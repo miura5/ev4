@@ -51,6 +51,7 @@ async function deployedStaging() {
     write(path.join(state, 'record/system', id + '.json'), { ...doc, at: '2026-10-18T00:00:00Z' });
   }
   write(path.join(state, 'page.html'), `<!doctype html><meta name="ev-release" content="${manifest.release}"><title>E.V. Home Staging</title>`);
+  write(path.join(state, 'record/system/seed.json'), { schema: 1, writer: 'deploy', at: '2026-10-18T05:30:00Z', source: 'seed-staging', from: 'live export', exportedAt: '2026-10-18T05:02:42Z', migration: 'v3-to-v4', counts: { weakspots: 3 }, hashes: {}, command: 'seed-staging' });
   return { dir, dist, state, manifest };
 }
 
@@ -61,7 +62,8 @@ test('from a build chat with nothing deployed, verify-deploy staging is red and 
   assert.equal(r.code, 1);
   assert.match(r.out, /^verify-deploy staging: RED/);
   assert.match(r.out, /NO  build commit is pushed/);
-  assert.match(r.out, /NO  staging record exists: no staging record/);
+  assert.match(r.out, /NO  staging record read: no saved system\/\* documents/);
+  assert.match(r.out, /ArtifactData \{"action":"get","url":"https:\/\/claude\.ai\/artifact\/[A-Za-z0-9]+","collection":"system","doc_id":"seed"/);
   assert.match(r.out, /NO  scheduled tasks read/);
   assert.match(r.out, /mcp__claude-code-remote__list_triggers \{"limit":100\}/);
   const saved = JSON.parse(fs.readFileSync(path.join(dir, 'dist/verify-staging.json'), 'utf8'));
@@ -74,6 +76,7 @@ test('verify-deploy is green when the saved state matches the manifest', async (
   assert.equal(r.code, 0, r.out);
   assert.match(r.out, /^verify-deploy staging: GREEN/);
   assert.doesNotMatch(r.out, /NO  /);
+  assert.match(r.out, /ok  staging seed: 3 documents from a live export taken 2026-10-18, \d+ days? old/);
 });
 
 test('a planted wrong prompt hash and a stale page stamp are both reported', async () => {
@@ -166,4 +169,11 @@ test('helpers: page stamps and canonical JSON', () => {
 test('usage: an unknown command or target exits 2', () => {
   const r = cli(process.cwd(), 'verify-deploy', 'prod');
   assert.equal(r.code, 2);
+});
+
+test('verify-deploy staging is red without a seed stamp', async () => {
+  const { dir, state } = await deployedStaging();
+  fs.rmSync(path.join(state, 'record/system/seed.json'));
+  const r = cli(dir, 'verify-deploy', 'staging');
+  assert.equal(r.code, 1); assert.match(r.out, /NO  staging seed: no system\/seed: run seed-staging/);
 });

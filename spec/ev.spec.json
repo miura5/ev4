@@ -117,7 +117,10 @@
     "artifact": "Bu8RevP4r1twPdSGc77nfg",
     "name": "E.V. Home"
    },
-   "staging": null
+   "staging": {
+    "artifact": "Pb6jQ6CvEbtxi6Rcshu9uC",
+    "name": "E.V. Home Staging v4"
+   }
   },
   "docs": {
    "designV4": "Fgb2KjoLKcRgCRrBmM6kEf",
@@ -486,14 +489,16 @@
    "key": [
     "spec",
     "manifest",
-    "environments"
+    "environments",
+    "seed"
    ],
-   "holds": "the spec; the release pointer; proven capabilities",
+   "holds": "the spec; the release pointer; proven capabilities; the staging seed stamp",
    "fromV3": "system/spec, system/code",
    "fixedIds": [
     "spec",
     "manifest",
-    "environments"
+    "environments",
+    "seed"
    ],
    "schema": "spec/schemas/system.schema.json"
   },

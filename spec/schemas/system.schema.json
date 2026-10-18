@@ -13,7 +13,8 @@
   "documents": {
    "spec": "#/$defs/spec",
    "manifest": "#/$defs/manifest",
-   "environments": "#/$defs/environments"
+   "environments": "#/$defs/environments",
+   "seed": "#/$defs/seed"
   }
  },
  "$comment": "The manifest shape is completed in B-03; a deployed manifest is never dirty.",
@@ -362,6 +363,71 @@
    "required": [
     "artifact",
     "systemDocs"
+   ],
+   "additionalProperties": false
+  },
+  "seed": {
+   "type": "object",
+   "$comment": "Written by seed-staging on the staging record only: which export it is a copy of, so verify-deploy staging can say how old it is.",
+   "properties": {
+    "schema": {
+     "const": 1
+    },
+    "writer": {
+     "const": "deploy"
+    },
+    "at": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "source": {
+     "type": "string",
+     "minLength": 1
+    },
+    "from": {
+     "enum": [
+      "live export",
+      "backup"
+     ]
+    },
+    "exportedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "migration": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "counts": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "integer",
+      "minimum": 0
+     }
+    },
+    "hashes": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+     }
+    },
+    "command": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "schema",
+    "writer",
+    "at",
+    "source",
+    "from",
+    "exportedAt",
+    "counts",
+    "hashes",
+    "command"
    ],
    "additionalProperties": false
   }

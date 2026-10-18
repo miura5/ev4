@@ -4,6 +4,8 @@
 // deployCalls() prints the exact tool calls that make the live state match it.
 
 export const SYSTEM_IDS = ['manifest', 'spec', 'environments'];
+// What verify reads from a record: the deployed system documents, plus staging's seed stamp (written by seed-staging).
+export const readIds = target => (target === 'staging' ? [...SYSTEM_IDS, 'seed'] : SYSTEM_IDS);
 export const ENVELOPE = ['schema', 'writer', 'at', 'source'];
 const STAMP = /<meta\s+name=["']ev-release["']\s+content=["']([^"']+)["']/i;
 
@@ -32,7 +34,7 @@ export function verifyReads({ manifest, target, stateDir }) {
     note: 'Save the result exactly as returned (copy the file the tool saved when it saved one). When it has a next_cursor, call again with cursor and save triggers-2.json, and so on.',
   }];
   if (rec.artifact) {
-    for (const id of SYSTEM_IDS) reads.push({ tool: 'ArtifactData', args: { action: 'get', url: artifactUrl(rec.artifact), collection: 'system', doc_id: id, out_dir: `${stateDir}/record` }, save: `${stateDir}/record/system/${id}.json`, note: 'Saved by the tool; note the version it prints for deploy --version.' });
+    for (const id of readIds(target)) reads.push({ tool: 'ArtifactData', args: { action: 'get', url: artifactUrl(rec.artifact), collection: 'system', doc_id: id, out_dir: `${stateDir}/record` }, save: `${stateDir}/record/system/${id}.json`, note: 'Saved by the tool; note the version it prints for deploy --version.' });
     const page = manifest.pages[target];
     if (page.artifact) reads.push({ tool: 'Artifact', args: { action: 'read', url: artifactUrl(page.artifact) }, save: `${stateDir}/page.html`, note: 'Copy the saved file that holds the full page.' });
   }
@@ -53,7 +55,7 @@ function triggerFields(t) {
  * spec, environments} (absent docs undefined) | null, pageHtml: string | null, pageFiles: {path: sha256} | null}.
  * build: {pushed: bool}. sha256: the hash function (node's or the page's). Returns {green, lines: [{ok, what, detail}]}.
  */
-export function verify({ manifest, target, state, build, dist, sha256 }) {
+export function verify({ manifest, target, state, build, dist, sha256, now = new Date().toISOString() }) {
   const lines = [];
   const add = (ok, what, detail = '') => lines.push({ ok, what, detail });
   const rec = manifest.records[target];
@@ -75,6 +77,15 @@ export function verify({ manifest, target, state, build, dist, sha256 }) {
     for (const id of ['spec', 'environments']) {
       if (!live[id]) add(false, `system/${id} deployed`, 'absent from the record');
       else add(same(strip(live[id]), strip(dist[id])), `system/${id} matches the build`, same(strip(live[id]), strip(dist[id])) ? '' : 'its content differs from dist/system/' + id + '.json');
+    }
+    if (target === 'staging') {
+      const seed = live.seed;
+      if (!seed || !seed.exportedAt) add(false, 'staging seed', 'no system/seed: run seed-staging');
+      else {
+        const days = Math.max(0, Math.floor((Date.parse(now) - Date.parse(seed.exportedAt)) / 864e5));
+        const docs = Object.values(seed.counts || {}).reduce((n, c) => n + c, 0);
+        add(true, 'staging seed', `${docs} documents from a ${seed.from || 'live export'} taken ${seed.exportedAt.slice(0, 10)}, ${days} day${days === 1 ? '' : 's'} old`);
+      }
     }
   }
 

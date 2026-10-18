@@ -4,6 +4,7 @@
 //   deploy <live|staging>          print the exact calls that deploy this build (refuses dirty, unpushed, live w/o OK)
 //   migrate v3 --from <export>     the v4 writes for a v3 record export, as document files and chunked batches
 //   verify-migration --from <export>   recompute every weak spot from the migrated Facts; zero mismatches passes
+//   seed-staging --from <export>   the batches that make the staging record a copy of an export, stamped system/seed
 // Options: --root <repo> (default: this checkout), --dist <dir> (default <root>/dist), --state <dir> (default
 // <dist>/state/<target>), --version <manifest|spec|environments>=<n> (deploy: the version a get printed),
 // --matt-ok (deploy live), --json; migrate: --from <export dir>, --at <ISO stamp> (default now), --out <dir>
@@ -14,6 +15,7 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { verify, verifyReads, formatVerify, deployCalls, formatDeploy, SYSTEM_IDS, artifactUrl } from './deploy.mjs';
+import { seedStaging } from './seed.mjs';
 import { migrateV3, verifyMigration, applyWrites } from './migrate.mjs';
 import { chunkWrites } from './batches.mjs';
 import { readExport, loadValidator } from './schemas.mjs';
@@ -47,7 +49,7 @@ export function readState(dir) {
   const pages = fs.readdirSync(dir).filter(f => /^triggers-\d+\.json$/.test(f)).sort((a, b) => parseInt(a.slice(9)) - parseInt(b.slice(9)));
   const triggers = pages.length ? pages.flatMap(f => { const r = readJson(path.join(dir, f)); return Array.isArray(r) ? r : r.data || []; }) : null;
   const sys = path.join(dir, 'record', 'system');
-  const record = fs.existsSync(sys) ? Object.fromEntries(SYSTEM_IDS.map(id => [id, maybeJson(path.join(sys, id + '.json'))])) : null;
+  const record = fs.existsSync(sys) ? Object.fromEntries([...SYSTEM_IDS, 'seed'].map(id => [id, maybeJson(path.join(sys, id + '.json'))])) : null;
   const pageHtml = fs.existsSync(path.join(dir, 'page.html')) ? fs.readFileSync(path.join(dir, 'page.html'), 'utf8') : null;
   const filesDir = path.join(dir, 'page-files');
   let pageFiles = null;
@@ -106,6 +108,32 @@ const commands = {
     if (result.skipped.length) console.log(`  kept in legacy only or skipped: ${result.skipped.length} (listed in plan.json)`);
     return 0;
   },
+  'seed-staging'(o) {
+    const root = o.root ? path.resolve(o.root) : HERE;
+    const spec = readJson(path.join(root, 'spec', 'ev.spec.json'));
+    EV.configure(spec);
+    const rec = spec.registry.records.staging;
+    if (!rec || !rec.artifact) throw new Error('no staging record in spec.registry.records');
+    const exp = loadExport(o.from);
+    const stampFile = path.join(path.resolve(o.from), 'EXPORTED.txt');
+    const exportedAt = o['exported-at'] || (fs.existsSync(stampFile) ? (fs.readFileSync(stampFile, 'utf8').match(/\d{4}-\d{2}-\d{2}T[\d:.]+Z/) || [])[0] : null);
+    if (!exportedAt) throw new Error('give --exported-at <ISO>: when the export was taken (or an EXPORTED.txt beside it)');
+    const at = o.at || new Date().toISOString();
+    const { writes, seed, migrated } = seedStaging(exp, { at, exportedAt, from: o.kind === 'backup' ? 'backup' : 'live export', command: `seed-staging --from ${path.basename(path.resolve(o.from))}` });
+    const validate = loadValidator(path.join(root, 'spec', 'schemas'));
+    const invalid = writes.map(w => ({ w, r: validate(w.collection, w.data, { id: w.id }) })).filter(x => !x.r.ok);
+    if (invalid.length) { console.log(`seed-staging: REFUSED, ${invalid.length} write(s) do not validate`); for (const { w, r } of invalid.slice(0, 20)) console.log('  ' + describeErrors(`${w.collection}/${w.id}`, r).split('\n')[0]); return 1; }
+    const out = o.out ? path.resolve(o.out) : path.join(root, 'dist', 'seed');
+    fs.rmSync(out, { recursive: true, force: true });
+    const files = writes.map(w => { const f = path.join(out, 'docs', w.collection, w.id + '.json'); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, JSON.stringify(w.data)); return { op: 'set', collection: w.collection, doc_id: w.id, file_path: f, data: w.data }; });
+    // The seed stamp goes last, alone: it is written only once every document is in.
+    const batches = [...chunkWrites(files.slice(0, -1), spec.capacity.batch), [files[files.length - 1]]].map(b => b.map(({ data, ...w }) => w));
+    const plan = { record: artifactUrl(rec.artifact), target: 'staging', at, exportedAt: seed.exportedAt, migrated, counts: seed.counts, batches };
+    fs.writeFileSync(path.join(out, 'plan.json'), JSON.stringify(plan, null, 1));
+    console.log(`seed-staging: ${writes.length} writes in ${batches.length} batches to the staging record (${rec.artifact}), export taken ${seed.exportedAt}${migrated ? ', migrated from v3' : ''} -> ${path.relative(process.cwd(), out) || out}/plan.json`);
+    console.log('Apply each batch in order with ArtifactData batch (url: the plan\'s record); a set on a document that already exists needs its if_version from a get.');
+    return 0;
+  },
   'verify-migration'(o) {
     const { v3, at, result } = migration(o);
     const vm = verifyMigration(v3, result.writes);
@@ -146,7 +174,7 @@ export function main(argv) {
   const o = args(argv);
   const cmd = commands[o._[0]];
   if (!cmd || (TARGETED.includes(o._[0]) && !['live', 'staging'].includes(o._[1]))) {
-    console.error('Commands: verify-deploy <live|staging>, deploy <live|staging>, migrate v3 --from <dir>, verify-migration --from <dir>');
+    console.error('Commands: verify-deploy <live|staging>, deploy <live|staging>, migrate v3 --from <dir>, verify-migration --from <dir>, seed-staging --from <dir>');
     return 2;
   }
   try { return cmd(o); } catch (e) { console.error(`${o._[0]} failed: ${e.message}`); return 1; }
