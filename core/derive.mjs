@@ -2,8 +2,8 @@
 // A producer is the one function a pipeline computes a Derived document with; `rebuild` runs the same function on
 // the record as it stood at the stored document's time, so the two cannot disagree unless the code or a later Edit
 // changed. Pure: the record goes in as {collection: [docs with id]}, data comes out. The rule this puts on a run
-// (B-08): a Derived document's `at` is taken after the run's own Fact writes are applied, so the record it was
-// computed from is exactly the record as of its `at`.
+// (core/run.mjs compute): each step sees the writes of the steps before it, and every write is stamped with the
+// run's one compute time, so the record a Derived document was computed from is exactly the record as of its `at`.
 import EV from './evcore.mjs';
 
 const ms = x => EV.toMs(x);

@@ -8,6 +8,10 @@
 //   lint --from <record>           the record against its rules: writers, unchanged Facts, budgets, schemas, every
 //                                  Derived document rebuilt byte for byte, and the content checks (--date, --json)
 //   rebuild <collection|all> --from <record>   regenerate Derived documents as of their time; --out <dir> writes them
+//   run <pipeline> <start|pull|pulled|compute|apply|replan|end|audit>   the run protocol's moves; each prints the
+//                                  exact calls to make. --dir (default /tmp/ev/run), --record <live|staging>,
+//                                  --at, --transcript <jsonl> (default this session's), --failed <n>, --batch <n>,
+//                                  --status <ok|partial|failed>, --detail
 // Options: --root <repo> (default: this checkout), --dist <dir> (default <root>/dist), --state <dir> (default
 // <dist>/state/<target>), --version <manifest|spec|environments>=<n> (deploy: the version a get printed),
 // --matt-ok (deploy live), --json; migrate: --from <export dir>, --at <ISO stamp> (default now), --out <dir>
@@ -25,6 +29,8 @@ import { readExport, loadValidator } from './schemas.mjs';
 import { describeErrors } from './validate.mjs';
 import { lintRecord, formatLint } from './lint.mjs';
 import { rebuild } from './derive.mjs';
+import * as RUN from './run.mjs';
+import { newestTranscript } from './transcript.mjs';
 import EV from './evcore.mjs';
 
 const HERE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -36,7 +42,7 @@ function args(argv) {
   const o = { _: [], version: {} };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === '--matt-ok' || a === '--json') o[a.slice(2).replace('-ok', 'Ok')] = true;
+    if (a === '--matt-ok' || a === '--json' || a === '--no-audit') o[a.slice(2).replace('-ok', 'Ok')] = true;
     else if (a === '--version') { const [k, v] = (argv[++i] || '').split('='); o.version[k] = Number(v); }
     else if (a.startsWith('--')) o[a.slice(2)] = argv[++i];
     else o._.push(a);
@@ -160,6 +166,47 @@ const commands = {
     console.log(`rebuild: ${results.filter(r => r.status === 'same' || r.status === 'inexact-same').length} reproduced, ${bad} differ, ${results.filter(r => r.status === 'inexact-differs').length} differ after a later edit, ${results.filter(r => r.status === 'skipped').length} skipped`);
     return bad ? 1 : 0;
   },
+  run(o) {
+    const root = o.root ? path.resolve(o.root) : HERE;
+    const spec = readJson(path.join(root, 'spec', 'ev.spec.json')); EV.configure(spec);
+    const [, pipeline, move] = o._;
+    const dir = path.resolve(o.dir || '/tmp/ev/run'); const at = o.at || new Date().toISOString();
+    const transcript = () => { const f = o.transcript || newestTranscript(); if (!f) throw new Error('no session transcript found'); return fs.readFileSync(f, 'utf8'); };
+    const show = (calls, then) => { console.log(`${pipeline} ${move}: ${calls.length} call${calls.length === 1 ? '' : 's'}, in order. Make each exactly as printed.\n`); console.log(RUN.formatCalls(calls)); if (then) console.log('\nThen: ' + then); return 0; };
+    const cli = `node ${path.relative(process.cwd(), path.join(root, 'core', 'cli.mjs')) || 'core/cli.mjs'} run ${pipeline}`;
+    const d = ` --dir ${dir}`;
+    switch (move) {
+      case 'start': {
+        const manifest = maybeJson(path.join(root, 'dist', 'manifest.json'));
+        return show(RUN.start({ spec, pipeline, record: o.record || 'staging', at, dir, release: o.release || (manifest && manifest.release) || EV.VERSION }), `${cli} pull${d}`);
+      }
+      case 'pull': return show(RUN.pull({ spec, dir, at }), `${cli} pulled${d}`);
+      case 'pulled': {
+        const r = RUN.pulled({ spec, dir, transcript: transcript() });
+        if (!r.done) return show(r.calls, `${cli} pulled${d}`);
+        console.log(`${pipeline} pulled: versions for ${Object.values(r.versions).reduce((n, v) => n + Object.keys(v).length, 0)} documents in ${Object.keys(r.versions).length} collections.\nThen: ${cli} compute${d}`); return 0;
+      }
+      case 'compute': {
+        const r = RUN.compute({ spec, dir, validate: loadValidator(path.join(root, 'spec', 'schemas')), at });
+        if (r.status === 'waiting') { console.log(`${pipeline} compute: waiting on step ${r.step}.\nJudgment: ${r.question.judgment}\nMaterial: ${JSON.stringify(r.question.material)}\nAnswer shape (JSON Schema): ${JSON.stringify(r.question.output)}\nWrite the answer as JSON to ${r.question.answerPath}, then: ${cli} compute${d}`); return 3; }
+        if (r.status === 'refused') { console.log(`${pipeline} compute: REFUSED, nothing planned`); for (const p of r.problems) console.log('  ' + p); return 1; }
+        console.log(`${pipeline} compute: ${r.plan.writes} writes in ${r.plan.batches.length} batches, plan ${r.plan.hash.slice(0, 12)}${r.plan.push ? '\nPush: ' + r.plan.push : ''}\nThen: ${cli} apply${d}`); return 0;
+      }
+      case 'apply':
+        if (o.failed) return show(RUN.applyFailed({ dir, batch: Number(o.failed) }), `${cli} replan --batch ${o.failed}${d}`);
+        return show(RUN.apply({ dir }), `if a batch is refused on a version pin: ${cli} apply --failed <n>${d}; after the last batch: ${cli} end${d}`);
+      case 'replan': return show(RUN.replan({ spec, dir, batch: Number(o.batch), transcript: transcript() }), `continue with the batches after it, then ${cli} end${d}`);
+      case 'end': return show(RUN.end({ dir, at, status: o.status, detail: o.detail, transcript: o['no-audit'] ? null : transcript() }));
+      case 'audit': {
+        const a = RUN.audit({ dir, transcript: transcript() });
+        console.log(`${pipeline} audit: ${a.ok ? 'GREEN' : 'RED'} · ${a.matched} calls matched${a.extra.length ? ', ' + a.extra.length + ' not printed' : ''}${a.missing.length ? ', ' + a.missing.length + ' printed but not made' : ''}`);
+        for (const c of a.extra) console.log(`  NO  ${c.tool} ${c.summary}`);
+        for (const m of a.missing) console.log(`  missing ${m}`);
+        return a.ok ? 0 : 1;
+      }
+      default: throw new Error('run <pipeline> <start|pull|pulled|compute|apply|replan|end|audit>');
+    }
+  },
   'verify-migration'(o) {
     const { v3, at, result } = migration(o);
     const vm = verifyMigration(v3, result.writes);
@@ -200,7 +247,7 @@ export function main(argv) {
   const o = args(argv);
   const cmd = commands[o._[0]];
   if (!cmd || (TARGETED.includes(o._[0]) && !['live', 'staging'].includes(o._[1]))) {
-    console.error('Commands: verify-deploy <live|staging>, deploy <live|staging>, migrate v3 --from <dir>, verify-migration --from <dir>, seed-staging --from <dir>, lint --from <dir>, rebuild <collection|all> --from <dir>');
+    console.error('Commands: verify-deploy <live|staging>, deploy <live|staging>, migrate v3 --from <dir>, verify-migration --from <dir>, seed-staging --from <dir>, lint --from <dir>, rebuild <collection|all> --from <dir>, run <pipeline> <move>');
     return 2;
   }
   try { return cmd(o); } catch (e) { console.error(`${o._[0]} failed: ${e.message}`); return 1; }
