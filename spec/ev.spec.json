@@ -1572,7 +1572,7 @@
     ],
     "macBound": true,
     "push": false,
-    "trigger": null,
+    "trigger": "trig_01Jz9FH9FvNUHYQCsVAGHyCJ",
     "note": "Loads the latest live backup on the Mac into the staging record. Slot agreed with Matt Oct 18."
    }
   },
