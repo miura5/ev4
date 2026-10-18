@@ -282,3 +282,9 @@ body.opening .msg.greet .msg-cards{display:grid;grid-template-columns:repeat(aut
   body.skill-on #p-ev>.sk-panel{display:flex;flex-direction:column;gap:12px;grid-column:2;grid-row:1/span 20;position:sticky;top:calc(var(--top-h) + 16px);max-height:calc(100vh - var(--top-h) - var(--dock-h) - 40px);overflow:auto;padding:16px 18px;background:rgba(63,224,197,.05);border:1px solid var(--accent-edge);border-radius:var(--r)}
   .sk-panel .actions{margin-top:2px}
 }
+/* D-108: the workout card */
+.wo-clock{margin:0;font:600 34px var(--mono);letter-spacing:.02em;font-variant-numeric:tabular-nums;color:var(--ink)}
+.wo-moves{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.wo-moves li{display:flex;gap:10px;align-items:baseline;font-size:18px}
+.wo-moves b{min-width:2.4em;text-align:right;font:600 20px var(--mono);color:var(--accent-text);font-variant-numeric:tabular-nums}
+.wo-extra{display:flex;flex-direction:column;gap:10px}

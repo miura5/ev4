@@ -1622,6 +1622,73 @@ Return JSON: {"pages": [{"page": <page number>, "text": "<the page's text>"}]}`;
     return { op: 'update', collection: 'sessions', id: s.id, data: { status: 'ended', endedAt: at, minutes, endedBy, summary, events: { [eventKey('page', at)]: { type: 'end', at, why: endedBy } } } };
   }
 
+  // ---------------------------------------------------------------- workouts (D-108)
+  /** The sequences spec.workouts names, by id: {id, title, kind: amrap|ladder, ...}. */
+  function workoutSequences() { const q = (SPEC && SPEC.workouts && SPEC.workouts.sequences) || {}; return Object.fromEntries(Object.entries(q).map(([id, s]) => [id, { id, ...s }])); }
+  /** The moves of round n (1-based): amrap repeats its round; a ladder's rung r is each move times its per. */
+  function workoutMoves(seq, n) {
+    if (!seq) return [];
+    if (seq.kind === 'amrap') return seq.round.map(m => ({ move: m.move, reps: m.reps }));
+    const r = (seq.rungs || [])[n - 1]; return r == null ? [] : seq.moves.map(m => ({ move: m.move, reps: m.per * r }));
+  }
+  const workoutRoundReps = (seq, n) => workoutMoves(seq, n).reduce((a, m) => a + m.reps, 0);
+  /** A new workouts/<id> (status active) for a sequence, started now. */
+  function startWorkout(seq, { now, date } = {}) {
+    if (!seq || !seq.id) throw new Error('no such workout');
+    const at = isoOf(now); const id = safeId('wo-' + compactTime(at).slice(0, 15) + '-' + seq.id);
+    return { op: 'set', collection: 'workouts', id, data: { ...envelope('page', 'E.V. Home', at), sequence: seq.id, title: seq.title, date: date || chicagoDate(at), status: 'active', startedAt: at, endedAt: null, events: {}, result: null, energy: null, mood: null } };
+  }
+  /**
+   * Where a workout stands: rounds done, the round he is on and its moves, the clock (elapsed, and for an amrap what is
+   * left of the cap), whether it is over (an amrap at its cap, a ladder past its last rung) and the reps so far.
+   */
+  function workoutState(w, seq, now) {
+    const rounds = Object.entries((w && w.events) || {}).filter(([, e]) => e && e.type === 'round').map(([, e]) => e.n);
+    const done = rounds.length ? Math.max(...rounds) : 0;
+    const total = seq && seq.kind === 'ladder' ? seq.rungs.length : null;
+    const end = w && w.endedAt ? toMs(w.endedAt) : toMs(isoOf(now));
+    const elapsedMs = Math.max(0, end - toMs(w.startedAt));
+    const capMs = seq && seq.kind === 'amrap' ? seq.capMinutes * 60000 : null;
+    const leftMs = capMs != null ? Math.max(0, capMs - elapsedMs) : null;
+    let reps = 0; for (let n = 1; n <= done; n++) reps += workoutRoundReps(seq, n);
+    const over = capMs != null ? leftMs === 0 : done >= total;
+    const current = over ? null : done + 1;
+    return { done, current, total, moves: current ? workoutMoves(seq, current) : [], elapsedMs, capMs, leftMs, over, reps };
+  }
+  /** One round done (the next round's number), appended as an event. */
+  function workoutRound(w, seq, { now } = {}) {
+    const at = isoOf(now); const st = workoutState(w, seq, at);
+    if (w.status !== 'active') throw new Error('this workout is over');
+    if (!st.current) throw new Error(seq.kind === 'amrap' ? 'the time cap has passed' : 'every round is done');
+    return { op: 'update', collection: 'workouts', id: w.id, data: { events: { [eventKey('page', at)]: { type: 'round', n: st.current, at } } } };
+  }
+  /**
+   * Ending a workout: an amrap keeps its rounds in the cap plus the extra reps he typed; a ladder keeps its total time and,
+   * when stopped early, the round he stopped in (completed false). status done or stopped, endedAt now.
+   */
+  function endWorkout(w, seq, { now, extraReps = 0, stopped = false } = {}) {
+    const at = isoOf(now); const st = workoutState(w, seq, at);
+    const extra = Math.max(0, Math.floor(Number(extraReps) || 0));
+    let result;
+    if (seq.kind === 'amrap') result = { rounds: st.done, extraReps: extra, reps: st.reps + extra, totalSeconds: Math.round(Math.min(st.elapsedMs, st.capMs) / 1000), completed: !stopped };
+    else { const completed = st.done >= st.total; result = { rounds: st.done, totalSeconds: Math.round(st.elapsedMs / 1000), reps: st.reps, completed, ...(completed ? {} : { stopRound: st.done + 1 }) }; }
+    return { op: 'update', collection: 'workouts', id: w.id, data: { status: result.completed ? 'done' : 'stopped', endedAt: at, result } };
+  }
+  /** The energy and mood line at the end (energy 1 to 5; mood in his words, at most 200 characters, no identifiers). */
+  function workoutCheckin(w, { energy, mood } = {}) {
+    const e = Number(energy); if (!(e >= 1 && e <= 5)) throw new Error('energy is 1 to 5');
+    const m = String(mood || '').replace(/\s+/g, ' ').trim().slice(0, 200);
+    if (scanIdentifiers(m).length) throw new Error('that note ' + scanIdentifiers(m)[0]);
+    return { op: 'update', collection: 'workouts', id: w.id, data: { energy: Math.round(e), mood: m || null } };
+  }
+  /** One line for a finished workout, for the card, the list and the conversation. */
+  function workoutSummary(w, seq) {
+    const r = w && w.result; if (!r) return '';
+    const t = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+    const main = seq && seq.kind === 'amrap' ? `${r.rounds} round${r.rounds === 1 ? '' : 's'}${r.extraReps ? ' + ' + r.extraReps + ' reps' : ''} in ${seq.capMinutes} min` : r.completed ? `all ${seq ? seq.rungs.length : r.rounds} rounds in ${t(r.totalSeconds)}` : `stopped in round ${r.stopRound} after ${t(r.totalSeconds)} (${r.reps} reps)`;
+    return [main, w.energy ? 'energy ' + w.energy + '/5' : '', w.mood ? '“' + w.mood + '”' : ''].filter(Boolean).join(' · ');
+  }
+
   function cardsText(cards) { return (cards || []).map(c => `${c.term}\t${c.definition}`).join('\n'); }
   /**
    * The open weak spots as Quizlet cards (B-41, Matt's pick 5): the topic as the term; the objective's text and the
@@ -1770,6 +1837,8 @@ Return JSON: {"pages": [{"page": <page number>, "text": "<the page's text>"}]}`;
     sessionState, noteMark, noteDelta, sessionContext, checkPrompt, parseCheck, wrapPrompt, parseWrap, closeSession, decideSessionQuestion, cardsText,
     // skills practice and the readiness audit
     skillSteps, skillState, skillStep, startSkill, endSkill, readinessAudit,
+    // workouts (D-108)
+    workoutSequences, workoutMoves, startWorkout, workoutState, workoutRound, endWorkout, workoutCheckin, workoutSummary,
     // conversation
     greeting,
   };

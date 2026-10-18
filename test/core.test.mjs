@@ -391,6 +391,42 @@ test('readiness prediction is deterministic and explains itself', () => {
   assert.deepEqual(EV.calibrate({ prediction: p, score: 72 }).inRange, true);
 });
 
+test('B-52 (D-108): CINDY keeps rounds in the cap, the ladder its time and stop point; every write validates', () => {
+  const q = EV.workoutSequences();
+  assert.deepEqual(Object.keys(q).sort(), ['cindy', 'ladder-1500']);
+  const L = q['ladder-1500']; assert.equal(L.rungs.length, 19);
+  assert.equal(L.rungs.reduce((a, r) => a + r, 0) * L.moves.reduce((a, m) => a + m.per, 0), 1500);
+  assert.deepEqual(EV.workoutMoves(L, 10), [{ move: 'pull-ups', reps: 10 }, { move: 'dips', reps: 20 }, { move: 'push-ups', reps: 30 }, { move: 'sit-ups', reps: 40 }, { move: 'air squats', reps: 50 }]);
+  const apply = (doc, w) => { const merge = (a, b) => { const o = { ...a }; for (const [k, v] of Object.entries(b)) o[k] = v && typeof v === 'object' && !Array.isArray(v) && a && a[k] && typeof a[k] === 'object' ? merge(a[k], v) : v; return o; }; assertValid(w, doc); return w.op === 'set' ? { ...w.data, id: w.id } : { ...merge(doc, w.data), id: doc.id }; };
+  // CINDY: three rounds, the cap passes, 7 extra reps typed, then energy and mood.
+  const t0 = '2026-10-19T12:00:00Z'; const min = m => new Date(Date.parse(t0) + m * 60000).toISOString();
+  const s = EV.startWorkout(q.cindy, { now: t0 }); assert.equal(s.id, 'wo-20261019-120000-cindy');
+  let c = apply(null, s);
+  for (const m of [6, 12, 18]) c = apply(c, EV.workoutRound(c, q.cindy, { now: min(m) }));
+  let st = EV.workoutState(c, q.cindy, min(19)); assert.deepEqual([st.done, st.current, st.reps, Math.round(st.leftMs / 1000)], [3, 4, 90, 60]);
+  assert.equal(EV.workoutState(c, q.cindy, min(20)).over, true);
+  assert.throws(() => EV.workoutRound(c, q.cindy, { now: min(21) }), /time cap has passed/);
+  c = apply(c, EV.endWorkout(c, q.cindy, { now: min(20.5), extraReps: 7 }));
+  assert.deepEqual([c.status, c.result], ['done', { rounds: 3, extraReps: 7, reps: 97, totalSeconds: 1200, completed: true }]);
+  assert.throws(() => EV.workoutCheckin(c, { energy: 6 }), /energy is 1 to 5/);
+  assert.throws(() => EV.workoutCheckin(c, { energy: 3, mood: 'patient in room 12 was loud' }), /room number/);
+  c = apply(c, EV.workoutCheckin(c, { energy: 4, mood: '  strong,   arms gone ' }));
+  assert.equal(EV.workoutSummary(c, q.cindy), '3 rounds + 7 reps in 20 min · energy 4/5 · “strong, arms gone”');
+  // The ladder, stopped in round 6 after 5 rungs.
+  let l = apply(null, EV.startWorkout(L, { now: t0 }));
+  for (let n = 1; n <= 5; n++) l = apply(l, EV.workoutRound(l, L, { now: min(3 * n) }));
+  assert.deepEqual(EV.workoutState(l, L, min(16)).moves[0], { move: 'pull-ups', reps: 6 });
+  l = apply(l, EV.endWorkout(l, L, { now: min(17), stopped: true }));
+  assert.deepEqual([l.status, l.result], ['stopped', { rounds: 5, totalSeconds: 1020, reps: 225, completed: false, stopRound: 6 }]);
+  assert.equal(EV.workoutSummary(l, L), 'stopped in round 6 after 17:00 (225 reps)');
+  // All 19 rungs: completed, total time kept.
+  let f = apply(null, EV.startWorkout(L, { now: t0 }));
+  for (let n = 1; n <= 19; n++) f = apply(f, EV.workoutRound(f, L, { now: min(3 * n) }));
+  assert.equal(EV.workoutState(f, L, min(58)).over, true);
+  f = apply(f, EV.endWorkout(f, L, { now: min(58) }));
+  assert.deepEqual([f.status, f.result.completed, f.result.reps, f.result.totalSeconds], ['done', true, 1500, 3480]);
+});
+
 test('B-47 (D-104): examRetro sets the night-before prediction against the score and reads only E.V.\'s own practice', () => {
   const exam = { ...E4, schema: 2 };
   const prediction = { id: 'E4', schema: 1, writer: 'morning', examId: 'E4', date: '2026-10-20', predictedRange: [78, 86], basis: 'past unit exams average 84' };

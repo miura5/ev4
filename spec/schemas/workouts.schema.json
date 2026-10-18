@@ -1,0 +1,189 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/workouts",
+ "title": "workouts/<id>",
+ "description": "one workout run from a spec sequence (D-108): rounds as events, the result, energy and mood",
+ "x-ev": {
+  "collection": "workouts",
+  "class": "Fact",
+  "writers": [
+   "page"
+  ],
+  "schema": 1,
+  "marks": {
+   "status": [
+    "page"
+   ],
+   "endedAt": [
+    "page"
+   ],
+   "result": [
+    "page"
+   ],
+   "energy": [
+    "page"
+   ],
+   "mood": [
+    "page"
+   ]
+  }
+ },
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "page"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "const": "E.V. Home"
+  },
+  "sequence": {
+   "type": "string",
+   "pattern": "^[a-z0-9][a-z0-9-]*$"
+  },
+  "title": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 120
+  },
+  "date": {
+   "type": "string",
+   "format": "date"
+  },
+  "status": {
+   "enum": [
+    "active",
+    "done",
+    "stopped"
+   ]
+  },
+  "startedAt": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "endedAt": {
+   "anyOf": [
+    {
+     "type": "string",
+     "format": "date-time"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "events": {
+   "type": "object",
+   "propertyNames": {
+    "pattern": "^[a-z][a-z-]*-\\d{8}-\\d{6}(\\d{3})?(-[a-z0-9]+)?$"
+   },
+   "additionalProperties": {
+    "type": "object",
+    "properties": {
+     "type": {
+      "enum": [
+       "round"
+      ]
+     },
+     "n": {
+      "type": "integer",
+      "minimum": 1
+     },
+     "at": {
+      "type": "string",
+      "format": "date-time"
+     }
+    },
+    "required": [
+     "type",
+     "n",
+     "at"
+    ],
+    "additionalProperties": false
+   }
+  },
+  "result": {
+   "anyOf": [
+    {
+     "type": "null"
+    },
+    {
+     "type": "object",
+     "properties": {
+      "rounds": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "extraReps": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "totalSeconds": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "stopRound": {
+       "type": "integer",
+       "minimum": 1
+      },
+      "completed": {
+       "type": "boolean"
+      },
+      "reps": {
+       "type": "integer",
+       "minimum": 0
+      }
+     },
+     "required": [
+      "completed",
+      "reps"
+     ],
+     "additionalProperties": false
+    }
+   ]
+  },
+  "energy": {
+   "anyOf": [
+    {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 5
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "mood": {
+   "anyOf": [
+    {
+     "type": "string",
+     "maxLength": 200
+    },
+    {
+     "type": "null"
+    }
+   ]
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "sequence",
+  "title",
+  "date",
+  "status",
+  "startedAt"
+ ],
+ "additionalProperties": false
+}

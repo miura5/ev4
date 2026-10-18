@@ -16,7 +16,7 @@ const PIPELINES = ['morning', 'evening-cloud', 'evening-mac', 'weekly', 'worker'
 const SURFACES = ['cloud-run', 'mac-run', 'browser-tab', 'page', 'build-chat'];
 // Every collection in the Data architecture tab's collection map.
 const COLLECTIONS = ['weakspots', 'sets', 'answers', 'exams', 'examedits', 'predictions', 'objectives', 'plans', 'planedits', 'dates', 'dateedits', 'days',
-  'dayedits', 'weeks', 'runs', 'health', 'state', 'sessions', 'ideas', 'journal', 'talk', 'jobs', 'jobresults', 'materials',
+  'dayedits', 'weeks', 'runs', 'health', 'state', 'sessions', 'ideas', 'workouts', 'journal', 'talk', 'jobs', 'jobresults', 'materials',
   'materialedits', 'libindex', 'announcements', 'concepts', 'system', 'legacy', 'debug'];
 const CRON = /^CRON_TZ=America\/Chicago (\S+ ){4}\S+$/;
 

@@ -1,0 +1,19 @@
+{
+ "schema": 1,
+ "writer": "page",
+ "at": "2026-10-17T12:00:00Z",
+ "source": "E.V. Home",
+ "sequence": "cindy",
+ "title": "CINDY",
+ "date": "2026-10-17",
+ "status": "done",
+ "startedAt": "2026-10-17T12:00:00Z",
+ "endedAt": "2026-10-17T12:20:30Z",
+ "events": {
+  "page-20261017-120600": { "type": "round", "n": 1, "at": "2026-10-17T12:06:00Z" },
+  "page-20261017-121200": { "type": "round", "n": 2, "at": "2026-10-17T12:12:00Z" }
+ },
+ "result": { "rounds": 2, "extraReps": 4, "reps": 64, "totalSeconds": 1200, "completed": true },
+ "energy": 3,
+ "mood": "A made-up mood line"
+}

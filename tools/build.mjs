@@ -121,7 +121,7 @@ export function buildPages({ root, spec, schemas, release }) {
       release, target, specVersion: spec.specVersion,
       record: { artifact: rec.artifact || null, name: rec.name || null },
       tasks: { [target]: spec.tasks[target], ...(target === 'staging' ? { diagnostic: spec.tasks.diagnostic } : {}) },
-      constants: spec.constants, capacity: spec.capacity, ui: spec.ui, jobs: spec.jobs, boundaries: spec.boundaries,
+      constants: spec.constants, capacity: spec.capacity, ui: spec.ui, jobs: spec.jobs, workouts: spec.workouts || null, boundaries: spec.boundaries,
       workingAgreements: spec.workingAgreements, persona: spec.persona || null, items: spec.items || null, pipelines: Object.fromEntries(Object.entries(spec.pipelines).filter(([k]) => !k.startsWith('_')).map(([k, p]) => [k, { lane: p.lane, purpose: p.purpose, steps: p.steps ? p.steps.length : null }])),
       reader: (spec.registry.studyWatch || {}).reader || null,
       // When each runs live (no task ids); a pipeline with no live task (the restore drill, which drills into staging)

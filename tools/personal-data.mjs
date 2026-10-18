@@ -9,7 +9,7 @@ import { execFileSync } from 'node:child_process';
 // Every record collection, v3 and v4 (Data architecture, collection map). B-01 keeps this list in step with the spec.
 export const RECORD_COLLECTIONS = [
   'weakspots', 'sets', 'answers', 'exams', 'examedits', 'predictions', 'objectives', 'plans', 'planedits', 'dates', 'dateedits', 'days', 'dayedits',
-  'weeks', 'runs', 'health', 'state', 'sessions', 'ideas', 'journal', 'talk', 'jobs', 'jobresults', 'materials',
+  'weeks', 'runs', 'health', 'state', 'sessions', 'ideas', 'workouts', 'journal', 'talk', 'jobs', 'jobresults', 'materials',
   'materialedits', 'libindex', 'announcements', 'concepts', 'system', 'legacy', 'debug',
 ];
 
