@@ -1493,7 +1493,7 @@
     "folders": [],
     "macBound": false,
     "push": true,
-    "trigger": null,
+    "trigger": "trig_01GrcEzEwb4L3oXX7dsTdpwD",
     "note": "Hours spelled out (D-084): an every-3-hours cron anchors to the minute it was created. Pushes per D-097."
    }
   },
