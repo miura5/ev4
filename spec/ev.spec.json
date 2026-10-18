@@ -659,15 +659,15 @@
     "pipeline": "restore-drill",
     "record": "staging",
     "lane": "mac",
-    "schedule": null,
-    "cadence": "monthly",
+    "schedule": "CRON_TZ=America/Chicago 55 20 1 * *",
+    "cadence": "monthly, the 1st at 8:55pm (after that night's backup)",
     "folders": [
      "/Users/peachfritter/Documents/E.V. Study Watch"
     ],
     "macBound": true,
     "push": false,
     "trigger": null,
-    "note": "Loads the latest live backup on the Mac into the staging record; its monthly slot is set in B-22."
+    "note": "Loads the latest live backup on the Mac into the staging record. Slot agreed with Matt Oct 18."
    }
   },
   "diagnostic": {
