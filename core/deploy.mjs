@@ -142,11 +142,19 @@ export function formatVerify(target, result, reads) {
 /**
  * The calls that make the target match the manifest, in order. versions: {manifest, spec, environments} as the
  * chat's last get printed them (absent: the document does not exist yet). Refuses a dirty or unpushed build, a
- * missing record, and live without Matt's OK. state (optional): the saved verify state, used to skip tasks whose
+ * missing record, live without Matt's OK, and live unless stagingVerify (dist/verify-staging.json) is green at the same
+ * commit (B-35). state (optional): the saved verify state, used to skip tasks whose
  * prompt already matches.
  */
-export function deployCalls({ manifest, target, distDir, build, versions = {}, mattOk = false, state = null, sha256 }) {
+export function deployCalls({ manifest, target, distDir, build, versions = {}, mattOk = false, state = null, sha256, stagingVerify = null }) {
   const refusals = [];
+  // B-35: the build that goes live has always been through staging: dist/verify-staging.json green at this commit.
+  if (target === 'live') {
+    const v = stagingVerify;
+    if (!v) refusals.push('no dist/verify-staging.json: deploy staging and run verify-deploy staging first');
+    else if (v.commit !== manifest.commit) refusals.push(`verify-deploy staging ran at ${String(v.commit).slice(0, 12)}, this build is ${manifest.commit.slice(0, 12)}: deploy staging at this commit first`);
+    else if (!v.green) refusals.push(`verify-deploy staging is red at ${manifest.commit.slice(0, 12)}: make it green first`);
+  }
   if (manifest.dirty) refusals.push('the build is dirty: commit, push and build again');
   if (!build.pushed) refusals.push(`${manifest.commit.slice(0, 12)} is not pushed to origin/main`);
   if (target === 'live' && !mattOk) refusals.push("a live deploy needs Matt's explicit OK in the chat (then pass --matt-ok)");

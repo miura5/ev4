@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // E.V. v4 command line. Build-chat commands so far:
 //   verify-deploy <live|staging>   diff the saved live state against dist/manifest.json; prints the reads to save
-//   deploy <live|staging>          print the exact calls that deploy this build (refuses dirty, unpushed, live w/o OK)
+//   deploy <live|staging>          print the exact calls that deploy this build (refuses dirty, unpushed, live w/o OK,
+//                                  live unless dist/verify-staging.json is green at the same commit: B-35)
 //   migrate v3 --from <export>     the v4 writes for a v3 record export, as document files and chunked batches
 //   verify-migration --from <export>   recompute every weak spot from the migrated Facts; zero mismatches passes
 //   seed-staging --from <export>   the batches that make the staging record a copy of an export, stamped system/seed
@@ -314,7 +315,8 @@ const commands = {
   deploy(o) {
     const target = o._[1];
     const { dist, manifest, stateDir, build } = load(o, target);
-    const result = deployCalls({ manifest, target, distDir: dist, build, versions: o.version, mattOk: Boolean(o.mattOk), state: withShell(readState(stateDir), manifest, target, dist), sha256 });
+    const stagingVerify = maybeJson(path.join(dist, 'verify-staging.json')) || null;
+    const result = deployCalls({ manifest, target, distDir: dist, build, versions: o.version, mattOk: Boolean(o.mattOk), state: withShell(readState(stateDir), manifest, target, dist), sha256, stagingVerify });
     if (result.ok) fs.writeFileSync(path.join(dist, `deploy-${target}.json`), JSON.stringify(result, null, 1));
     console.log(o.json ? JSON.stringify(result, null, 1) : formatDeploy(target, result));
     return result.ok ? 0 : 1;

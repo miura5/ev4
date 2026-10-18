@@ -139,6 +139,18 @@ test('deploy prints the system batch with expected versions, refuses dirty, unpu
   assert.ok(plan.skipped.some(s => /staging\.evening-mac: Mac-bound/.test(s)));
   assert.match(cli(dir, 'deploy', 'live').out, /REFUSED[\s\S]*Matt's explicit OK/);
 
+  // B-35: live refuses without a green staging verify at the same commit, even with Matt's OK.
+  const live = () => cli(dir, 'deploy', 'live', '--matt-ok').out;
+  fs.rmSync(path.join(dist, 'verify-staging.json'), { force: true });
+  assert.match(live(), /REFUSED[\s\S]*no dist\/verify-staging\.json/);
+  const commit = JSON.parse(fs.readFileSync(path.join(dist, 'manifest.json'), 'utf8')).commit;
+  write(path.join(dist, 'verify-staging.json'), { target: 'staging', commit: 'f'.repeat(40), green: true, lines: [] });
+  assert.match(live(), /REFUSED[\s\S]*verify-deploy staging ran at ffffffffffff/);
+  write(path.join(dist, 'verify-staging.json'), { target: 'staging', commit, green: false, lines: [] });
+  assert.match(live(), /REFUSED[\s\S]*verify-deploy staging is red/);
+  write(path.join(dist, 'verify-staging.json'), { target: 'staging', commit, green: true, lines: [] });
+  assert.doesNotMatch(live(), /verify-staging|verify-deploy staging/, 'green at this commit: the staging rule passes');
+
   fs.appendFileSync(path.join(dir, 'core/validate.mjs'), '\n// changed\n');
   await build({ root: dir, now: NOW });
   const dirty = cli(dir, 'deploy', 'staging');

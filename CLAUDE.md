@@ -24,7 +24,8 @@ Claude Docs tools. The Decisions log stays in the v3 doc: https://claude.ai/arti
    involved, the harness at phone and desktop width, and look at the screenshots.
 5. Ship: commit with the task id first in the message (`B-07: lint and rebuild`), then the attribution lines the
    session gives you; push to `main`. If `deploy` exists: `deploy staging`, run every printed call, `verify-deploy
-   staging` green. **Never deploy live** without Matt's explicit OK in the chat.
+   staging` green. **Never deploy live** without Matt's explicit OK in the chat; `deploy live` also refuses unless
+   `dist/verify-staging.json` is green at the same commit (B-35), so a build reaches live only through staging.
 6. Record: mark the task `done` in `BACKLOG.md` with one line of Notes (commit it); a Board row in the v3 doc; a
    Changelog line per staging deploy. Never a date on anything that gates work.
 7. Continue with the next open task until none is open or every open task is blocked. Then stop and leave a
