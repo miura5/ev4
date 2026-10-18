@@ -26,7 +26,7 @@ every id in Depends is `done`. Edit only the Status and Notes columns; commit ev
 | B-17 | Tab parity and the System health panel | B-15 | M3 | open | |
 | B-18 | New features: skills practice mode, readiness audit, grounded explanations, session filing from the page (reader stubbed) | B-16 | M3 | open | |
 | B-19 | Staging page published; soak; Matt's phone and desktop check | B-16, B-17, B-18 | M3 gate | open | Needs Matt |
-| B-20 | Reader v2: list_sessions, read_session; Matt rebuilds the extension | B-00 | M4 | blocked | Reader 0.2.0 built and tested (8 reader tests); packed with npx @anthropic-ai/mcpb pack studywatch/reader dist/ev-study-watch-reader.mcpb. Needs Matt: install it in the desktop app (Settings > Extensions > Install Extension, replacing 0.1.0); then a Mac-linked build chat checks list_sessions answers |
+| B-20 | Reader v2: list_sessions, read_session; Matt rebuilds the extension | B-00 | M4 | done | Reader 0.2.0 installed by Matt; from this build chat status, list_sessions (1 session) and read_session answered from the desktop app with findings only |
 | B-21 | evening-mac: Canvas scripts as files, backup and mirror, the staging/ folder; Mac-bound staging task from a Mac-linked chat | B-09, B-20 | M4 | open | Needs Matt for the task |
 | B-22 | restore-drill task | B-12, B-21 | M4 gate | open | Needs Matt |
 | B-23 | Parity: v3 and v4 cores on the same seed nightly; a week of identical output | B-13, B-21 | M5 gate | open | |
