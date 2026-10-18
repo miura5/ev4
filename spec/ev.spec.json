@@ -556,7 +556,7 @@
   "watchdog": {
    "lane": "cloud",
    "writer": "watchdog",
-   "purpose": "checks that every pipeline ran and ended and every job moved, re-fires each miss once, and writes health/current",
+   "purpose": "writes health/current, E.V.'s own status page in this record: which of its runs ran and ended, which missed their slot, and which of his jobs are waiting",
    "reads": [
     {
      "collection": "runs",

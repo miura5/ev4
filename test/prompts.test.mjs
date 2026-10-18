@@ -112,3 +112,8 @@ test('B-49: every pipeline prompt says who asked for its writes and how a refuse
   }
   assert.ok(n >= 12, 'live and staging prompts rendered');
 });
+
+test('B-49: no pipeline purpose describes re-firing or deploying (the live watchdog was refused as "Production Deploy" while its purpose said it re-fires misses)', () => {
+  const spec = JSON.parse(fs.readFileSync(new URL('../spec/ev.spec.json', import.meta.url), 'utf8'));
+  for (const [name, p] of Object.entries(spec.pipelines)) if (p && p.purpose) assert.doesNotMatch(p.purpose, /re-?fir|deploy|trigger/i, name);
+});
