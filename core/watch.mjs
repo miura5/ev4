@@ -44,14 +44,16 @@ export function lastSlot(schedule, now) {
 export function watch(db, { now, record, spec }) {
   const w = W(spec); const tasks = (spec.tasks && spec.tasks[record]) || {};
   const runs = (db.runs || []).filter(r => r.pipeline);
-  const done = new Set(runs.map(r => r.id));
+  const done = new Map(runs.map(r => [r.id, r]));
   const minutes = since => Math.round((ms(now) - ms(since)) / 6e4);
   const pipelines = {};
   for (const r of [...runs].sort((a, b) => ms(a.startedAt) - ms(b.startedAt) || (a.id < b.id ? -1 : 1))) if (!/^watchdog-refire-/.test(r.id)) pipelines[r.pipeline] = { id: r.id, status: r.status, startedAt: r.startedAt, endedAt: r.endedAt || null, release: r.release || null };
   const refires = []; const reported = [];
   const consider = (id, target, task, reason, deadline, text) => {
     const entry = { id, target, reason };
-    if (done.has(id)) { reported.push({ ...entry, why: 'already re-fired once' }); return true; }
+    const rec = done.get(id);
+    // A record stamped at this run's own time is this run's re-fire (health is written after it), not a second miss.
+    if (rec) { if (ms(rec.startedAt || rec.at) !== ms(now)) reported.push({ ...entry, why: 'already re-fired once' }); return true; }
     if (!task || !task.trigger) { reported.push({ ...entry, why: 'no task to fire' }); return false; }
     if (deadline && ms(now) > ms(deadline)) { reported.push({ ...entry, why: 'past its re-fire window' }); return false; }
     refires.push({ ...entry, trigger: task.trigger, ...(text ? { text } : {}) }); return true;

@@ -98,6 +98,7 @@ test('the watchdog pipeline: re-fire records and health/current in one batch, th
   for (const w of r.plan.batches.flat()) (after[w.collection] = after[w.collection] || []).push({ ...JSON.parse(fs.readFileSync(w.file_path, 'utf8')), id: w.doc_id });
   const health = after.health.find(h => h.id === 'current');
   assert.deepEqual([health.stalledRuns[0].refired, health.stalledJobs[0].refired, health.record], [true, true, 'staging']);
+  assert.deepEqual(health.reported, [], 'this run\'s own re-fires are not second misses');
   assert.ok(validate('health', EV.docData(health), { id: 'current' }).ok);
   assert.equal(rebuildOne(after, spec, 'health', health).status, 'same');
   // The next watchdog run sees the records and reports instead of re-firing.

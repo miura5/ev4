@@ -27,7 +27,7 @@ test('every cloud pipeline with steps has a prompt for live and staging; the res
   assert.ok(['morning', 'evening-cloud', 'weekly', 'worker'].every(n => ready.includes(n)));
   for (const n of ready) { assert.equal(typeof p[`live.${n}`], 'string', n); assert.equal(typeof p[`staging.${n}`], 'string', n); }
   for (const n of Object.keys(spec.tasks.staging).filter(n => !ready.includes(n))) assert.equal(p[`staging.${n}`], null, n);
-  assert.match(p['staging.worker'], /Add --job <id> to the start command/);
+  assert.match(p['staging.worker'], /end this turn with exactly: Waiting for the job id\. When it arrives, add --job <id> to the start command/);
   assert.match(p['staging.worker'], /except the one Claude Doc a study-guide job asks for/);
   assert.doesNotMatch(p['staging.morning'], /--job|Claude Doc/);
   assert.equal(p['build.ev4-builder'], 'You are an E.V. v4 build session. Follow CLAUDE.md and BACKLOG.md in this repository exactly, including the Unattended runs section.');

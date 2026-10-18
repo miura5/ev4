@@ -47,7 +47,7 @@ export function renderPrompt({ key, task, spec, release }) {
     '2. Load the ArtifactData tool (ToolSearch "select:ArtifactData" if it isn\'t loaded). Get collection "system", doc_id "manifest", with out_dir /tmp/ev.',
     '3. Check out the deployed commit in this session\'s own checkout and verify it, with Bash (no cloning or downloading):',
     `node -e '${GATE}'`,
-    ...(p.input && p.input.job ? ['   This run was started by a message naming one job: "Job <id>". Add --job <id> to the start command below. If no id reached you, start without it: the run takes the oldest job that has no result.'] : []),
+    ...(p.input && p.input.job ? ['   The job this run does is named in the message after this one: "Job <id>". If that message is not in front of you yet, end this turn with exactly: Waiting for the job id. When it arrives, add --job <id> to the start command below. If a message arrives with no job id, start without --job: the run takes the oldest job that has no result.'] : []),
     `4. From that checkout's directory, run: node core/cli.mjs run ${task.pipeline} start --record ${task.record} --dir /tmp/ev/run --manifest /tmp/ev/system/manifest.json`,
     '   Each command prints the calls to make and the next command after "Then:". Follow it through pull, pulled, compute, apply and end.' + (hasAgent ? ' When compute stops at a judgment step, it prints the judgment, the material and the answer\'s shape: do that work carefully and well, write your answer as JSON to the file it names, and run compute again.' : ''),
     '   If a batch is refused because a document changed, run the apply --failed command it names; never edit a plan or a write by hand.',
