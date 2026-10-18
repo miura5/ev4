@@ -200,8 +200,22 @@ CODE_STEPS['job-brief'] = function jobBrief(db, ctx, spec) {
     const exam = views.find(e => new RegExp(`\\b${e.id}\\b`).test(q)) || [...views].filter(e => typeof e.score === 'number').sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || (a.id < b.id ? -1 : 1))[0] || null;
     context.retro = exam ? EV.examRetro({ examId: exam.id, exams: db.exams || [], examedits: db.examedits || [], predictions: db.predictions || [], sets: db.sets || [], answers: db.answers || [], weakspots: ms, plans: EV.planViews(db.plans || [], db.planedits || []), objectives: db.objectives || [] }) : null;
   }
+  let groups = null;
+  if (kind === 'share-set') {
+    // D-110: the page is built here, in code, from the set the brief names; the agent only publishes it as printed.
+    const words = new Set(String(q).split(/[^\w.-]+/).map(w => w.replace(/[.]+$/, '')));
+    const set = (db.sets || []).find(x => words.has(x.id)) || null;
+    const ok = EV.shareableSet(set, EV.planViews(db.plans || [], db.planedits || []));
+    context.set = set ? { id: set.id, title: set.title, questions: EV.validItems(set).length } : null;
+    if (!ok.ok) context.refused = ok.why;
+    else {
+      const dir = path.join(ctx.dir, 'share'); fs.mkdirSync(dir, { recursive: true });
+      const file = path.join(dir, set.id + '.html'); fs.writeFileSync(file, EV.sharePage(set));
+      groups = [{ name: 'publish', rule: 'one publish of the page this run built; note the link it returns', calls: [{ tool: 'Artifact', args: { action: 'publish', file_path: file, title: 'Practice: ' + String(set.title || set.id).replace(/\s+/g, ' ').trim().slice(0, 100), icon: 'quiz', description: 'Practice questions for classmates; the answers and rationales show after each try.' } }] }];
+    }
+  }
   ctx.job = job;
-  ctx.jobBrief = { job: { id: job.id, kind, title: job.title, brief: job.brief }, guide: kinds[kind] ? kinds[kind].guide : '', today: ctx.date, context };
+  ctx.jobBrief = { job: { id: job.id, kind, title: job.title, brief: job.brief }, guide: kinds[kind] ? kinds[kind].guide : '', today: ctx.date, context, ...(groups ? { groups } : {}) };
   return { say: [`Job ${job.id} (${kind}): ${job.title}`] };
 };
 
@@ -420,6 +434,8 @@ export const AGENT_FOLDS = {
     const doc = result.links.find(l => /^https:\/\/claude\.ai\//.test(l.url)); if (doc && job.kind === 'study-guide') result.docUrl = doc.url;
     // D-104: the numbers the retro narrative was written over travel with it, so its card shows the same ones.
     if (!failed && job.kind === 'exam-retro' && ctx.jobBrief && ctx.jobBrief.context.retro) result.retro = ctx.jobBrief.context.retro;
+    // D-110: the page's link, when the publish returned one; a refused share is a failed job.
+    if (!failed && job.kind === 'share-set') { const page = result.links.find(l => /^https:\/\/claude\.ai\//.test(l.url)); if (page) result.pageUrl = page.url; }
     if (!failed && job.kind === 'practice-set') {
       const raw = answer.items || []; const items = [];
       for (const r of raw) { const q = { id: 'p' + (items.length + 1), kind: r && r.weakspotId ? 'review' : 'check', ...pick(r || {}, ITEM_FIELDS) }; if (q.weakspotId && !(db.weakspots || []).some(w => w.id === q.weakspotId)) delete q.weakspotId; if (EV.validateItem(q, { strict: true }).ok) items.push(q); }

@@ -92,6 +92,11 @@
       "retro": {
        "type": "object",
        "description": "exam-retro: the examRetro numbers the narrative was written over (D-104)"
+      },
+      "pageUrl": {
+       "type": "string",
+       "pattern": "^https://claude\\.ai/",
+       "description": "share-set: the link of the page the job published (D-110)"
       }
      },
      "required": [],

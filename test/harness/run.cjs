@@ -370,6 +370,20 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     // Practice: open the harness set, answer single (right), sata (wrong), matrix (right)
     await page.click('#seg-study [data-v="practice"]'); await page.waitForTimeout(100);
     ok('practice lists sets', (await page.locator('#pr-body .row').count()) >= 2);
+    // B-54 (D-110): a calendar drill over a chapter range offers Share as a page; a weak-spot drill and his own sets do not
+    { const shareRows = await page.evaluate(() => [...document.querySelectorAll('#pr-body .row')].filter(r => [...r.querySelectorAll('button')].some(b => b.textContent === 'Share as a page')).map(r => r.textContent.slice(0, 40)));
+      const plans = await page.evaluate(() => Object.entries(window.__db.plans || {}).map(([id, p]) => ({ id, ...p })));
+      const expect = await page.evaluate(pl => Object.entries(window.__db.sets).map(([id, x]) => ({ id, ...x })).filter(x => x.kind !== 'review' && window.EVCore.validItems(x).length && window.EVCore.shareableSet(x, window.EVCore.planViews(pl, [])).ok).length, plans);
+      ok('only qualifying calendar sets offer Share as a page', shareRows.length === expect && !shareRows.some(t => /weak spots|Harness set/.test(t)), JSON.stringify(shareRows) + ' expected ' + expect);
+      if (shareRows.length) {
+        const before = await page.evaluate(() => window.__mcpCalls.filter(c => c[1] === 'fire_trigger').length);
+        await page.locator('#pr-body .row').filter({ has: page.locator('button', { hasText: 'Share as a page' }) }).first().locator('button', { hasText: 'Share as a page' }).click(); await page.waitForTimeout(400);
+        const sj = await page.evaluate(() => Object.entries(window.__db.jobs).filter(([, j]) => j.kind === 'share-set').map(([id, j]) => ({ id, ...j })));
+        const fires = await page.evaluate(() => window.__mcpCalls.filter(c => c[1] === 'fire_trigger').map(c => c[2].text));
+        ok('Share as a page starts one share-set job naming the set, fired on the worker', sj.length === 1 && /^[\w.-]+: share it as a page for classmates$/.test(sj[0].brief) && fires.length === before + 1 && fires[fires.length - 1] === 'Job ' + sj[0].id, JSON.stringify(sj.map(j => j.brief)));
+        ok('while it is made, the row says so', (await page.locator('#pr-body button', { hasText: 'Making its page…' }).count()) === 1);
+      }
+    }
     const model = id => page.evaluate(id => { const rows = c => Object.entries(window.__db[c] || {}).map(([k, v]) => ({ id: k, ...v })); return (window.EVCore.buildWeakspots({ weakspots: rows('weakspots'), sets: rows('sets'), answers: rows('answers'), exams: rows('exams') }).find(w => w.id === id) || {}).derived; }, id);
     const agingDerived = await model('e4-aging-expected'); const agingBefore = (agingDerived && agingDerived.streak) || 0; const agingRightToday = !!agingDerived && agingDerived.lastReviewed === today && agingDerived.lastResult === 'right';
     await page.locator('#pr-body .row', { hasText: 'Harness set' }).locator('button').click(); await page.waitForTimeout(100);
@@ -605,6 +619,25 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
       ok('[desktop] Stop on the panel ends the run and the panel goes', !(await dp.isVisible('#skpanel')) && await dp.evaluate(() => Object.values(window.__db.sessions).some(x => x.kind === 'skill' && x.status === 'ended')));
       ok('B-51: no page errors', dErr.length === 0, dErr.join(' | '));
       await dp.close();
+    }
+    // ---- B-54 (D-110): the shared page itself, at both widths: answers and reasons show only after an attempt
+    for (const [label, vp] of [['phone', { width: 390, height: 844 }], ['desktop', { width: 1280, height: 860 }]]) {
+      const sp = await browser.newPage({ viewport: vp, colorScheme: label === 'phone' ? 'dark' : 'light' }); const sErr = []; sp.on('pageerror', e => sErr.push(e.message));
+      await sp.addScriptTag({ path: path.join(root, 'dist/page/staging/core.js') }).catch(() => {});
+      const html = await sp.evaluate(() => window.EVCore.sharePage({ id: 'x', title: 'Drill 9: Ch 3-4', items: [
+        { id: 'a', type: 'single', stem: 'A made-up client asks which action comes first?', options: ['Wait', 'Assess airway'], correct: [1], rationales: ['Delays care.', 'Airway first.'], weakspotId: 'ws-x', objective: 'E9-1' },
+        { id: 'b', type: 'sata', stem: 'Which findings are expected after a made-up procedure? Select all that apply.', options: ['Mild pain', 'Fever 40 C', 'Fatigue'], correct: [0, 2], rationales: ['Expected.', 'Report it.', 'Expected.'] },
+        { id: 'c', type: 'matrix', stem: 'Mark each made-up finding as expected or unexpected.', matrix: { columns: ['Expected', 'Unexpected'], rows: [{ text: 'Dry skin', correct: 0, rationale: 'Normal aging.' }, { text: 'New confusion', correct: 1, rationale: 'Sudden change.' }, { text: 'Slower reaction time', correct: 0, rationale: 'Normal aging.' }] } } ] }));
+      await sp.setContent(html); await sp.waitForTimeout(150);
+      ok(`[${label}] the shared page shows questions with the reasons hidden, and nothing of his`, (await sp.locator('.q').count()) === 3 && (await sp.locator('.why:visible').count()) === 0 && !/ws-x|E9-1/.test(await sp.content()));
+      await sp.locator('.q').nth(0).locator('label', { hasText: 'Wait' }).click(); await sp.locator('.q').nth(0).locator('button.check').click();
+      ok(`[${label}] a wrong try marks the right answer and shows the reasons`, /Not quite/.test(await sp.locator('.q').nth(0).textContent()) && await sp.locator('.q').nth(0).locator('.why', { hasText: 'Airway first.' }).isVisible());
+      await sp.locator('.q').nth(2).locator('input[aria-label="Dry skin: Expected"]').check(); await sp.locator('.q').nth(2).locator('input[aria-label="New confusion: Unexpected"]').check(); await sp.locator('.q').nth(2).locator('input[aria-label="Slower reaction time: Expected"]').check(); await sp.locator('.q').nth(2).locator('button.check').click();
+      ok(`[${label}] a matrix answered right says so`, /Right/.test(await sp.locator('.q').nth(2).textContent()));
+      ok(`[${label}] no horizontal scroll on the shared page`, await sp.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+      await sp.screenshot({ path: `${shots}/share-page-${label}.png`, fullPage: true });
+      ok(`[${label}] B-54: no page errors`, sErr.length === 0, sErr.join(' | '));
+      await sp.close();
     }
     // ---- B-52 (D-108): both workout sequences at both widths; every workouts/<id> written validates
     {

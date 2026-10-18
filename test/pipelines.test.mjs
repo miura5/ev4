@@ -405,3 +405,45 @@ test('B-54 (D-110): the page-publish probe writes a made-up page and prints one 
   assert.equal(RUN.audit({ dir, transcript }).ok, true);
   assert.equal(RUN.audit({ dir, transcript: transcript + '\n' + tool('b', 'Artifact', { ...pub, file_path: '/tmp/other.html' }) }).ok, false);
 });
+
+test('B-54 (D-110): a share-set job builds the page in code and prints its one publish; a review set is refused with no call', () => {
+  const at = '2026-10-17T19:34:00Z';
+  const run = (db, jobId) => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-share-'));
+    RUN.start({ spec, pipeline: 'worker', record: 'staging', at, dir, release: 'v4.0.0', input: { job: jobId } });
+    const lines = [];
+    for (const c of RUN.pull({ spec, dir, at })) {
+      const a = c.args; const docs = (db[a.collection] || []).filter(d => !a.query.where || EV.toMs(d.at) >= EV.toMs(a.query.where[0][2]));
+      for (const d of docs) { const f = path.join(a.out_dir, a.collection, d.id + '.json'); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, JSON.stringify(EV.docData(d))); }
+      const id = 's' + (++seq);
+      lines.push(line({ message: { content: [{ type: 'tool_use', id, name: 'ArtifactData', input: a }] } }));
+      lines.push(line({ message: { content: [{ type: 'tool_result', tool_use_id: id, content: [{ type: 'text', text: docs.length ? `${docs.length} documents from collection "${a.collection}" saved:\n` + docs.map(d => `- "${d.id}"  1 bytes  version 2  "x"`).join('\n') : '0 documents' }] }] } }));
+    }
+    RUN.pulled({ spec, dir, transcript: lines.join('\n') });
+    return dir;
+  };
+  const db = recordDb();
+  db.plans[0].days[0].tasks.push({ id: 't2', text: 'Drill 1: Ch 12-13', kind: 'drill', chapters: [12, 13] });
+  const q = n => ({ id: 'd' + n, kind: 'drill', type: 'single', stem: `Made-up question number ${n} about the sample topic?`, options: ['a', 'b', 'c', 'd'], correct: [0], rationales: ['y', 'n', 'n', 'n'], objective: 'E9-1', topic: 'Sample topic', cjStep: 'recognize-cues', verify: true });
+  db.sets.push({ id: 'E9-drill-1', schema: 1, writer: 'morning', at: '2026-10-17T09:25:00Z', source: 'morning', kind: 'drill', exam: 'E9', title: 'Drill 1: Ch 12-13', planTaskId: 't2', items: [q(1), q(2)], createdAt: '2026-10-17T09:25:00Z' });
+  const job = (id, brief) => ({ id, schema: 1, writer: 'page', at: '2026-10-17T19:33:00Z', source: 'E.V. Home', kind: 'share-set', title: 'Share: a set', brief, fired: { at: '2026-10-17T19:33:01Z', ok: true } });
+  db.jobs.push(job('job-20261017-193300-share-drill', 'E9-drill-1: share it as a page for classmates'), job('job-20261017-193301-share-review', 'review-2026-10-16: share it'));
+  const dir = run(db, 'job-20261017-193300-share-drill');
+  const w = RUN.compute({ spec, dir, validate, at });
+  assert.equal(w.status, 'waiting');
+  const m = w.question.material; const pub = m.groups[0].calls[0];
+  assert.deepEqual([pub.tool, pub.args.action, pub.args.url, pub.args.title], ['Artifact', 'publish', undefined, 'Practice: Drill 1: Ch 12-13']);
+  const html = fs.readFileSync(pub.args.file_path, 'utf8'); assert.match(html, /2 practice questions/); assert.doesNotMatch(html, /E9-1|Sample topic|weakspot/);
+  answer(dir, 'do-job', { text: 'Your Drill 1 page is ready to share from its Share menu.', links: [{ title: 'Practice: Drill 1', url: 'https://claude.ai/artifact/MadeUpShare1234567890' }] });
+  const r = RUN.compute({ spec, dir, validate, at });
+  assert.equal(r.status, 'planned', JSON.stringify(r.problems));
+  const res = applied(db, dir).out.jobresults.find(x => x.id === 'job-20261017-193300-share-drill');
+  assert.deepEqual([res.status, res.result.pageUrl], ['done', 'https://claude.ai/artifact/MadeUpShare1234567890']);
+  // The printed publish is the one call the audit allows beyond the record's; a publish of anything else is extra.
+  const calls = JSON.parse(fs.readFileSync(path.join(dir, 'run.json'), 'utf8')).calls;
+  assert.ok(calls.some(c => c.tool === 'Artifact' && c.args.action === 'publish' && c.args.file_path === pub.args.file_path));
+  // A review set: refused in the brief, no call listed.
+  const d2 = run(db, 'job-20261017-193301-share-review');
+  const w2 = RUN.compute({ spec, dir: d2, validate, at });
+  assert.match(w2.question.material.context.refused, /review set is built for you/); assert.equal(w2.question.material.groups, undefined);
+});

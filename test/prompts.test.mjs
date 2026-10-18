@@ -37,7 +37,7 @@ test('every pipeline with steps has a prompt for live and staging; the rest wait
   assert.doesNotMatch(p['staging.worker'] + p['staging.morning'], /page-publish probe/);
   for (const n of Object.keys(spec.tasks.staging).filter(n => !ready.includes(n))) assert.equal(p[`staging.${n}`], null, n);
   assert.match(p['staging.worker'], /end this turn with exactly: Waiting for the job id\. When it arrives, add --job <id> to the start command/);
-  assert.match(p['staging.worker'], /except the one Claude Doc a study-guide job asks for/);
+  assert.match(p['staging.worker'], /except the one Claude Doc a study-guide job asks for and the one practice page a share-set job publishes\./); // B-54
   assert.doesNotMatch(p['staging.morning'], /--job|Claude Doc/);
   // The Mac lane: its folder, read-only Canvas, and the Mac written only by printed calls; the cloud lane names none of it.
   assert.ok(ready.includes('evening-mac'));

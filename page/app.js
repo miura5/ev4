@@ -403,12 +403,22 @@
       list.forEach(x => { const items = E.validItems(x); const ans = answersOf(x); const n = items.filter(q => ans[q.id]).length; const r = items.filter(q => ans[q.id] && ans[q.id].correct).length;
         ul.append(row({ title: x.title || x.id, detail: [x.exam, plural(items.length, 'question'), n ? (n === items.length ? r + ' of ' + n + ' right' : n + ' answered') : 'not started', short(x.createdAt)].filter(Boolean).join(' · '),
           chips: [[x.kind === 'more' ? 'More practice' : x.kind === 'sim' ? 'Sim' : x.kind === 'job' ? 'From a job' : 'Drill', x.kind === 'more' || x.kind === 'job' ? 'plum' : 'info']],
-          action: btn(n ? (n < items.length ? 'Continue' : 'Review') : 'Start', () => { ui.openSet = x.id; render(); }, { primary: n < items.length }) })); });
+          action: (() => { const go = btn(n ? (n < items.length ? 'Continue' : 'Review') : 'Start', () => { ui.openSet = x.id; render(); }, { primary: n < items.length }); const sh = shareButton(x); if (!sh) return go; const box = el('div', 'share-acts'); box.append(sh, go); return box; })() })); });
       body.replaceChildren(ul); return;
     }
     $('pr-title').textContent = d.title || 'Practice';
     runner({ key: 'pr-' + d.id, set: d, items: E.validItems(d), body, countEl: $('pr-count'), barEl: $('pr-bar'), label: 'E.V. · ' + (d.title || d.id),
-      summaryExtra: () => { const a = el('div', 'actions'); a.append(btn('All sets', () => { delete retakes[d.id]; ui.openSet = null; render(); }), btn('Retake', () => retake(d, 'pr-' + d.id), { primary: true })); return [a]; } });
+      summaryExtra: () => { const a = el('div', 'actions'); const sh = shareButton(d); a.append(btn('All sets', () => { delete retakes[d.id]; ui.openSet = null; render(); }), ...(sh ? [sh] : []), btn('Retake', () => retake(d, 'pr-' + d.id), { primary: true })); return [a]; } });
+  }
+  // D-110: a calendar set over a chapter range can go out once as a page for classmates (no name, none of his weak
+  // spots); the worker builds and publishes it, and he shares it from that page's Share menu.
+  const shareJob = set => S.jobs.filter(j => j.kind === 'share-set' && String(j.brief || '').startsWith(set.id + ':')).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))[0] || null;
+  function shareButton(set) {
+    if (!E.shareableSet(set, S.plans).ok) return null;
+    const j = shareJob(set); const url = j && j.status === 'done' && j.result && j.result.pageUrl;
+    if (url) { const a = el('a', 'btn-link', 'Open its page'); a.href = url; a.target = '_blank'; a.rel = 'noopener'; return a; }
+    if (j && ['queued', 'running'].includes(j.status) && !(j.fired && j.fired.ok === false)) return btn('Making its page…', null, { disabled: true });
+    return btn('Share as a page', ev => guard(ev.target, async () => { const r = await startJob({ kind: 'share-set', title: 'Share: ' + (set.title || set.id), brief: set.id + ': share it as a page for classmates' }); toast(r.fired.ok ? 'Making a page of it. It stays private until you share it.' : 'Couldn’t start it: ' + fireCopy(r.fired.error)); }));
   }
   function renderPlan() {
     const card = $('plan-card');
@@ -1751,7 +1761,7 @@
           if (type === 'job') { if (!S.jobs.some(j => j.id === i.id)) throw new Error('no job with id ' + i.id); c.id = String(i.id); }
           if (type === 'today') c.filter = i.filter === 'all' ? 'all' : 'open'; if (type === 'dates') c.days = Math.max(1, Math.min(14, Number(i.days) || 7));
           addCard(c); return 'shown'; } },
-      { name: 'start_job', description: 'Start a background job for work bigger than one reply. study-guide: a one-page guide saved as a Claude Doc. practice-set: 10 to 30 questions saved as a set (put the number and topic in the brief). exam-plan: a study plan for a named exam. exam-retro: the post-exam retro for a named exam (put its id, like E4, in the brief); a saved score starts one on its own. general: research or other long work. Runs in the cloud and posts back here in a few minutes; a job card is attached automatically. Never for graded work. Returns the job id.',
+      { name: 'start_job', description: 'Start a background job for work bigger than one reply. study-guide: a one-page guide saved as a Claude Doc. practice-set: 10 to 30 questions saved as a set (put the number and topic in the brief). exam-plan: a study plan for a named exam. exam-retro: the post-exam retro for a named exam (put its id, like E4, in the brief); a saved score starts one on its own. share-set: a page of a calendar practice set for classmates (put the set id first in the brief); only drill or sim sets over a chapter range qualify. general: research or other long work. Runs in the cloud and posts back here in a few minutes; a job card is attached automatically. Never for graded work. Returns the job id.',
         inputSchema: { type: 'object', properties: { kind: { type: 'string', enum: Object.keys(KINDS) }, title: { type: 'string', description: 'short title, e.g. "Study guide: fluid volume deficit"' }, brief: { type: 'string', description: 'what he asked, in his words, plus your one-line restatement of the deliverable' } }, required: ['kind', 'title', 'brief'] },
         execute: async i => { const r = await startJob({ kind: str(i.kind, 20), title: str(i.title, 90), brief: String(i.brief || '') }); addCard({ type: 'job', id: r.id }); pend.jobId = r.id; return r.fired.ok ? 'started ' + r.id : 'created ' + r.id + ' but not started: ' + fireCopy(r.fired.error); } },
       { name: 'add_weakspot', description: 'Log a weak spot he names or clearly misses: a concept to review until he gets it right on two different days. Use his words for the topic. Returns the id.',

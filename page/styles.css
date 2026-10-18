@@ -288,3 +288,6 @@ body.opening .msg.greet .msg-cards{display:grid;grid-template-columns:repeat(aut
 .wo-moves li{display:flex;gap:10px;align-items:baseline;font-size:18px}
 .wo-moves b{min-width:2.4em;text-align:right;font:600 20px var(--mono);color:var(--accent-text);font-variant-numeric:tabular-nums}
 .wo-extra{display:flex;flex-direction:column;gap:10px}
+/* D-110: share a calendar set as a page */
+a.btn-link{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--accent-edge);color:var(--accent-text);text-decoration:none;font-weight:500;white-space:nowrap}
+.share-acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}

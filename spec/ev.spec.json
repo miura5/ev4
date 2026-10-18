@@ -2636,6 +2636,10 @@
     "label": "Exam retro",
     "guide": "Write the retro for the exam the brief names from the numbers in retro (D-104): the night-before prediction against his score and how far off it was; his practice accuracy, weakest objective first; the weak spots he made solid and the ones still open (by topic); the plan tasks done and left. End with one or two things to carry into the next exam. Use only those numbers and his own topic words: never mention, guess at or ask about the exam’s questions or his graded answers. Warm and plain, at most 1,200 characters in text, no links. The prediction is E.V.’s own (its morning run writes one the day before a NUR unit exam): never ask him to make or log one; with none on file, just say there was nothing to compare against. If retro.score is null, say the comparison comes once he enters his score. If retro is null, say in failed that the exam isn’t in his record."
    },
+   "share-set": {
+    "label": "Shareable practice page",
+    "guide": "The page is already built in code from the set the brief names (D-110): its questions and options, each answer and rationale shown after an attempt, no name and none of his weak-spot data. If context.refused says why the set cannot be shared, say that in failed and make no call. Otherwise make the one Artifact publish in context.groups exactly as listed, change nothing in the page, and answer with one or two warm lines in text (it is private until he shares it from the page’s Share menu; he answers the same set in E.V. so his weak spots still track) and the returned link first in links."
+   },
    "general": {
     "label": "Background task",
     "guide": "Do the asked work if it fits E.V.'s boundaries and needs only the record and the web. Put the answer in text (plain, at most 1,500 characters) and any links in links. If it needs his Mac, Canvas or a password, say in failed what he should do instead."
