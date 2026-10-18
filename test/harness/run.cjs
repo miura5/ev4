@@ -27,8 +27,18 @@ if (lastReview && lastReview !== 'review-' + today) {
   const a = (seed.answers || {})[lastReview];
   if (a) { seed.answers['review-' + today] = { ...a, setId: 'review-' + today }; }
 }
+// The page shows the summary once every item is answered, the first unanswered item ("n of m") while some are, and
+// the first item untouched before any are. An export taken the same day may hold a review set part answered.
 { const rs = (seed.sets || {})['review-' + today]; const a = ((seed.answers || {})['review-' + today] || {}).answers || {};
-  if (rs) { const latest = q => { const t = a[q.id] || {}; const k = Object.keys(t).sort().pop(); return k ? t[k] : null; }; const got = rs.items.map(latest).filter(Boolean); reviewExpect = got.length ? `${got.filter(x => x.correct).length} of ${got.length} right` : null; } }
+  if (rs) {
+    const latest = q => { const t = a[q.id] || {}; const k = Object.keys(t).sort().pop(); return k ? t[k] : null; };
+    const items = rs.items || []; const got = items.map(latest); const done = got.filter(Boolean);
+    const next = got.findIndex(x => !x);
+    reviewExpect = !done.length ? null : next < 0 ? `${done.filter(x => x.correct).length} of ${done.length} right` : `${next + 1} of ${items.length}`;
+  } }
+// The harness opens the page as if nothing has been said today (the greeting at full size, a quick ask making the day's
+// first two messages): an export taken today carries today's conversation, so it is left out.
+if (seed.talk) delete seed.talk[today];
 // A small practice set to exercise all three question types and the answer flow.
 seed.sets = seed.sets || {};
 seed.sets['more-' + today + '-1'] = { ...env('page', 'More practice'), kind: 'more', date: today, exam: 'E4', title: 'Harness set', createdAt: new Date().toISOString(), items: [
@@ -442,7 +452,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     ok('health panel leads with a plain verdict from health/current', /3 things to look at\./.test(hp) && /checked 5\d min ago/.test(hp), hp.slice(0, 160));
     ok('a missed slot, a stalled run and a stuck retry each read as a sentence', /Evening \(cloud\) missed its .*run; E\.V\. started it again\./.test(hp) && /Weekly review started 3 h ago and never finished\./.test(hp) && /weekly-h: never ended, still stuck after one retry\. A build chat should look\./.test(hp), hp);
     ok('the weak spot state is held against the evening hash, and the drill age is shown', /Your weak spots changed since the evening snapshot/.test(hp) && /Backup restore drill: none yet/.test(hp));
-    ok('pipelines read with when they run', /Morning · daily 4:25am/.test(await page.textContent('#pipes')) && /Watchdog · every 3 hours/.test(await page.textContent('#pipes')) && /Restore drill · not built yet/.test(await page.textContent('#pipes')), (await page.textContent('#pipes')).slice(0, 300));
+    ok('pipelines read with when they run', /Morning · daily 4:25am/.test(await page.textContent('#pipes')) && /Watchdog · every 3 hours at :55/.test(await page.textContent('#pipes')) && /Restore drill · monthly on the 1st, 8:55pm/.test(await page.textContent('#pipes')), (await page.textContent('#pipes')).slice(0, 300));
     ok('versions name the release and the record', /Release v4\.0\.0 · core v4\.0\.0 · spec 4\.0\.0 · staging record/.test(await page.textContent('#versions')));
     await page.screenshot({ path: `${shots}/system.png`, fullPage: true });
     ok('no page errors after interactions', errors.length === 0, errors.join(' | '));

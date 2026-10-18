@@ -583,9 +583,16 @@
   const PIPE_NAME = { morning: 'Morning', 'evening-cloud': 'Evening (cloud)', 'evening-mac': 'Evening (Mac)', weekly: 'Weekly review', worker: 'Background jobs', watchdog: 'Watchdog', 'restore-drill': 'Restore drill', diagnostic: 'Diagnostics' };
   function when(cron) { // 'CRON_TZ=America/Chicago 25 4 * * *' -> 'daily 4:25am'
     if (!cron) return 'when you ask';
-    const f = String(cron).replace(/^CRON_TZ=\S+\s+/, '').split(/\s+/); const [mi, h, , , dow] = f;
+    const f = String(cron).replace(/^CRON_TZ=\S+\s+/, '').split(/\s+/); const [mi, h, dom, , dow] = f;
     if (/^\*\/\d+$/.test(h)) return 'every ' + h.slice(2) + ' hours';
+    // A list of hours, evenly spaced over the day (the watchdog's 1,4,7,…,22 since D-084): 'every 3 hours at :55'.
+    if (/^\d+(,\d+)+$/.test(h)) {
+      const hs = h.split(',').map(Number); const k = hs[1] - hs[0];
+      if (k > 0 && hs.every((x, i) => !i || x - hs[i - 1] === k) && hs.length * k === 24) return 'every ' + k + ' hours at :' + String(mi).padStart(2, '0');
+      return hs.length + ' times a day';
+    }
     const t = (Number(h) % 12 || 12) + (mi === '0' ? '' : ':' + String(mi).padStart(2, '0')) + (Number(h) < 12 ? 'am' : 'pm');
+    if (/^\d+$/.test(dom) && dow === '*') { const n = Number(dom); const th = n % 100 >= 11 && n % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' })[n % 10] || 'th'; return 'monthly on the ' + n + th + ', ' + t; }
     const days = { '0': 'Sundays', '1': 'Mondays', '6': 'Saturdays', '1-5': 'weekdays' };
     return (dow === '*' ? 'daily ' : (days[dow] || 'days ' + dow) + ' ') + t;
   }
