@@ -18,7 +18,7 @@ every id in Depends is `done`. Edit only the Status and Notes columns; commit ev
 | B-09 | Pipelines morning, evening-cloud, weekly as step lists; prompts.mjs v4 | B-08 | M2 | open | |
 | B-10 | worker with jobs and jobresults | B-08 | M2 | open | |
 | B-11 | watchdog and health/current | B-08 | M2 | open | |
-| B-12 | seed-staging and system/seed; the v4 staging artifact (record + placeholder page) | B-06 | M2 | open | Creating the staging artifact is allowed unattended; it is not the live record |
+| B-12 | seed-staging and system/seed; the v4 staging artifact (record + placeholder page) | B-06 | M2 | in progress | Oct 18. Taken before B-07/B-08 on purpose: the v3 export exists only in this session's workspace, and seeding staging from it keeps it for every later build run. Creating the staging artifact is allowed unattended; it is not the live record |
 | B-13 | Create the cloud staging tasks from a chat with this repository; fire each | B-09, B-10, B-11, B-12 | M2 gate | open | |
 | B-14 | Diagnostics: document size, batch and page-tool ceilings; environments rows with run ids | B-13 | M2 | open | |
 | B-15 | Page shell and published files; publish flow in deploy | B-05 | M3 | open | |
