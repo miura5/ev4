@@ -287,9 +287,153 @@
   "evening-mac": {
    "lane": "mac",
    "writer": "evening-mac",
-   "purpose": "brings in Canvas changes read-only, saves the backup and mirror to the Mac",
-   "steps": null,
-   "pendingIn": "B-21"
+   "purpose": "brings in Canvas changes read-only through his signed-in browser tab, and saves the nightly backup (and on Sundays the Markdown mirror) to his Mac",
+   "input": {
+    "mirror": "yes: write the Markdown mirror tonight even though it isn't Sunday"
+   },
+   "reads": [
+    {
+     "collection": "weakspots"
+    },
+    {
+     "collection": "sets"
+    },
+    {
+     "collection": "answers"
+    },
+    {
+     "collection": "exams"
+    },
+    {
+     "collection": "objectives"
+    },
+    {
+     "collection": "plans"
+    },
+    {
+     "collection": "planedits"
+    },
+    {
+     "collection": "dates"
+    },
+    {
+     "collection": "dateedits"
+    },
+    {
+     "collection": "days"
+    },
+    {
+     "collection": "dayedits"
+    },
+    {
+     "collection": "weeks"
+    },
+    {
+     "collection": "runs"
+    },
+    {
+     "collection": "debug"
+    },
+    {
+     "collection": "health"
+    },
+    {
+     "collection": "state"
+    },
+    {
+     "collection": "sessions"
+    },
+    {
+     "collection": "ideas"
+    },
+    {
+     "collection": "talk"
+    },
+    {
+     "collection": "jobs"
+    },
+    {
+     "collection": "jobresults"
+    },
+    {
+     "collection": "materials"
+    },
+    {
+     "collection": "materialedits"
+    },
+    {
+     "collection": "libindex"
+    },
+    {
+     "collection": "announcements"
+    },
+    {
+     "collection": "concepts"
+    },
+    {
+     "collection": "legacy"
+    }
+   ],
+   "agentCalls": [
+    "mcp__remote-devices__Claude_Browser__"
+   ],
+   "steps": [
+    {
+     "id": "canvas",
+     "kind": "agent",
+     "judgment": "Bring Canvas in, read-only, as the material says: find the Canvas tab in the built-in browser (open one if there is none); if it shows a sign-in page, stop and answer signed-out (never sign in). Then for each part in order (dates, files, then each texts batch): print its script with the command given, run the printed script with javascript_tool in the Canvas tab (it returns at once with 'started <part>'), then print and run the part's poll script every 15 seconds or so until it stops saying 'still running'. The poll result is long on purpose, so the tool saves it to a file and names it; run the unwrap command on that file. Never retype a result. Answer ok when dates and files were collected (and every texts batch, if any), otherwise the status that fits, with the problem in one line.",
+     "material": "canvas-brief",
+     "output": {
+      "type": "object",
+      "properties": {
+       "status": {
+        "enum": [
+         "ok",
+         "signed-out",
+         "no-browser",
+         "failed"
+        ]
+       },
+       "problem": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 300
+       }
+      },
+      "required": [
+       "status"
+      ],
+      "additionalProperties": false
+     },
+     "fold": "canvas-sync"
+    },
+    {
+     "id": "note",
+     "kind": "agent",
+     "judgment": "Write the one short note Matt sees about tonight's Canvas sync, plain and warm, at most two sentences. For each possible conflict, say only that two entries disagree and that he should check with his instructor; never pick a side, and leave out anything that is not a real conflict. On Saturdays, read his Quizlet home page as the material says and name the one deck most worth refreshing for the coming week's exams and open weak spots.",
+     "material": "evening-note",
+     "output": {
+      "type": "object",
+      "properties": {
+       "note": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 400
+       }
+      },
+      "required": [
+       "note"
+      ],
+      "additionalProperties": false
+     },
+     "fold": "evening-note"
+    },
+    {
+     "id": "mac-files",
+     "kind": "code",
+     "does": "writes the nightly backup (every collection but the journal, with counts and per-collection hashes) and, on Sundays, the Markdown mirror, as device_commit_files calls into E.V.'s own files in the Mac folder"
+    }
+   ]
   },
   "worker": {
    "lane": "cloud",
@@ -702,6 +846,58 @@
      "live/latest.json"
     ],
     "note": "Read-only. Reachable only from E.V. Home opened in the Claude desktop app on Matt's Mac, and only by the owner. Verified Oct 17, 2026 with the private check page Study Watch Reader Check."
+   }
+  },
+  "canvas": {
+   "_why": "Canvas, read-only (B-12): the host, the two courses, and which module files become library materials (D-079). The scripts in scripts/canvas/ take these as parameters.",
+   "host": "https://alabama.instructure.com",
+   "courses": {
+    "NUR 112": 199214,
+    "BIO 201": 199416
+   },
+   "library": {
+    "_why": "D-079. Which Canvas module files become library materials. Graded clinical paperwork (data prep sheets, judgment maps, drug cards) stays out by section and title (B-01); videos and images have no text.",
+    "modules": [
+     {
+      "course": "NUR 112",
+      "module": "^exam \\d+ content",
+      "kind": "slides"
+     },
+     {
+      "course": "NUR 112",
+      "module": "^lab/skills",
+      "kind": "lab"
+     },
+     {
+      "course": "NUR 112",
+      "module": "^clinical resources",
+      "kind": "clinical"
+     },
+     {
+      "course": "NUR 112",
+      "module": "^start here",
+      "kind": "course",
+      "only": "syllabus|calendar|abbreviation|prefixes|suffixes|remediat"
+     },
+     {
+      "course": "BIO 201",
+      "module": "^(unit|chapter) \\d+",
+      "kind": "slides"
+     },
+     {
+      "course": "BIO 201",
+      "module": "^lab material",
+      "kind": "lab"
+     },
+     {
+      "course": "BIO 201",
+      "module": "^start here",
+      "kind": "course",
+      "only": "syllabus"
+     }
+    ],
+    "skipSections": "paperwork|judgment map|medications",
+    "skipTitles": "video|parking|template|policy manual|reel|\\.mp4|supply kit video|fiction contract"
    }
   }
  },

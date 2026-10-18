@@ -21,9 +21,9 @@ const all = () => {
   return out;
 };
 
-test('every cloud pipeline with steps has a prompt for live and staging; the rest wait for their steps', () => {
+test('every pipeline with steps has a prompt for live and staging; the rest wait for their steps', () => {
   const p = all();
-  const ready = Object.keys(spec.pipelines).filter(n => n !== '_rules' && Array.isArray(spec.pipelines[n].steps) && spec.pipelines[n].lane === 'cloud');
+  const ready = Object.keys(spec.pipelines).filter(n => n !== '_rules' && Array.isArray(spec.pipelines[n].steps) && ['cloud', 'mac'].includes(spec.pipelines[n].lane));
   assert.ok(['morning', 'evening-cloud', 'weekly', 'worker'].every(n => ready.includes(n)));
   for (const n of ready.filter(n => spec.tasks.staging[n])) { assert.equal(typeof p[`live.${n}`], 'string', n); assert.equal(typeof p[`staging.${n}`], 'string', n); }
   const diag = renderPrompt({ key: 'staging.diagnostic', task: spec.tasks.diagnostic, spec, release });
@@ -33,6 +33,13 @@ test('every cloud pipeline with steps has a prompt for live and staging; the res
   assert.match(p['staging.worker'], /end this turn with exactly: Waiting for the job id\. When it arrives, add --job <id> to the start command/);
   assert.match(p['staging.worker'], /except the one Claude Doc a study-guide job asks for/);
   assert.doesNotMatch(p['staging.morning'], /--job|Claude Doc/);
+  // The Mac lane: its folder, read-only Canvas, and the Mac written only by printed calls; the cloud lane names none of it.
+  assert.ok(ready.includes('evening-mac'));
+  assert.match(p['staging.evening-mac'], /E\.V\.'s folder for this record there is "\/Users\/peachfritter\/Documents\/E\.V\. Study Watch\/staging"/);
+  assert.match(p['live.evening-mac'], /there is "\/Users\/peachfritter\/Documents\/E\.V\. Study Watch"\./);
+  assert.match(p['staging.evening-mac'], /Canvas is read-only: only the GET requests the printed scripts make/);
+  assert.match(p['staging.evening-mac'], /never enter a password/);
+  for (const n of ['morning', 'evening-cloud', 'weekly', 'worker']) assert.doesNotMatch(p['staging.' + n], /Mac|Canvas|device_|browser/, n);
   assert.equal(p['build.ev4-builder'], 'You are an E.V. v4 build session. Follow CLAUDE.md and BACKLOG.md in this repository exactly, including the Unattended runs section.');
 });
 

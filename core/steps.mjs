@@ -12,6 +12,8 @@ import path from 'node:path';
 import EV from './evcore.mjs';
 import { produce } from './derive.mjs';
 import { watch } from './watch.mjs';
+import { canvasRaw } from './canvas.mjs';
+import { collectionHash } from './seed.mjs';
 
 const models = db => EV.buildWeakspots({ weakspots: db.weakspots || [], sets: db.sets || [], answers: db.answers || [], exams: db.exams || [] });
 /** Fields a set item may carry (spec/schemas/sets.schema.json); anything else an agent adds is dropped. */
@@ -120,6 +122,51 @@ CODE_STEPS.health = function healthStep(db, ctx, spec) {
   return { writes: [{ op: 'set', collection: 'health', id: 'current', data }], say: ['health/current written.'] };
 };
 
+
+// ------------------------------------------------------------------------------------------------ evening-mac
+const WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+/** The Mac folder this run's record writes to (spec.tasks.<record>.evening-mac.folders[0]). */
+export function macFolder(spec, record) {
+  const t = ((spec.tasks || {})[record] || {})['evening-mac'];
+  if (!t || !(t.folders || []).length) throw new Error(`spec.tasks.${record}.evening-mac names no Mac folder`);
+  return t.folders[0];
+}
+/** E.V. v4's own files in that folder: names v3's files never use, so the two never overwrite each other. */
+export const MAC_FILES = { backup: day => `backup/E.V.-v4-backup-${day}.json`, mirror: 'mirror-v4' };
+/** A backup as restore-drill checks it: every collection the run pulled (never journal or system), with counts and hashes. */
+export function macBackup(db, { now, label, release }) {
+  const collections = {};
+  for (const col of Object.keys(db).filter(c => c !== 'journal' && c !== 'system').sort()) collections[col] = [...db[col]].sort((a, b) => (a.id < b.id ? -1 : 1));
+  const b = EV.buildBackup(collections, { now, label });
+  const hashes = Object.fromEntries(Object.entries(collections).map(([c, docs]) => [c, collectionHash(docs)]));
+  return { ...b, release: release || b.release, hashes };
+}
+/**
+ * The nightly backup (and, on Sundays or when the run is told to, the Markdown mirror) written under ctx.outputs and
+ * handed to the Mac as device_commit_files calls the apply move prints. Nothing on the Mac is read or deleted.
+ */
+CODE_STEPS['mac-files'] = function macFiles(db, ctx, spec) {
+  const folder = macFolder(spec, ctx.record);
+  const out = path.join(ctx.outputs || '/mnt/user-data/outputs/ev', ctx.runId);
+  const day = WEEKDAYS[EV.weekday(ctx.date)];
+  const files = [];
+  const put = (rel, body) => { const f = path.join(out, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, body); files.push({ stagedPath: f, devicePath: folder + '/' + rel }); };
+  const backup = macBackup(db, { now: ctx.now, label: `${ctx.pipeline} ${ctx.runId}`, release: ctx.release });
+  const body = JSON.stringify(backup, null, 1);
+  put(MAC_FILES.backup(day), body);
+  const docs = Object.values(backup.counts).reduce((a, b) => a + b, 0);
+  const mirror = day === 'sunday' || /^(yes|true|1)$/i.test(String((ctx.input || {}).mirror || ''));
+  let mirrored = 0;
+  if (mirror) {
+    const weakspotModels = models(db);
+    for (const f of EV.toMarkdown({ ...db, weakspotModels }, { date: ctx.date })) { put(MAC_FILES.mirror + '/' + f.path, f.content); mirrored++; }
+  }
+  const device = [];
+  for (let i = 0; i < files.length; i += 50) device.push({ tool: 'mcp__remote-devices__device_commit_files', args: { files: files.slice(i, i + 50) } });
+  const detail = `backup ${MAC_FILES.backup(day)} (${docs} documents, ${Math.round(Buffer.byteLength(body) / 1024)} KB)${mirror ? `, mirror ${mirrored} files` : ''}`;
+  return { device, detail, say: [`Mac files: ${detail}, to ${folder}.`] };
+};
+
 export const AGENT_MATERIAL = {
   /** The probe this diagnostic run answers, and the surfaces the environments registry tracks. */
   'probe-brief'(db, ctx, spec) {
@@ -134,6 +181,28 @@ export const AGENT_MATERIAL = {
     const b = ctx.brief;
     if (!b || (!b.review.targets.length && !b.review.checks.length && !b.drills.length)) return { skip: b && b.review.exists ? 'today\'s review set already exists and no drill is due' : 'nothing to write today' };
     return b;
+  },
+  /** How to bring Canvas in: the tab, then each part's script, poll and unwrap, as commands of this checkout. */
+  'canvas-brief'(db, ctx, spec) {
+    const c = spec.registry.canvas; const d = ctx.dir; const cli = 'node core/cli.mjs';
+    const part = p => ({ part: p, print: `${cli} canvas-script ${p} --dir ${d}`, poll: `${cli} canvas-script poll --of ${p} --dir ${d}`, unwrap: `${cli} unwrap <the file the tool saved> --to ${d}/in/canvas-${p}.json` });
+    return {
+      host: c.host, tab: `a tab on ${c.host.replace(/^https:\/\//, '')} in the built-in browser (tools: ToolSearch query "mcp__remote-devices__Claude_Browser__", max_results 64; tabs_context lists the tabs; with none, preview_start ${c.host})`,
+      parts: [part('dates'), part('files'), { part: 'texts', print: `${cli} canvas-script texts --dir ${d} --batch <n>`, poll: `${cli} canvas-script poll --of texts --dir ${d}`, unwrap: `${cli} unwrap <the file the tool saved> --to ${d}/in/canvas-texts-<n>.json`, batches: 'the first texts command says how many batches there are (none when no file is new or changed); do each n in turn, one at a time (start, poll, unwrap); if unwrap says a batch was cut, run that batch again with --ids <one fileId> per file and unwrap each to canvas-texts-<n>-<fileId>.json' }],
+      rules: ['GET requests only, through the printed scripts', 'never click, type, submit, sign in or sign out on Canvas', 'never open quizzes, exams, assignments, grades, submissions or feedback', 'never retype a result: only unwrap files the tool saved'],
+    };
+  },
+  /** What the Canvas sync found that Matt should hear about tonight, and on Saturdays his Quizlet home page. */
+  'evening-note'(db, ctx) {
+    const c = ctx.canvas; if (!c) return { skip: 'no Canvas step ran' };
+    const saturday = EV.weekday(ctx.date) === 6;
+    if (!saturday && !c.candidates.length) return { skip: 'no possible conflicts and not Saturday' };
+    const ms = models(db).filter(w => EV.isActive(w));
+    const soon = (db.exams || []).filter(e => e.date && e.date >= ctx.date && e.date <= EV.addDays(ctx.date, 7)).map(e => ({ id: e.id, title: e.title, date: e.date }));
+    return {
+      canvas: { status: c.status, changes: c.changes.map(x => x.text), possibleConflicts: c.candidates, errors: c.errors },
+      ...(saturday ? { quizlet: 'Saturday: in the built-in browser, open https://quizlet.com/latest in a new tab with preview_start and read it with get_page_text (max_chars 1500): only the "Jump back in" decks with their % done and the "Recents" list. Never click, type, start or change anything there; a sign-in page means skip it and say so.', openWeakSpots: ms.slice(0, 15).map(w => w.topic), examsThisWeek: soon } : {}),
+    };
   },
   'week-brief'(db, ctx) { return ctx.week; },
   /** What the day looks like, for a one-line note. */
@@ -243,6 +312,26 @@ export const AGENT_FOLDS = {
     if (rejects.length) say.push(`Dropped ${rejects.length}: ${rejects.slice(0, 6).join('; ')}`);
     return { writes, say };
   },
+  /** {status, problem?}: the Canvas files the run collected become dates, announcements and library materials. */
+  'canvas-sync'(answer, db, ctx, spec) {
+    const skip = (why) => { ctx.canvas = { status: answer.status, changes: [], candidates: [], errors: [why] }; return { detail: 'Canvas skipped: ' + why, say: ['Canvas skipped: ' + why] }; };
+    if (answer.status !== 'ok') return skip(`${answer.status}${answer.problem ? ' (' + answer.problem + ')' : ''}`);
+    const raw = canvasRaw(path.join(ctx.dir, 'in'), spec);
+    if (raw.collected.signedOut) return skip('signed-out (a script found the Canvas sign-in page)');
+    if (!raw.collected.dates) return skip('no dates collected');
+    const res = EV.normalizeCanvas(raw, db, { now: ctx.now });
+    const writes = [
+      ...res.dates.map(d => ({ op: d.op || ((db.dates || []).some(x => x.id === d.id) ? 'update' : 'set'), collection: 'dates', id: d.id, data: d.data })),
+      ...res.announcements.map(a => ({ op: 'set', collection: 'announcements', id: a.id, data: a.data })),
+      ...res.materials.map(m => ({ op: 'set', collection: 'materials', id: m.id, data: m.data })),
+    ];
+    ctx.canvas = { status: 'ok', changes: res.changes, candidates: res.candidates, errors: raw.errors };
+    const n = k => res.changes.filter(c => c.type === k).length;
+    const detail = `Canvas: ${n('new-date')} new and ${n('changed-date')} changed dates, ${res.announcements.length} announcements, ${res.materials.length} files${res.candidates.length ? `, ${res.candidates.length} possible conflicts` : ''}${raw.errors.length ? `, ${raw.errors.length} fetch errors` : ''}`;
+    return { writes, detail, say: [detail + '.'] };
+  },
+  /** {note}: the one short note the run ends with. */
+  'evening-note'(answer) { return { detail: answer.note, push: answer.note.slice(0, 120) }; },
   /** {review, reflection, push}: weeks/<Sunday> with the week's roll-ups and the review as written. */
   'week-doc'(answer, db, ctx, spec) {
     const data = produce(db, spec, 'weeks', { date: ctx.date, now: ctx.now }, { source: ctx.source, stored: { review: answer.review, reflection: answer.reflection } });

@@ -172,11 +172,12 @@ export function deployCalls({ manifest, target, distDir, build, versions = {}, m
     if (key.startsWith('build.')) continue;
     if (!t.promptSha256) { skipped.push(`${key}: no prompt rendered (tools/prompts.mjs)`); continue; }
     const promptFile = `${distDir}/prompts/${key}.txt`;
-    if (t.macBound) skipped.push(`${key}: Mac-bound; create or change it from a chat linked to the Mac, with Matt present`);
     if (!t.trigger) {
-      if (!t.macBound) calls.push({ step: `create ${key}`, tool: 'mcp__claude-code-remote__create_trigger', args: { name: t.name, prompt: `<the contents of ${promptFile}>`, initiation: 'human_request', ...(t.schedule ? { cron_expression: t.schedule } : {}), notifications: { push: t.push }, requires_local_device: false }, then: `record the returned id as spec.tasks.${key}.trigger, commit, push and build again` });
+      // A Mac-bound task is created only from a chat linked to the Mac with Matt present: printed, marked as such.
+      calls.push({ step: `create ${key}${t.macBound ? ' (only from a chat linked to the Mac, with Matt present)' : ''}`, tool: 'mcp__claude-code-remote__create_trigger', args: { name: t.name, prompt: `<the contents of ${promptFile}>`, initiation: 'human_request', ...(t.schedule ? { cron_expression: t.schedule } : {}), notifications: { push: t.push }, requires_local_device: Boolean(t.macBound), ...(t.macBound ? { folders: t.folders } : {}) }, then: `record the returned id as spec.tasks.${key}.trigger, commit, push and build again` });
       continue;
     }
+    if (t.macBound) skipped.push(`${key}: Mac-bound; change it only from a chat linked to the Mac, with Matt present`);
     const live = state && state.triggers && state.triggers.find(x => x.id === t.trigger);
     const livePrompt = live && live.derived_state && live.derived_state.prompt;
     if (live && typeof livePrompt === 'string' && sha256(livePrompt) === t.promptSha256) continue;

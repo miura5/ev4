@@ -9,6 +9,8 @@
 //                                  Derived document rebuilt byte for byte, and the content checks (--date, --json)
 //   rebuild <collection|all> --from <record>   regenerate Derived documents as of their time; --out <dir> writes them
 //   steps [pipeline]               every pipeline's reads and steps, as the spec lists them
+//   canvas-script <dates|files|texts|poll> --dir <run>   a read-only Canvas script with its parameters (scripts/canvas/)
+//   unwrap <saved tool result> --to <json>   the value a Canvas script returned, from the file the browser tool saved
 //   run <pipeline> <start|pull|pulled|compute|apply|replan|end|audit>   the run protocol's moves; each prints the
 //                                  exact calls to make. --dir (default /tmp/ev/run), --record <live|staging>,
 //                                  --at, --transcript <jsonl> (default this session's), --failed <n>, --batch <n>,
@@ -33,6 +35,7 @@ import { rebuild } from './derive.mjs';
 import * as RUN from './run.mjs';
 import { newestTranscript } from './transcript.mjs';
 import EV from './evcore.mjs';
+import * as CANVAS from './canvas.mjs';
 
 const HERE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const sha256 = s => crypto.createHash('sha256').update(s).digest('hex');
@@ -212,7 +215,7 @@ const commands = {
     switch (move) {
       case 'start': {
         const manifest = maybeJson(path.resolve(o.manifest || '/tmp/ev/system/manifest.json')) || maybeJson(path.join(root, 'dist', 'manifest.json'));
-        return show(RUN.start({ spec, pipeline, record: o.record || 'staging', at, dir, release: o.release || (manifest && manifest.release) || EV.VERSION, commit: (manifest && manifest.commit) || null, input: { ...(o.job ? { job: o.job } : {}), ...(o.probe ? { probe: o.probe } : {}) } }), `${cli} pull${d}`);
+        return show(RUN.start({ spec, pipeline, record: o.record || 'staging', at, dir, release: o.release || (manifest && manifest.release) || EV.VERSION, commit: (manifest && manifest.commit) || null, input: { ...(o.job ? { job: o.job } : {}), ...(o.probe ? { probe: o.probe } : {}), ...(o.mirror ? { mirror: o.mirror } : {}) }, ...(o.outputs ? { outputs: path.resolve(o.outputs) } : {}) }), `${cli} pull${d}`);
       }
       case 'pull': return show(RUN.pull({ spec, dir, at }), `${cli} pulled${d}`);
       case 'pulled': {
@@ -244,6 +247,44 @@ const commands = {
       }
       default: throw new Error('run <pipeline> <start|pull|pulled|compute|apply|replan|end|audit>');
     }
+  },
+  'canvas-script'(o) {
+    // One read-only Canvas script for the run in --dir, its parameters filled in from the spec and the run's pull
+    // (scripts/canvas/<part>.js). Saved to <dir>/canvas/ and printed to run with javascript_tool in the Canvas tab.
+    const root = o.root ? path.resolve(o.root) : HERE;
+    const spec = readJson(path.join(root, 'spec', 'ev.spec.json')); EV.configure(spec);
+    const part = o._[1]; const dir = path.resolve(o.dir || '/tmp/ev/run');
+    if (!CANVAS.PARTS.includes(part)) throw new Error(`canvas-script <${CANVAS.PARTS.join('|')}> --dir <run dir>`);
+    const db = RUN.loadPulled(dir);
+    let params, name = part, note = '';
+    if (part === 'poll') { if (!['dates', 'files', 'texts'].includes(o.of)) throw new Error('poll needs --of dates|files|texts'); params = CANVAS.scriptParams('poll', { spec, db, of: o.of }); name = 'poll-' + o.of; }
+    else if (part === 'texts') {
+      const listing = maybeJson(path.join(dir, 'in', 'canvas-files.json'));
+      if (!listing) throw new Error(`no ${path.join(dir, 'in', 'canvas-files.json')}: collect the files part first`);
+      const changed = CANVAS.changedFiles(listing, db.materials);
+      const batches = CANVAS.textBatches(changed, o.ids ? String(o.ids).split(',') : null);
+      if (!changed.length) { console.log('No library file is new or changed: there are no texts batches to run.'); return 0; }
+      const n = Number(o.batch || 1); const files = batches[n - 1];
+      if (!files || !files.length) throw new Error(`no texts batch ${o.batch || 1}${o.ids ? ' for --ids ' + o.ids : ''} (there ${batches.length === 1 ? 'is 1' : 'are ' + batches.length})`);
+      params = CANVAS.scriptParams('texts', { spec, db, batch: o.ids ? String(o.ids) : n, files });
+      name = 'texts-' + (o.ids ? String(o.ids).replace(/,/g, '-') : n);
+      note = `texts batch ${o.ids ? 'for ' + o.ids : n + ' of ' + batches.length}: ${files.map(f => `${f.title} (${f.fileId})`).join('; ')}`;
+    } else params = CANVAS.scriptParams(part, { spec, db });
+    const script = CANVAS.canvasScript(root, part, params);
+    const file = path.join(dir, 'canvas', name + '.js'); fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, script);
+    if (note) console.log('// ' + note);
+    console.log(script);
+    console.error(`(saved to ${file}; run it with javascript_tool in the signed-in Canvas tab${part === 'poll' ? '' : `, then poll: node core/cli.mjs canvas-script poll --of ${part} --dir ${dir}`})`);
+    return 0;
+  },
+  unwrap(o) {
+    // A browser tool result the tool saved to a file -> the value the Canvas script returned, as JSON. Never retyped.
+    const src = o._[1]; if (!src || !o.to) throw new Error('unwrap <the file the tool saved> --to <file.json>');
+    const v = CANVAS.unwrap(fs.readFileSync(path.resolve(src), 'utf8'));
+    const to = path.resolve(o.to); fs.mkdirSync(path.dirname(to), { recursive: true }); fs.writeFileSync(to, JSON.stringify(v));
+    const n = k => (Array.isArray(v[k]) ? v[k].length : 0);
+    console.log(`unwrapped ${v.part || 'a failed part'} to ${to}: ${v.failed ? 'FAILED ' + v.failed : `${n('planner')} planner items, ${n('announcements')} announcements, ${n('files')} files`}${n('errors') ? `, ${n('errors')} errors: ${v.errors.slice(0, 3).join('; ')}` : ''}`);
+    return v.failed ? 1 : 0;
   },
   'verify-migration'(o) {
     const { v3, at, result } = migration(o);
@@ -285,7 +326,7 @@ export function main(argv) {
   const o = args(argv);
   const cmd = commands[o._[0]];
   if (!cmd || (TARGETED.includes(o._[0]) && !['live', 'staging'].includes(o._[1]))) {
-    console.error('Commands: verify-deploy <live|staging>, deploy <live|staging>, migrate v3 --from <dir>, verify-migration --from <dir>, seed-staging --from <dir>, lint --from <dir>, rebuild <collection|all> --from <dir>, run <pipeline> <move>, steps [pipeline]');
+    console.error('Commands: verify-deploy <live|staging>, deploy <live|staging>, migrate v3 --from <dir>, canvas-script <part> --dir <run>, unwrap <file> --to <json>, verify-migration --from <dir>, seed-staging --from <dir>, lint --from <dir>, rebuild <collection|all> --from <dir>, run <pipeline> <move>, steps [pipeline]');
     return 2;
   }
   try { return cmd(o); } catch (e) { console.error(`${o._[0]} failed: ${e.message}`); return 1; }
