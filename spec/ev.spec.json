@@ -1168,7 +1168,7 @@
    "folders": [],
    "macBound": false,
    "push": false,
-   "trigger": null,
+   "trigger": "trig_01V9d1ED24oKHsEjZU6tPKWk",
    "note": "The two-step task pattern: a diagnostic run first, then an environments row, then code. A mac variant is created only when a probe needs the Mac."
   },
   "build": {
