@@ -1,85 +1,496 @@
-// The page harness (Operational architecture, "Harness"): drives the built shell with its published files served
-// locally, at phone and desktop width, with the record, sample, mcp and the reader stubbed (stub.js).
-//   node test/harness/run.cjs [record dir] [screenshots dir] [target]
-// record dir: a folder of <collection>/<id>.json (default: the synthetic record in test/data/record).
-// Run `node tools/build.mjs` first: the harness reads dist/page/<target>/. Exit code 1 when any check fails.
+// The page harness (B-16, ported from v3's test/harness/run.cjs): drives the built v4 page (dist/page/<target>/, the
+// shell with its published files served beside it) at phone and desktop width, with the record, sample, mcp and the
+// Study Watch reader stubbed (stub.js). The record comes from a folder of <collection>/<id>.json in v4 shapes: the
+// staging seed (`seed-staging --out`) or a migrated export, kept outside the repository (it is personal data).
+//   node test/harness/run.cjs <record dir> [screenshots dir]
+// Run `node tools/build.mjs` first. Exit code 1 when any check fails. The shell's own checks are test/harness/shell.cjs.
 const { chromium } = require('playwright');
 const fs = require('fs'); const path = require('path');
 const root = path.resolve(__dirname, '../..');
-const dbDir = process.argv[2] || path.join(root, 'test/data/record');
+const dbDir = process.argv[2];
+if (!dbDir) { console.error('usage: node test/harness/run.cjs <record dir> [screenshots dir]'); process.exit(2); }
 const shots = process.argv[3] || '/tmp/ev4-shots'; fs.mkdirSync(shots, { recursive: true });
-const target = process.argv[4] || 'staging';
-const pageDir = path.join(root, 'dist/page', target);
-const ORIGIN = 'https://ev.local';
-
 function load(dir) { const db = {}; for (const c of fs.readdirSync(dir)) { const p = path.join(dir, c); if (!fs.statSync(p).isDirectory()) continue; db[c] = {}; for (const f of fs.readdirSync(p)) if (f.endsWith('.json')) db[c][f.slice(0, -5)] = JSON.parse(fs.readFileSync(path.join(p, f), 'utf8')); } return db; }
 const seed = load(dbDir);
-delete seed.system; delete seed.legacy; delete seed.debug; // the page never subscribes to these
+delete seed.system; delete seed.legacy; delete seed.debug; delete seed.journal; // the harness never needs his journal
+const env = (writer, source, at) => ({ schema: 1, writer, at: at || new Date().toISOString(), source });
+const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date());
+// Today's review: the newest review set in the record, with its answers, as today's (so the summary is known).
+const lastReview = Object.keys(seed.sets || {}).filter(k => /^review-\d{4}-\d{2}-\d{2}$/.test(k)).sort().pop();
+let reviewExpect = null;
+if (lastReview && lastReview !== 'review-' + today) {
+  seed.sets['review-' + today] = { ...seed.sets[lastReview], date: today };
+  const a = (seed.answers || {})[lastReview];
+  if (a) { seed.answers['review-' + today] = { ...a, setId: 'review-' + today }; }
+}
+{ const rs = (seed.sets || {})['review-' + today]; const a = ((seed.answers || {})['review-' + today] || {}).answers || {};
+  if (rs) { const latest = q => { const t = a[q.id] || {}; const k = Object.keys(t).sort().pop(); return k ? t[k] : null; }; const got = rs.items.map(latest).filter(Boolean); reviewExpect = got.length ? `${got.filter(x => x.correct).length} of ${got.length} right` : null; } }
+// A small practice set to exercise all three question types and the answer flow.
+seed.sets = seed.sets || {};
+seed.sets['more-' + today + '-1'] = { ...env('page', 'More practice'), kind: 'more', date: today, exam: 'E4', title: 'Harness set', createdAt: new Date().toISOString(), items: [
+  { id: 'm1', kind: 'review', weakspotId: 'e4-preschooler', objective: 'E4-6', topic: 'Preschooler health promotion', type: 'single', cjStep: 'take-action', stem: 'A parent asks how to keep a 4-year-old safe in the car. What should the nurse teach?', options: ['Forward-facing seat with harness', 'Adult seat belt only', 'Front seat with airbag off', 'Booster with lap belt only'], correct: [0], rationales: ['Right for this age and size.', 'Too early.', 'Back seat is safest.', 'Needs lap and shoulder belt.'] },
+  { id: 'm2', kind: 'check', objective: 'E4-2', topic: 'Caring behaviors', type: 'sata', cjStep: 'generate-solutions', stem: 'Which actions show caring behaviors with an anxious older adult? Select all that apply.', options: ['Sit at eye level', 'Use touch if welcomed', 'Speak quickly to save time', 'Listen without interrupting', 'Talk to the family instead'], correct: [0, 1, 3], rationales: ['Yes.', 'Yes.', 'No.', 'Yes.', 'No.'] },
+  { id: 'm3', kind: 'review', weakspotId: 'e4-aging-expected', objective: 'E4-3', topic: 'Aging: expected vs. unexpected', type: 'matrix', cjStep: 'recognize-cues', stem: 'An 82-year-old is admitted. Mark each finding as expected with aging or unexpected.', matrix: { columns: ['Expected', 'Unexpected'], rows: [{ text: 'Thinner, drier skin', correct: 0, rationale: 'Normal aging.' }, { text: 'New confusion since yesterday', correct: 1, rationale: 'Sudden change suggests delirium.' }, { text: 'Slower reaction time', correct: 0, rationale: 'Normal aging.' }] } },
+] };
+// A background job that finished an hour ago, so the greeting has something to report.
+const hourAgo = new Date(Date.now() - 3600e3).toISOString();
+// A small library file (D-079): the skills packet's head-to-toe checklist sits on page 12.
+seed.materials = seed.materials || {};
+seed.materials['NUR112-harness-skills'] = { ...env('canvas-sync', 'Canvas'), course: 'NUR 112', kind: 'lab', title: 'Harness Skills Packet.pdf', fileType: 'pdf', pages: 13, module: 'LAB/SKILLS Resources',
+  text: '[p1] Nursing Skills Packet\n[p2] Table of contents: Vital signs 8; Head to Toe Assessment 12; Head to Toe Documentation 13\n[p12] HEAD TO TOE ASSESSMENT * 1. Perform hand hygiene. * 2. Introduce yourself and verify the client with two identifiers. * 3. Provide privacy and explain the assessment. * 4. Inspect the skin and auscultate heart sounds at the five landmarks.\n[p13] HEAD TO TOE DOCUMENTATION * Document findings by body system.\n' };
+// Calendar entries for the edit checks (D-080): two from Canvas (graded work stays; an optional event can go) and the rest of the export.
+const inDays = n => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date(Date.now() + n * 86400e3));
+seed.dates = seed.dates || {};
+seed.dates['canvas-h-graded'] = { ...env('canvas-sync', 'Canvas'), canvasId: 9001, date: inDays(2), title: 'Harness graded quiz', kind: 'due', graded: true, course: 'NUR 112' };
+seed.dates['canvas-h-hall'] = { ...env('canvas-sync', 'Canvas'), canvasId: 9002, date: inDays(3), title: 'Harness study hall', kind: 'other', graded: false, course: 'NUR 112' };
+// pdf.js comes from cdnjs on the page; the harness serves a local copy (npm install --no-save pdfjs-dist@4.4.168)
+const pdfjsDir = path.join(root, 'node_modules/pdfjs-dist/build');
+const hasPdfjs = fs.existsSync(path.join(pdfjsDir, 'pdf.min.mjs'));
+const servePdfjs = page => page.route('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/**', r => { const f = path.join(pdfjsDir, r.request().url().split('/').pop()); return fs.existsSync(f) ? r.fulfill({ body: fs.readFileSync(f), headers: { 'Content-Type': 'text/javascript', 'Access-Control-Allow-Origin': '*' } }) : r.abort(); });
+// A background job that finished an hour ago: the page wrote jobs/<id>, the worker wrote jobresults/<id>.
+seed.jobs = { 'job-20261017-150000-cardiac-output': { ...env('page', 'E.V. Home', new Date(Date.now() - 7200e3).toISOString()), kind: 'study-guide', title: 'Study guide: cardiac output', brief: 'harness', fired: { at: hourAgo, ok: true } } };
+seed.jobresults = { 'job-20261017-150000-cardiac-output': { ...env('worker', 'worker harness', hourAgo), release: 'v4.0.0', status: 'done', startedAt: hourAgo, finishedAt: hourAgo, result: { text: 'One page on preload, afterload and contractility, with three self-check questions.', links: [{ title: 'E.V. study guide: cardiac output', url: 'https://claude.ai/artifact/harness' }] } } };
+const spec = JSON.parse(fs.readFileSync(path.join(root, 'spec/ev.spec.json'), 'utf8'));
 const stub = fs.readFileSync(path.join(__dirname, 'stub.js'), 'utf8');
-// What publishing does to the shell: the platform's skeleton around it (the Artifact tool's page contract).
-const skeleton = body => '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0}[hidden]{display:none!important}</style></head><body>' + body + '</body></html>';
-const TYPES = { '.js': 'text/javascript', '.json': 'application/json', '.css': 'text/css', '.html': 'text/html' };
-
-const results = []; const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', name, detail]);
-
-/** A page with the published files served from dist (overrides: {file: body | null to fail it}) and the stub. */
-async function open(browser, { viewport, pre = '', overrides = {} }) {
-  const page = await browser.newPage({ viewport, colorScheme: 'dark' });
-  const errors = []; page.on('pageerror', e => errors.push(e.message)); page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
-  await page.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));
-  await page.route(ORIGIN + '/**', r => {
-    const name = new URL(r.request().url()).pathname.replace(/^\//, '') || 'index.html';
-    if (name === 'index.html') return r.fulfill({ body: skeleton(fs.readFileSync(path.join(pageDir, 'index.html'), 'utf8')), contentType: 'text/html' });
-    if (Object.prototype.hasOwnProperty.call(overrides, name)) return overrides[name] == null ? r.fulfill({ status: 404, body: 'gone' }) : r.fulfill({ body: overrides[name], contentType: TYPES[path.extname(name)] });
-    const f = path.join(pageDir, name);
-    return fs.existsSync(f) ? r.fulfill({ body: fs.readFileSync(f), contentType: TYPES[path.extname(name)] || 'application/octet-stream' }) : r.fulfill({ status: 404, body: 'not published' });
-  });
+// The page as the platform serves it: the shell inside its skeleton at the artifact's origin, its files beside it.
+const ORIGIN = 'https://ev.local';
+const TYPES = { '.js': 'text/javascript', '.json': 'application/json', '.css': 'text/css' };
+const skeleton = b => '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0}[hidden]{display:none!important}</style></head><body>' + b + '</body></html>';
+// The page's clock starts at 2pm Central today and runs from there, so the greeting and its chips are the afternoon's
+// whatever time the harness runs (v3's ran in the daytime by habit).
+const DAYTIME = new Date(today + 'T19:00:00Z'); // 2pm CDT
+async function openPage(page, target = 'staging', pre = '') { // live tasks are created at cutover (B-24), so the main pass drives the staging build
+  await page.clock.install({ time: DAYTIME });
+  const dir = path.join(root, 'dist/page', target);
+  await page.route(ORIGIN + '/**', r => { const name = new URL(r.request().url()).pathname.slice(1) || 'index.html'; if (name === 'index.html') return r.fulfill({ body: skeleton(fs.readFileSync(path.join(dir, 'index.html'), 'utf8')), contentType: 'text/html' }); const f = path.join(dir, name); return fs.existsSync(f) ? r.fulfill({ body: fs.readFileSync(f), contentType: TYPES[path.extname(name)] || 'application/octet-stream' }) : r.fulfill({ status: 404, body: '' }); });
   await page.addInitScript(pre + 'window.__db=' + JSON.stringify(seed) + ';' + stub);
   await page.goto(ORIGIN + '/');
-  return { page, errors };
 }
-const statusText = page => page.evaluate(() => (document.getElementById('status') || {}).textContent || '');
-
+const liveWorker = spec.tasks.live.worker.trigger, stagingWorker = spec.tasks.staging.worker.trigger;
+const todayDoc = () => window.__db.talk && window.__db.talk[new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date())];
+async function send(page, text) { await page.fill('#ev-input', text); await page.click('#ev-send'); await page.waitForTimeout(250); }
+const msgs = page => page.evaluate(() => { const d = window.__db.talk && window.__db.talk[new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date())]; return d ? Object.entries(d.messages).sort(([a], [b]) => a.localeCompare(b)).map(([id, m]) => ({ id, ...m })) : []; });
+const results = []; const ok = (name, cond, detail = '') => { results.push([cond ? 'PASS' : 'FAIL', name, detail]); };
 (async () => {
   const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' }).catch(() => chromium.launch());
-  for (const [scheme, viewport] of [['phone', { width: 390, height: 844 }], ['desktop', { width: 1280, height: 860 }]]) {
-    const { page, errors } = await open(browser, { viewport });
-    await page.waitForFunction(() => document.querySelector('#thread .msg.ev'), null, { timeout: 5000 }).catch(() => {});
-    await page.screenshot({ path: `${shots}/shell-${scheme}.png` });
-    ok(`[${scheme}] the shell loads core.js, spec.json, app.js and styles.css from beside it`, await page.evaluate(() => !!(window.EVCore && window.EVApp && window.EVValidate) && getComputedStyle(document.body).getPropertyValue('--accent').trim() !== ''));
-    ok(`[${scheme}] opens on E.V. with the greeting`, await page.isVisible('#p-ev') && !(await page.isVisible('#p-today')) && /Matt|Still up|Afternoon/.test(await page.locator('#thread .msg.ev').first().textContent().catch(() => '')));
-    ok(`[${scheme}] five tabs in the dock, System in the top bar`, (await page.locator('.dock .tab').count()) === 5 && await page.isVisible('#tab-system'));
-    ok(`[${scheme}] the staging stamp, a quiet status and the staging readout`, (await statusText(page)) === '' && /EV-04 · staging/.test(await page.locator('#readout').textContent()) && await page.evaluate(() => document.querySelector('meta[name="ev-release"]').content === 'v4.0.0' && document.querySelector('meta[name="ev-target"]').content === 'staging'), await statusText(page));
-    ok(`[${scheme}] no sideways scroll`, await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
-    for (const t of ['today', 'study', 'progress', 'record']) { await page.click('#tab-' + t); await page.waitForTimeout(60); }
-    ok(`[${scheme}] each tab opens its own panel`, await page.isVisible('#p-record') && !(await page.isVisible('#p-ev')));
-    await page.click('#tab-system'); await page.waitForTimeout(80);
-    ok(`[${scheme}] System shows the release`, /Release v4\.0\.0/.test(await page.locator('#versions').textContent()));
-    await page.screenshot({ path: `${shots}/system-${scheme}.png` });
+  // A · Aurora is dark only (D-077): the passes are phone width (all interactions) and desktop width (screens).
+  for (const scheme of ['phone', 'desktop']) {
+    const page = await browser.newPage({ viewport: scheme === 'phone' ? { width: 390, height: 844 } : { width: 1280, height: 860 }, colorScheme: 'dark' });
+    const errors = []; page.on('pageerror', e => errors.push(e.message)); page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+    await page.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' })); await servePdfjs(page);
+    await openPage(page); await page.waitForTimeout(900);
+    await page.screenshot({ path: `${shots}/ev-${scheme}.png`, fullPage: false });
+    ok(`[${scheme}] opens on E.V.`, await page.isVisible('#p-ev') && !(await page.isVisible('#p-today')));
+    ok(`[${scheme}] opening: large core above the greeting, top-bar core tucked away`, await page.evaluate(() => document.body.classList.contains('opening') && !!document.querySelector('#hero canvas') && document.querySelector('#hero').getBoundingClientRect().height > 150 && document.querySelector('#top-av').getBoundingClientRect().width < 4));
+    ok(`[${scheme}] core is drawing`, await page.evaluate(() => { const c = document.querySelector('#hero canvas'); const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let lit = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 20) lit++; return lit > 500; }));
+    ok(`[${scheme}] dock has five tabs, System sits in the top bar`, (await page.locator('.dock .tab').count()) === 5 && await page.isVisible('#tab-system'));
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+    ok(`[${scheme}] no sideways scroll`, !overflow);
     ok(`[${scheme}] no page errors`, errors.length === 0, errors.join(' | '));
-    if (scheme === 'phone') {
-      const q = await page.evaluate(() => window.__queries);
-      const where = c => (q.find(([n, f]) => n === c && f.length) || [])[1];
-      ok('subscribes by window: talk and days by date, runs by at', (where('talk') || [])[0] && where('talk')[0][0] === 'date' && where('days')[0][0] === 'date' && where('runs')[0][0] === 'at' && !q.some(([n]) => ['system', 'legacy', 'debug', 'materials', 'libindex', 'journal'].includes(n) && n !== 'journal'), JSON.stringify(q.filter(([, f]) => f.length)));
-      ok('never subscribes to system, legacy, debug, materials or libindex at boot', !q.some(([n]) => ['system', 'legacy', 'debug', 'materials', 'libindex'].includes(n)));
+    // ---- E.V.: greeting, quick asks, chat with tools, jobs, guard, check-in (light pass does the interactions)
+    const greet = (await page.locator('#thread .msg.ev').last().textContent()) || '';
+    ok(`[${scheme}] greeting rendered`, /Morning, Matt|Afternoon check-in|Evening, Matt|Still up/.test(greet), greet.slice(0, 140));
+    ok(`[${scheme}] greeting reports the finished job`, /Finished in the background: Study guide: cardiac output/.test(greet));
+    ok(`[${scheme}] finished job card links out`, (await page.locator('#thread .ev-card a[href="https://claude.ai/artifact/harness"]').count()) === 1);
+    ok(`[${scheme}] quick chips`, (await page.locator('#qchips .qchip').count()) >= 3, String(await page.locator('#qchips .qchip').count()));
+    await page.click('#tab-today'); await page.waitForTimeout(100);
+    ok(`[${scheme}] switching tabs plays the arrival`, await page.evaluate(() => document.getElementById('p-today').classList.contains('enter') && getComputedStyle(document.querySelector('#p-today > .card')).animationName === 'rise'));
+    await page.waitForTimeout(900);
+    await page.screenshot({ path: `${shots}/today-${scheme}.png`, fullPage: true });
+    await page.click('#tab-ev'); await page.waitForTimeout(100);
+    if (scheme === 'desktop') {
+      await page.locator('#qchips .qchip', { hasText: 'What’s due this week?' }).click(); await page.waitForTimeout(900);
+      await page.screenshot({ path: `${shots}/ev-desktop-conversation.png`, fullPage: false });
+      await page.close(); continue;
     }
-    await page.close();
+    await page.waitForTimeout(1500);
+    ok('open marks lastSeenAt in talk/memory', await page.evaluate(() => !!(window.__db.talk && window.__db.talk.memory && window.__db.talk.memory.lastSeenAt)));
+    await page.locator('#qchips .qchip', { hasText: 'What’s due this week?' }).click(); await page.waitForTimeout(250);
+    let m = await msgs(page);
+    ok('quick ask posts Matt + E.V. to talk/<today>', m.length === 2 && m[0].role === 'matt' && m[1].role === 'ev' && m[1].cards[0].type === 'dates', JSON.stringify(m.map(x => [x.role, x.text.slice(0, 30)])));
+    ok('dates card shown', /Next 7 days/.test(await page.locator('#thread .msg.ev').last().textContent()));
+    ok('after his first message the core moves to the top bar', await page.evaluate(() => !document.body.classList.contains('opening') && document.querySelector('#top-av').getBoundingClientRect().width > 30));
+    ok('one live core, on the newest E.V. message only', (await page.locator('#thread .ev-av canvas').count()) === 1 && (await page.locator('#thread .msg.ev').last().locator('.ev-av canvas').count()) === 1);
+    // Chat that starts a background job through the page tools and the Claude Code Remote connector
+    await page.evaluate(() => { window.__chatScript = [{ tool: 'start_job', input: { kind: 'study-guide', title: 'Study guide: fluid balance', brief: 'Matt asked for a study guide on fluid balance for Exam 4.' } }]; window.__chatReply = 'On it. Study guide queued.'; });
+    await send(page, 'Make me a study guide on fluid balance'); await page.waitForTimeout(300);
+    const call = await page.evaluate(() => [...window.__chatCalls].reverse().find(c => Array.isArray(c.input)));
+    ok('chat sends context first and the message last', call.input[0].role === 'user' && /HIS RECORD/.test(call.input[0].content) && call.input[call.input.length - 1].content === 'Make me a study guide on fluid balance', call.input.length + ' turns');
+    ok('chat offers the page tools on the quick tier', call.tier === 'quick' && call.tools.includes('start_job') && call.tools.includes('show_card'), call.tier + ' ' + call.tools.join(','));
+    const jobs = await page.evaluate(() => Object.entries(window.__db.jobs).filter(([, j]) => j.title === 'Study guide: fluid balance').map(([id, j]) => ({ id, ...j })));
+    ok('job doc created with its envelope and fired', jobs.length === 1 && jobs[0].writer === 'page' && jobs[0].at && jobs[0].fired && jobs[0].fired.ok === true, JSON.stringify(jobs[0] && jobs[0].fired));
+    const mc = await page.evaluate(() => window.__mcpCalls[0]);
+    ok('fire_trigger called on the live worker with the job id', mc && mc[0] === 'Claude Code Remote' && mc[1] === 'fire_trigger' && mc[2].trigger_id === stagingWorker && mc[2].text === 'Job ' + (jobs[0] || {}).id, JSON.stringify(mc));
+    m = await msgs(page); const last = m[m.length - 1];
+    ok('reply saved with its job card', last.role === 'ev' && last.text === 'On it. Study guide queued.' && last.cards.some(c => c.type === 'job') && last.jobId === (jobs[0] || {}).id && last.replyTo === m[m.length - 2].id, JSON.stringify(last).slice(0, 200));
+    ok('job card shows queued', /queued/.test(await page.locator('#thread .msg.ev').last().textContent()));
+    ok('Go deeper offered on the quick reply', (await page.locator('#thread .msg.ev').last().locator('button', { hasText: 'Go deeper' }).count()) === 1);
+    ok('chat context carries the greeting as record data and the reply-once rule', /Today’s greeting, built by E.V. core from this record/.test(call.input[0].content) && /write your reply once, after the last tool result/.test(call.input[0].content));
+    // A reply written in two rounds around a tool call shows once (only the text after the tool)
+    await page.evaluate(() => { window.__chatPre = 'I can’t resize myself, but I can attach your list.'; window.__chatScript = [{ tool: 'show_card', input: { type: 'today', filter: 'open' } }]; window.__chatReply = 'Here’s what’s still open today.'; });
+    await send(page, 'Show me what is left today'); await page.waitForTimeout(300);
+    const two = (await msgs(page)).slice(-1)[0];
+    ok('two-round reply saved once, without the first-round narration', two.text === 'Here’s what’s still open today.' && two.cards.some(c => c.type === 'today'), JSON.stringify(two.text));
+    ok('two-round reply shown once', !/resize/.test(await page.locator('#thread .msg.ev').last().textContent()));
+    await page.evaluate(() => { window.__chatPre = ''; });
+    // Ticking an item in a conversation card: the thread is patched in place (no replayed animations, no jump)
+    {
+      const tc = page.locator('#thread .msg.ev').last();
+      await tc.locator('input.tick:not(:checked)').first().evaluate(n => n.scrollIntoView({ block: 'center' })); await page.waitForTimeout(200);
+      const t0 = await page.evaluate(() => { window.__anims = []; document.addEventListener('animationstart', e => window.__anims.push(String(e.target.className)), true); window.__msgNode = document.querySelector('#thread .msg.ev:last-of-type'); window.__firstMsg = document.querySelector('#thread .msg'); return scrollY; });
+      const bb = await tc.locator('input.tick:not(:checked)').first().boundingBox(); await page.mouse.click(bb.x + bb.width / 2, bb.y + bb.height / 2); await page.waitForTimeout(700);
+      const t1 = await page.evaluate(() => ({ y: scrollY, msgAnims: window.__anims.filter(c => /\bmsg\b/.test(c)).length, kept: window.__firstMsg.isConnected }));
+      ok('ticking in a conversation card keeps the page still: no replayed messages, no scroll', t1.msgAnims === 0 && Math.abs(t1.y - t0) < 2 && t1.kept, JSON.stringify({ t0, ...t1 }));
+      ok('the ticked item stays in the open card, shown done', (await tc.locator('.row.done input.tick:checked').count()) >= 1);
+      ok('the tick was saved', await page.evaluate(() => Object.keys((window.__db.dayedits && window.__db.dayedits[new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date())] || {}).checks || {}).length > 0 || Object.values(window.__db.planedits || {}).some(p => p.ticks && Object.keys(p.ticks).length)));
+    }
+    // The small core in the top bar brings the large one back, and sending tucks it away again
+    await page.click('#brand'); await page.waitForTimeout(700);
+    ok('tapping the small core shows the large one', await page.evaluate(() => document.body.classList.contains('core-big') && document.querySelector('#hero').getBoundingClientRect().height > 150));
+    await page.click('#brand'); await page.waitForTimeout(100);
+    ok('tapping again tucks it away', await page.evaluate(() => !document.body.classList.contains('core-big')));
+    // Logging a weak spot from the conversation
+    await page.evaluate(() => { window.__chatScript = [{ tool: 'add_weakspot', input: { topic: 'Isotonic vs hypotonic IV fluids', objective: 'E4-3' } }, { tool: 'show_card', input: { type: 'weakspots' } }]; window.__chatReply = 'Logged.'; });
+    await send(page, 'I keep mixing up isotonic and hypotonic fluids, log that'); await page.waitForTimeout(250);
+    const ws2 = await page.evaluate(() => Object.values(window.__db.weakspots).filter(w => w.topic === 'Isotonic vs hypotonic IV fluids'));
+    ok('add_weakspot tool writes a weak spot as a Fact, nothing derived stored', ws2.length === 1 && ws2[0].source === 'Told E.V.' && ws2[0].objective === 'E4-3' && ws2[0].writer === 'page' && !ws2[0].derived, JSON.stringify(ws2[0] && { o: ws2[0].objective, s: ws2[0].source }));
+    // Identifier guard: first send is held, nothing is written
+    const before2 = (await msgs(page)).length;
+    await page.fill('#ev-input', 'The resident in room 12 was confused'); await page.click('#ev-send'); await page.waitForTimeout(150);
+    ok('identifier guard holds the message', !(await page.isHidden('#ev-guard')) && (await msgs(page)).length === before2 && /room number/.test(await page.textContent('#ev-guard')), await page.textContent('#ev-guard'));
+    await page.fill('#ev-input', '');
+    // Check-in: local quick ask, energy picker writes days/<today>.checkin and posts advice
+    await page.evaluate(() => { window.__chatScript = []; });
+    await send(page, 'I’m wiped'); await page.waitForTimeout(150);
+    await page.locator('#thread .msg.ev').last().locator('.energy button').nth(1).click(); await page.waitForTimeout(300);
+    const ci = await page.evaluate(() => { const d = (window.__db.dayedits || {})[new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date())]; return d && d.checkin; });
+    ok('check-in saved to the day’s edits', ci && ci.energy === 2, JSON.stringify(ci));
+    ok('low energy gets a lighter plan', /Minimum viable day/.test((await msgs(page)).slice(-1)[0].text));
+    // Connector failure: job is created but not started; Try again re-fires on a click
+    await page.evaluate(() => { window.__mcpFail = 'server_not_connected'; window.__chatScript = [{ tool: 'start_job', input: { kind: 'practice-set', title: 'Practice: acid-base', brief: '20 questions on acid-base' } }]; window.__chatReply = 'Queued.'; });
+    await send(page, 'Write me 20 acid-base questions'); await page.waitForTimeout(300);
+    let jb = await page.evaluate(() => Object.values(window.__db.jobs).find(j => j.title === 'Practice: acid-base'));
+    ok('connector error recorded on the job', jb && jb.fired && jb.fired.ok === false && jb.fired.error === 'server_not_connected', JSON.stringify(jb && jb.fired));
+    const jc = page.locator('#thread .msg.ev').last();
+    ok('job card says how to fix it', /Settings → Connectors/.test(await jc.textContent()) && (await jc.locator('button', { hasText: 'Try again' }).count()) === 1);
+    await page.evaluate(() => { window.__mcpFail = null; }); await jc.locator('button', { hasText: 'Try again' }).click(); await page.waitForTimeout(300);
+    jb = await page.evaluate(() => Object.values(window.__db.jobs).find(j => j.title === 'Practice: acid-base'));
+    ok('Try again re-fires the job with a clean attempt', jb.fired.ok === true && !jb.fired.error, JSON.stringify(jb.fired));
+    // Claude errors are branched by code
+    await page.evaluate(() => { window.__chatFail = 'rate_limited'; });
+    await send(page, 'Quick question about potassium'); await page.waitForTimeout(250);
+    const rl = (await msgs(page)).slice(-1)[0];
+    ok('rate limit explained, kept in the thread', /usage limit/.test(rl.text) && rl.error === 'rate_limited', rl.text);
+    await page.evaluate(() => { window.__chatFail = null; window.__chatScript = []; });
+    ok('explain questions go to the default tier', await page.evaluate(async () => { window.__chatReply = 'Because…'; return true; }));
+    await send(page, 'Explain why hypokalemia causes muscle weakness'); await page.waitForTimeout(250);
+    ok('tier picks default for explanations', (await page.evaluate(() => [...window.__chatCalls].reverse().find(c => Array.isArray(c.input)).tier)) === 'default');
+    await page.screenshot({ path: `${shots}/ev-conversation.png`, fullPage: true });
+    ok('no sideways scroll after the conversation', !(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)));
+    ok('status is live', /^Live/.test(await page.textContent('#status')), await page.textContent('#status'));
+    ok('now card has an action', (await page.textContent('#now')).length > 10, (await page.textContent('#now')).slice(0, 120));
+    ok('today list rendered', (await page.locator('#today-list .row').count()) > 0, String(await page.locator('#today-list .row').count()));
+    // ---- List edits (D-078): E.V. adds to the day's list and takes items off; Matt can add and remove on Today
+    const dayDoc = () => page.evaluate(() => window.__db.dayedits && window.__db.dayedits[new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date())]);
+    const listLines = c => ((/Today’s list \(id \| done \| tag \| item\):\n([\s\S]*?)(\n[A-Z][^\n|]*:|\n---|$)/.exec(c) || [])[1] || '').split('\n').map(l => l.split(' | '));
+    const budgetMin = async () => Number(((await page.textContent('#today-list .card-head')) || '').replace(/^\D*?(\d+) of.*$/s, '$1'));
+    const min0 = await budgetMin();
+    await page.evaluate(() => { window.__toolResults = []; window.__chatScript = [{ tool: 'edit_list', input: { action: 'add', text: 'Quizlets: Ch 7 & 8 lecture for BIO 201 Lecture Exam 3', kind: 'practice', minutes: 30, course: 'BIO 201' } }, { tool: 'edit_list', input: { action: 'add', text: 'Review the Chapter 8 lecture', kind: 'review', minutes: 25, course: 'BIO 201' } }, { tool: 'edit_list', input: { action: 'add', text: 'Write the care plan', date: '2020-01-01' } }]; window.__chatReply = 'Both are on today’s list.'; });
+    await send(page, 'Add Quizlets for chapter 7 and 8 and a Chapter 8 lecture review to today'); await page.waitForTimeout(300);
+    let dd = await dayDoc(); let addedNow = Object.values((dd && dd.added) || {}).filter(Boolean);
+    const lcall = await page.evaluate(() => [...window.__chatCalls].reverse().find(c => Array.isArray(c.input)));
+    ok('chat offers edit_list and says when to use it', lcall.tools.includes('edit_list') && /His daily list is yours to keep/.test(lcall.input[0].content) && /His calendar is yours to keep too/.test(lcall.input[0].content) && !lcall.tools.includes('add_date'), lcall.tools.join(',') + ' | ' + JSON.stringify(await page.evaluate(() => window.__toolResults)).slice(0, 400));
+    ok('edit_list adds both to today, by E.V., with kind, minutes and course', addedNow.length === 2 && addedNow.every(a => a.by === 'E.V.' && a.course === 'BIO 201') && addedNow[0].tag === 'PRACTICE' && addedNow[1].minutes === 25, JSON.stringify(addedNow));
+    ok('edit_list refuses a day in the past', /date must be today/.test((await page.evaluate(() => window.__toolResults)).slice(-1)[0]));
+    ok('nothing added to the calendar', !(await page.evaluate(seeded => Object.entries(window.__db.dates || {}).some(([id, d]) => !seeded.includes(id) && /Quizlets: Ch 7/.test(d.title)), Object.keys(seed.dates || {}))));
+    const lc = page.locator('#thread .msg.ev').last();
+    ok('the reply carries today’s list with the new items', /Quizlets: Ch 7 & 8 lecture/.test(await lc.textContent()) && /added by E\.V\./.test(await lc.textContent()));
+    await page.click('#tab-today'); await page.waitForTimeout(150);
+    ok('Today lists the added items with Remove, and counts their minutes', (await page.locator('#today-list .row', { hasText: 'Review the Chapter 8 lecture' }).locator('button', { hasText: 'Remove' }).count()) === 1 && (Number.isNaN(min0) ? /~25 min · added by E\.V\./.test(await page.textContent('#today-list')) : (await budgetMin()) === min0 + 55), `${min0} -> ${await budgetMin()}`);
+    // Matt adds one himself, then removes it
+    await page.fill('#today-add', 'Flashcards for the bones lab'); await page.press('#today-add', 'Enter'); await page.waitForTimeout(200);
+    dd = await dayDoc(); const mine = Object.entries(dd.added || {}).find(([, a]) => a && a.text === 'Flashcards for the bones lab');
+    ok('the add row writes his item and clears', mine && mine[1].by === 'Matt' && (await page.inputValue('#today-add')) === '' && (await page.locator('#today-list .row', { hasText: 'Flashcards for the bones lab' }).count()) === 1);
+    await page.fill('#today-add', 'half typed'); await page.focus('#today-add'); const rr = await page.evaluate(async () => { const n = document.querySelectorAll('#today-list .row').length; const t = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date()); await (await window.claude.use('db')).collection('dayedits').doc(t).update({ updatedAt: new Date().toISOString() }); return n; }); await page.waitForTimeout(150);
+    ok('a refresh keeps what he is typing', rr > 0 && (await page.inputValue('#today-add')) === 'half typed' && await page.evaluate(() => document.activeElement && document.activeElement.id === 'today-add')); await page.fill('#today-add', '');
+    await page.locator('#today-list .row', { hasText: 'Flashcards for the bones lab' }).locator('button', { hasText: 'Remove' }).click(); await page.waitForTimeout(200);
+    dd = await dayDoc();
+    ok('top bar stays one line while jobs run', await page.evaluate(() => { const b = document.getElementById('brand').getBoundingClientRect(), y = document.getElementById('tab-system').getBoundingClientRect(); return Math.abs((b.top + b.bottom) / 2 - (y.top + y.bottom) / 2) < 6; }), await page.textContent('#readout'));
+    ok('the add row is one line: field and Add', await page.evaluate(() => { const i = document.getElementById('today-add').getBoundingClientRect(), b = document.querySelector('.add-row button').getBoundingClientRect(); return Math.abs(i.top - b.top) < 8 && b.left > i.right; }));
+    ok('Remove takes his item off', !(mine[0] in dd.added) && (await page.locator('#today-list .row', { hasText: 'Flashcards for the bones lab' }).count()) === 0);
+    await page.evaluate(() => document.querySelector('#today-add').scrollIntoView({ block: 'center' })); await page.waitForTimeout(2800); await page.screenshot({ path: `${shots}/today-edited.png`, fullPage: false });
+    await page.click('#tab-ev'); await page.waitForTimeout(100);
+    // E.V. takes a planned item off for the day and brings it back; fixed items stay
+    const lines = listLines(lcall.input[0].content);
+    const plannedLine = lines.find(l => l[0] && !/^add-/.test(l[0]) && !['GRADED', 'EXAM', 'CLINICAL', 'VALIDATION'].includes(l[2]));
+    await page.evaluate(id => { window.__toolResults = []; window.__chatScript = [{ tool: 'edit_list', input: { action: 'remove', id } }]; window.__chatReply = 'Taken off today.'; }, plannedLine && plannedLine[0]);
+    await send(page, 'Take that off today'); await page.waitForTimeout(300);
+    dd = await dayDoc();
+    ok('remove on a planned item skips it for the day', plannedLine && dd.skipped && dd.skipped[plannedLine[0]] && dd.skipped[plannedLine[0]].by === 'E.V.', JSON.stringify(plannedLine) + ' ' + JSON.stringify(dd.skipped));
+    const ctx2 = await page.evaluate(() => { window.__chatScript = []; window.__chatReply = 'Ok.'; return true; });
+    await send(page, 'What is still on my list?'); await page.waitForTimeout(250);
+    const c3 = (await page.evaluate(() => [...window.__chatCalls].reverse().find(c => Array.isArray(c.input)))).input[0].content;
+    ok('the chat sees what was taken off and who added what', ctx2 && /Taken off today’s list: /.test(c3) && /\[added by you\]/.test(c3) && !listLines(c3).some(l => l[0] === plannedLine[0]));
+    await page.evaluate(id => { window.__toolResults = []; window.__chatScript = [{ tool: 'edit_list', input: { action: 'restore', id } }]; window.__chatReply = 'Back on.'; }, plannedLine[0]);
+    await send(page, 'Actually put it back'); await page.waitForTimeout(300);
+    ok('restore brings it back', !(await dayDoc()).skipped[plannedLine[0]]);
+    const fixedId = (lines.find(l => ['GRADED', 'EXAM', 'CLINICAL', 'VALIDATION'].includes(l[2])) || [])[0] || null; // graded work, exams, clinicals and validations stay
+    if (fixedId) {
+      await page.evaluate(id => { window.__toolResults = []; window.__chatScript = [{ tool: 'edit_list', input: { action: 'remove', id } }]; window.__chatReply = 'That one stays.'; }, fixedId);
+      await send(page, 'Take the graded one off'); await page.waitForTimeout(300);
+      ok('graded work stays on the list', /stays on the list/.test((await page.evaluate(() => window.__toolResults)).slice(-1)[0]) && !((await dayDoc()).skipped || {})[fixedId]);
+    }
+    // A later day: the doc is created with only the added item; the morning run keeps it
+    const tmr = await page.evaluate(() => { const d = new Date(Date.now() + 86400e3); return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(d); });
+    await page.evaluate(date => { window.__chatScript = [{ tool: 'edit_list', input: { action: 'add', text: 'Skim Ch 9 before lab', kind: 'reading', date } }]; window.__chatReply = 'On tomorrow’s list.'; }, tmr);
+    await send(page, 'Put skimming chapter 9 on tomorrow'); await page.waitForTimeout(300);
+    const td = await page.evaluate(d => window.__db.dayedits[d], tmr);
+    ok('tomorrow gets its own dayedits doc with the item; the morning run keeps it', td && td.date === tmr && td.schema === 1 && td.writer === 'page' && Object.values(td.added).some(a => a && a.text === 'Skim Ch 9 before lab' && a.tag === 'READING'), JSON.stringify(td));
+    // ---- Calendar edits (D-080): E.V. adds, changes and takes entries off; Canvas graded work stays; Record has Remove and Bring back
+    const labDate = inDays(4); const labId = labDate + '-bio-lab-practical'; const cal = () => page.evaluate(() => { const out = {}; const ed = window.__db.dateedits || {}; for (const [id, d] of Object.entries(window.__db.dates || {})) { const e = ed[id]; out[id] = { ...d, ...(e && e.overrides || {}), ...(e && e.notes != null ? { notes: e.notes } : {}), removed: e ? e.removed || null : undefined, edited: !!e }; } return out; });
+    await page.evaluate(([labDate, labId]) => { window.__toolResults = []; window.__chatScript = [{ tool: 'edit_dates', input: { action: 'add', date: labDate, title: 'BIO lab practical', kind: 'exam', course: 'BIO 201' } }, { tool: 'edit_dates', input: { action: 'change', id: labId, notes: 'Bring the bones kit' } }, { tool: 'edit_dates', input: { action: 'remove', id: 'canvas-h-graded' } }, { tool: 'edit_dates', input: { action: 'remove', id: 'canvas-h-hall' } }]; window.__chatReply = 'Calendar updated.'; }, [labDate, labId]);
+    await send(page, 'Put the BIO lab practical on my calendar, bones kit noted, and take the study hall off'); await page.waitForTimeout(350);
+    const dcall = await page.evaluate(() => [...window.__chatCalls].reverse().find(c => Array.isArray(c.input))); let dr = await page.evaluate(() => window.__toolResults.slice(-4)); let cd = await cal();
+    ok('chat offers edit_dates with calendar ids in the context', dcall.tools.includes('edit_dates') && /Calendar, next 7 days \(id: date title\): /.test(dcall.input[0].content) && /canvas-h-hall: \d{4}-\d{2}-\d{2} Harness study hall \(other, Canvas\)/.test(dcall.input[0].content), (dcall.input[0].content.match(/Calendar, next 7 days[^\n]*/) || [''])[0].slice(0, 200));
+    ok('edit_dates adds and changes his entry, by E.V.', cd[labId] && cd[labId].addedBy === 'E.V.' && cd[labId].course === 'BIO 201' && cd[labId].kind === 'exam' && cd[labId].notes === 'Bring the bones kit' && cd[labId].edited && /^added to the calendar/.test(dr[0]) && /\(notes\)$/.test(dr[1]), JSON.stringify(cd[labId]) + ' ' + JSON.stringify(dr.slice(0, 2)));
+    ok('graded work from Canvas stays; an optional Canvas event comes off', /stays on the calendar/.test(dr[2]) && !cd['canvas-h-graded'].removed && cd['canvas-h-hall'].removed && cd['canvas-h-hall'].removed.by === 'E.V.' && /^taken off the calendar: canvas-h-hall/.test(dr[3]), JSON.stringify(dr.slice(2)));
+    await page.evaluate(() => { window.__toolResults = []; window.__chatScript = [{ tool: 'lookup', input: { what: 'dates', query: 'harness' } }]; window.__chatReply = 'Here is what I see.'; }); await send(page, 'What is on my calendar?'); await page.waitForTimeout(300);
+    const c4 = (await page.evaluate(() => [...window.__chatCalls].reverse().find(c => Array.isArray(c.input)))).input[0].content; const lk = (await page.evaluate(() => window.__toolResults.slice(-1)))[0] || '';
+    ok('the chat sees what came off the calendar, and only live entries in the week', /Taken off the calendar: canvas-h-hall: /.test(c4) && !/canvas-h-hall: [^;\n]*\(other, Canvas\)/.test((c4.match(/Calendar, next 7 days[^\n]*/) || [''])[0]));
+    ok('lookup dates returns ids and marks what is off', /"id":"canvas-h-graded"/.test(lk) && /"id":"canvas-h-hall"[^}]*"off":true/.test(lk), lk.slice(0, 200));
+    await page.click('#tab-today'); await page.waitForTimeout(150);
+    ok('Today’s week leaves out what came off and shows the new entry', !/Harness study hall/.test(await page.textContent('#ahead')) && /BIO lab practical/.test(await page.textContent('#ahead')));
+    await page.click('#tab-record'); await page.waitForTimeout(100); await page.locator('#seg-record [data-v="dates"]').click(); await page.waitForTimeout(150);
+    const offRow = page.locator('#dates-off .row', { hasText: 'Harness study hall' });
+    ok('Record → Dates lists what came off with Bring back; graded Canvas work has no Remove', (await offRow.locator('button', { hasText: 'Bring back' }).count()) === 1 && /taken off by E\.V\./.test(await offRow.textContent()) && (await page.locator('#dates .row', { hasText: 'Harness graded quiz' }).locator('button').count()) === 0 && (await page.locator('#dates .row', { hasText: 'BIO lab practical' }).locator('button', { hasText: 'Remove' }).count()) === 1);
+    await page.screenshot({ path: `${shots}/record-dates.png`, fullPage: true });
+    await offRow.locator('button', { hasText: 'Bring back' }).click(); await page.waitForTimeout(200);
+    await page.locator('#dates .row', { hasText: 'BIO lab practical' }).locator('button', { hasText: 'Remove' }).click(); await page.waitForTimeout(200); cd = await cal();
+    ok('Bring back and Remove write through E.V. core, by Matt', cd['canvas-h-hall'].removed === null && (await page.locator('#dates .row', { hasText: 'Harness study hall' }).count()) === 1 && cd[labId].removed && cd[labId].removed.by === 'Matt' && (await page.locator('#dates-off .row', { hasText: 'BIO lab practical' }).count()) === 1, JSON.stringify([cd['canvas-h-hall'].removed, cd[labId].removed]));
+    await page.fill('#d-date', labDate); await page.fill('#d-title', 'BIO lab practical'); await page.click('#date-add button[type="submit"]'); await page.waitForTimeout(200); cd = await cal();
+    ok('adding it again from the form brings it back instead of a copy', cd[labId].removed === null && Object.keys(cd).filter(k => k.startsWith(labId)).length === 1);
+    await page.click('#tab-ev'); await page.waitForTimeout(100);
+    // ---- Library (D-079): E.V. searches and reads his materials; attachments are read on the page and saved
+    await page.evaluate(() => { window.__toolResults = []; window.__gets = 0; window.__chatScript = [{ tool: 'materials', input: { action: 'search', query: 'head to toe assessment', course: 'NUR 112' } }, { tool: 'materials', input: { action: 'read', id: 'NUR112-harness-skills', page: 12 } }, { tool: 'materials', input: { action: 'list', kind: 'lab' } }]; window.__chatReply = 'From your Skills Packet, p. 12: start with hand hygiene.'; });
+    await send(page, 'Let us run the head to toe validation'); await page.waitForTimeout(300);
+    const lr = await page.evaluate(() => window.__toolResults.slice(-3));
+    const lcall2 = await page.evaluate(() => [...window.__chatCalls].reverse().find(c => Array.isArray(c.input)));
+    ok('chat offers the materials tool and the cite-your-source rule', lcall2.tools.includes('materials') && /search them first and name the file and page/.test(lcall2.input[0].content));
+    ok('materials search cites the file and page', /"cite":"Harness Skills Packet, p\. 12"/.test(lr[0]), String(lr[0]).slice(0, 200));
+    ok('materials read starts at the asked page', (() => { try { const r = JSON.parse(lr[1]); return r.text.startsWith('[p12] HEAD TO TOE') && /\[p13\] HEAD TO TOE DOCUMENTATION/.test(r.text) && r.more === false; } catch (e) { return false; } })(), String(lr[1]).slice(0, 160));
+    ok('materials list shows the lab files', /NUR112-harness-skills \| NUR 112 \| lab \| Harness Skills Packet\.pdf/.test(lr[2]));
+    ok('the library loads once per open', await page.evaluate(() => window.__gets === 1), String(await page.evaluate(() => window.__gets)));
+    const mats = () => page.evaluate(() => Object.entries(window.__db.materials || {}).filter(([id]) => /^up-/.test(id)).map(([id, m]) => ({ id, ...m })));
+    // A Word file
+    await page.setInputFiles('#ev-file', path.join(root, 'test/data/sample.docx')); await page.waitForTimeout(800);
+    let up = await mats(); let lastE = (await msgs(page)).slice(-1)[0];
+    ok('a Word attachment is read and saved to the library', up.length === 1 && /^up-\d{4}-\d{2}-\d{2}-sample$/.test(up[0].id) && /^Head-to-Toe Assessment Checklist\nPerform hand hygiene/.test(up[0].text) && up[0].addedBy === 'Matt' && up[0].course === 'NUR 112', JSON.stringify(up.map(u => [u.id, u.text.slice(0, 40)])));
+    ok('the reply names it and carries its card', /Saved \*\*sample\.docx\*\* to your library/.test(lastE.text) && lastE.cards[0].type === 'material' && (await page.locator('#thread .msg.ev').last().locator('button', { hasText: 'Remove from library' }).count()) === 1, lastE.text);
+    ok('his message shows the attachment', /Attached \*\*sample\.docx\*\*/.test((await msgs(page)).slice(-2)[0].text));
+    await page.evaluate(() => { window.__chatScript = []; window.__chatReply = 'Ok.'; }); await send(page, 'quiz me on it'); await page.waitForTimeout(250);
+    ok('the chat knows what he just attached', /Files he just attached \(in the materials tool\): up-\d{4}-\d{2}-\d{2}-sample "sample\.docx"/.test((await page.evaluate(() => [...window.__chatCalls].reverse().find(c => Array.isArray(c.input)))).input[0].content));
+    // A photo: read by Claude through sample images
+    await page.evaluate(() => { window.__sampleFn = p => /Transcribe all the text/.test(p) ? { pages: [{ page: 1, text: 'Erikson: trust vs. mistrust in infancy' }] } : { items: [] }; });
+    await page.setInputFiles('#ev-file', { name: 'erikson-photo.png', mimeType: 'image/png', buffer: fs.readFileSync(path.join(root, 'test/data/sample.png')) }); await page.waitForTimeout(800);
+    up = await mats(); const ph = up.find(u => /erikson-photo/.test(u.id));
+    const ocrCall = await page.evaluate(() => (window.__jsonCalls || []).slice(-1)[0]);
+    ok('a photo is read by Claude and saved with its source marked', ph && ph.text === '[p1] Erikson: trust vs. mistrust in infancy' && ph.ocr && ph.ocr.pages[0] === 1 && ocrCall.images === 1 && ocrCall.tier === 'default', JSON.stringify(ph && { t: ph.text, o: ph.ocr }));
+    // A text file with a real-looking record number is refused, nothing saved
+    const before4 = (await mats()).length;
+    await page.setInputFiles('#ev-file', { name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('Client notes. MRN: 4482913. Ambulated twice.') }); await page.waitForTimeout(500);
+    ok('an attachment with a record number is refused', (await mats()).length === before4 && /has a medical record number, so I didn't save it/.test((await msgs(page)).slice(-1)[0].text), (await msgs(page)).slice(-1)[0].text);
+    // A PDF: text pages with pdf.js, the image-only page read by Claude
+    if (hasPdfjs) {
+      await page.evaluate(() => { window.__sampleFn = p => /Transcribe all the text/.test(p) ? { pages: [{ page: 2, text: 'Scanned page: Erikson stages. Trust vs. mistrust (infancy)' }] } : { items: [] }; });
+      await page.setInputFiles('#ev-file', path.join(root, 'test/data/sample.pdf')); await page.waitForTimeout(3000);
+      const pdf = (await mats()).find(u => /-sample-2$|-sample$/.test(u.id) && u.fileType === 'pdf');
+      ok('a PDF is read: text pages directly, the picture page by Claude', pdf && /^\[p1\] Head-to-Toe Assessment Checklist Perform hand hygiene/.test(pdf.text) && /\[p2\] Scanned page: Erikson stages/.test(pdf.text) && pdf.pages === 2 && pdf.ocr.pages.join() === '2', JSON.stringify(pdf && { id: pdf.id, t: pdf.text.slice(0, 160), o: pdf.ocr }) + ' | ' + (await msgs(page)).slice(-1)[0].text);
+    } else console.log('NOTE PDF attachment checks skipped: npm install --no-save pdfjs-dist@4.4.168');
+    // Remove from library
+    await page.locator('#thread .msg.ev', { hasText: 'Saved **sample.docx**'.replace(/\*/g, '') }).first().locator('button', { hasText: 'Remove from library' }).click(); await page.waitForTimeout(250);
+    const rm = await page.evaluate(() => { const id = Object.keys(window.__db.materials).find(id => /-sample$/.test(id) && window.__db.materials[id].fileType === 'docx'); return id ? [id, window.__db.materials[id], (window.__db.materialedits || {})[id]] : null; });
+    ok('Remove from library marks it in materialedits and keeps the material', rm && rm[2] && rm[2].removed && rm[2].removed.by === 'Matt' && rm[1].text.length > 0, JSON.stringify(rm && rm[2]));
+    // Record > Library lists the files
+    await page.click('#tab-record'); await page.click('#seg-record [data-v="library"]'); await page.waitForTimeout(250);
+    ok('Record lists the library by course with uploads removable', (await page.locator('#library .row').count()) >= 4 && /Harness Skills Packet/.test(await page.textContent('#library')) && (await page.locator('#library .row', { hasText: 'erikson-photo' }).locator('button', { hasText: 'Remove' }).count()) === 1, String(await page.locator('#library .row').count()));
+    await page.waitForTimeout(900); await page.screenshot({ path: `${shots}/library.png`, fullPage: false });
+    await page.click('#seg-record [data-v="sessions"]'); await page.click('#tab-ev'); await page.waitForTimeout(100);
+    await page.evaluate(() => { window.__sampleFn = null; });
+    // Study > Review: the migrated set, all answered
+    await page.click('#tab-study'); await page.click('#seg-study [data-v="review"]'); await page.waitForTimeout(100);
+    const rv = await page.textContent('#rv-body');
+    ok('review summary from migrated answers', reviewExpect ? rv.includes(reviewExpect) : /Check answer/.test(rv), (reviewExpect || '(unanswered)') + ' · ' + rv.slice(0, 80));
+    // Practice: open the harness set, answer single (right), sata (wrong), matrix (right)
+    await page.click('#seg-study [data-v="practice"]'); await page.waitForTimeout(100);
+    ok('practice lists sets', (await page.locator('#pr-body .row').count()) >= 2);
+    const model = id => page.evaluate(id => { const rows = c => Object.entries(window.__db[c] || {}).map(([k, v]) => ({ id: k, ...v })); return (window.EVCore.buildWeakspots({ weakspots: rows('weakspots'), sets: rows('sets'), answers: rows('answers'), exams: rows('exams') }).find(w => w.id === id) || {}).derived; }, id);
+    const agingDerived = await model('e4-aging-expected'); const agingBefore = (agingDerived && agingDerived.streak) || 0; const agingRightToday = !!agingDerived && agingDerived.lastReviewed === today && agingDerived.lastResult === 'right';
+    await page.locator('#pr-body .row', { hasText: 'Harness set' }).locator('button').click(); await page.waitForTimeout(100);
+    await page.locator('#pr-body label.opt').nth(0).click(); await page.click('#pr-body button:has-text("Check answer")'); await page.waitForTimeout(150);
+    ok('single answered and scored', /Correct\./.test(await page.textContent('#pr-body')));
+    let ws = await model('e4-preschooler');
+    ok('the answer lands in answers/<setId> and the weak spot is recomputed from it', ws && ws.streak === 1 && ws.lastResult === 'right' && await page.evaluate(t => { const a = (window.__db.answers || {})['more-' + t + '-1']; return !!a && a.writer === 'page' && Object.keys(a.answers.m1 || {}).length === 1 && !window.__db.weakspots['e4-preschooler'].derived; }, today), JSON.stringify(ws && { s: ws.streak, n: ws.nextDue }));
+    await page.click('#pr-body button:has-text("Next question")'); await page.waitForTimeout(100);
+    await page.locator('#pr-body label.opt').nth(0).click(); await page.locator('#pr-body label.opt').nth(2).click();
+    await page.click('#pr-body button:has-text("Check answer")'); await page.waitForTimeout(150);
+    const t2 = await page.textContent('#pr-body');
+    ok('select-all partial credit shown', /Partly right|Not quite/.test(t2));
+    const created = await page.evaluate(() => Object.keys(window.__db.weakspots).filter(k => k.includes('E4-2')));
+    ok('missed check created a weak spot', created.length === 1, created.join(','));
+    await page.click('#pr-body button:has-text("Next question")'); await page.waitForTimeout(100);
+    const radios = page.locator('#pr-body table.mx input[type=radio]');
+    ok('matrix renders 3 rows x 2 columns', (await radios.count()) === 6);
+    await radios.nth(0).check(); await radios.nth(3).check(); await radios.nth(4).check();
+    await page.click('#pr-body button:has-text("Check answer")'); await page.waitForTimeout(150);
+    ok('matrix answered correctly', /Correct\./.test(await page.textContent('#pr-body')));
+    ws = await model('e4-aging-expected');
+    ok('matrix right: today counts once toward the streak', ws.streak === agingBefore + 1 || (ws.streak === agingBefore && agingRightToday), JSON.stringify({ before: agingBefore, s: ws.streak, last: ws.lastReviewed }));
+    await page.screenshot({ path: `${shots}/practice.png`, fullPage: true });
+    // Plan: tick a task
+    await page.click('#seg-study [data-v="plan"]'); await page.waitForTimeout(100);
+    const planRows = page.locator('#plan-card .plan-day').first().locator('input.tick');
+    ok('plan shows tasks', (await planRows.count()) > 0);
+    const before = await page.evaluate(() => Object.keys(((window.__db.planedits || {}).E4 || {}).ticks || {}).length);
+    const firstUnchecked = page.locator('#plan-card .plan-day').first().locator('input.tick:not(:checked)').first();
+    await firstUnchecked.check(); await page.waitForTimeout(150);
+    const after = await page.evaluate(() => Object.keys(((window.__db.planedits || {}).E4 || {}).ticks || {}).length);
+    ok('plan tick saved to planedits/E4, the plan untouched', after === before + 1 && !(await page.evaluate(() => window.__db.plans.E4.done)), before + ' -> ' + after);
+    await page.screenshot({ path: `${shots}/plan.png`, fullPage: true });
+    // Progress
+    await page.click('#tab-progress'); await page.waitForTimeout(100);
+    const rd = await page.textContent('#ready-card');
+    ok('readiness shows E4', /Exam 4/.test(rd) && /% solid/.test(rd), rd.slice(0, 100));
+    await page.click('#seg-progress [data-v="weak"]'); await page.waitForTimeout(100);
+    ok('weak spots listed', (await page.locator('#weak-active .row').count()) > 10, String(await page.locator('#weak-active .row').count()));
+    ok('previews listed', (await page.locator('#weak-preview .row').count()) === 4, String(await page.locator('#weak-preview .row').count()));
+    await page.locator('#weak-active .row').first().locator('button').click(); await page.waitForTimeout(150);
+    const solidEv = await page.evaluate(() => Object.entries(window.__db.weakspots).filter(([, w]) => w.events && Object.values(w.events).some(e => e.type === 'solid' && e.by === 'owner')).map(([id]) => id));
+    ok('mark solid writes an owner event', solidEv.length === 1, solidEv.join(','));
+    await page.screenshot({ path: `${shots}/progress.png`, fullPage: true });
+    // Record
+    await page.click('#tab-record'); await page.waitForTimeout(100);
+    ok('sessions listed', (await page.locator('#sessions .row').count()) === 2);
+    ok('ideas show links', /1 link/.test(await page.textContent('#ideas')));
+    await page.click('#seg-record [data-v="journal"]'); await page.fill('#j-text', 'Resident in room 12 was confused.'); await page.waitForTimeout(50);
+    ok('journal warns about identifiers', /room number/.test(await page.textContent('#j-warn')));
+    // System
+    await page.click('#tab-system'); await page.waitForTimeout(100);
+    ok('system shows capacity and the runs', /documents|health check/.test(await page.textContent('#capacity')) && (await page.locator('#pipes .row').count()) >= 5, await page.textContent('#capacity'));
+    await page.screenshot({ path: `${shots}/system.png`, fullPage: true });
+    ok('no page errors after interactions', errors.length === 0, errors.join(' | '));
+    // Visitor
+    const v = await browser.newPage({ viewport: { width: 390, height: 700 } });
+    await openPage(v, 'staging', 'window.__notOwner=true;'); await v.waitForTimeout(600);
+    ok('visitors see nothing and cannot write', /private study record/.test(await v.textContent('#status')) && (await v.evaluate(() => window.__writes.length)) === 0);
+    await page.close(); await v.close();
+    // Staging page: same page, staging worker only; filing is live-only
+    const st = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    await st.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
+    await openPage(st, 'staging'); await st.waitForTimeout(900);
+    await st.evaluate(() => { window.__chatScript = [{ tool: 'start_job', input: { kind: 'general', title: 'Staging check', brief: 'harness' } }]; window.__chatReply = 'Queued.'; });
+    await send(st, 'Run a staging job'); await st.waitForTimeout(300);
+    const smc = await st.evaluate(() => window.__mcpCalls[0]);
+    ok('staging fires only the staging worker', smc && smc[2].trigger_id === stagingWorker, JSON.stringify(smc));
+    await send(st, 'File it'); await st.waitForTimeout(200);
+    ok('file it answers without firing a Mac task', /evening run/.test((await msgs(st)).slice(-1)[0].text) && (await st.evaluate(() => window.__mcpCalls.length)) === 1);
+    ok('staging readout says staging', /staging/i.test(await st.textContent('#readout')));
+    await st.close();
+
+    // ---- Study session, entirely in the E.V. conversation (D-073). A fake clock fast-forwards to each check.
+    const ss = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    const sErr = []; ss.on('pageerror', e => sErr.push(e.message)); ss.on('console', m => { if (m.type() === 'error') sErr.push(m.text()); });
+    await ss.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
+    await openPage(ss); await ss.waitForTimeout(900);
+    const host = spec.registry.studyWatch.reader.host;
+    const note1 = 'Fluids and electrolytes\nIsotonic: 0.9% NaCl stays in the vessels.';
+    const setNote = (text, extra = {}) => ss.evaluate(([t, e]) => { window.__readerNote = { found: true, appVersion: '0.4', note: { id: 'x-coredata://n1', name: 'Fluids and electrolytes', folder: '2026/2026 Fall/NUR 112/Week 9', modifiedAt: new Date().toISOString(), text: t }, ...e }; }, [text, extra]);
+    const sess = () => ss.evaluate(() => Object.entries(window.__db.sessions || {}).filter(([, x]) => x.source === 'E.V. Home').map(([id, x]) => ({ id, ...x }))[0] || null);
+    // Moves the page's wall clock forward, then waits for done(). Not clock.fastForward: with the core's animation frames
+    // keeping Playwright's fake clock busy, its real-time sync can finish after a fast-forward and rewind the clock.
+    const jump = async (ms, done) => { await ss.clock.setSystemTime(await ss.evaluate(() => Date.now()) + ms); for (let i = 0; i < 50 && !(await done()); i++) await ss.waitForTimeout(100); await ss.waitForTimeout(250); };
+    const hasEvent = test => async () => { const s = await sess(); return !!s && Object.values(s.events || {}).some(test); };
+    // Without the reader (a browser tab or the iPhone), E.V. says where to open the page
+    await ss.evaluate(() => { window.__readerFail = 'server_not_connected'; });
+    ok('session chip offered', (await ss.locator('#qchips .qchip', { hasText: 'Start a study session' }).count()) === 1);
+    await ss.locator('#qchips .qchip', { hasText: 'Start a study session' }).click(); await ss.waitForTimeout(300);
+    ok('no reader: says to open the desktop app, starts nothing', /Claude desktop app on your Mac/.test((await msgs(ss)).slice(-1)[0].text) && !(await sess()), (await msgs(ss)).slice(-1)[0].text);
+    // A #graded note is refused
+    await ss.evaluate(() => { window.__readerFail = null; }); await setNote('', { graded: true });
+    await send(ss, 'Start a study session'); await ss.waitForTimeout(300);
+    ok('graded note refused', /#graded/.test((await msgs(ss)).slice(-1)[0].text) && !(await sess()));
+    // Start
+    await setNote(note1);
+    await send(ss, 'start a study session'); await ss.waitForTimeout(400);
+    let S1 = await sess();
+    ok('session saved as active with a start mark, no note text', S1 && S1.status === 'active' && S1.topic === 'Fluids and electrolytes' && Object.values(S1.events)[0].len === note1.length && !JSON.stringify(S1).includes('Isotonic'), JSON.stringify(S1 && S1.events));
+    ok('start message in the thread', /Session started on Fluids and electrolytes/.test((await msgs(ss)).slice(-1)[0].text.replace(/\*\*/g, '')));
+    ok('session ring holds the core', (await ss.locator('#sbar .s-ring canvas').count()) === 1 && await ss.evaluate(() => document.body.classList.contains('in-session') && !document.body.classList.contains('opening')));
+    ok('session bar shows the note and the next check', !(await ss.isHidden('#sbar')) && /Fluids and electrolytes/.test(await ss.textContent('#sbar')) && /next check 6:5\d|next check 7:00/.test(await ss.textContent('#sbar')), await ss.textContent('#sbar'));
+    ok('chip hidden while a session runs', (await ss.locator('#qchips .qchip', { hasText: 'Start a study session' }).count()) === 0);
+    await ss.screenshot({ path: `${shots}/session-bar.png` });
+    // First check: only the new writing goes to Claude, the reply posts as a check card
+    await setNote(note1 + '\nHypotonic: 0.45% NaCl shifts water into the cells.');
+    await ss.evaluate(() => { window.__sampleFn = p => /Study session check/.test(p) ? { items: [{ text: '1. Why does 0.45% NaCl move water into the cells?', kind: 'why' }, { text: 'Your note has no hypertonic example yet.', kind: 'gap' }] } : { summary: 'Worked through IV fluid tonicity and where water moves.', weakSpots: [{ objective: 'E4-3', topic: 'Hypokalemia findings' }, { objective: 'E4-3', topic: 'Fluid volume excess signs' }, { objective: 'E4-3', topic: 'Hypotonic vs isotonic fluid shifts' }, { topic: 'Why the kidneys hold sodium' }], connections: ['Sodium pulls water, which links fluids to edema'], noteTodos: ['Add a hypertonic example'], cards: [{ term: 'Isotonic', definition: '0.9% NaCl; stays in the vessels' }, { term: 'Hypotonic', definition: '0.45% NaCl; water moves into cells' }] }; });
+    await jump(425e3, hasEvent(e => e.type === 'check'));
+    S1 = await sess(); const chk = Object.values(S1.events).find(e => e.type === 'check');
+    const jp = await ss.evaluate(() => (window.__jsonCalls || []).slice(-1)[0]);
+    ok('check reads the note through the reader', await ss.evaluate(h => window.__mcpCalls.some(c => c[0] === h && c[1] === 'latest_note'), host));
+    ok('check prompt carries only the new writing and the record context', jp && /New text since the last check:\n\nHypotonic: 0.45% NaCl/.test(jp.prompt) && /Testable objectives:/.test(jp.prompt) && jp.tier === 'quick', jp && jp.prompt.slice(0, 400));
+    ok('check event keeps a mark, not the text', chk && chk.n === 1 && chk.items === 2 && chk.len > note1.length && !JSON.stringify(S1).includes('Hypotonic'), JSON.stringify(chk));
+    const lastChk = (await msgs(ss)).slice(-1)[0];
+    ok('check posted as a card with its items', lastChk.cards && lastChk.cards[0].type === 'check' && lastChk.cards[0].items.length === 2 && lastChk.cards[0].items[0].text === 'Why does 0.45% NaCl move water into the cells?', JSON.stringify(lastChk.cards));
+    ok('check card rendered', /Two questions on what you just wrote/.test((await msgs(ss)).slice(-1)[0].text) && /Check 1 · Fluids and electrolytes/.test(await ss.locator('#thread .msg.ev').last().textContent()) && (await ss.locator('#thread .msg.ev').last().locator('ol.check-items li').count()) === 2);
+    // Answer in the composer: recorded on the session, and Claude sees the check's questions
+    await ss.evaluate(() => { window.__sampleFn && (window.__chatReply = 'Right: less solute outside, so water moves in. What happens to cell size?'); window.__chatScript = []; });
+    await ss.locator('#thread .msg.ev').last().locator('button', { hasText: 'Answer' }).click();
+    ok('Answer focuses the composer', await ss.evaluate(() => document.activeElement && document.activeElement.id === 'ev-input' && /Answer check 1/.test(document.activeElement.placeholder)));
+    await send(ss, 'There is less solute in the fluid so water moves into the cells'); await ss.waitForTimeout(400);
+    S1 = await sess(); const ans = Object.values(S1.events).find(e => e.type === 'answer');
+    const cc = await ss.evaluate(() => [...window.__chatCalls].reverse().find(c => Array.isArray(c.input)));
+    ok('answer recorded on the session', ans && ans.n === 1 && /^m-\d{8}-\d{9}-matt$/.test(ans.msgId), JSON.stringify(ans));
+    ok('chat sees the session and the check questions', /Study session running on his note "Fluids and electrolytes"/.test(cc.input[0].content) && cc.input.some(t => /Why does 0\.45% NaCl move water into the cells\?/.test(t.content)) && cc.tools.includes('study_session'));
+    ok('check card shows answered', /answered/.test(await ss.locator('#thread .msg.ev', { hasText: 'Check 1 ·' }).textContent()));
+    // Break and resume from the bar
+    await ss.locator('#sbar button', { hasText: 'Break' }).click(); await ss.waitForTimeout(300);
+    ok('break shown in the bar', /On a break/.test(await ss.textContent('#sbar')) && Object.values((await sess()).events).some(e => e.type === 'break'));
+    await ss.screenshot({ path: `${shots}/session-break.png` });
+    await ss.locator('#sbar button', { hasText: 'Resume' }).click(); await ss.waitForTimeout(300);
+    ok('resume restarts the countdown', /next check/.test(await ss.textContent('#sbar')));
+    // New writing with what looks like an identifier skips the check and says why, once
+    await setNote(note1 + '\nHypotonic: 0.45% NaCl shifts water into the cells.\nThe resident in room 12 had edema.');
+    const before3 = (await msgs(ss)).length; await jump(425e3, hasEvent(e => e.type === 'skip' && e.why === 'identifiers'));
+    S1 = await sess();
+    ok('identifier skips the check', Object.values(S1.events).some(e => e.type === 'skip' && e.why === 'identifiers') && /room number/.test((await msgs(ss)).slice(-1)[0].text) && (await msgs(ss)).length === before3 + 1);
+    // End: wrap-up as JSON, filed with the same rules as evening filing; near-repeat waits on a tap
+    await ss.locator('#sbar button', { hasText: 'End' }).click();
+    for (let i = 0; i < 50 && !(((await sess()) || {}).status === 'ended' && /Session saved/.test((await msgs(ss)).slice(-1)[0].text)); i++) await ss.waitForTimeout(100);
+    await ss.waitForTimeout(400);
+    S1 = await sess();
+    ok('session ended with summary, counts and cards', S1.weakSpots.length === 3 && S1.connections.includes('Why the kidneys hold sodium') && S1.status === 'ended' && /tonicity/.test(S1.summary) && S1.checks === 1 && S1.questions === 2 && S1.cardCount === 2 && S1.minutes >= 14, JSON.stringify({ st: S1.status, m: S1.minutes, c: S1.checks, q: S1.questions }));
+    const wsNew = await ss.evaluate(() => Object.entries(window.__db.weakspots).filter(([, w]) => /Study session/.test(w.addedBy || '') || /^E\.V\. Home · /.test(w.source || '') || /Study session/.test(w.source || '')).map(([id, w]) => ({ id, ...w })));
+    ok('new weak spot (objective) and note to-do, as Facts', wsNew.some(w => w.topic === 'Hypotonic vs isotonic fluid shifts' && w.kind === 'concept' && !w.derived && w.writer === 'page') && wsNew.some(w => w.kind === 'note' && /hypertonic/.test(w.topic)), wsNew.map(w => w.topic).join(' | '));
+    ok('exact repeat bumps the existing weak spot', await ss.evaluate(() => Object.values(window.__db.weakspots['ws-2026-10-17-E4-3-hypokalemia-findings'].events || {}).some(e => e.type === 'seen' && e.by === 'Study session')));
+    ok('ideas kept from the session', await ss.evaluate(() => Object.values(window.__db.ideas).filter(i => i.by === 'Study session' && /^Study session · /.test(i.source)).length === 2));
+    ok('near-repeat waits on Matt', S1.pending && S1.pending.ws1 && S1.pending.ws1.candidate.id === 'ws-2026-10-17-E4-3-fluid-volume-excess', JSON.stringify(S1.pending));
+    const card = ss.locator('#thread .msg.ev').last();
+    ok('wrap-up card: summary, sections, Quizlet copy, same-or-different', /Session saved/.test((await msgs(ss)).slice(-1)[0].text) && /Worked through IV fluid tonicity/.test(await card.textContent()) && (await card.locator('button', { hasText: 'Copy 2 cards for Quizlet' }).count()) === 1 && (await card.locator('button', { hasText: 'Same' }).count()) === 1);
+    ok('bar gone after the session', await ss.isHidden('#sbar'));
+    await ss.screenshot({ path: `${shots}/session-wrap.png`, fullPage: true });
+    await card.locator('button', { hasText: 'Same' }).click(); await ss.waitForTimeout(400);
+    S1 = await sess();
+    ok('same: bumps the old weak spot and clears the question', S1.pending.ws1 === null && await ss.evaluate(() => Object.values(window.__db.weakspots['ws-2026-10-17-E4-3-fluid-volume-excess'].events || {}).some(e => e.type === 'seen' && e.by === 'Study session')));
+    ok('Record lists the session', await (async () => { await ss.click('#tab-record'); await ss.waitForTimeout(150); const t = await ss.textContent('#sessions'); await ss.click('#tab-ev'); return /Fluids and electrolytes/.test(t); })());
+    ok('back on E.V., the newest message is in view', await ss.evaluate(() => { const r = [...document.querySelectorAll('#thread .msg')].pop().getBoundingClientRect(); return r.top < innerHeight && r.bottom > 0; }));
+    await ss.setViewportSize({ width: 1280, height: 860 }); await ss.waitForTimeout(300);
+    await ss.screenshot({ path: `${shots}/session-wrap-desktop.png`, fullPage: false });
+    await ss.setViewportSize({ width: 390, height: 844 }); await ss.waitForTimeout(200);
+    ok('session: no sideways scroll', !(await ss.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)));
+    ok('session: no page errors', sErr.length === 0, sErr.join(' | '));
+    await ss.close();
   }
-  // The boot's refusals, each with its plain sentence and nothing else drawn.
-  const phone = { width: 390, height: 844 };
-  let r = await open(browser, { viewport: phone, pre: 'window.__notOwner=true;' }); await r.page.waitForTimeout(400);
-  ok('someone other than the owner sees only the private-record line', /private study record/.test(await statusText(r.page)) && !(await r.page.isVisible('#p-ev')) && !(await r.page.isVisible('.dock')));
-  await r.page.close();
-  r = await open(browser, { viewport: phone, overrides: { 'app.js': fs.readFileSync(path.join(pageDir, 'app.js'), 'utf8').replace("const VERSION = 'v4.0.0'", "const VERSION = 'v4.0.0-old'") } }); await r.page.waitForTimeout(400);
-  ok('files from two releases stop the boot and say so', /different releases.*app v4\.0\.0-old/.test(await statusText(r.page)), await statusText(r.page));
-  await r.page.close();
-  r = await open(browser, { viewport: phone, overrides: { 'core.js': null } }); await r.page.waitForTimeout(400);
-  ok('a file that does not load stops the boot and says which', /could not load its files \(core\.js did not load\)/.test(await statusText(r.page)), await statusText(r.page));
-  await r.page.screenshot({ path: `${shots}/boot-failed-phone.png` });
-  await r.page.close();
   await browser.close();
-  for (const [s, n, d] of results) console.log(`${s}  ${n}${d && s === 'FAIL' ? '  -- ' + d : ''}`);
-  const failed = results.filter(x => x[0] === 'FAIL').length;
-  console.log(`\n${results.length - failed} of ${results.length} checks pass; screenshots in ${shots}`);
+  for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : '');
+  const failed = results.filter(r => r[0] === 'FAIL').length;
+  console.log(failed ? `SOME FAILED: ${failed} of ${results.length}` : `ALL PASSED: ${results.length} checks`);
   process.exit(failed ? 1 : 0);
-})().catch(e => { console.error(e); process.exit(1); });
+})().catch(e => { for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : ''); console.log('CRASHED', e.message.split('\n')[0]); process.exit(1); });

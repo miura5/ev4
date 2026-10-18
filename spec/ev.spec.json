@@ -675,6 +675,34 @@
   "repos": {
    "v4": "miura5/ev4",
    "v3": "miura5/ev-core"
+  },
+  "studyWatch": {
+   "app": {
+    "version": "0.4",
+    "path": "~/Applications/E.V. Study Watch.app",
+    "source": "studywatch/app (build on the Mac with build.sh)",
+    "modes": {
+     "reader": "default: saves the school note being written to <mac folder>/live/latest.json about every 30 s when its text changed; no Claude calls",
+     "classic": "0.3 behavior: its own sessions, questions and session files (filed by the evening run or File it)"
+    }
+   },
+   "reader": {
+    "name": "E.V. Study Watch reader",
+    "version": "0.2.0",
+    "host": "host:E_V__Study_Watch_reader",
+    "tools": [
+     "status",
+     "latest_note",
+     "list_sessions",
+     "read_session"
+    ],
+    "source": "studywatch/reader (packed with mcpb into dist/ev-study-watch-reader.mcpb; Matt installs it in the Claude desktop app)",
+    "reads": [
+     "context.json",
+     "live/latest.json"
+    ],
+    "note": "Read-only. Reachable only from E.V. Home opened in the Claude desktop app on Matt's Mac, and only by the owner. Verified Oct 17, 2026 with the private check page Study Watch Reader Check."
+   }
   }
  },
  "collections": {
@@ -1841,7 +1869,253 @@
    }
   }
  },
+ "persona": {
+  "name": "E.V.",
+  "unit": "EV-03",
+  "tagline": "Homemade study unit. Core data platform, three pipelines, one student.",
+  "role": "Matt's study partner and second brain. It remembers, plans, writes practice and runs the background work. It is not Matt and does not decide for him.",
+  "voice": [
+   "Short and plain. Lead with the answer or the action; one to four sentences unless he asks for more.",
+   "Dry, loyal, a little corporate-AI in small doses ('Logged.', 'Noted for the record.', 'Systems nominal.'). At most one joke per reply, never at his expense.",
+   "Speaks as 'I'; calls him Matt now and then; never 'as an AI'.",
+   "Warm when he is tired or stressed: name it plainly, offer one concrete easing, never guilt.",
+   "Explains nursing content like a sharp classmate: the rule, why it works, one memory hook, and when it matters on the NCLEX.",
+   "Admits uncertainty: anything not from his course materials is marked 'check your materials'.",
+   "At most two unprompted suggestions a day outside the daily brief (B-14)."
+  ],
+  "never": [
+   "Help with graded or submitted work, including graded clinical work (B-01); it schedules those and stops there.",
+   "Use or keep patient identifiers (B-04); made-up clients only.",
+   "Diagnose or give medical advice about Matt's own health (B-05); it can adjust the study plan and suggest he talk to a clinician.",
+   "Send messages or post as Matt (B-09).",
+   "Pretend to remember what isn't in the record or the conversation memory."
+  ],
+  "avatar": {
+   "look": "a particle core (A · Aurora, D-077): ribbon filaments of fine points around a hot core, with drifting sparks, always teal and violet; drawn live on a canvas by one shared loop on the page",
+   "moods": [
+    "idle",
+    "listening",
+    "thinking",
+    "speaking",
+    "alert",
+    "happy",
+    "sleepy"
+   ],
+   "when": {
+    "idle": "nothing happening",
+    "listening": "Matt is typing",
+    "thinking": "Claude is working on a reply or a check",
+    "speaking": "a reply is streaming",
+    "alert": "a session check just posted (a ring goes out)",
+    "happy": "a right answer, the page opening on a clear day",
+    "sleepy": "on a session break, late at night"
+   },
+   "sizes": {
+    "opening": "180 to 260 px, centred above the greeting",
+    "topBar": 40,
+    "sessionRing": 52,
+    "message": 32
+   },
+   "rules": [
+    "Color never changes; motion carries the state.",
+    "Only cores that follow E.V.'s state animate: the opening core, the top bar, the session ring and the newest E.V. message. Older message cores hold one still frame.",
+    "Off-screen cores are skipped; cores under 128 px run at 30 fps; reduced motion shows still frames only."
+   ]
+  }
+ },
+ "items": {
+  "types": {
+   "single": "options 3-6, exactly one correct index, a rationale per option",
+   "sata": "options 5-6, two or more correct, a rationale per option; never 'select N' or 'select two'",
+   "matrix": "matrix.columns 2-4 labels, matrix.rows 3-6 of {text, correct: column index, rationale}; scored per row, correct only when every row is right"
+  },
+  "fields": [
+   "id",
+   "kind (review|check|drill|sim|more)",
+   "weakspotId (reviews)",
+   "objective",
+   "topic",
+   "type",
+   "stem",
+   "options",
+   "correct",
+   "rationales",
+   "matrix",
+   "cjStep",
+   "verify",
+   "sourceRef (materials/<id>)",
+   "chapters"
+  ],
+  "cjSteps": [
+   "recognize-cues",
+   "analyze-cues",
+   "prioritize-hypotheses",
+   "generate-solutions",
+   "take-action",
+   "evaluate-outcomes"
+  ],
+  "cjStepLabels": {
+   "recognize-cues": "Recognize cues",
+   "analyze-cues": "Analyze cues",
+   "prioritize-hypotheses": "Prioritize hypotheses",
+   "generate-solutions": "Generate solutions",
+   "take-action": "Take action",
+   "evaluate-outcomes": "Evaluate outcomes"
+  },
+  "writingGuide": [
+   "Realistic made-up client scenarios; never real patients.",
+   "One question per weak spot per set; never the same stem twice for the same weak spot.",
+   "Lean on formats Matt misses (kind format weak spots): matrix and select-all often.",
+   "A rationale for every option says why it is right or wrong.",
+   "Tag every item to its objective and one clinical-judgment step.",
+   "Ground in materials (sourceRef); if the point comes from general knowledge, set verify true.",
+   "No graded coursework, no drug cards before that week's medication table is turned in."
+  ]
+ },
  "ui": {
+  "tabs": [
+   {
+    "id": "ev",
+    "label": "E.V.",
+    "answers": "What should I do now? Ask me anything.",
+    "holds": [
+     "E.V.'s greeting (EVCore.greeting: time of day, open items, insights)",
+     "the conversation with cards",
+     "quick chips",
+     "background jobs",
+     "study sessions: a session bar under the top bar, check cards and the wrap-up card in the thread"
+    ]
+   },
+   {
+    "id": "today",
+    "label": "Today",
+    "answers": "What now?",
+    "holds": [
+     "Now card (one primary action)",
+     "today's list with checkboxes; an add row; items added by Matt or E.V. carry a Remove button (D-078)",
+     "next 7 days"
+    ]
+   },
+   {
+    "id": "study",
+    "label": "Study",
+    "holds": [
+     "Review set",
+     "drills and sims",
+     "exam plan checklist",
+     "More practice"
+    ]
+   },
+   {
+    "id": "progress",
+    "label": "Progress",
+    "holds": [
+     "readiness",
+     "accuracy by objective, format and clinical-judgment step",
+     "weak spots"
+    ]
+   },
+   {
+    "id": "record",
+    "label": "Record",
+    "holds": [
+     "sessions and ideas",
+     "dates, with Remove and Bring back (D-080)",
+     "journal",
+     "announcements",
+     "library"
+    ]
+   },
+   {
+    "id": "system",
+    "label": "System",
+    "holds": [
+     "pipeline runs",
+     "capacity",
+     "backup",
+     "spec and code versions",
+     "lint"
+    ]
+   }
+  ],
+  "kit": [
+   "card",
+   "row (title, one line of detail, at most one button)",
+   "chip",
+   "stat tile",
+   "table",
+   "question runner (single, select-all, matrix)",
+   "empty state (says when content will appear)",
+   "conversation message with its own core, and cards (today, review, readiness, dates, weak spots, practice, job, link, chart)",
+   "session bar: timer ring with E.V.'s core inside, note, clock, Break / +5 min / End"
+  ],
+  "rules": [
+   "The page opens on E.V. (the conversation); after it, at most five tabs.",
+   "One primary button per card; every write shows feedback.",
+   "Phone first: 44px touch targets, dark only (A · Aurora), no sideways scrolling.",
+   "Rules live once, in E.V. core; the page never re-implements logic a pipeline uses.",
+   "A new feature: define the shape here, place it in an existing tab, build from the kit, test in staging at phone and desktop size, publish, add a changelog line."
+  ],
+  "conversation": {
+   "opens": "The page always opens on E.V. A #tab link can open another tab.",
+   "greeting": "EVCore.greeting on each open, frozen for that open; never stored.",
+   "quickAsks": "Greeting chips and their typed equivalents are answered on the page with no model call: Start review, Start a study session, What's due this week?, Give me 5 more, File it, How ready am I?, I'm wiped, Show my progress, plus End session, Take a break, Resume and Add 5 minutes while a session runs.",
+   "chat": "sample with the persona, rules and a compact record summary as the first turn, then up to 14 recent turns after talk/memory.upTo. Tier: quick by default; default for explain/why/compare questions or long messages, and for 'Go deeper'.",
+   "tools": [
+    "show_card",
+    "start_job",
+    "add_weakspot",
+    "edit_dates",
+    "log_checkin",
+    "tick_item",
+    "edit_list",
+    "lookup",
+    "materials",
+    "save_idea",
+    "make_practice",
+    "file_sessions",
+    "study_session"
+   ],
+   "cards": [
+    "today",
+    "review",
+    "set",
+    "readiness",
+    "dates",
+    "weakspots",
+    "job",
+    "chart",
+    "checkin",
+    "link",
+    "check",
+    "session"
+   ],
+   "guard": "Messages that look like they carry patient identifiers (EVCore.scanIdentifiers) are held once; tools refuse to store them.",
+   "errors": "sample and mcp failures are branched by code; nothing retries on its own. Writes to the connector are re-sent only from a 'Try again' click.",
+   "sessions": {
+    "where": "Entirely in the E.V. conversation (D-073). Nothing in the Study tab.",
+    "start": "'Start a study session' (chip, typed, or the study_session tool) binds to the school note Study Watch saved last, read through the reader connector. Without the reader (a browser tab, the iPhone) E.V. says to open E.V. Home in the Claude desktop app on the Mac.",
+    "checks": "Every checkMinutes (breaks and +5 min shift it), the page reads latest_note, computes the new writing with EVCore.noteDelta, and asks sample.json with EVCore.checkPrompt for 1 to 3 items. E.V. posts them as a check card; Matt answers in the card or in the composer, and E.V. replies as a study partner. No new writing for idleChecksToEnd checks wraps the session up.",
+    "guard": "#graded notes and new text with what looks like a patient identifier (EVCore.scanIdentifiers) skip that check and say why.",
+    "end": "End (bar, chip, typed or tool) asks sample.json with EVCore.wrapPrompt, then EVCore.closeSession writes the session, weak spots, ideas and note to-dos; near-repeats wait in the wrap-up card for a same-or-different tap. Cards copy as Quizlet text."
+   },
+   "listEdits": "E.V. edits the daily list with edit_list (D-078): add a study task he or E.V. proposes (today or a day in the next week), remove an added item, or take a planned item off for the day when he asks, and bring it back. Graded work, exams, clinicals and validations stay. Rules in EVCore.listEdit and EVCore.dayView; The calendar is edited the same way with edit_dates (dateEdits).",
+   "library": "His course materials (D-079). The materials tool lists the library, searches it (cites file and page) and reads a file from a page on. The composer's attach button adds a PDF, Word, PowerPoint, text file or photo: text is extracted on the page (pdf.js, EVCore.officeText); scanned pages and photos are read by Claude through sample images (EVCore.ocrPrompt); the result is saved as materials/up-… (EVCore.materialFromUpload). Patient identifiers block the save. Graded work stays his alone even when its instructions are in the library.",
+   "dateEdits": "E.V. keeps the calendar with edit_dates (D-080): add a deadline or event, change an entry he or E.V. added (date, title, kind, course, graded, notes; Canvas entries take notes only, since Canvas keeps their date and title current), take an entry off and bring it back. Graded work, exams, clinicals and validations from Canvas stay. Moving a calendar entry onto the list is two edits: edit_list add, then edit_dates remove. Rules in EVCore.dateEdit, EVCore.liveDates and EVCore.isFixedDate; Record → Dates has Remove and Bring back too."
+  },
+  "look": {
+   "name": "A · Aurora (D-077)",
+   "theme": "Dark only. Ground #070A12; cards are 4% white glass with a 9% white edge; text #E6EEF2, secondary #98A7B3.",
+   "colorRoles": {
+    "teal #3FE0C5": "do it or done: primary buttons, ticks, progress, the session ring, a check waiting on Matt",
+    "violet #9A7BFF": "secondary: more practice, select-all and clinical-judgment tags, right once, Same or Different",
+    "amber #F2B45A": "needs attention: due today, deferred, validations, a session break, warnings",
+    "coral #F08A78": "graded work (yours alone), wrong answers, failures"
+   },
+   "type": "Geist for text (16 to 17 px body), Geist Mono for labels and readouts",
+   "layout": "Sticky top bar (small E.V. core, readout, status, System button); one centred column; a floating dock with E.V., Today, Study, Progress and Record. The E.V. tab opens with a large core above the greeting; after his first message today, or while a session runs, the core moves to the top bar (or into the session ring) and each E.V. message gets its own small core.",
+   "motion": "New messages rise in over 0.6 s; the core eases between states over about half a second; timers move once a second; reduced motion turns animation off."
+  },
   "page": {
    "_rules": [
     "Page delivery (Operational architecture): a shell plus published files, each a build output hashed in the manifest. The shell holds markup and boot code and changes rarely; core.js, spec.json, app.js and styles.css change with the rules, the spec, the page logic and the look.",

@@ -38,7 +38,7 @@
     // comes back joined by a blank line, both on onText and in the result.
     const pre = window.__chatPre || '';
     if (pre && opts.onText) opts.onText({ text: pre, delta: pre });
-    for (const step of (window.__chatScript || [])) {
+    for (const step of (opts.tools ? window.__chatScript || [] : [])) { // a call without tools (the running summary) runs no script
       const t = (opts.tools || []).find(x => x.name === step.tool);
       try { window.__toolResults.push(t ? await t.execute(step.input || {}, { signal: new AbortController().signal }) : 'Error: no tool ' + step.tool); } catch (e) { window.__toolResults.push('Error: ' + e.message); }
     }
