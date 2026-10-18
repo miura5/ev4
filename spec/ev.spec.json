@@ -2572,7 +2572,7 @@
    },
    "exam-retro": {
     "label": "Exam retro",
-    "guide": "Write the retro for the exam the brief names from the numbers in retro (D-104): the night-before prediction against his score and how far off it was; his practice accuracy, weakest objective first; the weak spots he made solid and the ones still open (by topic); the plan tasks done and left. End with one or two things to carry into the next exam. Use only those numbers and his own topic words: never mention, guess at or ask about the exam’s questions or his graded answers. Warm and plain, at most 1,200 characters in text, no links. If retro.score is null, say the comparison comes once he enters his score. If retro is null, say in failed that the exam isn’t in his record."
+    "guide": "Write the retro for the exam the brief names from the numbers in retro (D-104): the night-before prediction against his score and how far off it was; his practice accuracy, weakest objective first; the weak spots he made solid and the ones still open (by topic); the plan tasks done and left. End with one or two things to carry into the next exam. Use only those numbers and his own topic words: never mention, guess at or ask about the exam’s questions or his graded answers. Warm and plain, at most 1,200 characters in text, no links. The prediction is E.V.’s own (its morning run writes one the day before a NUR unit exam): never ask him to make or log one; with none on file, just say there was nothing to compare against. If retro.score is null, say the comparison comes once he enters his score. If retro is null, say in failed that the exam isn’t in his record."
    },
    "general": {
     "label": "Background task",

@@ -227,7 +227,7 @@ test('B-47 (D-104): an exam-retro job gets examRetro\'s numbers as material and 
   const w = RUN.compute({ spec, dir, validate, at });
   assert.equal(w.status, 'waiting');
   const m = w.question.material;
-  assert.equal(m.job.kind, 'exam-retro'); assert.match(m.guide, /never mention, guess at or ask about the exam/);
+  assert.equal(m.job.kind, 'exam-retro'); assert.match(m.guide, /never mention, guess at or ask about the exam/); assert.match(m.guide, /never ask him to make or log one/);
   assert.deepEqual([m.context.retro.examId, m.context.retro.score], ['E8', 90]);
   assert.deepEqual(m.context.retro.calibration, { score: 90, predictedRange: [80, 88], inRange: false, error: 6 });
   answer(dir, 'do-job', { text: 'You scored 90, two points above the top of my range. I underrated you; next time I’ll weigh your practice more.' });
