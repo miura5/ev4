@@ -1055,7 +1055,7 @@
     "folders": [],
     "macBound": false,
     "push": false,
-    "trigger": null
+    "trigger": "trig_0129LJiaEoMDTVe87nDAQtqA"
    },
    "evening-mac": {
     "pipeline": "evening-mac",
@@ -1079,7 +1079,7 @@
     "folders": [],
     "macBound": false,
     "push": false,
-    "trigger": null
+    "trigger": "trig_019oXKPbXkt75hDyNtypEHeq"
    },
    "worker": {
     "pipeline": "worker",
@@ -1090,7 +1090,7 @@
     "folders": [],
     "macBound": false,
     "push": false,
-    "trigger": null
+    "trigger": "trig_01C16PH6TrgE9aB6MSFHTGUJ"
    },
    "watchdog": {
     "pipeline": "watchdog",
@@ -1101,7 +1101,7 @@
     "folders": [],
     "macBound": false,
     "push": false,
-    "trigger": null
+    "trigger": "trig_01QuaFkQ6qzBGQhtCSKzyxLA"
    },
    "restore-drill": {
     "pipeline": "restore-drill",
