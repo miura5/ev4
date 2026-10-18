@@ -240,6 +240,10 @@ test('B-53 (D-109): the ideas 1 to 2 bump makes every earlier idea a learning id
   for (const w of r.writes) assert.ok(validate(w.collection, w.data, { id: w.id }).ok, `${w.collection}/${w.id} validates`);
   assert.ok(got.ideas.every(i => i.kind === 'learning' && i.schema === 2));
   assert.deepEqual(migrateBumps(applyWrites(before, r.writes), { at: '2026-10-19T17:00:00Z' }).writes, [], 'a second run writes nothing');
+  // A schema-1 idea that already carries a kind keeps it: only a missing kind becomes learning.
+  const { BUMPS } = await import('../core/migrate.mjs');
+  assert.equal(BUMPS.ideas[1]({ id: 'made-up', schema: 1, text: 'A made-up idea', kind: 'feature' }).data.kind, 'feature');
+  assert.equal(BUMPS.ideas[1]({ id: 'made-up', schema: 1, text: 'A made-up idea' }).data.kind, 'learning');
 });
 
 test('B-29 (Matt, Oct 18): the weeks 1 to 2 bump makes health {summary, verify: null}, matches its fixture, rebuilds and is idempotent', async () => {
