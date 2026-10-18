@@ -117,7 +117,7 @@ export function migrateV3(v3, { at } = {}) {
   for (const d of docs('dates')) {
     const canvas = fromCanvas(d);
     const keep = without(EV.docData(d), ['schema', 'removed', 'editedAt', 'editedBy', ...(canvas && d.editedAt ? ['notes'] : [])]);
-    set('dates', d.id, { ...env(canvas && d.source === 'Canvas' ? 'canvas-sync' : 'page', d.source || 'migrated from v3', d.syncedAt || d.addedAt || `${d.date}T12:00:00Z`), ...keep });
+    set('dates', d.id, { ...env(canvas && d.source === 'Canvas' ? 'canvas-sync' : 'page', d.source || 'migrated from v3', d.syncedAt || d.addedAt || at), ...keep });
     const removed = d.removed && d.removed.at ? { at: iso(d.removed.at), by: String(d.removed.by || 'Matt') } : null;
     const notes = canvas && d.editedAt && d.notes ? d.notes : null;
     if (removed || notes) set('dateedits', d.id, { ...env('page', 'E.V. Home', d.editedAt || (removed && removed.at) || at), updatedAt: iso(d.editedAt) || (removed && removed.at) || iso(at), removed, notes, overrides: {} });
@@ -185,6 +185,10 @@ export function migrateV3(v3, { at } = {}) {
   for (const col of Object.keys(v3)) if (!known.has(col)) for (const d of v3[col] || []) skipped.push({ ref: `${col}/${d.id}`, why: 'collection not in the migration' });
 
   const counts = {}; for (const w of writes) counts[w.collection] = (counts[w.collection] || 0) + 1;
+  // No document was created after the export it came from: an envelope time past the migration stamp (a date with no
+  // creation time, stamped with its own day) is the migration's.
+  const stamp = iso(at);
+  for (const w of writes) if (w.data && w.data.at && Date.parse(w.data.at) > Date.parse(stamp)) w.data.at = stamp;
   return { writes, skipped, counts };
 }
 

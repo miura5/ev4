@@ -86,6 +86,11 @@ function load(o, target) {
 }
 
 /** A record export folder as {collection: [docs with id]}. */
+/** This checkout's commit when it is clean (the code a rebuild runs), else null. */
+function gitHead(root) {
+  const dirty = execFileSync('git', ['-C', root, 'status', '--porcelain'], { encoding: 'utf8' }).trim();
+  return dirty ? null : execFileSync('git', ['-C', root, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+}
 function loadExport(dir) {
   if (!dir || !fs.existsSync(dir)) throw new Error(`no export at ${dir || '(give --from <dir>)'}`);
   const db = {};
@@ -150,7 +155,8 @@ const commands = {
     const root = o.root ? path.resolve(o.root) : HERE;
     const spec = readJson(path.join(root, 'spec', 'ev.spec.json')); EV.configure(spec);
     const db = loadExport(o.from);
-    const result = lintRecord(db, spec, loadValidator(path.join(root, 'spec', 'schemas')), { date: o.date || EV.chicagoDate(new Date().toISOString()) });
+    const commit = o.commit || (() => { try { const g = gitHead(root); return g; } catch { return null; } })();
+    const result = lintRecord(db, spec, loadValidator(path.join(root, 'spec', 'schemas')), { date: o.date || EV.chicagoDate(new Date().toISOString()), commit });
     if (o.json) fs.writeFileSync(path.resolve(o.json === true ? 'lint.json' : o.json), JSON.stringify(result.issues, null, 1));
     console.log(formatLint(result));
     return result.issues.some(i => i.severity === 'error') ? 1 : 0;
@@ -193,7 +199,7 @@ const commands = {
     switch (move) {
       case 'start': {
         const manifest = maybeJson(path.resolve(o.manifest || '/tmp/ev/system/manifest.json')) || maybeJson(path.join(root, 'dist', 'manifest.json'));
-        return show(RUN.start({ spec, pipeline, record: o.record || 'staging', at, dir, release: o.release || (manifest && manifest.release) || EV.VERSION, input: { ...(o.job ? { job: o.job } : {}), ...(o.probe ? { probe: o.probe } : {}) } }), `${cli} pull${d}`);
+        return show(RUN.start({ spec, pipeline, record: o.record || 'staging', at, dir, release: o.release || (manifest && manifest.release) || EV.VERSION, commit: (manifest && manifest.commit) || null, input: { ...(o.job ? { job: o.job } : {}), ...(o.probe ? { probe: o.probe } : {}) } }), `${cli} pull${d}`);
       }
       case 'pull': return show(RUN.pull({ spec, dir, at }), `${cli} pulled${d}`);
       case 'pulled': {

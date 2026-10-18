@@ -17,7 +17,7 @@ const bytes = d => Buffer.byteLength(JSON.stringify(EV.docData(d)), 'utf8');
  * db: {collection: [docs with id]}. Returns {issues: [{severity, code, ref, msg}], rebuilt: [rebuild results]}, issues
  * sorted errors first. opts.date: the day content checks run as of (exam-passed notes).
  */
-export function lintRecord(db, spec, validate, { date } = {}) {
+export function lintRecord(db, spec, validate, { date, commit = null } = {}) {
   const issues = [];
   const add = (severity, code, ref, msg) => issues.push({ severity, code, ref, msg });
   const rec = Object.fromEntries(Object.entries(db || {}).filter(([c]) => c !== 'journal'));
@@ -54,7 +54,16 @@ export function lintRecord(db, spec, validate, { date } = {}) {
 
   const rebuilt = rebuild(rec, spec);
   for (const r of rebuilt) {
-    if (r.status === 'differs') add('error', 'derived-differs', r.ref, 'rebuild does not reproduce it byte for byte');
+    if (r.status === 'differs') {
+      // Built by an earlier build, it may differ for that reason alone; its next run rebuilds it with today's code.
+      const [col, ...rest] = r.ref.split('/'); const stored = (rec[col] || []).find(d => d.id === rest.join('/'));
+      const runId = String((stored && stored.source) || '').split(' ').pop();
+      const run = (rec.runs || []).find(x => x.id === runId);
+      const built = run && run.commit;
+      if (commit && built === commit) add('error', 'derived-differs', r.ref, 'rebuild does not reproduce it byte for byte');
+      else if (commit) add('warning', 'derived-stale', r.ref, `built by ${built ? 'build ' + built.slice(0, 12) : 'an earlier build'}; differs from this build's rebuild until its next run`);
+      else add('error', 'derived-differs', r.ref, 'rebuild does not reproduce it byte for byte');
+    }
     else if (r.status === 'inexact-differs') add('info', 'derived-inexact', r.ref, `differs, but ${r.inexact.join(', ')} changed since it was built`);
     else if (r.status === 'skipped') add('info', 'not-rebuilt', r.ref, r.reason);
   }

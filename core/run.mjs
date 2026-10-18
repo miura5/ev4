@@ -44,14 +44,14 @@ function saveRun(dir, run) { writeJson(path.join(dir, 'run.json'), run); }
 function printed(dir, run, move, calls) { run.calls.push(...calls.map(c => ({ move, ...c }))); saveRun(dir, run); return calls; }
 
 // ------------------------------------------------------------------------------------------------ 2 start
-export function start({ spec, pipeline, record = 'staging', at, dir, release, input = {} }) {
+export function start({ spec, pipeline, record = 'staging', at, dir, release, commit = null, input = {} }) {
   const def = pipelineDef(spec, pipeline);
   const id = runIdFor(pipeline, at); const url = recordUrl(spec, record);
   // The run directory is scratch: a previous run's is replaced, anything else is refused.
   if (fs.existsSync(dir) && fs.readdirSync(dir).length && !fs.existsSync(path.join(dir, 'run.json'))) throw new Error(`${dir} is not empty and holds no run; give --dir an empty or run directory`);
   fs.rmSync(dir, { recursive: true, force: true }); fs.mkdirSync(dir, { recursive: true });
   for (const k of Object.keys(input)) if (!(def.input || {})[k]) throw new Error(`${pipeline} takes no --${k}`);
-  const data = { ...EV.envelope(pipeline, `${pipeline} run`, at), release, pipeline, startedAt: EV.envelope(pipeline, '', at).at, endedAt: null, status: 'running', planned: def.steps.map(s => s.id), ...(Object.keys(input).length ? { detail: Object.entries(input).map(([k, v]) => `${k} ${v}`).join(', ') } : {}) };
+  const data = { ...EV.envelope(pipeline, `${pipeline} run`, at), release, pipeline, startedAt: EV.envelope(pipeline, '', at).at, endedAt: null, status: 'running', ...(commit ? { commit } : {}), planned: def.steps.map(s => s.id), ...(Object.keys(input).length ? { detail: Object.entries(input).map(([k, v]) => `${k} ${v}`).join(', ') } : {}) };
   const file = path.join(dir, 'out', 'runs', id + '.json'); writeJson(file, data);
   const run = { id, pipeline, record, url, release, startedAt: data.startedAt, input, allowed: def.agentCalls || [], dir, calls: [] };
   saveRun(dir, run);

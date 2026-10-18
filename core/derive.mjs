@@ -64,6 +64,8 @@ export function asOf(db, at, spec) {
       if (cls === 'Config') { out[col].push(d); continue; }
       if (Number.isFinite(ms(d.at)) && ms(d.at) > t) continue;
       if (cls === 'Edit') { if (ms(d.updatedAt || d.at) > t) inexact.push(`${col}/${d.id}`); out[col].push(d); continue; }
+      // A run's ledger entry is written at its start and completed at its end: before its end it was still running.
+      if (col === 'runs' && d.endedAt && ms(d.endedAt) > t) { const { steps, planHash, push, ...open } = d; out[col].push({ ...open, status: 'running', endedAt: null }); continue; }
       if (!appends.length) { out[col].push(d); continue; }
       const cut = { ...d }; for (const f of appends) if (cut[f]) cut[f] = cutMap(cut[f], t, appendDepth(col, f));
       out[col].push(cut);
@@ -140,15 +142,15 @@ function weekBody(db, { date }, spec, stored) {
   const solid = v.models.filter(w => w.derived.solidAt && EV.chicagoDate(w.derived.solidAt) >= from);
   const sessions = (db.sessions || []).filter(s => s.date >= from && s.date <= date);
   const runs = (db.runs || []).filter(r => r.pipeline && EV.chicagoDate(r.startedAt || r.at) >= from && EV.chicagoDate(r.startedAt || r.at) <= date);
-  const byPipeline = {}; for (const r of runs) { const p = byPipeline[r.pipeline] = byPipeline[r.pipeline] || { ok: 0, failed: 0 }; if (r.status === 'ok') p.ok++; else p.failed++; }
+  const byPipeline = {}; for (const r of runs) { const p = byPipeline[r.pipeline] = byPipeline[r.pipeline] || { ok: 0, failed: 0, running: 0 }; if (r.status === 'ok') p.ok++; else if (r.status === 'running') p.running++; else p.failed++; }
   const sorted = o => Object.fromEntries(Object.entries(o).sort(([a], [b]) => (a < b ? -1 : 1)));
   const calibration = {};
   for (const e of [...v.exams].sort((a, b) => (a.id < b.id ? -1 : 1))) { const c = EV.calibrate(e); if (c) calibration[e.id] = c; }
-  const failed = runs.filter(r => r.status !== 'ok').length;
+  const ended = runs.filter(r => r.status !== 'running'); const failed = ended.filter(r => r.status !== 'ok').length;
   const body = {
     date,
     calibration,
-    health: runs.length ? `${runs.length - failed} of ${runs.length} runs ok` + (failed ? `; failed: ${[...new Set(runs.filter(r => r.status !== 'ok').map(r => r.pipeline))].sort().join(', ')}` : '') : 'no runs this week',
+    health: ended.length ? `${ended.length - failed} of ${ended.length} runs ok` + (failed ? `; failed: ${[...new Set(ended.filter(r => r.status !== 'ok').map(r => r.pipeline))].sort().join(', ')}` : '') : 'no runs this week',
     rollups: {
       from, to: date, answered: stats.total, right: stats.right, byObjective: sorted(stats.byObjective), byType: sorted(stats.byType),
       newWeakSpots: added.map(w => w.id).sort(), solid: solid.map(w => w.id).sort(), active: v.models.filter(EV.isActive).length,

@@ -198,6 +198,7 @@ test('end writes the ledger entry, and the audit catches a call no command print
   assert.equal(endDoc.status, 'ok'); assert.equal(endDoc.push, 'All quiet'); assert.match(endDoc.planHash, /^[0-9a-f]{64}$/);
   assert.deepEqual(endDoc.steps.map(s => [s.id, s.status]), [['auto-park', 'ok'], ['note', 'ok'], ['state', 'ok'], ['audit', 'ok']]);
   const startDoc = JSON.parse(fs.readFileSync(path.join(dir, 'out', 'runs', 'evening-cloud-20261017-011500000.json'), 'utf8'));
+  assert.equal(startDoc.commit, undefined, 'no manifest commit given, none written');
   assert.ok(validate('runs', { ...startDoc, ...endDoc }, { id: 'x' }).ok, 'the ledger entry validates once ended');
 });
 

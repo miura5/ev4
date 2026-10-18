@@ -196,3 +196,11 @@ test('the real v3 export: every write validates, zero mismatches, a second run w
   assert.ok(vm.compared > 0); assert.deepEqual(vm.mismatches, []);
   assert.deepEqual(migrateV3(applyWrites(v3, r.writes), { at: AT }).writes, []);
 });
+
+test('no migrated document is stamped after the export: a date with no creation time takes the migration time', () => {
+  const v3 = { dates: [{ id: 'd-future', schema: 1, date: '2026-12-01', title: 'A made-up date', kind: 'due', source: 'owner' }] };
+  const { writes } = migrateV3(v3, { at: '2026-10-18T05:00:00Z' });
+  const d = writes.find(w => w.collection === 'dates' && w.id === 'd-future');
+  assert.equal(d.data.at, '2026-10-18T05:00:00.000Z');
+  for (const w of writes) assert.ok(!(Date.parse(w.data.at) > Date.parse('2026-10-18T05:00:00Z')), `${w.collection}/${w.id}`);
+});

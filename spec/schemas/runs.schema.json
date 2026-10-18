@@ -127,6 +127,10 @@
      "type": "null"
     }
    ]
+  },
+  "commit": {
+   "type": "string",
+   "pattern": "^[0-9a-f]{40}$"
   }
  },
  "required": [

@@ -129,3 +129,22 @@ test('cli: lint exits 0 green and 1 red; rebuild --out writes the regenerated do
   assert.equal(r.code, 0); assert.match(r.out, /rebuild: 2 reproduced, 0 differ/);
   assert.equal(fs.readFileSync(path.join(out, 'days', '2026-10-16.json'), 'utf8'), fs.readFileSync(path.join(RECORD, 'days', '2026-10-16.json'), 'utf8'));
 });
+
+test('a run ended after the as-of time reads as still running then', () => {
+  const db = { runs: [{ id: 'evening-cloud-x', schema: 1, writer: 'evening-cloud', at: '2026-10-18T06:00:00Z', source: 's', release: 'v4.0.0', pipeline: 'evening-cloud', startedAt: '2026-10-18T06:00:00Z', endedAt: '2026-10-18T06:02:00Z', status: 'ok', steps: [{ id: 'a', status: 'ok' }], planHash: 'f'.repeat(64), push: 'x' }] };
+  const mid = asOf(db, '2026-10-18T06:01:00Z', spec).db.runs[0];
+  assert.deepEqual([mid.status, mid.endedAt, 'steps' in mid, 'push' in mid], ['running', null, false, false]);
+  assert.equal(asOf(db, '2026-10-18T06:03:00Z', spec).db.runs[0].status, 'ok');
+});
+
+test('a Derived document built by an earlier build is stale, a warning; by this build, an error', () => {
+  const db = load();
+  const day = doc(db, 'days', '2026-10-16'); day.push = 'Something this build would not say';
+  db.runs.push({ id: 'morning-x', schema: 1, writer: 'morning', at: day.at, source: 's', release: 'v4.0.0', pipeline: 'morning', startedAt: day.at, endedAt: day.at, status: 'ok', commit: 'a'.repeat(40) });
+  day.source = 'morning morning-x';
+  const stale = lintRecord(db, spec, validate, { date: '2026-10-17', commit: 'b'.repeat(40) });
+  assert.ok(codes(stale, 'derived-stale').some(i => i.ref === 'days/2026-10-16' && /build aaaaaaaaaaaa/.test(i.msg)));
+  assert.ok(!codes(stale, 'derived-differs').some(i => i.ref === 'days/2026-10-16'));
+  const same = lintRecord(db, spec, validate, { date: '2026-10-17', commit: 'a'.repeat(40) });
+  assert.ok(codes(same, 'derived-differs').some(i => i.ref === 'days/2026-10-16'));
+});
