@@ -1493,7 +1493,7 @@
     "folders": [],
     "macBound": false,
     "push": true,
-    "trigger": "trig_01WB1kmsWv5Tx5f3xF3MPrH4",
+    "trigger": null,
     "note": "Hours spelled out (D-084): an every-3-hours cron anchors to the minute it was created. Pushes per D-097."
    }
   },
@@ -1608,7 +1608,20 @@
     "prompt": "You are an E.V. v4 build session. Follow CLAUDE.md and BACKLOG.md in this repository exactly, including the Unattended runs section."
    }
   },
-  "retired": []
+  "retired": [
+   {
+    "trigger": "trig_01WB1kmsWv5Tx5f3xF3MPrH4",
+    "was": "live.watchdog",
+    "name": "E.V. watchdog (v4.0.0)",
+    "reason": "B-26 (D-084): its every-3-hours cron anchored to minute 4, so a missed morning was seen only after 6:00am; replaced by the task with the hours spelled out. Disabled and kept."
+   },
+   {
+    "trigger": "trig_0153NCSgZviQyn3cHDTyMEko",
+    "was": "probe",
+    "name": "E.V. watchdog one-shot probe (B-49)",
+    "reason": "B-49: one scheduled firing of the live watchdog prompt, Oct 18; spent after it fired."
+   }
+  ]
  },
  "environments": {
   "_rules": [
