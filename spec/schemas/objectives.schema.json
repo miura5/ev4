@@ -44,13 +44,20 @@
    "minLength": 1
   },
   "chapters": {
-   "type": "array",
-   "items": {
-    "type": [
-     "string",
-     "integer"
-    ]
-   }
+   "anyOf": [
+    {
+     "type": "array",
+     "items": {
+      "type": [
+       "string",
+       "integer"
+      ]
+     }
+    },
+    {
+     "type": "string"
+    }
+   ]
   }
  },
  "required": [

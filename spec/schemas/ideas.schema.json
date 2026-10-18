@@ -71,6 +71,13 @@
      },
      "note": {
       "type": "string"
+     },
+     "createdAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "createdBy": {
+      "type": "string"
      }
     },
     "required": [

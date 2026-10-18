@@ -181,17 +181,31 @@
       "type": "boolean"
      },
      "sourceRef": {
-      "type": "string",
-      "pattern": "^materials/"
+      "anyOf": [
+       {
+        "type": "string",
+        "pattern": "^materials/"
+       },
+       {
+        "type": "null"
+       }
+      ]
      },
      "chapters": {
-      "type": "array",
-      "items": {
-       "type": [
-        "string",
-        "integer"
-       ]
-      }
+      "anyOf": [
+       {
+        "type": "array",
+        "items": {
+         "type": [
+          "string",
+          "integer"
+         ]
+        }
+       },
+       {
+        "type": "string"
+       }
+      ]
      }
     },
     "required": [
