@@ -412,6 +412,9 @@ test('B-52 (D-108): CINDY keeps rounds in the cap, the ladder its time and stop 
   assert.throws(() => EV.workoutCheckin(c, { energy: 3, mood: 'patient in room 12 was loud' }), /room number/);
   c = apply(c, EV.workoutCheckin(c, { energy: 4, mood: '  strong,   arms gone ' }));
   assert.equal(EV.workoutSummary(c, q.cindy), '3 rounds + 7 reps in 20 min · energy 4/5 · “strong, arms gone”');
+  const early = apply(apply(apply(null, EV.startWorkout(q.cindy, { now: t0 })), EV.workoutRound({ ...apply(null, EV.startWorkout(q.cindy, { now: t0 })) }, q.cindy, { now: min(4) })), { op: 'update', collection: 'workouts', id: 'wo-20261019-120000-cindy', data: {} });
+  const e2 = apply(early, EV.endWorkout(early, q.cindy, { now: min(9), stopped: true }));
+  assert.equal(EV.workoutSummary(e2, q.cindy), '1 round in 9:00, stopped before the 20-minute cap');
   // The ladder, stopped in round 6 after 5 rungs.
   let l = apply(null, EV.startWorkout(L, { now: t0 }));
   for (let n = 1; n <= 5; n++) l = apply(l, EV.workoutRound(l, L, { now: min(3 * n) }));

@@ -370,23 +370,28 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     // Practice: open the harness set, answer single (right), sata (wrong), matrix (right)
     await page.click('#seg-study [data-v="practice"]'); await page.waitForTimeout(100);
     ok('practice lists sets', (await page.locator('#pr-body .row').count()) >= 2);
-    // B-54 (D-110): a calendar drill over a chapter range offers Share as a page; a weak-spot drill and his own sets do not
-    { const shareRows = await page.evaluate(() => [...document.querySelectorAll('#pr-body .row')].filter(r => [...r.querySelectorAll('button')].some(b => b.textContent === 'Share as a page')).map(r => r.textContent.slice(0, 40)));
-      const plans = await page.evaluate(() => Object.entries(window.__db.plans || {}).map(([id, p]) => ({ id, ...p })));
-      const expect = await page.evaluate(pl => Object.entries(window.__db.sets).map(([id, x]) => ({ id, ...x })).filter(x => x.kind !== 'review' && window.EVCore.validItems(x).length && window.EVCore.shareableSet(x, window.EVCore.planViews(pl, [])).ok).length, plans);
-      ok('only qualifying calendar sets offer Share as a page', shareRows.length === expect && !shareRows.some(t => /weak spots|Harness set/.test(t)), JSON.stringify(shareRows) + ' expected ' + expect);
-      if (shareRows.length) {
+    // B-54 (D-110): an open calendar drill over a chapter range offers Share as a page above its questions; other sets do not
+    { const ids = await page.evaluate(() => { const pl = Object.entries(window.__db.plans || {}).map(([id, p]) => ({ id, ...p })); const views = window.EVCore.planViews(pl, []); const all = Object.entries(window.__db.sets).map(([id, x]) => ({ id, ...x })).filter(x => x.kind !== 'review' && window.EVCore.validItems(x).length); return { yes: all.filter(x => window.EVCore.shareableSet(x, views).ok).map(x => x.title), no: all.filter(x => !window.EVCore.shareableSet(x, views).ok).map(x => x.title) }; });
+      ok('only a calendar drill over a chapter range qualifies here', ids.yes.length >= 1 && ids.no.some(t => /weak spots/.test(t)) && ids.no.includes('Harness set') && !ids.yes.some(t => /weak spots/.test(t)), JSON.stringify(ids));
+      if (ids.yes.length) {
+        await page.evaluate(t => { const r = [...document.querySelectorAll('#pr-body .row')].find(r => r.textContent.startsWith(t.slice(0, 30))); if (r) r.querySelector('button').click(); }, ids.yes[0]); await page.waitForTimeout(250);
+        ok('an open calendar drill offers Share as a page above its questions', await page.isVisible('#pr-share') && (await page.locator('#pr-share button', { hasText: 'Share as a page' }).count()) === 1, ids.yes[0]);
         const before = await page.evaluate(() => window.__mcpCalls.filter(c => c[1] === 'fire_trigger').length);
-        await page.locator('#pr-body .row').filter({ has: page.locator('button', { hasText: 'Share as a page' }) }).first().locator('button', { hasText: 'Share as a page' }).click(); await page.waitForTimeout(400);
+        await page.locator('#pr-share button', { hasText: 'Share as a page' }).click(); await page.waitForTimeout(400);
         const sj = await page.evaluate(() => Object.entries(window.__db.jobs).filter(([, j]) => j.kind === 'share-set').map(([id, j]) => ({ id, ...j })));
         const fires = await page.evaluate(() => window.__mcpCalls.filter(c => c[1] === 'fire_trigger').map(c => c[2].text));
         ok('Share as a page starts one share-set job naming the set, fired on the worker', sj.length === 1 && /^[\w.-]+: share it as a page for classmates$/.test(sj[0].brief) && fires.length === before + 1 && fires[fires.length - 1] === 'Job ' + sj[0].id, JSON.stringify(sj.map(j => j.brief)));
-        ok('while it is made, the row says so', (await page.locator('#pr-body button', { hasText: 'Making its page…' }).count()) === 1);
+        ok('while it is made, the bar says so', (await page.locator('#pr-share button', { hasText: 'Making its page…' }).count()) === 1);
+        await page.screenshot({ path: `${shots}/share-bar-phone.png` });
+        const allSets = page.locator('#pr-body button', { hasText: 'All sets' });
+        if (await allSets.count()) { await allSets.first().click(); await page.waitForTimeout(150); }
+        ok('back on the list, the share bar goes', !(await page.isVisible('#pr-share')));
       }
     }
     const model = id => page.evaluate(id => { const rows = c => Object.entries(window.__db[c] || {}).map(([k, v]) => ({ id: k, ...v })); return (window.EVCore.buildWeakspots({ weakspots: rows('weakspots'), sets: rows('sets'), answers: rows('answers'), exams: rows('exams') }).find(w => w.id === id) || {}).derived; }, id);
     const agingDerived = await model('e4-aging-expected'); const agingBefore = (agingDerived && agingDerived.streak) || 0; const agingRightToday = !!agingDerived && agingDerived.lastReviewed === today && agingDerived.lastResult === 'right';
     await page.locator('#pr-body .row', { hasText: 'Harness set' }).locator('button').click(); await page.waitForTimeout(100);
+    ok('a set made for him offers no Share', !(await page.isVisible('#pr-share')));
     await page.locator('#pr-body label.opt').nth(0).click(); await page.click('#pr-body button:has-text("Check answer")'); await page.waitForTimeout(150);
     ok('single answered and scored', /Correct\./.test(await page.textContent('#pr-body')));
     let ws = await model('e4-preschooler');
@@ -655,6 +660,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
         ok(`[${label}] CINDY runs as a card with its clock and round`, /Workout · CINDY/.test(await last().textContent()) && /20:00 left|19:5\d left/.test(await last().textContent()) && /5 pull-ups/.test(await last().textContent()), (await last().textContent()).slice(0, 160));
         for (let i = 0; i < 3; i++) { await wp.clock.fastForward(5 * 60e3); await last().locator('button', { hasText: 'Round done' }).click(); await wp.waitForTimeout(250); }
         ok(`[${label}] three rounds counted`, /3 rounds so far \(90 reps\)/.test(await last().textContent()), (await last().textContent()).slice(0, 200));
+        ok(`[${label}] the running workout sits in the dock too, with its round and buttons`, label === 'phone' ? (await wp.isVisible('#sksheet') && /CINDY · Round 4/.test(await wp.textContent('#sksheet')) && (await wp.locator('#sksheet button', { hasText: 'Round done' }).count()) === 1) : (await wp.isVisible('#skpanel') && /Workout · CINDY/.test(await wp.textContent('#skpanel')) && (await wp.locator('#skpanel button', { hasText: 'Round done' }).count()) === 1));
         await wp.clock.fastForward(5 * 60e3 + 5000); await wp.waitForTimeout(1500);
         ok(`[${label}] at the cap the card asks for the extra reps`, /3 rounds in 20 minutes/.test(await last().textContent()) && await last().locator('input[type=number]').count() === 1);
         await wp.screenshot({ path: `${shots}/workout-cindy-${label}.png` });

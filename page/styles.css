@@ -291,3 +291,10 @@ body.opening .msg.greet .msg-cards{display:grid;grid-template-columns:repeat(aut
 /* D-110: share a calendar set as a page */
 a.btn-link{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--accent-edge);color:var(--accent-text);text-decoration:none;font-weight:500;white-space:nowrap}
 .share-acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.sk-headtxt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.sk-head button{flex:0 0 auto;min-height:36px}
+.sk-static{cursor:default;padding-right:2px}.sk-static::after{display:none}
+.sk-clock{font-variant-numeric:tabular-nums}
+.share-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--accent-edge);border-radius:16px;background:var(--accent-bg)}
+.share-bar .grow{flex:1 1 200px}
+@media (max-width:1023px){body.skill-on .toast{bottom:auto;top:calc(var(--top-h) + 14px + env(safe-area-inset-top,0px))}}

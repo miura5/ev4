@@ -1745,7 +1745,7 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
   function workoutSummary(w, seq) {
     const r = w && w.result; if (!r) return '';
     const t = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-    const main = seq && seq.kind === 'amrap' ? `${r.rounds} round${r.rounds === 1 ? '' : 's'}${r.extraReps ? ' + ' + r.extraReps + ' reps' : ''} in ${seq.capMinutes} min` : r.completed ? `all ${seq ? seq.rungs.length : r.rounds} rounds in ${t(r.totalSeconds)}` : `stopped in round ${r.stopRound} after ${t(r.totalSeconds)} (${r.reps} reps)`;
+    const main = seq && seq.kind === 'amrap' ? `${r.rounds} round${r.rounds === 1 ? '' : 's'}${r.extraReps ? ' + ' + r.extraReps + ' reps' : ''} in ${r.completed ? seq.capMinutes + ' min' : t(r.totalSeconds) + ', stopped before the ' + seq.capMinutes + '-minute cap'}` : r.completed ? `all ${seq ? seq.rungs.length : r.rounds} rounds in ${t(r.totalSeconds)}` : `stopped in round ${r.stopRound} after ${t(r.totalSeconds)} (${r.reps} reps)`;
     return [main, w.energy ? 'energy ' + w.energy + '/5' : '', w.mood ? '“' + w.mood + '”' : ''].filter(Boolean).join(' · ');
   }
 

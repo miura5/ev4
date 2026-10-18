@@ -397,16 +397,20 @@
     const d = ui.openSet && list.find(x => x.id === ui.openSet);
     $('pr-prog').hidden = !d;
     if (!d) {
+      if ($('pr-share')) $('pr-share').hidden = true;
       $('pr-title').textContent = 'Drills and practice'; $('pr-count').textContent = list.length ? plural(list.length, 'set') : '';
       if (!list.length) { body.replaceChildren(el('p', 'empty', 'E.V. builds drills from your exam plan, and More practice adds sets here.')); return; }
       const ul = el('ul', 'list');
       list.forEach(x => { const items = E.validItems(x); const ans = answersOf(x); const n = items.filter(q => ans[q.id]).length; const r = items.filter(q => ans[q.id] && ans[q.id].correct).length;
         ul.append(row({ title: x.title || x.id, detail: [x.exam, plural(items.length, 'question'), n ? (n === items.length ? r + ' of ' + n + ' right' : n + ' answered') : 'not started', short(x.createdAt)].filter(Boolean).join(' · '),
           chips: [[x.kind === 'more' ? 'More practice' : x.kind === 'sim' ? 'Sim' : x.kind === 'job' ? 'From a job' : 'Drill', x.kind === 'more' || x.kind === 'job' ? 'plum' : 'info']],
-          action: (() => { const go = btn(n ? (n < items.length ? 'Continue' : 'Review') : 'Start', () => { ui.openSet = x.id; render(); }, { primary: n < items.length }); const sh = shareButton(x); if (!sh) return go; const box = el('div', 'share-acts'); box.append(sh, go); return box; })() })); });
+          action: btn(n ? (n < items.length ? 'Continue' : 'Review') : 'Start', () => { ui.openSet = x.id; render(); }, { primary: n < items.length }) })); });
       body.replaceChildren(ul); return;
     }
     $('pr-title').textContent = d.title || 'Practice';
+    // D-110: a set that can go out as a page says so above its questions.
+    let bar = $('pr-share'); if (!bar) { bar = el('div', 'share-bar'); bar.id = 'pr-share'; body.before(bar); }
+    const sh = shareButton(d); bar.hidden = !sh; bar.replaceChildren(...(sh ? [el('span', 'meta grow', 'Classmates can practise this set too: a page with no name and none of your weak spots.'), sh] : []));
     runner({ key: 'pr-' + d.id, set: d, items: E.validItems(d), body, countEl: $('pr-count'), barEl: $('pr-bar'), label: 'E.V. · ' + (d.title || d.id),
       summaryExtra: () => { const a = el('div', 'actions'); const sh = shareButton(d); a.append(btn('All sets', () => { delete retakes[d.id]; ui.openSet = null; render(); }), ...(sh ? [sh] : []), btn('Retake', () => retake(d, 'pr-' + d.id), { primary: true })); return [a]; } });
   }
@@ -1166,13 +1170,40 @@
     const did = btn('Did it', ev => guard(ev.target, () => skillMark(s, step.n, 'pass')), { primary: true });
     a.append(miss, did); return a;
   }
+  // D-108 on the runner pattern: a running workout keeps its clock, the round's moves and its buttons in the same dock.
+  function renderWorkoutDock(w, q, sheet, panel) {
+    const st = E.workoutState(w, q, now());
+    const k = ['wo', w.id, st.done, st.over].join('|');
+    if (sheet.dataset.k === k && panel.dataset.k === k) return;
+    sheet.dataset.k = panel.dataset.k = k; sheet.hidden = panel.hidden = false; sheet.classList.remove('open');
+    const where = q.kind === 'ladder' ? `Round ${Math.min(st.done + 1, st.total)} of ${st.total}` : st.over ? plural(st.done, 'round') : `Round ${st.done + 1}`;
+    const clock = () => { const c = el('span', 'sk-clock', clockText(w, q)); c.dataset.woClock = w.id; return c; };
+    const acts = () => {
+      const a = el('div', 'sk-acts');
+      if (st.over) { a.append(btn('Show the card', () => { const n = [...document.querySelectorAll('#thread .wo-extra')].pop(); if (n) n.scrollIntoView({ block: 'center' }); }, { primary: true })); a.style.gridTemplateColumns = '1fr'; return a; }
+      a.append(btn(q.kind === 'ladder' ? 'Stop here' : 'Finish', ev => guard(ev.target, () => write(E.endWorkout(w, q, { now: now(), stopped: true })), 'Workout saved')));
+      a.append(btn('Round done', ev => guard(ev.target, async () => { await write(E.workoutRound(w, q, { now: now() })); const w2 = woOf(w.id); if (w2 && q.kind === 'ladder' && E.workoutState(w2, q, now()).over) await write(E.endWorkout(w2, q, { now: now() })); }), { primary: true }));
+      return a;
+    };
+    const moves = st.over ? 'Time! Enter the reps into your next round on the card.' : st.moves.map(m => m.reps + ' ' + m.move).join(' · ');
+    const peek = el('div', 'sk-peek'); const top = el('div', 'sk-tog sk-static'); const line = el('span', 'sk-count'); line.append(document.createTextNode(q.title + ' · ' + where + ' · '), clock()); top.append(line, el('span', 'sk-now', moves));
+    peek.append(top, acts()); sheet.replaceChildren(peek);
+    const ph = el('div', 'sk-head'); const t = el('div', 'sk-headtxt'); t.append(el('span', 'sk-title', 'Workout · ' + q.title), el('span', 'meta', where)); ph.append(t);
+    const big = el('p', 'wo-clock'); big.append(clock());
+    const ul = el('ul', 'wo-moves'); if (!st.over) for (const m of st.moves) { const li = el('li'); li.append(el('b', null, String(m.reps)), document.createTextNode(' ' + m.move)); ul.append(li); }
+    panel.replaceChildren(ph, big, ...(st.over ? [el('p', 'meta', moves)] : [ul]), acts(), el('p', 'meta', (q.source || '')));
+  }
   function renderSkillDock() {
     const s = activeSkill(); const st = s && s.skill ? E.skillState(s) : null; const live = !!(st && st.next);
     document.body.classList.toggle('skill-on', live);
     let sheet = $('sksheet'), panel = $('skpanel');
     if (!sheet) { sheet = el('div', 'sk-sheet'); sheet.id = 'sksheet'; sheet.setAttribute('role', 'region'); sheet.setAttribute('aria-label', 'Skills checklist'); $('composer').prepend(sheet); }
     if (!panel) { panel = el('aside', 'sk-panel'); panel.id = 'skpanel'; panel.setAttribute('aria-label', 'Skills checklist'); $('p-ev').append(panel); }
-    if (!live) { if (!sheet.hidden) { sheet.hidden = true; sheet.replaceChildren(); } if (!panel.hidden) { panel.hidden = true; panel.replaceChildren(); } sheet.dataset.k = panel.dataset.k = ''; SK.open = false; return; }
+    if (!live) {
+      const w = activeWorkout(); const q = w && SEQ[w.sequence];
+      if (w && q) { document.body.classList.add('skill-on'); renderWorkoutDock(w, q, sheet, panel); return; }
+      if (!sheet.hidden) { sheet.hidden = true; sheet.replaceChildren(); } if (!panel.hidden) { panel.hidden = true; panel.replaceChildren(); } sheet.dataset.k = panel.dataset.k = ''; SK.open = false; return;
+    }
     const k = [s.id, JSON.stringify(st.results), SK.open].join('|');
     if (sheet.dataset.k === k && panel.dataset.k === k) return;
     sheet.dataset.k = panel.dataset.k = k; sheet.hidden = panel.hidden = false;
@@ -1186,7 +1217,7 @@
     tog.addEventListener('click', () => { SK.open = !SK.open; renderSkillDock(); });
     peek.append(tog, skillButtons(s, step));
     const body = el('div', 'sk-body'); body.id = 'sksheet-list'; body.hidden = !SK.open;
-    if (SK.open) { const h = el('div', 'sk-head'); h.append(el('span', 'sk-title', s.topic), el('span', 'meta', tally)); body.append(h, skillList(s, st)); const a = el('div', 'actions'); a.append(btn('Stop', ev => guard(ev.target, () => finishSkill(s, 'ended'), 'Skills run saved'))); body.append(a); }
+    if (SK.open) { const h = el('div', 'sk-head'); const t = el('div', 'sk-headtxt'); t.append(el('span', 'sk-title', s.topic), el('span', 'meta', tally)); h.append(t, btn('Stop', ev => guard(ev.target, () => finishSkill(s, 'ended'), 'Skills run saved'))); body.append(h, skillList(s, st)); }
     sheet.replaceChildren(body, peek);
     // Desktop: the whole list beside the thread, the current step with its buttons on top.
     const ph = el('div', 'sk-head'); ph.append(el('span', 'sk-title', 'Skills · ' + s.topic), el('span', 'meta', tally));
