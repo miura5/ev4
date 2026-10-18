@@ -428,6 +428,12 @@ test('B-52 (D-108): CINDY keeps rounds in the cap, the ladder its time and stop 
   assert.equal(EV.workoutState(f, L, min(58)).over, true);
   f = apply(f, EV.endWorkout(f, L, { now: min(58) }));
   assert.deepEqual([f.status, f.result.completed, f.result.reps, f.result.totalSeconds], ['done', true, 1500, 3480]);
+  assert.equal(EV.workoutSummary(f, L), 'all 19 rounds in 58:00');
+  assert.throws(() => EV.workoutRound(f, L, { now: min(59) }), /this workout is over/);
+  assert.throws(() => EV.workoutRound({ ...f, status: 'active', endedAt: null }, L, { now: min(59) }), /every round is done/);
+  assert.deepEqual(EV.workoutMoves(L, 20), []); assert.deepEqual(EV.workoutMoves(null, 1), []);
+  assert.throws(() => EV.startWorkout(null, { now: t0 }), /no such workout/);
+  assert.equal(EV.workoutSummary({ ...f, result: null }, L), '');
 });
 
 test('B-47 (D-104): examRetro sets the night-before prediction against the score and reads only E.V.\'s own practice', () => {
