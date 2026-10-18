@@ -282,7 +282,11 @@ export function end({ dir, at, status, detail, transcript }) {
   if (plan) { try { hash = planHash(plan); } catch (e) { changed = `a write file cannot be read: ${e.message}`; } if (hash && hash !== plan.hash) changed = `the plan's write files changed after compute (plan ${String(plan.hash).slice(0, 12)}, files ${hash.slice(0, 12)})`; }
   if (transcript != null) { const a = audit({ dir, transcript }); steps.push({ id: 'audit', status: a.ok ? 'ok' : 'extra-calls', detail: a.ok ? `${a.matched} calls, all printed` + (a.missing.length ? `; ${a.missing.length} printed but not made` : '') : a.extra.map(c => c.tool + ' ' + c.summary).join('; ').slice(0, 300) }); }
   const why = [changed, detail || (plan && plan.detail)].filter(Boolean).join(' · ');
-  const data = { endedAt: EV.envelope('x', '', at).at, status: changed ? 'failed' : status || (plan ? 'ok' : 'failed'), steps, ...(plan ? { ...(hash ? { planHash: hash } : {}), push: plan.push || null } : {}), ...(why ? { detail: why.slice(0, 500) } : {}) };
+  const final = changed ? 'failed' : status || (plan ? 'ok' : 'failed');
+  // B-40: a failed run's push names the failed step (the detail's "<move>:" lead), never the plan's push.
+  const failedAt = final !== 'ok' ? String(changed ? 'apply' : (detail || '').split(':')[0] || '').trim().slice(0, 40) : '';
+  const push = final === 'ok' ? (plan && plan.push) || null : `E.V. ${run.pipeline} ${final}${failedAt ? ' at ' + failedAt : ''}`;
+  const data = { endedAt: EV.envelope('x', '', at).at, status: final, steps, ...(plan && hash ? { planHash: hash } : {}), ...(plan || final !== 'ok' ? { push } : {}), ...(why ? { detail: why.slice(0, 500) } : {}) };
   const file = path.join(dir, 'out', 'runs', run.id + '.end.json'); writeJson(file, data);
   return printed(dir, run, 'end', [{ tool: 'ArtifactData', args: { action: 'update', url: run.url, collection: 'runs', doc_id: run.id, file_path: file, if_version: 1 } }]);
 }

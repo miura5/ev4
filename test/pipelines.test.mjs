@@ -251,3 +251,39 @@ test('diagnostic: a named probe prints its exact calls, the audit holds the agen
   assert.deepEqual(dbg.numbers, { documentKiBAccepted: 1000, documentKiBRefused: 1536 });
   assert.match(r.plan.detail, /documentKiBAccepted=1000/);
 });
+test('B-40: the evening push carries the day: review left, weak spots solid or reopened, tomorrow, the Canvas note; never the journal', async () => {
+  const { eveningPush } = await import('../core/steps.mjs');
+  const db = recordDb();
+  db.journal = [{ id: 'j-planted', schema: 1, writer: 'page', at: '2026-10-16T20:00:00Z', source: 'E.V. Home', text: 'PLANTED-JOURNAL-LINE', kind: 'free' }];
+  const ctx = { date: '2026-10-16', now: '2026-10-17T01:15:00.000Z', source: 'evening-cloud evening-cloud-test', writer: 'evening-cloud' };
+  // The state step's snapshot first, as the pipeline runs it; then last night's evening-mac note.
+  for (const w of CODE_STEPS.state(db, ctx, spec).writes) db.state = [...(db.state || []).filter(d => d.id !== w.id), { ...w.data, id: w.id }];
+  db.runs.push({ id: 'evening-mac-20261016-012000000', schema: 1, writer: 'evening-mac', at: '2026-10-16T01:20:00Z', source: 't', pipeline: 'evening-mac', release: 'v4.0.0', startedAt: '2026-10-16T01:20:00Z', endedAt: '2026-10-16T01:24:00Z', status: 'ok', push: 'Canvas: BIO 201 Lab Practical moved to Thursday 10/22, check with your instructor' });
+  const line = eveningPush(db, ctx, spec);
+  assert.ok(line.length <= spec.constants.push.maxChars, `${line.length}: ${line}`);
+  assert.match(line, /^Review 1\/2, 1 left · /, line);
+  assert.match(line, /Sat: off/, line);
+  assert.match(line, / · Canvas: BIO 201 Lab/, line);
+  assert.ok(!/PLANTED-JOURNAL-LINE/.test(line));
+  // The step itself, in the pipeline's order, sets the plan's push.
+  assert.deepEqual(spec.pipelines['evening-cloud'].steps.map(s => s.id), ['auto-park', 'state', 'push']);
+  assert.equal(CODE_STEPS.push(db, ctx, spec).push, line);
+  // A failed evening-mac: said plainly; an old one (over 36 hours): left out.
+  db.runs[db.runs.length - 1].status = 'failed';
+  assert.match(eveningPush(db, ctx, spec), /Canvas: last night's sync failed$/);
+  db.runs[db.runs.length - 1].startedAt = '2026-10-14T01:20:00Z';
+  assert.ok(!/Canvas/.test(eveningPush(db, ctx, spec)));
+  // Too long: tomorrow's first item and the Canvas note are cut with an ellipsis before anything is dropped.
+  const tight = { ...spec, constants: { ...spec.constants, push: { maxChars: 60 } } };
+  db.runs[db.runs.length - 1].startedAt = '2026-10-16T01:20:00Z'; db.runs[db.runs.length - 1].status = 'ok';
+  const short = eveningPush(db, ctx, tight);
+  assert.ok(short.length <= 60, short); assert.match(short, /^Review 1\/2, 1 left/);
+});
+
+test('B-40: a failed run ends with a push naming the failed step', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-push-'));
+  RUN.start({ spec, pipeline: 'evening-cloud', record: 'staging', at: '2026-10-17T01:15:00Z', dir, release: 'v4.0.0' });
+  const [call] = RUN.end({ dir, at: '2026-10-17T01:16:00Z', status: 'failed', detail: 'pull: "the tool timed out"', transcript: null });
+  const doc = JSON.parse(fs.readFileSync(call.args.file_path, 'utf8'));
+  assert.equal(doc.push, 'E.V. evening-cloud failed at pull');
+});

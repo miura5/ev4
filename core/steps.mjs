@@ -26,6 +26,44 @@ function library(db) {
 }
 const passages = (idx, q, n = 2) => EV.searchLibrary(idx, q, { k: n }).map(h => ({ ref: 'materials/' + h.id, page: h.page || null, title: h.title, text: h.text.slice(0, 600) }));
 
+/**
+ * The evening push line (B-40, Matt's pick 8), composed from state/current (just written by the state step) and
+ * days/<tomorrow> (or tomorrow's plan as the morning will make it, when that document is not written yet): today's
+ * review answered or left, weak spots made solid or reopened today, tomorrow's day type and first item, and last
+ * night's Canvas note (D-097). Never from the journal: nothing here reads it. Fits spec.constants.push.maxChars.
+ */
+export function eveningPush(db, ctx, spec) {
+  const max = ((spec.constants || {}).push || {}).maxChars || 120;
+  const date = ctx.date, tomorrow = EV.addDays(date, 1);
+  const st = (db.state || []).find(d => d.id === 'current');
+  const today = st && st.snapshot && st.snapshot.date === date ? st.snapshot.today : null;
+  const set = (db.sets || []).find(s => s.id === 'review-' + date);
+  const items = today && today.reviewItems != null ? today.reviewItems : set ? (set.items || []).length : 0;
+  const answered = today && today.answered != null ? today.answered : set ? EV.answeredItems(set, db.answers || []).length : 0;
+  const parts = [];
+  if (items) parts.push({ text: answered >= items ? `Review done (${items})` : answered ? `Review ${answered}/${items}, ${items - answered} left` : `Review: ${items} left` });
+  const ms = models(db); const on = x => x && EV.chicagoDate(x) === date;
+  const solid = ms.filter(w => (w.kind || 'concept') === 'concept' && EV.isSolid(w) && on(w.derived.solidAt)).length;
+  const back = ms.filter(w => (w.kind || 'concept') === 'concept' && EV.isActive(w) && on(w.derived.reopenedAt)).length;
+  if (solid || back) parts.push({ text: [solid ? `${solid} solid` : null, back ? `${back} reopened` : null].filter(Boolean).join(', ') });
+  const day = (db.days || []).find(d => d.id === tomorrow) || produce(db, spec, 'days', { date: tomorrow, now: ctx.now }, { source: ctx.source });
+  const first = day && day.list && (day.list.items || [])[0];
+  const wd = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][EV.weekday(tomorrow)];
+  if (day) parts.push({ text: `${wd}: ${day.dayType || 'day'}${first ? ', first ' : ''}`, tail: first ? first.text : '' });
+  const macs = (db.runs || []).filter(r => r.pipeline === 'evening-mac' && r.status !== 'running' && EV.toMs(r.startedAt) < EV.toMs(ctx.now)).sort((a, b) => EV.toMs(b.startedAt) - EV.toMs(a.startedAt));
+  const mac = macs[0];
+  if (mac && EV.toMs(ctx.now) - EV.toMs(mac.startedAt) < 36 * 3600e3) parts.push(mac.status === 'ok' ? { text: 'Canvas: ', tail: String(mac.push || 'synced').replace(/^Canvas:\s*/i, '') } : { text: 'Canvas: last night\'s sync failed' });
+  const line = ps => ps.map(p => p.text + (p.tail || '')).join(' · ');
+  // Fit: shorten the tails (tomorrow's first item, the Canvas note), then drop parts from the end.
+  let ps = parts.slice();
+  while (ps.length && line(ps).length > max) {
+    const over = line(ps).length - max; const t = ps.slice().reverse().find(p => p.tail && p.tail.length > 12);
+    if (t) { t.tail = t.tail.slice(0, Math.max(10, t.tail.length - over - 1)).replace(/\s+\S*$/, '') + '…'; continue; }
+    ps = ps.slice(0, -1);
+  }
+  return line(ps) || 'Evening snapshot saved';
+}
+
 export const CODE_STEPS = {
   /** Weak spots whose exam has passed are parked: one event each, appended (never a change to the Fact). */
   'auto-park'(db, ctx) {
@@ -44,6 +82,11 @@ export const CODE_STEPS = {
     }
     writes.unshift({ op: 'set', collection: 'state', id: 'current', data });
     return { writes, say: [`Snapshot: ${data.snapshot.weakspots.active} active weak spots, ${data.snapshot.due.count} due.${split.length ? ` Fact hashes split into ${split.length} state/facts-* documents (state/current reached its budget).` : ''}`] };
+  },
+  /** The evening push line (B-40): what today did and what tomorrow starts with, from the snapshot just written. */
+  push(db, ctx, spec) {
+    const line = eveningPush(db, ctx, spec);
+    return { push: line, say: ['Push: ' + line] };
   },
   /** days/<date>: the plan and the list. */
   day(db, ctx, spec) {

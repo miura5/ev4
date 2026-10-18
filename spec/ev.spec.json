@@ -209,6 +209,11 @@
      "id": "state",
      "kind": "code",
      "does": "writes state/current: the snapshot, the derived hash and every Fact's hash"
+    },
+    {
+     "id": "push",
+     "kind": "code",
+     "does": "composes the push line from state/current and tomorrow's day: review answered or left, weak spots made solid or reopened today, tomorrow's day type and first item, last night's Canvas note (B-40); never from the journal"
     }
    ]
   },
@@ -925,6 +930,10 @@
   "planDay": {
    "_note": "D-086: a plan task whose title is this similar to one of the day's records (dates or exams) is that record, shown once under its id.",
    "sameItem": 0.3
+  },
+  "push": {
+   "_note": "B-40: the push lines E.V. has written since v3 fit 120 characters, what the notification shows on his phone without opening it",
+   "maxChars": 120
   }
  },
  "registry": {
@@ -1804,6 +1813,12 @@
     "was": "pre-v3.test",
     "name": "E.V. daily list test (A-2)",
     "reason": "Before v3: a one-time test of the 5am daily list, Oct 17; disabled and kept."
+   },
+   {
+    "trigger": "trig_01PqBxmGf4u1KfEzgVMiKPCN",
+    "was": "probe",
+    "name": "E.V. watchdog one-shot probe 2 (B-49, CLAUDE.md fix)",
+    "reason": "B-49: one scheduled firing of the live watchdog prompt after CLAUDE.md scoped its explicit-OK list to build chats, Oct 18; spent after it fired."
    }
   ]
  },

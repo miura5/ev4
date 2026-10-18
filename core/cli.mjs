@@ -239,9 +239,9 @@ const commands = {
         return r.done ? show(r.calls, `continue with the batches after it, then ${cli} end${d}`) : show(r.calls, `${cli} replan --batch ${o.batch}${d}`);
       }
       case 'end': {
-        show(RUN.end({ dir, at, status: o.status, detail: o.detail, transcript: o['no-audit'] ? null : transcript() }));
-        const plan = maybeJson(path.join(dir, 'plan.json'));
-        console.log(`\nPush: ${(plan && plan.push) || `E.V. ${pipeline} ${o.status && o.status !== 'ok' ? o.status : 'done'}`}`); return 0;
+        const calls = RUN.end({ dir, at, status: o.status, detail: o.detail, transcript: o['no-audit'] ? null : transcript() }); show(calls);
+        const ended = maybeJson(calls[0].args.file_path) || {};
+        console.log(`\nPush: ${ended.push || `E.V. ${pipeline} ${o.status && o.status !== 'ok' ? o.status : 'done'}`}`); return 0;
       }
       case 'audit': {
         const a = RUN.audit({ dir, transcript: transcript() });
