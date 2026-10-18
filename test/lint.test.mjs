@@ -231,3 +231,11 @@ test('B-39/B-53: a schema bump\'s legacy copy keeps its writer, and the bumped F
   doc(db, 'legacy', 'v4-ideas-sample-idea-s1').text = 'A planted different text';
   assert.deepEqual(codes(lint(db), 'fact-changed').map(i => i.ref), [ref]);
 });
+
+test('state/current rebuilds the same from a fuller export: it counts only what the evening-cloud run reads', () => {
+  const db = load();
+  db.debug = [{ id: 'made-up-debug', schema: 1, writer: 'evening-mac', at: '2026-10-16T01:00:00Z', source: 'test' }];
+  const st = doc(db, 'state', 'current');
+  assert.equal(rebuildOne(db, spec, 'state', st).status, rebuildOne({ ...db, debug: undefined }, spec, 'state', st).status);
+  assert.ok(['same', 'inexact-same'].includes(rebuildOne(db, spec, 'state', st).status));
+});

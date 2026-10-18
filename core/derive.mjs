@@ -150,7 +150,10 @@ function dayBody(db, { date, now }) {
 }
 
 /** state/current, the evening-cloud run: the snapshot, the derived hash, and every Fact's hash for lint. */
-function stateBody(db, { date, now, specVersion, part = null, split = null }, spec) {
+function stateBody(all, { date, now, specVersion, part = null, split = null }, spec) {
+  // What the evening-cloud run pulls and nothing else, so a rebuild from a fuller export (debug, say) counts the same.
+  const reads = new Set(((spec.pipelines['evening-cloud'] || {}).reads || []).map(r => r.collection));
+  const db = reads.size ? Object.fromEntries(Object.entries(all).filter(([c]) => reads.has(c))) : all;
   const v = views(db);
   // The counts are of what the run reads: state/current leaves itself out (the run sees the previous one, a rebuild
   // the one it wrote), and Config (system/*) is the deploy's, not the record's.
