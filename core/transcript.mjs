@@ -37,7 +37,8 @@ export function toolResults(jsonl, tool) {
 
 /** The capability declaration an Artifact read shows for the published version (B-28), parsed; null when absent. */
 export function declarationOf(text) {
-  const m = String(text || '').match(/<artifact-stored-declaration>\s*([\s\S]*?)\s*<\/artifact-stored-declaration>/);
+  // The tag opens a line of its own; the header above it names the tag in prose ("inside the <...> tag below").
+  const m = String(text || '').match(/(?:^|\n)<artifact-stored-declaration>\s*([\s\S]*?)\s*<\/artifact-stored-declaration>/);
   return m ? JSON.parse(m[1]) : null;
 }
 
