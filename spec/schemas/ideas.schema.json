@@ -10,7 +10,12 @@
    "page",
    "filing"
   ],
-  "schema": 1
+  "schema": 1,
+  "marks": {
+   "status": [
+    "page"
+   ]
+  }
  },
  "type": "object",
  "properties": {

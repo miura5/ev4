@@ -52,6 +52,14 @@ export function registryProblems(spec, schemas) {
     if (want.schema !== `spec/schemas/${c}.schema.json`) problems.push(`${c}: the spec names schema file ${want.schema}`);
     if (meta.class !== want.class) problems.push(`${c}: class ${meta.class} in the schema, ${want.class} in the spec`);
     if (JSON.stringify(meta.writers) !== JSON.stringify(want.writers)) problems.push(`${c}: writers differ between the schema and the spec`);
+    // B-32 (D-089): a Fact's marks, each with the roles that may change it, named alike in the schema and the spec.
+    if (JSON.stringify(meta.marks || null) !== JSON.stringify(want.marks || null)) problems.push(`${c}: marks differ between the schema (x-ev.marks) and the spec`);
+    for (const [f, roles] of Object.entries(meta.marks || {})) {
+      if (want.class !== 'Fact') problems.push(`${c}: marks on a ${want.class}; only a Fact has marks`);
+      if (!schemas[c].properties || !schemas[c].properties[f]) problems.push(`${c}: mark ${f} is not a property of its schema`);
+      if (!Array.isArray(roles) || !roles.length) problems.push(`${c}: mark ${f} names no role`);
+      if ((want.appends || {})[f]) problems.push(`${c}: ${f} is both a mark and an append map`);
+    }
     if (c !== 'legacy' && JSON.stringify((schemas[c].properties.writer || {}).enum) !== JSON.stringify(want.writers)) problems.push(`${c}: the envelope writer enum differs from the spec`);
   }
   return problems;

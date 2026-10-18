@@ -1045,7 +1045,10 @@ const EVCore = (() => {
   function normalizeCanvas(raw, existing = {}, { now } = {}) {
     const at = isoOf(now);
     const env = () => envelope('canvas-sync', 'Canvas sync', at);
-    const out = { dates: [], announcements: [], materials: [], changes: [], candidates: [] };
+    const out = { dates: [], announcements: [], materials: [], changes: [], candidates: [], refused: [] };
+    // The Canvas ingress (Data architecture, "Four ingresses, one scanner"): a text with a patient identifier value is
+    // refused here, never stored; the rest of the sync goes on, and the run's own scan of every write stays behind it.
+    const refuse = (ref, text) => { const why = scanIdentifierValues(text); if (!why.length) return false; out.refused.push({ ref, why: why[0] }); out.changes.push({ type: 'refused', ref, text: `Left out ${ref}: it ${why[0]}` }); return true; };
     const courseName = id => { for (const [n, cid] of Object.entries(raw.courses || {})) if (Number(cid) === Number(id)) return n; return null; };
     const prev = (col, id) => (existing[col] || []).find(d => d.id === id) || null;
     for (const p of raw.planner || []) {
@@ -1077,6 +1080,7 @@ const EVCore = (() => {
       const id = 'canvas-' + a.id; if (prev('announcements', id)) continue;
       const course = courseName(String(a.context_code || '').replace('course_', '')) || a.course || null;
       const text = a.message != null ? stripHtml(a.message) : String(a.text || '');
+      if (refuse('announcements/' + id, (a.title || '') + '\n' + text)) continue;
       out.announcements.push({ id, data: { ...env(), course, title: a.title || '', postedAt: a.posted_at || a.postedAt || null, text: text.slice(0, 6000), url: a.html_url || a.url || null, syncedAt: at } });
       out.changes.push({ type: 'new-announcement', ref: 'announcements/' + id, text: `${course || 'Canvas'} announcement: ${a.title}` });
     }
@@ -1084,6 +1088,7 @@ const EVCore = (() => {
       const course = f.course || courseName(f.courseId); const key = String(course || 'X').replace(/\s+/g, '');
       const id = key + '-' + f.fileId; const old = prev('materials', id);
       if (old && old.fileUpdatedAt === f.updatedAt) continue;
+      if (refuse('materials/' + id, (f.title || '') + '\n' + String(f.text || ''))) continue;
       const exam = f.exam || ((String(f.module || '').match(/\bExam\s+(\d+)/i) || [])[1] ? 'E' + String(f.module).match(/\bExam\s+(\d+)/i)[1] : null);
       const kind = MATERIAL_KINDS.includes(f.kind) ? f.kind : materialKind({ title: f.title });
       const needsOcr = !!f.needsOcr || String(f.text || '').replace(/\[(?:p|s)\d+\]/g, '').trim().length < 200;

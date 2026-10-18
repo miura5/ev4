@@ -274,3 +274,24 @@ test('B-33: replan follows a repull page with a next_cursor before re-pinning (1
   assert.equal(done.done, true);
   assert.equal(done.calls[0].args.writes.find(w => w.collection === 'state').if_version, 7, 'pinned to the version on the second page');
 });
+
+test('B-32 (D-089): compute lets an update to a Fact change only its marks (by a named role), its maps and fields it lacks', () => {
+  const at = '2026-10-18T01:20:00Z';
+  const plan = (writer, roles, data) => {
+    const { dir, lines } = begin();
+    RUN.pulled({ spec, dir, transcript: lines.join('\n') }); answer(dir, { push: 'ok' });
+    CODE_STEPS['test-mark'] = () => ({ writes: [{ op: 'update', collection: 'dates', id: 'canvas-900001', data }] });
+    try {
+      const s2 = { ...spec, pipelines: { ...spec.pipelines, 'evening-cloud': { ...DEF, writer, ...(roles ? { roles } : {}), steps: [...DEF.steps, { id: 'test-mark', kind: 'code' }] } } };
+      return RUN.compute({ spec: s2, dir, validate, at: AT });
+    } finally { delete CODE_STEPS['test-mark']; }
+  };
+  const ok = plan('evening-cloud', ['canvas-sync'], { date: '2026-12-01', dueAt: '2026-12-02T05:59:59Z', syncedAt: at });
+  assert.equal(ok.status, 'planned', JSON.stringify(ok.problems));
+  const wrongRole = plan('evening-cloud', null, { date: '2026-12-01' });
+  assert.ok(wrongRole.problems.some(p => /dates\/canvas-900001: date is a mark canvas-sync changes, not evening-cloud/.test(p)), wrongRole.problems.join('\n'));
+  const unmarked = plan('evening-cloud', ['canvas-sync'], { title: 'A planted new title' });
+  assert.ok(unmarked.problems.some(p => /dates\/canvas-900001: title is write-once on a Fact/.test(p)), unmarked.problems.join('\n'));
+  const first = plan('evening-cloud', ['canvas-sync'], { notes: 'A made-up first note' });
+  assert.ok(!(first.problems || []).some(p => /write-once/.test(p)), 'a field the Fact lacks is a first write');
+});

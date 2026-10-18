@@ -433,6 +433,9 @@
      "kind": "code",
      "does": "writes the nightly backup (every collection but the journal, with counts and per-collection hashes) and, on Sundays, the Markdown mirror, as device_commit_files calls into E.V.'s own files in the Mac folder"
     }
+   ],
+   "roles": [
+    "canvas-sync"
    ]
   },
   "worker": {
@@ -1137,7 +1140,18 @@
    ],
    "holds": "the calendar entry",
    "fromV3": "dates",
-   "schema": "spec/schemas/dates.schema.json"
+   "schema": "spec/schemas/dates.schema.json",
+   "marks": {
+    "date": [
+     "canvas-sync"
+    ],
+    "dueAt": [
+     "canvas-sync"
+    ],
+    "syncedAt": [
+     "canvas-sync"
+    ]
+   }
   },
   "dateedits": {
    "class": "Edit",
@@ -1257,7 +1271,18 @@
      "page"
     ]
    },
-   "schema": "spec/schemas/sessions.schema.json"
+   "schema": "spec/schemas/sessions.schema.json",
+   "marks": {
+    "status": [
+     "page"
+    ],
+    "pending": [
+     "page"
+    ],
+    "endedAt": [
+     "page"
+    ]
+   }
   },
   "ideas": {
    "class": "Fact",
@@ -1268,7 +1293,12 @@
    "key": "<slug>",
    "holds": "text, objective, links, status mark",
    "fromV3": "ideas",
-   "schema": "spec/schemas/ideas.schema.json"
+   "schema": "spec/schemas/ideas.schema.json",
+   "marks": {
+    "status": [
+     "page"
+    ]
+   }
   },
   "journal": {
    "class": "Fact",
@@ -1317,7 +1347,12 @@
    "key": "job-<YYYYMMDD-HHMMSS>-<slug>",
    "holds": "kind, title, brief, fired",
    "fromV3": "jobs request fields",
-   "schema": "spec/schemas/jobs.schema.json"
+   "schema": "spec/schemas/jobs.schema.json",
+   "marks": {
+    "fired": [
+     "page"
+    ]
+   }
   },
   "jobresults": {
    "class": "Log",
@@ -1341,7 +1376,21 @@
    ],
    "holds": "text with page marks, ocr, kind, module",
    "fromV3": "materials",
-   "schema": "spec/schemas/materials.schema.json"
+   "schema": "spec/schemas/materials.schema.json",
+   "marks": {
+    "text": [
+     "canvas-sync"
+    ],
+    "fileUpdatedAt": [
+     "canvas-sync"
+    ],
+    "fetchedAt": [
+     "canvas-sync"
+    ],
+    "needsOcr": [
+     "canvas-sync"
+    ]
+   }
   },
   "materialedits": {
    "class": "Edit",

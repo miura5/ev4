@@ -1,6 +1,6 @@
 // lint (Data architecture, "A+ acceptance checklist"): the record checked against its own rules, by command.
 //   wrong-writer     a document, or an append-map entry, written by a role its collection does not name
-//   fact-changed     a Fact whose own fields differ from the hash state/current kept for it
+//   fact-changed     a Fact whose own fields (not its marks or append maps) differ from the hash state/current kept
 //   over-budget      a document over spec.capacity.documentBytes, a material over materialTextChars, a collection
 //                    over its budget once B-14 sets one
 //   invalid          a document its collection's schema refuses
@@ -8,7 +8,7 @@
 // plus the content checks E.V. core has always run (items, orphans, duplicates, identifiers). The journal is never
 // read: it stays the page's (D-059).
 import EV from './evcore.mjs';
-import { classOf, writersOf, factHash, rebuild, appendEntries, appendDepth, keyWriter } from './derive.mjs';
+import { classOf, writersOf, factCheck, rebuild, appendEntries, appendDepth, keyWriter } from './derive.mjs';
 import { describeErrors } from './validate.mjs';
 
 const bytes = d => Buffer.byteLength(JSON.stringify(EV.docData(d)), 'utf8');
@@ -23,7 +23,7 @@ export function lintRecord(db, spec, validate, { date, commit = null } = {}) {
   const rec = Object.fromEntries(Object.entries(db || {}).filter(([c]) => c !== 'journal'));
   const cap = spec.capacity || {};
   const state = ((rec.state || []).find(d => d.id === 'current')) || null;
-  const known = (state && state.factHashes) || {};
+  const known = (state && state.factHashes) || {}; const knownFields = (state && state.factFields) || {};
 
   for (const [col, docs] of Object.entries(rec)) {
     const c = spec.collections[col];
@@ -41,7 +41,11 @@ export function lintRecord(db, spec, validate, { date, commit = null } = {}) {
           if (w && !allowed.includes(w)) add('error', 'wrong-writer', `${ref}#${field}.${p}`, `appended by ${w}; ${field} is appended by ${allowed.join(', ')}`);
         }
       }
-      if (cls === 'Fact' && known[ref] && known[ref] !== factHash(spec, col, d)) add('error', 'fact-changed', ref, 'its own fields changed since state/current hashed them; a Fact is written once (events go in its maps)');
+      if (cls === 'Fact' && known[ref]) {
+        // B-32 (D-089): marks and append maps may change; a field first set since the hash is a first write.
+        const f = factCheck(spec, col, d, known[ref], knownFields[col]);
+        if (f.ok === false) add('error', 'fact-changed', ref, `${f.why} since state/current hashed it; a Fact's own fields are write-once (marks: ${Object.keys(c.marks || {}).join(', ') || 'none'}; events go in its maps)`);
+      }
       if (cap.documentBytes && size > cap.documentBytes) add('error', 'over-budget', ref, `${size} bytes; the budget is ${cap.documentBytes}`);
       if (col === 'materials' && cap.materialTextChars && String(d.text || '').length > cap.materialTextChars) add('error', 'over-budget', ref, `${String(d.text).length} characters of text; the cap is ${cap.materialTextChars} (chunk as ${cap.materialChunkId || '<id>-p<n>'})`);
     }

@@ -41,6 +41,16 @@
   },
   "factHashes": {
    "type": "object"
+  },
+  "factFields": {
+   "type": "object",
+   "description": "B-32: per collection, the sorted fields the fact hashes' masks index (marks, append maps and at left out)",
+   "additionalProperties": {
+    "type": "array",
+    "items": {
+     "type": "string"
+    }
+   }
   }
  },
  "required": [

@@ -835,3 +835,18 @@ test('session state skips an event whose time cannot be read, without disturbing
   const st = EV.sessionState(s, plus(8));
   assert.equal(st.checks, 1); assert.equal(st.onBreak, false);
 });
+
+test('B-32: the Canvas ingress refuses a text with a patient identifier value and keeps the rest (positive and negative)', () => {
+  const raw = { courses: { 'NUR 112': 199214 }, planner: [],
+    announcements: [
+      { id: 21, title: 'Clinical reminder', message: '<p>Bring your stethoscope. Your client in room 12 (MRN: 4482913) needs a made-up care plan.</p>', context_code: 'course_199214', posted_at: '2026-10-15T14:00:00Z' },
+      { id: 22, title: 'Lab moved', message: '<p>Skills lab moves to room 214 on Tuesday.</p>', context_code: 'course_199214', posted_at: '2026-10-15T15:00:00Z' }],
+    files: [
+      { course: 'NUR 112', courseId: 199214, fileId: 501, title: 'Made-up case study', module: 'Exam 4 Content', updatedAt: '2026-10-15T00:00:00Z', text: '[p1] Case: patient born 03/14/1951, DOB 03/14/1951. ' + 'Made-up teaching text. '.repeat(20) },
+      { course: 'NUR 112', courseId: 199214, fileId: 502, title: 'Made-up slides', module: 'Exam 4 Content', updatedAt: '2026-10-15T00:00:00Z', text: '[s1] Label the specimen with the patient\'s name, DOB and MRN. ' + 'Made-up teaching text. '.repeat(20) }] };
+  const r = EV.normalizeCanvas(raw, {}, { now: '2026-10-17T20:15:00Z' });
+  assert.deepEqual(r.announcements.map(a => a.id), ['canvas-22'], 'the clean announcement stays (a lab room is no identifier)');
+  assert.deepEqual(r.materials.map(m => m.id), ['NUR112-502'], 'the field names alone are no identifier');
+  assert.deepEqual(r.refused.map(x => x.ref).sort(), ['announcements/canvas-21', 'materials/NUR112-501']);
+  assert.ok(r.changes.some(c => c.type === 'refused' && /has a medical record number/.test(c.text)));
+});

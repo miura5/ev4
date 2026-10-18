@@ -6,6 +6,7 @@
 // run's one compute time, so the record a Derived document was computed from is exactly the record as of its `at`.
 import EV from './evcore.mjs';
 import { healthBody } from './watch.mjs';
+import { loadSchemas } from './schemas.mjs';
 
 const ms = x => EV.toMs(x);
 
@@ -90,11 +91,39 @@ function views(db) {
 }
 
 /** sha256 of a Fact's own fields: everything but its envelope's time and its append maps. */
-export function factHash(spec, collection, doc) {
+// B-32 (D-089): a Fact's own fields are write-once: set once, never changed. Its marks (spec.collections.<c>.marks)
+// change in place by their named roles and its append maps gain keys, so neither is hashed. A fact hash is
+// "<sha256>.<mask>": the hash of the fields present when it was taken, and which of the collection's hashed fields
+// (factFields, kept beside the hashes in state/current) those were, so a field set for the first time later (a
+// session's summary when it ends, a canvasId on a hand-entered date) is a first write, not a change.
+let SCHEMAS = null;
+/** The fields a Fact's hash covers: its schema's properties less at, its append maps and its marks, sorted. */
+export function factFields(spec, collection) {
   const c = spec.collections[collection] || {};
-  const data = EV.docData(doc); delete data.at;
-  for (const f of Object.keys(c.appends || {})) delete data[f];
-  return EV.sha256(EV.stableStringify(data));
+  SCHEMAS = SCHEMAS || loadSchemas();
+  const props = Object.keys(((SCHEMAS[collection] || {}).properties) || {});
+  const skip = new Set(['at', ...Object.keys(c.appends || {}), ...Object.keys(c.marks || {})]);
+  return props.filter(k => !skip.has(k)).sort();
+}
+/** The hash of a Fact's own fields: those present (or exactly `only`), indexed against `fields`. */
+export function factHash(spec, collection, doc, { fields = factFields(spec, collection), only = null } = {}) {
+  const data = EV.docData(doc);
+  const covered = only || fields.filter(k => data[k] !== undefined);
+  const body = Object.fromEntries(covered.map(k => [k, data[k] === undefined ? null : data[k]]));
+  let mask = 0n; for (const k of covered) { const i = fields.indexOf(k); if (i >= 0) mask |= 1n << BigInt(i); }
+  return EV.sha256(EV.stableStringify(body)) + '.' + mask.toString(36);
+}
+const fromBase36 = t => [...String(t)].reduce((n, ch) => n * 36n + BigInt(parseInt(ch, 36)), 0n);
+/**
+ * Whether a Fact still matches the hash state/current kept for it: every field it had then holds the same value.
+ * {ok: true} | {ok: false, why} | {ok: null} when the stored hash predates masks (nothing to compare against).
+ */
+export function factCheck(spec, collection, doc, stored, fields) {
+  const [, m] = String(stored || '').split('.'); if (m === undefined || !fields) return { ok: null };
+  const mask = fromBase36(m); const had = fields.filter((_, i) => (mask >> BigInt(i)) & 1n);
+  if (factHash(spec, collection, doc, { fields, only: had }) === stored) return { ok: true };
+  const data = EV.docData(doc); const gone = had.filter(k => data[k] === undefined);
+  return { ok: false, why: gone.length ? `${gone.join(', ')} removed` : `one of ${had.join(', ')} changed` };
 }
 
 // ------------------------------------------------------------------------------------------------ producers
@@ -128,12 +157,16 @@ function stateBody(db, { date, now, specVersion }, spec) {
   const counts = Object.fromEntries(Object.entries(db).filter(([k, d]) => k !== 'state' && spec.collections[k] && spec.collections[k].class !== 'Config' && d.length).map(([k, d]) => [k, d.length]).sort(([a], [b]) => (a < b ? -1 : 1)));
   const content = EV.lint({ ...db, journal: [], weakspotModels: v.models, counts }, { date });
   const snapshot = EV.buildSnapshot({ date, now, exams: v.exams, weakspots: v.models, sets: v.sets, answers: v.answers, days: db.days || [], dates: db.dates || [], dateedits: db.dateedits || [], plans: db.plans || [], planedits: db.planedits || [], runs: db.runs || [], counts, versions: { spec: specVersion || null }, lint: content, canvas: null });
-  const factHashes = {};
+  const factHashes = {}; const fieldLists = {};
   for (const [col, docs] of Object.entries(db).sort(([a], [b]) => (a < b ? -1 : 1))) {
     if (col === 'journal') continue; // pipelines never read it (D-059)
-    for (const d of [...docs].sort((a, b) => (a.id < b.id ? -1 : 1))) if (classOf(spec, col, d.id) === 'Fact') factHashes[`${col}/${d.id}`] = factHash(spec, col, d);
+    for (const d of [...docs].sort((a, b) => (a.id < b.id ? -1 : 1))) {
+      if (classOf(spec, col, d.id) !== 'Fact') continue;
+      const fields = fieldLists[col] = fieldLists[col] || factFields(spec, col);
+      factHashes[`${col}/${d.id}`] = factHash(spec, col, d, { fields });
+    }
   }
-  return { snapshot, derivedHash: snapshot.derivedHash, factHashes };
+  return { snapshot, derivedHash: snapshot.derivedHash, factHashes, factFields: fieldLists };
 }
 
 /** weeks/<Sunday>, the weekly run: the week's roll-ups, calibration and health line. The review and reflection are

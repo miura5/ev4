@@ -10,7 +10,18 @@
    "page",
    "filing"
   ],
-  "schema": 1
+  "schema": 1,
+  "marks": {
+   "status": [
+    "page"
+   ],
+   "pending": [
+    "page"
+   ],
+   "endedAt": [
+    "page"
+   ]
+  }
  },
  "$comment": "The note's text never enters the record: length and hash only (B-06).",
  "type": "object",

@@ -340,7 +340,7 @@ export const AGENT_FOLDS = {
     ];
     ctx.canvas = { status: 'ok', changes: res.changes, candidates: res.candidates, errors: raw.errors };
     const n = k => res.changes.filter(c => c.type === k).length;
-    const detail = `Canvas: ${n('new-date')} new and ${n('changed-date')} changed dates, ${res.announcements.length} announcements, ${res.materials.length} files${res.candidates.length ? `, ${res.candidates.length} possible conflicts` : ''}${raw.errors.length ? `, ${raw.errors.length} fetch errors` : ''}`;
+    const detail = `Canvas: ${n('new-date')} new and ${n('changed-date')} changed dates, ${res.announcements.length} announcements, ${res.materials.length} files${res.candidates.length ? `, ${res.candidates.length} possible conflicts` : ''}${raw.errors.length ? `, ${raw.errors.length} fetch errors` : ''}${(res.refused || []).length ? `, ${res.refused.length} left out for a possible patient identifier` : ''}`;
     return { writes, detail, say: [detail + '.'] };
   },
   /**

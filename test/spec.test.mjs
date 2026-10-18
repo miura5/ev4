@@ -198,3 +198,13 @@ test('B-28: spec.tasks.retired keeps every old task with its reason, never a tas
   // The four v3 live tasks the rollback procedure names, and the two v3 staging tasks left enabled at the cutover.
   for (const id of ['trig_01R7242YzwUXFyNVcmqT8vob', 'trig_0148JgXzDzGX1zghMymdvMmL', 'trig_01GHogoFx9Ns7uE1uUmi2i2G', 'trig_01PxKp1tsgddna4Kt1FzpNhv', 'trig_01VK4WrkLh2361Bc7MgvcDUY', 'trig_01VTGsL3VVYKwboByCz8RqZ3']) assert.ok(seen.has(id), id);
 });
+
+test('B-32 (D-089): x-ev.marks in the five schemas match the spec, and the registry check catches a difference', async () => {
+  const { registryProblems, loadSchemas } = await import('../tools/build.mjs');
+  const schemas = loadSchemas(ROOT);
+  const want = { jobs: ['fired'], sessions: ['status', 'pending', 'endedAt'], ideas: ['status'], dates: ['date', 'dueAt', 'syncedAt'], materials: ['text', 'fileUpdatedAt', 'fetchedAt', 'needsOcr'] };
+  for (const [c, fields] of Object.entries(want)) assert.deepEqual(Object.keys(schemas[c]['x-ev'].marks), fields, c);
+  assert.deepEqual(registryProblems(spec, schemas), []);
+  const s2 = JSON.parse(JSON.stringify(spec)); s2.collections.dates.marks.title = ['page'];
+  assert.ok(registryProblems(s2, schemas).some(p => /dates: marks differ/.test(p)));
+});

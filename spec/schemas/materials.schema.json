@@ -10,7 +10,21 @@
    "canvas-sync",
    "page"
   ],
-  "schema": 1
+  "schema": 1,
+  "marks": {
+   "text": [
+    "canvas-sync"
+   ],
+   "fileUpdatedAt": [
+    "canvas-sync"
+   ],
+   "fetchedAt": [
+    "canvas-sync"
+   ],
+   "needsOcr": [
+    "canvas-sync"
+   ]
+  }
  },
  "$comment": "Text is capped at 200,000 characters; longer files are chunked into materials/<id>-p2. Removal lives in materialedits/<id>.",
  "type": "object",
@@ -186,6 +200,11 @@
   },
   "addedBy": {
    "type": "string"
+  },
+  "fetchedAt": {
+   "type": "string",
+   "format": "date-time",
+   "description": "when canvas-sync last fetched the file (a mark, D-089)"
   }
  },
  "required": [

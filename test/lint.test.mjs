@@ -160,3 +160,31 @@ test('a Derived document built by an earlier build is stale, a warning; by this 
   const same = lintRecord(db, spec, validate, { date: '2026-10-17', commit: 'a'.repeat(40) });
   assert.ok(codes(same, 'derived-differs').some(i => i.ref === 'days/2026-10-16'));
 });
+
+test('B-32 (D-089): marks change in place, a first write is not a change, and a planted unmarked change is red', () => {
+  const db = load();
+  const state = doc(db, 'state', 'current');
+  for (const ref of ['dates/canvas-900001', 'jobs/job-20261016-140000-sample-guide', 'sessions/ss-20261016-200000-sample-note', 'materials/NUR112-900002']) assert.match(state.factHashes[ref], /^[0-9a-f]{64}\.[0-9a-z]+$/, ref);
+  assert.ok(state.factFields.dates.includes('title') && !state.factFields.dates.includes('date'), 'a mark is outside the hashed fields');
+  // A Canvas re-date, a fired job, a session ended (its marks plus first writes), a refetched file: all green.
+  const d = doc(db, 'dates', 'canvas-900001'); Object.assign(d, { date: '2026-12-01', dueAt: '2026-12-02T05:59:59Z', syncedAt: '2026-10-18T01:20:00Z' });
+  const j = doc(db, 'jobs', 'job-20261016-140000-sample-guide'); j.fired = '2026-10-17T12:00:00Z';
+  const s = doc(db, 'sessions', 'ss-20261016-200000-sample-note'); const hadSummary = s.summary !== undefined;
+  Object.assign(s, { status: 'ended', endedAt: '2026-10-16T21:00:00Z', pending: {} }); if (!hadSummary) s.summary = 'A first write when the session ends';
+  const m = doc(db, 'materials', 'NUR112-900002'); Object.assign(m, { text: (m.text || '') + ' [p9] Made-up added slide.', fetchedAt: '2026-10-18T01:20:00Z' });
+  const green = lint(db);
+  assert.deepEqual(codes(green, 'fact-changed'), [], JSON.stringify(codes(green, 'fact-changed')));
+  // An unmarked field changed: red, naming the rule; a field removed: red too.
+  d.title = 'A planted different title';
+  const red = codes(lint(db), 'fact-changed');
+  assert.deepEqual(red.map(i => i.ref), ['dates/canvas-900001']);
+  assert.match(red[0].msg, /write-once \(marks: date, dueAt, syncedAt;/);
+  delete j.title; assert.match(codes(lint(db), 'fact-changed').find(i => i.ref.startsWith('jobs/')).msg, /^title removed/);
+});
+
+test('B-32: a stored hash from before marks is not compared (no mask), so the first night after deploy is not red', () => {
+  const db = load(); const state = doc(db, 'state', 'current');
+  state.factHashes = Object.fromEntries(Object.entries(state.factHashes).map(([k, v]) => [k, v.split('.')[0]])); delete state.factFields;
+  doc(db, 'dates', 'canvas-900001').title = 'changed';
+  assert.deepEqual(codes(lint(db), 'fact-changed'), []);
+});

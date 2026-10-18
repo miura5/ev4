@@ -9,7 +9,12 @@
   "writers": [
    "page"
   ],
-  "schema": 1
+  "schema": 1,
+  "marks": {
+   "fired": [
+    "page"
+   ]
+  }
  },
  "$comment": "Status and result live in jobresults/<job id>.",
  "type": "object",

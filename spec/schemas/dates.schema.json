@@ -10,7 +10,18 @@
    "canvas-sync",
    "page"
   ],
-  "schema": 1
+  "schema": 1,
+  "marks": {
+   "date": [
+    "canvas-sync"
+   ],
+   "dueAt": [
+    "canvas-sync"
+   ],
+   "syncedAt": [
+    "canvas-sync"
+   ]
+  }
  },
  "$comment": "Removals, notes and overrides on Canvas entries live in dateedits/<id>.",
  "type": "object",
@@ -92,6 +103,15 @@
   },
   "addedBy": {
    "type": "string"
+  },
+  "syncedAt": {
+   "type": "string",
+   "format": "date-time",
+   "description": "when canvas-sync last wrote this entry (a mark, D-089)"
+  },
+  "canvasType": {
+   "type": "string",
+   "description": "Canvas's plannable_type"
   }
  },
  "required": [

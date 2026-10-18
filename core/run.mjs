@@ -177,6 +177,17 @@ export function compute({ spec, dir, validate, at }) {
     const existing = (pulledDb[w.collection] || []).find(d => d.id === w.id) || null;
     const doc = w.op === 'update' ? merge(existing ? EV.docData(existing) : null, w.data) : w.data;
     if (w.op === 'update' && !existing) problems.push(`${ref}: an update needs the document in the pull`);
+    // B-32 (D-089): an update to a Fact changes only its append maps, its marks (by a role the mark names) and fields
+    // it does not have yet; every other field is write-once.
+    if (w.op === 'update' && existing && classOf(spec, w.collection, w.id) === 'Fact') {
+      const c = spec.collections[w.collection]; const roles = [def.writer || run.pipeline, ...(def.roles || [])];
+      for (const [k, v] of Object.entries(w.data)) {
+        if ((c.appends || {})[k]) continue;
+        const mark = (c.marks || {})[k];
+        if (mark) { if (!mark.some(r => roles.includes(r))) problems.push(`${ref}: ${k} is a mark ${mark.join(', ')} changes, not ${roles.join(' or ')}`); continue; }
+        if (existing[k] !== undefined && EV.stableStringify(existing[k]) !== EV.stableStringify(v)) problems.push(`${ref}: ${k} is write-once on a Fact (not a mark)`);
+      }
+    }
     const vr = validate(w.collection, doc, { id: w.id }); if (!vr.ok) problems.push(describeErrors(ref, vr).split('\n').slice(0, 2).join(' · '));
     if (w.op === 'set' && doc.writer && !writersOf(spec, w.collection, w.id).includes(doc.writer)) problems.push(`${ref}: written as ${doc.writer}, not a writer of ${w.collection}`);
     for (const [field, allowed] of Object.entries(spec.collections[w.collection].appends || {})) {
