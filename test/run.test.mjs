@@ -238,7 +238,12 @@ test('B-33: apply and end recompute the plan hash from the write files; an edite
   assert.equal(r.status, 'planned', JSON.stringify(r.problems));
   assert.equal(RUN.planHash(r.plan), r.plan.hash);
   assert.equal(RUN.apply({ dir }).length, r.plan.batches.length);
-  // Edit one write by hand, as a run must never do.
+  // Edit plan.json by hand (a re-pin), as a run must never do: refused.
+  const planFile = path.join(dir, 'plan.json'); const original = fs.readFileSync(planFile, 'utf8');
+  const edited = JSON.parse(original); edited.batches[0][0].if_version = 99; fs.writeFileSync(planFile, JSON.stringify(edited));
+  assert.throws(() => RUN.apply({ dir }), /write files changed since it was computed/);
+  fs.writeFileSync(planFile, original);
+  // Edit one write by hand: refused too.
   const w = r.plan.batches[0][0];
   const data = JSON.parse(fs.readFileSync(w.file_path, 'utf8')); data.planted = 'by hand'; fs.writeFileSync(w.file_path, JSON.stringify(data));
   assert.throws(() => RUN.apply({ dir }), /write files changed since it was computed .*never edit a plan or a write by hand/);
@@ -251,14 +256,15 @@ test('B-33: apply and end recompute the plan hash from the write files; an edite
   assert.notEqual(endDoc.planHash, r.plan.hash);
 });
 
-test('B-33: replan follows a repull page with a next_cursor before re-pinning', () => {
+test('B-33: replan follows a repull page with a next_cursor before re-pinning (1,001 planted documents)', () => {
   const { dir, lines } = begin(recordDb(), { version: () => 1 });
   RUN.pulled({ spec, dir, transcript: lines.join('\n') }); answer(dir, { push: 'ok' });
   const r = RUN.compute({ spec, dir, validate, at: AT });
   assert.equal(r.status, 'planned', JSON.stringify(r.problems));
   const repull = RUN.applyFailed({ dir, batch: 1 });
   const first = [];
-  for (const c of repull) { const [id, l] = use('ArtifactData', c.args); first.push(l, result(id, listReply(c.args.collection, [], c.args.out_dir, { cursor: 'page2' }).replace(/^0 documents.*$/, `0 documents from collection "${c.args.collection}".\nnext_cursor: page2`))); }
+  const filler = Array.from({ length: 1000 }, (_, i) => ({ id: `planted-${String(i).padStart(4, '0')}` }));
+  for (const c of repull) { const [id, l] = use('ArtifactData', c.args); first.push(l, result(id, listReply(c.args.collection, filler, c.args.out_dir, { cursor: 'page2' }))); }
   const more = RUN.replan({ spec, dir, batch: 1, transcript: first.join('\n') });
   assert.equal(more.done, false);
   assert.ok(more.calls.length >= 1 && more.calls.every(c => c.args.query.cursor === 'page2' && c.args.out_dir.endsWith('repull-1')));
