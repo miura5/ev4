@@ -552,9 +552,21 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
       ok('a missed step is a weak spot of kind skill at once', sw.length === 1 && /: step 2, /.test(sw[0].topic) && /Step 3\./.test(await card().textContent()), JSON.stringify(sw.map(w => w.topic)));
       ok('the card keeps the tally', /2 of \d+ · 1 missed/.test(await card().textContent()), (await card().textContent()).slice(0, 120));
       await fp.screenshot({ path: `${shots}/skills-card.png` });
+      // B-51 (D-107): on the phone a bottom sheet keeps the current step in view; marking works from it as from the card
+      ok('[phone] the sheet peeks with the current step and its count, the side panel hidden', await fp.isVisible('#sksheet') && /Step 3 of \d+/.test(await fp.textContent('#sksheet')) && !(await fp.isVisible('#skpanel')), await fp.textContent('#sksheet'));
+      const sb = await fp.locator('#sksheet').boundingBox(); const vh = fp.viewportSize().height;
+      ok('[phone] the sheet sits on screen above the dock, without scrolling', sb && sb.y > vh / 3 && sb.y + sb.height <= vh, JSON.stringify(sb));
+      await fp.locator('#sksheet .sk-peek button', { hasText: 'Did it' }).click(); await fp.waitForTimeout(400);
+      ok('[phone] Did it on the sheet marks step 3, and the card follows', /Step 4 of \d+/.test(await fp.textContent('#sksheet')) && /Step 4\./.test(await card().textContent()) && /3 of \d+ · 1 missed/.test(await card().textContent()));
+      await fp.locator('#sksheet .sk-tog').click(); await fp.waitForTimeout(300);
+      const opened = await fp.evaluate(() => [...document.querySelectorAll('#sksheet .sk-step')].map(li => (li.className.match(/pass|miss|cur/) || [''])[0]));
+      ok('[phone] the sheet opens to the whole ticked list, the current step marked', opened.slice(0, 4).join(',') === 'pass,miss,pass,cur' && await fp.locator('#sksheet .sk-tog').getAttribute('aria-expanded') === 'true', opened.join(','));
+      await fp.screenshot({ path: `${shots}/skills-sheet-phone.png` });
+      await fp.locator('#sksheet .sk-tog').click(); await fp.waitForTimeout(200);
       await card().locator('button', { hasText: 'Stop' }).click(); await fp.waitForTimeout(400);
+      ok('[phone] the sheet goes when the run ends', !(await fp.isVisible('#sksheet')));
       const ended = await fp.evaluate(id => window.__db.sessions[id], sk.id);
-      ok('Stop ends the run with its summary', ended.status === 'ended' && /^1 of \d+ steps done right, missed step 2\. Stopped before the end\.$/.test(ended.summary) && /missed step 2/.test(await card().textContent()), ended.summary);
+      ok('Stop ends the run with its summary', ended.status === 'ended' && /^2 of \d+ steps done right, missed step 2\. Stopped before the end\.$/.test(ended.summary) && /missed step 2/.test(await card().textContent()), ended.summary);
       await fp.click('#tab-progress'); await fp.locator('#seg-progress [data-v="weak"]').click(); await fp.waitForTimeout(200);
       ok('Progress lists it as a skill to practice', (await fp.locator('#weak-notes .row', { hasText: ': step 2, ' }).locator('button', { hasText: 'Practiced' }).count()) === 1);
       await fp.click('#tab-ev'); await fp.waitForTimeout(150);
@@ -569,6 +581,30 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
       ok('grounded explanations: explain from his materials and cite, or mark it', /Grounded explanations: when he asks why, or to explain a weak spot/.test(gc.input[0].content) && /\(check your materials\)/.test(gc.input[0].content) && gc.tools.includes('materials') && gc.tools.includes('practice_skill'));
       ok('B-18: no page errors', fErr.length === 0, fErr.join(' | '));
       await fp.close();
+    }
+    // ---- B-51 (D-107): at 1024px and up the checklist is a side panel beside the thread
+    {
+      const dp = await browser.newPage({ viewport: { width: 1280, height: 860 } }); const dErr = []; dp.on('pageerror', e => dErr.push(e.message));
+      await dp.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
+      await openPage(dp, 'staging'); await dp.waitForTimeout(1500);
+      await dp.evaluate(() => { window.__chatScript = [{ tool: 'practice_skill', input: { action: 'start', skill: 'head to toe assessment' } }]; window.__chatReply = 'Let’s run it.'; });
+      await send(dp, 'Run me through the head to toe validation'); await dp.waitForTimeout(800);
+      const dcard = () => dp.locator('#thread .msg.ev').last();
+      ok('[desktop] the side panel shows the whole checklist beside the thread, the sheet hidden', await dp.isVisible('#skpanel') && !(await dp.isVisible('#sksheet')) && (await dp.locator('#skpanel .sk-step').count()) >= 4 && /Step 1 of \d+/.test(await dp.textContent('#skpanel')));
+      const pb = await dp.locator('#skpanel').boundingBox(), tb = await dp.locator('#thread').boundingBox();
+      ok('[desktop] the panel sits to the right of the thread, in view', pb && tb && pb.x >= tb.x + tb.width && pb.y < 860 && pb.x + pb.width <= 1280, JSON.stringify({ pb, tb }));
+      await dp.locator('#skpanel .sk-acts button', { hasText: 'Did it' }).click(); await dp.waitForTimeout(400);
+      await dp.locator('#skpanel .sk-acts button', { hasText: 'Missed it' }).click(); await dp.waitForTimeout(400);
+      const marks = await dp.evaluate(() => [...document.querySelectorAll('#skpanel .sk-step')].map(li => (li.className.match(/pass|miss|cur/) || [''])[0]));
+      ok('[desktop] marking from the panel ticks the list and the card follows', marks.slice(0, 3).join(',') === 'pass,miss,cur' && /Step 3\./.test(await dcard().textContent()) && /2 of \d+ · 1 missed/.test(await dcard().textContent()), marks.join(','));
+      await dcard().locator('button', { hasText: 'Did it' }).click(); await dp.waitForTimeout(400);
+      ok('[desktop] marking from the card moves the panel on', /Step 4 of \d+/.test(await dp.textContent('#skpanel')));
+      await dp.screenshot({ path: `${shots}/skills-panel-desktop.png` });
+      ok('[desktop] no horizontal scroll with the panel open', await dp.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+      await dp.locator('#skpanel button', { hasText: 'Stop' }).click(); await dp.waitForTimeout(400);
+      ok('[desktop] Stop on the panel ends the run and the panel goes', !(await dp.isVisible('#skpanel')) && await dp.evaluate(() => Object.values(window.__db.sessions).some(x => x.kind === 'skill' && x.status === 'ended')));
+      ok('B-51: no page errors', dErr.length === 0, dErr.join(' | '));
+      await dp.close();
     }
 
     // ---- Study session, entirely in the E.V. conversation (D-073). A fake clock fast-forwards to each check.

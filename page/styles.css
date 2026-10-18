@@ -250,3 +250,35 @@ body.opening .msg.greet .msg-cards{display:grid;grid-template-columns:repeat(aut
 @keyframes glow{0%{box-shadow:0 0 0 0 rgba(63,224,197,0)}30%{box-shadow:0 0 0 5px rgba(63,224,197,.14),0 0 44px -10px rgba(63,224,197,.45)}100%{box-shadow:0 0 0 0 rgba(63,224,197,0)}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
 .update{position:fixed;left:0;right:0;margin:0 auto;width:max-content;top:calc(64px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:12px;background:#121826;color:#E6EEF2;border:1px solid rgba(124,240,214,.35);font-size:14px;padding:8px 8px 8px 16px;border-radius:999px;max-width:calc(100% - 32px);z-index:21;box-shadow:0 10px 30px -10px rgba(0,0,0,.6)}.update[hidden]{display:none}.update span{white-space:nowrap}.update button{padding:6px 14px;min-height:0}
+/* D-107: the skills checklist in view. Phone: a bottom sheet on the composer (peek bar, opens to the list). 1024px and up: a side panel beside the thread. */
+.sk-sheet{display:flex;flex-direction:column;gap:0;background:rgba(13,18,30,.96);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid var(--accent-edge);border-radius:var(--r);overflow:hidden}
+.sk-peek{display:flex;flex-direction:column;gap:8px;padding:10px 12px 12px}
+.sk-tog{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;min-height:var(--tap);padding:2px 30px 2px 2px;background:none;border:0;border-radius:12px;color:inherit;text-align:left;font:inherit;position:relative;cursor:pointer}
+.sk-tog::after{content:"";position:absolute;right:8px;top:50%;width:9px;height:9px;border-left:2px solid var(--soft);border-top:2px solid var(--soft);transform:translateY(-25%) rotate(45deg);transition:transform .25s var(--ease)}
+.sk-tog[aria-expanded="true"]::after{transform:translateY(-75%) rotate(225deg)}
+.sk-tog:hover{background:none}
+.sk-count{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--accent-text)}
+.sk-now{font-size:16px;line-height:1.35;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sk-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sk-acts button{min-height:var(--tap)}
+.sk-body{padding:12px 14px 4px;border-bottom:1px solid var(--line);max-height:min(46vh,420px);overflow:auto;display:flex;flex-direction:column;gap:10px}
+.sk-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}.sk-head .meta{white-space:nowrap;flex:0 0 auto}
+.sk-title{font-weight:600;overflow-wrap:anywhere}
+.sk-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.sk-step{display:flex;gap:10px;align-items:baseline;padding:7px 8px;border-radius:12px;font-size:15px;line-height:1.45;color:var(--ink2);overflow-wrap:anywhere}
+.sk-step.cur{background:var(--accent-bg);color:var(--ink)}
+.sk-step.pass .sk-txt{color:var(--soft)}
+.sk-mark{flex:0 0 16px;font-weight:700;text-align:center;color:var(--accent-text)}
+.sk-step.miss .sk-mark{color:var(--bad)}
+.sk-crit{font:500 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--warn);white-space:nowrap}
+.sk-cur{margin:0;font-size:17px;line-height:1.5}
+.sk-panel{display:none}
+@media (max-width:1023px){body.skill-on .qchips{display:none}}
+@media (min-width:1024px){
+  .sk-sheet{display:none}
+  body.skill-on.on-ev .wrap{max-width:1120px}
+  body.skill-on #p-ev{display:grid;grid-template-columns:minmax(0,1fr) 340px;column-gap:28px;align-items:start}
+  body.skill-on #p-ev>*{grid-column:1}
+  body.skill-on #p-ev>.sk-panel{display:flex;flex-direction:column;gap:12px;grid-column:2;grid-row:1/span 20;position:sticky;top:calc(var(--top-h) + 16px);max-height:calc(100vh - var(--top-h) - var(--dock-h) - 40px);overflow:auto;padding:16px 18px;background:rgba(63,224,197,.05);border:1px solid var(--accent-edge);border-radius:var(--r)}
+  .sk-panel .actions{margin-top:2px}
+}

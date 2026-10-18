@@ -1131,6 +1131,60 @@
   }
   async function skillMark(s, n, result) { await run(E.skillStep(s, n, result, { weakspots: M.models, now: now(), by: 'Matt' })); const s2 = sessOf(s.id); if (s2 && E.skillState(s2).complete) await finishSkill(s2, 'complete'); }
   async function finishSkill(s, why) { await write(E.endSkill(s, { now: now(), endedBy: why })); }
+  // D-107: the checklist stays in view while he practises, so he never scrolls up to tick a step. On the phone a bottom
+  // sheet rides on the composer: a peek bar (the current step, its count, Missed it and Did it) that opens to the whole
+  // ticked list; at 1024px and up a side panel beside the thread. Both mark through skillMark, like the card.
+  const SK = { open: false };
+  function skillList(s, st) {
+    const ol = el('ol', 'sk-steps');
+    for (const step of s.skill.steps) {
+      const r = st.results[step.n]; const cur = st.next && st.next.n === step.n;
+      const li = el('li', 'sk-step' + (r ? ' ' + r : '') + (cur ? ' cur' : ''));
+      const mark = el('span', 'sk-mark', r === 'pass' ? '✓' : r === 'miss' ? '✗' : cur ? '•' : ''); mark.setAttribute('aria-hidden', 'true');
+      const txt = el('span', 'sk-txt'); txt.append(el('b', null, step.n + '. '), document.createTextNode(step.text));
+      if (step.critical) txt.append(el('span', 'sk-crit', ' must not miss'));
+      li.append(mark, txt); li.setAttribute('aria-label', `Step ${step.n}${r === 'pass' ? ', done' : r === 'miss' ? ', missed' : cur ? ', current' : ''}: ${step.text}`);
+      if (cur) li.setAttribute('aria-current', 'step');
+      ol.append(li);
+    }
+    return ol;
+  }
+  function skillButtons(s, step, cls) {
+    const a = el('div', 'sk-acts' + (cls ? ' ' + cls : ''));
+    const miss = btn('Missed it', ev => guard(ev.target, () => skillMark(s, step.n, 'miss'), 'Logged as a skill to practice'));
+    const did = btn('Did it', ev => guard(ev.target, () => skillMark(s, step.n, 'pass')), { primary: true });
+    a.append(miss, did); return a;
+  }
+  function renderSkillDock() {
+    const s = activeSkill(); const st = s && s.skill ? E.skillState(s) : null; const live = !!(st && st.next);
+    document.body.classList.toggle('skill-on', live);
+    let sheet = $('sksheet'), panel = $('skpanel');
+    if (!sheet) { sheet = el('div', 'sk-sheet'); sheet.id = 'sksheet'; sheet.setAttribute('role', 'region'); sheet.setAttribute('aria-label', 'Skills checklist'); $('composer').prepend(sheet); }
+    if (!panel) { panel = el('aside', 'sk-panel'); panel.id = 'skpanel'; panel.setAttribute('aria-label', 'Skills checklist'); $('p-ev').append(panel); }
+    if (!live) { if (!sheet.hidden) { sheet.hidden = true; sheet.replaceChildren(); } if (!panel.hidden) { panel.hidden = true; panel.replaceChildren(); } sheet.dataset.k = panel.dataset.k = ''; SK.open = false; return; }
+    const k = [s.id, JSON.stringify(st.results), SK.open].join('|');
+    if (sheet.dataset.k === k && panel.dataset.k === k) return;
+    sheet.dataset.k = panel.dataset.k = k; sheet.hidden = panel.hidden = false;
+    const step = st.next; const count = `Step ${step.n} of ${st.total}`;
+    const tally = `${st.done} of ${st.total} done${st.missed.length ? ' · ' + st.missed.length + ' missed' : ''}`;
+    // Phone: the peek bar, and the list above it when open.
+    sheet.classList.toggle('open', SK.open);
+    const peek = el('div', 'sk-peek');
+    const tog = el('button', 'sk-tog'); tog.type = 'button'; tog.setAttribute('aria-expanded', String(SK.open)); tog.setAttribute('aria-controls', 'sksheet-list');
+    tog.append(el('span', 'sk-count', count), el('span', 'sk-now', step.text));
+    tog.addEventListener('click', () => { SK.open = !SK.open; renderSkillDock(); });
+    peek.append(tog, skillButtons(s, step));
+    const body = el('div', 'sk-body'); body.id = 'sksheet-list'; body.hidden = !SK.open;
+    if (SK.open) { const h = el('div', 'sk-head'); h.append(el('span', 'sk-title', s.topic), el('span', 'meta', tally)); body.append(h, skillList(s, st)); const a = el('div', 'actions'); a.append(btn('Stop', ev => guard(ev.target, () => finishSkill(s, 'ended'), 'Skills run saved'))); body.append(a); }
+    sheet.replaceChildren(body, peek);
+    // Desktop: the whole list beside the thread, the current step with its buttons on top.
+    const ph = el('div', 'sk-head'); ph.append(el('span', 'sk-title', 'Skills · ' + s.topic), el('span', 'meta', tally));
+    const pr = el('div', 'progress'); const bar = el('i'); bar.style.width = (st.total ? 100 * st.done / st.total : 0) + '%'; pr.append(bar);
+    const cur = el('p', 'sk-cur'); cur.append(el('b', null, count + '. '), document.createTextNode(step.text));
+    const pa = el('div', 'actions'); pa.append(btn('Stop', ev => guard(ev.target, () => finishSkill(s, 'ended'), 'Skills run saved')));
+    panel.replaceChildren(ph, pr, cur, skillButtons(s, step), skillList(s, st), pa, el('p', 'meta', s.skill.cite || ''));
+    const curLi = sheet.querySelector('.sk-step.cur'); if (curLi && SK.open) curLi.scrollIntoView({ block: 'nearest' });
+  }
 
   // ---------------------------------------------------------------- cards (rendered live on every snapshot)
   const CARD_ROWS = 5; // a long list in a card shows five and a "more" (UI and UX, rule 3)
@@ -1820,7 +1874,7 @@
     document.body.classList.toggle('core-big', !opening && !activeSession() && !!T.bigCore);
     renderMood();
     const chips = ((T.greet && T.greet.chips) || ['What’s due this week?', 'How ready am I?']).filter(c => !(c === 'Start a study session' && activeSession()));
-    renderBar();
+    renderBar(); renderSkillDock();
     const qc = $('qchips'); if (qc.dataset.k !== chips.join('|')) { qc.dataset.k = chips.join('|'); qc.replaceChildren(...chips.map(c => { const b = btn(c, () => guard(null, () => quick(c))); b.className = 'qchip'; if (c === 'Start a study session') { b.classList.add('go'); b.insertAdjacentHTML('afterbegin', PLAY_ICON); } return b; })); }
     const sb = $('ev-send'); const sk = T.busy ? 'stop' : 'send'; if (sb.dataset.k !== sk) { sb.dataset.k = sk; sb.innerHTML = T.busy ? STOP_ICON : SEND_ICON; sb.setAttribute('aria-label', T.busy ? 'Stop' : 'Send'); sb.classList.toggle('primary', !T.busy); }
     renderThread();
