@@ -1487,6 +1487,15 @@
     ],
     "needsOcr": [
      "canvas-sync"
+    ],
+    "pages": [
+     "canvas-sync"
+    ],
+    "chars": [
+     "canvas-sync"
+    ],
+    "ocr": [
+     "canvas-sync"
     ]
    }
   },

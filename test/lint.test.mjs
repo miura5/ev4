@@ -278,3 +278,12 @@ test('B-34 (D-090): the state step writes state/current.lint from its pull; a pl
   assert.equal(lt.errors, 1); assert.deepEqual(lt.top.filter(i => i.severity === 'error').map(i => [i.code, i.ref]), [['fact-changed', `exams/${planted.exams[0].id}`]]);
   assert.equal(lt.top[0].code, 'fact-changed', 'errors first');
 });
+
+test('B-32 follow-up (Matt, Oct 18): a refetched file\'s pages, chars and ocr are marks; its title is still write-once', () => {
+  const db = load();
+  const m = doc(db, 'materials', 'NUR112-900002');
+  Object.assign(m, { pages: (m.pages || 1) + 3, chars: (m.chars || 0) + 500, ocr: { by: 'Claude (E.V. Home)', at: '2026-10-18T01:20:00Z', pages: [2], stale: true }, fetchedAt: '2026-10-18T01:20:00Z' });
+  assert.deepEqual(codes(lint(db), 'fact-changed'), []);
+  m.title = 'A planted renamed file.pdf';
+  assert.deepEqual(codes(lint(db), 'fact-changed').map(i => i.ref), ['materials/NUR112-900002']);
+});
