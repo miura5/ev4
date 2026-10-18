@@ -195,7 +195,7 @@ test('worker without a job id takes the oldest job with no result, and ends quie
   assert.equal(r.plan.writes, 0);
 });
 
-test('diagnostic: the probe from the firing text, the findings in the ledger entry, no record writes', () => {
+test('diagnostic: the probe from the firing text, the findings in the ledger entry and debug/<run id>', () => {
   const at = '2026-10-18T06:30:00Z';
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-diag-'));
   RUN.start({ spec, pipeline: 'diagnostic', record: 'staging', at, dir, release: 'v4.0.0', input: { probe: 'Is this session\'s transcript readable?' } });
@@ -205,7 +205,10 @@ test('diagnostic: the probe from the firing text, the findings in the ledger ent
   assert.ok(w.question.material.surfaces.includes('cloud-run'));
   answer(dir, 'probe', { findings: 'The transcript is at ~/.claude/projects and readable.', proven: ['cloud-run reads its own transcript'], limits: [] });
   const r = RUN.compute({ spec, dir, validate, at });
-  assert.equal(r.status, 'planned'); assert.equal(r.plan.writes, 0);
+  assert.equal(r.status, 'planned'); assert.equal(r.plan.writes, 1);
+  assert.deepEqual(r.plan.batches[0].map(w => [w.collection, w.doc_id]), [['debug', 'diagnostic-20261018-063000000']]);
+  const dbg = JSON.parse(fs.readFileSync(r.plan.batches[0][0].file_path, 'utf8'));
+  assert.deepEqual(dbg.proven, ['cloud-run reads its own transcript']); assert.equal(dbg.writer, 'diagnostic');
   const [call] = RUN.end({ dir, at: '2026-10-18T06:31:00Z', transcript: null });
   const end = JSON.parse(fs.readFileSync(call.args.file_path, 'utf8'));
   assert.equal(end.detail, 'The transcript is at ~/.claude/projects and readable. | proven: cloud-run reads its own transcript');
@@ -213,4 +216,38 @@ test('diagnostic: the probe from the firing text, the findings in the ledger ent
   const plain = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-diag-'));
   RUN.start({ spec, pipeline: 'diagnostic', record: 'staging', at, dir: plain, release: 'v4.0.0' });
   assert.equal(RUN.compute({ spec, dir: plain, validate, at }).plan.steps[0].status, 'skipped', 'no probe, nothing to do');
+});
+
+test('diagnostic: a named probe prints its exact calls, the audit holds the agent to them, numbers reach the ledger', () => {
+  const at = '2026-10-18T06:40:00Z';
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-diag-'));
+  RUN.start({ spec, pipeline: 'diagnostic', record: 'staging', at, dir, release: 'v4.0.0', input: { probe: 'ceilings' } });
+  const w = RUN.compute({ spec, dir, validate, at });
+  assert.equal(w.status, 'waiting');
+  const groups = w.question.material.groups;
+  assert.deepEqual(groups.map(g => [g.name, g.calls.length]), [['document', 7], ['batch-writes', 1], ['batch-bytes', 2]]);
+  const first = groups[0].calls[0].args;
+  assert.deepEqual([first.action, first.collection, first.doc_id], ['set', 'debug', 'diagnostic-20261018-064000000-doc-0256k']);
+  const doc = JSON.parse(fs.readFileSync(first.file_path, 'utf8'));
+  assert.ok(Math.abs(Buffer.byteLength(JSON.stringify(doc)) - 256 * 1024) <= 2, 'the probe document is the size it says');
+  assert.ok(validate('debug', doc).ok, 'a probe document fits debug.schema.json');
+  assert.equal(groups[1].calls[0].args.writes.length, 50);
+  assert.equal(new Set(groups.flatMap(g => g.calls.flatMap(c => c.args.writes ? c.args.writes.map(x => x.doc_id) : [c.args.doc_id]))).size, 61, 'no document is written twice');
+  RUN.compute({ spec, dir, validate, at });
+  const run = JSON.parse(fs.readFileSync(path.join(dir, 'run.json'), 'utf8'));
+  assert.equal(run.calls.filter(c => c.move === 'agent:probe').length, 10, 'registered once, however often compute runs');
+  // The transcript: the gate read, the start, two document sets (the second refused), then an unlisted write.
+  const tool = (id, name, input) => JSON.stringify({ type: 'assistant', message: { content: [{ type: 'tool_use', id, name, input }] } }) + '\n' + JSON.stringify({ type: 'user', message: { content: [{ type: 'tool_result', tool_use_id: id, content: 'ok' }] } });
+  const g0 = groups[0].calls;
+  const transcript = [tool('a', 'ArtifactData', g0[0].args), tool('b', 'ArtifactData', g0[1].args)].join('\n');
+  const a = RUN.audit({ dir, transcript });
+  assert.equal(a.ok, true, JSON.stringify(a.extra));
+  const extra = RUN.audit({ dir, transcript: transcript + '\n' + tool('c', 'ArtifactData', { action: 'set', url: g0[0].args.url, collection: 'debug', doc_id: 'other', data: {} }) });
+  assert.equal(extra.ok, false);
+  answer(dir, 'probe', { findings: 'set accepted 1000 KiB and refused 1536 KiB; a batch holds 50 writes and refused 1200 KiB.', proven: ['ArtifactData set of a 1000 KiB document'], limits: ['a 1536 KiB document is refused'], numbers: { documentKiBAccepted: 1000, documentKiBRefused: 1536 } });
+  const r = RUN.compute({ spec, dir, validate, at });
+  assert.equal(r.status, 'planned', JSON.stringify(r.problems));
+  const dbg = JSON.parse(fs.readFileSync(r.plan.batches[0][0].file_path, 'utf8'));
+  assert.deepEqual(dbg.numbers, { documentKiBAccepted: 1000, documentKiBRefused: 1536 });
+  assert.match(r.plan.detail, /documentKiBAccepted=1000/);
 });

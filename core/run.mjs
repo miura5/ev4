@@ -139,7 +139,7 @@ export function compute({ spec, dir, validate, at }) {
   const versions = fs.existsSync(versionsFile) ? readJson(versionsFile) : {};
   const db = loadPulled(dir); const pulledDb = loadPulled(dir);
   const now = EV.envelope('x', '', at).at;
-  const ctx = { runId: run.id, pipeline: run.pipeline, record: run.record, writer: def.writer || run.pipeline, date: EV.chicagoDate(now), now, source: `${run.pipeline} ${run.id}`, release: run.release, startedAt: run.startedAt, input: run.input || {} };
+  const ctx = { runId: run.id, pipeline: run.pipeline, record: run.record, writer: def.writer || run.pipeline, date: EV.chicagoDate(now), now, source: `${run.pipeline} ${run.id}`, release: run.release, startedAt: run.startedAt, input: run.input || {}, url: run.url, dir };
   const writes = []; const steps = []; let push = null, detail = null; const problems = []; const fires = [];
   for (const s of def.steps) {
     let r;
@@ -148,7 +148,12 @@ export function compute({ spec, dir, validate, at }) {
       const answerPath = path.join(dir, 'answers', s.id + '.json');
       const pre = s.material ? AGENT_MATERIAL[s.material](db, ctx, spec) : null;
       if (pre && pre.skip) { steps.push({ id: s.id, status: 'skipped', detail: pre.skip }); continue; }
-      if (!fs.existsSync(answerPath)) return { status: 'waiting', step: s.id, question: { judgment: s.judgment, material: pre, output: s.output, answerPath } };
+      if (!fs.existsSync(answerPath)) {
+        // Calls a material lists are printed calls: the audit holds the agent to them (registered once per step).
+        const listed = ((pre && pre.groups) || []).flatMap(g => g.calls || []);
+        if (listed.length && !run.calls.some(c => c.move === 'agent:' + s.id)) printed(dir, run, 'agent:' + s.id, listed);
+        return { status: 'waiting', step: s.id, question: { judgment: s.judgment, material: pre, output: s.output, answerPath } };
+      }
       const answer = readJson(answerPath);
       const v = validateAgainst(s.output, answer);
       if (!v.ok) { problems.push(`${s.id}: the answer does not fit its shape: ${describeErrors('answer', v).split('\n')[0]}`); steps.push({ id: s.id, status: 'refused' }); continue; }

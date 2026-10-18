@@ -1,0 +1,15 @@
+{
+ "schema": 1,
+ "writer": "diagnostic",
+ "at": "2026-10-18T06:31:00.000Z",
+ "source": "diagnostic diagnostic-20261018-063000000",
+ "release": "v4.0.0",
+ "run": "diagnostic-20261018-063000000",
+ "probe": "Is this session's transcript readable?",
+ "findings": "Made-up finding for the fixture: the transcript is readable.",
+ "proven": [
+  "cloud-run reads its own transcript"
+ ],
+ "limits": [],
+ "numbers": {}
+}

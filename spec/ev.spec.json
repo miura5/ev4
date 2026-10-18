@@ -457,12 +457,60 @@
    "input": {
     "probe": "the probe, from the message that started this run ('Probe: <what to find out>')"
    },
+   "probes": {
+    "_rules": [
+     "A named probe ('Probe: <name>') is a measurement: compute writes its probe documents to files and prints the exact calls, which are the only record writes a diagnostic makes, all into debug/<run id>-<label>. Any other probe is answered with read-only commands.",
+     "Groups run in order; within a group the calls go from smallest to largest and stop at the first refusal, so nothing beyond the ceiling is attempted twice."
+    ],
+    "ceilings": {
+     "measures": "the largest document one ArtifactData set accepts and the batch ceilings (writes per batch, bytes per batch)",
+     "groups": [
+      {
+       "name": "document",
+       "rule": "one set per call, ascending; stop at the first refusal",
+       "documentKiB": [
+        256,
+        512,
+        768,
+        1000,
+        1536,
+        2048,
+        4096
+       ]
+      },
+      {
+       "name": "batch-writes",
+       "rule": "one batch of many small writes",
+       "batches": [
+        {
+         "writes": 50,
+         "kib": 1
+        }
+       ]
+      },
+      {
+       "name": "batch-bytes",
+       "rule": "batches of two large writes, ascending; stop at the first refusal",
+       "batches": [
+        {
+         "writes": 2,
+         "kib": 480
+        },
+        {
+         "writes": 2,
+         "kib": 600
+        }
+       ]
+      }
+     ]
+    }
+   },
    "reads": [],
    "steps": [
     {
      "id": "probe",
      "kind": "agent",
-     "judgment": "Find out exactly what the probe asks, with read-only commands in this session (no record writes, no network beyond what the probe names, nothing deleted). Report what you observed, not what you expect: findings in at most 480 characters, plus each capability you saw work (proven) and each limit you hit (limits).",
+     "judgment": "Find out exactly what the probe asks. When the material lists calls, make them exactly as listed, group by group in order, stopping a group at its first refused call, and note for each call whether it was accepted or refused and the refusal's words; make no other record call. Otherwise use read-only commands in this session (no record writes, no network beyond what the probe names, nothing deleted). Report what you observed, not what you expect: findings in at most 480 characters, each capability you saw work (proven), each limit you hit (limits), and any measured number (numbers, e.g. documentKiBAccepted).",
      "material": "probe-brief",
      "output": {
       "type": "object",
@@ -487,6 +535,16 @@
          "maxLength": 160
         },
         "maxItems": 10
+       },
+       "numbers": {
+        "type": "object",
+        "additionalProperties": {
+         "type": [
+          "number",
+          "null"
+         ]
+        },
+        "maxProperties": 12
        }
       },
       "required": [
@@ -787,6 +845,17 @@
    "holds": "pipeline, release, startedAt, endedAt, status, steps, detail",
    "fromV3": "days.runs",
    "schema": "spec/schemas/runs.schema.json"
+  },
+  "debug": {
+   "class": "Log",
+   "writers": [
+    "diagnostic"
+   ],
+   "key": "<diagnostic run id>[-<probe label>]",
+   "holds": "what a diagnostic probe found (findings, proven, limits, numbers) and the probe documents a measurement writes",
+   "fromV3": "debug (v3 diagnostics)",
+   "readBy": "build chats only; no pipeline or page reads it",
+   "schema": "spec/schemas/debug.schema.json"
   },
   "health": {
    "class": "Derived",
@@ -1475,6 +1544,13 @@
     "warnBytes": null,
     "failBytes": null,
     "relief": "weekly run counts per pipeline (weeks/<date> roll-up)"
+   },
+   "debug": {
+    "warnDocs": null,
+    "failDocs": null,
+    "warnBytes": null,
+    "failBytes": null,
+    "relief": null
    },
    "health": {
     "warnDocs": null,

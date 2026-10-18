@@ -10,7 +10,7 @@ import { execFileSync } from 'node:child_process';
 export const RECORD_COLLECTIONS = [
   'weakspots', 'sets', 'answers', 'exams', 'objectives', 'plans', 'planedits', 'dates', 'dateedits', 'days', 'dayedits',
   'weeks', 'runs', 'health', 'state', 'sessions', 'ideas', 'journal', 'talk', 'jobs', 'jobresults', 'materials',
-  'materialedits', 'libindex', 'announcements', 'concepts', 'system', 'legacy',
+  'materialedits', 'libindex', 'announcements', 'concepts', 'system', 'legacy', 'debug',
 ];
 
 // A folder that holds made-up records for tests opts out of the layout rule with this marker file at its root.

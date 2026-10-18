@@ -1,0 +1,98 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/debug",
+ "title": "debug/<id>",
+ "description": "what a diagnostic probe found (findings, proven, limits, numbers) and the probe documents a measurement writes",
+ "x-ev": {
+  "collection": "debug",
+  "class": "Log",
+  "writers": [
+   "diagnostic"
+  ],
+  "schema": 1
+ },
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "diagnostic"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "release": {
+   "type": "string",
+   "pattern": "^v\\d+(\\.\\d+){0,2}$"
+  },
+  "run": {
+   "type": "string",
+   "minLength": 1
+  },
+  "probe": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 500
+  },
+  "findings": {
+   "type": "string",
+   "maxLength": 480
+  },
+  "proven": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "maxLength": 160
+   }
+  },
+  "limits": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "maxLength": 160
+   }
+  },
+  "numbers": {
+   "type": "object",
+   "additionalProperties": {
+    "type": [
+     "number",
+     "null"
+    ]
+   }
+  },
+  "calls": {
+   "type": "array",
+   "items": {
+    "type": "object"
+   }
+  },
+  "label": {
+   "type": "string"
+  },
+  "bytes": {
+   "type": "integer",
+   "minimum": 0
+  },
+  "pad": {
+   "type": "string"
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "release",
+  "run"
+ ],
+ "additionalProperties": false
+}

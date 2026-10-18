@@ -209,7 +209,7 @@ const commands = {
       }
       case 'compute': {
         const r = RUN.compute({ spec, dir, validate: loadValidator(path.join(root, 'spec', 'schemas')), at });
-        if (r.status === 'waiting') { console.log(`${pipeline} compute: waiting on step ${r.step}.\nJudgment: ${r.question.judgment}\nMaterial: ${JSON.stringify(r.question.material)}\nAnswer shape (JSON Schema): ${JSON.stringify(r.question.output)}\nWrite the answer as JSON to ${r.question.answerPath}, then: ${cli} compute${d}`); return 3; }
+        if (r.status === 'waiting') { const m = r.question.material || {}; const groups = m.groups || []; const shown = groups.length ? { ...m, groups: groups.map(g => ({ name: g.name, rule: g.rule, calls: g.calls.length })) } : m; console.log(`${pipeline} compute: waiting on step ${r.step}.\nJudgment: ${r.question.judgment}\nMaterial: ${JSON.stringify(shown)}${groups.map(g => `\n\nGroup ${g.name} (${g.rule}):\n${RUN.formatCalls(g.calls)}`).join('')}\nAnswer shape (JSON Schema): ${JSON.stringify(r.question.output)}\nWrite the answer as JSON to ${r.question.answerPath}, then: ${cli} compute${d}`); return 3; }
         if (r.status === 'refused') { console.log(`${pipeline} compute: REFUSED, nothing planned`); for (const p of r.problems) console.log('  ' + p); return 1; }
         console.log(`${pipeline} compute: ${r.plan.writes} writes in ${r.plan.batches.length} batches, plan ${r.plan.hash.slice(0, 12)}${r.plan.push ? '\nPush: ' + r.plan.push : ''}\nThen: ${cli} apply${d}`); return 0;
       }

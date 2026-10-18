@@ -7,6 +7,8 @@
 // ctx: {runId, pipeline, writer, date (Central), now (ISO), source}; a code step may leave a brief on ctx for the
 // agent step after it (compute runs every step again on each call, so nothing is carried between calls).
 // A material builder returns {skip: reason} when its agent has nothing to do today.
+import fs from 'node:fs';
+import path from 'node:path';
 import EV from './evcore.mjs';
 import { produce } from './derive.mjs';
 import { watch } from './watch.mjs';
@@ -122,7 +124,10 @@ export const AGENT_MATERIAL = {
   /** The probe this diagnostic run answers, and the surfaces the environments registry tracks. */
   'probe-brief'(db, ctx, spec) {
     if (!ctx.input || !ctx.input.probe) return { skip: 'no probe named' };
-    return { probe: ctx.input.probe, surfaces: Object.keys((spec.environments && spec.environments.surfaces) || spec.environments || {}).filter(k => !k.startsWith('_')) };
+    const surfaces = Object.keys((spec.environments && spec.environments.surfaces) || spec.environments || {}).filter(k => !k.startsWith('_'));
+    const named = probeNamed(spec, ctx.input.probe);
+    if (!named) return { probe: ctx.input.probe, surfaces };
+    return { probe: ctx.input.probe, surfaces, measures: named.def.measures, groups: probeGroups(named, ctx) };
   },
   'job-brief'(db, ctx) { return ctx.job ? ctx.jobBrief : { skip: ctx.jobSkip || 'no job' }; },
   'practice-brief'(db, ctx) {
@@ -138,11 +143,48 @@ export const AGENT_MATERIAL = {
   },
 };
 
+// ------------------------------------------------------------------------------------------------ named probes
+/** The named probe a firing text asks for ('ceilings', or 'Probe: ceilings'), or null for a free-form probe. */
+export function probeNamed(spec, text) {
+  const probes = ((spec.pipelines.diagnostic || {}).probes) || {};
+  const name = String(text || '').trim().replace(/^probe:\s*/i, '').toLowerCase();
+  return Object.prototype.hasOwnProperty.call(probes, name) && !name.startsWith('_') ? { name, def: probes[name] } : null;
+}
+const PAD = 'E.V. probe padding, not study data. ';
+/** One probe document of about `bytes` bytes as JSON: the envelope, its label and padding. */
+export function probeDoc(ctx, label, bytes) {
+  const base = { schema: 1, writer: 'diagnostic', at: ctx.now, source: ctx.source, release: ctx.release, run: ctx.runId, label, bytes, pad: '' };
+  const room = Math.max(0, bytes - Buffer.byteLength(JSON.stringify(base)));
+  base.pad = PAD.repeat(Math.ceil(room / PAD.length)).slice(0, room);
+  return base;
+}
+const kib = n => String(n).padStart(4, '0');
+/**
+ * The groups of exact calls a named probe makes, each document written to <ctx.dir>/probe/ first (so a call names a
+ * file, never inline data). Ids are debug/<run id>-<label>; nothing is created twice and nothing is deleted.
+ */
+export function probeGroups(named, ctx) {
+  const dir = path.join(ctx.dir, 'probe');
+  const file = (label, bytes) => { const f = path.join(dir, label + '.json'); fs.mkdirSync(dir, { recursive: true }); fs.writeFileSync(f, JSON.stringify(probeDoc(ctx, label, bytes))); return f; };
+  return named.def.groups.map(g => {
+    const calls = [];
+    for (const k of g.documentKiB || []) { const label = 'doc-' + kib(k) + 'k'; calls.push({ tool: 'ArtifactData', args: { action: 'set', url: ctx.url, collection: 'debug', doc_id: ctx.runId + '-' + label, file_path: file(label, k * 1024) } }); }
+    for (const b of g.batches || []) {
+      const writes = [];
+      for (let i = 1; i <= b.writes; i++) { const label = `batch-${b.writes}x${kib(b.kib)}k-${String(i).padStart(2, '0')}`; writes.push({ op: 'set', collection: 'debug', doc_id: ctx.runId + '-' + label, file_path: file(label, b.kib * 1024) }); }
+      calls.push({ tool: 'ArtifactData', args: { action: 'batch', url: ctx.url, writes } });
+    }
+    return { name: g.name, rule: g.rule, calls };
+  });
+}
+
 export const AGENT_FOLDS = {
   /** {findings, proven?, limits?}: the run's ledger entry carries them (a design chat turns them into registry rows). */
-  'probe-result'(answer) {
-    const parts = [answer.findings, ...(answer.proven || []).map(p => 'proven: ' + p), ...(answer.limits || []).map(l => 'limit: ' + l)];
-    return { detail: parts.join(' | ').slice(0, 500), push: ('Diagnostic: ' + answer.findings).slice(0, 120), say: [`${(answer.proven || []).length} proven, ${(answer.limits || []).length} limits.`] };
+  'probe-result'(answer, db, ctx) {
+    const numbers = answer.numbers || {};
+    const parts = [answer.findings, ...(answer.proven || []).map(p => 'proven: ' + p), ...(answer.limits || []).map(l => 'limit: ' + l), ...Object.entries(numbers).map(([k, v]) => `${k}=${v}`)];
+    const doc = { ...EV.envelope('diagnostic', ctx.source, ctx.now), release: ctx.release, run: ctx.runId, probe: String(ctx.input.probe).slice(0, 500), findings: answer.findings, proven: answer.proven || [], limits: answer.limits || [], numbers };
+    return { writes: [{ op: 'set', collection: 'debug', id: ctx.runId, data: doc }], detail: parts.join(' | ').slice(0, 500), push: ('Diagnostic: ' + answer.findings).slice(0, 120), say: [`${(answer.proven || []).length} proven, ${(answer.limits || []).length} limits, ${Object.keys(numbers).length} numbers.`] };
   },
   /** {text, links?, items?, plan?, failed?}: jobresults/<id>, what the job made, and E.V.'s message in talk/<date>. */
   'job-result'(answer, db, ctx) {
