@@ -1432,7 +1432,7 @@
     "folders": [],
     "macBound": false,
     "push": true,
-    "trigger": null
+    "trigger": "trig_011W9Sbx19jaEvmGtQ3Fqrfh"
    },
    "evening-cloud": {
     "pipeline": "evening-cloud",
@@ -1443,7 +1443,7 @@
     "folders": [],
     "macBound": false,
     "push": true,
-    "trigger": null
+    "trigger": "trig_01Bzb2Lk1KhGGU7mD7CMX99k"
    },
    "evening-mac": {
     "pipeline": "evening-mac",
@@ -1456,7 +1456,7 @@
     ],
     "macBound": true,
     "push": false,
-    "trigger": null
+    "trigger": "trig_01GbvqgvbaSjvDDpNHum5Nxk"
    },
    "weekly": {
     "pipeline": "weekly",
@@ -1467,7 +1467,7 @@
     "folders": [],
     "macBound": false,
     "push": true,
-    "trigger": null
+    "trigger": "trig_01FPRdD8XPeYr5k628cNaDYH"
    },
    "worker": {
     "pipeline": "worker",
@@ -1478,18 +1478,19 @@
     "folders": [],
     "macBound": false,
     "push": true,
-    "trigger": null
+    "trigger": "trig_01UWWPYMnyf4XGtjU3C6zAaC"
    },
    "watchdog": {
     "pipeline": "watchdog",
     "record": "live",
     "lane": "cloud",
-    "schedule": "CRON_TZ=America/Chicago 0 */3 * * *",
+    "schedule": "CRON_TZ=America/Chicago 4 */3 * * *",
     "cadence": "every 3 hours",
     "folders": [],
     "macBound": false,
     "push": false,
-    "trigger": null
+    "trigger": "trig_01WB1kmsWv5Tx5f3xF3MPrH4",
+    "note": "The server anchors an every-3-hours schedule to the minute it was created (Oct 18 cutover: minute 4)."
    }
   },
   "staging": {

@@ -106,7 +106,7 @@ test('tasks: every live pipeline has a task, every pipeline has a staging task, 
   assert.equal(at('evening-cloud'), 'CRON_TZ=America/Chicago 15 20 * * *');
   assert.equal(at('evening-mac'), 'CRON_TZ=America/Chicago 20 20 * * *');
   assert.equal(at('weekly'), 'CRON_TZ=America/Chicago 57 17 * * 0');
-  assert.equal(at('watchdog'), 'CRON_TZ=America/Chicago 0 */3 * * *');
+  assert.match(at('watchdog'), /^CRON_TZ=America\/Chicago \d{1,2} \*\/3 \* \* \*$/, 'every 3 hours; the server anchors the minute');
   assert.equal(at('worker'), null);
 });
 
