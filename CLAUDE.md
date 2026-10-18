@@ -7,7 +7,7 @@ repository is v4 from its first commit. The design is finished before you start;
 **The design lives in one doc:** E.V. Foundation v4, https://claude.ai/artifact/Fgb2KjoLKcRgCRrBmM6kEf
 (tabs: main · v3 audit · Data architecture · Operational architecture · Features · Build plan). Read it with the
 Claude Docs tools. The Decisions log stays in the v3 doc: https://claude.ai/artifact/AXwVp9xqpWaUKLE4SqZzwg
-(tabs: Board, Changelog, Decisions; next id **D-106**; D-084 to D-105 are accepted). The v3 code you port from is `miura5/ev-core`
+(tabs: Board, Changelog, Decisions; next id **D-112**; D-084 to D-111 are accepted, D-059 superseded by D-106). The v3 code you port from is `miura5/ev-core`
 (read-only to you; attach it with `add_repo` when a task needs it).
 
 ## Every session
