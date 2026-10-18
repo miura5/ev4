@@ -200,7 +200,7 @@ export function knownFacts(stateDocs) {
 
 /** weeks/<Sunday>, the weekly run: the week's roll-ups, calibration and health line. The review and reflection are
  *  the run's own writing (an agent step), kept as written. */
-function weekBody(db, { date }, spec, stored) {
+function weekBody(db, { date, verify = null }, spec, stored) {
   const v = views(db); const from = EV.addDays(date, -6);
   const atts = EV.collectAttempts(v.sets, v.answers).all.filter(a => a.date >= from && a.date <= date);
   const stats = EV.answerStats(atts, { date });
@@ -213,10 +213,13 @@ function weekBody(db, { date }, spec, stored) {
   const calibration = {};
   for (const e of [...v.exams].sort((a, b) => (a.id < b.id ? -1 : 1))) { const c = EV.calibrate(e); if (c) calibration[e.id] = c; }
   const ended = runs.filter(r => r.status !== 'running'); const failed = ended.filter(r => r.status !== 'ok').length;
+  const summary = ended.length ? `${ended.length - failed} of ${ended.length} runs ok` + (failed ? `; failed: ${[...new Set(ended.filter(r => r.status !== 'ok').map(r => r.pipeline))].sort().join(', ')}` : '') : 'no runs this week';
   const body = {
+    schema: 2, // B-29: health is {summary, verify}
     date,
     calibration,
-    health: ended.length ? `${ended.length - failed} of ${ended.length} runs ok` + (failed ? `; failed: ${[...new Set(ended.filter(r => r.status !== 'ok').map(r => r.pipeline))].sort().join(', ')}` : '') : 'no runs this week',
+    // The verify result comes from the run's own reads of its record (verify-deploy, read-only), an input as stored.
+    health: { summary, verify },
     rollups: {
       from, to: date, answered: stats.total, right: stats.right, byObjective: sorted(stats.byObjective), byType: sorted(stats.byType),
       newWeakSpots: added.map(w => w.id).sort(), solid: solid.map(w => w.id).sort(), active: v.models.filter(EV.isActive).length,
@@ -259,7 +262,7 @@ export const AUTHORED = { weeks: ['review', 'reflection'] }; // the spec's list 
 export const PRODUCERS = {
   days: { writer: 'morning', inputs: (s) => ({ date: s.date || s.id, now: s.at }), build: (db, i) => dayBody(db, i) },
   state: { writer: 'evening-cloud', inputs: (s) => ({ date: (s.snapshot && s.snapshot.date) || EV.chicagoDate(s.at), now: s.at, specVersion: s.snapshot ? s.snapshot.specVersion : (s.specVersion || null), part: s.facts || null, split: s.factsSplit || null, lint: s.lint || null }), build: (db, i, spec) => stateBody(db, i, spec) },
-  weeks: { writer: 'weekly', inputs: (s) => ({ date: s.date || s.id, now: s.at }), build: (db, i, spec, stored) => weekBody(db, i, spec, stored) },
+  weeks: { writer: 'weekly', inputs: (s) => ({ date: s.date || s.id, now: s.at, verify: (s.health && typeof s.health === 'object' && s.health.verify) || null }), build: (db, i, spec, stored) => weekBody(db, i, spec, stored) },
   predictions: { writer: 'morning', inputs: (s) => ({ examId: s.examId || s.id, date: s.date, now: s.at }), build: (db, i) => predictionBody(db, i) },
   libindex: { writer: 'evening-cloud', inputs: (s) => ({ course: s.course || s.id, now: s.at }), build: (db, i) => libindexBody(db, i) },
   health: { writer: 'watchdog', inputs: (s) => ({ now: s.at, record: s.record || 'staging' }), build: (db, i, spec) => healthBody(db, i, spec) },

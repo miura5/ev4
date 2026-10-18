@@ -314,6 +314,8 @@ export function audit({ dir, transcript }) {
     if (i >= 0) { pool.splice(i, 1); matched++; continue; }
     const a = u.input || {};
     if (toolName(u.name) === 'ArtifactData' && a.action === 'get' && a.collection === 'system') { matched++; continue; } // the gate
+    // The next page of a printed list_triggers: the same arguments plus the cursor the last page gave (B-29).
+    if (toolName(u.name) === 'list_triggers' && a.cursor) { const { cursor, ...rest } = a; if (expected.some(e => e.key === callKey(u.name, rest))) { matched++; continue; } }
     if ((run.allowed || []).some(p => String(u.name).startsWith(p))) { allowed++; continue; } // what the pipeline's judgment step may do
     extra.push({ tool: toolName(u.name), summary: summary(a) || k.slice(0, 120) });
   }

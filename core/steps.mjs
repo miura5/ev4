@@ -9,7 +9,12 @@
 // A material builder returns {skip: reason} when its agent has nothing to do today.
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import EV from './evcore.mjs';
+import { verify, verifyReads } from './deploy.mjs';
+import { readState, withShell } from './verifystate.mjs';
 import { produce, classOf, factsSplitFor, examTomorrow } from './derive.mjs';
 import { watch } from './watch.mjs';
 import { canvasRaw } from './canvas.mjs';
@@ -303,6 +308,23 @@ export const AGENT_MATERIAL = {
     };
   },
   'week-brief'(db, ctx) { return ctx.week; },
+  /**
+   * B-29: the reads verify-deploy needs for this run's own record, as exact calls: list_triggers (paged by its cursor),
+   * the record's system/*, its page and the page's files. This checkout is built into the run folder first (the gate
+   * proved it is the deployed commit), so the run compares the record with what that commit builds, read-only.
+   */
+  'verify-brief'(db, ctx) {
+    const v = verifyPaths(ctx);
+    if (!fs.existsSync(path.join(v.build, 'manifest.json'))) execFileSync(process.execPath, [path.join(ROOT, 'tools', 'build.mjs'), '--root', ROOT, '--out', v.build, '--now', ctx.now], { stdio: 'pipe' });
+    const manifest = JSON.parse(fs.readFileSync(path.join(v.build, 'manifest.json'), 'utf8'));
+    const reads = verifyReads({ manifest, target: ctx.record, stateDir: v.state });
+    return {
+      target: ctx.record,
+      rules: ['make each call exactly as listed, in order', 'save each result as its note says, with the printed tool-result command (never retyped)', 'a list_triggers result with a next_cursor: call it again with the same arguments plus cursor, save it as the next triggers-<n>.json, until there is none', 'change nothing anywhere: these are reads'],
+      groups: [{ name: 'verify-reads', rule: 'one call each, in order; stop at the first refusal and quote it', calls: reads.map(r => ({ tool: r.tool, args: r.args })) }],
+      saves: reads.map(r => ({ tool: r.tool, save: r.save, note: r.note })),
+    };
+  },
   /** What the day looks like, for a one-line note. */
   'day-summary'(db, ctx) {
     const day = (db.days || []).find(d => d.id === ctx.date);
@@ -347,7 +369,29 @@ export function probeGroups(named, ctx) {
   });
 }
 
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+/** Where a run keeps its verify build and saved reads; the state folder is named for the target, as verify expects. */
+const verifyPaths = ctx => ({ build: path.join(ctx.dir, 'verify', 'build'), state: path.join(ctx.dir, 'verify', ctx.record) });
+/** The weekly's verify result (B-29): what verify-deploy <record> says against this checkout's build, from the reads saved. */
+export function verifyOutcome(answer, ctx) {
+  const v = verifyPaths(ctx); const base = { at: ctx.now, target: ctx.record };
+  const mp = path.join(v.build, 'manifest.json');
+  if (!fs.existsSync(mp)) return { ...base, commit: null, green: null, checked: 0, differences: [], refused: 'the build did not run' };
+  const manifest = JSON.parse(fs.readFileSync(mp, 'utf8'));
+  if (!answer.saved) return { ...base, commit: manifest.commit, green: null, checked: 0, differences: [], refused: String(answer.refused || 'a read was not made').slice(0, 300) };
+  const dist = Object.fromEntries(['spec', 'environments'].map(id => [id, JSON.parse(fs.readFileSync(path.join(v.build, 'system', id + '.json'), 'utf8'))]));
+  const state = withShell(readState(v.state), manifest, ctx.record, v.build);
+  // The commit is pushed: the gate found it in this checkout, a clone of origin's main.
+  const r = verify({ manifest, target: ctx.record, state, build: { pushed: true }, dist, sha256: b => crypto.createHash('sha256').update(b).digest('hex'), now: ctx.now });
+  return { ...base, commit: manifest.commit, green: r.green, checked: r.lines.length, differences: r.lines.filter(l => !l.ok).slice(0, 30).map(l => ({ what: l.what, detail: String(l.detail || '').slice(0, 300) })) };
+}
+
 export const AGENT_FOLDS = {
+  /** {saved, refused?}: the verify result, kept on ctx for the week document written after it (B-29). */
+  'verify-result'(answer, db, ctx) {
+    const v = ctx.verify = verifyOutcome(answer, ctx);
+    return { say: [v.refused ? `verify-deploy ${v.target}: not run (${v.refused})` : `verify-deploy ${v.target}: ${v.green ? 'GREEN' : `RED (${v.differences.length} difference${v.differences.length === 1 ? '' : 's'})`}`] };
+  },
   /** {findings, proven?, limits?}: the run's ledger entry carries them (a design chat turns them into registry rows). */
   'probe-result'(answer, db, ctx) {
     const numbers = answer.numbers || {};
@@ -480,7 +524,7 @@ export const AGENT_FOLDS = {
   'evening-note'(answer) { return { detail: answer.note, push: answer.note.slice(0, 120) }; },
   /** {review, reflection, push}: weeks/<Sunday> with the week's roll-ups and the review as written. */
   'week-doc'(answer, db, ctx, spec) {
-    const data = produce(db, spec, 'weeks', { date: ctx.date, now: ctx.now }, { source: ctx.source, stored: { review: answer.review, reflection: answer.reflection } });
+    const data = produce(db, spec, 'weeks', { date: ctx.date, now: ctx.now, verify: ctx.verify || null }, { source: ctx.source, stored: { review: answer.review, reflection: answer.reflection } });
     return { writes: [{ op: 'set', collection: 'weeks', id: ctx.date, data }], push: answer.push, say: ['Weekly review written.'] };
   },
   /** {push}: the run's push line, as the agent wrote it. */

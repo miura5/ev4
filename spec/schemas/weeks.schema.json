@@ -9,7 +9,7 @@
   "writers": [
    "weekly"
   ],
-  "schema": 1,
+  "schema": 2,
   "authored": [
    "review",
    "reflection"
@@ -19,7 +19,7 @@
  "type": "object",
  "properties": {
   "schema": {
-   "const": 1
+   "const": 2
   },
   "writer": {
    "enum": [
@@ -48,7 +48,79 @@
    "type": "object"
   },
   "health": {
-   "type": "string"
+   "type": "object",
+   "description": "schema 2 (B-29): the week's run line, and the read-only verify-deploy the weekly ran on its own record",
+   "required": [
+    "summary"
+   ],
+   "properties": {
+    "summary": {
+     "type": "string"
+    },
+    "verify": {
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "object",
+       "required": [
+        "at",
+        "target",
+        "green"
+       ],
+       "properties": {
+        "at": {
+         "type": "string"
+        },
+        "target": {
+         "enum": [
+          "live",
+          "staging"
+         ]
+        },
+        "commit": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "green": {
+         "type": [
+          "boolean",
+          "null"
+         ]
+        },
+        "checked": {
+         "type": "integer",
+         "minimum": 0
+        },
+        "differences": {
+         "type": "array",
+         "maxItems": 30,
+         "items": {
+          "type": "object",
+          "required": [
+           "what"
+          ],
+          "properties": {
+           "what": {
+            "type": "string"
+           },
+           "detail": {
+            "type": "string"
+           }
+          }
+         }
+        },
+        "refused": {
+         "type": "string"
+        }
+       }
+      }
+     ]
+    }
+   }
   },
   "rollups": {
    "type": "object"

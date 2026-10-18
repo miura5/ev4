@@ -126,11 +126,25 @@ test('evening-cloud: auto-park and the snapshot, with no judgment; state/current
   assert.equal(rebuildOne(out, spec, 'state', state).status, 'same');
 });
 
-test('weekly: the roll-ups, the review as written, weeks/<Sunday>; it rebuilds byte for byte with the text kept', () => {
+test('weekly: the roll-ups, the verify reads, the review as written, weeks/<Sunday>; it rebuilds byte for byte with the text kept', () => {
   const at = '2026-10-18T22:57:00Z';
   const { dir, db } = session('weekly', at);
+  // B-29: the verify step first lists the exact reads verify-deploy needs for this record, built from this checkout.
+  const v = RUN.compute({ spec, dir, validate, at });
+  assert.equal(v.status, 'waiting'); assert.equal(v.step, 'verify');
+  const calls = v.question.material.groups[0].calls;
+  assert.deepEqual(calls.map(c => [c.tool, c.args.action || null, c.args.doc_id || null]), [
+    ['mcp__claude-code-remote__list_triggers', null, null], ['ArtifactData', 'get', 'manifest'], ['ArtifactData', 'get', 'spec'], ['ArtifactData', 'get', 'environments'], ['ArtifactData', 'get', 'seed'], ['Artifact', 'read', null], ['Artifact', 'read', null]]);
+  assert.ok(v.question.material.saves.every(x => x.save.startsWith(path.join(dir, 'verify', 'staging'))), 'saved in the run folder, named for the target');
+  // Made, and the next list_triggers page by its cursor: matched; any other call is not.
+  const tool = (id, name, input) => JSON.stringify({ type: 'assistant', message: { content: [{ type: 'tool_use', id, name, input }] } }) + '\n' + JSON.stringify({ type: 'user', message: { content: [{ type: 'tool_result', tool_use_id: id, content: 'ok' }] } });
+  const t = calls.map((c, i) => tool('v' + i, c.tool, c.args)).concat([tool('vc', calls[0].tool, { ...calls[0].args, cursor: 'next' })]).join('\n');
+  assert.equal(RUN.audit({ dir, transcript: t }).extra.length, 0, JSON.stringify(RUN.audit({ dir, transcript: t }).extra));
+  assert.equal(RUN.audit({ dir, transcript: t + '\n' + tool('vx', calls[0].tool, { limit: 5, cursor: 'next' }) }).extra.length, 1);
+  // Nothing saved: verify says what it could not read, red; the week records it.
+  answer(dir, 'verify', { saved: true });
   const w = RUN.compute({ spec, dir, validate, at });
-  assert.equal(w.status, 'waiting'); assert.equal(w.question.material.to, '2026-10-18');
+  assert.equal(w.status, 'waiting'); assert.equal(w.step, 'week-review'); assert.equal(w.question.material.to, '2026-10-18');
   answer(dir, 'week-review', { review: 'A made-up week: steady practice.', reflection: 'What felt easier this week?', push: 'Weekly review ready · steady week' });
   const r = RUN.compute({ spec, dir, validate, at });
   assert.equal(r.status, 'planned', JSON.stringify(r.problems));
@@ -138,7 +152,16 @@ test('weekly: the roll-ups, the review as written, weeks/<Sunday>; it rebuilds b
   const { out } = applied(db, dir);
   const week = out.weeks.find(d => d.id === '2026-10-18');
   assert.equal(week.review, 'A made-up week: steady practice.');
+  assert.equal(week.schema, 2); assert.equal(typeof week.health.summary, 'string');
+  const vr = week.health.verify;
+  assert.deepEqual([vr.target, vr.green, vr.at], ['staging', false, new Date(at).toISOString()]);
+  assert.ok(vr.differences.some(d => d.what === 'scheduled tasks read') && vr.differences.some(d => d.what === 'staging page read'), JSON.stringify(vr.differences));
   assert.equal(rebuildOne(out, spec, 'weeks', week).status, 'same');
+  // A refused read: recorded as not run, with the refusal.
+  answer(dir, 'verify', { saved: false, refused: 'Artifact read: "A made-up refusal"' });
+  const rr = RUN.compute({ spec, dir, validate, at });
+  const wk2 = JSON.parse(fs.readFileSync(rr.plan.batches.flat().find(x => x.collection === 'weeks' || (x.writes || []).some(y => y.collection === 'weeks')).file_path || '{}', 'utf8'));
+  assert.equal((wk2.health || {}).verify ? wk2.health.verify.refused : undefined, 'Artifact read: "A made-up refusal"');
 });
 
 test('worker: the named job done end to end, its practice set saved and its message posted; the audit allows its one Doc', () => {

@@ -201,6 +201,11 @@ export function migrateV3(v3, { at } = {}) {
 // document changes shape any other way. Each function takes a document at that version (data, with its id) and
 // returns {data: the document at the next version, also: [{collection, id, data}] new documents it implies}.
 export const BUMPS = {
+  weeks: {
+    // B-29 (Matt, Oct 18): health becomes {summary, verify}: the week's run line, and the read-only verify-deploy the
+    // weekly runs on its own record (null for a week before it).
+    1: d => ({ data: { ...d, schema: 2, health: { summary: typeof d.health === 'string' ? d.health : String((d.health && d.health.summary) || ''), verify: null } }, also: [] }),
+  },
   ideas: {
     // D-109: ideas carry a kind; every idea before it came from study (sessions, Study Watch, the conversation), so
     // each becomes a learning idea, the only kind that can become a weak spot.

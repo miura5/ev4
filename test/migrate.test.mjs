@@ -241,3 +241,25 @@ test('B-53 (D-109): the ideas 1 to 2 bump makes every earlier idea a learning id
   assert.ok(got.ideas.every(i => i.kind === 'learning' && i.schema === 2));
   assert.deepEqual(migrateBumps(applyWrites(before, r.writes), { at: '2026-10-19T17:00:00Z' }).writes, [], 'a second run writes nothing');
 });
+
+test('B-29 (Matt, Oct 18): the weeks 1 to 2 bump makes health {summary, verify: null}, matches its fixture, rebuilds and is idempotent', async () => {
+  const { migrateBumps } = await import('../core/migrate.mjs');
+  const { rebuildOne } = await import('../core/derive.mjs');
+  const { readExport: read } = await import('../core/schemas.mjs');
+  const dir = path.join(ROOT, 'test/data/bumps/weeks-1');
+  const load = d => { const db = {}; for (const { collection, id, doc } of read(d)) (db[collection] = db[collection] || []).push({ ...doc, id }); return db; };
+  const before = load(path.join(dir, 'before')), after = load(path.join(dir, 'after'));
+  const r = migrateBumps(before, { at: '2026-10-18T17:00:00Z' });
+  const got = {}; for (const w of r.writes) (got[w.collection] = got[w.collection] || []).push({ ...w.data, id: w.id });
+  const sorted = l => (l || []).slice().sort((a, b) => (a.id < b.id ? -1 : 1));
+  for (const [c, docs] of Object.entries(after)) assert.equal(EV.stableStringify(sorted(got[c])), EV.stableStringify(sorted(docs)), c);
+  for (const w of r.writes) assert.ok(validate(w.collection, w.data, { id: w.id }).ok, `${w.collection}/${w.id} validates`);
+  assert.deepEqual(got.weeks[0].health, { summary: before.weeks[0].health, verify: null });
+  const applied = applyWrites(before, r.writes);
+  assert.deepEqual(migrateBumps(applied, { at: '2026-10-19T17:00:00Z' }).writes, [], 'a second run writes nothing');
+  // The bumped week still rebuilds as its run would write it today, in the synthetic record it came from.
+  const rec = {}; for (const { collection, id, doc } of read(path.join(ROOT, 'test/data/record'))) if (collection !== 'journal') (rec[collection] = rec[collection] || []).push({ ...doc, id });
+  rec.weeks = applied.weeks;
+  const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
+  assert.equal(rebuildOne(rec, spec, 'weeks', rec.weeks[0]).status, 'same');
+});

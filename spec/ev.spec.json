@@ -280,6 +280,29 @@
      "does": "rolls up the week: answers by objective and type, weak spots added and made solid, study minutes, runs, calibration"
     },
     {
+     "id": "verify",
+     "kind": "agent",
+     "judgment": "Check, read-only, that this record runs the build it should: make each listed read exactly as listed, in order, and save each result as its note says, with the printed tool-result command, never retyped. When list_triggers returns a next_cursor, call it again with the same arguments plus that cursor and save the next page the same way, until there is none. Change nothing. Answer saved: true when every read was made and saved; if a read is refused, stop there and answer saved: false with the refusal quoted.",
+     "material": "verify-brief",
+     "output": {
+      "type": "object",
+      "properties": {
+       "saved": {
+        "type": "boolean"
+       },
+       "refused": {
+        "type": "string",
+        "maxLength": 300
+       }
+      },
+      "required": [
+       "saved"
+      ],
+      "additionalProperties": false
+     },
+     "fold": "verify-result"
+    },
+    {
      "id": "week-review",
      "kind": "agent",
      "judgment": "Write the week's review for Matt from the brief: what moved, what is still weak (nearest exam first), the coming week's dates, any failed runs, one suggestion for next week; then one reflection question for him to write about, and a one-line push. Plain, warm, under 3000 characters. Never about graded work.",
