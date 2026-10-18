@@ -1,6 +1,7 @@
 // lint (Data architecture, "A+ acceptance checklist"): the record checked against its own rules, by command.
 //   wrong-writer     a document, or an append-map entry, written by a role its collection does not name
-//   fact-changed     a Fact whose own fields (not its marks or append maps) differ from the hash state/current kept
+//   fact-changed     a Fact whose own fields (not its marks or append maps) differ from the hash state/current kept,
+//                    unless a schema bump's legacy copy still matches that hash (an info note, fact-migrated)
 //   over-budget      a document over spec.capacity.documentBytes, a material over materialTextChars, a collection
 //                    over its budget once B-14 sets one
 //   invalid          a document its collection's schema refuses
@@ -10,6 +11,12 @@
 import EV from './evcore.mjs';
 import { classOf, writersOf, factCheck, knownFacts, rebuild, appendEntries, appendDepth, keyWriter } from './derive.mjs';
 import { describeErrors } from './validate.mjs';
+
+/** The legacy copy a schema bump kept of collection/id (legacy/v4-<collection>-<id>-s<n>) that passes ok(copy), if any. */
+function migratedCopy(rec, col, id, ok) {
+  const pre = `v4-${col}-${id}-s`;
+  return (rec.legacy || []).find(l => l.id.startsWith(pre) && /^\d+$/.test(l.id.slice(pre.length)) && l.migratedTo === `${col}/${id}` && ok(l)) || null;
+}
 
 const bytes = d => Buffer.byteLength(JSON.stringify(EV.docData(d)), 'utf8');
 
@@ -34,7 +41,9 @@ export function lintRecord(db, spec, validate, { date, commit = null } = {}) {
       const r = validate(col, EV.docData(d), { id: d.id });
       if (!r.ok) add('error', 'invalid', ref, describeErrors(ref, r).split('\n').slice(0, 3).join(' · '));
       const writers = writersOf(spec, col, d.id);
-      if (d.writer && !writers.includes(d.writer)) add('error', 'wrong-writer', ref, `written by ${d.writer}; ${col} is written by ${writers.join(', ') || 'no one'}`);
+      // A legacy copy keeps its original's writer as it was (rollback writes it back whole); legacy itself is written by
+      // migrations, not by a role.
+      if (d.writer && !writers.includes(d.writer) && !(col === 'legacy' && d.migratedTo)) add('error', 'wrong-writer', ref, `written by ${d.writer}; ${col} is written by ${writers.join(', ') || 'no one'}`);
       for (const [field, allowed] of Object.entries(c.appends || {})) {
         for (const [p, k] of appendEntries(d[field], appendDepth(col, field))) {
           const w = keyWriter(col, field, k);
@@ -44,7 +53,9 @@ export function lintRecord(db, spec, validate, { date, commit = null } = {}) {
       if (cls === 'Fact' && known[ref]) {
         // B-32 (D-089): marks and append maps may change; a field first set since the hash is a first write.
         const f = factCheck(spec, col, d, known[ref], knownFields[col]);
-        if (f.ok === false) add('error', 'fact-changed', ref, `${f.why} since state/current hashed it; a Fact's own fields are write-once (marks: ${Object.keys(c.marks || {}).join(', ') || 'none'}; events go in its maps)`);
+        const bumped = f.ok === false && migratedCopy(rec, col, d.id, c => factCheck(spec, col, c, known[ref], knownFields[col]).ok === true);
+        if (bumped) add('info', 'fact-migrated', ref, `changed by a schema bump (${bumped.id}) since state/current hashed it; the next state rebuild hashes the new form`);
+        else if (f.ok === false) add('error', 'fact-changed', ref, `${f.why} since state/current hashed it; a Fact's own fields are write-once (marks: ${Object.keys(c.marks || {}).join(', ') || 'none'}; events go in its maps)`);
       }
       if (cap.documentBytes && size > cap.documentBytes) add('error', 'over-budget', ref, `${size} bytes; the budget is ${cap.documentBytes}`);
       if (col === 'materials' && cap.materialTextChars && String(d.text || '').length > cap.materialTextChars) add('error', 'over-budget', ref, `${String(d.text).length} characters of text; the cap is ${cap.materialTextChars} (chunk as ${cap.materialChunkId || '<id>-p<n>'})`);

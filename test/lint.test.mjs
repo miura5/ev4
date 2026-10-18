@@ -212,3 +212,22 @@ test('B-37 (D-093): lint warns on a planted 200 KiB state/current, and the state
   db2.exams[0].title = 'A planted change';
   assert.deepEqual(lintRecord(db2, small, validate, { date: '2026-10-17' }).issues.filter(i => i.code === 'fact-changed').map(i => i.ref), [`exams/${db2.exams[0].id}`]);
 });
+
+test('B-39/B-53: a schema bump\'s legacy copy keeps its writer, and the bumped Fact is a note until the next state rebuild', async () => {
+  const { migrateBumps } = await import('../core/migrate.mjs');
+  const db = load(); const state = doc(db, 'state', 'current');
+  const idea = doc(db, 'ideas', 'sample-idea'); const ref = 'ideas/sample-idea';
+  // The idea as it stood at schema 1, hashed by state/current then; the bump sets it at 2 and keeps the old form.
+  const old = { ...idea, schema: 1 }; delete old.kind;
+  state.factHashes[ref] = factHash(spec, 'ideas', old, { fields: state.factFields.ideas });
+  const { writes } = migrateBumps({ ideas: [old] }, { at: '2026-10-18T16:36:00Z' });
+  db.ideas = db.ideas.filter(d => d.id !== 'sample-idea'); db.legacy = db.legacy || [];
+  for (const w of writes) db[w.collection].push({ ...w.data, id: w.id });
+  const r = lint(db);
+  assert.deepEqual(codes(r, 'wrong-writer'), [], 'a legacy copy carries its original\'s writer');
+  assert.deepEqual(codes(r, 'fact-changed'), []);
+  assert.deepEqual(codes(r, 'fact-migrated').map(i => i.ref), [ref]);
+  // A legacy copy that does not match the stored hash covers nothing: the change is red.
+  doc(db, 'legacy', 'v4-ideas-sample-idea-s1').text = 'A planted different text';
+  assert.deepEqual(codes(lint(db), 'fact-changed').map(i => i.ref), [ref]);
+});
