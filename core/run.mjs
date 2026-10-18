@@ -53,7 +53,7 @@ export function start({ spec, pipeline, record = 'staging', at, dir, release, co
   for (const k of Object.keys(input)) if (!(def.input || {})[k]) throw new Error(`${pipeline} takes no --${k}`);
   const data = { ...EV.envelope(pipeline, `${pipeline} run`, at), release, pipeline, startedAt: EV.envelope(pipeline, '', at).at, endedAt: null, status: 'running', ...(commit ? { commit } : {}), planned: def.steps.map(s => s.id), ...(Object.keys(input).length ? { detail: Object.entries(input).map(([k, v]) => `${k} ${v}`).join(', ') } : {}) };
   const file = path.join(dir, 'out', 'runs', id + '.json'); writeJson(file, data);
-  const run = { id, pipeline, record, url, release, startedAt: data.startedAt, input, allowed: def.agentCalls || [], dir, outputs, calls: [] };
+  const run = { id, pipeline, record, url, release, ...(commit ? { commit } : {}), startedAt: data.startedAt, input, allowed: def.agentCalls || [], dir, outputs, calls: [] };
   saveRun(dir, run);
   return printed(dir, run, 'start', [{ tool: 'ArtifactData', args: { action: 'set', url, collection: 'runs', doc_id: id, file_path: file } }]);
 }

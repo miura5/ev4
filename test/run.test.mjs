@@ -295,3 +295,10 @@ test('B-32 (D-089): compute lets an update to a Fact change only its marks (by a
   const first = plan('evening-cloud', ['canvas-sync'], { notes: 'A made-up first note' });
   assert.ok(!(first.problems || []).some(p => /write-once/.test(p)), 'a field the Fact lacks is a first write');
 });
+
+test('B-34: the run keeps its deployed commit, so the nightly lint can tell a stale document (an earlier build) from a drifted one', () => {
+  const dir = tmp('ev4-run-'); const commit = 'c'.repeat(40);
+  const calls = RUN.start({ spec, pipeline: 'evening-cloud', record: 'staging', at: AT, dir, release: 'v4.0.0', commit });
+  assert.equal(JSON.parse(fs.readFileSync(path.join(dir, 'run.json'), 'utf8')).commit, commit);
+  assert.equal(JSON.parse(fs.readFileSync(calls[0].args.file_path, 'utf8')).commit, commit);
+});
