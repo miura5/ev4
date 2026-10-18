@@ -14,6 +14,8 @@ import { produce, classOf, factsSplitFor, examTomorrow } from './derive.mjs';
 import { watch } from './watch.mjs';
 import { canvasRaw } from './canvas.mjs';
 import { collectionHash } from './seed.mjs';
+import { lintRecord, lintSummary } from './lint.mjs';
+import { loadValidator } from './schemas.mjs';
 
 const models = db => EV.buildWeakspots({ weakspots: db.weakspots || [], sets: db.sets || [], answers: db.answers || [], exams: db.exams || [] });
 /** Fields a set item may carry (spec/schemas/sets.schema.json); anything else an agent adds is dropped. */
@@ -72,7 +74,10 @@ export const CODE_STEPS = {
   },
   /** state/current: the snapshot, the derived hash and the Fact hashes lint checks against. */
   state(db, ctx, spec) {
-    const inputs = { date: ctx.date, now: ctx.now, specVersion: spec.specVersion };
+    // D-090: the nightly record lint, on this run's pull and before the fact hashes are taken again, so a Fact changed
+    // since last night is caught here; kept in state/current.lint, which the System tab's Checks card shows.
+    const lint = lintSummary(lintRecord(db, spec, loadValidator(), { date: ctx.date, commit: ctx.commit || null }), { at: ctx.now, commit: ctx.commit || null });
+    const inputs = { date: ctx.date, now: ctx.now, specVersion: spec.specVersion, lint };
     let data = produce(db, spec, 'state', inputs, { source: ctx.source });
     // B-37 (D-093): past its warnBytes, state/current keeps the snapshot and the fact hashes move per collection.
     const split = factsSplitFor(spec, data); const writes = [];
@@ -81,7 +86,7 @@ export const CODE_STEPS = {
       for (const c of split) writes.push({ op: 'set', collection: 'state', id: 'facts-' + c, data: produce(db, spec, 'state', { ...inputs, part: c }, { source: ctx.source }) });
     }
     writes.unshift({ op: 'set', collection: 'state', id: 'current', data });
-    return { writes, say: [`Snapshot: ${data.snapshot.weakspots.active} active weak spots, ${data.snapshot.due.count} due.${split.length ? ` Fact hashes split into ${split.length} state/facts-* documents (state/current reached its budget).` : ''}`] };
+    return { writes, say: [`Lint: ${lint.errors} errors, ${lint.warnings} warnings, ${lint.notes} notes.`, `Snapshot: ${data.snapshot.weakspots.active} active weak spots, ${data.snapshot.due.count} due.${split.length ? ` Fact hashes split into ${split.length} state/facts-* documents (state/current reached its budget).` : ''}`] };
   },
   /** The evening push line (B-40): what today did and what tomorrow starts with, from the snapshot just written. */
   push(db, ctx, spec) {

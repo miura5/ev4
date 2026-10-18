@@ -139,7 +139,7 @@ export function compute({ spec, dir, validate, at }) {
   const versions = fs.existsSync(versionsFile) ? readJson(versionsFile) : {};
   const db = loadPulled(dir); const pulledDb = loadPulled(dir);
   const now = EV.envelope('x', '', at).at;
-  const ctx = { runId: run.id, pipeline: run.pipeline, record: run.record, writer: def.writer || run.pipeline, date: EV.chicagoDate(now), now, source: `${run.pipeline} ${run.id}`, release: run.release, startedAt: run.startedAt, input: run.input || {}, url: run.url, dir, outputs: run.outputs };
+  const ctx = { runId: run.id, pipeline: run.pipeline, record: run.record, writer: def.writer || run.pipeline, date: EV.chicagoDate(now), now, source: `${run.pipeline} ${run.id}`, release: run.release, commit: run.commit || null, startedAt: run.startedAt, input: run.input || {}, url: run.url, dir, outputs: run.outputs };
   const writes = []; const steps = []; let push = null, detail = null; const problems = []; const fires = []; const device = [];
   for (const s of def.steps) {
     let r;

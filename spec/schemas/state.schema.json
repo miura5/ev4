@@ -62,6 +62,90 @@
   "facts": {
    "type": "string",
    "description": "B-37: on state/facts-<collection>, the collection whose fact hashes it holds"
+  },
+  "lint": {
+   "type": "object",
+   "description": "D-090: the record lint evening-cloud ran on its pull (lintSummary): counts, every error and warning up to 20, notes by code; the System tab Checks card shows it",
+   "required": [
+    "at",
+    "errors",
+    "warnings",
+    "notes",
+    "top"
+   ],
+   "properties": {
+    "at": {
+     "type": "string"
+    },
+    "commit": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "errors": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "warnings": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "notes": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "notesByCode": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "integer",
+      "minimum": 0
+     }
+    },
+    "rebuilt": {
+     "type": "object",
+     "properties": {
+      "same": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "of": {
+       "type": "integer",
+       "minimum": 0
+      }
+     }
+    },
+    "top": {
+     "type": "array",
+     "maxItems": 20,
+     "items": {
+      "type": "object",
+      "required": [
+       "severity",
+       "code",
+       "ref",
+       "msg"
+      ],
+      "properties": {
+       "severity": {
+        "enum": [
+         "error",
+         "warning"
+        ]
+       },
+       "code": {
+        "type": "string"
+       },
+       "ref": {
+        "type": "string"
+       },
+       "msg": {
+        "type": "string"
+       }
+      }
+     }
+    }
+   }
   }
  },
  "required": [

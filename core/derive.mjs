@@ -150,7 +150,7 @@ function dayBody(db, { date, now }) {
 }
 
 /** state/current, the evening-cloud run: the snapshot, the derived hash, and every Fact's hash for lint. */
-function stateBody(all, { date, now, specVersion, part = null, split = null }, spec) {
+function stateBody(all, { date, now, specVersion, part = null, split = null, lint = null }, spec) {
   // What the evening-cloud run pulls and nothing else, so a rebuild from a fuller export (debug, say) counts the same.
   const reads = new Set(((spec.pipelines['evening-cloud'] || {}).reads || []).map(r => r.collection));
   const db = reads.size ? Object.fromEntries(Object.entries(all).filter(([c]) => reads.has(c))) : all;
@@ -173,14 +173,17 @@ function stateBody(all, { date, now, specVersion, part = null, split = null }, s
       factHashes[`${col}/${d.id}`] = factHash(spec, col, d, { fields });
     }
   }
-  const full = { snapshot, derivedHash: snapshot.derivedHash, factHashes, factFields: fieldLists };
+  // D-090: the record lint the state step ran on this run's pull. It is an input, not recomputed here: lint itself
+  // rebuilds state/current, so rebuild takes it as stored, as it takes the date and spec version.
+  const linted = lint ? { lint } : {};
+  const full = { snapshot, derivedHash: snapshot.derivedHash, factHashes, factFields: fieldLists, ...linted };
   // B-37 (D-093): state/current past its warnBytes keeps the snapshot; each collection's fact hashes move to
   // state/facts-<collection>. `split` (from the stored document, or the state step's measure) says which.
   if (part) return { facts: part, factHashes: Object.fromEntries(Object.entries(factHashes).filter(([ref]) => ref.split('/')[0] === part)), factFields: { [part]: fieldLists[part] || [] } };
   if (!split || !split.length) return full;
   const keep = Object.fromEntries(Object.entries(factHashes).filter(([ref]) => !split.includes(ref.split('/')[0])));
   const keepFields = Object.fromEntries(Object.entries(fieldLists).filter(([c]) => !split.includes(c)));
-  return { snapshot, derivedHash: snapshot.derivedHash, factHashes: keep, factFields: keepFields, factsSplit: split };
+  return { snapshot, derivedHash: snapshot.derivedHash, factHashes: keep, factFields: keepFields, factsSplit: split, ...linted };
 }
 /** The collections whose fact hashes move out of state/current: all of them once the whole document reaches warnBytes. */
 export function factsSplitFor(spec, body) {
@@ -255,7 +258,7 @@ export const AUTHORED = { weeks: ['review', 'reflection'] }; // the spec's list 
 
 export const PRODUCERS = {
   days: { writer: 'morning', inputs: (s) => ({ date: s.date || s.id, now: s.at }), build: (db, i) => dayBody(db, i) },
-  state: { writer: 'evening-cloud', inputs: (s) => ({ date: (s.snapshot && s.snapshot.date) || EV.chicagoDate(s.at), now: s.at, specVersion: s.snapshot ? s.snapshot.specVersion : (s.specVersion || null), part: s.facts || null, split: s.factsSplit || null }), build: (db, i, spec) => stateBody(db, i, spec) },
+  state: { writer: 'evening-cloud', inputs: (s) => ({ date: (s.snapshot && s.snapshot.date) || EV.chicagoDate(s.at), now: s.at, specVersion: s.snapshot ? s.snapshot.specVersion : (s.specVersion || null), part: s.facts || null, split: s.factsSplit || null, lint: s.lint || null }), build: (db, i, spec) => stateBody(db, i, spec) },
   weeks: { writer: 'weekly', inputs: (s) => ({ date: s.date || s.id, now: s.at }), build: (db, i, spec, stored) => weekBody(db, i, spec, stored) },
   predictions: { writer: 'morning', inputs: (s) => ({ examId: s.examId || s.id, date: s.date, now: s.at }), build: (db, i) => predictionBody(db, i) },
   libindex: { writer: 'evening-cloud', inputs: (s) => ({ course: s.course || s.id, now: s.at }), build: (db, i) => libindexBody(db, i) },

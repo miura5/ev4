@@ -239,3 +239,42 @@ test('state/current rebuilds the same from a fuller export: it counts only what 
   assert.equal(rebuildOne(db, spec, 'state', st).status, rebuildOne({ ...db, debug: undefined }, spec, 'state', st).status);
   assert.ok(['same', 'inexact-same'].includes(rebuildOne(db, spec, 'state', st).status));
 });
+
+test('B-34 (D-090): frozen originals and spec.legacyCollections are notes, never errors; an unknown collection still warns', () => {
+  const db = load();
+  // A v3 leftover in a v4 collection, in its old shape and writer, marked by the migration: frozen, not invalid.
+  db.runs = db.runs || [];
+  // (dated after the fixture's state/current, so the stored snapshot's rebuild is not what is tested here)
+  db.runs.push({ id: 'made-up-v2-run', writer: 'v2-pipeline', at: '2026-10-30T09:00:00Z', kind: 'old', migratedAt: '2026-10-18T05:00:00Z' });
+  db.daily = [{ id: '2026-09-30', writer: 'v3', at: '2026-09-30T09:00:00Z', text: 'A made-up v3 daily' }];
+  const r = lint(db);
+  assert.deepEqual(r.issues.filter(i => i.severity === 'error').map(i => i.ref), []);
+  assert.deepEqual(r.issues.filter(i => i.ref === 'runs/made-up-v2-run'), [], 'no invalid or wrong-writer on a frozen original');
+  assert.match(codes(r, 'frozen').find(i => i.ref === 'runs').msg, /^1 frozen original/);
+  assert.equal(codes(r, 'frozen').find(i => i.ref === 'daily').severity, 'info');
+  assert.deepEqual(codes(r, 'unknown-collection'), []);
+  // A legacy copy is still checked against legacy's own schema.
+  if (db.legacy && db.legacy.length) { db.legacy[0].migratedTo = 42; assert.ok(codes(lint(db), 'invalid').some(i => i.ref === `legacy/${db.legacy[0].id}`)); }
+  db.notacollection = [{ id: 'x', writer: 'page', at: '2026-10-01T00:00:00Z' }];
+  assert.equal(codes(lint(db), 'unknown-collection').length, 1);
+});
+
+test('B-34 (D-090): the state step writes state/current.lint from its pull; a planted change is in it; state still rebuilds byte for byte', async () => {
+  const { CODE_STEPS } = await import('../core/steps.mjs');
+  const ctx = { date: '2026-10-17', now: '2026-10-20T01:15:00.000Z', source: 'evening-cloud evening-cloud-test', commit: 'c'.repeat(40) };
+  const clean = load(); delete clean.journal;
+  const r = CODE_STEPS.state(clean, ctx, spec);
+  const cur = r.writes.find(w => w.id === 'current').data;
+  assert.equal(cur.lint.errors, 0); assert.equal(cur.lint.at, ctx.now); assert.equal(cur.lint.commit, ctx.commit);
+  assert.ok(validate('state', cur, { id: 'current' }).ok);
+  assert.match(r.say[0], /^Lint: 0 errors/);
+  // Rebuild reproduces the new state/current byte for byte: the lint is taken as stored, as the date is.
+  const after = load(); after.state = [{ ...cur, id: 'current' }];
+  const rb = rebuildOne(after, spec, 'state', after.state[0]);
+  assert.match(rb.status, /same$/); assert.deepEqual(rb.data.lint, cur.lint);
+  // A Fact changed since last night's hashes is caught by tonight's lint, before the hashes are taken again.
+  const planted = load(); delete planted.journal; planted.exams[0].title = 'A planted change';
+  const lt = CODE_STEPS.state(planted, ctx, spec).writes.find(w => w.id === 'current').data.lint;
+  assert.equal(lt.errors, 1); assert.deepEqual(lt.top.filter(i => i.severity === 'error').map(i => [i.code, i.ref]), [['fact-changed', `exams/${planted.exams[0].id}`]]);
+  assert.equal(lt.top[0].code, 'fact-changed', 'errors first');
+});

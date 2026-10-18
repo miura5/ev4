@@ -640,8 +640,19 @@
       const rows = (cap.budgets || []).map(b => row({ title: b.collection, detail: `${used(b)} · ${limit(b)}${b.level !== 'ok' && b.relief ? ' · relief: ' + b.relief : ''}`, chips: [[b.level === 'ok' ? 'within budget' : b.level === 'warn' ? 'near budget' : 'over budget', b.level === 'ok' ? 'ok' : b.level === 'warn' ? 'warn' : 'bad']] }));
       $('capacity').replaceChildren(el('p', null, `${Number(cap.docs).toLocaleString()} documents in your record.`), ...(rows.length ? [(() => { const ul = el('ul', 'list'); ul.append(...rows); return ul; })()] : []), el('p', 'meta', 'Nothing is ever deleted; budgets bound what E.V. reads each night, not what it keeps.'));
     } else $('capacity').replaceChildren(el('p', 'meta', 'Counts arrive with the watchdog’s health check.'));
-    const issues = st && st.lint ? st.lint.top || [] : [];
-    $('lint').replaceChildren(...(issues.length ? issues.map(i => row({ title: i.msg, detail: i.ref, chips: [[i.severity, i.severity === 'error' ? 'bad' : i.severity === 'warning' ? 'warn' : '']] })) : [empty('No problems in the last check.')]));
+    // The nightly record lint (D-090): evening-cloud runs it on its pull and keeps it in state/current.lint.
+    const lt = st && st.lint && typeof st.lint.errors === 'number' ? st.lint : null;
+    const side = (id, before) => { let n = $(id); if (!n) { n = el('div', null); n.id = id; $('lint').insertAdjacentElement(before ? 'beforebegin' : 'afterend', n); } return n; };
+    if (!lt) { side('lint-sum', true).replaceChildren(); side('lint-notes').replaceChildren(); $('lint').replaceChildren(empty('The nightly check runs with the 8:15pm evening run.')); }
+    else {
+      const issues = lt.top || []; const nb = lt.notesByCode || {};
+      const NOTE = { frozen: 'kept from before, frozen', 'fact-migrated': 'updated by a schema change', retired: 'in a retired collection', 'not-rebuilt': 'rebuilt by their next run', 'derived-inexact': 'built from something since edited' };
+      const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+      const summary = el('p', 'meta', `Checked ${short(lt.at)} ${E.chicagoClock(lt.at)} · ${plural(lt.errors, 'error')}, ${plural(lt.warnings, 'warning')}` + (lt.rebuilt && lt.rebuilt.of ? ` · ${lt.rebuilt.same} of ${lt.rebuilt.of} built documents reproduced` : ''));
+      const notes = Object.entries(nb).length ? [el('p', 'meta', 'Notes, not problems: ' + Object.entries(nb).map(([c, n]) => `${n} ${NOTE[c] || c}`).join(' · '))] : [];
+      side('lint-sum', true).replaceChildren(summary); side('lint-notes').replaceChildren(...notes);
+      $('lint').replaceChildren(...(issues.length ? issues.map(i => row({ title: i.msg, detail: i.ref, chips: [[i.severity, i.severity === 'error' ? 'bad' : 'warn']] })) : [empty(lt.errors || lt.warnings ? 'Details are in the evening run.' : 'No problems in the last check.')]));
+    }
     const js = [...S.jobs].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || ''))).slice(0, 10);
     $('jobs').replaceChildren(...(js.length ? js.map(j => { const st = jobState(j); return row({ lead: short(j.createdAt), title: j.title || j.id, detail: [(KINDS[j.kind] || {}).label, st.detail].filter(Boolean).join(' · '), chips: [[st.label, st.v]] }); }) : [empty('Jobs you ask E.V. for show up here.')]));
     $('versions').replaceChildren(document.createTextNode(`Release ${EV_BUILD} · core ${E.VERSION} · spec ${EV_SPEC.specVersion} · ${EV_SPEC.target === 'staging' ? 'staging record' : 'your record'}${st ? ' · snapshot ' + short(st.generatedAt) + ' ' + E.chicagoClock(st.generatedAt) : ''}`));

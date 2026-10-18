@@ -1524,6 +1524,12 @@
    "schema": "spec/schemas/legacy.schema.json"
   }
  },
+ "legacyCollections": [
+  "daily",
+  "drills",
+  "links",
+  "reviews"
+ ],
  "tasks": {
   "_rules": [
    "Every scheduled task is a row here; tools/prompts.mjs renders its prompt from this table and its pipeline steps, and verify-deploy compares the live task with it.",

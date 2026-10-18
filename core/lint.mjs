@@ -6,6 +6,8 @@
 //                    over its budget once B-14 sets one
 //   invalid          a document its collection's schema refuses
 //   derived-differs  a Derived document that rebuild does not reproduce byte for byte
+//   frozen           (info) D-090: a document carrying migratedAt or migratedTo is a frozen original, and a collection
+//                    in spec.legacyCollections is v3's, kept by rule; each is one note per collection, never an error
 // plus the content checks E.V. core has always run (items, orphans, duplicates, identifiers). The journal is never
 // read: it stays the page's (D-059).
 import EV from './evcore.mjs';
@@ -19,6 +21,8 @@ function migratedCopy(rec, col, id, ok) {
 }
 
 const bytes = d => Buffer.byteLength(JSON.stringify(EV.docData(d)), 'utf8');
+/** D-090: an original a migration marked (migratedAt, migratedTo) is frozen: kept as it was, never changed again. */
+export const isFrozen = d => !!(d && (d.migratedAt || d.migratedTo));
 
 /**
  * db: {collection: [docs with id]}. Returns {issues: [{severity, code, ref, msg}], rebuilt: [rebuild results]}, issues
@@ -32,12 +36,17 @@ export function lintRecord(db, spec, validate, { date, commit = null } = {}) {
   const state = ((rec.state || []).find(d => d.id === 'current')) || null;
   const kf = knownFacts(rec.state); const known = kf.hashes; const knownFields = kf.fields;
 
+  const legacyCols = spec.legacyCollections || [];
   for (const [col, docs] of Object.entries(rec)) {
     const c = spec.collections[col];
+    if (!c && legacyCols.includes(col)) { if ((docs || []).length) add('info', 'frozen', col, `${docs.length} document(s) in a v3 collection kept by rule (spec.legacyCollections): frozen, read by no pipeline`); continue; }
     if (!c) { add('warning', 'unknown-collection', col, 'not in spec.collections'); continue; }
-    let total = 0;
+    let total = 0; let frozen = 0;
     for (const d of docs || []) {
       const ref = `${col}/${d.id}`; const cls = classOf(spec, col, d.id); const size = bytes(d); total += size;
+      // A frozen original outside legacy keeps the shape it had when it was migrated: no schema, writer or fact check
+      // applies to it now. legacy's own schema describes its copies, so those are still validated.
+      if (isFrozen(d)) { frozen++; if (col !== 'legacy') { if (cap.documentBytes && size > cap.documentBytes) add('error', 'over-budget', ref, `${size} bytes; the budget is ${cap.documentBytes}`); continue; } }
       const r = validate(col, EV.docData(d), { id: d.id });
       if (!r.ok) add('error', 'invalid', ref, describeErrors(ref, r).split('\n').slice(0, 3).join(' · '));
       const writers = writersOf(spec, col, d.id);
@@ -60,6 +69,7 @@ export function lintRecord(db, spec, validate, { date, commit = null } = {}) {
       if (cap.documentBytes && size > cap.documentBytes) add('error', 'over-budget', ref, `${size} bytes; the budget is ${cap.documentBytes}`);
       if (col === 'materials' && cap.materialTextChars && String(d.text || '').length > cap.materialTextChars) add('error', 'over-budget', ref, `${String(d.text).length} characters of text; the cap is ${cap.materialTextChars} (chunk as ${cap.materialChunkId || '<id>-p<n>'})`);
     }
+    if (frozen) add('info', 'frozen', col, `${frozen} frozen original(s) (migratedAt or migratedTo): kept as migrated, never changed`);
     if (c.retired && (docs || []).length) add('info', 'retired', col, `${(docs || []).length} document(s) kept in a retired collection: ${String(c.retired).split(':')[0]}`);
     const b = (cap.collections || {})[col] || {}; const n = (docs || []).length;
     if (b.failDocs != null && n >= b.failDocs) add('error', 'over-budget', col, `${n} documents; fails at ${b.failDocs}` + (b.relief ? ` (relief: ${b.relief})` : ''));
@@ -88,6 +98,22 @@ export function lintRecord(db, spec, validate, { date, commit = null } = {}) {
   const rank = { error: 0, warning: 1, info: 2 };
   issues.sort((a, b) => rank[a.severity] - rank[b.severity] || (a.ref < b.ref ? -1 : a.ref > b.ref ? 1 : 0));
   return { issues, rebuilt };
+}
+
+/**
+ * The nightly lint as state/current.lint keeps it (D-090): the counts, every error and warning (up to `max`), and the
+ * notes by code. Small enough for state's budget: notes are counted, not listed.
+ */
+export function lintSummary({ issues, rebuilt }, { at, commit = null, max = 20 } = {}) {
+  const n = s => issues.filter(i => i.severity === s).length;
+  const notes = {}; for (const i of issues) if (i.severity === 'info') notes[i.code] = (notes[i.code] || 0) + 1;
+  const counted = rebuilt.filter(r => r.status !== 'skipped');
+  return {
+    at, commit, errors: n('error'), warnings: n('warning'), notes: n('info'),
+    notesByCode: Object.fromEntries(Object.entries(notes).sort(([a], [b]) => (a < b ? -1 : 1))),
+    rebuilt: { same: counted.filter(r => r.status === 'same' || r.status === 'inexact-same').length, of: counted.length },
+    top: issues.filter(i => i.severity !== 'info').slice(0, max).map(({ severity, code, ref, msg }) => ({ severity, code, ref, msg: String(msg).slice(0, 300) })),
+  };
 }
 
 export function formatLint({ issues, rebuilt }) {
