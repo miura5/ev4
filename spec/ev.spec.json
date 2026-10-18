@@ -1947,6 +1947,13 @@
      "date": "2026-10-18",
      "run": "cse_0197QUKzUow8ypBAMqfnNm9W",
      "evidence": "runs/diagnostic-20261018-064940608 audit step: 9 calls, all printed"
+    },
+    {
+     "capability": "the run checkout holds the deployed commit when it is within the clone depth: a shallow clone of main as the session started (one graft, 50 commits deep), so the gate can check out a deployed commit behind main",
+     "proven": true,
+     "date": "2026-10-18",
+     "run": "cse_01JRvpNYTUiBpyAPsSjgGARw",
+     "evidence": "runs/diagnostic-20261018-173336722, debug/diagnostic-20261018-173336722 (B-36): is-shallow 1, 50 commits visible from HEAD, the manifest commit 92ca50f and the live build 0c62f2f (an ancestor) both present; git read-only commands work in a cloud run"
     }
    ],
    "limits": [
@@ -1954,12 +1961,14 @@
     "fetching or unpacking code to run it is refused by the safety review (\"Code from External\")",
     "ArtifactData refuses a document over 262144 bytes serialized, before sending (\"the limit is 262144\")",
     "ArtifactData refuses a batch request over 1048576 bytes serialized (\"split it into smaller batches\")",
-    "a batch holds at most 50 writes (the tool's own schema)"
+    "a batch holds at most 50 writes (the tool's own schema)",
+    "the run checkout is shallow, 50 commits deep from main at the session start: a deployed commit more than 50 commits behind main is missing and the gate fails (\"this checkout does not have the deployed commit\"); deploy live before main runs that far ahead"
    ],
    "numbers": {
     "documentBytes": 262144,
     "batchWrites": 50,
-    "batchRequestBytes": 1048576
+    "batchRequestBytes": 1048576,
+    "checkoutDepthCommits": 50
    }
   },
   "mac-run": {
