@@ -2786,6 +2786,10 @@
      "collection": "runs",
      "field": "at",
      "windowDays": 7
+    },
+    {
+     "collection": "system",
+     "doc": "manifest"
     }
    ],
    "onDemand": [

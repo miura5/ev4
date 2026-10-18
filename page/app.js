@@ -88,8 +88,26 @@
   const render = () => { if (queued) return; queued = true; requestAnimationFrame(() => { queued = false; try { renderAll(); } catch (e) { setStatus('Something on this page broke: ' + e.message); console.error(e); } }); };
   const fail = e => { setStatus('Lost the connection to your record (' + (e && e.code || 'error') + '). Reload to retry.'); };
   const docs = s => s.docs.map(d => ({ id: d.id, ...(d.data() || {}) }));
+  // B-38: system/manifest names the deployed build. A release other than this page's, or page files that change
+  // after the page loaded, mean a newer E.V. is out: one quiet bar asks for a reload (nothing reloads on its own).
+  let shipped = null;
+  function manifestChanged(m) {
+    if (!m) return;
+    const sig = JSON.stringify(((m.pages || {})[EV_SPEC.target] || {}).files || null);
+    if (shipped === null) shipped = sig;
+    const stale = (m.release && m.release !== EV_BUILD) || sig !== shipped;
+    let bar = document.getElementById('ev-update');
+    if (!stale) { if (bar) bar.hidden = true; return; }
+    if (!bar) {
+      bar = el('div', 'update'); bar.id = 'ev-update'; bar.setAttribute('role', 'status');
+      const b = el('button', 'primary', 'Reload'); b.type = 'button'; b.addEventListener('click', () => location.reload());
+      bar.append(el('span', null, 'E.V. updated: reload'), b); document.body.append(bar);
+    }
+    bar.hidden = false;
+  }
   function changed(key, value) {
     const k = NAME[key] || key;
+    if (key === 'system/manifest') { S.manifest = value; manifestChanged(value); return; }
     if (key === 'talk/memory') S.memory = value;
     else if (key === 'state' || key === 'health') S[k] = (value || []).find(x => x.id === 'current') || null;
     else if (key === 'dates') S.datesRaw = value;

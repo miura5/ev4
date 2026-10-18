@@ -13,6 +13,7 @@ const shots = process.argv[3] || '/tmp/ev4-shots'; fs.mkdirSync(shots, { recursi
 function load(dir) { const db = {}; for (const c of fs.readdirSync(dir)) { const p = path.join(dir, c); if (!fs.statSync(p).isDirectory()) continue; db[c] = {}; for (const f of fs.readdirSync(p)) if (f.endsWith('.json')) db[c][f.slice(0, -5)] = JSON.parse(fs.readFileSync(path.join(p, f), 'utf8')); } return db; }
 const seed = load(dbDir);
 delete seed.system; delete seed.legacy; delete seed.debug; delete seed.journal; // the harness never needs his journal
+seed.system = { manifest: { release: 'v4.0.0', commit: 'a'.repeat(40), pages: { staging: { files: { 'page/staging/app.js': 'a'.repeat(64) } }, live: { files: {} } } } }; // B-38
 const env = (writer, source, at) => ({ schema: 1, writer, at: at || new Date().toISOString(), source });
 const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date());
 const DAYTIME = new Date(today + 'T19:00:00Z'); // 2pm CDT: the page's clock (see openPage)
@@ -84,6 +85,16 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     ok(`[${scheme}] opens on E.V.`, await page.isVisible('#p-ev') && !(await page.isVisible('#p-today')));
     ok(`[${scheme}] opening: large core above the greeting, top-bar core tucked away`, await page.evaluate(() => document.body.classList.contains('opening') && !!document.querySelector('#hero canvas') && document.querySelector('#hero').getBoundingClientRect().height > 150 && document.querySelector('#top-av').getBoundingClientRect().width < 4));
     ok(`[${scheme}] core is drawing`, await page.evaluate(() => { const c = document.querySelector('#hero canvas'); const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let lit = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 20) lit++; return lit > 500; }));
+    // B-38: the page follows system/manifest; a newer build asks for a reload, nothing reloads on its own
+    ok(`[${scheme}] no update bar while the deployed build is this page's`, !(await page.isVisible('#ev-update')));
+    await page.evaluate(async () => { const db = await window.claude.use('db'); const m = JSON.parse(JSON.stringify(window.__db.system.manifest)); m.commit = 'b'.repeat(40); m.pages.staging.files['page/staging/app.js'] = 'b'.repeat(64); await db.collection('system').doc('manifest').set(m); });
+    await page.waitForTimeout(150);
+    ok(`[${scheme}] a new deploy shows "E.V. updated: reload" with a Reload button`, await page.isVisible('#ev-update') && /E\.V\. updated: reload/.test(await page.textContent('#ev-update')) && (await page.locator('#ev-update button', { hasText: 'Reload' }).count()) === 1);
+    await page.screenshot({ path: `${shots}/update-bar-${scheme}.png`, fullPage: false });
+    ok(`[${scheme}] the bar never covers the top bar's buttons or sideways-scrolls`, await page.evaluate(() => { const b = document.getElementById('ev-update').getBoundingClientRect(), t = document.getElementById('tab-system').getBoundingClientRect(); return (b.top >= t.bottom || b.bottom <= t.top) && document.documentElement.scrollWidth <= innerWidth + 1; }));
+    await page.evaluate(async () => { const db = await window.claude.use('db'); const m = JSON.parse(JSON.stringify(window.__db.system.manifest)); m.pages.staging.files['page/staging/app.js'] = 'a'.repeat(64); await db.collection('system').doc('manifest').set(m); });
+    await page.waitForTimeout(100);
+    ok(`[${scheme}] back on this page's build, the bar goes away`, !(await page.isVisible('#ev-update')));
     ok(`[${scheme}] dock has five tabs, System sits in the top bar`, (await page.locator('.dock .tab').count()) === 5 && await page.isVisible('#tab-system'));
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
     ok(`[${scheme}] no sideways scroll`, !overflow);
