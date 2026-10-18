@@ -54,6 +54,7 @@ async function deployedStaging() {
   const built = path.join(dist, 'page', 'staging');
   write(path.join(state, 'page.html'), '<!doctype html><html><head><meta charset=utf8></head><body>\n' + fs.readFileSync(path.join(built, 'index.html'), 'utf8') + '\n</body></html>');
   for (const f of fs.readdirSync(built)) if (f !== 'index.html') { fs.mkdirSync(path.join(state, 'page-files'), { recursive: true }); fs.copyFileSync(path.join(built, f), path.join(state, 'page-files', f)); }
+  write(path.join(state, 'page-declaration.json'), manifest.pages.staging.capabilities);
   write(path.join(state, 'record/system/seed.json'), { schema: 1, writer: 'deploy', at: '2026-10-18T05:30:00Z', source: 'seed-staging', from: 'live export', exportedAt: '2026-10-18T05:02:42Z', migration: 'v3-to-v4', counts: { weakspots: 3 }, hashes: {}, command: 'seed-staging' });
   return { dir, dist, state, manifest };
 }
@@ -68,7 +69,7 @@ test('from a build chat with nothing deployed, verify-deploy staging is red and 
   assert.match(r.out, /NO  staging record read: no saved system\/\* documents/);
   assert.match(r.out, /ArtifactData \{"action":"get","url":"https:\/\/claude\.ai\/artifact\/[A-Za-z0-9]+","collection":"system","doc_id":"seed"/);
   assert.match(r.out, /NO  scheduled tasks read/);
-  assert.match(r.out, /mcp__claude-code-remote__list_triggers \{"limit":100\}/);
+  assert.match(r.out, /mcp__claude-code-remote__list_triggers \{"limit":100,"enabled":true\}/);
   const saved = JSON.parse(fs.readFileSync(path.join(dir, 'dist/verify-staging.json'), 'utf8'));
   assert.equal(saved.green, false);
 });

@@ -35,8 +35,19 @@ export function toolResults(jsonl, tool) {
   return out;
 }
 
+/** The capability declaration an Artifact read shows for the published version (B-28), parsed; null when absent. */
+export function declarationOf(text) {
+  const m = String(text || '').match(/<artifact-stored-declaration>\s*([\s\S]*?)\s*<\/artifact-stored-declaration>/);
+  return m ? JSON.parse(m[1]) : null;
+}
+
 /** The text to save for one result: its first JSON text block, pretty-printed, else the joined text. */
-export function resultBody(r, { html = false } = {}) {
+export function resultBody(r, { html = false, declaration = false } = {}) {
+  if (declaration) {
+    const d = declarationOf(r.texts.join('\n'));
+    if (!d) throw new Error('no <artifact-stored-declaration> in that result');
+    return JSON.stringify(d, null, 1);
+  }
   if (html) {
     const text = r.texts.join('\n'), i = text.search(/<!doctype html/i);
     if (i < 0) throw new Error('no <!doctype html> in that result');

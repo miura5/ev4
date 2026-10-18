@@ -182,3 +182,19 @@ test('B-26 (D-084): the watchdog\'s slots land inside every scheduled cloud pipe
   assert.ok(old.some(u => u.task === 'weekly'), 'and the weekly too late');
   assert.equal(spec.tasks.staging.morning.watchSchedule, spec.tasks.live.morning.schedule, 'staging watches its morning on the live slot');
 });
+
+test('B-28: spec.tasks.retired keeps every old task with its reason, never a task still in use', () => {
+  const inUse = new Set();
+  for (const g of ['live', 'staging']) for (const t of Object.values(spec.tasks[g])) if (t.trigger) inUse.add(t.trigger);
+  for (const t of Object.values(spec.tasks.build)) if (t.trigger) inUse.add(t.trigger);
+  if (spec.tasks.diagnostic && spec.tasks.diagnostic.trigger) inUse.add(spec.tasks.diagnostic.trigger);
+  const seen = new Set();
+  for (const r of spec.tasks.retired) {
+    for (const k of ['trigger', 'was', 'name', 'reason']) assert.ok(typeof r[k] === 'string' && r[k].length, `${r.trigger}: ${k}`);
+    assert.match(r.trigger, /^trig_[A-Za-z0-9]+$/);
+    assert.ok(!seen.has(r.trigger), `${r.trigger} listed twice`); seen.add(r.trigger);
+    assert.ok(!inUse.has(r.trigger), `${r.trigger} is retired and in use`);
+  }
+  // The four v3 live tasks the rollback procedure names, and the two v3 staging tasks left enabled at the cutover.
+  for (const id of ['trig_01R7242YzwUXFyNVcmqT8vob', 'trig_0148JgXzDzGX1zghMymdvMmL', 'trig_01GHogoFx9Ns7uE1uUmi2i2G', 'trig_01PxKp1tsgddna4Kt1FzpNhv', 'trig_01VK4WrkLh2361Bc7MgvcDUY', 'trig_01VTGsL3VVYKwboByCz8RqZ3']) assert.ok(seen.has(id), id);
+});

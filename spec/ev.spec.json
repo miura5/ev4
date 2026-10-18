@@ -1620,6 +1620,138 @@
     "was": "probe",
     "name": "E.V. watchdog one-shot probe (B-49)",
     "reason": "B-49: one scheduled firing of the live watchdog prompt, Oct 18; spent after it fired."
+   },
+   {
+    "trigger": "trig_01R7242YzwUXFyNVcmqT8vob",
+    "was": "v3.live.morning",
+    "name": "E.V. morning (v3.6)",
+    "reason": "D-085: v3 live, replaced by v4 at the Oct 18 cutover; disabled and kept. The rollback procedure in CLAUDE.md re-enables it only with Matt's explicit OK."
+   },
+   {
+    "trigger": "trig_0148JgXzDzGX1zghMymdvMmL",
+    "was": "v3.live.evening",
+    "name": "E.V. evening (v3.6)",
+    "reason": "D-085: v3 live, replaced by v4 at the Oct 18 cutover; disabled and kept. The rollback procedure in CLAUDE.md re-enables it only with Matt's explicit OK. Mac-bound: re-enabled only from a chat linked to the Mac, with Matt present."
+   },
+   {
+    "trigger": "trig_01GHogoFx9Ns7uE1uUmi2i2G",
+    "was": "v3.live.weekly",
+    "name": "E.V. weekly review (v3.6)",
+    "reason": "D-085: v3 live, replaced by v4 at the Oct 18 cutover; disabled and kept. The rollback procedure in CLAUDE.md re-enables it only with Matt's explicit OK."
+   },
+   {
+    "trigger": "trig_01PxKp1tsgddna4Kt1FzpNhv",
+    "was": "v3.live.worker",
+    "name": "E.V. worker (v3.6)",
+    "reason": "D-085: v3 live, replaced by v4 at the Oct 18 cutover; disabled and kept. The rollback procedure in CLAUDE.md re-enables it only with Matt's explicit OK."
+   },
+   {
+    "trigger": "trig_01VK4WrkLh2361Bc7MgvcDUY",
+    "was": "v3.staging.worker",
+    "name": "E.V. staging · worker (v3.6)",
+    "reason": "B-28: v3 staging (fire-only, ev-core's staging record); left enabled at the cutover, disabled Oct 18 and kept. v4 staging has its own tasks."
+   },
+   {
+    "trigger": "trig_01VTGsL3VVYKwboByCz8RqZ3",
+    "was": "v3.staging.morning-preview",
+    "name": "E.V. staging · morning preview (v3.6)",
+    "reason": "B-28: v3 staging (fire-only, ev-core's staging record); left enabled at the cutover, disabled Oct 18 and kept. v4 staging has its own tasks."
+   },
+   {
+    "trigger": "trig_01EEZ3phyW3JPK9vR2jbSu72",
+    "was": "build.kickoff",
+    "name": "ev4-builder kickoff (Sun 9:21am)",
+    "reason": "Matt cancelled this one-shot kickoff of the ev4-builder task on Oct 18 before it fired; kept disabled. ev4-builder itself stays as it is."
+   },
+   {
+    "trigger": "trig_019oVXWRJzpRGzagwGA4rcEX",
+    "was": "v3.staging.bootstrap-diagnostic",
+    "name": "E.V. staging · bootstrap diagnostic",
+    "reason": "v3.6 build: a one-time diagnostic, done; disabled and kept."
+   },
+   {
+    "trigger": "trig_01MpicSnWnACo5eKss6GvKGA",
+    "was": "v3.staging.worker",
+    "name": "E.V. staging · worker",
+    "reason": "v3: replaced by the v3.6 staging worker on Oct 18; disabled and kept."
+   },
+   {
+    "trigger": "trig_01BSMyEZe8D3M8fLbjbZCbpw",
+    "was": "v3.live.worker",
+    "name": "E.V. worker (v3)",
+    "reason": "v3: replaced by E.V. worker (v3.6) on Oct 18; disabled and kept."
+   },
+   {
+    "trigger": "trig_01J7Vv7RSfSbfYsuVEBR7Ebx",
+    "was": "v3.check",
+    "name": "Check first v3 evening run",
+    "reason": "v3: a one-shot check of the first v3 evening run, Oct 17; disabled and kept."
+   },
+   {
+    "trigger": "trig_015gUuHGazi7iM9wVT1p41mf",
+    "was": "v3.live.evening",
+    "name": "E.V. evening (v3)",
+    "reason": "v3: replaced by E.V. evening (v3.6) on Oct 18; disabled and kept."
+   },
+   {
+    "trigger": "trig_013dKLNvFH1vKj42Ud9rEB71",
+    "was": "v3.live.weekly",
+    "name": "E.V. weekly review (v3)",
+    "reason": "v3: replaced by E.V. weekly review (v3.6) on Oct 18; disabled and kept."
+   },
+   {
+    "trigger": "trig_01WBtoJJydc7Q5odnsjbvKvn",
+    "was": "v3.live.morning",
+    "name": "E.V. morning (v3)",
+    "reason": "v3: replaced by E.V. morning (v3.6) on Oct 18; disabled and kept."
+   },
+   {
+    "trigger": "trig_01LpdggK4EmLPu8VPisiQWYb",
+    "was": "v3.staging.morning-preview",
+    "name": "E.V. staging · morning preview",
+    "reason": "v3: replaced by the v3.6 staging morning preview on Oct 18; disabled and kept."
+   },
+   {
+    "trigger": "trig_018ptM4wetEZMtgoQsw7eou8",
+    "was": "pre-v3.canvas-sync",
+    "name": "E.V. Canvas sync",
+    "reason": "Before v3 (one task per job): folded into the v3 evening pipeline on Oct 17; disabled and kept."
+   },
+   {
+    "trigger": "trig_019KsL5ag6bhCyf6fBAQYkWV",
+    "was": "pre-v3.practice-builder",
+    "name": "E.V. practice builder",
+    "reason": "Before v3 (one task per job): folded into the v3 morning pipeline on Oct 17; disabled and kept."
+   },
+   {
+    "trigger": "trig_019xJaK8ZTSAEUtkrTwp1tG9",
+    "was": "pre-v3.file-sessions",
+    "name": "E.V. file sessions",
+    "reason": "Before v3 (one task per job, Mac-bound): folded into the v3 evening pipeline on Oct 17; disabled and kept."
+   },
+   {
+    "trigger": "trig_01PMFYXEvhVGiedPGjQnnSk5",
+    "was": "pre-v3.evening-sweep",
+    "name": "E.V. evening sweep",
+    "reason": "Before v3 (one task per job): folded into the v3 evening pipeline on Oct 17; disabled and kept."
+   },
+   {
+    "trigger": "trig_01EYHauosjbJ2G8X4J6my71M",
+    "was": "pre-v3.sunday-review",
+    "name": "E.V. Sunday review",
+    "reason": "Before v3 (one task per job): replaced by the v3 weekly review on Oct 17; disabled and kept."
+   },
+   {
+    "trigger": "trig_01HEmBoh7MsMfbC6XTotDQa6",
+    "was": "pre-v3.daily-list",
+    "name": "E.V. daily list",
+    "reason": "Before v3 (one task per job): folded into the v3 morning pipeline on Oct 17; disabled and kept."
+   },
+   {
+    "trigger": "trig_01U319p9VyCYhHCv4oMyDkXA",
+    "was": "pre-v3.test",
+    "name": "E.V. daily list test (A-2)",
+    "reason": "Before v3: a one-time test of the 5am daily list, Oct 17; disabled and kept."
    }
   ]
  },

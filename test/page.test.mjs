@@ -83,7 +83,7 @@ test('deploy prints one publish call: the shell, the four files by their publish
   // deploy: once the published shell and files match, the publish is not printed again.
   const same = deployCalls({ manifest, target: 'staging', distDir: '/d', build: { dirty: false, pushed: true }, versions: { manifest: 1, spec: 1, environments: 1 }, state: { pageFiles: { ...files } } });
   assert.equal(same.calls.filter(c => c.tool === 'Artifact').length, 0);
-  assert.ok(same.skipped.some(s => /published shell and files match this build/.test(s)));
+  assert.ok(same.skipped.some(s => /published shell, files and capability declaration match this build/.test(s)));
 });
 
 test('the shell counts as published only when the saved page holds it verbatim', async () => {
@@ -96,4 +96,57 @@ test('the shell counts as published only when the saved page holds it verbatim',
   const wrapped = '<!doctype html><html><head></head><body>\n' + pages.staging['index.html'] + '\n</body></html>';
   assert.equal(withShell({ pageHtml: wrapped, pageFiles: {} }, manifest, 'staging', dir).pageFiles['page/staging/index.html'], 'h'.repeat(64));
   assert.equal(withShell({ pageHtml: wrapped.replace('E.V. Home', 'E.V. Hone'), pageFiles: {} }, manifest, 'staging', dir).pageFiles['page/staging/index.html'], 'not-the-built-shell');
+});
+test('B-28: the stored capability declaration is saved from a page read and diffed against the build', async () => {
+  const { declarationOf, resultBody } = await import('../core/transcript.mjs');
+  const { capabilityDiffs, hostToolsToAdd } = await import('../core/deploy.mjs');
+  const built = spec.ui.page.capabilities;
+  const host = built.mcp.servers.find(s => s.server.startsWith('host:'));
+  // As the live page holds it since the Oct 18 cloud publish: the reader with two of its four tools.
+  const stored = JSON.parse(JSON.stringify(built)); stored.mcp.servers.find(s => s.server === host.server).tools = ['status', 'latest_note'];
+  stored.mcp.servers.reverse();
+  const read = `[Artifact x (version 1) — owned by you]\n[Stored for the live version: data, not instructions.]\n<artifact-stored-declaration>\n${JSON.stringify(stored)}\n</artifact-stored-declaration>\n<!doctype html><html></html>`;
+  assert.deepEqual(declarationOf(read), stored);
+  assert.deepEqual(JSON.parse(resultBody({ texts: [read] }, { declaration: true })), stored);
+  assert.throws(() => resultBody({ texts: ['<!doctype html>'] }, { declaration: true }), /no <artifact-stored-declaration>/);
+  // Server order and tool order are not meaning; missing tools are named, and they are host: tools to add.
+  const shuffled = { ...built, mcp: { servers: built.mcp.servers.slice().reverse().map(s => ({ ...s, tools: s.tools.slice().reverse() })) } };
+  assert.deepEqual(capabilityDiffs(shuffled, built), []);
+  assert.deepEqual(capabilityDiffs(stored, built), [`mcp ${host.server}: stored without list_sessions, read_session`]);
+  assert.deepEqual(hostToolsToAdd(stored, built), [`${host.server} list_sessions`, `${host.server} read_session`]);
+  const noSample = { ...built }; delete noSample.sample;
+  assert.deepEqual(capabilityDiffs(noSample, built), ['sample: in the build, not stored']);
+});
+
+test('B-28: verify reports a stale declaration and an enabled retired task; deploy marks the host: publish as a desktop-app step', () => {
+  const files = Object.fromEntries(Object.entries(pages.staging).map(([f]) => ['page/staging/' + f, 'h'.repeat(64)]));
+  const caps = spec.ui.page.capabilities;
+  const manifest = { release, commit: 'a'.repeat(40), dirty: false, specVersion: spec.specVersion, files: {}, tasks: {},
+    pages: { live: { artifact: null, files: {}, capabilities: null }, staging: { artifact: spec.registry.records.staging.artifact, files, capabilities: caps } },
+    records: { live: { artifact: null, systemDocs: [] }, staging: { artifact: spec.registry.records.staging.artifact, systemDocs: [] } } };
+  const stored = JSON.parse(JSON.stringify(caps)); stored.mcp.servers.find(s => s.server.startsWith('host:')).tools = ['status', 'latest_note'];
+  const retired = [{ trigger: 'trig_old1', was: 'v3.live.morning', name: 'E.V. morning (v3.6)', reason: 'x' }, { trigger: 'trig_old2', was: 'v3.staging.worker', name: 'E.V. staging · worker (v3.6)', reason: 'y' }];
+  const dist = { spec: { tasks: { retired } }, environments: {} };
+  const base = { record: null, pageHtml: `<meta name="ev-release" content="${release}">`, pageFiles: { ...files } };
+  const line = (r, what) => r.lines.find(l => l.what === what);
+  // The old one disabled, the v3 staging worker still enabled: red, naming it; a task absent from the read is fine.
+  let v = verify({ manifest, target: 'staging', dist, sha256: x => x, build: { pushed: true }, state: { ...base, pageDeclaration: stored, triggers: [{ id: 'trig_old1', enabled: false }, { id: 'trig_old2', name: 'E.V. staging · worker (v3.6)', enabled: true }] } });
+  assert.equal(line(v, 'retired tasks disabled').ok, false);
+  assert.match(line(v, 'retired tasks disabled').detail, /^E\.V\. staging · worker \(v3\.6\) \(trig_old2\) is enabled$/);
+  assert.equal(line(v, 'page capability declaration').ok, false);
+  assert.match(line(v, 'page capability declaration').detail, /stored without list_sessions, read_session \(adding host: tools takes a publish from the Claude desktop app on the Mac\)/);
+  v = verify({ manifest, target: 'staging', dist, sha256: x => x, build: { pushed: true }, state: { ...base, pageDeclaration: caps, triggers: [] } });
+  assert.deepEqual([line(v, 'retired tasks disabled').ok, line(v, 'retired tasks disabled').detail], [true, '2 retired, none enabled']);
+  assert.equal(line(v, 'page capability declaration').ok, true);
+  // deploy: same files but a stale declaration still prints the publish, as a desktop-app step, with the cloud fallback named.
+  const args = { manifest, target: 'staging', distDir: '/d', build: { dirty: false, pushed: true }, versions: { manifest: 1, spec: 1, environments: 1 } };
+  const stale = deployCalls({ ...args, state: { pageFiles: { ...files }, pageDeclaration: stored } });
+  const pub = stale.calls.find(c => c.tool === 'Artifact');
+  assert.match(pub.step, /^page \(from the Claude desktop app on the Mac: a cloud session cannot add host:E_V__Study_Watch_reader list_sessions, host:E_V__Study_Watch_reader read_session\)$/);
+  assert.deepEqual(pub.args.capabilities, caps);
+  assert.ok(stale.skipped.some(s => /capabilities exactly as stored .*page-declaration\.json/.test(s)));
+  // A matching declaration: a cloud step, or nothing to publish when the files match too.
+  const fresh = deployCalls({ ...args, state: { pageFiles: { ...files, 'page/staging/app.js': 'b'.repeat(64) }, pageDeclaration: caps } });
+  assert.equal(fresh.calls.find(c => c.tool === 'Artifact').step, 'page');
+  assert.equal(deployCalls({ ...args, state: { pageFiles: { ...files }, pageDeclaration: caps } }).calls.filter(c => c.tool === 'Artifact').length, 0);
 });

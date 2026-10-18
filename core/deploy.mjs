@@ -20,6 +20,40 @@ export function canonical(v) {
 }
 const same = (a, b) => canonical(a) === canonical(b);
 
+// B-28: a page's capability declaration, as the artifact service stores it, compared with the build's as data: an mcp
+// server is matched by name and its tools as a set; every other capability by its canonical JSON.
+const serverMap = c => Object.fromEntries(((c && c.mcp && c.mcp.servers) || []).map(s => [s.server, s]));
+export function capabilityDiffs(stored, built) {
+  const diffs = [], st = stored || {}, bu = built || {};
+  for (const k of [...new Set([...Object.keys(st), ...Object.keys(bu)])].sort()) {
+    if (!(k in bu)) { diffs.push(`${k}: stored, not in the build`); continue; }
+    if (!(k in st)) { diffs.push(`${k}: in the build, not stored`); continue; }
+    if (k !== 'mcp') { if (!same(st[k], bu[k])) diffs.push(`${k}: differs`); continue; }
+    const a = serverMap(st), b = serverMap(bu);
+    for (const name of [...new Set([...Object.keys(a), ...Object.keys(b)])].sort()) {
+      if (!b[name]) { diffs.push(`mcp ${name}: stored, not in the build`); continue; }
+      if (!a[name]) { diffs.push(`mcp ${name}: in the build, not stored`); continue; }
+      const ta = new Set(a[name].tools || []), tb = new Set(b[name].tools || []);
+      const lacks = [...tb].filter(t => !ta.has(t)), extra = [...ta].filter(t => !tb.has(t));
+      if (lacks.length) diffs.push(`mcp ${name}: stored without ${lacks.join(', ')}`);
+      if (extra.length) diffs.push(`mcp ${name}: stored with ${extra.join(', ')}, not in the build`);
+      const rest = o => { const { server, tools, ...r } = o; return r; };
+      if (!same(rest(a[name]), rest(b[name]))) diffs.push(`mcp ${name}: settings differ`);
+    }
+  }
+  return diffs;
+}
+/** The host: tools (a local MCP server on Matt's Mac) the build declares that the stored declaration lacks: only a
+ *  publish from the Claude desktop app on that Mac can add them (Oct 18: a cloud publish adding them answered 422). */
+export function hostToolsToAdd(stored, built) {
+  const a = serverMap(stored), out = [];
+  for (const [name, s] of Object.entries(serverMap(built))) if (name.startsWith('host:')) for (const t of s.tools || []) if (!(a[name] && (a[name].tools || []).includes(t))) out.push(`${name} ${t}`);
+  return out;
+}
+const hostServers = c => Object.keys(serverMap(c)).filter(n => n.startsWith('host:'));
+/** spec.tasks.retired, from the built system/spec (envelope and all). */
+const retiredOf = dist => (dist && dist.spec && dist.spec.tasks && Array.isArray(dist.spec.tasks.retired)) ? dist.spec.tasks.retired : [];
+
 /** The tasks a target's verify and deploy cover: that target's pipeline tasks, plus the build tasks on staging. */
 export function tasksFor(manifest, target) {
   return Object.entries(manifest.tasks).filter(([key, t]) => t.record === target || (target === 'staging' && key.startsWith('build.')));
@@ -29,14 +63,14 @@ export function tasksFor(manifest, target) {
 export function verifyReads({ manifest, target, stateDir }) {
   const rec = manifest.records[target];
   const reads = [{
-    tool: 'mcp__claude-code-remote__list_triggers', args: { limit: 100 },
+    tool: 'mcp__claude-code-remote__list_triggers', args: { limit: 100, enabled: true },
     save: `${stateDir}/triggers-1.json`,
-    note: `Save it with node tools/tool-result.mjs list_triggers ${stateDir}/triggers-1.json (copies the result from this session's transcript; never retype it). When it has a next_cursor, call again with cursor and save triggers-2.json the same way, and so on.`,
+    note: `Enabled tasks only: a task absent from it is disabled or spent. Save it with node tools/tool-result.mjs list_triggers ${stateDir}/triggers-1.json (copies the result from this session's transcript; never retype it). When it has a next_cursor, call again with cursor and save triggers-2.json the same way, and so on; remove pages left from an earlier, longer read.`,
   }];
   if (rec.artifact) {
     for (const id of readIds(target)) reads.push({ tool: 'ArtifactData', args: { action: 'get', url: artifactUrl(rec.artifact), collection: 'system', doc_id: id, out_dir: `${stateDir}/record` }, save: `${stateDir}/record/system/${id}.json`, note: 'Saved by the tool; note the version it prints for deploy --version.' });
     const page = manifest.pages[target];
-    if (page.artifact) reads.push({ tool: 'Artifact', args: { action: 'read', url: artifactUrl(page.artifact) }, save: `${stateDir}/page.html`, note: `Save it with node tools/tool-result.mjs Artifact ${stateDir}/page.html --html (or copy the file the read names, when it names one).` });
+    if (page.artifact) reads.push({ tool: 'Artifact', args: { action: 'read', url: artifactUrl(page.artifact) }, save: `${stateDir}/page.html`, note: `Save it with node tools/tool-result.mjs Artifact ${stateDir}/page.html --html (or copy the file the read names, when it names one), and its stored capability declaration with node tools/tool-result.mjs Artifact ${stateDir}/page-declaration.json --declaration.` });
     const published = Object.keys(page.files).slice(1).map(f => f.replace(/^page\/[^/]+\//, ''));
     if (page.artifact && published.length) reads.push({ tool: 'Artifact', args: { action: 'read', url: artifactUrl(page.artifact), paths: published, out_dir: `${stateDir}/page-files` }, save: `${stateDir}/page-files/`, note: 'Saved by the tool, one file per published path. The shell is held by the page read above: publishing wraps it, so the read must contain the built shell verbatim.' });
   }
@@ -103,6 +137,14 @@ export function verify({ manifest, target, state, build, dist, sha256, now = new
         const changed = Object.keys({ ...page.files, ...state.pageFiles }).filter(f => state.pageFiles[f] !== page.files[f]);
         add(changed.length === 0, 'published page files', changed.length ? `${changed.length} differ: ${changed.join(', ')}` : '');
       }
+      // B-28: the capability declaration the artifact service holds, against the build's (manifest.pages.<target>).
+      if (page.capabilities) {
+        if (state.pageDeclaration == null) add(false, 'page capability declaration', 'not saved: save the page read\'s <artifact-stored-declaration> (tool-result --declaration)');
+        else {
+          const d = capabilityDiffs(state.pageDeclaration, page.capabilities), adds = hostToolsToAdd(state.pageDeclaration, page.capabilities);
+          add(d.length === 0, 'page capability declaration', d.length ? d.join('; ') + (adds.length ? ' (adding host: tools takes a publish from the Claude desktop app on the Mac)' : '') : Object.keys(page.capabilities).sort().join(', '));
+        }
+      }
     }
   }
 
@@ -113,7 +155,7 @@ export function verify({ manifest, target, state, build, dist, sha256, now = new
     if (!t.trigger && !t.promptSha256 && t.pipeline) { add(true, `task ${key}`, 'pending: its pipeline has no steps in this build'); continue; }
     if (!t.trigger) { add(false, `task ${key}`, 'not created yet'); continue; }
     const live = state.triggers.find(x => x.id === t.trigger);
-    if (!live) { add(false, `task ${key}`, `${t.trigger} not found in the saved task list`); continue; }
+    if (!live) { add(false, `task ${key}`, `${t.trigger} not found in the saved task list (disabled, spent or gone: the read lists enabled tasks only)`); continue; }
     const f = triggerFields(live), diffs = [];
     if (f.name !== t.name) diffs.push(`name "${f.name}", expected "${t.name}"`);
     if (!f.enabled) diffs.push('disabled');
@@ -124,6 +166,17 @@ export function verify({ manifest, target, state, build, dist, sha256, now = new
     if (t.macBound && !same(f.folders.slice().sort(), t.folders.slice().sort())) diffs.push(`folders ${JSON.stringify(f.folders)}, expected ${JSON.stringify(t.folders)}`);
     if (f.push !== t.push) diffs.push(`push ${f.push}, expected ${t.push}`);
     add(diffs.length === 0, `task ${key}`, diffs.join('; ') || t.trigger);
+  }
+
+  // B-28: every retired task stays disabled (kept, never deleted). The saved read lists enabled tasks only, so a
+  // retired id found in it is enabled; one absent is disabled or a spent one-shot.
+  const retired = retiredOf(dist);
+  if (retired.length) {
+    if (!state.triggers) add(false, 'retired tasks disabled', 'no saved list_triggers result; run the reads below');
+    else {
+      const on = retired.filter(r => { const t = state.triggers.find(x => x.id === r.trigger); return t && t.enabled !== false; });
+      add(on.length === 0, 'retired tasks disabled', on.length ? on.map(r => `${r.name} (${r.trigger}) is enabled`).join('; ') : `${retired.length} retired, none enabled`);
+    }
   }
   return { green: lines.every(l => l.ok), lines };
 }
@@ -171,11 +224,17 @@ export function deployCalls({ manifest, target, distDir, build, versions = {}, m
   calls.push({ step: 'system documents', tool: 'ArtifactData', args: { action: 'batch', url: artifactUrl(rec.artifact), writes } });
 
   const page = manifest.pages[target];
-  const published = state && state.pageFiles && Object.keys(page.files).length && Object.keys({ ...page.files, ...state.pageFiles }).every(f => state.pageFiles[f] === page.files[f]);
-  if (published) skipped.push(`${target} page: the published shell and files match this build`);
+  const declared = state && state.pageDeclaration;
+  const declarationOk = !declared || !page.capabilities || capabilityDiffs(declared, page.capabilities).length === 0;
+  const published = state && state.pageFiles && Object.keys(page.files).length && Object.keys({ ...page.files, ...state.pageFiles }).every(f => state.pageFiles[f] === page.files[f]) && declarationOk;
+  if (published) skipped.push(`${target} page: the published shell, files and capability declaration match this build`);
   if (page.artifact && Object.keys(page.files).length && !published) {
     const [shell, ...rest] = Object.keys(page.files);
-    calls.push({ step: 'page', tool: 'Artifact', args: { action: 'publish', url: artifactUrl(page.artifact), file_path: `${distDir}/${shell}`, files: Object.fromEntries(rest.map(f => [f.replace(/^page\/[^/]+\//, ''), `${distDir}/${f}`])), capabilities: page.capabilities } });
+    // B-28: a host: server's tools are added only by a publish from the Claude desktop app on the Mac that runs it.
+    const adds = declared ? hostToolsToAdd(declared, page.capabilities) : hostServers(page.capabilities).map(n => n + ' (stored declaration not saved)');
+    const where = adds.length ? ` (from the Claude desktop app on the Mac${target === 'live' ? ', with Matt\'s OK' : ''}: a cloud session cannot add ${adds.join(', ')})` : '';
+    calls.push({ step: 'page' + where, tool: 'Artifact', args: { action: 'publish', url: artifactUrl(page.artifact), file_path: `${distDir}/${shell}`, files: Object.fromEntries(rest.map(f => [f.replace(/^page\/[^/]+\//, ''), `${distDir}/${f}`])), capabilities: page.capabilities } });
+    if (adds.length && declared) skipped.push(`${target} page from a cloud session: the same publish with capabilities exactly as stored (state/${target}/page-declaration.json) ships the files; verify-deploy stays red on the declaration until the desktop-app publish`);
   }
 
   for (const [key, t] of tasksFor(manifest, target)) {

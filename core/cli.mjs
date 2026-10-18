@@ -74,7 +74,7 @@ export function withShell(state, manifest, target, distDir) {
 }
 
 export function readState(dir) {
-  if (!fs.existsSync(dir)) return { triggers: null, record: null, pageHtml: null, pageFiles: null };
+  if (!fs.existsSync(dir)) return { triggers: null, record: null, pageHtml: null, pageFiles: null, pageDeclaration: null };
   const pages = fs.readdirSync(dir).filter(f => /^triggers-\d+\.json$/.test(f)).sort((a, b) => parseInt(a.slice(9)) - parseInt(b.slice(9)));
   const triggers = pages.length ? pages.flatMap(f => { const r = readJson(path.join(dir, f)); return Array.isArray(r) ? r : r.data || []; }) : null;
   const sys = path.join(dir, 'record', 'system');
@@ -87,7 +87,8 @@ export function readState(dir) {
     const walk = (d, rel) => { for (const f of fs.readdirSync(d)) { const p = path.join(d, f); if (fs.statSync(p).isDirectory()) walk(p, rel + f + '/'); else pageFiles['page/' + path.basename(dir) + '/' + rel + f] = sha256(fs.readFileSync(p)); } };
     walk(filesDir, '');
   }
-  return { triggers, record, pageHtml, pageFiles };
+  const pageDeclaration = maybeJson(path.join(dir, 'page-declaration.json'));
+  return { triggers, record, pageHtml, pageFiles, pageDeclaration };
 }
 
 function load(o, target) {
