@@ -925,7 +925,12 @@
    "refireWithinMinutes": 180,
    "refireUntil": {
     "morning": "06:00"
-   }
+   },
+   "since": {
+    "live": "2026-10-18T11:03:00Z",
+    "staging": "2026-10-18T06:01:00Z"
+   },
+   "_sinceNote": "A slot before the record's first v4 task was created is not a miss (the Oct 18 watchdog pushed last Sunday's weekly slot, from before cutover)"
   },
   "planDay": {
    "_note": "D-086: a plan task whose title is this similar to one of the day's records (dates or exams) is that record, shown once under its id.",

@@ -68,6 +68,8 @@ export function watch(db, { now, record, spec }) {
     const sched = t.schedule || t.watchSchedule;
     if (!t.pipeline || !sched || t.lane !== 'cloud') continue;
     const slot = lastSlot(sched, now); if (!slot || minutes(slot) < w.graceMinutes) continue;
+    // A slot before this record's v4 tasks existed (spec.constants.watchdog.since) was never this task's to run.
+    if (w.since && w.since[record] && ms(slot) < ms(w.since[record])) continue;
     if (runs.some(r => r.pipeline === t.pipeline && ms(r.startedAt) >= ms(slot) - 5 * 6e4)) continue;
     const id = `watchdog-refire-${t.pipeline}-${EV.compactTime(slot)}`;
     missing.push({ pipeline: t.pipeline, slot, refired: consider(id, `${name} slot ${slot}`, t, 'missed its slot', deadlineFor(t.pipeline, slot, t, true)) });

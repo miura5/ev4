@@ -15,7 +15,7 @@ import { ROOT } from './helpers.mjs';
 const base = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
 EV.configure(base);
 const validate = loadValidator();
-const withTriggers = target => { const s = JSON.parse(JSON.stringify(base)); let n = 0; for (const t of Object.values(s.tasks[target])) t.trigger = 'trig_test' + (++n); return s; };
+const withTriggers = target => { const s = JSON.parse(JSON.stringify(base)); let n = 0; for (const t of Object.values(s.tasks[target])) t.trigger = 'trig_test' + (++n); delete s.constants.watchdog.since; return s; }; // these cases sit on Oct 18, before the since cut
 const run = (id, pipeline, startedAt, extra = {}) => ({ id, schema: 1, writer: pipeline, at: startedAt, source: 'test', release: 'v4.0.0', pipeline, startedAt, endedAt: extra.status === 'running' ? null : startedAt, status: 'ok', ...extra });
 
 test('lastSlot reads the task table\'s Central schedules, across the change back to standard time', () => {
@@ -112,4 +112,15 @@ test('the watchdog pipeline: re-fire records and health/current in one batch, th
   const again = watch(after, { now: '2026-10-18T15:30:00Z', record: 'staging', spec });
   assert.deepEqual(again.refires, []);
   assert.deepEqual(again.reported.map(x => x.why), ['already re-fired once', 'already re-fired once']);
+});
+
+test('a slot from before the record\'s v4 tasks existed is not a miss (spec.constants.watchdog.since)', async () => {
+  const { watch } = await import('../core/watch.mjs');
+  const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
+  // Sunday Oct 18, 11:12am Central: the last weekly slot is Oct 11 5:57pm, a week before the live tasks were created.
+  const v = watch({ runs: [] }, { now: '2026-10-18T16:12:00Z', record: 'live', spec });
+  assert.ok(!v.missing.some(m => m.pipeline === 'weekly'), JSON.stringify(v.missing));
+  assert.ok(!v.reported.some(r => /weekly/.test(r.target)));
+  const s2 = JSON.parse(JSON.stringify(spec)); delete s2.constants.watchdog.since;
+  assert.ok(watch({ runs: [] }, { now: '2026-10-18T16:12:00Z', record: 'live', spec: s2 }).missing.some(m => m.pipeline === 'weekly'), 'without since, the old slot reads as missed');
 });
