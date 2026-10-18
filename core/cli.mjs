@@ -67,7 +67,7 @@ export function readState(dir) {
   let pageFiles = null;
   if (fs.existsSync(filesDir)) {
     pageFiles = {};
-    const walk = (d, rel) => { for (const f of fs.readdirSync(d)) { const p = path.join(d, f); if (fs.statSync(p).isDirectory()) walk(p, rel + f + '/'); else pageFiles['page/' + rel + f] = sha256(fs.readFileSync(p)); } };
+    const walk = (d, rel) => { for (const f of fs.readdirSync(d)) { const p = path.join(d, f); if (fs.statSync(p).isDirectory()) walk(p, rel + f + '/'); else pageFiles['page/' + path.basename(dir) + '/' + rel + f] = sha256(fs.readFileSync(p)); } };
     walk(filesDir, '');
   }
   return { triggers, record, pageHtml, pageFiles };

@@ -37,6 +37,8 @@ export function verifyReads({ manifest, target, stateDir }) {
     for (const id of readIds(target)) reads.push({ tool: 'ArtifactData', args: { action: 'get', url: artifactUrl(rec.artifact), collection: 'system', doc_id: id, out_dir: `${stateDir}/record` }, save: `${stateDir}/record/system/${id}.json`, note: 'Saved by the tool; note the version it prints for deploy --version.' });
     const page = manifest.pages[target];
     if (page.artifact) reads.push({ tool: 'Artifact', args: { action: 'read', url: artifactUrl(page.artifact) }, save: `${stateDir}/page.html`, note: `Save it with node tools/tool-result.mjs Artifact ${stateDir}/page.html --html (or copy the file the read names, when it names one).` });
+    const published = Object.keys(page.files).slice(1).map(f => f.replace(/^page\/[^/]+\//, ''));
+    if (page.artifact && published.length) reads.push({ tool: 'Artifact', args: { action: 'read', url: artifactUrl(page.artifact), paths: published, out_dir: `${stateDir}/page-files` }, save: `${stateDir}/page-files/`, note: 'Saved by the tool, one file per published path. The shell is checked by its release stamp: publishing wraps it, so its bytes differ from the build.' });
   }
   return reads;
 }
@@ -96,7 +98,8 @@ export function verify({ manifest, target, state, build, dist, sha256, now = new
       const stamp = pageStamp(state.pageHtml);
       add(stamp === manifest.release, 'page stamp', stamp === manifest.release ? stamp : `the published page says ${stamp || '(no stamp)'}, the build is ${manifest.release}`);
       if (state.pageFiles) {
-        const changed = Object.keys({ ...page.files, ...state.pageFiles }).filter(f => state.pageFiles[f] !== page.files[f]);
+        const shell = Object.keys(page.files)[0]; // wrapped at publish time; its stamp is checked above
+        const changed = Object.keys({ ...page.files, ...state.pageFiles }).filter(f => f !== shell && state.pageFiles[f] !== page.files[f]);
         add(changed.length === 0, 'published page files', changed.length ? `${changed.length} differ: ${changed.join(', ')}` : '');
       }
     }
@@ -161,7 +164,7 @@ export function deployCalls({ manifest, target, distDir, build, versions = {}, m
   const page = manifest.pages[target];
   if (page.artifact && Object.keys(page.files).length) {
     const [shell, ...rest] = Object.keys(page.files);
-    calls.push({ step: 'page', tool: 'Artifact', args: { action: 'publish', url: artifactUrl(page.artifact), file_path: `${distDir}/${shell}`, files: Object.fromEntries(rest.map(f => [f.replace(/^page\//, ''), `${distDir}/${f}`])), capabilities: page.capabilities } });
+    calls.push({ step: 'page', tool: 'Artifact', args: { action: 'publish', url: artifactUrl(page.artifact), file_path: `${distDir}/${shell}`, files: Object.fromEntries(rest.map(f => [f.replace(/^page\/[^/]+\//, ''), `${distDir}/${f}`])), capabilities: page.capabilities } });
   }
 
   const skipped = [];

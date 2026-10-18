@@ -1833,5 +1833,158 @@
     "guide": "Do the asked work if it fits E.V.'s boundaries and needs only the record and the web. Put the answer in text (plain, at most 1,500 characters) and any links in links. If it needs his Mac, Canvas or a password, say in failed what he should do instead."
    }
   }
+ },
+ "ui": {
+  "page": {
+   "_rules": [
+    "Page delivery (Operational architecture): a shell plus published files, each a build output hashed in the manifest. The shell holds markup and boot code and changes rarely; core.js, spec.json, app.js and styles.css change with the rules, the spec, the page logic and the look.",
+    "Capabilities are declared here once, whole; the build copies them into the manifest and deploy prints them, so no publish carries a partial set.",
+    "The page subscribes by date window (Data architecture, Retention): what is not listed here is read on demand (materials, libindex) or never (system, legacy, debug)."
+   ],
+   "shell": "index.html",
+   "files": [
+    "core.js",
+    "spec.json",
+    "app.js",
+    "styles.css"
+   ],
+   "shellBudgetBytes": 32768,
+   "capabilities": {
+    "db": {
+     "rules": [
+      {
+       "path": "",
+       "read": "owner",
+       "write": "owner"
+      }
+     ]
+    },
+    "user": {},
+    "sample": {
+     "images": true
+    },
+    "mcp": {
+     "servers": [
+      {
+       "server": "Claude Code Remote",
+       "tools": [
+        "fire_trigger"
+       ]
+      },
+      {
+       "server": "host:E_V__Study_Watch_reader",
+       "tools": [
+        "status",
+        "latest_note",
+        "list_sessions",
+        "read_session"
+       ]
+      }
+     ]
+    }
+   },
+   "subscribe": [
+    {
+     "collection": "weakspots"
+    },
+    {
+     "collection": "sets"
+    },
+    {
+     "collection": "answers"
+    },
+    {
+     "collection": "exams"
+    },
+    {
+     "collection": "objectives"
+    },
+    {
+     "collection": "plans"
+    },
+    {
+     "collection": "planedits"
+    },
+    {
+     "collection": "dates"
+    },
+    {
+     "collection": "dateedits"
+    },
+    {
+     "collection": "weeks"
+    },
+    {
+     "collection": "state"
+    },
+    {
+     "collection": "health"
+    },
+    {
+     "collection": "sessions"
+    },
+    {
+     "collection": "ideas"
+    },
+    {
+     "collection": "journal"
+    },
+    {
+     "collection": "materialedits"
+    },
+    {
+     "collection": "announcements"
+    },
+    {
+     "collection": "concepts"
+    },
+    {
+     "collection": "talk",
+     "field": "date",
+     "windowDays": 7
+    },
+    {
+     "collection": "talk",
+     "doc": "memory"
+    },
+    {
+     "collection": "days",
+     "field": "date",
+     "windowDays": 14
+    },
+    {
+     "collection": "dayedits",
+     "field": "date",
+     "windowDays": 14
+    },
+    {
+     "collection": "jobs",
+     "field": "at",
+     "windowDays": 30
+    },
+    {
+     "collection": "jobresults",
+     "field": "at",
+     "windowDays": 30
+    },
+    {
+     "collection": "runs",
+     "field": "at",
+     "windowDays": 7
+    }
+   ],
+   "onDemand": [
+    "materials",
+    "libindex"
+   ],
+   "tabs": [
+    "ev",
+    "today",
+    "study",
+    "progress",
+    "record",
+    "system"
+   ]
+  }
  }
 }

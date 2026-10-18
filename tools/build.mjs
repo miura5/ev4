@@ -34,7 +34,7 @@ export function gitState(root) {
   return { commit, dirty: porcelain.length > 0, changes: porcelain, files };
 }
 
-function loadSchemas(root) {
+export function loadSchemas(root) {
   const dir = path.join(root, 'spec', 'schemas');
   const out = {};
   for (const f of fs.readdirSync(dir).filter(f => f.endsWith('.schema.json')).sort()) out[f.slice(0, -12)] = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
@@ -83,6 +83,53 @@ async function promptHashes(root, spec, release, tasks) {
   return texts;
 }
 
+// ------------------------------------------------------------------------------------------------ the page
+/**
+ * The page as a shell plus published files (Operational architecture, "Page delivery"), once per target:
+ * {live: {'index.html': text, 'core.js', 'spec.json', 'app.js', 'styles.css'}, staging: {...}}, the shell first.
+ * core.js is evcore.mjs with its export made a global, then validate.mjs the same way: the same rules the pipelines
+ * run. spec.json is what the page needs of the spec for its own target only; the build refuses a page that names
+ * the other target's tasks or record (the v3 staging check, kept). null when the repository has no shell yet.
+ */
+export function buildPages({ root, spec, schemas, release }) {
+  const ui = spec.ui && spec.ui.page; const shellFile = path.join(root, 'page', 'index.src.html');
+  if (!ui || !fs.existsSync(shellFile)) return null;
+  const read = f => fs.readFileSync(path.join(root, f), 'utf8');
+  const core = read('core/evcore.mjs');
+  if (!/export default EVCore;\s*$/.test(core)) throw new Error('core/evcore.mjs must end with export default EVCore;');
+  const validate = read('core/validate.mjs');
+  if (/^import /m.test(validate)) throw new Error('core/validate.mjs must not import: it runs in the page as written');
+  const names = [...validate.matchAll(/^export function (\w+)/gm)].map(m => m[1]);
+  const coreJs = core.replace(/export default EVCore;\s*$/, 'window.EVCore = EVCore;\n')
+    + '\n// ---- core/validate.mjs\n(function () {\n' + validate.replace(/^export function /gm, 'function ') + '\nwindow.EVValidate = { ' + names.join(', ') + ' };\n})();\n';
+  const app = read('page/app.js');
+  const appVersion = (app.match(/const VERSION = '([^']+)'/) || [])[1];
+  if (appVersion !== release) throw new Error(`page/app.js VERSION ${appVersion || '(none)'} differs from the release ${release}`);
+  const out = {};
+  for (const target of ['live', 'staging']) {
+    const other = target === 'live' ? 'staging' : 'live';
+    const rec = spec.registry.records[target] || {};
+    const pageSpec = {
+      release, target, specVersion: spec.specVersion,
+      record: { artifact: rec.artifact || null, name: rec.name || null },
+      tasks: { [target]: spec.tasks[target], ...(target === 'staging' ? { diagnostic: spec.tasks.diagnostic } : {}) },
+      constants: spec.constants, capacity: spec.capacity, ui: spec.ui, jobs: spec.jobs, boundaries: spec.boundaries,
+      workingAgreements: spec.workingAgreements, ...(spec.persona ? { persona: spec.persona } : {}),
+      collections: spec.collections, schemas,
+    };
+    const specJson = JSON.stringify(pageSpec);
+    const foreign = [...Object.values(spec.tasks[other] || {}).map(t => t && t.trigger).filter(Boolean), (spec.registry.records[other] || {}).artifact].filter(Boolean);
+    const leak = foreign.find(id => specJson.includes(id));
+    if (leak) throw new Error(`the ${target} page would name ${other}'s ${leak}`);
+    const shell = read('page/index.src.html').replaceAll('{{TITLE}}', rec.name || 'E.V. Home').replaceAll('{{RELEASE}}', release).replaceAll('{{TARGET}}', target);
+    if (/\{\{\w+\}\}/.test(shell)) throw new Error('page/index.src.html has a placeholder the build does not fill: ' + shell.match(/\{\{\w+\}\}/)[0]);
+    if (Buffer.byteLength(shell) > ui.shellBudgetBytes) throw new Error(`the shell is ${Buffer.byteLength(shell)} bytes, over its ${ui.shellBudgetBytes}-byte budget`);
+    out[target] = { [ui.shell]: shell, 'core.js': coreJs, 'spec.json': specJson, 'app.js': app, 'styles.css': read('page/styles.css') };
+    const want = [ui.shell, ...ui.files].sort().join(); if (Object.keys(out[target]).sort().join() !== want) throw new Error('spec.ui.page lists ' + want + '; the build makes ' + Object.keys(out[target]).sort().join());
+  }
+  return out;
+}
+
 export async function build({ root = HERE, out = path.join(root, 'dist'), now = new Date().toISOString() } = {}) {
   const spec = JSON.parse(fs.readFileSync(path.join(root, 'spec', 'ev.spec.json'), 'utf8'));
   const schemas = loadSchemas(root);
@@ -99,7 +146,8 @@ export async function build({ root = HERE, out = path.join(root, 'dist'), now = 
   const g = gitState(root);
   const files = {};
   for (const f of g.files.filter(f => HASHED.some(re => re.test(f))).sort()) files[f] = sha256(fs.readFileSync(path.join(root, f)));
-  const page = target => ({ artifact: target === 'live' ? (spec.registry.records.live || {}).artifact || null : (spec.registry.records.staging || {}).artifact || null, files: {}, capabilities: null });
+  const pageOut = buildPages({ root, spec, schemas, release });
+  const page = target => ({ artifact: (spec.registry.records[target] || {}).artifact || null, files: pageOut ? Object.fromEntries(Object.entries(pageOut[target]).map(([f, body]) => ['page/' + target + '/' + f, sha256(body)])) : {}, capabilities: pageOut ? spec.ui.page.capabilities : null });
   const tasks = taskEntries(spec, release);
   const prompts = await promptHashes(root, spec, release, tasks);
   const records = Object.fromEntries(['live', 'staging'].map(t => [t, { artifact: (spec.registry.records[t] || {}).artifact || null, systemDocs: SYSTEM_DOCS }]));
@@ -125,6 +173,11 @@ export async function build({ root = HERE, out = path.join(root, 'dist'), now = 
   fs.mkdirSync(path.join(out, 'system'), { recursive: true });
   fs.writeFileSync(path.join(out, 'manifest.json'), JSON.stringify(manifest, null, 1));
   for (const [key, doc] of Object.entries(docs)) fs.writeFileSync(path.join(out, key + '.json'), JSON.stringify(doc, null, 1));
+  fs.rmSync(path.join(out, 'page'), { recursive: true, force: true });
+  if (pageOut) for (const [target, files] of Object.entries(pageOut)) {
+    fs.mkdirSync(path.join(out, 'page', target), { recursive: true });
+    for (const [f, body] of Object.entries(files)) fs.writeFileSync(path.join(out, 'page', target, f), body);
+  }
   fs.rmSync(path.join(out, 'prompts'), { recursive: true, force: true }); fs.mkdirSync(path.join(out, 'prompts'), { recursive: true });
   for (const [key, text] of Object.entries(prompts)) fs.writeFileSync(path.join(out, 'prompts', key + '.txt'), text);
   return { manifest, changes: g.changes, out };
