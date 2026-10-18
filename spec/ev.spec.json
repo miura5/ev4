@@ -1691,23 +1691,24 @@
      "evidence": "v3 evening on staging"
     },
     {
-     "capability": "stage and commit files in attached folders",
+     "capability": "device_commit_files into the task's attached folder (staged under /mnt/user-data/outputs)",
      "proven": true,
-     "date": "2026-10-17",
-     "run": null,
-     "evidence": "v3 evening on staging"
+     "date": "2026-10-18",
+     "run": "cse_01QUW8ZBiN3XhM21Amz93Cib",
+     "evidence": "runs/evening-mac-20261018-103423119: backup (515 documents, 4.7 MB) and 61 mirror files written to staging/"
     },
     {
-     "capability": "built-in browser on the signed-in Canvas tab",
+     "capability": "built-in browser on the signed-in Canvas tab, scripts from the checkout run with javascript_tool (start, poll, unwrap)",
      "proven": true,
-     "date": "2026-10-17",
-     "run": null,
-     "evidence": "v3 evening on staging"
+     "date": "2026-10-18",
+     "run": "cse_01QUW8ZBiN3XhM21Amz93Cib",
+     "evidence": "runs/evening-mac-20261018-103423119 canvas step ok, audit 31 calls all printed; runs/evening-mac-20261018-102816525 the same"
     }
    ],
    "limits": [
     "only folders attached at task creation",
-    "deletes refused"
+    "deletes refused",
+    "a folder named at create_trigger may not be attached to the task's runs until Matt adds it to the task in the desktop app (Oct 18: the first evening-mac run saw connectedFolders [] and its device_commit_files were refused)"
    ]
   },
   "browser-tab": {
