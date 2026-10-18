@@ -31,12 +31,12 @@ export function verifyReads({ manifest, target, stateDir }) {
   const reads = [{
     tool: 'mcp__claude-code-remote__list_triggers', args: { limit: 100 },
     save: `${stateDir}/triggers-1.json`,
-    note: 'Save the result exactly as returned (copy the file the tool saved when it saved one). When it has a next_cursor, call again with cursor and save triggers-2.json, and so on.',
+    note: `Save it with node tools/tool-result.mjs list_triggers ${stateDir}/triggers-1.json (copies the result from this session's transcript; never retype it). When it has a next_cursor, call again with cursor and save triggers-2.json the same way, and so on.`,
   }];
   if (rec.artifact) {
     for (const id of readIds(target)) reads.push({ tool: 'ArtifactData', args: { action: 'get', url: artifactUrl(rec.artifact), collection: 'system', doc_id: id, out_dir: `${stateDir}/record` }, save: `${stateDir}/record/system/${id}.json`, note: 'Saved by the tool; note the version it prints for deploy --version.' });
     const page = manifest.pages[target];
-    if (page.artifact) reads.push({ tool: 'Artifact', args: { action: 'read', url: artifactUrl(page.artifact) }, save: `${stateDir}/page.html`, note: 'Copy the saved file that holds the full page.' });
+    if (page.artifact) reads.push({ tool: 'Artifact', args: { action: 'read', url: artifactUrl(page.artifact) }, save: `${stateDir}/page.html`, note: `Save it with node tools/tool-result.mjs Artifact ${stateDir}/page.html --html (or copy the file the read names, when it names one).` });
   }
   return reads;
 }
