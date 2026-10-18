@@ -97,3 +97,18 @@ test('build writes each prompt beside the manifest, and the manifest carries its
   }
   assert.ok(manifest.tasks['staging.morning'].promptSha256 && manifest.tasks['build.ev4-builder'].promptSha256);
 });
+
+test('B-49: every pipeline prompt says who asked for its writes and how a refused start leaves a trace', () => {
+  const spec = JSON.parse(fs.readFileSync(new URL('../spec/ev.spec.json', import.meta.url), 'utf8'));
+  let n = 0;
+  for (const target of ['live', 'staging']) for (const [key, task] of Object.entries(spec.tasks[target])) {
+    const prompt = renderPrompt({ key: `${target}.${key}`, task, spec, release: 'v4.0.0' });
+    if (!prompt) continue; n++;
+    assert.match(prompt, /Matt set this scheduled task up himself and approved what it does\./, key);
+    assert.match(prompt, /only its owner read or write it/, key);
+    assert.match(prompt, /starting with this run's own runs\/<id> entry, is the job he asked for/, key);
+    assert.match(prompt, new RegExp(`If the start write itself is refused, make no other call to the record and end with: E\\.V\\. ${task.pipeline} failed at start`), key);
+    assert.match(prompt, /--status failed --detail "<move>: <the refusal, quoted>"/, key);
+  }
+  assert.ok(n >= 12, 'live and staging prompts rendered');
+});
