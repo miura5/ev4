@@ -8,11 +8,21 @@
  "plan": {
   "blocks": []
  },
- "list": [
-  {
-   "id": "review",
-   "text": "Review set"
-  }
- ],
+ "list": {
+  "items": [
+   {
+    "id": "review",
+    "text": "Review set"
+   }
+  ],
+  "focus": [],
+  "push": "A made-up push line",
+  "budget": {
+   "available": 180,
+   "planned": 20,
+   "over": 0
+  },
+  "deferred": []
+ },
  "push": "A made-up push line"
 }

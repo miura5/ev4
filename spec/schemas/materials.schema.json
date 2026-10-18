@@ -91,12 +91,19 @@
    ]
   },
   "fileType": {
-   "enum": [
-    "pdf",
-    "docx",
-    "pptx",
-    "image",
-    "text"
+   "anyOf": [
+    {
+     "enum": [
+      "pdf",
+      "docx",
+      "pptx",
+      "image",
+      "text"
+     ]
+    },
+    {
+     "type": "null"
+    }
    ]
   },
   "fileId": {

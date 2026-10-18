@@ -73,21 +73,25 @@
      "type": "object",
      "properties": {
       "set": {
-       "type": "string"
+       "type": [
+        "string",
+        "null"
+       ]
       },
       "item": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "session": {
        "type": "string"
       },
       "at": {
        "type": "string",
        "format": "date-time"
       }
-     },
-     "required": [
-      "set",
-      "item"
-     ],
-     "additionalProperties": false
+     }
     },
     {
      "type": "null"

@@ -46,8 +46,15 @@
    "format": "date"
   },
   "startedAt": {
-   "type": "string",
-   "format": "date-time"
+   "anyOf": [
+    {
+     "type": "string",
+     "format": "date-time"
+    },
+    {
+     "type": "null"
+    }
+   ]
   },
   "endedAt": {
    "anyOf": [
@@ -128,23 +135,39 @@
    ]
   },
   "minutes": {
-   "type": "number",
-   "minimum": 0
+   "anyOf": [
+    {
+     "type": "number",
+     "minimum": 0
+    },
+    {
+     "type": "null"
+    }
+   ]
   },
   "checks": {
    "type": [
     "integer",
-    "array"
+    "array",
+    "null"
    ]
   },
   "questions": {
    "type": [
     "integer",
-    "array"
+    "array",
+    "null"
    ]
   },
   "endedBy": {
-   "type": "string"
+   "anyOf": [
+    {
+     "type": "string"
+    },
+    {
+     "type": "null"
+    }
+   ]
   },
   "summary": {
    "type": "string"

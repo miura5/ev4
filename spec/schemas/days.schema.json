@@ -43,22 +43,45 @@
    ]
   },
   "list": {
-   "type": "array",
-   "items": {
-    "type": "object",
-    "properties": {
-     "id": {
-      "type": "string",
-      "minLength": 1
-     },
-     "text": {
-      "type": "string"
+   "type": "object",
+   "properties": {
+    "items": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "string",
+        "minLength": 1
+       },
+       "text": {
+        "type": "string"
+       }
+      },
+      "required": [
+       "id"
+      ]
      }
     },
-    "required": [
-     "id"
-    ]
-   }
+    "focus": {
+     "type": "array"
+    },
+    "push": {
+     "type": "string"
+    },
+    "budget": {
+     "type": [
+      "object",
+      "null"
+     ]
+    },
+    "deferred": {
+     "type": "array"
+    }
+   },
+   "required": [
+    "items"
+   ]
   },
   "push": {
    "anyOf": [

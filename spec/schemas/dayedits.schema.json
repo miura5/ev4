@@ -67,7 +67,14 @@
       "minLength": 1
      },
      "tag": {
-      "type": "string"
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ]
      },
      "kind": {
       "enum": [
@@ -83,14 +90,7 @@
       "minimum": 0
      },
      "course": {
-      "anyOf": [
-       {
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
-      ]
+      "type": "string"
      },
      "at": {
       "type": "string",
