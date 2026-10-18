@@ -357,21 +357,26 @@ const EVCore = (() => {
   /** The hash of every weak spot's computed state, sorted by id (Data architecture, "Derivation"). evening-cloud stores it
    *  in state/current; the page computes the same hash on load, and a difference means two copies of the logic disagree. */
   function derivedHash(models) {
-    const rows = (models || []).map(w => [w.id, w.derived]).sort((a, b) => String(a[0]).localeCompare(String(b[0])));
+    const rows = (models || []).map(w => [String(w.id), w.derived]).sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
     return sha256(stableStringify(rows));
   }
 
   // ---------------------------------------------------------------- answering (the page calls this; tests too)
   /**
    * Decides what one answer does to the record. Pure: returns the writes, the page performs them.
-   * ctx: {set, item, chosen, now, weakspots (models), exams, plans (views), answers (answers/<setId> docs) or
-   *       byWeakspot, answersDoc (this set's answers/<setId>, or null when it has none yet), label}
+   * ctx: {set, item, chosen, now, weakspots (models), exams, plans (Facts or views), planedits (optional: ticks merged
+   *       into plans), answers (answers/<setId> docs) or byWeakspot, answersDoc (this set's answers/<setId>; looked up in
+   *       answers when not given; null only when the set has none yet), label}
    * Returns {answer, attemptKey, writes:[{op, collection, id, data}], outcome, correct, score, weakspotId, state}:
    * the attempt goes to answers/<setId>; a new weak spot is written as facts only; `state` is the affected weak spot's
    * state after this answer, computed here and never stored (the page shows it, every reader recomputes it).
    */
   function planAnswer(ctx) {
     const { set, item: q, chosen, now, label } = ctx;
+    // The set's answers document: given, or found among ctx.answers, so an earlier attempt is never overwritten by a set.
+    const answersDoc = ctx.answersDoc || (set && (ctx.answers || []).find(a => a && (a.id === set.id || a.setId === set.id))) || null;
+    // Plans as views: with planedits given, ticks reach preReadFor (a ticked reading is no longer ahead).
+    const plans = ctx.planedits ? planViews(ctx.plans, ctx.planedits) : (ctx.plans || []);
     const at = isoOf(now);
     const date = chicagoDate(at);
     const { correct, score } = scoreAnswer(q, chosen);
@@ -401,7 +406,7 @@ const EVCore = (() => {
         outcome = 'Already a weak spot, so it’s seen again and comes back tomorrow.';
       } else {
         const id = safeId('ws-' + date + '-' + (q.objective || 'x') + '-' + slug(topic));
-        const pre = preReadFor(q, ctx.plans || [], date);
+        const pre = preReadFor(q, plans, date);
         const facts = {
           ...envelope('page', label || ('E.V. · ' + shortDate(date)), at),
           topic, objective: q.objective || '', exam: String(q.objective || '').split('-')[0] || (set && set.exam) || '', course: (set && set.course) || 'NUR 112',
@@ -419,7 +424,7 @@ const EVCore = (() => {
     }
     answer.outcome = outcome;
     const entry = { [q.id]: { [attemptKey]: answer } };
-    writes.unshift(ctx.answersDoc
+    writes.unshift(answersDoc
       ? { op: 'update', collection: 'answers', id: set.id, data: { answers: entry } }
       : { op: 'set', collection: 'answers', id: set.id, data: { ...envelope('page', 'E.V. Home', at), setId: set.id, answers: entry } });
     return { answer, attemptKey, writes, outcome, correct, score, weakspotId, state };
@@ -489,7 +494,7 @@ const EVCore = (() => {
   /** A plan as readers see it: the Fact plus the page's ticks from planedits/<exam id> as `done` (taskId -> {at, by}). */
   function planView(plan, planedit) { return plan ? { ...plan, done: { ...((planedit && planedit.ticks) || {}) } } : plan; }
   /** Every plan as a view, ticks merged in from the planedits documents (matched by exam id). */
-  function planViews(plans, planedits) { const by = {}; for (const e of planedits || []) if (e) by[e.id] = e; return (plans || []).map(p => planView(p, by[p.id || p.exam])); }
+  function planViews(plans, planedits) { const by = {}; for (const e of planedits || []) if (e) by[e.id] = e; return (plans || []).map(p => planView(p, by[p.exam || p.id])); }
   /** The page's tick for a plan task: the whole new planedits/<exam id> document (Edits are replaced whole). */
   function planTick(planedit, examId, taskId, { done = true, now, by = 'Matt' } = {}) {
     const ticks = { ...((planedit && planedit.ticks) || {}) };
@@ -703,6 +708,7 @@ const EVCore = (() => {
    *  doc} where doc is the whole new dayedits/<date> (null when nothing changes, with a note); throws a reason he can read. */
   function listEdit(day, dayedit, edit, { now, by = 'E.V.', date } = {}) {
     const action = edit && edit.action; const ed = dayedit || {};
+    by = by === 'Matt' ? 'Matt' : 'E.V.';
     const added = ed.added || {}; const skip = ed.skipped || {};
     const planned = (day && day.list && day.list.items) || [];
     const forDate = date || (day && (day.date || day.id)) || ed.date || chicagoDate(now);
@@ -732,6 +738,7 @@ const EVCore = (() => {
     }
     if (action === 'check') {
       const it = planned.find(x => x.id === id) || (added[id] && { id, text: added[id].text }); if (!it) throw new Error('no item ' + id + ' on that day’s list');
+      if (skip[id] && !added[id] && !isFixedItem(it)) throw new Error(`“${it.text}” is off the list for the day; bring it back first`);
       const done = edit.done !== false; const checks = ed.checks || {};
       if (!!checks[id] === done) return { id, text: it.text, doc: null, note: done ? 'already done' : 'not done yet' };
       const doc = next(); if (done) doc.checks[id] = { at: isoOf(now), by }; else delete doc.checks[id];
@@ -751,7 +758,8 @@ const EVCore = (() => {
   function dateView(d, edit) {
     if (!d) return d;
     if (!edit) return d;
-    const v = { ...d, ...(edit.overrides || {}), edited: true };
+    // Canvas keeps its own entries current, so an override never masks them; they take notes and removal only.
+    const v = { ...d, ...(fromCanvas(d) ? {} : (edit.overrides || {})), edited: true };
     if (edit.notes != null) v.notes = edit.notes;
     v.removed = edit.removed && edit.removed.at ? edit.removed : null;
     return v;
@@ -1036,7 +1044,7 @@ const EVCore = (() => {
       const id = 'canvas-' + a.id; if (prev('announcements', id)) continue;
       const course = courseName(String(a.context_code || '').replace('course_', '')) || a.course || null;
       const text = a.message != null ? stripHtml(a.message) : String(a.text || '');
-      out.announcements.push({ id, data: { ...env(), course, title: a.title || '', postedAt: a.posted_at || a.postedAt || at, text: text.slice(0, 6000), url: a.html_url || a.url || null, syncedAt: at } });
+      out.announcements.push({ id, data: { ...env(), course, title: a.title || '', postedAt: a.posted_at || a.postedAt || null, text: text.slice(0, 6000), url: a.html_url || a.url || null, syncedAt: at } });
       out.changes.push({ type: 'new-announcement', ref: 'announcements/' + id, text: `${course || 'Canvas'} announcement: ${a.title}` });
     }
     for (const f of raw.files || []) {
@@ -1318,7 +1326,7 @@ Return JSON: {"pages": [{"page": <page number>, "text": "<the page's text>"}]}`;
     const c = SW(); const step = c.checkMinutes * 60e3; const t0 = toMs(s && s.startedAt); const nowMs = toMs(now == null ? new Date().toISOString() : now);
     const st = { status: (s && s.status) || 'active', onBreak: false, nextCheckAt: null, breakRemainingMs: 0, due: false, checks: 0, questions: 0, idleChecks: 0, shouldWrap: false, lastCheck: null, lastMark: null, answered: {}, minutes: 0, overdueMs: 0 };
     let next = Number.isFinite(t0) ? t0 + step : null, breakAt = null, remaining = 0, breakMs = 0, endMs = null;
-    const evs = Object.entries((s && s.events) || {}).filter(([, e]) => e && e.type).map(([k, e]) => [entryTime(k, e), e]).sort(([a], [b]) => toMs(a) - toMs(b));
+    const evs = Object.entries((s && s.events) || {}).filter(([, e]) => e && e.type).map(([k, e]) => [entryTime(k, e), e]).filter(([t]) => Number.isFinite(toMs(t))).sort(([a], [b]) => toMs(a) - toMs(b));
     for (const [at, e] of evs) {
       const t = toMs(at); if (!Number.isFinite(t)) continue;
       if (e.type === 'start') { if (e.len != null) st.lastMark = { noteId: e.noteId || null, len: e.len, h: e.h, modifiedAt: e.modifiedAt || null }; }

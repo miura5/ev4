@@ -157,7 +157,8 @@
        "solid",
        "done",
        "move",
-       "seen"
+       "seen",
+       "reopen"
       ]
      },
      "by": {

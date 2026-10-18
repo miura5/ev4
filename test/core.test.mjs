@@ -735,3 +735,69 @@ test('identifier values in whole files: field names alone pass, values do not', 
   assert.deepEqual(EV.scanIdentifierValues('The resident in room 12 was confused'), ["has a patient's room number"]);
   assert.ok(EV.scanIdentifiers('Label with DOB and MRN').length > 0); // messages stay strict
 });
+
+// ---------------------------------------------------------------- B-05 review follow-ups
+test('answering finds the set\'s answers document among ctx.answers, so an earlier attempt is never overwritten', () => {
+  const set = { id: 'review-2026-10-18', kind: 'review', items: [] };
+  const earlier = answersDoc(set.id, { q0: { [key(at('2026-10-18', '14:00'))]: { chosen: [0], correct: true, score: 1, at: at('2026-10-18', '14:00') } } });
+  const q = { id: 'q2', kind: 'check', objective: 'E4-2', topic: 'Made-up topic', type: 'single', options: ['a', 'b'], correct: [0] };
+  const r = EV.planAnswer({ set, item: q, chosen: [0], now: '2026-10-18T15:00:00Z', weakspots: [], exams: [E4], answers: [earlier] });
+  assert.equal(r.writes[0].op, 'update'); assertValid(r.writes[0], earlier);
+  assert.equal(EV.planAnswer({ set, item: q, chosen: [0], now: '2026-10-18T15:00:00Z', weakspots: [], exams: [E4], answers: [] }).writes[0].op, 'set');
+});
+
+test('answering with planedits: a ticked reading is no longer ahead, so a miss is a weak spot, not a preview', () => {
+  const now = '2026-10-18T15:00:00Z';
+  const plan = { id: 'E4', ...EV.planFromCards([{ days: [['Sun 10/18', '', [['Read Pharm Ch 27 (macrolides)']]]] }], { examId: 'E4', year: 2026, now }) };
+  const taskId = plan.days[0].tasks[0].id;
+  const q = { id: 'q4', kind: 'drill', objective: 'E4-7', topic: 'Macrolide teaching', chapters: ['Pharm 27'], type: 'single', options: ['a', 'b'], correct: [0] };
+  const base = { set: { id: 'E4-drill-7' }, item: q, chosen: [1], now, weakspots: [], exams: [E4], plans: [plan] };
+  assert.equal(EV.planAnswer(base).writes.find(w => w.collection === 'weakspots').data.preRead, true);
+  const ticked = EV.planAnswer({ ...base, planedits: [{ id: 'E4', ticks: { [taskId]: { at: at('2026-10-18', '13:00'), by: 'Matt' } } }] });
+  assert.ok(!ticked.writes.find(w => w.collection === 'weakspots').data.preRead);
+});
+
+test('planViews matches planedits on the exam id first', () => {
+  const [v] = EV.planViews([{ id: 'plan-e4-v2', exam: 'E4', days: [] }], [{ id: 'E4', ticks: { t1: { at: at('2026-10-18'), by: 'Matt' } } }]);
+  assert.deepEqual(Object.keys(v.done), ['t1']);
+});
+
+test('a dateedits override never masks a Canvas entry; notes and removal still apply', () => {
+  const canvas = { id: 'canvas-1', writer: 'canvas-sync', date: '2026-10-20', title: 'Quiz', kind: 'due', graded: true };
+  const hand = { id: '2026-10-23-lab', writer: 'page', date: '2026-10-23', title: 'Lab', kind: 'exam' };
+  const edit = { overrides: { date: '2026-10-30', title: 'Moved' }, notes: 'bring calculator', removed: null };
+  const c = EV.dateView(canvas, edit); assert.deepEqual([c.date, c.title, c.notes], ['2026-10-20', 'Quiz', 'bring calculator']);
+  const h = EV.dateView(hand, edit); assert.deepEqual([h.date, h.title, h.notes], ['2026-10-30', 'Moved', 'bring calculator']);
+  assert.equal(EV.liveDates([canvas], [{ id: 'canvas-1', removed: { at: at('2026-10-18'), by: 'Matt' } }]).length, 0);
+});
+
+test('derivedHash sorts ids by code unit, not by locale', () => {
+  const d = { status: 'open' };
+  const expected = EV.sha256(EV.stableStringify([['B', d], ['a', d]]));
+  assert.equal(EV.derivedHash([{ id: 'a', derived: d }, { id: 'B', derived: d }]), expected);
+});
+
+test('list edits: who did it is Matt or E.V.; a planned item taken off for the day cannot be checked until it is back', () => {
+  const now = '2026-10-17T23:20:00Z';
+  const day = { id: '2026-10-17', date: '2026-10-17', list: { items: [{ id: 'plan-t1', text: 'Pharm Ch 14 reading', tag: 'READING', minutes: 45 }] } };
+  assert.equal(EV.listEdit(day, null, { action: 'add', text: 'Made-up item' }, { now, by: 'someone else' }).doc.added['add-made-up-item'].by, 'E.V.');
+  const off = EV.listEdit(day, null, { action: 'remove', id: 'plan-t1' }, { now, by: 'Matt' });
+  assert.equal(off.doc.skipped['plan-t1'].by, 'Matt');
+  assert.throws(() => EV.listEdit(day, { id: '2026-10-17', ...off.doc }, { action: 'check', id: 'plan-t1' }, { now }), /off the list for the day; bring it back first/);
+});
+
+test('schemas: a reopen event is a weak spot event; an announcement with no Canvas post time keeps postedAt null', () => {
+  const w = ws('made-up', { events: ev(at('2026-10-18'), { type: 'reopen', by: 'Matt' }) });
+  assertValid({ op: 'set', collection: 'weakspots', id: w.id, data: EV.docData(w) });
+  const raw = { courses: { 'NUR 112': 199214 }, planner: [], announcements: [{ id: 10, title: 'Made up', message: '<p>Hi</p>', context_code: 'course_199214' }] };
+  const a = EV.normalizeCanvas(raw, {}, { now: '2026-10-17T20:15:00Z' }).announcements[0];
+  assert.equal(a.data.postedAt, null);
+  assertValid({ op: 'set', collection: 'announcements', id: a.id, data: a.data });
+});
+
+test('session state skips an event whose time cannot be read, without disturbing the order of the rest', () => {
+  const s = session({ [plus(7)]: { type: 'check', n: 1, items: 2 } });
+  s.events['not-a-time'] = { type: 'break' };
+  const st = EV.sessionState(s, plus(8));
+  assert.equal(st.checks, 1); assert.equal(st.onBreak, false);
+});
