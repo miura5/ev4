@@ -1445,6 +1445,13 @@
      "date": null,
      "run": null,
      "evidence": "the page writes through its own db, not ArtifactData; assumed no larger than the cloud-run numbers until measured from the page (B-19)"
+    },
+    {
+     "capability": "the shell loads its published files beside it (script src and fetch of core.js, app.js, spec.json, styles.css)",
+     "proven": false,
+     "date": null,
+     "run": null,
+     "evidence": "B-15 published the v4 shell and files to staging (verify-deploy reads them back); the platform documents same-origin files, but no viewer has opened the page yet. Proven when Matt opens the staging page (B-19)"
     }
    ],
    "limits": [
