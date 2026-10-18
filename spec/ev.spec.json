@@ -1407,7 +1407,7 @@
     ],
     "macBound": true,
     "push": false,
-    "trigger": null
+    "trigger": "trig_01FHjw4mu745gorCZ5quGSJD"
    },
    "weekly": {
     "pipeline": "weekly",
