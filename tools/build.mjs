@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // E.V. v4 build (Operational architecture, "Release: manifest, deploy, verify"). Writes dist/:
 //   manifest.json            release, commit, dirty, builtAt, file hashes, pages, tasks (prompt hashes), records
+//   prompts/<task key>.txt   each task's prompt, as tools/prompts.mjs renders it
 //   system/manifest.json     the record copy of the manifest (envelope added); deploy refuses it when dirty
 //   system/spec.json         the spec as the record holds it
 //   system/environments.json spec.environments as the record holds it
@@ -68,15 +69,18 @@ function taskEntries(spec, release) {
   return out;
 }
 
-// Prompt hashes come from tools/prompts.mjs once it exists (B-09); until then every promptSha256 is null.
+// Every task's prompt from tools/prompts.mjs: its hash in the manifest, its text in dist/prompts/<key>.txt (the file
+// deploy's create_trigger and update_trigger calls name). A task whose pipeline has no steps yet keeps a null hash.
 async function promptHashes(root, spec, release, tasks) {
   const p = path.join(root, 'tools', 'prompts.mjs');
-  if (!fs.existsSync(p)) return;
+  if (!fs.existsSync(p)) return {};
   const { renderPrompt } = await import(pathToFileURL(p).href);
+  const texts = {};
   for (const [key, t] of Object.entries(tasks)) {
     const text = renderPrompt({ key, task: t, spec, release });
-    if (typeof text === 'string') t.promptSha256 = sha256(text);
+    if (typeof text === 'string') { t.promptSha256 = sha256(text); texts[key] = text; }
   }
+  return texts;
 }
 
 export async function build({ root = HERE, out = path.join(root, 'dist'), now = new Date().toISOString() } = {}) {
@@ -97,7 +101,7 @@ export async function build({ root = HERE, out = path.join(root, 'dist'), now = 
   for (const f of g.files.filter(f => HASHED.some(re => re.test(f))).sort()) files[f] = sha256(fs.readFileSync(path.join(root, f)));
   const page = target => ({ artifact: target === 'live' ? (spec.registry.records.live || {}).artifact || null : (spec.registry.records.staging || {}).artifact || null, files: {}, capabilities: null });
   const tasks = taskEntries(spec, release);
-  await promptHashes(root, spec, release, tasks);
+  const prompts = await promptHashes(root, spec, release, tasks);
   const records = Object.fromEntries(['live', 'staging'].map(t => [t, { artifact: (spec.registry.records[t] || {}).artifact || null, systemDocs: SYSTEM_DOCS }]));
   const manifest = { release, commit: g.commit, dirty: g.dirty, builtAt: now, specVersion: spec.specVersion, files, pages: { live: page('live'), staging: page('staging') }, tasks, records };
 
@@ -121,6 +125,8 @@ export async function build({ root = HERE, out = path.join(root, 'dist'), now = 
   fs.mkdirSync(path.join(out, 'system'), { recursive: true });
   fs.writeFileSync(path.join(out, 'manifest.json'), JSON.stringify(manifest, null, 1));
   for (const [key, doc] of Object.entries(docs)) fs.writeFileSync(path.join(out, key + '.json'), JSON.stringify(doc, null, 1));
+  fs.rmSync(path.join(out, 'prompts'), { recursive: true, force: true }); fs.mkdirSync(path.join(out, 'prompts'), { recursive: true });
+  for (const [key, text] of Object.entries(prompts)) fs.writeFileSync(path.join(out, 'prompts', key + '.txt'), text);
   return { manifest, changes: g.changes, out };
 }
 

@@ -38,7 +38,7 @@ async function deployedStaging() {
     if (t.record !== 'staging' && !key.startsWith('build.')) continue;
     t.trigger = t.trigger || `trig_test${++n}`;
     const prompt = `prompt for ${key}`;
-    if (t.pipeline) t.promptSha256 = sha256(prompt);
+    t.promptSha256 = sha256(prompt);
     triggers.push({ id: t.trigger, name: t.name, enabled: true, cron_expression: t.schedule || '', notifications: { channel: { push: t.push } }, ...(t.macBound ? { bound_device_uuid: 'device-1' } : {}), derived_state: { prompt, folders: t.macBound ? t.folders : [] } });
   }
   write(path.join(dist, 'manifest.json'), manifest);

@@ -116,8 +116,9 @@ function dayBody(db, { date, now }) {
 /** state/current, the evening-cloud run: the snapshot, the derived hash, and every Fact's hash for lint. */
 function stateBody(db, { date, now, specVersion }, spec) {
   const v = views(db);
-  // state/current leaves itself out of the counts: the run sees the previous one, a rebuild the one it wrote.
-  const counts = Object.fromEntries(Object.entries(db).filter(([k, d]) => k !== 'state' && d.length).map(([k, d]) => [k, d.length]).sort(([a], [b]) => (a < b ? -1 : 1)));
+  // The counts are of what the run reads: state/current leaves itself out (the run sees the previous one, a rebuild
+  // the one it wrote), and Config (system/*) is the deploy's, not the record's.
+  const counts = Object.fromEntries(Object.entries(db).filter(([k, d]) => k !== 'state' && spec.collections[k] && spec.collections[k].class !== 'Config' && d.length).map(([k, d]) => [k, d.length]).sort(([a], [b]) => (a < b ? -1 : 1)));
   const content = EV.lint({ ...db, journal: [], weakspotModels: v.models, counts }, { date });
   const snapshot = EV.buildSnapshot({ date, now, exams: v.exams, weakspots: v.models, sets: v.sets, answers: v.answers, days: db.days || [], dates: db.dates || [], dateedits: db.dateedits || [], plans: db.plans || [], planedits: db.planedits || [], runs: db.runs || [], counts, versions: { spec: specVersion || null }, lint: content, canvas: null });
   const factHashes = {};

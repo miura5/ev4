@@ -15,16 +15,311 @@
   "restore-drill",
   "diagnostic"
  ],
- "pipelines": [
-  "morning",
-  "evening-cloud",
-  "evening-mac",
-  "weekly",
-  "worker",
-  "watchdog",
-  "restore-drill",
-  "diagnostic"
- ],
+ "pipelines": {
+  "_rules": [
+   "Every pipeline follows the run protocol (core/run.mjs): start, pull, compute, apply, end; each move prints the exact calls.",
+   "A step is code (core/steps.mjs CODE_STEPS), or agent: a named judgment, the material it is shown, the shape of its answer and the fold that turns the answer into writes. Code does every step with one right answer.",
+   "reads is the pull: the collections a run reads, with windowDays where only recent documents matter. The journal is in no read set (D-059).",
+   "steps null means the pipeline's steps arrive with the backlog task in pendingIn; its task is not created before then."
+  ],
+  "morning": {
+   "lane": "cloud",
+   "writer": "morning",
+   "purpose": "builds today's practice (the review set and any drill the exam plan calls for) and the day's plan and list before the 5am alarm",
+   "reads": [
+    {
+     "collection": "weakspots"
+    },
+    {
+     "collection": "answers"
+    },
+    {
+     "collection": "sets"
+    },
+    {
+     "collection": "exams"
+    },
+    {
+     "collection": "objectives"
+    },
+    {
+     "collection": "plans"
+    },
+    {
+     "collection": "planedits"
+    },
+    {
+     "collection": "dates"
+    },
+    {
+     "collection": "dateedits"
+    },
+    {
+     "collection": "materials"
+    },
+    {
+     "collection": "materialedits"
+    },
+    {
+     "collection": "announcements"
+    },
+    {
+     "collection": "dayedits",
+     "windowDays": 14
+    }
+   ],
+   "steps": [
+    {
+     "id": "practice-brief",
+     "kind": "code",
+     "does": "plans the day, picks the weak spots due for review, the new checks and the drills the plan calls for, and finds the passages in his materials each one rests on"
+    },
+    {
+     "id": "write-practice",
+     "kind": "agent",
+     "judgment": "Write today's review and drill questions from the brief: one review item per target weak spot (from a new angle if it has history), one check per objective listed, and each drill's count of items on its chapters and objectives. Ground every item in the passages given; match their terms and values. Each item: type single|sata|matrix, stem (10+ characters), options (2 to 6) and correct (indexes) or a matrix, rationales, objective, topic, cjStep (one of the six clinical-judgment steps), sourceRef (materials/<id> it rests on) or verify: true when the point is not in his materials; a review item names its weakspotId target; never select-N; only exam content, never graded work.",
+     "material": "practice-brief",
+     "output": {
+      "type": "object",
+      "properties": {
+       "review": {
+        "type": "array",
+        "items": {
+         "type": "object"
+        },
+        "maxItems": 40
+       },
+       "drills": {
+        "type": "object",
+        "additionalProperties": {
+         "type": "array",
+         "items": {
+          "type": "object"
+         },
+         "maxItems": 40
+        }
+       }
+      },
+      "required": [
+       "review",
+       "drills"
+      ],
+      "additionalProperties": false
+     },
+     "fold": "practice-sets"
+    },
+    {
+     "id": "day",
+     "kind": "code",
+     "does": "builds days/<date>: the plan, the list and the push line"
+    }
+   ]
+  },
+  "evening-cloud": {
+   "lane": "cloud",
+   "writer": "evening-cloud",
+   "purpose": "parks weak spots whose exam has passed, recomputes every weak spot from his answers and writes the snapshot the page and lint check against",
+   "reads": [
+    {
+     "collection": "weakspots"
+    },
+    {
+     "collection": "sets"
+    },
+    {
+     "collection": "answers"
+    },
+    {
+     "collection": "exams"
+    },
+    {
+     "collection": "objectives"
+    },
+    {
+     "collection": "plans"
+    },
+    {
+     "collection": "planedits"
+    },
+    {
+     "collection": "dates"
+    },
+    {
+     "collection": "dateedits"
+    },
+    {
+     "collection": "days"
+    },
+    {
+     "collection": "dayedits"
+    },
+    {
+     "collection": "weeks"
+    },
+    {
+     "collection": "runs"
+    },
+    {
+     "collection": "health"
+    },
+    {
+     "collection": "state"
+    },
+    {
+     "collection": "sessions"
+    },
+    {
+     "collection": "ideas"
+    },
+    {
+     "collection": "talk"
+    },
+    {
+     "collection": "jobs"
+    },
+    {
+     "collection": "jobresults"
+    },
+    {
+     "collection": "materials"
+    },
+    {
+     "collection": "materialedits"
+    },
+    {
+     "collection": "libindex"
+    },
+    {
+     "collection": "announcements"
+    },
+    {
+     "collection": "concepts"
+    },
+    {
+     "collection": "legacy"
+    }
+   ],
+   "steps": [
+    {
+     "id": "auto-park",
+     "kind": "code",
+     "does": "parks the weak spots of exams that have passed (an event each)"
+    },
+    {
+     "id": "state",
+     "kind": "code",
+     "does": "writes state/current: the snapshot, the derived hash and every Fact's hash"
+    }
+   ]
+  },
+  "weekly": {
+   "lane": "cloud",
+   "writer": "weekly",
+   "purpose": "writes his Sunday review of the week from the week's answers, weak spots, sessions and runs",
+   "reads": [
+    {
+     "collection": "answers"
+    },
+    {
+     "collection": "sets"
+    },
+    {
+     "collection": "weakspots"
+    },
+    {
+     "collection": "exams"
+    },
+    {
+     "collection": "sessions"
+    },
+    {
+     "collection": "dates"
+    },
+    {
+     "collection": "dateedits"
+    },
+    {
+     "collection": "runs",
+     "windowDays": 8
+    }
+   ],
+   "steps": [
+    {
+     "id": "week-brief",
+     "kind": "code",
+     "does": "rolls up the week: answers by objective and type, weak spots added and made solid, study minutes, runs, calibration"
+    },
+    {
+     "id": "week-review",
+     "kind": "agent",
+     "judgment": "Write the week's review for Matt from the brief: what moved, what is still weak (nearest exam first), the coming week's dates, any failed runs, one suggestion for next week; then one reflection question for him to write about, and a one-line push. Plain, warm, under 3000 characters. Never about graded work.",
+     "material": "week-brief",
+     "output": {
+      "type": "object",
+      "properties": {
+       "review": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 3000
+       },
+       "reflection": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 300
+       },
+       "push": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 120
+       }
+      },
+      "required": [
+       "review",
+       "reflection",
+       "push"
+      ],
+      "additionalProperties": false
+     },
+     "fold": "week-doc"
+    }
+   ]
+  },
+  "evening-mac": {
+   "lane": "mac",
+   "writer": "evening-mac",
+   "purpose": "brings in Canvas changes read-only, saves the backup and mirror to the Mac",
+   "steps": null,
+   "pendingIn": "B-21"
+  },
+  "worker": {
+   "lane": "cloud",
+   "writer": "worker",
+   "purpose": "does one job Matt asked for in the conversation and posts the result back",
+   "steps": null,
+   "pendingIn": "B-10"
+  },
+  "watchdog": {
+   "lane": "cloud",
+   "writer": "watchdog",
+   "purpose": "checks every pipeline ran and every job moved, writes health/current, re-fires once",
+   "steps": null,
+   "pendingIn": "B-11"
+  },
+  "restore-drill": {
+   "lane": "mac",
+   "writer": "restore-drill",
+   "purpose": "restores the latest backup into staging and checks counts and hashes",
+   "steps": null,
+   "pendingIn": "B-22"
+  },
+  "diagnostic": {
+   "lane": "cloud",
+   "writer": "diagnostic",
+   "purpose": "runs the one probe named in the firing text and records what it found",
+   "steps": null,
+   "pendingIn": "B-13"
+  }
+ },
  "classes": {
   "Fact": "Created once by one writer; append-only maps gain keys namespaced <writer>-<time>, never changed or removed. The truth.",
   "Edit": "The page only; replaced whole, small, one document per day or entity; sits beside a Fact and overrides nothing in it.",
@@ -698,7 +993,8 @@
     "folders": [],
     "macBound": false,
     "push": true,
-    "trigger": "trig_01Rubgkh9mfYXZaRh8jm6uP6"
+    "trigger": "trig_01Rubgkh9mfYXZaRh8jm6uP6",
+    "prompt": "You are an E.V. v4 build session. Follow CLAUDE.md and BACKLOG.md in this repository exactly, including the Unattended runs section."
    }
   },
   "retired": []

@@ -28,7 +28,7 @@ test('top-level sections and a v4 release string', () => {
   for (const k of ['specVersion', 'roles', 'pipelines', 'classes', 'registry', 'collections', 'tasks', 'environments', 'capacity', 'boundaries', 'workingAgreements']) assert.ok(k in spec, `missing ${k}`);
   assert.match(spec.specVersion, /^4\.\d+\.\d+$/);
   assert.deepEqual(Object.keys(spec.classes).sort(), CLASSES.slice().sort());
-  assert.deepEqual(spec.pipelines, PIPELINES);
+  assert.deepEqual(Object.keys(spec.pipelines).filter(k => k !== '_rules').sort(), PIPELINES.slice().sort());
   for (const p of PIPELINES) assert.ok(spec.roles.includes(p), `pipeline ${p} is not a role`);
 });
 

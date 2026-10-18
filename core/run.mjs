@@ -28,7 +28,7 @@ const merge = (a, b) => { const o = { ...(a || {}) }; for (const [k, v] of Objec
 /** The pipeline's step list from the spec (B-09 writes them); an error names what is missing. */
 export function pipelineDef(spec, pipeline) {
   const p = spec.pipelines && !Array.isArray(spec.pipelines) ? spec.pipelines[pipeline] : null;
-  if (!p) throw new Error(`no step list for ${pipeline} in spec.pipelines`);
+  if (!p || !Array.isArray(p.steps)) throw new Error(`no step list for ${pipeline} in spec.pipelines${p && p.pendingIn ? ` (its steps arrive with ${p.pendingIn})` : ''}`);
   for (const s of p.steps || []) {
     if (s.kind === 'code' && !CODE_STEPS[s.fn || s.id]) throw new Error(`${pipeline}: no code step ${s.fn || s.id}`);
     if (s.kind === 'agent' && (!s.output || !AGENT_FOLDS[s.fold])) throw new Error(`${pipeline}: agent step ${s.id} needs an output shape and a fold`);
@@ -145,10 +145,9 @@ export function compute({ spec, dir, validate, at }) {
     if (s.kind === 'code') r = CODE_STEPS[s.fn || s.id](db, ctx, spec);
     else if (s.kind === 'agent') {
       const answerPath = path.join(dir, 'answers', s.id + '.json');
-      if (!fs.existsSync(answerPath)) {
-        const material = s.material ? AGENT_MATERIAL[s.material](db, ctx, spec) : null;
-        return { status: 'waiting', step: s.id, question: { judgment: s.judgment, material, output: s.output, answerPath } };
-      }
+      const pre = s.material ? AGENT_MATERIAL[s.material](db, ctx, spec) : null;
+      if (pre && pre.skip) { steps.push({ id: s.id, status: 'skipped', detail: pre.skip }); continue; }
+      if (!fs.existsSync(answerPath)) return { status: 'waiting', step: s.id, question: { judgment: s.judgment, material: pre, output: s.output, answerPath } };
       const answer = readJson(answerPath);
       const v = validateAgainst(s.output, answer);
       if (!v.ok) { problems.push(`${s.id}: the answer does not fit its shape: ${describeErrors('answer', v).split('\n')[0]}`); steps.push({ id: s.id, status: 'refused' }); continue; }

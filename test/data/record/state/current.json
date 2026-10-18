@@ -58,7 +58,7 @@
     }
    },
    "capacity": {
-    "docs": 29,
+    "docs": 26,
     "cap": 25000,
     "pct": 0.1,
     "level": "ok"
@@ -86,7 +86,6 @@
     "runs": 1,
     "sessions": 1,
     "sets": 1,
-    "system": 3,
     "talk": 2,
     "weakspots": 1,
     "weeks": 1

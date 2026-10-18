@@ -22,7 +22,7 @@ const DEF = { writer: 'evening-cloud', reads: READS, steps: [
   { id: 'note', kind: 'agent', judgment: 'One line for tonight, under 120 characters.', material: 'day-summary', output: PUSH, fold: 'push-line' },
   { id: 'state', kind: 'code' },
 ] };
-const spec = { ...baseSpec, pipelines: { ...Object.fromEntries(baseSpec.pipelines.map(p => [p, null])), 'evening-cloud': DEF } };
+const spec = { ...baseSpec, pipelines: { ...baseSpec.pipelines, 'evening-cloud': DEF } };
 const AT = '2026-10-17T01:15:00Z'; // 8:15pm Central on Oct 16
 
 // ---------------------------------------------------------------- a made-up session: pulled files and the transcript
@@ -221,6 +221,7 @@ test('cli: the moves end to end, with the exit codes a run reads', () => {
   r = cli('apply'); assert.equal(r.code, 0); assert.match(r.out, /apply: 1 call/);
   r = cli('end', '--no-audit'); assert.equal(r.code, 0); assert.match(r.out, /"action": "update"/);
   r = cli('audit'); assert.equal(r.code, 0, 'calls not made are reported, not failed: the run status says why'); assert.match(r.out, /GREEN .*printed but not made/);
-  try { execFileSync('node', [path.join(root, 'core/cli.mjs'), 'run', 'morning', 'start', '--dir', dir, '--root', root], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }); assert.fail('a pipeline with no step list must not start'); }
-  catch (e) { assert.equal(e.status, 1); assert.match(e.stderr, /no step list for morning/); }
+  let refused = null;
+  try { execFileSync('node', [path.join(root, 'core/cli.mjs'), 'run', 'worker', 'start', '--dir', dir, '--root', root], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }); } catch (e) { refused = e; }
+  assert.ok(refused, 'a pipeline with no step list must not start'); assert.equal(refused.status, 1); assert.match(refused.stderr, /no step list for worker/);
 });

@@ -8,6 +8,7 @@
 //   lint --from <record>           the record against its rules: writers, unchanged Facts, budgets, schemas, every
 //                                  Derived document rebuilt byte for byte, and the content checks (--date, --json)
 //   rebuild <collection|all> --from <record>   regenerate Derived documents as of their time; --out <dir> writes them
+//   steps [pipeline]               every pipeline's reads and steps, as the spec lists them
 //   run <pipeline> <start|pull|pulled|compute|apply|replan|end|audit>   the run protocol's moves; each prints the
 //                                  exact calls to make. --dir (default /tmp/ev/run), --record <live|staging>,
 //                                  --at, --transcript <jsonl> (default this session's), --failed <n>, --batch <n>,
@@ -166,6 +167,20 @@ const commands = {
     console.log(`rebuild: ${results.filter(r => r.status === 'same' || r.status === 'inexact-same').length} reproduced, ${bad} differ, ${results.filter(r => r.status === 'inexact-differs').length} differ after a later edit, ${results.filter(r => r.status === 'skipped').length} skipped`);
     return bad ? 1 : 0;
   },
+  steps(o) {
+    const root = o.root ? path.resolve(o.root) : HERE;
+    const spec = readJson(path.join(root, 'spec', 'ev.spec.json'));
+    const names = o._[1] ? [o._[1]] : Object.keys(spec.pipelines).filter(k => k !== '_rules');
+    for (const n of names) {
+      const p = spec.pipelines[n]; if (!p) throw new Error('no pipeline ' + n);
+      console.log(`${n} (${p.lane}, writes as ${p.writer}): ${p.purpose}`);
+      if (!Array.isArray(p.steps)) { console.log(`  steps arrive with ${p.pendingIn}\n`); continue; }
+      console.log(`  reads: ${(p.reads || []).map(r => r.collection + (r.windowDays ? ` (${r.windowDays} days)` : '')).join(', ')}`);
+      p.steps.forEach((s, i) => console.log(`  ${i + 1}. [${s.kind}] ${s.id}: ${s.kind === 'agent' ? s.judgment : s.does || ''}`));
+      console.log('');
+    }
+    return 0;
+  },
   run(o) {
     const root = o.root ? path.resolve(o.root) : HERE;
     const spec = readJson(path.join(root, 'spec', 'ev.spec.json')); EV.configure(spec);
@@ -177,7 +192,7 @@ const commands = {
     const d = ` --dir ${dir}`;
     switch (move) {
       case 'start': {
-        const manifest = maybeJson(path.join(root, 'dist', 'manifest.json'));
+        const manifest = maybeJson(path.resolve(o.manifest || '/tmp/ev/system/manifest.json')) || maybeJson(path.join(root, 'dist', 'manifest.json'));
         return show(RUN.start({ spec, pipeline, record: o.record || 'staging', at, dir, release: o.release || (manifest && manifest.release) || EV.VERSION }), `${cli} pull${d}`);
       }
       case 'pull': return show(RUN.pull({ spec, dir, at }), `${cli} pulled${d}`);
@@ -196,7 +211,11 @@ const commands = {
         if (o.failed) return show(RUN.applyFailed({ dir, batch: Number(o.failed) }), `${cli} replan --batch ${o.failed}${d}`);
         return show(RUN.apply({ dir }), `if a batch is refused on a version pin: ${cli} apply --failed <n>${d}; after the last batch: ${cli} end${d}`);
       case 'replan': return show(RUN.replan({ spec, dir, batch: Number(o.batch), transcript: transcript() }), `continue with the batches after it, then ${cli} end${d}`);
-      case 'end': return show(RUN.end({ dir, at, status: o.status, detail: o.detail, transcript: o['no-audit'] ? null : transcript() }));
+      case 'end': {
+        show(RUN.end({ dir, at, status: o.status, detail: o.detail, transcript: o['no-audit'] ? null : transcript() }));
+        const plan = maybeJson(path.join(dir, 'plan.json'));
+        console.log(`\nPush: ${(plan && plan.push) || `E.V. ${pipeline} ${o.status && o.status !== 'ok' ? o.status : 'done'}`}`); return 0;
+      }
       case 'audit': {
         const a = RUN.audit({ dir, transcript: transcript() });
         console.log(`${pipeline} audit: ${a.ok ? 'GREEN' : 'RED'} · ${a.matched} calls matched${a.extra.length ? ', ' + a.extra.length + ' not printed' : ''}${a.missing.length ? ', ' + a.missing.length + ' printed but not made' : ''}`);
@@ -247,7 +266,7 @@ export function main(argv) {
   const o = args(argv);
   const cmd = commands[o._[0]];
   if (!cmd || (TARGETED.includes(o._[0]) && !['live', 'staging'].includes(o._[1]))) {
-    console.error('Commands: verify-deploy <live|staging>, deploy <live|staging>, migrate v3 --from <dir>, verify-migration --from <dir>, seed-staging --from <dir>, lint --from <dir>, rebuild <collection|all> --from <dir>, run <pipeline> <move>');
+    console.error('Commands: verify-deploy <live|staging>, deploy <live|staging>, migrate v3 --from <dir>, verify-migration --from <dir>, seed-staging --from <dir>, lint --from <dir>, rebuild <collection|all> --from <dir>, run <pipeline> <move>, steps [pipeline]');
     return 2;
   }
   try { return cmd(o); } catch (e) { console.error(`${o._[0]} failed: ${e.message}`); return 1; }
