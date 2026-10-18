@@ -191,22 +191,39 @@ export function compute({ spec, dir, validate, at }) {
   }
   if (problems.length) return { status: 'refused', problems, steps };
   const batches = chunkWrites(files, spec.capacity.batch).map(b => b.map(({ data, ...x }) => x));
-  const hash = EV.sha256(EV.stableStringify({ runId: run.id, push, detail, fires, ...(device.length ? { device } : {}), batches: chunkWrites(files, spec.capacity.batch) }));
-  const plan = { runId: run.id, pipeline: run.pipeline, url: run.url, computedAt: now, push, ...(detail ? { detail } : {}), steps, writes: files.length, batches, fires, ...(device.length ? { device } : {}), hash, replans: [] };
+  const plan = { runId: run.id, pipeline: run.pipeline, url: run.url, computedAt: now, push, ...(detail ? { detail } : {}), steps, writes: files.length, batches, fires, ...(device.length ? { device } : {}), hash: null, replans: [] };
+  plan.hash = planHash(plan);
   writeJson(path.join(dir, 'plan.json'), plan);
   return { status: 'planned', plan };
+}
+
+/**
+ * The plan's checksum, recomputed from the plan and every write file it names (B-33): the run id, the push line, the
+ * detail, the fires, the device calls and each batch's writes with the data read back from disk. A write file edited
+ * after compute changes it.
+ */
+export function planHash(plan) {
+  const batches = plan.batches.map(b => b.map(w => ({ ...w, data: readJson(w.file_path) })));
+  return EV.sha256(EV.stableStringify({ runId: plan.runId, push: plan.push, detail: plan.detail, fires: plan.fires, ...(plan.device && plan.device.length ? { device: plan.device } : {}), batches }));
+}
+/** The plan, refused when its files no longer hash to what compute (or the last replan) stored. */
+function checkedPlan(dir) {
+  const plan = readJson(path.join(dir, 'plan.json'));
+  let now; try { now = planHash(plan); } catch (e) { throw new Error(`a write file of the plan cannot be read (${e.message}): run compute again; never edit a plan or a write by hand`); }
+  if (now !== plan.hash) throw new Error(`the plan's write files changed since it was computed (plan ${String(plan.hash).slice(0, 12)}, files ${now.slice(0, 12)}): run compute again; never edit a plan or a write by hand`);
+  return plan;
 }
 
 // ------------------------------------------------------------------------------------------------ 5 apply
 const batchCall = (url, writes) => ({ tool: 'ArtifactData', args: { action: 'batch', url, writes } });
 export function apply({ dir }) {
-  const run = loadRun(dir); const plan = readJson(path.join(dir, 'plan.json'));
+  const run = loadRun(dir); const plan = checkedPlan(dir);
   // Writes first, so a re-fire's record exists before the task starts; the Mac's files after the record's.
   return printed(dir, run, 'apply', [...plan.batches.map(b => batchCall(run.url, b)), ...(plan.device || []), ...(plan.fires || []).map(f => ({ tool: 'mcp__claude-code-remote__fire_trigger', args: f }))]);
 }
 /** Batch n (1-based) was refused on a version pin: the fresh pull of its collections, into <dir>/repull-<n>. */
 export function applyFailed({ dir, batch }) {
-  const run = loadRun(dir); const plan = readJson(path.join(dir, 'plan.json'));
+  const run = loadRun(dir); const plan = checkedPlan(dir);
   const b = plan.batches[batch - 1]; if (!b) throw new Error(`no batch ${batch}`);
   const out = path.join(dir, `repull-${batch}`);
   const cols = [...new Set(b.map(w => w.collection))];
@@ -215,17 +232,22 @@ export function applyFailed({ dir, batch }) {
 /**
  * Re-plans batch n from its fresh pull: appends are keyed and Derived documents are whole, so the same writes are
  * re-pinned to the versions now current. A Fact that now exists was written by an earlier attempt: its set is dropped.
+ * A repull reply with a next_cursor is followed first (B-33): {done: false, calls} until every page is in, then
+ * {done: true, calls: [the batch]}. The plan's hash is recomputed for the re-pinned batch.
  */
 export function replan({ spec, dir, batch, transcript }) {
-  const run = loadRun(dir); const plan = readJson(path.join(dir, 'plan.json'));
+  const run = loadRun(dir); const plan = checkedPlan(dir);
   const b = plan.batches[batch - 1]; if (!b) throw new Error(`no batch ${batch}`);
   const out = path.join(dir, `repull-${batch}`);
-  const fresh = {};
+  const fresh = {}; const last = {};
   for (const r of toolResults(transcript, 'ArtifactData').filter(r => r.input && r.input.out_dir === out && !r.isError)) {
     const p = parseListReply(r.texts.join('\n')); Object.assign(fresh[r.input.collection] = fresh[r.input.collection] || {}, p.versions);
+    last[r.input.collection] = { input: r.input, more: p.more };
   }
   const cols = [...new Set(b.map(w => w.collection))];
   const missing = cols.filter(c => !fresh[c]); if (missing.length) throw new Error(`no fresh pull for ${missing.join(', ')}: make the printed calls first`);
+  const followUps = cols.filter(c => last[c].more).map(c => ({ tool: 'ArtifactData', args: { ...last[c].input, query: { ...(last[c].input.query || {}), cursor: last[c].more } } }));
+  if (followUps.length) return { done: false, calls: printed(dir, run, 'repull', followUps) };
   const dropped = [];
   const next = b.flatMap(w => {
     const v = fresh[w.collection][w.doc_id];
@@ -233,9 +255,10 @@ export function replan({ spec, dir, batch, transcript }) {
     if (v == null) { const { if_version, ...x } = w; return [x]; }
     return [{ ...w, if_version: v }];
   });
-  plan.batches[batch - 1] = next; plan.replans.push({ batch, dropped });
+  const from = plan.hash;
+  plan.batches[batch - 1] = next; plan.hash = planHash(plan); plan.replans.push({ batch, dropped, from });
   writeJson(path.join(dir, 'plan.json'), plan);
-  return printed(dir, run, 'apply', [batchCall(run.url, next)]);
+  return { done: true, calls: printed(dir, run, 'apply', [batchCall(run.url, next)]) };
 }
 
 // ------------------------------------------------------------------------------------------------ 6 end
@@ -243,8 +266,12 @@ export function end({ dir, at, status, detail, transcript }) {
   const run = loadRun(dir);
   const planFile = path.join(dir, 'plan.json'); const plan = fs.existsSync(planFile) ? readJson(planFile) : null;
   const steps = plan ? [...plan.steps] : [];
+  // B-33: end stores the hash recomputed from the files, not the one compute wrote; a difference fails the run.
+  let hash = null, changed = null;
+  if (plan) { try { hash = planHash(plan); } catch (e) { changed = `a write file cannot be read: ${e.message}`; } if (hash && hash !== plan.hash) changed = `the plan's write files changed after compute (plan ${String(plan.hash).slice(0, 12)}, files ${hash.slice(0, 12)})`; }
   if (transcript != null) { const a = audit({ dir, transcript }); steps.push({ id: 'audit', status: a.ok ? 'ok' : 'extra-calls', detail: a.ok ? `${a.matched} calls, all printed` + (a.missing.length ? `; ${a.missing.length} printed but not made` : '') : a.extra.map(c => c.tool + ' ' + c.summary).join('; ').slice(0, 300) }); }
-  const data = { endedAt: EV.envelope('x', '', at).at, status: status || (plan ? 'ok' : 'failed'), steps, ...(plan ? { planHash: plan.hash, push: plan.push || null } : {}), ...(detail || (plan && plan.detail) ? { detail: String(detail || plan.detail).slice(0, 500) } : {}) };
+  const why = [changed, detail || (plan && plan.detail)].filter(Boolean).join(' · ');
+  const data = { endedAt: EV.envelope('x', '', at).at, status: changed ? 'failed' : status || (plan ? 'ok' : 'failed'), steps, ...(plan ? { ...(hash ? { planHash: hash } : {}), push: plan.push || null } : {}), ...(why ? { detail: why.slice(0, 500) } : {}) };
   const file = path.join(dir, 'out', 'runs', run.id + '.end.json'); writeJson(file, data);
   return printed(dir, run, 'end', [{ tool: 'ArtifactData', args: { action: 'update', url: run.url, collection: 'runs', doc_id: run.id, file_path: file, if_version: 1 } }]);
 }

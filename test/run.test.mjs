@@ -166,12 +166,16 @@ test('the retry path: a batch refused on its pin is re-pulled and re-pinned, and
     assert.ok(repull.every(c => c.args.out_dir.endsWith('repull-1')));
     const fresh = [];
     for (const c of repull) { const [id, l] = use('ArtifactData', c.args); fresh.push(l, result(id, listReply(c.args.collection, c.args.collection === 'ideas' ? [{ id: 'made-up-idea' }] : [{ id: 'current' }], c.args.out_dir, { version: () => 9 }))); }
-    const [call] = RUN.replan({ spec: s2, dir, batch: 1, transcript: fresh.join('\n') });
+    const before = JSON.parse(fs.readFileSync(path.join(dir, 'plan.json'), 'utf8')).hash;
+    const re = RUN.replan({ spec: s2, dir, batch: 1, transcript: fresh.join('\n') });
+    assert.equal(re.done, true); const [call] = re.calls;
     const ws = call.args.writes;
     assert.ok(!ws.some(w => w.doc_id === 'made-up-idea'), 'the Fact that now exists was written by the first attempt');
     assert.equal(ws.find(w => w.collection === 'state').if_version, 9);
     const plan = JSON.parse(fs.readFileSync(path.join(dir, 'plan.json'), 'utf8'));
-    assert.deepEqual(plan.replans, [{ batch: 1, dropped: ['ideas/made-up-idea'] }]);
+    assert.deepEqual(plan.replans, [{ batch: 1, dropped: ['ideas/made-up-idea'], from: before }]);
+    assert.equal(plan.hash, RUN.planHash(plan), 'the replan stores the hash of the re-pinned plan');
+    assert.notEqual(plan.hash, before);
   } finally { delete CODE_STEPS['test-fact']; }
 });
 
@@ -225,4 +229,42 @@ test('cli: the moves end to end, with the exit codes a run reads', () => {
   let refused = null;
   try { execFileSync('node', [path.join(root, 'core/cli.mjs'), 'run', 'nonesuch', 'start', '--dir', dir, '--root', root], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }); } catch (e) { refused = e; }
   assert.ok(refused, 'a pipeline with no step list must not start'); assert.equal(refused.status, 1); assert.match(refused.stderr, /no step list for nonesuch/);
+});
+
+test('B-33: apply and end recompute the plan hash from the write files; an edited write is refused and fails the run', () => {
+  const { dir, lines } = begin();
+  RUN.pulled({ spec, dir, transcript: lines.join('\n') }); answer(dir, { push: 'All quiet' });
+  const r = RUN.compute({ spec, dir, validate, at: AT });
+  assert.equal(r.status, 'planned', JSON.stringify(r.problems));
+  assert.equal(RUN.planHash(r.plan), r.plan.hash);
+  assert.equal(RUN.apply({ dir }).length, r.plan.batches.length);
+  // Edit one write by hand, as a run must never do.
+  const w = r.plan.batches[0][0];
+  const data = JSON.parse(fs.readFileSync(w.file_path, 'utf8')); data.planted = 'by hand'; fs.writeFileSync(w.file_path, JSON.stringify(data));
+  assert.throws(() => RUN.apply({ dir }), /write files changed since it was computed .*never edit a plan or a write by hand/);
+  assert.throws(() => RUN.applyFailed({ dir, batch: 1 }), /write files changed/);
+  const [call] = RUN.end({ dir, at: '2026-10-17T01:20:00Z', transcript: null });
+  const endDoc = JSON.parse(fs.readFileSync(call.args.file_path, 'utf8'));
+  assert.equal(endDoc.status, 'failed');
+  assert.match(endDoc.detail, /^the plan's write files changed after compute/);
+  assert.equal(endDoc.planHash, RUN.planHash(JSON.parse(fs.readFileSync(path.join(dir, 'plan.json'), 'utf8'))), 'end stores the recomputed hash');
+  assert.notEqual(endDoc.planHash, r.plan.hash);
+});
+
+test('B-33: replan follows a repull page with a next_cursor before re-pinning', () => {
+  const { dir, lines } = begin(recordDb(), { version: () => 1 });
+  RUN.pulled({ spec, dir, transcript: lines.join('\n') }); answer(dir, { push: 'ok' });
+  const r = RUN.compute({ spec, dir, validate, at: AT });
+  assert.equal(r.status, 'planned', JSON.stringify(r.problems));
+  const repull = RUN.applyFailed({ dir, batch: 1 });
+  const first = [];
+  for (const c of repull) { const [id, l] = use('ArtifactData', c.args); first.push(l, result(id, listReply(c.args.collection, [], c.args.out_dir, { cursor: 'page2' }).replace(/^0 documents.*$/, `0 documents from collection "${c.args.collection}".\nnext_cursor: page2`))); }
+  const more = RUN.replan({ spec, dir, batch: 1, transcript: first.join('\n') });
+  assert.equal(more.done, false);
+  assert.ok(more.calls.length >= 1 && more.calls.every(c => c.args.query.cursor === 'page2' && c.args.out_dir.endsWith('repull-1')));
+  const second = [...first];
+  for (const c of more.calls) { const [id, l] = use('ArtifactData', c.args); second.push(l, result(id, listReply(c.args.collection, [{ id: 'current' }], c.args.out_dir, { version: () => 7 }))); }
+  const done = RUN.replan({ spec, dir, batch: 1, transcript: second.join('\n') });
+  assert.equal(done.done, true);
+  assert.equal(done.calls[0].args.writes.find(w => w.collection === 'state').if_version, 7, 'pinned to the version on the second page');
 });

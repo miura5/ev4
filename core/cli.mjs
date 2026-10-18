@@ -234,7 +234,10 @@ const commands = {
       case 'apply':
         if (o.failed) return show(RUN.applyFailed({ dir, batch: Number(o.failed) }), `${cli} replan --batch ${o.failed}${d}`);
         return show(RUN.apply({ dir }), `if a batch is refused on a version pin: ${cli} apply --failed <n>${d}; after the last batch: ${cli} end${d}`);
-      case 'replan': return show(RUN.replan({ spec, dir, batch: Number(o.batch), transcript: transcript() }), `continue with the batches after it, then ${cli} end${d}`);
+      case 'replan': {
+        const r = RUN.replan({ spec, dir, batch: Number(o.batch), transcript: transcript() });
+        return r.done ? show(r.calls, `continue with the batches after it, then ${cli} end${d}`) : show(r.calls, `${cli} replan --batch ${o.batch}${d}`);
+      }
       case 'end': {
         show(RUN.end({ dir, at, status: o.status, detail: o.detail, transcript: o['no-audit'] ? null : transcript() }));
         const plan = maybeJson(path.join(dir, 'plan.json'));
