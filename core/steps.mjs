@@ -9,6 +9,7 @@
 // A material builder returns {skip: reason} when its agent has nothing to do today.
 import EV from './evcore.mjs';
 import { produce } from './derive.mjs';
+import { watch } from './watch.mjs';
 
 const models = db => EV.buildWeakspots({ weakspots: db.weakspots || [], sets: db.sets || [], answers: db.answers || [], exams: db.exams || [] });
 /** Fields a set item may carry (spec/schemas/sets.schema.json); anything else an agent adds is dropped. */
@@ -101,6 +102,20 @@ CODE_STEPS['job-brief'] = function jobBrief(db, ctx, spec) {
   ctx.job = job;
   ctx.jobBrief = { job: { id: job.id, kind, title: job.title, brief: job.brief }, guide: kinds[kind] ? kinds[kind].guide : '', today: ctx.date, context };
   return { say: [`Job ${job.id} (${kind}): ${job.title}`] };
+};
+
+// ------------------------------------------------------------------------------------------------ watchdog
+CODE_STEPS.watch = function watchStep(db, ctx, spec) {
+  const v = watch(db, { now: ctx.now, record: ctx.record, spec });
+  const writes = v.refires.map(r => ({ op: 'set', collection: 'runs', id: r.id, data: { ...EV.envelope('watchdog', ctx.source, ctx.now), release: ctx.release, pipeline: 'watchdog', startedAt: ctx.now, endedAt: ctx.now, status: 'ok', detail: `re-fired ${r.target}: ${r.reason}` } }));
+  const fires = v.refires.map(r => ({ trigger_id: r.trigger, ...(r.text ? { text: r.text } : {}) }));
+  const say = [`${v.missing.length} missed, ${v.stalledRuns.length} unfinished, ${v.stalledJobs.length} stalled; re-firing ${v.refires.length}.`, ...v.reported.map(r => `Not re-fired: ${r.target} (${r.why}).`)];
+  const push = v.refires.length || v.reported.length ? `Watchdog: ${[...v.refires.map(r => 're-fired ' + r.target), ...v.reported.map(r => r.target + ' ' + r.why)].join('; ')}`.slice(0, 120) : null;
+  return { writes, fires, say, ...(push ? { push } : {}) };
+};
+CODE_STEPS.health = function healthStep(db, ctx, spec) {
+  const data = produce(db, spec, 'health', { now: ctx.now, record: ctx.record }, { source: ctx.source });
+  return { writes: [{ op: 'set', collection: 'health', id: 'current', data }], say: ['health/current written.'] };
 };
 
 export const AGENT_MATERIAL = {

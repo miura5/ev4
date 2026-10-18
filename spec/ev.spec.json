@@ -412,9 +412,36 @@
   "watchdog": {
    "lane": "cloud",
    "writer": "watchdog",
-   "purpose": "checks every pipeline ran and every job moved, writes health/current, re-fires once",
-   "steps": null,
-   "pendingIn": "B-11"
+   "purpose": "checks that every pipeline ran and ended and every job moved, re-fires each miss once, and writes health/current",
+   "reads": [
+    {
+     "collection": "runs",
+     "windowDays": 9
+    },
+    {
+     "collection": "jobs",
+     "windowDays": 2
+    },
+    {
+     "collection": "jobresults",
+     "windowDays": 2
+    },
+    {
+     "collection": "state"
+    }
+   ],
+   "steps": [
+    {
+     "id": "watch",
+     "kind": "code",
+     "does": "finds missed slots, runs that never ended and stalled jobs; plans one re-fire each (a runs record and a printed fire_trigger), or reports a second miss"
+    },
+    {
+     "id": "health",
+     "kind": "code",
+     "does": "writes health/current: the last run per pipeline, what is missing or stalled, the derived hash, capacity and the restore drill's age"
+    }
+   ]
   },
   "restore-drill": {
    "lane": "mac",
@@ -515,6 +542,15 @@
    "ocrMinChars": 80,
    "pdfjs": "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs",
    "pdfjsWorker": "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs"
+  },
+  "watchdog": {
+   "jobStallMinutes": 15,
+   "runTimeoutMinutes": 60,
+   "graceMinutes": 30,
+   "refireWithinMinutes": 180,
+   "refireUntil": {
+    "morning": "06:00"
+   }
   }
  },
  "registry": {

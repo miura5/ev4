@@ -3,7 +3,30 @@
  "writer": "watchdog",
  "at": "2026-10-16T14:00:00Z",
  "source": "watchdog",
- "pipelines": {},
+ "record": "staging",
+ "pipelines": {
+  "morning": {
+   "id": "morning-20261016-092500-ab12",
+   "status": "ok",
+   "startedAt": "2026-10-16T09:25:00Z",
+   "endedAt": "2026-10-16T09:31:00Z",
+   "release": "v4.0.0"
+  }
+ },
  "missing": [],
- "stalledJobs": []
+ "stalledRuns": [],
+ "stalledJobs": [],
+ "reported": [],
+ "verifyDeploy": null,
+ "derivedHash": {
+  "evening": "3e4bdc2c5f514755ec2f91b790642ac95ffe62fad422a5bde541475ad77890ca",
+  "at": "2026-10-16T14:00:00Z"
+ },
+ "capacity": {
+  "docs": 26,
+  "cap": 25000,
+  "pct": 0.1,
+  "level": "ok"
+ },
+ "restoreDrill": null
 }

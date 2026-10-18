@@ -21,7 +21,8 @@ const LIMITS = [
   'made-up clients only, never patient identifiers',
   'never send a message or post as Matt',
   'never delete anything',
-  'touch no other artifact, page, file, task or account',
+  'touch no other artifact, page, file or account',
+  'never create, change or delete a scheduled task, and fire one only when a command prints the call',
 ];
 
 /** The prompt for one manifest task entry, or null when its pipeline has no steps yet. */

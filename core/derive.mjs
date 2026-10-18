@@ -5,6 +5,7 @@
 // (core/run.mjs compute): each step sees the writes of the steps before it, and every write is stamped with the
 // run's one compute time, so the record a Derived document was computed from is exactly the record as of its `at`.
 import EV from './evcore.mjs';
+import { healthBody } from './watch.mjs';
 
 const ms = x => EV.toMs(x);
 
@@ -174,11 +175,11 @@ export const PRODUCERS = {
   state: { writer: 'evening-cloud', inputs: (s) => ({ date: (s.snapshot && s.snapshot.date) || EV.chicagoDate(s.at), now: s.at, specVersion: s.snapshot ? s.snapshot.specVersion : null }), build: (db, i, spec) => stateBody(db, i, spec) },
   weeks: { writer: 'weekly', inputs: (s) => ({ date: s.date || s.id, now: s.at }), build: (db, i, spec, stored) => weekBody(db, i, spec, stored) },
   libindex: { writer: 'evening-cloud', inputs: (s) => ({ course: s.course || s.id, now: s.at }), build: (db, i) => libindexBody(db, i) },
+  health: { writer: 'watchdog', inputs: (s) => ({ now: s.at, record: s.record || 'staging' }), build: (db, i, spec) => healthBody(db, i, spec) },
 };
 
 /** Derived documents with no producer yet, and why. lint reports them; rebuild skips them. */
 export const NOT_REBUILDABLE = {
-  health: 'its producer is the watchdog (B-11)',
   concepts: 'grouping weak spots under a concept is not specified as a computation (design question)',
   'talk/memory': 'the running summary is written by a model on the page (design question)',
 };

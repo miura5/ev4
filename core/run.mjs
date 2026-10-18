@@ -139,8 +139,8 @@ export function compute({ spec, dir, validate, at }) {
   const versions = fs.existsSync(versionsFile) ? readJson(versionsFile) : {};
   const db = loadPulled(dir); const pulledDb = loadPulled(dir);
   const now = EV.envelope('x', '', at).at;
-  const ctx = { runId: run.id, pipeline: run.pipeline, writer: def.writer || run.pipeline, date: EV.chicagoDate(now), now, source: `${run.pipeline} ${run.id}`, release: run.release, startedAt: run.startedAt, input: run.input || {} };
-  const writes = []; const steps = []; let push = null; const problems = [];
+  const ctx = { runId: run.id, pipeline: run.pipeline, record: run.record, writer: def.writer || run.pipeline, date: EV.chicagoDate(now), now, source: `${run.pipeline} ${run.id}`, release: run.release, startedAt: run.startedAt, input: run.input || {} };
+  const writes = []; const steps = []; let push = null; const problems = []; const fires = [];
   for (const s of def.steps) {
     let r;
     if (s.kind === 'code') r = CODE_STEPS[s.fn || s.id](db, ctx, spec);
@@ -158,6 +158,7 @@ export function compute({ spec, dir, validate, at }) {
     } else { steps.push({ id: s.id, status: 'skipped', detail: `${s.kind} step: printed by its own move` }); continue; }
     for (const w of r.writes || []) { if (w.op === 'delete' || !['set', 'update'].includes(w.op)) { problems.push(`${s.id}: plans never delete (${w.collection}/${w.id})`); continue; } writes.push(w); applyInMemory(db, w); }
     if (r.push) push = r.push;
+    for (const f of r.fires || []) { if (!/^trig_/.test(f.trigger_id || '')) problems.push(`${s.id}: a fire needs a trigger id`); else fires.push(f); }
     steps.push({ id: s.id, status: 'ok', detail: (r.say || []).join(' ').slice(0, 300) || `${(r.writes || []).length} write(s)` });
   }
   const planned = coalesce(writes);
@@ -182,8 +183,8 @@ export function compute({ spec, dir, validate, at }) {
   }
   if (problems.length) return { status: 'refused', problems, steps };
   const batches = chunkWrites(files, spec.capacity.batch).map(b => b.map(({ data, ...x }) => x));
-  const hash = EV.sha256(EV.stableStringify({ runId: run.id, push, batches: chunkWrites(files, spec.capacity.batch) }));
-  const plan = { runId: run.id, pipeline: run.pipeline, url: run.url, computedAt: now, push, steps, writes: files.length, batches, hash, replans: [] };
+  const hash = EV.sha256(EV.stableStringify({ runId: run.id, push, fires, batches: chunkWrites(files, spec.capacity.batch) }));
+  const plan = { runId: run.id, pipeline: run.pipeline, url: run.url, computedAt: now, push, steps, writes: files.length, batches, fires, hash, replans: [] };
   writeJson(path.join(dir, 'plan.json'), plan);
   return { status: 'planned', plan };
 }
@@ -192,7 +193,8 @@ export function compute({ spec, dir, validate, at }) {
 const batchCall = (url, writes) => ({ tool: 'ArtifactData', args: { action: 'batch', url, writes } });
 export function apply({ dir }) {
   const run = loadRun(dir); const plan = readJson(path.join(dir, 'plan.json'));
-  return printed(dir, run, 'apply', plan.batches.map(b => batchCall(run.url, b)));
+  // Writes first, so a re-fire's record exists before the task starts.
+  return printed(dir, run, 'apply', [...plan.batches.map(b => batchCall(run.url, b)), ...(plan.fires || []).map(f => ({ tool: 'mcp__claude-code-remote__fire_trigger', args: f }))]);
 }
 /** Batch n (1-based) was refused on a version pin: the fresh pull of its collections, into <dir>/repull-<n>. */
 export function applyFailed({ dir, batch }) {
