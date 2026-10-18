@@ -310,3 +310,20 @@ test('B-55 (D-111): a 5-hour-old health/current is named first by the evening an
   // The morning pulls health/current for this, and no Derived document it writes reads it.
   assert.deepEqual(spec.pipelines.morning.reads.find(r => r.collection === 'health'), { collection: 'health', derived: false, why: spec.pipelines.morning.reads.find(r => r.collection === 'health').why });
 });
+
+test('B-29: the cloud-reads probe prints a read of its own record\'s page and one list_triggers; the audit accepts those and nothing else', () => {
+  const at = '2026-10-18T18:00:00Z';
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-diag-'));
+  RUN.start({ spec, pipeline: 'diagnostic', record: 'staging', at, dir, release: 'v4.0.0', input: { probe: 'cloud-reads' } });
+  const w = RUN.compute({ spec, dir, validate, at });
+  const groups = w.question.material.groups;
+  assert.deepEqual(groups.map(g => [g.name, g.calls.map(c => c.tool)]), [['artifact-read', ['Artifact']], ['list-triggers', ['mcp__claude-code-remote__list_triggers']]]);
+  const read = groups[0].calls[0].args;
+  assert.deepEqual(read, { action: 'read', url: 'https://claude.ai/artifact/' + spec.registry.records.staging.artifact });
+  const tool = (id, name, input) => JSON.stringify({ type: 'assistant', message: { content: [{ type: 'tool_use', id, name, input }] } }) + '\n' + JSON.stringify({ type: 'user', message: { content: [{ type: 'tool_result', tool_use_id: id, content: 'ok' }] } });
+  const transcript = [tool('a', 'Artifact', read), tool('b', 'mcp__claude-code-remote__list_triggers', { limit: 100, enabled: true })].join('\n');
+  assert.equal(RUN.audit({ dir, transcript }).ok, true);
+  // A read of another artifact, or a publish of this one, is not one of the printed calls.
+  assert.equal(RUN.audit({ dir, transcript: transcript + '\n' + tool('c', 'Artifact', { action: 'read', url: 'https://claude.ai/artifact/another' }) }).ok, false);
+  assert.equal(RUN.audit({ dir, transcript: transcript + '\n' + tool('d', 'Artifact', { action: 'publish', url: read.url, file_path: '/tmp/x.html' }) }).ok, false);
+});

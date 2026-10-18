@@ -798,6 +798,37 @@
        ]
       }
      ]
+    },
+    "cloud-reads": {
+     "measures": "whether a cloud run can read its record's page with the Artifact tool (the stored declaration and the published files) and list this account's scheduled tasks with list_triggers: the two reads the weekly's verify step needs (B-29)",
+     "groups": [
+      {
+       "name": "artifact-read",
+       "rule": "one read of this record's page; note whether it answered and whether the result held the <artifact-stored-declaration> block",
+       "calls": [
+        {
+         "tool": "Artifact",
+         "args": {
+          "action": "read",
+          "url": "<record>"
+         }
+        }
+       ]
+      },
+      {
+       "name": "list-triggers",
+       "rule": "one read of the enabled tasks; note whether it answered and how many it listed",
+       "calls": [
+        {
+         "tool": "mcp__claude-code-remote__list_triggers",
+         "args": {
+          "limit": 100,
+          "enabled": true
+         }
+        }
+       ]
+      }
+     ]
     }
    },
    "reads": [],

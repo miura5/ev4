@@ -336,6 +336,8 @@ export function probeGroups(named, ctx) {
   return named.def.groups.map(g => {
     const calls = [];
     for (const k of g.documentKiB || []) { const label = 'doc-' + kib(k) + 'k'; calls.push({ tool: 'ArtifactData', args: { action: 'set', url: ctx.url, collection: 'debug', doc_id: ctx.runId + '-' + label, file_path: file(label, k * 1024) } }); }
+    // A read call a probe names whole (B-29's cloud-reads); "<record>" is this run's record URL.
+    for (const c of g.calls || []) calls.push({ tool: c.tool, args: JSON.parse(JSON.stringify(c.args).split('"<record>"').join(JSON.stringify(ctx.url))) });
     for (const b of g.batches || []) {
       const writes = [];
       for (let i = 1; i <= b.writes; i++) { const label = `batch-${b.writes}x${kib(b.kib)}k-${String(i).padStart(2, '0')}`; writes.push({ op: 'set', collection: 'debug', doc_id: ctx.runId + '-' + label, file_path: file(label, b.kib * 1024) }); }
