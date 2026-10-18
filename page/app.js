@@ -536,22 +536,60 @@
   }
 
   // ------------------------------------------------------------ System
+  // System: health in plain words (UI and UX, rule 8: visible, never alarming). health/current is the watchdog's
+  // Derived document; the page adds what it can see itself (its release, the weak spot state against the evening's hash).
+  const PIPE_NAME = { morning: 'Morning', 'evening-cloud': 'Evening (cloud)', 'evening-mac': 'Evening (Mac)', weekly: 'Weekly review', worker: 'Background jobs', watchdog: 'Watchdog', 'restore-drill': 'Restore drill', diagnostic: 'Diagnostics' };
+  function when(cron) { // 'CRON_TZ=America/Chicago 25 4 * * *' -> 'daily 4:25am'
+    if (!cron) return 'when you ask';
+    const f = String(cron).replace(/^CRON_TZ=\S+\s+/, '').split(/\s+/); const [mi, h, , , dow] = f;
+    if (/^\*\/\d+$/.test(h)) return 'every ' + h.slice(2) + ' hours';
+    const t = (Number(h) % 12 || 12) + (mi === '0' ? '' : ':' + String(mi).padStart(2, '0')) + (Number(h) < 12 ? 'am' : 'pm');
+    const days = { '0': 'Sundays', '1': 'Mondays', '6': 'Saturdays', '1-5': 'weekdays' };
+    return (dow === '*' ? 'daily ' : (days[dow] || 'days ' + dow) + ' ') + t;
+  }
+  const ago = iso => { const m = Math.round((Date.now() - E.toMs(iso)) / 60000); return m < 2 ? 'just now' : m < 90 ? m + ' min ago' : m < 36 * 60 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' days ago'; };
+  function healthLines() { // [{text, v}] in plain words, the worst first; [] when there is nothing to say
+    const hl = S.health; const out = [];
+    if (!hl) return [{ text: 'No health check yet. The watchdog writes one every three hours.', v: 'info' }];
+    for (const m of hl.missing || []) out.push({ text: `${PIPE_NAME[m.pipeline] || m.pipeline} missed its ${m.slot ? clock12(m.slot) + ' ' : ''}run${m.refired ? '; E.V. started it again' : ''}.`, v: 'warn' });
+    for (const r of hl.stalledRuns || []) out.push({ text: `${PIPE_NAME[r.pipeline] || r.pipeline} started ${ago(r.startedAt)} and never finished${r.refired ? '; E.V. started it again' : ''}.`, v: 'warn' });
+    for (const j of hl.stalledJobs || []) out.push({ text: `A background job waited ${j.minutes || '?'} min without starting${j.refired ? '; E.V. sent it again' : ''}.`, v: 'warn' });
+    const why = { 'already re-fired once': 'still stuck after one retry', 'no task to fire': 'and there is no task to start it again', 'past its re-fire window': 'too late in the day to start it again' };
+    for (const r of hl.reported || []) out.push({ text: `${String(r.target || r.id).replace(/^(run|job) /, '')}: ${r.reason}, ${why[r.why] || r.why}. A build chat should look.`, v: 'bad' });
+    return out;
+  }
   function renderSystem() {
     const st = S.state; const hl = S.health;
+    const panel = $('p-system');
+    let hc = $('health'); if (!hc) { hc = el('div', 'card'); hc.id = 'health'; panel.querySelector('.ptitle').after(hc); }
+    const lines = healthLines(); const bad = lines.filter(l => l.v !== 'info');
+    const kids = [head2('Health', hl ? 'checked ' + ago(hl.at) : ''), el('p', 'big', bad.length ? (bad.length === 1 ? 'One thing to look at.' : bad.length + ' things to look at.') : hl ? 'Everything ran on schedule.' : 'Waiting for the first health check.')];
+    kids[1].style.cssText = 'font-size:1.15rem;margin:0';
+    if (lines.length) { const ul = el('ul', 'list'); lines.forEach(l => ul.append(row({ title: l.text, chips: [[l.v === 'bad' ? 'needs a look' : l.v === 'warn' ? 'handled' : 'note', l.v]] }))); kids.push(ul); }
+    // The weak spot state E.V. computes now, against the hash the evening run stored with its snapshot.
+    if (M && hl && hl.derivedHash && hl.derivedHash.evening) {
+      const now = E.derivedHash(M.models); const same = now === hl.derivedHash.evening;
+      kids.push(el('p', 'meta', same ? 'Your weak spots match the evening run’s snapshot.' : `Your weak spots changed since the evening snapshot (${short(hl.derivedHash.at)} ${E.chicagoClock(hl.derivedHash.at)}), as answers do.`));
+    }
+    const drill = hl && hl.restoreDrill;
+    kids.push(el('p', 'meta', drill ? `Backup restore drill: ${drill.status === 'ok' ? 'passed' : drill.status} ${drill.days === 0 ? 'today' : drill.days + ' days ago'}.` : 'Backup restore drill: none yet (it runs monthly once the Mac lane is set up).'));
+    hc.replaceChildren(...kids);
     const runs = [...S.runs].sort((a, b) => String(b.startedAt || '').localeCompare(String(a.startedAt || '')));
-    const last = E.lastRuns(S.runs);
-    const names = Object.entries(EV_SPEC.pipelines || {}).filter(([k, p]) => !k.startsWith('_') && p && p.steps);
+    const last = { ...E.lastRuns(S.runs), ...((hl && hl.pipelines) || {}) };
+    const names = Object.entries(EV_SPEC.pipelines || {}).filter(([k]) => !k.startsWith('_'));
     const v = r => r.status === 'ok' ? 'ok' : r.status === 'running' ? 'info' : r.status === 'partial' ? 'warn' : 'bad';
-    $('pipes').replaceChildren(...names.map(([p, def]) => { const r = last[p]; return row({ title: p, detail: r ? `Last run ${short(r.startedAt)} ${E.chicagoClock(r.startedAt)}${r.detail ? ' · ' + r.detail : ''}` : 'No run yet', chips: [r ? [r.status, v(r)] : ['waiting', '']] }); }));
-    $('runs').replaceChildren(...(runs.length ? runs.slice(0, 12).map(r => row({ lead: short(r.startedAt), title: r.pipeline || r.id, detail: [E.chicagoClock(r.startedAt), r.detail].filter(Boolean).join(' · '), chips: [[r.status || '?', v(r)]] })) : [empty('Runs log here, including failures.')]));
-    const cap = (hl && hl.capacity) || (st && st.health && st.health.capacity) || null;
-    if (cap && cap.docs != null) { const meter = el('div', 'meter'); const bar = el('i'); bar.style.width = Math.max(1, Math.min(100, cap.pct || 0)) + '%'; meter.append(bar); $('capacity').replaceChildren(el('p', null, `${Number(cap.docs).toLocaleString()} documents${cap.cap ? ' of ' + Number(cap.cap).toLocaleString() + ' (' + cap.pct + '%)' : ''}`), meter); }
+    const sched = EV_SPEC.schedules || {};
+    $('pipes').replaceChildren(...names.map(([p, def]) => { const r = last[p]; const label = (PIPE_NAME[p] || p) + ' · ' + (def.steps ? when(sched[p]) : 'not built yet');
+      return row({ title: label, detail: r ? `Last run ${short(r.startedAt)} ${E.chicagoClock(r.startedAt)}${r.status === 'running' ? ', still running' : ''}${r.detail ? ' · ' + r.detail : ''}` : def.steps ? 'No run yet' : 'Arrives in a later build step', chips: [r ? [r.status, v(r)] : [def.steps ? 'waiting' : 'later', '']] }); }));
+    $('runs').replaceChildren(...(runs.length ? runs.slice(0, 12).map(r => row({ lead: short(r.startedAt), title: PIPE_NAME[r.pipeline] || r.pipeline || r.id, detail: [E.chicagoClock(r.startedAt), r.detail].filter(Boolean).join(' · ').slice(0, 220), chips: [[r.status || '?', v(r)]] })) : [empty('Runs log here, including failures.')]));
+    const cap = (hl && hl.capacity) || null;
+    if (cap && cap.docs != null) $('capacity').replaceChildren(el('p', null, `${Number(cap.docs).toLocaleString()} documents in your record.`), el('p', 'meta', 'Nothing is ever deleted; E.V. reads by date window, so the record can grow without slowing the page.'));
     else $('capacity').replaceChildren(el('p', 'meta', 'Counts arrive with the watchdog’s health check.'));
     const issues = st && st.lint ? st.lint.top || [] : [];
     $('lint').replaceChildren(...(issues.length ? issues.map(i => row({ title: i.msg, detail: i.ref, chips: [[i.severity, i.severity === 'error' ? 'bad' : i.severity === 'warning' ? 'warn' : '']] })) : [empty('No problems in the last check.')]));
     const js = [...S.jobs].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || ''))).slice(0, 10);
     $('jobs').replaceChildren(...(js.length ? js.map(j => { const st = jobState(j); return row({ lead: short(j.createdAt), title: j.title || j.id, detail: [(KINDS[j.kind] || {}).label, st.detail].filter(Boolean).join(' · '), chips: [[st.label, st.v]] }); }) : [empty('Jobs you ask E.V. for show up here.')]));
-    $('versions').replaceChildren(document.createTextNode(`Release ${EV_BUILD} · core ${E.VERSION} · spec ${EV_SPEC.specVersion} · ${EV_SPEC.target} record${st ? ' · snapshot ' + short(st.generatedAt) + ' ' + E.chicagoClock(st.generatedAt) : ''}`));
+    $('versions').replaceChildren(document.createTextNode(`Release ${EV_BUILD} · core ${E.VERSION} · spec ${EV_SPEC.specVersion} · ${EV_SPEC.target === 'staging' ? 'staging record' : 'your record'}${st ? ' · snapshot ' + short(st.generatedAt) + ' ' + E.chicagoClock(st.generatedAt) : ''}`));
   }
 
   // ------------------------------------------------------------ E.V. (the conversation)

@@ -15,6 +15,7 @@ const seed = load(dbDir);
 delete seed.system; delete seed.legacy; delete seed.debug; delete seed.journal; // the harness never needs his journal
 const env = (writer, source, at) => ({ schema: 1, writer, at: at || new Date().toISOString(), source });
 const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date());
+const DAYTIME = new Date(today + 'T19:00:00Z'); // 2pm CDT: the page's clock (see openPage)
 // Today's review: the newest review set in the record, with its answers, as today's (so the summary is known).
 const lastReview = Object.keys(seed.sets || {}).filter(k => /^review-\d{4}-\d{2}-\d{2}$/.test(k)).sort().pop();
 let reviewExpect = null;
@@ -32,7 +33,6 @@ seed.sets['more-' + today + '-1'] = { ...env('page', 'More practice'), kind: 'mo
   { id: 'm2', kind: 'check', objective: 'E4-2', topic: 'Caring behaviors', type: 'sata', cjStep: 'generate-solutions', stem: 'Which actions show caring behaviors with an anxious older adult? Select all that apply.', options: ['Sit at eye level', 'Use touch if welcomed', 'Speak quickly to save time', 'Listen without interrupting', 'Talk to the family instead'], correct: [0, 1, 3], rationales: ['Yes.', 'Yes.', 'No.', 'Yes.', 'No.'] },
   { id: 'm3', kind: 'review', weakspotId: 'e4-aging-expected', objective: 'E4-3', topic: 'Aging: expected vs. unexpected', type: 'matrix', cjStep: 'recognize-cues', stem: 'An 82-year-old is admitted. Mark each finding as expected with aging or unexpected.', matrix: { columns: ['Expected', 'Unexpected'], rows: [{ text: 'Thinner, drier skin', correct: 0, rationale: 'Normal aging.' }, { text: 'New confusion since yesterday', correct: 1, rationale: 'Sudden change suggests delirium.' }, { text: 'Slower reaction time', correct: 0, rationale: 'Normal aging.' }] } },
 ] };
-// A background job that finished an hour ago, so the greeting has something to report.
 const hourAgo = new Date(Date.now() - 3600e3).toISOString();
 // A small library file (D-079): the skills packet's head-to-toe checklist sits on page 12.
 seed.materials = seed.materials || {};
@@ -47,6 +47,8 @@ seed.dates['canvas-h-hall'] = { ...env('canvas-sync', 'Canvas'), canvasId: 9002,
 const pdfjsDir = path.join(root, 'node_modules/pdfjs-dist/build');
 const hasPdfjs = fs.existsSync(path.join(pdfjsDir, 'pdf.min.mjs'));
 const servePdfjs = page => page.route('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/**', r => { const f = path.join(pdfjsDir, r.request().url().split('/').pop()); return fs.existsSync(f) ? r.fulfill({ body: fs.readFileSync(f), headers: { 'Content-Type': 'text/javascript', 'Access-Control-Allow-Origin': '*' } }) : r.abort(); });
+// The watchdog's last health check (B-17): one stalled run it re-fired, one it could not, the evening's hash.
+seed.health = { current: { ...env('watchdog', 'watchdog harness', new Date(DAYTIME.getTime() - 50 * 60e3).toISOString()), record: 'staging', pipelines: { morning: { id: 'morning-h', status: 'ok', startedAt: new Date(DAYTIME.getTime() - 9 * 3600e3).toISOString(), endedAt: new Date(DAYTIME.getTime() - 9 * 3600e3 + 300e3).toISOString(), release: 'v4.0.0' } }, missing: [{ pipeline: 'evening-cloud', slot: new Date(DAYTIME.getTime() - 20 * 3600e3).toISOString(), refired: true }], stalledRuns: [{ id: 'weekly-h', pipeline: 'weekly', startedAt: new Date(DAYTIME.getTime() - 3 * 3600e3).toISOString(), minutes: 180, refired: false }], stalledJobs: [], reported: [{ id: 'watchdog-refire-weekly-h', target: 'run weekly-h', reason: 'never ended', why: 'already re-fired once' }], verifyDeploy: null, derivedHash: { evening: 'x'.repeat(64), at: new Date(DAYTIME.getTime() - 18 * 3600e3).toISOString() }, capacity: { cap: 25000, docs: 412, level: 'ok', pct: 1.6 }, restoreDrill: null } };
 // A background job that finished an hour ago: the page wrote jobs/<id>, the worker wrote jobresults/<id>.
 seed.jobs = { 'job-20261017-150000-cardiac-output': { ...env('page', 'E.V. Home', new Date(Date.now() - 7200e3).toISOString()), kind: 'study-guide', title: 'Study guide: cardiac output', brief: 'harness', fired: { at: hourAgo, ok: true } } };
 seed.jobresults = { 'job-20261017-150000-cardiac-output': { ...env('worker', 'worker harness', hourAgo), release: 'v4.0.0', status: 'done', startedAt: hourAgo, finishedAt: hourAgo, result: { text: 'One page on preload, afterload and contractility, with three self-check questions.', links: [{ title: 'E.V. study guide: cardiac output', url: 'https://claude.ai/artifact/harness' }] } } };
@@ -58,7 +60,6 @@ const TYPES = { '.js': 'text/javascript', '.json': 'application/json', '.css': '
 const skeleton = b => '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0}[hidden]{display:none!important}</style></head><body>' + b + '</body></html>';
 // The page's clock starts at 2pm Central today and runs from there, so the greeting and its chips are the afternoon's
 // whatever time the harness runs (v3's ran in the daytime by habit).
-const DAYTIME = new Date(today + 'T19:00:00Z'); // 2pm CDT
 async function openPage(page, target = 'staging', pre = '') { // live tasks are created at cutover (B-24), so the main pass drives the staging build
   await page.clock.install({ time: DAYTIME });
   const dir = path.join(root, 'dist/page', target);
@@ -375,7 +376,14 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     ok('journal warns about identifiers', /room number/.test(await page.textContent('#j-warn')));
     // System
     await page.click('#tab-system'); await page.waitForTimeout(100);
-    ok('system shows capacity and the runs', /documents|health check/.test(await page.textContent('#capacity')) && (await page.locator('#pipes .row').count()) >= 5, await page.textContent('#capacity'));
+    ok('system shows capacity and the runs', /412 documents in your record/.test(await page.textContent('#capacity')) && (await page.locator('#pipes .row').count()) >= 5, await page.textContent('#capacity'));
+    // ---- System health panel (B-17): health/current in plain words, never alarming
+    const hp = await page.textContent('#health');
+    ok('health panel leads with a plain verdict from health/current', /3 things to look at\./.test(hp) && /checked 5\d min ago/.test(hp), hp.slice(0, 160));
+    ok('a missed slot, a stalled run and a stuck retry each read as a sentence', /Evening \(cloud\) missed its .*run; E\.V\. started it again\./.test(hp) && /Weekly review started 3 h ago and never finished\./.test(hp) && /weekly-h: never ended, still stuck after one retry\. A build chat should look\./.test(hp), hp);
+    ok('the weak spot state is held against the evening hash, and the drill age is shown', /Your weak spots changed since the evening snapshot/.test(hp) && /Backup restore drill: none yet/.test(hp));
+    ok('pipelines read with when they run', /Morning · daily 4:25am/.test(await page.textContent('#pipes')) && /Watchdog · every 3 hours/.test(await page.textContent('#pipes')) && /Restore drill · not built yet/.test(await page.textContent('#pipes')), (await page.textContent('#pipes')).slice(0, 300));
+    ok('versions name the release and the record', /Release v4\.0\.0 · core v4\.0\.0 · spec 4\.0\.0 · staging record/.test(await page.textContent('#versions')));
     await page.screenshot({ path: `${shots}/system.png`, fullPage: true });
     ok('no page errors after interactions', errors.length === 0, errors.join(' | '));
     // Visitor

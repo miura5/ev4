@@ -116,6 +116,7 @@ export function buildPages({ root, spec, schemas, release }) {
       constants: spec.constants, capacity: spec.capacity, ui: spec.ui, jobs: spec.jobs, boundaries: spec.boundaries,
       workingAgreements: spec.workingAgreements, persona: spec.persona || null, items: spec.items || null, pipelines: Object.fromEntries(Object.entries(spec.pipelines).filter(([k]) => !k.startsWith('_')).map(([k, p]) => [k, { lane: p.lane, purpose: p.purpose, steps: p.steps ? p.steps.length : null }])),
       reader: (spec.registry.studyWatch || {}).reader || null,
+      schedules: Object.fromEntries(Object.entries(spec.tasks.live || {}).filter(([, t]) => t && t.pipeline).map(([k, t]) => [t.pipeline, t.schedule || null])), // when each runs live (no task ids)
       collections: spec.collections, schemas,
     };
     const specJson = JSON.stringify(pageSpec);
