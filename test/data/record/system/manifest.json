@@ -2,8 +2,261 @@
  "schema": 1,
  "writer": "deploy",
  "at": "2026-10-16T14:00:00Z",
- "source": "deploy",
+ "source": "deploy v4.0.0",
  "release": "v4.0.0",
- "commit": "0000000000000000000000000000000000000000",
- "dirty": false
+ "commit": "f951d794b498dfb6d109c4ce7c1ba5c8305c763d",
+ "dirty": false,
+ "builtAt": "2026-10-16T14:00:00Z",
+ "specVersion": "4.0.0",
+ "files": {
+  "core/schemas.mjs": "6c1c2889d18ee56b1fcdeea53d109035cd4284091865d146ad796cc61f61cbe0",
+  "core/validate.mjs": "2d9bcc06c0253d5d73aba033e5fc27998635fc29e0060fbfe6e982fe1f047bd0",
+  "spec/ev.spec.json": "e8400078051bce39beae7e1e277ee2254955a37e22bc0d9a19f83e0a8bed1856",
+  "spec/schemas/announcements.schema.json": "c113c52e679dbd13a0802c79d1756b5bbc2df88544b0e7a6aca4e8a5badedadf",
+  "spec/schemas/answers.schema.json": "f5b28ed365effe6d67a155b92c2c92e5296212617e9760ff3d4920c579357e92",
+  "spec/schemas/concepts.schema.json": "a787afb94bbffd92c4ceede1f2750c74922255c9d98566b63c58c9c729147d52",
+  "spec/schemas/dateedits.schema.json": "f4224c02fc660e3d4855e2b4b83ac18a3f78df96b38ff024489f45b02fb648ec",
+  "spec/schemas/dates.schema.json": "484055bd2470ad7714f5b5c2f9de167f0f5413a81462502c2c337146c88a4842",
+  "spec/schemas/dayedits.schema.json": "b85daf8118c96c680d567600a4ef36bdaddea5a3ab9f123076fee4fdee70614f",
+  "spec/schemas/days.schema.json": "98aa53d4c108ff3ae17fdb80cd1ab0c92f92174b687ea3e923d2fc5455b61cac",
+  "spec/schemas/exams.schema.json": "750ba41faa8ff10efb81fbd6c1bc46cacae0e3f45941c41edd6bf8df23ac072b",
+  "spec/schemas/health.schema.json": "68f5e499faba31282ecc66ed017af1ab83e1657bf2971b3b1bead784ab749681",
+  "spec/schemas/ideas.schema.json": "1b164e08ceea1e340be63766ce6a1e1b941a6f4cad84bfdd2cac97141c726950",
+  "spec/schemas/jobresults.schema.json": "6f4ba212f6ac914159cdde4a1c28368e8aa3cc95423d1960ddae3541de2f2398",
+  "spec/schemas/jobs.schema.json": "f245e643e7801cc23d5204c98272dd175ecc84ee13835e106bf0b2af95a21b45",
+  "spec/schemas/journal.schema.json": "1dd73efdbf385d7871450a0ade09a2cb14ce1a0988083a08740df91b7aaa54da",
+  "spec/schemas/legacy.schema.json": "656cc6d00f73f1d46fc3ab3584bbba2ea50160c6eac75a5615daa2a43b5fdd42",
+  "spec/schemas/libindex.schema.json": "1ccf47e1d40276fec007a49b35c3f4f75e059dfed4db8d828a5f250b851fd47a",
+  "spec/schemas/materialedits.schema.json": "beafd0478a538b96049e09b3a3d5c2164900bfdbb4b7b3d6a0e185e70d1f05c6",
+  "spec/schemas/materials.schema.json": "f96ec3fe661d9f044a1a9a4765d90fbf7872727da631c85a7b08d7f68cd4a0c9",
+  "spec/schemas/objectives.schema.json": "5c6b74016cef79bd78f7a64dce0f308cb1f2443f5aa35809fddeca0ee3b26e6b",
+  "spec/schemas/planedits.schema.json": "f3c091cda6af00cfd28f8650016dd9d525c108a017bfff2f152afc6a03c852a5",
+  "spec/schemas/plans.schema.json": "b6ea32a5613f0b8a235df2499633ec2a480798f95ac60bf10b68de9ad64db1b1",
+  "spec/schemas/runs.schema.json": "83d59543b263cb6001c485283f0aa0d44a3e3b3780e9b59b6e99bb712d7af168",
+  "spec/schemas/sessions.schema.json": "53cfc85b51eb503f806dda0e0a05e852ccbfa2f1ecc543facd10f74b44bf8e32",
+  "spec/schemas/sets.schema.json": "2f5afe698db46deb2b5acb3257e55e02789e7baffff3ac086638530dc985a5b2",
+  "spec/schemas/state.schema.json": "c29d61bcec60bcf75ee122212c653fdcb3c32bfec72581f0a58d1c878c556d26",
+  "spec/schemas/system.schema.json": "fd0611482875427776d4a3f950b3677c3e74e20896e87ae2b9bfef4c2c95844a",
+  "spec/schemas/talk.schema.json": "6e061aea0e7d6402fdcdbb3c7ea06742f35eec7b70795bbb7e3f9b51a67928f3",
+  "spec/schemas/weakspots.schema.json": "805a033e96fe1fc75e1006482d780abe85ed8a50dda35b7d3010c939ce828ca8",
+  "spec/schemas/weeks.schema.json": "43d65a95f59a2b86524f190f4396eedfa918ef9c9dba127a9bb86f9c4911b37d"
+ },
+ "pages": {
+  "live": {
+   "artifact": "Bu8RevP4r1twPdSGc77nfg",
+   "files": {},
+   "capabilities": null
+  },
+  "staging": {
+   "artifact": null,
+   "files": {},
+   "capabilities": null
+  }
+ },
+ "tasks": {
+  "live.morning": {
+   "name": "E.V. morning (v4.0.0)",
+   "pipeline": "morning",
+   "record": "live",
+   "lane": "cloud",
+   "schedule": "CRON_TZ=America/Chicago 25 4 * * *",
+   "macBound": false,
+   "folders": [],
+   "push": true,
+   "trigger": null,
+   "promptSha256": null
+  },
+  "live.evening-cloud": {
+   "name": "E.V. evening-cloud (v4.0.0)",
+   "pipeline": "evening-cloud",
+   "record": "live",
+   "lane": "cloud",
+   "schedule": "CRON_TZ=America/Chicago 15 20 * * *",
+   "macBound": false,
+   "folders": [],
+   "push": true,
+   "trigger": null,
+   "promptSha256": null
+  },
+  "live.evening-mac": {
+   "name": "E.V. evening-mac (v4.0.0)",
+   "pipeline": "evening-mac",
+   "record": "live",
+   "lane": "mac",
+   "schedule": "CRON_TZ=America/Chicago 20 20 * * *",
+   "macBound": true,
+   "folders": [
+    "/Users/peachfritter/Documents/E.V. Study Watch"
+   ],
+   "push": false,
+   "trigger": null,
+   "promptSha256": null
+  },
+  "live.weekly": {
+   "name": "E.V. weekly (v4.0.0)",
+   "pipeline": "weekly",
+   "record": "live",
+   "lane": "cloud",
+   "schedule": "CRON_TZ=America/Chicago 57 17 * * 0",
+   "macBound": false,
+   "folders": [],
+   "push": true,
+   "trigger": null,
+   "promptSha256": null
+  },
+  "live.worker": {
+   "name": "E.V. worker (v4.0.0)",
+   "pipeline": "worker",
+   "record": "live",
+   "lane": "cloud",
+   "schedule": null,
+   "macBound": false,
+   "folders": [],
+   "push": true,
+   "trigger": null,
+   "promptSha256": null
+  },
+  "live.watchdog": {
+   "name": "E.V. watchdog (v4.0.0)",
+   "pipeline": "watchdog",
+   "record": "live",
+   "lane": "cloud",
+   "schedule": "CRON_TZ=America/Chicago 0 */3 * * *",
+   "macBound": false,
+   "folders": [],
+   "push": false,
+   "trigger": null,
+   "promptSha256": null
+  },
+  "staging.morning": {
+   "name": "E.V. staging · morning (v4.0.0)",
+   "pipeline": "morning",
+   "record": "staging",
+   "lane": "cloud",
+   "schedule": null,
+   "macBound": false,
+   "folders": [],
+   "push": false,
+   "trigger": null,
+   "promptSha256": null
+  },
+  "staging.evening-cloud": {
+   "name": "E.V. staging · evening-cloud (v4.0.0)",
+   "pipeline": "evening-cloud",
+   "record": "staging",
+   "lane": "cloud",
+   "schedule": null,
+   "macBound": false,
+   "folders": [],
+   "push": false,
+   "trigger": null,
+   "promptSha256": null
+  },
+  "staging.evening-mac": {
+   "name": "E.V. staging · evening-mac (v4.0.0)",
+   "pipeline": "evening-mac",
+   "record": "staging",
+   "lane": "mac",
+   "schedule": null,
+   "macBound": true,
+   "folders": [
+    "/Users/peachfritter/Documents/E.V. Study Watch/staging"
+   ],
+   "push": false,
+   "trigger": null,
+   "promptSha256": null
+  },
+  "staging.weekly": {
+   "name": "E.V. staging · weekly (v4.0.0)",
+   "pipeline": "weekly",
+   "record": "staging",
+   "lane": "cloud",
+   "schedule": null,
+   "macBound": false,
+   "folders": [],
+   "push": false,
+   "trigger": null,
+   "promptSha256": null
+  },
+  "staging.worker": {
+   "name": "E.V. staging · worker (v4.0.0)",
+   "pipeline": "worker",
+   "record": "staging",
+   "lane": "cloud",
+   "schedule": null,
+   "macBound": false,
+   "folders": [],
+   "push": false,
+   "trigger": null,
+   "promptSha256": null
+  },
+  "staging.watchdog": {
+   "name": "E.V. staging · watchdog (v4.0.0)",
+   "pipeline": "watchdog",
+   "record": "staging",
+   "lane": "cloud",
+   "schedule": null,
+   "macBound": false,
+   "folders": [],
+   "push": false,
+   "trigger": null,
+   "promptSha256": null
+  },
+  "staging.restore-drill": {
+   "name": "E.V. staging · restore-drill (v4.0.0)",
+   "pipeline": "restore-drill",
+   "record": "staging",
+   "lane": "mac",
+   "schedule": null,
+   "macBound": true,
+   "folders": [
+    "/Users/peachfritter/Documents/E.V. Study Watch"
+   ],
+   "push": false,
+   "trigger": null,
+   "promptSha256": null
+  },
+  "staging.diagnostic": {
+   "name": "E.V. staging · diagnostic (v4.0.0)",
+   "pipeline": "diagnostic",
+   "record": "staging",
+   "lane": "cloud",
+   "schedule": null,
+   "macBound": false,
+   "folders": [],
+   "push": false,
+   "trigger": null,
+   "promptSha256": null
+  },
+  "build.ev4-builder": {
+   "name": "ev4-builder",
+   "pipeline": null,
+   "record": null,
+   "lane": "cloud",
+   "schedule": null,
+   "macBound": false,
+   "folders": [],
+   "push": true,
+   "trigger": "trig_01Rubgkh9mfYXZaRh8jm6uP6",
+   "promptSha256": null
+  }
+ },
+ "records": {
+  "live": {
+   "artifact": "Bu8RevP4r1twPdSGc77nfg",
+   "systemDocs": [
+    "system/manifest",
+    "system/spec",
+    "system/environments"
+   ]
+  },
+  "staging": {
+   "artifact": null,
+   "systemDocs": [
+    "system/manifest",
+    "system/spec",
+    "system/environments"
+   ]
+  }
+ }
 }

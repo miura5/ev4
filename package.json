@@ -8,7 +8,8 @@
   "node": ">=22"
  },
  "scripts": {
-  "test": "node --test test/*.test.mjs"
+  "test": "node --test test/*.test.mjs",
+  "build": "node tools/build.mjs"
  },
  "devDependencies": {
   "playwright": "1.64.1"

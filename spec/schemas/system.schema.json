@@ -78,6 +78,11 @@
    ]
   },
   "manifest": {
+   "allOf": [
+    {
+     "$ref": "#/$defs/manifestBody"
+    }
+   ],
    "type": "object",
    "properties": {
     "schema": {
@@ -94,14 +99,6 @@
      "type": "string",
      "minLength": 1
     },
-    "release": {
-     "type": "string",
-     "pattern": "^v4\\.\\d+\\.\\d+$"
-    },
-    "commit": {
-     "type": "string",
-     "pattern": "^[0-9a-f]{40}$"
-    },
     "dirty": {
      "const": false
     }
@@ -110,10 +107,7 @@
     "schema",
     "writer",
     "at",
-    "source",
-    "release",
-    "commit",
-    "dirty"
+    "source"
    ]
   },
   "environments": {
@@ -140,6 +134,236 @@
     "at",
     "source"
    ]
+  },
+  "manifestBody": {
+   "type": "object",
+   "properties": {
+    "schema": {
+     "const": 1
+    },
+    "writer": {
+     "const": "deploy"
+    },
+    "at": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "source": {
+     "type": "string",
+     "minLength": 1
+    },
+    "release": {
+     "type": "string",
+     "pattern": "^v4\\.\\d+\\.\\d+$"
+    },
+    "commit": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{40}$"
+    },
+    "dirty": {
+     "type": "boolean"
+    },
+    "builtAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "specVersion": {
+     "type": "string",
+     "pattern": "^4\\.\\d+\\.\\d+$"
+    },
+    "files": {
+     "type": "object",
+     "propertyNames": {
+      "pattern": "^(core|scripts|page|spec|dist)/"
+     },
+     "additionalProperties": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+     }
+    },
+    "pages": {
+     "type": "object",
+     "properties": {
+      "live": {
+       "$ref": "#/$defs/page"
+      },
+      "staging": {
+       "$ref": "#/$defs/page"
+      }
+     },
+     "required": [
+      "live",
+      "staging"
+     ],
+     "additionalProperties": false
+    },
+    "tasks": {
+     "type": "object",
+     "additionalProperties": {
+      "$ref": "#/$defs/task"
+     }
+    },
+    "records": {
+     "type": "object",
+     "properties": {
+      "live": {
+       "$ref": "#/$defs/record"
+      },
+      "staging": {
+       "$ref": "#/$defs/record"
+      }
+     },
+     "required": [
+      "live",
+      "staging"
+     ],
+     "additionalProperties": false
+    }
+   },
+   "required": [
+    "release",
+    "commit",
+    "dirty",
+    "builtAt",
+    "specVersion",
+    "files",
+    "pages",
+    "tasks",
+    "records"
+   ],
+   "additionalProperties": false,
+   "$comment": "What tools/build.mjs writes to dist/manifest.json. The record copy (system/manifest) adds the envelope and must not be dirty."
+  },
+  "page": {
+   "type": "object",
+   "properties": {
+    "artifact": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "files": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+     }
+    },
+    "capabilities": {
+     "type": [
+      "object",
+      "null"
+     ]
+    }
+   },
+   "required": [
+    "artifact",
+    "files",
+    "capabilities"
+   ],
+   "additionalProperties": false
+  },
+  "task": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "type": "string",
+     "minLength": 1
+    },
+    "pipeline": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "record": {
+     "enum": [
+      "live",
+      "staging",
+      null
+     ]
+    },
+    "lane": {
+     "enum": [
+      "cloud",
+      "mac"
+     ]
+    },
+    "schedule": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "macBound": {
+     "type": "boolean"
+    },
+    "folders": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "push": {
+     "type": "boolean"
+    },
+    "trigger": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "pattern": "^trig_"
+    },
+    "promptSha256": {
+     "anyOf": [
+      {
+       "type": "string",
+       "pattern": "^[0-9a-f]{64}$"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    }
+   },
+   "required": [
+    "name",
+    "pipeline",
+    "record",
+    "lane",
+    "schedule",
+    "macBound",
+    "folders",
+    "push",
+    "trigger",
+    "promptSha256"
+   ],
+   "additionalProperties": false
+  },
+  "record": {
+   "type": "object",
+   "properties": {
+    "artifact": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "systemDocs": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "pattern": "^system/"
+     },
+     "minItems": 1
+    }
+   },
+   "required": [
+    "artifact",
+    "systemDocs"
+   ],
+   "additionalProperties": false
   }
  }
 }
