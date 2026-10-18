@@ -15,12 +15,6 @@ const seed = load(dbDir);
 delete seed.system; delete seed.legacy; delete seed.debug; delete seed.journal; // the harness never needs his journal
 seed.ideas = seed.ideas || {}; seed.ideas['idea-harness-feature'] = { schema: 2, writer: 'page', at: '2026-10-17T14:00:00Z', source: 'Told E.V.', kind: 'feature', text: 'Harness feature idea: a dark-mode calendar', objective: '', status: 'open', links: [] }; // B-53
 seed.exams = seed.exams || {}; seed.exams['E0H'] = { schema: 2, writer: 'page', at: '2026-09-01T14:00:00Z', source: 'harness', course: 'NUR 112', kind: 'unit', title: 'Harness Exam 0', date: '2026-10-01', status: 'upcoming' }; // B-39: past, no score
-// B-47 (D-104): a finished exam-retro job with its numbers, for the retro card check
-seed.jobs = seed.jobs || {}; seed.jobresults = seed.jobresults || {};
-seed.jobs['job-harness-retro'] = { schema: 1, writer: 'page', at: '2026-10-01T15:00:00Z', source: 'E.V. Home', kind: 'exam-retro', title: 'Retro: Harness Exam 3', brief: 'E3H: the retro after the score he entered', fired: { at: '2026-10-01T15:00:01Z', ok: true } };
-seed.jobresults['job-harness-retro'] = { schema: 1, writer: 'worker', at: '2026-10-01T15:05:00Z', source: 'worker harness', release: 'v4.0.0', status: 'done', startedAt: '2026-10-01T15:02:00Z', finishedAt: '2026-10-01T15:05:00Z', message: null, error: null,
-  result: { text: 'You scored 90, two points above my range. I underrated you.', links: [], retro: { examId: 'E3H', title: 'Harness Exam 3', date: '2026-09-30', score: 90, prediction: { predictedRange: [80, 88], basis: 'made up' }, calibration: { score: 90, predictedRange: [80, 88], inRange: false, error: 6 },
-    practice: { answered: 10, right: 7, pct: 70, byObjective: [{ id: 'E3-2', text: '', right: 2, n: 4, pct: 50 }, { id: 'E3-1', text: '', right: 5, n: 6, pct: 83.3 }] }, weakSpots: { solid: 2, open: 1, openTopics: [{ topic: 'Made-up topic', objective: 'E3-2', recurrence: 1 }] }, plan: { tasks: 4, ticked: 3, left: [{ date: '2026-09-29', text: 'Practice sim', kind: 'sim' }] } } } };
 seed.system = { manifest: { release: 'v4.0.0', commit: 'a'.repeat(40), pages: { staging: { files: { 'page/staging/app.js': 'a'.repeat(64) } }, live: { files: {} } } } }; // B-38
 const env = (writer, source, at) => ({ schema: 1, writer, at: at || new Date().toISOString(), source });
 const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date());
@@ -73,6 +67,11 @@ seed.health = { current: { ...env('watchdog', 'watchdog harness', new Date(DAYTI
 if (seed.state && seed.state.current) seed.state.current.lint = { at: new Date(DAYTIME.getTime() - 18 * 3600e3).toISOString(), commit: 'c'.repeat(40), errors: 0, warnings: 1, notes: 2, notesByCode: { frozen: 1, 'not-rebuilt': 1 }, rebuilt: { same: 3, of: 4 }, top: [{ severity: 'warning', code: 'derived-stale', ref: 'days/2026-10-17', msg: 'built by build aaaaaaaaaaaa; differs from this build\'s rebuild until its next run' }] };
 seed.jobs = { 'job-20261017-150000-cardiac-output': { ...env('page', 'E.V. Home', new Date(Date.now() - 7200e3).toISOString()), kind: 'study-guide', title: 'Study guide: cardiac output', brief: 'harness', fired: { at: hourAgo, ok: true } } };
 seed.jobresults = { 'job-20261017-150000-cardiac-output': { ...env('worker', 'worker harness', hourAgo), release: 'v4.0.0', status: 'done', startedAt: hourAgo, finishedAt: hourAgo, result: { text: 'One page on preload, afterload and contractility, with three self-check questions.', links: [{ title: 'E.V. study guide: cardiac output', url: 'https://claude.ai/artifact/harness' }] } } };
+// B-47 (D-104): a finished exam-retro job with its numbers, for the retro card check
+seed.jobs['job-harness-retro'] = { schema: 1, writer: 'page', at: hourAgo, source: 'E.V. Home', kind: 'exam-retro', title: 'Retro: Harness Exam 3', brief: 'E3H: the retro after the score he entered', fired: { at: '2026-10-01T15:00:01Z', ok: true } };
+seed.jobresults['job-harness-retro'] = { schema: 1, writer: 'worker', at: hourAgo, source: 'worker harness', release: 'v4.0.0', status: 'done', startedAt: '2026-10-01T15:02:00Z', finishedAt: '2026-10-01T15:05:00Z', message: null, error: null,
+  result: { text: 'You scored 90, two points above my range. I underrated you.', links: [], retro: { examId: 'E3H', title: 'Harness Exam 3', date: '2026-09-30', score: 90, prediction: { predictedRange: [80, 88], basis: 'made up' }, calibration: { score: 90, predictedRange: [80, 88], inRange: false, error: 6 },
+    practice: { answered: 10, right: 7, pct: 70, byObjective: [{ id: 'E3-2', text: '', right: 2, n: 4, pct: 50 }, { id: 'E3-1', text: '', right: 5, n: 6, pct: 83.3 }] }, weakSpots: { solid: 2, open: 1, openTopics: [{ topic: 'Made-up topic', objective: 'E3-2', recurrence: 1 }] }, plan: { tasks: 4, ticked: 3, left: [{ date: '2026-09-29', text: 'Practice sim', kind: 'sim' }] } } } };
 const spec = JSON.parse(fs.readFileSync(path.join(root, 'spec/ev.spec.json'), 'utf8'));
 const stub = fs.readFileSync(path.join(__dirname, 'stub.js'), 'utf8');
 // The page as the platform serves it: the shell inside its skeleton at the artifact's origin, its files beside it.
@@ -133,6 +132,11 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     if (scheme === 'desktop') {
       await page.locator('#qchips .qchip', { hasText: 'What’s due this week?' }).click(); await page.waitForTimeout(900);
       await page.screenshot({ path: `${shots}/ev-desktop-conversation.png`, fullPage: false });
+      // B-47: the retro card at desktop width
+      await page.evaluate(() => { window.__chatPre = ''; window.__chatScript = [{ tool: 'show_card', input: { type: 'job', id: 'job-harness-retro' } }]; window.__chatReply = 'Here’s your Exam 3 retro.'; });
+      await send(page, 'Show me my Exam 3 retro'); await page.waitForTimeout(300);
+      ok('[desktop] the retro card shows its numbers', /you scored 90 \(2 above the range\)/.test(await page.locator('#thread .msg.ev').last().textContent()));
+      await page.locator('#thread .msg.ev').last().screenshot({ path: `${shots}/retro-card-desktop.png` });
       await page.close(); continue;
     }
     await page.waitForTimeout(1500);
@@ -164,12 +168,6 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     const two = (await msgs(page)).slice(-1)[0];
     ok('two-round reply saved once, without the first-round narration', two.text === 'Here’s what’s still open today.' && two.cards.some(c => c.type === 'today'), JSON.stringify(two.text));
     ok('two-round reply shown once', !/resize/.test(await page.locator('#thread .msg.ev').last().textContent()));
-    // B-47 (D-104): a finished retro's card shows the numbers the narrative was written over
-    await page.evaluate(() => { window.__chatScript = [{ tool: 'show_card', input: { type: 'job', id: 'job-harness-retro' } }]; window.__chatReply = 'Here’s your Exam 3 retro.'; });
-    await send(page, 'Show me my Exam 3 retro'); await page.waitForTimeout(300);
-    { const t = await page.locator('#thread .msg.ev').last().textContent();
-      ok('the retro card shows prediction against score, practice, weak spots and plan', /Exam retro/.test(t) && /80–88 · you scored 90 \(2 above the range\)/.test(t) && /7 of 10 right \(70%\) · weakest E3-2 at 50%/.test(t) && /2 made solid · 1 still open/.test(t) && /3 of 4 tasks done/.test(t) && /I underrated you/.test(t), t.slice(0, 300));
-      await page.locator('#thread .msg.ev').last().screenshot({ path: `${shots}/retro-card.png` }); }
     await page.evaluate(() => { window.__chatPre = ''; });
     // Ticking an item in a conversation card: the thread is patched in place (no replayed animations, no jump)
     {
@@ -182,6 +180,12 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
       ok('the ticked item stays in the open card, shown done', (await tc.locator('.row.done input.tick:checked').count()) >= 1);
       ok('the tick was saved', await page.evaluate(() => Object.keys((window.__db.dayedits && window.__db.dayedits[new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date())] || {}).checks || {}).length > 0 || Object.values(window.__db.planedits || {}).some(p => p.ticks && Object.keys(p.ticks).length)));
     }
+    // B-47 (D-104): a finished retro's card shows the numbers the narrative was written over
+    await page.evaluate(() => { window.__chatPre = ''; window.__chatScript = [{ tool: 'show_card', input: { type: 'job', id: 'job-harness-retro' } }]; window.__chatReply = 'Here’s your Exam 3 retro.'; });
+    await send(page, 'Show me my Exam 3 retro'); await page.waitForTimeout(300);
+    { const t = await page.locator('#thread .msg.ev').last().textContent();
+      ok('the retro card shows prediction against score, practice, weak spots and plan', /Exam retro/.test(t) && /80–88 · you scored 90 \(2 above the range\)/.test(t) && /7 of 10 right \(70%\) · weakest E3-2 at 50%/.test(t) && /2 made solid · 1 still open/.test(t) && /3 of 4 tasks done/.test(t) && /I underrated you/.test(t), t.slice(0, 300));
+      await page.locator('#thread .msg.ev').last().screenshot({ path: `${shots}/retro-card.png` }); }
     // The small core in the top bar brings the large one back, and sending tucks it away again
     await page.click('#brand'); await page.waitForTimeout(700);
     ok('tapping the small core shows the large one', await page.evaluate(() => document.body.classList.contains('core-big') && document.querySelector('#hero').getBoundingClientRect().height > 150));
@@ -420,7 +424,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
       const ed = await page.evaluate(() => (window.__db.examedits || {}).E0H);
       ok('the score lands in examedits/<examId>, the exam itself unchanged', !!ed && ed.score === 88.5 && ed.status === 'done' && ed.writer === 'page' && await page.evaluate(() => !('score' in window.__db.exams.E0H)), JSON.stringify(ed));
       // B-47 (D-104): the saved score starts the post-exam retro: an exam-retro job naming the exam, fired on the worker
-      const rj = await page.evaluate(() => Object.entries(window.__db.jobs || {}).filter(([, j]) => j.kind === 'exam-retro').map(([id, j]) => ({ id, ...j })));
+      const rj = await page.evaluate(() => Object.entries(window.__db.jobs || {}).filter(([, j]) => j.kind === 'exam-retro' && /^E0H: /.test(j.brief || '')).map(([id, j]) => ({ id, ...j })));
       const rf = await page.evaluate(() => window.__mcpCalls.filter(c => c[1] === 'fire_trigger').map(c => c[2].text));
       ok('a saved score starts the retro job for that exam, fired once', rj.length === 1 && /^E0H: /.test(rj[0].brief) && rj[0].fired && rj[0].fired.ok === true && rf.filter(t => t === 'Job ' + rj[0].id).length === 1, JSON.stringify(rj.map(j => [j.brief, j.fired])));
       ok('once scored, the card asks for the next one or hides', !/Harness Exam 0/.test(await page.textContent('#score-card') || '') || !(await page.isVisible('#score-card')));
