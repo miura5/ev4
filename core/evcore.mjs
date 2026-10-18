@@ -27,6 +27,7 @@ const EVCore = (() => {
     dayBudgetMinutes: { off: 300, class: 180, validation: 150, clinical: 60, exam: 120 },
     taskMinutes: { reading: 45, drill: 25, sim: 75, review: 20, val: 20, terminology: 15, graded: 45, clinical: 0, exam: 90, other: 20 },
     nurUnitExamKinds: ['unit', 'final', 'dosage'],
+    planDay: { sameItem: 0.3 },
     library: { chunkChars: 900, searchK: 6, hitChars: 700, readChars: 12000, maxChars: 200000, ocrMinChars: 80, pdfjs: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs', pdfjsWorker: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs' },
   };
   let C = clone(DEFAULTS);
@@ -599,6 +600,8 @@ const EVCore = (() => {
   const PLAN_TAG_LABELS = { graded: 'GRADED', drill: 'PRACTICE', review: 'ATI REVIEW', clinical: 'CLINICAL PREP', val: 'VALIDATION PREP' };
 
   // ---------------------------------------------------------------- day plan (budget in minutes across both courses)
+  // Fixed items (D-086): his own time, never E.V.'s study budget.
+  const FIXED_KINDS = ['graded', 'clinical', 'exam'];
   function planDay(ctx) {
     const { date, exams = [], weakspots = [], objectives = [], sets = [], answers = [] } = ctx; const dates = liveDates(ctx.dates, ctx.dateedits);
     const plans = ctx.planedits ? planViews(ctx.plans, ctx.planedits) : (ctx.plans || []);
@@ -619,15 +622,22 @@ const EVCore = (() => {
     }
     // Graded work due tomorrow: a heads-up, not budgeted.
     for (const d of dates.filter(d => d.date === addDays(date, 1) && d.graded)) add({ id: 'soon-' + d.id, kind: 'graded-soon', title: d.title + ' (due tomorrow)', tag: 'GRADED', minutes: 0, required: true, note: 'Yours alone', ref: 'dates/' + d.id });
+    // D-086: a plan task that names one of today's records (title similarity 0.3 or better) is that record, shown once
+    // under the record's id; graded work, exams, clinicals and validations are fixed and cost no study minutes.
+    const records = blocks.filter(b => b.ref && ['exam', 'graded', 'clinical', 'val'].includes(b.kind));
+    for (const b of records) b.minutes = 0;
     // Plan tasks for today, in plan order.
     for (const p of plans) {
       const day = (p.days || []).find(x => x.date === date); if (!day) continue;
       for (const t of day.tasks) {
         if (['clinical'].includes(t.kind) && blocks.some(b => b.kind === 'clinical')) continue;
+        const same = records.find(b => similarity(b.title, t.text) >= C.planDay.sameItem);
+        if (same) { (same.planTasks = same.planTasks || []).push(t.id); continue; }
         const done = taskDone(p, { ...t, date }, date, sets, answers);
         const cutRank = { terminology: 10, other: 20, review: 35, val: 45, drill: 50, sim: 55, reading: 70, graded: 99, clinical: 99, exam: 99 }[t.kind] || 20;
         const optional = /^optional\b|^only if\b|^if\b/i.test(t.text);
-        add({ id: 'plan-' + t.id, kind: t.kind, title: t.text, tag: t.tag ? (PLAN_TAG_LABELS[t.tag] || t.tag.toUpperCase()) : (t.kind === 'reading' ? 'READING' : null), minutes: done ? 0 : (M[t.kind] != null ? M[t.kind] : M.other),
+        const fixed = FIXED_KINDS.includes(t.kind);
+        add({ id: 'plan-' + t.id, kind: t.kind, title: t.text, tag: t.tag ? (PLAN_TAG_LABELS[t.tag] || t.tag.toUpperCase()) : (t.kind === 'reading' ? 'READING' : null), minutes: done || fixed ? 0 : (M[t.kind] != null ? M[t.kind] : M.other),
           required: ['graded', 'clinical', 'exam'].includes(t.kind), cut: optional ? 5 : cutRank, done, plan: p.exam, taskId: t.id, drill: t.drill || null, chapters: t.chapters || null });
       }
     }

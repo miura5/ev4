@@ -918,6 +918,10 @@
    "refireUntil": {
     "morning": "06:00"
    }
+  },
+  "planDay": {
+   "_note": "D-086: a plan task whose title is this similar to one of the day's records (dates or exams) is that record, shown once under its id.",
+   "sameItem": 0.3
   }
  },
  "registry": {

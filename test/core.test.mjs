@@ -268,7 +268,8 @@ test('plans as data: tasks, chapters, reading state and the pre-read rule; ticks
 test('day plan: budget cuts optional work first and never cuts graded work or exams', () => {
   const plan = EV.planFromCards([{ days: [['Sun 10/18', '', [['Read Ch 99 (big chapter)'], ['Terminology drill'], ['Optional lab'], ['Drill 9: Ch 99', 'drill'], ['Engage module due 11:59pm', 'graded']]]] }], { examId: 'E9', year: 2026 });
   const exams = [{ id: 'BIO-E3', course: 'BIO 201', kind: 'unit', date: '2026-10-18', title: 'BIO 201 Lecture Exam 3' }];
-  EV.configure({ ...spec, constants: { ...spec.constants, dayBudgetMinutes: { ...spec.constants.dayBudgetMinutes, off: 200 } } });
+  // Graded work and exams cost no study minutes (D-086), so a 60-minute day is what forces the cuts.
+  EV.configure({ ...spec, constants: { ...spec.constants, dayBudgetMinutes: { ...spec.constants.dayBudgetMinutes, off: 60 } } });
   const d = EV.planDay({ date: '2026-10-18', dates: [], exams, plans: [plan], weakspots: [], objectives: [] });
   EV.configure(spec);
   const byId = Object.fromEntries(d.blocks.map(b => [b.title, b]));
@@ -277,8 +278,41 @@ test('day plan: budget cuts optional work first and never cuts graded work or ex
   assert.ok(!byId['Engage module due 11:59pm'].deferred);
   assert.ok(byId['Optional lab'].deferred && byId['Terminology drill'].deferred, 'optional and terminology go first');
   assert.ok(!byId['Read Ch 99 (big chapter)'].deferred, 'reading is kept');
-  assert.ok(d.budget.planned <= 200);
+  assert.ok(d.budget.planned <= 60);
+  assert.equal(byId['BIO 201 Lecture Exam 3'].minutes, 0); assert.equal(byId['Engage module due 11:59pm'].minutes, 0);
   assert.ok(d.deferred.some(x => /Optional lab/.test(x.title)));
+});
+
+test('B-31 (D-086): on the Oct 19 shape each item shows once, fixed items cost nothing, and no review is deferred', () => {
+  // Synthetic: a validation day with a Canvas graded date, a hand-entered validation date and plan tasks naming them.
+  const date = '2026-10-19';
+  const dates = [
+    { id: 'val-group', date, kind: 'validation', course: 'NUR 112', title: 'Group check-off validation; practice sim in the evening' },
+    { id: 'canvas-engage', date, kind: 'due', course: 'NUR 112', graded: true, canvasId: 900100, title: 'Online module: Topic A + Topic B review due 11:59pm' },
+  ];
+  const plan = { ...EV.planFromCards([{ days: [['Mon 10/19', '', [
+    ['Group check-off validation (lab); confirm what it covers', 'graded'],
+    ['Online module: Topic A, due 11:59pm (30 min minimum)', 'graded'],
+    ['Online module: Topic B review, due 11:59pm (30 min minimum)', 'graded'],
+    ['Final sim tab: timed, weighted to weak spots', 'drill'],
+    ['Terminology drill'],
+  ]]] }], { examId: 'E9', year: 2026 }), id: 'E9' };
+  const exams = [{ id: 'E9', course: 'NUR 112', kind: 'unit', date: '2026-10-21', title: 'Exam 9' }];
+  const objectives = [{ id: 'E9-1', exam: 'E9' }];
+  const weakspots = Array.from({ length: 12 }, (_, i) => ({ id: 'ws' + i, topic: 'Topic ' + i, objective: 'E9-1', exam: 'E9', kind: 'concept', addedAt: '2026-10-10T12:00:00Z', derived: { status: 'open', nextDue: '2026-10-18', recurrence: 1, misses: 1, rightDays: 0 } }));
+  const d = EV.planDay({ date, dates, exams, plans: [plan], weakspots, objectives });
+  assert.equal(d.dayType, 'validation'); assert.equal(d.budget.available, 150);
+  const list = EV.buildDayList(d, {});
+  const titles = list.items.map(i => i.text);
+  assert.equal(titles.filter(t => /check-off validation/i.test(t)).length, 1, 'the validation shows once');
+  assert.equal(titles.filter(t => /Online module/i.test(t)).length, 1, 'the graded module shows once');
+  assert.ok(list.items.some(i => i.id === 'date-canvas-engage') && list.items.some(i => i.id === 'date-val-group'), 'under the records\' ids');
+  assert.ok(d.blocks.filter(b => ['graded', 'val', 'exam', 'clinical'].includes(b.kind)).every(b => b.minutes === 0), 'fixed items cost 0');
+  assert.deepEqual(d.blocks.find(b => b.id === 'date-canvas-engage').planTasks.length, 2);
+  assert.ok(!d.deferred.some(x => x.kind === 'weakspot'), 'no weak spot deferred over load');
+  assert.ok(!d.blocks.some(b => b.kind === 'reviews' && b.deferred), 'no review block deferred');
+  assert.ok(d.reviews.ids.length >= 10, `reviews kept: ${d.reviews.ids.length}`);
+  assert.ok(d.budget.planned <= 150, `planned ${d.budget.planned}`);
 });
 
 test('day plan honors planedits ticks: a ticked task costs no minutes', () => {
