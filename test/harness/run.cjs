@@ -379,7 +379,10 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     await page.click('#tab-system'); await page.waitForTimeout(100);
     ok('system shows capacity and the runs', /412 documents in your record/.test(await page.textContent('#capacity')) && (await page.locator('#pipes .row').count()) >= 5, await page.textContent('#capacity'));
     { const c = await page.textContent('#capacity'); // B-37 (D-093): the budgets, worst first, no 25,000 cap
-      ok('system shows the D-093 budgets, the one near its budget first with its relief', (await page.locator('#capacity .row').count()) === 3 && /^412 documents in your record\.sets401 documents · warns at 400 · relief: the weekly roll-upnear budget/.test(c) && /warns at 192 KiB, fails at 240 KiB/.test(c) && /1\.5 MiB · warns at 4 MiB/.test(c) && !/25,000/.test(c), c); }
+      ok('system shows the D-093 budgets, the one near its budget first with its relief', (await page.locator('#capacity .row').count()) === 3 && /^412 documents in your record\.setsnear budget401 documents · warns at 400 · relief: the weekly roll-upstate/.test(c) && /warns at 192 KiB, fails at 240 KiB/.test(c) && /1\.5 MiB · warns at 4 MiB/.test(c) && !/25,000/.test(c), c);
+      const card = page.locator('#capacity').locator('xpath=..');
+      for (const [w, h] of [[390, 844], [1280, 860]]) { await page.setViewportSize({ width: w, height: h }); await card.scrollIntoViewIfNeeded(); await page.waitForTimeout(400); await card.screenshot({ path: `${shots}/capacity-${w}.png` }); }
+      await page.setViewportSize(scheme === 'phone' ? { width: 390, height: 844 } : { width: 1280, height: 860 }); }
     // ---- System health panel (B-17): health/current in plain words, never alarming
     const hp = await page.textContent('#health');
     ok('health panel leads with a plain verdict from health/current', /3 things to look at\./.test(hp) && /checked 5\d min ago/.test(hp), hp.slice(0, 160));
