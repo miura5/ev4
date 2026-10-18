@@ -81,7 +81,7 @@ export function asOf(db, at, spec, { since = null, self = null } = {}) {
 
 /** Weak spot models, dates and plans as every producer sees them. */
 function views(db) {
-  const exams = db.exams || [], sets = db.sets || [], answers = db.answers || [];
+  const exams = EV.examViews(db.exams, db.examedits, db.predictions), sets = db.sets || [], answers = db.answers || [];
   return {
     exams, sets, answers,
     models: EV.buildWeakspots({ weakspots: db.weakspots || [], sets, answers, exams }),
@@ -154,7 +154,7 @@ function stateBody(db, { date, now, specVersion, part = null, split = null }, sp
   const v = views(db);
   // The counts are of what the run reads: state/current leaves itself out (the run sees the previous one, a rebuild
   // the one it wrote), and Config (system/*) is the deploy's, not the record's.
-  const counts = Object.fromEntries(Object.entries(db).filter(([k, d]) => k !== 'state' && spec.collections[k] && spec.collections[k].class !== 'Config' && d.length).map(([k, d]) => [k, d.length]).sort(([a], [b]) => (a < b ? -1 : 1)));
+  const counts = Object.fromEntries(Object.entries(db).filter(([k, d]) => k !== 'state' && spec.collections[k] && spec.collections[k].class !== 'Config' && !spec.collections[k].retired && d.length).map(([k, d]) => [k, d.length]).sort(([a], [b]) => (a < b ? -1 : 1)));
   const content = EV.lint({ ...db, journal: [], weakspotModels: v.models, counts }, { date });
   // Bytes for the collections a byte budget watches (D-093). state leaves itself out, as the counts do (it cannot
   // measure the document it is writing); lint measures it.
@@ -217,8 +217,24 @@ function weekBody(db, { date }, spec, stored) {
       sessions: sessions.length, studyMinutes: sessions.reduce((s, x) => s + (Number(x.minutes) || 0), 0), runs: sorted(byPipeline),
     },
   };
-  for (const k of AUTHORED.weeks) if (stored && stored[k] !== undefined) body[k] = stored[k];
+  for (const k of authoredOf(spec, 'weeks')) if (stored && stored[k] !== undefined) body[k] = stored[k];
   return body;
+}
+
+/** predictions/<examId>, the morning run the day before the exam (D-094): readiness as of that morning. */
+function predictionBody(db, { examId, date, now }) {
+  const v = views(db); const atts = EV.collectAttempts(v.sets, v.answers).all;
+  // The exam being predicted never informs its own prediction (its score, once entered, comes after).
+  const exams = v.exams.filter(e => e.id !== examId);
+  const p = EV.predictReadiness({ examId, exams, weakspots: v.models, attempts: atts, date, now });
+  if (!p) return null;
+  const { at, ...rest } = p;
+  return { examId, date, ...rest };
+}
+/** The exam a morning run predicts: a NUR unit exam tomorrow (D-094), or null. */
+export function examTomorrow(db, date) {
+  const t = EV.addDays(date, 1);
+  return (db.exams || []).find(e => e.date === t && (e.course || 'NUR 112') === 'NUR 112' && EV.constants().nurUnitExamKinds.includes(e.kind) && e.status !== 'done') || null;
 }
 
 /** libindex/<course>, the evening-cloud run: the course's library cut into the passages the page searches. */
@@ -229,13 +245,16 @@ function libindexBody(db, { course }) {
   return { course, chunks, materials };
 }
 
-/** Fields a run writes by judgment rather than computes; rebuild keeps them as stored and checks everything else. */
-export const AUTHORED = { weeks: ['review', 'reflection'] };
+/** Fields a run writes by judgment rather than computes (D-096: spec.collections.<c>.authored, x-ev.authored in the
+ *  schema); rebuild keeps them as stored and checks everything else. */
+export const authoredOf = (spec, collection) => ((spec.collections || {})[collection] || {}).authored || [];
+export const AUTHORED = { weeks: ['review', 'reflection'] }; // the spec's list for weeks, kept for older callers
 
 export const PRODUCERS = {
   days: { writer: 'morning', inputs: (s) => ({ date: s.date || s.id, now: s.at }), build: (db, i) => dayBody(db, i) },
   state: { writer: 'evening-cloud', inputs: (s) => ({ date: (s.snapshot && s.snapshot.date) || EV.chicagoDate(s.at), now: s.at, specVersion: s.snapshot ? s.snapshot.specVersion : (s.specVersion || null), part: s.facts || null, split: s.factsSplit || null }), build: (db, i, spec) => stateBody(db, i, spec) },
   weeks: { writer: 'weekly', inputs: (s) => ({ date: s.date || s.id, now: s.at }), build: (db, i, spec, stored) => weekBody(db, i, spec, stored) },
+  predictions: { writer: 'morning', inputs: (s) => ({ examId: s.examId || s.id, date: s.date, now: s.at }), build: (db, i) => predictionBody(db, i) },
   libindex: { writer: 'evening-cloud', inputs: (s) => ({ course: s.course || s.id, now: s.at }), build: (db, i) => libindexBody(db, i) },
   health: { writer: 'watchdog', inputs: (s) => ({ now: s.at, record: s.record || 'staging' }), build: (db, i, spec) => healthBody(db, i, spec) },
 };
@@ -243,7 +262,6 @@ export const PRODUCERS = {
 /** Derived documents with no producer yet, and why. lint reports them; rebuild skips them. */
 export const NOT_REBUILDABLE = {
   concepts: 'grouping weak spots under a concept is not specified as a computation (design question)',
-  'talk/memory': 'the running summary is written by a model on the page (design question)',
 };
 const pendingReason = (col, id) => NOT_REBUILDABLE[`${col}/${id}`] || NOT_REBUILDABLE[col] || null;
 

@@ -106,14 +106,14 @@ test('morning with the review set already written and no drill due: the agent st
   const { dir } = session('morning', at, db);
   const r = RUN.compute({ spec, dir, validate, at });
   assert.equal(r.status, 'planned', JSON.stringify(r));
-  assert.deepEqual(r.plan.steps.map(s => [s.id, s.status]), [['practice-brief', 'ok'], ['write-practice', 'skipped'], ['day', 'ok']]);
+  assert.deepEqual(r.plan.steps.map(s => [s.id, s.status]), [['practice-brief', 'ok'], ['write-practice', 'skipped'], ['prediction', 'ok'], ['day', 'ok']]);
 });
 
 test('evening-cloud: auto-park and the snapshot, with no judgment; state/current rebuilds byte for byte', () => {
   const at = '2026-10-18T01:15:00Z';
   const db = recordDb();
-  db.exams.push({ id: 'E8', schema: 1, writer: 'canvas-sync', at: '2026-09-01T00:00:00Z', source: 'test', course: 'NUR 112', kind: 'unit', title: 'Exam 8', date: '2026-10-10', status: 'upcoming' });
-  db.weakspots.push({ id: 'ws-old', schema: 1, writer: 'page', at: '2026-09-02T00:00:00Z', source: 'test', topic: 'A made-up old topic', objective: 'E8-1', exam: 'E8', course: 'NUR 112', kind: 'concept', addedBy: 'test', initial: { streak: 0, nextDue: '2026-09-03', recurrence: 1, misses: 0 }, events: {} });
+  db.exams.push({ id: 'E4', schema: 2, writer: 'canvas-sync', at: '2026-09-01T00:00:00Z', source: 'test', course: 'NUR 112', kind: 'unit', title: 'Exam 4', date: '2026-10-10', status: 'upcoming' });
+  db.weakspots.push({ id: 'ws-old', schema: 1, writer: 'page', at: '2026-09-02T00:00:00Z', source: 'test', topic: 'A made-up old topic', objective: 'E4-1', exam: 'E4', course: 'NUR 112', kind: 'concept', addedBy: 'test', initial: { streak: 0, nextDue: '2026-09-03', recurrence: 1, misses: 0 }, events: {} });
   const { dir } = session('evening-cloud', at, db);
   const r = RUN.compute({ spec, dir, validate, at });
   assert.equal(r.status, 'planned', JSON.stringify(r.problems));

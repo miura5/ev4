@@ -1,0 +1,11 @@
+{
+ "schema": 1,
+ "writer": "morning",
+ "at": "2026-10-09T09:25:00Z",
+ "source": "morning 4:25",
+ "release": "v4.0.0",
+ "pipeline": "morning",
+ "startedAt": "2026-10-09T09:25:00Z",
+ "endedAt": "2026-10-09T09:31:00Z",
+ "status": "ok"
+}

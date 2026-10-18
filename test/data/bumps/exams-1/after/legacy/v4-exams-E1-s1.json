@@ -1,0 +1,16 @@
+{
+ "schema": 1,
+ "writer": "page",
+ "at": "2026-08-20T14:00:00Z",
+ "source": "migrated from v3",
+ "course": "NUR 112",
+ "kind": "unit",
+ "title": "Sample Exam 1",
+ "status": "done",
+ "score": 88.5,
+ "scoreAt": "2026-09-02T18:30:00Z",
+ "migratedFrom": "exams/E1",
+ "migratedTo": "exams/E1",
+ "migratedAt": "2026-10-18T17:00:00.000Z",
+ "migration": "exams schema 1 to 2"
+}

@@ -3,9 +3,9 @@
 // hashes, so verify-deploy staging can say how old staging is. Pure. A v3 export is migrated first (staging holds v4
 // documents); a v4 export or a backup is copied as it is. The journal is never part of a seed.
 import EV from './evcore.mjs';
-import { migrateV3 } from './migrate.mjs';
+import { migrateV3, bumpWrite } from './migrate.mjs';
 
-const isV4 = d => !!d && d.schema === 1 && typeof d.writer === 'string';
+const isV4 = d => !!d && Number.isInteger(d.schema) && d.schema >= 1 && typeof d.writer === 'string';
 
 /** sha256 of a collection's documents in id order (canonical JSON), the fingerprint a restore drill checks. */
 export function collectionHash(docs) {
@@ -23,7 +23,8 @@ export function seedStaging(exp, { at, exportedAt, from = 'live export', command
   const isV3 = Object.entries(exp).some(([col, docs]) => col !== 'legacy' && (docs || []).some(d => d && !isV4(d)));
   let docs = [];
   if (isV3) docs = migrateV3(exp, { at: exportedAt }).writes.map(w => ({ collection: w.collection, id: w.id, data: w.data }));
-  else for (const [col, list] of Object.entries(exp)) for (const d of list || []) docs.push({ collection: col, id: d.id, data: EV.docData(d) });
+  // A v4 export lands at today's schema versions: each document goes through its collection's bumps (none: unchanged).
+  else for (const [col, list] of Object.entries(exp)) for (const d of list || []) for (const w of bumpWrite({ op: 'set', collection: col, id: d.id, data: EV.docData(d) }, exportedAt)) docs.push({ collection: w.collection, id: w.id, data: w.data });
   // system/* is Config: deploy writes it per target, so a seed never carries the source record's spec or manifest.
   docs = docs.filter(d => d.collection !== 'system');
   const by = {}; for (const d of docs) (by[d.collection] = by[d.collection] || []).push({ id: d.id, ...d.data });

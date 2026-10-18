@@ -9,7 +9,8 @@
   "writers": [
    "evening-cloud"
   ],
-  "schema": 1
+  "schema": 1,
+  "retired": true
  },
  "$comment": "Shape completed with evening-cloud (B-09).",
  "type": "object",

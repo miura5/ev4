@@ -13,6 +13,7 @@ const shots = process.argv[3] || '/tmp/ev4-shots'; fs.mkdirSync(shots, { recursi
 function load(dir) { const db = {}; for (const c of fs.readdirSync(dir)) { const p = path.join(dir, c); if (!fs.statSync(p).isDirectory()) continue; db[c] = {}; for (const f of fs.readdirSync(p)) if (f.endsWith('.json')) db[c][f.slice(0, -5)] = JSON.parse(fs.readFileSync(path.join(p, f), 'utf8')); } return db; }
 const seed = load(dbDir);
 delete seed.system; delete seed.legacy; delete seed.debug; delete seed.journal; // the harness never needs his journal
+seed.exams = seed.exams || {}; seed.exams['E0H'] = { schema: 2, writer: 'page', at: '2026-09-01T14:00:00Z', source: 'harness', course: 'NUR 112', kind: 'unit', title: 'Harness Exam 0', date: '2026-10-01', status: 'upcoming' }; // B-39: past, no score
 seed.system = { manifest: { release: 'v4.0.0', commit: 'a'.repeat(40), pages: { staging: { files: { 'page/staging/app.js': 'a'.repeat(64) } }, live: { files: {} } } } }; // B-38
 const env = (writer, source, at) => ({ schema: 1, writer, at: at || new Date().toISOString(), source });
 const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date());
@@ -363,6 +364,17 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     ws = await model('e4-aging-expected');
     ok('matrix right: today counts once toward the streak', ws.streak === agingBefore + 1 || (ws.streak === agingBefore && agingRightToday), JSON.stringify({ before: agingBefore, s: ws.streak, last: ws.lastReviewed }));
     await page.screenshot({ path: `${shots}/practice.png`, fullPage: true });
+    // B-39 (D-095): every attempt is truth: Retake shows the set fresh, a new answer is appended, nothing is replaced
+    { const setId = 'more-' + today + '-1';
+      const tries = () => page.evaluate(id => Object.keys((((window.__db.answers || {})[id] || {}).answers || {}).m1 || {}).length, setId);
+      const before = await tries();
+      const next = page.locator('#pr-body button', { hasText: /See results|Next question|Summary/ }).first(); if (await next.count()) { await next.click(); await page.waitForTimeout(150); }
+      ok('a finished set offers Retake', (await page.locator('#pr-body button', { hasText: 'Retake' }).count()) === 1, (await page.textContent('#pr-body')).slice(0, 160));
+      await page.locator('#pr-body button', { hasText: 'Retake' }).click(); await page.waitForTimeout(150);
+      ok('Retake shows the first question unanswered', /Check answer/.test(await page.textContent('#pr-body')) && /1 of 3/.test(await page.textContent('#pr-body')));
+      await page.locator('#pr-body label.opt').nth(1).click(); await page.click('#pr-body button:has-text("Check answer")'); await page.waitForTimeout(150);
+      ok('the retake answer is appended beside the first one, never replacing it', (await tries()) === before + 1, `${before} -> ${await tries()}`);
+      await page.screenshot({ path: `${shots}/retake-${scheme}.png`, fullPage: false }); }
     // Plan: tick a task
     await page.click('#seg-study [data-v="plan"]'); await page.waitForTimeout(100);
     const planRows = page.locator('#plan-card .plan-day').first().locator('input.tick');
@@ -376,6 +388,13 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     await page.screenshot({ path: `${shots}/plan.png`, fullPage: true });
     // Progress
     await page.click('#tab-progress'); await page.waitForTimeout(100);
+    // B-39 (D-094): the score card asks for a past unit exam's score and saves it to examedits/<examId>, replaced whole
+    { ok('score card asks for the past exam with no score', await page.isVisible('#score-card') && /Harness Exam 0/.test(await page.textContent('#score-card')), await page.textContent('#score-card'));
+      await page.fill('#score-in', '88.5'); await page.click('#score-form button[type=submit]'); await page.waitForTimeout(200);
+      const ed = await page.evaluate(() => (window.__db.examedits || {}).E0H);
+      ok('the score lands in examedits/<examId>, the exam itself unchanged', !!ed && ed.score === 88.5 && ed.status === 'done' && ed.writer === 'page' && await page.evaluate(() => !('score' in window.__db.exams.E0H)), JSON.stringify(ed));
+      ok('once scored, the card asks for the next one or hides', !/Harness Exam 0/.test(await page.textContent('#score-card') || '') || !(await page.isVisible('#score-card')));
+      await page.screenshot({ path: `${shots}/score-${scheme}.png`, fullPage: false }); }
     const rd = await page.textContent('#ready-card');
     ok('readiness shows E4', /Exam 4/.test(rd) && /% solid/.test(rd), rd.slice(0, 100));
     await page.click('#seg-progress [data-v="weak"]'); await page.waitForTimeout(100);

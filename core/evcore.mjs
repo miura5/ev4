@@ -965,6 +965,21 @@ const EVCore = (() => {
       basis: [pastAvg != null ? `past unit exams average ${Math.round(pastAvg * 10) / 10}` : null, acc7 != null ? `${Math.round(acc7 * 100)}% on ${examId} questions in the last 7 days (${last7.length} answers)` : null, r.pctSolid != null ? `${r.pctSolid}% of ${examId} weak spots solid` : null].filter(Boolean).join('; '),
     };
   }
+  /**
+   * An exam as readers see it (D-094): the Fact, with Matt's score and any status override from examedits/<id> and the
+   * night-before prediction from predictions/<id>. Nothing of either is stored on the exam.
+   */
+  function examView(exam, edit, prediction) {
+    if (!exam) return exam;
+    const v = { ...exam };
+    if (edit) { if (typeof edit.score === 'number') v.score = edit.score; if (edit.scoreAt) v.scoreAt = edit.scoreAt; if (edit.status) v.status = edit.status; }
+    if (prediction && Array.isArray(prediction.predictedRange)) { const { schema, writer, source, examId, ...p } = prediction; v.prediction = p; }
+    return v;
+  }
+  function examViews(exams, examedits, predictions) {
+    const e = new Map((examedits || []).map(x => [x.id, x])), p = new Map((predictions || []).map(x => [x.id, x]));
+    return (exams || []).map(x => examView(x, e.get(x.id), p.get(x.id)));
+  }
   function calibrate(exam) {
     if (!exam || !exam.prediction || typeof exam.score !== 'number') return null;
     const [lo, hi] = exam.prediction.predictedRange; const mid = (lo + hi) / 2;
@@ -1016,7 +1031,7 @@ const EVCore = (() => {
       ...(db.weakspots || []).map(w => ['weakspots/' + w.id, w.topic || '']),
     ];
     for (const [ref, t] of texts) for (const why of scanIdentifiers(t)) add('error', 'possible-identifier', ref, why + ' (B-04): check and remove');
-    if (date) for (const e of db.exams || []) if (e.date && e.date < date && e.status !== 'done' && C.nurUnitExamKinds.includes(e.kind)) add('info', 'exam-passed', 'exams/' + e.id, 'exam date passed; record the score to calibrate');
+    if (date) for (const e of examViews(db.exams, db.examedits, db.predictions).sort((a, b) => (a.id < b.id ? -1 : 1))) if (e.date && e.date < date && e.status !== 'done' && typeof e.score !== 'number' && C.nurUnitExamKinds.includes(e.kind)) add('info', 'exam-passed', 'exams/' + e.id, 'exam date passed; record the score to calibrate');
     const rank = { error: 0, warning: 1, info: 2 };
     return issues.sort((a, b) => rank[a.severity] - rank[b.severity]);
   }
@@ -1040,7 +1055,7 @@ const EVCore = (() => {
     for (const w of ws) files.push({ path: `weak-spots/${w.id}.md`, content: fm({ kind: w.kind, status: w.derived.status, objective: w.objective, exam: examOf(w), nextDue: w.derived.nextDue, streak: w.derived.streak, recurrence: w.derived.recurrence }) +
       `# ${w.topic}\n\n- Objective: ${w.objective ? link('objectives', w.objective, w.objective) : 'none'}\n- Source: ${w.source}\n- Added: ${shortDate(w.addedAt)}\n` + (w.derived.history.length ? `\n## History\n\n${w.derived.history.map(h => `- ${h.date}: ${h.correct ? 'right' : 'missed'}`).join('\n')}\n` : '') });
     for (const o of db.objectives || []) files.push({ path: `objectives/${o.id}.md`, content: fm({ exam: o.exam }) + `# ${o.id}: ${o.text}\n\n${o.chapters || ''}\n\n## Weak spots\n\n${ws.filter(w => w.objective === o.id).map(w => '- ' + link('weak-spots', w.id, w.topic) + ` (${w.derived.status})`).join('\n') || '- none'}\n` });
-    for (const e of db.exams || []) files.push({ path: `exams/${e.id}.md`, content: fm({ date: e.date, course: e.course, kind: e.kind, score: e.score }) + `# ${e.title}\n\n${(db.objectives || []).filter(o => o.exam === e.id).map(o => '- ' + link('objectives', o.id, o.id + ' ' + o.text)).join('\n')}\n` });
+    for (const e of examViews(db.exams, db.examedits, db.predictions)) files.push({ path: `exams/${e.id}.md`, content: fm({ date: e.date, course: e.course, kind: e.kind, score: e.score }) + `# ${e.title}\n\n${(db.objectives || []).filter(o => o.exam === e.id).map(o => '- ' + link('objectives', o.id, o.id + ' ' + o.text)).join('\n')}\n` });
     for (const s of db.sessions || []) files.push({ path: `sessions/${s.id}.md`, content: fm({ date: s.date, minutes: s.minutes, source: s.source }) + `# ${s.topic || 'Study session'}\n\n${s.summary || ''}\n` });
     for (const i of db.ideas || []) files.push({ path: `ideas/${i.id}.md`, content: fm({ status: i.status, objective: i.objective }) + `# Idea\n\n${i.text}\n\n${(i.links || []).map(l => `- ${l.type}: [[${l.to}]]`).join('\n')}\n` });
     files.push({ path: 'index.md', content: `# E.V. record mirror\n\nRead-only copy written by the evening pipeline${date ? ' on ' + date : ''}. Edit in E.V. Home, not here.\n\n- Weak spots: ${ws.length}\n- Objectives: ${(db.objectives || []).length}\n- Sessions: ${(db.sessions || []).length}\n- Ideas: ${(db.ideas || []).length}\n` });
@@ -1711,7 +1726,7 @@ Return JSON: {"pages": [{"page": <page number>, "text": "<the page's text>"}]}`;
     // planning
     dayType, reviewLoad, rankDue, targetExam, pickReviews, planDay, buildDayList, nextNurExams, dayView, dayeditBase, listEdit, isFixedItem, DATE_KINDS, dateEdit, dateView, liveDates, isRemovedDate, isFixedDate, fromCanvas,
     // snapshot, context, insights
-    buildSnapshot, lastRuns, capacity, weakspotCards, buildContext, answerStats, readiness, predictReadiness, calibrate,
+    buildSnapshot, lastRuns, capacity, weakspotCards, examView, examViews, buildContext, answerStats, readiness, predictReadiness, calibrate,
     // trust
     lint, scanIdentifiers, scanIdentifierValues, autoParkEvents, toMarkdown, buildBackup, restorePlan,
     // intake

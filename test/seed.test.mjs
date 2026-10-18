@@ -61,7 +61,7 @@ test('a v3 export is migrated first, with legacy copies, and stamped v3-to-v4', 
   assert.equal(migrated, true);
   assert.equal(seed.migration, 'v3-to-v4');
   const exam = writes.find(w => w.collection === 'exams' && w.id === 'E9');
-  assert.ok(exam && exam.data.schema === 1 && typeof exam.data.writer === 'string', 'the exam is a v4 document');
+  assert.ok(exam && exam.data.schema === 2 && typeof exam.data.writer === 'string', 'the exam is a v4 document at today\'s version');
   assert.ok(writes.some(w => w.collection === 'legacy' && w.id === 'v3-exams-E9'), 'the v3 original is kept in legacy');
   for (const w of writes) assert.ok(validate(w.collection, w.data, { id: w.id }).ok, `${w.collection}/${w.id} validates`);
 });

@@ -1,0 +1,11 @@
+{
+ "schema": 1,
+ "writer": "canvas-sync",
+ "at": "2026-08-20T14:00:00Z",
+ "source": "Canvas",
+ "course": "NUR 112",
+ "kind": "unit",
+ "date": "2026-11-02",
+ "title": "Sample Exam 2",
+ "status": "upcoming"
+}

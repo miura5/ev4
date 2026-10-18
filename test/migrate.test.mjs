@@ -9,7 +9,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import EV from '../core/evcore.mjs';
-import { migrateV3, verifyMigration, applyWrites } from '../core/migrate.mjs';
+import { currentVersion, migrateV3, verifyMigration, applyWrites } from '../core/migrate.mjs';
 import { chunkWrites, writeBytes } from '../core/batches.mjs';
 import { loadValidator, readExport } from '../core/schemas.mjs';
 import { describeErrors } from '../core/validate.mjs';
@@ -68,7 +68,7 @@ test('every migrated write validates against its v4 schema and carries the envel
   for (const w of r.writes) {
     const v = validate(w.collection, w.data, { id: w.id });
     assert.ok(v.ok, describeErrors(`${w.collection}/${w.id}`, v));
-    if (w.collection !== 'legacy') { assert.equal(w.data.schema, 1); assert.ok(w.data.writer && w.data.at && w.data.source, `${w.collection}/${w.id} envelope`); }
+    if (w.collection !== 'legacy') { assert.equal(w.data.schema, currentVersion(w.collection), `${w.collection}/${w.id} at today's version`); assert.ok(w.data.writer && w.data.at && w.data.source, `${w.collection}/${w.id} envelope`); }
   }
   assert.deepEqual(r.skipped.map(s => s.ref), ['days/2026-10-13#runs/old-v2']);
 });
@@ -203,4 +203,26 @@ test('no migrated document is stamped after the export: a date with no creation 
   const d = writes.find(w => w.collection === 'dates' && w.id === 'd-future');
   assert.equal(d.data.at, '2026-10-18T05:00:00.000Z');
   for (const w of writes) assert.ok(!(Date.parse(w.data.at) > Date.parse('2026-10-18T05:00:00Z')), `${w.collection}/${w.id}`);
+});
+
+test('B-39 (D-094): the exams 1 to 2 bump moves the score to examedits, keeps the original in legacy, matches its fixture and is idempotent', async () => {
+  const { migrateBumps, BUMPS } = await import('../core/migrate.mjs');
+  const { readExport: read } = await import('../core/schemas.mjs');
+  const dir = path.join(ROOT, 'test/data/bumps/exams-1');
+  const load = d => { const db = {}; for (const { collection, id, doc } of read(d)) (db[collection] = db[collection] || []).push({ ...doc, id }); return db; };
+  const before = load(path.join(dir, 'before')), after = load(path.join(dir, 'after'));
+  assert.ok(BUMPS.exams[1], 'a migration keyed by collection and version');
+  const r = migrateBumps(before, { at: '2026-10-18T17:00:00Z' });
+  const got = {}; for (const w of r.writes) (got[w.collection] = got[w.collection] || []).push({ ...w.data, id: w.id });
+  for (const [c, docs] of Object.entries(after)) assert.deepEqual(EV.stableStringify((got[c] || []).sort((a, b) => (a.id < b.id ? -1 : 1))), EV.stableStringify(docs.sort((a, b) => (a.id < b.id ? -1 : 1))), c);
+  assert.deepEqual(Object.keys(got).sort(), Object.keys(after).sort());
+  for (const w of r.writes) assert.ok(validate(w.collection, w.data, { id: w.id }).ok, `${w.collection}/${w.id} validates`);
+  assert.ok(!('score' in got.exams.find(e => e.id === 'E1')) && got.examedits.find(e => e.id === 'E1').score === 88.5);
+  // Idempotent: the record as it stands after the bump needs nothing more.
+  const applied = applyWrites(before, r.writes);
+  assert.deepEqual(migrateBumps(applied, { at: '2026-10-19T17:00:00Z' }).writes, []);
+  // A score Matt entered after the bump is never overwritten by a later run of it.
+  applied.exams = applied.exams.map(e => (e.id === 'E2' ? { ...e, schema: 1, score: 70 } : e));
+  applied.examedits.push({ id: 'E2', schema: 1, writer: 'page', at: '2026-11-03T00:00:00Z', source: 'E.V. Home', updatedAt: '2026-11-03T00:00:00Z', score: 91 });
+  assert.ok(!migrateBumps(applied, { at: '2026-11-04T00:00:00Z' }).writes.some(w => w.collection === 'examedits'), 'an existing examedits document is kept');
 });

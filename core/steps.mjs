@@ -10,7 +10,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import EV from './evcore.mjs';
-import { produce, classOf, factsSplitFor } from './derive.mjs';
+import { produce, classOf, factsSplitFor, examTomorrow } from './derive.mjs';
 import { watch } from './watch.mjs';
 import { canvasRaw } from './canvas.mjs';
 import { collectionHash } from './seed.mjs';
@@ -87,6 +87,13 @@ export const CODE_STEPS = {
   push(db, ctx, spec) {
     const line = eveningPush(db, ctx, spec);
     return { push: line, say: ['Push: ' + line] };
+  },
+  /** predictions/<examId> on the day before a NUR unit exam (D-094): the readiness prediction calibrate reads later. */
+  prediction(db, ctx, spec) {
+    const e = examTomorrow(db, ctx.date); if (!e) return { say: [] };
+    const data = produce(db, spec, 'predictions', { examId: e.id, date: ctx.date, now: ctx.now }, { source: ctx.source });
+    if (!data.predictedRange) return { say: [`No prediction for ${e.id}: no past scores and no answers in the last 7 days.`] };
+    return { writes: [{ op: 'set', collection: 'predictions', id: e.id, data }], say: [`Prediction for ${e.id}: ${data.predictedRange.join('–')}.`] };
   },
   /** days/<date>: the plan and the list. */
   day(db, ctx, spec) {

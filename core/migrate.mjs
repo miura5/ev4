@@ -10,7 +10,7 @@ export const MIGRATION = 'v3-to-v4';
 const ISO_KEY = /^\d{4}-\d{2}-\d{2}T/;
 const clone = x => (x == null ? x : JSON.parse(JSON.stringify(x)));
 const iso = x => { const t = EV.toMs(x); return Number.isFinite(t) ? new Date(t).toISOString() : null; };
-const isV4 = d => !!d && d.schema === 1 && typeof d.writer === 'string' && typeof d.at === 'string';
+const isV4 = d => !!d && Number.isInteger(d.schema) && d.schema >= 1 && typeof d.writer === 'string' && typeof d.at === 'string';
 const env = (writer, source, at, extra = {}) => ({ schema: 1, writer, at: iso(at) || at, source: String(source || writer), ...extra });
 const without = (o, keys) => { const r = { ...o }; for (const k of keys) delete r[k]; return r; };
 /** v3 wrote some times with a UTC offset (-05:00); v4 documents hold ISO UTC. Same instant, normalized. */
@@ -189,7 +189,56 @@ export function migrateV3(v3, { at } = {}) {
   // creation time, stamped with its own day) is the migration's.
   const stamp = iso(at);
   for (const w of writes) if (w.data && w.data.at && Date.parse(w.data.at) > Date.parse(stamp)) w.data.at = stamp;
-  return { writes, skipped, counts };
+  // v4's own schema bumps run on the migrated documents too, so a v3 export lands at today's versions.
+  const bumped = []; for (const w of writes) bumped.push(...bumpWrite(w, at));
+  const counts2 = {}; for (const w of bumped) counts2[w.collection] = (counts2[w.collection] || 0) + 1;
+  return { writes: bumped, skipped, counts: counts2 };
+}
+
+// ------------------------------------------------------------------------------------------------ schema bumps
+// Data architecture, "Schema registry": bumping a schema means a new schema file version, a migration function here
+// keyed by collection and version, a fixture before and after, and a test that the migration is idempotent. No
+// document changes shape any other way. Each function takes a document at that version (data, with its id) and
+// returns {data: the document at the next version, also: [{collection, id, data}] new documents it implies}.
+export const BUMPS = {
+  exams: {
+    // D-094: the score is Matt's hand entry on a Fact he did not create, so it moves to examedits/<examId> (an Edit
+    // the page replaces whole); the exam keeps its own fields; a stored prediction or calibration never existed in v4.
+    1: (d, { at }) => {
+      const { score, scoreAt, prediction, calibration, ...rest } = d;
+      const also = [];
+      if (typeof score === 'number') also.push({ collection: 'examedits', id: d.id, data: { schema: 1, writer: 'page', at: iso(scoreAt) || iso(at), source: 'migrated from exams/' + d.id, updatedAt: iso(scoreAt) || iso(at), score, scoreAt: iso(scoreAt) || null, ...(rest.status === 'done' ? { status: 'done' } : {}) } });
+      return { data: { ...rest, schema: 2 }, also };
+    },
+  },
+};
+/** The version a collection's documents are at today: the highest a bump leads to, else 1. */
+export const currentVersion = collection => { const b = BUMPS[collection]; return b ? Math.max(...Object.keys(b).map(Number)) + 1 : 1; };
+/** One write carried through every bump its collection has, plus the documents the bumps imply. */
+export function bumpWrite(w, at) {
+  const steps = BUMPS[w.collection]; if (!steps || !w.data) return [w];
+  let data = w.data; const out = [];
+  while (steps[data.schema || 1]) { const r = steps[data.schema || 1]({ ...data, id: w.id }, { at }); const { id, ...rest } = r.data; data = rest; for (const a of r.also || []) out.push({ op: 'set', ...a }); }
+  return [{ ...w, data }, ...out];
+}
+/**
+ * The bumps a v4 record needs: {collection: [docs with id]} in, {writes, legacy, counts} out. Each document below its
+ * collection's version is set at the new version (pinned by the caller to the version it pulled), its old form kept as
+ * legacy/v4-<collection>-<id>-s<n> marked migratedTo; documents a bump implies are created unless one already exists
+ * with the same data. A record already at today's versions yields no writes, so running it twice changes nothing.
+ */
+export function migrateBumps(db, { at } = {}) {
+  if (!at) throw new Error('migrateBumps needs opts.at');
+  const writes = []; const have = {}; for (const [c, ds] of Object.entries(db || {})) for (const d of ds || []) have[c + '/' + d.id] = d;
+  for (const [col, steps] of Object.entries(BUMPS)) for (const d of db[col] || []) {
+    const from = d.schema || 1; if (!steps[from]) continue;
+    const [main, ...also] = bumpWrite({ op: 'set', collection: col, id: d.id, data: EV.docData(d) }, at);
+    writes.push({ op: 'set', collection: 'legacy', id: `v4-${col}-${d.id}-s${from}`, data: { ...EV.docData(d), migratedFrom: `${col}/${d.id}`, migratedTo: `${col}/${d.id}`, migratedAt: iso(at), migration: `${col} schema ${from} to ${main.data.schema}` } });
+    writes.push(main);
+    for (const a of also) { const e = have[a.collection + '/' + a.id]; if (e && EV.stableStringify(EV.docData(e)) === EV.stableStringify(a.data)) continue; if (e) continue; writes.push(a); }
+  }
+  const counts = {}; for (const w of writes) counts[w.collection] = (counts[w.collection] || 0) + 1;
+  return { writes, counts };
 }
 
 /** The v4 record a migration's writes produce on top of the export (sets replace whole). */

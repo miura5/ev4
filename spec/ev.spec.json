@@ -66,6 +66,12 @@
     {
      "collection": "dayedits",
      "windowDays": 14
+    },
+    {
+     "collection": "examedits"
+    },
+    {
+     "collection": "predictions"
     }
    ],
    "steps": [
@@ -107,6 +113,11 @@
       "additionalProperties": false
      },
      "fold": "practice-sets"
+    },
+    {
+     "id": "prediction",
+     "kind": "code",
+     "does": "the day before a NUR unit exam, writes predictions/<examId>: readiness as of this morning, which calibrate reads with the score Matt enters (D-094)"
     },
     {
      "id": "day",
@@ -187,9 +198,6 @@
      "collection": "materialedits"
     },
     {
-     "collection": "libindex"
-    },
-    {
      "collection": "announcements"
     },
     {
@@ -197,6 +205,12 @@
     },
     {
      "collection": "legacy"
+    },
+    {
+     "collection": "examedits"
+    },
+    {
+     "collection": "predictions"
     }
    ],
    "steps": [
@@ -246,6 +260,12 @@
     {
      "collection": "runs",
      "windowDays": 8
+    },
+    {
+     "collection": "examedits"
+    },
+    {
+     "collection": "predictions"
     }
    ],
    "steps": [
@@ -365,9 +385,6 @@
     },
     {
      "collection": "materialedits"
-    },
-    {
-     "collection": "libindex"
     },
     {
      "collection": "announcements"
@@ -668,9 +685,6 @@
     },
     {
      "collection": "materialedits"
-    },
-    {
-     "collection": "libindex"
     },
     {
      "collection": "announcements"
@@ -1110,6 +1124,27 @@
    "fromV3": "exams",
    "schema": "spec/schemas/exams.schema.json"
   },
+  "examedits": {
+   "class": "Edit",
+   "writers": [
+    "page"
+   ],
+   "key": "<examId>",
+   "holds": "score, scoreAt, a status override (D-094)",
+   "fromV3": "exams.score (the page's hand entry on a Fact it did not create)",
+   "schema": "spec/schemas/examedits.schema.json"
+  },
+  "predictions": {
+   "class": "Derived",
+   "writers": [
+    "morning"
+   ],
+   "key": "<examId>",
+   "holds": "the night-before readiness prediction (D-094)",
+   "fromV3": "new (v3 computed it on the fly and stored it on the exam)",
+   "rebuild": "rebuild predictions",
+   "schema": "spec/schemas/predictions.schema.json"
+  },
   "objectives": {
    "class": "Fact",
    "writers": [
@@ -1207,7 +1242,11 @@
    "holds": "review text, reflection prompt, calibration, health line, roll-ups",
    "fromV3": "days.weekly",
    "rebuild": "rebuild weeks",
-   "schema": "spec/schemas/weeks.schema.json"
+   "schema": "spec/schemas/weeks.schema.json",
+   "authored": [
+    "review",
+    "reflection"
+   ]
   },
   "runs": {
    "class": "Log",
@@ -1345,13 +1384,12 @@
    },
    "documents": {
     "memory": {
-     "class": "Derived",
+     "class": "Edit",
      "writers": [
       "page"
      ],
-     "holds": "the running summary",
-     "fromV3": "talk/memory",
-     "rebuild": "rebuild talk/memory"
+     "holds": "the running summary, replaced whole by the page; never rebuilt (D-096)",
+     "fromV3": "talk/memory"
     }
    },
    "schema": "spec/schemas/talk.schema.json"
@@ -1425,10 +1463,11 @@
     "evening-cloud"
    ],
    "key": "<course>",
-   "holds": "the chunk index the page searches",
+   "holds": "retired (D-092): was the chunk index the page searched",
    "fromV3": "new (built on the page in v3)",
    "rebuild": "rebuild libindex",
-   "schema": "spec/schemas/libindex.schema.json"
+   "schema": "spec/schemas/libindex.schema.json",
+   "retired": "D-092: no writer, no reader; the page and the pipelines build the index from materials. The collection, its schema and its rebuild entry stay, since nothing is deleted; chunking per course is the answer if page open time ever matters."
   },
   "announcements": {
    "class": "Fact",
@@ -2106,6 +2145,20 @@
     "failBytes": null,
     "relief": null
    },
+   "examedits": {
+    "warnDocs": null,
+    "failDocs": null,
+    "warnBytes": null,
+    "failBytes": null,
+    "relief": null
+   },
+   "predictions": {
+    "warnDocs": null,
+    "failDocs": null,
+    "warnBytes": null,
+    "failBytes": null,
+    "relief": null
+   },
    "objectives": {
     "warnDocs": null,
     "failDocs": null,
@@ -2717,6 +2770,12 @@
      "collection": "exams"
     },
     {
+     "collection": "predictions"
+    },
+    {
+     "collection": "examedits"
+    },
+    {
      "collection": "objectives"
     },
     {
@@ -2798,8 +2857,7 @@
     }
    ],
    "onDemand": [
-    "materials",
-    "libindex"
+    "materials"
    ],
    "tabs": [
     "ev",

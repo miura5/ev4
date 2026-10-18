@@ -1,0 +1,68 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/examedits",
+ "title": "examedits/<examId>",
+ "description": "score, scoreAt, a status override",
+ "x-ev": {
+  "collection": "examedits",
+  "class": "Edit",
+  "writers": [
+   "page"
+  ],
+  "schema": 1
+ },
+ "$comment": "D-094: the score Matt enters for an exam lives here, beside the exam (a Fact he did not create); replaced whole by the page.",
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "page"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "updatedAt": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "score": {
+   "type": "number",
+   "minimum": 0,
+   "maximum": 100
+  },
+  "scoreAt": {
+   "anyOf": [
+    {
+     "type": "string",
+     "format": "date-time"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "status": {
+   "enum": [
+    "upcoming",
+    "done"
+   ]
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "updatedAt"
+ ],
+ "additionalProperties": false
+}

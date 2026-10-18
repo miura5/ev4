@@ -49,6 +49,7 @@ export function lintRecord(db, spec, validate, { date, commit = null } = {}) {
       if (cap.documentBytes && size > cap.documentBytes) add('error', 'over-budget', ref, `${size} bytes; the budget is ${cap.documentBytes}`);
       if (col === 'materials' && cap.materialTextChars && String(d.text || '').length > cap.materialTextChars) add('error', 'over-budget', ref, `${String(d.text).length} characters of text; the cap is ${cap.materialTextChars} (chunk as ${cap.materialChunkId || '<id>-p<n>'})`);
     }
+    if (c.retired && (docs || []).length) add('info', 'retired', col, `${(docs || []).length} document(s) kept in a retired collection: ${String(c.retired).split(':')[0]}`);
     const b = (cap.collections || {})[col] || {}; const n = (docs || []).length;
     if (b.failDocs != null && n >= b.failDocs) add('error', 'over-budget', col, `${n} documents; fails at ${b.failDocs}` + (b.relief ? ` (relief: ${b.relief})` : ''));
     else if (b.warnDocs != null && n >= b.warnDocs) add('warning', 'over-budget', col, `${n} documents; warns at ${b.warnDocs}` + (b.relief ? ` (relief: ${b.relief})` : ''));

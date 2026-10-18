@@ -1,0 +1,17 @@
+{
+ "schema": 1,
+ "writer": "morning",
+ "at": "2026-10-09T09:25:00.000Z",
+ "source": "morning morning-20261009-092500-e8e8",
+ "examId": "E8",
+ "date": "2026-10-09",
+ "percentSolid": null,
+ "activeWeakSpots": 0,
+ "accuracyLast7": null,
+ "answersLast7": 0,
+ "predictedRange": [
+  80,
+  88
+ ],
+ "basis": "past unit exams average 84"
+}

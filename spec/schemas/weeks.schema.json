@@ -9,7 +9,11 @@
   "writers": [
    "weekly"
   ],
-  "schema": 1
+  "schema": 1,
+  "authored": [
+   "review",
+   "reflection"
+  ]
  },
  "$comment": "Shape completed with the weekly pipeline (B-09).",
  "type": "object",

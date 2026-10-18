@@ -166,7 +166,8 @@
     "source",
     "summary"
    ],
-   "additionalProperties": false
+   "additionalProperties": false,
+   "description": "talk/memory, an Edit of the page (D-096): the running summary, replaced whole; never rebuilt"
   }
  }
 }

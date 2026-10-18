@@ -81,7 +81,7 @@
   use('sample').then(sm => { sample = sm; if (sm && sm.limits) sm.limits().then(l => { toolMax = (l && l.tools && l.tools.maxCount) || 0; }).catch(() => {}); render(); });
   use('mcp').then(m => { mcp = m; render(); }); // connectors (background jobs, the reader) load on their own; the page works without them
 
-  const S = { weak: [], sets: [], answers: [], exams: [], objectives: [], plans: [], plansRaw: [], planedits: [], dates: [], datesAll: [], datesRaw: [], dateedits: [], days: [], dayedits: [], weeks: [], state: null, health: null, runs: [], ideas: [], sessions: [], journal: [], announcements: [], talk: [], jobs: [], jobresults: [], materialedits: [], concepts: [], memory: null };
+  const S = { weak: [], sets: [], answers: [], exams: [], examsRaw: null, examedits: [], predictions: [], objectives: [], plans: [], plansRaw: [], planedits: [], dates: [], datesAll: [], datesRaw: [], dateedits: [], days: [], dayedits: [], weeks: [], state: null, health: null, runs: [], ideas: [], sessions: [], journal: [], announcements: [], talk: [], jobs: [], jobresults: [], materialedits: [], concepts: [], memory: null };
   const NAME = { weakspots: 'weak', 'talk/memory': 'memory' };
   const loaded = new Set();
   let queued = false;
@@ -112,6 +112,7 @@
     else if (key === 'state' || key === 'health') S[k] = (value || []).find(x => x.id === 'current') || null;
     else if (key === 'dates') S.datesRaw = value;
     else if (key === 'plans') S.plansRaw = value;
+    else if (key === 'exams') S.examsRaw = value || [];
     else S[k] = value || [];
     if (key === 'ideas') S.ideas = (value || []).map(i => ({ ...i, createdAt: i.createdAt || i.at }));
     if (key === 'jobs' || key === 'jobresults') { // a job's state lives in jobresults/<id>, written by the worker
@@ -125,6 +126,8 @@
       loaded.add('dates');
     }
     if (key === 'plans' || key === 'planedits') { S.plans = E.planViews(S.plansRaw, S.planedits); loaded.add('plans'); }
+    // D-094: every reader sees an exam with its score and status from examedits and its night-before prediction.
+    if (key === 'exams' || key === 'examedits' || key === 'predictions') { S.exams = E.examViews(S.examsRaw || [], S.examedits || [], S.predictions || []); if (S.examsRaw) loaded.add('exams'); }
     loaded.add(k); render();
   }
   function lost(key, e) { fail(e); }
@@ -168,8 +171,19 @@
 
   // ------------------------------------------------------------ question runner (single, select-all, matrix)
   const views = {}; const sels = {};
+  // D-095: every attempt is truth. A retake shows a set fresh: only the attempts since it began count in the runner;
+  // every new answer is appended like any other, the weak spots see all of them, and outside the retake the page shows
+  // each item's latest attempt.
+  const retakes = {};
+  function answersFor(set) {
+    const from = set && retakes[set.id]; if (!from) return answersOf(set);
+    const doc = S.answers.find(a => a.id === set.id || a.setId === set.id); const out = {};
+    for (const [qid, tries] of Object.entries((doc && doc.answers) || {})) { const k = Object.keys(tries || {}).filter(x => tries[x] && tries[x].at && tries[x].at >= from).sort().pop(); if (k) out[qid] = tries[k]; }
+    return out;
+  }
+  function retake(set, key) { retakes[set.id] = now(); views[key] = null; for (const k of Object.keys(sels)) if (k.startsWith(key)) delete sels[k]; render(); }
   function runner(o) { // o: {key, set, items, body, countEl, barEl, label, summaryExtra}
-    const { key, set, items, body } = o; const answers = answersOf(set);
+    const { key, set, items, body } = o; const answers = answersFor(set);
     const done = items.filter(q => answers[q.id]).length;
     if (o.countEl) o.countEl.textContent = items.length ? done + ' of ' + items.length + ' answered' : '';
     if (o.barEl) o.barEl.style.width = items.length ? (100 * done / items.length) + '%' : '0';
@@ -394,7 +408,7 @@
     }
     $('pr-title').textContent = d.title || 'Practice';
     runner({ key: 'pr-' + d.id, set: d, items: E.validItems(d), body, countEl: $('pr-count'), barEl: $('pr-bar'), label: 'E.V. · ' + (d.title || d.id),
-      summaryExtra: () => { const a = el('div', 'actions'); a.append(btn('All sets', () => { ui.openSet = null; render(); })); return [a]; } });
+      summaryExtra: () => { const a = el('div', 'actions'); a.append(btn('All sets', () => { delete retakes[d.id]; ui.openSet = null; render(); }), btn('Retake', () => retake(d, 'pr-' + d.id), { primary: true })); return [a]; } });
   }
   function renderPlan() {
     const card = $('plan-card');
@@ -481,13 +495,14 @@
       card.replaceChildren(...kids);
     }
     // Score entry for past unit exams (calibration).
-    const needScore = []; // where exam scores live in v4 is open for the design chat (BACKLOG B-02); until then no score card
+    // D-094: a past NUR unit exam with no score yet; the score goes to examedits/<examId>, replaced whole.
+    const needScore = S.exams.filter(e => e.date && e.date < today && (e.course || 'NUR 112') === 'NUR 112' && E.constants().nurUnitExamKinds.includes(e.kind) && typeof e.score !== 'number').sort((a, b) => b.date.localeCompare(a.date));
     const sc = $('score-card'); sc.hidden = !needScore.length;
     if (needScore.length) {
       const e = needScore[0]; const f = el('form'); f.id = 'score-form'; const inp = document.createElement('input'); inp.type = 'number'; inp.min = '0'; inp.max = '100'; inp.step = '0.1'; inp.id = 'score-in'; inp.placeholder = 'Score, e.g. 88.5'; inp.setAttribute('aria-label', 'Score for ' + e.title);
       const a = el('div', 'actions'); const sb = el('button', 'primary', 'Save score'); sb.type = 'submit'; a.append(sb);
       f.append(el('h2', null, 'Record your ' + (e.title || e.id).replace(/:.*$/, '') + ' score'), el('p', 'meta', 'E.V. compares it with its prediction to get better at reading your readiness.'), inp, a);
-      f.addEventListener('submit', ev => { ev.preventDefault(); const v = Number(inp.value); if (!(v >= 0 && v <= 100)) { toast('Enter a score from 0 to 100.'); return; } guard(sb, () => write({ op: 'update', collection: 'exams', id: e.id, data: { score: v, status: 'done', scoreAt: now() } }), 'Score saved'); });
+      f.addEventListener('submit', ev => { ev.preventDefault(); const v = Number(inp.value); if (!(v >= 0 && v <= 100)) { toast('Enter a score from 0 to 100.'); return; } guard(sb, () => { const at = now(); const cur = (S.examedits || []).find(x => x.id === e.id); const { id, ...base } = cur || {}; return write({ op: 'set', collection: 'examedits', id: e.id, data: { ...(cur ? base : envelope('E.V. Home', at)), updatedAt: at, score: v, scoreAt: at, status: 'done' } }); }, 'Score saved'); });
       sc.replaceChildren(f);
     }
     const st = E.answerStats(M.attempts.all, { date: today });
@@ -1697,6 +1712,8 @@
     summarize();
   }
 
+  /** talk/memory as written: the stored fields with these changes, the whole document (an Edit, D-096). */
+  function memoryEdit(data, at) { const { id, ...cur } = S.memory || {}; return { ...(S.memory ? cur : { ...envelope('E.V. Home', at), summary: '', upTo: null }), ...data }; }
   // Older turns fold into talk/memory so the context stays small (at most 1,200 characters).
   async function summarize() {
     if (T.summarizing || !sample || T.sampleOff) return;
@@ -1706,7 +1723,7 @@
       const prompt = ['Update the running summary of Matt\'s conversations with E.V., his study assistant (he is a first-semester nursing student).', 'Keep durable facts only: what he is studying, what he struggles with, decisions, preferences, open questions, promises E.V. made. Drop small talk and anything already in the record (lists, dates). No patient details.', 'Plain text, at most 1,000 characters.', 'Current summary: ' + ((S.memory && S.memory.summary) || '(none)'), 'New turns:\n' + chunk.map(m => (m.role === 'matt' ? 'Matt: ' : 'E.V.: ') + String(m.text).slice(0, 500)).join('\n').slice(-12000)].join('\n\n');
       const r = await sample(prompt, { modelTier: 'quick', cache: false });
       const data = { summary: String(r.text || '').trim().slice(0, 1200), upTo: chunk[chunk.length - 1].id, summarizedAt: now() };
-      if (S.memory) await write({ op: 'update', collection: 'talk', id: 'memory', data }); else await write({ op: 'set', collection: 'talk', id: 'memory', data: { ...envelope('E.V. Home'), ...data } });
+      await write({ op: 'set', collection: 'talk', id: 'memory', data: memoryEdit(data) }); // an Edit, replaced whole (D-096)
     } catch { /* the summary can wait for the next message */ } finally { T.summarizing = false; }
   }
 
@@ -1723,7 +1740,7 @@
     const at = now(); T.greet = { id: msgId('g'), role: 'ev', greeting: true, text: g.lines.join('\n'), cards: g.cards, at, day: today, mood: g.mood, chips: g.chips };
     T.scrollTo = T.greet.id; T.firstScroll = true;
     // Mark this open as seen, so the next greeting only reports what's new. One write per open.
-    setTimeout(() => { const data = { lastSeenAt: at }; (S.memory ? write({ op: 'update', collection: 'talk', id: 'memory', data }) : write({ op: 'set', collection: 'talk', id: 'memory', data: { ...envelope('E.V. Home', at), summary: '', upTo: null, ...data } })).catch(() => {}); }, 1500);
+    setTimeout(() => { write({ op: 'set', collection: 'talk', id: 'memory', data: memoryEdit({ lastSeenAt: at }, at) }).catch(() => {}); }, 1500);
   }
 
   // ---------------------------------------------------------------- render + composer

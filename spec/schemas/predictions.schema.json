@@ -1,0 +1,91 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/predictions",
+ "title": "predictions/<examId>",
+ "description": "the night-before readiness prediction",
+ "x-ev": {
+  "collection": "predictions",
+  "class": "Derived",
+  "writers": [
+   "morning"
+  ],
+  "schema": 1
+ },
+ "$comment": "D-094: written by the morning run the day before the exam; rebuildable as of that morning; calibrate reads it with the exam and its examedits.",
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "morning"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "examId": {
+   "type": "string",
+   "minLength": 1
+  },
+  "date": {
+   "type": "string",
+   "format": "date"
+  },
+  "percentSolid": {
+   "anyOf": [
+    {
+     "type": "number"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "activeWeakSpots": {
+   "type": "integer",
+   "minimum": 0
+  },
+  "accuracyLast7": {
+   "anyOf": [
+    {
+     "type": "number"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "answersLast7": {
+   "type": "integer",
+   "minimum": 0
+  },
+  "predictedRange": {
+   "type": "array",
+   "items": {
+    "type": "number"
+   },
+   "minItems": 2,
+   "maxItems": 2
+  },
+  "basis": {
+   "type": "string"
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "examId",
+  "date",
+  "predictedRange"
+ ],
+ "additionalProperties": false
+}

@@ -27,7 +27,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { verify, verifyReads, formatVerify, deployCalls, formatDeploy, SYSTEM_IDS, artifactUrl } from './deploy.mjs';
 import { seedStaging } from './seed.mjs';
-import { migrateV3, verifyMigration, applyWrites } from './migrate.mjs';
+import { migrateV3, verifyMigration, applyWrites, migrateBumps } from './migrate.mjs';
 import { chunkWrites } from './batches.mjs';
 import { readExport, loadValidator } from './schemas.mjs';
 import { describeErrors } from './validate.mjs';
@@ -125,7 +125,8 @@ function migration(o) {
 
 const commands = {
   migrate(o) {
-    if (o._[1] !== 'v3') throw new Error('usage: migrate v3 --from <export dir>');
+    if (o._[1] === 'bumps') return commands['migrate-bumps'](o);
+    if (o._[1] !== 'v3') throw new Error('usage: migrate v3 --from <export dir> | migrate bumps --from <v4 export dir> --record <target> [--versions <file>]');
     const { root, at, result } = migration(o);
     const spec = readJson(path.join(root, 'spec', 'ev.spec.json'));
     const validate = loadValidator(path.join(root, 'spec', 'schemas'));
@@ -141,6 +142,31 @@ const commands = {
     console.log(`migrate v3: ${result.writes.length} writes in ${batches.length} batches (at ${at}) -> ${path.relative(process.cwd(), out) || out}/plan.json`);
     console.log('  ' + Object.entries(result.counts).map(([k, v]) => `${k} ${v}`).join(', '));
     if (result.skipped.length) console.log(`  kept in legacy only or skipped: ${result.skipped.length} (listed in plan.json)`);
+    return 0;
+  },
+  /**
+   * The schema bumps a v4 record needs (Data architecture, "Schema registry"), printed as pinned batch calls: --from a
+   * pull of the bumped collections (ArtifactData list with out_dir), --versions a JSON {collection: {id: version}} of
+   * that pull (from its replies), --record the target. A record already at today's versions prints nothing to do.
+   */
+  'migrate-bumps'(o) {
+    const root = o.root ? path.resolve(o.root) : HERE;
+    const spec = readJson(path.join(root, 'spec', 'ev.spec.json')); EV.configure(spec);
+    const validate = loadValidator(path.join(root, 'spec', 'schemas'));
+    const db = loadExport(o.from); const at = o.at || new Date().toISOString();
+    const versions = o.versions ? readJson(path.resolve(o.versions)) : {};
+    const { writes, counts } = migrateBumps(db, { at });
+    if (!writes.length) { console.log('migrate bumps: nothing to do; every document is at its collection\'s version'); return 0; }
+    const invalid = writes.map(w => ({ w, r: validate(w.collection, w.data, { id: w.id }) })).filter(x => !x.r.ok);
+    if (invalid.length) { console.log(`migrate bumps: REFUSED, ${invalid.length} write(s) do not validate`); for (const { w, r } of invalid.slice(0, 20)) console.log('  ' + describeErrors(`${w.collection}/${w.id}`, r).split('\n')[0]); return 1; }
+    const missing = writes.filter(w => (db[w.collection] || []).some(d => d.id === w.id) && !((versions[w.collection] || {})[w.id]));
+    if (missing.length) { console.log(`migrate bumps: REFUSED, no pulled version for ${missing.map(w => w.collection + '/' + w.id).join(', ')} (give --versions)`); return 1; }
+    const rec = spec.registry.records[o.record || 'staging']; if (!rec || !rec.artifact) throw new Error('no record ' + o.record);
+    const out = o.out ? path.resolve(o.out) : path.join(root, 'dist', 'bumps'); fs.rmSync(out, { recursive: true, force: true });
+    const files = writes.map(w => { const f = path.join(out, 'docs', w.collection, w.id + '.json'); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, JSON.stringify(w.data)); const v = (versions[w.collection] || {})[w.id]; return { op: 'set', collection: w.collection, doc_id: w.id, file_path: f, ...(v ? { if_version: v } : {}), data: w.data }; });
+    const batches = chunkWrites(files, spec.capacity.batch).map(b => b.map(({ data, ...w }) => w));
+    console.log(`migrate bumps: ${writes.length} writes in ${batches.length} batch${batches.length === 1 ? '' : 'es'} (${Object.entries(counts).map(([k, v]) => `${k} ${v}`).join(', ')}). Make each call exactly as printed.\n`);
+    batches.forEach((b, i) => console.log(`${i + 1}. ArtifactData\n${JSON.stringify({ action: 'batch', url: artifactUrl(rec.artifact), writes: b }, null, 1)}\n`));
     return 0;
   },
   'seed-staging'(o) {

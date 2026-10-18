@@ -11,13 +11,13 @@
    "page",
    "worker"
   ],
-  "schema": 1
+  "schema": 2
  },
- "$comment": "Predictions and calibration are computed (weeks/<date>), never stored on the exam.",
+ "$comment": "Schema 2 (D-094): the score lives in examedits/<examId>, the night-before prediction in predictions/<examId>; neither is stored on the exam.",
  "type": "object",
  "properties": {
   "schema": {
-   "const": 1
+   "const": 2
   },
   "writer": {
    "enum": [
@@ -96,6 +96,16 @@
    {
     "required": [
      "calibration"
+    ]
+   },
+   {
+    "required": [
+     "score"
+    ]
+   },
+   {
+    "required": [
+     "scoreAt"
     ]
    }
   ]
