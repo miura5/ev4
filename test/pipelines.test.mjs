@@ -140,3 +140,57 @@ test('weekly: the roll-ups, the review as written, weeks/<Sunday>; it rebuilds b
   assert.equal(week.review, 'A made-up week: steady practice.');
   assert.equal(rebuildOne(out, spec, 'weeks', week).status, 'same');
 });
+
+test('worker: the named job done end to end, its practice set saved and its message posted; the audit allows its one Doc', () => {
+  const at = '2026-10-17T19:34:00Z';
+  const db = recordDb();
+  db.jobs.push({ id: 'job-20261017-193300-made-up-set', schema: 1, writer: 'page', at: '2026-10-17T19:33:00Z', source: 'E.V. Home', kind: 'practice-set', title: 'Five made-up questions', brief: 'Five questions on the sample topic.', fired: { at: '2026-10-17T19:33:01Z', ok: true } });
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-worker-'));
+  assert.throws(() => RUN.start({ spec, pipeline: 'morning', at, dir, release: 'v4.0.0', input: { job: 'x' } }), /morning takes no --job/);
+  RUN.start({ spec, pipeline: 'worker', record: 'staging', at, dir, release: 'v4.0.0', input: { job: 'job-20261017-193300-made-up-set' } });
+  const lines = [];
+  for (const c of RUN.pull({ spec, dir, at })) {
+    const a = c.args; const docs = (db[a.collection] || []).filter(d => !a.query.where || EV.toMs(d.at) >= EV.toMs(a.query.where[0][2]));
+    for (const d of docs) { const f = path.join(a.out_dir, a.collection, d.id + '.json'); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, JSON.stringify(EV.docData(d))); }
+    const id = 'w' + (++seq);
+    lines.push(line({ message: { content: [{ type: 'tool_use', id, name: 'ArtifactData', input: a }] } }));
+    lines.push(line({ message: { content: [{ type: 'tool_result', tool_use_id: id, content: [{ type: 'text', text: docs.length ? `${docs.length} documents from collection "${a.collection}" saved:\n` + docs.map(d => `- "${d.id}"  1 bytes  version 2  "x"`).join('\n') : '0 documents' }] }] } }));
+  }
+  RUN.pulled({ spec, dir, transcript: lines.join('\n') });
+  const w = RUN.compute({ spec, dir, validate, at });
+  assert.equal(w.status, 'waiting'); assert.equal(w.question.material.job.kind, 'practice-set');
+  assert.match(w.question.material.guide, /aimed at his active weak spots/);
+  const q = n => ({ type: 'single', stem: `Made-up question number ${n} about the sample topic?`, options: ['a', 'b', 'c', 'd'], correct: [0], rationales: ['y', 'n', 'n', 'n'], objective: 'E9-1', topic: 'Sample topic', cjStep: 'recognize-cues', verify: true });
+  answer(dir, 'do-job', { text: 'Here are five questions on the sample topic. Try them when you have ten minutes.', items: [q(1), q(2), q(3), q(4), { ...q(5), options: ['only one'] }] });
+  const r = RUN.compute({ spec, dir, validate, at });
+  assert.equal(r.status, 'planned', JSON.stringify(r.problems));
+  assert.equal(r.plan.push, 'Here are five questions on the sample topic.');
+  const { out } = applied(db, dir);
+  const res = out.jobresults.find(x => x.id === 'job-20261017-193300-made-up-set');
+  assert.deepEqual([res.status, res.result.setId, res.writer], ['done', 'job-20261017-193300-made-up-set', 'worker']);
+  const set = out.sets.find(x => x.id === res.result.setId);
+  assert.equal(set.items.length, 4, 'the invalid question is dropped');
+  const talk = out.talk.find(x => x.id === '2026-10-17');
+  const msg = talk.messages[res.message];
+  assert.deepEqual([msg.role, msg.jobId, msg.cards.map(c => c.type)], ['ev', 'job-20261017-193300-made-up-set', ['job', 'set']]);
+  assert.ok(validate('talk', EV.docData(talk), { id: talk.id }).ok);
+  // The run's transcript: its printed calls plus the one Claude Doc a study-guide may create; anything else is extra.
+  const calls = JSON.parse(fs.readFileSync(path.join(dir, 'run.json'), 'utf8')).calls;
+  const t = calls.map((c, i) => line({ message: { content: [{ type: 'tool_use', id: 'k' + i, name: c.tool, input: c.args }] } }));
+  t.push(line({ message: { content: [{ type: 'tool_use', id: 'doc', name: 'mcp__Claude_Docs__batch', input: { container: { kind: 'project' } } }] } }));
+  for (const c of RUN.apply({ dir })) t.push(line({ message: { content: [{ type: 'tool_use', id: 'a' + seq++, name: c.tool, input: c.args }] } }));
+  const toResults = arr => arr.flatMap(l => { const u = JSON.parse(l).message.content[0]; return [l, line({ message: { content: [{ type: 'tool_result', tool_use_id: u.id, content: [{ type: 'text', text: 'ok' }] }] } })]; });
+  const a = RUN.audit({ dir, transcript: toResults(t).join('\n') });
+  assert.equal(a.ok, true, JSON.stringify(a.extra)); assert.equal(a.allowed, 1);
+});
+
+test('worker without a job id takes the oldest job with no result, and ends quietly when there is none', () => {
+  const at = '2026-10-17T19:34:00Z';
+  const db = recordDb(); // its one job already has a result
+  const { dir } = session('worker', at, db);
+  const r = RUN.compute({ spec, dir, validate, at });
+  assert.equal(r.status, 'planned');
+  assert.deepEqual(r.plan.steps.map(s => [s.id, s.status]), [['job-brief', 'ok'], ['do-job', 'skipped']]);
+  assert.match(r.plan.steps[1].detail, /no job is waiting/);
+  assert.equal(r.plan.writes, 0);
+});

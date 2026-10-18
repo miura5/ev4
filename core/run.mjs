@@ -44,15 +44,16 @@ function saveRun(dir, run) { writeJson(path.join(dir, 'run.json'), run); }
 function printed(dir, run, move, calls) { run.calls.push(...calls.map(c => ({ move, ...c }))); saveRun(dir, run); return calls; }
 
 // ------------------------------------------------------------------------------------------------ 2 start
-export function start({ spec, pipeline, record = 'staging', at, dir, release }) {
+export function start({ spec, pipeline, record = 'staging', at, dir, release, input = {} }) {
   const def = pipelineDef(spec, pipeline);
   const id = runIdFor(pipeline, at); const url = recordUrl(spec, record);
   // The run directory is scratch: a previous run's is replaced, anything else is refused.
   if (fs.existsSync(dir) && fs.readdirSync(dir).length && !fs.existsSync(path.join(dir, 'run.json'))) throw new Error(`${dir} is not empty and holds no run; give --dir an empty or run directory`);
   fs.rmSync(dir, { recursive: true, force: true }); fs.mkdirSync(dir, { recursive: true });
-  const data = { ...EV.envelope(pipeline, `${pipeline} run`, at), release, pipeline, startedAt: EV.envelope(pipeline, '', at).at, endedAt: null, status: 'running', planned: def.steps.map(s => s.id) };
+  for (const k of Object.keys(input)) if (!(def.input || {})[k]) throw new Error(`${pipeline} takes no --${k}`);
+  const data = { ...EV.envelope(pipeline, `${pipeline} run`, at), release, pipeline, startedAt: EV.envelope(pipeline, '', at).at, endedAt: null, status: 'running', planned: def.steps.map(s => s.id), ...(Object.keys(input).length ? { detail: Object.entries(input).map(([k, v]) => `${k} ${v}`).join(', ') } : {}) };
   const file = path.join(dir, 'out', 'runs', id + '.json'); writeJson(file, data);
-  const run = { id, pipeline, record, url, release, startedAt: data.startedAt, dir, calls: [] };
+  const run = { id, pipeline, record, url, release, startedAt: data.startedAt, input, allowed: def.agentCalls || [], dir, calls: [] };
   saveRun(dir, run);
   return printed(dir, run, 'start', [{ tool: 'ArtifactData', args: { action: 'set', url, collection: 'runs', doc_id: id, file_path: file } }]);
 }
@@ -138,7 +139,7 @@ export function compute({ spec, dir, validate, at }) {
   const versions = fs.existsSync(versionsFile) ? readJson(versionsFile) : {};
   const db = loadPulled(dir); const pulledDb = loadPulled(dir);
   const now = EV.envelope('x', '', at).at;
-  const ctx = { runId: run.id, pipeline: run.pipeline, writer: def.writer || run.pipeline, date: EV.chicagoDate(now), now, source: `${run.pipeline} ${run.id}` };
+  const ctx = { runId: run.id, pipeline: run.pipeline, writer: def.writer || run.pipeline, date: EV.chicagoDate(now), now, source: `${run.pipeline} ${run.id}`, release: run.release, startedAt: run.startedAt, input: run.input || {} };
   const writes = []; const steps = []; let push = null; const problems = [];
   for (const s of def.steps) {
     let r;
@@ -255,15 +256,16 @@ export function audit({ dir, transcript }) {
   const startKey = expected.length ? expected[0].key : null;
   const from = used.findIndex(u => callKey(u.name, u.input) === startKey);
   const calls = from >= 0 ? used.slice(from) : used;
-  const pool = expected.map(e => e.key); const extra = []; let matched = 0;
+  const pool = expected.map(e => e.key); const extra = []; let matched = 0, allowed = 0;
   for (const u of calls) {
     const k = callKey(u.name, u.input); const i = pool.indexOf(k);
     if (i >= 0) { pool.splice(i, 1); matched++; continue; }
     const a = u.input || {};
     if (toolName(u.name) === 'ArtifactData' && a.action === 'get' && a.collection === 'system') { matched++; continue; } // the gate
+    if ((run.allowed || []).some(p => String(u.name).startsWith(p))) { allowed++; continue; } // what the pipeline's judgment step may do
     extra.push({ tool: toolName(u.name), summary: summary(a) || k.slice(0, 120) });
   }
-  return { ok: !extra.length, matched, extra, missing: pool.map(k => k.slice(0, 160)) };
+  return { ok: !extra.length, matched, allowed, extra, missing: pool.map(k => k.slice(0, 160)) };
 }
 
 export const formatCalls = calls => calls.map((c, i) => `${i + 1}. ${c.tool}\n${JSON.stringify(c.args, null, 1)}`).join('\n\n');

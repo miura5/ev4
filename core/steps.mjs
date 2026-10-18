@@ -74,7 +74,37 @@ CODE_STEPS['week-brief'] = function weekBrief(db, ctx, spec) {
   return { say: [`Week ${week.rollups.from}..${week.rollups.to}: ${week.rollups.right}/${week.rollups.answered} right, ${week.rollups.newWeakSpots.length} new weak spots, ${week.rollups.solid.length} made solid.`] };
 };
 
+// ------------------------------------------------------------------------------------------------ worker
+/** The job this run does: the one the firing named, or the oldest with no result; with its guide and material. */
+CODE_STEPS['job-brief'] = function jobBrief(db, ctx, spec) {
+  const results = new Map((db.jobresults || []).map(r => [r.id, r]));
+  const wanted = ctx.input && ctx.input.job;
+  const job = wanted ? (db.jobs || []).find(j => j.id === wanted) : [...(db.jobs || [])].filter(j => !results.has(j.id)).sort((a, b) => EV.toMs(a.at) - EV.toMs(b.at) || (a.id < b.id ? -1 : 1))[0];
+  if (!job) { ctx.job = null; ctx.jobSkip = wanted ? `no job ${wanted} in the record` : 'no job is waiting'; return { say: [ctx.jobSkip] }; }
+  const done = results.get(job.id);
+  if (done && done.status !== 'running') { ctx.job = null; ctx.jobSkip = `job ${job.id} already has a result (${done.status})`; return { say: [ctx.jobSkip] }; }
+  const kinds = (spec.jobs && spec.jobs.kinds) || {}; const kind = kinds[job.kind] ? job.kind : 'general';
+  const ms = models(db); const idx = library(db); const q = `${job.title} ${job.brief}`;
+  const context = {};
+  if (kind === 'study-guide') context.passages = passages(idx, q, 6);
+  if (kind === 'practice-set') {
+    context.weakSpots = EV.rankDue(ms.filter(EV.isActive), '9999-12-31', db.exams || []).map(w => ({ w, s: EV.similarity(q, w.topic + ' ' + w.objective) })).sort((a, b) => b.s - a.s).slice(0, 15).map(({ w }) => ({ weakspotId: w.id, topic: w.topic, objective: w.objective }));
+    context.passages = passages(idx, q, 6);
+  }
+  if (kind === 'exam-plan') {
+    const exam = (db.exams || []).find(e => new RegExp(`\\b${e.id}\\b`).test(q) || (e.title && q.toLowerCase().includes(e.title.toLowerCase()))) || null;
+    context.exam = exam ? { id: exam.id, title: exam.title, date: exam.date, course: exam.course } : null;
+    context.objectives = (db.objectives || []).filter(o => !exam || o.exam === exam.id).map(o => ({ id: o.id, text: o.text, chapters: o.chapters || '' }));
+    context.dates = EV.liveDates(db.dates, db.dateedits).filter(d => d.date >= ctx.date && (!exam || !exam.date || d.date <= exam.date)).map(d => ({ date: d.date, title: d.title, kind: d.kind, graded: !!d.graded }));
+    context.passages = passages(idx, q, 4);
+  }
+  ctx.job = job;
+  ctx.jobBrief = { job: { id: job.id, kind, title: job.title, brief: job.brief }, guide: kinds[kind] ? kinds[kind].guide : '', today: ctx.date, context };
+  return { say: [`Job ${job.id} (${kind}): ${job.title}`] };
+};
+
 export const AGENT_MATERIAL = {
+  'job-brief'(db, ctx) { return ctx.job ? ctx.jobBrief : { skip: ctx.jobSkip || 'no job' }; },
   'practice-brief'(db, ctx) {
     const b = ctx.brief;
     if (!b || (!b.review.targets.length && !b.review.checks.length && !b.drills.length)) return { skip: b && b.review.exists ? 'today\'s review set already exists and no drill is due' : 'nothing to write today' };
@@ -89,6 +119,37 @@ export const AGENT_MATERIAL = {
 };
 
 export const AGENT_FOLDS = {
+  /** {text, links?, items?, plan?, failed?}: jobresults/<id>, what the job made, and E.V.'s message in talk/<date>. */
+  'job-result'(answer, db, ctx) {
+    const job = ctx.job; const writes = []; const say = [];
+    const failed = answer.failed ? String(answer.failed) : null;
+    const result = { text: failed ? 'I couldn’t finish this one: ' + failed : answer.text, links: (answer.links || []).map(l => ({ ...(l.title ? { title: String(l.title).slice(0, 120) } : {}), url: l.url })) };
+    const doc = result.links.find(l => /^https:\/\/claude\.ai\//.test(l.url)); if (doc && job.kind === 'study-guide') result.docUrl = doc.url;
+    if (!failed && job.kind === 'practice-set') {
+      const raw = answer.items || []; const items = [];
+      for (const r of raw) { const q = { id: 'p' + (items.length + 1), kind: r && r.weakspotId ? 'review' : 'check', ...pick(r || {}, ITEM_FIELDS) }; if (q.weakspotId && !(db.weakspots || []).some(w => w.id === q.weakspotId)) delete q.weakspotId; if (EV.validateItem(q, { strict: true }).ok) items.push(q); }
+      if (items.length) {
+        const setId = 'job-' + job.id.replace(/^job-/, '');
+        const target = EV.targetExam({ exams: db.exams || [], objectives: db.objectives || [], weakspots: models(db), date: ctx.date });
+        writes.push({ op: 'set', collection: 'sets', id: setId, data: { ...EV.envelope('worker', ctx.source, ctx.now), kind: 'job', date: ctx.date, ...(target ? { exam: target.id } : {}), title: job.title, items, createdAt: ctx.now } });
+        result.setId = setId; say.push(`Practice set ${setId}: ${items.length} of ${raw.length} questions kept.`);
+      } else result.text += ' (The questions didn’t pass my checks, so nothing was saved.)';
+    }
+    if (!failed && job.kind === 'exam-plan' && answer.plan && answer.plan.exam && Array.isArray(answer.plan.days) && answer.plan.days.length) {
+      const p = answer.plan; const exists = (db.plans || []).some(x => x.id === p.exam);
+      const planId = exists ? p.exam + '-draft' : p.exam;
+      writes.push({ op: 'set', collection: 'plans', id: planId, data: { ...EV.envelope('worker', ctx.source, ctx.now), ...pick(p, ['exam', 'title', 'days']) } });
+      result.text += exists ? ` (Your current ${p.exam} plan stays; this one is saved as plans/${planId}.)` : '';
+      say.push(`Plan ${planId}: ${p.days.length} days.`);
+    }
+    const key = `m-${EV.compactTime(ctx.now)}-job`;
+    const message = { role: 'ev', text: result.text.slice(0, 4000), cards: [{ type: 'job', id: job.id }, ...(result.setId ? [{ type: 'set', id: result.setId }] : [])], at: ctx.now, jobId: job.id };
+    const day = (db.talk || []).find(t => t.id === ctx.date);
+    writes.push(day ? { op: 'update', collection: 'talk', id: ctx.date, data: { messages: { [key]: message } } } : { op: 'set', collection: 'talk', id: ctx.date, data: { ...EV.envelope('worker', ctx.source, ctx.now), date: ctx.date, messages: { [key]: message } } });
+    writes.unshift({ op: 'set', collection: 'jobresults', id: job.id, data: { ...EV.envelope('worker', ctx.source, ctx.now), release: ctx.release, status: failed ? 'failed' : 'done', startedAt: ctx.startedAt, finishedAt: ctx.now, result, message: key, error: failed } });
+    say.push(`Job ${job.id} ${failed ? 'failed' : 'done'}; message posted to talk/${ctx.date}.`);
+    return { writes, say, push: result.text.split(/(?<=[.!?])\s/)[0].slice(0, 120) };
+  },
   /** {review: [items], drills: {setId: [items]}}: today's review set and each drill, keeping only valid items. */
   'practice-sets'(answer, db, ctx) {
     const b = ctx.brief; const writes = []; const say = []; const rejects = [];

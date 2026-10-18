@@ -222,6 +222,6 @@ test('cli: the moves end to end, with the exit codes a run reads', () => {
   r = cli('end', '--no-audit'); assert.equal(r.code, 0); assert.match(r.out, /"action": "update"/);
   r = cli('audit'); assert.equal(r.code, 0, 'calls not made are reported, not failed: the run status says why'); assert.match(r.out, /GREEN .*printed but not made/);
   let refused = null;
-  try { execFileSync('node', [path.join(root, 'core/cli.mjs'), 'run', 'worker', 'start', '--dir', dir, '--root', root], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }); } catch (e) { refused = e; }
-  assert.ok(refused, 'a pipeline with no step list must not start'); assert.equal(refused.status, 1); assert.match(refused.stderr, /no step list for worker/);
+  try { execFileSync('node', [path.join(root, 'core/cli.mjs'), 'run', 'watchdog', 'start', '--dir', dir, '--root', root], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }); } catch (e) { refused = e; }
+  assert.ok(refused, 'a pipeline with no step list must not start'); assert.equal(refused.status, 1); assert.match(refused.stderr, /no step list for watchdog/);
 });

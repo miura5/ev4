@@ -294,9 +294,120 @@
   "worker": {
    "lane": "cloud",
    "writer": "worker",
-   "purpose": "does one job Matt asked for in the conversation and posts the result back",
-   "steps": null,
-   "pendingIn": "B-10"
+   "purpose": "does one job Matt asked for in the conversation and posts the result back to it",
+   "input": {
+    "job": "the job id, from the message that started this run ('Job <id>'); without it the run takes the oldest job that has no result"
+   },
+   "reads": [
+    {
+     "collection": "weakspots"
+    },
+    {
+     "collection": "sets"
+    },
+    {
+     "collection": "answers"
+    },
+    {
+     "collection": "exams"
+    },
+    {
+     "collection": "objectives"
+    },
+    {
+     "collection": "plans"
+    },
+    {
+     "collection": "dates"
+    },
+    {
+     "collection": "dateedits"
+    },
+    {
+     "collection": "materials"
+    },
+    {
+     "collection": "materialedits"
+    },
+    {
+     "collection": "jobs",
+     "windowDays": 30
+    },
+    {
+     "collection": "jobresults",
+     "windowDays": 30
+    },
+    {
+     "collection": "talk",
+     "windowDays": 7
+    }
+   ],
+   "agentCalls": [
+    "mcp__Claude_Docs__"
+   ],
+   "steps": [
+    {
+     "id": "job-brief",
+     "kind": "code",
+     "does": "finds the job, its kind's guide and the material it needs from the record and the library"
+    },
+    {
+     "id": "do-job",
+     "kind": "agent",
+     "judgment": "Do the job by its guide, carefully and well, in E.V.'s voice: warm, plain and brief. Answer with text (what you did or found, at most 1,500 characters) and any links; a practice set's questions go in items, an exam plan in plan. If the job can't be done within E.V.'s boundaries, say why in failed (one line).",
+     "material": "job-brief",
+     "output": {
+      "type": "object",
+      "properties": {
+       "text": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1500
+       },
+       "links": {
+        "type": "array",
+        "items": {
+         "type": "object",
+         "properties": {
+          "title": {
+           "type": "string"
+          },
+          "url": {
+           "type": "string",
+           "pattern": "^https://"
+          }
+         },
+         "required": [
+          "url"
+         ],
+         "additionalProperties": false
+        },
+        "maxItems": 6
+       },
+       "items": {
+        "type": "array",
+        "items": {
+         "type": "object"
+        },
+        "maxItems": 40
+       },
+       "plan": {
+        "type": "object"
+       },
+       "failed": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 300
+       }
+      },
+      "required": [
+       "text"
+      ],
+      "additionalProperties": false
+     },
+     "fold": "job-result"
+    }
+   ]
   },
   "watchdog": {
    "lane": "cloud",
@@ -1495,5 +1606,29 @@
   "A Decision row (v3 doc Decisions tab) only when the design chat says so; a Board row per task and a Changelog line per deploy. Never a date on anything that gates work.",
   "Changes run in staging first: spec, code and page.",
   "Matt's legacy study workflow keeps working without E.V."
- ]
+ ],
+ "jobs": {
+  "_rules": [
+   "The page writes jobs/<id> and fires the worker with 'Job <id>'; the worker writes jobresults/<id>, what the job made, and one message in talk/<date>.",
+   "A job never touches graded work; a practice set's items follow the same rules as the morning's."
+  ],
+  "kinds": {
+   "study-guide": {
+    "label": "Study guide",
+    "guide": "Write a one-page study guide on the brief, grounded in the passages given from his course materials: the key rules, a comparison table where it helps, 3 memory hooks, the NCLEX traps, and 3 self-check questions with answers at the end. Create it as a Claude Doc titled 'E.V. study guide: <topic>' with the Claude Docs tools and put its link first in links. Mark anything from general knowledge 'check your materials'."
+   },
+   "practice-set": {
+    "label": "Practice set",
+    "guide": "Write the number of questions the brief asks for (default 15) on its topic, aimed at his active weak spots on that topic (copy their weakspotId). type single|sata|matrix, stem (10+ characters), options (2 to 6) and correct (indexes) or a matrix, rationales, objective, topic, cjStep (one of the six clinical-judgment steps), sourceRef (materials/<id> it rests on) or verify: true when the point is not in his materials; a review item names its weakspotId target; never select-N; only exam content, never graded work."
+   },
+   "exam-plan": {
+    "label": "Exam plan",
+    "guide": "Build a study plan for the named exam from its materials, dates and objectives given, in the shape of an exam plan: exam, title, and days, each {date, label, dayLabel, tasks: [{id, text, kind}]} with kinds reading, drill, sim, review, graded, clinical, val, terminology, exam or other. Put it in plan. Never invent objectives."
+   },
+   "general": {
+    "label": "Background task",
+    "guide": "Do the asked work if it fits E.V.'s boundaries and needs only the record and the web. Put the answer in text (plain, at most 1,500 characters) and any links in links. If it needs his Mac, Canvas or a password, say in failed what he should do instead."
+   }
+  }
+ }
 }
