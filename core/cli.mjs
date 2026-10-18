@@ -56,6 +56,19 @@ export function isPushed(root, commit) {
 }
 
 /** Reads the state a chat saved with verifyReads(): triggers-<n>.json pages, record/system/*.json, page.html. */
+/**
+ * The published shell is wrapped by the platform's skeleton, so it is held by containment: when the saved page holds
+ * the built shell verbatim, the shell counts as published with the build's hash (Operational architecture, "Page
+ * delivery": most changes never touch the shell).
+ */
+export function withShell(state, manifest, target, distDir) {
+  const files = (manifest.pages[target] || {}).files || {}; const key = Object.keys(files)[0];
+  if (!key || state.pageHtml == null) return state;
+  const built = path.join(distDir, key);
+  const held = fs.existsSync(built) && state.pageHtml.includes(fs.readFileSync(built, 'utf8'));
+  return { ...state, pageFiles: { ...(state.pageFiles || {}), [key]: held ? files[key] : 'not-the-built-shell' } };
+}
+
 export function readState(dir) {
   if (!fs.existsSync(dir)) return { triggers: null, record: null, pageHtml: null, pageFiles: null };
   const pages = fs.readdirSync(dir).filter(f => /^triggers-\d+\.json$/.test(f)).sort((a, b) => parseInt(a.slice(9)) - parseInt(b.slice(9)));
@@ -250,7 +263,7 @@ const commands = {
   'verify-deploy'(o) {
     const target = o._[1];
     const { dist, manifest, distDocs, stateDir, build } = load(o, target);
-    const state = readState(stateDir);
+    const state = withShell(readState(stateDir), manifest, target, dist);
     const result = verify({ manifest, target, state, build, dist: distDocs, sha256 });
     const reads = verifyReads({ manifest, target, stateDir });
     fs.writeFileSync(path.join(dist, `verify-${target}.json`), JSON.stringify({ target, release: manifest.release, commit: manifest.commit, green: result.green, lines: result.lines }, null, 1));
@@ -260,7 +273,7 @@ const commands = {
   deploy(o) {
     const target = o._[1];
     const { dist, manifest, stateDir, build } = load(o, target);
-    const result = deployCalls({ manifest, target, distDir: dist, build, versions: o.version, mattOk: Boolean(o.mattOk), state: readState(stateDir), sha256 });
+    const result = deployCalls({ manifest, target, distDir: dist, build, versions: o.version, mattOk: Boolean(o.mattOk), state: withShell(readState(stateDir), manifest, target, dist), sha256 });
     if (result.ok) fs.writeFileSync(path.join(dist, `deploy-${target}.json`), JSON.stringify(result, null, 1));
     console.log(o.json ? JSON.stringify(result, null, 1) : formatDeploy(target, result));
     return result.ok ? 0 : 1;

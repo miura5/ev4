@@ -38,7 +38,7 @@ export function verifyReads({ manifest, target, stateDir }) {
     const page = manifest.pages[target];
     if (page.artifact) reads.push({ tool: 'Artifact', args: { action: 'read', url: artifactUrl(page.artifact) }, save: `${stateDir}/page.html`, note: `Save it with node tools/tool-result.mjs Artifact ${stateDir}/page.html --html (or copy the file the read names, when it names one).` });
     const published = Object.keys(page.files).slice(1).map(f => f.replace(/^page\/[^/]+\//, ''));
-    if (page.artifact && published.length) reads.push({ tool: 'Artifact', args: { action: 'read', url: artifactUrl(page.artifact), paths: published, out_dir: `${stateDir}/page-files` }, save: `${stateDir}/page-files/`, note: 'Saved by the tool, one file per published path. The shell is checked by its release stamp: publishing wraps it, so its bytes differ from the build.' });
+    if (page.artifact && published.length) reads.push({ tool: 'Artifact', args: { action: 'read', url: artifactUrl(page.artifact), paths: published, out_dir: `${stateDir}/page-files` }, save: `${stateDir}/page-files/`, note: 'Saved by the tool, one file per published path. The shell is held by the page read above: publishing wraps it, so the read must contain the built shell verbatim.' });
   }
   return reads;
 }
@@ -98,8 +98,7 @@ export function verify({ manifest, target, state, build, dist, sha256, now = new
       const stamp = pageStamp(state.pageHtml);
       add(stamp === manifest.release, 'page stamp', stamp === manifest.release ? stamp : `the published page says ${stamp || '(no stamp)'}, the build is ${manifest.release}`);
       if (state.pageFiles) {
-        const shell = Object.keys(page.files)[0]; // wrapped at publish time; its stamp is checked above
-        const changed = Object.keys({ ...page.files, ...state.pageFiles }).filter(f => f !== shell && state.pageFiles[f] !== page.files[f]);
+        const changed = Object.keys({ ...page.files, ...state.pageFiles }).filter(f => state.pageFiles[f] !== page.files[f]);
         add(changed.length === 0, 'published page files', changed.length ? `${changed.length} differ: ${changed.join(', ')}` : '');
       }
     }
@@ -153,7 +152,7 @@ export function deployCalls({ manifest, target, distDir, build, versions = {}, m
   if (!rec.artifact) refusals.push(`no ${target} record in spec.registry.records`);
   if (refusals.length) return { ok: false, refusals, calls: [] };
 
-  const calls = [];
+  const calls = []; const skipped = [];
   const writes = SYSTEM_IDS.map(id => {
     const w = { op: 'set', collection: 'system', doc_id: id, file_path: `${distDir}/system/${id}.json` };
     if (versions[id]) w.if_version = versions[id];
@@ -162,12 +161,13 @@ export function deployCalls({ manifest, target, distDir, build, versions = {}, m
   calls.push({ step: 'system documents', tool: 'ArtifactData', args: { action: 'batch', url: artifactUrl(rec.artifact), writes } });
 
   const page = manifest.pages[target];
-  if (page.artifact && Object.keys(page.files).length) {
+  const published = state && state.pageFiles && Object.keys(page.files).length && Object.keys({ ...page.files, ...state.pageFiles }).every(f => state.pageFiles[f] === page.files[f]);
+  if (published) skipped.push(`${target} page: the published shell and files match this build`);
+  if (page.artifact && Object.keys(page.files).length && !published) {
     const [shell, ...rest] = Object.keys(page.files);
     calls.push({ step: 'page', tool: 'Artifact', args: { action: 'publish', url: artifactUrl(page.artifact), file_path: `${distDir}/${shell}`, files: Object.fromEntries(rest.map(f => [f.replace(/^page\/[^/]+\//, ''), `${distDir}/${f}`])), capabilities: page.capabilities } });
   }
 
-  const skipped = [];
   for (const [key, t] of tasksFor(manifest, target)) {
     if (key.startsWith('build.')) continue;
     if (!t.promptSha256) { skipped.push(`${key}: no prompt rendered (tools/prompts.mjs)`); continue; }

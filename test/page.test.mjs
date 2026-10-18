@@ -75,9 +75,25 @@ test('deploy prints one publish call: the shell, the four files by their publish
   assert.deepEqual(pub[0].args.capabilities, spec.ui.page.capabilities);
   for (const k of ['db', 'user', 'sample', 'mcp']) assert.ok(pub[0].args.capabilities[k], `capability ${k} restated`);
   assert.deepEqual(pub[0].args.capabilities.mcp.servers.map(s => s.server), ['Claude Code Remote', 'host:E_V__Study_Watch_reader']);
-  // verify: a published file that differs is reported; the shell (wrapped at publish) is held by its stamp only.
-  const state = { triggers: [], record: null, pageHtml: `<meta name="ev-release" content="${release}">`, pageFiles: { ...files, 'page/staging/index.html': 'x'.repeat(64), 'page/staging/app.js': 'b'.repeat(64) } };
+  // verify: a published file that differs is reported (the shell by containment, see withShell in the CLI test).
+  const state = { triggers: [], record: null, pageHtml: `<meta name="ev-release" content="${release}">`, pageFiles: { ...files, 'page/staging/app.js': 'b'.repeat(64) } };
   const v = verify({ manifest, target: 'staging', state, build: { commit: manifest.commit, dirty: false, pushed: true }, sha256: x => x, now: '2026-10-18T06:00:00Z' });
   const line = v.lines.find(l => l.what === 'published page files');
   assert.equal(line.ok, false); assert.match(line.detail, /^1 differ: page\/staging\/app\.js$/);
+  // deploy: once the published shell and files match, the publish is not printed again.
+  const same = deployCalls({ manifest, target: 'staging', distDir: '/d', build: { dirty: false, pushed: true }, versions: { manifest: 1, spec: 1, environments: 1 }, state: { pageFiles: { ...files } } });
+  assert.equal(same.calls.filter(c => c.tool === 'Artifact').length, 0);
+  assert.ok(same.skipped.some(s => /published shell and files match this build/.test(s)));
+});
+
+test('the shell counts as published only when the saved page holds it verbatim', async () => {
+  const { withShell } = await import('../core/cli.mjs');
+  const os = await import('node:os');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-shell-'));
+  fs.mkdirSync(path.join(dir, 'page/staging'), { recursive: true });
+  fs.writeFileSync(path.join(dir, 'page/staging/index.html'), pages.staging['index.html']);
+  const manifest = { pages: { staging: { files: { 'page/staging/index.html': 'h'.repeat(64), 'page/staging/app.js': 'a'.repeat(64) } } } };
+  const wrapped = '<!doctype html><html><head></head><body>\n' + pages.staging['index.html'] + '\n</body></html>';
+  assert.equal(withShell({ pageHtml: wrapped, pageFiles: {} }, manifest, 'staging', dir).pageFiles['page/staging/index.html'], 'h'.repeat(64));
+  assert.equal(withShell({ pageHtml: wrapped.replace('E.V. Home', 'E.V. Hone'), pageFiles: {} }, manifest, 'staging', dir).pageFiles['page/staging/index.html'], 'not-the-built-shell');
 });

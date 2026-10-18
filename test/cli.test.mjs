@@ -50,7 +50,10 @@ async function deployedStaging() {
     const doc = JSON.parse(fs.readFileSync(path.join(dist, 'system', id + '.json'), 'utf8'));
     write(path.join(state, 'record/system', id + '.json'), { ...doc, at: '2026-10-18T00:00:00Z' });
   }
-  write(path.join(state, 'page.html'), `<!doctype html><meta name="ev-release" content="${manifest.release}"><title>E.V. Home Staging</title>`);
+  // The page as the platform serves it back: the built shell inside its skeleton, and each published file.
+  const built = path.join(dist, 'page', 'staging');
+  write(path.join(state, 'page.html'), '<!doctype html><html><head><meta charset=utf8></head><body>\n' + fs.readFileSync(path.join(built, 'index.html'), 'utf8') + '\n</body></html>');
+  for (const f of fs.readdirSync(built)) if (f !== 'index.html') { fs.mkdirSync(path.join(state, 'page-files'), { recursive: true }); fs.copyFileSync(path.join(built, f), path.join(state, 'page-files', f)); }
   write(path.join(state, 'record/system/seed.json'), { schema: 1, writer: 'deploy', at: '2026-10-18T05:30:00Z', source: 'seed-staging', from: 'live export', exportedAt: '2026-10-18T05:02:42Z', migration: 'v3-to-v4', counts: { weakspots: 3 }, hashes: {}, command: 'seed-staging' });
   return { dir, dist, state, manifest };
 }
@@ -89,9 +92,10 @@ test('a planted wrong prompt hash and a stale page stamp are both reported', asy
   write(path.join(state, 'page.html'), '<!doctype html><meta name="ev-release" content="v4.0.0-old"><title>x</title>');
   const r = cli(dir, 'verify-deploy', 'staging');
   assert.equal(r.code, 1);
-  assert.match(r.out, /RED \(2 differences\)/);
+  assert.match(r.out, /RED \(3 differences\)/);
   assert.match(r.out, /NO  task staging\.[\w-]+: prompt hash differs from the manifest/);
   assert.match(r.out, /NO  page stamp: the published page says v4\.0\.0-old, the build is v4\.\d+\.\d+/);
+  assert.match(r.out, /NO  published page files: 1 differ: page\/staging\/index\.html/, 'an old page does not hold the built shell');
 });
 
 test('verify reports each kind of drift: missing task, schedule, binding, push, record content, file hashes', async () => {
