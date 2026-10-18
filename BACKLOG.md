@@ -28,6 +28,6 @@ every id in Depends is `done`. Edit only the Status and Notes columns; commit ev
 | B-19 | Staging page published; soak; Matt's phone and desktop check | B-16, B-17, B-18 | M3 gate | done | Matt, Oct 18: passes on his phone and in the desktop app (staging page at dcee3a4, verify-deploy GREEN) |
 | B-20 | Reader v2: list_sessions, read_session; Matt rebuilds the extension | B-00 | M4 | done | Reader 0.2.0 installed by Matt; from this build chat status, list_sessions (1 session) and read_session answered from the desktop app with findings only |
 | B-21 | evening-mac: Canvas scripts as files, backup and mirror, the staging/ folder; Mac-bound staging task from a Mac-linked chat | B-09, B-20 | M4 | in progress | Oct 18, Mac-linked build chat with Matt present |
-| B-22 | restore-drill task | B-12, B-21 | M4 gate | open | Needs Matt |
+| B-22 | restore-drill task | B-12, B-21 | M4 gate | in progress | Oct 18, Mac-linked build chat with Matt present |
 | B-23 | Parity: v3 and v4 cores on the same seed nightly; a week of identical output | B-13, B-21 | M5 gate | done | Retired, not run (D-083, Matt, Oct 18): instead of a week of v3/v4 parity, the gate is that v4 is ready for his study workflow; he uses v4 with v3 kept as the backup and gives feedback. B-24 waits on B-21, B-22 and Matt's own test instead |
 | B-24 | Cutover: migrate live, live tasks, live page, v3 tasks disabled and kept, ev-core archived | B-23 | M6 gate | open | Matt's explicit OK |
