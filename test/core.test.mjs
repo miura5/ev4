@@ -391,6 +391,41 @@ test('readiness prediction is deterministic and explains itself', () => {
   assert.deepEqual(EV.calibrate({ prediction: p, score: 72 }).inRange, true);
 });
 
+test('B-47 (D-104): examRetro sets the night-before prediction against the score and reads only E.V.\'s own practice', () => {
+  const exam = { ...E4, schema: 2 };
+  const prediction = { id: 'E4', schema: 1, writer: 'morning', examId: 'E4', date: '2026-10-20', predictedRange: [78, 86], basis: 'past unit exams average 84' };
+  const examedit = { id: 'E4', schema: 1, writer: 'page', score: 88.5, scoreAt: '2026-10-22T15:00:00Z', status: 'done' };
+  const item = (id, objective) => ({ id, type: 'single', stem: 'A made-up client asks a sample question.', options: ['a', 'b'], correct: [0], rationales: ['r', 'r'], objective, cjStep: 'take-action' });
+  const sets = [{ id: 'review-2026-10-19', kind: 'review', items: [item('q1', 'E4-3'), item('q2', 'E4-1'), item('q3', 'E5-1')] }, { id: 'E4-drill-1', kind: 'drill', planTaskId: 't2', items: [item('d1', 'E4-3')] }];
+  const a = (iso, correct) => ({ [key(iso)]: { at: iso, correct } });
+  const answers = [
+    answersDoc('review-2026-10-19', { q1: { ...a(at('2026-10-19'), false), ...a(at('2026-10-20'), true) }, q2: a(at('2026-10-19'), true), q3: a(at('2026-10-19'), false) }),
+    answersDoc('E4-drill-1', { d1: { ...a(at('2026-10-20'), true), ...a(at('2026-10-23'), false) } }), // the miss after the exam is not part of it
+  ];
+  const models = [
+    { ...ws('fluid-shift'), derived: { status: 'reviewed', recurrence: 1 } },
+    { ...ws('potassium-limits'), derived: { status: 'parked', recurrence: 2, misses: 3 } },
+    { ...ws('insulin-peak'), derived: { status: 'open', recurrence: 1, misses: 1 } },
+    { ...ws('moved-one'), derived: { status: 'moved' } },
+    { ...ws('other-exam', { objective: 'E5-1', exam: 'E5' }), derived: { status: 'open' } },
+  ];
+  const plans = EV.planViews([{ id: 'E4', exam: 'E4', days: [{ date: '2026-10-18', tasks: [{ id: 't1', text: 'Read chapter 12', kind: 'reading' }, { id: 't2', text: 'Drill 1', kind: 'drill' }] }, { date: '2026-10-20', tasks: [{ id: 't3', text: 'Practice sim', kind: 'sim' }] }, { date: '2026-10-25', tasks: [{ id: 't4', text: 'After the exam', kind: 'other' }] }] }], []);
+  const r = EV.examRetro({ examId: 'E4', exams: [exam], examedits: [examedit], predictions: [prediction], sets, answers, weakspots: models, plans, objectives: [{ id: 'E4-3', text: 'Fluid balance' }] });
+  assert.equal(r.score, 88.5);
+  assert.deepEqual(r.prediction, { predictedRange: [78, 86], basis: 'past unit exams average 84' });
+  assert.deepEqual(r.calibration, { score: 88.5, predictedRange: [78, 86], inRange: false, error: 6.5 });
+  assert.deepEqual([r.practice.answered, r.practice.right, r.practice.pct], [4, 3, 75]);
+  assert.deepEqual(r.practice.byObjective, [{ id: 'E4-3', text: 'Fluid balance', right: 2, n: 3, pct: 66.7 }, { id: 'E4-1', text: '', right: 1, n: 1, pct: 100 }]);
+  assert.deepEqual([r.weakSpots.solid, r.weakSpots.open], [1, 2]);
+  assert.deepEqual(r.weakSpots.openTopics.map(t => t.topic), ['potassium limits', 'insulin peak'], 'the parked one stays open and comes first');
+  assert.deepEqual([r.plan.tasks, r.plan.ticked], [3, 2]); // the reading's day passed, the drill was fully answered; the sim is left
+  assert.deepEqual(r.plan.left.map(t => t.text), ['Practice sim']);
+  // No score yet (a retro on request): the numbers stand without calibration.
+  const early = EV.examRetro({ examId: 'E4', exams: [exam], predictions: [prediction], sets, answers, weakspots: models, plans });
+  assert.equal(early.score, null); assert.equal(early.calibration, null);
+  assert.equal(EV.examRetro({ examId: 'E99', exams: [exam] }), null);
+});
+
 test('snapshot reads runs/<id> and answers/<setId>, carries the release and the derived hash; Study Watch context', () => {
   const models = [{ ...ws('a'), derived: { status: 'open', streak: 0, nextDue: '2026-10-18', recurrence: 1 } }];
   const runs = [{ id: 'morning-20261017-092500-aa11', pipeline: 'morning', status: 'ok', startedAt: '2026-10-17T09:25:00Z', release: 'v4.0.0' }, { id: 'morning-20261018-092500-bb22', pipeline: 'morning', status: 'failed', startedAt: '2026-10-18T09:25:00Z', detail: 'x', release: 'v4.0.0' }];

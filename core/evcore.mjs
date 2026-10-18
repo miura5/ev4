@@ -985,6 +985,39 @@ const EVCore = (() => {
     const [lo, hi] = exam.prediction.predictedRange; const mid = (lo + hi) / 2;
     return { score: exam.score, predictedRange: [lo, hi], inRange: exam.score >= lo && exam.score <= hi, error: Math.round((exam.score - mid) * 10) / 10 };
   }
+  /**
+   * The post-exam retro (D-104): the night-before prediction against the score Matt typed (calibrate on the exam's
+   * view), accuracy by objective from E.V.'s own practice answers on that exam up to its date, the exam's weak spots
+   * made solid and still open (an auto-parked one is still open: it was never made solid), and the plan tasks ticked
+   * and left. Only E.V.'s sets and his answers to them and the score he entered; never the exam's questions or his
+   * graded answers. Returns null for an unknown exam. weakspots are models (buildWeakspots); plans are planViews.
+   */
+  function examRetro({ examId, exams, examedits, predictions, sets, answers, weakspots, plans, objectives } = {}) {
+    const exam = examViews(exams || [], examedits || [], predictions || []).find(e => e.id === examId);
+    if (!exam) return null;
+    const until = exam.date || '9999-12-31';
+    const atts = collectAttempts(sets || [], answers || []).all.filter(a => a.objective && String(a.objective).startsWith(examId + '-') && a.date <= until);
+    const pctOf = (r, n) => n ? Math.round(1000 * r / n) / 10 : null;
+    const objText = new Map((objectives || []).map(o => [o.id, o.text || '']));
+    const byObjective = Object.entries(answerStats(atts).byObjective).map(([id, s]) => ({ id, text: objText.get(id) || '', right: s.right, n: s.n, pct: pctOf(s.right, s.n) }))
+      .sort((a, b) => a.right / a.n - b.right / b.n || b.n - a.n || (a.id < b.id ? -1 : 1));
+    const mine = (weakspots || []).filter(w => (w.kind || 'concept') === 'concept' && examOf(w) === examId && w.derived && w.derived.status !== 'moved');
+    const byNeed = (a, b) => (b.derived.recurrence || 1) - (a.derived.recurrence || 1) || (b.derived.misses || 0) - (a.derived.misses || 0) || (a.id < b.id ? -1 : 1);
+    const solid = mine.filter(isSolid), open = mine.filter(w => !isSolid(w)).sort(byNeed);
+    const ticked = [], left = [];
+    for (const p of (plans || []).filter(x => (x.exam || x.id) === examId)) for (const t of planTasks(p)) {
+      if (t.date > until) continue;
+      (taskDone(p, t, until, sets, answers) ? ticked : left).push({ date: t.date, text: t.text, kind: t.kind || null });
+    }
+    const pred = exam.prediction ? { predictedRange: exam.prediction.predictedRange, basis: exam.prediction.basis || '' } : null;
+    return {
+      examId, title: exam.title || examId, date: exam.date || null, score: typeof exam.score === 'number' ? exam.score : null,
+      prediction: pred, calibration: calibrate(exam),
+      practice: { answered: atts.length, right: atts.filter(a => a.correct).length, pct: pctOf(atts.filter(a => a.correct).length, atts.length), byObjective },
+      weakSpots: { solid: solid.length, open: open.length, openTopics: open.slice(0, 8).map(w => ({ topic: w.topic, objective: w.objective || null, recurrence: w.derived.recurrence || 1 })) },
+      plan: { tasks: ticked.length + left.length, ticked: ticked.length, left: left.slice(0, 10) },
+    };
+  }
 
   // ---------------------------------------------------------------- lint
   const ID_PATTERNS = [
@@ -1726,7 +1759,7 @@ Return JSON: {"pages": [{"page": <page number>, "text": "<the page's text>"}]}`;
     // planning
     dayType, reviewLoad, rankDue, targetExam, pickReviews, planDay, buildDayList, nextNurExams, dayView, dayeditBase, listEdit, isFixedItem, DATE_KINDS, dateEdit, dateView, liveDates, isRemovedDate, isFixedDate, fromCanvas,
     // snapshot, context, insights
-    buildSnapshot, lastRuns, capacity, weakspotCards, examView, examViews, buildContext, answerStats, readiness, predictReadiness, calibrate,
+    buildSnapshot, lastRuns, capacity, weakspotCards, examView, examViews, buildContext, answerStats, readiness, predictReadiness, calibrate, examRetro,
     // trust
     lint, scanIdentifiers, scanIdentifierValues, autoParkEvents, toMarkdown, buildBackup, restorePlan,
     // intake

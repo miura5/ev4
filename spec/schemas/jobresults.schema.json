@@ -88,6 +88,10 @@
       "docUrl": {
        "type": "string",
        "pattern": "^https://"
+      },
+      "retro": {
+       "type": "object",
+       "description": "exam-retro: the examRetro numbers the narrative was written over (D-104)"
       }
      },
      "required": [],

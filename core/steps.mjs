@@ -193,6 +193,13 @@ CODE_STEPS['job-brief'] = function jobBrief(db, ctx, spec) {
     context.dates = EV.liveDates(db.dates, db.dateedits).filter(d => d.date >= ctx.date && (!exam || !exam.date || d.date <= exam.date)).map(d => ({ date: d.date, title: d.title, kind: d.kind, graded: !!d.graded }));
     context.passages = passages(idx, q, 4);
   }
+  if (kind === 'exam-retro') {
+    // D-104: the exam the brief names, else the latest one with a score; core computes every number, the agent only
+    // writes the narrative over them.
+    const views = EV.examViews(db.exams || [], db.examedits || [], db.predictions || []);
+    const exam = views.find(e => new RegExp(`\\b${e.id}\\b`).test(q)) || [...views].filter(e => typeof e.score === 'number').sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || (a.id < b.id ? -1 : 1))[0] || null;
+    context.retro = exam ? EV.examRetro({ examId: exam.id, exams: db.exams || [], examedits: db.examedits || [], predictions: db.predictions || [], sets: db.sets || [], answers: db.answers || [], weakspots: ms, plans: EV.planViews(db.plans || [], db.planedits || []), objectives: db.objectives || [] }) : null;
+  }
   ctx.job = job;
   ctx.jobBrief = { job: { id: job.id, kind, title: job.title, brief: job.brief }, guide: kinds[kind] ? kinds[kind].guide : '', today: ctx.date, context };
   return { say: [`Job ${job.id} (${kind}): ${job.title}`] };
@@ -405,6 +412,8 @@ export const AGENT_FOLDS = {
     const failed = answer.failed ? String(answer.failed) : null;
     const result = { text: failed ? 'I couldn’t finish this one: ' + failed : answer.text, links: (answer.links || []).map(l => ({ ...(l.title ? { title: String(l.title).slice(0, 120) } : {}), url: l.url })) };
     const doc = result.links.find(l => /^https:\/\/claude\.ai\//.test(l.url)); if (doc && job.kind === 'study-guide') result.docUrl = doc.url;
+    // D-104: the numbers the retro narrative was written over travel with it, so its card shows the same ones.
+    if (!failed && job.kind === 'exam-retro' && ctx.jobBrief && ctx.jobBrief.context.retro) result.retro = ctx.jobBrief.context.retro;
     if (!failed && job.kind === 'practice-set') {
       const raw = answer.items || []; const items = [];
       for (const r of raw) { const q = { id: 'p' + (items.length + 1), kind: r && r.weakspotId ? 'review' : 'check', ...pick(r || {}, ITEM_FIELDS) }; if (q.weakspotId && !(db.weakspots || []).some(w => w.id === q.weakspotId)) delete q.weakspotId; if (EV.validateItem(q, { strict: true }).ok) items.push(q); }

@@ -207,6 +207,40 @@ test('worker: the named job done end to end, its practice set saved and its mess
   assert.equal(a.ok, true, JSON.stringify(a.extra)); assert.equal(a.allowed, 1);
 });
 
+test('B-47 (D-104): an exam-retro job gets examRetro\'s numbers as material and keeps them in its result beside the narrative', () => {
+  const at = '2026-10-17T19:34:00Z';
+  const db = recordDb();
+  db.examedits.push({ id: 'E8', schema: 1, writer: 'page', at: '2026-10-17T19:30:00Z', source: 'E.V. Home', updatedAt: '2026-10-17T19:30:00Z', score: 90, scoreAt: '2026-10-17T19:30:00Z', status: 'done' });
+  const jobId = 'job-20261017-193000-retro-e8';
+  db.jobs.push({ id: jobId, schema: 1, writer: 'page', at: '2026-10-17T19:30:00Z', source: 'E.V. Home', kind: 'exam-retro', title: 'Retro: Sample Exam 8', brief: 'E8: the retro after the score he entered', fired: { at: '2026-10-17T19:30:01Z', ok: true } });
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-retro-'));
+  RUN.start({ spec, pipeline: 'worker', record: 'staging', at, dir, release: 'v4.0.0', input: { job: jobId } });
+  const lines = [];
+  for (const c of RUN.pull({ spec, dir, at })) {
+    const a = c.args; const docs = (db[a.collection] || []).filter(d => !a.query.where || EV.toMs(d.at) >= EV.toMs(a.query.where[0][2]));
+    for (const d of docs) { const f = path.join(a.out_dir, a.collection, d.id + '.json'); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, JSON.stringify(EV.docData(d))); }
+    const id = 'r' + (++seq);
+    lines.push(line({ message: { content: [{ type: 'tool_use', id, name: 'ArtifactData', input: a }] } }));
+    lines.push(line({ message: { content: [{ type: 'tool_result', tool_use_id: id, content: [{ type: 'text', text: docs.length ? `${docs.length} documents from collection "${a.collection}" saved:\n` + docs.map(d => `- "${d.id}"  1 bytes  version 2  "x"`).join('\n') : '0 documents' }] }] } }));
+  }
+  RUN.pulled({ spec, dir, transcript: lines.join('\n') });
+  const w = RUN.compute({ spec, dir, validate, at });
+  assert.equal(w.status, 'waiting');
+  const m = w.question.material;
+  assert.equal(m.job.kind, 'exam-retro'); assert.match(m.guide, /never mention, guess at or ask about the exam/);
+  assert.deepEqual([m.context.retro.examId, m.context.retro.score], ['E8', 90]);
+  assert.deepEqual(m.context.retro.calibration, { score: 90, predictedRange: [80, 88], inRange: false, error: 6 });
+  answer(dir, 'do-job', { text: 'You scored 90, two points above the top of my range. I underrated you; next time I’ll weigh your practice more.' });
+  const r = RUN.compute({ spec, dir, validate, at });
+  assert.equal(r.status, 'planned', JSON.stringify(r.problems));
+  const { out } = applied(db, dir);
+  const res = out.jobresults.find(x => x.id === jobId);
+  assert.equal(res.status, 'done'); assert.deepEqual(res.result.retro, m.context.retro);
+  assert.ok(validate('jobresults', EV.docData(res), { id: jobId }).ok);
+  const msg = out.talk.find(x => x.id === '2026-10-17').messages[res.message];
+  assert.deepEqual([msg.jobId, msg.cards.map(c => c.type)], [jobId, ['job']]);
+});
+
 test('worker without a job id takes the oldest job with no result, and ends quietly when there is none', () => {
   const at = '2026-10-17T19:34:00Z';
   const db = recordDb(); // its one job already has a result

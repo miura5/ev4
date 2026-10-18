@@ -502,7 +502,10 @@
       const e = needScore[0]; const f = el('form'); f.id = 'score-form'; const inp = document.createElement('input'); inp.type = 'number'; inp.min = '0'; inp.max = '100'; inp.step = '0.1'; inp.id = 'score-in'; inp.placeholder = 'Score, e.g. 88.5'; inp.setAttribute('aria-label', 'Score for ' + e.title);
       const a = el('div', 'actions'); const sb = el('button', 'primary', 'Save score'); sb.type = 'submit'; a.append(sb);
       f.append(el('h2', null, 'Record your ' + (e.title || e.id).replace(/:.*$/, '') + ' score'), el('p', 'meta', 'E.V. compares it with its prediction to get better at reading your readiness.'), inp, a);
-      f.addEventListener('submit', ev => { ev.preventDefault(); const v = Number(inp.value); if (!(v >= 0 && v <= 100)) { toast('Enter a score from 0 to 100.'); return; } guard(sb, () => { const at = now(); const cur = (S.examedits || []).find(x => x.id === e.id); const { id, ...base } = cur || {}; return write({ op: 'set', collection: 'examedits', id: e.id, data: { ...(cur ? base : envelope('E.V. Home', at)), updatedAt: at, score: v, scoreAt: at, status: 'done' } }); }, 'Score saved'); });
+      f.addEventListener('submit', ev => { ev.preventDefault(); const v = Number(inp.value); if (!(v >= 0 && v <= 100)) { toast('Enter a score from 0 to 100.'); return; } guard(sb, async () => { const at = now(); const cur = (S.examedits || []).find(x => x.id === e.id); const { id, ...base } = cur || {}; await write({ op: 'set', collection: 'examedits', id: e.id, data: { ...(cur ? base : envelope('E.V. Home', at)), updatedAt: at, score: v, scoreAt: at, status: 'done' } });
+        // D-104: a saved score starts the post-exam retro; the worker posts it to the conversation.
+        let r = null; try { r = await startJob({ kind: 'exam-retro', title: 'Retro: ' + (e.title || e.id), brief: e.id + ': the retro after the score he entered' }); } catch (err) { toast('Score saved. The retro didn’t start: ' + ((err && err.message) || 'error')); return; }
+        toast(r.fired.ok ? 'Score saved. E.V. is writing your retro.' : 'Score saved. The retro didn’t start: ' + fireCopy(r.fired.error)); }); });
       sc.replaceChildren(f);
     }
     const st = E.answerStats(M.attempts.all, { date: today });
@@ -915,6 +918,17 @@
     if (!j.fired) return { label: 'queued', v: '', detail: 'Handing it to the worker…' };
     return mins(j.fired.at) > 15 ? { label: 'queued', v: 'warn', detail: 'No word from the worker in 15 minutes.', retry: true } : { label: 'queued', v: 'info', detail: 'Sent to the worker at ' + clock12(j.fired.at) + '. It usually starts within a few minutes.' };
   }
+  /** D-104: the retro's numbers on its job card, the same ones the narrative was written over. */
+  function retroList(x) {
+    const ul = el('ul', 'list retro'); const c = x.calibration; const range = x.prediction ? x.prediction.predictedRange.join('–') : null;
+    const off = c ? (c.inRange ? 'inside the range' : `${Math.abs(Math.round(10 * (c.error < 0 ? c.predictedRange[0] - c.score : c.score - c.predictedRange[1])) / 10)} ${c.error < 0 ? 'below' : 'above'} the range`) : null;
+    ul.append(row({ title: 'Prediction', detail: range ? `${range}${x.score != null ? ' · you scored ' + x.score + ' (' + off + ')' : ' · no score yet'}` : x.score != null ? 'No prediction for this exam · you scored ' + x.score : 'No prediction for this exam' }));
+    const p = x.practice; const weak = p.byObjective[0];
+    ul.append(row({ title: 'Practice', detail: p.answered ? `${p.right} of ${p.answered} right (${p.pct}%)${weak && p.byObjective.length > 1 ? ' · weakest ' + weak.id + ' at ' + weak.pct + '%' : ''}` : 'No practice answers on this exam' }));
+    ul.append(row({ title: 'Weak spots', detail: `${x.weakSpots.solid} made solid · ${x.weakSpots.open} still open` }));
+    if (x.plan.tasks) ul.append(row({ title: 'Plan', detail: `${x.plan.ticked} of ${x.plan.tasks} tasks done` }));
+    return ul;
+  }
   const liveJobs = () => S.jobs.filter(j => ['queued', 'running'].includes(j.status) && !(j.fired && j.fired.ok === false) && Date.now() - E.toMs(j.createdAt) < 3 * 3600e3);
 
   // ---------------------------------------------------------------- check-ins (self-report only, B-05)
@@ -1205,6 +1219,7 @@
       const st = jobState(j); const h = el('div', 'card-head'); h.append(el('h2', null, (KINDS[j.kind] || {}).label || 'Background job'), chip(st.label, st.v)); box.append(h);
       box.append(el('p', 'job-title', j.title || j.id));
       const r = j.result || {};
+      if (j.status === 'done' && r.retro) box.append(retroList(r.retro));
       if (j.status === 'done' && r.text) { const p = el('div', 'result'); p.append(fmt(r.text)); box.append(p); }
       else box.append(el('p', 'meta', st.detail));
       const links = (r.links || []).filter(l => l && /^https:\/\//.test(l.url || ''));
@@ -1612,7 +1627,7 @@
           if (type === 'job') { if (!S.jobs.some(j => j.id === i.id)) throw new Error('no job with id ' + i.id); c.id = String(i.id); }
           if (type === 'today') c.filter = i.filter === 'all' ? 'all' : 'open'; if (type === 'dates') c.days = Math.max(1, Math.min(14, Number(i.days) || 7));
           addCard(c); return 'shown'; } },
-      { name: 'start_job', description: 'Start a background job for work bigger than one reply. study-guide: a one-page guide saved as a Claude Doc. practice-set: 10 to 30 questions saved as a set (put the number and topic in the brief). exam-plan: a study plan for a named exam. general: research or other long work. Runs in the cloud and posts back here in a few minutes; a job card is attached automatically. Never for graded work. Returns the job id.',
+      { name: 'start_job', description: 'Start a background job for work bigger than one reply. study-guide: a one-page guide saved as a Claude Doc. practice-set: 10 to 30 questions saved as a set (put the number and topic in the brief). exam-plan: a study plan for a named exam. exam-retro: the post-exam retro for a named exam (put its id, like E4, in the brief); a saved score starts one on its own. general: research or other long work. Runs in the cloud and posts back here in a few minutes; a job card is attached automatically. Never for graded work. Returns the job id.',
         inputSchema: { type: 'object', properties: { kind: { type: 'string', enum: Object.keys(KINDS) }, title: { type: 'string', description: 'short title, e.g. "Study guide: fluid volume deficit"' }, brief: { type: 'string', description: 'what he asked, in his words, plus your one-line restatement of the deliverable' } }, required: ['kind', 'title', 'brief'] },
         execute: async i => { const r = await startJob({ kind: str(i.kind, 20), title: str(i.title, 90), brief: String(i.brief || '') }); addCard({ type: 'job', id: r.id }); pend.jobId = r.id; return r.fired.ok ? 'started ' + r.id : 'created ' + r.id + ' but not started: ' + fireCopy(r.fired.error); } },
       { name: 'add_weakspot', description: 'Log a weak spot he names or clearly misses: a concept to review until he gets it right on two different days. Use his words for the topic. Returns the id.',

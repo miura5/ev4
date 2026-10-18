@@ -509,10 +509,19 @@
      "collection": "exams"
     },
     {
+     "collection": "examedits"
+    },
+    {
+     "collection": "predictions"
+    },
+    {
      "collection": "objectives"
     },
     {
      "collection": "plans"
+    },
+    {
+     "collection": "planedits"
     },
     {
      "collection": "dates"
@@ -2560,6 +2569,10 @@
    "exam-plan": {
     "label": "Exam plan",
     "guide": "Build a study plan for the named exam from its materials, dates and objectives given, in the shape of an exam plan: exam, title, and days, each {date, label, dayLabel, tasks: [{id, text, kind}]} with kinds reading, drill, sim, review, graded, clinical, val, terminology, exam or other. Put it in plan. Never invent objectives."
+   },
+   "exam-retro": {
+    "label": "Exam retro",
+    "guide": "Write the retro for the exam the brief names from the numbers in retro (D-104): the night-before prediction against his score and how far off it was; his practice accuracy, weakest objective first; the weak spots he made solid and the ones still open (by topic); the plan tasks done and left. End with one or two things to carry into the next exam. Use only those numbers and his own topic words: never mention, guess at or ask about the exam’s questions or his graded answers. Warm and plain, at most 1,200 characters in text, no links. If retro.score is null, say the comparison comes once he enters his score. If retro is null, say in failed that the exam isn’t in his record."
    },
    "general": {
     "label": "Background task",
