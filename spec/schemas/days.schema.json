@@ -1,0 +1,83 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/days",
+ "title": "days/<id>",
+ "description": "dayType, plan, list, push",
+ "x-ev": {
+  "collection": "days",
+  "class": "Derived",
+  "writers": [
+   "morning"
+  ],
+  "schema": 1
+ },
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "morning"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "date": {
+   "type": "string",
+   "format": "date"
+  },
+  "dayType": {
+   "type": "string"
+  },
+  "plan": {
+   "type": [
+    "object",
+    "null"
+   ]
+  },
+  "list": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string",
+      "minLength": 1
+     },
+     "text": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "id"
+    ]
+   }
+  },
+  "push": {
+   "anyOf": [
+    {
+     "type": "string"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "date",
+  "list"
+ ],
+ "additionalProperties": false
+}

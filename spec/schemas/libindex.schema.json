@@ -1,0 +1,54 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/libindex",
+ "title": "libindex/<id>",
+ "description": "the chunk index the page searches",
+ "x-ev": {
+  "collection": "libindex",
+  "class": "Derived",
+  "writers": [
+   "evening-cloud"
+  ],
+  "schema": 1
+ },
+ "$comment": "Shape completed with evening-cloud (B-09).",
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "evening-cloud"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "course": {
+   "type": "string",
+   "minLength": 1
+  },
+  "chunks": {
+   "type": "array",
+   "items": {
+    "type": "object"
+   }
+  },
+  "materials": {
+   "type": "object"
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "course"
+ ]
+}

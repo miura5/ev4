@@ -1,0 +1,110 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/jobs",
+ "title": "jobs/<id>",
+ "description": "kind, title, brief, fired",
+ "x-ev": {
+  "collection": "jobs",
+  "class": "Fact",
+  "writers": [
+   "page"
+  ],
+  "schema": 1
+ },
+ "$comment": "Status and result live in jobresults/<job id>.",
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "page"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "kind": {
+   "enum": [
+    "study-guide",
+    "practice-set",
+    "exam-plan",
+    "general"
+   ]
+  },
+  "title": {
+   "type": "string",
+   "minLength": 1
+  },
+  "brief": {
+   "type": "string",
+   "minLength": 1
+  },
+  "fired": {
+   "anyOf": [
+    {
+     "type": "object",
+     "properties": {
+      "at": {
+       "type": "string",
+       "format": "date-time"
+      },
+      "ok": {
+       "type": "boolean"
+      },
+      "error": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "at",
+      "ok"
+     ],
+     "additionalProperties": false
+    },
+    {
+     "type": "null"
+    }
+   ]
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "kind",
+  "title",
+  "brief"
+ ],
+ "not": {
+  "anyOf": [
+   {
+    "required": [
+     "status"
+    ]
+   },
+   {
+    "required": [
+     "result"
+    ]
+   },
+   {
+    "required": [
+     "startedAt"
+    ]
+   },
+   {
+    "required": [
+     "finishedAt"
+    ]
+   }
+  ]
+ }
+}

@@ -1,0 +1,23 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/legacy",
+ "title": "legacy/*",
+ "description": "v2 and v3 documents marked migratedTo",
+ "x-ev": {
+  "collection": "legacy",
+  "class": "Fact",
+  "writers": [],
+  "schema": 1
+ },
+ "$comment": "Frozen as written by v2 and v3; nobody writes it. Only the migration mark is checked.",
+ "type": "object",
+ "properties": {
+  "migratedTo": {
+   "type": [
+    "string",
+    "array",
+    "null"
+   ]
+  }
+ }
+}

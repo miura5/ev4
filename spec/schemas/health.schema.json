@@ -1,0 +1,83 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/health",
+ "title": "health/<id>",
+ "description": "last run per pipeline, stalled jobs, drift result, capacity, restore-drill age",
+ "x-ev": {
+  "collection": "health",
+  "class": "Derived",
+  "writers": [
+   "watchdog",
+   "evening-cloud",
+   "restore-drill"
+  ],
+  "schema": 1
+ },
+ "$comment": "Shape completed with the watchdog (B-11).",
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "watchdog",
+    "evening-cloud",
+    "restore-drill"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "pipelines": {
+   "type": "object"
+  },
+  "missing": {
+   "type": "array",
+   "items": {
+    "type": "object"
+   }
+  },
+  "stalledJobs": {
+   "type": "array",
+   "items": {
+    "type": "object"
+   }
+  },
+  "verifyDeploy": {
+   "type": [
+    "object",
+    "null"
+   ]
+  },
+  "derivedHash": {
+   "type": [
+    "object",
+    "null"
+   ]
+  },
+  "capacity": {
+   "type": [
+    "object",
+    "null"
+   ]
+  },
+  "restoreDrill": {
+   "type": [
+    "object",
+    "null"
+   ]
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source"
+ ]
+}

@@ -1,0 +1,120 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/dates",
+ "title": "dates/<id>",
+ "description": "the calendar entry",
+ "x-ev": {
+  "collection": "dates",
+  "class": "Fact",
+  "writers": [
+   "canvas-sync",
+   "page"
+  ],
+  "schema": 1
+ },
+ "$comment": "Removals, notes and overrides on Canvas entries live in dateedits/<id>.",
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "canvas-sync",
+    "page"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "date": {
+   "type": "string",
+   "format": "date"
+  },
+  "title": {
+   "type": "string",
+   "minLength": 1
+  },
+  "kind": {
+   "enum": [
+    "exam",
+    "validation",
+    "clinical",
+    "due",
+    "other"
+   ]
+  },
+  "graded": {
+   "type": "boolean"
+  },
+  "course": {
+   "anyOf": [
+    {
+     "type": "string"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "notes": {
+   "anyOf": [
+    {
+     "type": "string"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "dueAt": {
+   "anyOf": [
+    {
+     "type": "string",
+     "format": "date-time"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "canvasId": {
+   "type": [
+    "string",
+    "integer",
+    "null"
+   ]
+  },
+  "addedBy": {
+   "type": "string"
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "date",
+  "title",
+  "kind"
+ ],
+ "not": {
+  "anyOf": [
+   {
+    "required": [
+     "editedAt"
+    ]
+   },
+   {
+    "required": [
+     "editedBy"
+    ]
+   }
+  ]
+ }
+}

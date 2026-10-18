@@ -1,0 +1,18 @@
+{
+ "schema": 1,
+ "writer": "morning",
+ "at": "2026-10-16T14:00:00Z",
+ "source": "morning 4:25",
+ "date": "2026-10-16",
+ "dayType": "class",
+ "plan": {
+  "blocks": []
+ },
+ "list": [
+  {
+   "id": "review",
+   "text": "Review set"
+  }
+ ],
+ "push": "A made-up push line"
+}

@@ -1,0 +1,16 @@
+{
+ "schema": 1,
+ "writer": "canvas-sync",
+ "at": "2026-10-16T14:00:00Z",
+ "source": "Canvas sync",
+ "course": "NUR 112",
+ "kind": "slides",
+ "title": "Sample slides.pptx",
+ "module": "Week 1",
+ "fileType": "pptx",
+ "fileId": 900002,
+ "text": "[s1] A made-up slide.",
+ "pages": 1,
+ "chars": 21,
+ "needsOcr": false
+}

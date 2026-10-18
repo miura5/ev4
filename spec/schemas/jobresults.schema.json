@@ -1,0 +1,132 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/jobresults",
+ "title": "jobresults/<id>",
+ "description": "status, result, posted message key",
+ "x-ev": {
+  "collection": "jobresults",
+  "class": "Log",
+  "writers": [
+   "worker"
+  ],
+  "schema": 1
+ },
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "worker"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "release": {
+   "type": "string",
+   "pattern": "^v\\d+(\\.\\d+){0,2}$"
+  },
+  "status": {
+   "enum": [
+    "running",
+    "done",
+    "failed"
+   ]
+  },
+  "startedAt": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "finishedAt": {
+   "anyOf": [
+    {
+     "type": "string",
+     "format": "date-time"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "result": {
+   "anyOf": [
+    {
+     "type": "object",
+     "properties": {
+      "text": {
+       "type": "string"
+      },
+      "links": {
+       "type": "array",
+       "items": {
+        "type": "object",
+        "properties": {
+         "title": {
+          "type": "string"
+         },
+         "url": {
+          "type": "string",
+          "pattern": "^https://"
+         }
+        },
+        "required": [
+         "url"
+        ],
+        "additionalProperties": false
+       }
+      },
+      "setId": {
+       "type": "string"
+      },
+      "docUrl": {
+       "type": "string",
+       "pattern": "^https://"
+      }
+     },
+     "required": [],
+     "additionalProperties": false
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "message": {
+   "anyOf": [
+    {
+     "type": "string"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "error": {
+   "anyOf": [
+    {
+     "type": "string"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "release",
+  "status",
+  "startedAt"
+ ],
+ "additionalProperties": false
+}

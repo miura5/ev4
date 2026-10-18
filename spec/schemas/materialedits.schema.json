@@ -1,0 +1,71 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/materialedits",
+ "title": "materialedits/<id>",
+ "description": "removed",
+ "x-ev": {
+  "collection": "materialedits",
+  "class": "Edit",
+  "writers": [
+   "page"
+  ],
+  "schema": 1
+ },
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "page"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "updatedAt": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "removed": {
+   "anyOf": [
+    {
+     "type": "object",
+     "properties": {
+      "at": {
+       "type": "string",
+       "format": "date-time"
+      },
+      "by": {
+       "type": "string",
+       "minLength": 1
+      }
+     },
+     "required": [
+      "at",
+      "by"
+     ],
+     "additionalProperties": false
+    },
+    {
+     "type": "null"
+    }
+   ]
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "updatedAt",
+  "removed"
+ ],
+ "additionalProperties": false
+}

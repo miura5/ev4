@@ -1,0 +1,202 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/weakspots",
+ "title": "weakspots/<id>",
+ "description": "topic, objective, exam, course, kind, source, initial, events map",
+ "x-ev": {
+  "collection": "weakspots",
+  "class": "Fact",
+  "writers": [
+   "page",
+   "morning",
+   "worker",
+   "filing"
+  ],
+  "schema": 1
+ },
+ "$comment": "Nothing derived on a Fact: state comes from answers and events by the core function.",
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "page",
+    "morning",
+    "worker",
+    "filing"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "topic": {
+   "type": "string",
+   "minLength": 1
+  },
+  "objective": {
+   "type": "string"
+  },
+  "exam": {
+   "anyOf": [
+    {
+     "type": "string"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "course": {
+   "type": "string"
+  },
+  "kind": {
+   "enum": [
+    "concept",
+    "note",
+    "connection",
+    "format"
+   ]
+  },
+  "addedBy": {
+   "type": "string"
+  },
+  "origin": {
+   "anyOf": [
+    {
+     "type": "object",
+     "properties": {
+      "set": {
+       "type": "string"
+      },
+      "item": {
+       "type": "string"
+      },
+      "at": {
+       "type": "string",
+       "format": "date-time"
+      }
+     },
+     "required": [
+      "set",
+      "item"
+     ],
+     "additionalProperties": false
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "preRead": {
+   "type": "boolean"
+  },
+  "readingDue": {
+   "anyOf": [
+    {
+     "type": "string",
+     "format": "date"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "initial": {
+   "type": "object",
+   "properties": {
+    "streak": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "nextDue": {
+     "anyOf": [
+      {
+       "type": "string",
+       "format": "date"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "recurrence": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "misses": {
+     "type": "integer",
+     "minimum": 0
+    }
+   },
+   "required": [],
+   "additionalProperties": false
+  },
+  "events": {
+   "type": "object",
+   "propertyNames": {
+    "pattern": "^[a-z][a-z-]*-\\d{8}-\\d{6}(\\d{3})?(-[a-z0-9]+)?$"
+   },
+   "additionalProperties": {
+    "type": "object",
+    "properties": {
+     "type": {
+      "enum": [
+       "park",
+       "activate",
+       "solid",
+       "done",
+       "move",
+       "seen"
+      ]
+     },
+     "by": {
+      "type": "string"
+     },
+     "note": {
+      "type": "string"
+     },
+     "at": {
+      "type": "string",
+      "format": "date-time"
+     }
+    },
+    "required": [
+     "type"
+    ],
+    "additionalProperties": false
+   }
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "topic",
+  "objective",
+  "kind",
+  "initial",
+  "events"
+ ],
+ "not": {
+  "anyOf": [
+   {
+    "required": [
+     "derived"
+    ]
+   },
+   {
+    "required": [
+     "concept"
+    ]
+   }
+  ]
+ }
+}

@@ -1,0 +1,128 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/dateedits",
+ "title": "dateedits/<id>",
+ "description": "removed, notes, field overrides",
+ "x-ev": {
+  "collection": "dateedits",
+  "class": "Edit",
+  "writers": [
+   "page"
+  ],
+  "schema": 1
+ },
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "page"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "updatedAt": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "removed": {
+   "anyOf": [
+    {
+     "type": "object",
+     "properties": {
+      "at": {
+       "type": "string",
+       "format": "date-time"
+      },
+      "by": {
+       "type": "string",
+       "minLength": 1
+      }
+     },
+     "required": [
+      "at",
+      "by"
+     ],
+     "additionalProperties": false
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "notes": {
+   "anyOf": [
+    {
+     "type": "string"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "overrides": {
+   "type": "object",
+   "properties": {
+    "date": {
+     "type": "string",
+     "format": "date"
+    },
+    "title": {
+     "type": "string",
+     "minLength": 1
+    },
+    "kind": {
+     "enum": [
+      "exam",
+      "validation",
+      "clinical",
+      "due",
+      "other"
+     ]
+    },
+    "course": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "dueAt": {
+     "anyOf": [
+      {
+       "type": "string",
+       "format": "date-time"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "graded": {
+     "type": "boolean"
+    }
+   },
+   "required": [],
+   "additionalProperties": false
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "updatedAt"
+ ],
+ "additionalProperties": false
+}

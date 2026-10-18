@@ -1,0 +1,25 @@
+{
+ "schema": 1,
+ "writer": "worker",
+ "at": "2026-10-16T14:00:00Z",
+ "source": "Exam plan job",
+ "exam": "E9",
+ "title": "Sample Exam 9 plan",
+ "days": [
+  {
+   "date": "2026-11-01",
+   "label": "Week 1",
+   "tasks": [
+    {
+     "id": "t1",
+     "text": "Read a sample chapter",
+     "tag": "reading",
+     "kind": "reading",
+     "chapters": [
+      12
+     ]
+    }
+   ]
+  }
+ ]
+}

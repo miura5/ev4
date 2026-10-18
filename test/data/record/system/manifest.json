@@ -1,0 +1,9 @@
+{
+ "schema": 1,
+ "writer": "deploy",
+ "at": "2026-10-16T14:00:00Z",
+ "source": "deploy",
+ "release": "v4.0.0",
+ "commit": "0000000000000000000000000000000000000000",
+ "dirty": false
+}

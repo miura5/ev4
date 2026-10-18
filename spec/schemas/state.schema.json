@@ -1,0 +1,52 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/state",
+ "title": "state/<id>",
+ "description": "the snapshot and the derived hash",
+ "x-ev": {
+  "collection": "state",
+  "class": "Derived",
+  "writers": [
+   "evening-cloud",
+   "morning"
+  ],
+  "schema": 1
+ },
+ "$comment": "Shape completed with evening-cloud (B-09).",
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "evening-cloud",
+    "morning"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "snapshot": {
+   "type": "object"
+  },
+  "derivedHash": {
+   "type": "string",
+   "pattern": "^[0-9a-f]{64}$"
+  },
+  "factHashes": {
+   "type": "object"
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source"
+ ]
+}

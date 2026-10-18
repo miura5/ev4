@@ -1,0 +1,103 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/exams",
+ "title": "exams/<id>",
+ "description": "title, date, course, kind, status",
+ "x-ev": {
+  "collection": "exams",
+  "class": "Fact",
+  "writers": [
+   "canvas-sync",
+   "page",
+   "worker"
+  ],
+  "schema": 1
+ },
+ "$comment": "Predictions and calibration are computed (weeks/<date>), never stored on the exam.",
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "canvas-sync",
+    "page",
+    "worker"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "course": {
+   "type": "string"
+  },
+  "kind": {
+   "enum": [
+    "unit",
+    "dosage",
+    "final",
+    "ati",
+    "lab"
+   ]
+  },
+  "date": {
+   "anyOf": [
+    {
+     "type": "string",
+     "format": "date"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "title": {
+   "type": "string",
+   "minLength": 1
+  },
+  "status": {
+   "enum": [
+    "upcoming",
+    "done"
+   ]
+  },
+  "planId": {
+   "anyOf": [
+    {
+     "type": "string"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "title",
+  "kind"
+ ],
+ "not": {
+  "anyOf": [
+   {
+    "required": [
+     "prediction"
+    ]
+   },
+   {
+    "required": [
+     "calibration"
+    ]
+   }
+  ]
+ }
+}

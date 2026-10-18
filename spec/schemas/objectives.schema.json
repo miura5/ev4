@@ -1,0 +1,64 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/objectives",
+ "title": "objectives/<id>",
+ "description": "text, exam (seeded, never invented)",
+ "x-ev": {
+  "collection": "objectives",
+  "class": "Fact",
+  "writers": [
+   "worker",
+   "page"
+  ],
+  "schema": 1
+ },
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "worker",
+    "page"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "exam": {
+   "type": "string",
+   "minLength": 1
+  },
+  "num": {
+   "type": "integer",
+   "minimum": 0
+  },
+  "text": {
+   "type": "string",
+   "minLength": 1
+  },
+  "chapters": {
+   "type": "array",
+   "items": {
+    "type": [
+     "string",
+     "integer"
+    ]
+   }
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "exam",
+  "text"
+ ]
+}

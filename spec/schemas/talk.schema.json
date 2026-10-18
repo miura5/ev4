@@ -1,0 +1,172 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/talk",
+ "title": "talk/<id>",
+ "description": "messages map, keys m-<time>-<by>",
+ "x-ev": {
+  "collection": "talk",
+  "class": "Fact",
+  "writers": [
+   "page",
+   "worker"
+  ],
+  "schema": 1,
+  "documents": {
+   "memory": "#/$defs/memory"
+  }
+ },
+ "$comment": "talk/<date> is a Fact of appended messages; talk/memory is Derived (its own shape).",
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "page",
+    "worker"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "date": {
+   "type": "string",
+   "format": "date"
+  },
+  "messages": {
+   "type": "object",
+   "propertyNames": {
+    "pattern": "^m-\\d{8}-\\d{6}(\\d{3})?-[a-z]+$"
+   },
+   "additionalProperties": {
+    "type": "object",
+    "properties": {
+     "role": {
+      "enum": [
+       "ev",
+       "matt"
+      ]
+     },
+     "text": {
+      "type": "string",
+      "maxLength": 4000
+     },
+     "cards": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      },
+      "maxItems": 3
+     },
+     "at": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "tier": {
+      "enum": [
+       "quick",
+       "default",
+       "complex",
+       "local"
+      ]
+     },
+     "replyTo": {
+      "type": "string"
+     },
+     "jobId": {
+      "type": "string"
+     },
+     "error": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "role",
+     "text",
+     "at"
+    ],
+    "additionalProperties": false
+   }
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "date",
+  "messages"
+ ],
+ "additionalProperties": false,
+ "$defs": {
+  "memory": {
+   "type": "object",
+   "properties": {
+    "schema": {
+     "const": 1
+    },
+    "writer": {
+     "const": "page"
+    },
+    "at": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "source": {
+     "type": "string",
+     "minLength": 1
+    },
+    "summary": {
+     "type": "string",
+     "maxLength": 1200
+    },
+    "upTo": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "summarizedAt": {
+     "anyOf": [
+      {
+       "type": "string",
+       "format": "date-time"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "lastSeenAt": {
+     "anyOf": [
+      {
+       "type": "string",
+       "format": "date-time"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    }
+   },
+   "required": [
+    "schema",
+    "writer",
+    "at",
+    "source",
+    "summary"
+   ],
+   "additionalProperties": false
+  }
+ }
+}

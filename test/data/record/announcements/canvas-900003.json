@@ -1,0 +1,10 @@
+{
+ "schema": 1,
+ "writer": "canvas-sync",
+ "at": "2026-10-16T14:00:00Z",
+ "source": "Canvas sync",
+ "title": "Sample announcement",
+ "text": "A made-up announcement.",
+ "course": "NUR 112",
+ "postedAt": "2026-10-16T14:00:00Z"
+}

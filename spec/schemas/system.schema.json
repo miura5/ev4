@@ -1,0 +1,145 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/system",
+ "title": "system/<id>",
+ "description": "the spec; the release pointer; proven capabilities",
+ "x-ev": {
+  "collection": "system",
+  "class": "Config",
+  "writers": [
+   "deploy"
+  ],
+  "schema": 1,
+  "documents": {
+   "spec": "#/$defs/spec",
+   "manifest": "#/$defs/manifest",
+   "environments": "#/$defs/environments"
+  }
+ },
+ "$comment": "The manifest shape is completed in B-03; a deployed manifest is never dirty.",
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "deploy"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source"
+ ],
+ "$defs": {
+  "spec": {
+   "type": "object",
+   "properties": {
+    "schema": {
+     "const": 1
+    },
+    "writer": {
+     "const": "deploy"
+    },
+    "at": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "source": {
+     "type": "string",
+     "minLength": 1
+    },
+    "specVersion": {
+     "type": "string",
+     "pattern": "^4\\.\\d+\\.\\d+$"
+    },
+    "collections": {
+     "type": "object"
+    }
+   },
+   "required": [
+    "schema",
+    "writer",
+    "at",
+    "source",
+    "specVersion",
+    "collections"
+   ]
+  },
+  "manifest": {
+   "type": "object",
+   "properties": {
+    "schema": {
+     "const": 1
+    },
+    "writer": {
+     "const": "deploy"
+    },
+    "at": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "source": {
+     "type": "string",
+     "minLength": 1
+    },
+    "release": {
+     "type": "string",
+     "pattern": "^v4\\.\\d+\\.\\d+$"
+    },
+    "commit": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{40}$"
+    },
+    "dirty": {
+     "const": false
+    }
+   },
+   "required": [
+    "schema",
+    "writer",
+    "at",
+    "source",
+    "release",
+    "commit",
+    "dirty"
+   ]
+  },
+  "environments": {
+   "type": "object",
+   "properties": {
+    "schema": {
+     "const": 1
+    },
+    "writer": {
+     "const": "deploy"
+    },
+    "at": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "source": {
+     "type": "string",
+     "minLength": 1
+    }
+   },
+   "required": [
+    "schema",
+    "writer",
+    "at",
+    "source"
+   ]
+  }
+ }
+}

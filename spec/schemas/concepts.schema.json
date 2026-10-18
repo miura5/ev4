@@ -1,0 +1,55 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/concepts",
+ "title": "concepts/<id>",
+ "description": "weak spots grouped under one concept",
+ "x-ev": {
+  "collection": "concepts",
+  "class": "Derived",
+  "writers": [
+   "weekly"
+  ],
+  "schema": 1
+ },
+ "$comment": "Only when 2 or more weak spots share a concept; drug content still follows B-02.",
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "weekly"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "name": {
+   "type": "string",
+   "minLength": 1
+  },
+  "weakspots": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "minLength": 1
+   },
+   "minItems": 2
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "name",
+  "weakspots"
+ ],
+ "additionalProperties": false
+}

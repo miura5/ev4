@@ -1,0 +1,241 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/sessions",
+ "title": "sessions/<id>",
+ "description": "events map, findings, lengths and hashes, never note text",
+ "x-ev": {
+  "collection": "sessions",
+  "class": "Fact",
+  "writers": [
+   "page",
+   "filing"
+  ],
+  "schema": 1
+ },
+ "$comment": "The note's text never enters the record: length and hash only (B-06).",
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "page",
+    "filing"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "enum": [
+    "Study Watch",
+    "E.V. Home"
+   ]
+  },
+  "status": {
+   "enum": [
+    "active",
+    "ending",
+    "ended"
+   ]
+  },
+  "date": {
+   "type": "string",
+   "format": "date"
+  },
+  "startedAt": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "endedAt": {
+   "anyOf": [
+    {
+     "type": "string",
+     "format": "date-time"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "topic": {
+   "type": "string"
+  },
+  "noteId": {
+   "type": "string"
+  },
+  "folder": {
+   "type": "string"
+  },
+  "events": {
+   "type": "object",
+   "propertyNames": {
+    "pattern": "^[a-z][a-z-]*-\\d{8}-\\d{6}(\\d{3})?(-[a-z0-9]+)?$"
+   },
+   "additionalProperties": {
+    "type": "object",
+    "properties": {
+     "type": {
+      "enum": [
+       "start",
+       "check",
+       "idle",
+       "skip",
+       "break",
+       "resume",
+       "extend",
+       "answer",
+       "end"
+      ]
+     },
+     "len": {
+      "type": "integer",
+      "minimum": 0
+     },
+     "h": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "type"
+    ]
+   }
+  },
+  "driver": {
+   "anyOf": [
+    {
+     "type": "object",
+     "properties": {
+      "view": {
+       "type": "string"
+      },
+      "at": {
+       "type": "string",
+       "format": "date-time"
+      }
+     },
+     "required": [
+      "view",
+      "at"
+     ],
+     "additionalProperties": false
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "minutes": {
+   "type": "number",
+   "minimum": 0
+  },
+  "checks": {
+   "type": [
+    "integer",
+    "array"
+   ]
+  },
+  "questions": {
+   "type": [
+    "integer",
+    "array"
+   ]
+  },
+  "endedBy": {
+   "type": "string"
+  },
+  "summary": {
+   "type": "string"
+  },
+  "weakSpots": {
+   "type": "array",
+   "items": {
+    "type": [
+     "string",
+     "object"
+    ]
+   }
+  },
+  "connections": {
+   "type": "array",
+   "items": {
+    "type": [
+     "string",
+     "object"
+    ]
+   }
+  },
+  "noteTodos": {
+   "type": "array",
+   "items": {
+    "type": [
+     "string",
+     "object"
+    ]
+   }
+  },
+  "cards": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "term": {
+      "type": "string"
+     },
+     "definition": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "term",
+     "definition"
+    ],
+    "additionalProperties": false
+   },
+   "maxItems": 30
+  },
+  "cardCount": {
+   "type": "integer",
+   "minimum": 0
+  },
+  "pending": {
+   "type": [
+    "object",
+    "null"
+   ]
+  },
+  "filedAt": {
+   "type": "string",
+   "format": "date-time"
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "source",
+  "date"
+ ],
+ "not": {
+  "anyOf": [
+   {
+    "required": [
+     "text"
+    ]
+   },
+   {
+    "required": [
+     "noteText"
+    ]
+   },
+   {
+    "required": [
+     "note"
+    ]
+   }
+  ]
+ }
+}

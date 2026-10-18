@@ -1,0 +1,60 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/weeks",
+ "title": "weeks/<id>",
+ "description": "review text, reflection prompt, calibration, health line, roll-ups",
+ "x-ev": {
+  "collection": "weeks",
+  "class": "Derived",
+  "writers": [
+   "weekly"
+  ],
+  "schema": 1
+ },
+ "$comment": "Shape completed with the weekly pipeline (B-09).",
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "weekly"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "date": {
+   "type": "string",
+   "format": "date"
+  },
+  "review": {
+   "type": "string"
+  },
+  "reflection": {
+   "type": "string"
+  },
+  "calibration": {
+   "type": "object"
+  },
+  "health": {
+   "type": "string"
+  },
+  "rollups": {
+   "type": "object"
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "date"
+ ]
+}

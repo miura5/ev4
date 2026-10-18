@@ -1,0 +1,20 @@
+{
+ "schema": 1,
+ "writer": "worker",
+ "at": "2026-10-16T14:00:00Z",
+ "source": "worker",
+ "release": "v4.0.0",
+ "status": "done",
+ "startedAt": "2026-10-16T14:01:00Z",
+ "finishedAt": "2026-10-16T14:09:00Z",
+ "result": {
+  "text": "Done.",
+  "links": [
+   {
+    "title": "Sample guide",
+    "url": "https://example.com/guide"
+   }
+  ]
+ },
+ "message": "m-20261016-140900000-j"
+}

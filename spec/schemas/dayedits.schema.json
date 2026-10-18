@@ -1,0 +1,182 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/dayedits",
+ "title": "dayedits/<id>",
+ "description": "checks, added, skipped, checkin",
+ "x-ev": {
+  "collection": "dayedits",
+  "class": "Edit",
+  "writers": [
+   "page"
+  ],
+  "schema": 1
+ },
+ "$comment": "Replaced whole by the page; there is no null-to-clear.",
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "page"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "updatedAt": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "date": {
+   "type": "string",
+   "format": "date"
+  },
+  "checks": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "object",
+    "properties": {
+     "at": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "by": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "at"
+    ],
+    "additionalProperties": false
+   }
+  },
+  "added": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "object",
+    "properties": {
+     "text": {
+      "type": "string",
+      "minLength": 1
+     },
+     "tag": {
+      "type": "string"
+     },
+     "kind": {
+      "enum": [
+       "reading",
+       "practice",
+       "review",
+       "notes",
+       "todo"
+      ]
+     },
+     "minutes": {
+      "type": "number",
+      "minimum": 0
+     },
+     "course": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "at": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "by": {
+      "enum": [
+       "E.V.",
+       "Matt"
+      ]
+     }
+    },
+    "required": [
+     "text",
+     "kind",
+     "at",
+     "by"
+    ],
+    "additionalProperties": false
+   }
+  },
+  "skipped": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "object",
+    "properties": {
+     "at": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "by": {
+      "type": "string",
+      "minLength": 1
+     }
+    },
+    "required": [
+     "at",
+     "by"
+    ],
+    "additionalProperties": false
+   }
+  },
+  "checkin": {
+   "anyOf": [
+    {
+     "type": "object",
+     "properties": {
+      "energy": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 5
+      },
+      "stress": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 5
+      },
+      "sleepHours": {
+       "type": "number",
+       "minimum": 0,
+       "maximum": 24
+      },
+      "at": {
+       "type": "string",
+       "format": "date-time"
+      }
+     },
+     "required": [
+      "energy",
+      "at"
+     ],
+     "additionalProperties": false
+    },
+    {
+     "type": "null"
+    }
+   ]
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "updatedAt",
+  "date"
+ ],
+ "additionalProperties": false
+}

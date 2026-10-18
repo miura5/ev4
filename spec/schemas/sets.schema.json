@@ -1,0 +1,232 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/sets",
+ "title": "sets/<id>",
+ "description": "items, kind, date, exam; items never change once written",
+ "x-ev": {
+  "collection": "sets",
+  "class": "Fact",
+  "writers": [
+   "morning",
+   "worker",
+   "page"
+  ],
+  "schema": 1
+ },
+ "$comment": "Items never change once written; answers live in answers/<setId>.",
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "morning",
+    "worker",
+    "page"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "kind": {
+   "enum": [
+    "review",
+    "drill",
+    "sim",
+    "more",
+    "job"
+   ]
+  },
+  "title": {
+   "type": "string"
+  },
+  "date": {
+   "type": "string",
+   "format": "date"
+  },
+  "exam": {
+   "anyOf": [
+    {
+     "type": "string"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "planTaskId": {
+   "type": "string"
+  },
+  "objectives": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "focus": {
+   "type": [
+    "string",
+    "array",
+    "null"
+   ]
+  },
+  "items": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string",
+      "minLength": 1
+     },
+     "kind": {
+      "type": "string"
+     },
+     "type": {
+      "enum": [
+       "single",
+       "sata",
+       "matrix"
+      ]
+     },
+     "stem": {
+      "type": "string",
+      "minLength": 10
+     },
+     "options": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "minLength": 1
+      },
+      "maxItems": 6
+     },
+     "correct": {
+      "type": "array",
+      "items": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "minItems": 1
+     },
+     "rationales": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "matrix": {
+      "type": "object",
+      "properties": {
+       "columns": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        },
+        "minItems": 2,
+        "maxItems": 4
+       },
+       "rows": {
+        "type": "array",
+        "items": {
+         "type": "object",
+         "properties": {
+          "text": {
+           "type": "string",
+           "minLength": 1
+          },
+          "correct": {
+           "type": "integer",
+           "minimum": 0
+          },
+          "rationale": {
+           "type": "string"
+          }
+         },
+         "required": [
+          "text",
+          "correct"
+         ],
+         "additionalProperties": false
+        },
+        "minItems": 3,
+        "maxItems": 6
+       }
+      },
+      "required": [
+       "columns",
+       "rows"
+      ],
+      "additionalProperties": false
+     },
+     "weakspotId": {
+      "type": "string"
+     },
+     "objective": {
+      "type": "string"
+     },
+     "topic": {
+      "type": "string"
+     },
+     "cjStep": {
+      "type": "string"
+     },
+     "verify": {
+      "type": "boolean"
+     },
+     "sourceRef": {
+      "type": "string",
+      "pattern": "^materials/"
+     },
+     "chapters": {
+      "type": "array",
+      "items": {
+       "type": [
+        "string",
+        "integer"
+       ]
+      }
+     }
+    },
+    "required": [
+     "id",
+     "stem"
+    ],
+    "additionalProperties": false
+   },
+   "minItems": 1
+  },
+  "createdAt": {
+   "type": "string",
+   "format": "date-time"
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "kind",
+  "items"
+ ],
+ "not": {
+  "anyOf": [
+   {
+    "required": [
+     "answers"
+    ]
+   },
+   {
+    "required": [
+     "pastAttempts"
+    ]
+   }
+  ]
+ }
+}

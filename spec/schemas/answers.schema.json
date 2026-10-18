@@ -1,0 +1,110 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/answers",
+ "title": "answers/<id>",
+ "description": "answers map, item id to attempts (append-only)",
+ "x-ev": {
+  "collection": "answers",
+  "class": "Fact",
+  "writers": [
+   "page"
+  ],
+  "schema": 1
+ },
+ "$comment": "answers: item id -> attempt key (<writer>-<time>) -> attempt; append-only.",
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "page"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "setId": {
+   "type": "string",
+   "minLength": 1
+  },
+  "answers": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "object",
+    "propertyNames": {
+     "pattern": "^[a-z][a-z-]*-\\d{8}-\\d{6}(\\d{3})?(-[a-z0-9]+)?$"
+    },
+    "additionalProperties": {
+     "type": "object",
+     "properties": {
+      "chosen": {
+       "type": [
+        "integer",
+        "array",
+        "object",
+        "string",
+        "null"
+       ]
+      },
+      "correct": {
+       "type": "boolean"
+      },
+      "score": {
+       "type": "number",
+       "minimum": 0,
+       "maximum": 1
+      },
+      "at": {
+       "type": "string",
+       "format": "date-time"
+      },
+      "outcome": {
+       "type": "string"
+      },
+      "weakspotId": {
+       "type": "string"
+      },
+      "matched": {
+       "type": [
+        "string",
+        "boolean",
+        "null"
+       ]
+      },
+      "createdWeakspot": {
+       "type": [
+        "string",
+        "boolean",
+        "null"
+       ]
+      },
+      "endedAt": {
+       "type": "string",
+       "format": "date-time"
+      }
+     },
+     "required": [
+      "at"
+     ],
+     "additionalProperties": false
+    }
+   }
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "setId",
+  "answers"
+ ],
+ "additionalProperties": false
+}

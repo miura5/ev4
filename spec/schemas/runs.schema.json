@@ -1,0 +1,143 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/runs",
+ "title": "runs/<id>",
+ "description": "pipeline, release, startedAt, endedAt, status, steps, detail",
+ "x-ev": {
+  "collection": "runs",
+  "class": "Log",
+  "writers": [
+   "morning",
+   "evening-cloud",
+   "evening-mac",
+   "weekly",
+   "worker",
+   "watchdog",
+   "restore-drill",
+   "diagnostic"
+  ],
+  "schema": 1
+ },
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "morning",
+    "evening-cloud",
+    "evening-mac",
+    "weekly",
+    "worker",
+    "watchdog",
+    "restore-drill",
+    "diagnostic"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "release": {
+   "type": "string",
+   "pattern": "^v\\d+(\\.\\d+){0,2}$"
+  },
+  "pipeline": {
+   "enum": [
+    "morning",
+    "evening-cloud",
+    "evening-mac",
+    "weekly",
+    "worker",
+    "watchdog",
+    "restore-drill",
+    "diagnostic"
+   ]
+  },
+  "startedAt": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "endedAt": {
+   "anyOf": [
+    {
+     "type": "string",
+     "format": "date-time"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "status": {
+   "enum": [
+    "running",
+    "ok",
+    "partial",
+    "failed"
+   ]
+  },
+  "steps": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string",
+      "minLength": 1
+     },
+     "status": {
+      "type": "string"
+     },
+     "detail": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "status"
+    ],
+    "additionalProperties": false
+   }
+  },
+  "planned": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "planHash": {
+   "type": "string",
+   "pattern": "^[0-9a-f]{64}$"
+  },
+  "detail": {
+   "type": "string"
+  },
+  "push": {
+   "anyOf": [
+    {
+     "type": "string"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "release",
+  "pipeline",
+  "startedAt",
+  "status"
+ ],
+ "additionalProperties": false
+}

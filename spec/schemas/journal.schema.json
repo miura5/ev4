@@ -1,0 +1,55 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/journal",
+ "title": "journal/<id>",
+ "description": "entries; pipelines never read; not in backups",
+ "x-ev": {
+  "collection": "journal",
+  "class": "Fact",
+  "writers": [
+   "page"
+  ],
+  "schema": 1
+ },
+ "$comment": "Private: the page only; no pipeline pulls it, no backup includes it.",
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "page"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "text": {
+   "type": "string"
+  },
+  "kind": {
+   "enum": [
+    "free",
+    "clinical",
+    "weekly"
+   ]
+  },
+  "createdAt": {
+   "type": "string",
+   "format": "date-time"
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "text"
+ ]
+}

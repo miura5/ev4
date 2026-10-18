@@ -1,0 +1,65 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/planedits",
+ "title": "planedits/<id>",
+ "description": "task ticks",
+ "x-ev": {
+  "collection": "planedits",
+  "class": "Edit",
+  "writers": [
+   "page"
+  ],
+  "schema": 1
+ },
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "page"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "updatedAt": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "ticks": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "object",
+    "properties": {
+     "at": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "by": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "at"
+    ],
+    "additionalProperties": false
+   }
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "updatedAt",
+  "ticks"
+ ],
+ "additionalProperties": false
+}

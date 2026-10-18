@@ -1,0 +1,125 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/plans",
+ "title": "plans/<id>",
+ "description": "cards, days, tasks",
+ "x-ev": {
+  "collection": "plans",
+  "class": "Fact",
+  "writers": [
+   "worker",
+   "page"
+  ],
+  "schema": 1
+ },
+ "$comment": "Task ticks live in planedits/<exam id>.",
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "worker",
+    "page"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "exam": {
+   "type": "string",
+   "minLength": 1
+  },
+  "title": {
+   "type": "string"
+  },
+  "sourceUrl": {
+   "type": "string"
+  },
+  "cards": {
+   "type": "array",
+   "items": {
+    "type": "object"
+   }
+  },
+  "tasks": {
+   "type": "array",
+   "items": {
+    "type": "object"
+   }
+  },
+  "days": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "date": {
+      "type": "string",
+      "format": "date"
+     },
+     "label": {
+      "type": "string"
+     },
+     "tasks": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "id": {
+         "type": "string",
+         "minLength": 1
+        },
+        "text": {
+         "type": "string"
+        },
+        "tag": {
+         "type": "string"
+        },
+        "kind": {
+         "type": "string"
+        },
+        "chapters": {
+         "type": "array",
+         "items": {
+          "type": [
+           "string",
+           "integer"
+          ]
+         }
+        }
+       },
+       "required": [
+        "id"
+       ]
+      }
+     }
+    },
+    "required": [
+     "date"
+    ]
+   }
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "exam"
+ ],
+ "not": {
+  "anyOf": [
+   {
+    "required": [
+     "done"
+    ]
+   }
+  ]
+ }
+}

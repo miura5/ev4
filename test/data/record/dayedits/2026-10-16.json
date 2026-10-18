@@ -1,0 +1,26 @@
+{
+ "schema": 1,
+ "writer": "page",
+ "at": "2026-10-16T14:00:00Z",
+ "source": "E.V. Home",
+ "updatedAt": "2026-10-16T14:00:00Z",
+ "date": "2026-10-16",
+ "checks": {
+  "review": {
+   "at": "2026-10-16T14:00:00Z"
+  }
+ },
+ "added": {
+  "a-1": {
+   "text": "Made-up added item",
+   "kind": "todo",
+   "at": "2026-10-16T14:00:00Z",
+   "by": "Matt"
+  }
+ },
+ "skipped": {},
+ "checkin": {
+  "energy": 3,
+  "at": "2026-10-16T14:00:00Z"
+ }
+}

@@ -1,0 +1,25 @@
+{
+ "schema": 1,
+ "writer": "page",
+ "at": "2026-10-16T14:00:00Z",
+ "source": "E.V. Home",
+ "status": "ended",
+ "date": "2026-10-16",
+ "startedAt": "2026-10-17T01:00:00Z",
+ "endedAt": "2026-10-17T01:40:00Z",
+ "topic": "Sample note",
+ "events": {
+  "page-20261017-010000": {
+   "type": "start",
+   "len": 1200,
+   "h": "abc123"
+  }
+ },
+ "minutes": 38,
+ "cards": [
+  {
+   "term": "Term",
+   "definition": "A made-up definition"
+  }
+ ]
+}

@@ -1,0 +1,112 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/ideas",
+ "title": "ideas/<id>",
+ "description": "text, objective, links, status mark",
+ "x-ev": {
+  "collection": "ideas",
+  "class": "Fact",
+  "writers": [
+   "page",
+   "filing"
+  ],
+  "schema": 1
+ },
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "page",
+    "filing"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "text": {
+   "type": "string",
+   "minLength": 1
+  },
+  "objective": {
+   "anyOf": [
+    {
+     "type": "string"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "status": {
+   "enum": [
+    "open",
+    "promoted",
+    "archived"
+   ]
+  },
+  "links": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "to": {
+      "type": "string",
+      "pattern": "^[a-z]+/.+"
+     },
+     "type": {
+      "enum": [
+       "seen-in",
+       "related",
+       "contrasts",
+       "causes"
+      ]
+     },
+     "note": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "to",
+     "type"
+    ],
+    "additionalProperties": false
+   }
+  },
+  "sessionId": {
+   "anyOf": [
+    {
+     "type": "string"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "weakspotId": {
+   "anyOf": [
+    {
+     "type": "string"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "text",
+  "status"
+ ]
+}

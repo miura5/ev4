@@ -1,0 +1,28 @@
+{
+ "schema": 1,
+ "writer": "page",
+ "at": "2026-10-16T14:00:00Z",
+ "source": "Told E.V.",
+ "topic": "Sample topic about fluid balance",
+ "objective": "E9-1",
+ "exam": "E9",
+ "course": "NUR 112",
+ "kind": "concept",
+ "initial": {
+  "streak": 0,
+  "nextDue": "2026-10-17",
+  "recurrence": 0,
+  "misses": 1
+ },
+ "events": {
+  "page-20261016-140500": {
+   "type": "seen",
+   "by": "Matt"
+  },
+  "evening-cloud-20261017-011500": {
+   "type": "park",
+   "by": "E.V.",
+   "note": "made up"
+  }
+ }
+}

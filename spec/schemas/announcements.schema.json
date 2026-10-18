@@ -1,0 +1,64 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/announcements",
+ "title": "announcements/<id>",
+ "description": "plain text, course, postedAt",
+ "x-ev": {
+  "collection": "announcements",
+  "class": "Fact",
+  "writers": [
+   "canvas-sync"
+  ],
+  "schema": 1
+ },
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "canvas-sync"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "title": {
+   "type": "string"
+  },
+  "text": {
+   "type": "string"
+  },
+  "course": {
+   "type": "string"
+  },
+  "postedAt": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "url": {
+   "anyOf": [
+    {
+     "type": "string"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "text",
+  "course"
+ ]
+}

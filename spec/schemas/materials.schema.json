@@ -1,0 +1,203 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/materials",
+ "title": "materials/<id>",
+ "description": "text with page marks, ocr, kind, module",
+ "x-ev": {
+  "collection": "materials",
+  "class": "Fact",
+  "writers": [
+   "canvas-sync",
+   "page"
+  ],
+  "schema": 1
+ },
+ "$comment": "Text is capped at 200,000 characters; longer files are chunked into materials/<id>-p2. Removal lives in materialedits/<id>.",
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "canvas-sync",
+    "page"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "course": {
+   "type": "string",
+   "minLength": 1
+  },
+  "kind": {
+   "enum": [
+    "slides",
+    "lab",
+    "clinical",
+    "course",
+    "handout",
+    "upload"
+   ]
+  },
+  "title": {
+   "type": "string",
+   "minLength": 1
+  },
+  "module": {
+   "anyOf": [
+    {
+     "type": "string"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "section": {
+   "anyOf": [
+    {
+     "type": "string"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "exam": {
+   "anyOf": [
+    {
+     "type": "string"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "unit": {
+   "anyOf": [
+    {
+     "type": "string"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "fileType": {
+   "enum": [
+    "pdf",
+    "docx",
+    "pptx",
+    "image",
+    "text"
+   ]
+  },
+  "fileId": {
+   "type": [
+    "string",
+    "integer"
+   ]
+  },
+  "fileUpdatedAt": {
+   "anyOf": [
+    {
+     "type": "string"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "url": {
+   "anyOf": [
+    {
+     "type": "string"
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "text": {
+   "type": "string",
+   "maxLength": 200000
+  },
+  "pages": {
+   "anyOf": [
+    {
+     "type": "integer",
+     "minimum": 0
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "chars": {
+   "type": "integer",
+   "minimum": 0
+  },
+  "needsOcr": {
+   "type": "boolean"
+  },
+  "ocr": {
+   "anyOf": [
+    {
+     "type": "object",
+     "properties": {
+      "by": {
+       "type": "string"
+      },
+      "at": {
+       "type": "string",
+       "format": "date-time"
+      },
+      "pages": {
+       "type": "array",
+       "items": {
+        "type": "integer",
+        "minimum": 1
+       }
+      },
+      "stale": {
+       "type": "boolean"
+      }
+     },
+     "required": []
+    },
+    {
+     "type": "null"
+    }
+   ]
+  },
+  "addedBy": {
+   "type": "string"
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "course",
+  "kind",
+  "title",
+  "text"
+ ],
+ "not": {
+  "anyOf": [
+   {
+    "required": [
+     "status"
+    ]
+   }
+  ]
+ }
+}

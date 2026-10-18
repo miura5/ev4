@@ -1,0 +1,62 @@
+{
+ "schema": 1,
+ "writer": "morning",
+ "at": "2026-10-16T14:00:00Z",
+ "source": "morning 4:25",
+ "kind": "review",
+ "date": "2026-10-16",
+ "exam": "E9",
+ "items": [
+  {
+   "id": "q1",
+   "type": "single",
+   "stem": "A made-up client asks a sample question. What is the best first action?",
+   "options": [
+    "First option",
+    "Second option",
+    "Third option"
+   ],
+   "correct": [
+    1
+   ],
+   "rationales": [
+    "a",
+    "b",
+    "c"
+   ],
+   "objective": "E9-1",
+   "cjStep": "recognize",
+   "verify": true
+  },
+  {
+   "id": "q2",
+   "type": "matrix",
+   "stem": "For each made-up finding, choose whether it is expected or unexpected.",
+   "matrix": {
+    "columns": [
+     "Expected",
+     "Unexpected"
+    ],
+    "rows": [
+     {
+      "text": "Finding one",
+      "correct": 0,
+      "rationale": "x"
+     },
+     {
+      "text": "Finding two",
+      "correct": 1,
+      "rationale": "y"
+     },
+     {
+      "text": "Finding three",
+      "correct": 0,
+      "rationale": "z"
+     }
+    ]
+   },
+   "objective": "E9-1",
+   "cjStep": "analyze"
+  }
+ ]
+}
