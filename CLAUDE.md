@@ -76,8 +76,8 @@ record by hand. A refused action is reported in Notes, never worked around.
 
 ## Rollback to v3 (D-085, manual, only with Matt's explicit OK)
 
-Open until the first exam taken on v4 or Oct 25, whichever comes first; after that, rollback means the previous v4
-tag (B-30). The cost: everything answered on v4 since cutover is lost from the active record (it stays in place,
+Open until NUR Exam 4 on Wed Oct 21, the first exam taken on v4 (Matt, Oct 18); after that, rollback means the
+previous v4 tag (B-30). The cost: everything answered on v4 since cutover is lost from the active record (it stays in place,
 unread by v3). In a Mac-linked desktop-app chat with Matt present, in order, nothing deleted:
 
 1. Disable the six v4 live tasks (`spec.tasks.live.*.trigger`: morning, evening-cloud, evening-mac, weekly, worker,
