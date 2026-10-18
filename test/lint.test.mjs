@@ -188,3 +188,27 @@ test('B-32: a stored hash from before marks is not compared (no mask), so the fi
   doc(db, 'dates', 'canvas-900001').title = 'changed';
   assert.deepEqual(codes(lint(db), 'fact-changed'), []);
 });
+
+test('B-37 (D-093): lint warns on a planted 200 KiB state/current, and the state step splits the fact hashes past the budget', async () => {
+  const db = load(); const state = doc(db, 'state', 'current');
+  state.snapshot = { ...state.snapshot, padding: 'Made-up padding. '.repeat(Math.ceil(200 * 1024 / 17)) };
+  const warn = codes(lint(db), 'over-budget').filter(i => i.ref === 'state');
+  assert.equal(warn.length, 1); assert.equal(warn[0].severity, 'warning'); assert.match(warn[0].msg, /warns at 196608/);
+  // The split: a planted budget small enough that tonight's state/current reaches it.
+  const { CODE_STEPS } = await import('../core/steps.mjs');
+  const small = JSON.parse(JSON.stringify(spec)); small.capacity.collections.state.warnBytes = 2000;
+  const fresh = load(); delete fresh.journal; const ctx = { date: '2026-10-17', now: '2026-10-20T01:15:00.000Z', source: 'evening-cloud evening-cloud-test' };
+  const r = CODE_STEPS.state(fresh, ctx, small);
+  const ids = r.writes.map(w => w.id);
+  assert.equal(ids[0], 'current'); assert.ok(ids.length > 2 && ids.slice(1).every(id => /^facts-[a-z]+$/.test(id)), ids.join(','));
+  const cur = r.writes[0].data;
+  assert.deepEqual(cur.factHashes, {}); assert.deepEqual(cur.factsSplit, ids.slice(1).map(id => id.slice(6)));
+  for (const w of r.writes) assert.ok(validate('state', w.data, { id: w.id }).ok, w.id);
+  // lint reads the hashes wherever they are: a change is still caught, and every split document rebuilds.
+  const db2 = load(); db2.state = r.writes.map(w => ({ ...w.data, id: w.id }));
+  const res = lintRecord(db2, small, validate, { date: '2026-10-17' });
+  assert.deepEqual(res.issues.filter(i => i.code === 'fact-changed'), []);
+  for (const x of res.rebuilt.filter(x => x.ref.startsWith('state/'))) assert.match(x.status, /same$/, x.ref);
+  db2.exams[0].title = 'A planted change';
+  assert.deepEqual(lintRecord(db2, small, validate, { date: '2026-10-17' }).issues.filter(i => i.code === 'fact-changed').map(i => i.ref), [`exams/${db2.exams[0].id}`]);
+});

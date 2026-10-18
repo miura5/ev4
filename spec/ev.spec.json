@@ -1245,8 +1245,11 @@
     "evening-cloud",
     "morning"
    ],
-   "key": "current",
-   "holds": "the snapshot and the derived hash",
+   "key": [
+    "current",
+    "facts-<collection>"
+   ],
+   "holds": "the snapshot, the derived hash, the fact hashes (in state/facts-<collection> once state/current reaches its budget, D-093) and the nightly lint",
    "fromV3": "state",
    "fixedIds": [
     "current"
@@ -2036,7 +2039,7 @@
   "_rules": [
    "Nothing is deleted, so capacity is managed by bounding what is read, not what is kept.",
    "documentBytes and batch rest on environments.cloud-run (B-14, runs/diagnostic-20261018-064940608): 262144 bytes per document and 1048576 bytes per batch request are the platform's own refusals. maxBytes keeps 4096 bytes of the request for the call's own fields.",
-   "Per-collection budgets stay null: no ceiling on document count or record size was found or reachable without writing that much, so none is set from guesswork. lint warns and fails at these numbers once a design chat sets them from read cost."
+   "Per-collection budgets (D-093) rest on read cost and the one measured ceiling (262144 bytes a document): state/current warns at 192 KiB and fails at 240 KiB, relieved by its factHashes split per collection into state/facts-<collection>; sets and answers warn at 400 documents each, relieved by the weekly roll-up; runs warns at 1,500, relieved by weekly run counts and cursor-paged pulls; materials warns at 4 MiB in total, relieved by the lazy library load. v3's 25,000-document cap is gone. Every other budget stays null: nothing measured calls for one."
   ],
   "documentBytes": 262144,
   "materialTextChars": 200000,
@@ -2063,14 +2066,14 @@
     "relief": null
    },
    "sets": {
-    "warnDocs": null,
+    "warnDocs": 400,
     "failDocs": null,
     "warnBytes": null,
     "failBytes": null,
-    "relief": null
+    "relief": "the weekly roll-up (weeks/<date>) in place of reading every set"
    },
    "answers": {
-    "warnDocs": null,
+    "warnDocs": 400,
     "failDocs": null,
     "warnBytes": null,
     "failBytes": null,
@@ -2140,11 +2143,11 @@
     "relief": null
    },
    "runs": {
-    "warnDocs": null,
+    "warnDocs": 1500,
     "failDocs": null,
     "warnBytes": null,
     "failBytes": null,
-    "relief": "weekly run counts per pipeline (weeks/<date> roll-up)"
+    "relief": "weekly run counts per pipeline (weeks/<date> roll-up); pulls page by cursor"
    },
    "debug": {
     "warnDocs": null,
@@ -2163,9 +2166,9 @@
    "state": {
     "warnDocs": null,
     "failDocs": null,
-    "warnBytes": null,
-    "failBytes": null,
-    "relief": null
+    "warnBytes": 196608,
+    "failBytes": 245760,
+    "relief": "factHashes split per collection into state/facts-<collection> (the state step does it when state/current reaches warnBytes)"
    },
    "sessions": {
     "warnDocs": null,
@@ -2212,9 +2215,9 @@
    "materials": {
     "warnDocs": null,
     "failDocs": null,
-    "warnBytes": null,
+    "warnBytes": 4194304,
     "failBytes": null,
-    "relief": "chunked as materials/<id>-p2 past the text cap"
+    "relief": "the lazy library load (the page loads a course's materials when the library is opened); chunked as materials/<id>-p2 past the text cap"
    },
    "materialedits": {
     "warnDocs": null,

@@ -150,13 +150,17 @@ function dayBody(db, { date, now }) {
 }
 
 /** state/current, the evening-cloud run: the snapshot, the derived hash, and every Fact's hash for lint. */
-function stateBody(db, { date, now, specVersion }, spec) {
+function stateBody(db, { date, now, specVersion, part = null, split = null }, spec) {
   const v = views(db);
   // The counts are of what the run reads: state/current leaves itself out (the run sees the previous one, a rebuild
   // the one it wrote), and Config (system/*) is the deploy's, not the record's.
   const counts = Object.fromEntries(Object.entries(db).filter(([k, d]) => k !== 'state' && spec.collections[k] && spec.collections[k].class !== 'Config' && d.length).map(([k, d]) => [k, d.length]).sort(([a], [b]) => (a < b ? -1 : 1)));
   const content = EV.lint({ ...db, journal: [], weakspotModels: v.models, counts }, { date });
-  const snapshot = EV.buildSnapshot({ date, now, exams: v.exams, weakspots: v.models, sets: v.sets, answers: v.answers, days: db.days || [], dates: db.dates || [], dateedits: db.dateedits || [], plans: db.plans || [], planedits: db.planedits || [], runs: db.runs || [], counts, versions: { spec: specVersion || null }, lint: content, canvas: null });
+  // Bytes for the collections a byte budget watches (D-093). state leaves itself out, as the counts do (it cannot
+  // measure the document it is writing); lint measures it.
+  const budgets = (spec.capacity && spec.capacity.collections) || {};
+  const bytes = Object.fromEntries(Object.entries(budgets).filter(([c, b]) => c !== 'state' && b && (b.warnBytes != null || b.failBytes != null) && db[c]).map(([c]) => [c, db[c].reduce((s, d) => s + Buffer.byteLength(JSON.stringify(EV.docData(d)), 'utf8'), 0)]));
+  const snapshot = EV.buildSnapshot({ date, now, exams: v.exams, weakspots: v.models, sets: v.sets, answers: v.answers, days: db.days || [], dates: db.dates || [], dateedits: db.dateedits || [], plans: db.plans || [], planedits: db.planedits || [], runs: db.runs || [], counts, bytes, budgets, versions: { spec: specVersion || null }, lint: content, canvas: null });
   const factHashes = {}; const fieldLists = {};
   for (const [col, docs] of Object.entries(db).sort(([a], [b]) => (a < b ? -1 : 1))) {
     if (col === 'journal') continue; // pipelines never read it (D-059)
@@ -166,7 +170,26 @@ function stateBody(db, { date, now, specVersion }, spec) {
       factHashes[`${col}/${d.id}`] = factHash(spec, col, d, { fields });
     }
   }
-  return { snapshot, derivedHash: snapshot.derivedHash, factHashes, factFields: fieldLists };
+  const full = { snapshot, derivedHash: snapshot.derivedHash, factHashes, factFields: fieldLists };
+  // B-37 (D-093): state/current past its warnBytes keeps the snapshot; each collection's fact hashes move to
+  // state/facts-<collection>. `split` (from the stored document, or the state step's measure) says which.
+  if (part) return { facts: part, factHashes: Object.fromEntries(Object.entries(factHashes).filter(([ref]) => ref.split('/')[0] === part)), factFields: { [part]: fieldLists[part] || [] } };
+  if (!split || !split.length) return full;
+  const keep = Object.fromEntries(Object.entries(factHashes).filter(([ref]) => !split.includes(ref.split('/')[0])));
+  const keepFields = Object.fromEntries(Object.entries(fieldLists).filter(([c]) => !split.includes(c)));
+  return { snapshot, derivedHash: snapshot.derivedHash, factHashes: keep, factFields: keepFields, factsSplit: split };
+}
+/** The collections whose fact hashes move out of state/current: all of them once the whole document reaches warnBytes. */
+export function factsSplitFor(spec, body) {
+  const b = ((spec.capacity || {}).collections || {}).state || {};
+  if (b.warnBytes == null || Buffer.byteLength(JSON.stringify(body), 'utf8') < b.warnBytes) return [];
+  return Object.keys(body.factFields || {}).sort();
+}
+/** Every fact hash and field list state keeps, from state/current and any state/facts-<collection>. */
+export function knownFacts(stateDocs) {
+  const hashes = {}, fields = {};
+  for (const d of stateDocs || []) if (d.id === 'current' || /^facts-/.test(d.id)) { Object.assign(hashes, d.factHashes || {}); Object.assign(fields, d.factFields || {}); }
+  return { hashes, fields };
 }
 
 /** weeks/<Sunday>, the weekly run: the week's roll-ups, calibration and health line. The review and reflection are
@@ -211,7 +234,7 @@ export const AUTHORED = { weeks: ['review', 'reflection'] };
 
 export const PRODUCERS = {
   days: { writer: 'morning', inputs: (s) => ({ date: s.date || s.id, now: s.at }), build: (db, i) => dayBody(db, i) },
-  state: { writer: 'evening-cloud', inputs: (s) => ({ date: (s.snapshot && s.snapshot.date) || EV.chicagoDate(s.at), now: s.at, specVersion: s.snapshot ? s.snapshot.specVersion : null }), build: (db, i, spec) => stateBody(db, i, spec) },
+  state: { writer: 'evening-cloud', inputs: (s) => ({ date: (s.snapshot && s.snapshot.date) || EV.chicagoDate(s.at), now: s.at, specVersion: s.snapshot ? s.snapshot.specVersion : (s.specVersion || null), part: s.facts || null, split: s.factsSplit || null }), build: (db, i, spec) => stateBody(db, i, spec) },
   weeks: { writer: 'weekly', inputs: (s) => ({ date: s.date || s.id, now: s.at }), build: (db, i, spec, stored) => weekBody(db, i, spec, stored) },
   libindex: { writer: 'evening-cloud', inputs: (s) => ({ course: s.course || s.id, now: s.at }), build: (db, i) => libindexBody(db, i) },
   health: { writer: 'watchdog', inputs: (s) => ({ now: s.at, record: s.record || 'staging' }), build: (db, i, spec) => healthBody(db, i, spec) },

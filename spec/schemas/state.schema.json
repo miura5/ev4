@@ -51,6 +51,17 @@
      "type": "string"
     }
    }
+  },
+  "factsSplit": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "description": "B-37 (D-093): the collections whose fact hashes live in state/facts-<collection>, because state/current reached its warnBytes"
+  },
+  "facts": {
+   "type": "string",
+   "description": "B-37: on state/facts-<collection>, the collection whose fact hashes it holds"
   }
  },
  "required": [

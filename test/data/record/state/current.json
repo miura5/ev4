@@ -59,9 +59,64 @@
    },
    "capacity": {
     "docs": 26,
-    "cap": 25000,
-    "pct": 0.1,
-    "level": "ok"
+    "level": "ok",
+    "budgets": [
+     {
+      "collection": "answers",
+      "docs": 1,
+      "bytes": null,
+      "warnDocs": 400,
+      "failDocs": null,
+      "warnBytes": null,
+      "failBytes": null,
+      "level": "ok",
+      "relief": "weekly answer statistics per week (weeks/<date> roll-up)"
+     },
+     {
+      "collection": "materials",
+      "docs": 1,
+      "bytes": 271,
+      "warnDocs": null,
+      "failDocs": null,
+      "warnBytes": 4194304,
+      "failBytes": null,
+      "level": "ok",
+      "relief": "the lazy library load (the page loads a course's materials when the library is opened); chunked as materials/<id>-p2 past the text cap"
+     },
+     {
+      "collection": "runs",
+      "docs": 1,
+      "bytes": null,
+      "warnDocs": 1500,
+      "failDocs": null,
+      "warnBytes": null,
+      "failBytes": null,
+      "level": "ok",
+      "relief": "weekly run counts per pipeline (weeks/<date> roll-up); pulls page by cursor"
+     },
+     {
+      "collection": "sets",
+      "docs": 1,
+      "bytes": null,
+      "warnDocs": 400,
+      "failDocs": null,
+      "warnBytes": null,
+      "failBytes": null,
+      "level": "ok",
+      "relief": "the weekly roll-up (weeks/<date>) in place of reading every set"
+     },
+     {
+      "collection": "state",
+      "docs": 0,
+      "bytes": null,
+      "warnDocs": null,
+      "failDocs": null,
+      "warnBytes": 196608,
+      "failBytes": 245760,
+      "level": "ok",
+      "relief": "factHashes split per collection into state/facts-<collection> (the state step does it when state/current reaches warnBytes)"
+     }
+    ]
    },
    "counts": {
     "announcements": 1,

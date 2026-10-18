@@ -582,9 +582,15 @@
     $('pipes').replaceChildren(...names.map(([p, def]) => { const r = last[p]; const label = (PIPE_NAME[p] || p) + ' · ' + (def.steps ? when(sched[p]) : 'not built yet');
       return row({ title: label, detail: r ? `Last run ${short(r.startedAt)} ${E.chicagoClock(r.startedAt)}${r.status === 'running' ? ', still running' : ''}${r.detail ? ' · ' + r.detail : ''}` : def.steps ? 'No run yet' : 'Arrives in a later build step', chips: [r ? [r.status, v(r)] : [def.steps ? 'waiting' : 'later', '']] }); }));
     $('runs').replaceChildren(...(runs.length ? runs.slice(0, 12).map(r => row({ lead: short(r.startedAt), title: PIPE_NAME[r.pipeline] || r.pipeline || r.id, detail: [E.chicagoClock(r.startedAt), r.detail].filter(Boolean).join(' · ').slice(0, 220), chips: [[r.status || '?', v(r)]] })) : [empty('Runs log here, including failures.')]));
+    // The record against its budgets (D-093): one line per budgeted collection, worst first; no overall cap.
     const cap = (hl && hl.capacity) || null;
-    if (cap && cap.docs != null) $('capacity').replaceChildren(el('p', null, `${Number(cap.docs).toLocaleString()} documents in your record.`), el('p', 'meta', 'Nothing is ever deleted; E.V. reads by date window, so the record can grow without slowing the page.'));
-    else $('capacity').replaceChildren(el('p', 'meta', 'Counts arrive with the watchdog’s health check.'));
+    if (cap && cap.docs != null) {
+      const kib = n => n >= 1048576 ? (Math.round(n / 104857.6) / 10) + ' MiB' : Math.round(n / 1024) + ' KiB';
+      const limit = b => [b.warnDocs != null ? `warns at ${Number(b.warnDocs).toLocaleString()}` : null, b.warnBytes != null ? `warns at ${kib(b.warnBytes)}` : null, b.failBytes != null ? `fails at ${kib(b.failBytes)}` : null].filter(Boolean).join(', ');
+      const used = b => [b.warnDocs != null || b.failDocs != null ? `${Number(b.docs).toLocaleString()} documents` : null, b.bytes != null ? kib(b.bytes) : null].filter(Boolean).join(' · ') || 'measured by the nightly check';
+      const rows = (cap.budgets || []).map(b => row({ title: b.collection, detail: `${used(b)} · ${limit(b)}${b.level !== 'ok' && b.relief ? ' · relief: ' + b.relief : ''}`, chips: [[b.level === 'ok' ? 'within budget' : b.level === 'warn' ? 'near budget' : 'over budget', b.level === 'ok' ? 'ok' : b.level === 'warn' ? 'warn' : 'bad']] }));
+      $('capacity').replaceChildren(el('p', null, `${Number(cap.docs).toLocaleString()} documents in your record.`), ...(rows.length ? [(() => { const ul = el('ul', 'list'); ul.append(...rows); return ul; })()] : []), el('p', 'meta', 'Nothing is ever deleted; budgets bound what E.V. reads each night, not what it keeps.'));
+    } else $('capacity').replaceChildren(el('p', 'meta', 'Counts arrive with the watchdog’s health check.'));
     const issues = st && st.lint ? st.lint.top || [] : [];
     $('lint').replaceChildren(...(issues.length ? issues.map(i => row({ title: i.msg, detail: i.ref, chips: [[i.severity, i.severity === 'error' ? 'bad' : i.severity === 'warning' ? 'warn' : '']] })) : [empty('No problems in the last check.')]));
     const js = [...S.jobs].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || ''))).slice(0, 10);

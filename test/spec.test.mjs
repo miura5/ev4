@@ -208,3 +208,12 @@ test('B-32 (D-089): x-ev.marks in the five schemas match the spec, and the regis
   const s2 = JSON.parse(JSON.stringify(spec)); s2.collections.dates.marks.title = ['page'];
   assert.ok(registryProblems(s2, schemas).some(p => /dates: marks differ/.test(p)));
 });
+
+test('B-37 (D-093): the budgets rest on read cost and the measured ceiling, each with its relief; no 25,000 cap', () => {
+  const c = spec.capacity.collections;
+  assert.deepEqual([c.state.warnBytes, c.state.failBytes], [192 * 1024, 240 * 1024]);
+  assert.ok(c.state.failBytes < spec.capacity.documentBytes, 'state/current fails before the platform refuses it');
+  assert.deepEqual([c.sets.warnDocs, c.answers.warnDocs, c.runs.warnDocs, c.materials.warnBytes], [400, 400, 1500, 4 * 1024 * 1024]);
+  for (const k of ['state', 'sets', 'answers', 'runs', 'materials']) assert.ok(c[k].relief, `${k} names its relief`);
+  assert.ok(!/25,?000/.test(JSON.stringify(spec.constants)) && !/cap: 25000/.test(fs.readFileSync(path.join(ROOT, 'core/evcore.mjs'), 'utf8')), 'the 25,000 cap is gone');
+});

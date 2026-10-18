@@ -10,7 +10,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import EV from './evcore.mjs';
-import { produce, classOf } from './derive.mjs';
+import { produce, classOf, factsSplitFor } from './derive.mjs';
 import { watch } from './watch.mjs';
 import { canvasRaw } from './canvas.mjs';
 import { collectionHash } from './seed.mjs';
@@ -34,8 +34,16 @@ export const CODE_STEPS = {
   },
   /** state/current: the snapshot, the derived hash and the Fact hashes lint checks against. */
   state(db, ctx, spec) {
-    const data = produce(db, spec, 'state', { date: ctx.date, now: ctx.now, specVersion: spec.specVersion }, { source: ctx.source });
-    return { writes: [{ op: 'set', collection: 'state', id: 'current', data }], say: [`Snapshot: ${data.snapshot.weakspots.active} active weak spots, ${data.snapshot.due.count} due.`] };
+    const inputs = { date: ctx.date, now: ctx.now, specVersion: spec.specVersion };
+    let data = produce(db, spec, 'state', inputs, { source: ctx.source });
+    // B-37 (D-093): past its warnBytes, state/current keeps the snapshot and the fact hashes move per collection.
+    const split = factsSplitFor(spec, data); const writes = [];
+    if (split.length) {
+      data = produce(db, spec, 'state', { ...inputs, split }, { source: ctx.source });
+      for (const c of split) writes.push({ op: 'set', collection: 'state', id: 'facts-' + c, data: produce(db, spec, 'state', { ...inputs, part: c }, { source: ctx.source }) });
+    }
+    writes.unshift({ op: 'set', collection: 'state', id: 'current', data });
+    return { writes, say: [`Snapshot: ${data.snapshot.weakspots.active} active weak spots, ${data.snapshot.due.count} due.${split.length ? ` Fact hashes split into ${split.length} state/facts-* documents (state/current reached its budget).` : ''}`] };
   },
   /** days/<date>: the plan and the list. */
   day(db, ctx, spec) {

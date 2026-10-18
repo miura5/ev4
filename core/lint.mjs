@@ -8,7 +8,7 @@
 // plus the content checks E.V. core has always run (items, orphans, duplicates, identifiers). The journal is never
 // read: it stays the page's (D-059).
 import EV from './evcore.mjs';
-import { classOf, writersOf, factCheck, rebuild, appendEntries, appendDepth, keyWriter } from './derive.mjs';
+import { classOf, writersOf, factCheck, knownFacts, rebuild, appendEntries, appendDepth, keyWriter } from './derive.mjs';
 import { describeErrors } from './validate.mjs';
 
 const bytes = d => Buffer.byteLength(JSON.stringify(EV.docData(d)), 'utf8');
@@ -23,7 +23,7 @@ export function lintRecord(db, spec, validate, { date, commit = null } = {}) {
   const rec = Object.fromEntries(Object.entries(db || {}).filter(([c]) => c !== 'journal'));
   const cap = spec.capacity || {};
   const state = ((rec.state || []).find(d => d.id === 'current')) || null;
-  const known = (state && state.factHashes) || {}; const knownFields = (state && state.factFields) || {};
+  const kf = knownFacts(rec.state); const known = kf.hashes; const knownFields = kf.fields;
 
   for (const [col, docs] of Object.entries(rec)) {
     const c = spec.collections[col];

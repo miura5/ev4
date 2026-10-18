@@ -17,7 +17,6 @@ const EVCore = (() => {
 
   // ---------------------------------------------------------------- constants
   const DEFAULTS = {
-    capacity: { cap: 25000, warnPct: 50, alarmPct: 80 },
     review: {
       solidAfterRightDays: 2, intervalDays: 3, intervalNearExamDays: 1, nearExamWithinDays: 5,
       load: { class: 10, off: 10, validation: 10, clinical: 3, clinicalBeforeExam: 5, examDay: 0 },
@@ -876,11 +875,27 @@ const EVCore = (() => {
       today: today ? { dayType: today.dayType || null, push: today.push || null, reviewSet: reviewSet ? reviewSet.id : null, reviewItems: reviewSet ? (reviewSet.items || []).length : 0, answered } : { dayType: dayType({ date, dates, exams }), reviewSet: reviewSet ? reviewSet.id : null, answered },
       reading: Object.entries(unreadChapters(plans, date)).slice(0, 12).map(([ch, v]) => ({ chapter: ch, date: v.date })),
       canvas: canvas || null,
-      health: { runs, capacity: docs != null ? capacity(docs) : null, counts },
+      health: { runs, capacity: counts ? capacity(counts, ctx.bytes || {}, ctx.budgets || {}) : null, counts },
       lint: lintResult ? { errors: lintResult.filter(i => i.severity === 'error').length, warnings: lintResult.filter(i => i.severity === 'warning').length, top: lintResult.slice(0, 8) } : null,
     };
   }
-  function capacity(docs) { const cap = C.capacity.cap; const pct = Math.round(1000 * docs / cap) / 10; return { docs, cap, pct, level: pct >= C.capacity.alarmPct ? 'alarm' : pct >= C.capacity.warnPct ? 'warn' : 'ok' }; }
+  /**
+   * The record against its budgets (D-093: spec.capacity.collections; v3's 25,000-document cap is gone). counts and
+   * bytes per collection in, {docs, level, budgets: [{collection, docs, bytes, warnDocs, failDocs, warnBytes, failBytes,
+   * level, relief}]} out, one row per collection that has a budget, worst level first.
+   */
+  function capacity(counts = {}, bytes = {}, budgets = {}) {
+    const rank = { fail: 0, warn: 1, ok: 2 }; const rows = [];
+    for (const [c, b] of Object.entries(budgets || {})) {
+      if (!b || [b.warnDocs, b.failDocs, b.warnBytes, b.failBytes].every(x => x == null)) continue;
+      const n = counts[c] || 0, by = bytes[c] != null ? bytes[c] : null;
+      const over = (v, lim) => v != null && lim != null && v >= lim;
+      const level = over(n, b.failDocs) || over(by, b.failBytes) ? 'fail' : over(n, b.warnDocs) || over(by, b.warnBytes) ? 'warn' : 'ok';
+      rows.push({ collection: c, docs: n, bytes: by, warnDocs: b.warnDocs, failDocs: b.failDocs, warnBytes: b.warnBytes, failBytes: b.failBytes, level, relief: b.relief || null });
+    }
+    rows.sort((a, z) => rank[a.level] - rank[z.level] || (a.collection < z.collection ? -1 : 1));
+    return { docs: Object.values(counts || {}).reduce((s, x) => s + x, 0), level: rows.length ? rows[0].level : 'ok', budgets: rows };
+  }
 
   /** context.json for Study Watch (unchanged v2 shape). */
   function buildContext({ date, now, exams, objectives, weakspots }) {
@@ -1001,7 +1016,6 @@ const EVCore = (() => {
       ...(db.weakspots || []).map(w => ['weakspots/' + w.id, w.topic || '']),
     ];
     for (const [ref, t] of texts) for (const why of scanIdentifiers(t)) add('error', 'possible-identifier', ref, why + ' (B-04): check and remove');
-    if (db.counts) { const c = capacity(Object.values(db.counts).reduce((s, n) => s + n, 0)); if (c.level !== 'ok') add(c.level === 'alarm' ? 'error' : 'warning', 'capacity', 'record', `${c.docs} of ${c.cap} documents (${c.pct}%)`); }
     if (date) for (const e of db.exams || []) if (e.date && e.date < date && e.status !== 'done' && C.nurUnitExamKinds.includes(e.kind)) add('info', 'exam-passed', 'exams/' + e.id, 'exam date passed; record the score to calibrate');
     const rank = { error: 0, warning: 1, info: 2 };
     return issues.sort((a, b) => rank[a.severity] - rank[b.severity]);
