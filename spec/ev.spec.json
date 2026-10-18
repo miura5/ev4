@@ -2088,6 +2088,13 @@
      "date": "2026-10-18",
      "run": "cse_016yPwhbhteeNtak5VT9ZHMh",
      "evidence": "runs/diagnostic-20261018-174229507, debug/diagnostic-20261018-174229507 (B-29, probe cloud-reads)"
+    },
+    {
+     "capability": "Artifact publish of a new private page (no url) from a scheduled cloud run: accepted on the first call, the result returns the new page link and its version; the page stays private (sharing is the owner Share menu), and the run gets no live subscription to it",
+     "proven": true,
+     "date": "2026-10-18",
+     "run": "cse_014j5wumiXcSyTExE3GUe12x",
+     "evidence": "runs/diagnostic-20261018-215636262, debug/diagnostic-20261018-215636262 (B-54, probe page-publish; the made-up page https://claude.ai/artifact/JMv8r31QoeGY2sBstzf37M)"
     }
    ],
    "limits": [
