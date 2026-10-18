@@ -256,6 +256,7 @@ test('B-40: the evening push carries the day: review left, weak spots solid or r
   const db = recordDb();
   db.journal = [{ id: 'j-planted', schema: 1, writer: 'page', at: '2026-10-16T20:00:00Z', source: 'E.V. Home', text: 'PLANTED-JOURNAL-LINE', kind: 'free' }];
   const ctx = { date: '2026-10-16', now: '2026-10-17T01:15:00.000Z', source: 'evening-cloud evening-cloud-test', writer: 'evening-cloud' };
+  db.health = db.health.map(h => h.id === 'current' ? { ...h, at: '2026-10-17T00:55:00.000Z' } : h); // a fresh check (B-55 covers a stale one)
   // The state step's snapshot first, as the pipeline runs it; then last night's evening-mac note.
   for (const w of CODE_STEPS.state(db, ctx, spec).writes) db.state = [...(db.state || []).filter(d => d.id !== w.id), { ...w.data, id: w.id }];
   db.runs.push({ id: 'evening-mac-20261016-012000000', schema: 1, writer: 'evening-mac', at: '2026-10-16T01:20:00Z', source: 't', pipeline: 'evening-mac', release: 'v4.0.0', startedAt: '2026-10-16T01:20:00Z', endedAt: '2026-10-16T01:24:00Z', status: 'ok', push: 'Canvas: BIO 201 Lab Practical moved to Thursday 10/22, check with your instructor' });
@@ -286,4 +287,26 @@ test('B-40: a failed run ends with a push naming the failed step', () => {
   const [call] = RUN.end({ dir, at: '2026-10-17T01:16:00Z', status: 'failed', detail: 'pull: "the tool timed out"', transcript: null });
   const doc = JSON.parse(fs.readFileSync(call.args.file_path, 'utf8'));
   assert.equal(doc.push, 'E.V. evening-cloud failed at pull');
+});
+
+
+test('B-55 (D-111): a 5-hour-old health/current is named first by the evening and the morning push lines; a fresh one is not', () => {
+  const db = recordDb();
+  const ctx = { date: '2026-10-16', now: '2026-10-17T01:15:00.000Z', source: 'evening-cloud evening-cloud-test', writer: 'evening-cloud' };
+  const at = h => { db.health = db.health.map(d => d.id === 'current' ? { ...d, at: h } : d); };
+  at('2026-10-16T20:15:00.000Z'); // 5 hours before ctx.now
+  for (const w of CODE_STEPS.state(db, ctx, spec).writes) db.state = [...(db.state || []).filter(d => d.id !== w.id), { ...w.data, id: w.id }];
+  const evening = CODE_STEPS.push(db, ctx, spec).push;
+  assert.match(evening, /^Health check 5 h old · /, evening); assert.ok(evening.length <= spec.constants.push.maxChars, evening);
+  const mctx = { date: '2026-10-17', now: '2026-10-17T01:15:00.000Z', source: 'morning morning-test', writer: 'morning' };
+  const morning = CODE_STEPS.day(db, mctx, spec);
+  assert.match(morning.push, /^Health check 5 h old · /, morning.push); assert.ok(morning.push.length <= spec.constants.push.maxChars, morning.push);
+  assert.ok(!/Health check/.test(morning.writes[0].data.push), 'the days document keeps its own push');
+  // Fresh (under spec.constants.health.staleHours): nothing added. None at all: said so.
+  at('2026-10-16T23:55:00.000Z');
+  assert.ok(!/Health check/.test(CODE_STEPS.push(db, ctx, spec).push)); assert.ok(!/Health check/.test(CODE_STEPS.day(db, mctx, spec).push));
+  db.health = db.health.filter(d => d.id !== 'current');
+  assert.match(CODE_STEPS.push(db, ctx, spec).push, /^No health check yet · /);
+  // The morning pulls health/current for this, and no Derived document it writes reads it.
+  assert.deepEqual(spec.pipelines.morning.reads.find(r => r.collection === 'health'), { collection: 'health', derived: false, why: spec.pipelines.morning.reads.find(r => r.collection === 'health').why });
 });

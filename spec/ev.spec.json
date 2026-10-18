@@ -72,6 +72,11 @@
     },
     {
      "collection": "predictions"
+    },
+    {
+     "collection": "health",
+     "derived": false,
+     "why": "D-111: the push line names a stale health check; no Derived document reads it"
     }
    ],
    "steps": [
@@ -953,6 +958,10 @@
   "push": {
    "_note": "B-40: the push lines E.V. has written since v3 fit 120 characters, what the notification shows on his phone without opening it",
    "maxChars": 120
+  },
+  "health": {
+   "_note": "D-111: a health/current older than this is named first in the morning and evening push lines and marked stale on the System tab (the watchdog writes it every 3 hours)",
+   "staleHours": 4
   }
  },
  "registry": {

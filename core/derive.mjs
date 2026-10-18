@@ -290,7 +290,8 @@ export function rebuildOne(db, spec, collection, stored) {
   const run = runId ? (db.runs || []).find(r => r.id === runId) : null;
   const { db: then, inexact: changed } = asOf(db, stored.at, spec, { since: run ? run.startedAt : null, self: runId });
   // Only what the producing pipeline reads can explain a difference.
-  const reads = run && spec.pipelines[run.pipeline] ? (spec.pipelines[run.pipeline].reads || []).map(r => r.collection || r) : null;
+  // A read marked derived: false (the morning's health/current, for its push line: D-111) feeds no Derived document.
+  const reads = run && spec.pipelines[run.pipeline] ? (spec.pipelines[run.pipeline].reads || []).filter(r => r.derived !== false).map(r => r.collection || r) : null;
   const inexact = changed.filter(r => r !== `${collection}/${stored.id}` && (!reads || reads.includes(r.split('/')[0])));
   const body = p.build(then, inputs, spec, stored);
   const data = { schema: 1, writer: p.writer, at: stored.at, source: stored.source || p.writer, ...body };

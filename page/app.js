@@ -600,6 +600,9 @@
   function healthLines() { // [{text, v}] in plain words, the worst first; [] when there is nothing to say
     const hl = S.health; const out = [];
     if (!hl) return [{ text: 'No health check yet. The watchdog writes one every three hours.', v: 'info' }];
+    // D-111: a health check older than spec.constants.health.staleHours means the watchdog itself may have stopped.
+    const staleH = ((EV_SPEC.constants || {}).health || {}).staleHours || 4; const ageH = (Date.now() - E.toMs(hl.at)) / 3600e3;
+    if (ageH > staleH) out.push({ text: `This health check is ${Math.floor(ageH)} hours old. The watchdog checks every three hours, so it may have stopped. A build chat should look.`, v: 'bad', chip: 'stale' });
     for (const m of hl.missing || []) out.push({ text: `${PIPE_NAME[m.pipeline] || m.pipeline} missed its ${m.slot ? clock12(m.slot) + ' ' : ''}run${m.refired ? '; E.V. started it again' : ''}.`, v: 'warn' });
     for (const r of hl.stalledRuns || []) out.push({ text: `${PIPE_NAME[r.pipeline] || r.pipeline} started ${ago(r.startedAt)} and never finished${r.refired ? '; E.V. started it again' : ''}.`, v: 'warn' });
     for (const j of hl.stalledJobs || []) out.push({ text: `A background job waited ${j.minutes || '?'} min without starting${j.refired ? '; E.V. sent it again' : ''}.`, v: 'warn' });
@@ -614,7 +617,7 @@
     const lines = healthLines(); const bad = lines.filter(l => l.v !== 'info');
     const kids = [head2('Health', hl ? 'checked ' + ago(hl.at) : ''), el('p', 'big', bad.length ? (bad.length === 1 ? 'One thing to look at.' : bad.length + ' things to look at.') : hl ? 'Everything ran on schedule.' : 'Waiting for the first health check.')];
     kids[1].style.cssText = 'font-size:1.15rem;margin:0';
-    if (lines.length) { const ul = el('ul', 'list'); lines.forEach(l => ul.append(row({ title: l.text, chips: [[l.v === 'bad' ? 'needs a look' : l.v === 'warn' ? 'handled' : 'note', l.v]] }))); kids.push(ul); }
+    if (lines.length) { const ul = el('ul', 'list'); lines.forEach(l => ul.append(row({ title: l.text, chips: [[l.chip || (l.v === 'bad' ? 'needs a look' : l.v === 'warn' ? 'handled' : 'note'), l.v]] }))); kids.push(ul); }
     // The weak spot state E.V. computes now, against the hash the evening run stored with its snapshot.
     if (M && hl && hl.derivedHash && hl.derivedHash.evening) {
       const now = E.derivedHash(M.models); const same = now === hl.derivedHash.evening;

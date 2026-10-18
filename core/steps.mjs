@@ -37,12 +37,14 @@ const passages = (idx, q, n = 2) => EV.searchLibrary(idx, q, { k: n }).map(h => 
 export function eveningPush(db, ctx, spec) {
   const max = ((spec.constants || {}).push || {}).maxChars || 120;
   const date = ctx.date, tomorrow = EV.addDays(date, 1);
+  const stale = healthStale(db, ctx.now, spec);
   const st = (db.state || []).find(d => d.id === 'current');
   const today = st && st.snapshot && st.snapshot.date === date ? st.snapshot.today : null;
   const set = (db.sets || []).find(s => s.id === 'review-' + date);
   const items = today && today.reviewItems != null ? today.reviewItems : set ? (set.items || []).length : 0;
   const answered = today && today.answered != null ? today.answered : set ? EV.answeredItems(set, db.answers || []).length : 0;
   const parts = [];
+  if (stale) parts.push({ text: stale }); // D-111: first, so fitting the line never drops it
   if (items) parts.push({ text: answered >= items ? `Review done (${items})` : answered ? `Review ${answered}/${items}, ${items - answered} left` : `Review: ${items} left` });
   const ms = models(db); const on = x => x && EV.chicagoDate(x) === date;
   const solid = ms.filter(w => (w.kind || 'concept') === 'concept' && EV.isSolid(w) && on(w.derived.solidAt)).length;
@@ -64,6 +66,25 @@ export function eveningPush(db, ctx, spec) {
     ps = ps.slice(0, -1);
   }
   return line(ps) || 'Evening snapshot saved';
+}
+
+/**
+ * D-111 (trace or caught): the words a push line leads with when health/current is older than
+ * spec.constants.health.staleHours (the watchdog that writes it may have stopped), or null when it is fresh.
+ */
+export function healthStale(db, now, spec) {
+  const hours = ((spec.constants || {}).health || {}).staleHours || 4;
+  const h = (db.health || []).find(d => d.id === 'current');
+  if (!h) return 'No health check yet';
+  const age = (EV.toMs(now) - EV.toMs(h.at)) / 3600e3;
+  return age > hours ? `Health check ${Math.floor(age)} h old` : null;
+}
+/** A push line led by the stale-health words when there are any, cut to spec.constants.push.maxChars. */
+export function withStale(line, db, ctx, spec) {
+  const stale = healthStale(db, ctx.now, spec); if (!stale) return line;
+  const max = ((spec.constants || {}).push || {}).maxChars || 120;
+  const out = line ? `${stale} · ${line}` : stale;
+  return out.length <= max ? out : out.slice(0, max - 1).replace(/\s+\S*$/, '') + '…';
 }
 
 export const CODE_STEPS = {
@@ -103,7 +124,8 @@ export const CODE_STEPS = {
   /** days/<date>: the plan and the list. */
   day(db, ctx, spec) {
     const data = produce(db, spec, 'days', { date: ctx.date, now: ctx.now }, { source: ctx.source });
-    return { writes: [{ op: 'set', collection: 'days', id: ctx.date, data }], push: data.push, say: [`Day list: ${data.list.items.length} items.`] };
+    // The run's push leads with a stale health check (D-111); the days document keeps its own push as built.
+    return { writes: [{ op: 'set', collection: 'days', id: ctx.date, data }], push: withStale(data.push, db, ctx, spec), say: [`Day list: ${data.list.items.length} items.`] };
   },
 };
 

@@ -462,6 +462,20 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     ok('pipelines read with when they run', /Morning · daily 4:25am/.test(await page.textContent('#pipes')) && /Watchdog · every 3 hours at :55/.test(await page.textContent('#pipes')) && /Restore drill · monthly on the 1st, 8:55pm/.test(await page.textContent('#pipes')), (await page.textContent('#pipes')).slice(0, 300));
     ok('versions name the release and the record', /Release v4\.0\.0 · core v4\.0\.0 · spec 4\.0\.0 · staging record/.test(await page.textContent('#versions')));
     await page.screenshot({ path: `${shots}/system.png`, fullPage: true });
+    { // B-55 (D-111): a health check 5 hours old is marked stale, the watchdog itself may have stopped
+      const keep = await page.evaluate(() => window.__db.health.current.at);
+      const setAt = t => page.evaluate(async t => { const db = await window.claude.use('db'); await db.collection('health').doc('current').set({ ...window.__db.health.current, at: t }); }, t);
+      await setAt(await page.evaluate(() => new Date(Date.now() - 5 * 3600e3 - 60e3).toISOString())); await page.waitForTimeout(300); // the page's own (fake) clock
+      const card = page.locator('#health');
+      for (const [w, h] of [[390, 844], [1280, 860]]) {
+        await page.setViewportSize({ width: w, height: h }); await card.scrollIntoViewIfNeeded(); await page.waitForTimeout(300);
+        const t = await card.textContent();
+        ok(`[${w}] a 5-hour-old health check is marked stale`, /This health check is 5 hours old\. The watchdog checks every three hours, so it may have stopped\./.test(t) && (await card.locator('.chip', { hasText: 'stale' }).count()) === 1 && /4 things to look at\./.test(t), t.slice(0, 200));
+        await card.screenshot({ path: `${shots}/health-stale-${w}.png` });
+      }
+      await setAt(keep); await page.waitForTimeout(200);
+      ok('a fresh health check has no stale mark', !/stale/.test(await card.textContent()));
+      await page.setViewportSize({ width: 390, height: 844 }); }
     ok('no page errors after interactions', errors.length === 0, errors.join(' | '));
     // Visitor
     const v = await browser.newPage({ viewport: { width: 390, height: 700 } });
