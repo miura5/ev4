@@ -469,13 +469,10 @@
        "name": "document",
        "rule": "one set per call, ascending; stop at the first refusal",
        "documentKiB": [
+        255,
         256,
-        512,
-        768,
-        1000,
-        1536,
-        2048,
-        4096
+        257,
+        512
        ]
       },
       {
@@ -490,15 +487,23 @@
       },
       {
        "name": "batch-bytes",
-       "rule": "batches of two large writes, ascending; stop at the first refusal",
+       "rule": "batches of documents just under the document limit, ascending total; stop at the first refusal",
        "batches": [
         {
-         "writes": 2,
-         "kib": 480
+         "writes": 3,
+         "kib": 250
         },
         {
-         "writes": 2,
-         "kib": 600
+         "writes": 4,
+         "kib": 250
+        },
+        {
+         "writes": 5,
+         "kib": 250
+        },
+        {
+         "writes": 8,
+         "kib": 250
         }
        ]
       }

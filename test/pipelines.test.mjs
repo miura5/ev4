@@ -225,17 +225,17 @@ test('diagnostic: a named probe prints its exact calls, the audit holds the agen
   const w = RUN.compute({ spec, dir, validate, at });
   assert.equal(w.status, 'waiting');
   const groups = w.question.material.groups;
-  assert.deepEqual(groups.map(g => [g.name, g.calls.length]), [['document', 7], ['batch-writes', 1], ['batch-bytes', 2]]);
+  assert.deepEqual(groups.map(g => [g.name, g.calls.length]), [['document', 4], ['batch-writes', 1], ['batch-bytes', 4]]);
   const first = groups[0].calls[0].args;
-  assert.deepEqual([first.action, first.collection, first.doc_id], ['set', 'debug', 'diagnostic-20261018-064000000-doc-0256k']);
+  assert.deepEqual([first.action, first.collection, first.doc_id], ['set', 'debug', 'diagnostic-20261018-064000000-doc-0255k']);
   const doc = JSON.parse(fs.readFileSync(first.file_path, 'utf8'));
-  assert.ok(Math.abs(Buffer.byteLength(JSON.stringify(doc)) - 256 * 1024) <= 2, 'the probe document is the size it says');
+  assert.ok(Math.abs(Buffer.byteLength(JSON.stringify(doc)) - 255 * 1024) <= 2, 'the probe document is the size it says');
   assert.ok(validate('debug', doc).ok, 'a probe document fits debug.schema.json');
   assert.equal(groups[1].calls[0].args.writes.length, 50);
-  assert.equal(new Set(groups.flatMap(g => g.calls.flatMap(c => c.args.writes ? c.args.writes.map(x => x.doc_id) : [c.args.doc_id]))).size, 61, 'no document is written twice');
+  assert.equal(new Set(groups.flatMap(g => g.calls.flatMap(c => c.args.writes ? c.args.writes.map(x => x.doc_id) : [c.args.doc_id]))).size, 4 + 50 + 20, 'no document is written twice');
   RUN.compute({ spec, dir, validate, at });
   const run = JSON.parse(fs.readFileSync(path.join(dir, 'run.json'), 'utf8'));
-  assert.equal(run.calls.filter(c => c.move === 'agent:probe').length, 10, 'registered once, however often compute runs');
+  assert.equal(run.calls.filter(c => c.move === 'agent:probe').length, 9, 'registered once, however often compute runs');
   // The transcript: the gate read, the start, two document sets (the second refused), then an unlisted write.
   const tool = (id, name, input) => JSON.stringify({ type: 'assistant', message: { content: [{ type: 'tool_use', id, name, input }] } }) + '\n' + JSON.stringify({ type: 'user', message: { content: [{ type: 'tool_result', tool_use_id: id, content: 'ok' }] } });
   const g0 = groups[0].calls;
