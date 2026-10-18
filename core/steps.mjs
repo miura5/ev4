@@ -367,6 +367,12 @@ export function probeGroups(named, ctx) {
     for (const k of g.documentKiB || []) { const label = 'doc-' + kib(k) + 'k'; calls.push({ tool: 'ArtifactData', args: { action: 'set', url: ctx.url, collection: 'debug', doc_id: ctx.runId + '-' + label, file_path: file(label, k * 1024) } }); }
     // A read call a probe names whole (B-29's cloud-reads); "<record>" is this run's record URL.
     for (const c of g.calls || []) calls.push({ tool: c.tool, args: JSON.parse(JSON.stringify(c.args).split('"<record>"').join(JSON.stringify(ctx.url))) });
+    // A new private page a probe publishes (B-54's page-publish): made up, no study data; the run writes the file it names.
+    for (const pg of g.pages || []) {
+      const f = path.join(dir, pg.label + '.html'); fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(f, `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${pg.title}</title><style>:root{color-scheme:light dark;--bg:#fff;--ink:#111}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b0f17;--ink:#e6eef2}}:root[data-theme="dark"]{--bg:#0b0f17;--ink:#e6eef2}body{margin:0;padding:24px 16px;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,sans-serif}</style></head><body><h1>${pg.title}</h1><p>A made-up page an E.V. diagnostic run (${ctx.runId}) published to learn whether a cloud run can publish a page. It holds no study data.</p></body></html>`);
+      calls.push({ tool: 'Artifact', args: { action: 'publish', file_path: f, title: pg.title, icon: pg.icon || 'page', description: 'A made-up page from an E.V. diagnostic run; no study data.' } });
+    }
     for (const b of g.batches || []) {
       const writes = [];
       for (let i = 1; i <= b.writes; i++) { const label = `batch-${b.writes}x${kib(b.kib)}k-${String(i).padStart(2, '0')}`; writes.push({ op: 'set', collection: 'debug', doc_id: ctx.runId + '-' + label, file_path: file(label, b.kib * 1024) }); }

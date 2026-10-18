@@ -33,6 +33,8 @@ test('every pipeline with steps has a prompt for live and staging; the rest wait
   const diag = renderPrompt({ key: 'staging.diagnostic', task: spec.tasks.diagnostic, spec, release });
   assert.match(diag, /end this turn with exactly: Waiting for the probe\. When it arrives, add --probe/);
   assert.doesNotMatch(diag, /journal|add_repo|git clone/i);
+  assert.match(diag, /, except the one made-up page a page-publish probe prints\./); // B-54
+  assert.doesNotMatch(p['staging.worker'] + p['staging.morning'], /page-publish probe/);
   for (const n of Object.keys(spec.tasks.staging).filter(n => !ready.includes(n))) assert.equal(p[`staging.${n}`], null, n);
   assert.match(p['staging.worker'], /end this turn with exactly: Waiting for the job id\. When it arrives, add --job <id> to the start command/);
   assert.match(p['staging.worker'], /except the one Claude Doc a study-guide job asks for/);

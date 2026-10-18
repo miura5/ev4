@@ -861,6 +861,22 @@
        ]
       }
      ]
+    },
+    "page-publish": {
+     "measures": "whether a cloud run can publish a new private Artifact page and get its link back: the call a share-set job needs (B-54, D-110). The page is made up and holds no study data",
+     "groups": [
+      {
+       "name": "publish",
+       "rule": "one publish of the made-up page the run wrote; note whether it was accepted, the link it returned, or the refusal in its words",
+       "pages": [
+        {
+         "label": "probe-page",
+         "title": "E.V. probe page",
+         "icon": "page"
+        }
+       ]
+      }
+     ]
     }
    },
    "reads": [],

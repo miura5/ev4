@@ -387,3 +387,21 @@ test('B-29: the cloud-reads probe prints a read of its own record\'s page and on
   assert.deepEqual(RUN.audit({ dir, transcript }).missing.filter(k => /list_triggers/.test(k)), []);
   assert.equal(RUN.audit({ dir, transcript: transcript + '\n' + tool('e', 'mcp__claude-code-remote__list_triggers', { limit: 5 }) }).ok, false);
 });
+
+test('B-54 (D-110): the page-publish probe writes a made-up page and prints one publish of it; nothing else is allowed', () => {
+  const at = '2026-10-18T22:00:00Z';
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-diag-'));
+  RUN.start({ spec, pipeline: 'diagnostic', record: 'staging', at, dir, release: 'v4.0.0', input: { probe: 'page-publish' } });
+  const w = RUN.compute({ spec, dir, validate, at });
+  const groups = w.question.material.groups;
+  assert.deepEqual(groups.map(g => [g.name, g.calls.map(c => [c.tool, c.args.action])]), [['publish', [['Artifact', 'publish']]]]);
+  const pub = groups[0].calls[0].args;
+  assert.ok(!pub.url, 'a new page, never the record’s own');
+  const html = fs.readFileSync(pub.file_path, 'utf8');
+  assert.match(html, /<title>E\.V\. probe page<\/title>/); assert.match(html, /holds no study data/);
+  assert.doesNotMatch(html, /weak spot|answers|exam/i);
+  const tool = (id, name, input) => JSON.stringify({ type: 'assistant', message: { content: [{ type: 'tool_use', id, name, input }] } }) + '\n' + JSON.stringify({ type: 'user', message: { content: [{ type: 'tool_result', tool_use_id: id, content: 'ok' }] } });
+  const transcript = tool('a', 'Artifact', pub);
+  assert.equal(RUN.audit({ dir, transcript }).ok, true);
+  assert.equal(RUN.audit({ dir, transcript: transcript + '\n' + tool('b', 'Artifact', { ...pub, file_path: '/tmp/other.html' }) }).ok, false);
+});
