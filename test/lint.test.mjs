@@ -137,6 +137,18 @@ test('a run ended after the as-of time reads as still running then', () => {
   assert.equal(asOf(db, '2026-10-18T06:03:00Z', spec).db.runs[0].status, 'ok');
 });
 
+test('what changed while the producing run ran, or a Derived input rewritten since, makes a rebuild inexact', () => {
+  const ledger = (id, startedAt, endedAt) => ({ id, schema: 1, writer: id.split('-20')[0], at: startedAt, source: 's', release: 'v4.0.0', pipeline: id.split('-20')[0], startedAt, endedAt, status: 'ok', steps: [] });
+  const db = {
+    runs: [ledger('watchdog-20261018-060000000', '2026-10-18T06:00:00Z', '2026-10-18T06:01:30Z'), ledger('weekly-20261018-055000000', '2026-10-18T05:50:00Z', '2026-10-18T05:52:00Z')],
+    health: [{ id: 'current', schema: 1, writer: 'watchdog', at: '2026-10-18T06:05:00Z', source: 'watchdog x' }],
+  };
+  const during = asOf(db, '2026-10-18T06:02:00Z', spec, { since: '2026-10-18T06:01:00Z' }).inexact;
+  assert.deepEqual(during, ['runs/watchdog-20261018-060000000', 'health/current'], 'ended mid-run; rewritten since');
+  assert.deepEqual(asOf(db, '2026-10-18T06:02:00Z', spec).inexact, ['health/current'], 'with no run window, only the rewrite');
+  assert.deepEqual(asOf(db, '2026-10-18T06:02:00Z', spec, { since: '2026-10-18T06:01:00Z', self: 'watchdog-20261018-060000000' }).inexact, ['health/current'], 'its own ledger entry never counts');
+});
+
 test('a Derived document built by an earlier build is stale, a warning; by this build, an error', () => {
   const db = load();
   const day = doc(db, 'days', '2026-10-16'); day.push = 'Something this build would not say';

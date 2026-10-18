@@ -52,8 +52,10 @@ function cutMap(value, at, depth) {
  * is replaced whole, so one changed since `at` cannot be wound back; it is used as it is now and named in `inexact`.
  * Config documents (system/*) are always current. The journal is left out: no pipeline reads it (D-059).
  */
-export function asOf(db, at, spec) {
-  const t = ms(at); const out = {}; const inexact = [];
+export function asOf(db, at, spec, { since = null, self = null } = {}) {
+  const t = ms(at); const s = since == null ? null : ms(since); const out = {}; const inexact = [];
+  // What changed while the producing run ran (after its start, by its write): its pull may have seen the version before.
+  const during = (col, d) => s != null && !(col === 'runs' && d.id === self) && [d.at, d.endedAt, d.updatedAt].some(x => Number.isFinite(ms(x)) && ms(x) > s && ms(x) <= t);
   for (const [col, docs] of Object.entries(db || {})) {
     const c = spec.collections[col]; if (!c || col === 'journal') continue; // no producer reads the journal (D-059)
     const appends = Object.keys(c.appends || {});
@@ -62,7 +64,9 @@ export function asOf(db, at, spec) {
       if (!d) continue;
       const cls = classOf(spec, col, d.id);
       if (cls === 'Config') { out[col].push(d); continue; }
-      if (Number.isFinite(ms(d.at)) && ms(d.at) > t) continue;
+      // A Derived document rewritten since: the version this time saw is gone.
+      if (Number.isFinite(ms(d.at)) && ms(d.at) > t) { if (cls === 'Derived') inexact.push(`${col}/${d.id}`); continue; }
+      if (during(col, d)) inexact.push(`${col}/${d.id}`);
       if (cls === 'Edit') { if (ms(d.updatedAt || d.at) > t) inexact.push(`${col}/${d.id}`); out[col].push(d); continue; }
       // A run's ledger entry is written at its start and completed at its end: before its end it was still running.
       if (col === 'runs' && d.endedAt && ms(d.endedAt) > t) { const { steps, planHash, push, ...open } = d; out[col].push({ ...open, status: 'running', endedAt: null }); continue; }
@@ -202,7 +206,12 @@ export function rebuildOne(db, spec, collection, stored) {
   const p = PRODUCERS[collection]; if (!p) return { ref, status: 'skipped', reason: 'not a Derived collection' };
   if (/^migrated from v3/.test(stored.source || '')) return { ref, status: 'skipped', reason: 'migrated from v3; the next run rebuilds it' };
   const inputs = p.inputs(stored);
-  const { db: then, inexact } = asOf(db, stored.at, spec);
+  const runId = String(stored.source || '').split(' ')[1] || null;
+  const run = runId ? (db.runs || []).find(r => r.id === runId) : null;
+  const { db: then, inexact: changed } = asOf(db, stored.at, spec, { since: run ? run.startedAt : null, self: runId });
+  // Only what the producing pipeline reads can explain a difference.
+  const reads = run && spec.pipelines[run.pipeline] ? (spec.pipelines[run.pipeline].reads || []).map(r => r.collection || r) : null;
+  const inexact = changed.filter(r => r !== `${collection}/${stored.id}` && (!reads || reads.includes(r.split('/')[0])));
   const body = p.build(then, inputs, spec, stored);
   const data = { schema: 1, writer: p.writer, at: stored.at, source: stored.source || p.writer, ...body };
   const same = EV.stableStringify(comparable(data)) === EV.stableStringify(comparable(stored));
