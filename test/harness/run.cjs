@@ -120,7 +120,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     ok('chat offers the page tools on the quick tier', call.tier === 'quick' && call.tools.includes('start_job') && call.tools.includes('show_card'), call.tier + ' ' + call.tools.join(','));
     const jobs = await page.evaluate(() => Object.entries(window.__db.jobs).filter(([, j]) => j.title === 'Study guide: fluid balance').map(([id, j]) => ({ id, ...j })));
     ok('job doc created with its envelope and fired', jobs.length === 1 && jobs[0].writer === 'page' && jobs[0].at && jobs[0].fired && jobs[0].fired.ok === true, JSON.stringify(jobs[0] && jobs[0].fired));
-    const mc = await page.evaluate(() => window.__mcpCalls[0]);
+    const mc = await page.evaluate(() => window.__mcpCalls.find(c => c[1] === 'fire_trigger'));
     ok('fire_trigger called on the live worker with the job id', mc && mc[0] === 'Claude Code Remote' && mc[1] === 'fire_trigger' && mc[2].trigger_id === stagingWorker && mc[2].text === 'Job ' + (jobs[0] || {}).id, JSON.stringify(mc));
     m = await msgs(page); const last = m[m.length - 1];
     ok('reply saved with its job card', last.role === 'ev' && last.text === 'On it. Study guide queued.' && last.cards.some(c => c.type === 'job') && last.jobId === (jobs[0] || {}).id && last.replyTo === m[m.length - 2].id, JSON.stringify(last).slice(0, 200));
@@ -355,6 +355,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     const firstUnchecked = page.locator('#plan-card .plan-day').first().locator('input.tick:not(:checked)').first();
     await firstUnchecked.check(); await page.waitForTimeout(150);
     const after = await page.evaluate(() => Object.keys(((window.__db.planedits || {}).E4 || {}).ticks || {}).length);
+    if (after !== before + 1) console.log('DEBUG plan ticks', JSON.stringify(await page.evaluate(() => (window.__db.planedits || {}).E4)), JSON.stringify(await page.evaluate(() => window.__writes.filter(w => w[1] === 'planedits'))));
     ok('plan tick saved to planedits/E4, the plan untouched', after === before + 1 && !(await page.evaluate(() => window.__db.plans.E4.done)), before + ' -> ' + after);
     await page.screenshot({ path: `${shots}/plan.png`, fullPage: true });
     // Progress
@@ -397,12 +398,63 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     await openPage(st, 'staging'); await st.waitForTimeout(900);
     await st.evaluate(() => { window.__chatScript = [{ tool: 'start_job', input: { kind: 'general', title: 'Staging check', brief: 'harness' } }]; window.__chatReply = 'Queued.'; });
     await send(st, 'Run a staging job'); await st.waitForTimeout(300);
-    const smc = await st.evaluate(() => window.__mcpCalls[0]);
+    const smc = await st.evaluate(() => window.__mcpCalls.find(c => c[1] === 'fire_trigger'));
     ok('staging fires only the staging worker', smc && smc[2].trigger_id === stagingWorker, JSON.stringify(smc));
     await send(st, 'File it'); await st.waitForTimeout(200);
-    ok('file it answers without firing a Mac task', /evening run/.test((await msgs(st)).slice(-1)[0].text) && (await st.evaluate(() => window.__mcpCalls.length)) === 1);
+    ok('file it files through the reader on the page, never a Mac task', /Nothing new to file/.test((await msgs(st)).slice(-1)[0].text) && (await st.evaluate(() => window.__mcpCalls.filter(c => c[1] === 'fire_trigger').length)) === 1);
     ok('staging readout says staging', /staging/i.test(await st.textContent('#readout')));
     await st.close();
+
+    // ---- B-18: session filing from the page, skills practice, the readiness audit, grounded explanations
+    {
+      const fp = await browser.newPage({ viewport: { width: 390, height: 844 } }); const fErr = []; fp.on('pageerror', e => fErr.push(e.message));
+      await fp.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
+      // The reader lists three sessions: one new, one v3 already filed (under its bare id), one tagged #graded.
+      const fresh = { found: true, id: '2026-10-18-1300-Harness-Fluids', date: today, startedAt: today + 'T18:00:00Z', endedAt: today + 'T18:40:00Z', note: 'Harness Fluids', minutes: 40, checks: 3, questions: 4, summary: 'Worked through third spacing.', weakSpots: [{ objective: 'E4-3', topic: 'Third spacing signs' }, { objective: '', topic: 'Why albumin holds fluid in the vessels' }], connections: ['Albumin links nutrition to edema'], noteTodos: ['Add a third-spacing example'], cardCount: 2, source: 'Study Watch' };
+      const pre = `window.__readerSessions = { sessions: [{ id: '2026-10-18-1300-Harness-Fluids', bytes: 900, sha256: 'a', modifiedAt: '${today}T18:41:00Z' }, { id: '2026-10-17-0035-Pharmacology-Chapter-50', bytes: 800, sha256: 'b', modifiedAt: '2026-10-17T05:50:00Z' }, { id: '2026-10-18-1200-Harness-Graded', bytes: 300, sha256: 'c', modifiedAt: '${today}T17:00:00Z' }], count: 3, more: false };
+        window.__readerSession = { '2026-10-18-1300-Harness-Fluids': ${JSON.stringify(fresh)}, '2026-10-18-1200-Harness-Graded': { found: true, id: '2026-10-18-1200-Harness-Graded', graded: true } };`;
+      await openPage(fp, 'staging', pre); await fp.waitForTimeout(2500);
+      const filed = await fp.evaluate(() => window.__db.sessions['sw-2026-10-18-1300-Harness-Fluids']);
+      ok('on open, new Study Watch sessions are filed from the page through the reader', filed && filed.writer === 'page' && filed.source === 'Study Watch' && filed.summary === 'Worked through third spacing.' && !JSON.stringify(filed).includes('note text'), JSON.stringify(filed).slice(0, 200));
+      ok('only findings were read, and only from the reader’s session tools', await fp.evaluate(h => window.__mcpCalls.filter(c => c[0] === h).map(c => c[1]).every(t => ['status', 'list_sessions', 'read_session'].includes(t)) && window.__mcpCalls.some(c => c[1] === 'read_session' && c[2].id === '2026-10-18-1300-Harness-Fluids'), spec.registry.studyWatch.reader.host));
+      ok('a session v3 already filed and a #graded one are left alone', await fp.evaluate(() => !window.__db.sessions['sw-2026-10-17-0035-Pharmacology-Chapter-50'] && !window.__db.sessions['sw-2026-10-18-1200-Harness-Graded'] && !window.__mcpCalls.some(c => c[1] === 'read_session' && c[2].id === '2026-10-17-0035-Pharmacology-Chapter-50')));
+      const fw = await fp.evaluate(() => ({ ws: Object.values(window.__db.weakspots).filter(w => w.topic === 'Third spacing signs' || w.topic === 'Add a third-spacing example').map(w => w.kind), ideas: Object.values(window.__db.ideas).filter(i => i.sessionId === 'sw-2026-10-18-1300-Harness-Fluids').length }));
+      ok('its findings are filed by the session rules: a weak spot, a note to-do, ideas', fw.ws.includes('concept') && fw.ws.includes('note') && fw.ideas === 2, JSON.stringify(fw));
+      const fm = (await msgs(fp)).slice(-1)[0];
+      ok('E.V. says what it filed, once, with the session card', /^Filed 1 Study Watch session, 2 new weak spots, 2 ideas\. Sessions tagged #graded stayed out\.$/.test(fm.text) && fm.cards[0].type === 'session', fm.text);
+      await send(fp, 'File it'); await fp.waitForTimeout(500);
+      ok('file it again: nothing new, nothing written twice', /Nothing new to file|#graded stayed out of the record/.test((await msgs(fp)).slice(-1)[0].text) && (await fp.evaluate(() => Object.keys(window.__db.sessions).filter(k => k.startsWith('sw-')).length)) === 1, (await msgs(fp)).slice(-1)[0].text);
+      // Skills practice: E.V. finds the checklist in the library and runs it in a card, one step at a time
+      await fp.evaluate(() => { window.__toolResults = []; window.__chatScript = [{ tool: 'practice_skill', input: { action: 'start', skill: 'head to toe assessment' } }]; window.__chatReply = 'Let’s run it.'; });
+      await send(fp, 'Run me through the head to toe validation'); await fp.waitForTimeout(800);
+      const sk = await fp.evaluate(() => Object.entries(window.__db.sessions).filter(([id]) => id.startsWith('ss-skill-')).map(([id, x]) => ({ id, ...x }))[0]);
+      ok('practice_skill starts a skills session from the checklist in his materials', sk && sk.kind === 'skill' && sk.status === 'active' && sk.skill.steps.length >= 4 && /p\. 12/.test(sk.skill.cite), JSON.stringify(sk && { t: sk.topic, n: sk.skill.steps.length, c: sk.skill.cite }) + ' ' + JSON.stringify(await fp.evaluate(() => window.__toolResults)));
+      const card = () => fp.locator('#thread .msg.ev').last();
+      ok('the skills card shows step 1 with Did it and Missed it', /Step 1\./.test(await card().textContent()) && (await card().locator('button', { hasText: 'Did it' }).count()) === 1);
+      await card().locator('button', { hasText: 'Did it' }).click(); await fp.waitForTimeout(400);
+      await card().locator('button', { hasText: 'Missed it' }).click(); await fp.waitForTimeout(400);
+      const sw = await fp.evaluate(id => Object.values(window.__db.weakspots).filter(w => w.kind === 'skill' && w.origin && w.origin.session === id), sk.id);
+      ok('a missed step is a weak spot of kind skill at once', sw.length === 1 && /: step 2, /.test(sw[0].topic) && /Step 3\./.test(await card().textContent()), JSON.stringify(sw.map(w => w.topic)));
+      ok('the card keeps the tally', /2 of \d+ · 1 missed/.test(await card().textContent()), (await card().textContent()).slice(0, 120));
+      await fp.screenshot({ path: `${shots}/skills-card.png` });
+      await card().locator('button', { hasText: 'Stop' }).click(); await fp.waitForTimeout(400);
+      const ended = await fp.evaluate(id => window.__db.sessions[id], sk.id);
+      ok('Stop ends the run with its summary', ended.status === 'ended' && /^1 of \d+ steps done right, missed step 2\. Stopped before the end\.$/.test(ended.summary) && /missed step 2/.test(await card().textContent()), ended.summary);
+      await fp.click('#tab-progress'); await fp.locator('#seg-progress [data-v="weak"]').click(); await fp.waitForTimeout(200);
+      ok('Progress lists it as a skill to practice', (await fp.locator('#weak-notes .row', { hasText: ': step 2, ' }).locator('button', { hasText: 'Practiced' }).count()) === 1);
+      await fp.click('#tab-ev'); await fp.waitForTimeout(150);
+      // The readiness audit: per objective, what to reread, from "How ready am I?"
+      await send(fp, 'How ready am I?'); await fp.waitForTimeout(1200);
+      const au = await fp.locator('#thread .msg.ev').last().textContent();
+      ok('How ready am I? attaches the readiness audit with what to reread', /Readiness audit · /.test(au) && /\d+ solid · \d+ right once · \d+ not yet/.test(au) && /Reread: [^·]+, (p\.|slide) \d+/.test(au), au.slice(0, 400));
+      await fp.screenshot({ path: `${shots}/audit-card.png` });
+      // Grounded explanations: the rule rides in the chat context, with the materials tool
+      await fp.evaluate(() => { window.__chatScript = []; window.__chatReply = 'Ok.'; }); await send(fp, 'Explain why third spacing causes low blood pressure'); await fp.waitForTimeout(400);
+      const gc = await fp.evaluate(() => [...window.__chatCalls].reverse().find(c => Array.isArray(c.input)));
+      ok('grounded explanations: explain from his materials and cite, or mark it', /Grounded explanations: when he asks why, or to explain a weak spot/.test(gc.input[0].content) && /\(check your materials\)/.test(gc.input[0].content) && gc.tools.includes('materials') && gc.tools.includes('practice_skill'));
+      ok('B-18: no page errors', fErr.length === 0, fErr.join(' | '));
+      await fp.close();
+    }
 
     // ---- Study session, entirely in the E.V. conversation (D-073). A fake clock fast-forwards to each check.
     const ss = await browser.newPage({ viewport: { width: 390, height: 844 } });

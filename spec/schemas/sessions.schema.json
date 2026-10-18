@@ -41,6 +41,64 @@
     "ended"
    ]
   },
+  "kind": {
+   "enum": [
+    "note",
+    "skill"
+   ]
+  },
+  "skill": {
+   "type": "object",
+   "properties": {
+    "materialId": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "page": {
+     "type": [
+      "integer",
+      "null"
+     ]
+    },
+    "cite": {
+     "type": "string"
+    },
+    "steps": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "n": {
+        "type": "integer",
+        "minimum": 1
+       },
+       "text": {
+        "type": "string",
+        "maxLength": 300
+       },
+       "critical": {
+        "type": "boolean"
+       }
+      },
+      "required": [
+       "n",
+       "text"
+      ],
+      "additionalProperties": false
+     },
+     "maxItems": 80
+    },
+    "rule": {
+     "type": "object"
+    }
+   },
+   "required": [
+    "steps"
+   ],
+   "additionalProperties": false
+  },
   "date": {
    "type": "string",
    "format": "date"
@@ -94,7 +152,8 @@
        "resume",
        "extend",
        "answer",
-       "end"
+       "end",
+       "step"
       ]
      },
      "len": {
@@ -103,6 +162,16 @@
      },
      "h": {
       "type": "string"
+     },
+     "n": {
+      "type": "integer",
+      "minimum": 1
+     },
+     "result": {
+      "enum": [
+       "pass",
+       "miss"
+      ]
      }
     },
     "required": [

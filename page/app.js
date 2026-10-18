@@ -484,12 +484,12 @@
   }
   function wsRow(w) {
     const d = w.derived; const due = E.isDue(w, today);
-    const when = d.status === 'parked' ? (d.parkedReason || w.parkedReason || 'parked') : (w.kind === 'note' || d.status === 'reviewed') ? '' :
+    const when = d.status === 'parked' ? (d.parkedReason || w.parkedReason || 'parked') : (w.kind === 'note' || w.kind === 'skill' || d.status === 'reviewed') ? '' :
       d.preRead ? 'first check after the reading' + (w.readingDue ? ' (' + short(w.readingDue) + ')' : '') : d.nextDue ? (due ? 'due today' : 'next ' + short(d.nextDue)) + (d.streak ? ' · ' + d.streak + ' of 2 right' : '') : 'not scheduled';
     const detail = [w.objective || w.exam, w.source, d.recurrence > 1 ? 'seen ' + d.recurrence + '×' : '', when].filter(Boolean).join(' · ');
     let action = null;
     if (d.status === 'parked') action = btn('Make active', ev => guard(ev.target, () => write(weakEvent(w, 'activate')), 'Active again'));
-    else if (d.status === 'open') action = btn(w.kind === 'note' ? 'Done' : 'Mark solid', ev => guard(ev.target, () => write(weakEvent(w, w.kind === 'note' ? 'done' : 'solid')), w.kind === 'note' ? 'Marked done' : 'Marked solid'));
+    else if (d.status === 'open') { const toDo = w.kind === 'note' || w.kind === 'skill'; action = btn(w.kind === 'skill' ? 'Practiced' : toDo ? 'Done' : 'Mark solid', ev => guard(ev.target, () => write(weakEvent(w, toDo ? 'done' : 'solid')), toDo ? 'Marked done' : 'Marked solid')); }
     else action = chip((w.kind === 'note' ? 'done ' : 'solid ') + short(d.solidAt), 'ok');
     return row({ title: w.topic || 'Untitled', detail, chips: due ? [['due', 'warn']] : [], action });
   }
@@ -497,7 +497,7 @@
     const ms = M.models; const byAdded = (a, b) => String(b.addedAt || '').localeCompare(String(a.addedAt || ''));
     const active = ms.filter(w => E.isActive(w) && !w.derived.preRead).sort((a, b) => String(a.derived.nextDue || '9').localeCompare(String(b.derived.nextDue || '9')) || byAdded(a, b));
     const previews = ms.filter(w => E.isActive(w) && w.derived.preRead).sort(byAdded);
-    const notes = ms.filter(w => w.kind === 'note' && w.derived.status === 'open').sort(byAdded);
+    const notes = ms.filter(w => (w.kind === 'note' || w.kind === 'skill') && w.derived.status === 'open').sort(byAdded);
     const parked = ms.filter(w => w.derived.status === 'parked' && w.kind !== 'connection').sort(byAdded);
     const solid = ms.filter(w => w.derived.status === 'reviewed' && w.kind !== 'note').sort((a, b) => String(b.derived.solidAt || '').localeCompare(String(a.derived.solidAt || '')));
     const formats = ms.filter(w => w.kind === 'format' && w.derived.status === 'open');
@@ -789,7 +789,35 @@
     try { await mcp.callTool('Claude Code Remote', 'fire_trigger', { trigger_id, text }, { cache: false }); return { at, ok: true }; }
     catch (e) { return { at, ok: false, error: (e && e.code) || 'upstream_error' }; }
   }
-  const fileItCopy = () => 'Filing your Study Watch sessions moves into this page with the reader’s new tools; until that lands, sessions are filed by the evening run.';
+  // ---- Session filing from the page (Features: reader v2 list_sessions/read_session, core.intakeSession). Runs once
+  // when E.V. Home opens where the reader answers (the desktop app on his Mac) and on "file it". Only findings ever
+  // leave the reader (never note text); a #graded session is left alone; a near-repeat waits on Same or Different.
+  const FILE = { running: null, opened: false };
+  const filedIds = () => new Set(S.sessions.map(s => /^(sw|ss)-/.test(s.id) ? s.id : 'sw-' + s.id)); // v3 filed them without the prefix
+  async function fileSessions({ quiet = false } = {}) {
+    if (FILE.running) return FILE.running;
+    FILE.running = (async () => {
+      let list; try { list = await readerCall('list_sessions', { sinceModifiedAt: new Date(Date.now() - 30 * 864e5).toISOString() }); }
+      catch (e) { if (!quiet) return { text: readerCopy((e && e.code) || 'upstream_error', e && e.message).replace('read your note', 'reach your sessions'), cards: [] }; return null; }
+      const known = filedIds(); const todo = ((list && list.sessions) || []).filter(x => x && x.id && !known.has('sw-' + x.id)).slice(0, 10);
+      if (!todo.length) return quiet ? null : { text: 'Nothing new to file: every Study Watch session from the last 30 days is already in your record.', cards: [] };
+      const filed = []; let graded = 0, weak = 0, ideas = 0, asks = 0;
+      for (const x of todo) {
+        let f; try { f = await readerCall('read_session', { id: x.id }); } catch { continue; }
+        if (!f || !f.found) continue; if (f.graded) { graded++; continue; }
+        const r = E.intakeSession({ ...f, id: 'sw-' + x.id }, { weakspots: M.models, sessions: S.sessions.map(s => ({ ...s, id: /^(sw|ss)-/.test(s.id) ? s.id : 'sw-' + s.id })), objectives: S.objectives, now: now(), writer: 'page' });
+        if (r.skip) continue;
+        const writes = r.writes.map(w => w.collection === 'sessions' && w.id === r.id && r.questions.length ? { ...w, data: { ...w.data, pending: Object.fromEntries(r.questions.map(q => [q.key, { topic: q.topic, objective: q.objective, candidate: q.candidate }])) } } : w);
+        await run(writes);
+        filed.push(r.id); weak += writes.filter(w => w.collection === 'weakspots' && w.op === 'set').length; ideas += writes.filter(w => w.collection === 'ideas').length; asks += r.questions.length;
+      }
+      if (!filed.length) return quiet && !graded ? null : { text: graded ? `${plural(graded, 'session')} tagged #graded stayed out of the record. Nothing else new to file.` : 'Nothing new to file.', cards: [] };
+      const bits = [plural(filed.length, 'Study Watch session'), weak ? plural(weak, 'new weak spot') : '', ideas ? plural(ideas, 'idea') : ''].filter(Boolean).join(', ');
+      return { text: `Filed ${bits}.${asks ? ' ' + (asks === 1 ? 'One near-repeat waits' : asks + ' near-repeats wait') + ' on Same or Different.' : ''}${graded ? ' Sessions tagged #graded stayed out.' : ''}`, cards: filed.slice(0, 3).map(id => ({ type: 'session', id })) };
+    })().finally(() => { FILE.running = null; });
+    return FILE.running;
+  }
+  async function fileItReply() { const r = await fileSessions(); return r ? [r.text, r.cards] : ['Nothing new to file.', []]; }
   const jobText = id => (TASKS.jobText || 'Job {id}').replace('{id}', id);
   async function startJob({ kind, title, brief }) {
     kind = KINDS[kind] ? kind : 'general';
@@ -857,7 +885,7 @@
   }
   async function probeReader() { if (SS.probing || SS.readerOk != null) return; SS.probing = true; try { await readerCall('status'); } catch { SS.readerOk = false; } finally { SS.probing = false; } }
   const sessOf = id => S.sessions.find(s => s.id === id) || null;
-  const activeSession = () => S.sessions.filter(s => s.source === 'E.V. Home' && (s.status === 'active' || s.status === 'ending')).sort((a, b) => String(b.startedAt).localeCompare(String(a.startedAt)))[0] || null;
+  const activeSession = () => S.sessions.filter(s => s.source === 'E.V. Home' && s.kind !== 'skill' && (s.status === 'active' || s.status === 'ending')).sort((a, b) => String(b.startedAt).localeCompare(String(a.startedAt)))[0] || null;
   const sessEvent = (s, type, extra = {}) => { const at = now(); return write({ op: 'update', collection: 'sessions', id: s.id, data: { events: { [pageKey(at)]: { type, at, ...extra } } } }); };
   const withDerived = writes => writes; // v4 stores no derived state (D-047): core's writes go as they are
   const sessCtx = () => E.sessionContext({ date: today, exams: S.exams, objectives: S.objectives, weakspots: M.models });
@@ -988,6 +1016,7 @@
     SS.ring.arc.setAttribute('stroke-dashoffset', (RING_C * (1 - frac)).toFixed(1));
   }
   function sessionTick() {
+    if (!FILE.opened && M && mcp && loaded.has('sessions')) { FILE.opened = true; fileSessions({ quiet: true }).then(r => { if (r) evSay(r.text, r.cards, { tier: 'local' }); }).catch(() => {}); }
     const s = activeSession(); renderBar();
     if (!s || !M || SS.busy) return;
     if (SS.readerOk == null) probeReader();
@@ -999,6 +1028,26 @@
     if (st.due) runCheck(s);
   }
   setInterval(sessionTick, 1000);
+
+  // ---------------------------------------------------------------- skills practice (Features: "Skills practice mode")
+  const activeSkill = () => S.sessions.filter(s => s.kind === 'skill' && s.status === 'active').sort((a, b) => String(b.startedAt).localeCompare(String(a.startedAt)))[0] || null;
+  async function startSkillRun(skill, page) {
+    if (activeSkill()) return { text: 'A skills run is already going; finish or stop it first.', card: { type: 'skill', session: activeSkill().id } };
+    const L = await library(); let sk = null;
+    const hits = page ? [] : E.searchLibrary(L.idx, (skill || '') + ' validation checklist', { kind: 'lab', k: 8 });
+    // A hit can land on the page after a checklist begins (or on its documentation page), so its neighbors are tried too.
+    const tries = page ? L.mats.filter(m => E.materialKind(m) === 'lab').map(m => ({ id: m.id, page })) : hits.flatMap(h => h.page ? [h, { id: h.id, page: h.page - 1 }, { id: h.id, page: h.page + 1 }] : [h]);
+    // Every candidate page's checklist, kept when its own title names the skill he asked for (a search hit can be the
+    // table of contents or the checklist before it); otherwise the first checklist found.
+    const want = new Set(E.libTokens(skill || '')); let best = -1;
+    for (const h of tries) { const m = L.mats.find(x => x.id === h.id); if (!m) continue; const got = E.skillSteps(m, { page: h.page }); if (got.steps.length < 3) continue;
+      const tt = E.libTokens(got.title); const score = tt.filter(w => want.has(w)).length - 0.1 * tt.filter(w => !want.has(w)).length; if (score > best) { best = score; sk = got; } }
+    if (!sk) return { text: `I couldn’t find a numbered checklist for “${skill}” in your materials. Name the skill as the Skills Packet does, or tell me its page.` };
+    const w = E.startSkill(sk, { now: now(), date: today }); await write(w);
+    return { text: `${sk.title}: ${plural(sk.steps.length, 'step')} from ${sk.cite}. Mark each one as you go.`, card: { type: 'skill', session: w.id } };
+  }
+  async function skillMark(s, n, result) { await run(E.skillStep(s, n, result, { weakspots: M.models, now: now(), by: 'Matt' })); const s2 = sessOf(s.id); if (s2 && E.skillState(s2).complete) await finishSkill(s2, 'complete'); }
+  async function finishSkill(s, why) { await write(E.endSkill(s, { now: now(), endedBy: why })); }
 
   // ---------------------------------------------------------------- cards (rendered live on every snapshot)
   const CARD_ROWS = 5; // a long list in a card shows five and a "more" (UI and UX, rule 3)
@@ -1027,6 +1076,35 @@
       const cnt = el('span', 'meta'); const h = head2(s.title || 'Practice set'); h.append(cnt); box.append(h);
       const bar = el('i'); bar.style.width = '0'; const pr = el('div', 'progress'); pr.append(bar); const body = el('div'); box.append(pr, body);
       runner({ key: 'ev-' + key, set: s, items: E.validItems(s), body, countEl: cnt, barEl: bar, label: 'E.V. · ' + (s.title || s.id) });
+    },
+    skill(box, c) {
+      const s = sessOf(c.session); if (!s || !s.skill) { box.append(head2('Skills practice'), el('p', 'empty', 'Setting it up…')); return; }
+      const st = E.skillState(s); const live = s.status === 'active' && !!st.next;
+      box.classList.add('check', live ? 'live' : 'done');
+      box.append(head2('Skills · ' + s.topic, `${st.done} of ${st.total}${st.missed.length ? ' · ' + st.missed.length + ' missed' : ''}`));
+      const pr = el('div', 'progress'); const bar = el('i'); bar.style.width = (st.total ? 100 * st.done / st.total : 0) + '%'; pr.append(bar); box.append(pr);
+      if (live) {
+        const step = st.next; const p = el('p', 'stem'); p.append(el('b', null, 'Step ' + step.n + '. '), document.createTextNode(step.text)); box.append(p);
+        box.append(el('p', 'meta', [step.critical ? 'Must not be missed (asterisk on the checklist).' : '', s.skill.cite].filter(Boolean).join(' · ')));
+        const a = el('div', 'actions');
+        a.append(btn('Stop', ev => guard(ev.target, () => finishSkill(s, 'ended'), 'Skills run saved')), el('span', 'grow'));
+        a.append(btn('Missed it', ev => guard(ev.target, () => skillMark(s, step.n, 'miss'), 'Logged as a skill to practice')), btn('Did it', ev => guard(ev.target, () => skillMark(s, step.n, 'pass')), { primary: true }));
+        box.append(a);
+      } else {
+        if (s.summary) box.append(el('p', 'result', s.summary));
+        if (st.missed.length) { const ul = el('ul', 'list'); st.missed.slice(0, CARD_ROWS).forEach(n => { const step = s.skill.steps.find(x => x.n === n); ul.append(row({ title: 'Step ' + n + ': ' + step.text, chips: [[step.critical ? 'must not miss' : 'missed', step.critical ? 'bad' : 'warn']] })); }); box.append(ul); }
+        box.append(el('p', 'meta', st.missed.length ? 'Missed steps are on Progress → Weak spots as skills to practice; a later run that gets them right clears them.' : 'Clean run.'));
+      }
+    },
+    audit(box) {
+      const ex = M.target; if (!ex) { box.append(head2('Readiness audit'), el('p', 'empty', 'No upcoming exam with weak spots yet.')); return; }
+      if (!LIB.mats && !LIB.loading) library().then(() => render()).catch(() => {});
+      const rows = E.readinessAudit({ examId: ex.id, objectives: S.objectives, weakspots: M.models, index: LIB.idx || null });
+      box.append(head2('Readiness audit · ' + (ex.title || ex.id).replace(/:.*$/, ''), plural(rows.length, 'objective')));
+      if (!rows.length) { box.append(el('p', 'empty', 'No weak spots logged for this exam yet.')); return; }
+      const ul = el('ul', 'list');
+      rows.slice(0, CARD_ROWS).forEach(r => ul.append(row({ title: r.id + ' · ' + String(r.text).slice(0, 80), detail: [`${r.solid} solid · ${r.rightOnce} right once · ${r.notYet} not yet`, r.passages.length ? 'Reread: ' + r.passages.map(x => x.cite).join('; ') : (r.notYet || r.rightOnce) && !LIB.mats ? 'Finding what to reread…' : ''].filter(Boolean).join(' · '), chips: [r.notYet ? ['not yet ' + r.notYet, 'warn'] : r.rightOnce ? ['almost', 'info'] : ['solid', 'ok']] })));
+      box.append(ul); if (rows.length > CARD_ROWS) box.append(el('p', 'meta', `${rows.length - CARD_ROWS} more objectives in Progress.`));
     },
     readiness(box) {
       const ex = M.target; if (!ex) { box.append(head2('Readiness'), el('p', 'empty', 'No upcoming exam with weak spots yet.')); return; }
@@ -1245,8 +1323,8 @@
     'start review': () => { const { rs, left } = reviewState(); return left ? [`${plural(left, 'review')} left. One at a time; every answer updates your weak spots.`, [{ type: 'review' }]] : rs ? ['Today’s review is done. Logged with quiet satisfaction.', []] : ['Today’s review lands with the 4:25am run. Want 5 fresh questions instead?', []]; },
     "what's due this week": () => { const w = S.dates.filter(d => d.date >= today && d.date <= E.addDays(today, 7)); const g = w.filter(d => d.graded).length; return [w.length ? `${plural(w.length, 'date')} in the next 7 days${g ? `, ${g} graded (yours alone)` : ''}.` : 'Nothing dated in the next 7 days. Suspiciously calm.', [{ type: 'dates', days: 7 }]]; },
     'give me 5 more': () => { if (!sample || T.sampleOff) return ['Writing questions needs permission to ask Claude, which this view doesn’t have.', []]; if (morePending) return ['Already writing a batch. Hold tight.', []]; morePractice({ announce: true }); return ['Writing 5 now, aimed at your weakest spots. They’ll post here in about a minute.', []]; },
-    'file it': async () => [fileItCopy(), []],
-    'how ready am i': () => { const ex = M.target; if (!ex) return ['No upcoming exam with weak spots yet, so nothing to measure.', []]; const r = E.readiness({ examId: ex.id, weakspots: M.models }); const d = E.diffDays(today, ex.date); return [`${(ex.title || ex.id).replace(/:.*$/, '')}${d > 0 ? ' in ' + plural(d, 'day') : ' is today'}: ${r.pctSolid ?? 0}% of its weak spots solid, about ${r.need} correct reviews to go.`, [{ type: 'readiness' }]]; },
+    'file it': () => fileItReply(),
+    'how ready am i': () => { const ex = M.target; if (!ex) return ['No upcoming exam with weak spots yet, so nothing to measure.', []]; const r = E.readiness({ examId: ex.id, weakspots: M.models }); const d = E.diffDays(today, ex.date); return [`${(ex.title || ex.id).replace(/:.*$/, '')}${d > 0 ? ' in ' + plural(d, 'day') : ' is today'}: ${r.pctSolid ?? 0}% of its weak spots solid, about ${r.need} correct reviews to go.`, [{ type: 'readiness' }, { type: 'audit' }]]; },
     "i'm wiped": () => ['Noted. Energy check, 1 to 5? I’ll size the rest of today to match. No guilt either way.', [{ type: 'checkin' }]],
     'show my progress': () => ['Here’s the week.', [{ type: 'chart' }]],
     'start a study session': () => startSession(), 'start session': () => startSession(), 'start studying': () => startSession(), 'start a session': () => startSession(),
@@ -1371,6 +1449,7 @@
     L.push(`How to reply:
 - Plain text, 1 to 4 short sentences unless he asks for more. "- " bullets only for 3 or more parallel items. **bold** sparingly. No headings, no tables.
 - Act with tools instead of describing: attach a card rather than listing what it shows; log what he wants kept (weak spots, ideas, dates, energy); start a background job for anything bigger than one reply. After acting, say what you did in a few words.
+- Grounded explanations: when he asks why, or to explain a weak spot or a missed question, first search the materials for its topic, explain from that passage and cite it, like (Ch 42 Fluids, slide 3). Whatever comes from general knowledge instead, mark "(check your materials)"; never present it as his course's.
 - His course materials are in the materials tool. For course content, a skill or anything his class teaches, search them first and name the file and page you used, like (Skills Packet, p. 12). For a validation run-through, read that skill's checklist pages and follow them step by step. If his materials don't cover it, say so and mark the answer "(check your materials)". Graded work stays his alone even when its instructions are in the library.
 - His daily list is yours to keep: put study tasks he asks for or agrees to on it with edit_list (today, or a day in the next week), take items off or bring them back the same way when he asks, and tick them off with tick_item. Graded work, exams, clinicals and validations stay.
 - His calendar is yours to keep too: add deadlines and events with edit_dates, fix the ones he or you added, take entries off and bring them back when he asks. Graded work, exams, clinicals and validations from Canvas stay. Study tasks go on the list, not the calendar; to move a calendar entry onto the list, add it with edit_list, then remove it with edit_dates.
@@ -1440,8 +1519,8 @@
     const str = (v, n) => String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, n);
     const noIds = t => { const w = E.scanIdentifiers(t); if (w.length) throw new Error('That text ' + w[0] + '. Patient identifiers are never stored; use a made-up client.'); };
     const tools = [
-      { name: 'show_card', description: 'Attach a live card under your reply. today: today\'s list (filter "open" or "all"). review: today\'s review, answerable inline. readiness: the next exam. dates: next N days (days 1 = tomorrow). weakspots: most due. set: a practice set by id, answerable inline. job: a background job by id. chart: accuracy over the last 7 days. checkin: energy check. Returns "shown".',
-        inputSchema: { type: 'object', properties: { type: { type: 'string', enum: ['today', 'review', 'readiness', 'dates', 'weakspots', 'set', 'job', 'chart', 'checkin'] }, filter: { type: 'string', enum: ['open', 'all'] }, days: { type: 'integer', minimum: 1, maximum: 14 }, id: { type: 'string' } }, required: ['type'] },
+      { name: 'show_card', description: 'Attach a live card under your reply. today: today\'s list (filter "open" or "all"). review: today\'s review, answerable inline. readiness: the next exam. audit: the readiness audit, per objective of the next exam with what to reread. dates: next N days (days 1 = tomorrow). weakspots: most due. set: a practice set by id, answerable inline. job: a background job by id. chart: accuracy over the last 7 days. checkin: energy check. Returns "shown".',
+        inputSchema: { type: 'object', properties: { type: { type: 'string', enum: ['today', 'review', 'readiness', 'audit', 'dates', 'weakspots', 'set', 'job', 'chart', 'checkin'] }, filter: { type: 'string', enum: ['open', 'all'] }, days: { type: 'integer', minimum: 1, maximum: 14 }, id: { type: 'string' } }, required: ['type'] },
         execute: i => { const type = str(i.type, 20); if (!CARDS[type] || type === 'link') throw new Error('unknown card type ' + type); const c = { type };
           if (type === 'set') { if (!S.sets.some(s => s.id === i.id)) throw new Error('no set with id ' + i.id); c.id = String(i.id); }
           if (type === 'job') { if (!S.jobs.some(j => j.id === i.id)) throw new Error('no job with id ' + i.id); c.id = String(i.id); }
@@ -1529,8 +1608,14 @@
           if (a === 'end') { const [t, c] = await endSession('ended'); (c || []).forEach(addCard); return t; }
           if (['break', 'resume', 'extend'].includes(a)) return sessionCmd(a);
           throw new Error('action must be start, end, break, resume or extend'); } },
-      { name: 'file_sessions', description: 'File his Study Watch session notes into the record now (runs on his Mac). Use when he says to file, save or sync his sessions.',
-        execute: async () => fileItCopy() },
+      { name: 'file_sessions', description: 'File his new Study Watch sessions into the record now, through the Study Watch reader (the desktop app on his Mac). Use when he says to file, save or sync his sessions. Returns what was filed; session cards are attached.',
+        execute: async () => { const r = await fileSessions(); if (r) (r.cards || []).forEach(addCard); return r ? r.text : 'nothing new to file'; } },
+      { name: 'practice_skill', description: 'Run a skills validation checklist from his Skills Packet step by step (head-to-toe, vital signs, medication administration, intradermal injection, and the rest). start: find the checklist in his materials and begin; a card shows one step at a time and he marks it done or missed (a miss becomes a skill weak spot). end: stop the run. Returns what happened.',
+        inputSchema: { type: 'object', properties: { action: { type: 'string', enum: ['start', 'end'] }, skill: { type: 'string', description: 'start: the skill in a few words, e.g. "head to toe assessment"' }, page: { type: 'integer', description: 'start: the checklist page, when known from a search' } }, required: ['action'] },
+        execute: async i => { const a = str(i.action, 10);
+          if (a === 'start') { const r = await startSkillRun(str(i.skill, 80), Number(i.page) || null); if (r.card) addCard(r.card); return r.text; }
+          if (a === 'end') { const s = activeSkill(); if (!s) return 'no skills run is going'; await finishSkill(s, 'ended'); addCard({ type: 'skill', session: s.id }); return 'ended'; }
+          throw new Error('action must be start or end'); } },
     ];
     // Mark where the current round's text ends whenever a tool runs; later text belongs to a later round.
     for (const t of tools) { const run = t.execute; t.execute = (input, ctx) => { pend.cut = pend.raw.length; return run(input, ctx); }; }

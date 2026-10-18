@@ -899,6 +899,29 @@ const EVCore = (() => {
     const total = active.length + solid;
     return { examId, active: active.length, solid, need, rightOnce: one, preRead, notYet: active.length - one - preRead, pctSolid: total ? Math.round(100 * solid / total) : null };
   }
+  /**
+   * The readiness audit (Features: "Readiness audit"): per objective of an exam, its weak spots solid, right once and
+   * not yet, the topics not yet right, and with a library index the passages to reread for them (cited by file and
+   * page). Objectives with the most not yet first; objectives with no weak spots are left out.
+   * {examId, objectives, weakspots, index?, k?} -> [{id, text, solid, rightOnce, notYet, preRead, topics, passages}]
+   */
+  function readinessAudit({ examId, objectives = [], weakspots = [], index = null, k = 2 } = {}) {
+    const mine = weakspots.filter(w => (w.kind || 'concept') === 'concept' && examOf(w) === examId && w.derived && !['parked', 'moved'].includes(w.derived.status));
+    const rows = [];
+    for (const o of objectives.filter(o => o.exam === examId || String(o.id).split('-')[0] === examId)) {
+      const ws = mine.filter(w => w.objective === o.id); if (!ws.length) continue;
+      const open = ws.filter(isActive);
+      const notYetWs = open.filter(w => !w.derived.preRead && (w.derived.streak || 0) === 0);
+      const row = { id: o.id, text: o.text || '', solid: ws.filter(isSolid).length, rightOnce: open.filter(w => !w.derived.preRead && (w.derived.streak || 0) >= 1).length, notYet: notYetWs.length, preRead: open.filter(w => w.derived.preRead).length, topics: notYetWs.map(w => w.topic).slice(0, 3), passages: [] };
+      if (index && (row.notYet || row.rightOnce)) {
+        const q = (row.topics.length ? row.topics : open.map(w => w.topic)).join(' ') + ' ' + row.text;
+        const seen = new Set();
+        for (const h of searchLibrary(index, q, { k: k + 3 })) { const key = h.id + '#' + (h.page || ''); if (seen.has(key)) continue; seen.add(key); row.passages.push({ id: h.id, page: h.page || null, cite: citeMaterial(h) }); if (row.passages.length >= k) break; }
+      }
+      rows.push(row);
+    }
+    return rows.sort((a, b) => b.notYet - a.notYet || b.rightOnce - a.rightOnce || String(a.id).localeCompare(String(b.id)));
+  }
   /** D-042 prediction: transparent, deterministic, and checked against the score afterward. */
   function predictReadiness({ examId, exams, weakspots, attempts, date, now }) {
     const past = (exams || []).filter(e => e.kind === 'unit' && typeof e.score === 'number');
@@ -1456,6 +1479,72 @@ Return JSON: {"pages": [{"page": <page number>, "text": "<the page's text>"}]}`;
     return [...f.writes, { op: 'update', collection: 'sessions', id: s.id, data: { pending: { [key]: null } } }];
   }
   /** Flashcards as Quizlet import text: term<TAB>definition per line. */
+  // ---------------------------------------------------------------- skills practice (Features: "Skills practice mode")
+  // A validation checklist from the Skills Packet, run step by step in the conversation: Matt marks each step done or
+  // missed; a miss is a weak spot of kind skill at once, and a later pass on that step marks it done. The steps come
+  // from the checklist page as printed: numbered 1, 2, 3 …, an asterisk before a number marks a step he may not miss.
+  /** The checklist starting on `page` of a material: {materialId, title, page, cite, steps: [{n, text, critical}], rule}. */
+  function skillSteps(m, { page } = {}) {
+    const t = String((m && m.text) || ''); let from = 0;
+    if (page) { const i = t.search(new RegExp('\\[(?:p|s|Page |Slide )' + Number(page) + '\\]')); if (i >= 0) from = i; }
+    let body = t.slice(from, from + 40000);
+    // One checklist: from its own heading to the next checklist's (each opens "Student Name Date Instructor Name <TITLE>").
+    const heads = [...body.matchAll(/Student Name\s+Date\s+Instructor Name/g)];
+    if (heads.length > 1) { const cut = body.slice(0, heads[1].index).search(/\d\s*st Attempt: S or U[^]*$/); body = body.slice(0, cut > heads[0].index ? cut : heads[1].index); }
+    const heading = /Student Name\s+Date\s+Instructor Name\s+(.+?)\s+(?:\*?The (?:grading|student)|\*Preparing|The grade)/.exec(body);
+    const title = heading ? heading[1].replace(/\s+/g, ' ').trim().slice(0, 100) : (m && m.title ? String(m.title).replace(/\.(pdf|docx|pptx)$/i, '') : 'Skill');
+    const re = /(\*\s*)?(\d{1,2})\.\s+(?=[A-Za-z(])/g; const marks = []; let x; let next = 1;
+    while ((x = re.exec(body))) { const n = Number(x[2]); if (n === next) { marks.push({ n, critical: !!x[1], at: x.index, start: x.index + x[0].length }); next++; } else if (n === 1 && marks.length >= 3) break; }
+    const clean = s => s.replace(/(?:Overall Performance|_{3,}|\s\d\s*(?:st|nd)\s*Attempt)[^]*$/, '').replace(/\[(?:p|s|Page |Slide )\d+\]\s*\d*\s*/g, ' ').replace(/\d\s*(?:st|nd)\s*Attempt[^]*?Instructor Name/g, ' ').replace(/1\s*st Attempt\s*2\s*nd Attempt\s*S\s*U\s*S\s*U/g, ' ').replace(/\s*\*\s*$/, '')
+      .replace(/(?:\s+[A-Z][A-Z/&,'-]+){2,}\s*$/, '').replace(/\s+/g, ' ').trim();
+    const steps = marks.map((mk, i) => ({ n: mk.n, critical: mk.critical, text: clean(body.slice(mk.start, i + 1 < marks.length ? marks[i + 1].at : Math.min(body.length, mk.start + 400))).slice(0, 300) })).filter(st => st.text);
+    const atLeast = /AT LEAST (\d+) of the following/i.exec(body); const allow = /only (\d+) of the non-asterisk/i.exec(body);
+    const rule = { ...(atLeast ? { atLeast: Number(atLeast[1]) } : {}), ...(allow ? { missNonCritical: Number(allow[1]) } : {}) };
+    return { materialId: m && m.id, title, page: page || null, cite: citeMaterial({ title: m && m.title, id: m && m.id, page }), steps, rule };
+  }
+  /** A skills session's state from its events: the step results, the next step, the tally and whether it passes. */
+  function skillState(s) {
+    const steps = (s && s.skill && s.skill.steps) || []; const results = {};
+    const evs = Object.entries((s && s.events) || {}).filter(([, e]) => e && e.type === 'step').map(([k, e]) => [entryTime(k, e), e]).sort(([a], [b]) => toMs(a) - toMs(b));
+    for (const [, e] of evs) if (steps.some(st => st.n === e.n) && (e.result === 'pass' || e.result === 'miss')) results[e.n] = e.result;
+    const next = steps.find(st => !results[st.n]) || null;
+    const missed = steps.filter(st => results[st.n] === 'miss'); const passed = steps.filter(st => results[st.n] === 'pass');
+    const rule = (s && s.skill && s.skill.rule) || {};
+    const criticalMissed = missed.filter(st => st.critical).length;
+    const satisfactory = criticalMissed === 0 && (rule.missNonCritical != null ? missed.length - criticalMissed <= rule.missNonCritical : true) && (rule.atLeast != null ? passed.length >= rule.atLeast : true);
+    return { total: steps.length, done: passed.length + missed.length, next, passed: passed.length, missed: missed.map(st => st.n), criticalMissed, satisfactory: !next && satisfactory, complete: !next, results };
+  }
+  const skillWeakspotId = (s, n) => safeId('skill-' + slug((s.skill && s.skill.title) || s.topic || 'skill', 30) + '-' + n);
+  /**
+   * One step marked: the session's step event, and the weak spot it leads to: a miss opens (or sees again) the step's
+   * weak spot of kind skill, a pass marks an open one done. Returns the writes.
+   */
+  function skillStep(s, n, result, { weakspots = [], now, by = 'Matt' } = {}) {
+    const at = isoOf(now); const st = ((s.skill && s.skill.steps) || []).find(x => x.n === Number(n));
+    if (!st) throw new Error('no step ' + n + ' in this checklist');
+    if (result !== 'pass' && result !== 'miss') throw new Error('result must be pass or miss');
+    const writes = [{ op: 'update', collection: 'sessions', id: s.id, data: { events: { [eventKey('page', at)]: { type: 'step', n: st.n, result, at } } } }];
+    const id = skillWeakspotId(s, st.n); const open = weakspots.find(w => w.id === id && w.derived && w.derived.status === 'open');
+    const title = (s.skill && s.skill.title) || s.topic || 'Skill';
+    if (result === 'miss' && open) writes.push({ op: 'update', collection: 'weakspots', id, data: { events: { [eventKey('page', at)]: { type: 'seen', by, note: 'Skills practice', at } } } });
+    else if (result === 'miss') writes.push({ op: 'set', collection: 'weakspots', id, data: { ...envelope('page', 'Skills practice · ' + title, at), topic: (title + ': step ' + st.n + ', ' + st.text).slice(0, 200), objective: '', exam: '', course: 'NUR 112', kind: 'skill', addedBy: by, origin: { session: s.id, step: st.n, at, material: s.skill && s.skill.materialId || null, page: s.skill && s.skill.page || null }, initial: { streak: 0, nextDue: null, recurrence: 1, misses: 1 }, events: {} } });
+    else if (open) writes.push({ op: 'update', collection: 'weakspots', id, data: { events: { [eventKey('page', at)]: { type: 'done', by, note: 'Skills practice: done right', at } } } });
+    return writes;
+  }
+  /** A new skills session (sessions/ss-skill-*): the checklist it runs, from skillSteps. */
+  function startSkill(sk, { now, date } = {}) {
+    if (!sk || !(sk.steps || []).length) throw new Error('no numbered steps on that page');
+    const at = isoOf(now); const id = safeId('ss-skill-' + compactTime(at).slice(0, 15) + '-' + slug(sk.title, 24));
+    return { op: 'set', collection: 'sessions', id, data: { ...envelope('page', 'E.V. Home', at), kind: 'skill', status: 'active', date: date || chicagoDate(at), startedAt: at, topic: sk.title, skill: { materialId: sk.materialId || null, page: sk.page || null, cite: sk.cite || '', steps: sk.steps, rule: sk.rule || {} }, events: { [eventKey('page', at)]: { type: 'start', at } } } };
+  }
+  /** Ending a skills session: its status, minutes and a one-line summary. */
+  function endSkill(s, { now, endedBy = 'ended' } = {}) {
+    const at = isoOf(now); const st = skillState(s);
+    const minutes = Math.max(0, Math.round((toMs(at) - toMs(s.startedAt)) / 60000));
+    const summary = `${st.passed} of ${st.total} steps done right${st.missed.length ? ', missed step' + (st.missed.length > 1 ? 's ' : ' ') + st.missed.join(', ') : ''}.` + (st.complete ? (st.satisfactory ? ' That run meets the checklist’s bar.' : ' That run would not meet the checklist’s bar yet.') : ' Stopped before the end.');
+    return { op: 'update', collection: 'sessions', id: s.id, data: { status: 'ended', endedAt: at, minutes, endedBy, summary, events: { [eventKey('page', at)]: { type: 'end', at, why: endedBy } } } };
+  }
+
   function cardsText(cards) { return (cards || []).map(c => `${c.term}\t${c.definition}`).join('\n'); }
 
   // ---------------------------------------------------------------- backup
@@ -1578,6 +1667,8 @@ Return JSON: {"pages": [{"page": <page number>, "text": "<the page's text>"}]}`;
     MATERIAL_KINDS, materialKind, isRemovedMaterial, liveMaterials, materialRemove, normCourse, citeMaterial, libStem, libTokens, libraryChunks, libraryIndex, searchLibrary, libraryCatalog, readMaterial, libraryPick, officeText, pdfText, ocrPrompt, parseOcr, mergeOcr, guessCourse, materialFromUpload,
     // study sessions in E.V. Home
     sessionState, noteMark, noteDelta, sessionContext, checkPrompt, parseCheck, wrapPrompt, parseWrap, closeSession, decideSessionQuestion, cardsText,
+    // skills practice and the readiness audit
+    skillSteps, skillState, skillStep, startSkill, endSkill, readinessAudit,
     // conversation
     greeting,
   };
