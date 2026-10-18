@@ -47,7 +47,9 @@ function triggerFields(t) {
   const ds = t.derived_state || {};
   return {
     name: t.name, enabled: t.enabled, schedule: t.cron_expression || null, prompt: typeof ds.prompt === 'string' ? ds.prompt : null,
-    macBound: Boolean(t.bound_device_uuid || t.bound_device), folders: ds.folders || [],
+    // list_triggers does not report the bound device (Oct 18: both Mac tasks ran on the Mac with "Require this
+    // computer" on, yet showed no bound_device); attached folders exist only on a task that requires the computer.
+    macBound: Boolean(t.bound_device_uuid || t.bound_device || ds.folders_state === 'FOLDERS_STATE_PRESENT'), folders: ds.folders || [],
     push: Boolean(t.notifications && t.notifications.channel && t.notifications.channel.push),
   };
 }
