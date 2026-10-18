@@ -25,7 +25,11 @@ test('every pipeline with steps has a prompt for live and staging; the rest wait
   const p = all();
   const ready = Object.keys(spec.pipelines).filter(n => n !== '_rules' && Array.isArray(spec.pipelines[n].steps) && ['cloud', 'mac'].includes(spec.pipelines[n].lane));
   assert.ok(['morning', 'evening-cloud', 'weekly', 'worker'].every(n => ready.includes(n)));
-  for (const n of ready.filter(n => spec.tasks.staging[n])) { assert.equal(typeof p[`live.${n}`], 'string', n); assert.equal(typeof p[`staging.${n}`], 'string', n); }
+  for (const n of ready.filter(n => spec.tasks.staging[n])) { if (spec.tasks.live[n]) assert.equal(typeof p[`live.${n}`], 'string', n); assert.equal(typeof p[`staging.${n}`], 'string', n); }
+  assert.equal(spec.tasks.live['restore-drill'], undefined, 'the drill restores into staging only');
+  assert.match(p['staging.restore-drill'], /reads one backup file from it, with device_list_dir and device_stage_files/);
+  assert.match(p['staging.restore-drill'], /on the Mac, read only the backup files the step names, and write, move or change nothing there/);
+  assert.doesNotMatch(p['staging.restore-drill'], /Canvas|Quizlet|device_commit_files/);
   const diag = renderPrompt({ key: 'staging.diagnostic', task: spec.tasks.diagnostic, spec, release });
   assert.match(diag, /end this turn with exactly: Waiting for the probe\. When it arrives, add --probe/);
   assert.doesNotMatch(diag, /journal|add_repo|git clone/i);

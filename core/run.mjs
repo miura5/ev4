@@ -161,6 +161,7 @@ export function compute({ spec, dir, validate, at }) {
       if (ids.length) { problems.push(`${s.id}: the answer ${ids[0]}`); steps.push({ id: s.id, status: 'refused' }); continue; }
       r = AGENT_FOLDS[s.fold](answer, db, ctx, spec);
     } else { steps.push({ id: s.id, status: 'skipped', detail: `${s.kind} step: printed by its own move` }); continue; }
+    for (const x of r.problems || []) problems.push(`${s.id}: ${x}`);
     for (const w of r.writes || []) { if (w.op === 'delete' || !['set', 'update'].includes(w.op)) { problems.push(`${s.id}: plans never delete (${w.collection}/${w.id})`); continue; } writes.push(w); applyInMemory(db, w); }
     if (r.push) push = r.push;
     if (r.detail) detail = detail ? detail + ' · ' + r.detail : r.detail;

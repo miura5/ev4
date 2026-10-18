@@ -146,3 +146,44 @@ test('an evening-mac run: Canvas folds into the record, the backup and mirror be
   assert.equal(r.status, 'planned'); assert.equal(r.plan.writes, 0); assert.match(r.plan.detail, /^Canvas skipped: signed-out · backup/);
   assert.ok(r.plan.device.length >= 1);
 });
+
+test('restore drill: the newest backup restores into staging, counts and hashes checked; a tampered backup is refused', () => {
+  const pullFixture = dir => {
+    const versions = {};
+    for (const { collection, id, doc } of readExport(path.join(ROOT, 'test/data/record'))) {
+      if (collection === 'journal' || collection === 'system') continue;
+      const f = path.join(dir, 'pull', collection, id + '.json'); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, JSON.stringify(EV.docData({ ...doc, id })));
+      (versions[collection] = versions[collection] || {})[id] = 3;
+    }
+    fs.writeFileSync(path.join(dir, 'versions.json'), JSON.stringify(versions));
+  };
+  const AT = '2026-11-02T02:55:00Z';
+  // A backup made from the fixture record plus one Canvas date the record does not have (as if written after a loss).
+  const db = RUN.loadPulled((() => { const d = tmp('ev4-src-'); pullFixture(d); return d; })());
+  const lost = { id: 'canvas-424242', ...EV.envelope('canvas-sync', 'Canvas sync', '2026-10-30T01:20:00Z'), date: '2026-11-05', dueAt: '2026-11-06T04:59:00Z', title: 'Made-up care plan', course: 'NUR 112', kind: 'due', graded: true, canvasType: 'assignment', canvasId: 424242, syncedAt: '2026-10-30T01:20:00Z' };
+  const backup = (await_ => { const { macBackup } = await_; return macBackup({ ...db, dates: [...db.dates, lost] }, { now: '2026-11-01T01:20:00Z', label: 'evening-mac test', release: 'v4.0.0' }); });
+  return import('../core/steps.mjs').then(steps => {
+    const b = backup(steps);
+    const run = (body, answer = { status: 'ok', path: '/Users/x/E.V. Study Watch/staging/backup/E.V.-v4-backup-saturday.json' }) => {
+      const dir = tmp('ev4-drill-');
+      RUN.start({ spec, pipeline: 'restore-drill', record: 'staging', at: AT, dir, release: 'v4.0.0' });
+      assert.ok(!RUN.pull({ spec, dir, at: AT }).some(c => ['journal', 'system'].includes(c.args.collection)));
+      pullFixture(dir);
+      let r = RUN.compute({ spec, dir, validate, at: AT });
+      assert.equal(r.status, 'waiting'); assert.equal(r.step, 'fetch-backup');
+      assert.deepEqual(r.question.material.look, ['/Users/peachfritter/Documents/E.V. Study Watch/backup', '/Users/peachfritter/Documents/E.V. Study Watch/staging/backup']);
+      if (body != null) { fs.mkdirSync(path.join(dir, 'in'), { recursive: true }); fs.writeFileSync(path.join(dir, 'in/backup.json'), body); }
+      fs.mkdirSync(path.join(dir, 'answers'), { recursive: true }); fs.writeFileSync(path.join(dir, 'answers/fetch-backup.json'), JSON.stringify(answer));
+      return RUN.compute({ spec, dir, validate, at: AT });
+    };
+    const ok = run(JSON.stringify(b));
+    assert.equal(ok.status, 'planned', JSON.stringify(ok.problems));
+    assert.deepEqual(ok.plan.batches.flat().map(w => `${w.op} ${w.collection}/${w.doc_id}`), ['set dates/canvas-424242'], 'only what differs is written back');
+    assert.match(ok.plan.detail, /^drill ok: E\.V\.-v4-backup-saturday\.json .* counts and hashes match its manifest; 1 restored, \d+ already identical/);
+    const tampered = JSON.parse(JSON.stringify(b)); tampered.collections.dates[0].title = 'changed after the backup';
+    const bad = run(JSON.stringify(tampered));
+    assert.equal(bad.status, 'refused'); assert.match(bad.problems.join(' '), /dates: its documents do not hash to its manifest/);
+    assert.equal(run(null, { status: 'none' }).status, 'refused');
+    assert.match(run('{"kind":"E.V. record backup"}').problems.join(' '), /not a v4 backup/);
+  });
+});

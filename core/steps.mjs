@@ -10,7 +10,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import EV from './evcore.mjs';
-import { produce } from './derive.mjs';
+import { produce, classOf } from './derive.mjs';
 import { watch } from './watch.mjs';
 import { canvasRaw } from './canvas.mjs';
 import { collectionHash } from './seed.mjs';
@@ -204,6 +204,19 @@ export const AGENT_MATERIAL = {
       ...(saturday ? { quizlet: 'Saturday: in the built-in browser, open https://quizlet.com/latest in a new tab with preview_start and read it with get_page_text (max_chars 1500): only the "Jump back in" decks with their % done and the "Recents" list. Never click, type, start or change anything there; a sign-in page means skip it and say so.', openWeakSpots: ms.slice(0, 15).map(w => w.topic), examsThisWeek: soon } : {}),
     };
   },
+  /** Where the newest v4 backup is on the Mac, and where the run wants its copy (restore-drill). */
+  'backup-brief'(db, ctx, spec) {
+    const t = ((spec.tasks || {})[ctx.record] || {})['restore-drill'];
+    if (!t || !(t.folders || []).length) return { skip: `spec.tasks.${ctx.record}.restore-drill names no Mac folder` };
+    const folder = t.folders[0];
+    return {
+      look: [folder + '/backup', folder + '/staging/backup'],
+      files: 'E.V.-v4-backup-<weekday>.json (only these: v3 and v2 backups are other shapes)',
+      pick: 'the one with the newest mtimeMs across both folders',
+      saveTo: path.join(ctx.dir, 'in', 'backup.json'),
+      how: 'device_list_dir on each folder in look; device_stage_files with that one file\'s full path; then copy the staged file (the stage result names where it landed, under /mnt/user-data/uploads/) to saveTo with cp. Read nothing else on the Mac and change nothing there.',
+    };
+  },
   'week-brief'(db, ctx) { return ctx.week; },
   /** What the day looks like, for a one-line note. */
   'day-summary'(db, ctx) {
@@ -329,6 +342,52 @@ export const AGENT_FOLDS = {
     const n = k => res.changes.filter(c => c.type === k).length;
     const detail = `Canvas: ${n('new-date')} new and ${n('changed-date')} changed dates, ${res.announcements.length} announcements, ${res.materials.length} files${res.candidates.length ? `, ${res.candidates.length} possible conflicts` : ''}${raw.errors.length ? `, ${raw.errors.length} fetch errors` : ''}`;
     return { writes, detail, say: [detail + '.'] };
+  },
+  /**
+   * {status, path?, problem?}: the restore drill. The backup's own counts and hashes are checked against its documents,
+   * then every document that differs from the record is set back to the backup's copy (Log entries the record already
+   * has are kept: a log is never rewritten), and the record as it will stand is checked against the backup's hashes.
+   * Documents the record has and the backup lacks are kept and counted (nothing is deleted). Any mismatch refuses the plan.
+   */
+  'restore'(answer, db, ctx, spec) {
+    if (answer.status !== 'ok') return { problems: [`no backup to restore: ${answer.status}${answer.problem ? ' (' + answer.problem + ')' : ''}`] };
+    const file = path.join(ctx.dir, 'in', 'backup.json');
+    if (!fs.existsSync(file)) return { problems: [`no ${file}: copy the staged backup there first`] };
+    let b; try { b = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) { return { problems: ['the backup does not parse: ' + e.message] }; }
+    if (!b || b.kind !== 'E.V. record backup' || !b.hashes || !b.collections) return { problems: ['not a v4 backup (no kind, hashes or collections)'] };
+    const problems = [];
+    for (const c of ['journal', 'system']) if (b.collections[c]) problems.push(`the backup holds ${c}, which no backup may`);
+    for (const [c, docs] of Object.entries(b.collections)) {
+      if (!spec.collections[c]) { problems.push(`the backup holds ${c}, which is no collection`); continue; }
+      if (b.counts[c] !== docs.length) problems.push(`${c}: ${docs.length} documents, its manifest says ${b.counts[c]}`);
+      if (b.hashes[c] !== collectionHash(docs)) problems.push(`${c}: its documents do not hash to its manifest`);
+    }
+    for (const c of Object.keys(b.counts)) if (!b.collections[c]) problems.push(`${c}: in the manifest, not in the backup`);
+    if (problems.length) return { problems };
+    const same = (x, y) => EV.stableStringify(EV.docData(x)) === EV.stableStringify(EV.docData(y));
+    const writes = []; let identical = 0, logsKept = 0, extra = 0; const after = {};
+    for (const [c, docs] of Object.entries(b.collections)) {
+      const have = Object.fromEntries((db[c] || []).map(d => [d.id, d]));
+      for (const d of docs) {
+        const cur = have[d.id];
+        if (cur && same(cur, d)) { identical++; continue; }
+        if (cur && classOf(spec, c, d.id) === 'Log') { logsKept++; continue; }
+        writes.push({ op: 'set', collection: c, id: d.id, data: EV.docData(d) });
+        have[d.id] = d;
+      }
+      const ids = new Set(docs.map(d => d.id)); extra += (db[c] || []).filter(d => !ids.has(d.id)).length;
+      after[c] = docs.map(d => have[d.id]);
+    }
+    for (const [c, docs] of Object.entries(after)) {
+      const kept = docs.filter((d, i) => !same(d, b.collections[c][i]));
+      if (kept.some(d => classOf(spec, c, d.id) !== 'Log')) problems.push(`${c}: the record would not match the backup after the restore`);
+      else if (!kept.length && collectionHash(docs) !== b.hashes[c]) problems.push(`${c}: restored, but its hash would differ`);
+    }
+    if (problems.length) return { problems };
+    const docs = Object.values(b.counts).reduce((x, y) => x + y, 0);
+    const name = path.basename(String(answer.path || 'backup'));
+    const detail = `drill ok: ${name} (${b.at}), ${Object.keys(b.collections).length} collections and ${docs} documents; counts and hashes match its manifest; ${writes.length} restored, ${identical} already identical, ${logsKept} log entries kept as they are, ${extra} documents not in the backup kept`;
+    return { writes, detail, push: `Restore drill passed: ${docs} documents match the backup.`, say: [detail + '.'] };
   },
   /** {note}: the one short note the run ends with. */
   'evening-note'(answer) { return { detail: answer.note, push: answer.note.slice(0, 120) }; },

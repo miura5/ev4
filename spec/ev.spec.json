@@ -590,9 +590,128 @@
   "restore-drill": {
    "lane": "mac",
    "writer": "restore-drill",
-   "purpose": "restores the latest backup into staging and checks counts and hashes",
-   "steps": null,
-   "pendingIn": "B-22"
+   "purpose": "restores the newest v4 backup on his Mac into the staging record and checks every count and hash against the backup's manifest",
+   "reads": [
+    {
+     "collection": "weakspots"
+    },
+    {
+     "collection": "sets"
+    },
+    {
+     "collection": "answers"
+    },
+    {
+     "collection": "exams"
+    },
+    {
+     "collection": "objectives"
+    },
+    {
+     "collection": "plans"
+    },
+    {
+     "collection": "planedits"
+    },
+    {
+     "collection": "dates"
+    },
+    {
+     "collection": "dateedits"
+    },
+    {
+     "collection": "days"
+    },
+    {
+     "collection": "dayedits"
+    },
+    {
+     "collection": "weeks"
+    },
+    {
+     "collection": "runs"
+    },
+    {
+     "collection": "debug"
+    },
+    {
+     "collection": "health"
+    },
+    {
+     "collection": "state"
+    },
+    {
+     "collection": "sessions"
+    },
+    {
+     "collection": "ideas"
+    },
+    {
+     "collection": "talk"
+    },
+    {
+     "collection": "jobs"
+    },
+    {
+     "collection": "jobresults"
+    },
+    {
+     "collection": "materials"
+    },
+    {
+     "collection": "materialedits"
+    },
+    {
+     "collection": "libindex"
+    },
+    {
+     "collection": "announcements"
+    },
+    {
+     "collection": "concepts"
+    },
+    {
+     "collection": "legacy"
+    }
+   ],
+   "agentCalls": [
+    "mcp__remote-devices__device_list_dir",
+    "mcp__remote-devices__device_stage_files"
+   ],
+   "steps": [
+    {
+     "id": "fetch-backup",
+     "kind": "agent",
+     "judgment": "Bring the newest v4 backup from the Mac into this run, as the material says: list the folders it names, pick the newest E.V.-v4-backup-*.json by modification time, stage that one file, and copy the staged file to saveTo. Read nothing else on the Mac and change nothing there. Answer ok with the backup's full path on the Mac, none when no v4 backup exists, failed with the problem in one line otherwise.",
+     "material": "backup-brief",
+     "output": {
+      "type": "object",
+      "properties": {
+       "status": {
+        "enum": [
+         "ok",
+         "none",
+         "failed"
+        ]
+       },
+       "path": {
+        "type": "string",
+        "minLength": 1
+       },
+       "problem": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 300
+       }
+      },
+      "required": [
+       "status"
+      ],
+      "additionalProperties": false
+     },
+     "fold": "restore"
+    }
+   ]
   },
   "diagnostic": {
    "lane": "cloud",
