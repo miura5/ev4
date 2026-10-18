@@ -7,7 +7,7 @@ every id in Depends is `done`. Edit only the Status and Notes columns; commit ev
 | Id | Task | Depends | Milestone | Status | Notes |
 | --- | --- | --- | --- | --- | --- |
 | B-00 | Repository skeleton: layout, package.json, .gitignore, personal-data grep test, CLAUDE.md | — | M0 | done | Layout dirs, package.json (node:test + playwright), tools/personal-data.mjs + its test; npm test 8/8, red on a planted export in the tree |
-| B-01 | Spec v4 skeleton: collection map (class, writer, key, schema file), tasks, environments seeded from Oct 17, capacity, boundaries and working agreements ported from ev-core | B-00 | M0 | open | |
+| B-01 | Spec v4 skeleton: collection map (class, writer, key, schema file), tasks, environments seeded from Oct 17, capacity, boundaries and working agreements ported from ev-core | B-00 | M0 | in progress | Oct 17 |
 | B-02 | Schema registry: a JSON Schema per collection, validate.mjs, fixture validation | B-01 | M0 | open | |
 | B-03 | Build and manifest: tools/build.mjs writes dist/manifest.json; dirty detection | B-01 | M0 | open | |
 | B-04 | deploy printer and verify-deploy | B-03 | M0 gate | open | |
