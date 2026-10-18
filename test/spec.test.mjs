@@ -144,9 +144,17 @@ test('environments: the five surfaces, each capability with a proof', () => {
 
 test('capacity: the design constants, a budget row per collection, nothing guessed before measurement', () => {
   const cap = spec.capacity;
-  assert.equal(cap.documentBytes, 256 * 1024);
   assert.equal(cap.materialTextChars, 200000);
-  assert.deepEqual(cap.batch, { maxWrites: 50, maxBytes: 1024 * 1024 });
+  // B-14: the document and batch limits rest on the measured cloud-run rows, not on guesses.
+  const measured = spec.environments['cloud-run'].numbers;
+  assert.equal(cap.measured, true);
+  assert.equal(cap.documentBytes, measured.documentBytes);
+  assert.equal(cap.batch.maxWrites, measured.batchWrites);
+  assert.equal(cap.batch.ceilingBytes, measured.batchRequestBytes);
+  assert.ok(cap.batch.maxBytes < measured.batchRequestBytes, 'room for the call\'s own fields');
+  for (const n of ['documentBytes', 'batchWrites', 'batchRequestBytes']) {
+    assert.ok(spec.environments['cloud-run'].proven.some(p => /^cse_/.test(p.run || '') && p.date && p.evidence.includes('runs/diagnostic-')), 'a diagnostic row proves ' + n);
+  }
   assert.deepEqual(cap.readWindowDays, { talk: 7, days: 14, dayedits: 14, jobs: 30, runs: 7 });
   assert.deepEqual(Object.keys(cap.collections).sort(), COLLECTIONS.slice().sort());
   if (!cap.measured) for (const [k, b] of Object.entries(cap.collections)) {

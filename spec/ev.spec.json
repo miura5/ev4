@@ -1264,7 +1264,7 @@
  "environments": {
   "_rules": [
    "A pipeline or page step may use only a capability listed here as proven. A new need gets a diagnostic run first, then a row, then code.",
-   "Seeded from what Oct 17 taught (v3). run is the diagnostic or pipeline run that proved the row; rows with run null are backfilled by B-14."
+   "Seeded from what Oct 17 taught (v3). run is the session (cse_...) of the diagnostic or pipeline run that proved the row; evidence names its runs/<id> and debug/<id>. B-14 measured the ArtifactData ceilings; rows still run null were proven by v3 or by surfaces a cloud diagnostic cannot reach (the Mac, the browser tab, the page) and are re-proven by B-21 and B-19."
   ],
   "cloud-run": {
    "proven": [
@@ -1287,20 +1287,56 @@
      "proven": true,
      "date": "2026-10-17",
      "run": null,
-     "evidence": "v3 pipeline prompts (D-081)"
+     "evidence": "v3 pipeline prompts (D-081); v4 runs never fetch: the gate checks out the deployed commit already in the checkout"
     },
     {
      "capability": "fire_trigger",
      "proven": true,
      "date": "2026-10-17",
      "run": null,
-     "evidence": "v3"
+     "evidence": "v3; v4 watchdog re-fires on staging (runs/watchdog-refire-morning-20261018-044000000-planted, B-11)"
+    },
+    {
+     "capability": "ArtifactData set of one document up to 262144 bytes serialized (256 KiB exactly)",
+     "proven": true,
+     "date": "2026-10-18",
+     "run": "cse_0197QUKzUow8ypBAMqfnNm9W",
+     "evidence": "runs/diagnostic-20261018-064940608: 255 and 256 KiB accepted, 257 KiB refused; debug/diagnostic-20261018-064940608"
+    },
+    {
+     "capability": "ArtifactData batch of 50 writes, committed atomically",
+     "proven": true,
+     "date": "2026-10-18",
+     "run": "cse_01Rd9KvXY1kYU8srX414Am1m",
+     "evidence": "runs/diagnostic-20261018-064132904; debug/diagnostic-20261018-064132904"
+    },
+    {
+     "capability": "ArtifactData batch request up to 1048576 bytes serialized",
+     "proven": true,
+     "date": "2026-10-18",
+     "run": "cse_0197QUKzUow8ypBAMqfnNm9W",
+     "evidence": "runs/diagnostic-20261018-064940608: 4 x 250000-byte documents accepted, 5 refused at 1280569 bytes"
+    },
+    {
+     "capability": "reads its own session transcript (~/.claude/projects) for the run audit",
+     "proven": true,
+     "date": "2026-10-18",
+     "run": "cse_0197QUKzUow8ypBAMqfnNm9W",
+     "evidence": "runs/diagnostic-20261018-064940608 audit step: 9 calls, all printed"
     }
    ],
    "limits": [
     "no add_repo",
-    "fetching or unpacking code to run it is refused by the safety review (\"Code from External\")"
-   ]
+    "fetching or unpacking code to run it is refused by the safety review (\"Code from External\")",
+    "ArtifactData refuses a document over 262144 bytes serialized, before sending (\"the limit is 262144\")",
+    "ArtifactData refuses a batch request over 1048576 bytes serialized (\"split it into smaller batches\")",
+    "a batch holds at most 50 writes (the tool's own schema)"
+   ],
+   "numbers": {
+    "documentBytes": 262144,
+    "batchWrites": 50,
+    "batchRequestBytes": 1048576
+   }
   },
   "mac-run": {
    "proven": [
@@ -1401,7 +1437,14 @@
      "proven": false,
      "date": null,
      "run": null,
-     "evidence": "13 page tools in use; the cap is measured in M3"
+     "evidence": "13 page tools in use; measured from the page itself once the v4 shell is published (B-15/B-19): sample runs as the viewer, so a cloud diagnostic cannot reach it"
+    },
+    {
+     "capability": "page db document and batch ceilings",
+     "proven": false,
+     "date": null,
+     "run": null,
+     "evidence": "the page writes through its own db, not ArtifactData; assumed no larger than the cloud-run numbers until measured from the page (B-19)"
     }
    ],
    "limits": [
@@ -1441,14 +1484,16 @@
  "capacity": {
   "_rules": [
    "Nothing is deleted, so capacity is managed by bounding what is read, not what is kept.",
-   "Per-collection budgets stay null until the B-14 diagnostic measures the platform limits; no budget is set from guesswork. lint warns and fails at these numbers once set."
+   "documentBytes and batch rest on environments.cloud-run (B-14, runs/diagnostic-20261018-064940608): 262144 bytes per document and 1048576 bytes per batch request are the platform's own refusals. maxBytes keeps 4096 bytes of the request for the call's own fields.",
+   "Per-collection budgets stay null: no ceiling on document count or record size was found or reachable without writing that much, so none is set from guesswork. lint warns and fails at these numbers once a design chat sets them from read cost."
   ],
   "documentBytes": 262144,
   "materialTextChars": 200000,
   "materialChunkId": "<id>-p<n>",
   "batch": {
    "maxWrites": 50,
-   "maxBytes": 1048576
+   "maxBytes": 1044480,
+   "ceilingBytes": 1048576
   },
   "readWindowDays": {
    "talk": 7,
@@ -1457,7 +1502,7 @@
    "jobs": 30,
    "runs": 7
   },
-  "measured": false,
+  "measured": true,
   "collections": {
    "weakspots": {
     "warnDocs": null,
