@@ -603,7 +603,7 @@
     // D-111: a health check older than spec.constants.health.staleHours means the watchdog itself may have stopped.
     const staleH = ((EV_SPEC.constants || {}).health || {}).staleHours || 4; const ageH = (Date.now() - E.toMs(hl.at)) / 3600e3;
     if (ageH > staleH) out.push({ text: `This health check is ${Math.floor(ageH)} hours old. The watchdog checks every three hours, so it may have stopped. A build chat should look.`, v: 'bad', chip: 'stale' });
-    for (const m of hl.missing || []) out.push({ text: `${PIPE_NAME[m.pipeline] || m.pipeline} missed its ${m.slot ? clock12(m.slot) + ' ' : ''}run${m.refired ? '; E.V. started it again' : ''}.`, v: 'warn' });
+    for (const m of hl.missing || []) out.push({ text: `${PIPE_NAME[m.pipeline] || m.pipeline} missed its ${m.slot ? clock12(m.slot) + ' ' : ''}run${m.refired ? '; E.V. started it again' : m.lane === 'mac' ? '. It runs on your Mac, which may have been asleep or offline; it runs again at its next time' : ''}.`, v: 'warn' });
     for (const r of hl.stalledRuns || []) out.push({ text: `${PIPE_NAME[r.pipeline] || r.pipeline} started ${ago(r.startedAt)} and never finished${r.refired ? '; E.V. started it again' : ''}.`, v: 'warn' });
     for (const j of hl.stalledJobs || []) out.push({ text: `A background job waited ${j.minutes || '?'} min without starting${j.refired ? '; E.V. sent it again' : ''}.`, v: 'warn' });
     const why = { 'already re-fired once': 'still stuck after one retry', 'no task to fire': 'and there is no task to start it again', 'past its re-fire window': 'too late in the day to start it again' };

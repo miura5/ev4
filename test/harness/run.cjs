@@ -475,6 +475,11 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
       }
       await setAt(keep); await page.waitForTimeout(200);
       ok('a fresh health check has no stale mark', !/stale/.test(await card.textContent()));
+      // B-27 (D-087): a missed Mac-lane slot reads as a sentence, not a retry
+      const h0 = await page.evaluate(() => JSON.parse(JSON.stringify(window.__db.health.current)));
+      await page.evaluate(async h => { const db = await window.claude.use('db'); await db.collection('health').doc('current').set({ ...h, missing: [...h.missing, { pipeline: 'evening-mac', slot: '2026-10-19T01:20:00.000Z', refired: false, lane: 'mac' }] }); }, h0); await page.waitForTimeout(300);
+      ok('a missed Mac-lane slot says the Mac may have been asleep, and is not retried', /Evening \(Mac\) missed its 8:20 PM run\. It runs on your Mac, which may have been asleep or offline; it runs again at its next time\./.test(await card.textContent()), (await card.textContent()).slice(0, 400));
+      await page.evaluate(async h => { const db = await window.claude.use('db'); await db.collection('health').doc('current').set(h); }, h0); await page.waitForTimeout(200);
       await page.setViewportSize({ width: 390, height: 844 }); }
     ok('no page errors after interactions', errors.length === 0, errors.join(' | '));
     // Visitor

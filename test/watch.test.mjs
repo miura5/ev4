@@ -65,14 +65,14 @@ test('a run that never ended and a job stalled in the queue are re-fired once; f
     ['watchdog-refire-morning-old', spec.tasks.staging.morning.trigger, null],
     ['watchdog-refire-job-job-a', spec.tasks.staging.worker.trigger, 'Job job-a'],
   ]);
-  assert.deepEqual(v.missing, [], 'a morning run started after the 4:25am slot: nothing missed');
+  assert.deepEqual(v.missing.filter(m => m.lane !== 'mac'), [], 'a morning run started after the 4:25am slot: nothing missed (the Mac lane is B-27\'s test)');
   // Staging watches its morning on the live slot (B-26): a morning with no run is re-fired until 6:00am, then reported.
   const bare = { runs: [], jobs: [], jobresults: [] };
   const early = watch(bare, { now: '2026-10-19T10:00:00Z', record: 'staging', spec });
-  assert.deepEqual(early.missing.map(m => [m.pipeline, m.refired]), [['morning', true]]);
+  assert.deepEqual(early.missing.filter(m => m.lane !== 'mac').map(m => [m.pipeline, m.refired]), [['morning', true]]);
   assert.equal(early.refires[0].trigger, spec.tasks.staging.morning.trigger);
   const late = watch(bare, { now: '2026-10-19T11:30:00Z', record: 'staging', spec });
-  assert.deepEqual(late.missing.map(m => [m.pipeline, m.refired]), [['morning', false]]);
+  assert.deepEqual(late.missing.filter(m => m.lane !== 'mac').map(m => [m.pipeline, m.refired]), [['morning', false]]);
 });
 
 test('the watchdog pipeline: re-fire records and health/current in one batch, then the printed fire_trigger calls; health rebuilds', () => {
@@ -123,4 +123,20 @@ test('a slot from before the record\'s v4 tasks existed is not a miss (spec.cons
   assert.ok(!v.reported.some(r => /weekly/.test(r.target)));
   const s2 = JSON.parse(JSON.stringify(spec)); delete s2.constants.watchdog.since;
   assert.ok(watch({ runs: [] }, { now: '2026-10-18T16:12:00Z', record: 'live', spec: s2 }).missing.some(m => m.pipeline === 'weekly'), 'without since, the old slot reads as missed');
+});
+
+test('B-27 (D-087): a missed mac-lane slot is listed in missing and never re-fired; staging watches its evening-mac on the live slot', () => {
+  for (const target of ['live', 'staging']) {
+    const spec = withTriggers(target);
+    const db = { runs: [run('evening-cloud-x', 'evening-cloud', '2026-10-19T01:15:00Z')] }; // the cloud evening ran, the Mac's did not
+    const v = watch(db, { now: '2026-10-19T02:00:00Z', record: target, spec }); // 9:00pm CDT, 40 min after 8:20pm
+    const m = v.missing.find(x => x.pipeline === 'evening-mac');
+    assert.deepEqual(m, { pipeline: 'evening-mac', slot: '2026-10-19T01:20:00.000Z', refired: false, lane: 'mac' }, target);
+    assert.ok(!v.refires.some(r => r.target.includes('evening-mac')), `${target}: never re-fired`);
+    assert.ok(!v.reported.some(r => r.target.includes('evening-mac')), `${target}: a miss, not a stuck retry`);
+    // It ran: nothing missing.
+    db.runs.push(run('evening-mac-y', 'evening-mac', '2026-10-19T01:20:30Z'));
+    assert.ok(!watch(db, { now: '2026-10-19T02:00:00Z', record: target, spec }).missing.some(x => x.pipeline === 'evening-mac'));
+  }
+  assert.equal(base.tasks.staging['evening-mac'].watchSchedule, base.tasks.live['evening-mac'].schedule);
 });

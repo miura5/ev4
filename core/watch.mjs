@@ -1,7 +1,8 @@
 // The watchdog's judgment, done by code (Operational architecture, "Observability"): which scheduled slots were missed,
 // which runs never ended, which jobs stalled in the queue, and which of them to re-fire. Each is re-fired once: the
 // re-fire writes runs/watchdog-refire-<target> (a Log), so a second miss finds it and is reported, not retried. A
-// missed morning is re-fired until 6:00am Central and never after; the windows live in spec.constants.watchdog. Pure.
+// missed morning is re-fired until 6:00am Central and never after; the windows live in spec.constants.watchdog. A
+// mac-lane slot (evening-mac, the restore drill) is reported and never re-fired (D-087): only the Mac can run it. Pure.
 import EV from './evcore.mjs';
 
 const ms = x => EV.toMs(x);
@@ -66,11 +67,12 @@ export function watch(db, { now, record, spec }) {
   const missing = [];
   for (const [name, t] of Object.entries(tasks).sort(([a], [b]) => (a < b ? -1 : 1))) {
     const sched = t.schedule || t.watchSchedule;
-    if (!t.pipeline || !sched || t.lane !== 'cloud') continue;
+    if (!t.pipeline || !sched || (t.lane !== 'cloud' && t.lane !== 'mac')) continue;
     const slot = lastSlot(sched, now); if (!slot || minutes(slot) < w.graceMinutes) continue;
     // A slot before this record's v4 tasks existed (spec.constants.watchdog.since) was never this task's to run.
     if (w.since && w.since[record] && ms(slot) < ms(w.since[record])) continue;
     if (runs.some(r => r.pipeline === t.pipeline && ms(r.startedAt) >= ms(slot) - 5 * 6e4)) continue;
+    if (t.lane === 'mac') { missing.push({ pipeline: t.pipeline, slot, refired: false, lane: 'mac' }); continue; } // D-087: reported, never re-fired
     const id = `watchdog-refire-${t.pipeline}-${EV.compactTime(slot)}`;
     missing.push({ pipeline: t.pipeline, slot, refired: consider(id, `${name} slot ${slot}`, t, 'missed its slot', deadlineFor(t.pipeline, slot, t, true)) });
   }

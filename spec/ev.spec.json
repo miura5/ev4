@@ -1655,7 +1655,8 @@
     ],
     "macBound": true,
     "push": false,
-    "trigger": "trig_01FHjw4mu745gorCZ5quGSJD"
+    "trigger": "trig_01FHjw4mu745gorCZ5quGSJD",
+    "watchSchedule": "CRON_TZ=America/Chicago 20 20 * * *"
    },
    "weekly": {
     "pipeline": "weekly",
