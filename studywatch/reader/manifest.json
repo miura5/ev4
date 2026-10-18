@@ -2,27 +2,54 @@
   "manifest_version": "0.3",
   "name": "ev-study-watch-reader",
   "display_name": "E.V. Study Watch reader",
-  "version": "0.1.0",
-  "description": "Read-only: lets E.V. Home read your latest school note and E.V.'s context file from Documents/E.V. Study Watch.",
-  "long_description": "E.V. Home, opened in the Claude desktop app, uses this to read two files in Documents/E.V. Study Watch: context.json (written by E.V.'s evening run) and live/latest.json (your latest NUR 112 or BIO 201 note, written by Study Watch in reader mode). It cannot write, delete or list files, reads nothing else, skips notes tagged #graded, and never returns Journal, personal or E.V. folders.",
-  "author": { "name": "Matt (E.V.)" },
+  "version": "0.2.0",
+  "description": "Read-only: lets E.V. Home read your latest school note, E.V.'s context file and your Study Watch session files from Documents/E.V. Study Watch.",
+  "long_description": "E.V. Home, opened in the Claude desktop app, uses this to read context.json (written by E.V.'s evening run), live/latest.json (your latest NUR 112 or BIO 201 note, written by Study Watch in reader mode) and the session files in sessions/, so it can file your sessions the moment you open it. It cannot write or delete, reads nothing else, returns a session as its findings (never the note text or cards), skips notes and sessions tagged #graded, and never returns Journal, personal or E.V. folders.",
+  "author": {
+    "name": "Matt (E.V.)"
+  },
   "server": {
     "type": "node",
     "entry_point": "server/index.mjs",
     "mcp_config": {
       "command": "node",
-      "args": ["${__dirname}/server/index.mjs"],
+      "args": [
+        "${__dirname}/server/index.mjs"
+      ],
       "env": {}
     }
   },
   "tools": [
-    { "name": "status", "description": "Whether the folder is reachable, when context.json was written, and which note Study Watch saved last (no note text)." },
-    { "name": "latest_note", "description": "Your latest NUR 112 or BIO 201 note's plain text, or unchanged:true when nothing new was written." }
+    {
+      "name": "status",
+      "description": "Whether the folder is reachable, when context.json was written, and which note Study Watch saved last (no note text)."
+    },
+    {
+      "name": "latest_note",
+      "description": "Your latest NUR 112 or BIO 201 note's plain text, or unchanged:true when nothing new was written."
+    },
+    {
+      "name": "list_sessions",
+      "description": "Your Study Watch session files: id, size, hash and modified time (no contents)."
+    },
+    {
+      "name": "read_session",
+      "description": "One session's findings as E.V. files them (summary, weak spots, connections, note to-dos), never the note text."
+    }
   ],
-  "keywords": ["E.V.", "Study Watch", "nursing", "read-only"],
+  "keywords": [
+    "E.V.",
+    "Study Watch",
+    "nursing",
+    "read-only"
+  ],
   "license": "UNLICENSED",
   "compatibility": {
-    "platforms": ["darwin"],
-    "runtimes": { "node": ">=18.0.0" }
+    "platforms": [
+      "darwin"
+    ],
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
   }
 }
