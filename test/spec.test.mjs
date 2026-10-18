@@ -106,7 +106,7 @@ test('tasks: every live pipeline has a task, every pipeline has a staging task, 
   assert.equal(at('evening-cloud'), 'CRON_TZ=America/Chicago 15 20 * * *');
   assert.equal(at('evening-mac'), 'CRON_TZ=America/Chicago 20 20 * * *');
   assert.equal(at('weekly'), 'CRON_TZ=America/Chicago 57 17 * * 0');
-  assert.match(at('watchdog'), /^CRON_TZ=America\/Chicago \d{1,2} \*\/3 \* \* \*$/, 'every 3 hours; the server anchors the minute');
+  assert.equal(at('watchdog'), 'CRON_TZ=America/Chicago 55 1,4,7,10,13,16,19,22 * * *', 'hours spelled out (D-084): an every-3-hours cron anchors to its creation minute');
   assert.equal(at('worker'), null);
 });
 
@@ -172,4 +172,13 @@ test('boundaries B-01 to B-14 ported, the explicit-OK list and the working agree
 
 test('no delete op anywhere in the spec (P10)', () => {
   assert.doesNotMatch(RAW, /"op":\s*"delete"/);
+});
+
+test('B-26 (D-084): the watchdog\'s slots land inside every scheduled cloud pipeline\'s re-fire window', async () => {
+  const { uncoveredSlots } = await import('../core/watch.mjs');
+  assert.deepEqual(uncoveredSlots(spec), [], 'every missed slot over two weeks is seen in time');
+  const old = uncoveredSlots(spec, { watchdog: 'CRON_TZ=America/Chicago 4 */3 * * *' });
+  assert.ok(old.some(u => u.task === 'morning'), 'the Oct 18 schedule sees a missed morning only after 6:00am');
+  assert.ok(old.some(u => u.task === 'weekly'), 'and the weekly too late');
+  assert.equal(spec.tasks.staging.morning.watchSchedule, spec.tasks.live.morning.schedule, 'staging watches its morning on the live slot');
 });

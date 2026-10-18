@@ -59,16 +59,18 @@ export function watch(db, { now, record, spec }) {
     refires.push({ ...entry, trigger: task.trigger, ...(text ? { text } : {}) }); return true;
   };
   // A scheduled pipeline's window is a Central clock time where the spec names one (a missed morning until 6:00am);
-  // a fire-only task's (staging) is a span from the slot or start.
-  const deadlineFor = (pipeline, from, task) => { const until = task && task.schedule ? w.refireUntil[pipeline] : null; if (until) { const [h, m] = until.split(':').map(Number); return chicagoInstant(EV.chicagoDate(from), h, m); } return new Date(ms(from) + w.refireWithinMinutes * 6e4).toISOString(); };
+  // a fire-only task's (staging) is a span from the slot or start, except a staging slot watched on the live
+  // schedule (watchSchedule), which keeps the live window so staging shows what live would do.
+  const deadlineFor = (pipeline, from, task, slotMiss = false) => { const until = task && (task.schedule || (slotMiss && task.watchSchedule)) ? w.refireUntil[pipeline] : null; if (until) { const [h, m] = until.split(':').map(Number); return chicagoInstant(EV.chicagoDate(from), h, m); } return new Date(ms(from) + w.refireWithinMinutes * 6e4).toISOString(); };
 
   const missing = [];
   for (const [name, t] of Object.entries(tasks).sort(([a], [b]) => (a < b ? -1 : 1))) {
-    if (!t.pipeline || !t.schedule || t.lane !== 'cloud') continue;
-    const slot = lastSlot(t.schedule, now); if (!slot || minutes(slot) < w.graceMinutes) continue;
+    const sched = t.schedule || t.watchSchedule;
+    if (!t.pipeline || !sched || t.lane !== 'cloud') continue;
+    const slot = lastSlot(sched, now); if (!slot || minutes(slot) < w.graceMinutes) continue;
     if (runs.some(r => r.pipeline === t.pipeline && ms(r.startedAt) >= ms(slot) - 5 * 6e4)) continue;
     const id = `watchdog-refire-${t.pipeline}-${EV.compactTime(slot)}`;
-    missing.push({ pipeline: t.pipeline, slot, refired: consider(id, `${name} slot ${slot}`, t, 'missed its slot', deadlineFor(t.pipeline, slot, t)) });
+    missing.push({ pipeline: t.pipeline, slot, refired: consider(id, `${name} slot ${slot}`, t, 'missed its slot', deadlineFor(t.pipeline, slot, t, true)) });
   }
   const stalledRuns = [];
   for (const r of runs.filter(r => r.status === 'running' && r.pipeline !== 'watchdog' && minutes(r.startedAt) > w.runTimeoutMinutes).sort((a, b) => (a.id < b.id ? -1 : 1))) {
@@ -98,4 +100,25 @@ export function healthBody(db, { now, record }, spec) {
     capacity: state && state.snapshot && state.snapshot.health ? state.snapshot.health.capacity || null : null,
     restoreDrill: drill ? { id: drill.id, status: drill.status, at: drill.startedAt, days: Math.floor((ms(now) - ms(drill.startedAt)) / 864e5) } : null,
   };
+}
+
+/**
+ * D-084, the schedule test: for every scheduled cloud task, over the next `days`, the watchdog slot that would see a
+ * missed slot (the first one at least graceMinutes after it) falls inside that pipeline's re-fire window. Returns the
+ * slots no watchdog slot covers, as {task, slot, deadline}; empty means every miss can be re-fired.
+ */
+export function uncoveredSlots(spec, { watchdog = (spec.tasks.live.watchdog || {}).schedule, from = '2026-10-19T00:00:00Z', days = 14 } = {}) {
+  const w = W(spec); const out = [];
+  for (const [name, t] of Object.entries(spec.tasks.live || {})) {
+    if (!t.schedule || t.lane !== 'cloud' || t.pipeline === 'watchdog') continue;
+    const seen = new Set();
+    for (let h = 0; h <= days * 24; h++) {
+      const slot = lastSlot(t.schedule, new Date(ms(from) + h * 36e5).toISOString()); if (!slot || seen.has(slot) || ms(slot) < ms(from)) continue; seen.add(slot);
+      const until = w.refireUntil[t.pipeline];
+      const deadline = until ? (() => { const [hh, mm] = until.split(':').map(Number); return chicagoInstant(EV.chicagoDate(slot), hh, mm); })() : new Date(ms(slot) + w.refireWithinMinutes * 6e4).toISOString();
+      const seenBy = lastSlot(watchdog, deadline);
+      if (!seenBy || ms(seenBy) < ms(slot) + w.graceMinutes * 6e4) out.push({ task: name, slot, deadline });
+    }
+  }
+  return out;
 }

@@ -1488,13 +1488,13 @@
     "pipeline": "watchdog",
     "record": "live",
     "lane": "cloud",
-    "schedule": "CRON_TZ=America/Chicago 4 */3 * * *",
-    "cadence": "every 3 hours",
+    "schedule": "CRON_TZ=America/Chicago 55 1,4,7,10,13,16,19,22 * * *",
+    "cadence": "eight times a day at 1:55, 4:55, 7:55 … 22:55 Central",
     "folders": [],
     "macBound": false,
-    "push": false,
+    "push": true,
     "trigger": "trig_01WB1kmsWv5Tx5f3xF3MPrH4",
-    "note": "The server anchors an every-3-hours schedule to the minute it was created (Oct 18 cutover: minute 4)."
+    "note": "Hours spelled out (D-084): an every-3-hours cron anchors to the minute it was created. Pushes per D-097."
    }
   },
   "staging": {
@@ -1507,7 +1507,8 @@
     "folders": [],
     "macBound": false,
     "push": false,
-    "trigger": "trig_016sxpQRnaatRuxCyX4nzWPQ"
+    "trigger": "trig_016sxpQRnaatRuxCyX4nzWPQ",
+    "watchSchedule": "CRON_TZ=America/Chicago 25 4 * * *"
    },
    "evening-cloud": {
     "pipeline": "evening-cloud",

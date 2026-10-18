@@ -65,7 +65,14 @@ test('a run that never ended and a job stalled in the queue are re-fired once; f
     ['watchdog-refire-morning-old', spec.tasks.staging.morning.trigger, null],
     ['watchdog-refire-job-job-a', spec.tasks.staging.worker.trigger, 'Job job-a'],
   ]);
-  assert.deepEqual(v.missing, [], 'staging tasks are fire-only: no slot to miss');
+  assert.deepEqual(v.missing, [], 'a morning run started after the 4:25am slot: nothing missed');
+  // Staging watches its morning on the live slot (B-26): a morning with no run is re-fired until 6:00am, then reported.
+  const bare = { runs: [], jobs: [], jobresults: [] };
+  const early = watch(bare, { now: '2026-10-19T10:00:00Z', record: 'staging', spec });
+  assert.deepEqual(early.missing.map(m => [m.pipeline, m.refired]), [['morning', true]]);
+  assert.equal(early.refires[0].trigger, spec.tasks.staging.morning.trigger);
+  const late = watch(bare, { now: '2026-10-19T11:30:00Z', record: 'staging', spec });
+  assert.deepEqual(late.missing.map(m => [m.pipeline, m.refired]), [['morning', false]]);
 });
 
 test('the watchdog pipeline: re-fire records and health/current in one batch, then the printed fire_trigger calls; health rebuilds', () => {
