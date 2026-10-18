@@ -201,6 +201,11 @@ export function migrateV3(v3, { at } = {}) {
 // document changes shape any other way. Each function takes a document at that version (data, with its id) and
 // returns {data: the document at the next version, also: [{collection, id, data}] new documents it implies}.
 export const BUMPS = {
+  ideas: {
+    // D-109: ideas carry a kind; every idea before it came from study (sessions, Study Watch, the conversation), so
+    // each becomes a learning idea, the only kind that can become a weak spot.
+    1: d => ({ data: { ...d, schema: 2, kind: d.kind || 'learning' }, also: [] }),
+  },
   exams: {
     // D-094: the score is Matt's hand entry on a Fact he did not create, so it moves to examedits/<examId> (an Edit
     // the page replaces whole); the exam keeps its own fields; a stored prediction or calibration never existed in v4.

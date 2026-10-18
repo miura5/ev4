@@ -202,7 +202,7 @@ test('B-28: spec.tasks.retired keeps every old task with its reason, never a tas
 test('B-32 (D-089): x-ev.marks in the five schemas match the spec, and the registry check catches a difference', async () => {
   const { registryProblems, loadSchemas } = await import('../tools/build.mjs');
   const schemas = loadSchemas(ROOT);
-  const want = { jobs: ['fired'], sessions: ['status', 'pending', 'endedAt'], ideas: ['status'], dates: ['date', 'dueAt', 'syncedAt'], materials: ['text', 'fileUpdatedAt', 'fetchedAt', 'needsOcr'] };
+  const want = { jobs: ['fired'], sessions: ['status', 'pending', 'endedAt'], ideas: ['status', 'kind'], dates: ['date', 'dueAt', 'syncedAt'], materials: ['text', 'fileUpdatedAt', 'fetchedAt', 'needsOcr'] };
   for (const [c, fields] of Object.entries(want)) assert.deepEqual(Object.keys(schemas[c]['x-ev'].marks), fields, c);
   assert.deepEqual(registryProblems(spec, schemas), []);
   const s2 = JSON.parse(JSON.stringify(spec)); s2.collections.dates.marks.title = ['page'];

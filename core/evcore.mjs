@@ -1354,7 +1354,7 @@ Return JSON: {"pages": [{"page": <page number>, "text": "<the page's text>"}]}`;
     (weakSpots || []).forEach((raw, i) => {
       const w = typeof raw === 'string' ? { topic: raw } : raw || {}; const topic = String(w.topic || '').trim(); if (!topic) return;
       if (!w.objective || !objIds.has(w.objective)) { // not a confirmed testable objective -> an idea (Matt's rule)
-        writes.push({ op: 'set', collection: 'ideas', id: safeId('idea-' + slug(topic, 40)), data: { ...env(), text: topic, objective: w.objective || '', status: 'open', by, sessionId: id, links: seenIn } });
+        writes.push({ op: 'set', collection: 'ideas', id: safeId('idea-' + slug(topic, 40)), data: { ...env(), schema: 2, kind: 'learning', text: topic, objective: w.objective || '', status: 'open', by, sessionId: id, links: seenIn } });
         return;
       }
       const same = weakspots.find(x => isActive(x) && x.objective === w.objective && norm(x.topic) === norm(topic));
@@ -1371,7 +1371,7 @@ Return JSON: {"pages": [{"page": <page number>, "text": "<the page's text>"}]}`;
     });
     (connections || []).forEach(c => {
       const text = typeof c === 'string' ? c : c && (c.text || c.topic); if (!text) return;
-      writes.push({ op: 'set', collection: 'ideas', id: safeId('idea-' + slug(text, 40)), data: { ...env(), text, objective: (c && c.objective) || '', status: 'open', by, sessionId: id, links: seenIn } });
+      writes.push({ op: 'set', collection: 'ideas', id: safeId('idea-' + slug(text, 40)), data: { ...env(), schema: 2, kind: 'learning', text, objective: (c && c.objective) || '', status: 'open', by, sessionId: id, links: seenIn } });
     });
     (noteTodos || []).forEach(n => {
       const text = typeof n === 'string' ? n : n && (n.text || n.topic); if (!text) return;

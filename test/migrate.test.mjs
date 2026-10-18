@@ -226,3 +226,18 @@ test('B-39 (D-094): the exams 1 to 2 bump moves the score to examedits, keeps th
   applied.examedits.push({ id: 'E2', schema: 1, writer: 'page', at: '2026-11-03T00:00:00Z', source: 'E.V. Home', updatedAt: '2026-11-03T00:00:00Z', score: 91 });
   assert.ok(!migrateBumps(applied, { at: '2026-11-04T00:00:00Z' }).writes.some(w => w.collection === 'examedits'), 'an existing examedits document is kept');
 });
+
+test('B-53 (D-109): the ideas 1 to 2 bump makes every earlier idea a learning idea, matches its fixture and is idempotent', async () => {
+  const { migrateBumps } = await import('../core/migrate.mjs');
+  const { readExport: read } = await import('../core/schemas.mjs');
+  const dir = path.join(ROOT, 'test/data/bumps/ideas-1');
+  const load = d => { const db = {}; for (const { collection, id, doc } of read(d)) (db[collection] = db[collection] || []).push({ ...doc, id }); return db; };
+  const before = load(path.join(dir, 'before')), after = load(path.join(dir, 'after'));
+  const r = migrateBumps(before, { at: '2026-10-18T17:00:00Z' });
+  const got = {}; for (const w of r.writes) (got[w.collection] = got[w.collection] || []).push({ ...w.data, id: w.id });
+  const sorted = l => (l || []).slice().sort((a, b) => (a.id < b.id ? -1 : 1));
+  for (const [c, docs] of Object.entries(after)) assert.equal(EV.stableStringify(sorted(got[c])), EV.stableStringify(sorted(docs)), c);
+  for (const w of r.writes) assert.ok(validate(w.collection, w.data, { id: w.id }).ok, `${w.collection}/${w.id} validates`);
+  assert.ok(got.ideas.every(i => i.kind === 'learning' && i.schema === 2));
+  assert.deepEqual(migrateBumps(applyWrites(before, r.writes), { at: '2026-10-19T17:00:00Z' }).writes, [], 'a second run writes nothing');
+});

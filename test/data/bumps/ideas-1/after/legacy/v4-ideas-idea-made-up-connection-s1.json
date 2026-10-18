@@ -1,0 +1,14 @@
+{
+ "schema": 1,
+ "writer": "filing",
+ "at": "2026-10-12T05:51:05Z",
+ "source": "Study Watch",
+ "text": "Made-up connection between preload and fluid balance",
+ "objective": "E4-3",
+ "status": "open",
+ "links": [],
+ "migratedFrom": "ideas/idea-made-up-connection",
+ "migratedTo": "ideas/idea-made-up-connection",
+ "migratedAt": "2026-10-18T17:00:00.000Z",
+ "migration": "ideas schema 1 to 2"
+}

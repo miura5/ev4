@@ -156,7 +156,7 @@ test('the retry path: a batch refused on its pin is re-pulled and re-pinned, and
   const { dir, lines } = begin(recordDb(), { version: () => 1 });
   RUN.pulled({ spec, dir, transcript: lines.join('\n') }); answer(dir, { push: 'ok' });
   // Plant a new Fact in the plan beside the state write, then plan.
-  CODE_STEPS['test-fact'] = () => ({ writes: [{ op: 'set', collection: 'ideas', id: 'made-up-idea', data: { ...EV.envelope('page', 'test', AT), text: 'A made-up idea', status: 'open', source: 'test' } }] });
+  CODE_STEPS['test-fact'] = () => ({ writes: [{ op: 'set', collection: 'ideas', id: 'made-up-idea', data: { ...EV.envelope('page', 'test', AT), schema: 2, kind: 'learning', text: 'A made-up idea', status: 'open', source: 'test' } }] });
   try {
     const s2 = { ...spec, pipelines: { ...spec.pipelines, 'evening-cloud': { ...DEF, steps: [...DEF.steps, { id: 'test-fact', kind: 'code' }] } } };
     const r = RUN.compute({ spec: s2, dir, validate, at: AT });

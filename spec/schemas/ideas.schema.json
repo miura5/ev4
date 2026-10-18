@@ -10,9 +10,12 @@
    "page",
    "filing"
   ],
-  "schema": 1,
+  "schema": 2,
   "marks": {
    "status": [
+    "page"
+   ],
+   "kind": [
     "page"
    ]
   }
@@ -20,7 +23,7 @@
  "type": "object",
  "properties": {
   "schema": {
-   "const": 1
+   "const": 2
   },
   "writer": {
    "enum": [
@@ -111,6 +114,14 @@
      "type": "null"
     }
    ]
+  },
+  "kind": {
+   "enum": [
+    "learning",
+    "feature",
+    "general"
+   ],
+   "description": "D-109: learning (course content, may become a weak spot), feature (an idea for E.V.), general"
   }
  },
  "required": [
@@ -119,6 +130,8 @@
   "at",
   "source",
   "text",
-  "status"
- ]
+  "status",
+  "kind"
+ ],
+ "$comment": "Schema 2 (D-109): kind; only learning ideas can become weak spots."
 }

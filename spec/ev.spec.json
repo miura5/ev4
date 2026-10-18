@@ -1347,11 +1347,14 @@
     "filing"
    ],
    "key": "<slug>",
-   "holds": "text, objective, links, status mark",
+   "holds": "text, objective, links, kind (learning, feature, general: D-109); status and kind are marks the page changes",
    "fromV3": "ideas",
    "schema": "spec/schemas/ideas.schema.json",
    "marks": {
     "status": [
+     "page"
+    ],
+    "kind": [
      "page"
     ]
    }

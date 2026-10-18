@@ -13,6 +13,7 @@ const shots = process.argv[3] || '/tmp/ev4-shots'; fs.mkdirSync(shots, { recursi
 function load(dir) { const db = {}; for (const c of fs.readdirSync(dir)) { const p = path.join(dir, c); if (!fs.statSync(p).isDirectory()) continue; db[c] = {}; for (const f of fs.readdirSync(p)) if (f.endsWith('.json')) db[c][f.slice(0, -5)] = JSON.parse(fs.readFileSync(path.join(p, f), 'utf8')); } return db; }
 const seed = load(dbDir);
 delete seed.system; delete seed.legacy; delete seed.debug; delete seed.journal; // the harness never needs his journal
+seed.ideas = seed.ideas || {}; seed.ideas['idea-harness-feature'] = { schema: 2, writer: 'page', at: '2026-10-17T14:00:00Z', source: 'Told E.V.', kind: 'feature', text: 'Harness feature idea: a dark-mode calendar', objective: '', status: 'open', links: [] }; // B-53
 seed.exams = seed.exams || {}; seed.exams['E0H'] = { schema: 2, writer: 'page', at: '2026-09-01T14:00:00Z', source: 'harness', course: 'NUR 112', kind: 'unit', title: 'Harness Exam 0', date: '2026-10-01', status: 'upcoming' }; // B-39: past, no score
 seed.system = { manifest: { release: 'v4.0.0', commit: 'a'.repeat(40), pages: { staging: { files: { 'page/staging/app.js': 'a'.repeat(64) } }, live: { files: {} } } } }; // B-38
 const env = (writer, source, at) => ({ schema: 1, writer, at: at || new Date().toISOString(), source });
@@ -417,6 +418,15 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     await page.click('#tab-record'); await page.waitForTimeout(100);
     ok('sessions listed', (await page.locator('#sessions .row').count()) === 2);
     ok('ideas show links', /1 link/.test(await page.textContent('#ideas')));
+    // B-53 (D-109): every idea shows its kind; only a learning idea offers "Make it a weak spot"; the kind can change
+    { const feat = page.locator('#ideas .row', { hasText: 'Harness feature idea' });
+      ok('a feature idea shows its kind and no weak-spot action', /Feature/.test(await feat.textContent()) && (await feat.locator('button', { hasText: 'Make it a weak spot' }).count()) === 0);
+      const learnRows = page.locator('#ideas .row').filter({ has: page.locator('select.idea-kind') }).filter({ hasNot: page.locator('text=Harness feature idea') });
+      ok('a learning idea offers Make it a weak spot', (await page.locator('#ideas .row', { hasText: 'Make it a weak spot' }).count()) >= 1);
+      await feat.locator('select.idea-kind').selectOption('learning'); await page.waitForTimeout(200);
+      const k = await page.evaluate(() => window.__db.ideas['idea-harness-feature'].kind);
+      ok('changing the kind writes it (a mark) and the action appears', k === 'learning' && (await page.locator('#ideas .row', { hasText: 'Harness feature idea' }).locator('button', { hasText: 'Make it a weak spot' }).count()) === 1, k);
+      await page.locator('#ideas').scrollIntoViewIfNeeded(); await page.screenshot({ path: `${shots}/ideas-${scheme}.png`, fullPage: false }); }
     await page.click('#seg-record [data-v="journal"]'); await page.fill('#j-text', 'Resident in room 12 was confused.'); await page.waitForTimeout(50);
     ok('journal warns about identifiers', /room number/.test(await page.textContent('#j-warn')));
     // System

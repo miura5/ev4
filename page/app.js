@@ -548,17 +548,24 @@
   }
 
   // ------------------------------------------------------------ Record
+  const IDEA_KIND = { learning: 'Learning', feature: 'Feature', general: 'General' };
+  const promote = i => btn('Make it a weak spot', ev => guard(ev.target, async () => {
+        const at = now(); const id = E.safeId('ws-idea-' + i.id);
+        const facts = { ...envelope('Promoted idea', at), topic: String(i.text || '').slice(0, 140), objective: i.objective || '', exam: String(i.objective || '').split('-')[0] || '', course: 'NUR 112', kind: 'concept', addedBy: 'page', origin: { idea: i.id }, initial: { streak: 0, nextDue: E.addDays(today, 1), recurrence: 1, misses: 0 }, events: {} };
+        await write({ op: 'set', collection: 'weakspots', id, data: facts });
+        await write({ op: 'update', collection: 'ideas', id: i.id, data: { status: 'promoted', weakspotId: id } });
+      }, 'Now a weak spot'));
   function renderRecord() {
     const ss = [...S.sessions].sort((a, b) => String(b.startedAt || b.date || '').localeCompare(String(a.startedAt || a.date || '')));
     $('sessions').replaceChildren(...(ss.length ? ss.map(s => row({ lead: short(s.date), title: s.topic || 'Study session', chips: [s.status === 'active' || s.status === 'ending' ? ['in progress', 'info'] : null, s.source === 'E.V. Home' ? ['E.V.', 'ok'] : null], detail: [s.minutes ? s.minutes + ' min' : '', s.questions ? plural(s.questions, 'question') : '', s.cardCount ? s.cardCount + ' cards' : '', s.summary].filter(Boolean).join(' · ') })) : [empty('Study sessions show up here. Start one from the E.V. conversation.')]));
     const ideas = S.ideas.filter(i => i.status !== 'archived').sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
     $('ideas').replaceChildren(...(ideas.length ? ideas.map(i => row({ title: i.text || '', detail: [i.objective, i.sourceLabel || i.source, short(i.createdAt), (i.links || []).length ? plural(new Set(i.links.map(l => (l && l.to) + '|' + (l && l.type))).size, 'link') : '', i.status === 'promoted' ? 'now a weak spot' : ''].filter(Boolean).join(' · '),
-      action: i.status === 'promoted' ? null : btn('Make it a weak spot', ev => guard(ev.target, async () => {
-        const at = now(); const id = E.safeId('ws-idea-' + i.id);
-        const facts = { ...envelope('Promoted idea', at), topic: String(i.text || '').slice(0, 140), objective: i.objective || '', exam: String(i.objective || '').split('-')[0] || '', course: 'NUR 112', kind: 'concept', addedBy: 'page', origin: { idea: i.id }, initial: { streak: 0, nextDue: E.addDays(today, 1), recurrence: 1, misses: 0 }, events: {} };
-        await write({ op: 'set', collection: 'weakspots', id, data: facts });
-        await write({ op: 'update', collection: 'ideas', id: i.id, data: { status: 'promoted', weakspotId: id } });
-      }, 'Now a weak spot')) })) : [empty('Ideas from Study Watch sessions show up here after filing.')]));
+      chips: [[IDEA_KIND[i.kind || 'learning'] || 'Learning', i.kind === 'feature' ? 'plum' : i.kind === 'general' ? '' : 'info']],
+      action: (() => { // D-109: a kind control on every idea; only a learning idea can become a weak spot
+        const box = el('div', 'idea-acts'); const sel = document.createElement('select'); sel.setAttribute('aria-label', 'Kind of idea'); sel.className = 'idea-kind';
+        for (const [v, t] of Object.entries(IDEA_KIND)) { const o = document.createElement('option'); o.value = v; o.textContent = t; o.selected = (i.kind || 'learning') === v; sel.append(o); }
+        sel.addEventListener('change', () => guard(sel, () => write({ op: 'update', collection: 'ideas', id: i.id, data: { kind: sel.value } }), 'Kind changed'));
+        box.append(sel); if (i.status !== 'promoted' && (i.kind || 'learning') === 'learning') box.append(promote(i)); return box; })() })) : [empty('Ideas from Study Watch sessions show up here after filing.')]));
     const up = S.dates.filter(d => (d.date || '') >= today).sort((a, b) => a.date.localeCompare(b.date) || String(a.title).localeCompare(b.title));
     $('dates').replaceChildren(...(up.length ? up.map(d => dateRow(d, { edit: true })) : [empty('No upcoming dates. Add one below.')]));
     const offUp = S.datesAll.filter(d => E.isRemovedDate(d) && (d.date || '') >= today).sort((a, b) => a.date.localeCompare(b.date));
@@ -1652,10 +1659,11 @@
           }
           throw new Error('action must be search, read or list');
         } },
-      { name: 'save_idea', description: 'Save a connection or insight he wants to keep (not something to drill). Returns the id.',
-        inputSchema: { type: 'object', properties: { text: { type: 'string' }, objective: { type: 'string' } }, required: ['text'] },
+      { name: 'save_idea', description: 'Save a connection or insight he wants to keep (not something to drill). kind: learning (about his course content), feature (an idea for E.V. itself) or general (anything else). Returns the id.',
+        inputSchema: { type: 'object', properties: { text: { type: 'string' }, objective: { type: 'string' }, kind: { type: 'string', enum: ['learning', 'feature', 'general'] } }, required: ['text', 'kind'] },
         execute: async i => { const text = str(i.text, 400); if (!text) throw new Error('text is required'); noIds(text); const id = E.safeId('idea-' + today + '-' + E.slug(text, 30));
-          await write({ op: 'set', collection: 'ideas', id, data: { ...envelope('Told E.V.'), text, objective: S.objectives.some(o => o.id === i.objective) ? String(i.objective) : '', status: 'open', links: [] } }); return 'saved ' + id; } },
+          const kind = ['learning', 'feature', 'general'].includes(i.kind) ? i.kind : 'general';
+          await write({ op: 'set', collection: 'ideas', id, data: { ...envelope('Told E.V.'), schema: 2, kind, text, objective: kind === 'learning' && S.objectives.some(o => o.id === i.objective) ? String(i.objective) : '', status: 'open', links: [] } }); return 'saved ' + id + ' (' + kind + ')'; } },
       { name: 'make_practice', description: 'Write 5 new practice questions now, aimed at his most due weak spots or the topic given. Takes about a minute and posts as its own message. For more than 5, use start_job with practice-set.',
         inputSchema: { type: 'object', properties: { topic: { type: 'string' } } },
         execute: i => { if (morePending) return 'already writing a batch'; morePractice({ announce: true, topic: str(i.topic, 200) || undefined }); return 'started; they post here in about a minute'; } },
