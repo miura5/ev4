@@ -4,5 +4,20 @@
  "at": "2026-10-16T14:00:00Z",
  "source": "evening 8:15",
  "course": "NUR 112",
- "chunks": []
+ "chunks": [
+  {
+   "id": "NUR112-900002",
+   "page": 1,
+   "unit": "slide",
+   "kind": "slides",
+   "text": "A made-up slide."
+  }
+ ],
+ "materials": {
+  "NUR112-900002": {
+   "title": "Sample slides.pptx",
+   "kind": "slides",
+   "chars": 21
+  }
+ }
 }

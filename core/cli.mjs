@@ -5,6 +5,9 @@
 //   migrate v3 --from <export>     the v4 writes for a v3 record export, as document files and chunked batches
 //   verify-migration --from <export>   recompute every weak spot from the migrated Facts; zero mismatches passes
 //   seed-staging --from <export>   the batches that make the staging record a copy of an export, stamped system/seed
+//   lint --from <record>           the record against its rules: writers, unchanged Facts, budgets, schemas, every
+//                                  Derived document rebuilt byte for byte, and the content checks (--date, --json)
+//   rebuild <collection|all> --from <record>   regenerate Derived documents as of their time; --out <dir> writes them
 // Options: --root <repo> (default: this checkout), --dist <dir> (default <root>/dist), --state <dir> (default
 // <dist>/state/<target>), --version <manifest|spec|environments>=<n> (deploy: the version a get printed),
 // --matt-ok (deploy live), --json; migrate: --from <export dir>, --at <ISO stamp> (default now), --out <dir>
@@ -20,6 +23,8 @@ import { migrateV3, verifyMigration, applyWrites } from './migrate.mjs';
 import { chunkWrites } from './batches.mjs';
 import { readExport, loadValidator } from './schemas.mjs';
 import { describeErrors } from './validate.mjs';
+import { lintRecord, formatLint } from './lint.mjs';
+import { rebuild } from './derive.mjs';
 import EV from './evcore.mjs';
 
 const HERE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -134,6 +139,27 @@ const commands = {
     console.log('Apply each batch in order with ArtifactData batch (url: the plan\'s record); a set on a document that already exists needs its if_version from a get.');
     return 0;
   },
+  lint(o) {
+    const root = o.root ? path.resolve(o.root) : HERE;
+    const spec = readJson(path.join(root, 'spec', 'ev.spec.json')); EV.configure(spec);
+    const db = loadExport(o.from);
+    const result = lintRecord(db, spec, loadValidator(path.join(root, 'spec', 'schemas')), { date: o.date || EV.chicagoDate(new Date().toISOString()) });
+    if (o.json) fs.writeFileSync(path.resolve(o.json === true ? 'lint.json' : o.json), JSON.stringify(result.issues, null, 1));
+    console.log(formatLint(result));
+    return result.issues.some(i => i.severity === 'error') ? 1 : 0;
+  },
+  rebuild(o) {
+    const root = o.root ? path.resolve(o.root) : HERE;
+    const spec = readJson(path.join(root, 'spec', 'ev.spec.json')); EV.configure(spec);
+    const want = o._.slice(1).filter(c => c !== 'all');
+    for (const c of want) if (!spec.collections[c]) throw new Error('no collection ' + c);
+    const results = rebuild(loadExport(o.from), spec, want);
+    for (const r of results) console.log(`  ${r.status.padEnd(15)} ${r.ref}${r.reason ? ': ' + r.reason : ''}${r.inexact ? ' (changed since: ' + r.inexact.join(', ') + ')' : ''}`);
+    if (o.out) for (const r of results.filter(r => r.data)) { const [col, ...rest] = r.ref.split('/'); const f = path.join(path.resolve(o.out), col, rest.join('/') + '.json'); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, JSON.stringify(r.data, null, 1)); }
+    const bad = results.filter(r => r.status === 'differs').length;
+    console.log(`rebuild: ${results.filter(r => r.status === 'same' || r.status === 'inexact-same').length} reproduced, ${bad} differ, ${results.filter(r => r.status === 'inexact-differs').length} differ after a later edit, ${results.filter(r => r.status === 'skipped').length} skipped`);
+    return bad ? 1 : 0;
+  },
   'verify-migration'(o) {
     const { v3, at, result } = migration(o);
     const vm = verifyMigration(v3, result.writes);
@@ -174,7 +200,7 @@ export function main(argv) {
   const o = args(argv);
   const cmd = commands[o._[0]];
   if (!cmd || (TARGETED.includes(o._[0]) && !['live', 'staging'].includes(o._[1]))) {
-    console.error('Commands: verify-deploy <live|staging>, deploy <live|staging>, migrate v3 --from <dir>, verify-migration --from <dir>, seed-staging --from <dir>');
+    console.error('Commands: verify-deploy <live|staging>, deploy <live|staging>, migrate v3 --from <dir>, verify-migration --from <dir>, seed-staging --from <dir>, lint --from <dir>, rebuild <collection|all> --from <dir>');
     return 2;
   }
   try { return cmd(o); } catch (e) { console.error(`${o._[0]} failed: ${e.message}`); return 1; }

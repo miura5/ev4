@@ -4,6 +4,22 @@
  "at": "2026-10-16T14:00:00Z",
  "source": "weekly 5:57",
  "date": "2026-10-11",
+ "calibration": {},
+ "health": "no runs this week",
+ "rollups": {
+  "from": "2026-10-05",
+  "to": "2026-10-11",
+  "answered": 0,
+  "right": 0,
+  "byObjective": {},
+  "byType": {},
+  "newWeakSpots": [],
+  "solid": [],
+  "active": 1,
+  "sessions": 0,
+  "studyMinutes": 0,
+  "runs": {}
+ },
  "review": "A made-up week.",
  "reflection": "A made-up prompt?"
 }
