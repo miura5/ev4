@@ -65,6 +65,25 @@ record. A refused action is reported in Notes, never worked around.
 - Spec edits: JSON with indent 1, no trailing newline. `node --test test/*.test.mjs > /tmp/t.log 2>&1; grep -E
   "^# (pass|fail)" /tmp/t.log` (never pipe node through grep inside `&&`).
 
+## Rollback to v3 (D-085, manual, only with Matt's explicit OK)
+
+Open until the first exam taken on v4 or Oct 25, whichever comes first; after that, rollback means the previous v4
+tag (B-30). The cost: everything answered on v4 since cutover is lost from the active record (it stays in place,
+unread by v3). In a Mac-linked desktop-app chat with Matt present, in order, nothing deleted:
+
+1. Disable the six v4 live tasks (`spec.tasks.live.*.trigger`: morning, evening-cloud, evening-mac, weekly, worker,
+   watchdog) with `update_trigger enabled:false`. They are kept.
+2. Re-enable the four v3 live tasks: E.V. morning (v3.6) trig_01R7242YzwUXFyNVcmqT8vob, E.V. evening (v3.6)
+   trig_0148JgXzDzGX1zghMymdvMmL (Mac-bound: Matt approves), E.V. weekly review (v3.6) trig_01GHogoFx9Ns7uE1uUmi2i2G,
+   E.V. worker (v3.6) trig_01PxKp1tsgddna4Kt1FzpNhv.
+3. Restore the v3 originals: every `legacy/<id>` document whose `migratedTo` names a v3 collection is written back to
+   that collection under its own id (the 191 originals), as one printed batch set per 50, pinned to the versions read
+   first. v4-only collections are left as they are.
+4. Republish the v3 page from `miura5/ev-core` at the commit its `system/code` names, with v3's capabilities whole,
+   from a local desktop session (a cloud session cannot add the reader's tools).
+5. Write `system/code` and `system/spec` back to v3's (from legacy), fire the v3 evening by hand, and read its run back.
+6. A Board row and a Changelog line say what was rolled back and why.
+
 ## Where things live
 
 | What | Where |
