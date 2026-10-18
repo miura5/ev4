@@ -326,4 +326,7 @@ test('B-29: the cloud-reads probe prints a read of its own record\'s page and on
   // A read of another artifact, or a publish of this one, is not one of the printed calls.
   assert.equal(RUN.audit({ dir, transcript: transcript + '\n' + tool('c', 'Artifact', { action: 'read', url: 'https://claude.ai/artifact/another' }) }).ok, false);
   assert.equal(RUN.audit({ dir, transcript: transcript + '\n' + tool('d', 'Artifact', { action: 'publish', url: read.url, file_path: '/tmp/x.html' }) }).ok, false);
+  // list_triggers is audited too: made as printed it is matched, an unprinted one is extra.
+  assert.deepEqual(RUN.audit({ dir, transcript }).missing, []);
+  assert.equal(RUN.audit({ dir, transcript: transcript + '\n' + tool('e', 'mcp__claude-code-remote__list_triggers', { limit: 5 }) }).ok, false);
 });

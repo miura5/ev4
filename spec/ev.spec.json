@@ -1985,6 +1985,20 @@
      "date": "2026-10-18",
      "run": "cse_01JRvpNYTUiBpyAPsSjgGARw",
      "evidence": "runs/diagnostic-20261018-173336722, debug/diagnostic-20261018-173336722 (B-36): is-shallow 1, 50 commits visible from HEAD, the manifest commit 92ca50f and the live build 0c62f2f (an ancestor) both present; git read-only commands work in a cloud run"
+    },
+    {
+     "capability": "Artifact read of its own record page: the raw HTML, the published file count, the contract version and the <artifact-stored-declaration> block",
+     "proven": true,
+     "date": "2026-10-18",
+     "run": "cse_016yPwhbhteeNtak5VT9ZHMh",
+     "evidence": "runs/diagnostic-20261018-174229507, debug/diagnostic-20261018-174229507 (B-29, probe cloud-reads)"
+    },
+    {
+     "capability": "list_triggers (enabled: true) answers with ids, prompts, schedules, last_run and next_run_at",
+     "proven": true,
+     "date": "2026-10-18",
+     "run": "cse_016yPwhbhteeNtak5VT9ZHMh",
+     "evidence": "runs/diagnostic-20261018-174229507, debug/diagnostic-20261018-174229507 (B-29, probe cloud-reads)"
     }
    ],
    "limits": [
@@ -1993,7 +2007,8 @@
     "ArtifactData refuses a document over 262144 bytes serialized, before sending (\"the limit is 262144\")",
     "ArtifactData refuses a batch request over 1048576 bytes serialized (\"split it into smaller batches\")",
     "a batch holds at most 50 writes (the tool's own schema)",
-    "the run checkout is shallow, 50 commits deep from main at the session start: a deployed commit more than 50 commits behind main is missing and the gate fails (\"this checkout does not have the deployed commit\"); deploy live before main runs that far ahead"
+    "the run checkout is shallow, 50 commits deep from main at the session start: a deployed commit more than 50 commits behind main is missing and the gate fails (\"this checkout does not have the deployed commit\"); deploy live before main runs that far ahead",
+    "list_triggers ends a page early by response size (11 tasks of limit 100 here) with has_more and a next_cursor: the full list takes cursor paging"
    ],
    "numbers": {
     "documentBytes": 262144,

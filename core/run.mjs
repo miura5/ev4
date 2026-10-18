@@ -292,7 +292,7 @@ export function end({ dir, at, status, detail, transcript }) {
 }
 
 // ------------------------------------------------------------------------------------------------ audit
-const IO_TOOL = /(^|__)(ArtifactData|Artifact|fire_trigger|update_trigger|create_trigger|delete_trigger|device_commit_files|device_bash|batch|update|create|delete)$/;
+const IO_TOOL = /(^|__)(ArtifactData|Artifact|fire_trigger|update_trigger|create_trigger|delete_trigger|list_triggers|device_commit_files|device_bash|batch|update|create|delete)$/;
 const toolName = n => String(n).replace(/^mcp__[^_]+(?:_[^_]+)*?__/, '');
 /** A call reduced to what identifies it: the tool and its arguments, key order ignored. */
 const callKey = (tool, args) => toolName(tool) + ' ' + EV.stableStringify(args || {});
