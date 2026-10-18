@@ -447,6 +447,7 @@
     } finally { morePending = false; b.disabled = false; }
   }
   $('more-btn').addEventListener('click', () => morePractice());
+  $('weak-quizlet-btn').addEventListener('click', () => copyQuizlet($('weak-quizlet')));
 
   // ------------------------------------------------------------ Progress
   function renderReadiness() {
@@ -503,6 +504,7 @@
     const formats = ms.filter(w => w.kind === 'format' && w.derived.status === 'open');
     $('weak-count').textContent = active.length + ' active · ' + E.rankDue(ms, today, S.exams).length + ' due';
     $('weak-active').replaceChildren(...(active.length ? active.map(wsRow) : [empty('No active weak spots.')]));
+    $('weak-quizlet').hidden = !active.some(w => (w.kind || 'concept') === 'concept');
     $('weak-preview-card').hidden = !previews.length; $('weak-preview').replaceChildren(...previews.map(wsRow));
     $('weak-notes').replaceChildren(...(notes.length ? notes.map(wsRow) : [empty('Gaps in your notes from study sessions show up here.')]));
     $('weak-formats').textContent = formats.length ? 'Question format pattern: ' + formats.map(f => f.topic).join('; ') + '. Review sets lean on these formats.' : '';
@@ -1170,6 +1172,13 @@
       });
       const wrap = el('div', 'chart'); wrap.append(svg); box.append(wrap);
     },
+    quizlet(box) { // B-41: the open weak spots as Quizlet cards, copied on his tap; nothing is written to the record
+      const cards = quizletCards(); box.append(head2('Weak spots for Quizlet', plural(cards.length, 'card')));
+      const ul = el('ul', 'list'); ul.append(...cards.slice(0, 4).map(c => row({ title: c.term, detail: c.definition.slice(0, 140) })));
+      if (cards.length > 4) ul.append(row({ title: `+ ${cards.length - 4} more`, detail: 'All of them go in the copy.' }));
+      const a = el('div', 'actions'); a.append(btn(`Copy ${plural(cards.length, 'card')} for Quizlet`, () => copyQuizlet(box), { primary: true }));
+      box.append(ul, a, el('p', 'meta', 'In Quizlet: Create, Import, then paste. Term and definition are separated by a tab.'));
+    },
     checkin(box, c, key) {
       const ci = (M.dayedit && M.dayedit.checkin) || null; box.append(head2('Energy check', ci && ci.energy ? 'logged ' + clock12(ci.at) : ''));
       const g = el('div', 'energy'); const labels = ['Empty', 'Low', 'Okay', 'Good', 'Charged'];
@@ -1333,11 +1342,21 @@
     'how ready am i': () => { const ex = M.target; if (!ex) return ['No upcoming exam with weak spots yet, so nothing to measure.', []]; const r = E.readiness({ examId: ex.id, weakspots: M.models }); const d = E.diffDays(today, ex.date); return [`${(ex.title || ex.id).replace(/:.*$/, '')}${d > 0 ? ' in ' + plural(d, 'day') : ' is today'}: ${r.pctSolid ?? 0}% of its weak spots solid, about ${r.need} correct reviews to go.`, [{ type: 'readiness' }, { type: 'audit' }]]; },
     "i'm wiped": () => ['Noted. Energy check, 1 to 5? I’ll size the rest of today to match. No guilt either way.', [{ type: 'checkin' }]],
     'show my progress': () => ['Here’s the week.', [{ type: 'chart' }]],
+    'weak spots to quizlet': () => { const n = quizletCards().length; return n ? [`${plural(n, 'open weak spot')} as Quizlet cards: the topic on the front, the objective and the last rationale you missed on the back.`, [{ type: 'quizlet' }]] : ['No open weak spots right now, so nothing to send to Quizlet.', []]; },
     'start a study session': () => startSession(), 'start session': () => startSession(), 'start studying': () => startSession(), 'start a session': () => startSession(),
     'end session': () => endSession('ended'), 'end the session': () => endSession('ended'), 'end study session': () => endSession('ended'), 'end my session': () => endSession('ended'),
     'take a break': async () => [await sessionCmd('break'), []], 'break': async () => [await sessionCmd('break'), []], 'resume': async () => [await sessionCmd('resume'), []],
     'add 5 minutes': async () => [await sessionCmd('extend'), []], '+5 min': async () => [await sessionCmd('extend'), []],
   };
+  // B-41: the open weak spots as Quizlet import text, nothing written to the record.
+  function quizletCards() { return E.weakspotCards({ weakspots: M.models, objectives: S.objectives, sets: S.sets, answers: S.answers }); }
+  async function copyQuizlet(box) {
+    const cards = quizletCards(); if (!cards.length) { toast('No open weak spots to copy.'); return 0; }
+    const t = E.cardsText(cards);
+    try { await navigator.clipboard.writeText(t); toast(`Copied ${plural(cards.length, 'card')}. In Quizlet: Create, Import, then paste.`); }
+    catch { if (box) { const ta = el('textarea'); ta.readOnly = true; ta.value = t; ta.setAttribute('aria-label', 'Weak spots as Quizlet import text'); box.append(ta); ta.focus(); ta.select(); } toast('Select all and copy, then paste into Quizlet’s Import.'); }
+    return cards.length;
+  }
   async function quick(label) {
     const fn = LOCAL[key(label)]; if (!fn) return false;
     T.bigCore = false; await mattSay(label); const [text, cards] = await fn(); await evSay(text, cards, { tier: 'local' }); return true;
@@ -1525,8 +1544,8 @@
     const str = (v, n) => String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, n);
     const noIds = t => { const w = E.scanIdentifiers(t); if (w.length) throw new Error('That text ' + w[0] + '. Patient identifiers are never stored; use a made-up client.'); };
     const tools = [
-      { name: 'show_card', description: 'Attach a live card under your reply. today: today\'s list (filter "open" or "all"). review: today\'s review, answerable inline. readiness: the next exam. audit: the readiness audit, per objective of the next exam with what to reread. dates: next N days (days 1 = tomorrow). weakspots: most due. set: a practice set by id, answerable inline. job: a background job by id. chart: accuracy over the last 7 days. checkin: energy check. Returns "shown".',
-        inputSchema: { type: 'object', properties: { type: { type: 'string', enum: ['today', 'review', 'readiness', 'audit', 'dates', 'weakspots', 'set', 'job', 'chart', 'checkin'] }, filter: { type: 'string', enum: ['open', 'all'] }, days: { type: 'integer', minimum: 1, maximum: 14 }, id: { type: 'string' } }, required: ['type'] },
+      { name: 'show_card', description: 'Attach a live card under your reply. today: today\'s list (filter "open" or "all"). review: today\'s review, answerable inline. readiness: the next exam. audit: the readiness audit, per objective of the next exam with what to reread. dates: next N days (days 1 = tomorrow). weakspots: most due. set: a practice set by id, answerable inline. job: a background job by id. chart: accuracy over the last 7 days. checkin: energy check. quizlet: the open weak spots as Quizlet import cards, copied on his tap. Returns "shown".',
+        inputSchema: { type: 'object', properties: { type: { type: 'string', enum: ['today', 'review', 'readiness', 'audit', 'dates', 'weakspots', 'set', 'job', 'chart', 'checkin', 'quizlet'] }, filter: { type: 'string', enum: ['open', 'all'] }, days: { type: 'integer', minimum: 1, maximum: 14 }, id: { type: 'string' } }, required: ['type'] },
         execute: i => { const type = str(i.type, 20); if (!CARDS[type] || type === 'link') throw new Error('unknown card type ' + type); const c = { type };
           if (type === 'set') { if (!S.sets.some(s => s.id === i.id)) throw new Error('no set with id ' + i.id); c.id = String(i.id); }
           if (type === 'job') { if (!S.jobs.some(j => j.id === i.id)) throw new Error('no job with id ' + i.id); c.id = String(i.id); }

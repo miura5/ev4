@@ -1575,6 +1575,30 @@ Return JSON: {"pages": [{"page": <page number>, "text": "<the page's text>"}]}`;
   }
 
   function cardsText(cards) { return (cards || []).map(c => `${c.term}\t${c.definition}`).join('\n'); }
+  /**
+   * The open weak spots as Quizlet cards (B-41, Matt's pick 5): the topic as the term; the objective's text and the
+   * rationale of the last question he missed on it (the right answer's) as the definition. Concept weak spots only,
+   * due soonest first. Tabs and line breaks become spaces so each card stays one import line.
+   */
+  function weakspotCards({ weakspots = [], objectives = [], sets = [], answers = [] } = {}) {
+    const flat = t => String(t || '').replace(/[\t\r\n]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
+    const objText = new Map((objectives || []).map(o => [o.id, o.text]));
+    const items = new Map(); for (const st of sets || []) for (const q of st.items || []) items.set(st.id + '/' + q.id, q);
+    const { byWeakspot } = collectAttempts(sets, answers);
+    const why = q => {
+      if (!q) return '';
+      if (q.matrix && Array.isArray(q.matrix.rows)) return q.matrix.rows.map(r => r.rationale).filter(Boolean).join(' ');
+      const right = (q.correct || [])[0]; const r = (q.rationales || [])[right];
+      return [q.options && q.options[right] != null ? `Answer: ${q.options[right]}.` : '', r || ''].filter(Boolean).join(' ');
+    };
+    return (weakspots || []).filter(w => (w.kind || 'concept') === 'concept' && isActive(w))
+      .sort((a, b) => String(a.derived.nextDue || '9').localeCompare(String(b.derived.nextDue || '9')) || String(a.topic).localeCompare(String(b.topic)))
+      .map(w => {
+        const missed = (byWeakspot[w.id] || []).filter(a => !a.correct).pop();
+        const parts = [objText.get(w.objective) ? `${w.objective}: ${objText.get(w.objective)}` : (w.objective || ''), missed ? why(items.get(missed.setId + '/' + missed.itemId)) : ''];
+        return { term: flat(w.topic), definition: flat(parts.filter(Boolean).join(' · ')) || 'Open weak spot' };
+      });
+  }
 
   // ---------------------------------------------------------------- backup
   function buildBackup(collections, { now, label } = {}) {
@@ -1687,7 +1711,7 @@ Return JSON: {"pages": [{"page": <page number>, "text": "<the page's text>"}]}`;
     // planning
     dayType, reviewLoad, rankDue, targetExam, pickReviews, planDay, buildDayList, nextNurExams, dayView, dayeditBase, listEdit, isFixedItem, DATE_KINDS, dateEdit, dateView, liveDates, isRemovedDate, isFixedDate, fromCanvas,
     // snapshot, context, insights
-    buildSnapshot, lastRuns, capacity, buildContext, answerStats, readiness, predictReadiness, calibrate,
+    buildSnapshot, lastRuns, capacity, weakspotCards, buildContext, answerStats, readiness, predictReadiness, calibrate,
     // trust
     lint, scanIdentifiers, scanIdentifierValues, autoParkEvents, toMarkdown, buildBackup, restorePlan,
     // intake

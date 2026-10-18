@@ -167,6 +167,11 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     const ci = await page.evaluate(() => { const d = (window.__db.dayedits || {})[new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date())]; return d && d.checkin; });
     ok('check-in saved to the day’s edits', ci && ci.energy === 2, JSON.stringify(ci));
     ok('low energy gets a lighter plan', /Minimum viable day/.test((await msgs(page)).slice(-1)[0].text));
+    // B-41: the weak spots to Quizlet quick ask answers locally with a card that copies the cards
+    await send(page, 'Weak spots to Quizlet'); await page.waitForTimeout(250);
+    { const last = page.locator('#thread .msg.ev').last(); const t = await last.textContent();
+      ok('quick ask: weak spots to Quizlet posts a card with the copy button', /open weak spots? as Quizlet cards/.test(t) && /Weak spots for Quizlet/.test(t) && (await last.locator('button', { hasText: 'for Quizlet' }).count()) === 1, t.slice(0, 160));
+      await last.scrollIntoViewIfNeeded(); await page.screenshot({ path: `${shots}/quizlet-card-${scheme}.png`, fullPage: false }); }
     // Connector failure: job is created but not started; Try again re-fires on a click
     await page.evaluate(() => { window.__mcpFail = 'server_not_connected'; window.__chatScript = [{ tool: 'start_job', input: { kind: 'practice-set', title: 'Practice: acid-base', brief: '20 questions on acid-base' } }]; window.__chatReply = 'Queued.'; });
     await send(page, 'Write me 20 acid-base questions'); await page.waitForTimeout(300);
@@ -368,6 +373,15 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     await page.locator('#weak-active .row').first().locator('button').click(); await page.waitForTimeout(150);
     const solidEv = await page.evaluate(() => Object.entries(window.__db.weakspots).filter(([, w]) => w.events && Object.values(w.events).some(e => e.type === 'solid' && e.by === 'owner')).map(([id]) => id));
     ok('mark solid writes an owner event', solidEv.length === 1, solidEv.join(','));
+    // B-41: Copy for Quizlet on the weak-spot list: import text, one tab-separated card per open weak spot, no write
+    { await page.evaluate(() => { window.__clip = null; try { Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: t => { window.__clip = t; return Promise.resolve(); } } }); } catch (e) { window.__clipErr = e.message; } window.__writes0 = JSON.stringify(window.__db); });
+      ok('weak spots: Copy for Quizlet is offered', await page.isVisible('#weak-quizlet-btn'));
+      await page.click('#weak-quizlet-btn'); await page.waitForTimeout(150);
+      const clip = await page.evaluate(() => window.__clip || ''); const lines = clip.split('\n').filter(Boolean);
+      const open = await page.evaluate(() => Object.values(window.__db.weakspots).length);
+      ok('Copy for Quizlet copies one term<TAB>definition line per open concept weak spot', lines.length >= 10 && lines.every(l => l.split('\t').length === 2 && l.split('\t')[0] && l.split('\t')[1]), `${lines.length} lines of ${open} · ${lines[0] || ''}`.slice(0, 200));
+      ok('Copy for Quizlet writes nothing to the record', await page.evaluate(() => JSON.stringify(window.__db) === window.__writes0));
+      await page.locator('#weak-quizlet').scrollIntoViewIfNeeded(); await page.screenshot({ path: `${shots}/weak-quizlet-${scheme}.png`, fullPage: false }); }
     await page.screenshot({ path: `${shots}/progress.png`, fullPage: true });
     // Record
     await page.click('#tab-record'); await page.waitForTimeout(100);
