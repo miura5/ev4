@@ -194,3 +194,23 @@ test('worker without a job id takes the oldest job with no result, and ends quie
   assert.match(r.plan.steps[1].detail, /no job is waiting/);
   assert.equal(r.plan.writes, 0);
 });
+
+test('diagnostic: the probe from the firing text, the findings in the ledger entry, no record writes', () => {
+  const at = '2026-10-18T06:30:00Z';
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-diag-'));
+  RUN.start({ spec, pipeline: 'diagnostic', record: 'staging', at, dir, release: 'v4.0.0', input: { probe: 'Is this session\'s transcript readable?' } });
+  assert.deepEqual(RUN.pull({ spec, dir, at }), [], 'a diagnostic reads nothing');
+  const w = RUN.compute({ spec, dir, validate, at });
+  assert.equal(w.status, 'waiting'); assert.equal(w.question.material.probe, 'Is this session\'s transcript readable?');
+  assert.ok(w.question.material.surfaces.includes('cloud-run'));
+  answer(dir, 'probe', { findings: 'The transcript is at ~/.claude/projects and readable.', proven: ['cloud-run reads its own transcript'], limits: [] });
+  const r = RUN.compute({ spec, dir, validate, at });
+  assert.equal(r.status, 'planned'); assert.equal(r.plan.writes, 0);
+  const [call] = RUN.end({ dir, at: '2026-10-18T06:31:00Z', transcript: null });
+  const end = JSON.parse(fs.readFileSync(call.args.file_path, 'utf8'));
+  assert.equal(end.detail, 'The transcript is at ~/.claude/projects and readable. | proven: cloud-run reads its own transcript');
+  assert.match(end.push, /^Diagnostic: The transcript/);
+  const plain = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-diag-'));
+  RUN.start({ spec, pipeline: 'diagnostic', record: 'staging', at, dir: plain, release: 'v4.0.0' });
+  assert.equal(RUN.compute({ spec, dir: plain, validate, at }).plan.steps[0].status, 'skipped', 'no probe, nothing to do');
+});

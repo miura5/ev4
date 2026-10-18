@@ -453,9 +453,50 @@
   "diagnostic": {
    "lane": "cloud",
    "writer": "diagnostic",
-   "purpose": "runs the one probe named in the firing text and records what it found",
-   "steps": null,
-   "pendingIn": "B-13"
+   "purpose": "runs the one probe named in the firing text and records what it found, so a capability is proven before anything is built on it",
+   "input": {
+    "probe": "the probe, from the message that started this run ('Probe: <what to find out>')"
+   },
+   "reads": [],
+   "steps": [
+    {
+     "id": "probe",
+     "kind": "agent",
+     "judgment": "Find out exactly what the probe asks, with read-only commands in this session (no record writes, no network beyond what the probe names, nothing deleted). Report what you observed, not what you expect: findings in at most 480 characters, plus each capability you saw work (proven) and each limit you hit (limits).",
+     "material": "probe-brief",
+     "output": {
+      "type": "object",
+      "properties": {
+       "findings": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 480
+       },
+       "proven": {
+        "type": "array",
+        "items": {
+         "type": "string",
+         "maxLength": 160
+        },
+        "maxItems": 10
+       },
+       "limits": {
+        "type": "array",
+        "items": {
+         "type": "string",
+         "maxLength": 160
+        },
+        "maxItems": 10
+       }
+      },
+      "required": [
+       "findings"
+      ],
+      "additionalProperties": false
+     },
+     "fold": "probe-result"
+    }
+   ]
   }
  },
  "classes": {

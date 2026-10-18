@@ -119,6 +119,11 @@ CODE_STEPS.health = function healthStep(db, ctx, spec) {
 };
 
 export const AGENT_MATERIAL = {
+  /** The probe this diagnostic run answers, and the surfaces the environments registry tracks. */
+  'probe-brief'(db, ctx, spec) {
+    if (!ctx.input || !ctx.input.probe) return { skip: 'no probe named' };
+    return { probe: ctx.input.probe, surfaces: Object.keys((spec.environments && spec.environments.surfaces) || spec.environments || {}).filter(k => !k.startsWith('_')) };
+  },
   'job-brief'(db, ctx) { return ctx.job ? ctx.jobBrief : { skip: ctx.jobSkip || 'no job' }; },
   'practice-brief'(db, ctx) {
     const b = ctx.brief;
@@ -134,6 +139,11 @@ export const AGENT_MATERIAL = {
 };
 
 export const AGENT_FOLDS = {
+  /** {findings, proven?, limits?}: the run's ledger entry carries them (a design chat turns them into registry rows). */
+  'probe-result'(answer) {
+    const parts = [answer.findings, ...(answer.proven || []).map(p => 'proven: ' + p), ...(answer.limits || []).map(l => 'limit: ' + l)];
+    return { detail: parts.join(' | ').slice(0, 500), push: ('Diagnostic: ' + answer.findings).slice(0, 120), say: [`${(answer.proven || []).length} proven, ${(answer.limits || []).length} limits.`] };
+  },
   /** {text, links?, items?, plan?, failed?}: jobresults/<id>, what the job made, and E.V.'s message in talk/<date>. */
   'job-result'(answer, db, ctx) {
     const job = ctx.job; const writes = []; const say = [];

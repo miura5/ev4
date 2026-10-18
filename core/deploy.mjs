@@ -105,6 +105,8 @@ export function verify({ manifest, target, state, build, dist, sha256, now = new
   const tasks = tasksFor(manifest, target);
   if (!state.triggers) add(false, 'scheduled tasks read', 'no saved list_triggers result; run the reads below');
   else for (const [key, t] of tasks) {
+    // A task whose pipeline has no steps yet has no prompt in this build: nothing to deploy, so not a difference.
+    if (!t.trigger && !t.promptSha256 && t.pipeline) { add(true, `task ${key}`, 'pending: its pipeline has no steps in this build'); continue; }
     if (!t.trigger) { add(false, `task ${key}`, 'not created yet'); continue; }
     const live = state.triggers.find(x => x.id === t.trigger);
     if (!live) { add(false, `task ${key}`, `${t.trigger} not found in the saved task list`); continue; }

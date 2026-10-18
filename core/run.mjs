@@ -140,7 +140,7 @@ export function compute({ spec, dir, validate, at }) {
   const db = loadPulled(dir); const pulledDb = loadPulled(dir);
   const now = EV.envelope('x', '', at).at;
   const ctx = { runId: run.id, pipeline: run.pipeline, record: run.record, writer: def.writer || run.pipeline, date: EV.chicagoDate(now), now, source: `${run.pipeline} ${run.id}`, release: run.release, startedAt: run.startedAt, input: run.input || {} };
-  const writes = []; const steps = []; let push = null; const problems = []; const fires = [];
+  const writes = []; const steps = []; let push = null, detail = null; const problems = []; const fires = [];
   for (const s of def.steps) {
     let r;
     if (s.kind === 'code') r = CODE_STEPS[s.fn || s.id](db, ctx, spec);
@@ -158,6 +158,7 @@ export function compute({ spec, dir, validate, at }) {
     } else { steps.push({ id: s.id, status: 'skipped', detail: `${s.kind} step: printed by its own move` }); continue; }
     for (const w of r.writes || []) { if (w.op === 'delete' || !['set', 'update'].includes(w.op)) { problems.push(`${s.id}: plans never delete (${w.collection}/${w.id})`); continue; } writes.push(w); applyInMemory(db, w); }
     if (r.push) push = r.push;
+    if (r.detail) detail = r.detail;
     for (const f of r.fires || []) { if (!/^trig_/.test(f.trigger_id || '')) problems.push(`${s.id}: a fire needs a trigger id`); else fires.push(f); }
     steps.push({ id: s.id, status: 'ok', detail: (r.say || []).join(' ').slice(0, 300) || `${(r.writes || []).length} write(s)` });
   }
@@ -183,8 +184,8 @@ export function compute({ spec, dir, validate, at }) {
   }
   if (problems.length) return { status: 'refused', problems, steps };
   const batches = chunkWrites(files, spec.capacity.batch).map(b => b.map(({ data, ...x }) => x));
-  const hash = EV.sha256(EV.stableStringify({ runId: run.id, push, fires, batches: chunkWrites(files, spec.capacity.batch) }));
-  const plan = { runId: run.id, pipeline: run.pipeline, url: run.url, computedAt: now, push, steps, writes: files.length, batches, fires, hash, replans: [] };
+  const hash = EV.sha256(EV.stableStringify({ runId: run.id, push, detail, fires, batches: chunkWrites(files, spec.capacity.batch) }));
+  const plan = { runId: run.id, pipeline: run.pipeline, url: run.url, computedAt: now, push, ...(detail ? { detail } : {}), steps, writes: files.length, batches, fires, hash, replans: [] };
   writeJson(path.join(dir, 'plan.json'), plan);
   return { status: 'planned', plan };
 }
@@ -236,7 +237,7 @@ export function end({ dir, at, status, detail, transcript }) {
   const planFile = path.join(dir, 'plan.json'); const plan = fs.existsSync(planFile) ? readJson(planFile) : null;
   const steps = plan ? [...plan.steps] : [];
   if (transcript != null) { const a = audit({ dir, transcript }); steps.push({ id: 'audit', status: a.ok ? 'ok' : 'extra-calls', detail: a.ok ? `${a.matched} calls, all printed` + (a.missing.length ? `; ${a.missing.length} printed but not made` : '') : a.extra.map(c => c.tool + ' ' + c.summary).join('; ').slice(0, 300) }); }
-  const data = { endedAt: EV.envelope('x', '', at).at, status: status || (plan ? 'ok' : 'failed'), steps, ...(plan ? { planHash: plan.hash, push: plan.push || null } : {}), ...(detail ? { detail: String(detail).slice(0, 500) } : {}) };
+  const data = { endedAt: EV.envelope('x', '', at).at, status: status || (plan ? 'ok' : 'failed'), steps, ...(plan ? { planHash: plan.hash, push: plan.push || null } : {}), ...(detail || (plan && plan.detail) ? { detail: String(detail || plan.detail).slice(0, 500) } : {}) };
   const file = path.join(dir, 'out', 'runs', run.id + '.end.json'); writeJson(file, data);
   return printed(dir, run, 'end', [{ tool: 'ArtifactData', args: { action: 'update', url: run.url, collection: 'runs', doc_id: run.id, file_path: file, if_version: 1 } }]);
 }

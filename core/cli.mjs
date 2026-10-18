@@ -12,7 +12,7 @@
 //   run <pipeline> <start|pull|pulled|compute|apply|replan|end|audit>   the run protocol's moves; each prints the
 //                                  exact calls to make. --dir (default /tmp/ev/run), --record <live|staging>,
 //                                  --at, --transcript <jsonl> (default this session's), --failed <n>, --batch <n>,
-//                                  --status <ok|partial|failed>, --detail, --job <id> (worker)
+//                                  --status <ok|partial|failed>, --detail, --job <id> (worker), --probe <text> (diagnostic)
 // Options: --root <repo> (default: this checkout), --dist <dir> (default <root>/dist), --state <dir> (default
 // <dist>/state/<target>), --version <manifest|spec|environments>=<n> (deploy: the version a get printed),
 // --matt-ok (deploy live), --json; migrate: --from <export dir>, --at <ISO stamp> (default now), --out <dir>
@@ -193,7 +193,7 @@ const commands = {
     switch (move) {
       case 'start': {
         const manifest = maybeJson(path.resolve(o.manifest || '/tmp/ev/system/manifest.json')) || maybeJson(path.join(root, 'dist', 'manifest.json'));
-        return show(RUN.start({ spec, pipeline, record: o.record || 'staging', at, dir, release: o.release || (manifest && manifest.release) || EV.VERSION, input: o.job ? { job: o.job } : {} }), `${cli} pull${d}`);
+        return show(RUN.start({ spec, pipeline, record: o.record || 'staging', at, dir, release: o.release || (manifest && manifest.release) || EV.VERSION, input: { ...(o.job ? { job: o.job } : {}), ...(o.probe ? { probe: o.probe } : {}) } }), `${cli} pull${d}`);
       }
       case 'pull': return show(RUN.pull({ spec, dir, at }), `${cli} pulled${d}`);
       case 'pulled': {

@@ -177,3 +177,14 @@ test('verify-deploy staging is red without a seed stamp', async () => {
   const r = cli(dir, 'verify-deploy', 'staging');
   assert.equal(r.code, 1); assert.match(r.out, /NO  staging seed: no system\/seed: run seed-staging/);
 });
+
+test('verify-deploy: a task whose pipeline has no steps in the build is pending, not a difference', async () => {
+  const { verify } = await import('../core/deploy.mjs');
+  const manifest = { release: 'v4.0.0', commit: 'a'.repeat(40), dirty: false, specVersion: '4.0.0', files: {}, pages: { staging: { artifact: null, files: {}, capabilities: null } }, records: { staging: { artifact: null, systemDocs: [] } },
+    tasks: { 'staging.evening-mac': { name: 'x', pipeline: 'evening-mac', record: 'staging', lane: 'mac', schedule: null, macBound: true, folders: [], push: false, trigger: null, promptSha256: null },
+             'staging.weekly': { name: 'y', pipeline: 'weekly', record: 'staging', lane: 'cloud', schedule: null, macBound: false, folders: [], push: false, trigger: null, promptSha256: 'b'.repeat(64) } } };
+  const r = verify({ manifest, target: 'staging', state: { triggers: [], record: null, pageHtml: null }, build: { commit: manifest.commit, dirty: false, pushed: true }, sha256: s => s, now: '2026-10-18T06:00:00Z' });
+  const line = k => r.lines.find(l => l.what === `task ${k}`);
+  assert.deepEqual([line('staging.evening-mac').ok, line('staging.evening-mac').detail], [true, 'pending: its pipeline has no steps in this build']);
+  assert.deepEqual([line('staging.weekly').ok, line('staging.weekly').detail], [false, 'not created yet']);
+});
