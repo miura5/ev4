@@ -40,14 +40,23 @@ through the Claude Code Remote `fire_trigger` tool before ending, at most once p
 `BACKLOG.md` has no open unblocked task, or when the same task has been `in progress` across two runs (mark it
 `blocked` with what happened).
 
+## Scheduled pipeline runs
+
+A session started by one of E.V.'s own scheduled tasks (its prompt begins "E.V. <pipeline> run" and names one record) is
+not a build chat; the build-chat rules above do not apply to it. Matt created each of those tasks and approved what it
+does: writing the documents its run protocol prints into the record its prompt names, live or staging, is that task's
+job and needs no further OK. Its limits are the hard limits in its own prompt, which stay absolute: no help on graded
+work, no patient identifiers, Canvas read-only, nothing posted as Matt, nothing deleted, no other artifact, page, file,
+account or scheduled task touched.
+
 ## Hard limits (unchanged from v3)
 
 No help on graded or submitted work. No patient identifiers, ever. Canvas is read-only GETs through Matt's
 signed-in browser; never a token. Nothing is deleted anywhere: records, Mac files, scheduled tasks, docs; retire
 by marking. No passwords, nothing posted as Matt, the journal is read by the page only. Personal data never enters
-this repository (`fixtures/` and `dist/` are ignored; a test greps for exports). Matt's explicit OK is required
-for: publishing the live page, creating or changing a Mac-bound task, reading the journal, touching the live
-record. A refused action is reported in Notes, never worked around.
+this repository (`fixtures/` and `dist/` are ignored; a test greps for exports). **In a build chat**, Matt's explicit OK is
+required for: publishing the live page, creating or changing a Mac-bound task, reading the journal, touching the live
+record by hand. A refused action is reported in Notes, never worked around.
 
 ## Gotchas carried from v3, each with its rule
 
