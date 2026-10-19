@@ -1556,17 +1556,17 @@
   "title": "`log` and the views: status changes and deploys go through `log`, which prints the Board, Changelog and overview updates.",
   "dod": "one real task is recorded start to finish with no hand edits to any view",
   "milestone": "M12",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-92"
   ],
-  "notes": "Oct 19: in progress; B-93 itself is the task recorded start to finish through log",
-  "commit": null,
+  "notes": "Oct 19, 58e4eca: log writes one change (status, notes, triage, deploy, decision), regenerates BACKLOG.md and commits; views prints the Board, Changelog and overview calls from this session's newest read of each (stale once updated). Proof: B-92 and B-93 themselves recorded start to finish by printed calls only (Board rows added and chipped, B-24 and B-61 Board drift fixed, the overview's status line moved from 314bb5f to c049f48). npm test 263",
+  "commit": "58e4eca",
   "source": "BACKLOG.md",
   "board": {
    "row": "v4 B-93: log and the views",
    "why": "Recording a finished task takes one command instead of about a dozen hand edits in four places",
-   "notes": "Oct 19. In progress: B-93 is recorded start to finish through log"
+   "notes": "Oct 19, 58e4eca. B-92 and B-93 were recorded on this Board by log's printed calls alone; it also fixed two rows that had drifted (B-24, B-61) and the overview's stale build line"
   }
  },
  {
