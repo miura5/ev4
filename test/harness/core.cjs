@@ -59,6 +59,8 @@ const SPEECH = `async (secs) => { const C = window.EVApp.core; const text = 'Pre
     ok(`[${scheme}] her stage core is ${want} px (spec.ui.look.core.sizes at 100%)`, Math.round(size) === want, String(size));
     ok(`[${scheme}] she draws with WebGL`, (await canvasInfo(page)).renderer === 'webgl');
     ok(`[${scheme}] the page API is there`, await page.evaluate(() => ['setMood', 'gesture', 'speak', 'speechEnd', 'setRing'].every(k => typeof window.EVApp.core[k] === 'function')));
+    // B-77: the greeting reveals word by word on opening and ends on a settle; let it finish before timing anything.
+    await page.waitForFunction(() => !document.querySelector('#thread .reveal') && window.EVApp.core.stats().gestures.length === 0, null, { timeout: 30000 });
     // Each mood, held long enough to ease in (the page's own mood timer is held off by setting it again).
     for (const m of spec.persona.avatar.moods) {
       await page.evaluate(m => { const C = window.EVApp.core; if (!C.__set) { C.__set = C.setMood; C.setMood = x => C.__set(window.__holdMood || x); } window.__holdMood = m; C.setMood(m); }, m);

@@ -1034,6 +1034,9 @@
    "_note": "D-086: a plan task whose title is this similar to one of the day's records (dates or exams) is that record, shown once under its id.",
    "sameItem": 0.3
   },
+  "conversation": {
+   "idleGapMin": 120
+  },
   "push": {
    "_note": "B-40: the push lines E.V. has written since v3 fit 120 characters, what the notification shows on his phone without opening it",
    "maxChars": 120

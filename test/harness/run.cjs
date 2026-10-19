@@ -155,8 +155,9 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     let m = await msgs(page);
     ok('quick ask posts Matt + E.V. to talk/<today>', m.length === 2 && m[0].role === 'matt' && m[1].role === 'ev' && m[1].cards[0].type === 'dates', JSON.stringify(m.map(x => [x.role, x.text.slice(0, 30)])));
     ok('dates card shown', /Next 7 days/.test(await page.locator('#thread .msg.ev').last().textContent()));
-    ok('after his first message the core moves to the top bar', await page.evaluate(() => !document.body.classList.contains('opening') && document.querySelector('#top-av').getBoundingClientRect().width > 30));
-    ok('one live core, on the newest E.V. message only', (await page.locator('#thread .ev-av canvas').count()) === 1 && (await page.locator('#thread .msg.ev').last().locator('.ev-av canvas').count()) === 1);
+    // Captions (B-77): after his first message she stays on her stage at 80%; no core moves to the top bar or a message.
+    ok('after his first message her core stays on her stage, at the conversation step', await page.evaluate(() => document.getElementById('hero').dataset.step === 'conversation' && document.querySelector('#top-av').getBoundingClientRect().width < 1));
+    ok('one live core, her stage: none on the messages', (await page.locator('#thread .ev-av canvas').count()) === 0 && (await page.locator('#hero canvas').count()) === 1);
     // Chat that starts a background job through the page tools and the Claude Code Remote connector
     await page.evaluate(() => { window.__chatScript = [{ tool: 'start_job', input: { kind: 'study-guide', title: 'Study guide: fluid balance', brief: 'Matt asked for a study guide on fluid balance for Exam 4.' } }]; window.__chatReply = 'On it. Study guide queued.'; });
     await send(page, 'Make me a study guide on fluid balance'); await page.waitForTimeout(300);
@@ -183,9 +184,9 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     {
       const tc = page.locator('#thread .msg.ev').last();
       await tc.locator('input.tick:not(:checked)').first().evaluate(n => n.scrollIntoView({ block: 'center' })); await page.waitForTimeout(200);
-      const t0 = await page.evaluate(() => { window.__anims = []; document.addEventListener('animationstart', e => window.__anims.push(String(e.target.className)), true); window.__msgNode = document.querySelector('#thread .msg.ev:last-of-type'); window.__firstMsg = document.querySelector('#thread .msg'); return scrollY; });
+      const t0 = await page.evaluate(() => { window.__anims = []; document.addEventListener('animationstart', e => window.__anims.push(String(e.target.className)), true); window.__msgNode = document.querySelector('#thread .msg.ev:last-of-type'); window.__firstMsg = document.querySelector('#thread .msg'); return scrollY + document.getElementById('thread').scrollTop; });
       const bb = await tc.locator('input.tick:not(:checked)').first().boundingBox(); await page.mouse.click(bb.x + bb.width / 2, bb.y + bb.height / 2); await page.waitForTimeout(700);
-      const t1 = await page.evaluate(() => ({ y: scrollY, msgAnims: window.__anims.filter(c => /\bmsg\b/.test(c)).length, kept: window.__firstMsg.isConnected }));
+      const t1 = await page.evaluate(() => ({ y: scrollY + document.getElementById('thread').scrollTop, msgAnims: window.__anims.filter(c => /\bmsg\b/.test(c)).length, kept: window.__firstMsg.isConnected }));
       ok('ticking in a conversation card keeps the page still: no replayed messages, no scroll', t1.msgAnims === 0 && Math.abs(t1.y - t0) < 2 && t1.kept, JSON.stringify({ t0, ...t1 }));
       ok('the ticked item stays in the open card, shown done', (await tc.locator('.row.done input.tick:checked').count()) >= 1);
       ok('the tick was saved', await page.evaluate(() => Object.keys((window.__db.dayedits && window.__db.dayedits[new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date())] || {}).checks || {}).length > 0 || Object.values(window.__db.planedits || {}).some(p => p.ticks && Object.keys(p.ticks).length)));
@@ -196,11 +197,10 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     { const t = await page.locator('#thread .msg.ev').last().textContent();
       ok('the retro card shows prediction against score, practice, weak spots and plan', /Exam retro/.test(t) && /80–88 · you scored 90 \(2 above the range\)/.test(t) && /7 of 10 right \(70%\) · weakest E3-2 at 50%/.test(t) && /2 made solid · 1 still open/.test(t) && /3 of 4 tasks done/.test(t) && /I underrated you/.test(t), t.slice(0, 300));
       await page.locator('#thread .msg.ev').last().screenshot({ path: `${shots}/retro-card.png` }); }
-    // The small core in the top bar brings the large one back, and sending tucks it away again
-    await page.click('#brand'); await page.waitForTimeout(700);
-    ok('tapping the small core shows the large one', await page.evaluate(() => document.body.classList.contains('core-big') && document.querySelector('#hero').getBoundingClientRect().height > 150));
-    await page.click('#brand'); await page.waitForTimeout(100);
-    ok('tapping again tucks it away', await page.evaluate(() => !document.body.classList.contains('core-big')));
+    // Captions (B-77): the brand, like tapping her, returns to now from wherever he has scrolled
+    await page.evaluate(() => { const t = document.getElementById('thread'); t.scrollTop = 0; t.dispatchEvent(new Event('scroll')); }); await page.waitForTimeout(150);
+    await page.click('#brand'); await page.waitForTimeout(900);
+    ok('tapping the brand returns to now', await page.evaluate(() => { const t = document.getElementById('thread'); return t.scrollHeight - t.clientHeight - t.scrollTop < 4 && document.getElementById('ev-now').hidden; }));
     // Logging a weak spot from the conversation
     await page.evaluate(() => { window.__chatScript = [{ tool: 'add_weakspot', input: { topic: 'Isotonic vs hypotonic IV fluids', objective: 'E4-3' } }, { tool: 'show_card', input: { type: 'weakspots' } }]; window.__chatReply = 'Logged.'; });
     await send(page, 'I keep mixing up isotonic and hypotonic fluids, log that'); await page.waitForTimeout(250);
@@ -727,6 +727,9 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     let S1 = await sess();
     ok('session saved as active with a start mark, no note text', S1 && S1.status === 'active' && S1.topic === 'Fluids and electrolytes' && Object.values(S1.events)[0].len === note1.length && !JSON.stringify(S1).includes('Isotonic'), JSON.stringify(S1 && S1.events));
     ok('start message in the thread', /Session started on Fluids and electrolytes/.test((await msgs(ss)).slice(-1)[0].text.replace(/\*\*/g, '')));
+    // Captions (B-77, D-122): in a session only her latest two lines show, and her core is at the session step (66%).
+    { const cs = await ss.evaluate(() => { const h = document.getElementById('hero'); return { step: h.dataset.step, px: Math.round(h.querySelector('.ev-av').getBoundingClientRect().width), stage: Math.round(h.getBoundingClientRect().height), lines: document.querySelectorAll('#thread .msg.ev').length }; });
+      ok('in a session: only her latest two lines, her core at 66% (172 px) on a 196 px stage', cs.step === 'session' && cs.lines === 2 && Math.abs(cs.px - 172) <= 1 && cs.stage === 196, JSON.stringify(cs)); }
     ok('session ring holds the core', (await ss.locator('#sbar .s-ring canvas').count()) === 1 && await ss.evaluate(() => document.body.classList.contains('in-session') && !document.body.classList.contains('opening')));
     ok('session bar shows the note and the next check', !(await ss.isHidden('#sbar')) && /Fluids and electrolytes/.test(await ss.textContent('#sbar')) && /next check 6:5\d|next check 7:00/.test(await ss.textContent('#sbar')), await ss.textContent('#sbar'));
     ok('chip hidden while a session runs', (await ss.locator('#qchips .qchip', { hasText: 'Start a study session' }).count()) === 0);
@@ -796,4 +799,4 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
   const failed = results.filter(r => r[0] === 'FAIL').length;
   console.log(failed ? `SOME FAILED: ${failed} of ${results.length}` : `ALL PASSED: ${results.length} checks`);
   process.exit(failed ? 1 : 0);
-})().catch(e => { for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : ''); console.log('CRASHED', e.message.split('\n')[0]); process.exit(1); });
+})().catch(e => { for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : ''); console.log('CRASHED', e.message.split('\n').slice(0, 14).join('\n')); process.exit(1); });
