@@ -1689,13 +1689,18 @@
   "title": "`ship`, then `brief`: the deploy checklist with the D-139 rule enforced, then the one-page brief.",
   "dod": "a staging deploy runs from `ship` alone, and a fresh session starts a task from `brief` alone",
   "milestone": "M12",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-93"
   ],
-  "notes": "",
+  "notes": "Oct 19: in progress",
   "commit": null,
-  "source": "BACKLOG.md"
+  "source": "BACKLOG.md",
+  "board": {
+   "row": "v4 B-96: ship and brief",
+   "why": "A deploy runs from one checklist that refuses what the rules forbid and skips reads nothing needs; a new session starts from one page",
+   "notes": "Oct 19. In progress"
+  }
  },
  {
   "id": "B-97",
