@@ -74,6 +74,9 @@ const view = page => page.evaluate(() => {
     bubbles: lines.some(m => { const b = m.querySelector('.bubble'); return b && (cs(b).backgroundColor !== 'rgba(0, 0, 0, 0)' || parseFloat(cs(b).paddingLeft) > 0); }) };
 });
 async function send(page, text, reply) { await page.evaluate(r => { window.__chatScript = []; window.__chatPre = ''; window.__chatReply = r; }, reply); await page.fill('#ev-input', text); await page.click('#ev-send'); }
+// Now is the bottom, or, when her current line is taller than the captions, its start pinned at the top (pinNow).
+const atNow = page => page.evaluate(() => { const t = document.getElementById('thread'), cur = t.querySelector('.msg.ev.current'), tr = t.getBoundingClientRect(), cr = cur && cur.getBoundingClientRect();
+  return t.scrollHeight - t.clientHeight - t.scrollTop < 4 || (!!cr && cr.height > t.clientHeight - 16 && Math.abs(cr.top - tr.top - 8) < 4); });
 async function pullOnce(page) { await page.evaluate(() => { const t = document.getElementById('thread'); t.scrollTop = 0; t.dispatchEvent(new Event('scroll')); }); await page.waitForTimeout(450); }
 // A full pull after an edge: away from the top first (the next pull starts over), then up and hold.
 async function pullAgain(page) { await page.evaluate(() => { const t = document.getElementById('thread'); t.scrollTop = Math.min(220, t.scrollHeight - t.clientHeight); t.dispatchEvent(new Event('scroll')); }); await page.waitForTimeout(120); await pullOnce(page); }
@@ -192,12 +195,12 @@ async function sideBySide(browser, left, right, out, vp) {
       await page.waitForTimeout(600);
     }
     // Back to now: scrolling away shows the pill; tapping her returns.
-    await page.evaluate(() => { const t = document.getElementById('thread'); t.scrollTop = Math.max(0, t.scrollHeight - t.clientHeight - 200); t.dispatchEvent(new Event('scroll')); });
+    await page.evaluate(() => { const t = document.getElementById('thread'); t.scrollTop = Math.max(170, t.scrollHeight - t.clientHeight - 600); t.dispatchEvent(new Event('scroll')); });
     await page.waitForTimeout(200); v = await view(page);
     ok(`[${scheme}] scrolling away shows Back to now`, v.now, JSON.stringify({ top: v.scrollTop, max: v.maxScroll }));
     await page.screenshot({ path: `${shots}/captions-back-to-now-${scheme}.png` });
     await page.click('#hero'); await page.waitForTimeout(900); v = await view(page);
-    ok(`[${scheme}] tapping her returns to now`, !v.now && v.maxScroll - v.scrollTop < 4, JSON.stringify({ top: v.scrollTop, max: v.maxScroll }));
+    ok(`[${scheme}] tapping her returns to now`, !v.now && await atNow(page), JSON.stringify({ top: v.scrollTop, max: v.maxScroll }));
     // Pull to load: noon (4), then this morning (3), then the start of today; last night is never loaded.
     await pullOnce(page); v = await view(page);
     ok(`[${scheme}] a pull says it is loading the noon conversation's 4 messages`, v.pull === 'Loading 4 earlier messages', v.pull);
@@ -230,7 +233,7 @@ async function sideBySide(browser, left, right, out, vp) {
     await page.evaluate(() => { document.getElementById('thread').scrollTop = 0; }); await page.waitForTimeout(200);
     await page.screenshot({ path: `${shots}/captions-last-7-days-${scheme}.png` });
     const pillShown = await page.isVisible('#ev-now'); await page.click('#ev-now'); await page.waitForTimeout(900); v = await view(page);
-    ok(`[${scheme}] tapping the Back to now pill folds the earlier conversations away`, pillShown && !v.texts.some(t => t.startsWith('E:')) && !v.now && v.maxScroll - v.scrollTop < 4);
+    ok(`[${scheme}] tapping the Back to now pill folds the earlier conversations away`, pillShown && !v.texts.some(t => t.startsWith('E:')) && !v.now && await atNow(page));
     // Until B-78 (D-122, D-125 as amended): a reply with cards steps her down to the list size; its first card shows
     // under her line, five rows and a more that opens its tab, never scrolling inside itself; the rest are one tappable
     // line that swaps the next card in.
