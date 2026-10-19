@@ -1708,16 +1708,21 @@
   "title": "Cutover: rewrite CLAUDE.md's every-session and Record steps to use the Chart, mark BACKLOG.md as generated, and record the switch as a decision. From here on, no view is edited by hand.",
   "dod": "the next real task runs start to finish through the Chart",
   "milestone": "M12",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-93",
    "B-94",
    "B-95",
    "B-96"
   ],
-  "notes": "",
+  "notes": "Oct 19: in progress",
   "commit": null,
-  "source": "BACKLOG.md"
+  "source": "BACKLOG.md",
+  "board": {
+   "row": "v4 B-97: cutover: the Chart is how work is recorded",
+   "why": "From here on every task, deploy and decision is recorded through the Chart and every view is printed from it",
+   "notes": "Oct 19. In progress"
+  }
  },
  {
   "id": "B-98",
