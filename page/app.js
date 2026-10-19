@@ -1984,7 +1984,7 @@
     if (convs.length && !T.readyAt) T.readyAt = setTimeout(() => { T.ready = true; }, 900);
     renderStage();
     // The newest line stays in view unless he has scrolled up to read.
-    if ((CAP.stick || T.scrollTo) && ui.tab === 'ev') { T.scrollTo = null; T.firstScroll = false; requestAnimationFrame(pinNow); }
+    if ((CAP.stick || T.scrollTo) && ui.tab === 'ev') { T.scrollTo = null; T.firstScroll = false; requestAnimationFrame(pinNow); clearTimeout(CAP.repin); CAP.repin = setTimeout(() => { if (CAP.stick && ui.tab === 'ev') pinNow(); }, 450); } // again once late layout (cards, folded lines) settles
   }
 
   // ---------------------------------------------------------------- writing to the thread
