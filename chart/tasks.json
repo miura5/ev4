@@ -1715,13 +1715,13 @@
    "B-95",
    "B-96"
   ],
-  "notes": "Oct 19: in progress",
+  "notes": "Oct 19, c4d0aa1: cut over. CLAUDE.md's every-session and Record steps run through the Chart (inbox and triage first, brief, log, ship, views); BACKLOG.md says it is generated and npm test fails if it differs from chart/; D-140 recorded (the Decisions tab is now a view, next id D-141); staging redeployed at c4d0aa1 from ship with the task and page reads skipped, verify GREEN. Left: the definition of done needs the next real task run start to finish through the Chart; the session that records that task done closes B-97 with log B-97 --status done --commit <that task's commit>. Revert c4d0aa1 to go back to hand bookkeeping",
   "commit": null,
   "source": "BACKLOG.md",
   "board": {
    "row": "v4 B-97: cutover: the Chart is how work is recorded",
    "why": "From here on every task, deploy and decision is recorded through the Chart and every view is printed from it",
-   "notes": "Oct 19. In progress"
+   "notes": "Oct 19, c4d0aa1. Cut over: from here on every task, deploy and decision is recorded through the Chart and every view is printed. It closes when the next real task runs through it"
   }
  },
  {
