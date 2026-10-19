@@ -2668,7 +2668,7 @@
    "Pretend to remember what isn't in the record or the conversation memory."
   ],
   "avatar": {
-   "look": "a particle core (A · Aurora, D-077): ribbon filaments of fine points around a hot core, with drifting sparks, always teal and violet; drawn live on a canvas by one shared loop on the page",
+   "look": "core v2 (D-134): the Silk body, five translucent bands round a hot core with short inner filaments, the nucleus leading on a soft spring; teal and violet, coral only on an error; drawn live on a canvas by one shared loop on the page; every parameter in spec.ui.look.core",
    "moods": [
     "idle",
     "listening",
@@ -2688,15 +2688,16 @@
     "sleepy": "on a session break, late at night"
    },
    "sizes": {
-    "opening": "180 to 260 px, centred above the greeting",
+    "opening": "spec.ui.look.core.sizes at 100%: 260 px on the phone, 340 px from 900 px",
     "topBar": 40,
     "sessionRing": 52,
     "message": 32
    },
    "rules": [
-    "Color never changes; motion carries the state.",
+    "Teal and violet only, coral only on an error; motion carries the state.",
     "Only cores that follow E.V.'s state animate: the opening core, the top bar, the session ring and the newest E.V. message. Older message cores hold one still frame.",
-    "Off-screen cores are skipped; cores under 128 px run at 30 fps; reduced motion shows still frames only."
+    "Off-screen cores are skipped; cores under 128 px run at 30 fps; reduced motion shows a still frame per mood.",
+    "The page raises gesture(send | done | error | glance | settle), speak(word, {emphasis}) and speechEnd(); setMood takes computeMood's seven moods."
    ]
   }
  },
@@ -2891,7 +2892,292 @@
    },
    "type": "Geist for text (16 to 17 px body), Geist Mono for labels and readouts",
    "layout": "Sticky top bar (small E.V. core, readout, status, System button); one centred column; a floating dock with E.V., Today, Study, Progress and Record. The E.V. tab opens with a large core above the greeting; after his first message today, or while a session runs, the core moves to the top bar (or into the session ring) and each E.V. message gets its own small core.",
-   "motion": "New messages rise in over 0.6 s; the core eases between states over about half a second; timers move once a second; reduced motion turns animation off."
+   "motion": "New messages rise in over 0.6 s; the core eases between states over about half a second; timers move once a second; reduced motion turns animation off.",
+   "core": {
+    "_": [
+     "Core v2 (B-76; D-134, D-135): the Silk body from the E.V. Core Variations canvas, its Silk preset's values copied here once on Oct 18; from then on the spec owns them, and the canvas is not read again.",
+     "Units: lengths are fractions of her radius R (R is radiusOfSize times the canvas size) unless named Px; rates are per second; times in seconds unless named Ms.",
+     "core/motion.mjs reads speech, nucleus, gestures, sizes and stepDown; the page's core engine reads the rest."
+    ],
+    "preset": "silk",
+    "palette": {
+     "a": [
+      36,
+      214,
+      186
+     ],
+     "b": [
+      150,
+      96,
+      255
+     ],
+     "spark": [
+      255,
+      168,
+      236
+     ],
+     "coral": [
+      240,
+      138,
+      120
+     ],
+     "ring": [
+      120,
+      240,
+      222
+     ],
+     "core": [
+      230,
+      255,
+      250
+     ],
+     "glow": [
+      70,
+      120,
+      255
+     ]
+    },
+    "moods": {
+     "idle": {
+      "len": 0.92,
+      "curl": 0.38,
+      "spin": 0.06,
+      "flow": 0.55,
+      "bright": 0.8,
+      "width": 1,
+      "pulse": 0.55,
+      "lean": 0,
+      "spark": 0.55,
+      "ring": 0,
+      "hue": 0.5,
+      "roam": 1
+     },
+     "listening": {
+      "len": 0.98,
+      "curl": 0.22,
+      "spin": 0.02,
+      "flow": -0.7,
+      "bright": 0.95,
+      "width": 0.9,
+      "pulse": 0.9,
+      "lean": 0.6,
+      "spark": 0.75,
+      "ring": 0,
+      "hue": 0.38,
+      "roam": 0.55
+     },
+     "thinking": {
+      "len": 0.8,
+      "curl": 1,
+      "spin": 0.6,
+      "flow": 1.9,
+      "bright": 1,
+      "width": 0.75,
+      "pulse": 2.4,
+      "lean": 0,
+      "spark": 1,
+      "ring": 0,
+      "hue": 0.7,
+      "roam": 1.35
+     },
+     "speaking": {
+      "len": 1,
+      "curl": 0.45,
+      "spin": 0.1,
+      "flow": 1.2,
+      "bright": 1,
+      "width": 1.2,
+      "pulse": 1.2,
+      "lean": 0,
+      "spark": 0.85,
+      "ring": 0,
+      "hue": 0.5,
+      "roam": 0.8
+     },
+     "alert": {
+      "len": 1.02,
+      "curl": 0.3,
+      "spin": 0.08,
+      "flow": 1,
+      "bright": 1.1,
+      "width": 1.1,
+      "pulse": 1.6,
+      "lean": 0,
+      "spark": 1,
+      "ring": 1,
+      "hue": 0.6,
+      "roam": 0.7
+     },
+     "happy": {
+      "len": 1.06,
+      "curl": 0.42,
+      "spin": 0.12,
+      "flow": 0.9,
+      "bright": 1.1,
+      "width": 1.35,
+      "pulse": 0.9,
+      "lean": 0,
+      "spark": 1.3,
+      "ring": 0,
+      "hue": 0.56,
+      "roam": 1.2
+     },
+     "sleepy": {
+      "len": 0.62,
+      "curl": 0.14,
+      "spin": 0.02,
+      "flow": 0.22,
+      "bright": 0.4,
+      "width": 0.7,
+      "pulse": 0.28,
+      "lean": 0,
+      "spark": 0.15,
+      "ring": 0,
+      "hue": 0.45,
+      "roam": 0.3
+     }
+    },
+    "moodEase": 3,
+    "radiusOfSize": 0.4,
+    "turbulence": 0.6,
+    "body": {
+     "renderer": "webgl",
+     "bands": 5,
+     "refSizePx": 300,
+     "canvasDprMax": 2,
+     "scaleMin": 0.35,
+     "scaleMax": 1.3,
+     "pointsPerBand": 110,
+     "pointsPerBandMin": 40,
+     "widthPoints": 6,
+     "radius": 0.74,
+     "bandWidth": 0.13,
+     "bandWidthSwell": 0.28,
+     "filaments": 11,
+     "filamentPoints": 26,
+     "filamentPointsMin": 10,
+     "coreRadius": 0.32,
+     "coreSwell": 0.14
+    },
+    "nucleus": {
+     "follow": 7,
+     "stiffness": 26,
+     "damping": 7.5
+    },
+    "rubato": {
+     "on": true,
+     "amp": 0.065,
+     "glanceEverySec": [
+      5,
+      11
+     ],
+     "glanceReach": 0.06,
+     "glanceSec": 2.1
+    },
+    "pointer": {
+     "on": true,
+     "reach": 0.06,
+     "leanMin": 0.35
+    },
+    "speech": {
+     "floor": 0.22,
+     "floorWave": 0.25,
+     "floorWaveRate": 2.1,
+     "decay": 2.2,
+     "spring": 7.5,
+     "talkRate": 2.5,
+     "wordGain": 0.8,
+     "swell": 0.14,
+     "max": 1.1,
+     "maxStepPctOfRadius": 0.35,
+     "wordVoice": {
+      "base": 0.3,
+      "perChar": 0.07,
+      "max": 0.9,
+      "emphasis": 1
+     },
+     "wispChance": 0.4
+    },
+    "wisps": {
+     "on": true,
+     "perSecond": 3.2,
+     "opacity": 0.4,
+     "trailPoints": 7,
+     "max": 200,
+     "lifeSec": [
+      1.6,
+      3.4
+     ]
+    },
+    "ripple": {
+     "durationSec": 1.5,
+     "alertEverySec": 1.9
+    },
+    "ring": {
+     "radius": 1.12,
+     "pointsPerPx": 1.1,
+     "pointsMin": 90
+    },
+    "gestures": {
+     "send": {
+      "durationSec": 1.2,
+      "does": "a send ripple and a dip"
+     },
+     "done": {
+      "durationSec": 1.6,
+      "does": "a contraction, a small nod and a burst of wisps"
+     },
+     "error": {
+      "durationSec": 1.8,
+      "does": "a recoil, tinted coral (the only coral she shows)"
+     },
+     "glance": {
+      "durationSec": 2.2,
+      "does": "a look toward a direction or a target on the page"
+     },
+     "settle": {
+      "durationSec": 2.4,
+      "does": "an exhale and a sink"
+     }
+    },
+    "sizes": {
+     "phone": {
+      "basePx": 260,
+      "steps": {
+       "idle": 100,
+       "conversation": 80,
+       "session": 66,
+       "list": 52,
+       "skills": 44
+      }
+     },
+     "desktop": {
+      "basePx": 340,
+      "minWidthPx": 900,
+      "steps": {
+       "idle": 100,
+       "conversation": 80,
+       "surface": 70
+      }
+     }
+    },
+    "stepDown": {
+     "windowSec": 2,
+     "p95Ms": 20,
+     "ignoreAboveMs": 250,
+     "order": [
+      "wisps",
+      "halfPoints"
+     ],
+     "never": "the Silk outline"
+    },
+    "frameBudget": {
+     "p95FrameMs": 16.7,
+     "p95CoreDrawMs": 8,
+     "measuredAt": "10 s of speech at 390x844, DPR 3, Chromium, 4x CPU throttle (D-135)"
+    },
+    "reducedMotion": "a still frame per mood; a gesture is a short brightness change (D-127)"
+   }
   },
   "page": {
    "_rules": [

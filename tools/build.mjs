@@ -108,8 +108,13 @@ export function buildPages({ root, spec, schemas, release }) {
   const validate = read('core/validate.mjs');
   if (/^import /m.test(validate)) throw new Error('core/validate.mjs must not import: it runs in the page as written');
   const names = [...validate.matchAll(/^export function (\w+)/gm)].map(m => m[1]);
+  // core/motion.mjs (B-76): core v2's springs, speech envelope and gesture blend, as window.EVMotion.
+  const motion = read('core/motion.mjs');
+  if (/^import /m.test(motion)) throw new Error('core/motion.mjs must not import: it runs in the page as written');
+  const motionNames = [...motion.matchAll(/^export (?:function|const) (\w+)/gm)].map(m => m[1]);
   const coreJs = core.replace(/export default EVCore;\s*$/, 'window.EVCore = EVCore;\n')
-    + '\n// ---- core/validate.mjs\n(function () {\n' + validate.replace(/^export function /gm, 'function ') + '\nwindow.EVValidate = { ' + names.join(', ') + ' };\n})();\n';
+    + '\n// ---- core/validate.mjs\n(function () {\n' + validate.replace(/^export function /gm, 'function ') + '\nwindow.EVValidate = { ' + names.join(', ') + ' };\n})();\n'
+    + '\n// ---- core/motion.mjs\n(function () {\n' + motion.replace(/^export (function|const) /gm, '$1 ') + '\nwindow.EVMotion = { ' + motionNames.join(', ') + ' };\n})();\n';
   const app = read('page/app.js');
   const appVersion = (app.match(/const VERSION = '([^']+)'/) || [])[1];
   if (appVersion !== release) throw new Error(`page/app.js VERSION ${appVersion || '(none)'} differs from the release ${release}`);

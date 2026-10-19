@@ -25,7 +25,7 @@ a{color:var(--accent-text)}
 .brand{flex:1 1 0;display:flex;align-items:center;gap:12px;min-width:0;background:none;border:0;padding:0 6px 0 0;color:inherit;text-align:left;min-height:44px;border-radius:14px;cursor:pointer;font:inherit}
 .brand:hover{background:none}
 .top-av{width:40px;height:40px;flex:0 0 40px;display:grid;place-items:center;transition:opacity .45s ease,transform .55s var(--ease),width .55s var(--ease),flex-basis .55s var(--ease),margin .55s var(--ease)}
-body.on-ev.opening .top-av,body.on-ev.in-session .top-av,body.on-ev.core-big .top-av{opacity:0;transform:scale(.5);width:0;flex-basis:0;margin-right:-12px}
+body.on-ev.opening .top-av,body.on-ev.in-session .top-av,body.on-ev.core-big .top-av{overflow:hidden;opacity:0;transform:scale(.5);width:0;flex-basis:0;margin-right:-12px}
 .brand-txt{display:flex;flex-direction:column;gap:1px;min-width:0}
 .wordmark{font-size:17px;font-weight:600;letter-spacing:.02em;line-height:1.2}
 .wordmark .stg{font:500 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--warn);margin-left:6px;vertical-align:2px}
@@ -143,7 +143,7 @@ body.on-ev .toast{bottom:calc(var(--dock-h) + 150px + env(safe-area-inset-bottom
 .ev-av canvas{width:100%;height:100%;display:block}
 /* E.V.: opening hero, thread, composer */
 .hero{display:flex;justify-content:center;max-height:0;opacity:0;overflow:hidden;margin:0;transition:max-height .6s var(--ease),opacity .45s ease,margin .6s var(--ease)}
-body.opening .hero,body.core-big .hero{max-height:300px;opacity:1;margin:0 0 -10px}
+body.opening .hero,body.core-big .hero{max-height:360px;opacity:1;margin:0 0 -10px}
 .thread{display:flex;flex-direction:column;gap:18px;min-width:0}
 .thread>button{align-self:center;min-height:34px;font-size:13px;color:var(--soft)}
 .msg{display:flex;gap:12px;align-items:flex-start;min-width:0;scroll-margin-top:calc(var(--top-h) + 100px);scroll-margin-bottom:220px}

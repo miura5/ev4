@@ -39,6 +39,10 @@ if (lastReview && lastReview !== 'review-' + today) {
 // The harness opens the page as if nothing has been said today (the greeting at full size, a quick ask making the day's
 // first two messages): an export taken today carries today's conversation, so it is left out.
 if (seed.talk) delete seed.talk[today];
+// The same for today's sessions and workouts: a staging record carries the proofs earlier build chats ran on it (B-51's
+// skills run, B-52's CINDY), which would otherwise read as a run already started today.
+for (const c of ['sessions', 'workouts']) for (const [id, d] of Object.entries(seed[c] || {})) if ((d.date || E_DATE(d.startedAt)) === today) delete seed[c][id];
+function E_DATE(iso) { return iso ? new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date(iso)) : null; }
 // A small practice set to exercise all three question types and the answer flow.
 seed.sets = seed.sets || {};
 seed.sets['more-' + today + '-1'] = { ...env('page', 'More practice'), kind: 'more', date: today, exam: 'E4', title: 'Harness set', createdAt: new Date().toISOString(), items: [
@@ -103,7 +107,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     await page.screenshot({ path: `${shots}/ev-${scheme}.png`, fullPage: false });
     ok(`[${scheme}] opens on E.V.`, await page.isVisible('#p-ev') && !(await page.isVisible('#p-today')));
     ok(`[${scheme}] opening: large core above the greeting, top-bar core tucked away`, await page.evaluate(() => document.body.classList.contains('opening') && !!document.querySelector('#hero canvas') && document.querySelector('#hero').getBoundingClientRect().height > 150 && document.querySelector('#top-av').getBoundingClientRect().width < 4));
-    ok(`[${scheme}] core is drawing`, await page.evaluate(() => { const c = document.querySelector('#hero canvas'); const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let lit = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 20) lit++; return lit > 500; }));
+    ok(`[${scheme}] core is drawing`, await page.evaluate(() => { const sm = window.EVApp.core.sample(0); let lit = sm ? sm.lit : 0; return lit > 500; }));
     // B-38: the page follows system/manifest; a newer build asks for a reload, nothing reloads on its own
     ok(`[${scheme}] no update bar while the deployed build is this page's`, !(await page.isVisible('#ev-update')));
     await page.evaluate(async () => { const db = await window.claude.use('db'); const m = JSON.parse(JSON.stringify(window.__db.system.manifest)); m.commit = 'b'.repeat(40); m.pages.staging.files['page/staging/app.js'] = 'b'.repeat(64); await db.collection('system').doc('manifest').set(m); });
