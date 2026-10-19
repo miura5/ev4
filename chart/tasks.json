@@ -1735,5 +1735,24 @@
   },
   "waitingOn": "Matt",
   "renumberedFrom": "B-83"
+ },
+ {
+  "id": "B-99",
+  "kind": "request",
+  "title": "Request (reported Oct 19): - Instead of being constantly reminded about graded assignments and “made-up” patients. Just let the graded assignment constraints deny if a graded assignment is ever requested to be edited; and just completely drop the “made-up” patient phrasing; that’s redundant. it’s generative NCLEX-style questions of course it’s not a real patient. the audience (me) knows that and having the same reminder of the few constraints we have on every instance gets repetitive very fast. And not once have I requested a graded assignment to be done or turne in for me, but I’m constantly reading the same flag and constraint and it feels over the top. Unless it’s an actual issue, there’s no need for the constant flag everytime.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "- Instead of being constantly reminded about graded assignments and “made-up” patients. Just let the graded assignment constraints deny if a graded assignment is ever requested to be edited; and just completely drop the “made-up” patient phrasing; that’s redundant. it’s generative NCLEX-style questions of course it’s not a real patient. the audience (me) knows that and having the same reminder of the few constraints we have on every instance gets repetitive very fast. And not once have I requested a graded assignment to be done or turne in for me, but I’m constantly reading the same flag and constraint and it feels over the top. Unless it’s an actual issue, there’s no need for the constant flag everytime.",
+  "reportedAt": "2026-10-19T23:33:54.434Z",
+  "board": {
+   "row": "v4 B-99: - Instead of being constantly reminded about graded assignments and…",
+   "why": "- Instead of being constantly reminded about graded assignments and “made-up” patients. Just let the graded assignment constraints deny if a graded assignment is ever requested to be edited; and just completely drop the “made-up” patient phrasing; that’s redundant. it’s generative NCLEX-style questions of course it’s not a real patient. the audience (me) knows that and having the same reminder of the few constraints we have on every instance gets repetitive very fast. And not once have I requested a graded assignment to be done or turne in for me, but I’m constantly reading the same flag and constraint and it feels over the top. Unless it’s an actual issue, there’s no need for the constant flag everytime.",
+   "notes": "Reported Oct 19 from build chat"
+  }
  }
 ]
