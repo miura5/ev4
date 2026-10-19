@@ -27,6 +27,7 @@ const EVCore = (() => {
     taskMinutes: { reading: 45, drill: 25, sim: 75, review: 20, val: 20, terminology: 15, graded: 45, clinical: 0, exam: 90, other: 20 },
     nurUnitExamKinds: ['unit', 'final', 'dosage'],
     planDay: { sameItem: 0.3 },
+    conversation: { idleGapMin: 120 },
     library: { chunkChars: 900, searchK: 6, hitChars: 700, readChars: 12000, maxChars: 200000, ocrMinChars: 80, pdfjs: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs', pdfjsWorker: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs' },
   };
   let C = clone(DEFAULTS);
@@ -1869,6 +1870,35 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
     return { segment, mood, lines, cards: cards.slice(0, 3), chips: chips.slice(0, 5) };
   }
 
+  // ---------------------------------------------------------------- conversations (B-77, D-128)
+  /**
+   * The current conversation is derived, not stored (D-128): talk splits into conversations at a gap of
+   * constants.conversation.idleGapMin minutes or more between one message and the next. Midnight is not a boundary.
+   * (The session boundary of D-128 comes with the talk session field, B-74.) msgs: [{id, at, ...}] in any order;
+   * returns [{start, end, messages}] oldest first, each conversation's messages in time order.
+   */
+  function conversations(msgs, o = {}) {
+    const gap = (o.idleGapMin != null ? o.idleGapMin : C.conversation.idleGapMin) * 60000;
+    const xs = [...(msgs || [])].filter(m => m && m.at && Number.isFinite(toMs(m.at))).sort((a, b) => toMs(a.at) - toMs(b.at) || String(a.id || '').localeCompare(String(b.id || '')));
+    const out = [];
+    for (const m of xs) {
+      const last = out[out.length - 1];
+      if (last && toMs(m.at) - toMs(last.end) < gap) { last.messages.push(m); last.end = m.at; }
+      else out.push({ start: m.at, end: m.at, messages: [m] });
+    }
+    return out;
+  }
+  /**
+   * What a pull to load can bring back (D-128): the conversation before the ones on screen, if it has any message
+   * from `today` (Central); null once the next one back lies wholly before today ("That's the start of today").
+   * shown is how many conversations are on screen, counted from the newest. count is that conversation's length.
+   */
+  function earlierConversation(convs, shown, today) {
+    const i = convs.length - 1 - shown; if (i < 0) return null;
+    const c = convs[i]; if (chicagoDate(c.end) < today) return null;
+    return { index: i, count: c.messages.length, conversation: c };
+  }
+
   return {
     VERSION, TZ, CJ_STEPS, CJ_LABELS, DAY_LABELS, configure, constants,
     // helpers
@@ -1893,6 +1923,8 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
     normalizeCanvas, stripHtml, intakeSession, sessionFindings,
     // library (course materials)
     MATERIAL_KINDS, materialKind, isRemovedMaterial, liveMaterials, materialRemove, normCourse, citeMaterial, libStem, libTokens, libraryChunks, libraryIndex, searchLibrary, libraryCatalog, readMaterial, libraryPick, officeText, pdfText, ocrPrompt, parseOcr, mergeOcr, guessCourse, materialFromUpload,
+    // conversations (Captions)
+    conversations, earlierConversation,
     // study sessions in E.V. Home
     sessionState, noteMark, noteDelta, sessionContext, checkPrompt, parseCheck, wrapPrompt, parseWrap, closeSession, decideSessionQuestion, cardsText,
     // skills practice and the readiness audit

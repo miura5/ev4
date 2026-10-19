@@ -61,7 +61,7 @@
   tabs.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
   $('brand').addEventListener('click', () => { // on E.V., the small core brings the large one back (and tucks it away again)
     if (ui.tab !== 'ev') { showTab('ev'); return; }
-    T.bigCore = !T.bigCore && !document.body.classList.contains('opening'); if (T.bigCore) window.scrollTo({ top: 0, behavior: 'smooth' }); render();
+    backToNow();
   });
   function wireSeg(id, key, prefix) {
     const seg = $(id); const set = v => { if (ui[key] !== v && seg.dataset.ready) enter($(prefix + '-' + v)); ui[key] = v; seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v))); seg.parentElement.querySelectorAll(':scope > [id^="' + prefix + '-"]').forEach(p => p.hidden = p.id !== prefix + '-' + v); store.set(key, v); };
@@ -1053,8 +1053,113 @@
   function MO_SIZE(w, state) { return window.EVMotion.coreSize(w, state, EV_SPEC.ui.look.core.sizes); }
   const heroOrb = CORE.make(coreStage().px, { follow: true, pointer: true }); $('hero').append(heroOrb.el);
   // The top bar's core is tucked away (styles.css) while her stage core is up or a session runs; then it does not draw.
-  const topOrb = CORE.make(40, { follow: true, when: () => !document.body.matches('.on-ev.opening, .on-ev.in-session, .on-ev.core-big') }); $('top-av').append(topOrb.el);
-  addEventListener('resize', () => heroOrb.resize(coreStage().px));
+  const topOrb = CORE.make(40, { follow: true, when: () => !document.body.matches('.on-ev.captions, .on-ev.opening, .on-ev.in-session, .on-ev.core-big') }); $('top-av').append(topOrb.el);
+  // A resize keeps the newest line in view when he was reading it (the layout steps at 900 px move everything).
+  addEventListener('resize', () => { heroOrb.resize(coreStage().px); renderStage(); if (CAP.stick) requestAnimationFrame(() => { capBox.scrollTop = capBox.scrollHeight; capBox.dispatchEvent(new Event('scroll')); }); });
+
+  // ---------------------------------------------------------------- Captions (B-77; D-122, D-127, D-128)
+  // The E.V. tab without the thread: her stage, her lines under her (the current one large, earlier ones above, smaller
+  // and dimmer), Matt's line echoed above the composer for about 3 s, the Breath reveal paced with her speech, Back to
+  // now, and pull to load one earlier conversation at a time (core.conversations, the idle-gap rule). Screen readers
+  // get each finished sentence once, from a polite live region of its own.
+  document.body.classList.add('captions');
+  const REDUCE = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const CAP = { loaded: 0, stick: true, holdT: null, pull: null, pullN: 0, queue: [], rv: new Map(), said: new Set(), timer: null, echoT: null, end: new Map() };
+  const capBox = $('thread'); capBox.removeAttribute('aria-live');
+  const capIn = el('div', 'cap-in'); capBox.replaceChildren(capIn);
+  const capPull = el('div', 'cap-pull'); capPull.setAttribute('aria-hidden', 'true');
+  capPull.innerHTML = '<div class="ring"><svg class="r" viewBox="0 0 34 34"><circle class="t" cx="17" cy="17" r="15"/><circle class="a" cx="17" cy="17" r="15"/></svg><span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></span></div><span class="lbl"></span>';
+  const capSay = el('div', 'sr'); capSay.id = 'ev-say'; capSay.setAttribute('aria-live', 'polite'); capSay.setAttribute('aria-atomic', 'false'); $('p-ev').append(capSay);
+  const capEchoEl = el('p', 'cap-echo'); capEchoEl.id = 'ev-echo'; capEchoEl.setAttribute('aria-hidden', 'true'); $('composer').prepend(capEchoEl);
+  const capNow = btn('Back to now', () => backToNow(), { cls: 'cap-now' }); capNow.id = 'ev-now'; capNow.hidden = true;
+  capNow.insertAdjacentHTML('afterbegin', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>');
+  $('p-ev').append(capNow);
+  const capSide = el('aside'); capSide.id = 'ev-side'; capSide.setAttribute('aria-label', 'Beside E.V.'); $('p-ev').append(capSide);
+  $('hero').addEventListener('click', () => backToNow());
+  // One announcement per finished sentence (D-127); the region keeps its last few.
+  function announce(key, text) { text = String(text || '').replace(/\s+/g, ' ').trim(); if (!text || CAP.said.has(key)) return; CAP.said.add(key);
+    const p = el('p', null, text); capSay.append(p); while (capSay.children.length > 6) capSay.firstChild.remove(); }
+  // Her stage (D-122): idle on a new conversation, conversation once he has spoken in it, session while one runs.
+  function stageState() {
+    if (activeSession()) return 'session';
+    const convs = E.conversations(allMsgs()); const cur = convs.length ? convs[convs.length - 1].messages : [];
+    return cur.some(m => m.role === 'matt') ? 'conversation' : 'idle';
+  }
+  // The stage's height at each step, as the Captions v2 artboards draw it (V2.dc.html, V2Desktop.dc.html: stageH).
+  const STAGE_PX = { phone: { idle: 300, conversation: 232, session: 196, list: 150, skills: 128 }, desktop: { idle: 370, conversation: 290, surface: 260 } };
+  function renderStage() {
+    const z = MO_SIZE(innerWidth, stageState()); const h = $('hero');
+    h.style.setProperty('--core-scale', String(z.pct / 100)); h.style.setProperty('--stage-h', (STAGE_PX[z.layout][z.step] || z.px + 24) + 'px');
+    h.dataset.step = z.step; h.dataset.px = String(z.px);
+  }
+  function pullView(p, mode) {
+    capPull.style.setProperty('--pull-o', String(mode ? 1 : Math.pow(p, 1.4).toFixed(2)));
+    capPull.style.setProperty('--pull-dash', (94.25 * (1 - (mode ? 1 : p))).toFixed(1));
+    capPull.style.setProperty('--pull-rot', Math.round((mode ? 1 : p) * 180) + 'deg');
+    capPull.classList.toggle('loading', mode === 'loading');
+    capPull.querySelector('.lbl').textContent = mode === 'loading' ? `Loading ${CAP.pullN} earlier message${CAP.pullN === 1 ? '' : 's'}` : mode === 'start' ? 'That’s the start of today' : p > .96 ? 'Hold for earlier' : 'Keep scrolling for earlier';
+  }
+  capBox.addEventListener('scroll', () => {
+    const t = capBox, fromBottom = t.scrollHeight - t.clientHeight - t.scrollTop;
+    CAP.stick = fromBottom < 30;
+    const away = fromBottom > 140; if (capNow.hidden === away) { capNow.hidden = !away; if (away) capNow.style.bottom = ($('composer').offsetHeight + 12) + 'px'; }
+    const p = Math.max(0, Math.min(1, (160 - t.scrollTop) / 160)); if (!CAP.pull) pullView(p, null);
+    // Reaching the top and holding there for 0.3 s loads the conversation before the ones on screen (D-128).
+    if (t.scrollTop <= 3 && !CAP.holdT && CAP.pull !== 'loading') CAP.holdT = setTimeout(pullHold, 300);
+  }, { passive: true });
+  function pullHold() {
+    CAP.holdT = null; if (capBox.scrollTop > 6 || CAP.pull === 'loading') return;
+    const nx = E.earlierConversation(E.conversations(allMsgs()), 1 + CAP.loaded, today);
+    if (!nx) { CAP.pull = 'start'; pullView(1, 'start'); return; }
+    CAP.pull = 'loading'; CAP.pullN = nx.count; pullView(1, 'loading');
+    setTimeout(() => { const h = capBox.scrollHeight, top = capBox.scrollTop; CAP.loaded++; CAP.pull = null; renderThread(); capBox.scrollTop = capBox.scrollHeight - h + top; pullView(0, null); }, 800);
+  }
+  function backToNow() {
+    if (ui.tab !== 'ev') return; CAP.loaded = 0; CAP.pull = null; CAP.stick = true; capNow.hidden = true; renderThread();
+    requestAnimationFrame(() => capBox.scrollTo({ top: capBox.scrollHeight, behavior: REDUCE ? 'auto' : 'smooth' }));
+  }
+  // Matt's line echoes above the composer for about 3 s, then fades; it is announced once.
+  function capEcho(id, text) {
+    capEchoEl.textContent = 'You · ' + String(text).replace(/\s+/g, ' ').slice(0, 200); capEchoEl.classList.add('on');
+    clearTimeout(CAP.echoT); CAP.echoT = setTimeout(() => capEchoEl.classList.remove('on'), 3200); announce(id, 'You: ' + text);
+  }
+  // A caption's words, each its own span (the Breath reveal), from the same paragraphs, bullets and bold fmt() makes.
+  function capWords(frag) {
+    const walk = n => { for (const c of [...n.childNodes]) {
+      if (c.nodeType === 3) { const parts = c.textContent.split(/(\s+)/); const f = document.createDocumentFragment(); for (const w of parts) { if (!w) continue; if (/^\s+$/.test(w)) f.append(document.createTextNode(w)); else f.append(el('span', 'w', w)); } c.replaceWith(f); }
+      else if (c.nodeType === 1 && c.tagName !== 'A') walk(c); else if (c.nodeType === 1) { c.classList.add('w'); } } };
+    walk(frag); return frag;
+  }
+  // The Breath reveal (D-122): words fade and un-blur in at her speaking pace, pausing at punctuation; each word is
+  // one speak() to her core, emphasis (bold) in teal; a finished sentence is announced; the reply's gesture comes when
+  // the last word is out. Reduced motion shows the line whole and announces it once.
+  // A newer line never waits behind an older one: what is left of the older line shows at once (and is announced).
+  function revealFinish(id) { const rec = T.els.get(id), st = CAP.rv.get(id); if (!rec || !st) return; const b = rec.el.querySelector('.bubble'); const ws = b ? [...b.querySelectorAll('.w')] : [];
+    ws.forEach(w => w.classList.add('on')); if (st.from < ws.length) announce(id + ':' + st.from, ws.slice(st.from).map(x => x.textContent).join(' ')); st.n = st.from = ws.length; if (b) b.classList.remove('reveal'); }
+  function revealQueue(m) { if (REDUCE || CAP.rv.has(m.id)) return; while (CAP.queue.length) revealFinish(CAP.queue.shift()); CAP.rv.set(m.id, { n: 0, from: 0 }); CAP.queue.push(m.id); if (!CAP.timer) CAP.timer = setTimeout(revealTick, 120); }
+  // How a reply ends on her core: an error recoils (coral), a reply that changed the record nods, the rest settle.
+  const endGesture = m => m.error && m.error !== 'cancelled' ? 'error' : (m.cards || []).length && !m.greeting ? 'done' : 'settle';
+  function revealTick() {
+    CAP.timer = null; const id = CAP.queue[0]; if (!id) { T.revealing = false; return; }
+    const rec = T.els.get(id), st = CAP.rv.get(id);
+    const ws = rec ? [...rec.el.querySelectorAll('.bubble .w')] : [];
+    const later = ms => { CAP.timer = setTimeout(revealTick, ms); };
+    if (st.n < ws.length) {
+      const w = ws[st.n++]; w.classList.add('on'); T.revealing = true; const word = w.textContent;
+      CORE.speak(word, { emphasis: !!w.closest('b') });
+      const blk = w.closest('p, li'), blkWs = blk ? blk.querySelectorAll('.w') : null;
+      if (/[.!?…]["”’)]*$/.test(word) || (blkWs && blkWs[blkWs.length - 1] === w)) { announce(id + ':' + st.from, ws.slice(st.from, st.n).map(x => x.textContent).join(' ')); st.from = st.n; }
+      later(55 + word.length * 14 + (/[,;:—]$/.test(word) ? 200 : 0) + (/[.?!]["”’)]*$/.test(word) ? 380 : 0)); return;
+    }
+    const m = rec && rec.msg;
+    if (!m || m.pending) { later(80); return; } // still streaming: wait for more words
+    if (st.from < ws.length) announce(id + ':' + st.from, ws.slice(st.from).map(x => x.textContent).join(' '));
+    if (rec) rec.el.querySelector('.bubble') && rec.el.querySelector('.bubble').classList.remove('reveal');
+    CAP.queue.shift(); CORE.speechEnd();
+    CORE.gesture(endGesture(m));
+    T.revealing = CAP.queue.length > 0; if (CAP.queue.length) later(400);
+  }
+
   if (STAGING) $('ev-fine').textContent = 'Staging copy. Jobs here run the staging worker on the staging record.';
 
   const clock12 = iso => { const c = E.chicagoClock(iso); if (!c) return ''; const [h, m] = c.split(':').map(Number); return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`; };
@@ -1732,7 +1837,7 @@
   function msgEl(m, showAv, isLastEv) {
     let rec = T.els.get(m.id);
     const sig = JSON.stringify([m.text, m.cards, !!m.pending, m.error, showAv, isLastEv, T.busy, T.retry.has(m.id)]);
-    if (rec && rec.sig === sig) return rec;
+    if (rec && rec.sig === sig) { rec.msg = m; return rec; }
     // New messages rise into place (the greeting always; others once the page has settled). One core, shared, sits on
     // the newest E.V. message and follows E.V.'s state; earlier E.V. messages keep its column empty.
     const rise = rec ? rec.rise : !!(m.greeting || T.ready);
@@ -1742,9 +1847,19 @@
       if (showAv) { if (!T.msgOrb) T.msgOrb = CORE.make(32, { follow: true }); kids.push(T.msgOrb.el); }
       else kids.push(el('span', 'av-slot'));
     }
+    // A line that arrives while the page is open (a reply from its first dots) reveals word by word; history shows whole.
+    if (m.role !== 'matt' && !rec && (m.greeting || T.ready)) revealQueue(m);
     const body = el('div', 'msg-body');
     if (m.pending && !m.text) { const b = el('div', 'bubble'); const d = el('span', 'dots'); d.setAttribute('aria-label', 'E.V. is thinking'); d.append(el('i'), el('i'), el('i')); b.append(d); body.append(b); }
-    else if (m.text) { const b = el('div', 'bubble' + (m.error ? ' err' : '')); b.append(fmt(m.text)); body.append(b); }
+    else if (m.text) {
+      const b = el('div', 'bubble' + (m.error ? ' err' : '')); b.append(m.role === 'matt' ? fmt(m.text) : capWords(fmt(m.text))); body.append(b);
+      const st = CAP.rv.get(m.id);
+      if (st && CAP.queue.includes(m.id)) { b.classList.add('reveal'); [...b.querySelectorAll('.w')].slice(0, st.n).forEach(w => w.classList.add('on')); }
+      else if (REDUCE && m.role !== 'matt' && !m.pending && (m.greeting || T.ready)) {
+        announce(m.id + ':0', [...b.querySelectorAll('.w')].map(w => w.textContent).join(' '));
+        if (!CAP.said.has(m.id + ':end')) { CAP.said.add(m.id + ':end'); CORE.speechEnd(); CORE.gesture(endGesture(m)); }
+      }
+    }
     const cardsBox = el('div', 'msg-cards'); body.append(cardsBox);
     const meta = el('div', 'msg-meta'); meta.append(el('span', null, (m.greeting ? 'just now' : clock12(m.at)) + (m.role !== 'matt' && m.tier && m.tier !== 'local' ? ' · ' + m.tier : '')));
     if (m.role !== 'matt' && !m.pending && !T.busy) {
@@ -1755,35 +1870,34 @@
     if (m.pending && T.ctl) meta.append(btn('Stop', () => T.ctl && T.ctl.abort()));
     body.append(meta);
     node.replaceChildren(...kids, body);
-    rec = { el: node, sig, cardsBox, rise }; T.els.set(m.id, rec); return rec;
+    rec = { el: node, sig, cardsBox, rise, msg: m }; T.els.set(m.id, rec); return rec;
   }
   function renderThread() {
-    const box = $('thread'); const all = allMsgs();
-    const vis = T.expanded ? all : all.filter(m => (m.day || E.chicagoDate(m.at)) === today);
-    const kids = [];
-    if (vis.length < all.length) { if (!T.earlier) T.earlier = btn('', () => { T.expanded = true; render(); }); T.earlier.textContent = `Earlier conversations (${all.length - vis.length})`; kids.push(T.earlier); }
-    // Only the newest E.V. message carries the core (one live core that moves down as the conversation grows).
-    const lastEv = [...vis].reverse().find(m => m.role !== 'matt');
-    let lastDay = null;
-    for (const m of vis) {
-      const day = m.day || E.chicagoDate(m.at);
-      if (day !== lastDay) { let sep = T.seps.get(day); if (!sep) T.seps.set(day, sep = el('div', 'daysep')); sep.textContent = dayLabel(day); kids.push(sep); lastDay = day; }
-      const rec = msgEl(m, m === lastEv, m === lastEv);
-      renderCards(rec, m); kids.push(rec.el);
+    // Captions: the current conversation (core.conversations' idle-gap rule), plus the earlier ones pulled back today.
+    const convs = E.conversations(allMsgs()), shown = Math.min(convs.length, 1 + CAP.loaded);
+    const earlier = convs.slice(convs.length - shown, convs.length - 1).flatMap(c => c.messages);
+    let cur = convs.length ? convs[convs.length - 1].messages : [];
+    // In a session only her latest two lines show, until he pulls for more (D-122).
+    if (activeSession() && !CAP.loaded) { let c = 0; for (let i = cur.length - 1; i >= 0; i--) if (cur[i].role !== 'matt' && ++c === 2) { cur = cur.slice(i); break; } }
+    const lastEv = [...cur].reverse().find(m => m.role !== 'matt'), lastMatt = [...cur].reverse().find(m => m.role === 'matt');
+    const kids = [capPull];
+    for (const m of earlier) { const rec = msgEl(m, false, false); rec.el.classList.add('earlier'); rec.el.classList.remove('current', 'last'); renderCards(rec, m); kids.push(rec.el); }
+    if (earlier.length) { if (!T.capDiv) { T.capDiv = el('div', 'cap-div', 'Now'); T.capDiv.setAttribute('aria-hidden', 'true'); } kids.push(T.capDiv); }
+    const nowIdx = lastEv ? cur.indexOf(lastEv) : -1, mattIdx = lastMatt ? cur.indexOf(lastMatt) : -1;
+    for (const m of cur) {
+      const rec = msgEl(m, false, m === lastEv); renderCards(rec, m); rec.el.classList.remove('earlier');
+      rec.el.classList.toggle('current', m === lastEv && !(mattIdx > nowIdx)); rec.el.classList.toggle('last', m === lastMatt);
+      kids.push(rec.el);
     }
-    if (!vis.length) kids.push(T.waking || (T.waking = el('p', 'empty', 'Waking up…')));
-    box.classList.toggle('today-only', !T.expanded);
-    // Patch the thread in place: nodes already where they belong stay put. Re-inserting every message on each save
-    // replayed their rise animation (the whole thread flashed) and pulled the card he was using out of the page.
-    let at = box.firstChild;
-    for (const k of kids) { if (k === at) { at = at.nextSibling; continue; } box.insertBefore(k, at); }
+    if (!convs.length) kids.push(T.waking || (T.waking = el('p', 'empty', 'Waking up…')));
+    // Patch in place: nodes already where they belong stay put (no replayed animations, no lost card state).
+    let at = capIn.firstChild;
+    for (const k of kids) { if (k === at) { at = at.nextSibling; continue; } capIn.insertBefore(k, at); }
     while (at) { const n = at.nextSibling; at.remove(); at = n; }
-    if (vis.length && !T.readyAt) T.readyAt = setTimeout(() => { T.ready = true; }, 900);
-    if (T.scrollTo && ui.tab === 'ev') {
-      const r = T.els.get(T.scrollTo); const first = T.firstScroll; T.scrollTo = null; T.firstScroll = false;
-      // On open, only scroll when earlier messages push the greeting low; later, keep the newest message in view.
-      if (r) requestAnimationFrame(() => { if (!first) r.el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); else if (r.el.getBoundingClientRect().top > innerHeight * 0.6) r.el.scrollIntoView({ block: 'start' }); });
-    }
+    if (convs.length && !T.readyAt) T.readyAt = setTimeout(() => { T.ready = true; }, 900);
+    renderStage();
+    // The newest line stays in view unless he has scrolled up to read.
+    if ((CAP.stick || T.scrollTo) && ui.tab === 'ev') { T.scrollTo = null; T.firstScroll = false; requestAnimationFrame(() => { capBox.scrollTop = capBox.scrollHeight; }); }
   }
 
   // ---------------------------------------------------------------- writing to the thread
@@ -1802,7 +1916,7 @@
     return p;
   }
   const evSay = (text, cards = [], o = {}) => postMsg({ id: msgId('e'), role: 'ev', text, cards, at: now(), tier: o.tier || 'local', ...(o.replyTo ? { replyTo: o.replyTo } : {}) });
-  const mattSay = text => { const id = msgId('m'); return postMsg({ id, role: 'matt', text, at: now() }).then(() => id, () => id); };
+  const mattSay = text => { const id = msgId('m'); capEcho(id, text); return postMsg({ id, role: 'matt', text, at: now() }).then(() => id, () => id); };
 
   // ---------------------------------------------------------------- quick asks (handled here, no model call)
   const key = t => String(t || '').toLowerCase().replace(/[’‘]/g, "'").replace(/[?.!\s]+$/, '').trim();
@@ -2136,10 +2250,8 @@
     const pend = { id, role: 'ev', text: '', cards: [], at, tier, pending: true, replyTo: o.replyTo, raw: '', cut: 0 };
     const ctl = new AbortController(); T.busy = true; T.ctl = ctl; T.local.set(id, pend); T.scrollTo = id; render();
     CORE.gesture('send');
-    // Her speech (D-134): each word that has finished streaming nudges the core once; the word still arriving waits.
-    let spoken = 0; const say = (txt, all) => { const ws = String(txt || '').split(/\s+/).filter(Boolean); const upto = all ? ws.length : Math.max(0, ws.length - 1);
-      for (; spoken < upto; spoken++) CORE.speak(ws[spoken].replace(/\*/g, ''), { emphasis: /\*\*/.test(ws[spoken]) }); };
-    const opts = { modelTier: tier, cache: false, signal: ctl.signal, onText: ({ text: t }) => { pend.raw = t; pend.text = lastRound(t, pend.cut); T.streaming = true; say(t); render(); } };
+    // Her words reach the core through the Breath reveal (Captions), word by word as they show.
+    const opts = { modelTier: tier, cache: false, signal: ctl.signal, onText: ({ text: t }) => { pend.raw = t; pend.text = lastRound(t, pend.cut); T.streaming = true; render(); } };
     if (!T.noTools && toolMax !== 0) opts.tools = buildTools(pend);
     let error = null;
     try {
@@ -2154,9 +2266,8 @@
       if (code === 'cancelled') pend.text = (pend.text ? pend.text + '\n\n' : '') + '(Stopped.)';
       else pend.text = (pend.text ? pend.text + '\n\n' : '') + (SAMPLE_COPY[code] || 'Connection hiccup. Tap Try again.');
       if (!HIDE.has(code) && !['cancelled', 'refused', 'prompt_too_large', 'tools_unavailable', 'rate_limited', 'session_expired'].includes(code)) T.retry.set(id, { text, tier, replyTo: o.replyTo });
-    } finally { T.busy = false; T.ctl = null; T.streaming = false; say(pend.raw, true); CORE.speechEnd(); }
+    } finally { T.busy = false; T.ctl = null; T.streaming = false; }
     pend.pending = false;
-    CORE.gesture(error && error !== 'cancelled' ? 'error' : pend.cards.length ? 'done' : 'settle');
     await postMsg({ id, role: 'ev', text: pend.text || 'Done.', cards: pend.cards, at, tier, ...(o.replyTo ? { replyTo: o.replyTo } : {}), ...(pend.jobId ? { jobId: pend.jobId } : {}), ...(error && error !== 'cancelled' ? { error } : {}) }).catch(() => {});
     summarize();
   }
@@ -2199,6 +2310,7 @@
   // E.V.'s state, shown by every core that follows it and by the readout: streaming → speaking, Claude working → thinking,
   // a check just posted → check ready, a session break → resting, a right answer → pleased, typing → listening.
   function computeMood() {
+    if (T.revealing) return 'speaking';
     if (T.busy) return T.streaming ? 'speaking' : 'thinking';
     if (SS.busy || T.reading) return 'thinking';
     if (Date.now() < (SS.alertUntil || 0)) return 'alert';
