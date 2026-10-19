@@ -750,10 +750,11 @@ async function ship(o) {
       if (found.length) refusals.push(`R-01 (D-139): D-085's rollback window is open (B-30 not done), so live takes page-only changes; since live's ${String(base).slice(0, 7)}: ${found.join('; ')}`);
     }
   }
-  const skip = skips({ manifest, target, deployed, rec });
+  const shipFile = path.join(dist, `ship-${target}.json`), last = fs.existsSync(shipFile) ? JSON.parse(fs.readFileSync(shipFile, 'utf8')) : null;
+  // Once the calls ship printed are made, the deployed manifest is this build's own: keep the skips it printed them on.
+  const skip = deployed && last && last.skip && deployed.commit === manifest.commit && last.commit === manifest.commit ? last.skip : skips({ manifest, target, deployed, rec });
   const have = p => p.endsWith('/') ? fs.existsSync(p) && fs.readdirSync(p).length > 0 : fs.existsSync(p);
   const reads = verifyReads({ manifest, target, stateDir }).map(r => ({ ...r, have: have(r.save) }));
-  const shipFile = path.join(dist, `ship-${target}.json`), last = fs.existsSync(shipFile) ? JSON.parse(fs.readFileSync(shipFile, 'utf8')) : null;
   const savedAt = f => (fs.existsSync(f) ? fs.statSync(f).mtimeMs : 0);
   const stale = Boolean(last && last.commit === manifest.commit && savedAt(path.join(stateDir, 'record', 'system', 'manifest.json')) < last.at);
   const verifyResult = verify({ manifest, target, state, build: { pushed }, dist: distDocs, sha256 });
@@ -772,7 +773,7 @@ async function ship(o) {
   if (step.kind === 'deploy') {
     const missingV = SYSTEM_IDS.filter(id => state.record && state.record[id] && !versions[id]);
     if (missingV.length) { console.log(`${head}: the versions of ${missingV.join(', ')} are not in this session's ArtifactData replies: pass --version ${missingV.map(id => id + '=<n>').join(',')}`); return 1; }
-    fs.writeFileSync(shipFile, JSON.stringify({ commit: manifest.commit, at: Date.now() }));
+    fs.writeFileSync(shipFile, JSON.stringify({ commit: manifest.commit, at: Date.now(), skip }));
     console.log(formatDeploy(target, { ...deploy, calls: step.calls, skipped: step.skipped }).replace(`deploy ${target}:`, `${head}:`).replace(`then run verify-deploy ${target}.`, `then make the reads below again and run ship ${target}.`));
     console.log(['', 'Reads after the calls:', ...reads.filter(r => !(skip.tasks && isTaskRead(r)) && !(skip.pages && isPageRead(r))).map(r => `  ${r.tool} ${JSON.stringify(r.args)}`)].join('\n'));
     return 0;

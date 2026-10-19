@@ -25,8 +25,9 @@ function git(root, args) {
   return execFileSync('git', ['-C', root, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
 }
 
-// The project record (M12): chart/ and the BACKLOG.md generated from it. Nothing is built from them.
-export const BOOKKEEPING = [/^chart\//, /^BACKLOG\.md$/];
+// The project record (M12): chart/, the BACKLOG.md generated from it, and the Chart's own tool and test. Nothing that
+// ships is built from them.
+export const BOOKKEEPING = [/^chart\//, /^BACKLOG\.md$/, /^tools\/chart\.mjs$/, /^test\/chart\.test\.mjs$/];
 const bookkeeping = f => BOOKKEEPING.some(re => re.test(f));
 
 /**
@@ -36,7 +37,7 @@ const bookkeeping = f => BOOKKEEPING.some(re => re.test(f));
  */
 export function gitState(root) {
   let commit = '';
-  try { commit = git(root, ['log', '-1', '--format=%H', '--', '.', ':(exclude)chart', ':(exclude)BACKLOG.md']).trim(); } catch { /* none in a shallow checkout */ }
+  try { commit = git(root, ['log', '-1', '--format=%H', '--', '.', ':(exclude)chart', ':(exclude)BACKLOG.md', ':(exclude)tools/chart.mjs', ':(exclude)test/chart.test.mjs']).trim(); } catch { /* none in a shallow checkout */ }
   if (!commit) commit = git(root, ['rev-parse', 'HEAD']).trim();
   const porcelain = git(root, ['status', '--porcelain', '--untracked-files=all']).split('\n').filter(Boolean)
     .filter(l => !l.slice(3).split(' -> ').every(bookkeeping));
