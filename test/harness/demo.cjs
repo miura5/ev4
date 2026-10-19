@@ -23,7 +23,10 @@ const results = []; const ok = (n, c, d = '') => results.push([c ? 'PASS' : 'FAI
     await page.goto(ORIGIN + '/');
     const greeted = await page.waitForFunction(() => document.querySelector('#thread .msg.greet'), null, { timeout: 20000 }).then(() => true, () => false);
     ok(`[${scheme}] the demo boots on its own record and greets`, greeted, await page.textContent('#status').catch(() => ''));
-    await page.waitForTimeout(7000);
+    await page.waitForTimeout(3500);
+    const toastNote = await page.evaluate(() => { const t = document.getElementById('toast'); return !t.hidden && /^Demo copy/.test(t.textContent); });
+    ok(`[${scheme}] the demo note shows once as a toast when it opens`, toastNote);
+    await page.waitForTimeout(3500);
     const g = await page.evaluate(() => ({ greet: document.querySelector('#thread .msg.greet .bubble').textContent, chips: [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent), fine: document.getElementById('sys-note').textContent, title: document.title, unit: document.getElementById('readout').textContent }));
     ok(`[${scheme}] greeting with the review and Exam 4, three chips, the demo note`, /review/.test(g.greet) && /Exam 4/.test(g.greet) && g.chips.length === 3 && /^Demo copy/.test(g.fine) && /^EV-04/.test(g.unit), JSON.stringify(g));
     await page.screenshot({ path: `${shots}/demo-open-${scheme}.png` });

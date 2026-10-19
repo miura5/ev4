@@ -72,7 +72,10 @@
 
   // Say on the page what this is.
   document.addEventListener('DOMContentLoaded', () => {
-    const f = document.getElementById('sys-note'); if (f) f.textContent = 'Demo copy: made-up data, scripted replies. Nothing here is saved; reload to start over.';
+    // The note lives in System (B-85 took the caption under the input away); a visitor also sees it once, as a toast.
+    const NOTE = 'Demo copy: made-up data, scripted replies. Nothing here is saved; reload to start over.';
+    const f = document.getElementById('sys-note'); if (f) f.textContent = NOTE;
+    setTimeout(() => { const t = document.getElementById('toast'); if (!t) return; t.textContent = NOTE; t.hidden = false; setTimeout(() => { if (t.textContent === NOTE) t.hidden = true; }, 7000); }, 2500);
     const st = document.getElementById('status'); // the header's status line names the record: here it is the demo
     if (st) new MutationObserver(() => { if (/^Live\b/.test(st.textContent)) st.textContent = st.textContent.replace(/^Live\b/, 'Demo'); }).observe(st, { childList: true, characterData: true, subtree: true });
   });
