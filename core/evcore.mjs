@@ -1796,6 +1796,7 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
    *       jobs:[{id,title,status,finishedAt}], lastSeenAt, runs:{<pipeline>:{status,startedAt,detail}},
    *       tomorrow:{dates:[{title,kind,graded}]}, quizlet:{refresh}|null, checkin:{energy}|null, sessionActive}
    */
+  const JOB_NOUN = { 'study-guide': 'study guide', 'practice-set': 'practice set', 'exam-plan': 'exam plan', 'exam-retro': 'exam retro', 'share-set': 'practice page' };
   function greeting(ctx) {
     const c = ctx || {}; const date = c.date; const clock = chicagoClock(c.now || new Date()) || '12:00';
     const hour = Number(clock.slice(0, 2));
@@ -1859,15 +1860,19 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
     if (c.quizlet && c.quizlet.refresh && [5, 6, 0].includes(weekday(date))) insights.push({ line: `Quizlet pick for this week: ${c.quizlet.refresh}.` });
     for (const ins of insights.slice(0, 2)) { lines.push(ins.line); if (ins.card && !cards.some(x => x.type === ins.card.type && x.id === ins.card.id)) cards.push(ins.card); if (ins.alert) mood = 'alert'; }
 
-    const chips = [];
-    if (rl) chips.push('Start review');
-    if (!c.sessionActive && segment !== 'late') chips.push('Start a study session');
-    chips.push('What’s due this week?');
-    if (segment !== 'late') chips.push('Give me 5 more');
-    chips.push('File it');
-    chips.push('How ready am I?');
-    if (segment === 'evening' || segment === 'late' || segment === 'midday') chips.push('I’m wiped');
-    return { segment, mood, lines, cards: cards.slice(0, 3), chips: chips.slice(0, 5) };
+    // The greeting is her first line, with no card (D-125 as amended Oct 18): what its cards offered becomes the chips,
+    // at most three (UI rule 5), in this order: the open review, a finished job (Open the study guide), sessions waiting
+    // to be filed, what's due; then the usual asks fill what is left.
+    const chips = [], add = x => { if (x && chips.length < 3 && !chips.includes(x)) chips.push(x); };
+    const finished = (c.jobs || []).find(j => j.status === 'done' && toMs(j.finishedAt) > seen);
+    if (rl) add('Start review');
+    if (finished) add('Open the ' + (JOB_NOUN[finished.kind] || 'result'));
+    if (c.unfiled > 0) add('File it');
+    if (c.dueSoon == null || c.dueSoon > 0) add('What’s due this week?');
+    if (!c.sessionActive && segment !== 'late') add('Start a study session');
+    add('How ready am I?');
+    if (segment !== 'late') add('Give me 5 more');
+    return { segment, mood, lines, cards: [], offers: cards.slice(0, 3), chips, job: finished ? finished.id : null };
   }
 
   // ---------------------------------------------------------------- conversations (B-77, D-128)

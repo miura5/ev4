@@ -126,10 +126,9 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     const greet = (await page.locator('#thread .msg.ev').last().textContent()) || '';
     ok(`[${scheme}] greeting rendered`, /Morning, Matt|Afternoon check-in|Evening, Matt|Still up/.test(greet), greet.slice(0, 140));
     ok(`[${scheme}] greeting reports the finished job`, /Finished in the background: Study guide: cardiac output/.test(greet));
-    // B-77 until B-78: her line shows its first card and names the rest ("n more cards"); the finished job's card is
-    // among them, and links out when it is the one shown.
-    const gm = await page.locator('#thread .msg.ev').last().evaluate(m => ({ cards: m.querySelectorAll('.ev-card').length, more: (m.querySelector('.cap-cards-more') || {}).textContent || '' }));
-    ok(`[${scheme}] the greeting shows one card and names the rest`, gm.cards === 1 && /^\d+ more cards?$/.test(gm.more), JSON.stringify(gm));
+    // D-125 as amended: the greeting has no card; its offers are the chips, at most three, the finished job among them.
+    const gm = await page.evaluate(() => ({ cards: document.querySelectorAll('#thread .msg.greet .ev-card').length, chips: [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent) }));
+    ok(`[${scheme}] the greeting has no card; at most three chips, one opening the finished study guide`, gm.cards === 0 && gm.chips.length <= 3 && gm.chips.includes('Open the study guide'), JSON.stringify(gm));
     ok(`[${scheme}] quick chips`, (await page.locator('#qchips .qchip').count()) >= 3, String(await page.locator('#qchips .qchip').count()));
     await page.click('#tab-today'); await page.waitForTimeout(100);
     ok(`[${scheme}] switching tabs plays the arrival`, await page.evaluate(() => document.getElementById('p-today').classList.contains('enter') && getComputedStyle(document.querySelector('#p-today > .card')).animationName === 'rise'));
@@ -145,10 +144,11 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
         ok('[desktop] idea kinds shown; only the learning idea offers Make it a weak spot', /Feature/.test(await row('Harness feature idea').textContent()) && /General/.test(await row('Harness general idea').textContent()) && (await act('Harness feature idea')) === 0 && (await act('Harness general idea')) === 0 && (await act('Harness learning idea')) === 1);
         await page.locator('#ideas').scrollIntoViewIfNeeded(); await page.screenshot({ path: `${shots}/ideas-desktop.png`, fullPage: false }); }
       await page.click('#tab-ev'); await page.waitForTimeout(150);
-      // The finished job's card links out (it is the greeting's second card, named in its "more" line until B-78).
-      await page.evaluate(() => { window.__chatPre = ''; window.__chatScript = [{ tool: 'show_card', input: { type: 'job', id: 'job-20261017-150000-cardiac-output' } }]; window.__chatReply = 'Your study guide is ready.'; });
-      await send(page, 'where is my study guide'); await page.waitForTimeout(900);
-      ok('[desktop] finished job card links out', (await page.locator('#thread .msg.ev').last().locator('.ev-card a[href="https://claude.ai/artifact/harness"]').count()) === 1);
+      // The greeting's Open the study guide chip opens the guide in a new tab and answers with the job's card.
+      await page.evaluate(() => { window.__opened = []; window.open = (u, t) => { window.__opened.push([u, t]); return null; }; });
+      await page.locator('#qchips .qchip', { hasText: 'Open the study guide' }).click(); await page.waitForTimeout(900);
+      const op = await page.evaluate(() => window.__opened);
+      ok('[desktop] Open the study guide opens it in a new tab, and her reply carries the job card with its link', JSON.stringify(op) === JSON.stringify([['https://claude.ai/artifact/harness', '_blank']]) && (await page.locator('#thread .msg.ev').last().locator('.ev-card a[href="https://claude.ai/artifact/harness"]').count()) === 1, JSON.stringify(op));
       // B-47: the retro card at desktop width
       await page.evaluate(() => { window.__chatPre = ''; window.__chatScript = [{ tool: 'show_card', input: { type: 'job', id: 'job-harness-retro' } }]; window.__chatReply = 'Here’s your Exam 3 retro.'; });
       await send(page, 'Show me my Exam 3 retro'); await page.waitForTimeout(300);
@@ -163,7 +163,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     ok('quick ask posts Matt + E.V. to talk/<today>', m.length === 2 && m[0].role === 'matt' && m[1].role === 'ev' && m[1].cards[0].type === 'dates', JSON.stringify(m.map(x => [x.role, x.text.slice(0, 30)])));
     ok('dates card shown', /Next 7 days/.test(await page.locator('#thread .msg.ev').last().textContent()));
     // Captions (B-77): after his first message she stays on her stage at 80%; no core moves to the top bar or a message.
-    ok('after his first message her core stays on her stage, at the conversation step', await page.evaluate(() => document.getElementById('hero').dataset.step === 'conversation' && document.querySelector('#top-av').getBoundingClientRect().width < 1));
+    ok('after his first message her core stays on her stage, a step down (her reply carries the dates card: the list step)', await page.evaluate(() => document.getElementById('hero').dataset.step === 'list' && document.querySelector('#top-av').getBoundingClientRect().width < 1));
     ok('one live core, her stage: none on the messages', (await page.locator('#thread .ev-av canvas').count()) === 0 && (await page.locator('#hero canvas').count()) === 1);
     // Chat that starts a background job through the page tools and the Claude Code Remote connector
     await page.evaluate(() => { window.__chatScript = [{ tool: 'start_job', input: { kind: 'study-guide', title: 'Study guide: fluid balance', brief: 'Matt asked for a study guide on fluid balance for Exam 4.' } }]; window.__chatReply = 'On it. Study guide queued.'; });
@@ -207,7 +207,10 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     // Captions (B-77): the brand, like tapping her, returns to now from wherever he has scrolled
     await page.evaluate(() => { const t = document.getElementById('thread'); t.scrollTop = 0; t.dispatchEvent(new Event('scroll')); }); await page.waitForTimeout(150);
     await page.click('#brand'); await page.waitForTimeout(900);
-    ok('tapping the brand returns to now', await page.evaluate(() => { const t = document.getElementById('thread'); return t.scrollHeight - t.clientHeight - t.scrollTop < 4 && document.getElementById('ev-now').hidden; }));
+    // Now is the bottom, or, when her current line and its card are taller than the captions, her line pinned at the top.
+    const bn = await page.evaluate(() => { const t = document.getElementById('thread'), cur = t.querySelector('.msg.ev.current'), tr = t.getBoundingClientRect(), cr = cur && cur.getBoundingClientRect();
+      return { atBottom: t.scrollHeight - t.clientHeight - t.scrollTop < 4, linePinned: !!cr && Math.abs(cr.top - tr.top - 8) < 4, pill: !document.getElementById('ev-now').hidden }; });
+    ok('tapping the brand returns to now', (bn.atBottom || bn.linePinned) && !bn.pill, JSON.stringify(bn));
     // Logging a weak spot from the conversation
     await page.evaluate(() => { window.__chatScript = [{ tool: 'add_weakspot', input: { topic: 'Isotonic vs hypotonic IV fluids', objective: 'E4-3' } }, { tool: 'show_card', input: { type: 'weakspots' } }]; window.__chatReply = 'Logged.'; });
     await send(page, 'I keep mixing up isotonic and hypotonic fluids, log that'); await page.waitForTimeout(250);
@@ -611,10 +614,9 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
       await send(fp, 'How ready am I?'); await fp.waitForTimeout(1200);
       const hr = (await msgs(fp)).filter(m => m.role === 'ev').slice(-1)[0] || {};
       ok('How ready am I? attaches readiness and the readiness audit (the audit named as 1 more card until B-78)', (hr.cards || []).map(c => c.type).join() === 'readiness,audit' && /1 more card/.test(await fp.locator('#thread .msg.ev').last().textContent()), JSON.stringify(hr.cards));
-      await fp.evaluate(() => { window.__chatPre = ''; window.__chatScript = [{ tool: 'show_card', input: { type: 'audit' } }]; window.__chatReply = 'Here is the audit.'; });
-      await send(fp, 'show me the audit'); await fp.waitForTimeout(1200);
+      await fp.locator('#thread .msg.ev').last().locator('.cap-cards-more').click(); await fp.waitForTimeout(400);
       const au = await fp.locator('#thread .msg.ev').last().textContent();
-      ok('the readiness audit card says what to reread', /Readiness audit · /.test(au) && /\d+ solid · \d+ right once · \d+ not yet/.test(au) && /Reread: [^·]+, (p\.|slide) \d+/.test(au), au.slice(0, 400));
+      ok('tapping 1 more card swaps the readiness audit in, with what to reread', /Readiness audit · /.test(au) && /\d+ solid · \d+ right once · \d+ not yet/.test(au) && /Reread: [^·]+, (p\.|slide) \d+/.test(au), au.slice(0, 400));
       await fp.screenshot({ path: `${shots}/audit-card.png` });
       // Grounded explanations: the rule rides in the chat context, with the materials tool
       await fp.evaluate(() => { window.__chatScript = []; window.__chatReply = 'Ok.'; }); await send(fp, 'Explain why third spacing causes low blood pressure'); await fp.waitForTimeout(400);
@@ -725,8 +727,13 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     const hasEvent = test => async () => { const s = await sess(); return !!s && Object.values(s.events || {}).some(test); };
     // Without the reader (a browser tab or the iPhone), E.V. says where to open the page
     await ss.evaluate(() => { window.__readerFail = 'server_not_connected'; });
-    ok('session chip offered', (await ss.locator('#qchips .qchip', { hasText: 'Start a study session' }).count()) === 1);
-    await ss.locator('#qchips .qchip', { hasText: 'Start a study session' }).click(); await ss.waitForTimeout(300);
+    // D-125 as amended: at most three chips, the greeting's offers first; the session chip fills a free slot, and the
+    // session also starts typed.
+    const sc = await ss.evaluate(() => [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent));
+    const offers = ['Start review', 'Open the study guide', 'File it', 'What’s due this week?'];
+    ok('session chip offered when a slot is free (at most three chips, offers first)', sc.length <= 3 && (sc.includes('Start a study session') || sc.every(c => offers.includes(c))), JSON.stringify(sc));
+    if (sc.includes('Start a study session')) await ss.locator('#qchips .qchip', { hasText: 'Start a study session' }).click(); else await send(ss, 'Start a study session');
+    await ss.waitForTimeout(300);
     ok('no reader: says to open the desktop app, starts nothing', /Claude desktop app on your Mac/.test((await msgs(ss)).slice(-1)[0].text) && !(await sess()), (await msgs(ss)).slice(-1)[0].text);
     // A #graded note is refused
     await ss.evaluate(() => { window.__readerFail = null; }); await setNote('', { graded: true });

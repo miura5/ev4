@@ -503,8 +503,8 @@ test('Greeting: morning leads with the review; late night before clinical says s
   const m = EV.greeting({ ...base, now: '2026-10-19T12:00:00Z', reviewLeft: 12, push: 'Class day · 12 reviews ready · Read Ch 42' });
   assert.equal(m.segment, 'morning');
   assert.match(m.lines[0], /^Morning, Matt\. Class day · 12 reviews ready\./);
-  assert.equal(m.cards[0].type, 'review');
-  assert.ok(m.chips.includes('Start review'));
+  assert.deepEqual(m.cards, [], 'the greeting carries no card (D-125 as amended)'); assert.equal(m.offers[0].type, 'review');
+  assert.equal(m.chips[0], 'Start review', 'the open review is the first chip'); assert.ok(m.chips.length <= 3, 'at most three chips (rule 5)');
   const late = EV.greeting({ ...base, now: '2026-10-20T04:30:00Z', tomorrow: { dates: [{ title: 'Clinical, 0630–1500', kind: 'clinical' }] } });
   assert.equal(late.segment, 'late'); assert.equal(late.mood, 'sleepy');
   assert.ok(late.lines.some(l => /Sleep is on tomorrow/.test(l)));
@@ -513,12 +513,13 @@ test('Greeting: morning leads with the review; late night before clinical says s
 test('Greeting: at most two insights, finished jobs first, exam countdown with readiness', () => {
   const g = EV.greeting({ now: '2026-10-18T22:00:00Z', date: '2026-10-18', items: [], reviewLeft: 0,
     nextExams: [{ id: 'E4', title: 'Exam 4: Health Promotion', date: '2026-10-21', kind: 'unit' }], readiness: { examId: 'E4', pctSolid: 10, need: 30 },
-    jobs: [{ id: 'j1', title: 'Study guide: potassium', status: 'done', finishedAt: '2026-10-18T21:00:00Z' }], lastSeenAt: '2026-10-18T20:00:00Z',
+    jobs: [{ id: 'j1', kind: 'study-guide', title: 'Study guide: potassium', status: 'done', finishedAt: '2026-10-18T21:00:00Z' }], lastSeenAt: '2026-10-18T20:00:00Z',
     runs: { evening: { status: 'failed', startedAt: '2026-10-18T01:15:00Z', detail: 'Mac asleep' } }, tomorrow: { dates: [] } });
   const ins = g.lines.filter(l => /Finished in the background|failed|Exam 4 in/.test(l));
   assert.equal(ins.length, 2);
   assert.match(ins[0], /Finished in the background: Study guide: potassium/);
-  assert.ok(g.cards.some(c => c.type === 'job' && c.id === 'j1'));
+  assert.ok(g.offers.some(c => c.type === 'job' && c.id === 'j1')); assert.deepEqual(g.cards, []);
+  assert.equal(g.chips[0], 'Open the study guide', 'a finished job is a chip, first when no review is open'); assert.equal(g.job, 'j1');
   assert.equal(g.mood, 'alert');
 });
 
@@ -967,4 +968,14 @@ test('B-54 (D-110): only a calendar set over a chapter range is shared; the page
   assert.match(html, /This one, because\./); assert.match(html, /class="why" hidden/, 'reasons start hidden');
   assert.doesNotMatch(html, /ws-made-up|weakspot|E4-3|Sample topic|Matt|E4-drill-6/);
   assert.equal(EV.sharePage({ ...drill, title: '<b>x</b>' }).includes('<title>&lt;b&gt;x&lt;/b&gt;</title>'), true, 'text is escaped');
+});
+
+test('greeting chips (D-125 as amended): at most three, review, then a finished job, then filing, then what is due', () => {
+  const base = { now: '2026-10-18T20:00:00Z', date: '2026-10-18', items: [], nextExams: [], tomorrow: { dates: [] }, lastSeenAt: '2026-10-18T18:00:00Z' };
+  const job = { id: 'j', kind: 'practice-set', title: 'Practice set: fluids', status: 'done', finishedAt: '2026-10-18T19:00:00Z' };
+  assert.deepEqual(EV.greeting({ ...base, reviewLeft: 4, jobs: [job], unfiled: 2, dueSoon: 3 }).chips, ['Start review', 'Open the practice set', 'File it']);
+  assert.deepEqual(EV.greeting({ ...base, reviewLeft: 0, jobs: [job], unfiled: 0, dueSoon: 3 }).chips, ['Open the practice set', 'What’s due this week?', 'Start a study session']);
+  assert.deepEqual(EV.greeting({ ...base, reviewLeft: 0, dueSoon: 0 }).chips, ['Start a study session', 'How ready am I?', 'Give me 5 more']);
+  assert.deepEqual(EV.greeting({ ...base, reviewLeft: 0, jobs: [{ ...job, finishedAt: '2026-10-18T17:00:00Z' }], dueSoon: 0 }).chips.includes('Open the practice set'), false, 'a job he has already seen is not offered');
+  assert.equal(EV.greeting({ ...base, jobs: [{ ...job, kind: 'mystery' }], dueSoon: 0 }).chips[0], 'Open the result');
 });

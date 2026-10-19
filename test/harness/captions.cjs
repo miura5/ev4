@@ -74,6 +74,9 @@ const view = page => page.evaluate(() => {
     bubbles: lines.some(m => { const b = m.querySelector('.bubble'); return b && (cs(b).backgroundColor !== 'rgba(0, 0, 0, 0)' || parseFloat(cs(b).paddingLeft) > 0); }) };
 });
 async function send(page, text, reply) { await page.evaluate(r => { window.__chatScript = []; window.__chatPre = ''; window.__chatReply = r; }, reply); await page.fill('#ev-input', text); await page.click('#ev-send'); }
+// Now is the bottom, or, when her current line is taller than the captions, its start pinned at the top (pinNow).
+const atNow = page => page.evaluate(() => { const t = document.getElementById('thread'), cur = t.querySelector('.msg.ev.current'), tr = t.getBoundingClientRect(), cr = cur && cur.getBoundingClientRect();
+  return t.scrollHeight - t.clientHeight - t.scrollTop < 4 || (!!cr && cr.height > t.clientHeight - 16 && Math.abs(cr.top - tr.top - 8) < 4); });
 async function pullOnce(page) { await page.evaluate(() => { const t = document.getElementById('thread'); t.scrollTop = 0; t.dispatchEvent(new Event('scroll')); }); await page.waitForTimeout(450); }
 // A full pull after an edge: away from the top first (the next pull starts over), then up and hold.
 async function pullAgain(page) { await page.evaluate(() => { const t = document.getElementById('thread'); t.scrollTop = Math.min(220, t.scrollHeight - t.clientHeight); t.dispatchEvent(new Event('scroll')); }); await page.waitForTimeout(120); await pullOnce(page); }
@@ -125,10 +128,9 @@ async function sideBySide(browser, left, right, out, vp) {
     const d = { corePx: [a.corePx, ours.corePx], coreX: [a.coreX, ours.coreX], coreY: [a.coreY, ours.coreY], lineFs: [a.lineFs, ours.nowSize], lineY: [a.lineY, ours.lineY], composerW: [a.composerW, ours.composerW] };
     rendered[scheme][state].vs = d;
     // Checked: her core's size in both states, and her line's size once she is talking (on opening the artboard's
-    // greeting is still typing). Reported, not checked: positions, which depend on the header, the reply's length and,
-    // on desktop, the side column (the brief's empty 300 to 440 px column puts her stage left of the window's centre;
-    // the artboard centres it: a question for the design chat).
-    ok(`[${scheme}] against the rendered artboard, ${state}: her core ${a.corePx} px` + (state === 'open' ? '' : `, her line ${a.lineFs}`), a.caught && Math.abs(a.corePx - ours.corePx) <= 1 && (state === 'open' || a.lineFs === ours.nowSize), JSON.stringify(d));
+    // greeting is still typing), and her core's centre (D-122 as amended: no side column while nothing is in it).
+    // Reported, not checked: vertical positions, which depend on the header and the reply's length.
+    ok(`[${scheme}] against the rendered artboard, ${state}: her core ${a.corePx} px, centred at ${a.coreX}` + (state === 'open' ? '' : `, her line ${a.lineFs}`), a.caught && Math.abs(a.corePx - ours.corePx) <= 1 && Math.abs(a.coreX - ours.coreX) <= 2 && (state === 'open' || a.lineFs === ours.nowSize), JSON.stringify(d));
     console.log(`DIFF [${scheme}] ${state}, artboard vs build:`, JSON.stringify({ coreX: d.coreX, coreY: d.coreY, lineY: d.lineY, composerW: d.composerW }));
   };
   for (const scheme of ['phone', 'desktop']) {
@@ -139,6 +141,8 @@ async function sideBySide(browser, left, right, out, vp) {
     await openPage(page); await page.waitForTimeout(400);
     let v = await view(page); const A = art[scheme];
     ok(`[${scheme}] a new conversation opens on the greeting alone`, v.greetOnly, JSON.stringify(v.texts));
+    const gc = await page.evaluate(() => ({ cards: document.querySelectorAll('#thread .msg.greet .ev-card').length, chips: [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent) }));
+    ok(`[${scheme}] the greeting has no card; its offers are the chips, at most three`, gc.cards === 0 && gc.chips.length >= 1 && gc.chips.length <= 3, JSON.stringify(gc));
     ok(`[${scheme}] opening: her core at 100% (${A.core} px) on a ${A.stage} px stage, no bubbles`, v.step === 'idle' && v.corePx === A.core && v.stageH === A.stage && !v.bubbles, JSON.stringify({ step: v.step, px: v.corePx, stage: v.stageH }));
     ok(`[${scheme}] the captions are the screen reader's polite live region, the scroller is not`, v.sayLive === 'polite' && !v.threadLive);
     await page.waitForTimeout(9000); // the greeting reveals and settles
@@ -191,12 +195,12 @@ async function sideBySide(browser, left, right, out, vp) {
       await page.waitForTimeout(600);
     }
     // Back to now: scrolling away shows the pill; tapping her returns.
-    await page.evaluate(() => { const t = document.getElementById('thread'); t.scrollTop = Math.max(0, t.scrollHeight - t.clientHeight - 200); t.dispatchEvent(new Event('scroll')); });
+    await page.evaluate(() => { const t = document.getElementById('thread'); t.scrollTop = Math.max(170, t.scrollHeight - t.clientHeight - 600); t.dispatchEvent(new Event('scroll')); });
     await page.waitForTimeout(200); v = await view(page);
     ok(`[${scheme}] scrolling away shows Back to now`, v.now, JSON.stringify({ top: v.scrollTop, max: v.maxScroll }));
     await page.screenshot({ path: `${shots}/captions-back-to-now-${scheme}.png` });
     await page.click('#hero'); await page.waitForTimeout(900); v = await view(page);
-    ok(`[${scheme}] tapping her returns to now`, !v.now && v.maxScroll - v.scrollTop < 4, JSON.stringify({ top: v.scrollTop, max: v.maxScroll }));
+    ok(`[${scheme}] tapping her returns to now`, !v.now && await atNow(page), JSON.stringify({ top: v.scrollTop, max: v.maxScroll }));
     // Pull to load: noon (4), then this morning (3), then the start of today; last night is never loaded.
     await pullOnce(page); v = await view(page);
     ok(`[${scheme}] a pull says it is loading the noon conversation's 4 messages`, v.pull === 'Loading 4 earlier messages', v.pull);
@@ -229,28 +233,49 @@ async function sideBySide(browser, left, right, out, vp) {
     await page.evaluate(() => { document.getElementById('thread').scrollTop = 0; }); await page.waitForTimeout(200);
     await page.screenshot({ path: `${shots}/captions-last-7-days-${scheme}.png` });
     const pillShown = await page.isVisible('#ev-now'); await page.click('#ev-now'); await page.waitForTimeout(900); v = await view(page);
-    ok(`[${scheme}] tapping the Back to now pill folds the earlier conversations away`, pillShown && !v.texts.some(t => t.startsWith('E:')) && !v.now && v.maxScroll - v.scrollTop < 4);
-    // Until B-78: a reply with several cards shows the first under her line, capped so her line stays in view, and the
-    // rest as one line.
+    ok(`[${scheme}] tapping the Back to now pill folds the earlier conversations away`, pillShown && !v.texts.some(t => t.startsWith('E:')) && !v.now && await atNow(page), JSON.stringify({ pillShown, earlier: v.texts.filter(t => t.startsWith('E:')).length, pill: v.now, top: v.scrollTop, max: v.maxScroll, atNow: await atNow(page), pin: await page.evaluate(() => { const t = document.getElementById('thread'), c = t.querySelector('.msg.ev.current'); return c ? [Math.round(c.getBoundingClientRect().top - t.getBoundingClientRect().top), Math.round(c.getBoundingClientRect().height), t.clientHeight] : null; }) }));
+    // Until B-78 (D-122, D-125 as amended): a reply with cards steps her down to the list size; its first card shows
+    // under her line, five rows and a more that opens its tab, never scrolling inside itself; the rest are one tappable
+    // line that swaps the next card in.
     await page.evaluate(() => { window.__chatScript = [{ tool: 'show_card', input: { type: 'dates', days: 14 } }, { tool: 'show_card', input: { type: 'weakspots' } }, { tool: 'show_card', input: { type: 'today', filter: 'all' } }]; window.__chatPre = ''; window.__chatReply = 'Here is the next two weeks. Nine things are dated.'; });
     await page.fill('#ev-input', 'what is coming up'); await page.click('#ev-send'); await page.waitForTimeout(4500);
-    const lc = await page.evaluate(() => { const t = document.getElementById('thread').getBoundingClientRect(), cur = document.querySelector('#thread .msg.ev.current'), b = cur.querySelector('.bubble').getBoundingClientRect(), card = cur.querySelector('.ev-card'), cr = card && card.getBoundingClientRect();
-      return { cards: cur.querySelectorAll('.ev-card').length, more: (cur.querySelector('.cap-cards-more') || {}).textContent, line: [Math.round(b.top), Math.round(b.bottom)], card: cr && [Math.round(cr.top), Math.round(cr.bottom), card.scrollHeight > card.clientHeight + 1], thread: [Math.round(t.top), Math.round(t.bottom)] }; });
-    ok(`[${scheme}] a long card: one card under her line, then "2 more cards"`, lc.cards === 1 && lc.more === '2 more cards', JSON.stringify(lc));
-    ok(`[${scheme}] a long card: her line stays in view, the card fits below it`, lc.line[0] >= lc.thread[0] - 1 && lc.line[1] <= lc.thread[1] + 1 && lc.card && lc.card[1] <= lc.thread[1] + 1, JSON.stringify(lc));
+    const cardView = () => page.evaluate(() => { const t = document.getElementById('thread').getBoundingClientRect(), hero = document.getElementById('hero'), cur = document.querySelector('#thread .msg.ev.current'), b = cur.querySelector('.bubble').getBoundingClientRect(), card = cur.querySelector('.ev-card'), cr = card && card.getBoundingClientRect();
+      return { step: hero.dataset.step, stage: Math.round(hero.getBoundingClientRect().height), cards: cur.querySelectorAll('.ev-card').length, title: card && (card.querySelector('h2') || {}).textContent, more: (cur.querySelector('.cap-cards-more') || {}).textContent, cardMore: card && (card.querySelector('.card-more') || {}).textContent, line: [Math.round(b.top), Math.round(b.bottom)], card: cr && [Math.round(cr.top), Math.round(cr.bottom)], scrollsInside: card ? card.scrollHeight > card.clientHeight + 1 : null, thread: [Math.round(t.top), Math.round(t.bottom)] }; });
+    const lc = await cardView(); const listStage = scheme === 'phone' ? 150 : 260;
+    ok(`[${scheme}] a reply with cards: her core steps down (the ${scheme === 'phone' ? '52%' : 'surface'} step, a ${listStage} px stage)`, lc.step === (scheme === 'phone' ? 'list' : 'surface') && lc.stage === listStage, JSON.stringify(lc));
+    ok(`[${scheme}] one card under her line, then "2 more cards"`, lc.cards === 1 && lc.more === '2 more cards', JSON.stringify(lc));
+    ok(`[${scheme}] the card shows five rows and a more, and never scrolls inside itself`, /^\d+ more in Record → Dates$/.test(lc.cardMore || '') && lc.scrollsInside === false, JSON.stringify(lc));
+    ok(`[${scheme}] her line stays in view`, lc.line[0] >= lc.thread[0] - 1 && lc.line[1] <= lc.thread[1] + 1, JSON.stringify(lc));
     await page.screenshot({ path: `${shots}/captions-long-card-${scheme}.png` });
+    const seenCards = [lc.title];
+    for (let k = 0; k < 3; k++) { await page.click('#thread .msg.ev.current .cap-cards-more'); await page.waitForTimeout(300); const x = await cardView(); seenCards.push(x.title); if (k === 0) ok(`[${scheme}] tapping "2 more cards" swaps the next card in, the first joining the line`, x.cards === 1 && x.title !== lc.title && x.more === '2 more cards', JSON.stringify(x)); }
+    ok(`[${scheme}] tapping on goes through all three and back to the first`, new Set(seenCards.slice(0, 3)).size === 3 && seenCards[3] === seenCards[0], JSON.stringify(seenCards));
+    await page.click('#thread .msg.ev.current .card-more'); await page.waitForTimeout(300);
+    const opened = await page.evaluate(() => ({ record: !document.getElementById('p-record').hidden, dates: !document.getElementById('record-dates').hidden }));
+    ok(`[${scheme}] the card's more opens the item in its tab (Record → Dates)`, opened.record && opened.dates, JSON.stringify(opened));
+    await page.click('#tab-ev'); await page.waitForTimeout(400);
     // Chips and composer kept.
     ok(`[${scheme}] chips and composer kept`, (await page.locator('#qchips .qchip').count()) >= 1 && await page.isVisible('#ev-input') && await page.isVisible('#ev-send'));
     if (scheme === 'desktop') {
-      // From 900 px the stage and a side column; below, the phone stack.
-      const lay = async w => { await page.setViewportSize({ width: w, height: 860 }); await page.waitForTimeout(400); return page.evaluate(() => { const r = id => document.getElementById(id).getBoundingClientRect(); const s = r('ev-side'), c = r('composer'), th = r('thread'); return { sideLeft: s.left, sideTop: s.top, sideW: s.width, comp: { left: c.left, right: c.right, bottom: c.bottom, top: c.top }, threadRight: th.right, compW: document.querySelector('.compose-row').getBoundingClientRect().width }; }); };
+      // D-122 as amended: the side column exists only while it holds something. With nothing in it her stage centres in
+      // the window; with something (a stand-in for B-78's surface) it slides in from 900 px and her stage re-centres in
+      // what is left; below 900 it wraps under the stage.
+      const lay = async w => { await page.setViewportSize({ width: w, height: 860 }); await page.waitForTimeout(700); return page.evaluate(() => { const r = id => document.getElementById(id).getBoundingClientRect(); const s = r('ev-side'), c = r('composer'), th = r('thread'), av = document.querySelector('#hero .ev-av').getBoundingClientRect();
+        return { sideShown: getComputedStyle(document.getElementById('ev-side')).display !== 'none', sideLeft: Math.round(s.left), sideTop: Math.round(s.top), sideW: Math.round(s.width), comp: { left: Math.round(c.left), right: Math.round(c.right), bottom: Math.round(c.bottom), top: Math.round(c.top) }, threadLeft: Math.round(th.left), threadRight: Math.round(th.right), coreX: Math.round(av.left + av.width / 2), compW: Math.round(document.querySelector('.compose-row').getBoundingClientRect().width) }; }); };
+      const e1280 = await lay(1280), e900 = await lay(900);
+      ok('[desktop] with nothing beside her: no side column, her stage centred in the window (640 px at 1280, 450 at 900)', !e1280.sideShown && !e900.sideShown && Math.abs(e1280.coreX - 640) <= 2 && Math.abs(e900.coreX - 450) <= 2, JSON.stringify({ e1280, e900 }));
+      await page.evaluate(() => { const d = document.createElement('div'); d.className = 'card'; d.id = 'harness-surface'; d.textContent = 'Harness surface (a stand-in for B-78)'; document.getElementById('ev-side').append(d); });
       const at900 = await lay(900), at899 = await lay(899);
-      ok('[desktop] at 900 px the side column sits beside her stage (300 to 440 px)', at900.sideLeft >= at900.threadRight && at900.sideTop < at900.comp.top && at900.sideW >= 300 && at900.sideW <= 440, JSON.stringify(at900));
-      ok('[desktop] at 899 px it wraps under the stage (the phone stack)', at899.sideTop >= at899.comp.bottom - 1 && at899.sideLeft < at899.threadRight, JSON.stringify(at899));
+      ok('[desktop] something beside her: at 900 px the column sits beside her stage (300 to 440 px)', at900.sideShown && at900.sideLeft >= at900.threadRight && at900.sideTop < at900.comp.top && at900.sideW >= 300 && at900.sideW <= 440, JSON.stringify(at900));
+      ok('[desktop] at 899 px it wraps under the stage (the phone stack)', at899.sideShown && at899.sideTop >= at899.comp.bottom - 1 && at899.sideLeft < at899.threadRight, JSON.stringify(at899));
       const at1280 = await lay(1280);
-      ok('[desktop] captions and composer at most 660 px', at1280.compW <= 660 && at1280.sideW >= 300 && at1280.sideW <= 440, JSON.stringify(at1280));
-      await page.setViewportSize({ width: 899, height: 860 }); await page.waitForTimeout(300); await page.screenshot({ path: `${shots}/captions-wrap-899.png` });
-      await page.setViewportSize({ width: 900, height: 860 }); await page.waitForTimeout(300); await page.screenshot({ path: `${shots}/captions-wrap-900.png` });
+      ok('[desktop] at 1280 her stage re-centres in what is left; captions and composer at most 660 px', at1280.compW <= 660 && at1280.sideW >= 300 && at1280.sideW <= 440 && Math.abs(at1280.coreX - (at1280.threadLeft + at1280.threadRight) / 2) <= 2 && at1280.coreX < 600, JSON.stringify(at1280));
+      await page.setViewportSize({ width: 899, height: 860 }); await page.waitForTimeout(400); await page.screenshot({ path: `${shots}/captions-wrap-899.png` });
+      await page.setViewportSize({ width: 900, height: 860 }); await page.waitForTimeout(400); await page.screenshot({ path: `${shots}/captions-wrap-900.png` });
+      await page.setViewportSize({ width: 1280, height: 860 }); await page.waitForTimeout(400); await page.screenshot({ path: `${shots}/captions-side-1280.png` });
+      await page.evaluate(() => document.getElementById('harness-surface').remove());
+      const back = await lay(1280);
+      ok('[desktop] emptied, the column goes and her stage centres again', !back.sideShown && Math.abs(back.coreX - 640) <= 2, JSON.stringify(back));
     }
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
     ok(`[${scheme}] no sideways scroll`, !overflow);
