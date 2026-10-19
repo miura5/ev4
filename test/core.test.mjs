@@ -981,3 +981,27 @@ test('greeting chips (D-125 as amended): at most three; Start a study session la
   assert.equal(EV.greeting({ ...base, reviewLeft: 0, jobs: [{ ...job, finishedAt: '2026-10-18T17:00:00Z' }], dueSoon: 0 }).chips.includes('Open the practice set'), false, 'a job he has already seen is not offered');
   assert.equal(EV.greeting({ ...base, jobs: [{ ...job, kind: 'mystery' }], dueSoon: 0 }).chips[0], 'Open the result');
 });
+test('B-88 comment mode: comments and quiet checkpoints move the mark without counting as checks; a quiz does', () => {
+  const t0 = '2026-10-19T19:00:00.000Z'; const at = m => new Date(Date.parse(t0) + m * 60e3).toISOString();
+  const key = (type, m) => type + '-' + at(m).replace(/[-:]/g, '').replace('T', '-').replace(/\.\d+Z$/, '');
+  const s = { status: 'active', startedAt: t0, events: {
+    [key('start', 0)]: { type: 'start', at: at(0), len: 10, h: 'a', noteId: 'n' },
+    [key('check', 2)]: { type: 'check', at: at(2), comment: true, len: 40, h: 'b', noteId: 'n', msgId: 'm-1' },
+    [key('check', 7)]: { type: 'check', at: at(7), quiet: true, len: 60, h: 'c', noteId: 'n' },
+    [key('idle', 14)]: { type: 'idle', at: at(14) },
+    [key('check', 16)]: { type: 'check', at: at(16), n: 1, items: 2, len: 70, h: 'd', noteId: 'n' } } };
+  const st = EV.sessionState(s, at(17));
+  assert.equal(st.checks, 1); assert.equal(st.questions, 2); assert.equal(st.comments, 1); assert.equal(st.reads, 3);
+  assert.deepEqual([st.lastMark.h, st.lastQuizMark.h], ['d', 'd']);
+  const mid = EV.sessionState({ ...s, events: Object.fromEntries(Object.entries(s.events).slice(0, 3)) }, at(8));
+  assert.deepEqual([mid.checks, mid.comments, mid.lastMark.h, mid.lastQuizMark.h, mid.idleChecks], [0, 1, 'c', 'a', 0]);
+});
+
+test('B-88 comment prompt and parser: silence by default, one short line, a quote only if he wrote it', () => {
+  const p = EV.commentPrompt({ noteName: 'Cardiac', opening: 'CO = HR x SV', before: 'Preload', added: 'SV falls if afterload climbs\n', context: { text: 'Next exam: E4' } });
+  assert.match(p, /Most of the time, say nothing/); assert.match(p, /The new lines he just wrote:\nSV falls if afterload climbs/); assert.match(p, /Next exam: E4/); assert.match(p, /Never help with graded/);
+  assert.equal(EV.parseComment({ say: null }, 'x'), null); assert.equal(EV.parseComment({ say: 'null' }, 'x'), null); assert.equal(EV.parseComment('nope', 'x'), null);
+  assert.deepEqual(EV.parseComment({ say: ' Good link.  That is afterload on the exam. ', quote: '“SV falls if afterload climbs”', kind: 'exam' }, 'SV falls if afterload climbs\n'), { say: 'Good link. That is afterload on the exam.', quote: 'SV falls if afterload climbs', kind: 'exam' });
+  assert.equal(EV.parseComment({ say: 'Nice.', quote: 'not in his note', kind: 'odd' }, 'SV falls').quote, null);
+  assert.equal(EV.parseComment({ say: 'Nice.', kind: 'odd' }, 'SV falls').kind, 'connection');
+});

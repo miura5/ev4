@@ -999,7 +999,11 @@
    "takeoverMinutes": 2,
    "openingChars": 800,
    "addedChars": 6000,
-   "fallbackChars": 2500
+   "fallbackChars": 2500,
+   "mode": "comment",
+   "readSeconds": 30,
+   "commentMinChars": 20,
+   "commentGapSeconds": 75
   },
   "nurUnitExamKinds": [
    "unit",

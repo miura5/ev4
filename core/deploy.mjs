@@ -199,8 +199,25 @@ export function formatVerify(target, result, reads) {
  * commit (B-35). state (optional): the saved verify state, used to skip tasks whose
  * prompt already matches.
  */
-export function deployCalls({ manifest, target, distDir, build, versions = {}, mattOk = false, state = null, sha256, stagingVerify = null }) {
+/** B-87: the sessions a deploy would interrupt: active or ending, with activity in the last 45 minutes (an abandoned
+ * session left active does not block deploys forever). */
+export function liveSessions(running, nowMs) {
+  const t = v => { const n = Date.parse(v); return Number.isFinite(n) ? n : null; };
+  return ((running && running.sessions) || []).filter(s => ['active', 'ending'].includes(s.status)).map(s => {
+    const times = [t(s.startedAt), t(s.driver && s.driver.at), ...Object.entries(s.events || {}).map(([k, e]) => t(e && e.at) || t(String(k).replace(/^[a-z-]+-(\d{4})(\d\d)(\d\d)-(\d\d)(\d\d)(\d\d).*$/, '$1-$2-$3T$4:$5:$6Z')))].filter(x => x != null);
+    return { id: s.id, topic: s.topic || s.id, kind: s.kind || 'note', startedAt: s.startedAt, lastMs: times.length ? Math.max(...times) : null };
+  }).filter(s => s.lastMs != null && nowMs - s.lastMs < 45 * 60e3);
+}
+export const RUNNING_READ = (stateDir, url) => `read the live record's running sessions first: ArtifactData query on ${url} collection "sessions" with query {"where": [["status", "in", ["active", "ending"]]], "limit": 20} and out_dir ${stateDir}/running (empty that folder first), then: node tools/tool-result.mjs ArtifactData ${stateDir}/running.txt`;
+
+export function deployCalls({ manifest, target, distDir, build, versions = {}, mattOk = false, state = null, sha256, stagingVerify = null, duringSession = false, now = Date.now(), stateDir = null }) {
   const refusals = [];
+  // B-87 (Matt, Oct 19): a live deploy can reload his page, so it waits while a study session or skills run is going.
+  if (target === 'live' && !duringSession) {
+    const r = state && state.running; const url = artifactUrl((manifest.records.live || {}).artifact || '');
+    if (!r || now - r.readAt > 15 * 60e3) refusals.push(RUNNING_READ(stateDir || `${distDir}/state/live`, url) + (r ? ` (the saved read is ${Math.round((now - r.readAt) / 60e3)} min old)` : ''));
+    else for (const s of liveSessions(r, now)) refusals.push(`a ${s.kind === 'skill' ? 'skills run' : 'study session'} is running on live ("${String(s.topic).slice(0, 60)}", last activity ${Math.round((now - s.lastMs) / 60e3)} min ago): deploy after it ends, or pass --during-session with Matt's explicit OK`);
+  }
   // B-35: the build that goes live has always been through staging: dist/verify-staging.json green at this commit.
   if (target === 'live') {
     const v = stagingVerify;

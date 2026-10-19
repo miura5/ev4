@@ -2,7 +2,8 @@
 // E.V. v4 command line. Build-chat commands so far:
 //   verify-deploy <live|staging>   diff the saved live state against dist/manifest.json; prints the reads to save
 //   deploy <live|staging>          print the exact calls that deploy this build (refuses dirty, unpushed, live w/o OK,
-//                                  live unless dist/verify-staging.json is green at the same commit: B-35)
+//                                  live unless dist/verify-staging.json is green at the same commit: B-35, live while
+//                                  a study session runs on it: B-87)
 //   migrate v3 --from <export>     the v4 writes for a v3 record export, as document files and chunked batches
 //   verify-migration --from <export>   recompute every weak spot from the migrated Facts; zero mismatches passes
 //   seed-staging --from <export>   the batches that make the staging record a copy of an export, stamped system/seed
@@ -18,7 +19,7 @@
 //                                  --status <ok|partial|failed>, --detail, --job <id> (worker), --probe <text> (diagnostic)
 // Options: --root <repo> (default: this checkout), --dist <dir> (default <root>/dist), --state <dir> (default
 // <dist>/state/<target>), --version <manifest|spec|environments>=<n> (deploy: the version a get printed),
-// --matt-ok (deploy live), --json; migrate: --from <export dir>, --at <ISO stamp> (default now), --out <dir>
+// --matt-ok (deploy live), --during-session (deploy live while a session runs, B-87), --json; migrate: --from <export dir>, --at <ISO stamp> (default now), --out <dir>
 // (default <dist>/migration), --record <live|staging> (the batch target). Exit 0 green, 1 red or refused, 2 usage.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -50,6 +51,7 @@ function args(argv) {
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--matt-ok' || a === '--json' || a === '--no-audit') o[a.slice(2).replace('-ok', 'Ok')] = true;
+    else if (a === '--during-session') o.duringSession = true; // B-87: deploy live over a running session (Matt's OK)
     else if (a === '--version') { const [k, v] = (argv[++i] || '').split('='); o.version[k] = Number(v); }
     else if (a.startsWith('--')) o[a.slice(2)] = argv[++i];
     else o._.push(a);
@@ -318,7 +320,7 @@ const commands = {
     const target = o._[1];
     const { dist, manifest, stateDir, build } = load(o, target);
     const stagingVerify = maybeJson(path.join(dist, 'verify-staging.json')) || null;
-    const result = deployCalls({ manifest, target, distDir: dist, build, versions: o.version, mattOk: Boolean(o.mattOk), state: withShell(readState(stateDir), manifest, target, dist), sha256, stagingVerify });
+    const result = deployCalls({ manifest, target, distDir: dist, build, versions: o.version, mattOk: Boolean(o.mattOk), duringSession: Boolean(o.duringSession), state: withShell(readState(stateDir), manifest, target, dist), sha256, stagingVerify, stateDir });
     if (result.ok) fs.writeFileSync(path.join(dist, `deploy-${target}.json`), JSON.stringify(result, null, 1));
     console.log(o.json ? JSON.stringify(result, null, 1) : formatDeploy(target, result));
     return result.ok ? 0 : 1;

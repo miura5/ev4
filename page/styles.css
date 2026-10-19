@@ -9,7 +9,7 @@
   --warn:#F5C77E; --warn-solid:#F2B45A; --warn-bg:rgba(242,180,90,.14);
   --bad:#F4A797; --bad-solid:#F08A78; --bad-bg:rgba(240,138,120,.14);
   --info:#C9D3DA; --info-bg:rgba(255,255,255,.07); --card:var(--glass);
-  --sans:"Geist","Helvetica Neue",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"Geist Mono",ui-monospace,Menlo,Consolas,monospace; --serif:var(--sans);
+  --sans:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace; /* B-89: one font, the system UI font; --mono is for code only */ --serif:var(--sans);
   --r:22px; --tap:44px; --top-h:53px; --dock-h:0px; --ease:cubic-bezier(.2,.7,.2,1);
 }
 *{box-sizing:border-box}
@@ -27,13 +27,13 @@ a{color:var(--accent-text)}
 .top-av{width:36px;height:36px;flex:0 0 36px;display:grid;place-items:center;transition:opacity .45s ease,transform .55s var(--ease),width .55s var(--ease),flex-basis .55s var(--ease),margin .55s var(--ease)}
 body.on-ev.opening .top-av,body.on-ev.in-session .top-av,body.on-ev.core-big .top-av{overflow:hidden;opacity:0;transform:scale(.5);width:0;flex-basis:0;margin-right:-10px}
 .brand-txt{display:flex;flex-direction:column;gap:1px;min-width:0}
-.wordmark{font-size:16px;font-weight:600;letter-spacing:.02em;line-height:1.2}
-.wordmark .stg{font:500 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--warn);margin-left:6px;vertical-align:2px}
-.readout{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--soft);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wordmark{font-size:16px;font-weight:600;line-height:1.2}
+.wordmark .stg{font:500 12px var(--sans);color:var(--warn);margin-left:6px;vertical-align:2px}
+.readout{font:500 12px var(--sans);color:var(--soft);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .readout .led{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-right:7px;vertical-align:1px}
 .readout .led.busy{background:var(--plum);animation:pulse 1.2s ease-in-out infinite} .readout .led.off{background:var(--soft)} .readout .led.brk{background:var(--warn-solid)}
 .top-right{flex:0 0 auto;display:flex;align-items:center;gap:6px}
-.status{flex:0 1 auto;min-width:0;font:500 12px var(--mono);color:var(--soft);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:36vw}
+.status{flex:0 1 auto;min-width:0;font:500 12px var(--sans);color:var(--soft);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:36vw}
 .status:not(.ok){color:var(--warn);white-space:normal}
 .tab-sys{appearance:none;width:40px;height:40px;flex:0 0 40px;border-radius:50%;border:1px solid var(--line2);background:transparent;color:var(--ink2);display:grid;place-items:center;padding:0;cursor:pointer}
 .tab-sys:hover{background:var(--glass2)} .tab-sys[aria-current="page"]{background:var(--accent-bg);border-color:var(--accent-edge);color:var(--accent-text)}
@@ -54,8 +54,8 @@ body.on-ev.opening .top-av,body.on-ev.in-session .top-av,body.on-ev.core-big .to
 .wrap{max-width:760px;margin:0 auto;padding-top:18px;display:flex;flex-direction:column;gap:16px}
 .ptitle{font:600 30px/1.15 var(--sans);letter-spacing:-.02em;text-transform:none;color:var(--ink);margin:4px 0 0}
 h1{font-size:30px;font-weight:600;letter-spacing:-.02em;margin:0}
-h2{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--soft);margin:0}
-.eyebrow{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--soft)}
+h2{font:600 13.5px/1.3 var(--sans);color:var(--ink2);margin:0}
+.eyebrow{font:500 12.5px var(--sans);color:var(--soft)}
 .seg{display:flex;gap:4px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:999px;padding:4px;align-self:flex-start;max-width:100%;overflow-x:auto;scrollbar-width:none}
 .seg::-webkit-scrollbar{display:none}
 .seg button{flex:0 0 auto;min-height:38px;border:0;background:transparent;color:#B4C1CB;font:600 14px var(--sans);border-radius:999px;padding:0 16px;cursor:pointer}
@@ -76,7 +76,7 @@ h2{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:
 .row .title{overflow-wrap:anywhere}
 .row.done .title{color:#8593A0;text-decoration:line-through;text-decoration-color:rgba(255,255,255,.2)}
 .meta{font-size:13.5px;color:var(--soft);margin-top:2px}
-.when{font:500 12px var(--mono);font-variant-numeric:tabular-nums;min-width:4.6rem;color:var(--ink2);padding-top:2px}
+.when{font:500 12px var(--sans);font-variant-numeric:tabular-nums;min-width:4.6rem;color:var(--ink2);padding-top:2px}
 .chips{display:inline-flex;gap:4px;flex-wrap:wrap;vertical-align:1px}
 .chip{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap;background:var(--chip);color:#B4C1CB}
 .chip.accent{background:var(--accent);color:var(--accent-ink)} .chip.ok{background:var(--accent-bg);color:var(--accent-text)}
@@ -90,12 +90,12 @@ h2{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:
 .empty{color:var(--soft);font-size:15px;margin:0}
 .scroll{overflow-x:auto;max-width:100%}
 table.tbl{width:100%;border-collapse:collapse;font-size:14px}
-table.tbl th{text-align:left;font:500 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--soft);padding:6px 8px 8px 0;border-bottom:1px solid var(--line)}
+table.tbl th{text-align:left;font:500 12px var(--sans);color:var(--soft);padding:6px 8px 8px 0;border-bottom:1px solid var(--line)}
 table.tbl td{padding:8px 8px 8px 0;border-bottom:1px solid rgba(255,255,255,.06);vertical-align:top}
 table.tbl .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .meter{height:8px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden}.meter i{display:block;height:100%;background:var(--accent);border-radius:4px;transition:width .6s var(--ease)}
 .progress{height:4px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden}.progress i{display:block;height:100%;background:var(--accent);transition:width .4s var(--ease)}
-details>summary{cursor:pointer;font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--soft);min-height:36px;display:flex;align-items:center}
+details>summary{cursor:pointer;font:600 13.5px var(--sans);color:var(--ink2);min-height:36px;display:flex;align-items:center}
 /* controls */
 button,.btn{font:500 14px var(--sans);border-radius:999px;padding:0 16px;min-height:40px;cursor:pointer;border:1px solid var(--line2);background:transparent;color:var(--ink);transition:background .2s ease,border-color .2s ease,transform .1s ease}
 button:hover{background:var(--glass2)}
@@ -129,7 +129,7 @@ button.quiet{background:transparent;border-color:var(--line2);color:var(--ink2)}
 .opt.locked{cursor:default}
 .why{display:block;font-size:14px;color:#B4C1CB;margin-top:4px;line-height:1.45}
 table.mx{width:100%;border-collapse:separate;border-spacing:0 6px;font-size:15px}
-table.mx th{font:500 10.5px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--soft);padding:0 6px;text-align:center}
+table.mx th{font:500 12px var(--sans);color:var(--soft);padding:0 6px;text-align:center}
 table.mx th:first-child{text-align:left}
 table.mx td{background:rgba(255,255,255,.03);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:10px 6px;text-align:center;vertical-align:middle}
 table.mx td:first-child{text-align:left;border-left:1px solid var(--line);border-radius:12px 0 0 12px;padding-left:12px}
@@ -165,10 +165,10 @@ body.opening .hero,body.core-big .hero{max-height:360px;opacity:1;margin:0 0 -10
 .msg.ev .bubble.err{background:var(--warn-bg);border:1px solid rgba(242,180,90,.32);padding:10px 14px;border-radius:14px}
 .msg-cards{display:flex;flex-direction:column;gap:12px;min-width:0}
 .msg-cards:empty{display:none}
-.msg-meta{font:500 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#8593A0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.msg-meta{font:500 12px var(--sans);color:#8593A0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .msg-meta button{min-height:32px;padding:0 12px;font:500 13px var(--sans);letter-spacing:0;text-transform:none;color:#D5DEE4}
-.list .daysep-row{font:500 10.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--soft);padding:16px 0 4px;border:0;min-height:0}
-.daysep{align-self:center;font:500 10.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--soft);padding:4px 12px;border-radius:999px;background:rgba(255,255,255,.05)}
+.list .daysep-row{font:500 12px var(--sans);color:var(--soft);padding:16px 0 4px;border:0;min-height:0}
+.daysep{align-self:center;font:500 12px var(--sans);color:var(--soft);padding:4px 12px;border-radius:999px;background:rgba(255,255,255,.05)}
 .dots{display:inline-flex;gap:5px;padding:6px 0} .dots i{width:6px;height:6px;border-radius:50%;background:var(--soft);animation:pulse 1.1s infinite}
 .dots i:nth-child(2){animation-delay:.18s} .dots i:nth-child(3){animation-delay:.36s}
 /* opening: E.V. greets at full size, the greeting sits under the core */
@@ -207,10 +207,10 @@ body.opening .msg.greet .msg-cards{display:grid;grid-template-columns:repeat(aut
 .compose-row .attach{background:transparent;border-color:transparent;color:var(--soft)}.compose-row .attach:hover{color:var(--ink);background:rgba(255,255,255,.05)}
 #p-ev.drop .compose-row{border-color:var(--accent)}
 .guard{font-size:14px;color:var(--warn);margin:0}
-.fine{font:500 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#8593A0;text-align:center;margin:0}
+.fine{font:500 12px var(--sans);color:#8593A0;text-align:center;margin:0}
 /* E.V.: a running study session (B-84, the Captions v2 artboard): one line, a dot, the minutes and the next check,
    Break, +5, End; its progress is the ring round her core */
-.sbar{display:flex;align-items:center;justify-content:center;flex-wrap:nowrap;gap:8px;min-height:32px;padding:0;min-width:0;font:500 12px var(--mono);letter-spacing:.04em;color:var(--soft);transition:color .3s ease}
+.sbar{display:flex;align-items:center;justify-content:center;flex-wrap:nowrap;gap:8px;min-height:32px;padding:0;min-width:0;font:500 13px var(--sans);font-variant-numeric:tabular-nums;color:var(--soft);transition:color .3s ease}
 .s-led{width:6px;height:6px;border-radius:50%;background:var(--accent);flex:0 0 6px;animation:pulse 1.8s ease-in-out infinite}
 .sbar.brk .s-led{background:var(--warn-solid)} .sbar.busy .s-led{background:var(--plum)}
 .s-main{flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -224,11 +224,11 @@ body.opening .msg.greet .msg-cards{display:grid;grid-template-columns:repeat(aut
 .ev-card.check.done{background:var(--glass);border-color:var(--line)}
 .check-items{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
 .check-items li{display:flex;gap:12px;align-items:baseline;overflow-wrap:anywhere;font-size:16.5px;line-height:1.5}
-.check-kind{flex:0 0 46px;font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--accent-text)}
+.check-kind{flex:0 0 46px;text-transform:capitalize;font:500 12px var(--sans);color:var(--accent-text)}
 .check-kind.link{color:var(--plum)} .check-kind.gap,.check-kind.weakspot{color:var(--warn)}
 .ev-card textarea{min-height:72px}
 .sess-sec{display:flex;flex-direction:column;gap:6px}
-.sess-sec h3{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--soft);margin:0}
+.sess-sec h3{font:500 12px var(--sans);color:var(--soft);margin:0}
 .sess-sec ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:3px}
 .pend{display:flex;flex-direction:column;gap:10px;padding:12px 14px;border:1px solid rgba(154,123,255,.30);border-radius:16px;background:rgba(154,123,255,.07)}
 /* motion: a view's blocks rise in when you switch to it; bars and the week chart grow in */
@@ -254,7 +254,7 @@ body.opening .msg.greet .msg-cards{display:grid;grid-template-columns:repeat(aut
 .sk-tog::after{content:"";position:absolute;right:8px;top:50%;width:9px;height:9px;border-left:2px solid var(--soft);border-top:2px solid var(--soft);transform:translateY(-25%) rotate(45deg);transition:transform .25s var(--ease)}
 .sk-tog[aria-expanded="true"]::after{transform:translateY(-75%) rotate(225deg)}
 .sk-tog:hover{background:none}
-.sk-count{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--accent-text)}
+.sk-count{font:500 12px var(--sans);color:var(--accent-text)}
 .sk-now{font-size:16px;line-height:1.35;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sk-top{display:flex;align-items:center;gap:6px;min-height:28px;padding-left:2px}.sk-top .grow{flex:1}
 .sk-mini{min-height:32px;padding:0 12px;font-size:13px;border-radius:999px;background:transparent;border:1px solid var(--line);color:var(--ink2)}
@@ -270,7 +270,7 @@ body.opening .msg.greet .msg-cards{display:grid;grid-template-columns:repeat(aut
 .sk-step.pass .sk-txt{color:var(--soft)}
 .sk-mark{flex:0 0 16px;font-weight:700;text-align:center;color:var(--accent-text)}
 .sk-step.miss .sk-mark{color:var(--bad)}
-.sk-crit{font:500 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--warn);white-space:nowrap}
+.sk-crit{font:500 12px var(--sans);color:var(--warn);white-space:nowrap}
 .sk-cur{margin:0;font-size:17px;line-height:1.5}
 .sk-panel{display:none}
 @media (max-width:1023px){body.skill-on .qchips{display:none}}
@@ -283,10 +283,10 @@ body.opening .msg.greet .msg-cards{display:grid;grid-template-columns:repeat(aut
   .sk-panel .actions{margin-top:2px}
 }
 /* D-108: the workout card */
-.wo-clock{margin:0;font:600 34px var(--mono);letter-spacing:.02em;font-variant-numeric:tabular-nums;color:var(--ink)}
+.wo-clock{margin:0;font:600 34px var(--sans);font-variant-numeric:tabular-nums;color:var(--ink)}
 .wo-moves{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .wo-moves li{display:flex;gap:10px;align-items:baseline;font-size:18px}
-.wo-moves b{min-width:2.4em;text-align:right;font:600 20px var(--mono);color:var(--accent-text);font-variant-numeric:tabular-nums}
+.wo-moves b{min-width:2.4em;text-align:right;font:600 20px var(--sans);color:var(--accent-text);font-variant-numeric:tabular-nums}
 .wo-extra{display:flex;flex-direction:column;gap:10px}
 /* D-110: share a calendar set as a page */
 a.btn-link{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--accent-edge);color:var(--accent-text);text-decoration:none;font-weight:500;white-space:nowrap}
@@ -332,7 +332,7 @@ body.captions .cap-pull .arrow svg{width:14px;height:14px}
 body.captions .cap-pull.loading .r{animation:evspin 1s linear infinite}
 body.captions .cap-pull .lbl{font-size:12px;color:var(--soft)}
 @keyframes evspin{to{transform:rotate(360deg)}}
-body.captions .cap-div{align-self:stretch;display:flex;align-items:center;gap:10px;font:500 11.5px var(--mono);letter-spacing:.04em;color:var(--soft)}
+body.captions .cap-div{align-self:stretch;display:flex;align-items:center;gap:10px;font:500 12px var(--sans);color:var(--soft)}
 body.captions .cap-div::before,body.captions .cap-div::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.09)}
 /* No bubbles: her lines are captions; his earlier lines are small and grey. */
 body.captions .msg{display:block;width:100%;scroll-margin:0}
@@ -360,6 +360,21 @@ body.captions .msg-cards:empty{display:none}
 body.captions .cap-cards-more{align-self:center;min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:none;font-size:13px;color:var(--soft)}
 body.captions .cap-cards-more:hover{color:var(--ink)}
 .card-more{align-self:flex-start;min-height:36px;padding:0 12px;font-size:13px}
+/* B-88: what she is reading: one line above the input, her quote under her comment, and on desktop his notes beside her. */
+.sread{display:flex;align-items:baseline;gap:8px;min-width:0;margin:0;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--glass);font-size:12.5px;color:var(--soft);white-space:nowrap;overflow:hidden}
+.sread .sr-where{flex:0 0 auto}
+@media (max-width:559px){.sread .sr-nm{display:none}}
+.sread .sr-line{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;color:var(--ink);font-weight:500}
+.cap-quote{margin:2px 0 0;font-size:12.5px;color:var(--soft);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body.captions .msg.ev:not(.current) .cap-quote{opacity:.6}
+.snotes{display:flex;flex-direction:column;gap:10px}
+.snotes .card-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.snotes .card-head .meta{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sn-lines{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:13.5px;line-height:1.4;color:var(--ink2)}
+.sn-lines li{padding:2px 0 2px 10px;border-left:2px solid transparent}
+.sn-lines li.said{border-left-color:var(--accent-edge)}
+.sn-lines li.new{color:var(--ink);font-weight:600;border-left-color:var(--accent)}
+.sn-foot{margin:0;font-size:12px}
 /* B-85: a card that only informs is one tappable line that opens its tab; a card he acts in stays whole. */
 .card-line{appearance:none;align-self:stretch;display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:14px;background:var(--glass);color:var(--ink2);font:500 14px var(--sans);text-align:left;cursor:pointer}
 .card-line:hover{background:var(--glass2);color:var(--ink)}

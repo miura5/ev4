@@ -152,6 +152,20 @@ test('deploy prints the system batch with expected versions, refuses dirty, unpu
   write(path.join(dist, 'verify-staging.json'), { target: 'staging', commit, green: true, lines: [] });
   assert.doesNotMatch(live(), /verify-staging|verify-deploy staging/, 'green at this commit: the staging rule passes');
 
+  // B-87: live waits for a running study session, and it needs a fresh read of the live record's running sessions.
+  assert.match(live(), /REFUSED[\s\S]*read the live record's running sessions first/);
+  const lst = path.join(dist, 'state', 'live'); fs.mkdirSync(path.join(lst, 'running', 'sessions'), { recursive: true });
+  fs.writeFileSync(path.join(lst, 'running.txt'), 'No documents matched in collection "sessions".');
+  assert.doesNotMatch(live(), /running sessions first|is running on live/, 'a fresh read with nothing running passes');
+  write(path.join(lst, 'running', 'sessions', 'ss-x.json'), { status: 'active', kind: 'note', topic: 'Ch 39', startedAt: new Date(Date.now() - 5 * 60e3).toISOString(), events: {} });
+  assert.match(live(), /REFUSED[\s\S]*a study session is running on live \("Ch 39", last activity 5 min ago\)/);
+  assert.doesNotMatch(cli(dir, 'deploy', 'live', '--matt-ok', '--during-session').out, /is running on live|running sessions first/, '--during-session overrides');
+  write(path.join(lst, 'running', 'sessions', 'ss-x.json'), { status: 'active', kind: 'note', topic: 'Ch 39', startedAt: new Date(Date.now() - 3 * 3600e3).toISOString(), events: {} });
+  assert.doesNotMatch(live(), /is running on live/, 'a session left active for hours does not block');
+  const old = (Date.now() - 20 * 60e3) / 1000; fs.utimesSync(path.join(lst, 'running.txt'), old, old);
+  assert.match(live(), /REFUSED[\s\S]*running sessions first[\s\S]*20 min old/);
+  fs.rmSync(path.join(lst, 'running'), { recursive: true, force: true }); fs.rmSync(path.join(lst, 'running.txt'), { force: true });
+
   fs.appendFileSync(path.join(dir, 'core/validate.mjs'), '\n// changed\n');
   await build({ root: dir, now: NOW });
   const dirty = cli(dir, 'deploy', 'staging');

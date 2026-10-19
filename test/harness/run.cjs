@@ -757,7 +757,9 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
       return { h: Math.round(r.height), top: Math.round(r.top), heroBottom: Math.round(h.bottom), threadTop: Math.round(th.top), cores: b.querySelectorAll('canvas').length, ring: window.EVApp.core.stats().ring, label: b.getAttribute('aria-label'), bg: cs.backgroundColor, border: cs.borderTopWidth, session: document.body.classList.contains('in-session') && !document.body.classList.contains('opening'), over: b.scrollWidth > b.clientWidth + 1 }; });
     { const pr = await lineView();
       ok('the session is one quiet line under her core (at most 34 px, no box), above her words; her own core carries the ring', pr.h <= 34 && pr.top >= pr.heroBottom - 8 && pr.top + pr.h <= pr.threadTop + 1 && /rgba\(0, 0, 0, 0\)|transparent/.test(pr.bg) && pr.border === '0px' && pr.cores === 0 && pr.ring >= 0 && pr.ring < .1 && pr.session && !pr.over, JSON.stringify(pr));
-      ok('the line names the session in its label and shows the minutes and the next check, then Break, +5, End', /Fluids and electrolytes/.test(pr.label) && /^\d+ min · check (6:5\d|7:00)$/.test(await ss.textContent('#sbar .s-clock')) && (await ss.locator('#sbar button').allTextContents()).join(',') === 'Break,+5,End', await ss.textContent('#sbar')); }
+      ok('the line names the session in its label and shows the minutes and that she is reading along, then Break and End (B-88)', /Fluids and electrolytes/.test(pr.label) && /^\d+ min · reading along$/.test(await ss.textContent('#sbar .s-clock')) && (await ss.locator('#sbar button').allTextContents()).join(',') === 'Break,End', await ss.textContent('#sbar')); }
+    { const rv = await ss.evaluate(() => ({ reading: !document.getElementById('sread').hidden && document.getElementById('sread').textContent, chips: [...document.querySelectorAll('#qchips .qchip')].filter(c => c.offsetParent).map(c => c.textContent) }));
+      ok('in a session: the Reading line names the course, note and his latest line, and Quiz me now is the one chip', /^Reading · NUR 112 › Fluids and electrolytesIsotonic: 0\.9% NaCl stays in the vessels\.$/.test(rv.reading || '') && rv.chips.join() === 'Quiz me now', JSON.stringify(rv)); }
     ok('chip hidden while a session runs', (await ss.locator('#qchips .qchip', { hasText: 'Start a study session' }).count()) === 0);
     await ss.screenshot({ path: `${shots}/session-bar.png` });
     // The same line at 1280, under her core in the middle column.
@@ -766,17 +768,36 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
       ok('[desktop] the line stays one line, under her core and centred on it', pd.h <= 34 && pd.top >= pd.heroBottom - 8 && c <= 2 && !pd.over, JSON.stringify({ ...pd, offCentre: c })); }
     await ss.screenshot({ path: `${shots}/session-bar-desktop.png` });
     await ss.setViewportSize({ width: 390, height: 844 }); await ss.waitForTimeout(400);
-    // First check: only the new writing goes to Claude, the reply posts as a check card
-    await setNote(note1 + '\nHypotonic: 0.45% NaCl shifts water into the cells.');
-    await ss.evaluate(() => { window.__sampleFn = p => /Study session check/.test(p) ? { items: [{ text: '1. Why does 0.45% NaCl move water into the cells?', kind: 'why' }, { text: 'Your note has no hypertonic example yet.', kind: 'gap' }] } : { summary: 'Worked through IV fluid tonicity and where water moves.', weakSpots: [{ objective: 'E4-3', topic: 'Hypokalemia findings' }, { objective: 'E4-3', topic: 'Fluid volume excess signs' }, { objective: 'E4-3', topic: 'Hypotonic vs isotonic fluid shifts' }, { topic: 'Why the kidneys hold sodium' }], connections: ['Sodium pulls water, which links fluids to edema'], noteTodos: ['Add a hypertonic example'], cards: [{ term: 'Isotonic', definition: '0.9% NaCl; stays in the vessels' }, { term: 'Hypotonic', definition: '0.45% NaCl; water moves into cells' }] }; });
-    await jump(425e3, hasEvent(e => e.type === 'check'));
-    S1 = await sess(); const chk = Object.values(S1.events).find(e => e.type === 'check');
-    const jp = await ss.evaluate(() => (window.__jsonCalls || []).slice(-1)[0]);
-    ok('check reads the note through the reader', await ss.evaluate(h => window.__mcpCalls.some(c => c[0] === h && c[1] === 'latest_note'), host));
-    ok('check prompt carries only the new writing and the record context', jp && /New text since the last check:\n\nHypotonic: 0.45% NaCl/.test(jp.prompt) && /Testable objectives:/.test(jp.prompt) && jp.tier === 'quick', jp && jp.prompt.slice(0, 400));
-    ok('check event keeps a mark, not the text', chk && chk.n === 1 && chk.items === 2 && chk.len > note1.length && !JSON.stringify(S1).includes('Hypotonic'), JSON.stringify(chk));
+    // B-88: she reads along every 30 s; a line that earns it gets one short comment quoting it (the quote in memory only)
+    const WRAP = { summary: 'Worked through IV fluid tonicity and where water moves.', weakSpots: [{ objective: 'E4-3', topic: 'Hypokalemia findings' }, { objective: 'E4-3', topic: 'Fluid volume excess signs' }, { objective: 'E4-3', topic: 'Hypotonic vs isotonic fluid shifts' }, { topic: 'Why the kidneys hold sodium' }], connections: ['Sodium pulls water, which links fluids to edema'], noteTodos: ['Add a hypertonic example'], cards: [{ term: 'Isotonic', definition: '0.9% NaCl; stays in the vessels' }, { term: 'Hypotonic', definition: '0.45% NaCl; water moves into cells' }] };
+    await ss.evaluate(w => { window.__commentSay = { say: 'Good link: that is tonicity deciding where the water goes.', quote: 'Hypotonic: 0.45% NaCl shifts water into the cells.', kind: 'connection' };
+      window.__sampleFn = p => /reading over his shoulder/.test(p) ? window.__commentSay : /Study session check/.test(p) ? { items: [{ text: '1. Why does 0.45% NaCl move water into the cells?', kind: 'why' }, { text: 'Your note has no hypertonic example yet.', kind: 'gap' }] } : w; }, WRAP);
+    const note2 = note1 + '\nHypotonic: 0.45% NaCl shifts water into the cells.\n';
+    await setNote(note2); const beforeC = (await msgs(ss)).length;
+    await jump(31e3, hasEvent(e => e.type === 'check' && e.comment)); await ss.waitForTimeout(400);
+    S1 = await sess(); const cev = Object.values(S1.events).find(e => e.type === 'check' && e.comment);
+    const cp = await ss.evaluate(() => (window.__jsonCalls || []).filter(c => /reading over his shoulder/.test(c.prompt)).slice(-1)[0]);
+    ok('a read sends only the new lines to Claude on the quick tier, with the record context', cp && /The new lines he just wrote:\nHypotonic: 0\.45% NaCl shifts water into the cells\./.test(cp.prompt) && /Testable objectives:/.test(cp.prompt) && cp.tier === 'quick', cp && cp.prompt.slice(0, 300));
+    const cm = (await msgs(ss)).slice(-1)[0];
+    ok('her comment posts as one line with no card, and the session keeps a mark, not the text or the quote', (await msgs(ss)).length === beforeC + 1 && cm.text === 'Good link: that is tonicity deciding where the water goes.' && !cm.cards && cev && cev.msgId === cm.id && cev.len === note2.length && !JSON.stringify(S1).includes('Hypotonic') && !JSON.stringify(await msgs(ss)).includes('shifts water into the cells'), JSON.stringify({ cm, cev }));
+    ok('the quote shows under her line on the page', (await ss.textContent('#thread .msg.ev.current .cap-quote').catch(() => '')) === 'on “Hypotonic: 0.45% NaCl shifts water into the cells.”');
+    await ss.screenshot({ path: `${shots}/session-comment.png` });
+    // A read with nothing worth a word stays silent: no message, no event
+    await ss.evaluate(() => { window.__commentSay = { say: null, quote: null, kind: null }; });
+    await setNote(note2 + 'Hypertonic: 3% NaCl pulls water out of the cells.\n'); const beforeS = (await msgs(ss)).length; const evN = Object.keys((await sess()).events).length;
+    await jump(80e3, async () => (await ss.evaluate(() => (window.__jsonCalls || []).filter(c => /reading over his shoulder/.test(c.prompt)).length)) >= 2);
+    ok('a read with nothing worth saying stays silent', (await msgs(ss)).length === beforeS && Object.keys((await sess()).events).length === evN);
+    // Quiz me now: 1 to 3 questions on what he wrote since the session started, as a check card
+    await ss.locator('#qchips .qchip', { hasText: 'Quiz me now' }).click();
+    for (let i = 0; i < 50 && !(await hasEvent(e => e.type === 'check' && e.items)()); i++) await ss.waitForTimeout(100);
+    await ss.waitForTimeout(300);
+    S1 = await sess(); const chk = Object.values(S1.events).find(e => e.type === 'check' && e.items);
+    const jp = await ss.evaluate(() => (window.__jsonCalls || []).filter(c => /Study session check/.test(c.prompt)).slice(-1)[0]);
+    ok('Quiz me now reads the note through the reader', await ss.evaluate(h => window.__mcpCalls.some(c => c[0] === h && c[1] === 'latest_note'), host));
+    ok('the quiz prompt carries his writing since the start and the record context', jp && /New text since the last check:\n\nHypotonic: 0\.45% NaCl[\s\S]*Hypertonic: 3% NaCl/.test(jp.prompt) && /Testable objectives:/.test(jp.prompt) && jp.tier === 'quick', jp && jp.prompt.slice(0, 400));
+    ok('the quiz keeps a mark, not the text', chk && chk.n === 1 && chk.items === 2 && chk.len > note1.length && !JSON.stringify(S1).includes('Hypotonic'), JSON.stringify(chk));
     const lastChk = (await msgs(ss)).slice(-1)[0];
-    ok('check posted as a card with its items', lastChk.cards && lastChk.cards[0].type === 'check' && lastChk.cards[0].items.length === 2 && lastChk.cards[0].items[0].text === 'Why does 0.45% NaCl move water into the cells?', JSON.stringify(lastChk.cards));
+    ok('the quiz posts as a card with its items', lastChk.cards && lastChk.cards[0].type === 'check' && lastChk.cards[0].items.length === 2 && lastChk.cards[0].items[0].text === 'Why does 0.45% NaCl move water into the cells?', JSON.stringify(lastChk.cards));
     ok('check card rendered', /Two questions on what you just wrote/.test((await msgs(ss)).slice(-1)[0].text) && /Check 1 · Fluids and electrolytes/.test(await ss.locator('#thread .msg.ev').last().textContent()) && (await ss.locator('#thread .msg.ev').last().locator('ol.check-items li').count()) === 2);
     // Answer in the composer: recorded on the session, and Claude sees the check's questions
     await ss.evaluate(() => { window.__sampleFn && (window.__chatReply = 'Right: less solute outside, so water moves in. What happens to cell size?'); window.__chatScript = []; });
@@ -793,10 +814,10 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     ok('break shown on the line', /On a break/.test(await ss.textContent('#sbar')) && Object.values((await sess()).events).some(e => e.type === 'break'));
     await ss.screenshot({ path: `${shots}/session-break.png` });
     await ss.locator('#sbar button', { hasText: 'Resume' }).click(); await ss.waitForTimeout(300);
-    ok('resume restarts the countdown', /min · check \d+:\d\d/.test(await ss.textContent('#sbar')), await ss.textContent('#sbar'));
+    ok('resume: she reads along again', /min · reading along/.test(await ss.textContent('#sbar')), await ss.textContent('#sbar'));
     // New writing with what looks like an identifier skips the check and says why, once
-    await setNote(note1 + '\nHypotonic: 0.45% NaCl shifts water into the cells.\nThe resident in room 12 had edema.');
-    const before3 = (await msgs(ss)).length; await jump(425e3, hasEvent(e => e.type === 'skip' && e.why === 'identifiers'));
+    await setNote(note1 + '\nHypotonic: 0.45% NaCl shifts water into the cells.\nHypertonic: 3% NaCl pulls water out of the cells.\nThe resident in room 12 had edema.\n');
+    const before3 = (await msgs(ss)).length; await jump(80e3, hasEvent(e => e.type === 'skip' && e.why === 'identifiers'));
     S1 = await sess();
     ok('identifier skips the check', Object.values(S1.events).some(e => e.type === 'skip' && e.why === 'identifiers') && /room number/.test((await msgs(ss)).slice(-1)[0].text) && (await msgs(ss)).length === before3 + 1);
     // End: wrap-up as JSON, filed with the same rules as evening filing; near-repeat waits on a tap
@@ -804,7 +825,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     for (let i = 0; i < 50 && !(((await sess()) || {}).status === 'ended' && /Session saved/.test((await msgs(ss)).slice(-1)[0].text)); i++) await ss.waitForTimeout(100);
     await ss.waitForTimeout(400);
     S1 = await sess();
-    ok('session ended with summary, counts and cards', S1.weakSpots.length === 3 && S1.connections.includes('Why the kidneys hold sodium') && S1.status === 'ended' && /tonicity/.test(S1.summary) && S1.checks === 1 && S1.questions === 2 && S1.cardCount === 2 && S1.minutes >= 14, JSON.stringify({ st: S1.status, m: S1.minutes, c: S1.checks, q: S1.questions }));
+    ok('session ended with summary, counts and cards', S1.weakSpots.length === 3 && S1.connections.includes('Why the kidneys hold sodium') && S1.status === 'ended' && /tonicity/.test(S1.summary) && S1.checks === 1 && S1.questions === 2 && S1.cardCount === 2 && S1.minutes >= 3, JSON.stringify({ st: S1.status, m: S1.minutes, c: S1.checks, q: S1.questions }));
     const wsNew = await ss.evaluate(() => Object.entries(window.__db.weakspots).filter(([, w]) => /Study session/.test(w.addedBy || '') || /^E\.V\. Home · /.test(w.source || '') || /Study session/.test(w.source || '')).map(([id, w]) => ({ id, ...w })));
     ok('new weak spot (objective) and note to-do, as Facts', wsNew.some(w => w.topic === 'Hypotonic vs isotonic fluid shifts' && w.kind === 'concept' && !w.derived && w.writer === 'page') && wsNew.some(w => w.kind === 'note' && /hypertonic/.test(w.topic)), wsNew.map(w => w.topic).join(' | '));
     ok('exact repeat bumps the existing weak spot', await ss.evaluate(() => Object.values(window.__db.weakspots['ws-2026-10-17-E4-3-hypokalemia-findings'].events || {}).some(e => e.type === 'seen' && e.by === 'Study session')));
@@ -825,6 +846,18 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     ok('session: no sideways scroll', !(await ss.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)));
     ok('session: no page errors', sErr.length === 0, sErr.join(' | '));
     await ss.close();
+    // B-87: a page opened mid-session (a reload, a reopened tab, a live publish) past a due checkpoint takes the session
+    // over as soon as its reader answers, instead of sitting at 0:00 for two minutes.
+    { const tk = await browser.newPage({ viewport: { width: 390, height: 844 } }); const tErr = []; tk.on('pageerror', e => tErr.push(e.message));
+      await tk.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' })); await openPage(tk); await tk.waitForTimeout(900);
+      await tk.evaluate(async () => { const t0 = new Date(Date.now() - 8 * 60e3).toISOString(); const k = 'page-' + t0.replace(/[-:]/g, '').replace('T', '-').replace(/\.\d+Z$/, '');
+        window.__readerNote = { found: true, appVersion: '0.4', note: { id: 'x-coredata://n9', name: 'Reload test', folder: 'NUR 112', modifiedAt: t0, text: 'Line one\nLine two\n' } };
+        const db = await window.claude.use('db'); await db.collection('sessions').doc('ss-reload').set({ schema: 1, writer: 'page', at: t0, source: 'E.V. Home', status: 'active', date: t0.slice(0, 10), startedAt: t0, topic: 'Reload test', noteId: 'x-coredata://n9', driver: { view: 'gone', at: t0 }, events: { [k]: { type: 'start', at: t0, len: 5, h: 'zz', noteId: 'x-coredata://n9' } } }); });
+      const t0 = Date.now(); let d = null;
+      for (let i = 0; i < 80; i++) { d = await tk.evaluate(() => window.__db.sessions['ss-reload']); if (d.driver.view !== 'gone' && Object.values(d.events).some(e => e.type === 'check' || e.type === 'idle')) break; await tk.waitForTimeout(100); }
+      ok('B-87: a page opened mid-session past a due checkpoint claims the session and runs the checkpoint within seconds', d && d.driver.view !== 'gone' && Object.values(d.events).some(e => e.type === 'check' && e.quiet) && Date.now() - t0 < 8000, JSON.stringify({ driver: d && d.driver, events: d && Object.values(d.events).map(e => e.type + (e.quiet ? ':quiet' : '')), ms: Date.now() - t0 }));
+      ok('B-87: no page errors', tErr.length === 0, tErr.join(' | '));
+      await tk.close(); }
   }
   await browser.close();
   for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : '');
