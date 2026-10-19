@@ -72,7 +72,7 @@
 
   // Say on the page what this is.
   document.addEventListener('DOMContentLoaded', () => {
-    const f = document.getElementById('ev-fine'); if (f) f.textContent = 'Demo copy: made-up data, scripted replies. Nothing here is saved; reload to start over.';
+    const f = document.getElementById('sys-note'); if (f) f.textContent = 'Demo copy: made-up data, scripted replies. Nothing here is saved; reload to start over.';
     const st = document.getElementById('status'); // the header's status line names the record: here it is the demo
     if (st) new MutationObserver(() => { if (/^Live\b/.test(st.textContent)) st.textContent = st.textContent.replace(/^Live\b/, 'Demo'); }).observe(st, { childList: true, characterData: true, subtree: true });
   });

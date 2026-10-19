@@ -48,7 +48,7 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
     await page.screenshot({ path: `${shots}/shell-${scheme}.png` });
     ok(`[${scheme}] the shell loads core.js, spec.json, app.js and styles.css from beside it`, await page.evaluate(() => !!(window.EVCore && window.EVApp && window.EVValidate) && getComputedStyle(document.body).getPropertyValue('--accent').trim() !== ''));
     ok(`[${scheme}] opens on E.V. with the greeting`, await page.isVisible('#p-ev') && !(await page.isVisible('#p-today')) && /Matt|Still up|Afternoon/.test(await page.locator('#thread .msg.ev').first().textContent().catch(() => '')));
-    ok(`[${scheme}] five tabs in the dock, System in the top bar`, (await page.locator('.dock .tab').count()) === 5 && await page.isVisible('#tab-system'));
+    ok(`[${scheme}] five tabs in the top bar beside System`, (await page.locator('#top .tabs .tab').count()) === 5 && await page.isVisible('#tab-system'));
     ok(`[${scheme}] the staging stamp, a quiet status and the staging readout`, /^Live · /.test(await statusText(page)) && /staging/.test(await page.locator('#readout').textContent()) && await page.evaluate(() => document.querySelector('meta[name="ev-release"]').content === 'v4.0.0' && document.querySelector('meta[name="ev-target"]').content === 'staging'), await statusText(page));
     ok(`[${scheme}] no sideways scroll`, await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
     for (const t of ['today', 'study', 'progress', 'record']) { await page.click('#tab-' + t); await page.waitForTimeout(60); }
@@ -68,7 +68,7 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
   // The boot's refusals, each with its plain sentence and nothing else drawn.
   const phone = { width: 390, height: 844 };
   let r = await open(browser, { viewport: phone, pre: 'window.__notOwner=true;' }); await r.page.waitForTimeout(400);
-  ok('someone other than the owner sees only the private-record line', /private study record/.test(await statusText(r.page)) && !(await r.page.isVisible('#p-ev')) && !(await r.page.isVisible('.dock')));
+  ok('someone other than the owner sees only the private-record line', /private study record/.test(await statusText(r.page)) && !(await r.page.isVisible('#p-ev')) && !(await r.page.isVisible('.tabs')));
   await r.page.close();
   r = await open(browser, { viewport: phone, overrides: { 'app.js': fs.readFileSync(path.join(pageDir, 'app.js'), 'utf8').replace("const VERSION = 'v4.0.0'", "const VERSION = 'v4.0.0-old'") } }); await r.page.waitForTimeout(400);
   ok('files from two releases stop the boot and say so', /different releases.*app v4\.0\.0-old/.test(await statusText(r.page)), await statusText(r.page));

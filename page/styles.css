@@ -1,6 +1,6 @@
 /* A · Aurora (D-077). Dark only. E.V. is a particle core that is always teal and violet; its motion carries its state.
    Interface color has one job per accent: teal = do it or done, violet = secondary, amber = needs attention, coral = graded or errors.
-   Layout: a sticky top bar (small E.V. + readout + System), one centered column, a floating dock with five tabs. */
+   Layout: a sticky top bar (small E.V. + readout, the five tabs as icons, System), one centered column (B-85: no dock). */
 :root{color-scheme:dark;
   --bg:#070A12; --glass:rgba(255,255,255,.04); --glass2:rgba(255,255,255,.07); --line:rgba(255,255,255,.09); --line2:rgba(255,255,255,.14);
   --ink:#E6EEF2; --ink2:#C9D3DA; --soft:#98A7B3; --chip:rgba(255,255,255,.06);
@@ -10,7 +10,7 @@
   --bad:#F4A797; --bad-solid:#F08A78; --bad-bg:rgba(240,138,120,.14);
   --info:#C9D3DA; --info-bg:rgba(255,255,255,.07); --card:var(--glass);
   --sans:"Geist","Helvetica Neue",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"Geist Mono",ui-monospace,Menlo,Consolas,monospace; --serif:var(--sans);
-  --r:22px; --tap:44px; --top-h:64px; --dock-h:76px; --ease:cubic-bezier(.2,.7,.2,1);
+  --r:22px; --tap:44px; --top-h:53px; --dock-h:0px; --ease:cubic-bezier(.2,.7,.2,1);
 }
 *{box-sizing:border-box}
 html{background:var(--bg)}
@@ -19,34 +19,37 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16p
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:0}
 a{color:var(--accent-text)}
 /* top bar */
-.top{position:sticky;top:0;z-index:8;margin:0 calc(-1 * max(16px,env(safe-area-inset-right,0px))) 0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:calc(8px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 8px max(16px,env(safe-area-inset-left,0px));
+.top{position:sticky;top:0;z-index:8;margin:0 calc(-1 * max(16px,env(safe-area-inset-right,0px))) 0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:calc(4px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 4px max(16px,env(safe-area-inset-left,0px));
   background:rgba(7,10,18,.95);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.06)}
-.top-in{max-width:1120px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px}
-.brand{flex:1 1 0;display:flex;align-items:center;gap:12px;min-width:0;background:none;border:0;padding:0 6px 0 0;color:inherit;text-align:left;min-height:44px;border-radius:14px;cursor:pointer;font:inherit}
+.top-in{max-width:1120px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px}
+.brand{flex:1 1 0;display:flex;align-items:center;gap:10px;min-width:0;background:none;border:0;padding:0 6px 0 0;color:inherit;text-align:left;min-height:44px;border-radius:14px;cursor:pointer;font:inherit}
 .brand:hover{background:none}
-.top-av{width:40px;height:40px;flex:0 0 40px;display:grid;place-items:center;transition:opacity .45s ease,transform .55s var(--ease),width .55s var(--ease),flex-basis .55s var(--ease),margin .55s var(--ease)}
-body.on-ev.opening .top-av,body.on-ev.in-session .top-av,body.on-ev.core-big .top-av{overflow:hidden;opacity:0;transform:scale(.5);width:0;flex-basis:0;margin-right:-12px}
+.top-av{width:36px;height:36px;flex:0 0 36px;display:grid;place-items:center;transition:opacity .45s ease,transform .55s var(--ease),width .55s var(--ease),flex-basis .55s var(--ease),margin .55s var(--ease)}
+body.on-ev.opening .top-av,body.on-ev.in-session .top-av,body.on-ev.core-big .top-av{overflow:hidden;opacity:0;transform:scale(.5);width:0;flex-basis:0;margin-right:-10px}
 .brand-txt{display:flex;flex-direction:column;gap:1px;min-width:0}
-.wordmark{font-size:17px;font-weight:600;letter-spacing:.02em;line-height:1.2}
+.wordmark{font-size:16px;font-weight:600;letter-spacing:.02em;line-height:1.2}
 .wordmark .stg{font:500 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--warn);margin-left:6px;vertical-align:2px}
 .readout{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--soft);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .readout .led{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-right:7px;vertical-align:1px}
 .readout .led.busy{background:var(--plum);animation:pulse 1.2s ease-in-out infinite} .readout .led.off{background:var(--soft)} .readout .led.brk{background:var(--warn-solid)}
-.top-right{flex:0 1 auto;display:flex;align-items:center;gap:12px;min-width:0}
-.status{font:500 12px var(--mono);color:var(--soft);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:44vw}
+.top-right{flex:0 0 auto;display:flex;align-items:center;gap:6px}
+.status{flex:0 1 auto;min-width:0;font:500 12px var(--mono);color:var(--soft);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:36vw}
 .status:not(.ok){color:var(--warn);white-space:normal}
-.tab-sys{appearance:none;width:44px;height:44px;flex:0 0 44px;border-radius:50%;border:1px solid var(--line2);background:transparent;color:var(--ink2);display:grid;place-items:center;padding:0;cursor:pointer}
+.tab-sys{appearance:none;width:40px;height:40px;flex:0 0 40px;border-radius:50%;border:1px solid var(--line2);background:transparent;color:var(--ink2);display:grid;place-items:center;padding:0;cursor:pointer}
 .tab-sys:hover{background:var(--glass2)} .tab-sys[aria-current="page"]{background:var(--accent-bg);border-color:var(--accent-edge);color:var(--accent-text)}
-@media (max-width:560px){.status.ok{display:none}.top-in{flex-wrap:wrap}.status:not(.ok){order:3;flex-basis:100%;max-width:none}}
-/* dock: five tabs, floating */
-.dock{position:fixed;z-index:9;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom,0px));display:flex;gap:4px;padding:6px;border-radius:999px;
-  background:rgba(12,16,26,.9);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.10);box-shadow:0 14px 34px -14px rgba(0,0,0,.75)}
-.dock .tab{appearance:none;display:flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border:0;border-radius:999px;background:transparent;color:#B4C1CB;font:500 14px var(--sans);cursor:pointer;white-space:nowrap;transition:background .25s ease,color .25s ease}
-.dock .tab svg{width:18px;height:18px;flex:0 0 18px}
-.dock .tab:hover{background:var(--glass2)}
-.dock .tab[aria-selected="true"]{background:var(--accent-bg);color:var(--accent-text);font-weight:600}
-@media (max-width:560px){.dock{left:8px;right:8px;transform:none;border-radius:22px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px;padding:4px}
-  .dock .tab{flex-direction:column;justify-content:center;gap:3px;padding:6px 0;min-height:52px;font-size:11px;border-radius:16px}}
+/* B-85: the Live line only from 900 px; boot and error lines always, on their own row under 900 */
+@media (max-width:899px){.status.ok{display:none}.top-in{flex-wrap:wrap;row-gap:0}.status:not(.ok){order:3;flex-basis:100%;max-width:none;padding:0 0 4px}}
+/* the five tabs: icons in the top bar beside System, their names from 900 px (B-85; was a floating dock) */
+.tabs{display:flex;align-items:center;gap:2px}
+.tabs .tab{appearance:none;position:relative;display:flex;align-items:center;justify-content:center;gap:7px;min-width:40px;height:40px;padding:0 10px;border:0;border-radius:999px;background:transparent;color:#B4C1CB;font:500 13.5px var(--sans);cursor:pointer;white-space:nowrap;transition:background .25s ease,color .25s ease}
+.tabs .tab svg{width:19px;height:19px;flex:0 0 19px}
+.tabs .tab span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.tabs .tab:hover{background:var(--glass2)}
+.tabs .tab[aria-selected="true"]{background:var(--accent-bg);color:var(--accent-text);font-weight:600}
+@media (min-width:900px){.tabs .tab{padding:0 13px}.tabs .tab span{position:static;width:auto;height:auto;overflow:visible;clip:auto}
+  .brand{flex:0 0 auto;max-width:300px}.status{flex:1 1 auto;max-width:none;text-align:right}}
+.panel .card{scroll-margin-top:calc(var(--top-h) + 12px)}
+@media (max-width:420px){.top-in{gap:6px}.tabs{gap:0}.tabs .tab{min-width:38px;padding:0 9px}.top-right{gap:4px}}
 /* page */
 .wrap{max-width:760px;margin:0 auto;padding-top:18px;display:flex;flex-direction:column;gap:16px}
 .ptitle{font:600 30px/1.15 var(--sans);letter-spacing:-.02em;text-transform:none;color:var(--ink);margin:4px 0 0}
@@ -305,7 +308,7 @@ a.btn-link{display:inline-flex;align-items:center;min-height:40px;padding:0 14px
    centre (captions and composer at most 660 px) beside a 300 to 440 px side column; below 900 px it wraps into the
    phone stack. The core gives up height in the steps of spec.ui.look.core.sizes (--core-scale, --stage-h). */
 body.captions.on-ev{padding-bottom:0}
-body.captions.on-ev .top-av{opacity:0;transform:scale(.5);width:0;flex-basis:0;margin-right:-12px;overflow:hidden}
+body.captions.on-ev .top-av{opacity:0;transform:scale(.5);width:0;flex-basis:0;margin-right:-10px;overflow:hidden}
 body.captions #p-ev{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr) auto auto;row-gap:0;
   height:calc(100dvh - var(--top-h) - 18px - var(--dock-h) - 22px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));min-height:420px;position:relative}
 body.captions #p-ev>*{grid-column:1;min-width:0}
@@ -319,9 +322,9 @@ body.captions #p-ev>#ev-side:empty{display:none}
 body.captions .hero,body.captions.opening .hero,body.captions.core-big .hero{max-height:none;opacity:1;margin:0;overflow:visible;height:var(--stage-h,300px);align-items:center;transition:height .8s var(--ease);cursor:pointer;-webkit-tap-highlight-color:transparent}
 body.captions .hero>.ev-av{transform:scale(var(--core-scale,1));transition:transform .8s var(--ease)}
 /* Her captions: a scroller with the pull zone above them; the newest line sits just under her. */
-body.captions .thread{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;gap:0;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 20px);mask-image:linear-gradient(to bottom,transparent 0,#000 20px)}
+body.captions .thread{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;gap:0;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 20px,#000 calc(100% - 16px),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 20px,#000 calc(100% - 16px),transparent 100%)}
 body.captions .thread::-webkit-scrollbar{display:none}
-body.captions .cap-in{min-height:calc(100% + 160px);display:flex;flex-direction:column;align-items:center;gap:12px;padding:0 8px 12px;box-sizing:border-box;text-align:center;max-width:660px;margin:0 auto;width:100%}
+body.captions .cap-in{min-height:calc(100% + 160px);display:flex;flex-direction:column;align-items:center;gap:12px;padding:0 8px 18px;box-sizing:border-box;text-align:center;max-width:660px;margin:0 auto;width:100%}
 body.captions .cap-pull{height:160px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding-bottom:8px;box-sizing:border-box;opacity:var(--pull-o,0);transition:opacity .15s linear}
 body.captions .cap-pull .ring{position:relative;width:34px;height:34px}
 body.captions .cap-pull svg.r{position:absolute;inset:0}
@@ -360,6 +363,15 @@ body.captions .msg-cards:empty{display:none}
 body.captions .cap-cards-more{align-self:center;min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:none;font-size:13px;color:var(--soft)}
 body.captions .cap-cards-more:hover{color:var(--ink)}
 .card-more{align-self:flex-start;min-height:36px;padding:0 12px;font-size:13px}
+/* B-85: a card that only informs is one tappable line that opens its tab; a card he acts in stays whole. */
+.card-line{appearance:none;align-self:stretch;display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:14px;background:var(--glass);color:var(--ink2);font:500 14px var(--sans);text-align:left;cursor:pointer}
+.card-line:hover{background:var(--glass2);color:var(--ink)}
+.card-line .cl-t{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-line .cl-go{flex:none;display:flex;align-items:center;gap:4px;color:var(--accent-text);font-size:13px}
+.card-line .cl-go svg{width:14px;height:14px}
+body.captions .msg-cards{gap:8px}
+/* B-85: the chips under the greeting, or in an empty focused input; out of the way in a conversation or session. */
+body.chips-quiet #qchips{display:none}
 /* The Breath reveal: each word fades and un-blurs in; emphasised words are teal. */
 body.captions .w{display:inline-block}
 body.captions .reveal .w{opacity:0;filter:blur(6px);transform:translateY(6px)}

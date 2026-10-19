@@ -24,7 +24,7 @@ const results = []; const ok = (n, c, d = '') => results.push([c ? 'PASS' : 'FAI
     const greeted = await page.waitForFunction(() => document.querySelector('#thread .msg.greet'), null, { timeout: 20000 }).then(() => true, () => false);
     ok(`[${scheme}] the demo boots on its own record and greets`, greeted, await page.textContent('#status').catch(() => ''));
     await page.waitForTimeout(7000);
-    const g = await page.evaluate(() => ({ greet: document.querySelector('#thread .msg.greet .bubble').textContent, chips: [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent), fine: document.getElementById('ev-fine').textContent, title: document.title, unit: document.getElementById('readout').textContent }));
+    const g = await page.evaluate(() => ({ greet: document.querySelector('#thread .msg.greet .bubble').textContent, chips: [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent), fine: document.getElementById('sys-note').textContent, title: document.title, unit: document.getElementById('readout').textContent }));
     ok(`[${scheme}] greeting with the review and Exam 4, three chips, the demo note`, /review/.test(g.greet) && /Exam 4/.test(g.greet) && g.chips.length === 3 && /^Demo copy/.test(g.fine) && /^EV-04/.test(g.unit), JSON.stringify(g));
     await page.screenshot({ path: `${shots}/demo-open-${scheme}.png` });
     // A scripted reply
@@ -33,6 +33,9 @@ const results = []; const ok = (n, c, d = '') => results.push([c ? 'PASS' : 'FAI
     ok(`[${scheme}] a scripted reply: explain preload`, /stretch/.test(r1) && /afterload/i.test(r1), r1.slice(0, 120));
     await page.screenshot({ path: `${shots}/demo-reply-${scheme}.png` });
     // Today's review from the chip, one answer
+    // B-85: in a conversation the chips step aside; focusing the empty input brings them back.
+    const quiet = await page.isVisible('#qchips'); await page.focus('#ev-input'); await page.waitForTimeout(150);
+    ok(`[${scheme}] the chips step aside in a conversation and come back on an empty focused input`, !quiet && await page.isVisible('#qchips .qchip:has-text("Start review")'));
     await page.click('#qchips .qchip:has-text("Start review")'); await page.waitForTimeout(3500);
     const card = page.locator('#thread .msg.ev.current .ev-card');
     ok(`[${scheme}] Start review shows today's review in a card`, (await card.count()) === 1 && /Today.s review/.test(await card.textContent()), (await card.textContent().catch(() => '')).slice(0, 120));

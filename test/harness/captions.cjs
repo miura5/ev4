@@ -234,17 +234,17 @@ async function sideBySide(browser, left, right, out, vp) {
     await page.screenshot({ path: `${shots}/captions-last-7-days-${scheme}.png` });
     const pillShown = await page.isVisible('#ev-now'); await page.click('#ev-now'); await page.waitForTimeout(900); v = await view(page);
     ok(`[${scheme}] tapping the Back to now pill folds the earlier conversations away`, pillShown && !v.texts.some(t => t.startsWith('E:')) && !v.now && await atNow(page), JSON.stringify({ pillShown, earlier: v.texts.filter(t => t.startsWith('E:')).length, pill: v.now, top: v.scrollTop, max: v.maxScroll, atNow: await atNow(page), pin: await page.evaluate(() => { const t = document.getElementById('thread'), c = t.querySelector('.msg.ev.current'); return c ? [Math.round(c.getBoundingClientRect().top - t.getBoundingClientRect().top), Math.round(c.getBoundingClientRect().height), t.clientHeight] : null; }) }));
-    // Until B-78 (D-122, D-125 as amended): a reply with cards steps her down to the list size; its first card shows
-    // under her line, five rows and a more that opens its tab, never scrolling inside itself; the rest are one tappable
-    // line that swaps the next card in.
-    await page.evaluate(() => { window.__chatScript = [{ tool: 'show_card', input: { type: 'dates', days: 14 } }, { tool: 'show_card', input: { type: 'weakspots' } }, { tool: 'show_card', input: { type: 'today', filter: 'all' } }]; window.__chatPre = ''; window.__chatReply = 'Here is the next two weeks. Nine things are dated.'; });
+    // B-85 (D-125 as amended): a card that only informs is one tappable line that opens its tab; of the cards he acts in,
+    // the first shows under her line (never scrolling inside itself) and the rest are one tappable line that swaps the
+    // next one in. A whole card steps her down to the list size; lines alone keep her conversation size.
+    await page.evaluate(() => { window.__chatScript = [{ tool: 'show_card', input: { type: 'dates', days: 14 } }, { tool: 'show_card', input: { type: 'quizlet' } }, { tool: 'show_card', input: { type: 'review' } }]; window.__chatPre = ''; window.__chatReply = 'Here is the next two weeks. Nine things are dated.'; });
     await page.fill('#ev-input', 'what is coming up'); await page.click('#ev-send'); await page.waitForTimeout(4500);
     const cardView = () => page.evaluate(() => { const t = document.getElementById('thread').getBoundingClientRect(), hero = document.getElementById('hero'), cur = document.querySelector('#thread .msg.ev.current'), b = cur.querySelector('.bubble').getBoundingClientRect(), card = cur.querySelector('.ev-card'), cr = card && card.getBoundingClientRect();
-      return { step: hero.dataset.step, stage: Math.round(hero.getBoundingClientRect().height), cards: cur.querySelectorAll('.ev-card').length, title: card && (card.querySelector('h2') || {}).textContent, more: (cur.querySelector('.cap-cards-more') || {}).textContent, cardMore: card && (card.querySelector('.card-more') || {}).textContent, line: [Math.round(b.top), Math.round(b.bottom)], card: cr && [Math.round(cr.top), Math.round(cr.bottom)], scrollsInside: card ? card.scrollHeight > card.clientHeight + 1 : null, thread: [Math.round(t.top), Math.round(t.bottom)] }; });
+      return { step: hero.dataset.step, stage: Math.round(hero.getBoundingClientRect().height), cards: cur.querySelectorAll('.ev-card').length, lines: [...cur.querySelectorAll('.card-line .cl-t')].map(x => x.textContent), lineH: [...cur.querySelectorAll('.card-line')].map(x => Math.round(x.getBoundingClientRect().height)), title: card && (card.querySelector('h2') || {}).textContent, more: (cur.querySelector('.cap-cards-more') || {}).textContent, line: [Math.round(b.top), Math.round(b.bottom)], card: cr && [Math.round(cr.top), Math.round(cr.bottom)], scrollsInside: card ? card.scrollHeight > card.clientHeight + 1 : null, thread: [Math.round(t.top), Math.round(t.bottom)] }; });
     const lc = await cardView(); const listStage = scheme === 'phone' ? 150 : 260;
-    ok(`[${scheme}] a reply with cards: her core steps down (the ${scheme === 'phone' ? '52%' : 'surface'} step, a ${listStage} px stage)`, lc.step === (scheme === 'phone' ? 'list' : 'surface') && lc.stage === listStage, JSON.stringify(lc));
-    ok(`[${scheme}] one card under her line, then "2 more cards"`, lc.cards === 1 && lc.more === '2 more cards', JSON.stringify(lc));
-    ok(`[${scheme}] the card shows five rows and a more, and never scrolls inside itself`, /^\d+ more in Record → Dates$/.test(lc.cardMore || '') && lc.scrollsInside === false, JSON.stringify(lc));
+    ok(`[${scheme}] a reply with a whole card: her core steps down (the ${scheme === 'phone' ? '52%' : 'surface'} step, a ${listStage} px stage)`, lc.step === (scheme === 'phone' ? 'list' : 'surface') && lc.stage === listStage, JSON.stringify(lc));
+    ok(`[${scheme}] the dates card is one line naming its count; the Quizlet card shows whole under her line, then "1 more card"`, lc.lines.length === 1 && /^\d+ dates? in the next two weeks$/.test(lc.lines[0]) && lc.lineH[0] <= 48 && lc.cards === 1 && /Quizlet/.test(lc.title || '') && lc.more === '1 more card', JSON.stringify(lc));
+    ok(`[${scheme}] the card never scrolls inside itself`, lc.scrollsInside === false, JSON.stringify(lc));
     ok(`[${scheme}] her line stays in view`, lc.line[0] >= lc.thread[0] - 1 && lc.line[1] <= lc.thread[1] + 1, JSON.stringify(lc));
     await page.screenshot({ path: `${shots}/captions-long-card-${scheme}.png` });
     // D-122 as amended: now is the latest reply as a whole. Her stage stays put; scrolling down through the card shows no
@@ -262,14 +262,23 @@ async function sideBySide(browser, left, right, out, vp) {
     const back = await page.evaluate(() => !document.getElementById('ev-now').hidden);
     ok(`[${scheme}] tapping her returns to the pinned spot`, !back && await atNow(page), JSON.stringify({ pill: back }));
     const seenCards = [lc.title];
-    for (let k = 0; k < 3; k++) { await page.click('#thread .msg.ev.current .cap-cards-more'); await page.waitForTimeout(300); const x = await cardView(); seenCards.push(x.title); if (k === 0) ok(`[${scheme}] tapping "2 more cards" swaps the next card in, the first joining the line`, x.cards === 1 && x.title !== lc.title && x.more === '2 more cards', JSON.stringify(x)); }
-    ok(`[${scheme}] tapping on goes through all three and back to the first`, new Set(seenCards.slice(0, 3)).size === 3 && seenCards[3] === seenCards[0], JSON.stringify(seenCards));
-    await page.click('#thread .msg.ev.current .card-more'); await page.waitForTimeout(300);
+    for (let k = 0; k < 2; k++) { await page.click('#thread .msg.ev.current .cap-cards-more'); await page.waitForTimeout(300); const x = await cardView(); seenCards.push(x.title); if (k === 0) ok(`[${scheme}] tapping "1 more card" swaps the next whole card in, the line card staying put`, x.cards === 1 && x.title !== lc.title && /Today.s review/.test(x.title || '') && x.more === '1 more card' && x.lines.join() === lc.lines.join(), JSON.stringify(x)); }
+    ok(`[${scheme}] tapping on goes back to the first`, seenCards[2] === seenCards[0], JSON.stringify(seenCards));
+    await page.click('#thread .msg.ev.current .card-line'); await page.waitForTimeout(300);
     const opened = await page.evaluate(() => ({ record: !document.getElementById('p-record').hidden, dates: !document.getElementById('record-dates').hidden }));
-    ok(`[${scheme}] the card's more opens the item in its tab (Record → Dates)`, opened.record && opened.dates, JSON.stringify(opened));
+    ok(`[${scheme}] the dates line opens it in its tab (Record → Dates)`, opened.record && opened.dates, JSON.stringify(opened));
     await page.click('#tab-ev'); await page.waitForTimeout(400);
-    // Chips and composer kept.
-    ok(`[${scheme}] chips and composer kept`, (await page.locator('#qchips .qchip').count()) >= 1 && await page.isVisible('#ev-input') && await page.isVisible('#ev-send'));
+    // Lines alone keep her conversation size.
+    await page.evaluate(() => { window.__chatScript = [{ tool: 'show_card', input: { type: 'weakspots' } }, { tool: 'show_card', input: { type: 'today', filter: 'all' } }, { tool: 'show_card', input: { type: 'chart' } }]; window.__chatPre = ''; window.__chatReply = 'Three things to look at.'; });
+    await page.fill('#ev-input', 'how am I doing'); await page.click('#ev-send'); await page.waitForTimeout(4000);
+    const lo = await cardView();
+    ok(`[${scheme}] a reply with only info cards: three lines, no whole card, her core at the conversation size`, lo.cards === 0 && lo.lines.length === 3 && !lo.more && lo.step === 'conversation' && /due now|No active weak spots/.test(lo.lines[0]) && /^(Today’s list · \d+ of \d+ done|Nothing on today’s list yet)$/.test(lo.lines[1]) && /^(Last 7 days · \d+ of \d+ right \(\d+%\)|No answers in the last week yet)$/.test(lo.lines[2]), JSON.stringify(lo));
+    await page.screenshot({ path: `${shots}/captions-line-cards-${scheme}.png` });
+    // B-85: in a conversation the chips step aside; an empty focused input brings them back; the composer stays.
+    const quietChips = await page.isVisible('#qchips'); await page.focus('#ev-input'); await page.waitForTimeout(150);
+    ok(`[${scheme}] chips step aside in a conversation and come back in an empty focused input; composer kept`, !quietChips && (await page.locator('#qchips .qchip:visible').count()) >= 1 && await page.isVisible('#ev-input') && await page.isVisible('#ev-send'));
+    await page.fill('#ev-input', 'x'); await page.waitForTimeout(100); const typed = await page.isVisible('#qchips'); await page.fill('#ev-input', ''); await page.evaluate(() => document.activeElement.blur()); await page.waitForTimeout(350);
+    ok(`[${scheme}] typing puts them away again, and so does leaving the input`, !typed && !(await page.isVisible('#qchips')));
     if (scheme === 'desktop') {
       // D-122 as amended: the side column exists only while it holds something. With nothing in it her stage centres in
       // the window; with something (a stand-in for B-78's surface) it slides in from 900 px and her stage re-centres in

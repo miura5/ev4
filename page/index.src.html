@@ -13,8 +13,15 @@
       <span class="top-av" id="top-av"></span>
       <span class="brand-txt"><span class="wordmark" id="wordmark">E.V.</span><span class="readout" id="readout"><span class="led"></span>EV-04 · starting up</span></span>
     </button>
+    <p class="status" id="status" role="status">Connecting to your record…</p>
     <div class="top-right">
-      <p class="status" id="status" role="status">Connecting to your record…</p>
+      <nav class="tabs" role="tablist" aria-label="Sections">
+        <button class="tab" role="tab" title="E.V." id="tab-ev" data-tab="ev" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="2.5"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg><span>E.V.</span></button>
+        <button class="tab" role="tab" title="Today" id="tab-today" data-tab="today" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span>Today</span></button>
+        <button class="tab" role="tab" title="Study" id="tab-study" data-tab="study" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5h5.5A3.5 3.5 0 0 1 12 9v11a2.5 2.5 0 0 0-2.5-2.5H3z"/><path d="M21 5.5h-5.5A3.5 3.5 0 0 0 12 9v11a2.5 2.5 0 0 1 2.5-2.5H21z"/></svg><span>Study</span></button>
+        <button class="tab" role="tab" title="Progress" id="tab-progress" data-tab="progress" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg><span>Progress</span></button>
+        <button class="tab" role="tab" title="Record" id="tab-record" data-tab="record" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v9.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V9M10 13h4"/></svg><span>Record</span></button>
+      </nav>
       <button class="tab tab-sys" id="tab-system" data-tab="system" type="button" aria-label="System" title="System" aria-current="false">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
       </button>
@@ -24,14 +31,6 @@
 
 <div class="wrap">
   <h1 class="sr" id="page-title">E.V. Home</h1>
-  <nav class="dock" role="tablist" aria-label="Sections">
-    <button class="tab" role="tab" id="tab-ev" data-tab="ev" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="2.5"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg><span>E.V.</span></button>
-    <button class="tab" role="tab" id="tab-today" data-tab="today" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span>Today</span></button>
-    <button class="tab" role="tab" id="tab-study" data-tab="study" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5h5.5A3.5 3.5 0 0 1 12 9v11a2.5 2.5 0 0 0-2.5-2.5H3z"/><path d="M21 5.5h-5.5A3.5 3.5 0 0 0 12 9v11a2.5 2.5 0 0 1 2.5-2.5H21z"/></svg><span>Study</span></button>
-    <button class="tab" role="tab" id="tab-progress" data-tab="progress" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg><span>Progress</span></button>
-    <button class="tab" role="tab" id="tab-record" data-tab="record" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v9.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V9M10 13h4"/></svg><span>Record</span></button>
-  </nav>
-
   <!-- E.V. -->
   <section class="panel" id="p-ev" role="tabpanel" aria-labelledby="tab-ev">
     <div class="hero" id="hero" aria-hidden="true"></div>
@@ -46,7 +45,6 @@
         <button class="primary" type="submit" id="ev-send" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></button>
       </form>
       <p class="guard" id="ev-guard" role="status" hidden></p>
-      <p class="fine" id="ev-fine">E.V. logs this conversation to your record. Only you can read it.</p>
     </div>
   </section>
 
@@ -101,6 +99,7 @@
     </div>
     <div id="progress-readiness" class="panel">
       <div class="card" id="ready-card"><h2>Readiness</h2><p class="empty">Readiness appears once an upcoming exam has weak spots.</p></div>
+      <div class="card" id="audit-card" hidden></div>
       <div class="card" id="score-card" hidden></div>
       <div class="card"><h2>Accuracy by objective</h2><div class="scroll" id="acc-obj"></div></div>
       <div class="card"><h2>By question format</h2><div class="scroll" id="acc-fmt"></div></div>
@@ -179,6 +178,7 @@
     <div class="card"><h2>Capacity</h2><div id="capacity"></div></div>
     <div class="card"><h2>Checks</h2><ul class="list" id="lint"></ul></div>
     <div class="card"><h2>Versions</h2><div id="versions" class="meta"></div></div>
+    <div class="card" id="sys-privacy"><h2>Privacy</h2><p class="meta" id="sys-note">E.V. logs your conversations to your record. Only you can read it.</p><p class="meta" id="sys-staging" hidden>Staging copy. Jobs here run the staging worker on the staging record.</p></div>
   </section>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
@@ -193,7 +193,7 @@
   const RELEASE = '{{RELEASE}}';
   const $ = id => document.getElementById(id);
   const say = t => { const s = $('status'); if (s) s.textContent = t; };
-  const stop = t => { say(t); document.body.classList.add('boot-stopped'); document.querySelectorAll('section.panel, .dock, .tab-sys').forEach(s => { s.hidden = true; }); };
+  const stop = t => { say(t); document.body.classList.add('boot-stopped'); document.querySelectorAll('section.panel, .tabs, .tab-sys').forEach(s => { s.hidden = true; }); };
   const script = src => new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => no(new Error(src + ' did not load')); document.head.appendChild(s); });
   let spec;
   try {

@@ -118,7 +118,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     await page.evaluate(async () => { const db = await window.claude.use('db'); const m = JSON.parse(JSON.stringify(window.__db.system.manifest)); m.pages.staging.files['page/staging/app.js'] = 'a'.repeat(64); await db.collection('system').doc('manifest').set(m); });
     await page.waitForTimeout(100);
     ok(`[${scheme}] back on this page's build, the bar goes away`, !(await page.isVisible('#ev-update')));
-    ok(`[${scheme}] dock has five tabs, System sits in the top bar`, (await page.locator('.dock .tab').count()) === 5 && await page.isVisible('#tab-system'));
+    ok(`[${scheme}] five tabs as icons in the top bar beside System, no dock (B-85)`, (await page.locator('#top .tabs .tab').count()) === 5 && await page.isVisible('#tab-system') && (await page.locator('.dock').count()) === 0 && await page.evaluate(() => { const t = document.getElementById('top').getBoundingClientRect().height, lab = getComputedStyle(document.querySelector('#tab-today span')).position; return t <= 54 && (innerWidth >= 900 ? lab === 'static' : lab === 'absolute'); }));
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
     ok(`[${scheme}] no sideways scroll`, !overflow);
     ok(`[${scheme}] no page errors`, errors.length === 0, errors.join(' | '));
@@ -146,6 +146,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
       await page.click('#tab-ev'); await page.waitForTimeout(150);
       // The greeting's Open the study guide chip opens the guide in a new tab and answers with the job's card.
       await page.evaluate(() => { window.__opened = []; window.open = (u, t) => { window.__opened.push([u, t]); return null; }; });
+      await page.focus('#ev-input'); await page.waitForTimeout(150); // B-85: in a conversation the chips come back in an empty focused input
       await page.locator('#qchips .qchip', { hasText: 'Open the study guide' }).click(); await page.waitForTimeout(900);
       const op = await page.evaluate(() => window.__opened);
       ok('[desktop] Open the study guide opens it in a new tab, and her reply carries the job card with its link', JSON.stringify(op) === JSON.stringify([['https://claude.ai/artifact/harness', '_blank']]) && (await page.locator('#thread .msg.ev').last().locator('.ev-card a[href="https://claude.ai/artifact/harness"]').count()) === 1, JSON.stringify(op));
@@ -161,9 +162,9 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     await send(page, 'What’s due this week?'); // typed: with review, a finished job and the session chip it has no chip (D-125) await page.waitForTimeout(250);
     let m = await msgs(page);
     ok('quick ask posts Matt + E.V. to talk/<today>', m.length === 2 && m[0].role === 'matt' && m[1].role === 'ev' && m[1].cards[0].type === 'dates', JSON.stringify(m.map(x => [x.role, x.text.slice(0, 30)])));
-    ok('dates card shown', /Next 7 days/.test(await page.locator('#thread .msg.ev').last().textContent()));
+    ok('the dates card is one line that opens Record (B-85)', /^\d+ dates? in the next week$|^Nothing dated in the next week$/.test(await page.locator('#thread .msg.ev').last().locator('.card-line .cl-t').first().textContent().catch(() => '')) && (await page.locator('#thread .msg.ev').last().locator('.ev-card').count()) === 0);
     // Captions (B-77): after his first message she stays on her stage at 80%; no core moves to the top bar or a message.
-    ok('after his first message her core stays on her stage, a step down (her reply carries the dates card: the list step)', await page.evaluate(() => document.getElementById('hero').dataset.step === 'list' && document.querySelector('#top-av').getBoundingClientRect().width < 1));
+    ok('after his first message her core stays on her stage, a step down (a line card keeps the conversation step, B-85)', await page.evaluate(() => document.getElementById('hero').dataset.step === 'conversation' && document.querySelector('#top-av').getBoundingClientRect().width < 1));
     ok('one live core, her stage: none on the messages', (await page.locator('#thread .ev-av canvas').count()) === 0 && (await page.locator('#hero canvas').count()) === 1);
     // Chat that starts a background job through the page tools and the Claude Code Remote connector
     await page.evaluate(() => { window.__chatScript = [{ tool: 'start_job', input: { kind: 'study-guide', title: 'Study guide: fluid balance', brief: 'Matt asked for a study guide on fluid balance for Exam 4.' } }]; window.__chatReply = 'On it. Study guide queued.'; });
@@ -598,7 +599,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
       // B-51 (D-107): on the phone a bottom sheet keeps the current step in view; marking works from it as from the card
       ok('[phone] the sheet peeks with the current step and its count, the side panel hidden', await fp.isVisible('#sksheet') && /Step 3 of \d+/.test(await fp.textContent('#sksheet')) && !(await fp.isVisible('#skpanel')), await fp.textContent('#sksheet'));
       const sb = await fp.locator('#sksheet').boundingBox(); const vh = fp.viewportSize().height;
-      ok('[phone] the sheet sits on screen above the dock, without scrolling', sb && sb.y > vh / 3 && sb.y + sb.height <= vh, JSON.stringify(sb));
+      ok('[phone] the sheet sits on screen, without scrolling', sb && sb.y > vh / 3 && sb.y + sb.height <= vh, JSON.stringify(sb));
       await fp.locator('#sksheet .sk-peek button', { hasText: 'Did it' }).click(); await fp.waitForTimeout(400);
       ok('[phone] Did it on the sheet marks step 3', /Step 4 of \d+/.test(await fp.textContent('#sksheet')) && (await card().locator('.ev-card').count()) === 0);
       await fp.locator('#sksheet .sk-tog').click(); await fp.waitForTimeout(300);
@@ -616,11 +617,13 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
       // The readiness audit: per objective, what to reread, from "How ready am I?"
       await send(fp, 'How ready am I?'); await fp.waitForTimeout(1200);
       const hr = (await msgs(fp)).filter(m => m.role === 'ev').slice(-1)[0] || {};
-      ok('How ready am I? attaches readiness and the readiness audit (the audit named as 1 more card until B-78)', (hr.cards || []).map(c => c.type).join() === 'readiness,audit' && /1 more card/.test(await fp.locator('#thread .msg.ev').last().textContent()), JSON.stringify(hr.cards));
-      await fp.locator('#thread .msg.ev').last().locator('.cap-cards-more').click(); await fp.waitForTimeout(400);
-      const au = await fp.locator('#thread .msg.ev').last().textContent();
-      ok('tapping 1 more card swaps the readiness audit in, with what to reread', /Readiness audit · /.test(au) && /\d+ solid · \d+ right once · \d+ not yet/.test(au) && /Reread: [^·]+, (p\.|slide) \d+/.test(au), au.slice(0, 400));
+      const hl = await fp.locator('#thread .msg.ev').last().evaluate(m => ({ lines: [...m.querySelectorAll('.card-line')].map(b => b.querySelector('.cl-t').textContent), cards: m.querySelectorAll('.ev-card').length }));
+      ok('How ready am I? attaches readiness and the readiness audit, each one line that opens Progress (B-85)', (hr.cards || []).map(c => c.type).join() === 'readiness,audit' && hl.cards === 0 && hl.lines.length === 2 && /readiness · (\d+% solid|no weak spots yet) · /.test(hl.lines[0]) && /audit · \d+ objectives?/.test(hl.lines[1]), JSON.stringify({ cards: hr.cards, hl }));
+      await fp.locator('#thread .msg.ev').last().locator('.card-line', { hasText: 'audit' }).click(); await fp.waitForTimeout(600);
+      const au = await fp.evaluate(() => ({ progress: !document.getElementById('p-progress').hidden, readiness: !document.getElementById('progress-readiness').hidden, text: document.getElementById('audit-card').textContent }));
+      ok('its audit line opens Progress → Readiness, where the audit lists what to reread', au.progress && au.readiness && /Readiness audit · /.test(au.text) && /\d+ solid · \d+ right once · \d+ not yet/.test(au.text) && /Reread: [^·]+, (p\.|slide) \d+/.test(au.text), JSON.stringify(au).slice(0, 400));
       await fp.screenshot({ path: `${shots}/audit-card.png` });
+      await fp.click('#tab-ev'); await fp.waitForTimeout(300);
       // Grounded explanations: the rule rides in the chat context, with the materials tool
       await fp.evaluate(() => { window.__chatScript = []; window.__chatReply = 'Ok.'; }); await send(fp, 'Explain why third spacing causes low blood pressure'); await fp.waitForTimeout(400);
       const gc = await fp.evaluate(() => [...window.__chatCalls].reverse().find(c => Array.isArray(c.input)));
