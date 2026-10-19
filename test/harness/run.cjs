@@ -862,6 +862,22 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     ok('session: no sideways scroll', !(await ss.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)));
     ok('session: no page errors', sErr.length === 0, sErr.join(' | '));
     await ss.close();
+    // B-91 (Matt, Oct 19): a reopen within the same conversation starts clean at her greeting: what he said before it
+    // folds behind the pull, her stage is at full size, the chips show, and the briefing has room to unfold.
+    { const rp = await browser.newPage({ viewport: { width: 1280, height: 860 } }); const rErr = []; rp.on('pageerror', e => rErr.push(e.message));
+      await rp.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
+      const t1 = new Date(DAYTIME.getTime() - 25 * 60e3).toISOString(), t2 = new Date(DAYTIME.getTime() - 24 * 60e3).toISOString(), mk = (t, by) => 'm-' + t.replace(/[-:T]/g, '').replace(/\.(\d+)Z$/, '$1').replace(/^(\d{8})/, '$1-') + '-' + by;
+      const pre = `window.__preTalk = ${JSON.stringify({ [mk(t1, 'matt')]: { role: 'matt', text: 'What’s due this week?', at: t1 }, [mk(t2, 'ev')]: { role: 'ev', text: '9 dates in the next 7 days.', cards: [{ type: 'dates', days: 7 }], at: t2, tier: 'local' } })};`;
+      // the talk is planted as the page loads (the stub's record is rebuilt from the seed on every load)
+      const plant = `Object.defineProperty(window, '__db', { configurable: true, get() { return this.__db0; }, set(v) { v.talk = v.talk || {}; v.talk[${JSON.stringify(today)}] = { schema: 1, writer: 'page', at: ${JSON.stringify(t1)}, source: 'E.V. Home', date: ${JSON.stringify(today)}, messages: window.__preTalk }; this.__db0 = v; } });`;
+      await openPage(rp, 'staging', pre + plant); await rp.waitForTimeout(3500);
+      const planted = await rp.evaluate(d => Object.keys(((window.__db.talk || {})[d] || {}).messages || {}).length, today);
+      const v = await rp.evaluate(() => ({ msgs: [...document.querySelectorAll('#thread .msg')].map(m => m.className.replace(/\s+/g, ' ')), step: document.getElementById('hero').dataset.step, chips: [...document.querySelectorAll('#qchips .qchip')].filter(c => c.offsetParent).length, greet: !!document.querySelector('#thread .msg.greet.current .brief-row') }));
+      ok('B-91: a reopen in the same conversation starts clean at her greeting (his earlier lines fold behind the pull)', planted >= 2 && v.msgs.length === 1 && /greet/.test(v.msgs[0]) && v.greet && v.step === 'idle' && v.chips >= 1, JSON.stringify({ planted, ...v }));
+      await rp.click('#thread .msg.greet .brief-row'); await rp.waitForTimeout(1200);
+      ok('B-91: and its briefing unfolds with her stage stepping down', await rp.evaluate(() => document.getElementById('hero').dataset.step === 'surface' && !document.querySelector('#thread .msg.greet .brief-list').hidden));
+      ok('B-91: no page errors', rErr.length === 0, rErr.join(' | '));
+      await rp.close(); }
     // B-87: a page opened mid-session (a reload, a reopened tab, a live publish) past a due checkpoint takes the session
     // over as soon as its reader answers, instead of sitting at 0:00 for two minutes.
     { const tk = await browser.newPage({ viewport: { width: 390, height: 844 } }); const tErr = []; tk.on('pageerror', e => tErr.push(e.message));

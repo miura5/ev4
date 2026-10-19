@@ -1105,10 +1105,20 @@
   // Her stage (D-122): idle on a new conversation, conversation once he has spoken in it, session while one runs.
   // A reply with cards steps her down to the list size (D-122's 52%, desktop's surface step) until B-78's surfaces,
   // so the card has the height a surface will have.
+  // B-91 (Matt, Oct 19): each time he opens the page, her greeting starts a clean view. What he said before it in the
+  // same conversation (D-128's idle gap) folds behind the pull like an earlier conversation, so a reopen looks like a
+  // first open: her stage at full size, the chips, the briefing with room to unfold. Only the view splits: the
+  // conversation itself, and what Claude is given as context, stay as D-128 defines them.
+  function viewConvs() {
+    const convs = E.conversations(allMsgs()); const g = T.greet; if (!g || !convs.length) return convs;
+    const last = convs[convs.length - 1], i = last.messages.indexOf(g);
+    if (i <= 0) return convs;
+    return [...convs.slice(0, -1), { ...last, end: last.messages[i - 1].at, messages: last.messages.slice(0, i) }, { ...last, start: g.at, messages: last.messages.slice(i) }];
+  }
   function stageState() {
     if (activeSession()) return 'session';
     if (skillShown()) return 'skills'; // D-122's skills step while the runner is up (B-82)
-    const convs = E.conversations(allMsgs()); const cur = convs.length ? convs[convs.length - 1].messages : [];
+    const convs = viewConvs(); const cur = convs.length ? convs[convs.length - 1].messages : [];
     const last = cur[cur.length - 1];
     if (last && last.role !== 'matt' && !last.greeting && fullCards(last).length) return 'list'; // a line card keeps her size (B-85)
     if (cur.some(m => m.role === 'matt')) return 'conversation';
@@ -1153,7 +1163,7 @@
     CAP.holdT = null; if (capBox.scrollTop > 6 || CAP.pull === 'loading') return;
     // D-128 as amended: first the pulls stop at the start of today; the next full pull goes on into earlier days, one
     // conversation at a time under a date divider, to the read window's edge.
-    const nx = E.earlierConversation(E.conversations(allMsgs()), 1 + CAP.loaded, today, { pastToday: CAP.pastToday, windowStart: E.addDays(today, -TALK_DAYS) });
+    const nx = E.earlierConversation(viewConvs(), 1 + CAP.loaded, today, { pastToday: CAP.pastToday, windowStart: E.addDays(today, -TALK_DAYS) });
     if (nx.edge === 'today') { CAP.pull = 'start'; CAP.pastToday = true; pullView(1, 'start'); return; }
     if (nx.edge === 'window') { CAP.pull = 'window'; pullView(1, 'window'); return; }
     CAP.pull = 'loading'; CAP.pullN = nx.count; pullView(1, 'loading');
@@ -2018,7 +2028,7 @@
   function cardLine(c) {
     let v; try { v = LINES[c.type](c); } catch (e) { console.error(e); v = { text: 'This card couldn’t load.', go: () => {} }; }
     const b = el('button', 'card-line'); b.type = 'button'; b.dataset.type = c.type;
-    const g = el('span', 'cl-go', 'Open'); g.insertAdjacentHTML('beforeend', OPEN_ICON);
+    const g = el('span', 'cl-go'); g.insertAdjacentHTML('beforeend', OPEN_ICON); // B-91: plain text and a chevron, no pill
     b.append(el('span', 'cl-t', v.text), g); b.setAttribute('aria-label', v.text + '. Open');
     b.addEventListener('click', () => v.go()); return b;
   }
@@ -2153,7 +2163,7 @@
   }
   function renderThread() {
     // Captions: the current conversation (core.conversations' idle-gap rule), plus the earlier ones pulled back today.
-    const convs = E.conversations(allMsgs()), shown = Math.min(convs.length, 1 + CAP.loaded);
+    const convs = viewConvs(), shown = Math.min(convs.length, 1 + CAP.loaded);
     const earlierConvs = convs.slice(convs.length - shown, convs.length - 1);
     let cur = convs.length ? convs[convs.length - 1].messages : [];
     // In a session only her latest two lines show, until he pulls for more (D-122).
@@ -2654,7 +2664,7 @@
   function renderEV() {
     if (!T.greet && ['days', 'dates', 'jobs', 'talk', 'memory', 'state', 'sessions'].every(k => loaded.has(k))) greetNow();
     // Opening: E.V. greets at full size until the conversation starts (his first message today) or a session runs.
-    const opening = !activeSession() && !T.expanded && !allMsgs().some(m => m.role === 'matt' && (m.day || E.chicagoDate(m.at)) === today);
+    const opening = !activeSession() && !T.expanded && !allMsgs().some(m => m.role === 'matt' && (T.greet ? String(m.at) > String(T.greet.at) : (m.day || E.chicagoDate(m.at)) === today)); // B-91: each open starts at her greeting
     document.body.classList.toggle('opening', opening);
     document.body.classList.toggle('core-big', !opening && !activeSession() && !!T.bigCore);
     renderMood();

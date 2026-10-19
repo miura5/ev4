@@ -404,10 +404,11 @@ body.captions .msg.ev:not(.current) .cap-quote{opacity:.6}
 .sn-lines li.new{color:var(--ink);font-weight:600;border-left-color:var(--accent)}
 .sn-foot{margin:0;font-size:12px}
 /* B-85: a card that only informs is one tappable line that opens its tab; a card he acts in stays whole. */
-.card-line{appearance:none;align-self:stretch;display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:14px;background:var(--glass);color:var(--ink2);font:500 14px var(--sans);text-align:left;cursor:pointer}
-.card-line:hover{background:var(--glass2);color:var(--ink)}
-.card-line .cl-t{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.card-line .cl-go{flex:none;display:flex;align-items:center;gap:4px;color:var(--accent-text);font-size:13px}
+.card-line{appearance:none;align-self:center;display:inline-flex;align-items:center;gap:6px;max-width:100%;min-height:36px;padding:0 4px;border:0;border-radius:8px;background:none;color:var(--ink2);font:500 14.5px var(--sans);text-align:left;cursor:pointer}
+.card-line:hover,.card-line:active,.card-line:focus{background:none;color:var(--ink);transform:none}
+.card-line .cl-t{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:underline;text-decoration-color:rgba(255,255,255,.18);text-underline-offset:4px}
+.card-line:hover .cl-t{text-decoration-color:currentColor}
+.card-line .cl-go{flex:none;display:flex;align-items:center;color:var(--soft)}
 .card-line .cl-go svg{width:14px;height:14px}
 body.captions .msg-cards{gap:8px}
 /* B-85: the chips under the greeting, or in an empty focused input; out of the way in a conversation or session. */
