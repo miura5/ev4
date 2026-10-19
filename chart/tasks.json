@@ -1537,13 +1537,18 @@
   "title": "The record (M12 The Chart, design: https://claude.ai/artifact/8DVSMh5WdybjeHVV5m2uQT, approved by Matt Oct 19): move today's backlog, decisions and deploy history into `chart/*.json` with a one-time import.",
   "dod": "the generated BACKLOG.md matches today's file row for row, apart from fixes `lint` asks for",
   "milestone": "M12",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-91"
   ],
-  "notes": "Oct 19: in progress (the Chart, Matt's design approved Oct 19)",
-  "commit": null,
-  "source": "BACKLOG.md"
+  "notes": "Oct 19, 2e0e4df: chart/ imported once (94 tasks, 96 decisions D-044 to D-139, 72 v4 deploys, 4 rules); the generated BACKLOG.md matches the file row for row (92 byte for byte, B-26 and B-42 with | escaped); lint will find the duplicate B-83 (B-94); sources in chart/import",
+  "commit": "2e0e4df",
+  "source": "BACKLOG.md",
+  "board": {
+   "row": "v4 B-92: the Chart's record, imported",
+   "why": "One record of tasks, decisions and deploys that the backlog, the Board and the Changelog are printed from, so they stop drifting",
+   "notes": "Oct 19. tasks, decisions and deploys in chart/ (94, 96 and 72), imported once; BACKLOG.md now printed from it, row for row"
+  }
  },
  {
   "id": "B-93",
