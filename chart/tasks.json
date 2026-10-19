@@ -1670,13 +1670,18 @@
   "title": "`report` and triage.",
   "dod": "a bug said in chat lands in the inbox, is triaged into a task, and shows on the Board with its status",
   "milestone": "M12",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-93"
   ],
-  "notes": "",
+  "notes": "Oct 19: in progress",
   "commit": null,
-  "source": "BACKLOG.md"
+  "source": "BACKLOG.md",
+  "board": {
+   "row": "v4 B-95: report and triage",
+   "why": "Say a bug or idea in plain words; it lands in the inbox, gets triaged first thing next session, and shows here with what happened to it",
+   "notes": "Oct 19. In progress"
+  }
  },
  {
   "id": "B-96",
