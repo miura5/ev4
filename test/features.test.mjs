@@ -66,6 +66,30 @@ test('a skills session: start, a miss files a skill weak spot at once, a later p
   assert.throws(() => EV.startSkill({ title: 'x', steps: [] }, { now: NOW }), /no numbered steps/);
 });
 
+test('B-82: a skills run left alone for the conversation idle gap ends itself; its Resume chip leads the greeting', () => {
+  const sk = EV.skillSteps(PACKET, { page: 4 });
+  const start = EV.startSkill(sk, { now: NOW }); let s = { id: start.id, ...start.data };
+  const apply = writes => { for (const w of writes) if (w.collection === 'sessions') s = { ...s, ...w.data, events: { ...s.events, ...(w.data.events || {}) } }; };
+  const gap = EV.constants().conversation.idleGapMin; assert.equal(gap, 120);
+  assert.equal(Date.parse(EV.skillState(s).lastAt), Date.parse(NOW), 'a fresh run last moved at its start');
+  assert.equal(EV.skillIdle(s, '2026-10-18T20:59:00Z'), false, '119 minutes: still waiting');
+  assert.equal(EV.skillIdle(s, '2026-10-18T21:00:00Z'), true, '120 minutes: it ends');
+  apply(EV.skillStep(s, 1, 'pass', { now: '2026-10-18T19:30:00Z' }));
+  assert.equal(Date.parse(EV.skillState(s).lastAt), Date.parse('2026-10-18T19:30:00Z'), 'a marked step moves it');
+  assert.equal(EV.skillIdle(s, '2026-10-18T21:00:00Z'), false, 'counted from the last step, not the start');
+  assert.equal(EV.skillIdle(s, '2026-10-18T21:30:00Z'), true);
+  assert.equal(EV.skillResumeChip(s), 'Resume Bed bath · 2 of 6');
+  const end = EV.endSkill(s, { now: '2026-10-18T21:30:00Z', endedBy: 'idle' });
+  assert.equal(end.data.endedBy, 'idle'); assert.equal(end.data.minutes, 30, 'minutes to the last step, not to the close');
+  assert.match(end.data.summary, /^1 of 6 steps done right\. Left unfinished; nothing was logged for the steps not reached\.$/);
+  assert.equal(end.collection, 'sessions'); assert.ok(validate('sessions', { ...s, ...end.data, events: { ...s.events, ...end.data.events } }).ok);
+  const ended = { ...s, ...end.data };
+  assert.equal(EV.skillIdle(ended, '2026-10-19T09:00:00Z'), false, 'an ended run is never ended again');
+  // The greeting: the Resume chip first, Start a study session still last, three at most.
+  const g = EV.greeting({ now: '2026-10-18T23:00:00Z', date: '2026-10-18', items: [], reviewLeft: 4, tomorrow: { dates: [] }, skillRun: EV.skillResumeChip(s) });
+  assert.deepEqual(g.chips, ['Resume Bed bath · 2 of 6', 'Start review', 'Start a study session']);
+});
+
 test('readinessAudit: per objective, not-yet first, with the passages to reread cited by file and page', () => {
   const day = '2026-10-18';
   const w = (id, objective, topic, streak, status = 'open') => ({ id, topic, objective, exam: 'E4', kind: 'concept', derived: { status, streak, preRead: false } });

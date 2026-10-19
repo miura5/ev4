@@ -1590,7 +1590,29 @@ Return JSON: {"pages": [{"page": <page number>, "text": "<the page's text>"}]}`;
     const rule = (s && s.skill && s.skill.rule) || {};
     const criticalMissed = missed.filter(st => st.critical).length;
     const satisfactory = criticalMissed === 0 && (rule.missNonCritical != null ? missed.length - criticalMissed <= rule.missNonCritical : true) && (rule.atLeast != null ? passed.length >= rule.atLeast : true);
-    return { total: steps.length, done: passed.length + missed.length, next, passed: passed.length, missed: missed.map(st => st.n), criticalMissed, satisfactory: !next && satisfactory, complete: !next, results };
+    // When the run last moved: its start or its latest step (the idle end counts from here).
+    const times = [s && s.startedAt, ...Object.entries((s && s.events) || {}).filter(([, e]) => e && (e.type === 'start' || e.type === 'step')).map(([k, e]) => entryTime(k, e))].filter(t => t && Number.isFinite(toMs(t)));
+    const moved = times.sort((x, y) => toMs(y) - toMs(x))[0] || null;
+    return { total: steps.length, done: passed.length + missed.length, next, passed: passed.length, missed: missed.map(st => st.n), criticalMissed, satisfactory: !next && satisfactory, complete: !next, results, lastAt: moved };
+  }
+  /**
+   * Whether a running skills run has sat untouched for the conversation idle gap (B-82, Matt Oct 19: it ends on its own
+   * after the same time a conversation starts anew; constants.conversation.idleGapMin), counted from its last step or
+   * its start.
+   */
+  function skillIdle(s, now, o = {}) {
+    if (!s || s.status !== 'active') return false; const st = skillState(s); if (!st.next || !st.lastAt) return false;
+    const gap = (o.idleGapMin != null ? o.idleGapMin : C.conversation.idleGapMin) * 60000;
+    return toMs(isoOf(now)) - toMs(st.lastAt) >= gap;
+  }
+  /** The greeting's chip that brings a waiting skills run back (B-82): "Resume Head-to-toe assessment · 4 of 32". */
+  function skillResumeChip(s) {
+    if (!s || !s.skill) return null; const st = skillState(s); if (!st.next) return null;
+    // The checklist's own title, shortened: no "validation checklist", sentence case when the packet shouts, 22 characters.
+    let t = String(s.topic || s.skill.title || 'skills run').replace(/\s+/g, ' ').replace(/\s*\b(validation\s+)?checklist\b\s*$/i, '').trim() || 'skills run';
+    if (t === t.toUpperCase()) t = t.charAt(0) + t.slice(1).toLowerCase();
+    const name = t.length <= 22 ? t : t.slice(0, 22).replace(/\s+\S*$/, '') + '…';
+    return `Resume ${name} · ${st.next.n} of ${st.total}`;
   }
   const skillWeakspotId = (s, n) => safeId('skill-' + slug((s.skill && s.skill.title) || s.topic || 'skill', 30) + '-' + n);
   /**
@@ -1618,8 +1640,10 @@ Return JSON: {"pages": [{"page": <page number>, "text": "<the page's text>"}]}`;
   /** Ending a skills session: its status, minutes and a one-line summary. */
   function endSkill(s, { now, endedBy = 'ended' } = {}) {
     const at = isoOf(now); const st = skillState(s);
-    const minutes = Math.max(0, Math.round((toMs(at) - toMs(s.startedAt)) / 60000));
-    const summary = `${st.passed} of ${st.total} steps done right${st.missed.length ? ', missed step' + (st.missed.length > 1 ? 's ' : ' ') + st.missed.join(', ') : ''}.` + (st.complete ? (st.satisfactory ? ' That run meets the checklist’s bar.' : ' That run would not meet the checklist’s bar yet.') : ' Stopped before the end.');
+    // A run that ended itself (idle) counts its minutes to the last step, not to the moment it was closed.
+    const until = endedBy === 'idle' && st.lastAt ? st.lastAt : at;
+    const minutes = Math.max(0, Math.round((toMs(until) - toMs(s.startedAt)) / 60000));
+    const summary = `${st.passed} of ${st.total} steps done right${st.missed.length ? ', missed step' + (st.missed.length > 1 ? 's ' : ' ') + st.missed.join(', ') : ''}.` + (st.complete ? (st.satisfactory ? ' That run meets the checklist’s bar.' : ' That run would not meet the checklist’s bar yet.') : endedBy === 'idle' ? ' Left unfinished; nothing was logged for the steps not reached.' : ' Stopped before the end.');
     return { op: 'update', collection: 'sessions', id: s.id, data: { status: 'ended', endedAt: at, minutes, endedBy, summary, events: { [eventKey('page', at)]: { type: 'end', at, why: endedBy } } } };
   }
 
@@ -1794,7 +1818,7 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
    * ctx: {now, date, dayType, items:[{id,text,tag,done,deferred,minutes,set}], reviewLeft, reviewTotal, push,
    *       nextExams:[{id,title,date,course,kind}], readiness:{examId,pctSolid,need}|null, dueCount,
    *       jobs:[{id,title,status,finishedAt}], lastSeenAt, runs:{<pipeline>:{status,startedAt,detail}},
-   *       tomorrow:{dates:[{title,kind,graded}]}, quizlet:{refresh}|null, checkin:{energy}|null, sessionActive}
+   *       tomorrow:{dates:[{title,kind,graded}]}, quizlet:{refresh}|null, checkin:{energy}|null, sessionActive, skillRun (a Resume chip, B-82)}
    */
   const JOB_NOUN = { 'study-guide': 'study guide', 'practice-set': 'practice set', 'exam-plan': 'exam plan', 'exam-retro': 'exam retro', 'share-set': 'practice page' };
   function greeting(ctx) {
@@ -1866,6 +1890,7 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
     // (the first to drop: the Today tab covers it). During a session all three go by priority. Usual asks fill gaps.
     const chips = [], finished = (c.jobs || []).find(j => j.status === 'done' && toMs(j.finishedAt) > seen);
     const room = c.sessionActive ? 3 : 2, add = x => { if (x && chips.length < room && !chips.includes(x)) chips.push(x); };
+    if (c.skillRun) add(c.skillRun); // a skills run waiting for him (B-82): its Resume chip comes first
     if (rl) add('Start review');
     if (finished) add('Open the ' + (JOB_NOUN[finished.kind] || 'result'));
     if (c.unfiled > 0) add('File it');
@@ -1937,7 +1962,7 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
     // study sessions in E.V. Home
     sessionState, noteMark, noteDelta, sessionContext, checkPrompt, parseCheck, wrapPrompt, parseWrap, closeSession, decideSessionQuestion, cardsText,
     // skills practice and the readiness audit
-    skillSteps, skillState, skillStep, startSkill, endSkill, readinessAudit,
+    skillSteps, skillState, skillStep, startSkill, endSkill, skillIdle, skillResumeChip, readinessAudit,
     // workouts (D-108)
     shareableSet, sharePage,
     workoutSequences, workoutMoves, startWorkout, workoutState, workoutRound, endWorkout, workoutCheckin, workoutSummary,

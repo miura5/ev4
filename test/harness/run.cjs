@@ -410,12 +410,14 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     }
     const model = id => page.evaluate(id => { const rows = c => Object.entries(window.__db[c] || {}).map(([k, v]) => ({ id: k, ...v })); return (window.EVCore.buildWeakspots({ weakspots: rows('weakspots'), sets: rows('sets'), answers: rows('answers'), exams: rows('exams') }).find(w => w.id === id) || {}).derived; }, id);
     const agingDerived = await model('e4-aging-expected'); const agingBefore = (agingDerived && agingDerived.streak) || 0; const agingRightToday = !!agingDerived && agingDerived.lastReviewed === today && agingDerived.lastResult === 'right';
+    const prePre = await model('e4-preschooler'); // the export can already hold his answers on it
+    const preStreak = prePre && prePre.lastResult === 'right' ? (prePre.lastReviewed === today ? prePre.streak - 1 : prePre.streak) : 0;
     await page.locator('#pr-body .row', { hasText: 'Harness set' }).locator('button').click(); await page.waitForTimeout(100);
     ok('a set made for him offers no Share', !(await page.isVisible('#pr-share')));
     await page.locator('#pr-body label.opt').nth(0).click(); await page.click('#pr-body button:has-text("Check answer")'); await page.waitForTimeout(150);
     ok('single answered and scored', /Correct\./.test(await page.textContent('#pr-body')));
     let ws = await model('e4-preschooler');
-    ok('the answer lands in answers/<setId> and the weak spot is recomputed from it', ws && ws.streak === 1 && ws.lastResult === 'right' && await page.evaluate(t => { const a = (window.__db.answers || {})['more-' + t + '-1']; return !!a && a.writer === 'page' && Object.keys(a.answers.m1 || {}).length === 1 && !window.__db.weakspots['e4-preschooler'].derived; }, today), JSON.stringify(ws && { s: ws.streak, n: ws.nextDue }));
+    ok('the answer lands in answers/<setId> and the weak spot is recomputed from it', ws && ws.streak === preStreak + 1 && ws.lastResult === 'right' && await page.evaluate(t => { const a = (window.__db.answers || {})['more-' + t + '-1']; return !!a && a.writer === 'page' && Object.keys(a.answers.m1 || {}).length === 1 && !window.__db.weakspots['e4-preschooler'].derived; }, today), JSON.stringify(ws && { s: ws.streak, n: ws.nextDue }));
     await page.click('#pr-body button:has-text("Next question")'); await page.waitForTimeout(100);
     await page.locator('#pr-body label.opt').nth(0).click(); await page.locator('#pr-body label.opt').nth(2).click();
     await page.click('#pr-body button:has-text("Check answer")'); await page.waitForTimeout(150);
@@ -488,7 +490,8 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     await page.screenshot({ path: `${shots}/progress.png`, fullPage: true });
     // Record
     await page.click('#tab-record'); await page.waitForTimeout(100);
-    ok('sessions listed', (await page.locator('#sessions .row').count()) === 2);
+    { const want = await page.evaluate(() => Object.values(window.__db.sessions || {}).filter(x => x.status !== 'active').length); const got = await page.locator('#sessions .row').count();
+      ok('sessions listed (every session the record holds that is not running)', got >= 2 && got === want, JSON.stringify({ got, want })); }
     ok('ideas show links', /1 link/.test(await page.textContent('#ideas')));
     // B-53 (D-109): every idea shows its kind; only a learning idea offers "Make it a weak spot"; the kind can change
     { const feat = page.locator('#ideas .row', { hasText: 'Harness feature idea' });
@@ -582,31 +585,31 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
       // Skills practice: E.V. finds the checklist in the library and runs it in a card, one step at a time
       await fp.evaluate(() => { window.__toolResults = []; window.__chatScript = [{ tool: 'practice_skill', input: { action: 'start', skill: 'head to toe assessment' } }]; window.__chatReply = 'Let’s run it.'; });
       await send(fp, 'Run me through the head to toe validation'); await fp.waitForTimeout(800);
-      const sk = await fp.evaluate(() => Object.entries(window.__db.sessions).filter(([id]) => id.startsWith('ss-skill-')).map(([id, x]) => ({ id, ...x }))[0]);
+      const sk = await fp.evaluate(() => Object.entries(window.__db.sessions).filter(([id, x]) => id.startsWith('ss-skill-') && x.status === 'active').map(([id, x]) => ({ id, ...x }))[0]);
       ok('practice_skill starts a skills session from the checklist in his materials', sk && sk.kind === 'skill' && sk.status === 'active' && sk.skill.steps.length >= 4 && /p\. 12/.test(sk.skill.cite), JSON.stringify(sk && { t: sk.topic, n: sk.skill.steps.length, c: sk.skill.cite }) + ' ' + JSON.stringify(await fp.evaluate(() => window.__toolResults)));
       const card = () => fp.locator('#thread .msg.ev').last();
-      ok('the skills card shows step 1 with Did it and Missed it', /Step 1\./.test(await card().textContent()) && (await card().locator('button', { hasText: 'Did it' }).count()) === 1);
-      await card().locator('button', { hasText: 'Did it' }).click(); await fp.waitForTimeout(400);
-      await card().locator('button', { hasText: 'Missed it' }).click(); await fp.waitForTimeout(400);
+      // B-82: while the run goes the sheet is the whole runner; her line carries no card.
+      ok('the run shows in the sheet at step 1 with Did it and Missed it; her line carries no card', (await card().locator('.ev-card').count()) === 0 && /Step 1 of \d+/.test(await fp.textContent('#sksheet')) && (await fp.locator('#sksheet .sk-acts button', { hasText: 'Did it' }).count()) === 1);
+      await fp.locator('#sksheet .sk-acts button', { hasText: 'Did it' }).click(); await fp.waitForTimeout(400);
+      await fp.locator('#sksheet .sk-acts button', { hasText: 'Missed it' }).click(); await fp.waitForTimeout(400);
       const sw = await fp.evaluate(id => Object.values(window.__db.weakspots).filter(w => w.kind === 'skill' && w.origin && w.origin.session === id), sk.id);
-      ok('a missed step is a weak spot of kind skill at once', sw.length === 1 && /: step 2, /.test(sw[0].topic) && /Step 3\./.test(await card().textContent()), JSON.stringify(sw.map(w => w.topic)));
-      ok('the card keeps the tally', /2 of \d+ · 1 missed/.test(await card().textContent()), (await card().textContent()).slice(0, 120));
+      ok('a missed step is a weak spot of kind skill at once', sw.length === 1 && /: step 2, /.test(sw[0].topic) && /Step 3 of \d+/.test(await fp.textContent('#sksheet')), JSON.stringify(sw.map(w => w.topic)));
       await fp.screenshot({ path: `${shots}/skills-card.png` });
       // B-51 (D-107): on the phone a bottom sheet keeps the current step in view; marking works from it as from the card
       ok('[phone] the sheet peeks with the current step and its count, the side panel hidden', await fp.isVisible('#sksheet') && /Step 3 of \d+/.test(await fp.textContent('#sksheet')) && !(await fp.isVisible('#skpanel')), await fp.textContent('#sksheet'));
       const sb = await fp.locator('#sksheet').boundingBox(); const vh = fp.viewportSize().height;
       ok('[phone] the sheet sits on screen above the dock, without scrolling', sb && sb.y > vh / 3 && sb.y + sb.height <= vh, JSON.stringify(sb));
       await fp.locator('#sksheet .sk-peek button', { hasText: 'Did it' }).click(); await fp.waitForTimeout(400);
-      ok('[phone] Did it on the sheet marks step 3, and the card follows', /Step 4 of \d+/.test(await fp.textContent('#sksheet')) && /Step 4\./.test(await card().textContent()) && /3 of \d+ · 1 missed/.test(await card().textContent()));
+      ok('[phone] Did it on the sheet marks step 3', /Step 4 of \d+/.test(await fp.textContent('#sksheet')) && (await card().locator('.ev-card').count()) === 0);
       await fp.locator('#sksheet .sk-tog').click(); await fp.waitForTimeout(300);
       const opened = await fp.evaluate(() => [...document.querySelectorAll('#sksheet .sk-step')].map(li => (li.className.match(/pass|miss|cur/) || [''])[0]));
-      ok('[phone] the sheet opens to the whole ticked list, the current step marked', opened.slice(0, 4).join(',') === 'pass,miss,pass,cur' && await fp.locator('#sksheet .sk-tog').getAttribute('aria-expanded') === 'true', opened.join(','));
+      ok('[phone] the sheet opens to the whole ticked list, the current step marked, with the tally', opened.slice(0, 4).join(',') === 'pass,miss,pass,cur' && await fp.locator('#sksheet .sk-tog').getAttribute('aria-expanded') === 'true' && /3 of \d+ done · 1 missed/.test(await fp.textContent('#sksheet .sk-head')), opened.join(','));
       await fp.screenshot({ path: `${shots}/skills-sheet-phone.png` });
       await fp.locator('#sksheet .sk-tog').click(); await fp.waitForTimeout(200);
-      await card().locator('button', { hasText: 'Stop' }).click(); await fp.waitForTimeout(400);
+      await fp.locator('#sksheet .sk-mini', { hasText: 'Stop' }).click(); await fp.waitForTimeout(400);
       ok('[phone] the sheet goes when the run ends', !(await fp.isVisible('#sksheet')));
       const ended = await fp.evaluate(id => window.__db.sessions[id], sk.id);
-      ok('Stop ends the run with its summary', ended.status === 'ended' && /^2 of \d+ steps done right, missed step 2\. Stopped before the end\.$/.test(ended.summary) && /missed step 2/.test(await card().textContent()), ended.summary);
+      ok('Stop ends the run with its summary, and the summary card comes back under her line', ended.status === 'ended' && /^2 of \d+ steps done right, missed step 2\. Stopped before the end\.$/.test(ended.summary) && /missed step 2/.test(await card().textContent()), ended.summary);
       await fp.click('#tab-progress'); await fp.locator('#seg-progress [data-v="weak"]').click(); await fp.waitForTimeout(200);
       ok('Progress lists it as a skill to practice', (await fp.locator('#weak-notes .row', { hasText: ': step 2, ' }).locator('button', { hasText: 'Practiced' }).count()) === 1);
       await fp.click('#tab-ev'); await fp.waitForTimeout(150);
@@ -639,9 +642,8 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
       await dp.locator('#skpanel .sk-acts button', { hasText: 'Did it' }).click(); await dp.waitForTimeout(400);
       await dp.locator('#skpanel .sk-acts button', { hasText: 'Missed it' }).click(); await dp.waitForTimeout(400);
       const marks = await dp.evaluate(() => [...document.querySelectorAll('#skpanel .sk-step')].map(li => (li.className.match(/pass|miss|cur/) || [''])[0]));
-      ok('[desktop] marking from the panel ticks the list and the card follows', marks.slice(0, 3).join(',') === 'pass,miss,cur' && /Step 3\./.test(await dcard().textContent()) && /2 of \d+ · 1 missed/.test(await dcard().textContent()), marks.join(','));
-      await dcard().locator('button', { hasText: 'Did it' }).click(); await dp.waitForTimeout(400);
-      ok('[desktop] marking from the card moves the panel on', /Step 4 of \d+/.test(await dp.textContent('#skpanel')));
+      ok('[desktop] marking from the panel ticks the list, with the tally', marks.slice(0, 3).join(',') === 'pass,miss,cur' && /2 of \d+ done · 1 missed/.test(await dp.textContent('#skpanel')), marks.join(','));
+      ok('[desktop] her line carries no card while the panel runs (B-82)', (await dcard().locator('.ev-card').count()) === 0);
       await dp.screenshot({ path: `${shots}/skills-panel-desktop.png` });
       ok('[desktop] no horizontal scroll with the panel open', await dp.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
       await dp.locator('#skpanel button', { hasText: 'Stop' }).click(); await dp.waitForTimeout(400);
@@ -690,7 +692,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
         await wp.screenshot({ path: `${shots}/workout-cindy-${label}.png` });
         await last().locator('input[type=number]').fill('7'); await last().locator('form button[type=submit]').click(); await wp.waitForTimeout(400);
         await last().locator('.energy button', { hasText: '4' }).click(); await last().locator('input[aria-label=Mood]').fill('strong, arms gone'); await last().locator('button', { hasText: 'Save' }).click(); await wp.waitForTimeout(400);
-        const cindy = await wp.evaluate(() => Object.entries(window.__db.workouts || {}).filter(([, w]) => w.sequence === 'cindy').map(([id, w]) => ({ id, ...w })));
+        const cindy = await wp.evaluate(old => Object.entries(window.__db.workouts || {}).filter(([id, w]) => w.sequence === 'cindy' && !old.includes(id)).map(([id, w]) => ({ id, ...w })), Object.keys(seed.workouts || {})); // the run this harness made, not one the export holds
         ok(`[${label}] CINDY lands in workouts/<id>: rounds, extra reps, energy and mood, valid`, cindy.length === 1 && cindy[0].status === 'done' && cindy[0].result.rounds === 3 && cindy[0].result.extraReps === 7 && cindy[0].energy === 4 && cindy[0].mood === 'strong, arms gone' && validate('workouts', (({ id, ...d }) => d)(cindy[0]), { id: cindy[0].id }).ok, JSON.stringify(cindy[0] && cindy[0].result));
         ok(`[${label}] the card closes with the summary`, /3 rounds \+ 7 reps in 20 min/.test(await last().textContent()) && /Energy 4\/5/.test(await last().textContent()));
         // The ladder from the conversation: five rounds, stopped in round six
@@ -720,7 +722,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     const host = spec.registry.studyWatch.reader.host;
     const note1 = 'Fluids and electrolytes\nIsotonic: 0.9% NaCl stays in the vessels.';
     const setNote = (text, extra = {}) => ss.evaluate(([t, e]) => { window.__readerNote = { found: true, appVersion: '0.4', note: { id: 'x-coredata://n1', name: 'Fluids and electrolytes', folder: '2026/2026 Fall/NUR 112/Week 9', modifiedAt: new Date().toISOString(), text: t }, ...e }; }, [text, extra]);
-    const sess = () => ss.evaluate(() => Object.entries(window.__db.sessions || {}).filter(([, x]) => x.source === 'E.V. Home').map(([id, x]) => ({ id, ...x }))[0] || null);
+    const sess = () => ss.evaluate(() => Object.entries(window.__db.sessions || {}).filter(([, x]) => x.source === 'E.V. Home' && x.kind !== 'skill').map(([id, x]) => ({ id, ...x }))[0] || null); // study sessions only: the export can hold a skills run
     // Moves the page's wall clock forward, then waits for done(). Not clock.fastForward: with the core's animation frames
     // keeping Playwright's fake clock busy, its real-time sync can finish after a fast-forward and rewind the clock.
     const jump = async (ms, done) => { await ss.clock.setSystemTime(await ss.evaluate(() => Date.now()) + ms); for (let i = 0; i < 50 && !(await done()); i++) await ss.waitForTimeout(100); await ss.waitForTimeout(250); };

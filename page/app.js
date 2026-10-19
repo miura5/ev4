@@ -1102,9 +1102,10 @@
   // so the card has the height a surface will have.
   function stageState() {
     if (activeSession()) return 'session';
+    if (skillShown()) return 'skills'; // D-122's skills step while the runner is up (B-82)
     const convs = E.conversations(allMsgs()); const cur = convs.length ? convs[convs.length - 1].messages : [];
     const last = cur[cur.length - 1];
-    if (last && last.role !== 'matt' && !last.greeting && (last.cards || []).length) return 'list';
+    if (last && last.role !== 'matt' && !last.greeting && shownCards(last).length) return 'list';
     return cur.some(m => m.role === 'matt') ? 'conversation' : 'idle';
   }
   // The stage's height at each step, as the Captions v2 artboards draw it (V2.dc.html, V2Desktop.dc.html: stageH).
@@ -1510,6 +1511,8 @@
     SS.ring.arc.setAttribute('stroke-dashoffset', (RING_C * (1 - frac)).toFixed(1));
   }
   function sessionTick() {
+    const sk = activeSkill(); // B-82: a skills run left alone for the conversation idle gap ends itself, saved as left unfinished
+    if (sk && !SK.ending && E.skillIdle(sk, now())) { SK.ending = true; finishSkill(sk, 'idle').catch(() => {}).finally(() => { SK.ending = false; }); }
     if (!FILE.opened && M && mcp && loaded.has('sessions')) { FILE.opened = true; fileSessions({ quiet: true }).then(r => { if (r) evSay(r.text, r.cards, { tier: 'local' }); }).catch(() => { FILE.quiet = FILE.quiet || { ok: false }; }).finally(regreet); }
     const s = activeSession(); renderBar();
     if (!s || !M || SS.busy) return;
@@ -1525,8 +1528,19 @@
 
   // ---------------------------------------------------------------- skills practice (Features: "Skills practice mode")
   const activeSkill = () => S.sessions.filter(s => s.kind === 'skill' && s.status === 'active').sort((a, b) => String(b.startedAt).localeCompare(String(a.startedAt)))[0] || null;
+  // B-82 (Matt, Oct 19). The runner is the bottom sheet (D-107, D-124); while a run goes her line carries no card. A run
+  // found already going when the page opens waits behind a Resume chip, so the greeting is never covered; Hide does
+  // the same on purpose. A run untouched for the conversation idle gap ends itself (skillIdle).
+  const SK = { open: false, parked: null, ending: false, chip: null };
+  const skillGoing = s => !!(s && s.status === 'active' && s.skill && E.skillState(s).next);
+  function skillParkInit() { if (SK.parked == null && loaded.has('sessions')) SK.parked = skillGoing(activeSkill()); }
+  const skillShown = () => { skillParkInit(); return !SK.parked && skillGoing(activeSkill()); };
+  const resumeChip = () => { skillParkInit(); const s = activeSkill(); return SK.parked && skillGoing(s) ? E.skillResumeChip(s) : null; };
+  function skillPark(on) { SK.parked = on; SK.open = false; regreet(); render(); }
+  // A reply's cards as Captions shows them: a running skills run's card stays out (the sheet is the runner).
+  const shownCards = m => (m.cards || []).filter(c => !(c && c.type === 'skill' && skillGoing(sessOf(c.session))));
   async function startSkillRun(skill, page) {
-    if (activeSkill()) return { text: 'A skills run is already going; finish or stop it first.', card: { type: 'skill', session: activeSkill().id } };
+    if (activeSkill()) { SK.parked = false; return { text: 'A skills run is already going; it’s in the sheet above the composer. Finish or stop it first.', card: { type: 'skill', session: activeSkill().id } }; }
     const L = await library(); let sk = null;
     const hits = page ? [] : E.searchLibrary(L.idx, (skill || '') + ' validation checklist', { kind: 'lab', k: 8 });
     // A hit can land on the page after a checklist begins (or on its documentation page), so its neighbors are tried too.
@@ -1537,7 +1551,7 @@
     for (const h of tries) { const m = L.mats.find(x => x.id === h.id); if (!m) continue; const got = E.skillSteps(m, { page: h.page }); if (got.steps.length < 3) continue;
       const tt = E.libTokens(got.title); const score = tt.filter(w => want.has(w)).length - 0.1 * tt.filter(w => !want.has(w)).length; if (score > best) { best = score; sk = got; } }
     if (!sk) return { text: `I couldn’t find a numbered checklist for “${skill}” in your materials. Name the skill as the Skills Packet does, or tell me its page.` };
-    const w = E.startSkill(sk, { now: now(), date: today }); await write(w);
+    const w = E.startSkill(sk, { now: now(), date: today }); SK.parked = false; await write(w);
     return { text: `${sk.title}: ${plural(sk.steps.length, 'step')} from ${sk.cite}. Mark each one as you go.`, card: { type: 'skill', session: w.id } };
   }
   async function skillMark(s, n, result) { await run(E.skillStep(s, n, result, { weakspots: M.models, now: now(), by: 'Matt' })); const s2 = sessOf(s.id); if (s2 && E.skillState(s2).complete) await finishSkill(s2, 'complete'); }
@@ -1545,7 +1559,6 @@
   // D-107: the checklist stays in view while he practises, so he never scrolls up to tick a step. On the phone a bottom
   // sheet rides on the composer: a peek bar (the current step, its count, Missed it and Did it) that opens to the whole
   // ticked list; at 1024px and up a side panel beside the thread. Both mark through skillMark, like the card.
-  const SK = { open: false };
   function skillList(s, st) {
     const ol = el('ol', 'sk-steps');
     for (const step of s.skill.steps) {
@@ -1590,7 +1603,8 @@
     panel.replaceChildren(ph, big, ...(st.over ? [el('p', 'meta', moves)] : [ul]), acts(), el('p', 'meta', (q.source || '')));
   }
   function renderSkillDock() {
-    const s = activeSkill(); const st = s && s.skill ? E.skillState(s) : null; const live = !!(st && st.next);
+    const s = activeSkill(); const st = s && s.skill ? E.skillState(s) : null; const live = !!(st && st.next) && skillShown();
+    const rc = resumeChip(); if (rc !== SK.chip) { SK.chip = rc; regreet(); }
     document.body.classList.toggle('skill-on', live);
     let sheet = $('sksheet'), panel = $('skpanel');
     if (!sheet) { sheet = el('div', 'sk-sheet'); sheet.id = 'sksheet'; sheet.setAttribute('role', 'region'); sheet.setAttribute('aria-label', 'Skills checklist'); $('composer').prepend(sheet); }
@@ -1608,10 +1622,15 @@
     // Phone: the peek bar, and the list above it when open.
     sheet.classList.toggle('open', SK.open);
     const peek = el('div', 'sk-peek');
+    // The count line carries Hide (the run waits behind a Resume chip) and Stop (it ends here, saved): B-82.
+    const top = el('div', 'sk-top'); top.append(el('span', 'sk-count', count), el('span', 'grow'),
+      btn('Hide', () => skillPark(true), { cls: 'sk-mini' }), btn('Stop', ev => guard(ev.target, () => finishSkill(s, 'ended'), 'Skills run saved'), { cls: 'sk-mini' }));
+    top.querySelector('.sk-mini').setAttribute('aria-label', 'Hide the checklist; a Resume chip brings it back');
     const tog = el('button', 'sk-tog'); tog.type = 'button'; tog.setAttribute('aria-expanded', String(SK.open)); tog.setAttribute('aria-controls', 'sksheet-list');
-    tog.append(el('span', 'sk-count', count), el('span', 'sk-now', step.text));
+    tog.setAttribute('aria-label', (SK.open ? 'Close' : 'Open') + ' the full checklist. ' + count + ': ' + step.text);
+    tog.append(el('span', 'sk-now', step.text));
     tog.addEventListener('click', () => { SK.open = !SK.open; renderSkillDock(); });
-    peek.append(tog, skillButtons(s, step));
+    peek.append(top, tog, skillButtons(s, step));
     const body = el('div', 'sk-body'); body.id = 'sksheet-list'; body.hidden = !SK.open;
     if (SK.open) { const h = el('div', 'sk-head'); const t = el('div', 'sk-headtxt'); t.append(el('span', 'sk-title', s.topic), el('span', 'meta', tally)); h.append(t, btn('Stop', ev => guard(ev.target, () => finishSkill(s, 'ended'), 'Skills run saved'))); body.append(h, skillList(s, st)); }
     sheet.replaceChildren(body, peek);
@@ -1619,7 +1638,7 @@
     const ph = el('div', 'sk-head'); ph.append(el('span', 'sk-title', 'Skills · ' + s.topic), el('span', 'meta', tally));
     const pr = el('div', 'progress'); const bar = el('i'); bar.style.width = (st.total ? 100 * st.done / st.total : 0) + '%'; pr.append(bar);
     const cur = el('p', 'sk-cur'); cur.append(el('b', null, count + '. '), document.createTextNode(step.text));
-    const pa = el('div', 'actions'); pa.append(btn('Stop', ev => guard(ev.target, () => finishSkill(s, 'ended'), 'Skills run saved')));
+    const pa = el('div', 'actions'); pa.append(btn('Hide', () => skillPark(true)), btn('Stop', ev => guard(ev.target, () => finishSkill(s, 'ended'), 'Skills run saved')));
     panel.replaceChildren(ph, pr, cur, skillButtons(s, step), skillList(s, st), pa, el('p', 'meta', s.skill.cite || ''));
     const curLi = sheet.querySelector('.sk-step.cur'); if (curLi && SK.open) curLi.scrollIntoView({ block: 'nearest' });
   }
@@ -1875,7 +1894,7 @@
     // A reply with cards steps her core down (stageState), so the card has a surface's height.
     // Which card shows (D-125 as amended): the reply's cards come ordered with the one showing the change she made
     // first, else the one that answers; "n more cards" swaps the next one in, the shown one joining the line.
-    const all = m.cards || [], at = all.length ? (T.cardAt.get(m.id) || 0) % all.length : 0;
+    const all = shownCards(m), at = all.length ? (T.cardAt.get(m.id) || 0) % all.length : 0;
     const fresh = all.slice(at, at + 1).map(c => {
       const box = el('div', 'card ev-card'); const i = all.indexOf(c);
       try { (CARDS[c && c.type] || (() => { throw new Error('unknown card'); }))(box, c, m.id + '-' + i); } catch (e) { box.replaceChildren(el('p', 'empty', 'This card couldn’t load.')); console.error(e); }
@@ -2398,7 +2417,7 @@
   // ---------------------------------------------------------------- greeting (once per open)
   const latestRuns = () => E.lastRuns(S.runs);
   // The chips change once quiet filing has run (or could not): the greeting's offers are recomputed, its lines kept.
-  function regreet() { if (!T.greet || !T.greetCtx) return; const c = E.greeting({ ...T.greetCtx, unfiled: fileUnfiled(), sessionActive: !!activeSession() }).chips; if (c.join('|') !== (T.greet.chips || []).join('|')) { T.greet.chips = c; render(); } }
+  function regreet() { if (!T.greet || !T.greetCtx) return; const c = E.greeting({ ...T.greetCtx, unfiled: fileUnfiled(), sessionActive: !!activeSession(), skillRun: resumeChip() }).chips; if (c.join('|') !== (T.greet.chips || []).join('|')) { T.greet.chips = c; render(); } }
   function greetNow() {
     const { day, items, isDone } = dayState(); const { left, total } = reviewState();
     const rd = M.target ? E.readiness({ examId: M.target.id, weakspots: M.models }) : null;
@@ -2406,7 +2425,7 @@
       reviewLeft: left, reviewTotal: total, push: (M.day && M.day.push) || null, nextExams: S.exams.filter(e => e.date).map(e => ({ id: e.id, title: e.title || e.id, date: e.date, course: e.course, kind: e.kind })),
       readiness: rd ? { examId: M.target.id, pctSolid: rd.pctSolid, need: rd.need } : null, dueCount: E.rankDue(M.models, today, S.exams).length,
       jobs: S.jobs.map(j => ({ id: j.id, kind: j.kind, title: j.title, status: j.status, finishedAt: j.finishedAt })), dueSoon: S.dates.filter(d => d.date >= today && d.date <= E.addDays(today, 7)).length, lastSeenAt: (S.memory && S.memory.lastSeenAt) || new Date(Date.now() - 864e5).toISOString(),
-      runs: latestRuns(), tomorrow: { dates: S.dates.filter(d => d.date === E.addDays(today, 1)) }, quizlet: null, checkin: (M.dayedit && M.dayedit.checkin) || null, sessionActive: !!activeSession() });
+      runs: latestRuns(), tomorrow: { dates: S.dates.filter(d => d.date === E.addDays(today, 1)) }, quizlet: null, checkin: (M.dayedit && M.dayedit.checkin) || null, sessionActive: !!activeSession(), skillRun: resumeChip() });
     const at = now(); T.greet = { id: msgId('g'), role: 'ev', greeting: true, text: g.lines.join('\n'), cards: g.cards, at, day: today, mood: g.mood, chips: g.chips, job: g.job };
     T.scrollTo = T.greet.id; T.firstScroll = true;
     // Mark this open as seen, so the next greeting only reports what's new. One write per open.
@@ -2434,7 +2453,7 @@
     MOOD_NOW = computeMood(); CORE.setMood(MOOD_NOW);
     const off = !sample || T.sampleOff; const running = liveJobs().length;
     const word = off && !T.busy ? 'quick asks only' : MOOD_NOW === 'sleepy' && activeSession() ? 'on a break' : MOOD_WORD[MOOD_NOW] || 'online';
-    const txt = [P.unit || 'EV-03', word, running ? plural(running, 'job') + ' running' : '', STAGING ? 'staging' : ''].filter(Boolean).join(' · ');
+    const txt = [P.unit || 'EV-04', word, running ? plural(running, 'job') + ' running' : '', STAGING ? 'staging' : ''].filter(Boolean).join(' · ');
     const cls = 'led' + (T.busy || SS.busy ? ' busy' : MOOD_NOW === 'sleepy' ? ' brk' : off ? ' off' : '');
     const ro = $('readout'); if (ro.dataset.k !== cls + txt) { ro.dataset.k = cls + txt; ro.replaceChildren(el('span', cls), document.createTextNode(txt)); }
   }
@@ -2448,7 +2467,7 @@
     renderMood();
     const chips = ((T.greet && T.greet.chips) || ['What’s due this week?', 'How ready am I?']).filter(c => !(c === 'Start a study session' && activeSession()));
     renderBar(); renderSkillDock();
-    const qc = $('qchips'); if (qc.dataset.k !== chips.join('|')) { qc.dataset.k = chips.join('|'); qc.replaceChildren(...chips.map(c => { const b = btn(c, () => guard(null, () => quick(c))); b.className = 'qchip'; if (c === 'Start a study session') { b.classList.add('go'); b.insertAdjacentHTML('afterbegin', PLAY_ICON); } return b; })); }
+    const qc = $('qchips'); if (qc.dataset.k !== chips.join('|')) { qc.dataset.k = chips.join('|'); qc.replaceChildren(...chips.map(c => { const b = /^Resume .+ · \d+ of \d+$/.test(c) ? btn(c, () => skillPark(false)) : btn(c, () => guard(null, () => quick(c))); b.className = 'qchip'; if (c === 'Start a study session') { b.classList.add('go'); b.insertAdjacentHTML('afterbegin', PLAY_ICON); } return b; })); }
     const sb = $('ev-send'); const sk = T.busy ? 'stop' : 'send'; if (sb.dataset.k !== sk) { sb.dataset.k = sk; sb.innerHTML = T.busy ? STOP_ICON : SEND_ICON; sb.setAttribute('aria-label', T.busy ? 'Stop' : 'Send'); sb.classList.toggle('primary', !T.busy); }
     renderThread();
   }

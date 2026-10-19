@@ -259,6 +259,9 @@ body.opening .msg.greet .msg-cards{display:grid;grid-template-columns:repeat(aut
 .sk-tog:hover{background:none}
 .sk-count{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--accent-text)}
 .sk-now{font-size:16px;line-height:1.35;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sk-top{display:flex;align-items:center;gap:6px;min-height:28px;padding-left:2px}.sk-top .grow{flex:1}
+.sk-mini{min-height:32px;padding:0 12px;font-size:13px;border-radius:999px;background:transparent;border:1px solid var(--line);color:var(--ink2)}
+.sk-mini:hover{color:var(--ink)}
 .sk-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .sk-acts button{min-height:var(--tap)}
 .sk-body{padding:12px 14px 4px;border-bottom:1px solid var(--line);max-height:min(46vh,420px);overflow:auto;display:flex;flex-direction:column;gap:10px}

@@ -296,6 +296,66 @@ async function sideBySide(browser, left, right, out, vp) {
     ok(`[${scheme}] no page errors`, errors.length === 0, errors.join(' | '));
     await ctx.close();
   }
+  // B-82 (Matt, Oct 19): a skills run in Captions. The bottom sheet is the whole runner (her line carries no card while
+  // it goes), its count line has Hide and Stop, Hide leaves a Resume chip first among the chips, Stop brings the summary
+  // card back; a run found going on a fresh visit waits behind the Resume chip; one untouched for the conversation idle
+  // gap ends itself. A made-up checklist, planted as a lab material.
+  const PACKET = { schema: 1, writer: 'canvas-sync', at: new Date().toISOString(), source: 'harness', title: 'Harness Skills Packet.pdf', course: 'NUR 112', kind: 'lab', pages: 5, text: [
+    '[p4] 4 1 st Attempt: S or U Student Name Date Instructor Name HARNESS BED BATH VALIDATION CHECKLIST The student may miss NONE of the asterisk (*) areas and only 1 of the non-asterisk areas. * 1. Perform hand hygiene 2. Explain the procedure to the client * 3. Lower the bed rail on the working side 4. Wash from cleanest to dirtiest area',
+    '[p5] 5 * 5. Raise the bed rail before stepping away 6. Document the bath and skin findings Overall Performance: ______ / 6'].join('\n') };
+  const skillSeed = extra => { const d = JSON.parse(JSON.stringify(seed)); d.materials = { ...(d.materials || {}), 'NUR112-990': PACKET }; Object.assign(d.sessions = d.sessions || {}, extra || {}); return d; };
+  const plantedRun = (id, startedMinAgo, marks) => { const st = new Date(NOW.getTime() - startedMinAgo * 60e3).toISOString(); const ev = { [mid(new Date(st), 'page').replace(/^m-/, 'page-')]: { type: 'start', at: st } };
+    for (const [n, minAgo, r] of marks) { const at = new Date(NOW.getTime() - minAgo * 60e3).toISOString(); ev['page-' + at.replace(/[-:]/g, '').replace('T', '-').replace('.', '').replace('Z', '')] = { type: 'step', n, result: r, at }; }
+    return { [id]: { schema: 1, writer: 'page', at: st, source: 'E.V. Home', kind: 'skill', status: 'active', date: today, startedAt: st, topic: 'HARNESS BED BATH VALIDATION CHECKLIST',
+      skill: { materialId: 'NUR112-990', page: 4, cite: 'Harness Skills Packet, p. 4', steps: [1, 2, 3, 4, 5, 6].map(n => ({ n, text: 'Harness step ' + n, critical: n % 2 === 1 })), rule: { missNonCritical: 1 } }, events: ev } }; };
+  const skillView = page => page.evaluate(() => { const sh = document.getElementById('sksheet'), pn = document.getElementById('skpanel'), cur = document.querySelector('#thread .msg.ev.current');
+    const vis = e => !!e && !e.hidden && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().height > 0;
+    return { sheet: vis(sh), panel: vis(pn), count: (document.querySelector('#sksheet .sk-count') || {}).textContent || null, minis: [...document.querySelectorAll('#sksheet .sk-mini')].map(b => b.textContent),
+      panelBtns: [...document.querySelectorAll('#skpanel button')].map(b => b.textContent), cards: cur ? cur.querySelectorAll('.ev-card').length : -1, cardText: cur && cur.querySelector('.ev-card') ? cur.querySelector('.ev-card').textContent.slice(0, 160) : '',
+      greetCurrent: !!document.querySelector('#thread .msg.greet.current'), step: document.getElementById('hero').dataset.step, chips: [...document.querySelectorAll('#qchips .qchip')].filter(vis).map(c => c.textContent),
+      unit: document.getElementById('readout').textContent }; });
+  const skillState = page => page.evaluate(() => Object.entries(window.__db.sessions || {}).filter(([id, s]) => s.kind === 'skill' && /harness/.test(id)).map(([id, s]) => ({ id, status: s.status, endedBy: s.endedBy || null, summary: s.summary || '' })));
+  for (const scheme of ['phone', 'desktop']) {
+    const vp = scheme === 'phone' ? { width: 390, height: 844 } : { width: 1280, height: 860 }, phone = scheme === 'phone';
+    const ctx = await browser.newContext({ viewport: vp, colorScheme: 'dark' }); const page = await ctx.newPage(); const errors = []; page.on('pageerror', e => errors.push(e.message));
+    await openPage(page, skillSeed()); await page.waitForTimeout(1500);
+    ok(`[skills ${scheme}] the readout names the unit EV-04`, /^EV-04 · /.test((await skillView(page)).unit), (await skillView(page)).unit);
+    await page.evaluate(() => { window.__chatPre = ''; window.__chatScript = [{ tool: 'practice_skill', input: { action: 'start', skill: 'harness bed bath', page: 4 } }]; window.__chatReply = 'Harness bed bath: six steps. Mark each one as you go.'; });
+    await page.fill('#ev-input', 'practice harness bed bath'); await page.click('#ev-send'); await page.waitForTimeout(4500);
+    let v = await skillView(page);
+    ok(`[skills ${scheme}] a run starts: her line carries no card, the ${phone ? 'bottom sheet' : 'side panel'} is the runner`, v.cards === 0 && (phone ? v.sheet && !v.panel : v.panel), JSON.stringify(v));
+    ok(`[skills ${scheme}] her core steps to the skills size (${phone ? "D-122's 44%" : 'the surface step'})`, v.step === (phone ? 'skills' : 'surface'), JSON.stringify(v));
+    if (phone) ok('[skills phone] the sheet\'s count line has Hide and Stop, beside Missed it and Did it', v.count === 'Step 1 of 6' && v.minis.join(',') === 'Hide,Stop', JSON.stringify(v));
+    else ok('[skills desktop] the panel has Hide and Stop', v.panelBtns.includes('Hide') && v.panelBtns.includes('Stop'), JSON.stringify(v.panelBtns));
+    await page.screenshot({ path: `${shots}/skills-run-${scheme}.png` });
+    await page.click(phone ? '#sksheet .sk-acts button:has-text("Did it")' : '#skpanel .sk-acts button:has-text("Did it")'); await page.waitForTimeout(500);
+    await page.click(phone ? '#sksheet .sk-mini:has-text("Hide")' : '#skpanel button:has-text("Hide")'); await page.waitForTimeout(600);
+    v = await skillView(page);
+    ok(`[skills ${scheme}] Hide: the runner goes, a Resume chip leads the chips, Start a study session still last`, !v.sheet && !v.panel && v.chips[0] === 'Resume Harness bed bath · 2 of 6' && v.chips.length <= 3 && v.chips[v.chips.length - 1] === 'Start a study session' && v.cards === 0, JSON.stringify(v));
+    await page.screenshot({ path: `${shots}/skills-hidden-${scheme}.png` });
+    await page.click('#qchips .qchip:has-text("Resume")'); await page.waitForTimeout(600);
+    v = await skillView(page);
+    ok(`[skills ${scheme}] tapping Resume brings the runner back at step 2, with no new line in the captions`, (phone ? v.sheet && v.count === 'Step 2 of 6' : v.panel) && !v.chips.some(c => /^Resume /.test(c)), JSON.stringify(v));
+    await page.click(phone ? '#sksheet .sk-mini:has-text("Stop")' : '#skpanel button:has-text("Stop")'); await page.waitForTimeout(900);
+    v = await skillView(page); const st = await skillState(page);
+    ok(`[skills ${scheme}] Stop ends the run, saved; the summary card comes back under her line`, st.length === 1 && st[0].status === 'ended' && st[0].endedBy === 'ended' && !v.sheet && !v.panel && v.cards === 1 && /1 of 6 steps done right\. Stopped before the end\./.test(v.cardText), JSON.stringify({ st, v }));
+    ok(`[skills ${scheme}] no page errors`, errors.length === 0, errors.join(' | '));
+    await ctx.close();
+    // A fresh visit with a run going (started 30 min ago, one step marked 20 min ago): the greeting is her line, the
+    // runner waits behind the Resume chip.
+    const c2 = await browser.newContext({ viewport: vp, colorScheme: 'dark' }); const p2 = await c2.newPage();
+    await openPage(p2, skillSeed(plantedRun('ss-skill-harness-going', 30, [[1, 20, 'pass']]))); await p2.waitForTimeout(2500);
+    v = await skillView(p2);
+    ok(`[skills ${scheme}] a fresh visit with a run going: the greeting is her line, the runner waits, Resume leads the chips`, v.greetCurrent && !v.sheet && !v.panel && v.chips[0] === 'Resume Harness bed bath · 2 of 6' && v.step === 'idle', JSON.stringify(v));
+    await p2.screenshot({ path: `${shots}/skills-return-${scheme}.png` });
+    await c2.close();
+    // A run untouched for the conversation idle gap (started 3 h ago, last step 125 min ago) ends itself on open.
+    const c3 = await browser.newContext({ viewport: vp, colorScheme: 'dark' }); const p3 = await c3.newPage();
+    await openPage(p3, skillSeed(plantedRun('ss-skill-harness-stale', 180, [[1, 125, 'pass']]))); await p3.waitForTimeout(3000);
+    v = await skillView(p3); const st3 = await skillState(p3);
+    ok(`[skills ${scheme}] a run untouched for 2 h ends itself as left unfinished; no Resume chip, no runner`, st3.length === 1 && st3[0].status === 'ended' && st3[0].endedBy === 'idle' && /Left unfinished/.test(st3[0].summary) && !v.sheet && !v.panel && !v.chips.some(c => /^Resume /.test(c)), JSON.stringify({ st3, v }));
+    await c3.close();
+  }
   // D-125 as amended: File it is the fallback chip when quiet filing cannot run; here the reader is unreachable and
   // two Study Watch sessions wait. With no review left and no unseen job, it takes a priority slot.
   { const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: 'dark' });
