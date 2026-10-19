@@ -1861,17 +1861,17 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
     for (const ins of insights.slice(0, 2)) { lines.push(ins.line); if (ins.card && !cards.some(x => x.type === ins.card.type && x.id === ins.card.id)) cards.push(ins.card); if (ins.alert) mood = 'alert'; }
 
     // The greeting is her first line, with no card (D-125 as amended Oct 18): what its cards offered becomes the chips,
-    // at most three (UI rule 5), in this order: the open review, a finished job (Open the study guide), sessions waiting
-    // to be filed, what's due; then the usual asks fill what is left.
-    const chips = [], add = x => { if (x && chips.length < 3 && !chips.includes(x)) chips.push(x); };
-    const finished = (c.jobs || []).find(j => j.status === 'done' && toMs(j.finishedAt) > seen);
+    // at most three (UI rule 5). While no session runs, Start a study session keeps the last chip and the other two go
+    // by priority: the open review, a finished job (Open the study guide), sessions waiting to be filed, what's due
+    // (the first to drop: the Today tab covers it). During a session all three go by priority. Usual asks fill gaps.
+    const chips = [], finished = (c.jobs || []).find(j => j.status === 'done' && toMs(j.finishedAt) > seen);
+    const room = c.sessionActive ? 3 : 2, add = x => { if (x && chips.length < room && !chips.includes(x)) chips.push(x); };
     if (rl) add('Start review');
     if (finished) add('Open the ' + (JOB_NOUN[finished.kind] || 'result'));
     if (c.unfiled > 0) add('File it');
     if (c.dueSoon == null || c.dueSoon > 0) add('What’s due this week?');
-    if (!c.sessionActive && segment !== 'late') add('Start a study session');
-    add('How ready am I?');
-    if (segment !== 'late') add('Give me 5 more');
+    add('How ready am I?'); if (segment !== 'late') add('Give me 5 more');
+    if (!c.sessionActive) chips.push('Start a study session');
     return { segment, mood, lines, cards: [], offers: cards.slice(0, 3), chips, job: finished ? finished.id : null };
   }
 

@@ -970,12 +970,14 @@ test('B-54 (D-110): only a calendar set over a chapter range is shared; the page
   assert.equal(EV.sharePage({ ...drill, title: '<b>x</b>' }).includes('<title>&lt;b&gt;x&lt;/b&gt;</title>'), true, 'text is escaped');
 });
 
-test('greeting chips (D-125 as amended): at most three, review, then a finished job, then filing, then what is due', () => {
+test('greeting chips (D-125 as amended): at most three; Start a study session last unless one runs; then review, finished job, filing, what is due', () => {
   const base = { now: '2026-10-18T20:00:00Z', date: '2026-10-18', items: [], nextExams: [], tomorrow: { dates: [] }, lastSeenAt: '2026-10-18T18:00:00Z' };
   const job = { id: 'j', kind: 'practice-set', title: 'Practice set: fluids', status: 'done', finishedAt: '2026-10-18T19:00:00Z' };
-  assert.deepEqual(EV.greeting({ ...base, reviewLeft: 4, jobs: [job], unfiled: 2, dueSoon: 3 }).chips, ['Start review', 'Open the practice set', 'File it']);
-  assert.deepEqual(EV.greeting({ ...base, reviewLeft: 0, jobs: [job], unfiled: 0, dueSoon: 3 }).chips, ['Open the practice set', 'What’s due this week?', 'Start a study session']);
-  assert.deepEqual(EV.greeting({ ...base, reviewLeft: 0, dueSoon: 0 }).chips, ['Start a study session', 'How ready am I?', 'Give me 5 more']);
-  assert.deepEqual(EV.greeting({ ...base, reviewLeft: 0, jobs: [{ ...job, finishedAt: '2026-10-18T17:00:00Z' }], dueSoon: 0 }).chips.includes('Open the practice set'), false, 'a job he has already seen is not offered');
+  assert.deepEqual(EV.greeting({ ...base, reviewLeft: 4, jobs: [job], unfiled: 2, dueSoon: 3 }).chips, ['Start review', 'Open the practice set', 'Start a study session']);
+  assert.deepEqual(EV.greeting({ ...base, reviewLeft: 0, jobs: [job], unfiled: 1, dueSoon: 3 }).chips, ['Open the practice set', 'File it', 'Start a study session']);
+  assert.deepEqual(EV.greeting({ ...base, reviewLeft: 0, unfiled: 0, dueSoon: 3 }).chips, ['What’s due this week?', 'How ready am I?', 'Start a study session'], 'what is due is the first offer to drop, but fills a free slot');
+  assert.deepEqual(EV.greeting({ ...base, reviewLeft: 4, jobs: [job], unfiled: 2, dueSoon: 3, sessionActive: true }).chips, ['Start review', 'Open the practice set', 'File it'], 'during a session the slot goes back to the priority list');
+  assert.deepEqual(EV.greeting({ ...base, reviewLeft: 0, dueSoon: 0 }).chips, ['How ready am I?', 'Give me 5 more', 'Start a study session']);
+  assert.equal(EV.greeting({ ...base, reviewLeft: 0, jobs: [{ ...job, finishedAt: '2026-10-18T17:00:00Z' }], dueSoon: 0 }).chips.includes('Open the practice set'), false, 'a job he has already seen is not offered');
   assert.equal(EV.greeting({ ...base, jobs: [{ ...job, kind: 'mystery' }], dueSoon: 0 }).chips[0], 'Open the result');
 });

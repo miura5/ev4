@@ -727,12 +727,10 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     const hasEvent = test => async () => { const s = await sess(); return !!s && Object.values(s.events || {}).some(test); };
     // Without the reader (a browser tab or the iPhone), E.V. says where to open the page
     await ss.evaluate(() => { window.__readerFail = 'server_not_connected'; });
-    // D-125 as amended: at most three chips, the greeting's offers first; the session chip fills a free slot, and the
-    // session also starts typed.
+    // D-125 as amended: while no session runs, Start a study session keeps the last of the three chips.
     const sc = await ss.evaluate(() => [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent));
-    const offers = ['Start review', 'Open the study guide', 'File it', 'What’s due this week?'];
-    ok('session chip offered when a slot is free (at most three chips, offers first)', sc.length <= 3 && (sc.includes('Start a study session') || sc.every(c => offers.includes(c))), JSON.stringify(sc));
-    if (sc.includes('Start a study session')) await ss.locator('#qchips .qchip', { hasText: 'Start a study session' }).click(); else await send(ss, 'Start a study session');
+    ok('session chip offered, last of at most three', sc.length <= 3 && sc[sc.length - 1] === 'Start a study session', JSON.stringify(sc));
+    await ss.locator('#qchips .qchip', { hasText: 'Start a study session' }).click();
     await ss.waitForTimeout(300);
     ok('no reader: says to open the desktop app, starts nothing', /Claude desktop app on your Mac/.test((await msgs(ss)).slice(-1)[0].text) && !(await sess()), (await msgs(ss)).slice(-1)[0].text);
     // A #graded note is refused

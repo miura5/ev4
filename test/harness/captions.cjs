@@ -142,7 +142,7 @@ async function sideBySide(browser, left, right, out, vp) {
     let v = await view(page); const A = art[scheme];
     ok(`[${scheme}] a new conversation opens on the greeting alone`, v.greetOnly, JSON.stringify(v.texts));
     const gc = await page.evaluate(() => ({ cards: document.querySelectorAll('#thread .msg.greet .ev-card').length, chips: [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent) }));
-    ok(`[${scheme}] the greeting has no card; its offers are the chips, at most three`, gc.cards === 0 && gc.chips.length >= 1 && gc.chips.length <= 3, JSON.stringify(gc));
+    ok(`[${scheme}] the greeting has no card; its offers are the chips, at most three, Start a study session last`, gc.cards === 0 && gc.chips.length === 3 && gc.chips[2] === 'Start a study session' && !gc.chips.includes('File it'), JSON.stringify(gc));
     ok(`[${scheme}] opening: her core at 100% (${A.core} px) on a ${A.stage} px stage, no bubbles`, v.step === 'idle' && v.corePx === A.core && v.stageH === A.stage && !v.bubbles, JSON.stringify({ step: v.step, px: v.corePx, stage: v.stageH }));
     ok(`[${scheme}] the captions are the screen reader's polite live region, the scroller is not`, v.sayLive === 'polite' && !v.threadLive);
     await page.waitForTimeout(9000); // the greeting reveals and settles
@@ -247,6 +247,20 @@ async function sideBySide(browser, left, right, out, vp) {
     ok(`[${scheme}] the card shows five rows and a more, and never scrolls inside itself`, /^\d+ more in Record → Dates$/.test(lc.cardMore || '') && lc.scrollsInside === false, JSON.stringify(lc));
     ok(`[${scheme}] her line stays in view`, lc.line[0] >= lc.thread[0] - 1 && lc.line[1] <= lc.thread[1] + 1, JSON.stringify(lc));
     await page.screenshot({ path: `${shots}/captions-long-card-${scheme}.png` });
+    // D-122 as amended: now is the latest reply as a whole. Her stage stays put; scrolling down through the card shows no
+    // Back to now; above her line it shows; tapping her returns to the pinned spot.
+    const thru = await page.evaluate(async () => { const t = document.getElementById('thread'), h = document.getElementById('hero'), h0 = Math.round(h.getBoundingClientRect().top); const seen = []; const max = t.scrollHeight - t.clientHeight;
+      for (let y = t.scrollTop; y <= max + 1; y += 60) { t.scrollTop = Math.min(y, max); t.dispatchEvent(new Event('scroll')); await new Promise(r => setTimeout(r, 40)); seen.push(!document.getElementById('ev-now').hidden); }
+      return { steps: seen.length, pill: seen.some(Boolean), stageMoved: Math.round(h.getBoundingClientRect().top) !== h0, step: h.dataset.step }; });
+    ok(`[${scheme}] scrolling down through the card is still now: no Back to now, and her stage stays put`, thru.steps > 1 && !thru.pill && !thru.stageMoved && thru.step === lc.step, JSON.stringify(thru));
+    await page.evaluate(() => { const t = document.getElementById('thread'), c = t.querySelector('.msg.ev.current'); t.scrollTop = Math.max(170, t.scrollTop + c.getBoundingClientRect().top - t.getBoundingClientRect().top - 260); t.dispatchEvent(new Event('scroll')); });
+    await page.waitForTimeout(200);
+    const above = await page.evaluate(() => !document.getElementById('ev-now').hidden);
+    ok(`[${scheme}] above her latest line, Back to now shows`, above);
+    await page.screenshot({ path: `${shots}/captions-above-line-${scheme}.png` });
+    await page.click('#hero'); await page.waitForTimeout(900);
+    const back = await page.evaluate(() => !document.getElementById('ev-now').hidden);
+    ok(`[${scheme}] tapping her returns to the pinned spot`, !back && await atNow(page), JSON.stringify({ pill: back }));
     const seenCards = [lc.title];
     for (let k = 0; k < 3; k++) { await page.click('#thread .msg.ev.current .cap-cards-more'); await page.waitForTimeout(300); const x = await cardView(); seenCards.push(x.title); if (k === 0) ok(`[${scheme}] tapping "2 more cards" swaps the next card in, the first joining the line`, x.cards === 1 && x.title !== lc.title && x.more === '2 more cards', JSON.stringify(x)); }
     ok(`[${scheme}] tapping on goes through all three and back to the first`, new Set(seenCards.slice(0, 3)).size === 3 && seenCards[3] === seenCards[0], JSON.stringify(seenCards));
@@ -282,6 +296,14 @@ async function sideBySide(browser, left, right, out, vp) {
     ok(`[${scheme}] no page errors`, errors.length === 0, errors.join(' | '));
     await ctx.close();
   }
+  // D-125 as amended: File it is the fallback chip when quiet filing cannot run; here the reader is unreachable and
+  // two Study Watch sessions wait.
+  { const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: 'dark' });
+    const page = await ctx.newPage(); await page.addInitScript(() => { window.__readerFail = 'server_not_connected'; window.__readerSessions = { sessions: [{ id: 'h1', title: 'Harness note one', modifiedAt: new Date().toISOString() }, { id: 'h2', title: 'Harness note two', modifiedAt: new Date().toISOString() }] }; });
+    await openPage(page); await page.waitForTimeout(2500);
+    const chips = await page.evaluate(() => [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent));
+    ok('[phone] with the reader unreachable, File it is offered, Start a study session still last', chips.includes('File it') && chips.length === 3 && chips[2] === 'Start a study session', JSON.stringify(chips));
+    await ctx.close(); }
   // Reduced motion, at both widths: the line whole at once, announced once, her core still, its gesture still raised.
   for (const [label, vp] of [['phone', { width: 390, height: 844 }], ['desktop', { width: 1280, height: 860 }]]) {
     const ctx = await browser.newContext({ viewport: vp, colorScheme: 'dark', reducedMotion: 'reduce' });
