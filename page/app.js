@@ -1054,7 +1054,7 @@
     function speechEnd() { if (sig.talking) note('speechEnd'); sig.talking = false; }
     function setMood(m) { if (!MOOD[m]) return; if (m !== sig.mood) note('mood', m); sig.mood = m; }
     function setRing(p) { sig.ring = typeof p === 'number' && p >= 0 ? Math.min(1, p) : -1; }
-    const stats = () => ({ frames: frames.slice(), draws: frames.length ? draws.slice() : [], level: down.level, steps: L.stepDown.order.slice(0, down.level), envelope: { ...sig.env }, gestures: sig.gestures.map(g => ({ name: g.name, el: g.el })), mood: sig.mood, reduce, log: log.slice() });
+    const stats = () => ({ frames: frames.slice(), draws: frames.length ? draws.slice() : [], level: down.level, steps: L.stepDown.order.slice(0, down.level), envelope: { ...sig.env }, gestures: sig.gestures.map(g => ({ name: g.name, el: g.el })), mood: sig.mood, ring: sig.ring, reduce, log: log.slice() });
     const resetStats = () => { frames.length = 0; draws.length = 0; };
     // The last frame a core drew, as numbers: lit pixels, the mean colour of what is lit, a hash (harness checks).
     function sample(i = 0) { const c = [...cores][i]; if (!c) return null; const d = c.eng.read(); let lit = 0, r = 0, g = 0, b = 0, h = 0;
@@ -1474,41 +1474,35 @@
 
   const tickClock = ms => { const t = Math.max(0, Math.round(ms / 1000)); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
   async function barPress(b, fn) { b.disabled = true; try { await fn(); } catch (e) { toast('Couldn’t save: ' + (e && (e.message || e.code) || 'error')); } finally { b.disabled = false; } }
-  const RING_C = 2 * Math.PI * 31;
-  function sessionRing() { // the timer ring with E.V.'s core inside; built once and reused
-    if (SS.ring) return SS.ring;
-    const NS = 'http://www.w3.org/2000/svg'; const wrap = el('div', 's-ring'); const svg = document.createElementNS(NS, 'svg');
-    for (const [k, v] of [['viewBox', '0 0 68 68'], ['width', '68'], ['height', '68'], ['aria-hidden', 'true']]) svg.setAttribute(k, v);
-    const circle = cls => { const c = document.createElementNS(NS, 'circle'); for (const [k, v] of [['cx', '34'], ['cy', '34'], ['r', '31'], ['class', cls]]) c.setAttribute(k, v); svg.append(c); return c; };
-    circle('trk'); const arc = circle('arc'); arc.setAttribute('stroke-dasharray', RING_C.toFixed(1)); arc.setAttribute('stroke-dashoffset', RING_C.toFixed(1));
-    wrap.append(svg, CORE.make(52, { follow: true }).el);
-    return (SS.ring = { el: wrap, arc });
-  }
+  // B-84 (the Captions v2 artboard): a running session is a one-line pill (a dot, the minutes, the next check, Break,
+  // +5, End), and its progress to the next check is the particle ring round her own core, not a second core in a card.
   function renderBar() {
     const bar = $('sbar'); const s = activeSession();
     document.body.classList.toggle('in-session', !!s);
-    if (!s) { if (!bar.hidden) { bar.hidden = true; bar.replaceChildren(); bar.dataset.k = ''; } return; }
+    if (!s) { CORE.setRing(-1); if (!bar.hidden) { bar.hidden = true; bar.replaceChildren(); bar.dataset.k = ''; } return; }
     const st = E.sessionState(s, now()); const ending = s.status === 'ending';
     const k = [s.id, s.status, st.onBreak, SS.busy].join('|');
     bar.hidden = false; bar.classList.toggle('brk', st.onBreak); bar.classList.toggle('busy', SS.busy || ending); bar.classList.toggle('alert', Date.now() < (SS.alertUntil || 0));
     if (bar.dataset.k !== k) { // buttons change with the state; the clock line and the ring update in place every second
       bar.dataset.k = k;
       const led = el('span', 's-led'); led.setAttribute('aria-hidden', 'true');
-      const note = el('span', 's-note'); note.append(led, el('span', 's-what', (ending ? 'Wrapping up' : st.onBreak ? 'On a break' : 'Studying') + ' ·'), el('b', null, s.topic || 'Study session'));
-      const main = el('div', 's-main'); main.append(note, el('span', 's-clock', ''));
+      const what = el('span', 's-what', ending ? 'Wrapping up' : st.onBreak ? 'On a break' : 'Studying');
+      const topic = el('span', 's-topic', s.topic || 'Study session'); topic.title = s.topic || '';
+      const main = el('span', 's-main'); main.append(what, topic, el('span', 's-clock', ''));
+      bar.setAttribute('aria-label', 'Study session: ' + (s.topic || 'untitled'));
       const acts = el('div', 's-acts');
       if (!ending) {
         const brk = btn(st.onBreak ? 'Resume' : 'Break', () => barPress(brk, async () => toast(await sessionCmd(st.onBreak ? 'resume' : 'break')))); acts.append(brk);
-        const ext = btn('+5 min', () => barPress(ext, async () => toast(await sessionCmd('extend')))); acts.append(ext);
+        const ext = btn('+5', () => barPress(ext, async () => toast(await sessionCmd('extend')))); ext.setAttribute('aria-label', 'Add 5 minutes before the next check'); acts.append(ext);
       }
       const end = btn(ending ? 'Finish' : 'End', () => barPress(end, async () => { const [t, c] = await endSession('ended'); await evSay(t, c, { tier: 'local' }); }));
       end.classList.add('end'); if (SS.busy) end.disabled = true; acts.append(end);
-      bar.replaceChildren(sessionRing().el, main, acts);
+      bar.replaceChildren(led, main, acts);
     }
-    bar.querySelector('.s-clock').textContent = ending ? 'Wrapping up…' : SS.busy ? 'Reading your note…' : st.onBreak ? `On a break · ${tickClock(st.breakRemainingMs)} to the next check` : `${st.minutes} min · next check ${tickClock(Date.parse(st.nextCheckAt) - Date.now())}${st.checks ? ' · ' + plural(st.checks, 'check') : ''}`;
+    bar.querySelector('.s-clock').textContent = ending ? 'Wrapping up…' : SS.busy ? 'Reading your note…' : st.onBreak ? `${tickClock(st.breakRemainingMs)} to the check` : `${st.minutes} min · check ${tickClock(Date.parse(st.nextCheckAt) - Date.now())}`;
     const per = (SWC.checkMinutes || 7) * 60e3; const left = st.onBreak ? st.breakRemainingMs : Date.parse(st.nextCheckAt) - Date.now();
     const frac = Number.isFinite(left) ? Math.max(0, Math.min(1, 1 - left / per)) : 1;
-    SS.ring.arc.setAttribute('stroke-dashoffset', (RING_C * (1 - frac)).toFixed(1));
+    CORE.setRing(ending || SS.busy ? 1 : frac); // the ring round her core fills toward the next check
   }
   function sessionTick() {
     const sk = activeSkill(); // B-82: a skills run left alone for the conversation idle gap ends itself, saved as left unfinished

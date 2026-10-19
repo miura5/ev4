@@ -205,24 +205,22 @@ body.opening .msg.greet .msg-cards{display:grid;grid-template-columns:repeat(aut
 #p-ev.drop .compose-row{border-color:var(--accent)}
 .guard{font-size:14px;color:var(--warn);margin:0}
 .fine{font:500 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#8593A0;text-align:center;margin:0}
-/* E.V.: study session bar (sticky under the top bar), with the core inside the timer ring */
-.sbar{position:sticky;top:calc(var(--top-h) + 8px);z-index:6;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:8px 10px 8px 8px;border-radius:26px;background:rgba(13,18,30,.94);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid var(--line);box-shadow:0 14px 34px -16px rgba(0,0,0,.7);min-width:0;transition:border-color .4s ease}
-.sbar.brk{border-color:rgba(242,180,90,.35)} .sbar.alert{border-color:rgba(63,224,197,.5)}
-.s-ring{position:relative;width:68px;height:68px;flex:0 0 68px;display:grid;place-items:center}
-.s-ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
-.s-ring .trk{fill:none;stroke:rgba(255,255,255,.10);stroke-width:2.5}
-.s-ring .arc{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linecap:round;transition:stroke-dashoffset 1s linear,stroke .4s ease}
-.sbar.brk .s-ring .arc{stroke:var(--warn-solid)}
-.s-main{flex:1 1 200px;min-width:0;display:flex;flex-direction:column;gap:3px}
-.s-note{display:flex;align-items:center;gap:8px;min-width:0;font-size:16px;white-space:nowrap}
-.s-note .s-what{flex:0 0 auto;color:var(--ink2)}
-.s-note b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* E.V.: a running study session (B-84, the Captions v2 artboard): one line, a dot, the minutes and the next check,
+   Break, +5, End; its progress is the ring round her core */
+.sbar{position:sticky;top:calc(var(--top-h) + 8px);z-index:6;display:flex;flex-wrap:nowrap;align-items:center;gap:8px;min-height:44px;padding:4px 4px 4px 14px;border-radius:999px;background:rgba(13,18,30,.9);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid rgba(63,224,197,.24);min-width:0;transition:border-color .4s ease}
+.sbar.brk{border-color:rgba(242,180,90,.35)} .sbar.alert{border-color:rgba(63,224,197,.6)}
 .s-led{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:0 0 7px;animation:pulse 1.8s ease-in-out infinite}
 .sbar.brk .s-led{background:var(--warn-solid)} .sbar.busy .s-led{background:var(--plum)}
-.s-clock{font:500 12px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--soft);font-variant-numeric:tabular-nums}
+.s-main{flex:1 1 auto;min-width:0;display:flex;align-items:baseline;gap:6px;white-space:nowrap;overflow:hidden;font-size:13px;color:var(--ink2)}
+.s-what{flex:0 0 auto}
+.s-topic{display:none;min-width:0;overflow:hidden;text-overflow:ellipsis;color:var(--ink);font-weight:500}
+.s-clock{flex:0 0 auto;font:500 12px var(--mono);letter-spacing:.04em;color:var(--soft);font-variant-numeric:tabular-nums}
+.s-what::after{content:" ·";color:var(--soft)}
+@media (max-width:519px){.s-what{display:none}}
+@media (min-width:640px){.s-topic{display:block;flex:0 1 auto}.s-topic::after{content:" ·";color:var(--soft)}}
 .s-acts{display:flex;gap:6px;flex:0 0 auto}
-.sbar button{min-height:40px;padding:0 14px}
-.sbar button.end{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.sbar button{min-height:36px;padding:0 12px;font-size:12.5px;border-radius:999px}
+.sbar button.end{background:rgba(255,255,255,.08);border-color:transparent;color:var(--ink)}
 .ev-card.check{background:rgba(63,224,197,.05);border-color:rgba(63,224,197,.32)}
 .ev-card.check.done{background:var(--glass);border-color:var(--line)}
 .check-items{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
@@ -311,7 +309,7 @@ body.captions.on-ev .top-av{opacity:0;transform:scale(.5);width:0;flex-basis:0;m
 body.captions #p-ev{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr) auto auto;row-gap:0;
   height:calc(100dvh - var(--top-h) - 18px - var(--dock-h) - 22px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));min-height:420px;position:relative}
 body.captions #p-ev>*{grid-column:1;min-width:0}
-body.captions #p-ev>.sbar{grid-row:1;position:relative;top:auto;margin-bottom:8px}
+body.captions #p-ev>.sbar{grid-row:1;position:relative;top:auto;margin-bottom:8px;justify-self:center;width:100%;max-width:660px;box-sizing:border-box}
 body.captions #p-ev>.hero{grid-row:2}
 body.captions #p-ev>.thread{grid-row:3}
 body.captions #p-ev>.composer{grid-row:4}

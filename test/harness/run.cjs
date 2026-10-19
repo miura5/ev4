@@ -748,10 +748,18 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     // Captions (B-77, D-122): in a session only her latest two lines show, and her core is at the session step (66%).
     { const cs = await ss.evaluate(() => { const h = document.getElementById('hero'); return { step: h.dataset.step, px: Math.round(h.querySelector('.ev-av').getBoundingClientRect().width), stage: Math.round(h.getBoundingClientRect().height), lines: document.querySelectorAll('#thread .msg.ev').length }; });
       ok('in a session: only her latest two lines, her core at 66% (172 px) on a 196 px stage', cs.step === 'session' && cs.lines === 2 && Math.abs(cs.px - 172) <= 1 && cs.stage === 196, JSON.stringify(cs)); }
-    ok('session ring holds the core', (await ss.locator('#sbar .s-ring canvas').count()) === 1 && await ss.evaluate(() => document.body.classList.contains('in-session') && !document.body.classList.contains('opening')));
-    ok('session bar shows the note and the next check', !(await ss.isHidden('#sbar')) && /Fluids and electrolytes/.test(await ss.textContent('#sbar')) && /next check 6:5\d|next check 7:00/.test(await ss.textContent('#sbar')), await ss.textContent('#sbar'));
+    // B-84 (the Captions v2 artboard): the session is a one-line pill; its progress is the ring round her own core.
+    { const pr = await ss.evaluate(() => { const b = document.getElementById('sbar'), r = b.getBoundingClientRect(); return { h: Math.round(r.height), w: Math.round(r.width), cores: b.querySelectorAll('canvas').length, ring: window.EVApp.core.stats().ring, label: b.getAttribute('aria-label'), session: document.body.classList.contains('in-session') && !document.body.classList.contains('opening'), over: b.scrollWidth > b.clientWidth + 1 }; });
+      ok('the session is a one-line pill (at most 48 px), no core inside it; her own core carries the ring', pr.h <= 48 && pr.cores === 0 && pr.ring >= 0 && pr.ring < .1 && pr.session && !pr.over, JSON.stringify(pr));
+      ok('the pill names the session and shows the minutes and the next check', /Fluids and electrolytes/.test(pr.label) && /\d+ min · check (6:5\d|7:00)/.test(await ss.textContent('#sbar')) && (await ss.locator('#sbar button').allTextContents()).join(',') === 'Break,+5,End', await ss.textContent('#sbar')); }
     ok('chip hidden while a session runs', (await ss.locator('#qchips .qchip', { hasText: 'Start a study session' }).count()) === 0);
     await ss.screenshot({ path: `${shots}/session-bar.png` });
+    // The same pill at 1280: still one line, the note's title shown beside the clock.
+    await ss.setViewportSize({ width: 1280, height: 860 }); await ss.waitForTimeout(500);
+    { const pd = await ss.evaluate(() => { const b = document.getElementById('sbar'), t = b.querySelector('.s-topic'); return { h: Math.round(b.getBoundingClientRect().height), topic: t && getComputedStyle(t).display !== 'none' ? t.textContent : null }; });
+      ok('[desktop] the pill stays one line and shows the note title', pd.h <= 48 && pd.topic === 'Fluids and electrolytes', JSON.stringify(pd)); }
+    await ss.screenshot({ path: `${shots}/session-bar-desktop.png` });
+    await ss.setViewportSize({ width: 390, height: 844 }); await ss.waitForTimeout(400);
     // First check: only the new writing goes to Claude, the reply posts as a check card
     await setNote(note1 + '\nHypotonic: 0.45% NaCl shifts water into the cells.');
     await ss.evaluate(() => { window.__sampleFn = p => /Study session check/.test(p) ? { items: [{ text: '1. Why does 0.45% NaCl move water into the cells?', kind: 'why' }, { text: 'Your note has no hypertonic example yet.', kind: 'gap' }] } : { summary: 'Worked through IV fluid tonicity and where water moves.', weakSpots: [{ objective: 'E4-3', topic: 'Hypokalemia findings' }, { objective: 'E4-3', topic: 'Fluid volume excess signs' }, { objective: 'E4-3', topic: 'Hypotonic vs isotonic fluid shifts' }, { topic: 'Why the kidneys hold sodium' }], connections: ['Sodium pulls water, which links fluids to edema'], noteTodos: ['Add a hypertonic example'], cards: [{ term: 'Isotonic', definition: '0.9% NaCl; stays in the vessels' }, { term: 'Hypotonic', definition: '0.45% NaCl; water moves into cells' }] }; });
@@ -779,7 +787,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     ok('break shown in the bar', /On a break/.test(await ss.textContent('#sbar')) && Object.values((await sess()).events).some(e => e.type === 'break'));
     await ss.screenshot({ path: `${shots}/session-break.png` });
     await ss.locator('#sbar button', { hasText: 'Resume' }).click(); await ss.waitForTimeout(300);
-    ok('resume restarts the countdown', /next check/.test(await ss.textContent('#sbar')));
+    ok('resume restarts the countdown', /min · check \d+:\d\d/.test(await ss.textContent('#sbar')), await ss.textContent('#sbar'));
     // New writing with what looks like an identifier skips the check and says why, once
     await setNote(note1 + '\nHypotonic: 0.45% NaCl shifts water into the cells.\nThe resident in room 12 had edema.');
     const before3 = (await msgs(ss)).length; await jump(425e3, hasEvent(e => e.type === 'skip' && e.why === 'identifiers'));
