@@ -718,7 +718,7 @@
     // lost, the same sums are made in a buffer here, touching only the pixels points land on, and handed to a 2D canvas
     // in one putImageData. Thousands of separate antialiased 2D fills were most of her cost (D-135's frame budget).
     // A renderer: resize(W, dpr), begin(), put(rgb, alpha, x, y, size) in CSS px, glow(x, y, r, stops), end(), read().
-    function glRenderer(canvas) {
+    function glRenderer(canvas, onLost) {
       let gl = null; try { gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: true }); } catch {}
       if (!gl) return null; canvas.__gl = true;
       const hp = gl.getShaderPrecisionFormat && gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT); const prec = hp && hp.precision > 0 ? 'highp' : 'mediump';
@@ -739,8 +739,8 @@
         gl.disable(gl.DEPTH_TEST); gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
       };
       try { init(); } catch (e) { console.warn('E.V. core: WebGL unavailable, drawing on 2D (' + e.message + ')'); return null; }
-      canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); lost = true; });
-      canvas.addEventListener('webglcontextrestored', () => { try { init(); lost = false; } catch {} });
+      // A lost context hands her to the 2D path for good (D-134): the engine swaps in a fresh canvas.
+      canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); if (lost) return; lost = true; if (onLost) onLost(); });
       let dpr = 1;
       return {
         kind: 'webgl',
@@ -822,13 +822,19 @@
       };
     }
 
-    function engine(canvas) {
+    function engine(canvas, onSwap) {
       let seed = 11;
       const rnd = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
       const C = [0, 0], C2 = [0, 0];
-      // spec body.renderer: webgl (falling back to the 2D buffer when WebGL is missing) or 2d.
-      let rd = B.renderer === '2d' ? null : glRenderer(canvas);
-      if (!rd) { if (canvas.__gl) { const c2 = canvas.cloneNode(); canvas.replaceWith(c2); canvas = c2; } rd = splatRenderer(canvas); }
+      // spec.ui.look.core.renderer: webgl, falling back to the 2D buffer when WebGL is missing or its context is lost
+      // (D-134); or 2d. A canvas that held a WebGL context cannot give a 2D one, so the fallback takes a fresh canvas.
+      let rd = null, sized = false;
+      const toTwoD = why => {
+        const old = canvas, c2 = canvas.cloneNode(); if (canvas.parentNode) canvas.replaceWith(c2); canvas = c2;
+        rd = splatRenderer(canvas); sized = false; note('renderer', '2d', why); if (onSwap) onSwap(canvas, old);
+      };
+      if (L.renderer !== '2d') rd = glRenderer(canvas, () => toTwoD('webgl context lost'));
+      if (!rd) { if (canvas.__gl) toTwoD('webgl unavailable'); else rd = splatRenderer(canvas); }
       const st = { size: 0, p: { ...MOOD.idle }, t: rnd() * 100, rot: 0, ptr: null, lx: 0, ly: 0, n: { x: 0, y: 0 }, s: { x: 0, y: 0, vx: 0, vy: 0 }, wt: rnd() * 50, lookT: 4, look: null,
         wisps: [], ripples: [], wAcc: 0, alertT: 0, ringShown: 0, gid: sig.gid, vid: sig.vid, fired: new Set() };
       const build = size => {
@@ -842,7 +848,8 @@
       const spawnW = (x, y, vx, vy, life, kind) => { if (st.wisps.length > L.wisps.max) return; st.wisps.push({ x, y, vx, vy, age: 0, life, sz: .7 + rnd() * 1.1, c: kind, tr: [] }); };
       function frame(dt, o) {
         const size = o.size, still = !!o.still, dpr = Math.min(B.canvasDprMax, window.devicePixelRatio || 1);
-        if (st.size !== size || canvas.width !== Math.round(size * dpr)) { canvas.width = Math.round(size * dpr); canvas.height = Math.round(size * dpr); build(size); rd.resize(canvas.width, canvas.width / size); }
+        if (st.size !== size || canvas.width !== Math.round(size * dpr)) { canvas.width = Math.round(size * dpr); canvas.height = Math.round(size * dpr); build(size); sized = false; }
+        if (!sized) { rd.resize(canvas.width, canvas.width / size); sized = true; }
         const R = size * L.radiusOfSize, cx0 = size / 2, cy0 = size / 2, dot = Math.max(1, size / 190), turbK = L.turbulence, follow = !!o.follow;
         const lvl = follow ? down.level : 0, noWisps = L.stepDown.order.slice(0, lvl).includes('wisps') || !L.wisps.on, half = L.stepDown.order.slice(0, lvl).includes('halfPoints');
         // A word just spoken may shed a wisp; a send ripples; a done bursts once, at its contraction.
@@ -988,7 +995,7 @@
       // A still frame (reduced motion, held cores) is drawn from the same start every time, so one mood is one picture.
       const t0 = st.t, wt0 = st.wt;
       const reset = () => { Object.assign(st, { p: { ...MOOD.idle }, t: t0, rot: 0, lx: 0, ly: 0, n: { x: 0, y: 0 }, s: { x: 0, y: 0, vx: 0, vy: 0 }, wt: wt0, lookT: 4, look: null, wAcc: 0, alertT: 0, ringShown: 0 }); if (st.size) build(st.size); };
-      return { frame, reset, canvas, renderer: rd.kind, read: () => rd.read(), setPointer: a => { st.ptr = a; }, state: () => ({ n: { ...st.n }, s: { ...st.s }, wisps: st.wisps.length, ripples: st.ripples.length, points: st.silkM, mood: { ...st.p } }) };
+      return { frame, reset, get canvas() { return canvas; }, get renderer() { return rd.kind; }, read: () => rd.read(), setPointer: a => { st.ptr = a; }, state: () => ({ n: { ...st.n }, s: { ...st.s }, wisps: st.wisps.length, ripples: st.ripples.length, points: st.silkM, mood: { ...st.p } }) };
     }
 
     const cores = new Set(); let raf = 0, last = 0;
@@ -1016,14 +1023,20 @@
     }
     function make(size, opt = {}) {
       const el = document.createElement('span'); el.className = 'ev-av'; el.setAttribute('aria-hidden', 'true'); el.style.setProperty('--s', size + 'px');
-      let cv = document.createElement('canvas'); el.append(cv);
-      const core = { el, size, mood: opt.mood || 'idle', follow: !!opt.follow, still: !!opt.still, when: opt.when || null, acc: 0, k: '', vis: true, eng: engine(cv) }; cv = core.eng.canvas;
+      const cv0 = document.createElement('canvas'); el.append(cv0);
+      // What a canvas carries: its core (for the observer) and, on her stage, the pointer lean. A 2D fallback after a
+      // lost WebGL context brings a fresh canvas, which gets the same.
+      const attach = cv => {
+        cv.__core = core; if (io) io.observe(cv);
+        if (opt.pointer) {
+          cv.addEventListener('pointermove', e => { const r = cv.getBoundingClientRect(); core.eng.setPointer(Math.atan2(e.clientY - r.top - r.height / 2, e.clientX - r.left - r.width / 2)); });
+          cv.addEventListener('pointerleave', () => core.eng.setPointer(null));
+        }
+      };
+      const core = { el, size, mood: opt.mood || 'idle', follow: !!opt.follow, still: !!opt.still, when: opt.when || null, acc: 0, k: '', vis: true, eng: null };
+      core.eng = engine(cv0, (cv, old) => { if (!core.eng) return; if (io) io.unobserve(old); attach(cv); core.k = ''; });
       core.resize = px => { px = Math.round(px); if (px === core.size) return; core.size = px; el.style.setProperty('--s', px + 'px'); core.k = ''; };
-      cv.__core = core; if (io) io.observe(cv);
-      if (opt.pointer) {
-        cv.addEventListener('pointermove', e => { const r = cv.getBoundingClientRect(); core.eng.setPointer(Math.atan2(e.clientY - r.top - r.height / 2, e.clientX - r.left - r.width / 2)); });
-        cv.addEventListener('pointerleave', () => core.eng.setPointer(null));
-      }
+      attach(core.eng.canvas);
       cores.add(core); if (!raf) raf = requestAnimationFrame(tick);
       return core;
     }

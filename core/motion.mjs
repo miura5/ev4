@@ -143,11 +143,17 @@ export function percentile(xs, p) {
 
 export function stepDownStart() { return { level: 0, samples: [], lastStepAt: null }; }
 
+/** The share (0 to 1) of frame times longer than ms; 0 for an empty list. D-135 counts dropped frames this way. */
+export function slowShare(xs, ms) {
+  if (!xs.length) return 0; let n = 0; for (const x of xs) if (x > ms) n++; return n / xs.length;
+}
+
 /**
- * The run-time step-down (D-135): frame times over a rolling stepDown.windowSec; when a full window's p95 passes
- * stepDown.p95Ms the level rises by one (stepDown.order: wisps off, then half the points; the Silk outline is never
- * dropped), then waits a window before it can rise again. A frame longer than stepDown.ignoreAboveMs (a hidden tab,
- * a page stall) is not a sample. level names the steps taken: stepDown.order.slice(0, level).
+ * The run-time step-down (D-135 as amended Oct 18): frame times over a rolling stepDown.windowSec; when more than
+ * stepDown.maxSlowShare of a full window's frames take longer than stepDown.slowFrameMs, the level rises by one
+ * (stepDown.order: wisps off, then half the points; the Silk outline is never dropped), then waits a window before it
+ * can rise again. A frame longer than stepDown.ignoreAboveMs (a hidden tab, a page stall) is not a sample. level
+ * names the steps taken: stepDown.order.slice(0, level).
  */
 export function stepDownStep(st, frameMs, nowMs, P) {
   const D = P.stepDown, win = D.windowSec * 1000;
@@ -155,6 +161,6 @@ export function stepDownStep(st, frameMs, nowMs, P) {
   const samples = [...st.samples, [nowMs, frameMs]].filter(([t]) => nowMs - t <= win);
   const full = samples.length > 1 && nowMs - samples[0][0] >= win * .9;
   const ready = st.lastStepAt == null || nowMs - st.lastStepAt >= win;
-  if (full && ready && st.level < D.order.length && percentile(samples.map(s => s[1]), 95) > D.p95Ms) return { level: st.level + 1, samples: [], lastStepAt: nowMs };
+  if (full && ready && st.level < D.order.length && slowShare(samples.map(s => s[1]), D.slowFrameMs) > D.maxSlowShare) return { level: st.level + 1, samples: [], lastStepAt: nowMs };
   return { ...st, samples };
 }

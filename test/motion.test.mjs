@@ -134,17 +134,22 @@ test('her size steps (D-122): phone 260 px, desktop 340 px from 900 px wide', ()
   assert.equal(MO.coreSize(899, 'idle', Z).layout, 'phone'); assert.equal(MO.coreSize(900, 'idle', Z).layout, 'desktop');
 });
 
-test('the step-down: a rolling 2 s p95 over 20 ms turns wisps off, then halves the points, and stops there', () => {
+test('the step-down: more than 10% of frames over 25 ms in a rolling 2 s turns wisps off, then halves the points, and stops there', () => {
   let st = MO.stepDownStart(), t = 0; const D = P.stepDown;
+  assert.deepEqual({ w: D.windowSec, ms: D.slowFrameMs, share: D.maxSlowShare }, { w: 2, ms: 25, share: .1 }, 'D-135 as amended');
   const run = (ms, secs) => { for (const end = t + secs * 1000; t < end; t += ms) st = MO.stepDownStep(st, ms, t, P); };
   run(14, 5); assert.equal(st.level, 0, 'a 14 ms frame never steps down');
+  run(16.8, 5); assert.equal(st.level, 0, 'the harness vsync floor (16.8 ms) never steps down');
+  run(25, 3); assert.equal(st.level, 0, 'a frame of exactly 25 ms is not over 25 ms');
   run(300, 3); assert.equal(st.level, 0, 'stalls (a hidden tab) are not samples');
-  run(25, 2.2); assert.equal(st.level, 1); assert.deepEqual(D.order.slice(0, st.level), ['wisps']);
-  run(25, 1); assert.equal(st.level, 1, 'one window between steps');
-  run(25, 1.5); assert.equal(st.level, 2); assert.deepEqual(D.order.slice(0, st.level), ['wisps', 'halfPoints']);
+  run(30, 2.2); assert.equal(st.level, 1); assert.deepEqual(D.order.slice(0, st.level), ['wisps']);
+  run(30, 1); assert.equal(st.level, 1, 'one window between steps');
+  run(30, 1.5); assert.equal(st.level, 2); assert.deepEqual(D.order.slice(0, st.level), ['wisps', 'halfPoints']);
   run(40, 6); assert.equal(st.level, 2, 'nothing past half the points: the Silk outline stays');
-  // A few slow frames in a window of fast ones do not pass the p95.
-  st = MO.stepDownStart(); for (let i = 0; i < 300; i++) { t += 16; st = MO.stepDownStep(st, i % 30 === 0 ? 40 : 15, t, P); } assert.equal(st.level, 0);
+  // The share decides, not the size of the slow frames: 1 in 12 slow (8%) holds, 1 in 8 (12.5%) steps.
+  const mixed = every => { let s = MO.stepDownStart(), u = 0; for (let i = 0; i < 150; i++) { u += 16; s = MO.stepDownStep(s, i % every === 0 ? 80 : 15, u, P); } return s.level; };
+  assert.equal(mixed(12), 0); assert.equal(mixed(8), 1);
+  assert.equal(MO.slowShare([10, 30, 26, 25], 25), .5); assert.equal(MO.slowShare([], 25), 0);
   assert.equal(MO.percentile([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 95), 10); assert.equal(MO.percentile([], 95), null);
 });
 
@@ -157,9 +162,9 @@ test('spec.ui.look.core: every core v2 parameter, the seven moods, five gestures
   for (const [k, c] of Object.entries(P.palette)) { assert.equal(c.length, 3, k); for (const x of c) assert.ok(Number.isInteger(x) && x >= 0 && x <= 255, k); }
   assert.deepEqual(Object.keys(P.palette).sort(), ['a', 'b', 'coral', 'core', 'glow', 'ring', 'spark']);
   assert.equal(P.preset, 'silk'); assert.equal(P.body.bands, 5, 'five translucent bands');
-  assert.ok(['webgl', '2d'].includes(P.body.renderer), 'body.renderer is webgl (2d where WebGL is missing) or 2d');
+  assert.ok(['webgl', '2d'].includes(P.renderer), 'renderer is webgl (2d where WebGL is missing or lost) or 2d (D-134)'); assert.equal(P.body.renderer, undefined, 'the renderer lives at spec.ui.look.core.renderer');
   assert.ok(P.body.canvasDprMax >= 1 && P.body.canvasDprMax <= 3, 'body.canvasDprMax');
-  for (const sec of ['body', 'nucleus', 'speech', 'wisps', 'ripple', 'ring']) for (const [k, v] of Object.entries(P[sec])) if (typeof v !== 'boolean' && !Array.isArray(v) && typeof v !== 'object' && k !== 'renderer') num(v, `${sec}.${k}`);
+  for (const sec of ['body', 'nucleus', 'speech', 'wisps', 'ripple', 'ring']) for (const [k, v] of Object.entries(P[sec])) if (typeof v !== 'boolean' && !Array.isArray(v) && typeof v !== 'object') num(v, `${sec}.${k}`);
   for (const k of ['base', 'perChar', 'max', 'emphasis']) num(P.speech.wordVoice[k], 'speech.wordVoice.' + k);
   assert.equal(P.speech.maxStepPctOfRadius, .35, 'D-134: at most 0.35% of her radius a frame');
   assert.ok(P.wisps.perSecond >= 2.5 && P.wisps.perSecond <= 3.5 && P.wisps.opacity === .4, 'wisps: about 3 a second at 40%');
@@ -167,8 +172,8 @@ test('spec.ui.look.core: every core v2 parameter, the seven moods, five gestures
   assert.deepEqual(Object.keys(P.gestures).sort(), [...MO.GESTURES].sort());
   for (const g of MO.GESTURES) assert.ok(P.gestures[g].durationSec > 0 && P.gestures[g].durationSec <= 3, g);
   assert.deepEqual(P.sizes, { phone: { basePx: 260, steps: { idle: 100, conversation: 80, session: 66, list: 52, skills: 44 } }, desktop: { basePx: 340, minWidthPx: 900, steps: { idle: 100, conversation: 80, surface: 70 } } });
-  assert.deepEqual({ w: P.stepDown.windowSec, p: P.stepDown.p95Ms, o: P.stepDown.order }, { w: 2, p: 20, o: ['wisps', 'halfPoints'] });
-  assert.deepEqual({ f: P.frameBudget.p95FrameMs, d: P.frameBudget.p95CoreDrawMs }, { f: 16.7, d: 8 });
+  assert.deepEqual({ w: P.stepDown.windowSec, ms: P.stepDown.slowFrameMs, share: P.stepDown.maxSlowShare, o: P.stepDown.order }, { w: 2, ms: 25, share: .1, o: ['wisps', 'halfPoints'] });
+  assert.deepEqual({ ms: P.frameBudget.slowFrameMs, share: P.frameBudget.maxSlowShare, d: P.frameBudget.p95CoreDrawMs }, { ms: 25, share: .05, d: 8 }, 'D-135 as amended: at most 5% of frames over 25 ms, draw p95 at most 8 ms');
   // Teal and violet carry her; coral is reserved for the error gesture.
   assert.deepEqual(P.palette.a, [36, 214, 186]); assert.deepEqual(P.palette.b, [150, 96, 255]);
 });

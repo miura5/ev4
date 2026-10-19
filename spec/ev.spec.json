@@ -2903,6 +2903,7 @@
      "core/motion.mjs reads speech, nucleus, gestures, sizes and stepDown; the page's core engine reads the rest."
     ],
     "preset": "silk",
+    "renderer": "webgl",
     "palette": {
      "a": [
       36,
@@ -3044,7 +3045,6 @@
     "radiusOfSize": 0.4,
     "turbulence": 0.6,
     "body": {
-     "renderer": "webgl",
      "bands": 5,
      "refSizePx": 300,
      "canvasDprMax": 2,
@@ -3166,18 +3166,22 @@
     },
     "stepDown": {
      "windowSec": 2,
-     "p95Ms": 20,
+     "slowFrameMs": 25,
+     "maxSlowShare": 0.1,
      "ignoreAboveMs": 250,
      "order": [
       "wisps",
       "halfPoints"
      ],
-     "never": "the Silk outline"
+     "never": "the Silk outline",
+     "_note": "D-135 as amended Oct 18: more than 10% of frames over 25 ms in a rolling 2 s takes one step"
     },
     "frameBudget": {
-     "p95FrameMs": 16.7,
+     "slowFrameMs": 25,
+     "maxSlowShare": 0.05,
      "p95CoreDrawMs": 8,
-     "measuredAt": "10 s of speech at 390x844, DPR 3, Chromium, 4x CPU throttle (D-135)"
+     "measuredAt": "10 s of speech at 390x844, DPR 3, Chromium, 4x CPU throttle (D-135)",
+     "_note": "D-135 as amended Oct 18: dropped frames are the measure, since frame intervals cannot go below the harness vsync floor of about 16.8 ms"
     },
     "reducedMotion": "a still frame per mood; a gesture is a short brightness change (D-127)"
    }

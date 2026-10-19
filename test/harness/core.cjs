@@ -3,8 +3,9 @@
 // frames being measured). It renders each mood and gesture at 390 and 1280 px with screenshots, checks that each
 // gesture settles, that coral shows only on an error and that reduced motion holds a still frame per mood, and measures
 // 10 s of speech, with wisps and the ring, at 390x844, DPR 3, Chromium, 4x CPU throttle (CDP
-// Emulation.setCPUThrottlingRate): the p95 frame time and the core's own draw against spec.ui.look.core.frameBudget.
-// It then throttles harder to watch the run-time step-down. The record is a staging export as for run.cjs.
+// Emulation.setCPUThrottlingRate): the share of frames over 25 ms and the core's own draw p95 against
+// spec.ui.look.core.frameBudget (D-135 as amended). It then throttles harder to watch the run-time step-down, and checks
+// the Canvas 2D fallback, both where WebGL is missing and where its context is lost. The record is a staging export as for run.cjs.
 //   node test/harness/core.cjs <record dir> [screenshots dir] [--json <file>]
 // Run `node tools/build.mjs` first. Exit code 1 when any check fails.
 const { chromium } = require('playwright');
@@ -29,7 +30,7 @@ const skeleton = b => '<!doctype html><html><head><meta charset=utf8><meta name=
 async function openPage(page, { renderer } = {}) {
   const dir = path.join(root, 'dist/page/staging');
   await page.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
-  await page.route(ORIGIN + '/**', r => { const name = new URL(r.request().url()).pathname.slice(1) || 'index.html'; if (name === 'index.html') return r.fulfill({ body: skeleton(fs.readFileSync(path.join(dir, 'index.html'), 'utf8')), contentType: 'text/html' }); const f = path.join(dir, name); if (name === 'spec.json' && renderer) { const sp = JSON.parse(fs.readFileSync(f, 'utf8')); sp.ui.look.core.body.renderer = renderer; return r.fulfill({ body: JSON.stringify(sp), contentType: 'application/json' }); } return fs.existsSync(f) ? r.fulfill({ body: fs.readFileSync(f), contentType: TYPES[path.extname(name)] || 'application/octet-stream' }) : r.fulfill({ status: 404, body: '' }); });
+  await page.route(ORIGIN + '/**', r => { const name = new URL(r.request().url()).pathname.slice(1) || 'index.html'; if (name === 'index.html') return r.fulfill({ body: skeleton(fs.readFileSync(path.join(dir, 'index.html'), 'utf8')), contentType: 'text/html' }); const f = path.join(dir, name); if (name === 'spec.json' && renderer) { const sp = JSON.parse(fs.readFileSync(f, 'utf8')); sp.ui.look.core.renderer = renderer; return r.fulfill({ body: JSON.stringify(sp), contentType: 'application/json' }); } return fs.existsSync(f) ? r.fulfill({ body: fs.readFileSync(f), contentType: TYPES[path.extname(name)] || 'application/octet-stream' }) : r.fulfill({ status: 404, body: '' }); });
   await page.addInitScript('window.__db=' + JSON.stringify(seed) + ';' + stub);
   await page.goto(ORIGIN + '/');
   await page.waitForFunction(() => window.EVApp && window.EVApp.core && document.querySelector('#hero canvas'), null, { timeout: 15000 });
@@ -112,25 +113,40 @@ const SPEECH = `async (secs) => { const C = window.EVApp.core; const text = 'Pre
       await page.waitForTimeout(1500);
       const m = await page.evaluate(`(${SPEECH})(10)`);
       await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
-      budget.phone = { renderer: (await canvasInfo(page)).renderer, frames: m.frames.length, missedRefreshes: m.frames.filter(f => f > 1.5 * 1000 / 60).length, p95FrameMs: r2(p95(m.frames)), p95CoreDrawMs: r2(p95(m.draws)), medianFrameMs: r2(m.frames.slice().sort((a, b) => a - b)[m.frames.length >> 1]), stepDownLevel: m.level, dpr: 3, throttle: 4, viewport: '390x844' };
-      // rAF intervals sit on the 60 Hz refresh (16.67 ms) with about 0.1 ms of timestamp jitter; a frame that misses the
-      // refresh shows as about 33 ms, counted as missedRefreshes beside the p95. The check is the clause as written.
-      ok(`[phone] frame budget: p95 frame ≤ ${L.frameBudget.p95FrameMs} ms over 10 s of speech, 4x throttle, DPR 3`, budget.phone.p95FrameMs <= L.frameBudget.p95FrameMs && m.frames.length > 300, JSON.stringify(budget.phone));
+      const FB = L.frameBudget, slow = m.frames.filter(f => f > FB.slowFrameMs).length;
+      budget.phone = { renderer: (await canvasInfo(page)).renderer, frames: m.frames.length, framesOver25ms: slow, slowSharePct: r2(100 * slow / Math.max(1, m.frames.length)), p95FrameMs: r2(p95(m.frames)), p95CoreDrawMs: r2(p95(m.draws)), medianFrameMs: r2(m.frames.slice().sort((a, b) => a - b)[m.frames.length >> 1]), stepDownLevel: m.level, dpr: 3, throttle: 4, viewport: '390x844' };
+      // D-135 as amended: dropped frames are the measure, since rAF intervals cannot go below the harness's vsync floor
+      // (about 16.8 ms); the p95 frame time is still reported.
+      ok(`[phone] frame budget: at most ${FB.maxSlowShare * 100}% of frames over ${FB.slowFrameMs} ms over 10 s of speech, 4x throttle, DPR 3`, slow <= FB.maxSlowShare * m.frames.length && m.frames.length > 300, JSON.stringify(budget.phone));
       ok(`[phone] frame budget: the core's own draw ≤ ${L.frameBudget.p95CoreDrawMs} ms p95`, budget.phone.p95CoreDrawMs <= L.frameBudget.p95CoreDrawMs, JSON.stringify(budget.phone));
       ok('[phone] she ran whole through it (no step-down during the measured speech)', m.level === 0, 'level ' + m.level);
     } else {
       const m = await page.evaluate(`(${SPEECH})(10)`);
-      budget.desktop = { frames: m.frames.length, p95FrameMs: r2(p95(m.frames)), p95CoreDrawMs: r2(p95(m.draws)), stepDownLevel: m.level, dpr: 1, throttle: 1, viewport: '1280x860' };
+      budget.desktop = { frames: m.frames.length, framesOver25ms: m.frames.filter(f => f > L.frameBudget.slowFrameMs).length, p95FrameMs: r2(p95(m.frames)), p95CoreDrawMs: r2(p95(m.draws)), stepDownLevel: m.level, dpr: 1, throttle: 1, viewport: '1280x860' };
       ok('[desktop] 10 s of speech recorded at 1280 (no throttle)', m.frames.length > 300, JSON.stringify(budget.desktop));
     }
     ok(`[${scheme}] no page errors`, errors.length === 0, errors.join(' | '));
     await ctx.close();
   }
-  // The fallback where WebGL is missing (spec body.renderer 2d): the same body in a 2D canvas.
+  // The fallback where WebGL is missing (spec.ui.look.core.renderer 2d): the same body in a 2D canvas.
   { const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: 'dark', deviceScaleFactor: 3 });
     const page = await ctx.newPage(); await openPage(page, { renderer: '2d' }); await page.waitForTimeout(900);
     const info = await canvasInfo(page); await page.locator('#hero').screenshot({ path: `${shots}/core-renderer-2d-phone.png` });
     ok('[2d fallback] she draws on a 2D canvas, teal and violet', info.renderer === '2d' && info.lit > 2000 && info.g > info.r * .9, JSON.stringify({ renderer: info.renderer, lit: info.lit }));
+    await ctx.close(); }
+  // The fallback where the WebGL context is lost (D-134): the canvas is swapped for a fresh 2D one, carrying her core,
+  // and she keeps drawing.
+  { const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: 'dark', deviceScaleFactor: 3 });
+    const page = await ctx.newPage(); const errors = []; page.on('pageerror', e => errors.push(e.message));
+    await openPage(page); await page.waitForTimeout(600);
+    const before = await canvasInfo(page);
+    const lost = await page.evaluate(() => { const cv = document.querySelector('#hero canvas'); const gl = cv.getContext('webgl'); const x = gl && gl.getExtension('WEBGL_lose_context'); if (!x) return false; x.loseContext(); return true; });
+    await page.waitForTimeout(900);
+    const info = await canvasInfo(page); await page.locator('#hero').screenshot({ path: `${shots}/core-renderer-lost-phone.png` });
+    const after = await page.evaluate(() => { const C = window.EVApp.core, c = C.cores()[0]; const cv = c.eng.canvas; return { inPage: cv.isConnected && document.querySelectorAll('#hero canvas').length === 1, tagged: cv.__core === c, log: C.stats().log.filter(e => e.kind === 'renderer').map(e => e.detail) }; });
+    ok('[context lost] WebGL drew first, then the context was lost', before.renderer === 'webgl' && lost, JSON.stringify({ before: before.renderer, lost }));
+    ok('[context lost] she goes on drawing on a fresh 2D canvas, teal and violet', info.renderer === '2d' && info.lit > 2000 && info.g > info.r * .9 && after.inPage && after.tagged, JSON.stringify({ renderer: info.renderer, lit: info.lit, ...after }));
+    ok('[context lost] no page errors', errors.length === 0, errors.join(' | '));
     await ctx.close(); }
   // Reduced motion (D-127): a still frame per mood, a gesture a short brightness change and back.
   { const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: 'dark', reducedMotion: 'reduce' });
@@ -146,8 +162,8 @@ const SPEECH = `async (secs) => { const C = window.EVApp.core; const text = 'Pre
     const b = await canvasInfo(page); await page.waitForTimeout(600); const c = await canvasInfo(page);
     ok('[reduced motion] a gesture is a short brightness change, then the same still frame', b.hash !== a.hash && c.hash === a.hash, `${a.hash} ${b.hash} ${c.hash}`);
     await ctx.close(); }
-  // The run-time step-down (D-135): throttled hard, a rolling 2 s p95 over 20 ms turns wisps off, then halves the
-  // points; the Silk outline stays.
+  // The run-time step-down (D-135 as amended): throttled hard, more than 10% of frames over 25 ms in a rolling 2 s turns
+  // wisps off, then halves the points; the Silk outline stays.
   { const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: 'dark', deviceScaleFactor: 3 });
     const page = await ctx.newPage(); await openPage(page);
     const before = await page.evaluate(() => window.EVApp.core.cores()[0].eng.state().points);
