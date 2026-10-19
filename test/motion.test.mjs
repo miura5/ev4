@@ -57,6 +57,19 @@ test('the envelope holds its floor between words and comes to rest after speechE
   assert.ok(frames.slice(firstZero).every(f => f.env === 0));
 });
 
+test('the per-frame cap, and the clamps at 0 and at speech.max, hold when the spring would pass them', () => {
+  const S = { ...P.speech, spring: 400 }, Q = { ...P, speech: S }, cap = (S.maxStepPctOfRadius / 100) / (S.swell * P.body.radius);
+  // A stiff spring and a full word: the raw step is far past the cap, so the step is exactly the cap.
+  const a = MO.envelopeStep(MO.envelopeStart(), { talking: true, word: 1 }, DT, Q);
+  assert.ok(Math.abs(a.env - cap) < 1e-12, `stepped ${a.env}, cap ${cap}`); assert.ok(Math.abs(a.envV - cap * FPS) < 1e-9);
+  // Falling the same way: never below 0, and at rest it stays 0.
+  const down = MO.envelopeStep({ t: 0, talk: 0, vT: 0, env: .001, envV: -50 }, { talking: false, word: null }, DT, Q);
+  assert.equal(down.env, 0); assert.ok(down.envV >= 0);
+  // Above speech.max it is held at the max.
+  const up = MO.envelopeStep({ t: 0, talk: 1, vT: 5, env: S.max - 1e-6, envV: 50 }, { talking: true, word: null }, DT, { ...Q, speech: { ...S, maxStepPctOfRadius: 100 } });
+  assert.equal(up.env, S.max); assert.ok(up.envV <= 0);
+});
+
 test('each word nudges the swell; an emphasised word nudges it most', () => {
   const S = P.speech;
   assert.equal(MO.wordVoice('stretch', true, S), S.wordVoice.emphasis);
@@ -92,6 +105,8 @@ test('a glance takes a direction, an angle or a target point', () => {
   assert.equal(MO.glanceAngle('left'), Math.PI); assert.equal(MO.glanceAngle({ direction: 'down' }), Math.PI / 2); assert.equal(MO.glanceAngle(1.2), 1.2);
   assert.equal(MO.glanceAngle({ x: 10, y: 0 }, { x: 0, y: 0 }), 0);
   assert.ok(Math.abs(MO.glanceAngle({ x: 0, y: -5 }, { x: 0, y: 0 }) + Math.PI / 2) < 1e-12);
+  assert.equal(MO.glanceAngle({ direction: 1.2 }), 1.2);
+  assert.equal(MO.glanceAngle({ target: 'up' }), -Math.PI / 2);
   assert.throws(() => MO.glanceAngle('sideways'), /direction/);
 });
 
@@ -115,6 +130,7 @@ test('her size steps (D-122): phone 260 px, desktop 340 px from 900 px wide', ()
   assert.deepEqual(['idle', 'conversation', 'session', 'list', 'skills'].map(s => px(390, s)), [260, 208, 172, 135, 114]);
   assert.deepEqual(['idle', 'conversation', 'surface'].map(s => px(1280, s)), [340, 272, 238]);
   assert.equal(px(1280, 'session'), 238); assert.equal(px(390, 'surface'), 135);
+  assert.equal(px(390, 'somewhere-else'), 260, 'a state no layout names falls back to idle');
   assert.equal(MO.coreSize(899, 'idle', Z).layout, 'phone'); assert.equal(MO.coreSize(900, 'idle', Z).layout, 'desktop');
 });
 

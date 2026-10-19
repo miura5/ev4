@@ -1035,7 +1035,8 @@
       sig.gestures.push(g); if (reduce) sig.flashUntil = Date.now() + 400;
       note('gesture', name, name === 'glance' ? (g.target ? (g.target.id || g.target.className || 'element') : detail) : null);
     }
-    function speak(word, o = {}) { sig.talking = true; sig.vid++; sig.word = Math.max(sig.word || 0, MO.wordVoice(word, !!(o && o.emphasis), L.speech)); note('speak', String(word).slice(0, 40), o && o.emphasis ? 'emphasis' : null); }
+    // speak(word, {emphasis}) or speak(word, true): the Build plan names the second argument as emphasis either way.
+    function speak(word, o = {}) { const em = o === true || !!(o && o.emphasis); sig.talking = true; sig.vid++; sig.word = Math.max(sig.word || 0, MO.wordVoice(word, em, L.speech)); note('speak', String(word).slice(0, 40), em ? 'emphasis' : null); }
     function speechEnd() { if (sig.talking) note('speechEnd'); sig.talking = false; }
     function setMood(m) { if (!MOOD[m]) return; if (m !== sig.mood) note('mood', m); sig.mood = m; }
     function setRing(p) { sig.ring = typeof p === 'number' && p >= 0 ? Math.min(1, p) : -1; }
