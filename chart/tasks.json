@@ -1651,17 +1651,17 @@
   "title": "`lint`: the id, dependency, decision, commit and inbox checks, run by `npm test`.",
   "dod": "it finds the duplicate B-83 and nothing else",
   "milestone": "M12",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-92"
   ],
-  "notes": "Oct 19: in progress",
-  "commit": null,
+  "notes": "Oct 19, 4b1b7f0: lint (ids, dependencies, decisions under rules, done without commit, inbox) runs in npm test. On the import it found the duplicate B-83 and also B-81 depending on B-78, B-79 and B-80, which the Build plan tab has and BACKLOG.md never did. Fixed by log: the second B-83 (live evening-mac) is B-98; B-74, B-75, B-78, B-79, B-80 added from the Build plan tab, open. Lint green; npm test 266",
+  "commit": "4b1b7f0",
   "source": "BACKLOG.md",
   "board": {
    "row": "v4 B-94: lint: the record checks itself",
    "why": "A duplicate id, a missing dependency or a rule resting on a dropped decision is caught by npm test, not by memory",
-   "notes": "Oct 19. In progress"
+   "notes": "Oct 19, 4b1b7f0. Lint found the duplicate B-83 (the Mac evening task is now B-98) and three tasks B-81 waits on that never reached the backlog (B-78 to B-80, added with B-74 and B-75 from the Build plan). Green now, and npm test runs it"
   }
  },
  {
