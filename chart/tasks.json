@@ -1381,6 +1381,20 @@
   "source": "Build plan tab"
  },
  {
+  "id": "B-80",
+  "kind": "task",
+  "title": "Skills runner with the desktop tuck rail (D-124, D-107): the skills runner as a surface over core.skillSteps, step dots on the phone and the full list on desktop, Passed and Missed per step, a miss with her recoil filing a weak spot of kind skill, the next step read aloud; on desktop the 64 px tuck rail (step dots, Passed, Missed, hold-to-peek) while she says only the step number and earlier step lines blur; the pill Vital signs · step n of 7; takes over B-51's page part for the E.V. tab, noted on B-51 in BACKLOG.md",
+  "dod": "the harness runs a planted checklist at 390 and 1280: every step marked from the surface and from the rail without scrolling; a miss files one weak spot of kind skill; tucking blurs earlier step captions and shortens her lines to the step number; hold-to-peek shows the list and releases; screenshots at both widths, rail tucked and open",
+  "milestone": "M11",
+  "status": "open",
+  "depends": [
+   "B-78"
+  ],
+  "notes": "Oct 19, added by B-94 from the Build plan tab: it never reached BACKLOG.md, and B-81 depends on it. The Oct 19 page work (B-82 to B-91) may cover part of it: check before starting",
+  "commit": null,
+  "source": "Build plan tab"
+ },
+ {
   "id": "B-81",
   "kind": "task",
   "title": "Captions rollout (D-136, D-139): B-76 and B-77 go live at 6ad8a53 on Matt's OK, and B-78 and B-80 may follow the same way when done (no stored-document change); for the rest, a staging soak of B-74 to B-80 and Matt's phone and desktop check on staging, two minutes of a session included; then, after NUR Exam 4 (Wed Oct 21) and B-30's retirement steps close D-085's window, the talk, sessions, sets and answers migrations on live and the live page by deploy's printed calls on Matt's explicit OK.",
