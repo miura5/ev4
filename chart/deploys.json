@@ -1,0 +1,1338 @@
+[
+ {
+  "target": "staging",
+  "commit": "3fa5d2a",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green with exceptions",
+  "rollback": null,
+  "tasks": [
+   "B-13"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging: first deploy to E.V. Home Staging v4 (release v4.0.0, build 3fa5d2a): the system manifest, spec and environments, on top of a seed from Saturday night's copy of your record migrated to v4 (371 documents, no journal). verify-deploy staging is green except the staging tasks, which come in B-13. Nothing live touched",
+   "why": "Build plan B-12: v4 needs a staging record of its own before any pipeline runs",
+   "decision": "D-082"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "c455cb3",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green with exceptions",
+  "rollback": null,
+  "tasks": [
+   "B-05",
+   "B-13"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging: system documents redeployed at build c455cb3 (lint and rebuild, and the B-05 review fixes). verify-deploy staging green except the staging tasks (B-13). Nothing live touched",
+   "why": "Build plan B-07: the record checks itself and every computed document can be reproduced",
+   "decision": "D-082"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "b1854a3",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green with exceptions",
+  "rollback": null,
+  "tasks": [
+   "B-13"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging: system documents redeployed at build b1854a3 (the run protocol). verify-deploy staging green except the staging tasks (B-13). Nothing live touched",
+   "why": "Build plan B-08: runs make only the calls their commands print",
+   "decision": "D-082"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "92ec038",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": null,
+  "rollback": null,
+  "tasks": [
+   "B-13"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging: system documents redeployed at build 92ec038 (morning, evening-cloud and weekly step lists; task prompts rendered). The three staging tasks are created with B-13. Nothing live touched",
+   "why": "Build plan B-09: pipelines as step lists",
+   "decision": "D-082"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "a3b75b2",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": null,
+  "rollback": null,
+  "tasks": [
+   "B-13"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging: system documents redeployed at build a3b75b2 (the worker pipeline and job kinds). Staging tasks still come with B-13. Nothing live touched",
+   "why": "Build plan B-10: background jobs",
+   "decision": "D-082"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "aa00033",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": null,
+  "rollback": null,
+  "tasks": [],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging: five cloud staging tasks created (morning, evening-cloud, weekly, worker, watchdog; fire-only, no push) and system documents at build aa00033. First v4 runs: morning built a 14-question review set, Drill 7 and the day's list; the watchdog re-fired a planted stuck run and a planted stalled job, and both finished. The worker now waits for its job id. Nothing live touched",
+   "why": "Build plan B-11: the watchdog's proof is a staging firing",
+   "decision": "D-082"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "17e3d5f",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": null,
+  "rollback": null,
+  "tasks": [],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging: system documents at build 17e3d5f. Weekly and diagnostic tasks added; all six cloud runs fired green with clean audits. 15 migrated calendar entries re-stamped (their envelope time was a future noon); lint now tells a stale build and runs that overlapped from real drift, and the full staging read-back lints green. Nothing live touched",
+   "why": "Build plan B-13: every pipeline green on staging (M2 gate)",
+   "decision": "D-082"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "3f9010c",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": null,
+  "rollback": null,
+  "tasks": [],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging: system documents at build 3f9010c. New debug collection; the diagnostic's 'ceilings' probe fired twice and measured 262144 bytes per document, 50 writes and 1048576 bytes per batch (probe documents kept in debug/). spec.environments and spec.capacity updated from those runs. Nothing live touched",
+   "why": "Build plan B-14: ceilings measured, environments rows with run ids",
+   "decision": "D-082"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "b6b1aa5",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": null,
+  "rollback": null,
+  "tasks": [],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging: E.V. Home Staging v4 republished as the v4 shell (index.html) with core.js, spec.json, app.js and styles.css; capabilities restated whole (db owner-only, user, sample with images, mcp: Claude Code Remote fire_trigger and the Study Watch reader's four tools). System documents at build b6b1aa5. The placeholder page is retired. Nothing live touched",
+   "why": "Build plan B-15: page shell and published files",
+   "decision": "D-082"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "006e99e",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": null,
+  "rollback": null,
+  "tasks": [],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging: app.js and spec.json republished at build 006e99e: v3's conversation and tabs on v4 documents (answers, dayedits, dateedits, planedits, materialedits, jobresults). Spec gains persona, items, ui text and the reader 0.2.0. Nothing live touched",
+   "why": "Build plan B-16: conversation parity",
+   "decision": "D-082"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "447818b",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": null,
+  "rollback": null,
+  "tasks": [],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging: app.js and spec.json republished at build 447818b: the System tab's Health card from health/current, pipelines with their live schedules. Nothing live touched",
+   "why": "Build plan B-17: tab parity and the System health panel",
+   "decision": "D-082"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "dcee3a4",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging: system docs and the page (shell, core.js, spec.json, app.js, styles.css) republished at build dcee3a4: skills practice, readiness audit, grounded explanations, File it from the reader's saved sessions. verify-deploy GREEN. Nothing live touched",
+   "why": "Build plan B-18: the new features",
+   "decision": "D-082"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "01c2f69",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": null,
+  "rollback": null,
+  "tasks": [],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging: system docs and page at builds 01c2f69 through b853d84: evening-mac and restore-drill pipelines, Canvas registry, two Mac-bound staging tasks created from a Mac-linked chat with Matt present (evening-mac fire-only; restore-drill monthly on the 1st at 8:55pm). Nothing live touched",
+   "why": "Build plan B-21 and B-22",
+   "decision": "D-082, D-083"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "b853d84",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": null,
+  "rollback": null,
+  "tasks": [],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging: system docs and page at builds 01c2f69 through b853d84: evening-mac and restore-drill pipelines, Canvas registry, two Mac-bound staging tasks created from a Mac-linked chat with Matt present (evening-mac fire-only; restore-drill monthly on the 1st at 8:55pm). Nothing live touched",
+   "why": "Build plan B-21 and B-22",
+   "decision": "D-082, D-083"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "live",
+  "commit": "d69f67b",
+  "time": "2026-10-18",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": null,
+  "tasks": [],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 live on your E.V. Home (release v4.0.0, build d69f67b): v3 tasks turned off and kept; record migrated in place with legacy copies; system manifest, spec and environments; six live tasks (morning, evening-cloud, evening-mac on your Mac, weekly, worker, watchdog); page republished as the v4 shell and files with the reader's status and latest_note only (a cloud session can't add list_sessions and read_session). verify-deploy live GREEN; evening-cloud fired by hand for the first snapshot",
+   "why": "You said do the first push live for v4, same link, v3 as the rollback, before tonight's runs",
+   "decision": "D-082, D-083; Build plan B-24"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "d69f67b",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-35",
+   "B-49"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "Staging redeployed three times: at d69f67b (B-35), at 31deffc and at 1bba7e6 (B-49 task prompts and the watchdog's status-page purpose), verify-deploy staging GREEN each time. Live system docs and the eleven task prompts at 31deffc, verify-deploy live GREEN; the live watchdog prompt carries the 1bba7e6 purpose ahead of that build's live deploy. A one-shot probe task (E.V. watchdog one-shot probe, B-49) fired once and is spent",
+   "why": "You asked for the watchdog bug fixed before tonight's runs, with your OK for the prompt changes and live test firings",
+   "decision": "Build plan B-35, B-49; D-111 (proposed)"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "31deffc",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-35",
+   "B-49"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "Staging redeployed three times: at d69f67b (B-35), at 31deffc and at 1bba7e6 (B-49 task prompts and the watchdog's status-page purpose), verify-deploy staging GREEN each time. Live system docs and the eleven task prompts at 31deffc, verify-deploy live GREEN; the live watchdog prompt carries the 1bba7e6 purpose ahead of that build's live deploy. A one-shot probe task (E.V. watchdog one-shot probe, B-49) fired once and is spent",
+   "why": "You asked for the watchdog bug fixed before tonight's runs, with your OK for the prompt changes and live test firings",
+   "decision": "Build plan B-35, B-49; D-111 (proposed)"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "1bba7e6",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-35",
+   "B-49"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "Staging redeployed three times: at d69f67b (B-35), at 31deffc and at 1bba7e6 (B-49 task prompts and the watchdog's status-page purpose), verify-deploy staging GREEN each time. Live system docs and the eleven task prompts at 31deffc, verify-deploy live GREEN; the live watchdog prompt carries the 1bba7e6 purpose ahead of that build's live deploy. A one-shot probe task (E.V. watchdog one-shot probe, B-49) fired once and is spent",
+   "why": "You asked for the watchdog bug fixed before tonight's runs, with your OK for the prompt changes and live test firings",
+   "decision": "Build plan B-35, B-49; D-111 (proposed)"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "live",
+  "commit": "31deffc",
+  "time": "2026-10-18",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-35",
+   "B-49"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "Staging redeployed three times: at d69f67b (B-35), at 31deffc and at 1bba7e6 (B-49 task prompts and the watchdog's status-page purpose), verify-deploy staging GREEN each time. Live system docs and the eleven task prompts at 31deffc, verify-deploy live GREEN; the live watchdog prompt carries the 1bba7e6 purpose ahead of that build's live deploy. A one-shot probe task (E.V. watchdog one-shot probe, B-49) fired once and is spent",
+   "why": "You asked for the watchdog bug fixed before tonight's runs, with your OK for the prompt changes and live test firings",
+   "decision": "Build plan B-35, B-49; D-111 (proposed)"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "live",
+  "commit": "2938dd6",
+  "time": "2026-10-18",
+  "okFrom": "Matt",
+  "verify": null,
+  "rollback": null,
+  "tasks": [],
+  "line": {
+   "date": "Oct 18",
+   "change": "Live at 2938dd6 after staging green at the same commit: system docs and page files (the page keeps the reader's status and latest_note; adding list_sessions and read_session needs a local desktop session). New live watchdog task at 1:55, 4:55 … 22:55 Central with push on; the old 3-hourly one disabled and kept. Earlier today: live at 1bba7e6 (the watchdog's status-page purpose). Staging deployed at 90eef28, 15da2f6 and 2938dd6; a one-shot staging watchdog waits for Mon 5:10am",
+   "why": "You OK'd the live deploys so Monday's 4:25am morning gets the day-plan fix and a watchdog that can re-fire it",
+   "decision": "Build plan B-26, B-31, B-49; D-084, D-086"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "live",
+  "commit": "1bba7e6",
+  "time": "2026-10-18",
+  "okFrom": "Matt",
+  "verify": null,
+  "rollback": null,
+  "tasks": [],
+  "line": {
+   "date": "Oct 18",
+   "change": "Live at 2938dd6 after staging green at the same commit: system docs and page files (the page keeps the reader's status and latest_note; adding list_sessions and read_session needs a local desktop session). New live watchdog task at 1:55, 4:55 … 22:55 Central with push on; the old 3-hourly one disabled and kept. Earlier today: live at 1bba7e6 (the watchdog's status-page purpose). Staging deployed at 90eef28, 15da2f6 and 2938dd6; a one-shot staging watchdog waits for Mon 5:10am",
+   "why": "You OK'd the live deploys so Monday's 4:25am morning gets the day-plan fix and a watchdog that can re-fire it",
+   "decision": "Build plan B-26, B-31, B-49; D-084, D-086"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "90eef28",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": null,
+  "rollback": null,
+  "tasks": [],
+  "line": {
+   "date": "Oct 18",
+   "change": "Live at 2938dd6 after staging green at the same commit: system docs and page files (the page keeps the reader's status and latest_note; adding list_sessions and read_session needs a local desktop session). New live watchdog task at 1:55, 4:55 … 22:55 Central with push on; the old 3-hourly one disabled and kept. Earlier today: live at 1bba7e6 (the watchdog's status-page purpose). Staging deployed at 90eef28, 15da2f6 and 2938dd6; a one-shot staging watchdog waits for Mon 5:10am",
+   "why": "You OK'd the live deploys so Monday's 4:25am morning gets the day-plan fix and a watchdog that can re-fire it",
+   "decision": "Build plan B-26, B-31, B-49; D-084, D-086"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "15da2f6",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": null,
+  "rollback": null,
+  "tasks": [],
+  "line": {
+   "date": "Oct 18",
+   "change": "Live at 2938dd6 after staging green at the same commit: system docs and page files (the page keeps the reader's status and latest_note; adding list_sessions and read_session needs a local desktop session). New live watchdog task at 1:55, 4:55 … 22:55 Central with push on; the old 3-hourly one disabled and kept. Earlier today: live at 1bba7e6 (the watchdog's status-page purpose). Staging deployed at 90eef28, 15da2f6 and 2938dd6; a one-shot staging watchdog waits for Mon 5:10am",
+   "why": "You OK'd the live deploys so Monday's 4:25am morning gets the day-plan fix and a watchdog that can re-fire it",
+   "decision": "Build plan B-26, B-31, B-49; D-084, D-086"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "2938dd6",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": null,
+  "rollback": null,
+  "tasks": [],
+  "line": {
+   "date": "Oct 18",
+   "change": "Live at 2938dd6 after staging green at the same commit: system docs and page files (the page keeps the reader's status and latest_note; adding list_sessions and read_session needs a local desktop session). New live watchdog task at 1:55, 4:55 … 22:55 Central with push on; the old 3-hourly one disabled and kept. Earlier today: live at 1bba7e6 (the watchdog's status-page purpose). Staging deployed at 90eef28, 15da2f6 and 2938dd6; a one-shot staging watchdog waits for Mon 5:10am",
+   "why": "You OK'd the live deploys so Monday's 4:25am morning gets the day-plan fix and a watchdog that can re-fire it",
+   "decision": "Build plan B-26, B-31, B-49; D-084, D-086"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "c6244e9",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green with exceptions",
+  "rollback": null,
+  "tasks": [
+   "B-28",
+   "B-33",
+   "B-37",
+   "B-32",
+   "B-40",
+   "B-41",
+   "B-38"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "Staging deployed at c6244e9, 88ed5d7, 377c609, fe4f8a9, d9612b7 and 641863b: verify-deploy now diffs the page's stored tools and checks retired tasks (B-28), plan-hash checks in every run (B-33), capacity budgets (B-37), fact marks (B-32), the evening push (B-40), weak spots to Quizlet (B-41) and the update bar (B-38). verify-deploy staging green but for the two v3.6 staging tasks still on. CLAUDE.md now scopes the explicit-OK list to build chats (0c3b219); the first scheduled live watchdog after it wrote its start entry. Live stays at 2938dd6",
+   "why": "Scheduled live runs were refused because the safety check reads CLAUDE.md, which said touching the live record needs your OK in the chat",
+   "decision": "Build plan B-28, B-32, B-33, B-37, B-38, B-40, B-41, B-49; D-089, D-093"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "88ed5d7",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green with exceptions",
+  "rollback": null,
+  "tasks": [
+   "B-28",
+   "B-33",
+   "B-37",
+   "B-32",
+   "B-40",
+   "B-41",
+   "B-38"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "Staging deployed at c6244e9, 88ed5d7, 377c609, fe4f8a9, d9612b7 and 641863b: verify-deploy now diffs the page's stored tools and checks retired tasks (B-28), plan-hash checks in every run (B-33), capacity budgets (B-37), fact marks (B-32), the evening push (B-40), weak spots to Quizlet (B-41) and the update bar (B-38). verify-deploy staging green but for the two v3.6 staging tasks still on. CLAUDE.md now scopes the explicit-OK list to build chats (0c3b219); the first scheduled live watchdog after it wrote its start entry. Live stays at 2938dd6",
+   "why": "Scheduled live runs were refused because the safety check reads CLAUDE.md, which said touching the live record needs your OK in the chat",
+   "decision": "Build plan B-28, B-32, B-33, B-37, B-38, B-40, B-41, B-49; D-089, D-093"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "377c609",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green with exceptions",
+  "rollback": null,
+  "tasks": [
+   "B-28",
+   "B-33",
+   "B-37",
+   "B-32",
+   "B-40",
+   "B-41",
+   "B-38"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "Staging deployed at c6244e9, 88ed5d7, 377c609, fe4f8a9, d9612b7 and 641863b: verify-deploy now diffs the page's stored tools and checks retired tasks (B-28), plan-hash checks in every run (B-33), capacity budgets (B-37), fact marks (B-32), the evening push (B-40), weak spots to Quizlet (B-41) and the update bar (B-38). verify-deploy staging green but for the two v3.6 staging tasks still on. CLAUDE.md now scopes the explicit-OK list to build chats (0c3b219); the first scheduled live watchdog after it wrote its start entry. Live stays at 2938dd6",
+   "why": "Scheduled live runs were refused because the safety check reads CLAUDE.md, which said touching the live record needs your OK in the chat",
+   "decision": "Build plan B-28, B-32, B-33, B-37, B-38, B-40, B-41, B-49; D-089, D-093"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "fe4f8a9",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green with exceptions",
+  "rollback": null,
+  "tasks": [
+   "B-28",
+   "B-33",
+   "B-37",
+   "B-32",
+   "B-40",
+   "B-41",
+   "B-38"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "Staging deployed at c6244e9, 88ed5d7, 377c609, fe4f8a9, d9612b7 and 641863b: verify-deploy now diffs the page's stored tools and checks retired tasks (B-28), plan-hash checks in every run (B-33), capacity budgets (B-37), fact marks (B-32), the evening push (B-40), weak spots to Quizlet (B-41) and the update bar (B-38). verify-deploy staging green but for the two v3.6 staging tasks still on. CLAUDE.md now scopes the explicit-OK list to build chats (0c3b219); the first scheduled live watchdog after it wrote its start entry. Live stays at 2938dd6",
+   "why": "Scheduled live runs were refused because the safety check reads CLAUDE.md, which said touching the live record needs your OK in the chat",
+   "decision": "Build plan B-28, B-32, B-33, B-37, B-38, B-40, B-41, B-49; D-089, D-093"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "d9612b7",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green with exceptions",
+  "rollback": null,
+  "tasks": [
+   "B-28",
+   "B-33",
+   "B-37",
+   "B-32",
+   "B-40",
+   "B-41",
+   "B-38"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "Staging deployed at c6244e9, 88ed5d7, 377c609, fe4f8a9, d9612b7 and 641863b: verify-deploy now diffs the page's stored tools and checks retired tasks (B-28), plan-hash checks in every run (B-33), capacity budgets (B-37), fact marks (B-32), the evening push (B-40), weak spots to Quizlet (B-41) and the update bar (B-38). verify-deploy staging green but for the two v3.6 staging tasks still on. CLAUDE.md now scopes the explicit-OK list to build chats (0c3b219); the first scheduled live watchdog after it wrote its start entry. Live stays at 2938dd6",
+   "why": "Scheduled live runs were refused because the safety check reads CLAUDE.md, which said touching the live record needs your OK in the chat",
+   "decision": "Build plan B-28, B-32, B-33, B-37, B-38, B-40, B-41, B-49; D-089, D-093"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "641863b",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green with exceptions",
+  "rollback": null,
+  "tasks": [
+   "B-28",
+   "B-33",
+   "B-37",
+   "B-32",
+   "B-40",
+   "B-41",
+   "B-38"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "Staging deployed at c6244e9, 88ed5d7, 377c609, fe4f8a9, d9612b7 and 641863b: verify-deploy now diffs the page's stored tools and checks retired tasks (B-28), plan-hash checks in every run (B-33), capacity budgets (B-37), fact marks (B-32), the evening push (B-40), weak spots to Quizlet (B-41) and the update bar (B-38). verify-deploy staging green but for the two v3.6 staging tasks still on. CLAUDE.md now scopes the explicit-OK list to build chats (0c3b219); the first scheduled live watchdog after it wrote its start entry. Live stays at 2938dd6",
+   "why": "Scheduled live runs were refused because the safety check reads CLAUDE.md, which said touching the live record needs your OK in the chat",
+   "decision": "Build plan B-28, B-32, B-33, B-37, B-38, B-40, B-41, B-49; D-089, D-093"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "e0a4cb8",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-39",
+   "B-53"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "Staging deployed at e0a4cb8, cec78a3 and 0c62f2f: exam scores as edits, predictions and Retake (B-39), idea kinds (B-53). The exams and ideas schema bumps ran on staging (12 exams, 2 ideas, each old form kept in legacy). Lint now accepts a bump's legacy copies, and state/current counts only what its run reads, so lint and rebuild all are green on the full staging export (runs/evening-cloud-20261018-164346237). verify-deploy staging green at 0c62f2f. Live stays at 2938dd6",
+   "why": "M8 needs staging green before it goes live",
+   "decision": "Build plan B-38, B-39, B-41, B-53; D-092, D-094, D-095, D-096, D-109"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "cec78a3",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-39",
+   "B-53"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "Staging deployed at e0a4cb8, cec78a3 and 0c62f2f: exam scores as edits, predictions and Retake (B-39), idea kinds (B-53). The exams and ideas schema bumps ran on staging (12 exams, 2 ideas, each old form kept in legacy). Lint now accepts a bump's legacy copies, and state/current counts only what its run reads, so lint and rebuild all are green on the full staging export (runs/evening-cloud-20261018-164346237). verify-deploy staging green at 0c62f2f. Live stays at 2938dd6",
+   "why": "M8 needs staging green before it goes live",
+   "decision": "Build plan B-38, B-39, B-41, B-53; D-092, D-094, D-095, D-096, D-109"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "0c62f2f",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-39",
+   "B-53"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "Staging deployed at e0a4cb8, cec78a3 and 0c62f2f: exam scores as edits, predictions and Retake (B-39), idea kinds (B-53). The exams and ideas schema bumps ran on staging (12 exams, 2 ideas, each old form kept in legacy). Lint now accepts a bump's legacy copies, and state/current counts only what its run reads, so lint and rebuild all are green on the full staging export (runs/evening-cloud-20261018-164346237). verify-deploy staging green at 0c62f2f. Live stays at 2938dd6",
+   "why": "M8 needs staging green before it goes live",
+   "decision": "Build plan B-38, B-39, B-41, B-53; D-092, D-094, D-095, D-096, D-109"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "live",
+  "commit": "0c62f2f",
+  "time": "2026-10-18",
+  "okFrom": "Matt",
+  "verify": "green with exceptions",
+  "rollback": "2938dd6",
+  "tasks": [],
+  "line": {
+   "date": "Oct 18",
+   "change": "Live deployed at 0c62f2f with your OK (was 2938dd6): system documents, the page with its stored tools, and the exams and ideas updates in one batch (12 exams, 4 ideas, scores E1-E3 moved to their own edit, 16 old versions kept). verify-deploy live green but for the two reader tools that only a desktop-app publish can add. The watchdog's old-slot alerts stop with this build",
+   "why": "M8 live once staging was green",
+   "decision": "Build plan B-28, B-38, B-39, B-41, B-53"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "fb0a5bf",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [],
+  "line": {
+   "date": "Oct 18",
+   "change": "Staging deployed at fb0a5bf: the System tab now says the watchdog runs every 3 hours at :55 and the restore drill monthly on the 1st, 8:55pm (it read them as daily 12:55pm and daily 8:55pm). The page harness passes 192 of 192 on a fresh staging export. verify-deploy staging green at fb0a5bf. Live stays at 0c62f2f",
+   "why": "The harness is a clean gate again",
+   "decision": "Build plan B-37 follow-up"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "47f0d85",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-34",
+   "B-55",
+   "B-27",
+   "B-36"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "Staging deployed at 47f0d85, 92ca50f and c566388: the nightly record lint in state/current.lint, shown on the System tab's Checks card (B-34; first staging firing: 0 errors, 0 warnings, 3 notes); a health check over 4 hours old leads the evening and morning pushes and is marked stale (B-55); a missed evening on the Mac is listed, never re-run (B-27, part 1); the cloud run's checkout is 50 commits deep (B-36). verify-deploy staging green at c566388. Live stays at 0c62f2f",
+   "why": "M7: problems reach you instead of going quiet",
+   "decision": "Build plan B-27, B-34, B-36, B-55"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "92ca50f",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-34",
+   "B-55",
+   "B-27",
+   "B-36"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "Staging deployed at 47f0d85, 92ca50f and c566388: the nightly record lint in state/current.lint, shown on the System tab's Checks card (B-34; first staging firing: 0 errors, 0 warnings, 3 notes); a health check over 4 hours old leads the evening and morning pushes and is marked stale (B-55); a missed evening on the Mac is listed, never re-run (B-27, part 1); the cloud run's checkout is 50 commits deep (B-36). verify-deploy staging green at c566388. Live stays at 0c62f2f",
+   "why": "M7: problems reach you instead of going quiet",
+   "decision": "Build plan B-27, B-34, B-36, B-55"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "c566388",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-34",
+   "B-55",
+   "B-27",
+   "B-36"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "Staging deployed at 47f0d85, 92ca50f and c566388: the nightly record lint in state/current.lint, shown on the System tab's Checks card (B-34; first staging firing: 0 errors, 0 warnings, 3 notes); a health check over 4 hours old leads the evening and morning pushes and is marked stale (B-55); a missed evening on the Mac is listed, never re-run (B-27, part 1); the cloud run's checkout is 50 commits deep (B-36). verify-deploy staging green at c566388. Live stays at 0c62f2f",
+   "why": "M7: problems reach you instead of going quiet",
+   "decision": "Build plan B-27, B-34, B-36, B-55"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "244d5dc",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-29",
+   "B-32"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "Staging deployed at 244d5dc, 804cd88 and be87b84: the weekly checks what is deployed, read-only, and keeps it with the week (B-29; weeks schema 2, bumped on staging, the old form kept in legacy); a re-uploaded Canvas file's pages, chars and ocr no longer count as a changed fact (your answer to the B-32 question). The staging weekly ran with verify green. verify-deploy staging green at be87b84. Live stays at 0c62f2f",
+   "why": "The deploy check runs every Sunday on its own",
+   "decision": "Build plan B-29, B-32 follow-up"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "804cd88",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-29",
+   "B-32"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "Staging deployed at 244d5dc, 804cd88 and be87b84: the weekly checks what is deployed, read-only, and keeps it with the week (B-29; weeks schema 2, bumped on staging, the old form kept in legacy); a re-uploaded Canvas file's pages, chars and ocr no longer count as a changed fact (your answer to the B-32 question). The staging weekly ran with verify green. verify-deploy staging green at be87b84. Live stays at 0c62f2f",
+   "why": "The deploy check runs every Sunday on its own",
+   "decision": "Build plan B-29, B-32 follow-up"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "be87b84",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-29",
+   "B-32"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "Staging deployed at 244d5dc, 804cd88 and be87b84: the weekly checks what is deployed, read-only, and keeps it with the week (B-29; weeks schema 2, bumped on staging, the old form kept in legacy); a re-uploaded Canvas file's pages, chars and ocr no longer count as a changed fact (your answer to the B-32 question). The staging weekly ran with verify green. verify-deploy staging green at be87b84. Live stays at 0c62f2f",
+   "why": "The deploy check runs every Sunday on its own",
+   "decision": "Build plan B-29, B-32 follow-up"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "live",
+  "commit": "b6ed772",
+  "time": "2026-10-18",
+  "okFrom": "Matt",
+  "verify": "green with exceptions",
+  "rollback": "0c62f2f",
+  "tasks": [],
+  "line": {
+   "date": "Oct 18",
+   "change": "Live deployed at b6ed772 with your OK (was 0c62f2f), after verify-deploy staging green at the same commit: the nightly record lint, stale health named in the pushes, a missed Mac evening listed and never re-run, the weekly's own deploy check, and the System tab's corrected schedules. Your evening-mac task now pushes (you turned it on). verify-deploy live green but for the two reader tools, which need a publish from a local session on your Mac",
+   "why": "M7 live",
+   "decision": "Build plan B-27, B-28, B-29, B-34, B-55"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "275bc09",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-47"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging deployed at 275bc09, then 57fdacd: the post-exam retro (B-47). A saved score starts an exam-retro job; the worker writes the retro over examRetro's numbers (prediction against score, practice by objective, weak spots, plan) and its card shows them. verify-deploy staging green at 57fdacd.",
+   "why": "Matt's pick 6: a prediction with no retro teaches calibration nothing. 57fdacd tells the retro the prediction is E.V.'s own after the staging proof's narrative asked Matt to log one.",
+   "decision": "D-104"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "57fdacd",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-47"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging deployed at 275bc09, then 57fdacd: the post-exam retro (B-47). A saved score starts an exam-retro job; the worker writes the retro over examRetro's numbers (prediction against score, practice by objective, weak spots, plan) and its card shows them. verify-deploy staging green at 57fdacd.",
+   "why": "Matt's pick 6: a prediction with no retro teaches calibration nothing. 57fdacd tells the retro the prediction is E.V.'s own after the staging proof's narrative asked Matt to log one.",
+   "decision": "D-104"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "1244ae6",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-51"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging deployed at 1244ae6: the skills checklist in view (B-51). A bottom sheet on the phone (the current step, its count and both buttons, opening to the whole ticked list) and a side panel beside the thread at 1024px and up. verify-deploy staging green.",
+   "why": "He should never scroll up to tick a step.",
+   "decision": "D-107"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "27ad921",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-52"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging deployed at 27ad921: the workout sequence card (B-52). workouts/<id> is a new collection written by the page; CINDY and the 1,500-rep ladder are spec sequences run as a card with a clock, ending with energy and mood; a Workouts list on Record. verify-deploy staging green.",
+   "why": "Start fitness data small, with the runner already in use.",
+   "decision": "D-108"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "8da3b35",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-54",
+   "B-51",
+   "B-52"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging deployed at 8da3b35, 9955300 and d88f222: the page-publish probe and the shareable practice pages (B-54: the share-set job, Share as a page on qualifying sets; the staging diagnostic and worker prompts name their one page), then fixes from running B-51, B-52 and B-54 on the staging page at phone width (the workout in the dock, Stop in the sheet's header, toasts above the sheet, Share above the open set). verify-deploy staging green at d88f222.",
+   "why": "Broad content sets help classmates; a capability proven before it is built on.",
+   "decision": "D-110, D-107, D-108"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "9955300",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-54",
+   "B-51",
+   "B-52"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging deployed at 8da3b35, 9955300 and d88f222: the page-publish probe and the shareable practice pages (B-54: the share-set job, Share as a page on qualifying sets; the staging diagnostic and worker prompts name their one page), then fixes from running B-51, B-52 and B-54 on the staging page at phone width (the workout in the dock, Stop in the sheet's header, toasts above the sheet, Share above the open set). verify-deploy staging green at d88f222.",
+   "why": "Broad content sets help classmates; a capability proven before it is built on.",
+   "decision": "D-110, D-107, D-108"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "d88f222",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-54",
+   "B-51",
+   "B-52"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging deployed at 8da3b35, 9955300 and d88f222: the page-publish probe and the shareable practice pages (B-54: the share-set job, Share as a page on qualifying sets; the staging diagnostic and worker prompts name their one page), then fixes from running B-51, B-52 and B-54 on the staging page at phone width (the workout in the dock, Stop in the sheet's header, toasts above the sheet, Share above the open set). verify-deploy staging green at d88f222.",
+   "why": "Broad content sets help classmates; a capability proven before it is built on.",
+   "decision": "D-110, D-107, D-108"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "42f35e9",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-52",
+   "B-53"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging deployed at 42f35e9 (system documents only; page and tasks unchanged): the B-52/B-53 test additions and the review skill, so the live deploy has a staging-green build to go from. verify-deploy staging green at 42f35e9.",
+   "why": "A build reaches live only through staging (B-35).",
+   "decision": "D-110, D-107, D-108"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "live",
+  "commit": "42f35e9",
+  "time": "2026-10-18",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-47",
+   "B-51",
+   "B-52",
+   "B-54"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 live deployed at 42f35e9 with Matt's OK, from the cloud build chat in ask-first mode: post-exam retro (B-47), skills checklist in view (B-51), workouts (B-52), shareable practice pages (B-54). System documents, the page with its capabilities whole, and the live worker prompt; verify-deploy live green at 42f35e9. Then the hooks probe's SessionStart hook added (5233c64).",
+   "why": "Proven on staging first; the Mac reader tools were already on the page, so no desktop publish was needed.",
+   "decision": "D-104, D-107, D-108, D-110"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "2469e0d",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-76"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging deployed at 2469e0d: core v2 (B-76). The Silk body replaces the ORB, with gestures on send, done and error, speech-paced motion and a still frame per mood under reduced motion; WebGL drawing. verify-deploy staging green at 2469e0d. Live stays at 42f35e9",
+   "why": "M11 starts on staging; D-136 keeps it off live while the D-085 rollback window is open",
+   "decision": "D-122, D-134, D-135, D-136"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "0323f9f",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-77"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging deployed at 0323f9f: Captions (B-77). The E.V. tab shows her current line under the core and earlier lines above, reveals each reply word by word with her speech, loads earlier conversations by pulling down, and sets a side column beside the stage from 900 px. verify-deploy staging green at 0323f9f. Live stays at 42f35e9",
+   "why": "M11 on staging; D-136 keeps it off live while the D-085 rollback window is open",
+   "decision": "D-122, D-127, D-128, D-136"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "8d80543",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-76",
+   "B-77",
+   "B-26"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging deployed at 8d80543: the design chat's amendments to core v2 and Captions (B-76, B-77). Changes: dropped frames are her frame budget and her step-down; a lost WebGL context falls back to 2D; a pull past today goes on day by day to the 7-day edge; a reply shows its first card, sized so her line stays in view; earlier lines are 16 px on desktop; the reveal runs at speech pace and finishes within 6 s. CLAUDE.md gains the hotfix rule (D-138). verify-deploy staging green at 8d80543. Live stays at 42f35e9; B-26's 5:10am proof runs at 8d80543, with no pipeline file changed since 42f35e9",
+   "why": "The design chat's answers to the B-76/B-77 build chat's questions",
+   "decision": "D-122, D-128, D-134, D-135, D-137, D-138"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "1f31900",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-77",
+   "B-26"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging deployed at 1f31900: Captions round 2 (B-77). Her stage centres when nothing is beside her. The greeting's offers are chips (Open the study guide among them) instead of cards. A reply with cards steps her down and shows one card at a time, with n more cards swapping the next in; a card's more opens its tab. A long line pins to the top. verify-deploy staging green at 1f31900. Live stays at 42f35e9; B-26's 5:10am proof runs at 1f31900, with no pipeline file changed since 42f35e9",
+   "why": "The design chat's second round of answers",
+   "decision": "D-122, D-125"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "a078693",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-77",
+   "B-26"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging deployed at a078693: Captions round 3 (B-77). Scrolling through her latest reply's card is still now; Back to now shows only above her latest line. Start a study session keeps the last chip. File it appears when quiet filing cannot run. verify-deploy staging green at a078693. Live stays at 42f35e9; B-26's 5:10am proof runs at a078693, with no pipeline file changed since 42f35e9",
+   "why": "The design chat's third round of answers",
+   "decision": "D-122, D-125"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "6ad8a53",
+  "time": "2026-10-18",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-35"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 staging deployed at 6ad8a53 (a078693 plus notes; system documents only), so staging and the live deploy share one commit (B-35 gate). verify-deploy staging GREEN at 6ad8a53",
+   "why": "The B-35 gate before the live deploy",
+   "decision": "D-139"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "live",
+  "commit": "6ad8a53",
+  "time": "2026-10-18T23:57:00-05:00",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "42f35e9",
+  "tasks": [
+   "B-76",
+   "B-77"
+  ],
+  "line": {
+   "date": "Oct 18",
+   "change": "v4 live deployed at 6ad8a53 (23:57 CT), from 42f35e9: core v2 (B-76) and Captions (B-77) on the live page. deploy live's two printed calls: system manifest, spec and environments in one pinned batch, then the page with its capabilities whole. verify-deploy live GREEN at 6ad8a53, staging GREEN at the same commit. No stored document beyond system/, no pipeline file, prompt, schema, migration or scheduled task changed; the six live tasks are untouched. Rollback is a redeploy of 42f35e9",
+   "why": "Matt's OK in the build chat, under D-139",
+   "decision": "D-139, D-136, D-085"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "329349f",
+  "time": "2026-10-19T00:47:00-05:00",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-82",
+   "B-26"
+  ],
+  "line": {
+   "date": "Oct 19",
+   "change": "v4 staging deployed at 329349f (00:47 CT): the skills runner in Captions (B-82), EV-04. verify-deploy staging GREEN at 329349f. B-26's 5:10am proof runs at 329349f; the only core change is in functions the page alone calls",
+   "why": "The B-35 gate before the live deploy",
+   "decision": "D-139"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "live",
+  "commit": "329349f",
+  "time": "2026-10-19T00:48:00-05:00",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "6ad8a53",
+  "tasks": [
+   "B-82"
+  ],
+  "line": {
+   "date": "Oct 19",
+   "change": "v4 live deployed at 329349f (00:48 CT), from 6ad8a53: the skills runner in Captions (B-82) and the readout's unit EV-04. deploy live's two printed calls; verify-deploy live GREEN at 329349f, staging GREEN at the same commit. Page only: no pipeline file, prompt, schema, migration or scheduled task changed. Rollback is a redeploy of 6ad8a53",
+   "why": "Matt's report and OK in the build chat, under D-139",
+   "decision": "D-139, D-107, D-124, D-122"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "7e17d7c",
+  "time": "2026-10-19T12:14:00-05:00",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-84"
+  ],
+  "line": {
+   "date": "Oct 19",
+   "change": "v4 staging deployed at 7e17d7c (12:14 CT): the session pill and her ring (B-84). verify-deploy staging GREEN",
+   "why": "The B-35 gate before the live deploy",
+   "decision": "D-139"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "live",
+  "commit": "7e17d7c",
+  "time": "2026-10-19T12:17:00-05:00",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "329349f",
+  "tasks": [
+   "B-84"
+  ],
+  "line": {
+   "date": "Oct 19",
+   "change": "v4 live deployed at 7e17d7c (12:17 CT), from 329349f: the study session is a one-line pill and its progress is the ring round her core (B-84). deploy live's two printed calls; verify-deploy live GREEN, staging GREEN at the same commit. Page only. Rollback is a redeploy of 329349f",
+   "why": "Matt's report and OK, under D-139",
+   "decision": "D-139, D-122"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "99b3d3f",
+  "time": "2026-10-19T12:51:00-05:00",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-85"
+  ],
+  "line": {
+   "date": "Oct 19",
+   "change": "v4 staging deployed at 99b3d3f (12:51 CT): the split-screen home (B-85). verify-deploy staging GREEN",
+   "why": "Matt's request, under D-139",
+   "decision": "D-139"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "live",
+  "commit": "99b3d3f",
+  "time": "2026-10-19T12:52:00-05:00",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "7e17d7c",
+  "tasks": [
+   "B-85"
+  ],
+  "line": {
+   "date": "Oct 19",
+   "change": "v4 live deployed at 99b3d3f (12:52 CT), from 7e17d7c: the split-screen home (B-85): tabs in the top bar, no dock or caption, line cards, quiet chips, a shorter stage on short screens. deploy live's two printed calls; verify-deploy live GREEN, staging GREEN at the same commit. Page only. Rollback is a redeploy of 7e17d7c",
+   "why": "Matt's request and OK, under D-139",
+   "decision": "D-139, D-125"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "2c84b86",
+  "time": "2026-10-19T13:52:00-05:00",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-86"
+  ],
+  "line": {
+   "date": "Oct 19",
+   "change": "v4 staging deployed at 2c84b86 (13:52 CT): the study session's stats are one quiet line under her core instead of a pill above her (B-86); the demo copy republished from the same build, with a scripted study session. verify-deploy staging GREEN. Live waits for Matt's OK",
+   "why": "Matt's request, under D-139",
+   "decision": "D-139"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "live",
+  "commit": "2c84b86",
+  "time": "2026-10-19T14:06:00-05:00",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "99b3d3f",
+  "tasks": [
+   "B-86"
+  ],
+  "line": {
+   "date": "Oct 19",
+   "change": "v4 live deployed at 2c84b86 (14:06 CT), from 99b3d3f: the study session's stats are one quiet line under her core instead of a pill above her (B-86). deploy live's two printed calls; verify-deploy live GREEN, staging GREEN at the same commit. Page only. Rollback is a redeploy of 99b3d3f",
+   "why": "Matt's request and OK, under D-139",
+   "decision": "D-139"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "7d67e2b",
+  "time": "2026-10-19T14:52:00-05:00",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-87",
+   "B-88",
+   "B-89"
+  ],
+  "line": {
+   "date": "Oct 19",
+   "change": "v4 staging deployed at 7d67e2b (14:52 CT): a session survives a reload and deploy live waits for a running session (B-87); in a session E.V. reads along and comments on lines that earn it, Quiz me now, the Reading line and the Your notes column (B-88, spec.constants.studyWatch.mode comment); one system font (B-89). The demo republished from the same build. verify-deploy staging GREEN. Live waits for Matt's OK",
+   "why": "Matt's features 10/19, under D-139",
+   "decision": "D-139, D-073"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "live",
+  "commit": "7d67e2b",
+  "time": "2026-10-19T15:10:00-05:00",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "2c84b86",
+  "tasks": [
+   "B-87",
+   "B-88",
+   "B-89"
+  ],
+  "line": {
+   "date": "Oct 19",
+   "change": "v4 live deployed at 7d67e2b (15:10 CT), from 2c84b86: sessions survive a reload and live deploys wait for one (B-87), E.V. reads along and comments in a session with Quiz me now and the notes views (B-88), one system font (B-89). deploy live first read the live record's running sessions (none), then its two printed calls; verify-deploy live GREEN, staging GREEN at the same commit. Rollback is a redeploy of 2c84b86",
+   "why": "Matt's features 10/19 and OK, under D-139",
+   "decision": "D-139, D-073"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "314bb5f",
+  "time": "2026-10-19T15:58:00-05:00",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-90"
+  ],
+  "line": {
+   "date": "Oct 19",
+   "change": "v4 staging (15:58 CT) then live (15:59 CT) at 314bb5f, from 7d67e2b: a one-line greeting over a folded briefing, urgent and new marked, plain text (B-90). deploy live read the running sessions first (none); verify-deploy staging and live GREEN at the same commit; the demo republished from the same build. Page only. Rollback is a redeploy of 7d67e2b",
+   "why": "Matt's request and OK, under D-139",
+   "decision": "D-139, D-125"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "live",
+  "commit": "314bb5f",
+  "time": "2026-10-19T15:59:00-05:00",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "7d67e2b",
+  "tasks": [
+   "B-90"
+  ],
+  "line": {
+   "date": "Oct 19",
+   "change": "v4 staging (15:58 CT) then live (15:59 CT) at 314bb5f, from 7d67e2b: a one-line greeting over a folded briefing, urgent and new marked, plain text (B-90). deploy live read the running sessions first (none); verify-deploy staging and live GREEN at the same commit; the demo republished from the same build. Page only. Rollback is a redeploy of 7d67e2b",
+   "why": "Matt's request and OK, under D-139",
+   "decision": "D-139, D-125"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "staging",
+  "commit": "c049f48",
+  "time": "2026-10-19T16:20:00-05:00",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "tasks": [
+   "B-91"
+  ],
+  "line": {
+   "date": "Oct 19",
+   "change": "v4 staging then live (16:20 CT) at c049f48, from 314bb5f: a reopen starts clean at her greeting, earlier lines of the same conversation folded behind the pull; one-line cards in plain text (B-91). deploy live read the running sessions first (none); verify-deploy staging and live GREEN; the demo republished. Page only. Rollback is a redeploy of 314bb5f",
+   "why": "Matt's report; his OK for the greeting (B-90), under D-139",
+   "decision": "D-139, D-128"
+  },
+  "source": "Changelog tab"
+ },
+ {
+  "target": "live",
+  "commit": "c049f48",
+  "time": "2026-10-19T16:20:00-05:00",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "314bb5f",
+  "tasks": [
+   "B-91"
+  ],
+  "line": {
+   "date": "Oct 19",
+   "change": "v4 staging then live (16:20 CT) at c049f48, from 314bb5f: a reopen starts clean at her greeting, earlier lines of the same conversation folded behind the pull; one-line cards in plain text (B-91). deploy live read the running sessions first (none); verify-deploy staging and live GREEN; the demo republished. Page only. Rollback is a redeploy of 314bb5f",
+   "why": "Matt's report; his OK for the greeting (B-90), under D-139",
+   "decision": "D-139, D-128"
+  },
+  "source": "Changelog tab"
+ }
+]

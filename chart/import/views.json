@@ -1,0 +1,8 @@
+{
+ "doc": "AXwVp9xqpWaUKLE4SqZzwg",
+ "decisionsTab": "https://claude.ai/artifact/AXwVp9xqpWaUKLE4SqZzwg (tab Decisions)",
+ "board": {"node": "56ab7667-6c03", "table": "md3hqtw3ep2.101", "statusEnum": "63e47dab-cdaa", "statusOptions": ["Done", "In progress", "Next", "Waiting on Matt", "Later"]},
+ "changelog": {"node": "c0e7bd09-5507", "table": "md3hqtw3ep2.107"},
+ "overview": {"doc": "659928a7-59aa-4591-a8fd-a371250569e9", "node": "69182c4a-5da1", "paragraph": "mvkrvx62320.9706"},
+ "design": "https://claude.ai/artifact/8DVSMh5WdybjeHVV5m2uQT"
+}

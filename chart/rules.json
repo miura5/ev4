@@ -1,0 +1,34 @@
+[
+ {
+  "id": "R-01",
+  "rule": "While D-085's rollback window is open (B-30 not done), a live deploy changes no stored document, pipeline step, prompt, schema or migration since the live build; anything else waits for the window to close",
+  "decision": "D-139",
+  "task": "B-30",
+  "command": "ship live",
+  "check": "pageOnlyLive"
+ },
+ {
+  "id": "R-02",
+  "rule": "A build reaches live only through staging: verify-deploy staging green at the same commit",
+  "decision": "D-049",
+  "task": "B-35",
+  "command": "ship live (deploy live)",
+  "check": "stagingGate"
+ },
+ {
+  "id": "R-03",
+  "rule": "A live deploy waits while a study session or skills run is going on live (an explicit --during-session on Matt's OK overrides)",
+  "decision": "D-139",
+  "task": "B-87",
+  "command": "ship live (deploy live)",
+  "check": "sessionGate"
+ },
+ {
+  "id": "R-04",
+  "rule": "A live deploy needs Matt's explicit OK in the chat",
+  "decision": "D-083",
+  "task": null,
+  "command": "ship live (deploy live --matt-ok)",
+  "check": "mattOk"
+ }
+]
