@@ -1921,10 +1921,12 @@
   // the "n more cards" line and the gaps; a taller card scrolls inside itself.
   function capFit() {
     const cur = capIn.querySelector('.msg.ev.current'); capIn.querySelectorAll('.msg-cards').forEach(c => { if (!cur || !cur.contains(c)) c.style.removeProperty('--card-max'); });
-    if (!cur) return; const box = cur.querySelector('.msg-cards'); if (!box || !box.firstChild) return;
-    const h = x => x ? x.getBoundingClientRect().height : 0, more = cur.querySelector('.cap-cards-more');
-    const avail = capBox.clientHeight - h(cur.querySelector('.bubble')) - h(cur.querySelector('.msg-meta')) - (more ? h(more) + 12 : 0) - 40;
-    box.style.setProperty('--card-max', Math.max(96, Math.floor(avail)) + 'px');
+    if (!cur) return; const box = cur.querySelector('.msg-cards'), card = box && box.querySelector('.ev-card'); if (!card) return;
+    // Everything of her line but the card (the line, the more line, the meta, the gaps), and what follows it in the
+    // scroller (its bottom padding), measured as laid out, so the card takes exactly what is left.
+    const h = x => x.getBoundingClientRect().height, pad = parseFloat(getComputedStyle(capIn).paddingBottom) || 0;
+    const rest = h(cur) - h(card) + pad + (capIn.lastElementChild !== cur ? capIn.getBoundingClientRect().bottom - cur.getBoundingClientRect().bottom - pad : 0);
+    box.style.setProperty('--card-max', Math.max(40, Math.floor(capBox.clientHeight - rest - 6)) + 'px');
   }
   function dayDivider(day) {
     T.dayDivs = T.dayDivs || new Map(); let d = T.dayDivs.get(day);
