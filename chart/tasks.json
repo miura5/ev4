@@ -1790,5 +1790,24 @@
    "why": "The harnesses (run.cjs, captions.cjs, core.cjs, demo.cjs, shell.cjs) load a staging export kept in a session's scratch folder, and the screenshot scripts live there too, so a fresh session cannot run the full suite without re-exporting staging by hand. Commit a synthetic, non-personal seed and the look scripts to the repo (real exports stay ignored; the personal-data test guards it) so any session can run everything.",
    "notes": "Reported Oct 19 from Oct 19 build chat: Claude's workflow review, filed on Matt's OK"
   }
+ },
+ {
+  "id": "B-101",
+  "kind": "request",
+  "title": "Request (reported Oct 19): One command for every check: npm test plus five harnesses, where core.cjs must run alone and demo.cjs needs tools/demo.mjs run first. Add npm run check that runs them in the right order and ends with the phone and desktop screenshots, so the order is not remembered by hand.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Oct 19 build chat: Claude's workflow review, filed on Matt's OK",
+  "words": "One command for every check: npm test plus five harnesses, where core.cjs must run alone and demo.cjs needs tools/demo.mjs run first. Add npm run check that runs them in the right order and ends with the phone and desktop screenshots, so the order is not remembered by hand.",
+  "reportedAt": "2026-10-19T23:59:10.937Z",
+  "board": {
+   "row": "v4 B-101: One command for every check: npm test plus five harnesses, where…",
+   "why": "One command for every check: npm test plus five harnesses, where core.cjs must run alone and demo.cjs needs tools/demo.mjs run first. Add npm run check that runs them in the right order and ends with the phone and desktop screenshots, so the order is not remembered by hand.",
+   "notes": "Reported Oct 19 from Oct 19 build chat: Claude's workflow review, filed on Matt's OK"
+  }
  }
 ]
