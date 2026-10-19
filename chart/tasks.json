@@ -1351,6 +1351,20 @@
   }
  },
  {
+  "id": "B-78",
+  "kind": "task",
+  "title": "Surfaces (D-123, D-124, D-126): the existing cards as surfaces (Today, review set, dates, readiness, material, practice check), one at a time with the rest as pills; the phone sheet (330 to 410 px, five rows and a more) and the desktop side column; a glance as one opens, a nod and one line on a check-off without moving the list, closing to a pill; the review set as a surface with its pill; a caption's citation span opening the material surface in place of the open one",
+  "dod": "the harness at 390 and 1280: a reply with three cards opens one surface and two pills; ticking a Today item keeps scroll and its neighbours in place (rule 6); a review answered in the surface leaves Review · n of 10 and closes when done; a citation in her current line and in an earlier one opens the passage with the previous surface as a pill; the core's event log shows glance and done; screenshots at both widths",
+  "milestone": "M11",
+  "status": "open",
+  "depends": [
+   "B-77"
+  ],
+  "notes": "Oct 19, added by B-94 from the Build plan tab: it never reached BACKLOG.md, and B-81 depends on it. The Oct 19 page work (B-82 to B-91) may cover part of it: check before starting",
+  "commit": null,
+  "source": "Build plan tab"
+ },
+ {
   "id": "B-81",
   "kind": "task",
   "title": "Captions rollout (D-136, D-139): B-76 and B-77 go live at 6ad8a53 on Matt's OK, and B-78 and B-80 may follow the same way when done (no stored-document change); for the rest, a staging soak of B-74 to B-80 and Matt's phone and desktop check on staging, two minutes of a session included; then, after NUR Exam 4 (Wed Oct 21) and B-30's retirement steps close D-085's window, the talk, sessions, sets and answers migrations on live and the live page by deploy's printed calls on Matt's explicit OK.",
