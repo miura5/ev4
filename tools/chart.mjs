@@ -27,6 +27,9 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { newestTranscript, toolResults } from '../core/transcript.mjs';
+import { verify, verifyReads, deployCalls, formatDeploy, canonical, SYSTEM_IDS } from '../core/deploy.mjs';
+import { readState, withShell } from '../core/verifystate.mjs';
+import { build } from './build.mjs';
 
 const HERE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const FILES = ['tasks', 'decisions', 'deploys', 'rules', 'views'];
@@ -400,8 +403,8 @@ export function changelogLine(d) {
   if (d.line) return d.line;
   const at = d.time && d.time.length > 10 ? ` (${ctClock(d.time)} CT)` : '';
   const verify = d.verify ? ` verify-deploy ${d.target} ${d.verify === 'green' ? 'GREEN' : d.verify}.` : '';
-  const live = d.target === 'live' ? ` Rollback is a redeploy of ${d.rollback || '(none named)'}` : (d.from ? '' : ' Live stays where it is');
-  const change = `v4 ${d.target} deployed at ${d.commit}${at}${d.from ? `, from ${d.from}` : ''}: ${d.summary || 'no summary'}${d.tasks && d.tasks.length ? ` (${d.tasks.join(', ')})` : ''}.${verify}${live}`;
+  const live = d.target === 'live' ? ` Rollback is a redeploy of ${d.rollback || '(none named)'}` : ' Live stays where it is';
+  const change = `v4 ${d.target} deployed at ${d.commit}${at}${d.from ? `, from ${d.from}` : ''}: ${d.summary || 'see the tasks'}${d.tasks && d.tasks.length ? ` (${d.tasks.join(', ')})` : ''}.${verify}${live}`;
   return { date: ctDate(d.time), change: change.replace(/\.\./g, '.'), why: d.why || (d.target === 'live' ? `Matt's OK${d.okFrom && d.okFrom !== 'Matt' ? ' (' + d.okFrom + ')' : ''}` : 'The B-35 gate: staging first'), decision: (d.decisions || []).join(', ') || 'D-049' };
 }
 export function changelogCalls(rec, read) {
@@ -493,7 +496,7 @@ export function applyLog(rec, o, { now = new Date().toISOString() } = {}) {
     const target = o.target; if (!['staging', 'live'].includes(target)) throw new Error('log deploy needs --target staging|live');
     if (!o.commit) throw new Error('log deploy needs --commit');
     const live = rec.deploys.filter(d => d.target === 'live').at(-1);
-    const d = { target, commit: o.commit.slice(0, 7), time: o.time || now, okFrom: o.ok || (target === 'live' ? null : null), verify: o.verify || null, rollback: target === 'live' ? (o.rollback || (live && live.commit) || null) : null, tasks: list(o.tasks), summary: o.summary || null, why: o.why || null, decisions: list(o.decisions), source: 'log' };
+    const d = { target, commit: o.commit.slice(0, 7), time: o.time || now, okFrom: o.ok || null, verify: o.verify || null, rollback: target === 'live' ? (o.rollback || (live && live.commit) || null) : null, from: o.from ? String(o.from).slice(0, 7) : null, tasks: list(o.tasks), summary: o.summary || null, why: o.why || null, decisions: list(o.decisions), source: o.source || 'log' };
     if (target === 'live' && d.okFrom !== 'Matt') throw new Error("a live deploy is recorded with --ok Matt: there is none without his OK");
     if (rec.deploys.some(x => x.target === target && x.commit === d.commit && !x.line)) throw new Error(`a ${target} deploy at ${d.commit} is already recorded`);
     rec.deploys.push(d);
@@ -680,27 +683,109 @@ export function pageOnlyFindings(root, from, to = 'HEAD') {
   const keys = PAGE_ONLY.specKeys.filter(k => JSON.stringify(a[k]) !== JSON.stringify(b[k]));
   return [...bad.map(f => `${f} changed`), ...keys.map(k => `spec.${k} changed`)];
 }
-const tasksHash = tasks => sha256(JSON.stringify(Object.fromEntries(Object.entries(tasks || {}).sort(([x], [y]) => x < y ? -1 : 1).map(([k, t]) => [k, [t.name, t.schedule, t.promptSha256, t.trigger, t.macBound, t.push]]))));
+const tasksHash = tasks => canonical(Object.fromEntries(Object.entries(tasks || {}).map(([k, t]) => [k, [t.name, t.schedule, t.promptSha256, t.trigger, t.macBound, t.push, t.folders]])));
+const pageHash = p => canonical(p ? [p.files, p.capabilities] : null);
 /**
- * The deploy checklist as a pure step: given the build, the saved state and the record, either the refusals, the
- * reads to make, the deploy's calls, or the verified deploy to record. A task read (list_triggers) is skipped when the
- * build's tasks equal those of the deployed manifest: the deploy changes no task, so it prints no task call either.
+ * What this deploy can skip reading, from the deployed system/manifest: its tasks (list_triggers) when the build's
+ * tasks equal the deployed ones, its page (the page reads) when the build's page files and capabilities do, each only
+ * when the record holds a green deploy of this target at the deployed commit (so what is there was verified).
  */
-export function shipStep({ target, manifest, state, verifyResult, reads, deploy, rec, refusals, deployedAt }) {
+export function skips({ manifest, target, deployed, rec }) {
+  if (!deployed) return { tasks: false, pages: false, from: null };
+  const greenAt = rec.deploys.some(d => d.target === target && d.verify === 'green' && String(deployed.commit).startsWith(d.commit));
+  const tasks = (m) => Object.fromEntries(Object.entries(m.tasks || {}).filter(([k, t]) => t.record === target || (target === 'staging' && k.startsWith('build.'))));
+  return { tasks: greenAt && tasksHash(tasks(deployed)) === tasksHash(tasks(manifest)), pages: greenAt && pageHash(deployed.pages && deployed.pages[target]) === pageHash(manifest.pages[target]), from: String(deployed.commit).slice(0, 7) };
+}
+const isTaskRead = r => /list_triggers/.test(r.tool), isPageRead = r => r.tool === 'Artifact';
+const isTaskLine = l => /^(task |scheduled tasks read|retired tasks)/.test(l.what), isPageLine = l => /^(\w+ page read|page stamp|published page files|page capability declaration)/.test(l.what);
+/**
+ * The deploy checklist as one pure step: the refusals; else the reads still to make; else, when verify is green, the
+ * deploy to record; else deploy's calls (minus the task and page calls the skips make needless).
+ */
+export function shipStep({ target, manifest, state, verifyResult, reads, deploy, rec, refusals, skip, stale }) {
   if (refusals.length) return { kind: 'refused', refusals };
-  const deployed = state.record && state.record.manifest;
-  const tasksSame = Boolean(deployed && deployed.tasks && tasksHash(deployed.tasks) === tasksHash(manifest.tasks));
-  const need = reads.filter(r => !(tasksSame && /list_triggers/.test(r.tool)));
+  const deployedRead = state.record && state.record.manifest;
+  const need = reads.filter(r => !(skip.tasks && isTaskRead(r)) && !(skip.pages && isPageRead(r)) && !(!deployedRead && (isTaskRead(r) || isPageRead(r))));
   const missing = need.filter(r => !r.have);
-  if (missing.length || deployedAt.stale) return { kind: 'reads', reads: deployedAt.stale ? need : missing, tasksSame, why: deployedAt.stale ? 'the saved state predates the deploy calls: read it again' : null };
-  const lines = verifyResult.lines.map(l => tasksSame && /^(task |scheduled tasks read|retired tasks)/.test(l.what) && !l.ok ? { ...l, ok: true, detail: `not read: the build's tasks equal the deployed manifest's (${deployed.commit.slice(0, 7)}), so this deploy changes no task` } : l);
-  const green = lines.every(l => l.ok);
-  if (green) {
-    const recorded = rec.deploys.some(d => d.target === target && d.commit === manifest.commit.slice(0, 7));
-    return { kind: 'verified', lines, tasksSame, recorded };
+  if (stale) return { kind: 'reads', reads: need, why: 'the saved state predates the calls ship printed: read it again' };
+  if (missing.length) return { kind: 'reads', reads: missing, why: deployedRead ? null : 'the deployed system documents first: they say which other reads this deploy needs' };
+  const why = what => `not read: the build's ${what} equal the deployed manifest's (${skip.from}, green when deployed), so this deploy changes none`;
+  const lines = verifyResult.lines.map(l => !l.ok && skip.tasks && isTaskLine(l) ? { ...l, ok: true, detail: why('tasks') } : !l.ok && skip.pages && isPageLine(l) ? { ...l, ok: true, detail: why('page files') } : l);
+  if (lines.every(l => l.ok)) return { kind: 'verified', lines, recorded: rec.deploys.some(d => d.target === target && d.commit === manifest.commit.slice(0, 7) && !d.line) };
+  if (!deploy.ok) return { kind: 'refused', refusals: deploy.refusals, lines };
+  const calls = deploy.calls.filter(c => !(skip.tasks && /trigger/.test(c.tool)) && !(skip.pages && c.tool === 'Artifact'));
+  return { kind: 'deploy', lines, calls, skipped: [...(deploy.skipped || []).filter(x => !(skip.tasks && /^\w+\.\w+(-\w+)?: /.test(x))), ...(skip.tasks ? [why('tasks').replace('not read: ', 'no task call: ')] : []), ...(skip.pages ? [why('page files').replace('not read: ', 'no page publish: ')] : [])] };
+}
+/** The record's versions of the system documents, from this session's ArtifactData gets of them. */
+export function versionsFrom(jsonl, url) {
+  const out = {};
+  for (const r of toolResults(jsonl || '', 'ArtifactData')) {
+    const i = r.input || {};
+    if (i.action !== 'get' || i.collection !== 'system' || i.url !== url || !SYSTEM_IDS.includes(i.doc_id) || r.isError) continue;
+    const m = r.texts.join('\n').match(/\bversion\D{0,4}(\d+)/i);
+    if (m) out[i.doc_id] = Number(m[1]);
   }
-  const calls = deploy.calls.filter(c => !(tasksSame && /trigger/.test(c.tool)));
-  return { kind: 'deploy', lines, calls, skipped: [...(deploy.skipped || []), ...(tasksSame ? ['scheduled tasks: the build\'s tasks equal the deployed manifest\'s; no task call'] : [])], tasksSame };
+  return out;
+}
+async function ship(o) {
+  const root = rootOf(o), target = o._[1];
+  if (!['staging', 'live'].includes(target)) throw new Error('ship <staging|live>');
+  const rec = loadChart(root), refusals = [];
+  const red = lintChart(rec).filter(f => f.level === 'error');
+  if (red.length) refusals.push(`the Chart lints red (${red.length}): node tools/chart.mjs lint`);
+  const dist = path.join(root, 'dist'), stateDir = path.join(dist, 'state', target);
+  const { manifest } = await build({ root, out: dist });
+  const read = f => JSON.parse(fs.readFileSync(path.join(dist, 'system', f + '.json'), 'utf8'));
+  const distDocs = { spec: read('spec'), environments: read('environments') };
+  let pushed = false; try { git(root, ['merge-base', '--is-ancestor', manifest.commit, 'origin/main']); pushed = true; } catch { /* not pushed */ }
+  const state = withShell(readState(stateDir), manifest, target, dist);
+  const deployed = state.record && state.record.manifest;
+  if (target === 'live') {
+    // R-04 (D-083): Matt's explicit OK. R-01 (D-139): page-only while D-085's window is open (B-30 not done).
+    if (!o['matt-ok']) refusals.push("R-04 (D-083): a live deploy needs Matt's explicit OK in the chat (then pass --matt-ok)");
+    const b30 = findTask(rec, 'B-30')[0];
+    if (!b30 || b30.status !== 'done') {
+      const base = (deployed && deployed.commit) || ((rec.deploys.filter(d => d.target === 'live').at(-1)) || {}).commit;
+      const found = base ? pageOnlyFindings(root, base, manifest.commit) : ['no live build to compare with'];
+      if (found.length) refusals.push(`R-01 (D-139): D-085's rollback window is open (B-30 not done), so live takes page-only changes; since live's ${String(base).slice(0, 7)}: ${found.join('; ')}`);
+    }
+  }
+  const skip = skips({ manifest, target, deployed, rec });
+  const have = p => p.endsWith('/') ? fs.existsSync(p) && fs.readdirSync(p).length > 0 : fs.existsSync(p);
+  const reads = verifyReads({ manifest, target, stateDir }).map(r => ({ ...r, have: have(r.save) }));
+  const shipFile = path.join(dist, `ship-${target}.json`), last = fs.existsSync(shipFile) ? JSON.parse(fs.readFileSync(shipFile, 'utf8')) : null;
+  const savedAt = f => (fs.existsSync(f) ? fs.statSync(f).mtimeMs : 0);
+  const stale = Boolean(last && last.commit === manifest.commit && savedAt(path.join(stateDir, 'record', 'system', 'manifest.json')) < last.at);
+  const verifyResult = verify({ manifest, target, state, build: { pushed }, dist: distDocs, sha256 });
+  const file = o.transcript || newestTranscript(), jsonl = file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+  const versions = { ...versionsFrom(jsonl, `https://claude.ai/artifact/${manifest.records[target].artifact}`), ...(o.version ? Object.fromEntries(list(o.version).map(kv => kv.split('=')).map(([k, v]) => [k, Number(v)])) : {}) };
+  const stagingVerify = fs.existsSync(path.join(dist, 'verify-staging.json')) ? JSON.parse(fs.readFileSync(path.join(dist, 'verify-staging.json'), 'utf8')) : null;
+  const deploy = deployCalls({ manifest, target, distDir: dist, build: { pushed }, versions, mattOk: Boolean(o['matt-ok']), duringSession: Boolean(o['during-session']), state, sha256, stagingVerify, stateDir });
+  const step = shipStep({ target, manifest, state, verifyResult, reads, deploy, rec, refusals, skip, stale });
+  const head = `ship ${target}: ${manifest.release} at ${manifest.commit.slice(0, 7)}`;
+  if (step.kind === 'refused') { console.log([`${head}: REFUSED`, ...step.refusals.map(r => '  ' + r)].join('\n')); return 1; }
+  if (step.kind === 'reads') {
+    console.log([`${head}: ${step.reads.length} read${step.reads.length === 1 ? '' : 's'} to make${step.why ? ` (${step.why})` : ''}, then run ship ${target} again:`, ...step.reads.flatMap(r => [`  ${r.tool} ${JSON.stringify(r.args)}`, `    -> ${r.save}${r.note ? '  (' + r.note + ')' : ''}`]),
+      ...(skip.tasks ? [`  not needed: list_triggers (the build's tasks equal the deployed manifest's, ${skip.from})`] : []), ...(skip.pages ? [`  not needed: the page reads (the build's page files equal the deployed manifest's, ${skip.from})`] : [])].join('\n'));
+    return 1;
+  }
+  if (step.kind === 'deploy') {
+    const missingV = SYSTEM_IDS.filter(id => state.record && state.record[id] && !versions[id]);
+    if (missingV.length) { console.log(`${head}: the versions of ${missingV.join(', ')} are not in this session's ArtifactData replies: pass --version ${missingV.map(id => id + '=<n>').join(',')}`); return 1; }
+    fs.writeFileSync(shipFile, JSON.stringify({ commit: manifest.commit, at: Date.now() }));
+    console.log(formatDeploy(target, { ...deploy, calls: step.calls, skipped: step.skipped }).replace(`deploy ${target}:`, `${head}:`).replace(`then run verify-deploy ${target}.`, `then make the reads below again and run ship ${target}.`));
+    console.log(['', 'Reads after the calls:', ...reads.filter(r => !(skip.tasks && isTaskRead(r)) && !(skip.pages && isPageRead(r))).map(r => `  ${r.tool} ${JSON.stringify(r.args)}`)].join('\n'));
+    return 0;
+  }
+  // verified: the gate file deploy live reads (B-35), then the deploy in the record.
+  fs.writeFileSync(path.join(dist, `verify-${target}.json`), JSON.stringify({ target, release: manifest.release, commit: manifest.commit, green: true, lines: step.lines, by: 'ship' }, null, 1));
+  console.log([`${head}: GREEN`, ...step.lines.map(l => `  ${l.ok ? 'ok ' : 'NO '} ${l.what}${l.detail ? ': ' + l.detail : ''}`)].join('\n'));
+  if (step.recorded) { console.log(`the ${target} deploy at ${manifest.commit.slice(0, 7)} is in the record`); return 0; }
+  const prev = rec.deploys.filter(d => d.target === target).at(-1);
+  let tasks = list(o.tasks);
+  if (!tasks.length && prev) { try { tasks = [...new Set(ids(git(root, ['log', '--format=%s', `${prev.commit}..${manifest.commit}`])).filter(x => x.startsWith('B-')))].reverse(); } catch { /* history too shallow */ } }
+  const names = tasks.map(id => (rec.tasks.find(t => t.id === id) || {})).filter(t => t.id).map(t => boardName(t).replace(/^v4 B-\d+: /, ''));
+  return record({ ...o, _: ['log', 'deploy'], target, commit: manifest.commit, verify: 'green', ok: target === 'live' ? 'Matt' : undefined, tasks: tasks.join(','), from: prev && prev.commit, summary: o.summary || names.join('; ') || null, why: o.why || null, decisions: o.decisions || null }, applyLog);
 }
 
 // ------------------------------------------------------------------------------------------------ brief
@@ -785,7 +870,7 @@ const commands = {
   log(o) { return record(o, applyLog); },
   report(o) { return record(o, applyReport); },
   brief(o) { const id = o.task || o._[1]; if (!id) throw new Error('brief --task <id>'); console.log(brief(loadChart(rootOf(o)), id, { root: rootOf(o) })); return 0; },
-  ship() { throw new Error('ship comes with B-96'); },
+  ship(o) { return ship(o); },
 };
 function record(o, apply) {
   const root = rootOf(o), rec = loadChart(root);

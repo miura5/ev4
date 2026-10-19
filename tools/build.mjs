@@ -25,10 +25,21 @@ function git(root, args) {
   return execFileSync('git', ['-C', root, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
 }
 
-/** The tree git would commit (tracked plus untracked-not-ignored), and whether it differs from HEAD. */
+// The project record (M12): chart/ and the BACKLOG.md generated from it. Nothing is built from them.
+export const BOOKKEEPING = [/^chart\//, /^BACKLOG\.md$/];
+const bookkeeping = f => BOOKKEEPING.some(re => re.test(f));
+
+/**
+ * The tree git would commit (tracked plus untracked-not-ignored), and whether it differs from HEAD. The build's
+ * commit is the newest that changed anything but the bookkeeping (M12): recording a task or a deploy in chart/ never
+ * moves it, so verify-deploy stays green across it, and a bookkeeping change left uncommitted is not dirt.
+ */
 export function gitState(root) {
-  const commit = git(root, ['rev-parse', 'HEAD']).trim();
-  const porcelain = git(root, ['status', '--porcelain', '--untracked-files=all']).split('\n').filter(Boolean);
+  let commit = '';
+  try { commit = git(root, ['log', '-1', '--format=%H', '--', '.', ':(exclude)chart', ':(exclude)BACKLOG.md']).trim(); } catch { /* none in a shallow checkout */ }
+  if (!commit) commit = git(root, ['rev-parse', 'HEAD']).trim();
+  const porcelain = git(root, ['status', '--porcelain', '--untracked-files=all']).split('\n').filter(Boolean)
+    .filter(l => !l.slice(3).split(' -> ').every(bookkeeping));
   const files = git(root, ['ls-files', '--cached', '--others', '--exclude-standard', '-z']).split('\0').filter(Boolean)
     .filter(f => fs.existsSync(path.join(root, f)));
   return { commit, dirty: porcelain.length > 0, changes: porcelain, files };

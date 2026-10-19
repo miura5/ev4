@@ -264,3 +264,22 @@ test('B-95: a Board comment is filed from the comment query and answered with it
   assert.throws(() => C.applyReport(r, { _: ['report', 'bug'], 'from-comment': 'u-1' }, { jsonl }), /already filed/);
   assert.match(C.formatInbox(C.inboxPlan(r, jsonl)), /B-04 \(bug, .*from Board comment u-1\): "the Quiz me button does nothing on my phone"/);
 });
+
+// ------------------------------------------------------------------------------------------------ B-96 the build's commit
+test('B-96: a bookkeeping commit (chart/, BACKLOG.md) never moves the build\'s commit; a code commit does', async () => {
+  const dir = copyRepo(), out = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-chart-dist-'));
+  const g = (...a) => execFileSync('git', ['-C', dir, '-c', 'user.name=T', '-c', 'user.email=t@example.com', ...a], { encoding: 'utf8' }).trim();
+  const first = (await build({ root: dir, out })).manifest;
+  assert.equal(first.commit, g('rev-parse', 'HEAD'));
+  fs.appendFileSync(path.join(dir, 'BACKLOG.md'), '\n');
+  fs.writeFileSync(path.join(dir, 'chart', 'note.json'), '{}');
+  assert.equal((await build({ root: dir, out })).manifest.dirty, false, 'an uncommitted bookkeeping change is not dirt');
+  g('add', '-A'); g('commit', '-q', '-m', 'B-00: done (chart)');
+  const after = (await build({ root: dir, out })).manifest;
+  assert.equal(after.commit, first.commit, 'the chart commit leaves the build where it was');
+  assert.deepEqual(after.files, first.files);
+  fs.appendFileSync(path.join(dir, 'core', 'batches.mjs'), '\n');
+  assert.equal((await build({ root: dir, out })).manifest.dirty, true);
+  g('commit', '-qam', 'B-00: code');
+  assert.equal((await build({ root: dir, out })).manifest.commit, g('rev-parse', 'HEAD'));
+});
