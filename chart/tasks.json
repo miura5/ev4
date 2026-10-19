@@ -1847,5 +1847,24 @@
    "why": "demo/runtime.js re-scripts session timing, the reading-along comments and the wrap-up by hand, so every UI change needs a matching demo edit, and the demo has drifted before. Generate more of the demo from the real build and core, leaving only the fake data scripted.",
    "notes": "Reported Oct 19 from Oct 19 build chat: Claude's workflow review, filed on Matt's OK"
   }
+ },
+ {
+  "id": "B-104",
+  "kind": "request",
+  "title": "Request (reported Oct 19): Question for Matt: should a validation or a clinical tomorrow count as urgent in the greeting's briefing? Today urgent means an exam today or tomorrow, or graded work due today and not ticked.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Oct 19 build chat: Claude's workflow review, filed on Matt's OK",
+  "words": "Question for Matt: should a validation or a clinical tomorrow count as urgent in the greeting's briefing? Today urgent means an exam today or tomorrow, or graded work due today and not ticked.",
+  "reportedAt": "2026-10-19T23:59:11.627Z",
+  "board": {
+   "row": "v4 B-104: Question for Matt: should a validation or a clinical tomorrow count…",
+   "why": "Question for Matt: should a validation or a clinical tomorrow count as urgent in the greeting's briefing? Today urgent means an exam today or tomorrow, or graded work due today and not ticked.",
+   "notes": "Reported Oct 19 from Oct 19 build chat: Claude's workflow review, filed on Matt's OK"
+  }
  }
 ]
