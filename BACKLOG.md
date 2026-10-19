@@ -1,8 +1,8 @@
 # E.V. v4 build backlog
 
-The sequence every build session follows. Full definitions of done are in the Build plan tab of E.V. Foundation
-v4; this file is the live status board. Status: `open` · `in progress` · `blocked` · `done`. A task opens when
-every id in Depends is `done`. Edit only the Status and Notes columns; commit every change.
+**Generated from the Chart (chart/tasks.json) by `node tools/chart.mjs`: never edit this file by hand** (D-140).
+Change the record with `log`, `report` or `ship`; npm test fails when this file and the record differ.
+Status: `open` · `in progress` · `blocked` · `done`. A task opens when every id in Depends is `done`.
 
 | Id | Task | Depends | Milestone | Status | Notes |
 | --- | --- | --- | --- | --- | --- |

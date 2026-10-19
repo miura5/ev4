@@ -22,5 +22,17 @@
   "node": "69182c4a-5da1",
   "paragraph": "mvkrvx62320.9706"
  },
- "design": "https://claude.ai/artifact/8DVSMh5WdybjeHVV5m2uQT"
+ "design": "https://claude.ai/artifact/8DVSMh5WdybjeHVV5m2uQT",
+ "decisions": {
+  "node": "a539154c-4802",
+  "table": "md3hqtw3ep2.88",
+  "intro": "md3hqtw3ep2.10",
+  "statusEnum": "3756a9a8-59cf",
+  "statusOptions": [
+   "Accepted",
+   "Revisit",
+   "Superseded",
+   "Proposed"
+  ]
+ }
 }

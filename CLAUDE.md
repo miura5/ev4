@@ -6,30 +6,46 @@ repository is v4 from its first commit. The design is finished before you start;
 
 **The design lives in one doc:** E.V. Foundation v4, https://claude.ai/artifact/Fgb2KjoLKcRgCRrBmM6kEf
 (tabs: main · v3 audit · Data architecture · Operational architecture · Features · Build plan). Read it with the
-Claude Docs tools. The Decisions log stays in the v3 doc: https://claude.ai/artifact/AXwVp9xqpWaUKLE4SqZzwg
-(tabs: Board, Changelog, Decisions; next id **D-122**; D-084 to D-121 are accepted, D-115 proposed; D-059 superseded by D-106). The v3 code you port from is `miura5/ev-core`
-(read-only to you; attach it with `add_repo` when a task needs it).
+Claude Docs tools. The project record is **the Chart** (`chart/`, design https://claude.ai/artifact/8DVSMh5WdybjeHVV5m2uQT,
+D-140): tasks, reports, decisions, deploys and the rules commands enforce, written only through `tools/chart.mjs`.
+BACKLOG.md, the Board and Changelog tabs of the v3 doc (https://claude.ai/artifact/AXwVp9xqpWaUKLE4SqZzwg), its
+Decisions tab and the overview doc's status line are printed from it; no view is edited by hand. Decisions keep their
+reasoning in the Decisions tab; `chart/decisions.json` holds id, title, status, supersedes and amends, and `log
+decision` takes only the next free id. The v3 code you port from is `miura5/ev-core` (read-only to you; attach it
+with `add_repo` when a task needs it).
 
 ## Every session
 
-1. Read this file, `BACKLOG.md`, and the Build plan tab. If `core/cli.mjs` has `verify-deploy`, run
-   `node core/cli.mjs verify-deploy staging` and read its answer first.
-2. Take the lowest `open` task in `BACKLOG.md` whose dependencies are `done`. Mark it `in progress` with the
-   session's date in the Notes column, commit that, and say which task you took.
-3. A task is one backlog id. If it needs a schema, a spec shape or a decision the design does not give, write the
-   question in the task's Notes, mark it `blocked`, commit, and move to the next open task. Code-level choices are
-   yours.
-4. Prove it exactly as its definition of done says. `npm test` green first. Where a pipeline is involved, the proof
-   is a scheduled task fired against staging and its `runs/<id>` read back, never a hand replay. Where the page is
-   involved, the harness at phone and desktop width, and look at the screenshots.
-5. Ship: commit with the task id first in the message (`B-07: lint and rebuild`), then the attribution lines the
-   session gives you; push to `main`. If `deploy` exists: `deploy staging`, run every printed call, `verify-deploy
-   staging` green. **Never deploy live** without Matt's explicit OK in the chat; `deploy live` also refuses unless
-   `dist/verify-staging.json` is green at the same commit (B-35), so a build reaches live only through staging.
-6. Record: mark the task `done` in `BACKLOG.md` with one line of Notes (commit it); a Board row in the v3 doc; a
-   Changelog line per staging deploy. Never a date on anything that gates work.
-7. Continue with the next open task until none is open or every open task is blocked. Then stop and leave a
-   summary in the last task's Notes.
+Every command below is `node tools/chart.mjs <command>`; each that writes the record commits it (pass the session's
+attribution lines with `--trailer`, one per line) and prints the Docs calls that bring the views in line. Make those
+calls exactly as printed, read the view again when asked, and run `views` until it says the views are in step.
+
+1. Read this file. Run `node core/cli.mjs verify-deploy staging` and read its answer.
+2. Triage first: `inbox` lists the Board comments to file (`report bug|request --from-comment <id>`, then the printed
+   reply) and every entry waiting in the inbox. Each becomes a task (`log <id> --triage task --dod ... --milestone
+   ...`), joins one (`--triage join <id>`), or is declined with a reason (`--triage decline --reason ...`); nothing
+   is deleted. A bug that breaks studying is taken before any other open task. When Matt says "bug: ..." or
+   "idea: ..." in the chat, file it at once with `report bug|request --from-chat` (his words come from the
+   transcript, never retyped).
+3. Take the lowest `open` task in BACKLOG.md whose dependencies are `done`; `brief --task <id>` is its one page.
+   Start it with `log <id> --status "in progress" --note "..."` (`--name` and `--why` give it a Board row the first
+   time) and say which task you took. `log` refuses while an entry waits in the inbox.
+4. A task is one id. If it needs a schema, a spec shape or a decision the design does not give, `log <id> --status
+   blocked --note "<the question>" --waiting-on Matt`, and move to the next open task. Code-level choices are yours.
+5. Prove it exactly as its definition of done says. `npm test` green first (it runs the Chart's lint). Where a
+   pipeline is involved, the proof is a scheduled task fired against staging and its `runs/<id>` read back, never a
+   hand replay. Where the page is involved, the harness at phone and desktop width, and look at the screenshots.
+6. Ship: commit with the task id first in the message (`B-07: lint and rebuild`), then the attribution lines the
+   session gives you; push to `main`. Then `ship staging` and make every call and read it prints, running it again
+   each time, until it says GREEN: it records the deploy and prints the Changelog line. **Never deploy live** without
+   Matt's explicit OK in the chat; `ship live --matt-ok` also refuses what `chart/rules.json` forbids (R-01 page-only
+   live while D-085's window is open, D-139; R-02 staging green at the same commit, B-35; R-03 no running study
+   session, B-87; R-04 Matt's OK), so a build reaches live only through staging.
+7. Record: `log <id> --status done --commit <sha> --note "<one line>"` (`--board-note` for the Board's plain words),
+   then `views`, as above. A decision is `log decision <next id> --title ... --why ... --status ...`. Never a date on
+   anything that gates work.
+8. Continue with the next open task until none is open or every open task is blocked. Then stop and leave a
+   summary in the last task's notes (`log <id> --note ...`).
 
 ## Unattended runs
 
@@ -94,7 +110,8 @@ unread by v3). In a Mac-linked desktop-app chat with Matt present, in order, not
 6. A Board row and a Changelog line say what was rolled back and why.
 
 **Live hotfixes while the window is open (D-138).** `main` carries core v2 and Captions, which D-136 keeps off live
-until D-085's window closes. Until then a live hotfix never starts from `main`: branch from the live build (42f35e9),
+until D-085's window closes. Until then a live hotfix never starts from `main`: branch from the live build (the newest
+live deploy in `chart/deploys.json`; c049f48 on Oct 19),
 commit the fix there, deploy staging at the hotfix commit and get `verify-deploy staging` green, deploy live only on
 Matt's explicit OK, then cherry-pick the fix onto `main` and redeploy staging from `main`. The B-35 gate still holds,
 because staging runs the hotfix commit before live does.
@@ -104,6 +121,7 @@ because staging runs the hotfix commit before live does.
 | What | Where |
 | --- | --- |
 | v4 design | E.V. Foundation v4 (link above) |
+| Project record (the Chart) | `chart/` via `tools/chart.mjs`; BACKLOG.md is generated from it (D-140) |
 | v3 source, live | `miura5/ev-core`; live record https://claude.ai/artifact/Bu8RevP4r1twPdSGc77nfg |
 | v4 staging record + page | created in B-12 / B-15; ids go into `spec/ev.spec.json` `registry` |
 | Mac folder | Documents/E.V. Study Watch (v4 uses its `staging/` subfolder until cutover) |

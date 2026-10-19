@@ -79,12 +79,20 @@ export const ctTwelve = iso => {
 };
 
 // ------------------------------------------------------------------------------------------------ BACKLOG.md
-export const BACKLOG_HEADER = [
+// As BACKLOG.md stood when the Chart imported it (B-92), and as it reads since the cutover (B-97, D-140).
+export const BACKLOG_HEADER_IMPORTED = [
   '# E.V. v4 build backlog',
   '',
   'The sequence every build session follows. Full definitions of done are in the Build plan tab of E.V. Foundation',
   'v4; this file is the live status board. Status: `open` · `in progress` · `blocked` · `done`. A task opens when',
   'every id in Depends is `done`. Edit only the Status and Notes columns; commit every change.',
+];
+export const BACKLOG_HEADER = [
+  '# E.V. v4 build backlog',
+  '',
+  '**Generated from the Chart (chart/tasks.json) by `node tools/chart.mjs`: never edit this file by hand** (D-140).',
+  'Change the record with `log`, `report` or `ship`; npm test fails when this file and the record differ.',
+  'Status: `open` · `in progress` · `blocked` · `done`. A task opens when every id in Depends is `done`.',
 ];
 const COLUMNS = '| Id | Task | Depends | Milestone | Status | Notes |\n| --- | --- | --- | --- | --- | --- |';
 // A | inside a field would split the cell (GFM splits on every unescaped |), so the generator escapes it.
@@ -419,6 +427,26 @@ export function changelogCalls(rec, read) {
   }
   return ops.length ? [{ step: `Changelog: ${notes.join(', ')}`, ...docCall(rec.views.doc, v.node, ops) }] : [];
 }
+/** The Decisions tab: a row per decision logged since the import (newest on top), its Status chip, and the intro's next id. */
+export function decisionsCalls(rec, read, intro) {
+  const v = rec.views.decisions; if (!v) return [];
+  const ops = [], notes = [];
+  const rows = read.rows.slice(1), header = read.rows[0].id, opts = v.statusOptions;
+  const word = d => d.status.charAt(0).toUpperCase() + d.status.slice(1);
+  for (const d of [...rec.decisions].reverse()) {
+    const i = rows.findIndex(r => r.cells[1].text === d.id);
+    if (i < 0) {
+      if (d.source !== 'log') continue;
+      ops.push({ op: 'insert', target: { kind: 'blocks', ids: [header] }, side: 'after', source: { as: 'blocks', from: { kind: 'inline', content: [{ type: 'row', content: [textCell(d.date), textCell(d.id), textCell(d.title), textCell(d.why), textCell(word(d))] }] } } });
+      notes.push(`${d.id}: a new row`); continue;
+    }
+    const c = rows[i].cells[4];
+    if (!sameStatus(c, { option: word(d) }, opts)) { ops.push({ op: 'replace', target: { kind: 'cell', table: v.table, row: i + 1, col: 4 }, ifRev: read.rev, with: { as: 'markdown', from: { kind: 'inline', content: '<?claude block st?>' }, blocks: { st: { type: 'dropdown', enum: v.statusEnum, index: opts.indexOf(word(d)) } } } }); notes.push(`${d.id}: status ${word(d)}`); }
+  }
+  const m = intro && intro.text.match(/next id (D-\d{3})/), next = nextDecisionId(rec);
+  if (m && m[1] !== next) { ops.push({ op: 'replace', target: { kind: 'find', text: m[0] }, with: { as: 'text', from: { kind: 'inline', content: `next id ${next}` } } }); notes.push(`next id ${next}`); }
+  return ops.length ? [{ step: `Decisions: ${notes.join('; ')}`, ...docCall(rec.views.doc, v.node, ops) }] : [];
+}
 const STATUS_LINE = /on build ([0-9a-f]{7,}) since (\S+?) on ([A-Z][a-z]{2} \d{1,2})/;
 /** The overview doc's status line: the build live runs and since when, from the newest live deploy. */
 export function overviewCalls(rec, para) {
@@ -450,6 +478,7 @@ export function viewReads(rec, jsonl) {
   const all = toolResults(jsonl, '*');
   const isRead = r => /Claude_Docs__read$/.test(r.name), isUpdate = r => /Claude_Docs__(update|batch)$/.test(r.name);
   const want = { board: [rec.views.board.node, rec.views.board.table], changelog: [rec.views.changelog.node, rec.views.changelog.table], overview: [rec.views.overview.node, rec.views.overview.paragraph] };
+  if (rec.views.decisions) Object.assign(want, { decisions: [rec.views.decisions.node, rec.views.decisions.table], decisionsIntro: [rec.views.decisions.node, rec.views.decisions.intro] });
   const out = {};
   for (const [k, [node, parent]] of Object.entries(want)) {
     let at = -1;
@@ -461,14 +490,16 @@ export function viewReads(rec, jsonl) {
 }
 export const readCall = (doc, node, parentId) => ({ tool: 'mcp__Claude_Docs__read', args: { ref: { object: 'node', id: node }, engine: 'prose', container: { kind: 'project', id: doc }, payload: { kind: 'view', parentId } } });
 /** Views: the reads still to make, else the calls. which: the views to cover (default all three). */
-export function viewsPlan(rec, reads, which = ['board', 'changelog', 'overview']) {
+export function viewsPlan(rec, reads, which = ['board', 'changelog', 'overview', ...(rec.views.decisions ? ['decisions', 'decisionsIntro'] : [])]) {
   const v = rec.views, needs = [], calls = [], notes = [];
-  const call = { board: () => readCall(v.doc, v.board.node, v.board.table), changelog: () => readCall(v.doc, v.changelog.node, v.changelog.table), overview: () => readCall(v.overview.doc, v.overview.node, v.overview.paragraph) };
+  const call = { board: () => readCall(v.doc, v.board.node, v.board.table), changelog: () => readCall(v.doc, v.changelog.node, v.changelog.table), overview: () => readCall(v.overview.doc, v.overview.node, v.overview.paragraph),
+    decisions: () => readCall(v.doc, v.decisions.node, v.decisions.table), decisionsIntro: () => readCall(v.doc, v.decisions.node, v.decisions.intro) };
   for (const k of which) {
     const r = reads[k];
     if (!r || r.missing || r.stale || !r.body) { needs.push({ view: k, ...call[k](), why: !r || r.missing ? 'no read in this session' : r.stale ? 'updated since the last read' : 'the last read was refused' }); continue; }
     if (k === 'board') calls.push(...boardCalls(rec, parseTableXml(r.body.xml)));
     if (k === 'changelog') calls.push(...changelogCalls(rec, parseTableXml(r.body.xml)));
+    if (k === 'decisions') calls.push(...decisionsCalls(rec, parseTableXml(r.body.xml), reads.decisionsIntro && reads.decisionsIntro.body && !reads.decisionsIntro.stale ? parseParagraphXml(reads.decisionsIntro.body.xml, v.decisions.intro) : null));
     if (k === 'overview') for (const c of overviewCalls(rec, parseParagraphXml(r.body.xml, v.overview.paragraph))) (c.note ? notes : calls).push(c.note || c);
   }
   return { needs, calls, notes };
@@ -506,13 +537,13 @@ export function applyLog(rec, o, { now = new Date().toISOString() } = {}) {
     const did = o._[2]; if (!/^D-\d{3}$/.test(did || '')) throw new Error('log decision <D-id> --title ...');
     const old = rec.decisions.find(d => d.id === did);
     if (!old && did !== nextDecisionId(rec)) throw new Error(`the next free decision id is ${nextDecisionId(rec)}, not ${did}`);
-    const d = old || { id: did, date: ctDate(now), title: '', why: '', status: 'proposed', supersedes: [], amends: [] };
+    const d = old || { id: did, date: ctDate(now), title: '', why: '', status: 'proposed', supersedes: [], amends: [], source: 'log' };
     if (o.title) d.title = o.title; if (o.why) d.why = o.why; if (o.status) d.status = o.status;
     if (o.supersedes) d.supersedes = list(o.supersedes); if (o.amends) d.amends = list(o.amends);
     if (!d.title) throw new Error('a decision needs --title');
     if (!old) rec.decisions.unshift(d);
     for (const s of d.supersedes) { const x = rec.decisions.find(y => y.id === s); if (x) x.status = 'superseded'; }
-    return { rec, what: `decision ${did} (${d.status})`, id: did, views: [] };
+    return { rec, what: `decision ${did} (${d.status})`, id: o.task || did, views: ['decisions', 'decisionsIntro'] };
   }
   if (id === 'new') {
     // A task the design names that the record lacks (the Build plan tab's B-74, say): never an id already in use.

@@ -33,7 +33,8 @@ test('B-92: the import regenerates BACKLOG.md row for row', () => {
   a.forEach((l, i) => assert.deepEqual(C.parseBacklogRow(b[i]), C.parseBacklogRow(l), `row ${i + 1} (${l.slice(0, 8)}) differs`));
   // Text differs only where a | inside a field is now escaped (it split the cell: B-26's notes, B-42's ||).
   assert.deepEqual(a.filter((l, i) => l !== b[i]).map(l => l.slice(2, 6)), ['B-26', 'B-42']);
-  assert.equal(gen.split('\n| Id |')[0], before.split('\n| Id |')[0], 'the header is today\'s');
+  assert.equal(C.renderBacklog(imported(), { header: C.BACKLOG_HEADER_IMPORTED }).split('\n| Id |')[0], before.split('\n| Id |')[0], 'the header was today\'s');
+  assert.match(gen, /Generated from the Chart .* never edit this file by hand/, 'since the cutover (B-97) it says it is generated');
 });
 
 test('B-92: the import holds every decision, the v4 deploys and the Board rows', () => {
