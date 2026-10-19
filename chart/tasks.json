@@ -1365,6 +1365,22 @@
   "source": "Build plan tab"
  },
  {
+  "id": "B-79",
+  "kind": "task",
+  "title": "Study session in Captions (D-129, D-130, D-133): started by talking; the session bar and ring; listening; the notes bar with reader v2's title and a glance at each new line; comments through core.commentGate with the quote, the notes bar holding while she speaks; the session menu (Comments More, Some, Off; Quiz me now) and the level carried to the next session; the seven-minute check on the surface with alert mood and chips hidden, its format from checkFormat, a recoil and one line on a wrong pick, hit and missed points and Add to it once on an open answer; Break (sleepy, ring dimmed, clock paused, checks held); End's one filing line; desktop Your notes",
+  "dod": "core tests on commentGate: the 4-minute and 4-line limits at Some, 2 and 2 at More, none at Off, none during a check, a break, the minute before a check or while answering, a correction taking the next slot; the harness runs the proposal's Study session sequence step by step on fake time against the reader stub at 390 and 1280 with a screenshot per step; a staging session's sessions/ss-* and talk read back with session, note and comments",
+  "milestone": "M11",
+  "status": "open",
+  "depends": [
+   "B-74",
+   "B-75",
+   "B-78"
+  ],
+  "notes": "Oct 19, added by B-94 from the Build plan tab: it never reached BACKLOG.md, and B-81 depends on it. The Oct 19 page work (B-82 to B-91) may cover part of it: check before starting",
+  "commit": null,
+  "source": "Build plan tab"
+ },
+ {
   "id": "B-81",
   "kind": "task",
   "title": "Captions rollout (D-136, D-139): B-76 and B-77 go live at 6ad8a53 on Matt's OK, and B-78 and B-80 may follow the same way when done (no stored-document change); for the rest, a staging soak of B-74 to B-80 and Matt's phone and desktop check on staging, two minutes of a session included; then, after NUR Exam 4 (Wed Oct 21) and B-30's retirement steps close D-085's window, the talk, sessions, sets and answers migrations on live and the live page by deploy's printed calls on Matt's explicit OK.",
