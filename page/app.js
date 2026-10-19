@@ -1933,12 +1933,12 @@
     node.replaceChildren(...kids, body);
     rec = { el: node, sig, cardsBox, rise, msg: m }; T.els.set(m.id, rec); return rec;
   }
-  // The present: the newest line at the bottom; but when her current line and its card are taller than the captions,
-  // her line pins to the top and the card runs on below it (the card never scrolls inside itself; her line never
-  // leaves view). That pinned place counts as now for Back to now.
+  // The present: the newest line at the bottom; but when her current line (with its card) is taller than the captions,
+  // its start pins to the top and the rest runs on below it (a card never scrolls inside itself; her line never leaves
+  // view). That pinned place counts as now for Back to now.
   function pinNow() {
-    const cur = capIn.querySelector('.msg.ev.current'), card = cur && cur.querySelector('.ev-card'); CAP.anchorTop = null;
-    if (card) { const r = cur.getBoundingClientRect(), t = capBox.getBoundingClientRect();
+    const cur = capIn.querySelector('.msg.ev.current'); CAP.anchorTop = null;
+    if (cur) { const r = cur.getBoundingClientRect(), t = capBox.getBoundingClientRect();
       if (r.height > capBox.clientHeight - 16) { capBox.scrollTop += r.top - t.top - 8; CAP.anchorTop = capBox.scrollTop; return; } }
     capBox.scrollTop = capBox.scrollHeight;
   }
