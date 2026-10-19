@@ -59,9 +59,30 @@ test('a pull loads the previous conversation with its count, and stops at the st
   assert.equal(cs.length, 4);
   const first = EV.earlierConversation(cs, 1, today); assert.equal(first.count, 2); assert.deepEqual(first.conversation.messages.map(m => m.id), ['n1', 'n2']);
   const second = EV.earlierConversation(cs, 2, today); assert.equal(second.count, 4);
-  assert.equal(EV.earlierConversation(cs, 3, today), null, 'yesterday evening lies wholly before today: that is the start of today');
-  assert.equal(EV.earlierConversation(cs, 4, today), null);
+  assert.deepEqual(EV.earlierConversation(cs, 3, today), { edge: 'today' }, 'yesterday evening lies wholly before today: that is the start of today');
+  assert.deepEqual(EV.earlierConversation(cs, 4, today), { edge: 'today' });
   // A conversation that began last night and ran past midnight ends today: it can be loaded.
   const t2 = [msg('a', at(17, 23, 50), 'matt'), msg('b', at(18, 0, 10)), msg('g', at(18, 9, 0))];
   const c2 = EV.conversations(t2); assert.equal(EV.earlierConversation(c2, 1, today).count, 2);
+});
+
+test('past the start of today a further pull goes on into earlier days, one conversation at a time, to the 7-day edge (D-128 as amended)', () => {
+  const today = '2026-10-18', windowStart = '2026-10-11';
+  const t = [
+    msg('o1', at(10, 20, 0), 'matt'), msg('o2', at(10, 20, 1)),                                   // Oct 10: outside the window
+    msg('f1', at(16, 9, 0), 'matt'), msg('f2', at(16, 9, 1)), msg('f3', at(16, 9, 2)),            // Fri, Oct 16
+    msg('y1', at(17, 20, 0), 'matt'), msg('y2', at(17, 20, 1)),                                   // yesterday evening
+    msg('n1', at(18, 12, 0), 'matt'), msg('n2', at(18, 12, 1)),                                   // noon
+    msg('g', at(18, 19, 0)),                                                                        // the greeting, now
+  ];
+  const cs = EV.conversations(t); const o = { pastToday: true, windowStart };
+  assert.equal(EV.earlierConversation(cs, 1, today).count, 2);
+  assert.deepEqual(EV.earlierConversation(cs, 2, today), { edge: 'today' }, 'first the start of today');
+  const y = EV.earlierConversation(cs, 2, today, o); assert.equal(y.count, 2); assert.deepEqual(y.conversation.messages.map(m => m.id), ['y1', 'y2']);
+  const f = EV.earlierConversation(cs, 3, today, o); assert.equal(f.count, 3);
+  assert.deepEqual(EV.earlierConversation(cs, 4, today, o), { edge: 'window' }, 'Oct 10 ended before the window: everything from the last 7 days');
+  assert.deepEqual(EV.earlierConversation(cs, 5, today, o), { edge: 'window' });
+  // With nothing older at all, the window edge comes once today is past.
+  const c2 = EV.conversations([msg('g', at(18, 9, 0))]);
+  assert.deepEqual(EV.earlierConversation(c2, 1, today), { edge: 'today' }); assert.deepEqual(EV.earlierConversation(c2, 1, today, o), { edge: 'window' });
 });
