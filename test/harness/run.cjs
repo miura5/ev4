@@ -136,7 +136,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     await page.screenshot({ path: `${shots}/today-${scheme}.png`, fullPage: true });
     await page.click('#tab-ev'); await page.waitForTimeout(100);
     if (scheme === 'desktop') {
-      await page.locator('#qchips .qchip', { hasText: 'What’s due this week?' }).click(); await page.waitForTimeout(900);
+      await send(page, 'What’s due this week?'); // typed: with review, a finished job and the session chip it has no chip (D-125) await page.waitForTimeout(900);
       await page.screenshot({ path: `${shots}/ev-desktop-conversation.png`, fullPage: false });
       // B-53 (D-109) at desktop width: the kind on every idea, the weak-spot action only on a learning idea
       await page.click('#tab-record'); await page.waitForTimeout(150);
@@ -158,7 +158,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     }
     await page.waitForTimeout(1500);
     ok('open marks lastSeenAt in talk/memory', await page.evaluate(() => !!(window.__db.talk && window.__db.talk.memory && window.__db.talk.memory.lastSeenAt)));
-    await page.locator('#qchips .qchip', { hasText: 'What’s due this week?' }).click(); await page.waitForTimeout(250);
+    await send(page, 'What’s due this week?'); // typed: with review, a finished job and the session chip it has no chip (D-125) await page.waitForTimeout(250);
     let m = await msgs(page);
     ok('quick ask posts Matt + E.V. to talk/<today>', m.length === 2 && m[0].role === 'matt' && m[1].role === 'ev' && m[1].cards[0].type === 'dates', JSON.stringify(m.map(x => [x.role, x.text.slice(0, 30)])));
     ok('dates card shown', /Next 7 days/.test(await page.locator('#thread .msg.ev').last().textContent()));

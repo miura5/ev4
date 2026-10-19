@@ -49,12 +49,12 @@ for (let i = 1; i <= 9; i++) { const d = dayBefore(today, -i); seed.dates['harne
 for (const c of ['sessions', 'workouts']) for (const [id, d] of Object.entries(seed[c] || {})) if ((d.date || (d.startedAt && fmt(new Date(d.startedAt)))) === today) delete seed[c][id];
 const ORIGIN = 'https://ev.local'; const TYPES = { '.js': 'text/javascript', '.json': 'application/json', '.css': 'text/css' };
 const skeleton = b => '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0}[hidden]{display:none!important}</style></head><body>' + b + '</body></html>';
-async function openPage(page) {
+async function openPage(page, db = seed) {
   await page.clock.install({ time: NOW });
   const dir = path.join(root, 'dist/page/staging');
   await page.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
   await page.route(ORIGIN + '/**', r => { const name = new URL(r.request().url()).pathname.slice(1) || 'index.html'; if (name === 'index.html') return r.fulfill({ body: skeleton(fs.readFileSync(path.join(dir, 'index.html'), 'utf8')), contentType: 'text/html' }); const f = path.join(dir, name); return fs.existsSync(f) ? r.fulfill({ body: fs.readFileSync(f), contentType: TYPES[path.extname(name)] || 'application/octet-stream' }) : r.fulfill({ status: 404, body: '' }); });
-  await page.addInitScript('window.__db=' + JSON.stringify(seed) + ';' + stub);
+  await page.addInitScript('window.__db=' + JSON.stringify(db) + ';' + stub);
   await page.goto(ORIGIN + '/');
   await page.waitForFunction(() => document.querySelector('#thread .msg.greet'), null, { timeout: 15000 });
 }
@@ -297,10 +297,11 @@ async function sideBySide(browser, left, right, out, vp) {
     await ctx.close();
   }
   // D-125 as amended: File it is the fallback chip when quiet filing cannot run; here the reader is unreachable and
-  // two Study Watch sessions wait.
+  // two Study Watch sessions wait. With no review left and no unseen job, it takes a priority slot.
   { const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: 'dark' });
     const page = await ctx.newPage(); await page.addInitScript(() => { window.__readerFail = 'server_not_connected'; window.__readerSessions = { sessions: [{ id: 'h1', title: 'Harness note one', modifiedAt: new Date().toISOString() }, { id: 'h2', title: 'Harness note two', modifiedAt: new Date().toISOString() }] }; });
-    await openPage(page); await page.waitForTimeout(2500);
+    const quiet = JSON.parse(JSON.stringify(seed)); delete (quiet.sets || {})['review-' + today]; quiet.talk.memory = { ...(quiet.talk.memory || {}), lastSeenAt: new Date(Date.now() + 864e5).toISOString() };
+    await openPage(page, quiet); await page.waitForTimeout(2500);
     const chips = await page.evaluate(() => [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent));
     ok('[phone] with the reader unreachable, File it is offered, Start a study session still last', chips.includes('File it') && chips.length === 3 && chips[2] === 'Start a study session', JSON.stringify(chips));
     await ctx.close(); }
