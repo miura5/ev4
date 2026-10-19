@@ -207,7 +207,10 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     // Captions (B-77): the brand, like tapping her, returns to now from wherever he has scrolled
     await page.evaluate(() => { const t = document.getElementById('thread'); t.scrollTop = 0; t.dispatchEvent(new Event('scroll')); }); await page.waitForTimeout(150);
     await page.click('#brand'); await page.waitForTimeout(900);
-    ok('tapping the brand returns to now', await page.evaluate(() => { const t = document.getElementById('thread'); return t.scrollHeight - t.clientHeight - t.scrollTop < 4 && document.getElementById('ev-now').hidden; }));
+    // Now is the bottom, or, when her current line and its card are taller than the captions, her line pinned at the top.
+    const bn = await page.evaluate(() => { const t = document.getElementById('thread'), cur = t.querySelector('.msg.ev.current'), tr = t.getBoundingClientRect(), cr = cur && cur.getBoundingClientRect();
+      return { atBottom: t.scrollHeight - t.clientHeight - t.scrollTop < 4, linePinned: !!cr && Math.abs(cr.top - tr.top - 8) < 4, pill: !document.getElementById('ev-now').hidden }; });
+    ok('tapping the brand returns to now', (bn.atBottom || bn.linePinned) && !bn.pill, JSON.stringify(bn));
     // Logging a weak spot from the conversation
     await page.evaluate(() => { window.__chatScript = [{ tool: 'add_weakspot', input: { topic: 'Isotonic vs hypotonic IV fluids', objective: 'E4-3' } }, { tool: 'show_card', input: { type: 'weakspots' } }]; window.__chatReply = 'Logged.'; });
     await send(page, 'I keep mixing up isotonic and hypotonic fluids, log that'); await page.waitForTimeout(250);
