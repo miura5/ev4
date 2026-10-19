@@ -1,0 +1,7 @@
+{
+ "hooks": {
+  "SessionStart": [
+   { "hooks": [ { "type": "command", "command": "date -u +%FT%TZ > /tmp/ev4-hook-marker 2>/dev/null || true" } ] }
+  ]
+ }
+}
