@@ -163,7 +163,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     ok('quick ask posts Matt + E.V. to talk/<today>', m.length === 2 && m[0].role === 'matt' && m[1].role === 'ev' && m[1].cards[0].type === 'dates', JSON.stringify(m.map(x => [x.role, x.text.slice(0, 30)])));
     ok('dates card shown', /Next 7 days/.test(await page.locator('#thread .msg.ev').last().textContent()));
     // Captions (B-77): after his first message she stays on her stage at 80%; no core moves to the top bar or a message.
-    ok('after his first message her core stays on her stage, at the conversation step', await page.evaluate(() => document.getElementById('hero').dataset.step === 'conversation' && document.querySelector('#top-av').getBoundingClientRect().width < 1));
+    ok('after his first message her core stays on her stage, a step down (her reply carries the dates card: the list step)', await page.evaluate(() => document.getElementById('hero').dataset.step === 'list' && document.querySelector('#top-av').getBoundingClientRect().width < 1));
     ok('one live core, her stage: none on the messages', (await page.locator('#thread .ev-av canvas').count()) === 0 && (await page.locator('#hero canvas').count()) === 1);
     // Chat that starts a background job through the page tools and the Claude Code Remote connector
     await page.evaluate(() => { window.__chatScript = [{ tool: 'start_job', input: { kind: 'study-guide', title: 'Study guide: fluid balance', brief: 'Matt asked for a study guide on fluid balance for Exam 4.' } }]; window.__chatReply = 'On it. Study guide queued.'; });
@@ -724,8 +724,13 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     const hasEvent = test => async () => { const s = await sess(); return !!s && Object.values(s.events || {}).some(test); };
     // Without the reader (a browser tab or the iPhone), E.V. says where to open the page
     await ss.evaluate(() => { window.__readerFail = 'server_not_connected'; });
-    ok('session chip offered', (await ss.locator('#qchips .qchip', { hasText: 'Start a study session' }).count()) === 1);
-    await ss.locator('#qchips .qchip', { hasText: 'Start a study session' }).click(); await ss.waitForTimeout(300);
+    // D-125 as amended: at most three chips, the greeting's offers first; the session chip fills a free slot, and the
+    // session also starts typed.
+    const sc = await ss.evaluate(() => [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent));
+    const offers = ['Start review', 'Open the study guide', 'File it', 'What’s due this week?'];
+    ok('session chip offered when a slot is free (at most three chips, offers first)', sc.length <= 3 && (sc.includes('Start a study session') || sc.every(c => offers.includes(c))), JSON.stringify(sc));
+    if (sc.includes('Start a study session')) await ss.locator('#qchips .qchip', { hasText: 'Start a study session' }).click(); else await send(ss, 'Start a study session');
+    await ss.waitForTimeout(300);
     ok('no reader: says to open the desktop app, starts nothing', /Claude desktop app on your Mac/.test((await msgs(ss)).slice(-1)[0].text) && !(await sess()), (await msgs(ss)).slice(-1)[0].text);
     // A #graded note is refused
     await ss.evaluate(() => { window.__readerFail = null; }); await setNote('', { graded: true });

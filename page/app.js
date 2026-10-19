@@ -1068,7 +1068,7 @@
   // The top bar's core is tucked away (styles.css) while her stage core is up or a session runs; then it does not draw.
   const topOrb = CORE.make(40, { follow: true, when: () => !document.body.matches('.on-ev.captions, .on-ev.opening, .on-ev.in-session, .on-ev.core-big') }); $('top-av').append(topOrb.el);
   // A resize keeps the newest line in view when he was reading it (the layout steps at 900 px move everything).
-  addEventListener('resize', () => { heroOrb.resize(coreStage().px); renderStage(); if (CAP.stick) requestAnimationFrame(() => { capBox.scrollTop = capBox.scrollHeight; capBox.dispatchEvent(new Event('scroll')); }); });
+  addEventListener('resize', () => { heroOrb.resize(coreStage().px); renderStage(); if (CAP.stick) requestAnimationFrame(() => { pinNow(); capBox.dispatchEvent(new Event('scroll')); }); });
 
   // ---------------------------------------------------------------- Captions (B-77; D-122, D-127, D-128)
   // The E.V. tab without the thread: her stage, her lines under her (the current one large, earlier ones above, smaller
@@ -1091,7 +1091,7 @@
   // The side column is there only while it holds something (D-122 as amended): B-78's surfaces and a session's notes
   // go in #ev-side; with nothing in it her stage centres in the window.
   const sideSync = () => document.body.classList.toggle('side-on', capSide.childElementCount > 0);
-  new MutationObserver(() => { sideSync(); requestAnimationFrame(() => { if (CAP.stick) capBox.scrollTop = capBox.scrollHeight; }); }).observe(capSide, { childList: true }); sideSync();
+  new MutationObserver(() => { sideSync(); requestAnimationFrame(() => { if (CAP.stick) pinNow(); }); }).observe(capSide, { childList: true }); sideSync();
   $('hero').addEventListener('click', () => backToNow());
   // One announcement per finished sentence (D-127); the region keeps its last few.
   function announce(key, text) { text = String(text || '').replace(/\s+/g, ' ').trim(); if (!text || CAP.said.has(key)) return; CAP.said.add(key);
@@ -1125,8 +1125,9 @@
   }
   capBox.addEventListener('scroll', () => {
     const t = capBox, fromBottom = t.scrollHeight - t.clientHeight - t.scrollTop;
-    CAP.stick = fromBottom < 30;
-    const away = fromBottom > 140; if (capNow.hidden === away) { capNow.hidden = !away; if (away) capNow.style.bottom = ($('composer').offsetHeight + 12) + 'px'; }
+    const atAnchor = CAP.anchorTop != null && Math.abs(t.scrollTop - CAP.anchorTop) < 30;
+    CAP.stick = fromBottom < 30 || atAnchor;
+    const away = fromBottom > 140 && !atAnchor; if (capNow.hidden === away) { capNow.hidden = !away; if (away) capNow.style.bottom = ($('composer').offsetHeight + 12) + 'px'; }
     // Leaving the top after an edge (the start of today, the 7-day edge) readies the next full pull.
     if ((CAP.pull === 'start' || CAP.pull === 'window') && t.scrollTop > 40) CAP.pull = null;
     const p = Math.max(0, Math.min(1, (160 - t.scrollTop) / 160)); if (!CAP.pull) pullView(p, null);
@@ -1145,7 +1146,7 @@
   }
   function backToNow() {
     if (ui.tab !== 'ev') return; CAP.loaded = 0; CAP.pastToday = false; CAP.pull = null; CAP.stick = true; capNow.hidden = true; renderThread();
-    requestAnimationFrame(() => capBox.scrollTo({ top: capBox.scrollHeight, behavior: REDUCE ? 'auto' : 'smooth' }));
+    requestAnimationFrame(() => { if (CAP.anchorTop == null) capBox.scrollTo({ top: capBox.scrollHeight, behavior: REDUCE ? 'auto' : 'smooth' }); });
   }
   // Matt's line echoes above the composer for about 3 s, then fades; it is announced once.
   function capEcho(id, text) {
@@ -1932,6 +1933,15 @@
     node.replaceChildren(...kids, body);
     rec = { el: node, sig, cardsBox, rise, msg: m }; T.els.set(m.id, rec); return rec;
   }
+  // The present: the newest line at the bottom; but when her current line and its card are taller than the captions,
+  // her line pins to the top and the card runs on below it (the card never scrolls inside itself; her line never
+  // leaves view). That pinned place counts as now for Back to now.
+  function pinNow() {
+    const cur = capIn.querySelector('.msg.ev.current'), card = cur && cur.querySelector('.ev-card'); CAP.anchorTop = null;
+    if (card) { const r = cur.getBoundingClientRect(), t = capBox.getBoundingClientRect();
+      if (r.height > capBox.clientHeight - 16) { capBox.scrollTop += r.top - t.top - 8; CAP.anchorTop = capBox.scrollTop; return; } }
+    capBox.scrollTop = capBox.scrollHeight;
+  }
   function dayDivider(day) {
     T.dayDivs = T.dayDivs || new Map(); let d = T.dayDivs.get(day);
     if (!d) {
@@ -1974,7 +1984,7 @@
     if (convs.length && !T.readyAt) T.readyAt = setTimeout(() => { T.ready = true; }, 900);
     renderStage();
     // The newest line stays in view unless he has scrolled up to read.
-    if ((CAP.stick || T.scrollTo) && ui.tab === 'ev') { T.scrollTo = null; T.firstScroll = false; requestAnimationFrame(() => { capBox.scrollTop = capBox.scrollHeight; }); }
+    if ((CAP.stick || T.scrollTo) && ui.tab === 'ev') { T.scrollTo = null; T.firstScroll = false; requestAnimationFrame(pinNow); }
   }
 
   // ---------------------------------------------------------------- writing to the thread
