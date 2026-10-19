@@ -500,7 +500,7 @@ export function applyLog(rec, o, { now = new Date().toISOString() } = {}) {
     if (target === 'live' && d.okFrom !== 'Matt') throw new Error("a live deploy is recorded with --ok Matt: there is none without his OK");
     if (rec.deploys.some(x => x.target === target && x.commit === d.commit && !x.line)) throw new Error(`a ${target} deploy at ${d.commit} is already recorded`);
     rec.deploys.push(d);
-    return { rec, what: `${target} deploy at ${d.commit}`, id: d.tasks[0] || 'deploy', views: target === 'live' ? ['changelog', 'overview'] : ['changelog'] };
+    return { rec, what: `${target} deploy at ${d.commit}`, id: d.tasks.at(-1) || 'deploy', views: target === 'live' ? ['changelog', 'overview'] : ['changelog'] };
   }
   if (id === 'decision') {
     const did = o._[2]; if (!/^D-\d{3}$/.test(did || '')) throw new Error('log decision <D-id> --title ...');
@@ -707,7 +707,9 @@ export function shipStep({ target, manifest, state, verifyResult, reads, deploy,
   const deployedRead = state.record && state.record.manifest;
   const need = reads.filter(r => !(skip.tasks && isTaskRead(r)) && !(skip.pages && isPageRead(r)) && !(!deployedRead && (isTaskRead(r) || isPageRead(r))));
   const missing = need.filter(r => !r.have);
-  if (stale) return { kind: 'reads', reads: need, why: 'the saved state predates the calls ship printed: read it again' };
+  // After the calls, only what they changed is read again: a deploy with no task or page call leaves those reads true.
+  const changed = r => !isTaskRead(r) && !isPageRead(r) || (stale.tasks && isTaskRead(r)) || (stale.pages && isPageRead(r));
+  if (stale) return { kind: 'reads', reads: need.filter(changed), why: 'the saved state predates the calls ship printed: read what they changed again' };
   if (missing.length) return { kind: 'reads', reads: missing, why: deployedRead ? null : 'the deployed system documents first: they say which other reads this deploy needs' };
   const why = what => `not read: the build's ${what} equal the deployed manifest's (${skip.from}, green when deployed), so this deploy changes none`;
   const lines = verifyResult.lines.map(l => !l.ok && skip.tasks && isTaskLine(l) ? { ...l, ok: true, detail: why('tasks') } : !l.ok && skip.pages && isPageLine(l) ? { ...l, ok: true, detail: why('page files') } : l);
@@ -756,7 +758,7 @@ async function ship(o) {
   const have = p => p.endsWith('/') ? fs.existsSync(p) && fs.readdirSync(p).length > 0 : fs.existsSync(p);
   const reads = verifyReads({ manifest, target, stateDir }).map(r => ({ ...r, have: have(r.save) }));
   const savedAt = f => (fs.existsSync(f) ? fs.statSync(f).mtimeMs : 0);
-  const stale = Boolean(last && last.commit === manifest.commit && savedAt(path.join(stateDir, 'record', 'system', 'manifest.json')) < last.at);
+  const stale = last && last.commit === manifest.commit && savedAt(path.join(stateDir, 'record', 'system', 'manifest.json')) < last.at ? { tasks: last.touched ? last.touched.tasks : true, pages: last.touched ? last.touched.pages : true } : null;
   const verifyResult = verify({ manifest, target, state, build: { pushed }, dist: distDocs, sha256 });
   const file = o.transcript || newestTranscript(), jsonl = file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
   const versions = { ...versionsFrom(jsonl, `https://claude.ai/artifact/${manifest.records[target].artifact}`), ...(o.version ? Object.fromEntries(list(o.version).map(kv => kv.split('=')).map(([k, v]) => [k, Number(v)])) : {}) };
@@ -773,9 +775,10 @@ async function ship(o) {
   if (step.kind === 'deploy') {
     const missingV = SYSTEM_IDS.filter(id => state.record && state.record[id] && !versions[id]);
     if (missingV.length) { console.log(`${head}: the versions of ${missingV.join(', ')} are not in this session's ArtifactData replies: pass --version ${missingV.map(id => id + '=<n>').join(',')}`); return 1; }
-    fs.writeFileSync(shipFile, JSON.stringify({ commit: manifest.commit, at: Date.now(), skip }));
+    fs.writeFileSync(shipFile, JSON.stringify({ commit: manifest.commit, at: Date.now(), skip, touched: { tasks: step.calls.some(c => /trigger/.test(c.tool)), pages: step.calls.some(c => c.tool === 'Artifact') } }));
     console.log(formatDeploy(target, { ...deploy, calls: step.calls, skipped: step.skipped }).replace(`deploy ${target}:`, `${head}:`).replace(`then run verify-deploy ${target}.`, `then make the reads below again and run ship ${target}.`));
-    console.log(['', 'Reads after the calls:', ...reads.filter(r => !(skip.tasks && isTaskRead(r)) && !(skip.pages && isPageRead(r))).map(r => `  ${r.tool} ${JSON.stringify(r.args)}`)].join('\n'));
+    const again = reads.filter(r => !isTaskRead(r) && !isPageRead(r) || (isTaskRead(r) && step.calls.some(c => /trigger/.test(c.tool))) || (isPageRead(r) && step.calls.some(c => c.tool === 'Artifact')));
+    console.log(['', 'Reads after the calls (only what they change):', ...again.map(r => `  ${r.tool} ${JSON.stringify(r.args)}`)].join('\n'));
     return 0;
   }
   // verified: the gate file deploy live reads (B-35), then the deploy in the record.
@@ -798,26 +801,58 @@ export function brief(rec, id, { root = HERE } = {}) {
   const inbox = rec.tasks.filter(x => x.status === 'inbox');
   const lintF = lintChart(rec).filter(f => f.level === 'error');
   const live = rec.deploys.filter(d => d.target === 'live').at(-1), staging = rec.deploys.filter(d => d.target === 'staging').at(-1);
-  const out = [`# Brief: ${t.id}`, ''];
+  const out = [`# Brief: ${t.id}`, '', `Read first: CLAUDE.md (the hard limits and the every-session steps). Design: E.V. Foundation v4 (https://claude.ai/artifact/Fgb2KjoLKcRgCRrBmM6kEf, Build plan tab); the Chart's own: ${rec.views.design}.`, ''];
   out.push('## Inbox first', inbox.length ? inbox.map(x => `- ${x.id} (${x.kind}, ${x.reportedAt}, from ${x.source}): "${x.words}". Triage: log ${x.id} --triage task --dod "..." --milestone M.. | --triage join <id> | --triage decline --reason "..."`).join('\n') : '- Empty: nothing to triage.', '');
   out.push(`## The task: ${t.id} (${t.status}, ${t.milestone})`, taskText(t), '', t.notes ? `Notes: ${t.notes}` : 'Notes: none yet.', '');
   out.push('## Depends on', t.depends.length ? t.depends.map(d => `- ${d}: ${byId[d] ? byId[d].status : 'NOT IN THE RECORD'}${byId[d] ? ' (' + (byId[d].title.slice(0, 80)) + ')' : ''}`).join('\n') : '- Nothing.', t.dependsText ? `As written: ${t.dependsText}` : '', '');
   out.push('## Decisions it rests on', named.length ? named.map(d => decisions[d] ? `- ${d} (${decisions[d].status}): ${decisions[d].title.slice(0, 240)}${decisions[d].title.length > 240 ? '…' : ''}` : `- ${d}: not in the record`).join('\n') : '- None named in the task; the hard limits and D-139 below still hold.', `Reasoning in full: ${rec.views.decisionsTab}`, '');
+  out.push('## Where to look', ...whereToLook(root, [t.title, t.dod, t.notes].join(' ')), '');
   out.push('## What it may touch',
     '- The repository, on main; npm test green before every push.',
     '- Staging: deploy and verify through `node tools/chart.mjs ship staging`.',
     "- Never live without Matt's explicit OK in the chat (R-04); live goes through `ship live`, which refuses what rules.json forbids:",
     ...rec.rules.map(r => `  - ${r.id} (${r.decision}${r.task ? ', ' + r.task : ''}): ${r.rule}`),
+    '- A change to tools/prompts.mjs, spec.pipelines or spec.tasks changes scheduled-task prompts: deploy prints update_trigger for the cloud ones; a Mac-bound one changes only from a chat linked to the Mac with Matt present; a task prompt\'s hard limits stay absolute.',
     '- The hard limits in CLAUDE.md: no help on graded work, no patient identifiers, Canvas read-only, nothing posted as Matt, nothing deleted.', '');
-  out.push('## Tonight\'s runs (live, Central time)', ...runWindows(root), '');
+  out.push('## The next 24 hours of live runs', ...runWindows(root), '');
   out.push('## Where things stand', `- Live: ${live ? `${live.commit}, ${live.time}` : 'none recorded'}. Staging: ${staging ? `${staging.commit}, ${staging.time}` : 'none recorded'}.`, `- Chart lint: ${lintF.length ? lintF.length + ' errors (node tools/chart.mjs lint)' : 'green'}.`, '');
   out.push('## Record as you go', `- Start: node tools/chart.mjs log ${t.id} --status "in progress" --note "..."`, `- Finish: node tools/chart.mjs log ${t.id} --status done --commit <sha> --note "one line"; then views prints the Board call.`);
   return out.join('\n');
 }
-function runWindows(root) {
+/** The files and spec keys a task's text names, resolved against the checkout (spec.persona -> spec/ev.spec.json "persona"). */
+export function whereToLook(root, text) {
+  const out = [], seen = new Set();
+  let spec = {}; try { spec = readJson(path.join(root, 'spec', 'ev.spec.json')); } catch { /* none */ }
+  for (const m of String(text).matchAll(/\b((?:core|page|tools|spec|scripts|test|studywatch)\/[\w./-]+\.\w+)\b/g)) if (!seen.has(m[1]) && fs.existsSync(path.join(root, m[1]))) { seen.add(m[1]); out.push(`- ${m[1]}`); }
+  for (const m of String(text).matchAll(/\bspec\.(\w+)(?:\.(\w+))?/g)) {
+    const k = m[1] + (m[2] && spec[m[1]] && spec[m[1]][m[2]] !== undefined ? '.' + m[2] : '');
+    if (spec[m[1]] !== undefined && !seen.has(k)) { seen.add(k); out.push(`- spec/ev.spec.json "${k}" (${Buffer.byteLength(JSON.stringify(k.split('.').reduce((o, x) => o[x], spec)))} bytes)`); }
+  }
+  for (const w of ['page copy', 'prompts', 'harness']) if (new RegExp(`\\b${w}\\b`).test(text) && !seen.has(w)) { seen.add(w); out.push(`- ${{ 'page copy': 'page/app.js and page/index.src.html (the page\'s words)', prompts: 'tools/prompts.mjs (every task prompt) and the guides in spec.jobs', harness: 'test/harness/*.cjs (the page harness, at phone and desktop width)' }[w]}`); }
+  return out.length ? [...out, '- Then grep for the task\'s own words; dist/ is build output, never a source.'] : ['- The task names no file: grep for its words (dist/ is build output, never a source).'];
+}
+/** The live tasks' runs in the next 24 hours, Central time, from their cron schedules (minute, hour, day, weekday). */
+export function nextRuns(tasks, now = new Date()) {
+  const field = (f, lo, hi) => f === '*' ? null : new Set(f.split(',').map(Number).filter(n => n >= lo && n <= hi));
+  const out = [];
+  for (const [k, t] of Object.entries(tasks || {})) {
+    const m = String((t && t.schedule) || '').match(/^(?:CRON_TZ=\S+ )?(\S+) (\S+) (\S+) (\S+) (\S+)$/);
+    if (!m) continue;
+    const [mins, hours, doms, , dows] = [field(m[1], 0, 59), field(m[2], 0, 23), field(m[3], 1, 31), null, field(m[5], 0, 6)];
+    for (let i = 0; i < 24 * 60; i++) {
+      const at = new Date(Math.ceil(now.getTime() / 60e3) * 60e3 + i * 60e3);
+      const p = parts(at, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', day: 'numeric', weekday: 'short' });
+      const wd = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(p.weekday);
+      if ((!mins || mins.has(Number(p.minute))) && (!hours || hours.has(Number(p.hour))) && (!doms || doms.has(Number(p.day))) && (!dows || dows.has(wd))) out.push({ task: k, at, macBound: Boolean(t.macBound) });
+    }
+  }
+  return out.sort((x, y) => x.at - y.at);
+}
+function runWindows(root, now = new Date()) {
   try {
     const spec = readJson(path.join(root, 'spec', 'ev.spec.json'));
-    return Object.entries(spec.tasks.live || {}).filter(([, t]) => t && t.schedule).map(([k, t]) => `- ${k}: ${t.schedule}${t.macBound ? ' (on the Mac)' : ''}`);
+    const runs = nextRuns(spec.tasks.live, now);
+    return runs.length ? runs.map(r => `- ${ctDate(r.at.toISOString())} ${ctClock(r.at.toISOString())} CT: ${r.task}${r.macBound ? ' (on the Mac)' : ''}`).concat(['- A live deploy waits while a study session runs (R-03); a staging deploy is best kept clear of the staging proofs pending in the notes.']) : ['- none in the next 24 hours'];
   } catch { return ['- (spec not readable)']; }
 }
 

@@ -283,3 +283,60 @@ test('B-96: a bookkeeping commit (chart/, BACKLOG.md) never moves the build\'s c
   g('commit', '-qam', 'B-00: code');
   assert.equal((await build({ root: dir, out })).manifest.commit, g('rev-parse', 'HEAD'));
 });
+
+// ------------------------------------------------------------------------------------------------ B-96 ship and brief
+const M = (o = {}) => ({ commit: 'a'.repeat(40), release: 'v4.0.0', tasks: { 'staging.morning': { record: 'staging', name: 'm', promptSha256: 'p1', trigger: 't1' }, 'live.morning': { record: 'live', name: 'm', promptSha256: 'p1', trigger: 't2' } }, pages: { staging: { files: { 'page/staging/app.js': 'h1' }, capabilities: { db: {} } } }, ...o });
+const READS = [{ tool: 'mcp__claude-code-remote__list_triggers', have: false }, { tool: 'ArtifactData', args: { doc_id: 'manifest' }, have: true }, { tool: 'Artifact', have: false }];
+const VERIFY = { lines: [{ ok: true, what: 'build is clean' }, { ok: false, what: 'system/manifest commit' }, { ok: false, what: 'staging page read' }, { ok: false, what: 'scheduled tasks read' }] };
+const DEPLOY = { ok: true, calls: [{ tool: 'ArtifactData' }, { tool: 'Artifact' }, { tool: 'mcp__claude-code-remote__update_trigger' }], skipped: [] };
+
+test('B-96: ship skips the task and page reads (and their calls) when the deployed manifest, green when deployed, has the same', () => {
+  const r = sample(); r.deploys.push({ target: 'staging', commit: 'bbbbbbb', verify: 'green', time: 't', tasks: [] });
+  const deployed = M({ commit: 'b'.repeat(40) });
+  const skip = C.skips({ manifest: M(), target: 'staging', deployed, rec: r });
+  assert.deepEqual(skip, { tasks: true, pages: true, from: 'bbbbbbb' });
+  assert.equal(C.skips({ manifest: M({ pages: { staging: { files: { 'page/staging/app.js': 'h2' }, capabilities: { db: {} } } } }), target: 'staging', deployed, rec: r }).pages, false, 'a changed page file is read');
+  assert.equal(C.skips({ manifest: M(), target: 'staging', deployed, rec: sample() }).tasks, false, 'no green deploy at that commit in the record: read everything');
+  const step = C.shipStep({ target: 'staging', manifest: M(), state: { record: { manifest: deployed } }, verifyResult: VERIFY, reads: READS, deploy: DEPLOY, rec: r, refusals: [], skip, stale: null });
+  assert.equal(step.kind, 'deploy');
+  assert.deepEqual(step.calls.map(c => c.tool), ['ArtifactData'], 'no page publish, no trigger call');
+  assert.ok(step.lines.filter(l => /page read|tasks read/.test(l.what)).every(l => l.ok && /not read/.test(l.detail)));
+  // Without the deployed manifest read yet: only that read is asked for.
+  const first = C.shipStep({ target: 'staging', manifest: M(), state: { record: null }, verifyResult: VERIFY, reads: READS.map(x => ({ ...x, have: false })), deploy: DEPLOY, rec: r, refusals: [], skip: { tasks: false, pages: false }, stale: null });
+  assert.deepEqual([first.kind, first.reads.map(x => x.tool)], ['reads', ['ArtifactData']]);
+  // After calls that touched neither tasks nor the page, only the system documents are read again.
+  const again = C.shipStep({ target: 'staging', manifest: M(), state: { record: { manifest: deployed } }, verifyResult: VERIFY, reads: READS.map(x => ({ ...x, have: true })), deploy: DEPLOY, rec: r, refusals: [], skip: { tasks: false, pages: false }, stale: { tasks: false, pages: false } });
+  assert.deepEqual(again.reads.map(x => x.tool), ['ArtifactData']);
+  const green = C.shipStep({ target: 'staging', manifest: M(), state: { record: { manifest: deployed } }, verifyResult: { lines: [{ ok: true, what: 'x' }] }, reads: READS.map(x => ({ ...x, have: true })), deploy: DEPLOY, rec: r, refusals: [], skip, stale: null });
+  assert.deepEqual([green.kind, green.recorded], ['verified', false]);
+  assert.equal(C.shipStep({ target: 'live', manifest: M(), state: {}, verifyResult: VERIFY, reads: [], deploy: DEPLOY, rec: r, refusals: ['R-04 (D-083): no OK'], skip, stale: null }).kind, 'refused');
+});
+
+test('B-96: R-01 (D-139) finds what makes a live deploy more than page-only since the live build', () => {
+  const dir = copyRepo();
+  const g = (...a) => execFileSync('git', ['-C', dir, '-c', 'user.name=T', '-c', 'user.email=t@example.com', ...a], { encoding: 'utf8' }).trim();
+  const base = g('rev-parse', 'HEAD');
+  fs.appendFileSync(path.join(dir, 'page', 'styles.css'), '\n'); g('commit', '-qam', 'page');
+  assert.deepEqual(C.pageOnlyFindings(dir, base), [], 'a page file alone is page-only');
+  const spec = JSON.parse(fs.readFileSync(path.join(dir, 'spec', 'ev.spec.json'), 'utf8'));
+  spec.pipelines._note = 'changed'; fs.writeFileSync(path.join(dir, 'spec', 'ev.spec.json'), JSON.stringify(spec, null, 1));
+  fs.appendFileSync(path.join(dir, 'tools', 'prompts.mjs'), '\n'); g('commit', '-qam', 'pipeline and prompt');
+  assert.deepEqual(C.pageOnlyFindings(dir, base), ['tools/prompts.mjs changed', 'spec.pipelines changed']);
+  assert.deepEqual(C.RULES.map(r => [r.id, r.decision, r.task]), [['R-01', 'D-139', 'B-30'], ['R-02', 'D-049', 'B-35'], ['R-03', 'D-139', 'B-87'], ['R-04', 'D-083', null]]);
+});
+
+test('B-96: ship reads the system documents\' versions from this session\'s ArtifactData replies', () => {
+  const url = 'https://claude.ai/artifact/X';
+  const jsonl = ['manifest', 'spec'].flatMap((id, i) => toolPair('g' + i, 'ArtifactData', { action: 'get', url, collection: 'system', doc_id: id, out_dir: '/tmp' }, `1 document from collection "system" saved as JSON files:\n- "${id}"  15337 bytes  version ${71 + i}  "/tmp/system/${id}.json"`)).join('\n');
+  assert.deepEqual(C.versionsFrom(jsonl, url), { manifest: 71, spec: 72 });
+  assert.deepEqual(C.versionsFrom(jsonl, 'https://claude.ai/artifact/Y'), {});
+});
+
+test('B-96: brief is one page: the inbox, the task, its dependencies, decisions, limits and the next live runs', () => {
+  const b = C.brief(rec(), 'B-97');
+  for (const h of ['## Inbox first', '## The task: B-97', '## Depends on', '## Decisions it rests on', '## What it may touch', '## The next 24 hours of live runs', '## Record as you go']) assert.ok(b.includes(h), h);
+  assert.match(b, /- B-93: done/);
+  assert.match(b, /R-01 \(D-139, B-30\)/);
+  const runs = C.nextRuns({ morning: { schedule: 'CRON_TZ=America/Chicago 25 4 * * *' }, weekly: { schedule: 'CRON_TZ=America/Chicago 57 17 * * 0' }, worker: { schedule: null } }, new Date('2026-10-19T23:45:00Z'));
+  assert.deepEqual(runs.map(r => [r.task, C.ctClock(r.at.toISOString())]), [['morning', '04:25']], 'Monday: no weekly');
+});
