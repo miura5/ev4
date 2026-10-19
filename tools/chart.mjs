@@ -509,10 +509,30 @@ export function applyLog(rec, o, { now = new Date().toISOString() } = {}) {
     for (const s of d.supersedes) { const x = rec.decisions.find(y => y.id === s); if (x) x.status = 'superseded'; }
     return { rec, what: `decision ${did} (${d.status})`, id: did, views: [] };
   }
+  if (id === 'new') {
+    // A task the design names that the record lacks (the Build plan tab's B-74, say): never an id already in use.
+    const nid = o._[2];
+    if (!/^B-\d{2,3}$/.test(nid || '') || findTask(rec, nid).length) throw new Error(`log new <B-id not in the record> --title ... --dod ... --milestone ...`);
+    if (!o.title || !o.milestone) throw new Error('log new needs --title and --milestone (and --dod)');
+    const t = { id: nid, kind: 'task', title: o.title, dod: o.dod || null, milestone: o.milestone, status: 'open', depends: list(o.depends).filter(x => /^B-\d+$/.test(x)), notes: o.note || '', commit: null, source: o.source || 'log new' };
+    if (o.depends && list(o.depends).join(', ') !== t.depends.join(', ')) t.dependsText = o.depends;
+    const at = o.after ? rec.tasks.findIndex(x => x.id === o.after) : -1;
+    if (o.after && at < 0) throw new Error(`--after ${o.after}: no such task`);
+    rec.tasks.splice(at < 0 ? rec.tasks.length : at + 1, 0, t);
+    return { rec, what: `new task (${t.milestone})`, id: nid, views: [] };
+  }
   const tasks = findTask(rec, id);
   if (!tasks.length) throw new Error(`no task ${id} in the record`);
-  if (tasks.length > 1) throw new Error(`${tasks.length} tasks carry ${id}: renumber one first (lint)`);
-  const t = tasks[0], what = [];
+  const which = o.which ? Number(o.which) : null;
+  if (tasks.length > 1 && !which) throw new Error(`${tasks.length} tasks carry ${id}: renumber one first (log ${id} --which <n> --renumber ${nextTaskId(rec)})`);
+  const t = tasks[(which || 1) - 1], what = [];
+  if (!t) throw new Error(`--which ${which}: only ${tasks.length} tasks carry ${id}`);
+  if (o.renumber) {
+    if (o.renumber !== nextTaskId(rec)) throw new Error(`renumber to the next free id, ${nextTaskId(rec)}`);
+    if (t.board && t.board.row) { t.board.were = [...(t.board.were || []), t.board.row]; t.board.row = t.board.row.replace(`v4 ${t.id}:`, `v4 ${o.renumber}:`); }
+    t.renumberedFrom = t.id; t.id = o.renumber;
+    what.push(`renumbered from ${id} (it shared that id)`);
+  }
   if (o.triage) {
     if (t.status !== 'inbox') throw new Error(`${id} is ${t.status}, not in the inbox`);
     const how = o.triage === true ? '' : o.triage;
@@ -552,7 +572,7 @@ export function applyLog(rec, o, { now = new Date().toISOString() } = {}) {
   }
   if (o['waiting-on'] != null) { if (o['waiting-on']) t.waitingOn = o['waiting-on']; else delete t.waitingOn; what.push('waiting on'); }
   if (!what.length) throw new Error('nothing to log: give --status, --note, --commit, --triage or a board field');
-  return { rec, what: what.join(', '), id, views: t.board || t.kind !== 'task' ? ['board'] : [] };
+  return { rec, what: what.join(', '), id: t.id, views: t.board || t.kind !== 'task' ? ['board'] : [] };
 }
 export function applyReport(rec, o, { now = new Date().toISOString() } = {}) {
   const [, kind, ...rest] = o._;

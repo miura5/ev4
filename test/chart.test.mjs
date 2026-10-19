@@ -177,3 +177,32 @@ test('B-93: log writes the record, regenerates BACKLOG.md and commits both, noth
 test('BACKLOG.md is generated from chart/ (no hand edits)', () => {
   assert.equal(fs.readFileSync(path.join(ROOT, 'BACKLOG.md'), 'utf8'), C.renderBacklog(rec()), 'BACKLOG.md differs from chart/: change the record with node tools/chart.mjs log, never the file');
 });
+
+// ------------------------------------------------------------------------------------------------ B-94 lint
+test('B-94: lint on the record as imported finds the duplicate B-83, and B-81 waiting on three tasks the backlog never had', () => {
+  // The design expected the duplicate alone. B-78, B-79 and B-80 are in the Build plan tab but never reached
+  // BACKLOG.md; B-94 added them (with B-74 and B-75) and renumbered the second B-83 to B-98.
+  const f = C.lintChart(imported());
+  assert.deepEqual(f.map(x => `${x.check} ${x.id}${x.check === 'missing-dependency' ? ' ' + x.detail.match(/B-\d+/)[0] : ''}`), ['duplicate-id B-83', 'missing-dependency B-81 B-78', 'missing-dependency B-81 B-79', 'missing-dependency B-81 B-80']);
+});
+
+test('B-94: the record lints green (npm test runs the Chart lint)', () => {
+  const f = C.lintChart(rec());
+  assert.deepEqual(f.filter(x => x.level === 'error'), [], C.formatLint(f));
+  const r = rec();
+  assert.equal(r.tasks.find(t => t.id === 'B-98').renumberedFrom, 'B-83');
+  assert.equal(r.tasks.filter(t => t.id === 'B-83').length, 1);
+});
+
+test('B-94: each check fires on a planted fault', () => {
+  const r = sample();
+  assert.deepEqual(C.lintChart(r), []);
+  r.tasks.push(task('B-02'));                                   // a duplicate id
+  r.tasks[2].depends = ['B-77'];                                // a dependency on nothing
+  r.tasks[0].commit = null;                                     // done with no commit
+  r.rules[0].decision = 'D-001';                                // a rule on a superseded decision
+  r.tasks.push({ ...task('B-04', { kind: 'bug', status: 'inbox' }), words: 'the timer sat at 0:00', source: 'build chat', reportedAt: '2026-10-19T22:00:00Z' });
+  r.tasks.push(task('B-05', { kind: 'request', status: 'declined', words: 'w', source: 's', reportedAt: 't', triage: {} }));
+  const got = C.lintChart(r).map(x => `${x.level} ${x.check} ${x.id}`);
+  assert.deepEqual(got.sort(), ['error declined-without-reason B-05', 'error done-without-commit B-01', 'error duplicate-id B-02', 'error missing-dependency B-03', 'error rule-decision R-01', 'warn untriaged B-04'].sort());
+});
