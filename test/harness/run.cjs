@@ -124,8 +124,24 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     ok(`[${scheme}] no page errors`, errors.length === 0, errors.join(' | '));
     // ---- E.V.: greeting, quick asks, chat with tools, jobs, guard, check-in (light pass does the interactions)
     const greet = (await page.locator('#thread .msg.ev').last().textContent()) || '';
-    ok(`[${scheme}] greeting rendered`, /Morning, Matt|Afternoon check-in|Evening, Matt|Still up/.test(greet), greet.slice(0, 140));
-    ok(`[${scheme}] greeting reports the finished job`, /Finished in the background: Study guide: cardiac output/.test(greet));
+    // B-90: one strict line (what can't wait, else a greeting and how she can help), and a briefing folded under it.
+    const gb = await page.evaluate(() => { const g = document.querySelector('#thread .msg.greet'), row = g.querySelector('.brief-row'), ul = g.querySelector('.brief-list');
+      const cs = getComputedStyle(row);
+      return { head: g.querySelector('.bubble').textContent, row: row && row.textContent, folded: !!ul && ul.hidden && row.getAttribute('aria-expanded') === 'false', dots: [...row.querySelectorAll('.br-dot')].map(d => d.className), plain: cs.borderTopWidth === '0px' && /rgba\(0, 0, 0, 0\)|transparent/.test(cs.backgroundColor) && !g.querySelector('.badge, .bi-act'),
+        items: [...g.querySelectorAll('.brief-item')].map(li => [li.dataset.level, li.querySelector('.bi-t').textContent, (li.querySelector('.bi-mark') || {}).className || '']) }; });
+    ok(`[${scheme}] greeting rendered: one sentence naming what can't wait`, /^(Morning|Afternoon|Evening), Matt\. ATI Engage Fundamentals is due tonight\.$|^Still up, Matt\? ATI Engage Fundamentals is due tonight\.$/.test(gb.head), gb.head);
+    ok(`[${scheme}] the briefing starts folded: plain text, a count and one red dot for the urgent item (urgent outranks new), no pills`, gb.folded && /^\d+ things to know$/.test(gb.row) && gb.dots.join() === 'br-dot urgent' && gb.plain, JSON.stringify(gb).slice(0, 300));
+    ok(`[${scheme}] the briefing ranks urgent, then new (the finished job), then the rest; urgent and new carry an accent mark`, gb.items[0][0] === 'urgent' && /^ATI Engage Fundamentals/.test(gb.items[0][1]) && gb.items[0][2] === 'bi-mark urgent' && gb.items[1][0] === 'new' && /Study guide: cardiac output/.test(gb.items[1][1]) && gb.items[1][2] === 'bi-mark new' && gb.items.slice(2).every(i => i[0] === 'normal' && !i[2]), JSON.stringify(gb.items));
+    if (scheme === 'phone') {
+      await page.click('#thread .msg.greet .brief-row'); await page.waitForTimeout(1100);
+      const op = await page.evaluate(() => { const ul = document.querySelector('#thread .msg.greet .brief-list'), li = ul.querySelector('.brief-item'), t = li.querySelector('.bi-t'); return { open: !ul.hidden, cut: t.scrollWidth > t.clientWidth + 1, rowsLeft: [...ul.querySelectorAll('.bi-t')].every(x => getComputedStyle(x).textAlign !== 'center'), step: document.getElementById('hero').dataset.step }; });
+      await page.click('#thread .msg.greet .brief-item .bi-main'); await page.waitForTimeout(300);
+      const ex = await page.evaluate(() => { const li = document.querySelector('#thread .msg.greet .brief-item'), t = li.querySelector('.bi-t'); return { open: li.classList.contains('open'), whole: t.scrollWidth <= t.clientWidth + 1, detail: li.querySelector('.bi-more').offsetParent && li.querySelector('.bi-d').textContent, go: (li.querySelector('.bi-go') || {}).textContent }; });
+      ok('[phone] opened, the briefing is a left-aligned list, rows cut to one line, her core stepped down', op.open && op.cut && op.rowsLeft && op.step === 'list', JSON.stringify(op));
+      ok('[phone] a line opens in place by its chevron to the full text, the detail and its action as a text link', ex.open && ex.whole && ex.detail === 'Due tonight. Graded: yours alone.' && ex.go === 'Open Today →', JSON.stringify(ex));
+      await page.screenshot({ path: `${shots}/briefing-open-phone.png` });
+      await page.click('#thread .msg.greet .brief-row'); await page.waitForTimeout(900);
+    }
     // D-125 as amended: the greeting has no card; its offers are the chips, at most three, the finished job among them.
     const gm = await page.evaluate(() => ({ cards: document.querySelectorAll('#thread .msg.greet .ev-card').length, chips: [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent) }));
     ok(`[${scheme}] the greeting has no card; at most three chips, one opening the finished study guide`, gm.cards === 0 && gm.chips.length <= 3 && gm.chips.includes('Open the study guide'), JSON.stringify(gm));

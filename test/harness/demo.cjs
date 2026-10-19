@@ -27,8 +27,8 @@ const results = []; const ok = (n, c, d = '') => results.push([c ? 'PASS' : 'FAI
     const toastNote = await page.evaluate(() => { const t = document.getElementById('toast'); return !t.hidden && /^Demo copy/.test(t.textContent); });
     ok(`[${scheme}] the demo note shows once as a toast when it opens`, toastNote);
     await page.waitForTimeout(3500);
-    const g = await page.evaluate(() => ({ greet: document.querySelector('#thread .msg.greet .bubble').textContent, chips: [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent), fine: document.getElementById('sys-note').textContent, title: document.title, unit: document.getElementById('readout').textContent }));
-    ok(`[${scheme}] greeting with the review and Exam 4, three chips, the demo note`, /review/.test(g.greet) && /Exam 4/.test(g.greet) && g.chips.length === 3 && /^Demo copy/.test(g.fine) && /^EV-04/.test(g.unit), JSON.stringify(g));
+    const g = await page.evaluate(() => ({ greet: document.querySelector('#thread .msg.greet .bubble').textContent, brief: [...document.querySelectorAll('#thread .msg.greet .brief-item .bi-t')].map(x => x.textContent).join(' | '), chips: [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent), fine: document.getElementById('sys-note').textContent, title: document.title, unit: document.getElementById('readout').textContent }));
+    ok(`[${scheme}] a one-line greeting; its briefing has the review and Exam 4; three chips, the demo note`, /^((Morning|Afternoon|Evening), Matt\.|Still up, Matt\?) /.test(g.greet) && !/\n/.test(g.greet) && /review/.test(g.brief) && /Exam 4/.test(g.brief) && g.chips.length === 3 && /^Demo copy/.test(g.fine) && /^EV-04/.test(g.unit), JSON.stringify(g));
     await page.screenshot({ path: `${shots}/demo-open-${scheme}.png` });
     // A scripted reply
     await page.fill('#ev-input', 'explain preload'); await page.click('#ev-send'); await page.waitForTimeout(6500);

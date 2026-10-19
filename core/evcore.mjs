@@ -1862,9 +1862,9 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
     const open = items.filter(i => !i.done && !/^review|^checks$/.test(i.id || ''));
     const doneN = items.filter(i => i.done).length;
     const lines = []; const cards = []; const insights = []; let mood = 'idle';
-    const short = t => { // a list item as a phrase: no minutes, no trailing parenthetical, cut at a word
+    const short = (t, n = 48) => { // a list item as a phrase: no minutes, no trailing parenthetical, cut at a word
       const s = String(t || '').replace(/\s*\(~?\d+ min\)/, '').replace(/\s+due 11:59pm$/i, '').replace(/\s*\([^)]*\)\s*$/, '').trim();
-      if (s.length <= 48) return s; const cut = s.slice(0, 48); return cut.slice(0, Math.max(cut.lastIndexOf(' '), 24)).replace(/[\s,:;+–-]+$/, '') + '…';
+      if (s.length <= n) return s; const cut = s.slice(0, n); return cut.slice(0, Math.max(cut.lastIndexOf(' '), Math.floor(n / 2))).replace(/[\s,:;+–-]+$/, '') + '…';
     };
     const listOf = arr => arr.length <= 1 ? (arr[0] || '') : arr.slice(0, -1).join(', ') + ' and ' + arr[arr.length - 1];
     const exams = (c.nextExams || []).filter(e => e.date >= date).sort((a, b) => a.date.localeCompare(b.date));
@@ -1930,7 +1930,39 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
     if (c.dueSoon == null || c.dueSoon > 0) add('What’s due this week?');
     add('How ready am I?'); if (segment !== 'late') add('Give me 5 more');
     if (!c.sessionActive) chips.push('Start a study session');
-    return { segment, mood, lines, cards: [], offers: cards.slice(0, 3), chips, job: finished ? finished.id : null };
+
+    // B-90 (Matt, Oct 19): a strict one-line headline over a briefing that starts folded. Urgent is only what can't
+    // wait: an exam today or tomorrow, graded work due today. New is what arrived since his last visit. The headline
+    // names the urgent ones (one, two, or the first and a count); with nothing urgent it greets and asks how to help.
+    const hello = { morning: 'Morning, Matt.', midday: 'Afternoon, Matt.', evening: 'Evening, Matt.', late: 'Still up, Matt?' }[segment];
+    const brief = []; const put = (level, kind, title, x = {}) => brief.push({ id: kind + '-' + brief.length, level, kind, title, ...x });
+    const exName = e => e.title.replace(/:.*$/, '');
+    const shortDay = iso => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][weekday(iso)];
+    if (todayExam) put('urgent', 'exam', `${exName(todayExam)} is today`, { when: 'today', detail: todayExam.title, say: `${exName(todayExam)} is today`, tab: 'progress' });
+    if (tomorrowExam) put('urgent', 'exam', `${exName(tomorrowExam)} is tomorrow`, { when: 'tomorrow', detail: tomorrowExam.title, say: `${exName(tomorrowExam)} is tomorrow`, tab: 'progress' });
+    const key24 = t => String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().slice(0, 24);
+    const doneKeys = new Set(items.filter(i => i.done).map(i => key24(i.text)));
+    const gradedToday = [...items.filter(i => i.tag === 'GRADED' && !i.done).map(i => ({ title: i.text })), ...(c.todayDates || []).filter(d => d.graded && d.kind !== 'exam').map(d => ({ title: d.title }))]
+      .filter((g, i, a) => !doneKeys.has(key24(g.title)) && a.findIndex(x => key24(x.title) === key24(g.title)) === i);
+    const named = t => { const s = String(t || '').replace(/\s+due\b.*$/i, '').replace(/\s*\([^)]*\)\s*$/, '').trim(); if (s.length <= 40) return s; const head = s.split(':')[0].trim(); return short(head.length >= 8 ? head : s, 34); };
+    for (const g of gradedToday) { const tonight = /11:59|pm\b|tonight/i.test(g.title); put('urgent', 'due', String(g.title).replace(/\s*\(~?\d+ min\)/, ''), { when: tonight ? 'tonight' : 'today', detail: 'Graded: yours alone.', say: `${named(g.title)} is due ${tonight ? 'tonight' : 'today'}`, tab: 'today' }); }
+    for (const j of (c.jobs || []).filter(j => j.status === 'done' && toMs(j.finishedAt) > seen).slice(0, 2)) put('new', 'job', j.title, { when: 'done', detail: 'Finished in the background.', ...(finished && j.id === finished.id ? { action: { label: 'Open', chip: 'Open the ' + (JOB_NOUN[j.kind] || 'result') } } : { tab: 'system' }) });
+    for (const j of (c.jobs || []).filter(j => j.status === 'failed' && toMs(j.finishedAt) > seen).slice(0, 1)) put('new', 'job', `${j.title} hit a wall`, { when: 'failed', detail: 'The background job stopped. System has the details and a Try again.', tab: 'system' });
+    if (rl) put('normal', 'review', `${rl} review${rl === 1 ? '' : 's'} waiting`, { when: `~${rl} min`, action: { label: 'Start', chip: 'Start review' } });
+    if (items.length) put('normal', 'today', open.length ? `${doneN} of ${items.length} done on today’s list` : 'Today’s list is done', { detail: open.length ? 'Still open: ' + open.map(i => short(i.text)).join('; ') + '.' : '', tab: 'today' });
+    for (const d of tmrGraded.slice(0, 3)) put('normal', 'due', d.title, { when: 'tomorrow', detail: 'Graded: yours alone.', tab: 'record' });
+    if (tmrClinical) put('normal', 'clinical', tmrClinical.title, { when: 'tomorrow', tab: 'record' });
+    if (soon && c.readiness && c.readiness.examId === soon.id) put('normal', 'exam', `${exName(soon)} in ${diffDays(date, soon.date)} day${diffDays(date, soon.date) === 1 ? '' : 's'}: ${c.readiness.pctSolid ?? 0}% solid`, { when: shortDay(soon.date), detail: `About ${c.readiness.need} correct reviews to go.`, tab: 'progress' });
+    if (failed.length) put('normal', 'system', `The ${failed[0][0]} run failed`, { detail: failed[0][1].detail ? String(failed[0][1].detail).slice(0, 200) : '', tab: 'system' });
+    if (c.checkin && c.checkin.energy != null && c.checkin.energy <= 2) put('normal', 'checkin', 'You logged low energy today', { detail: 'Say the word and I’ll lighten the list.' });
+    if (c.quizlet && c.quizlet.refresh && [5, 6, 0].includes(weekday(date))) put('normal', 'quizlet', `Quizlet pick: ${c.quizlet.refresh}`);
+    const rank = { urgent: 0, new: 1, normal: 2 }; brief.sort((a, b) => rank[a.level] - rank[b.level]);
+    const urg = brief.filter(b => b.level === 'urgent');
+    const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
+    const headline = urg.length ? `${hello} ${cap(urg[0].say)}${urg.length === 2 ? ', and ' + urg[1].say : urg.length > 2 ? `, plus ${urg.length - 1} more that can’t wait` : ''}.`
+      : `${hello} How can I help${segment === 'morning' ? ' today' : ''}?`;
+    if (urg.length) mood = 'alert';
+    return { segment, mood, lines, cards: [], offers: cards.slice(0, 3), chips, job: finished ? finished.id : null, headline, brief: brief.map(({ say, ...b }) => b) };
   }
 
   // ---------------------------------------------------------------- conversations (B-77, D-128)

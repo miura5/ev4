@@ -1005,3 +1005,32 @@ test('B-88 comment prompt and parser: silence by default, one short line, a quot
   assert.equal(EV.parseComment({ say: 'Nice.', quote: 'not in his note', kind: 'odd' }, 'SV falls').quote, null);
   assert.equal(EV.parseComment({ say: 'Nice.', kind: 'odd' }, 'SV falls').kind, 'connection');
 });
+
+test('B-90 greeting: one strict line; urgent only for what cannot wait; a folded briefing ranked urgent, new, the rest', () => {
+  const base = { date: '2026-10-19', dayType: 'class', reviewLeft: 0, nextExams: [], tomorrow: { dates: [] }, items: [], jobs: [], lastSeenAt: '2026-10-19T15:00:00Z' };
+  const calm = EV.greeting({ ...base, now: '2026-10-19T19:00:00Z', reviewLeft: 12, items: [{ id: 'a', text: 'Read Ch 42', done: false }, { id: 'b', text: 'Pharm Ch 14', done: true }] });
+  assert.equal(calm.headline, 'Afternoon, Matt. How can I help?');
+  assert.deepEqual(calm.brief.map(b => [b.level, b.title]), [['normal', '12 reviews waiting'], ['normal', '1 of 2 done on today’s list']]);
+  assert.deepEqual(calm.brief[0].action, { label: 'Start', chip: 'Start review' });
+  assert.equal(EV.greeting({ ...base, now: '2026-10-19T12:00:00Z' }).headline, 'Morning, Matt. How can I help today?');
+  const one = EV.greeting({ ...base, now: '2026-10-19T19:00:00Z', items: [{ id: 'g', text: 'ATI Engage Fundamentals: Nutrition + Fluid, Electrolyte and Acid-Base Regulation due 11:59pm', tag: 'GRADED', done: false }] });
+  assert.equal(one.headline, 'Afternoon, Matt. ATI Engage Fundamentals is due tonight.'); assert.equal(one.mood, 'alert');
+  assert.deepEqual([one.brief[0].level, one.brief[0].when], ['urgent', 'tonight']);
+  const two = EV.greeting({ ...base, now: '2026-10-19T19:00:00Z', items: one.brief.length ? [{ id: 'g', text: 'ATI Engage due 11:59pm', tag: 'GRADED' }] : [], nextExams: [{ id: 'E4', title: 'Exam 4: Health Promotion', date: '2026-10-20', kind: 'unit' }] });
+  assert.equal(two.headline, 'Afternoon, Matt. Exam 4 is tomorrow, and ATI Engage is due tonight.');
+  const three = EV.greeting({ ...base, now: '2026-10-19T19:00:00Z', items: [{ id: 'g', text: 'ATI Engage due 11:59pm', tag: 'GRADED' }], todayDates: [{ title: 'Dosage calc quiz', graded: true, kind: 'due' }, { title: 'ATI Engage due 11:59pm', graded: true, kind: 'due' }], nextExams: [{ id: 'E4', title: 'Exam 4', date: '2026-10-20', kind: 'unit' }] });
+  assert.equal(three.headline, 'Afternoon, Matt. Exam 4 is tomorrow, plus 2 more that can’t wait.');
+  assert.equal(three.brief.filter(b => b.level === 'urgent').length, 3, 'the same graded item from the list and the dates counts once');
+  const done = EV.greeting({ ...base, now: '2026-10-19T19:00:00Z', items: [{ id: 'g', text: 'ATI Engage due 11:59pm', tag: 'GRADED', done: true }], todayDates: [{ title: 'ATI Engage due 11:59pm', graded: true, kind: 'due' }] });
+  assert.equal(done.headline, 'Afternoon, Matt. How can I help?', 'graded work he ticked off is not urgent');
+  const fresh = EV.greeting({ ...base, now: '2026-10-19T19:00:00Z', reviewLeft: 3, jobs: [{ id: 'j1', kind: 'study-guide', title: 'Study guide: potassium', status: 'done', finishedAt: '2026-10-19T18:00:00Z' }, { id: 'j0', kind: 'study-guide', title: 'Old guide', status: 'done', finishedAt: '2026-10-19T14:00:00Z' }] });
+  assert.deepEqual(fresh.brief.map(b => b.level + ':' + b.title), ['new:Study guide: potassium', 'normal:3 reviews waiting']);
+  assert.deepEqual(fresh.brief[0].action, { label: 'Open', chip: 'Open the study guide' });
+  assert.ok(fresh.lines.length >= 1, 'the full lines stay for the chat context');
+});
+
+test('B-90 greeting names a short graded item whole, a long one by the part before its colon', () => {
+  const base = { date: '2026-10-19', now: '2026-10-19T19:00:00Z', reviewLeft: 0, nextExams: [], tomorrow: { dates: [] }, jobs: [] };
+  assert.equal(EV.greeting({ ...base, items: [{ id: 'q', text: 'Unit quiz: fluids and electrolytes (yours alone)', tag: 'GRADED' }] }).headline, 'Afternoon, Matt. Unit quiz: fluids and electrolytes is due today.');
+  assert.equal(EV.greeting({ ...base, items: [{ id: 'g', text: 'ATI Engage Fundamentals: Nutrition + Fluid, Electrolyte and Acid-Base Regulation due 11:59pm', tag: 'GRADED' }] }).headline, 'Afternoon, Matt. ATI Engage Fundamentals is due tonight.');
+});
