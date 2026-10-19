@@ -1689,17 +1689,17 @@
   "title": "`ship`, then `brief`: the deploy checklist with the D-139 rule enforced, then the one-page brief.",
   "dod": "a staging deploy runs from `ship` alone, and a fresh session starts a task from `brief` alone",
   "milestone": "M12",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-93"
   ],
-  "notes": "Oct 19: in progress",
-  "commit": null,
+  "notes": "Oct 19, a30bf7e and a16a57f: ship runs the checklist (rules R-01 to R-04 from chart/rules.json, the reads, deploy's calls, verify, the record); the build's commit skips bookkeeping commits. Proof: staging deployed at a30bf7e from ship alone, one call (system documents), verify GREEN on all 24 lines read in full, recorded in deploys.json and the Changelog by printed calls; later deploys skip the task and page reads when nothing there changed. brief: a fresh agent given only the B-99 brief started it (the start command, the limits, not live tonight under R-01); its gaps (no files named, the prompt rule) fixed in a16a57f. npm test 274",
+  "commit": "a30bf7e",
   "source": "BACKLOG.md",
   "board": {
    "row": "v4 B-96: ship and brief",
    "why": "A deploy runs from one checklist that refuses what the rules forbid and skips reads nothing needs; a new session starts from one page",
-   "notes": "Oct 19. In progress"
+   "notes": "Oct 19, a30bf7e. A staging deploy ran from ship alone (one call, verify green) and is in the Changelog; a fresh session started your B-99 from its one-page brief"
   }
  },
  {
