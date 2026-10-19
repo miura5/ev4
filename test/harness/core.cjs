@@ -111,9 +111,9 @@ const SPEECH = `async (secs) => { const C = window.EVApp.core; const text = 'Pre
       const m = await page.evaluate(`(${SPEECH})(10)`);
       await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
       budget.phone = { renderer: (await canvasInfo(page)).renderer, frames: m.frames.length, missedRefreshes: m.frames.filter(f => f > 1.5 * 1000 / 60).length, p95FrameMs: r2(p95(m.frames)), p95CoreDrawMs: r2(p95(m.draws)), medianFrameMs: r2(m.frames.slice().sort((a, b) => a - b)[m.frames.length >> 1]), stepDownLevel: m.level, dpr: 3, throttle: 4, viewport: '390x844' };
-      // rAF intervals sit on the 60 Hz refresh (16.67 ms) with about 0.1 ms of timestamp jitter; a frame that misses
-      // the refresh shows as 33 ms. The raw p95 is reported; the pass allows the 0.2 ms of jitter, never a missed frame.
-      ok(`[phone] frame budget: p95 frame ≤ ${L.frameBudget.p95FrameMs} ms (+0.2 ms rAF jitter) over 10 s of speech, 4x throttle, DPR 3`, budget.phone.p95FrameMs <= L.frameBudget.p95FrameMs + .2 && m.frames.length > 300, JSON.stringify(budget.phone));
+      // rAF intervals sit on the 60 Hz refresh (16.67 ms) with about 0.1 ms of timestamp jitter; a frame that misses the
+      // refresh shows as about 33 ms, counted as missedRefreshes beside the p95. The check is the clause as written.
+      ok(`[phone] frame budget: p95 frame ≤ ${L.frameBudget.p95FrameMs} ms over 10 s of speech, 4x throttle, DPR 3`, budget.phone.p95FrameMs <= L.frameBudget.p95FrameMs && m.frames.length > 300, JSON.stringify(budget.phone));
       ok(`[phone] frame budget: the core's own draw ≤ ${L.frameBudget.p95CoreDrawMs} ms p95`, budget.phone.p95CoreDrawMs <= L.frameBudget.p95CoreDrawMs, JSON.stringify(budget.phone));
       ok('[phone] she ran whole through it (no step-down during the measured speech)', m.level === 0, 'level ' + m.level);
     } else {
