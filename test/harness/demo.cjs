@@ -58,6 +58,25 @@ const results = []; const ok = (n, c, d = '') => results.push([c ? 'PASS' : 'FAI
       await page.screenshot({ path: `${shots}/demo-${tab}-${scheme}.png` });
     }
     await page.click('#tab-ev'); await page.waitForTimeout(300);
+    // A study session (Matt, Oct 19): the chip starts one on the made-up note; checks come every 90 s in the demo.
+    await page.focus('#ev-input'); await page.waitForTimeout(150);
+    await page.click('#qchips .qchip:has-text("Start a study session")'); await page.waitForTimeout(2500);
+    const s0 = await page.evaluate(() => ({ line: !document.getElementById('sbar').hidden && document.getElementById('sbar').textContent, said: document.querySelector('#thread .msg.ev.current .bubble').textContent, ring: window.EVApp.core.stats().ring }));
+    ok(`[${scheme}] Start a study session starts one on the demo note, with its line under her core`, /Session started on Ch 39 Fluids and electrolytes/.test(s0.said) && /every 1\.5 minutes/.test(s0.said) && /^\d+ min · check 1:\d\dBreak\+5End$/.test(s0.line || '') && s0.ring >= 0, JSON.stringify(s0));
+    await page.screenshot({ path: `${shots}/demo-session-${scheme}.png` });
+    if (scheme === 'desktop') {
+      await page.waitForFunction(() => !!document.querySelector('#thread .msg.ev .ev-card .check, #thread .ev-card [data-check], #thread .msg.ev.current .ev-card'), null, { timeout: 120000 }).catch(() => {});
+      await page.waitForTimeout(2500);
+      const c1 = await page.evaluate(() => (document.querySelector('#thread .msg.ev.current') || {}).textContent || '');
+      ok(`[${scheme}] after 90 s a check lands on what was written, as questions under her line`, /questions? on what you just wrote/.test(c1) && /daily weight|sodium|potassium/i.test(c1), c1.slice(0, 300));
+      await page.screenshot({ path: `${shots}/demo-session-check-${scheme}.png` });
+      await page.fill('#ev-input', 'Because weight catches all the losses you cannot measure'); await page.click('#ev-send'); await page.waitForTimeout(2500);
+      ok(`[${scheme}] answering a check gets the scripted session reply`, /fold it into the wrap-up/.test(await page.textContent('#thread .msg.ev.current')));
+    }
+    await page.click('#sbar button:has-text("End")'); await page.waitForTimeout(3000);
+    const s1 = await page.evaluate(() => ({ line: !document.getElementById('sbar').hidden, said: (document.querySelector('#thread .msg.ev.current') || {}).textContent || '' }));
+    ok(`[${scheme}] End saves the session and her line says so; the session line goes`, !s1.line && /Session saved: \d+ min/.test(s1.said), JSON.stringify(s1).slice(0, 300));
+    await page.screenshot({ path: `${shots}/demo-session-end-${scheme}.png` });
     ok(`[${scheme}] no request leaves the page's own files (fonts aside)`, outside.length === 0, outside.join(' '));
     ok(`[${scheme}] no page errors`, errors.length === 0, errors.join(' | '));
     ok(`[${scheme}] no sideways scroll`, !(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)));

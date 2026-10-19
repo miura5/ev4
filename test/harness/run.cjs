@@ -751,16 +751,19 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     // Captions (B-77, D-122): in a session only her latest two lines show, and her core is at the session step (66%).
     { const cs = await ss.evaluate(() => { const h = document.getElementById('hero'); return { step: h.dataset.step, px: Math.round(h.querySelector('.ev-av').getBoundingClientRect().width), stage: Math.round(h.getBoundingClientRect().height), lines: document.querySelectorAll('#thread .msg.ev').length }; });
       ok('in a session: only her latest two lines, her core at 66% (172 px) on a 196 px stage', cs.step === 'session' && cs.lines === 2 && Math.abs(cs.px - 172) <= 1 && cs.stage === 196, JSON.stringify(cs)); }
-    // B-84 (the Captions v2 artboard): the session is a one-line pill; its progress is the ring round her own core.
-    { const pr = await ss.evaluate(() => { const b = document.getElementById('sbar'), r = b.getBoundingClientRect(); return { h: Math.round(r.height), w: Math.round(r.width), cores: b.querySelectorAll('canvas').length, ring: window.EVApp.core.stats().ring, label: b.getAttribute('aria-label'), session: document.body.classList.contains('in-session') && !document.body.classList.contains('opening'), over: b.scrollWidth > b.clientWidth + 1 }; });
-      ok('the session is a one-line pill (at most 48 px), no core inside it; her own core carries the ring', pr.h <= 48 && pr.cores === 0 && pr.ring >= 0 && pr.ring < .1 && pr.session && !pr.over, JSON.stringify(pr));
-      ok('the pill names the session and shows the minutes and the next check', /Fluids and electrolytes/.test(pr.label) && /\d+ min · check (6:5\d|7:00)/.test(await ss.textContent('#sbar')) && (await ss.locator('#sbar button').allTextContents()).join(',') === 'Break,+5,End', await ss.textContent('#sbar')); }
+    // B-86 (Matt, Oct 19): the session's stats are one quiet line under her core (no pill above her); its progress is
+    // the ring round her own core (B-84).
+    const lineView = () => ss.evaluate(() => { const b = document.getElementById('sbar'), r = b.getBoundingClientRect(), h = document.getElementById('hero').getBoundingClientRect(), th = document.getElementById('thread').getBoundingClientRect(), cs = getComputedStyle(b);
+      return { h: Math.round(r.height), top: Math.round(r.top), heroBottom: Math.round(h.bottom), threadTop: Math.round(th.top), cores: b.querySelectorAll('canvas').length, ring: window.EVApp.core.stats().ring, label: b.getAttribute('aria-label'), bg: cs.backgroundColor, border: cs.borderTopWidth, session: document.body.classList.contains('in-session') && !document.body.classList.contains('opening'), over: b.scrollWidth > b.clientWidth + 1 }; });
+    { const pr = await lineView();
+      ok('the session is one quiet line under her core (at most 34 px, no box), above her words; her own core carries the ring', pr.h <= 34 && pr.top >= pr.heroBottom - 8 && pr.top + pr.h <= pr.threadTop + 1 && /rgba\(0, 0, 0, 0\)|transparent/.test(pr.bg) && pr.border === '0px' && pr.cores === 0 && pr.ring >= 0 && pr.ring < .1 && pr.session && !pr.over, JSON.stringify(pr));
+      ok('the line names the session in its label and shows the minutes and the next check, then Break, +5, End', /Fluids and electrolytes/.test(pr.label) && /^\d+ min · check (6:5\d|7:00)$/.test(await ss.textContent('#sbar .s-clock')) && (await ss.locator('#sbar button').allTextContents()).join(',') === 'Break,+5,End', await ss.textContent('#sbar')); }
     ok('chip hidden while a session runs', (await ss.locator('#qchips .qchip', { hasText: 'Start a study session' }).count()) === 0);
     await ss.screenshot({ path: `${shots}/session-bar.png` });
-    // The same pill at 1280: still one line, the note's title shown beside the clock.
+    // The same line at 1280, under her core in the middle column.
     await ss.setViewportSize({ width: 1280, height: 860 }); await ss.waitForTimeout(500);
-    { const pd = await ss.evaluate(() => { const b = document.getElementById('sbar'), t = b.querySelector('.s-topic'); return { h: Math.round(b.getBoundingClientRect().height), topic: t && getComputedStyle(t).display !== 'none' ? t.textContent : null }; });
-      ok('[desktop] the pill stays one line and shows the note title', pd.h <= 48 && pd.topic === 'Fluids and electrolytes', JSON.stringify(pd)); }
+    { const pd = await lineView(); const c = await ss.evaluate(() => { const b = document.getElementById('sbar').getBoundingClientRect(), a = document.querySelector('#hero .ev-av').getBoundingClientRect(); return Math.round(Math.abs((b.left + b.right) / 2 - (a.left + a.right) / 2)); });
+      ok('[desktop] the line stays one line, under her core and centred on it', pd.h <= 34 && pd.top >= pd.heroBottom - 8 && c <= 2 && !pd.over, JSON.stringify({ ...pd, offCentre: c })); }
     await ss.screenshot({ path: `${shots}/session-bar-desktop.png` });
     await ss.setViewportSize({ width: 390, height: 844 }); await ss.waitForTimeout(400);
     // First check: only the new writing goes to Claude, the reply posts as a check card
@@ -787,7 +790,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     ok('check card shows answered', /answered/.test(await ss.locator('#thread .msg.ev', { hasText: 'Check 1 ·' }).textContent()));
     // Break and resume from the bar
     await ss.locator('#sbar button', { hasText: 'Break' }).click(); await ss.waitForTimeout(300);
-    ok('break shown in the bar', /On a break/.test(await ss.textContent('#sbar')) && Object.values((await sess()).events).some(e => e.type === 'break'));
+    ok('break shown on the line', /On a break/.test(await ss.textContent('#sbar')) && Object.values((await sess()).events).some(e => e.type === 'break'));
     await ss.screenshot({ path: `${shots}/session-break.png` });
     await ss.locator('#sbar button', { hasText: 'Resume' }).click(); await ss.waitForTimeout(300);
     ok('resume restarts the countdown', /min · check \d+:\d\d/.test(await ss.textContent('#sbar')), await ss.textContent('#sbar'));
