@@ -1357,5 +1357,24 @@
    "D-139"
   ],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "c4d0aa1",
+  "time": "2026-10-19T23:49:28.145Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "a30bf7e",
+  "tasks": [
+   "B-97"
+  ],
+  "summary": "the cutover: CLAUDE.md's every-session and Record steps run through the Chart, BACKLOG.md marked generated, the Decisions tab a view (D-140); system documents only, the page, pipelines and tasks unchanged, their reads skipped",
+  "why": "The B-35 gate after the cutover commit; ship's first deploy with the task and page reads skipped",
+  "decisions": [
+   "D-140",
+   "D-049"
+  ],
+  "source": "log"
  }
 ]
