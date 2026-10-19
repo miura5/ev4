@@ -233,7 +233,7 @@ async function sideBySide(browser, left, right, out, vp) {
     await page.evaluate(() => { document.getElementById('thread').scrollTop = 0; }); await page.waitForTimeout(200);
     await page.screenshot({ path: `${shots}/captions-last-7-days-${scheme}.png` });
     const pillShown = await page.isVisible('#ev-now'); await page.click('#ev-now'); await page.waitForTimeout(900); v = await view(page);
-    ok(`[${scheme}] tapping the Back to now pill folds the earlier conversations away`, pillShown && !v.texts.some(t => t.startsWith('E:')) && !v.now && await atNow(page));
+    ok(`[${scheme}] tapping the Back to now pill folds the earlier conversations away`, pillShown && !v.texts.some(t => t.startsWith('E:')) && !v.now && await atNow(page), JSON.stringify({ pillShown, earlier: v.texts.filter(t => t.startsWith('E:')).length, pill: v.now, top: v.scrollTop, max: v.maxScroll, atNow: await atNow(page), pin: await page.evaluate(() => { const t = document.getElementById('thread'), c = t.querySelector('.msg.ev.current'); return c ? [Math.round(c.getBoundingClientRect().top - t.getBoundingClientRect().top), Math.round(c.getBoundingClientRect().height), t.clientHeight] : null; }) }));
     // Until B-78 (D-122, D-125 as amended): a reply with cards steps her down to the list size; its first card shows
     // under her line, five rows and a more that opens its tab, never scrolling inside itself; the rest are one tappable
     // line that swaps the next card in.
