@@ -93,6 +93,12 @@ unread by v3). In a Mac-linked desktop-app chat with Matt present, in order, not
 5. Write `system/code` and `system/spec` back to v3's (from legacy), fire the v3 evening by hand, and read its run back.
 6. A Board row and a Changelog line say what was rolled back and why.
 
+**Live hotfixes while the window is open (D-138).** `main` carries core v2 and Captions, which D-136 keeps off live
+until D-085's window closes. Until then a live hotfix never starts from `main`: branch from the live build (42f35e9),
+commit the fix there, deploy staging at the hotfix commit and get `verify-deploy staging` green, deploy live only on
+Matt's explicit OK, then cherry-pick the fix onto `main` and redeploy staging from `main`. The B-35 gate still holds,
+because staging runs the hotfix commit before live does.
+
 ## Where things live
 
 | What | Where |
