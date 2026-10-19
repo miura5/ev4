@@ -1575,13 +1575,18 @@
   "title": "`lint`: the id, dependency, decision, commit and inbox checks, run by `npm test`.",
   "dod": "it finds the duplicate B-83 and nothing else",
   "milestone": "M12",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-92"
   ],
-  "notes": "",
+  "notes": "Oct 19: in progress",
   "commit": null,
-  "source": "BACKLOG.md"
+  "source": "BACKLOG.md",
+  "board": {
+   "row": "v4 B-94: lint: the record checks itself",
+   "why": "A duplicate id, a missing dependency or a rule resting on a dropped decision is caught by npm test, not by memory",
+   "notes": "Oct 19. In progress"
+  }
  },
  {
   "id": "B-95",
