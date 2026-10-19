@@ -1556,13 +1556,18 @@
   "title": "`log` and the views: status changes and deploys go through `log`, which prints the Board, Changelog and overview updates.",
   "dod": "one real task is recorded start to finish with no hand edits to any view",
   "milestone": "M12",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-92"
   ],
-  "notes": "",
+  "notes": "Oct 19: in progress; B-93 itself is the task recorded start to finish through log",
   "commit": null,
-  "source": "BACKLOG.md"
+  "source": "BACKLOG.md",
+  "board": {
+   "row": "v4 B-93: log and the views",
+   "why": "Recording a finished task takes one command instead of about a dozen hand edits in four places",
+   "notes": "Oct 19. In progress: B-93 is recorded start to finish through log"
+  }
  },
  {
   "id": "B-94",
