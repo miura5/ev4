@@ -3,7 +3,9 @@
 // Oct 19). chart/ holds the facts; BACKLOG.md, the Board and Changelog tables of the v3 doc and the overview doc's status
 // line are generated from them; these commands are the only way in. chart/ and this file sit outside the manifest's
 // file list (tools/build.mjs HASHED), so a bookkeeping commit never changes what a deploy ships.
-//   report <bug|request> "<Matt's words>" --source <where> [--at <ISO>]   an inbox entry, words as written (B-95)
+//   report <bug|request> --from-chat ["<words>"] | --from-comment <id> | "<words>" --source <where>   an inbox entry
+//            in Matt's words as written, taken from this session's transcript (his message, a Board comment) (B-95)
+//   inbox                    session start: the Board comments to file and the entries to triage, as commands
 //   log <id> [--status s] [--note t] [--board-note t] [--commit sha] [--name n] [--why w] [--waiting-on who]
 //            [--triage task --dod d --milestone m [--depends ids] | --triage join <id> | --triage decline --reason r]
 //   log deploy --target <staging|live> --commit sha [--time ISO] [--ok Matt] [--verify green] [--rollback sha]
@@ -574,15 +576,90 @@ export function applyLog(rec, o, { now = new Date().toISOString() } = {}) {
   if (!what.length) throw new Error('nothing to log: give --status, --note, --commit, --triage or a board field');
   return { rec, what: what.join(', '), id: t.id, views: t.board || t.kind !== 'task' ? ['board'] : [] };
 }
-export function applyReport(rec, o, { now = new Date().toISOString() } = {}) {
+export function applyReport(rec, o, { now = new Date().toISOString(), jsonl = null } = {}) {
   const [, kind, ...rest] = o._;
-  const words = rest.join(' ');
-  if (!['bug', 'request'].includes(kind) || !words) throw new Error('report <bug|request> "<the words as written>" --source <where>');
+  let words = rest.join(' '), at = o.at || null;
+  if (o['from-chat']) {
+    // Matt's words come from his message in this session's transcript, never retyped.
+    const w = jsonl && wordsFromChat(jsonl, o['from-chat'] === true ? null : o['from-chat']);
+    if (!w) throw new Error('no message in this session says "bug: ..." or "idea: ..."' + (o['from-chat'] === true ? '' : ` or holds "${o['from-chat']}"`));
+    words = w.words; at = at || w.at; o.source = o.source || 'build chat';
+  }
+  if (o['from-comment']) {
+    const c = jsonl && (commentsFrom(jsonl, rec.views.board.node) || []).find(x => x.id === o['from-comment']);
+    if (!c) throw new Error(`no Board comment ${o['from-comment']} in this session's newest comment query (run inbox)`);
+    if (rec.tasks.some(t => t.source === `Board comment ${c.id}`)) throw new Error(`Board comment ${c.id} is already filed`);
+    words = c.body; o.source = `Board comment ${c.id}`; o.reply = c.id;
+  }
+  if (!['bug', 'request'].includes(kind) || !words) throw new Error('report <bug|request> "<the words as written>" --source <where> | --from-chat ["<words to find>"] | --from-comment <id>');
   if (!o.source) throw new Error('report needs --source (the chat, a Board comment, the page)');
+  now = at || now;
   const id = nextTaskId(rec);
   const name = words.replace(/\s+/g, ' ').slice(0, 70).replace(/\s\S*$/, words.length > 70 ? '…' : '');
-  rec.tasks.push({ id, kind, title: `${kind === 'bug' ? 'Bug' : 'Request'} (reported ${ctDate(o.at || now)}): ${words}`, dod: null, milestone: 'Inbox', status: 'inbox', depends: [], notes: '', commit: null, source: o.source, words, reportedAt: o.at || now, board: { row: `v4 ${id}: ${name}`, why: words, notes: `Reported ${ctDate(o.at || now)} from ${o.source}` } });
-  return { rec, what: `${kind} reported`, id, views: ['board'] };
+  rec.tasks.push({ id, kind, title: `${kind === 'bug' ? 'Bug' : 'Request'} (reported ${ctDate(now)}): ${words}`, dod: null, milestone: 'Inbox', status: 'inbox', depends: [], notes: '', commit: null, source: o.source, words, reportedAt: now, board: { row: `v4 ${id}: ${name}`, why: words, notes: `Reported ${ctDate(now)} from ${o.source}` } });
+  return { rec, what: `${kind} reported`, id, views: ['board'], reply: o.reply ? commentReply(rec, o.reply, `Filed as ${id} (${kind}). It is triaged at the start of the next build session and shows on this Board with what happened to it.`) : null };
+}
+
+// ------------------------------------------------------------------------------------------------ Matt's words
+const stripReminders = t => String(t).replace(/<system-reminder>[\s\S]*?<\/system-reminder>/g, '').trim();
+/** What Matt typed in this session, oldest first: his messages, and his own words in answers to a question. */
+export function chatMessages(jsonl) {
+  const out = [];
+  for (const line of jsonl.split('\n')) {
+    let row; try { row = JSON.parse(line); } catch { continue; }
+    if (!row || row.type !== 'user' || row.isMeta || !row.message) continue;
+    const c = row.message.content;
+    if (typeof c === 'string') { out.push({ text: stripReminders(c), at: row.timestamp }); continue; }
+    if (!Array.isArray(c) || row.sourceToolUseID) continue;
+    const texts = c.filter(b => b.type === 'text').map(b => b.text);
+    if (texts.length && !c.some(b => b.type === 'tool_result')) out.push({ text: stripReminders(texts.join('\n')), at: row.timestamp });
+    for (const b of c.filter(b => b.type === 'tool_result')) {
+      const t = typeof b.content === 'string' ? b.content : (b.content || []).filter(x => x.type === 'text').map(x => x.text).join('\n');
+      for (const m of String(t).matchAll(/"[^"]*"="([^"]*)"/g)) out.push({ text: m[1], at: row.timestamp, answer: true });
+    }
+  }
+  return out.filter(m => m.text);
+}
+const MARK = /(?:^|\n)\s*(bug|idea|request)\s*:\s*/i;
+/** The words of the newest message that says "bug: ..." / "idea: ..." (or holds --match), exactly as written. */
+export function wordsFromChat(jsonl, match) {
+  const msgs = chatMessages(jsonl).filter(m => match ? m.text.toLowerCase().includes(String(match).toLowerCase()) : MARK.test(m.text));
+  const m = msgs.at(-1); if (!m) return null;
+  const k = m.text.search(MARK);
+  let words = k < 0 ? m.text : m.text.slice(k).replace(MARK, '');
+  const para = words.indexOf('\n\n'); if (para > 0) words = words.slice(0, para);
+  if (match && !words.toLowerCase().includes(String(match).toLowerCase())) words = m.text.split('\n\n').find(p => p.toLowerCase().includes(String(match).toLowerCase()));
+  return { words: words.trim(), at: m.at, said: (m.text.match(MARK) || [])[1] };
+}
+/** The comment threads of the newest comment query on a node in this session: [{id, body, by, self}]. */
+export function commentsFrom(jsonl, node) {
+  const rs = toolResults(jsonl, 'Claude_Docs__query').filter(r => r.input && r.input.payload && r.input.payload.under && r.input.payload.under.id === node && !r.isError);
+  const r = rs.at(-1); if (!r) return null;
+  const t = r.texts.join(''); const i = t.indexOf('{"verdict"');
+  const v = JSON.parse(t.slice(i, t.lastIndexOf('}') + 1));
+  const rows = v.rows || [];
+  const replies = new Set(rows.filter(x => x.payload && x.payload.value && x.payload.value.parent && x.payload.value.parent.object === 'utterance').map(x => x.payload.value.parent.id));
+  return rows.filter(x => x.payload && x.payload.value && x.payload.value.body && x.payload.value.parent && x.payload.value.parent.object === 'node')
+    .map(x => ({ id: x.id, body: x.payload.value.body, by: (x.actor && (x.actor.name || x.actor.principal)) || '?', self: Boolean(x.actor && x.actor.self), replied: replies.has(x.id) }));
+}
+export const commentQuery = (rec) => ({ tool: 'mcp__Claude_Docs__query', args: { object: 'utterance', container: { kind: 'project', id: rec.views.doc }, payload: { under: { object: 'node', id: rec.views.board.node } } } });
+export const commentReply = (rec, threadId, body) => ({ tool: 'mcp__Claude_Docs__create', args: { object: 'utterance', container: { kind: 'project', id: rec.views.doc }, payload: { value: { body, parent: { object: 'utterance', id: threadId } } } } });
+/** Session start: the Board comments to file, then the inbox to triage, each as the exact command or call. */
+export function inboxPlan(rec, jsonl) {
+  const out = { query: null, comments: [], triage: rec.tasks.filter(t => t.status === 'inbox') };
+  const comments = jsonl ? commentsFrom(jsonl, rec.views.board.node) : null;
+  if (!comments) out.query = commentQuery(rec);
+  else for (const c of comments) if (!rec.tasks.some(t => t.source === `Board comment ${c.id}`) && !c.replied) out.comments.push(c);
+  return out;
+}
+export function formatInbox(plan) {
+  const out = [];
+  if (plan.query) out.push('inbox: read the Board\'s comments first (the result stays in this session\'s transcript), then run inbox again:', `  ${plan.query.tool}`, '  ' + JSON.stringify(plan.query.args));
+  for (const c of plan.comments) out.push(`Board comment ${c.id} by ${c.by}: "${c.body}"`, `  file it: node tools/chart.mjs report <bug|request> --from-comment ${c.id}   (its words come from the query, never retyped; it prints the reply)`);
+  for (const t of plan.triage) out.push(`${t.id} (${t.kind}, ${t.reportedAt}, from ${t.source}): "${t.words}"`, `  triage: node tools/chart.mjs log ${t.id} --triage task --dod "..." --milestone M.. [--depends ...] | --triage join <id> | --triage decline --reason "..."`);
+  if (!out.length) out.push('inbox: empty; no Board comment waits to be filed');
+  else if (!plan.query && (plan.comments.length || plan.triage.length)) out.push('', 'Triage comes first: log refuses to start a task while an entry waits in the inbox. A bug that breaks studying is taken before any other open task.');
+  return out.join('\n');
 }
 
 function commitRecord(root, message, trailers) {
@@ -704,6 +781,7 @@ const commands = {
     return f.some(x => x.level === 'error') ? 1 : 0;
   },
   views(o) { printViews(loadChart(rootOf(o)), o); return 0; },
+  inbox(o) { const file = o.transcript || newestTranscript(); console.log(formatInbox(inboxPlan(loadChart(rootOf(o)), file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null))); return 0; },
   log(o) { return record(o, applyLog); },
   report(o) { return record(o, applyReport); },
   brief(o) { const id = o.task || o._[1]; if (!id) throw new Error('brief --task <id>'); console.log(brief(loadChart(rootOf(o)), id, { root: rootOf(o) })); return 0; },
@@ -711,20 +789,23 @@ const commands = {
 };
 function record(o, apply) {
   const root = rootOf(o), rec = loadChart(root);
-  const { what, id, views } = apply(rec, o, { now: o.at && o._[0] === 'report' ? o.at : undefined });
+  const file = o.transcript || newestTranscript();
+  const jsonl = file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+  const { what, id, views, reply } = apply(rec, o, { jsonl });
   const errors = lintChart(rec).filter(f => f.level === 'error' && (f.id === id));
   if (errors.length) throw new Error('the record would not lint: ' + errors.map(f => f.detail).join('; '));
   saveChart(root, rec); writeBacklog(root, rec);
   const sha = o['no-commit'] ? null : commitRecord(root, `${id}: ${what} (chart)`, o.trailer);
   console.log(`${o._[0]} ${id}: ${what}${sha ? `; committed ${sha} (push it: git push origin main)` : o['no-commit'] ? '; not committed (--no-commit)' : '; nothing changed'}`);
   console.log('BACKLOG.md regenerated.');
+  if (reply) console.log(`Reply in the comment's thread with the id it got: ${reply.tool}\n${JSON.stringify(reply.args)}`);
   if (views.length) printViews(rec, o, views);
   return 0;
 }
 
 export async function main(argv) {
   const o = args(argv), cmd = commands[o._[0]];
-  if (!cmd) { console.error('Commands: report, log, views, lint, ship <staging|live>, brief --task <id>, backlog [--check], import --from <dir>'); return 2; }
+  if (!cmd) { console.error('Commands: report, inbox, log, views, lint, ship <staging|live>, brief --task <id>, backlog [--check], import --from <dir>'); return 2; }
   try { return await cmd(o); } catch (e) { console.error(`${o._[0]} refused: ${e.message}`); return 1; }
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) process.exitCode = await main(process.argv.slice(2));

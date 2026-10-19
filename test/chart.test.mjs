@@ -206,3 +206,61 @@ test('B-94: each check fires on a planted fault', () => {
   const got = C.lintChart(r).map(x => `${x.level} ${x.check} ${x.id}`);
   assert.deepEqual(got.sort(), ['error declined-without-reason B-05', 'error done-without-commit B-01', 'error duplicate-id B-02', 'error missing-dependency B-03', 'error rule-decision R-01', 'warn untriaged B-04'].sort());
 });
+
+// ------------------------------------------------------------------------------------------------ B-95 report and triage
+const human = (text, at = '2026-10-19T23:40:00.000Z') => JSON.stringify({ type: 'user', timestamp: at, message: { role: 'user', content: text } });
+const toolPair = (id, name, input, result) => [JSON.stringify({ message: { content: [{ type: 'tool_use', id, name, input }] } }), JSON.stringify({ type: 'user', message: { content: [{ type: 'tool_result', tool_use_id: id, content: [{ type: 'text', text: result }] }] } })];
+
+test('B-95: report takes Matt\'s words from his message, exactly as written', () => {
+  const jsonl = [human('ok next one'), human('bug: the timer sat at 0:00 after I came back\n\nalso, nice work <system-reminder>x</system-reminder>', '2026-10-19T23:41:00.000Z')].join('\n');
+  assert.deepEqual(C.wordsFromChat(jsonl), { words: 'the timer sat at 0:00 after I came back', at: '2026-10-19T23:41:00.000Z', said: 'bug' });
+  assert.equal(C.wordsFromChat(jsonl, 'nice work').words, 'also, nice work');
+  const r = sample();
+  const out = C.applyReport(r, { _: ['report', 'bug'], 'from-chat': true }, { jsonl });
+  const t = r.tasks.at(-1);
+  assert.deepEqual([out.id, t.kind, t.status, t.words, t.source, t.reportedAt], ['B-04', 'bug', 'inbox', 'the timer sat at 0:00 after I came back', 'build chat', '2026-10-19T23:41:00.000Z']);
+  assert.deepEqual(C.boardRow(t, r).status, { text: 'New report' });
+  assert.match(C.renderBacklog(r), /## Inbox[\s\S]*\| B-04 \| bug \| 2026-10-19T23:41:00.000Z \| the timer sat at 0:00 after I came back \| build chat \| inbox \|/);
+  assert.equal(C.lintChart(r).find(f => f.id === 'B-04').level, 'warn');
+  assert.throws(() => C.applyReport(sample(), { _: ['report', 'bug'], 'from-chat': true }, { jsonl: human('nothing to see') }), /no message in this session says/);
+});
+
+test('B-95: triage comes first, then the entry becomes a task, joins one, or is declined with a reason; nothing is deleted', () => {
+  const r = sample();
+  C.applyReport(r, { _: ['report', 'bug', 'the', 'timer', 'sat', 'at', '0:00'], source: 'build chat', at: '2026-10-19T23:41:00Z' });
+  assert.throws(() => C.applyLog(r, { _: ['log', 'B-02'], status: 'in progress' }), /triage first: B-04 waits in the inbox/);
+  assert.throws(() => C.applyLog(r, { _: ['log', 'B-04'], status: 'in progress' }), /in the inbox: triage it first/);
+  assert.throws(() => C.applyLog(r, { _: ['log', 'B-04'], triage: 'task', dod: 'x' }), /needs --dod and --milestone/);
+  C.applyLog(r, { _: ['log', 'B-04'], triage: 'task', dod: 'the clock resumes from the session\'s start after a return; a harness test', milestone: 'M11' });
+  const t = r.tasks.find(x => x.id === 'B-04');
+  assert.deepEqual([t.status, t.milestone, t.triage.outcome], ['open', 'M11', 'task']);
+  assert.deepEqual(C.boardRow(t, r).status, { option: 'Next' });
+  assert.match(C.renderBacklog(r), /\| B-04 \| Bug \(reported Oct 19\): the timer sat at 0:00 Done when: the clock resumes/);
+  C.applyLog(r, { _: ['log', 'B-02'], status: 'in progress' });
+  // join and decline keep the entry, marked.
+  C.applyReport(r, { _: ['report', 'request', 'reorder', 'the', 'briefing'], source: 'build chat' });
+  C.applyLog(r, { _: ['log', 'B-05', 'B-02'], triage: 'join' });
+  C.applyReport(r, { _: ['report', 'request', 'a', 'dark', 'mode', 'toggle'], source: 'build chat' });
+  assert.throws(() => C.applyLog(r, { _: ['log', 'B-06'], triage: 'decline' }), /needs --reason/);
+  C.applyLog(r, { _: ['log', 'B-06'], triage: 'decline', reason: 'the page is dark only by design (D-077)' });
+  assert.deepEqual(r.tasks.slice(-2).map(x => [x.id, x.status, C.boardRow(x, r).status.text]), [['B-05', 'declined', 'Joined B-02'], ['B-06', 'declined', 'Declined']]);
+  assert.match(C.boardRow(r.tasks.at(-1), r).notes, /^the page is dark only by design \(D-077\)/);
+  assert.deepEqual(C.lintChart(r).filter(f => f.level === 'error'), []);
+});
+
+test('B-95: a Board comment is filed from the comment query and answered with its id', () => {
+  const r = sample();
+  const q = { object: 'utterance', container: { kind: 'project', id: 'DOC' }, payload: { under: { object: 'node', id: 'BN' } } };
+  const rows = { verdict: 'allow', rows: [{ id: 'u-1', verb: 'create', actor: { name: 'Mathew', self: true }, payload: { value: { body: 'the Quiz me button does nothing on my phone', parent: { object: 'node', id: 'BN', anchor: {} } } } }] };
+  let jsonl = toolPair('q1', 'mcp__Claude_Docs__query', q, JSON.stringify(rows)).join('\n');
+  assert.deepEqual(C.inboxPlan(r, null).query, C.commentQuery(r));
+  assert.deepEqual(C.inboxPlan(r, jsonl).comments.map(c => [c.id, c.body]), [['u-1', 'the Quiz me button does nothing on my phone']]);
+  const out = C.applyReport(r, { _: ['report', 'bug'], 'from-comment': 'u-1' }, { jsonl });
+  assert.equal(r.tasks.at(-1).words, 'the Quiz me button does nothing on my phone');
+  assert.equal(r.tasks.at(-1).source, 'Board comment u-1');
+  assert.deepEqual(out.reply.args.payload.value.parent, { object: 'utterance', id: 'u-1' });
+  assert.match(out.reply.args.payload.value.body, /^Filed as B-04 \(bug\)/);
+  assert.deepEqual(C.inboxPlan(r, jsonl).comments, [], 'filed: not listed again');
+  assert.throws(() => C.applyReport(r, { _: ['report', 'bug'], 'from-comment': 'u-1' }, { jsonl }), /already filed/);
+  assert.match(C.formatInbox(C.inboxPlan(r, jsonl)), /B-04 \(bug, .*from Board comment u-1\): "the Quiz me button does nothing on my phone"/);
+});
