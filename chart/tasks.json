@@ -1634,7 +1634,7 @@
   "source": "BACKLOG.md"
  },
  {
-  "id": "B-83",
+  "id": "B-98",
   "kind": "task",
   "title": "Live evening-mac runs with its checkout: its first scheduled run (Oct 18, 8:20pm) failed at the gate, \"the E.V. repository is not checked out in this session\" (runs/evening-mac-failed-20261019-012057581), while the staging evening-mac of the same shape ran with it; find the cause (the task was re-saved Oct 18 18:13Z in the desktop app when its push was turned on) and fix the task so its runs start in this repository; nothing deleted (a replacement task retires the old one under spec.tasks.retired)",
   "dod": null,
@@ -1645,10 +1645,14 @@
   "commit": null,
   "source": "BACKLOG.md",
   "board": {
-   "row": "v4 B-83: the Mac evening run starts without its code",
+   "row": "v4 B-98: the Mac evening run starts without its code",
    "why": "Until fixed: no Canvas sync, no nightly backup and no Sunday mirror, and a failure push at 8:20pm each night",
-   "notes": "Oct 19, found by B-25. Needs you at the Mac with a chat that has the repository"
+   "notes": "Oct 19, found by B-25. Needs you at the Mac with a chat that has the repository",
+   "were": [
+    "v4 B-83: the Mac evening run starts without its code"
+   ]
   },
-  "waitingOn": "Matt"
+  "waitingOn": "Matt",
+  "renumberedFrom": "B-83"
  }
 ]
