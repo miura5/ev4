@@ -1670,17 +1670,17 @@
   "title": "`report` and triage.",
   "dod": "a bug said in chat lands in the inbox, is triaged into a task, and shows on the Board with its status",
   "milestone": "M12",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-93"
   ],
-  "notes": "Oct 19: in progress",
-  "commit": null,
+  "notes": "Oct 19, 03cb584: report files Matt's words from the transcript (his message, or a Board comment with a printed reply giving the id); inbox lists what waits at session start; log refuses to start a task while an entry waits; triage makes it a task, joins it to one, or declines it with a reason (kept). Proof: Matt's idea in this chat filed word for word as B-99, triaged into a task (M11), on the Board as Next. npm test 269",
+  "commit": "03cb584",
   "source": "BACKLOG.md",
   "board": {
    "row": "v4 B-95: report and triage",
    "why": "Say a bug or idea in plain words; it lands in the inbox, gets triaged first thing next session, and shows here with what happened to it",
-   "notes": "Oct 19. In progress"
+   "notes": "Oct 19, 03cb584. Your idea in the chat went in word for word as B-99, was triaged into a task and is on this Board as Next"
   }
  },
  {
