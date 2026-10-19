@@ -136,7 +136,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     await page.screenshot({ path: `${shots}/today-${scheme}.png`, fullPage: true });
     await page.click('#tab-ev'); await page.waitForTimeout(100);
     if (scheme === 'desktop') {
-      await page.locator('#qchips .qchip', { hasText: 'What’s due this week?' }).click(); await page.waitForTimeout(900);
+      await send(page, 'What’s due this week?'); // typed: with review, a finished job and the session chip it has no chip (D-125) await page.waitForTimeout(900);
       await page.screenshot({ path: `${shots}/ev-desktop-conversation.png`, fullPage: false });
       // B-53 (D-109) at desktop width: the kind on every idea, the weak-spot action only on a learning idea
       await page.click('#tab-record'); await page.waitForTimeout(150);
@@ -158,7 +158,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     }
     await page.waitForTimeout(1500);
     ok('open marks lastSeenAt in talk/memory', await page.evaluate(() => !!(window.__db.talk && window.__db.talk.memory && window.__db.talk.memory.lastSeenAt)));
-    await page.locator('#qchips .qchip', { hasText: 'What’s due this week?' }).click(); await page.waitForTimeout(250);
+    await send(page, 'What’s due this week?'); // typed: with review, a finished job and the session chip it has no chip (D-125) await page.waitForTimeout(250);
     let m = await msgs(page);
     ok('quick ask posts Matt + E.V. to talk/<today>', m.length === 2 && m[0].role === 'matt' && m[1].role === 'ev' && m[1].cards[0].type === 'dates', JSON.stringify(m.map(x => [x.role, x.text.slice(0, 30)])));
     ok('dates card shown', /Next 7 days/.test(await page.locator('#thread .msg.ev').last().textContent()));
@@ -727,12 +727,10 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     const hasEvent = test => async () => { const s = await sess(); return !!s && Object.values(s.events || {}).some(test); };
     // Without the reader (a browser tab or the iPhone), E.V. says where to open the page
     await ss.evaluate(() => { window.__readerFail = 'server_not_connected'; });
-    // D-125 as amended: at most three chips, the greeting's offers first; the session chip fills a free slot, and the
-    // session also starts typed.
+    // D-125 as amended: while no session runs, Start a study session keeps the last of the three chips.
     const sc = await ss.evaluate(() => [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent));
-    const offers = ['Start review', 'Open the study guide', 'File it', 'What’s due this week?'];
-    ok('session chip offered when a slot is free (at most three chips, offers first)', sc.length <= 3 && (sc.includes('Start a study session') || sc.every(c => offers.includes(c))), JSON.stringify(sc));
-    if (sc.includes('Start a study session')) await ss.locator('#qchips .qchip', { hasText: 'Start a study session' }).click(); else await send(ss, 'Start a study session');
+    ok('session chip offered, last of at most three', sc.length <= 3 && sc[sc.length - 1] === 'Start a study session', JSON.stringify(sc));
+    await ss.locator('#qchips .qchip', { hasText: 'Start a study session' }).click();
     await ss.waitForTimeout(300);
     ok('no reader: says to open the desktop app, starts nothing', /Claude desktop app on your Mac/.test((await msgs(ss)).slice(-1)[0].text) && !(await sess()), (await msgs(ss)).slice(-1)[0].text);
     // A #graded note is refused

@@ -79,7 +79,8 @@
   // keeps them in S under v3's names; dates are always seen through their edits (D-080) and plans through their ticks.
   let sample = null; let mcp = null; let toolMax = -1; // -1 = not known yet; 0 = this view runs no page tools
   use('sample').then(sm => { sample = sm; if (sm && sm.limits) sm.limits().then(l => { toolMax = (l && l.tools && l.tools.maxCount) || 0; }).catch(() => {}); render(); });
-  use('mcp').then(m => { mcp = m; render(); }); // connectors (background jobs, the reader) load on their own; the page works without them
+  let mcpKnown = false;
+  use('mcp').then(m => { mcp = m; mcpKnown = true; render(); if (!m) regreet(); }); // connectors (background jobs, the reader) load on their own; the page works without them
 
   const S = { weak: [], sets: [], answers: [], exams: [], examsRaw: null, examedits: [], predictions: [], objectives: [], plans: [], plansRaw: [], planedits: [], dates: [], datesAll: [], datesRaw: [], dateedits: [], days: [], dayedits: [], weeks: [], state: null, health: null, runs: [], ideas: [], workouts: [], sessions: [], journal: [], announcements: [], talk: [], jobs: [], jobresults: [], materialedits: [], concepts: [], memory: null };
   const NAME = { weakspots: 'weak', 'talk/memory': 'memory' };
@@ -1125,9 +1126,11 @@
   }
   capBox.addEventListener('scroll', () => {
     const t = capBox, fromBottom = t.scrollHeight - t.clientHeight - t.scrollTop;
+    // Now is her latest reply as a whole (D-122 as amended): when it is pinned, scrolling down through its card is
+    // still now; Back to now shows once he scrolls above her latest line into earlier ones.
     const atAnchor = CAP.anchorTop != null && Math.abs(t.scrollTop - CAP.anchorTop) < 30;
     CAP.stick = fromBottom < 30 || atAnchor;
-    const away = fromBottom > 140 && !atAnchor; if (capNow.hidden === away) { capNow.hidden = !away; if (away) capNow.style.bottom = ($('composer').offsetHeight + 12) + 'px'; }
+    const away = CAP.anchorTop != null ? t.scrollTop < CAP.anchorTop - 40 : fromBottom > 140; if (capNow.hidden === away) { capNow.hidden = !away; if (away) capNow.style.bottom = ($('composer').offsetHeight + 12) + 'px'; }
     // Leaving the top after an edge (the start of today, the 7-day edge) readies the next full pull.
     if ((CAP.pull === 'start' || CAP.pull === 'window') && t.scrollTop > 40) CAP.pull = null;
     const p = Math.max(0, Math.min(1, (160 - t.scrollTop) / 160)); if (!CAP.pull) pullView(p, null);
@@ -1267,25 +1270,30 @@
   // ---- Session filing from the page (Features: reader v2 list_sessions/read_session, core.intakeSession). Runs once
   // when E.V. Home opens where the reader answers (the desktop app on his Mac) and on "file it". Only findings ever
   // leave the reader (never note text); a #graded session is left alone; a near-repeat waits on Same or Different.
-  const FILE = { running: null, opened: false };
+  const FILE = { running: null, opened: false, quiet: null };
+  // Sessions waiting to be filed, for the greeting's File it chip (D-125 as amended): quiet filing on open is the main
+  // path; the chip is the fallback when it cannot run (no Mac reader here, the reader unreachable) or left some behind.
+  const fileUnfiled = () => !mcpKnown ? 0 : !mcp || (FILE.quiet && !FILE.quiet.ok) ? 1 : FILE.quiet ? FILE.quiet.left : 0;
   const filedIds = () => new Set(S.sessions.map(s => /^(sw|ss)-/.test(s.id) ? s.id : 'sw-' + s.id)); // v3 filed them without the prefix
   async function fileSessions({ quiet = false } = {}) {
     if (FILE.running) return FILE.running;
     FILE.running = (async () => {
       let list; try { list = await readerCall('list_sessions', { sinceModifiedAt: new Date(Date.now() - 30 * 864e5).toISOString() }); }
-      catch (e) { if (!quiet) return { text: readerCopy((e && e.code) || 'upstream_error', e && e.message).replace('read your note', 'reach your sessions'), cards: [] }; return null; }
+      catch (e) { if (quiet) FILE.quiet = { ok: false }; if (!quiet) return { text: readerCopy((e && e.code) || 'upstream_error', e && e.message).replace('read your note', 'reach your sessions'), cards: [] }; return null; }
       const known = filedIds(); const todo = ((list && list.sessions) || []).filter(x => x && x.id && !known.has('sw-' + x.id)).slice(0, 10);
+      let unread = 0; if (quiet) FILE.quiet = { ok: true, left: 0 };
       if (!todo.length) return quiet ? null : { text: 'Nothing new to file: every Study Watch session from the last 30 days is already in your record.', cards: [] };
       const filed = []; let graded = 0, weak = 0, ideas = 0, asks = 0;
       for (const x of todo) {
-        let f; try { f = await readerCall('read_session', { id: x.id }); } catch { continue; }
-        if (!f || !f.found) continue; if (f.graded) { graded++; continue; }
+        let f; try { f = await readerCall('read_session', { id: x.id }); } catch { unread++; continue; }
+        if (!f || !f.found) { unread++; continue; } if (f.graded) { graded++; continue; }
         const r = E.intakeSession({ ...f, id: 'sw-' + x.id }, { weakspots: M.models, sessions: S.sessions.map(s => ({ ...s, id: /^(sw|ss)-/.test(s.id) ? s.id : 'sw-' + s.id })), objectives: S.objectives, now: now(), writer: 'page' });
         if (r.skip) continue;
         const writes = r.writes.map(w => w.collection === 'sessions' && w.id === r.id && r.questions.length ? { ...w, data: { ...w.data, pending: Object.fromEntries(r.questions.map(q => [q.key, { topic: q.topic, objective: q.objective, candidate: q.candidate }])) } } : w);
         await run(writes);
         filed.push(r.id); weak += writes.filter(w => w.collection === 'weakspots' && w.op === 'set').length; ideas += writes.filter(w => w.collection === 'ideas').length; asks += r.questions.length;
       }
+      if (quiet) FILE.quiet = { ok: true, left: unread };
       if (!filed.length) return quiet && !graded ? null : { text: graded ? `${plural(graded, 'session')} tagged #graded stayed out of the record. Nothing else new to file.` : 'Nothing new to file.', cards: [] };
       const bits = [plural(filed.length, 'Study Watch session'), weak ? plural(weak, 'new weak spot') : '', ideas ? plural(ideas, 'idea') : ''].filter(Boolean).join(', ');
       return { text: `Filed ${bits}.${asks ? ' ' + (asks === 1 ? 'One near-repeat waits' : asks + ' near-repeats wait') + ' on Same or Different.' : ''}${graded ? ' Sessions tagged #graded stayed out.' : ''}`, cards: filed.slice(0, 3).map(id => ({ type: 'session', id })) };
@@ -1502,7 +1510,7 @@
     SS.ring.arc.setAttribute('stroke-dashoffset', (RING_C * (1 - frac)).toFixed(1));
   }
   function sessionTick() {
-    if (!FILE.opened && M && mcp && loaded.has('sessions')) { FILE.opened = true; fileSessions({ quiet: true }).then(r => { if (r) evSay(r.text, r.cards, { tier: 'local' }); }).catch(() => {}); }
+    if (!FILE.opened && M && mcp && loaded.has('sessions')) { FILE.opened = true; fileSessions({ quiet: true }).then(r => { if (r) evSay(r.text, r.cards, { tier: 'local' }); }).catch(() => { FILE.quiet = FILE.quiet || { ok: false }; }).finally(regreet); }
     const s = activeSession(); renderBar();
     if (!s || !M || SS.busy) return;
     if (SS.readerOk == null) probeReader();
@@ -2389,10 +2397,12 @@
 
   // ---------------------------------------------------------------- greeting (once per open)
   const latestRuns = () => E.lastRuns(S.runs);
+  // The chips change once quiet filing has run (or could not): the greeting's offers are recomputed, its lines kept.
+  function regreet() { if (!T.greet || !T.greetCtx) return; const c = E.greeting({ ...T.greetCtx, unfiled: fileUnfiled(), sessionActive: !!activeSession() }).chips; if (c.join('|') !== (T.greet.chips || []).join('|')) { T.greet.chips = c; render(); } }
   function greetNow() {
     const { day, items, isDone } = dayState(); const { left, total } = reviewState();
     const rd = M.target ? E.readiness({ examId: M.target.id, weakspots: M.models }) : null;
-    const g = E.greeting({ now: new Date(), date: today, dayType: day.dayType, items: items.map(it => ({ id: it.id, text: it.text, tag: it.tag, done: isDone(it), deferred: !!it.deferred, minutes: it.minutes, set: it.set })),
+    const g = E.greeting(T.greetCtx = { now: new Date(), date: today, unfiled: fileUnfiled(), dayType: day.dayType, items: items.map(it => ({ id: it.id, text: it.text, tag: it.tag, done: isDone(it), deferred: !!it.deferred, minutes: it.minutes, set: it.set })),
       reviewLeft: left, reviewTotal: total, push: (M.day && M.day.push) || null, nextExams: S.exams.filter(e => e.date).map(e => ({ id: e.id, title: e.title || e.id, date: e.date, course: e.course, kind: e.kind })),
       readiness: rd ? { examId: M.target.id, pctSolid: rd.pctSolid, need: rd.need } : null, dueCount: E.rankDue(M.models, today, S.exams).length,
       jobs: S.jobs.map(j => ({ id: j.id, kind: j.kind, title: j.title, status: j.status, finishedAt: j.finishedAt })), dueSoon: S.dates.filter(d => d.date >= today && d.date <= E.addDays(today, 7)).length, lastSeenAt: (S.memory && S.memory.lastSeenAt) || new Date(Date.now() - 864e5).toISOString(),
