@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-140",
+  "date": "Oct 19",
+  "title": "The Chart is E.V.'s project record: chart/ in ev4, written only through tools/chart.mjs (report, log, lint, ship, brief), holds tasks with Matt's reports, decisions, deploys and the rules commands enforce; BACKLOG.md, the v3 doc's Board, Changelog and Decisions tabs and the overview doc's status line are printed from it and never edited by hand; ship refuses what chart/rules.json forbids; chart/ stays outside the manifest so a bookkeeping commit never moves the build. Reverting the cutover commit (c4d0aa1) brings hand bookkeeping back",
+  "why": "Matt approved the design Oct 19: each finished task took about a dozen hand edits in four places that drifted (the Board had B-24 Done and B-61 blank, the overview named a build two deploys old, the backlog held a duplicate B-83 and lacked five Build plan tasks), and rules like page-only live deploys were prose checked by memory",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-139",
   "date": "Oct 18",
   "title": "While D-085's window is open, a change that touches no stored document, pipeline step, prompt, schema or migration may go live by the normal path (verify-deploy staging green at the commit, deploy live on Matt's OK), its going-back being a redeploy of the previous live build; the first is core v2 and Captions (B-76, B-77) at 6ad8a53, live on Matt's OK Oct 18; schema changes (B-74, B-75) still wait for the window to close; the window itself stays as D-085 says",
