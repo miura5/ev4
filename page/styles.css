@@ -352,6 +352,10 @@ body.captions .msg-meta{justify-content:center}
 body.captions .msg-meta>span{display:none}
 body.captions .msg-cards,body.captions.opening .msg.greet .msg-cards{display:flex;align-self:stretch;text-align:left;margin-top:4px}
 body.captions .msg-cards:empty{display:none}
+/* Until B-78's surfaces: one card under her line, at most the space left (capFit sets --card-max), scrolling inside
+   itself when taller; the rest of the reply's cards as one line. */
+body.captions .msg-cards>.ev-card{max-height:var(--card-max,none);overflow-y:auto;overscroll-behavior:contain;flex:none}
+body.captions .cap-cards-more{margin:0;text-align:center;font-size:13px;color:var(--soft)}
 /* The Breath reveal: each word fades and un-blurs in; emphasised words are teal. */
 body.captions .w{display:inline-block}
 body.captions .reveal .w{opacity:0;filter:blur(6px);transform:translateY(6px)}
@@ -371,6 +375,7 @@ body.captions .composer>.cap-echo{max-width:none}
   body.captions .hero{--stage-h:370px}
   body.captions #p-ev{grid-template-columns:minmax(0,1fr) clamp(300px,30vw,440px);column-gap:28px;grid-template-rows:auto auto minmax(0,1fr) auto}
   body.captions #p-ev>#ev-side{grid-column:2;grid-row:1/span 4;align-self:stretch}
+  body.captions .msg.ev .bubble{font-size:16px}
   body.captions .msg.ev.current .bubble{font-size:24px}
   body.captions .msg.matt .bubble{font-size:14px}
   body.captions.surface-open .msg.ev.current .bubble{font-size:17px}

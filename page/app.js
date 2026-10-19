@@ -1068,7 +1068,7 @@
   // The top bar's core is tucked away (styles.css) while her stage core is up or a session runs; then it does not draw.
   const topOrb = CORE.make(40, { follow: true, when: () => !document.body.matches('.on-ev.captions, .on-ev.opening, .on-ev.in-session, .on-ev.core-big') }); $('top-av').append(topOrb.el);
   // A resize keeps the newest line in view when he was reading it (the layout steps at 900 px move everything).
-  addEventListener('resize', () => { heroOrb.resize(coreStage().px); renderStage(); if (CAP.stick) requestAnimationFrame(() => { capBox.scrollTop = capBox.scrollHeight; capBox.dispatchEvent(new Event('scroll')); }); });
+  addEventListener('resize', () => { heroOrb.resize(coreStage().px); renderStage(); capFit(); if (CAP.stick) requestAnimationFrame(() => { capBox.scrollTop = capBox.scrollHeight; capBox.dispatchEvent(new Event('scroll')); }); });
 
   // ---------------------------------------------------------------- Captions (B-77; D-122, D-127, D-128)
   // The E.V. tab without the thread: her stage, her lines under her (the current one large, earlier ones above, smaller
@@ -1077,7 +1077,7 @@
   // get each finished sentence once, from a polite live region of its own.
   document.body.classList.add('captions');
   const REDUCE = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  const CAP = { loaded: 0, stick: true, holdT: null, pull: null, pullN: 0, queue: [], rv: new Map(), said: new Set(), timer: null, echoT: null, end: new Map() };
+  const CAP = { loaded: 0, pastToday: false, stick: true, holdT: null, pull: null, pullN: 0, queue: [], rv: new Map(), said: new Set(), timer: null, echoT: null, end: new Map() };
   const capBox = $('thread'); capBox.removeAttribute('aria-live');
   const capIn = el('div', 'cap-in'); capBox.replaceChildren(capIn);
   const capPull = el('div', 'cap-pull'); capPull.setAttribute('aria-hidden', 'true');
@@ -1105,30 +1105,37 @@
     h.style.setProperty('--core-scale', String(z.pct / 100)); h.style.setProperty('--stage-h', (STAGE_PX[z.layout][z.step] || z.px + 24) + 'px');
     h.dataset.step = z.step; h.dataset.px = String(z.px);
   }
+  // The talk the page holds (the shell's read window, spec.ui.page.subscribe): the edge a pull past today stops at.
+  const TALK_DAYS = (EV_SPEC.ui.page.subscribe.find(x => x.collection === 'talk' && x.windowDays) || { windowDays: 7 }).windowDays;
   function pullView(p, mode) {
     capPull.style.setProperty('--pull-o', String(mode ? 1 : Math.pow(p, 1.4).toFixed(2)));
     capPull.style.setProperty('--pull-dash', (94.25 * (1 - (mode ? 1 : p))).toFixed(1));
     capPull.style.setProperty('--pull-rot', Math.round((mode ? 1 : p) * 180) + 'deg');
     capPull.classList.toggle('loading', mode === 'loading');
-    capPull.querySelector('.lbl').textContent = mode === 'loading' ? `Loading ${CAP.pullN} earlier message${CAP.pullN === 1 ? '' : 's'}` : mode === 'start' ? 'That’s the start of today' : p > .96 ? 'Hold for earlier' : 'Keep scrolling for earlier';
+    capPull.querySelector('.lbl').textContent = mode === 'loading' ? `Loading ${CAP.pullN} earlier message${CAP.pullN === 1 ? '' : 's'}` : mode === 'start' ? 'That’s the start of today' : mode === 'window' ? `That’s everything from the last ${TALK_DAYS} days` : p > .96 ? 'Hold for earlier' : 'Keep scrolling for earlier';
   }
   capBox.addEventListener('scroll', () => {
     const t = capBox, fromBottom = t.scrollHeight - t.clientHeight - t.scrollTop;
     CAP.stick = fromBottom < 30;
     const away = fromBottom > 140; if (capNow.hidden === away) { capNow.hidden = !away; if (away) capNow.style.bottom = ($('composer').offsetHeight + 12) + 'px'; }
+    // Leaving the top after an edge (the start of today, the 7-day edge) readies the next full pull.
+    if ((CAP.pull === 'start' || CAP.pull === 'window') && t.scrollTop > 40) CAP.pull = null;
     const p = Math.max(0, Math.min(1, (160 - t.scrollTop) / 160)); if (!CAP.pull) pullView(p, null);
     // Reaching the top and holding there for 0.3 s loads the conversation before the ones on screen (D-128).
     if (t.scrollTop <= 3 && !CAP.holdT && CAP.pull !== 'loading') CAP.holdT = setTimeout(pullHold, 300);
   }, { passive: true });
   function pullHold() {
     CAP.holdT = null; if (capBox.scrollTop > 6 || CAP.pull === 'loading') return;
-    const nx = E.earlierConversation(E.conversations(allMsgs()), 1 + CAP.loaded, today);
-    if (!nx) { CAP.pull = 'start'; pullView(1, 'start'); return; }
+    // D-128 as amended: first the pulls stop at the start of today; the next full pull goes on into earlier days, one
+    // conversation at a time under a date divider, to the read window's edge.
+    const nx = E.earlierConversation(E.conversations(allMsgs()), 1 + CAP.loaded, today, { pastToday: CAP.pastToday, windowStart: E.addDays(today, -TALK_DAYS) });
+    if (nx.edge === 'today') { CAP.pull = 'start'; CAP.pastToday = true; pullView(1, 'start'); return; }
+    if (nx.edge === 'window') { CAP.pull = 'window'; pullView(1, 'window'); return; }
     CAP.pull = 'loading'; CAP.pullN = nx.count; pullView(1, 'loading');
     setTimeout(() => { const h = capBox.scrollHeight, top = capBox.scrollTop; CAP.loaded++; CAP.pull = null; renderThread(); capBox.scrollTop = capBox.scrollHeight - h + top; pullView(0, null); }, 800);
   }
   function backToNow() {
-    if (ui.tab !== 'ev') return; CAP.loaded = 0; CAP.pull = null; CAP.stick = true; capNow.hidden = true; renderThread();
+    if (ui.tab !== 'ev') return; CAP.loaded = 0; CAP.pastToday = false; CAP.pull = null; CAP.stick = true; capNow.hidden = true; renderThread();
     requestAnimationFrame(() => capBox.scrollTo({ top: capBox.scrollHeight, behavior: REDUCE ? 'auto' : 'smooth' }));
   }
   // Matt's line echoes above the composer for about 3 s, then fades; it is announced once.
@@ -1143,13 +1150,23 @@
       else if (c.nodeType === 1 && c.tagName !== 'A') walk(c); else if (c.nodeType === 1) { c.classList.add('w'); } } };
     walk(frag); return frag;
   }
-  // The Breath reveal (D-122): words fade and un-blur in at her speaking pace, pausing at punctuation; each word is
-  // one speak() to her core, emphasis (bold) in teal; a finished sentence is announced; the reply's gesture comes when
-  // the last word is out. Reduced motion shows the line whole and announces it once.
-  // A newer line never waits behind an older one: what is left of the older line shows at once (and is announced).
+  // The Breath reveal (D-122, paced by D-137): words fade and un-blur in, the first sentence at speech pace (about 3
+  // words a second, pausing at punctuation), then faster, so the whole reply is out within 6 s; a tap on her line, a
+  // scroll or a newer line shows the rest at once. Each word shown is one speak() to her core (emphasis, bold, in
+  // teal), so her swell ends with the last word; a finished sentence is announced; the reply's gesture comes when the
+  // last word is out. Reduced motion shows the line whole and announces it once.
   function revealFinish(id) { const rec = T.els.get(id), st = CAP.rv.get(id); if (!rec || !st) return; const b = rec.el.querySelector('.bubble'); const ws = b ? [...b.querySelectorAll('.w')] : [];
     ws.forEach(w => w.classList.add('on')); if (st.from < ws.length) announce(id + ':' + st.from, ws.slice(st.from).map(x => x.textContent).join(' ')); st.n = st.from = ws.length; if (b) b.classList.remove('reveal'); }
-  function revealQueue(m) { if (REDUCE || CAP.rv.has(m.id)) return; while (CAP.queue.length) revealFinish(CAP.queue.shift()); CAP.rv.set(m.id, { n: 0, from: 0 }); CAP.queue.push(m.id); if (!CAP.timer) CAP.timer = setTimeout(revealTick, 120); }
+  function revealQueue(m) { if (REDUCE || CAP.rv.has(m.id)) return; while (CAP.queue.length) revealFinish(CAP.queue.shift()); CAP.rv.set(m.id, { n: 0, from: 0, t0: null, first: true, all: false }); CAP.queue.push(m.id); if (!CAP.timer) CAP.timer = setTimeout(revealTick, 120); }
+  // D-137: a tap on her line or a scroll completes the reveal at once (a newer line already does, in revealQueue).
+  function revealNow() { const id = CAP.queue[0], st = id && CAP.rv.get(id); if (!st || st.all) return; st.all = true; clearTimeout(CAP.timer); CAP.timer = null; revealTick(); }
+  capIn.addEventListener('click', e => { if (e.target.closest('.msg.ev.current .bubble')) revealNow(); });
+  for (const k of ['wheel', 'touchmove']) capBox.addEventListener(k, revealNow, { passive: true });
+  capBox.addEventListener('keydown', e => { if (/^(Page|Arrow)(Up|Down)$|^(Home|End)$/.test(e.key)) revealNow(); });
+  // The pace (D-137): a word's natural gap is its speech time; after the first sentence each gap shrinks to what is
+  // left of the 6 s over the words left, and once a gap would be under a frame, several words come out together.
+  const PACE = { wordMs: 230, charMs: 14, commaMs: 200, stopMs: 380, maxMs: 6000, frameMs: 16 };
+  const naturalMs = w => PACE.wordMs + w.length * PACE.charMs + (/[,;:—]$/.test(w) ? PACE.commaMs : 0) + (/[.?!…]["”’)]*$/.test(w) ? PACE.stopMs : 0);
   // How a reply ends on her core: an error recoils (coral), a reply that changed the record nods, the rest settle.
   const endGesture = m => m.error && m.error !== 'cancelled' ? 'error' : (m.cards || []).length && !m.greeting ? 'done' : 'settle';
   function revealTick() {
@@ -1158,11 +1175,22 @@
     const ws = rec ? [...rec.el.querySelectorAll('.bubble .w')] : [];
     const later = ms => { CAP.timer = setTimeout(revealTick, ms); };
     if (st.n < ws.length) {
-      const w = ws[st.n++]; w.classList.add('on'); T.revealing = true; const word = w.textContent;
-      CORE.speak(word, { emphasis: !!w.closest('b') });
-      const blk = w.closest('p, li'), blkWs = blk ? blk.querySelectorAll('.w') : null;
-      if (/[.!?…]["”’)]*$/.test(word) || (blkWs && blkWs[blkWs.length - 1] === w)) { announce(id + ':' + st.from, ws.slice(st.from, st.n).map(x => x.textContent).join(' ')); st.from = st.n; }
-      later(55 + word.length * 14 + (/[,;:—]$/.test(word) ? 200 : 0) + (/[.?!]["”’)]*$/.test(word) ? 380 : 0)); return;
+      if (st.t0 == null) st.t0 = Date.now();
+      const left = ws.length - st.n, budget = PACE.maxMs - (Date.now() - st.t0);
+      // How many words this tick shows: one, or (past the first sentence, short of time, or completed) more at once.
+      let k = 1, gap = naturalMs(ws[st.n].textContent);
+      if (st.all) k = left;
+      else if (!st.first) { const per = budget / left; if (per < PACE.frameMs) k = Math.min(left, Math.ceil(PACE.frameMs / Math.max(1, per))); gap = Math.min(gap, Math.max(PACE.frameMs, per * k)); }
+      else if (budget <= 0) { k = left; }
+      let word = '', em = false;
+      for (let i = 0; i < k; i++) {
+        const w = ws[st.n++]; w.classList.add('on'); word = w.textContent; em = em || !!w.closest('b');
+        const blk = w.closest('p, li'), blkWs = blk ? blk.querySelectorAll('.w') : null;
+        if (/[.!?…]["”’)]*$/.test(word) || (blkWs && blkWs[blkWs.length - 1] === w)) { announce(id + ':' + st.from, ws.slice(st.from, st.n).map(x => x.textContent).join(' ')); st.from = st.n; st.first = false; }
+      }
+      T.revealing = true; CORE.speak(word, { emphasis: em });
+      if (st.n >= ws.length) gap = Math.min(gap, PACE.frameMs * 4); // the last word out: speech ends with it
+      later(st.all ? 0 : gap); return;
     }
     const m = rec && rec.msg;
     if (!m || m.pending) { later(80); return; } // still streaming: wait for more words
@@ -1823,11 +1851,15 @@
     link(box, c) { if (!/^https:\/\//.test(c.url || '')) return; const a = el('a', null, c.title || c.url); a.href = c.url; a.target = '_blank'; a.rel = 'noopener'; box.append(a); },
   };
   function renderCards(rec, m) { // live on every snapshot, but a card is swapped only when what it shows changed
-    const fresh = (m.cards || []).slice(0, 3).map((c, i) => {
+    // Until B-78's surfaces (B-77): a reply shows its first card under her line, the rest as one line "n more cards";
+    // capFit() keeps that card to the space left, so her current line never leaves view.
+    const all = m.cards || [];
+    const fresh = all.slice(0, 1).map((c, i) => {
       const box = el('div', 'card ev-card');
       try { (CARDS[c && c.type] || (() => { throw new Error('unknown card'); }))(box, c, m.id + '-' + i); } catch (e) { box.replaceChildren(el('p', 'empty', 'This card couldn’t load.')); console.error(e); }
       return box;
     });
+    if (all.length > 1) fresh.push(el('p', 'cap-cards-more', plural(all.length - 1, 'more card')));
     const old = [...rec.cardsBox.children];
     fresh.forEach((b, i) => {
       const o = old[i]; if (!o) { rec.cardsBox.append(b); return; }
@@ -1885,17 +1917,43 @@
     node.replaceChildren(...kids, body);
     rec = { el: node, sig, cardsBox, rise, msg: m }; T.els.set(m.id, rec); return rec;
   }
+  // Her current line never leaves view (B-77, until B-78): the card under it gets the scroller's height less her line,
+  // the "n more cards" line and the gaps; a taller card scrolls inside itself.
+  function capFit() {
+    const cur = capIn.querySelector('.msg.ev.current'); capIn.querySelectorAll('.msg-cards').forEach(c => { if (!cur || !cur.contains(c)) c.style.removeProperty('--card-max'); });
+    if (!cur) return; const box = cur.querySelector('.msg-cards'); if (!box || !box.firstChild) return;
+    const h = x => x ? x.getBoundingClientRect().height : 0, more = cur.querySelector('.cap-cards-more');
+    const avail = capBox.clientHeight - h(cur.querySelector('.bubble')) - h(cur.querySelector('.msg-meta')) - (more ? h(more) + 12 : 0) - 40;
+    box.style.setProperty('--card-max', Math.max(96, Math.floor(avail)) + 'px');
+  }
+  function dayDivider(day) {
+    T.dayDivs = T.dayDivs || new Map(); let d = T.dayDivs.get(day);
+    if (!d) {
+      const label = day === today ? 'Today' : day === E.addDays(today, -1) ? 'Yesterday' : new Date(day + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
+      d = el('div', 'cap-div cap-day', label); d.dataset.day = day; T.dayDivs.set(day, d);
+    }
+    return d;
+  }
   function renderThread() {
     // Captions: the current conversation (core.conversations' idle-gap rule), plus the earlier ones pulled back today.
     const convs = E.conversations(allMsgs()), shown = Math.min(convs.length, 1 + CAP.loaded);
-    const earlier = convs.slice(convs.length - shown, convs.length - 1).flatMap(c => c.messages);
+    const earlierConvs = convs.slice(convs.length - shown, convs.length - 1);
     let cur = convs.length ? convs[convs.length - 1].messages : [];
     // In a session only her latest two lines show, until he pulls for more (D-122).
     if (activeSession() && !CAP.loaded) { let c = 0; for (let i = cur.length - 1; i >= 0; i--) if (cur[i].role !== 'matt' && ++c === 2) { cur = cur.slice(i); break; } }
     const lastEv = [...cur].reverse().find(m => m.role !== 'matt'), lastMatt = [...cur].reverse().find(m => m.role === 'matt');
     const kids = [capPull];
-    for (const m of earlier) { const rec = msgEl(m, false, false); rec.el.classList.add('earlier'); rec.el.classList.remove('current', 'last'); renderCards(rec, m); kids.push(rec.el); }
-    if (earlier.length) { if (!T.capDiv) { T.capDiv = el('div', 'cap-div', 'Now'); T.capDiv.setAttribute('aria-hidden', 'true'); } kids.push(T.capDiv); }
+    // Earlier days come under a date divider (Yesterday, Fri, Oct 16), and today's under Today once any came before.
+    let prevDay = null;
+    for (const c of earlierConvs) {
+      const day = E.chicagoDate(c.start);
+      if (day !== prevDay && (day !== today || prevDay)) kids.push(dayDivider(day));
+      prevDay = day;
+      for (const m of c.messages) { const rec = msgEl(m, false, false); rec.el.classList.add('earlier'); rec.el.classList.remove('current', 'last'); renderCards(rec, m); kids.push(rec.el); }
+    }
+    const curDay = convs.length ? E.chicagoDate(convs[convs.length - 1].start) : today;
+    if (prevDay && prevDay !== curDay) kids.push(dayDivider(curDay));
+    if (earlierConvs.length) { if (!T.capDiv) { T.capDiv = el('div', 'cap-div', 'Now'); T.capDiv.setAttribute('aria-hidden', 'true'); } kids.push(T.capDiv); }
     const nowIdx = lastEv ? cur.indexOf(lastEv) : -1, mattIdx = lastMatt ? cur.indexOf(lastMatt) : -1;
     for (const m of cur) {
       const rec = msgEl(m, false, m === lastEv); renderCards(rec, m); rec.el.classList.remove('earlier');
@@ -1908,7 +1966,7 @@
     for (const k of kids) { if (k === at) { at = at.nextSibling; continue; } capIn.insertBefore(k, at); }
     while (at) { const n = at.nextSibling; at.remove(); at = n; }
     if (convs.length && !T.readyAt) T.readyAt = setTimeout(() => { T.ready = true; }, 900);
-    renderStage();
+    renderStage(); capFit();
     // The newest line stays in view unless he has scrolled up to read.
     if ((CAP.stick || T.scrollTo) && ui.tab === 'ev') { T.scrollTo = null; T.firstScroll = false; requestAnimationFrame(() => { capBox.scrollTop = capBox.scrollHeight; }); }
   }

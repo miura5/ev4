@@ -1889,13 +1889,17 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
     return out;
   }
   /**
-   * What a pull to load can bring back (D-128): the conversation before the ones on screen, if it has any message
-   * from `today` (Central); null once the next one back lies wholly before today ("That's the start of today").
-   * shown is how many conversations are on screen, counted from the newest. count is that conversation's length.
+   * What a pull to load can bring back (D-128 as amended Oct 18): the conversation before the ones on screen, or the
+   * edge a pull has reached. First the pulls stop at the start of today ({edge: 'today'}: "That's the start of today");
+   * with o.pastToday a further pull continues into earlier days, one conversation at a time, until the talk read window
+   * runs out ({edge: 'window'}: "That's everything from the last 7 days"): no conversation is left, or the next one
+   * ended before o.windowStart. shown is how many conversations are on screen, counted from the newest; today and
+   * windowStart are Central dates. A conversation is {index, count, conversation}, count its length.
    */
-  function earlierConversation(convs, shown, today) {
-    const i = convs.length - 1 - shown; if (i < 0) return null;
-    const c = convs[i]; if (chicagoDate(c.end) < today) return null;
+  function earlierConversation(convs, shown, today, o = {}) {
+    const i = convs.length - 1 - shown, c = i >= 0 ? convs[i] : null, end = c ? chicagoDate(c.end) : null;
+    if (!o.pastToday) { if (!c || end < today) return { edge: 'today' }; }
+    else if (!c || (o.windowStart && end < o.windowStart)) return { edge: 'window' };
     return { index: i, count: c.messages.length, conversation: c };
   }
 
