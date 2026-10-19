@@ -126,10 +126,9 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     const greet = (await page.locator('#thread .msg.ev').last().textContent()) || '';
     ok(`[${scheme}] greeting rendered`, /Morning, Matt|Afternoon check-in|Evening, Matt|Still up/.test(greet), greet.slice(0, 140));
     ok(`[${scheme}] greeting reports the finished job`, /Finished in the background: Study guide: cardiac output/.test(greet));
-    // B-77 until B-78: her line shows its first card and names the rest ("n more cards"); the finished job's card is
-    // among them, and links out when it is the one shown.
-    const gm = await page.locator('#thread .msg.ev').last().evaluate(m => ({ cards: m.querySelectorAll('.ev-card').length, more: (m.querySelector('.cap-cards-more') || {}).textContent || '' }));
-    ok(`[${scheme}] the greeting shows one card and names the rest`, gm.cards === 1 && /^\d+ more cards?$/.test(gm.more), JSON.stringify(gm));
+    // D-125 as amended: the greeting has no card; its offers are the chips, at most three, the finished job among them.
+    const gm = await page.evaluate(() => ({ cards: document.querySelectorAll('#thread .msg.greet .ev-card').length, chips: [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent) }));
+    ok(`[${scheme}] the greeting has no card; at most three chips, one opening the finished study guide`, gm.cards === 0 && gm.chips.length <= 3 && gm.chips.includes('Open the study guide'), JSON.stringify(gm));
     ok(`[${scheme}] quick chips`, (await page.locator('#qchips .qchip').count()) >= 3, String(await page.locator('#qchips .qchip').count()));
     await page.click('#tab-today'); await page.waitForTimeout(100);
     ok(`[${scheme}] switching tabs plays the arrival`, await page.evaluate(() => document.getElementById('p-today').classList.contains('enter') && getComputedStyle(document.querySelector('#p-today > .card')).animationName === 'rise'));
@@ -145,10 +144,11 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
         ok('[desktop] idea kinds shown; only the learning idea offers Make it a weak spot', /Feature/.test(await row('Harness feature idea').textContent()) && /General/.test(await row('Harness general idea').textContent()) && (await act('Harness feature idea')) === 0 && (await act('Harness general idea')) === 0 && (await act('Harness learning idea')) === 1);
         await page.locator('#ideas').scrollIntoViewIfNeeded(); await page.screenshot({ path: `${shots}/ideas-desktop.png`, fullPage: false }); }
       await page.click('#tab-ev'); await page.waitForTimeout(150);
-      // The finished job's card links out (it is the greeting's second card, named in its "more" line until B-78).
-      await page.evaluate(() => { window.__chatPre = ''; window.__chatScript = [{ tool: 'show_card', input: { type: 'job', id: 'job-20261017-150000-cardiac-output' } }]; window.__chatReply = 'Your study guide is ready.'; });
-      await send(page, 'where is my study guide'); await page.waitForTimeout(900);
-      ok('[desktop] finished job card links out', (await page.locator('#thread .msg.ev').last().locator('.ev-card a[href="https://claude.ai/artifact/harness"]').count()) === 1);
+      // The greeting's Open the study guide chip opens the guide in a new tab and answers with the job's card.
+      await page.evaluate(() => { window.__opened = []; window.open = (u, t) => { window.__opened.push([u, t]); return null; }; });
+      await page.locator('#qchips .qchip', { hasText: 'Open the study guide' }).click(); await page.waitForTimeout(900);
+      const op = await page.evaluate(() => window.__opened);
+      ok('[desktop] Open the study guide opens it in a new tab, and her reply carries the job card with its link', JSON.stringify(op) === JSON.stringify([['https://claude.ai/artifact/harness', '_blank']]) && (await page.locator('#thread .msg.ev').last().locator('.ev-card a[href="https://claude.ai/artifact/harness"]').count()) === 1, JSON.stringify(op));
       // B-47: the retro card at desktop width
       await page.evaluate(() => { window.__chatPre = ''; window.__chatScript = [{ tool: 'show_card', input: { type: 'job', id: 'job-harness-retro' } }]; window.__chatReply = 'Here’s your Exam 3 retro.'; });
       await send(page, 'Show me my Exam 3 retro'); await page.waitForTimeout(300);
@@ -611,10 +611,9 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
       await send(fp, 'How ready am I?'); await fp.waitForTimeout(1200);
       const hr = (await msgs(fp)).filter(m => m.role === 'ev').slice(-1)[0] || {};
       ok('How ready am I? attaches readiness and the readiness audit (the audit named as 1 more card until B-78)', (hr.cards || []).map(c => c.type).join() === 'readiness,audit' && /1 more card/.test(await fp.locator('#thread .msg.ev').last().textContent()), JSON.stringify(hr.cards));
-      await fp.evaluate(() => { window.__chatPre = ''; window.__chatScript = [{ tool: 'show_card', input: { type: 'audit' } }]; window.__chatReply = 'Here is the audit.'; });
-      await send(fp, 'show me the audit'); await fp.waitForTimeout(1200);
+      await fp.locator('#thread .msg.ev').last().locator('.cap-cards-more').click(); await fp.waitForTimeout(400);
       const au = await fp.locator('#thread .msg.ev').last().textContent();
-      ok('the readiness audit card says what to reread', /Readiness audit · /.test(au) && /\d+ solid · \d+ right once · \d+ not yet/.test(au) && /Reread: [^·]+, (p\.|slide) \d+/.test(au), au.slice(0, 400));
+      ok('tapping 1 more card swaps the readiness audit in, with what to reread', /Readiness audit · /.test(au) && /\d+ solid · \d+ right once · \d+ not yet/.test(au) && /Reread: [^·]+, (p\.|slide) \d+/.test(au), au.slice(0, 400));
       await fp.screenshot({ path: `${shots}/audit-card.png` });
       // Grounded explanations: the rule rides in the chat context, with the materials tool
       await fp.evaluate(() => { window.__chatScript = []; window.__chatReply = 'Ok.'; }); await send(fp, 'Explain why third spacing causes low blood pressure'); await fp.waitForTimeout(400);

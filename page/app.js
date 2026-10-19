@@ -1068,7 +1068,7 @@
   // The top bar's core is tucked away (styles.css) while her stage core is up or a session runs; then it does not draw.
   const topOrb = CORE.make(40, { follow: true, when: () => !document.body.matches('.on-ev.captions, .on-ev.opening, .on-ev.in-session, .on-ev.core-big') }); $('top-av').append(topOrb.el);
   // A resize keeps the newest line in view when he was reading it (the layout steps at 900 px move everything).
-  addEventListener('resize', () => { heroOrb.resize(coreStage().px); renderStage(); capFit(); if (CAP.stick) requestAnimationFrame(() => { capBox.scrollTop = capBox.scrollHeight; capBox.dispatchEvent(new Event('scroll')); }); });
+  addEventListener('resize', () => { heroOrb.resize(coreStage().px); renderStage(); if (CAP.stick) requestAnimationFrame(() => { capBox.scrollTop = capBox.scrollHeight; capBox.dispatchEvent(new Event('scroll')); }); });
 
   // ---------------------------------------------------------------- Captions (B-77; D-122, D-127, D-128)
   // The E.V. tab without the thread: her stage, her lines under her (the current one large, earlier ones above, smaller
@@ -1088,18 +1088,27 @@
   capNow.insertAdjacentHTML('afterbegin', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>');
   $('p-ev').append(capNow);
   const capSide = el('aside'); capSide.id = 'ev-side'; capSide.setAttribute('aria-label', 'Beside E.V.'); $('p-ev').append(capSide);
+  // The side column is there only while it holds something (D-122 as amended): B-78's surfaces and a session's notes
+  // go in #ev-side; with nothing in it her stage centres in the window.
+  const sideSync = () => document.body.classList.toggle('side-on', capSide.childElementCount > 0);
+  new MutationObserver(() => { sideSync(); requestAnimationFrame(() => { if (CAP.stick) capBox.scrollTop = capBox.scrollHeight; }); }).observe(capSide, { childList: true }); sideSync();
   $('hero').addEventListener('click', () => backToNow());
   // One announcement per finished sentence (D-127); the region keeps its last few.
   function announce(key, text) { text = String(text || '').replace(/\s+/g, ' ').trim(); if (!text || CAP.said.has(key)) return; CAP.said.add(key);
     const p = el('p', null, text); capSay.append(p); while (capSay.children.length > 6) capSay.firstChild.remove(); }
   // Her stage (D-122): idle on a new conversation, conversation once he has spoken in it, session while one runs.
+  // A reply with cards steps her down to the list size (D-122's 52%, desktop's surface step) until B-78's surfaces,
+  // so the card has the height a surface will have.
   function stageState() {
     if (activeSession()) return 'session';
     const convs = E.conversations(allMsgs()); const cur = convs.length ? convs[convs.length - 1].messages : [];
+    const last = cur[cur.length - 1];
+    if (last && last.role !== 'matt' && !last.greeting && (last.cards || []).length) return 'list';
     return cur.some(m => m.role === 'matt') ? 'conversation' : 'idle';
   }
   // The stage's height at each step, as the Captions v2 artboards draw it (V2.dc.html, V2Desktop.dc.html: stageH).
   const STAGE_PX = { phone: { idle: 300, conversation: 232, session: 196, list: 150, skills: 128 }, desktop: { idle: 370, conversation: 290, surface: 260 } };
+  // (coreSize maps the phone's list step to the desktop's surface step.)
   function renderStage() {
     const z = MO_SIZE(innerWidth, stageState()); const h = $('hero');
     h.style.setProperty('--core-scale', String(z.pct / 100)); h.style.setProperty('--stage-h', (STAGE_PX[z.layout][z.step] || z.px + 24) + 'px');
@@ -1671,6 +1680,8 @@
 
   // ---------------------------------------------------------------- cards (rendered live on every snapshot)
   const CARD_ROWS = 5; // a long list in a card shows five and a "more" (UI and UX, rule 3)
+  // The "more": opens the item in its tab (D-125 as amended; the card never scrolls inside itself).
+  const cardMore = (label, go) => { const b = btn(label, go); b.classList.add('card-more'); return b; };
   const head2 = (title, meta) => { const h = el('div', 'card-head'); h.append(el('h2', null, title)); if (meta) h.append(el('span', 'meta', meta)); return h; };
   const CARDS = {
     today(box, c) {
@@ -1682,7 +1693,7 @@
       box.append(head2('Today’s list', all.length ? `${doneN} of ${all.length} done` : ''));
       if (!all.length) box.append(el('p', 'empty', 'Nothing planned yet. The 4:25am run builds the list.'));
       else if (!list.length) box.append(el('p', 'empty', 'Everything on today’s list is done.'));
-      else { const ul = el('ul', 'list'); list.slice(0, CARD_ROWS).forEach(it => ul.append(itemRow(it, isDone))); box.append(ul); if (list.length > CARD_ROWS) box.append(el('p', 'meta', `${list.length - CARD_ROWS} more in Today.`)); }
+      else { const ul = el('ul', 'list'); list.slice(0, CARD_ROWS).forEach(it => ul.append(itemRow(it, isDone))); box.append(ul); if (list.length > CARD_ROWS) box.append(cardMore(`${list.length - CARD_ROWS} more in Today`, () => showTab('today'))); }
       const a = el('div', 'actions'); a.append(btn('Open Today', () => showTab('today'))); box.append(a);
     },
     review(box, c, key) {
@@ -1729,7 +1740,7 @@
       if (!rows.length) { box.append(el('p', 'empty', 'No weak spots logged for this exam yet.')); return; }
       const ul = el('ul', 'list');
       rows.slice(0, CARD_ROWS).forEach(r => ul.append(row({ title: r.id + ' · ' + String(r.text).slice(0, 80), detail: [`${r.solid} solid · ${r.rightOnce} right once · ${r.notYet} not yet`, r.passages.length ? 'Reread: ' + r.passages.map(x => x.cite).join('; ') : (r.notYet || r.rightOnce) && !LIB.mats ? 'Finding what to reread…' : ''].filter(Boolean).join(' · '), chips: [r.notYet ? ['not yet ' + r.notYet, 'warn'] : r.rightOnce ? ['almost', 'info'] : ['solid', 'ok']] })));
-      box.append(ul); if (rows.length > CARD_ROWS) box.append(el('p', 'meta', `${rows.length - CARD_ROWS} more objectives in Progress.`));
+      box.append(ul); if (rows.length > CARD_ROWS) box.append(cardMore(`${rows.length - CARD_ROWS} more objectives in Progress`, () => { showTab('progress'); $('seg-progress').querySelector('[data-v="readiness"]').click(); }));
     },
     readiness(box) {
       const ex = M.target; if (!ex) { box.append(head2('Readiness'), el('p', 'empty', 'No upcoming exam with weak spots yet.')); return; }
@@ -1745,7 +1756,7 @@
       const list = S.dates.filter(d => d.date >= from && d.date <= to).sort((a, b) => a.date.localeCompare(b.date) || String(a.title).localeCompare(b.title));
       box.append(head2(days === 1 ? 'Tomorrow · ' + short(from) : 'Next ' + days + ' days', list.length ? plural(list.length, 'date') : ''));
       if (!list.length) { box.append(el('p', 'empty', days === 1 ? 'Nothing dated tomorrow.' : 'Nothing dated in that window.')); return; }
-      const ul = el('ul', 'list'); list.slice(0, CARD_ROWS).forEach(d => ul.append(dateRow(d))); box.append(ul); if (list.length > CARD_ROWS) box.append(el('p', 'meta', `${list.length - CARD_ROWS} more in Record → Dates.`));
+      const ul = el('ul', 'list'); list.slice(0, CARD_ROWS).forEach(d => ul.append(dateRow(d))); box.append(ul); if (list.length > CARD_ROWS) box.append(cardMore(`${list.length - CARD_ROWS} more in Record → Dates`, () => { showTab('record'); $('seg-record').querySelector('[data-v="dates"]').click(); }));
     },
     weakspots(box) {
       const due = E.rankDue(M.models, today, S.exams); const act = M.models.filter(w => E.isActive(w) && !w.derived.preRead).sort((a, b) => String(a.derived.nextDue || '9').localeCompare(String(b.derived.nextDue || '9')));
@@ -1852,14 +1863,16 @@
   };
   function renderCards(rec, m) { // live on every snapshot, but a card is swapped only when what it shows changed
     // Until B-78's surfaces (B-77): a reply shows its first card under her line, the rest as one line "n more cards";
-    // capFit() keeps that card to the space left, so her current line never leaves view.
-    const all = m.cards || [];
-    const fresh = all.slice(0, 1).map((c, i) => {
-      const box = el('div', 'card ev-card');
+    // A reply with cards steps her core down (stageState), so the card has a surface's height.
+    // Which card shows (D-125 as amended): the reply's cards come ordered with the one showing the change she made
+    // first, else the one that answers; "n more cards" swaps the next one in, the shown one joining the line.
+    const all = m.cards || [], at = all.length ? (T.cardAt.get(m.id) || 0) % all.length : 0;
+    const fresh = all.slice(at, at + 1).map(c => {
+      const box = el('div', 'card ev-card'); const i = all.indexOf(c);
       try { (CARDS[c && c.type] || (() => { throw new Error('unknown card'); }))(box, c, m.id + '-' + i); } catch (e) { box.replaceChildren(el('p', 'empty', 'This card couldn’t load.')); console.error(e); }
       return box;
     });
-    if (all.length > 1) fresh.push(el('p', 'cap-cards-more', plural(all.length - 1, 'more card')));
+    if (all.length > 1) { const mb = el('button', 'cap-cards-more', plural(all.length - 1, 'more card')); mb.type = 'button'; mb.dataset.next = String((at + 1) % all.length); fresh.push(mb); }
     const old = [...rec.cardsBox.children];
     fresh.forEach((b, i) => {
       const o = old[i]; if (!o) { rec.cardsBox.append(b); return; }
@@ -1870,6 +1883,8 @@
     });
     old.slice(fresh.length).forEach(o => o.remove());
   }
+  T.cardAt = new Map();
+  capIn.addEventListener('click', e => { const b = e.target.closest('.cap-cards-more'); if (!b) return; const id = b.closest('.msg').dataset.id; T.cardAt.set(id, Number(b.dataset.next) || 0); renderThread(); });
 
   // ---------------------------------------------------------------- thread
   function storedMsgs() { const out = []; for (const d of S.talk) for (const [id, m] of Object.entries(d.messages || {})) if (m && m.role) out.push({ ...m, id, day: d.date || d.id }); return out; }
@@ -1917,17 +1932,6 @@
     node.replaceChildren(...kids, body);
     rec = { el: node, sig, cardsBox, rise, msg: m }; T.els.set(m.id, rec); return rec;
   }
-  // Her current line never leaves view (B-77, until B-78): the card under it gets the scroller's height less her line,
-  // the "n more cards" line and the gaps; a taller card scrolls inside itself.
-  function capFit() {
-    const cur = capIn.querySelector('.msg.ev.current'); capIn.querySelectorAll('.msg-cards').forEach(c => { if (!cur || !cur.contains(c)) c.style.removeProperty('--card-max'); });
-    if (!cur) return; const box = cur.querySelector('.msg-cards'), card = box && box.querySelector('.ev-card'); if (!card) return;
-    // Everything of her line but the card (the line, the more line, the meta, the gaps), and what follows it in the
-    // scroller (its bottom padding), measured as laid out, so the card takes exactly what is left.
-    const h = x => x.getBoundingClientRect().height, pad = parseFloat(getComputedStyle(capIn).paddingBottom) || 0;
-    const rest = h(cur) - h(card) + pad + (capIn.lastElementChild !== cur ? capIn.getBoundingClientRect().bottom - cur.getBoundingClientRect().bottom - pad : 0);
-    box.style.setProperty('--card-max', Math.max(40, Math.floor(capBox.clientHeight - rest - 6)) + 'px');
-  }
   function dayDivider(day) {
     T.dayDivs = T.dayDivs || new Map(); let d = T.dayDivs.get(day);
     if (!d) {
@@ -1968,7 +1972,7 @@
     for (const k of kids) { if (k === at) { at = at.nextSibling; continue; } capIn.insertBefore(k, at); }
     while (at) { const n = at.nextSibling; at.remove(); at = n; }
     if (convs.length && !T.readyAt) T.readyAt = setTimeout(() => { T.ready = true; }, 900);
-    renderStage(); capFit();
+    renderStage();
     // The newest line stays in view unless he has scrolled up to read.
     if ((CAP.stick || T.scrollTo) && ui.tab === 'ev') { T.scrollTo = null; T.firstScroll = false; requestAnimationFrame(() => { capBox.scrollTop = capBox.scrollHeight; }); }
   }
@@ -2017,8 +2021,17 @@
     catch { if (box) { const ta = el('textarea'); ta.readOnly = true; ta.value = t; ta.setAttribute('aria-label', 'Weak spots as Quizlet import text'); box.append(ta); ta.focus(); ta.select(); } toast('Select all and copy, then paste into Quizlet’s Import.'); }
     return cards.length;
   }
+  // The greeting's finished job (D-125 as amended): its chip opens the result and answers with the job's card.
+  function openJob(id) {
+    const j = S.jobs.find(x => x.id === id); if (!j) return ['That job isn’t in the record any more.', []];
+    const url = ((j.result || {}).links || []).map(l => l && l.url).find(u => /^https:\/\//.test(u || ''));
+    if (url) { try { window.open(url, '_blank', 'noopener'); } catch {} }
+    return [`${j.title || 'Your job'}${url ? ', opening in a new tab.' : '.'}`, [{ type: 'job', id: j.id }]];
+  }
   async function quick(label) {
-    const fn = LOCAL[key(label)]; if (!fn) return false;
+    const job = T.greet && T.greet.job && /^Open the /.test(label) ? T.greet.job : null;
+    const opened = job ? openJob(job) : null; // before any await: the tab opens inside his tap
+    const fn = opened ? () => opened : LOCAL[key(label)]; if (!fn) return false;
     T.bigCore = false; await mattSay(label); const [text, cards] = await fn(); await evSay(text, cards, { tier: 'local' }); return true;
   }
 
@@ -2200,7 +2213,11 @@
   const HIDE = new Set(['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed']);
 
   function buildTools(pend) {
-    const addCard = c => { if (pend.cards.length < 3 && !pend.cards.some(x => JSON.stringify(x) === JSON.stringify(c))) { pend.cards.push(c); render(); } };
+    // A card a write tool adds shows the change she just made; show_card's only answer. Changes come first (D-125 as
+    // amended): the order is the stored order, so no field is added to the message.
+    const addCard = (c, shown) => { if (pend.cards.length < 3 && !pend.cards.some(x => JSON.stringify(x) === JSON.stringify(c))) {
+      if (shown) pend.cards.push(c); else pend.cards.splice(pend.cards.filter(x => pend.changed.has(x)).length, 0, c);
+      if (!shown) pend.changed.add(c); render(); } };
     const str = (v, n) => String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, n);
     const noIds = t => { const w = E.scanIdentifiers(t); if (w.length) throw new Error('That text ' + w[0] + '. Patient identifiers are never stored; use a made-up client.'); };
     const tools = [
@@ -2210,7 +2227,7 @@
           if (type === 'set') { if (!S.sets.some(s => s.id === i.id)) throw new Error('no set with id ' + i.id); c.id = String(i.id); }
           if (type === 'job') { if (!S.jobs.some(j => j.id === i.id)) throw new Error('no job with id ' + i.id); c.id = String(i.id); }
           if (type === 'today') c.filter = i.filter === 'all' ? 'all' : 'open'; if (type === 'dates') c.days = Math.max(1, Math.min(14, Number(i.days) || 7));
-          addCard(c); return 'shown'; } },
+          addCard(c, true); return 'shown'; } },
       { name: 'start_job', description: 'Start a background job for work bigger than one reply. study-guide: a one-page guide saved as a Claude Doc. practice-set: 10 to 30 questions saved as a set (put the number and topic in the brief). exam-plan: a study plan for a named exam. exam-retro: the post-exam retro for a named exam (put its id, like E4, in the brief); a saved score starts one on its own. share-set: a page of a calendar practice set for classmates (put the set id first in the brief); only drill or sim sets over a chapter range qualify. general: research or other long work. Runs in the cloud and posts back here in a few minutes; a job card is attached automatically. Never for graded work. Returns the job id.',
         inputSchema: { type: 'object', properties: { kind: { type: 'string', enum: Object.keys(KINDS) }, title: { type: 'string', description: 'short title, e.g. "Study guide: fluid volume deficit"' }, brief: { type: 'string', description: 'what he asked, in his words, plus your one-line restatement of the deliverable' } }, required: ['kind', 'title', 'brief'] },
         execute: async i => { const r = await startJob({ kind: str(i.kind, 20), title: str(i.title, 90), brief: String(i.brief || '') }); addCard({ type: 'job', id: r.id }); pend.jobId = r.id; return r.fired.ok ? 'started ' + r.id : 'created ' + r.id + ' but not started: ' + fireCopy(r.fired.error); } },
@@ -2320,7 +2337,7 @@
     if (T.busy) return;
     if (!sample || T.sampleOff) { await evSay(SAMPLE_COPY[T.sampleOff] || 'Asking Claude isn’t available in this view. The quick asks still work.', []); return; }
     const tier = o.tier || tierFor(text); const id = msgId('e'); const at = now();
-    const pend = { id, role: 'ev', text: '', cards: [], at, tier, pending: true, replyTo: o.replyTo, raw: '', cut: 0 };
+    const pend = { id, role: 'ev', text: '', cards: [], changed: new Set(), at, tier, pending: true, replyTo: o.replyTo, raw: '', cut: 0 };
     const ctl = new AbortController(); T.busy = true; T.ctl = ctl; T.local.set(id, pend); T.scrollTo = id; render();
     CORE.gesture('send');
     // Her words reach the core through the Breath reveal (Captions), word by word as they show.
@@ -2368,9 +2385,9 @@
     const g = E.greeting({ now: new Date(), date: today, dayType: day.dayType, items: items.map(it => ({ id: it.id, text: it.text, tag: it.tag, done: isDone(it), deferred: !!it.deferred, minutes: it.minutes, set: it.set })),
       reviewLeft: left, reviewTotal: total, push: (M.day && M.day.push) || null, nextExams: S.exams.filter(e => e.date).map(e => ({ id: e.id, title: e.title || e.id, date: e.date, course: e.course, kind: e.kind })),
       readiness: rd ? { examId: M.target.id, pctSolid: rd.pctSolid, need: rd.need } : null, dueCount: E.rankDue(M.models, today, S.exams).length,
-      jobs: S.jobs.map(j => ({ id: j.id, title: j.title, status: j.status, finishedAt: j.finishedAt })), lastSeenAt: (S.memory && S.memory.lastSeenAt) || new Date(Date.now() - 864e5).toISOString(),
+      jobs: S.jobs.map(j => ({ id: j.id, kind: j.kind, title: j.title, status: j.status, finishedAt: j.finishedAt })), dueSoon: S.dates.filter(d => d.date >= today && d.date <= E.addDays(today, 7)).length, lastSeenAt: (S.memory && S.memory.lastSeenAt) || new Date(Date.now() - 864e5).toISOString(),
       runs: latestRuns(), tomorrow: { dates: S.dates.filter(d => d.date === E.addDays(today, 1)) }, quizlet: null, checkin: (M.dayedit && M.dayedit.checkin) || null, sessionActive: !!activeSession() });
-    const at = now(); T.greet = { id: msgId('g'), role: 'ev', greeting: true, text: g.lines.join('\n'), cards: g.cards, at, day: today, mood: g.mood, chips: g.chips };
+    const at = now(); T.greet = { id: msgId('g'), role: 'ev', greeting: true, text: g.lines.join('\n'), cards: g.cards, at, day: today, mood: g.mood, chips: g.chips, job: g.job };
     T.scrollTo = T.greet.id; T.firstScroll = true;
     // Mark this open as seen, so the next greeting only reports what's new. One write per open.
     setTimeout(() => { write({ op: 'set', collection: 'talk', id: 'memory', data: memoryEdit({ lastSeenAt: at }, at) }).catch(() => {}); }, 1500);
