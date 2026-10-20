@@ -1584,5 +1584,24 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "e6a666c",
+  "time": "2026-10-20T03:10:12.356Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "620411d",
+  "tasks": [
+   "B-99",
+   "B-62",
+   "B-61",
+   "B-66"
+  ],
+  "summary": "drop the standing graded-work and made-up patient reminders; The journal rule decided once; the watchdog checks the scheduler (D-112); Status page warts",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
