@@ -153,6 +153,22 @@ const results = []; const ok = (name, cond, detail = '') => results.push([cond ?
         }
       }
     }
+    // B-123 (D-162): Weak spots at 390, 735 and 1470: no due pill and no Mark solid at load; Due today open, the other
+    // sections closed; an opened row shows Mark solid, and marking one moves it to Solid without moving the page.
+    if ([390, 735, 1470].includes(size.width) && [844, 830].includes(size.height)) {
+      await page.click('#tab-progress'); await page.click('#seg-progress [data-v="weak"]'); await page.waitForTimeout(500);
+      const w = await page.evaluate(() => { const vis = e => !!e && !e.closest('[hidden]') && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().height > 0, p = document.getElementById('progress-weak');
+        return { lead: (document.getElementById('weak-lead') || {}).textContent, pills: [...p.querySelectorAll('.chip')].filter(vis).map(c => c.textContent), markSolid: [...p.querySelectorAll('button')].filter(b => vis(b) && /Mark solid/.test(b.textContent)).length,
+          dueOpen: vis(document.getElementById('weak-due')), closed: ['weak-tom', 'weak-later', 'weak-preview', 'weak-parked', 'weak-solid'].filter(id => vis(document.getElementById(id))), form: !!document.getElementById('weak-add') }; });
+      ok(`[${width}] weak spots: the count due leads, no pill, no Mark solid at load, Due today open and the rest closed, no Log form`, /due today$/.test(w.lead || '') && !w.pills.length && !w.markSolid && w.dueOpen && !w.closed.length && !w.form, JSON.stringify(w));
+      const first = page.locator('#weak-due .ws-item').first(), id = await first.getAttribute('data-id');
+      await first.locator('.ws-line').click(); await page.waitForTimeout(200);
+      const y0 = await page.evaluate(() => scrollY), shown = await first.locator('button', { hasText: 'Mark solid' }).isVisible();
+      await first.locator('button', { hasText: 'Mark solid' }).click(); await page.waitForTimeout(600);
+      const m = await page.evaluate(id => ({ y: scrollY, inDue: !!document.querySelector(`#weak-due [data-id="${id}"]`), inSolid: !!document.querySelector(`#weak-solid [data-id="${id}"]`), solidLine: document.getElementById('weak-solid-fold').textContent }), id);
+      ok(`[${width}] weak spots: an opened row shows Mark solid; marking it moves it to Solid and the page stays put`, shown && !m.inDue && m.inSolid && Math.abs(m.y - y0) <= 1, JSON.stringify({ id, shown, y0, ...m }));
+      await page.screenshot({ path: `${shots}/look-weak-marked-${width}.png`, fullPage: true });
+    }
     // Each seg control back to its first view, as a fresh open has it.
     for (const v of VIEWS.filter(x => x.v)) if (VIEWS.find(x => x.tab === v.tab).v === v.v) { await page.click('#tab-' + v.tab); await page.click(`#seg-${v.tab} [data-v="${v.v}"]`); }
     if (['390x844', '1280x800'].includes(width)) {

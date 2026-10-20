@@ -546,3 +546,13 @@ body.captions.skill-on #p-ev>.sk-panel{align-self:start}
 .check-head .check-fold{color:var(--ink);font-weight:600;font-size:15px}
 .ev-card.check.folded{gap:0}.ev-card.check.folded>:not(.check-head){display:none}
 .sk-pfold{color:var(--ink);font-weight:600}.sk-panel.folded{gap:0}
+/* B-123 (D-162): Weak spots. One line per weak spot with its objective, opening in place; Copy for Quizlet a text link. */
+.ws-lead{margin:0 0 2px}
+.ws-item{flex-direction:column;align-items:stretch;gap:2px;padding:2px 0}
+.ws-line{all:unset;box-sizing:border-box;display:flex;align-items:baseline;gap:8px;width:100%;min-width:0;cursor:pointer;padding:6px 0;line-height:1.4}
+.ws-line:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.ws-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ws-n{flex:none;color:var(--ink2);font-size:13px}
+.ws-more{display:none;flex-direction:column;gap:6px;padding:0 0 8px}.ws-item.open .ws-more{display:flex}.ws-more .meta{margin:0}.ws-more .actions{margin:0}
+#weak-card>.fold-line{display:block}
+button.tlink{all:unset;cursor:pointer;color:var(--accent-text);font-size:14px;padding:4px 0}button.tlink:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}

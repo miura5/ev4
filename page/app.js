@@ -600,16 +600,30 @@
     const days = st.lastDays.filter(d => d.n || mins[d.date]);
     foldCard('days', days.length, b => b.replaceChildren(table(['Day', 'Answered', 'Right', 'Study min'], days.map(d => [short(d.date), String(d.n), pct(d.right, d.n), String(mins[d.date] || 0)]))));
   }
+  // B-123 (D-162): a weak spot is one line, its topic and objective, opening in place to its source and its action.
+  const openWs = new Set();
   function wsRow(w) {
     const d = w.derived; const due = E.isDue(w, today);
-    const when = d.status === 'parked' ? (d.parkedReason || w.parkedReason || 'parked') : (w.kind === 'note' || w.kind === 'skill' || d.status === 'reviewed') ? '' :
+    const when = d.status === 'parked' ? (d.parkedReason || w.parkedReason || 'parked') : (w.kind === 'note' || w.kind === 'skill') ? '' : d.status === 'reviewed' ? ((w.kind === 'note' ? 'done ' : 'solid ') + short(d.solidAt)) :
       d.preRead ? 'first check after the reading' + (w.readingDue ? ' (' + short(w.readingDue) + ')' : '') : d.nextDue ? (due ? 'due today' : 'next ' + short(d.nextDue)) + (d.streak ? ' · ' + d.streak + ' of 2 right' : '') : 'not scheduled';
-    const detail = [w.objective || w.exam, w.source, d.recurrence > 1 ? 'seen ' + d.recurrence + '×' : '', when].filter(Boolean).join(' · ');
+    const detail = [w.source, d.recurrence > 1 ? 'seen ' + d.recurrence + '×' : '', when].filter(Boolean).join(' · ');
     let action = null;
     if (d.status === 'parked') action = btn('Make active', ev => guard(ev.target, () => write(weakEvent(w, 'activate')), 'Active again'));
     else if (d.status === 'open') { const toDo = w.kind === 'note' || w.kind === 'skill'; action = btn(w.kind === 'skill' ? 'Practiced' : toDo ? 'Done' : 'Mark solid', ev => guard(ev.target, () => write(weakEvent(w, toDo ? 'done' : 'solid')), toDo ? 'Marked done' : 'Marked solid')); }
-    else action = chip((w.kind === 'note' ? 'done ' : 'solid ') + short(d.solidAt), 'ok');
-    return row({ title: w.topic || 'Untitled', detail, chips: due ? [['due', 'warn']] : [], action });
+    const on = openWs.has(w.id), li = el('li', 'row ws-item' + (on ? ' open' : '')); li.dataset.id = w.id;
+    const b = el('button', 'ws-line'); b.type = 'button'; b.setAttribute('aria-expanded', String(on));
+    b.append(el('span', 'ws-t', w.topic || 'Untitled'), el('span', 'ws-n', w.objective || w.exam || ''));
+    b.addEventListener('click', () => { const o = !openWs.has(w.id); o ? openWs.add(w.id) : openWs.delete(w.id); li.classList.toggle('open', o); b.setAttribute('aria-expanded', String(o)); });
+    const more = el('div', 'ws-more'); if (detail) more.append(el('p', 'meta', detail)); if (action) { const a = el('div', 'actions'); a.append(action); more.append(a); }
+    li.append(b, more); return li;
+  }
+  // A section folded under its line of count; open while ui[key] is set.
+  function wsFold(lineId, listId, label, rows, cardId) {
+    const line = $(lineId), list = $(listId), key = 'ws:' + listId;
+    if (cardId) $(cardId).hidden = !rows.length; else line.hidden = !rows.length;
+    line.textContent = `${label} · ${rows.length}`; line.setAttribute('aria-expanded', String(!!ui[key])); list.hidden = !ui[key] || !rows.length;
+    if (!line.dataset.on) { line.dataset.on = '1'; line.addEventListener('click', () => { ui[key] = !ui[key]; render(); }); }
+    list.replaceChildren(...rows.map(wsRow));
   }
   function renderWeak() {
     const ms = M.models; const byAdded = (a, b) => String(b.addedAt || '').localeCompare(String(a.addedAt || ''));
@@ -619,16 +633,24 @@
     const parked = ms.filter(w => w.derived.status === 'parked' && w.kind !== 'connection').sort(byAdded);
     const solid = ms.filter(w => w.derived.status === 'reviewed' && w.kind !== 'note').sort((a, b) => String(b.derived.solidAt || '').localeCompare(String(a.derived.solidAt || '')));
     const formats = ms.filter(w => w.kind === 'format' && w.derived.status === 'open');
-    $('weak-count').textContent = active.length + ' active · ' + E.rankDue(ms, today, S.exams).length + ' due';
-    $('weak-active').replaceChildren(...(active.length ? active.map(wsRow) : [empty('No active weak spots.')]));
+    const tomorrow = E.addDays(today, 1);
+    const due = active.filter(w => E.isDue(w, today)), tom = active.filter(w => !E.isDue(w, today) && w.derived.nextDue === tomorrow), later = active.filter(w => !due.includes(w) && !tom.includes(w));
+    $('weak-lead').textContent = due.length ? `${plural(due.length, 'weak spot')} due today` : active.length ? 'Nothing due today.' : 'No active weak spots.';
+    // Due today is open: five rows, the rest under one line (D-148).
+    const shown = ui.wsDueAll ? due : due.slice(0, 5);
+    $('weak-due').replaceChildren(...shown.map(wsRow)); $('weak-due').hidden = !due.length;
+    const dm = $('weak-due-more'); dm.hidden = due.length <= 5; dm.textContent = ui.wsDueAll ? 'Fewer' : `${due.length - 5} more due today`; dm.setAttribute('aria-expanded', String(!!ui.wsDueAll));
+    if (!dm.dataset.on) { dm.dataset.on = '1'; dm.addEventListener('click', () => { ui.wsDueAll = !ui.wsDueAll; render(); }); }
     $('weak-quizlet').hidden = !active.some(w => (w.kind || 'concept') === 'concept');
-    $('weak-preview-card').hidden = !previews.length; $('weak-preview').replaceChildren(...previews.map(wsRow));
-    $('weak-notes').replaceChildren(...(notes.length ? notes.map(wsRow) : [empty('Gaps in your notes from study sessions show up here.')]));
+    wsFold('weak-tom-fold', 'weak-tom', 'Due tomorrow', tom);
+    wsFold('weak-later-fold', 'weak-later', 'Later', later);
+    wsFold('weak-preview-fold', 'weak-preview', 'Previews, before the reading', previews, 'weak-preview-card');
+    wsFold('weak-parked-fold', 'weak-parked', 'Parked', parked, 'weak-parked-card');
+    wsFold('weak-solid-fold', 'weak-solid', 'Solid', solid, 'weak-solid-card');
+    // The notes-and-skills card only while it holds something (D-151).
+    $('weak-notes-card').hidden = !notes.length && !formats.length;
+    $('weak-notes').replaceChildren(...notes.map(wsRow));
     $('weak-formats').textContent = formats.length ? 'Question format pattern: ' + formats.map(f => f.topic).join('; ') + '. Review sets lean on these formats.' : '';
-    $('parked-n').textContent = parked.length; $('weak-parked').replaceChildren(...(parked.length ? parked.map(wsRow) : [empty('Nothing parked.')]));
-    $('solid-n').textContent = solid.length; $('weak-solid').replaceChildren(...(solid.length ? solid.map(wsRow) : [empty('Weak spots you get right on two different days land here.')]));
-    const sel = $('w-obj'); const want = S.objectives.filter(o => !M.target || o.exam === M.target.id).map(o => o.id).sort();
-    if (sel.dataset.k !== want.join()) { sel.dataset.k = want.join(); sel.replaceChildren(el('option', null, 'Objective'), ...want.map(id => { const o = el('option', null, id); o.value = id; return o; })); sel.firstChild.value = ''; }
   }
 
   // ------------------------------------------------------------ Record
@@ -2875,10 +2897,6 @@
     if (r.write) await write({ op: r.write.op, collection: r.write.collection, id: r.write.id || r.id, data: r.write.data });
     return r;
   }
-  $('weak-add').addEventListener('submit', ev => { ev.preventDefault();
-    const topic = $('w-topic').value.trim(); if (!topic) return;
-    guard(ev.submitter, async () => { await addWeakspot({ topic, objective: $('w-obj').value, source: $('w-source').value.trim() }); $('w-topic').value = ''; $('w-source').value = ''; }, 'Weak spot added');
-  });
   $('date-add').addEventListener('submit', ev => { ev.preventDefault();
     const date = $('d-date').value, title = $('d-title').value.trim(); if (!date || !title) return;
     guard(ev.submitter, async () => { const r = await editDates({ action: 'add', date, title, kind: $('d-kind').value, graded: $('d-graded').checked, course: $('d-course').value }, 'Matt'); if (r.note && r.note !== 'back on the calendar') throw new Error(r.note); $('d-title').value = ''; $('d-graded').checked = false; }, 'Date added');

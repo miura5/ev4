@@ -500,9 +500,9 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     const rd = await page.textContent('#ready-card');
     ok('readiness shows E4', /Exam 4/.test(rd) && /% solid/.test(rd), rd.slice(0, 100));
     await page.click('#seg-progress [data-v="weak"]'); await page.waitForTimeout(100);
-    ok('weak spots listed', (await page.locator('#weak-active .row').count()) > 10, String(await page.locator('#weak-active .row').count()));
+    ok('weak spots listed', (await page.locator('#progress-weak li.ws-item').count()) > 10, String(await page.locator('#progress-weak li.ws-item').count()));
     ok('previews listed', (await page.locator('#weak-preview .row').count()) === 4, String(await page.locator('#weak-preview .row').count()));
-    await page.locator('#weak-active .row').first().locator('button').click(); await page.waitForTimeout(150);
+    await page.locator('#weak-due .ws-item').first().locator('.ws-line').click(); await page.locator('#weak-due .ws-item').first().locator('button', { hasText: 'Mark solid' }).click(); await page.waitForTimeout(150);
     const solidEv = await page.evaluate(() => Object.entries(window.__db.weakspots).filter(([, w]) => w.events && Object.values(w.events).some(e => e.type === 'solid' && e.by === 'owner')).map(([id]) => id));
     ok('mark solid writes an owner event', solidEv.length === 1, solidEv.join(','));
     // B-41: Copy for Quizlet on the weak-spot list: import text, one tab-separated card per open weak spot, no write

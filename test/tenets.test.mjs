@@ -16,7 +16,7 @@ test('B-115: the look pass checks D-146 to D-151 at 390, 735 and 1280, with E.V.
   assert.deepEqual(spec.ui.tenets.checks, ['D-146', 'D-147', 'D-148', 'D-149', 'D-150', 'D-151', 'D-160']);
   assert.deepEqual(spec.ui.tenets.onFor, { 'D-160': ['ev', 'study'] });
   assert.deepEqual(spec.ui.tenets.widths, [390, 735, 1280]);
-  assert.deepEqual(spec.ui.tenets.on, ['ev', 'today', 'study-review', 'progress-readiness', 'system']);
+  assert.deepEqual(spec.ui.tenets.on, ['ev', 'today', 'study-review', 'progress-readiness', 'system', 'progress-weak']);
   assert.deepEqual(judge(ev()).map(c => c.tenet).sort(), [...spec.ui.tenets.checks].sort());
   assert.deepEqual(failing(ev()), [], 'the E.V. tab passes them all');
   const look = fs.readFileSync(path.join(ROOT, 'test', 'harness', 'look.cjs'), 'utf8');
