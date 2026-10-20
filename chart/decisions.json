@@ -1,5 +1,265 @@
 [
  {
+  "id": "D-165",
+  "date": "Oct 19",
+  "title": "Study's three views: in Review the counter (3 of 8) is the set's fold line, replacing All questions, and from 1024 the set sits beside the question; once answered, the verdict is one line (Right · one more right on Tue makes it solid), your pick and the right answer carry their why, and Why not the others folds; a finished set leads with its score and Give me 5 more, misses as lines that open to what you picked and why, right answers folded, and the next set as one line; Practice leads with the set to do next and its Start, finished sets as lines opening to Review and Retake (D-095); Plan leads with its count and exam day, open items as ticks, Done and Earlier days folded, no explanation paragraph",
+  "why": "Answered, all four explanations opened and the verdict said Correct. then Right.; More practice showed under an unfinished set; a Drill pill sat on titles that already say Drill; Plan opened with a paragraph on how ticks work (D-146, D-148, D-150, D-151)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474 P-20"
+ },
+ {
+  "id": "D-164",
+  "date": "Oct 19",
+  "title": "On a prep day's evening before (clinical, lab, validation) Today's Now card is the pack check (D-143) until it is ticked, with that evening's review in the list below; on the day's morning the Now card is the day itself (place, hours) with the bag check folded under it; each check is the same list the greeting shows, so a tick in one is a tick in both; each item carries its source as a quiet second line (D-144); a ticked check folds to one line",
+  "why": "Forgetting an item on a clinical day costs more than a late review (D-143); one focus per view (D-146); state sits on its subject, once (D-151)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474 P-19"
+ },
+ {
+  "id": "D-163",
+  "date": "Oct 19",
+  "title": "Motion shows where things went and never makes him wait: only a change of layout moves (her stage stepping down as a fold opens, the side column sliding in from its side, a line opening in place); everything else appears at once; UI moves take at most 0.45 s; her stage and core keep their own pace (0.8 s at most), as do the reveal and the echo of his line (D-122); her reveal ends within 6 s and a tap completes it; nothing he is reading or ticking moves; reduced motion gives the same end state with no movement",
+  "why": "The reveal at speech pace capped at 6 s with tap to finish (D-137); the stage's fixed steps (D-122); the column sliding in (D-125); check-offs never move the page (v4 rule 6); reduced motion (D-127); the frame budget (D-135)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474 P-18",
+  "kind": "tenet",
+  "scope": [
+   "ui"
+  ],
+  "check": "harness",
+  "how": "harness: no CSS transition or animation over 450 ms outside her stage, her core (the header avatar too), the reveal and the echo of his line; a tab's content is settled within 450 ms of the switch; a tick keeps scroll (v4 rule 6); reduced-motion screenshots match the settled ones; the core's frame budget (D-135)"
+ },
+ {
+  "id": "D-162",
+  "date": "Oct 19",
+  "title": "Progress's Weak spots view leads with the count due today; Due today is open, and Due tomorrow, Previews and Solid fold under their own lines; the Log a weak spot form goes, since E.V. logs weak spots when told; each weak spot is one line with its objective, opening in place to its source and Mark solid; Copy for Quizlet is a text link under Due today; the notes-and-skills card is absent while empty",
+  "why": "The view ran to 3,382 px at 390 with 20 identical Mark solid buttons and 12 due pills (D-147, D-148, D-150, D-151)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474 P-17"
+ },
+ {
+  "id": "D-161",
+  "date": "Oct 19",
+  "title": "A study session's check folds like the briefing: its head line (Check 3 · 2 questions, with a chevron) collapses it to that one line, files nothing, and it unfolds again at the next checkpoint or on a tap; the skills runner's Hide button goes, since its peek line already folds and unfolds the sheet, and its Stop reads End, as the session's does",
+  "why": "An open check holds the surface (D-123) with only Answer, so the one way past it is to type something; the skills sheet has a Hide button beside a peek line that already does the same; Stop and End meant the same thing in two places (D-160)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474 P-16"
+ },
+ {
+  "id": "D-160",
+  "date": "Oct 19",
+  "title": "The way out is the thing folding, not a button: anything that runs or opens (a session, a skills run, a check, a set, a surface, a briefing) collapses to its own one-line summary with a chevron, and tapping that line folds or unfolds it (on the phone a sheet also swipes down); no close, hide or × button takes space; End appears inside the open thing only where ending loses something; leaving never loses his place",
+  "why": "Two skills surfaces with no way to collapse or end early (B-82); a reload left the session at 0:00 (B-87); a closed surface leaves a pill (D-124)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474 P-15",
+  "kind": "tenet",
+  "scope": [
+   "ui"
+  ],
+  "check": "harness",
+  "how": "harness: no button whose only job is to close or hide (Hide, Close, ×); every running mode on the synthetic record folds to one line by a tap on its own line and unfolds the same way; after a tab switch or a reload it returns at the same step"
+ },
+ {
+  "id": "D-159",
+  "date": "Oct 19",
+  "title": "The page has two breakpoints, 600 and 1024 px, and nothing changes shape between them: every split-screen width (the Claude side panel at about 560, half the laptop at 735, half a 1080p screen at 960) gets the phone stack with its column centred at most 660 px wide; from 1024 the header names its tabs and shows its status, the E.V. tab gets its side column, and the other tabs go to two columns. Amends D-125's 900 px and B-85's tab names from 900",
+  "why": "900 px sits inside the 640 to 960 band where all of Matt's split-screen widths land, so resizing a split flipped the header and her side column, and 960 got a crammed desktop header (D-153)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474 P-14"
+ },
+ {
+  "id": "D-158",
+  "date": "Oct 19",
+  "title": "From 1024 px, Today, Study, Progress, Record and System are two columns: the lead and the list he acts in on the left, the folded detail on the right, as v4 rule 10 says",
+  "why": "At 1280 they are one 760 px column with half the window empty (D-153)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474 P-13"
+ },
+ {
+  "id": "D-157",
+  "date": "Oct 19",
+  "title": "The header's status line reads Live or the one problem, never counts",
+  "why": "Weak-spot and set counts in the header are not his next step, and at 960 px they crammed the line (D-151)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474 P-12"
+ },
+ {
+  "id": "D-156",
+  "date": "Oct 19",
+  "title": "The 30 px page title shows only from 1024 px; below it the highlighted tab icon names the page",
+  "why": "The title repeated the tab and took 50 px of the phone's first screen (D-153)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474 P-11"
+ },
+ {
+  "id": "D-155",
+  "date": "Oct 19",
+  "title": "Progress's Readiness view is one objective list in core's weakness order (readinessAudit: most weak spots not yet right first, then right once), each row showing its not-yet count, merging the readiness audit and accuracy by objective; each row opens to its counts, accuracy and reread passages; the format, clinical-judgment step and 7-day tables fold to one line each and are absent while they hold one row",
+  "why": "Objectives appeared three times and the view ran to 2,668 px at 390 (D-146, D-148, D-151)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474 P-10"
+ },
+ {
+  "id": "D-154",
+  "date": "Oct 19",
+  "title": "The Today tab drops its three stat tiles; the Now card's second line carries the exam countdown, and readiness lives in Progress",
+  "why": "Each tile repeated the Now card or Progress (D-146, D-147)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474 P-9"
+ },
+ {
+  "id": "D-153",
+  "date": "Oct 19",
+  "title": "Built for his real windows: every size from a 375 px phone to a 1920 px screen gets one clear layout (his usual is half the laptop, about 735 x 830); chrome gives way so his content gets the room, and the chat box and his current task stay on screen at short heights",
+  "why": "In the split pane her words had 129 px in a session, now 391 (B-85, B-86)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474 P-8",
+  "kind": "tenet",
+  "scope": [
+   "ui"
+  ],
+  "check": "harness",
+  "how": "look pass at 375x667, 390x844, 430x932, 390x450 (keyboard open), 560x830, 735x830, 960x1000, 1280x800, 1470x830 and 1920x1080, every view of every tab: no sideways scroll, the composer and the lead fully in view, one layout from 600 to 1023 px"
+ },
+ {
+  "id": "D-152",
+  "date": "Oct 19",
+  "title": "Every open starts at now and nothing is lost: a reopen lands on the present, what came before folds behind a pull, a reload keeps a running session",
+  "why": "Live felt rigid with the old list above the greeting (B-91); a reload left the clock at 0:00 (B-87)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474 P-7",
+  "kind": "tenet",
+  "scope": [
+   "ui"
+  ],
+  "check": "harness",
+  "how": "harness (exists): a reopen mid-conversation and a reload mid-session"
+ },
+ {
+  "id": "D-151",
+  "date": "Oct 19",
+  "title": "Only where and while it applies: state sits on the thing it is about, and anything empty or idle is absent rather than explained",
+  "why": "The ring moved onto her core and the session line under her (B-84, B-86); chips only under the greeting (B-85); the side column only while it holds something (D-125)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474 P-6",
+  "kind": "tenet",
+  "scope": [
+   "ui"
+  ],
+  "check": "harness",
+  "how": "harness: no visible card whose only content is an empty-state sentence; chips hidden in a conversation"
+ },
+ {
+  "id": "D-150",
+  "date": "Oct 19",
+  "title": "Words, not chrome: plain text in one font, normal case; no pill, badge, bubble, box or caption where a word or its position does the job",
+  "why": "Accent fonts looked tacky (B-89); the briefing drawn as plain text (B-90); no bubbles (D-122); no caption under the input (B-85)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474 P-5",
+  "kind": "tenet",
+  "scope": [
+   "ui"
+  ],
+  "check": "lint",
+  "how": "lint (B-89): no monospace or spaced capitals; harness: at most 3 chips in a tab's first screen"
+ },
+ {
+  "id": "D-149",
+  "date": "Oct 19",
+  "title": "Colour has one meaning and urgent is rare: coral only for an exam today or tomorrow, graded work due today and not ticked, and errors; teal do or done, violet secondary, amber attention; predictable days stay calm",
+  "why": "Predictable days read as emergencies (D-143); one job per accent (D-077)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474 P-4",
+  "kind": "tenet",
+  "scope": [
+   "ui"
+  ],
+  "check": "harness",
+  "how": "harness: on the synthetic record the coral elements on each tab equal core's urgent count"
+ },
+ {
+  "id": "D-148",
+  "date": "Oct 19",
+  "title": "Fold, rank, open in place: a list opens folded under a one-line count, ranked urgent, new, then the rest; a row is one line that expands where it is",
+  "why": "The greeting's lists cluttered every open (B-90); earlier conversations wait behind the pull (D-128)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474 P-3",
+  "kind": "tenet",
+  "scope": [
+   "ui"
+  ],
+  "check": "harness",
+  "how": "harness: no list of more than 5 rows is open at load; a closed row is at most 44 px high"
+ },
+ {
+  "id": "D-147",
+  "date": "Oct 19",
+  "title": "Read in a line, act in a card: what he only reads is one tappable line that opens where it lives; a card holds something he does",
+  "why": "Info cards buried the conversation in the 480 x 740 pane (B-85); line cards dropped their pill (B-91)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474 P-2",
+  "kind": "tenet",
+  "scope": [
+   "ui"
+  ],
+  "check": "harness",
+  "how": "harness: every visible card holds a control (button, input, tick or link) unless spec.ui lists it as an exception"
+ },
+ {
+  "id": "D-146",
+  "date": "Oct 19",
+  "title": "One focus per view: each view leads with the one thing to do or read now; everything else recedes, smaller, dimmer or folded",
+  "why": "Her current line leads and one surface shows at a time (D-122, D-123); the greeting is one strict line (B-90)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474 P-1",
+  "kind": "tenet",
+  "scope": [
+   "ui"
+  ],
+  "check": "harness",
+  "how": "harness: at load each tab shows at most one primary button and one lead element in its first screen at 390 and 1280"
+ },
+ {
   "id": "D-145",
   "date": "Oct 19",
   "title": "Matt drops the v3 rollback on Oct 19, before NUR Exam 4, understanding the risk: D-085's window is closed now, not after the exam. Nothing is deleted: v3's tasks stay disabled and kept (spec.tasks.retired), its legacy copies stay in the record, ev-core is archived read-only (B-108). The gates that rested on the window end: live takes stored-document, pipeline, prompt, schema and migration changes by the normal path (staging green at the commit, then live on Matt's explicit OK), so R-01 ends and D-136's staging-only rule for the Captions schema bumps with it; a live hotfix starts from main (D-138 ends). Until the v4 rollback exists (B-60, built once the open tasks are done), going back is a redeploy of the previous v4 live build chart/deploys.json names",

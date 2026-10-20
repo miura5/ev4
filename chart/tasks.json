@@ -2049,5 +2049,201 @@
    "outcome": "task",
    "at": "2026-10-20T02:32:44.485Z"
   }
+ },
+ {
+  "id": "B-111",
+  "kind": "task",
+  "title": "Record, Ideas: an idea's text wraps one letter per line at 390 because its status menu and Make it a weak spot sit beside it; the title gets its own line and the menu and button show when the row is opened (D-148)",
+  "dod": "the look harness plants a 30-word idea; at 390 and 1280 its title is at most 3 lines and at least 80% of the card's width; opening the row shows the menu and button; npm test green; screenshots looked at",
+  "milestone": "M14 UI",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
+ },
+ {
+  "id": "B-112",
+  "kind": "task",
+  "title": "Short heights on the E.V. tab: at 390 x 450 (the phone with its keyboard open) the chat box is cut off below the screen; her stage steps down further and the briefing yields so the composer and her current line stay in view, idle, in a conversation and in a session (D-153)",
+  "dod": "the Captions harness at 390x450, 375x667 and 735x830, idle, mid-conversation and mid-session: the composer's bottom edge and her current line inside the viewport; screenshots looked at; npm test green",
+  "milestone": "M14 UI",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
+ },
+ {
+  "id": "B-113",
+  "kind": "task",
+  "title": "The look pass at Matt's sizes: every view of every tab (Study's Review, Practice and Plan; Progress's two views; Record's five) at 375x667, 390x844, 430x932, 390x450, 560x830, 735x830, 960x1000, 1280x800, 1470x830 and 1920x1080; check prints the phone, 735 and 1280 shots to look at first (D-153)",
+  "dod": "npm run check lists a screenshot per view per size and passes no-sideways-scroll, no-page-error and composer-in-view on each; a view added later without a shot fails a test",
+  "milestone": "M14 UI",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
+ },
+ {
+  "id": "B-114",
+  "kind": "task",
+  "title": "Two breakpoints (D-159): the header, the E.V. tab's side column and the page title change only at 600 and 1024 px; between them every width is the phone stack, its column centred at most 660 px wide",
+  "dod": "the shell and Captions harnesses at 560, 735, 960 and 1023 find one layout (icon tabs, no status line, no side column, a session's notes under the stage) and at 1024 and 1470 the desktop one; no sideways scroll at any listed size; screenshots at 735 and 960 looked at",
+  "milestone": "M14 UI",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
+ },
+ {
+  "id": "B-115",
+  "kind": "task",
+  "title": "Tenet checks in the harness: D-146, D-147, D-148, D-149, D-150 and D-151's checks run on every view at 390, 735 and 1280, with exceptions listed in spec.ui; a tab's checks report without failing until its catch-up task turns them on",
+  "dod": "the look harness prints each check per view; E.V. passes all of them; a planted info-only card fails D-147 and a planted empty-state card fails D-151 in a test; npm test green",
+  "milestone": "M14 UI",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
+ },
+ {
+  "id": "B-116",
+  "kind": "task",
+  "title": "Study, the question: the stem leads at 20 px; the tags become one quiet line under it; one counter, in the progress bar; Give me 5 more is one line shown once the set is done; Review and Practice alike (D-146, D-150, D-151)",
+  "dod": "the look harness at 390, 735 and 1280: no chip above a stem, one count on the screen, no More practice card while a set is unfinished, and its line after the last answer; Study's tenet checks on and green; screenshots looked at",
+  "milestone": "M14 UI",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
+ },
+ {
+  "id": "B-117",
+  "kind": "task",
+  "title": "Today: the stat tiles go and the Now card's second line carries the exam countdown (D-154); one line per item with its minutes once, in grey, and no type pill; an item E.V. added opens to its Remove (D-078); the exam leaves the tick list for Next 7 days; coral only for graded work due today and unticked (D-149); D-143's Prep marker on clinical, lab, validation and class days; Next 7 days open at up to 5 rows, folded under its count past that (D-148)",
+  "dod": "the look harness at 390, 735 and 1280 on the synthetic record: no stat tile, no item minutes shown twice, the exam in Next 7 days only, coral count equal to core's urgent count, a Prep marker on the clinical day; ticking still keeps scroll (v4 rule 6); Today's tenet checks on and green",
+  "milestone": "M14 UI",
+  "status": "open",
+  "depends": [
+   "B-104"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
+ },
+ {
+  "id": "B-118",
+  "kind": "task",
+  "title": "Progress, Readiness: one lead line (percent solid, right answers to go, days left) and one objective list in readinessAudit's order (most not yet right first), each row showing its not-yet count and opening to its counts, accuracy and reread passages; format, clinical-judgment step and 7 days fold to one line each and are absent while they hold one row (D-155)",
+  "dod": "the look harness: Readiness at 390 is at most 1.5 screens with all rows closed; each objective appears once; an opened row shows its passages; the planted one-row format table is absent; Progress's tenet checks on and green at 390, 735 and 1280",
+  "milestone": "M14 UI",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
+ },
+ {
+  "id": "B-119",
+  "kind": "task",
+  "title": "System: a lead line (All 8 pipelines on time, or the one that isn't); the pipeline and run lists fold under it with only exceptions marked; Background jobs, Capacity and Checks are absent while empty; versions and privacy are two quiet lines at the end (D-148, D-150, D-151)",
+  "dod": "the look harness at 390, 735 and 1280: no ok pill, the empty cards absent, a planted failed run shows in the lead and is marked in the list; System's tenet checks on and green",
+  "milestone": "M14 UI",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
+ },
+ {
+  "id": "B-120",
+  "kind": "task",
+  "title": "Header and shell: the status reads Live or the one problem, never counts (D-157); the page title shows only from 1024 px (D-156)",
+  "dod": "the shell harness: at 1280 the status is Live on the synthetic record and names a planted failed run; no page title at 390 or 735 and one at 1280; screenshots looked at",
+  "milestone": "M14 UI",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
+ },
+ {
+  "id": "B-121",
+  "kind": "task",
+  "title": "Two columns from 1024 px for Today, Study, Progress, Record and System: the lead and the list he acts in on the left, the folded detail on the right (D-158)",
+  "dod": "the look harness at 1280 and 1470: each tab has two columns, the left holding its primary; at 1023 one column; no sideways scroll at any listed size; screenshots looked at",
+  "milestone": "M14 UI",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
+ },
+ {
+  "id": "B-122",
+  "kind": "task",
+  "title": "Ways out by folding (D-160, D-161): a session check folds to its head line and back; the skills sheet loses its Hide button (its peek line folds it) and its Stop becomes End; no close or hide button is left on the page",
+  "dod": "the Captions harness at 390, 735 and 1280: a session check folded by a tap on its head line is one line high, files no answer, and unfolds at the next checkpoint; the skills sheet folds and unfolds by its peek line and has no Hide button; no button named Hide, Close or × anywhere on the page; D-160's check on and green for E.V. and Study; npm test green; screenshots looked at",
+  "milestone": "M14 UI",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
+ },
+ {
+  "id": "B-123",
+  "kind": "task",
+  "title": "Progress, Weak spots (D-162): a lead with the count due today; Due today open, the rest folded under their lines; one line per weak spot opening to its source and Mark solid; Copy for Quizlet as a text link; the empty notes-and-skills card absent; the Log a weak spot form removed (E.V. logs them)",
+  "dod": "the look harness at 390, 735 and 1470 on the synthetic record: no due pill and no Mark solid button visible at load; Due today open and the other sections closed; an opened row shows Mark solid, and marking one moves it to Solid without moving the page; Progress's tenet checks on and green; screenshots looked at",
+  "milestone": "M14 UI",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
+ },
+ {
+  "id": "B-124",
+  "kind": "task",
+  "title": "Today on prep days (D-164): the evening before a clinical, lab or validation day the pack check is the Now card until ticked; on the day's morning the Now card names the place and hours with the bag check folded under it; one list shared with the greeting's check; sources as a quiet second line",
+  "dod": "the look harness on a planted calendar at 390, 735 and 1280: the evening before a clinical day the Now card is the pack check and folds to one line when all are ticked; the morning shows place, hours and the folded bag check; a tick on Today shows ticked in the greeting and back; every item shows its source; screenshots looked at",
+  "milestone": "M14 UI",
+  "status": "open",
+  "depends": [
+   "B-104"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
+ },
+ {
+  "id": "B-125",
+  "kind": "task",
+  "title": "Motion on the other tabs (D-163): the staggered rise on every tab switch and the 0.9 s growth of bars and meters go; a tab's content shows at once (a fade of at most 0.2 s); folds, her stage and the side column keep their moves",
+  "dod": "the look harness reads every transition and animation on each tab at 390 and 1280: none over 450 ms outside her stage, her core (the header avatar too), the reveal and the echo of his line; a tab's content settled within 450 ms of the switch; reduced-motion screenshots match; npm test green",
+  "milestone": "M14 UI",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
+ },
+ {
+  "id": "B-126",
+  "kind": "task",
+  "title": "Study, answered and done (D-165): the counter as the set's fold line; a one-line verdict with your pick's and the right answer's why, the rest folded; a finished set's score, misses and next set; Practice led by the next set; Plan led by its count, with Done and Earlier days folded",
+  "dod": "the look harness at 390, 735 and 1280 answers a planted set: one verdict line, two whys visible and the rest closed, nothing above the verdict moving; the finished set shows its score, misses and Give me 5 more as the one primary; Practice and Plan each have one lead and no pill; Study's tenet checks on and green; screenshots looked at",
+  "milestone": "M14 UI",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
  }
 ]
