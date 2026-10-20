@@ -1820,17 +1820,20 @@
   "title": "Request (reported Oct 19): One command for every check: npm test plus five harnesses, where core.cjs must run alone and demo.cjs needs tools/demo.mjs run first. Add npm run check that runs them in the right order and ends with the phone and desktop screenshots, so the order is not remembered by hand.",
   "dod": "npm run check runs npm test, then the five harnesses in the right order (core.cjs alone, tools/demo.mjs before demo.cjs), then the phone and desktop screenshots, stops at the first failure with its name, and ends green on main; CLAUDE.md step 5 names it.",
   "milestone": "M13 Workflow",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Oct 20 session: npm run check",
-  "commit": null,
+  "notes": "npm run check (tools/check.mjs): npm test, build, shell, run, captions, core alone, demo build + demo.cjs, look pass (test/harness/look.cjs) at 390 and 1280; GREEN on main Oct 20 on the synthetic record (B-100, 07d685a): run 270, captions 124, core 68, look 14 checks. CLAUDE.md step 5 names it.",
+  "commit": "92ff599",
   "source": "Oct 19 build chat: Claude's workflow review, filed on Matt's OK",
   "words": "One command for every check: npm test plus five harnesses, where core.cjs must run alone and demo.cjs needs tools/demo.mjs run first. Add npm run check that runs them in the right order and ends with the phone and desktop screenshots, so the order is not remembered by hand.",
   "reportedAt": "2026-10-19T23:59:10.937Z",
   "board": {
-   "row": "v4 B-101: One command for every check: npm test plus five harnesses, where…",
-   "why": "One command for every check: npm test plus five harnesses, where core.cjs must run alone and demo.cjs needs tools/demo.mjs run first. Add npm run check that runs them in the right order and ends with the phone and desktop screenshots, so the order is not remembered by hand.",
-   "notes": "Reported Oct 19 from Oct 19 build chat: Claude's workflow review, filed on Matt's OK"
+   "row": "v4 B-101: npm run check: every check in one command",
+   "why": "the harness order was remembered by hand",
+   "notes": "npm run check runs the tests, every harness, the demo and the phone and desktop screenshots in order, and stops at the first failure",
+   "were": [
+    "v4 B-101: One command for every check: npm test plus five harnesses, where…"
+   ]
   },
   "triage": {
    "outcome": "task",
