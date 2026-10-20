@@ -2182,14 +2182,15 @@
   "title": "Progress, Readiness: one lead line (percent solid, right answers to go, days left) and one objective list in readinessAudit's order (most not yet right first), each row showing its not-yet count and opening to its counts, accuracy and reread passages; format, clinical-judgment step and 7 days fold to one line each and are absent while they hold one row (D-155)",
   "dod": "the look harness: Readiness at 390 is at most 1.5 screens with all rows closed; each objective appears once; an opened row shows its passages; the planted one-row format table is absent; Progress's tenet checks on and green at 390, 735 and 1280",
   "milestone": "M14 UI",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Taken after B-117 (M14).",
-  "commit": null,
+  "notes": "Readiness: one lead line (9% solid · 37 right answers to go · 2 days left); one objective list in readinessAudit's order (most not yet first), merging the audit and accuracy by objective (objectives answered but with no weak spot join at the end), each row one line with its not-yet count, opening in place to its counts, accuracy and passages to reread; past 5 it folds under a count. Format, clinical-judgment step and Last 7 days each fold to one line and are absent while they hold one row. The conversation's audit line still opens here. Look harness at 390, 735 and 1280: under 1.5 screens at 390 with rows closed (479 px), each objective once, an opened row shows its passages, the one-row format table absent (the record as planted answers one format); Readiness's tenet checks on (18/18). Progress's Weak spots view keeps reporting until B-123, its rework. npm run check GREEN; screenshots looked at. Staging GREEN at d8fb07b.",
+  "commit": "d8fb07b",
   "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474",
   "board": {
    "row": "v4 B-118: Progress, Readiness as one list",
-   "why": "objectives appeared three times and the view ran to 2,668 px at 390"
+   "why": "objectives appeared three times and the view ran to 2,668 px at 390",
+   "notes": "Readiness is one line and one list: each objective once, most to do first, opening to what to reread. On staging."
   }
  },
  {
