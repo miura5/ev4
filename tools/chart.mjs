@@ -846,6 +846,8 @@ async function ship(o) {
   if (step.kind === 'deploy') {
     const missingV = SYSTEM_IDS.filter(id => state.record && state.record[id] && !versions[id]);
     if (missingV.length) { console.log(`${head}: the versions of ${missingV.join(', ')} are not in this session's ArtifactData replies: pass --version ${missingV.map(id => id + '=<n>').join(',')}`); return 1; }
+    // B-58: ship live prints these calls only on Matt's OK (R-04), so the live-write guard lets them through for a while.
+    if (target === 'live') fs.writeFileSync(path.join(dist, 'live-ok'), JSON.stringify({ at: Date.now(), commit: manifest.commit, by: 'ship live --matt-ok' }));
     fs.writeFileSync(shipFile, JSON.stringify({ commit: manifest.commit, at: Date.now(), skip, touched: { tasks: step.calls.some(c => /trigger/.test(c.tool)), pages: step.calls.some(c => c.tool === 'Artifact') } }));
     console.log(formatDeploy(target, { ...deploy, calls: step.calls, skipped: step.skipped }).replace(`deploy ${target}:`, `${head}:`).replace(`then run verify-deploy ${target}.`, `then make the reads below again and run ship ${target}.`));
     const again = reads.filter(r => !isTaskRead(r) && !isPageRead(r) || (isTaskRead(r) && step.calls.some(c => /trigger/.test(c.tool))) || (isPageRead(r) && step.calls.some(c => c.tool === 'Artifact')));

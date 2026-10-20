@@ -75,7 +75,9 @@ signed-in browser; never a token. Nothing is deleted anywhere: records, Mac file
 by marking. No passwords, nothing posted as Matt, the journal is read by the page only. Personal data never enters
 this repository (`fixtures/` and `dist/` are ignored; a test greps for exports). **In a build chat**, Matt's explicit OK is
 required for: publishing the live page, creating or changing a Mac-bound task, reading the journal, touching the live
-record by hand. A refused action is reported in Notes, never worked around.
+record by hand. A refused action is reported in Notes, never worked around. Build chats load three hooks
+(.claude/settings.json, B-56 to B-58): npm test at the end of a turn, the spec's JSON form, and a guard that refuses a
+live write or publish unless `deploy live --matt-ok` wrote dist/live-ok; pipeline runs never load them (B-65).
 
 ## Gotchas carried from v3, each with its rule
 
@@ -90,7 +92,7 @@ record by hand. A refused action is reported in Notes, never worked around.
 - ArtifactData: every write to an existing document carries `if_version`; batches are atomic, 50 writes / 1 MiB.
   The page's `update` merges nested maps; Edits documents are replaced whole.
 - Playwright's fake clock races its real-time sync: `setSystemTime` plus condition waits.
-- Spec edits: JSON with indent 1, no trailing newline. `node --test test/*.test.mjs > /tmp/t.log 2>&1; grep -E
+- Spec edits: JSON with indent 1, no trailing newline (a PostToolUse hook re-writes spec files so, B-57). `node --test test/*.test.mjs > /tmp/t.log 2>&1; grep -E
   "^# (pass|fail)" /tmp/t.log` (never pipe node through grep inside `&&`).
 
 ## Rollback to v3 (D-085, manual, only with Matt's explicit OK)

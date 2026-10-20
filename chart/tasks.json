@@ -1023,11 +1023,11 @@
   "title": "Stop hook: a .claude/settings.json Stop hook in this repository runs npm test and reports red to the session before it ends",
   "dod": null,
   "milestone": "Process",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-65"
   ],
-  "notes": "Rewritten by B-65: waits on the hooks probe (O-5). Done when: a session that leaves a failing test is told so at its end (planted failing test), and a green one ends quietly; the hook never edits or reverts anything",
+  "notes": "Oct 20 session",
   "commit": null,
   "source": "BACKLOG.md"
  },

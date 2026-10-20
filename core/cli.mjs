@@ -332,6 +332,8 @@ const commands = {
     const stagingVerify = maybeJson(path.join(dist, 'verify-staging.json')) || null;
     const result = deployCalls({ manifest, target, distDir: dist, build, versions: o.version, mattOk: Boolean(o.mattOk), duringSession: Boolean(o.duringSession), state: withShell(readState(stateDir), manifest, target, dist), sha256, stagingVerify, stateDir });
     if (result.ok) fs.writeFileSync(path.join(dist, `deploy-${target}.json`), JSON.stringify(result, null, 1));
+    // B-58: the live-write guard (tools/hooks.mjs live-guard) lets these calls through for a while: Matt said OK.
+    if (result.ok && target === 'live') fs.writeFileSync(path.join(dist, 'live-ok'), JSON.stringify({ at: Date.now(), commit: manifest.commit, by: 'deploy live --matt-ok' }));
     console.log(o.json ? JSON.stringify(result, null, 1) : formatDeploy(target, result));
     return result.ok ? 0 : 1;
   },
