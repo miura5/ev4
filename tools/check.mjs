@@ -13,6 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const { SIZES, FIRST, missingShots } = createRequire(import.meta.url)('../test/harness/views.cjs');
 const opt = (argv, name, dflt) => { const i = argv.indexOf('--' + name); return i >= 0 && argv[i + 1] ? path.resolve(argv[i + 1]) : dflt; };
 
 /** The steps, in order, as [name, command, args]. */
@@ -45,8 +46,12 @@ export function main(argv = process.argv.slice(2)) {
   }
   const look = path.join(shots, 'look');
   const files = fs.readdirSync(look).filter(f => f.endsWith('.png')).sort();
-  console.log(`\ncheck: GREEN. Look at the screenshots in ${look}:`);
-  for (const w of ['phone', 'desktop']) console.log(`  ${w}: ${files.filter(f => f.endsWith(`-${w}.png`)).join(', ')}`);
+  // B-113: one screenshot per view per size, or the look pass missed a view.
+  const missing = missingShots(files, fs.readFileSync(path.join(ROOT, 'dist', 'page', 'staging', 'index.html'), 'utf8'));
+  if (missing.length) { console.log(`\ncheck: RED at look: no screenshot for ${missing.length} view${missing.length === 1 ? '' : 's'} at a size: ${missing.slice(0, 8).join(', ')}${missing.length > 8 ? ', …' : ''}`); return 1; }
+  console.log(`\ncheck: GREEN. Look at the screenshots in ${look}, these first:`);
+  for (const tag of FIRST) console.log(`  ${tag}: ${files.filter(f => f.endsWith(`-${tag}.png`)).join(', ')}`);
+  console.log(`  then the other sizes (${SIZES.filter(s => !FIRST.includes(s.tag)).map(s => s.tag).join(', ')}): ${files.filter(f => !FIRST.some(t => f.endsWith(`-${t}.png`))).length} more`);
   return 0;
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) process.exitCode = main();

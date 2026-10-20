@@ -1,6 +1,8 @@
-// The look pass (B-101): every tab of the built page at phone (390) and desktop (1280) width, full-page screenshots
-// to look at after a page change, with the record, sample, mcp and the reader stubbed (stub.js) as in shell.cjs. Checks
-// only what any screen must hold: no page error and no sideways scroll.
+// The look pass (B-101, B-113): every view of every tab of the built page (each tab, and each segment of a tab's seg
+// control) at Matt's sizes (views.cjs: phone 375 to 430, the phone with its keyboard open, the Claude side panel, half
+// the laptop, half a 1080p screen, the laptop and the big screens), full-page screenshots to look at after a page
+// change, with the record, sample, mcp and the reader stubbed (stub.js) as in shell.cjs. Checks what any screen must
+// hold: no page error, no sideways scroll, and on the E.V. tab the composer in view.
 //   node test/harness/look.cjs [record dir | synthetic] [screenshots dir] [target]
 // record dir: a folder of <collection>/<id>.json (default: the synthetic record, test/data/synthetic.cjs).
 // Run `node tools/build.mjs` first. Exit code 1 when any check fails.
@@ -22,12 +24,14 @@ seed.ideas = { ...(seed.ideas || {}), 'look-long-idea': { schema: 2, writer: 'pa
 const stub = fs.readFileSync(path.join(__dirname, 'stub.js'), 'utf8');
 const skeleton = body => '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0}[hidden]{display:none!important}</style></head><body>' + body + '</body></html>';
 const TYPES = { '.js': 'text/javascript', '.json': 'application/json', '.css': 'text/css', '.html': 'text/html' };
-const TABS = ['ev', 'today', 'study', 'progress', 'record', 'system'];
+const { SIZES, viewsOf, shotName } = require('./views.cjs');
+const VIEWS = viewsOf(fs.readFileSync(path.join(pageDir, 'index.html'), 'utf8'));
 const results = []; const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', name, detail]);
 
 (async () => {
   const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' }).catch(() => chromium.launch());
-  for (const [width, viewport] of [['phone', { width: 390, height: 844 }], ['desktop', { width: 1280, height: 860 }]]) {
+  for (const size of SIZES) {
+    const width = size.tag, viewport = { width: size.width, height: size.height };
     const page = await browser.newPage({ viewport, colorScheme: 'dark' });
     const errors = []; page.on('pageerror', e => errors.push(e.message)); page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
     await page.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));
@@ -40,13 +44,18 @@ const results = []; const ok = (name, cond, detail = '') => results.push([cond ?
     await page.addInitScript('window.__db=' + JSON.stringify(seed) + ';' + stub);
     await page.goto(ORIGIN + '/');
     await page.waitForFunction(() => document.querySelector('#thread .msg.ev'), null, { timeout: 5000 }).catch(() => {});
-    for (const t of TABS) {
-      await page.click('#tab-' + t); await page.waitForTimeout(700); // past the panel's fade-in
-      await page.screenshot({ path: `${shots}/look-${t}-${width}.png`, fullPage: true });
-      ok(`[${width}] ${t}: no sideways scroll`, await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
+    for (const view of VIEWS) {
+      await page.click('#tab-' + view.tab); if (view.v) await page.click(`#seg-${view.tab} [data-v="${view.v}"]`);
+      await page.waitForTimeout(500); // past the panel's fade-in
+      await page.screenshot({ path: `${shots}/${shotName(view, size)}`, fullPage: true });
+      ok(`[${width}] ${view.id}: no sideways scroll`, await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
+      if (view.tab === 'ev') ok(`[${width}] ev: the composer is in view`, await page.evaluate(() => { const c = document.querySelector('.compose-row').getBoundingClientRect(); return c.top >= 0 && c.bottom <= innerHeight + 1 && c.height > 0; }));
     }
+    // Each seg control back to its first view, as a fresh open has it.
+    for (const v of VIEWS.filter(x => x.v)) if (VIEWS.find(x => x.tab === v.tab).v === v.v) { await page.click('#tab-' + v.tab); await page.click(`#seg-${v.tab} [data-v="${v.v}"]`); }
+    if (['390x844', '1280x800'].includes(width)) {
     // B-111: the long idea's text is at most 3 lines and at least 80% of its card's width; opening it shows its controls.
-    await page.click('#tab-record'); await page.waitForTimeout(400);
+    await page.click('#tab-record'); await page.click('#seg-record [data-v="sessions"]'); await page.waitForTimeout(400);
     const idea = await page.evaluate(() => {
       const li = document.querySelector('#ideas li.idea[data-id="look-long-idea"]'); if (!li) return null;
       const t = li.querySelector('.title'), card = li.closest('.card'), cs = getComputedStyle(t);
@@ -62,6 +71,7 @@ const results = []; const ok = (name, cond, detail = '') => results.push([cond ?
     ok(`[${width}] record: opening the idea shows its menu and Make it a weak spot`, opened.menu && opened.button && opened.expanded === 'true', JSON.stringify(opened));
     ok(`[${width}] record: the planted idea is 30 words, and opened it shows them all`, LONG_IDEA.split(/\s+/).length === 30 && await page.evaluate(() => { const t = document.querySelector('#ideas li.idea[data-id="look-long-idea"] .title'); return t.scrollHeight <= t.clientHeight + 1; }));
     await page.locator('#ideas li.idea[data-id="look-long-idea"]').screenshot({ path: `${shots}/look-idea-open-${width}.png` });
+    }
     ok(`[${width}] no page errors`, errors.length === 0, errors.join(' | '));
     await page.close();
   }
