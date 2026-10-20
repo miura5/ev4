@@ -1135,11 +1135,11 @@
   "title": "Watchdog compares the scheduler with the record (M-1, D-112): a material step prints the list_triggers reads (enabled, paged; proven from a cloud run in B-29 and counted by the audit the same way), the fold compares every task in spec.tasks.<record> against runs/: a SUCCEEDED firing with no run document within 5 minutes of fired_at is refused-at-start, a slot past its grace with no firing is not-fired; both in health/current.missing with a kind, named in the watchdog's push; the System tab shows them",
   "dod": null,
   "milestone": "M9",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-25"
   ],
-  "notes": "Evidence, Oct 18 read-back: the live watchdog's 1:55pm slot (18:55Z) left no runs document and no runs/watchdog-failed-* document, between the 10:55am refusal (traced) and the ok 4:55pm run; list_triggers only shows a task's last_run, so this firing's outcome is not visible from a build chat. The case this task's comparison would catch",
+  "notes": "Taken in the Oct 20 build session.",
   "commit": null,
   "source": "BACKLOG.md",
   "board": {
