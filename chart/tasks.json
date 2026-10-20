@@ -1023,13 +1023,18 @@
   "title": "Stop hook: a .claude/settings.json Stop hook in this repository runs npm test and reports red to the session before it ends",
   "dod": null,
   "milestone": "Process",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-65"
   ],
-  "notes": "Oct 20 session",
-  "commit": null,
-  "source": "BACKLOG.md"
+  "notes": "tools/hooks.mjs stop, wired as the Stop hook: a planted failing test is reported by name, a green suite ends quietly, it edits nothing and never blocks twice in a row (test/hooks.test.mjs). Staging GREEN at c3d087d.",
+  "commit": "c3d087d",
+  "source": "BACKLOG.md",
+  "board": {
+   "row": "v4 B-56: Stop hook: npm test before a build chat ends",
+   "why": "a session could end with tests red",
+   "notes": "build chats now run the tests when a turn ends and say so if any fail"
+  }
  },
  {
   "id": "B-57",
