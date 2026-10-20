@@ -2199,11 +2199,15 @@
   "title": "System: a lead line (All 8 pipelines on time, or the one that isn't); the pipeline and run lists fold under it with only exceptions marked; Background jobs, Capacity and Checks are absent while empty; versions and privacy are two quiet lines at the end (D-148, D-150, D-151)",
   "dod": "the look harness at 390, 735 and 1280: no ok pill, the empty cards absent, a planted failed run shows in the lead and is marked in the list; System's tenet checks on and green",
   "milestone": "M14 UI",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken after B-118 (M14).",
   "commit": null,
-  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474",
+  "board": {
+   "row": "v4 B-119: System, one line until something is wrong",
+   "why": "eight ok pills, empty cards and long lists for a page that is usually fine"
+  }
  },
  {
   "id": "B-120",
