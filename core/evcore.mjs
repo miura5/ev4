@@ -794,10 +794,13 @@ const EVCore = (() => {
   /** The bring-list entries in one passage: what follows "bring:", "you will need", "supplies needed" and the like. */
   function prepBringItems(text) {
     const P = C.prep || {}; const out = [];
-    const re = new RegExp('\\b' + (P.bring || 'bring') + '\\b[^:.;\\n]{0,40}?[:\\-–]\\s*([^.\\n]+)', 'gi'); let m;
+    // A list opens at a colon only (a dash is a page range in a table of contents), and a table of contents is no list.
+    if (/table of contents/i.test(String(text || ''))) return out;
+    const re = new RegExp('\\b' + (P.bring || 'bring') + '\\b[^:.;\\n]{0,40}?:\\s*([^.\\n]+)', 'gi'); let m;
     while ((m = re.exec(String(text || '')))) for (const raw of m[1].split(/[,;•]|\s+and\s+|\s+\+\s+/)) {
-      const t = raw.replace(/^\s*(?:a|an|the|your|one|two|1|2)\s+/i, '').replace(/^[\s\-–*]+|[\s\-–*]+$/g, '').trim();
-      if (t.length >= 3 && t.length <= 60 && !/^(the following|following|these|this)$/i.test(t)) out.push(t.charAt(0).toUpperCase() + t.slice(1));
+      const t = raw.replace(/^\s*(?:a|an|the|your|one|two|1|2)\s+/i, '').replace(/^[\s\-–*]+|[\s\-–*]+$/g, '').replace(/\s+/g, ' ').trim();
+      const looksLikeItem = t.length >= 3 && t.length <= 60 && t.split(' ').length <= 7 && (t.match(/\d+/g) || []).length <= 1 && !/\d\s*[-–]\s*\d/.test(t);
+      if (looksLikeItem && !/^(the following|following|these|this)$/i.test(t)) out.push(t.charAt(0).toUpperCase() + t.slice(1));
     }
     return out;
   }
@@ -836,7 +839,7 @@ const EVCore = (() => {
     const looks = ((P.lookFor || {})[day.kind] || []).map(l => ({ item: l.item, re: new RegExp(l.match, 'i') }));
     for (const d of passages) {
       for (const t of prepBringItems(d.c.text)) { const seed = looks.find(l => l.re.test(t)); add(seed ? seed.item : t, d); }
-      for (const l of looks) if (l.re.test(d.c.text)) add(l.item, d);
+      if (!/table of contents/i.test(d.c.text)) for (const l of looks) if (l.re.test(d.c.text)) add(l.item, d);
     }
     const fromMaterials = items.length;
     const edits = {}; for (const e of o.dayedits || []) if (e) edits[e.id || e.date] = e;

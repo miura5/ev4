@@ -1151,7 +1151,7 @@
     ],
     "class": []
    },
-   "bring": "(?:what to bring|bring(?: with you| to (?:lab|clinical|class|validation))?|you will need|you'll need|students (?:must|should) (?:bring|have)|supplies(?: needed)?|equipment(?: needed)?|required (?:items|supplies|equipment|paperwork))",
+   "bring": "(?:what to bring|bring(?: with you| to (?:lab|clinical|class|validation))?|you will need|you'll need|students (?:must|should) (?:bring|have)|(?:supplies|equipment|items) (?:needed|required|to bring)|required (?:items|supplies|equipment|paperwork))",
    "queryWords": {
     "clinical": "clinical bring paperwork",
     "lab": "lab bring supplies",

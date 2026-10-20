@@ -154,3 +154,11 @@ test('the 8:15pm push carries the pack-check line, first after a stale health wa
   for (const d of ['2026-10-20', '2026-10-21', '2026-10-22', '2026-10-25']) assert.ok(push(d, MATS).length <= SPEC.constants.push.maxChars);
   assert.doesNotMatch(push('2026-10-23', MATS), /Pack|Prep/);
 });
+test('a table of contents is never read as a bring list (a dash there is a page range)', () => {
+  const toc = { id: 'NUR112-899', title: 'Practice Skills Packet.pdf', course: 'NUR 112', kind: 'lab', text: '[p2] SKILLS CHECKLIST TABLE OF CONTENTS Handwashing 5 Donning and Removing Personal Protective Equipment (PPE) 7 Vital Signs 8 - 9 Head to Toe Assessment 12 Donning and Removing Sterile Gloves 15 - 16 Medication Administration Preparing Oral, Intramuscular 20-24' };
+  assert.deepEqual(EV.prepBringItems(toc.text), []);
+  const day = EV.prepDay([date('v9', '2026-10-27', 'Validation: Sterile gloves', 'validation')], [], '2026-10-27');
+  const l = EV.prepList({ day, phase: 'night', materials: [toc] });
+  assert.equal(l.empty, true, JSON.stringify(l.items));
+  assert.deepEqual(EV.prepBringItems('Equipment: Vital Signs 8 - 9 Range of Motion 10 - 11'), [], 'bare "equipment" opens no list');
+});
