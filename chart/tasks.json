@@ -2146,11 +2146,15 @@
   "title": "Study, the question: the stem leads at 20 px; the tags become one quiet line under it; one counter, in the progress bar; Give me 5 more is one line shown once the set is done; Review and Practice alike (D-146, D-150, D-151)",
   "dod": "the look harness at 390, 735 and 1280: no chip above a stem, one count on the screen, no More practice card while a set is unfinished, and its line after the last answer; Study's tenet checks on and green; screenshots looked at",
   "milestone": "M14 UI",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken after B-115 (M14).",
   "commit": null,
-  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474",
+  "board": {
+   "row": "v4 B-116: Study, the question",
+   "why": "pills above the stem, two counters and a More practice card mid-set"
+  }
  },
  {
   "id": "B-117",
