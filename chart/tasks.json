@@ -819,7 +819,7 @@
   "title": "Courses as data (pick 9, D-099): spec.courses with Canvas id, status, exam kinds, module and skip rules and day-type budget per course; registry.canvas.courses, registry.canvas.library.modules and constants.nurUnitExamKinds removed; core reads every course rule from the table and names no course in code; searchLibrary and the morning passages default to active courses; build and lint check exams.course and materials.course against it",
   "dod": null,
   "milestone": "M9",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-25",
    "B-31",
@@ -830,9 +830,13 @@
    "B-37",
    "B-39"
   ],
-  "notes": "Matt, Oct 18: M8 starts once M7's build work is done, not after B-25; M8 goes live today with his explicit OK once staging is green; before B-44. SPEC (interview with Matt, Oct 18; D-099): spec.courses = {\"NUR 112\": {canvasId 199214, status active, endsAfter FINAL (marked done after its final, mid-Dec), examKinds [unit, dosage, final, ati], reviewKinds [unit, final, dosage] (today's nurUnitExamKinds), examDayKinds [unit, final, dosage, ati] (today's isNurExamDay), library: its four registry.canvas.library.modules rules as they are}, \"BIO 201\": {canvasId 199416, status active, endsAfter its final (mid-Dec), examKinds [unit, lab, final] (a lecture exam is unit), reviewKinds [unit, lab, final], examDayKinds [unit, lab, final], library: its three rules as they are (Matt confirmed: Unit N or Chapter N slides, Lab Material lab, Start Here syllabus only)}}; registry.canvas.courses, registry.canvas.library.modules and constants.nurUnitExamKinds leave the spec. Rules (Matt): BIO review shares the day's budget (one review set across courses, inside dayBudgetMinutes; no own block); when exams of both courses are near, the nearest exam's weak spots come first and a same-day tie splits by how many are due; a lab practical gets review like a lecture exam, its checks and passages from that course's lab-kind materials; a done course leaves search and the morning passages by default and comes back when Matt names the course. Code: nextExams, isNurExamDay (becomes isExamDay), pickReviews, libraryPick, examTomorrow (predictions stay NUR unit only unless the table says otherwise), normCourse, guessCourse and the course defaults (course || 'NUR 112') read the table; core names no course (a spec test fails on a core file with a course literal); build and lint check exams.course and materials.course against spec.courses; system/spec carries the table and the page's course select reads it. Default I chose, for Matt to correct: examDayKinds as above (a BIO exam day is an exam day type). Done when (Build plan): the spec test; npm test green with NUR 112 unchanged (the fixture morning rebuilds byte for byte) and BIO-E3/BIO-LAB-BONES-shaped exams in nextExams; a staging morning firing, then verify-deploy staging green. Build in a fresh session",
+  "notes": "Oct 20: taken after M14 (Matt's order: B-42 unblocks M8). Before-snapshot of the morning's days over 61 dates on the fixture and a synthetic record taken for the byte-for-byte check",
   "commit": null,
-  "source": "BACKLOG.md"
+  "source": "BACKLOG.md",
+  "board": {
+   "row": "v4 B-42: Courses as data",
+   "why": "core hardcodes NUR 112, so BIO 201 exams never reach the morning review and a finished course can't be retired by marking"
+  }
  },
  {
   "id": "B-43",
