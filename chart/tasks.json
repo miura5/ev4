@@ -2327,10 +2327,14 @@
   "title": "Delete the demo copy (D-166): demo/runtime.js, tools/demo.mjs, test/harness/demo.cjs and test/demo.test.mjs removed; demo/seed.js moves to test/data/seed.cjs as the synthetic record's seed (its dated-from-now test joins test/synthetic.test.mjs); npm run check, CLAUDE.md, the reminders test and the Chart's file patterns no longer name the demo; the demo artifact deleted on Matt's word; the overview doc says it is gone",
   "dod": "npm test green; npm run check's harnesses green on the synthetic record built from test/data/seed.cjs; no file names demo/ or tools/demo.mjs; the demo artifact deleted; the overview doc's demo line updated",
   "milestone": "Process",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken in the parent build chat on Matt's word (D-166)",
   "commit": null,
-  "source": "Matt, Oct 20 (D-166)"
+  "source": "Matt, Oct 20 (D-166)",
+  "board": {
+   "row": "v4 B-127: Delete the demo copy",
+   "why": "Matt: redundant aside from its seed data; it adds overhead to every build and check"
+  }
  }
 ]
