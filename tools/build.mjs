@@ -25,6 +25,18 @@ const HASHED = [
 ];
 const SYSTEM_DOCS = ['system/manifest', 'system/spec', 'system/environments'];
 
+/** The page's app.js as published: page/app/*.js in name order, joined as they are (B-64). Each part is one section of
+ *  the one closure EVApp.boot runs, split by tab for the reader; only the joined file is JavaScript on its own. */
+export function appSource(root = HERE) {
+  const dir = path.join(root, 'page', 'app');
+  if (!fs.existsSync(dir)) throw new Error('no page/app/: the page logic lives there as parts (B-64)');
+  return fs
+    .readdirSync(dir)
+    .filter(f => f.endsWith('.js'))
+    .sort()
+    .map(f => fs.readFileSync(path.join(dir, f), 'utf8'))
+    .join('');
+}
 export const sha256 = buf => crypto.createHash('sha256').update(buf).digest('hex');
 
 function git(root, args) {
@@ -188,10 +200,10 @@ export function buildPages({ root, spec, schemas, release }) {
     '\nwindow.EVMotion = { ' +
     motionNames.join(', ') +
     ' };\n})();\n';
-  const app = read('page/app.js');
+  const app = appSource(root);
   const appVersion = (app.match(/const VERSION = '([^']+)'/) || [])[1];
   if (appVersion !== release)
-    throw new Error(`page/app.js VERSION ${appVersion || '(none)'} differs from the release ${release}`);
+    throw new Error(`page/app VERSION ${appVersion || '(none)'} differs from the release ${release}`);
   const out = {};
   for (const target of ['live', 'staging']) {
     const other = target === 'live' ? 'staging' : 'live';

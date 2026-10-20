@@ -9,6 +9,11 @@ import { listRepoFiles } from '../tools/personal-data.mjs';
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 /** A source file as one line (B-64): the formatter's line breaks and indents collapse to single spaces, and none
  *  follows an opening or precedes a closing bracket, so a test can match the code it names however it is wrapped. */
+export const flatText = text =>
+  String(text)
+    .replace(/\s+/g, ' ')
+    .replace(/([([{]) /g, '$1')
+    .replace(/,? ([)\]}])/g, '$1');
 export const flatSource = rel =>
   fs
     .readFileSync(path.join(ROOT, rel), 'utf8')

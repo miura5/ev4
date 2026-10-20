@@ -1,0 +1,797 @@
+    // ---------------------------------------------------------------- study sessions (D-073: all in this conversation)
+    // Study Watch (reader mode) saves the school note he is writing, and the read-only reader connector serves it to
+    // this page inside the Claude desktop app. Rules (timer, new-text diff, prompts, filing) live in E.V. core. The note's
+    // text stays in this page's memory; the record keeps only its length and hash.
+    const READER = EV_SPEC.reader || {};
+    const SWC = (EV_SPEC.constants && EV_SPEC.constants.studyWatch) || {};
+    const SS = {
+      view: Math.random().toString(36).slice(2, 10),
+      busy: false,
+      text: null,
+      added: '',
+      said: new Set(),
+      audio: null,
+      readerOk: null,
+      probing: false,
+      // B-87: a view claims a running session once the reader answers (on open and each time the tab comes back).
+      mayClaim: true,
+      reprobeAt: 0,
+      // B-88: comment mode reads every readSeconds; seen is what she has read, quotes keep her quoted lines in memory only.
+      seen: null,
+      nextRead: 0,
+      reading: false,
+      lastAsk: 0,
+      quotes: new Map(),
+      note: null,
+      changedAt: 0,
+    };
+    const COMMENT = SWC.mode === 'comment';
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        SS.mayClaim = true;
+        SS.nextRead = 0;
+      }
+    });
+    const READER_COPY = {
+      mcp_unavailable:
+        'I can’t reach the Study Watch reader in this view. Open E.V. Home in the Claude desktop app on your Mac.',
+      server_not_connected:
+        'I can’t reach the Study Watch reader from here. Open E.V. Home in the Claude desktop app on your Mac, with the E.V. Study Watch reader extension turned on.',
+      not_in_manifest:
+        'The Study Watch reader is switched off for this page. Turn it on in the page’s Permissions menu, then try again.',
+      cancelled: 'You declined the reader just now, so I didn’t read your note.',
+      approval_required: 'Reading your note needs your OK. Try again and choose Allow when the app asks.',
+      blocked_by_policy: 'Your organization blocks local connectors, so I can’t read your note.',
+      not_granted: 'Reading your note isn’t available in this view.',
+      capability_disabled:
+        'Reading your note isn’t available in this view. Open E.V. Home in the Claude desktop app on your Mac.',
+    };
+    const readerCopy = (code, msg) =>
+      READER_COPY[code] ||
+      (code === 'tool_error' && msg
+        ? 'The Study Watch reader says: ' + msg
+        : `Couldn’t read your note (${code}). I’ll try again at the next check.`);
+    async function readerCall(tool, input) {
+      if (!mcp || !READER.host) throw Object.assign(new Error('no connector'), { code: 'mcp_unavailable' });
+      const r = await mcp.callTool(READER.host, tool, input || {}, { cache: false });
+      SS.readerOk = true;
+      return (r && r.payload) || {};
+    }
+    async function probeReader() {
+      if (SS.probing || SS.readerOk != null) return;
+      SS.probing = true;
+      try {
+        await readerCall('status');
+      } catch {
+        SS.readerOk = false;
+      } finally {
+        SS.probing = false;
+      }
+    }
+    const sessOf = id => S.sessions.find(s => s.id === id) || null;
+    const activeSession = () =>
+      S.sessions
+        .filter(s => s.source === 'E.V. Home' && s.kind !== 'skill' && (s.status === 'active' || s.status === 'ending'))
+        .sort((a, b) => String(b.startedAt).localeCompare(String(a.startedAt)))[0] || null;
+    const sessEvent = (s, type, extra = {}) => {
+      const at = now();
+      return write({
+        op: 'update',
+        collection: 'sessions',
+        id: s.id,
+        data: { events: { [pageKey(at)]: { type, at, ...extra } } },
+      });
+    };
+    const withDerived = writes => writes; // v4 stores no derived state (D-047): core's writes go as they are
+    const sessCtx = () =>
+      E.sessionContext({ date: today, exams: S.exams, objectives: S.objectives, weakspots: M.models });
+    function unlockAudio() {
+      try {
+        if (!SS.audio) {
+          const A = window.AudioContext || window.webkitAudioContext;
+          if (A) SS.audio = new A();
+        }
+        if (SS.audio && SS.audio.state === 'suspended') SS.audio.resume();
+      } catch {}
+    }
+    function chime() {
+      // a soft two-note cue when a check lands; sound only works after a click on this page
+      try {
+        const a = SS.audio;
+        if (!a || a.state !== 'running') return;
+        [660, 880].forEach((f, i) => {
+          const o = a.createOscillator(),
+            g = a.createGain(),
+            t = a.currentTime + i * 0.16;
+          o.frequency.value = f;
+          g.gain.setValueAtTime(0.0001, t);
+          g.gain.exponentialRampToValueAtTime(0.06, t + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+          o.connect(g).connect(a.destination);
+          o.start(t);
+          o.stop(t + 0.32);
+        });
+      } catch {}
+    }
+    const idWhy = w => (/^(mentions|looks)/.test(w) ? w : 'has a ' + w);
+
+    async function startSession() {
+      unlockAudio();
+      const cur = activeSession();
+      if (cur)
+        return [
+          `A session on **${cur.topic}** is already running. End it from the line under my core when you’re done.`,
+          [],
+        ];
+      if (!sample || T.sampleOff)
+        return [
+          'Study sessions need permission to ask Claude for the checks. Allow Claude for this page from its Permissions menu.',
+          [],
+        ];
+      let p;
+      try {
+        p = await readerCall('latest_note');
+      } catch (e) {
+        SS.readerOk = false;
+        return [readerCopy((e && e.code) || 'upstream_error', e && e.message), []];
+      }
+      if (!p.found)
+        return [
+          p.refused
+            ? 'Study Watch’s latest note isn’t in ' +
+              E.courses().join(' or ') +
+              ', so I won’t read it. Type a line in a school note, then start again.'
+            : 'Study Watch hasn’t saved a school note yet. Check that it’s running in reader mode, type a line in your NUR 112 or BIO 201 note, then start again.',
+          [],
+        ];
+      const n = p.note || {};
+      if (p.graded)
+        return [`**${n.name}** is tagged #graded, so I stay out of it. Open another note and start again.`, []];
+      const at = now();
+      const stamp = at.replace(/\D/g, '').slice(0, 14);
+      const mark = E.noteMark(n.text || '');
+      const id = E.safeId(`ss-${stamp.slice(0, 8)}-${stamp.slice(8)}-${E.slug(n.name || 'note', 24)}`);
+      await write({
+        op: 'set',
+        collection: 'sessions',
+        id,
+        data: {
+          ...envelope('E.V. Home', at),
+          status: 'active',
+          date: today,
+          startedAt: at,
+          topic: String(n.name || 'Study session').slice(0, 120),
+          noteId: String(n.id || ''),
+          folder: String(n.folder || ''),
+          driver: { view: SS.view, at },
+          events: {
+            [pageKey(at)]: { type: 'start', noteId: n.id, len: mark.len, h: mark.h, modifiedAt: n.modifiedAt || null },
+          },
+        },
+      });
+      SS.text = n.text || '';
+      SS.added = '';
+      SS.said.clear();
+      SS.seen = SS.text;
+      SS.note = { id: n.id, name: n.name, folder: n.folder || '' };
+      SS.nextRead = Date.now() + (SWC.readSeconds || 30) * 1e3;
+      SS.changedAt = Date.now();
+      renderNotes();
+      if (COMMENT)
+        return [
+          `Session started on **${n.name}**. I’m reading along as you write and I’ll only chime in when a line makes a connection. Tap Quiz me now whenever you want questions. Break and End are on the line under my core.`,
+          [],
+        ];
+      return [
+        `Session started on **${n.name}**. I’ll check your new writing every ${SWC.checkMinutes || 7} minutes and post the questions here. Break, +5 and End are on the line under my core.`,
+        [],
+      ];
+    }
+
+    async function runCheck(s, { quiz = false } = {}) {
+      if (SS.busy) return;
+      SS.busy = true;
+      render();
+      const st = E.sessionState(s, now());
+      const n = st.checks + 1;
+      const skip = async (why, say) => {
+        await sessEvent(s, 'skip', { why });
+        if (say && !SS.said.has(why)) {
+          SS.said.add(why);
+          await evSay(say, [], { tier: 'local' });
+        }
+      };
+      try {
+        if (!s.driver || s.driver.view !== SS.view)
+          await write({
+            op: 'update',
+            collection: 'sessions',
+            id: s.id,
+            data: { driver: { view: SS.view, at: now() } },
+          });
+        let p;
+        try {
+          p = await readerCall('latest_note');
+        } catch (e) {
+          const code = (e && e.code) || 'upstream_error';
+          if (['server_not_connected', 'mcp_unavailable', 'capability_disabled', 'not_granted'].includes(code))
+            SS.readerOk = false;
+          await skip('reader-' + code, readerCopy(code, e && e.message));
+          return;
+        }
+        if (!p.found) {
+          await skip('no-note', 'I can’t see a saved school note right now. Is Study Watch running in reader mode?');
+          return;
+        }
+        const note = p.note || {};
+        if (p.graded) {
+          await skip(
+            'graded',
+            `**${note.name}** is tagged #graded, so I’m staying out of it. Checks pick up when you’re back in a study note.`
+          );
+          return;
+        }
+        const base = quiz ? st.lastQuizMark : st.lastMark;
+        const mark = base && base.noteId === note.id ? base : null;
+        const text = String(note.text || '');
+        let d = E.noteDelta(text, mark);
+        if (d.same && quiz) d = { added: text.slice(-(SWC.fallbackChars || 2500)), same: false, rewritten: true }; // Quiz me now on an unchanged note: the note so far
+        if (d.same) {
+          await sessEvent(s, 'idle');
+          return;
+        }
+        const ids = E.scanIdentifiers(d.added);
+        if (ids.length) {
+          await skip('identifiers', `Your new writing ${idWhy(ids[0])}. I skipped this check.`);
+          return;
+        }
+        const out = await sample.json(
+          E.checkPrompt({ noteName: note.name, text, added: d.added, n, context: sessCtx(), rewritten: d.rewritten }),
+          { modelTier: 'quick', cache: false }
+        );
+        const items = E.parseCheck(out);
+        if (!items.length) {
+          await skip('no-items');
+          return;
+        }
+        const msg = msgId('e');
+        const m2 = E.noteMark(text);
+        const switched = st.lastMark && st.lastMark.noteId && st.lastMark.noteId !== note.id;
+        const count =
+          ['One question', 'Two questions', 'Three questions'][items.length - 1] || plural(items.length, 'question');
+        await postMsg({
+          id: msg,
+          role: 'ev',
+          text: `${count} on what you just wrote${switched ? ' in **' + note.name + '**' : ''}.`,
+          cards: [{ type: 'check', session: s.id, n, items }],
+          at: now(),
+          tier: 'quick',
+        });
+        await sessEvent(s, 'check', {
+          n,
+          items: items.length,
+          msgId: msg,
+          noteId: note.id,
+          len: m2.len,
+          h: m2.h,
+          modifiedAt: note.modifiedAt || null,
+        });
+        SS.text = text;
+        SS.added = d.added;
+        SS.alertUntil = Date.now() + 4500;
+        chime();
+        if (SS.seen != null && text.startsWith(SS.seen)) SS.seen = text;
+      } catch (e) {
+        const code = (e && e.code) || 'error';
+        if (HIDE.has(code)) T.sampleOff = code;
+        await skip(
+          'sample-' + code,
+          code === 'rate_limited'
+            ? 'You’ve hit a usage limit, so checks pause until it resets. The session keeps time.'
+            : SAMPLE_COPY[code] || 'That check didn’t go through. I’ll try again at the next one.'
+        ).catch(() => {});
+      } finally {
+        SS.busy = false;
+        render();
+      }
+    }
+
+    // B-88 (Matt, Oct 19; the Captions artboard). Comment mode: she reads the note every readSeconds and, when new lines
+    // land, asks Claude whether one of them earns a word (a connection, an exam point, a slip). Most reads say nothing.
+    // Her line is posted to the conversation; the line of his it answers stays in this page's memory (SS.quotes), never
+    // in the record. A comment writes a check event marked comment, so the note's mark and the idle count move with it.
+    async function readTick(s) {
+      if (SS.reading || SS.busy || Date.now() < SS.nextRead) return;
+      SS.reading = true;
+      SS.nextRead = Date.now() + (SWC.readSeconds || 30) * 1e3;
+      try {
+        let p;
+        try {
+          p = await readerCall('latest_note');
+        } catch {
+          return;
+        }
+        if (!p || !p.found || p.graded) return;
+        const note = p.note || {};
+        const text = String(note.text || '');
+        const prev = SS.text;
+        SS.text = text;
+        SS.note = { id: note.id, name: note.name, folder: note.folder || '' };
+        if (prev !== text) {
+          SS.changedAt = Date.now();
+          renderNotes();
+        }
+        if (SS.seen == null) {
+          SS.seen = text;
+          return;
+        } // opened mid-session: what is already written counts as read
+        const grew = text.startsWith(SS.seen);
+        let added = grew ? text.slice(SS.seen.length) : text.slice(-1200);
+        if (prev !== text) {
+          const k = added.lastIndexOf('\n');
+          added = k >= 0 ? added.slice(0, k + 1) : '';
+        } // still typing: complete lines only
+        if (
+          added.replace(/\s/g, '').length < (SWC.commentMinChars || 20) ||
+          Date.now() - SS.lastAsk < (SWC.commentGapSeconds || 75) * 1e3
+        )
+          return;
+        const seenNext = grew ? SS.seen + added : text;
+        const before = grew ? SS.seen.slice(-800) : '';
+        const ids = E.scanIdentifiers(added);
+        if (ids.length) {
+          SS.seen = seenNext;
+          if (!SS.said.has('identifiers')) {
+            SS.said.add('identifiers');
+            await sessEvent(s, 'skip', { why: 'identifiers' });
+            await evSay(`Your new writing ${idWhy(ids[0])}, so I skipped reading it.`, [], { tier: 'local' });
+          }
+          return;
+        }
+        if (!sample || T.sampleOff) return;
+        SS.lastAsk = Date.now();
+        SS.thinking = true;
+        renderBar();
+        let out;
+        try {
+          out = await sample.json(
+            E.commentPrompt({
+              noteName: note.name,
+              opening: text.slice(0, SWC.openingChars || 800),
+              before,
+              added,
+              context: sessCtx(),
+            }),
+            { modelTier: 'quick', cache: false }
+          );
+        } catch (e) {
+          const code = (e && e.code) || 'error';
+          if (HIDE.has(code)) T.sampleOff = code;
+          if (code === 'rate_limited') SS.lastAsk = Date.now() + 10 * 60e3;
+          return;
+        }
+        SS.seen = seenNext;
+        SS.added = added;
+        const c = E.parseComment(out, added);
+        if (!c) return;
+        const id = msgId('e');
+        if (c.quote) SS.quotes.set(id, c.quote);
+        await postMsg({ id, role: 'ev', text: c.say, at: now(), tier: 'quick' });
+        const m2 = E.noteMark(text);
+        await sessEvent(s, 'check', {
+          comment: true,
+          kind: c.kind,
+          msgId: id,
+          noteId: note.id,
+          len: m2.len,
+          h: m2.h,
+          modifiedAt: note.modifiedAt || null,
+        });
+        SS.alertUntil = Date.now() + 4500;
+      } finally {
+        SS.reading = false;
+        SS.thinking = false;
+      }
+    }
+    // The checkpoint every checkMinutes in comment mode: no Claude call, only whether he wrote (the idle count that ends a
+    // session left alone, and the mark a quiz starts from).
+    async function runCheckpoint(s) {
+      if (SS.busy) return;
+      SS.busy = 'quiet';
+      try {
+        const st = E.sessionState(s, now());
+        if (!s.driver || s.driver.view !== SS.view)
+          await write({
+            op: 'update',
+            collection: 'sessions',
+            id: s.id,
+            data: { driver: { view: SS.view, at: now() } },
+          });
+        let p;
+        try {
+          p = await readerCall('latest_note');
+        } catch (e) {
+          const code = (e && e.code) || 'upstream_error';
+          if (['server_not_connected', 'mcp_unavailable', 'capability_disabled', 'not_granted'].includes(code))
+            SS.readerOk = false;
+          await sessEvent(s, 'skip', { why: 'reader-' + code });
+          if (!SS.said.has('reader-' + code)) {
+            SS.said.add('reader-' + code);
+            await evSay(readerCopy(code, e && e.message), [], { tier: 'local' });
+          }
+          return;
+        }
+        if (!p.found || p.graded) {
+          await sessEvent(s, 'skip', { why: p.graded ? 'graded' : 'no-note' });
+          return;
+        }
+        const note = p.note || {};
+        const text = String(note.text || '');
+        const mark = st.lastMark && st.lastMark.noteId === note.id ? st.lastMark : null;
+        if (E.noteDelta(text, mark).same) {
+          await sessEvent(s, 'idle');
+          return;
+        }
+        const m2 = E.noteMark(text);
+        await sessEvent(s, 'check', {
+          quiet: true,
+          noteId: note.id,
+          len: m2.len,
+          h: m2.h,
+          modifiedAt: note.modifiedAt || null,
+        });
+      } finally {
+        SS.busy = false;
+      }
+    }
+    async function quizNow() {
+      const s = activeSession();
+      if (!s || s.status !== 'active') return ['No session is running. Say “start a study session” first.', []];
+      if (!sample || T.sampleOff) return ['Quizzing needs permission to ask Claude, which this view doesn’t have.', []];
+      if (SS.busy) return ['One moment, I’m reading your note.', []];
+      await runCheck(s, { quiz: true });
+      return null;
+    }
+    // What she is reading (B-88): a Reading line above the input, and on desktop the Your notes column beside her.
+    const noteCourse = n => {
+      const m = String((n && n.folder) || '').match(/\b(NUR|BIO)\s?(\d{3})\b/i);
+      return m ? m[1].toUpperCase() + ' ' + m[2] : '';
+    };
+    const noteLines = t =>
+      String(t || '')
+        .split('\n')
+        .map(x => x.trim())
+        .filter(Boolean);
+    function renderNotes() {
+      const s = activeSession();
+      const on = !!(s && s.status !== 'ended' && SS.text != null && SS.note);
+      const rd = $('sread');
+      const lines = on ? noteLines(SS.text) : [];
+      const last = lines[lines.length - 1] || '';
+      rd.hidden = !on || !last;
+      if (!rd.hidden) {
+        const c = noteCourse(SS.note);
+        const k = c + '|' + SS.note.name + '|' + last;
+        if (rd.dataset.k !== k) {
+          rd.dataset.k = k;
+          const w = el('span', 'sr-where', 'Reading · ' + (c || SS.note.name));
+          if (c) w.append(el('span', 'sr-nm', ' › ' + SS.note.name));
+          rd.replaceChildren(w, el('span', 'sr-line', last));
+          rd.title = SS.note.name + ': ' + last;
+        }
+      }
+      let panel = $('snotes');
+      const wide = innerWidth >= 1024; // D-159
+      if (!on || !wide) {
+        if (panel) panel.remove();
+        return;
+      }
+      if (!panel) {
+        panel = el('section', 'card snotes');
+        panel.id = 'snotes';
+        panel.setAttribute('aria-label', 'Your notes');
+        capSide.append(panel);
+      }
+      const quoted = new Set(SS.quotes.values());
+      const show = lines.slice(-14);
+      const k = show.join('\n') + '|' + [...quoted].join('|');
+      if (panel.dataset.k === k) return;
+      panel.dataset.k = k;
+      const head = el('div', 'card-head');
+      head.append(
+        el('h2', null, 'Your notes'),
+        el('span', 'meta', ['Notes', noteCourse(SS.note), SS.note.name].filter(Boolean).join(' › '))
+      );
+      const ul = el('ul', 'sn-lines');
+      show.forEach((l, i) => {
+        const li = el(
+          'li',
+          (i === show.length - 1 ? 'new' : '') + ([...quoted].some(q => l.includes(q)) ? ' said' : ''),
+          l
+        );
+        ul.append(li);
+      });
+      panel.replaceChildren(head, ul, el('p', 'meta sn-foot', 'E.V. reads new lines as you write them.'));
+    }
+    addEventListener('resize', () => {
+      try {
+        renderNotes();
+      } catch {}
+    });
+
+    function sessionTranscript(s) {
+      return allMsgs()
+        .filter(m => !m.pending && !m.greeting && String(m.at) >= String(s.startedAt))
+        .map(m => {
+          const chk = (m.cards || []).find(c => c && c.type === 'check' && c.session === s.id);
+          return {
+            who: m.role === 'matt' ? 'Matt' : 'E.V.',
+            text: chk ? `Check ${chk.n}: ` + (chk.items || []).map((x, i) => `${i + 1}. ${x.text}`).join(' ') : m.text,
+          };
+        })
+        .filter(t => t.text);
+    }
+    async function endSession(reason = 'ended') {
+      const s = activeSession();
+      if (!s) return ['No session is running. Say “start a study session” when you’re ready.', []];
+      if (SS.busy && s.status === 'ending') return ['Already wrapping up.', []];
+      SS.busy = true;
+      render();
+      try {
+        const at = now();
+        let s2 = s;
+        if (s.status !== 'ending') {
+          const k = pageKey(at);
+          await write({
+            op: 'update',
+            collection: 'sessions',
+            id: s.id,
+            data: { status: 'ending', events: { [k]: { type: 'end', why: reason, at } } },
+          });
+          s2 = { ...s, status: 'ending', events: { ...(s.events || {}), [k]: { type: 'end', why: reason, at } } };
+        }
+        const st = E.sessionState(s2, now());
+        let wrap = {};
+        let note = '';
+        if ((st.checks || st.comments || st.reads) && sample && !T.sampleOff) {
+          try {
+            wrap =
+              (await sample.json(
+                E.wrapPrompt({
+                  noteName: s.topic,
+                  transcript: sessionTranscript(s),
+                  context: sessCtx(),
+                  opening: SS.text ? SS.text.slice(0, 800) : '',
+                }),
+                { modelTier: 'default', cache: false }
+              )) || {};
+          } catch (e) {
+            note = ` I couldn’t write the summary (${(e && e.code) || 'error'}), so it’s saved without one.`;
+          }
+        }
+        const r = E.closeSession(s2, wrap, {
+          weakspots: M.models,
+          objectives: S.objectives,
+          now: now(),
+          endedBy: reason,
+        });
+        await run(withDerived(r.writes));
+        const up = r.writes[0].data;
+        SS.text = null;
+        SS.added = '';
+        SS.seen = null;
+        SS.note = null;
+        renderNotes();
+        const bits = [
+          `${up.minutes} min`,
+          ...(COMMENT
+            ? [st.comments ? plural(st.comments, 'comment') : '', up.questions ? plural(up.questions, 'question') : '']
+            : [plural(up.checks, 'check')]),
+          up.weakSpots.length ? plural(up.weakSpots.length, 'weak spot') : '',
+          up.cardCount ? plural(up.cardCount, 'card') : '',
+        ]
+          .filter(Boolean)
+          .join(', ');
+        return [
+          `${reason === 'idle' ? 'No new writing for a while, so I wrapped up. ' : ''}Session saved: ${bits}.${r.questions.length ? ' One thing to settle on the card.' : ''}${note}`,
+          [{ type: 'session', id: s.id }],
+        ];
+      } finally {
+        SS.busy = false;
+        render();
+      }
+    }
+    async function sessionCmd(type) {
+      unlockAudio();
+      const s = activeSession();
+      if (!s || s.status !== 'active') return 'No session is running.';
+      const st = E.sessionState(s, now());
+      if (type === 'break' && st.onBreak) return 'Already on a break.';
+      if (type === 'resume' && !st.onBreak) return 'Checks are already running.';
+      await sessEvent(s, type);
+      return type === 'break'
+        ? 'Break started. No checks until you resume, and breaks don’t count as study time.'
+        : type === 'resume'
+          ? 'Welcome back. Checks resume.'
+          : 'Next check moved 5 minutes later.';
+    }
+    async function decideSession(s, key, decision) {
+      await run(
+        withDerived(
+          E.decideSessionQuestion(s, key, decision, { weakspots: M.models, objectives: S.objectives, now: now() })
+        )
+      );
+    }
+    function noteAnswer(mid) {
+      // a message he sends during a session answers the newest check he hasn't answered yet
+      const s = activeSession();
+      if (!s || s.status !== 'active') return;
+      const st = E.sessionState(s, now());
+      if (st.lastCheck && !st.answered[st.lastCheck.n])
+        sessEvent(s, 'answer', { n: st.lastCheck.n, msgId: mid }).catch(() => {});
+    }
+
+    const tickClock = ms => {
+      const t = Math.max(0, Math.round(ms / 1000));
+      return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0');
+    };
+    async function barPress(b, fn) {
+      b.disabled = true;
+      try {
+        await fn();
+      } catch (e) {
+        toast('Couldn’t save: ' + ((e && (e.message || e.code)) || 'error'));
+      } finally {
+        b.disabled = false;
+      }
+    }
+    // B-84 (the Captions v2 artboard): a session's progress to the next check is the particle ring round her own core.
+    // B-86 (Matt, Oct 19): its stats are one quiet line under her core (a dot, the minutes and the next check, then Break,
+    // +5 and End as text buttons), not a pill above her; the note's title is in the line's label and tooltip.
+    function renderBar() {
+      const bar = $('sbar');
+      const s = activeSession();
+      document.body.classList.toggle('in-session', !!s);
+      if (!s) {
+        CORE.setRing(-1);
+        if (!bar.hidden) {
+          bar.hidden = true;
+          bar.replaceChildren();
+          bar.dataset.k = '';
+        }
+        return;
+      }
+      const st = E.sessionState(s, now());
+      const ending = s.status === 'ending';
+      const k = [s.id, s.status, st.onBreak, !!SS.busy].join('|');
+      bar.hidden = false;
+      bar.classList.toggle('brk', st.onBreak);
+      bar.classList.toggle('busy', SS.busy === true || SS.thinking || ending);
+      bar.classList.toggle('alert', Date.now() < (SS.alertUntil || 0));
+      if (bar.dataset.k !== k) {
+        // buttons change with the state; the clock line and the ring update in place every second
+        bar.dataset.k = k;
+        const led = el('span', 's-led');
+        led.setAttribute('aria-hidden', 'true');
+        const main = el('span', 's-main');
+        main.append(el('span', 's-clock', ''));
+        bar.setAttribute('aria-label', 'Study session: ' + (s.topic || 'untitled'));
+        bar.title = s.topic || '';
+        const acts = el('div', 's-acts');
+        if (!ending) {
+          const brk = btn(st.onBreak ? 'Resume' : 'Break', () =>
+            barPress(brk, async () => toast(await sessionCmd(st.onBreak ? 'resume' : 'break')))
+          );
+          acts.append(brk);
+          if (!COMMENT) {
+            const ext = btn('+5', () => barPress(ext, async () => toast(await sessionCmd('extend'))));
+            ext.setAttribute('aria-label', 'Add 5 minutes before the next check');
+            acts.append(ext);
+          }
+        }
+        const end = btn(ending ? 'Finish' : 'End', () =>
+          barPress(end, async () => {
+            const [t, c] = await endSession('ended');
+            await evSay(t, c, { tier: 'local' });
+          })
+        );
+        end.classList.add('end');
+        if (SS.busy === true) end.disabled = true;
+        acts.append(end);
+        bar.replaceChildren(led, main, acts);
+      }
+      if (COMMENT) {
+        // B-88: she reads along; the ring sweeps toward her next read, and fills while she thinks about a line
+        bar.querySelector('.s-clock').textContent = ending
+          ? 'Wrapping up…'
+          : SS.busy === true
+            ? 'Writing your quiz…'
+            : st.onBreak
+              ? `On a break · ${st.minutes} min`
+              : `${st.minutes} min · ${SS.thinking ? 'thinking about that line' : 'reading along'}`;
+        const per = (SWC.readSeconds || 30) * 1e3;
+        const left = SS.nextRead - Date.now();
+        CORE.setRing(
+          ending || SS.busy === true || SS.thinking ? 1 : st.onBreak ? 0 : Math.max(0, Math.min(1, 1 - left / per))
+        );
+        return;
+      }
+      bar.querySelector('.s-clock').textContent = ending
+        ? 'Wrapping up…'
+        : SS.busy
+          ? 'Reading your note…'
+          : st.onBreak
+            ? `On a break · ${tickClock(st.breakRemainingMs)} to the check`
+            : `${st.minutes} min · check ${tickClock(Date.parse(st.nextCheckAt) - Date.now())}`;
+      const per = (SWC.checkMinutes || 7) * 60e3;
+      const left = st.onBreak ? st.breakRemainingMs : Date.parse(st.nextCheckAt) - Date.now();
+      const frac = Number.isFinite(left) ? Math.max(0, Math.min(1, 1 - left / per)) : 1;
+      CORE.setRing(ending || SS.busy ? 1 : frac); // the ring round her core fills toward the next check
+    }
+    function sessionTick() {
+      const sk = activeSkill(); // B-82: a skills run left alone for the conversation idle gap ends itself, saved as left unfinished
+      if (sk && !SK.ending && E.skillIdle(sk, now())) {
+        SK.ending = true;
+        finishSkill(sk, 'idle')
+          .catch(() => {})
+          .finally(() => {
+            SK.ending = false;
+          });
+      }
+      if (!FILE.opened && M && mcp && loaded.has('sessions')) {
+        FILE.opened = true;
+        fileSessions({ quiet: true })
+          .then(r => {
+            if (r) evSay(r.text, r.cards, { tier: 'local' });
+          })
+          .catch(() => {
+            FILE.quiet = FILE.quiet || { ok: false };
+          })
+          .finally(regreet);
+      }
+      const s = activeSession();
+      renderBar();
+      renderNotes();
+      if (!s || !M || SS.busy) return;
+      if (SS.readerOk === false && Date.now() > SS.reprobeAt) {
+        SS.reprobeAt = Date.now() + 30e3;
+        SS.readerOk = null;
+      } // B-87: a failed probe is retried
+      if (SS.readerOk == null) probeReader();
+      if (s.status !== 'active') return;
+      const st = E.sessionState(s, now());
+      // B-87: the view in front of him takes the session over as soon as its reader answers (a reload or a reopened tab
+      // used to wait two minutes past a due check, the clock at 0:00).
+      if (
+        SS.readerOk === true &&
+        SS.mayClaim &&
+        document.visibilityState !== 'hidden' &&
+        (!s.driver || s.driver.view !== SS.view)
+      ) {
+        SS.mayClaim = false;
+        write({ op: 'update', collection: 'sessions', id: s.id, data: { driver: { view: SS.view, at: now() } } }).catch(
+          () => {
+            SS.mayClaim = true;
+          }
+        );
+        return;
+      }
+      const mine =
+        (s.driver && s.driver.view === SS.view) ||
+        (SS.readerOk === true && (!s.driver || st.overdueMs > (SWC.takeoverMinutes || 2) * 60e3));
+      if (!mine) return;
+      if (st.shouldWrap) {
+        endSession('idle')
+          .then(([t, c]) => evSay(t, c, { tier: 'local' }))
+          .catch(e => toast('Couldn’t wrap up: ' + ((e && (e.message || e.code)) || 'error')));
+        return;
+      }
+      if (st.due) {
+        if (COMMENT) runCheckpoint(s);
+        else runCheck(s);
+        return;
+      }
+      if (COMMENT && !st.onBreak) readTick(s);
+    }
+    setInterval(sessionTick, 1000);
+

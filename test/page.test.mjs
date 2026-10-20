@@ -83,7 +83,7 @@ test('the build refuses a page that would name the other target, an app from ano
   assert.throws(() => buildPages({ root: ROOT, spec: tight, schemas, release }), /over its 1000-byte budget/);
   assert.throws(
     () => buildPages({ root: ROOT, spec, schemas, release: 'v9.9.9' }),
-    /page\/app\.js VERSION v4\.0\.0 differs from the release v9\.9\.9/
+    /page\/app VERSION v4\.0\.0 differs from the release v9\.9\.9/
   );
 });
 

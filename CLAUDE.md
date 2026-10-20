@@ -123,3 +123,4 @@ applied to live stays applied (its legacy copies are kept), and the dry run name
 | Live record and page (v4) | https://claude.ai/artifact/Bu8RevP4r1twPdSGc77nfg |
 | v4 staging record + page | created in B-12 / B-15; ids go into `spec/ev.spec.json` `registry` |
 | Mac folder | Documents/E.V. Study Watch (v4 uses its `staging/` subfolder until cutover) |
+| Code style, page source, CI | prettier at 120 columns (`npx prettier --write .`, B-64); the page logic is `page/app/*.js` by tab, joined by the build into the published app.js; GitHub Actions runs `npm test` on every push |

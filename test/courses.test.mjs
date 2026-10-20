@@ -9,7 +9,8 @@ import { courseProblems, unknownCourses, lintRecord } from '../core/lint.mjs';
 import { examTomorrow } from '../core/derive.mjs';
 import { scriptParams } from '../core/canvas.mjs';
 import { loadValidator } from '../core/schemas.mjs';
-import { ROOT, flatSource } from './helpers.mjs';
+import { ROOT, flatSource, flatText } from './helpers.mjs';
+import { appSource } from '../tools/build.mjs';
 
 const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
 EV.configure(spec);
@@ -349,7 +350,7 @@ test('B-42: the Canvas sync takes its course ids and module rules from spec.cour
 
 test('B-42: the page reads the table: the course select and the course words come from spec.courses', () => {
   const shell = fs.readFileSync(path.join(ROOT, 'page/index.src.html'), 'utf8'),
-    app = flatSource('page/app.js');
+    app = flatText(appSource(ROOT));
   assert.match(shell, /<select id="d-course" aria-label="Course"><\/select>/, 'no course in the shell');
   assert.match(app, /\$\('d-course'\)\.replaceChildren\(\.\.\.E\.activeCourses\(\)/);
   assert.doesNotMatch(app, /nextNurExams|nurUnitExamKinds|enum: \['NUR 112', 'BIO 201'\]/);

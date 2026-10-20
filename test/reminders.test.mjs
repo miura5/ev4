@@ -8,6 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import EV from '../core/evcore.mjs';
+import { appSource } from '../tools/build.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
@@ -25,7 +26,7 @@ test('no standing graded-work or made-up client wording in what E.V. says or wri
     ['spec.boundaries', JSON.stringify(spec.boundaries)],
     ['spec.pipelines', JSON.stringify(spec.pipelines)],
     ['spec.jobs', JSON.stringify(spec.jobs)],
-    ['page/app.js', read('page/app.js')],
+    ['page/app', appSource(ROOT)],
     ['page/index.src.html', read('page/index.src.html')],
     ['core/evcore.mjs', read('core/evcore.mjs')],
     ['core/steps.mjs', read('core/steps.mjs')],
