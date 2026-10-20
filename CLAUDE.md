@@ -1,7 +1,8 @@
 # CLAUDE.md: the build-chat contract for E.V. v4
 
 You are building **E.V. v4**, Matt's homemade study partner (a first-semester ADN nursing student; NUR 112 and
-BIO 201; Central time). v3 is live in `miura5/ev-core` and stays live, untouched, until v4 passes parity. This
+BIO 201; Central time). v3 (`miura5/ev-core`) is retired: Matt dropped its rollback on Oct 19 (D-145); its tasks stay
+disabled and kept, its legacy copies stay in the record, nothing is deleted. This
 repository is v4 from its first commit. The design is finished before you start; your job is to build it.
 
 **The design lives in one doc:** E.V. Foundation v4, https://claude.ai/artifact/Fgb2KjoLKcRgCRrBmM6kEf
@@ -41,9 +42,9 @@ calls exactly as printed, read the view again when asked, and run `views` until 
 6. Ship: commit with the task id first in the message (`B-07: lint and rebuild`), then the attribution lines the
    session gives you; push to `main`. Then `ship staging` and make every call and read it prints, running it again
    each time, until it says GREEN: it records the deploy and prints the Changelog line. **Never deploy live** without
-   Matt's explicit OK in the chat; `ship live --matt-ok` also refuses what `chart/rules.json` forbids (R-01 page-only
-   live while D-085's window is open, D-139; R-02 staging green at the same commit, B-35; R-03 no running study
-   session, B-87; R-04 Matt's OK), so a build reaches live only through staging.
+   Matt's explicit OK in the chat; `ship live --matt-ok` also refuses what `chart/rules.json` forbids (R-02 staging green
+   at the same commit, B-35; R-03 no running study session, B-87; R-04 Matt's OK; R-05 not inside a live watchdog
+   window, B-102; R-01, page-only live, ended with D-085's window, D-145), so a build reaches live only through staging.
 7. Record: `log <id> --status done --commit <sha> --note "<one line>"` (`--board-note` for the Board's plain words),
    then `views`, as above. A decision is `log decision <next id> --title ... --why ... --status ...`. Never a date on
    anything that gates work.
@@ -95,31 +96,14 @@ live write or publish unless `deploy live --matt-ok` wrote dist/live-ok; pipelin
 - Spec edits: JSON with indent 1, no trailing newline (a PostToolUse hook re-writes spec files so, B-57). `node --test test/*.test.mjs > /tmp/t.log 2>&1; grep -E
   "^# (pass|fail)" /tmp/t.log` (never pipe node through grep inside `&&`).
 
-## Rollback to v3 (D-085, manual, only with Matt's explicit OK)
+## Rollback (D-145)
 
-Open until NUR Exam 4 on Wed Oct 21, the first exam taken on v4 (Matt, Oct 18); after that, rollback means the
-previous v4 tag (B-30). The cost: everything answered on v4 since cutover is lost from the active record (it stays in place,
-unread by v3). In a Mac-linked desktop-app chat with Matt present, in order, nothing deleted:
-
-1. Disable the six v4 live tasks (`spec.tasks.live.*.trigger`: morning, evening-cloud, evening-mac, weekly, worker,
-   watchdog) with `update_trigger enabled:false`. They are kept.
-2. Re-enable the four v3 live tasks: E.V. morning (v3.6) trig_01R7242YzwUXFyNVcmqT8vob, E.V. evening (v3.6)
-   trig_0148JgXzDzGX1zghMymdvMmL (Mac-bound: Matt approves), E.V. weekly review (v3.6) trig_01GHogoFx9Ns7uE1uUmi2i2G,
-   E.V. worker (v3.6) trig_01PxKp1tsgddna4Kt1FzpNhv.
-3. Restore the v3 originals: every `legacy/<id>` document whose `migratedTo` names a v3 collection is written back to
-   that collection under its own id (the 191 originals), as one printed batch set per 50, pinned to the versions read
-   first. v4-only collections are left as they are.
-4. Republish the v3 page from `miura5/ev-core` at the commit its `system/code` names, with v3's capabilities whole,
-   from a local desktop session (a cloud session cannot add the reader's tools).
-5. Write `system/code` and `system/spec` back to v3's (from legacy), fire the v3 evening by hand, and read its run back.
-6. A Board row and a Changelog line say what was rolled back and why.
-
-**Live hotfixes while the window is open (D-138).** `main` carries core v2 and Captions, which D-136 keeps off live
-until D-085's window closes. Until then a live hotfix never starts from `main`: branch from the live build (the newest
-live deploy in `chart/deploys.json`; c049f48 on Oct 19),
-commit the fix there, deploy staging at the hotfix commit and get `verify-deploy staging` green, deploy live only on
-Matt's explicit OK, then cherry-pick the fix onto `main` and redeploy staging from `main`. The B-35 gate still holds,
-because staging runs the hotfix commit before live does.
+The v3 rollback is gone: Matt closed D-085's window on Oct 19, before NUR Exam 4, understanding the risk (D-145). The
+time gates that rested on it are gone with it: live takes stored-document, pipeline, prompt, schema and migration
+changes by the normal path (`ship staging` green at the commit, then `ship live --matt-ok` on Matt's explicit OK), and a
+live hotfix starts from `main` like any change. Going back, until the v4 rollback exists (B-60, built once the open
+tasks are done), is a redeploy of the previous v4 live build that `chart/deploys.json` names, on Matt's explicit OK; a
+schema bump already applied to live stays applied (its legacy copies are kept), so check a rollback across one first.
 
 ## Where things live
 
@@ -127,6 +111,7 @@ because staging runs the hotfix commit before live does.
 | --- | --- |
 | v4 design | E.V. Foundation v4 (link above) |
 | Project record (the Chart) | `chart/` via `tools/chart.mjs`; BACKLOG.md is generated from it (D-140) |
-| v3 source, live | `miura5/ev-core`; live record https://claude.ai/artifact/Bu8RevP4r1twPdSGc77nfg |
+| v3 source (retired, D-145) | `miura5/ev-core` |
+| Live record and page (v4) | https://claude.ai/artifact/Bu8RevP4r1twPdSGc77nfg |
 | v4 staging record + page | created in B-12 / B-15; ids go into `spec/ev.spec.json` `registry` |
 | Mac folder | Documents/E.V. Study Watch (v4 uses its `staging/` subfolder until cutover) |
