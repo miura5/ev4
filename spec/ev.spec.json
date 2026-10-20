@@ -1158,6 +1158,13 @@
     "validation": "validation checklist bring supplies",
     "class": "class bring"
    }
+  },
+  "runs": {
+   "_rules": [
+    "B-110: every scheduled run checks the deployed commit out of a clone of main cloneDepth commits deep; verify-deploy goes red at refreshAt commits behind origin/main, and the fix is the same ship at main's head (the same content)."
+   ],
+   "cloneDepth": 50,
+   "refreshAt": 40
   }
  },
  "registry": {

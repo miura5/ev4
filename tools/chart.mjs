@@ -32,7 +32,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { newestTranscript, toolResults } from '../core/transcript.mjs';
 import { verify, verifyReads, deployCalls, formatDeploy, canonical, SYSTEM_IDS, contentHash } from '../core/deploy.mjs';
-import { commitsBehind } from '../core/cli.mjs';
+import { commitsBehind, mainHead } from '../core/cli.mjs';
 import { readState, withShell } from '../core/verifystate.mjs';
 import { build } from './build.mjs';
 
@@ -837,7 +837,7 @@ async function ship(o) {
   const reads = verifyReads({ manifest, target, stateDir }).map(r => ({ ...r, have: have(r.save) }));
   const savedAt = f => (fs.existsSync(f) ? fs.statSync(f).mtimeMs : 0);
   const stale = last && last.commit === manifest.commit && savedAt(path.join(stateDir, 'record', 'system', 'manifest.json')) < last.at ? { tasks: last.touched ? last.touched.tasks : true, pages: last.touched ? last.touched.pages : true } : null;
-  const buildInfo = { pushed, behind: c => commitsBehind(root, c, manifest.commit), contentHash: contentHash(manifest, distDocs.spec, sha256) };
+  const buildInfo = { pushed, behind: c => commitsBehind(root, c, manifest.commit), behindMain: c => commitsBehind(root, c, mainHead(root)), contentHash: contentHash(manifest, distDocs.spec, sha256) };
   const verifyResult = verify({ manifest, target, state, build: buildInfo, dist: distDocs, sha256 });
   const file = o.transcript || newestTranscript(), jsonl = file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
   const versions = { ...versionsFrom(jsonl, `https://claude.ai/artifact/${manifest.records[target].artifact}`), ...(o.version ? Object.fromEntries(list(o.version).map(kv => kv.split('=')).map(([k, v]) => [k, Number(v)])) : {}) };

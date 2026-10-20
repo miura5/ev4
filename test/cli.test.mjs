@@ -243,3 +243,17 @@ test('B-63 (D-114): verify compares content, not commit; the B-35 gate compares 
   assert.ok(!gate({ commit: 'e'.repeat(40), contentHash: h, green: true }).some(r => /staging/.test(r)), 'same content at another commit passes');
   assert.ok(gate({ commit: manifest.commit, contentHash: '2'.repeat(64), green: true }).some(r => /ran on other content/.test(r)));
 });
+
+test('B-110: verify goes red when the deployed commit is too far behind origin/main for the runs\' 50-deep clone', async () => {
+  const { dist, state, manifest } = await deployedStaging();
+  const read = p => JSON.parse(fs.readFileSync(p, 'utf8'));
+  const triggers = [...read(path.join(state, 'triggers-1.json')).data, ...read(path.join(state, 'triggers-2.json')).data];
+  const dist2 = { spec: read(path.join(dist, 'system/spec.json')), environments: read(path.join(dist, 'system/environments.json')) };
+  const rec = { manifest: { ...read(path.join(state, 'record/system/manifest.json')), commit: 'e'.repeat(40) }, spec: read(path.join(state, 'record/system/spec.json')), environments: read(path.join(state, 'record/system/environments.json')) };
+  const line = behindMain => verify({ manifest, target: 'live', dist: dist2, sha256, build: { pushed: true, behind: () => 3, behindMain: () => behindMain },
+    state: { triggers, record: rec, pageHtml: null, pageFiles: null } }).lines.find(l => l.what === 'deployed commit within the runs\' clone');
+  assert.deepEqual(line(12), { ok: true, what: 'deployed commit within the runs\' clone', detail: '12 commits behind origin/main; runs clone 50 deep' });
+  assert.deepEqual(line(45), { ok: false, what: 'deployed commit within the runs\' clone', detail: '45 commits behind origin/main; runs clone 50 deep: ship live again at main\'s head (the same content) before it reaches 50' }, 'a build planted 45 behind is red, with its fix');
+  assert.match(line(106).detail, /out of reach, so every run fails at its gate$/);
+  assert.equal(verify({ manifest, target: 'live', dist: dist2, sha256, build: { pushed: true, behind: () => 3 }, state: { triggers, record: rec, pageHtml: null, pageFiles: null } }).lines.some(l => /runs' clone/.test(l.what)), false, 'a read-only verify without git (the weekly run) leaves the line out');
+});

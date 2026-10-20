@@ -93,6 +93,10 @@ live write or publish unless `deploy live --matt-ok` wrote dist/live-ok; pipelin
 - ArtifactData: every write to an existing document carries `if_version`; batches are atomic, 50 writes / 1 MiB.
   The page's `update` merges nested maps; Edits documents are replaced whole.
 - Playwright's fake clock races its real-time sync: `setSystemTime` plus condition waits.
+- Scheduled runs clone `main` 50 commits deep and check out the deployed commit from it (B-110): bookkeeping commits
+  push a deployed build out of reach and every run then fails at its gate. verify-deploy goes red at 40 commits behind
+  origin/main; the fix is `ship <target>` again at main's head (the same content: a system/manifest-only deploy; live on
+  Matt's OK, like any live deploy).
 - Spec edits: JSON with indent 1, no trailing newline (a PostToolUse hook re-writes spec files so, B-57). `node --test test/*.test.mjs > /tmp/t.log 2>&1; grep -E
   "^# (pass|fail)" /tmp/t.log` (never pipe node through grep inside `&&`).
 

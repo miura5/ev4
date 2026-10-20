@@ -69,6 +69,11 @@ export function commitsBehind(root, older, commit) {
   } catch { return null; }
 }
 
+/** origin/main's commit here, or null without one (B-110: how far a deployed build is from what the runs clone). */
+export function mainHead(root) {
+  try { return execFileSync('git', ['-C', root, 'rev-parse', 'origin/main'], { encoding: 'utf8' }).trim(); } catch { return null; }
+}
+
 export function isPushed(root, commit) {
   try { execFileSync('git', ['-C', root, 'merge-base', '--is-ancestor', commit, 'origin/main'], { stdio: 'ignore' }); return true; } catch { return false; }
 }
@@ -84,7 +89,7 @@ function load(o, target) {
   if (!manifest.records[target]) throw new Error(`unknown target ${target} (live or staging)`);
   const distDocs = Object.fromEntries(['spec', 'environments'].map(id => [id, readJson(path.join(dist, 'system', id + '.json'))]));
   const stateDir = o.state ? path.resolve(o.state) : path.join(dist, 'state', target);
-  return { root, dist, manifest, distDocs, stateDir, build: { pushed: isPushed(root, manifest.commit), behind: c => commitsBehind(root, c, manifest.commit), contentHash: contentHash(manifest, distDocs.spec, sha256) } };
+  return { root, dist, manifest, distDocs, stateDir, build: { pushed: isPushed(root, manifest.commit), behind: c => commitsBehind(root, c, manifest.commit), behindMain: c => commitsBehind(root, c, mainHead(root)), contentHash: contentHash(manifest, distDocs.spec, sha256) } };
 }
 
 /** A record export folder as {collection: [docs with id]}. */
