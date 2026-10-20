@@ -2250,14 +2250,15 @@
   "title": "Ways out by folding (D-160, D-161): a session check folds to its head line and back; the skills sheet loses its Hide button (its peek line folds it) and its Stop becomes End; no close or hide button is left on the page",
   "dod": "the Captions harness at 390, 735 and 1280: a session check folded by a tap on its head line is one line high, files no answer, and unfolds at the next checkpoint; the skills sheet folds and unfolds by its peek line and has no Hide button; no button named Hide, Close or × anywhere on the page; D-160's check on and green for E.V. and Study; npm test green; screenshots looked at",
   "milestone": "M14 UI",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "A check's head line (Check N · K questions) folds it, writing nothing; the next checkpoint's card arrives open. Skills: no Hide (the peek line folds the sheet; the desktop panel folds by its head line), Stop reads End. D-160 added to the tenet checks, on for E.V. and Study.",
-  "commit": null,
+  "notes": "A session check's head line (Check N · K questions, chevron) folds it to that one line and back, writing nothing; the next checkpoint's card arrives open. Skills runner: no Hide anywhere (the phone sheet folds by its peek line, the desktop panel by its head line), Stop reads End (sheet, panel, card). D-160 added to the tenet checks (no Hide/Close/× button), on for E.V. and Study via spec.ui.tenets.onFor. Captions harness at 390/735/1280: check folds, files nothing, next check open; sheet and panel fold; no closer anywhere. npm run check GREEN; staging GREEN at 9cc108c. Note: one captions run failed the history-pull block (pre-existing timing flake), green on re-run.",
+  "commit": "9cc108c",
   "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474",
   "board": {
    "row": "v4 B-122: Ways out by folding",
-   "why": "Hide and Stop buttons took space where folding the thing itself is the way out"
+   "why": "Hide and Stop buttons took space where folding the thing itself is the way out",
+   "notes": "A check folds to its one line when you tap it; the skills runner folds instead of hiding, and Stop now says End."
   }
  },
  {
