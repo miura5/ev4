@@ -2095,11 +2095,15 @@
   "title": "The look pass at Matt's sizes: every view of every tab (Study's Review, Practice and Plan; Progress's two views; Record's five) at 375x667, 390x844, 430x932, 390x450, 560x830, 735x830, 960x1000, 1280x800, 1470x830 and 1920x1080; check prints the phone, 735 and 1280 shots to look at first (D-153)",
   "dod": "npm run check lists a screenshot per view per size and passes no-sideways-scroll, no-page-error and composer-in-view on each; a view added later without a shot fails a test",
   "milestone": "M14 UI",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken after B-112 (M14).",
   "commit": null,
-  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474",
+  "board": {
+   "row": "v4 B-113: The look pass at Matt's sizes",
+   "why": "the look pass covered only 390 and 1280 and only each tab's first view"
+  }
  },
  {
   "id": "B-114",
