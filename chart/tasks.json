@@ -1843,17 +1843,20 @@
   "title": "Request (reported Oct 19): ship live should refuse during the live watchdog windows (:45 to :05 around 1, 4, 7, 10, 13, 16, 19 and 22h Central) as a rule in rules.json, instead of the windows being checked from memory.",
   "dod": "A rule in chart/rules.json that ship live checks: it refuses during the live watchdog windows (:45 to :05 around 1, 4, 7, 10, 13, 16, 19 and 22h Central) and passes outside them; tests prove both sides of a window edge, and ship live prints the rule with the time it opens again.",
   "milestone": "M13 Workflow",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Oct 20 session: rule R-05",
-  "commit": null,
+  "notes": "R-05 (D-142) in chart/rules.json, checked by ship live from the live watchdog's schedule; test B-102 proves both edges (4:45 in, 4:44:59 out, 5:04:59 in, 5:05 out), midnight and CST; log rule added.",
+  "commit": "0c0da55",
   "source": "Oct 19 build chat: Claude's workflow review, filed on Matt's OK",
   "words": "ship live should refuse during the live watchdog windows (:45 to :05 around 1, 4, 7, 10, 13, 16, 19 and 22h Central) as a rule in rules.json, instead of the windows being checked from memory.",
   "reportedAt": "2026-10-19T23:59:11.174Z",
   "board": {
-   "row": "v4 B-102: ship live should refuse during the live watchdog windows (:45 to :05…",
-   "why": "ship live should refuse during the live watchdog windows (:45 to :05 around 1, 4, 7, 10, 13, 16, 19 and 22h Central) as a rule in rules.json, instead of the windows being checked from memory.",
-   "notes": "Reported Oct 19 from Oct 19 build chat: Claude's workflow review, filed on Matt's OK"
+   "row": "v4 B-102: ship live waits out the watchdog windows",
+   "why": "a deploy landing on a watchdog run races it; the windows were checked from memory",
+   "notes": "ship live now refuses from :45 to :05 around each live watchdog run and says when it opens (rule R-05)",
+   "were": [
+    "v4 B-102: ship live should refuse during the live watchdog windows (:45 to :05…"
+   ]
   },
   "triage": {
    "outcome": "task",
