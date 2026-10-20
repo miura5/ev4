@@ -664,18 +664,19 @@
   "title": "Nightly record lint (D-090): evening-cloud's state step runs lintRecord on its pull and writes it to state/current.lint; lint treats marked originals and spec.legacyCollections as frozen (info); the System tab's Checks card shows it",
   "dod": null,
   "milestone": "M7",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-32"
   ],
-  "notes": "Oct 18: lint treats a document carrying migratedAt or migratedTo as a frozen original (one note per collection; outside legacy no schema, writer or fact check) and spec.legacyCollections (daily, drills, links, reviews) as frozen notes, not unknown; the state step runs lintRecord on its pull with the run's commit and keeps lintSummary in state/current.lint (counts, errors and warnings up to 20, notes by code; schema field), passed to the producer as an input so state rebuilds byte for byte; the Checks card shows it (harness at 390 and 1280 px). Proof pending: a staging evening-cloud firing, and tonight's live export linting green Second staging firing runs/evening-cloud-20261018-183949844: state/current.lint 0 errors, 0 warnings, 4 notes, commit b6ed772 (the commit fix works). Live at b6ed772; done once tonight's live export lints green Live, Oct 18: the first nightly live lint (state/current.lint, 42f35e9) has 1 error: days/2026-10-16, a v2 test document (pipeline \"v2 Daily list (test A-2)\", source \"migrated\") with no migratedAt, so not frozen. The full live export (431 docs) also lints system/code, v3's system doc kept for the D-085 rollback until Oct 21, as invalid; the nightly lint does not read system. No fact-migrated notes; state/current and weeks rebuild byte for byte. Not done until both are settled: mark days/2026-10-16 migratedAt (a hand write to live: Matt's OK) or treat it in code, and treat v3's system/code as frozen",
-  "commit": null,
+  "notes": "Settled in code, no hand write to live: lint treats the two pre-v4 leftovers as frozen notes (a document with no v4 envelope stamped source 'migrated', like days/2026-10-16; an id outside a collection's fixed ids, like v3's system/code), and rebuild never judges them. Tonight's live export (464 documents, journal not read) lints GREEN with this code: 0 errors, 1 warning (weeks/2026-10-18 derived-stale, built by b6ed772). On staging at e5bc1cb. Live waits for Matt's OK; the first nightly live lint after it should read 0 errors.",
+  "commit": "f8e2e6f",
   "source": "BACKLOG.md",
   "board": {
    "row": "v4 B-34: a nightly check of the whole record",
    "why": "The 8:15pm run checks every rule on your record and the System tab's Checks card shows what it found",
-   "notes": "Oct 18, 47f0d85. First staging run: 0 errors, 0 warnings, 3 notes. Done once tonight's live export lints green"
-  }
+   "notes": "Settled in code: the record check counts the two old v2/v3 leftovers as kept notes, not errors. Tonight's live record checks green with it. Live waits for your OK."
+  },
+  "waitingOn": "Matt"
  },
  {
   "id": "B-35",
