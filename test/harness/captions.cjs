@@ -374,6 +374,29 @@ async function sideBySide(browser, left, right, out, vp) {
     const chips = await page.evaluate(() => [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent));
     ok('[phone] with the reader unreachable, File it is offered, Start a study session still last', chips.includes('File it') && chips.length === 3 && chips[2] === 'Start a study session', JSON.stringify(chips));
     await ctx.close(); }
+  // B-112 (D-153): at short heights (390x450 is the phone with its keyboard open) the composer's bottom edge and her
+  // current line stay inside the viewport, idle, in a conversation and in a session.
+  { const sessionSeed = () => { const db = JSON.parse(JSON.stringify(seed)), t0 = new Date(NOW.getTime() - 3 * 60e3).toISOString(), k = 'start-' + t0.replace(/[-:.TZ]/g, '').slice(0, 14);
+      db.sessions = { ...(db.sessions || {}), 'ss-harness-short': { schema: 1, writer: 'page', at: t0, source: 'E.V. Home', status: 'active', date: today, startedAt: t0, topic: 'Harness short screen', noteId: 'x-coredata://short', driver: { view: 'gone', at: t0 }, events: { [k]: { type: 'start', at: t0, len: 5, h: 'zz', noteId: 'x-coredata://short' } } } };
+      return db; };
+    const inView = page => page.evaluate(() => { const c = document.querySelector('.compose-row').getBoundingClientRect(), cur = document.querySelector('#thread .msg.ev.current .bubble'), r = cur && cur.getBoundingClientRect(), H = innerHeight;
+      return { H, composerBottom: Math.round(c.bottom), lineTop: r ? Math.round(r.top) : null, lineBottom: r ? Math.round(r.bottom) : null, step: document.getElementById('hero').dataset.step, stage: Math.round(document.getElementById('hero').getBoundingClientRect().height), scrollY: Math.round(scrollY),
+        ok: c.bottom <= H + 1 && c.top >= 0 && !!r && r.top >= 0 && r.top + 18 <= Math.min(H, c.top) }; });
+    for (const vp of [{ width: 390, height: 450 }, { width: 375, height: 667 }, { width: 735, height: 830 }]) {
+      const tag = `${vp.width}x${vp.height}`;
+      for (const state of ['idle', 'conversation', 'session']) {
+        const ctx = await browser.newContext({ viewport: vp, colorScheme: 'dark' }); const page = await ctx.newPage();
+        await openPage(page, state === 'session' ? sessionSeed() : seed); await page.waitForTimeout(1500);
+        if (state === 'conversation') { await send(page, 'explain preload', REPLY); await page.waitForTimeout(3000); }
+        if (state === 'session') await page.waitForFunction(() => document.getElementById('hero').dataset.step === 'session', null, { timeout: 8000 }).catch(() => {});
+        await page.waitForTimeout(1000); // past the stage's step
+        const v = await inView(page);
+        ok(`[short ${tag} ${state}] the composer and her current line are in view`, v.ok, JSON.stringify(v));
+        await page.screenshot({ path: `${shots}/short-${tag}-${state}.png` });
+        await ctx.close();
+      }
+    }
+  }
   // Reduced motion, at both widths: the line whole at once, announced once, her core still, its gesture still raised.
   for (const [label, vp] of [['phone', { width: 390, height: 844 }], ['desktop', { width: 1280, height: 860 }]]) {
     const ctx = await browser.newContext({ viewport: vp, colorScheme: 'dark', reducedMotion: 'reduce' });

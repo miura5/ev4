@@ -1142,9 +1142,12 @@
   // B-85: on a screen under 800 px tall (a laptop's split-screen pane) each step is shorter, so her lines keep the room;
   // the core shrinks with its stage and keeps its ring.
   const STAGE_SHORT = { phone: { idle: 236, conversation: 168, session: 128, list: 120, skills: 108 }, desktop: { idle: 290, conversation: 220, surface: 200 } };
+  // B-112 (D-153): under 560 px tall (the phone with its keyboard open) she steps down again, so the composer and her
+  // current line stay on screen; her words scroll under her as before.
+  const STAGE_TINY = { phone: { idle: 132, conversation: 104, session: 92, list: 88, skills: 80 }, desktop: { idle: 132, conversation: 104, surface: 92 } };
   function renderStage() {
     const z = MO_SIZE(innerWidth, stageState()); const h = $('hero');
-    const full = STAGE_PX[z.layout][z.step] || z.px + 24, low = innerHeight < 800 && STAGE_SHORT[z.layout][z.step], stage = low || full;
+    const full = STAGE_PX[z.layout][z.step] || z.px + 24, low = (innerHeight < 560 && STAGE_TINY[z.layout][z.step]) || (innerHeight < 800 && STAGE_SHORT[z.layout][z.step]), stage = low || full;
     const k = low ? Math.max(0.3, (low - 24) / Math.max(1, full - 24)) : 1;
     h.style.setProperty('--core-scale', String(z.pct / 100 * k)); h.style.setProperty('--stage-h', stage + 'px');
     h.dataset.step = z.step; h.dataset.px = String(Math.round(z.px * k)); h.dataset.short = low ? '1' : '';

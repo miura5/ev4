@@ -315,6 +315,8 @@ body.captions.on-ev .top-av{opacity:0;transform:scale(.5);width:0;flex-basis:0;m
 body.captions #p-ev{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr) auto auto;row-gap:0;
   height:calc(100dvh - var(--top-h) - 18px - var(--dock-h) - 22px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));min-height:420px;position:relative}
 body.captions #p-ev>*{grid-column:1;min-width:0}
+/* B-112: under 560 px tall the panel gives up its floor and the composer its fade, so it fits the screen. */
+@media (max-height:559px){body.captions #p-ev{min-height:0}body.captions .composer{padding-top:10px}}
 body.captions #p-ev>.hero{grid-row:1}
 /* B-86: the session's line sits just under her core, between her and her words. */
 body.captions #p-ev>.sbar{grid-row:2;justify-self:center;max-width:min(660px,100%);margin:-6px 0 4px;box-sizing:border-box}
