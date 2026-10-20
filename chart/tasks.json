@@ -2284,13 +2284,17 @@
   "title": "Today on prep days (D-164): the evening before a clinical, lab or validation day the pack check is the Now card until ticked; on the day's morning the Now card names the place and hours with the bag check folded under it; one list shared with the greeting's check; sources as a quiet second line",
   "dod": "the look harness on a planted calendar at 390, 735 and 1280: the evening before a clinical day the Now card is the pack check and folds to one line when all are ticked; the morning shows place, hours and the folded bag check; a tick on Today shows ticked in the greeting and back; every item shows its source; screenshots looked at",
   "milestone": "M14 UI",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-104"
   ],
-  "notes": "",
+  "notes": "From the evening before a prep day the Now card is the pack check (the greeting's same list) until ticked through, then it folds to one line under the usual Now card; on the day the Now card is the day (place, hours) with the bag check folded under it. Proven in the prep harness (planted calendar and clock) at 390, 735 and 1280.",
   "commit": null,
-  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474",
+  "board": {
+   "row": "v4 B-124: Today on prep days",
+   "why": "the pack and bag checks lived only under her greeting; Today didn't know it was a clinical day"
+  }
  },
  {
   "id": "B-125",
