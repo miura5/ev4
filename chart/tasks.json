@@ -2129,14 +2129,15 @@
   "title": "Tenet checks in the harness: D-146, D-147, D-148, D-149, D-150 and D-151's checks run on every view at 390, 735 and 1280, with exceptions listed in spec.ui; a tab's checks report without failing until its catch-up task turns them on",
   "dod": "the look harness prints each check per view; E.V. passes all of them; a planted info-only card fails D-147 and a planted empty-state card fails D-151 in a test; npm test green",
   "milestone": "M14 UI",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Taken after B-114 (M14).",
-  "commit": null,
+  "notes": "test/harness/tenets.cjs: collect (in the page, a plain snapshot of the view) and judge (D-146 one primary and one lead in the first screen; D-147 every card holds a control; D-148 no open list over 5 rows, rows at most 44 px; D-149 coral only as many as the record's urgent items; D-150 at most 3 chips, no monospace or spaced capitals; D-151 no empty-state card, chips hidden in a conversation). The look pass prints each per view at 390, 735 and 1280; spec.ui.tenets.on = [ev] fails the pass (E.V. 18/18), the other tabs report (100 of 216 pass: the catch-up list). Tests B-115 (3): planted info-only card fails D-147, empty-state card fails D-151, each other check fails on what it forbids. npm run check GREEN. Staging GREEN at a11367f.",
+  "commit": "a11367f",
   "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474",
   "board": {
    "row": "v4 B-115: Tenet checks in the harness",
-   "why": "the UI tenets need a check that can fail, on every view"
+   "why": "the UI tenets need a check that can fail, on every view",
+   "notes": "The page is now checked against your ten UI principles on every screen; the E.V. tab passes all of them, the rest list what their catch-up tasks fix. On staging."
   }
  },
  {
