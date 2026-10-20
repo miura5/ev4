@@ -1155,11 +1155,11 @@
   "title": "The journal rule decided once (M-2, D-113): the journal is a named read for the steps that need it and in backups and the mirror (D-106), the repository clause is dropped, test/personal-data.test.mjs stays; CLAUDE.md Hard limits, core/run.mjs's pull refusal, the Data architecture Privacy bullet and spec.boundaries say the same thing in one commit; B-50 stays in BACKLOG.md marked done with the note superseded by B-62",
   "dod": null,
   "milestone": "M9",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-25"
   ],
-  "notes": "",
+  "notes": "Taken in the Oct 20 build session.",
   "commit": null,
   "source": "BACKLOG.md"
  },
