@@ -602,7 +602,7 @@
   "depends": [
    "B-106"
   ],
-  "notes": "A decision has kind decision|tenet; a tenet carries scope (ui, data, ops, pipelines) and check (harness, lint, ship, review). log decision --kind tenet --scope --checked-by; plan files a Tenets proposed table (shared P-n and D-ids); brief lists accepted tenets in the task's scope (milestone, files, spec keys, or --scope); lint names open tasks and tests citing a superseded tenet (the sweep task naming both is exempt); the review skill checks the diff against them; the Decisions tab labels tenet rows; CLAUDE.md has the one line. Tests B-109 (3); npm test 317 green. Tooling only: nothing to ship.",
+  "notes": "A decision has kind decision|tenet; a tenet carries scope, check and how. plan files Tenets proposed (P-order ids, one commit per hand-off); brief lists the tenets in scope; lint names open tasks and tests citing a superseded tenet; the review skill checks the diff against them; the Decisions tab labels tenets. Tests B-109; npm test 317 green. SESSION SUMMARY (Oct 19, 22:40 CT): live GREEN at 69502f6 on Matt's OK, carrying B-104, B-34, B-110, B-107, B-99, B-61, B-62, B-66 and B-109 (rollback: redeploy 93698f0). The UI tenets doc (Matt-approved) is filed: D-146 to D-165 (10 tenets, 10 decisions), B-111 to B-126 (M14 UI). Not started: B-64, B-67, M11 (B-74, B-75, B-78 to B-81), B-42, M8, B-45, B-60, M14. Live evening-mac still fails with no checkout on the Mac (B-83, needs Matt there). No live deploy from 6pm Tue to the end of Wed (Exam 4).",
   "commit": "69502f6",
   "source": "Matt, Oct 20, in the B-92 build chat",
   "board": {
