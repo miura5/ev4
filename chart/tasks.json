@@ -2095,14 +2095,15 @@
   "title": "The look pass at Matt's sizes: every view of every tab (Study's Review, Practice and Plan; Progress's two views; Record's five) at 375x667, 390x844, 430x932, 390x450, 560x830, 735x830, 960x1000, 1280x800, 1470x830 and 1920x1080; check prints the phone, 735 and 1280 shots to look at first (D-153)",
   "dod": "npm run check lists a screenshot per view per size and passes no-sideways-scroll, no-page-error and composer-in-view on each; a view added later without a shot fails a test",
   "milestone": "M14 UI",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Taken after B-112 (M14).",
-  "commit": null,
+  "notes": "The look pass shoots every view of every tab (13: each tab and each seg view, read from the page's markup) at Matt's ten sizes (375x667 to 1920x1080, 390x450 included), checking no sideways scroll, no page error and on E.V. the composer in view (160/160); npm run check lists the 390x844, 735x830 and 1280x800 shots first and goes red on a view with no shot at a size (test B-113 plants a view and a tab). Also: check has each harness write its own synthetic record as it starts (6bfd3da), so a check across midnight keeps one day. npm run check GREEN; screenshots looked at. Staging GREEN at 6bfd3da.",
+  "commit": "7ead1ad",
   "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474",
   "board": {
    "row": "v4 B-113: The look pass at Matt's sizes",
-   "why": "the look pass covered only 390 and 1280 and only each tab's first view"
+   "why": "the look pass covered only 390 and 1280 and only each tab's first view",
+   "notes": "Every screen of the page is now checked at all ten of your screen sizes, phone to big monitor. On staging."
   }
  },
  {
