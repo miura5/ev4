@@ -566,12 +566,12 @@
   "title": "Rollback window and v3 retirement (D-085): the manual rollback procedure in CLAUDE.md now; when the window closes, the v3 tasks and the two v3 staging tasks listed in spec.tasks.retired with the reason, ev-core archived read-only, the v3 Board's closing row and Changelog line; nothing is deleted",
   "dod": null,
   "milestone": "M7",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-35"
   ],
-  "notes": "Oct 18: step 1 done, the rollback procedure is in CLAUDE.md (task ids, the legacy restore, the v3 page republish from a local session). The retirement steps wait for the D-085 window to close and Matt's OK Matt, Oct 18: the window closes after NUR Exam 4 on Wed Oct 21 (the first NUR unit exam on v4), earlier than Oct 25. Then, with his OK: the retired list is already in place (B-28); archive ev-core read-only; the v3 Board's closing row and Changelog line; B-24's last step marked done",
-  "commit": null,
+  "notes": "Oct 19, 10c6b3c: the window closed early on Matt's call (D-145, superseding D-085), not after Exam 4. v3's tasks were already retired and kept (B-28); CLAUDE.md's rollback section now gives the v4 way back; R-01 ends with B-30 done. Archiving ev-core moved to B-108 (Matt, on GitHub). The new v4 rollback is B-60, built once the open tasks are done",
+  "commit": "10c6b3c",
   "source": "BACKLOG.md"
  },
  {
