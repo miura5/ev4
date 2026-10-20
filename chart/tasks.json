@@ -2112,14 +2112,15 @@
   "title": "Two breakpoints (D-159): the header, the E.V. tab's side column and the page title change only at 600 and 1024 px; between them every width is the phone stack, its column centred at most 660 px wide",
   "dod": "the shell and Captions harnesses at 560, 735, 960 and 1023 find one layout (icon tabs, no status line, no side column, a session's notes under the stage) and at 1024 and 1470 the desktop one; no sideways scroll at any listed size; screenshots at 735 and 960 looked at",
   "milestone": "M14 UI",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Taken after B-113 (M14).",
-  "commit": null,
+  "notes": "Two breakpoints (D-159): the header's tab names and status line, her side column, her desktop sizes (spec.ui.look.core.sizes.desktop.minWidthPx 1024) and a session's notes beside her all come at 1024 px, not 900; below 1024 is the phone stack, its column centred at most 660 px; the 560 px rules moved to 600. Captions harness at 560, 735, 960 and 1023: icon tabs, no status line, no side column, the notes under the stage; at 1024 and 1470 the desktop layout (6/6); its side-column checks moved to 1023/1024. Shell harness: the header and the centred column at all six widths (27/27). npm run check GREEN; screenshots at 735 and 960 looked at. Staging GREEN at 8102227.",
+  "commit": "8102227",
   "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474",
   "board": {
    "row": "v4 B-114: Two breakpoints, 600 and 1024",
-   "why": "900 px sat inside Matt's split-screen widths, so resizing a split flipped the header and her side column"
+   "why": "900 px sat inside Matt's split-screen widths, so resizing a split flipped the header and her side column",
+   "notes": "Your split-screen widths (side panel, half the laptop, half a big screen) now all get the clean phone layout; the desktop layout starts at 1024 px. On staging."
   }
  },
  {
