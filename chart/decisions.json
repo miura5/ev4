@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-141",
+  "date": "Oct 19",
+  "title": "A design chat names the decisions it proposes P-1, P-2 and so on, and lists the tasks it proposes in a 'Tasks to add' table; neither gets an id until it is accepted and filed through the Chart (log decision takes the next free D-id; plan, B-106, files the tasks), so two chats never claim the same id and no designed task is left out of the backlog",
+  "why": "Matt, Oct 20: the Oct 18 design chats picked D-ids themselves, and five Build plan tasks (B-74, B-75, B-78 to B-80) never reached the backlog until lint caught them (B-94)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-140",
   "date": "Oct 19",
   "title": "The Chart is E.V.'s project record: chart/ in ev4, written only through tools/chart.mjs (report, log, lint, ship, brief), holds tasks with Matt's reports, decisions, deploys and the rules commands enforce; BACKLOG.md, the v3 doc's Board, Changelog and Decisions tabs and the overview doc's status line are printed from it and never edited by hand; ship refuses what chart/rules.json forbids; chart/ stays outside the manifest so a bookkeeping commit never moves the build. Reverting the cutover commit (c4d0aa1) brings hand bookkeeping back",
