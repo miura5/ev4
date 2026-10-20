@@ -2216,14 +2216,15 @@
   "title": "Header and shell: the status reads Live or the one problem, never counts (D-157); the page title shows only from 1024 px (D-156)",
   "dod": "the shell harness: at 1280 the status is Live on the synthetic record and names a planted failed run; no page title at 390 or 735 and one at 1280; screenshots looked at",
   "milestone": "M14 UI",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Status line from System's own lead: Live when nothing needs a look, else that one problem; .ptitle hidden below 1024 px.",
-  "commit": null,
+  "notes": "Status line reads Live, or System's lead problem by name (amber, from 1024 px; below it the header stays clean and System leads with it); no counts. Page title (.ptitle) only from 1024 px. Shell harness: Live at 1280 on synthetic, a planted failed run named at 1280, no title or status at 390/735, title at 1280. npm run check GREEN; staging GREEN at efeccab.",
+  "commit": "efeccab",
   "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474",
   "board": {
    "row": "v4 B-120: Header: Live or the one problem",
-   "why": "the status line counted weak spots and sets, and the page title took a line on the phone"
+   "why": "the status line counted weak spots and sets, and the page title took a line on the phone",
+   "notes": "The header says Live, or names the one thing wrong; the page title shows only on the laptop."
   }
  },
  {
