@@ -1135,19 +1135,20 @@
   "title": "Watchdog compares the scheduler with the record (M-1, D-112): a material step prints the list_triggers reads (enabled, paged; proven from a cloud run in B-29 and counted by the audit the same way), the fold compares every task in spec.tasks.<record> against runs/: a SUCCEEDED firing with no run document within 5 minutes of fired_at is refused-at-start, a slot past its grace with no firing is not-fired; both in health/current.missing with a kind, named in the watchdog's push; the System tab shows them",
   "dod": null,
   "milestone": "M9",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-25"
   ],
-  "notes": "Taken in the Oct 20 build session.",
-  "commit": null,
+  "notes": "Proven: the staging watchdog fired against staging at 620411d, runs/watchdog-20261020-030717042 ok (audit: 10 calls, all printed, the pull's list_triggers among them); health/current.scheduler holds each staging task's last firing (7 tasks) and missing names evening-mac kind not-fired (its 8:20pm slot, never fired on staging); push 'Watchdog: evening-mac was never fired (20:20); …'. The scheduler read is part of the pull (spec.pipelines.watchdog.schedulerRead), so no scheduled task's prompt changes; refused-at-start is covered by test/scheduler.test.mjs (tonight's live case: fired, no run within 5 minutes). System tab names the kind. npm run check GREEN. Live waits for Matt's OK.",
+  "commit": "620411d",
   "source": "BACKLOG.md",
   "board": {
    "row": "v4 B-61: the watchdog checks the scheduler (D-112)",
    "why": "The 1:55pm watchdog left nothing in your record, so nothing could notice it was missing",
-   "notes": "Oct 18: the 1:55pm live watchdog is its first real case; the review filed the fix as B-61 (M9)",
+   "notes": "On staging: the 3-hourly status check now asks the scheduler too, so a run that was fired but never started, or never fired at all, shows up by name in the System tab and the push. Live waits for your OK.",
    "was": "-"
-  }
+  },
+  "waitingOn": "Matt"
  },
  {
   "id": "B-62",
