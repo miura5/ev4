@@ -187,19 +187,16 @@
   function runner(o) { // o: {key, set, items, body, countEl, barEl, label, summaryExtra}
     const { key, set, items, body } = o; const answers = answersFor(set);
     const done = items.filter(q => answers[q.id]).length;
-    if (o.countEl) o.countEl.textContent = items.length ? done + ' of ' + items.length + ' answered' : '';
+    if (o.countEl) o.countEl.textContent = items.length ? done + ' of ' + items.length : ''; // B-116: the one count, at the bar
     if (o.barEl) o.barEl.style.width = items.length ? (100 * done / items.length) + '%' : '0';
     let view = views[key];
     if (view !== '__summary' && (!view || !items.find(q => q.id === view))) view = views[key] = (items.find(q => !answers[q.id]) || {}).id || '__summary';
     if (view === '__summary') return summary(o, items, answers);
     const q = items.find(x => x.id === view); const a = answers[q.id]; const type = E.itemType(q);
     const sel = sels[key + q.id] || (sels[key + q.id] = type === 'matrix' ? [] : new Set());
-    const head = el('div', 'q-head');
-    head.append(chip(q.weakspotId ? 'Weak spot' : q.kind === 'check' ? 'New check' : 'Practice', q.weakspotId ? 'ok' : q.kind === 'check' ? 'warn' : 'info'));
-    if (q.objective) head.append(chip(q.objective, 'info'));
-    if (q.cjStep) head.append(chip(cjLabel(q.cjStep), 'plum'));
-    head.append(el('span', 'meta', (items.indexOf(q) + 1) + ' of ' + items.length + (type === 'sata' ? ' · Select all that apply' : type === 'matrix' ? ' · One choice per row' : '')));
-    const parts = [head, el('p', 'stem', q.stem)];
+    // B-116 (D-146, D-150): the stem leads; what kind of question it is follows as one quiet line, no chips, no second count.
+    const tags = el('p', 'meta q-tags', [q.weakspotId ? 'Weak spot' : q.kind === 'check' ? 'New check' : 'Practice', q.objective, q.cjStep ? cjLabel(q.cjStep) : '', type === 'sata' ? 'Select all that apply' : type === 'matrix' ? 'One choice per row' : ''].filter(Boolean).join(' · '));
+    const parts = [el('p', 'stem q-stem', q.stem), tags];
     const submit = btn('Check answer', null, { primary: true });
     const ready = () => type === 'matrix' ? (q.matrix.rows.every((_, i) => Number.isInteger(sel[i]))) : sel.size > 0;
     if (type === 'matrix') {
@@ -384,8 +381,10 @@
 
   // ------------------------------------------------------------ Study
   function renderReview() {
-    $('more-card').hidden = !sample;
     const rs = S.sets.find(s => s.id === 'review-' + today); const items = rs ? E.validItems(rs) : [];
+    // B-116 (D-151): More practice is a line once today's set is done, never beside an unfinished one.
+    const rsAnswers = rs ? answersFor(rs) : {};
+    $('more-card').hidden = !sample || items.some(q => !rsAnswers[q.id]);
     if (!items.length) {
       $('rv-count').textContent = ''; $('rv-bar').style.width = '0';
       const due = E.rankDue(M.models, today, S.exams).length;
@@ -413,7 +412,8 @@
     // D-110: a set that can go out as a page says so above its questions.
     let bar = $('pr-share'); if (!bar) { bar = el('div', 'share-bar'); bar.id = 'pr-share'; body.before(bar); }
     const sh = shareButton(d); bar.hidden = !sh; bar.replaceChildren(...(sh ? [el('span', 'meta grow', 'Classmates can practise this set too: a page with no name and none of your weak spots.'), sh] : []));
-    runner({ key: 'pr-' + d.id, set: d, items: E.validItems(d), body, countEl: $('pr-count'), barEl: $('pr-bar'), label: 'E.V. · ' + (d.title || d.id),
+    $('pr-count').textContent = '';
+    runner({ key: 'pr-' + d.id, set: d, items: E.validItems(d), body, countEl: $('pr-qcount'), barEl: $('pr-bar'), label: 'E.V. · ' + (d.title || d.id),
       summaryExtra: () => { const a = el('div', 'actions'); const sh = shareButton(d); a.append(btn('All sets', () => { delete retakes[d.id]; ui.openSet = null; render(); }), ...(sh ? [sh] : []), btn('Retake', () => retake(d, 'pr-' + d.id), { primary: true })); return [a]; } });
   }
   // D-110: a calendar set over a chapter range can go out once as a page for classmates (no name, none of his weak

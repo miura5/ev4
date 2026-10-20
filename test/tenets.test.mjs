@@ -15,11 +15,11 @@ const failing = s => judge(s, spec.ui.tenets.exceptions).filter(c => !c.ok).map(
 test('B-115: the look pass checks D-146 to D-151 at 390, 735 and 1280, with E.V. on and the other tabs reporting', () => {
   assert.deepEqual(spec.ui.tenets.checks, ['D-146', 'D-147', 'D-148', 'D-149', 'D-150', 'D-151']);
   assert.deepEqual(spec.ui.tenets.widths, [390, 735, 1280]);
-  assert.deepEqual(spec.ui.tenets.on, ['ev']);
+  assert.deepEqual(spec.ui.tenets.on, ['ev', 'study-review']);
   assert.deepEqual(judge(ev()).map(c => c.tenet), spec.ui.tenets.checks);
   assert.deepEqual(failing(ev()), [], 'the E.V. tab passes them all');
   const look = fs.readFileSync(path.join(ROOT, 'test', 'harness', 'look.cjs'), 'utf8');
-  assert.match(look, /page\.evaluate\(collect\)/); assert.match(look, /TENETS\.on\.includes\(view\.tab\)/);
+  assert.match(look, /page\.evaluate\(collect\)/); assert.match(look, /TENETS\.on\.includes\(view\.tab\) \|\| TENETS\.on\.includes\(view\.id\)/);
 });
 
 test('B-115: a planted info-only card fails D-147; a planted empty-state card fails D-151', () => {
@@ -38,7 +38,8 @@ test('B-115: the other checks each fail on what their tenet forbids', () => {
   const open = ev(); open.lists.push({ id: 'weak-active', rows: 20 }); assert.deepEqual(failing(open), ['D-148']);
   const tall = ev(); tall.rows.push({ text: 'a two-line row', h: 70 }); assert.deepEqual(failing(tall), ['D-148']);
   const coral = ev(); coral.coral.push('graded', 'graded'); assert.deepEqual(failing(coral), ['D-149']);
-  const none = ev(); none.coral = []; assert.deepEqual(failing(none), ['D-149'], 'an urgent item with nothing coral');
+  const none = ev(); none.coral = []; assert.deepEqual(failing(none), ['D-149'], 'an urgent item with nothing coral on the E.V. tab');
+  const study = ev(); study.tab = 'study'; study.coral = []; assert.deepEqual(failing(study), [], 'another tab need not repeat it');
   const chips = ev(); chips.chips.push('due', 'graded'); assert.deepEqual(failing(chips), ['D-150']);
   const mono = ev(); mono.monoOrSpacedCaps = 2; assert.deepEqual(failing(mono), ['D-150']);
   const talk = ev(); talk.step = 'conversation'; assert.deepEqual(failing(talk), ['D-151'], 'chips shown in a conversation');

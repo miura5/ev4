@@ -3484,7 +3484,7 @@
    ]
   },
   "tenets": {
-   "note": "B-115: the UI tenets checked on every view by the look pass (test/harness/tenets.cjs). A tab in on fails the pass; the others report until their catch-up task (B-116 to B-126) adds them. exceptions: card ids or classes a tenet excuses.",
+   "note": "B-115: the UI tenets checked on every view by the look pass (test/harness/tenets.cjs). A tab or view (tab-view) in on fails the pass; the others report until their catch-up task (B-116 to B-126) adds them. exceptions: card ids or classes a tenet excuses.",
    "checks": [
     "D-146",
     "D-147",
@@ -3499,7 +3499,8 @@
     1280
    ],
    "on": [
-    "ev"
+    "ev",
+    "study-review"
    ],
    "exceptions": {
     "D-147": [],

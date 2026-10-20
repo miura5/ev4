@@ -130,6 +130,12 @@ button.quiet{background:transparent;border-color:var(--line2);color:var(--ink2)}
 /* question runner */
 .q-head{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .stem{font-size:17px;line-height:1.55;margin:2px 0 0;white-space:pre-wrap}
+/* B-116: the question's stem leads at 20 px; its kind is one quiet line under it; the one count sits at the bar. */
+.q-stem{font-size:20px;line-height:1.5}
+.q-tags{margin:2px 0 4px}
+.bar-row{display:flex;align-items:center;gap:10px}.bar-row .progress{flex:1}.bar-row .meta{flex:none;font-variant-numeric:tabular-nums}
+.more-line{flex-direction:row;align-items:center;gap:12px;padding-top:12px;padding-bottom:12px}
+#more-btn{flex:none}
 .opts{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;border:0;min-width:0}
 .opt{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid rgba(255,255,255,.10);border-radius:14px;cursor:pointer;background:rgba(255,255,255,.02);min-height:var(--tap);transition:border-color .2s,background .2s}
 .opt:hover{border-color:var(--accent-edge)}

@@ -56,11 +56,30 @@ const results = []; const ok = (name, cond, detail = '') => results.push([cond ?
       if (TENETS.widths.includes(size.width) && [844, 830, 800].includes(size.height)) {
         const snap = await page.evaluate(collect);
         for (const c of judge(snap, TENETS.exceptions)) {
-          if (TENETS.on.includes(view.tab)) ok(`[${width}] ${view.id}: ${c.tenet}`, c.ok, c.detail);
+          if (TENETS.on.includes(view.tab) || TENETS.on.includes(view.id)) ok(`[${width}] ${view.id}: ${c.tenet}`, c.ok, c.detail);
           else reports.push([c.ok ? 'ok  ' : 'NOT ', `[${width}] ${view.id}: ${c.tenet}`, c.detail]);
         }
       }
       if (view.tab === 'ev') ok(`[${width}] ev: the composer is in view`, await page.evaluate(() => { const c = document.querySelector('.compose-row').getBoundingClientRect(); return c.top >= 0 && c.bottom <= innerHeight + 1 && c.height > 0; }));
+    }
+    // B-116: the question view: the stem leads with no chip above it, one count on the screen, no More practice while
+    // the set is unfinished; after the last answer, More practice is one line.
+    if (TENETS.widths.includes(size.width) && [844, 830, 800].includes(size.height)) {
+      await page.click('#tab-study'); await page.click('#seg-study [data-v="review"]'); await page.waitForTimeout(300);
+      const q = await page.evaluate(() => { const vis = e => !!e && !e.closest('[hidden]') && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().height > 0;
+        const stem = document.querySelector('#rv-body .q-stem'), panel = document.getElementById('p-study');
+        const counts = [...panel.querySelectorAll('*')].filter(e => vis(e) && [...e.childNodes].some(n => n.nodeType === 3 && /\b\d+ of \d+\b/.test(n.textContent))).map(e => e.textContent.trim());
+        return { stem: !!stem && parseFloat(getComputedStyle(stem).fontSize), chipAbove: !!stem && [...document.querySelectorAll('#rv-body .chip')].some(c => vis(c) && c.getBoundingClientRect().top < stem.getBoundingClientRect().top), counts, more: vis(document.getElementById('more-card')) }; });
+      ok(`[${width}] study: the stem leads at 20 px with no chip above it, one count on the screen, no More practice mid-set`, q.stem === 20 && !q.chipAbove && q.counts.length === 1 && !q.more, JSON.stringify(q));
+      for (let i = 0; i < 15 && await page.isVisible('#rv-body button:has-text("Check answer")'); i++) {
+        if (await page.locator('#rv-body table.mx').count()) { const rows = await page.locator('#rv-body table.mx tbody tr').count(); for (let r = 0; r < rows; r++) await page.locator('#rv-body table.mx tbody tr').nth(r).locator('input[type=radio]').first().check(); }
+        else await page.locator('#rv-body label.opt').first().click();
+        await page.click('#rv-body button:has-text("Check answer")'); await page.waitForTimeout(120);
+        const next = page.locator('#rv-body button', { hasText: /Next question|See results/ }).first(); if (await next.count()) { await next.click(); await page.waitForTimeout(120); }
+      }
+      const done = await page.evaluate(() => { const m = document.getElementById('more-card'), r = m.getBoundingClientRect(); return { shown: !m.hidden && r.height > 0, h: Math.round(r.height), button: (document.getElementById('more-btn') || {}).textContent, left: document.querySelectorAll('#rv-body button').length && /Check answer/.test(document.getElementById('rv-body').textContent) }; });
+      ok(`[${width}] study: after the last answer, More practice is one line with Give me 5 more`, done.shown && done.h <= 72 && done.button === 'Give me 5 more' && !done.left, JSON.stringify(done));
+      await page.screenshot({ path: `${shots}/look-study-done-${width}.png`, fullPage: true });
     }
     // Each seg control back to its first view, as a fresh open has it.
     for (const v of VIEWS.filter(x => x.v)) if (VIEWS.find(x => x.tab === v.tab).v === v.v) { await page.click('#tab-' + v.tab); await page.click(`#seg-${v.tab} [data-v="${v.v}"]`); }

@@ -43,7 +43,8 @@ function judge(s, exceptions = {}) {
     r('D-146', s.primaries.length <= 1 && s.leads.length <= 1, `primary buttons in the first screen: ${s.primaries.length} (${s.primaries.join(', ')}); lead elements: ${s.leads.length} (${s.leads.join(' | ')})`),
     r('D-147', !infoOnly.length, infoOnly.length ? `cards with no control: ${infoOnly.map(c => c.id || c.text).join(' | ')}` : 'every card holds a control'),
     r('D-148', !open.length && !tall.length, `${open.length ? 'lists open with more than 5 rows: ' + open.map(l => `${l.id} (${l.rows})`).join(', ') + '; ' : ''}${tall.length ? `rows over 44 px: ${tall.length} (${tall.slice(0, 3).map(x => x.h).join(', ')} px)` : 'every row one line'}`),
-    r('D-149', s.coral.length <= s.urgent && (!s.urgent || s.coral.length >= 1), `coral elements: ${s.coral.length} (${s.coral.join(', ')}); urgent in the record: ${s.urgent}`),
+    // Coral never outnumbers what is urgent; the E.V. tab, which carries the briefing, also shows it when there is any.
+    r('D-149', s.coral.length <= s.urgent && (s.tab !== 'ev' || !s.urgent || s.coral.length >= 1), `coral elements: ${s.coral.length} (${s.coral.join(', ')}); urgent in the record: ${s.urgent}`),
     r('D-150', !s.monoOrSpacedCaps && s.chips.length <= 3, `chips in the first screen: ${s.chips.length}; monospace or spaced capitals: ${s.monoOrSpacedCaps}`),
     r('D-151', !emptyCards.length && !(s.step === 'conversation' && s.qchipsShown), `${emptyCards.length ? 'cards holding only an empty-state line: ' + emptyCards.map(c => c.id || c.text).join(' | ') : 'no empty-state card'}${s.step === 'conversation' ? `; chips ${s.qchipsShown ? 'shown' : 'hidden'} in a conversation` : ''}`),
   ];

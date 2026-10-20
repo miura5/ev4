@@ -463,7 +463,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
       const next = page.locator('#pr-body button', { hasText: /See results|Next question|Summary/ }).first(); if (await next.count()) { await next.click(); await page.waitForTimeout(150); }
       ok('a finished set offers Retake', (await page.locator('#pr-body button', { hasText: 'Retake' }).count()) === 1, (await page.textContent('#pr-body')).slice(0, 160));
       await page.locator('#pr-body button', { hasText: 'Retake' }).click(); await page.waitForTimeout(150);
-      ok('Retake shows the first question unanswered', /Check answer/.test(await page.textContent('#pr-body')) && /1 of 3/.test(await page.textContent('#pr-body')));
+      ok('Retake shows the first question unanswered, the one count at the bar back to none (B-116)', /Check answer/.test(await page.textContent('#pr-body')) && (await page.textContent('#pr-qcount')) === '0 of 3', await page.textContent('#pr-qcount'));
       await page.locator('#pr-body label.opt').nth(1).click(); await page.click('#pr-body button:has-text("Check answer")'); await page.waitForTimeout(150);
       ok('the retake answer is appended beside the first one, never replacing it', (await tries()) === before + 1, `${before} -> ${await tries()}`);
       await page.screenshot({ path: `${shots}/retake-${scheme}.png`, fullPage: false }); }
