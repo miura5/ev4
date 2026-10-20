@@ -1042,12 +1042,12 @@
   "title": "PostToolUse hook: after Edit or Write on spec/**/*.json, re-write the file as JSON with indent 1 and no trailing newline (the spec-edit rule in CLAUDE.md)",
   "dod": null,
   "milestone": "Process",
-  "status": "open",
+  "status": "done",
   "depends": [
    "B-65"
   ],
-  "notes": "Rewritten by B-65: waits on the hooks probe (O-5). Done when: a planted indent-2 spec edit comes back at indent 1 with no trailing newline and the same content; non-spec files are untouched",
-  "commit": null,
+  "notes": "tools/hooks.mjs spec-format, PostToolUse on Edit/Write/MultiEdit: a planted indent-2 spec file comes back at indent 1, no trailing newline, same content; package.json untouched; invalid JSON is reported and left as it is (test/hooks.test.mjs).",
+  "commit": "c3d087d",
   "source": "BACKLOG.md"
  },
  {
