@@ -1156,13 +1156,19 @@
   "title": "The journal rule decided once (M-2, D-113): the journal is a named read for the steps that need it and in backups and the mirror (D-106), the repository clause is dropped, test/personal-data.test.mjs stays; CLAUDE.md Hard limits, core/run.mjs's pull refusal, the Data architecture Privacy bullet and spec.boundaries say the same thing in one commit; B-50 stays in BACKLOG.md marked done with the note superseded by B-62",
   "dod": null,
   "milestone": "M9",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-25"
   ],
-  "notes": "Taken in the Oct 20 build session.",
-  "commit": null,
-  "source": "BACKLOG.md"
+  "notes": "D-113 in one commit (6cb4c9f): pull refuses a journal read unless it names one of the pipeline's steps (for); evening-mac reads it for mac-files, so the nightly backup and Sunday mirror hold it (journal/<id>.md); the restore drill accepts a backup with it (system still refused); CLAUDE.md Hard limits and spec.boundaries (journal, mattOkRequired) now say what the Data architecture's Privacy bullet already said; test/personal-data.test.mjs stays; B-50 stays done, superseded by B-62. Tests: run, pipelines, spec and evening-mac (the backup holds the fixture journal; the mirror writes journal/<id>.md). On staging at e6a666c; the staging evening-mac is Mac-bound and was not fired from here. Live waits for Matt's OK.",
+  "commit": "6cb4c9f",
+  "source": "BACKLOG.md",
+  "board": {
+   "row": "v4 B-62: The journal rule decided once",
+   "why": "D-113: one statement of the journal rule in CLAUDE.md, the pull, the Data architecture and spec.boundaries",
+   "notes": "Settled in code and docs: your journal is read only where a step names it, and your nightly Mac backup and mirror now include it. Live waits for your OK."
+  },
+  "waitingOn": "Matt"
  },
  {
   "id": "B-63",
