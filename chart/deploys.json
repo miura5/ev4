@@ -1376,5 +1376,32 @@
    "D-049"
   ],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "470284a",
+  "time": "2026-10-20T00:59:31.277Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "c4d0aa1",
+  "tasks": [
+   "B-95",
+   "B-103",
+   "B-98",
+   "B-105",
+   "B-104",
+   "B-106",
+   "B-97",
+   "B-102",
+   "B-101",
+   "B-100",
+   "B-63",
+   "B-65"
+  ],
+  "summary": "report and triage; demo/runtime.js re-scripts session timing, the reading-along comments…; the Mac evening run starts without its code; The live evening-mac gate failure is still open. It needs a chat…; Greeting: what counts as urgent; Design hand-off: plan files a design doc's tasks and decisions; cutover: the Chart is how work is recorded; ship live waits out the watchdog windows; npm run check: every check in one command; A synthetic record so any session runs every harness; verify compares content, not commit; Hooks proven before used",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
