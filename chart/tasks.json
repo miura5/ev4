@@ -1207,16 +1207,17 @@
   "title": "Repository hygiene for the next reader (O-3): a formatter at 120 columns (a devDependency beside Playwright; the runtime stays dependency-free) applied once in its own commit with no logic change; page/app.js split by tab into page/app/*.js that the build concatenates into the same published app.js (the shell is unchanged); npm test on every push through a GitHub Actions workflow (the personal-data test included); CLAUDE.md gains the one line that names them",
   "dod": null,
   "milestone": "M9",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-63"
   ],
-  "notes": "Oct 20: taken after M8 blocked on staging firings (Matt's order). Formatter pass committed alone (da29d8b): same 334 tests by name, check GREEN",
-  "commit": null,
+  "notes": "Oct 20: prettier 3.9.10 at 120 columns, a pinned dev dependency (runtime still dependency-free), applied once in da29d8b with no logic change: the same 334 tests pass by name before and after, npm run check GREEN. page/app.js split by tab into 28 parts in page/app/ (a473214); the build joins them into the published app.js byte for byte (hash compared), test/format.test.mjs holds the join to the formatter. GitHub Actions runs the formatter check and npm test on every push (8722a95, af92e6a): green on main at af92e6a. CLAUDE.md names them. verify-deploy staging GREEN at af92e6a after the split. Against the DoD's 'harness 192/192 on a staging export': on a fresh staging export the page harness passes 252 of 273, and fails the same 21 checks at this session's starting commit b47e04c, so the format and split change nothing there; the 21 come from the harness expecting the synthetic record's shape (greeting text, briefing order, workouts, study-session stubs), which is B-67's ground",
+  "commit": "a473214",
   "source": "BACKLOG.md",
   "board": {
    "row": "v4 B-64: Repository hygiene",
-   "why": "the next reader meets 400-character lines and one 3,000-line page file, and nothing runs the tests on a push"
+   "why": "the next reader meets 400-character lines and one 3,000-line page file, and nothing runs the tests on a push",
+   "notes": "Code formatted at 120 columns, the page code split by tab, and the tests now run on GitHub on every push. Staging only; no behaviour change."
   }
  },
  {
