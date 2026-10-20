@@ -1708,15 +1708,15 @@
   "title": "Cutover: rewrite CLAUDE.md's every-session and Record steps to use the Chart, mark BACKLOG.md as generated, and record the switch as a decision. From here on, no view is edited by hand.",
   "dod": "the next real task runs start to finish through the Chart",
   "milestone": "M12",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-93",
    "B-94",
    "B-95",
    "B-96"
   ],
-  "notes": "Oct 19, c4d0aa1: cut over. CLAUDE.md's every-session and Record steps run through the Chart (inbox and triage first, brief, log, ship, views); BACKLOG.md says it is generated and npm test fails if it differs from chart/; D-140 recorded (the Decisions tab is now a view, next id D-141); staging redeployed at c4d0aa1 from ship with the task and page reads skipped, verify GREEN. Left: the definition of done needs the next real task run start to finish through the Chart; the session that records that task done closes B-97 with log B-97 --status done --commit <that task's commit>. Revert c4d0aa1 to go back to hand bookkeeping",
-  "commit": null,
+  "notes": "Cutover closed: B-106 (e0d4dbc) was the first task recorded done through the Chart, Oct 20.",
+  "commit": "e0d4dbc",
   "source": "BACKLOG.md",
   "board": {
    "row": "v4 B-97: cutover: the Chart is how work is recorded",
