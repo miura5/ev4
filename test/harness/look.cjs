@@ -26,6 +26,10 @@ const skeleton = body => '<!doctype html><html><head><meta charset=utf8><meta na
 const TYPES = { '.js': 'text/javascript', '.json': 'application/json', '.css': 'text/css', '.html': 'text/html' };
 const { SIZES, viewsOf, shotName } = require('./views.cjs');
 const VIEWS = viewsOf(fs.readFileSync(path.join(pageDir, 'index.html'), 'utf8'));
+// B-115: the tenet checks, on every view at spec.ui.tenets.widths; a tab in spec.ui.tenets.on fails the pass.
+const TENETS = JSON.parse(fs.readFileSync(path.join(root, 'spec', 'ev.spec.json'), 'utf8')).ui.tenets;
+const { collect, judge } = require('./tenets.cjs');
+const reports = [];
 const results = []; const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', name, detail]);
 
 (async () => {
@@ -49,6 +53,13 @@ const results = []; const ok = (name, cond, detail = '') => results.push([cond ?
       await page.waitForTimeout(500); // past the panel's fade-in
       await page.screenshot({ path: `${shots}/${shotName(view, size)}`, fullPage: true });
       ok(`[${width}] ${view.id}: no sideways scroll`, await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
+      if (TENETS.widths.includes(size.width) && [844, 830, 800].includes(size.height)) {
+        const snap = await page.evaluate(collect);
+        for (const c of judge(snap, TENETS.exceptions)) {
+          if (TENETS.on.includes(view.tab)) ok(`[${width}] ${view.id}: ${c.tenet}`, c.ok, c.detail);
+          else reports.push([c.ok ? 'ok  ' : 'NOT ', `[${width}] ${view.id}: ${c.tenet}`, c.detail]);
+        }
+      }
       if (view.tab === 'ev') ok(`[${width}] ev: the composer is in view`, await page.evaluate(() => { const c = document.querySelector('.compose-row').getBoundingClientRect(); return c.top >= 0 && c.bottom <= innerHeight + 1 && c.height > 0; }));
     }
     // Each seg control back to its first view, as a fresh open has it.
@@ -77,6 +88,8 @@ const results = []; const ok = (name, cond, detail = '') => results.push([cond ?
   }
   await browser.close();
   for (const [s, n, d] of results) console.log(`${s}  ${n}${d && s === 'FAIL' ? '  -- ' + d : ''}`);
+  // The tabs whose tenet checks are not on yet: each check per view, reported, not failed (B-115).
+  if (reports.length) { console.log(`\ntenet checks, reported until each tab's catch-up task turns them on (${reports.filter(r => r[0] === 'ok  ').length} of ${reports.length} pass):`); for (const [s, n, d] of reports) console.log(`${s}  ${n}  -- ${d}`); }
   const failed = results.filter(x => x[0] === 'FAIL').length;
   console.log(`\n${results.length - failed} of ${results.length} checks pass; screenshots in ${shots}`);
   process.exit(failed ? 1 : 0);

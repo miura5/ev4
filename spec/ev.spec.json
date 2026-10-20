@@ -3482,6 +3482,29 @@
     "record",
     "system"
    ]
+  },
+  "tenets": {
+   "note": "B-115: the UI tenets checked on every view by the look pass (test/harness/tenets.cjs). A tab in on fails the pass; the others report until their catch-up task (B-116 to B-126) adds them. exceptions: card ids or classes a tenet excuses.",
+   "checks": [
+    "D-146",
+    "D-147",
+    "D-148",
+    "D-149",
+    "D-150",
+    "D-151"
+   ],
+   "widths": [
+    390,
+    735,
+    1280
+   ],
+   "on": [
+    "ev"
+   ],
+   "exceptions": {
+    "D-147": [],
+    "D-151": []
+   }
   }
  },
  "workouts": {
