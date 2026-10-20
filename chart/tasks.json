@@ -2303,9 +2303,9 @@
   "title": "Motion on the other tabs (D-163): the staggered rise on every tab switch and the 0.9 s growth of bars and meters go; a tab's content shows at once (a fade of at most 0.2 s); folds, her stage and the side column keep their moves",
   "dod": "the look harness reads every transition and animation on each tab at 390 and 1280: none over 450 ms outside her stage, her core (the header avatar too), the reveal and the echo of his line; a tab's content settled within 450 ms of the switch; reduced-motion screenshots match; npm test green",
   "milestone": "M14 UI",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Oct 20: taken first by Matt's order (finishes M14 with B-126)",
   "commit": null,
   "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
  },
