@@ -519,6 +519,10 @@ test('B-60: rollback live dry-runs going back to the previous live build at main
   assert.equal(g('status', '--porcelain'), '');
 });
 
+test('B-111: a deploy credits each commit\'s own task, not every id a subject mentions', () => {
+  assert.deepEqual(C.commitTasks(['B-111: ideas rows (chart)', 'D-146 to D-165, B-111 to B-126: plan fab: 10 decisions (chart)', 'B-60: the rollback', 'B-109: tenets; see B-106'].join('\n')), ['B-109', 'B-60', 'B-111']);
+});
+
 test('B-60: the rollback names the schemas it crosses and the live prompts that differ; the skill names its steps', () => {
   assert.deepEqual(C.schemaCrossings({ weeks: 2, ideas: 2, notes: 1 }, { weeks: 1, ideas: 2 }), [{ collection: 'weeks', now: 2, then: 1 }, { collection: 'notes', now: 1, then: null }]);
   assert.deepEqual(C.schemaCrossings({ weeks: 2 }, { weeks: 2 }), []);

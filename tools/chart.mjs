@@ -842,6 +842,11 @@ export function versionsFrom(jsonl, url) {
   }
   return out;
 }
+/** The tasks a range of commits did, oldest first: each subject's leading id ("B-07: ..."), not every id it mentions
+ * (a hand-off commit names the ids it filed, "D-146 to D-165, B-111 to B-126: plan ..."). */
+export function commitTasks(subjects) {
+  return [...new Set(String(subjects).split('\n').map(l => (l.match(/^(B-\d{2,3})\b/) || [])[1]).filter(Boolean))].reverse();
+}
 async function ship(o) {
   const root = rootOf(o), target = o._[1];
   if (!['staging', 'live'].includes(target)) throw new Error('ship <staging|live>');
@@ -908,7 +913,7 @@ async function ship(o) {
   if (step.recorded) { console.log(`the ${target} deploy at ${manifest.commit.slice(0, 7)} is in the record`); return 0; }
   const prev = rec.deploys.filter(d => d.target === target).at(-1);
   let tasks = list(o.tasks);
-  if (!tasks.length && prev) { try { tasks = [...new Set(ids(git(root, ['log', '--format=%s', `${prev.commit}..${manifest.commit}`])).filter(x => x.startsWith('B-')))].reverse(); } catch { /* history too shallow */ } }
+  if (!tasks.length && prev) { try { tasks = commitTasks(git(root, ['log', '--format=%s', `${prev.commit}..${manifest.commit}`])); } catch { /* history too shallow */ } }
   const names = tasks.map(id => (rec.tasks.find(t => t.id === id) || {})).filter(t => t.id).map(t => boardName(t).replace(/^v4 B-\d+: /, ''));
   return record({ ...o, _: ['log', 'deploy'], target, commit: manifest.commit, verify: 'green', ok: target === 'live' ? 'Matt' : undefined, tasks: tasks.join(','), from: prev && prev.commit, summary: o.summary || names.join('; ') || null, why: o.why || null, decisions: o.decisions || null }, applyLog);
 }
