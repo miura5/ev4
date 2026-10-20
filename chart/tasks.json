@@ -875,13 +875,17 @@
   "title": "Exam plan draft on request (pick 3, D-102): plans/<examId>-<n> for later drafts, planedits.plan (schema bump) set when Matt accepts a draft from its card, planTasks reading the plan in force, and the one greeting line when the Canvas sync brings in a new exam-content module; nothing is drafted unasked",
   "dod": null,
   "milestone": "M8",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-39"
   ],
-  "notes": "",
+  "notes": "Oct 20: taken while M8's other tasks wait on B-42's staging firing (Matt: B-45 whenever it fits)",
   "commit": null,
-  "source": "BACKLOG.md"
+  "source": "BACKLOG.md",
+  "board": {
+   "row": "v4 B-45: Exam plan drafts on request",
+   "why": "the exam-plan job writes plans/<exam>-draft beside a plan and nothing reads it; there is no way to switch to a new plan"
+  }
  },
  {
   "id": "B-46",
