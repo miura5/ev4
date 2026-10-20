@@ -2111,7 +2111,8 @@
     "ArtifactData refuses a batch request over 1048576 bytes serialized (\"split it into smaller batches\")",
     "a batch holds at most 50 writes (the tool's own schema)",
     "the run checkout is shallow, 50 commits deep from main at the session start: a deployed commit more than 50 commits behind main is missing and the gate fails (\"this checkout does not have the deployed commit\"); deploy live before main runs that far ahead",
-    "list_triggers ends a page early by response size (11 tasks of limit 100 here) with has_more and a next_cursor: the full list takes cursor paging"
+    "list_triggers ends a page early by response size (11 tasks of limit 100 here) with has_more and a next_cursor: the full list takes cursor paging",
+    "Hooks: a scheduled run starts in /home/claude, not in the checkout, and the repository's .claude/settings.json SessionStart hook did not run (no /tmp/ev4-hook-marker; B-65, session cse_0147TqGQdQEgvhe1Q1XX2RL6, runs/diagnostic-20261020-004959219, Oct 20). Pipeline runs do not load the repository's hooks."
    ],
    "numbers": {
     "documentBytes": 262144,
@@ -2263,6 +2264,13 @@
      "date": "2026-10-17",
      "run": null,
      "evidence": "v3 build chats"
+    },
+    {
+     "capability": "hooks from the checkout's .claude/settings.json (a cloud build session started in the checkout runs its SessionStart hook)",
+     "proven": true,
+     "date": "2026-10-20",
+     "run": "cse_01XNq9pktXaebtWwbLeeEGwE",
+     "evidence": "B-65: /tmp/ev4-hook-marker written 2026-10-20T00:09:21Z as this build session started; the scheduled diagnostic the same hour found none (cloud-run limits)"
     }
    ],
    "limits": [
