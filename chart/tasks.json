@@ -1945,7 +1945,7 @@
   "milestone": "M13 Workflow",
   "status": "done",
   "depends": [],
-  "notes": "Staging green at 93698f0. Core: prepKindOf/prepDay/prepList/prepEdit; items only where a passage names them, each citing file and page; Matt's Oct 20 clinical items seed spec.constants.prep.lookFor.clinical; hand-added items are dayedits added entries tagged PREP (no schema change), ticks are checks prep-night-*/prep-morning-*; class days count only when the calendar names a class or lecture. test/prep.test.mjs (7) and test/harness/prep.cjs (30 checks at 390 and 1280, screenshots looked at); npm run check GREEN (run.cjs's workout clock now moves by setSystemTime). Live waits for Matt's OK.",
+  "notes": "Live at 93698f0 on Matt's OK in the Oct 20 build session (\"Deploy live\", 21:16 CT): ship live GREEN; no live study session running; outside the watchdog windows. Rollback is a redeploy of c049f48.",
   "commit": "93698f0",
   "source": "Oct 19 build chat: Claude's workflow review, filed on Matt's OK",
   "words": "Question for Matt: should a validation or a clinical tomorrow count as urgent in the greeting's briefing? Today urgent means an exam today or tomorrow, or graded work due today and not ticked.",
@@ -1963,7 +1963,7 @@
    "outcome": "task",
    "at": "2026-10-20T00:11:33.591Z"
   },
-  "waitingOn": "Matt"
+  "waitingOn": "none"
  },
  {
   "id": "B-107",
