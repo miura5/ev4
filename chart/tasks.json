@@ -1972,13 +1972,19 @@
   "title": "Prep checks in the evening run (D-143, D-144): the evening step that builds tomorrow's prep list from that day's materials, and the night-before pack check line in the 8:15pm push",
   "dod": "a scheduled evening run fired against staging writes tomorrow's prep list for a planted validation, lab and clinical day (each cited), says so on a day with no materials, and its push carries the pack-check line; runs/<id> read back; npm test green",
   "milestone": "M13 Workflow",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-104"
   ],
-  "notes": "Taken in the Oct 20 build session after B-104 (D-145 lifted the R-01 wait).",
-  "commit": null,
-  "source": "B-104 split, Oct 20"
+  "notes": "Proven by the staging evening-cloud fired against staging with planted made-up days and materials for tomorrow (Oct 20), runs/ read back: validation runs/evening-cloud-20261020-022912374 (state/current.snapshot.prep: Penlight, Skills packet, Pair of size 7 sterile gloves, each 'B107 Sterile Gloving Validation Guide, p. 1'; push 'Pack 3 for Validation: Sterile gloving'); clinical evening-cloud-20261020-023125066 (6 items, folder marked paperwork, Jarvis from the NUR 112 calendar p. 8; push 'Pack 6 for Clinical: Enterprise Health &…'); lab evening-cloud-20261020-023406048 ('Pack 3 for Lab: Wound care practice'); no materials evening-cloud-20261020-023826156 at e5bc1cb ('Prep: nothing in your materials for Class:…', note says so plainly). The first run at ec51b44 took the real Skills Packet's table of contents for a list; fixed in 3e9fb46. Lint 0 errors on each. Planted documents retired by marking (dateedits, materialedits); the staging clinical restored. npm test green. Live waits for Matt's OK.",
+  "commit": "3e9fb46",
+  "source": "B-104 split, Oct 20",
+  "board": {
+   "row": "v4 B-107: Prep checks in the evening run",
+   "why": "The night-before pack list is built by the 8:15pm run from tomorrow's materials and named in the push (D-143, D-144)",
+   "notes": "On staging: the 8:15pm evening run builds tomorrow's pack list from that day's materials (each item with file and page) and the push leads with it, or says plainly when nothing in your materials covers the day. Live waits for your OK."
+  },
+  "waitingOn": "Matt"
  },
  {
   "id": "B-105",
