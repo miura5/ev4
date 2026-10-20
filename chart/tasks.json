@@ -2078,11 +2078,15 @@
   "title": "Short heights on the E.V. tab: at 390 x 450 (the phone with its keyboard open) the chat box is cut off below the screen; her stage steps down further and the briefing yields so the composer and her current line stay in view, idle, in a conversation and in a session (D-153)",
   "dod": "the Captions harness at 390x450, 375x667 and 735x830, idle, mid-conversation and mid-session: the composer's bottom edge and her current line inside the viewport; screenshots looked at; npm test green",
   "milestone": "M14 UI",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken after B-111 (M14).",
   "commit": null,
-  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474",
+  "board": {
+   "row": "v4 B-112: Chat box stays in view at short heights",
+   "why": "at 390x450 (keyboard open) the chat box was cut off below the screen"
+  }
  },
  {
   "id": "B-113",
