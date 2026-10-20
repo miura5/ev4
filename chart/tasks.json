@@ -598,16 +598,17 @@
   "title": "Tenets in the Chart (Matt, Oct 20): standing design principles that every relevant session applies, beside the one-time decisions. A decision gains kind (decision or tenet); a tenet also carries its scope (ui, data, ops, pipelines) and how it is checked (harness, lint, ship, review). plan files a design doc's 'Tenets proposed' table (P-n, tenet, scope, check, why) like its decisions; brief lists the accepted tenets in the task's scope (from its milestone, the files and spec keys it names, or --scope); the review skill checks a task's diff against the tenets in its scope; lint flags an open task, rule or test that cites a superseded tenet; the Decisions tab shows the kind; CLAUDE.md says in one line that a tenet is changed only by a superseding tenet plus a sweep task for what still follows the old one",
   "dod": "a planted ui tenet appears in the brief of a page task and not in a pipeline task's; superseding it makes lint name an open task that still cites it; plan files a planted 'Tenets proposed' table with scope and check; the review skill's steps name the tenets in scope; npm test green",
   "milestone": "M13 Workflow",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-106"
   ],
-  "notes": "Taken on the parent build chat's request (Matt, Oct 20), ahead of the rest of the list.",
-  "commit": null,
+  "notes": "A decision has kind decision|tenet; a tenet carries scope (ui, data, ops, pipelines) and check (harness, lint, ship, review). log decision --kind tenet --scope --checked-by; plan files a Tenets proposed table (shared P-n and D-ids); brief lists accepted tenets in the task's scope (milestone, files, spec keys, or --scope); lint names open tasks and tests citing a superseded tenet (the sweep task naming both is exempt); the review skill checks the diff against them; the Decisions tab labels tenet rows; CLAUDE.md has the one line. Tests B-109 (3); npm test 317 green. Tooling only: nothing to ship.",
+  "commit": "69502f6",
   "source": "Matt, Oct 20, in the B-92 build chat",
   "board": {
    "row": "v4 B-109: Tenets in the Chart",
-   "why": "standing design principles every session applies, beside one-time decisions"
+   "why": "standing design principles every session applies, beside one-time decisions",
+   "notes": "Standing principles (tenets) can now be filed, show up in each task's brief, and are checked in review. Tooling only, nothing to deploy."
   }
  },
  {
