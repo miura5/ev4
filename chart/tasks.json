@@ -1227,7 +1227,7 @@
   "depends": [
    "B-61"
   ],
-  "notes": "Proved on staging: the watchdog fired at 03:10Z (run watchdog-20261020-031045025) wrote health/current v7 with pipelines.watchdog ok, self:true, endedAt set; the planted unfinished run was reported, not re-fired twice. Live waits for Matt's OK.",
+  "notes": "Session summary: B-104 live at 93698f0 on Matt's OK. On staging and green, live waits for Matt's OK: B-107, B-34, B-110, B-99, B-61, B-62, B-66. One ship live --matt-ok at main's head carries all of them and also resets the runs' clone distance (B-110; live is 34+ commits behind, red at 40, out of reach at 50). Not before 6pm Tue to end of Wed (Exam 4) unless Matt names that window. I stopped here to keep live inside the clone for the 4:25am live morning run. Not started: B-64, B-67, M11 (B-74, B-75, B-78-B-81), B-42, M8, B-45, B-60. Live evening-mac still fails because the Mac has no checkout (B-83, needs Matt at the Mac).",
   "commit": "e6a666c",
   "source": "BACKLOG.md",
   "board": {
