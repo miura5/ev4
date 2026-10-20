@@ -1725,6 +1725,20 @@
   }
  },
  {
+  "id": "B-106",
+  "kind": "task",
+  "title": "Design hand-off into the Chart (D-141; Matt, Oct 20): `plan --from <doc link>` reads, from this session's read of a design doc, its 'Tasks to add' table (Task, Depends, Definition of done, Milestone) and its 'Decisions proposed' table (P-n, Decision, Why), and prints the log new and log decision commands that file them (the next free ids; each P-n rewritten to its D-id in titles and depends), then runs them with --apply; the Build plan tab of E.V. Foundation v4 gets one line, by a printed Docs call, saying new tasks enter through the Chart and the tab is design history; CLAUDE.md says in one line how a design chat hands off (its doc's two tables, then a build chat runs plan)",
+  "dod": "a planted doc read with two tasks and one proposed decision files two open tasks and one decision with the next free ids, P-1 rewritten to its D-id, and a second run files nothing; npm test green; the Build plan tab's line and CLAUDE.md's hand-off line are in",
+  "milestone": "M12",
+  "status": "open",
+  "depends": [
+   "B-96"
+  ],
+  "notes": "Oct 20: added on Matt's OK (the design-to-Chart hand-off was manual, which is how B-74, B-75 and B-78 to B-80 never reached the backlog)",
+  "commit": null,
+  "source": "Matt, Oct 20, in the B-92 build chat"
+ },
+ {
   "id": "B-98",
   "kind": "task",
   "title": "Live evening-mac runs with its checkout: its first scheduled run (Oct 18, 8:20pm) failed at the gate, \"the E.V. repository is not checked out in this session\" (runs/evening-mac-failed-20261019-012057581), while the staging evening-mac of the same shape ran with it; find the cause (the task was re-saved Oct 18 18:13Z in the desktop app when its push was turned on) and fix the task so its runs start in this repository; nothing deleted (a replacement task retires the old one under spec.tasks.retired)",
