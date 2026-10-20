@@ -598,13 +598,17 @@
   "title": "Tenets in the Chart (Matt, Oct 20): standing design principles that every relevant session applies, beside the one-time decisions. A decision gains kind (decision or tenet); a tenet also carries its scope (ui, data, ops, pipelines) and how it is checked (harness, lint, ship, review). plan files a design doc's 'Tenets proposed' table (P-n, tenet, scope, check, why) like its decisions; brief lists the accepted tenets in the task's scope (from its milestone, the files and spec keys it names, or --scope); the review skill checks a task's diff against the tenets in its scope; lint flags an open task, rule or test that cites a superseded tenet; the Decisions tab shows the kind; CLAUDE.md says in one line that a tenet is changed only by a superseding tenet plus a sweep task for what still follows the old one",
   "dod": "a planted ui tenet appears in the brief of a page task and not in a pipeline task's; superseding it makes lint name an open task that still cites it; plan files a planted 'Tenets proposed' table with scope and check; the review skill's steps name the tenets in scope; npm test green",
   "milestone": "M13 Workflow",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-106"
   ],
-  "notes": "Oct 20: filed on Matt's OK. The UI tenets of the conversation tab (the UI overhaul design chat, started the same evening) are its first users; tenets approved before this lands are filed as decisions and given their kind here",
+  "notes": "Taken on the parent build chat's request (Matt, Oct 20), ahead of the rest of the list.",
   "commit": null,
-  "source": "Matt, Oct 20, in the B-92 build chat"
+  "source": "Matt, Oct 20, in the B-92 build chat",
+  "board": {
+   "row": "v4 B-109: Tenets in the Chart",
+   "why": "standing design principles every session applies, beside one-time decisions"
+  }
  },
  {
   "id": "B-31",
