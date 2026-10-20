@@ -2146,14 +2146,15 @@
   "title": "Study, the question: the stem leads at 20 px; the tags become one quiet line under it; one counter, in the progress bar; Give me 5 more is one line shown once the set is done; Review and Practice alike (D-146, D-150, D-151)",
   "dod": "the look harness at 390, 735 and 1280: no chip above a stem, one count on the screen, no More practice card while a set is unfinished, and its line after the last answer; Study's tenet checks on and green; screenshots looked at",
   "milestone": "M14 UI",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Taken after B-115 (M14).",
-  "commit": null,
+  "notes": "The question (Review and Practice alike, one runner): the stem leads at 20 px; its kind (Weak spot · E4-1 · Recognize cues, and Select all that apply) is one quiet line under it, no chips; one count, beside the progress bar; More practice is one line (Five new questions on what's due soonest · Give me 5 more), hidden while today's set is unfinished. Look harness at 390, 735 and 1280: stem 20 px, no chip above it, one count, no More practice mid-set, and its one line after the last answer (6/6). spec.ui.tenets.on gains study-review (18/18 green); Study's Practice list and Plan stay reporting until B-126, whose rework they are. D-149's check reads coral never above the urgent count, and only the E.V. tab must show it (the literal 'equal on each tab' would force coral onto every tab). npm run check GREEN; screenshots looked at. Staging GREEN at f525c6e.",
+  "commit": "f525c6e",
   "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474",
   "board": {
    "row": "v4 B-116: Study, the question",
-   "why": "pills above the stem, two counters and a More practice card mid-set"
+   "why": "pills above the stem, two counters and a More practice card mid-set",
+   "notes": "A practice question now leads with the question itself; one count, no pills, and Give me 5 more only once the set is done. On staging."
   }
  },
  {
