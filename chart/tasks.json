@@ -2182,11 +2182,15 @@
   "title": "Progress, Readiness: one lead line (percent solid, right answers to go, days left) and one objective list in readinessAudit's order (most not yet right first), each row showing its not-yet count and opening to its counts, accuracy and reread passages; format, clinical-judgment step and 7 days fold to one line each and are absent while they hold one row (D-155)",
   "dod": "the look harness: Readiness at 390 is at most 1.5 screens with all rows closed; each objective appears once; an opened row shows its passages; the planted one-row format table is absent; Progress's tenet checks on and green at 390, 735 and 1280",
   "milestone": "M14 UI",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken after B-117 (M14).",
   "commit": null,
-  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474",
+  "board": {
+   "row": "v4 B-118: Progress, Readiness as one list",
+   "why": "objectives appeared three times and the view ran to 2,668 px at 390"
+  }
  },
  {
   "id": "B-119",
