@@ -1971,11 +1971,11 @@
   "title": "Prep checks in the evening run (D-143, D-144): the evening step that builds tomorrow's prep list from that day's materials, and the night-before pack check line in the 8:15pm push",
   "dod": "a scheduled evening run fired against staging writes tomorrow's prep list for a planted validation, lab and clinical day (each cited), says so on a day with no materials, and its push carries the pack-check line; runs/<id> read back; npm test green",
   "milestone": "M13 Workflow",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-104"
   ],
-  "notes": "Waits for D-085's window to close (D-139, rule R-01): it likely adds a stored document and a pipeline judgment step, and it changes a pipeline prompt, so it cannot go live before then. Split from B-104 on Matt's Oct 20 answer.",
+  "notes": "Taken in the Oct 20 build session after B-104 (D-145 lifted the R-01 wait).",
   "commit": null,
   "source": "B-104 split, Oct 20"
  },
