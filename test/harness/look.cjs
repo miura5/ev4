@@ -92,6 +92,26 @@ const results = []; const ok = (name, cond, detail = '') => results.push([cond ?
         const counts = [...panel.querySelectorAll('*')].filter(e => vis(e) && [...e.childNodes].some(n => n.nodeType === 3 && /\b\d+ of \d+\b/.test(n.textContent))).map(e => e.textContent.trim());
         return { stem: !!stem && parseFloat(getComputedStyle(stem).fontSize), chipAbove: !!stem && [...document.querySelectorAll('#rv-body .chip')].some(c => vis(c) && c.getBoundingClientRect().top < stem.getBoundingClientRect().top), counts, more: vis(document.getElementById('more-card')) }; });
       ok(`[${width}] study: the stem leads at 20 px with no chip above it, one count on the screen, no More practice mid-set`, q.stem === 20 && !q.chipAbove && q.counts.length === 1 && !q.more, JSON.stringify(q));
+      // B-126 (D-165): the counter is the set's fold line, opening the set above the question (beside it from 1024 px).
+      { await page.click('#rv-count'); await page.waitForTimeout(150);
+        const sl = await page.evaluate(() => { const l = document.querySelector('#rv-body .set-list'); return { tag: document.getElementById('rv-count').tagName, list: l ? l.querySelectorAll('.set-item').length : 0, beside: !!document.querySelector('#rv-body.q-beside .q-set .set-list'), expanded: document.getElementById('rv-count').getAttribute('aria-expanded'), allQ: [...document.querySelectorAll('#p-study button')].some(b => /All questions/.test(b.textContent)) }; });
+        ok(`[${width}] study: the counter is the set's fold line, opening the set ${size.width >= 1024 ? 'beside' : 'above'} the question; no All questions`, sl.tag === 'BUTTON' && sl.list >= 2 && sl.expanded === 'true' && sl.beside === (size.width >= 1024) && !sl.allQ, JSON.stringify(sl));
+        await page.screenshot({ path: `${shots}/look-study-set-${width}.png`, fullPage: true });
+        await page.click('#rv-count'); await page.waitForTimeout(150); }
+      // B-126 (D-165): the planted set's first question answered wrong: one verdict line under the stem, his pick's and
+      // the right answer's why shown and the rest folded under one line, nothing above the verdict moved.
+      { const pick = await page.evaluate(() => { const stem = document.querySelector('#rv-body .q-stem').textContent; for (const x of Object.values(window.__db.sets)) for (const q of x.items || []) if (q.stem === stem && q.options && q.correct) return q.options.findIndex((_, i) => !q.correct.includes(i)); return 1; });
+        await page.locator('#rv-body label.opt').nth(pick).click(); await page.locator('#rv-body button:has-text("Check answer")').scrollIntoViewIfNeeded();
+        const where = () => page.evaluate(() => ({ y: Math.round(scrollY), stem: Math.round(document.querySelector('#rv-body .q-stem').getBoundingClientRect().top), tags: Math.round(document.querySelector('#rv-body .q-tags').getBoundingClientRect().top), bar: Math.round(document.querySelector('#study-review .bar-row').getBoundingClientRect().top) }));
+        const before = await where(); await page.click('#rv-body button:has-text("Check answer")'); await page.waitForTimeout(250); const after = await where();
+        const v = await page.evaluate(() => { const vis = e => !!e && !e.closest('[hidden]') && !e.hidden && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().height > 0, b = document.getElementById('rv-body');
+          const vs = [...b.querySelectorAll('.verdict')].filter(vis), vd = vs[0], lh = vd ? (parseFloat(getComputedStyle(vd).lineHeight) || parseFloat(getComputedStyle(vd).fontSize) * 1.3) : 0;
+          return { verdicts: vs.length, oneLine: !!vd && vd.getBoundingClientRect().height <= lh * 1.5, text: vd && vd.textContent, underStem: !!vd && vd.previousElementSibling === b.querySelector('.q-tags'), whys: [...b.querySelectorAll('.why')].filter(vis).length, folded: [...b.querySelectorAll('.why-rest')].filter(e => !vis(e)).length, fold: !!b.querySelector('.why-fold[aria-expanded="false"]') }; });
+        ok(`[${width}] study: answered, one verdict line under the stem, two whys shown and the rest folded, nothing above it moved`, v.verdicts === 1 && v.oneLine && /^Missed/.test(v.text || '') && v.underStem && v.whys === 2 && v.folded >= 1 && v.fold && JSON.stringify(before) === JSON.stringify(after), JSON.stringify({ before, after, v }));
+        await page.screenshot({ path: `${shots}/look-study-answered-${width}.png`, fullPage: true });
+        await page.click('#rv-body .why-fold'); await page.waitForTimeout(150);
+        ok(`[${width}] study: Why not the others opens the other whys in place`, await page.evaluate(() => [...document.querySelectorAll('#rv-body .why-rest')].every(e => !e.hidden) && document.querySelector('#rv-body .why-fold').getAttribute('aria-expanded') === 'true'));
+        const nx = page.locator('#rv-body button', { hasText: /Next question|See results/ }).first(); if (await nx.count()) { await nx.click(); await page.waitForTimeout(120); } }
       for (let i = 0; i < 15 && await page.isVisible('#rv-body button:has-text("Check answer")'); i++) {
         if (await page.locator('#rv-body table.mx').count()) { const rows = await page.locator('#rv-body table.mx tbody tr').count(); for (let r = 0; r < rows; r++) await page.locator('#rv-body table.mx tbody tr').nth(r).locator('input[type=radio]').first().check(); }
         else await page.locator('#rv-body label.opt').first().click();
@@ -101,6 +121,25 @@ const results = []; const ok = (name, cond, detail = '') => results.push([cond ?
       const done = await page.evaluate(() => { const m = document.getElementById('more-card'), r = m.getBoundingClientRect(); return { shown: !m.hidden && r.height > 0, h: Math.round(r.height), button: (document.getElementById('more-btn') || {}).textContent, left: document.querySelectorAll('#rv-body button').length && /Check answer/.test(document.getElementById('rv-body').textContent) }; });
       ok(`[${width}] study: after the last answer, More practice is one line with Give me 5 more`, done.shown && done.h <= 72 && done.button === 'Give me 5 more' && !done.left, JSON.stringify(done));
       await page.screenshot({ path: `${shots}/look-study-done-${width}.png`, fullPage: true });
+      // B-126 (D-165): the finished set leads with its score; Give me 5 more is the one primary; misses are lines opening
+      // to what he picked and why; right answers fold; Practice and Plan each lead with one thing and carry no pill.
+      { const fin = await page.evaluate(() => { const vis = e => !!e && !e.closest('[hidden]') && !e.hidden && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().height > 0, p = document.getElementById('p-study'), b = document.getElementById('rv-body');
+          return { first: b.firstElementChild && b.firstElementChild.className, score: (b.querySelector('.set-score') || {}).textContent, primaries: [...p.querySelectorAll('button.primary')].filter(vis).map(x => x.textContent.trim()), misses: [...b.querySelectorAll('.sum-item')].filter(vis).length, rightFolded: [...b.querySelectorAll('.fold-line')].some(f => vis(f) && /^\d+ right$/.test(f.textContent.trim()) && f.getAttribute('aria-expanded') === 'false'), pills: [...b.querySelectorAll('.chip')].filter(vis).length }; });
+        ok(`[${width}] study: the finished set leads with its score, misses as lines, right answers folded, Give me 5 more the one primary`, /set-score/.test(fin.first || '') && /^\d+ of \d+ right$/.test(fin.score || '') && fin.misses >= 1 && fin.rightFolded && fin.primaries.length === 1 && fin.primaries[0] === 'Give me 5 more' && !fin.pills, JSON.stringify(fin));
+        await page.locator('#rv-body .sum-line').first().click(); await page.waitForTimeout(150);
+        const miss = await page.evaluate(() => (document.querySelector('#rv-body .sum-item.open .sum-more') || {}).textContent || '');
+        ok(`[${width}] study: a miss opens in place to what he picked and the answer, with their whys`, /You picked: /.test(miss) && /Answer: /.test(miss), miss.slice(0, 160));
+        await page.locator('#rv-body .sum-line').first().click(); await page.waitForTimeout(100);
+        for (const v of ['practice', 'plan']) {
+          const seg = await page.isVisible(`#seg-study [data-v="${v}"]`); if (seg) await page.click(`#seg-study [data-v="${v}"]`); else await page.click('#plan-card .fold-line');
+          await page.waitForTimeout(300);
+          const r = await page.evaluate(box => { const vis = e => !!e && !e.closest('[hidden]') && !e.hidden && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().height > 0, c = document.querySelector(box), own = e => [...e.childNodes].some(n => n.nodeType === 3 && n.textContent.trim());
+            return { leads: [...c.querySelectorAll('*')].filter(e => vis(e) && own(e) && parseFloat(getComputedStyle(e).fontSize) >= 20).map(e => e.textContent.trim().slice(0, 40)), pills: [...c.querySelectorAll('.chip')].filter(vis).length, paragraph: /Ticks save/.test(c.textContent), tall: [...c.querySelectorAll('li.row')].filter(vis).filter(li => li.getBoundingClientRect().height > 44).length }; }, v === 'practice' ? '#pr-card' : '#plan-card');
+          ok(`[${width}] study ${v}: one lead, no pill${v === 'plan' ? ', no paragraph on ticks' : ''}, each row one line`, r.leads.length === 1 && !r.pills && !r.paragraph && !r.tall, JSON.stringify(r));
+          await page.screenshot({ path: `${shots}/look-study-${v}-led-${width}.png`, fullPage: true });
+          if (!seg) await page.click('#plan-card .fold-line');
+        }
+        await page.click('#seg-study [data-v="review"]'); await page.waitForTimeout(150); }
     }
     // B-117: Today: no stat tile, no item's minutes twice, the exam in Next 7 days only, coral equal to core's urgent
     // count, a Prep marker on the clinical day; ticking keeps the scroll (v4 rule 6).
@@ -183,7 +222,7 @@ const results = []; const ok = (name, cond, detail = '') => results.push([cond ?
         await page.waitForTimeout(Math.max(0, t0 + M.maxMs - Date.now()));
         const at = await page.evaluate(motion, M), s0 = await sig(); await page.waitForTimeout(700); const s1 = await sig();
         const c = judgeMotion(first, at, M.maxMs);
-        const moved = s0 === s1 ? [] : s0.split(';').map((x, i) => [i, x, s1.split(';')[i]]).filter(([, a, b]) => a !== b).slice(0, 3);
+        const moved = s0 === s1 ? [] : [s0.split(';').length + ' -> ' + s1.split(';').length].concat(s0.split(';').map((x, i) => [i, x, s1.split(';')[i]]).filter(([, a, b]) => a !== b).slice(0, 3));
         ok(`[${width}] ${view.id}: D-163 motion`, c.ok && s0 === s1, c.detail + (s0 === s1 ? '' : '; the layout still moved after 450 ms: ' + JSON.stringify(moved)));
         // On E.V. the end state is after her reveal, which ends within 6 s (D-163); the settled shot waits it out.
         const ENDS = view.tab === 'ev' ? 6000 : 0; if (ENDS) await page.waitForTimeout(ENDS);

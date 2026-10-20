@@ -72,18 +72,18 @@
     <div id="study-review" class="panel">
       <div class="card">
         <div class="card-head"><h2>Today's review</h2></div>
-        <div class="bar-row"><div class="progress" aria-hidden="true"><i id="rv-bar" style="width:0"></i></div><span class="meta" id="rv-count"></span></div>
+        <div class="bar-row"><div class="progress" aria-hidden="true"><i id="rv-bar" style="width:0"></i></div><button type="button" class="fold-line set-count" id="rv-count" aria-expanded="false" aria-controls="rv-body" hidden></button></div>
         <div id="rv-body"><p class="empty">Today's review appears after the 4:25am run.</p></div>
       </div>
-      <!-- B-116 (D-151): one line, shown once today's set is done. -->
+      <!-- B-116 (D-151): one line, shown once today's set is done; B-126 (D-165): then inside the finished set, its one primary. -->
       <div class="card more-line" id="more-card" hidden title="E.V. writes 5 new questions aimed at the weak spots due soonest and your weakest objective. It uses your Claude plan, like a chat.">
-        <span class="meta grow" id="more-status" role="status">Five new questions on what’s due soonest.</span><button type="button" id="more-btn">Give me 5 more</button>
+        <span class="meta grow" id="more-status" role="status">Five new questions on what’s due soonest.</span><button type="button" id="more-btn" class="primary">Give me 5 more</button>
       </div>
     </div>
     <div id="study-practice" class="panel" hidden>
       <div class="card" id="pr-card">
         <div class="card-head"><h2 id="pr-title">Drills and practice</h2><span class="meta" id="pr-count"></span></div>
-        <div class="bar-row" id="pr-prog" hidden><div class="progress" aria-hidden="true"><i id="pr-bar" style="width:0"></i></div><span class="meta" id="pr-qcount"></span></div>
+        <div class="bar-row" id="pr-prog" hidden><div class="progress" aria-hidden="true"><i id="pr-bar" style="width:0"></i></div><button type="button" class="fold-line set-count" id="pr-qcount" aria-expanded="false" aria-controls="pr-body" hidden></button></div>
         <div id="pr-body"></div>
       </div>
     </div>

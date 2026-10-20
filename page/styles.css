@@ -550,3 +550,31 @@ body.captions.skill-on #p-ev>.sk-panel{align-self:start}
 .ws-more{display:none;flex-direction:column;gap:6px;padding:0 0 8px}.ws-item.open .ws-more{display:flex}.ws-more .meta{margin:0}.ws-more .actions{margin:0}
 #weak-card>.fold-line{display:block}
 button.tlink{all:unset;cursor:pointer;color:var(--accent-text);font-size:14px;padding:4px 0}button.tlink:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+/* B-126 (D-165): Study answered and done. The counter is the set's fold line; one line per question under it, beside
+   the question from 1024 px; the verdict one line under the stem; a finished set's lines open in place. */
+.set-count{flex:none;font-variant-numeric:tabular-nums;color:var(--ink2);font-size:13.5px}
+.fold-line.flat{cursor:default;pointer-events:none}.fold-line.flat::after{content:''}
+.set-list{margin:2px 0 8px}
+.set-q,.sum-line,.pr-line{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:8px;width:100%;min-height:36px;cursor:pointer;color:var(--ink);font-size:14.5px}
+.set-q:focus-visible,.sum-line:focus-visible,.pr-line:focus-visible,.next-line:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.set-list .row,.sum-list .row,#pr-body .row{padding:4px 0}
+.sq-n{flex:none;color:var(--soft);font-variant-numeric:tabular-nums;min-width:1.6em}
+.sq-t,.sum-t,.pr-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sq-s,.sum-k,.pr-s{flex:none;color:var(--soft);font-size:13px}.sq-s.ok{color:var(--accent-text)}
+.set-item.current .sq-t{color:var(--accent-text)}
+.q-beside{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,15rem);gap:20px;align-items:start}
+.q-main{display:flex;flex-direction:column;gap:12px;min-width:0}.q-set{border-left:1px solid var(--line);padding-left:16px;min-width:0}
+.verdict{margin:0}
+.why[hidden]{display:none}
+.why-fold{align-self:flex-start}
+.sum-h{margin:6px 0 0}
+.sum-more{display:flex;flex-direction:column;gap:6px;padding:2px 0 8px}.sum-more p{margin:0}
+.next-line{all:unset;cursor:pointer;color:var(--ink2);font-size:14.5px;padding:8px 0 2px;display:block}.next-line::after{content:' ›'}
+.pr-lead{display:flex;flex-direction:column;gap:8px;align-items:flex-start;padding-bottom:6px}
+.pr-acts{display:flex;gap:8px;flex-wrap:wrap;padding:4px 0 8px}.pr-acts[hidden]{display:none}
+#more-card:not(.card){padding:4px 0}
+.plan-lead{margin:2px 0 0}
+.plan-dh{margin:10px 0 0}
+.plan-past[hidden]{display:none}
+.plan-item .title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}.plan-item.open .title{white-space:normal}
+#plan-card .row{padding:8px 0;align-items:center}

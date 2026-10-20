@@ -187,19 +187,47 @@
     return out;
   }
   function retake(set, key) { retakes[set.id] = now(); views[key] = null; for (const k of Object.keys(sels)) if (k.startsWith(key)) delete sels[k]; render(); }
-  function runner(o) { // o: {key, set, items, body, countEl, barEl, label, summaryExtra}
+  // B-126 (D-165): the folds the page keeps while it is open: a set's list under its counter, the other options' whys
+  // under an answer, a finished set's lines and its right answers.
+  const setOpen = {}, whyOpen = {}, sumOpen = {};
+  const verdictWord = (a, type) => a.correct ? 'Right' : (type !== 'single' && a.score > 0 ? `Partly right (${Math.round(a.score * 100)}%)` : 'Missed');
+  // The outcome core wrote ("Right. One more correct check on Wed 10/21 makes it solid.") as the verdict's second half.
+  function outcomeLine(o) {
+    let t = String(o || '').trim().replace(/^(right|correct|not quite|missed|wrong|partly right)[^.!]*[.!]\s*/i, '').replace(/[.\s]+$/, '');
+    return /^[A-Z][a-z]/.test(t) ? t.charAt(0).toLowerCase() + t.slice(1) : t;
+  }
+  function setLines(key, items, answers, current) { // the set as one line per question, under its counter
+    const ul = el('ul', 'list set-list');
+    items.forEach((q, i) => { const a = answers[q.id]; const li = el('li', 'row set-item' + (q.id === current ? ' current' : ''));
+      const b = el('button', 'set-q'); b.type = 'button'; if (q.id === current) b.setAttribute('aria-current', 'true');
+      b.append(el('span', 'sq-n', (i + 1) + '.'), el('span', 'sq-t', q.topic || q.stem), el('span', 'sq-s' + (a ? (a.correct ? ' ok' : ' no') : ''), a ? (a.correct ? 'right' : 'missed') : ''));
+      b.addEventListener('click', () => { views[key] = q.id; if (!WIDE.matches) setOpen[key] = false; render(); });
+      li.append(b); ul.append(li); });
+    return ul;
+  }
+  function foldLine(text, open, onToggle, cls) { const f = el('button', 'fold-line' + (cls ? ' ' + cls : ''), text); f.type = 'button'; f.setAttribute('aria-expanded', String(!!open)); f.addEventListener('click', onToggle); return f; }
+  function runner(o) { // o: {key, set, items, body, countEl, barEl, label, summaryExtra, more, next}
     const { key, set, items, body } = o; const answers = answersFor(set);
     const done = items.filter(q => answers[q.id]).length;
-    if (o.countEl) o.countEl.textContent = items.length ? done + ' of ' + items.length : ''; // B-116: the one count, at the bar
     if (o.barEl) o.barEl.style.width = items.length ? (100 * done / items.length) + '%' : '0';
     let view = views[key];
     if (view !== '__summary' && (!view || !items.find(q => q.id === view))) view = views[key] = (items.find(q => !answers[q.id]) || {}).id || '__summary';
+    if (view === '__summary' && items.some(q => !answers[q.id])) view = views[key] = items.find(q => !answers[q.id]).id; // the score waits for the last answer
+    // B-126 (D-165): the counter is the set's fold line (it replaces All questions); a finished set has nothing under it.
+    if (o.countEl) { const c = o.countEl, flat = view === '__summary'; c.textContent = items.length ? done + ' of ' + items.length : ''; c.hidden = !items.length;
+      c.classList.toggle('flat', flat); c.disabled = flat; c.setAttribute('aria-expanded', String(!flat && !!setOpen[key]));
+      c.onclick = () => { setOpen[key] = !setOpen[key]; render(); }; }
     if (view === '__summary') return summary(o, items, answers);
     const q = items.find(x => x.id === view); const a = answers[q.id]; const type = E.itemType(q);
     const sel = sels[key + q.id] || (sels[key + q.id] = type === 'matrix' ? [] : new Set());
     // B-116 (D-146, D-150): the stem leads; what kind of question it is follows as one quiet line, no chips, no second count.
     const tags = el('p', 'meta q-tags', [q.weakspotId ? 'Weak spot' : q.kind === 'check' ? 'New check' : 'Practice', q.objective, q.cjStep ? cjLabel(q.cjStep) : '', type === 'sata' ? 'Select all that apply' : type === 'matrix' ? 'One choice per row' : ''].filter(Boolean).join(' · '));
     const parts = [el('p', 'stem q-stem', q.stem), tags];
+    // B-126 (D-165): answered, the verdict is one line under the stem (nothing above it moves); his pick and the right
+    // answer carry their why; the other whys fold under one line.
+    if (a) { const rest = outcomeLine(a.outcome); parts.push(el('p', 'verdict ' + (a.correct ? 'ok' : 'no'), verdictWord(a, type) + (rest ? ' · ' + rest : ''))); }
+    const wk = key + q.id, restOpen = !!whyOpen[wk]; let hasRest = false;
+    const why = (text, keep) => { const s = el('span', 'why' + (keep ? '' : ' why-rest'), text); if (!keep) { hasRest = true; s.hidden = !restOpen; } return s; };
     const submit = btn('Check answer', null, { primary: true });
     const ready = () => type === 'matrix' ? (q.matrix.rows.every((_, i) => Number.isInteger(sel[i]))) : sel.size > 0;
     if (type === 'matrix') {
@@ -207,7 +235,7 @@
       q.matrix.columns.forEach(c => hr.append(el('th', null, c))); const th = el('thead'); th.append(hr); t.append(th); const tb = el('tbody');
       q.matrix.rows.forEach((r, ri) => {
         const tr = el('tr'); const name = el('td'); name.append(document.createTextNode(r.text)); tr.append(name);
-        if (a) { const ok = Array.isArray(a.chosen) && a.chosen[ri] === r.correct; tr.className = ok ? 'right' : 'wrong'; if (r.rationale) name.append(el('span', 'why', (ok ? '' : 'Answer: ' + q.matrix.columns[r.correct] + '. ') + r.rationale)); }
+        if (a) { const ok = Array.isArray(a.chosen) && a.chosen[ri] === r.correct; tr.className = ok ? 'right' : 'wrong'; if (r.rationale) name.append(why((ok ? '' : 'Answer: ' + q.matrix.columns[r.correct] + '. ') + r.rationale, !ok)); }
         q.matrix.columns.forEach((c, ci) => { const td = el('td'); const inp = document.createElement('input'); inp.type = 'radio'; inp.name = 'mx-' + key + q.id + '-' + ri; inp.setAttribute('aria-label', r.text + ': ' + c);
           inp.checked = a ? (a.chosen || [])[ri] === ci : sel[ri] === ci; inp.disabled = !!a; inp.addEventListener('change', () => { sel[ri] = ci; submit.disabled = !ready(); }); td.append(inp); tr.append(td); });
         tb.append(tr);
@@ -220,16 +248,16 @@
         inp.type = type === 'sata' ? 'checkbox' : 'radio'; inp.name = 'q-' + key + q.id; inp.checked = a ? (a.chosen || []).includes(i) : sel.has(i); inp.disabled = !!a;
         inp.addEventListener('change', () => { if (type === 'sata') inp.checked ? sel.add(i) : sel.delete(i); else { sel.clear(); sel.add(i); } submit.disabled = !ready(); });
         const span = el('span', 'grow'); span.append(document.createTextNode(txt));
-        if (a) { if (q.correct.includes(i)) lab.classList.add('right'); else if ((a.chosen || []).includes(i)) lab.classList.add('wrong'); if (q.rationales && q.rationales[i]) span.append(el('span', 'why', q.rationales[i])); }
+        if (a) { const picked = (a.chosen || []).includes(i), right = q.correct.includes(i);
+          if (right) lab.classList.add('right'); else if (picked) lab.classList.add('wrong');
+          if (q.rationales && q.rationales[i]) span.append(why(q.rationales[i], right || picked)); }
         lab.append(inp, span); opts.append(lab);
       });
       parts.push(opts);
     }
+    if (a && hasRest) parts.push(foldLine(type === 'matrix' ? 'Why the other rows' : 'Why not the others', restOpen, () => { whyOpen[wk] = !whyOpen[wk]; render(); }, 'why-fold'));
     const actions = el('div', 'actions');
-    actions.append(btn('All questions', () => { views[key] = '__summary'; render(); }));
     if (a) {
-      parts.push(el('p', 'verdict ' + (a.correct ? 'ok' : 'no'), a.correct ? 'Correct.' : (type !== 'single' && a.score > 0 ? `Partly right (${Math.round(a.score * 100)}%).` : 'Not quite.')));
-      if (a.outcome) parts.push(el('p', 'meta', a.outcome));
       if (q.verify) parts.push(el('p', 'meta', 'Built from general knowledge: check it against your materials.'));
       const next = items.find(x => !answers[x.id] && x.id !== q.id);
       actions.append(btn(next ? 'Next question' : 'See results', () => { views[key] = next ? next.id : '__summary'; render(); }, { primary: true }));
@@ -248,20 +276,54 @@
       actions.append(submit);
     }
     parts.push(actions);
-    body.replaceChildren(...parts);
+    // From 1024 px the set sits beside the question; below, it opens in place above it.
+    if (setOpen[key]) {
+      const list = setLines(key, items, answers, q.id);
+      if (WIDE.matches) { const main = el('div', 'q-main'), side = el('div', 'q-set'); main.append(...parts); side.append(list); body.classList.add('q-beside'); body.replaceChildren(main, side); return; }
+      parts.unshift(list);
+    }
+    body.classList.remove('q-beside'); body.replaceChildren(...parts);
+  }
+  function choiceText(q, idx) { return (idx || []).map(i => q.options[i]).filter(Boolean).join('; '); }
+  function sumLine(key, q, a) { // a finished question as one line, opening in place to what he picked and why
+    const k = key + q.id, open = !!sumOpen[k];
+    const li = el('li', 'row sum-item' + (open ? ' open' : '')); li.dataset.id = q.id;
+    const line = el('button', 'sum-line'); line.type = 'button'; line.setAttribute('aria-expanded', String(open));
+    line.append(el('span', 'sum-t', q.topic || q.stem)); if (q.cjStep) line.append(el('span', 'sum-k', cjLabel(q.cjStep)));
+    line.addEventListener('click', () => { sumOpen[k] = !sumOpen[k]; render(); });
+    const g = el('div', 'grow'); g.append(line);
+    if (open) { const more = el('div', 'sum-more'), type = E.itemType(q), R = q.rationales || [];
+      if (type === 'matrix') q.matrix.rows.forEach((r, ri) => { const ok = (a.chosen || [])[ri] === r.correct; if (!ok || a.correct) more.append(el('p', 'meta', `${r.text}: ${ok ? '' : 'you picked ' + (q.matrix.columns[(a.chosen || [])[ri]] || 'nothing') + '; '}${q.matrix.columns[r.correct]}. ${r.rationale || ''}`.trim())); });
+      else {
+        const picked = a.chosen || [], right = q.correct || [];
+        if (!a.correct) more.append(el('p', 'meta', 'You picked: ' + (choiceText(q, picked) || 'nothing') + '. ' + picked.map(i => R[i]).filter(Boolean).join(' ')));
+        more.append(el('p', 'meta', (a.correct ? 'Your answer: ' : 'Answer: ') + choiceText(q, right) + '. ' + right.map(i => R[i]).filter(Boolean).join(' ')));
+      }
+      more.append(btn('See the question', () => { views[key] = q.id; render(); }, { cls: 'tlink' }));
+      g.append(more); }
+    li.append(g); return li;
   }
   function summary(o, items, answers) {
-    const right = items.filter(q => answers[q.id] && answers[q.id].correct).length;
-    const answered = items.filter(q => answers[q.id]).length;
+    const key = o.key, right = items.filter(q => answers[q.id] && answers[q.id].correct), answered = items.filter(q => answers[q.id]);
+    const missed = answered.filter(q => !answers[q.id].correct);
     const solid = items.filter(q => answers[q.id] && /marked solid/.test(answers[q.id].outcome || '')).length;
     const added = items.filter(q => answers[q.id] && answers[q.id].createdWeakspot).length;
-    const ul = el('ul', 'list');
-    items.forEach(q => { const a = answers[q.id];
-      ul.append(row({ title: q.topic || q.stem.slice(0, 90), detail: a && a.outcome, chips: [[!a ? 'skipped' : a.correct ? 'right' : 'missed', !a ? '' : a.correct ? 'ok' : 'bad'], q.cjStep ? [cjLabel(q.cjStep), 'plum'] : null], action: btn(a ? 'See' : 'Answer', () => { views[o.key] = q.id; render(); }) })); });
-    const parts = [el('p', 'big', right + ' of ' + answered + ' right'), el('p', 'meta', [solid ? solid + ' marked solid' : '', added ? plural(added, 'new weak spot') : '', answered < items.length ? (items.length - answered) + ' not answered yet' : 'all done'].filter(Boolean).join(' · ')), ul];
-    parts[0].style.cssText = 'font-family:var(--serif);font-size:1.2rem;margin:0';
+    // B-126 (D-165): the score leads with Give me 5 more as the one primary; misses are lines that open to what he
+    // picked and why; right answers fold; the next set is one line.
+    const parts = [el('p', 'big set-score', right.length + ' of ' + answered.length + ' right')];
+    const extra = [solid ? solid + ' marked solid' : '', added ? plural(added, 'new weak spot') : ''].filter(Boolean).join(' · ');
+    if (extra) parts.push(el('p', 'meta', extra));
+    const more = o.more && o.more(); if (more) parts.push(more);
+    if (missed.length) { const ul = el('ul', 'list sum-list'), all = !!sumOpen[key + ':missed'];
+      (all ? missed : missed.slice(0, 5)).forEach(q => ul.append(sumLine(key, q, answers[q.id]))); parts.push(el('p', 'meta sum-h', (missed.length === 1 ? '1 miss' : missed.length + ' misses')), ul);
+      if (missed.length > 5) parts.push(foldLine(all ? 'Fewer' : (missed.length - 5) + ' more', all, () => { sumOpen[key + ':missed'] = !all; render(); })); }
+    if (right.length) { const open = !!sumOpen[key + ':right'], ul = el('ul', 'list sum-list'); ul.hidden = !open;
+      if (open) right.forEach(q => ul.append(sumLine(key, q, answers[q.id])));
+      parts.push(foldLine(right.length + ' right', open, () => { sumOpen[key + ':right'] = !open; render(); }), ul); }
+    if (o.next) { const n = o.next, f = el('button', 'next-line', 'Next: ' + (n.title || n.id) + ' · ' + plural(E.validItems(n).length, 'question')); f.type = 'button';
+      f.addEventListener('click', () => { ui.openSet = n.id; showTab('study'); setStudy('practice'); render(); }); parts.push(f); }
     if (o.summaryExtra) parts.push(...o.summaryExtra());
-    o.body.replaceChildren(...parts);
+    o.body.classList.remove('q-beside'); o.body.replaceChildren(...parts);
   }
 
   // ------------------------------------------------------------ Today
@@ -435,33 +497,67 @@
   }
 
   // ------------------------------------------------------------ Study
+  // B-126 (D-165): the set to do next: the newest set with a question left, other than the one he is on.
+  const unfinished = s => E.validItems(s).some(q => !answersOf(s)[q.id]);
+  const practiceSets = () => S.sets.filter(s => s.kind !== 'review' && E.validItems(s).length).sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+  const nextSet = except => practiceSets().find(s => s.id !== except && unfinished(s)) || null;
+  function moreMount(on) { // the More practice line: inside a finished review set, else parked hidden after the card
+    const mc = $('more-card'), home = $('study-review');
+    if (!on) { mc.hidden = true; mc.classList.add('card'); if (mc.parentElement !== home) home.append(mc); return null; }
+    mc.hidden = false; mc.classList.remove('card'); return mc;
+  }
   function renderReview() {
     const rs = S.sets.find(s => s.id === 'review-' + today); const items = rs ? E.validItems(rs) : [];
-    // B-116 (D-151): More practice is a line once today's set is done, never beside an unfinished one.
+    // B-116 (D-151): More practice only once today's set is done; B-126: then it is the summary's one primary.
     const rsAnswers = rs ? answersFor(rs) : {};
-    $('more-card').hidden = !sample || items.some(q => !rsAnswers[q.id]);
+    const finished = !!items.length && !items.some(q => !rsAnswers[q.id]);
     if (!items.length) {
-      $('rv-count').textContent = ''; $('rv-bar').style.width = '0';
+      moreMount(false); $('rv-count').textContent = ''; $('rv-count').hidden = true; $('rv-bar').style.width = '0';
       const due = E.rankDue(M.models, today, S.exams).length;
       $('rv-body').replaceChildren(el('p', 'empty', rs ? 'Today’s set came through empty. Tell E.V. in a chat and it will rebuild it.' : 'Today’s review appears after the 4:25am run.' + (due ? ' ' + plural(due, 'weak spot') + ' due.' : '')));
       return;
     }
-    runner({ key: 'rv', set: rs, items, body: $('rv-body'), countEl: $('rv-count'), barEl: $('rv-bar'), label: 'E.V. Review · ' + short(today) });
+    if (!finished || !sample) moreMount(false);
+    runner({ key: 'rv', set: rs, items, body: $('rv-body'), countEl: $('rv-count'), barEl: $('rv-bar'), label: 'E.V. Review · ' + short(today),
+      more: sample ? () => moreMount(true) : null, next: nextSet(null) });
+  }
+  function giveFive() { // a finished practice set's Give me 5 more
+    const b = btn('Give me 5 more', null, { primary: true });
+    b.addEventListener('click', async () => { b.disabled = true; b.textContent = 'Writing 5 questions…'; const ok = await morePractice(); if (!ok) { b.disabled = false; b.textContent = 'Give me 5 more'; toast($('more-status').textContent); } });
+    return b;
+  }
+  function practiceLine(x, o = {}) { // a set as one line, opening in place to its actions
+    const items = E.validItems(x), ans = answersOf(x), n = items.filter(q => ans[q.id]).length, r = items.filter(q => ans[q.id] && ans[q.id].correct).length;
+    const k = 'pr:' + x.id, open = !!sumOpen[k];
+    const li = el('li', 'row pr-item' + (open ? ' open' : '')); li.dataset.id = x.id;
+    const line = el('button', 'pr-line'); line.type = 'button'; line.setAttribute('aria-expanded', String(open));
+    line.append(el('span', 'pr-t', x.title || x.id), el('span', 'pr-s', n === items.length ? r + ' of ' + n + ' right' : n ? n + ' of ' + items.length : plural(items.length, 'question')));
+    line.addEventListener('click', () => { sumOpen[k] = !open; render(); });
+    const acts = el('div', 'pr-acts'); acts.hidden = !open;
+    if (n === items.length) acts.append(btn('Review', () => { ui.openSet = x.id; views['pr-' + x.id] = '__summary'; render(); }), btn('Retake', () => { ui.openSet = x.id; retake(x, 'pr-' + x.id); }));
+    else acts.append(btn(n ? 'Continue' : 'Start', () => { ui.openSet = x.id; render(); }));
+    const g = el('div', 'grow'); g.append(line, acts); li.append(g); return li;
   }
   function renderPractice() {
-    const body = $('pr-body'); const list = S.sets.filter(s => s.kind !== 'review' && E.validItems(s).length).sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+    const body = $('pr-body'); const list = practiceSets();
     const d = ui.openSet && list.find(x => x.id === ui.openSet);
     $('pr-prog').hidden = !d;
     if (!d) {
       if ($('pr-share')) $('pr-share').hidden = true;
       $('pr-title').textContent = 'Drills and practice'; $('pr-count').textContent = list.length ? plural(list.length, 'set') : '';
       if (!list.length) { body.replaceChildren(el('p', 'empty', 'E.V. builds drills from your exam plan, and More practice adds sets here.')); return; }
-      const ul = el('ul', 'list');
-      list.forEach(x => { const items = E.validItems(x); const ans = answersOf(x); const n = items.filter(q => ans[q.id]).length; const r = items.filter(q => ans[q.id] && ans[q.id].correct).length;
-        ul.append(row({ title: x.title || x.id, detail: [x.exam, plural(items.length, 'question'), n ? (n === items.length ? r + ' of ' + n + ' right' : n + ' answered') : 'not started', short(x.createdAt)].filter(Boolean).join(' · '),
-          chips: [[x.kind === 'more' ? 'More practice' : x.kind === 'sim' ? 'Sim' : x.kind === 'job' ? 'From a job' : 'Drill', x.kind === 'more' || x.kind === 'job' ? 'plum' : 'info']],
-          action: btn(n ? (n < items.length ? 'Continue' : 'Review') : 'Start', () => { ui.openSet = x.id; render(); }, { primary: n < items.length }) })); });
-      body.replaceChildren(ul); return;
+      // B-126 (D-165): led by the set to do next and its Start; the other open sets one line each; finished sets fold,
+      // each opening to Review and Retake. No pills: the titles already say Drill or More practice.
+      const todo = list.filter(unfinished), done = list.filter(x => !unfinished(x)), kids = [];
+      const lead = todo[0], box = el('div', 'pr-lead');
+      if (lead) { const items = E.validItems(lead), ans = answersOf(lead), n = items.filter(q => ans[q.id]).length;
+        box.append(el('p', 'big', lead.title || lead.id), el('p', 'meta', [plural(items.length, 'question'), n ? n + ' answered' : '', lead.exam, short(lead.createdAt)].filter(Boolean).join(' · ')), btn(n ? 'Continue' : 'Start', () => { ui.openSet = lead.id; render(); }, { primary: true })); }
+      else box.append(el('p', 'big', 'Every set is done'), ...(sample ? [giveFive()] : []));
+      kids.push(box);
+      if (todo.length > 1) { const ul = el('ul', 'list'); todo.slice(1, 6).forEach(x => ul.append(practiceLine(x))); kids.push(ul); }
+      if (done.length) { const open = !!ui.prDoneOpen, ul = el('ul', 'list'); ul.id = 'pr-done'; ul.hidden = !open; done.forEach(x => ul.append(practiceLine(x)));
+        const f = foldLine(plural(done.length, 'finished set'), open, () => { ui.prDoneOpen = !open; render(); }); f.id = 'pr-done-fold'; f.setAttribute('aria-controls', 'pr-done'); kids.push(f, ul); }
+      body.replaceChildren(...kids); return;
     }
     $('pr-title').textContent = d.title || 'Practice';
     // D-110: a set that can go out as a page says so above its questions.
@@ -469,7 +565,8 @@
     const sh = shareButton(d); bar.hidden = !sh; bar.replaceChildren(...(sh ? [el('span', 'meta grow', 'Classmates can practise this set too: a page with no name and none of your weak spots.'), sh] : []));
     $('pr-count').textContent = '';
     runner({ key: 'pr-' + d.id, set: d, items: E.validItems(d), body, countEl: $('pr-qcount'), barEl: $('pr-bar'), label: 'E.V. · ' + (d.title || d.id),
-      summaryExtra: () => { const a = el('div', 'actions'); const sh = shareButton(d); a.append(btn('All sets', () => { delete retakes[d.id]; ui.openSet = null; render(); }), ...(sh ? [sh] : []), btn('Retake', () => retake(d, 'pr-' + d.id), { primary: true })); return [a]; } });
+      more: sample ? giveFive : null, next: nextSet(d.id),
+      summaryExtra: () => { const a = el('div', 'actions'); const sh = shareButton(d); a.append(btn('All sets', () => { delete retakes[d.id]; ui.openSet = null; render(); }), ...(sh ? [sh] : []), btn('Retake', () => retake(d, 'pr-' + d.id))); return [a]; } });
   }
   // D-110: a calendar set over a chapter range can go out once as a page for classmates (no name, none of his weak
   // spots); the worker builds and publishes it, and he shares it from that page's Share menu.
@@ -485,27 +582,34 @@
     const card = $('plan-card');
     const plan = (M.target && S.plans.find(p => p.id === M.target.id)) || S.plans.slice().sort((a, b) => String((b.days || [])[0]?.date).localeCompare(String((a.days || [])[0]?.date)))[0];
     if (!plan) { card.replaceChildren(el('h2', null, 'Exam plan'), el('p', 'empty', 'The exam plan appears here once it’s in the record.')); return; }
+    const tasks = E.planTasks(plan); const isDone = t => !!(plan.done && plan.done[t.id]) || E.taskDone(plan, t, today, S.sets, S.answers);
+    const doneN = tasks.filter(isDone).length;
+    const ex = S.exams.find(e => e.id === (plan.exam || plan.id)), exDay = ex && ex.date ? (ex.title || ex.id).replace(/:.*$/, '') + ' · ' + short(ex.date) : '';
+    // B-126 (D-165): led by its count and exam day; open items as ticks by day; Done and Earlier days fold; no paragraph
+    // on how ticks work and no pills.
+    const tickRow = (d, t0) => { const t = { ...t0, date: d.date }, on = isDone(t);
+      const li = row({ title: t.text, cls: 'plan-item' + (on ? ' done' : ''), check: { checked: on, label: 'Done: ' + t.text, onChange: (v, c) => guard(c, () => tickPlan(plan, t, v), v ? 'Checked off' : 'Unchecked') } });
+      const tt = li.querySelector('.title'); tt.title = t.text; tt.addEventListener('click', () => li.classList.toggle('open')); return li; }; // one line; a tap on the words opens it in place
+    const dayBlock = (d, list) => { const wrap = el('div', 'plan-day' + (d.date === today ? ' today' : ''));
+      wrap.append(el('p', 'meta plan-dh', [d.label, short(d.date) + (d.date === today ? ' · today' : ''), d.dayLabel].filter(Boolean).join(' · ')));
+      const ul = el('ul', 'list'), k = 'plan:' + d.date, all = !!sumOpen[k]; (all ? list : list.slice(0, 5)).forEach(t => ul.append(tickRow(d, t))); wrap.append(ul);
+      if (list.length > 5) wrap.append(foldLine(all ? 'Fewer' : (list.length - 5) + ' more', all, () => { sumOpen[k] = !all; render(); }));
+      return wrap; };
     const head = el('div', 'card-head'); head.append(el('h2', null, plan.title || 'Exam plan'));
-    const tasks = E.planTasks(plan); const doneN = tasks.filter(t => E.taskDone(plan, t, today, S.sets, S.answers)).length;
-    head.append(el('span', 'meta', `${doneN} of ${tasks.length} done`));
-    const kids = [head, el('p', 'meta', 'Ticks save to your record, so E.V. knows what you’ve read. Readings count as done once their day has passed.')];
-    const upcoming = plan.days.filter(d => d.date >= today); const past = plan.days.filter(d => d.date < today);
-    const dayBlock = d => {
-      const wrap = el('div', 'plan-day' + (d.date === today ? ' today' : '')); const h = el('div', 'card-head'); h.append(el('b', null, d.label + (d.date === today ? ' · today' : '')));
-      if (d.dayLabel) h.append(el('span', 'meta', d.dayLabel)); wrap.append(h);
-      const ul = el('ul', 'list');
-      d.tasks.forEach(t0 => { const t = { ...t0, date: d.date }; const checked = !!(plan.done && plan.done[t.id]); const auto = !checked && E.taskDone(plan, t, today, S.sets, S.answers);
-        const tagV = { graded: 'bad', drill: 'info', sim: 'info', review: 'plum', clinical: 'ok', val: 'warn', reading: 'ok' }[t.kind] || '';
-        ul.append(row({ title: t.text, detail: auto ? (t.kind === 'reading' ? 'Counted as read: its day has passed' : 'Done: every question answered') : '', cls: (checked || auto) ? 'done' : '', chips: t.kind !== 'other' ? [[t.kind === 'graded' ? 'GRADED' : t.kind, tagV]] : [],
-          check: { checked: checked || auto, label: 'Done: ' + t.text, onChange: (on, c) => guard(c, () => tickPlan(plan, t, on), on ? 'Checked off' : 'Unchecked') } })); });
-      wrap.append(ul); return wrap;
-    };
-    upcoming.forEach(d => kids.push(dayBlock(d)));
-    if (past.length) { const det = el('details'); det.append(el('summary', null, `Earlier days (${past.length})`)); past.slice().reverse().forEach(d => det.append(dayBlock(d))); kids.push(det); }
+    const kids = [head, el('p', 'big plan-lead', `${doneN} of ${tasks.length} done`)];
+    if (exDay) kids.push(el('p', 'meta', exDay));
+    const upcoming = plan.days.filter(d => d.date >= today), past = plan.days.filter(d => d.date < today);
+    for (const d of upcoming) { const open = d.tasks.filter(t => !isDone({ ...t, date: d.date })); if (open.length) kids.push(dayBlock(d, open)); }
+    const doneItems = upcoming.flatMap(d => d.tasks.filter(t => isDone({ ...t, date: d.date })).map(t => [d, t]));
+    if (doneItems.length) { const open = !!ui.planDoneOpen, ul = el('ul', 'list'); ul.hidden = !open; doneItems.forEach(([d, t]) => ul.append(tickRow(d, t)));
+      kids.push(foldLine('Done · ' + doneItems.length, open, () => { ui.planDoneOpen = !open; render(); }), ul); }
+    if (past.length) { const open = !!ui.planPastOpen, box = el('div', 'plan-past'); box.hidden = !open;
+      past.slice().reverse().forEach(d => { const w = el('div', 'plan-was'); w.append(el('p', 'meta plan-dh', [d.label, short(d.date)].filter(Boolean).join(' · '))); const ul = el('ul', 'list'); d.tasks.forEach(t => ul.append(tickRow(d, t))); w.append(ul); box.append(w); });
+      kids.push(foldLine('Earlier days · ' + past.length, open, () => { ui.planPastOpen = !open; render(); }), box); }
     if (plan.sourceUrl) { const a = el('a', 'meta', 'Original plan page'); a.href = plan.sourceUrl; a.target = '_blank'; a.rel = 'noopener'; kids.push(a); }
     // B-121 (D-158): from 1024 px the plan sits beside Review and Practice, folded to its title until opened.
     card.classList.toggle('fold-card', WIDE.matches);
-    if (WIDE.matches) { const f = el('button', 'fold-line', plan.title || 'Exam plan'); f.type = 'button'; f.setAttribute('aria-expanded', String(!!ui.planOpen)); f.addEventListener('click', () => { ui.planOpen = !ui.planOpen; render(); }); card.replaceChildren(f, ...(ui.planOpen ? kids : [])); }
+    if (WIDE.matches) { const f = foldLine((plan.title || 'Exam plan') + ' · ' + plural(tasks.length - doneN, 'item') + ' to do', !!ui.planOpen, () => { ui.planOpen = !ui.planOpen; render(); }); card.replaceChildren(f, ...(ui.planOpen ? kids.slice(1) : [])); }
     else card.replaceChildren(...kids);
   }
 

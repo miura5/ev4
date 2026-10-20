@@ -415,12 +415,19 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     ok('review summary from migrated answers', reviewExpect ? rv.includes(reviewExpect) : /Check answer/.test(rv), (reviewExpect || '(unanswered)') + ' · ' + rv.slice(0, 80));
     // Practice: open the harness set, answer single (right), sata (wrong), matrix (right)
     await page.click('#seg-study [data-v="practice"]'); await page.waitForTimeout(100);
-    ok('practice lists sets', (await page.locator('#pr-body .row').count()) >= 2);
+    ok('practice lists sets', (await page.locator('#pr-body .row').count()) + (await page.locator('#pr-body .pr-lead').count()) >= 2);
+    // B-126 (D-165): Practice leads with the set to do next; the others are lines opening in place to Start, Continue or
+    // Review, the finished ones folded under one line.
+    const openSet = async title => {
+      const lead = page.locator('#pr-body .pr-lead', { hasText: title }); if (await lead.count()) return lead.locator('button.primary').click();
+      if (await page.locator('#pr-done-fold[aria-expanded="false"]').count() && !(await page.locator('#pr-body .row', { hasText: title }).first().isVisible())) await page.click('#pr-done-fold');
+      const r = page.locator('#pr-body .row', { hasText: title }).first(); await r.locator('.pr-line').click(); await page.waitForTimeout(80);
+      return page.locator('#pr-body .row', { hasText: title }).first().locator('.pr-acts button').first().click(); };
     // B-54 (D-110): an open calendar drill over a chapter range offers Share as a page above its questions; other sets do not
     { const ids = await page.evaluate(() => { const pl = Object.entries(window.__db.plans || {}).map(([id, p]) => ({ id, ...p })); const views = window.EVCore.planViews(pl, []); const all = Object.entries(window.__db.sets).map(([id, x]) => ({ id, ...x })).filter(x => x.kind !== 'review' && window.EVCore.validItems(x).length); return { yes: all.filter(x => window.EVCore.shareableSet(x, views).ok).map(x => x.title), no: all.filter(x => !window.EVCore.shareableSet(x, views).ok).map(x => x.title) }; });
       ok('only a calendar drill over a chapter range qualifies here', ids.yes.length >= 1 && ids.no.some(t => /weak spots/.test(t)) && ids.no.includes('Harness set') && !ids.yes.some(t => /weak spots/.test(t)), JSON.stringify(ids));
       if (ids.yes.length) {
-        await page.evaluate(t => { const r = [...document.querySelectorAll('#pr-body .row')].find(r => r.textContent.startsWith(t.slice(0, 30))); if (r) r.querySelector('button').click(); }, ids.yes[0]); await page.waitForTimeout(250);
+        await openSet(ids.yes[0]); await page.waitForTimeout(250);
         ok('an open calendar drill offers Share as a page above its questions', await page.isVisible('#pr-share') && (await page.locator('#pr-share button', { hasText: 'Share as a page' }).count()) === 1, ids.yes[0]);
         const before = await page.evaluate(() => window.__mcpCalls.filter(c => c[1] === 'fire_trigger').length);
         await page.locator('#pr-share button', { hasText: 'Share as a page' }).click(); await page.waitForTimeout(400);
@@ -438,17 +445,17 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     const agingDerived = await model('e4-aging-expected'); const agingBefore = (agingDerived && agingDerived.streak) || 0; const agingRightToday = !!agingDerived && agingDerived.lastReviewed === today && agingDerived.lastResult === 'right';
     const prePre = await model('e4-preschooler'); // the export can already hold his answers on it
     const preStreak = prePre && prePre.lastResult === 'right' ? (prePre.lastReviewed === today ? prePre.streak - 1 : prePre.streak) : 0;
-    await page.locator('#pr-body .row', { hasText: 'Harness set' }).locator('button').click(); await page.waitForTimeout(100);
+    await openSet('Harness set'); await page.waitForTimeout(100);
     ok('a set made for him offers no Share', !(await page.isVisible('#pr-share')));
     await page.locator('#pr-body label.opt').nth(0).click(); await page.click('#pr-body button:has-text("Check answer")'); await page.waitForTimeout(150);
-    ok('single answered and scored', /Correct\./.test(await page.textContent('#pr-body')));
+    ok('single answered and scored', /^Right\b/.test(await page.textContent('#pr-body .verdict')));
     let ws = await model('e4-preschooler');
     ok('the answer lands in answers/<setId> and the weak spot is recomputed from it', ws && ws.streak === preStreak + 1 && ws.lastResult === 'right' && await page.evaluate(t => { const a = (window.__db.answers || {})['more-' + t + '-1']; return !!a && a.writer === 'page' && Object.keys(a.answers.m1 || {}).length === 1 && !window.__db.weakspots['e4-preschooler'].derived; }, today), JSON.stringify(ws && { s: ws.streak, n: ws.nextDue }));
     await page.click('#pr-body button:has-text("Next question")'); await page.waitForTimeout(100);
     await page.locator('#pr-body label.opt').nth(0).click(); await page.locator('#pr-body label.opt').nth(2).click();
     await page.click('#pr-body button:has-text("Check answer")'); await page.waitForTimeout(150);
     const t2 = await page.textContent('#pr-body');
-    ok('select-all partial credit shown', /Partly right|Not quite/.test(t2));
+    ok('select-all partial credit shown', /Partly right|Missed/.test(t2));
     const created = await page.evaluate(() => Object.keys(window.__db.weakspots).filter(k => k.includes('E4-2')));
     ok('missed check created a weak spot', created.length === 1, created.join(','));
     await page.click('#pr-body button:has-text("Next question")'); await page.waitForTimeout(100);
@@ -456,7 +463,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     ok('matrix renders 3 rows x 2 columns', (await radios.count()) === 6);
     await radios.nth(0).check(); await radios.nth(3).check(); await radios.nth(4).check();
     await page.click('#pr-body button:has-text("Check answer")'); await page.waitForTimeout(150);
-    ok('matrix answered correctly', /Correct\./.test(await page.textContent('#pr-body')));
+    ok('matrix answered correctly', /^Right\b/.test(await page.textContent('#pr-body .verdict')));
     ws = await model('e4-aging-expected');
     ok('matrix right: today counts once toward the streak', ws.streak === agingBefore + 1 || (ws.streak === agingBefore && agingRightToday), JSON.stringify({ before: agingBefore, s: ws.streak, last: ws.lastReviewed }));
     await page.screenshot({ path: `${shots}/practice.png`, fullPage: true });
