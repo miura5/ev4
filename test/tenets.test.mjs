@@ -13,10 +13,11 @@ const ev = () => ({ tab: 'ev', width: 390, step: 'idle', cards: [], primaries: [
 const failing = s => judge(s, spec.ui.tenets.exceptions).filter(c => !c.ok).map(c => c.tenet);
 
 test('B-115: the look pass checks D-146 to D-151 at 390, 735 and 1280, with E.V. on and the other tabs reporting', () => {
-  assert.deepEqual(spec.ui.tenets.checks, ['D-146', 'D-147', 'D-148', 'D-149', 'D-150', 'D-151']);
+  assert.deepEqual(spec.ui.tenets.checks, ['D-146', 'D-147', 'D-148', 'D-149', 'D-150', 'D-151', 'D-160']);
+  assert.deepEqual(spec.ui.tenets.onFor, { 'D-160': ['ev', 'study'] });
   assert.deepEqual(spec.ui.tenets.widths, [390, 735, 1280]);
   assert.deepEqual(spec.ui.tenets.on, ['ev', 'today', 'study-review', 'progress-readiness', 'system']);
-  assert.deepEqual(judge(ev()).map(c => c.tenet), spec.ui.tenets.checks);
+  assert.deepEqual(judge(ev()).map(c => c.tenet).sort(), [...spec.ui.tenets.checks].sort());
   assert.deepEqual(failing(ev()), [], 'the E.V. tab passes them all');
   const look = fs.readFileSync(path.join(ROOT, 'test', 'harness', 'look.cjs'), 'utf8');
   assert.match(look, /page\.evaluate\(collect\)/); assert.match(look, /TENETS\.on\.includes\(view\.tab\) \|\| TENETS\.on\.includes\(view\.id\)/);
@@ -44,4 +45,5 @@ test('B-115: the other checks each fail on what their tenet forbids', () => {
   const mono = ev(); mono.monoOrSpacedCaps = 2; assert.deepEqual(failing(mono), ['D-150']);
   const talk = ev(); talk.step = 'conversation'; assert.deepEqual(failing(talk), ['D-151'], 'chips shown in a conversation');
   talk.qchipsShown = false; assert.deepEqual(failing(talk), []);
+  const hide = ev(); hide.closers = ['Hide']; assert.deepEqual(failing(hide), ['D-160'], 'B-122: a Hide button');
 });

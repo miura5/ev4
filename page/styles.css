@@ -542,3 +542,7 @@ body.captions.skill-on #p-ev>.sk-panel{align-self:start}
   #p-study>#study-plan{grid-column:2;grid-row:3}
   #seg-study [data-v="plan"]{display:none}
 }
+/* B-122 (D-160, D-161): a check folds to its head line; the skills panel to its head line */
+.check-head .check-fold{color:var(--ink);font-weight:600;font-size:15px}
+.ev-card.check.folded{gap:0}.ev-card.check.folded>:not(.check-head){display:none}
+.sk-pfold{color:var(--ink);font-weight:600}.sk-panel.folded{gap:0}

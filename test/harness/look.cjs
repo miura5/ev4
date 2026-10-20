@@ -60,7 +60,7 @@ const results = []; const ok = (name, cond, detail = '') => results.push([cond ?
       if (TENETS.widths.includes(size.width) && [844, 830, 800].includes(size.height)) {
         const snap = await page.evaluate(collect);
         for (const c of judge(snap, TENETS.exceptions)) {
-          if (TENETS.on.includes(view.tab) || TENETS.on.includes(view.id)) ok(`[${width}] ${view.id}: ${c.tenet}`, c.ok, c.detail);
+          if (TENETS.on.includes(view.tab) || TENETS.on.includes(view.id) || ((TENETS.onFor || {})[c.tenet] || []).some(x => x === view.tab || x === view.id)) ok(`[${width}] ${view.id}: ${c.tenet}`, c.ok, c.detail);
           else reports.push([c.ok ? 'ok  ' : 'NOT ', `[${width}] ${view.id}: ${c.tenet}`, c.detail]);
         }
       }

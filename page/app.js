@@ -1816,7 +1816,7 @@
       if (w && q) { document.body.classList.add('skill-on'); renderWorkoutDock(w, q, sheet, panel); return; }
       if (!sheet.hidden) { sheet.hidden = true; sheet.replaceChildren(); } if (!panel.hidden) { panel.hidden = true; panel.replaceChildren(); } sheet.dataset.k = panel.dataset.k = ''; SK.open = false; return;
     }
-    const k = [s.id, JSON.stringify(st.results), SK.open].join('|');
+    const k = [s.id, JSON.stringify(st.results), SK.open, SK.pfold].join('|');
     if (sheet.dataset.k === k && panel.dataset.k === k) return;
     sheet.dataset.k = panel.dataset.k = k; sheet.hidden = panel.hidden = false;
     const step = st.next; const count = `Step ${step.n} of ${st.total}`;
@@ -1824,24 +1824,26 @@
     // Phone: the peek bar, and the list above it when open.
     sheet.classList.toggle('open', SK.open);
     const peek = el('div', 'sk-peek');
-    // The count line carries Hide (the run waits behind a Resume chip) and Stop (it ends here, saved): B-82.
+    // The count line carries End (the run ends here, saved): B-82; no Hide, its peek line folds the sheet (B-122, D-161).
     const top = el('div', 'sk-top'); top.append(el('span', 'sk-count', count), el('span', 'grow'),
-      btn('Hide', () => skillPark(true), { cls: 'sk-mini' }), btn('Stop', ev => guard(ev.target, () => finishSkill(s, 'ended'), 'Skills run saved'), { cls: 'sk-mini' }));
-    top.querySelector('.sk-mini').setAttribute('aria-label', 'Hide the checklist; a Resume chip brings it back');
+      btn('End', ev => guard(ev.target, () => finishSkill(s, 'ended'), 'Skills run saved'), { cls: 'sk-mini' }));
     const tog = el('button', 'sk-tog'); tog.type = 'button'; tog.setAttribute('aria-expanded', String(SK.open)); tog.setAttribute('aria-controls', 'sksheet-list');
-    tog.setAttribute('aria-label', (SK.open ? 'Close' : 'Open') + ' the full checklist. ' + count + ': ' + step.text);
+    tog.setAttribute('aria-label', (SK.open ? 'Fold' : 'Open') + ' the full checklist. ' + count + ': ' + step.text);
     tog.append(el('span', 'sk-now', step.text));
     tog.addEventListener('click', () => { SK.open = !SK.open; renderSkillDock(); });
     peek.append(top, tog, skillButtons(s, step));
     const body = el('div', 'sk-body'); body.id = 'sksheet-list'; body.hidden = !SK.open;
-    if (SK.open) { const h = el('div', 'sk-head'); const t = el('div', 'sk-headtxt'); t.append(el('span', 'sk-title', s.topic), el('span', 'meta', tally)); h.append(t, btn('Stop', ev => guard(ev.target, () => finishSkill(s, 'ended'), 'Skills run saved'))); body.append(h, skillList(s, st)); }
+    if (SK.open) { const h = el('div', 'sk-head'); const t = el('div', 'sk-headtxt'); t.append(el('span', 'sk-title', s.topic), el('span', 'meta', tally)); h.append(t, btn('End', ev => guard(ev.target, () => finishSkill(s, 'ended'), 'Skills run saved'))); body.append(h, skillList(s, st)); }
     sheet.replaceChildren(body, peek);
     // Desktop: the whole list beside the thread, the current step with its buttons on top.
-    const ph = el('div', 'sk-head'); ph.append(el('span', 'sk-title', 'Skills · ' + s.topic), el('span', 'meta', tally));
+    // Its head line folds the panel to that one line and back (B-122, D-160).
+    const pf = el('button', 'fold-line sk-pfold', 'Skills · ' + s.topic); pf.type = 'button'; pf.setAttribute('aria-expanded', String(!SK.pfold)); pf.addEventListener('click', () => { SK.pfold = !SK.pfold; renderSkillDock(); });
+    const ph = el('div', 'sk-head'); ph.append(pf, el('span', 'meta', tally));
     const pr = el('div', 'progress'); const bar = el('i'); bar.style.width = (st.total ? 100 * st.done / st.total : 0) + '%'; pr.append(bar);
     const cur = el('p', 'sk-cur'); cur.append(el('b', null, count + '. '), document.createTextNode(step.text));
-    const pa = el('div', 'actions'); pa.append(btn('Hide', () => skillPark(true)), btn('Stop', ev => guard(ev.target, () => finishSkill(s, 'ended'), 'Skills run saved')));
-    panel.replaceChildren(ph, pr, cur, skillButtons(s, step), skillList(s, st), pa, el('p', 'meta', s.skill.cite || ''));
+    const pa = el('div', 'actions'); pa.append(btn('End', ev => guard(ev.target, () => finishSkill(s, 'ended'), 'Skills run saved')));
+    panel.classList.toggle('folded', !!SK.pfold);
+    panel.replaceChildren(ph, ...(SK.pfold ? [] : [pr, cur, skillButtons(s, step), skillList(s, st), pa, el('p', 'meta', s.skill.cite || '')]));
     const curLi = sheet.querySelector('.sk-step.cur'); if (curLi && SK.open) curLi.scrollIntoView({ block: 'nearest' });
   }
 
@@ -1953,7 +1955,7 @@
         const step = st.next; const p = el('p', 'stem'); p.append(el('b', null, 'Step ' + step.n + '. '), document.createTextNode(step.text)); box.append(p);
         box.append(el('p', 'meta', [step.critical ? 'Must not be missed (asterisk on the checklist).' : '', s.skill.cite].filter(Boolean).join(' · ')));
         const a = el('div', 'actions');
-        a.append(btn('Stop', ev => guard(ev.target, () => finishSkill(s, 'ended'), 'Skills run saved')), el('span', 'grow'));
+        a.append(btn('End', ev => guard(ev.target, () => finishSkill(s, 'ended'), 'Skills run saved')), el('span', 'grow'));
         a.append(btn('Missed it', ev => guard(ev.target, () => skillMark(s, step.n, 'miss'), 'Logged as a skill to practice')), btn('Did it', ev => guard(ev.target, () => skillMark(s, step.n, 'pass')), { primary: true }));
         box.append(a);
       } else {
@@ -2048,7 +2050,12 @@
     check(box, c) {
       const s = sessOf(c.session); const st = s ? E.sessionState(s, now()) : null; const answered = st && st.answered[c.n]; const live = !answered && !!s && s.status === 'active';
       box.classList.add('check', live ? 'live' : 'done');
-      const h = el('div', 'card-head'); h.append(el('h2', null, 'Check ' + c.n + (s && s.topic ? ' · ' + s.topic : '')), chip(answered ? 'answered' : live ? 'your turn' : 'session over', answered ? 'ok' : live ? 'accent' : '')); box.append(h);
+      // B-122 (D-160, D-161): its head line folds it to that one line and back; folding files nothing, and the next
+      // checkpoint's card arrives open.
+      const key = c.session + '#' + c.n, folded = T.checkFold.has(key); box.classList.toggle('folded', folded);
+      const f = el('button', 'fold-line check-fold', `Check ${c.n} · ${plural((c.items || []).length, 'question')}`); f.type = 'button'; f.setAttribute('aria-expanded', String(!folded));
+      f.addEventListener('click', () => { const on = !T.checkFold.has(key); on ? T.checkFold.add(key) : T.checkFold.delete(key); box.classList.toggle('folded', on); f.setAttribute('aria-expanded', String(!on)); });
+      const h = el('div', 'card-head check-head'); h.append(f, chip(answered ? 'answered' : live ? 'your turn' : 'session over', answered ? 'ok' : live ? 'accent' : '')); box.append(h);
       const ol = el('ol', 'check-items'); const KIND = { why: 'Why', gap: 'Gap', link: 'Link', weakspot: 'Revisit' };
       (c.items || []).forEach(x => { const kind = KIND[x.kind] ? x.kind : 'why'; const li = el('li'); li.append(el('span', 'check-kind ' + kind, KIND[kind]), el('span', null, x.text)); ol.append(li); });
       box.append(ol);
@@ -2241,7 +2248,7 @@
     });
     old.slice(fresh.length).forEach(o => o.remove());
   }
-  T.cardAt = new Map();
+  T.cardAt = new Map(); T.checkFold = new Set();
   capIn.addEventListener('click', e => { const b = e.target.closest('.cap-cards-more'); if (!b) return; const id = b.closest('.msg').dataset.id; T.cardAt.set(id, Number(b.dataset.next) || 0); renderThread(); });
 
   // ---------------------------------------------------------------- thread

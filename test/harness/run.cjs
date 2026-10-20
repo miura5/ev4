@@ -637,7 +637,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
       ok('[phone] the sheet opens to the whole ticked list, the current step marked, with the tally', opened.slice(0, 4).join(',') === 'pass,miss,pass,cur' && await fp.locator('#sksheet .sk-tog').getAttribute('aria-expanded') === 'true' && /3 of \d+ done · 1 missed/.test(await fp.textContent('#sksheet .sk-head')), opened.join(','));
       await fp.screenshot({ path: `${shots}/skills-sheet-phone.png` });
       await fp.locator('#sksheet .sk-tog').click(); await fp.waitForTimeout(200);
-      await fp.locator('#sksheet .sk-mini', { hasText: 'Stop' }).click(); await fp.waitForTimeout(400);
+      await fp.locator('#sksheet .sk-mini', { hasText: 'End' }).click(); await fp.waitForTimeout(400);
       ok('[phone] the sheet goes when the run ends', !(await fp.isVisible('#sksheet')));
       const ended = await fp.evaluate(id => window.__db.sessions[id], sk.id);
       ok('Stop ends the run with its summary, and the summary card comes back under her line', ended.status === 'ended' && /^2 of \d+ steps done right, missed step 2\. Stopped before the end\.$/.test(ended.summary) && /missed step 2/.test(await card().textContent()), ended.summary);
@@ -681,8 +681,8 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
       ok('[desktop] her line carries no card while the panel runs (B-82)', (await dcard().locator('.ev-card').count()) === 0);
       await dp.screenshot({ path: `${shots}/skills-panel-desktop.png` });
       ok('[desktop] no horizontal scroll with the panel open', await dp.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
-      await dp.locator('#skpanel button', { hasText: 'Stop' }).click(); await dp.waitForTimeout(400);
-      ok('[desktop] Stop on the panel ends the run and the panel goes', !(await dp.isVisible('#skpanel')) && await dp.evaluate(() => Object.values(window.__db.sessions).some(x => x.kind === 'skill' && x.status === 'ended')));
+      await dp.locator('#skpanel button', { hasText: 'End' }).click(); await dp.waitForTimeout(400);
+      ok('[desktop] End on the panel ends the run and the panel goes', !(await dp.isVisible('#skpanel')) && await dp.evaluate(() => Object.values(window.__db.sessions).some(x => x.kind === 'skill' && x.status === 'ended')));
       ok('B-51: no page errors', dErr.length === 0, dErr.join(' | '));
       await dp.close();
     }
@@ -837,7 +837,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     ok('the quiz keeps a mark, not the text', chk && chk.n === 1 && chk.items === 2 && chk.len > note1.length && !JSON.stringify(S1).includes('Hypotonic'), JSON.stringify(chk));
     const lastChk = (await msgs(ss)).slice(-1)[0];
     ok('the quiz posts as a card with its items', lastChk.cards && lastChk.cards[0].type === 'check' && lastChk.cards[0].items.length === 2 && lastChk.cards[0].items[0].text === 'Why does 0.45% NaCl move water into the cells?', JSON.stringify(lastChk.cards));
-    ok('check card rendered', /Two questions on what you just wrote/.test((await msgs(ss)).slice(-1)[0].text) && /Check 1 · Fluids and electrolytes/.test(await ss.locator('#thread .msg.ev').last().textContent()) && (await ss.locator('#thread .msg.ev').last().locator('ol.check-items li').count()) === 2);
+    ok('check card rendered', /Two questions on what you just wrote/.test((await msgs(ss)).slice(-1)[0].text) && /Check 1 · 2 questions/.test(await ss.locator('#thread .msg.ev').last().textContent()) && (await ss.locator('#thread .msg.ev').last().locator('ol.check-items li').count()) === 2);
     // Answer in the composer: recorded on the session, and Claude sees the check's questions
     await ss.evaluate(() => { window.__sampleFn && (window.__chatReply = 'Right: less solute outside, so water moves in. What happens to cell size?'); window.__chatScript = []; });
     await ss.locator('#thread .msg.ev').last().locator('button', { hasText: 'Answer' }).click();

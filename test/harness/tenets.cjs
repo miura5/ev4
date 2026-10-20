@@ -28,8 +28,10 @@ function collect() {
   const coral = coralAll.filter(e => !coralAll.some(o => o !== e && o.contains(e))).map(e => (own(e) || e.className).slice(0, 30));
   const chips = all('.chip, .qchip').filter(first).map(c => c.textContent.trim().slice(0, 30));
   const fonts = all('*').filter(e => own(e)).map(e => getComputedStyle(e)).filter(s => /mono/i.test(s.fontFamily) || (s.textTransform === 'uppercase' && parseFloat(s.letterSpacing) > 0.5)).length;
+  // D-160: a button whose only job is to close or hide (by its words or its label).
+  const closers = all('button,[role=button]').map(b => (b.textContent.trim() || b.getAttribute('aria-label') || '').slice(0, 30)).filter(t => /^(hide|close|dismiss)\b|^[×✕✖]$/i.test(t));
   const hero = document.getElementById('hero');
-  return { tab: (panel && panel.id || '').replace(/^p-/, ''), width: innerWidth, step: hero && hero.dataset.step, cards, primaries, leads, lists, rows, coral, urgent: document.querySelectorAll('li.brief-item[data-level="urgent"]').length, chips, monoOrSpacedCaps: fonts, qchipsShown: vis(document.getElementById('qchips')) };
+  return { tab: (panel && panel.id || '').replace(/^p-/, ''), width: innerWidth, step: hero && hero.dataset.step, cards, primaries, leads, lists, rows, coral, urgent: document.querySelectorAll('li.brief-item[data-level="urgent"]').length, chips, monoOrSpacedCaps: fonts, closers, qchipsShown: vis(document.getElementById('qchips')) };
 }
 
 /** Each tenet's check on a snapshot: [{tenet, ok, detail}]. exceptions: {D-147: [card ids or classes], ...}. */
@@ -46,6 +48,7 @@ function judge(s, exceptions = {}) {
     // Coral never outnumbers what is urgent; the E.V. tab, which carries the briefing, also shows it when there is any.
     r('D-149', s.coral.length <= s.urgent && (s.tab !== 'ev' || !s.urgent || s.coral.length >= 1), `coral elements: ${s.coral.length} (${s.coral.join(', ')}); urgent in the record: ${s.urgent}`),
     r('D-150', !s.monoOrSpacedCaps && s.chips.length <= 3, `chips in the first screen: ${s.chips.length}; monospace or spaced capitals: ${s.monoOrSpacedCaps}`),
+    r('D-160', !(s.closers || []).length, (s.closers || []).length ? `buttons that only close or hide: ${s.closers.join(', ')}` : 'no close or hide button'),
     r('D-151', !emptyCards.length && !(s.step === 'conversation' && s.qchipsShown), `${emptyCards.length ? 'cards holding only an empty-state line: ' + emptyCards.map(c => c.id || c.text).join(' | ') : 'no empty-state card'}${s.step === 'conversation' ? `; chips ${s.qchipsShown ? 'shown' : 'hidden'} in a conversation` : ''}`),
   ];
 }

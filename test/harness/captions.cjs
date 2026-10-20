@@ -306,9 +306,9 @@ async function sideBySide(browser, left, right, out, vp) {
     await ctx.close();
   }
   // B-82 (Matt, Oct 19): a skills run in Captions. The bottom sheet is the whole runner (her line carries no card while
-  // it goes), its count line has Hide and Stop, Hide leaves a Resume chip first among the chips, Stop brings the summary
-  // card back; a run found going on a fresh visit waits behind the Resume chip; one untouched for the conversation idle
-  // gap ends itself. A made-up checklist, planted as a lab material.
+  // it goes), its count line has End (B-122, D-161: no Hide; its peek line folds the sheet, the desktop panel folds by
+  // its head line), End brings the summary card back; a run found going on a fresh visit waits behind the Resume chip;
+  // one untouched for the conversation idle gap ends itself. A made-up checklist, planted as a lab material.
   const PACKET = { schema: 1, writer: 'canvas-sync', at: new Date().toISOString(), source: 'harness', title: 'Harness Skills Packet.pdf', course: 'NUR 112', kind: 'lab', pages: 5, text: [
     '[p4] 4 1 st Attempt: S or U Student Name Date Instructor Name HARNESS BED BATH VALIDATION CHECKLIST The student may miss NONE of the asterisk (*) areas and only 1 of the non-asterisk areas. * 1. Perform hand hygiene 2. Explain the procedure to the client * 3. Lower the bed rail on the working side 4. Wash from cleanest to dirtiest area',
     '[p5] 5 * 5. Raise the bed rail before stepping away 6. Document the bath and skin findings Overall Performance: ______ / 6'].join('\n') };
@@ -320,12 +320,13 @@ async function sideBySide(browser, left, right, out, vp) {
   const skillView = page => page.evaluate(() => { const sh = document.getElementById('sksheet'), pn = document.getElementById('skpanel'), cur = document.querySelector('#thread .msg.ev.current');
     const vis = e => !!e && !e.hidden && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().height > 0;
     return { sheet: vis(sh), panel: vis(pn), count: (document.querySelector('#sksheet .sk-count') || {}).textContent || null, minis: [...document.querySelectorAll('#sksheet .sk-mini')].map(b => b.textContent),
-      panelBtns: [...document.querySelectorAll('#skpanel button')].map(b => b.textContent), cards: cur ? cur.querySelectorAll('.ev-card').length : -1, cardText: cur && cur.querySelector('.ev-card') ? cur.querySelector('.ev-card').textContent.slice(0, 160) : '',
+      panelBtns: [...document.querySelectorAll('#skpanel button')].map(b => b.textContent), sheetOpen: !!sh && sh.classList.contains('open'), panelH: pn ? Math.round(pn.getBoundingClientRect().height) : 0, panelActs: !!document.querySelector('#skpanel .sk-acts'),
+      closers: [...document.querySelectorAll('button,[role=button]')].map(b => (b.textContent.trim() || b.getAttribute('aria-label') || '')).filter(t => /^(hide|close|dismiss)\b|^[×✕✖]$/i.test(t)), cards: cur ? cur.querySelectorAll('.ev-card').length : -1, cardText: cur && cur.querySelector('.ev-card') ? cur.querySelector('.ev-card').textContent.slice(0, 160) : '',
       greetCurrent: !!document.querySelector('#thread .msg.greet.current'), step: document.getElementById('hero').dataset.step, chips: [...document.querySelectorAll('#qchips .qchip')].filter(vis).map(c => c.textContent),
       unit: document.getElementById('readout').textContent }; });
   const skillState = page => page.evaluate(() => Object.entries(window.__db.sessions || {}).filter(([id, s]) => s.kind === 'skill' && /harness/.test(id)).map(([id, s]) => ({ id, status: s.status, endedBy: s.endedBy || null, summary: s.summary || '' })));
-  for (const scheme of ['phone', 'desktop']) {
-    const vp = scheme === 'phone' ? { width: 390, height: 844 } : { width: 1280, height: 860 }, phone = scheme === 'phone';
+  for (const scheme of ['phone', 'half', 'desktop']) { // B-122: 390, 735 (the phone's sheet, half the laptop) and 1280
+    const vp = scheme === 'phone' ? { width: 390, height: 844 } : scheme === 'half' ? { width: 735, height: 830 } : { width: 1280, height: 860 }, phone = scheme !== 'desktop';
     const ctx = await browser.newContext({ viewport: vp, colorScheme: 'dark' }); const page = await ctx.newPage(); const errors = []; page.on('pageerror', e => errors.push(e.message));
     await openPage(page, skillSeed()); await page.waitForTimeout(1500);
     ok(`[skills ${scheme}] the readout names the unit EV-04`, /^EV-04 · /.test((await skillView(page)).unit), (await skillView(page)).unit);
@@ -334,20 +335,26 @@ async function sideBySide(browser, left, right, out, vp) {
     let v = await skillView(page);
     ok(`[skills ${scheme}] a run starts: her line carries no card, the ${phone ? 'bottom sheet' : 'side panel'} is the runner`, v.cards === 0 && (phone ? v.sheet && !v.panel : v.panel), JSON.stringify(v));
     ok(`[skills ${scheme}] her core steps to the skills size (${phone ? "D-122's 44%" : 'the surface step'})`, v.step === (phone ? 'skills' : 'surface'), JSON.stringify(v));
-    if (phone) ok('[skills phone] the sheet\'s count line has Hide and Stop, beside Missed it and Did it', v.count === 'Step 1 of 6' && v.minis.join(',') === 'Hide,Stop', JSON.stringify(v));
-    else ok('[skills desktop] the panel has Hide and Stop', v.panelBtns.includes('Hide') && v.panelBtns.includes('Stop'), JSON.stringify(v.panelBtns));
+    if (phone) ok(`[skills ${scheme}] the sheet's count line has End, beside Missed it and Did it; no Hide`, v.count === 'Step 1 of 6' && v.minis.join(',') === 'End', JSON.stringify(v));
+    else ok('[skills desktop] the panel has End and no Hide', v.panelBtns.includes('End') && !v.panelBtns.includes('Hide') && !v.panelBtns.includes('Stop'), JSON.stringify(v.panelBtns));
+    ok(`[skills ${scheme}] no button named Hide, Close or × anywhere on the page`, !v.closers.length, JSON.stringify(v.closers));
     await page.screenshot({ path: `${shots}/skills-run-${scheme}.png` });
     await page.click(phone ? '#sksheet .sk-acts button:has-text("Did it")' : '#skpanel .sk-acts button:has-text("Did it")'); await page.waitForTimeout(500);
-    await page.click(phone ? '#sksheet .sk-mini:has-text("Hide")' : '#skpanel button:has-text("Hide")'); await page.waitForTimeout(600);
-    v = await skillView(page);
-    ok(`[skills ${scheme}] Hide: the runner goes, a Resume chip leads the chips, Start a study session still last`, !v.sheet && !v.panel && v.chips[0] === 'Resume Harness bed bath · 2 of 6' && v.chips.length <= 3 && v.chips[v.chips.length - 1] === 'Start a study session' && v.cards === 0, JSON.stringify(v));
-    await page.screenshot({ path: `${shots}/skills-hidden-${scheme}.png` });
-    await page.click('#qchips .qchip:has-text("Resume")'); await page.waitForTimeout(600);
-    v = await skillView(page);
-    ok(`[skills ${scheme}] tapping Resume brings the runner back at step 2, with no new line in the captions`, (phone ? v.sheet && v.count === 'Step 2 of 6' : v.panel) && !v.chips.some(c => /^Resume /.test(c)), JSON.stringify(v));
-    await page.click(phone ? '#sksheet .sk-mini:has-text("Stop")' : '#skpanel button:has-text("Stop")'); await page.waitForTimeout(900);
+    // The way out is the thing folding (D-160): the peek line on the phone, the head line beside her on the desktop.
+    if (phone) {
+      await page.click('#sksheet .sk-tog'); await page.waitForTimeout(300); const o = await skillView(page);
+      await page.click('#sksheet .sk-tog'); await page.waitForTimeout(300); v = await skillView(page);
+      ok(`[skills ${scheme}] the peek line unfolds the sheet to the whole list and folds it again`, o.sheetOpen && !v.sheetOpen && v.sheet && v.count === 'Step 2 of 6', JSON.stringify({ o: o.sheetOpen, v: v.sheetOpen, count: v.count }));
+    } else {
+      const h0 = (await skillView(page)).panelH;
+      await page.click('#skpanel .sk-pfold'); await page.waitForTimeout(300); const f = await skillView(page);
+      await page.screenshot({ path: `${shots}/skills-folded-${scheme}.png` });
+      await page.click('#skpanel .sk-pfold'); await page.waitForTimeout(300); v = await skillView(page);
+      ok('[skills desktop] the panel\'s head line folds it to one line and unfolds it', f.panel && f.panelH <= 84 && !f.panelActs && v.panelActs && v.panelH === h0, JSON.stringify({ h0, folded: f.panelH, acts: f.panelActs, back: v.panelH }));
+    }
+    await page.click(phone ? '#sksheet .sk-mini:has-text("End")' : '#skpanel button:has-text("End")'); await page.waitForTimeout(900);
     v = await skillView(page); const st = await skillState(page);
-    ok(`[skills ${scheme}] Stop ends the run, saved; the summary card comes back under her line`, st.length === 1 && st[0].status === 'ended' && st[0].endedBy === 'ended' && !v.sheet && !v.panel && v.cards === 1 && /1 of 6 steps done right\. Stopped before the end\./.test(v.cardText), JSON.stringify({ st, v }));
+    ok(`[skills ${scheme}] End ends the run, saved; the summary card comes back under her line`, st.length === 1 && st[0].status === 'ended' && st[0].endedBy === 'ended' && !v.sheet && !v.panel && v.cards === 1 && /1 of 6 steps done right\. Stopped before the end\./.test(v.cardText), JSON.stringify({ st, v }));
     ok(`[skills ${scheme}] no page errors`, errors.length === 0, errors.join(' | '));
     await ctx.close();
     // A fresh visit with a run going (started 30 min ago, one step marked 20 min ago): the greeting is her line, the
@@ -357,6 +364,8 @@ async function sideBySide(browser, left, right, out, vp) {
     v = await skillView(p2);
     ok(`[skills ${scheme}] a fresh visit with a run going: the greeting is her line, the runner waits, Resume leads the chips`, v.greetCurrent && !v.sheet && !v.panel && v.chips[0] === 'Resume Harness bed bath · 2 of 6' && v.step === 'idle', JSON.stringify(v));
     await p2.screenshot({ path: `${shots}/skills-return-${scheme}.png` });
+    await p2.click('#qchips .qchip:has-text("Resume")'); await p2.waitForTimeout(600); v = await skillView(p2);
+    ok(`[skills ${scheme}] tapping Resume brings the runner back at step 2`, (phone ? v.sheet && v.count === 'Step 2 of 6' : v.panel) && !v.chips.some(c => /^Resume /.test(c)), JSON.stringify(v));
     await c2.close();
     // A run untouched for the conversation idle gap (started 3 h ago, last step 125 min ago) ends itself on open.
     const c3 = await browser.newContext({ viewport: vp, colorScheme: 'dark' }); const p3 = await c3.newPage();
@@ -374,6 +383,37 @@ async function sideBySide(browser, left, right, out, vp) {
     const chips = await page.evaluate(() => [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent));
     ok('[phone] with the reader unreachable, File it is offered, Start a study session still last', chips.includes('File it') && chips.length === 3 && chips[2] === 'Start a study session', JSON.stringify(chips));
     await ctx.close(); }
+  // B-122 (D-160, D-161): a session's check folds to its head line by a tap on it and back, files nothing, and the next
+  // checkpoint's card arrives open; at 390, 735 and 1280.
+  { const ITEMS = [{ kind: 'why', text: 'Why does 0.45% saline move water into the cells?' }, { kind: 'gap', text: 'What does 3% saline do to cell size?' }];
+    const checkSeed = () => { const db = JSON.parse(JSON.stringify(seed)), t0 = new Date(NOW.getTime() - 20 * 60e3).toISOString(), t1 = new Date(NOW.getTime() - 60e3), k = 'start-' + t0.replace(/[-:.TZ]/g, '').slice(0, 14);
+      db.sessions = { ...(db.sessions || {}), 'ss-harness-check': { schema: 1, writer: 'page', at: t0, source: 'E.V. Home', status: 'active', date: today, startedAt: t0, topic: 'Harness checks', noteId: 'x-coredata://check', driver: { view: 'gone', at: t0 }, events: { [k]: { type: 'start', at: t0, len: 5, h: 'zz', noteId: 'x-coredata://check' } } } };
+      return db; };
+    // A checkpoint arriving: the session posts check n as a reply in today's conversation.
+    const post = (page, n) => page.evaluate(async ({ today, items, n }) => { const db = await window.claude.use('db'), at = new Date(Date.now()).toISOString(), id = 'm-' + at.replace(/[-:]/g, '').replace('T', '-').replace('.', '').replace('Z', '') + '-ev';
+      const doc = (window.__db.talk || {})[today] || { schema: 1, writer: 'page', at, source: 'E.V. Home', date: today, messages: {} };
+      await db.collection('talk').doc(today).set({ ...doc, messages: { ...(doc.messages || {}), [id]: { role: 'ev', text: 'Two questions on what you just wrote.', cards: [{ type: 'check', session: 'ss-harness-check', n, items }], at, tier: 'quick' } } }); }, { today, items: ITEMS, n });
+    const card = page => page.evaluate(() => { const c = [...document.querySelectorAll('#thread .msg.ev.current .ev-card.check')].pop(); if (!c) return null; const f = c.querySelector('.check-fold'), r = c.getBoundingClientRect();
+      return { head: f && f.textContent, expanded: f && f.getAttribute('aria-expanded'), h: Math.round(r.height), lineH: f ? Math.round(f.getBoundingClientRect().height) : 0, items: [...c.querySelectorAll('ol.check-items')].some(o => o.getBoundingClientRect().height > 0), writes: (window.__writes || []).length }; });
+    for (const vp of [{ width: 390, height: 844 }, { width: 735, height: 830 }, { width: 1280, height: 860 }]) {
+      const tag = vp.width; const ctx = await browser.newContext({ viewport: vp, colorScheme: 'dark' }); const page = await ctx.newPage(); const errors = []; page.on('pageerror', e => errors.push(e.message));
+      await openPage(page, checkSeed()); await page.waitForTimeout(1500); await post(page, 1); await page.waitForFunction(() => document.querySelector('#thread .msg.ev.current .check-fold'), null, { timeout: 8000 }).catch(() => {}); await page.waitForTimeout(800);
+      const c0 = await card(page), w0 = c0 && c0.writes;
+      await page.click('#thread .msg.ev.current .check-fold'); await page.waitForTimeout(300); const c1 = await card(page);
+      await page.screenshot({ path: `${shots}/check-folded-${tag}.png` });
+      ok(`[check ${tag}] a tap on its head line folds the check to that one line, filing nothing`, c0 && c0.head === 'Check 1 · 2 questions' && c0.items && c1 && !c1.items && c1.expanded === 'false' && c1.h <= c1.lineH + 40 && c1.writes === c0.writes, JSON.stringify({ c0, c1 }));
+      await page.click('#thread .msg.ev.current .check-fold'); await page.waitForTimeout(300); const c2 = await card(page);
+      ok(`[check ${tag}] a second tap unfolds it`, c2 && c2.items && c2.expanded === 'true', JSON.stringify(c2));
+      await page.click('#thread .msg.ev.current .check-fold'); await page.waitForTimeout(200);
+      // The next checkpoint: a new check arrives open, the folded one stays folded.
+      await page.waitForTimeout(1100); await post(page, 2);
+      await page.waitForFunction(() => /Check 2/.test((document.querySelector('#thread .msg.ev.current .check-fold') || {}).textContent || ''), null, { timeout: 6000 }).catch(() => {}); await page.waitForTimeout(400);
+      const c3 = await card(page);
+      ok(`[check ${tag}] the next checkpoint's check arrives open`, c3 && c3.head === 'Check 2 · 2 questions' && c3.items && c3.expanded === 'true', JSON.stringify(c3));
+      ok(`[check ${tag}] no page errors`, errors.length === 0, errors.join(' | '));
+      await ctx.close();
+    }
+  }
   // B-112 (D-153): at short heights (390x450 is the phone with its keyboard open) the composer's bottom edge and her
   // current line stay inside the viewport, idle, in a conversation and in a session.
   { const sessionSeed = () => { const db = JSON.parse(JSON.stringify(seed)), t0 = new Date(NOW.getTime() - 3 * 60e3).toISOString(), k = 'start-' + t0.replace(/[-:.TZ]/g, '').slice(0, 14);
