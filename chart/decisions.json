@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-166",
+  "date": "Oct 20",
+  "title": "The demo copy (B-83) is deleted, not retired: its artifact and its code (demo/runtime.js, tools/demo.mjs, test/harness/demo.cjs, test/demo.test.mjs) go, and its made-up record moves to test/data/seed.cjs as the synthetic record's seed; tidying the repository may remove code outright (git history keeps it), while records, Mac files, scheduled tasks and docs stay retire-by-marking",
+  "why": "Matt, Oct 20: he overrides nothing-is-deleted for the demo, which is redundant aside from its seed data and adds overhead to every build and check; the repository is to be tidied",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-165",
   "date": "Oct 19",
   "title": "Study's three views: in Review the counter (3 of 8) is the set's fold line, replacing All questions, and from 1024 the set sits beside the question; once answered, the verdict is one line (Right · one more right on Tue makes it solid), your pick and the right answer carry their why, and Why not the others folds; a finished set leads with its score and Give me 5 more, misses as lines that open to what you picked and why, right answers folded, and the next set as one line; Practice leads with the set to do next and its Start, finished sets as lines opening to Review and Retake (D-095); Plan leads with its count and exam day, open items as ticks, Done and Earlier days folded, no explanation paragraph",
