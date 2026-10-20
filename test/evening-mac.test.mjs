@@ -18,7 +18,7 @@ const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'u
 EV.configure(spec);
 const validate = loadValidator();
 const tmp = p => fs.mkdtempSync(path.join(os.tmpdir(), p));
-const NUR = spec.registry.canvas.courses['NUR 112'];
+const NUR = spec.courses['NUR 112'].canvasId; // B-42: Canvas ids live in spec.courses
 
 // ---------------------------------------------------------------- a made-up Canvas
 const API = {

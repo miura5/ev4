@@ -420,7 +420,7 @@
     else if (nextTask) { parts.push(el('p', 'big', 'Next: ' + nextTask.text), el('p', 'meta', rs ? 'Today’s review is done.' : due.length ? `${plural(due.length, 'weak spot')} due. The review set arrives with the 4:25am run.` : 'Nothing due for review.')); }
     else { parts.push(el('p', 'big', rs ? 'Today’s review is done.' : 'Nothing urgent right now.'), el('p', 'meta', sample ? 'Want more? E.V. can write 5 new questions on your weakest spots.' : 'Check the plan for what’s next.')); if (sample) parts.push(btn('More practice', () => { showTab('study'); setStudy('review'); }, { primary: true })); }
     // B-117 (D-154): no stat tiles; the Now card's second line carries the exam countdown, readiness lives in Progress.
-    const ex = (S.state && S.state.nextExams || []).find(e => e.date >= today) || E.nextNurExams(S.exams, E.addDays(today, -1))[0];
+    const ex = (S.state && S.state.nextExams || []).find(e => e.date >= today) || E.nextExams(S.exams, E.addDays(today, -1))[0];
     if (ex && parts[1] && parts[1].classList.contains('meta')) { const n = E.diffDays(today, ex.date); parts[1].textContent += ` ${(ex.title || ex.id).replace(/:.*$/, '')} ${n === 0 ? 'is today' : n === 1 ? 'is tomorrow' : 'in ' + plural(n, 'day')}.`; }
     // B-124 (D-164): a prep day. From the evening before, the Now card is the pack check until it is ticked through,
     // then it folds to one line under the usual Now card; on the day itself the Now card is the day (place, hours)
@@ -492,7 +492,7 @@
       action = btn(off ? 'Bring back' : 'Remove', null, { cls: 'quiet' }); action.setAttribute('aria-label', (off ? 'Bring back: ' : 'Remove from the calendar: ') + (d.title || ''));
       action.addEventListener('click', () => guard(action, () => editDates({ action: off ? 'restore' : 'remove', id: d.id }, 'Matt'), off ? 'Back on the calendar' : 'Taken off the calendar'));
     }
-    const detail = [d.course && d.course !== 'NUR 112' ? d.course : '', d.notes, off ? 'taken off by ' + by(d.removed.by) : '', o.edit && d.addedBy ? 'added by ' + by(d.addedBy) : ''].filter(Boolean).join(' · ');
+    const detail = [d.course && d.course !== E.defaultCourse() ? d.course : '', d.notes, off ? 'taken off by ' + by(d.removed.by) : '', o.edit && d.addedBy ? 'added by ' + by(d.addedBy) : ''].filter(Boolean).join(' · ');
     return row({ lead: short(d.date), title: d.title || '', detail, chips: [d.kind ? [d.kind, kindV] : null, d.graded ? ['graded', 'bad'] : null], action });
   }
 
@@ -630,7 +630,7 @@
       for (const [id, s] of Object.entries(st)) if (s.n >= 2 && (!weakest || s.right / s.n < weakest.r / weakest.n)) weakest = { id, r: s.right, n: s.n };
       const formats = M.models.filter(w => w.kind === 'format' && w.derived.status === 'open').map(w => w.topic);
       const prompt = [
-        'You write NCLEX-style practice questions for Matt, a first-semester ADN nursing student (NUR 112). Return JSON only.',
+        'You write NCLEX-style practice questions for Matt, a first-semester ADN nursing student (' + E.defaultCourse() + '). Return JSON only.',
         ex ? `Exam: ${ex.title} on ${ex.date}.` : '', 'Objectives: ' + JSON.stringify(objs),
         'Weak spots to target first, one question each (copy weakspotId, topic and objective exactly): ' + JSON.stringify(targets),
         weakest ? `Weakest objective so far: ${weakest.id} (${weakest.r} of ${weakest.n} right). Use any remaining questions on it, as new checks.` : '',
@@ -656,6 +656,8 @@
       say(out.textContent); return false;
     } finally { morePending = false; b.disabled = false; }
   }
+  // B-42 (D-099): the course select reads spec.courses: its active courses, the default first.
+  $('d-course').replaceChildren(...E.activeCourses().sort((a, b) => (b === E.defaultCourse()) - (a === E.defaultCourse())).map(c => { const o = document.createElement('option'); o.textContent = c; return o; }));
   $('more-btn').addEventListener('click', () => morePractice());
   $('weak-quizlet-btn').addEventListener('click', () => copyQuizlet($('weak-quizlet')));
 
@@ -698,7 +700,7 @@
     $('audit-card').hidden = true; // merged into the list above (B-118); its line in the conversation still opens here
     // Score entry for past unit exams (calibration).
     // D-094: a past NUR unit exam with no score yet; the score goes to examedits/<examId>, replaced whole.
-    const needScore = S.exams.filter(e => e.date && e.date < today && (e.course || 'NUR 112') === 'NUR 112' && E.constants().nurUnitExamKinds.includes(e.kind) && typeof e.score !== 'number').sort((a, b) => b.date.localeCompare(a.date));
+    const needScore = S.exams.filter(e => e.date && e.date < today && E.examIs(e, 'scoredKinds') && typeof e.score !== 'number').sort((a, b) => b.date.localeCompare(a.date));
     const sc = $('score-card'); sc.hidden = !needScore.length;
     if (needScore.length) {
       const e = needScore[0]; const f = el('form'); f.id = 'score-form'; const inp = document.createElement('input'); inp.type = 'number'; inp.min = '0'; inp.max = '100'; inp.step = '0.1'; inp.id = 'score-in'; inp.placeholder = 'Score, e.g. 88.5'; inp.setAttribute('aria-label', 'Score for ' + e.title);
@@ -775,7 +777,7 @@
   const IDEA_KIND = { learning: 'Learning', feature: 'Feature', general: 'General' };
   const promote = i => btn('Make it a weak spot', ev => guard(ev.target, async () => {
         const at = now(); const id = E.safeId('ws-idea-' + i.id);
-        const facts = { ...envelope('Promoted idea', at), topic: String(i.text || '').slice(0, 140), objective: i.objective || '', exam: String(i.objective || '').split('-')[0] || '', course: 'NUR 112', kind: 'concept', addedBy: 'page', origin: { idea: i.id }, initial: { streak: 0, nextDue: E.addDays(today, 1), recurrence: 1, misses: 0 }, events: {} };
+        const facts = { ...envelope('Promoted idea', at), topic: String(i.text || '').slice(0, 140), objective: i.objective || '', exam: String(i.objective || '').split('-')[0] || '', course: E.defaultCourse(), kind: 'concept', addedBy: 'page', origin: { idea: i.id }, initial: { streak: 0, nextDue: E.addDays(today, 1), recurrence: 1, misses: 0 }, events: {} };
         await write({ op: 'set', collection: 'weakspots', id, data: facts });
         await write({ op: 'update', collection: 'ideas', id: i.id, data: { status: 'promoted', weakspotId: id } });
       }, 'Now a weak spot'));
@@ -1656,7 +1658,7 @@
     const cur = activeSession(); if (cur) return [`A session on **${cur.topic}** is already running. End it from the line under my core when you’re done.`, []];
     if (!sample || T.sampleOff) return ['Study sessions need permission to ask Claude for the checks. Allow Claude for this page from its Permissions menu.', []];
     let p; try { p = await readerCall('latest_note'); } catch (e) { SS.readerOk = false; return [readerCopy((e && e.code) || 'upstream_error', e && e.message), []]; }
-    if (!p.found) return [p.refused ? 'Study Watch’s latest note isn’t in NUR 112 or BIO 201, so I won’t read it. Type a line in a school note, then start again.' : 'Study Watch hasn’t saved a school note yet. Check that it’s running in reader mode, type a line in your NUR 112 or BIO 201 note, then start again.', []];
+    if (!p.found) return [p.refused ? 'Study Watch’s latest note isn’t in ' + E.courses().join(' or ') + ', so I won’t read it. Type a line in a school note, then start again.' : 'Study Watch hasn’t saved a school note yet. Check that it’s running in reader mode, type a line in your NUR 112 or BIO 201 note, then start again.', []];
     const n = p.note || {};
     if (p.graded) return [`**${n.name}** is tagged #graded, so I stay out of it. Open another note and start again.`, []];
     const at = now(); const stamp = at.replace(/\D/g, '').slice(0, 14); const mark = E.noteMark(n.text || '');
@@ -2645,7 +2647,7 @@
     const box = $('library'); if (!box) return;
     if (!LIB.mats) { $('lib-count').textContent = ''; box.replaceChildren(empty(LIB.loading ? 'Loading your library…' : 'Opening your library…')); if (ui.record === 'library' && !LIB.loading) library().catch(e => { box.replaceChildren(empty('Couldn’t load the library: ' + ((e && (e.code || e.message)) || 'error'))); }); return; }
     const cat = E.libraryCatalog(LIB.mats); $('lib-count').textContent = plural(cat.length, 'file');
-    const order = ['NUR 112', 'BIO 201']; const rows = [];
+    const order = E.courses(); const rows = [];
     for (const c of [...order, ...new Set(cat.map(x => x.course).filter(x => !order.includes(x)))]) {
       const mine = cat.filter(x => x.course === c); if (!mine.length) continue;
       rows.push(el('li', 'row daysep-row', c));
@@ -2687,7 +2689,7 @@
     const ahead = S.dayedits.filter(d => d.id > today && d.id <= E.addDays(today, 7) && d.added && Object.values(d.added).some(a => a && a.text));
     if (ahead.length) L.push('Added to later days: ' + ahead.map(d => d.id + ': ' + Object.entries(d.added).filter(([, a]) => a && a.text).map(([id, a]) => `${id} "${a.text}"`).join(', ')).join('; '));
     const exams = S.exams.filter(e => e.date && e.date >= today).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 4);
-    if (exams.length) L.push('Exams: ' + exams.map(e => `${e.id} "${e.title}" ${e.date} (${E.diffDays(today, e.date)} days, ${e.course || 'NUR 112'})`).join('; '));
+    if (exams.length) L.push('Exams: ' + exams.map(e => `${e.id} "${e.title}" ${e.date} (${E.diffDays(today, e.date)} days, ${e.course || E.defaultCourse()})`).join('; '));
     if (M.target) { const r = E.readiness({ examId: M.target.id, weakspots: M.models }); L.push(`Target exam ${M.target.id}: ${r.pctSolid ?? 0}% of weak spots solid, ${r.need} correct reviews to go.`); }
     const due = E.rankDue(M.models, today, S.exams); const act = M.models.filter(w => E.isActive(w));
     L.push(`Weak spots: ${act.length} active, ${due.length} due. Most due: ` + (due.length ? due : act).slice(0, 8).map(w => `${w.id} "${w.topic}" (${w.objective || w.exam || ''}, ${w.derived.streak || 0}/2 right)`).join('; '));
@@ -2757,7 +2759,7 @@
           const same = M.models.find(w => E.isActive(w) && E.norm(w.topic) === E.norm(topic)); if (same) return 'already active: ' + same.id;
           const objective = S.objectives.some(o => o.id === i.objective) ? String(i.objective) : ''; return 'logged ' + await addWeakspot({ topic, objective, source: 'Told E.V.' }); } },
       { name: 'edit_dates', description: 'Edit his calendar: deadlines and events in the record. add: a due date, exam, clinical, validation or other event (date, title, kind, course, graded, notes). change: fix an entry by id (date, title, kind, course, graded or notes; entries from Canvas take notes only, since Canvas keeps their date and title current). remove: take an entry off by id; restore brings it back. Graded work, exams, clinicals and validations from Canvas stay. Not for study tasks: those go on his daily list with edit_list; to move a calendar entry onto the list, add it there, then remove it here. Ids are in the calendar lines above; lookup dates finds others. Returns the id.',
-        inputSchema: { type: 'object', properties: { action: { type: 'string', enum: ['add', 'change', 'remove', 'restore'] }, id: { type: 'string', description: 'change, remove or restore: the entry id' }, date: { type: 'string', description: 'YYYY-MM-DD' }, title: { type: 'string' }, kind: { type: 'string', enum: E.DATE_KINDS }, course: { type: 'string', enum: ['NUR 112', 'BIO 201'] }, graded: { type: 'boolean' }, notes: { type: 'string' } }, required: ['action'] },
+        inputSchema: { type: 'object', properties: { action: { type: 'string', enum: ['add', 'change', 'remove', 'restore'] }, id: { type: 'string', description: 'change, remove or restore: the entry id' }, date: { type: 'string', description: 'YYYY-MM-DD' }, title: { type: 'string' }, kind: { type: 'string', enum: E.DATE_KINDS }, course: { type: 'string', enum: E.courses() }, graded: { type: 'boolean' }, notes: { type: 'string' } }, required: ['action'] },
         execute: async i => { const a = str(i.action, 10); if (i.title != null) noIds(str(i.title, 120)); if (i.notes != null) noIds(str(i.notes, 200));
           const r = await editDates({ action: a, id: str(i.id, 200), date: i.date, title: i.title, kind: i.kind, course: i.course, graded: i.graded, notes: i.notes }, 'E.V.');
           const span = E.diffDays(today, r.date); if (a !== 'remove' && span >= 0 && span <= 13) addCard({ type: 'dates', days: Math.min(14, Math.max(2, span + 1)) });
@@ -2771,7 +2773,7 @@
         inputSchema: { type: 'object', properties: { id: { type: 'string' }, done: { type: 'boolean' } }, required: ['id'] },
         execute: async i => { const { items, isDone } = dayState(); const it = items.find(x => x.id === i.id); if (!it) throw new Error('no item ' + i.id + ' on today\'s list'); const on = i.done !== false; if (isDone(it) === on) return 'already ' + (on ? 'done' : 'open'); await tickWrite(it, on); return (on ? 'checked off: ' : 'reopened: ') + it.text; } },
       { name: 'edit_list', description: 'Edit his daily list. add: a study task he asks for or agrees to, in his words (kind reading, practice, review, notes or todo; minutes when known; course). remove: take an item off by id (an added item goes; a planned one is skipped for that day). restore: bring a skipped item back. Today unless he names a day in the next 7. Graded work, exams, clinicals and validations always stay. Returns the item id.',
-        inputSchema: { type: 'object', properties: { action: { type: 'string', enum: ['add', 'remove', 'restore'] }, text: { type: 'string' }, kind: { type: 'string', enum: ['reading', 'practice', 'review', 'notes', 'todo'] }, minutes: { type: 'integer', minimum: 0, maximum: 240 }, course: { type: 'string', enum: ['NUR 112', 'BIO 201'] }, id: { type: 'string', description: 'remove or restore: the item id from the list' }, date: { type: 'string', description: 'YYYY-MM-DD; omit for today' } }, required: ['action'] },
+        inputSchema: { type: 'object', properties: { action: { type: 'string', enum: ['add', 'remove', 'restore'] }, text: { type: 'string' }, kind: { type: 'string', enum: ['reading', 'practice', 'review', 'notes', 'todo'] }, minutes: { type: 'integer', minimum: 0, maximum: 240 }, course: { type: 'string', enum: E.courses() }, id: { type: 'string', description: 'remove or restore: the item id from the list' }, date: { type: 'string', description: 'YYYY-MM-DD; omit for today' } }, required: ['action'] },
         execute: async i => { const date = i.date ? str(i.date, 10) : today;
           if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date < today || E.diffDays(today, date) > 7) throw new Error('date must be today or one of the next 7 days, as YYYY-MM-DD');
           const a = str(i.action, 10); if (a === 'add') noIds(str(i.text, 140));
@@ -2794,11 +2796,11 @@
             default: throw new Error('unknown lookup ' + i.what);
           }
           return JSON.stringify(out).slice(0, 4000); } },
-      { name: 'materials', description: 'His course materials: Canvas lecture slides (NUR 112 and BIO 201), the skills packet with the validation checklists, lab and clinical reference sheets, syllabi and calendars, handouts, and files he attached. search: the best passages for a question (each has a cite like "SKILLS PACKET, p. 12"). read: one file by id, from a page or slide on, for a whole checklist or section. list: what is there. Returns small JSON.',
-        inputSchema: { type: 'object', properties: { action: { type: 'string', enum: ['search', 'read', 'list'] }, query: { type: 'string', description: 'search: the topic in a few key words; list: words in the title (optional)' }, course: { type: 'string', enum: ['NUR 112', 'BIO 201'] }, kind: { type: 'string', enum: E.MATERIAL_KINDS }, id: { type: 'string', description: 'read: the id from search or list' }, page: { type: 'integer', description: 'read: start at this page or slide' } }, required: ['action'] },
+      { name: 'materials', description: 'His course materials: Canvas lecture slides (' + E.courses().join(' and ') + '), the skills packet with the validation checklists, lab and clinical reference sheets, syllabi and calendars, handouts, and files he attached. search: the best passages for a question (each has a cite like "SKILLS PACKET, p. 12"). read: one file by id, from a page or slide on, for a whole checklist or section. list: what is there. Returns small JSON.',
+        inputSchema: { type: 'object', properties: { action: { type: 'string', enum: ['search', 'read', 'list'] }, query: { type: 'string', description: 'search: the topic in a few key words; list: words in the title (optional)' }, course: { type: 'string', enum: E.courses() }, kind: { type: 'string', enum: E.MATERIAL_KINDS }, id: { type: 'string', description: 'read: the id from search or list' }, page: { type: 'integer', description: 'read: start at this page or slide' } }, required: ['action'] },
         execute: async i => {
           const L = await library(); const a = str(i.action, 10);
-          const course = ['NUR 112', 'BIO 201'].includes(i.course) ? i.course : undefined; const kind = E.MATERIAL_KINDS.includes(i.kind) ? i.kind : undefined;
+          const course = E.isCourse(i.course) ? i.course : undefined; const kind = E.MATERIAL_KINDS.includes(i.kind) ? i.kind : undefined;
           if (a === 'search') {
             const q = str(i.query, 300); if (!q) throw new Error('query is required');
             const hits = E.searchLibrary(L.idx, q, { course, kind });
@@ -3006,7 +3008,7 @@
   // ------------------------------------------------------------ forms
   async function addWeakspot({ topic, objective = '', source }) {
     const at = now(); const id = E.safeId('ws-' + today + '-' + (objective || 'x') + '-' + E.slug(topic));
-    const facts = { ...envelope(source || 'Logged by you', at), topic, objective, exam: objective.split('-')[0] || '', course: 'NUR 112', kind: 'concept', addedBy: 'page', initial: { streak: 0, nextDue: today, recurrence: 1, misses: 0 }, events: {} };
+    const facts = { ...envelope(source || 'Logged by you', at), topic, objective, exam: objective.split('-')[0] || '', course: E.defaultCourse(), kind: 'concept', addedBy: 'page', initial: { streak: 0, nextDue: today, recurrence: 1, misses: 0 }, events: {} };
     await write({ op: 'set', collection: 'weakspots', id, data: facts });
     return id;
   }

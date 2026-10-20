@@ -36,6 +36,37 @@ export const isLeftover = (d, c) => !!(d && ((c && c.fixedIds && !c.fixedIds.inc
  * db: {collection: [docs with id]}. Returns {issues: [{severity, code, ref, msg}], rebuilt: [rebuild results]}, issues
  * sorted errors first. opts.date: the day content checks run as of (exam-passed notes).
  */
+/** B-42 (D-099): what is wrong with spec.courses, as lines (none when it is sound); also that the keys it replaced
+ *  are gone. The build refuses a spec with any. */
+export function courseProblems(spec) {
+  const t = spec && spec.courses, out = [];
+  if (!t || typeof t !== 'object') return ['spec.courses is missing'];
+  const names = Object.keys(t).filter(k => !k.startsWith('_'));
+  if (!names.length) out.push('spec.courses names no course');
+  for (const n of names) {
+    const c = t[n] || {};
+    if (!['active', 'done'].includes(c.status)) out.push(`${n}: status is ${c.status}, not active or done`);
+    if (!Number.isInteger(c.canvasId)) out.push(`${n}: canvasId is not a Canvas course id`);
+    if (!Array.isArray(c.examKinds) || !c.examKinds.length) out.push(`${n}: examKinds is not a list of exam kinds`);
+    for (const k of ['reviewKinds', 'examDayKinds', 'scoredKinds']) if (!Array.isArray(c[k]) || c[k].some(x => !(c.examKinds || []).includes(x))) out.push(`${n}: ${k} is not a list of its examKinds`);
+    if (!Array.isArray(c.calendarDayKinds)) out.push(`${n}: calendarDayKinds is not a list`);
+    if (c.dayBudget !== 'shared') out.push(`${n}: dayBudget is ${c.dayBudget}; only shared is built (one review set inside the day's budget)`);
+    for (const r of ['aliases', 'guess']) if (c[r] != null) { try { new RegExp(c[r], 'i'); } catch { out.push(`${n}: ${r} is not a pattern`); } }
+    if (!Array.isArray(c.library) || c.library.some(r => !r || !r.module || !r.kind)) out.push(`${n}: library is not a list of module rules with module and kind`);
+    else for (const r of c.library) { try { new RegExp(r.module, 'i'); if (r.only) new RegExp(r.only, 'i'); } catch { out.push(`${n}: library rule ${r.module} is not a pattern`); } }
+  }
+  if (names.filter(n => t[n] && t[n].default).length !== 1) out.push('spec.courses needs exactly one default course');
+  const at = (o, ks) => ks.reduce((v, k) => (v == null ? v : v[k]), o);
+  for (const ks of [['registry', 'canvas', 'courses'], ['registry', 'canvas', 'library', 'modules'], ['constants', 'nurUnitExamKinds']]) if (at(spec, ks) !== undefined) out.push(`${ks.join('.')} moved to spec.courses (B-42) and must be gone`);
+  return out;
+}
+/** exams and materials whose course is not one spec.courses names (written the way the record writes it). */
+export function unknownCourses(db) {
+  EV.courses(); const out = [];
+  for (const col of ['exams', 'materials']) for (const d of (db && db[col]) || []) if (d.course != null && d.course !== '' && !EV.isCourse(EV.normCourse(d.course))) out.push({ ref: `${col}/${d.id}`, course: d.course });
+  return out;
+}
+
 export function lintRecord(db, spec, validate, { date, commit = null } = {}) {
   const issues = [];
   const add = (severity, code, ref, msg) => issues.push({ severity, code, ref, msg });
@@ -44,6 +75,7 @@ export function lintRecord(db, spec, validate, { date, commit = null } = {}) {
   const state = ((rec.state || []).find(d => d.id === 'current')) || null;
   const kf = knownFacts(rec.state); const known = kf.hashes; const knownFields = kf.fields;
 
+  for (const u of unknownCourses(rec)) add('error', 'unknown-course', u.ref, `course ${u.course} is not in spec.courses (B-42)`);
   const legacyCols = spec.legacyCollections || [];
   for (const [col, docs] of Object.entries(rec)) {
     const c = spec.collections[col];

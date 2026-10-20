@@ -25,7 +25,6 @@ const EVCore = (() => {
     },
     dayBudgetMinutes: { off: 300, class: 180, validation: 150, clinical: 60, exam: 120 },
     taskMinutes: { reading: 45, drill: 25, sim: 75, review: 20, val: 20, terminology: 15, graded: 45, clinical: 0, exam: 90, other: 20 },
-    nurUnitExamKinds: ['unit', 'final', 'dosage'],
     planDay: { sameItem: 0.3 },
     conversation: { idleGapMin: 120 },
     library: { chunkChars: 900, searchK: 6, hitChars: 700, readChars: 12000, maxChars: 200000, ocrMinChars: 80, pdfjs: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs', pdfjsWorker: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs' },
@@ -39,6 +38,25 @@ const EVCore = (() => {
     return C;
   }
   const constants = () => C;
+
+  // ---------------------------------------------------------------- courses (B-42, D-099)
+  // Every course rule is spec.courses: core names no course. A document with no course belongs to the default one.
+  function courseTable() { const t = (SPEC && SPEC.courses) || {}; return Object.keys(t).filter(k => !k.startsWith('_')).map(name => ({ name, ...t[name] })); }
+  const courses = () => courseTable().map(c => c.name);
+  const courseRule = name => courseTable().find(c => c.name === name) || null;
+  const isCourse = c => !!c && !!courseRule(c);
+  const defaultCourse = () => { const t = courseTable(); return (t.find(c => c.default) || t[0] || {}).name || null; };
+  const activeCourses = () => courseTable().filter(c => c.status !== 'done').map(c => c.name);
+  const courseOf = x => normCourse(x && x.course) || defaultCourse();
+  const kindsOf = (course, which) => ((courseRule(course) || {})[which]) || [];
+  /** Whether an exam's kind is one of its course's <which> kinds (reviewKinds, examDayKinds, scoredKinds). */
+  const examIs = (e, which) => !!e && kindsOf(courseOf(e), which).includes(e.kind);
+  /** Canvas's course ids by course, and the library rules with each course's module rules (scripts/canvas/). */
+  const canvasCourses = () => Object.fromEntries(courseTable().filter(c => c.canvasId != null).map(c => [c.name, c.canvasId]));
+  function libraryRules() {
+    const shared = (SPEC && SPEC.registry && SPEC.registry.canvas && SPEC.registry.canvas.library) || {};
+    return { skipSections: shared.skipSections, skipTitles: shared.skipTitles, modules: courseTable().flatMap(c => (c.library || []).map(r => ({ course: c.name, ...r }))) };
+  }
 
   const CJ_STEPS = ['recognize-cues', 'analyze-cues', 'prioritize-hypotheses', 'generate-solutions', 'take-action', 'evaluate-outcomes'];
   const CJ_LABELS = { 'recognize-cues': 'Recognize cues', 'analyze-cues': 'Analyze cues', 'prioritize-hypotheses': 'Prioritize hypotheses', 'generate-solutions': 'Generate solutions', 'take-action': 'Take action', 'evaluate-outcomes': 'Evaluate outcomes' };
@@ -253,7 +271,7 @@ const EVCore = (() => {
     const kind = w.kind || 'concept';
     const addedAt = w.addedAt || w.at || null;
     const f = {
-      id: w.id, writer: w.writer || null, topic: w.topic || '', objective: w.objective || '', exam: w.exam || examOf(w) || '', course: w.course || 'NUR 112',
+      id: w.id, writer: w.writer || null, topic: w.topic || '', objective: w.objective || '', exam: w.exam || examOf(w) || '', course: w.course || defaultCourse(),
       kind, source: w.source || '', addedAt, addedBy: w.addedBy || '',
     };
     if (w.origin) f.origin = w.origin;
@@ -410,7 +428,7 @@ const EVCore = (() => {
         const pre = preReadFor(q, plans, date);
         const facts = {
           ...envelope('page', label || ('E.V. · ' + shortDate(date)), at),
-          topic, objective: q.objective || '', exam: String(q.objective || '').split('-')[0] || (set && set.exam) || '', course: (set && set.course) || 'NUR 112',
+          topic, objective: q.objective || '', exam: String(q.objective || '').split('-')[0] || (set && set.exam) || '', course: (set && set.course) || defaultCourse(),
           kind: 'concept', addedBy: 'page',
           origin: { set: set && set.id, item: q.id, at },
           initial: { streak: 0, nextDue: pre ? addDays(pre.readingDue, 1) : addDays(date, 1), recurrence: 1, misses: 0 },
@@ -535,24 +553,28 @@ const EVCore = (() => {
   }
 
   // ---------------------------------------------------------------- day type, load, ranking
-  function isNurExamDay(e, date) { return e && e.date === date && (e.course || 'NUR 112') === 'NUR 112' && [...C.nurUnitExamKinds, 'ati'].includes(e.kind); }
+  /** An exam of a kind its course counts as an exam day (spec.courses.<course>.examDayKinds). */
+  function isExamDay(e, date) { return !!e && e.date === date && examIs(e, 'examDayKinds'); }
   function dayType({ date, dates, dateedits, exams }) {
-    if ((exams || []).some(e => isNurExamDay(e, date))) return 'exam';
-    const todays = liveDates(dates, dateedits).filter(d => d.date === date && (d.course || 'NUR 112') === 'NUR 112');
-    if (todays.some(d => d.kind === 'exam' && /\bexam\b/i.test(d.title || '') && !/sim/i.test(d.title || ''))) return 'exam';
-    if (todays.some(d => d.kind === 'clinical')) return 'clinical';
-    if (todays.some(d => d.kind === 'validation')) return 'validation';
+    if ((exams || []).some(e => isExamDay(e, date))) return 'exam';
+    // A calendar entry sets the day type when its course counts that kind (calendarDayKinds).
+    const todays = liveDates(dates, dateedits).filter(d => d.date === date), on = k => todays.filter(d => d.kind === k && kindsOf(courseOf(d), 'calendarDayKinds').includes(k));
+    if (on('exam').some(d => /\bexam\b/i.test(d.title || '') && !/sim/i.test(d.title || ''))) return 'exam';
+    if (on('clinical').length) return 'clinical';
+    if (on('validation').length) return 'validation';
     const wd = weekday(date);
     return wd === 0 || wd === 6 ? 'off' : 'class';
   }
-  function nextNurExams(exams, date) {
-    return (exams || []).filter(e => e.date && e.date > date && (e.course || 'NUR 112') === 'NUR 112' && C.nurUnitExamKinds.includes(e.kind) && e.status !== 'done')
+  /** The exams ahead that set the review load, nearest first: each active course's reviewKinds (D-099). */
+  function nextExams(exams, date) {
+    const active = new Set(activeCourses());
+    return (exams || []).filter(e => e.date && e.date > date && active.has(courseOf(e)) && examIs(e, 'reviewKinds') && e.status !== 'done')
       .sort((a, b) => a.date.localeCompare(b.date));
   }
   /** Today's review load (v2 rule + exam flex). */
   function reviewLoad({ date, dayType: dt, exams, weakspots }) {
     const L = C.review.load, F = C.review.flex;
-    const next = nextNurExams(exams, date)[0] || null;
+    const next = nextExams(exams, date)[0] || null;
     const daysLeft = next ? diffDays(date, next.date) : null;
     let base = dt === 'exam' ? L.examDay : dt === 'clinical' ? (daysLeft === 1 ? L.clinicalBeforeExam : L.clinical) : (L[dt] != null ? L[dt] : L.class);
     let load = base, flex = null;
@@ -568,9 +590,24 @@ const EVCore = (() => {
     return { load, base, flex, reason };
   }
   function examDateMap(exams) { const m = {}; for (const e of exams || []) if (e.date) m[e.id] = e.date; return m; }
-  /** Due weak spots in v2 priority order: overdue, nearest exam, recurrence, oldest. */
+  /** Due weak spots in v2 priority order: overdue, nearest exam, recurrence, oldest. When exams of different courses
+   *  fall on the same day, their weak spots take turns in proportion to how many each has due (D-099), so any first n
+   *  splits the day's load between them. */
   function rankDue(weakspots, date, exams) {
-    const ed = examDateMap(exams);
+    const ed = examDateMap(exams), courseOfExam = {}; for (const e of exams || []) courseOfExam[e.id] = courseOf(e);
+    const sorted = rankDueSorted(weakspots, date, ed);
+    const out = []; let i = 0;
+    while (i < sorted.length) {
+      const key = w => (w.derived.nextDue < date ? 0 : 1) + '|' + (ed[examOf(w)] || '9999'), k = key(sorted[i]); let j = i; while (j < sorted.length && key(sorted[j]) === k) j++;
+      const group = sorted.slice(i, j), byCourse = {}; for (const w of group) (byCourse[courseOfExam[examOf(w)] || ''] ||= []).push(w);
+      const lanes = Object.values(byCourse);
+      if (lanes.length < 2 || !ed[examOf(group[0])]) out.push(...group);
+      else { const taken = lanes.map(() => 0); for (let n = 0; n < group.length; n++) { let best = -1; lanes.forEach((l, li) => { if (taken[li] < l.length && (best < 0 || taken[li] / l.length < taken[best] / lanes[best].length)) best = li; }); out.push(lanes[best][taken[best]++]); } }
+      i = j;
+    }
+    return out;
+  }
+  function rankDueSorted(weakspots, date, ed) {
     return (weakspots || []).filter(w => isDue(w, date)).sort((a, b) =>
       ((a.derived.nextDue < date ? 0 : 1) - (b.derived.nextDue < date ? 0 : 1))
       || String(ed[examOf(a)] || '9999').localeCompare(String(ed[examOf(b)] || '9999'))
@@ -611,7 +648,7 @@ const EVCore = (() => {
     const blocks = [];
     const add = b => blocks.push(Object.assign({ minutes: 0, required: false, cut: 50 }, b));
     // Exams today, any course: fixed.
-    for (const e of exams.filter(e => e.date === date)) add({ id: 'exam-' + e.id, kind: 'exam', title: e.title, tag: 'EXAM', minutes: M.exam, required: true, note: 'Scheduled only', course: e.course || 'NUR 112', ref: 'exams/' + e.id });
+    for (const e of exams.filter(e => e.date === date)) add({ id: 'exam-' + e.id, kind: 'exam', title: e.title, tag: 'EXAM', minutes: M.exam, required: true, note: 'Scheduled only', course: e.course || defaultCourse(), ref: 'exams/' + e.id });
     // Dates today: graded work (scheduled only), clinical and validations: fixed.
     for (const d of dates.filter(d => d.date === date)) {
       if (blocks.some(b => b.kind === 'exam' && d.kind === 'exam' && similarity(b.title, d.title) > 0.3)) continue;
@@ -728,7 +765,7 @@ const EVCore = (() => {
       const same = dayView(day, dayedit).items.find(it => norm(it.text) === norm(text)); if (same) return { id: same.id, text: same.text, doc: null, note: 'already on the list' };
       const kind = Object.prototype.hasOwnProperty.call(LIST_KINDS, edit.kind) ? edit.kind : 'todo';
       const minutes = Math.max(0, Math.min(240, Math.round(Number(edit.minutes) || 0)));
-      const course = ['NUR 112', 'BIO 201'].includes(edit.course) ? edit.course : '';
+      const course = isCourse(edit.course) ? edit.course : '';
       const base = 'add-' + (slug(text, 32) || 'item'); let id = safeId(base); for (let n = 2; added[id] || planned.some(it => it.id === id); n++) id = safeId(base + '-' + n);
       const doc = next(); doc.added[id] = { text, tag: LIST_KINDS[kind], kind, minutes, course, at: isoOf(now), by };
       return { id, text, doc };
@@ -788,7 +825,7 @@ const EVCore = (() => {
     on.sort((a, b) => PREP_KINDS.indexOf(a.kind) - PREP_KINDS.indexOf(b.kind) || String(a.d.id).localeCompare(String(b.d.id)));
     const { d, kind } = on[0]; const title = String(d.title || '').trim();
     const subject = title.replace(/^\s*(skills?\s+)?(validation|clinical|lab|class|lecture)s?\s*[:\-–]\s*/i, '').replace(/\s*\([^)]*\)\s*$/, '').trim();
-    return { date, kind, title, subject: subject && subject !== title ? subject : (kind === 'validation' || kind === 'lab' ? subject : ''), dateId: d.id || null, course: normCourse(d.course) || 'NUR 112' };
+    return { date, kind, title, subject: subject && subject !== title ? subject : (kind === 'validation' || kind === 'lab' ? subject : ''), dateId: d.id || null, course: normCourse(d.course) || defaultCourse() };
   }
   const PAPERWORK = /paperwork|\bforms?\b|worksheet|care plan|concept map/i;
   /** The bring-list entries in one passage: what follows "bring:", "you will need", "supplies needed" and the like. */
@@ -947,7 +984,7 @@ const EVCore = (() => {
     const edits = {}; for (const e of dateedits || []) if (e) edits[e.id] = e;
     const view = d => dateView(d, edits[d.id]);
     const text = (v, n) => String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, n);
-    const course = (v, dflt) => normCourse(v) === 'NUR 112' || normCourse(v) === 'BIO 201' ? normCourse(v) : dflt;
+    const course = (v, dflt) => isCourse(normCourse(v)) ? normCourse(v) : dflt;
     const editWrite = (id, data) => ({ op: 'set', collection: 'dateedits', id, data });
     if (action === 'add') {
       const date = text(edit.date, 10); if (!DATE_RE.test(date)) throw new Error('date must be YYYY-MM-DD');
@@ -957,7 +994,7 @@ const EVCore = (() => {
       if (same) { const data = dateeditBase(edits[same.id], now); data.removed = null; return { id: same.id, title: same.title, date, write: editWrite(same.id, data), note: 'back on the calendar' }; }
       const kind = DATE_KINDS.includes(edit.kind) ? edit.kind : 'due';
       const base = safeId(date + '-' + (slug(title, 30) || 'date')); let id = base; for (let n = 2; all.some(d => d.id === id); n++) id = safeId(base + '-' + n);
-      const data = { ...envelope('page', by === 'Matt' ? 'Added by Matt' : 'Told E.V.', now), date, title, kind, graded: !!edit.graded, course: course(edit.course, 'NUR 112'), addedBy: by };
+      const data = { ...envelope('page', by === 'Matt' ? 'Added by Matt' : 'Told E.V.', now), date, title, kind, graded: !!edit.graded, course: course(edit.course, defaultCourse()), addedBy: by };
       const notes = text(edit.notes, 200); if (notes) data.notes = notes;
       return { id, title, date, write: { op: 'set', collection: 'dates', id, data } };
     }
@@ -983,7 +1020,7 @@ const EVCore = (() => {
       if (keys.includes('date')) { const v = text(edit.date, 10); if (!DATE_RE.test(v)) throw new Error('date must be YYYY-MM-DD'); ch.date = v; }
       if (keys.includes('title')) { const v = text(edit.title, 120); if (!v) throw new Error('title can’t be empty'); ch.title = v; }
       if (keys.includes('kind')) { if (!DATE_KINDS.includes(edit.kind)) throw new Error('kind must be one of ' + DATE_KINDS.join(', ')); ch.kind = edit.kind; }
-      if (keys.includes('course')) ch.course = course(edit.course, d.course || 'NUR 112');
+      if (keys.includes('course')) ch.course = course(edit.course, d.course || defaultCourse());
       if (keys.includes('graded')) ch.graded = !!edit.graded;
       if (keys.includes('notes')) ch.notes = text(edit.notes, 200);
       const changed = Object.keys(ch).filter(k => (d[k] ?? (k === 'notes' ? '' : null)) !== ch[k]);
@@ -1010,7 +1047,7 @@ const EVCore = (() => {
     const dates = liveDates(ctx.dates, ctx.dateedits); const plans = ctx.planedits ? planViews(ctx.plans, ctx.planedits) : (ctx.plans || []);
     const ws = weakspots;
     const nextExams = (exams || []).filter(e => e.date && e.date >= date && e.status !== 'done').sort((a, b) => a.date.localeCompare(b.date)).slice(0, 6)
-      .map(e => ({ id: e.id, title: e.title, date: e.date, course: e.course || 'NUR 112', kind: e.kind, daysLeft: diffDays(date, e.date) }));
+      .map(e => ({ id: e.id, title: e.title, date: e.date, course: e.course || defaultCourse(), kind: e.kind, daysLeft: diffDays(date, e.date) }));
     const due = rankDue(ws, date, exams);
     const byExam = {};
     for (const w of ws.filter(w => (w.kind || 'concept') === 'concept')) {
@@ -1056,7 +1093,7 @@ const EVCore = (() => {
 
   /** context.json for Study Watch (unchanged v2 shape). */
   function buildContext({ date, now, exams, objectives, weakspots }) {
-    const t = targetExam({ exams, objectives, weakspots, date }) || nextNurExams(exams, date)[0] || null;
+    const t = targetExam({ exams, objectives, weakspots, date }) || nextExams(exams, date)[0] || null;
     return {
       updatedAt: new Date(now || Date.now()).toISOString(),
       nextExam: t ? { id: t.id, date: t.date, title: t.title } : null,
@@ -1221,7 +1258,7 @@ const EVCore = (() => {
       ...(db.weakspots || []).map(w => ['weakspots/' + w.id, w.topic || '']),
     ];
     for (const [ref, t] of texts) for (const why of scanIdentifiers(t)) add('error', 'possible-identifier', ref, why + ' (B-04): check and remove');
-    if (date) for (const e of examViews(db.exams, db.examedits, db.predictions).sort((a, b) => (a.id < b.id ? -1 : 1))) if (e.date && e.date < date && e.status !== 'done' && typeof e.score !== 'number' && C.nurUnitExamKinds.includes(e.kind)) add('info', 'exam-passed', 'exams/' + e.id, 'exam date passed; record the score to calibrate');
+    if (date) for (const e of examViews(db.exams, db.examedits, db.predictions).sort((a, b) => (a.id < b.id ? -1 : 1))) if (e.date && e.date < date && e.status !== 'done' && typeof e.score !== 'number' && examIs(e, 'scoredKinds')) add('info', 'exam-passed', 'exams/' + e.id, 'exam date passed; record the score to calibrate');
     const rank = { error: 0, warning: 1, info: 2 };
     return issues.sort((a, b) => rank[a.severity] - rank[b.severity]);
   }
@@ -1323,7 +1360,7 @@ const EVCore = (() => {
   }
   // ---------------------------------------------------------------- library: course materials (D-079)
   // materials/<id> holds one file's text with [pN] page or [sN] slide marks. Canvas files arrive with the evening run
-  // (picked by spec.registry.canvas.library), uploads from the E.V. conversation. The page and the pipelines chunk and
+  // (picked by each course's library in spec.courses, B-42), uploads from the E.V. conversation. The page and the pipelines chunk and
   // score them the same way, so a citation means the same thing everywhere.
   const MATERIAL_KINDS = ['slides', 'lab', 'clinical', 'course', 'handout', 'upload'];
   // An upload taken out of the library is marked in materialedits/<id> (removed {at, by}); the material is kept.
@@ -1346,7 +1383,8 @@ const EVCore = (() => {
   function libStem(w) { if (w.length >= 5 && !/(ss|us|is)$/.test(w)) for (const s of LIB_SUFFIX) if (w.endsWith(s) && w.length - s.length >= 4) { w = w.slice(0, -s.length); break; } return w.slice(0, 7); }
   const libTokens = s => norm(s).split(' ').filter(w => w.length > 1 && !STOP.has(w)).map(libStem);
   const PAGE_MARK = /\[(p|s|Page |Slide )(\d+)\]/; // [p3] [s3], and [Page 3] in files read before D-079
-  const normCourse = c => /^nur\s*112$/i.test(String(c || '').trim()) ? 'NUR 112' : /^bio\s*201$/i.test(String(c || '').trim()) ? 'BIO 201' : (c || null);
+  /** A course name as the record writes it, to its spec.courses name (by its aliases); anything else as it came. */
+  function normCourse(c) { const t = String(c || '').trim(); const hit = courseTable().find(r => r.name === t || (r.aliases && new RegExp(r.aliases, 'i').test(t))); return hit ? hit.name : (c || null); }
   /** Every searchable passage: per page or slide, then about chunkChars long, with the page it came from. */
   function libraryChunks(materials, { chunkChars } = {}) {
     const N = chunkChars || C.library.chunkChars; const out = [];
@@ -1378,8 +1416,10 @@ const EVCore = (() => {
     const bigrams = [...new Set(seq.slice(1).map((w, i) => seq[i] + ' ' + w))]; // words side by side, as in "sterile gloves"
     const idfOf = w => { const n = index.df.get(w) || 0; return Math.log(1 + (index.n - n + 0.5) / (n + 0.5)); };
     const K1 = 1.2, B = 0.75, scored = [];
+    // B-42 (D-099): with no course named, a done course's passages stay out; naming it brings them back.
+    const active = course || id ? null : new Set(activeCourses());
     for (const d of index.docs) {
-      if ((course && d.c.course !== course) || (kind && d.c.kind !== kind) || (id && d.c.id !== id)) continue;
+      if ((course && d.c.course !== course) || (active && active.size && d.c.course && !active.has(d.c.course)) || (kind && d.c.kind !== kind) || (id && d.c.id !== id)) continue;
       let s = 0, hit = 0;
       for (const w of q) {
         const f = d.tf.get(w); if (!f) continue; hit++;
@@ -1412,7 +1452,7 @@ const EVCore = (() => {
     const next = end < t.length ? Number((PAGE_MARK.exec(t.slice(end)) || [])[2]) || null : null;
     return { id: m.id, title: m.title || m.id, course: normCourse(m.course), kind: materialKind(m), pages: m.pages || null, text: t.slice(from, end), more: end < t.length, next };
   }
-  /** Which Canvas module files belong in the library (spec.registry.canvas.library). Self-contained: the Canvas fetch
+  /** Which Canvas module files belong in the library (libraryRules: each course's rules in spec.courses with the shared skips). Self-contained: the Canvas fetch
    *  script embeds this exact function. Graded clinical paperwork is skipped by section and title (B-01). */
   function libraryPick(course, modules, rules) {
     const R = rules || {}; const out = []; const seen = new Set();
@@ -1502,7 +1542,8 @@ Return JSON: {"pages": [{"page": <page number>, "text": "<the page's text>"}]}`;
     }
     return t;
   }
-  const guessCourse = s => /\b(bio\s*201|anatomy|physiolog\w*|skeletal|bones?|tissues?|microscope|histolog\w*|osteo\w*|skull|vertebra\w*)\b/i.test(String(s || '')) ? 'BIO 201' : 'NUR 112';
+  /** The course an attached file belongs to: the first whose guess words it holds, else the default course. */
+  const guessCourse = s => (courseTable().find(r => r.guess && new RegExp(r.guess, 'i').test(String(s || ''))) || {}).name || defaultCourse();
   /** A file he attached in the conversation, as a materials document (text already extracted and read on the page). */
   function materialFromUpload({ title, text, fileType, pages, ocrPages, course, kind }, { now, existingIds = [] } = {}) {
     const at = isoOf(now); const t = String(text || '').trim();
@@ -1511,7 +1552,7 @@ Return JSON: {"pages": [{"page": <page number>, "text": "<the page's text>"}]}`;
     const base = safeId('up-' + chicagoDate(at) + '-' + (slug(name.replace(/\.[a-z0-9]{2,5}$/i, ''), 40) || 'file'));
     let id = base; for (let n = 2; existingIds.includes(id); n++) id = base + '-' + n;
     const max = C.library.maxChars;
-    return { id, data: { ...envelope('page', 'upload', at), course: ['NUR 112', 'BIO 201'].includes(course) ? course : guessCourse(name + ' ' + t.slice(0, 4000)), kind: MATERIAL_KINDS.includes(kind) ? kind : 'upload', title: name, fileType: fileType || null, pages: pages || null, chars: t.length, text: t.slice(0, max), truncated: t.length > max, needsOcr: false, ocr: ocrPages && ocrPages.length ? { by: 'Claude (E.V. Home)', at, pages: ocrPages } : null, addedBy: 'Matt' } };
+    return { id, data: { ...envelope('page', 'upload', at), course: isCourse(course) ? course : guessCourse(name + ' ' + t.slice(0, 4000)), kind: MATERIAL_KINDS.includes(kind) ? kind : 'upload', title: name, fileType: fileType || null, pages: pages || null, chars: t.length, text: t.slice(0, max), truncated: t.length > max, needsOcr: false, ocr: ocrPages && ocrPages.length ? { by: 'Claude (E.V. Home)', at, pages: ocrPages } : null, addedBy: 'Matt' } };
   }
 
   function stripHtml(h) { return String(h || '').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div|li|h\d)>/gi, '\n').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#39;|&rsquo;/g, '’').replace(/&quot;/g, '"').replace(/[ \t]+/g, ' ').replace(/\n\s*\n+/g, '\n').trim(); }
@@ -1558,7 +1599,7 @@ Return JSON: {"pages": [{"page": <page number>, "text": "<the page's text>"}]}`;
       } else if (near && !decision) {
         questions.push({ key, topic, objective: w.objective, candidate: { id: near.id, topic: near.topic, status: near.derived && near.derived.status }, ask: 'same or different?' });
       } else {
-        writes.push({ op: 'set', collection: 'weakspots', id: safeId('ws-' + date + '-' + w.objective + '-' + slug(topic)), data: { ...env(), topic, objective: w.objective, exam: w.objective.split('-')[0], course: 'NUR 112', kind: 'concept', addedBy: by, origin: { session: id, at }, initial: { streak: 0, nextDue: addDays(date, 1), recurrence: 1, misses: 0 }, events: {} } });
+        writes.push({ op: 'set', collection: 'weakspots', id: safeId('ws-' + date + '-' + w.objective + '-' + slug(topic)), data: { ...env(), topic, objective: w.objective, exam: w.objective.split('-')[0], course: defaultCourse(), kind: 'concept', addedBy: by, origin: { session: id, at }, initial: { streak: 0, nextDue: addDays(date, 1), recurrence: 1, misses: 0 }, events: {} } });
       }
     });
     (connections || []).forEach(c => {
@@ -1567,7 +1608,7 @@ Return JSON: {"pages": [{"page": <page number>, "text": "<the page's text>"}]}`;
     });
     (noteTodos || []).forEach(n => {
       const text = typeof n === 'string' ? n : n && (n.text || n.topic); if (!text) return;
-      writes.push({ op: 'set', collection: 'weakspots', id: safeId('note-' + date + '-' + slug(text, 40)), data: { ...env(), topic: text, objective: '', exam: '', course: 'NUR 112', kind: 'note', addedBy: by, origin: { session: id, at }, initial: { streak: 0, nextDue: null, recurrence: 1, misses: 0 }, events: {} } });
+      writes.push({ op: 'set', collection: 'weakspots', id: safeId('note-' + date + '-' + slug(text, 40)), data: { ...env(), topic: text, objective: '', exam: '', course: defaultCourse(), kind: 'note', addedBy: by, origin: { session: id, at }, initial: { streak: 0, nextDue: null, recurrence: 1, misses: 0 }, events: {} } });
     });
     return { writes, questions };
   }
@@ -1636,7 +1677,7 @@ Return JSON: {"pages": [{"page": <page number>, "text": "<the page's text>"}]}`;
   }
 
   const SESSION_RULES = [
-    "You are E.V., Matt's study partner for nursing school (NUR 112, BIO 201). Follow these rules:",
+    "You are E.V., Matt's study partner for nursing school (" + courses().join(', ') + "). Follow these rules:",
     '- Never help with graded or submitted work. If the note looks like a graded assignment, return no items.',
     '- No patient identifiers, ever.',
     "- Ground everything in Matt's own note. Label anything from general knowledge \"(check your materials)\".",
@@ -1833,7 +1874,7 @@ Return JSON: {"pages": [{"page": <page number>, "text": "<the page's text>"}]}`;
     const id = skillWeakspotId(s, st.n); const open = weakspots.find(w => w.id === id && w.derived && w.derived.status === 'open');
     const title = (s.skill && s.skill.title) || s.topic || 'Skill';
     if (result === 'miss' && open) writes.push({ op: 'update', collection: 'weakspots', id, data: { events: { [eventKey('page', at)]: { type: 'seen', by, note: 'Skills practice', at } } } });
-    else if (result === 'miss') writes.push({ op: 'set', collection: 'weakspots', id, data: { ...envelope('page', 'Skills practice · ' + title, at), topic: (title + ': step ' + st.n + ', ' + st.text).slice(0, 200), objective: '', exam: '', course: 'NUR 112', kind: 'skill', addedBy: by, origin: { session: s.id, step: st.n, at, material: s.skill && s.skill.materialId || null, page: s.skill && s.skill.page || null }, initial: { streak: 0, nextDue: null, recurrence: 1, misses: 1 }, events: {} } });
+    else if (result === 'miss') writes.push({ op: 'set', collection: 'weakspots', id, data: { ...envelope('page', 'Skills practice · ' + title, at), topic: (title + ': step ' + st.n + ', ' + st.text).slice(0, 200), objective: '', exam: '', course: defaultCourse(), kind: 'skill', addedBy: by, origin: { session: s.id, step: st.n, at, material: s.skill && s.skill.materialId || null, page: s.skill && s.skill.page || null }, initial: { streak: 0, nextDue: null, recurrence: 1, misses: 1 }, events: {} } });
     else if (open) writes.push({ op: 'update', collection: 'weakspots', id, data: { events: { [eventKey('page', at)]: { type: 'done', by, note: 'Skills practice: done right', at } } } });
     return writes;
   }
@@ -2085,7 +2126,7 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
     for (const j of (c.jobs || []).filter(j => j.status === 'failed' && toMs(j.finishedAt) > seen).slice(0, 1)) insights.push({ line: `A job hit a wall: ${j.title}. Details on the card.`, card: { type: 'job', id: j.id }, alert: true });
     const failed = Object.entries(c.runs || {}).filter(([, r]) => r && r.status === 'failed' && date && diffDays(chicagoDate(r.startedAt), date) <= 1);
     if (failed.length) insights.push({ line: `The ${failed[0][0]} run failed${failed[0][1].detail ? ': ' + String(failed[0][1].detail).slice(0, 80) : ''}. I’m flagging it, not ignoring it.`, alert: true });
-    const soon = exams.find(e => (e.course || 'NUR 112') === 'NUR 112' && ['unit', 'final'].includes(e.kind) && diffDays(date, e.date) >= 1 && diffDays(date, e.date) <= 3);
+    const soon = exams.find(e => examIs(e, 'scoredKinds') && ['unit', 'final'].includes(e.kind) && diffDays(date, e.date) >= 1 && diffDays(date, e.date) <= 3);
     if (soon && c.readiness && c.readiness.examId === soon.id) insights.push({ line: `${soon.title.replace(/:.*$/, '')} in ${diffDays(date, soon.date)} day${diffDays(date, soon.date) === 1 ? '' : 's'}: ${c.readiness.pctSolid ?? 0}% of its weak spots solid, about ${c.readiness.need} correct reviews to go.`, card: { type: 'readiness' } });
     if (c.checkin && c.checkin.energy != null && c.checkin.energy <= 2) insights.push({ line: 'You logged low energy today. I trimmed nothing on my own, but say the word and I’ll lighten the list.' });
     if (c.quizlet && c.quizlet.refresh && [5, 6, 0].includes(weekday(date))) insights.push({ line: `Quizlet pick for this week: ${c.quizlet.refresh}.` });
@@ -2194,7 +2235,8 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
     // plans
     planFromCards, planView, planViews, planTick, planTasks, taskDone, unreadChapters, preReadFor, parseChapters, inferTaskKind,
     // planning
-    dayType, reviewLoad, rankDue, targetExam, pickReviews, planDay, buildDayList, nextNurExams, dayView, dayeditBase, listEdit, isFixedItem,
+    courses, courseRule, isCourse, defaultCourse, activeCourses, courseOf, examIs, canvasCourses, libraryRules, isExamDay,
+    dayType, reviewLoad, rankDue, targetExam, pickReviews, planDay, buildDayList, nextExams, dayView, dayeditBase, listEdit, isFixedItem,
     // prep checks (D-143, D-144)
     PREP_KINDS, prepKindOf, prepDay, prepBringItems, prepList, prepEdit, prepCheckId, gradedAsk,
     DATE_KINDS, dateEdit, dateView, liveDates, isRemovedDate, isFixedDate, fromCanvas,

@@ -242,10 +242,10 @@ function predictionBody(db, { examId, date, now }) {
   const { at, ...rest } = p;
   return { examId, date, ...rest };
 }
-/** The exam a morning run predicts: a NUR unit exam tomorrow (D-094), or null. */
+/** The exam a morning run predicts: tomorrow's exam of a kind its course scores (spec.courses scoredKinds, D-094), or null. */
 export function examTomorrow(db, date) {
   const t = EV.addDays(date, 1);
-  return (db.exams || []).find(e => e.date === t && (e.course || 'NUR 112') === 'NUR 112' && EV.constants().nurUnitExamKinds.includes(e.kind) && e.status !== 'done') || null;
+  return (db.exams || []).find(e => e.date === t && EV.examIs(e, 'scoredKinds') && e.status !== 'done') || null;
 }
 
 /** libindex/<course>, the evening-cloud run: the course's library cut into the passages the page searches. */

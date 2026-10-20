@@ -1,4 +1,4 @@
-// E.V. read-only Canvas fetch: files. Which module files belong in the library (spec.registry.canvas.library, through
+// E.V. read-only Canvas fetch: files. Which module files belong in the library (each course's library in spec.courses, through
 // E.V. core's own libraryPick, filled in below) and each one's metadata: name, type, size, last update. Nothing is
 // downloaded here. GET requests only. Printed by `node core/cli.mjs canvas-script files --dir <run dir>`.
 (() => {

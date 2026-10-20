@@ -25,11 +25,11 @@ export function canvasScript(root, part, params) {
 
 /** The parameters each part takes, from the spec and the run's pulled record. */
 export function scriptParams(part, { spec, db, batch, files, of }) {
-  const canvas = spec.registry.canvas;
-  if (!canvas || !canvas.courses) throw new Error('spec.registry.canvas has no courses');
+  EV.configure(spec); const courses = EV.canvasCourses(); // B-42: the courses and their module rules are spec.courses
+  if (!Object.keys(courses).length) throw new Error('spec.courses names no course with a canvasId');
   if (part === 'poll') return { part: of };
-  if (part === 'dates') return { courses: canvas.courses, knownAnnouncements: (db.announcements || []).map(a => String(a.id).replace(/^canvas-/, '')) };
-  if (part === 'files') return { courses: canvas.courses, rules: canvas.library || { modules: [] } };
+  if (part === 'dates') return { courses, knownAnnouncements: (db.announcements || []).map(a => String(a.id).replace(/^canvas-/, '')) };
+  if (part === 'files') return { courses, rules: EV.libraryRules() };
   if (part === 'texts') { const L = spec.constants.library; return { batch, files, lib: { pdfjs: L.pdfjs, pdfjsWorker: L.pdfjsWorker, maxChars: L.maxChars, ocrMinChars: L.ocrMinChars } }; }
   throw new Error('no part ' + part);
 }
@@ -74,7 +74,7 @@ export function canvasRaw(inDir, spec) {
   const files = texts.flatMap(t => t.files || []);
   return {
     host: spec.registry.canvas.host || null,
-    courses: (dates && dates.courses) || spec.registry.canvas.courses,
+    courses: (dates && dates.courses) || (EV.configure(spec), EV.canvasCourses()),
     planner: (dates && dates.planner) || [],
     announcements: (dates && dates.announcements) || [],
     files: files.filter(f => !f.error),

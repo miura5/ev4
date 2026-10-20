@@ -269,11 +269,11 @@ test('day plan: budget cuts optional work first and never cuts graded work or ex
   const plan = EV.planFromCards([{ days: [['Sun 10/18', '', [['Read Ch 99 (big chapter)'], ['Terminology drill'], ['Optional lab'], ['Drill 9: Ch 99', 'drill'], ['Engage module due 11:59pm', 'graded']]]] }], { examId: 'E9', year: 2026 });
   const exams = [{ id: 'BIO-E3', course: 'BIO 201', kind: 'unit', date: '2026-10-18', title: 'BIO 201 Lecture Exam 3' }];
   // Graded work and exams cost no study minutes (D-086), so a 60-minute day is what forces the cuts.
-  EV.configure({ ...spec, constants: { ...spec.constants, dayBudgetMinutes: { ...spec.constants.dayBudgetMinutes, off: 60 } } });
+  EV.configure({ ...spec, constants: { ...spec.constants, dayBudgetMinutes: { ...spec.constants.dayBudgetMinutes, off: 60, exam: 60 } } });
   const d = EV.planDay({ date: '2026-10-18', dates: [], exams, plans: [plan], weakspots: [], objectives: [] });
   EV.configure(spec);
   const byId = Object.fromEntries(d.blocks.map(b => [b.title, b]));
-  assert.equal(d.dayType, 'off');
+  assert.equal(d.dayType, 'exam', 'B-42 (D-099): a BIO 201 unit exam makes the day an exam day (spec.courses examDayKinds)');
   assert.ok(byId['BIO 201 Lecture Exam 3'].required && !byId['BIO 201 Lecture Exam 3'].deferred);
   assert.ok(!byId['Engage module due 11:59pm'].deferred);
   assert.ok(byId['Optional lab'].deferred && byId['Terminology drill'].deferred, 'optional and terminology go first');
@@ -330,7 +330,9 @@ test('day type comes from exams and dates', () => {
   assert.equal(EV.dayType({ date: '2026-10-21', dates, exams: [E4] }), 'exam');
   assert.equal(EV.dayType({ date: '2026-10-20', dates, exams: [E4] }), 'clinical');
   assert.equal(EV.dayType({ date: '2026-10-19', dates, exams: [E4] }), 'validation');
-  assert.equal(EV.dayType({ date: '2026-10-18', dates, exams: [E4, { id: 'BIO-E3', course: 'BIO 201', kind: 'unit', date: '2026-10-18' }] }), 'off');
+  assert.equal(EV.dayType({ date: '2026-10-18', dates, exams: [E4, { id: 'BIO-E3', course: 'BIO 201', kind: 'unit', date: '2026-10-18' }] }), 'exam', 'B-42: a BIO 201 lecture exam is an exam day');
+  assert.equal(EV.dayType({ date: '2026-10-18', dates, exams: [E4, { id: 'BIO-LAB-BONES', course: 'BIO 201', kind: 'lab', date: '2026-10-18' }] }), 'exam', 'B-42: so is a lab practical');
+  assert.equal(EV.dayType({ date: '2026-10-18', dates: [{ id: 'bc', date: '2026-10-18', kind: 'clinical', course: 'BIO 201', title: 'Open lab' }], exams: [E4] }), 'off', 'a BIO calendar entry of a kind its course does not count leaves the day as it is');
   assert.equal(EV.dayType({ date: '2026-10-22', dates, exams: [E4] }), 'class');
   assert.equal(EV.dayType({ date: '2026-10-20', dates, dateedits: [{ id: 'c', removed: { at: at('2026-10-18'), by: 'Matt' } }], exams: [E4] }), 'class', 'a date taken off in dateedits is gone');
 });

@@ -1,5 +1,5 @@
 // E.V. read-only Canvas fetch: dates. Planner items in the coming 70 days and announcements from the last 21 days, for
-// the courses spec.registry.canvas names. GET requests to Canvas's own data endpoints only; nothing is clicked, opened,
+// the courses spec.courses names (their canvasId). GET requests to Canvas's own data endpoints only; nothing is clicked, opened,
 // started, submitted or changed. Printed by `node core/cli.mjs canvas-script dates --dir <run dir>` with P filled in,
 // run with javascript_tool in the signed-in Canvas tab. It starts in the background and returns at once; the poll
 // script collects it (the browser tool stops waiting after 45 s).

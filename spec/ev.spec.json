@@ -1010,11 +1010,6 @@
    "commentMinChars": 20,
    "commentGapSeconds": 75
   },
-  "nurUnitExamKinds": [
-   "unit",
-   "final",
-   "dosage"
-  ],
   "library": {
    "chunkChars": 900,
    "searchK": 6,
@@ -1220,56 +1215,115 @@
    }
   },
   "canvas": {
-   "_why": "Canvas, read-only (B-12): the host, the two courses, and which module files become library materials (D-079). The scripts in scripts/canvas/ take these as parameters.",
+   "_why": "Canvas, read-only (B-12): the host and the rules every course's library shares; the courses, their Canvas ids and their module rules are spec.courses (B-42, D-099). The scripts in scripts/canvas/ take these as parameters.",
    "host": "https://alabama.instructure.com",
-   "courses": {
-    "NUR 112": 199214,
-    "BIO 201": 199416
-   },
    "library": {
-    "_why": "D-079. Which Canvas module files become library materials. Graded clinical paperwork (data prep sheets, judgment maps, drug cards) stays out by section and title (B-01); videos and images have no text.",
-    "modules": [
-     {
-      "course": "NUR 112",
-      "module": "^exam \\d+ content",
-      "kind": "slides"
-     },
-     {
-      "course": "NUR 112",
-      "module": "^lab/skills",
-      "kind": "lab"
-     },
-     {
-      "course": "NUR 112",
-      "module": "^clinical resources",
-      "kind": "clinical"
-     },
-     {
-      "course": "NUR 112",
-      "module": "^start here",
-      "kind": "course",
-      "only": "syllabus|calendar|abbreviation|prefixes|suffixes|remediat"
-     },
-     {
-      "course": "BIO 201",
-      "module": "^(unit|chapter) \\d+",
-      "kind": "slides"
-     },
-     {
-      "course": "BIO 201",
-      "module": "^lab material",
-      "kind": "lab"
-     },
-     {
-      "course": "BIO 201",
-      "module": "^start here",
-      "kind": "course",
-      "only": "syllabus"
-     }
-    ],
+    "_why": "D-079. Graded clinical paperwork (data prep sheets, judgment maps, drug cards) stays out by section and title (B-01); videos and images have no text. Which module files become library materials is each course's library in spec.courses (B-42).",
     "skipSections": "paperwork|judgment map|medications",
     "skipTitles": "video|parking|template|policy manual|reel|\\.mp4|supply kit video|fiction contract"
    }
+  }
+ },
+ "courses": {
+  "_rules": [
+   "B-42 (D-099): one entry per course. Core takes every course rule from this table and names no course in code: canvasId (Canvas, read-only), status (active or done; a done course leaves search and the morning's passages by default and comes back when Matt names it), endsAfter (the exam kind after which Matt marks it done), examKinds (what its exams may be), reviewKinds (exams whose weak spots set the review load and count as the next exam), examDayKinds (exams that make the day an exam day), scoredKinds (exams whose score the page asks for and the morning predicts, D-094), calendarDayKinds (calendar entries of the course that set the day type), dayBudget (shared: its review shares the day's budget, one review set across courses), aliases (how its name is written in the record), guess (words that put an attached file in this course), default (the course a document without one belongs to), library (which Canvas module files become library materials, D-079).",
+   "exams.course and materials.course must name a course here (build and lint)."
+  ],
+  "NUR 112": {
+   "canvasId": 199214,
+   "status": "active",
+   "endsAfter": "final",
+   "examKinds": [
+    "unit",
+    "dosage",
+    "final",
+    "ati"
+   ],
+   "reviewKinds": [
+    "unit",
+    "final",
+    "dosage"
+   ],
+   "examDayKinds": [
+    "unit",
+    "final",
+    "dosage",
+    "ati"
+   ],
+   "scoredKinds": [
+    "unit",
+    "final",
+    "dosage"
+   ],
+   "calendarDayKinds": [
+    "exam",
+    "clinical",
+    "validation"
+   ],
+   "dayBudget": "shared",
+   "aliases": "^nur\\s*112$",
+   "default": true,
+   "library": [
+    {
+     "module": "^exam \\d+ content",
+     "kind": "slides"
+    },
+    {
+     "module": "^lab/skills",
+     "kind": "lab"
+    },
+    {
+     "module": "^clinical resources",
+     "kind": "clinical"
+    },
+    {
+     "module": "^start here",
+     "kind": "course",
+     "only": "syllabus|calendar|abbreviation|prefixes|suffixes|remediat"
+    }
+   ]
+  },
+  "BIO 201": {
+   "canvasId": 199416,
+   "status": "active",
+   "endsAfter": "final",
+   "examKinds": [
+    "unit",
+    "lab",
+    "final"
+   ],
+   "reviewKinds": [
+    "unit",
+    "lab",
+    "final"
+   ],
+   "examDayKinds": [
+    "unit",
+    "lab",
+    "final"
+   ],
+   "scoredKinds": [],
+   "calendarDayKinds": [
+    "exam"
+   ],
+   "dayBudget": "shared",
+   "aliases": "^bio\\s*201$",
+   "guess": "\\b(bio\\s*201|anatomy|physiolog\\w*|skeletal|bones?|tissues?|microscope|histolog\\w*|osteo\\w*|skull|vertebra\\w*)\\b",
+   "library": [
+    {
+     "module": "^(unit|chapter) \\d+",
+     "kind": "slides"
+    },
+    {
+     "module": "^lab material",
+     "kind": "lab"
+    },
+    {
+     "module": "^start here",
+     "kind": "course",
+     "only": "syllabus"
+    }
+   ]
   }
  },
  "collections": {

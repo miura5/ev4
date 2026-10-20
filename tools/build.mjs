@@ -138,7 +138,7 @@ export function buildPages({ root, spec, schemas, release }) {
       release, target, specVersion: spec.specVersion,
       record: { artifact: rec.artifact || null, name: rec.name || null },
       tasks: { [target]: spec.tasks[target], ...(target === 'staging' ? { diagnostic: spec.tasks.diagnostic } : {}) },
-      constants: spec.constants, capacity: spec.capacity, ui: spec.ui, jobs: spec.jobs, workouts: spec.workouts || null, boundaries: spec.boundaries,
+      constants: spec.constants, courses: spec.courses, capacity: spec.capacity, ui: spec.ui, jobs: spec.jobs, workouts: spec.workouts || null, boundaries: spec.boundaries,
       workingAgreements: spec.workingAgreements, persona: spec.persona || null, items: spec.items || null, pipelines: Object.fromEntries(Object.entries(spec.pipelines).filter(([k]) => !k.startsWith('_')).map(([k, p]) => [k, { lane: p.lane, purpose: p.purpose, steps: p.steps ? p.steps.length : null }])),
       reader: (spec.registry.studyWatch || {}).reader || null,
       // When each runs live (no task ids); a pipeline with no live task (the restore drill, which drills into staging)
@@ -174,6 +174,13 @@ export async function build({ root = HERE, out = path.join(root, 'dist'), now = 
     const m = fs.readFileSync(coreVersionFile, 'utf8').match(/VERSION\s*=\s*['"]([^'"]+)['"]/);
     if (!m || m[1] !== release) throw new Error(`core VERSION ${m ? m[1] : '(none)'} differs from the release ${release}`);
   }
+  // B-42 (D-099): the course table is sound, and the repository's own record names only its courses.
+  const { courseProblems, unknownCourses } = await import(pathToFileURL(path.join(root, 'core', 'lint.mjs')).href);
+  const cp = courseProblems(spec); if (cp.length) throw new Error('spec.courses:\n  ' + cp.join('\n  '));
+  { const EVm = (await import(pathToFileURL(path.join(root, 'core', 'evcore.mjs')).href)).default; EVm.configure(spec);
+    const rec = path.join(root, 'test', 'data', 'record'), db = {};
+    for (const col of ['exams', 'materials']) { const d = path.join(rec, col); db[col] = fs.existsSync(d) ? fs.readdirSync(d).filter(f => f.endsWith('.json')).map(f => ({ id: f.slice(0, -5), ...JSON.parse(fs.readFileSync(path.join(d, f), 'utf8')) })) : []; }
+    const bad = unknownCourses(db); if (bad.length) throw new Error('test/data/record names courses spec.courses does not: ' + bad.map(b => `${b.ref} (${b.course})`).join(', ')); }
 
   const g = gitState(root);
   const files = {};
