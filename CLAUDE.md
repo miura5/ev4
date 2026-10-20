@@ -36,7 +36,8 @@ calls exactly as printed, read the view again when asked, and run `views` until 
    blocked --note "<the question>" --waiting-on Matt`, and move to the next open task. Code-level choices are yours.
 5. Prove it exactly as its definition of done says. `npm test` green first (it runs the Chart's lint). Where a
    pipeline is involved, the proof is a scheduled task fired against staging and its `runs/<id>` read back, never a
-   hand replay. Where the page is involved, the harness at phone and desktop width, and look at the screenshots.
+   hand replay. Where the page is involved, `npm run check` (npm test, the build, every harness on the synthetic
+   record, the demo, then the look pass at phone and desktop width), and look at the screenshots it lists.
 6. Ship: commit with the task id first in the message (`B-07: lint and rebuild`), then the attribution lines the
    session gives you; push to `main`. Then `ship staging` and make every call and read it prints, running it again
    each time, until it says GREEN: it records the deploy and prints the Changelog line. **Never deploy live** without
