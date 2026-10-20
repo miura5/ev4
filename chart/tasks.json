@@ -1217,11 +1217,11 @@
   "title": "Status page warts (O-6): healthBody marks the watchdog's own entry as ended; planted staging documents (the 04:40Z morning, its re-fire) ended by marking; a core test",
   "dod": null,
   "milestone": "M9",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-61"
   ],
-  "notes": "",
+  "notes": "Taken in the Oct 20 build session.",
   "commit": null,
   "source": "BACKLOG.md"
  },
