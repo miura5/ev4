@@ -399,3 +399,13 @@ test('B-102: R-05 refuses a live deploy from :45 to :05 around each live watchdo
   const r = rec();
   assert.deepEqual(r.rules.filter(x => x.check === 'watchdogWindow').map(x => [x.id, x.command, x.decision]), [['R-05', 'ship live', 'D-142']], 'the rule is in chart/rules.json');
 });
+
+test('two new deploys reach the Changelog as one insert, newest first (Docs refuses two inserts on one anchor)', () => {
+  const r = sample();
+  C.applyLog(r, { _: ['log', 'deploy'], target: 'staging', commit: '3333333', verify: 'green', tasks: 'B-02', time: '2026-10-19T20:00:00-05:00' });
+  C.applyLog(r, { _: ['log', 'deploy'], target: 'staging', commit: '4444444', verify: 'green', tasks: 'B-03', time: '2026-10-19T20:05:00-05:00' });
+  const read = { rev: 1, rows: [{ id: 's1.20', cells: [{ text: 'Date' }, { text: 'Change' }] }] };
+  const [call] = C.changelogCalls(r, read);
+  assert.equal(call.args.payload.ops.length, 1);
+  assert.deepEqual(call.args.payload.ops[0].source.from.content.map(row => row.content[1].content[0].content[0].text.match(/at (\d{7})/)[1]), ['4444444', '3333333']);
+});

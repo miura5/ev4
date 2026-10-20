@@ -436,14 +436,15 @@ export function changelogLine(d) {
 }
 export function changelogCalls(rec, read) {
   const v = rec.views.changelog, have = new Set(read.rows.slice(1).map(r => r.cells[1].text));
-  const header = read.rows[0].id, ops = [], notes = [];
+  const header = read.rows[0].id, rows = [], notes = [];
   for (const d of rec.deploys.filter(d => !d.line)) {
     const l = changelogLine(d);
     if (have.has(l.change)) continue;
-    // Oldest first, each right under the header, so the newest ends on top.
-    ops.push({ op: 'insert', target: { kind: 'blocks', ids: [header] }, side: 'after', source: { as: 'blocks', from: { kind: 'inline', content: [{ type: 'row', content: [textCell(l.date), textCell(l.change), textCell(l.why), textCell(l.decision)] }] } } });
+    rows.push({ type: 'row', content: [textCell(l.date), textCell(l.change), textCell(l.why), textCell(l.decision)] });
     notes.push(`${d.target} ${d.commit}`);
   }
+  // One insert right under the header, newest first (Docs refuses two inserts on one anchor: they would read reversed).
+  const ops = rows.length ? [{ op: 'insert', target: { kind: 'blocks', ids: [header] }, side: 'after', source: { as: 'blocks', from: { kind: 'inline', content: rows.reverse() } } }] : [];
   return ops.length ? [{ step: `Changelog: ${notes.join(', ')}`, ...docCall(rec.views.doc, v.node, ops) }] : [];
 }
 /** The Decisions tab: a row per decision logged since the import (newest on top), its Status chip, and the intro's next id. */
