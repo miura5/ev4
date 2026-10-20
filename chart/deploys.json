@@ -1869,5 +1869,36 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "live",
+  "commit": "1682a4b",
+  "time": "2026-10-20T10:07:58.702Z",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "69502f6",
+  "from": "69502f6",
+  "tasks": [
+   "B-110",
+   "B-109",
+   "B-60",
+   "B-111",
+   "B-112",
+   "B-113",
+   "B-114",
+   "B-115",
+   "B-116",
+   "B-117",
+   "B-118",
+   "B-119",
+   "B-120",
+   "B-121",
+   "B-122",
+   "B-123"
+  ],
+  "summary": "Live build too far behind main for the runs' clone; Tenets in the Chart; The v4 rollback; Ideas rows readable on the phone; Chat box stays in view at short heights; The look pass at Matt's sizes; Two breakpoints, 600 and 1024; Tenet checks in the harness; Study, the question; Today, one focus; Progress, Readiness as one list; System, one line until something is wrong; Header: Live or the one problem; Two columns from 1024 px; Ways out by folding; Weak spots: due today leads, the rest folds",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
