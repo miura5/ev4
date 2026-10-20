@@ -1953,7 +1953,7 @@
   "board": {
    "row": "v4 B-104: Prep checks for clinical, lab, validation and class days",
    "why": "predictable days shouldn't read as urgent, but forgetting an item is costly",
-   "notes": "On staging: clinical, lab, validation and class days are never urgent; a calm Prep marker and a tickable pack check the night before and bag check that morning, built from that day's materials with file and page. Live waits for your OK.",
+   "notes": "Live: clinical, lab, validation and class days are never urgent; a calm Prep marker and a tickable pack check the night before and bag check that morning, built from that day's materials with file and page.",
    "were": [
     "v4 B-104: Question for Matt: should a validation or a clinical tomorrow count…",
     "v4 B-104: Greeting: what counts as urgent"
