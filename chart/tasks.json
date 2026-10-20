@@ -2163,16 +2163,17 @@
   "title": "Today: the stat tiles go and the Now card's second line carries the exam countdown (D-154); one line per item with its minutes once, in grey, and no type pill; an item E.V. added opens to its Remove (D-078); the exam leaves the tick list for Next 7 days; coral only for graded work due today and unticked (D-149); D-143's Prep marker on clinical, lab, validation and class days; Next 7 days open at up to 5 rows, folded under its count past that (D-148)",
   "dod": "the look harness at 390, 735 and 1280 on the synthetic record: no stat tile, no item minutes shown twice, the exam in Next 7 days only, coral count equal to core's urgent count, a Prep marker on the clinical day; ticking still keeps scroll (v4 rule 6); Today's tenet checks on and green",
   "milestone": "M14 UI",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-104"
   ],
-  "notes": "Taken after B-116 (M14).",
-  "commit": null,
+  "notes": "Today: the stat tiles go, the Now card's second line ends with the exam countdown; one line per item (tick, words, minutes once in grey, no pill), an added item opening in place to its Remove (D-078), a set opening where it lives; the exam leaves the tick list for Next 7 days (exams joined to the week's dates); coral only for graded work due today (graded, due today); D-143's Prep marker on clinical, lab, validation and class days; Next 7 days open up to 5, folded under its count past that, each line opening Record's Dates. The Now card's lead holds to one line, so ticking the item it names never moves the list (rule 6; the check caught it). Look harness at 390, 735 and 1280: no tile, minutes once, the exam in Next 7 days only, coral = urgent count (1), Prep on the clinical day, a ticked row stays put; Today's tenet checks on (18/18). npm run check GREEN; screenshots looked at. Staging GREEN at 762077c.",
+  "commit": "cfc6202",
   "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474",
   "board": {
    "row": "v4 B-117: Today, one focus",
-   "why": "stat tiles repeated the Now card; two-line items with minutes twice and type pills; the exam in the tick list"
+   "why": "stat tiles repeated the Now card; two-line items with minutes twice and type pills; the exam in the tick list",
+   "notes": "Today is one focus: no tiles, one line per item, the exam in Next 7 days, coral only for what is due today, Prep on clinical days. On staging."
   }
  },
  {
