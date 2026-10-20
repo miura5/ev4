@@ -679,9 +679,8 @@
   "board": {
    "row": "v4 B-34: a nightly check of the whole record",
    "why": "The 8:15pm run checks every rule on your record and the System tab's Checks card shows what it found",
-   "notes": "Settled in code: the record check counts the two old v2/v3 leftovers as kept notes, not errors. Tonight's live record checks green with it. Live waits for your OK."
-  },
-  "waitingOn": "Matt"
+   "notes": "Settled in code: the record check counts the two old v2/v3 leftovers as kept notes, not errors. Tonight's live record checks green with it. Live since Oct 19, 10:27pm (69502f6)."
+  }
  },
  {
   "id": "B-35",
@@ -1150,10 +1149,9 @@
   "board": {
    "row": "v4 B-61: the watchdog checks the scheduler (D-112)",
    "why": "The 1:55pm watchdog left nothing in your record, so nothing could notice it was missing",
-   "notes": "On staging: the 3-hourly status check now asks the scheduler too, so a run that was fired but never started, or never fired at all, shows up by name in the System tab and the push. Live waits for your OK.",
+   "notes": "The 3-hourly status check now asks the scheduler too, so a run that was fired but never started, or never fired at all, shows up by name in the System tab and the push. Live since Oct 19, 10:27pm (69502f6).",
    "was": "-"
-  },
-  "waitingOn": "Matt"
+  }
  },
  {
   "id": "B-62",
@@ -1171,9 +1169,8 @@
   "board": {
    "row": "v4 B-62: The journal rule decided once",
    "why": "D-113: one statement of the journal rule in CLAUDE.md, the pull, the Data architecture and spec.boundaries",
-   "notes": "Settled in code and docs: your journal is read only where a step names it, and your nightly Mac backup and mirror now include it. Live waits for your OK."
-  },
-  "waitingOn": "Matt"
+   "notes": "Settled in code and docs: your journal is read only where a step names it, and your nightly Mac backup and mirror now include it. Live since Oct 19, 10:27pm (69502f6)."
+  }
  },
  {
   "id": "B-63",
@@ -1238,9 +1235,8 @@
   "board": {
    "row": "v4 B-66: Watchdog marks its own run ended",
    "why": "health/current showed the watchdog itself as running",
-   "notes": "The health check no longer shows itself as still running. On staging; live waits for Matt's OK."
-  },
-  "waitingOn": "Matt"
+   "notes": "The health check no longer shows itself as still running. Live since Oct 19, 10:27pm (69502f6)."
+  }
  },
  {
   "id": "B-67",
@@ -1842,7 +1838,7 @@
   "board": {
    "row": "v4 B-99: drop the standing graded-work and made-up patient reminders",
    "why": "- Instead of being constantly reminded about graded assignments and “made-up” patients. Just let the graded assignment constraints deny if a graded assignment is ever requested to be edited; and just completely drop the “made-up” patient phrasing; that’s redundant. it’s generative NCLEX-style questions of course it’s not a real patient. the audience (me) knows that and having the same reminder of the few constraints we have on every instance gets repetitive very fast. And not once have I requested a graded assignment to be done or turne in for me, but I’m constantly reading the same flag and constraint and it feels over the top. Unless it’s an actual issue, there’s no need for the constant flag everytime.",
-   "notes": "On staging: no more standing reminders about graded work or 'made-up' clients. A real request to do graded work still gets one line back, and real patient details are still stopped. Live waits for your OK.",
+   "notes": "No more standing reminders about graded work or 'made-up' clients. A real request to do graded work still gets one line back, and real patient details are still stopped. Live since Oct 19, 10:27pm (69502f6).",
    "were": [
     "v4 B-99: - Instead of being constantly reminded about graded assignments and…"
    ]
@@ -1850,8 +1846,7 @@
   "triage": {
    "outcome": "task",
    "at": "2026-10-19T23:34:52.650Z"
-  },
-  "waitingOn": "Matt"
+  }
  },
  {
   "id": "B-100",
@@ -2001,9 +1996,8 @@
   "board": {
    "row": "v4 B-107: Prep checks in the evening run",
    "why": "The night-before pack list is built by the 8:15pm run from tomorrow's materials and named in the push (D-143, D-144)",
-   "notes": "On staging: the 8:15pm evening run builds tomorrow's pack list from that day's materials (each item with file and page) and the push leads with it, or says plainly when nothing in your materials covers the day. Live waits for your OK."
-  },
-  "waitingOn": "Matt"
+   "notes": "The 8:15pm evening run builds tomorrow's pack list from that day's materials (each item with file and page) and the push leads with it, or says plainly when nothing in your materials covers the day. Live since Oct 19, 10:27pm (69502f6)."
+  }
  },
  {
   "id": "B-105",
@@ -2046,7 +2040,7 @@
   "board": {
    "row": "v4 B-110: Live build too far behind main for the runs' clone",
    "why": "Every scheduled run checks out the live build's commit from a 50-deep clone of main; bookkeeping commits pushed it out of reach and tonight's live runs failed at their gate",
-   "notes": "Tonight's live runs failed because the live build had fallen too far behind the code history the runs copy. The 9:17pm live deploy fixed tonight's; the deploy check now goes red before it can happen again and says how to fix it. Live waits for your OK.",
+   "notes": "Tonight's live runs failed because the live build had fallen too far behind the code history the runs copy. The 9:17pm live deploy fixed tonight's; the deploy check now goes red before it can happen again and says how to fix it. Live since Oct 19, 10:27pm (69502f6).",
    "were": [
     "v4 B-110: Tonight's live runs failed at their gate: watchdog 00:56Z,…"
    ]
@@ -2054,7 +2048,6 @@
   "triage": {
    "outcome": "task",
    "at": "2026-10-20T02:32:44.485Z"
-  },
-  "waitingOn": "Matt"
+  }
  }
 ]
