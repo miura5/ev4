@@ -2199,14 +2199,15 @@
   "title": "System: a lead line (All 8 pipelines on time, or the one that isn't); the pipeline and run lists fold under it with only exceptions marked; Background jobs, Capacity and Checks are absent while empty; versions and privacy are two quiet lines at the end (D-148, D-150, D-151)",
   "dod": "the look harness at 390, 735 and 1280: no ok pill, the empty cards absent, a planted failed run shows in the lead and is marked in the list; System's tenet checks on and green",
   "milestone": "M14 UI",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Taken after B-118 (M14).",
-  "commit": null,
+  "notes": "System leads with the one thing to look at (a failed last run first, else the health check's first line, else 'All N pipelines on time.'); pipelines and runs fold under one counted line each, only exceptions marked in amber; Jobs, Capacity and Checks absent while empty and folded when present; versions and privacy two quiet lines. Look pass checks at 390/735/1280 with a planted failed run; 'system' tenet checks on. npm run check GREEN; staging GREEN at 0412884.",
+  "commit": "0412884",
   "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474",
   "board": {
    "row": "v4 B-119: System, one line until something is wrong",
-   "why": "eight ok pills, empty cards and long lists for a page that is usually fine"
+   "why": "eight ok pills, empty cards and long lists for a page that is usually fine",
+   "notes": "System says the one thing that needs a look, or that everything ran on time; the rest folds away."
   }
  },
  {
