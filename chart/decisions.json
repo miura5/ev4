@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-143",
+  "date": "Oct 19",
+  "title": "Clinical, lab, validation and class days are never marked urgent; urgent stays for one-time deadlines (an exam today or tomorrow, graded work due today and not ticked). They get a calm Prep marker of their own (not the coral, not counted with urgent): a night-before pack check in the evening greeting and the 8:15pm evening push, and a morning-of bag check in the greeting, each a tickable list that folds away once ticked; a validation names its skill",
+  "why": "Matt, Oct 20 (build chat session_01JoUaa285jLP3tei891mStP, answering B-104): an urgent marker on predictable weekly days would pollute the priority list, but he worries about forgetting items (he once forgot his stethoscope on a day he thought he was validating head-to-toe)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "Matt, Oct 20 build chat"
+ },
+ {
   "id": "D-142",
   "date": "Oct 19",
   "title": "ship live refuses during the live watchdog windows (from 10 minutes before to 10 minutes after each live watchdog run: :45 to :05 around 1, 4, 7, 10, 13, 16, 19 and 22h Central), checked as rule R-05 in chart/rules.json instead of from memory",
