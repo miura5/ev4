@@ -2320,14 +2320,15 @@
   "title": "Study, answered and done (D-165): the counter as the set's fold line; a one-line verdict with your pick's and the right answer's why, the rest folded; a finished set's score, misses and next set; Practice led by the next set; Plan led by its count, with Done and Earlier days folded",
   "dod": "the look harness at 390, 735 and 1280 answers a planted set: one verdict line, two whys visible and the rest closed, nothing above the verdict moving; the finished set shows its score, misses and Give me 5 more as the one primary; Practice and Plan each have one lead and no pill; Study's tenet checks on and green; screenshots looked at",
   "milestone": "M14 UI",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Oct 20: taken after B-125 (Matt's order, finishes M14)",
-  "commit": null,
+  "notes": "Oct 20, 3afcf73: Review's counter (3 of 8) is the set's fold line, the set one line per question above the question, beside it from 1024 px; All questions gone. Answered: one verdict line under the stem (Missed · it comes back tomorrow), his pick's and the right answer's why shown, the other whys under Why not the others. A finished set leads with its score and Give me 5 more as the one primary, misses as lines opening to what he picked, the answer and their whys, right answers under one line, the next set as one line. Practice leads with the set to do next and its Start, other open sets as lines, finished sets folded, each opening to Review and Retake; no pills. Plan leads with its count and exam day, open items as one-line ticks by day, Done and Earlier days folded, no paragraph. spec.ui.tenets.on has study (every Study view). Look pass at 390, 735 and 1280: counter fold, one verdict line, two whys and the rest closed, nothing above the verdict moved, the finished set, Practice and Plan one lead and no pill; npm run check GREEN; screenshots looked at. Staging GREEN at 3afcf73.",
+  "commit": "3afcf73",
   "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474",
   "board": {
    "row": "v4 B-126: Study, answered and done",
-   "why": "answered, all four explanations opened and the verdict said Correct. then Right.; More practice showed under an unfinished set; Plan opened with a paragraph"
+   "why": "answered, all four explanations opened and the verdict said Correct. then Right.; More practice showed under an unfinished set; Plan opened with a paragraph",
+   "notes": "Study: an answer shows one verdict line and only the two explanations that matter; a finished set leads with its score and Give me 5 more; Practice and Plan each lead with one thing. Staging only."
   }
  },
  {
