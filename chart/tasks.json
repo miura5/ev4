@@ -2233,14 +2233,15 @@
   "title": "Two columns from 1024 px for Today, Study, Progress, Record and System: the lead and the list he acts in on the left, the folded detail on the right (D-158)",
   "dod": "the look harness at 1280 and 1470: each tab has two columns, the left holding its primary; at 1023 one column; no sideways scroll at any listed size; screenshots looked at",
   "milestone": "M14 UI",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Each tab's (sub)panel wraps its cards in .cols/.col-main/.col-side (display:contents below 1024, so the phone order is unchanged); Study puts the exam plan beside Review and Practice from 1024 px (Plan seg button hidden there).",
-  "commit": null,
+  "notes": "From 1024 px each (sub)panel is two columns (.cols/.col-main/.col-side, display:contents below so the phone order is unchanged): Today Now + list | Next 7 days; Readiness list | folds; Weak spots Active | the rest; Record sessions | ideas, Upcoming | add date, entry form | entries; System health | the folded cards and footers. Study: Review/Practice left, the exam plan beside, folded to its title (Plan button hidden from 1024). Look pass: two columns with lead and primary left at 1280/1470, one column at 1023. npm run check GREEN; staging GREEN at a6f0a22.",
+  "commit": "a6f0a22",
   "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474",
   "board": {
    "row": "v4 B-121: Two columns from 1024 px",
-   "why": "every tab but E.V. was one 760 px column on the laptop"
+   "why": "every tab but E.V. was one 760 px column on the laptop",
+   "notes": "On the laptop the tabs use two columns: what you do on the left, the details beside it."
   }
  },
  {
