@@ -1207,13 +1207,17 @@
   "title": "Repository hygiene for the next reader (O-3): a formatter at 120 columns (a devDependency beside Playwright; the runtime stays dependency-free) applied once in its own commit with no logic change; page/app.js split by tab into page/app/*.js that the build concatenates into the same published app.js (the shell is unchanged); npm test on every push through a GitHub Actions workflow (the personal-data test included); CLAUDE.md gains the one line that names them",
   "dod": null,
   "milestone": "M9",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-63"
   ],
-  "notes": "",
+  "notes": "Oct 20: taken after M8 blocked on staging firings (Matt's order). Formatter pass committed alone (da29d8b): same 334 tests by name, check GREEN",
   "commit": null,
-  "source": "BACKLOG.md"
+  "source": "BACKLOG.md",
+  "board": {
+   "row": "v4 B-64: Repository hygiene",
+   "why": "the next reader meets 400-character lines and one 3,000-line page file, and nothing runs the tests on a push"
+  }
  },
  {
   "id": "B-65",
