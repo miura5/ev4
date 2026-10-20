@@ -2320,5 +2320,17 @@
   "notes": "",
   "commit": null,
   "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
+ },
+ {
+  "id": "B-127",
+  "kind": "task",
+  "title": "Delete the demo copy (D-166): demo/runtime.js, tools/demo.mjs, test/harness/demo.cjs and test/demo.test.mjs removed; demo/seed.js moves to test/data/seed.cjs as the synthetic record's seed (its dated-from-now test joins test/synthetic.test.mjs); npm run check, CLAUDE.md, the reminders test and the Chart's file patterns no longer name the demo; the demo artifact deleted on Matt's word; the overview doc says it is gone",
+  "dod": "npm test green; npm run check's harnesses green on the synthetic record built from test/data/seed.cjs; no file names demo/ or tools/demo.mjs; the demo artifact deleted; the overview doc's demo line updated",
+  "milestone": "Process",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt, Oct 20 (D-166)"
  }
 ]
