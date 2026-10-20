@@ -15,6 +15,9 @@
 //            commit trailer line, repeatable), then prints the view updates to make (views)
 //   views [--transcript f]   the exact Docs calls that bring the Board, the Changelog and the overview's status line in
 //            line with the record, from this session's newest read of each (or the reads to make first)
+//   plan --from <doc link> [--apply] [--handoff-note]   a design doc's hand-off (D-141, B-106): from this session's
+//            read of the doc, its 'Tasks to add' and 'Decisions proposed' tables as the log new and log decision commands
+//            that file them (the next free ids, P-n rewritten to its D-id); --apply runs them; filed rows are skipped
 //   lint [--json]            the record's checks: ids, dependencies, decisions, commits, the inbox (B-94; npm test runs it)
 //   ship <staging|live>      the deploy checklist: the rules, the reads, deploy's calls, verify, the record (B-96)
 //   brief --task <id>        one page for a new session: the inbox, the task, its dependencies, decisions, limits
@@ -541,7 +544,7 @@ export function applyLog(rec, o, { now = new Date().toISOString() } = {}) {
     const old = rec.decisions.find(d => d.id === did);
     if (!old && did !== nextDecisionId(rec)) throw new Error(`the next free decision id is ${nextDecisionId(rec)}, not ${did}`);
     const d = old || { id: did, date: ctDate(now), title: '', why: '', status: 'proposed', supersedes: [], amends: [], source: 'log' };
-    if (o.title) d.title = o.title; if (o.why) d.why = o.why; if (o.status) d.status = o.status;
+    if (o.title) d.title = o.title; if (o.why) d.why = o.why; if (o.status) d.status = o.status; if (!old && o.source) d.source = o.source;
     if (o.supersedes) d.supersedes = list(o.supersedes); if (o.amends) d.amends = list(o.amends);
     if (!d.title) throw new Error('a decision needs --title');
     if (!old) rec.decisions.unshift(d);
@@ -890,10 +893,88 @@ function runWindows(root, now = new Date()) {
   } catch { return ['- (spec not readable)']; }
 }
 
+// ------------------------------------------------------------------------------------------------ the design hand-off
+// D-141: a design chat proposes decisions as P-1, P-2 ... and tasks in a 'Tasks to add' table; a build chat files both
+// through plan, which takes the ids. The Build plan tab is design history from then on.
+const BUILD_PLAN = { doc: 'Fgb2KjoLKcRgCRrBmM6kEf', node: '199e3b19-3ad3', after: 'mzaay4nq4t8.5147' };
+export const HANDOFF_NOTE = 'New tasks enter through the Chart (D-140, D-141): a design chat lists them in its doc\'s Tasks to add table, with its proposed decisions as P-1, P-2 and so on, and a build chat files them with node tools/chart.mjs plan --from <doc link>. This table is design history; BACKLOG.md is the backlog.';
+export const handoffNoteCall = () => docCall(BUILD_PLAN.doc, BUILD_PLAN.node, [{ op: 'insert', target: { kind: 'blocks', ids: [BUILD_PLAN.after] }, side: 'after', source: { from: { kind: 'inline', content: HANDOFF_NOTE }, as: 'markdown' } }]);
+/** The doc id a link ends with (or the id itself). */
+export const docIdOf = link => String(link || '').replace(/[?#].*$/, '').replace(/\/+$/, '').split('/').pop().replace(/^.*-(?=[A-Za-z0-9]{22}$)/, '');
+/** The table under the heading that reads `title` in a prose read, as rows of cell texts (header row first). */
+export function tableUnder(xml, title) {
+  const ent = s => s.replace(/&apos;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+  for (const m of xml.matchAll(/<paragraph\b[^>]*\bheading='\d'[^>]*>([\s\S]*?)<\/paragraph>/g)) {
+    if (ent(m[1].replace(/<[^>]+>/g, '')).trim().toLowerCase() !== title.toLowerCase()) continue;
+    const from = xml.indexOf('<table', m.index + m[0].length), next = xml.slice(m.index + m[0].length).search(/<paragraph\b[^>]*\bheading='/);
+    if (from < 0 || (next >= 0 && from > m.index + m[0].length + next)) return null;
+    const table = xml.slice(from, xml.indexOf('</table>', from) + 8);
+    return parseTableXml(`<doc rev='0'>${table}</doc>`).rows.map(r => r.cells.map(c => c.text.trim()));
+  }
+  return null;
+}
+/** The newest Docs read in the transcript of the doc that holds a 'Tasks to add' or 'Decisions proposed' heading. */
+export function designRead(jsonl, docId) {
+  const rs = toolResults(jsonl, '*').filter(r => isDocsTool(r.name, 'read') && !r.isError && r.input && r.input.container && docIdOf(r.input.container.id) === docId);
+  for (const r of rs.reverse()) {
+    const b = readBody(r.texts);
+    if (b && b.xml && /Tasks to add|Decisions proposed/i.test(b.xml)) return b;
+  }
+  return null;
+}
+const byHeader = (rows, names) => {
+  if (!rows || !rows.length) return [];
+  const head = rows[0].map(h => h.toLowerCase());
+  const col = Object.fromEntries(Object.entries(names).map(([k, n]) => [k, head.findIndex(h => n.some(x => h === x))]));
+  return rows.slice(1).filter(r => r.some(Boolean)).map(r => Object.fromEntries(Object.entries(col).map(([k, i]) => [k, i < 0 ? '' : (r[i] || '').trim()])));
+};
+/**
+ * The hand-off from a design doc's read: the decisions and tasks to file, with ids, as `log` argument lists, in order
+ * (decisions first, so a task can name a decision's id). A row already filed from this doc is skipped.
+ */
+export function planFrom(rec, read, docId) {
+  if (!read) throw new Error(`no read of ${docId} with a 'Tasks to add' or 'Decisions proposed' table in this session: read the doc's tab first`);
+  const tasks = byHeader(tableUnder(read.xml, 'Tasks to add'), { title: ['task'], depends: ['depends'], dod: ['definition of done', 'done when'], milestone: ['milestone'] });
+  const props = byHeader(tableUnder(read.xml, 'Decisions proposed'), { pid: ['p-n', 'p', 'id'], title: ['decision'], why: ['why'], status: ['status'] });
+  const src = `plan ${docId}`, P = {}, out = { decisions: [], tasks: [], skipped: [], commands: [] };
+  let dn = Number(nextDecisionId(rec).slice(2)), tn = Number(nextTaskId(rec).slice(2));
+  for (const d of props) {
+    if (!/^P-\d+$/.test(d.pid) || !d.title) throw new Error(`Decisions proposed: a row needs a P-n and a decision (${JSON.stringify(d)})`);
+    const had = rec.decisions.find(x => x.source === `${src} ${d.pid}`);
+    if (had) { P[d.pid] = had.id; out.skipped.push(`${d.pid}: filed as ${had.id}`); continue; }
+    P[d.pid] = 'D-' + String(dn++).padStart(3, '0');
+  }
+  const rewrite = s => String(s || '').replace(/\bP-\d+\b/g, x => P[x] || x);
+  for (const d of props) {
+    if (out.skipped.some(x => x.startsWith(d.pid + ':'))) continue;
+    const e = { id: P[d.pid], pid: d.pid, title: rewrite(d.title), why: rewrite(d.why), status: (d.status || 'accepted').toLowerCase() };
+    out.decisions.push(e);
+    out.commands.push(['log', 'decision', e.id, '--title', e.title, ...(e.why ? ['--why', e.why] : []), '--status', e.status, '--source', `${src} ${d.pid}`]);
+  }
+  for (const t of tasks) {
+    if (!t.title || !t.milestone) throw new Error(`Tasks to add: a row needs a task and a milestone (${JSON.stringify(t)})`);
+    const title = rewrite(t.title), had = rec.tasks.find(x => x.source === src && x.title === title);
+    if (had) { out.skipped.push(`"${title.slice(0, 60)}": filed as ${had.id}`); continue; }
+    const e = { id: 'B-' + String(tn++).padStart(2, '0'), title, dod: rewrite(t.dod), milestone: t.milestone, depends: rewrite(t.depends).replace(/^[—-]$/, '') };
+    out.tasks.push(e);
+    out.commands.push(['log', 'new', e.id, '--title', e.title, ...(e.dod ? ['--dod', e.dod] : []), '--milestone', e.milestone, ...(e.depends ? ['--depends', e.depends] : []), '--source', src]);
+  }
+  return out;
+}
+const shellQuote = a => /^[\w@%+=:,./-]+$/.test(a) ? a : `'${a.replace(/'/g, `'\\''`)}'`;
+export function formatPlan(p) {
+  const out = [];
+  if (p.skipped.length) out.push(`plan: already filed: ${p.skipped.join('; ')}`);
+  if (!p.commands.length) { out.push('plan: nothing to file'); return out.join('\n'); }
+  out.push(`plan: ${p.decisions.length} decision${p.decisions.length === 1 ? '' : 's'} and ${p.tasks.length} task${p.tasks.length === 1 ? '' : 's'} to file (run again with --apply to file them):`);
+  for (const c of p.commands) out.push('  node tools/chart.mjs ' + c.map(shellQuote).join(' '));
+  return out.join('\n');
+}
+
 // ------------------------------------------------------------------------------------------------ the command line
 function args(argv) {
   const o = { _: [], trailer: [] };
-  const flags = new Set(['--json', '--check', '--no-commit', '--matt-ok', '--during-session', '--force']);
+  const flags = new Set(['--json', '--check', '--no-commit', '--matt-ok', '--during-session', '--force', '--apply', '--handoff-note']);
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (flags.has(a)) o[a.slice(2)] = true;
@@ -941,6 +1022,16 @@ const commands = {
   report(o) { return record(o, applyReport); },
   brief(o) { const id = o.task || o._[1]; if (!id) throw new Error('brief --task <id>'); console.log(brief(loadChart(rootOf(o)), id, { root: rootOf(o) })); return 0; },
   ship(o) { return ship(o); },
+  plan(o) {
+    if (o['handoff-note']) { const c = handoffNoteCall(); console.log(`plan: the Build plan tab's hand-off line (once): ${c.tool}\n${JSON.stringify(c.args)}`); return 0; }
+    if (!o.from || o.from === true) throw new Error('plan --from <design doc link> [--apply]');
+    const root = rootOf(o), file = o.transcript || newestTranscript(), docId = docIdOf(o.from);
+    const p = planFrom(loadChart(root), designRead(file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '', docId), docId);
+    console.log(formatPlan(p));
+    if (!o.apply || !p.commands.length) return 0;
+    for (const c of p.commands) { const a = args(c); a.trailer = o.trailer; a.root = o.root; a.transcript = o.transcript; a['no-commit'] = o['no-commit']; record(a, applyLog); }
+    return 0;
+  },
 };
 function record(o, apply) {
   const root = rootOf(o), rec = loadChart(root);
@@ -960,7 +1051,7 @@ function record(o, apply) {
 
 export async function main(argv) {
   const o = args(argv), cmd = commands[o._[0]];
-  if (!cmd) { console.error('Commands: report, inbox, log, views, lint, ship <staging|live>, brief --task <id>, backlog [--check], import --from <dir>'); return 2; }
+  if (!cmd) { console.error('Commands: report, inbox, log, views, lint, ship <staging|live>, brief --task <id>, plan --from <doc link> [--apply], backlog [--check], import --from <dir>'); return 2; }
   try { return await cmd(o); } catch (e) { console.error(`${o._[0]} refused: ${e.message}`); return 1; }
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) process.exitCode = await main(process.argv.slice(2));

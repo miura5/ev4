@@ -343,3 +343,31 @@ test('B-96: brief is one page: the inbox, the task, its dependencies, decisions,
   const runs = C.nextRuns({ morning: { schedule: 'CRON_TZ=America/Chicago 25 4 * * *' }, weekly: { schedule: 'CRON_TZ=America/Chicago 57 17 * * 0' }, worker: { schedule: null } }, new Date('2026-10-19T23:45:00Z'));
   assert.deepEqual(runs.map(r => [r.task, C.ctClock(r.at.toISOString())]), [['morning', '04:25']], 'Monday: no weekly');
 });
+
+// ------------------------------------------------------------------------------------------------ B-106 the design hand-off
+test('B-106: plan files a design doc\'s Tasks to add and Decisions proposed with the next free ids, once', async () => {
+  const r = sample();
+  const row = (i, cells) => `<row id='.${i}'>` + cells.map((c, j) => `<cell id='.${i}${j}'><paragraph id='.${i}${j}p'><text id='.${i}${j}t'>${c}</text></paragraph></cell>`).join('') + '</row>';
+  const xml = `<doc node='N' rev='4'><paragraph id='z1.1' heading='1'>Captions follow-ups</paragraph><paragraph id='.2'>Lead.</paragraph>` +
+    `<paragraph id='.3' heading='2'>Decisions proposed</paragraph><table id='.4'>${row(5, ['P-n', 'Decision', 'Why'])}${row(6, ['P-1', 'Captions keep the last line', 'Matt, Oct 20: it lost his place'])}</table>` +
+    `<paragraph id='.7' heading='2'>Tasks to add</paragraph><table id='.8'>${row(9, ['Task', 'Depends', 'Definition of done', 'Milestone'])}` +
+    `${row(10, ['Keep the last caption line (P-1)', 'B-02', 'the line stays after a pause; a harness test', 'M11'])}${row(11, ['Caption settings', '—', 'a toggle; npm test green', 'M11'])}</table></doc>`;
+  const result = JSON.stringify({ verdict: 'allow', rev: 4, data: { rev: 4, xml, complete: true } });
+  const jsonl = toolPair('r1', 'mcp__Claude_Docs__read', { ref: { object: 'node', id: 'N' }, engine: 'prose', container: { kind: 'project', id: 'AbCdEfGhIjKlMnOpQrStUv' } }, result).join('\n');
+  const id = C.docIdOf('https://claude.ai/artifact/Captions-AbCdEfGhIjKlMnOpQrStUv');
+  assert.equal(id, 'AbCdEfGhIjKlMnOpQrStUv');
+  assert.throws(() => C.planFrom(r, C.designRead('', id), id), /no read of/);
+  const p = C.planFrom(r, C.designRead(jsonl, id), id);
+  assert.deepEqual(p.decisions.map(d => [d.id, d.pid, d.title, d.status]), [['D-003', 'P-1', 'Captions keep the last line', 'accepted']]);
+  assert.deepEqual(p.tasks.map(t => [t.id, t.title, t.depends, t.milestone]), [['B-04', 'Keep the last caption line (D-003)', 'B-02', 'M11'], ['B-05', 'Caption settings', '', 'M11']]);
+  assert.match(C.formatPlan(p), /node tools\/chart.mjs log decision D-003 --title 'Captions keep the last line'/);
+  // --apply runs the printed commands in order through log.
+  for (const c of p.commands) C.applyLog(r, (() => { const o = { _: [], trailer: [] }; for (let i = 0; i < c.length; i++) c[i].startsWith('--') ? (o[c[i].slice(2)] = c[++i]) : o._.push(c[i]); return o; })());
+  assert.equal(r.decisions[0].id, 'D-003');
+  assert.deepEqual(r.tasks.slice(-2).map(t => [t.id, t.status, t.title, t.depends.join(',')]), [['B-04', 'open', 'Keep the last caption line (D-003)', 'B-02'], ['B-05', 'open', 'Caption settings', '']]);
+  assert.deepEqual(C.lintChart(r).filter(f => f.level === 'error'), []);
+  const again = C.planFrom(r, C.designRead(jsonl, id), id);
+  assert.deepEqual([again.commands, again.skipped.length], [[], 3], 'a second run files nothing');
+  assert.match(C.formatPlan(again), /nothing to file/);
+  assert.equal(C.handoffNoteCall().args.payload.ops[0].source.from.content, C.HANDOFF_NOTE);
+});

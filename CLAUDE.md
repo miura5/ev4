@@ -11,8 +11,10 @@ D-140): tasks, reports, decisions, deploys and the rules commands enforce, writt
 BACKLOG.md, the Board and Changelog tabs of the v3 doc (https://claude.ai/artifact/AXwVp9xqpWaUKLE4SqZzwg), its
 Decisions tab and the overview doc's status line are printed from it; no view is edited by hand. Decisions keep their
 reasoning in the Decisions tab; `chart/decisions.json` holds id, title, status, supersedes and amends, and `log
-decision` takes only the next free id. The v3 code you port from is `miura5/ev-core` (read-only to you; attach it
-with `add_repo` when a task needs it).
+decision` takes only the next free id. A design chat hands off through its doc's two tables, 'Tasks to add' and
+'Decisions proposed' (as P-1, P-2; D-141); a build chat reads that tab, then files both with `plan --from <doc link>
+--apply`. The v3 code you port from is `miura5/ev-core` (read-only to you; attach it with `add_repo` when a task
+needs it).
 
 ## Every session
 
