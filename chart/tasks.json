@@ -2061,11 +2061,15 @@
   "title": "Record, Ideas: an idea's text wraps one letter per line at 390 because its status menu and Make it a weak spot sit beside it; the title gets its own line and the menu and button show when the row is opened (D-148)",
   "dod": "the look harness plants a 30-word idea; at 390 and 1280 its title is at most 3 lines and at least 80% of the card's width; opening the row shows the menu and button; npm test green; screenshots looked at",
   "milestone": "M14 UI",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken first in M14 (Matt, via the parent build chat).",
   "commit": null,
-  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474",
+  "board": {
+   "row": "v4 B-111: Ideas rows readable on the phone",
+   "why": "an idea's text wrapped one letter per line at 390"
+  }
  },
  {
   "id": "B-112",
