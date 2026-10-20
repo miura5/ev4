@@ -1811,9 +1811,9 @@
   "title": "Live evening-mac runs with its checkout: its first scheduled run (Oct 18, 8:20pm) failed at the gate, \"the E.V. repository is not checked out in this session\" (runs/evening-mac-failed-20261019-012057581), while the staging evening-mac of the same shape ran with it; find the cause (the task was re-saved Oct 18 18:13Z in the desktop app when its push was turned on) and fix the task so its runs start in this repository; nothing deleted (a replacement task retires the old one under spec.tasks.retired)",
   "dod": null,
   "milestone": "M7",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "Found by B-25. Mac-bound: needs a chat with this repository linked to the Mac, with Matt present. Each night until fixed: no Canvas sync, no backup, no Sunday mirror, and a failure push at 8:20pm. Done when: a firing of the live evening-mac (Matt's OK) writes runs/evening-mac-<id> ok with the backup file on the Mac, and verify-deploy live is green",
+  "notes": "Taken in a build chat with Matt at the Mac: comparing live evening-mac (trig_01GbvqgvbaSjvDDpNHum5Nxk) with staging (trig_01FHjw4mu745gorCZ5quGSJD) before any change.",
   "commit": null,
   "source": "BACKLOG.md",
   "board": {
