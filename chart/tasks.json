@@ -1908,8 +1908,8 @@
  {
   "id": "B-104",
   "kind": "request",
-  "title": "Request (reported Oct 19): Question for Matt: should a validation or a clinical tomorrow count as urgent in the greeting's briefing? Today urgent means an exam today or tomorrow, or graded work due today and not ticked.",
-  "dod": "Matt answers whether a validation or a clinical tomorrow counts as urgent in the greeting's briefing; the greeting's urgent rule follows his answer, with a test for each kind.",
+  "title": "Prep checks (D-143, D-144): clinical, lab, validation and class days are never urgent; they get a calm Prep marker with a night-before pack check in the evening greeting and a morning-of bag check in the greeting, each a tickable list built for that day from that day's materials",
+  "dod": "core tests: the greeting never marks a clinical, lab, validation or class day urgent; a planted calendar entry for a validation, a lab and a clinical, each with planted materials, yields three different lists, each item citing its file and page; a day with no materials says so plainly; an item added by hand on one clinical day comes back on the next clinical day as 'you usually bring'; paperwork is listed, never filled in. Matt's clinical items (his Oct 20 words in the notes) seed what a clinical day looks for. The harness at 390 and 1280 shows the Prep marker, both checks ticking and folding away, with the screenshots looked at. Page only: the evening step and the 8:15pm push line are B-107",
   "milestone": "M13 Workflow",
   "status": "open",
   "depends": [],
