@@ -1279,12 +1279,16 @@
   "title": "core/study.mjs and the shadow pick (D-116): the review scheduler as a pure module with a spec.study.scheduler switch (fixed, today's rule; adaptive); the morning writes days/<date>.shadow (the other scheduler's pick for the day, reproduced by rebuild days) beside the list; the weekly compares them into weeks/<date>.study (items both pick, items only one picks, and how the deferred ones were answered)",
   "dod": null,
   "milestone": "M10",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
   "dependsText": "M9 gate",
-  "notes": "",
+  "notes": "Oct 20: taken per Matt's order (M10 starts with the shadow). The adaptive rule (D-117) is written as the shadow's other scheduler; the switch stays fixed until Matt's OK after a shadow week (B-69)",
   "commit": null,
-  "source": "BACKLOG.md"
+  "source": "BACKLOG.md",
+  "board": {
+   "row": "v4 B-68: Shadow scheduler",
+   "why": "a scheduler change costs a week of study when wrong, so the new rule runs beside today's first and the week compares them (D-116)"
+  }
  },
  {
   "id": "B-69",
