@@ -19,19 +19,41 @@ export function collectionHash(docs) {
  */
 export function seedStaging(exp, { at, exportedAt, from = 'live export', command = 'seed-staging' } = {}) {
   if (!at || !exportedAt) throw new Error('seedStaging needs opts.at and opts.exportedAt');
-  if (exp.journal && exp.journal.length) throw new Error('the journal is never seeded: it stays in the live record only (D-059)');
+  if (exp.journal && exp.journal.length)
+    throw new Error('the journal is never seeded: it stays in the live record only (D-059)');
   const isV3 = Object.entries(exp).some(([col, docs]) => col !== 'legacy' && (docs || []).some(d => d && !isV4(d)));
   let docs = [];
-  if (isV3) docs = migrateV3(exp, { at: exportedAt }).writes.map(w => ({ collection: w.collection, id: w.id, data: w.data }));
+  if (isV3)
+    docs = migrateV3(exp, { at: exportedAt }).writes.map(w => ({ collection: w.collection, id: w.id, data: w.data }));
   // A v4 export lands at today's schema versions: each document goes through its collection's bumps (none: unchanged).
-  else for (const [col, list] of Object.entries(exp)) for (const d of list || []) for (const w of bumpWrite({ op: 'set', collection: col, id: d.id, data: EV.docData(d) }, exportedAt)) docs.push({ collection: w.collection, id: w.id, data: w.data });
+  else
+    for (const [col, list] of Object.entries(exp))
+      for (const d of list || [])
+        for (const w of bumpWrite({ op: 'set', collection: col, id: d.id, data: EV.docData(d) }, exportedAt))
+          docs.push({ collection: w.collection, id: w.id, data: w.data });
   // system/* is Config: deploy writes it per target, so a seed never carries the source record's spec or manifest.
   docs = docs.filter(d => d.collection !== 'system');
-  const by = {}; for (const d of docs) (by[d.collection] = by[d.collection] || []).push({ id: d.id, ...d.data });
-  const counts = {}, hashes = {};
-  for (const col of Object.keys(by).sort()) { counts[col] = by[col].length; hashes[col] = collectionHash(by[col]); }
-  const seed = { ...EV.envelope('deploy', 'seed-staging', at), from, exportedAt: new Date(exportedAt).toISOString(), migration: isV3 ? 'v3-to-v4' : null, counts, hashes, command };
-  const writes = [...docs.map(d => ({ op: 'set', collection: d.collection, id: d.id, data: d.data })), { op: 'set', collection: 'system', id: 'seed', data: seed }];
+  const by = {};
+  for (const d of docs) (by[d.collection] = by[d.collection] || []).push({ id: d.id, ...d.data });
+  const counts = {},
+    hashes = {};
+  for (const col of Object.keys(by).sort()) {
+    counts[col] = by[col].length;
+    hashes[col] = collectionHash(by[col]);
+  }
+  const seed = {
+    ...EV.envelope('deploy', 'seed-staging', at),
+    from,
+    exportedAt: new Date(exportedAt).toISOString(),
+    migration: isV3 ? 'v3-to-v4' : null,
+    counts,
+    hashes,
+    command,
+  };
+  const writes = [
+    ...docs.map(d => ({ op: 'set', collection: d.collection, id: d.id, data: d.data })),
+    { op: 'set', collection: 'system', id: 'seed', data: seed },
+  ];
   return { writes, seed, migrated: isV3 };
 }
 

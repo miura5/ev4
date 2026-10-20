@@ -14,18 +14,42 @@ import { newestTranscript, toolResults, resultBody } from '../core/transcript.mj
 export { newestTranscript, toolResults, resultBody };
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const args = process.argv.slice(2), opt = k => { const i = args.indexOf(k); return i >= 0 ? args.splice(i, 2)[1] : null; };
-  const flag = k => { const on = args.includes(k); if (on) args.splice(args.indexOf(k), 1); return on; };
-  const html = flag('--html'), declaration = flag('--declaration');
-  const back = Number(opt('--back') || 0), file = opt('--transcript') || newestTranscript();
+  const args = process.argv.slice(2),
+    opt = k => {
+      const i = args.indexOf(k);
+      return i >= 0 ? args.splice(i, 2)[1] : null;
+    };
+  const flag = k => {
+    const on = args.includes(k);
+    if (on) args.splice(args.indexOf(k), 1);
+    return on;
+  };
+  const html = flag('--html'),
+    declaration = flag('--declaration');
+  const back = Number(opt('--back') || 0),
+    file = opt('--transcript') || newestTranscript();
   const [tool, out] = args;
-  if (!tool || !out) { console.error('usage: tool-result.mjs <tool> <out file> [--back N] [--html | --declaration] [--transcript f]'); process.exit(2); }
-  if (!file) { console.error('no session transcript found under ~/.claude/projects'); process.exit(1); }
+  if (!tool || !out) {
+    console.error('usage: tool-result.mjs <tool> <out file> [--back N] [--html | --declaration] [--transcript f]');
+    process.exit(2);
+  }
+  if (!file) {
+    console.error('no session transcript found under ~/.claude/projects');
+    process.exit(1);
+  }
   // A page read with paths (published files) carries no declaration or shell: skip those for --html and --declaration.
-  const all = toolResults(fs.readFileSync(file, 'utf8'), tool).filter(x => !(html || declaration) || !(x.input && (x.input.paths || x.input.path)));
+  const all = toolResults(fs.readFileSync(file, 'utf8'), tool).filter(
+    x => !(html || declaration) || !(x.input && (x.input.paths || x.input.path))
+  );
   const r = all[all.length - 1 - back];
-  if (!r) { console.error(`no result of ${tool} in ${file} (${all.length} found)`); process.exit(1); }
-  if (r.isError) { console.error(`that ${tool} call failed; not saved`); process.exit(1); }
+  if (!r) {
+    console.error(`no result of ${tool} in ${file} (${all.length} found)`);
+    process.exit(1);
+  }
+  if (r.isError) {
+    console.error(`that ${tool} call failed; not saved`);
+    process.exit(1);
+  }
   fs.mkdirSync(path.dirname(path.resolve(out)), { recursive: true });
   fs.writeFileSync(out, resultBody(r, { html, declaration }));
   console.log(`saved ${r.name} ${JSON.stringify(r.input)} -> ${out}`);

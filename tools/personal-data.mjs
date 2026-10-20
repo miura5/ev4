@@ -8,9 +8,38 @@ import { execFileSync } from 'node:child_process';
 
 // Every record collection, v3 and v4 (Data architecture, collection map). B-01 keeps this list in step with the spec.
 export const RECORD_COLLECTIONS = [
-  'weakspots', 'sets', 'answers', 'exams', 'examedits', 'predictions', 'objectives', 'plans', 'planedits', 'dates', 'dateedits', 'days', 'dayedits',
-  'weeks', 'runs', 'health', 'state', 'sessions', 'ideas', 'workouts', 'journal', 'talk', 'jobs', 'jobresults', 'materials',
-  'materialedits', 'libindex', 'announcements', 'concepts', 'system', 'legacy', 'debug',
+  'weakspots',
+  'sets',
+  'answers',
+  'exams',
+  'examedits',
+  'predictions',
+  'objectives',
+  'plans',
+  'planedits',
+  'dates',
+  'dateedits',
+  'days',
+  'dayedits',
+  'weeks',
+  'runs',
+  'health',
+  'state',
+  'sessions',
+  'ideas',
+  'workouts',
+  'journal',
+  'talk',
+  'jobs',
+  'jobresults',
+  'materials',
+  'materialedits',
+  'libindex',
+  'announcements',
+  'concepts',
+  'system',
+  'legacy',
+  'debug',
 ];
 
 // A folder that holds made-up records for tests opts out of the layout rule with this marker file at its root.
@@ -22,8 +51,13 @@ const COLLECTION_SET = new Set(RECORD_COLLECTIONS);
 const SESSION_FILE = /^\d{4}-\d{2}-\d{2}-\d{4}-[A-Za-z0-9-]*\.json$/;
 
 export function listRepoFiles(root) {
-  const out = execFileSync('git', ['-C', root, 'ls-files', '--cached', '--others', '--exclude-standard', '-z'], { encoding: 'utf8' });
-  return out.split('\0').filter(Boolean).filter(f => fs.existsSync(path.join(root, f)));
+  const out = execFileSync('git', ['-C', root, 'ls-files', '--cached', '--others', '--exclude-standard', '-z'], {
+    encoding: 'utf8',
+  });
+  return out
+    .split('\0')
+    .filter(Boolean)
+    .filter(f => fs.existsSync(path.join(root, f)));
 }
 
 function syntheticRoots(relPaths) {
@@ -43,7 +77,12 @@ function pathFinding(rel, synth) {
   if (parts[0] === 'mirror' || parts[0] === 'backup') return `a file under ${parts[0]}/ (the Mac backup layout)`;
   if (base === 'latest.json' && parts[parts.length - 2] === 'live') return 'a Study Watch live note (live/latest.json)';
   if (SESSION_FILE.test(base) && parts.includes('sessions')) return 'a Study Watch session file';
-  if (base.endsWith('.json') && parts.length >= 2 && COLLECTION_SET.has(parts[parts.length - 2]) && !underSynthetic(rel, synth)) {
+  if (
+    base.endsWith('.json') &&
+    parts.length >= 2 &&
+    COLLECTION_SET.has(parts[parts.length - 2]) &&
+    !underSynthetic(rel, synth)
+  ) {
     return `a record export document (${parts[parts.length - 2]}/<id>.json)`;
   }
   return null;
@@ -52,7 +91,11 @@ function pathFinding(rel, synth) {
 // Content rules: what a JSON file's shape gives away.
 function contentFinding(text) {
   let doc;
-  try { doc = JSON.parse(text); } catch { return null; }
+  try {
+    doc = JSON.parse(text);
+  } catch {
+    return null;
+  }
   if (!doc || typeof doc !== 'object' || Array.isArray(doc)) return null;
   if (doc._synthetic === true) return null;
   if (doc.kind === 'E.V. record backup') return 'a v3 record backup (kind: E.V. record backup)';
@@ -63,7 +106,8 @@ function contentFinding(text) {
   }
   const top = Object.keys(doc).filter(k => COLLECTION_SET.has(k) && Array.isArray(doc[k]));
   if (top.length >= 3) return `a record export (top-level ${top.slice(0, 4).join(', ')})`;
-  if (doc.source === 'Study Watch' && ('note' in doc || 'startedAt' in doc)) return 'a Study Watch session file (source: Study Watch)';
+  if (doc.source === 'Study Watch' && ('note' in doc || 'startedAt' in doc))
+    return 'a Study Watch session file (source: Study Watch)';
   return null;
 }
 
@@ -73,10 +117,18 @@ export function scanFiles(root, relPaths) {
   const findings = [];
   for (const rel of rels) {
     const byPath = pathFinding(rel, synth);
-    if (byPath) { findings.push({ file: rel, why: byPath }); continue; }
+    if (byPath) {
+      findings.push({ file: rel, why: byPath });
+      continue;
+    }
     if (!rel.endsWith('.json')) continue;
     const abs = path.join(root, rel);
-    let stat; try { stat = fs.statSync(abs); } catch { continue; }
+    let stat;
+    try {
+      stat = fs.statSync(abs);
+    } catch {
+      continue;
+    }
     if (!stat.isFile() || stat.size > MAX_SCAN_BYTES) continue;
     const byContent = contentFinding(fs.readFileSync(abs, 'utf8'));
     if (byContent) findings.push({ file: rel, why: byContent });

@@ -16,42 +16,74 @@ const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'u
 const release = 'v' + spec.specVersion;
 const all = () => {
   const out = {};
-  for (const target of ['live', 'staging']) for (const [id, t] of Object.entries(spec.tasks[target])) out[`${target}.${id}`] = renderPrompt({ key: `${target}.${id}`, task: t, spec, release });
-  for (const id of Object.keys(spec.tasks.build)) out[`build.${id}`] = renderPrompt({ key: `build.${id}`, task: spec.tasks.build[id], spec, release });
+  for (const target of ['live', 'staging'])
+    for (const [id, t] of Object.entries(spec.tasks[target]))
+      out[`${target}.${id}`] = renderPrompt({ key: `${target}.${id}`, task: t, spec, release });
+  for (const id of Object.keys(spec.tasks.build))
+    out[`build.${id}`] = renderPrompt({ key: `build.${id}`, task: spec.tasks.build[id], spec, release });
   return out;
 };
 
 test('every pipeline with steps has a prompt for live and staging; the rest wait for their steps', () => {
   const p = all();
-  const ready = Object.keys(spec.pipelines).filter(n => n !== '_rules' && Array.isArray(spec.pipelines[n].steps) && ['cloud', 'mac'].includes(spec.pipelines[n].lane));
+  const ready = Object.keys(spec.pipelines).filter(
+    n => n !== '_rules' && Array.isArray(spec.pipelines[n].steps) && ['cloud', 'mac'].includes(spec.pipelines[n].lane)
+  );
   assert.ok(['morning', 'evening-cloud', 'weekly', 'worker'].every(n => ready.includes(n)));
-  for (const n of ready.filter(n => spec.tasks.staging[n])) { if (spec.tasks.live[n]) assert.equal(typeof p[`live.${n}`], 'string', n); assert.equal(typeof p[`staging.${n}`], 'string', n); }
+  for (const n of ready.filter(n => spec.tasks.staging[n])) {
+    if (spec.tasks.live[n]) assert.equal(typeof p[`live.${n}`], 'string', n);
+    assert.equal(typeof p[`staging.${n}`], 'string', n);
+  }
   assert.equal(spec.tasks.live['restore-drill'], undefined, 'the drill restores into staging only');
-  assert.match(p['staging.restore-drill'], /reads one backup file from it, with device_list_dir and device_stage_files/);
-  assert.match(p['staging.restore-drill'], /on the Mac, read only the backup files the step names, and write, move or change nothing there/);
+  assert.match(
+    p['staging.restore-drill'],
+    /reads one backup file from it, with device_list_dir and device_stage_files/
+  );
+  assert.match(
+    p['staging.restore-drill'],
+    /on the Mac, read only the backup files the step names, and write, move or change nothing there/
+  );
   assert.doesNotMatch(p['staging.restore-drill'], /Canvas|Quizlet|device_commit_files/);
   const diag = renderPrompt({ key: 'staging.diagnostic', task: spec.tasks.diagnostic, spec, release });
   assert.match(diag, /end this turn with exactly: Waiting for the probe\. When it arrives, add --probe/);
   assert.doesNotMatch(diag, /journal|add_repo|git clone/i);
   assert.match(diag, /, except the one made-up page a page-publish probe prints\./); // B-54
   assert.doesNotMatch(p['staging.worker'] + p['staging.morning'], /page-publish probe/);
-  for (const n of Object.keys(spec.tasks.staging).filter(n => !ready.includes(n))) assert.equal(p[`staging.${n}`], null, n);
-  assert.match(p['staging.worker'], /end this turn with exactly: Waiting for the job id\. When it arrives, add --job <id> to the start command/);
-  assert.match(p['staging.worker'], /except the one Claude Doc a study-guide job asks for and the one practice page a share-set job publishes\./); // B-54
+  for (const n of Object.keys(spec.tasks.staging).filter(n => !ready.includes(n)))
+    assert.equal(p[`staging.${n}`], null, n);
+  assert.match(
+    p['staging.worker'],
+    /end this turn with exactly: Waiting for the job id\. When it arrives, add --job <id> to the start command/
+  );
+  assert.match(
+    p['staging.worker'],
+    /except the one Claude Doc a study-guide job asks for and the one practice page a share-set job publishes\./
+  ); // B-54
   assert.doesNotMatch(p['staging.morning'], /--job|Claude Doc/);
   // The Mac lane: its folder, read-only Canvas, and the Mac written only by printed calls; the cloud lane names none of it.
   assert.ok(ready.includes('evening-mac'));
-  assert.match(p['staging.evening-mac'], /E\.V\.'s folder for this record there is "\/Users\/peachfritter\/Documents\/E\.V\. Study Watch\/staging"/);
+  assert.match(
+    p['staging.evening-mac'],
+    /E\.V\.'s folder for this record there is "\/Users\/peachfritter\/Documents\/E\.V\. Study Watch\/staging"/
+  );
   assert.match(p['live.evening-mac'], /there is "\/Users\/peachfritter\/Documents\/E\.V\. Study Watch"\./);
   assert.match(p['staging.evening-mac'], /Canvas is read-only: only the GET requests the printed scripts make/);
   assert.match(p['staging.evening-mac'], /never enter a password/);
-  for (const n of ['morning', 'evening-cloud', 'weekly', 'worker']) assert.doesNotMatch(p['staging.' + n], /Mac|Canvas|device_|browser/, n);
-  assert.equal(p['build.ev4-builder'], 'You are an E.V. v4 build session. Follow CLAUDE.md and BACKLOG.md in this repository exactly, including the Unattended runs section.');
+  for (const n of ['morning', 'evening-cloud', 'weekly', 'worker'])
+    assert.doesNotMatch(p['staging.' + n], /Mac|Canvas|device_|browser/, n);
+  assert.equal(
+    p['build.ev4-builder'],
+    'You are an E.V. v4 build session. Follow CLAUDE.md and BACKLOG.md in this repository exactly, including the Unattended runs section.'
+  );
 });
 
 test('no prompt fetches, clones, unpacks or attaches code, or names the page-only collection', () => {
   for (const [key, text] of Object.entries(all()).filter(([, t]) => t)) {
-    assert.doesNotMatch(text, /add_repo|git clone|git fetch|curl |wget |fetch\(|npm install|unzip|tar -x|eval\(|new Function/i, key);
+    assert.doesNotMatch(
+      text,
+      /add_repo|git clone|git fetch|curl |wget |fetch\(|npm install|unzip|tar -x|eval\(|new Function/i,
+      key
+    );
     assert.doesNotMatch(text, /journal/i, key);
   }
 });
@@ -78,12 +110,25 @@ test('the gate passes a clean checkout at the deployed commit and refuses a chan
   const gate = /node -e '([^']+)'/.exec(text)[1];
   const repo = copyRepo();
   const commit = git(repo, 'rev-parse', 'HEAD').trim();
-  const files = {}; for (const f of ['core/evcore.mjs', 'core/cli.mjs', 'spec/ev.spec.json']) files[f] = crypto.createHash('sha256').update(fs.readFileSync(path.join(repo, f))).digest('hex');
+  const files = {};
+  for (const f of ['core/evcore.mjs', 'core/cli.mjs', 'spec/ev.spec.json'])
+    files[f] = crypto
+      .createHash('sha256')
+      .update(fs.readFileSync(path.join(repo, f)))
+      .digest('hex');
   const m = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-gate-')), 'manifest.json');
   fs.writeFileSync(m, JSON.stringify({ release, commit, dirty: false, files }));
-  const run = () => execFileSync('node', ['-e', gate.replace('/tmp/ev/system/manifest.json', m)], { cwd: repo, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  const run = () =>
+    execFileSync('node', ['-e', gate.replace('/tmp/ev/system/manifest.json', m)], {
+      cwd: repo,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
   assert.match(run(), new RegExp(`E\\.V\\. ${release.replace(/\./g, '\\.')} ${commit.slice(0, 12)} verified in`));
-  fs.writeFileSync(m, JSON.stringify({ release, commit, dirty: false, files: { ...files, 'core/evcore.mjs': '0'.repeat(64) } }));
+  fs.writeFileSync(
+    m,
+    JSON.stringify({ release, commit, dirty: false, files: { ...files, 'core/evcore.mjs': '0'.repeat(64) } })
+  );
   assert.throws(run, /core\/evcore\.mjs differs from the deployed build/);
   fs.writeFileSync(m, JSON.stringify({ release, commit: 'f'.repeat(40), dirty: false, files }));
   assert.throws(run, /does not have the deployed commit/);
@@ -103,19 +148,28 @@ test('build writes each prompt beside the manifest, and the manifest carries its
 test('B-49: every pipeline prompt says who asked for its writes and how a refused start leaves a trace', () => {
   const spec = JSON.parse(fs.readFileSync(new URL('../spec/ev.spec.json', import.meta.url), 'utf8'));
   let n = 0;
-  for (const target of ['live', 'staging']) for (const [key, task] of Object.entries(spec.tasks[target])) {
-    const prompt = renderPrompt({ key: `${target}.${key}`, task, spec, release: 'v4.0.0' });
-    if (!prompt) continue; n++;
-    assert.match(prompt, /Matt set this scheduled task up himself and approved what it does\./, key);
-    assert.match(prompt, /only its owner read or write it/, key);
-    assert.match(prompt, /starting with this run's own runs\/<id> entry, is the job he asked for/, key);
-    assert.match(prompt, new RegExp(`If the start write itself is refused, make no other call to the record and end with: E\\.V\\. ${task.pipeline} failed at start`), key);
-    assert.match(prompt, /--status failed --detail "<move>: <the refusal, quoted>"/, key);
-  }
+  for (const target of ['live', 'staging'])
+    for (const [key, task] of Object.entries(spec.tasks[target])) {
+      const prompt = renderPrompt({ key: `${target}.${key}`, task, spec, release: 'v4.0.0' });
+      if (!prompt) continue;
+      n++;
+      assert.match(prompt, /Matt set this scheduled task up himself and approved what it does\./, key);
+      assert.match(prompt, /only its owner read or write it/, key);
+      assert.match(prompt, /starting with this run's own runs\/<id> entry, is the job he asked for/, key);
+      assert.match(
+        prompt,
+        new RegExp(
+          `If the start write itself is refused, make no other call to the record and end with: E\\.V\\. ${task.pipeline} failed at start`
+        ),
+        key
+      );
+      assert.match(prompt, /--status failed --detail "<move>: <the refusal, quoted>"/, key);
+    }
   assert.ok(n >= 12, 'live and staging prompts rendered');
 });
 
 test('B-49: no pipeline purpose describes re-firing or deploying (the live watchdog was refused as "Production Deploy" while its purpose said it re-fires misses)', () => {
   const spec = JSON.parse(fs.readFileSync(new URL('../spec/ev.spec.json', import.meta.url), 'utf8'));
-  for (const [name, p] of Object.entries(spec.pipelines)) if (p && p.purpose) assert.doesNotMatch(p.purpose, /re-?fir|deploy|trigger/i, name);
+  for (const [name, p] of Object.entries(spec.pipelines))
+    if (p && p.purpose) assert.doesNotMatch(p.purpose, /re-?fir|deploy|trigger/i, name);
 });

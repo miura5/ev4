@@ -12,12 +12,52 @@ const RAW = fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8');
 const spec = JSON.parse(RAW);
 
 const CLASSES = ['Fact', 'Edit', 'Derived', 'Log', 'Config'];
-const PIPELINES = ['morning', 'evening-cloud', 'evening-mac', 'weekly', 'worker', 'watchdog', 'restore-drill', 'diagnostic'];
+const PIPELINES = [
+  'morning',
+  'evening-cloud',
+  'evening-mac',
+  'weekly',
+  'worker',
+  'watchdog',
+  'restore-drill',
+  'diagnostic',
+];
 const SURFACES = ['cloud-run', 'mac-run', 'browser-tab', 'page', 'build-chat'];
 // Every collection in the Data architecture tab's collection map.
-const COLLECTIONS = ['weakspots', 'sets', 'answers', 'exams', 'examedits', 'predictions', 'objectives', 'plans', 'planedits', 'dates', 'dateedits', 'days',
-  'dayedits', 'weeks', 'runs', 'health', 'state', 'sessions', 'ideas', 'workouts', 'journal', 'talk', 'jobs', 'jobresults', 'materials',
-  'materialedits', 'libindex', 'announcements', 'concepts', 'system', 'legacy', 'debug'];
+const COLLECTIONS = [
+  'weakspots',
+  'sets',
+  'answers',
+  'exams',
+  'examedits',
+  'predictions',
+  'objectives',
+  'plans',
+  'planedits',
+  'dates',
+  'dateedits',
+  'days',
+  'dayedits',
+  'weeks',
+  'runs',
+  'health',
+  'state',
+  'sessions',
+  'ideas',
+  'workouts',
+  'journal',
+  'talk',
+  'jobs',
+  'jobresults',
+  'materials',
+  'materialedits',
+  'libindex',
+  'announcements',
+  'concepts',
+  'system',
+  'legacy',
+  'debug',
+];
 const CRON = /^CRON_TZ=America\/Chicago (\S+ ){4}\S+$/;
 
 test('the spec is JSON with indent 1 and no trailing newline', () => {
@@ -25,10 +65,28 @@ test('the spec is JSON with indent 1 and no trailing newline', () => {
 });
 
 test('top-level sections and a v4 release string', () => {
-  for (const k of ['specVersion', 'roles', 'pipelines', 'classes', 'registry', 'collections', 'tasks', 'environments', 'capacity', 'boundaries', 'workingAgreements']) assert.ok(k in spec, `missing ${k}`);
+  for (const k of [
+    'specVersion',
+    'roles',
+    'pipelines',
+    'classes',
+    'registry',
+    'collections',
+    'tasks',
+    'environments',
+    'capacity',
+    'boundaries',
+    'workingAgreements',
+  ])
+    assert.ok(k in spec, `missing ${k}`);
   assert.match(spec.specVersion, /^4\.\d+\.\d+$/);
   assert.deepEqual(Object.keys(spec.classes).sort(), CLASSES.slice().sort());
-  assert.deepEqual(Object.keys(spec.pipelines).filter(k => k !== '_rules').sort(), PIPELINES.slice().sort());
+  assert.deepEqual(
+    Object.keys(spec.pipelines)
+      .filter(k => k !== '_rules')
+      .sort(),
+    PIPELINES.slice().sort()
+  );
   for (const p of PIPELINES) assert.ok(spec.roles.includes(p), `pipeline ${p} is not a role`);
 });
 
@@ -41,7 +99,12 @@ test('every collection names its class, writers, key and schema file', () => {
     assert.ok(CLASSES.includes(c.class), `${name}: class ${c.class}`);
     assert.ok(Array.isArray(c.writers), `${name}: writers`);
     for (const w of c.writers) assert.ok(spec.roles.includes(w), `${name}: writer ${w} is not a role`);
-    assert.ok(typeof c.key === 'string' ? c.key.length : Array.isArray(c.key) && c.key.length && c.key.every(k => typeof k === 'string' && k), `${name}: key`);
+    assert.ok(
+      typeof c.key === 'string'
+        ? c.key.length
+        : Array.isArray(c.key) && c.key.length && c.key.every(k => typeof k === 'string' && k),
+      `${name}: key`
+    );
     assert.equal(c.schema, `spec/schemas/${name}.schema.json`, `${name}: schema file`);
     assert.ok(c.holds && c.fromV3, `${name}: holds and fromV3`);
     if (name !== 'legacy') assert.ok(c.writers.length >= 1, `${name}: no writer`);
@@ -78,7 +141,8 @@ test('the journal is private and in no read set', () => {
 });
 
 test('the personal-data scan knows every collection', () => {
-  for (const name of Object.keys(spec.collections)) assert.ok(RECORD_COLLECTIONS.includes(name), `${name} missing from tools/personal-data.mjs`);
+  for (const name of Object.keys(spec.collections))
+    assert.ok(RECORD_COLLECTIONS.includes(name), `${name} missing from tools/personal-data.mjs`);
 });
 
 function checkTask(id, t, record) {
@@ -96,8 +160,23 @@ function checkTask(id, t, record) {
 
 test('tasks: every live pipeline has a task, every pipeline has a staging task, with the design schedules', () => {
   const { live, staging } = spec.tasks;
-  assert.deepEqual(Object.keys(live).sort(), ['evening-cloud', 'evening-mac', 'morning', 'watchdog', 'weekly', 'worker']);
-  assert.deepEqual(Object.keys(staging).sort(), ['evening-cloud', 'evening-mac', 'morning', 'restore-drill', 'watchdog', 'weekly', 'worker']);
+  assert.deepEqual(Object.keys(live).sort(), [
+    'evening-cloud',
+    'evening-mac',
+    'morning',
+    'watchdog',
+    'weekly',
+    'worker',
+  ]);
+  assert.deepEqual(Object.keys(staging).sort(), [
+    'evening-cloud',
+    'evening-mac',
+    'morning',
+    'restore-drill',
+    'watchdog',
+    'weekly',
+    'worker',
+  ]);
   for (const [id, t] of Object.entries(live)) checkTask(`live.${id}`, t, 'live');
   for (const [id, t] of Object.entries(staging)) checkTask(`staging.${id}`, t, 'staging');
   checkTask('diagnostic', spec.tasks.diagnostic, 'staging');
@@ -106,7 +185,11 @@ test('tasks: every live pipeline has a task, every pipeline has a staging task, 
   assert.equal(at('evening-cloud'), 'CRON_TZ=America/Chicago 15 20 * * *');
   assert.equal(at('evening-mac'), 'CRON_TZ=America/Chicago 20 20 * * *');
   assert.equal(at('weekly'), 'CRON_TZ=America/Chicago 57 17 * * 0');
-  assert.equal(at('watchdog'), 'CRON_TZ=America/Chicago 55 1,4,7,10,13,16,19,22 * * *', 'hours spelled out (D-084): an every-3-hours cron anchors to its creation minute');
+  assert.equal(
+    at('watchdog'),
+    'CRON_TZ=America/Chicago 55 1,4,7,10,13,16,19,22 * * *',
+    'hours spelled out (D-084): an every-3-hours cron anchors to its creation minute'
+  );
   assert.equal(at('worker'), null);
 });
 
@@ -114,7 +197,8 @@ test('staging is not a second live: no pushes, Mac writes only under staging/ ex
   for (const [id, t] of Object.entries(spec.tasks.staging)) {
     assert.equal(t.push, false, `staging.${id} pushes`);
     if (id !== 'restore-drill') assert.equal(t.schedule, null, `staging.${id} has a schedule`);
-    if (t.lane === 'mac' && id !== 'restore-drill') for (const f of t.folders) assert.match(f, /\/staging$/, `staging.${id}: ${f}`);
+    if (t.lane === 'mac' && id !== 'restore-drill')
+      for (const f of t.folders) assert.match(f, /\/staging$/, `staging.${id}: ${f}`);
   }
 });
 
@@ -127,7 +211,12 @@ test('tasks: name templates carry the release; retired is a list; the builder is
 
 test('environments: the five surfaces, each capability with a proof', () => {
   const env = spec.environments;
-  assert.deepEqual(Object.keys(env).filter(k => !k.startsWith('_')).sort(), SURFACES.slice().sort());
+  assert.deepEqual(
+    Object.keys(env)
+      .filter(k => !k.startsWith('_'))
+      .sort(),
+    SURFACES.slice().sort()
+  );
   for (const s of SURFACES) {
     assert.ok(env[s].proven.length >= 1, `${s}: nothing proven`);
     assert.ok(Array.isArray(env[s].limits), `${s}: limits`);
@@ -151,22 +240,36 @@ test('capacity: the design constants, a budget row per collection, nothing guess
   assert.equal(cap.documentBytes, measured.documentBytes);
   assert.equal(cap.batch.maxWrites, measured.batchWrites);
   assert.equal(cap.batch.ceilingBytes, measured.batchRequestBytes);
-  assert.ok(cap.batch.maxBytes < measured.batchRequestBytes, 'room for the call\'s own fields');
+  assert.ok(cap.batch.maxBytes < measured.batchRequestBytes, "room for the call's own fields");
   for (const n of ['documentBytes', 'batchWrites', 'batchRequestBytes']) {
-    assert.ok(spec.environments['cloud-run'].proven.some(p => /^cse_/.test(p.run || '') && p.date && p.evidence.includes('runs/diagnostic-')), 'a diagnostic row proves ' + n);
+    assert.ok(
+      spec.environments['cloud-run'].proven.some(
+        p => /^cse_/.test(p.run || '') && p.date && p.evidence.includes('runs/diagnostic-')
+      ),
+      'a diagnostic row proves ' + n
+    );
   }
   assert.deepEqual(cap.readWindowDays, { talk: 7, days: 14, dayedits: 14, jobs: 30, runs: 7 });
   assert.deepEqual(Object.keys(cap.collections).sort(), COLLECTIONS.slice().sort());
-  if (!cap.measured) for (const [k, b] of Object.entries(cap.collections)) {
-    for (const f of ['warnDocs', 'failDocs', 'warnBytes', 'failBytes']) assert.equal(b[f], null, `capacity.${k}.${f} set before the platform was measured`);
-  }
+  if (!cap.measured)
+    for (const [k, b] of Object.entries(cap.collections)) {
+      for (const f of ['warnDocs', 'failDocs', 'warnBytes', 'failBytes'])
+        assert.equal(b[f], null, `capacity.${k}.${f} set before the platform was measured`);
+    }
 });
 
 test('boundaries B-01 to B-14 ported, the explicit-OK list and the working agreements', () => {
-  assert.deepEqual(spec.boundaries.rules.map(b => b.id), Array.from({ length: 14 }, (_, i) => `B-${String(i + 1).padStart(2, '0')}`));
+  assert.deepEqual(
+    spec.boundaries.rules.map(b => b.id),
+    Array.from({ length: 14 }, (_, i) => `B-${String(i + 1).padStart(2, '0')}`)
+  );
   for (const b of spec.boundaries.rules) assert.ok(b.rule.length > 10, b.id);
-  for (const ok of ['publishing the live page', 'creating or changing a Mac-bound task', 'touching the live record']) assert.ok(spec.boundaries.mattOkRequired.includes(ok), ok);
-  assert.ok(!spec.boundaries.mattOkRequired.includes('reading the journal'), 'D-106, D-113: a build session may read the journal');
+  for (const ok of ['publishing the live page', 'creating or changing a Mac-bound task', 'touching the live record'])
+    assert.ok(spec.boundaries.mattOkRequired.includes(ok), ok);
+  assert.ok(
+    !spec.boundaries.mattOkRequired.includes('reading the journal'),
+    'D-106, D-113: a build session may read the journal'
+  );
   assert.ok(spec.workingAgreements.some(w => /No time-gating/.test(w)));
   assert.ok(spec.workingAgreements.some(w => /Nothing is deleted/.test(w)));
 });
@@ -175,38 +278,66 @@ test('no delete op anywhere in the spec (P10)', () => {
   assert.doesNotMatch(RAW, /"op":\s*"delete"/);
 });
 
-test('B-26 (D-084): the watchdog\'s slots land inside every scheduled cloud pipeline\'s re-fire window', async () => {
+test("B-26 (D-084): the watchdog's slots land inside every scheduled cloud pipeline's re-fire window", async () => {
   const { uncoveredSlots } = await import('../core/watch.mjs');
   assert.deepEqual(uncoveredSlots(spec), [], 'every missed slot over two weeks is seen in time');
   const old = uncoveredSlots(spec, { watchdog: 'CRON_TZ=America/Chicago 4 */3 * * *' });
-  assert.ok(old.some(u => u.task === 'morning'), 'the Oct 18 schedule sees a missed morning only after 6:00am');
-  assert.ok(old.some(u => u.task === 'weekly'), 'and the weekly too late');
-  assert.equal(spec.tasks.staging.morning.watchSchedule, spec.tasks.live.morning.schedule, 'staging watches its morning on the live slot');
+  assert.ok(
+    old.some(u => u.task === 'morning'),
+    'the Oct 18 schedule sees a missed morning only after 6:00am'
+  );
+  assert.ok(
+    old.some(u => u.task === 'weekly'),
+    'and the weekly too late'
+  );
+  assert.equal(
+    spec.tasks.staging.morning.watchSchedule,
+    spec.tasks.live.morning.schedule,
+    'staging watches its morning on the live slot'
+  );
 });
 
 test('B-28: spec.tasks.retired keeps every old task with its reason, never a task still in use', () => {
   const inUse = new Set();
-  for (const g of ['live', 'staging']) for (const t of Object.values(spec.tasks[g])) if (t.trigger) inUse.add(t.trigger);
+  for (const g of ['live', 'staging'])
+    for (const t of Object.values(spec.tasks[g])) if (t.trigger) inUse.add(t.trigger);
   for (const t of Object.values(spec.tasks.build)) if (t.trigger) inUse.add(t.trigger);
   if (spec.tasks.diagnostic && spec.tasks.diagnostic.trigger) inUse.add(spec.tasks.diagnostic.trigger);
   const seen = new Set();
   for (const r of spec.tasks.retired) {
-    for (const k of ['trigger', 'was', 'name', 'reason']) assert.ok(typeof r[k] === 'string' && r[k].length, `${r.trigger}: ${k}`);
+    for (const k of ['trigger', 'was', 'name', 'reason'])
+      assert.ok(typeof r[k] === 'string' && r[k].length, `${r.trigger}: ${k}`);
     assert.match(r.trigger, /^trig_[A-Za-z0-9]+$/);
-    assert.ok(!seen.has(r.trigger), `${r.trigger} listed twice`); seen.add(r.trigger);
+    assert.ok(!seen.has(r.trigger), `${r.trigger} listed twice`);
+    seen.add(r.trigger);
     assert.ok(!inUse.has(r.trigger), `${r.trigger} is retired and in use`);
   }
   // The four v3 live tasks the rollback procedure names, and the two v3 staging tasks left enabled at the cutover.
-  for (const id of ['trig_01R7242YzwUXFyNVcmqT8vob', 'trig_0148JgXzDzGX1zghMymdvMmL', 'trig_01GHogoFx9Ns7uE1uUmi2i2G', 'trig_01PxKp1tsgddna4Kt1FzpNhv', 'trig_01VK4WrkLh2361Bc7MgvcDUY', 'trig_01VTGsL3VVYKwboByCz8RqZ3']) assert.ok(seen.has(id), id);
+  for (const id of [
+    'trig_01R7242YzwUXFyNVcmqT8vob',
+    'trig_0148JgXzDzGX1zghMymdvMmL',
+    'trig_01GHogoFx9Ns7uE1uUmi2i2G',
+    'trig_01PxKp1tsgddna4Kt1FzpNhv',
+    'trig_01VK4WrkLh2361Bc7MgvcDUY',
+    'trig_01VTGsL3VVYKwboByCz8RqZ3',
+  ])
+    assert.ok(seen.has(id), id);
 });
 
 test('B-32 (D-089): x-ev.marks in the five schemas match the spec, and the registry check catches a difference', async () => {
   const { registryProblems, loadSchemas } = await import('../tools/build.mjs');
   const schemas = loadSchemas(ROOT);
-  const want = { jobs: ['fired'], sessions: ['status', 'pending', 'endedAt'], ideas: ['status', 'kind'], dates: ['date', 'dueAt', 'syncedAt'], materials: ['text', 'fileUpdatedAt', 'fetchedAt', 'needsOcr', 'pages', 'chars', 'ocr'] }; // pages, chars, ocr: Matt, Oct 18 (B-32 follow-up)
+  const want = {
+    jobs: ['fired'],
+    sessions: ['status', 'pending', 'endedAt'],
+    ideas: ['status', 'kind'],
+    dates: ['date', 'dueAt', 'syncedAt'],
+    materials: ['text', 'fileUpdatedAt', 'fetchedAt', 'needsOcr', 'pages', 'chars', 'ocr'],
+  }; // pages, chars, ocr: Matt, Oct 18 (B-32 follow-up)
   for (const [c, fields] of Object.entries(want)) assert.deepEqual(Object.keys(schemas[c]['x-ev'].marks), fields, c);
   assert.deepEqual(registryProblems(spec, schemas), []);
-  const s2 = JSON.parse(JSON.stringify(spec)); s2.collections.dates.marks.title = ['page'];
+  const s2 = JSON.parse(JSON.stringify(spec));
+  s2.collections.dates.marks.title = ['page'];
   assert.ok(registryProblems(s2, schemas).some(p => /dates: marks differ/.test(p)));
 });
 
@@ -214,7 +345,14 @@ test('B-37 (D-093): the budgets rest on read cost and the measured ceiling, each
   const c = spec.capacity.collections;
   assert.deepEqual([c.state.warnBytes, c.state.failBytes], [192 * 1024, 240 * 1024]);
   assert.ok(c.state.failBytes < spec.capacity.documentBytes, 'state/current fails before the platform refuses it');
-  assert.deepEqual([c.sets.warnDocs, c.answers.warnDocs, c.runs.warnDocs, c.materials.warnBytes], [400, 400, 1500, 4 * 1024 * 1024]);
+  assert.deepEqual(
+    [c.sets.warnDocs, c.answers.warnDocs, c.runs.warnDocs, c.materials.warnBytes],
+    [400, 400, 1500, 4 * 1024 * 1024]
+  );
   for (const k of ['state', 'sets', 'answers', 'runs', 'materials']) assert.ok(c[k].relief, `${k} names its relief`);
-  assert.ok(!/25,?000/.test(JSON.stringify(spec.constants)) && !/cap: 25000/.test(fs.readFileSync(path.join(ROOT, 'core/evcore.mjs'), 'utf8')), 'the 25,000 cap is gone');
+  assert.ok(
+    !/25,?000/.test(JSON.stringify(spec.constants)) &&
+      !/cap: 25000/.test(fs.readFileSync(path.join(ROOT, 'core/evcore.mjs'), 'utf8')),
+    'the 25,000 cap is gone'
+  );
 });

@@ -7,7 +7,19 @@ import { fileURLToPath } from 'node:url';
 import { listRepoFiles } from '../tools/personal-data.mjs';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-export const git = (dir, ...args) => execFileSync('git', ['-C', dir, '-c', 'user.name=Test', '-c', 'user.email=test@example.com', ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+/** A source file as one line (B-64): the formatter's line breaks and indents collapse to single spaces, and none
+ *  follows an opening or precedes a closing bracket, so a test can match the code it names however it is wrapped. */
+export const flatSource = rel =>
+  fs
+    .readFileSync(path.join(ROOT, rel), 'utf8')
+    .replace(/\s+/g, ' ')
+    .replace(/([([{]) /g, '$1')
+    .replace(/,? ([)\]}])/g, '$1');
+export const git = (dir, ...args) =>
+  execFileSync('git', ['-C', dir, '-c', 'user.name=Test', '-c', 'user.email=test@example.com', ...args], {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
 
 /** A throwaway git repository holding a copy of this working tree, committed; with push: true, also pushed to a bare origin. */
 export function copyRepo({ push = false } = {}) {

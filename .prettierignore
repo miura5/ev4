@@ -1,0 +1,13 @@
+# B-64: the formatter covers the JavaScript the next reader opens. JSON keeps the spec's own form (indent 1, no trailing
+# newline, B-57); the Canvas scripts carry placeholders the build fills by exact text; the shell, the stylesheet and the
+# Markdown views are written as they are.
+dist/
+node_modules/
+fixtures/
+chart/
+test/data/
+scripts/canvas/
+**/*.json
+**/*.md
+**/*.html
+**/*.css

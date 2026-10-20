@@ -31,15 +31,24 @@ export function specFileOf(input, root = ROOT) {
   return /^spec\/.+\.json$/.test(rel.split(path.sep).join('/')) ? path.join(root, rel) : null;
 }
 /** The spec's own form (CLAUDE.md): JSON with indent 1, no trailing newline. Null when the text is not JSON. */
-export function specForm(text) { try { return JSON.stringify(JSON.parse(text), null, 1); } catch { return null; } }
+export function specForm(text) {
+  try {
+    return JSON.stringify(JSON.parse(text), null, 1);
+  } catch {
+    return null;
+  }
+}
 
 /** B-58: the refusal for a tool call aimed at the live record or page, or null when it may go. */
 export function liveGuard(input, { liveId, liveOk = null, now = Date.now() }) {
-  const name = String((input && input.tool_name) || ''), a = (input && input.tool_input) || {};
+  const name = String((input && input.tool_name) || ''),
+    a = (input && input.tool_input) || {};
   const aimed = String(a.url || a.from_url || '').includes(liveId);
   let what = null;
-  if (/(^|__)ArtifactData$/.test(name) && aimed && WRITES.has(a.action)) what = `an ArtifactData ${a.action} on the live record`;
-  if (/(^|__)Artifact$/.test(name) && aimed && (a.action == null || a.action === 'publish' || a.action === 'delete')) what = `an Artifact ${a.action || 'publish'} of the live page`;
+  if (/(^|__)ArtifactData$/.test(name) && aimed && WRITES.has(a.action))
+    what = `an ArtifactData ${a.action} on the live record`;
+  if (/(^|__)Artifact$/.test(name) && aimed && (a.action == null || a.action === 'publish' || a.action === 'delete'))
+    what = `an Artifact ${a.action || 'publish'} of the live page`;
   if (!what) return null;
   const fresh = liveOk && Number.isFinite(liveOk.at) && now - liveOk.at < LIVE_OK_HOURS * 36e5;
   if (fresh) return null;
@@ -47,28 +56,60 @@ export function liveGuard(input, { liveId, liveOk = null, now = Date.now() }) {
 }
 
 // Its own test run, never a child of another (node:test skips the files when NODE_TEST_CONTEXT is set at all).
-const ownRun = () => { const env = { ...process.env }; delete env.NODE_TEST_CONTEXT; return env; };
-const readStdin = () => { try { return JSON.parse(fs.readFileSync(0, 'utf8') || '{}'); } catch { return {}; } };
-const no = msg => { process.stderr.write(msg + '\n'); return 2; };
+const ownRun = () => {
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  return env;
+};
+const readStdin = () => {
+  try {
+    return JSON.parse(fs.readFileSync(0, 'utf8') || '{}');
+  } catch {
+    return {};
+  }
+};
+const no = msg => {
+  process.stderr.write(msg + '\n');
+  return 2;
+};
 
 export function main(argv = process.argv.slice(2)) {
-  const input = readStdin(), cmd = argv[0];
+  const input = readStdin(),
+    cmd = argv[0];
   if (cmd === 'stop') {
-    const r = spawnSync(process.execPath, ['--test', ...fs.readdirSync(path.join(ROOT, 'test')).filter(f => f.endsWith('.test.mjs')).sort().map(f => path.join('test', f))], { cwd: ROOT, encoding: 'utf8', env: ownRun() });
+    const r = spawnSync(
+      process.execPath,
+      [
+        '--test',
+        ...fs
+          .readdirSync(path.join(ROOT, 'test'))
+          .filter(f => f.endsWith('.test.mjs'))
+          .sort()
+          .map(f => path.join('test', f)),
+      ],
+      { cwd: ROOT, encoding: 'utf8', env: ownRun() }
+    );
     const v = stopVerdict(input, { status: r.status, out: (r.stdout || '') + (r.stderr || '') });
     return v ? no(v) : 0;
   }
   if (cmd === 'spec-format') {
-    const f = specFileOf(input); if (!f || !fs.existsSync(f)) return 0;
-    const text = fs.readFileSync(f, 'utf8'), form = specForm(text);
+    const f = specFileOf(input);
+    if (!f || !fs.existsSync(f)) return 0;
+    const text = fs.readFileSync(f, 'utf8'),
+      form = specForm(text);
     if (form == null) return no(`${path.relative(ROOT, f)} is not valid JSON after that edit (B-57 left it as it is).`);
     if (form !== text) fs.writeFileSync(f, form);
     return 0;
   }
   if (cmd === 'live-guard') {
     const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec', 'ev.spec.json'), 'utf8'));
-    const okFile = path.join(ROOT, 'dist', 'live-ok'); let liveOk = null;
-    try { liveOk = JSON.parse(fs.readFileSync(okFile, 'utf8')); } catch { /* none */ }
+    const okFile = path.join(ROOT, 'dist', 'live-ok');
+    let liveOk = null;
+    try {
+      liveOk = JSON.parse(fs.readFileSync(okFile, 'utf8'));
+    } catch {
+      /* none */
+    }
     const v = liveGuard(input, { liveId: spec.registry.records.live.artifact, liveOk });
     return v ? no(v) : 0;
   }

@@ -25,14 +25,22 @@ test('the repository tree holds no record export, backup or session file', () =>
 });
 
 test('fixtures/ and dist/ are ignored by git', () => {
-  const ignore = fs.readFileSync(path.join(ROOT, '.gitignore'), 'utf8').split('\n').map(s => s.trim());
+  const ignore = fs
+    .readFileSync(path.join(ROOT, '.gitignore'), 'utf8')
+    .split('\n')
+    .map(s => s.trim());
   for (const dir of ['fixtures/', 'dist/']) assert.ok(ignore.includes(dir), `${dir} missing from .gitignore`);
 });
 
 test('a planted v3 backup, export folder and session file are each found', () => {
   const { root, rels } = plant({
     'notes/E.V.-backup-friday.json': { schema: 1 },
-    'scratch/dump.json': { schema: 1, kind: 'E.V. record backup', counts: { weakspots: 1 }, collections: { weakspots: [{ id: 'ws-1' }] } },
+    'scratch/dump.json': {
+      schema: 1,
+      kind: 'E.V. record backup',
+      counts: { weakspots: 1 },
+      collections: { weakspots: [{ id: 'ws-1' }] },
+    },
     'scratch/export.json': { collections: { weakspots: [], sets: [] } },
     'scratch/flat.json': { weakspots: [], sets: [], days: [] },
     'old/db/weakspots/ws-2026-10-01-E4-3-fluids.json': { topic: 'made up' },
@@ -41,13 +49,20 @@ test('a planted v3 backup, export folder and session file are each found', () =>
     'live/latest.json': { id: 'x' },
     'mirror.tgz': 'x',
   });
-  const found = scanFiles(root, rels).map(f => f.file).sort();
+  const found = scanFiles(root, rels)
+    .map(f => f.file)
+    .sort();
   assert.deepEqual(found, rels.slice().sort());
 });
 
 test('ordinary repository files are not flagged', () => {
   const { root, rels } = plant({
-    'spec/ev.spec.json': { collections: { weakspots: { class: 'Fact' }, sets: { class: 'Fact' }, days: { class: 'Derived' } }, tasks: {}, days: {}, sets: {} },
+    'spec/ev.spec.json': {
+      collections: { weakspots: { class: 'Fact' }, sets: { class: 'Fact' }, days: { class: 'Derived' } },
+      tasks: {},
+      days: {},
+      sets: {},
+    },
     'spec/schemas/weakspots.schema.json': { $schema: 'https://json-schema.org/draft/2020-12/schema', type: 'object' },
     'package.json': { name: 'ev4' },
     'test/data/sample.json': { items: [1, 2] },
@@ -62,5 +77,8 @@ test('a folder marked synthetic may hold made-up export documents, but a real ba
     'test/harness/data/weakspots/ws-1.json': { topic: 'made up' },
     'test/harness/data/real.json': { kind: 'E.V. record backup', collections: {} },
   });
-  assert.deepEqual(scanFiles(root, rels).map(f => f.file), ['test/harness/data/real.json']);
+  assert.deepEqual(
+    scanFiles(root, rels).map(f => f.file),
+    ['test/harness/data/real.json']
+  );
 });

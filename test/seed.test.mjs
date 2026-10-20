@@ -14,7 +14,8 @@ import { ROOT } from './helpers.mjs';
 
 EV.configure(JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8')));
 const validate = loadValidator();
-const AT = '2026-10-18T06:00:00Z', EXPORTED = '2026-10-18T05:02:42Z';
+const AT = '2026-10-18T06:00:00Z',
+  EXPORTED = '2026-10-18T05:02:42Z';
 
 const recordExport = ({ journal = false } = {}) => {
   const exp = {};
@@ -33,7 +34,9 @@ test('a v4 export is copied as it is, without system/*, and the seed stamp comes
   assert.deepEqual([last.collection, last.id], ['system', 'seed']);
   assert.equal(writes.filter(w => w.collection === 'system').length, 1, 'only the seed stamp is a system write');
   const copied = writes.slice(0, -1);
-  const expected = Object.entries(exp).filter(([c]) => c !== 'system').reduce((n, [, l]) => n + l.length, 0);
+  const expected = Object.entries(exp)
+    .filter(([c]) => c !== 'system')
+    .reduce((n, [, l]) => n + l.length, 0);
   assert.equal(copied.length, expected);
   for (const w of copied) {
     const src = exp[w.collection].find(d => d.id === w.id);
@@ -41,13 +44,20 @@ test('a v4 export is copied as it is, without system/*, and the seed stamp comes
   }
   assert.equal(seed.migration, null);
   assert.equal(seed.exportedAt, EXPORTED.replace('Z', '.000Z'));
-  assert.equal(Object.values(seed.counts).reduce((a, b) => a + b, 0), copied.length);
+  assert.equal(
+    Object.values(seed.counts).reduce((a, b) => a + b, 0),
+    copied.length
+  );
   assert.equal(seed.hashes.weakspots, collectionHash(exp.weakspots));
-  for (const w of writes) assert.ok(validate(w.collection, w.data, { id: w.id }).ok, `${w.collection}/${w.id} validates`);
+  for (const w of writes)
+    assert.ok(validate(w.collection, w.data, { id: w.id }).ok, `${w.collection}/${w.id} validates`);
 });
 
 test('the journal is never seeded', () => {
-  assert.throws(() => seedStaging(recordExport({ journal: true }), { at: AT, exportedAt: EXPORTED }), /journal is never seeded/);
+  assert.throws(
+    () => seedStaging(recordExport({ journal: true }), { at: AT, exportedAt: EXPORTED }),
+    /journal is never seeded/
+  );
 });
 
 test('a seed needs both its own time and the export time', () => {
@@ -56,18 +66,32 @@ test('a seed needs both its own time and the export time', () => {
 });
 
 test('a v3 export is migrated first, with legacy copies, and stamped v3-to-v4', () => {
-  const v3 = { exams: [{ id: 'E9', schema: 1, course: 'NUR 112', kind: 'unit', title: 'Exam 9', status: 'upcoming', source: 'made up' }] };
+  const v3 = {
+    exams: [
+      { id: 'E9', schema: 1, course: 'NUR 112', kind: 'unit', title: 'Exam 9', status: 'upcoming', source: 'made up' },
+    ],
+  };
   const { writes, seed, migrated } = seedStaging(v3, { at: AT, exportedAt: EXPORTED });
   assert.equal(migrated, true);
   assert.equal(seed.migration, 'v3-to-v4');
   const exam = writes.find(w => w.collection === 'exams' && w.id === 'E9');
-  assert.ok(exam && exam.data.schema === 2 && typeof exam.data.writer === 'string', 'the exam is a v4 document at today\'s version');
-  assert.ok(writes.some(w => w.collection === 'legacy' && w.id === 'v3-exams-E9'), 'the v3 original is kept in legacy');
-  for (const w of writes) assert.ok(validate(w.collection, w.data, { id: w.id }).ok, `${w.collection}/${w.id} validates`);
+  assert.ok(
+    exam && exam.data.schema === 2 && typeof exam.data.writer === 'string',
+    "the exam is a v4 document at today's version"
+  );
+  assert.ok(
+    writes.some(w => w.collection === 'legacy' && w.id === 'v3-exams-E9'),
+    'the v3 original is kept in legacy'
+  );
+  for (const w of writes)
+    assert.ok(validate(w.collection, w.data, { id: w.id }).ok, `${w.collection}/${w.id} validates`);
 });
 
 test('collectionHash ignores order and envelope; seedAgeDays counts whole days and never goes negative', () => {
-  const a = [{ id: 'x', schema: 1, writer: 'page', at: '2026-10-17T00:00:00Z', source: 's', v: 1 }, { id: 'y', schema: 1, writer: 'page', at: '2026-10-17T00:00:00Z', source: 's', v: 2 }];
+  const a = [
+    { id: 'x', schema: 1, writer: 'page', at: '2026-10-17T00:00:00Z', source: 's', v: 1 },
+    { id: 'y', schema: 1, writer: 'page', at: '2026-10-17T00:00:00Z', source: 's', v: 2 },
+  ];
   const b = [{ ...a[1], at: '2026-10-18T00:00:00Z' }, a[0]];
   assert.equal(collectionHash(a), collectionHash([...a].reverse()));
   assert.notEqual(collectionHash(a), collectionHash([{ ...a[0], v: 9 }, a[1]]));
@@ -83,7 +107,22 @@ test('cli seed-staging writes a plan whose last batch is the seed stamp alone, e
   const from = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-export-'));
   fs.cpSync(path.join(ROOT, 'test/data/record'), from, { recursive: true });
   fs.rmSync(path.join(from, 'journal'), { recursive: true, force: true });
-  const log = execFileSync('node', [path.join(ROOT, 'core/cli.mjs'), 'seed-staging', '--from', from, '--exported-at', EXPORTED, '--at', AT, '--out', out], { encoding: 'utf8' });
+  const log = execFileSync(
+    'node',
+    [
+      path.join(ROOT, 'core/cli.mjs'),
+      'seed-staging',
+      '--from',
+      from,
+      '--exported-at',
+      EXPORTED,
+      '--at',
+      AT,
+      '--out',
+      out,
+    ],
+    { encoding: 'utf8' }
+  );
   assert.match(log, /seed-staging: \d+ writes in \d+ batches to the staging record/);
   const plan = JSON.parse(fs.readFileSync(path.join(out, 'plan.json'), 'utf8'));
   assert.equal(plan.target, 'staging');

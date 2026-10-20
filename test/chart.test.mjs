@@ -14,27 +14,48 @@ const read = f => fs.readFileSync(path.join(IMPORT, f), 'utf8');
 const rec = () => C.loadChart(ROOT);
 // The import as it ran, with each done task's commit taken from the record (so the test needs no git history).
 function imported() {
-  const now = rec(), commits = {};
+  const now = rec(),
+    commits = {};
   for (const t of now.tasks) (commits[t.id] = commits[t.id] || []).push(t.commit);
   const seen = {};
   return C.importChart({
-    backlog: read('BACKLOG.md'), decisionsMd: read('Decisions.md'),
-    boardXml: C.readBody([read('board-read.json')]).xml, changelogXml: C.readBody([read('changelog-read.json')]).xml,
-    commitOf: id => { const n = seen[id] = (seen[id] || 0) + 1; return (commits[id] || [])[n - 1] || null; },
+    backlog: read('BACKLOG.md'),
+    decisionsMd: read('Decisions.md'),
+    boardXml: C.readBody([read('board-read.json')]).xml,
+    changelogXml: C.readBody([read('changelog-read.json')]).xml,
+    commitOf: id => {
+      const n = (seen[id] = (seen[id] || 0) + 1);
+      return (commits[id] || [])[n - 1] || null;
+    },
     views: JSON.parse(read('views.json')),
   });
 }
 const rows = s => s.split('\n').filter(l => l.startsWith('| B-'));
 
 test('B-92: the import regenerates BACKLOG.md row for row', () => {
-  const before = read('BACKLOG.md'), gen = C.renderBacklog(imported());
-  const a = rows(before), b = rows(gen);
+  const before = read('BACKLOG.md'),
+    gen = C.renderBacklog(imported());
+  const a = rows(before),
+    b = rows(gen);
   assert.equal(b.length, a.length);
-  a.forEach((l, i) => assert.deepEqual(C.parseBacklogRow(b[i]), C.parseBacklogRow(l), `row ${i + 1} (${l.slice(0, 8)}) differs`));
+  a.forEach((l, i) =>
+    assert.deepEqual(C.parseBacklogRow(b[i]), C.parseBacklogRow(l), `row ${i + 1} (${l.slice(0, 8)}) differs`)
+  );
   // Text differs only where a | inside a field is now escaped (it split the cell: B-26's notes, B-42's ||).
-  assert.deepEqual(a.filter((l, i) => l !== b[i]).map(l => l.slice(2, 6)), ['B-26', 'B-42']);
-  assert.equal(C.renderBacklog(imported(), { header: C.BACKLOG_HEADER_IMPORTED }).split('\n| Id |')[0], before.split('\n| Id |')[0], 'the header was today\'s');
-  assert.match(gen, /Generated from the Chart .* never edit this file by hand/, 'since the cutover (B-97) it says it is generated');
+  assert.deepEqual(
+    a.filter((l, i) => l !== b[i]).map(l => l.slice(2, 6)),
+    ['B-26', 'B-42']
+  );
+  assert.equal(
+    C.renderBacklog(imported(), { header: C.BACKLOG_HEADER_IMPORTED }).split('\n| Id |')[0],
+    before.split('\n| Id |')[0],
+    "the header was today's"
+  );
+  assert.match(
+    gen,
+    /Generated from the Chart .* never edit this file by hand/,
+    'since the cutover (B-97) it says it is generated'
+  );
 });
 
 test('B-92: the import holds every decision, the v4 deploys and the Board rows', () => {
@@ -50,33 +71,91 @@ test('B-92: the import holds every decision, the v4 deploys and the Board rows',
   assert.equal(live.at(-1).rollback, '314bb5f');
   assert.equal(live.at(-1).time, '2026-10-19T16:20:00-05:00');
   assert.equal(r.deploys[0].commit, '3fa5d2a', 'the first v4 deploy (staging, Oct 18)');
-  for (const d of r.deploys) assert.ok(d.line && d.line.change.includes(d.commit), `${d.target} ${d.commit} keeps its Changelog row`);
+  for (const d of r.deploys)
+    assert.ok(d.line && d.line.change.includes(d.commit), `${d.target} ${d.commit} keeps its Changelog row`);
   const b83 = r.tasks.filter(t => t.id === 'B-83');
-  assert.deepEqual(b83.map(t => t.board && t.board.row), ['v4 B-83: a demo copy and an overview doc', 'v4 B-83: the Mac evening run starts without its code']);
+  assert.deepEqual(
+    b83.map(t => t.board && t.board.row),
+    ['v4 B-83: a demo copy and an overview doc', 'v4 B-83: the Mac evening run starts without its code']
+  );
   assert.equal(b83[1].waitingOn, 'Matt');
   for (const t of r.tasks.filter(t => t.status === 'done')) assert.ok(t.commit, `${t.id} done with a commit`);
 });
 
 test('chart/ and tools/chart.mjs stay outside the manifest, so a bookkeeping commit ships nothing', async () => {
-  const dir = copyRepo(), out = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-chart-dist-'));
+  const dir = copyRepo(),
+    out = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-chart-dist-'));
   const { manifest } = await build({ root: dir, out, now: '2026-10-19T12:00:00Z' });
-  assert.deepEqual(Object.keys(manifest.files).filter(f => f.startsWith('chart/') || f === 'tools/chart.mjs' || f === 'BACKLOG.md'), []);
+  assert.deepEqual(
+    Object.keys(manifest.files).filter(f => f.startsWith('chart/') || f === 'tools/chart.mjs' || f === 'BACKLOG.md'),
+    []
+  );
 });
 
 // ------------------------------------------------------------------------------------------------ B-93 log and views
 import { execFileSync } from 'node:child_process';
-const SAMPLE_VIEWS = { doc: 'DOC', decisionsTab: 'tab', board: { node: 'BN', table: 's1.10', statusEnum: 'E1', statusOptions: ['Done', 'In progress', 'Next', 'Waiting on Matt', 'Later'] }, changelog: { node: 'CN', table: 's1.20' }, overview: { doc: 'OV', node: 'ON', paragraph: 's9.5' } };
-const task = (id, o = {}) => ({ id, kind: 'task', title: `Task ${id}`, dod: 'it works', milestone: 'M12', status: 'open', depends: [], notes: '', commit: null, source: 'test', ...o });
+const SAMPLE_VIEWS = {
+  doc: 'DOC',
+  decisionsTab: 'tab',
+  board: {
+    node: 'BN',
+    table: 's1.10',
+    statusEnum: 'E1',
+    statusOptions: ['Done', 'In progress', 'Next', 'Waiting on Matt', 'Later'],
+  },
+  changelog: { node: 'CN', table: 's1.20' },
+  overview: { doc: 'OV', node: 'ON', paragraph: 's9.5' },
+};
+const task = (id, o = {}) => ({
+  id,
+  kind: 'task',
+  title: `Task ${id}`,
+  dod: 'it works',
+  milestone: 'M12',
+  status: 'open',
+  depends: [],
+  notes: '',
+  commit: null,
+  source: 'test',
+  ...o,
+});
 const sample = () => ({
-  tasks: [task('B-01', { status: 'done', commit: 'abc1234', board: { row: 'v4 B-01: one', why: 'why one', notes: 'n1' } }), task('B-02', { board: { row: 'v4 B-02: two', why: 'why two', notes: 'n2' } }), task('B-03')],
-  decisions: [{ id: 'D-002', date: 'Oct 19', title: 'two', why: '', status: 'accepted', supersedes: ['D-001'], amends: [] }, { id: 'D-001', date: 'Oct 18', title: 'one', why: '', status: 'superseded', supersedes: [], amends: [] }],
-  deploys: [{ target: 'live', commit: '1111111', time: '2026-10-19T16:20:00-05:00', okFrom: 'Matt', verify: 'green', rollback: '0000000', tasks: [], line: { date: 'Oct 19', change: 'old row', why: 'w', decision: 'D-002' }, source: 'Changelog tab' }],
+  tasks: [
+    task('B-01', { status: 'done', commit: 'abc1234', board: { row: 'v4 B-01: one', why: 'why one', notes: 'n1' } }),
+    task('B-02', { board: { row: 'v4 B-02: two', why: 'why two', notes: 'n2' } }),
+    task('B-03'),
+  ],
+  decisions: [
+    { id: 'D-002', date: 'Oct 19', title: 'two', why: '', status: 'accepted', supersedes: ['D-001'], amends: [] },
+    { id: 'D-001', date: 'Oct 18', title: 'one', why: '', status: 'superseded', supersedes: [], amends: [] },
+  ],
+  deploys: [
+    {
+      target: 'live',
+      commit: '1111111',
+      time: '2026-10-19T16:20:00-05:00',
+      okFrom: 'Matt',
+      verify: 'green',
+      rollback: '0000000',
+      tasks: [],
+      line: { date: 'Oct 19', change: 'old row', why: 'w', decision: 'D-002' },
+      source: 'Changelog tab',
+    },
+  ],
   rules: [{ id: 'R-01', rule: 'r', decision: 'D-002', task: 'B-01', command: 'ship live', check: 'mattOk' }],
   views: SAMPLE_VIEWS,
 });
-const cellX = (id, text, dd) => `<cell id='${id}' h='h${id.slice(-2)}'><paragraph id='${id}p'>${dd != null ? `<dropdown id='${id}d' enum='E1' index='${dd}'>${['Done', 'In progress', 'Next', 'Waiting on Matt', 'Later'][dd]}</dropdown>` : `<text id='${id}t'>${text}</text>`}</paragraph></cell>`;
-const boardXml = rows => `<doc node='BN' rev='7' parent='s1.10'><table id='s1.10' h='t'><row id='.11' h='r0'>${cellX('.12', 'Task')}${cellX('.13', 'Why')}${cellX('.14', 'Status')}${cellX('.15', 'Notes')}</row>` +
-  rows.map((r, i) => `<row id='.${30 + i * 10}' h='r${i}'>${cellX(`.${31 + i * 10}`, r[0])}${cellX(`.${32 + i * 10}`, r[1])}${cellX(`.${33 + i * 10}`, r[2], r[3])}${cellX(`.${34 + i * 10}`, r[4])}</row>`).join('') + '</table></doc>';
+const cellX = (id, text, dd) =>
+  `<cell id='${id}' h='h${id.slice(-2)}'><paragraph id='${id}p'>${dd != null ? `<dropdown id='${id}d' enum='E1' index='${dd}'>${['Done', 'In progress', 'Next', 'Waiting on Matt', 'Later'][dd]}</dropdown>` : `<text id='${id}t'>${text}</text>`}</paragraph></cell>`;
+const boardXml = rows =>
+  `<doc node='BN' rev='7' parent='s1.10'><table id='s1.10' h='t'><row id='.11' h='r0'>${cellX('.12', 'Task')}${cellX('.13', 'Why')}${cellX('.14', 'Status')}${cellX('.15', 'Notes')}</row>` +
+  rows
+    .map(
+      (r, i) =>
+        `<row id='.${30 + i * 10}' h='r${i}'>${cellX(`.${31 + i * 10}`, r[0])}${cellX(`.${32 + i * 10}`, r[1])}${cellX(`.${33 + i * 10}`, r[2], r[3])}${cellX(`.${34 + i * 10}`, r[4])}</row>`
+    )
+    .join('') +
+  '</table></doc>';
 
 test('B-93: log changes one task and refuses what it must', () => {
   const r = sample();
@@ -85,17 +164,34 @@ test('B-93: log changes one task and refuses what it must', () => {
   assert.equal(out.what, 'open -> done, commit def5678, notes');
   assert.deepEqual(out.views, ['board']);
   assert.equal(r.tasks[1].status, 'done');
-  assert.throws(() => C.applyLog(r, { _: ['log', 'B-03'], status: 'in progress', why: 'w' }), /has no Board row yet: give --name/);
+  assert.throws(
+    () => C.applyLog(r, { _: ['log', 'B-03'], status: 'in progress', why: 'w' }),
+    /has no Board row yet: give --name/
+  );
   C.applyLog(r, { _: ['log', 'B-03'], status: 'in progress', name: 'three', why: 'why three' });
   assert.equal(r.tasks[2].board.row, 'v4 B-03: three');
   assert.throws(() => C.applyLog(r, { _: ['log', 'B-09'], status: 'done' }), /no task B-09/);
   assert.throws(() => C.applyLog(r, { _: ['log', 'B-01'] }), /nothing to log/);
   // A deploy, a decision.
-  const d = C.applyLog(r, { _: ['log', 'deploy'], target: 'staging', commit: '2222222', verify: 'green', tasks: 'B-02', summary: 'two', time: '2026-10-19T21:05:00-05:00' });
+  const d = C.applyLog(r, {
+    _: ['log', 'deploy'],
+    target: 'staging',
+    commit: '2222222',
+    verify: 'green',
+    tasks: 'B-02',
+    summary: 'two',
+    time: '2026-10-19T21:05:00-05:00',
+  });
   assert.deepEqual(d.views, ['changelog']);
   assert.throws(() => C.applyLog(r, { _: ['log', 'deploy'], target: 'live', commit: '2222222' }), /--ok Matt/);
   assert.throws(() => C.applyLog(r, { _: ['log', 'decision', 'D-009'], title: 'x' }), /next free decision id is D-003/);
-  C.applyLog(r, { _: ['log', 'decision', 'D-003'], title: 'three', status: 'accepted', supersedes: 'D-002', now: undefined });
+  C.applyLog(r, {
+    _: ['log', 'decision', 'D-003'],
+    title: 'three',
+    status: 'accepted',
+    supersedes: 'D-002',
+    now: undefined,
+  });
   assert.equal(r.decisions[0].id, 'D-003');
   assert.equal(r.decisions.find(x => x.id === 'D-002').status, 'superseded');
 });
@@ -103,58 +199,147 @@ test('B-93: log changes one task and refuses what it must', () => {
 test('B-93: the Board calls replace changed cells in place and add missing rows, chip on the next run', () => {
   const r = sample();
   r.tasks[1].status = 'in progress';
-  const read = C.parseTableXml(boardXml([['v4 B-01: one', 'why one', 'Done', 0, 'n1'], ['v4 B-02: two', 'why two', 'Next', 2, 'n2']]));
+  const read = C.parseTableXml(
+    boardXml([
+      ['v4 B-01: one', 'why one', 'Done', 0, 'n1'],
+      ['v4 B-02: two', 'why two', 'Next', 2, 'n2'],
+    ])
+  );
   assert.equal(read.rev, 7);
   assert.equal(read.rows[1].id, 's1.30', 'short ids read in full');
   const calls = C.boardCalls(r, read);
   assert.equal(calls.length, 1);
   const ops = calls[0].args.payload.ops;
-  assert.deepEqual(ops, [{ op: 'replace', target: { kind: 'cell', table: 's1.10', row: 2, col: 2 }, ifRev: 7, with: { as: 'markdown', from: { kind: 'inline', content: '<?claude block st?>' }, blocks: { st: { type: 'dropdown', enum: 'E1', index: 1 } } } }]);
+  assert.deepEqual(ops, [
+    {
+      op: 'replace',
+      target: { kind: 'cell', table: 's1.10', row: 2, col: 2 },
+      ifRev: 7,
+      with: {
+        as: 'markdown',
+        from: { kind: 'inline', content: '<?claude block st?>' },
+        blocks: { st: { type: 'dropdown', enum: 'E1', index: 1 } },
+      },
+    },
+  ]);
   assert.match(calls[0].step, /B-02: status Next -> In progress/);
   // A task with a Board entry and no row: appended, its status as text; the next read sees the text and chips it.
   r.tasks[2].board = { row: 'v4 B-03: three', why: 'w3', notes: '' };
   const add = C.boardCalls(r, read)[0].args.payload.ops.at(-1);
-  assert.equal(add.op, 'insert'); assert.equal(add.side, 'end');
+  assert.equal(add.op, 'insert');
+  assert.equal(add.side, 'end');
   assert.equal(add.source.from.content[0].content[2].content[0].content[0].text, 'Next');
-  const after = C.parseTableXml(boardXml([['v4 B-01: one', 'why one', 'Done', 0, 'n1'], ['v4 B-02: two', 'why two', 'In progress', 1, 'n2'], ['v4 B-03: three', 'w3', 'Next', null, '']]));
+  const after = C.parseTableXml(
+    boardXml([
+      ['v4 B-01: one', 'why one', 'Done', 0, 'n1'],
+      ['v4 B-02: two', 'why two', 'In progress', 1, 'n2'],
+      ['v4 B-03: three', 'w3', 'Next', null, ''],
+    ])
+  );
   const chip = C.boardCalls(r, after)[0].args.payload.ops;
-  assert.deepEqual(chip.map(o => [o.op, o.target.row, o.with.blocks.st.index]), [['replace', 3, 2]]);
+  assert.deepEqual(
+    chip.map(o => [o.op, o.target.row, o.with.blocks.st.index]),
+    [['replace', 3, 2]]
+  );
   r.tasks[2].status = 'open';
-  const inStep = C.parseTableXml(boardXml([['v4 B-01: one', 'why one', 'Done', 0, 'n1'], ['v4 B-02: two', 'why two', 'In progress', 1, 'n2'], ['v4 B-03: three', 'w3', 'Next', 2, '']]));
+  const inStep = C.parseTableXml(
+    boardXml([
+      ['v4 B-01: one', 'why one', 'Done', 0, 'n1'],
+      ['v4 B-02: two', 'why two', 'In progress', 1, 'n2'],
+      ['v4 B-03: three', 'w3', 'Next', 2, ''],
+    ])
+  );
   assert.deepEqual(C.boardCalls(r, inStep), [], 'in step: nothing to print');
 });
 
 test('B-93: the Changelog gets a row per logged deploy, newest on top; imported rows are never re-added', () => {
   const r = sample();
-  const read = C.parseTableXml(`<doc node='CN' rev='4'><table id='s1.20'><row id='.21'>${cellX('.22', 'Date')}${cellX('.23', 'Change')}${cellX('.24', 'Why')}${cellX('.25', 'Decision')}</row><row id='.31'>${cellX('.32', 'Oct 19')}${cellX('.33', 'old row')}${cellX('.34', 'w')}${cellX('.35', 'D-002')}</row></table></doc>`);
+  const read = C.parseTableXml(
+    `<doc node='CN' rev='4'><table id='s1.20'><row id='.21'>${cellX('.22', 'Date')}${cellX('.23', 'Change')}${cellX('.24', 'Why')}${cellX('.25', 'Decision')}</row><row id='.31'>${cellX('.32', 'Oct 19')}${cellX('.33', 'old row')}${cellX('.34', 'w')}${cellX('.35', 'D-002')}</row></table></doc>`
+  );
   assert.deepEqual(C.changelogCalls(r, read), []);
-  C.applyLog(r, { _: ['log', 'deploy'], target: 'staging', commit: '2222222abc', verify: 'green', tasks: 'B-02', summary: 'the second task', time: '2026-10-19T21:05:00-05:00', decisions: 'D-002' });
+  C.applyLog(r, {
+    _: ['log', 'deploy'],
+    target: 'staging',
+    commit: '2222222abc',
+    verify: 'green',
+    tasks: 'B-02',
+    summary: 'the second task',
+    time: '2026-10-19T21:05:00-05:00',
+    decisions: 'D-002',
+  });
   const [call] = C.changelogCalls(r, read);
   const op = call.args.payload.ops[0];
   assert.deepEqual([op.op, op.target.ids, op.side], ['insert', ['s1.21'], 'after']);
-  assert.deepEqual(op.source.from.content[0].content.map(c => c.content[0].content[0].text), ['Oct 19', 'v4 staging deployed at 2222222 (21:05 CT): the second task (B-02). verify-deploy staging GREEN. Live stays where it is', 'The B-35 gate: staging first', 'D-002']);
+  assert.deepEqual(
+    op.source.from.content[0].content.map(c => c.content[0].content[0].text),
+    [
+      'Oct 19',
+      'v4 staging deployed at 2222222 (21:05 CT): the second task (B-02). verify-deploy staging GREEN. Live stays where it is',
+      'The B-35 gate: staging first',
+      'D-002',
+    ]
+  );
 });
 
 test('B-93: the overview status line follows the newest live deploy', () => {
   const r = sample();
-  const para = C.parseParagraphXml(`<doc rev='3'><paragraph id='s9.5' h='p'><text id='.6'>The live page has been on build </text><text id='.7'>0000000 since 4pm on Oct 19, after a day</text></paragraph></doc>`, 's9.5');
+  const para = C.parseParagraphXml(
+    `<doc rev='3'><paragraph id='s9.5' h='p'><text id='.6'>The live page has been on build </text><text id='.7'>0000000 since 4pm on Oct 19, after a day</text></paragraph></doc>`,
+    's9.5'
+  );
   const [call] = C.overviewCalls(r, para);
-  assert.deepEqual(call.args.payload.ops, [{ op: 'replace', target: { kind: 'find', text: 'on build 0000000 since 4pm on Oct 19' }, with: { as: 'text', from: { kind: 'inline', content: 'on build 1111111 since 4:20pm on Oct 19' } } }]);
+  assert.deepEqual(call.args.payload.ops, [
+    {
+      op: 'replace',
+      target: { kind: 'find', text: 'on build 0000000 since 4pm on Oct 19' },
+      with: { as: 'text', from: { kind: 'inline', content: 'on build 1111111 since 4:20pm on Oct 19' } },
+    },
+  ]);
   assert.deepEqual(C.overviewCalls(r, { ...para, text: 'on build 1111111 since 4:20pm on Oct 19' }), []);
 });
 
 test('B-93: views finds the newest read of each view in the transcript, stale once the view is updated', () => {
-  const r = sample(), dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-views-'));
+  const r = sample(),
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-views-'));
   const saved = path.join(dir, 'big.txt');
   const verdict = xml => JSON.stringify({ verdict: 'allow', rev: 7, data: { rev: 7, xml } });
-  fs.writeFileSync(saved, JSON.stringify([{ type: 'text', text: '<artifact-content-authored-by-others/>' }, { type: 'text', text: verdict(boardXml([['v4 B-01: one', 'why one', 'Done', 0, 'n1']])) }]));
-  const line = (id, name, input, result) => [JSON.stringify({ message: { content: [{ type: 'tool_use', id, name, input }] } }), JSON.stringify({ message: { content: [{ type: 'tool_result', tool_use_id: id, content: [{ type: 'text', text: result }] }] } })];
-  const boardRead = { ref: { object: 'node', id: 'BN' }, engine: 'prose', container: { kind: 'project', id: 'DOC' }, payload: { kind: 'view', parentId: 's1.10' } };
-  let jsonl = line('a', 'mcp__Claude_Docs__read', boardRead, `Error: result (88,413 characters) exceeds maximum allowed tokens. Output has been saved to ${saved}.`).join('\n');
+  fs.writeFileSync(
+    saved,
+    JSON.stringify([
+      { type: 'text', text: '<artifact-content-authored-by-others/>' },
+      { type: 'text', text: verdict(boardXml([['v4 B-01: one', 'why one', 'Done', 0, 'n1']])) },
+    ])
+  );
+  const line = (id, name, input, result) => [
+    JSON.stringify({ message: { content: [{ type: 'tool_use', id, name, input }] } }),
+    JSON.stringify({
+      message: { content: [{ type: 'tool_result', tool_use_id: id, content: [{ type: 'text', text: result }] }] },
+    }),
+  ];
+  const boardRead = {
+    ref: { object: 'node', id: 'BN' },
+    engine: 'prose',
+    container: { kind: 'project', id: 'DOC' },
+    payload: { kind: 'view', parentId: 's1.10' },
+  };
+  let jsonl = line(
+    'a',
+    'mcp__Claude_Docs__read',
+    boardRead,
+    `Error: result (88,413 characters) exceeds maximum allowed tokens. Output has been saved to ${saved}.`
+  ).join('\n');
   let plan = C.viewsPlan(r, C.viewReads(r, jsonl), ['board']);
   assert.deepEqual(plan.needs, []);
   assert.match(plan.calls[0].step, /B-02: a new row/);
-  jsonl += '\n' + line('b', 'mcp__Claude_Docs__update', { ref: { object: 'node', id: 'BN' }, payload: {} }, '{"verdict":"allow"}').join('\n');
+  jsonl +=
+    '\n' +
+    line(
+      'b',
+      'mcp__Claude_Docs__update',
+      { ref: { object: 'node', id: 'BN' }, payload: {} },
+      '{"verdict":"allow"}'
+    ).join('\n');
   plan = C.viewsPlan(r, C.viewReads(r, jsonl), ['board']);
   assert.equal(plan.needs[0].why, 'updated since the last read');
   assert.deepEqual(plan.needs[0].args, boardRead);
@@ -163,7 +348,17 @@ test('B-93: views finds the newest read of each view in the transcript, stale on
 
 test('B-93: log writes the record, regenerates BACKLOG.md and commits both, nothing else', () => {
   const dir = copyRepo();
-  const run = (...a) => execFileSync('node', [path.join(dir, 'tools', 'chart.mjs'), ...a, '--root', dir, '--transcript', '/dev/null'], { encoding: 'utf8', env: { ...process.env, GIT_AUTHOR_NAME: 'T', GIT_AUTHOR_EMAIL: 't@example.com', GIT_COMMITTER_NAME: 'T', GIT_COMMITTER_EMAIL: 't@example.com' } });
+  const run = (...a) =>
+    execFileSync('node', [path.join(dir, 'tools', 'chart.mjs'), ...a, '--root', dir, '--transcript', '/dev/null'], {
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        GIT_AUTHOR_NAME: 'T',
+        GIT_AUTHOR_EMAIL: 't@example.com',
+        GIT_COMMITTER_NAME: 'T',
+        GIT_COMMITTER_EMAIL: 't@example.com',
+      },
+    });
   const before = execFileSync('git', ['-C', dir, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
   const open = C.loadChart(dir).tasks.find(t => t.status === 'open' && t.id === 'B-43');
   assert.ok(open);
@@ -171,12 +366,22 @@ test('B-93: log writes the record, regenerates BACKLOG.md and commits both, noth
   assert.match(out, /log B-43: notes; committed [0-9a-f]{7}/);
   const show = execFileSync('git', ['-C', dir, 'show', '--stat', '--format=%B', 'HEAD'], { encoding: 'utf8' });
   assert.match(show, /^B-43: notes \(chart\)\n\nTest-Trailer: yes/);
-  assert.deepEqual(execFileSync('git', ['-C', dir, 'diff', '--name-only', before, 'HEAD'], { encoding: 'utf8' }).trim().split('\n').sort(), ['BACKLOG.md', 'chart/tasks.json']);
+  assert.deepEqual(
+    execFileSync('git', ['-C', dir, 'diff', '--name-only', before, 'HEAD'], { encoding: 'utf8' })
+      .trim()
+      .split('\n')
+      .sort(),
+    ['BACKLOG.md', 'chart/tasks.json']
+  );
   assert.equal(fs.readFileSync(path.join(dir, 'BACKLOG.md'), 'utf8'), C.renderBacklog(C.loadChart(dir)));
 });
 
 test('BACKLOG.md is generated from chart/ (no hand edits)', () => {
-  assert.equal(fs.readFileSync(path.join(ROOT, 'BACKLOG.md'), 'utf8'), C.renderBacklog(rec()), 'BACKLOG.md differs from chart/: change the record with node tools/chart.mjs log, never the file');
+  assert.equal(
+    fs.readFileSync(path.join(ROOT, 'BACKLOG.md'), 'utf8'),
+    C.renderBacklog(rec()),
+    'BACKLOG.md differs from chart/: change the record with node tools/chart.mjs log, never the file'
+  );
 });
 
 // ------------------------------------------------------------------------------------------------ B-94 lint
@@ -184,12 +389,24 @@ test('B-94: lint on the record as imported finds the duplicate B-83, and B-81 wa
   // The design expected the duplicate alone. B-78, B-79 and B-80 are in the Build plan tab but never reached
   // BACKLOG.md; B-94 added them (with B-74 and B-75) and renumbered the second B-83 to B-98.
   const f = C.lintChart(imported());
-  assert.deepEqual(f.map(x => `${x.check} ${x.id}${x.check === 'missing-dependency' ? ' ' + x.detail.match(/B-\d+/)[0] : ''}`), ['duplicate-id B-83', 'missing-dependency B-81 B-78', 'missing-dependency B-81 B-79', 'missing-dependency B-81 B-80']);
+  assert.deepEqual(
+    f.map(x => `${x.check} ${x.id}${x.check === 'missing-dependency' ? ' ' + x.detail.match(/B-\d+/)[0] : ''}`),
+    [
+      'duplicate-id B-83',
+      'missing-dependency B-81 B-78',
+      'missing-dependency B-81 B-79',
+      'missing-dependency B-81 B-80',
+    ]
+  );
 });
 
 test('B-94: the record lints green (npm test runs the Chart lint)', () => {
   const f = C.lintChart(rec(), { tests: C.testTexts(ROOT) });
-  assert.deepEqual(f.filter(x => x.level === 'error'), [], C.formatLint(f));
+  assert.deepEqual(
+    f.filter(x => x.level === 'error'),
+    [],
+    C.formatLint(f)
+  );
   const r = rec();
   assert.equal(r.tasks.find(t => t.id === 'B-98').renumberedFrom, 'B-83');
   assert.equal(r.tasks.filter(t => t.id === 'B-83').length, 1);
@@ -198,45 +415,103 @@ test('B-94: the record lints green (npm test runs the Chart lint)', () => {
 test('B-94: each check fires on a planted fault', () => {
   const r = sample();
   assert.deepEqual(C.lintChart(r), []);
-  r.tasks.push(task('B-02'));                                   // a duplicate id
-  r.tasks[2].depends = ['B-77'];                                // a dependency on nothing
-  r.tasks[0].commit = null;                                     // done with no commit
-  r.rules[0].decision = 'D-001';                                // a rule on a superseded decision
-  r.tasks.push({ ...task('B-04', { kind: 'bug', status: 'inbox' }), words: 'the timer sat at 0:00', source: 'build chat', reportedAt: '2026-10-19T22:00:00Z' });
-  r.tasks.push(task('B-05', { kind: 'request', status: 'declined', words: 'w', source: 's', reportedAt: 't', triage: {} }));
+  r.tasks.push(task('B-02')); // a duplicate id
+  r.tasks[2].depends = ['B-77']; // a dependency on nothing
+  r.tasks[0].commit = null; // done with no commit
+  r.rules[0].decision = 'D-001'; // a rule on a superseded decision
+  r.tasks.push({
+    ...task('B-04', { kind: 'bug', status: 'inbox' }),
+    words: 'the timer sat at 0:00',
+    source: 'build chat',
+    reportedAt: '2026-10-19T22:00:00Z',
+  });
+  r.tasks.push(
+    task('B-05', { kind: 'request', status: 'declined', words: 'w', source: 's', reportedAt: 't', triage: {} })
+  );
   const got = C.lintChart(r).map(x => `${x.level} ${x.check} ${x.id}`);
-  assert.deepEqual(got.sort(), ['error declined-without-reason B-05', 'error done-without-commit B-01', 'error duplicate-id B-02', 'error missing-dependency B-03', 'error rule-decision R-01', 'warn untriaged B-04'].sort());
+  assert.deepEqual(
+    got.sort(),
+    [
+      'error declined-without-reason B-05',
+      'error done-without-commit B-01',
+      'error duplicate-id B-02',
+      'error missing-dependency B-03',
+      'error rule-decision R-01',
+      'warn untriaged B-04',
+    ].sort()
+  );
 });
 
 // ------------------------------------------------------------------------------------------------ B-95 report and triage
-const human = (text, at = '2026-10-19T23:40:00.000Z') => JSON.stringify({ type: 'user', timestamp: at, message: { role: 'user', content: text } });
-const toolPair = (id, name, input, result) => [JSON.stringify({ message: { content: [{ type: 'tool_use', id, name, input }] } }), JSON.stringify({ type: 'user', message: { content: [{ type: 'tool_result', tool_use_id: id, content: [{ type: 'text', text: result }] }] } })];
+const human = (text, at = '2026-10-19T23:40:00.000Z') =>
+  JSON.stringify({ type: 'user', timestamp: at, message: { role: 'user', content: text } });
+const toolPair = (id, name, input, result) => [
+  JSON.stringify({ message: { content: [{ type: 'tool_use', id, name, input }] } }),
+  JSON.stringify({
+    type: 'user',
+    message: { content: [{ type: 'tool_result', tool_use_id: id, content: [{ type: 'text', text: result }] }] },
+  }),
+];
 
-test('B-95: report takes Matt\'s words from his message, exactly as written', () => {
-  const jsonl = [human('ok next one'), human('bug: the timer sat at 0:00 after I came back\n\nalso, nice work <system-reminder>x</system-reminder>', '2026-10-19T23:41:00.000Z')].join('\n');
-  assert.deepEqual(C.wordsFromChat(jsonl), { words: 'the timer sat at 0:00 after I came back', at: '2026-10-19T23:41:00.000Z', said: 'bug' });
+test("B-95: report takes Matt's words from his message, exactly as written", () => {
+  const jsonl = [
+    human('ok next one'),
+    human(
+      'bug: the timer sat at 0:00 after I came back\n\nalso, nice work <system-reminder>x</system-reminder>',
+      '2026-10-19T23:41:00.000Z'
+    ),
+  ].join('\n');
+  assert.deepEqual(C.wordsFromChat(jsonl), {
+    words: 'the timer sat at 0:00 after I came back',
+    at: '2026-10-19T23:41:00.000Z',
+    said: 'bug',
+  });
   assert.equal(C.wordsFromChat(jsonl, 'nice work').words, 'also, nice work');
   const r = sample();
   const out = C.applyReport(r, { _: ['report', 'bug'], 'from-chat': true }, { jsonl });
   const t = r.tasks.at(-1);
-  assert.deepEqual([out.id, t.kind, t.status, t.words, t.source, t.reportedAt], ['B-04', 'bug', 'inbox', 'the timer sat at 0:00 after I came back', 'build chat', '2026-10-19T23:41:00.000Z']);
+  assert.deepEqual(
+    [out.id, t.kind, t.status, t.words, t.source, t.reportedAt],
+    ['B-04', 'bug', 'inbox', 'the timer sat at 0:00 after I came back', 'build chat', '2026-10-19T23:41:00.000Z']
+  );
   assert.deepEqual(C.boardRow(t, r).status, { text: 'New report' });
-  assert.match(C.renderBacklog(r), /## Inbox[\s\S]*\| B-04 \| bug \| 2026-10-19T23:41:00.000Z \| the timer sat at 0:00 after I came back \| build chat \| inbox \|/);
+  assert.match(
+    C.renderBacklog(r),
+    /## Inbox[\s\S]*\| B-04 \| bug \| 2026-10-19T23:41:00.000Z \| the timer sat at 0:00 after I came back \| build chat \| inbox \|/
+  );
   assert.equal(C.lintChart(r).find(f => f.id === 'B-04').level, 'warn');
-  assert.throws(() => C.applyReport(sample(), { _: ['report', 'bug'], 'from-chat': true }, { jsonl: human('nothing to see') }), /no message in this session says/);
+  assert.throws(
+    () => C.applyReport(sample(), { _: ['report', 'bug'], 'from-chat': true }, { jsonl: human('nothing to see') }),
+    /no message in this session says/
+  );
 });
 
 test('B-95: triage comes first, then the entry becomes a task, joins one, or is declined with a reason; nothing is deleted', () => {
   const r = sample();
-  C.applyReport(r, { _: ['report', 'bug', 'the', 'timer', 'sat', 'at', '0:00'], source: 'build chat', at: '2026-10-19T23:41:00Z' });
-  assert.throws(() => C.applyLog(r, { _: ['log', 'B-02'], status: 'in progress' }), /triage first: B-04 waits in the inbox/);
+  C.applyReport(r, {
+    _: ['report', 'bug', 'the', 'timer', 'sat', 'at', '0:00'],
+    source: 'build chat',
+    at: '2026-10-19T23:41:00Z',
+  });
+  assert.throws(
+    () => C.applyLog(r, { _: ['log', 'B-02'], status: 'in progress' }),
+    /triage first: B-04 waits in the inbox/
+  );
   assert.throws(() => C.applyLog(r, { _: ['log', 'B-04'], status: 'in progress' }), /in the inbox: triage it first/);
   assert.throws(() => C.applyLog(r, { _: ['log', 'B-04'], triage: 'task', dod: 'x' }), /needs --dod and --milestone/);
-  C.applyLog(r, { _: ['log', 'B-04'], triage: 'task', dod: 'the clock resumes from the session\'s start after a return; a harness test', milestone: 'M11' });
+  C.applyLog(r, {
+    _: ['log', 'B-04'],
+    triage: 'task',
+    dod: "the clock resumes from the session's start after a return; a harness test",
+    milestone: 'M11',
+  });
   const t = r.tasks.find(x => x.id === 'B-04');
   assert.deepEqual([t.status, t.milestone, t.triage.outcome], ['open', 'M11', 'task']);
   assert.deepEqual(C.boardRow(t, r).status, { option: 'Next' });
-  assert.match(C.renderBacklog(r), /\| B-04 \| Bug \(reported Oct 19\): the timer sat at 0:00 Done when: the clock resumes/);
+  assert.match(
+    C.renderBacklog(r),
+    /\| B-04 \| Bug \(reported Oct 19\): the timer sat at 0:00 Done when: the clock resumes/
+  );
   C.applyLog(r, { _: ['log', 'B-02'], status: 'in progress' });
   // join and decline keep the entry, marked.
   C.applyReport(r, { _: ['report', 'request', 'reorder', 'the', 'briefing'], source: 'build chat' });
@@ -244,20 +519,55 @@ test('B-95: triage comes first, then the entry becomes a task, joins one, or is 
   C.applyReport(r, { _: ['report', 'request', 'a', 'dark', 'mode', 'toggle'], source: 'build chat' });
   assert.throws(() => C.applyLog(r, { _: ['log', 'B-06'], triage: 'decline' }), /needs --reason/);
   C.applyLog(r, { _: ['log', 'B-06'], triage: 'decline', reason: 'the page is dark only by design (D-077)' });
-  assert.deepEqual(r.tasks.slice(-2).map(x => [x.id, x.status, C.boardRow(x, r).status.text]), [['B-05', 'declined', 'Joined B-02'], ['B-06', 'declined', 'Declined']]);
+  assert.deepEqual(
+    r.tasks.slice(-2).map(x => [x.id, x.status, C.boardRow(x, r).status.text]),
+    [
+      ['B-05', 'declined', 'Joined B-02'],
+      ['B-06', 'declined', 'Declined'],
+    ]
+  );
   assert.match(C.boardRow(r.tasks.at(-1), r).notes, /^the page is dark only by design \(D-077\)/);
-  assert.deepEqual(C.lintChart(r).filter(f => f.level === 'error'), []);
+  assert.deepEqual(
+    C.lintChart(r).filter(f => f.level === 'error'),
+    []
+  );
 });
 
 test('B-95: a Board comment is filed from the comment query and answered with its id', () => {
   const r = sample();
-  const q = { object: 'utterance', container: { kind: 'project', id: 'DOC' }, payload: { under: { object: 'node', id: 'BN' } } };
-  const rows = { verdict: 'allow', rows: [{ id: 'u-1', verb: 'create', actor: { name: 'Mathew', self: true }, payload: { value: { body: 'the Quiz me button does nothing on my phone', parent: { object: 'node', id: 'BN', anchor: {} } } } }] };
+  const q = {
+    object: 'utterance',
+    container: { kind: 'project', id: 'DOC' },
+    payload: { under: { object: 'node', id: 'BN' } },
+  };
+  const rows = {
+    verdict: 'allow',
+    rows: [
+      {
+        id: 'u-1',
+        verb: 'create',
+        actor: { name: 'Mathew', self: true },
+        payload: {
+          value: {
+            body: 'the Quiz me button does nothing on my phone',
+            parent: { object: 'node', id: 'BN', anchor: {} },
+          },
+        },
+      },
+    ],
+  };
   let jsonl = toolPair('q1', 'mcp__Claude_Docs__query', q, JSON.stringify(rows)).join('\n');
   assert.deepEqual(C.inboxPlan(r, null).query, C.commentQuery(r));
-  assert.deepEqual(C.inboxPlan(r, jsonl).comments.map(c => [c.id, c.body]), [['u-1', 'the Quiz me button does nothing on my phone']]);
+  assert.deepEqual(
+    C.inboxPlan(r, jsonl).comments.map(c => [c.id, c.body]),
+    [['u-1', 'the Quiz me button does nothing on my phone']]
+  );
   const byId = toolPair('q0', 'mcp__1a59c906-04da-521d-bda7-7f71b9f9e01c__query', q, JSON.stringify(rows)).join('\n');
-  assert.deepEqual(C.inboxPlan(r, byId).comments.map(c => c.id), ['u-1'], 'the Docs connector named by its id is read too');
+  assert.deepEqual(
+    C.inboxPlan(r, byId).comments.map(c => c.id),
+    ['u-1'],
+    'the Docs connector named by its id is read too'
+  );
   const out = C.applyReport(r, { _: ['report', 'bug'], 'from-comment': 'u-1' }, { jsonl });
   assert.equal(r.tasks.at(-1).words, 'the Quiz me button does nothing on my phone');
   assert.equal(r.tasks.at(-1).source, 'Board comment u-1');
@@ -265,19 +575,31 @@ test('B-95: a Board comment is filed from the comment query and answered with it
   assert.match(out.reply.args.payload.value.body, /^Filed as B-04 \(bug\)/);
   assert.deepEqual(C.inboxPlan(r, jsonl).comments, [], 'filed: not listed again');
   assert.throws(() => C.applyReport(r, { _: ['report', 'bug'], 'from-comment': 'u-1' }, { jsonl }), /already filed/);
-  assert.match(C.formatInbox(C.inboxPlan(r, jsonl)), /B-04 \(bug, .*from Board comment u-1\): "the Quiz me button does nothing on my phone"/);
+  assert.match(
+    C.formatInbox(C.inboxPlan(r, jsonl)),
+    /B-04 \(bug, .*from Board comment u-1\): "the Quiz me button does nothing on my phone"/
+  );
 });
 
 // ------------------------------------------------------------------------------------------------ B-96 the build's commit
-test('B-96: a bookkeeping commit (chart/, BACKLOG.md) never moves the build\'s commit; a code commit does', async () => {
-  const dir = copyRepo(), out = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-chart-dist-'));
-  const g = (...a) => execFileSync('git', ['-C', dir, '-c', 'user.name=T', '-c', 'user.email=t@example.com', ...a], { encoding: 'utf8' }).trim();
+test("B-96: a bookkeeping commit (chart/, BACKLOG.md) never moves the build's commit; a code commit does", async () => {
+  const dir = copyRepo(),
+    out = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-chart-dist-'));
+  const g = (...a) =>
+    execFileSync('git', ['-C', dir, '-c', 'user.name=T', '-c', 'user.email=t@example.com', ...a], {
+      encoding: 'utf8',
+    }).trim();
   const first = (await build({ root: dir, out })).manifest;
   assert.equal(first.commit, g('rev-parse', 'HEAD'));
   fs.appendFileSync(path.join(dir, 'BACKLOG.md'), '\n');
   fs.writeFileSync(path.join(dir, 'chart', 'note.json'), '{}');
-  assert.equal((await build({ root: dir, out })).manifest.dirty, false, 'an uncommitted bookkeeping change is not dirt');
-  g('add', '-A'); g('commit', '-q', '-m', 'B-00: done (chart)');
+  assert.equal(
+    (await build({ root: dir, out })).manifest.dirty,
+    false,
+    'an uncommitted bookkeeping change is not dirt'
+  );
+  g('add', '-A');
+  g('commit', '-q', '-m', 'B-00: done (chart)');
   const after = (await build({ root: dir, out })).manifest;
   assert.equal(after.commit, first.commit, 'the chart commit leaves the build where it was');
   assert.deepEqual(after.files, first.files);
@@ -288,84 +610,269 @@ test('B-96: a bookkeeping commit (chart/, BACKLOG.md) never moves the build\'s c
 });
 
 // ------------------------------------------------------------------------------------------------ B-96 ship and brief
-const M = (o = {}) => ({ commit: 'a'.repeat(40), release: 'v4.0.0', tasks: { 'staging.morning': { record: 'staging', name: 'm', promptSha256: 'p1', trigger: 't1' }, 'live.morning': { record: 'live', name: 'm', promptSha256: 'p1', trigger: 't2' } }, pages: { staging: { files: { 'page/staging/app.js': 'h1' }, capabilities: { db: {} } } }, ...o });
-const READS = [{ tool: 'mcp__claude-code-remote__list_triggers', have: false }, { tool: 'ArtifactData', args: { doc_id: 'manifest' }, have: true }, { tool: 'Artifact', have: false }];
-const VERIFY = { lines: [{ ok: true, what: 'build is clean' }, { ok: false, what: 'system/manifest commit' }, { ok: false, what: 'staging page read' }, { ok: false, what: 'scheduled tasks read' }] };
-const DEPLOY = { ok: true, calls: [{ tool: 'ArtifactData' }, { tool: 'Artifact' }, { tool: 'mcp__claude-code-remote__update_trigger' }], skipped: [] };
+const M = (o = {}) => ({
+  commit: 'a'.repeat(40),
+  release: 'v4.0.0',
+  tasks: {
+    'staging.morning': { record: 'staging', name: 'm', promptSha256: 'p1', trigger: 't1' },
+    'live.morning': { record: 'live', name: 'm', promptSha256: 'p1', trigger: 't2' },
+  },
+  pages: { staging: { files: { 'page/staging/app.js': 'h1' }, capabilities: { db: {} } } },
+  ...o,
+});
+const READS = [
+  { tool: 'mcp__claude-code-remote__list_triggers', have: false },
+  { tool: 'ArtifactData', args: { doc_id: 'manifest' }, have: true },
+  { tool: 'Artifact', have: false },
+];
+const VERIFY = {
+  lines: [
+    { ok: true, what: 'build is clean' },
+    { ok: false, what: 'system/manifest commit' },
+    { ok: false, what: 'staging page read' },
+    { ok: false, what: 'scheduled tasks read' },
+  ],
+};
+const DEPLOY = {
+  ok: true,
+  calls: [{ tool: 'ArtifactData' }, { tool: 'Artifact' }, { tool: 'mcp__claude-code-remote__update_trigger' }],
+  skipped: [],
+};
 
 test('B-96: ship skips the task and page reads (and their calls) when the deployed manifest, green when deployed, has the same', () => {
-  const r = sample(); r.deploys.push({ target: 'staging', commit: 'bbbbbbb', verify: 'green', time: 't', tasks: [] });
+  const r = sample();
+  r.deploys.push({ target: 'staging', commit: 'bbbbbbb', verify: 'green', time: 't', tasks: [] });
   const deployed = M({ commit: 'b'.repeat(40) });
   const skip = C.skips({ manifest: M(), target: 'staging', deployed, rec: r });
   assert.deepEqual(skip, { tasks: true, pages: true, from: 'bbbbbbb' });
-  assert.equal(C.skips({ manifest: M({ pages: { staging: { files: { 'page/staging/app.js': 'h2' }, capabilities: { db: {} } } } }), target: 'staging', deployed, rec: r }).pages, false, 'a changed page file is read');
-  assert.equal(C.skips({ manifest: M(), target: 'staging', deployed, rec: sample() }).tasks, false, 'no green deploy at that commit in the record: read everything');
-  const step = C.shipStep({ target: 'staging', manifest: M(), state: { record: { manifest: deployed } }, verifyResult: VERIFY, reads: READS, deploy: DEPLOY, rec: r, refusals: [], skip, stale: null });
+  assert.equal(
+    C.skips({
+      manifest: M({ pages: { staging: { files: { 'page/staging/app.js': 'h2' }, capabilities: { db: {} } } } }),
+      target: 'staging',
+      deployed,
+      rec: r,
+    }).pages,
+    false,
+    'a changed page file is read'
+  );
+  assert.equal(
+    C.skips({ manifest: M(), target: 'staging', deployed, rec: sample() }).tasks,
+    false,
+    'no green deploy at that commit in the record: read everything'
+  );
+  const step = C.shipStep({
+    target: 'staging',
+    manifest: M(),
+    state: { record: { manifest: deployed } },
+    verifyResult: VERIFY,
+    reads: READS,
+    deploy: DEPLOY,
+    rec: r,
+    refusals: [],
+    skip,
+    stale: null,
+  });
   assert.equal(step.kind, 'deploy');
-  assert.deepEqual(step.calls.map(c => c.tool), ['ArtifactData'], 'no page publish, no trigger call');
+  assert.deepEqual(
+    step.calls.map(c => c.tool),
+    ['ArtifactData'],
+    'no page publish, no trigger call'
+  );
   assert.ok(step.lines.filter(l => /page read|tasks read/.test(l.what)).every(l => l.ok && /not read/.test(l.detail)));
   // Without the deployed manifest read yet: only that read is asked for.
-  const first = C.shipStep({ target: 'staging', manifest: M(), state: { record: null }, verifyResult: VERIFY, reads: READS.map(x => ({ ...x, have: false })), deploy: DEPLOY, rec: r, refusals: [], skip: { tasks: false, pages: false }, stale: null });
+  const first = C.shipStep({
+    target: 'staging',
+    manifest: M(),
+    state: { record: null },
+    verifyResult: VERIFY,
+    reads: READS.map(x => ({ ...x, have: false })),
+    deploy: DEPLOY,
+    rec: r,
+    refusals: [],
+    skip: { tasks: false, pages: false },
+    stale: null,
+  });
   assert.deepEqual([first.kind, first.reads.map(x => x.tool)], ['reads', ['ArtifactData']]);
   // After calls that touched neither tasks nor the page, only the system documents are read again.
-  const again = C.shipStep({ target: 'staging', manifest: M(), state: { record: { manifest: deployed } }, verifyResult: VERIFY, reads: READS.map(x => ({ ...x, have: true })), deploy: DEPLOY, rec: r, refusals: [], skip: { tasks: false, pages: false }, stale: { tasks: false, pages: false } });
-  assert.deepEqual(again.reads.map(x => x.tool), ['ArtifactData']);
-  const green = C.shipStep({ target: 'staging', manifest: M(), state: { record: { manifest: deployed } }, verifyResult: { lines: [{ ok: true, what: 'x' }] }, reads: READS.map(x => ({ ...x, have: true })), deploy: DEPLOY, rec: r, refusals: [], skip, stale: null });
+  const again = C.shipStep({
+    target: 'staging',
+    manifest: M(),
+    state: { record: { manifest: deployed } },
+    verifyResult: VERIFY,
+    reads: READS.map(x => ({ ...x, have: true })),
+    deploy: DEPLOY,
+    rec: r,
+    refusals: [],
+    skip: { tasks: false, pages: false },
+    stale: { tasks: false, pages: false },
+  });
+  assert.deepEqual(
+    again.reads.map(x => x.tool),
+    ['ArtifactData']
+  );
+  const green = C.shipStep({
+    target: 'staging',
+    manifest: M(),
+    state: { record: { manifest: deployed } },
+    verifyResult: { lines: [{ ok: true, what: 'x' }] },
+    reads: READS.map(x => ({ ...x, have: true })),
+    deploy: DEPLOY,
+    rec: r,
+    refusals: [],
+    skip,
+    stale: null,
+  });
   assert.deepEqual([green.kind, green.recorded], ['verified', false]);
-  assert.equal(C.shipStep({ target: 'live', manifest: M(), state: {}, verifyResult: VERIFY, reads: [], deploy: DEPLOY, rec: r, refusals: ['R-04 (D-083): no OK'], skip, stale: null }).kind, 'refused');
+  assert.equal(
+    C.shipStep({
+      target: 'live',
+      manifest: M(),
+      state: {},
+      verifyResult: VERIFY,
+      reads: [],
+      deploy: DEPLOY,
+      rec: r,
+      refusals: ['R-04 (D-083): no OK'],
+      skip,
+      stale: null,
+    }).kind,
+    'refused'
+  );
 });
 
 test('B-96: R-01 (D-139) finds what makes a live deploy more than page-only since the live build', () => {
   const dir = copyRepo();
-  const g = (...a) => execFileSync('git', ['-C', dir, '-c', 'user.name=T', '-c', 'user.email=t@example.com', ...a], { encoding: 'utf8' }).trim();
+  const g = (...a) =>
+    execFileSync('git', ['-C', dir, '-c', 'user.name=T', '-c', 'user.email=t@example.com', ...a], {
+      encoding: 'utf8',
+    }).trim();
   const base = g('rev-parse', 'HEAD');
-  fs.appendFileSync(path.join(dir, 'page', 'styles.css'), '\n'); g('commit', '-qam', 'page');
+  fs.appendFileSync(path.join(dir, 'page', 'styles.css'), '\n');
+  g('commit', '-qam', 'page');
   assert.deepEqual(C.pageOnlyFindings(dir, base), [], 'a page file alone is page-only');
   const spec = JSON.parse(fs.readFileSync(path.join(dir, 'spec', 'ev.spec.json'), 'utf8'));
-  spec.pipelines._note = 'changed'; fs.writeFileSync(path.join(dir, 'spec', 'ev.spec.json'), JSON.stringify(spec, null, 1));
-  fs.appendFileSync(path.join(dir, 'tools', 'prompts.mjs'), '\n'); g('commit', '-qam', 'pipeline and prompt');
+  spec.pipelines._note = 'changed';
+  fs.writeFileSync(path.join(dir, 'spec', 'ev.spec.json'), JSON.stringify(spec, null, 1));
+  fs.appendFileSync(path.join(dir, 'tools', 'prompts.mjs'), '\n');
+  g('commit', '-qam', 'pipeline and prompt');
   assert.deepEqual(C.pageOnlyFindings(dir, base), ['tools/prompts.mjs changed', 'spec.pipelines changed']);
-  assert.deepEqual(C.RULES.map(r => [r.id, r.decision, r.task]), [['R-01', 'D-139', 'B-30'], ['R-02', 'D-049', 'B-35'], ['R-03', 'D-139', 'B-87'], ['R-04', 'D-083', null]]);
+  assert.deepEqual(
+    C.RULES.map(r => [r.id, r.decision, r.task]),
+    [
+      ['R-01', 'D-139', 'B-30'],
+      ['R-02', 'D-049', 'B-35'],
+      ['R-03', 'D-139', 'B-87'],
+      ['R-04', 'D-083', null],
+    ]
+  );
 });
 
-test('B-96: ship reads the system documents\' versions from this session\'s ArtifactData replies', () => {
+test("B-96: ship reads the system documents' versions from this session's ArtifactData replies", () => {
   const url = 'https://claude.ai/artifact/X';
-  const jsonl = ['manifest', 'spec'].flatMap((id, i) => toolPair('g' + i, 'ArtifactData', { action: 'get', url, collection: 'system', doc_id: id, out_dir: '/tmp' }, `1 document from collection "system" saved as JSON files:\n- "${id}"  15337 bytes  version ${71 + i}  "/tmp/system/${id}.json"`)).join('\n');
+  const jsonl = ['manifest', 'spec']
+    .flatMap((id, i) =>
+      toolPair(
+        'g' + i,
+        'ArtifactData',
+        { action: 'get', url, collection: 'system', doc_id: id, out_dir: '/tmp' },
+        `1 document from collection "system" saved as JSON files:\n- "${id}"  15337 bytes  version ${71 + i}  "/tmp/system/${id}.json"`
+      )
+    )
+    .join('\n');
   assert.deepEqual(C.versionsFrom(jsonl, url), { manifest: 71, spec: 72 });
   assert.deepEqual(C.versionsFrom(jsonl, 'https://claude.ai/artifact/Y'), {});
 });
 
 test('B-96: brief is one page: the inbox, the task, its dependencies, decisions, limits and the next live runs', () => {
   const b = C.brief(rec(), 'B-97');
-  for (const h of ['## Inbox first', '## The task: B-97', '## Depends on', '## Decisions it rests on', '## What it may touch', '## The next 24 hours of live runs', '## Record as you go']) assert.ok(b.includes(h), h);
+  for (const h of [
+    '## Inbox first',
+    '## The task: B-97',
+    '## Depends on',
+    '## Decisions it rests on',
+    '## What it may touch',
+    '## The next 24 hours of live runs',
+    '## Record as you go',
+  ])
+    assert.ok(b.includes(h), h);
   assert.match(b, /- B-93: done/);
   assert.match(b, /R-01 \(D-139, B-30\)/);
-  const runs = C.nextRuns({ morning: { schedule: 'CRON_TZ=America/Chicago 25 4 * * *' }, weekly: { schedule: 'CRON_TZ=America/Chicago 57 17 * * 0' }, worker: { schedule: null } }, new Date('2026-10-19T23:45:00Z'));
-  assert.deepEqual(runs.map(r => [r.task, C.ctClock(r.at.toISOString())]), [['morning', '04:25']], 'Monday: no weekly');
+  const runs = C.nextRuns(
+    {
+      morning: { schedule: 'CRON_TZ=America/Chicago 25 4 * * *' },
+      weekly: { schedule: 'CRON_TZ=America/Chicago 57 17 * * 0' },
+      worker: { schedule: null },
+    },
+    new Date('2026-10-19T23:45:00Z')
+  );
+  assert.deepEqual(
+    runs.map(r => [r.task, C.ctClock(r.at.toISOString())]),
+    [['morning', '04:25']],
+    'Monday: no weekly'
+  );
 });
 
 // ------------------------------------------------------------------------------------------------ B-106 the design hand-off
-test('B-106: plan files a design doc\'s Tasks to add and Decisions proposed with the next free ids, once', async () => {
+test("B-106: plan files a design doc's Tasks to add and Decisions proposed with the next free ids, once", async () => {
   const r = sample();
-  const row = (i, cells) => `<row id='.${i}'>` + cells.map((c, j) => `<cell id='.${i}${j}'><paragraph id='.${i}${j}p'><text id='.${i}${j}t'>${c}</text></paragraph></cell>`).join('') + '</row>';
-  const xml = `<doc node='N' rev='4'><paragraph id='z1.1' heading='1'>Captions follow-ups</paragraph><paragraph id='.2'>Lead.</paragraph>` +
+  const row = (i, cells) =>
+    `<row id='.${i}'>` +
+    cells
+      .map(
+        (c, j) => `<cell id='.${i}${j}'><paragraph id='.${i}${j}p'><text id='.${i}${j}t'>${c}</text></paragraph></cell>`
+      )
+      .join('') +
+    '</row>';
+  const xml =
+    `<doc node='N' rev='4'><paragraph id='z1.1' heading='1'>Captions follow-ups</paragraph><paragraph id='.2'>Lead.</paragraph>` +
     `<paragraph id='.3' heading='2'>Decisions proposed</paragraph><table id='.4'>${row(5, ['P-n', 'Decision', 'Why'])}${row(6, ['P-1', 'Captions keep the last line', 'Matt, Oct 20: it lost his place'])}</table>` +
     `<paragraph id='.7' heading='2'>Tasks to add</paragraph><table id='.8'>${row(9, ['Task', 'Depends', 'Definition of done', 'Milestone'])}` +
     `${row(10, ['Keep the last caption line (P-1)', 'B-02', 'the line stays after a pause; a harness test', 'M11'])}${row(11, ['Caption settings', '—', 'a toggle; npm test green', 'M11'])}</table></doc>`;
   const result = JSON.stringify({ verdict: 'allow', rev: 4, data: { rev: 4, xml, complete: true } });
-  const jsonl = toolPair('r1', 'mcp__Claude_Docs__read', { ref: { object: 'node', id: 'N' }, engine: 'prose', container: { kind: 'project', id: 'AbCdEfGhIjKlMnOpQrStUv' } }, result).join('\n');
+  const jsonl = toolPair(
+    'r1',
+    'mcp__Claude_Docs__read',
+    { ref: { object: 'node', id: 'N' }, engine: 'prose', container: { kind: 'project', id: 'AbCdEfGhIjKlMnOpQrStUv' } },
+    result
+  ).join('\n');
   const id = C.docIdOf('https://claude.ai/artifact/Captions-AbCdEfGhIjKlMnOpQrStUv');
   assert.equal(id, 'AbCdEfGhIjKlMnOpQrStUv');
   assert.throws(() => C.planFrom(r, C.designRead('', id), id), /no read of/);
   const p = C.planFrom(r, C.designRead(jsonl, id), id);
-  assert.deepEqual(p.decisions.map(d => [d.id, d.pid, d.title, d.status]), [['D-003', 'P-1', 'Captions keep the last line', 'accepted']]);
-  assert.deepEqual(p.tasks.map(t => [t.id, t.title, t.depends, t.milestone]), [['B-04', 'Keep the last caption line (D-003)', 'B-02', 'M11'], ['B-05', 'Caption settings', '', 'M11']]);
+  assert.deepEqual(
+    p.decisions.map(d => [d.id, d.pid, d.title, d.status]),
+    [['D-003', 'P-1', 'Captions keep the last line', 'accepted']]
+  );
+  assert.deepEqual(
+    p.tasks.map(t => [t.id, t.title, t.depends, t.milestone]),
+    [
+      ['B-04', 'Keep the last caption line (D-003)', 'B-02', 'M11'],
+      ['B-05', 'Caption settings', '', 'M11'],
+    ]
+  );
   assert.match(C.formatPlan(p), /node tools\/chart.mjs log decision D-003 --title 'Captions keep the last line'/);
   // --apply runs the printed commands in order through log.
-  for (const c of p.commands) C.applyLog(r, (() => { const o = { _: [], trailer: [] }; for (let i = 0; i < c.length; i++) c[i].startsWith('--') ? (o[c[i].slice(2)] = c[++i]) : o._.push(c[i]); return o; })());
+  for (const c of p.commands)
+    C.applyLog(
+      r,
+      (() => {
+        const o = { _: [], trailer: [] };
+        for (let i = 0; i < c.length; i++) c[i].startsWith('--') ? (o[c[i].slice(2)] = c[++i]) : o._.push(c[i]);
+        return o;
+      })()
+    );
   assert.equal(r.decisions[0].id, 'D-003');
-  assert.deepEqual(r.tasks.slice(-2).map(t => [t.id, t.status, t.title, t.depends.join(',')]), [['B-04', 'open', 'Keep the last caption line (D-003)', 'B-02'], ['B-05', 'open', 'Caption settings', '']]);
-  assert.deepEqual(C.lintChart(r).filter(f => f.level === 'error'), []);
+  assert.deepEqual(
+    r.tasks.slice(-2).map(t => [t.id, t.status, t.title, t.depends.join(',')]),
+    [
+      ['B-04', 'open', 'Keep the last caption line (D-003)', 'B-02'],
+      ['B-05', 'open', 'Caption settings', ''],
+    ]
+  );
+  assert.deepEqual(
+    C.lintChart(r).filter(f => f.level === 'error'),
+    []
+  );
   const again = C.planFrom(r, C.designRead(jsonl, id), id);
   assert.deepEqual([again.commands, again.skipped.length], [[], 3], 'a second run files nothing');
   assert.match(C.formatPlan(again), /nothing to file/);
@@ -373,102 +880,328 @@ test('B-106: plan files a design doc\'s Tasks to add and Decisions proposed with
 });
 
 // ------------------------------------------------------------------------------------------------ B-109 tenets
-const logArgs = c => { const o = { _: [], trailer: [] }; for (let i = 0; i < c.length; i++) c[i].startsWith('--') ? (o[c[i].slice(2)] = c[++i]) : o._.push(c[i]); return o; };
+const logArgs = c => {
+  const o = { _: [], trailer: [] };
+  for (let i = 0; i < c.length; i++) c[i].startsWith('--') ? (o[c[i].slice(2)] = c[++i]) : o._.push(c[i]);
+  return o;
+};
 test('B-109: a tenet carries scope and check; brief lists it for tasks in its scope; superseding it makes lint name what still cites it', () => {
   const r = sample();
-  r.tasks.push(task('B-04', { title: 'Greeting card spacing in page/app.js', milestone: 'M11' }), task('B-05', { title: 'Watchdog retries in core/steps.mjs', milestone: 'M9' }));
-  assert.throws(() => C.applyLog(r, logArgs(['log', 'decision', 'D-003', '--title', 'x', '--kind', 'tenet'])), /needs --scope/);
-  assert.throws(() => C.applyLog(r, logArgs(['log', 'decision', 'D-003', '--title', 'x', '--kind', 'tenet', '--scope', 'ui', '--checked-by', 'vibes'])), /needs --checked-by/);
-  const did = C.applyLog(r, logArgs(['log', 'decision', 'D-003', '--title', 'One primary action per screen', '--status', 'accepted', '--kind', 'tenet', '--scope', 'ui', '--checked-by', 'harness']));
+  r.tasks.push(
+    task('B-04', { title: 'Greeting card spacing in page/app.js', milestone: 'M11' }),
+    task('B-05', { title: 'Watchdog retries in core/steps.mjs', milestone: 'M9' })
+  );
+  assert.throws(
+    () => C.applyLog(r, logArgs(['log', 'decision', 'D-003', '--title', 'x', '--kind', 'tenet'])),
+    /needs --scope/
+  );
+  assert.throws(
+    () =>
+      C.applyLog(
+        r,
+        logArgs([
+          'log',
+          'decision',
+          'D-003',
+          '--title',
+          'x',
+          '--kind',
+          'tenet',
+          '--scope',
+          'ui',
+          '--checked-by',
+          'vibes',
+        ])
+      ),
+    /needs --checked-by/
+  );
+  const did = C.applyLog(
+    r,
+    logArgs([
+      'log',
+      'decision',
+      'D-003',
+      '--title',
+      'One primary action per screen',
+      '--status',
+      'accepted',
+      '--kind',
+      'tenet',
+      '--scope',
+      'ui',
+      '--checked-by',
+      'harness',
+    ])
+  );
   assert.match(did.what, /^tenet D-003 \(accepted, ui, harness\)/);
   assert.deepEqual([r.decisions[0].kind, r.decisions[0].scope, r.decisions[0].check], ['tenet', ['ui'], 'harness']);
   assert.deepEqual(C.lintChart(r), []);
   // The page task's brief lists it; the pipeline task's does not; --scope overrides.
   assert.deepEqual([C.taskScope(r.tasks[3]), C.taskScope(r.tasks[4])], [['ui'], ['pipelines']]);
-  const page = C.brief(r, 'B-04', { root: ROOT }), pipe = C.brief(r, 'B-05', { root: ROOT });
+  const page = C.brief(r, 'B-04', { root: ROOT }),
+    pipe = C.brief(r, 'B-05', { root: ROOT });
   assert.match(page, /## Tenets in scope \(ui\)\n- D-003 \(ui; checked by harness\): One primary action per screen/);
   assert.doesNotMatch(pipe, /D-003/);
   assert.match(pipe, /## Tenets in scope \(pipelines\)\n- None accepted in this scope/);
   assert.match(C.brief(r, 'B-05', { root: ROOT, scope: 'ui' }), /- D-003 /);
   assert.equal(C.taskScope(task('B-09', { title: 'x', milestone: 'M14 UI' }))[0], 'ui', 'from the milestone');
-  assert.equal(C.taskScope(task('B-09', { title: 'retime spec.pipelines.morning', milestone: 'M9' }))[0], 'pipelines', 'from a spec key');
+  assert.equal(
+    C.taskScope(task('B-09', { title: 'retime spec.pipelines.morning', milestone: 'M9' }))[0],
+    'pipelines',
+    'from a spec key'
+  );
   // An open task, a rule and a test that cite it; then a tenet supersedes it.
   r.tasks[3].dod = 'follows D-003; a harness check';
   r.rules.push({ id: 'R-02', rule: 'r2', decision: 'D-003', task: 'B-04', command: 'ship live', check: 'x' });
-  C.applyLog(r, logArgs(['log', 'decision', 'D-004', '--title', 'Two actions at most', '--status', 'accepted', '--kind', 'tenet', '--scope', 'ui', '--checked-by', 'review', '--supersedes', 'D-003']));
+  C.applyLog(
+    r,
+    logArgs([
+      'log',
+      'decision',
+      'D-004',
+      '--title',
+      'Two actions at most',
+      '--status',
+      'accepted',
+      '--kind',
+      'tenet',
+      '--scope',
+      'ui',
+      '--checked-by',
+      'review',
+      '--supersedes',
+      'D-003',
+    ])
+  );
   assert.equal(r.decisions.find(d => d.id === 'D-003').status, 'superseded');
   const tests = { 'test/harness/look.cjs': "check('one primary action (D-003)')", 'test/other.test.mjs': 'nothing' };
   const got = C.lintChart(r, { tests }).map(f => `${f.check} ${f.id}`);
-  assert.deepEqual(got.sort(), ['rule-decision R-02', 'superseded-tenet B-04', 'superseded-tenet test/harness/look.cjs']);
+  assert.deepEqual(got.sort(), [
+    'rule-decision R-02',
+    'superseded-tenet B-04',
+    'superseded-tenet test/harness/look.cjs',
+  ]);
   assert.match(C.lintChart(r).find(f => f.id === 'B-04').detail, /cites D-003 \(superseded by D-004\)/);
   // The sweep task names both, so it is not flagged; a done task is history.
   r.tasks.push(task('B-06', { title: 'Sweep: what still follows D-003 moves to D-004', milestone: 'M11' }));
-  r.tasks[3].status = 'done'; r.tasks[3].commit = 'abc1234';
-  assert.deepEqual(C.lintChart(r).filter(f => f.check === 'superseded-tenet'), []);
+  r.tasks[3].status = 'done';
+  r.tasks[3].commit = 'abc1234';
+  assert.deepEqual(
+    C.lintChart(r).filter(f => f.check === 'superseded-tenet'),
+    []
+  );
   // The brief now lists the new one only.
   assert.match(C.brief(r, 'B-06', { root: ROOT, scope: 'ui' }), /- D-004 \(ui; checked by review\)/);
-  assert.doesNotMatch(C.brief(r, 'B-06', { root: ROOT, scope: 'ui' }).split('## Where to look')[0].split('## Tenets in scope')[1], /D-003 \(/);
+  assert.doesNotMatch(
+    C.brief(r, 'B-06', { root: ROOT, scope: 'ui' }).split('## Where to look')[0].split('## Tenets in scope')[1],
+    /D-003 \(/
+  );
   // A planted bad kind and scope lint red.
-  r.decisions.push({ id: 'D-005', date: 'Oct 20', title: 't', why: '', status: 'accepted', supersedes: [], amends: [], kind: 'tenet', scope: ['look'], check: 'harness' });
-  assert.deepEqual(C.lintChart(r).filter(f => f.id === 'D-005').map(f => f.check), ['tenet-scope']);
+  r.decisions.push({
+    id: 'D-005',
+    date: 'Oct 20',
+    title: 't',
+    why: '',
+    status: 'accepted',
+    supersedes: [],
+    amends: [],
+    kind: 'tenet',
+    scope: ['look'],
+    check: 'harness',
+  });
+  assert.deepEqual(
+    C.lintChart(r)
+      .filter(f => f.id === 'D-005')
+      .map(f => f.check),
+    ['tenet-scope']
+  );
 });
 
 test('B-109: plan files a Tenets proposed table with scope and check, numbered with the decisions; the Decisions tab shows the kind', () => {
   const r = sample();
-  const row = (i, cells) => `<row id='.${i}'>` + cells.map((c, j) => `<cell id='.${i}${j}'><paragraph id='.${i}${j}p'><text id='.${i}${j}t'>${c}</text></paragraph></cell>`).join('') + '</row>';
-  const xml = `<doc node='N' rev='4'><paragraph id='z1.1' heading='1'>UI tenets</paragraph>` +
+  const row = (i, cells) =>
+    `<row id='.${i}'>` +
+    cells
+      .map(
+        (c, j) => `<cell id='.${i}${j}'><paragraph id='.${i}${j}p'><text id='.${i}${j}t'>${c}</text></paragraph></cell>`
+      )
+      .join('') +
+    '</row>';
+  const xml =
+    `<doc node='N' rev='4'><paragraph id='z1.1' heading='1'>UI tenets</paragraph>` +
     `<paragraph id='.3' heading='2'>Decisions proposed</paragraph><table id='.4'>${row(5, ['P-n', 'Decision', 'Why'])}${row(6, ['P-1', 'The greeting moves up', 'Matt'])}</table>` +
     `<paragraph id='.20' heading='2'>Tenets proposed</paragraph><table id='.21'>${row(22, ['P-n', 'Tenet', 'Scope', 'Check', 'Why'])}${row(23, ['P-2', 'One primary action per screen', 'UI', 'harness', 'it lost his place'])}${row(24, ['P-3', 'Words before icons', 'ui, data', 'Review', 'P-1 needs it'])}</table>` +
     `<paragraph id='.7' heading='2'>Tasks to add</paragraph><table id='.8'>${row(9, ['Task', 'Depends', 'Definition of done', 'Milestone'])}${row(10, ['Apply P-2 to the greeting', '—', 'a harness check', 'M14 UI'])}</table></doc>`;
   const result = JSON.stringify({ verdict: 'allow', rev: 4, data: { rev: 4, xml, complete: true } });
   const id = 'AbCdEfGhIjKlMnOpQrStUv';
-  const jsonl = toolPair('r1', 'mcp__Claude_Docs__read', { ref: { object: 'node', id: 'N' }, engine: 'prose', container: { kind: 'project', id } }, result).join('\n');
+  const jsonl = toolPair(
+    'r1',
+    'mcp__Claude_Docs__read',
+    { ref: { object: 'node', id: 'N' }, engine: 'prose', container: { kind: 'project', id } },
+    result
+  ).join('\n');
   const p = C.planFrom(r, C.designRead(jsonl, id), id);
-  assert.deepEqual(p.decisions.map(d => [d.id, d.pid, d.kind, d.scope, d.check]), [['D-003', 'P-1', 'decision', undefined, undefined], ['D-004', 'P-2', 'tenet', ['ui'], 'harness'], ['D-005', 'P-3', 'tenet', ['ui', 'data'], 'review']]);
+  assert.deepEqual(
+    p.decisions.map(d => [d.id, d.pid, d.kind, d.scope, d.check]),
+    [
+      ['D-003', 'P-1', 'decision', undefined, undefined],
+      ['D-004', 'P-2', 'tenet', ['ui'], 'harness'],
+      ['D-005', 'P-3', 'tenet', ['ui', 'data'], 'review'],
+    ]
+  );
   assert.equal(p.decisions[2].why, 'D-003 needs it');
   assert.equal(p.tasks[0].title, 'Apply D-004 to the greeting');
   assert.match(C.formatPlan(p), /1 decision, 2 tenets and 1 task to file/);
-  assert.match(C.formatPlan(p), /log decision D-004 --title 'One primary action per screen' --why 'it lost his place' --status accepted --kind tenet --scope ui --checked-by harness/);
+  assert.match(
+    C.formatPlan(p),
+    /log decision D-004 --title 'One primary action per screen' --why 'it lost his place' --status accepted --kind tenet --scope ui --checked-by harness/
+  );
   for (const c of p.commands) C.applyLog(r, logArgs(c));
-  assert.deepEqual(r.decisions.slice(0, 3).map(d => [d.id, C.kindOf(d), (d.scope || []).join(','), d.check || '']), [['D-005', 'tenet', 'ui,data', 'review'], ['D-004', 'tenet', 'ui', 'harness'], ['D-003', 'decision', '', '']]);
-  assert.deepEqual(C.lintChart(r).filter(f => f.level === 'error'), []);
+  assert.deepEqual(
+    r.decisions.slice(0, 3).map(d => [d.id, C.kindOf(d), (d.scope || []).join(','), d.check || '']),
+    [
+      ['D-005', 'tenet', 'ui,data', 'review'],
+      ['D-004', 'tenet', 'ui', 'harness'],
+      ['D-003', 'decision', '', ''],
+    ]
+  );
+  assert.deepEqual(
+    C.lintChart(r).filter(f => f.level === 'error'),
+    []
+  );
   assert.deepEqual(C.planFrom(r, C.designRead(jsonl, id), id).commands, [], 'a second run files nothing');
   // A Check cell that says how: its first check word is the kind, the whole cell is kept as how.
-  assert.deepEqual(['harness: at load each tab shows one primary button', 'lint (B-89): no monospace; harness: at most 2', 'look pass at 375x667 and 1280x800', 'Review'].map(C.checkOf), ['harness', 'lint', 'harness', 'review']);
-  const how = C.planFrom(sample(), C.designRead(jsonl.replace('>harness<', '>harness: at most one primary button at 390<'), id), id);
-  assert.deepEqual([how.decisions[1].check, how.decisions[1].how], ['harness', 'harness: at most one primary button at 390']);
+  assert.deepEqual(
+    [
+      'harness: at load each tab shows one primary button',
+      'lint (B-89): no monospace; harness: at most 2',
+      'look pass at 375x667 and 1280x800',
+      'Review',
+    ].map(C.checkOf),
+    ['harness', 'lint', 'harness', 'review']
+  );
+  const how = C.planFrom(
+    sample(),
+    C.designRead(jsonl.replace('>harness<', '>harness: at most one primary button at 390<'), id),
+    id
+  );
+  assert.deepEqual(
+    [how.decisions[1].check, how.decisions[1].how],
+    ['harness', 'harness: at most one primary button at 390']
+  );
   assert.ok(how.commands[1].includes('--how'));
   // plan --apply on a copy files the whole hand-off in one commit (runs clone main only so deep, B-110).
-  const dir = copyRepo(), tr = path.join(dir, 'transcript.jsonl');
+  const dir = copyRepo(),
+    tr = path.join(dir, 'transcript.jsonl');
   fs.writeFileSync(tr, jsonl.replace('>harness<', '>harness: at most one primary button at 390<'));
-  const env = { ...process.env, GIT_AUTHOR_NAME: 'T', GIT_AUTHOR_EMAIL: 't@example.com', GIT_COMMITTER_NAME: 'T', GIT_COMMITTER_EMAIL: 't@example.com' };
+  const env = {
+    ...process.env,
+    GIT_AUTHOR_NAME: 'T',
+    GIT_AUTHOR_EMAIL: 't@example.com',
+    GIT_COMMITTER_NAME: 'T',
+    GIT_COMMITTER_EMAIL: 't@example.com',
+  };
   const before = execFileSync('git', ['-C', dir, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
-  const out = execFileSync('node', [path.join(dir, 'tools', 'chart.mjs'), 'plan', '--from', `https://claude.ai/code/artifact/${id}`, '--apply', '--root', dir, '--transcript', tr, '--trailer', 'X-Test: 1'], { encoding: 'utf8', env });
-  const real = C.loadChart(dir), d0 = real.decisions.find(d => d.how);
+  const out = execFileSync(
+    'node',
+    [
+      path.join(dir, 'tools', 'chart.mjs'),
+      'plan',
+      '--from',
+      `https://claude.ai/code/artifact/${id}`,
+      '--apply',
+      '--root',
+      dir,
+      '--transcript',
+      tr,
+      '--trailer',
+      'X-Test: 1',
+    ],
+    { encoding: 'utf8', env }
+  );
+  const real = C.loadChart(dir),
+    d0 = real.decisions.find(d => d.how);
   assert.match(out, /plan: filed D-\d{3}, D-\d{3}, D-\d{3}, B-\d+; committed/);
-  assert.equal(execFileSync('git', ['-C', dir, 'rev-list', '--count', `${before}..HEAD`], { encoding: 'utf8' }).trim(), '1');
-  assert.match(execFileSync('git', ['-C', dir, 'log', '-1', '--format=%B'], { encoding: 'utf8' }), /^D-\d{3} to D-\d{3}, B-\d+: plan AbCdEfGhIjKlMnOpQrStUv: 1 decisions, 2 tenets, 1 tasks \(chart\)\n\nX-Test: 1/);
+  assert.equal(
+    execFileSync('git', ['-C', dir, 'rev-list', '--count', `${before}..HEAD`], { encoding: 'utf8' }).trim(),
+    '1'
+  );
+  assert.match(
+    execFileSync('git', ['-C', dir, 'log', '-1', '--format=%B'], { encoding: 'utf8' }),
+    /^D-\d{3} to D-\d{3}, B-\d+: plan AbCdEfGhIjKlMnOpQrStUv: 1 decisions, 2 tenets, 1 tasks \(chart\)\n\nX-Test: 1/
+  );
   assert.deepEqual([d0.kind, d0.check, d0.how], ['tenet', 'harness', 'harness: at most one primary button at 390']);
-  assert.match(C.brief(real, real.tasks.at(-1).id, { root: dir }), /checked by harness\): One primary action per screen\n  Check: harness: at most one primary button at 390/);
+  assert.match(
+    C.brief(real, real.tasks.at(-1).id, { root: dir }),
+    /checked by harness\): One primary action per screen\n  Check: harness: at most one primary button at 390/
+  );
   // A read too large for the transcript is followed to the file it was saved to, as an array of texts or plain.
   for (const body of [JSON.stringify([{ type: 'text', text: result }]), result]) {
     const f = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-saved-')), 'mcp-Claude_Docs-read-1.txt');
     fs.writeFileSync(f, body);
-    const big = toolPair('r2', 'mcp__Claude_Docs__read', { ref: { object: 'node', id: 'N' }, engine: 'prose', container: { kind: 'project', id } }, `Error: result (73,401 characters across 1 line) exceeds maximum allowed tokens. Output has been saved to ${f}.\nFormat: Plain text`).join('\n');
+    const big = toolPair(
+      'r2',
+      'mcp__Claude_Docs__read',
+      { ref: { object: 'node', id: 'N' }, engine: 'prose', container: { kind: 'project', id } },
+      `Error: result (73,401 characters across 1 line) exceeds maximum allowed tokens. Output has been saved to ${f}.\nFormat: Plain text`
+    ).join('\n');
     assert.equal(C.planFrom(sample(), C.designRead(big, id), id).decisions.length, 3);
   }
   // A row with no scope or a check outside the list is refused, filing nothing.
   const bad = xml.replace('>harness<', '>vibes<');
-  assert.throws(() => C.planFrom(sample(), C.designRead(jsonl.replace(JSON.stringify(xml).slice(1, -1), JSON.stringify(bad).slice(1, -1)), id), id), /P-2 needs a check/);
+  assert.throws(
+    () =>
+      C.planFrom(
+        sample(),
+        C.designRead(jsonl.replace(JSON.stringify(xml).slice(1, -1), JSON.stringify(bad).slice(1, -1)), id),
+        id
+      ),
+    /P-2 needs a check/
+  );
   // The Decisions tab: a new tenet's row says so; an existing row given the kind is relabelled.
-  r.views = { ...r.views, decisions: { node: 'DN', table: 'DT', statusEnum: 'E2', statusOptions: ['Accepted', 'Proposed', 'Superseded', 'Revisit'] } };
-  const tab = { rev: 9, rows: [{ id: 'h', cells: ['Date', 'Id', 'Decision', 'Why', 'Status'].map(text => ({ text })) }, ...['D-002', 'D-001'].map(d => ({ id: d, cells: ['Oct 19', d, d === 'D-002' ? 'two' : 'one', '', d === 'D-002' ? 'Accepted' : 'Superseded'].map(text => ({ text, option: ['Accepted', 'Superseded'].includes(text) ? text : undefined })) }))] };
-  r.decisions.find(d => d.id === 'D-002').kind = 'tenet'; Object.assign(r.decisions.find(d => d.id === 'D-002'), { scope: ['ops'], check: 'lint' });
+  r.views = {
+    ...r.views,
+    decisions: {
+      node: 'DN',
+      table: 'DT',
+      statusEnum: 'E2',
+      statusOptions: ['Accepted', 'Proposed', 'Superseded', 'Revisit'],
+    },
+  };
+  const tab = {
+    rev: 9,
+    rows: [
+      { id: 'h', cells: ['Date', 'Id', 'Decision', 'Why', 'Status'].map(text => ({ text })) },
+      ...['D-002', 'D-001'].map(d => ({
+        id: d,
+        cells: ['Oct 19', d, d === 'D-002' ? 'two' : 'one', '', d === 'D-002' ? 'Accepted' : 'Superseded'].map(
+          text => ({ text, option: ['Accepted', 'Superseded'].includes(text) ? text : undefined })
+        ),
+      })),
+    ],
+  };
+  r.decisions.find(d => d.id === 'D-002').kind = 'tenet';
+  Object.assign(
+    r.decisions.find(d => d.id === 'D-002'),
+    { scope: ['ops'], check: 'lint' }
+  );
   const calls = C.decisionsCalls(r, tab, null);
   assert.equal(calls.length, 1);
-  const ops = calls[0].args.payload.ops, ins = ops.find(o => o.op === 'insert'), rel = ops.find(o => o.op === 'replace' && o.target.col === 2);
-  assert.deepEqual(ins.source.from.content.map(x => x.content[2].content[0].content[0].text), ['Tenet (ui, data; checked by review): Words before icons', 'Tenet (ui; checked by harness): One primary action per screen', 'The greeting moves up']);
-  assert.deepEqual([rel.target.row, rel.with.from.content], [1, 'Tenet (ui, data; checked by lint): two'.replace('ui, data', 'ops')]);
+  const ops = calls[0].args.payload.ops,
+    ins = ops.find(o => o.op === 'insert'),
+    rel = ops.find(o => o.op === 'replace' && o.target.col === 2);
+  assert.deepEqual(
+    ins.source.from.content.map(x => x.content[2].content[0].content[0].text),
+    [
+      'Tenet (ui, data; checked by review): Words before icons',
+      'Tenet (ui; checked by harness): One primary action per screen',
+      'The greeting moves up',
+    ]
+  );
+  assert.deepEqual(
+    [rel.target.row, rel.with.from.content],
+    [1, 'Tenet (ui, data; checked by lint): two'.replace('ui, data', 'ops')]
+  );
 });
 
 test('B-109: the review skill checks the diff against the tenets in scope; CLAUDE.md says how a tenet changes', () => {
@@ -476,79 +1209,211 @@ test('B-109: the review skill checks the diff against the tenets in scope; CLAUD
   assert.match(skill, /Tenets in scope/);
   assert.match(skill, /Check the diff against each tenet in scope/);
   const claude = fs.readFileSync(path.join(ROOT, 'CLAUDE.md'), 'utf8').replace(/\s+/g, ' ');
-  assert.match(claude, /A tenet is changed only by a superseding tenet plus a sweep task for what still follows the old one/);
+  assert.match(
+    claude,
+    /A tenet is changed only by a superseding tenet plus a sweep task for what still follows the old one/
+  );
 });
 
 // ------------------------------------------------------------------------------------------------ B-60 the rollback
-test('B-60: rollback live dry-runs going back to the previous live build at main\'s head, and --apply makes the restore commit', () => {
+test("B-60: rollback live dry-runs going back to the previous live build at main's head, and --apply makes the restore commit", () => {
   const dir = copyRepo();
-  const g = (...a) => execFileSync('git', ['-C', dir, '-c', 'user.name=T', '-c', 'user.email=t@example.com', ...a], { encoding: 'utf8' }).trim();
+  const g = (...a) =>
+    execFileSync('git', ['-C', dir, '-c', 'user.name=T', '-c', 'user.email=t@example.com', ...a], {
+      encoding: 'utf8',
+    }).trim();
   const A = g('rev-parse', 'HEAD');
   fs.appendFileSync(path.join(dir, 'core', 'watch.mjs'), '\n// a change after A\n');
   fs.writeFileSync(path.join(dir, 'core', 'extra.mjs'), 'export const x = 1;\n');
-  g('add', '-A'); g('commit', '-q', '-m', 'B-01: after A');
+  g('add', '-A');
+  g('commit', '-q', '-m', 'B-01: after A');
   const B = g('rev-parse', 'HEAD');
   const deploys = JSON.parse(fs.readFileSync(path.join(dir, 'chart', 'deploys.json'), 'utf8'));
-  deploys.push({ target: 'live', commit: A.slice(0, 7), time: '2026-10-20T01:00:00Z', okFrom: 'Matt', verify: 'green', rollback: null, tasks: [], source: 'log' }, { target: 'live', commit: B.slice(0, 7), time: '2026-10-20T02:00:00Z', okFrom: 'Matt', verify: 'green', rollback: A.slice(0, 7), tasks: [], source: 'log' });
+  deploys.push(
+    {
+      target: 'live',
+      commit: A.slice(0, 7),
+      time: '2026-10-20T01:00:00Z',
+      okFrom: 'Matt',
+      verify: 'green',
+      rollback: null,
+      tasks: [],
+      source: 'log',
+    },
+    {
+      target: 'live',
+      commit: B.slice(0, 7),
+      time: '2026-10-20T02:00:00Z',
+      okFrom: 'Matt',
+      verify: 'green',
+      rollback: A.slice(0, 7),
+      tasks: [],
+      source: 'log',
+    }
+  );
   fs.writeFileSync(path.join(dir, 'chart', 'deploys.json'), JSON.stringify(deploys, null, 1));
-  g('add', '-A'); g('commit', '-q', '-m', 'B-01: live deploys (chart)');
+  g('add', '-A');
+  g('commit', '-q', '-m', 'B-01: live deploys (chart)');
   const head = g('rev-parse', 'HEAD');
-  const run = (...a) => { try { return { code: 0, out: execFileSync('node', [path.join(dir, 'tools', 'chart.mjs'), 'rollback', 'live', ...a, '--root', dir, '--transcript', '/dev/null'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }) }; } catch (e) { return { code: e.status, out: String(e.stdout) + String(e.stderr) }; } };
+  const run = (...a) => {
+    try {
+      return {
+        code: 0,
+        out: execFileSync(
+          'node',
+          [path.join(dir, 'tools', 'chart.mjs'), 'rollback', 'live', ...a, '--root', dir, '--transcript', '/dev/null'],
+          { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }
+        ),
+      };
+    } catch (e) {
+      return { code: e.status, out: String(e.stdout) + String(e.stderr) };
+    }
+  };
   const dry = run('--no-test');
   assert.equal(dry.code, 0, dry.out);
-  assert.match(dry.out, new RegExp(`^rollback live: from ${B.slice(0, 7)} .* to ${A.slice(0, 7)} .*chart/deploys.json\\): DRY RUN, nothing is written or deployed`));
-  assert.match(dry.out, /It does not undo: .*an applied schema bump or migration stays applied and its legacy copies are kept/);
+  assert.match(
+    dry.out,
+    new RegExp(
+      `^rollback live: from ${B.slice(0, 7)} .* to ${A.slice(0, 7)} .*chart/deploys.json\\): DRY RUN, nothing is written or deployed`
+    )
+  );
+  assert.match(
+    dry.out,
+    /It does not undo: .*an applied schema bump or migration stays applied and its legacy copies are kept/
+  );
   assert.match(dry.out, /Schema: none crossed/);
   assert.match(dry.out, /Live tasks' prompts: the same in both builds: no task call/);
-  assert.match(dry.out, new RegExp(`1 file back to ${A.slice(0, 7)}: core/watch.mjs; 1 added since, removed from the tree \\(kept in history\\): core/extra.mjs`));
+  assert.match(
+    dry.out,
+    new RegExp(
+      `1 file back to ${A.slice(0, 7)}: core/watch.mjs; 1 added since, removed from the tree \\(kept in history\\): core/extra.mjs`
+    )
+  );
   assert.match(dry.out, new RegExp(`the restore build equals ${A.slice(0, 7)}'s build`));
-  assert.match(dry.out, /1\. system documents: ArtifactData[\s\S]*"doc_id": "manifest"[\s\S]*2\. page[^\n]*: Artifact[\s\S]*"capabilities"/);
+  assert.match(
+    dry.out,
+    /1\. system documents: ArtifactData[\s\S]*"doc_id": "manifest"[\s\S]*2\. page[^\n]*: Artifact[\s\S]*"capabilities"/
+  );
   assert.match(dry.out, /rollback live --matt-ok --apply[\s\S]*ship staging[\s\S]*ship live --matt-ok/);
   // A dry run writes nothing: same head, clean tree, no worktree left, no live gate file.
-  assert.deepEqual([g('rev-parse', 'HEAD'), g('status', '--porcelain'), g('worktree', 'list').split('\n').length, fs.existsSync(path.join(dir, 'dist', 'live-ok'))], [head, '', 1, false]);
+  assert.deepEqual(
+    [
+      g('rev-parse', 'HEAD'),
+      g('status', '--porcelain'),
+      g('worktree', 'list').split('\n').length,
+      fs.existsSync(path.join(dir, 'dist', 'live-ok')),
+    ],
+    [head, '', 1, false]
+  );
   assert.match(run('--to', 'abcdef1', '--no-test').out, /not an earlier live build/);
   assert.match(run('--apply', '--no-test').out, /needs Matt's explicit OK/);
   assert.equal(g('rev-parse', 'HEAD'), head, 'refused: no commit');
   const applied = run('--matt-ok', '--apply', '--no-test', '--trailer', 'X-Test: 1');
   assert.equal(applied.code, 0, applied.out);
   assert.equal(g('rev-list', '--count', `${head}..HEAD`), '1');
-  assert.match(g('log', '-1', '--format=%B'), new RegExp(`^B-60: roll live back to ${A.slice(0, 7)}'s content, from ${B.slice(0, 7)}`));
-  assert.equal(g('diff', '--name-only', A, 'HEAD', '--', 'core', 'page', 'spec', 'tools', 'test'), '', 'the code is A\'s again');
+  assert.match(
+    g('log', '-1', '--format=%B'),
+    new RegExp(`^B-60: roll live back to ${A.slice(0, 7)}'s content, from ${B.slice(0, 7)}`)
+  );
+  assert.equal(
+    g('diff', '--name-only', A, 'HEAD', '--', 'core', 'page', 'spec', 'tools', 'test'),
+    '',
+    "the code is A's again"
+  );
   assert.ok(!fs.existsSync(path.join(dir, 'core', 'extra.mjs')));
   assert.equal(g('diff', '--name-only', head, 'HEAD', '--', 'chart'), '', 'the record is kept');
   assert.equal(g('status', '--porcelain'), '');
 });
 
-test('B-111: a deploy credits each commit\'s own task, not every id a subject mentions', () => {
-  assert.deepEqual(C.commitTasks(['B-111: ideas rows (chart)', 'D-146 to D-165, B-111 to B-126: plan fab: 10 decisions (chart)', 'B-60: the rollback', 'B-109: tenets; see B-106'].join('\n')), ['B-109', 'B-60', 'B-111']);
+test("B-111: a deploy credits each commit's own task, not every id a subject mentions", () => {
+  assert.deepEqual(
+    C.commitTasks(
+      [
+        'B-111: ideas rows (chart)',
+        'D-146 to D-165, B-111 to B-126: plan fab: 10 decisions (chart)',
+        'B-60: the rollback',
+        'B-109: tenets; see B-106',
+      ].join('\n')
+    ),
+    ['B-109', 'B-60', 'B-111']
+  );
 });
 
 test('B-60: the rollback names the schemas it crosses and the live prompts that differ; the skill names its steps', () => {
-  assert.deepEqual(C.schemaCrossings({ weeks: 2, ideas: 2, notes: 1 }, { weeks: 1, ideas: 2 }), [{ collection: 'weeks', now: 2, then: 1 }, { collection: 'notes', now: 1, then: null }]);
+  assert.deepEqual(C.schemaCrossings({ weeks: 2, ideas: 2, notes: 1 }, { weeks: 1, ideas: 2 }), [
+    { collection: 'weeks', now: 2, then: 1 },
+    { collection: 'notes', now: 1, then: null },
+  ]);
   assert.deepEqual(C.schemaCrossings({ weeks: 2 }, { weeks: 2 }), []);
-  const m = p => ({ tasks: { 'live.morning': { record: 'live', promptSha256: p }, 'live.evening-mac': { record: 'live', promptSha256: 'm', macBound: true }, 'staging.morning': { record: 'staging', promptSha256: 'x' } } });
+  const m = p => ({
+    tasks: {
+      'live.morning': { record: 'live', promptSha256: p },
+      'live.evening-mac': { record: 'live', promptSha256: 'm', macBound: true },
+      'staging.morning': { record: 'staging', promptSha256: 'x' },
+    },
+  });
   assert.deepEqual(C.promptChanges(m('a'), m('b')), [{ task: 'live.morning', macBound: false }]);
   assert.deepEqual(C.promptChanges(m('a'), m('a')), []);
-  const r = sample(); r.deploys.push({ target: 'live', commit: '2222222', time: 't', okFrom: 'Matt', verify: 'green', rollback: '1111111', tasks: [] });
+  const r = sample();
+  r.deploys.push({
+    target: 'live',
+    commit: '2222222',
+    time: 't',
+    okFrom: 'Matt',
+    verify: 'green',
+    rollback: '1111111',
+    tasks: [],
+  });
   assert.deepEqual([C.rollbackTarget(r).from.commit, C.rollbackTarget(r).to.commit], ['2222222', '1111111']);
-  r.deploys.push({ target: 'live', commit: '3333333', time: 't', okFrom: 'Matt', verify: 'green', rollback: '2222222', tasks: [] });
+  r.deploys.push({
+    target: 'live',
+    commit: '3333333',
+    time: 't',
+    okFrom: 'Matt',
+    verify: 'green',
+    rollback: '2222222',
+    tasks: [],
+  });
   assert.equal(C.rollbackTarget(r).to.commit, '2222222');
   assert.equal(C.rollbackTarget(r, '1111111').to.commit, '1111111');
-  assert.ok(C.ROLLBACK_KEEP.some(re => re.test('chart/deploys.json')) && !C.ROLLBACK_KEEP.some(re => re.test('core/evcore.mjs')) && !C.ROLLBACK_KEEP.some(re => re.test('tools/chart.mjs')));
+  assert.ok(
+    C.ROLLBACK_KEEP.some(re => re.test('chart/deploys.json')) &&
+      !C.ROLLBACK_KEEP.some(re => re.test('core/evcore.mjs')) &&
+      !C.ROLLBACK_KEEP.some(re => re.test('tools/chart.mjs'))
+  );
   const skill = fs.readFileSync(path.join(ROOT, '.claude', 'skills', 'rollback', 'SKILL.md'), 'utf8');
   assert.match(skill, /^---\nname: rollback\n/);
-  for (const w of ['chart/deploys.json', 'rollback live', '--matt-ok --apply', 'ship staging', 'ship live --matt-ok', 'live tasks', 'schema', 'legacy copies', 'Mac']) assert.ok(skill.includes(w), w);
-  assert.match(fs.readFileSync(path.join(ROOT, 'CLAUDE.md'), 'utf8').replace(/\s+/g, ' '), /\.claude\/skills\/rollback\/SKILL\.md/);
+  for (const w of [
+    'chart/deploys.json',
+    'rollback live',
+    '--matt-ok --apply',
+    'ship staging',
+    'ship live --matt-ok',
+    'live tasks',
+    'schema',
+    'legacy copies',
+    'Mac',
+  ])
+    assert.ok(skill.includes(w), w);
+  assert.match(
+    fs.readFileSync(path.join(ROOT, 'CLAUDE.md'), 'utf8').replace(/\s+/g, ' '),
+    /\.claude\/skills\/rollback\/SKILL\.md/
+  );
 });
 
 // ------------------------------------------------------------------------------------------------ B-102 the watchdog windows
 test('B-102: R-05 refuses a live deploy from :45 to :05 around each live watchdog run, and says when it opens', () => {
-  const sched = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec', 'ev.spec.json'), 'utf8')).tasks.live.watchdog.schedule;
+  const sched = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec', 'ev.spec.json'), 'utf8')).tasks.live.watchdog
+    .schedule;
   const at = iso => C.watchdogWindow(sched, new Date(iso));
   // Oct 20 is CDT (UTC-5): the 4:55 run is 09:55Z.
   assert.equal(at('2026-10-20T09:44:59Z'), null, '4:44:59 is open');
   assert.equal(C.ctClock(at('2026-10-20T09:45:00Z').run.toISOString()), '04:55', '4:45 is in the window');
-  assert.equal(C.ctClock(at('2026-10-20T10:04:59Z').opens.toISOString()), '05:05', '5:04:59 is in it; it opens at 5:05');
+  assert.equal(
+    C.ctClock(at('2026-10-20T10:04:59Z').opens.toISOString()),
+    '05:05',
+    '5:04:59 is in it; it opens at 5:05'
+  );
   assert.equal(at('2026-10-20T10:05:00Z'), null, '5:05 is open');
   assert.equal(at('2026-10-20T08:30:00Z'), null, 'between windows');
   // Across midnight: 22:55 Central is 03:55Z the next day; 23:00 is in, 23:05 is out.
@@ -557,29 +1422,75 @@ test('B-102: R-05 refuses a live deploy from :45 to :05 around each live watchdo
   // In CST (Nov 2, UTC-6) the 1:55 run is 07:55Z.
   assert.equal(C.ctClock(at('2026-11-02T07:50:00Z').run.toISOString()), '01:55');
   assert.equal(at('2026-11-02T06:50:00Z'), null);
-  assert.equal(C.watchdogRefusal(sched, new Date('2026-10-20T09:50:00Z')), 'R-05 (D-142): the live watchdog runs at 04:55 CT; live deploys wait until 05:05 CT');
+  assert.equal(
+    C.watchdogRefusal(sched, new Date('2026-10-20T09:50:00Z')),
+    'R-05 (D-142): the live watchdog runs at 04:55 CT; live deploys wait until 05:05 CT'
+  );
   assert.equal(C.watchdogRefusal(sched, new Date('2026-10-20T10:10:00Z')), null);
   // log rule: the next free id, on a decision in the record; --fn names the check.
   const s = sample();
-  assert.throws(() => C.applyLog(s, { _: ['log', 'rule', 'R-07'], rule: 'r', decision: 'D-002', command: 'ship live', fn: 'f' }), /log rule R-02/);
-  assert.throws(() => C.applyLog(s, { _: ['log', 'rule', 'R-02'], rule: 'r', decision: 'D-009', command: 'ship live', fn: 'f' }), /D-009 is not in the record/);
-  C.applyLog(s, { _: ['log', 'rule', 'R-02'], rule: 'r', decision: 'D-002', command: 'ship live', fn: 'watchdogWindow', task: 'B-02' });
-  assert.deepEqual(s.rules.at(-1), { id: 'R-02', rule: 'r', decision: 'D-002', task: 'B-02', command: 'ship live', check: 'watchdogWindow' });
+  assert.throws(
+    () => C.applyLog(s, { _: ['log', 'rule', 'R-07'], rule: 'r', decision: 'D-002', command: 'ship live', fn: 'f' }),
+    /log rule R-02/
+  );
+  assert.throws(
+    () => C.applyLog(s, { _: ['log', 'rule', 'R-02'], rule: 'r', decision: 'D-009', command: 'ship live', fn: 'f' }),
+    /D-009 is not in the record/
+  );
+  C.applyLog(s, {
+    _: ['log', 'rule', 'R-02'],
+    rule: 'r',
+    decision: 'D-002',
+    command: 'ship live',
+    fn: 'watchdogWindow',
+    task: 'B-02',
+  });
+  assert.deepEqual(s.rules.at(-1), {
+    id: 'R-02',
+    rule: 'r',
+    decision: 'D-002',
+    task: 'B-02',
+    command: 'ship live',
+    check: 'watchdogWindow',
+  });
   const r = rec();
-  assert.deepEqual(r.rules.filter(x => x.check === 'watchdogWindow').map(x => [x.id, x.command, x.decision]), [['R-05', 'ship live', 'D-142']], 'the rule is in chart/rules.json');
+  assert.deepEqual(
+    r.rules.filter(x => x.check === 'watchdogWindow').map(x => [x.id, x.command, x.decision]),
+    [['R-05', 'ship live', 'D-142']],
+    'the rule is in chart/rules.json'
+  );
 });
 
 test('two new deploys reach the Changelog as one insert, newest first (Docs refuses two inserts on one anchor)', () => {
   const r = sample();
-  C.applyLog(r, { _: ['log', 'deploy'], target: 'staging', commit: '3333333', verify: 'green', tasks: 'B-02', time: '2026-10-19T20:00:00-05:00' });
-  C.applyLog(r, { _: ['log', 'deploy'], target: 'staging', commit: '4444444', verify: 'green', tasks: 'B-03', time: '2026-10-19T20:05:00-05:00' });
+  C.applyLog(r, {
+    _: ['log', 'deploy'],
+    target: 'staging',
+    commit: '3333333',
+    verify: 'green',
+    tasks: 'B-02',
+    time: '2026-10-19T20:00:00-05:00',
+  });
+  C.applyLog(r, {
+    _: ['log', 'deploy'],
+    target: 'staging',
+    commit: '4444444',
+    verify: 'green',
+    tasks: 'B-03',
+    time: '2026-10-19T20:05:00-05:00',
+  });
   const read = { rev: 1, rows: [{ id: 's1.20', cells: [{ text: 'Date' }, { text: 'Change' }] }] };
   const [call] = C.changelogCalls(r, read);
   assert.equal(call.args.payload.ops.length, 1);
-  assert.deepEqual(call.args.payload.ops[0].source.from.content.map(row => row.content[1].content[0].content[0].text.match(/at (\d{7})/)[1]), ['4444444', '3333333']);
+  assert.deepEqual(
+    call.args.payload.ops[0].source.from.content.map(
+      row => row.content[1].content[0].content[0].text.match(/at (\d{7})/)[1]
+    ),
+    ['4444444', '3333333']
+  );
 });
 
-test('log rewrites a task\'s definition of done or title outside triage', () => {
+test("log rewrites a task's definition of done or title outside triage", () => {
   const r = sample();
   const out = C.applyLog(r, { _: ['log', 'B-03'], dod: 'a new definition', title: 'a new title' });
   assert.equal(out.what, 'definition of done, title');
@@ -587,24 +1498,56 @@ test('log rewrites a task\'s definition of done or title outside triage', () => 
 });
 
 test('a decision filed with a source (log --source, plan) still gets its Decisions row; an imported one is left alone', () => {
-  const r = sample(); r.views = { ...r.views, decisions: { node: 'DN', table: 's1.30', statusEnum: 'E2', statusOptions: ['Accepted', 'Proposed', 'Superseded'] } };
+  const r = sample();
+  r.views = {
+    ...r.views,
+    decisions: { node: 'DN', table: 's1.30', statusEnum: 'E2', statusOptions: ['Accepted', 'Proposed', 'Superseded'] },
+  };
   C.applyLog(r, { _: ['log', 'decision', 'D-003'], title: 'three', status: 'accepted', source: 'plan DOC P-1' });
-  const read = { rev: 1, rows: [{ id: 's1.31', cells: [{ text: 'Date' }, { text: 'Id' }, { text: 'Decision' }, { text: 'Why' }, { text: 'Status' }] }] };
+  const read = {
+    rev: 1,
+    rows: [
+      {
+        id: 's1.31',
+        cells: [{ text: 'Date' }, { text: 'Id' }, { text: 'Decision' }, { text: 'Why' }, { text: 'Status' }],
+      },
+    ],
+  };
   const [call] = C.decisionsCalls(r, read, null);
   assert.match(call.step, /^Decisions: D-003: a new row$/, 'D-001 and D-002 (imported, no source) are not re-added');
   C.applyLog(r, { _: ['log', 'decision', 'D-004'], title: 'four', status: 'accepted', source: 'log' });
   const two = C.decisionsCalls(r, read, null)[0].args.payload.ops;
   assert.equal(two.filter(o => o.op === 'insert').length, 1, 'one insert for two new rows');
-  assert.deepEqual(two[0].source.from.content.map(row => row.content[1].content[0].content[0].text), ['D-004', 'D-003'], 'newest first');
+  assert.deepEqual(
+    two[0].source.from.content.map(row => row.content[1].content[0].content[0].text),
+    ['D-004', 'D-003'],
+    'newest first'
+  );
 });
 
 test('B-93: a Decisions call replaces cells before it inserts a row above them', () => {
   const r = sample();
-  r.views.decisions = { node: 'DN', table: 's1.40', intro: 's1.39', statusEnum: 'E2', statusOptions: ['Accepted', 'Revisit', 'Superseded', 'Proposed'] };
-  const dcell = (id, t, i) => `<cell id='${id}'><paragraph id='${id}p'>${i != null ? `<dropdown id='${id}d' enum='E2' index='${i}'>${t}</dropdown>` : `<text id='${id}t'>${t}</text>`}</paragraph></cell>`;
-  const row = (id, d, st, i) => `<row id='${id}'>${dcell(id + '1', 'Oct 18')}${dcell(id + '2', d)}${dcell(id + '3', 't')}${dcell(id + '4', 'w')}${dcell(id + '5', st, i)}</row>`;
-  const read = C.parseTableXml(`<doc rev='5'><table id='s1.40'>${row('.41', 'ID', 'Status')}${row('.50', 'D-002', 'Accepted', 0)}${row('.60', 'D-001', 'Accepted', 0)}</table></doc>`);
+  r.views.decisions = {
+    node: 'DN',
+    table: 's1.40',
+    intro: 's1.39',
+    statusEnum: 'E2',
+    statusOptions: ['Accepted', 'Revisit', 'Superseded', 'Proposed'],
+  };
+  const dcell = (id, t, i) =>
+    `<cell id='${id}'><paragraph id='${id}p'>${i != null ? `<dropdown id='${id}d' enum='E2' index='${i}'>${t}</dropdown>` : `<text id='${id}t'>${t}</text>`}</paragraph></cell>`;
+  const row = (id, d, st, i) =>
+    `<row id='${id}'>${dcell(id + '1', 'Oct 18')}${dcell(id + '2', d)}${dcell(id + '3', 't')}${dcell(id + '4', 'w')}${dcell(id + '5', st, i)}</row>`;
+  const read = C.parseTableXml(
+    `<doc rev='5'><table id='s1.40'>${row('.41', 'ID', 'Status')}${row('.50', 'D-002', 'Accepted', 0)}${row('.60', 'D-001', 'Accepted', 0)}</table></doc>`
+  );
   C.applyLog(r, { _: ['log', 'decision', 'D-003'], title: 'three', status: 'accepted', supersedes: 'D-001' });
   const ops = C.decisionsCalls(r, read, null)[0].args.payload.ops;
-  assert.deepEqual(ops.map(o => [o.op, o.target.row || null]), [['replace', 2], ['insert', null]]);
+  assert.deepEqual(
+    ops.map(o => [o.op, o.target.row || null]),
+    [
+      ['replace', 2],
+      ['insert', null],
+    ]
+  );
 });

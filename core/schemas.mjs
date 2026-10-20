@@ -9,7 +9,10 @@ export const SCHEMA_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.ur
 
 export function loadSchemas(dir = SCHEMA_DIR) {
   const schemas = {};
-  for (const f of fs.readdirSync(dir).filter(f => f.endsWith('.schema.json')).sort()) {
+  for (const f of fs
+    .readdirSync(dir)
+    .filter(f => f.endsWith('.schema.json'))
+    .sort()) {
     schemas[f.slice(0, -'.schema.json'.length)] = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
   }
   return schemas;
@@ -25,7 +28,10 @@ export function readExport(dir) {
   for (const col of fs.readdirSync(dir).sort()) {
     const p = path.join(dir, col);
     if (!fs.statSync(p).isDirectory()) continue;
-    for (const f of fs.readdirSync(p).filter(f => f.endsWith('.json')).sort()) {
+    for (const f of fs
+      .readdirSync(p)
+      .filter(f => f.endsWith('.json'))
+      .sort()) {
       out.push({ collection: col, id: f.slice(0, -5), doc: JSON.parse(fs.readFileSync(path.join(p, f), 'utf8')) });
     }
   }

@@ -14,13 +14,27 @@ import { createRequire } from 'node:module';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { SIZES, FIRST, missingShots } = createRequire(import.meta.url)('../test/harness/views.cjs');
-const opt = (argv, name, dflt) => { const i = argv.indexOf('--' + name); return i >= 0 && argv[i + 1] ? path.resolve(argv[i + 1]) : dflt; };
+const opt = (argv, name, dflt) => {
+  const i = argv.indexOf('--' + name);
+  return i >= 0 && argv[i + 1] ? path.resolve(argv[i + 1]) : dflt;
+};
 
 /** The steps, in order, as [name, command, args]. */
 export function steps({ record, shots }) {
   const h = (name, ...a) => [name, process.execPath, [path.join('test', 'harness', name + '.cjs'), ...a]];
   return [
-    ['npm test', process.execPath, ['--test', ...fs.readdirSync(path.join(ROOT, 'test')).filter(f => f.endsWith('.test.mjs')).sort().map(f => path.join('test', f))]],
+    [
+      'npm test',
+      process.execPath,
+      [
+        '--test',
+        ...fs
+          .readdirSync(path.join(ROOT, 'test'))
+          .filter(f => f.endsWith('.test.mjs'))
+          .sort()
+          .map(f => path.join('test', f)),
+      ],
+    ],
     ['build', process.execPath, ['tools/build.mjs']],
     h('shell', record, path.join(shots, 'shell')),
     h('run', record, path.join(shots, 'run')),
@@ -36,22 +50,43 @@ export function main(argv = process.argv.slice(2)) {
   // Without --record each harness writes its own synthetic record as it starts (recordDir('synthetic')), anchored to the
   // day it runs on: one record written at the start went stale for the harnesses after midnight (B-113).
   const record = opt(argv, 'record', null) || 'synthetic';
-  if (record !== 'synthetic' && !fs.existsSync(record)) { console.error(`check: no record at ${record}`); return 2; }
+  if (record !== 'synthetic' && !fs.existsSync(record)) {
+    console.error(`check: no record at ${record}`);
+    return 2;
+  }
   for (const [name, cmd, args] of steps({ record, shots })) {
     const t = Date.now();
     console.log(`\n== ${name}`);
     const r = spawnSync(cmd, args, { cwd: ROOT, stdio: 'inherit' });
-    if (r.status !== 0) { console.log(`\ncheck: RED at ${name} (exit ${r.status ?? r.signal})`); return 1; }
+    if (r.status !== 0) {
+      console.log(`\ncheck: RED at ${name} (exit ${r.status ?? r.signal})`);
+      return 1;
+    }
     console.log(`== ${name}: ok (${Math.round((Date.now() - t) / 1000)} s)`);
   }
   const look = path.join(shots, 'look');
-  const files = fs.readdirSync(look).filter(f => f.endsWith('.png')).sort();
+  const files = fs
+    .readdirSync(look)
+    .filter(f => f.endsWith('.png'))
+    .sort();
   // B-113: one screenshot per view per size, or the look pass missed a view.
-  const missing = missingShots(files, fs.readFileSync(path.join(ROOT, 'dist', 'page', 'staging', 'index.html'), 'utf8'));
-  if (missing.length) { console.log(`\ncheck: RED at look: no screenshot for ${missing.length} view${missing.length === 1 ? '' : 's'} at a size: ${missing.slice(0, 8).join(', ')}${missing.length > 8 ? ', …' : ''}`); return 1; }
+  const missing = missingShots(
+    files,
+    fs.readFileSync(path.join(ROOT, 'dist', 'page', 'staging', 'index.html'), 'utf8')
+  );
+  if (missing.length) {
+    console.log(
+      `\ncheck: RED at look: no screenshot for ${missing.length} view${missing.length === 1 ? '' : 's'} at a size: ${missing.slice(0, 8).join(', ')}${missing.length > 8 ? ', …' : ''}`
+    );
+    return 1;
+  }
   console.log(`\ncheck: GREEN. Look at the screenshots in ${look}, these first:`);
   for (const tag of FIRST) console.log(`  ${tag}: ${files.filter(f => f.endsWith(`-${tag}.png`)).join(', ')}`);
-  console.log(`  then the other sizes (${SIZES.filter(s => !FIRST.includes(s.tag)).map(s => s.tag).join(', ')}): ${files.filter(f => !FIRST.some(t => f.endsWith(`-${t}.png`))).length} more`);
+  console.log(
+    `  then the other sizes (${SIZES.filter(s => !FIRST.includes(s.tag))
+      .map(s => s.tag)
+      .join(', ')}): ${files.filter(f => !FIRST.some(t => f.endsWith(`-${t}.png`))).length} more`
+  );
   return 0;
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) process.exitCode = main();

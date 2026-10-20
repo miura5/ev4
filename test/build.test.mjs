@@ -15,7 +15,8 @@ import { loadSchemas } from '../core/schemas.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const NOW = '2026-10-17T12:00:00Z';
-const git = (dir, ...args) => execFileSync('git', ['-C', dir, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+const git = (dir, ...args) =>
+  execFileSync('git', ['-C', dir, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
 
 function copyRepo() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-build-'));
@@ -41,9 +42,17 @@ test('a clean tree builds a manifest that validates, with every file hash, task 
   assert.ok(validateAgainst({ $ref: '#/$defs/manifestBody', $defs: schemas.system.$defs }, manifest).ok);
   const onDisk = JSON.parse(fs.readFileSync(path.join(dir, 'dist/manifest.json'), 'utf8'));
   assert.deepEqual(onDisk, manifest);
-  for (const f of ['core/validate.mjs', 'spec/ev.spec.json', 'spec/schemas/weakspots.schema.json']) assert.equal(manifest.files[f], sha256(fs.readFileSync(path.join(dir, f))), f);
-  assert.ok(!Object.keys(manifest.files).some(f => f.startsWith('test/') || f.startsWith('tools/')), 'only deployed files are hashed');
-  const expected = Object.keys(spec.tasks.live).length + Object.keys(spec.tasks.staging).length + 1 + Object.keys(spec.tasks.build).length;
+  for (const f of ['core/validate.mjs', 'spec/ev.spec.json', 'spec/schemas/weakspots.schema.json'])
+    assert.equal(manifest.files[f], sha256(fs.readFileSync(path.join(dir, f))), f);
+  assert.ok(
+    !Object.keys(manifest.files).some(f => f.startsWith('test/') || f.startsWith('tools/')),
+    'only deployed files are hashed'
+  );
+  const expected =
+    Object.keys(spec.tasks.live).length +
+    Object.keys(spec.tasks.staging).length +
+    1 +
+    Object.keys(spec.tasks.build).length;
   assert.equal(Object.keys(manifest.tasks).length, expected);
   assert.equal(manifest.tasks['live.morning'].name, `E.V. morning (${manifest.release})`);
   assert.equal(manifest.tasks['staging.evening-mac'].macBound, true);
@@ -75,10 +84,16 @@ test('a dirty tree marks dirty: true (a changed file, a new file); ignored files
   fs.appendFileSync(path.join(dir, 'core/validate.mjs'), '\n// changed\n');
   const changed = await build({ root: dir, now: NOW });
   assert.equal(changed.manifest.dirty, true);
-  assert.equal(changed.manifest.files['core/validate.mjs'], sha256(fs.readFileSync(path.join(dir, 'core/validate.mjs'))));
+  assert.equal(
+    changed.manifest.files['core/validate.mjs'],
+    sha256(fs.readFileSync(path.join(dir, 'core/validate.mjs')))
+  );
   const record = JSON.parse(fs.readFileSync(path.join(dir, 'dist/system/manifest.json'), 'utf8'));
   const validate = makeValidator(loadSchemas(path.join(dir, 'spec', 'schemas')));
-  assert.ok(validate('system', record, { id: 'manifest' }).errors.some(e => e.path === '/dirty'), 'the record copy of a dirty build cannot validate as deployed');
+  assert.ok(
+    validate('system', record, { id: 'manifest' }).errors.some(e => e.path === '/dirty'),
+    'the record copy of a dirty build cannot validate as deployed'
+  );
 
   git(dir, 'checkout', '-q', '--', 'core/validate.mjs');
   fs.writeFileSync(path.join(dir, 'core', 'new.mjs'), 'export {};\n');

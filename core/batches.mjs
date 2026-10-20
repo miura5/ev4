@@ -10,13 +10,24 @@ export const writeBytes = w => new TextEncoder().encode(JSON.stringify(w)).lengt
  * error: it can never be applied and must be split at its source.
  */
 export function chunkWrites(writes, { maxWrites = 50, maxBytes = 1048576 } = {}) {
-  const batches = []; let cur = [], bytes = 0, ids = new Set();
-  const flush = () => { if (cur.length) batches.push(cur); cur = []; bytes = 0; ids = new Set(); };
+  const batches = [];
+  let cur = [],
+    bytes = 0,
+    ids = new Set();
+  const flush = () => {
+    if (cur.length) batches.push(cur);
+    cur = [];
+    bytes = 0;
+    ids = new Set();
+  };
   for (const w of writes) {
-    const b = writeBytes(w); const key = `${w.collection}/${w.id || w.doc_id}`;
+    const b = writeBytes(w);
+    const key = `${w.collection}/${w.id || w.doc_id}`;
     if (b > maxBytes) throw new Error(`${key} is ${b} bytes, over the ${maxBytes}-byte batch limit`);
     if (cur.length >= maxWrites || bytes + b > maxBytes || ids.has(key)) flush();
-    cur.push(w); bytes += b; ids.add(key);
+    cur.push(w);
+    bytes += b;
+    ids.add(key);
   }
   flush();
   return batches;

@@ -16,7 +16,13 @@ import { makeValidator, validateAgainst, describeErrors } from '../core/validate
 
 const HERE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // What the manifest hashes: everything that executes or is deployed. dist/ page outputs join when the page exists (B-15).
-const HASHED = [/^core\/.+\.mjs$/, /^scripts\/.+\.js$/, /^page\/.+\.(html|js|css)$/, /^spec\/ev\.spec\.json$/, /^spec\/schemas\/.+\.schema\.json$/];
+const HASHED = [
+  /^core\/.+\.mjs$/,
+  /^scripts\/.+\.js$/,
+  /^page\/.+\.(html|js|css)$/,
+  /^spec\/ev\.spec\.json$/,
+  /^spec\/schemas\/.+\.schema\.json$/,
+];
 const SYSTEM_DOCS = ['system/manifest', 'system/spec', 'system/environments'];
 
 export const sha256 = buf => crypto.createHash('sha256').update(buf).digest('hex');
@@ -37,11 +43,29 @@ const bookkeeping = f => BOOKKEEPING.some(re => re.test(f));
  */
 export function gitState(root) {
   let commit = '';
-  try { commit = git(root, ['log', '-1', '--format=%H', '--', '.', ':(exclude)chart', ':(exclude)BACKLOG.md', ':(exclude)tools/chart.mjs', ':(exclude)test/chart.test.mjs']).trim(); } catch { /* none in a shallow checkout */ }
+  try {
+    commit = git(root, [
+      'log',
+      '-1',
+      '--format=%H',
+      '--',
+      '.',
+      ':(exclude)chart',
+      ':(exclude)BACKLOG.md',
+      ':(exclude)tools/chart.mjs',
+      ':(exclude)test/chart.test.mjs',
+    ]).trim();
+  } catch {
+    /* none in a shallow checkout */
+  }
   if (!commit) commit = git(root, ['rev-parse', 'HEAD']).trim();
-  const porcelain = git(root, ['status', '--porcelain', '--untracked-files=all']).split('\n').filter(Boolean)
+  const porcelain = git(root, ['status', '--porcelain', '--untracked-files=all'])
+    .split('\n')
+    .filter(Boolean)
     .filter(l => !l.slice(3).split(' -> ').every(bookkeeping));
-  const files = git(root, ['ls-files', '--cached', '--others', '--exclude-standard', '-z']).split('\0').filter(Boolean)
+  const files = git(root, ['ls-files', '--cached', '--others', '--exclude-standard', '-z'])
+    .split('\0')
+    .filter(Boolean)
     .filter(f => fs.existsSync(path.join(root, f)));
   return { commit, dirty: porcelain.length > 0, changes: porcelain, files };
 }
@@ -49,41 +73,65 @@ export function gitState(root) {
 export function loadSchemas(root) {
   const dir = path.join(root, 'spec', 'schemas');
   const out = {};
-  for (const f of fs.readdirSync(dir).filter(f => f.endsWith('.schema.json')).sort()) out[f.slice(0, -12)] = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
+  for (const f of fs
+    .readdirSync(dir)
+    .filter(f => f.endsWith('.schema.json'))
+    .sort())
+    out[f.slice(0, -12)] = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
   return out;
 }
 
 /** The registry rule: the build fails if a schema and the spec's collection map disagree. Returns a list of problems. */
 export function registryProblems(spec, schemas) {
   const problems = [];
-  const cols = Object.keys(spec.collections), have = Object.keys(schemas);
+  const cols = Object.keys(spec.collections),
+    have = Object.keys(schemas);
   for (const c of cols) if (!have.includes(c)) problems.push(`${c}: no schema file`);
   for (const c of have) if (!cols.includes(c)) problems.push(`${c}: a schema with no collection in the spec`);
   for (const c of cols.filter(c => have.includes(c))) {
-    const meta = schemas[c]['x-ev'] || {}, want = spec.collections[c];
-    if (want.schema !== `spec/schemas/${c}.schema.json`) problems.push(`${c}: the spec names schema file ${want.schema}`);
+    const meta = schemas[c]['x-ev'] || {},
+      want = spec.collections[c];
+    if (want.schema !== `spec/schemas/${c}.schema.json`)
+      problems.push(`${c}: the spec names schema file ${want.schema}`);
     if (meta.class !== want.class) problems.push(`${c}: class ${meta.class} in the schema, ${want.class} in the spec`);
-    if (JSON.stringify(meta.writers) !== JSON.stringify(want.writers)) problems.push(`${c}: writers differ between the schema and the spec`);
+    if (JSON.stringify(meta.writers) !== JSON.stringify(want.writers))
+      problems.push(`${c}: writers differ between the schema and the spec`);
     // B-32 (D-089): a Fact's marks, each with the roles that may change it, named alike in the schema and the spec.
-    if (JSON.stringify(meta.marks || null) !== JSON.stringify(want.marks || null)) problems.push(`${c}: marks differ between the schema (x-ev.marks) and the spec`);
+    if (JSON.stringify(meta.marks || null) !== JSON.stringify(want.marks || null))
+      problems.push(`${c}: marks differ between the schema (x-ev.marks) and the spec`);
     for (const [f, roles] of Object.entries(meta.marks || {})) {
       if (want.class !== 'Fact') problems.push(`${c}: marks on a ${want.class}; only a Fact has marks`);
-      if (!schemas[c].properties || !schemas[c].properties[f]) problems.push(`${c}: mark ${f} is not a property of its schema`);
+      if (!schemas[c].properties || !schemas[c].properties[f])
+        problems.push(`${c}: mark ${f} is not a property of its schema`);
       if (!Array.isArray(roles) || !roles.length) problems.push(`${c}: mark ${f} names no role`);
       if ((want.appends || {})[f]) problems.push(`${c}: ${f} is both a mark and an append map`);
     }
-    if (c !== 'legacy' && JSON.stringify((schemas[c].properties.writer || {}).enum) !== JSON.stringify(want.writers)) problems.push(`${c}: the envelope writer enum differs from the spec`);
+    if (c !== 'legacy' && JSON.stringify((schemas[c].properties.writer || {}).enum) !== JSON.stringify(want.writers))
+      problems.push(`${c}: the envelope writer enum differs from the spec`);
   }
   return problems;
 }
 
 function taskEntries(spec, release) {
   const out = {};
-  const name = (lane, pipeline) => spec.tasks.nameTemplate[lane].replace('<pipeline>', pipeline).replace('<release>', release);
+  const name = (lane, pipeline) =>
+    spec.tasks.nameTemplate[lane].replace('<pipeline>', pipeline).replace('<release>', release);
   const entry = (key, t, displayName, promptSha256) => {
-    out[key] = { name: displayName, pipeline: t.pipeline, record: t.record, lane: t.lane, schedule: t.schedule, macBound: t.macBound, folders: t.folders, push: t.push, trigger: t.trigger, promptSha256 };
+    out[key] = {
+      name: displayName,
+      pipeline: t.pipeline,
+      record: t.record,
+      lane: t.lane,
+      schedule: t.schedule,
+      macBound: t.macBound,
+      folders: t.folders,
+      push: t.push,
+      trigger: t.trigger,
+      promptSha256,
+    };
   };
-  for (const target of ['live', 'staging']) for (const [id, t] of Object.entries(spec.tasks[target])) entry(`${target}.${id}`, t, name(target, id), null);
+  for (const target of ['live', 'staging'])
+    for (const [id, t] of Object.entries(spec.tasks[target])) entry(`${target}.${id}`, t, name(target, id), null);
   entry('staging.diagnostic', spec.tasks.diagnostic, name('staging', 'diagnostic'), null);
   for (const [id, t] of Object.entries(spec.tasks.build)) entry(`build.${id}`, t, id, null);
   return out;
@@ -98,7 +146,10 @@ async function promptHashes(root, spec, release, tasks) {
   const texts = {};
   for (const [key, t] of Object.entries(tasks)) {
     const text = renderPrompt({ key, task: t, spec, release });
-    if (typeof text === 'string') { t.promptSha256 = sha256(text); texts[key] = text; }
+    if (typeof text === 'string') {
+      t.promptSha256 = sha256(text);
+      texts[key] = text;
+    }
   }
   return texts;
 }
@@ -112,7 +163,8 @@ async function promptHashes(root, spec, release, tasks) {
  * the other target's tasks or record (the v3 staging check, kept). null when the repository has no shell yet.
  */
 export function buildPages({ root, spec, schemas, release }) {
-  const ui = spec.ui && spec.ui.page; const shellFile = path.join(root, 'page', 'index.src.html');
+  const ui = spec.ui && spec.ui.page;
+  const shellFile = path.join(root, 'page', 'index.src.html');
   if (!ui || !fs.existsSync(shellFile)) return null;
   const read = f => fs.readFileSync(path.join(root, f), 'utf8');
   const core = read('core/evcore.mjs');
@@ -124,40 +176,90 @@ export function buildPages({ root, spec, schemas, release }) {
   const motion = read('core/motion.mjs');
   if (/^import /m.test(motion)) throw new Error('core/motion.mjs must not import: it runs in the page as written');
   const motionNames = [...motion.matchAll(/^export (?:function|const) (\w+)/gm)].map(m => m[1]);
-  const coreJs = core.replace(/export default EVCore;\s*$/, 'window.EVCore = EVCore;\n')
-    + '\n// ---- core/validate.mjs\n(function () {\n' + validate.replace(/^export function /gm, 'function ') + '\nwindow.EVValidate = { ' + names.join(', ') + ' };\n})();\n'
-    + '\n// ---- core/motion.mjs\n(function () {\n' + motion.replace(/^export (function|const) /gm, '$1 ') + '\nwindow.EVMotion = { ' + motionNames.join(', ') + ' };\n})();\n';
+  const coreJs =
+    core.replace(/export default EVCore;\s*$/, 'window.EVCore = EVCore;\n') +
+    '\n// ---- core/validate.mjs\n(function () {\n' +
+    validate.replace(/^export function /gm, 'function ') +
+    '\nwindow.EVValidate = { ' +
+    names.join(', ') +
+    ' };\n})();\n' +
+    '\n// ---- core/motion.mjs\n(function () {\n' +
+    motion.replace(/^export (function|const) /gm, '$1 ') +
+    '\nwindow.EVMotion = { ' +
+    motionNames.join(', ') +
+    ' };\n})();\n';
   const app = read('page/app.js');
   const appVersion = (app.match(/const VERSION = '([^']+)'/) || [])[1];
-  if (appVersion !== release) throw new Error(`page/app.js VERSION ${appVersion || '(none)'} differs from the release ${release}`);
+  if (appVersion !== release)
+    throw new Error(`page/app.js VERSION ${appVersion || '(none)'} differs from the release ${release}`);
   const out = {};
   for (const target of ['live', 'staging']) {
     const other = target === 'live' ? 'staging' : 'live';
     const rec = spec.registry.records[target] || {};
     const pageSpec = {
-      release, target, specVersion: spec.specVersion,
+      release,
+      target,
+      specVersion: spec.specVersion,
       record: { artifact: rec.artifact || null, name: rec.name || null },
       tasks: { [target]: spec.tasks[target], ...(target === 'staging' ? { diagnostic: spec.tasks.diagnostic } : {}) },
-      constants: spec.constants, courses: spec.courses, capacity: spec.capacity, ui: spec.ui, jobs: spec.jobs, workouts: spec.workouts || null, boundaries: spec.boundaries,
-      workingAgreements: spec.workingAgreements, persona: spec.persona || null, items: spec.items || null, pipelines: Object.fromEntries(Object.entries(spec.pipelines).filter(([k]) => !k.startsWith('_')).map(([k, p]) => [k, { lane: p.lane, purpose: p.purpose, steps: p.steps ? p.steps.length : null }])),
+      constants: spec.constants,
+      courses: spec.courses,
+      capacity: spec.capacity,
+      ui: spec.ui,
+      jobs: spec.jobs,
+      workouts: spec.workouts || null,
+      boundaries: spec.boundaries,
+      workingAgreements: spec.workingAgreements,
+      persona: spec.persona || null,
+      items: spec.items || null,
+      pipelines: Object.fromEntries(
+        Object.entries(spec.pipelines)
+          .filter(([k]) => !k.startsWith('_'))
+          .map(([k, p]) => [k, { lane: p.lane, purpose: p.purpose, steps: p.steps ? p.steps.length : null }])
+      ),
       reader: (spec.registry.studyWatch || {}).reader || null,
       // When each runs live (no task ids); a pipeline with no live task (the restore drill, which drills into staging)
       // shows its staging task's schedule.
       schedules: Object.fromEntries([
-        ...Object.values(spec.tasks.staging || {}).filter(t => t && t.pipeline && t.schedule).map(t => [t.pipeline, t.schedule]),
-        ...Object.values(spec.tasks.live || {}).filter(t => t && t.pipeline).map(t => [t.pipeline, t.schedule || null]),
+        ...Object.values(spec.tasks.staging || {})
+          .filter(t => t && t.pipeline && t.schedule)
+          .map(t => [t.pipeline, t.schedule]),
+        ...Object.values(spec.tasks.live || {})
+          .filter(t => t && t.pipeline)
+          .map(t => [t.pipeline, t.schedule || null]),
       ]),
-      collections: spec.collections, schemas,
+      collections: spec.collections,
+      schemas,
     };
     const specJson = JSON.stringify(pageSpec);
-    const foreign = [...Object.values(spec.tasks[other] || {}).map(t => t && t.trigger).filter(Boolean), (spec.registry.records[other] || {}).artifact].filter(Boolean);
+    const foreign = [
+      ...Object.values(spec.tasks[other] || {})
+        .map(t => t && t.trigger)
+        .filter(Boolean),
+      (spec.registry.records[other] || {}).artifact,
+    ].filter(Boolean);
     const leak = foreign.find(id => specJson.includes(id));
     if (leak) throw new Error(`the ${target} page would name ${other}'s ${leak}`);
-    const shell = read('page/index.src.html').replaceAll('{{TITLE}}', rec.name || 'E.V. Home').replaceAll('{{RELEASE}}', release).replaceAll('{{TARGET}}', target);
-    if (/\{\{\w+\}\}/.test(shell)) throw new Error('page/index.src.html has a placeholder the build does not fill: ' + shell.match(/\{\{\w+\}\}/)[0]);
-    if (Buffer.byteLength(shell) > ui.shellBudgetBytes) throw new Error(`the shell is ${Buffer.byteLength(shell)} bytes, over its ${ui.shellBudgetBytes}-byte budget`);
-    out[target] = { [ui.shell]: shell, 'core.js': coreJs, 'spec.json': specJson, 'app.js': app, 'styles.css': read('page/styles.css') };
-    const want = [ui.shell, ...ui.files].sort().join(); if (Object.keys(out[target]).sort().join() !== want) throw new Error('spec.ui.page lists ' + want + '; the build makes ' + Object.keys(out[target]).sort().join());
+    const shell = read('page/index.src.html')
+      .replaceAll('{{TITLE}}', rec.name || 'E.V. Home')
+      .replaceAll('{{RELEASE}}', release)
+      .replaceAll('{{TARGET}}', target);
+    if (/\{\{\w+\}\}/.test(shell))
+      throw new Error(
+        'page/index.src.html has a placeholder the build does not fill: ' + shell.match(/\{\{\w+\}\}/)[0]
+      );
+    if (Buffer.byteLength(shell) > ui.shellBudgetBytes)
+      throw new Error(`the shell is ${Buffer.byteLength(shell)} bytes, over its ${ui.shellBudgetBytes}-byte budget`);
+    out[target] = {
+      [ui.shell]: shell,
+      'core.js': coreJs,
+      'spec.json': specJson,
+      'app.js': app,
+      'styles.css': read('page/styles.css'),
+    };
+    const want = [ui.shell, ...ui.files].sort().join();
+    if (Object.keys(out[target]).sort().join() !== want)
+      throw new Error('spec.ui.page lists ' + want + '; the build makes ' + Object.keys(out[target]).sort().join());
   }
   return out;
 }
@@ -172,25 +274,67 @@ export async function build({ root = HERE, out = path.join(root, 'dist'), now = 
   const coreVersionFile = path.join(root, 'core', 'evcore.mjs');
   if (fs.existsSync(coreVersionFile)) {
     const m = fs.readFileSync(coreVersionFile, 'utf8').match(/VERSION\s*=\s*['"]([^'"]+)['"]/);
-    if (!m || m[1] !== release) throw new Error(`core VERSION ${m ? m[1] : '(none)'} differs from the release ${release}`);
+    if (!m || m[1] !== release)
+      throw new Error(`core VERSION ${m ? m[1] : '(none)'} differs from the release ${release}`);
   }
   // B-42 (D-099): the course table is sound, and the repository's own record names only its courses.
   const { courseProblems, unknownCourses } = await import(pathToFileURL(path.join(root, 'core', 'lint.mjs')).href);
-  const cp = courseProblems(spec); if (cp.length) throw new Error('spec.courses:\n  ' + cp.join('\n  '));
-  { const EVm = (await import(pathToFileURL(path.join(root, 'core', 'evcore.mjs')).href)).default; EVm.configure(spec);
-    const rec = path.join(root, 'test', 'data', 'record'), db = {};
-    for (const col of ['exams', 'materials']) { const d = path.join(rec, col); db[col] = fs.existsSync(d) ? fs.readdirSync(d).filter(f => f.endsWith('.json')).map(f => ({ id: f.slice(0, -5), ...JSON.parse(fs.readFileSync(path.join(d, f), 'utf8')) })) : []; }
-    const bad = unknownCourses(db); if (bad.length) throw new Error('test/data/record names courses spec.courses does not: ' + bad.map(b => `${b.ref} (${b.course})`).join(', ')); }
+  const cp = courseProblems(spec);
+  if (cp.length) throw new Error('spec.courses:\n  ' + cp.join('\n  '));
+  {
+    const EVm = (await import(pathToFileURL(path.join(root, 'core', 'evcore.mjs')).href)).default;
+    EVm.configure(spec);
+    const rec = path.join(root, 'test', 'data', 'record'),
+      db = {};
+    for (const col of ['exams', 'materials']) {
+      const d = path.join(rec, col);
+      db[col] = fs.existsSync(d)
+        ? fs
+            .readdirSync(d)
+            .filter(f => f.endsWith('.json'))
+            .map(f => ({ id: f.slice(0, -5), ...JSON.parse(fs.readFileSync(path.join(d, f), 'utf8')) }))
+        : [];
+    }
+    const bad = unknownCourses(db);
+    if (bad.length)
+      throw new Error(
+        'test/data/record names courses spec.courses does not: ' + bad.map(b => `${b.ref} (${b.course})`).join(', ')
+      );
+  }
 
   const g = gitState(root);
   const files = {};
-  for (const f of g.files.filter(f => HASHED.some(re => re.test(f))).sort()) files[f] = sha256(fs.readFileSync(path.join(root, f)));
+  for (const f of g.files.filter(f => HASHED.some(re => re.test(f))).sort())
+    files[f] = sha256(fs.readFileSync(path.join(root, f)));
   const pageOut = buildPages({ root, spec, schemas, release });
-  const page = target => ({ artifact: (spec.registry.records[target] || {}).artifact || null, files: pageOut ? Object.fromEntries(Object.entries(pageOut[target]).map(([f, body]) => ['page/' + target + '/' + f, sha256(body)])) : {}, capabilities: pageOut ? spec.ui.page.capabilities : null });
+  const page = target => ({
+    artifact: (spec.registry.records[target] || {}).artifact || null,
+    files: pageOut
+      ? Object.fromEntries(
+          Object.entries(pageOut[target]).map(([f, body]) => ['page/' + target + '/' + f, sha256(body)])
+        )
+      : {},
+    capabilities: pageOut ? spec.ui.page.capabilities : null,
+  });
   const tasks = taskEntries(spec, release);
   const prompts = await promptHashes(root, spec, release, tasks);
-  const records = Object.fromEntries(['live', 'staging'].map(t => [t, { artifact: (spec.registry.records[t] || {}).artifact || null, systemDocs: SYSTEM_DOCS }]));
-  const manifest = { release, commit: g.commit, dirty: g.dirty, builtAt: now, specVersion: spec.specVersion, files, pages: { live: page('live'), staging: page('staging') }, tasks, records };
+  const records = Object.fromEntries(
+    ['live', 'staging'].map(t => [
+      t,
+      { artifact: (spec.registry.records[t] || {}).artifact || null, systemDocs: SYSTEM_DOCS },
+    ])
+  );
+  const manifest = {
+    release,
+    commit: g.commit,
+    dirty: g.dirty,
+    builtAt: now,
+    specVersion: spec.specVersion,
+    files,
+    pages: { live: page('live'), staging: page('staging') },
+    tasks,
+    records,
+  };
 
   const system = schemas.system;
   const body = validateAgainst({ $ref: '#/$defs/manifestBody', $defs: system.$defs }, manifest);
@@ -211,23 +355,38 @@ export async function build({ root = HERE, out = path.join(root, 'dist'), now = 
 
   fs.mkdirSync(path.join(out, 'system'), { recursive: true });
   fs.writeFileSync(path.join(out, 'manifest.json'), JSON.stringify(manifest, null, 1));
-  for (const [key, doc] of Object.entries(docs)) fs.writeFileSync(path.join(out, key + '.json'), JSON.stringify(doc, null, 1));
+  for (const [key, doc] of Object.entries(docs))
+    fs.writeFileSync(path.join(out, key + '.json'), JSON.stringify(doc, null, 1));
   fs.rmSync(path.join(out, 'page'), { recursive: true, force: true });
-  if (pageOut) for (const [target, files] of Object.entries(pageOut)) {
-    fs.mkdirSync(path.join(out, 'page', target), { recursive: true });
-    for (const [f, body] of Object.entries(files)) fs.writeFileSync(path.join(out, 'page', target, f), body);
-  }
-  fs.rmSync(path.join(out, 'prompts'), { recursive: true, force: true }); fs.mkdirSync(path.join(out, 'prompts'), { recursive: true });
+  if (pageOut)
+    for (const [target, files] of Object.entries(pageOut)) {
+      fs.mkdirSync(path.join(out, 'page', target), { recursive: true });
+      for (const [f, body] of Object.entries(files)) fs.writeFileSync(path.join(out, 'page', target, f), body);
+    }
+  fs.rmSync(path.join(out, 'prompts'), { recursive: true, force: true });
+  fs.mkdirSync(path.join(out, 'prompts'), { recursive: true });
   for (const [key, text] of Object.entries(prompts)) fs.writeFileSync(path.join(out, 'prompts', key + '.txt'), text);
   return { manifest, changes: g.changes, out };
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const arg = n => { const i = process.argv.indexOf('--' + n); return i > 0 ? process.argv[i + 1] : undefined; };
+  const arg = n => {
+    const i = process.argv.indexOf('--' + n);
+    return i > 0 ? process.argv[i + 1] : undefined;
+  };
   try {
-    const { manifest, changes, out } = await build({ root: arg('root') ? path.resolve(arg('root')) : HERE, out: arg('out') ? path.resolve(arg('out')) : undefined, now: arg('now') });
-    console.log(`E.V. ${manifest.release} at ${manifest.commit.slice(0, 12)}: ${Object.keys(manifest.files).length} files hashed, ${Object.keys(manifest.tasks).length} tasks -> ${path.relative(process.cwd(), out) || out}`);
-    if (manifest.dirty) console.log(`dirty: true (${changes.length} uncommitted change${changes.length === 1 ? '' : 's'}); deploy will refuse this build`);
+    const { manifest, changes, out } = await build({
+      root: arg('root') ? path.resolve(arg('root')) : HERE,
+      out: arg('out') ? path.resolve(arg('out')) : undefined,
+      now: arg('now'),
+    });
+    console.log(
+      `E.V. ${manifest.release} at ${manifest.commit.slice(0, 12)}: ${Object.keys(manifest.files).length} files hashed, ${Object.keys(manifest.tasks).length} tasks -> ${path.relative(process.cwd(), out) || out}`
+    );
+    if (manifest.dirty)
+      console.log(
+        `dirty: true (${changes.length} uncommitted change${changes.length === 1 ? '' : 's'}); deploy will refuse this build`
+      );
   } catch (e) {
     console.error('build failed: ' + e.message);
     process.exit(1);
