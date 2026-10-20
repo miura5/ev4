@@ -128,8 +128,8 @@ table.tbl{width:100%;border-collapse:collapse;font-size:14px}
 table.tbl th{text-align:left;font:500 12px var(--sans);color:var(--soft);padding:6px 8px 8px 0;border-bottom:1px solid var(--line)}
 table.tbl td{padding:8px 8px 8px 0;border-bottom:1px solid rgba(255,255,255,.06);vertical-align:top}
 table.tbl .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-.meter{height:8px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden}.meter i{display:block;height:100%;background:var(--accent);border-radius:4px;transition:width .6s var(--ease)}
-.progress{height:4px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden}.progress i{display:block;height:100%;background:var(--accent);transition:width .4s var(--ease)}
+.meter{height:8px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden}.meter i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.progress{height:4px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden}.progress i{display:block;height:100%;background:var(--accent);transition:width .2s ease}
 details>summary{cursor:pointer;font:600 13.5px var(--sans);color:var(--ink2);min-height:36px;display:flex;align-items:center}
 /* controls */
 button,.btn{font:500 14px var(--sans);border-radius:999px;padding:0 16px;min-height:40px;cursor:pointer;border:1px solid var(--line2);background:transparent;color:var(--ink);transition:background .2s ease,border-color .2s ease,transform .1s ease}
@@ -272,18 +272,12 @@ body.opening .msg.greet .msg-cards{display:grid;grid-template-columns:repeat(aut
 .sess-sec h3{font:500 12px var(--sans);color:var(--soft);margin:0}
 .sess-sec ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:3px}
 .pend{display:flex;flex-direction:column;gap:10px;padding:12px 14px;border:1px solid rgba(154,123,255,.30);border-radius:16px;background:rgba(154,123,255,.07)}
-/* motion: a view's blocks rise in when you switch to it; bars and the week chart grow in */
-/* the blocks rise in; inside two columns (B-121) each column's blocks do, the wrappers themselves stay still */
-.panel.enter>:not(.cols),.panel.enter>.cols>*>*{animation:rise .55s var(--ease) both}
-.panel.enter>:nth-child(2),.panel.enter>.cols>*>:nth-child(2){animation-delay:.05s}.panel.enter>:nth-child(3),.panel.enter>.cols>*>:nth-child(3){animation-delay:.1s}.panel.enter>:nth-child(4),.panel.enter>.cols>*>:nth-child(4){animation-delay:.15s}
-.panel.enter>:nth-child(5),.panel.enter>.cols>*>:nth-child(5){animation-delay:.2s}.panel.enter>:nth-child(6),.panel.enter>.cols>*>:nth-child(6){animation-delay:.25s}.panel.enter>:nth-child(n+7),.panel.enter>.cols>*>:nth-child(n+7){animation-delay:.3s}
-#p-ev.enter>*{animation-name:fade;animation-duration:.4s}
-.panel.enter .meter i,.panel.enter .progress i{transform-origin:left;animation:grow-x .9s var(--ease) .15s both}
-.panel.enter .chart .bar{transform-box:fill-box;transform-origin:bottom;animation:grow-y .9s var(--ease) .15s both}
+/* motion (B-125, D-163): a view's content shows at once on a switch, with one fade of at most 0.2 s on the view as a
+   whole; nothing rises or staggers, and bars, meters and the week chart are drawn at their value. Folds, her stage and
+   the side column keep their own moves. */
+.panel.enter{animation:fade .18s ease both}
 @keyframes fade{from{opacity:0}to{opacity:1}}
-@keyframes grow-x{from{transform:scaleX(0)}to{transform:none}}
-@keyframes grow-y{from{transform:scaleY(0)}to{transform:none}}
-.rise{animation:rise .6s var(--ease) both}
+.rise{animation:rise .3s var(--ease) both}
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @keyframes pulse{50%{opacity:.35}}
 @keyframes glow{0%{box-shadow:0 0 0 0 rgba(63,224,197,0)}30%{box-shadow:0 0 0 5px rgba(63,224,197,.14),0 0 44px -10px rgba(63,224,197,.45)}100%{box-shadow:0 0 0 0 rgba(63,224,197,0)}}

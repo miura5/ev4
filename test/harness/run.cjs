@@ -147,7 +147,8 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     ok(`[${scheme}] the greeting has no card; at most three chips, one opening the finished study guide`, gm.cards === 0 && gm.chips.length <= 3 && gm.chips.includes('Open the study guide'), JSON.stringify(gm));
     ok(`[${scheme}] quick chips`, (await page.locator('#qchips .qchip').count()) >= 3, String(await page.locator('#qchips .qchip').count()));
     await page.click('#tab-today'); await page.waitForTimeout(100);
-    ok(`[${scheme}] switching tabs plays the arrival`, await page.evaluate(() => document.getElementById('p-today').classList.contains('enter') && getComputedStyle(document.querySelector('#p-today .card')).animationName === 'rise'));
+    // B-125 (D-163): a switch shows the tab at once, one fade of at most 0.2 s on the whole; its cards do not rise.
+    ok(`[${scheme}] switching tabs shows the tab at once: one short fade, nothing rising`, await page.evaluate(() => { const p = document.getElementById('p-today'), s = getComputedStyle(p); return p.classList.contains('enter') && s.animationName === 'fade' && parseFloat(s.animationDuration) <= 0.2 && getComputedStyle(document.querySelector('#p-today .card')).animationName === 'none'; }));
     await page.waitForTimeout(900);
     await page.screenshot({ path: `${shots}/today-${scheme}.png`, fullPage: true });
     await page.click('#tab-ev'); await page.waitForTimeout(100);

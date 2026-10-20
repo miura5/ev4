@@ -32,13 +32,14 @@ const { SIZES, viewsOf, shotName } = require('./views.cjs');
 const VIEWS = viewsOf(fs.readFileSync(path.join(pageDir, 'index.html'), 'utf8'));
 // B-115: the tenet checks, on every view at spec.ui.tenets.widths; a tab in spec.ui.tenets.on fails the pass.
 const TENETS = JSON.parse(fs.readFileSync(path.join(root, 'spec', 'ev.spec.json'), 'utf8')).ui.tenets;
-const { collect, judge } = require('./tenets.cjs');
+const { collect, judge, motion, judgeMotion } = require('./tenets.cjs');
+const png = require('./png.cjs');
 const reports = [];
 const results = []; const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', name, detail]);
 
 (async () => {
   const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' }).catch(() => chromium.launch());
-  for (const size of SIZES) {
+  for (const size of SIZES.filter(z => !process.env.LOOK_SIZES || process.env.LOOK_SIZES.split(',').includes(z.tag))) { // LOOK_SIZES=390x844: a quicker pass while working (check.mjs runs them all)
     const width = size.tag, viewport = { width: size.width, height: size.height };
     const page = await browser.newPage({ viewport, colorScheme: 'dark' });
     const errors = []; page.on('pageerror', e => errors.push(e.message)); page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
@@ -104,7 +105,7 @@ const results = []; const ok = (name, cond, detail = '') => results.push([cond ?
     // B-117: Today: no stat tile, no item's minutes twice, the exam in Next 7 days only, coral equal to core's urgent
     // count, a Prep marker on the clinical day; ticking keeps the scroll (v4 rule 6).
     if (TENETS.widths.includes(size.width) && [844, 830, 800].includes(size.height)) {
-      await page.click('#tab-today'); await page.waitForTimeout(800); // past the panel's rise
+      await page.click('#tab-today'); await page.waitForTimeout(450); // B-125: settled within 450 ms
       const t = await page.evaluate(() => { const vis = e => !!e && !e.closest('[hidden]') && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().height > 0;
         const items = [...document.querySelectorAll('#today-list li')].filter(vis).map(li => (li.querySelector('.ti-t') || li).textContent.trim());
         const ahead = [...document.querySelectorAll('#ahead li')].filter(vis);
@@ -168,6 +169,32 @@ const results = []; const ok = (name, cond, detail = '') => results.push([cond ?
       const m = await page.evaluate(id => ({ y: scrollY, inDue: !!document.querySelector(`#weak-due [data-id="${id}"]`), inSolid: !!document.querySelector(`#weak-solid [data-id="${id}"]`), solidLine: document.getElementById('weak-solid-fold').textContent }), id);
       ok(`[${width}] weak spots: an opened row shows Mark solid; marking it moves it to Solid and the page stays put`, shown && !m.inDue && m.inSolid && Math.abs(m.y - y0) <= 1, JSON.stringify({ id, shown, y0, ...m }));
       await page.screenshot({ path: `${shots}/look-weak-marked-${width}.png`, fullPage: true });
+    }
+    // B-125 (D-163): every view at 390 and 1280: no transition or animation over 450 ms outside her stage, her core (the
+    // header avatar too), the reveal and the echo of his line; the view settled 450 ms after the switch; and the
+    // reduced-motion screenshot the same as the settled one.
+    if (['390x844', '1280x800'].includes(width)) {
+      const M = TENETS.motion, sig = () => page.evaluate(ex => { const p = document.querySelector('section.panel:not([hidden])'); return [...p.querySelectorAll('*')].filter(e => !ex.some(x => e.closest(x)) && (!e.checkVisibility || e.checkVisibility({ contentVisibilityAuto: true }))).slice(0, 400).map(e => { const r = e.getBoundingClientRect(); return [e.id || e.className, Math.round(r.top), Math.round(r.left), Math.round(r.width), Math.round(r.height), getComputedStyle(e).opacity].join(','); }).join(';'); }, M.exempt);
+      const open = async view => { await page.click(view.tab === 'system' ? '#tab-today' : '#tab-system'); await page.waitForTimeout(300); await page.evaluate(() => window.scrollTo(0, 0));
+        const t0 = Date.now(); await page.click('#tab-' + view.tab); if (view.v && await page.isVisible(`#seg-${view.tab} [data-v="${view.v}"]`)) await page.click(`#seg-${view.tab} [data-v="${view.v}"]`); return t0; };
+      const settledShot = () => page.screenshot({ fullPage: false, caret: 'hide', mask: M.exempt.map(x => page.locator(x)), maskColor: '#000' }); // her stage, core, reveal and echo keep their own pace
+      for (const view of VIEWS) {
+        const t0 = await open(view), first = await page.evaluate(motion, M);
+        await page.waitForTimeout(Math.max(0, t0 + M.maxMs - Date.now()));
+        const at = await page.evaluate(motion, M), s0 = await sig(); await page.waitForTimeout(700); const s1 = await sig();
+        const c = judgeMotion(first, at, M.maxMs);
+        const moved = s0 === s1 ? [] : s0.split(';').map((x, i) => [i, x, s1.split(';')[i]]).filter(([, a, b]) => a !== b).slice(0, 3);
+        ok(`[${width}] ${view.id}: D-163 motion`, c.ok && s0 === s1, c.detail + (s0 === s1 ? '' : '; the layout still moved after 450 ms: ' + JSON.stringify(moved)));
+        // On E.V. the end state is after her reveal, which ends within 6 s (D-163); the settled shot waits it out.
+        const ENDS = view.tab === 'ev' ? 6000 : 0; if (ENDS) await page.waitForTimeout(ENDS);
+        const moving = await settledShot();
+        await page.emulateMedia({ reducedMotion: 'reduce' }); await open(view); await page.waitForTimeout(1150 + ENDS);
+        const still = await settledShot(); await page.emulateMedia({ reducedMotion: 'no-preference' });
+        const d = png.diff(moving, still);
+        ok(`[${width}] ${view.id}: the reduced-motion screenshot matches the settled one`, d.share <= M.shotTolerance, JSON.stringify(d));
+        if (d.share > M.shotTolerance) { fs.writeFileSync(`${shots}/motion-${view.id}-${width}-settled.png`, moving); fs.writeFileSync(`${shots}/motion-${view.id}-${width}-reduced.png`, still); }
+      }
+      await page.evaluate(() => window.scrollTo(0, 0));
     }
     // Each seg control back to its first view, as a fresh open has it.
     for (const v of VIEWS.filter(x => x.v)) if (VIEWS.find(x => x.tab === v.tab).v === v.v) { await page.click('#tab-' + v.tab); await page.click(`#seg-${v.tab} [data-v="${v.v}"]`); }

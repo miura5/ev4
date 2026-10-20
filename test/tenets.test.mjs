@@ -47,3 +47,23 @@ test('B-115: the other checks each fail on what their tenet forbids', () => {
   talk.qchipsShown = false; assert.deepEqual(failing(talk), []);
   const hide = ev(); hide.closers = ['Hide']; assert.deepEqual(failing(hide), ['D-160'], 'B-122: a Hide button');
 });
+
+test('B-125 (D-163): the motion check fails a planted long move, a view still moving at 450 ms and a fading panel', () => {
+  const { judgeMotion } = createRequire(import.meta.url)('./harness/tenets.cjs');
+  const still = { tab: 'today', over: [], declared: 12, running: [], opacity: 1 };
+  assert.equal(judgeMotion(still, still).ok, true);
+  assert.equal(judgeMotion({ ...still, over: ['div.card animation rise 550 ms'] }, still).ok, false, 'the old staggered rise');
+  assert.equal(judgeMotion(still, { ...still, running: ['i animation grow-x'] }).ok, false, 'a bar still growing at 450 ms');
+  assert.equal(judgeMotion(still, { ...still, opacity: 0.6 }).ok, false, 'the view still fading in');
+  const m = spec.ui.tenets.motion;
+  assert.equal(m.maxMs, 450);
+  assert.deepEqual(m.exempt, ['#hero', '.ev-av', '#top-av', '.reveal', '.cap-echo'], 'her stage, her core and the header avatar, the reveal, the echo of his line');
+  const look = fs.readFileSync(path.join(ROOT, 'test', 'harness', 'look.cjs'), 'utf8');
+  assert.match(look, /page\.evaluate\(motion, M\)/); assert.match(look, /reducedMotion: 'reduce'/);
+});
+
+test('B-125 (D-163): the stylesheet has no staggered rise and no growth of bars on a tab switch', () => {
+  const css = fs.readFileSync(path.join(ROOT, 'page', 'styles.css'), 'utf8');
+  assert.doesNotMatch(css, /grow-[xy]/); assert.doesNotMatch(css, /\.panel\.enter>:nth-child/);
+  assert.match(css, /\.panel\.enter\{animation:fade \.18s/);
+});
