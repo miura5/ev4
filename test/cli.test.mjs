@@ -8,7 +8,7 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { copyRepo, git } from './helpers.mjs';
 import { build } from '../tools/build.mjs';
-import { verify, pageStamp, canonical } from '../core/deploy.mjs';
+import { verify, pageStamp, canonical, contentHash, deployCalls } from '../core/deploy.mjs';
 
 const CLI = new URL('../core/cli.mjs', import.meta.url).pathname;
 const NOW = '2026-10-17T12:00:00Z';
@@ -218,4 +218,28 @@ test('verify-deploy: a task whose pipeline has no steps in the build is pending,
   const line = k => r.lines.find(l => l.what === `task ${k}`);
   assert.deepEqual([line('staging.evening-mac').ok, line('staging.evening-mac').detail], [true, 'pending: its pipeline has no steps in this build']);
   assert.deepEqual([line('staging.weekly').ok, line('staging.weekly').detail], [false, 'not created yet']);
+});
+
+test('B-63 (D-114): verify compares content, not commit; the B-35 gate compares a content hash', async () => {
+  const { dist, state, manifest } = await deployedStaging();
+  const read = p => JSON.parse(fs.readFileSync(p, 'utf8'));
+  const triggers = [...read(path.join(state, 'triggers-1.json')).data, ...read(path.join(state, 'triggers-2.json')).data];
+  const dist2 = { spec: read(path.join(dist, 'system/spec.json')), environments: read(path.join(dist, 'system/environments.json')) };
+  const record = rec => ({ manifest: rec, spec: read(path.join(state, 'record/system/spec.json')), environments: read(path.join(state, 'record/system/environments.json')) });
+  const older = { ...read(path.join(state, 'record/system/manifest.json')), commit: 'e'.repeat(40) };
+  const run = (rec, behind) => verify({ manifest, target: 'staging', dist: dist2, sha256, build: { pushed: true, behind: c => (c === older.commit ? behind : null) },
+    state: { triggers, record: record(rec), pageHtml: `<meta name="ev-release" content="${manifest.release}">`, pageFiles: null } }).lines.find(l => l.what === 'system/manifest commit');
+  assert.deepEqual(run(older, 3), { ok: true, what: 'system/manifest commit', detail: 'deployed eeeeeee, 3 notes-only commits behind' }, 'an ancestor with the same content is green');
+  assert.equal(run(older, null).ok, false, 'not an ancestor: red');
+  assert.equal(run({ ...older, files: { ...older.files, 'core/validate.mjs': '0'.repeat(64) } }, 3).ok, false, 'a differing file hash stays red');
+  const prompts = JSON.parse(JSON.stringify(older)); const k = Object.keys(prompts.tasks).find(x => prompts.tasks[x].promptSha256); prompts.tasks[k].promptSha256 = '1'.repeat(64);
+  assert.match(run(prompts, 3).detail, /content differs \(prompts: /, 'a differing prompt hash stays red');
+  // The content hash covers files, prompts and spec; deployCalls' B-35 gate passes on it at another commit.
+  const h = contentHash(manifest, dist2.spec, sha256);
+  assert.equal(h, contentHash({ ...manifest, commit: 'e'.repeat(40), builtAt: 'later' }, { ...dist2.spec, at: 'later' }, sha256), 'commit, build time and envelope are not content');
+  assert.notEqual(h, contentHash({ ...manifest, files: { ...manifest.files, 'core/validate.mjs': '0'.repeat(64) } }, dist2.spec, sha256));
+  assert.notEqual(h, contentHash(manifest, { ...dist2.spec, specVersion: '9' }, sha256));
+  const gate = v => deployCalls({ manifest, target: 'live', distDir: dist, build: { pushed: true, contentHash: h }, mattOk: true, duringSession: true, sha256, stagingVerify: v }).refusals || [];
+  assert.ok(!gate({ commit: 'e'.repeat(40), contentHash: h, green: true }).some(r => /staging/.test(r)), 'same content at another commit passes');
+  assert.ok(gate({ commit: manifest.commit, contentHash: '2'.repeat(64), green: true }).some(r => /ran on other content/.test(r)));
 });

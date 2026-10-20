@@ -1131,11 +1131,11 @@
   "title": "verify compares content, not commit (O-1, D-114): verify-deploy is green when release, specVersion, every file hash, spec, environments and every prompt hash match and the record's commit is an ancestor of HEAD, with the line \"deployed <commit>, n notes-only commits behind\"; any differing hash stays red; deploy live's B-35 gate compares a content hash (sha256 over the manifest's files, prompts and spec) instead of the commit",
   "dod": null,
   "milestone": "M9",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-25"
   ],
-  "notes": "",
+  "notes": "Oct 20 session: verify on content",
   "commit": null,
   "source": "BACKLOG.md"
  },

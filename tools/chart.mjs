@@ -31,7 +31,8 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { newestTranscript, toolResults } from '../core/transcript.mjs';
-import { verify, verifyReads, deployCalls, formatDeploy, canonical, SYSTEM_IDS } from '../core/deploy.mjs';
+import { verify, verifyReads, deployCalls, formatDeploy, canonical, SYSTEM_IDS, contentHash } from '../core/deploy.mjs';
+import { commitsBehind } from '../core/cli.mjs';
 import { readState, withShell } from '../core/verifystate.mjs';
 import { build } from './build.mjs';
 
@@ -828,11 +829,12 @@ async function ship(o) {
   const reads = verifyReads({ manifest, target, stateDir }).map(r => ({ ...r, have: have(r.save) }));
   const savedAt = f => (fs.existsSync(f) ? fs.statSync(f).mtimeMs : 0);
   const stale = last && last.commit === manifest.commit && savedAt(path.join(stateDir, 'record', 'system', 'manifest.json')) < last.at ? { tasks: last.touched ? last.touched.tasks : true, pages: last.touched ? last.touched.pages : true } : null;
-  const verifyResult = verify({ manifest, target, state, build: { pushed }, dist: distDocs, sha256 });
+  const buildInfo = { pushed, behind: c => commitsBehind(root, c, manifest.commit), contentHash: contentHash(manifest, distDocs.spec, sha256) };
+  const verifyResult = verify({ manifest, target, state, build: buildInfo, dist: distDocs, sha256 });
   const file = o.transcript || newestTranscript(), jsonl = file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
   const versions = { ...versionsFrom(jsonl, `https://claude.ai/artifact/${manifest.records[target].artifact}`), ...(o.version ? Object.fromEntries(list(o.version).map(kv => kv.split('=')).map(([k, v]) => [k, Number(v)])) : {}) };
   const stagingVerify = fs.existsSync(path.join(dist, 'verify-staging.json')) ? JSON.parse(fs.readFileSync(path.join(dist, 'verify-staging.json'), 'utf8')) : null;
-  const deploy = deployCalls({ manifest, target, distDir: dist, build: { pushed }, versions, mattOk: Boolean(o['matt-ok']), duringSession: Boolean(o['during-session']), state, sha256, stagingVerify, stateDir });
+  const deploy = deployCalls({ manifest, target, distDir: dist, build: buildInfo, versions, mattOk: Boolean(o['matt-ok']), duringSession: Boolean(o['during-session']), state, sha256, stagingVerify, stateDir });
   const step = shipStep({ target, manifest, state, verifyResult, reads, deploy, rec, refusals, skip, stale });
   const head = `ship ${target}: ${manifest.release} at ${manifest.commit.slice(0, 7)}`;
   if (step.kind === 'refused') { console.log([`${head}: REFUSED`, ...step.refusals.map(r => '  ' + r)].join('\n')); return 1; }
@@ -851,7 +853,7 @@ async function ship(o) {
     return 0;
   }
   // verified: the gate file deploy live reads (B-35), then the deploy in the record.
-  fs.writeFileSync(path.join(dist, `verify-${target}.json`), JSON.stringify({ target, release: manifest.release, commit: manifest.commit, green: true, lines: step.lines, by: 'ship' }, null, 1));
+  fs.writeFileSync(path.join(dist, `verify-${target}.json`), JSON.stringify({ target, release: manifest.release, commit: manifest.commit, contentHash: buildInfo.contentHash, green: true, lines: step.lines, by: 'ship' }, null, 1));
   console.log([`${head}: GREEN`, ...step.lines.map(l => `  ${l.ok ? 'ok ' : 'NO '} ${l.what}${l.detail ? ': ' + l.detail : ''}`)].join('\n'));
   if (step.recorded) { console.log(`the ${target} deploy at ${manifest.commit.slice(0, 7)} is in the record`); return 0; }
   const prev = rec.deploys.filter(d => d.target === target).at(-1);

@@ -20,6 +20,17 @@ export function canonical(v) {
 }
 const same = (a, b) => canonical(a) === canonical(b);
 
+/**
+ * B-63 (D-114): what a deploy carries, as one hash: the release, specVersion, every file hash (the page's included),
+ * every task's prompt hash and the spec. Two builds with the same content hash deploy the same thing, whatever their
+ * commits.
+ */
+export function contentHash(manifest, spec, sha256) {
+  const prompts = Object.fromEntries(Object.entries(manifest.tasks || {}).map(([k, t]) => [k, t.promptSha256 || null]));
+  const pages = Object.fromEntries(Object.entries(manifest.pages || {}).map(([k, p]) => [k, p.files || {}]));
+  return sha256(canonical({ release: manifest.release, specVersion: manifest.specVersion, files: manifest.files, prompts, pages, spec: spec ? strip(spec) : null }));
+}
+
 // B-28: a page's capability declaration, as the artifact service stores it, compared with the build's as data: an mcp
 // server is matched by name and its tools as a set; every other capability by its canonical JSON.
 const serverMap = c => Object.fromEntries(((c && c.mcp && c.mcp.servers) || []).map(s => [s.server, s]));
@@ -107,8 +118,19 @@ export function verify({ manifest, target, state, build, dist, sha256, now = new
     const live = state.record;
     if (!live.manifest) add(false, 'system/manifest deployed', 'absent from the record');
     else {
-      for (const k of ['release', 'commit', 'specVersion']) add(live.manifest[k] === manifest[k], `system/manifest ${k}`, live.manifest[k] === manifest[k] ? manifest[k] : `record ${live.manifest[k]}, build ${manifest[k]}`);
+      for (const k of ['release', 'specVersion']) add(live.manifest[k] === manifest[k], `system/manifest ${k}`, live.manifest[k] === manifest[k] ? manifest[k] : `record ${live.manifest[k]}, build ${manifest[k]}`);
       const changed = Object.keys({ ...manifest.files, ...(live.manifest.files || {}) }).filter(f => (live.manifest.files || {})[f] !== manifest.files[f]);
+      // B-63 (D-114): content, not commit. An older deployed commit is green when it is an ancestor of this build and
+      // everything it carries is the same (files, prompts, spec, environments): the commits between changed notes only.
+      if (live.manifest.commit === manifest.commit) add(true, 'system/manifest commit', manifest.commit);
+      else {
+        const behind = typeof build.behind === 'function' ? build.behind(live.manifest.commit) : null;
+        const prompts = Object.keys({ ...manifest.tasks, ...(live.manifest.tasks || {}) }).filter(k => ((live.manifest.tasks || {})[k] || {}).promptSha256 !== (manifest.tasks[k] || {}).promptSha256);
+        const sameDocs = ['spec', 'environments'].every(id => live[id] && same(strip(live[id]), strip(dist[id])));
+        const content = !changed.length && !prompts.length && sameDocs && live.manifest.release === manifest.release && live.manifest.specVersion === manifest.specVersion;
+        add(behind != null && content, 'system/manifest commit', behind == null ? `record ${live.manifest.commit}, build ${manifest.commit}${typeof build.behind === 'function' ? ' (not an ancestor of this build)' : ''}`
+          : content ? `deployed ${live.manifest.commit.slice(0, 7)}, ${behind} notes-only commit${behind === 1 ? '' : 's'} behind` : `record ${live.manifest.commit.slice(0, 7)} is ${behind} commit${behind === 1 ? '' : 's'} behind and its content differs${prompts.length ? ` (prompts: ${prompts.slice(0, 3).join(', ')})` : ''}`);
+      }
       add(changed.length === 0, 'system/manifest file hashes', changed.length ? `${changed.length} differ: ${changed.slice(0, 5).join(', ')}` : `${Object.keys(manifest.files).length} files`);
       add(live.manifest.dirty === false, 'system/manifest is clean');
     }
@@ -222,7 +244,9 @@ export function deployCalls({ manifest, target, distDir, build, versions = {}, m
   if (target === 'live') {
     const v = stagingVerify;
     if (!v) refusals.push('no dist/verify-staging.json: deploy staging and run verify-deploy staging first');
-    else if (v.commit !== manifest.commit) refusals.push(`verify-deploy staging ran at ${String(v.commit).slice(0, 12)}, this build is ${manifest.commit.slice(0, 12)}: deploy staging at this commit first`);
+    // B-63: the same content passes even at another commit (a notes-only commit since); a verify saved before content
+    // hashes existed is held to the commit.
+    else if (v.contentHash ? v.contentHash !== (build.contentHash || null) : v.commit !== manifest.commit) refusals.push(v.contentHash ? `verify-deploy staging ran on other content (at ${String(v.commit).slice(0, 12)}): deploy staging with this build's content first` : `verify-deploy staging ran at ${String(v.commit).slice(0, 12)}, this build is ${manifest.commit.slice(0, 12)}: deploy staging at this commit first`);
     else if (!v.green) refusals.push(`verify-deploy staging is red at ${manifest.commit.slice(0, 12)}: make it green first`);
   }
   if (manifest.dirty) refusals.push('the build is dirty: commit, push and build again');

@@ -26,7 +26,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { verify, verifyReads, formatVerify, deployCalls, formatDeploy, SYSTEM_IDS, artifactUrl } from './deploy.mjs';
+import { verify, verifyReads, formatVerify, deployCalls, formatDeploy, SYSTEM_IDS, artifactUrl, contentHash } from './deploy.mjs';
 import { readState, withShell } from './verifystate.mjs';
 export { readState, withShell };
 import { seedStaging } from './seed.mjs';
@@ -59,6 +59,16 @@ function args(argv) {
   return o;
 }
 
+/** How many commits `older` is behind `commit` when it is an ancestor of it (0 when the same), else null (B-63). */
+export function commitsBehind(root, older, commit) {
+  if (!older) return null;
+  if (older === commit) return 0;
+  try {
+    execFileSync('git', ['-C', root, 'merge-base', '--is-ancestor', older, commit], { stdio: 'ignore' });
+    return Number(execFileSync('git', ['-C', root, 'rev-list', '--count', `${older}..${commit}`], { encoding: 'utf8' }).trim());
+  } catch { return null; }
+}
+
 export function isPushed(root, commit) {
   try { execFileSync('git', ['-C', root, 'merge-base', '--is-ancestor', commit, 'origin/main'], { stdio: 'ignore' }); return true; } catch { return false; }
 }
@@ -74,7 +84,7 @@ function load(o, target) {
   if (!manifest.records[target]) throw new Error(`unknown target ${target} (live or staging)`);
   const distDocs = Object.fromEntries(['spec', 'environments'].map(id => [id, readJson(path.join(dist, 'system', id + '.json'))]));
   const stateDir = o.state ? path.resolve(o.state) : path.join(dist, 'state', target);
-  return { root, dist, manifest, distDocs, stateDir, build: { pushed: isPushed(root, manifest.commit) } };
+  return { root, dist, manifest, distDocs, stateDir, build: { pushed: isPushed(root, manifest.commit), behind: c => commitsBehind(root, c, manifest.commit), contentHash: contentHash(manifest, distDocs.spec, sha256) } };
 }
 
 /** A record export folder as {collection: [docs with id]}. */
@@ -312,7 +322,7 @@ const commands = {
     const state = withShell(readState(stateDir), manifest, target, dist);
     const result = verify({ manifest, target, state, build, dist: distDocs, sha256 });
     const reads = verifyReads({ manifest, target, stateDir });
-    fs.writeFileSync(path.join(dist, `verify-${target}.json`), JSON.stringify({ target, release: manifest.release, commit: manifest.commit, green: result.green, lines: result.lines }, null, 1));
+    fs.writeFileSync(path.join(dist, `verify-${target}.json`), JSON.stringify({ target, release: manifest.release, commit: manifest.commit, contentHash: build.contentHash, green: result.green, lines: result.lines }, null, 1));
     console.log(o.json ? JSON.stringify({ ...result, reads }, null, 1) : formatVerify(target, result, reads));
     return result.green ? 0 : 1;
   },
