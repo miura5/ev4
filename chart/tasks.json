@@ -1813,9 +1813,9 @@
   "id": "B-101",
   "kind": "request",
   "title": "Request (reported Oct 19): One command for every check: npm test plus five harnesses, where core.cjs must run alone and demo.cjs needs tools/demo.mjs run first. Add npm run check that runs them in the right order and ends with the phone and desktop screenshots, so the order is not remembered by hand.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "npm run check runs npm test, then the five harnesses in the right order (core.cjs alone, tools/demo.mjs before demo.cjs), then the phone and desktop screenshots, stops at the first failure with its name, and ends green on main; CLAUDE.md step 5 names it.",
+  "milestone": "M13 Workflow",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -1826,6 +1826,10 @@
    "row": "v4 B-101: One command for every check: npm test plus five harnesses, where…",
    "why": "One command for every check: npm test plus five harnesses, where core.cjs must run alone and demo.cjs needs tools/demo.mjs run first. Add npm run check that runs them in the right order and ends with the phone and desktop screenshots, so the order is not remembered by hand.",
    "notes": "Reported Oct 19 from Oct 19 build chat: Claude's workflow review, filed on Matt's OK"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-20T00:11:33.014Z"
   }
  },
  {
