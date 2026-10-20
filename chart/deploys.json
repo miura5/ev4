@@ -1442,5 +1442,28 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "93698f0",
+  "time": "2026-10-20T02:14:14.271Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "51fd01e",
+  "tasks": [
+   "B-103",
+   "B-107",
+   "B-108",
+   "B-30",
+   "B-24",
+   "B-93",
+   "B-109",
+   "B-104"
+  ],
+  "summary": "The demo follows the real build; Prep checks in the evening run; archive ev-core read-only (your step on GitHub); Rollback window and v3 retirement; cutover to v4; log and the views; Tenets in the Chart; Prep checks for clinical, lab, validation and class days",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
