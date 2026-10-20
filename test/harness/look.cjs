@@ -81,6 +81,24 @@ const results = []; const ok = (name, cond, detail = '') => results.push([cond ?
       ok(`[${width}] study: after the last answer, More practice is one line with Give me 5 more`, done.shown && done.h <= 72 && done.button === 'Give me 5 more' && !done.left, JSON.stringify(done));
       await page.screenshot({ path: `${shots}/look-study-done-${width}.png`, fullPage: true });
     }
+    // B-117: Today: no stat tile, no item's minutes twice, the exam in Next 7 days only, coral equal to core's urgent
+    // count, a Prep marker on the clinical day; ticking keeps the scroll (v4 rule 6).
+    if (TENETS.widths.includes(size.width) && [844, 830, 800].includes(size.height)) {
+      await page.click('#tab-today'); await page.waitForTimeout(800); // past the panel's rise
+      const t = await page.evaluate(() => { const vis = e => !!e && !e.closest('[hidden]') && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().height > 0;
+        const items = [...document.querySelectorAll('#today-list li')].filter(vis).map(li => (li.querySelector('.ti-t') || li).textContent.trim());
+        const ahead = [...document.querySelectorAll('#ahead li')].filter(vis);
+        const coralRgb = /rgba?\((240, 138, 120|244, 167, 151)/, panel = document.getElementById('p-today');
+        const coral = [...panel.querySelectorAll('*')].filter(e => vis(e) && [...e.childNodes].some(n => n.nodeType === 3 && n.textContent.trim()) && coralRgb.test(getComputedStyle(e).color)).length;
+        return { tiles: [...document.querySelectorAll('#stats .stat')].filter(vis).length, minsTwice: items.filter(x => (x.match(/\d+\s*min/g) || []).length > 1), examInList: items.some(x => /^Exam \d/.test(x)), examAhead: ahead.some(li => /Exam/.test(li.textContent)) || !document.querySelector('#ahead'),
+          coral, urgent: document.querySelectorAll('li.brief-item[data-level="urgent"]').length, prepOnClinical: ahead.filter(li => /clinical/i.test(li.textContent)).every(li => li.querySelector('.bi-prep')) && ahead.some(li => /clinical/i.test(li.textContent)) }; });
+      ok(`[${width}] today: no stat tile, minutes once, the exam in Next 7 days only, coral equal to the urgent count, Prep on the clinical day`, !t.tiles && !t.minsTwice.length && !t.examInList && t.coral === t.urgent && t.prepOnClinical, JSON.stringify(t));
+      const tick = page.locator('#today-list li.today-item input.tick').first();
+      // Rule 6: the row he ticks stays where it is on the screen.
+      if (await tick.count()) { const at = () => page.evaluate(() => Math.round(document.querySelector('#today-list li.today-item').getBoundingClientRect().top + scrollY)); /* in the document: the click itself may scroll it into view */ const y0 = await at(); await tick.click(); await page.waitForTimeout(400); const y1 = await at(); await page.locator('#today-list li.today-item input.tick').first().click(); await page.waitForTimeout(300);
+        ok(`[${width}] today: ticking an item keeps it where it is`, Math.abs(y1 - y0) <= 1, JSON.stringify({ y0, y1 })); }
+      await page.evaluate(() => window.scrollTo(0, 0));
+    }
     // Each seg control back to its first view, as a fresh open has it.
     for (const v of VIEWS.filter(x => x.v)) if (VIEWS.find(x => x.tab === v.tab).v === v.v) { await page.click('#tab-' + v.tab); await page.click(`#seg-${v.tab} [data-v="${v.v}"]`); }
     if (['390x844', '1280x800'].includes(width)) {

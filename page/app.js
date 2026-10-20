@@ -301,6 +301,27 @@
   }
   function openItem(it) { const toSet = it.set || (it.ref && it.ref.startsWith('sets/') ? it.ref.slice(5) : null); if (!toSet) return null; return () => { if (toSet.startsWith('review-')) { showTab('study'); setStudy('review'); } else { ui.openSet = toSet; showTab('study'); setStudy('practice'); render(); } }; }
   const TAG_V = { GRADED: 'bad', EXAM: 'accent', REVIEW: 'plum', 'ATI REVIEW': 'plum', PRACTICE: 'info', READING: 'ok', CLINICAL: 'ok', 'CLINICAL PREP': 'ok', VALIDATION: 'warn', 'VALIDATION PREP': 'warn', CANVAS: 'info', NOTES: '' };
+  // B-117 (D-147, D-148, D-150): an item of today's list is one line: its tick, its words, its minutes once in grey,
+  // no type pill. Coral only for graded work due today and not ticked (D-149). An item someone added opens in place to
+  // its Remove (D-078); a set opens where it lives.
+  const openRows = new Set();
+  function todayRow(it, isDone) {
+    const doneNow = isDone(it); const go = openItem(it);
+    const li = el('li', 'row today-item' + (doneNow ? ' done' : '') + (openRows.has(it.id) ? ' open' : '')); li.dataset.id = it.id;
+    const c = document.createElement('input'); c.type = 'checkbox'; c.className = 'tick'; c.checked = c.defaultChecked = doneNow; c.setAttribute('aria-label', 'Done: ' + it.text);
+    c.addEventListener('change', () => { T.ticked.add(it.id); guard(c, () => tickWrite(it, c.checked), c.checked ? 'Checked off' : 'Unchecked'); });
+    const text = String(it.text || '').replace(/\s*\(~?\d+\s*min\)\s*$/i, '');
+    const line = el('button', 'ti-line'); line.type = 'button'; line.setAttribute('aria-expanded', String(openRows.has(it.id)));
+    const t = el('span', 'ti-t' + (it.tag === 'GRADED' && !doneNow ? ' urgent' : ''), text); line.append(t);
+    if (it.minutes) line.append(el('span', 'ti-min', it.minutes + ' min'));
+    const more = el('div', 'ti-more');
+    const bits = [it.note, it.deferred ? 'deferred: over today’s budget' : '', it.added ? 'added by ' + (it.by === 'Matt' ? 'you' : 'E.V.') : ''].filter(Boolean).join(' · ');
+    if (bits) more.append(el('p', 'meta', bits));
+    if (it.added) { const rm = btn('Remove', null, { cls: 'quiet' }); rm.setAttribute('aria-label', 'Remove from today: ' + it.text); rm.addEventListener('click', () => guard(rm, () => editList(today, { action: 'remove', id: it.id }, 'Matt'), 'Removed')); more.append(rm); }
+    line.addEventListener('click', () => { if (go && !it.added) return go(); const on = !openRows.has(it.id); on ? openRows.add(it.id) : openRows.delete(it.id); li.classList.toggle('open', on); line.setAttribute('aria-expanded', String(on)); });
+    const g = el('div', 'grow'); g.append(line, more); li.append(c, g);
+    return li;
+  }
   function itemRow(it, isDone, o = {}) {
     const doneNow = isDone(it); const go = openItem(it);
     const detail = [it.note, it.minutes ? '~' + it.minutes + ' min' : '', it.deferred ? 'deferred: over today’s budget' : '', it.added ? 'added by ' + (it.by === 'Matt' ? 'you' : 'E.V.') : ''].filter(Boolean).join(' · ');
@@ -333,20 +354,17 @@
     else if (openDrill) { parts.push(el('p', 'big', openDrill.title), el('p', 'meta', 'Built for today from your plan. Your answers update your weak spots.'), btn('Start', () => { ui.openSet = openDrill.id; showTab('study'); setStudy('practice'); render(); }, { primary: true })); }
     else if (nextTask) { parts.push(el('p', 'big', 'Next: ' + nextTask.text), el('p', 'meta', rs ? 'Today’s review is done.' : due.length ? `${plural(due.length, 'weak spot')} due. The review set arrives with the 4:25am run.` : 'Nothing due for review.')); }
     else { parts.push(el('p', 'big', rs ? 'Today’s review is done.' : 'Nothing urgent right now.'), el('p', 'meta', sample ? 'Want more? E.V. can write 5 new questions on your weakest spots.' : 'Check the plan for what’s next.')); if (sample) parts.push(btn('More practice', () => { showTab('study'); setStudy('review'); }, { primary: true })); }
+    // B-117 (D-154): no stat tiles; the Now card's second line carries the exam countdown, readiness lives in Progress.
+    const ex = (S.state && S.state.nextExams || []).find(e => e.date >= today) || E.nextNurExams(S.exams, E.addDays(today, -1))[0];
+    if (ex && parts[1] && parts[1].classList.contains('meta')) { const n = E.diffDays(today, ex.date); parts[1].textContent += ` ${(ex.title || ex.id).replace(/:.*$/, '')} ${n === 0 ? 'is today' : n === 1 ? 'is tomorrow' : 'in ' + plural(n, 'day')}.`; }
     const nc = el('div'); nc.style.cssText = 'display:flex;flex-direction:column;gap:8px;align-items:flex-start'; nc.append(el('h2', null, (E.DAY_LABELS[day.dayType] || 'Today') + ' · ' + short(today)), ...parts);
     nowCard.replaceChildren(nc);
-    // Stats
-    const ex = (S.state && S.state.nextExams || []).find(e => e.date >= today) || E.nextNurExams(S.exams, E.addDays(today, -1))[0];
-    const rd = M.target ? E.readiness({ examId: M.target.id, weakspots: M.models }) : null;
-    $('stats').replaceChildren(
-      stat(rs ? String(rLeft) : String(due.length), rs ? (rLeft === 1 ? 'review left today' : 'reviews left today') : 'weak spots due'),
-      ex ? stat(E.diffDays(today, ex.date) === 0 ? 'Today' : plural(E.diffDays(today, ex.date), 'day'), 'to ' + (ex.title || ex.id).replace(/:.*$/, '')) : stat('–', 'no exam scheduled'),
-      rd && rd.pctSolid != null ? stat(rd.pctSolid + '%', `of ${rd.examId} weak spots solid`) : stat('–', 'solid for the next exam'));
+    $('stats').replaceChildren(); $('stats').hidden = true;
     // List
     const box = $('today-list'); const head = el('div', 'card-head'); head.append(el('h2', null, 'Today’s list'));
     const b = budget; if (b) head.append(el('span', 'meta', `${b.planned} of ${b.available} min planned`));
     const ul = el('ul', 'list');
-    for (const it of items) ul.append(itemRow(it, isDone, { remove: true }));
+    for (const it of items.filter(i => i.tag !== 'EXAM')) ul.append(todayRow(it, isDone)); // the exam is in Next 7 days (B-117)
     const kids = [head]; const after = []; // the add row sits right under the list; Focus and notes follow it
     if (items.length) kids.push(ul); else kids.push(el('p', 'empty', 'Nothing planned for today yet. The 4:25am run builds the list; add your own below or ask E.V.'));
     const focus = (day.list && day.list.focus) || [];
@@ -363,8 +381,28 @@
     const wk = S.weeks.filter(w => w.id <= today && w.id >= E.addDays(today, -1)).sort((a, b) => b.id.localeCompare(a.id))[0]; const wc = $('weekly'); wc.hidden = !(wk && (wk.review || wk.reflection));
     if (!wc.hidden) { wc.replaceChildren(el('h2', null, 'Weekly review'), ...(wk.review ? [el('p', 'stem', wk.review)] : []), ...(wk.reflection ? [el('p', 'meta', 'Reflection: ' + wk.reflection)] : []), btn('Write a reflection', () => { showTab('record'); $('seg-record').querySelector('[data-v="journal"]').click(); $('j-kind').value = 'weekly'; $('j-text').focus(); })); }
     // Next 7 days
-    const week = S.dates.filter(d => d.date >= today && d.date <= E.addDays(today, 7)).sort((a, b) => a.date.localeCompare(b.date) || String(a.title).localeCompare(b.title));
-    $('ahead').replaceChildren(...(week.length ? week.map(dateRow) : [empty('No dates in the next week.')]));
+    // The exam leaves the tick list for Next 7 days (B-117): exams in the window join the calendar's dates, once each.
+    const inWeek = d => d.date >= today && d.date <= E.addDays(today, 7);
+    const examDates = S.exams.filter(e => e.date && inWeek(e) && !S.dates.some(d => d.kind === 'exam' && d.date === e.date)).map(e => ({ id: 'exam-' + e.id, date: e.date, title: e.title || e.id, kind: 'exam' }));
+    const week = [...S.dates.filter(inWeek), ...examDates].sort((a, b) => a.date.localeCompare(b.date) || String(a.title).localeCompare(b.title));
+    const ahead = $('ahead'), open = week.length <= 5 || ui.aheadOpen;
+    let fold = $('ahead-fold');
+    if (week.length > 5) { if (!fold) { fold = el('button', 'fold-line'); fold.id = 'ahead-fold'; fold.type = 'button'; fold.addEventListener('click', () => { ui.aheadOpen = !ui.aheadOpen; render(); }); ahead.before(fold); }
+      fold.textContent = plural(week.length, 'date') + ' this week'; fold.setAttribute('aria-expanded', String(!!open)); }
+    else if (fold) fold.remove();
+    ahead.hidden = !open;
+    ahead.replaceChildren(...(week.length ? week.map(weekRow) : [empty('No dates in the next week.')]));
+  }
+  // B-117: a date in Next 7 days is one line (its day, its title, its kind in grey); a clinical, lab, validation or class
+  // day carries the calm Prep marker (D-143); coral only for graded work due today (D-149). It opens Record's Dates.
+  function weekRow(d) {
+    const li = el('li', 'row week-item'); const b = el('button', 'wk-line'); b.type = 'button';
+    b.append(el('span', 'when', short(d.date)), el('span', 'wk-t', d.title || ''));
+    if (E.prepKindOf(d)) b.append(el('span', 'bi-prep', 'Prep'));
+    const urgent = d.graded && d.date === today && d.kind !== 'exam';
+    b.append(el('span', 'wk-k' + (urgent ? ' urgent' : ''), urgent ? 'graded, due today' : [d.kind === 'other' ? '' : d.kind, d.graded ? 'graded' : ''].filter(Boolean).join(' · ')));
+    b.addEventListener('click', () => { showTab('record'); $('seg-record').querySelector('[data-v="dates"]').click(); });
+    li.append(b); return li;
   }
   function reviewReason() { const L = E.reviewLoad({ date: today, dayType: E.dayType({ date: today, dates: S.dates, exams: S.exams }), exams: S.exams, weakspots: M.models }); return L.flex ? `${L.flex.need} correct reviews still needed for ${L.flex.exam} over ${plural(L.flex.daysLeft, 'day')}.` : 'Due weak spots, oldest misses first.'; }
   function dateRow(d, o = {}) { // o.edit: Remove (or Bring back) for entries that can leave the calendar (D-080)

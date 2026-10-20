@@ -3500,6 +3500,7 @@
    ],
    "on": [
     "ev",
+    "today",
     "study-review"
    ],
    "exceptions": {
