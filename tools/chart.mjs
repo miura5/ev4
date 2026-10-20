@@ -450,19 +450,21 @@ export function changelogCalls(rec, read) {
 /** The Decisions tab: a row per decision logged since the import (newest on top), its Status chip, and the intro's next id. */
 export function decisionsCalls(rec, read, intro) {
   const v = rec.views.decisions; if (!v) return [];
-  const ops = [], notes = [];
+  const ops = [], notes = [], added = [];
   const rows = read.rows.slice(1), header = read.rows[0].id, opts = v.statusOptions;
   const word = d => d.status.charAt(0).toUpperCase() + d.status.slice(1);
   for (const d of [...rec.decisions].reverse()) {
     const i = rows.findIndex(r => r.cells[1].text === d.id);
     if (i < 0) {
       if (!d.source) continue; // imported (B-92): its row was in the tab; one filed since (log, plan) is added
-      ops.push({ op: 'insert', target: { kind: 'blocks', ids: [header] }, side: 'after', source: { as: 'blocks', from: { kind: 'inline', content: [{ type: 'row', content: [textCell(d.date), textCell(d.id), textCell(d.title), textCell(d.why), textCell(word(d))] }] } } });
+      added.push({ type: 'row', content: [textCell(d.date), textCell(d.id), textCell(d.title), textCell(d.why), textCell(word(d))] });
       notes.push(`${d.id}: a new row`); continue;
     }
     const c = rows[i].cells[4];
     if (!sameStatus(c, { option: word(d) }, opts)) { ops.push({ op: 'replace', target: { kind: 'cell', table: v.table, row: i + 1, col: 4 }, ifRev: read.rev, with: { as: 'markdown', from: { kind: 'inline', content: '<?claude block st?>' }, blocks: { st: { type: 'dropdown', enum: v.statusEnum, index: opts.indexOf(word(d)) } } } }); notes.push(`${d.id}: status ${word(d)}`); }
   }
+  // One insert under the header, newest first (Docs refuses two inserts on one anchor).
+  if (added.length) ops.unshift({ op: 'insert', target: { kind: 'blocks', ids: [header] }, side: 'after', source: { as: 'blocks', from: { kind: 'inline', content: added.reverse() } } });
   const m = intro && intro.text.match(/next id (D-\d{3})/), next = nextDecisionId(rec);
   if (m && m[1] !== next) { ops.push({ op: 'replace', target: { kind: 'find', text: m[0] }, with: { as: 'text', from: { kind: 'inline', content: `next id ${next}` } } }); notes.push(`next id ${next}`); }
   return ops.length ? [{ step: `Decisions: ${notes.join('; ')}`, ...docCall(rec.views.doc, v.node, ops) }] : [];

@@ -423,4 +423,8 @@ test('a decision filed with a source (log --source, plan) still gets its Decisio
   const read = { rev: 1, rows: [{ id: 's1.31', cells: [{ text: 'Date' }, { text: 'Id' }, { text: 'Decision' }, { text: 'Why' }, { text: 'Status' }] }] };
   const [call] = C.decisionsCalls(r, read, null);
   assert.match(call.step, /^Decisions: D-003: a new row$/, 'D-001 and D-002 (imported, no source) are not re-added');
+  C.applyLog(r, { _: ['log', 'decision', 'D-004'], title: 'four', status: 'accepted', source: 'log' });
+  const two = C.decisionsCalls(r, read, null)[0].args.payload.ops;
+  assert.equal(two.filter(o => o.op === 'insert').length, 1, 'one insert for two new rows');
+  assert.deepEqual(two[0].source.from.content.map(row => row.content[1].content[0].content[0].text), ['D-004', 'D-003'], 'newest first');
 });
