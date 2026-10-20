@@ -73,10 +73,10 @@ account or scheduled task touched.
 
 No help on graded or submitted work. No patient identifiers, ever. Canvas is read-only GETs through Matt's
 signed-in browser; never a token. Nothing is deleted anywhere: records, Mac files, scheduled tasks, docs; retire
-by marking. No passwords, nothing posted as Matt, the journal is read by the page only. Personal data never enters
+by marking. No passwords, nothing posted as Matt. The journal is a named read (D-106, D-113): a run reads it only for
+a step that names it, backups and the mirror include it, and a build session may read it. Personal data never enters
 this repository (`fixtures/` and `dist/` are ignored; a test greps for exports). **In a build chat**, Matt's explicit OK is
-required for: publishing the live page, creating or changing a Mac-bound task, reading the journal, touching the live
-record by hand. A refused action is reported in Notes, never worked around. Build chats load three hooks
+required for: publishing the live page, creating or changing a Mac-bound task, touching the live record by hand. A refused action is reported in Notes, never worked around. Build chats load three hooks
 (.claude/settings.json, B-56 to B-58): npm test at the end of a turn, the spec's JSON form, and a guard that refuses a
 live write or publish unless `deploy live --matt-ok` wrote dist/live-ok; pipeline runs never load them (B-65).
 

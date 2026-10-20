@@ -255,10 +255,10 @@ export function macFolder(spec, record) {
 }
 /** E.V. v4's own files in that folder: names v3's files never use, so the two never overwrite each other. */
 export const MAC_FILES = { backup: day => `backup/E.V.-v4-backup-${day}.json`, mirror: 'mirror-v4' };
-/** A backup as restore-drill checks it: every collection the run pulled (never journal or system), with counts and hashes. */
+/** A backup as restore-drill checks it: every collection the run pulled (the journal too, D-113; never system), with counts and hashes. */
 export function macBackup(db, { now, label, release }) {
   const collections = {};
-  for (const col of Object.keys(db).filter(c => c !== 'journal' && c !== 'system').sort()) collections[col] = [...db[col]].sort((a, b) => (a.id < b.id ? -1 : 1));
+  for (const col of Object.keys(db).filter(c => c !== 'system').sort()) collections[col] = [...db[col]].sort((a, b) => (a.id < b.id ? -1 : 1));
   const b = EV.buildBackup(collections, { now, label });
   const hashes = Object.fromEntries(Object.entries(collections).map(([c, docs]) => [c, collectionHash(docs)]));
   return { ...b, release: release || b.release, hashes };
@@ -535,7 +535,7 @@ export const AGENT_FOLDS = {
     let b; try { b = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) { return { problems: ['the backup does not parse: ' + e.message] }; }
     if (!b || b.kind !== 'E.V. record backup' || !b.hashes || !b.collections) return { problems: ['not a v4 backup (no kind, hashes or collections)'] };
     const problems = [];
-    for (const c of ['journal', 'system']) if (b.collections[c]) problems.push(`the backup holds ${c}, which no backup may`);
+    for (const c of ['system']) if (b.collections[c]) problems.push(`the backup holds ${c}, which no backup may`); // the journal is in backups (D-113)
     for (const [c, docs] of Object.entries(b.collections)) {
       if (!spec.collections[c]) { problems.push(`the backup holds ${c}, which is no collection`); continue; }
       if (b.counts[c] !== docs.length) problems.push(`${c}: ${docs.length} documents, its manifest says ${b.counts[c]}`);

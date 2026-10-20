@@ -98,11 +98,12 @@ test('an evening-mac run: Canvas folds into the record, the backup and mirror be
   const AT = '2026-10-19T01:20:00Z'; // Sunday 8:20pm Central
   RUN.start({ spec, pipeline: 'evening-mac', record: 'staging', at: AT, dir, release: 'v4.0.0', outputs });
   const pullCalls = RUN.pull({ spec, dir, at: AT });
-  assert.ok(!pullCalls.some(c => ['journal', 'system'].includes(c.args.collection)), 'the journal and system are never pulled');
+  assert.ok(!pullCalls.some(c => c.args.collection === 'system'), 'system is never pulled');
+  assert.ok(pullCalls.some(c => c.args.collection === 'journal'), 'the journal is a named read for the backup and mirror (D-113)');
   // The pull, as files and versions (the transcript side is run.test's).
   const versions = {};
   for (const { collection, id, doc } of readExport(path.join(ROOT, 'test/data/record'))) {
-    if (collection === 'journal' || collection === 'system') continue;
+    if (collection === 'system') continue;
     const f = path.join(dir, 'pull', collection, id + '.json'); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, JSON.stringify(EV.docData({ ...doc, id })));
     (versions[collection] = versions[collection] || {})[id] = 3;
   }
@@ -134,7 +135,7 @@ test('an evening-mac run: Canvas folds into the record, the backup and mirror be
   assert.ok(files.every(f => f.stagedPath.startsWith(outputs) && f.devicePath.startsWith(folder + '/')));
   assert.ok(files.every(f => /\/(backup\/E\.V\.-v4-backup-\w+\.json|mirror-v4\/.+\.md)$/.test(f.devicePath)), 'never one of v3\'s file names');
   const backup = JSON.parse(fs.readFileSync(files.find(f => /backup/.test(f.devicePath)).stagedPath, 'utf8'));
-  assert.equal(backup.kind, 'E.V. record backup'); assert.ok(!backup.collections.journal && !backup.collections.system);
+  assert.equal(backup.kind, 'E.V. record backup'); assert.ok(!backup.collections.system); assert.equal(!!backup.collections.journal, fs.existsSync(path.join(ROOT, 'test/data/record/journal')), 'the journal is in the backup when there is one (D-113)');
   assert.ok(backup.collections.dates.some(d => d.id === 'canvas-9001'), 'the backup holds tonight\'s Canvas writes');
   for (const [c, docs] of Object.entries(backup.collections)) { assert.equal(backup.counts[c], docs.length); assert.equal(backup.hashes[c], collectionHash(docs), c); }
   // apply prints the record's batches first, then the Mac's files.
@@ -186,4 +187,10 @@ test('restore drill: the newest backup restores into staging, counts and hashes 
     assert.equal(run(null, { status: 'none' }).status, 'refused');
     assert.match(run('{"kind":"E.V. record backup"}').problems.join(' '), /not a v4 backup/);
   });
+});
+
+test('B-62 (D-113): the mirror holds the journal the run read; the restore drill takes a backup that holds it', () => {
+  const files = EV.toMarkdown({ journal: [{ id: 'j-made-up', kind: 'free', createdAt: '2026-10-19T02:00:00Z', text: 'A made-up entry.' }] }, { date: '2026-10-19' });
+  const j = files.find(f => f.path === 'journal/j-made-up.md');
+  assert.ok(j && /A made-up entry\./.test(j.content), JSON.stringify(files.map(f => f.path)));
 });

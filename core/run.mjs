@@ -63,7 +63,8 @@ export function pull({ spec, dir, at }) {
   const run = loadRun(dir); const def = pipelineDef(spec, run.pipeline);
   const out = path.join(dir, 'pull');
   const calls = (def.reads || []).map(r => {
-    if (r.collection === 'journal') throw new Error('the journal is in no read set (D-059)');
+    // D-113 (B-62): the journal is a named read: a pipeline pulls it only for a step it names (r.for), never by default.
+    if (r.collection === 'journal' && !(r.for && (def.steps || []).some(s => s.id === r.for))) throw new Error('the journal is read only for a step that names it (D-113): give the read a for naming one of this pipeline\'s steps');
     const query = { limit: 1000 };
     if (r.windowDays) query.where = [['at', '>=', new Date(EV.toMs(at) - r.windowDays * 864e5).toISOString()]];
     return { tool: 'ArtifactData', args: { action: query.where ? 'query' : 'list', url: run.url, collection: r.collection, query, out_dir: out } };

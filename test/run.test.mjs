@@ -77,7 +77,7 @@ test('start and pull print the same calls every time, and the journal is in no r
   assert.throws(() => RUN.start({ spec: bad, pipeline: 'evening-cloud', at: AT, dir, release: 'v4.0.0' }), /not empty and holds no run/);
   fs.renameSync(path.join(dir, 'keep.txt'), path.join(dir, '..', path.basename(dir) + '-keep.txt'));
   RUN.start({ spec: bad, pipeline: 'evening-cloud', at: AT, dir, release: 'v4.0.0' });
-  assert.throws(() => RUN.pull({ spec: bad, dir, at: AT }), /journal is in no read set/);
+  assert.throws(() => RUN.pull({ spec: bad, dir, at: AT }), /journal is read only for a step that names it/);
 });
 
 test('pulled takes every version from the replies, asks for the next page, and refuses a missing read', () => {

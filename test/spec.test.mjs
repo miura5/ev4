@@ -165,7 +165,8 @@ test('capacity: the design constants, a budget row per collection, nothing guess
 test('boundaries B-01 to B-14 ported, the explicit-OK list and the working agreements', () => {
   assert.deepEqual(spec.boundaries.rules.map(b => b.id), Array.from({ length: 14 }, (_, i) => `B-${String(i + 1).padStart(2, '0')}`));
   for (const b of spec.boundaries.rules) assert.ok(b.rule.length > 10, b.id);
-  for (const ok of ['publishing the live page', 'creating or changing a Mac-bound task', 'reading the journal', 'touching the live record']) assert.ok(spec.boundaries.mattOkRequired.includes(ok), ok);
+  for (const ok of ['publishing the live page', 'creating or changing a Mac-bound task', 'touching the live record']) assert.ok(spec.boundaries.mattOkRequired.includes(ok), ok);
+  assert.ok(!spec.boundaries.mattOkRequired.includes('reading the journal'), 'D-106, D-113: a build session may read the journal');
   assert.ok(spec.workingAgreements.some(w => /No time-gating/.test(w)));
   assert.ok(spec.workingAgreements.some(w => /Nothing is deleted/.test(w)));
 });
