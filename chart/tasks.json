@@ -1882,9 +1882,9 @@
   "id": "B-104",
   "kind": "request",
   "title": "Request (reported Oct 19): Question for Matt: should a validation or a clinical tomorrow count as urgent in the greeting's briefing? Today urgent means an exam today or tomorrow, or graded work due today and not ticked.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Matt answers whether a validation or a clinical tomorrow counts as urgent in the greeting's briefing; the greeting's urgent rule follows his answer, with a test for each kind.",
+  "milestone": "M13 Workflow",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -1895,6 +1895,10 @@
    "row": "v4 B-104: Question for Matt: should a validation or a clinical tomorrow count…",
    "why": "Question for Matt: should a validation or a clinical tomorrow count as urgent in the greeting's briefing? Today urgent means an exam today or tomorrow, or graded work due today and not ticked.",
    "notes": "Reported Oct 19 from Oct 19 build chat: Claude's workflow review, filed on Matt's OK"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-20T00:11:33.591Z"
   }
  },
  {
