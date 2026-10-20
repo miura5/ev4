@@ -1223,13 +1223,19 @@
   "title": "Status page warts (O-6): healthBody marks the watchdog's own entry as ended; planted staging documents (the 04:40Z morning, its re-fire) ended by marking; a core test",
   "dod": null,
   "milestone": "M9",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-61"
   ],
-  "notes": "Taken in the Oct 20 build session.",
-  "commit": null,
-  "source": "BACKLOG.md"
+  "notes": "Proved on staging: the watchdog fired at 03:10Z (run watchdog-20261020-031045025) wrote health/current v7 with pipelines.watchdog ok, self:true, endedAt set; the planted unfinished run was reported, not re-fired twice. Live waits for Matt's OK.",
+  "commit": "e6a666c",
+  "source": "BACKLOG.md",
+  "board": {
+   "row": "v4 B-66: Watchdog marks its own run ended",
+   "why": "health/current showed the watchdog itself as running",
+   "notes": "The health check no longer shows itself as still running. On staging; live waits for Matt's OK."
+  },
+  "waitingOn": "Matt"
  },
  {
   "id": "B-67",
