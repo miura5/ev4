@@ -119,4 +119,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 
 | Id | Kind | Reported | Words | Source | Status | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| B-105 | bug | 2026-10-19T23:59:11.901Z | The live evening-mac gate failure is still open. It needs a chat linked to Matt's Mac, with Matt present, to look into. | Oct 19 build chat: Claude's workflow review, filed on Matt's OK | inbox |  |
+| B-105 | bug | 2026-10-19T23:59:11.901Z | The live evening-mac gate failure is still open. It needs a chat linked to Matt's Mac, with Matt present, to look into. | Oct 19 build chat: Claude's workflow review, filed on Matt's OK | declined |  |

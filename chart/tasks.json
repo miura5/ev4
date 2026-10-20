@@ -1907,7 +1907,7 @@
   "title": "Bug (reported Oct 19): The live evening-mac gate failure is still open. It needs a chat linked to Matt's Mac, with Matt present, to look into.",
   "dod": null,
   "milestone": "Inbox",
-  "status": "inbox",
+  "status": "declined",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -1918,6 +1918,12 @@
    "row": "v4 B-105: The live evening-mac gate failure is still open. It needs a chat…",
    "why": "The live evening-mac gate failure is still open. It needs a chat linked to Matt's Mac, with Matt present, to look into.",
    "notes": "Reported Oct 19 from Oct 19 build chat: Claude's workflow review, filed on Matt's OK"
+  },
+  "triage": {
+   "outcome": "joined",
+   "into": "B-98",
+   "reason": "joins B-98",
+   "at": "2026-10-20T00:11:33.764Z"
   }
  }
 ]
