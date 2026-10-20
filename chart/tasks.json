@@ -2284,16 +2284,17 @@
   "title": "Today on prep days (D-164): the evening before a clinical, lab or validation day the pack check is the Now card until ticked; on the day's morning the Now card names the place and hours with the bag check folded under it; one list shared with the greeting's check; sources as a quiet second line",
   "dod": "the look harness on a planted calendar at 390, 735 and 1280: the evening before a clinical day the Now card is the pack check and folds to one line when all are ticked; the morning shows place, hours and the folded bag check; a tick on Today shows ticked in the greeting and back; every item shows its source; screenshots looked at",
   "milestone": "M14 UI",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-104"
   ],
-  "notes": "From the evening before a prep day the Now card is the pack check (the greeting's same list) until ticked through, then it folds to one line under the usual Now card; on the day the Now card is the day (place, hours) with the bag check folded under it. Proven in the prep harness (planted calendar and clock) at 390, 735 and 1280.",
-  "commit": null,
+  "notes": "Evening before a clinical/lab/validation day: Today's Now card is the pack check (prepEl, the greeting's own list on dayedits, so a tick in one is a tick in both), open until ticked through, then folded to one line under the usual Now card. On the day: the Now card names the day (Clinical day · …), place and hours parsed from the date title, with the bag check folded under it. Every item carries its source as a second line. Proven in the prep harness (planted calendar, fake clock) at 390/735/1280: 24 checks. npm run check GREEN (a core frame-budget flake on the first run, green on re-run); staging and live GREEN at d33e08a on Matt's OK. SESSION SUMMARY (Oct 20): done and live: B-119 System, B-120 header, B-121 two columns, B-122 folding, B-123 Weak spots, B-124 prep days (live 1682a4b at 05:07 fixed the runs' 50-deep clone; live d33e08a at 05:47). Open: B-125 motion, B-126 Study views. Blocked: none from this chat. Flakes seen: captions history-pull and D-137 pace, core step-down under throttle, each green on re-run. Another build chat has B-98 (Mac evening-mac) in progress.",
+  "commit": "d33e08a",
   "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474",
   "board": {
    "row": "v4 B-124: Today on prep days",
-   "why": "the pack and bag checks lived only under her greeting; Today didn't know it was a clinical day"
+   "why": "the pack and bag checks lived only under her greeting; Today didn't know it was a clinical day",
+   "notes": "On a clinical, lab or validation day, Today shows the pack check the night before and the place, hours and bag check that morning."
   }
  },
  {
