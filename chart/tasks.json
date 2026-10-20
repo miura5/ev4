@@ -1124,14 +1124,18 @@
   "title": "Rollback as a skill, for the v4-tag rollback: .claude/skills/rollback/SKILL.md takes live back to the previous v4 tag (B-30), CLAUDE.md keeps one line pointing at it",
   "dod": null,
   "milestone": "Process",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-30"
   ],
   "dependsText": "B-30 (the D-085 window closed)",
-  "notes": "Rewritten by B-65: opens when the D-085 window closes (B-30 done); the v3 procedure is not moved. Done when: the skill loads by name and its steps name the previous v4 tag, the live tasks and the printed deploy calls",
+  "notes": "Taken on Matt's OK via the parent build chat, ahead of the rest.",
   "commit": null,
-  "source": "BACKLOG.md"
+  "source": "BACKLOG.md",
+  "board": {
+   "row": "v4 B-60: The v4 rollback",
+   "why": "a way back from live before anything more goes live (Exam 4 is Wednesday)"
+  }
  },
  {
   "id": "B-61",
