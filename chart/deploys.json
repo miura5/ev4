@@ -1917,5 +1917,22 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "live",
+  "commit": "d33e08a",
+  "time": "2026-10-20T10:47:28.888Z",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "1682a4b",
+  "from": "1682a4b",
+  "tasks": [
+   "B-123",
+   "B-124"
+  ],
+  "summary": "Weak spots: due today leads, the rest folds; Today on prep days",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
