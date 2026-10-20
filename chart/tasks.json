@@ -2267,11 +2267,15 @@
   "title": "Progress, Weak spots (D-162): a lead with the count due today; Due today open, the rest folded under their lines; one line per weak spot opening to its source and Mark solid; Copy for Quizlet as a text link; the empty notes-and-skills card absent; the Log a weak spot form removed (E.V. logs them)",
   "dod": "the look harness at 390, 735 and 1470 on the synthetic record: no due pill and no Mark solid button visible at load; Due today open and the other sections closed; an opened row shows Mark solid, and marking one moves it to Solid without moving the page; Progress's tenet checks on and green; screenshots looked at",
   "milestone": "M14 UI",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Weak spots: the count due today leads; Due today open (5 rows, the rest under a line); Due tomorrow, Later, Previews, Parked and Solid fold under their lines; one line per weak spot (topic, objective) opening to source and Mark solid; Copy for Quizlet a text link; the notes card absent while empty; the Log a weak spot form removed.",
   "commit": null,
-  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474",
+  "board": {
+   "row": "v4 B-123: Weak spots: due today leads, the rest folds",
+   "why": "pills, Mark solid buttons and a form on every row made the list long and loud"
+  }
  },
  {
   "id": "B-124",
