@@ -456,7 +456,7 @@ export function decisionsCalls(rec, read, intro) {
   for (const d of [...rec.decisions].reverse()) {
     const i = rows.findIndex(r => r.cells[1].text === d.id);
     if (i < 0) {
-      if (d.source !== 'log') continue;
+      if (!d.source) continue; // imported (B-92): its row was in the tab; one filed since (log, plan) is added
       ops.push({ op: 'insert', target: { kind: 'blocks', ids: [header] }, side: 'after', source: { as: 'blocks', from: { kind: 'inline', content: [{ type: 'row', content: [textCell(d.date), textCell(d.id), textCell(d.title), textCell(d.why), textCell(word(d))] }] } } });
       notes.push(`${d.id}: a new row`); continue;
     }

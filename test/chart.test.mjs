@@ -416,3 +416,11 @@ test('log rewrites a task\'s definition of done or title outside triage', () => 
   assert.equal(out.what, 'definition of done, title');
   assert.deepEqual([r.tasks[2].dod, r.tasks[2].title], ['a new definition', 'a new title']);
 });
+
+test('a decision filed with a source (log --source, plan) still gets its Decisions row; an imported one is left alone', () => {
+  const r = sample(); r.views = { ...r.views, decisions: { node: 'DN', table: 's1.30', statusEnum: 'E2', statusOptions: ['Accepted', 'Proposed', 'Superseded'] } };
+  C.applyLog(r, { _: ['log', 'decision', 'D-003'], title: 'three', status: 'accepted', source: 'plan DOC P-1' });
+  const read = { rev: 1, rows: [{ id: 's1.31', cells: [{ text: 'Date' }, { text: 'Id' }, { text: 'Decision' }, { text: 'Why' }, { text: 'Status' }] }] };
+  const [call] = C.decisionsCalls(r, read, null);
+  assert.match(call.step, /^Decisions: D-003: a new row$/, 'D-001 and D-002 (imported, no source) are not re-added');
+});
