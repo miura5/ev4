@@ -1934,5 +1934,24 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "ea7cd75",
+  "time": "2026-10-20T21:33:16.870Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "d33e08a",
+  "tasks": [
+   "B-98",
+   "B-124",
+   "B-127",
+   "B-125"
+  ],
+  "summary": "the Mac evening run starts without its code; Today on prep days; Delete the demo copy; Motion on the other tabs",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
