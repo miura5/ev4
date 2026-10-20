@@ -467,6 +467,8 @@ export function decisionsCalls(rec, read, intro) {
   if (added.length) ops.unshift({ op: 'insert', target: { kind: 'blocks', ids: [header] }, side: 'after', source: { as: 'blocks', from: { kind: 'inline', content: added.reverse() } } });
   const m = intro && intro.text.match(/next id (D-\d{3})/), next = nextDecisionId(rec);
   if (m && m[1] !== next) { ops.push({ op: 'replace', target: { kind: 'find', text: m[0] }, with: { as: 'text', from: { kind: 'inline', content: `next id ${next}` } } }); notes.push(`next id ${next}`); }
+  // Cell replaces address rows by position on the table as read, so they go before an insert that would shift them.
+  ops.sort((a, b) => (a.op === 'insert') - (b.op === 'insert'));
   return ops.length ? [{ step: `Decisions: ${notes.join('; ')}`, ...docCall(rec.views.doc, v.node, ops) }] : [];
 }
 const STATUS_LINE = /on build ([0-9a-f]{7,}) since (\S+?) on ([A-Z][a-z]{2} \d{1,2})/;

@@ -428,3 +428,14 @@ test('a decision filed with a source (log --source, plan) still gets its Decisio
   assert.equal(two.filter(o => o.op === 'insert').length, 1, 'one insert for two new rows');
   assert.deepEqual(two[0].source.from.content.map(row => row.content[1].content[0].content[0].text), ['D-004', 'D-003'], 'newest first');
 });
+
+test('B-93: a Decisions call replaces cells before it inserts a row above them', () => {
+  const r = sample();
+  r.views.decisions = { node: 'DN', table: 's1.40', intro: 's1.39', statusEnum: 'E2', statusOptions: ['Accepted', 'Revisit', 'Superseded', 'Proposed'] };
+  const dcell = (id, t, i) => `<cell id='${id}'><paragraph id='${id}p'>${i != null ? `<dropdown id='${id}d' enum='E2' index='${i}'>${t}</dropdown>` : `<text id='${id}t'>${t}</text>`}</paragraph></cell>`;
+  const row = (id, d, st, i) => `<row id='${id}'>${dcell(id + '1', 'Oct 18')}${dcell(id + '2', d)}${dcell(id + '3', 't')}${dcell(id + '4', 'w')}${dcell(id + '5', st, i)}</row>`;
+  const read = C.parseTableXml(`<doc rev='5'><table id='s1.40'>${row('.41', 'ID', 'Status')}${row('.50', 'D-002', 'Accepted', 0)}${row('.60', 'D-001', 'Accepted', 0)}</table></doc>`);
+  C.applyLog(r, { _: ['log', 'decision', 'D-003'], title: 'three', status: 'accepted', supersedes: 'D-001' });
+  const ops = C.decisionsCalls(r, read, null)[0].args.payload.ops;
+  assert.deepEqual(ops.map(o => [o.op, o.target.row || null]), [['replace', 2], ['insert', null]]);
+});
