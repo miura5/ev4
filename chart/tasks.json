@@ -1933,6 +1933,20 @@
   }
  },
  {
+  "id": "B-107",
+  "kind": "task",
+  "title": "Prep checks in the evening run (D-143, D-144): the evening step that builds tomorrow's prep list from that day's materials, and the night-before pack check line in the 8:15pm push",
+  "dod": "a scheduled evening run fired against staging writes tomorrow's prep list for a planted validation, lab and clinical day (each cited), says so on a day with no materials, and its push carries the pack-check line; runs/<id> read back; npm test green",
+  "milestone": "M13 Workflow",
+  "status": "open",
+  "depends": [
+   "B-104"
+  ],
+  "notes": "Waits for D-085's window to close (D-139, rule R-01): it likely adds a stored document and a pipeline judgment step, and it changes a pipeline prompt, so it cannot go live before then. Split from B-104 on Matt's Oct 20 answer.",
+  "commit": null,
+  "source": "B-104 split, Oct 20"
+ },
+ {
   "id": "B-105",
   "kind": "bug",
   "title": "Bug (reported Oct 19): The live evening-mac gate failure is still open. It needs a chat linked to Matt's Mac, with Matt present, to look into.",
