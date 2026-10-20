@@ -1,5 +1,21 @@
 [
  {
+  "id": "D-145",
+  "date": "Oct 19",
+  "title": "Matt drops the v3 rollback on Oct 19, before NUR Exam 4, understanding the risk: D-085's window is closed now, not after the exam. Nothing is deleted: v3's tasks stay disabled and kept (spec.tasks.retired), its legacy copies stay in the record, ev-core is archived read-only (B-108). The gates that rested on the window end: live takes stored-document, pipeline, prompt, schema and migration changes by the normal path (staging green at the commit, then live on Matt's explicit OK), so R-01 ends and D-136's staging-only rule for the Captions schema bumps with it; a live hotfix starts from main (D-138 ends). Until the v4 rollback exists (B-60, built once the open tasks are done), going back is a redeploy of the previous v4 live build chart/deploys.json names",
+  "why": "Matt, Oct 19: \"drop the current v3 rollback; that is far outdated at this point. That will remove those tasks from the time gates; complete the tasks and create a new rollback at that point when they're finished.\"",
+  "status": "accepted",
+  "supersedes": [
+   "D-085"
+  ],
+  "amends": [
+   "D-136",
+   "D-138",
+   "D-139"
+  ],
+  "source": "log"
+ },
+ {
   "id": "D-144",
   "date": "Oct 19",
   "title": "No approve-once kit: each prep list is built for that day by E.V. from that day's own materials. The calendar entry says what tomorrow is (which validation and skill, which lab and what it practises, which clinical facility), and E.V. finds what it requires in his library (Canvas skills checklists, lab equipment lists, facility paperwork, clinical objectives, syllabus); each item carries its source (file and page). Items Matt adds by hand on a day of a kind come back on later days of that kind as 'you usually bring'. With no materials for a day, the check says so plainly instead of showing a short list as if complete. E.V. lists the paperwork to bring and never helps fill it in (graded clinical work; the hard limits stand)",
@@ -546,7 +562,7 @@
   "date": "Oct 18",
   "title": "Rollback to v3 stays an option until the first exam taken on v4 or Oct 25, whichever comes first; until then CLAUDE.md carries the manual procedure (disable v4 tasks, re-enable v3's, republish the v3 page version, restore the 191 originals from legacy, accept the loss of everything answered on v4); after it the v3 tasks move to spec.tasks.retired, ev-core is archived read-only and the Board closes",
   "why": "Every day on v4 makes rollback lossier and nothing restores the legacy copies by command (finding 4); a window with a date is a stated cost, not a time gate on work",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [],
   "amends": []
  },
