@@ -300,6 +300,60 @@
         );
         box.append(a);
       },
+      // B-45 (D-102): a plan the exam-plan job drafted. While it is a draft its one action makes it the plan in force
+      // (planedits/<exam>.plan, ticks kept); once in force it opens the Study tab's plan.
+      plan(box, c) {
+        const p = (S.plansRaw || []).find(x => x.id === c.id);
+        if (!p) {
+          box.append(head2('Exam plan'), el('p', 'empty', 'Saving the plan…'));
+          return;
+        }
+        const examId = p.exam || p.id,
+          inForce = S.plans.some(x => x.id === p.id),
+          tasks = E.planTasks(p);
+        box.append(
+          head2(
+            p.title || 'Exam plan ' + examId,
+            `${plural((p.days || []).length, 'day')} · ${plural(tasks.length, 'task')}`
+          )
+        );
+        const ul = el('ul', 'list');
+        (p.days || [])
+          .slice(0, 3)
+          .forEach(d =>
+            ul.append(
+              row({ lead: short(d.date), title: [d.label, plural(d.tasks.length, 'task')].filter(Boolean).join(' · ') })
+            )
+          );
+        box.append(ul);
+        const a = el('div', 'actions');
+        if (inForce) {
+          box.append(el('p', 'meta', 'This is the plan in force.'));
+          a.append(
+            btn('Open the plan', () => {
+              showTab('study');
+              setStudy('plan');
+            })
+          );
+        } else
+          a.append(
+            btn(
+              'Use this plan',
+              ev =>
+                guard(
+                  ev.target,
+                  () => {
+                    const pe = S.planedits.find(x => x.id === examId) || null;
+                    const r = E.planAccept(pe, examId, p.id, { now: now() });
+                    return write({ op: 'set', collection: 'planedits', id: r.id, data: r.data });
+                  },
+                  'This plan is in force'
+                ),
+              { primary: true }
+            )
+          );
+        box.append(a);
+      },
       job(box, c) {
         const j = S.jobs.find(x => x.id === c.id);
         if (!j) {

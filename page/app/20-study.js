@@ -280,7 +280,7 @@
     function renderPlan() {
       const card = $('plan-card');
       const plan =
-        (M.target && S.plans.find(p => p.id === M.target.id)) ||
+        (M.target && S.plans.find(p => (p.exam || p.id) === M.target.id)) ||
         S.plans
           .slice()
           .sort((a, b) => String((b.days || [])[0]?.date).localeCompare(String((a.days || [])[0]?.date)))[0];

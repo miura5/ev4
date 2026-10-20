@@ -1226,7 +1226,7 @@
  },
  "courses": {
   "_rules": [
-   "B-42 (D-099): one entry per course. Core takes every course rule from this table and names no course in code: canvasId (Canvas, read-only), status (active or done; a done course leaves search and the morning's passages by default and comes back when Matt names it), endsAfter (the exam kind after which Matt marks it done), examKinds (what its exams may be), reviewKinds (exams whose weak spots set the review load and count as the next exam), examDayKinds (exams that make the day an exam day), scoredKinds (exams whose score the page asks for and the morning predicts, D-094), calendarDayKinds (calendar entries of the course that set the day type), dayBudget (shared: its review shares the day's budget, one review set across courses), aliases (how its name is written in the record), guess (words that put an attached file in this course), default (the course a document without one belongs to), library (which Canvas module files become library materials, D-079).",
+   "B-42 (D-099): one entry per course. Core takes every course rule from this table and names no course in code: canvasId (Canvas, read-only), status (active or done; a done course leaves search and the morning's passages by default and comes back when Matt names it), endsAfter (the exam kind after which Matt marks it done), examKinds (what its exams may be), reviewKinds (exams whose weak spots set the review load and count as the next exam), examDayKinds (exams that make the day an exam day), scoredKinds (exams whose score the page asks for and the morning predicts, D-094), calendarDayKinds (calendar entries of the course that set the day type), dayBudget (shared: its review shares the day's budget, one review set across courses), aliases (how its name is written in the record), guess (words that put an attached file in this course), default (the course a document without one belongs to), library (which Canvas module files become library materials, D-079), planModule (B-45, D-102: the module whose arrival offers a plan draft, and the exam id it names).",
    "exams.course and materials.course must name a course here (build and lint)."
   ],
   "NUR 112": {
@@ -1281,7 +1281,11 @@
      "kind": "course",
      "only": "syllabus|calendar|abbreviation|prefixes|suffixes|remediat"
     }
-   ]
+   ],
+   "planModule": {
+    "module": "^exam\\s*(\\d+)\\s+content",
+    "exam": "E$1"
+   }
   },
   "BIO 201": {
    "canvasId": 199416,

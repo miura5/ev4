@@ -926,6 +926,7 @@ export const AGENT_FOLDS = {
     const writes = [];
     const say = [];
     const failed = answer.failed ? String(answer.failed) : null;
+    let draftCard = null;
     const result = {
       text: failed ? 'I couldn’t finish this one: ' + failed : answer.text,
       links: (answer.links || []).map(l => ({
@@ -989,23 +990,32 @@ export const AGENT_FOLDS = {
       Array.isArray(answer.plan.days) &&
       answer.plan.days.length
     ) {
+      // B-45 (D-102): the exam's first plan is plans/<exam>; any later one is a draft plans/<exam>-<n>, a Fact
+      // never changed, that Matt makes the plan in force from its card. Nothing is replaced.
       const p = answer.plan;
-      const exists = (db.plans || []).some(x => x.id === p.exam);
-      const planId = exists ? p.exam + '-draft' : p.exam;
+      const exists = (db.plans || []).some(x => (x.exam || x.id) === p.exam);
+      const planId = EV.nextPlanId(db.plans || [], p.exam);
       writes.push({
         op: 'set',
         collection: 'plans',
         id: planId,
         data: { ...EV.envelope('worker', ctx.source, ctx.now), ...pick(p, ['exam', 'title', 'days']) },
       });
-      result.text += exists ? ` (Your current ${p.exam} plan stays; this one is saved as plans/${planId}.)` : '';
+      result.text += exists
+        ? ` Your current ${p.exam} plan stays in force; this draft waits on its card until you use it.`
+        : '';
+      draftCard = { type: 'plan', id: planId }; // the card names it; jobresults keep their shape
       say.push(`Plan ${planId}: ${p.days.length} days.`);
     }
     const key = `m-${EV.compactTime(ctx.now)}-job`;
     const message = {
       role: 'ev',
       text: result.text.slice(0, 4000),
-      cards: [{ type: 'job', id: job.id }, ...(result.setId ? [{ type: 'set', id: result.setId }] : [])],
+      cards: [
+        { type: 'job', id: job.id },
+        ...(result.setId ? [{ type: 'set', id: result.setId }] : []),
+        ...(draftCard ? [draftCard] : []),
+      ],
       at: ctx.now,
       jobId: job.id,
     };

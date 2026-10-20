@@ -480,6 +480,11 @@ export const BUMPS = {
       also: [],
     }),
   },
+  planedits: {
+    // B-45 (D-102): planedits gains plan, the id of the plan in force; an Edit before it named none, so plans/<examId>
+    // stays in force and the document only moves to the new version.
+    1: d => ({ data: { ...d, schema: 2 }, also: [] }),
+  },
   ideas: {
     // D-109: ideas carry a kind; every idea before it came from study (sessions, Study Watch, the conversation), so
     // each becomes a learning idea, the only kind that can become a weak spot.

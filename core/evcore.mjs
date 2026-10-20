@@ -893,18 +893,86 @@ const EVCore = (() => {
   function planView(plan, planedit) {
     return plan ? { ...plan, done: { ...((planedit && planedit.ticks) || {}) } } : plan;
   }
-  /** Every plan as a view, ticks merged in from the planedits documents (matched by exam id). */
+  // B-45 (D-102): an exam's plans are plans/<examId> and its drafts plans/<examId>-<n>, each a Fact never changed;
+  // planedits/<examId>.plan names the one in force (unset: plans/<examId>). Readers see only the plan in force.
+  const planExam = p => (p && (p.exam || p.id)) || null;
+  /** The id of the plan in force for an exam, among the plans the record holds. */
+  function planInForceId(plans, planedit, examId) {
+    const mine = (plans || []).filter(p => planExam(p) === examId);
+    const want = planedit && planedit.plan;
+    return (
+      (want && mine.find(p => p.id === want) ? want : null) ||
+      (mine.find(p => p.id === examId) || mine[0] || {}).id ||
+      null
+    );
+  }
+  /** Every exam's plan in force as a view, ticks merged in from its planedits document; drafts are left out. */
   function planViews(plans, planedits) {
     const by = {};
     for (const e of planedits || []) if (e) by[e.id] = e;
-    return (plans || []).map(p => planView(p, by[p.exam || p.id]));
+    const inForce = {};
+    for (const p of plans || []) {
+      const x = planExam(p);
+      if (!(x in inForce)) inForce[x] = planInForceId(plans, by[x], x);
+    }
+    return (plans || []).filter(p => inForce[planExam(p)] === p.id).map(p => planView(p, by[planExam(p)]));
+  }
+  /** An exam's drafts: its plans other than the one in force, newest first. */
+  function planDrafts(plans, planedits, examId) {
+    const pe = (planedits || []).find(e => e && e.id === examId);
+    const f = planInForceId(plans, pe, examId);
+    return (plans || [])
+      .filter(p => planExam(p) === examId && p.id !== f)
+      .sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
+  }
+  /** Where the worker saves a plan it drafts: plans/<examId> when the exam has none, else the next plans/<examId>-<n>. */
+  function nextPlanId(plans, examId) {
+    const ids = new Set((plans || []).map(p => p.id));
+    if (!ids.has(examId)) return examId;
+    let n = 2;
+    while (ids.has(examId + '-' + n)) n++;
+    return examId + '-' + n;
+  }
+  /** Matt accepts a draft from its card: planedits/<examId> names it as the plan in force, ticks kept (replaced whole). */
+  function planAccept(planedit, examId, planId, { now } = {}) {
+    return {
+      id: examId,
+      data: { ...editBase(planedit, now), schema: 2, ticks: { ...((planedit && planedit.ticks) || {}) }, plan: planId },
+    };
   }
   /** The page's tick for a plan task: the whole new planedits/<exam id> document (Edits are replaced whole). */
   function planTick(planedit, examId, taskId, { done = true, now, by = 'Matt' } = {}) {
     const ticks = { ...((planedit && planedit.ticks) || {}) };
     if (done) ticks[taskId] = { at: isoOf(now), by };
     else delete ticks[taskId];
-    return { id: examId, data: { ...editBase(planedit, now), ticks } };
+    return { id: examId, data: { ...editBase(planedit, now), schema: 2, ticks } };
+  }
+  /**
+   * B-45 (D-102): the one greeting offer of a plan draft, when the Canvas sync has just brought in a course's
+   * exam-content module (spec.courses.<course>.planModule) for an exam ahead that has no plan and no exam-plan job.
+   * Returns {examId, title} or null; E.V. never drafts unasked.
+   */
+  function planOffer({ materials, plans, exams, jobs, since, date }) {
+    for (const m of (materials || []).filter(m => !since || String(m.at || m.createdAt || '') > since)) {
+      const rule = (courseRule(courseOf(m)) || {}).planModule;
+      if (!rule) continue;
+      const hit = new RegExp(rule.module, 'i').exec(String(m.module || '').trim());
+      if (!hit) continue;
+      const examId = String(rule.exam).replace(/\$(\d)/g, (x, i) => hit[Number(i)] || '');
+      const exam = (exams || []).find(e => e.id === examId && e.date && e.date >= date && e.status !== 'done');
+      if (!exam) continue;
+      if ((plans || []).some(p => planExam(p) === examId)) continue;
+      if (
+        (jobs || []).some(
+          j =>
+            j.kind === 'exam-plan' &&
+            new RegExp(`\\b${examId}\\b`).test(String(j.brief || '') + ' ' + String(j.title || ''))
+        )
+      )
+        continue;
+      return { examId, title: exam.title || examId };
+    }
+    return null;
   }
   function planTasks(plan) {
     return ((plan && plan.days) || []).flatMap(d => d.tasks.map(t => ({ ...t, date: d.date })));
@@ -4486,6 +4554,11 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
         line: `The ${failed[0][0]} run failed${failed[0][1].detail ? ': ' + String(failed[0][1].detail).slice(0, 80) : ''}. I’m flagging it, not ignoring it.`,
         alert: true,
       });
+    // B-45 (D-102): a new exam-content module from the Canvas sync offers a plan draft, once, as one line.
+    if (c.planOffer)
+      insights.push({
+        line: `${String(c.planOffer.title).replace(/:.*$/, '')} content is on Canvas. Want me to draft its plan?`,
+      });
     const soon = exams.find(
       e =>
         examIs(e, 'scoredKinds') &&
@@ -4601,6 +4674,14 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
         when: 'failed',
         detail: 'The background job stopped. System has the details and a Try again.',
         tab: 'system',
+      });
+    // B-45 (D-102): new on Canvas, an exam's content with no plan: one line offering the draft; drafted only on his tap.
+    if (c.planOffer)
+      put('new', 'plan', `${exName(c.planOffer)} content is on Canvas`, {
+        when: 'new',
+        detail: 'No plan yet. E.V. can draft one from it, your calendar and the objectives.',
+        action: { label: 'Draft its plan', chip: 'Draft its plan' },
+        exam: c.planOffer.examId,
       });
     if (rl)
       put('normal', 'review', `${rl} review${rl === 1 ? '' : 's'} waiting`, {
@@ -4766,6 +4847,11 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
     planFromCards,
     planView,
     planViews,
+    planInForceId,
+    planDrafts,
+    nextPlanId,
+    planAccept,
+    planOffer,
     planTick,
     planTasks,
     taskDone,

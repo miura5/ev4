@@ -6,6 +6,23 @@
         .replace(/[?.!\s]+$/, '')
         .trim();
     const LOCAL = {
+      // B-45 (D-102): the briefing's plan offer, the one way a draft starts without his asking in words.
+      'draft its plan': async () => {
+        const item = ((T.greet && T.greet.brief) || []).find(b => b.kind === 'plan' && b.exam);
+        const ex = item && S.exams.find(e => e.id === item.exam);
+        if (!ex) return ['There’s no exam waiting on a plan right now.', []];
+        const r = await startJob({
+          kind: 'exam-plan',
+          title: 'Exam plan: ' + (ex.title || ex.id).replace(/:.*$/, ''),
+          brief: ex.id + ': draft its plan from the new exam content',
+        });
+        return r.fired && r.fired.ok
+          ? [
+              `Drafting the ${(ex.title || ex.id).replace(/:.*$/, '')} plan in the background. It arrives as a card you can use or leave.`,
+              [{ type: 'job', id: r.id }],
+            ]
+          : ['Couldn’t start it: ' + fireCopy(r.fired && r.fired.error), []];
+      },
       'start review': () => {
         const { rs, left } = reviewState();
         return left

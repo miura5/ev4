@@ -532,7 +532,7 @@
                   }));
                 break;
               case 'plan': {
-                const p = M.target && S.plans.find(x => x.id === M.target.id);
+                const p = M.target && S.plans.find(x => (x.exam || x.id) === M.target.id);
                 out = p
                   ? (p.days || [])
                       .filter(d => d.date >= today)

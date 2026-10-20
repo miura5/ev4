@@ -14,6 +14,26 @@
         render();
       }
     }
+    // B-45 (D-102): the materials the Canvas sync brought in since he last looked (one small query, at the first open),
+    // so the greeting can offer a plan draft for an exam whose content just arrived. A failed read offers nothing.
+    const NEWMATS = { docs: [], asked: false };
+    function newMaterials() {
+      if (NEWMATS.asked) return;
+      NEWMATS.asked = true;
+      const since = (S.memory && S.memory.lastSeenAt) || new Date(Date.now() - 864e5).toISOString();
+      Promise.resolve()
+        .then(() => db.collection('materials').where('at', '>=', since).get())
+        .then(
+          snap => {
+            NEWMATS.docs = snap.docs.map(d => ({ id: d.id, ...(d.data() || {}) }));
+          },
+          () => {}
+        )
+        .finally(() => {
+          loaded.add('newmats');
+          render();
+        });
+    }
     function greetNow() {
       const { day, items, isDone } = dayState();
       const { left, total } = reviewState();
@@ -56,6 +76,15 @@
             .filter(d => d.date === today)
             .map(d => ({ title: d.title, graded: !!d.graded, kind: d.kind })),
           quizlet: null,
+          // B-45 (D-102): an exam-content module the Canvas sync brought in since he last looked, for an exam with no plan.
+          planOffer: E.planOffer({
+            materials: NEWMATS.docs,
+            plans: S.plansRaw || [],
+            exams: S.exams,
+            jobs: S.jobs,
+            since: (S.memory && S.memory.lastSeenAt) || null,
+            date: today,
+          }),
           checkin: (M.dayedit && M.dayedit.checkin) || null,
           sessionActive: !!activeSession(),
           skillRun: resumeChip(),

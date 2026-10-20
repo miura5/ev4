@@ -96,7 +96,11 @@
     addEventListener('resize', fitPlaceholder);
     fitPlaceholder();
     function renderEV() {
-      if (!T.greet && ['days', 'dates', 'jobs', 'talk', 'memory', 'state', 'sessions'].every(k => loaded.has(k)))
+      if (!T.greet && loaded.has('memory')) newMaterials();
+      if (
+        !T.greet &&
+        ['days', 'dates', 'jobs', 'talk', 'memory', 'state', 'sessions', 'newmats'].every(k => loaded.has(k))
+      )
         greetNow();
       // Opening: E.V. greets at full size until the conversation starts (his first message today) or a session runs.
       const opening =
