@@ -1263,7 +1263,7 @@
   "depends": [
    "B-64"
   ],
-  "notes": "",
+  "notes": "Oct 20, from B-64: on a fresh staging export (fixtures/staging-export, ignored) test/harness/run.cjs passes 252 of 273; the same 21 fail at b47e04c, so they predate this session. They expect the synthetic record (the greeting naming one urgent item, the briefing's order, the ladder workout, the study-session and filing stubs). B-67's job is the inverse direction (pass on a generated record from npm test); the export failures are a finding for whoever next wants a real-record gate",
   "commit": null,
   "source": "BACKLOG.md"
  },
