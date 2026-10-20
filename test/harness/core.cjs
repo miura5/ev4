@@ -6,14 +6,14 @@
 // Emulation.setCPUThrottlingRate): the share of frames over 25 ms and the core's own draw p95 against
 // spec.ui.look.core.frameBudget (D-135 as amended). It then throttles harder to watch the run-time step-down, and checks
 // the Canvas 2D fallback, both where WebGL is missing and where its context is lost. The record is a staging export as for run.cjs.
-//   node test/harness/core.cjs <record dir> [screenshots dir] [--json <file>]
+//   node test/harness/core.cjs [record dir | synthetic] [screenshots dir] [--json <file>]
 // Run `node tools/build.mjs` first. Exit code 1 when any check fails.
 const { chromium } = require('playwright');
 const fs = require('fs'); const path = require('path');
 const root = path.resolve(__dirname, '../..');
 const args = process.argv.slice(2); const jsonAt = args.indexOf('--json'); const jsonOut = jsonAt >= 0 ? args.splice(jsonAt, 2)[1] : null;
-const [dbDir, shotsArg] = args;
-if (!dbDir) { console.error('usage: node test/harness/core.cjs <record dir> [screenshots dir] [--json <file>]'); process.exit(2); }
+const [dbArg, shotsArg] = args;
+const dbDir = require('../data/synthetic.cjs').recordDir(dbArg);
 const shots = shotsArg || '/tmp/ev4-shots'; fs.mkdirSync(shots, { recursive: true });
 function load(dir) { const db = {}; for (const c of fs.readdirSync(dir)) { const p = path.join(dir, c); if (!fs.statSync(p).isDirectory()) continue; db[c] = {}; for (const f of fs.readdirSync(p)) if (f.endsWith('.json')) db[c][f.slice(0, -5)] = JSON.parse(fs.readFileSync(path.join(p, f), 'utf8')); } return db; }
 const seed = load(dbDir); delete seed.system; delete seed.legacy; delete seed.debug; delete seed.journal;

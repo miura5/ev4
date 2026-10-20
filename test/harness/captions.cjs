@@ -9,14 +9,14 @@
 // Design artifact's project/V2.dc.html, project/V2Desktop.dc.html, project/Core2.dc.html and
 // artifact-type/dc-runtime.js (Artifact read of E.V. Home: Captions; never committed here), served as ./support.js.
 // Each width's open and conversation states are measured on both and saved side by side.
-//   node test/harness/captions.cjs <record dir> [screenshots dir] [--artboards <dir>]
+//   node test/harness/captions.cjs [record dir | synthetic] [screenshots dir] [--artboards <dir>]
 // Run `node tools/build.mjs` first. Exit code 1 when any check fails.
 const { chromium } = require('playwright');
 const fs = require('fs'); const path = require('path');
 const root = path.resolve(__dirname, '../..');
 const argv = process.argv.slice(2); const artAt = argv.indexOf('--artboards'); const artDir = artAt >= 0 ? argv.splice(artAt, 2)[1] : null;
-const [dbDir, shotsArg] = argv;
-if (!dbDir) { console.error('usage: node test/harness/captions.cjs <record dir> [screenshots dir]'); process.exit(2); }
+const [dbArg, shotsArg] = argv;
+const dbDir = require('../data/synthetic.cjs').recordDir(dbArg);
 const shots = shotsArg || '/tmp/ev4-shots'; fs.mkdirSync(shots, { recursive: true });
 function load(dir) { const db = {}; for (const c of fs.readdirSync(dir)) { const p = path.join(dir, c); if (!fs.statSync(p).isDirectory()) continue; db[c] = {}; for (const f of fs.readdirSync(p)) if (f.endsWith('.json')) db[c][f.slice(0, -5)] = JSON.parse(fs.readFileSync(path.join(p, f), 'utf8')); } return db; }
 const seed = load(dbDir); delete seed.system; delete seed.legacy; delete seed.debug; delete seed.journal;

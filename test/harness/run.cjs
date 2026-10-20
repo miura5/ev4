@@ -1,14 +1,14 @@
 // The page harness (B-16, ported from v3's test/harness/run.cjs): drives the built v4 page (dist/page/<target>/, the
 // shell with its published files served beside it) at phone and desktop width, with the record, sample, mcp and the
-// Study Watch reader stubbed (stub.js). The record comes from a folder of <collection>/<id>.json in v4 shapes: the
-// staging seed (`seed-staging --out`) or a migrated export, kept outside the repository (it is personal data).
-//   node test/harness/run.cjs <record dir> [screenshots dir]
+// Study Watch reader stubbed (stub.js). The record comes from a folder of <collection>/<id>.json in v4 shapes: by
+// default the synthetic record (test/data/synthetic.cjs, made up), else the staging seed (`seed-staging --out`) or a
+// migrated export, kept outside the repository (it is personal data).
+//   node test/harness/run.cjs [record dir | synthetic] [screenshots dir]   (default: the synthetic record, B-100)
 // Run `node tools/build.mjs` first. Exit code 1 when any check fails. The shell's own checks are test/harness/shell.cjs.
 const { chromium } = require('playwright');
 const fs = require('fs'); const path = require('path');
 const root = path.resolve(__dirname, '../..');
-const dbDir = process.argv[2];
-if (!dbDir) { console.error('usage: node test/harness/run.cjs <record dir> [screenshots dir]'); process.exit(2); }
+const dbDir = require('../data/synthetic.cjs').recordDir(process.argv[2]);
 const shots = process.argv[3] || '/tmp/ev4-shots'; fs.mkdirSync(shots, { recursive: true });
 function load(dir) { const db = {}; for (const c of fs.readdirSync(dir)) { const p = path.join(dir, c); if (!fs.statSync(p).isDirectory()) continue; db[c] = {}; for (const f of fs.readdirSync(p)) if (f.endsWith('.json')) db[c][f.slice(0, -5)] = JSON.parse(fs.readFileSync(path.join(p, f), 'utf8')); } return db; }
 const seed = load(dbDir);
