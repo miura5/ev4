@@ -6,8 +6,9 @@
 //                    over its budget once B-14 sets one
 //   invalid          a document its collection's schema refuses
 //   derived-differs  a Derived document that rebuild does not reproduce byte for byte
-//   frozen           (info) D-090: a document carrying migratedAt or migratedTo is a frozen original, and a collection
-//                    in spec.legacyCollections is v3's, kept by rule; each is one note per collection, never an error
+//   frozen           (info) D-090: a document carrying migratedAt or migratedTo is a frozen original, so is a v2 or v3
+//                    leftover (B-34), and a collection in spec.legacyCollections is v3's, kept by rule; each is one note
+//                    per collection, never an error
 // plus the content checks E.V. core has always run (items, orphans, duplicates, identifiers). The journal is never
 // read: it stays the page's (D-059).
 import EV from './evcore.mjs';
@@ -23,6 +24,13 @@ function migratedCopy(rec, col, id, ok) {
 const bytes = d => Buffer.byteLength(JSON.stringify(EV.docData(d)), 'utf8');
 /** D-090: an original a migration marked (migratedAt, migratedTo) is frozen: kept as it was, never changed again. */
 export const isFrozen = d => !!(d && (d.migratedAt || d.migratedTo));
+/**
+ * B-34: the pre-v4 leftovers the migration did not mark, settled in code rather than by a hand write to live: a
+ * document a v2 or v3 pipeline wrote (its pipeline field names the version, like days/2026-10-16, "v2 Daily list (test
+ * A-2)"), and a document in a collection with fixed ids under an id v4 does not fix (v3's system/code). Both are kept as
+ * they are (nothing is deleted) and lint notes them as frozen, like a marked original.
+ */
+export const isLeftover = (d, c) => !!(d && ((c && c.fixedIds && !c.fixedIds.includes(d.id)) || /^v[123]\b/i.test(String(d.pipeline || ''))));
 
 /**
  * db: {collection: [docs with id]}. Returns {issues: [{severity, code, ref, msg}], rebuilt: [rebuild results]}, issues
@@ -46,7 +54,7 @@ export function lintRecord(db, spec, validate, { date, commit = null } = {}) {
       const ref = `${col}/${d.id}`; const cls = classOf(spec, col, d.id); const size = bytes(d); total += size;
       // A frozen original outside legacy keeps the shape it had when it was migrated: no schema, writer or fact check
       // applies to it now. legacy's own schema describes its copies, so those are still validated.
-      if (isFrozen(d)) { frozen++; if (col !== 'legacy') { if (cap.documentBytes && size > cap.documentBytes) add('error', 'over-budget', ref, `${size} bytes; the budget is ${cap.documentBytes}`); continue; } }
+      if (isFrozen(d) || isLeftover(d, c)) { frozen++; if (col !== 'legacy') { if (cap.documentBytes && size > cap.documentBytes) add('error', 'over-budget', ref, `${size} bytes; the budget is ${cap.documentBytes}`); continue; } }
       const r = validate(col, EV.docData(d), { id: d.id });
       if (!r.ok) add('error', 'invalid', ref, describeErrors(ref, r).split('\n').slice(0, 3).join(' · '));
       const writers = writersOf(spec, col, d.id);
@@ -69,7 +77,7 @@ export function lintRecord(db, spec, validate, { date, commit = null } = {}) {
       if (cap.documentBytes && size > cap.documentBytes) add('error', 'over-budget', ref, `${size} bytes; the budget is ${cap.documentBytes}`);
       if (col === 'materials' && cap.materialTextChars && String(d.text || '').length > cap.materialTextChars) add('error', 'over-budget', ref, `${String(d.text).length} characters of text; the cap is ${cap.materialTextChars} (chunk as ${cap.materialChunkId || '<id>-p<n>'})`);
     }
-    if (frozen) add('info', 'frozen', col, `${frozen} frozen original(s) (migratedAt or migratedTo): kept as migrated, never changed`);
+    if (frozen) add('info', 'frozen', col, `${frozen} frozen original(s) (migratedAt or migratedTo, or a v2 or v3 leftover): kept as they were, never changed`);
     if (c.retired && (docs || []).length) add('info', 'retired', col, `${(docs || []).length} document(s) kept in a retired collection: ${String(c.retired).split(':')[0]}`);
     const b = (cap.collections || {})[col] || {}; const n = (docs || []).length;
     if (b.failDocs != null && n >= b.failDocs) add('error', 'over-budget', col, `${n} documents; fails at ${b.failDocs}` + (b.relief ? ` (relief: ${b.relief})` : ''));
@@ -78,7 +86,9 @@ export function lintRecord(db, spec, validate, { date, commit = null } = {}) {
     else if (b.warnBytes != null && total >= b.warnBytes) add('warning', 'over-budget', col, `${total} bytes; warns at ${b.warnBytes}`);
   }
 
-  const rebuilt = rebuild(rec, spec);
+  // A frozen original or a pre-v4 leftover is no build of today's code: rebuild never judges it.
+  const kept = new Set(); for (const [col, docs] of Object.entries(rec)) for (const d of docs || []) if (isFrozen(d) || isLeftover(d, spec.collections[col])) kept.add(`${col}/${d.id}`);
+  const rebuilt = rebuild(rec, spec).filter(r => !kept.has(r.ref));
   for (const r of rebuilt) {
     if (r.status === 'differs') {
       // Built by an earlier build, it may differ for that reason alone; its next run rebuilds it with today's code.

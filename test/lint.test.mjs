@@ -259,6 +259,20 @@ test('B-34 (D-090): frozen originals and spec.legacyCollections are notes, never
   assert.equal(codes(lint(db), 'unknown-collection').length, 1);
 });
 
+test('B-34: the two pre-v4 leftovers the live lint found are frozen notes, in code: a v2 test day and v3\'s system/code', () => {
+  const db = load();
+  // Made-up stand-ins in the shapes the live export had: no migratedAt on either.
+  db.days = [...(db.days || []), { id: '2026-09-16', pipeline: 'v2 Daily list (test A-2)', source: 'migrated', items: [{ text: 'a made-up v2 item' }] }];
+  db.system = [...(db.system || []), { id: 'code', version: 'v3.2', files: { 'app.js': 'made-up' } }];
+  const r = lint(db);
+  assert.deepEqual(r.issues.filter(i => i.severity === 'error' && /2026-09-16|system\/code/.test(i.ref)), [], JSON.stringify(r.issues.filter(i => i.severity === 'error')));
+  assert.match(codes(r, 'frozen').find(i => i.ref === 'days').msg, /^1 frozen original/);
+  assert.match(codes(r, 'frozen').find(i => i.ref === 'system').msg, /^1 frozen original/);
+  // A v4 document is never a leftover: a days document of today's shape with a bad field is still invalid.
+  db.days.push({ ...db.days.find(d => d.id !== '2026-09-16' && d.schema), id: '2026-09-17', schema: 'x' });
+  assert.ok(codes(lint(db), 'invalid').some(i => i.ref === 'days/2026-09-17'));
+});
+
 test('B-34 (D-090): the state step writes state/current.lint from its pull; a planted change is in it; state still rebuilds byte for byte', async () => {
   const { CODE_STEPS } = await import('../core/steps.mjs');
   const ctx = { date: '2026-10-17', now: '2026-10-20T01:15:00.000Z', source: 'evening-cloud evening-cloud-test', commit: 'c'.repeat(40) };
