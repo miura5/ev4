@@ -1885,17 +1885,20 @@
   "title": "Request (reported Oct 19): demo/runtime.js re-scripts session timing, the reading-along comments and the wrap-up by hand, so every UI change needs a matching demo edit, and the demo has drifted before. Generate more of the demo from the real build and core, leaving only the fake data scripted.",
   "dod": "demo/runtime.js takes session timing, the reading-along comments and the wrap-up from the real build and core instead of re-scripting them; only the fake data stays scripted; demo.cjs is green, and a test fails when the demo scripts a behavior core already owns.",
   "milestone": "M13 Workflow",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Oct 20 session",
-  "commit": null,
+  "notes": "core names the session prompts' landmarks once and EVCore.sessionPrompt reads them; demo/runtime.js no longer patches spec.json timing or copies prompt wording, and its wrap-up holds the parts written; test B-103 fails on the old runtime (it set readSeconds) and passes now; demo.cjs 36/36 on the real 30 s reads. Staging GREEN at 51fd01e. The published demo artifact was not republished tonight.",
+  "commit": "51fd01e",
   "source": "Oct 19 build chat: Claude's workflow review, filed on Matt's OK",
   "words": "demo/runtime.js re-scripts session timing, the reading-along comments and the wrap-up by hand, so every UI change needs a matching demo edit, and the demo has drifted before. Generate more of the demo from the real build and core, leaving only the fake data scripted.",
   "reportedAt": "2026-10-19T23:59:11.403Z",
   "board": {
-   "row": "v4 B-103: demo/runtime.js re-scripts session timing, the reading-along comments…",
-   "why": "demo/runtime.js re-scripts session timing, the reading-along comments and the wrap-up by hand, so every UI change needs a matching demo edit, and the demo has drifted before. Generate more of the demo from the real build and core, leaving only the fake data scripted.",
-   "notes": "Reported Oct 19 from Oct 19 build chat: Claude's workflow review, filed on Matt's OK"
+   "row": "v4 B-103: The demo follows the real build",
+   "why": "every UI change needed a matching demo edit, and the demo drifted",
+   "notes": "the demo now uses the real session timing and prompts, so it can no longer drift from the page; only its made-up data is scripted",
+   "were": [
+    "v4 B-103: demo/runtime.js re-scripts session timing, the reading-along comments…"
+   ]
   },
   "triage": {
    "outcome": "task",
