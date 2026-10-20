@@ -575,6 +575,18 @@
   "source": "BACKLOG.md"
  },
  {
+  "id": "B-108",
+  "kind": "task",
+  "title": "Archive miura5/ev-core read-only (D-145): v3's repository is marked archived on GitHub (Settings, Archive this repository), which keeps every commit and makes it read-only; nothing is deleted. A session has no tool that archives a repository, so it is Matt's two-minute step",
+  "dod": "miura5/ev-core shows as archived on GitHub",
+  "milestone": "M7",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "B-30, on D-145"
+ },
+ {
   "id": "B-31",
   "kind": "task",
   "title": "planDay dedupe and fixed-item cost (D-086), with a core test built on the Oct 19 shape (a Canvas graded date, a validation date and three plan tasks for the same items, synthetic) and a staging morning firing",
