@@ -53,7 +53,7 @@ const results = []; const ok = (name, cond, detail = '') => results.push([cond ?
     await page.goto(ORIGIN + '/');
     await page.waitForFunction(() => document.querySelector('#thread .msg.ev'), null, { timeout: 5000 }).catch(() => {});
     for (const view of VIEWS) {
-      await page.click('#tab-' + view.tab); if (view.v) await page.click(`#seg-${view.tab} [data-v="${view.v}"]`);
+      await page.click('#tab-' + view.tab); if (view.v && await page.isVisible(`#seg-${view.tab} [data-v="${view.v}"]`)) await page.click(`#seg-${view.tab} [data-v="${view.v}"]`); // B-121: from 1024 px Study's plan sits beside, with no button
       await page.waitForTimeout(500); // past the panel's fade-in
       await page.screenshot({ path: `${shots}/${shotName(view, size)}`, fullPage: true });
       ok(`[${width}] ${view.id}: no sideways scroll`, await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
@@ -132,6 +132,26 @@ const results = []; const ok = (name, cond, detail = '') => results.push([cond ?
       ok(`[${width}] system: opened, the runs are one line each and only the failed one is marked`, s1.length >= 2 && s1.every(r => r.h <= 44) && s1.filter(r => r.mark).length === 1 && /Weekly review/.test(s1.find(r => r.mark).t) && s1.find(r => r.mark).mark === 'failed', JSON.stringify(s1));
       await page.screenshot({ path: `${shots}/look-system-runs-${width}.png`, fullPage: true });
       await page.click('#runs-fold'); await page.evaluate(() => window.scrollTo(0, 0));
+    }
+    // B-121 (D-158): from 1024 px each tab but E.V. is two columns, its lead and its primary on the left; at 1023 one.
+    if ([1280, 1470].includes(size.width)) {
+      const columns = () => page.evaluate(() => { const vis = e => !!e && !e.closest('[hidden]') && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().height > 0;
+        const panel = document.querySelector('section.panel:not([hidden])'), cards = [...panel.querySelectorAll('.card, .sys-foot')].filter(c => vis(c) && !c.parentElement.closest('.card'));
+        const L = c => Math.round(c.getBoundingClientRect().left - parseFloat(getComputedStyle(c).marginLeft)), lefts = [...new Set(cards.map(L))].sort((a, b) => a - b);
+        const prim = [...panel.querySelectorAll('button.primary')].filter(vis).map(b => L(b.closest('.card')));
+        return { lefts, lead: cards.length && L(cards[0]), prim, sideways: document.documentElement.scrollWidth > innerWidth + 1 }; });
+      for (const tab of ['today', 'study', 'progress', 'record', 'system']) {
+        await page.click('#tab-' + tab); const first = await page.$(`#seg-${tab} button`); if (first) await first.click(); await page.waitForTimeout(500);
+        const c = await columns();
+        ok(`[${width}] ${tab}: two columns, the lead and the primary on the left`, c.lefts.length === 2 && c.lead === c.lefts[0] && c.prim.every(x => x === c.lefts[0]) && !c.sideways, JSON.stringify(c));
+        if (size.width === 1280) {
+          await page.screenshot({ path: `${shots}/look-cols-${tab}-${width}.png`, fullPage: true });
+          await page.setViewportSize({ width: 1023, height: 800 }); await page.waitForTimeout(300);
+          const n = await columns();
+          ok(`[1023x800] ${tab}: one column`, n.lefts.length === 1 && !n.sideways, JSON.stringify(n));
+          await page.setViewportSize(viewport); await page.waitForTimeout(200);
+        }
+      }
     }
     // Each seg control back to its first view, as a fresh open has it.
     for (const v of VIEWS.filter(x => x.v)) if (VIEWS.find(x => x.tab === v.tab).v === v.v) { await page.click('#tab-' + v.tab); await page.click(`#seg-${v.tab} [data-v="${v.v}"]`); }

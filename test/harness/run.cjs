@@ -147,7 +147,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     ok(`[${scheme}] the greeting has no card; at most three chips, one opening the finished study guide`, gm.cards === 0 && gm.chips.length <= 3 && gm.chips.includes('Open the study guide'), JSON.stringify(gm));
     ok(`[${scheme}] quick chips`, (await page.locator('#qchips .qchip').count()) >= 3, String(await page.locator('#qchips .qchip').count()));
     await page.click('#tab-today'); await page.waitForTimeout(100);
-    ok(`[${scheme}] switching tabs plays the arrival`, await page.evaluate(() => document.getElementById('p-today').classList.contains('enter') && getComputedStyle(document.querySelector('#p-today > .card')).animationName === 'rise'));
+    ok(`[${scheme}] switching tabs plays the arrival`, await page.evaluate(() => document.getElementById('p-today').classList.contains('enter') && getComputedStyle(document.querySelector('#p-today .card')).animationName === 'rise'));
     await page.waitForTimeout(900);
     await page.screenshot({ path: `${shots}/today-${scheme}.png`, fullPage: true });
     await page.click('#tab-ev'); await page.waitForTimeout(100);
@@ -470,8 +470,10 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
       await page.locator('#pr-body label.opt').nth(1).click(); await page.click('#pr-body button:has-text("Check answer")'); await page.waitForTimeout(150);
       ok('the retake answer is appended beside the first one, never replacing it', (await tries()) === before + 1, `${before} -> ${await tries()}`);
       await page.screenshot({ path: `${shots}/retake-${scheme}.png`, fullPage: false }); }
-    // Plan: tick a task
-    await page.click('#seg-study [data-v="plan"]'); await page.waitForTimeout(100);
+    // Plan: tick a task (B-121: from 1024 px the plan sits beside review and practice, with no Plan button)
+    if (scheme === 'desktop') { ok('[desktop] the plan sits beside the study view, folded to its title, with no Plan button', await page.isVisible('#plan-card .fold-line') && !(await page.isVisible('#plan-card .plan-day')) && !(await page.isVisible('#seg-study [data-v="plan"]'))); await page.click('#plan-card .fold-line'); }
+    else await page.click('#seg-study [data-v="plan"]');
+    await page.waitForTimeout(100);
     const planRows = page.locator('#plan-card .plan-day').first().locator('input.tick');
     ok('plan shows tasks', (await planRows.count()) > 0);
     const before = await page.evaluate(() => Object.keys(((window.__db.planedits || {}).E4 || {}).ticks || {}).length);

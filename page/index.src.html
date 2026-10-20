@@ -51,11 +51,14 @@
   <!-- TODAY -->
   <section class="panel" id="p-today" role="tabpanel" aria-labelledby="tab-today" hidden>
     <h2 class="ptitle">Today</h2>
+    <div class="cols"><div class="col-main">
     <div class="card now" id="now"><p class="empty">Loading what's next…</p></div>
     <div class="stats" id="stats"></div>
     <div class="card" id="today-list"><h2>Today</h2><p class="empty">Today's list appears after the 4:25am run.</p></div>
+    </div><div class="col-side">
     <div class="card" id="weekly" hidden></div>
     <div class="card"><h2>Next 7 days</h2><ul class="list" id="ahead"></ul></div>
+    </div></div>
   </section>
 
   <!-- STUDY -->
@@ -84,7 +87,7 @@
         <div id="pr-body"></div>
       </div>
     </div>
-    <div id="study-plan" class="panel" hidden>
+    <div id="study-plan" class="panel" data-beside="1" hidden>
       <div class="card" id="plan-card"><h2>Exam plan</h2><p class="empty">The exam plan appears here once it's in the record.</p></div>
     </div>
   </section>
@@ -96,21 +99,22 @@
       <button type="button" data-v="readiness" aria-pressed="true">Readiness</button>
       <button type="button" data-v="weak" aria-pressed="false">Weak spots</button>
     </div>
-    <div id="progress-readiness" class="panel">
+    <div id="progress-readiness" class="panel"><div class="cols"><div class="col-main">
       <div class="card" id="ready-card"><h2>Readiness</h2><p class="empty">Readiness appears once an upcoming exam has weak spots.</p></div>
-      <div class="card" id="audit-card" hidden></div>
+      </div><div class="col-side"><div class="card" id="audit-card" hidden></div>
       <div class="card" id="score-card" hidden></div>
       <!-- B-118 (D-155): accuracy by objective lives in the readiness list; the other tables fold to one line each and are
            absent while they hold one row. -->
       <div class="card fold-card" id="fmt-card" hidden><button type="button" class="fold-line" aria-expanded="false" aria-controls="acc-fmt">By question format</button><div class="scroll" id="acc-fmt" hidden></div></div>
       <div class="card fold-card" id="cj-card" hidden><button type="button" class="fold-line" aria-expanded="false" aria-controls="acc-cj">By clinical-judgment step</button><div class="scroll" id="acc-cj" hidden></div></div>
       <div class="card fold-card" id="days-card" hidden><button type="button" class="fold-line" aria-expanded="false" aria-controls="acc-days">Last 7 days</button><div class="scroll" id="acc-days" hidden></div></div>
-    </div>
-    <div id="progress-weak" class="panel" hidden>
+    </div></div></div>
+    <div id="progress-weak" class="panel" hidden><div class="cols"><div class="col-main">
       <div class="card"><div class="card-head"><h2>Active</h2><span class="meta" id="weak-count"></span></div>
         <p class="meta" style="margin:0">Each one comes back until you get it right on two different days.</p>
         <ul class="list" id="weak-active"></ul>
         <div class="actions" id="weak-quizlet" hidden><button type="button" id="weak-quizlet-btn">Copy for Quizlet</button></div></div>
+      </div><div class="col-side">
       <div class="card" id="weak-preview-card" hidden><h2>Previews</h2><p class="meta" style="margin:0">Missed before the reading. One right answer after the reading clears each one.</p><ul class="list" id="weak-preview"></ul></div>
       <div class="card"><h2>To do: notes and skills</h2><ul class="list" id="weak-notes"></ul><p class="meta" id="weak-formats" style="margin:0"></p></div>
       <form class="card" id="weak-add" autocomplete="off">
@@ -121,7 +125,7 @@
       </form>
       <div class="card"><details><summary>Parked (<span id="parked-n">0</span>)</summary><p class="meta">Past-exam weak spots. Make one active to review it again.</p><ul class="list" id="weak-parked"></ul></details></div>
       <div class="card"><details><summary>Solid (<span id="solid-n">0</span>)</summary><ul class="list" id="weak-solid"></ul></details></div>
-    </div>
+    </div></div></div>
   </section>
 
   <!-- RECORD -->
@@ -134,12 +138,13 @@
       <button type="button" data-v="news" aria-pressed="false">Canvas</button>
       <button type="button" data-v="library" aria-pressed="false">Library</button>
     </div>
-    <div id="record-sessions" class="panel">
+    <div id="record-sessions" class="panel"><div class="cols"><div class="col-main">
       <div class="card"><h2>Study sessions</h2><ul class="list" id="sessions"></ul></div>
-      <div class="card"><h2>Ideas and connections</h2><p class="meta" style="margin:0">Deeper links from your sessions. They aren't reviewed unless you make one a weak spot.</p><ul class="list" id="ideas"></ul></div>
-    </div>
-    <div id="record-dates" class="panel" hidden>
+      </div><div class="col-side"><div class="card"><h2>Ideas and connections</h2><p class="meta" style="margin:0">Deeper links from your sessions. They aren't reviewed unless you make one a weak spot.</p><ul class="list" id="ideas"></ul></div>
+    </div></div></div>
+    <div id="record-dates" class="panel" hidden><div class="cols"><div class="col-main">
       <div class="card"><h2>Upcoming</h2><ul class="list" id="dates"></ul></div>
+      </div><div class="col-side">
       <div class="card" id="dates-off-card" hidden><h2>Taken off</h2><p class="meta" style="margin:0">Off your calendar and out of E.V.’s plans. Bring one back any time.</p><ul class="list" id="dates-off"></ul></div>
       <form class="card" id="date-add" autocomplete="off">
         <h2>Add a date</h2>
@@ -151,16 +156,16 @@
         </div>
         <div class="actions"><button class="primary" type="submit">Add date</button></div>
       </form>
-    </div>
-    <div id="record-journal" class="panel" hidden>
+    </div></div></div>
+    <div id="record-journal" class="panel" hidden><div class="cols"><div class="col-main">
       <form class="card" id="j-add" autocomplete="off">
         <h2>New entry</h2>
         <select id="j-kind" aria-label="Kind"><option value="free">Free write</option><option value="clinical">After clinical</option><option value="weekly">Weekly reflection</option></select>
         <textarea id="j-text" placeholder="How did today go? School, health, anything on your mind. No patient details." required></textarea>
         <div class="actions"><span class="meta grow" id="j-warn" role="status"></span><button class="primary" type="submit">Save entry</button></div>
       </form>
-      <div class="card"><h2>Entries</h2><ul class="list" id="journal"></ul></div>
-    </div>
+      </div><div class="col-side"><div class="card"><h2>Entries</h2><ul class="list" id="journal"></ul></div>
+    </div></div></div>
     <div id="record-news" class="panel" hidden>
       <div class="card"><h2>Canvas announcements</h2><ul class="list" id="news"></ul></div>
     </div>
@@ -174,15 +179,18 @@
     <h2 class="ptitle">System</h2>
     <!-- B-119 (D-148, D-150, D-151): one lead line, the pipeline and run lists folded under it with only exceptions
          marked; Background jobs, Capacity and Checks absent while empty; versions and privacy two quiet lines. -->
+    <div class="cols"><div class="col-main">
     <div class="card" id="health"><div id="health-top"></div>
       <button type="button" class="fold-line" id="pipes-fold" aria-expanded="false" aria-controls="pipes">Pipelines</button><ul class="list" id="pipes" hidden></ul>
       <button type="button" class="fold-line" id="runs-fold" aria-expanded="false" aria-controls="runs">Recent runs</button><ul class="list" id="runs" hidden></ul>
     </div>
+    </div><div class="col-side">
     <div class="card fold-card" id="jobs-card" hidden><button type="button" class="fold-line" id="jobs-card-line" aria-expanded="false" aria-controls="jobs">Background jobs</button><ul class="list" id="jobs" hidden></ul></div>
     <div class="card fold-card" id="cap-card" hidden><button type="button" class="fold-line" id="cap-card-line" aria-expanded="false" aria-controls="capacity">Capacity</button><div id="capacity" hidden></div></div>
     <div class="card fold-card" id="lint-card" hidden><button type="button" class="fold-line" id="lint-card-line" aria-expanded="false" aria-controls="lint-body">Checks</button><div id="lint-body" hidden><ul class="list" id="lint"></ul></div></div>
     <p class="meta sys-foot" id="versions"></p>
     <p class="meta sys-foot" id="sys-privacy"><span id="sys-note">E.V. logs your conversations to your record. Only you can read it.</span> <span id="sys-staging" hidden>Staging copy. Jobs here run the staging worker on the staging record.</span></p>
+    </div></div>
   </section>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>

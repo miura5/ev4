@@ -64,10 +64,13 @@
     if (ui.tab !== 'ev') { showTab('ev'); return; }
     backToNow();
   });
+  const WIDE = window.matchMedia ? matchMedia('(min-width:1024px)') : { matches: false, addEventListener() {} }; // B-121 (D-158)
   function wireSeg(id, key, prefix) {
-    const seg = $(id); const set = v => { if (ui[key] !== v && seg.dataset.ready) enter($(prefix + '-' + v)); ui[key] = v; seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v))); seg.parentElement.querySelectorAll(':scope > [id^="' + prefix + '-"]').forEach(p => p.hidden = p.id !== prefix + '-' + v); store.set(key, v); };
+    // A view marked data-beside sits beside the others from 1024 px (Study's plan): never chosen there, never hidden.
+    const seg = $(id); const set = v => { const beside = $(prefix + '-' + v) && $(prefix + '-' + v).dataset.beside; if (WIDE.matches && beside) v = seg.querySelector('button').dataset.v; if (ui[key] !== v && seg.dataset.ready) enter($(prefix + '-' + v)); ui[key] = v; seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v))); seg.parentElement.querySelectorAll(':scope > [id^="' + prefix + '-"]').forEach(p => p.hidden = p.id !== prefix + '-' + v && !(WIDE.matches && p.dataset.beside)); if (!(WIDE.matches && beside)) store.set(key, v); };
     seg.querySelectorAll('button').forEach(b => b.addEventListener('click', () => set(b.dataset.v)));
-    const saved = store.get(key); if (saved && seg.querySelector('[data-v="' + saved + '"]')) set(saved); seg.dataset.ready = '1'; return set;
+    const saved = store.get(key); if (saved && seg.querySelector('[data-v="' + saved + '"]')) set(saved); else set(seg.querySelector('button').dataset.v); seg.dataset.ready = '1';
+    WIDE.addEventListener('change', () => { set(store.get(key) || ui[key]); render(); }); return set;
   }
   const setStudy = wireSeg('seg-study', 'study', 'study');
   wireSeg('seg-progress', 'progress', 'progress');
@@ -486,7 +489,10 @@
     upcoming.forEach(d => kids.push(dayBlock(d)));
     if (past.length) { const det = el('details'); det.append(el('summary', null, `Earlier days (${past.length})`)); past.slice().reverse().forEach(d => det.append(dayBlock(d))); kids.push(det); }
     if (plan.sourceUrl) { const a = el('a', 'meta', 'Original plan page'); a.href = plan.sourceUrl; a.target = '_blank'; a.rel = 'noopener'; kids.push(a); }
-    card.replaceChildren(...kids);
+    // B-121 (D-158): from 1024 px the plan sits beside Review and Practice, folded to its title until opened.
+    card.classList.toggle('fold-card', WIDE.matches);
+    if (WIDE.matches) { const f = el('button', 'fold-line', plan.title || 'Exam plan'); f.type = 'button'; f.setAttribute('aria-expanded', String(!!ui.planOpen)); f.addEventListener('click', () => { ui.planOpen = !ui.planOpen; render(); }); card.replaceChildren(f, ...(ui.planOpen ? kids : [])); }
+    else card.replaceChildren(...kids);
   }
 
   // More practice: asks Claude from the page, validated by E.V. core before it's saved.
@@ -1897,7 +1903,7 @@
   }
   function renderWorkoutList() {
     let card = $('workouts-card');
-    if (!card) { card = el('div', 'card'); card.id = 'workouts-card'; const h = el('h2', null, 'Workouts'); const ul = el('ul', 'list'); ul.id = 'workouts'; card.append(h, ul); const host = $('record-sessions'); if (!host) return; host.append(card); }
+    if (!card) { card = el('div', 'card'); card.id = 'workouts-card'; const h = el('h2', null, 'Workouts'); const ul = el('ul', 'list'); ul.id = 'workouts'; card.append(h, ul); const host = document.querySelector('#record-sessions .col-side'); if (!host) return; host.append(card); } // B-121: beside the sessions, under the ideas
     const ws = [...S.workouts].sort((a, b) => String(b.startedAt || '').localeCompare(String(a.startedAt || '')));
     $('workouts').replaceChildren(...(ws.length ? ws.map(w => { const q = SEQ[w.sequence]; return row({ lead: short(w.date), title: w.title || w.sequence, detail: w.status === 'active' ? 'going now' : E.workoutSummary(w, q), chips: [[w.status === 'active' ? 'live' : w.status === 'stopped' ? 'stopped' : 'done', w.status === 'active' ? 'info' : w.status === 'stopped' ? 'warn' : 'ok']] }); }) : [el('p', 'empty', 'Say “start a workout” to run CINDY or the 1,500-rep ladder.')]));
   }
