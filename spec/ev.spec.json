@@ -1048,6 +1048,116 @@
   "health": {
    "_note": "D-111: a health/current older than this is named first in the morning and evening push lines and marked stale on the System tab (the watchdog writes it every 3 hours)",
    "staleHours": 4
+  },
+  "prep": {
+   "_rules": [
+    "D-143, D-144 (B-104): clinical, lab, validation and class days get a Prep check built for that day from its own materials, never urgent. lookFor is what a day of that kind looks for in the passages that day's search finds; an item is listed only where a passage names it, with that passage's file and page. Matt's clinical items (Oct 20) seed clinical. bring is the wording that opens a list of things to bring in a passage."
+   ],
+   "searchK": 12,
+   "lookFor": {
+    "clinical": [
+     {
+      "item": "Completed drug cards",
+      "match": "drug cards?"
+     },
+     {
+      "item": "Clinical folder with your paperwork",
+      "match": "clinical folder"
+     },
+     {
+      "item": "Jarvis handbook",
+      "match": "\\bjarvis\\b"
+     },
+     {
+      "item": "Drug handbook",
+      "match": "drug (?:hand)?book|drug guide"
+     },
+     {
+      "item": "Nursing diagnoses handbook",
+      "match": "nursing diagnos[ie]s (?:hand)?book|diagnos[ie]s handbook"
+     },
+     {
+      "item": "Stethoscope",
+      "match": "stethoscopes?"
+     },
+     {
+      "item": "Penlight",
+      "match": "pen ?lights?"
+     },
+     {
+      "item": "Black pen",
+      "match": "\\b(?:black )?pens?\\b(?! ?lights?)"
+     },
+     {
+      "item": "Bandage shears",
+      "match": "shears|bandage scissors"
+     },
+     {
+      "item": "Clinical badge",
+      "match": "\\bbadge\\b|student id"
+     },
+     {
+      "item": "Watch with a second hand",
+      "match": "\\bwatch(?:es)?\\b(?! for)"
+     },
+     {
+      "item": "Notebook",
+      "match": "notebook|note ?pad"
+     }
+    ],
+    "validation": [
+     {
+      "item": "Stethoscope",
+      "match": "stethoscopes?"
+     },
+     {
+      "item": "Penlight",
+      "match": "pen ?lights?"
+     },
+     {
+      "item": "Watch with a second hand",
+      "match": "\\bwatch(?:es)?\\b(?! for)"
+     },
+     {
+      "item": "Bandage shears",
+      "match": "shears|bandage scissors"
+     },
+     {
+      "item": "Skills packet",
+      "match": "skills? packet"
+     }
+    ],
+    "lab": [
+     {
+      "item": "Stethoscope",
+      "match": "stethoscopes?"
+     },
+     {
+      "item": "Penlight",
+      "match": "pen ?lights?"
+     },
+     {
+      "item": "Watch with a second hand",
+      "match": "\\bwatch(?:es)?\\b(?! for)"
+     },
+     {
+      "item": "Bandage shears",
+      "match": "shears|bandage scissors"
+     },
+     {
+      "item": "Skills packet",
+      "match": "skills? packet"
+     }
+    ],
+    "class": []
+   },
+   "bring": "(?:what to bring|bring(?: with you| to (?:lab|clinical|class|validation))?|you will need|you'll need|students (?:must|should) (?:bring|have)|supplies(?: needed)?|equipment(?: needed)?|required (?:items|supplies|equipment|paperwork))",
+   "queryWords": {
+    "clinical": "clinical bring paperwork",
+    "lab": "lab bring supplies",
+    "validation": "validation checklist bring supplies",
+    "class": "class bring"
+   }
   }
  },
  "registry": {

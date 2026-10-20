@@ -24,6 +24,7 @@ export function steps({ record, shots }) {
     h('shell', record, path.join(shots, 'shell')),
     h('run', record, path.join(shots, 'run')),
     h('captions', record, path.join(shots, 'captions')),
+    h('prep', record, path.join(shots, 'prep')),
     h('core', record, path.join(shots, 'core')),
     ['demo build', process.execPath, ['tools/demo.mjs']],
     h('demo', path.join(shots, 'demo')),

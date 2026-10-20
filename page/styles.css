@@ -445,3 +445,30 @@ body.captions .composer>.cap-echo{max-width:none}
 /* With the skills or workout panel open on desktop (B-51), her captions still fill their row and scroll. */
 body.captions #p-ev,body.captions.skill-on #p-ev{align-items:stretch}
 body.captions.skill-on #p-ev>.sk-panel{align-self:start}
+/* B-104 (D-143, D-144): the calm Prep marker (violet, the secondary accent; never the coral of urgent) and the prep
+   check under her greeting: one line that opens to a tickable list, each item with the file and page it came from. */
+.bi-prep,.prep-mark{flex:none;margin-left:8px;padding:0 7px;border-radius:999px;background:var(--plum-bg);color:var(--plum);font:600 11.5px/20px var(--sans);letter-spacing:.02em}
+.prep-mark{margin-left:0}
+.prep{align-self:stretch;margin-top:6px;border-top:1px solid var(--line);text-align:left}
+.prep-row{appearance:none;display:flex;align-items:center;gap:8px;width:100%;min-height:44px;padding:6px 2px;border:0;background:none;color:var(--ink2);font:500 14px var(--sans);text-align:left;cursor:pointer}
+.prep-row:hover,.prep-row:active,.prep-row:focus{background:none;transform:none}
+.prep-row:focus-visible{outline:2px solid var(--accent-edge);outline-offset:2px}
+.prep-t{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prep.open .prep-t{white-space:normal}
+.prep-n{flex:none;color:var(--soft);font-size:13px}
+.prep-row .chev{width:14px;height:14px;opacity:.7;transition:transform .25s var(--ease)}
+.prep.open .prep-row .chev{transform:rotate(180deg)}
+.prep.done .prep-t{color:var(--soft)} .prep.done .prep-mark{background:var(--accent-bg);color:var(--accent-text)}
+.prep-box[hidden]{display:none}
+.prep-note{margin:2px 0 8px;font-size:14px;line-height:1.45;color:var(--soft)}
+.prep-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.prep-item{display:flex;align-items:center;gap:8px;min-height:44px}
+.prep-lab{flex:1 1 auto;min-width:0;display:flex;align-items:flex-start;gap:12px;padding:6px 0;cursor:pointer}
+.pi-txt{min-width:0;display:flex;flex-direction:column}
+.pi-t{font-size:15px;line-height:1.4;color:var(--ink)}
+.prep-item.on .pi-t{color:var(--soft);text-decoration:line-through;text-decoration-color:rgba(255,255,255,.3)}
+.pi-c{font-size:12.5px;line-height:1.4;color:var(--soft);overflow-wrap:anywhere}
+.pi-rm{flex:none;min-height:36px}
+.prep-add{display:flex;gap:8px;margin:6px 0 4px}
+.prep-add input{flex:1 1 auto;min-width:0;min-height:40px}
+.prep-add button{flex:none;min-height:40px}

@@ -1,0 +1,129 @@
+// B-104 (D-143, D-144): prep checks in E.V. core. Clinical, lab, validation and class days are never urgent; each gets
+// a Prep marker and a tickable check built for that day from that day's own materials, every item citing its file and
+// page. Made-up materials and calendar entries throughout.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import EV from '../core/evcore.mjs';
+import { makeValidator } from '../core/validate.mjs';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const schemas = Object.fromEntries(fs.readdirSync(path.join(ROOT, 'spec/schemas')).map(f => [f.replace('.schema.json', ''), JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/schemas', f), 'utf8'))]));
+const validate = makeValidator(schemas);
+EV.configure(JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8')));
+
+const env = { schema: 1, writer: 'page', at: '2026-10-19T12:00:00Z', source: 'test' };
+const date = (id, d, title, kind, x = {}) => ({ id, ...env, addedAt: env.at, date: d, title, kind, course: 'NUR 112', graded: false, ...x });
+// Three planted days, each with its own materials: a validation (head-to-toe), a lab (catheter insertion), a clinical.
+const DATES = [
+  date('v1', '2026-10-21', 'Validation: Head-to-toe assessment', 'validation', { graded: true }),
+  date('l1', '2026-10-22', 'Lab: Urinary catheter insertion', 'other'),
+  date('c1', '2026-10-23', 'Clinical: Mercy Hospital 4 West', 'clinical'),
+  date('c2', '2026-10-30', 'Clinical: Mercy Hospital 4 West', 'clinical'),
+  date('k1', '2026-10-26', 'Class: Unit 5 fluids lecture', 'other'),
+  date('d1', '2026-10-21', 'Care plan 3 due 11:59pm', 'due', { graded: true }),
+];
+const MATS = [
+  { id: 'NUR112-801', title: 'Skills Validation Guide.pdf', course: 'NUR 112', kind: 'lab', text: '[p3] Head-to-toe assessment validation. Bring with you: stethoscope, penlight, a watch with a second hand and your skills packet. Arrive 10 minutes early.\n[p4] Medication administration validation. Bring: drug cards and your MAR worksheet.' },
+  { id: 'NUR112-802', title: 'Lab 6 Catheter Insertion.pptx', course: 'NUR 112', kind: 'lab', text: '[s2] Urinary catheter insertion lab. Supplies needed: sterile gloves, catheter kit, a practice manikin pass. [s3] Catheter insertion steps: open the kit away from you.' },
+  { id: 'NUR112-803', title: 'Clinical Orientation Mercy.pdf', course: 'NUR 112', kind: 'clinical', text: '[p2] Mercy Hospital clinical: what to bring: clinical badge, black pen, bandage shears, Jarvis handbook, drug handbook, completed drug cards. Bring your clinical folder with the facility paperwork (the Mercy assessment form). [p5] Parking at Mercy is in lot C.' },
+  { id: 'NUR112-804', title: 'NUR 112 Syllabus.pdf', course: 'NUR 112', kind: 'course', text: '[p9] Clinical expectations: a stethoscope and a notebook at every clinical.' },
+];
+const day = d => EV.prepDay(DATES, [], d);
+
+test('prepKindOf: validations and clinicals by kind, labs and classes by name; graded work and exams are not prep days', () => {
+  assert.deepEqual(DATES.map(EV.prepKindOf), ['validation', 'lab', 'clinical', 'clinical', 'class', null]);
+  assert.equal(EV.prepKindOf(date('x', '2026-10-21', 'Lab quiz due', 'due', { graded: true })), null);
+  assert.equal(EV.prepKindOf(date('x', '2026-10-21', 'NUR Exam 4', 'exam')), null);
+  assert.equal(day('2026-10-21').kind, 'validation', 'a validation outranks the graded due item on the same day');
+  assert.equal(day('2026-10-21').subject, 'Head-to-toe assessment', 'a validation names its skill');
+  assert.equal(day('2026-10-24'), null);
+});
+
+test('three planted days with their own materials yield three different lists, each item citing its file and page', () => {
+  const lists = ['2026-10-21', '2026-10-22', '2026-10-23'].map(d => EV.prepList({ day: day(d), phase: 'night', materials: MATS, dates: DATES }));
+  const texts = lists.map(l => l.items.map(i => i.text));
+  assert.deepEqual(texts[0], ['Stethoscope', 'Penlight', 'Watch with a second hand', 'Skills packet']);
+  assert.deepEqual(texts[1], ['Sterile gloves', 'Catheter kit', 'Practice manikin pass']);
+  assert.ok(['Clinical badge', 'Black pen', 'Bandage shears', 'Jarvis handbook', 'Drug handbook', 'Completed drug cards', 'Clinical folder with your paperwork', 'Stethoscope', 'Notebook'].every(t => texts[2].includes(t)), texts[2].join(', '));
+  assert.notDeepEqual(texts[0], texts[1]); assert.notDeepEqual(texts[1], texts[2]); assert.notDeepEqual(texts[0], texts[2]);
+  for (const l of lists) { assert.equal(l.empty, false); assert.equal(l.note, null); for (const it of l.items) assert.match(it.cite, /, (p|slide)\. ?\d+$|, slide \d+$/, it.text + ' cites its file and page'); }
+  assert.equal(lists[0].items[0].cite, 'Skills Validation Guide, p. 3');
+  assert.equal(lists[1].items[0].cite, 'Lab 6 Catheter Insertion, slide 2');
+  assert.equal(lists[2].items.find(i => i.text === 'Notebook').cite, 'NUR 112 Syllabus, p. 9', 'the syllabus counts as that day’s material');
+  assert.ok(!texts[0].includes('Completed drug cards'), 'the medication validation’s page is not the head-to-toe day’s');
+});
+
+test('paperwork is listed to bring, never filled in', () => {
+  const l = EV.prepList({ day: day('2026-10-23'), phase: 'night', materials: MATS, dates: DATES });
+  const pw = l.items.filter(i => i.paperwork).map(i => i.text);
+  assert.ok(pw.includes('Clinical folder with your paperwork'), pw.join(', '));
+  for (const it of l.items) assert.deepEqual(Object.keys(it).filter(k => /fill|draft|answer|write/i.test(k)), [], 'an item carries nothing to fill in');
+});
+
+test('a day with no materials says so plainly instead of a short list', () => {
+  const l = EV.prepList({ day: day('2026-10-26'), phase: 'morning', materials: MATS, dates: DATES });
+  assert.equal(l.empty, true); assert.deepEqual(l.items, []);
+  assert.equal(l.note, 'Nothing in your materials says what to bring for Class: Unit 5 fluids lecture. Add what you know and I’ll keep it for next time.');
+  assert.equal(l.done, false, 'an empty check is never shown as done');
+  const v = EV.prepList({ day: day('2026-10-21'), phase: 'night', materials: [], dates: DATES });
+  assert.match(v.note, /^Nothing in your materials says what to bring for the Head-to-toe assessment validation\./);
+});
+
+test('an item added by hand on one clinical day comes back on the next clinical day as you usually bring', () => {
+  const now = '2026-10-22T23:00:00Z';
+  const r = EV.prepEdit(null, { action: 'add', text: 'Lunch and a water bottle' }, { now, date: '2026-10-23' });
+  assert.equal(r.doc.added[r.id].tag, 'PREP');
+  assert.deepEqual(validate('dayedits', r.doc).errors, [], 'the dayedits document stays valid at its schema');
+  const dayedits = [{ id: '2026-10-23', ...r.doc }];
+  const first = EV.prepList({ day: day('2026-10-23'), phase: 'night', materials: MATS, dates: DATES, dayedits });
+  assert.ok(first.items.some(i => i.added && i.text === 'Lunch and a water bottle'));
+  const next = EV.prepList({ day: day('2026-10-30'), phase: 'night', materials: MATS, dates: DATES, dayedits });
+  const back = next.items.find(i => i.text === 'Lunch and a water bottle');
+  assert.ok(back && back.usual && !back.added, 'it comes back as you usually bring');
+  const lab = EV.prepList({ day: day('2026-10-22'), phase: 'night', materials: MATS, dates: DATES, dayedits });
+  assert.ok(!lab.items.some(i => i.text === 'Lunch and a water bottle'), 'only on days of the same kind');
+  // It stays off the day's own list.
+  assert.ok(!EV.dayView({ list: { items: [] } }, dayedits[0]).items.some(i => /Lunch/.test(i.text)));
+});
+
+test('ticks: night and morning are two checks on the day; ticked through, the check is done', () => {
+  const l0 = EV.prepList({ day: day('2026-10-21'), phase: 'night', materials: MATS, dates: DATES });
+  let doc = null; const now = '2026-10-21T01:00:00Z';
+  for (const it of l0.items) doc = EV.prepEdit(doc && { id: '2026-10-21', ...doc }, { action: 'check', id: it.id, phase: 'night' }, { now, date: '2026-10-21' }).doc;
+  assert.deepEqual(validate('dayedits', doc).errors, []);
+  const night = EV.prepList({ day: day('2026-10-21'), phase: 'night', materials: MATS, dates: DATES, dayedits: [{ id: '2026-10-21', ...doc }] });
+  assert.equal(night.done, true);
+  const morning = EV.prepList({ day: day('2026-10-21'), phase: 'morning', materials: MATS, dates: DATES, dayedits: [{ id: '2026-10-21', ...doc }] });
+  assert.equal(morning.done, false, 'the morning bag check is its own');
+  const un = EV.prepEdit({ id: '2026-10-21', ...doc }, { action: 'check', id: l0.items[0].id, phase: 'night', done: false }, { now, date: '2026-10-21' }).doc;
+  assert.equal(EV.prepList({ day: day('2026-10-21'), phase: 'night', materials: MATS, dates: DATES, dayedits: [{ id: '2026-10-21', ...un }] }).done, false);
+});
+
+const base = { date: '2026-10-20', items: [], reviewLeft: 0, nextExams: [], jobs: [], runs: {} };
+const prep = d => ({ today: day(d.today) || null, tomorrow: day(d.tomorrow) || null });
+test('the greeting never marks a clinical, lab, validation or class day urgent; it gets the Prep marker', () => {
+  for (const [d, next] of [['2026-10-21', '2026-10-22'], ['2026-10-22', '2026-10-23'], ['2026-10-23', '2026-10-24'], ['2026-10-26', '2026-10-27']]) {
+    const todayDates = DATES.filter(x => x.date === d && x.kind !== 'due').map(x => ({ title: x.title, graded: !!x.graded, kind: x.kind }));
+    const items = [{ id: 'date-' + d, text: DATES.find(x => x.date === d).title, tag: DATES.find(x => x.date === d).kind === 'validation' ? 'VALIDATION' : null }];
+    const g = EV.greeting({ ...base, date: d, now: d + 'T12:30:00Z', items, todayDates, prep: prep({ today: d, tomorrow: next }) }); // 7:30am Central
+    assert.equal(g.brief.filter(b => b.level === 'urgent').length, 0, d + ': nothing urgent');
+    assert.doesNotMatch(g.headline, /validation|lab|clinical|class/i, d + ': the headline names nothing that can wait');
+    const p = g.brief.find(b => b.level === 'prep');
+    assert.ok(p && p.kind === 'prep' && p.when === 'today', d + ': the Prep marker');
+    assert.equal(g.prep.phase, 'morning'); assert.equal(g.prep.date, d);
+    assert.notEqual(g.mood, 'alert');
+  }
+  // The night before: the pack check is for tomorrow.
+  const eve = EV.greeting({ ...base, date: '2026-10-20', now: '2026-10-21T00:30:00Z', tomorrow: { dates: [{ title: 'Validation: Head-to-toe assessment', kind: 'validation', graded: true }] }, prep: prep({ today: '2026-10-20', tomorrow: '2026-10-21' }) });
+  assert.deepEqual([eve.prep.phase, eve.prep.date], ['night', '2026-10-21']);
+  assert.equal(eve.brief.find(b => b.level === 'prep').title, 'Prep: Validation: Head-to-toe assessment');
+  assert.equal(eve.brief.filter(b => b.level === 'urgent').length, 0);
+  assert.equal(eve.brief.filter(b => /Head-to-toe/.test(b.title)).length, 1, 'the graded validation is the Prep marker alone, not a second line');
+  // Urgent stays for one-time deadlines: graded work due today still is.
+  const due = EV.greeting({ ...base, date: '2026-10-21', now: '2026-10-21T14:00:00Z', todayDates: [{ title: 'Care plan 3 due 11:59pm', graded: true, kind: 'due' }, { title: 'Validation: Head-to-toe assessment', graded: true, kind: 'validation' }], prep: prep({ today: '2026-10-21' }) });
+  assert.deepEqual(due.brief.filter(b => b.level === 'urgent').map(b => b.title), ['Care plan 3 due 11:59pm']);
+  assert.ok(due.brief.findIndex(b => b.level === 'prep') > due.brief.findIndex(b => b.level === 'urgent'), 'urgent first, then the calm Prep marker');
+});

@@ -698,16 +698,20 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
         await wp.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
         await openPage(wp, 'staging'); await wp.waitForTimeout(1500);
         const last = () => wp.locator('#thread .msg.ev').last();
+        // The page's wall clock forward: not clock.fastForward, whose real-time sync can rewind it (CLAUDE.md, and jump below).
+        const ahead = async ms => { await wp.clock.setSystemTime(await wp.evaluate(() => Date.now()) + ms); await wp.waitForTimeout(150); };
         // CINDY from the quick ask: the picker, Start, three rounds, the cap, extra reps, then energy and mood
         await send(wp, 'Start a workout'); await wp.waitForTimeout(400);
         ok(`[${label}] start a workout offers both sequences`, /CINDY/.test(await last().textContent()) && /1,500-rep ladder/.test(await last().textContent()) && (await last().locator('button', { hasText: 'Start' }).count()) === 2);
         await last().locator('.row', { hasText: 'CINDY' }).locator('button', { hasText: 'Start' }).click(); await wp.waitForTimeout(500);
         ok(`[${label}] CINDY runs as a card with its clock and round`, /Workout · CINDY/.test(await last().textContent()) && /20:00 left|19:5\d left/.test(await last().textContent()) && /5 pull-ups/.test(await last().textContent()), (await last().textContent()).slice(0, 160));
-        for (let i = 0; i < 3; i++) { await wp.clock.fastForward(5 * 60e3); await last().locator('button', { hasText: 'Round done' }).click(); await wp.waitForTimeout(250); }
+        for (let i = 0; i < 3; i++) { await ahead(5 * 60e3); await last().locator('button', { hasText: 'Round done' }).click(); await wp.waitForTimeout(250); }
         ok(`[${label}] three rounds counted`, /3 rounds so far \(90 reps\)/.test(await last().textContent()), (await last().textContent()).slice(0, 200));
         ok(`[${label}] the running workout sits in the dock too, with its round and buttons`, label === 'phone' ? (await wp.isVisible('#sksheet') && /CINDY · Round 4/.test(await wp.textContent('#sksheet')) && (await wp.locator('#sksheet button', { hasText: 'Round done' }).count()) === 1) : (await wp.isVisible('#skpanel') && /Workout · CINDY/.test(await wp.textContent('#skpanel')) && (await wp.locator('#skpanel button', { hasText: 'Round done' }).count()) === 1));
-        await wp.clock.fastForward(5 * 60e3 + 5000); await wp.waitForTimeout(1500);
-        ok(`[${label}] at the cap the card asks for the extra reps`, /3 rounds in 20 minutes/.test(await last().textContent()) && await last().locator('input[type=number]').count() === 1);
+        // Then the card's condition, not a fixed wait: its clock redraws on the next tick.
+        await ahead(5 * 60e3 + 5000);
+        await wp.waitForFunction(() => /rounds in 20 minutes/.test([...document.querySelectorAll('#thread .msg.ev')].pop().textContent), null, { timeout: 8000 }).catch(() => {});
+        ok(`[${label}] at the cap the card asks for the extra reps`, /3 rounds in 20 minutes/.test(await last().textContent()) && await last().locator('input[type=number]').count() === 1, (await last().textContent()).slice(0, 240));
         await wp.screenshot({ path: `${shots}/workout-cindy-${label}.png` });
         await last().locator('input[type=number]').fill('7'); await last().locator('form button[type=submit]').click(); await wp.waitForTimeout(400);
         await last().locator('.energy button', { hasText: '4' }).click(); await last().locator('input[aria-label=Mood]').fill('strong, arms gone'); await last().locator('button', { hasText: 'Save' }).click(); await wp.waitForTimeout(400);
@@ -718,10 +722,10 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
         await wp.evaluate(() => { window.__chatScript = [{ tool: 'start_workout', input: { sequence: 'ladder-1500' } }]; window.__chatReply = 'Ladder time.'; });
         await send(wp, 'Let’s do the 1500 rep ladder'); await wp.waitForTimeout(600);
         ok(`[${label}] the ladder runs round by round`, /Round 1 of 19/.test(await last().textContent()) && /1 pull-ups/.test(await last().textContent()) && /5 air squats/.test(await last().textContent()), (await last().textContent()).slice(0, 200));
-        for (let i = 0; i < 5; i++) { await wp.clock.fastForward(2 * 60e3); await last().locator('button', { hasText: 'Round done' }).click(); await wp.waitForTimeout(250); }
+        for (let i = 0; i < 5; i++) { await ahead(2 * 60e3); await last().locator('button', { hasText: 'Round done' }).click(); await wp.waitForTimeout(250); }
         ok(`[${label}] round six asks for 6, 12, 18, 24 and 30`, /Round 6 of 19/.test(await last().textContent()) && /6 pull-ups/.test(await last().textContent()) && /30 air squats/.test(await last().textContent()));
         await wp.screenshot({ path: `${shots}/workout-ladder-${label}.png` });
-        await wp.clock.fastForward(60e3); await last().locator('button', { hasText: 'Stop here' }).click(); await wp.waitForTimeout(400);
+        await ahead(60e3); await last().locator('button', { hasText: 'Stop here' }).click(); await wp.waitForTimeout(400);
         await last().locator('.energy button', { hasText: '2' }).click(); await last().locator('button', { hasText: 'Save' }).click(); await wp.waitForTimeout(400);
         const lad = await wp.evaluate(() => Object.entries(window.__db.workouts || {}).filter(([, w]) => w.sequence === 'ladder-1500').map(([id, w]) => ({ id, ...w })));
         ok(`[${label}] the ladder keeps total time and where he stopped, valid`, lad.length === 1 && lad[0].status === 'stopped' && lad[0].result.stopRound === 6 && lad[0].result.reps === 225 && lad[0].result.totalSeconds >= 660 && lad[0].result.totalSeconds < 690 && lad[0].energy === 2 && lad[0].mood === null && validate('workouts', (({ id, ...d }) => d)(lad[0]), { id: lad[0].id }).ok, JSON.stringify(lad[0] && lad[0].result));

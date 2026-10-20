@@ -2052,8 +2052,9 @@
     for (const it of b) {
       const li = el('li', 'brief-item'); li.dataset.level = it.level; li.dataset.kind = it.kind;
       const tog = el('button', 'bi-main'); tog.type = 'button';
-      const line = el('span', 'bi-line'); line.append(el('span', 'bi-t', it.title));
-      if (it.level !== 'normal') { const a = el('span', 'bi-mark ' + it.level, '*'); a.setAttribute('aria-label', it.level === 'urgent' ? 'urgent' : 'new'); line.append(a); }
+      const line = el('span', 'bi-line'); line.append(el('span', 'bi-t', it.level === 'prep' ? it.title.replace(/^Prep: /, '') : it.title));
+      if (it.level === 'prep') line.append(el('span', 'bi-prep', 'Prep')); // D-143: its own calm marker, never the urgent one
+      else if (it.level !== 'normal') { const a = el('span', 'bi-mark ' + it.level, '*'); a.setAttribute('aria-label', it.level === 'urgent' ? 'urgent' : 'new'); line.append(a); }
       tog.append(line); tog.insertAdjacentHTML('beforeend', CHEV);
       const more = el('div', 'bi-more');
       const when = it.when ? it.when.charAt(0).toUpperCase() + it.when.slice(1) + '.' : '';
@@ -2069,6 +2070,59 @@
     show(T.briefOpen); row.addEventListener('click', () => { show(!T.briefOpen); CAP.stick = true; // her stage steps down over 0.8 s; then her line pins and the list comes into view
       clearTimeout(T.briefT); T.briefT = setTimeout(() => { pinNow(); if (T.briefOpen) { const t = $('thread'), r = ul.getBoundingClientRect(), tr = t.getBoundingClientRect(); if (r.bottom > tr.bottom) t.scrollTop += Math.min(r.bottom - tr.bottom + 12, Math.max(0, r.top - tr.top - 8)); } }, REDUCE ? 50 : 850); });
     wrap.append(row, ul); return wrap;
+  }
+  // The prep check under her greeting (B-104; D-143, D-144): the night-before pack check from the evening on, the
+  // morning-of bag check in the morning, each a tickable list EVCore builds for that day from that day's materials.
+  // A tick or an added item is that day's dayedits/<date>; once every item is ticked the check folds to one line.
+  T.prepOpen = new Map();
+  function prepNow(p) {
+    if (!p) return null;
+    if (!LIB.mats) { library().catch(() => {}); return { loading: true }; }
+    const day = E.prepDay(S.dates, [], p.date); if (!day) return null;
+    return E.prepList({ day, phase: p.phase, index: LIB.idx, dates: S.dates, dayedits: S.dayedits });
+  }
+  async function prepWrite(date, edit) {
+    const r = E.prepEdit(dayEditDoc(date), edit, { now: now(), by: 'Matt', date });
+    if (r.doc) await writeDayEdit(date, r.doc);
+    return r;
+  }
+  function prepEl(m) {
+    const p = m.prep, l = prepNow(p); if (!l) return null;
+    const night = p.phase === 'night';
+    const wrap = el('div', 'prep'); wrap.dataset.phase = p.phase;
+    const row = el('button', 'prep-row'); row.type = 'button';
+    row.append(el('span', 'prep-mark', 'Prep'), el('span', 'prep-t', (night ? 'Pack for tomorrow: ' : 'Bag check: ') + p.title));
+    if (l.loading) { row.append(el('span', 'prep-n', 'reading your materials…')); row.disabled = true; wrap.append(row); return wrap; }
+    const n = l.items.filter(i => i.checked).length;
+    if (l.done) { wrap.classList.add('done'); row.querySelector('.prep-t').textContent = (night ? 'Packed for tomorrow: ' : 'Bag checked: ') + p.title; }
+    row.append(el('span', 'prep-n', l.items.length ? `${n} of ${l.items.length}` : ''));
+    row.insertAdjacentHTML('beforeend', CHEV);
+    const box = el('div', 'prep-box'); box.id = 'prep-' + m.id; row.setAttribute('aria-controls', box.id);
+    if (l.note) box.append(el('p', 'prep-note', l.note));
+    const ul = el('ul', 'prep-list');
+    for (const it of l.items) {
+      const li = el('li', 'prep-item' + (it.checked ? ' on' : ''));
+      const lab = el('label', 'prep-lab'); const c = el('input'); c.type = 'checkbox'; c.className = 'tick'; c.checked = !!it.checked; c.setAttribute('aria-label', it.text);
+      c.addEventListener('change', () => guard(c, () => prepWrite(p.date, { action: 'check', id: it.id, phase: p.phase, done: c.checked })));
+      const txt = el('span', 'pi-txt'); txt.append(el('span', 'pi-t', it.text));
+      const src = it.cite ? it.cite : it.usual ? 'you usually bring' : it.added ? 'added by you' : '';
+      if (src || it.paperwork) txt.append(el('span', 'pi-c', [src, it.paperwork ? 'bring it; filling it in is yours' : ''].filter(Boolean).join(' · ')));
+      lab.append(c, txt); li.append(lab);
+      if (it.added) { const rm = btn('Remove', () => guard(rm, () => prepWrite(p.date, { action: 'remove', id: it.id })), { cls: 'quiet pi-rm' }); rm.setAttribute('aria-label', 'Remove ' + it.text); li.append(rm); }
+      ul.append(li);
+    }
+    if (l.items.length) box.append(ul);
+    const f = el('form', 'prep-add'); f.autocomplete = 'off'; const inp = el('input'); inp.type = 'text'; inp.placeholder = 'Something else to bring'; inp.setAttribute('aria-label', 'Add something to bring'); inp.maxLength = 80;
+    const add = el('button', null, 'Add'); add.type = 'submit'; f.append(inp, add);
+    f.addEventListener('submit', ev => { ev.preventDefault(); const t = inp.value.trim(); if (!t) return; guard(add, async () => { await prepWrite(p.date, { action: 'add', text: t }); inp.value = ''; }); });
+    box.append(f);
+    const key = m.id + ':' + p.phase; const open = T.prepOpen.has(key) ? T.prepOpen.get(key) : !l.done;
+    const show = o => { T.prepOpen.set(key, o); box.hidden = !o; row.setAttribute('aria-expanded', String(o)); wrap.classList.toggle('open', o); };
+    show(open); row.addEventListener('click', () => show(!wrap.classList.contains('open')));
+    // Ticking the last item folds the check away; reopening it is one tap on its line.
+    if (l.done && T.prepWasDone && T.prepWasDone.get(key) === false) show(false);
+    (T.prepWasDone = T.prepWasDone || new Map()).set(key, l.done);
+    wrap.append(row, box); return wrap;
   }
   function renderCards(rec, m) { // live on every snapshot, but a card is swapped only when what it shows changed
     // Until B-78's surfaces (B-77): a reply shows its first card under her line, the rest as one line "n more cards";
@@ -2106,7 +2160,7 @@
   }
   function msgEl(m, showAv, isLastEv) {
     let rec = T.els.get(m.id);
-    const sig = JSON.stringify([m.text, m.cards, !!m.pending, m.error, showAv, isLastEv, T.busy, T.retry.has(m.id)]);
+    const sig = JSON.stringify([m.text, m.cards, !!m.pending, m.error, showAv, isLastEv, T.busy, T.retry.has(m.id), m.greeting && m.prep ? prepNow(m.prep) : null]);
     if (rec && rec.sig === sig) { rec.msg = m; return rec; }
     // New messages rise into place (the greeting always; others once the page has settled). One core, shared, sits on
     // the newest E.V. message and follows E.V.'s state; earlier E.V. messages keep its column empty.
@@ -2132,6 +2186,7 @@
     }
     const q = SS.quotes.get(m.id); if (q && m.text) body.append(el('p', 'cap-quote', `on “${q}”`)); // B-88: the line of his she answered (memory only)
     if (m.greeting && m.brief && m.brief.length) body.append(briefEl(m));
+    if (m.greeting && m.prep) { const pe = prepEl(m); if (pe) body.append(pe); }
     const cardsBox = el('div', 'msg-cards'); body.append(cardsBox);
     const meta = el('div', 'msg-meta'); meta.append(el('span', null, (m.greeting ? 'just now' : clock12(m.at)) + (m.role !== 'matt' && m.tier && m.tier !== 'local' ? ' · ' + m.tier : '')));
     if (m.role !== 'matt' && !m.pending && !T.busy) {
@@ -2612,8 +2667,9 @@
       reviewLeft: left, reviewTotal: total, push: (M.day && M.day.push) || null, nextExams: S.exams.filter(e => e.date).map(e => ({ id: e.id, title: e.title || e.id, date: e.date, course: e.course, kind: e.kind })),
       readiness: rd ? { examId: M.target.id, pctSolid: rd.pctSolid, need: rd.need } : null, dueCount: E.rankDue(M.models, today, S.exams).length,
       jobs: S.jobs.map(j => ({ id: j.id, kind: j.kind, title: j.title, status: j.status, finishedAt: j.finishedAt })), dueSoon: S.dates.filter(d => d.date >= today && d.date <= E.addDays(today, 7)).length, lastSeenAt: (S.memory && S.memory.lastSeenAt) || new Date(Date.now() - 864e5).toISOString(),
-      runs: latestRuns(), tomorrow: { dates: S.dates.filter(d => d.date === E.addDays(today, 1)) }, todayDates: S.dates.filter(d => d.date === today).map(d => ({ title: d.title, graded: !!d.graded, kind: d.kind })), quizlet: null, checkin: (M.dayedit && M.dayedit.checkin) || null, sessionActive: !!activeSession(), skillRun: resumeChip() });
-    const at = now(); T.greet = { id: msgId('g'), role: 'ev', greeting: true, text: g.headline, lines: g.lines, brief: g.brief, cards: g.cards, at, day: today, mood: g.mood, chips: g.chips, job: g.job };
+      runs: latestRuns(), tomorrow: { dates: S.dates.filter(d => d.date === E.addDays(today, 1)) }, todayDates: S.dates.filter(d => d.date === today).map(d => ({ title: d.title, graded: !!d.graded, kind: d.kind })), quizlet: null, checkin: (M.dayedit && M.dayedit.checkin) || null, sessionActive: !!activeSession(), skillRun: resumeChip(),
+      prep: { today: E.prepDay(S.dates, [], today), tomorrow: E.prepDay(S.dates, [], E.addDays(today, 1)) } });
+    const at = now(); T.greet = { id: msgId('g'), role: 'ev', greeting: true, text: g.headline, lines: g.lines, brief: g.brief, cards: g.cards, at, day: today, mood: g.mood, chips: g.chips, job: g.job, prep: g.prep };
     T.briefOpen = false; T.briefItem = new Set(); // B-90: the briefing starts folded on every open
     T.scrollTo = T.greet.id; T.firstScroll = true;
     // Mark this open as seen, so the next greeting only reports what's new. One write per open.
