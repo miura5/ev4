@@ -2129,11 +2129,15 @@
   "title": "Tenet checks in the harness: D-146, D-147, D-148, D-149, D-150 and D-151's checks run on every view at 390, 735 and 1280, with exceptions listed in spec.ui; a tab's checks report without failing until its catch-up task turns them on",
   "dod": "the look harness prints each check per view; E.V. passes all of them; a planted info-only card fails D-147 and a planted empty-state card fails D-151 in a test; npm test green",
   "milestone": "M14 UI",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken after B-114 (M14).",
   "commit": null,
-  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474",
+  "board": {
+   "row": "v4 B-115: Tenet checks in the harness",
+   "why": "the UI tenets need a check that can fail, on every view"
+  }
  },
  {
   "id": "B-116",
