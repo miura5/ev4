@@ -1,8 +1,9 @@
-// The demo copy's record (B-83): a made-up first-semester nursing student's study record, built fresh on every open
-// and dated from the moment it opens (Central time), so the demo always has today's review, an exam two days out and
-// a week of dates. Every document validates against spec/schemas (test/demo.test.mjs). Nothing here is Matt's: no
-// real course file, Canvas text, journal, conversation or answer. Clinical content is generic textbook fundamentals,
-// and every client is made up.
+// The synthetic record's seed (B-100, first written for the demo copy, B-83, which is gone): a made-up first-semester
+// nursing student's study record, dated from the moment it is built (Central time), so it always has today's review,
+// an exam two days out and a week of dates. test/data/synthetic.cjs adds the documents the harnesses name; every
+// document validates against spec/schemas (test/synthetic.test.mjs). Nothing here is Matt's: no real course file,
+// Canvas text, journal, conversation or answer. Clinical content is generic textbook fundamentals, and every client is
+// made up.
 (function (g) {
   'use strict';
   const TZ = 'America/Chicago';
@@ -17,7 +18,7 @@
   const key = (writer, iso) => writer + '-' + iso.replace(/[-:]/g, '').replace('T', '-').replace(/\.\d+Z$/, '').replace('Z', '');
   const env = (writer, source, at) => ({ schema: 1, writer, at, source });
 
-  g.EVDemoSeed = function (nowDate) {
+  g.seed = function (nowDate) {
     const now = nowDate || new Date(), today = ymd(now), yday = addDays(today, -1), d = n => addDays(today, n);
     const morning = ct(today, 4, 25), lastNight = ct(yday, 20, 15);
     const db = {};
@@ -126,15 +127,10 @@
     put('talk', 'memory', { ...env('page', 'E.V. Home', m2), summary: 'Demo student, NUR 112, Exam 4 in two days. Working on fluids and electrolytes.', upTo: '', summarizedAt: m2, lastSeenAt: ct(yday, 21, 5) });
     const run = (pipeline, startedAt, mins) => { const id = pipeline + '-' + startedAt.replace(/[-:]/g, '').replace('T', '-').replace(/\.\d+Z$/, ''); put('runs', id, { ...env(pipeline, pipeline, startedAt), release: 'v4.0.0', pipeline, startedAt, endedAt: new Date(Date.parse(startedAt) + mins * 6e4).toISOString(), status: 'ok' }); return { id, status: 'ok', startedAt, endedAt: new Date(Date.parse(startedAt) + mins * 6e4).toISOString(), release: 'v4.0.0' }; };
     const pipes = { 'evening-cloud': run('evening-cloud', lastNight, 3), 'evening-mac': run('evening-mac', ct(yday, 20, 20), 6), morning: run('morning', morning, 7), watchdog: run('watchdog', ct(today, 1, 55), 2) };
-    put('health', 'current', { ...env('watchdog', 'watchdog', ct(today, 4, 57)), record: 'demo', pipelines: pipes, missing: [], stalledRuns: [], stalledJobs: [], reported: [], verifyDeploy: null });
+    // The watchdog's last check: 4:57am, or 20 minutes ago once that is later (it checks every three hours, so a
+    // 4:57am check reads as stopped by the afternoon).
+    const checked = new Date(Math.max(Date.parse(ct(today, 4, 57)), now.getTime() - 20 * 6e4)).toISOString();
+    put('health', 'current', { ...env('watchdog', 'watchdog', checked), record: 'demo', pipelines: pipes, missing: [], stalledRuns: [], stalledJobs: [], reported: [], verifyDeploy: null });
     return db;
   };
-  // Five more questions for "Give me 5 more", scripted in the demo.
-  g.EVDemoMore = [
-    { id: 'm1', type: 'single', stem: 'A client with heart failure gains 2 kg in two days. What does the nurse do first?', options: ['Assess lung sounds and edema', 'Encourage more fluids', 'Hold the morning weight', 'Ambulate the client'], correct: [0], rationales: ['Right: assess for the fluid overload the weight gain suggests.', 'More fluid would worsen overload.', 'Daily weight is the key data point; never skip it.', 'Assessment comes before activity.'], objective: 'E4-1', topic: 'Signs of fluid volume excess', weakspotId: 'ws-demo-fve' },
-    { id: 'm2', type: 'single', stem: 'Which IV solution would most likely raise a client’s blood pressure quickly?', options: ['0.9% sodium chloride', '0.45% sodium chloride', 'D5W', '0.33% sodium chloride'], correct: [0], rationales: ['Right: isotonic saline stays in the vessels and expands volume.', 'Hypotonic: most of it moves into the cells.', 'D5W acts hypotonic once the sugar is used.', 'Hypotonic.'], objective: 'E4-5', topic: 'Isotonic vs hypotonic IV solutions', weakspotId: 'ws-demo-iv' },
-    { id: 'm3', type: 'single', stem: 'Which made-up finding needs the quickest report: potassium 5.9 mEq/L or sodium 136 mEq/L?', options: ['Potassium 5.9 mEq/L', 'Sodium 136 mEq/L', 'Both equally', 'Neither'], correct: [0], rationales: ['Right: potassium is above 5.0 and can disturb the heart’s rhythm.', 'Sodium 136 is within 135 to 145.', 'Only one is abnormal.', 'The potassium is high.'], objective: 'E4-2', topic: 'Normal potassium range and hyperkalemia signs', weakspotId: 'ws-demo-k' },
-    { id: 'm4', type: 'single', stem: 'High blood pressure mostly increases which of these?', options: ['Afterload', 'Preload', 'Heart rate', 'Stroke volume'], correct: [0], rationales: ['Right: higher arterial pressure means more resistance to push against.', 'Preload is filling volume.', 'Not directly.', 'Stroke volume tends to fall as afterload rises.'], objective: 'E4-3', topic: 'Preload vs afterload', weakspotId: 'ws-demo-preload' },
-    { id: 'm5', type: 'single', stem: 'Standing up, a client’s systolic pressure falls from 128 to 104. What does this suggest?', options: ['Orthostatic hypotension', 'A normal response', 'Hypertension', 'A cuff that is too small'], correct: [0], rationales: ['Right: a systolic drop of 20 or more on standing is orthostatic hypotension.', 'A drop this size is not normal.', 'The pressure fell, not rose.', 'A small cuff reads falsely high, not a drop.'], objective: 'E4-4', topic: 'Orthostatic blood pressure technique', weakspotId: 'ws-demo-ortho' },
-  ];
-})(typeof window !== 'undefined' ? window : globalThis);
+})(module.exports);

@@ -41,7 +41,7 @@ calls exactly as printed, read the view again when asked, and run `views` until 
 5. Prove it exactly as its definition of done says. `npm test` green first (it runs the Chart's lint). Where a
    pipeline is involved, the proof is a scheduled task fired against staging and its `runs/<id>` read back, never a
    hand replay. Where the page is involved, `npm run check` (npm test, the build, every harness on the synthetic
-   record, the demo, then the look pass at phone and desktop width), and look at the screenshots it lists.
+   record, then the look pass at phone and desktop width), and look at the screenshots it lists.
 6. Ship: commit with the task id first in the message (`B-07: lint and rebuild`), then the attribution lines the
    session gives you; push to `main`. Then `ship staging` and make every call and read it prints, running it again
    each time, until it says GREEN: it records the deploy and prints the Changelog line. **Never deploy live** without
@@ -76,7 +76,7 @@ account or scheduled task touched.
 
 No help on graded or submitted work. No patient identifiers, ever. Canvas is read-only GETs through Matt's
 signed-in browser; never a token. Nothing is deleted anywhere: records, Mac files, scheduled tasks, docs; retire
-by marking. No passwords, nothing posted as Matt. The journal is a named read (D-106, D-113): a run reads it only for
+by marking. Repository code may be removed outright when it is no longer needed; git history keeps it (D-166). No passwords, nothing posted as Matt. The journal is a named read (D-106, D-113): a run reads it only for
 a step that names it, backups and the mirror include it, and a build session may read it. Personal data never enters
 this repository (`fixtures/` and `dist/` are ignored; a test greps for exports). **In a build chat**, Matt's explicit OK is
 required for: publishing the live page, creating or changing a Mac-bound task, touching the live record by hand. A refused action is reported in Notes, never worked around. Build chats load three hooks

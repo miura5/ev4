@@ -34,3 +34,20 @@ test('B-100: a harness with no record dir gets a fresh synthetic one; a named di
   assert.ok(fs.existsSync(path.join(dir, 'SYNTHETIC')) && fs.existsSync(path.join(dir, 'weakspots', 'e4-preschooler.json')));
   fs.rmSync(dir, { recursive: true });
 });
+
+test('the seed is dated from the moment it is built: today’s review, Exam 4 in two days, due weak spots', async () => {
+  const EV = (await import('../core/evcore.mjs')).default;
+  EV.configure(JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8')));
+  const now = new Date('2026-10-19T19:00:00Z'), db = require('./data/seed.cjs').seed(now), today = EV.chicagoDate(now);
+  let n = 0;
+  for (const [c, docs] of Object.entries(db)) for (const [id, doc] of Object.entries(docs)) { const r = validate(c, doc, { id }); assert.ok(r.ok, `${c}/${id}: ${JSON.stringify(r.errors)}`); n++; }
+  assert.ok(n >= 35, n + ' documents');
+  assert.ok(db.sets['review-' + today], 'today’s review set');
+  assert.equal(db.days[today].date, today);
+  assert.equal(EV.diffDays(today, db.exams.E4.date), 2);
+  const rows = c => Object.entries(db[c]).map(([id, d]) => ({ id, ...d }));
+  const models = EV.buildWeakspots({ weakspots: rows('weakspots'), sets: rows('sets'), answers: rows('answers'), exams: rows('exams') });
+  assert.equal(models.length, 10);
+  assert.ok(models.filter(m => m.derived.status === 'open').length >= 6, 'most are open');
+  assert.ok(EV.rankDue(models, today, rows('exams')).length >= 4, 'several are due today');
+});

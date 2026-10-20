@@ -1,15 +1,15 @@
 // The synthetic record (B-100): a made-up study record in v4 shapes for the page harnesses, so any session can run
-// them without a staging export. It is the demo's made-up record (demo/seed.js), dated from the day it is built, with
+// them without a staging export. It is the made-up record of test/data/seed.cjs, dated from the day it is built, with
 // the documents the harnesses' own checks name. Nothing here is Matt's: no export, no Canvas text, no journal, no
 // conversation of his; clinical content is generic and every client is made up.
 //   node test/data/synthetic.cjs <out dir>        -> <out dir>/<collection>/<id>.json
 // The harnesses (run.cjs, captions.cjs, core.cjs) build one themselves when no record dir is given, or given "synthetic".
 const fs = require('fs'); const path = require('path');
-require('../../demo/seed.js');
+const { seed } = require('./seed.cjs');
 const TZ = 'America/Chicago';
 const ymd = d => new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(d);
 const addDays = (date, n) => new Date(Date.parse(date + 'T12:00:00Z') + n * 864e5).toISOString().slice(0, 10);
-// An instant at a Central wall-clock time on a date (as demo/seed.js).
+// An instant at a Central wall-clock time on a date (as seed.cjs).
 function ct(date, hh, mm = 0) {
   let t = Date.parse(date + 'T00:00:00Z') + (hh + 6) * 36e5 + mm * 6e4;
   const h = Number(new Intl.DateTimeFormat('en-US', { timeZone: TZ, hour: '2-digit', hourCycle: 'h23' }).format(new Date(t)));
@@ -18,7 +18,7 @@ function ct(date, hh, mm = 0) {
 
 /** The record as {collection: {id: doc}}, dated from `now`. */
 function syntheticRecord(now = new Date()) {
-  const db = globalThis.EVDemoSeed(now);
+  const db = seed(now);
   const today = ymd(now), d = n => addDays(today, n), at = ct(d(-7), 18), env = (writer, source, when = at) => ({ schema: 1, writer, at: when, source });
   const put = (c, id, doc) => { (db[c] = db[c] || {})[id] = doc; };
   // run.cjs: graded work due today is the greeting's one urgent line.
@@ -56,7 +56,7 @@ function syntheticRecord(now = new Date()) {
   const guide = labs.map((t, i) => `[p${i + 1}] Skills lab week ${i + 1}: ${t}. Practice it in pairs, then fold it into your head to toe routine. Your instructor signs your practice log.`).join('\n');
   put('materials', 'NUR112-990003', { ...env('canvas-sync', 'Canvas sync', ct(d(-20), 20, 20)), course: 'NUR 112', kind: 'lab', title: 'Skills lab guide.pdf', module: 'Week 9', fileType: 'pdf', fileId: 990003, text: guide, pages: labs.length, chars: guide.length, needsOcr: false });
   // run.cjs: two filed sessions; one is a v3 session filed under its bare id, which the reader must leave alone. The
-  // page's own study sessions are the harness's to start, so the demo's filed session is a Study Watch one here.
+  // page's own study sessions are the harness's to start, so the seed's filed session is a Study Watch one here.
   for (const x of Object.values(db.sessions)) x.source = 'Study Watch';
   { const [id0, s0] = Object.entries(db.sessions)[0], s1 = ct(d(-2), 0, 35), e1 = ct(d(-2), 1, 20);
     put('sessions', '2026-10-17-0035-Pharmacology-Chapter-50', { ...s0, at: e1, date: d(-2), startedAt: s1, endedAt: e1, topic: 'Pharmacology: made-up dosage practice', minutes: 45, events: { ['page-' + s1.replace(/[-:]/g, '').replace('T', '-').replace(/\.\d+Z$/, '')]: { type: 'start', len: 600, h: 'synth1' } }, summary: 'Dosage math on made-up orders.', cards: [] }); }

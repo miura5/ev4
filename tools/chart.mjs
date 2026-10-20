@@ -922,7 +922,7 @@ async function ship(o) {
 // B-109: the parts of E.V. a task touches, from its milestone and the files and spec keys it names; brief --scope
 // overrides. A tenet applies to a task when their scopes meet.
 const SCOPE_OF = {
-  ui: { milestone: /\bUI\b|\bpage\b/i, file: /^(?:page\/|test\/harness\/|demo\/)/, spec: /^(?:copy|persona|page|look|layout|motion)$/ },
+  ui: { milestone: /\bUI\b|\bpage\b/i, file: /^(?:page\/|test\/harness\/)/, spec: /^(?:copy|persona|page|look|layout|motion)$/ },
   pipelines: { milestone: /\bpipelines?\b/i, file: /^(?:core\/(?:run|steps|watch|pipelines)\.mjs|tools\/prompts\.mjs|studywatch\/)/, spec: /^(?:pipelines|tasks|jobs)$/ },
   data: { milestone: /\b(?:data|schema|migration)\b/i, file: /^(?:core\/(?:migrate|schema|derive|lint)\.mjs|spec\/schema)/, spec: /^(?:schema|collections|migrations)$/ },
   ops: { milestone: /\b(?:ops|workflow|deploy)\b/i, file: /^(?:core\/(?:deploy|cli)\.mjs|tools\/(?:chart|check|build|hooks)\.mjs|\.claude\/|chart\/)/, spec: /^(?:registry|environments)$/ },
@@ -930,7 +930,7 @@ const SCOPE_OF = {
 export function taskScope(t, override) {
   if (override && override !== true) return list(override).filter(x => TENET_SCOPES.includes(x));
   const text = [t.title, t.dod, t.notes].join(' ');
-  const files = [...text.matchAll(/(?:^|[\s(`'"])((?:core|page|tools|spec|test|demo|studywatch|chart|\.claude)\/[\w./-]+)/g)].map(m => m[1]);
+  const files = [...text.matchAll(/(?:^|[\s(`'"])((?:core|page|tools|spec|test|studywatch|chart|\.claude)\/[\w./-]+)/g)].map(m => m[1]);
   const keys = [...text.matchAll(/\bspec\.(\w+)/g)].map(m => m[1]);
   return TENET_SCOPES.filter(k => SCOPE_OF[k].milestone.test(t.milestone || '') || files.some(f => SCOPE_OF[k].file.test(f)) || keys.some(x => SCOPE_OF[k].spec.test(x)));
 }

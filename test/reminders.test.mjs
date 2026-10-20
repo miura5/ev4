@@ -1,5 +1,5 @@
 // B-99 (Matt, Oct 19): no standing reminder about graded work and no "made-up" patient or client wording in what E.V.
-// says or writes (spec.persona, the item guide, page copy, core's lines and prompts, the demo); the limits still act
+// says or writes (spec.persona, the item guide, page copy, core's lines and prompts, the synthetic record); the limits still act
 // when it matters: a real ask to do, edit or turn in graded work gets one line back, and the identifier scan still stops
 // a real identifier. The scheduled tasks' own prompts (tools/prompts.mjs) keep their hard limits word for word.
 import test from 'node:test';
@@ -16,7 +16,7 @@ const STANDING = /yours alone|made[- ]up (?:client|patient)s?|invented (?:client
 
 test('no standing graded-work or made-up client wording in what E.V. says or writes', () => {
   for (const [name, text] of [['spec.persona', JSON.stringify(spec.persona)], ['spec.items', JSON.stringify(spec.items)], ['spec.workingAgreements', JSON.stringify(spec.workingAgreements)], ['spec.ui', JSON.stringify(spec.ui)], ['spec.boundaries', JSON.stringify(spec.boundaries)], ['spec.pipelines', JSON.stringify(spec.pipelines)], ['spec.jobs', JSON.stringify(spec.jobs)],
-    ['page/app.js', read('page/app.js')], ['page/index.src.html', read('page/index.src.html')], ['core/evcore.mjs', read('core/evcore.mjs')], ['core/steps.mjs', read('core/steps.mjs')], ['demo/seed.js', read('demo/seed.js')], ['demo/runtime.js', read('demo/runtime.js')]]) {
+    ['page/app.js', read('page/app.js')], ['page/index.src.html', read('page/index.src.html')], ['core/evcore.mjs', read('core/evcore.mjs')], ['core/steps.mjs', read('core/steps.mjs')], ['test/data/seed.cjs', read('test/data/seed.cjs')]]) {
     const m = text.match(new RegExp('.{0,40}(' + STANDING.source + ').{0,40}', 'i'));
     assert.equal(m, null, `${name}: ${m && m[0]}`);
   }

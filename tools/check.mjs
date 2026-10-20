@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Every check, in the order they must run (B-101): npm test, the build, the page harnesses (core.cjs alone: it
-// measures frame times, so nothing runs beside it), the demo (tools/demo.mjs builds it first), then the look pass's
+// measures frame times, so nothing runs beside it), then the look pass's
 // phone and desktop screenshots. Stops at the first failure and names it.
 //   npm run check [-- --record <dir>] [--shots <dir>]
 // --record: a folder of <collection>/<id>.json for the harnesses (default: the synthetic record, built fresh by
@@ -27,8 +27,6 @@ export function steps({ record, shots }) {
     h('captions', record, path.join(shots, 'captions')),
     h('prep', record, path.join(shots, 'prep')),
     h('core', record, path.join(shots, 'core')),
-    ['demo build', process.execPath, ['tools/demo.mjs']],
-    h('demo', path.join(shots, 'demo')),
     h('look', record, path.join(shots, 'look')),
   ];
 }
