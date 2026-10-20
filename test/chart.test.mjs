@@ -256,6 +256,8 @@ test('B-95: a Board comment is filed from the comment query and answered with it
   let jsonl = toolPair('q1', 'mcp__Claude_Docs__query', q, JSON.stringify(rows)).join('\n');
   assert.deepEqual(C.inboxPlan(r, null).query, C.commentQuery(r));
   assert.deepEqual(C.inboxPlan(r, jsonl).comments.map(c => [c.id, c.body]), [['u-1', 'the Quiz me button does nothing on my phone']]);
+  const byId = toolPair('q0', 'mcp__1a59c906-04da-521d-bda7-7f71b9f9e01c__query', q, JSON.stringify(rows)).join('\n');
+  assert.deepEqual(C.inboxPlan(r, byId).comments.map(c => c.id), ['u-1'], 'the Docs connector named by its id is read too');
   const out = C.applyReport(r, { _: ['report', 'bug'], 'from-comment': 'u-1' }, { jsonl });
   assert.equal(r.tasks.at(-1).words, 'the Quiz me button does nothing on my phone');
   assert.equal(r.tasks.at(-1).source, 'Board comment u-1');

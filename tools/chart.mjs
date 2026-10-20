@@ -474,9 +474,12 @@ export function readBody(texts) {
  * The newest read of each view in a transcript (a Claude_Docs read whose parentId is the view's table or paragraph),
  * and whether a Docs update to that node came after it (then the read is stale).
  */
+// The Claude Docs connector's tools: named Claude_Docs in most sessions, by the connector's id in others.
+const DOCS = '(?:Claude_Docs|1a59c906-04da-521d-bda7-7f71b9f9e01c)__';
+export const isDocsTool = (name, tool) => new RegExp(DOCS + '(?:' + tool + ')$').test(String(name));
 export function viewReads(rec, jsonl) {
   const all = toolResults(jsonl, '*');
-  const isRead = r => /Claude_Docs__read$/.test(r.name), isUpdate = r => /Claude_Docs__(update|batch)$/.test(r.name);
+  const isRead = r => isDocsTool(r.name, 'read'), isUpdate = r => isDocsTool(r.name, 'update|batch');
   const want = { board: [rec.views.board.node, rec.views.board.table], changelog: [rec.views.changelog.node, rec.views.changelog.table], overview: [rec.views.overview.node, rec.views.overview.paragraph] };
   if (rec.views.decisions) Object.assign(want, { decisions: [rec.views.decisions.node, rec.views.decisions.table], decisionsIntro: [rec.views.decisions.node, rec.views.decisions.intro] });
   const out = {};
@@ -667,7 +670,7 @@ export function wordsFromChat(jsonl, match) {
 }
 /** The comment threads of the newest comment query on a node in this session: [{id, body, by, self}]. */
 export function commentsFrom(jsonl, node) {
-  const rs = toolResults(jsonl, 'Claude_Docs__query').filter(r => r.input && r.input.payload && r.input.payload.under && r.input.payload.under.id === node && !r.isError);
+  const rs = toolResults(jsonl, '*').filter(r => isDocsTool(r.name, 'query') && r.input && r.input.payload && r.input.payload.under && r.input.payload.under.id === node && !r.isError);
   const r = rs.at(-1); if (!r) return null;
   const t = r.texts.join(''); const i = t.indexOf('{"verdict"');
   const v = JSON.parse(t.slice(i, t.lastIndexOf('}') + 1));
