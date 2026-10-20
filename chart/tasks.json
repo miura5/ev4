@@ -2061,14 +2061,15 @@
   "title": "Record, Ideas: an idea's text wraps one letter per line at 390 because its status menu and Make it a weak spot sit beside it; the title gets its own line and the menu and button show when the row is opened (D-148)",
   "dod": "the look harness plants a 30-word idea; at 390 and 1280 its title is at most 3 lines and at least 80% of the card's width; opening the row shows the menu and button; npm test green; screenshots looked at",
   "milestone": "M14 UI",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Taken first in M14 (Matt, via the parent build chat).",
-  "commit": null,
+  "notes": "An idea is its text on a full-width line (3 lines folded, all of it opened) with kind and source as one quiet line; the kind menu and Make it a weak spot show when the row opens in place, and stay open across renders. Look pass plants a 30-word idea: at 390 and 1280 at most 3 lines, 100% of the card's width, opening shows menu and button (24/24). npm run check GREEN (the run harness's session-stage read now waits for the stage to settle, 2bacd75). Staging GREEN at 2bacd75. That deploy's Changelog line also names B-126, read from the plan commit's subject; fixed in ship (commitTasks) for later deploys.",
+  "commit": "582d0b0",
   "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474",
   "board": {
    "row": "v4 B-111: Ideas rows readable on the phone",
-   "why": "an idea's text wrapped one letter per line at 390"
+   "why": "an idea's text wrapped one letter per line at 390",
+   "notes": "On the phone an idea's text now gets the whole row; its menu and Make it a weak spot show when you open it. On staging."
   }
  },
  {
