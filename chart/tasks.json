@@ -2327,14 +2327,15 @@
   "title": "Delete the demo copy (D-166): demo/runtime.js, tools/demo.mjs, test/harness/demo.cjs and test/demo.test.mjs removed; demo/seed.js moves to test/data/seed.cjs as the synthetic record's seed (its dated-from-now test joins test/synthetic.test.mjs); npm run check, CLAUDE.md, the reminders test and the Chart's file patterns no longer name the demo; the demo artifact deleted on Matt's word; the overview doc says it is gone",
   "dod": "npm test green; npm run check's harnesses green on the synthetic record built from test/data/seed.cjs; no file names demo/ or tools/demo.mjs; the demo artifact deleted; the overview doc's demo line updated",
   "milestone": "Process",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Taken in the parent build chat on Matt's word (D-166)",
-  "commit": null,
+  "notes": "c81e194: demo/runtime.js, tools/demo.mjs, test/harness/demo.cjs, test/demo.test.mjs deleted; demo/seed.js is test/data/seed.cjs (its dated test in synthetic.test); npm run check drops the demo; the seed's health check stays 20 min old (it went red after ~8am, on main too). npm test 320; shell 31/31, run, captions, prep, core green, look 337/337. Demo artifact TTaBxoUFKxVUVDVxdFBsXW deleted on Matt's word; the overview doc's Try it section and demo mentions removed. No deployed file changed (manifest's 57 files), so no deploy",
+  "commit": "c81e194",
   "source": "Matt, Oct 20 (D-166)",
   "board": {
    "row": "v4 B-127: Delete the demo copy",
-   "why": "Matt: redundant aside from its seed data; it adds overhead to every build and check"
+   "why": "Matt: redundant aside from its seed data; it adds overhead to every build and check",
+   "notes": "The demo is gone; its made-up data now only feeds the tests"
   }
  }
 ]
