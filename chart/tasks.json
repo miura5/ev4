@@ -2250,11 +2250,15 @@
   "title": "Ways out by folding (D-160, D-161): a session check folds to its head line and back; the skills sheet loses its Hide button (its peek line folds it) and its Stop becomes End; no close or hide button is left on the page",
   "dod": "the Captions harness at 390, 735 and 1280: a session check folded by a tap on its head line is one line high, files no answer, and unfolds at the next checkpoint; the skills sheet folds and unfolds by its peek line and has no Hide button; no button named Hide, Close or × anywhere on the page; D-160's check on and green for E.V. and Study; npm test green; screenshots looked at",
   "milestone": "M14 UI",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "A check's head line (Check N · K questions) folds it, writing nothing; the next checkpoint's card arrives open. Skills: no Hide (the peek line folds the sheet; the desktop panel folds by its head line), Stop reads End. D-160 added to the tenet checks, on for E.V. and Study.",
   "commit": null,
-  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474",
+  "board": {
+   "row": "v4 B-122: Ways out by folding",
+   "why": "Hide and Stop buttons took space where folding the thing itself is the way out"
+  }
  },
  {
   "id": "B-123",
