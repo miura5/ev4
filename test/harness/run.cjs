@@ -776,6 +776,9 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     ok('session saved as active with a start mark, no note text', S1 && S1.status === 'active' && S1.topic === 'Fluids and electrolytes' && Object.values(S1.events)[0].len === note1.length && !JSON.stringify(S1).includes('Isotonic'), JSON.stringify(S1 && S1.events));
     ok('start message in the thread', /Session started on Fluids and electrolytes/.test((await msgs(ss)).slice(-1)[0].text.replace(/\*\*/g, '')));
     // Captions (B-77, D-122): in a session only her latest two lines show, and her core is at the session step (66%).
+    // The stage steps down over its own transition: measure once its height has held still (under a loaded check run
+    // it was read mid-step, 197 for 196).
+    await ss.waitForFunction(() => { const h = document.getElementById('hero'), v = Math.round(h.getBoundingClientRect().height); const s = window.__stageRead; window.__stageRead = v; return s === v && h.dataset.step === 'session'; }, null, { polling: 150, timeout: 5000 }).catch(() => {});
     { const cs = await ss.evaluate(() => { const h = document.getElementById('hero'); return { step: h.dataset.step, px: Math.round(h.querySelector('.ev-av').getBoundingClientRect().width), stage: Math.round(h.getBoundingClientRect().height), lines: document.querySelectorAll('#thread .msg.ev').length }; });
       ok('in a session: only her latest two lines, her core at 66% (172 px) on a 196 px stage', cs.step === 'session' && cs.lines === 2 && Math.abs(cs.px - 172) <= 1 && cs.stage === 196, JSON.stringify(cs)); }
     // B-86 (Matt, Oct 19): the session's stats are one quiet line under her core (no pill above her); its progress is
