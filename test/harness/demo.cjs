@@ -50,7 +50,7 @@ const results = []; const ok = (n, c, d = '') => results.push([c ? 'PASS' : 'FAI
     const sk = await page.evaluate(m => { const v = id => { const e = document.getElementById(id); return !!e && !e.hidden && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().height > 0; }; return { sheet: v('sksheet'), panel: v('skpanel'), text: (document.getElementById(m ? 'sksheet' : 'skpanel') || {}).textContent || '' }; }, scheme === 'phone');
     ok(`[${scheme}] practice bed bath runs the made-up checklist in the skills ${scheme === 'phone' ? 'sheet' : 'panel'}`, (scheme === 'phone' ? sk.sheet : sk.panel) && /Step 1 of 8/.test(sk.text), JSON.stringify(sk).slice(0, 200));
     await page.screenshot({ path: `${shots}/demo-skills-${scheme}.png` });
-    await page.click(scheme === 'phone' ? '#sksheet .sk-mini:has-text("Stop")' : '#skpanel button:has-text("Stop")'); await page.waitForTimeout(600);
+    await page.click(scheme === 'phone' ? '#sksheet .sk-mini:has-text("End")' : '#skpanel button:has-text("End")'); await page.waitForTimeout(600);
     // The tabs
     for (const [tab, want] of [['today', /Read Ch 39/], ['progress', /Readiness/], ['record', /Fluids and electrolytes/]]) {
       await page.click('#tab-' + tab); await page.waitForTimeout(700);
