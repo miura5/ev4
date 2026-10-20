@@ -131,6 +131,10 @@ export function watch(db, { now, record, spec, scheduler = null }) {
 /** health/current's own fields (the producer adds the envelope). */
 export function healthBody(db, { now, record, scheduler = null }, spec) {
   const v = watch(db, { now, record, spec, scheduler });
+  // B-66: the watchdog's own run is still running while it writes this page; it ends right after, so its entry here
+  // says so instead of showing the watchdog as running forever.
+  const own = v.pipelines.watchdog;
+  if (own && own.status === 'running' && ms(now) - ms(own.startedAt) < 15 * 6e4) v.pipelines.watchdog = { ...own, status: 'ok', endedAt: now, self: true };
   const state = (db.state || []).find(s => s.id === 'current') || null;
   const drill = (db.runs || []).filter(r => r.pipeline === 'restore-drill').sort((a, b) => ms(b.startedAt) - ms(a.startedAt))[0] || null;
   return {

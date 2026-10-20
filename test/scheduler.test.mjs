@@ -92,3 +92,11 @@ test('the pull prints the list_triggers read; pulled saves its pages and asks fo
   assert.equal(r.say.length > 0, true); assert.deepEqual(ctx.scheduler.map(x => x.task), ['morning', 'watchdog']);
   fs.rmSync(dir, { recursive: true, force: true });
 });
+
+test('B-66: health/current marks the watchdog\'s own run as ended, not running', () => {
+  const now = '2026-10-20T10:56:00Z';
+  const h = healthBody({ runs: [run('watchdog-now', 'watchdog', '2026-10-20T10:55:10Z', { status: 'running', endedAt: null })], jobs: [], jobresults: [], state: [] }, { now, record: 'live' }, spec);
+  assert.deepEqual([h.pipelines.watchdog.status, h.pipelines.watchdog.endedAt, h.pipelines.watchdog.self], ['ok', now, true]);
+  const stale = healthBody({ runs: [run('watchdog-old', 'watchdog', '2026-10-20T08:55:10Z', { status: 'running', endedAt: null })], jobs: [], jobresults: [], state: [] }, { now, record: 'live' }, spec);
+  assert.equal(stale.pipelines.watchdog.status, 'running', 'an older watchdog left running is not this run: it stays as it is');
+});
