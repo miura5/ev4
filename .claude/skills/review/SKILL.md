@@ -19,7 +19,8 @@ task or writes to a record. It never blocks anything by itself: the build chat d
 1. Read the task's row in `BACKLOG.md` (Task, Depends, Notes) and its definition of done. The definition of done is
    the "Definition of done" column of the Build plan tab of E.V. Foundation v4 (read it with the Claude Docs tools);
    when that tab is not reachable, use the "Done when" text in the row's Notes and say so.
-2. Read `CLAUDE.md`.
+2. Read `CLAUDE.md`, then the task's tenets in scope: `node tools/chart.mjs brief --task <id>` lists them under
+   "Tenets in scope" (B-109), each with its scope and how it is checked.
 3. Find the work: `git log --format='%h %s' --grep='^<id>'` (and the range if given); `git show --stat` each commit and
    read the diffs that matter.
 4. Check each clause of the definition of done against evidence you can point to: a test by name that exists and
@@ -37,7 +38,10 @@ task or writes to a record. It never blocks anything by itself: the build chat d
    - shipping steps that apply: pushed, `deploy staging` with every printed call, `verify-deploy staging` green,
      never live without Matt's explicit OK;
    - recording: the task's Notes line, a Board row, a Changelog line per staging deploy.
-6. Report.
+6. Check the diff against each tenet in scope: one checked by `harness`, `lint` or `ship` needs that check named and
+   green for this work; one checked by `review` is judged here, from the diff. A change that goes against a tenet is a
+   gap unless a superseding tenet and its sweep task are in the record.
+7. Report.
 
 ## Report
 

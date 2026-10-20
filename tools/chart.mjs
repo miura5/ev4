@@ -42,6 +42,11 @@ export const TASK_STATUS = ['inbox', 'open', 'in progress', 'blocked', 'done', '
 export const TASK_KINDS = ['task', 'bug', 'request'];
 // The design's three, plus revisit: three rows of the Decisions tab carry it and the import keeps what it finds.
 export const DECISION_STATUS = ['proposed', 'accepted', 'superseded', 'revisit'];
+// B-109: a decision is one-time; a tenet is a standing principle, with the parts of E.V. it governs and how it is checked.
+export const DECISION_KINDS = ['decision', 'tenet'];
+export const TENET_SCOPES = ['ui', 'data', 'ops', 'pipelines'];
+export const TENET_CHECKS = ['harness', 'lint', 'ship', 'review'];
+export const kindOf = d => d.kind || 'decision';
 const TZ = 'America/Chicago';
 const readJson = p => JSON.parse(fs.readFileSync(p, 'utf8'));
 // Same as the spec: indent 1, no trailing newline.
@@ -329,7 +334,7 @@ export const PAGE_ONLY = {
  * superseded or missing decision, a done task with no commit, a malformed entry. Warnings: an inbox entry left
  * untriaged (log refuses to start a task while one waits, so triage comes first). Returns [{level, check, id, detail}].
  */
-export function lintChart(rec) {
+export function lintChart(rec, { tests = {} } = {}) {
   const out = [], add = (level, check, id, detail) => out.push({ level, check, id, detail });
   const seen = {};
   for (const t of rec.tasks) seen[t.id] = (seen[t.id] || 0) + 1;
@@ -351,6 +356,24 @@ export function lintChart(rec) {
   for (const d of rec.decisions) {
     if (!DECISION_STATUS.includes(d.status)) add('error', 'bad-status', d.id, `status "${d.status}"`);
     for (const x of [...d.supersedes, ...d.amends]) if (!decisions[x]) add('error', 'missing-decision', d.id, `names ${x}, which is not in the record`);
+    if (!DECISION_KINDS.includes(kindOf(d))) add('error', 'bad-kind', d.id, `kind "${d.kind}"`);
+    if (kindOf(d) === 'tenet') {
+      if (!(d.scope || []).length || d.scope.some(x => !TENET_SCOPES.includes(x))) add('error', 'tenet-scope', d.id, `scope "${(d.scope || []).join(', ')}": one or more of ${TENET_SCOPES.join(', ')}`);
+      if (!TENET_CHECKS.includes(d.check)) add('error', 'tenet-check', d.id, `checked by "${d.check}": one of ${TENET_CHECKS.join(', ')}`);
+    }
+  }
+  // A superseded tenet still cited by an open task or a test: sweep it (a task that also cites the tenet that
+  // superseded it is the sweep itself). A rule resting on one is caught below.
+  const superseder = id => rec.decisions.filter(x => x.supersedes.includes(id)).map(x => x.id);
+  const oldTenets = rec.decisions.filter(d => kindOf(d) === 'tenet' && d.status === 'superseded');
+  for (const d of oldTenets) {
+    const by = superseder(d.id), byText = by.length ? ` (superseded by ${by.join(', ')})` : '';
+    for (const t of rec.tasks) {
+      if (!['open', 'in progress', 'blocked'].includes(t.status)) continue;
+      const cited = ids([t.title, t.dod, t.notes].join(' '));
+      if (cited.includes(d.id) && !by.some(x => cited.includes(x))) add('error', 'superseded-tenet', t.id, `cites ${d.id}${byText}: bring it in line, or name it in the sweep task`);
+    }
+    for (const [file, text] of Object.entries(tests)) if (ids(text).includes(d.id)) add('error', 'superseded-tenet', file, `cites ${d.id}${byText}`);
   }
   const rseen = {};
   for (const r of rec.rules) {
@@ -370,6 +393,8 @@ export function formatLint(findings) {
 }
 
 // ------------------------------------------------------------------------------------------------ the views
+export const tenetLabel = d => `Tenet (${(d.scope || []).join(', ')}; checked by ${d.check}): `;
+const tabTitle = d => (kindOf(d) === 'tenet' ? tenetLabel(d) : '') + d.title;
 // Board status: the record's status in the Board's own words (its Status dropdown), or plain text where it has none.
 export function boardStatus(t, rec) {
   if (t.status === 'inbox') return { text: 'New report' };
@@ -457,9 +482,11 @@ export function decisionsCalls(rec, read, intro) {
     const i = rows.findIndex(r => r.cells[1].text === d.id);
     if (i < 0) {
       if (!d.source) continue; // imported (B-92): its row was in the tab; one filed since (log, plan) is added
-      added.push({ type: 'row', content: [textCell(d.date), textCell(d.id), textCell(d.title), textCell(d.why), textCell(word(d))] });
+      added.push({ type: 'row', content: [textCell(d.date), textCell(d.id), textCell(tabTitle(d)), textCell(d.why), textCell(word(d))] });
       notes.push(`${d.id}: a new row`); continue;
     }
+    // A tenet's row says so (B-109), also when an imported decision is given the kind later.
+    if (kindOf(d) === 'tenet' && !rows[i].cells[2].text.startsWith(tenetLabel(d))) { ops.push({ op: 'replace', target: { kind: 'cell', table: v.table, row: i + 1, col: 2 }, ifRev: read.rev, with: { as: 'markdown', from: { kind: 'inline', content: mdEscape(tabTitle(d)) } } }); notes.push(`${d.id}: a tenet`); }
     const c = rows[i].cells[4];
     if (!sameStatus(c, { option: word(d) }, opts)) { ops.push({ op: 'replace', target: { kind: 'cell', table: v.table, row: i + 1, col: 4 }, ifRev: read.rev, with: { as: 'markdown', from: { kind: 'inline', content: '<?claude block st?>' }, blocks: { st: { type: 'dropdown', enum: v.statusEnum, index: opts.indexOf(word(d)) } } } }); notes.push(`${d.id}: status ${word(d)}`); }
   }
@@ -568,9 +595,17 @@ export function applyLog(rec, o, { now = new Date().toISOString() } = {}) {
     if (o.title) d.title = o.title; if (o.why) d.why = o.why; if (o.status) d.status = o.status; if (!old && o.source) d.source = o.source;
     if (o.supersedes) d.supersedes = list(o.supersedes); if (o.amends) d.amends = list(o.amends);
     if (!d.title) throw new Error('a decision needs --title');
+    // B-109: --kind tenet --scope ui[,data] --checked-by harness|lint|ship|review (--check is lint's flag).
+    if (typeof o.kind === 'string') { if (!DECISION_KINDS.includes(o.kind)) throw new Error(`--kind ${DECISION_KINDS.join('|')}`); d.kind = o.kind; }
+    if (typeof o.scope === 'string') d.scope = list(o.scope);
+    if (typeof o['checked-by'] === 'string') d.check = o['checked-by'];
+    if (kindOf(d) === 'tenet') {
+      if (!(d.scope || []).length || d.scope.some(x => !TENET_SCOPES.includes(x))) throw new Error(`a tenet needs --scope, one or more of ${TENET_SCOPES.join(', ')}`);
+      if (!TENET_CHECKS.includes(d.check)) throw new Error(`a tenet needs --checked-by, one of ${TENET_CHECKS.join(', ')}`);
+    } else { delete d.scope; delete d.check; }
     if (!old) rec.decisions.unshift(d);
     for (const s of d.supersedes) { const x = rec.decisions.find(y => y.id === s); if (x) x.status = 'superseded'; }
-    return { rec, what: `decision ${did} (${d.status})`, id: o.task || did, views: ['decisions', 'decisionsIntro'] };
+    return { rec, what: `${kindOf(d)} ${did} (${d.status}${kindOf(d) === 'tenet' ? `, ${d.scope.join(', ')}, ${d.check}` : ''})`, id: o.task || did, views: ['decisions', 'decisionsIntro'] };
   }
   if (id === 'rule') {
     // A rule ship enforces: a new one takes the next free R- and rests on a decision in the record; --fn names the
@@ -874,7 +909,23 @@ async function ship(o) {
 }
 
 // ------------------------------------------------------------------------------------------------ brief
-export function brief(rec, id, { root = HERE } = {}) {
+// B-109: the parts of E.V. a task touches, from its milestone and the files and spec keys it names; brief --scope
+// overrides. A tenet applies to a task when their scopes meet.
+const SCOPE_OF = {
+  ui: { milestone: /\bUI\b|\bpage\b/i, file: /^(?:page\/|test\/harness\/|demo\/)/, spec: /^(?:copy|persona|page|look|layout|motion)$/ },
+  pipelines: { milestone: /\bpipelines?\b/i, file: /^(?:core\/(?:run|steps|watch|pipelines)\.mjs|tools\/prompts\.mjs|studywatch\/)/, spec: /^(?:pipelines|tasks|jobs)$/ },
+  data: { milestone: /\b(?:data|schema|migration)\b/i, file: /^(?:core\/(?:migrate|schema|derive|lint)\.mjs|spec\/schema)/, spec: /^(?:schema|collections|migrations)$/ },
+  ops: { milestone: /\b(?:ops|workflow|deploy)\b/i, file: /^(?:core\/(?:deploy|cli)\.mjs|tools\/(?:chart|check|build|hooks)\.mjs|\.claude\/|chart\/)/, spec: /^(?:registry|environments)$/ },
+};
+export function taskScope(t, override) {
+  if (override && override !== true) return list(override).filter(x => TENET_SCOPES.includes(x));
+  const text = [t.title, t.dod, t.notes].join(' ');
+  const files = [...text.matchAll(/(?:^|[\s(`'"])((?:core|page|tools|spec|test|demo|studywatch|chart|\.claude)\/[\w./-]+)/g)].map(m => m[1]);
+  const keys = [...text.matchAll(/\bspec\.(\w+)/g)].map(m => m[1]);
+  return TENET_SCOPES.filter(k => SCOPE_OF[k].milestone.test(t.milestone || '') || files.some(f => SCOPE_OF[k].file.test(f)) || keys.some(x => SCOPE_OF[k].spec.test(x)));
+}
+export const tenetsFor = (rec, scope) => rec.decisions.filter(d => kindOf(d) === 'tenet' && d.status === 'accepted' && d.scope.some(x => scope.includes(x)));
+export function brief(rec, id, { root = HERE, scope: override } = {}) {
   const ts = findTask(rec, id); if (!ts.length) throw new Error(`no task ${id}`);
   const t = ts[0], byId = Object.fromEntries(rec.tasks.map(x => [x.id, x]));
   const decisions = Object.fromEntries(rec.decisions.map(d => [d.id, d]));
@@ -887,6 +938,10 @@ export function brief(rec, id, { root = HERE } = {}) {
   out.push(`## The task: ${t.id} (${t.status}, ${t.milestone})`, taskText(t), '', t.notes ? `Notes: ${t.notes}` : 'Notes: none yet.', '');
   out.push('## Depends on', t.depends.length ? t.depends.map(d => `- ${d}: ${byId[d] ? byId[d].status : 'NOT IN THE RECORD'}${byId[d] ? ' (' + (byId[d].title.slice(0, 80)) + ')' : ''}`).join('\n') : '- Nothing.', t.dependsText ? `As written: ${t.dependsText}` : '', '');
   out.push('## Decisions it rests on', named.length ? named.map(d => decisions[d] ? `- ${d} (${decisions[d].status}): ${decisions[d].title.slice(0, 240)}${decisions[d].title.length > 240 ? '…' : ''}` : `- ${d}: not in the record`).join('\n') : '- None named in the task; the hard limits and D-139 below still hold.', `Reasoning in full: ${rec.views.decisionsTab}`, '');
+  const scope = taskScope(t, override), tenets = tenetsFor(rec, scope);
+  out.push(`## Tenets in scope (${scope.length ? scope.join(', ') : 'none found: brief --scope ui,data,ops,pipelines names them'})`,
+    tenets.length ? tenets.map(d => `- ${d.id} (${d.scope.join(', ')}; checked by ${d.check}): ${d.title}`).join('\n') : '- None accepted in this scope.',
+    'Every one applies to this task; the review skill checks the diff against each. A tenet changes only by a superseding tenet plus a sweep task.', '');
   out.push('## Where to look', ...whereToLook(root, [t.title, t.dod, t.notes].join(' ')), '');
   out.push('## What it may touch',
     '- The repository, on main; npm test green before every push.',
@@ -957,12 +1012,12 @@ export function tableUnder(xml, title) {
   }
   return null;
 }
-/** The newest Docs read in the transcript of the doc that holds a 'Tasks to add' or 'Decisions proposed' heading. */
+/** The newest Docs read in the transcript of the doc that holds a 'Tasks to add', 'Decisions proposed' or 'Tenets proposed' heading. */
 export function designRead(jsonl, docId) {
   const rs = toolResults(jsonl, '*').filter(r => isDocsTool(r.name, 'read') && !r.isError && r.input && r.input.container && docIdOf(r.input.container.id) === docId);
   for (const r of rs.reverse()) {
     const b = readBody(r.texts);
-    if (b && b.xml && /Tasks to add|Decisions proposed/i.test(b.xml)) return b;
+    if (b && b.xml && /Tasks to add|Decisions proposed|Tenets proposed/i.test(b.xml)) return b;
   }
   return null;
 }
@@ -977,13 +1032,24 @@ const byHeader = (rows, names) => {
  * (decisions first, so a task can name a decision's id). A row already filed from this doc is skipped.
  */
 export function planFrom(rec, read, docId) {
-  if (!read) throw new Error(`no read of ${docId} with a 'Tasks to add' or 'Decisions proposed' table in this session: read the doc's tab first`);
+  if (!read) throw new Error(`no read of ${docId} with a 'Tasks to add', 'Decisions proposed' or 'Tenets proposed' table in this session: read the doc's tab first`);
   const tasks = byHeader(tableUnder(read.xml, 'Tasks to add'), { title: ['task'], depends: ['depends'], dod: ['definition of done', 'done when'], milestone: ['milestone'] });
-  const props = byHeader(tableUnder(read.xml, 'Decisions proposed'), { pid: ['p-n', 'p', 'id'], title: ['decision'], why: ['why'], status: ['status'] });
+  const props = [
+    ...byHeader(tableUnder(read.xml, 'Decisions proposed'), { pid: ['p-n', 'p', 'id'], title: ['decision'], why: ['why'], status: ['status'] }),
+    // B-109: tenets share the P-n numbering and the D-ids; each carries its scope and how it is checked.
+    ...byHeader(tableUnder(read.xml, 'Tenets proposed'), { pid: ['p-n', 'p', 'id'], title: ['tenet'], scope: ['scope'], check: ['check', 'checked by'], why: ['why'], status: ['status'] }).map(d => ({ ...d, kind: 'tenet' })),
+  ];
   const src = `plan ${docId}`, P = {}, out = { decisions: [], tasks: [], skipped: [], commands: [] };
   let dn = Number(nextDecisionId(rec).slice(2)), tn = Number(nextTaskId(rec).slice(2));
   for (const d of props) {
-    if (!/^P-\d+$/.test(d.pid) || !d.title) throw new Error(`Decisions proposed: a row needs a P-n and a decision (${JSON.stringify(d)})`);
+    const table = d.kind === 'tenet' ? 'Tenets proposed' : 'Decisions proposed';
+    if (!/^P-\d+$/.test(d.pid) || !d.title) throw new Error(`${table}: a row needs a P-n and a ${d.kind || 'decision'} (${JSON.stringify(d)})`);
+    if (props.filter(x => x.pid === d.pid).length > 1) throw new Error(`${d.pid} is proposed twice`);
+    if (d.kind === 'tenet') {
+      d.scope = list(d.scope.toLowerCase()); d.check = d.check.toLowerCase();
+      if (!d.scope.length || d.scope.some(x => !TENET_SCOPES.includes(x))) throw new Error(`${table}: ${d.pid} needs a scope, one or more of ${TENET_SCOPES.join(', ')}`);
+      if (!TENET_CHECKS.includes(d.check)) throw new Error(`${table}: ${d.pid} needs a check, one of ${TENET_CHECKS.join(', ')}`);
+    }
     const had = rec.decisions.find(x => x.source === `${src} ${d.pid}`);
     if (had) { P[d.pid] = had.id; out.skipped.push(`${d.pid}: filed as ${had.id}`); continue; }
     P[d.pid] = 'D-' + String(dn++).padStart(3, '0');
@@ -991,9 +1057,9 @@ export function planFrom(rec, read, docId) {
   const rewrite = s => String(s || '').replace(/\bP-\d+\b/g, x => P[x] || x);
   for (const d of props) {
     if (out.skipped.some(x => x.startsWith(d.pid + ':'))) continue;
-    const e = { id: P[d.pid], pid: d.pid, title: rewrite(d.title), why: rewrite(d.why), status: (d.status || 'accepted').toLowerCase() };
+    const e = { id: P[d.pid], pid: d.pid, title: rewrite(d.title), why: rewrite(d.why), status: (d.status || 'accepted').toLowerCase(), kind: d.kind || 'decision', ...(d.kind === 'tenet' ? { scope: d.scope, check: d.check } : {}) };
     out.decisions.push(e);
-    out.commands.push(['log', 'decision', e.id, '--title', e.title, ...(e.why ? ['--why', e.why] : []), '--status', e.status, '--source', `${src} ${d.pid}`]);
+    out.commands.push(['log', 'decision', e.id, '--title', e.title, ...(e.why ? ['--why', e.why] : []), '--status', e.status, ...(e.kind === 'tenet' ? ['--kind', 'tenet', '--scope', e.scope.join(','), '--checked-by', e.check] : []), '--source', `${src} ${d.pid}`]);
   }
   for (const t of tasks) {
     if (!t.title || !t.milestone) throw new Error(`Tasks to add: a row needs a task and a milestone (${JSON.stringify(t)})`);
@@ -1010,7 +1076,8 @@ export function formatPlan(p) {
   const out = [];
   if (p.skipped.length) out.push(`plan: already filed: ${p.skipped.join('; ')}`);
   if (!p.commands.length) { out.push('plan: nothing to file'); return out.join('\n'); }
-  out.push(`plan: ${p.decisions.length} decision${p.decisions.length === 1 ? '' : 's'} and ${p.tasks.length} task${p.tasks.length === 1 ? '' : 's'} to file (run again with --apply to file them):`);
+  const n = (k, w) => { const c = p.decisions.filter(d => (d.kind || 'decision') === k).length; return `${c} ${w}${c === 1 ? '' : 's'}`; };
+  out.push(`plan: ${n('decision', 'decision')}, ${n('tenet', 'tenet')} and ${p.tasks.length} task${p.tasks.length === 1 ? '' : 's'} to file (run again with --apply to file them):`);
   for (const c of p.commands) out.push('  node tools/chart.mjs ' + c.map(shellQuote).join(' '));
   return out.join('\n');
 }
@@ -1029,6 +1096,15 @@ function args(argv) {
   return o;
 }
 const rootOf = o => (o.root ? path.resolve(o.root) : HERE);
+/** The tests' sources, for lint's superseded-tenet check (B-109). */
+export function testTexts(root) {
+  const out = {};
+  for (const dir of ['test', 'test/harness']) {
+    const d = path.join(root, dir); if (!fs.existsSync(d)) continue;
+    for (const f of fs.readdirSync(d)) if (/\.(?:mjs|cjs|js)$/.test(f)) out[`${dir}/${f}`] = fs.readFileSync(path.join(d, f), 'utf8');
+  }
+  return out;
+}
 function writeBacklog(root, rec) { fs.writeFileSync(path.join(root, 'BACKLOG.md'), renderBacklog(rec)); }
 function printViews(rec, o, which) {
   const file = o.transcript || newestTranscript();
@@ -1056,7 +1132,7 @@ const commands = {
     fs.writeFileSync(file, text); console.log('BACKLOG.md regenerated from chart/'); return 0;
   },
   lint(o) {
-    const f = lintChart(loadChart(rootOf(o)));
+    const f = lintChart(loadChart(rootOf(o)), { tests: testTexts(rootOf(o)) });
     console.log(o.json ? JSON.stringify(f, null, 1) : formatLint(f));
     return f.some(x => x.level === 'error') ? 1 : 0;
   },
@@ -1064,7 +1140,7 @@ const commands = {
   inbox(o) { const file = o.transcript || newestTranscript(); console.log(formatInbox(inboxPlan(loadChart(rootOf(o)), file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null))); return 0; },
   log(o) { return record(o, applyLog); },
   report(o) { return record(o, applyReport); },
-  brief(o) { const id = o.task || o._[1]; if (!id) throw new Error('brief --task <id>'); console.log(brief(loadChart(rootOf(o)), id, { root: rootOf(o) })); return 0; },
+  brief(o) { const id = o.task || o._[1]; if (!id) throw new Error('brief --task <id> [--scope ui,data,ops,pipelines]'); console.log(brief(loadChart(rootOf(o)), id, { root: rootOf(o), scope: o.scope })); return 0; },
   ship(o) { return ship(o); },
   plan(o) {
     if (o['handoff-note']) { const c = handoffNoteCall(); console.log(`plan: the Build plan tab's hand-off line (once): ${c.tool}\n${JSON.stringify(c.args)}`); return 0; }

@@ -11,10 +11,13 @@ Claude Docs tools. The project record is **the Chart** (`chart/`, design https:/
 D-140): tasks, reports, decisions, deploys and the rules commands enforce, written only through `tools/chart.mjs`.
 BACKLOG.md, the Board and Changelog tabs of the v3 doc (https://claude.ai/artifact/AXwVp9xqpWaUKLE4SqZzwg), its
 Decisions tab and the overview doc's status line are printed from it; no view is edited by hand. Decisions keep their
-reasoning in the Decisions tab; `chart/decisions.json` holds id, title, status, supersedes and amends, and `log
+reasoning in the Decisions tab; `chart/decisions.json` holds id, title, status, supersedes, amends and kind, and `log
 decision` takes only the next free id. A design chat hands off through its doc's two tables, 'Tasks to add' and
-'Decisions proposed' (as P-1, P-2; D-141); a build chat reads that tab, then files both with `plan --from <doc link>
---apply`. The v3 code you port from is `miura5/ev-core` (read-only to you; attach it with `add_repo` when a task
+'Decisions proposed' (as P-1, P-2; D-141), plus 'Tenets proposed' for standing principles; a build chat reads that tab,
+then files them with `plan --from <doc link> --apply`. A tenet (B-109) is a decision of kind tenet with a scope (ui,
+data, ops, pipelines) and a check (harness, lint, ship, review); `brief` lists those in a task's scope and the review
+skill holds the diff to them. A tenet is changed only by a superseding tenet plus a sweep task for what still follows
+the old one. The v3 code you port from is `miura5/ev-core` (read-only to you; attach it with `add_repo` when a task
 needs it).
 
 ## Every session

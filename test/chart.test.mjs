@@ -188,7 +188,7 @@ test('B-94: lint on the record as imported finds the duplicate B-83, and B-81 wa
 });
 
 test('B-94: the record lints green (npm test runs the Chart lint)', () => {
-  const f = C.lintChart(rec());
+  const f = C.lintChart(rec(), { tests: C.testTexts(ROOT) });
   assert.deepEqual(f.filter(x => x.level === 'error'), [], C.formatLint(f));
   const r = rec();
   assert.equal(r.tasks.find(t => t.id === 'B-98').renumberedFrom, 'B-83');
@@ -370,6 +370,89 @@ test('B-106: plan files a design doc\'s Tasks to add and Decisions proposed with
   assert.deepEqual([again.commands, again.skipped.length], [[], 3], 'a second run files nothing');
   assert.match(C.formatPlan(again), /nothing to file/);
   assert.equal(C.handoffNoteCall().args.payload.ops[0].source.from.content, C.HANDOFF_NOTE);
+});
+
+// ------------------------------------------------------------------------------------------------ B-109 tenets
+const logArgs = c => { const o = { _: [], trailer: [] }; for (let i = 0; i < c.length; i++) c[i].startsWith('--') ? (o[c[i].slice(2)] = c[++i]) : o._.push(c[i]); return o; };
+test('B-109: a tenet carries scope and check; brief lists it for tasks in its scope; superseding it makes lint name what still cites it', () => {
+  const r = sample();
+  r.tasks.push(task('B-04', { title: 'Greeting card spacing in page/app.js', milestone: 'M11' }), task('B-05', { title: 'Watchdog retries in core/steps.mjs', milestone: 'M9' }));
+  assert.throws(() => C.applyLog(r, logArgs(['log', 'decision', 'D-003', '--title', 'x', '--kind', 'tenet'])), /needs --scope/);
+  assert.throws(() => C.applyLog(r, logArgs(['log', 'decision', 'D-003', '--title', 'x', '--kind', 'tenet', '--scope', 'ui', '--checked-by', 'vibes'])), /needs --checked-by/);
+  const did = C.applyLog(r, logArgs(['log', 'decision', 'D-003', '--title', 'One primary action per screen', '--status', 'accepted', '--kind', 'tenet', '--scope', 'ui', '--checked-by', 'harness']));
+  assert.match(did.what, /^tenet D-003 \(accepted, ui, harness\)/);
+  assert.deepEqual([r.decisions[0].kind, r.decisions[0].scope, r.decisions[0].check], ['tenet', ['ui'], 'harness']);
+  assert.deepEqual(C.lintChart(r), []);
+  // The page task's brief lists it; the pipeline task's does not; --scope overrides.
+  assert.deepEqual([C.taskScope(r.tasks[3]), C.taskScope(r.tasks[4])], [['ui'], ['pipelines']]);
+  const page = C.brief(r, 'B-04', { root: ROOT }), pipe = C.brief(r, 'B-05', { root: ROOT });
+  assert.match(page, /## Tenets in scope \(ui\)\n- D-003 \(ui; checked by harness\): One primary action per screen/);
+  assert.doesNotMatch(pipe, /D-003/);
+  assert.match(pipe, /## Tenets in scope \(pipelines\)\n- None accepted in this scope/);
+  assert.match(C.brief(r, 'B-05', { root: ROOT, scope: 'ui' }), /- D-003 /);
+  assert.equal(C.taskScope(task('B-09', { title: 'x', milestone: 'M14 UI' }))[0], 'ui', 'from the milestone');
+  assert.equal(C.taskScope(task('B-09', { title: 'retime spec.pipelines.morning', milestone: 'M9' }))[0], 'pipelines', 'from a spec key');
+  // An open task, a rule and a test that cite it; then a tenet supersedes it.
+  r.tasks[3].dod = 'follows D-003; a harness check';
+  r.rules.push({ id: 'R-02', rule: 'r2', decision: 'D-003', task: 'B-04', command: 'ship live', check: 'x' });
+  C.applyLog(r, logArgs(['log', 'decision', 'D-004', '--title', 'Two actions at most', '--status', 'accepted', '--kind', 'tenet', '--scope', 'ui', '--checked-by', 'review', '--supersedes', 'D-003']));
+  assert.equal(r.decisions.find(d => d.id === 'D-003').status, 'superseded');
+  const tests = { 'test/harness/look.cjs': "check('one primary action (D-003)')", 'test/other.test.mjs': 'nothing' };
+  const got = C.lintChart(r, { tests }).map(f => `${f.check} ${f.id}`);
+  assert.deepEqual(got.sort(), ['rule-decision R-02', 'superseded-tenet B-04', 'superseded-tenet test/harness/look.cjs']);
+  assert.match(C.lintChart(r).find(f => f.id === 'B-04').detail, /cites D-003 \(superseded by D-004\)/);
+  // The sweep task names both, so it is not flagged; a done task is history.
+  r.tasks.push(task('B-06', { title: 'Sweep: what still follows D-003 moves to D-004', milestone: 'M11' }));
+  r.tasks[3].status = 'done'; r.tasks[3].commit = 'abc1234';
+  assert.deepEqual(C.lintChart(r).filter(f => f.check === 'superseded-tenet'), []);
+  // The brief now lists the new one only.
+  assert.match(C.brief(r, 'B-06', { root: ROOT, scope: 'ui' }), /- D-004 \(ui; checked by review\)/);
+  assert.doesNotMatch(C.brief(r, 'B-06', { root: ROOT, scope: 'ui' }).split('## Where to look')[0].split('## Tenets in scope')[1], /D-003 \(/);
+  // A planted bad kind and scope lint red.
+  r.decisions.push({ id: 'D-005', date: 'Oct 20', title: 't', why: '', status: 'accepted', supersedes: [], amends: [], kind: 'tenet', scope: ['look'], check: 'harness' });
+  assert.deepEqual(C.lintChart(r).filter(f => f.id === 'D-005').map(f => f.check), ['tenet-scope']);
+});
+
+test('B-109: plan files a Tenets proposed table with scope and check, numbered with the decisions; the Decisions tab shows the kind', () => {
+  const r = sample();
+  const row = (i, cells) => `<row id='.${i}'>` + cells.map((c, j) => `<cell id='.${i}${j}'><paragraph id='.${i}${j}p'><text id='.${i}${j}t'>${c}</text></paragraph></cell>`).join('') + '</row>';
+  const xml = `<doc node='N' rev='4'><paragraph id='z1.1' heading='1'>UI tenets</paragraph>` +
+    `<paragraph id='.3' heading='2'>Decisions proposed</paragraph><table id='.4'>${row(5, ['P-n', 'Decision', 'Why'])}${row(6, ['P-1', 'The greeting moves up', 'Matt'])}</table>` +
+    `<paragraph id='.20' heading='2'>Tenets proposed</paragraph><table id='.21'>${row(22, ['P-n', 'Tenet', 'Scope', 'Check', 'Why'])}${row(23, ['P-2', 'One primary action per screen', 'UI', 'harness', 'it lost his place'])}${row(24, ['P-3', 'Words before icons', 'ui, data', 'Review', 'P-1 needs it'])}</table>` +
+    `<paragraph id='.7' heading='2'>Tasks to add</paragraph><table id='.8'>${row(9, ['Task', 'Depends', 'Definition of done', 'Milestone'])}${row(10, ['Apply P-2 to the greeting', '—', 'a harness check', 'M14 UI'])}</table></doc>`;
+  const result = JSON.stringify({ verdict: 'allow', rev: 4, data: { rev: 4, xml, complete: true } });
+  const id = 'AbCdEfGhIjKlMnOpQrStUv';
+  const jsonl = toolPair('r1', 'mcp__Claude_Docs__read', { ref: { object: 'node', id: 'N' }, engine: 'prose', container: { kind: 'project', id } }, result).join('\n');
+  const p = C.planFrom(r, C.designRead(jsonl, id), id);
+  assert.deepEqual(p.decisions.map(d => [d.id, d.pid, d.kind, d.scope, d.check]), [['D-003', 'P-1', 'decision', undefined, undefined], ['D-004', 'P-2', 'tenet', ['ui'], 'harness'], ['D-005', 'P-3', 'tenet', ['ui', 'data'], 'review']]);
+  assert.equal(p.decisions[2].why, 'D-003 needs it');
+  assert.equal(p.tasks[0].title, 'Apply D-004 to the greeting');
+  assert.match(C.formatPlan(p), /1 decision, 2 tenets and 1 task to file/);
+  assert.match(C.formatPlan(p), /log decision D-004 --title 'One primary action per screen' --why 'it lost his place' --status accepted --kind tenet --scope ui --checked-by harness/);
+  for (const c of p.commands) C.applyLog(r, logArgs(c));
+  assert.deepEqual(r.decisions.slice(0, 3).map(d => [d.id, C.kindOf(d), (d.scope || []).join(','), d.check || '']), [['D-005', 'tenet', 'ui,data', 'review'], ['D-004', 'tenet', 'ui', 'harness'], ['D-003', 'decision', '', '']]);
+  assert.deepEqual(C.lintChart(r).filter(f => f.level === 'error'), []);
+  assert.deepEqual(C.planFrom(r, C.designRead(jsonl, id), id).commands, [], 'a second run files nothing');
+  // A row with no scope or a check outside the list is refused, filing nothing.
+  const bad = xml.replace('>harness<', '>vibes<');
+  assert.throws(() => C.planFrom(sample(), C.designRead(jsonl.replace(JSON.stringify(xml).slice(1, -1), JSON.stringify(bad).slice(1, -1)), id), id), /P-2 needs a check/);
+  // The Decisions tab: a new tenet's row says so; an existing row given the kind is relabelled.
+  r.views = { ...r.views, decisions: { node: 'DN', table: 'DT', statusEnum: 'E2', statusOptions: ['Accepted', 'Proposed', 'Superseded', 'Revisit'] } };
+  const tab = { rev: 9, rows: [{ id: 'h', cells: ['Date', 'Id', 'Decision', 'Why', 'Status'].map(text => ({ text })) }, ...['D-002', 'D-001'].map(d => ({ id: d, cells: ['Oct 19', d, d === 'D-002' ? 'two' : 'one', '', d === 'D-002' ? 'Accepted' : 'Superseded'].map(text => ({ text, option: ['Accepted', 'Superseded'].includes(text) ? text : undefined })) }))] };
+  r.decisions.find(d => d.id === 'D-002').kind = 'tenet'; Object.assign(r.decisions.find(d => d.id === 'D-002'), { scope: ['ops'], check: 'lint' });
+  const calls = C.decisionsCalls(r, tab, null);
+  assert.equal(calls.length, 1);
+  const ops = calls[0].args.payload.ops, ins = ops.find(o => o.op === 'insert'), rel = ops.find(o => o.op === 'replace' && o.target.col === 2);
+  assert.deepEqual(ins.source.from.content.map(x => x.content[2].content[0].content[0].text), ['Tenet (ui, data; checked by review): Words before icons', 'Tenet (ui; checked by harness): One primary action per screen', 'The greeting moves up']);
+  assert.deepEqual([rel.target.row, rel.with.from.content], [1, 'Tenet (ui, data; checked by lint): two'.replace('ui, data', 'ops')]);
+});
+
+test('B-109: the review skill checks the diff against the tenets in scope; CLAUDE.md says how a tenet changes', () => {
+  const skill = fs.readFileSync(path.join(ROOT, '.claude', 'skills', 'review', 'SKILL.md'), 'utf8');
+  assert.match(skill, /Tenets in scope/);
+  assert.match(skill, /Check the diff against each tenet in scope/);
+  const claude = fs.readFileSync(path.join(ROOT, 'CLAUDE.md'), 'utf8').replace(/\s+/g, ' ');
+  assert.match(claude, /A tenet is changed only by a superseding tenet plus a sweep task for what still follows the old one/);
 });
 
 // ------------------------------------------------------------------------------------------------ B-102 the watchdog windows
