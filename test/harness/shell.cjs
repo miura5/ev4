@@ -6,7 +6,7 @@
 const { chromium } = require('playwright');
 const fs = require('fs'); const path = require('path');
 const root = path.resolve(__dirname, '../..');
-const dbDir = process.argv[2] || path.join(root, 'test/data/record');
+const dbDir = process.argv[2] === 'synthetic' ? require('../data/synthetic.cjs').recordDir('synthetic') : process.argv[2] || path.join(root, 'test/data/record');
 const shots = process.argv[3] || '/tmp/ev4-shots'; fs.mkdirSync(shots, { recursive: true });
 const target = process.argv[4] || 'staging';
 const pageDir = path.join(root, 'dist/page', target);

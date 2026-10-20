@@ -35,8 +35,10 @@ export function steps({ record, shots }) {
 
 export function main(argv = process.argv.slice(2)) {
   const shots = opt(argv, 'shots', '/tmp/ev4-check');
-  const record = opt(argv, 'record', null) || createRequire(import.meta.url)('../test/data/synthetic.cjs').recordDir();
-  if (!fs.existsSync(record)) { console.error(`check: no record at ${record}`); return 2; }
+  // Without --record each harness writes its own synthetic record as it starts (recordDir('synthetic')), anchored to the
+  // day it runs on: one record written at the start went stale for the harnesses after midnight (B-113).
+  const record = opt(argv, 'record', null) || 'synthetic';
+  if (record !== 'synthetic' && !fs.existsSync(record)) { console.error(`check: no record at ${record}`); return 2; }
   for (const [name, cmd, args] of steps({ record, shots })) {
     const t = Date.now();
     console.log(`\n== ${name}`);
