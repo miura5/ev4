@@ -108,9 +108,10 @@ live write or publish unless `deploy live --matt-ok` wrote dist/live-ok; pipelin
 The v3 rollback is gone: Matt closed D-085's window on Oct 19, before NUR Exam 4, understanding the risk (D-145). The
 time gates that rested on it are gone with it: live takes stored-document, pipeline, prompt, schema and migration
 changes by the normal path (`ship staging` green at the commit, then `ship live --matt-ok` on Matt's explicit OK), and a
-live hotfix starts from `main` like any change. Going back, until the v4 rollback exists (B-60, built once the open
-tasks are done), is a redeploy of the previous v4 live build that `chart/deploys.json` names, on Matt's explicit OK; a
-schema bump already applied to live stays applied (its legacy copies are kept), so check a rollback across one first.
+live hotfix starts from `main` like any change. Going back is the rollback skill,
+`.claude/skills/rollback/SKILL.md` (B-60): the previous v4 live build that `chart/deploys.json` names, restored at main's
+head and shipped through staging, on Matt's explicit OK; `rollback live` dry-runs it first. A schema bump already
+applied to live stays applied (its legacy copies are kept), and the dry run names any it goes back across.
 
 ## Where things live
 

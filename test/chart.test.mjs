@@ -479,6 +479,64 @@ test('B-109: the review skill checks the diff against the tenets in scope; CLAUD
   assert.match(claude, /A tenet is changed only by a superseding tenet plus a sweep task for what still follows the old one/);
 });
 
+// ------------------------------------------------------------------------------------------------ B-60 the rollback
+test('B-60: rollback live dry-runs going back to the previous live build at main\'s head, and --apply makes the restore commit', () => {
+  const dir = copyRepo();
+  const g = (...a) => execFileSync('git', ['-C', dir, '-c', 'user.name=T', '-c', 'user.email=t@example.com', ...a], { encoding: 'utf8' }).trim();
+  const A = g('rev-parse', 'HEAD');
+  fs.appendFileSync(path.join(dir, 'core', 'watch.mjs'), '\n// a change after A\n');
+  fs.writeFileSync(path.join(dir, 'core', 'extra.mjs'), 'export const x = 1;\n');
+  g('add', '-A'); g('commit', '-q', '-m', 'B-01: after A');
+  const B = g('rev-parse', 'HEAD');
+  const deploys = JSON.parse(fs.readFileSync(path.join(dir, 'chart', 'deploys.json'), 'utf8'));
+  deploys.push({ target: 'live', commit: A.slice(0, 7), time: '2026-10-20T01:00:00Z', okFrom: 'Matt', verify: 'green', rollback: null, tasks: [], source: 'log' }, { target: 'live', commit: B.slice(0, 7), time: '2026-10-20T02:00:00Z', okFrom: 'Matt', verify: 'green', rollback: A.slice(0, 7), tasks: [], source: 'log' });
+  fs.writeFileSync(path.join(dir, 'chart', 'deploys.json'), JSON.stringify(deploys, null, 1));
+  g('add', '-A'); g('commit', '-q', '-m', 'B-01: live deploys (chart)');
+  const head = g('rev-parse', 'HEAD');
+  const run = (...a) => { try { return { code: 0, out: execFileSync('node', [path.join(dir, 'tools', 'chart.mjs'), 'rollback', 'live', ...a, '--root', dir, '--transcript', '/dev/null'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }) }; } catch (e) { return { code: e.status, out: String(e.stdout) + String(e.stderr) }; } };
+  const dry = run('--no-test');
+  assert.equal(dry.code, 0, dry.out);
+  assert.match(dry.out, new RegExp(`^rollback live: from ${B.slice(0, 7)} .* to ${A.slice(0, 7)} .*chart/deploys.json\\): DRY RUN, nothing is written or deployed`));
+  assert.match(dry.out, /It does not undo: .*an applied schema bump or migration stays applied and its legacy copies are kept/);
+  assert.match(dry.out, /Schema: none crossed/);
+  assert.match(dry.out, /Live tasks' prompts: the same in both builds: no task call/);
+  assert.match(dry.out, new RegExp(`1 file back to ${A.slice(0, 7)}: core/watch.mjs; 1 added since, removed from the tree \\(kept in history\\): core/extra.mjs`));
+  assert.match(dry.out, new RegExp(`the restore build equals ${A.slice(0, 7)}'s build`));
+  assert.match(dry.out, /1\. system documents: ArtifactData[\s\S]*"doc_id": "manifest"[\s\S]*2\. page[^\n]*: Artifact[\s\S]*"capabilities"/);
+  assert.match(dry.out, /rollback live --matt-ok --apply[\s\S]*ship staging[\s\S]*ship live --matt-ok/);
+  // A dry run writes nothing: same head, clean tree, no worktree left, no live gate file.
+  assert.deepEqual([g('rev-parse', 'HEAD'), g('status', '--porcelain'), g('worktree', 'list').split('\n').length, fs.existsSync(path.join(dir, 'dist', 'live-ok'))], [head, '', 1, false]);
+  assert.match(run('--to', 'abcdef1', '--no-test').out, /not an earlier live build/);
+  assert.match(run('--apply', '--no-test').out, /needs Matt's explicit OK/);
+  assert.equal(g('rev-parse', 'HEAD'), head, 'refused: no commit');
+  const applied = run('--matt-ok', '--apply', '--no-test', '--trailer', 'X-Test: 1');
+  assert.equal(applied.code, 0, applied.out);
+  assert.equal(g('rev-list', '--count', `${head}..HEAD`), '1');
+  assert.match(g('log', '-1', '--format=%B'), new RegExp(`^B-60: roll live back to ${A.slice(0, 7)}'s content, from ${B.slice(0, 7)}`));
+  assert.equal(g('diff', '--name-only', A, 'HEAD', '--', 'core', 'page', 'spec', 'tools', 'test'), '', 'the code is A\'s again');
+  assert.ok(!fs.existsSync(path.join(dir, 'core', 'extra.mjs')));
+  assert.equal(g('diff', '--name-only', head, 'HEAD', '--', 'chart'), '', 'the record is kept');
+  assert.equal(g('status', '--porcelain'), '');
+});
+
+test('B-60: the rollback names the schemas it crosses and the live prompts that differ; the skill names its steps', () => {
+  assert.deepEqual(C.schemaCrossings({ weeks: 2, ideas: 2, notes: 1 }, { weeks: 1, ideas: 2 }), [{ collection: 'weeks', now: 2, then: 1 }, { collection: 'notes', now: 1, then: null }]);
+  assert.deepEqual(C.schemaCrossings({ weeks: 2 }, { weeks: 2 }), []);
+  const m = p => ({ tasks: { 'live.morning': { record: 'live', promptSha256: p }, 'live.evening-mac': { record: 'live', promptSha256: 'm', macBound: true }, 'staging.morning': { record: 'staging', promptSha256: 'x' } } });
+  assert.deepEqual(C.promptChanges(m('a'), m('b')), [{ task: 'live.morning', macBound: false }]);
+  assert.deepEqual(C.promptChanges(m('a'), m('a')), []);
+  const r = sample(); r.deploys.push({ target: 'live', commit: '2222222', time: 't', okFrom: 'Matt', verify: 'green', rollback: '1111111', tasks: [] });
+  assert.deepEqual([C.rollbackTarget(r).from.commit, C.rollbackTarget(r).to.commit], ['2222222', '1111111']);
+  r.deploys.push({ target: 'live', commit: '3333333', time: 't', okFrom: 'Matt', verify: 'green', rollback: '2222222', tasks: [] });
+  assert.equal(C.rollbackTarget(r).to.commit, '2222222');
+  assert.equal(C.rollbackTarget(r, '1111111').to.commit, '1111111');
+  assert.ok(C.ROLLBACK_KEEP.some(re => re.test('chart/deploys.json')) && !C.ROLLBACK_KEEP.some(re => re.test('core/evcore.mjs')) && !C.ROLLBACK_KEEP.some(re => re.test('tools/chart.mjs')));
+  const skill = fs.readFileSync(path.join(ROOT, '.claude', 'skills', 'rollback', 'SKILL.md'), 'utf8');
+  assert.match(skill, /^---\nname: rollback\n/);
+  for (const w of ['chart/deploys.json', 'rollback live', '--matt-ok --apply', 'ship staging', 'ship live --matt-ok', 'live tasks', 'schema', 'legacy copies', 'Mac']) assert.ok(skill.includes(w), w);
+  assert.match(fs.readFileSync(path.join(ROOT, 'CLAUDE.md'), 'utf8').replace(/\s+/g, ' '), /\.claude\/skills\/rollback\/SKILL\.md/);
+});
+
 // ------------------------------------------------------------------------------------------------ B-102 the watchdog windows
 test('B-102: R-05 refuses a live deploy from :45 to :05 around each live watchdog run, and says when it opens', () => {
   const sched = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec', 'ev.spec.json'), 'utf8')).tasks.live.watchdog.schedule;

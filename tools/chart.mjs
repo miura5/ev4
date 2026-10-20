@@ -21,11 +21,14 @@
 //            that file them (the next free ids, P-n rewritten to its D-id); --apply runs them; filed rows are skipped
 //   lint [--json]            the record's checks: ids, dependencies, decisions, commits, the inbox (B-94; npm test runs it)
 //   ship <staging|live>      the deploy checklist: the rules, the reads, deploy's calls, verify, the record (B-96)
+//   rollback live [--to sha] [--matt-ok --apply] [--no-test]   the way back (B-60): the previous live build's content at main's
+//            head, as a restore commit, then ship staging and ship live; without --apply a dry run that prints it all
 //   brief --task <id>        one page for a new session: the inbox, the task, its dependencies, decisions, limits
 //   backlog [--check]        regenerate BACKLOG.md (--check: exit 1 when the file differs)
 //   import --from <dir>      the one-time import (B-92) from saved copies of BACKLOG.md and the doc tabs
 // Options: --root <repo> (default this checkout). Exit 0 green, 1 red or refused, 2 usage.
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
@@ -1089,6 +1092,112 @@ export function formatPlan(p) {
   return out.join('\n');
 }
 
+// ------------------------------------------------------------------------------------------------ rollback (B-60)
+// Going back is the previous live build's content at main's head: a restore commit, then ship staging and ship live on
+// Matt's OK (D-145). Not a redeploy of the old commit itself: runs clone main only 50 deep (B-110), and an old commit
+// falls out of reach as main moves on, while deploying main's head again would undo the rollback.
+/** What a restore commit keeps as it is: the record and the docs. The tools and tests go back with the code they import
+ * (tools/chart.mjs imports core/), so the restored tree builds, ships and tests as that build did. */
+export const ROLLBACK_KEEP = [/^chart\//, /^BACKLOG\.md$/, /^CLAUDE\.md$/, /^\.claude\/skills\//];
+/** The live build to go back to: --to (a live build in chart/deploys.json), else the live build before the current one. */
+export function rollbackTarget(rec, to = null) {
+  const lives = rec.deploys.filter(d => d.target === 'live' && d.commit);
+  const from = lives.at(-1); if (!from) throw new Error('no live deploy in chart/deploys.json');
+  const earlier = lives.filter(d => d.commit !== from.commit && d.verify === 'green');
+  const t = to ? earlier.filter(d => d.commit.startsWith(String(to).slice(0, 7))).at(-1) : (earlier.find(d => d.commit === from.rollback) || earlier.at(-1));
+  if (!t) throw new Error(to ? `${to} is not an earlier live build that verified green in chart/deploys.json` : 'no earlier live build that verified green in chart/deploys.json');
+  return { from, to: t };
+}
+/** The files a restore commit changes: each one that differs between the build and HEAD, restored or removed. */
+export function restoreFiles(root, to, head = 'HEAD') {
+  const changed = git(root, ['diff', '--name-only', '--no-renames', to, head]).split('\n').filter(Boolean).filter(f => !ROLLBACK_KEEP.some(re => re.test(f)));
+  const has = f => { try { git(root, ['cat-file', '-e', `${to}:${f}`]); return true; } catch { return false; } };
+  return { restore: changed.filter(has), remove: changed.filter(f => !has(f)) };
+}
+function applyRestore(dir, to, files) {
+  if (files.restore.length) git(dir, ['checkout', to, '--', ...files.restore]);
+  if (files.remove.length) git(dir, ['rm', '-q', '--', ...files.remove]);
+}
+/** Each schema's x-ev version at a commit: {collection: n}. */
+export function schemaVersions(root, commit) {
+  const out = {};
+  for (const f of git(root, ['ls-tree', '--name-only', commit, 'spec/schemas/']).split('\n').filter(x => x.endsWith('.schema.json'))) {
+    try { const x = JSON.parse(git(root, ['show', `${commit}:${f}`]))['x-ev'] || {}; if (x.collection) out[x.collection] = x.schema || 1; } catch { /* unreadable: not a schema */ }
+  }
+  return out;
+}
+/** The schemas a rollback goes back across: a collection newer (or new) in the current build. */
+export function schemaCrossings(now, then) {
+  return Object.entries(now).filter(([c, v]) => (then[c] || 0) < v).map(([c, v]) => ({ collection: c, now: v, then: then[c] || null }));
+}
+/** The live tasks whose prompt differs between two builds' manifests. */
+export function promptChanges(now, then) {
+  return Object.entries(then.tasks || {}).filter(([, t]) => t.record === 'live').filter(([k, t]) => !now.tasks[k] || now.tasks[k].promptSha256 !== t.promptSha256).map(([k, t]) => ({ task: k, macBound: Boolean(t.macBound) }));
+}
+function buildIn(root, commit, files, label) {
+  const base = fs.mkdtempSync(path.join(os.tmpdir(), `ev4-${label}-`)), dir = path.join(base, 'tree'), out = path.join(base, 'dist');
+  git(root, ['worktree', 'add', '--detach', '-q', dir, commit]);
+  try {
+    if (files) applyRestore(dir, files.to, files);
+    // The build's own tools: what it ships is what its commit built.
+    execFileSync('node', [path.join(dir, 'tools', 'build.mjs'), '--root', dir, '--out', out], { stdio: 'pipe' });
+    const manifest = readJson(path.join(out, 'manifest.json')), spec = readJson(path.join(out, 'system', 'spec.json'));
+    return { dir, out, manifest, hash: contentHash(manifest, spec, sha256) };
+  } catch (e) { git(root, ['worktree', 'remove', '--force', dir]); throw e; }
+}
+async function rollback(o) {
+  const root = rootOf(o);
+  if (o._[1] !== 'live') throw new Error('rollback live [--to <sha>] (a dry run) | rollback live --matt-ok --apply');
+  const rec = loadChart(root), { from, to } = rollbackTarget(rec, o.to && o.to !== true ? o.to : null);
+  const toFull = git(root, ['rev-parse', to.commit]).trim(), head = git(root, ['rev-parse', 'HEAD']).trim();
+  const files = { ...restoreFiles(root, toFull), to: toFull };
+  const crossings = schemaCrossings(schemaVersions(root, head), schemaVersions(root, toFull));
+  const then = buildIn(root, toFull, null, `then-${to.commit}`), now = buildIn(root, head, null, `now-${from.commit}`), restored = buildIn(root, head, files, 'restore');
+  try {
+    const same = restored.hash === then.hash, prompts = promptChanges(now.manifest, then.manifest);
+    const tasksBetween = (() => { try { return [...new Set(ids(git(root, ['log', '--format=%s', `${toFull}..${from.commit}`])).filter(x => x.startsWith('B-')))].reverse(); } catch { return []; } })();
+    const out = [`rollback live: from ${from.commit} (live since ${from.time}) to ${to.commit} (live since ${to.time}, verified green; chart/deploys.json)${o.apply ? '' : ': DRY RUN, nothing is written or deployed'}`, ''];
+    out.push(`Going back undoes what ${tasksBetween.length ? tasksBetween.join(', ') : 'the builds since'} shipped: the page (shell, core.js, app.js, spec.json, styles.css), system/manifest, system/spec and system/environments, so every scheduled run from then on runs ${to.commit}'s code, and the live tasks' prompts where they differ (below).`);
+    out.push('It does not undo: documents the live record holds (runs, state, health, his own entries) stay as written; an applied schema bump or migration stays applied and its legacy copies are kept (D-145); a Mac-bound task\'s prompt changes only from a chat linked to the Mac, with Matt present.', '');
+    out.push(crossings.length ? `Schema: going back crosses ${crossings.map(c => `${c.collection} (schema ${c.now} now, ${c.then ? 'schema ' + c.then : 'no such collection'} in ${to.commit})`).join('; ')}. The live documents stay at the newer schema; before live, ship staging at the restore commit and fire the staging evening-cloud and watchdog (the staging record is seeded from live, so it holds the same shapes), and go live only when their runs/<id> read back ok.` : `Schema: none crossed (every schema in ${from.commit} has the version it has in ${to.commit}); documents written since keep their fields, and ${to.commit}'s code reads them as before.`);
+    out.push(prompts.length ? `Live tasks' prompts: ${prompts.map(p => p.task + (p.macBound ? ' (Mac-bound: only from a chat linked to the Mac, with Matt present)' : '')).join(', ')} differ: ship live prints update_trigger for each cloud one.` : `Live tasks' prompts: the same in both builds: no task call.`, '');
+    out.push(`The restore commit (on main, at its head, so the runs' clone always reaches it, B-110): ${files.restore.length} file${files.restore.length === 1 ? '' : 's'} back to ${to.commit}${files.restore.length ? ': ' + files.restore.join(', ') : ''}; ${files.remove.length} added since, removed from the tree (kept in history)${files.remove.length ? ': ' + files.remove.join(', ') : ''}. Kept as they are: chart/, BACKLOG.md, CLAUDE.md, .claude/skills/.`);
+    out.push(`Content: the restore build ${same ? 'equals' : 'DIFFERS FROM'} ${to.commit}'s build (content hash ${restored.hash.slice(0, 12)}${same ? '' : ' vs ' + then.hash.slice(0, 12)}).`);
+    if (!same) { console.log(out.concat(['', 'rollback refused: the restore would not ship the same content; nothing was written']).join('\n')); return 1; }
+    // The restored tree works as that build did: its own npm test (the Chart's lint on today's record included).
+    if (!o['no-test']) {
+      const nm = path.join(root, 'node_modules'); if (fs.existsSync(nm) && !fs.existsSync(path.join(restored.dir, 'node_modules'))) fs.symlinkSync(nm, path.join(restored.dir, 'node_modules'));
+      let log = ''; try { log = execFileSync('npm', ['test', '--silent'], { cwd: restored.dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 64 << 20 }); } catch (e) { log = String(e.stdout || '') + String(e.stderr || ''); }
+      const n = k => Number((log.match(new RegExp(`^# ${k} (\\d+)`, 'm')) || [])[1] || 0), pass = n('pass'), fail = n('fail');
+      out.push(`Tests: npm test in the restored tree: ${pass} pass, ${fail} fail${fail || !pass ? ': ' + (log.match(/^not ok .*$/gm) || ['no result']).slice(0, 5).join('; ') : ''}.`);
+      if (fail || !pass) { console.log(out.concat(['', 'rollback refused: the restored tree does not pass its own tests; nothing was written']).join('\n')); return 1; }
+    }
+    // The calls ship live will print for the restore build, against the saved live state (versions from this
+    // session's last get; the file paths are where ship builds, dist/).
+    const stateDir = path.join(root, 'dist', 'state', 'live'), state = withShell(readState(stateDir), restored.manifest, 'live', restored.out);
+    const file = o.transcript || newestTranscript(), jsonl = file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+    const versions = versionsFrom(jsonl, `https://claude.ai/artifact/${restored.manifest.records.live.artifact}`);
+    const calls = deployCalls({ manifest: { ...restored.manifest, dirty: false }, target: 'live', distDir: path.join(root, 'dist'), build: { pushed: true, contentHash: restored.hash }, versions, mattOk: true, duringSession: true, state, sha256, stagingVerify: { green: true, contentHash: restored.hash }, stateDir });
+    out.push('', 'Steps (each on Matt\'s explicit OK in the chat; never between 6pm Tuesday and the end of Wednesday of an exam week unless he names that window):',
+      `  1. node tools/chart.mjs rollback live${o.to && o.to !== true ? ' --to ' + to.commit : ''} --matt-ok --apply   (the restore commit, with the session's --trailer lines)`,
+      '  2. npm test, then git push origin main',
+      `  3. node tools/chart.mjs ship staging, with every call and read it prints, until GREEN${crossings.length ? '; then fire the staging evening-cloud and watchdog and read their runs back' : ''}`,
+      '  4. node tools/chart.mjs ship live --matt-ok, with every call and read it prints, until GREEN; it records the deploy (its rollback names the build left)',
+      `  5. log a decision naming why live went back; bringing the newer work back later is git revert <the restore commit> and the normal path`,
+      '', `The live calls step 4 will print (from the saved live state; the shell's live page files and system documents become ${to.commit}'s):`, formatDeploy('live', calls).replace(/^deploy live: /, '').replace(', then run verify-deploy live.', '.'));
+    if (o.apply) {
+      if (!o['matt-ok']) throw new Error("rollback --apply needs Matt's explicit OK in the chat (then pass --matt-ok)");
+      if (git(root, ['status', '--porcelain']).trim()) throw new Error('the checkout has uncommitted changes: commit or stash them first');
+      applyRestore(root, toFull, files);
+      git(root, ['add', '-A', '--', ...files.restore]);
+      git(root, ['commit', '-q', '-m', [`B-60: roll live back to ${to.commit}'s content, from ${from.commit} (restore commit, on Matt's OK)`, ...(o.trailer.length ? ['', ...o.trailer] : [])].join('\n')]);
+      out.push('', `restore commit ${git(root, ['rev-parse', '--short=7', 'HEAD']).trim()} made: go on with step 2`);
+    }
+    console.log(out.join('\n'));
+    return 0;
+  } finally { for (const b of [then, now, restored]) { try { git(root, ['worktree', 'remove', '--force', b.dir]); } catch { /* gone */ } } }
+}
+
 // ------------------------------------------------------------------------------------------------ the command line
 function args(argv) {
   const o = { _: [], trailer: [] };
@@ -1149,6 +1258,7 @@ const commands = {
   report(o) { return record(o, applyReport); },
   brief(o) { const id = o.task || o._[1]; if (!id) throw new Error('brief --task <id> [--scope ui,data,ops,pipelines]'); console.log(brief(loadChart(rootOf(o)), id, { root: rootOf(o), scope: o.scope })); return 0; },
   ship(o) { return ship(o); },
+  rollback(o) { return rollback(o); },
   plan(o) {
     if (o['handoff-note']) { const c = handoffNoteCall(); console.log(`plan: the Build plan tab's hand-off line (once): ${c.tool}\n${JSON.stringify(c.args)}`); return 0; }
     if (!o.from || o.from === true) throw new Error('plan --from <design doc link> [--apply]');
