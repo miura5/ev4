@@ -262,8 +262,8 @@ test('B-34 (D-090): frozen originals and spec.legacyCollections are notes, never
 test('B-34: the two pre-v4 leftovers the live lint found are frozen notes, in code: a v2 test day and v3\'s system/code', () => {
   const db = load();
   // Made-up stand-ins in the shapes the live export had: no migratedAt on either.
-  db.days = [...(db.days || []), { id: '2026-09-16', pipeline: 'v2 Daily list (test A-2)', source: 'migrated', items: [{ text: 'a made-up v2 item' }] }];
-  db.system = [...(db.system || []), { id: 'code', version: 'v3.2', files: { 'app.js': 'made-up' } }];
+  db.days = [...(db.days || []), { id: '2026-09-16', date: '2026-09-16', schema: 1, source: 'migrated', runs: { 'made-up-daily-test': { pipeline: 'v2 Daily list (test A-2)', status: 'ok', startedAt: '2026-09-17T03:11:39Z', endedAt: '2026-09-17T03:11:39Z' } } }];
+  db.system = [...(db.system || []), { id: 'code', schema: 1, version: 'v3.2', commit: 'made-up', short: 'made-up', dirty: false, builtAt: '2026-10-16T00:00:00Z' }];
   const r = lint(db);
   assert.deepEqual(r.issues.filter(i => i.severity === 'error' && /2026-09-16|system\/code/.test(i.ref)), [], JSON.stringify(r.issues.filter(i => i.severity === 'error')));
   assert.match(codes(r, 'frozen').find(i => i.ref === 'days').msg, /^1 frozen original/);

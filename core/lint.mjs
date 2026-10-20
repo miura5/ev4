@@ -26,11 +26,11 @@ const bytes = d => Buffer.byteLength(JSON.stringify(EV.docData(d)), 'utf8');
 export const isFrozen = d => !!(d && (d.migratedAt || d.migratedTo));
 /**
  * B-34: the pre-v4 leftovers the migration did not mark, settled in code rather than by a hand write to live: a
- * document a v2 or v3 pipeline wrote (its pipeline field names the version, like days/2026-10-16, "v2 Daily list (test
- * A-2)"), and a document in a collection with fixed ids under an id v4 does not fix (v3's system/code). Both are kept as
+ * document with no v4 envelope that an earlier migration stamped only source "migrated" (days/2026-10-16, a v2 test
+ * day), and a document in a collection with fixed ids under an id v4 does not fix (v3's system/code). Both are kept as
  * they are (nothing is deleted) and lint notes them as frozen, like a marked original.
  */
-export const isLeftover = (d, c) => !!(d && ((c && c.fixedIds && !c.fixedIds.includes(d.id)) || /^v[123]\b/i.test(String(d.pipeline || ''))));
+export const isLeftover = (d, c) => !!(d && ((c && c.fixedIds && !c.fixedIds.includes(d.id)) || (!d.writer && d.source === 'migrated')));
 
 /**
  * db: {collection: [docs with id]}. Returns {issues: [{severity, code, ref, msg}], rebuilt: [rebuild results]}, issues
