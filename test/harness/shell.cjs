@@ -65,6 +65,18 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
     }
     await page.close();
   }
+  // B-114 (D-159): the header changes only at 1024 px: icon tabs and no status line at 560, 735, 960 and 1023; named
+  // tabs and the status line at 1024 and 1470. Between 600 and 1024 the column is centred at most 660 px wide.
+  for (const w of [560, 735, 960, 1023, 1024, 1470]) {
+    const { page } = await open(browser, { viewport: { width: w, height: 860 } }); await page.waitForTimeout(500);
+    const v = await page.evaluate(() => { const vis = e => !!e && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().width > 1;
+      document.getElementById('tab-today').click();
+      const wrap = document.querySelector('.wrap').getBoundingClientRect();
+      return { iconTabs: [...document.querySelectorAll('#top .tabs .tab span')].every(s => !vis(s)), statusLine: vis(document.getElementById('status')), wrapW: Math.round(wrap.width), centred: Math.abs(wrap.left - (innerWidth - wrap.right)) <= 2, sideways: document.documentElement.scrollWidth > innerWidth + 1 }; }).catch(e => ({ error: e.message }));
+    const desk = w >= 1024;
+    ok(`[${w}] ${desk ? 'the desktop header: named tabs and the status line' : 'one layout: icon tabs, no status line, the column centred at most 660 px'}`, !v.sideways && (desk ? !v.iconTabs && v.statusLine : v.iconTabs && !v.statusLine && v.centred && v.wrapW <= 660), JSON.stringify(v));
+    await page.close();
+  }
   // The boot's refusals, each with its plain sentence and nothing else drawn.
   const phone = { width: 390, height: 844 };
   let r = await open(browser, { viewport: phone, pre: 'window.__notOwner=true;' }); await r.page.waitForTimeout(400);

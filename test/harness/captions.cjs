@@ -2,8 +2,8 @@
 // a staging export with a planted day of talk (two earlier conversations today, one last night), the page's clock at
 // 7pm Central so the greeting opens a new conversation. Checks: the greeting opens alone at her full size; a reply
 // reveals word by word, each sentence announced once; Matt's echo; Back to now on scroll and on tapping her; a pull
-// loads the previous conversation with its count and stops at the start of today; the layout wraps at 899 px and not
-// at 900; reduced motion shows the line whole. Screenshots of each state at both widths, and the measured layout set
+// loads the previous conversation with its count and stops at the start of today; the layout wraps at 1023 px and not
+// at 1024 (D-159); reduced motion shows the line whole. Screenshots of each state at both widths, and the measured layout set
 // against the Captions v2 artboards' numbers.
 // With --artboards <dir> it also renders the Captions v2 artboards themselves, offline, beside the page: <dir> holds the
 // Design artifact's project/V2.dc.html, project/V2Desktop.dc.html, project/Core2.dc.html and
@@ -281,20 +281,20 @@ async function sideBySide(browser, left, right, out, vp) {
     ok(`[${scheme}] typing puts them away again, and so does leaving the input`, !typed && !(await page.isVisible('#qchips')));
     if (scheme === 'desktop') {
       // D-122 as amended: the side column exists only while it holds something. With nothing in it her stage centres in
-      // the window; with something (a stand-in for B-78's surface) it slides in from 900 px and her stage re-centres in
-      // what is left; below 900 it wraps under the stage.
+      // the window; with something (a stand-in for B-78's surface) it slides in from 1024 px and her stage re-centres in
+      // what is left; below 1024 it wraps under the stage (D-159).
       const lay = async w => { await page.setViewportSize({ width: w, height: 860 }); await page.waitForTimeout(700); return page.evaluate(() => { const r = id => document.getElementById(id).getBoundingClientRect(); const s = r('ev-side'), c = r('composer'), th = r('thread'), av = document.querySelector('#hero .ev-av').getBoundingClientRect();
         return { sideShown: getComputedStyle(document.getElementById('ev-side')).display !== 'none', sideLeft: Math.round(s.left), sideTop: Math.round(s.top), sideW: Math.round(s.width), comp: { left: Math.round(c.left), right: Math.round(c.right), bottom: Math.round(c.bottom), top: Math.round(c.top) }, threadLeft: Math.round(th.left), threadRight: Math.round(th.right), coreX: Math.round(av.left + av.width / 2), compW: Math.round(document.querySelector('.compose-row').getBoundingClientRect().width) }; }); };
-      const e1280 = await lay(1280), e900 = await lay(900);
-      ok('[desktop] with nothing beside her: no side column, her stage centred in the window (640 px at 1280, 450 at 900)', !e1280.sideShown && !e900.sideShown && Math.abs(e1280.coreX - 640) <= 2 && Math.abs(e900.coreX - 450) <= 2, JSON.stringify({ e1280, e900 }));
+      const e1280 = await lay(1280), e900 = await lay(1024);
+      ok('[desktop] with nothing beside her: no side column, her stage centred in the window (640 px at 1280, 512 at 1024)', !e1280.sideShown && !e900.sideShown && Math.abs(e1280.coreX - 640) <= 2 && Math.abs(e900.coreX - 512) <= 2, JSON.stringify({ e1280, e900 }));
       await page.evaluate(() => { const d = document.createElement('div'); d.className = 'card'; d.id = 'harness-surface'; d.textContent = 'Harness surface (a stand-in for B-78)'; document.getElementById('ev-side').append(d); });
-      const at900 = await lay(900), at899 = await lay(899);
-      ok('[desktop] something beside her: at 900 px the column sits beside her stage (300 to 440 px)', at900.sideShown && at900.sideLeft >= at900.threadRight && at900.sideTop < at900.comp.top && at900.sideW >= 300 && at900.sideW <= 440, JSON.stringify(at900));
-      ok('[desktop] at 899 px it wraps under the stage (the phone stack)', at899.sideShown && at899.sideTop >= at899.comp.bottom - 1 && at899.sideLeft < at899.threadRight, JSON.stringify(at899));
+      const at900 = await lay(1024), at899 = await lay(1023);
+      ok('[desktop] something beside her: at 1024 px the column sits beside her stage (300 to 440 px)', at900.sideShown && at900.sideLeft >= at900.threadRight && at900.sideTop < at900.comp.top && at900.sideW >= 300 && at900.sideW <= 440, JSON.stringify(at900));
+      ok('[desktop] at 1023 px it wraps under the stage (the phone stack)', at899.sideShown && at899.sideTop >= at899.comp.bottom - 1 && at899.sideLeft < at899.threadRight, JSON.stringify(at899));
       const at1280 = await lay(1280);
       ok('[desktop] at 1280 her stage re-centres in what is left; captions and composer at most 660 px', at1280.compW <= 660 && at1280.sideW >= 300 && at1280.sideW <= 440 && Math.abs(at1280.coreX - (at1280.threadLeft + at1280.threadRight) / 2) <= 2 && at1280.coreX < 600, JSON.stringify(at1280));
-      await page.setViewportSize({ width: 899, height: 860 }); await page.waitForTimeout(400); await page.screenshot({ path: `${shots}/captions-wrap-899.png` });
-      await page.setViewportSize({ width: 900, height: 860 }); await page.waitForTimeout(400); await page.screenshot({ path: `${shots}/captions-wrap-900.png` });
+      await page.setViewportSize({ width: 1023, height: 860 }); await page.waitForTimeout(400); await page.screenshot({ path: `${shots}/captions-wrap-1023.png` });
+      await page.setViewportSize({ width: 1024, height: 860 }); await page.waitForTimeout(400); await page.screenshot({ path: `${shots}/captions-wrap-1024.png` });
       await page.setViewportSize({ width: 1280, height: 860 }); await page.waitForTimeout(400); await page.screenshot({ path: `${shots}/captions-side-1280.png` });
       await page.evaluate(() => document.getElementById('harness-surface').remove());
       const back = await lay(1280);
@@ -395,6 +395,30 @@ async function sideBySide(browser, left, right, out, vp) {
         await page.screenshot({ path: `${shots}/short-${tag}-${state}.png` });
         await ctx.close();
       }
+    }
+  }
+  // B-114 (D-159): two breakpoints. At 560, 735, 960 and 1023 one layout: icon tabs, no status line, no side column, a
+  // session's notes under the stage; at 1024 and 1470 the desktop one. No sideways scroll at any of them.
+  { const sessionSeed = () => { const db = JSON.parse(JSON.stringify(seed)), t0 = new Date(NOW.getTime() - 3 * 60e3).toISOString(), k = 'start-' + t0.replace(/[-:.TZ]/g, '').slice(0, 14);
+      db.sessions = { ...(db.sessions || {}), 'ss-harness-bp': { schema: 1, writer: 'page', at: t0, source: 'E.V. Home', status: 'active', date: today, startedAt: t0, topic: 'Harness breakpoints', noteId: 'x-coredata://bp', driver: { view: 'gone', at: t0 }, events: { [k]: { type: 'start', at: t0, len: 5, h: 'zz', noteId: 'x-coredata://bp' } } } };
+      return db; };
+    const layout = page => page.evaluate(() => { const vis = e => !!e && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().width > 1 && e.getBoundingClientRect().height > 1;
+      const hero = document.getElementById('hero').getBoundingClientRect(), side = document.getElementById('ev-side'), notes = document.getElementById('snotes'), sread = document.getElementById('sread');
+      return { iconTabs: [...document.querySelectorAll('#top .tabs .tab span')].every(s => !vis(s)), statusLine: vis(document.getElementById('status')), sideColumn: vis(side) && side.getBoundingClientRect().left >= hero.right - 1,
+        notesPanel: vis(notes), notesUnder: vis(sread) && sread.getBoundingClientRect().top >= hero.bottom - 1, step: document.getElementById('hero').dataset.step, sideways: document.documentElement.scrollWidth > innerWidth + 1 }; });
+    for (const w of [560, 735, 960, 1023, 1024, 1470]) {
+      const ctx = await browser.newContext({ viewport: { width: w, height: 860 }, colorScheme: 'dark' }); const page = await ctx.newPage();
+      await page.addInitScript(() => { window.__readerNote = { found: true, appVersion: '0.4', note: { id: 'x-coredata://bp', name: 'Harness breakpoints', folder: 'NUR 112', modifiedAt: new Date().toISOString(), text: 'Preload stretches the ventricle.\nAfterload is the push back.\n' } }; });
+      await openPage(page, sessionSeed());
+      await page.waitForFunction(() => document.getElementById('hero').dataset.step === 'session', null, { timeout: 8000 }).catch(() => {});
+      // The session reads his note on its first poll; the stage steps.
+      await page.waitForFunction(() => !document.getElementById('sread').hidden, null, { timeout: 12000 }).catch(() => {});
+      await page.waitForTimeout(1200);
+      const v = await layout(page), desk = w >= 1024;
+      ok(`[breakpoints ${w}] ${desk ? 'the desktop layout: named tabs, the status line, the notes in the side column' : 'the phone stack: icon tabs, no status line, no side column, the notes under the stage'}`,
+        !v.sideways && (desk ? !v.iconTabs && v.statusLine && v.notesPanel && v.sideColumn : v.iconTabs && !v.statusLine && !v.notesPanel && !v.sideColumn && v.notesUnder), JSON.stringify(v));
+      if ([735, 960].includes(w)) await page.screenshot({ path: `${shots}/breakpoints-${w}.png` });
+      await ctx.close();
     }
   }
   // Reduced motion, at both widths: the line whole at once, announced once, her core still, its gesture still raised.

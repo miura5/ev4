@@ -125,13 +125,13 @@ test('the critically damped spring never overshoots', () => {
   assert.ok(Math.abs(x - 1) < 1e-4);
 });
 
-test('her size steps (D-122): phone 260 px, desktop 340 px from 900 px wide', () => {
+test('her size steps (D-122): phone 260 px, desktop 340 px from 1024 px wide (D-159)', () => {
   const Z = P.sizes, px = (w, s) => MO.coreSize(w, s, Z).px;
   assert.deepEqual(['idle', 'conversation', 'session', 'list', 'skills'].map(s => px(390, s)), [260, 208, 172, 135, 114]);
   assert.deepEqual(['idle', 'conversation', 'surface'].map(s => px(1280, s)), [340, 272, 238]);
   assert.equal(px(1280, 'session'), 238); assert.equal(px(390, 'surface'), 135);
   assert.equal(px(390, 'somewhere-else'), 260, 'a state no layout names falls back to idle');
-  assert.equal(MO.coreSize(899, 'idle', Z).layout, 'phone'); assert.equal(MO.coreSize(900, 'idle', Z).layout, 'desktop');
+  assert.equal(MO.coreSize(1023, 'idle', Z).layout, 'phone'); assert.equal(MO.coreSize(1024, 'idle', Z).layout, 'desktop');
 });
 
 test('the step-down: more than 10% of frames over 25 ms in a rolling 2 s turns wisps off, then halves the points, and stops there', () => {
@@ -171,7 +171,7 @@ test('spec.ui.look.core: every core v2 parameter, the seven moods, five gestures
   assert.deepEqual(P.rubato.glanceEverySec, [5, 11], 'glances every 5 to 11 s');
   assert.deepEqual(Object.keys(P.gestures).sort(), [...MO.GESTURES].sort());
   for (const g of MO.GESTURES) assert.ok(P.gestures[g].durationSec > 0 && P.gestures[g].durationSec <= 3, g);
-  assert.deepEqual(P.sizes, { phone: { basePx: 260, steps: { idle: 100, conversation: 80, session: 66, list: 52, skills: 44 } }, desktop: { basePx: 340, minWidthPx: 900, steps: { idle: 100, conversation: 80, surface: 70 } } });
+  assert.deepEqual(P.sizes, { phone: { basePx: 260, steps: { idle: 100, conversation: 80, session: 66, list: 52, skills: 44 } }, desktop: { basePx: 340, minWidthPx: 1024, steps: { idle: 100, conversation: 80, surface: 70 } } });
   assert.deepEqual({ w: P.stepDown.windowSec, ms: P.stepDown.slowFrameMs, share: P.stepDown.maxSlowShare, o: P.stepDown.order }, { w: 2, ms: 25, share: .1, o: ['wisps', 'halfPoints'] });
   assert.deepEqual({ ms: P.frameBudget.slowFrameMs, share: P.frameBudget.maxSlowShare, d: P.frameBudget.p95CoreDrawMs }, { ms: 25, share: .05, d: 8 }, 'D-135 as amended: at most 5% of frames over 25 ms, draw p95 at most 8 ms');
   // Teal and violet carry her; coral is reserved for the error gesture.

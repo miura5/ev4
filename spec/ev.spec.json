@@ -3290,7 +3290,7 @@
      },
      "desktop": {
       "basePx": 340,
-      "minWidthPx": 900,
+      "minWidthPx": 1024,
       "steps": {
        "idle": 100,
        "conversation": 80,
