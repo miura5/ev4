@@ -875,17 +875,18 @@
   "title": "Exam plan draft on request (pick 3, D-102): plans/<examId>-<n> for later drafts, planedits.plan (schema bump) set when Matt accepts a draft from its card, planTasks reading the plan in force, and the one greeting line when the Canvas sync brings in a new exam-content module; nothing is drafted unasked",
   "dod": null,
   "milestone": "M8",
-  "status": "in progress",
+  "status": "blocked",
   "depends": [
    "B-39"
   ],
-  "notes": "Oct 20: taken while M8's other tasks wait on B-42's staging firing (Matt: B-45 whenever it fits)",
+  "notes": "Oct 20, 8e4b2f8 on staging (ship staging GREEN): the worker saves a later plan as plans/<exam>-<n> beside the one in force and its message carries a plan card (pipeline test on the fixture: plans/E9 untouched, the draft E9-2 saved and valid, not in force); planedits schema 2 with plan, its bump with fixture and idempotence test, applied on staging (planedits/E4 at version 2, legacy/v4-planedits-E4-s1 kept; a second run: nothing to do); readers (planDay, the page, the morning) see only each exam's plan in force; the card's Use this plan writes planedits/<exam>.plan with the ticks kept (validated); the briefing offers one draft as a new line (Exam 5 content is on Canvas · Draft its plan) when the Canvas sync brought in that exam's content module since he last looked and the exam has no plan or plan job (spec.courses NUR 112 planModule). npm run check GREEN. Left for the DoD, all on staging: a staging worker firing that drafts a plan for an exam that has one, the card, Use this plan switching the Study tab, and the greeting after a planted exam module. Waiting on Matt's word to fire the staging worker task (the session's auto-mode check refuses fire_trigger unless he names it), or on him firing and looking himself",
   "commit": null,
   "source": "BACKLOG.md",
   "board": {
    "row": "v4 B-45: Exam plan drafts on request",
    "why": "the exam-plan job writes plans/<exam>-draft beside a plan and nothing reads it; there is no way to switch to a new plan"
-  }
+  },
+  "waitingOn": "Matt"
  },
  {
   "id": "B-46",
