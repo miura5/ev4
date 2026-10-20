@@ -123,7 +123,7 @@ test('an evening-mac run: Canvas folds into the record, the backup and mirror be
   assert.ok(written.includes('set dates/canvas-9001'), written.join(', '));
   assert.ok(written.includes('set announcements/canvas-77'));
   const date = JSON.parse(fs.readFileSync(plan.batches.flat().find(w => w.doc_id === 'canvas-9001').file_path, 'utf8'));
-  assert.equal(date.writer, 'canvas-sync'); assert.equal(date.graded, true); assert.match(date.notes, /GRADED: yours alone/);
+  assert.equal(date.writer, 'canvas-sync'); assert.equal(date.graded, true); assert.match(date.notes, /^Due 11:59pm\. Graded\.$/);
   assert.ok(/modules BIO 201/.test(JSON.stringify(CANVAS.canvasRaw(path.join(dir, 'in'), spec).errors)), 'the stub has no BIO 201 modules: one fetch error, kept');
   assert.equal(plan.steps.find(s => s.id === 'note').status, 'skipped', 'no conflict and not Saturday: no note to write');
   assert.match(plan.detail, /Canvas: 1 new and 0 changed dates, 1 announcements, 0 files, 1 fetch errors · backup backup\/E\.V\.-v4-backup-sunday\.json \(\d+ documents, \d+ KB\), mirror \d+ files/);

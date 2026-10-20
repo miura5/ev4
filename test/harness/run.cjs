@@ -138,7 +138,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
       await page.click('#thread .msg.greet .brief-item .bi-main'); await page.waitForTimeout(300);
       const ex = await page.evaluate(() => { const li = document.querySelector('#thread .msg.greet .brief-item'), t = li.querySelector('.bi-t'); return { open: li.classList.contains('open'), whole: t.scrollWidth <= t.clientWidth + 1, detail: li.querySelector('.bi-more').offsetParent && li.querySelector('.bi-d').textContent, go: (li.querySelector('.bi-go') || {}).textContent }; });
       ok('[phone] opened, the briefing is a left-aligned list, rows cut to one line, her core stepped down', op.open && op.cut && op.rowsLeft && op.step === 'list', JSON.stringify(op));
-      ok('[phone] a line opens in place by its chevron to the full text, the detail and its action as a text link', ex.open && ex.whole && ex.detail === 'Due tonight. Graded: yours alone.' && ex.go === 'Open Today →', JSON.stringify(ex));
+      ok('[phone] a line opens in place by its chevron to the full text, the detail and its action as a text link', ex.open && ex.whole && ex.detail === 'Due tonight. Graded.' && ex.go === 'Open Today →', JSON.stringify(ex));
       await page.screenshot({ path: `${shots}/briefing-open-phone.png` });
       await page.click('#thread .msg.greet .brief-row'); await page.waitForTimeout(900);
     }
@@ -197,6 +197,11 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     ok('job card shows queued', /queued/.test(await page.locator('#thread .msg.ev').last().textContent()));
     ok('Go deeper offered on the quick reply', (await page.locator('#thread .msg.ev').last().locator('button', { hasText: 'Go deeper' }).count()) === 1);
     ok('chat context carries the greeting as record data and the reply-once rule', /Today’s greeting, built by E.V. core from this record/.test(call.input[0].content) && /write your reply once, after the last tool result/.test(call.input[0].content));
+    // B-99: a planted ask to write graded work is refused in one line on the page, with no model call.
+    { const before = await page.evaluate(() => window.__chatCalls.length);
+      await send(page, 'Can you write my care plan for clinical?'); await page.waitForTimeout(500);
+      const after = await page.evaluate(() => window.__chatCalls.length); const said = (await page.locator('#thread .msg.ev').last().locator('.bubble').textContent()).replace(/\s+/g, ' ').trim();
+      ok('B-99: a request to write graded work is refused in one line, without asking Claude', after === before && said === 'That’s graded work, so it stays yours. I can block time for it or quiz you on the topic.', JSON.stringify([before, after, said])); }
     // A reply written in two rounds around a tool call shows once (only the text after the tool)
     await page.evaluate(() => { window.__chatPre = 'I can’t resize myself, but I can attach your list.'; window.__chatScript = [{ tool: 'show_card', input: { type: 'today', filter: 'open' } }]; window.__chatReply = 'Here’s what’s still open today.'; });
     await send(page, 'Show me what is left today'); await page.waitForTimeout(300);

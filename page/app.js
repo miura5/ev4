@@ -309,7 +309,7 @@
     const detail = [it.note, it.minutes ? '~' + it.minutes + ' min' : '', it.deferred ? 'deferred: over today’s budget' : '', it.added ? 'added by ' + (it.by === 'Matt' ? 'you' : 'E.V.') : ''].filter(Boolean).join(' · ');
     const rm = o.remove && it.added ? btn('Remove', null, { cls: 'quiet' }) : null;
     if (rm) { rm.setAttribute('aria-label', 'Remove from today: ' + it.text); rm.addEventListener('click', () => guard(rm, () => editList(today, { action: 'remove', id: it.id }, 'Matt'), 'Removed')); }
-    return row({ title: it.text, detail, chips: it.tag ? [[it.tag === 'GRADED' ? 'Graded · yours alone' : it.tag.charAt(0) + it.tag.slice(1).toLowerCase(), TAG_V[it.tag] ?? '']] : [], cls: doneNow ? 'done' : '', // B-89: tags in sentence case
+    return row({ title: it.text, detail, chips: it.tag ? [[it.tag === 'GRADED' ? 'Graded' : it.tag.charAt(0) + it.tag.slice(1).toLowerCase(), TAG_V[it.tag] ?? '']] : [], cls: doneNow ? 'done' : '', // B-89: tags in sentence case
       check: { checked: doneNow, label: 'Done: ' + it.text, onChange: (on, c) => { T.ticked.add(it.id); guard(c, () => tickWrite(it, on), on ? 'Checked off' : 'Unchecked'); } },
       action: go ? btn('Open', go) : rm });
   }
@@ -320,7 +320,7 @@
     const b = el('button', null, 'Add'); b.type = 'submit';
     f.append(inp, b);
     f.addEventListener('submit', e => { e.preventDefault(); const t = inp.value.replace(/\s+/g, ' ').trim(); if (!t) { inp.focus(); return; }
-      const w = E.scanIdentifiers(t); if (w.length) { toast('That ' + w[0] + '. Made-up clients only.'); return; }
+      const w = E.scanIdentifiers(t); if (w.length) { toast('That ' + w[0] + '. Leave real patient details out.'); return; }
       guard(b, async () => { const r = await editList(today, { action: 'add', text: t }, 'Matt'); inp.value = ''; b.disabled = false; if (r.note) toast('Already on the list'); }, 'Added to today'); });
     return (addForm = f);
   }
@@ -1328,7 +1328,7 @@
     kind = KINDS[kind] ? kind : 'general';
     title = String(title || '').replace(/\s+/g, ' ').trim().slice(0, 90) || KINDS[kind].label;
     brief = String(brief || '').trim().slice(0, 1500);
-    if (E.scanIdentifiers(title + ' ' + brief).length) throw new Error('The brief looks like it has patient details. Rephrase it with a made-up client.');
+    if (E.scanIdentifiers(title + ' ' + brief).length) throw new Error('The brief looks like it has patient details. Leave real patient details out.');
     const st = new Date().toISOString().replace(/\D/g, '').slice(0, 14);
     const id = E.safeId(`job-${st.slice(0, 8)}-${st.slice(8)}-${E.slug(title, 24)}`);
     await write({ op: 'set', collection: 'jobs', id, data: { ...envelope('E.V. Home'), kind, title, brief } });
@@ -1424,7 +1424,7 @@
     let p; try { p = await readerCall('latest_note'); } catch (e) { SS.readerOk = false; return [readerCopy((e && e.code) || 'upstream_error', e && e.message), []]; }
     if (!p.found) return [p.refused ? 'Study Watch’s latest note isn’t in NUR 112 or BIO 201, so I won’t read it. Type a line in a school note, then start again.' : 'Study Watch hasn’t saved a school note yet. Check that it’s running in reader mode, type a line in your NUR 112 or BIO 201 note, then start again.', []];
     const n = p.note || {};
-    if (p.graded) return [`**${n.name}** is tagged #graded, so it’s yours alone. Open another note and start again.`, []];
+    if (p.graded) return [`**${n.name}** is tagged #graded, so I stay out of it. Open another note and start again.`, []];
     const at = now(); const stamp = at.replace(/\D/g, '').slice(0, 14); const mark = E.noteMark(n.text || '');
     const id = E.safeId(`ss-${stamp.slice(0, 8)}-${stamp.slice(8)}-${E.slug(n.name || 'note', 24)}`);
     await write({ op: 'set', collection: 'sessions', id, data: { ...envelope('E.V. Home', at), status: 'active', date: today, startedAt: at, topic: String(n.name || 'Study session').slice(0, 120), noteId: String(n.id || ''), folder: String(n.folder || ''), driver: { view: SS.view, at }, events: { [pageKey(at)]: { type: 'start', noteId: n.id, len: mark.len, h: mark.h, modifiedAt: n.modifiedAt || null } } } });
@@ -1448,7 +1448,7 @@
       if (d.same && quiz) d = { added: text.slice(-(SWC.fallbackChars || 2500)), same: false, rewritten: true }; // Quiz me now on an unchanged note: the note so far
       if (d.same) { await sessEvent(s, 'idle'); return; }
       const ids = E.scanIdentifiers(d.added);
-      if (ids.length) { await skip('identifiers', `Your new writing ${idWhy(ids[0])}. I skipped this check. Made-up clients only, please.`); return; }
+      if (ids.length) { await skip('identifiers', `Your new writing ${idWhy(ids[0])}. I skipped this check.`); return; }
       const out = await sample.json(E.checkPrompt({ noteName: note.name, text, added: d.added, n, context: sessCtx(), rewritten: d.rewritten }), { modelTier: 'quick', cache: false });
       const items = E.parseCheck(out);
       if (!items.length) { await skip('no-items'); return; }
@@ -1482,7 +1482,7 @@
       if (added.replace(/\s/g, '').length < (SWC.commentMinChars || 20) || Date.now() - SS.lastAsk < (SWC.commentGapSeconds || 75) * 1e3) return;
       const seenNext = grew ? SS.seen + added : text; const before = grew ? SS.seen.slice(-800) : '';
       const ids = E.scanIdentifiers(added);
-      if (ids.length) { SS.seen = seenNext; if (!SS.said.has('identifiers')) { SS.said.add('identifiers'); await sessEvent(s, 'skip', { why: 'identifiers' }); await evSay(`Your new writing ${idWhy(ids[0])}, so I skipped reading it. Made-up clients only, please.`, [], { tier: 'local' }); } return; }
+      if (ids.length) { SS.seen = seenNext; if (!SS.said.has('identifiers')) { SS.said.add('identifiers'); await sessEvent(s, 'skip', { why: 'identifiers' }); await evSay(`Your new writing ${idWhy(ids[0])}, so I skipped reading it.`, [], { tier: 'local' }); } return; }
       if (!sample || T.sampleOff) return;
       SS.lastAsk = Date.now(); SS.thinking = true; renderBar();
       let out; try { out = await sample.json(E.commentPrompt({ noteName: note.name, opening: text.slice(0, SWC.openingChars || 800), before, added, context: sessCtx() }), { modelTier: 'quick', cache: false }); }
@@ -2275,7 +2275,7 @@
   const key = t => String(t || '').toLowerCase().replace(/[’‘]/g, "'").replace(/[?.!\s]+$/, '').trim();
   const LOCAL = {
     'start review': () => { const { rs, left } = reviewState(); return left ? [`${plural(left, 'review')} left. One at a time; every answer updates your weak spots.`, [{ type: 'review' }]] : rs ? ['Today’s review is done. Logged with quiet satisfaction.', []] : ['Today’s review lands with the 4:25am run. Want 5 fresh questions instead?', []]; },
-    "what's due this week": () => { const w = S.dates.filter(d => d.date >= today && d.date <= E.addDays(today, 7)); const g = w.filter(d => d.graded).length; return [w.length ? `${plural(w.length, 'date')} in the next 7 days${g ? `, ${g} graded (yours alone)` : ''}.` : 'Nothing dated in the next 7 days. Suspiciously calm.', [{ type: 'dates', days: 7 }]]; },
+    "what's due this week": () => { const w = S.dates.filter(d => d.date >= today && d.date <= E.addDays(today, 7)); const g = w.filter(d => d.graded).length; return [w.length ? `${plural(w.length, 'date')} in the next 7 days${g ? `, ${g} graded` : ''}.` : 'Nothing dated in the next 7 days. Suspiciously calm.', [{ type: 'dates', days: 7 }]]; },
     'give me 5 more': () => { if (!sample || T.sampleOff) return ['Writing questions needs permission to ask Claude, which this view doesn’t have.', []]; if (morePending) return ['Already writing a batch. Hold tight.', []]; morePractice({ announce: true }); return ['Writing 5 now, aimed at your weakest spots. They’ll post here in about a minute.', []]; },
     'file it': () => fileItReply(),
     'how ready am i': () => { const ex = M.target; if (!ex) return ['No upcoming exam with weak spots yet, so nothing to measure.', []]; const r = E.readiness({ examId: ex.id, weakspots: M.models }); const d = E.diffDays(today, ex.date); return [`${(ex.title || ex.id).replace(/:.*$/, '')}${d > 0 ? ' in ' + plural(d, 'day') : ' is today'}: ${r.pctSolid ?? 0}% of its weak spots solid, about ${r.need} correct reviews to go.`, [{ type: 'readiness' }, { type: 'audit' }]]; },
@@ -2383,7 +2383,7 @@
         const got = await readImages(name, [1], async () => f, caps); r = { text: got[1] ? '[p1] ' + got[1] + '\n' : '', pages: 1 }; ocrPages = got[1] ? [1] : [];
       }
       const flagged = E.scanIdentifierValues(r.text);
-      if (flagged.length) return finish(`**${name}** ${flagged[0]}, so I didn't save it. Course materials and made-up clients only; remove the detail and attach it again.`);
+      if (flagged.length) return finish(`**${name}** ${flagged[0]}, so I didn't save it. Remove the detail and attach it again.`);
       const existingIds = [...(LIB.mats || []).map(m => m.id), ...T.uploads.keys()];
       const u = E.materialFromUpload({ title: name, text: r.text, fileType: type === 'text' ? 'text' : type, pages: r.pages, ocrPages }, { now: now(), existingIds });
       await write({ op: 'set', collection: 'materials', id: u.id, data: u.data });
@@ -2430,7 +2430,8 @@
 - His calendar is yours to keep too: add deadlines and events with edit_dates, fix the ones he or you added, take entries off and bring them back when he asks. Graded work, exams, clinicals and validations from Canvas stay. Study tasks go on the list, not the calendar; to move a calendar entry onto the list, add it with edit_list, then remove it with edit_dates.
 - Teaching: the rule, why it works, one memory hook, and when it shows up on the NCLEX. Mark anything not from his course materials "(check your materials)".
 - Graded or submitted work (anything tagged GRADED, medication tables, care plans, narrative notes, clinical judgment maps for credit, quizzes, exams, discussion posts): no help with its content, not even a check. Offer to block time for it instead.
-- Real patients: never repeat or store identifiers; made-up clients only. If he includes a real detail, remind him once, briefly.
+- Real patients: never repeat or store identifiers. If he includes a real detail, say so once, briefly.
+- No standing reminders (B-99): never add a note about graded work or that a scenario or client is invented; these limits speak only when a request actually crosses them.
 - His health: you may log the energy, stress or sleep he reports and shape study suggestions around it. Never diagnose; for real concerns suggest a clinician.
 - Don't invent record data. If it isn't below or in a lookup, say you don't have it.
 - At most one unprompted suggestion per reply, and only when clearly useful.
@@ -2497,7 +2498,7 @@
       if (shown) pend.cards.push(c); else pend.cards.splice(pend.cards.filter(x => pend.changed.has(x)).length, 0, c);
       if (!shown) pend.changed.add(c); render(); } };
     const str = (v, n) => String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, n);
-    const noIds = t => { const w = E.scanIdentifiers(t); if (w.length) throw new Error('That text ' + w[0] + '. Patient identifiers are never stored; use a made-up client.'); };
+    const noIds = t => { const w = E.scanIdentifiers(t); if (w.length) throw new Error('That text ' + w[0] + '. Patient identifiers are never stored.'); };
     const tools = [
       { name: 'show_card', description: 'Attach a live card under your reply. today: today\'s list (filter "open" or "all"). review: today\'s review, answerable inline. readiness: the next exam. audit: the readiness audit, per objective of the next exam with what to reread. dates: next N days (days 1 = tomorrow). weakspots: most due. set: a practice set by id, answerable inline. job: a background job by id. chart: accuracy over the last 7 days. checkin: energy check. quizlet: the open weak spots as Quizlet import cards, copied on his tap. Returns "shown".',
         inputSchema: { type: 'object', properties: { type: { type: 'string', enum: ['today', 'review', 'readiness', 'audit', 'dates', 'weakspots', 'set', 'job', 'chart', 'checkin', 'quizlet'] }, filter: { type: 'string', enum: ['open', 'all'] }, days: { type: 'integer', minimum: 1, maximum: 14 }, id: { type: 'string' } }, required: ['type'] },
@@ -2614,6 +2615,8 @@
   const lastRound = (raw, cut) => { const all = String(raw || '').trim(); const tail = String(raw || '').slice(cut || 0).trim(); return !cut || !tail || (tail.length < 40 && all.length > tail.length * 3) ? all : tail; };
   async function chat(text, o = {}) {
     if (T.busy) return;
+    // B-99: a real ask to do, edit or turn in graded work is refused in one line, here, with no model call.
+    const no = E.gradedAsk(text, S.dates.filter(d => d.graded).map(d => d.title)); if (no) { await evSay(no, [], { tier: 'local' }); return; }
     if (!sample || T.sampleOff) { await evSay(SAMPLE_COPY[T.sampleOff] || 'Asking Claude isn’t available in this view. The quick asks still work.', []); return; }
     const tier = o.tier || tierFor(text); const id = msgId('e'); const at = now();
     const pend = { id, role: 'ev', text: '', cards: [], changed: new Set(), at, tier, pending: true, replyTo: o.replyTo, raw: '', cut: 0 };
@@ -2736,14 +2739,14 @@
   const grow = () => { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 140) + 'px'; };
   const typing = on => { T.typing = on; clearTimeout(T.typeT); if (on) T.typeT = setTimeout(() => { T.typing = false; }, 1800); };
   input.addEventListener('blur', () => typing(false));
-  input.addEventListener('input', () => { grow(); syncChips(); typing(!!input.value.trim()); const w = E.scanIdentifiers(input.value); guardEl.hidden = !w.length; guardEl.textContent = w.length ? `This ${w[0]}. No patient details: use a made-up client.${guardFor === input.value ? '' : ' Send again to send it anyway.'}` : ''; });
+  input.addEventListener('input', () => { grow(); syncChips(); typing(!!input.value.trim()); const w = E.scanIdentifiers(input.value); guardEl.hidden = !w.length; guardEl.textContent = w.length ? `This ${w[0]}. Leave real patient details out.${guardFor === input.value ? '' : ' Send again to send it anyway.'}` : ''; });
   input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && matchMedia('(pointer: fine)').matches) { e.preventDefault(); $('ev-form').requestSubmit(); } });
   $('ev-form').addEventListener('submit', async e => {
     e.preventDefault();
     if (T.busy) { if (T.ctl) T.ctl.abort(); return; }
     const text = input.value.trim(); if (!text) return;
     if (!M) { toast('Still loading your record.'); return; }
-    const w = E.scanIdentifiers(text); if (w.length && guardFor !== text) { guardFor = text; guardEl.hidden = false; guardEl.textContent = `This ${w[0]}. No patient details: use a made-up client. Send again to send it anyway.`; return; }
+    const w = E.scanIdentifiers(text); if (w.length && guardFor !== text) { guardFor = text; guardEl.hidden = false; guardEl.textContent = `This ${w[0]}. Leave real patient details out. Send again to send it anyway.`; return; }
     guardFor = null; guardEl.hidden = true; input.value = ''; grow(); typing(false); T.bigCore = false;
     if (LOCAL[key(text)]) { await quick(text); return; }
     input.placeholder = placeholder();

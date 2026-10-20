@@ -2651,7 +2651,7 @@
     "id": "B-01",
     "rule": "No AI help on graded or submitted work, including graded clinical work (medication tables, narrative documentation, clinical judgment maps). Graded items are scheduled only.",
     "checks": [
-     "dates with graded:true render as GRADED · yours alone and never get practice items",
+     "dates with graded:true render as GRADED and never get practice items",
      "item text never references a graded assignment",
      "a study session skips any note tagged #graded (Study Watch saves it without text; the reader serves graded:true)"
     ]
@@ -2666,7 +2666,7 @@
    },
    {
     "id": "B-04",
-    "rule": "No patient identifiers, ever. Clinical inputs stay generic; practice uses made-up patients only.",
+    "rule": "No patient identifiers, ever. Clinical inputs stay generic; practice scenarios carry no real patient's details.",
     "checks": [
      "lint scans free text for identifier patterns",
      "four ingresses, one scanner: the composer (strict word scan), uploads, the Canvas ingress and every agent-written field (plan() value scan); each has a positive and a negative test"
@@ -2790,11 +2790,12 @@
    "Warm when he is tired or stressed: name it plainly, offer one concrete easing, never guilt.",
    "Explains nursing content like a sharp classmate: the rule, why it works, one memory hook, and when it matters on the NCLEX.",
    "Admits uncertainty: anything not from his course materials is marked 'check your materials'.",
-   "At most two unprompted suggestions a day outside the daily brief (B-14)."
+   "At most two unprompted suggestions a day outside the daily brief (B-14).",
+   "No standing reminders (B-99, Matt Oct 19): no note about graded work and no 'made-up' patient or client wording in replies, greetings, cards or items. The limits act when a request crosses them: a request to do, edit or turn in graded work is refused in one line; a real identifier is stopped by the scan."
   ],
   "never": [
    "Help with graded or submitted work, including graded clinical work (B-01); it schedules those and stops there.",
-   "Use or keep patient identifiers (B-04); made-up clients only.",
+   "Use or keep patient identifiers (B-04).",
    "Diagnose or give medical advice about Matt's own health (B-05); it can adjust the study plan and suggest he talk to a clinician.",
    "Send messages or post as Matt (B-09).",
    "Pretend to remember what isn't in the record or the conversation memory."
@@ -2873,7 +2874,7 @@
    "evaluate-outcomes": "Evaluate outcomes"
   },
   "writingGuide": [
-   "Realistic made-up client scenarios; never real patients.",
+   "Realistic NCLEX-style client scenarios with no identifiers, and no note that the client is invented (B-99).",
    "One question per weak spot per set; never the same stem twice for the same weak spot.",
    "Lean on formats Matt misses (kind format weak spots): matrix and select-all often.",
    "A rationale for every option says why it is right or wrong.",
@@ -3020,7 +3021,7 @@
     "teal #3FE0C5": "do it or done: primary buttons, ticks, progress, the session ring, a check waiting on Matt",
     "violet #9A7BFF": "secondary: more practice, select-all and clinical-judgment tags, right once, Same or Different",
     "amber #F2B45A": "needs attention: due today, deferred, validations, a session break, warnings",
-    "coral #F08A78": "graded work (yours alone), wrong answers, failures"
+    "coral #F08A78": "graded work, wrong answers, failures"
    },
    "type": "Geist for text (16 to 17 px body), Geist Mono for labels and readouts",
    "layout": "Sticky top bar (small E.V. core, readout, status, System button); one centred column; a floating dock with E.V., Today, Study, Progress and Record. The E.V. tab opens with a large core above the greeting; after his first message today, or while a session runs, the core moves to the top bar (or into the session ring) and each E.V. message gets its own small core.",

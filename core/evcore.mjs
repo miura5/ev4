@@ -615,13 +615,13 @@ const EVCore = (() => {
     // Dates today: graded work (scheduled only), clinical and validations: fixed.
     for (const d of dates.filter(d => d.date === date)) {
       if (blocks.some(b => b.kind === 'exam' && d.kind === 'exam' && similarity(b.title, d.title) > 0.3)) continue;
-      if (d.graded && d.kind !== 'exam') add({ id: 'date-' + d.id, kind: 'graded', title: d.title, tag: 'GRADED', minutes: M.graded, required: true, note: 'Yours alone', course: d.course, ref: 'dates/' + d.id });
+      if (d.graded && d.kind !== 'exam') add({ id: 'date-' + d.id, kind: 'graded', title: d.title, tag: 'GRADED', minutes: M.graded, required: true, note: 'Graded', course: d.course, ref: 'dates/' + d.id });
       else if (d.kind === 'clinical') add({ id: 'date-' + d.id, kind: 'clinical', title: d.title, tag: 'CLINICAL', minutes: 0, required: true, ref: 'dates/' + d.id });
       else if (d.kind === 'validation') add({ id: 'date-' + d.id, kind: 'val', title: d.title, tag: 'VALIDATION', minutes: 0, required: true, ref: 'dates/' + d.id, note: d.notes || '' });
       else if (d.kind === 'exam' && !blocks.some(b => b.kind === 'exam')) add({ id: 'date-' + d.id, kind: 'exam', title: d.title, tag: 'EXAM', minutes: M.exam, required: true, note: 'Scheduled only', ref: 'dates/' + d.id });
     }
     // Graded work due tomorrow: a heads-up, not budgeted.
-    for (const d of dates.filter(d => d.date === addDays(date, 1) && d.graded)) add({ id: 'soon-' + d.id, kind: 'graded-soon', title: d.title + ' (due tomorrow)', tag: 'GRADED', minutes: 0, required: true, note: 'Yours alone', ref: 'dates/' + d.id });
+    for (const d of dates.filter(d => d.date === addDays(date, 1) && d.graded)) add({ id: 'soon-' + d.id, kind: 'graded-soon', title: d.title + ' (due tomorrow)', tag: 'GRADED', minutes: 0, required: true, note: 'Graded', ref: 'dates/' + d.id });
     // D-086: a plan task that names one of today's records (title similarity 0.3 or better) is that record, shown once
     // under the record's id; graded work, exams, clinicals and validations are fixed and cost no study minutes.
     const records = blocks.filter(b => b.ref && ['exam', 'graded', 'clinical', 'val'].includes(b.kind));
@@ -891,6 +891,22 @@ const EVCore = (() => {
       return { id, text: id, doc };
     }
     throw new Error('action must be add, remove or check');
+  }
+
+  // ---------------------------------------------------------------- graded work (B-99)
+  // The graded-work limit speaks only when a request crosses it: no standing reminder anywhere, and a real ask to do,
+  // edit, check or turn in graded work gets one line back without a model call.
+  const GRADED_ACT = /\b(write|do|finish|complete|edit|fix|proofread|check|grade|answer|fill (?:in|out)|turn (?:it |this |that )?in|submit|redo|rewrite|draft|word)\b/;
+  const GRADED_WORK = /\b(graded|for (?:a )?grade|for credit|care plans?|discussion posts?|medication tables?|narrative notes?|clinical judgment maps?|concept maps?|my (?:assignment|quiz|paper|essay|homework))\b/;
+  const GRADED_ONE_LINE = 'That’s graded work, so it stays yours. I can block time for it or quiz you on the topic.';
+  /** The one-line refusal when text asks E.V. to do, edit, check or turn in graded work (by its words, or by naming a
+   *  graded calendar entry), else null. Asking about a topic, a quiz or a schedule is not that. */
+  function gradedAsk(text, gradedTitles = []) {
+    const t = norm(text); if (!t || !GRADED_ACT.test(t)) return null;
+    if (/\b(quiz me|schedule|block time|remind me|when is|when s)\b/.test(t) && !/\b(write|edit|fix|submit|turn in|fill)\b/.test(t)) return null;
+    const words = new Set(t.split(' '));
+    const names = (gradedTitles || []).some(x => { const k = [...new Set(norm(x).split(' ').filter(w => w.length > 3 && !STOP.has(w) && !/^\d+$/.test(w)))]; return k.length >= 2 && k.filter(w => words.has(w)).length >= Math.min(3, k.length); });
+    return GRADED_WORK.test(t) || names ? GRADED_ONE_LINE : null;
   }
 
   // ---------------------------------------------------------------- calendar edits (D-080)
@@ -1274,7 +1290,7 @@ const EVCore = (() => {
         continue;
       }
       const doc = { ...env(), date, dueAt, title, course, kind: canvasKind(p), graded, canvasType: p.plannable_type, canvasId: p.plannable_id, syncedAt: at };
-      if (graded) doc.notes = `${dueWords}. GRADED: yours alone.`;
+      if (graded) doc.notes = `${dueWords}. Graded.`;
       out.dates.push({ id, op: 'set', data: doc });
       out.changes.push({ type: 'new-date', ref: 'dates/' + id, text: `New on Canvas: ${title} (${shortDate(date)})` });
       for (const d of liveDates(existing.dates, existing.dateedits)) if (d.date === date && d.id !== id && !d.canvasId && d.kind === doc.kind && similarity(d.title, title) < 0.3) out.candidates.push({ a: 'dates/' + d.id, b: 'dates/' + id, why: `two ${doc.kind} items on ${shortDate(date)} with different titles` });
@@ -1620,7 +1636,7 @@ Return JSON: {"pages": [{"page": <page number>, "text": "<the page's text>"}]}`;
   const SESSION_RULES = [
     "You are E.V., Matt's study partner for nursing school (NUR 112, BIO 201). Follow these rules:",
     '- Never help with graded or submitted work. If the note looks like a graded assignment, return no items.',
-    '- No patient identifiers, ever. Made-up clients only.',
+    '- No patient identifiers, ever.',
     "- Ground everything in Matt's own note. Label anything from general knowledge \"(check your materials)\".",
     '- Ask before telling. Keep each item short and plain.',
   ].join('\n');
@@ -1887,7 +1903,7 @@ h1{font-size:24px;line-height:1.25;margin:0 0 6px}.lead{color:var(--soft);margin
 footer{color:var(--soft);font-size:13px;margin-top:28px}</style></head><body><main>
 <h1>${esc(title)}</h1><p class="lead">${items.length} practice question${items.length === 1 ? '' : 's'}. Pick your answer, then Check: the right answer and the reasons show after you try.</p>
 ${qs}
-<footer>Made-up clients only. Practice for study, not graded work.</footer></main>
+<footer>Practice for study.</footer></main>
 <script>document.querySelectorAll('.q').forEach(function(q){q.querySelector('.check').addEventListener('click',function(){var res=q.querySelector('.res'),right=true,any=false;
 if(q.dataset.type==='matrix'){q.querySelectorAll('tbody tr[data-correct]').forEach(function(r){var c=r.querySelector('input:checked');if(c)any=true;var ok=c&&c.value===r.dataset.correct;r.classList.toggle('ok',!!ok);r.classList.toggle('no',!ok);if(!ok)right=false;r.nextElementSibling.hidden=false;});}
 else{q.querySelectorAll('.opts li').forEach(function(li){var c=li.querySelector('input').checked;if(c)any=true;var want=li.dataset.ok==='1';if(c!==want)right=false;li.classList.toggle('ok',want);li.classList.toggle('no',c&&!want);li.querySelector('.why').hidden=false;});}
@@ -2053,7 +2069,7 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
     if (segment !== 'morning') {
       const bits = [];
       if (tomorrowExam) bits.push(tomorrowExam.title.replace(/:.*$/, ''));
-      tmrGraded.slice(0, 2).forEach(d => bits.push(short(d.title) + ' (yours alone)'));
+      tmrGraded.slice(0, 2).forEach(d => bits.push(short(d.title)));
       if (tmrClinical) bits.push(short(tmrClinical.title));
       if (bits.length) { lines.push('Tomorrow: ' + listOf(bits) + '.'); cards.push({ type: 'dates', days: 1 }); }
       if (segment === 'late' && (tmrClinical || tomorrowExam)) { lines.push('Sleep is on tomorrow’s plan too. Strongly recommended by me, your circadian rhythm and the nursing literature.'); mood = 'sleepy'; }
@@ -2102,12 +2118,12 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
     const gradedToday = [...items.filter(i => i.tag === 'GRADED' && !i.done).map(i => ({ title: i.text })), ...(c.todayDates || []).filter(d => d.graded && d.kind !== 'exam' && !prepKindOf(d)).map(d => ({ title: d.title }))]
       .filter((g, i, a) => !doneKeys.has(key24(g.title)) && a.findIndex(x => key24(x.title) === key24(g.title)) === i);
     const named = t => { const s = String(t || '').replace(/\s+due\b.*$/i, '').replace(/\s*\([^)]*\)\s*$/, '').trim(); if (s.length <= 40) return s; const head = s.split(':')[0].trim(); return short(head.length >= 8 ? head : s, 34); };
-    for (const g of gradedToday) { const tonight = /11:59|pm\b|tonight/i.test(g.title); put('urgent', 'due', String(g.title).replace(/\s*\(~?\d+ min\)/, ''), { when: tonight ? 'tonight' : 'today', detail: 'Graded: yours alone.', say: `${named(g.title)} is due ${tonight ? 'tonight' : 'today'}`, tab: 'today' }); }
+    for (const g of gradedToday) { const tonight = /11:59|pm\b|tonight/i.test(g.title); put('urgent', 'due', String(g.title).replace(/\s*\(~?\d+ min\)/, ''), { when: tonight ? 'tonight' : 'today', detail: 'Graded.', say: `${named(g.title)} is due ${tonight ? 'tonight' : 'today'}`, tab: 'today' }); }
     for (const j of (c.jobs || []).filter(j => j.status === 'done' && toMs(j.finishedAt) > seen).slice(0, 2)) put('new', 'job', j.title, { when: 'done', detail: 'Finished in the background.', ...(finished && j.id === finished.id ? { action: { label: 'Open', chip: 'Open the ' + (JOB_NOUN[j.kind] || 'result') } } : { tab: 'system' }) });
     for (const j of (c.jobs || []).filter(j => j.status === 'failed' && toMs(j.finishedAt) > seen).slice(0, 1)) put('new', 'job', `${j.title} hit a wall`, { when: 'failed', detail: 'The background job stopped. System has the details and a Try again.', tab: 'system' });
     if (rl) put('normal', 'review', `${rl} review${rl === 1 ? '' : 's'} waiting`, { when: `~${rl} min`, action: { label: 'Start', chip: 'Start review' } });
     if (items.length) put('normal', 'today', open.length ? `${doneN} of ${items.length} done on today’s list` : 'Today’s list is done', { detail: open.length ? 'Still open: ' + open.map(i => short(i.text)).join('; ') + '.' : '', tab: 'today' });
-    for (const d of tmrGraded.filter(d => !prepKindOf(d)).slice(0, 3)) put('normal', 'due', d.title, { when: 'tomorrow', detail: 'Graded: yours alone.', tab: 'record' }); // a prep day has its marker
+    for (const d of tmrGraded.filter(d => !prepKindOf(d)).slice(0, 3)) put('normal', 'due', d.title, { when: 'tomorrow', detail: 'Graded.', tab: 'record' }); // a prep day has its marker
     // The Prep marker (D-143): calm, its own level, never counted with urgent. The bag check is for today in the morning
     // and through the day; from the evening on the pack check is for tomorrow.
     const prepDayNow = c.prep && (segment === 'evening' || segment === 'late' ? c.prep.tomorrow : c.prep.today);
@@ -2178,7 +2194,7 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
     // planning
     dayType, reviewLoad, rankDue, targetExam, pickReviews, planDay, buildDayList, nextNurExams, dayView, dayeditBase, listEdit, isFixedItem,
     // prep checks (D-143, D-144)
-    PREP_KINDS, prepKindOf, prepDay, prepBringItems, prepList, prepEdit, prepCheckId,
+    PREP_KINDS, prepKindOf, prepDay, prepBringItems, prepList, prepEdit, prepCheckId, gradedAsk,
     DATE_KINDS, dateEdit, dateView, liveDates, isRemovedDate, isFixedDate, fromCanvas,
     // snapshot, context, insights
     buildSnapshot, lastRuns, capacity, weakspotCards, examView, examViews, buildContext, answerStats, readiness, predictReadiness, calibrate, examRetro,
