@@ -1124,17 +1124,18 @@
   "title": "Rollback as a skill, for the v4-tag rollback: .claude/skills/rollback/SKILL.md takes live back to the previous v4 tag (B-30), CLAUDE.md keeps one line pointing at it",
   "dod": null,
   "milestone": "Process",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-30"
   ],
   "dependsText": "B-30 (the D-085 window closed)",
-  "notes": "Taken on Matt's OK via the parent build chat, ahead of the rest.",
-  "commit": null,
+  "notes": "rollback live [--to sha]: a dry run that names the build left and the build gone back to (chart/deploys.json), what a redeploy undoes and keeps (applied schema bumps and migrations stay, legacy copies kept), the schemas crossed, the live tasks' prompts, the restore commit's files, the same-content proof (content hash) and npm test in the restored tree, then every printed deploy call; --matt-ok --apply makes the restore commit at main's head (runs clone 50 deep, B-110), then ship staging and ship live. The skill .claude/skills/rollback/SKILL.md loads by name; CLAUDE.md points at it. Proof: the dry run for 69502f6 -> 93698f0: same content (0a339c78e8ba), 297 tests pass in the restored tree, no schema crossed, no task call, 2 live calls; nothing written. Tests B-60 (2); npm test 319 green.",
+  "commit": "163ceba",
   "source": "BACKLOG.md",
   "board": {
    "row": "v4 B-60: The v4 rollback",
-   "why": "a way back from live before anything more goes live (Exam 4 is Wednesday)"
+   "why": "a way back from live before anything more goes live (Exam 4 is Wednesday)",
+   "notes": "There is now a tested way back: one command shows exactly what going back to the previous live build undoes and keeps, then does it through staging on your OK."
   }
  },
  {
