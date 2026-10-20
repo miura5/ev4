@@ -515,7 +515,8 @@ export function overviewCalls(rec, para) {
 export function readBody(texts) {
   let t = texts.join('');
   const saved = t.match(/Output has been saved to (\S+?\.txt)/);
-  if (saved && fs.existsSync(saved[1])) { const a = readJson(saved[1]); t = Array.isArray(a) ? a.map(x => x.text || '').join('') : String(a); }
+  // A large result is saved as [{type, text}] or, as plain text, the result itself.
+  if (saved && fs.existsSync(saved[1])) { const a = readJson(saved[1]); t = Array.isArray(a) ? a.map(x => x.text || '').join('') : typeof a === 'string' ? a : JSON.stringify(a); }
   const i = t.indexOf('{"verdict"');
   if (i < 0) return null;
   const v = JSON.parse(t.slice(i, t.lastIndexOf('}') + 1));
@@ -599,10 +600,11 @@ export function applyLog(rec, o, { now = new Date().toISOString() } = {}) {
     if (typeof o.kind === 'string') { if (!DECISION_KINDS.includes(o.kind)) throw new Error(`--kind ${DECISION_KINDS.join('|')}`); d.kind = o.kind; }
     if (typeof o.scope === 'string') d.scope = list(o.scope);
     if (typeof o['checked-by'] === 'string') d.check = o['checked-by'];
+    if (typeof o.how === 'string') d.how = o.how;
     if (kindOf(d) === 'tenet') {
       if (!(d.scope || []).length || d.scope.some(x => !TENET_SCOPES.includes(x))) throw new Error(`a tenet needs --scope, one or more of ${TENET_SCOPES.join(', ')}`);
       if (!TENET_CHECKS.includes(d.check)) throw new Error(`a tenet needs --checked-by, one of ${TENET_CHECKS.join(', ')}`);
-    } else { delete d.scope; delete d.check; }
+    } else { delete d.scope; delete d.check; delete d.how; }
     if (!old) rec.decisions.unshift(d);
     for (const s of d.supersedes) { const x = rec.decisions.find(y => y.id === s); if (x) x.status = 'superseded'; }
     return { rec, what: `${kindOf(d)} ${did} (${d.status}${kindOf(d) === 'tenet' ? `, ${d.scope.join(', ')}, ${d.check}` : ''})`, id: o.task || did, views: ['decisions', 'decisionsIntro'] };
@@ -940,7 +942,7 @@ export function brief(rec, id, { root = HERE, scope: override } = {}) {
   out.push('## Decisions it rests on', named.length ? named.map(d => decisions[d] ? `- ${d} (${decisions[d].status}): ${decisions[d].title.slice(0, 240)}${decisions[d].title.length > 240 ? '…' : ''}` : `- ${d}: not in the record`).join('\n') : '- None named in the task; the hard limits and D-139 below still hold.', `Reasoning in full: ${rec.views.decisionsTab}`, '');
   const scope = taskScope(t, override), tenets = tenetsFor(rec, scope);
   out.push(`## Tenets in scope (${scope.length ? scope.join(', ') : 'none found: brief --scope ui,data,ops,pipelines names them'})`,
-    tenets.length ? tenets.map(d => `- ${d.id} (${d.scope.join(', ')}; checked by ${d.check}): ${d.title}`).join('\n') : '- None accepted in this scope.',
+    tenets.length ? tenets.map(d => `- ${d.id} (${d.scope.join(', ')}; checked by ${d.check}): ${d.title}${d.how ? `\n  Check: ${d.how}` : ''}`).join('\n') : '- None accepted in this scope.',
     'Every one applies to this task; the review skill checks the diff against each. A tenet changes only by a superseding tenet plus a sweep task.', '');
   out.push('## Where to look', ...whereToLook(root, [t.title, t.dod, t.notes].join(' ')), '');
   out.push('## What it may touch',
@@ -1021,6 +1023,11 @@ export function designRead(jsonl, docId) {
   }
   return null;
 }
+/** A Check cell's kind: the first of harness, lint, ship or review it names (the look pass is the harness's). */
+export function checkOf(text) {
+  const hits = [...String(text || '').toLowerCase().matchAll(/\b(harness|lint|ship|review|look pass)\b/g)].map(m => m[1] === 'look pass' ? 'harness' : m[1]);
+  return hits[0] || String(text || '').trim().toLowerCase();
+}
 const byHeader = (rows, names) => {
   if (!rows || !rows.length) return [];
   const head = rows[0].map(h => h.toLowerCase());
@@ -1038,7 +1045,7 @@ export function planFrom(rec, read, docId) {
     ...byHeader(tableUnder(read.xml, 'Decisions proposed'), { pid: ['p-n', 'p', 'id'], title: ['decision'], why: ['why'], status: ['status'] }),
     // B-109: tenets share the P-n numbering and the D-ids; each carries its scope and how it is checked.
     ...byHeader(tableUnder(read.xml, 'Tenets proposed'), { pid: ['p-n', 'p', 'id'], title: ['tenet'], scope: ['scope'], check: ['check', 'checked by'], why: ['why'], status: ['status'] }).map(d => ({ ...d, kind: 'tenet' })),
-  ];
+  ].sort((a, b) => Number(String(a.pid).slice(2)) - Number(String(b.pid).slice(2))); // ids follow the doc's P-order
   const src = `plan ${docId}`, P = {}, out = { decisions: [], tasks: [], skipped: [], commands: [] };
   let dn = Number(nextDecisionId(rec).slice(2)), tn = Number(nextTaskId(rec).slice(2));
   for (const d of props) {
@@ -1046,7 +1053,7 @@ export function planFrom(rec, read, docId) {
     if (!/^P-\d+$/.test(d.pid) || !d.title) throw new Error(`${table}: a row needs a P-n and a ${d.kind || 'decision'} (${JSON.stringify(d)})`);
     if (props.filter(x => x.pid === d.pid).length > 1) throw new Error(`${d.pid} is proposed twice`);
     if (d.kind === 'tenet') {
-      d.scope = list(d.scope.toLowerCase()); d.check = d.check.toLowerCase();
+      d.scope = list(d.scope.toLowerCase()); d.how = d.check; d.check = checkOf(d.check);
       if (!d.scope.length || d.scope.some(x => !TENET_SCOPES.includes(x))) throw new Error(`${table}: ${d.pid} needs a scope, one or more of ${TENET_SCOPES.join(', ')}`);
       if (!TENET_CHECKS.includes(d.check)) throw new Error(`${table}: ${d.pid} needs a check, one of ${TENET_CHECKS.join(', ')}`);
     }
@@ -1057,9 +1064,9 @@ export function planFrom(rec, read, docId) {
   const rewrite = s => String(s || '').replace(/\bP-\d+\b/g, x => P[x] || x);
   for (const d of props) {
     if (out.skipped.some(x => x.startsWith(d.pid + ':'))) continue;
-    const e = { id: P[d.pid], pid: d.pid, title: rewrite(d.title), why: rewrite(d.why), status: (d.status || 'accepted').toLowerCase(), kind: d.kind || 'decision', ...(d.kind === 'tenet' ? { scope: d.scope, check: d.check } : {}) };
+    const e = { id: P[d.pid], pid: d.pid, title: rewrite(d.title), why: rewrite(d.why), status: (d.status || 'accepted').toLowerCase(), kind: d.kind || 'decision', ...(d.kind === 'tenet' ? { scope: d.scope, check: d.check, how: d.how && d.how.toLowerCase() !== d.check ? d.how : '' } : {}) };
     out.decisions.push(e);
-    out.commands.push(['log', 'decision', e.id, '--title', e.title, ...(e.why ? ['--why', e.why] : []), '--status', e.status, ...(e.kind === 'tenet' ? ['--kind', 'tenet', '--scope', e.scope.join(','), '--checked-by', e.check] : []), '--source', `${src} ${d.pid}`]);
+    out.commands.push(['log', 'decision', e.id, '--title', e.title, ...(e.why ? ['--why', e.why] : []), '--status', e.status, ...(e.kind === 'tenet' ? ['--kind', 'tenet', '--scope', e.scope.join(','), '--checked-by', e.check, ...(e.how ? ['--how', e.how] : [])] : []), '--source', `${src} ${d.pid}`]);
   }
   for (const t of tasks) {
     if (!t.title || !t.milestone) throw new Error(`Tasks to add: a row needs a task and a milestone (${JSON.stringify(t)})`);
@@ -1149,7 +1156,19 @@ const commands = {
     const p = planFrom(loadChart(root), designRead(file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '', docId), docId);
     console.log(formatPlan(p));
     if (!o.apply || !p.commands.length) return 0;
-    for (const c of p.commands) { const a = args(c); a.trailer = o.trailer; a.root = o.root; a.transcript = o.transcript; a['no-commit'] = o['no-commit']; record(a, applyLog); }
+    // One commit for the whole hand-off (each record write would be its own, and runs clone main only so deep, B-110).
+    const rec = loadChart(root), filed = [];
+    let views = [];
+    for (const c of p.commands) { const r = applyLog(rec, args(c)); filed.push(c[2]); views = [...new Set([...views, ...r.views])]; }
+    const errors = lintChart(rec).filter(f => f.level === 'error' && filed.includes(f.id));
+    if (errors.length) throw new Error('the record would not lint: ' + errors.map(f => `${f.id}: ${f.detail}`).join('; '));
+    saveChart(root, rec); writeBacklog(root, rec);
+    const span = pre => { const x = filed.filter(i => i.startsWith(pre)); return x.length ? (x.length > 1 ? `${x[0]} to ${x.at(-1)}` : x[0]) : null; };
+    const what = `plan ${docId}: ${[p.decisions.filter(d => d.kind !== 'tenet').length + ' decisions', p.decisions.filter(d => d.kind === 'tenet').length + ' tenets', p.tasks.length + ' tasks'].join(', ')}`;
+    const sha = o['no-commit'] ? null : commitRecord(root, `${[span('D-'), span('B-')].filter(Boolean).join(', ')}: ${what} (chart)`, o.trailer);
+    console.log(`plan: filed ${filed.join(', ')}${sha ? `; committed ${sha} (push it: git push origin main)` : '; not committed (--no-commit)'}`);
+    console.log('BACKLOG.md regenerated.');
+    if (views.length) printViews(rec, o, views);
     return 0;
   },
 };

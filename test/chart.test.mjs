@@ -433,6 +433,30 @@ test('B-109: plan files a Tenets proposed table with scope and check, numbered w
   assert.deepEqual(r.decisions.slice(0, 3).map(d => [d.id, C.kindOf(d), (d.scope || []).join(','), d.check || '']), [['D-005', 'tenet', 'ui,data', 'review'], ['D-004', 'tenet', 'ui', 'harness'], ['D-003', 'decision', '', '']]);
   assert.deepEqual(C.lintChart(r).filter(f => f.level === 'error'), []);
   assert.deepEqual(C.planFrom(r, C.designRead(jsonl, id), id).commands, [], 'a second run files nothing');
+  // A Check cell that says how: its first check word is the kind, the whole cell is kept as how.
+  assert.deepEqual(['harness: at load each tab shows one primary button', 'lint (B-89): no monospace; harness: at most 2', 'look pass at 375x667 and 1280x800', 'Review'].map(C.checkOf), ['harness', 'lint', 'harness', 'review']);
+  const how = C.planFrom(sample(), C.designRead(jsonl.replace('>harness<', '>harness: at most one primary button at 390<'), id), id);
+  assert.deepEqual([how.decisions[1].check, how.decisions[1].how], ['harness', 'harness: at most one primary button at 390']);
+  assert.ok(how.commands[1].includes('--how'));
+  // plan --apply on a copy files the whole hand-off in one commit (runs clone main only so deep, B-110).
+  const dir = copyRepo(), tr = path.join(dir, 'transcript.jsonl');
+  fs.writeFileSync(tr, jsonl.replace('>harness<', '>harness: at most one primary button at 390<'));
+  const env = { ...process.env, GIT_AUTHOR_NAME: 'T', GIT_AUTHOR_EMAIL: 't@example.com', GIT_COMMITTER_NAME: 'T', GIT_COMMITTER_EMAIL: 't@example.com' };
+  const before = execFileSync('git', ['-C', dir, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+  const out = execFileSync('node', [path.join(dir, 'tools', 'chart.mjs'), 'plan', '--from', `https://claude.ai/code/artifact/${id}`, '--apply', '--root', dir, '--transcript', tr, '--trailer', 'X-Test: 1'], { encoding: 'utf8', env });
+  const real = C.loadChart(dir), d0 = real.decisions.find(d => d.how);
+  assert.match(out, /plan: filed D-\d{3}, D-\d{3}, D-\d{3}, B-\d+; committed/);
+  assert.equal(execFileSync('git', ['-C', dir, 'rev-list', '--count', `${before}..HEAD`], { encoding: 'utf8' }).trim(), '1');
+  assert.match(execFileSync('git', ['-C', dir, 'log', '-1', '--format=%B'], { encoding: 'utf8' }), /^D-\d{3} to D-\d{3}, B-\d+: plan AbCdEfGhIjKlMnOpQrStUv: 1 decisions, 2 tenets, 1 tasks \(chart\)\n\nX-Test: 1/);
+  assert.deepEqual([d0.kind, d0.check, d0.how], ['tenet', 'harness', 'harness: at most one primary button at 390']);
+  assert.match(C.brief(real, real.tasks.at(-1).id, { root: dir }), /checked by harness\): One primary action per screen\n  Check: harness: at most one primary button at 390/);
+  // A read too large for the transcript is followed to the file it was saved to, as an array of texts or plain.
+  for (const body of [JSON.stringify([{ type: 'text', text: result }]), result]) {
+    const f = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-saved-')), 'mcp-Claude_Docs-read-1.txt');
+    fs.writeFileSync(f, body);
+    const big = toolPair('r2', 'mcp__Claude_Docs__read', { ref: { object: 'node', id: 'N' }, engine: 'prose', container: { kind: 'project', id } }, `Error: result (73,401 characters across 1 line) exceeds maximum allowed tokens. Output has been saved to ${f}.\nFormat: Plain text`).join('\n');
+    assert.equal(C.planFrom(sample(), C.designRead(big, id), id).decisions.length, 3);
+  }
   // A row with no scope or a check outside the list is refused, filing nothing.
   const bad = xml.replace('>harness<', '>vibes<');
   assert.throws(() => C.planFrom(sample(), C.designRead(jsonl.replace(JSON.stringify(xml).slice(1, -1), JSON.stringify(bad).slice(1, -1)), id), id), /P-2 needs a check/);
