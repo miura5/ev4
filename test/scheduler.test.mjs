@@ -8,7 +8,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import EV from '../core/evcore.mjs';
 import { watch, schedulerView, healthBody } from '../core/watch.mjs';
-import { CODE_STEPS, AGENT_MATERIAL, AGENT_FOLDS } from '../core/steps.mjs';
+import { CODE_STEPS } from '../core/steps.mjs';
+import * as RUN from '../core/run.mjs';
+import os from 'node:os';
 import { rebuildOne } from '../core/derive.mjs';
 import { loadValidator } from '../core/schemas.mjs';
 import { ROOT } from './helpers.mjs';
@@ -67,15 +69,26 @@ test('the watch step names both kinds in the push; health/current keeps the sche
   assert.ok(['same', 'inexact-same'].includes(rebuildOne({ ...db, health: [{ id: 'current', ...h }] }, spec, 'health', { id: 'current', ...h }).status));
 });
 
-test('the scheduler read is a printed list_triggers call, and an unsaved read leaves the kinds at no-run', () => {
-  const ctx = { dir: '/tmp/ev-b61-test-' + process.pid, record: 'live' };
-  const m = AGENT_MATERIAL['scheduler-brief']({}, ctx, spec);
-  assert.deepEqual(m.groups[0].calls, [{ tool: 'mcp__claude-code-remote__list_triggers', args: { limit: 100, enabled: true } }]);
-  const f = AGENT_FOLDS['scheduler-result']({ saved: false, refused: 'tool not available' }, {}, ctx, spec);
-  assert.equal(ctx.scheduler, null); assert.match(f.say[0], /no-run/);
-  fs.mkdirSync(path.join(ctx.dir, 'scheduler'), { recursive: true });
-  fs.writeFileSync(path.join(ctx.dir, 'scheduler', 'triggers-1.json'), JSON.stringify(page([T('morning'), '2026-10-20T09:25:28Z'])));
-  AGENT_FOLDS['scheduler-result']({ saved: true }, {}, ctx, spec);
-  assert.equal(ctx.scheduler[0].task, 'morning');
-  fs.rmSync(ctx.dir, { recursive: true, force: true });
+test('the pull prints the list_triggers read; pulled saves its pages and asks for the next one; no result leaves the kinds at no-run', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-b61-'));
+  RUN.start({ spec, pipeline: 'watchdog', record: 'live', at: '2026-10-20T10:40:00Z', dir, release: 'v4.0.0' });
+  const calls = RUN.pull({ spec, dir, at: '2026-10-20T10:40:00Z' });
+  assert.deepEqual(calls[calls.length - 1], { tool: 'mcp__claude-code-remote__list_triggers', args: { limit: 100, enabled: true } });
+  const lines = []; let n = 0;
+  const say = (name, input, text) => { n++; lines.push(JSON.stringify({ message: { content: [{ type: 'tool_use', id: 'u' + n, name, input }] } })); lines.push(JSON.stringify({ message: { content: [{ type: 'tool_result', tool_use_id: 'u' + n, content: [{ type: 'text', text }] }] } })); };
+  for (const c of calls.slice(0, -1)) say('ArtifactData', c.args, `No documents matched in collection "${c.args.collection}".`);
+  // Without the scheduler's result the run goes on, with no pages.
+  assert.equal(RUN.pulled({ spec, dir, transcript: lines.join('\n') }).done, true);
+  assert.equal(fs.existsSync(path.join(dir, 'scheduler')), false);
+  // With a first page that has more, pulled asks for the next page; with both, it is done and both are saved.
+  say('mcp__claude-code-remote__list_triggers', { limit: 100, enabled: true }, JSON.stringify({ ...page([T('morning'), '2026-10-20T09:25:28Z']), has_more: true, next_cursor: 'c2' }));
+  const more = RUN.pulled({ spec, dir, transcript: lines.join('\n') });
+  assert.deepEqual([more.done, more.calls[0].args], [false, { limit: 100, enabled: true, cursor: 'c2' }]);
+  say('mcp__claude-code-remote__list_triggers', { limit: 100, enabled: true, cursor: 'c2' }, JSON.stringify(page([T('watchdog'), '2026-10-20T09:55:10Z'])));
+  assert.equal(RUN.pulled({ spec, dir, transcript: lines.join('\n') }).done, true);
+  assert.deepEqual(fs.readdirSync(path.join(dir, 'scheduler')).sort(), ['triggers-1.json', 'triggers-2.json']);
+  const ctx = { dir, record: 'live', now: '2026-10-20T10:40:00Z', release: 'v4.0.0', source: 't' };
+  const r = CODE_STEPS.watch({ runs: [] }, ctx, spec);
+  assert.equal(r.say.length > 0, true); assert.deepEqual(ctx.scheduler.map(x => x.task), ['morning', 'watchdog']);
+  fs.rmSync(dir, { recursive: true, force: true });
 });

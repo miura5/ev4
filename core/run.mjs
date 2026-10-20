@@ -17,7 +17,7 @@ import { readExport } from './schemas.mjs';
 import { chunkWrites } from './batches.mjs';
 import { describeErrors, validateAgainst } from './validate.mjs';
 import { writersOf, classOf, appendEntries, appendDepth, keyWriter } from './derive.mjs';
-import { toolResults } from './transcript.mjs';
+import { toolResults, resultBody } from './transcript.mjs';
 import { CODE_STEPS, AGENT_MATERIAL, AGENT_FOLDS } from './steps.mjs';
 
 const readJson = p => JSON.parse(fs.readFileSync(p, 'utf8'));
@@ -68,7 +68,23 @@ export function pull({ spec, dir, at }) {
     if (r.windowDays) query.where = [['at', '>=', new Date(EV.toMs(at) - r.windowDays * 864e5).toISOString()]];
     return { tool: 'ArtifactData', args: { action: query.where ? 'query' : 'list', url: run.url, collection: r.collection, query, out_dir: out } };
   });
+  // B-61 (D-112): a pipeline that compares the scheduler with the record reads it with its pull, read-only.
+  if (def.schedulerRead) calls.push({ tool: SCHEDULER_TOOL, args: { limit: 100, enabled: true } });
   return printed(dir, run, 'pull', calls);
+}
+const SCHEDULER_TOOL = 'mcp__claude-code-remote__list_triggers';
+/**
+ * B-61: the scheduler pages the pull's list_triggers call returned (its next_cursor pages too), saved to
+ * <dir>/scheduler/triggers-<n>.json as the transcript holds them. {pages, more: the next call | null}. No result (the
+ * tool not offered to this run) is no pages: the watchdog then keeps the kind no-run, and the run goes on.
+ */
+function schedulerPull(dir, transcript) {
+  const results = toolResults(transcript, 'list_triggers').filter(r => r.input && r.input.limit === 100 && r.input.enabled === true && !r.isError);
+  const sdir = path.join(dir, 'scheduler'); const pages = [];
+  results.forEach((r, i) => { const body = resultBody(r); writeJson(path.join(sdir, `triggers-${i + 1}.json`), JSON.parse(body.trim().startsWith('{') ? body : '{}')); pages.push(r); });
+  const last = results[results.length - 1]; let more = null;
+  if (last) { try { const j = JSON.parse(resultBody(last)); if (j.has_more && j.next_cursor) more = { tool: SCHEDULER_TOOL, args: { limit: 100, enabled: true, cursor: j.next_cursor } }; } catch { /* not JSON: no next page */ } }
+  return { pages: pages.length, more };
 }
 
 /** Versions from an ArtifactData list/query reply: {collection, versions: {id: n}, more: cursor | null}. */
@@ -99,6 +115,7 @@ export function pulled({ spec, dir, transcript }) {
     if (last.more) followUps.push({ tool: 'ArtifactData', args: { ...mine[mine.length - 1].input, query: { ...(mine[mine.length - 1].input.query || {}), cursor: last.more } } });
   }
   if (missing.length) throw new Error(`no pull result for ${missing.join(', ')}: make the printed pull calls first`);
+  if (def.schedulerRead) { const sc = schedulerPull(dir, transcript); if (sc.more) followUps.push(sc.more); }
   if (followUps.length) return { done: false, calls: printed(dir, run, 'pull', followUps) };
   writeJson(path.join(dir, 'versions.json'), versions);
   return { done: true, versions };

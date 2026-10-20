@@ -225,8 +225,10 @@ CODE_STEPS['job-brief'] = function jobBrief(db, ctx, spec) {
 };
 
 // ------------------------------------------------------------------------------------------------ watchdog
+/** The scheduler's last firing per task, from the pages the pull saved; null when there are none (B-61). */
+const schedulerOf = (ctx, spec) => { if (ctx.scheduler !== undefined) return ctx.scheduler; const pages = ctx.dir ? schedulerPages(ctx) : []; return (ctx.scheduler = pages.length ? schedulerView(pages, { record: ctx.record, spec }) : null); };
 CODE_STEPS.watch = function watchStep(db, ctx, spec) {
-  const v = watch(db, { now: ctx.now, record: ctx.record, spec, scheduler: ctx.scheduler || null });
+  const v = watch(db, { now: ctx.now, record: ctx.record, spec, scheduler: schedulerOf(ctx, spec) });
   const writes = v.refires.map(r => ({ op: 'set', collection: 'runs', id: r.id, data: { ...EV.envelope('watchdog', ctx.source, ctx.now), release: ctx.release, pipeline: 'watchdog', startedAt: ctx.now, endedAt: ctx.now, status: 'ok', detail: `re-fired ${r.target}: ${r.reason}` } }));
   const fires = v.refires.map(r => ({ trigger_id: r.trigger, ...(r.text ? { text: r.text } : {}) }));
   const say = [`${v.missing.length} missed, ${v.stalledRuns.length} unfinished, ${v.stalledJobs.length} stalled; re-firing ${v.refires.length}.`, ...v.reported.map(r => `Not re-fired: ${r.target} (${r.why}).`)];
@@ -238,7 +240,7 @@ CODE_STEPS.watch = function watchStep(db, ctx, spec) {
   return { writes, fires, say, ...(push ? { push } : {}) };
 };
 CODE_STEPS.health = function healthStep(db, ctx, spec) {
-  const data = produce(db, spec, 'health', { now: ctx.now, record: ctx.record, scheduler: ctx.scheduler || null }, { source: ctx.source });
+  const data = produce(db, spec, 'health', { now: ctx.now, record: ctx.record, scheduler: schedulerOf(ctx, spec) }, { source: ctx.source });
   return { writes: [{ op: 'set', collection: 'health', id: 'current', data }], say: ['health/current written.'] };
 };
 
@@ -339,19 +341,6 @@ export const AGENT_MATERIAL = {
   },
   'week-brief'(db, ctx) { return ctx.week; },
   /**
-   * B-61 (D-112): the scheduler's record, read by the watchdog as the weekly reads it for verify (B-29): list_triggers,
-   * enabled tasks, paged by its cursor, each page saved with the printed tool-result command. Reads only.
-   */
-  'scheduler-brief'(db, ctx) {
-    const dir = path.join(ctx.dir, 'scheduler'); const save = n => path.join(dir, `triggers-${n}.json`);
-    return {
-      record: ctx.record,
-      rules: ['make the call exactly as listed', `save each page with: node tools/tool-result.mjs list_triggers ${save('<n>')} (n = 1 for the first page; copies the result from this session's transcript, never retyped)`, 'a result with a next_cursor: call it again with the same arguments plus cursor and save it as the next page, until there is none', 'change nothing anywhere: this is a read'],
-      groups: [{ name: 'scheduler-read', rule: 'one call, then its next pages; stop at the first refusal and quote it', calls: [{ tool: 'mcp__claude-code-remote__list_triggers', args: { limit: 100, enabled: true } }] }],
-      saves: [{ tool: 'list_triggers', save: save(1), note: 'then triggers-2.json and on, one per next_cursor page' }],
-    };
-  },
-  /**
    * B-29: the reads verify-deploy needs for this run's own record, as exact calls: list_triggers (paged by its cursor),
    * the record's system/*, its page and the page's files. This checkout is built into the run folder first (the gate
    * proved it is the deployed commit), so the run compares the record with what that commit builds, read-only.
@@ -435,19 +424,13 @@ export function verifyOutcome(answer, ctx) {
   return { ...base, commit: manifest.commit, green: r.green, checked: r.lines.length, differences: r.lines.filter(l => !l.ok).slice(0, 30).map(l => ({ what: l.what, detail: String(l.detail || '').slice(0, 300) })) };
 }
 
-/** The scheduler pages a watchdog run saved (triggers-1.json, -2, ... in its run folder), oldest first. */
+/** The scheduler pages a watchdog run's pull saved (triggers-1.json, -2, ... in its run folder), oldest first (B-61). */
 export function schedulerPages(ctx) {
   const dir = path.join(ctx.dir, 'scheduler'); if (!fs.existsSync(dir)) return [];
   return fs.readdirSync(dir).filter(f => /^triggers-\d+\.json$/.test(f)).sort((a, b) => Number(a.match(/\d+/)[0]) - Number(b.match(/\d+/)[0])).map(f => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')));
 }
 
 export const AGENT_FOLDS = {
-  /** {saved, refused?}: the scheduler's last firing per task (B-61), kept on ctx for the watch and health steps. */
-  'scheduler-result'(answer, db, ctx, spec) {
-    if (!answer.saved) { ctx.scheduler = null; return { say: [`Scheduler not read: ${String(answer.refused || 'a read was not made').slice(0, 200)}. Missed slots keep the kind no-run.`] }; }
-    ctx.scheduler = schedulerView(schedulerPages(ctx), { record: ctx.record, spec });
-    return { say: [`Scheduler read: ${ctx.scheduler.length} task(s) of ${ctx.record} with their last firing.`] };
-  },
   /** {saved, refused?}: the verify result, kept on ctx for the week document written after it (B-29). */
   'verify-result'(answer, db, ctx) {
     const v = ctx.verify = verifyOutcome(answer, ctx);

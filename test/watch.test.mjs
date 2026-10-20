@@ -93,10 +93,6 @@ test('the watchdog pipeline: re-fire records and health/current in one batch, th
     lines.push(JSON.stringify({ message: { content: [{ type: 'tool_result', tool_use_id: 'p' + c.args.collection, content: [{ type: 'text', text: docs.length ? `${docs.length} documents from collection "${c.args.collection}" saved:\n` + docs.map(d => `- "${d.id}"  1 bytes  version 1  "x"`).join('\n') : '0 documents' }] }] } }));
   }
   RUN.pulled({ spec, dir, transcript: lines.join('\n') });
-  // B-61: the scheduler read comes first; this run is told it was not made, so misses keep the kind no-run.
-  const w0 = RUN.compute({ spec, dir, validate, at });
-  assert.deepEqual([w0.status, w0.step, w0.question.material.groups[0].calls[0].tool], ['waiting', 'scheduler', 'mcp__claude-code-remote__list_triggers']);
-  fs.mkdirSync(path.join(dir, 'answers'), { recursive: true }); fs.writeFileSync(path.join(dir, 'answers', 'scheduler.json'), JSON.stringify({ saved: false, refused: 'not read in this test' }));
   const r = RUN.compute({ spec, dir, validate, at });
   assert.equal(r.status, 'planned', JSON.stringify(r.problems));
   assert.deepEqual(r.plan.batches.flat().map(w => `${w.collection}/${w.doc_id}`).sort(), ['health/current', 'runs/watchdog-refire-job-job-a', 'runs/watchdog-refire-morning-old']);
