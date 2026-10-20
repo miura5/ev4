@@ -409,3 +409,10 @@ test('two new deploys reach the Changelog as one insert, newest first (Docs refu
   assert.equal(call.args.payload.ops.length, 1);
   assert.deepEqual(call.args.payload.ops[0].source.from.content.map(row => row.content[1].content[0].content[0].text.match(/at (\d{7})/)[1]), ['4444444', '3333333']);
 });
+
+test('log rewrites a task\'s definition of done or title outside triage', () => {
+  const r = sample();
+  const out = C.applyLog(r, { _: ['log', 'B-03'], dod: 'a new definition', title: 'a new title' });
+  assert.equal(out.what, 'definition of done, title');
+  assert.deepEqual([r.tasks[2].dod, r.tasks[2].title], ['a new definition', 'a new title']);
+});

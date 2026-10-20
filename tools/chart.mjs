@@ -6,7 +6,7 @@
 //   report <bug|request> --from-chat ["<words>"] | --from-comment <id> | "<words>" --source <where>   an inbox entry
 //            in Matt's words as written, taken from this session's transcript (his message, a Board comment) (B-95)
 //   inbox                    session start: the Board comments to file and the entries to triage, as commands
-//   log <id> [--status s] [--note t] [--board-note t] [--commit sha] [--name n] [--why w] [--waiting-on who]
+//   log <id> [--status s] [--note t] [--board-note t] [--commit sha] [--name n] [--why w] [--waiting-on who] [--dod d] [--title t]
 //            [--triage task --dod d --milestone m [--depends ids] | --triage join <id> | --triage decline --reason r]
 //   log deploy --target <staging|live> --commit sha [--time ISO] [--ok Matt] [--verify green] [--rollback sha]
 //              [--tasks ids] [--summary s] [--why w] [--decisions ids]
@@ -631,6 +631,9 @@ export function applyLog(rec, o, { now = new Date().toISOString() } = {}) {
     if (o.status === 'done' && !(o.commit || t.commit)) throw new Error(`${id} done needs --commit (the commit that did it)`);
     what.push(`${t.status} -> ${o.status}`); t.status = o.status;
   }
+  // A task's definition of done or title, rewritten when a decision changes it (outside triage, which sets both).
+  if (!o.triage && typeof o.dod === 'string') { t.dod = o.dod; what.push('definition of done'); }
+  if (!o.triage && typeof o.title === 'string') { t.title = o.title; what.push('title'); }
   if (o.commit) { t.commit = String(o.commit).slice(0, 7); what.push(`commit ${t.commit}`); }
   if (o.note != null) { t.notes = o.note; what.push('notes'); }
   if (o.name || o.why || o['board-note'] != null || o.board) {
