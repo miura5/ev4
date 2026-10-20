@@ -51,3 +51,17 @@ test('the demo build: the live build with only the shell’s door and the demo s
   assert.ok(out['index.html'].includes('window.EVDemo.use(n)'));
   assert.ok(!/window\.claude/.test(out['index.html']), 'the demo shell never reaches claude.use');
 });
+
+test('B-103: the demo scripts only made-up data: no session timing, no prompt wording core owns', () => {
+  const runtime = fs.readFileSync(path.join(ROOT, 'demo/runtime.js'), 'utf8');
+  // Timing comes from the published spec: the demo sets none of the study-session constants.
+  for (const k of Object.keys(JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8')).constants.studyWatch || {})) assert.doesNotMatch(runtime, new RegExp('\\b' + k + '\\s*:'), `the demo sets studyWatch.${k}`);
+  // Prompts are core's: the demo reads them through EVCore.sessionPrompt, never by their words.
+  const prompts = [EV.checkPrompt({ noteName: 'N', text: 'T', added: 'A', n: 1 }), EV.commentPrompt({ noteName: 'N', opening: 'O', added: 'A' }), EV.wrapPrompt({ noteName: 'N', transcript: [] })];
+  const lines = [...new Set(prompts.flatMap(p => p.split('\n')).map(l => l.replace(/"N"|\bN\b|\bT\b|\bO\b|\bA\b/g, '').trim()).filter(l => l.length >= 18))];
+  const pieces = lines.flatMap(l => l.split(/[.:,;()"]/).map(x => x.trim()).filter(x => x.length >= 18));
+  for (const w of pieces) assert.ok(!runtime.includes(w), `demo/runtime.js copies core's prompt wording: "${w}"`);
+  assert.match(runtime, /EVCore\.sessionPrompt\(/);
+  assert.deepEqual(['check', 'comment', 'wrap'], prompts.map(p => EV.sessionPrompt(p).kind));
+  assert.equal(EV.sessionPrompt(EV.commentPrompt({ noteName: 'N', opening: 'O', added: 'new line one\nnew line two' })).added, 'new line one\nnew line two');
+});

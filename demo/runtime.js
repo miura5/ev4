@@ -26,17 +26,13 @@
   }
   const DB = { collection: c => query(c, []) };
 
-  // A study session in the demo (Matt, Oct 19). On the real page Study Watch saves the school note he is writing and
-  // E.V. reads along every 30 seconds, speaking only when a line earns it (B-88). Here the reader serves a made-up note
-  // that grows while the session runs, she reads every 15 seconds (the spec the page reads is changed in this tab
-  // only; the published spec.json is the live file), and her comments, Quiz me now and the wrap-up are scripted.
-  const realFetch = window.fetch.bind(window);
-  window.fetch = async (u, o) => {
-    const r = await realFetch(u, o);
-    if (!/(^|\/)spec\.json(\?|$)/.test(String((u && u.url) || u))) return r;
-    const spec = await r.json(); spec.constants.studyWatch = { ...(spec.constants.studyWatch || {}), readSeconds: 15, commentGapSeconds: 25 };
-    return new Response(JSON.stringify(spec), { status: 200, headers: { 'Content-Type': 'application/json' } });
-  };
+  // A study session in the demo (Matt, Oct 19; B-103). Study Watch saves the school note he is writing and E.V. reads
+  // along at the page's own pace (spec.constants.studyWatch, as published: the demo changes no timing). Here the reader
+  // serves a made-up note that grows one part per read, and Claude's side is scripted: each part's comment, check
+  // questions and flashcard are the demo's made-up data. Which prompt is which, and the new lines in it, come from
+  // core (EVCore.sessionPrompt); the wrap-up holds the parts actually written.
+  let readMs = 30000;
+  window.fetch('spec.json', { cache: 'no-cache' }).then(r => r.json()).then(spec => { readMs = ((spec.constants.studyWatch || {}).readSeconds || 30) * 1e3; }).catch(() => {});
   const NOTE = { id: 'demo-note-ch39', name: 'Ch 39 Fluids and electrolytes', folder: 'NUR 112' };
   const OPENING = 'Thesis: fluid balance is about where the water is (in the cells, between them, in the vessels) and which electrolytes pull it there.';
   const PARTS = [
@@ -51,33 +47,38 @@
   const demoSession = () => Object.values(db.sessions || {}).find(x => x.source === 'E.V. Home' && x.kind !== 'skill' && (x.status === 'active' || x.status === 'ending'));
   function latestNote() {
     if (!demoSession() || notedAt == null) notedAt = Date.now(); // a new session starts the note over
-    const k = Math.min(PARTS.length, 1 + Math.floor((Date.now() - notedAt) / 30000));
+    const k = Math.min(PARTS.length, 1 + Math.floor((Date.now() - notedAt) / readMs));
     return { found: true, graded: false, refused: false, note: { ...NOTE, modifiedAt: new Date().toISOString(), text: [OPENING, ...PARTS.slice(0, k).map(p => p.text)].join('\n\n') + '\n' } };
   }
-  function commentFor(prompt) { // the newest scripted part in the new lines; parts with no line stay silent
-    const added = String(prompt).split('The new lines he just wrote:')[1] || '';
-    const hit = PARTS.filter(p => added.includes(p.text.slice(0, 40))).pop();
+  const added = prompt => window.EVCore.sessionPrompt(prompt).added;
+  function commentFor(prompt) { // the newest part in his new lines speaks; parts with no comment stay silent
+    const hit = PARTS.filter(p => added(prompt).includes(p.text.slice(0, 40))).pop();
     return hit && hit.say ? { say: hit.say, quote: hit.quote, kind: /exam/.test(hit.say) ? 'exam' : 'connection' } : { say: null, quote: null, kind: null };
   }
   function checkItems(prompt) {
-    const added = String(prompt).split('New text since the last check:')[1] || String(prompt).split('The end of the note now reads:')[1] || '';
-    const hits = PARTS.filter(p => added.includes(p.text.slice(0, 40)));
+    const hits = PARTS.filter(p => added(prompt).includes(p.text.slice(0, 40)));
     return { items: (hits.length ? hits : PARTS.slice(0, 1)).slice(0, 3).map(p => ({ text: p.ask, kind: /Connect|links/.test(p.ask) ? 'link' : /Gap/.test(p.ask) ? 'gap' : 'why' })) };
   }
-  const WRAP = {
-    summary: 'A solid pass through fluid balance: volume deficit and excess, sodium and potassium, and IV fluids by tonicity. The link from potassium to the heart monitor was the one to firm up.',
-    weakSpots: [{ objective: 'E4-2', topic: 'Why high potassium shows on the monitor first' }],
-    connections: ['Low sodium and hypotonic IV fluid push water the same way: into the cells.'],
-    noteTodos: ['Add the signs of high sodium next to the low sodium ones'],
-    cards: [
-      { term: 'Best measure of fluid loss', definition: 'Daily weight: 1 kg is about 1 liter' },
-      { term: 'Normal sodium', definition: '135 to 145 mEq/L' },
-      { term: 'Normal potassium', definition: '3.5 to 5.0 mEq/L' },
-      { term: 'First sign of high potassium', definition: 'Peaked T waves on the monitor' },
-      { term: 'Hypotonic IV fluid', definition: '0.45% saline: moves water into the cells' },
-      { term: 'Signs of fluid volume excess', definition: 'Crackles, distended neck veins, edema, bounding pulse' },
-    ],
-  };
+  // The made-up flashcards and topics for each part of the note, in order; the wrap-up holds the parts he wrote.
+  const PART_DATA = [
+    { topic: 'fluid volume deficit', cards: [{ term: 'Best measure of fluid loss', definition: 'Daily weight: 1 kg is about 1 liter' }] },
+    { topic: 'sodium', cards: [{ term: 'Normal sodium', definition: '135 to 145 mEq/L' }] },
+    { topic: 'potassium', cards: [{ term: 'Normal potassium', definition: '3.5 to 5.0 mEq/L' }, { term: 'First sign of high potassium', definition: 'Peaked T waves on the monitor' }], weakSpot: { objective: 'E4-2', topic: 'Why high potassium shows on the monitor first' } },
+    { topic: 'IV fluids by tonicity', cards: [{ term: 'Hypotonic IV fluid', definition: '0.45% saline: moves water into the cells' }] },
+    { topic: 'fluid volume excess', cards: [{ term: 'Signs of fluid volume excess', definition: 'Crackles, distended neck veins, edema, bounding pulse' }] },
+    { topic: 'third spacing', cards: [{ term: 'Third spacing', definition: 'Fluid leaves the vessels for the tissues: swollen, yet short of volume in the vessels' }] },
+  ];
+  function wrapUp() {
+    const n = notedAt == null ? 1 : Math.min(PARTS.length, 1 + Math.floor((Date.now() - notedAt) / readMs)), done = PART_DATA.slice(0, n);
+    const topics = done.map(d => d.topic), list = topics.length > 1 ? topics.slice(0, -1).join(', ') + ' and ' + topics[topics.length - 1] : topics[0];
+    return {
+      summary: `A pass through ${list}.` + (done.some(d => d.weakSpot) ? ' The link from potassium to the heart monitor is the one to firm up.' : ''),
+      weakSpots: done.filter(d => d.weakSpot).map(d => d.weakSpot),
+      connections: ['Low sodium and hypotonic IV fluid push water the same way: into the cells.'],
+      noteTodos: ['Add the signs of high sodium next to the low sodium ones'],
+      cards: done.flatMap(d => d.cards),
+    };
+  }
 
   // Scripted replies: the first rule whose pattern matches what was typed. A rule may run the page's own tools first
   // (a card, a skills run), exactly as Claude would.
@@ -112,9 +113,10 @@
   const sample = Object.assign(chat, {
     json: async p => { await wait(800); const t = String(p);
       if (/Write exactly 5 questions/.test(t)) return { items: window.EVDemoMore.map(q => ({ cjStep: 'analyze-cues', verify: false, ...q })) };
-      if (/reading over his shoulder/.test(t)) return commentFor(t);
-      if (/Study session check \d+ on/.test(t)) return checkItems(t);
-      if (/just ended a study session/.test(t)) return JSON.parse(JSON.stringify(WRAP));
+      const kind = window.EVCore.sessionPrompt(t).kind;
+      if (kind === 'comment') return commentFor(t);
+      if (kind === 'check') return checkItems(t);
+      if (kind === 'wrap') return wrapUp();
       return { items: [] }; },
     limits: async () => ({ maxInputBytes: 262144, tools: { maxCount: 16 } }),
   });
