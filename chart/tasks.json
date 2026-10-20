@@ -2003,5 +2003,24 @@
    "reason": "joins B-98",
    "at": "2026-10-20T00:11:33.764Z"
   }
+ },
+ {
+  "id": "B-110",
+  "kind": "bug",
+  "title": "Bug (reported Oct 19): Tonight's live runs failed at their gate: watchdog 00:56Z, evening-cloud 01:16Z ('this checkout does not have the deployed commit c049f48...': runs clone main 50 commits deep and the live build was 106 commits behind after the chart's bookkeeping commits) and evening-mac 01:21Z (no checkout on the Mac session, B-83). The 21:17 CT live deploy at 93698f0 put live 12 commits behind, so the next runs can check it out; it recurs once main runs 50 commits past the live build.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build session read of runs/ in the live record, Oct 19 21:40 CT",
+  "words": "Tonight's live runs failed at their gate: watchdog 00:56Z, evening-cloud 01:16Z ('this checkout does not have the deployed commit c049f48...': runs clone main 50 commits deep and the live build was 106 commits behind after the chart's bookkeeping commits) and evening-mac 01:21Z (no checkout on the Mac session, B-83). The 21:17 CT live deploy at 93698f0 put live 12 commits behind, so the next runs can check it out; it recurs once main runs 50 commits past the live build.",
+  "reportedAt": "2026-10-20T02:32:25.828Z",
+  "board": {
+   "row": "v4 B-110: Tonight's live runs failed at their gate: watchdog 00:56Z,…",
+   "why": "Tonight's live runs failed at their gate: watchdog 00:56Z, evening-cloud 01:16Z ('this checkout does not have the deployed commit c049f48...': runs clone main 50 commits deep and the live build was 106 commits behind after the chart's bookkeeping commits) and evening-mac 01:21Z (no checkout on the Mac session, B-83). The 21:17 CT live deploy at 93698f0 put live 12 commits behind, so the next runs can check it out; it recurs once main runs 50 commits past the live build.",
+   "notes": "Reported Oct 19 from build session read of runs/ in the live record, Oct 19 21:40 CT"
+  }
  }
 ]
