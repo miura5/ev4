@@ -302,7 +302,10 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     ok('the add row writes his item and clears', mine && mine[1].by === 'Matt' && (await page.inputValue('#today-add')) === '' && (await page.locator('#today-list .row', { hasText: 'Flashcards for the bones lab' }).count()) === 1);
     await page.fill('#today-add', 'half typed'); await page.focus('#today-add'); const rr = await page.evaluate(async () => { const n = document.querySelectorAll('#today-list .row').length; const t = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date()); await (await window.claude.use('db')).collection('dayedits').doc(t).update({ updatedAt: new Date().toISOString() }); return n; }); await page.waitForTimeout(150);
     ok('a refresh keeps what he is typing', rr > 0 && (await page.inputValue('#today-add')) === 'half typed' && await page.evaluate(() => document.activeElement && document.activeElement.id === 'today-add')); await page.fill('#today-add', '');
-    await page.locator('#today-list .row', { hasText: 'Flashcards for the bones lab' }).locator('button', { hasText: 'Remove' }).click(); await page.waitForTimeout(200);
+    // B-117 (D-078): an added item opens in place to its Remove.
+    { const fr = page.locator('#today-list .row', { hasText: 'Flashcards for the bones lab' });
+      ok('an added item shows its Remove only once its line is opened', !(await fr.locator('button', { hasText: 'Remove' }).isVisible()));
+      await fr.locator('.ti-line').click(); await fr.locator('button', { hasText: 'Remove' }).click(); await page.waitForTimeout(200); }
     dd = await dayDoc();
     ok('top bar stays one line while jobs run', await page.evaluate(() => { const b = document.getElementById('brand').getBoundingClientRect(), y = document.getElementById('tab-system').getBoundingClientRect(); return Math.abs((b.top + b.bottom) / 2 - (y.top + y.bottom) / 2) < 6; }), await page.textContent('#readout'));
     ok('the add row is one line: field and Add', await page.evaluate(() => { const i = document.getElementById('today-add').getBoundingClientRect(), b = document.querySelector('.add-row button').getBoundingClientRect(); return Math.abs(i.top - b.top) < 8 && b.left > i.right; }));
