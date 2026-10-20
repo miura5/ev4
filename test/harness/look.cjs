@@ -16,6 +16,9 @@ const ORIGIN = 'https://ev.local';
 function load(dir) { const db = {}; for (const c of fs.readdirSync(dir)) { const p = path.join(dir, c); if (!fs.statSync(p).isDirectory()) continue; db[c] = {}; for (const f of fs.readdirSync(p)) if (f.endsWith('.json')) db[c][f.slice(0, -5)] = JSON.parse(fs.readFileSync(path.join(p, f), 'utf8')); } return db; }
 const seed = load(dbDir);
 delete seed.system; delete seed.legacy; delete seed.debug; delete seed.journal; // the page never subscribes to these at boot
+// B-111: a long idea, to hold its row to a readable shape at both widths.
+const LONG_IDEA = 'When sodium drops the brain swells because water follows the gradient into cells, so confusion and seizures come before anything shows on the heart monitor, unlike potassium, which hits rhythm.';
+seed.ideas = { ...(seed.ideas || {}), 'look-long-idea': { schema: 2, writer: 'page', at: '2026-10-19T23:00:00.000Z', source: 'E.V. Home', text: LONG_IDEA, objective: 'E4-2', status: 'open', links: [], kind: 'learning' } };
 const stub = fs.readFileSync(path.join(__dirname, 'stub.js'), 'utf8');
 const skeleton = body => '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0}[hidden]{display:none!important}</style></head><body>' + body + '</body></html>';
 const TYPES = { '.js': 'text/javascript', '.json': 'application/json', '.css': 'text/css', '.html': 'text/html' };
@@ -42,6 +45,23 @@ const results = []; const ok = (name, cond, detail = '') => results.push([cond ?
       await page.screenshot({ path: `${shots}/look-${t}-${width}.png`, fullPage: true });
       ok(`[${width}] ${t}: no sideways scroll`, await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
     }
+    // B-111: the long idea's text is at most 3 lines and at least 80% of its card's width; opening it shows its controls.
+    await page.click('#tab-record'); await page.waitForTimeout(400);
+    const idea = await page.evaluate(() => {
+      const li = document.querySelector('#ideas li.idea[data-id="look-long-idea"]'); if (!li) return null;
+      const t = li.querySelector('.title'), card = li.closest('.card'), cs = getComputedStyle(t);
+      const lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.4;
+      const acts = li.querySelector('.idea-acts');
+      return { lines: Math.round(t.getBoundingClientRect().height / lh), share: t.getBoundingClientRect().width / (card.clientWidth - parseFloat(getComputedStyle(card).paddingLeft) - parseFloat(getComputedStyle(card).paddingRight)), hidden: getComputedStyle(acts).display === 'none' };
+    });
+    ok(`[${width}] record: the 30-word idea is at most 3 lines`, idea && idea.lines <= 3, JSON.stringify(idea));
+    ok(`[${width}] record: the idea's text is at least 80% of its card's width`, idea && idea.share >= 0.8, JSON.stringify(idea));
+    ok(`[${width}] record: an idea's menu and button wait until it is opened`, idea && idea.hidden, JSON.stringify(idea));
+    await page.click('#ideas li.idea[data-id="look-long-idea"] .idea-head');
+    const opened = await page.evaluate(() => { const li = document.querySelector('#ideas li.idea[data-id="look-long-idea"]'); const vis = e => e && e.getBoundingClientRect().height > 0; return { menu: vis(li.querySelector('select.idea-kind')), button: [...li.querySelectorAll('button')].some(b => /Make it a weak spot/.test(b.textContent) && vis(b)), expanded: li.querySelector('.idea-head').getAttribute('aria-expanded') }; });
+    ok(`[${width}] record: opening the idea shows its menu and Make it a weak spot`, opened.menu && opened.button && opened.expanded === 'true', JSON.stringify(opened));
+    ok(`[${width}] record: the planted idea is 30 words, and opened it shows them all`, LONG_IDEA.split(/\s+/).length === 30 && await page.evaluate(() => { const t = document.querySelector('#ideas li.idea[data-id="look-long-idea"] .title'); return t.scrollHeight <= t.clientHeight + 1; }));
+    await page.locator('#ideas li.idea[data-id="look-long-idea"]').screenshot({ path: `${shots}/look-idea-open-${width}.png` });
     ok(`[${width}] no page errors`, errors.length === 0, errors.join(' | '));
     await page.close();
   }

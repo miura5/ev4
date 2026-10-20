@@ -521,7 +521,9 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
       const gen = page.locator('#ideas .row', { hasText: 'Harness general idea' }), learn = page.locator('#ideas .row', { hasText: 'Harness learning idea' });
       ok('a general idea shows its kind and no weak-spot action', /General/.test(await gen.textContent()) && (await gen.locator('button', { hasText: 'Make it a weak spot' }).count()) === 0);
       ok('a learning idea shows its kind and offers Make it a weak spot', /Learning/.test(await learn.textContent()) && (await learn.locator('button', { hasText: 'Make it a weak spot' }).count()) === 1);
-      await feat.locator('select.idea-kind').selectOption('learning'); await page.waitForTimeout(200);
+      // B-111: the kind menu shows once the row is opened in place.
+      ok('an idea\'s kind menu waits until its row is opened', !(await feat.locator('select.idea-kind').isVisible()));
+      await feat.locator('.idea-head').click(); await feat.locator('select.idea-kind').selectOption('learning'); await page.waitForTimeout(200);
       const k = await page.evaluate(() => window.__db.ideas['idea-harness-feature'].kind);
       ok('changing the kind writes it (a mark) and the action appears', k === 'learning' && (await page.locator('#ideas .row', { hasText: 'Harness feature idea' }).locator('button', { hasText: 'Make it a weak spot' }).count()) === 1, k);
       await page.locator('#ideas').scrollIntoViewIfNeeded(); await page.screenshot({ path: `${shots}/ideas-${scheme}.png`, fullPage: false }); }

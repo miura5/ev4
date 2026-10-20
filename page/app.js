@@ -578,18 +578,28 @@
         await write({ op: 'set', collection: 'weakspots', id, data: facts });
         await write({ op: 'update', collection: 'ideas', id: i.id, data: { status: 'promoted', weakspotId: id } });
       }, 'Now a weak spot'));
+  // B-111 (D-148): an idea is its text on a line of its own, full width, with its kind and source as one quiet line; the
+  // kind menu and Make it a weak spot show when the row is opened in place, and an opened row stays open across renders.
+  const openIdeas = new Set();
+  function ideaRow(i) {
+    const li = el('li', 'row idea' + (openIdeas.has(i.id) ? ' open' : '')); li.dataset.id = i.id;
+    const head = el('button', 'idea-head'); head.type = 'button'; head.setAttribute('aria-expanded', String(openIdeas.has(i.id)));
+    head.append(el('span', 'title', i.text || ''), el('span', 'meta', [IDEA_KIND[i.kind || 'learning'] || 'Learning', i.objective, i.sourceLabel || i.source, short(i.createdAt), (i.links || []).length ? plural(new Set(i.links.map(l => (l && l.to) + '|' + (l && l.type))).size, 'link') : '', i.status === 'promoted' ? 'now a weak spot' : ''].filter(Boolean).join(' · ')));
+    // D-109: a kind control on every idea; only a learning idea can become a weak spot
+    const box = el('div', 'idea-acts'); const sel = document.createElement('select'); sel.setAttribute('aria-label', 'Kind of idea'); sel.className = 'idea-kind';
+    for (const [v, t] of Object.entries(IDEA_KIND)) { const o = document.createElement('option'); o.value = v; o.textContent = t; o.selected = (i.kind || 'learning') === v; sel.append(o); }
+    sel.addEventListener('change', () => guard(sel, () => write({ op: 'update', collection: 'ideas', id: i.id, data: { kind: sel.value } }), 'Kind changed'));
+    box.append(sel); if (i.status !== 'promoted' && (i.kind || 'learning') === 'learning') box.append(promote(i));
+    head.addEventListener('click', () => { const on = !openIdeas.has(i.id); on ? openIdeas.add(i.id) : openIdeas.delete(i.id); li.classList.toggle('open', on); head.setAttribute('aria-expanded', String(on)); });
+    li.append(head, box);
+    return li;
+  }
   function renderRecord() {
     renderWorkoutList();
     const ss = [...S.sessions].sort((a, b) => String(b.startedAt || b.date || '').localeCompare(String(a.startedAt || a.date || '')));
     $('sessions').replaceChildren(...(ss.length ? ss.map(s => row({ lead: short(s.date), title: s.topic || 'Study session', chips: [s.status === 'active' || s.status === 'ending' ? ['in progress', 'info'] : null, s.source === 'E.V. Home' ? ['E.V.', 'ok'] : null], detail: [s.minutes ? s.minutes + ' min' : '', s.questions ? plural(s.questions, 'question') : '', s.cardCount ? s.cardCount + ' cards' : '', s.summary].filter(Boolean).join(' · ') })) : [empty('Study sessions show up here. Start one from the E.V. conversation.')]));
     const ideas = S.ideas.filter(i => i.status !== 'archived').sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
-    $('ideas').replaceChildren(...(ideas.length ? ideas.map(i => row({ title: i.text || '', detail: [i.objective, i.sourceLabel || i.source, short(i.createdAt), (i.links || []).length ? plural(new Set(i.links.map(l => (l && l.to) + '|' + (l && l.type))).size, 'link') : '', i.status === 'promoted' ? 'now a weak spot' : ''].filter(Boolean).join(' · '),
-      chips: [[IDEA_KIND[i.kind || 'learning'] || 'Learning', i.kind === 'feature' ? 'plum' : i.kind === 'general' ? '' : 'info']],
-      action: (() => { // D-109: a kind control on every idea; only a learning idea can become a weak spot
-        const box = el('div', 'idea-acts'); const sel = document.createElement('select'); sel.setAttribute('aria-label', 'Kind of idea'); sel.className = 'idea-kind';
-        for (const [v, t] of Object.entries(IDEA_KIND)) { const o = document.createElement('option'); o.value = v; o.textContent = t; o.selected = (i.kind || 'learning') === v; sel.append(o); }
-        sel.addEventListener('change', () => guard(sel, () => write({ op: 'update', collection: 'ideas', id: i.id, data: { kind: sel.value } }), 'Kind changed'));
-        box.append(sel); if (i.status !== 'promoted' && (i.kind || 'learning') === 'learning') box.append(promote(i)); return box; })() })) : [empty('Ideas from Study Watch sessions show up here after filing.')]));
+    $('ideas').replaceChildren(...(ideas.length ? ideas.map(ideaRow) : [empty('Ideas from Study Watch sessions show up here after filing.')]));
     const up = S.dates.filter(d => (d.date || '') >= today).sort((a, b) => a.date.localeCompare(b.date) || String(a.title).localeCompare(b.title));
     $('dates').replaceChildren(...(up.length ? up.map(d => dateRow(d, { edit: true })) : [empty('No upcoming dates. Add one below.')]));
     const offUp = S.datesAll.filter(d => E.isRemovedDate(d) && (d.date || '') >= today).sort((a, b) => a.date.localeCompare(b.date));
