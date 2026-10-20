@@ -15,7 +15,7 @@ const failing = s => judge(s, spec.ui.tenets.exceptions).filter(c => !c.ok).map(
 test('B-115: the look pass checks D-146 to D-151 at 390, 735 and 1280, with E.V. on and the other tabs reporting', () => {
   assert.deepEqual(spec.ui.tenets.checks, ['D-146', 'D-147', 'D-148', 'D-149', 'D-150', 'D-151']);
   assert.deepEqual(spec.ui.tenets.widths, [390, 735, 1280]);
-  assert.deepEqual(spec.ui.tenets.on, ['ev', 'today', 'study-review']);
+  assert.deepEqual(spec.ui.tenets.on, ['ev', 'today', 'study-review', 'progress-readiness']);
   assert.deepEqual(judge(ev()).map(c => c.tenet), spec.ui.tenets.checks);
   assert.deepEqual(failing(ev()), [], 'the E.V. tab passes them all');
   const look = fs.readFileSync(path.join(ROOT, 'test', 'harness', 'look.cjs'), 'utf8');

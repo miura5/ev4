@@ -646,8 +646,10 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
       const hl = await fp.locator('#thread .msg.ev').last().evaluate(m => ({ lines: [...m.querySelectorAll('.card-line')].map(b => b.querySelector('.cl-t').textContent), cards: m.querySelectorAll('.ev-card').length }));
       ok('How ready am I? attaches readiness and the readiness audit, each one line that opens Progress (B-85)', (hr.cards || []).map(c => c.type).join() === 'readiness,audit' && hl.cards === 0 && hl.lines.length === 2 && /readiness · (\d+% solid|no weak spots yet) · /.test(hl.lines[0]) && /audit · \d+ objectives?/.test(hl.lines[1]), JSON.stringify({ cards: hr.cards, hl }));
       await fp.locator('#thread .msg.ev').last().locator('.card-line', { hasText: 'audit' }).click(); await fp.waitForTimeout(600);
-      const au = await fp.evaluate(() => ({ progress: !document.getElementById('p-progress').hidden, readiness: !document.getElementById('progress-readiness').hidden, text: document.getElementById('audit-card').textContent }));
-      ok('its audit line opens Progress → Readiness, where the audit lists what to reread', au.progress && au.readiness && /Readiness audit · /.test(au.text) && /\d+ solid · \d+ right once · \d+ not yet/.test(au.text) && /Reread: [^·]+, (p\.|slide) \d+/.test(au.text), JSON.stringify(au).slice(0, 400));
+      // B-118: the audit is the readiness list; its top objective opens to what to reread.
+      await fp.locator('#ready-card .obj-line').first().click(); await fp.waitForTimeout(200);
+      const au = await fp.evaluate(() => ({ progress: !document.getElementById('p-progress').hidden, readiness: !document.getElementById('progress-readiness').hidden, text: document.getElementById('ready-card').textContent }));
+      ok('its audit line opens Progress → Readiness, where the objective list opens to what to reread', au.progress && au.readiness && /\d+ not yet/.test(au.text) && /\d+ solid · \d+ right once · \d+ not yet/.test(au.text) && /Reread: [^·]+, (p\.|slide) \d+/.test(au.text), JSON.stringify(au).slice(0, 400));
       await fp.screenshot({ path: `${shots}/audit-card.png` });
       await fp.click('#tab-ev'); await fp.waitForTimeout(300);
       // Grounded explanations: the rule rides in the chat context, with the materials tool

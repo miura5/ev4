@@ -3501,7 +3501,8 @@
    "on": [
     "ev",
     "today",
-    "study-review"
+    "study-review",
+    "progress-readiness"
    ],
    "exceptions": {
     "D-147": [],

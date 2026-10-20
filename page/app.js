@@ -536,22 +536,42 @@
   $('weak-quizlet-btn').addEventListener('click', () => copyQuizlet($('weak-quizlet')));
 
   // ------------------------------------------------------------ Progress
+  // B-118 (D-155): Readiness is one lead line (percent solid, right answers to go, days left) and one objective list in
+  // readinessAudit's order (most not yet first), merging the audit and accuracy by objective. Each row is one line with
+  // its not-yet count and opens in place to its counts, accuracy and passages to reread; past 5 they fold under a count.
+  const openObjs = new Set();
+  function objRow(o, acc, folded) {
+    const li = el('li', 'row obj-item' + (openObjs.has(o.id) ? ' open' : '')); li.dataset.id = o.id; li.hidden = folded;
+    const b = el('button', 'obj-line'); b.type = 'button'; b.setAttribute('aria-expanded', String(openObjs.has(o.id)));
+    b.append(el('span', 'obj-t', o.id + ' · ' + (o.text || '')), el('span', 'obj-n', o.notYet + ' not yet'));
+    const more = el('div', 'obj-more');
+    more.append(el('p', 'meta', [`${o.solid} solid · ${o.rightOnce} right once · ${o.notYet} not yet${o.preRead ? ' · ' + o.preRead + ' previews' : ''}`, acc ? `${acc.right} of ${acc.n} right (${pct(acc.right, acc.n)})` : 'no answers yet'].join(' · ')));
+    if (o.passages && o.passages.length) more.append(el('p', 'meta obj-reread', 'Reread: ' + o.passages.map(x => x.cite).join('; ')));
+    else if ((o.notYet || o.rightOnce) && !LIB.mats) more.append(el('p', 'meta', 'Finding passages to reread…'));
+    b.addEventListener('click', () => { const on = !openObjs.has(o.id); on ? openObjs.add(o.id) : openObjs.delete(o.id); li.classList.toggle('open', on); b.setAttribute('aria-expanded', String(on)); });
+    li.append(b, more); return li;
+  }
+  function foldCard(id, rows, render) { // a table that folds to one line, absent while it holds one row
+    const c = $(id + '-card'), body = c.querySelector('.scroll'), line = c.querySelector('.fold-line'); c.hidden = rows < 2;
+    if (!line.dataset.on) { line.dataset.on = '1'; line.addEventListener('click', () => { body.hidden = !body.hidden; line.setAttribute('aria-expanded', String(!body.hidden)); }); }
+    if (!c.hidden) render(body);
+  }
   function renderReadiness() {
     const card = $('ready-card'); const ex = M.target;
-    if (ex) {
+    const st = E.answerStats(M.attempts.all, { date: today });
+    const objName = id => (S.objectives.find(o => o.id === id) || {}).text || id;
+    if (ex && ui.tab === 'progress') { // built while Progress shows: the audit reads the library
       const r = E.readiness({ examId: ex.id, weakspots: M.models }); const daysLeft = E.diffDays(today, ex.date);
-      const L = E.reviewLoad({ date: today, dayType: E.dayType({ date: today, dates: S.dates, exams: S.exams }), exams: S.exams, weakspots: M.models });
-      const ul = el('ul', 'list');
-      [['Solid', r.solid], ['Right once, one more to go', r.rightOnce], ['Not yet right', r.notYet], ['Previews (missed before the reading)', r.preRead]].forEach(([k, v]) => ul.append(row({ title: k, action: el('b', null, String(v)) })));
-      const plan = daysLeft <= 0 ? 'Exam day: no new reviews.' : r.need === 0 ? 'Everything for this exam is solid.' : `About ${r.need} correct reviews still needed over ${plural(daysLeft, 'day')}. Today’s load is ${L.load}${L.flex ? ' with exam flex' : ''}.`;
-      const kids = [el('h2', null, 'Readiness · ' + (ex.title || ex.id)), el('p', 'big', r.pctSolid != null ? r.pctSolid + '% solid' : 'No weak spots yet'), el('p', 'meta', plan), ul];
-      kids[1].style.cssText = 'font-family:var(--serif);font-size:1.3rem;margin:0';
+      const lead = el('p', 'big ready-lead', [r.pctSolid != null ? r.pctSolid + '% solid' : 'No weak spots yet', r.need ? plural(r.need, 'right answer') + ' to go' : 'nothing to go', daysLeft <= 0 ? 'exam day' : plural(daysLeft, 'day') + ' left'].join(' · '));
+      const audit = auditRows();
+      const seen = new Set(audit.map(a => a.id));
+      const rows = [...audit, ...Object.keys(st.byObjective).filter(id => !seen.has(id) && String(id).split('-')[0] === ex.id).map(id => ({ id, text: objName(id), solid: 0, rightOnce: 0, notYet: 0, preRead: 0, passages: [] }))];
+      const ul = el('ul', 'list obj-list'); rows.forEach((o, i) => ul.append(objRow(o, st.byObjective[o.id], i >= 5 && !ui.objAll)));
+      const kids = [el('h2', null, 'Readiness · ' + (ex.title || ex.id)), lead, ul];
+      if (rows.length > 5) { const f = el('button', 'fold-line'); f.type = 'button'; f.textContent = ui.objAll ? 'Fewer objectives' : `${plural(rows.length - 5, 'more objective')}`; f.setAttribute('aria-expanded', String(!!ui.objAll)); f.addEventListener('click', () => { ui.objAll = !ui.objAll; render(); }); kids.push(f); }
       card.replaceChildren(...kids);
     }
-    // B-85: the readiness audit in full, where its line in the conversation opens (built while Progress shows, since it
-    // reads the library).
-    const ac = $('audit-card'); ac.hidden = !ex;
-    if (ex && ui.tab === 'progress') { ac.replaceChildren(); CARDS.audit(ac, {}, 'progress', true); }
+    $('audit-card').hidden = true; // merged into the list above (B-118); its line in the conversation still opens here
     // Score entry for past unit exams (calibration).
     // D-094: a past NUR unit exam with no score yet; the score goes to examedits/<examId>, replaced whole.
     const needScore = S.exams.filter(e => e.date && e.date < today && (e.course || 'NUR 112') === 'NUR 112' && E.constants().nurUnitExamKinds.includes(e.kind) && typeof e.score !== 'number').sort((a, b) => b.date.localeCompare(a.date));
@@ -566,16 +586,13 @@
         toast(r.fired.ok ? 'Score saved. E.V. is writing your retro.' : 'Score saved. The retro didn’t start: ' + fireCopy(r.fired.error)); }); });
       sc.replaceChildren(f);
     }
-    const st = E.answerStats(M.attempts.all, { date: today });
-    const objName = id => (S.objectives.find(o => o.id === id) || {}).text || id;
-    const rows = Object.entries(st.byObjective).sort((a, b) => (a[1].right / a[1].n) - (b[1].right / b[1].n)).map(([id, s]) => [id + ' · ' + objName(id), s.right + ' of ' + s.n, pct(s.right, s.n)]);
-    $('acc-obj').replaceChildren(rows.length ? table(['Objective', 'Right', '%'], rows) : el('p', 'empty', 'Answer a review or drill to see this.'));
     const t = st.byType; const fr = [['One best answer', 'single'], ['Select all that apply', 'sata'], ['Matrix', 'matrix']].filter(([, k]) => t[k]).map(([lab, k]) => [lab, t[k].right + ' of ' + t[k].n, pct(t[k].right, t[k].n)]);
-    $('acc-fmt').replaceChildren(fr.length ? table(['Format', 'Right', '%'], fr) : el('p', 'empty', 'No answers yet.'));
+    foldCard('fmt', fr.length, b => b.replaceChildren(table(['Format', 'Right', '%'], fr)));
     const cj = E.CJ_STEPS.filter(s => st.byCjStep[s]).map(s => [cjLabel(s), st.byCjStep[s].right + ' of ' + st.byCjStep[s].n, pct(st.byCjStep[s].right, st.byCjStep[s].n)]);
-    $('acc-cj').replaceChildren(cj.length ? table(['Step', 'Right', '%'], cj) : el('p', 'empty', 'Questions written from today on carry a step; results show here as you answer them.'));
+    foldCard('cj', cj.length, b => b.replaceChildren(table(['Step', 'Right', '%'], cj)));
     const mins = {}; S.sessions.forEach(s => { if (s.date) mins[s.date] = (mins[s.date] || 0) + (s.minutes || 0); });
-    $('acc-days').replaceChildren(table(['Day', 'Answered', 'Right', 'Study min'], st.lastDays.map(d => [short(d.date), String(d.n), pct(d.right, d.n), String(mins[d.date] || 0)])));
+    const days = st.lastDays.filter(d => d.n || mins[d.date]);
+    foldCard('days', days.length, b => b.replaceChildren(table(['Day', 'Answered', 'Right', 'Study min'], days.map(d => [short(d.date), String(d.n), pct(d.right, d.n), String(mins[d.date] || 0)]))));
   }
   function wsRow(w) {
     const d = w.derived; const due = E.isDue(w, today);

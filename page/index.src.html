@@ -100,10 +100,11 @@
       <div class="card" id="ready-card"><h2>Readiness</h2><p class="empty">Readiness appears once an upcoming exam has weak spots.</p></div>
       <div class="card" id="audit-card" hidden></div>
       <div class="card" id="score-card" hidden></div>
-      <div class="card"><h2>Accuracy by objective</h2><div class="scroll" id="acc-obj"></div></div>
-      <div class="card"><h2>By question format</h2><div class="scroll" id="acc-fmt"></div></div>
-      <div class="card"><h2>By clinical-judgment step</h2><p class="meta" style="margin:0">The six NCLEX clinical-judgment steps. New questions are tagged with one.</p><div class="scroll" id="acc-cj"></div></div>
-      <div class="card"><h2>Last 7 days</h2><div class="scroll" id="acc-days"></div></div>
+      <!-- B-118 (D-155): accuracy by objective lives in the readiness list; the other tables fold to one line each and are
+           absent while they hold one row. -->
+      <div class="card fold-card" id="fmt-card" hidden><button type="button" class="fold-line" aria-expanded="false" aria-controls="acc-fmt">By question format</button><div class="scroll" id="acc-fmt" hidden></div></div>
+      <div class="card fold-card" id="cj-card" hidden><button type="button" class="fold-line" aria-expanded="false" aria-controls="acc-cj">By clinical-judgment step</button><div class="scroll" id="acc-cj" hidden></div></div>
+      <div class="card fold-card" id="days-card" hidden><button type="button" class="fold-line" aria-expanded="false" aria-controls="acc-days">Last 7 days</button><div class="scroll" id="acc-days" hidden></div></div>
     </div>
     <div id="progress-weak" class="panel" hidden>
       <div class="card"><div class="card-head"><h2>Active</h2><span class="meta" id="weak-count"></span></div>

@@ -62,6 +62,22 @@ const results = []; const ok = (name, cond, detail = '') => results.push([cond ?
       }
       if (view.tab === 'ev') ok(`[${width}] ev: the composer is in view`, await page.evaluate(() => { const c = document.querySelector('.compose-row').getBoundingClientRect(); return c.top >= 0 && c.bottom <= innerHeight + 1 && c.height > 0; }));
     }
+    // B-118: Progress, Readiness: at most 1.5 screens at 390 with every row closed; each objective once; an opened row
+    // shows its passages to reread; the one-row format table absent: the record as planted answers one format (before the Study block below answers a matrix).
+    if (TENETS.widths.includes(size.width) && [844, 830, 800].includes(size.height)) {
+      await page.click('#tab-progress'); await page.click('#seg-progress [data-v="readiness"]');
+      await page.waitForFunction(() => document.querySelector('#ready-card .obj-reread') || document.querySelectorAll('#ready-card .obj-item').length, null, { timeout: 8000 }).catch(() => {});
+      await page.waitForTimeout(1200); // the library loads; the list re-renders with its passages
+      const r = await page.evaluate(() => { const vis = e => !!e && !e.closest('[hidden]') && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().height > 0;
+        const ids = [...document.querySelectorAll('#ready-card .obj-t')].map(t => t.textContent.split(' · ')[0]);
+        const elsewhere = [...document.querySelectorAll('#progress-readiness td, #progress-readiness .row')].filter(e => !e.closest('#ready-card') && vis(e) && /\bE\d+-\d+\b/.test(e.textContent)).length;
+        return { h: Math.round(document.getElementById('progress-readiness').getBoundingClientRect().height), H: innerHeight, ids, once: new Set(ids).size === ids.length && !elsewhere, openAtLoad: document.querySelectorAll('#ready-card .obj-item.open').length, fmt: vis(document.getElementById('fmt-card')) }; });
+      ok(`[${width}] readiness: ${size.width === 390 ? 'at most 1.5 screens with every row closed; ' : ''}each objective once; the one-row format table absent`, (size.width !== 390 || r.h <= 1.5 * r.H) && r.ids.length > 0 && r.once && !r.openAtLoad && !r.fmt, JSON.stringify(r));
+      await page.locator('#ready-card .obj-line').first().click(); await page.waitForTimeout(250);
+      const o = await page.evaluate(() => { const li = document.querySelector('#ready-card .obj-item.open'); const m = li && li.querySelector('.obj-more'); return { open: !!li, shown: !!m && getComputedStyle(m).display !== 'none', text: m ? m.textContent.slice(0, 200) : '' }; });
+      ok(`[${width}] readiness: an opened objective shows its counts, accuracy and passages to reread`, o.open && o.shown && /solid/.test(o.text) && /right/.test(o.text) && /Reread: /.test(o.text), JSON.stringify(o));
+      await page.locator('#ready-card .obj-line').first().click(); await page.waitForTimeout(150);
+    }
     // B-116: the question view: the stem leads with no chip above it, one count on the screen, no More practice while
     // the set is unfinished; after the last answer, More practice is one line.
     if (TENETS.widths.includes(size.width) && [844, 830, 800].includes(size.height)) {
