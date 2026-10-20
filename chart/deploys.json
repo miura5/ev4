@@ -1564,5 +1564,25 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "620411d",
+  "time": "2026-10-20T03:06:11.599Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "e5bc1cb",
+  "tasks": [
+   "B-34",
+   "B-110",
+   "B-107",
+   "B-99",
+   "B-61"
+  ],
+  "summary": "a nightly check of the whole record; Live build too far behind main for the runs' clone; Prep checks in the evening run; drop the standing graded-work and made-up patient reminders; the watchdog checks the scheduler (D-112)",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
