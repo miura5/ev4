@@ -21,6 +21,10 @@ delete seed.system; delete seed.legacy; delete seed.debug; delete seed.journal; 
 // B-111: a long idea, to hold its row to a readable shape at both widths.
 const LONG_IDEA = 'When sodium drops the brain swells because water follows the gradient into cells, so confusion and seizures come before anything shows on the heart monitor, unlike potassium, which hits rhythm.';
 seed.ideas = { ...(seed.ideas || {}), 'look-long-idea': { schema: 2, writer: 'page', at: '2026-10-19T23:00:00.000Z', source: 'E.V. Home', text: LONG_IDEA, objective: 'E4-2', status: 'open', links: [], kind: 'learning' } };
+// B-119: a weekly run that failed after the last health check, to hold System to leading with it.
+const HC_AT = ((seed.health || {}).current || {}).at || new Date().toISOString();
+const FAILED_AT = new Date(Date.parse(HC_AT) + 60000).toISOString();
+seed.runs = { ...(seed.runs || {}), 'weekly-look-failed': { schema: 1, writer: 'weekly', at: FAILED_AT, source: 'weekly', release: 'v4.0.0', pipeline: 'weekly', startedAt: FAILED_AT, endedAt: FAILED_AT, status: 'failed', detail: 'the plan step stopped' } };
 const stub = fs.readFileSync(path.join(__dirname, 'stub.js'), 'utf8');
 const skeleton = body => '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0}[hidden]{display:none!important}</style></head><body>' + body + '</body></html>';
 const TYPES = { '.js': 'text/javascript', '.json': 'application/json', '.css': 'text/css', '.html': 'text/html' };
@@ -114,6 +118,20 @@ const results = []; const ok = (name, cond, detail = '') => results.push([cond ?
       if (await tick.count()) { const at = () => page.evaluate(() => Math.round(document.querySelector('#today-list li.today-item').getBoundingClientRect().top + scrollY)); /* in the document: the click itself may scroll it into view */ const y0 = await at(); await tick.click(); await page.waitForTimeout(400); const y1 = await at(); await page.locator('#today-list li.today-item input.tick').first().click(); await page.waitForTimeout(300);
         ok(`[${width}] today: ticking an item keeps it where it is`, Math.abs(y1 - y0) <= 1, JSON.stringify({ y0, y1 })); }
       await page.evaluate(() => window.scrollTo(0, 0));
+    }
+    // B-119: System: the planted failed run leads; no ok pill; no card stands empty; the pipeline and run lists fold
+    // under one line each, and only the runs that did not finish ok are marked.
+    if (TENETS.widths.includes(size.width) && [844, 830, 800].includes(size.height)) {
+      await page.click('#tab-system'); await page.waitForTimeout(500);
+      const s0 = await page.evaluate(() => { const vis = e => !!e && !e.closest('[hidden]') && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().height > 0, panel = document.getElementById('p-system');
+        return { lead: (document.querySelector('#health .sys-lead') || {}).textContent, okPill: [...panel.querySelectorAll('.chip, .sys-mark')].filter(vis).some(c => /^ok$/i.test(c.textContent.trim())), empty: [...panel.querySelectorAll('.empty')].filter(vis).length,
+          emptyCards: [...panel.querySelectorAll('.card')].filter(c => vis(c) && !c.querySelector('li, #health-top *')).map(c => c.id), listsOpen: ['pipes', 'runs'].filter(id => vis(document.getElementById(id))) }; });
+      ok(`[${width}] system: the failed run leads, no ok pill, no empty card, the lists folded`, /^Weekly review’s last run failed/.test(s0.lead || '') && !s0.okPill && !s0.empty && !s0.emptyCards.length && !s0.listsOpen.length, JSON.stringify(s0));
+      await page.click('#runs-fold'); await page.waitForTimeout(150);
+      const s1 = await page.evaluate(() => [...document.querySelectorAll('#runs li.sys-item')].map(li => ({ t: li.querySelector('.sys-t').textContent, mark: (li.querySelector('.sys-mark') || {}).textContent || '', h: Math.round(li.getBoundingClientRect().height) })));
+      ok(`[${width}] system: opened, the runs are one line each and only the failed one is marked`, s1.length >= 2 && s1.every(r => r.h <= 44) && s1.filter(r => r.mark).length === 1 && /Weekly review/.test(s1.find(r => r.mark).t) && s1.find(r => r.mark).mark === 'failed', JSON.stringify(s1));
+      await page.screenshot({ path: `${shots}/look-system-runs-${width}.png`, fullPage: true });
+      await page.click('#runs-fold'); await page.evaluate(() => window.scrollTo(0, 0));
     }
     // Each seg control back to its first view, as a fresh open has it.
     for (const v of VIEWS.filter(x => x.v)) if (VIEWS.find(x => x.tab === v.tab).v === v.v) { await page.click('#tab-' + v.tab); await page.click(`#seg-${v.tab} [data-v="${v.v}"]`); }

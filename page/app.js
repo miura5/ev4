@@ -701,55 +701,71 @@
     for (const r of hl.reported || []) out.push({ text: `${String(r.target || r.id).replace(/^(run|job) /, '')}: ${r.reason}, ${why[r.why] || r.why}. A build chat should look.`, v: 'bad' });
     return out;
   }
+  // B-119: a line of System that opens in place: one line, its whole text once opened.
+  const openSys = new Set();
+  function sysLine(key, text, mark, detail) {
+    const li = el('li', 'row sys-item' + (openSys.has(key) ? ' open' : '')); const b = el('button', 'sys-line'); b.type = 'button'; b.setAttribute('aria-expanded', String(openSys.has(key)));
+    b.append(el('span', 'sys-t', text)); if (mark) b.append(el('span', 'sys-mark', mark));
+    const more = el('div', 'sys-more'); if (detail) more.append(el('p', 'meta', detail));
+    b.addEventListener('click', () => { const on = !openSys.has(key); on ? openSys.add(key) : openSys.delete(key); li.classList.toggle('open', on); b.setAttribute('aria-expanded', String(on)); });
+    li.append(b, more); return li;
+  }
+  function sysFold(lineId, listId, label) { // a list folded under one line of its count
+    const line = $(lineId), list = $(listId); line.textContent = label;
+    if (!line.dataset.on) { line.dataset.on = '1'; line.addEventListener('click', () => { list.hidden = !list.hidden; line.setAttribute('aria-expanded', String(!list.hidden)); }); }
+  }
   function renderSystem() {
     const st = S.state; const hl = S.health;
-    const panel = $('p-system');
-    let hc = $('health'); if (!hc) { hc = el('div', 'card'); hc.id = 'health'; panel.querySelector('.ptitle').after(hc); }
-    const lines = healthLines(); const bad = lines.filter(l => l.v !== 'info');
-    const kids = [head2('Health', hl ? 'checked ' + ago(hl.at) : ''), el('p', 'big', bad.length ? (bad.length === 1 ? 'One thing to look at.' : bad.length + ' things to look at.') : hl ? 'Everything ran on schedule.' : 'Waiting for the first health check.')];
-    kids[1].style.cssText = 'font-size:1.15rem;margin:0';
-    if (lines.length) { const ul = el('ul', 'list'); lines.forEach(l => ul.append(row({ title: l.text, chips: [[l.chip || (l.v === 'bad' ? 'needs a look' : l.v === 'warn' ? 'handled' : 'note'), l.v]] }))); kids.push(ul); }
-    // The weak spot state E.V. computes now, against the hash the evening run stored with its snapshot.
-    if (M && hl && hl.derivedHash && hl.derivedHash.evening) {
-      const now = E.derivedHash(M.models); const same = now === hl.derivedHash.evening;
-      kids.push(el('p', 'meta', same ? 'Your weak spots match the evening run’s snapshot.' : `Your weak spots changed since the evening snapshot (${short(hl.derivedHash.at)} ${E.chicagoClock(hl.derivedHash.at)}), as answers do.`));
-    }
-    const drill = hl && hl.restoreDrill;
-    kids.push(el('p', 'meta', drill ? `Backup restore drill: ${drill.status === 'ok' ? 'passed' : drill.status} ${drill.days === 0 ? 'today' : drill.days + ' days ago'}.` : 'Backup restore drill: none yet (it runs monthly once the Mac lane is set up).'));
-    hc.replaceChildren(...kids);
-    const runs = [...S.runs].sort((a, b) => String(b.startedAt || '').localeCompare(String(a.startedAt || '')));
-    const last = { ...E.lastRuns(S.runs), ...((hl && hl.pipelines) || {}) };
+    // The last run of each pipeline: the health check's, or a newer one in runs (a run that failed since it was written).
+    const fromRuns = E.lastRuns(S.runs), fromHealth = (hl && hl.pipelines) || {}, last = {};
+    for (const p of new Set([...Object.keys(fromRuns), ...Object.keys(fromHealth)])) { const a = fromRuns[p], b = fromHealth[p]; last[p] = !a ? b : !b ? a : String(a.startedAt || '') > String(b.startedAt || '') ? a : b; }
     const names = Object.entries(EV_SPEC.pipelines || {}).filter(([k]) => !k.startsWith('_'));
-    const v = r => r.status === 'ok' ? 'ok' : r.status === 'running' ? 'info' : r.status === 'partial' ? 'warn' : 'bad';
     const sched = EV_SPEC.schedules || {};
-    $('pipes').replaceChildren(...names.map(([p, def]) => { const r = last[p]; const label = (PIPE_NAME[p] || p) + ' · ' + (def.steps ? when(sched[p]) : 'not built yet');
-      return row({ title: label, detail: r ? `Last run ${short(r.startedAt)} ${E.chicagoClock(r.startedAt)}${r.status === 'running' ? ', still running' : ''}${r.detail ? ' · ' + r.detail : ''}` : def.steps ? 'No run yet' : 'Arrives in a later build step', chips: [r ? [r.status, v(r)] : [def.steps ? 'waiting' : 'later', '']] }); }));
-    $('runs').replaceChildren(...(runs.length ? runs.slice(0, 12).map(r => row({ lead: short(r.startedAt), title: PIPE_NAME[r.pipeline] || r.pipeline || r.id, detail: [E.chicagoClock(r.startedAt), r.detail].filter(Boolean).join(' · ').slice(0, 220), chips: [[r.status || '?', v(r)]] })) : [empty('Runs log here, including failures.')]));
-    // The record against its budgets (D-093): one line per budgeted collection, worst first; no overall cap.
-    const cap = (hl && hl.capacity) || null;
+    const exception = r => !r ? null : r.status === 'ok' ? null : r.status === 'running' ? 'still running' : r.status || '?';
+    // What to look at, the worst first: a last run that failed, then the health check's own lines.
+    const failed = names.filter(([p]) => last[p] && !['ok', 'running'].includes(last[p].status)).map(([p]) => ({ text: `${PIPE_NAME[p] || p}’s last run ${last[p].status === 'partial' ? 'finished partly' : 'failed'} (${short(last[p].startedAt)} ${E.chicagoClock(last[p].startedAt)}).`, detail: last[p].detail || '' }));
+    const problems = [...failed, ...healthLines().filter(l => l.v !== 'info').map(l => ({ text: l.text, mark: l.chip }))];
+    const built = names.filter(([, d]) => d.steps).length;
+    const lead = problems.length ? problems[0].text : hl ? `All ${built} pipelines on time.` : 'Waiting for the first health check.';
+    const top = [head2('Health', hl ? 'checked ' + ago(hl.at) : ''), el('p', 'big sys-lead', lead)];
+    if (problems.length > 1) { const ul = el('ul', 'list'); problems.slice(1).forEach((p, i) => ul.append(sysLine('p' + i + p.text, p.text, p.mark, p.detail))); top.push(ul); }
+    if (M && hl && hl.derivedHash && hl.derivedHash.evening && E.derivedHash(M.models) !== hl.derivedHash.evening) top.push(el('p', 'meta', `Your weak spots changed since the evening snapshot (${short(hl.derivedHash.at)} ${E.chicagoClock(hl.derivedHash.at)}), as answers do.`));
+    const drill = hl && hl.restoreDrill; if (drill && drill.status !== 'ok') top.push(el('p', 'meta', `Backup restore drill: ${drill.status} ${drill.days === 0 ? 'today' : drill.days + ' days ago'}.`));
+    $('health-top').replaceChildren(...top);
+    const runs = [...S.runs].sort((a, b) => String(b.startedAt || '').localeCompare(String(a.startedAt || '')));
+    const pipeEx = names.filter(([p]) => exception(last[p])).length;
+    sysFold('pipes-fold', 'pipes', `Pipelines · ${names.length}${pipeEx ? ' · ' + pipeEx + ' to look at' : ''}`);
+    $('pipes').replaceChildren(...names.map(([p, def]) => { const r = last[p];
+      return sysLine('pipe-' + p, (PIPE_NAME[p] || p) + ' · ' + (def.steps ? when(sched[p]) : 'not built yet'), exception(r) || (!r && def.steps ? 'no run yet' : null), r ? `Last run ${short(r.startedAt)} ${E.chicagoClock(r.startedAt)}${r.detail ? ' · ' + r.detail : ''}` : ''); }));
+    const shown = runs.slice(0, 12), runEx = shown.filter(r => exception(r)).length;
+    sysFold('runs-fold', 'runs', `Recent runs · ${shown.length}${runEx ? ' · ' + runEx + ' to look at' : ''}`);
+    $('runs').replaceChildren(...shown.map(r => sysLine('run-' + r.id, `${short(r.startedAt)} ${E.chicagoClock(r.startedAt)} · ${PIPE_NAME[r.pipeline] || r.pipeline || r.id}`, exception(r), r.detail ? String(r.detail).slice(0, 220) : '')));
+    $('runs-fold').hidden = !shown.length;
+    // The record against its budgets (D-093): absent until the watchdog measures it; a line per budgeted collection.
+    const cap = (hl && hl.capacity) || null; $('cap-card').hidden = !(cap && cap.docs != null);
     if (cap && cap.docs != null) {
       const kib = n => n >= 1048576 ? (Math.round(n / 104857.6) / 10) + ' MiB' : Math.round(n / 1024) + ' KiB';
       const limit = b => [b.warnDocs != null ? `warns at ${Number(b.warnDocs).toLocaleString()}` : null, b.warnBytes != null ? `warns at ${kib(b.warnBytes)}` : null, b.failBytes != null ? `fails at ${kib(b.failBytes)}` : null].filter(Boolean).join(', ');
       const used = b => [b.warnDocs != null || b.failDocs != null ? `${Number(b.docs).toLocaleString()} documents` : null, b.bytes != null ? kib(b.bytes) : null].filter(Boolean).join(' · ') || 'measured by the nightly check';
-      const rows = (cap.budgets || []).map(b => row({ title: b.collection, detail: `${used(b)} · ${limit(b)}${b.level !== 'ok' && b.relief ? ' · relief: ' + b.relief : ''}`, chips: [[b.level === 'ok' ? 'within budget' : b.level === 'warn' ? 'near budget' : 'over budget', b.level === 'ok' ? 'ok' : b.level === 'warn' ? 'warn' : 'bad']] }));
-      $('capacity').replaceChildren(el('p', null, `${Number(cap.docs).toLocaleString()} documents in your record.`), ...(rows.length ? [(() => { const ul = el('ul', 'list'); ul.append(...rows); return ul; })()] : []), el('p', 'meta', 'Nothing is ever deleted; budgets bound what E.V. reads each night, not what it keeps.'));
-    } else $('capacity').replaceChildren(el('p', 'meta', 'Counts arrive with the watchdog’s health check.'));
-    // The nightly record lint (D-090): evening-cloud runs it on its pull and keeps it in state/current.lint.
-    const lt = st && st.lint && typeof st.lint.errors === 'number' ? st.lint : null;
-    const side = (id, before) => { let n = $(id); if (!n) { n = el('div', null); n.id = id; $('lint').insertAdjacentElement(before ? 'beforebegin' : 'afterend', n); } return n; };
-    if (!lt) { side('lint-sum', true).replaceChildren(); side('lint-notes').replaceChildren(); $('lint').replaceChildren(empty('The nightly check runs with the 8:15pm evening run.')); }
-    else {
+      const over = (cap.budgets || []).filter(b => b.level !== 'ok').length;
+      sysFold('cap-card-line', 'capacity', `Capacity · ${Number(cap.docs).toLocaleString()} documents in your record${over ? ' · ' + over + ' near or over budget' : ''}`);
+      const ul = el('ul', 'list'); ul.append(...(cap.budgets || []).map(b => sysLine('cap-' + b.collection, b.collection, b.level === 'ok' ? null : b.level === 'warn' ? 'near budget' : 'over budget', `${used(b)} · ${limit(b)}${b.level !== 'ok' && b.relief ? ' · relief: ' + b.relief : ''}`)));
+      $('capacity').replaceChildren(ul, el('p', 'meta', 'Nothing is ever deleted; budgets bound what E.V. reads each night, not what it keeps.'));
+    }
+    // The nightly record lint (D-090): absent until evening-cloud has run it; its issues fold under their count.
+    const lt = st && st.lint && typeof st.lint.errors === 'number' ? st.lint : null; $('lint-card').hidden = !lt;
+    if (lt) {
       const issues = lt.top || []; const nb = lt.notesByCode || {};
       const NOTE = { frozen: 'kept from before, frozen', 'fact-migrated': 'updated by a schema change', retired: 'in a retired collection', 'not-rebuilt': 'rebuilt by their next run', 'derived-inexact': 'built from something since edited' };
-      const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
-      const summary = el('p', 'meta', `Checked ${short(lt.at)} ${E.chicagoClock(lt.at)} · ${plural(lt.errors, 'error')}, ${plural(lt.warnings, 'warning')}` + (lt.rebuilt && lt.rebuilt.of ? ` · ${lt.rebuilt.same} of ${lt.rebuilt.of} built documents reproduced` : ''));
-      const notes = Object.entries(nb).length ? [el('p', 'meta', 'Notes, not problems: ' + Object.entries(nb).map(([c, n]) => `${n} ${NOTE[c] || c}`).join(' · '))] : [];
-      side('lint-sum', true).replaceChildren(summary); side('lint-notes').replaceChildren(...notes);
-      $('lint').replaceChildren(...(issues.length ? issues.map(i => row({ title: i.msg, detail: i.ref, chips: [[i.severity, i.severity === 'error' ? 'bad' : 'warn']] })) : [empty(lt.errors || lt.warnings ? 'Details are in the evening run.' : 'No problems in the last check.')]));
+      sysFold('lint-card-line', 'lint-body', `Checks · ${plural(lt.errors, 'error')}, ${plural(lt.warnings, 'warning')} · ${short(lt.at)} ${E.chicagoClock(lt.at)}`);
+      $('lint').replaceChildren(...issues.map((i, n) => sysLine('lint-' + n + i.msg, i.msg, i.severity, i.ref)));
+      const extra = [lt.rebuilt && lt.rebuilt.of ? `${lt.rebuilt.same} of ${lt.rebuilt.of} built documents reproduced.` : '', Object.entries(nb).length ? 'Notes, not problems: ' + Object.entries(nb).map(([c, n]) => `${n} ${NOTE[c] || c}`).join(' · ') + '.' : ''].filter(Boolean);
+      $('lint-body').querySelectorAll(':scope > p.meta').forEach(p => p.remove()); $('lint-body').append(...extra.map(t => el('p', 'meta', t)));
     }
     const js = [...S.jobs].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || ''))).slice(0, 10);
-    $('jobs').replaceChildren(...(js.length ? js.map(j => { const st = jobState(j); return row({ lead: short(j.createdAt), title: j.title || j.id, detail: [(KINDS[j.kind] || {}).label, st.detail].filter(Boolean).join(' · '), chips: [[st.label, st.v]] }); }) : [empty('Jobs you ask E.V. for show up here.')]));
-    $('versions').replaceChildren(document.createTextNode(`Release ${EV_BUILD} · core ${E.VERSION} · spec ${EV_SPEC.specVersion} · ${EV_SPEC.target === 'staging' ? 'staging record' : 'your record'}${st ? ' · snapshot ' + short(st.generatedAt) + ' ' + E.chicagoClock(st.generatedAt) : ''}`));
+    $('jobs-card').hidden = !js.length;
+    if (js.length) { sysFold('jobs-card-line', 'jobs', `Background jobs · ${js.length}`); $('jobs').replaceChildren(...js.map(j => { const s2 = jobState(j); return sysLine('job-' + j.id, `${short(j.createdAt)} · ${j.title || j.id}`, s2.v === 'ok' ? null : s2.label, [(KINDS[j.kind] || {}).label, s2.detail].filter(Boolean).join(' · ')); })); }
+    $('versions').textContent = `Release ${EV_BUILD} · core ${E.VERSION} · spec ${EV_SPEC.specVersion} · ${EV_SPEC.target === 'staging' ? 'staging record' : 'your record'}${st ? ' · snapshot ' + short(st.generatedAt) + ' ' + E.chicagoClock(st.generatedAt) : ''}`;
   }
 
   // ------------------------------------------------------------ E.V. (the conversation)

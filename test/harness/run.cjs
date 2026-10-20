@@ -534,21 +534,23 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     ok('journal warns about identifiers', /room number/.test(await page.textContent('#j-warn')));
     // System
     await page.click('#tab-system'); await page.waitForTimeout(100);
-    ok('system shows capacity and the runs', /412 documents in your record/.test(await page.textContent('#capacity')) && (await page.locator('#pipes .row').count()) >= 5, await page.textContent('#capacity'));
-    { const c = await page.textContent('#capacity'); // B-37 (D-093): the budgets, worst first, no 25,000 cap
-      ok('system shows the D-093 budgets, the one near its budget first with its relief', (await page.locator('#capacity .row').count()) === 3 && /^412 documents in your record\.setsnear budget401 documents · warns at 400 · relief: the weekly roll-upstate/.test(c) && /warns at 192 KiB, fails at 240 KiB/.test(c) && /1\.5 MiB · warns at 4 MiB/.test(c) && !/25,000/.test(c), c);
-      const card = page.locator('#capacity').locator('xpath=..');
+    // B-119: the lists fold under one line each; the cards' lines carry their counts.
+    ok('system shows capacity and the runs', /412 documents in your record · 1 near or over budget/.test(await page.textContent('#cap-card-line')) && (await page.locator('#pipes .sys-item').count()) >= 5 && !(await page.isVisible('#pipes')), await page.textContent('#cap-card-line'));
+    { await page.click('#cap-card-line'); const c = await page.textContent('#capacity'); // B-37 (D-093): the budgets, worst first, no 25,000 cap
+      ok('system shows the D-093 budgets, the one near its budget first with its relief', (await page.locator('#capacity .sys-item').count()) === 3 && /^setsnear budget401 documents · warns at 400 · relief: the weekly roll-upstate/.test(c) && /warns at 192 KiB, fails at 240 KiB/.test(c) && /1\.5 MiB · warns at 4 MiB/.test(c) && !/25,000/.test(c), c);
+      const card = page.locator('#cap-card');
       for (const [w, h] of [[390, 844], [1280, 860]]) { await page.setViewportSize({ width: w, height: h }); await card.scrollIntoViewIfNeeded(); await page.waitForTimeout(400); await card.screenshot({ path: `${shots}/capacity-${w}.png` }); }
-      await page.setViewportSize(scheme === 'phone' ? { width: 390, height: 844 } : { width: 1280, height: 860 }); }
-    { const card = page.locator('#lint').locator('xpath=..'); const c = await card.textContent(); // B-34 (D-090)
-      ok('the Checks card shows the nightly lint: when, the counts, the warning, the notes by kind', /Checked .* · 0 errors, 1 warning · 3 of 4 built documents reproduced/.test(c) && (await page.locator('#lint .row').count()) === 1 && /derived-stale|built by build/.test(c) && /days\/2026-10-17/.test(c) && /Notes, not problems: 1 kept from before, frozen · 1 rebuilt by their next run/.test(c), c.slice(0, 300));
+      await page.setViewportSize(scheme === 'phone' ? { width: 390, height: 844 } : { width: 1280, height: 860 }); await page.click('#cap-card-line'); }
+    { const card = page.locator('#lint-card'); await page.click('#lint-card-line'); const c = await card.textContent(); // B-34 (D-090)
+      ok('the Checks card shows the nightly lint: when, the counts, the warning, the notes by kind', /Checks · 0 errors, 1 warning · /.test(await page.textContent('#lint-card-line')) && /3 of 4 built documents reproduced\./.test(c) && (await page.locator('#lint .sys-item').count()) === 1 && /derived-stale|built by build/.test(c) && /days\/2026-10-17/.test(c) && /Notes, not problems: 1 kept from before, frozen · 1 rebuilt by their next run/.test(c), c.slice(0, 300));
       for (const [w, h] of [[390, 844], [1280, 860]]) { await page.setViewportSize({ width: w, height: h }); await card.scrollIntoViewIfNeeded(); await page.waitForTimeout(400); await card.screenshot({ path: `${shots}/checks-${w}.png` }); }
-      await page.setViewportSize(scheme === 'phone' ? { width: 390, height: 844 } : { width: 1280, height: 860 }); }
-    // ---- System health panel (B-17): health/current in plain words, never alarming
+      await page.setViewportSize(scheme === 'phone' ? { width: 390, height: 844 } : { width: 1280, height: 860 }); await page.click('#lint-card-line'); }
+    // ---- System health panel (B-17, B-119): health/current in plain words, never alarming; the first thing to look at leads
     const hp = await page.textContent('#health');
-    ok('health panel leads with a plain verdict from health/current', /3 things to look at\./.test(hp) && /checked 5\d min ago/.test(hp), hp.slice(0, 160));
+    const lead = await page.textContent('#health .sys-lead'), nTop = await page.locator('#health-top li').count();
+    ok('health panel leads with the first thing to look at, the rest one line each', /missed its .*run; E\.V\. started it again\./.test(lead) && nTop === 2 && /checked 5\d min ago/.test(hp), JSON.stringify({ lead, nTop }));
     ok('a missed slot, a stalled run and a stuck retry each read as a sentence', /Evening \(cloud\) missed its .*run; E\.V\. started it again\./.test(hp) && /Weekly review started 3 h ago and never finished\./.test(hp) && /weekly-h: never ended, still stuck after one retry\. A build chat should look\./.test(hp), hp);
-    ok('the weak spot state is held against the evening hash, and the drill age is shown', /Your weak spots changed since the evening snapshot/.test(hp) && /Backup restore drill: none yet/.test(hp));
+    ok('the weak spot state is held against the evening hash; a drill not yet run is not a line', /Your weak spots changed since the evening snapshot/.test(hp) && !/Backup restore drill/.test(hp));
     ok('pipelines read with when they run', /Morning · daily 4:25am/.test(await page.textContent('#pipes')) && /Watchdog · every 3 hours at :55/.test(await page.textContent('#pipes')) && /Restore drill · monthly on the 1st, 8:55pm/.test(await page.textContent('#pipes')), (await page.textContent('#pipes')).slice(0, 300));
     ok('versions name the release and the record', /Release v4\.0\.0 · core v4\.0\.0 · spec 4\.0\.0 · staging record/.test(await page.textContent('#versions')));
     await page.screenshot({ path: `${shots}/system.png`, fullPage: true });
@@ -560,7 +562,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
       for (const [w, h] of [[390, 844], [1280, 860]]) {
         await page.setViewportSize({ width: w, height: h }); await card.scrollIntoViewIfNeeded(); await page.waitForTimeout(300);
         const t = await card.textContent();
-        ok(`[${w}] a 5-hour-old health check is marked stale`, /This health check is 5 hours old\. The watchdog checks every three hours, so it may have stopped\./.test(t) && (await card.locator('.chip', { hasText: 'stale' }).count()) === 1 && /4 things to look at\./.test(t), t.slice(0, 200));
+        ok(`[${w}] a 5-hour-old health check is marked stale`, /This health check is 5 hours old\. The watchdog checks every three hours, so it may have stopped\./.test(t) && /^This health check is 5 hours old/.test(await page.textContent('#health .sys-lead')) && (await page.locator('#health-top li').count()) === 3, t.slice(0, 200));
         await card.screenshot({ path: `${shots}/health-stale-${w}.png` });
       }
       await setAt(keep); await page.waitForTimeout(200);

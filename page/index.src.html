@@ -172,13 +172,17 @@
   <!-- SYSTEM -->
   <section class="panel" id="p-system" role="tabpanel" aria-labelledby="tab-system" hidden>
     <h2 class="ptitle">System</h2>
-    <div class="card"><h2>Pipelines</h2><ul class="list" id="pipes"></ul></div>
-    <div class="card"><h2>Recent runs</h2><ul class="list" id="runs"></ul></div>
-    <div class="card"><h2>Background jobs</h2><ul class="list" id="jobs"></ul></div>
-    <div class="card"><h2>Capacity</h2><div id="capacity"></div></div>
-    <div class="card"><h2>Checks</h2><ul class="list" id="lint"></ul></div>
-    <div class="card"><h2>Versions</h2><div id="versions" class="meta"></div></div>
-    <div class="card" id="sys-privacy"><h2>Privacy</h2><p class="meta" id="sys-note">E.V. logs your conversations to your record. Only you can read it.</p><p class="meta" id="sys-staging" hidden>Staging copy. Jobs here run the staging worker on the staging record.</p></div>
+    <!-- B-119 (D-148, D-150, D-151): one lead line, the pipeline and run lists folded under it with only exceptions
+         marked; Background jobs, Capacity and Checks absent while empty; versions and privacy two quiet lines. -->
+    <div class="card" id="health"><div id="health-top"></div>
+      <button type="button" class="fold-line" id="pipes-fold" aria-expanded="false" aria-controls="pipes">Pipelines</button><ul class="list" id="pipes" hidden></ul>
+      <button type="button" class="fold-line" id="runs-fold" aria-expanded="false" aria-controls="runs">Recent runs</button><ul class="list" id="runs" hidden></ul>
+    </div>
+    <div class="card fold-card" id="jobs-card" hidden><button type="button" class="fold-line" id="jobs-card-line" aria-expanded="false" aria-controls="jobs">Background jobs</button><ul class="list" id="jobs" hidden></ul></div>
+    <div class="card fold-card" id="cap-card" hidden><button type="button" class="fold-line" id="cap-card-line" aria-expanded="false" aria-controls="capacity">Capacity</button><div id="capacity" hidden></div></div>
+    <div class="card fold-card" id="lint-card" hidden><button type="button" class="fold-line" id="lint-card-line" aria-expanded="false" aria-controls="lint-body">Checks</button><div id="lint-body" hidden><ul class="list" id="lint"></ul></div></div>
+    <p class="meta sys-foot" id="versions"></p>
+    <p class="meta sys-foot" id="sys-privacy"><span id="sys-note">E.V. logs your conversations to your record. Only you can read it.</span> <span id="sys-staging" hidden>Staging copy. Jobs here run the staging worker on the staging record.</span></p>
   </section>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
