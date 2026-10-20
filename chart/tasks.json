@@ -1259,13 +1259,14 @@
   "title": "Harness on the synthetic record (O-7, optional): test/harness/run.cjs passes on test/data/record or a generated record, so it can run from npm test when Playwright is present. Take only if it costs less than a session; the real gate stays the staging export",
   "dod": null,
   "milestone": "M9",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-64"
   ],
-  "notes": "Oct 20, from B-64: on a fresh staging export (fixtures/staging-export, ignored) test/harness/run.cjs passes 252 of 273; the same 21 fail at b47e04c, so they predate this session. They expect the synthetic record (the greeting naming one urgent item, the briefing's order, the ladder workout, the study-session and filing stubs). B-67's job is the inverse direction (pass on a generated record from npm test); the export failures are a finding for whoever next wants a real-record gate",
+  "notes": "Oct 20, not taken: it isn't cheap. The synthetic half is nearly there (run.cjs already defaults to a generated synthetic record and passes 273 of 273 in npm run check); putting it in npm test would add about two minutes to every npm test, and so to the end-of-turn hook and CI, which has no Chromium (it would skip there). The DoD's other half, the harness on a staging export, fails 21 of 273 today, all predating this session (same set at b47e04c): checks written against the synthetic record's shape (greeting text, briefing order, the ladder workout, study-session and filing stubs). Making those hold on real data is a session's work of its own. Question for Matt: take B-67 in its own session (and is a real-record pass still wanted), or decline it?",
   "commit": null,
-  "source": "BACKLOG.md"
+  "source": "BACKLOG.md",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-68",
