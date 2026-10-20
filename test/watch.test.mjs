@@ -93,6 +93,10 @@ test('the watchdog pipeline: re-fire records and health/current in one batch, th
     lines.push(JSON.stringify({ message: { content: [{ type: 'tool_result', tool_use_id: 'p' + c.args.collection, content: [{ type: 'text', text: docs.length ? `${docs.length} documents from collection "${c.args.collection}" saved:\n` + docs.map(d => `- "${d.id}"  1 bytes  version 1  "x"`).join('\n') : '0 documents' }] }] } }));
   }
   RUN.pulled({ spec, dir, transcript: lines.join('\n') });
+  // B-61: the scheduler read comes first; this run is told it was not made, so misses keep the kind no-run.
+  const w0 = RUN.compute({ spec, dir, validate, at });
+  assert.deepEqual([w0.status, w0.step, w0.question.material.groups[0].calls[0].tool], ['waiting', 'scheduler', 'mcp__claude-code-remote__list_triggers']);
+  fs.mkdirSync(path.join(dir, 'answers'), { recursive: true }); fs.writeFileSync(path.join(dir, 'answers', 'scheduler.json'), JSON.stringify({ saved: false, refused: 'not read in this test' }));
   const r = RUN.compute({ spec, dir, validate, at });
   assert.equal(r.status, 'planned', JSON.stringify(r.problems));
   assert.deepEqual(r.plan.batches.flat().map(w => `${w.collection}/${w.doc_id}`).sort(), ['health/current', 'runs/watchdog-refire-job-job-a', 'runs/watchdog-refire-morning-old']);
@@ -131,7 +135,7 @@ test('B-27 (D-087): a missed mac-lane slot is listed in missing and never re-fir
     const db = { runs: [run('evening-cloud-x', 'evening-cloud', '2026-10-19T01:15:00Z')] }; // the cloud evening ran, the Mac's did not
     const v = watch(db, { now: '2026-10-19T02:00:00Z', record: target, spec }); // 9:00pm CDT, 40 min after 8:20pm
     const m = v.missing.find(x => x.pipeline === 'evening-mac');
-    assert.deepEqual(m, { pipeline: 'evening-mac', slot: '2026-10-19T01:20:00.000Z', refired: false, lane: 'mac' }, target);
+    assert.deepEqual(m, { pipeline: 'evening-mac', slot: '2026-10-19T01:20:00.000Z', kind: 'no-run', refired: false, lane: 'mac' }, target);
     assert.ok(!v.refires.some(r => r.target.includes('evening-mac')), `${target}: never re-fired`);
     assert.ok(!v.reported.some(r => r.target.includes('evening-mac')), `${target}: a miss, not a stuck retry`);
     // It ran: nothing missing.

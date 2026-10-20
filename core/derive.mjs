@@ -267,7 +267,7 @@ export const PRODUCERS = {
   weeks: { writer: 'weekly', inputs: (s) => ({ date: s.date || s.id, now: s.at, verify: (s.health && typeof s.health === 'object' && s.health.verify) || null }), build: (db, i, spec, stored) => weekBody(db, i, spec, stored) },
   predictions: { writer: 'morning', inputs: (s) => ({ examId: s.examId || s.id, date: s.date, now: s.at }), build: (db, i) => predictionBody(db, i) },
   libindex: { writer: 'evening-cloud', inputs: (s) => ({ course: s.course || s.id, now: s.at }), build: (db, i) => libindexBody(db, i) },
-  health: { writer: 'watchdog', inputs: (s) => ({ now: s.at, record: s.record || 'staging' }), build: (db, i, spec) => healthBody(db, i, spec) },
+  health: { writer: 'watchdog', inputs: (s) => ({ now: s.at, record: s.record || 'staging', scheduler: s.scheduler || null }), build: (db, i, spec) => healthBody(db, i, spec) },
 };
 
 /** Derived documents with no producer yet, and why. lint reports them; rebuild skips them. */

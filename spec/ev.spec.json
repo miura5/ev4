@@ -638,14 +638,37 @@
    ],
    "steps": [
     {
+     "id": "scheduler",
+     "kind": "agent",
+     "judgment": "Read the scheduler's record, read-only (B-61, D-112): make the listed list_triggers call exactly as listed and save the result with the printed tool-result command, never retyped. When it returns a next_cursor, call it again with the same arguments plus that cursor and save the next page the same way, until there is none. Change nothing. Answer saved: true when every page was saved; if the call is refused, answer saved: false with the refusal quoted.",
+     "material": "scheduler-brief",
+     "output": {
+      "type": "object",
+      "properties": {
+       "saved": {
+        "type": "boolean"
+       },
+       "refused": {
+        "type": "string",
+        "maxLength": 300
+       }
+      },
+      "required": [
+       "saved"
+      ],
+      "additionalProperties": false
+     },
+     "fold": "scheduler-result"
+    },
+    {
      "id": "watch",
      "kind": "code",
-     "does": "finds missed slots, runs that never ended and stalled jobs; plans one re-fire each (a runs record and a printed fire_trigger), or reports a second miss"
+     "does": "finds missed slots (each with its kind: refused-at-start when the scheduler fired it and no run came within 5 minutes, not-fired when nothing fired it, B-61), runs that never ended and stalled jobs; plans one re-fire each (a runs record and a printed fire_trigger), or reports a second miss; names refused and unfired slots in its push"
     },
     {
      "id": "health",
      "kind": "code",
-     "does": "writes health/current: the last run per pipeline, what is missing or stalled, the derived hash, capacity and the restore drill's age"
+     "does": "writes health/current: the last run per pipeline, what is missing (with its kind) or stalled, the scheduler's last firing per task as read, the derived hash, capacity and the restore drill's age"
     }
    ]
   },

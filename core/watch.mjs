@@ -38,11 +38,30 @@ export function lastSlot(schedule, now) {
 }
 
 /**
+ * B-61 (D-112): the scheduler's side, from the list_triggers pages a run saved: for each task of spec.tasks.<record>,
+ * its trigger's last firing {task, pipeline, trigger, firedAt, status}. Tasks the scheduler does not list are left out.
+ */
+export function schedulerView(pages, { record, spec }) {
+  const tasks = (spec.tasks && spec.tasks[record]) || {};
+  const all = []; for (const p of pages || []) all.push(...((p && p.data) || []));
+  const out = [];
+  for (const [name, t] of Object.entries(tasks).sort(([a], [b]) => (a < b ? -1 : 1))) {
+    if (!t.trigger || !t.pipeline) continue;
+    const tr = all.find(x => x.id === t.trigger); if (!tr) continue;
+    const lr = tr.last_run || null;
+    out.push({ task: name, pipeline: t.pipeline, trigger: t.trigger, firedAt: (lr && lr.fired_at) || tr.last_fired_at || null, status: lr ? String(lr.status || '').replace(/^ROUTINE_RUN_STATUS_/, '') : null });
+  }
+  return out;
+}
+
+/**
  * db: runs, jobs, jobresults, state (as pulled). Returns {pipelines, missing, stalledRuns, stalledJobs, refires,
  * reported}: refires are {id (the runs record), target, trigger, text?, reason}; reported are second misses and
- * misses past their window.
+ * misses past their window. With `scheduler` (schedulerView, B-61) each missing slot has a kind: refused-at-start (the
+ * scheduler fired it and no run document came within 5 minutes) or not-fired (no firing for the slot); without it,
+ * no-run. A firing outside any slot (a fire-only task) that left no run is refused-at-start too.
  */
-export function watch(db, { now, record, spec }) {
+export function watch(db, { now, record, spec, scheduler = null }) {
   const w = W(spec); const tasks = (spec.tasks && spec.tasks[record]) || {};
   const runs = (db.runs || []).filter(r => r.pipeline);
   const done = new Map(runs.map(r => [r.id, r]));
@@ -65,6 +84,13 @@ export function watch(db, { now, record, spec }) {
   const deadlineFor = (pipeline, from, task, slotMiss = false) => { const until = task && (task.schedule || (slotMiss && task.watchSchedule)) ? w.refireUntil[pipeline] : null; if (until) { const [h, m] = until.split(':').map(Number); return chicagoInstant(EV.chicagoDate(from), h, m); } return new Date(ms(from) + w.refireWithinMinutes * 6e4).toISOString(); };
 
   const missing = [];
+  // A missed slot's kind, from the scheduler's last firing of that task (B-61): fired at or after the slot is
+  // refused-at-start (it fired and no run came), never fired since the slot is not-fired; unknown without the reads.
+  const kindAt = (name, slot) => {
+    if (!scheduler) return 'no-run';
+    const f = scheduler.find(x => x.task === name);
+    return f && f.firedAt && ms(f.firedAt) >= ms(slot) - 5 * 6e4 ? 'refused-at-start' : 'not-fired';
+  };
   for (const [name, t] of Object.entries(tasks).sort(([a], [b]) => (a < b ? -1 : 1))) {
     const sched = t.schedule || t.watchSchedule;
     if (!t.pipeline || !sched || (t.lane !== 'cloud' && t.lane !== 'mac')) continue;
@@ -72,9 +98,19 @@ export function watch(db, { now, record, spec }) {
     // A slot before this record's v4 tasks existed (spec.constants.watchdog.since) was never this task's to run.
     if (w.since && w.since[record] && ms(slot) < ms(w.since[record])) continue;
     if (runs.some(r => r.pipeline === t.pipeline && ms(r.startedAt) >= ms(slot) - 5 * 6e4)) continue;
-    if (t.lane === 'mac') { missing.push({ pipeline: t.pipeline, slot, refired: false, lane: 'mac' }); continue; } // D-087: reported, never re-fired
+    const kind = kindAt(name, slot);
+    if (t.lane === 'mac') { missing.push({ pipeline: t.pipeline, slot, kind, refired: false, lane: 'mac' }); continue; } // D-087: reported, never re-fired
     const id = `watchdog-refire-${t.pipeline}-${EV.compactTime(slot)}`;
-    missing.push({ pipeline: t.pipeline, slot, refired: consider(id, `${name} slot ${slot}`, t, 'missed its slot', deadlineFor(t.pipeline, slot, t, true)) });
+    missing.push({ pipeline: t.pipeline, slot, kind, refired: consider(id, `${name} slot ${slot}`, t, 'missed its slot', deadlineFor(t.pipeline, slot, t, true)) });
+  }
+  // B-61: a firing the scheduler recorded with no run document within 5 minutes of it, outside the slots above (a
+  // fire-only task, or a firing after its slot): the run was refused at its start and left nothing.
+  for (const f of scheduler || []) {
+    if (!f.firedAt || minutes(f.firedAt) < 5 || minutes(f.firedAt) > 9 * 24 * 60) continue;
+    if (w.since && w.since[record] && ms(f.firedAt) < ms(w.since[record])) continue;
+    if (missing.some(m => m.pipeline === f.pipeline && Math.abs(ms(m.slot) - ms(f.firedAt)) <= 60 * 6e4)) continue;
+    if (runs.some(r => r.pipeline === f.pipeline && Math.abs(ms(r.startedAt || r.at) - ms(f.firedAt)) <= 5 * 6e4)) continue;
+    missing.push({ pipeline: f.pipeline, slot: f.firedAt, kind: 'refused-at-start', refired: false, ...(tasks[f.task] && tasks[f.task].lane === 'mac' ? { lane: 'mac' } : {}) });
   }
   const stalledRuns = [];
   for (const r of runs.filter(r => r.status === 'running' && r.pipeline !== 'watchdog' && minutes(r.startedAt) > w.runTimeoutMinutes).sort((a, b) => (a.id < b.id ? -1 : 1))) {
@@ -93,8 +129,8 @@ export function watch(db, { now, record, spec }) {
 }
 
 /** health/current's own fields (the producer adds the envelope). */
-export function healthBody(db, { now, record }, spec) {
-  const v = watch(db, { now, record, spec });
+export function healthBody(db, { now, record, scheduler = null }, spec) {
+  const v = watch(db, { now, record, spec, scheduler });
   const state = (db.state || []).find(s => s.id === 'current') || null;
   const drill = (db.runs || []).filter(r => r.pipeline === 'restore-drill').sort((a, b) => ms(b.startedAt) - ms(a.startedAt))[0] || null;
   return {
@@ -103,6 +139,8 @@ export function healthBody(db, { now, record }, spec) {
     derivedHash: state ? { evening: state.derivedHash || null, at: state.at } : null,
     capacity: state && state.snapshot && state.snapshot.health ? state.snapshot.health.capacity || null : null,
     restoreDrill: drill ? { id: drill.id, status: drill.status, at: drill.startedAt, days: Math.floor((ms(now) - ms(drill.startedAt)) / 864e5) } : null,
+    // B-61: the scheduler's last firing per task as this run read it: an input, so a rebuild takes it as stored.
+    ...(scheduler ? { scheduler } : {}),
   };
 }
 
