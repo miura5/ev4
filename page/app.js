@@ -360,7 +360,21 @@
     // B-117 (D-154): no stat tiles; the Now card's second line carries the exam countdown, readiness lives in Progress.
     const ex = (S.state && S.state.nextExams || []).find(e => e.date >= today) || E.nextNurExams(S.exams, E.addDays(today, -1))[0];
     if (ex && parts[1] && parts[1].classList.contains('meta')) { const n = E.diffDays(today, ex.date); parts[1].textContent += ` ${(ex.title || ex.id).replace(/:.*$/, '')} ${n === 0 ? 'is today' : n === 1 ? 'is tomorrow' : 'in ' + plural(n, 'day')}.`; }
-    const nc = el('div'); nc.style.cssText = 'display:flex;flex-direction:column;gap:8px;align-items:flex-start'; nc.append(el('h2', null, (E.DAY_LABELS[day.dayType] || 'Today') + ' · ' + short(today)), ...parts);
+    // B-124 (D-164): a prep day. From the evening before, the Now card is the pack check until it is ticked through,
+    // then it folds to one line under the usual Now card; on the day itself the Now card is the day (place, hours)
+    // with the bag check folded under it. Each is the same list as the greeting's: a tick in one is a tick in both.
+    const hr = Number(String(E.chicagoClock(now()) || '12:00').split(':')[0]), eve = hr >= 17 || hr < 4;
+    const pd = E.prepDay(S.dates, [], eve ? E.addDays(today, 1) : today), pp = pd ? { phase: eve ? 'night' : 'morning', date: pd.date, kind: pd.kind, title: pd.title } : null;
+    const pl = pp && prepNow(pp), prepBox = pl && !pl.loading ? prepEl({ id: 'today', prep: pp }, { open: eve }) : null;
+    let nowHead = (E.DAY_LABELS[day.dayType] || 'Today') + ' · ' + short(today);
+    if (prepBox && eve && !pl.done) { parts.length = 0; nowHead = 'Tonight · ' + short(today); }
+    else if (prepBox && !eve) {
+      const hm = String(pd.title).match(/(\d{1,2}):?(\d{2})\s*[–-]\s*(\d{1,2}):?(\d{2})/), t12 = (h, m) => `${(+h % 12) || 12}${m === '00' ? '' : ':' + m}${+h < 12 ? 'am' : 'pm'}`;
+      const place = String(pd.subject || pd.title).replace(hm ? hm[0] : /$^/, '').replace(/[,\s·–-]+$/, '').trim() || pd.title;
+      nowHead = (E.DAY_LABELS[pd.kind] || 'Today') + ' · ' + short(today);
+      parts.length = 0; parts.push(el('p', 'big', `${pd.kind[0].toUpperCase() + pd.kind.slice(1)} · ${place}`), el('p', 'meta', hm ? `${t12(hm[1], hm[2])} to ${t12(hm[3], hm[4])}.` : 'Today.'));
+    }
+    const nc = el('div'); nc.style.cssText = 'display:flex;flex-direction:column;gap:8px;align-items:flex-start'; nc.append(el('h2', null, nowHead), ...parts, ...(prepBox ? [prepBox] : []));
     nowCard.replaceChildren(nc);
     $('stats').replaceChildren(); $('stats').hidden = true;
     // List
@@ -2209,7 +2223,7 @@
     if (r.doc) await writeDayEdit(date, r.doc);
     return r;
   }
-  function prepEl(m) {
+  function prepEl(m, o = {}) { // o.open: whether it starts open (default: until it is ticked through)
     const p = m.prep, l = prepNow(p); if (!l) return null;
     const night = p.phase === 'night';
     const wrap = el('div', 'prep'); wrap.dataset.phase = p.phase;
@@ -2239,7 +2253,7 @@
     const add = el('button', null, 'Add'); add.type = 'submit'; f.append(inp, add);
     f.addEventListener('submit', ev => { ev.preventDefault(); const t = inp.value.trim(); if (!t) return; guard(add, async () => { await prepWrite(p.date, { action: 'add', text: t }); inp.value = ''; }); });
     box.append(f);
-    const key = m.id + ':' + p.phase; const open = T.prepOpen.has(key) ? T.prepOpen.get(key) : !l.done;
+    const key = m.id + ':' + p.phase; const open = T.prepOpen.has(key) ? T.prepOpen.get(key) : o.open != null ? o.open && !l.done : !l.done;
     const show = o => { T.prepOpen.set(key, o); box.hidden = !o; row.setAttribute('aria-expanded', String(o)); wrap.classList.toggle('open', o); };
     show(open); row.addEventListener('click', () => show(!wrap.classList.contains('open')));
     // Ticking the last item folds the check away; reopening it is one tap on its line.

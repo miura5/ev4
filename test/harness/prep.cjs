@@ -125,6 +125,50 @@ async function tickAll(page) {
       await ctx.close();
     }
   }
+  // B-124 (D-164): Today on prep days, at 390, 735 and 1280. The evening before a clinical day the Now card is the pack
+  // check (the greeting's own list: a tick in one shows in the other), folding to one line once ticked through; on the
+  // day's morning the Now card names the place and hours with the bag check folded under it. Every item shows its source.
+  const clinicalRecord = () => { const db = record(); delete db.dates['prep-val'];
+    db.dates['prep-clin-tmr'] = { ...env, addedAt: env.at, date: tomorrow, title: 'Clinical: Mercy Hospital 4 West, 0630–1500', kind: 'clinical', course: 'NUR 112', graded: false };
+    db.dates['prep-clin'] = { ...db.dates['prep-clin'], title: 'Clinical: Mercy Hospital 4 West, 0630–1500' }; return db; };
+  const nowCard = page => page.evaluate(() => { const n = document.getElementById('now'), p = n.querySelector('.prep'), box = p && p.querySelector('.prep-box');
+    return { head: (n.querySelector('h2') || {}).textContent, big: (n.querySelector('.big') || {}).textContent || '', meta: (n.querySelector('p.meta') || {}).textContent || '', row: p ? p.querySelector('.prep-row').textContent : null,
+      open: !!(box && !box.hidden && box.getBoundingClientRect().height > 0), done: !!(p && p.classList.contains('done')), rowH: p ? Math.round(p.getBoundingClientRect().height) : 0,
+      items: p ? [...p.querySelectorAll('.prep-item')].map(li => ({ t: li.querySelector('.pi-t').textContent, c: (li.querySelector('.pi-c') || {}).textContent || '', on: li.querySelector('input').checked })) : [], sideways: document.documentElement.scrollWidth > innerWidth + 1 }; });
+  for (const viewport of [{ width: 390, height: 844 }, { width: 735, height: 830 }, { width: 1280, height: 860 }]) {
+    const w = viewport.width;
+    { const ctx = await browser.newContext({ viewport, colorScheme: 'dark' }); const page = await ctx.newPage(); const errors = []; page.on('pageerror', e => errors.push(e.message));
+      await openPage(page, ct(today, 19, 0), clinicalRecord());
+      await page.click('#tab-today'); await page.waitForFunction(() => document.querySelector('#now .prep .prep-item'), null, { timeout: 10000 }).catch(() => {}); await page.waitForTimeout(400);
+      let n = await nowCard(page);
+      ok(`[today ${w}] evening before a clinical: the Now card is the pack check, open, every item with its source`, /Pack for tomorrow: Clinical: Mercy Hospital 4 West/.test(n.row || '') && n.open && !n.big && n.items.length >= 3 && n.items.every(i => i.c.trim()), JSON.stringify(n));
+      await page.screenshot({ path: `${shots}/today-prep-night-${w}.png`, fullPage: true });
+      // A tick on Today shows in the greeting, and an untick there shows back on Today.
+      await page.click('#now .prep .prep-item input'); await page.waitForTimeout(400);
+      await page.click('#tab-ev'); await page.waitForTimeout(500); let g = await state(page);
+      const first = n.items[0].t;
+      ok(`[today ${w}] a tick on Today shows ticked in the greeting`, g.items.find(i => i.t === first) && g.items.find(i => i.t === first).on, JSON.stringify(g.items));
+      await page.$eval('#thread .msg.greet .prep', e => e.scrollIntoView({ block: 'center' })); if (!g.open) { await page.click('#thread .msg.greet .prep-row'); await page.waitForTimeout(300); }
+      await page.click('#thread .msg.greet .prep .prep-item input'); await page.waitForTimeout(400);
+      await page.click('#tab-today'); await page.waitForTimeout(400); n = await nowCard(page);
+      ok(`[today ${w}] and an untick in the greeting shows back on Today`, n.items.length && !n.items[0].on, JSON.stringify(n.items));
+      for (let i = 0; i < 20; i++) { const b = await page.$('#now .prep .prep-item:not(.on) input'); if (!b) break; await b.click(); await page.waitForTimeout(250); }
+      await page.waitForTimeout(500); n = await nowCard(page);
+      ok(`[today ${w}] ticked through, the pack check folds to one line under the usual Now card`, n.done && !n.open && /Packed for tomorrow/.test(n.row || '') && n.rowH <= 60 && !!n.big, JSON.stringify(n));
+      await page.screenshot({ path: `${shots}/today-prep-night-done-${w}.png`, fullPage: true });
+      ok(`[today ${w}] evening: no sideways scroll, no page errors`, !n.sideways && !errors.length, errors.join(' | '));
+      await ctx.close(); }
+    { const ctx = await browser.newContext({ viewport, colorScheme: 'dark' }); const page = await ctx.newPage(); const errors = []; page.on('pageerror', e => errors.push(e.message));
+      await openPage(page, ct(today, 7, 0), clinicalRecord());
+      await page.click('#tab-today'); await page.waitForFunction(() => document.querySelector('#now .prep'), null, { timeout: 10000 }).catch(() => {}); await page.waitForTimeout(400);
+      const n = await nowCard(page);
+      ok(`[today ${w}] the morning of: the Now card names the place and hours, the bag check folded under it`, /^Clinical day · /.test(n.head) && /Clinical · Mercy Hospital 4 West$/.test(n.big) && /6:30am to 3pm/.test(n.meta) && /Bag check: Clinical: Mercy Hospital 4 West/.test(n.row || '') && !n.open, JSON.stringify(n));
+      await page.click('#now .prep-row'); await page.waitForTimeout(300); const o = await nowCard(page);
+      ok(`[today ${w}] the morning of: one tap opens the bag check, every item with its source`, o.open && o.items.length >= 3 && o.items.every(i => i.c.trim()), JSON.stringify(o.items));
+      await page.screenshot({ path: `${shots}/today-prep-morning-${w}.png`, fullPage: true });
+      ok(`[today ${w}] morning: no sideways scroll, no page errors`, !o.sideways && !errors.length, errors.join(' | '));
+      await ctx.close(); }
+  }
   await browser.close();
   for (const [st, n, d] of results) console.log(`${st}  ${n}${d && st === 'FAIL' ? '  -- ' + d : ''}`);
   const failed = results.filter(x => x[0] === 'FAIL').length;
