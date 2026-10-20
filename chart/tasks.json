@@ -2320,11 +2320,15 @@
   "title": "Study, answered and done (D-165): the counter as the set's fold line; a one-line verdict with your pick's and the right answer's why, the rest folded; a finished set's score, misses and next set; Practice led by the next set; Plan led by its count, with Done and Earlier days folded",
   "dod": "the look harness at 390, 735 and 1280 answers a planted set: one verdict line, two whys visible and the rest closed, nothing above the verdict moving; the finished set shows its score, misses and Give me 5 more as the one primary; Practice and Plan each have one lead and no pill; Study's tenet checks on and green; screenshots looked at",
   "milestone": "M14 UI",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Oct 20: taken after B-125 (Matt's order, finishes M14)",
   "commit": null,
-  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474"
+  "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474",
+  "board": {
+   "row": "v4 B-126: Study, answered and done",
+   "why": "answered, all four explanations opened and the verdict said Correct. then Right.; More practice showed under an unfinished set; Plan opened with a paragraph"
+  }
  },
  {
   "id": "B-127",
