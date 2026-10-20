@@ -1,0 +1,22 @@
+# B-64 (O-3): npm test on every push and pull request, the personal-data test included. The page harnesses and the
+# look pass need Chromium and the synthetic record, so they stay `npm run check` in a build session.
+name: npm test
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prettier --check .
+      - run: npm test
