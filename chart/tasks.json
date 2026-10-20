@@ -2011,17 +2011,17 @@
   "title": "Bug (reported Oct 19): Tonight's live runs failed at their gate: watchdog 00:56Z, evening-cloud 01:16Z ('this checkout does not have the deployed commit c049f48...': runs clone main 50 commits deep and the live build was 106 commits behind after the chart's bookkeeping commits) and evening-mac 01:21Z (no checkout on the Mac session, B-83). The 21:17 CT live deploy at 93698f0 put live 12 commits behind, so the next runs can check it out; it recurs once main runs 50 commits past the live build.",
   "dod": "ship and verify-deploy go RED when a deployed build is 40 or more commits behind origin/main (scheduled runs clone main 50 deep) and print the refresh that fixes it: the same build re-pointed at the newest main commit with identical content (system/manifest only; no page, task or schema change); a test plants a build 45 commits behind; the live refresh itself runs on Matt's OK like any live write",
   "milestone": "M7",
-  "status": "open",
+  "status": "done",
   "depends": [],
-  "notes": "",
-  "commit": null,
+  "notes": "verify-deploy and ship carry a new line, 'deployed commit within the runs' clone': red at spec.constants.runs.refreshAt (40) commits behind origin/main, naming the fix (ship that target again at main's head, the same content: a system/manifest-only deploy). test/cli.test.mjs plants 45 behind (red, with the fix) and 106 (out of reach); staging GREEN at e5bc1cb with the line at 0 behind. Tonight's failures: live was 106 behind; the 21:17 live deploy at 93698f0 brought it to 12. Live waits for Matt's OK: deploying this session's build to live also resets the distance; after that, any session that moves main 40 commits past live ships live again on his OK.",
+  "commit": "e5bc1cb",
   "source": "build session read of runs/ in the live record, Oct 19 21:40 CT",
   "words": "Tonight's live runs failed at their gate: watchdog 00:56Z, evening-cloud 01:16Z ('this checkout does not have the deployed commit c049f48...': runs clone main 50 commits deep and the live build was 106 commits behind after the chart's bookkeeping commits) and evening-mac 01:21Z (no checkout on the Mac session, B-83). The 21:17 CT live deploy at 93698f0 put live 12 commits behind, so the next runs can check it out; it recurs once main runs 50 commits past the live build.",
   "reportedAt": "2026-10-20T02:32:25.828Z",
   "board": {
    "row": "v4 B-110: Live build too far behind main for the runs' clone",
    "why": "Every scheduled run checks out the live build's commit from a 50-deep clone of main; bookkeeping commits pushed it out of reach and tonight's live runs failed at their gate",
-   "notes": "Reported Oct 19 from build session read of runs/ in the live record, Oct 19 21:40 CT",
+   "notes": "Tonight's live runs failed because the live build had fallen too far behind the code history the runs copy. The 9:17pm live deploy fixed tonight's; the deploy check now goes red before it can happen again and says how to fix it. Live waits for your OK.",
    "were": [
     "v4 B-110: Tonight's live runs failed at their gate: watchdog 00:56Z,…"
    ]
@@ -2029,6 +2029,7 @@
   "triage": {
    "outcome": "task",
    "at": "2026-10-20T02:32:44.485Z"
-  }
+  },
+  "waitingOn": "Matt"
  }
 ]
