@@ -1836,9 +1836,9 @@
   "id": "B-102",
   "kind": "request",
   "title": "Request (reported Oct 19): ship live should refuse during the live watchdog windows (:45 to :05 around 1, 4, 7, 10, 13, 16, 19 and 22h Central) as a rule in rules.json, instead of the windows being checked from memory.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "A rule in chart/rules.json that ship live checks: it refuses during the live watchdog windows (:45 to :05 around 1, 4, 7, 10, 13, 16, 19 and 22h Central) and passes outside them; tests prove both sides of a window edge, and ship live prints the rule with the time it opens again.",
+  "milestone": "M13 Workflow",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -1849,6 +1849,10 @@
    "row": "v4 B-102: ship live should refuse during the live watchdog windows (:45 to :05…",
    "why": "ship live should refuse during the live watchdog windows (:45 to :05 around 1, 4, 7, 10, 13, 16, 19 and 22h Central) as a rule in rules.json, instead of the windows being checked from memory.",
    "notes": "Reported Oct 19 from Oct 19 build chat: Claude's workflow review, filed on Matt's OK"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-20T00:11:33.200Z"
   }
  },
  {
