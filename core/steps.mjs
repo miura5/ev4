@@ -37,7 +37,8 @@ const passages = (idx, q, n = 2) => EV.searchLibrary(idx, q, { k: n }).map(h => 
  * The evening push line (B-40, Matt's pick 8), composed from state/current (just written by the state step) and
  * days/<tomorrow> (or tomorrow's plan as the morning will make it, when that document is not written yet): today's
  * review answered or left, weak spots made solid or reopened today, tomorrow's day type and first item, and last
- * night's Canvas note (D-097). Never from the journal: nothing here reads it. Fits spec.constants.push.maxChars.
+ * night's Canvas note (D-097), and tomorrow's pack check when tomorrow is a prep day (B-107, D-143). Never from the
+ * journal: nothing here reads it. Fits spec.constants.push.maxChars.
  */
 export function eveningPush(db, ctx, spec) {
   const max = ((spec.constants || {}).push || {}).maxChars || 120;
@@ -50,6 +51,10 @@ export function eveningPush(db, ctx, spec) {
   const answered = today && today.answered != null ? today.answered : set ? EV.answeredItems(set, db.answers || []).length : 0;
   const parts = [];
   if (stale) parts.push({ text: stale }); // D-111: first, so fitting the line never drops it
+  // B-107 (D-143): the night-before pack check, from tomorrow's prep check in the snapshot just written; before the
+  // rest, so fitting the line shortens its title but never drops it.
+  const prep = st && st.snapshot && st.snapshot.date === date ? st.snapshot.prep : null;
+  if (prep) parts.push(prep.empty && !prep.items.length ? { text: 'Prep: nothing in your materials for ', tail: prep.title } : { text: `Pack ${prep.items.length} for `, tail: prep.title });
   if (items) parts.push({ text: answered >= items ? `Review done (${items})` : answered ? `Review ${answered}/${items}, ${items - answered} left` : `Review: ${items} left` });
   const ms = models(db); const on = x => x && EV.chicagoDate(x) === date;
   const solid = ms.filter(w => (w.kind || 'concept') === 'concept' && EV.isSolid(w) && on(w.derived.solidAt)).length;

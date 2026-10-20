@@ -158,7 +158,8 @@
      "msg": "exam date passed; record the score to calibrate"
     }
    ]
-  }
+  },
+  "prep": null
  },
  "derivedHash": "3e4bdc2c5f514755ec2f91b790642ac95ffe62fad422a5bde541475ad77890ca",
  "factHashes": {

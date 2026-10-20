@@ -127,3 +127,30 @@ test('the greeting never marks a clinical, lab, validation or class day urgent; 
   assert.deepEqual(due.brief.filter(b => b.level === 'urgent').map(b => b.title), ['Care plan 3 due 11:59pm']);
   assert.ok(due.brief.findIndex(b => b.level === 'prep') > due.brief.findIndex(b => b.level === 'urgent'), 'urgent first, then the calm Prep marker');
 });
+
+// B-107: the evening run's part. The state step's snapshot carries tomorrow's prep check, built as the page builds
+// it; the 8:15pm push carries its pack-check line.
+import { eveningPush } from '../core/steps.mjs';
+const SPEC = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
+const snapFor = (date, materials) => EV.buildSnapshot({ date, now: date + 'T01:15:00Z', dates: DATES, dateedits: [], materials, dayedits: [] });
+test('the evening snapshot carries tomorrow’s prep check, each item cited; none when tomorrow needs no prep', () => {
+  for (const [d, kind, first, cite] of [['2026-10-20', 'validation', 'Stethoscope', 'Skills Validation Guide, p. 3'], ['2026-10-21', 'lab', 'Sterile gloves', 'Lab 6 Catheter Insertion, slide 2'], ['2026-10-22', 'clinical', null, 'Clinical Orientation Mercy, p. 2']]) {
+    const p = snapFor(d, MATS).prep;
+    assert.equal(p.date, EV.addDays(d, 1)); assert.equal(p.kind, kind); assert.equal(p.empty, false);
+    if (first) assert.equal(p.items[0].text, first);
+    assert.ok(p.items.every(i => /, (p\.|slide) \d+$/.test(i.cite)), JSON.stringify(p.items));
+    assert.ok(p.items.some(i => i.cite === cite));
+  }
+  const none = snapFor('2026-10-25', MATS).prep;
+  assert.equal(none.kind, 'class'); assert.equal(none.empty, true); assert.match(none.note, /^Nothing in your materials says what to bring for Class: Unit 5 fluids lecture\./);
+  assert.equal(snapFor('2026-10-23', MATS).prep, null, 'a day after which nothing needs prep');
+  assert.ok(!('prep' in EV.buildSnapshot({ date: '2026-10-20', now: '2026-10-21T01:15:00Z', dates: DATES })), 'no materials passed, no prep field');
+});
+test('the 8:15pm push carries the pack-check line, first after a stale health warning', () => {
+  const push = (d, materials) => eveningPush({ state: [{ id: 'current', snapshot: snapFor(d, materials) }], health: [{ id: 'current', at: d + 'T01:00:00Z' }], sets: [], answers: [], weakspots: [], exams: [], days: [], dates: DATES, runs: [] }, { date: d, now: d + 'T01:15:00Z' }, SPEC);
+  assert.match(push('2026-10-20', MATS), /^Pack 4 for Validation: Head-to-toe assessment/);
+  assert.match(push('2026-10-21', MATS), /^Pack 3 for Lab: Urinary catheter insertion/);
+  assert.match(push('2026-10-25', MATS), /^Prep: nothing in your materials for Class: Unit 5 fluids lecture/);
+  for (const d of ['2026-10-20', '2026-10-21', '2026-10-22', '2026-10-25']) assert.ok(push(d, MATS).length <= SPEC.constants.push.maxChars);
+  assert.doesNotMatch(push('2026-10-23', MATS), /Pack|Prep/);
+});

@@ -227,12 +227,12 @@
     {
      "id": "state",
      "kind": "code",
-     "does": "writes state/current: the snapshot, the derived hash and every Fact's hash"
+     "does": "writes state/current: the snapshot (with tomorrow's prep check when tomorrow is a clinical, lab, validation or class day, built from its materials, B-107), the derived hash and every Fact's hash"
     },
     {
      "id": "push",
      "kind": "code",
-     "does": "composes the push line from state/current and tomorrow's day: review answered or left, weak spots made solid or reopened today, tomorrow's day type and first item, last night's Canvas note (B-40); never from the journal"
+     "does": "composes the push line from state/current and tomorrow's day: tomorrow's pack check when tomorrow is a prep day (B-107), review answered or left, weak spots made solid or reopened today, tomorrow's day type and first item, last night's Canvas note (B-40); never from the journal"
     }
    ]
   },

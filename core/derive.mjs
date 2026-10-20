@@ -163,7 +163,9 @@ function stateBody(all, { date, now, specVersion, part = null, split = null, lin
   // measure the document it is writing); lint measures it.
   const budgets = (spec.capacity && spec.capacity.collections) || {};
   const bytes = Object.fromEntries(Object.entries(budgets).filter(([c, b]) => c !== 'state' && b && (b.warnBytes != null || b.failBytes != null) && db[c]).map(([c]) => [c, db[c].reduce((s, d) => s + Buffer.byteLength(JSON.stringify(EV.docData(d)), 'utf8'), 0)]));
-  const snapshot = EV.buildSnapshot({ date, now, exams: v.exams, weakspots: v.models, sets: v.sets, answers: v.answers, days: db.days || [], dates: db.dates || [], dateedits: db.dateedits || [], plans: db.plans || [], planedits: db.planedits || [], runs: db.runs || [], counts, bytes, budgets, versions: { spec: specVersion || null }, lint: content, canvas: null });
+  const snapshot = EV.buildSnapshot({ date, now, exams: v.exams, weakspots: v.models, sets: v.sets, answers: v.answers, days: db.days || [], dates: db.dates || [], dateedits: db.dateedits || [], plans: db.plans || [], planedits: db.planedits || [], runs: db.runs || [], counts, bytes, budgets, versions: { spec: specVersion || null }, lint: content, canvas: null,
+    // B-107: tomorrow's prep check from the library the run reads (pictures not read yet left out) and his own items.
+    materials: EV.liveMaterials(db.materials || [], db.materialedits || []).filter(m => !(m.needsOcr && !m.ocr)), dayedits: db.dayedits || [] });
   const factHashes = {}; const fieldLists = {};
   for (const [col, docs] of Object.entries(db).sort(([a], [b]) => (a < b ? -1 : 1))) {
     if (col === 'journal') continue; // pipelines never read it (D-059)

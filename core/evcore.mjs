@@ -985,6 +985,9 @@ const EVCore = (() => {
   }
   function buildSnapshot(ctx) {
     const { date, now, exams = [], weakspots = [], sets = [], answers = [], days = [], runs: runDocs = [], counts = null, versions = {}, lint: lintResult = null, canvas = null } = ctx;
+    // B-107 (D-143, D-144): tomorrow's prep check, built as the page builds it, when the caller passes the materials.
+    const prepDayNext = ctx.materials ? prepDay(ctx.dates, ctx.dateedits, addDays(date, 1)) : null;
+    const prepNext = prepDayNext ? prepList({ day: prepDayNext, phase: 'night', materials: ctx.materials, dates: ctx.dates, dateedits: ctx.dateedits, dayedits: ctx.dayedits || [] }) : null;
     const dates = liveDates(ctx.dates, ctx.dateedits); const plans = ctx.planedits ? planViews(ctx.plans, ctx.planedits) : (ctx.plans || []);
     const ws = weakspots;
     const nextExams = (exams || []).filter(e => e.date && e.date >= date && e.status !== 'done').sort((a, b) => a.date.localeCompare(b.date)).slice(0, 6)
@@ -1011,6 +1014,7 @@ const EVCore = (() => {
       canvas: canvas || null,
       health: { runs, capacity: counts ? capacity(counts, ctx.bytes || {}, ctx.budgets || {}) : null, counts },
       lint: lintResult ? { errors: lintResult.filter(i => i.severity === 'error').length, warnings: lintResult.filter(i => i.severity === 'warning').length, top: lintResult.slice(0, 8) } : null,
+      ...(ctx.materials ? { prep: prepNext ? { date: prepNext.date, kind: prepNext.kind, title: prepNext.title, items: prepNext.items.map(it => ({ text: it.text, cite: it.cite, ...(it.paperwork ? { paperwork: true } : {}), ...(it.usual ? { usual: true } : {}), ...(it.added ? { added: true } : {}) })), empty: prepNext.empty, note: prepNext.note } : null } : {}),
     };
   }
   /**
