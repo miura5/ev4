@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-142",
+  "date": "Oct 19",
+  "title": "ship live refuses during the live watchdog windows (from 10 minutes before to 10 minutes after each live watchdog run: :45 to :05 around 1, 4, 7, 10, 13, 16, 19 and 22h Central), checked as rule R-05 in chart/rules.json instead of from memory",
+  "why": "Matt, Oct 19 workflow review (B-102, filed on his OK) and his Oct 20 session instruction: a deploy landing on a watchdog run races it, and the windows were checked by hand",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-141",
   "date": "Oct 19",
   "title": "A design chat names the decisions it proposes P-1, P-2 and so on, and lists the tasks it proposes in a 'Tasks to add' table; neither gets an id until it is accepted and filed through the Chart (log decision takes the next free D-id; plan, B-106, files the tasks), so two chats never claim the same id and no designed task is left out of the backlog",

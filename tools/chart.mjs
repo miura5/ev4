@@ -10,6 +10,7 @@
 //            [--triage task --dod d --milestone m [--depends ids] | --triage join <id> | --triage decline --reason r]
 //   log deploy --target <staging|live> --commit sha [--time ISO] [--ok Matt] [--verify green] [--rollback sha]
 //              [--tasks ids] [--summary s] [--why w] [--decisions ids]
+//   log rule <R-id> --rule t --decision D-id --command c --fn name [--task B-id]   a rule ship enforces
 //   log decision <D-id> --title t [--status s] [--why w] [--supersedes ids] [--amends ids]
 //            each writes one change to chart/, regenerates BACKLOG.md, commits (--no-commit to skip; --trailer adds a
 //            commit trailer line, repeatable), then prints the view updates to make (views)
@@ -294,13 +295,27 @@ export function importChart({ backlog, decisionsMd, boardXml, changelogXml, comm
   return { tasks, decisions: importDecisions(decisionsMd), deploys: importDeploys(changelog, { isCommit }), rules: RULES, views };
 }
 
-// The rules commands enforce (chart/rules.json starts from these). `check` names the function in ship that checks it.
+// The rules commands enforce, as the import seeded chart/rules.json (later ones arrive through log rule). `check` names the function in ship that checks it.
 export const RULES = [
   { id: 'R-01', rule: "While D-085's rollback window is open (B-30 not done), a live deploy changes no stored document, pipeline step, prompt, schema or migration since the live build; anything else waits for the window to close", decision: 'D-139', task: 'B-30', command: 'ship live', check: 'pageOnlyLive' },
   { id: 'R-02', rule: 'A build reaches live only through staging: verify-deploy staging green at the same commit', decision: 'D-049', task: 'B-35', command: 'ship live (deploy live)', check: 'stagingGate' },
   { id: 'R-03', rule: 'A live deploy waits while a study session or skills run is going on live (an explicit --during-session on Matt\'s OK overrides)', decision: 'D-139', task: 'B-87', command: 'ship live (deploy live)', check: 'sessionGate' },
   { id: 'R-04', rule: "A live deploy needs Matt's explicit OK in the chat", decision: 'D-083', task: null, command: 'ship live (deploy live --matt-ok)', check: 'mattOk' },
 ];
+/**
+ * R-05 (B-102): the live watchdog window `now` falls in, from the watchdog's cron schedule, as {run, opens}: the run
+ * it surrounds and when live deploys may go again; null outside every window.
+ */
+export function watchdogWindow(schedule, now = new Date(), margin = 10) {
+  const m = margin * 60e3;
+  const run = nextRuns({ watchdog: { schedule } }, new Date(now.getTime() - m)).map(r => r.at).find(at => now >= at.getTime() - m && now < at.getTime() + m);
+  return run ? { run, opens: new Date(run.getTime() + m) } : null;
+}
+/** ship live's R-05 refusal at `now`, or null outside the windows. */
+export function watchdogRefusal(schedule, now = new Date()) {
+  const w = watchdogWindow(schedule, now);
+  return w ? `R-05 (D-142): the live watchdog runs at ${ctClock(w.run.toISOString())} CT; live deploys wait until ${ctClock(w.opens.toISOString())} CT` : null;
+}
 // What R-01 protects: the paths and spec keys whose change makes a deploy more than page-only.
 export const PAGE_ONLY = {
   paths: [/^spec\/schemas\//, /^core\/migrate\.mjs$/, /^core\/steps\.mjs$/, /^core\/run\.mjs$/, /^tools\/prompts\.mjs$/, /^scripts\//],
@@ -551,6 +566,18 @@ export function applyLog(rec, o, { now = new Date().toISOString() } = {}) {
     for (const s of d.supersedes) { const x = rec.decisions.find(y => y.id === s); if (x) x.status = 'superseded'; }
     return { rec, what: `decision ${did} (${d.status})`, id: o.task || did, views: ['decisions', 'decisionsIntro'] };
   }
+  if (id === 'rule') {
+    // A rule ship enforces: a new one takes the next free R- and rests on a decision in the record; --fn names the
+    // check in ship that enforces it (--check is lint's flag).
+    const rid = o._[2], had = rec.rules.find(r => r.id === rid), next = 'R-' + String(Math.max(0, ...rec.rules.map(r => Number(r.id.slice(2)))) + 1).padStart(2, '0');
+    if (!had && rid !== next) throw new Error(`log rule ${next} --rule ... --decision D-... --command ... --fn ... [--task B-...]`);
+    const r = had || { id: rid, rule: '', decision: '', task: null, command: '', check: '' };
+    for (const [k, f] of [['rule', 'rule'], ['decision', 'decision'], ['task', 'task'], ['command', 'command'], ['check', 'fn']]) if (typeof o[f] === 'string') r[k] = o[f];
+    if (!r.rule || !r.decision || !r.command || !r.check) throw new Error('log rule needs --rule, --decision, --command and --fn');
+    if (!rec.decisions.some(d => d.id === r.decision)) throw new Error(`${r.decision} is not in the record`);
+    if (!had) rec.rules.push(r);
+    return { rec, what: `rule ${rid} (${r.check})`, id: r.task || rid, views: [] };
+  }
   if (id === 'new') {
     // A task the design names that the record lacks (the Build plan tab's B-74, say): never an id already in use.
     const nid = o._[2];
@@ -782,6 +809,11 @@ async function ship(o) {
   if (target === 'live') {
     // R-04 (D-083): Matt's explicit OK. R-01 (D-139): page-only while D-085's window is open (B-30 not done).
     if (!o['matt-ok']) refusals.push("R-04 (D-083): a live deploy needs Matt's explicit OK in the chat (then pass --matt-ok)");
+    if (rec.rules.some(r => r.check === 'watchdogWindow')) {
+      const live = (readJson(path.join(root, 'spec', 'ev.spec.json')).tasks.live || {}).watchdog;
+      const why = live && watchdogRefusal(live.schedule, new Date());
+      if (why) refusals.push(why);
+    }
     const b30 = findTask(rec, 'B-30')[0];
     if (!b30 || b30.status !== 'done') {
       const base = (deployed && deployed.commit) || ((rec.deploys.filter(d => d.target === 'live').at(-1)) || {}).commit;

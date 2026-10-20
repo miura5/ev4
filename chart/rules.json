@@ -30,5 +30,13 @@
   "task": null,
   "command": "ship live (deploy live --matt-ok)",
   "check": "mattOk"
+ },
+ {
+  "id": "R-05",
+  "rule": "A live deploy waits out the live watchdog windows: from 10 minutes before to 10 minutes after each live watchdog run (:45 to :05 around 1, 4, 7, 10, 13, 16, 19 and 22h Central)",
+  "decision": "D-142",
+  "task": "B-102",
+  "command": "ship live",
+  "check": "watchdogWindow"
  }
 ]
