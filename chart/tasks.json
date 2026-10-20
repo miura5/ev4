@@ -1911,26 +1911,26 @@
   "title": "Request (reported Oct 19): Question for Matt: should a validation or a clinical tomorrow count as urgent in the greeting's briefing? Today urgent means an exam today or tomorrow, or graded work due today and not ticked.",
   "dod": "Matt answers whether a validation or a clinical tomorrow counts as urgent in the greeting's briefing; the greeting's urgent rule follows his answer, with a test for each kind.",
   "milestone": "M13 Workflow",
-  "status": "blocked",
+  "status": "open",
   "depends": [],
-  "notes": "Question for Matt: should a validation or a clinical tomorrow count as urgent in the greeting's briefing? Today urgent means an exam today or tomorrow, or graded work due today and not ticked.",
+  "notes": "Answered by Matt Oct 20 in build chat session_01JoUaa285jLP3tei891mStP (relayed to this session; his messages verified in that transcript): D-143 and D-144. His words: \"Yes! Let's please factor in the night-before and morning-of checks behavior along with the Prep marker; whether that's a decision together or separate you make that judgment. And the prep materials vary a lot. But for clinical for example, I'd want to have my completed drug cards, my clinical folder with my clinical paper work, my handbooks (jarvis, drugs, and nursing diagnoses), stethocscope, penlight, pen, shears, clinical badge, watch, notebook; E.V. should also have the clinical objectives and the syllabus which she's been good at referencing so my instinct is to not hard code the prep list. If E.V. can organize that list of items to bring that would be the best case scenario in my opinion but let me know your take on that.\" Then: \"Well let me clarify and I' be cautious about the \\\"approve once\\\" workflow because most if not all class, clinical, lab, and validation days can require vastly different materials. Especially the validations. What we need depends on what we are validating for. What we bring to lab depends on what we're practicing. What we bring to clinical there's more a baseline like class but it also depends on the facility we are at so the paperwork might vary. But all this information is within the canvas materials and such so I think it's reasonable, if it's not already possible, to make some way for E.V. to organize these lists herself\" Page part only here; the evening step and 8:15pm push line are B-107.",
   "commit": null,
   "source": "Oct 19 build chat: Claude's workflow review, filed on Matt's OK",
   "words": "Question for Matt: should a validation or a clinical tomorrow count as urgent in the greeting's briefing? Today urgent means an exam today or tomorrow, or graded work due today and not ticked.",
   "reportedAt": "2026-10-19T23:59:11.627Z",
   "board": {
-   "row": "v4 B-104: Greeting: what counts as urgent",
-   "why": "the briefing flags only exams and graded work due",
+   "row": "v4 B-104: Prep checks for clinical, lab, validation and class days",
+   "why": "predictable days shouldn't read as urgent, but forgetting an item is costly",
    "notes": "Reported Oct 19 from Oct 19 build chat: Claude's workflow review, filed on Matt's OK",
    "were": [
-    "v4 B-104: Question for Matt: should a validation or a clinical tomorrow count…"
+    "v4 B-104: Question for Matt: should a validation or a clinical tomorrow count…",
+    "v4 B-104: Greeting: what counts as urgent"
    ]
   },
   "triage": {
    "outcome": "task",
    "at": "2026-10-20T00:11:33.591Z"
-  },
-  "waitingOn": "Matt"
+  }
  },
  {
   "id": "B-105",
