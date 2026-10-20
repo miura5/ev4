@@ -276,7 +276,7 @@ const results = []; const ok = (name, cond, detail = '') => { results.push([cond
     ok('tier picks default for explanations', (await page.evaluate(() => [...window.__chatCalls].reverse().find(c => Array.isArray(c.input)).tier)) === 'default');
     await page.screenshot({ path: `${shots}/ev-conversation.png`, fullPage: true });
     ok('no sideways scroll after the conversation', !(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)));
-    ok('status is live', /^Live/.test(await page.textContent('#status')), await page.textContent('#status'));
+    ok('status reads Live or the one problem System leads with (B-120)', await page.evaluate(() => { const s = document.getElementById('status').textContent, l = document.querySelector('#health .sys-lead'); return s === 'Live' || (!!l && s === l.textContent); }), await page.textContent('#status'));
     ok('now card has an action', (await page.textContent('#now')).length > 10, (await page.textContent('#now')).slice(0, 120));
     ok('today list rendered', (await page.locator('#today-list .row').count()) > 0, String(await page.locator('#today-list .row').count()));
     // ---- List edits (D-078): E.V. adds to the day's list and takes items off; Matt can add and remove on Today

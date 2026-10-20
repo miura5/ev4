@@ -38,7 +38,7 @@
   const pct = (r, n) => n ? Math.round(100 * r / n) + '%' : '–';
   const store = { get(k) { try { return localStorage.getItem('ev3-' + k); } catch { return null; } }, set(k, v) { try { localStorage.setItem('ev3-' + k, v); } catch {} } };
   const status = $('status');
-  const setStatus = (t, ok) => { status.textContent = t; status.classList.toggle('ok', !!ok); };
+  const setStatus = (t, ok, note) => { status.textContent = t; status.classList.toggle('ok', !!ok); status.classList.toggle('note', !!note); };
   const now = () => new Date().toISOString();
   const today = E.chicagoDate(new Date());
   const short = d => E.shortDate(d);
@@ -714,6 +714,7 @@
     const line = $(lineId), list = $(listId); line.textContent = label;
     if (!line.dataset.on) { line.dataset.on = '1'; line.addEventListener('click', () => { list.hidden = !list.hidden; line.setAttribute('aria-expanded', String(!list.hidden)); }); }
   }
+  let sysProblem = null; // B-120 (D-157): System's first problem, which the header's status line reads
   function renderSystem() {
     const st = S.state; const hl = S.health;
     // The last run of each pipeline: the health check's, or a newer one in runs (a run that failed since it was written).
@@ -726,6 +727,7 @@
     const failed = names.filter(([p]) => last[p] && !['ok', 'running'].includes(last[p].status)).map(([p]) => ({ text: `${PIPE_NAME[p] || p}’s last run ${last[p].status === 'partial' ? 'finished partly' : 'failed'} (${short(last[p].startedAt)} ${E.chicagoClock(last[p].startedAt)}).`, detail: last[p].detail || '' }));
     const problems = [...failed, ...healthLines().filter(l => l.v !== 'info').map(l => ({ text: l.text, mark: l.chip }))];
     const built = names.filter(([, d]) => d.steps).length;
+    sysProblem = problems.length ? problems[0].text : null;
     const lead = problems.length ? problems[0].text : hl ? `All ${built} pipelines on time.` : 'Waiting for the first health check.';
     const top = [head2('Health', hl ? 'checked ' + ago(hl.at) : ''), el('p', 'big sys-lead', lead)];
     if (problems.length > 1) { const ul = el('ul', 'list'); problems.slice(1).forEach((p, i) => ul.append(sysLine('p' + i + p.text, p.text, p.mark, p.detail))); top.push(ul); }
@@ -2844,8 +2846,8 @@
     if (!['weak', 'sets', 'exams'].every(k => loaded.has(k))) return;
     M = model();
     renderToday(); renderReview(); renderPractice(); renderPlan(); renderReadiness(); renderWeak(); renderRecord(); renderSystem(); renderEV();
-    const active = M.models.filter(E.isActive).length;
-    setStatus(`Live · ${short(today)} · ${active} active weak spots · ${S.sets.length} practice sets`, true);
+    // B-120 (D-157): Live, or the one problem System leads with; never counts.
+    setStatus(sysProblem || 'Live', !sysProblem, !!sysProblem);
   }
 
   // ------------------------------------------------------------ forms

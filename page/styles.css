@@ -34,11 +34,11 @@ body.on-ev.opening .top-av,body.on-ev.in-session .top-av,body.on-ev.core-big .to
 .readout .led.busy{background:var(--plum);animation:pulse 1.2s ease-in-out infinite} .readout .led.off{background:var(--soft)} .readout .led.brk{background:var(--warn-solid)}
 .top-right{flex:0 0 auto;display:flex;align-items:center;gap:6px}
 .status{flex:0 1 auto;min-width:0;font:500 12px var(--sans);color:var(--soft);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:36vw}
-.status:not(.ok){color:var(--warn);white-space:normal}
+.status:not(.ok){color:var(--warn);white-space:normal}.status.note{white-space:nowrap}
 .tab-sys{appearance:none;width:40px;height:40px;flex:0 0 40px;border-radius:50%;border:1px solid var(--line2);background:transparent;color:var(--ink2);display:grid;place-items:center;padding:0;cursor:pointer}
 .tab-sys:hover{background:var(--glass2)} .tab-sys[aria-current="page"]{background:var(--accent-bg);border-color:var(--accent-edge);color:var(--accent-text)}
 /* B-85, D-159: the Live line only from 1024 px; boot and error lines always, on their own row under 1024 */
-@media (max-width:1023px){.status.ok{display:none}.top-in{flex-wrap:wrap;row-gap:0}.status:not(.ok){order:3;flex-basis:100%;max-width:none;padding:0 0 4px}}
+@media (max-width:1023px){.status.ok,.status.note{display:none}.top-in{flex-wrap:wrap;row-gap:0}.status:not(.ok){order:3;flex-basis:100%;max-width:none;padding:0 0 4px}}
 /* the five tabs: icons in the top bar beside System, their names from 1024 px (B-85, D-159; was a floating dock) */
 .tabs{display:flex;align-items:center;gap:2px}
 .tabs .tab{appearance:none;position:relative;display:flex;align-items:center;justify-content:center;gap:7px;min-width:40px;height:40px;padding:0 10px;border:0;border-radius:999px;background:transparent;color:#B4C1CB;font:500 13.5px var(--sans);cursor:pointer;white-space:nowrap;transition:background .25s ease,color .25s ease}
@@ -525,3 +525,5 @@ body.captions.skill-on #p-ev>.sk-panel{align-self:start}
 .sys-mark{flex:none;color:var(--warn);font-size:13px}
 .sys-more{display:none;padding:0 0 6px}.sys-item.open .sys-more{display:block}.sys-more .meta{margin:0}
 .sys-foot{margin:10px 4px 0}
+/* B-120 (D-156): the page title only from 1024 px; below it the highlighted tab icon names the page. D-157: a problem in the status line reads amber, on desktop only (System leads with it everywhere). */
+@media (max-width:1023px){.ptitle{display:none}}

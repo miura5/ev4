@@ -23,7 +23,7 @@ const TYPES = { '.js': 'text/javascript', '.json': 'application/json', '.css': '
 const results = []; const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', name, detail]);
 
 /** A page with the published files served from dist (overrides: {file: body | null to fail it}) and the stub. */
-async function open(browser, { viewport, pre = '', overrides = {} }) {
+async function open(browser, { viewport, pre = '', overrides = {}, db = seed }) {
   const page = await browser.newPage({ viewport, colorScheme: 'dark' });
   const errors = []; page.on('pageerror', e => errors.push(e.message)); page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   await page.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));
@@ -34,7 +34,7 @@ async function open(browser, { viewport, pre = '', overrides = {} }) {
     const f = path.join(pageDir, name);
     return fs.existsSync(f) ? r.fulfill({ body: fs.readFileSync(f), contentType: TYPES[path.extname(name)] || 'application/octet-stream' }) : r.fulfill({ status: 404, body: 'not published' });
   });
-  await page.addInitScript(pre + 'window.__db=' + JSON.stringify(seed) + ';' + stub);
+  await page.addInitScript(pre + 'window.__db=' + JSON.stringify(db) + ';' + stub);
   await page.goto(ORIGIN + '/');
   return { page, errors };
 }
@@ -49,7 +49,7 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
     ok(`[${scheme}] the shell loads core.js, spec.json, app.js and styles.css from beside it`, await page.evaluate(() => !!(window.EVCore && window.EVApp && window.EVValidate) && getComputedStyle(document.body).getPropertyValue('--accent').trim() !== ''));
     ok(`[${scheme}] opens on E.V. with the greeting`, await page.isVisible('#p-ev') && !(await page.isVisible('#p-today')) && /Matt|Still up|Afternoon/.test(await page.locator('#thread .msg.ev').first().textContent().catch(() => '')));
     ok(`[${scheme}] five tabs in the top bar beside System`, (await page.locator('#top .tabs .tab').count()) === 5 && await page.isVisible('#tab-system'));
-    ok(`[${scheme}] the staging stamp, a quiet status and the staging readout`, /^Live · /.test(await statusText(page)) && /staging/.test(await page.locator('#readout').textContent()) && await page.evaluate(() => document.querySelector('meta[name="ev-release"]').content === 'v4.0.0' && document.querySelector('meta[name="ev-target"]').content === 'staging'), await statusText(page));
+    ok(`[${scheme}] the staging stamp, a quiet status and the staging readout`, /^Live$/.test(await statusText(page)) && /staging/.test(await page.locator('#readout').textContent()) && await page.evaluate(() => document.querySelector('meta[name="ev-release"]').content === 'v4.0.0' && document.querySelector('meta[name="ev-target"]').content === 'staging'), await statusText(page));
     ok(`[${scheme}] no sideways scroll`, await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
     for (const t of ['today', 'study', 'progress', 'record']) { await page.click('#tab-' + t); await page.waitForTimeout(60); }
     ok(`[${scheme}] each tab opens its own panel`, await page.isVisible('#p-record') && !(await page.isVisible('#p-ev')));
@@ -77,6 +77,21 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
     ok(`[${w}] ${desk ? 'the desktop header: named tabs and the status line' : 'one layout: icon tabs, no status line, the column centred at most 660 px'}`, !v.sideways && (desk ? !v.iconTabs && v.statusLine : v.iconTabs && !v.statusLine && v.centred && v.wrapW <= 660), JSON.stringify(v));
     await page.close();
   }
+  // B-120 (D-156, D-157): the page title only from 1024 px; the status line reads Live, or the one problem by name.
+  for (const w of [390, 735, 1280]) {
+    const { page } = await open(browser, { viewport: { width: w, height: 844 } }); await page.waitForTimeout(500);
+    await page.click('#tab-today'); await page.waitForTimeout(300);
+    const v = await page.evaluate(() => { const t = document.querySelector('#p-today .ptitle'), s = document.getElementById('status'); return { title: !!t && getComputedStyle(t).display !== 'none' && t.getBoundingClientRect().height > 0, status: s.textContent, shown: getComputedStyle(s).display !== 'none' }; });
+    ok(`[${w}] ${w >= 1024 ? 'the page title and the status line Live' : 'no page title, no status line'}`, w >= 1024 ? v.title && v.status === 'Live' && v.shown : !v.title && !v.shown, JSON.stringify(v));
+    await page.close();
+  }
+  { const at = ((seed.health || {}).current || {}).at || new Date().toISOString(), t = new Date(Date.parse(at) + 60000).toISOString();
+    const db = { ...seed, runs: { ...(seed.runs || {}), 'weekly-shell-failed': { schema: 1, writer: 'weekly', at: t, source: 'weekly', release: 'v4.0.0', pipeline: 'weekly', startedAt: t, endedAt: t, status: 'failed' } } };
+    const { page } = await open(browser, { viewport: { width: 1280, height: 860 }, db }); await page.waitForTimeout(600);
+    const v = await page.evaluate(() => { const s = document.getElementById('status'); return { status: s.textContent, shown: getComputedStyle(s).display !== 'none', color: getComputedStyle(s).color }; });
+    ok('[1280] a planted failed run is the status line, by name, with no count', /^Weekly review’s last run failed/.test(v.status) && v.shown && !/\d+ (active|practice|things)/.test(v.status), JSON.stringify(v));
+    await page.screenshot({ path: `${shots}/status-problem-1280.png` });
+    await page.close(); }
   // The boot's refusals, each with its plain sentence and nothing else drawn.
   const phone = { width: 390, height: 844 };
   let r = await open(browser, { viewport: phone, pre: 'window.__notOwner=true;' }); await r.page.waitForTimeout(400);
