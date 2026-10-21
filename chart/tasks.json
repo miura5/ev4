@@ -3226,9 +3226,9 @@
   "title": "The hard line (D-200): spec.boundaries.guarded lists the guarded paths (spec.boundaries, chart/rules.json, tools/hooks.mjs, .claude/settings.json, tools/gate.mjs, CLAUDE.md's Hard limits section, decisions of kind tenet); under the builder marker (/tmp/ev/builder-run) log and ship refuse to push a commit that touches one, log decision refuses --kind tenet and any --supersedes or --amends of a tenet, and deploy refuses to print a create_trigger or update_trigger; a lint test fails npm test on such a commit when the marker is present; the review skill reports any diff to a guarded path and any trigger call in a builder run's transcript",
   "dod": "chart tests for each refusal under the marker and the pass without it; test/hooks.test.mjs unchanged and green; the review skill's line present; npm test green; ship staging green; live only on Matt's OK",
   "milestone": "v4.4 guard",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken by the build chat while the builder session (session_01E8uRETL45FfPLHkrSyWY2p) builds B-177; B-184 has no dependencies and touches tools/chart.mjs, spec.boundaries and tests, not B-177's files.",
   "commit": null,
   "source": "plan TbfWAoQEeQixyNKZnEZKvv"
  },
