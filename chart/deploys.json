@@ -2064,5 +2064,32 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "86bdf3d",
+  "time": "2026-10-21T02:51:39.897Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "6218f16",
+  "tasks": [
+   "B-75",
+   "B-78",
+   "B-79",
+   "B-80",
+   "B-81",
+   "B-42",
+   "B-68",
+   "B-45",
+   "B-74",
+   "B-67",
+   "B-125",
+   "B-128"
+  ],
+  "summary": "Open-ended checks and grading; Surfaces in the E.V. tab; Study session in Captions; Skills runner tuck rail; Captions rollout to live; Courses as data; Shadow scheduler; Exam plan drafts on request; Talk and reader data fields; Harness on the synthetic record; No motion on tab switches; Study Watch reader 0.3",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
