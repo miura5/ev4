@@ -936,13 +936,13 @@
   "title": "Readiness trend (pick 7, D-105): days/<date>.readiness written by the morning and weeks/<date> closing readiness (two schema bumps, migrations and fixtures), rebuild days and rebuild weeks reproducing them, and the Progress tab's line per exam with the night-before prediction as the last marked point",
   "dod": null,
   "milestone": "M8",
-  "status": "open",
+  "status": "done",
   "depends": [
    "B-39",
    "B-42"
   ],
-  "notes": "",
-  "commit": null,
+  "notes": "Staging at 1d6d84a: days and weeks migrated to schema 3 (14 writes, legacy copies kept); staging morning (runs/morning-20261021-123610366) and weekly (runs/weekly-20261021-123600092) ok and stamped readiness per upcoming exam; evening-cloud's lint rebuilt the derived documents with none differing (runs/evening-cloud-20261021-124432483; its 2 errors were two schema-1 review sets on staging, migrated since); the harness draws the line and the night-before ring at 390 and 1280.",
+  "commit": "1d6d84a",
   "source": "BACKLOG.md"
  },
  {
