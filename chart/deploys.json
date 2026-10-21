@@ -2129,5 +2129,36 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "live",
+  "commit": "f547c21",
+  "time": "2026-10-21T04:29:44.782Z",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "6218f16",
+  "from": "6218f16",
+  "tasks": [
+   "B-75",
+   "B-78",
+   "B-79",
+   "B-80",
+   "B-81",
+   "B-42",
+   "B-68",
+   "B-45",
+   "B-67",
+   "B-125",
+   "B-128",
+   "B-129",
+   "B-130",
+   "B-74",
+   "B-93",
+   "B-43"
+  ],
+  "summary": "Open-ended checks and grading; Surfaces in the E.V. tab; Study session in Captions; Skills runner tuck rail; Captions rollout to live; Courses as data; Shadow scheduler; Exam plan drafts on request; Harness on the synthetic record; No motion on tab switches; Study Watch reader 0.3; A greeting that reads the moment; views across two build chats; Talk and reader data fields; log and the views; Dosage practice",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
