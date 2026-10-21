@@ -1356,13 +1356,15 @@
   "title": "weeks/<date>.insights (D-120): one producer (weekly); code computes accuracy by objective, format and clinical-judgment step with counts, the items that discriminate (missed across attempts against never missed), recurrence leaders, and study minutes from sessions and check-ins against next-day accuracy; the weekly's agent step writes the interpretation over those numbers into weeks/<date>.review (authored); the Progress tab shows the top three lines; make_practice and the morning target the weakest objective from the latest weeks document",
   "dod": null,
   "milestone": "M10",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-68"
   ],
-  "notes": "",
-  "commit": null,
-  "source": "BACKLOG.md"
+  "notes": "Built and on staging (b80eea4): staging weeks migrated to schema 4; the staging weekly (runs/weekly-20261021-132341297) wrote weeks/2026-10-21.insights: weakest E4-8 (1 of 4), what came back most, study against next-day accuracy. Fixture rebuilds byte for byte; harness checks the fold line and make_practice's target. Left (DoD): Matt opens Progress on the staging page, reads the week's three findings and says which line he acted on. The morning's half is B-170. SESSION SUMMARY (Oct 21, v4.2 next steps): filed the hand-off (D-186 to D-190, B-163 to B-165); done B-164, B-137, B-133 (fetch proven, B-168 filed), B-46 (clinical prep brief, staging brief cites Skills Packet pages), B-48 (readiness trend, days 3 and weeks 3), B-167 (live watchdog writes again on v4.2.0), B-169 (release +n in run schemas), B-108, B-45; B-163 restore migrates, proven on the Oct 18 backup, last proof tonight's v4.2 backup; B-72 on staging; B-69 waits on the shadow week; B-166 waits on one line from Matt. Staging at b80eea4 is green; live is 8ec85c4 (v4.2.0). Next open task: B-75.",
+  "commit": "b80eea4",
+  "source": "BACKLOG.md",
+  "waitingOn": "Matt",
+  "waitingWhere": "staging"
  },
  {
   "id": "B-73",
