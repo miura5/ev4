@@ -1279,16 +1279,18 @@
   "title": "core/study.mjs and the shadow pick (D-116): the review scheduler as a pure module with a spec.study.scheduler switch (fixed, today's rule; adaptive); the morning writes days/<date>.shadow (the other scheduler's pick for the day, reproduced by rebuild days) beside the list; the weekly compares them into weeks/<date>.study (items both pick, items only one picks, and how the deferred ones were answered)",
   "dod": null,
   "milestone": "M10",
-  "status": "in progress",
+  "status": "blocked",
   "depends": [],
   "dependsText": "M9 gate",
-  "notes": "Oct 20: taken per Matt's order (M10 starts with the shadow). The adaptive rule (D-117) is written as the shadow's other scheduler; the switch stays fixed until Matt's OK after a shadow week (B-69)",
+  "notes": "Shipped 6218f16, staging GREEN. Staging days 10-17..10-19 migrated to schema 2 (shadow null), legacy copies kept; a second migrate run does nothing. Morning lists byte-identical to the fixed scheduler on 122 days, the adaptive shadow non-empty on 45. Rebuild and lint over the migrated staging export: no lint errors; days/2026-10-18 rebuilds as an exam day (BIO 201 Lecture Exam 3, kind unit) where the stored one says off: that is B-42 and D-099, the same rebuild at b47e04c gives off, and the stored day stays as the morning wrote it. Still open in the DoD: a staging morning firing that writes days/<date>.shadow and a staging weekly firing that writes weeks/<date>.study. The auto-mode check refuses fire_trigger on staging tasks unless Matt names them; not worked around. Matt: say 'fire the E.V. staging morning and weekly tasks' to close it (B-42 and B-45 wait on the same firing).",
   "commit": null,
   "source": "BACKLOG.md",
   "board": {
    "row": "v4 B-68: Shadow scheduler",
-   "why": "a scheduler change costs a week of study when wrong, so the new rule runs beside today's first and the week compares them (D-116)"
-  }
+   "why": "a scheduler change costs a week of study when wrong, so the new rule runs beside today's first and the week compares them (D-116)",
+   "notes": "Shadow scheduler built and on staging; waiting on Matt to fire the staging morning and weekly"
+  },
+  "waitingOn": "Matt"
  },
  {
   "id": "B-69",
