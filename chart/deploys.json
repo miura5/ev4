@@ -2266,5 +2266,23 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "52c5d65",
+  "time": "2026-10-21T11:28:36.028Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "8ec85c4",
+  "tasks": [
+   "B-133",
+   "B-163",
+   "B-137"
+  ],
+  "summary": "Fetch diagnostic; Restore migrates; Mac tasks are created, never edited",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
