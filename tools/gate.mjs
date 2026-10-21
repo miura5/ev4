@@ -64,7 +64,7 @@ export function renderGate(fn = gate) {
     .split('\n')
     .map(l => l.trim())
     .filter(Boolean)
-    .join(' ')
+    .reduce((a, l) => (!a ? l : /[([{]$/.test(a) || /^[.)\]}]/.test(l) ? a + l : a + ' ' + l), '')
     .replace(/'/g, '"');
   if (/'/.test(body) || /\/\/|\/\*/.test(body.replace(/"[^"]*"/g, '""')))
     throw new Error('the gate does not render to one shell-safe line');
