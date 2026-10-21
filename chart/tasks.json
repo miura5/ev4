@@ -846,17 +846,18 @@
   "title": "Dosage practice (pick 1, D-100): the numeric item type in spec.items and the sets schema (bump, migration, fixtures, idempotence test), scoreAnswer with tolerance and unit, the dosage drill in the morning's step list and make_practice's dosage topic, grounded in the dosage material passages; the Study tab answers a numeric item with a number field and shows the worked steps after",
   "dod": "core tests score numeric items at the tolerance edge; a staging morning firing with a planted dosage exam five days out writes a dosage drill whose items validate and cite passages; the harness answers one at both widths",
   "milestone": "M8",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-39",
    "B-42"
   ],
-  "notes": "Oct 20: taken (Matt's order: B-43 after B-42). DoD from the Build plan tab.",
-  "commit": null,
+  "notes": "Oct 20: f547c21 on staging (GREEN). Core tests score numeric items at the tolerance edge (1.25 and 1.35 right for 1.3 ± 0.05, 1.24 and 1.36 wrong), the unit when given, and validation; sets schema 2 with fixture and idempotence test. Staging proof: a made-up dosage material (materials/up-b43-made-up-dosage) and a dosage exam five days out (exams/B43-DOSE, Oct 25) planted, then the staging morning fired: runs/morning-20261021-041941582 ok at f547c21 wrote sets/B43-DOSE-dosage-2026-10-20, 10 numeric items, every one valid, citing the planted passage, its math checked by hand. Run harness: a numeric item answered Right and one Missed past its tolerance on the phone, one Right with its unit typed at 1280. npm run check GREEN. Staging and live hold no real dosage material yet: the morning skips a dosage drill and says so until his dosage chapter or handout is in the library. The two planted made-up documents stay on staging. Not live: sets schema 2 waits for Matt's OK.",
+  "commit": "f547c21",
   "source": "BACKLOG.md",
   "board": {
    "row": "v4 B-43: Dosage practice",
-   "why": "Dosage is the one exam kind the review cannot practise: no item takes a number"
+   "why": "Dosage is the one exam kind the review cannot practise: no item takes a number",
+   "notes": "Done on staging: numeric dosage items, a dosage drill near a dosage exam; needs his dosage material in the library"
   }
  },
  {
