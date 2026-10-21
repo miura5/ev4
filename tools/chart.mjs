@@ -37,6 +37,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { newestTranscript, toolResults } from '../core/transcript.mjs';
 import { verify, verifyReads, deployCalls, formatDeploy, canonical, SYSTEM_IDS, contentHash } from '../core/deploy.mjs';
+import { builderRun, pushRefusal } from './guard.mjs';
 import { commitsBehind, mainHead } from '../core/cli.mjs';
 import { readState, withShell } from '../core/verifystate.mjs';
 import { build, BOOKKEEPING } from './build.mjs';
@@ -1183,7 +1184,7 @@ export function formatViews(plan) {
 
 // ------------------------------------------------------------------------------------------------ log, report
 /** One change to the record. Returns {rec, what, views: [view names it touches]}; throws on a refusal. */
-export function applyLog(rec, o, { now = new Date().toISOString() } = {}) {
+export function applyLog(rec, o, { now = new Date().toISOString(), builder = builderRun() } = {}) {
   const [, id] = o._;
   if (id === 'deploy') {
     const target = o.target;
@@ -1235,6 +1236,19 @@ export function applyLog(rec, o, { now = new Date().toISOString() } = {}) {
     const old = rec.decisions.find(d => d.id === did);
     if (!old && did !== nextDecisionId(rec))
       throw new Error(`the next free decision id is ${nextDecisionId(rec)}, not ${did}`);
+    // B-184 (D-200): a builder run never files, changes, supersedes or amends a tenet.
+    if (builder) {
+      const tenet = x => (rec.decisions.find(y => y.id === x) || {}).kind === 'tenet';
+      const hit = [
+        o.kind === 'tenet' || (old && old.kind === 'tenet') ? did : null,
+        ...list(o.supersedes || '').filter(tenet),
+        ...list(o.amends || '').filter(tenet),
+      ].filter(Boolean);
+      if (hit.length)
+        throw new Error(
+          `a builder run never files or changes a tenet (D-200): ${hit.join(', ')}; that is a chat with Matt present`
+        );
+    }
     const d = old || {
       id: did,
       date: ctDate(now),
@@ -1747,8 +1761,11 @@ export function syncRecord(root) {
   }
   return null;
 }
-export function pushRecord(root) {
+export function pushRecord(root, run = builderRun()) {
   if (!onMainWithOrigin(root)) return { pushed: false, why: 'no origin', next: null };
+  // B-184 (D-200): a builder run never pushes a change to a guarded path.
+  const refused = pushRefusal(root, run);
+  if (refused) return { pushed: false, why: refused, next: 'leave the commit for a build chat with Matt present' };
   try {
     git(root, ['push', '-q', 'origin', 'HEAD:main']);
     return { pushed: true };
@@ -2026,6 +2043,7 @@ async function ship(o) {
     ? JSON.parse(fs.readFileSync(path.join(dist, 'verify-staging.json'), 'utf8'))
     : null;
   const deploy = deployCalls({
+    builder: Boolean(builderRun()), // B-184 (D-200)
     manifest,
     target,
     distDir: dist,
@@ -2921,6 +2939,7 @@ async function rollback(o) {
       jsonl = file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
     const versions = versionsFrom(jsonl, `https://claude.ai/artifact/${restored.manifest.records.live.artifact}`);
     const calls = deployCalls({
+      builder: Boolean(builderRun()), // B-184 (D-200)
       manifest: { ...restored.manifest, dirty: false },
       target: 'live',
       distDir: path.join(root, 'dist'),

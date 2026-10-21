@@ -387,6 +387,39 @@ test('B-137 (O-5): a Mac task is created, never edited: its create_trigger print
   );
 });
 
+test('B-184 (D-200): under the builder marker deploy prints no create_trigger or update_trigger, and names why', async () => {
+  const { dir, dist } = await deployedStaging();
+  const mp = path.join(dist, 'manifest.json');
+  const manifest = JSON.parse(fs.readFileSync(mp, 'utf8'));
+  delete manifest.tasks['staging.evening-mac'].trigger;
+  write(mp, manifest);
+  const marker = path.join(dir, 'builder-run');
+  write(marker, { at: new Date().toISOString() });
+  const run = env =>
+    JSON.parse(
+      execFileSync('node', [CLI, 'deploy', 'staging', '--json', '--root', dir], {
+        encoding: 'utf8',
+        env: { ...process.env, EV_BUILDER_MARKER: env },
+      })
+    );
+  const hand = run(path.join(dir, 'no-marker'));
+  assert.ok(
+    hand.calls.some(c => c.tool === 'mcp__claude-code-remote__create_trigger'),
+    'a hand chat still gets it'
+  );
+  const builder = run(marker);
+  assert.deepEqual(
+    builder.calls.filter(c => /create_trigger|update_trigger/.test(c.tool)),
+    [],
+    'no trigger call in a builder run'
+  );
+  assert.ok(
+    builder.skipped.some(s =>
+      /staging\.evening-mac: create_trigger is never printed in a builder run \(D-200\)/.test(s)
+    )
+  );
+});
+
 test('helpers: page stamps and canonical JSON', () => {
   assert.equal(pageStamp('<head><meta name="ev-release" content="v4.1.2"></head>'), 'v4.1.2');
   assert.equal(pageStamp('<head></head>'), null);

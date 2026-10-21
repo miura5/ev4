@@ -47,6 +47,7 @@ import { lintRecord, formatLint } from './lint.mjs';
 import { rebuild } from './derive.mjs';
 import * as RUN from './run.mjs';
 import { newestTranscript } from './transcript.mjs';
+import { builderRun } from '../tools/guard.mjs';
 import EV from './evcore.mjs';
 import * as CANVAS from './canvas.mjs';
 
@@ -643,6 +644,7 @@ const commands = {
       versions: o.version,
       mattOk: Boolean(o.mattOk),
       duringSession: Boolean(o.duringSession),
+      builder: Boolean(builderRun()), // B-184 (D-200)
       state: withShell(readState(stateDir), manifest, target, dist),
       sha256,
       stagingVerify,

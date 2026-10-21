@@ -38,6 +38,10 @@ task or writes to a record. It never blocks anything by itself: the build chat d
    - shipping steps that apply: pushed, `ship staging` with every printed call until it says GREEN,
      never live without Matt's explicit OK;
    - recording: the task's Notes line through `log`, the deploy through `ship` (CHANGELOG.md, D-172).
+   - the hard line (D-200, B-184): any diff to a guarded path (`spec.boundaries.guarded`: chart/rules.json,
+     tools/hooks.mjs, .claude/settings.json, tools/gate.mjs, spec.boundaries, CLAUDE.md's Hard limits, any tenet) is
+     reported, saying whether a chat with Matt present made it; and any create_trigger or update_trigger call in a
+     builder run's transcript (a session whose first step wrote /tmp/ev/builder-run) is reported.
 6. Check the diff against each tenet in scope: one checked by `harness`, `lint` or `ship` needs that check named and
    green for this work; one checked by `review` is judged here, from the diff. A change that goes against a tenet is a
    gap unless a superseding tenet and its sweep task are in the record.

@@ -497,6 +497,7 @@ export function deployCalls({
   sha256,
   stagingVerify = null,
   duringSession = false,
+  builder = false,
   now = Date.now(),
   stateDir = null,
 }) {
@@ -595,6 +596,16 @@ export function deployCalls({
       continue;
     }
     const promptFile = `${distDir}/prompts/${key}.txt`;
+    // B-184 (D-200): a builder run creates, changes or deletes no scheduled task; what this would print is named instead.
+    if (builder) {
+      const live = state && state.triggers && state.triggers.find(x => x.id === t.trigger);
+      const same = live && live.derived_state && sha256(live.derived_state.prompt || '') === t.promptSha256;
+      if (!t.trigger || !same || (live && live.name !== t.name))
+        skipped.push(
+          `${key}: ${t.trigger ? 'update_trigger' : 'create_trigger'} is never printed in a builder run (D-200); a build chat with Matt present makes it`
+        );
+      continue;
+    }
     if (!t.trigger) {
       // A Mac-bound task is created only from a chat linked to the Mac with Matt present: printed, marked as such.
       calls.push({
