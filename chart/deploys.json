@@ -2407,5 +2407,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "c8f5464",
+  "time": "2026-10-21T20:15:09.294Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "b5aec79",
+  "tasks": [
+   "B-173"
+  ],
+  "summary": "Version-free task names",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
