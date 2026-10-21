@@ -70,7 +70,7 @@ function syntheticRecord(now = new Date()) {
   ['Enteral feeding checks', 'Bowel elimination changes', 'Urinary retention signs', 'Nutrition screening tools'].forEach((topic, i) => { const when = ct(d(-1), 21, i); put('weakspots', 'ws-preview-' + (i + 1), { ...env('page', 'Pre-reading check', when), addedAt: when, addedBy: 'Matt', topic, objective: '', exam: 'E5', course: 'NUR 112', kind: 'concept', preRead: true, readingDue: d(3), initial: { streak: 0, nextDue: d(3), recurrence: 1, misses: 1 }, events: {} }); });
   // run.cjs (B-72, D-120): last Sunday's weekly, with the insights the Progress card shows and make_practice aims at.
   { const wd = new Date(today + 'T12:00:00Z').getUTCDay(), sun = d(-(wd || 7)), base = JSON.parse(fs.readFileSync(path.join(__dirname, 'record', 'weeks', '2026-10-11.json'), 'utf8'));
-    put('weeks', sun, { ...base, at: ct(sun, 17, 59), date: sun, rollups: { ...base.rollups, from: addDays(sun, -6), to: sun, readiness: { E4: { pctSolid: 10, active: 8, solid: 1, accuracy7: 55, answers7: 12 } } },
+    put('weeks', sun, { ...base, at: ct(sun, 17, 59), date: sun, health: { ...(base.health || {}), evidence: { answers: 212, scoredExams: 1 } }, rollups: { ...base.rollups, from: addDays(sun, -6), to: sun, readiness: { E4: { pctSolid: 10, active: 8, solid: 1, accuracy7: 55, answers7: 12 } } },
       insights: { window: { from: addDays(sun, -27), to: sun },
         byObjective: [{ id: 'E4-3', right: 2, n: 7, pct: 29 }, { id: 'E4-2', right: 4, n: 8, pct: 50 }, { id: 'E4-1', right: 6, n: 9, pct: 67 }],
         byFormat: [{ id: 'select-all', right: 1, n: 4, pct: 25 }, { id: 'single', right: 11, n: 20, pct: 55 }],

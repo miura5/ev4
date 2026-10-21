@@ -2483,6 +2483,27 @@ const ok = (name, cond, detail = '') => {
       'the weak spot state is held against the evening hash; a drill not yet run is not a line',
       /Your weak spots changed since the evening snapshot/.test(hp) && !/Backup restore drill/.test(hp)
     );
+    // B-165 (D-188): the evidence two gated tasks wait on, from the latest weekly, read against the spec's numbers.
+    ok(
+      'B-165: the evidence B-70 and B-71 wait on reads beside the health line',
+      /Evidence \(week of [^)]+\): 212 of 300 answers for learned intervals · 1 of 2 exams with a prediction and a score for calibration\./.test(
+        hp
+      ),
+      hp
+    );
+    {
+      const card = page.locator('#health');
+      for (const [w, h] of [
+        [390, 844],
+        [1280, 860],
+      ]) {
+        await page.setViewportSize({ width: w, height: h });
+        await card.scrollIntoViewIfNeeded();
+        await page.waitForTimeout(400);
+        await card.screenshot({ path: `${shots}/health-evidence-${w}.png` });
+      }
+      await page.setViewportSize(scheme === 'phone' ? { width: 390, height: 844 } : { width: 1280, height: 860 });
+    }
     ok(
       'pipelines read with when they run',
       /Morning · daily 4:25am/.test(await page.textContent('#pipes')) &&
