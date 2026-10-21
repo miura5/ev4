@@ -2456,5 +2456,17 @@
    "at": "2026-10-21T03:17:12.468Z"
   },
   "waitingOn": "Matt"
+ },
+ {
+  "id": "B-130",
+  "kind": "task",
+  "title": "views across two build chats: a view's newest read in this session can be older than another session's writes, so views planned 25 Changelog rows and 13 Board rows that the other chat had already added (Oct 20, parent chat; caught by re-reading). Row inserts carry no ifRev guard. Fix: an insert or replace is guarded by the read's rev (ifRev), and a read older than the newest view write recorded in chart/ by any session (a views stamp per view, with its doc rev) counts as stale and is asked for again",
+  "dod": "a chart test plants two sessions' transcripts: session B's views after session A wrote the Board asks for a fresh read instead of planning A's rows; every printed insert and replace carries ifRev; npm test green",
+  "milestone": "Process",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "log new"
  }
 ]
