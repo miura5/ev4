@@ -131,11 +131,54 @@ export const dependsText = t => (t.dependsText != null ? t.dependsText : t.depen
 export const backlogRow = t =>
   `| ${t.id} | ${cell(taskText(t))} | ${cell(dependsText(t))} | ${cell(t.milestone)} | ${t.status} | ${cell(t.notes)} |`;
 const INBOX = new Set(['inbox', 'declined']);
-/** BACKLOG.md from the record: the task table in record order, then the inbox (reports untriaged or declined). */
+// B-148 (M-1, D-181): where what waits on Matt happens, so his list is one sitting per place.
+export const PLACES = {
+  mac: 'At the Mac',
+  staging: 'On the staging page',
+  github: 'On GitHub',
+  decision: 'A decision (a reply in a build chat)',
+};
+/** Everything waiting on Matt, grouped by where it happens (a task with no place is a decision). */
+export function yourTurn(rec) {
+  const waiting = rec.tasks.filter(t => t.waitingOn === 'Matt' && !['done', 'declined'].includes(t.status));
+  return Object.entries(PLACES)
+    .map(([k, label]) => ({
+      place: k,
+      label,
+      tasks: waiting.filter(t => (PLACES[t.waitingWhere] ? t.waitingWhere : 'decision') === k),
+    }))
+    .filter(g => g.tasks.length);
+}
+/** The Your turn section as Markdown lines: per place, each task with what it waits on (its notes' last sentence). */
+export function yourTurnLines(rec) {
+  const groups = yourTurn(rec);
+  if (!groups.length) return ['Nothing waits on Matt.'];
+  const out = [];
+  for (const g of groups) {
+    out.push(`### ${g.label}`, '');
+    for (const t of g.tasks) out.push(`- ${t.id} (${t.status}): ${cell(boardName(t).replace(/^v4 B-\d+: /, ''))}`);
+    out.push('');
+  }
+  return out.slice(0, -1);
+}
+/**
+ * BACKLOG.md from the record (B-148, D-4): the open, blocked and in-progress tasks first, then Your turn (what waits on
+ * Matt, by place), then the done tasks under one heading, then the inbox (reports untriaged or declined).
+ */
 export function renderBacklog(rec, { header = BACKLOG_HEADER } = {}) {
-  const tasks = rec.tasks.filter(t => !INBOX.has(t.status)),
+  const tasks = rec.tasks.filter(t => !INBOX.has(t.status) && t.status !== 'done'),
+    done = rec.tasks.filter(t => t.status === 'done'),
     inbox = rec.tasks.filter(t => INBOX.has(t.status));
   const out = [...header, '', COLUMNS, ...tasks.map(backlogRow)];
+  out.push(
+    '',
+    '## Your turn',
+    '',
+    'What waits on Matt, by where it happens (`brief --matt` prints the same list).',
+    '',
+    ...yourTurnLines(rec)
+  );
+  out.push('', '## Done', '', COLUMNS, ...done.map(backlogRow));
   if (inbox.length) {
     out.push(
       '',
@@ -1341,7 +1384,10 @@ export function applyLog(rec, o, { now = new Date().toISOString() } = {}) {
       what.push('declined');
     } else throw new Error('--triage task|join <id>|decline');
     // B-142: a declined or joined task waits on no one.
-    if (t.status === 'declined' && t.waitingOn) delete t.waitingOn;
+    if (t.status === 'declined' && t.waitingOn) {
+      delete t.waitingOn;
+      delete t.waitingWhere;
+    }
   }
   if (o.status) {
     if (!TASK_STATUS.includes(o.status) || ['inbox', 'declined'].includes(o.status))
@@ -1360,6 +1406,7 @@ export function applyLog(rec, o, { now = new Date().toISOString() } = {}) {
     // B-142: a finished task waits on no one.
     if (o.status === 'done' && t.waitingOn && o['waiting-on'] == null) {
       delete t.waitingOn;
+      delete t.waitingWhere;
       what.push('no longer waiting');
     }
   }
@@ -1408,8 +1455,17 @@ export function applyLog(rec, o, { now = new Date().toISOString() } = {}) {
   }
   if (o['waiting-on'] != null) {
     if (o['waiting-on']) t.waitingOn = o['waiting-on'];
-    else delete t.waitingOn;
+    else {
+      delete t.waitingOn;
+      delete t.waitingWhere;
+    }
     what.push('waiting on');
+  }
+  // B-148: where what waits on Matt happens (mac, staging, github, decision).
+  if (typeof o.where === 'string') {
+    if (!PLACES[o.where]) throw new Error(`--where ${o.where}: one of ${Object.keys(PLACES).join(', ')}`);
+    t.waitingWhere = o.where;
+    what.push('where');
   }
   if (!what.length) throw new Error('nothing to log: give --status, --note, --commit, --triage or a board field');
   return { rec, what: what.join(', '), id: t.id, views: t.board || t.kind !== 'task' ? ['board'] : [] };
@@ -2848,6 +2904,7 @@ function args(argv) {
     '--handoff-note',
     '--correct',
     '--retire',
+    '--matt',
   ]);
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -2973,8 +3030,12 @@ const commands = {
     return record(o, applyReport);
   },
   brief(o) {
+    if (o.matt) {
+      console.log(['# Your turn', '', ...yourTurnLines(loadChart(rootOf(o)))].join('\n'));
+      return 0;
+    }
     const id = o.task || o._[1];
-    if (!id) throw new Error('brief --task <id> [--scope ui,data,ops,pipelines]');
+    if (!id) throw new Error('brief --task <id> [--scope ui,data,ops,pipelines] | brief --matt');
     console.log(brief(loadChart(rootOf(o)), id, { root: rootOf(o), scope: o.scope }));
     return 0;
   },

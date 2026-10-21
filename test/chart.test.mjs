@@ -35,8 +35,10 @@ const rows = s => s.split('\n').filter(l => l.startsWith('| B-'));
 test('B-92: the import regenerates BACKLOG.md row for row', () => {
   const before = read('BACKLOG.md'),
     gen = C.renderBacklog(imported());
-  const a = rows(before),
-    b = rows(gen);
+  // B-148 groups the rows (open work, then Done), so the same rows are compared by id, not by place.
+  const byId = l => C.parseBacklogRow(l)[0] + '\u0000' + C.parseBacklogRow(l)[5];
+  const a = rows(before).sort((x, y) => (byId(x) < byId(y) ? -1 : 1)),
+    b = rows(gen).sort((x, y) => (byId(x) < byId(y) ? -1 : 1));
   assert.equal(b.length, a.length);
   a.forEach((l, i) =>
     assert.deepEqual(C.parseBacklogRow(b[i]), C.parseBacklogRow(l), `row ${i + 1} (${l.slice(0, 8)}) differs`)
@@ -1921,4 +1923,37 @@ test('B-147 (W-6): ship staging --done B-nn --commit <sha> records the task done
     `${task}: open -> done, commit ${head.slice(0, 7)}, notes (chart)`,
   ]);
   assert.ok(log.some(l => /is in the record|committed/.test(l)));
+});
+
+test('B-148 (D-4, M-1): BACKLOG.md lists open work first, then Your turn by place, then Done; brief --matt prints the same list', () => {
+  const r = sample();
+  C.applyLog(r, { _: ['log', 'B-02'], status: 'blocked', 'waiting-on': 'Matt', where: 'mac' });
+  C.applyLog(r, { _: ['log', 'B-03'], status: 'blocked', 'waiting-on': 'Matt', where: 'github' });
+  assert.throws(
+    () => C.applyLog(r, { _: ['log', 'B-03'], where: 'garden' }),
+    /--where garden: one of mac, staging, github, decision/
+  );
+  const md = C.renderBacklog(r);
+  const at = s => md.indexOf(s);
+  assert.ok(
+    at('| B-02 |') < at('## Your turn') && at('## Your turn') < at('## Done') && at('## Done') < at('| B-01 |')
+  );
+  const turn = md.slice(at('## Your turn'), at('## Done'));
+  assert.match(turn, /### At the Mac\n\n- B-02 \(blocked\): two/);
+  assert.match(turn, /### On GitHub\n\n- B-03 \(blocked\): /);
+  assert.doesNotMatch(turn, /B-01/);
+  assert.deepEqual(
+    C.yourTurn(r).map(g => [g.place, g.tasks.map(t => t.id)]),
+    [
+      ['mac', ['B-02']],
+      ['github', ['B-03']],
+    ]
+  );
+  // Done clears the place with the wait.
+  C.applyLog(r, { _: ['log', 'B-02'], status: 'done', commit: 'abc1234' });
+  assert.deepEqual([r.tasks[1].waitingOn, r.tasks[1].waitingWhere], [undefined, undefined]);
+  // brief --matt prints the record's own list.
+  const out = execFileSync('node', [path.join(ROOT, 'tools', 'chart.mjs'), 'brief', '--matt'], { encoding: 'utf8' });
+  assert.equal(out.trimEnd(), ['# Your turn', '', ...C.yourTurnLines(rec())].join('\n'));
+  assert.match(out, /### At the Mac\n\n- B-27 /);
 });

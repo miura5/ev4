@@ -520,7 +520,8 @@
    "why": "A night the Mac was asleep shows on the System tab and is never retried by the cloud",
    "notes": "Oct 18, e99382d (part 1). Part 1 proved: tonight's missed staging Mac evening showed up in the watchdog's report (runs/watchdog-20261019-020143411) and was not retried. evening-mac's push is on. Left: the drill stamping the seed, with you at the Mac"
   },
-  "waitingOn": "Matt"
+  "waitingOn": "Matt",
+  "waitingWhere": "mac"
  },
  {
   "id": "B-28",
@@ -590,7 +591,8 @@
    "why": "v3 is retired (D-145); archiving keeps its history and makes it read-only",
    "notes": "Waiting on you: GitHub, miura5/ev-core, Settings, Archive this repository"
   },
-  "waitingOn": "Matt"
+  "waitingOn": "Matt",
+  "waitingWhere": "github"
  },
  {
   "id": "B-109",
@@ -891,7 +893,8 @@
    "row": "v4 B-45: Exam plan drafts on request",
    "why": "the exam-plan job writes plans/<exam>-draft beside a plan and nothing reads it; there is no way to switch to a new plan"
   },
-  "waitingOn": "Matt"
+  "waitingOn": "Matt",
+  "waitingWhere": "staging"
  },
  {
   "id": "B-46",
@@ -1539,7 +1542,8 @@
    "why": "The gate that takes Captions to live",
    "notes": "Gate: waits on B-74 to B-80 and Matt's OK"
   },
-  "waitingOn": "Matt"
+  "waitingOn": "Matt",
+  "waitingWhere": "staging"
  },
  {
   "id": "B-82",
@@ -1892,7 +1896,8 @@
    ]
   },
   "waitingOn": "Matt",
-  "renumberedFrom": "B-83"
+  "renumberedFrom": "B-83",
+  "waitingWhere": "mac"
  },
  {
   "id": "B-99",
@@ -2430,7 +2435,8 @@
    "why": "The notes bar and E.V.'s comments name the note and line he is writing",
    "notes": "Waiting on Matt: install the new reader file in the desktop app"
   },
-  "waitingOn": "Matt"
+  "waitingOn": "Matt",
+  "waitingWhere": "mac"
  },
  {
   "id": "B-129",
@@ -2487,7 +2493,8 @@
   "notes": "Built and tested (B-131's commit on main). Staging at cc306a7 (Oct 21): system documents and page deployed, the six cloud staging prompts updated; staging watchdog fired green on it (runs/watchdog-20261021-061645855: ok, audit 11 calls all printed). verify-deploy staging is RED only on staging.evening-mac and staging.restore-drill: Mac-bound, their prompts change only from a chat linked to the Mac with Matt present (CLAUDE.md), so ship staging cannot reach GREEN until Matt's Mac session. Waiting on Matt: the Mac.",
   "commit": "ce39f4a",
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
-  "waitingOn": "Matt"
+  "waitingOn": "Matt",
+  "waitingWhere": "mac"
  },
  {
   "id": "B-132",
@@ -2500,7 +2507,8 @@
   "notes": "Built and tested (B-132's commit on main). Staging at cc306a7 (Oct 21): system documents and page deployed, the six cloud staging prompts updated; staging watchdog fired green on it (runs/watchdog-20261021-061645855: ok, audit 11 calls all printed). verify-deploy staging is RED only on staging.evening-mac and staging.restore-drill: Mac-bound, their prompts change only from a chat linked to the Mac with Matt present (CLAUDE.md), so ship staging cannot reach GREEN until Matt's Mac session. Waiting on Matt: the Mac.",
   "commit": "c339ea0",
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
-  "waitingOn": "Matt"
+  "waitingOn": "Matt",
+  "waitingWhere": "mac"
  },
  {
   "id": "B-133",
@@ -2513,7 +2521,8 @@
   "notes": "Oct 21: refused. Firing the staging diagnostic (trig_01V9d1ED24oKHsEjZU6tPKWk) with the fetch probe was denied by the session's auto-mode classifier: 'Cowork Run Routine Now' (a routine is run now only when Matt asked for that routine by name). Not worked around. Matt's part (a decision, in a build chat): say 'fire the staging diagnostic with the fetch probe'; the probe text: whether a cloud run can git fetch --depth 1 origin f525c6e5530a3035fd2dbade1e0ecb3e64da9bed (about 120 commits behind main, outside the 50-deep clone), read-only, nothing executed from it",
   "commit": null,
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
-  "waitingOn": "Matt"
+  "waitingOn": "Matt",
+  "waitingWhere": "decision"
  },
  {
   "id": "B-134",
@@ -2526,7 +2535,8 @@
   "notes": "Built and tested (B-134's commit on main). Staging at cc306a7 (Oct 21): system documents and page deployed, the six cloud staging prompts updated; staging watchdog fired green on it (runs/watchdog-20261021-061645855: ok, audit 11 calls all printed). verify-deploy staging is RED only on staging.evening-mac and staging.restore-drill: Mac-bound, their prompts change only from a chat linked to the Mac with Matt present (CLAUDE.md), so ship staging cannot reach GREEN until Matt's Mac session. Waiting on Matt: the Mac.",
   "commit": "0ee7573",
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
-  "waitingOn": "Matt"
+  "waitingOn": "Matt",
+  "waitingWhere": "mac"
  },
  {
   "id": "B-135",
@@ -2539,7 +2549,8 @@
   "notes": "Built and tested (B-135's commit on main). Staging at cc306a7 (Oct 21): system documents and page deployed, the six cloud staging prompts updated; staging watchdog fired green on it (runs/watchdog-20261021-061645855: ok, audit 11 calls all printed). verify-deploy staging is RED only on staging.evening-mac and staging.restore-drill: Mac-bound, their prompts change only from a chat linked to the Mac with Matt present (CLAUDE.md), so ship staging cannot reach GREEN until Matt's Mac session. Waiting on Matt: the Mac.",
   "commit": "e735743",
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
-  "waitingOn": "Matt"
+  "waitingOn": "Matt",
+  "waitingWhere": "mac"
  },
  {
   "id": "B-136",
@@ -2552,7 +2563,8 @@
   "notes": "Built and tested (B-136's commit on main). Staging at cc306a7 (Oct 21): system documents and page deployed, the six cloud staging prompts updated; staging watchdog fired green on it (runs/watchdog-20261021-061645855: ok, audit 11 calls all printed). verify-deploy staging is RED only on staging.evening-mac and staging.restore-drill: Mac-bound, their prompts change only from a chat linked to the Mac with Matt present (CLAUDE.md), so ship staging cannot reach GREEN until Matt's Mac session. Waiting on Matt: the Mac.",
   "commit": "c8c4264",
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
-  "waitingOn": "Matt"
+  "waitingOn": "Matt",
+  "waitingWhere": "mac"
  },
  {
   "id": "B-137",
@@ -2574,11 +2586,13 @@
   "title": "Stale health is the first task (D-180): CLAUDE.md step 1 reads health/current's age and, over spec.constants.health.staleHours, the chat reads the watchdog's last_run through list_triggers, files a bug with report and takes it first; brief prints the age; the morning and evening push lines add \"a build chat will look\" after the stale words",
   "dod": "the brief test prints the age from a planted health/current; the push test shows the added words; CLAUDE.md step 1 updated; npm test green; ship staging green; live only on Matt's OK",
   "milestone": "v4.2 watch",
-  "status": "in progress",
+  "status": "blocked",
   "depends": [],
   "notes": "Built 4666003: brief's Health first lines, CLAUDE.md step 1, the push words; tests green. Staging proof with the watch theme's staging deploy; staging GREEN waits on the Mac-bound staging prompts (B-131 notes)",
   "commit": "4666003",
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
+  "waitingOn": "Matt",
+  "waitingWhere": "mac"
  },
  {
   "id": "B-139",
@@ -2603,7 +2617,8 @@
   "notes": "Built c0c2816: spec, schemas and a spec test; npm test green; staging and live health/current validate. Staging proof with the watch theme's staging deploy; staging GREEN waits on the Mac-bound staging prompts (B-131 notes). Waiting on Matt: the Mac.",
   "commit": "c0c2816",
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
-  "waitingOn": "Matt"
+  "waitingOn": "Matt",
+  "waitingWhere": "mac"
  },
  {
   "id": "B-141",
@@ -2683,12 +2698,12 @@
   "title": "ship staging --done B-nn --commit <sha> (W-6) records the task done and the deploy in one command, printing the same calls as before",
   "dod": "a chart test shows one command producing the two record entries and the Changelog line; npm test green",
   "milestone": "v4.2 record",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-145"
   ],
-  "notes": "Taken Oct 21",
-  "commit": null,
+  "notes": "recordShip and --done; the chart test shows both entries, both commits and the CHANGELOG.md line; npm test green",
+  "commit": "004bfd7",
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
@@ -2697,9 +2712,9 @@
   "title": "BACKLOG.md order and Your turn (D-4, M-1): open and blocked tasks first, then a Your turn section of everything waitingOn Matt grouped by where it happens (the Mac, the staging page, GitHub, a decision), then done tasks under one heading; brief --matt prints the same list",
   "dod": "the drift test green on the new layout; a chart test plants two waitingOn tasks and finds them under Your turn and in brief --matt; npm test green",
   "milestone": "v4.2 record",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken Oct 21",
   "commit": null,
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
