@@ -2332,5 +2332,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "b80eea4",
+  "time": "2026-10-21T13:22:44.366Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "1d6d84a",
+  "tasks": [
+   "B-72"
+  ],
+  "summary": "weeks/<date>.insights",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
