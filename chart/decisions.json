@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-167",
+  "date": "Oct 20",
+  "title": "E.V.'s greeting headline reads the moment: core builds a situation of tags and enums (segment, day type, time since his last visit, momentum from recent answers and sessions, exam distance, the urgent and new items, prep phase); one quick-tier call writes the one headline from that situation and his last 7 headlines; code checks it (every urgent item named, no number, name or date absent from the situation, at most 22 words, no question when something is urgent) and falls back to core's line on a 2 s timeout or a failed check; the last 7 headlines are kept with talk/memory, amending spec.ui's 'never stored'; the briefing under it stays code",
+  "why": "Matt, Oct 20: the fixed phrases repeat and feel scheduled, and he wants her smart and alive; the facts stay code so she never invents one or misses an exam (B-129)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-166",
   "date": "Oct 20",
   "title": "The demo copy (B-83) is deleted, not retired: its artifact and its code (demo/runtime.js, tools/demo.mjs, test/harness/demo.cjs, test/demo.test.mjs) go, and its made-up record moves to test/data/seed.cjs as the synthetic record's seed; tidying the repository may remove code outright (git history keeps it), while records, Mac files, scheduled tasks and docs stay retire-by-marking",
@@ -430,9 +440,9 @@
  {
   "id": "D-129",
   "date": "Oct 18",
-  "title": "The proposal's Study session sequence is a requirement and the build's acceptance script: a session started by talking; notes read as he writes, with her glance; sparing comments with the quote under them and the notes bar holding; the seven-minute check (alert mood, the check surface rises, chips hide; Quiz me now gives one early); alternating formats, a recoil and one line on a wrong pick, hit or missed key points under an open answer, Add to it once; Break dims her and the ring, pauses the clock and holds checks; End files minutes, notes read and checks taken in one line; the demo's ten-times clock becomes real time (the harness runs it on fake time)",
-  "why": "Matt asked for this demo behaviour to carry into the build exactly",
-  "status": "proposed",
+  "title": "The proposal's Study session sequence is a requirement and the build's acceptance script, read through the UI tenets: a session started by talking; notes read as he writes, with her glance; sparing comments with the quote under them and the notes bar holding; the seven-minute check (alert mood; the check opens as the surface and chips hide; its head line folds it, D-161; Quiz me now gives one early); alternating formats, a recoil and one line on a wrong pick, hit or missed key points under an open answer, Add to it once; Break dims her and the ring, pauses the clock and holds checks; End files minutes, notes read and checks taken in one line; nothing closes to a pill (D-160); the harness runs the sequence on fake time",
+  "why": "Matt asked for this demo behaviour to carry into the build exactly; restated Oct 20 on Matt's word to the UI tenets written after it (D-160, D-161); the demo's ten-times clock went with the demo (D-166)",
+  "status": "accepted",
   "supersedes": [],
   "amends": []
  },
@@ -457,36 +467,36 @@
  {
   "id": "D-126",
   "date": "Oct 18",
-  "title": "A library citation in a caption is a teal underlined file · page span, revealed whole; tapping it, in her current or an earlier line, opens the material surface (passage, file, page, Read from here) in place of the open surface, which becomes a pill; in a session the notes bar stays; v4 rule 7 reads this way",
-  "why": "Rule 7 kept and drawn for captions: the passage opens beside her without leaving the conversation",
-  "status": "proposed",
+  "title": "A library citation in a caption is a teal underlined file · page span, revealed whole; tapping it, in her current or an earlier line, opens the material surface (passage, file, page, Read from here) in place of the open surface, which folds to a row under it (D-123), never a pill; in a session the session line and the notes bar stay; v4 rule 7 reads this way",
+  "why": "Rule 7 kept and drawn for captions: the passage opens beside her without leaving the conversation; restated Oct 20 on Matt's word to the UI tenets written after it: what it replaces folds (D-160) instead of becoming a pill (D-150)",
+  "status": "accepted",
   "supersedes": [],
   "amends": []
  },
  {
   "id": "D-125",
   "date": "Oct 18",
-  "title": "v4 rule 10, phone first (the proposal's rule 9), changes for the E.V. tab: from 900 px wide it is a stage (captions and composer at most 660 px) plus a side column of 300 to 440 px for the open surface and, in a session, Your notes (the last five lines read); the column is there only while it holds something, otherwise her stage centres in the window, and it slides in from the right when a surface opens; below 900 px the column wraps under the stage into the phone stack; navigation stays the bottom dock at every width until a decision covers the shell for all tabs (the artboard's top-bar tabs deferred; amended Oct 18); the other tabs keep the wider-phone rule at 1024 px",
-  "why": "On desktop she barely shrinks and the surface sits beside her; one layout still collapses to the phone",
-  "status": "proposed",
+  "title": "The E.V. tab's layout follows D-159's two breakpoints: below 1024 px it is the phone stack (her stage, captions and composer in a column at most 660 px, centred) with the open surface as the bottom sheet; from 1024 px it is her stage plus a side column of 300 to 440 px for the open surface and, in a session, Your notes (the last five lines read); the column is there only while it holds something (D-151), otherwise her stage centres, and it slides in from the right when a surface opens (D-163); the tabs sit in the top bar at every width, as B-85 built",
+  "why": "On desktop she barely shrinks and the surface sits beside her; one layout still collapses to the phone; restated Oct 20 on Matt's word to the UI tenets written after it: 1024, not 900 (D-159), and the top-bar tabs, not the bottom dock",
+  "status": "accepted",
   "supersedes": [],
   "amends": []
  },
  {
   "id": "D-124",
   "date": "Oct 18",
-  "title": "v4 rule 4 changes: a running study session pins as the session bar (44 px: time, next check, Break, End) plus the progress ring round her; the review set and the skills runner are surfaces, and closing one leaves a pill (Review · 4 of 10, Vital signs · step 4 of 7); D-107 stands, with its bottom sheet as the skills surface and its peek bar as the pill",
-  "why": "A pinned strip over a thread has no thread to sit over; the ring keeps the session's time on her, where he is looking",
-  "status": "proposed",
+  "title": "v4 rule 4 for the E.V. tab, restated to the UI tenets (D-151, D-153, D-160, D-161): a running study session shows as its one line under her core (time, next check, Break, End) and the progress ring round her, as B-84 and B-86 built, and the line stays on screen at short heights. The review set and the skills runner are surfaces: folding one leaves its own summary line where it was (Review · 4 of 10, Vital signs · step 4 of 7, with a chevron), which unfolds it; nothing becomes a pill above the composer. D-107 stands: on the phone the skills surface is its bottom sheet and its peek bar is that summary line",
+  "why": "A pinned strip over a thread has no thread to sit over; the ring keeps the session's time on her, where he is looking; restated Oct 20 on Matt's word to the UI tenets written after it: the closed state is the thing folded (D-160), not a pill (D-150)",
+  "status": "accepted",
   "supersedes": [],
   "amends": []
  },
  {
   "id": "D-123",
   "date": "Oct 18",
-  "title": "v4 rule 3 changes: one surface at a time; a reply may still carry up to three cards, the one that shows the change she just made opens and the rest wait as pills above the composer; never two surfaces; a surface grows to its content up to the sheet's height (330 to 410 px on the phone) and a longer list shows five and a more that extends it; an open check holds the surface and new cards wait as pills; she glances toward a surface as it opens",
-  "why": "No card scrolls the conversation away and E.V. stays on screen; answers the open question on two surfaces",
-  "status": "proposed",
+  "title": "v4 rule 3 for the E.V. tab, restated to the UI tenets (D-146, D-148, D-150, D-160): one surface open at a time. A reply may carry up to three cards: the one that shows the change she just made opens, and the others wait as one-line rows under its head line (each its title and state, opening in place and folding the open one), never as pills. A surface grows to its content up to the room it has (the phone sheet at 330 to 410 px); a longer list shows its first five rows and folds the rest under one 'n more' line that opens in place. An open check holds the surface and a card that arrives meanwhile waits as a row. Every surface folds to its own one-line summary with a chevron by tapping that line (on the phone the sheet also swipes down) and unfolds the same way. She glances toward a surface as it opens",
+  "why": "No card scrolls the conversation away and E.V. stays on screen; restated Oct 20 on Matt's word to the UI tenets written after it (its pills and five-row sheet clashed with D-148, D-150 and D-160)",
+  "status": "accepted",
   "supersedes": [],
   "amends": []
  },
@@ -556,9 +566,9 @@
  {
   "id": "D-115",
   "date": "Oct 18",
-  "title": "A v4 schema bump's legacy copy stores the fields the bump changed plus the original's hash; whole copies stay only for the v3 originals rollback needs",
-  "why": "Decide when the next bump of materials or sets is designed, not before (O-2). B-43 is the next sets bump; materials (4 MB budget) is the collection a whole copy would double",
-  "status": "proposed",
+  "title": "A v4 schema bump's legacy copy stores the fields the bump changed plus the original's hash; the whole v3 copies already in the record stay as they are, and no new whole copy is made now that the v3 rollback is gone (D-145)",
+  "why": "Decided before B-43, the next sets bump (O-2): materials (4 MB budget) is the collection a whole copy would double; accepted by Matt Oct 20",
+  "status": "accepted",
   "supersedes": [],
   "amends": []
  },

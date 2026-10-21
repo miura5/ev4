@@ -1399,20 +1399,19 @@
   "title": "Open-ended item schema and grading (D-132, D-133): kind open in spec.items and the sets and answers schemas (bump, migration, fixtures, idempotence test); the check function (2 or 3 key points of at most 12 words, each with keyword groups; a stem of at most 25 words; sourceRef; identifier scan); the grading prompt with its shape check and 8 s timeout; core.gradeOpenLocal; the grade rule (right, partial, wrong; partial counts as a miss; added text stored, grade unchanged); core.checkFormat; B-75 takes the next spec.items, sets and answers versions itself, and whichever of B-43 and B-75 lands second bumps again with its own migration",
   "dod": "core tests grade planted answers right, partial and wrong by a stubbed model reply and by the local fallback, send a malformed reply to the fallback, refuse an item with one key point, and walk checkFormat through multiple choice, open, and multiple choice when key points are missing; the harness answers one open check graded by the stub and one offline (hit and missed points, Add to it, Checked offline), screenshots at 390 and 1280",
   "milestone": "M11",
-  "status": "blocked",
+  "status": "open",
   "depends": [
    "B-39",
    "B-74"
   ],
-  "notes": "Checked against the UI tenets before building (Oct 21); not started. Blocked on: D-132 and D-133 are proposed, not accepted (accept as written?), and it depends on B-74 (blocked). Tenet note for when it is built: the open answer's view follows D-165 as B-126 built it (verdict one line, Right, Partly right or Missed; hit and missed points as lines; Add to it once as a text action), not a separate card (D-147, D-150).",
+  "notes": "D-132 and D-133 accepted Oct 20; waits only on B-74. Tenet note for when it is built: the open answer's view follows D-165 as B-126 built it (the verdict one line: Right, Partly right or Missed; hit and missed points as lines; Add to it once as a text action), not a separate card (D-147, D-150)",
   "commit": null,
   "source": "Build plan tab",
   "board": {
    "row": "v4 B-75: Open-ended checks and grading",
    "why": "Checks that ask for an answer in his own words",
-   "notes": "Waiting on Matt: D-132 and D-133 still proposed; after B-74"
-  },
-  "waitingOn": "Matt"
+   "notes": "Ready after B-74: D-132 and D-133 accepted"
+  }
  },
  {
   "id": "B-76",
@@ -1455,64 +1454,61 @@
  {
   "id": "B-78",
   "kind": "task",
-  "title": "Surfaces (D-123, D-124, D-126): the existing cards as surfaces (Today, review set, dates, readiness, material, practice check), one at a time with the rest as pills; the phone sheet (330 to 410 px, five rows and a more) and the desktop side column; a glance as one opens, a nod and one line on a check-off without moving the list, closing to a pill; the review set as a surface with its pill; a caption's citation span opening the material surface in place of the open one",
-  "dod": "the harness at 390 and 1280: a reply with three cards opens one surface and two pills; ticking a Today item keeps scroll and its neighbours in place (rule 6); a review answered in the surface leaves Review · n of 10 and closes when done; a citation in her current line and in an earlier one opens the passage with the previous surface as a pill; the core's event log shows glance and done; screenshots at both widths",
+  "title": "Surfaces (D-123, D-124, D-126, as restated Oct 20): the existing cards as surfaces (Today, review set, dates, readiness, material, practice check), one open at a time with the rest as one-line rows under its head line; below 1024 px the bottom sheet (330 to 410 px; five rows, the rest folded under an 'n more' line), from 1024 the side column (D-125); a glance as one opens, a nod and one line on a check-off without moving the list; every surface folds to its own summary line with a chevron and unfolds from it (swipe down on the phone), with no pill, close or × anywhere; the review set as a surface whose folded line is Review · n of 10; a caption's citation span opening the material surface in place of the open one, which folds to a row",
+  "dod": "the harness at 390, 735 and 1280: a reply with three cards opens one surface with two rows under its head line and no pill; tapping a row opens it in place and folds the open one to a row; ticking a Today item keeps scroll and its neighbours in place (rule 6); a review answered in the surface folds to Review · n of 10 and unfolds from that line; a citation in her current line and in an earlier one opens the passage with the previous surface folded to a row; the core's event log shows glance and done; the tenet checks (B-115) pass on the E.V. tab with no new exception; screenshots at all three widths",
   "milestone": "M11",
-  "status": "blocked",
+  "status": "open",
   "depends": [
    "B-77"
   ],
-  "notes": "Checked against the UI tenets before building (Oct 21); not built, by your rule. It rests on D-123, D-124 and D-126 (proposed, written before the tenets) and clashes with accepted ones: (a) pills: closing a surface to a pill above the composer (D-123, D-124) against D-160 (the way out is the thing folding to its own one-line summary with a chevron) and D-150 (no pill where a word does the job); (b) the phone sheet (330 to 410 px, five rows and a more) against D-148 (a list opens folded under a one-line count, rows open in place); (c) the desktop side column exists only from 1024 (D-158, D-159), so 600 to 1023 gets the phone stack and its sheet; D-123 does not say. Question: restate B-78 as one surface at a time that folds to its own line per D-160 and D-148 (supersede D-123 and D-124's pill parts), or keep the pills as a named exception to D-150 and D-160? Its DoD (one surface and two pills) changes with the answer.",
+  "notes": "restated Oct 20 to the UI tenets on Matt's word: D-123, D-124, D-125 and D-126 accepted as restated (rows, not pills; folds by its own line, D-160; the sheet below 1024 and the side column from 1024, D-159); checked against D-146 to D-153, D-160, D-161 and D-163",
   "commit": null,
   "source": "Build plan tab",
   "board": {
    "row": "v4 B-78: Surfaces in the E.V. tab",
    "why": "One thing open at a time in the E.V. tab",
-   "notes": "Waiting on Matt: its pills and phone sheet clash with the fold tenets (D-148, D-150, D-160)"
-  },
-  "waitingOn": "Matt"
+   "notes": "Ready: restated to fold like the rest of the page, no pills"
+  }
  },
  {
   "id": "B-79",
   "kind": "task",
-  "title": "Study session in Captions (D-129, D-130, D-133): started by talking; the session bar and ring; listening; the notes bar with reader v2's title and a glance at each new line; comments through core.commentGate with the quote, the notes bar holding while she speaks; the session menu (Comments More, Some, Off; Quiz me now) and the level carried to the next session; the seven-minute check on the surface with alert mood and chips hidden, its format from checkFormat, a recoil and one line on a wrong pick, hit and missed points and Add to it once on an open answer; Break (sleepy, ring dimmed, clock paused, checks held); End's one filing line; desktop Your notes",
-  "dod": "core tests on commentGate: the 4-minute and 4-line limits at Some, 2 and 2 at More, none at Off, none during a check, a break, the minute before a check or while answering, a correction taking the next slot; the harness runs the proposal's Study session sequence step by step on fake time against the reader stub at 390 and 1280 with a screenshot per step; a staging session's sessions/ss-* and talk read back with session, note and comments",
+  "title": "Study session in Captions (D-129 as restated Oct 20, D-130, D-133): started by talking; the session line under her and the ring (D-124); listening; the notes bar with reader v2's title and a glance at each new line; comments through core.commentGate with the quote, the notes bar holding while she speaks; the session menu (Comments More, Some, Off; Quiz me now) and the level carried to the next session; the seven-minute check as the surface with alert mood and chips hidden, folding by its head line and unfolding at the next checkpoint or on a tap (D-161), its format from checkFormat, a recoil and one line on a wrong pick, hit and missed points and Add to it once on an open answer; Break (sleepy, ring dimmed, clock paused, checks held); End's one filing line; Your notes in the side column from 1024 (D-125); nothing closes to a pill",
+  "dod": "core tests on commentGate: the 4-minute and 4-line limits at Some, 2 and 2 at More, none at Off, none during a check, a break, the minute before a check or while answering, a correction taking the next slot; the harness runs the proposal's Study session sequence step by step on fake time against the reader stub at 390, 735 and 1280 with a screenshot per step, with no pill, close or × at any step and the tenet checks (B-115) passing; a staging session's sessions/ss-* and talk read back with session, note and comments",
   "milestone": "M11",
-  "status": "blocked",
+  "status": "open",
   "depends": [
    "B-74",
    "B-75",
    "B-78"
   ],
-  "notes": "Checked against the UI tenets before building (Oct 21); not started. Depends on B-74, B-75 and B-78 (all blocked) and rests on D-129, D-130 and D-133 (proposed). Tenet points to settle with B-78's answer: D-129's script has the check rise as a surface with chips hidden, where D-161 (accepted) has the check fold like the briefing to its head line, and D-160 rules out pills for anything closed; the 44 px session bar (D-124) is fine with D-153 if it gives way at short heights. Question: accept D-129 read through D-160 and D-161 (the check folds, no pills)?",
+  "notes": "restated Oct 20 to the UI tenets on Matt's word: D-129 accepted as restated (the check folds by its head line, D-161; no pills, D-160); D-130 and D-133 accepted Oct 20. Waits on B-74, B-75 and B-78",
   "commit": null,
   "source": "Build plan tab",
   "board": {
    "row": "v4 B-79: Study session in Captions",
    "why": "A session run by talking to her, with comments and checks",
-   "notes": "Waiting on Matt: proposed decisions, and after B-74, B-75, B-78"
-  },
-  "waitingOn": "Matt"
+   "notes": "Ready after B-74, B-75 and B-78: restated to fold, no pills"
+  }
  },
  {
   "id": "B-80",
   "kind": "task",
-  "title": "Skills runner with the desktop tuck rail (D-124, D-107): the skills runner as a surface over core.skillSteps, step dots on the phone and the full list on desktop, Passed and Missed per step, a miss with her recoil filing a weak spot of kind skill, the next step read aloud; on desktop the 64 px tuck rail (step dots, Passed, Missed, hold-to-peek) while she says only the step number and earlier step lines blur; the pill Vital signs · step n of 7; takes over B-51's page part for the E.V. tab, noted on B-51 in BACKLOG.md",
-  "dod": "the harness runs a planted checklist at 390 and 1280: every step marked from the surface and from the rail without scrolling; a miss files one weak spot of kind skill; tucking blurs earlier step captions and shortens her lines to the step number; hold-to-peek shows the list and releases; screenshots at both widths, rail tucked and open",
+  "title": "Skills runner with the desktop tuck rail (D-124 as restated Oct 20, D-107, D-161): the skills runner as a surface over core.skillSteps, step dots below 1024 px and the full list from 1024, Passed and Missed per step, a miss with her recoil filing a weak spot of kind skill, the next step read aloud; from 1024 the 64 px tuck rail (step dots, Passed, Missed, hold-to-peek) while she says only the step number and earlier step lines blur; below 1024 D-107's bottom sheet, whose peek line (Vital signs · step n of 7, with a chevron) is its folded state, with no pill and no Hide; End inside it (D-161); takes over B-51's page part for the E.V. tab",
+  "dod": "the harness runs a planted checklist at 390, 735 and 1280: every step marked from the surface and, from 1024, from the rail without scrolling; a miss files one weak spot of kind skill; tucking blurs earlier step captions and shortens her lines to the step number; hold-to-peek shows the list and releases; below 1024 the sheet folds to its peek line and unfolds from it, with no pill or Hide; screenshots at all three widths, rail tucked and open",
   "milestone": "M11",
-  "status": "blocked",
+  "status": "open",
   "depends": [
    "B-78"
   ],
-  "notes": "Checked against the UI tenets before building (Oct 21); not started. Depends on B-78 (blocked) and rests on D-124 (proposed). Clash: the pill 'Vital signs · step n of 7' against D-150 and D-160, where D-161 already makes the runner's peek line its fold line. Question: is that pill simply the peek line (no pill)? The 64 px tuck rail is a desktop part, so from 1024 only (D-159); below that the bottom sheet of D-107 stands.",
+  "notes": "restated Oct 20 to the UI tenets on Matt's word: the step pill is the sheet's peek line (D-124 as restated, D-161); the rail only from 1024 (D-159). Waits on B-78",
   "commit": null,
   "source": "Build plan tab",
   "board": {
    "row": "v4 B-80: Skills runner tuck rail",
    "why": "The skills checklist beside her on desktop",
-   "notes": "Waiting on Matt: the step pill clashes with D-150 and D-160; after B-78"
-  },
-  "waitingOn": "Matt"
+   "notes": "Ready after B-78: the step pill is now the sheet's own peek line"
+  }
  },
  {
   "id": "B-81",
@@ -2436,9 +2432,9 @@
   "title": "A greeting that reads the moment (Matt, Oct 20): code decides what the greeting says, as a situation of tags and enums; one quick model call decides how she says it, with code's line as the fallback",
   "dod": "core.situation(ctx) returns the greeting's facts as tags and enums (segment, day type, time since his last visit, momentum from recent answers and sessions, exam distance, the urgent and new items, prep phase) with core tests across planted days; the headline is one line written by one quick-tier call from that situation and his last 7 headlines, shape-checked by code (every urgent item named, no number, name or date absent from the situation, at most 22 words, no question when something is urgent), 2 s timeout, else core's line as today; the last 7 headlines kept with talk/memory; the briefing under it stays code; the harness opens the page on planted states (exam tomorrow morning, a clear evening, back after 3 days, late before clinical) with a stubbed reply and with the stub failing, at 390 and 1280; npm run check green",
   "milestone": "M15 Voice",
-  "status": "blocked",
+  "status": "open",
   "depends": [],
-  "notes": "Question for Matt: accept the approach (facts from code as tags and enums, voice from one quick model call, code's line when it fails or is slow)? It changes spec.ui's 'greeting never stored' to keep his last 7 headlines so she doesn't repeat herself. Proposed in the parent build chat, Oct 20.",
+  "notes": "Matt approved the approach Oct 20 (D-167): facts from code as tags and enums, the line from one quick call, core's line as the fallback",
   "commit": null,
   "source": "build chat",
   "words": "Idea/feedback for behavior: - Instead of hard-coded phrases, maybe there can be some sort of system where the greeting is influenced by tags, enums, states; or whatever is best practice here; the phrases get very repetitive. I want E.V.’s greeting to feel smart and alive rather than rigid and as if they are scheduled; you get what I'm getting at; whatever the best approach for this is per your take let me know and we can add that.",
@@ -2446,7 +2442,7 @@
   "board": {
    "row": "v4 B-129: A greeting that reads the moment",
    "why": "Matt: the greeting's fixed phrases repeat and feel scheduled; he wants it smart and alive",
-   "notes": "Waiting on you: OK the approach (code picks the facts, Claude words the line, code's line as fallback)",
+   "notes": "Approved (D-167); next for a build chat",
    "were": [
     "v4 B-129: Idea/feedback for behavior: - Instead of hard-coded phrases, maybe…"
    ]
@@ -2454,8 +2450,7 @@
   "triage": {
    "outcome": "task",
    "at": "2026-10-21T03:17:12.468Z"
-  },
-  "waitingOn": "Matt"
+  }
  },
  {
   "id": "B-130",
