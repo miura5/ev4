@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 21 | v4 live deployed at c38c86b (12:05 CT), from 8ec85c4: Fetch diagnostic; Restore migrates; Mac tasks are created, never edited; Clinical-prep brief; A staging worker job fails at compute when staging runs a build past…; Readiness trend; weeks/<date>.insights; GitHub's npm test check red on every push since 11:14Z Oct 21:… (B-133, B-163, B-137, B-46, B-169, B-48, B-72, B-171). verify-deploy live GREEN. Rollback is a redeploy of 8ec85c4 | Matt's OK | D-049 |
 | Oct 21 | v4 staging deployed at c38c86b (10:47 CT), from b80eea4: GitHub's npm test check red on every push since 11:14Z Oct 21:… (B-171). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 21 | v4 staging deployed at b80eea4 (08:22 CT), from 1d6d84a: weeks/<date>.insights (B-72). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 21 | v4 staging deployed at 1d6d84a (07:34 CT), from f2f8dc4: Readiness trend (B-48). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |

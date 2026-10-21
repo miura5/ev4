@@ -2364,5 +2364,28 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "live",
+  "commit": "c38c86b",
+  "time": "2026-10-21T17:05:07.561Z",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "8ec85c4",
+  "from": "8ec85c4",
+  "tasks": [
+   "B-133",
+   "B-163",
+   "B-137",
+   "B-46",
+   "B-169",
+   "B-48",
+   "B-72",
+   "B-171"
+  ],
+  "summary": "Fetch diagnostic; Restore migrates; Mac tasks are created, never edited; Clinical-prep brief; A staging worker job fails at compute when staging runs a build past…; Readiness trend; weeks/<date>.insights; GitHub's npm test check red on every push since 11:14Z Oct 21:…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
