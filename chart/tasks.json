@@ -2910,7 +2910,7 @@
  {
   "id": "B-166",
   "kind": "bug",
-  "title": "A staging run reached Matt's phone (B-135 follow-up, Oct 21): find the path that sent it and close it; staging sends nothing to his phone",
+  "title": "A staging run reached Matt's phone around 3:59am Oct 21 (B-135 follow-up): find the path that sent it and close it; staging sends nothing to his phone",
   "dod": "the sending path named from evidence (the line Matt saw, the staging runs' push fields, the tasks' notification settings, the session that fired them); the fix in code, prompt or task setting; a staging morning fired from a build chat and from its schedule each leave nothing on his phone (Matt confirms); npm test green; ship staging green",
   "milestone": "v4.3 ops",
   "status": "blocked",
