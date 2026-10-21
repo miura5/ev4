@@ -3065,13 +3065,11 @@
   "title": "Version-free task names (D-192): spec.tasks.nameTemplate drops <minor> and <release>, so a scheduled task's name stays the same across releases (for example 'E.V. evening-mac', 'E.V. staging · worker'). The release stays in each rendered prompt and in system/manifest. deploy's create_trigger and update_trigger printouts follow. The cloud tasks are renamed by deploy once. The Mac-bound tasks are re-created once with Matt at the Mac (B-137); the old ones are disabled and kept under spec.tasks.retired",
   "dod": "a build test bumps specVersion on a planted spec and finds every task name unchanged; a prompt test finds the release in every rendered prompt; deploy's printout carries no rename on a patch or minor bump; ship staging green; the live and staging Mac tasks re-created with Matt present, and each one's next scheduled run writes an ok runs/ document; npm test green",
   "milestone": "v4.3 ops",
-  "status": "blocked",
+  "status": "done",
   "depends": [],
-  "notes": "4d1d521: nameTemplate is 'E.V. <pipeline>' / 'E.V. staging · <pipeline>' and the build refuses a template with <minor> or <release>; a bumped spec builds the same names; deploy prints no rename for a bump; every prompt reads its release from system/manifest (no literal, so a release changes no prompt; that is how this task reads 'the release stays in each prompt'). The six staging cloud tasks are renamed (18:12Z). Left, with Matt at the Mac (Matt's call, Oct 21): re-create the live evening-mac and the staging evening-mac and restore-drill with the new names and prompts (deploy's create_trigger printouts), disable the old ones and list them in spec.tasks.retired; each one's next scheduled run writes an ok runs/ document. Then ship staging is green and live can go (the cloud live tasks rename on that deploy).",
-  "commit": "4d1d521",
-  "source": "plan FWVokBpKM5YX1hko8Lse15",
-  "waitingOn": "Matt",
-  "waitingWhere": "mac"
+  "notes": "Shipped to staging at c8f5464: ship staging GREEN.",
+  "commit": "c8f5464",
+  "source": "plan FWVokBpKM5YX1hko8Lse15"
  },
  {
   "id": "B-174",
