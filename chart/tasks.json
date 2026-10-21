@@ -512,7 +512,7 @@
   "depends": [
    "B-26"
   ],
-  "notes": "Oct 21, part 2 proof on Matt's OK ('Fire the staging restore drill'): fired at 8ec85c4 (v4.2.0); runs/restore-drill-20261021-102717405 failed at compute, REFUSED with nothing planned: the newest v4 backup on the Mac is staging/backup/E.V.-v4-backup-sunday.json from Oct 18, which predates this week's schema bumps (days, exams, ideas, planedits, sessions, talk, weeks /schema must be 2; days /shadow; ideas /kind; weeks /health; exams E1-E3). The refusal is right: no backup has been written since Oct 18 because live evening-mac failed at its gate every night (B-98). system/seed untouched (version 1, Oct 18). Next: once tonight's 8:20pm live evening-mac writes a backup at v4.2, fire the staging restore drill again and read back its runs document and system/seed.",
+  "notes": "Oct 21: part 2's drill proven on staging with B-163's migration: runs/restore-drill-20261021-115939317 ok at 322af46, the Oct 18 Sunday backup (515 documents, 24 collections) checked against its manifest, migrated to this build (days, exams, ideas, planedits, sessions, sets, talk, weeks schema 1 to 2; 3 examedits added) and restored (15 written, 501 identical, 2 log entries kept); the first try at 52c5d65 refused legacy copies for their own schema, fixed in 322af46. Left of part 2: the drill stamping system/seed and logging its run in live (a staging restore-drill prompt change, Mac-bound, with Matt at the Mac).",
   "commit": null,
   "source": "BACKLOG.md",
   "board": {
