@@ -2647,10 +2647,10 @@
   "title": "Deploy attribution (W-2): commitTasks skips subjects ending \"(chart)\" and commits that touch only bookkeeping; the f547c21 live entry corrected by a note, nothing deleted",
   "dod": "a chart test with a planted mixed log attributes only product commits; rollback's dry run names the same list; npm test green",
   "milestone": "v4.2 record",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Taken Oct 21",
-  "commit": null,
+  "notes": "e74a068: attribution skips record and bookkeeping-only commits in ship and rollback; f547c21 corrected by a note; DECISIONS.md and CHANGELOG.md are bookkeeping in the build; tests green",
+  "commit": "e74a068",
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
@@ -2659,9 +2659,9 @@
   "title": "Atomic record changes (D-177): log, report, ship and plan fetch and rebase before they commit and push right after, printing the refusal and the next step when the push is refused",
   "dod": "a chart test runs two log calls from two clones of a throwaway remote and both entries land in order; npm test green",
   "milestone": "v4.2 record",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken Oct 21",
   "commit": null,
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },

@@ -1837,3 +1837,45 @@ test('B-144: a recorded deploy is corrected by a note, kept as it was; the Chang
   const real = rec().deploys.find(d => d.target === 'live' && d.commit === 'f547c21');
   assert.match(real.notes[0], /^B-144 \(W-2\): .* shipped B-125, B-128, B-74 and B-43/);
 });
+
+test('B-145 (D-177): two chats log from two clones of one remote; each takes origin first and pushes after, and both entries land in order', () => {
+  const a = copyRepo({ push: true });
+  const origin = execFileSync('git', ['-C', a, 'remote', 'get-url', 'origin'], { encoding: 'utf8' }).trim();
+  const b = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-second-chat-'));
+  execFileSync('git', ['clone', '-q', '-b', 'main', origin, b]);
+  const open = JSON.parse(fs.readFileSync(path.join(a, 'chart', 'tasks.json'), 'utf8')).filter(
+    t => t.status === 'open'
+  );
+  const [one, two] = [open[0].id, open[1].id];
+  const log = (dir, id, note) =>
+    execFileSync('node', [path.join(dir, 'tools', 'chart.mjs'), 'log', id, '--note', note, '--root', dir], {
+      encoding: 'utf8',
+    });
+  // Chat A records first and pushes; chat B, behind it, takes A's commit before its own and pushes on top.
+  assert.match(log(a, one, 'from chat A'), /committed \w{7} and pushed/);
+  assert.match(log(b, two, 'from chat B'), /committed \w{7} and pushed/);
+  const subjects = execFileSync('git', ['--git-dir', origin, 'log', '--format=%s', '-2', 'main'], { encoding: 'utf8' })
+    .trim()
+    .split('\n');
+  assert.deepEqual(subjects, [`${two}: notes (chart)`, `${one}: notes (chart)`]);
+  const tasks = JSON.parse(
+    execFileSync('git', ['--git-dir', origin, 'show', 'main:chart/tasks.json'], { encoding: 'utf8' })
+  );
+  assert.equal(tasks.find(t => t.id === one).notes, 'from chat A');
+  assert.equal(tasks.find(t => t.id === two).notes, 'from chat B');
+  // A push the remote refuses is printed with the next step, and the commit stays.
+  execFileSync('git', [
+    '-C',
+    a,
+    'remote',
+    'set-url',
+    '--push',
+    'origin',
+    path.join(os.tmpdir(), 'no-such-remote-' + Date.now()),
+  ]);
+  const out = log(a, one, 'again from chat A');
+  assert.match(
+    out,
+    /committed \w{7}; the push was refused \(.+\)\. Next: git pull --rebase origin main, then git push origin main/
+  );
+});

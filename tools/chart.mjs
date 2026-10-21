@@ -1628,8 +1628,58 @@ export function formatInbox(plan) {
   return out.join('\n');
 }
 
+// B-145 (D-177): a record change is one move. Before the change: take origin/main (fetch, rebase, keeping any work in
+// progress with --autostash), so the change lands on the newest record; after the commit: push at once. Only with an
+// origin and on main; a refused push is printed with the next step, never retried another way.
+const firstLine = e =>
+  String((e && (e.stderr || e.message)) || e)
+    .trim()
+    .split('\n')
+    .filter(Boolean)
+    .slice(-1)[0] || '';
+const onMainWithOrigin = root => {
+  try {
+    git(root, ['remote', 'get-url', 'origin']);
+    return git(root, ['rev-parse', '--abbrev-ref', 'HEAD']).trim() === 'main';
+  } catch {
+    return false;
+  }
+};
+export function syncRecord(root) {
+  if (!onMainWithOrigin(root)) return 'no origin to take first';
+  git(root, ['fetch', '-q', 'origin', 'main']);
+  try {
+    git(root, ['rebase', '-q', '--autostash', 'origin/main']);
+  } catch (e) {
+    try {
+      git(root, ['rebase', '--abort']);
+    } catch {
+      /* nothing to abort */
+    }
+    throw new Error(
+      `the record could not take origin/main first (${firstLine(e)}): run git pull --rebase origin main, then the command again`
+    );
+  }
+  return null;
+}
+export function pushRecord(root) {
+  if (!onMainWithOrigin(root)) return { pushed: false, why: 'no origin', next: null };
+  try {
+    git(root, ['push', '-q', 'origin', 'HEAD:main']);
+    return { pushed: true };
+  } catch (e) {
+    return { pushed: false, why: firstLine(e), next: 'git pull --rebase origin main, then git push origin main' };
+  }
+}
+const pushedText = (sha, p) =>
+  p.pushed
+    ? `; committed ${sha} and pushed`
+    : p.next
+      ? `; committed ${sha}; the push was refused (${p.why}). Next: ${p.next}`
+      : `; committed ${sha} (no origin: nothing pushed)`;
+
 function commitRecord(root, message, trailers) {
-  git(root, ['add', 'chart', 'BACKLOG.md']);
+  git(root, ['add', 'chart', 'BACKLOG.md', 'DECISIONS.md', 'CHANGELOG.md']);
   const staged = git(root, ['diff', '--cached', '--name-only']).trim();
   if (!staged) return null;
   git(root, ['commit', '-q', '-m', [message, ...(trailers.length ? ['', ...trailers] : [])].join('\n')]);
@@ -2924,6 +2974,7 @@ const commands = {
     console.log(formatPlan(p));
     if (!o.apply || !p.commands.length) return 0;
     // One commit for the whole hand-off (each record write would be its own, and runs clone main only so deep, B-110).
+    if (!o['no-commit']) syncRecord(root);
     const rec = loadChart(root),
       filed = [];
     let views = [];
@@ -2946,7 +2997,7 @@ const commands = {
       ? null
       : commitRecord(root, `${[span('D-'), span('B-')].filter(Boolean).join(', ')}: ${what} (chart)`, o.trailer);
     console.log(
-      `plan: filed ${filed.join(', ')}${sha ? `; committed ${sha} (push it: git push origin main)` : '; not committed (--no-commit)'}`
+      `plan: filed ${filed.join(', ')}${sha ? pushedText(sha, pushRecord(root)) : '; not committed (--no-commit)'}`
     );
     console.log('BACKLOG.md regenerated.');
     if (views.length) printViews(rec, o, views);
@@ -2954,8 +3005,9 @@ const commands = {
   },
 };
 function record(o, apply) {
-  const root = rootOf(o),
-    rec = loadChart(root);
+  const root = rootOf(o);
+  if (!o['no-commit']) syncRecord(root);
+  const rec = loadChart(root);
   const file = o.transcript || newestTranscript();
   const jsonl = file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
   const { what, id, views, reply } = apply(rec, o, { jsonl });
@@ -2964,8 +3016,9 @@ function record(o, apply) {
   saveChart(root, rec);
   writeBacklog(root, rec);
   const sha = o['no-commit'] ? null : commitRecord(root, `${id}: ${what} (chart)`, o.trailer);
+  const pushed = sha ? pushRecord(root) : null;
   console.log(
-    `${o._[0]} ${id}: ${what}${sha ? `; committed ${sha} (push it: git push origin main)` : o['no-commit'] ? '; not committed (--no-commit)' : '; nothing changed'}`
+    `${o._[0]} ${id}: ${what}${sha ? pushedText(sha, pushed) : o['no-commit'] ? '; not committed (--no-commit)' : '; nothing changed'}`
   );
   console.log('BACKLOG.md regenerated.');
   if (reply)
