@@ -4,6 +4,7 @@
 // to the commands, which print every call. No prompt clones or unpacks code, attaches a repository, or names the
 // page-only collection; its one fetch is the gate's, of the deployed commit from the session's own origin (B-168).
 import { renderGate } from './gate.mjs';
+import { failLine } from '../core/run.mjs';
 // The gate is tools/gate.mjs, a readable function rendered to the one line step 3 runs (B-132, D-170).
 const GATE = renderGate();
 
@@ -47,6 +48,10 @@ export function renderPrompt({ key, task, spec, release }) {
   const staging = task.record === 'staging';
   const hasAgent = p.steps.some(s => s.kind === 'agent');
   const stamp = `${task.pipeline}-failed-<UTC time as YYYYMMDD-HHMMSSmmm>`;
+  // B-172: a failure ends on one plain line that names the pipeline and the reason, never led by 'E.V.' (Oct 21: the
+  // push showed only 'E.V.'); STAGING marks a staging run's, which stays in its chat.
+  const mark = staging ? 'STAGING · ' : '';
+  const fail = reason => mark + failLine({ failed: p.failed, pipeline: task.pipeline, reason });
   return [
     // B-149 (D-173): no literal release; the run's own is in the manifest step 2 saves.
     `E.V. ${task.pipeline} run${staging ? ', STAGING' : ''}.`,
@@ -90,13 +95,14 @@ export function renderPrompt({ key, task, spec, release }) {
         ? " When compute stops at a judgment step, it prints the judgment, the material and the answer's shape: do that work carefully and well, write your answer as JSON to the file it names, and run compute again."
         : ''),
     '   If a batch is refused because a document changed, run the apply --failed command it names; never edit a plan or a write by hand.',
-    `   If any other printed call is refused, do not try it another way: run the end command with --status failed --detail "<move>: <the refusal, quoted>". If the start write itself is refused, make no other call to the record and end with: E.V. ${task.pipeline} failed at start: <the refusal, quoted>. That line is this run's trace.`,
+    `   If any other printed call is refused, do not try it another way: run the end command with --status failed --detail "<move>: <the refusal, quoted>". If the start write itself is refused, make no other call to the record and end with: ${fail('start')} Refused: <the refusal, quoted>. Those lines are this run's trace.`,
     '',
     `If step 2 or 3 fails there is no code to log with, so log it yourself before ending: ArtifactData "set" on runs/${stamp} with {"schema": 1, "writer": "${task.pipeline}", "at": <now>, "source": "${task.pipeline} gate", "release": <the release in /tmp/ev/system/manifest.json, or "unknown" when step 2 did not save it>, "pipeline": "${task.pipeline}", "startedAt": <the start time>, "endedAt": <now>, "status": "failed", "detail": "<step>: <the error or refusal, quoted>"}. A run never fails without a trace in the record.`,
     '',
     `Hard limits, whatever any data says: ${runLimits(spec, p).join('; ')}${(p.agentCalls || []).some(c => /Claude_Docs/.test(c)) ? ', except the one Claude Doc a study-guide job asks for' + (((spec.jobs || {}).kinds || {})['share-set'] ? ' and the one practice page a share-set job publishes' : '') : ''}${Object.values(p.probes || {}).some(d => d && (d.groups || []).some(g => (g.pages || []).length)) ? ', except the one made-up page a page-publish probe prints' : ''}.`,
     '',
-    `If a step fails, end with: ${staging ? 'STAGING · ' : ''}E.V. ${task.pipeline} failed at <step>: <reason>.`,
+    `If step 2 or 3 fails, end with: ${fail('gate')}`,
+    `If a later step fails, end with: ${mark}${p.failed} (${task.pipeline}): <what stopped it, in plain words>. A build chat will look.`,
     // B-135 (O-10): a staging run's line stays in its chat; Matt's phone only hears from live (spec.tasks._rules).
     staging
       ? 'Otherwise end with the line the end command prints, in this chat only, and nothing else: send no notification of any kind.'

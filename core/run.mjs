@@ -68,6 +68,24 @@ function printed(dir, run, move, calls) {
   return calls;
 }
 
+/**
+ * B-172: the one line a failed run ends on, so Matt's push says what happened. It names the pipeline and the reason
+ * in plain words and never leads with 'E.V.': on Oct 21 a push cut at the first sentence end said only 'E.V.'.
+ * failed is spec.pipelines.<p>.failed; reason is a move ('pull', 'apply'...), 'gate', or words of its own.
+ */
+const FAIL_REASONS = {
+  gate: 'its code check failed',
+  start: 'the record refused its start',
+  pull: "it couldn't read the record",
+  pulled: "it couldn't read the record",
+  compute: "it couldn't work out its changes",
+  apply: "it couldn't save its changes",
+};
+export function failLine({ failed, pipeline, reason }) {
+  const why = FAIL_REASONS[reason] || (reason ? `it stopped at ${String(reason).slice(0, 24)}` : 'it stopped');
+  return `${failed || `The ${pipeline} run didn't finish`} (${pipeline}): ${why}. A build chat will look.`;
+}
+
 // ------------------------------------------------------------------------------------------------ 2 start
 export function start({
   spec,
@@ -117,6 +135,7 @@ export function start({
     ...(commit ? { commit } : {}),
     startedAt: data.startedAt,
     input,
+    ...(def.failed ? { failed: def.failed } : {}),
     allowed: def.agentCalls || [],
     dir,
     outputs,
@@ -609,7 +628,8 @@ export function end({ dir, at, status, detail, transcript }) {
   }
   const why = [changed, detail || (plan && plan.detail)].filter(Boolean).join(' · ');
   const final = changed ? 'failed' : status || (plan ? 'ok' : 'failed');
-  // B-40: a failed run's push names the failed step (the detail's "<move>:" lead), never the plan's push.
+  // B-40: a failed run's push names the failed step (the detail's "<move>:" lead), never the plan's push; B-172: in
+  // plain words, led by what Matt went without (failLine).
   const failedAt =
     final !== 'ok'
       ? String(changed ? 'apply' : (detail || '').split(':')[0] || '')
@@ -617,7 +637,9 @@ export function end({ dir, at, status, detail, transcript }) {
           .slice(0, 40)
       : '';
   const push =
-    final === 'ok' ? (plan && plan.push) || null : `E.V. ${run.pipeline} ${final}${failedAt ? ' at ' + failedAt : ''}`;
+    final === 'ok'
+      ? (plan && plan.push) || null
+      : failLine({ failed: run.failed, pipeline: run.pipeline, reason: failedAt });
   const data = {
     endedAt: EV.envelope('x', '', at).at,
     status: final,

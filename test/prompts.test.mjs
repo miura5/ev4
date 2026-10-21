@@ -273,10 +273,24 @@ test('B-49: every pipeline prompt says who asked for its writes and how a refuse
       assert.match(
         prompt,
         new RegExp(
-          `If the start write itself is refused, make no other call to the record and end with: E\\.V\\. ${task.pipeline} failed at start`
+          `If the start write itself is refused, make no other call to the record and end with: (STAGING · )?${spec.pipelines[task.pipeline].failed} \\(${task.pipeline}\\): the record refused its start\\. A build chat will look\\. Refused: <the refusal, quoted>`
         ),
         key
       );
+      // B-172: a failure at the gate, or any later step, ends on one plain line naming the pipeline, never led by 'E.V.'
+      assert.ok(
+        prompt.includes(
+          `If step 2 or 3 fails, end with: ${target === 'staging' ? 'STAGING · ' : ''}${spec.pipelines[task.pipeline].failed} (${task.pipeline}): its code check failed. A build chat will look.`
+        ),
+        key
+      );
+      assert.ok(
+        prompt.includes(
+          `${spec.pipelines[task.pipeline].failed} (${task.pipeline}): <what stopped it, in plain words>.`
+        ),
+        key
+      );
+      assert.doesNotMatch(prompt, /end with: (STAGING · )?E\.V\./, `${key}: no failure line led by E.V.`);
       assert.match(prompt, /--status failed --detail "<move>: <the refusal, quoted>"/, key);
     }
   assert.ok(n >= 12, 'live and staging prompts rendered');
@@ -355,7 +369,8 @@ test('B-135 (O-10): a staging prompt ends in its chat with no notification and a
         ),
         key
       );
-      assert.match(text, /If a step fails, end with: STAGING · E\.V\. /, key);
+      assert.match(text, /If step 2 or 3 fails, end with: STAGING · [^\n]+: its code check failed\./, key);
+      assert.match(text, /If a later step fails, end with: STAGING · /, key);
       assert.doesNotMatch(text, /push line/, key);
     } else if (key.startsWith('live.')) {
       assert.ok(text.endsWith('Otherwise end with the push line the end command prints, and nothing else.'), key);

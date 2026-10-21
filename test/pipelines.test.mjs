@@ -757,7 +757,28 @@ test('B-40: a failed run ends with a push naming the failed step', () => {
     transcript: null,
   });
   const doc = JSON.parse(fs.readFileSync(call.args.file_path, 'utf8'));
-  assert.equal(doc.push, 'E.V. evening-cloud failed at pull');
+  // B-172: in plain words, the pipeline named, never led by 'E.V.' (a push cut at its first sentence end said only that).
+  assert.equal(
+    doc.push,
+    "Tonight's weak-spot update didn't run (evening-cloud): it couldn't read the record. A build chat will look."
+  );
+  assert.ok(doc.push.length <= (spec.constants.push || {}).maxChars || 120);
+});
+
+test('B-172: every pipeline has plain failure words, and each failure line fits a push and names its pipeline', () => {
+  const max = (spec.constants.push || {}).maxChars || 120;
+  for (const [name, p] of Object.entries(spec.pipelines).filter(([k]) => k !== '_rules')) {
+    if (!Array.isArray(p.steps)) continue;
+    assert.equal(typeof p.failed, 'string', `${name}: spec.pipelines.${name}.failed`);
+    assert.doesNotMatch(p.failed, /E\.V\./, `${name}: never led by, or carrying, 'E.V.'`);
+    for (const reason of ['gate', 'start', 'pull', 'compute', 'apply', 'canvas']) {
+      const line = RUN.failLine({ failed: p.failed, pipeline: name, reason });
+      assert.ok(line.length <= max, `${name} ${reason}: ${line.length} > ${max}`);
+      assert.ok(line.includes(`(${name})`), line);
+      assert.doesNotMatch(line.split('. ')[0], /^E\.V\.$/);
+      assert.match(line, /^[^.]+: [^.]+\. A build chat will look\.$/, `${name} ${reason}: one plain sentence first`);
+    }
+  }
 });
 
 test('B-55 (D-111): a 5-hour-old health/current is named first by the evening and the morning push lines; a fresh one is not', () => {

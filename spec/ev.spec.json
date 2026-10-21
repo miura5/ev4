@@ -20,12 +20,14 @@
    "Every pipeline follows the run protocol (core/run.mjs): start, pull, compute, apply, end; each move prints the exact calls.",
    "A step is code (core/steps.mjs CODE_STEPS), or agent: a named judgment, the material it is shown, the shape of its answer and the fold that turns the answer into writes. Code does every step with one right answer.",
    "reads is the pull: the collections a run reads, with windowDays where only recent documents matter. The journal is in no read set (D-059).",
-   "steps null means the pipeline's steps arrive with the backlog task in pendingIn; its task is not created before then."
+   "steps null means the pipeline's steps arrive with the backlog task in pendingIn; its task is not created before then.",
+   "B-172: 'failed' is what Matt reads when a run fails, in plain words and never led by 'E.V.' (a push cut at the first sentence end showed only 'E.V.' on Oct 21). Every failure line is '<failed> (<pipeline>): <the reason>. A build chat will look.', rendered by core/run.mjs failLine for the end move and by the prompt for a failure before the code runs."
   ],
   "morning": {
    "lane": "cloud",
    "writer": "morning",
    "purpose": "builds today's practice (the review set and any drill the exam plan calls for) and the day's plan and list before the 5am alarm",
+   "failed": "Today's practice and plan weren't built",
    "reads": [
     {
      "collection": "weakspots"
@@ -135,6 +137,7 @@
    "lane": "cloud",
    "writer": "evening-cloud",
    "purpose": "parks weak spots whose exam has passed, recomputes every weak spot from his answers and writes the snapshot the page and lint check against",
+   "failed": "Tonight's weak-spot update didn't run",
    "reads": [
     {
      "collection": "weakspots"
@@ -240,6 +243,7 @@
    "lane": "cloud",
    "writer": "weekly",
    "purpose": "writes his Sunday review of the week from the week's answers, weak spots, sessions and runs",
+   "failed": "This week's review wasn't written",
    "reads": [
     {
      "collection": "answers"
@@ -349,6 +353,7 @@
    "lane": "mac",
    "writer": "evening-mac",
    "purpose": "brings in Canvas changes read-only through his signed-in browser tab, and saves the nightly backup (and on Sundays the Markdown mirror) to his Mac",
+   "failed": "Tonight's Canvas check and backup didn't run",
    "input": {
     "mirror": "yes: write the Markdown mirror tonight even though it isn't Sunday"
    },
@@ -504,6 +509,7 @@
    "lane": "cloud",
    "writer": "worker",
    "purpose": "does one job Matt asked for in the conversation and posts the result back to it",
+   "failed": "Your job wasn't done",
    "input": {
     "job": "the job id, from the message that started this run ('Job <id>'); without it the run takes the oldest job that has no result"
    },
@@ -635,6 +641,7 @@
    "lane": "cloud",
    "writer": "watchdog",
    "purpose": "writes health/current, E.V.'s own status page in this record: which of its runs ran and ended, which missed their slot, and which of his jobs are waiting",
+   "failed": "The health check didn't finish",
    "reads": [
     {
      "collection": "runs",
@@ -670,6 +677,7 @@
    "lane": "mac",
    "writer": "restore-drill",
    "purpose": "restores the newest v4 backup on his Mac into the staging record and checks every count and hash against the backup's manifest",
+   "failed": "The restore drill didn't finish",
    "reads": [
     {
      "collection": "weakspots"
@@ -793,6 +801,7 @@
    "lane": "cloud",
    "writer": "diagnostic",
    "purpose": "runs the one probe named in the firing text and records what it found, so a capability is proven before anything is built on it",
+   "failed": "The diagnostic didn't finish",
    "input": {
     "probe": "the probe, from the message that started this run ('Probe: <what to find out>')"
    },
