@@ -2881,5 +2881,41 @@
   "notes": "The look pass prints the open time at 390x844 on a 4x CPU throttle: 787 ms on the synthetic record, in npm run check's output and the harness summary. npm test green; npm run check GREEN.",
   "commit": "803b22d",
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
+ },
+ {
+  "id": "B-163",
+  "kind": "task",
+  "title": "Restore migrates (D-186): seed-staging --from backup restores the backup as written, checks counts and hashes against the backup's manifest at that point, runs the migrations up to the checkout's schema and lints; it refuses only a backup whose schema is newer than the checkout's or a bump with no migration, each with the reason quoted; the drill's run document names the schema restored from and migrated to per collection; health/current shows how many bumps behind the latest backup is, amber when any",
+  "dod": "a cli test restores a planted schema-1 backup into a throwaway store, migrates it, lint green, the run document names both schemas; a planted newer-schema backup and a planted missing migration are refused with the reason; the health fixture shows the amber line and the System tab renders it; npm test green; ship staging green; the next staging restore-drill firing is ok on a v4.2 backup; live only on Matt's OK",
+  "milestone": "v4.3 ops",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan Q6ioLu7LnKC2vvWJkwJWA6"
+ },
+ {
+  "id": "B-164",
+  "kind": "task",
+  "title": "The study queue's gates (D-188): B-44 depends on B-98, B-73 on B-72, B-81 on B-79 alone; B-70 and B-71 marked blocked with their evidence named (300 answers in the record; two exams with a prediction and a score); B-81's notes and definition of done narrowed to the first live session read back (D-187)",
+  "dod": "BACKLOG.md shows the three depends, the two blocked notes and B-81's new definition; chart lint green; npm test green",
+  "milestone": "v4.3 study",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan Q6ioLu7LnKC2vvWJkwJWA6"
+ },
+ {
+  "id": "B-165",
+  "kind": "task",
+  "title": "Evidence counts in the weekly's health line: the weekly's code step counts the answers in the record and the exams that carry both a prediction and a score, writes them into weeks/<date>.health, and the System tab shows them beside the health line, so B-70's and B-71's gates are read, not counted by hand",
+  "dod": "a core test on a planted record returns both counts; a staging weekly firing carries them in weeks/<date>.health; the System tab shows them at 390 and 1280; npm test green; npm run check green; ship staging green; live only on Matt's OK",
+  "milestone": "v4.3 study",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan Q6ioLu7LnKC2vvWJkwJWA6"
  }
 ]
