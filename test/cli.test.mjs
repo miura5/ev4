@@ -469,17 +469,19 @@ test("B-110: verify goes red when the deployed commit is too far behind origin/m
     what: "deployed commit within the runs' clone",
     detail: '12 commits behind origin/main; runs clone 50 deep',
   });
+  // D-170 (B-132): the distance is a note; past the clone the gate checks the same content at its head.
   assert.deepEqual(
     line(45),
     {
-      ok: false,
+      ok: true,
       what: "deployed commit within the runs' clone",
-      detail:
-        "45 commits behind origin/main; runs clone 50 deep: ship live again at main's head (the same content) before it reaches 50",
+      detail: '45 commits behind origin/main; runs clone 50 deep',
     },
-    'a build planted 45 behind is red, with its fix'
+    'a build planted 45 behind is no longer red'
   );
-  assert.match(line(106).detail, /out of reach, so every run fails at its gate$/);
+  assert.equal(line(106).ok, true);
+  assert.match(line(106).detail, /past it, the gate checks the same content at the clone's head \(D-170\)$/);
+  assert.equal(line(null).ok, false, 'a deployed commit not on origin/main is still red');
   assert.equal(
     verify({
       manifest,

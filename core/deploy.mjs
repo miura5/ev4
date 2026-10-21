@@ -252,24 +252,19 @@ export function verify({ manifest, target, state, build, dist, sha256, now = new
         );
       }
       // B-110: every scheduled run checks the deployed commit out of a clone of main only spec.constants.runs.cloneDepth
-      // deep, so bookkeeping commits can push it out of reach (Oct 19: 106 behind, the live runs failed at their gate).
-      // Past refreshAt the line goes red; the fix is this same ship: the build at main's head, the same content.
+      // deep, so record commits can push it out of reach. D-170 (B-132): the gate then checks the same content at the
+      // clone's head and goes on, so the distance is a note, never a red; only a commit absent from origin/main is.
       if (typeof build.behindMain === 'function') {
         const R = (((dist && dist.spec) || {}).constants || {}).runs || {};
-        const depth = R.cloneDepth || 50,
-          at = R.refreshAt || 40;
+        const depth = R.cloneDepth || 50;
         const n = build.behindMain(live.manifest.commit);
         add(
-          n != null && n < at,
+          n != null,
           "deployed commit within the runs' clone",
           n == null
             ? `${live.manifest.commit.slice(0, 7)} is not on origin/main`
             : `${n} commit${n === 1 ? '' : 's'} behind origin/main; runs clone ${depth} deep` +
-                (n >= at
-                  ? n >= depth
-                    ? ': out of reach, so every run fails at its gate'
-                    : `: ship ${target} again at main's head (the same content) before it reaches ${depth}`
-                  : '')
+                (n >= depth ? "; past it, the gate checks the same content at the clone's head (D-170)" : '')
         );
       }
       add(

@@ -2489,7 +2489,7 @@
   "milestone": "v4.2 runs",
   "status": "in progress",
   "depends": [],
-  "notes": "Taken Oct 21 in the v4.2 build chat: the run marker in the gate, hooks.mjs passes while it is fresh",
+  "notes": "Built ce39f4a: the marker in step 1 and the hooks standing down (hooks and prompt tests green). Staging proof at the v4.2 runs staging deploy, together with B-132, B-134, B-135 (the same prompts change for each; one update per task, once)",
   "commit": null,
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
@@ -2499,9 +2499,9 @@
   "title": "The gate verifies content, not commit (D-170): the gate's source lives as a readable function in tools/gate.mjs and prompts.mjs renders it into the one-line form; when the deployed commit is absent from the clone the gate stays on the clone's head, checks every manifest.files hash there, goes on when all match and prints \"same content at <head>\", fails naming the file when one differs; verify-deploy's 40-behind line becomes a note",
   "dod": "the prompt test runs the rendered gate in a throwaway repository for: commit present; commit absent with matching hashes; commit absent with one differing hash; a dirty manifest; no checkout; spec.constants.runs.refreshAt retired to a note; npm test green; ship staging green; a staging morning fired green; live only on Matt's OK",
   "milestone": "v4.2 runs",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken Oct 21: tools/gate.mjs, the content fallback, verify-deploy's note",
   "commit": null,
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },

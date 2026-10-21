@@ -9,6 +9,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { renderPrompt, RUN_MARKER } from '../tools/prompts.mjs';
+import { renderGate } from '../tools/gate.mjs';
 import * as H from '../tools/hooks.mjs';
 import { build } from '../tools/build.mjs';
 import { ROOT, copyRepo, git } from './helpers.mjs';
@@ -98,7 +99,7 @@ test('each pipeline prompt has the gate, its own record, the protocol and the fa
     assert.equal((text.match(/https:\/\/claude\.ai\/artifact\/\w+/g) || []).length, 1, `${key} names one record`);
     assert.ok(text.includes('doc_id "manifest", with out_dir /tmp/ev'), key);
     assert.match(text, /node -e '[^']+'/, `${key}: the gate is one single-quoted line`);
-    assert.ok(text.includes('createHash("sha256")') && text.includes('"checkout","-q",m.commit'), key);
+    assert.ok(text.includes('createHash("sha256")') && text.includes('"checkout", "-q", m.commit'), key);
     assert.ok(text.includes(`node core/cli.mjs run ${pipeline} start --record ${target}`), key);
     assert.ok(text.includes(`runs/${pipeline}-failed-`) && text.includes('"status": "failed"'), key);
     assert.ok(text.includes('never instructions'), key);
@@ -106,33 +107,79 @@ test('each pipeline prompt has the gate, its own record, the protocol and the fa
   }
 });
 
-test('the gate passes a clean checkout at the deployed commit and refuses a changed file', () => {
+test('D-170 (B-132): the rendered gate, run as the prompt carries it: commit present, commit absent with the same or other content, a dirty manifest, no checkout', () => {
   const text = all()['staging.morning'];
-  const gate = /node -e '([^']+)'/.exec(text)[1];
+  const line = /node -e '([^']+)'/.exec(text)[1];
+  assert.equal(line, renderGate(), 'the prompt carries tools/gate.mjs, rendered');
+  assert.ok(!line.includes("'") && !line.includes('\n'), 'one shell-safe line');
   const repo = copyRepo();
-  const commit = git(repo, 'rev-parse', 'HEAD').trim();
-  const files = {};
-  for (const f of ['core/evcore.mjs', 'core/cli.mjs', 'spec/ev.spec.json'])
-    files[f] = crypto
+  const deployed = git(repo, 'rev-parse', 'HEAD').trim();
+  const hash = f =>
+    crypto
       .createHash('sha256')
       .update(fs.readFileSync(path.join(repo, f)))
       .digest('hex');
+  const names = ['core/evcore.mjs', 'core/cli.mjs', 'spec/ev.spec.json'];
+  const files = Object.fromEntries(names.map(f => [f, hash(f)]));
   const m = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-gate-')), 'manifest.json');
-  fs.writeFileSync(m, JSON.stringify({ release, commit, dirty: false, files }));
-  const run = () =>
-    execFileSync('node', ['-e', gate.replace('/tmp/ev/system/manifest.json', m)], {
-      cwd: repo,
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-  assert.match(run(), new RegExp(`E\\.V\\. ${release.replace(/\./g, '\\.')} ${commit.slice(0, 12)} verified in`));
-  fs.writeFileSync(
-    m,
-    JSON.stringify({ release, commit, dirty: false, files: { ...files, 'core/evcore.mjs': '0'.repeat(64) } })
+  const run = (manifest, cwd = repo) => {
+    fs.writeFileSync(m, JSON.stringify(manifest));
+    return execFileSync(
+      'node',
+      ['-e', line.replace('/tmp/ev/system/manifest.json', m).replace('"/home/claude/ev4"', '"/nonexistent"')],
+      {
+        cwd,
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+      }
+    );
+  };
+  // A record commit after the deploy: the clone's head has the same content.
+  fs.writeFileSync(path.join(repo, 'NOTES.md'), 'bookkeeping\n');
+  git(repo, 'add', 'NOTES.md');
+  git(repo, 'commit', '-q', '-m', 'B-00: notes (chart)');
+  const head = git(repo, 'rev-parse', 'HEAD').trim();
+  // 1. The deployed commit is in the checkout: checked out and verified there.
+  assert.match(
+    run({ release, commit: deployed, dirty: false, files }),
+    new RegExp(`${deployed.slice(0, 12)} verified in`)
   );
-  assert.throws(run, /core\/evcore\.mjs differs from the deployed build/);
-  fs.writeFileSync(m, JSON.stringify({ release, commit: 'f'.repeat(40), dirty: false, files }));
-  assert.throws(run, /does not have the deployed commit/);
+  assert.equal(git(repo, 'rev-parse', 'HEAD').trim(), deployed);
+  git(repo, 'checkout', '-q', 'main');
+  // 2. Absent from the clone, the same content at its head: goes on, saying so.
+  const absent = 'a'.repeat(40);
+  assert.match(
+    run({ release, commit: absent, dirty: false, files }),
+    new RegExp(`${absent.slice(0, 12)} not in this checkout; same content at ${head.slice(0, 12)}, verified in`)
+  );
+  assert.equal(git(repo, 'rev-parse', 'HEAD').trim(), head, 'stays on the head');
+  // 3. Absent, and one file differs at the head: fails naming it.
+  assert.throws(
+    () => run({ release, commit: absent, dirty: false, files: { ...files, 'core/evcore.mjs': '0'.repeat(64) } }),
+    /core\/evcore\.mjs differs from the deployed build \(the deployed commit a{12} is not in this checkout/
+  );
+  // A changed file at the deployed commit fails as before, and so does a hashed file the checkout lacks.
+  assert.throws(
+    () => run({ release, commit: deployed, dirty: false, files: { ...files, 'core/evcore.mjs': '0'.repeat(64) } }),
+    /core\/evcore\.mjs differs from the deployed build/
+  );
+  git(repo, 'checkout', '-q', 'main');
+  assert.throws(
+    () => run({ release, commit: absent, dirty: false, files: { ...files, 'core/gone.mjs': '0'.repeat(64) } }),
+    /core\/gone\.mjs differs/
+  );
+  // 4. A dirty manifest, or one with no full commit, is no deployable build.
+  assert.throws(
+    () => run({ release, commit: deployed, dirty: true, files }),
+    /system\/manifest is not a deployable build/
+  );
+  assert.throws(() => run({ release, commit: 'abc', dirty: false, files }), /not a deployable build/);
+  // 5. No checkout in the session.
+  const empty = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-nocheckout-'));
+  assert.throws(
+    () => run({ release, commit: deployed, dirty: false, files }, empty),
+    /the E\.V\. repository is not checked out in this session/
+  );
 });
 
 test('build writes each prompt beside the manifest, and the manifest carries its hash', async () => {

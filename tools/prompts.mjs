@@ -3,18 +3,9 @@
 // A prompt is thin on purpose: it gates the checkout (the one place code is written in a prompt), then hands the run
 // to the commands, which print every call. No prompt fetches, clones or unpacks code, attaches a repository, or
 // names the page-only collection.
-const GATE = [
-  'const fs=require("fs"),cp=require("child_process"),cr=require("crypto");',
-  'const S=[process.cwd(),"/home/claude/ev4"].find(d=>fs.existsSync(d+"/core/cli.mjs")&&fs.existsSync(d+"/.git"));',
-  'if(!S)throw new Error("the E.V. repository is not checked out in this session");',
-  'const m=JSON.parse(fs.readFileSync("/tmp/ev/system/manifest.json","utf8"));',
-  'if(!/^[0-9a-f]{40}$/.test(m.commit||"")||m.dirty)throw new Error("system/manifest is not a deployable build");',
-  'const g=a=>cp.execFileSync("git",["-C",S,...a],{stdio:"pipe"});',
-  'try{g(["cat-file","-e",m.commit+"^{commit}"])}catch(e){throw new Error("this checkout does not have the deployed commit "+m.commit)}',
-  'g(["checkout","-q",m.commit]);',
-  'for(const[f,h]of Object.entries(m.files)){if(cr.createHash("sha256").update(fs.readFileSync(S+"/"+f)).digest("hex")!==h)throw new Error(f+" differs from the deployed build")}',
-  'console.log("E.V.",m.release,m.commit.slice(0,12),"verified in",S)',
-].join('');
+import { renderGate } from './gate.mjs';
+// The gate is tools/gate.mjs, a readable function rendered to the one line step 3 runs (B-132, D-170).
+const GATE = renderGate();
 
 /** D-169: where step 1 of every task prompt marks the session as a pipeline run (tools/hooks.mjs reads it). */
 export const RUN_MARKER = '/tmp/ev/pipeline-run';
