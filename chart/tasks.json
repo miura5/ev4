@@ -2903,11 +2903,13 @@
   "title": "Evidence counts in the weekly's health line: the weekly's code step counts the answers in the record and the exams that carry both a prediction and a score, writes them into weeks/<date>.health, and the System tab shows them beside the health line, so B-70's and B-71's gates are read, not counted by hand",
   "dod": "a core test on a planted record returns both counts; a staging weekly firing carries them in weeks/<date>.health; the System tab shows them at 390 and 1280; npm test green; npm run check green; ship staging green; live only on Matt's OK",
   "milestone": "v4.3 study",
-  "status": "open",
+  "status": "blocked",
   "depends": [],
-  "notes": "",
-  "commit": null,
-  "source": "plan Q6ioLu7LnKC2vvWJkwJWA6"
+  "notes": "6699104, 30e743f: weeks/<date>.health.evidence {answers, scoredExams} (every answer in the record; exams carrying both a prediction and a score), read on the System tab against spec.constants.health.evidence (300, 2); optional, so a week written before it rebuilds as written. Core test on a planted record; run harness check and screenshots health-evidence-390/1280 (the line reads quietly under the health lines). npm run check GREEN (447 look checks). Staging weekly fired 18:35Z: runs/weekly-20261021-183509736 ok at 4d1d521, weeks/2026-10-21 health.evidence {answers: 30, scoredExams: 0}. Left: ship staging green, blocked only by the Mac tasks' prompts (see B-168).",
+  "commit": "30e743f",
+  "source": "plan Q6ioLu7LnKC2vvWJkwJWA6",
+  "waitingOn": "Matt",
+  "waitingWhere": "mac"
  },
  {
   "id": "B-166",
@@ -2964,11 +2966,13 @@
   "title": "The gate fetches before it falls back (B-133 proven): when system/manifest's commit is not in the run's checkout, the gate runs git fetch --depth 1 origin <commit> and checks it out, verifying every hash as now; only when the fetch is refused or fails does it take the content fallback (D-170); tools/gate.mjs and the rendered prompts carry it, and verify-deploy stops noting the clone distance as a risk",
   "dod": "a gate test in a throwaway repository: a commit outside a shallow clone is fetched and verified; a refused fetch falls back to the content check with the refusal quoted; the prompt test finds the fetch in step 3; a staging run fired with its deployed commit outside the 50-deep clone checks it out by fetch (its runs/ document read back), and if the run's safety review refuses running fetched code, that refusal is recorded as an environments row and the fallback stays; npm test green; ship staging green; live only on Matt's OK",
   "milestone": "v4.3 ops",
-  "status": "in progress",
+  "status": "blocked",
   "depends": [],
-  "notes": "Taken Oct 21 (first in D-191's order). Also covers health/current going stale this session (written 12:56Z, 4.7 h old at 17:38Z): the 10:55 CT live watchdog failed at the gate on this cause (runs/watchdog-failed-20261021-155901917, 'core/conversation.mjs differs ... 8ec85c4 is not in this checkout'), before the v4.3.0 deploy; no separate bug filed",
-  "commit": null,
-  "source": "B-133 diagnostic runs/diagnostic-20261021-110125159"
+  "notes": "Built and proven on staging. cc4b02c: the gate fetches a deployed commit missing from the clone (depth 1 from origin), checks it out and verifies every hash; only a failed fetch takes D-170's content check, quoting git's fatal line; step 3 says so; verify-deploy's distance line is information. Tests: a throwaway origin with a 1-deep clone (fetched and verified; a gone origin falls back with the refusal quoted), the prompt test finds the one fetch in step 3. Staging proof: with system/manifest set to b25e2ad (a commit only on branch proof/b168-outside-clone, never on main, core/cli.mjs differing from main), the staging watchdog fired at 17:58Z ran ok at that commit: runs/watchdog-20261021-175825673, commit b25e2ad, 11 calls all printed. The run safety review did not refuse running fetched code, so no environments row. Left: ship staging green, which needs the two staging Mac tasks (evening-mac, restore-drill) re-created with the new prompts, since every prompt carries the gate; with Matt at the Mac, together with B-173's re-creation. Live waits on that; until then live keeps the old gate, so main must stay under 50 commits past c38c86b (18 now).",
+  "commit": "cc4b02c",
+  "source": "B-133 diagnostic runs/diagnostic-20261021-110125159",
+  "waitingOn": "Matt",
+  "waitingWhere": "mac"
  },
  {
   "id": "B-169",
@@ -3036,10 +3040,10 @@
   "title": "Bug (reported Oct 21): A live worker that fails at the gate pushes 'E.V.' with no text: two notifications titled 'E.V. worker (v4.2)' at 10:45 CT Oct 21 said only 'E.V.', not the failure line",
   "dod": "a live run that fails at any step, the gate included, ends on one line that names the pipeline and the reason in plain words (e.g. 'E.V. couldn't make your practice set: its code check failed. A build chat will look.'), so the push says what happened; the prompt test asserts it; a staging run failed at the gate on purpose ends on that line; npm test green; ship staging green",
   "milestone": "v4.3 ops",
-  "status": "open",
+  "status": "blocked",
   "depends": [],
-  "notes": "",
-  "commit": null,
+  "notes": "9b086aa, 82b3c58: every failure line is '<what Matt went without> (<pipeline>): <reason>. A build chat will look.' from spec.pipelines.<p>.failed and core/run.mjs failLine, never led by 'E.V.' (the Oct 21 push was most likely cut at the first sentence end, leaving 'E.V.'); the gate's failure, a refused start and the end move's push all use it, within push.maxChars; the gate's own trace now carries the same line as push. Staging proof (shared with B-168's fetch): manifest b25e2ad with core/evcore.mjs's hash zeroed on purpose; the staging watchdog fired 18:13Z wrote runs/watchdog-failed-20261021-181332637: detail 'step 3: core/evcore.mjs differs from the deployed build (fetched b25e2ad57621)', push 'The health check didn't finish (watchdog): its code check failed. A build chat will look.' Left: ship staging green, blocked on the Mac re-creation (see B-168).",
+  "commit": "82b3c58",
   "source": "Matt's screenshot, build chat Oct 21",
   "words": "A live worker that fails at the gate pushes 'E.V.' with no text: two notifications titled 'E.V. worker (v4.2)' at 10:45 CT Oct 21 said only 'E.V.', not the failure line",
   "reportedAt": "2026-10-21T17:10:15.309Z",
@@ -3051,7 +3055,9 @@
   "triage": {
    "outcome": "task",
    "at": "2026-10-21T17:10:24.016Z"
-  }
+  },
+  "waitingOn": "Matt",
+  "waitingWhere": "mac"
  },
  {
   "id": "B-173",
@@ -3059,11 +3065,13 @@
   "title": "Version-free task names (D-192): spec.tasks.nameTemplate drops <minor> and <release>, so a scheduled task's name stays the same across releases (for example 'E.V. evening-mac', 'E.V. staging · worker'). The release stays in each rendered prompt and in system/manifest. deploy's create_trigger and update_trigger printouts follow. The cloud tasks are renamed by deploy once. The Mac-bound tasks are re-created once with Matt at the Mac (B-137); the old ones are disabled and kept under spec.tasks.retired",
   "dod": "a build test bumps specVersion on a planted spec and finds every task name unchanged; a prompt test finds the release in every rendered prompt; deploy's printout carries no rename on a patch or minor bump; ship staging green; the live and staging Mac tasks re-created with Matt present, and each one's next scheduled run writes an ok runs/ document; npm test green",
   "milestone": "v4.3 ops",
-  "status": "open",
+  "status": "blocked",
   "depends": [],
-  "notes": "",
-  "commit": null,
-  "source": "plan FWVokBpKM5YX1hko8Lse15"
+  "notes": "4d1d521: nameTemplate is 'E.V. <pipeline>' / 'E.V. staging · <pipeline>' and the build refuses a template with <minor> or <release>; a bumped spec builds the same names; deploy prints no rename for a bump; every prompt reads its release from system/manifest (no literal, so a release changes no prompt; that is how this task reads 'the release stays in each prompt'). The six staging cloud tasks are renamed (18:12Z). Left, with Matt at the Mac (Matt's call, Oct 21): re-create the live evening-mac and the staging evening-mac and restore-drill with the new names and prompts (deploy's create_trigger printouts), disable the old ones and list them in spec.tasks.retired; each one's next scheduled run writes an ok runs/ document. Then ship staging is green and live can go (the cloud live tasks rename on that deploy).",
+  "commit": "4d1d521",
+  "source": "plan FWVokBpKM5YX1hko8Lse15",
+  "waitingOn": "Matt",
+  "waitingWhere": "mac"
  },
  {
   "id": "B-174",
@@ -3071,10 +3079,10 @@
   "title": "Bug (reported Oct 21): npm test reds whenever the shared record has an entry in the inbox: the B-153 (T-5) test in test/chart.test.mjs plants a 'log <open task> --status in progress' on a copy of the real chart, and log refuses while an entry waits ('triage first: B-172 waits in the inbox'). Every 'report bug' commit is therefore red on CI until the triage commit after it (run 39641388014 at 3a6a260; reproduced locally, 432 pass, 1 fail)",
   "dod": "the B-153 (T-5) test settles every inbox entry in its own copy (triaged as a task) before planting, so it holds whatever state the shared record is in; a second case plants an inbox entry in the copy first and still lints green; npm test green on a commit that leaves an entry in the inbox",
   "milestone": "v4.3 ops",
-  "status": "open",
+  "status": "done",
   "depends": [],
-  "notes": "",
-  "commit": null,
+  "notes": "The T-5 test settles its copy's inbox first; a second case plants a waiting report and still lints green; npm test green (434 then, 439 now). Reproduced the red first: 3a6a260 checked out, 432 pass, 1 fail ('triage first: B-172 waits in the inbox').",
+  "commit": "cb2fd7d",
   "source": "npm test 39641388014",
   "words": "npm test reds whenever the shared record has an entry in the inbox: the B-153 (T-5) test in test/chart.test.mjs plants a 'log <open task> --status in progress' on a copy of the real chart, and log refuses while an entry waits ('triage first: B-172 waits in the inbox'). Every 'report bug' commit is therefore red on CI until the triage commit after it (run 39641388014 at 3a6a260; reproduced locally, 432 pass, 1 fail)",
   "reportedAt": "2026-10-21T17:41:49.743Z",
