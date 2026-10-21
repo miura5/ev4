@@ -844,16 +844,20 @@
   "id": "B-43",
   "kind": "task",
   "title": "Dosage practice (pick 1, D-100): the numeric item type in spec.items and the sets schema (bump, migration, fixtures, idempotence test), scoreAnswer with tolerance and unit, the dosage drill in the morning's step list and make_practice's dosage topic, grounded in the dosage material passages; the Study tab answers a numeric item with a number field and shows the worked steps after",
-  "dod": null,
+  "dod": "core tests score numeric items at the tolerance edge; a staging morning firing with a planted dosage exam five days out writes a dosage drill whose items validate and cite passages; the harness answers one at both widths",
   "milestone": "M8",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-39",
    "B-42"
   ],
-  "notes": "",
+  "notes": "Oct 20: taken (Matt's order: B-43 after B-42). DoD from the Build plan tab.",
   "commit": null,
-  "source": "BACKLOG.md"
+  "source": "BACKLOG.md",
+  "board": {
+   "row": "v4 B-43: Dosage practice",
+   "why": "Dosage is the one exam kind the review cannot practise: no item takes a number"
+  }
  },
  {
   "id": "B-44",
