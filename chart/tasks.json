@@ -581,18 +581,16 @@
   "title": "Archive miura5/ev-core read-only (D-145): v3's repository is marked archived on GitHub (Settings, Archive this repository), which keeps every commit and makes it read-only; nothing is deleted. A session has no tool that archives a repository, so it is Matt's two-minute step",
   "dod": "miura5/ev-core shows as archived on GitHub",
   "milestone": "M7",
-  "status": "blocked",
+  "status": "done",
   "depends": [],
-  "notes": "Oct 19: waiting on Matt: GitHub, miura5/ev-core, Settings, Archive this repository. Then any session runs log B-108 --status done --commit <any commit that mentions it>",
-  "commit": null,
+  "notes": "Oct 21: Matt archived miura5/ev-core on GitHub himself and said so in the build chat (Matt's step; no code).",
+  "commit": "11fa951",
   "source": "B-30, on D-145",
   "board": {
    "row": "v4 B-108: archive ev-core read-only (your step on GitHub)",
    "why": "v3 is retired (D-145); archiving keeps its history and makes it read-only",
    "notes": "Waiting on you: GitHub, miura5/ev-core, Settings, Archive this repository"
-  },
-  "waitingOn": "Matt",
-  "waitingWhere": "github"
+  }
  },
  {
   "id": "B-109",
