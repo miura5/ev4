@@ -92,6 +92,46 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
   const browser = await chromium
     .launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' })
     .catch(() => chromium.launch());
+  // B-162 (A-9): the page's open time at 390 px on a throttled profile (4x CPU, as the frame budget's phone), from the
+  // shell's request to E.V.'s first line, the files served from dist as the record's host would. One number, reported.
+  let openTime = null;
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: 'dark' });
+    const page = await ctx.newPage();
+    const cdp = await ctx.newCDPSession(page);
+    await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+    await page.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));
+    await page.route(ORIGIN + '/**', r => {
+      const name = new URL(r.request().url()).pathname.replace(/^\//, '') || 'index.html';
+      if (name === 'index.html')
+        return r.fulfill({
+          body: skeleton(fs.readFileSync(path.join(pageDir, 'index.html'), 'utf8')),
+          contentType: 'text/html',
+        });
+      const f = path.join(pageDir, name);
+      return fs.existsSync(f)
+        ? r.fulfill({ body: fs.readFileSync(f), contentType: TYPES[path.extname(name)] || 'application/octet-stream' })
+        : r.fulfill({ status: 404, body: 'not published' });
+    });
+    await page.addInitScript('window.__db=' + JSON.stringify(seed) + ';' + stub);
+    const t0 = Date.now();
+    await page.goto(ORIGIN + '/');
+    const shown = await page
+      .waitForFunction(() => document.querySelector('#thread .msg.ev'), null, { timeout: 20000 })
+      .then(() => true)
+      .catch(() => false);
+    openTime = shown ? Date.now() - t0 : null;
+    ok(
+      '[390x844] B-162: the page opens on a throttled profile and its time is recorded',
+      shown,
+      'no E.V. line in 20 s'
+    );
+    console.log(
+      `open time: ${openTime == null ? 'none (the page did not open in 20 s)' : openTime + ' ms'} at 390x844, 4x CPU, from the shell's request to E.V.'s first line`
+    );
+    await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
+    await ctx.close();
+  }
   for (const size of SIZES.filter(z => !process.env.LOOK_SIZES || process.env.LOOK_SIZES.split(',').includes(z.tag))) {
     // LOOK_SIZES=390x844: a quicker pass while working (check.mjs runs them all)
     const width = size.tag,
@@ -843,7 +883,9 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
     for (const [s, n, d] of reports) console.log(`${s}  ${n}  -- ${d}`);
   }
   const failed = results.filter(x => x[0] === 'FAIL').length;
-  console.log(`\n${results.length - failed} of ${results.length} checks pass; screenshots in ${shots}`);
+  console.log(
+    `\n${results.length - failed} of ${results.length} checks pass; open time ${openTime == null ? 'none' : openTime + ' ms'} at 390x844, 4x CPU; screenshots in ${shots}`
+  );
   process.exit(failed ? 1 : 0);
 })().catch(e => {
   console.error(e);
