@@ -39,7 +39,7 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 ### A decision (a reply in a build chat)
 
 - B-69 (blocked): Adaptive intervals, step 1
-- B-166 (blocked): My answers, so you don't have to ask: - B-133: yes, fire the staging…
+- B-166 (blocked): v4 B-166: a staging run may have reached your phone
 
 ## Done
 
