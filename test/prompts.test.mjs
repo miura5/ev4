@@ -291,6 +291,13 @@ test('B-49: every pipeline prompt says who asked for its writes and how a refuse
         key
       );
       assert.doesNotMatch(prompt, /end with: (STAGING · )?E\.V\./, `${key}: no failure line led by E.V.`);
+      // The gate's own trace carries the same plain line as its push, so the System tab and a build chat read it.
+      assert.ok(
+        prompt.includes(
+          `"push": "${spec.pipelines[task.pipeline].failed} (${task.pipeline}): its code check failed. A build chat will look."}`
+        ),
+        key
+      );
       assert.match(prompt, /--status failed --detail "<move>: <the refusal, quoted>"/, key);
     }
   assert.ok(n >= 12, 'live and staging prompts rendered');
