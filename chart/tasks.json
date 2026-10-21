@@ -3013,11 +3013,11 @@
   "id": "B-171",
   "kind": "bug",
   "title": "Bug (reported Oct 21): GitHub's npm test check red on every push since 11:14Z Oct 21: prettier --check . flags test/cli.test.mjs and test/schema.test.mjs; local npm test never runs that check",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "prettier --check . clean; npm test runs the same whole-repository check and fails on an unformatted file; the next push's npm test check is green",
+  "milestone": "M11",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Formatted the two test files; test/format.test.mjs now runs prettier --check . like CI",
   "commit": null,
   "source": "npm test 39608192119",
   "words": "GitHub's npm test check red on every push since 11:14Z Oct 21: prettier --check . flags test/cli.test.mjs and test/schema.test.mjs; local npm test never runs that check",
@@ -3026,6 +3026,10 @@
    "row": "v4 B-171: GitHub's npm test check red on every push since 11:14Z Oct 21:…",
    "why": "GitHub's npm test check red on every push since 11:14Z Oct 21: prettier --check . flags test/cli.test.mjs and test/schema.test.mjs; local npm test never runs that check",
    "notes": "Reported Oct 21 from npm test 39608192119"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-21T15:35:57.157Z"
   }
  }
 ]

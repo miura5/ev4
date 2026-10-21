@@ -66,3 +66,23 @@ test('B-64: the formatter and CI are set up: printWidth 120, prettier pinned bes
   assert.match(claude, /page\/app\//);
   assert.match(claude, /GitHub Actions/);
 });
+
+// B-171: CI's first step is `prettier --check .` over the whole repository; npm test held only the joined app.js to it,
+// so test files written out of style passed here and failed every push. The same check, here.
+test(
+  'B-171: every file is as the formatter writes it (CI runs prettier --check . first)',
+  { skip: formatSkip() },
+  async () => {
+    const { spawnSync } = await import('node:child_process');
+    const r = spawnSync(PRETTIER, ['--check', '.'], { cwd: ROOT, encoding: 'utf8' });
+    assert.equal(
+      r.status,
+      0,
+      'run npm run format: ' +
+        (r.stdout + r.stderr)
+          .split('\n')
+          .filter(l => /\[warn\]/.test(l))
+          .join('; ')
+    );
+  }
+);

@@ -192,7 +192,10 @@ test('B-169: run, job result and debug documents take the release system/manifes
     error: null,
   });
   for (const r of ['v4.2.0', 'v4.2.0+30', 'v4.3'])
-    assert.ok(v('jobresults', result(r), { id: 'job-x' }).ok, r + ': ' + JSON.stringify(v('jobresults', result(r), { id: 'job-x' }).errors));
+    assert.ok(
+      v('jobresults', result(r), { id: 'job-x' }).ok,
+      r + ': ' + JSON.stringify(v('jobresults', result(r), { id: 'job-x' }).errors)
+    );
   for (const r of ['4.2.0', 'v4.2.0+', 'v4.2.0-rc1', 'v4.2.0+30 '])
     assert.ok(!v('jobresults', result(r), { id: 'job-x' }).ok, r + ' is refused');
   const run = release => ({ ...base, writer: 'worker', release, pipeline: 'worker', startedAt: base.at, status: 'ok' });

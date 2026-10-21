@@ -338,14 +338,21 @@ test('B-137 (O-5): a Mac task is created, never edited: its create_trigger print
   const create = plan.calls.find(c => c.tool === 'mcp__claude-code-remote__create_trigger');
   assert.ok(create, JSON.stringify(plan.calls.map(c => c.step)));
   assert.match(create.step, /create staging\.evening-mac \(only from a chat linked to the Mac, with Matt present\)/);
-  assert.deepEqual(create.args.notifications, { push: false, email: false }, 'every channel named, none left to a default');
+  assert.deepEqual(
+    create.args.notifications,
+    { push: false, email: false },
+    'every channel named, none left to a default'
+  );
   assert.equal(create.args.requires_local_device, true);
   assert.deepEqual(create.args.folders, ['/Users/peachfritter/Documents/E.V. Study Watch/staging']);
   assert.equal(create.args.cron_expression, undefined, 'staging evening-mac is fire-only');
   assert.match(create.then, /spec\.tasks\.staging\.evening-mac\.trigger/);
   assert.match(create.then, /retired/, 'the old task is disabled and listed as retired, never deleted');
   const claude = fs.readFileSync(path.join(ROOT, 'CLAUDE.md'), 'utf8').replace(/\s+/g, ' ');
-  assert.match(claude, /never change a task in the desktop app; re-create it from a session with the Mac link and the repository/);
+  assert.match(
+    claude,
+    /never change a task in the desktop app; re-create it from a session with the Mac link and the repository/
+  );
 });
 
 test('helpers: page stamps and canonical JSON', () => {
