@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-203",
+  "date": "Oct 21",
+  "title": "Every new thing E.V. does from the page or a builder session is a row of spec.actions (name, argument shape, the collections and fields it may write, its effects, who may call it, what it costs: nothing, a staging proof or Matt's OK), composed and checked by one core function, never page code; the 13 conversation tools migrate to rows when touched, not all at once; no row may write the actions table or create, change or delete a scheduled task",
+  "why": "Matt's constraint from the other design chat, Oct 21: the record already has the noun side (collections with writers and schemas) and the pipelines are data; the verb side as data gives the hard line's tenet a lint instead of a reading, and the hook allowance is derived from the row, so the table and the guard cannot disagree",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan TbfWAoQEeQixyNKZnEZKvv P-11"
+ },
+ {
   "id": "D-202",
   "date": "Oct 21",
   "title": "She tells him once, in a line: a build's outcome is one greeting line and one card, what waits on him is one chip, a kickoff is one message with a Copy chip, and nothing she sends him about building repeats a fact his phone already carried",
@@ -34,7 +44,7 @@
  {
   "id": "D-200",
   "date": "Oct 21",
-  "title": "From her page or a builder session E.V. never: deploys live without Matt's OK bound to one commit; writes the live record outside her trace and the deploy his OK names; creates, changes or deletes a scheduled task, or fires one other than ev4-builder once per run and what ship prints on his OK; touches the Mac, the desktop app or a Mac-bound task; changes a guarded path (spec.boundaries, chart/rules.json, the hooks and their settings, tools/gate.mjs, CLAUDE.md's Hard limits, any tenet), which reaches main only from a chat with Matt present; answers a Your-turn item, picks a model, starts a design chat or files a task from the north star; deletes anything, posts as him, touches graded work or stores a patient identifier",
+  "title": "From her page or a builder session E.V. never: deploys live without Matt's OK bound to one commit; writes the live record outside her trace and the deploy his OK names; creates, changes or deletes a scheduled task, or fires one other than ev4-builder once per run and what ship prints on his OK; touches the Mac, the desktop app or a Mac-bound task; changes a guarded path (spec.boundaries, spec.actions, chart/rules.json, the hooks and their settings, tools/gate.mjs, CLAUDE.md's Hard limits, any tenet), which reaches main only from a chat with Matt present; answers a Your-turn item, picks a model, starts a design chat or files a task from the north star; deletes anything, posts as him, touches graded work or stores a patient identifier",
   "why": "What stays Matt's under any model (the north star): the direction, live, anything irreversible, the Mac, the hard limits; v5's trust harness needs the list written before the models that would test it arrive",
   "status": "accepted",
   "supersedes": [],
@@ -45,7 +55,8 @@
    "ops"
   ],
   "check": "lint",
-  "how": "lint: a commit under the builder marker that touches a guarded path fails npm test and log and ship refuse to push it, log decision refuses a tenet under the marker; ship: ship live refuses without --matt-ok or a bound ship job; harness: start_job refuses kinds reply and ship from the model's tool path; review: the review skill reports any diff to a guarded path and any trigger call in a builder run"
+  "how": "lint: test/actions.test.mjs asserts that no action row writes spec.actions or changes a scheduled task and that every page or builder write goes through core act or a core composer; a commit under the builder marker that touches a guarded path fails npm test and log and ship refuse to push it, log decision refuses a tenet under the marker; ship: ship live refuses without --matt-ok or a bound ship job; harness: start_job refuses kinds reply and ship from the model's tool path; review: the review skill reports any diff to a guarded path and any trigger call in a builder run",
+  "restated": "Oct 21"
  },
  {
   "id": "D-199",
