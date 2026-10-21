@@ -899,11 +899,11 @@
   "title": "Clinical-prep brief (pick 4, D-103): the clinical-prep job kind and its card, built from the next clinical's calendar entry, the clinical and lab materials, skill weak spots and announcements; the greeting offers it the day before a clinical day; a test proves the job's read set excludes graded paperwork by section and title and that the composer refuses identifiers in the brief's ask",
   "dod": "a staging worker firing posts a brief for a planted clinical day citing the Skills Packet pages, and the read-set test is green",
   "milestone": "M8",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-42"
   ],
-  "notes": "Oct 20, 23:30 CT: paused on Matt's word ('take a break from building') before any code; nothing written. Plan when resumed: core.clinicalPrep (next clinical or validation entry, lab and clinical materials minus graded paperwork by section and title, Skills Packet passages cited, open skill weak spots, instructor notes from announcements), the clinical-prep job kind in spec.jobs, the greeting's offer the day before a clinical day, and the read-set and identifier tests.",
+  "notes": "Taken Oct 21 (lowest open with dependencies done after B-44, which now waits on B-98): core.clinicalPrep read set, the clinical-prep job kind, the greeting's offer the day before a clinical day, read-set and identifier tests.",
   "commit": null,
   "source": "BACKLOG.md",
   "board": {
