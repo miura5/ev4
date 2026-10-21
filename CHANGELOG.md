@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 21 | v4 staging deployed at 8c5cfaa (17:48 CT), from 01d6e1f: Builder job kinds (B-177). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 21 | v4 staging deployed at 01d6e1f (17:23 CT), from 1a09695: Live deploys since v4.3.0 carry no patch tag on origin: ship live…; The hard line (B-175, B-184). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 21 | v4 staging deployed at 1a09695 (17:03 CT), from b9c59d5: Surfaces in the E.V. tab (B-78). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 21 | v4 live deployed at b9c59d5 (16:04 CT), from c8f5464: A greeting that reads the moment (B-129). verify-deploy live GREEN. Rollback is a redeploy of c8f5464 Note: release v4.3.2 (B-175: tagged here; the cloud proxy refused the push, tags.yml makes it on origin) | Matt's OK | D-049 |
