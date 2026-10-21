@@ -353,3 +353,112 @@ test('B-90 greeting names a short graded item whole, a long one by the part befo
     'Afternoon, Matt. ATI Engage Fundamentals is due tonight.'
   );
 });
+
+// B-129 (D-167): the greeting's situation, the headline's prompt and its shape check. All data is made up.
+const sitBase = {
+  dayType: 'class',
+  items: [{ id: 't1', text: 'Read Ch 42', tag: 'READING', minutes: 45 }],
+  tomorrow: { dates: [] },
+  nextExams: [{ id: 'E4', title: 'NUR 112 Exam 4: Fluids', date: '2026-10-27', course: 'NUR 112', kind: 'unit' }],
+};
+test('B-129: situation(ctx) is the greeting facts as tags and enums across planted days', () => {
+  // Exam tomorrow, in the morning, back after a night away, answering well.
+  const ans = (date, n, right) => Array.from({ length: n }, (_, i) => ({ date, correct: i < right }));
+  const exam = EV.situation({
+    ...sitBase,
+    date: '2026-10-26',
+    now: '2026-10-26T12:30:00Z',
+    lastSeenAt: '2026-10-26T02:00:00Z',
+    reviewLeft: 8,
+    recent: { answers: [...ans('2026-10-25', 8, 7), ...ans('2026-10-26', 4, 3)], sessions: [] },
+  });
+  assert.equal(exam.segment, 'morning');
+  assert.equal(exam.sinceLastVisit, 'overnight');
+  assert.equal(exam.momentum, 'building');
+  assert.deepEqual(exam.exam, { name: 'NUR 112 Exam 4', distance: 'tomorrow' });
+  assert.deepEqual(exam.urgent, [{ kind: 'exam', name: 'NUR 112 Exam 4', when: 'tomorrow' }]);
+  assert.equal(exam.reviewsWaiting, 8);
+  // A clear evening: nothing urgent, the list done, the exam days off.
+  const clear = EV.situation({
+    ...sitBase,
+    items: [{ id: 't1', text: 'Read Ch 42', tag: 'READING', minutes: 45, done: true }],
+    date: '2026-10-21',
+    now: '2026-10-22T00:30:00Z',
+    lastSeenAt: '2026-10-21T23:50:00Z',
+    reviewLeft: 0,
+    recent: { answers: ans('2026-10-21', 3, 3), sessions: [] },
+  });
+  assert.deepEqual(
+    [clear.segment, clear.sinceLastVisit, clear.urgent, clear.exam.distance, clear.listLeft, clear.momentum],
+    ['evening', 'minutes', [], 'this-week', 0, 'steady']
+  );
+  // Back after three days, nothing done in a week: quiet.
+  const back = EV.situation({
+    ...sitBase,
+    date: '2026-10-21',
+    now: '2026-10-21T20:00:00Z',
+    lastSeenAt: '2026-10-18T18:00:00Z',
+    recent: { answers: [], sessions: [] },
+  });
+  assert.deepEqual([back.sinceLastVisit, back.awayDays, back.momentum], ['days', 3, 'quiet']);
+  // Late, before a clinical day: the prep phase is tonight's, the clinical never urgent (D-143).
+  const prepDay = { date: '2026-10-22', kind: 'clinical', title: 'Clinical: Med-surg', subject: 'Med-surg' };
+  const late = EV.situation({
+    ...sitBase,
+    date: '2026-10-21',
+    now: '2026-10-22T04:30:00Z',
+    lastSeenAt: '2026-10-21T22:00:00Z',
+    tomorrow: { dates: [{ title: 'Clinical: Med-surg', kind: 'clinical' }] },
+    prep: { today: null, tomorrow: prepDay },
+    recent: { answers: ans('2026-10-17', 12, 4), sessions: [] },
+  });
+  assert.equal(late.segment, 'late');
+  assert.deepEqual(late.prep, { phase: 'night', kind: 'clinical', name: 'Clinical: Med-surg' });
+  assert.deepEqual(late.urgent, []);
+  assert.equal(late.momentum, 'slipping', 'a busy day earlier, nothing in the last three');
+  // situation is the greeting's own: the same facts the headline in code stands on.
+  assert.deepEqual(
+    EV.greeting({ ...sitBase, date: '2026-10-21', now: '2026-10-21T20:00:00Z' }).situation,
+    EV.situation({ ...sitBase, date: '2026-10-21', now: '2026-10-21T20:00:00Z' })
+  );
+});
+
+test('B-129: the headline check holds a model line to the situation; a failing line falls back to code', () => {
+  const sit = {
+    segment: 'morning',
+    dayType: 'class',
+    sinceLastVisit: 'hours',
+    momentum: 'building',
+    exam: { name: 'NUR 112 Exam 4', distance: 'tomorrow' },
+    urgent: [{ kind: 'exam', name: 'NUR 112 Exam 4', when: 'tomorrow' }],
+    new: [],
+    prep: null,
+    reviewsWaiting: 8,
+    listLeft: 1,
+  };
+  const ok = t => EV.checkHeadline({ headline: t }, sit);
+  assert.equal(ok('Morning, Matt. NUR 112 Exam 4 is tomorrow, and your 8 reviews are a good warm-up.').ok, true);
+  const no = {
+    'misses the urgent exam': 'Morning, Matt. Good momentum lately, keep it going.',
+    'a number not in the facts': 'Morning, Matt. NUR 112 Exam 4 is tomorrow; 12 reviews wait.',
+    'a day not in the facts': 'Morning, Matt. NUR 112 Exam 4 is tomorrow, Thursday after that is free.',
+    'a name not in the facts': 'Morning, Matt. NUR 112 Exam 4 is tomorrow, and Sarah says hi.',
+    'a question while urgent': 'Morning, Matt. NUR 112 Exam 4 is tomorrow. Ready to warm up?',
+    'over 22 words': 'Morning, Matt. NUR 112 Exam 4 is tomorrow ' + 'and that is fine '.repeat(5) + 'really.',
+    'two lines': 'Morning, Matt.\nNUR 112 Exam 4 is tomorrow.',
+  };
+  for (const [why, t] of Object.entries(no)) assert.equal(ok(t).ok, false, why);
+  assert.equal(EV.checkHeadline(null, sit).ok, false, 'no reply');
+  assert.equal(EV.checkHeadline({ text: 'x' }, sit).ok, false, 'the wrong shape');
+  // With nothing urgent, a question is fine.
+  assert.equal(
+    EV.checkHeadline({ headline: 'Evening, Matt. Quiet list tonight. Want a few questions?' }, { ...sit, urgent: [] })
+      .ok,
+    true
+  );
+  // The prompt carries the facts and his last headlines.
+  const p = EV.headlinePrompt(sit, [{ text: 'Morning, Matt. How can I help today?' }]);
+  assert.match(p, /"urgent":\[\{"kind":"exam","name":"NUR 112 Exam 4"/);
+  assert.match(p, /- Morning, Matt\. How can I help today\?/);
+  assert.match(p, /at most 22 words/);
+});

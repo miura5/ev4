@@ -91,6 +91,15 @@
           sessionActive: !!activeSession(),
           skillRun: resumeChip(),
           prep: { today: E.prepDay(S.dates, [], today), tomorrow: E.prepDay(S.dates, [], E.addDays(today, 1)) },
+          // B-129 (D-167): the last six days of answers and sessions, for the situation's momentum.
+          recent: {
+            answers: ((M && M.attempts && M.attempts.all) || [])
+              .filter(a => a.date >= E.addDays(today, -6))
+              .map(a => ({ date: a.date, correct: !!a.correct })),
+            sessions: S.sessions
+              .filter(x => x.date >= E.addDays(today, -6))
+              .map(x => ({ date: x.date, minutes: x.minutes || 0 })),
+          },
         })
       );
       const at = now();
@@ -113,11 +122,36 @@
       T.briefItem = new Set(); // B-90: the briefing starts folded on every open
       T.scrollTo = T.greet.id;
       T.firstScroll = true;
-      // Mark this open as seen, so the next greeting only reports what's new. One write per open.
-      setTimeout(() => {
-        write({ op: 'set', collection: 'talk', id: 'memory', data: memoryEdit({ lastSeenAt: at }, at) }).catch(
-          () => {}
-        );
-      }, 1500);
+      // B-129 (D-167): one quick call words the headline from the situation and his last 7; code holds it to the facts,
+      // and core's line stays on a timeout, a failed call or a failed check. Then this open is marked seen and its
+      // headline kept: one write per open.
+      const greetId = T.greet.id;
+      const last = ((S.memory && S.memory.headlines) || []).slice(-7);
+      const ms = (EV_SPEC.ui && EV_SPEC.ui.conversation && EV_SPEC.ui.conversation.headlineTimeoutMs) || 2000;
+      const worded =
+        sample && !T.sampleOff
+          ? Promise.race([
+              sample.json(E.headlinePrompt(g.situation, last), { modelTier: 'quick', cache: false }),
+              new Promise(ok => setTimeout(() => ok(null), ms)),
+            ]).then(
+              out => E.checkHeadline(out, g.situation),
+              () => ({ ok: false })
+            )
+          : Promise.resolve({ ok: false });
+      worded.then(r => {
+        if (r.ok && T.greet && T.greet.id === greetId) {
+          T.greet.text = r.line;
+          render();
+        }
+        const shown = { at, text: r.ok ? r.line : g.headline, by: r.ok ? 'model' : 'code' };
+        setTimeout(() => {
+          write({
+            op: 'set',
+            collection: 'talk',
+            id: 'memory',
+            data: memoryEdit({ lastSeenAt: at, headlines: [...last, shown].slice(-7) }, at),
+          }).catch(() => {});
+        }, 1500);
+      });
     }
 

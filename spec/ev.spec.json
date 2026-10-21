@@ -3282,7 +3282,7 @@
   ],
   "conversation": {
    "opens": "The page always opens on E.V. A #tab link can open another tab.",
-   "greeting": "EVCore.greeting on each open, frozen for that open; never stored.",
+   "greeting": "EVCore.greeting on each open, frozen for that open. B-129 (D-167, amending 'never stored'): its headline is worded by one quick-tier call from greeting(ctx).situation and his last 7 headlines, held to the facts by EVCore.checkHeadline, with core's line on a 2 s timeout or a failed check; the last 7 headlines are kept in talk/memory.headlines. The briefing under it stays code.",
    "quickAsks": "Greeting chips and their typed equivalents are answered on the page with no model call: Start review, Start a study session, What's due this week?, Give me 5 more, File it, How ready am I?, I'm wiped, Show my progress, plus End session, Take a break, Resume and Add 5 minutes while a session runs.",
    "chat": "sample with the persona, rules and a compact record summary as the first turn, then up to 14 recent turns after talk/memory.upTo. Tier: quick by default; default for explain/why/compare questions or long messages, and for 'Go deeper'.",
    "tools": [
@@ -3325,7 +3325,8 @@
    },
    "listEdits": "E.V. edits the daily list with edit_list (D-078): add a study task he or E.V. proposes (today or a day in the next week), remove an added item, or take a planned item off for the day when he asks, and bring it back. Graded work, exams, clinicals and validations stay. Rules in EVCore.listEdit and EVCore.dayView; The calendar is edited the same way with edit_dates (dateEdits).",
    "library": "His course materials (D-079). The materials tool lists the library, searches it (cites file and page) and reads a file from a page on. The composer's attach button adds a PDF, Word, PowerPoint, text file or photo: text is extracted on the page (pdf.js, EVCore.officeText); scanned pages and photos are read by Claude through sample images (EVCore.ocrPrompt); the result is saved as materials/up-… (EVCore.materialFromUpload). Patient identifiers block the save. Graded work stays his alone even when its instructions are in the library.",
-   "dateEdits": "E.V. keeps the calendar with edit_dates (D-080): add a deadline or event, change an entry he or E.V. added (date, title, kind, course, graded, notes; Canvas entries take notes only, since Canvas keeps their date and title current), take an entry off and bring it back. Graded work, exams, clinicals and validations from Canvas stay. Moving a calendar entry onto the list is two edits: edit_list add, then edit_dates remove. Rules in EVCore.dateEdit, EVCore.liveDates and EVCore.isFixedDate; Record → Dates has Remove and Bring back too."
+   "dateEdits": "E.V. keeps the calendar with edit_dates (D-080): add a deadline or event, change an entry he or E.V. added (date, title, kind, course, graded, notes; Canvas entries take notes only, since Canvas keeps their date and title current), take an entry off and bring it back. Graded work, exams, clinicals and validations from Canvas stay. Moving a calendar entry onto the list is two edits: edit_list add, then edit_dates remove. Rules in EVCore.dateEdit, EVCore.liveDates and EVCore.isFixedDate; Record → Dates has Remove and Bring back too.",
+   "headlineTimeoutMs": 2000
   },
   "look": {
    "name": "A · Aurora (D-077)",

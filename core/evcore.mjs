@@ -2284,7 +2284,7 @@ const EVCore = (() => {
   });
 
   // ---------------------------------------------------------------- conversation (E.V. tab); conversations (B-77, D-128) · core/conversation.mjs (B-157)
-  const { conversations, earlierConversation, greeting, noteTitle } = makeConversation({
+  const CONV = makeConversation({
     get C() {
       return C;
     },
@@ -2299,6 +2299,7 @@ const EVCore = (() => {
   });
 
   return {
+    ...CONV, // B-129: greeting, situation, headlinePrompt, checkHeadline and the conversation names
     VERSION,
     TZ,
     CJ_STEPS,
@@ -2449,9 +2450,6 @@ const EVCore = (() => {
     guessCourse,
     materialFromUpload,
     // conversations (Captions)
-    conversations,
-    noteTitle,
-    earlierConversation,
     // study sessions in E.V. Home
     sessionState,
     noteMark,
@@ -2490,7 +2488,6 @@ const EVCore = (() => {
     workoutCheckin,
     workoutSummary,
     // conversation
-    greeting,
   };
 })();
 

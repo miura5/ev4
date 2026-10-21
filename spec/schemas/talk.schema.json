@@ -194,6 +194,35 @@
        "type": "null"
       }
      ]
+    },
+    "headlines": {
+     "type": "array",
+     "maxItems": 7,
+     "description": "B-129 (D-167): the last 7 greeting headlines he saw, newest last, so the next one does not repeat them",
+     "items": {
+      "type": "object",
+      "properties": {
+       "at": {
+        "type": "string",
+        "format": "date-time"
+       },
+       "text": {
+        "type": "string",
+        "maxLength": 240
+       },
+       "by": {
+        "enum": [
+         "model",
+         "code"
+        ]
+       }
+      },
+      "required": [
+       "at",
+       "text"
+      ],
+      "additionalProperties": false
+     }
     }
    },
    "required": [
