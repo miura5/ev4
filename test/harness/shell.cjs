@@ -7,6 +7,10 @@ const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 const root = path.resolve(__dirname, '../..');
+// B-149: the release comes from the build (git describe at the build's commit), never a literal.
+const RELEASE = JSON.parse(fs.readFileSync(path.join(root, 'dist/manifest.json'), 'utf8')).release;
+const SPEC_VERSION = JSON.parse(fs.readFileSync(path.join(root, 'spec/ev.spec.json'), 'utf8')).specVersion;
+const reEsc = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const dbDir =
   process.argv[2] === 'synthetic'
     ? require('../data/synthetic.cjs').recordDir('synthetic')
@@ -116,9 +120,10 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
       /^Live$/.test(await statusText(page)) &&
         /staging/.test(await page.locator('#readout').textContent()) &&
         (await page.evaluate(
-          () =>
-            document.querySelector('meta[name="ev-release"]').content === 'v4.0.0' &&
-            document.querySelector('meta[name="ev-target"]').content === 'staging'
+          release =>
+            document.querySelector('meta[name="ev-release"]').content === release &&
+            document.querySelector('meta[name="ev-target"]').content === 'staging',
+          RELEASE
         )),
       await statusText(page)
     );
@@ -136,7 +141,10 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
     );
     await page.click('#tab-system');
     await page.waitForTimeout(80);
-    ok(`[${scheme}] System shows the release`, /Release v4\.0\.0/.test(await page.locator('#versions').textContent()));
+    ok(
+      `[${scheme}] System shows the release`,
+      new RegExp('Release ' + reEsc(RELEASE)).test(await page.locator('#versions').textContent())
+    );
     await page.screenshot({ path: `${shots}/system-${scheme}.png` });
     ok(`[${scheme}] no page errors`, errors.length === 0, errors.join(' | '));
     if (scheme === 'phone') {
@@ -221,7 +229,7 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
           writer: 'weekly',
           at: t,
           source: 'weekly',
-          release: 'v4.0.0',
+          release: RELEASE,
           pipeline: 'weekly',
           startedAt: t,
           endedAt: t,
@@ -259,7 +267,7 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
     overrides: {
       'app.js': fs
         .readFileSync(path.join(pageDir, 'app.js'), 'utf8')
-        .replace("const VERSION = 'v4.0.0'", "const VERSION = 'v4.0.0-old'"),
+        .replace(`const VERSION = '${RELEASE}'`, "const VERSION = 'v4.0.0-old'"),
     },
   });
   await r.page.waitForTimeout(400);

@@ -2000,3 +2000,23 @@ test("B-149 (D-173): the spec's specVersion is the newest tag's major.minor or t
   const newest = Math.max(...tags);
   assert.ok(m === newest || m === newest + 1, `specVersion ${spec.specVersion} against the newest tag v4.${newest}`);
 });
+
+// ------------------------------------------------------------------------------------------------ B-151 nightly check
+test('B-151 (T-1): the nightly workflow runs npm run check with Chromium, keeps the shots, and the inbox reads it', () => {
+  const wf = fs.readFileSync(path.join(ROOT, '.github/workflows/nightly.yml'), 'utf8');
+  assert.match(wf, /^ {2}schedule:\n(?: {4}#.*\n)* {4}- cron: '\d+ \d+ \* \* \*'/m, 'on a schedule');
+  assert.match(wf, /^ {2}workflow_dispatch:/m, 'and on demand');
+  assert.match(wf, /npx playwright install --with-deps chromium/);
+  assert.match(wf, /run: npm run check -- --shots shots/);
+  assert.match(wf, /uses: actions\/upload-artifact@v4[\s\S]*if: always\(\)[\s\S]*path: shots\//);
+  assert.match(wf, /permissions:\n {2}contents: read/, 'read-only, like test.yml');
+  const claude = fs.readFileSync(path.join(ROOT, 'CLAUDE.md'), 'utf8').replace(/\s+/g, ' ');
+  assert.match(
+    claude,
+    /A red last nightly check \(`\.github\/workflows\/nightly\.yml`, B-151; `inbox` prints the read\) is an inbox entry/
+  );
+  const out = C.formatInbox({ query: null, comments: [], triage: [] });
+  assert.match(out, /^inbox: empty/);
+  assert.match(out, /Nightly: gh run list --workflow nightly\.yml --limit 1/);
+  assert.match(out, /--source "nightly <id>"/);
+});

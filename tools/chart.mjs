@@ -1648,6 +1648,12 @@ export const commentReply = (rec, threadId, body) => ({
     payload: { value: { body, parent: { object: 'utterance', id: threadId } } },
   },
 });
+// B-151 (T-1): the nightly check (.github/workflows/nightly.yml) is part of the inbox. A red last run is a report.
+export const NIGHTLY_READ = [
+  'Nightly: gh run list --workflow nightly.yml --limit 1 --json conclusion,databaseId,createdAt,url',
+  '  red (conclusion "failure"): report bug "<the step that failed, from gh run view <id> --log-failed>" --source "nightly <id>" unless an open task covers it; its screenshots are the run\'s check-shots artifact',
+];
+
 /** Session start: the Board comments to file, then the inbox to triage, each as the exact command or call. */
 export function inboxPlan(rec, jsonl) {
   const out = { query: null, comments: [], triage: rec.tasks.filter(t => t.status === 'inbox') };
@@ -1682,6 +1688,7 @@ export function formatInbox(plan) {
       '',
       'Triage comes first: log refuses to start a task while an entry waits in the inbox. A bug that breaks studying is taken before any other open task.'
     );
+  out.push('', ...NIGHTLY_READ);
   return out.join('\n');
 }
 

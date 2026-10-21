@@ -2752,9 +2752,9 @@
   "title": "Nightly harness (T-1): .github/workflows/nightly.yml on a schedule installs Chromium, runs npm run check on the synthetic record and uploads the screenshots; CLAUDE.md step 2 says a red nightly is an inbox entry",
   "dod": "the workflow green on its first scheduled run; CLAUDE.md step 2 line present; npm test green",
   "milestone": "v4.2 tests",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken Oct 21. Found while proving it: the page harnesses run in this container after all (Chromium 1194 is at /opt/pw-browsers); the shell and run harnesses still expected the literal v4.0.0 that B-149 removed, so they now read the release from dist/manifest.json and the spec version from the spec.",
   "commit": null,
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },

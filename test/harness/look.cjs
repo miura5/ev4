@@ -10,6 +10,10 @@ const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 const root = path.resolve(__dirname, '../..');
+// B-149: the release comes from the build (git describe at the build's commit), never a literal.
+const RELEASE = JSON.parse(fs.readFileSync(path.join(root, 'dist/manifest.json'), 'utf8')).release;
+const SPEC_VERSION = JSON.parse(fs.readFileSync(path.join(root, 'spec/ev.spec.json'), 'utf8')).specVersion;
+const reEsc = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const dbDir = require('../data/synthetic.cjs').recordDir(process.argv[2]);
 const shots = process.argv[3] || '/tmp/ev4-look';
 fs.mkdirSync(shots, { recursive: true });
@@ -60,7 +64,7 @@ seed.runs = {
     writer: 'weekly',
     at: FAILED_AT,
     source: 'weekly',
-    release: 'v4.0.0',
+    release: RELEASE,
     pipeline: 'weekly',
     startedAt: FAILED_AT,
     endedAt: FAILED_AT,

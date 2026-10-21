@@ -1,0 +1,39 @@
+# B-151 (T-1): the page harnesses and the look pass, every night, on the synthetic record. npm test runs on every
+# push (test.yml); this runs the rest of `npm run check`, which needs Chromium, and keeps the screenshots. A red
+# nightly is an inbox entry for the next build chat (CLAUDE.md step 2). workflow_dispatch lets a build chat run it
+# on demand: gh workflow run nightly.yml, then gh run watch.
+name: nightly check
+on:
+  schedule:
+    # 08:41 UTC: before Matt's morning, outside the live watchdog's windows; off the hour, so it starts on time.
+    - cron: '41 8 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: git config --global user.name 'E.V. CI' && git config --global user.email 'ci@example.invalid'
+      # The harnesses try the build container's Chromium first and fall back to Playwright's own.
+      - run: npx playwright install --with-deps chromium
+      - run: npm run check -- --shots shots
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: check-shots-${{ github.run_id }}
+          path: shots/
+          retention-days: 14
+          if-no-files-found: warn

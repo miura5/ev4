@@ -9,6 +9,10 @@ const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 const root = path.resolve(__dirname, '../..');
+// B-149: the release comes from the build (git describe at the build's commit), never a literal.
+const RELEASE = JSON.parse(fs.readFileSync(path.join(root, 'dist/manifest.json'), 'utf8')).release;
+const SPEC_VERSION = JSON.parse(fs.readFileSync(path.join(root, 'spec/ev.spec.json'), 'utf8')).specVersion;
+const reEsc = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const dbDir = require('../data/synthetic.cjs').recordDir(process.argv[2]);
 const shots = process.argv[3] || '/tmp/ev4-shots';
 fs.mkdirSync(shots, { recursive: true });
@@ -76,7 +80,7 @@ seed.exams['E0H'] = {
 }; // B-39: past, no score
 seed.system = {
   manifest: {
-    release: 'v4.0.0',
+    release: RELEASE,
     commit: 'a'.repeat(40),
     pages: { staging: { files: { 'page/staging/app.js': 'a'.repeat(64) } }, live: { files: {} } },
   },
@@ -298,7 +302,7 @@ seed.health = {
         status: 'ok',
         startedAt: new Date(DAYTIME.getTime() - 9 * 3600e3).toISOString(),
         endedAt: new Date(DAYTIME.getTime() - 9 * 3600e3 + 300e3).toISOString(),
-        release: 'v4.0.0',
+        release: RELEASE,
       },
     },
     missing: [
@@ -393,7 +397,7 @@ seed.jobs = {
 seed.jobresults = {
   'job-20261017-150000-cardiac-output': {
     ...env('worker', 'worker harness', hourAgo),
-    release: 'v4.0.0',
+    release: RELEASE,
     status: 'done',
     startedAt: hourAgo,
     finishedAt: hourAgo,
@@ -419,7 +423,7 @@ seed.jobresults['job-harness-retro'] = {
   writer: 'worker',
   at: hourAgo,
   source: 'worker harness',
-  release: 'v4.0.0',
+  release: RELEASE,
   status: 'done',
   startedAt: '2026-10-01T15:02:00Z',
   finishedAt: '2026-10-01T15:05:00Z',
@@ -2316,7 +2320,9 @@ const ok = (name, cond, detail = '') => {
     );
     ok(
       'versions name the release and the record',
-      /Release v4\.0\.0 · core v4\.0\.0 · spec 4\.0\.0 · staging record/.test(await page.textContent('#versions'))
+      new RegExp(
+        `Release ${reEsc(RELEASE)} · core ${reEsc(RELEASE)} · spec ${reEsc(SPEC_VERSION)} · staging record`
+      ).test(await page.textContent('#versions'))
     );
     await page.screenshot({ path: `${shots}/system.png`, fullPage: true });
     {

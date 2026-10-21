@@ -35,7 +35,9 @@ attribution lines with `--trailer`, one per line) and regenerates BACKLOG.md, DE
 2. Triage first: `inbox` lists the Board comments to file (`report bug|request --from-comment <id>`, then the printed
    reply) and every entry waiting in the inbox. Each becomes a task (`log <id> --triage task --dod ... --milestone
    ...`), joins one (`--triage join <id>`), or is declined with a reason (`--triage decline --reason ...`); nothing
-   is deleted. A bug that breaks studying is taken before any other open task. When Matt says "bug: ..." or
+   is deleted. A red last nightly check (`.github/workflows/nightly.yml`, B-151; `inbox` prints the read) is an inbox
+   entry: file it with `report bug --source "nightly <run id>"` unless an open task covers it. A bug that breaks
+   studying is taken before any other open task. When Matt says "bug: ..." or
    "idea: ..." in the chat, file it at once with `report bug|request --from-chat` (his words come from the
    transcript, never retyped).
 3. Take the lowest `open` task in BACKLOG.md whose dependencies are `done`; `brief --task <id>` is its one page.
@@ -132,4 +134,4 @@ applied to live stays applied (its legacy copies are kept), and the dry run name
 | Live record and page (v4) | https://claude.ai/artifact/Bu8RevP4r1twPdSGc77nfg |
 | v4 staging record + page | https://claude.ai/artifact/Pb6jQ6CvEbtxi6Rcshu9uC (`spec/ev.spec.json` `registry`) |
 | Mac folder | Documents/E.V. Study Watch (live since the Oct 18 cutover; staging uses its `staging/` subfolder) |
-| Code style, page source, CI | prettier at 120 columns (`npm run format`, B-64); the page logic is `page/app/*.js` by tab, joined by the build into the published app.js; GitHub Actions runs `npm test` on every push |
+| Code style, page source, CI | prettier at 120 columns (`npm run format`, B-64); the page logic is `page/app/*.js` by tab, joined by the build into the published app.js; GitHub Actions runs `npm test` on every push and `npm run check` nightly with its screenshots (B-151; `gh workflow run nightly.yml` runs it now) |
