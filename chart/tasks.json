@@ -2964,5 +2964,24 @@
   "notes": "",
   "commit": null,
   "source": "B-133 diagnostic runs/diagnostic-20261021-110125159"
+ },
+ {
+  "id": "B-169",
+  "kind": "bug",
+  "title": "Bug (reported Oct 21): A staging worker job fails at compute when staging runs a build past its tag: jobresults/<id> /release does not match ^v\\d+(\\.\\d+){0,2}$ (manifest release v4.2.0+30, B-149's +n form); runs/worker-20261021-115949480",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "staging worker runs/worker-20261021-115949480",
+  "words": "A staging worker job fails at compute when staging runs a build past its tag: jobresults/<id> /release does not match ^v\\d+(\\.\\d+){0,2}$ (manifest release v4.2.0+30, B-149's +n form); runs/worker-20261021-115949480",
+  "reportedAt": "2026-10-21T12:07:31.555Z",
+  "board": {
+   "row": "v4 B-169: A staging worker job fails at compute when staging runs a build past…",
+   "why": "A staging worker job fails at compute when staging runs a build past its tag: jobresults/<id> /release does not match ^v\\d+(\\.\\d+){0,2}$ (manifest release v4.2.0+30, B-149's +n form); runs/worker-20261021-115949480",
+   "notes": "Reported Oct 21 from staging worker runs/worker-20261021-115949480"
+  }
  }
 ]
