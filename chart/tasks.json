@@ -3141,12 +3141,12 @@
   "title": "The builder's trace (D-195): node tools/chart.mjs trace --job <id> --status done or failed --note \"<one line>\" prints exactly three calls, jobresults/<id> (writer builder, schema 1 to 2: status, result text at most 1,500 characters naming the task filed, the staging commit and GREEN, what waits), one talk/<date> append as E.V. with the job card (talk schema 2 to 3, the builder as an appender), and system/yourturn (writer deploy, a new fixed id: the Your turn groups by place with each task's ask), and writes dist/trace-ok naming them; tools/hooks.mjs liveGuard lets a live write through only when it matches a call named in dist/trace-ok younger than ten minutes; ship (either target) also writes system/yourturn; the environments build-chat row records the first staging trace (D-185)",
   "dod": "test/hooks.test.mjs: the named trace call passes, an unnamed call is refused, a stale dist/trace-ok is refused, a named id on another collection is refused, the pipeline-marker case is unchanged; chart tests for trace's three calls and ship's yourturn write; bump fixtures and idempotence tests for jobresults, talk and system; npm test green; ship staging green; the first staging trace from a builder run read back (jobresults, talk, system/yourturn) and its row written; live only on Matt's OK",
   "milestone": "v4.4 builder",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-177",
    "B-186"
   ],
-  "notes": "P-11 (D-203, addendum Oct 21): the trace's three calls are the trace action's writes (spec.actions row trace, caller builder) printed from core/actions.mjs act, and dist/trace-ok is written from that row, so the hook allowance and the table cannot disagree.",
+  "notes": "Waits on probe A (D-179, kickoff step 4): the builder fired at 22:11Z with the probe text (session cse_01E8uRETL45FfPLHkrSyWY2p) filed no inbox entry 45 minutes in and took B-177 instead, its note saying the probe 'waits on its fired message'; a fired text reaching a builder session is unproven, and the trace rests on it. Unblocked by a diagnostic firing that proves the text arrives (or by changing how the builder reads it), recorded in B-176.",
   "commit": null,
   "source": "plan TbfWAoQEeQixyNKZnEZKvv"
  },
