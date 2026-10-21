@@ -174,6 +174,26 @@ test('B-186: a wrong caller, a bad shape, a write outside the row and an unmet c
   assert.match(A.act(spec, 'build-ask', { brief: 'x' }, {}).refused, /no caller set by code/);
 });
 
+test('B-186: the costs: his tap on ship-it is the OK, bound to its commit; staging needs a green verify at the commit', () => {
+  const r = tap('ship-it', { brief: 'ship it', commit: 'abc1234', tasks: ['B-190'] }, { now: NOW });
+  assert.equal(r.ok, true, r.refused);
+  assert.deepEqual(
+    [r.writes[0].data.kind, r.writes[0].data.commit, r.writes[0].data.tasks, r.effects[0].task],
+    ['ship', 'abc1234', ['B-190'], 'build.ev4-builder']
+  );
+  assert.match(tap('ship-it', { brief: 'ship it', tasks: ['B-190'] }, { now: NOW }).refused, /do not fit/, 'no commit');
+  // A planted row whose cost is a staging proof (no v4.4 row has one yet).
+  const planted = {
+    ...spec,
+    actions: { ...spec.actions, 'planted-staging': { ...spec.actions['build-ask'], cost: 'staging' } },
+  };
+  const go = (ctx, args = { brief: 'x', title: 'x' }) =>
+    A.act(planted, 'planted-staging', args, { caller: 'tap', now: NOW, ...ctx }, { 'planted-staging': () => ({}) });
+  assert.match(go({}).refused, /it needs staging green at the commit \(R-02\)/);
+  assert.match(go({ staging: { green: false, commit: 'abc1234' } }).refused, /R-02/);
+  assert.equal(go({ staging: { green: true, commit: 'abc1234def' } }).ok, true);
+});
+
 test('D-203: ctx.caller is set by code; a planted tap call claiming to be a builder is refused', () => {
   // The page's tap path calls the trace with a context that claims the builder: the actor's own caller wins.
   const claim = tap('trace', traceArgs, { caller: 'builder', now: NOW });
@@ -184,16 +204,86 @@ test('D-203: ctx.caller is set by code; a planted tap call claiming to be a buil
 
 // ------------------------------------------------------------------------------------------------ the write-site lint
 const LEGACY = path.join(ROOT, 'test', 'data', 'actions-legacy.json');
-const COMPOSED = /^(E\.|act\(|ACT\.|EVActions\.)/;
-/** Each write or run call in a page file whose writes do not come from act or a core composer (E.<name>). */
-export function writeSites(text) {
-  const out = [];
-  for (const m of String(text).matchAll(/(?<![\w.$])(write|run)\(\s*/g)) {
-    const before = text.slice(Math.max(0, m.index - 16), m.index);
-    if (/function\s+$/.test(before)) continue; // the definitions themselves
-    const arg = text.slice(m.index + m[0].length, m.index + m[0].length + 24);
-    if (!COMPOSED.test(arg)) out.push(arg.split('\n')[0]);
+/** The code of a source with its comments and string and template text blanked (a template's ${...} code is kept). */
+export function codeOnly(src) {
+  let out = '',
+    i = 0;
+  const stack = [];
+  const n = src.length;
+  const blank = ch => (ch === '\n' ? '\n' : ' ');
+  while (i < n) {
+    const c = src[i],
+      d = src[i + 1];
+    if (stack.at(-1) === '`') {
+      if (c === '\\') ((out += '  '), (i += 2));
+      else if (c === '`') (stack.pop(), (out += c), i++);
+      else if (c === '$' && d === '{') (stack.push('}'), (out += '${'), (i += 2));
+      else ((out += blank(c)), i++);
+      continue;
+    }
+    if (c === '/' && d === '/') {
+      while (i < n && src[i] !== '\n') ((out += ' '), i++);
+      continue;
+    }
+    if (c === '/' && d === '*') {
+      while (i < n && !(src[i] === '*' && src[i + 1] === '/')) ((out += blank(src[i])), i++);
+      ((out += '  '), (i += 2));
+      continue;
+    }
+    if (c === "'" || c === '"') {
+      ((out += c), i++);
+      while (i < n && src[i] !== c) {
+        if (src[i] === '\\') ((out += ' '), i++);
+        ((out += blank(src[i])), i++);
+      }
+      ((out += c), i++);
+      continue;
+    }
+    if (c === '`') stack.push('`');
+    else if (c === '{' && stack.length) stack.push('{');
+    else if (c === '}' && stack.length) stack.pop();
+    ((out += c), i++);
   }
+  return out;
+}
+/** The text of a call's arguments, from the index just after its "(" to the matching ")". */
+const argsOf = (code, k) => {
+  let depth = 1,
+    i = k;
+  for (; i < code.length && depth; i++) depth += code[i] === '(' ? 1 : code[i] === ')' ? -1 : 0;
+  return code.slice(k, i - 1);
+};
+// Writes from act or a core composer: the page's actors (ACT.tap, ACT.tool) or E.<composer>(...), never a write
+// object written in place.
+const COMPOSED = /^\s*(E\.\w+|ACT\.(tap|tool))\(/;
+/**
+ * Each record write site in a page file whose writes do not come from act or a core composer: a write or run call
+ * with any other argument, any other reference to write or run (an alias, .then(write), write.call), and a direct
+ * db.collection(...) set, update, add or delete. src is the file's text; funnel marks 04-model.js, where write and
+ * run are defined and the one db write lives.
+ */
+export function writeSites(src, { funnel = false } = {}) {
+  const code = codeOnly(String(src));
+  const out = [];
+  for (const m of code.matchAll(/(?<![\w.$])(write|run)\b/g)) {
+    const before = code.slice(Math.max(0, m.index - 16), m.index),
+      rest = code.slice(m.index + m[0].length);
+    if (/function\s+$/.test(before) || /^\s*\|/.test(rest) || /\|\s*$/.test(before)) continue; // a definition; a regex alternation
+    if (/^\s*:/.test(rest)) continue; // an object key named write or run
+    const call = /^\s*\(/.exec(rest);
+    if (!call) {
+      out.push(`${m[1]} by reference`);
+      continue;
+    }
+    const args = argsOf(code, m.index + m[0].length + call[0].length);
+    if (funnel && m[1] === 'write' && args.trim() === 'w') continue; // run's own loop over the writes it was given
+    if (!COMPOSED.test(args) || /\bop\s*:/.test(args)) out.push(`${m[1]}(${args.trim().slice(0, 40)}`);
+  }
+  if (!funnel)
+    for (const m of code.matchAll(/\bdb\s*\.\s*collection\s*\(/g)) {
+      const stmt = code.slice(m.index, code.indexOf(';', m.index) + 1 || undefined);
+      if (/\.\s*(set|update|add|delete)\s*\(/.test(stmt)) out.push('db.collection(...) write');
+    }
   return out;
 }
 function todaysSites() {
@@ -203,10 +293,34 @@ function todaysSites() {
     .readdirSync(dir)
     .filter(f => f.endsWith('.js'))
     .sort()) {
-    const n = writeSites(fs.readFileSync(path.join(dir, f), 'utf8')).length;
+    const n = writeSites(fs.readFileSync(path.join(dir, f), 'utf8'), { funnel: f === '04-model.js' }).length;
     if (n) out[`page/app/${f}`] = n;
   }
   return out;
+}
+// A record write a tools command prints as a call (JSON, a JS object or prose), outside core's composers.
+const PRINTED =
+  /"action"\s*:\s*"(set|update|batch|delete|str_replace)"|action: '(set|update|batch|delete|str_replace)'|ArtifactData \\?"?(set|update|batch|delete|str_replace)\b/g;
+function todaysToolSites() {
+  const out = {};
+  for (const f of fs
+    .readdirSync(path.join(ROOT, 'tools'))
+    .filter(f => f.endsWith('.mjs'))
+    .sort()) {
+    const n = [...fs.readFileSync(path.join(ROOT, 'tools', f), 'utf8').matchAll(PRINTED)].length;
+    if (n) out[`tools/${f}`] = n;
+  }
+  return out;
+}
+
+// EV_SHRINK_LEGACY=1 node --test test/actions.test.mjs rewrites the list from today's sites, after a site moved to act;
+// review the diff: the list only shrinks.
+if (process.env.EV_SHRINK_LEGACY) {
+  const old = JSON.parse(fs.readFileSync(LEGACY, 'utf8'));
+  const sites = todaysSites(),
+    tools = todaysToolSites();
+  const total = Object.values(sites).reduce((a, b) => a + b, 0);
+  fs.writeFileSync(LEGACY, JSON.stringify({ ...old, total, sites, tools }, null, 1) + '\n');
 }
 
 test('D-200 lint: every page write site is act, a core composer, or on the legacy list, which only shrinks', () => {
@@ -219,23 +333,42 @@ test('D-200 lint: every page write site is act, a core composer, or on the legac
     );
   // The list equals today's sites: when one moves to act, the list shrinks with it.
   assert.deepEqual(now, legacy.sites, 'test/data/actions-legacy.json is today’s sites; shrink it as sites move to act');
-  // Planted: a new write site outside the table is caught.
-  assert.equal(writeSites("await write({ op: 'set', collection: 'jobs', id, data });").length, 1);
-  assert.equal(writeSites('await run(E.skillStep(s));').length, 0);
-  assert.equal(writeSites("await run(act('build-ask', a).writes);").length, 0);
-  assert.equal(writeSites('async function write(w) {').length, 0);
+  // Planted: each form of a new write site is caught; act's actors and core composers are not.
+  const caught = s => writeSites(s).length;
+  assert.equal(caught("await write({ op: 'set', collection: 'jobs', id, data });"), 1);
+  assert.equal(caught('p.then(write);'), 1, 'by reference');
+  assert.equal(caught('const put = write; put(w);'), 1, 'an alias');
+  assert.equal(caught('write.call(null, w);'), 1, 'write.call');
+  assert.equal(caught("run(E.skillStep(s).concat([{ op: 'set', collection: 'x', id: 'y', data: {} }]));"), 1);
+  assert.equal(caught("db.collection('journal').add(data);"), 1, 'a direct db write');
+  assert.equal(caught("db.collection('jobs').doc(id).set(data);"), 1, 'a direct db write');
+  assert.equal(caught("run(EVActions.act(EV_SPEC, 'ship-it', a, { caller: 'tap' }).writes);"), 1, 'raw act');
+  assert.equal(caught("db.collection('talk').doc(d).get();"), 0, 'a read');
+  assert.equal(caught('await run(E.skillStep(s));'), 0);
+  assert.equal(caught("await run(ACT.tap('build-ask', a).writes);"), 0);
+  assert.equal(caught("toast('Couldn’t write: ' + e); // run(it)"), 0, 'strings and comments');
+  assert.equal(caught('async function write(w) {'), 0);
 });
 
-test('D-200 lint: no tools command prints a record write of its own; they come from core (deploy, run, act)', () => {
-  const dir = path.join(ROOT, 'tools');
-  for (const f of fs.readdirSync(dir).filter(f => f.endsWith('.mjs'))) {
-    const text = fs.readFileSync(path.join(dir, f), 'utf8');
-    assert.deepEqual(
-      [...text.matchAll(/action: '(set|update|batch|str_replace|delete)'/g)].map(m => m[0]),
-      [],
-      `tools/${f} composes a record write itself`
-    );
-  }
+test("D-203: only the page's model file sees EVActions; it makes the two actors and removes the factory", () => {
+  const dir = path.join(ROOT, 'page', 'app');
+  const users = fs
+    .readdirSync(dir)
+    .filter(f => f.endsWith('.js') && /EVActions/.test(codeOnly(fs.readFileSync(path.join(dir, f), 'utf8'))));
+  assert.deepEqual(users, ['04-model.js']);
+  const model = codeOnly(fs.readFileSync(path.join(dir, '04-model.js'), 'utf8'));
+  assert.match(model, /delete window\.EVActions/);
+  assert.doesNotMatch(model, /\.act\s*\(/, 'never the raw act');
+});
+
+test('D-200 lint: no tools command prints a record write of its own beyond the legacy list; they come from core', () => {
+  const legacy = JSON.parse(fs.readFileSync(LEGACY, 'utf8'));
+  assert.deepEqual(todaysToolSites(), legacy.tools, 'tools sites equal the legacy list (only the gate-failure log)');
+  const count = s => [...s.matchAll(PRINTED)].length;
+  assert.equal(count('console.log(`ArtifactData {"action":"set","collection":"runs"}`)'), 1, 'printed JSON');
+  assert.equal(count("calls.push({ tool: 'ArtifactData', args: { action: 'update' } })"), 1, 'a JS object');
+  assert.equal(count('ArtifactData "batch" on the record'), 1, 'prose');
+  assert.equal(count('ArtifactData {"action":"get","collection":"system"}'), 0, 'a read');
 });
 
 test("B-186: the page's spec.json carries actions, and spec.actions is a guarded spec key", async () => {

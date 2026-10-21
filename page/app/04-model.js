@@ -22,6 +22,7 @@
     const ACT = window.EVActions
       ? { tap: window.EVActions.actor(EV_SPEC, 'tap'), tool: window.EVActions.actor(EV_SPEC, 'tool') }
       : null;
+    delete window.EVActions; // the two actors are all the page keeps: no other code path names its own caller
     const answersOf = set => (M && set && M.latest[set.id]) || {};
     /** One write, checked against its collection's schema first (the page refuses what the pipelines refuse). */
     async function write(w) {

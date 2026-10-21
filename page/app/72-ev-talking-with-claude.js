@@ -797,10 +797,10 @@
       ];
       // Mark where the current round's text ends whenever a tool runs; later text belongs to a later round.
       for (const t of tools) {
-        const run = t.execute;
+        const exec = t.execute;
         t.execute = (input, ctx) => {
           pend.cut = pend.raw.length;
-          return run(input, ctx);
+          return exec(input, ctx);
         };
       }
       if (toolMax > 0 && tools.length > toolMax)
