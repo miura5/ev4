@@ -2039,5 +2039,30 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "live",
+  "commit": "6218f16",
+  "time": "2026-10-21T01:07:12.105Z",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "d33e08a",
+  "from": "d33e08a",
+  "tasks": [
+   "B-98",
+   "B-124",
+   "B-127",
+   "B-125",
+   "B-126",
+   "B-42",
+   "B-64",
+   "B-67",
+   "B-45",
+   "B-68"
+  ],
+  "summary": "the Mac evening run starts without its code; Today on prep days; Delete the demo copy; No motion on tab switches; Study, answered and done; Courses as data; Repository hygiene; Harness on the synthetic record; Exam plan drafts on request; Shadow scheduler",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
