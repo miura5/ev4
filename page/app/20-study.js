@@ -520,8 +520,15 @@
           .map(w => ({ weakspotId: w.id, topic: w.topic, objective: w.objective }));
         const st = E.answerStats(M.attempts.all).byObjective;
         let weakest = null;
-        for (const [id, s] of Object.entries(st))
-          if (s.n >= 2 && (!weakest || s.right / s.n < weakest.r / weakest.n)) weakest = { id, r: s.right, n: s.n };
+        // B-72 (D-120): the weakest objective the latest weekly measured, when there is one; else what the page counts.
+        const wk = [...(S.weeks || [])]
+          .filter(w => w.insights && w.insights.weakestObjective)
+          .sort((a, b) => String(b.date || b.id).localeCompare(String(a.date || a.id)))[0];
+        const wo = wk && wk.insights.byObjective.find(o => o.id === wk.insights.weakestObjective);
+        if (wo) weakest = { id: wo.id, r: wo.right, n: wo.n };
+        else
+          for (const [id, s] of Object.entries(st))
+            if (s.n >= 2 && (!weakest || s.right / s.n < weakest.r / weakest.n)) weakest = { id, r: s.right, n: s.n };
         const formats = M.models.filter(w => w.kind === 'format' && w.derived.status === 'open').map(w => w.topic);
         const prompt = [
           'You write NCLEX-style practice questions for Matt, a first-semester ADN nursing student (' +

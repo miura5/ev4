@@ -2240,6 +2240,50 @@ const ok = (name, cond, detail = '') => {
         await page.locator('#ready-card').screenshot({ path: `${shots}/readiness-trend-${w}.png` });
       }
       await page.setViewportSize(scheme === 'phone' ? { width: 390, height: 844 } : { width: 1280, height: 860 });
+      // B-72 (D-120): the latest weekly's insights, its three lines, beside readiness; nothing recomputed by the page.
+      const closed = await page.evaluate(() => document.getElementById('insights-list').hidden);
+      await page.click('#insights-line');
+      const ins = await page.evaluate(() => {
+        const c = document.getElementById('insights-card');
+        return c && !c.hidden
+          ? {
+              h: document.getElementById('insights-line').textContent,
+              closed: null,
+              lines: [...c.querySelectorAll('.ins-line')].map(l => l.textContent),
+            }
+          : null;
+      });
+      if (ins) ins.closed = closed;
+      ok(
+        'the week’s insights fold to one line that opens to their top three',
+        ins &&
+          ins.closed &&
+          /^From the week of .+ · 3 findings$/.test(ins.h) &&
+          ins.lines.length === 3 &&
+          ins.lines[0] === 'Weakest objective: E4-3, 2 of 7 right (29%).',
+        JSON.stringify(ins)
+      );
+      await page.locator('#insights-card').screenshot({ path: `${shots}/insights-${scheme}.png` });
+      // make_practice aims its spare questions at the weekly's weakest objective.
+      await page.evaluate(() => {
+        window.__jsonCalls = [];
+        window.__chatScript = [{ tool: 'make_practice', input: {} }];
+        window.__chatReply = 'Writing them.';
+      });
+      await page.click('#tab-ev');
+      await send(page, 'Give me 5 more questions');
+      await page.waitForTimeout(400);
+      const prompts = await page.evaluate(() => (window.__jsonCalls || []).map(c => String(c.prompt)));
+      ok(
+        'make_practice targets the weakest objective from the latest weeks document',
+        prompts.some(p => /Weakest objective so far: E4-3 \(2 of 7 right\)/.test(p)),
+        prompts.map(p => (p.match(/Weakest objective so far:[^.]*/) || [''])[0]).join(' | ')
+      );
+      await page.evaluate(() => {
+        window.__chatScript = [];
+      });
+      await page.click('#tab-progress');
+      await page.waitForTimeout(150);
     }
     await page.click('#seg-progress [data-v="weak"]');
     await page.waitForTimeout(100);

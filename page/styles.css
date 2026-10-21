@@ -598,3 +598,6 @@ button.tlink{all:unset;cursor:pointer;color:var(--accent-text);font-size:14px;pa
 .trend-pred{fill:var(--bg);stroke:var(--violet);stroke-width:2}
 .trend-label{fill:var(--ink2);font:600 11px var(--sans)}
 .trend-cap{margin:0}
+/* B-72 (D-120): the week's three lines. */
+.ins-list{margin:0}
+.ins-line{padding:6px 0;line-height:1.4}

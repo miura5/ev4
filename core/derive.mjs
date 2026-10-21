@@ -199,6 +199,101 @@ export function readinessStamp(v, date) {
   return out;
 }
 
+/**
+ * D-120 (B-72): weeks/<date>.insights, the week's measurements for what plans next, computed by code. Accuracy by
+ * objective, format and clinical-judgment step over the last 28 days (four weeks, so an objective has answers enough to
+ * rank), each with its counts; the items that discriminate (missed on every attempt, at least two, against those never
+ * missed); the recurrence leaders; and each day of the week's study minutes (sessions) and check-in energy against the
+ * next day's accuracy. weakestObjective is the lowest-accuracy objective with at least three answers; lines are the
+ * three the Progress tab shows. The weekly's review interprets these numbers; it never recomputes them.
+ */
+export function weekInsights(v, db, date) {
+  const from28 = EV.addDays(date, -27),
+    from7 = EV.addDays(date, -6);
+  const all = EV.collectAttempts(v.sets, v.answers).all.filter(a => a.date && a.date <= date);
+  const atts = all.filter(a => a.date >= from28);
+  const pct = (r, n) => (n ? Math.round((100 * r) / n) : null);
+  const group = key => {
+    const m = {};
+    for (const a of atts) {
+      const k = key(a);
+      if (!k) continue;
+      const g = (m[k] = m[k] || { right: 0, n: 0 });
+      g.n++;
+      if (a.correct) g.right++;
+    }
+    return Object.entries(m)
+      .map(([id, g]) => ({ id, right: g.right, n: g.n, pct: pct(g.right, g.n) }))
+      .sort((a, b) => a.pct - b.pct || b.n - a.n || (a.id < b.id ? -1 : 1));
+  };
+  const byObjective = group(a => a.objective);
+  const byItem = {};
+  for (const a of atts) {
+    const k = a.setId + '#' + a.itemId;
+    const it = (byItem[k] = byItem[k] || {
+      ref: 'sets/' + k,
+      topic: a.topic,
+      objective: a.objective,
+      attempts: 0,
+      missed: 0,
+    });
+    it.attempts++;
+    if (!a.correct) it.missed++;
+  }
+  const items = Object.values(byItem).filter(i => i.attempts >= 2);
+  const missedEvery = items
+    .filter(i => i.missed === i.attempts)
+    .sort((a, b) => b.attempts - a.attempts || (a.ref < b.ref ? -1 : 1))
+    .slice(0, 5);
+  const recurrence = v.models
+    .filter(w => (w.derived.recurrence || 1) > 1 && w.derived.status !== 'parked')
+    .sort((a, b) => b.derived.recurrence - a.derived.recurrence || (a.id < b.id ? -1 : 1))
+    .slice(0, 5)
+    .map(w => ({ weakspotId: w.id, topic: w.topic, recurrence: w.derived.recurrence }));
+  const edits = Object.fromEntries((db.dayedits || []).map(e => [e.id || e.date, e]));
+  const studyVsNextDay = [];
+  for (let d = from7; d <= date; d = EV.addDays(d, 1)) {
+    const next = EV.addDays(d, 1);
+    const na = all.filter(a => a.date === next);
+    const minutes = (db.sessions || []).filter(s => s.date === d).reduce((n, s) => n + (Number(s.minutes) || 0), 0);
+    const ci = edits[d] && edits[d].checkin;
+    studyVsNextDay.push({
+      date: d,
+      minutes,
+      energy: ci ? ci.energy : null,
+      nextAnswers: next <= date ? na.length : null,
+      nextPct: next <= date ? pct(na.filter(a => a.correct).length, na.length) : null,
+    });
+  }
+  const weakest = byObjective.find(o => o.n >= 3) || null;
+  const lines = [];
+  if (weakest)
+    lines.push(`Weakest objective: ${weakest.id}, ${weakest.right} of ${weakest.n} right (${weakest.pct}%).`);
+  if (missedEvery.length)
+    lines.push(
+      `Missed every time: ${missedEvery[0].topic || missedEvery[0].ref} (${missedEvery[0].missed} of ${missedEvery[0].attempts}).`
+    );
+  if (recurrence.length) lines.push(`Back most often: ${recurrence[0].topic} (${recurrence[0].recurrence} times).`);
+  const studied = studyVsNextDay.filter(x => x.minutes > 0 && x.nextAnswers);
+  const rest = studyVsNextDay.filter(x => !x.minutes && x.nextAnswers);
+  if (lines.length < 3 && studied.length && rest.length) {
+    const avg = xs => Math.round(xs.reduce((n, x) => n + x.nextPct, 0) / xs.length);
+    lines.push(`After a study session the next day ran ${avg(studied)}%; after none, ${avg(rest)}%.`);
+  }
+  return {
+    window: { from: from28, to: date },
+    byObjective,
+    byFormat: group(a => a.type),
+    byCjStep: group(a => a.cjStep),
+    missedEvery,
+    neverMissed: items.filter(i => i.missed === 0).length,
+    recurrence,
+    studyVsNextDay,
+    weakestObjective: weakest ? weakest.id : null,
+    lines: lines.slice(0, 3),
+  };
+}
+
 /** days/<date>, the morning run: the plan and the list at 4:25am. */
 function dayBody(db, { date, now }, spec, stored) {
   const v = views(db);
@@ -398,7 +493,7 @@ function weekBody(db, { date, verify = null }, spec, stored) {
         : '')
     : 'no runs this week';
   const body = {
-    schema: 3, // B-29: health is {summary, verify}; B-48: rollups.readiness
+    schema: 4, // B-29: health is {summary, verify}; B-48: rollups.readiness; B-72: insights
     date,
     calibration,
     // The verify result comes from the run's own reads of its record (verify-deploy, read-only), an input as stored.
@@ -420,6 +515,8 @@ function weekBody(db, { date, verify = null }, spec, stored) {
       readiness: stored && stored.rollups && stored.rollups.readiness === null ? null : readinessStamp(v, date),
     },
   };
+  // D-120 (B-72): the week's insights; a week written before them (migrated, null) rebuilds as it was.
+  body.insights = stored && stored.insights === null ? null : weekInsights(v, db, date);
   // B-68 (D-116): the week's two schedulers side by side, when its days carry a shadow (none before B-68).
   const study = STUDY.compareWeek(db.days || [], EV.collectAttempts(v.sets, v.answers).all, { from, to: date });
   if (study) body.study = study;

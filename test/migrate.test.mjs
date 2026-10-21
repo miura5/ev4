@@ -752,7 +752,7 @@ test('B-48 (D-105): the days and weeks 2 to 3 bumps add readiness null, match th
     for (const w of r.writes)
       assert.ok(validate(w.collection, w.data, { id: w.id }).ok, `${w.collection}/${w.id} validates`);
     const doc = got[c][0];
-    assert.equal(doc.schema, 3);
+    assert.equal(doc.schema, c === 'weeks' ? 4 : 3, 'the bumps chain to this build');
     assert.equal(
       c === 'days' ? doc.readiness : doc.rollups.readiness,
       null,
@@ -810,4 +810,33 @@ test('B-48 (D-105): a day stamps readiness per upcoming exam of every active cou
   const s = readinessStamp(v, '2026-10-21');
   assert.deepEqual(s.E9, { pctSolid: null, active: 0, solid: 0, accuracy7: 50, answers7: 2 });
   assert.deepEqual(readinessStamp(v, '2026-10-30'), {}, 'an exam today is no longer upcoming');
+});
+
+test('B-72 (D-120): the weeks 3 to 4 bump adds insights null, matches its fixture, validates, rebuilds and is idempotent', async () => {
+  const { migrateBumps } = await import('../core/migrate.mjs');
+  const { rebuildOne } = await import('../core/derive.mjs');
+  const { readExport: read } = await import('../core/schemas.mjs');
+  const load = d => {
+    const db = {};
+    for (const { collection, id, doc } of read(d)) (db[collection] = db[collection] || []).push({ ...doc, id });
+    return db;
+  };
+  const sorted = l => (l || []).slice().sort((a, b) => (a.id < b.id ? -1 : 1));
+  const dir = path.join(ROOT, 'test/data/bumps/weeks-3');
+  const before = load(path.join(dir, 'before')),
+    after = load(path.join(dir, 'after'));
+  const r = migrateBumps(before, { at: '2026-10-21T13:00:00Z' });
+  const got = {};
+  for (const w of r.writes) (got[w.collection] = got[w.collection] || []).push({ ...w.data, id: w.id });
+  for (const [col, docs] of Object.entries(after))
+    assert.equal(EV.stableStringify(sorted(got[col])), EV.stableStringify(sorted(docs)), col);
+  for (const w of r.writes) assert.ok(validate(w.collection, w.data, { id: w.id }).ok, `${w.collection}/${w.id}`);
+  assert.equal(got.weeks[0].insights, null);
+  assert.deepEqual(got.weeks[0].rollups.readiness, before.weeks[0].rollups.readiness, 'the B-48 stamp is kept');
+  const applied = applyWrites(before, r.writes);
+  assert.deepEqual(migrateBumps(applied, { at: '2026-10-22T13:00:00Z' }).writes, []);
+  const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
+  const rec = load(path.join(ROOT, 'test/data/record'));
+  delete rec.journal;
+  assert.equal(rebuildOne({ ...rec, weeks: applied.weeks }, spec, 'weeks', applied.weeks[0]).status, 'same');
 });

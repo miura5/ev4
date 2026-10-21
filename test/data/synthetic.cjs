@@ -68,6 +68,17 @@ function syntheticRecord(now = new Date()) {
   const more = [['E4-1', 'Third spacing and edema'], ['E4-1', 'Intake and output totals'], ['E4-2', 'Calcium and tetany signs'], ['E4-2', 'Magnesium and reflexes'], ['E4-3', 'Stroke volume factors'], ['E4-4', 'Pulse oximetry limits'], ['E4-5', 'Lactated Ringer’s uses'], ['E4-5', 'Hypertonic saline cautions']];
   more.forEach(([objective, topic], i) => { const when = ct(d(-3 - (i % 3)), 20, i); put('weakspots', 'ws-synth-' + (i + 1), { ...env('page', 'Review miss', when), addedAt: when, addedBy: 'Matt', topic, objective, exam: 'E4', course: 'NUR 112', kind: 'concept', initial: { streak: 0, nextDue: d(1), recurrence: 1, misses: 1 }, events: {} }); });
   ['Enteral feeding checks', 'Bowel elimination changes', 'Urinary retention signs', 'Nutrition screening tools'].forEach((topic, i) => { const when = ct(d(-1), 21, i); put('weakspots', 'ws-preview-' + (i + 1), { ...env('page', 'Pre-reading check', when), addedAt: when, addedBy: 'Matt', topic, objective: '', exam: 'E5', course: 'NUR 112', kind: 'concept', preRead: true, readingDue: d(3), initial: { streak: 0, nextDue: d(3), recurrence: 1, misses: 1 }, events: {} }); });
+  // run.cjs (B-72, D-120): last Sunday's weekly, with the insights the Progress card shows and make_practice aims at.
+  { const wd = new Date(today + 'T12:00:00Z').getUTCDay(), sun = d(-(wd || 7)), base = JSON.parse(fs.readFileSync(path.join(__dirname, 'record', 'weeks', '2026-10-11.json'), 'utf8'));
+    put('weeks', sun, { ...base, at: ct(sun, 17, 59), date: sun, rollups: { ...base.rollups, from: addDays(sun, -6), to: sun, readiness: { E4: { pctSolid: 10, active: 8, solid: 1, accuracy7: 55, answers7: 12 } } },
+      insights: { window: { from: addDays(sun, -27), to: sun },
+        byObjective: [{ id: 'E4-3', right: 2, n: 7, pct: 29 }, { id: 'E4-2', right: 4, n: 8, pct: 50 }, { id: 'E4-1', right: 6, n: 9, pct: 67 }],
+        byFormat: [{ id: 'select-all', right: 1, n: 4, pct: 25 }, { id: 'single', right: 11, n: 20, pct: 55 }],
+        byCjStep: [{ id: 'analyze-cues', right: 3, n: 8, pct: 38 }],
+        missedEvery: [{ ref: 'sets/drill-E4-weak#w1', topic: 'What raises cardiac output', objective: 'E4-3', attempts: 3, missed: 3 }],
+        neverMissed: 5, recurrence: [{ weakspotId: 'ws-synth-5', topic: 'Stroke volume factors', recurrence: 3 }],
+        studyVsNextDay: [], weakestObjective: 'E4-3',
+        lines: ['Weakest objective: E4-3, 2 of 7 right (29%).', 'Missed every time: What raises cardiac output (3 of 3).', 'Back most often: Stroke volume factors (3 times).'] } }); }
   return db;
 }
 

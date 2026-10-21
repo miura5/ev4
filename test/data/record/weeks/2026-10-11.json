@@ -1,5 +1,5 @@
 {
- "schema": 3,
+ "schema": 4,
  "writer": "weekly",
  "at": "2026-10-16T14:00:00Z",
  "source": "weekly 5:57",
@@ -37,6 +37,71 @@
     "answers7": 0
    }
   }
+ },
+ "insights": {
+  "window": {
+   "from": "2026-09-14",
+   "to": "2026-10-11"
+  },
+  "byObjective": [],
+  "byFormat": [],
+  "byCjStep": [],
+  "missedEvery": [],
+  "neverMissed": 0,
+  "recurrence": [],
+  "studyVsNextDay": [
+   {
+    "date": "2026-10-05",
+    "minutes": 0,
+    "energy": null,
+    "nextAnswers": 0,
+    "nextPct": null
+   },
+   {
+    "date": "2026-10-06",
+    "minutes": 0,
+    "energy": null,
+    "nextAnswers": 0,
+    "nextPct": null
+   },
+   {
+    "date": "2026-10-07",
+    "minutes": 0,
+    "energy": null,
+    "nextAnswers": 0,
+    "nextPct": null
+   },
+   {
+    "date": "2026-10-08",
+    "minutes": 0,
+    "energy": null,
+    "nextAnswers": 0,
+    "nextPct": null
+   },
+   {
+    "date": "2026-10-09",
+    "minutes": 0,
+    "energy": null,
+    "nextAnswers": 0,
+    "nextPct": null
+   },
+   {
+    "date": "2026-10-10",
+    "minutes": 0,
+    "energy": null,
+    "nextAnswers": 0,
+    "nextPct": null
+   },
+   {
+    "date": "2026-10-11",
+    "minutes": 0,
+    "energy": null,
+    "nextAnswers": null,
+    "nextPct": null
+   }
+  ],
+  "weakestObjective": null,
+  "lines": []
  },
  "review": "A made-up week.",
  "reflection": "A made-up prompt?"

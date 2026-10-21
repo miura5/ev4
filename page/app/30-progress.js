@@ -155,6 +155,30 @@
       );
       return wrap;
     }
+    // B-72 (D-120): the latest week's insights, its top three lines, as the weekly computed them; nothing recomputed here.
+    const latestInsights = () =>
+      [...(S.weeks || [])]
+        .filter(w => w.insights && (w.insights.lines || []).length)
+        .sort((a, b) => String(b.date || b.id).localeCompare(String(a.date || a.id)))[0] || null;
+    // One line that opens in place to the three (D-147, D-148), so no objective shows twice beside the list above.
+    function renderInsights() {
+      const c = $('insights-card');
+      const w = latestInsights();
+      c.hidden = !w;
+      if (!w) return;
+      const n = w.insights.lines.slice(0, 3);
+      const line = $('insights-line'),
+        list = $('insights-list');
+      if (!line.dataset.on) {
+        line.dataset.on = '1';
+        line.addEventListener('click', () => {
+          list.hidden = !list.hidden;
+          line.setAttribute('aria-expanded', String(!list.hidden));
+        });
+      }
+      line.textContent = `From the week of ${E.shortDate(w.date || w.id)} · ${plural(n.length, 'finding')}`;
+      list.replaceChildren(...n.map(t => el('li', 'row ins-line', t)));
+    }
     function renderReadiness() {
       const card = $('ready-card');
       const ex = M.target;
@@ -198,6 +222,7 @@
         }
         card.replaceChildren(...kids);
       }
+      renderInsights();
       $('audit-card').hidden = true; // merged into the list above (B-118); its line in the conversation still opens here
       // Score entry for past unit exams (calibration).
       // D-094: a past NUR unit exam with no score yet; the score goes to examedits/<examId>, replaced whole.

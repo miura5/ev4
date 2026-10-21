@@ -9,7 +9,7 @@
   "writers": [
    "weekly"
   ],
-  "schema": 3,
+  "schema": 4,
   "authored": [
    "review",
    "reflection"
@@ -19,7 +19,7 @@
  "type": "object",
  "properties": {
   "schema": {
-   "const": 3
+   "const": 4
   },
   "writer": {
    "enum": [
@@ -190,6 +190,271 @@
   "study": {
    "type": "object",
    "description": "B-68 (D-116): the week's list and shadow compared (core/study.mjs compareWeek); absent before the shadow existed"
+  },
+  "insights": {
+   "description": "B-72 (D-120): the week's measurements, computed by the weekly (accuracy by objective, format and clinical-judgment step over 28 days, items missed every time, recurrence leaders, study minutes against next-day accuracy, the weakest objective and three lines); null on a week written before them",
+   "anyOf": [
+    {
+     "type": "null"
+    },
+    {
+     "type": "object",
+     "properties": {
+      "window": {
+       "type": "object",
+       "properties": {
+        "from": {
+         "type": "string",
+         "format": "date"
+        },
+        "to": {
+         "type": "string",
+         "format": "date"
+        }
+       },
+       "required": [
+        "from",
+        "to"
+       ],
+       "additionalProperties": false
+      },
+      "byObjective": {
+       "type": "array",
+       "items": {
+        "type": "object",
+        "properties": {
+         "id": {
+          "type": "string",
+          "minLength": 1
+         },
+         "right": {
+          "type": "integer",
+          "minimum": 0
+         },
+         "n": {
+          "type": "integer",
+          "minimum": 1
+         },
+         "pct": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+         }
+        },
+        "required": [
+         "id",
+         "right",
+         "n",
+         "pct"
+        ],
+        "additionalProperties": false
+       }
+      },
+      "byFormat": {
+       "type": "array",
+       "items": {
+        "type": "object",
+        "properties": {
+         "id": {
+          "type": "string",
+          "minLength": 1
+         },
+         "right": {
+          "type": "integer",
+          "minimum": 0
+         },
+         "n": {
+          "type": "integer",
+          "minimum": 1
+         },
+         "pct": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+         }
+        },
+        "required": [
+         "id",
+         "right",
+         "n",
+         "pct"
+        ],
+        "additionalProperties": false
+       }
+      },
+      "byCjStep": {
+       "type": "array",
+       "items": {
+        "type": "object",
+        "properties": {
+         "id": {
+          "type": "string",
+          "minLength": 1
+         },
+         "right": {
+          "type": "integer",
+          "minimum": 0
+         },
+         "n": {
+          "type": "integer",
+          "minimum": 1
+         },
+         "pct": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+         }
+        },
+        "required": [
+         "id",
+         "right",
+         "n",
+         "pct"
+        ],
+        "additionalProperties": false
+       }
+      },
+      "missedEvery": {
+       "type": "array",
+       "maxItems": 5,
+       "items": {
+        "type": "object",
+        "properties": {
+         "ref": {
+          "type": "string",
+          "minLength": 1
+         },
+         "topic": {
+          "type": [
+           "string",
+           "null"
+          ]
+         },
+         "objective": {
+          "type": [
+           "string",
+           "null"
+          ]
+         },
+         "attempts": {
+          "type": "integer",
+          "minimum": 2
+         },
+         "missed": {
+          "type": "integer",
+          "minimum": 2
+         }
+        },
+        "required": [
+         "ref",
+         "attempts",
+         "missed"
+        ],
+        "additionalProperties": false
+       }
+      },
+      "neverMissed": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "recurrence": {
+       "type": "array",
+       "maxItems": 5,
+       "items": {
+        "type": "object",
+        "properties": {
+         "weakspotId": {
+          "type": "string",
+          "minLength": 1
+         },
+         "topic": {
+          "type": "string"
+         },
+         "recurrence": {
+          "type": "integer",
+          "minimum": 2
+         }
+        },
+        "required": [
+         "weakspotId",
+         "topic",
+         "recurrence"
+        ],
+        "additionalProperties": false
+       }
+      },
+      "studyVsNextDay": {
+       "type": "array",
+       "items": {
+        "type": "object",
+        "properties": {
+         "date": {
+          "type": "string",
+          "format": "date"
+         },
+         "minutes": {
+          "type": "number",
+          "minimum": 0
+         },
+         "energy": {
+          "type": [
+           "integer",
+           "null"
+          ]
+         },
+         "nextAnswers": {
+          "type": [
+           "integer",
+           "null"
+          ]
+         },
+         "nextPct": {
+          "type": [
+           "integer",
+           "null"
+          ]
+         }
+        },
+        "required": [
+         "date",
+         "minutes",
+         "energy",
+         "nextAnswers",
+         "nextPct"
+        ],
+        "additionalProperties": false
+       }
+      },
+      "weakestObjective": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "lines": {
+       "type": "array",
+       "maxItems": 3,
+       "items": {
+        "type": "string",
+        "minLength": 1
+       }
+      }
+     },
+     "required": [
+      "window",
+      "byObjective",
+      "byFormat",
+      "byCjStep",
+      "missedEvery",
+      "neverMissed",
+      "recurrence",
+      "studyVsNextDay",
+      "weakestObjective",
+      "lines"
+     ],
+     "additionalProperties": false
+    }
+   ]
   }
  },
  "required": [
@@ -197,6 +462,7 @@
   "writer",
   "at",
   "source",
-  "date"
+  "date",
+  "insights"
  ]
 }

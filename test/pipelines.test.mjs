@@ -304,7 +304,8 @@ test('weekly: the roll-ups, the verify reads, the review as written, weeks/<Sund
   const { out } = applied(db, dir);
   const week = out.weeks.find(d => d.id === '2026-10-18');
   assert.equal(week.review, 'A made-up week: steady practice.');
-  assert.equal(week.schema, 3);
+  assert.equal(week.schema, 4);
+  assert.ok(week.insights && Array.isArray(week.insights.lines), 'B-72: the week’s insights');
   assert.equal(typeof week.rollups.readiness, 'object', 'B-48: the week’s closing readiness');
   assert.equal(typeof week.health.summary, 'string');
   const vr = week.health.verify;

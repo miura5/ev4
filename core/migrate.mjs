@@ -481,6 +481,8 @@ export const BUMPS = {
     }),
     // B-48 (D-105): the roll-ups gain the week's closing readiness per exam; a week before it had none, so it is null.
     2: d => ({ data: { ...d, schema: 3, rollups: { ...(d.rollups || {}), readiness: null } }, also: [] }),
+    // B-72 (D-120): weeks gain insights, computed by the weekly; a week before it had none, so it is null.
+    3: d => ({ data: { ...d, schema: 4, insights: null }, also: [] }),
   },
   days: {
     // B-68 (D-116): days gains shadow, the other scheduler's pick; a day written before it had none, so it is null and

@@ -394,7 +394,15 @@ CODE_STEPS['week-brief'] = function weekBrief(db, ctx, spec) {
   const stillWeak = EV.rankDue(ms.filter(EV.isActive), '9999-12-31', db.exams || [])
     .slice(0, 5)
     .map(w => ({ topic: w.topic, objective: w.objective, recurrence: w.derived.recurrence }));
-  ctx.week = { ...week.rollups, calibration: week.calibration, health: week.health, ahead, stillWeak };
+  // B-72 (D-120): the week's insights travel with the brief; the review interprets them and never recomputes them.
+  ctx.week = {
+    ...week.rollups,
+    calibration: week.calibration,
+    health: week.health,
+    ahead,
+    stillWeak,
+    insights: week.insights,
+  };
   return {
     say: [
       `Week ${week.rollups.from}..${week.rollups.to}: ${week.rollups.right}/${week.rollups.answered} right, ${week.rollups.newWeakSpots.length} new weak spots, ${week.rollups.solid.length} made solid.`,

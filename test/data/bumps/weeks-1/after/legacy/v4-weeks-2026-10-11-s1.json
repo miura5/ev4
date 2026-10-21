@@ -31,5 +31,5 @@
  "migratedFrom": "weeks/2026-10-11",
  "migratedTo": "weeks/2026-10-11",
  "migratedAt": "2026-10-18T17:00:00.000Z",
- "migration": "weeks schema 1 to 3"
+ "migration": "weeks schema 1 to 4"
 }

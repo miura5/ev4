@@ -212,3 +212,66 @@ test("B-47 (D-104): examRetro sets the night-before prediction against the score
   assert.equal(early.calibration, null);
   assert.equal(EV.examRetro({ examId: 'E99', exams: [exam] }), null);
 });
+
+test('B-72 (D-120): weekInsights ranks objectives by accuracy, finds items missed every time, the recurrence leaders and study against the next day', async () => {
+  const { weekInsights } = await import('../core/derive.mjs');
+  const q = (id, objective, topic, type = 'single') => ({
+    id,
+    objective,
+    topic,
+    type,
+    correct: [0],
+    cjStep: 'analyze-cues',
+  });
+  const sets = [
+    {
+      id: 's1',
+      items: [q('a', 'E9-1', 'Potassium'), q('b', 'E9-2', 'Sodium', 'select-all'), q('c', 'E9-2', 'Calcium')],
+    },
+  ];
+  const ans = (day, n, right) => ({
+    chosen: [right ? 0 : 1],
+    correct: right,
+    score: right ? 1 : 0,
+    at: `2026-10-${day}T15:0${n}:00Z`,
+  });
+  const answers = [
+    {
+      id: 's1',
+      setId: 's1',
+      answers: {
+        a: { p1: ans(13, 1, false), p2: ans(14, 1, false), p3: ans(16, 1, false) },
+        b: { p1: ans(13, 2, true), p2: ans(16, 2, true) },
+        c: { p1: ans(14, 3, true), p2: ans(16, 3, false) },
+      },
+    },
+  ];
+  const models = [
+    { id: 'w1', topic: 'Potassium', derived: { recurrence: 3, status: 'open' } },
+    { id: 'w2', topic: 'Sodium', derived: { recurrence: 1, status: 'open' } },
+  ];
+  const db = {
+    sessions: [{ id: 'ss-1', date: '2026-10-15', minutes: 45 }],
+    dayedits: [{ id: '2026-10-15', checkin: { energy: 4, at: '2026-10-15T12:00:00Z' } }],
+  };
+  const r = weekInsights({ sets, answers, models }, db, '2026-10-18');
+  assert.deepEqual(r.window, { from: '2026-09-21', to: '2026-10-18' });
+  assert.deepEqual(r.byObjective, [
+    { id: 'E9-1', right: 0, n: 3, pct: 0 },
+    { id: 'E9-2', right: 3, n: 4, pct: 75 },
+  ]);
+  assert.equal(r.weakestObjective, 'E9-1');
+  assert.deepEqual(r.missedEvery, [
+    { ref: 'sets/s1#a', topic: 'Potassium', objective: 'E9-1', attempts: 3, missed: 3 },
+  ]);
+  assert.equal(r.neverMissed, 1);
+  assert.deepEqual(r.recurrence, [{ weakspotId: 'w1', topic: 'Potassium', recurrence: 3 }]);
+  const d15 = r.studyVsNextDay.find(x => x.date === '2026-10-15');
+  assert.deepEqual(d15, { date: '2026-10-15', minutes: 45, energy: 4, nextAnswers: 3, nextPct: 33 });
+  assert.deepEqual(r.lines, [
+    'Weakest objective: E9-1, 0 of 3 right (0%).',
+    'Missed every time: Potassium (3 of 3).',
+    'Back most often: Potassium (3 times).',
+  ]);
+  assert.equal(r.byFormat[0].id, 'single');
+});

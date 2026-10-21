@@ -275,6 +275,10 @@
     {
      "collection": "days",
      "windowDays": 8
+    },
+    {
+     "collection": "dayedits",
+     "windowDays": 8
     }
    ],
    "steps": [
@@ -309,7 +313,7 @@
     {
      "id": "week-review",
      "kind": "agent",
-     "judgment": "Write the week's review for Matt from the brief: what moved, what is still weak (nearest exam first), the coming week's dates, any failed runs, one suggestion for next week; then one reflection question for him to write about, and a one-line push. Plain, warm, under 3000 characters. Never about graded work.",
+     "judgment": "Write the week's review for Matt from the brief: what moved, what is still weak (nearest exam first), the coming week's dates, any failed runs, one suggestion for next week; then one reflection question for him to write about, and a one-line push. The brief's insights are the week's numbers, computed by code (B-72): say in a sentence or two what they mean for next week (the weakest objective, an item missed every time, what keeps coming back, how study minutes sat against the next day's accuracy); quote them, never recompute or round them differently. Plain, warm, under 3000 characters. Never about graded work.",
      "material": "week-brief",
      "output": {
       "type": "object",
