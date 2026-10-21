@@ -1571,7 +1571,6 @@
    "class": "Derived",
    "writers": [
     "watchdog",
-    "evening-cloud",
     "restore-drill"
    ],
    "key": "current",
@@ -1581,7 +1580,8 @@
     "current"
    ],
    "rebuild": "rebuild health",
-   "schema": "spec/schemas/health.schema.json"
+   "schema": "spec/schemas/health.schema.json",
+   "_note": "B-140: the watchdog's health step is the only producer (core/steps.mjs); restore-drill restores health/current as the backup held it. evening-cloud never wrote it and is no longer listed."
   },
   "state": {
    "class": "Derived",
@@ -1826,7 +1826,8 @@
    "holds": "weak spots grouped under one concept",
    "fromV3": "concepts (never populated)",
    "rebuild": "rebuild concepts",
-   "schema": "spec/schemas/concepts.schema.json"
+   "schema": "spec/schemas/concepts.schema.json",
+   "unpopulated": "D-096: no step writes it; the weekly never grouped weak spots under concepts. The collection, its schema and its rebuild entry stay, since nothing is deleted."
   },
   "system": {
    "class": "Config",

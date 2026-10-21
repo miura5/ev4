@@ -9,7 +9,8 @@
   "writers": [
    "weekly"
   ],
-  "schema": 1
+  "schema": 1,
+  "unpopulated": true
  },
  "$comment": "Only when 2 or more weak spots share a concept; drug content still follows B-02.",
  "type": "object",

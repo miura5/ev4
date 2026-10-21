@@ -375,3 +375,13 @@ test('lint, D-175 (B-134): CLAUDE.md names every boundary id, and every prompt p
     if (typeof b.prompt.text !== 'string') for (const l of b.prompt.lanes) assert.ok(b.prompt.text[l], `${b.id} ${l}`);
   }
 });
+
+test('B-140: the collection map tells the truth: health is written only by the watchdog (and restored by the drill); concepts is marked unpopulated', () => {
+  const steps = fs.readFileSync(new URL('../core/steps.mjs', import.meta.url), 'utf8');
+  assert.equal((steps.match(/collection: 'health'/g) || []).length, 1, 'one producer of health/current');
+  assert.deepEqual(spec.collections.health.writers, ['watchdog', 'restore-drill']);
+  assert.ok(!spec.pipelines['evening-cloud'].steps.some(s => /health/.test(s.id)), 'evening-cloud has no health step');
+  assert.match(spec.collections.concepts.unpopulated, /^D-096/);
+  const schema = JSON.parse(fs.readFileSync(new URL('../spec/schemas/concepts.schema.json', import.meta.url), 'utf8'));
+  assert.equal(schema['x-ev'].unpopulated, true);
+});

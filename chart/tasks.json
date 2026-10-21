@@ -2591,10 +2591,10 @@
   "title": "Unit tests for the three steps no test names: watchdog watch (a missed slot inside and outside the re-fire window, a refused start, a stalled job, a Mac miss, the watchdog's own entry), weekly week-brief and evening-mac mac-files on fixtures",
   "dod": "test/steps.test.mjs covers the cases above and each step's output validates against its schema; npm test green",
   "milestone": "v4.2 watch",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Taken Oct 21",
-  "commit": null,
+  "notes": "test/steps.test.mjs: 7 tests on the watch, health, week-brief and mac-files steps; every written document validates; npm test 378 green",
+  "commit": "430a885",
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
@@ -2603,9 +2603,9 @@
   "title": "Collection map truth: spec.collections.health.writers drops evening-cloud (the only producer is the watchdog's health step, restore-drill writes the drill age); concepts marked unpopulated the way libindex is marked retired; schemas' x-ev agree",
   "dod": "the build's registry check green; lint green on the synthetic record and on a staging export; npm test green; ship staging green; live only on Matt's OK",
   "milestone": "v4.2 watch",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken Oct 21",
   "commit": null,
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
