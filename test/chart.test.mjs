@@ -2045,9 +2045,14 @@ test('B-153 (T-5): no test reads the real record; a planted direct read is caugh
   assert.deepEqual(directRecordReads("path.join(dir, 'chart', 'tasks.json')"), [], 'a throwaway copy is fine');
 });
 
-test("B-153 (T-5): the record checks hold with two chats' worth of planted state in the copy", () => {
-  const dir = chartCopy(RECORD);
+// B-174: the copy starts from whatever state the shared record is in. A commit that reports a bug leaves it in the
+// inbox until the triage commit after it, and log refuses to take a task while one waits, so the copy settles every
+// inbox entry first (as a task) and the check holds on every commit, not only on triaged ones.
+function plantTwoChats(dir, { inbox = false } = {}) {
   const r = C.loadChart(dir);
+  if (inbox) C.applyReport(r, { _: ['report', 'bug', 'left in the inbox by a report commit'], source: 'test' });
+  for (const w of r.tasks.filter(t => t.status === 'inbox'))
+    C.applyLog(r, { _: ['log', w.id], triage: 'task', dod: 'settled by the test', milestone: 'v4.2 tests' });
   // Chat one: a task taken and a decision logged; chat two: a bug reported from the chat and triaged into a task.
   const open =
     r.tasks.find(t => t.status === 'open' && !(t.depends || []).length) || r.tasks.find(t => t.status === 'open');
@@ -2072,4 +2077,12 @@ test("B-153 (T-5): the record checks hold with two chats' worth of planted state
     !C.loadChart(RECORD).tasks.some(t => t.words === 'the planted bug from chat two'),
     'the shared copy is untouched'
   );
+}
+
+test("B-153 (T-5): the record checks hold with two chats' worth of planted state in the copy", () => {
+  plantTwoChats(chartCopy(RECORD));
+});
+
+test('B-174: the same checks hold on a copy taken while a report waits in the inbox', () => {
+  plantTwoChats(chartCopy(RECORD), { inbox: true });
 });

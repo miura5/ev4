@@ -1,5 +1,25 @@
 [
  {
+  "id": "D-192",
+  "date": "Oct 21",
+  "title": "A scheduled task's name carries no version. The release lives in its prompt and in system/manifest. A release renames no task",
+  "why": "Every minor release renamed every task. Renaming a Mac-bound task needs Matt at the Mac and his explicit OK (B-137), and the session's permission check refused one on Oct 21 until he gave it. A name that never changes removes that step from every release.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan FWVokBpKM5YX1hko8Lse15 P-2"
+ },
+ {
+  "id": "D-191",
+  "date": "Oct 21",
+  "title": "The build order after v4.3.0 is B-168, B-172, B-165, the version-free task names task (D-192), B-170, B-44, B-73, B-75, B-129, then B-78, B-80, B-79 and B-81. A build chat takes the first task in this order whose dependencies are done, ahead of CLAUDE.md step 3's lowest-id rule. A bug that breaks studying still comes first. Amends D-188's id order; its gates stand (B-44 after B-98, B-73 and B-170 after B-72, B-81 after B-79)",
+  "why": "On Oct 21, 58 record commits pushed live's commit out of the 50-deep clone, and every live run failed at the gate until the deploy. Main is already 11 past c38c86b, so B-168 has to land before the next busy build day. A failed run's push that says only 'E.V.' (B-172) hides the next one. The lowest-id rule would take B-75, the largest open task, first.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan FWVokBpKM5YX1hko8Lse15 P-1"
+ },
+ {
   "id": "D-190",
   "date": "Oct 21",
   "title": "A change to what the morning writes ships behind a comparison: the shadow pick, or an equivalent before-and-after measure, runs for a week and Matt reads it before the flip; the flip is its own staging-proved deploy on his word",

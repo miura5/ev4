@@ -2723,10 +2723,10 @@
   "title": "Nightly harness (T-1): .github/workflows/nightly.yml on a schedule installs Chromium, runs npm run check on the synthetic record and uploads the screenshots; CLAUDE.md step 2 says a red nightly is an inbox entry",
   "dod": "the workflow green on its first scheduled run; CLAUDE.md step 2 line present; npm test green",
   "milestone": "v4.2 tests",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "The workflow_dispatch run 39561986194 (at 91d6b39) is green: Chromium installed, npm run check GREEN, the shots kept. The first scheduled run (08:41 UTC) had not started by 09:46 UTC (GitHub's schedule lag on a new workflow); the next build chat's inbox prints the read (gh run list --workflow nightly.yml), and this task is done when that run is green.",
-  "commit": null,
+  "notes": "Its first scheduled nightly, run 39613705577 (14:05Z Oct 21, at b1e9486), is green: the DoD's last clause; closed from the Oct 21 status review hand-off on Matt's word",
+  "commit": "5d61e80",
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
@@ -2964,9 +2964,9 @@
   "title": "The gate fetches before it falls back (B-133 proven): when system/manifest's commit is not in the run's checkout, the gate runs git fetch --depth 1 origin <commit> and checks it out, verifying every hash as now; only when the fetch is refused or fails does it take the content fallback (D-170); tools/gate.mjs and the rendered prompts carry it, and verify-deploy stops noting the clone distance as a risk",
   "dod": "a gate test in a throwaway repository: a commit outside a shallow clone is fetched and verified; a refused fetch falls back to the content check with the refusal quoted; the prompt test finds the fetch in step 3; a staging run fired with its deployed commit outside the 50-deep clone checks it out by fetch (its runs/ document read back), and if the run's safety review refuses running fetched code, that refusal is recorded as an environments row and the fallback stays; npm test green; ship staging green; live only on Matt's OK",
   "milestone": "v4.3 ops",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "Hit live Oct 21: main reached 58 commits past live's 8ec85c4 (record commits count), so the 50-deep clone lost it and the fallback refused on core/conversation.mjs; the live worker (and every live run) failed at the gate until the v4.3.0 deploy at c38c86b. Two practice-set jobs from 15:44Z were re-fired by the build chat after the deploy. This is the fix that stops a busy build day breaking live; take it next.",
+  "notes": "Taken Oct 21 (first in D-191's order). Also covers health/current going stale this session (written 12:56Z, 4.7 h old at 17:38Z): the 10:55 CT live watchdog failed at the gate on this cause (runs/watchdog-failed-20261021-155901917, 'core/conversation.mjs differs ... 8ec85c4 is not in this checkout'), before the v4.3.0 deploy; no separate bug filed",
   "commit": null,
   "source": "B-133 diagnostic runs/diagnostic-20261021-110125159"
  },
@@ -3051,6 +3051,41 @@
   "triage": {
    "outcome": "task",
    "at": "2026-10-21T17:10:24.016Z"
+  }
+ },
+ {
+  "id": "B-173",
+  "kind": "task",
+  "title": "Version-free task names (D-192): spec.tasks.nameTemplate drops <minor> and <release>, so a scheduled task's name stays the same across releases (for example 'E.V. evening-mac', 'E.V. staging · worker'). The release stays in each rendered prompt and in system/manifest. deploy's create_trigger and update_trigger printouts follow. The cloud tasks are renamed by deploy once. The Mac-bound tasks are re-created once with Matt at the Mac (B-137); the old ones are disabled and kept under spec.tasks.retired",
+  "dod": "a build test bumps specVersion on a planted spec and finds every task name unchanged; a prompt test finds the release in every rendered prompt; deploy's printout carries no rename on a patch or minor bump; ship staging green; the live and staging Mac tasks re-created with Matt present, and each one's next scheduled run writes an ok runs/ document; npm test green",
+  "milestone": "v4.3 ops",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan FWVokBpKM5YX1hko8Lse15"
+ },
+ {
+  "id": "B-174",
+  "kind": "bug",
+  "title": "Bug (reported Oct 21): npm test reds whenever the shared record has an entry in the inbox: the B-153 (T-5) test in test/chart.test.mjs plants a 'log <open task> --status in progress' on a copy of the real chart, and log refuses while an entry waits ('triage first: B-172 waits in the inbox'). Every 'report bug' commit is therefore red on CI until the triage commit after it (run 39641388014 at 3a6a260; reproduced locally, 432 pass, 1 fail)",
+  "dod": "the B-153 (T-5) test settles every inbox entry in its own copy (triaged as a task) before planting, so it holds whatever state the shared record is in; a second case plants an inbox entry in the copy first and still lints green; npm test green on a commit that leaves an entry in the inbox",
+  "milestone": "v4.3 ops",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "npm test 39641388014",
+  "words": "npm test reds whenever the shared record has an entry in the inbox: the B-153 (T-5) test in test/chart.test.mjs plants a 'log <open task> --status in progress' on a copy of the real chart, and log refuses while an entry waits ('triage first: B-172 waits in the inbox'). Every 'report bug' commit is therefore red on CI until the triage commit after it (run 39641388014 at 3a6a260; reproduced locally, 432 pass, 1 fail)",
+  "reportedAt": "2026-10-21T17:41:49.743Z",
+  "board": {
+   "row": "v4 B-174: npm test reds whenever the shared record has an entry in the inbox:…",
+   "why": "npm test reds whenever the shared record has an entry in the inbox: the B-153 (T-5) test in test/chart.test.mjs plants a 'log <open task> --status in progress' on a copy of the real chart, and log refuses while an entry waits ('triage first: B-172 waits in the inbox'). Every 'report bug' commit is therefore red on CI until the triage commit after it (run 39641388014 at 3a6a260; reproduced locally, 432 pass, 1 fail)",
+   "notes": "Reported Oct 21 from npm test 39641388014"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-21T17:41:58.719Z"
   }
  }
 ]
