@@ -2917,10 +2917,10 @@
  {
   "id": "B-166",
   "kind": "bug",
-  "title": "Bug (reported Oct 21): My answers, so you don't have to ask:\n- B-133: yes, fire the staging diagnostic with the git-fetch probe. Record the environments row; file the follow-up task if it is proven.\n- B-135 follow-up: YES  — something from the staging morning reached my phone around 3:59am [if yes: the line started with \"...\"].\n- B-108: I will archive miura5/ev-core on GitHub myself and tell you \"B-108 done\" in this chat; log it then.\n- B-45: fine. I found the draft card in the staging conversation, tapped \"Use this plan\", and Study > Plan switched to E4-2 (2 days, 10 tasks). Mark it done.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "title": "A staging run reached Matt's phone (B-135 follow-up, Oct 21): find the path that sent it and close it; staging sends nothing to his phone",
+  "dod": "the sending path named from evidence (the line Matt saw, the staging runs' push fields, the tasks' notification settings, the session that fired them); the fix in code, prompt or task setting; a staging morning fired from a build chat and from its schedule each leave nothing on his phone (Matt confirms); npm test green; ship staging green",
+  "milestone": "v4.3 ops",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -2931,6 +2931,10 @@
    "row": "v4 B-166: My answers, so you don't have to ask: - B-133: yes, fire the staging…",
    "why": "My answers, so you don't have to ask:\n- B-133: yes, fire the staging diagnostic with the git-fetch probe. Record the environments row; file the follow-up task if it is proven.\n- B-135 follow-up: YES  — something from the staging morning reached my phone around 3:59am [if yes: the line started with \"...\"].\n- B-108: I will archive miura5/ev-core on GitHub myself and tell you \"B-108 done\" in this chat; log it then.\n- B-45: fine. I found the draft card in the staging conversation, tapped \"Use this plan\", and Study > Plan switched to E4-2 (2 days, 10 tasks). Mark it done.",
    "notes": "Reported Oct 21 from build chat"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-21T10:59:22.907Z"
   }
  }
 ]
