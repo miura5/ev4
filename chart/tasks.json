@@ -2406,5 +2406,17 @@
    "why": "Matt: redundant aside from its seed data; it adds overhead to every build and check",
    "notes": "The demo is gone; its made-up data now only feeds the tests"
   }
+ },
+ {
+  "id": "B-128",
+  "kind": "task",
+  "title": "Study Watch reader 0.3 (D-131), split from B-74 on Matt's word Oct 20: latest_note returns the note's file (its path under the notes folder), title (the course folder › its first heading, else its name without an extension) and line (the line being written); a graded note's title from its name only, with no line; the extension file built here, Matt installs it on his Mac (Settings > Extensions > Advanced settings > Install Extension, replacing 0.2.0)",
+  "dod": "reader tests return file, title and line for a nested note with a heading, the name without extension when there is no heading, Study Watch's own line when it sends one, the title on unchanged, and nothing of a graded note's text; the extension file unpacks and its server starts at 0.3.0; Matt installs it and the reader's status on his Mac reports 0.3.0",
+  "milestone": "M11",
+  "status": "open",
+  "depends": [],
+  "notes": "Split from B-74 (Matt, Oct 20). Matt's part: install the extension file.",
+  "commit": null,
+  "source": "log new"
  }
 ]
