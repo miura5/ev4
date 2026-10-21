@@ -87,7 +87,7 @@ test('reader: handshake, four read-only tools, no write tools', async () => {
       list.result.tools.map(t => t.name),
       ['status', 'latest_note', 'list_sessions', 'read_session']
     );
-    assert.equal(init.result.serverInfo.version, '0.2.0');
+    assert.equal(init.result.serverInfo.version, '0.3.0');
     for (const t of list.result.tools) {
       assert.equal(t.annotations.readOnlyHint, true);
       assert.equal(t.annotations.destructiveHint, false);
@@ -351,4 +351,38 @@ test('reader v2: the manifest names all four tools at the same version as the se
     ['status', 'latest_note', 'list_sessions', 'read_session']
   );
   assert.match(fs.readFileSync(SRC, 'utf8'), new RegExp(`const VERSION = '${m.version.replace(/\./g, '\\.')}'`));
+});
+
+test('reader 0.3 (D-131, B-128): latest_note names the file, the title (course › first heading, else the name) and the line', async () => {
+  const f = makeFolder();
+  writeLatest(f, {
+    ...sample,
+    folder: '2026/2026 Fall/NUR 112/Week 9/Cardiac',
+    name: 'Cardiac output.md',
+    text: 'Cardiac output.md\n\n## Cardiac output\nCO = HR x SV\nPreload stretches the ventricle\n\n',
+  });
+  const r = startReader(f);
+  try {
+    const n = JSON.parse((await r.call('latest_note')).content[0].text).note;
+    assert.equal(n.file, '2026/2026 Fall/NUR 112/Week 9/Cardiac/Cardiac output.md');
+    assert.equal(n.title, 'NUR 112 › Cardiac output');
+    assert.equal(n.line, 5);
+    assert.match(n.text, /Preload/);
+    // No heading: the name without its extension; unchanged keeps the title; Study Watch's own line wins.
+    writeLatest(f, { ...sample, name: 'Fluids.txt', line: 2, text: 'Isotonic\nHypotonic\nHypertonic' });
+    const m = JSON.parse((await r.call('latest_note')).content[0].text).note;
+    assert.deepEqual([m.title, m.line], ['NUR 112 › Fluids', 2]);
+    const u = JSON.parse((await r.call('latest_note', { sinceModifiedAt: '2026-10-18T00:00:00Z' })).content[0].text);
+    assert.deepEqual([u.unchanged, u.note.title, u.note.text], [true, 'NUR 112 › Fluids', undefined]);
+    // A graded note: its title from its name only, no line, no text.
+    writeLatest(f, { ...sample, name: 'Care plan', text: '# Secret heading #graded\nanswers' });
+    const g = JSON.parse((await r.call('latest_note')).content[0].text);
+    assert.deepEqual(
+      [g.graded, g.note.title, g.note.line, g.note.text],
+      [true, 'NUR 112 › Care plan', undefined, undefined]
+    );
+    assert.doesNotMatch(JSON.stringify(g), /Secret|answers/);
+  } finally {
+    r.stop();
+  }
 });

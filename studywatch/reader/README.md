@@ -7,7 +7,7 @@ E.V. Home, opened in the desktop app, read these in `~/Documents/E.V. Study Watc
 - `live/latest.json`: Matt's latest NUR 112 or BIO 201 note, written by Study Watch in reader mode (0.4+).
 - `sessions/<date>-<HHMM>-<note>.json`: Study Watch session files (v2), which the page files when it opens.
 
-Tools (v2, 0.2.0): `status`, `latest_note`, `list_sessions` (ids, sizes, sha256, modified times; no contents) and
+Tools (v2, 0.3.0): `status`, `latest_note` (with the note's `file`, `title` and `line`, D-131), `list_sessions` (ids, sizes, sha256, modified times; no contents) and
 `read_session` (one session's findings exactly as E.V.'s filing reads them: never the note text or the cards), all
 annotated read-only. It never writes or deletes, never returns
 other files or file names, refuses symlinks, skips notes tagged `#graded`, and re-checks B-06 (only NUR 112
@@ -23,4 +23,4 @@ npx @anthropic-ai/mcpb pack studywatch/reader dist/ev-study-watch-reader.mcpb
 ```
 
 Matt installs the file in the Claude desktop app: Settings > Extensions > Advanced settings >
-Install Extension (replacing 0.1.0). Tests: `test/reader.test.mjs`.
+Install Extension (replacing the version before it). Tests: `test/reader.test.mjs`.

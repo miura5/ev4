@@ -13,7 +13,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const VERSION = '0.2.0';
+const VERSION = '0.3.0';
 const NAME = 'ev-study-watch-reader';
 const FOLDER = process.env.EV_STUDY_WATCH_DIR || path.join(os.homedir(), 'Documents', 'E.V. Study Watch');
 const FILES = { context: 'context.json', latest: path.join('live', 'latest.json') };
@@ -43,7 +43,7 @@ const TOOLS = [
     name: 'latest_note',
     title: 'Latest school note',
     description:
-      'The school note Study Watch saved last (NUR 112 or BIO 201 only): id, name, folder, modified time and plain text. Pass sinceModifiedAt (ISO time from the previous call) to get unchanged:true without the text when nothing new was written. Notes tagged #graded come back as graded:true with no text.',
+      'The school note Study Watch saved last (NUR 112 or BIO 201 only): id, name, folder, file (its path under the notes folder), title (course › first heading), line (the line being written), modified time and plain text. Pass sinceModifiedAt (ISO time from the previous call) to get unchanged:true without the text when nothing new was written. Notes tagged #graded come back as graded:true with no text.',
     inputSchema: {
       type: 'object',
       properties: { sinceModifiedAt: { type: 'string', description: 'ISO time of the last version you already have' } },
@@ -123,6 +123,33 @@ function folderFound() {
   return a === 'ok';
 }
 
+/**
+ * D-131 (B-128): where the note is, for the notes bar and a comment's quote. file: its path under the notes folder
+ * (folder, then name); title: the course folder › the note's first heading, else its name without an extension; line:
+ * the line he is on, the last one with words (1-based), or Study Watch's own when it sends one.
+ */
+export function noteWhere(n, text) {
+  const parts = String((n && n.folder) || '')
+    .split('/')
+    .map(s => s.trim())
+    .filter(Boolean);
+  const name = String((n && n.name) || '').trim();
+  const course = parts.find(p => WATCHED.includes(p)) || null;
+  const lines = String(text || '').split(/\r?\n/);
+  const heading = lines.map(l => l.match(/^\s{0,3}#{1,6}\s+(.+?)\s*#*\s*$/)).find(Boolean);
+  const stem = name.replace(/\.[A-Za-z0-9]{1,5}$/, '');
+  const own = n && Number.isInteger(n.line) && n.line > 0 ? n.line : null;
+  let last = 0;
+  lines.forEach((l, i) => {
+    if (l.trim()) last = i + 1;
+  });
+  return {
+    file: [...parts, name].filter(Boolean).join('/'),
+    title: [course, (heading && heading[1]) || stem].filter(Boolean).join(' › '),
+    line: own || last || null,
+  };
+}
+
 /** B-06 check on a note's folder path ("2026/2026 Fall/NUR 112/Week 8"). */
 export function allowedFolder(folder) {
   const parts = String(folder || '')
@@ -179,14 +206,25 @@ function latestNote(args = {}) {
       refused: true,
       hint: 'The saved note is not in NUR 112 or BIO 201, so E.V. will not read it.',
     };
+  const text = String(n.text || '');
+  const graded = d.graded || /#graded\b/i.test(text);
+  // A graded note's title comes from its name only: nothing of its text leaves the reader.
+  const where = noteWhere(n, graded ? '' : text);
   const head = {
     found: true,
     writtenAt: d.writtenAt || null,
     appVersion: d.appVersion || null,
-    note: { id: String(n.id), name: String(n.name || ''), folder: String(n.folder), modifiedAt: n.modifiedAt || null },
+    note: {
+      id: String(n.id),
+      name: String(n.name || ''),
+      folder: String(n.folder),
+      modifiedAt: n.modifiedAt || null,
+      file: where.file,
+      title: where.title,
+      ...(graded ? {} : { line: where.line }),
+    },
   };
-  const text = String(n.text || '');
-  if (d.graded || /#graded\b/i.test(text)) return { ...head, graded: true };
+  if (graded) return { ...head, graded: true };
   if (args.sinceModifiedAt && n.modifiedAt && Date.parse(n.modifiedAt) <= Date.parse(args.sinceModifiedAt))
     return { ...head, unchanged: true };
   const truncated = text.length > MAX_TEXT_CHARS;
