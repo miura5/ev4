@@ -2581,8 +2581,8 @@
   "milestone": "v4.2 watch",
   "status": "in progress",
   "depends": [],
-  "notes": "Taken Oct 21: brief prints health/current's age; CLAUDE.md step 1; the push lines' added words",
-  "commit": null,
+  "notes": "Built 4666003: brief's Health first lines, CLAUDE.md step 1, the push words; tests green. Staging proof with the watch theme's staging deploy; staging GREEN waits on the Mac-bound staging prompts (B-131 notes)",
+  "commit": "4666003",
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
@@ -2591,9 +2591,9 @@
   "title": "Unit tests for the three steps no test names: watchdog watch (a missed slot inside and outside the re-fire window, a refused start, a stalled job, a Mac miss, the watchdog's own entry), weekly week-brief and evening-mac mac-files on fixtures",
   "dod": "test/steps.test.mjs covers the cases above and each step's output validates against its schema; npm test green",
   "milestone": "v4.2 watch",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken Oct 21",
   "commit": null,
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
