@@ -54,8 +54,9 @@ attribution lines with `--trailer`, one per line) and regenerates BACKLOG.md, DE
    at the same commit, B-35; R-03 no running study session, B-87; R-04 Matt's OK; R-05 not inside a live watchdog
    window, B-102; R-01, page-only live, ended with D-085's window, D-145, and is kept in `chart/rules.json` marked
    ended), so a build reaches live only through staging.
-7. Record: `log <id> --status done --commit <sha> --note "<one line>"`. A decision is `log decision <next id> --title
-   ... --why ... --status ...`. Never a date on anything that gates work.
+7. Record: `log <id> --status done --commit <sha> --note "<one line>"`, or in the same move as step 6 with `ship staging
+   --done <id> --commit <sha>` once staging is the task's last proof (B-147). A decision is `log decision <next id>
+   --title ... --why ... --status ...`. Never a date on anything that gates work.
 8. Continue with the next open task until none is open or every open task is blocked. Then stop and leave a
    summary in the last task's notes (`log <id> --note ...`).
 

@@ -1879,3 +1879,46 @@ test('B-145 (D-177): two chats log from two clones of one remote; each takes ori
     /committed \w{7}; the push was refused \(.+\)\. Next: git pull --rebase origin main, then git push origin main/
   );
 });
+
+test('B-147 (W-6): ship staging --done B-nn --commit <sha> records the task done and the deploy in one command, and CHANGELOG.md carries it', () => {
+  const dir = copyRepo();
+  const head = execFileSync('git', ['-C', dir, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+  const before = JSON.parse(fs.readFileSync(path.join(dir, 'chart', 'tasks.json'), 'utf8'));
+  const task = before.find(t => t.status === 'open').id;
+  const nDeploys = JSON.parse(fs.readFileSync(path.join(dir, 'chart', 'deploys.json'), 'utf8')).length;
+  const log = [];
+  const was = console.log;
+  console.log = (...a) => log.push(a.join(' '));
+  try {
+    C.recordShip(
+      dir,
+      { done: task, commit: head.slice(0, 7), trailer: [], root: dir, tasks: task, summary: 'a planted change' },
+      { target: 'staging', manifest: { commit: head } }
+    );
+  } finally {
+    console.log = was;
+  }
+  const after = JSON.parse(fs.readFileSync(path.join(dir, 'chart', 'tasks.json'), 'utf8'));
+  const deploys = JSON.parse(fs.readFileSync(path.join(dir, 'chart', 'deploys.json'), 'utf8'));
+  assert.deepEqual(
+    [after.find(t => t.id === task).status, after.find(t => t.id === task).commit],
+    ['done', head.slice(0, 7)]
+  );
+  assert.equal(deploys.length, nDeploys + 1);
+  assert.deepEqual(
+    [deploys.at(-1).target, deploys.at(-1).commit, deploys.at(-1).verify],
+    ['staging', head.slice(0, 7), 'green']
+  );
+  assert.match(
+    fs.readFileSync(path.join(dir, 'CHANGELOG.md'), 'utf8'),
+    new RegExp(`v4 staging deployed at ${head.slice(0, 7)} .*a planted change \\(${task}\\)`)
+  );
+  const subjects = execFileSync('git', ['-C', dir, 'log', '--format=%s', '-2'], { encoding: 'utf8' })
+    .trim()
+    .split('\n');
+  assert.deepEqual(subjects, [
+    `${task}: staging deploy at ${head.slice(0, 7)} (chart)`,
+    `${task}: open -> done, commit ${head.slice(0, 7)}, notes (chart)`,
+  ]);
+  assert.ok(log.some(l => /is in the record|committed/.test(l)));
+});

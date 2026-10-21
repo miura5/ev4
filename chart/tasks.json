@@ -2671,10 +2671,10 @@
   "title": "Stop hook runs tests once per tree (W-3): the hook hashes git ls-files -s and skips when it equals the last green run's hash kept in dist/test-ok",
   "dod": "test/hooks.test.mjs: an unchanged tree skips with a line saying so, a changed tree runs; npm test green",
   "milestone": "v4.2 record",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Taken Oct 21",
-  "commit": null,
+  "notes": "848ac9b: treeHash and dist/test-ok; the hook test shows skip, run on change, never skip after red; npm test green",
+  "commit": "848ac9b",
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
@@ -2683,11 +2683,11 @@
   "title": "ship staging --done B-nn --commit <sha> (W-6) records the task done and the deploy in one command, printing the same calls as before",
   "dod": "a chart test shows one command producing the two record entries and the Changelog line; npm test green",
   "milestone": "v4.2 record",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-145"
   ],
-  "notes": "",
+  "notes": "Taken Oct 21",
   "commit": null,
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },

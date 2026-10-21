@@ -20,7 +20,8 @@
 //            read of the doc, its 'Tasks to add' and 'Decisions proposed' tables as the log new and log decision commands
 //            that file them (the next free ids, P-n rewritten to its D-id); --apply runs them; filed rows are skipped
 //   lint [--json]            the record's checks: ids, dependencies, decisions, commits, the inbox (B-94; npm test runs it)
-//   ship <staging|live>      the deploy checklist: the rules, the reads, deploy's calls, verify, the record (B-96)
+//   ship <staging|live> [--done B-nn --commit sha]   the deploy checklist: the rules, the reads, deploy's calls, verify,
+//            the record (B-96); --done records those tasks done in the same command (B-147)
 //   rollback live [--to sha] [--matt-ok --apply] [--no-test]   the way back (B-60): the previous live build's content at main's
 //            head, as a restore commit, then ship staging and ship live; without --apply a dry run that prints it all
 //   brief --task <id>        one page for a new session: the inbox, the task, its dependencies, decisions, limits
@@ -2029,8 +2030,32 @@ async function ship(o) {
       ...step.lines.map(l => `  ${l.ok ? 'ok ' : 'NO '} ${l.what}${l.detail ? ': ' + l.detail : ''}`),
     ].join('\n')
   );
-  if (step.recorded) {
-    console.log(`the ${target} deploy at ${manifest.commit.slice(0, 7)} is in the record`);
+  return recordShip(root, o, { target, manifest, recorded: step.recorded });
+}
+/**
+ * The record half of a green ship: the deploy (once), and with --done B-nn[,B-mm] those tasks done at --commit (the
+ * task's own commit; default the deployed one) in the same command (B-147, W-6). Exported for its test.
+ */
+export function recordShip(root, o, { target, manifest, recorded = false }) {
+  const short = manifest.commit.slice(0, 7);
+  if (typeof o.done === 'string')
+    for (const id of list(o.done))
+      record(
+        {
+          _: ['log', id],
+          status: 'done',
+          commit: typeof o.commit === 'string' ? o.commit : short,
+          note: typeof o.note === 'string' ? o.note : `Shipped to ${target} at ${short}: ship ${target} GREEN.`,
+          trailer: o.trailer || [],
+          'no-commit': o['no-commit'],
+          root: o.root,
+          transcript: o.transcript,
+        },
+        applyLog
+      );
+  const rec = loadChart(root);
+  if (recorded || rec.deploys.some(d => d.target === target && d.commit === short)) {
+    console.log(`the ${target} deploy at ${short} is in the record`);
     return 0;
   }
   const prev = rec.deploys.filter(d => d.target === target).at(-1);
@@ -2048,7 +2073,6 @@ async function ship(o) {
     .map(t => boardName(t).replace(/^v4 B-\d+: /, ''));
   return record(
     {
-      ...o,
       _: ['log', 'deploy'],
       target,
       commit: manifest.commit,
@@ -2059,6 +2083,10 @@ async function ship(o) {
       summary: o.summary || names.join('; ') || null,
       why: o.why || null,
       decisions: o.decisions || null,
+      trailer: o.trailer || [],
+      'no-commit': o['no-commit'],
+      root: o.root,
+      transcript: o.transcript,
     },
     applyLog
   );
