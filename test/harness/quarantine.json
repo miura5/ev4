@@ -1,0 +1,12 @@
+{
+ "_rules": [
+  "B-152 (D-176): a timing check listed here is advisory. It reports its numbers, re-runs once in place on a miss, and fails the harness only on a second miss in a row. Each returns to blocking after 20 green scheduled nightlies since its date: node tools/chart.mjs quarantine --runs <the saved nightly run list> names the ones due; returning one is taking its row out of this file."
+ ],
+ "returnAfterGreenNightlies": 20,
+ "checks": {
+  "captions-history-pull": { "since": "2026-10-21", "by": "D-176", "what": "the captions history pull block (D-128): pulls past today under date dividers, its waits timed" },
+  "captions-pace": { "since": "2026-10-21", "by": "D-176", "what": "the D-137 reveal pace: first sentence at speech pace, the reply within 6 s, speech ending with the last word" },
+  "core-frame-budget": { "since": "2026-10-21", "by": "D-176", "what": "the core's frame budget at 4x CPU, DPR 3 (D-135): slow-frame share, the core's own draw p95, no step-down" },
+  "core-step-down": { "since": "2026-10-21", "by": "D-176", "what": "the run-time step-down under a 40x throttle (D-135): wisps off, then half the points" }
+ }
+}

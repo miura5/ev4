@@ -6,6 +6,7 @@
 //   report <bug|request> --from-chat ["<words>"] | --from-comment <id> | "<words>" --source <where>   an inbox entry
 //            in Matt's words as written, taken from this session's transcript (his message, a Board comment) (B-95)
 //   inbox                    session start: the Board comments to file and the entries to triage, as commands
+//   quarantine --runs <file> the quarantined timing checks and their green nightlies in a row (B-152)
 //   log <id> [--status s] [--note t] [--board-note t] [--commit sha] [--name n] [--why w] [--waiting-on who] [--dod d] [--title t]
 //            [--triage task --dod d --milestone m [--depends ids] | --triage join <id> | --triage decline --reason r]
 //   log deploy --target <staging|live> --commit sha [--time ISO] [--ok Matt] [--verify green] [--rollback sha]
@@ -1648,9 +1649,24 @@ export const commentReply = (rec, threadId, body) => ({
     payload: { value: { body, parent: { object: 'utterance', id: threadId } } },
   },
 });
+// B-152 (D-176): a quarantined timing check (test/harness/quarantine.json) returns to blocking after N green
+// scheduled nightlies in a row since its date. runs: gh run list --json conclusion,createdAt,event. Returns
+// [{id, greens, due}] for every quarantined check.
+export function quarantineDue(q, runs) {
+  const n = q.returnAfterGreenNightlies || 20;
+  const nightly = (runs || []).filter(r => r.event === 'schedule').sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
+  return Object.entries(q.checks || {}).map(([id, c]) => {
+    const since = nightly.filter(r => r.createdAt.slice(0, 10) >= c.since);
+    let greens = 0;
+    for (let i = since.length - 1; i >= 0 && since[i].conclusion === 'success'; i--) greens++;
+    return { id, greens, due: greens >= n };
+  });
+}
+
 // B-151 (T-1): the nightly check (.github/workflows/nightly.yml) is part of the inbox. A red last run is a report.
 export const NIGHTLY_READ = [
   'Nightly: gh run list --workflow nightly.yml --limit 1 --json conclusion,databaseId,createdAt,url',
+  '  quarantined timing checks (B-152): gh run list --workflow nightly.yml --limit 60 --json conclusion,createdAt,event > /tmp/ev/nightly.json, then node tools/chart.mjs quarantine --runs /tmp/ev/nightly.json names the ones back to blocking',
   '  red (conclusion "failure"): report bug "<the step that failed, from gh run view <id> --log-failed>" --source "nightly <id>" unless an open task covers it; its screenshots are the run\'s check-shots artifact',
 ];
 
@@ -3088,6 +3104,23 @@ const commands = {
     console.log(
       formatInbox(inboxPlan(loadChart(rootOf(o)), file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null))
     );
+    return 0;
+  },
+  quarantine(o) {
+    // B-152 (D-176): which quarantined timing checks have had their green nightlies.
+    const root = rootOf(o);
+    const q = JSON.parse(fs.readFileSync(path.join(root, 'test/harness/quarantine.json'), 'utf8'));
+    if (!o.runs)
+      throw new Error(
+        'quarantine --runs <file>: save gh run list --workflow nightly.yml --limit 60 --json conclusion,createdAt,event first'
+      );
+    const rows = quarantineDue(q, JSON.parse(fs.readFileSync(o.runs, 'utf8')));
+    const n = q.returnAfterGreenNightlies || 20;
+    for (const r of rows)
+      console.log(
+        `${r.id}: ${r.greens} green nightl${r.greens === 1 ? 'y' : 'ies'} in a row of ${n}${r.due ? ': back to blocking: take its row out of test/harness/quarantine.json' : ''}`
+      );
+    if (!rows.length) console.log('quarantine: none; every timing check is blocking');
     return 0;
   },
   log(o) {

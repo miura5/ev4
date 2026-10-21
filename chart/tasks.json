@@ -2764,11 +2764,11 @@
   "title": "Quarantine the timing checks (D-176): the captions history-pull block, the D-137 pace check and the core step-down and frame-budget checks report their numbers and are advisory, re-run once in place, failing only on a second consecutive miss; a check returns to blocking after 20 green nightlies",
   "dod": "the harness output marks the three as advisory with numbers; a planted miss fails only on the second; npm run check green; npm test green",
   "milestone": "v4.2 tests",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-151"
   ],
-  "notes": "",
+  "notes": "Taken Oct 21 while B-151's first scheduled run was pending (its workflow_dispatch run 39561986194 is green). The timing checks run through test/harness/quarantine.cjs advisory(): numbers printed, a miss measured once more in place, a failure only on a second miss; quarantine.json lists captions-history-pull, captions-pace, core-frame-budget, core-step-down; chart quarantine --runs counts green nightlies. With EV_PLANT_MISS on all four, core and captions passed on the re-run (65 and 140 checks).",
   "commit": null,
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
@@ -2802,11 +2802,13 @@
   "title": "Core split, library: the library section (searchLibrary, citeMaterial, readMaterial, libraryChunks, libraryIndex and their helpers) moves to core/library.mjs with test/library.test.mjs; evcore's export map re-exports; build exposes it to the page as the others; exports nothing calls are removed (D-166)",
   "dod": "npm test green; npm run check green; harness library checks green; ship staging green; live batched on Matt's OK",
   "milestone": "v4.2 core",
-  "status": "in progress",
+  "status": "blocked",
   "depends": [],
-  "notes": "Taken Oct 21.",
+  "notes": "Commit 761c377: core/library.mjs (one factory, no imports) with test/library.test.mjs; evcore imports it, its export map re-exports; build writes each core module into core.js ahead of E.V. core (page.test holds the bundle byte for byte); isRemovedMaterial and stripHtml left the export map. npm test green; npm run check GREEN at 96d9244 with all six splits (an earlier run at this commit failed only the core harness's step-down timing check while other work ran beside it; quiet, it passed). Left of the DoD: ship staging GREEN (waits on the two Mac-bound staging prompts, changed only from a chat linked to the Mac) and live in the end-of-chat batch on Matt's OK.",
   "commit": null,
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
+  "waitingOn": "Matt",
+  "waitingWhere": "mac"
  },
  {
   "id": "B-156",
@@ -2814,13 +2816,15 @@
   "title": "Core split, study sessions: the study sessions section (sessionState, closeSession, intakeSession, sessionFindings, commentGate and helpers) to core/sessions.mjs with its tests, the same way",
   "dod": "npm test green; npm run check green; ship staging green; live batched on Matt's OK",
   "milestone": "v4.2 core",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-155"
   ],
-  "notes": "",
+  "notes": "Commit a35f84f: core/sessions.mjs with test/sessions.test.mjs; sessionFindings and sessionPrompt left the export map. npm test green; npm run check GREEN at 96d9244. Left of the DoD: ship staging GREEN (waits on the two Mac-bound staging prompts, changed only from a chat linked to the Mac) and live in the end-of-chat batch on Matt's OK.",
   "commit": null,
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
+  "waitingOn": "Matt",
+  "waitingWhere": "mac"
  },
  {
   "id": "B-157",
@@ -2828,13 +2832,15 @@
   "title": "Core split, conversation: the conversation and conversations sections (greeting, chips, conversations, the E.V. tab rules) to core/conversation.mjs with its tests, the same way",
   "dod": "npm test green; npm run check green; ship staging green; live batched on Matt's OK",
   "milestone": "v4.2 core",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-156"
   ],
-  "notes": "",
+  "notes": "Commit 9bcb2d2: core/conversation.mjs with test/conversation.test.mjs. npm test green; npm run check GREEN at 96d9244. Left of the DoD: ship staging GREEN (waits on the two Mac-bound staging prompts, changed only from a chat linked to the Mac) and live in the end-of-chat batch on Matt's OK.",
   "commit": null,
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
+  "waitingOn": "Matt",
+  "waitingWhere": "mac"
  },
  {
   "id": "B-158",
@@ -2842,13 +2848,15 @@
   "title": "Core split, skills and workouts: the skills practice and workouts sections to core/skills.mjs with their tests, the same way",
   "dod": "npm test green; npm run check green; ship staging green; live batched on Matt's OK",
   "milestone": "v4.2 core",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-157"
   ],
-  "notes": "",
+  "notes": "Commit 1be5cea: core/skills.mjs with test/skills.test.mjs (the skills runs stay in features.test.mjs). npm test green; npm run check GREEN at 96d9244. Left of the DoD: ship staging GREEN (waits on the two Mac-bound staging prompts, changed only from a chat linked to the Mac) and live in the end-of-chat batch on Matt's OK.",
   "commit": null,
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
+  "waitingOn": "Matt",
+  "waitingWhere": "mac"
  },
  {
   "id": "B-159",
@@ -2856,13 +2864,15 @@
   "title": "Core split, prep and insights: the prep checks and insights sections to core/prep.mjs and core/insights.mjs with their tests, the same way",
   "dod": "npm test green; npm run check green; ship staging green; live batched on Matt's OK",
   "milestone": "v4.2 core",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-158"
   ],
-  "notes": "",
+  "notes": "Commit b856f56: core/prep.mjs and core/insights.mjs with test/insights.test.mjs and prep.test.mjs; the library binding sits ahead of them; PREP_KINDS, prepCheckId and examView left the export map. npm test green; npm run check GREEN at 96d9244. Left of the DoD: ship staging GREEN (waits on the two Mac-bound staging prompts, changed only from a chat linked to the Mac) and live in the end-of-chat batch on Matt's OK.",
   "commit": null,
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
+  "waitingOn": "Matt",
+  "waitingWhere": "mac"
  },
  {
   "id": "B-160",
@@ -2870,13 +2880,15 @@
   "title": "Core split, Canvas, mirror and share: the Canvas, Markdown mirror and shareable practice pages sections to core/canvas-rules.mjs, core/mirror.mjs and core/share.mjs with their tests, the same way; what remains in evcore is the record's rules (weak spots, items, attempts, answering, day plan, plans, dates, snapshot, lint, helpers)",
   "dod": "npm test green; npm run check green; ship staging green; live batched on Matt's OK; evcore under 2,500 lines",
   "milestone": "v4.2 core",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-159"
   ],
-  "notes": "",
+  "notes": "Commit 96d9244: core/canvas-rules.mjs, core/mirror.mjs (with the backup) and core/share.mjs with their tests; nine exports nothing calls left the export map; evcore is 2,497 lines (a test holds it under 2,500). npm test green; npm run check GREEN at 96d9244. Left of the DoD: ship staging GREEN (waits on the two Mac-bound staging prompts, changed only from a chat linked to the Mac) and live in the end-of-chat batch on Matt's OK.",
   "commit": null,
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
+  "waitingOn": "Matt",
+  "waitingWhere": "mac"
  },
  {
   "id": "B-161",
@@ -2884,11 +2896,13 @@
   "title": "The page's spec subset (A-3): build publishes to the page only the top-level keys the page reads, listed in one array in tools/build.mjs; a test greps page/app/*.js for spec.<key> and fails when the list and the page disagree; the Mac folder and the task table leave spec.json",
   "dod": "the test green; dist/page/live/spec.json under 50 KB; npm test green; npm run check green; ship staging green; live only on Matt's OK",
   "milestone": "v4.2 core",
-  "status": "open",
+  "status": "blocked",
   "depends": [],
-  "notes": "",
+  "notes": "Commit 7b75e25: PAGE_SPEC_KEYS lists what the page, the shell and core.js read; spec.json holds only those (worker by trigger id, reader by host, job kinds by label, page-written schemas without notes, every field kept; no prose, no tenets, no task table, no Mac folder); 104 KB to 46.9 KB. A first cut stripped schema fields named title and the run harness caught the workout card; fixed before the commit. npm test green; npm run check GREEN at 803b22d. Left of the DoD: ship staging GREEN (waits on the two Mac-bound staging prompts) and live on Matt's OK.",
   "commit": null,
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
+  "waitingOn": "Matt",
+  "waitingWhere": "mac"
  },
  {
   "id": "B-162",
@@ -2896,10 +2910,10 @@
   "title": "Open-time number (A-9): the look pass records the page's open time at 390 px on a throttled profile as one line of npm run check's output and in the harness summary",
   "dod": "the number appears in the check output for the synthetic record; npm run check green; npm test green",
   "milestone": "v4.2 core",
-  "status": "open",
+  "status": "done",
   "depends": [],
-  "notes": "",
-  "commit": null,
+  "notes": "The look pass prints the open time at 390x844 on a 4x CPU throttle: 787 ms on the synthetic record, in npm run check's output and the harness summary. npm test green; npm run check GREEN.",
+  "commit": "803b22d",
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  }
 ]

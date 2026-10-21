@@ -149,6 +149,7 @@ async function openPage(page, db = seed) {
   await page.goto(ORIGIN + '/');
   await page.waitForFunction(() => document.querySelector('#thread .msg.greet'), null, { timeout: 15000 });
 }
+const { advisory, allPass } = require('./quarantine.cjs');
 const results = [];
 const ok = (name, cond, detail = '') => {
   results.push([cond ? 'PASS' : 'FAIL', name, detail]);
@@ -522,47 +523,59 @@ async function sideBySide(browser, left, right, out, vp) {
       'Afterload is the pressure the ventricle has to push against to open the valve. Think of it as the door the heart pushes on. ' +
       'When the arteries are stiff or narrow, that door is heavier, so the heart works harder for the same output. High blood pressure raises it, and so does aortic stenosis. ' +
       'Drugs that relax the arteries lower it, which is why they help a failing heart. On the exam, link afterload to the left ventricle and to systemic resistance, and preload to filling.';
-    await watchReveal(page);
-    await send(page, 'and afterload', LONG);
-    await page.waitForTimeout(7500);
-    const rv = await page.evaluate(() => {
-      const t = window.__rvStop();
-      const log = window.EVApp.core.stats().log;
-      const end = log.filter(e => e.kind === 'speechEnd').slice(-1)[0];
+    // B-152 (D-176): advisory; its numbers are printed, and a miss is measured once more before it fails.
+    const measurePace = async () => {
+      await watchReveal(page);
+      await send(page, 'and afterload', LONG);
+      await page.waitForTimeout(7500);
+      const rv = await page.evaluate(() => {
+        const t = window.__rvStop();
+        const log = window.EVApp.core.stats().log;
+        const end = log.filter(e => e.kind === 'speechEnd').slice(-1)[0];
+        return {
+          words: window.__rv,
+          end: end ? end.at - t.t0 : null,
+          total: document.querySelectorAll('#thread .msg.ev.current .bubble .w').length,
+        };
+      });
+      const W = rv.words,
+        k1 = W.findIndex(([, w]) => /\.$/.test(w)) + 1,
+        firstMs = k1 > 1 ? W[k1 - 1][0] - W[0][0] : 0,
+        allMs = W.length ? W[W.length - 1][0] - W[0][0] : 0,
+        rate1 = k1 > 1 ? (k1 - 1) / (firstMs / 1000) : null;
       return {
-        words: window.__rv,
-        end: end ? end.at - t.t0 : null,
-        total: document.querySelectorAll('#thread .msg.ev.current .bubble .w').length,
+        words: W.length,
+        total: rv.total,
+        firstSentence: k1,
+        firstSentenceMs: firstMs,
+        wordsPerSecFirst: rate1 && +rate1.toFixed(2),
+        allMs,
+        speechEndAfterLastMs: rv.end != null && W.length ? rv.end - W[W.length - 1][0] : null,
       };
-    });
-    const W = rv.words,
-      k1 = W.findIndex(([, w]) => /\.$/.test(w)) + 1,
-      firstMs = k1 > 1 ? W[k1 - 1][0] - W[0][0] : 0,
-      allMs = W.length ? W[W.length - 1][0] - W[0][0] : 0,
-      rate1 = k1 > 1 ? (k1 - 1) / (firstMs / 1000) : null;
-    const pace = {
-      words: W.length,
-      total: rv.total,
-      firstSentence: k1,
-      firstSentenceMs: firstMs,
-      wordsPerSecFirst: rate1 && +rate1.toFixed(2),
-      allMs,
-      speechEndAfterLastMs: rv.end != null && W.length ? rv.end - W[W.length - 1][0] : null,
     };
-    ok(
-      `[${scheme}] D-137: the first sentence at speech pace (about 3 words a second)`,
-      W.length === rv.total && rate1 >= 2.2 && rate1 <= 4,
-      JSON.stringify(pace)
-    );
-    ok(
-      `[${scheme}] D-137: then faster, the whole reply out within 6 s`,
-      allMs <= 6000 + 250 && allMs > firstMs,
-      JSON.stringify(pace)
-    );
-    ok(
-      `[${scheme}] D-137: her speech ends with the last word`,
-      pace.speechEndAfterLastMs != null && pace.speechEndAfterLastMs >= 0 && pace.speechEndAfterLastMs <= 300,
-      JSON.stringify(pace)
+    const pace = await advisory(
+      results,
+      'captions-pace',
+      `[${scheme}] D-137: the first sentence at speech pace (about 3 words a second), the whole reply out within 6 s, her speech ending with the last word`,
+      measurePace,
+      x => {
+        const v = allPass([
+          [
+            x.words === x.total && x.wordsPerSecFirst >= 2.2 && x.wordsPerSecFirst <= 4 ? 'PASS' : 'FAIL',
+            'speech pace',
+            `${x.wordsPerSecFirst} words/s over the first ${x.firstSentence} words`,
+          ],
+          [x.allMs <= 6000 + 250 && x.allMs > x.firstSentenceMs ? 'PASS' : 'FAIL', 'within 6 s', `${x.allMs} ms`],
+          [
+            x.speechEndAfterLastMs != null && x.speechEndAfterLastMs >= 0 && x.speechEndAfterLastMs <= 300
+              ? 'PASS'
+              : 'FAIL',
+            'speech ends with the last word',
+            `${x.speechEndAfterLastMs} ms after`,
+          ],
+        ]);
+        return { ok: v.ok, numbers: JSON.stringify(x) + (v.ok ? '' : ' · missed: ' + v.numbers) };
+      }
     );
     measured[scheme].pace = pace;
     for (const [how, act] of [
@@ -613,86 +626,107 @@ async function sideBySide(browser, left, right, out, vp) {
       !v.now && (await atNow(page)),
       JSON.stringify({ top: v.scrollTop, max: v.maxScroll })
     );
-    // Pull to load: noon (4), then this morning (3), then the start of today; last night is never loaded.
-    await pullOnce(page);
-    v = await view(page);
-    ok(
-      `[${scheme}] a pull says it is loading the noon conversation's 4 messages`,
-      v.pull === 'Loading 4 earlier messages',
-      v.pull
-    );
-    await page.screenshot({ path: `${shots}/captions-pull-${scheme}.png` });
-    await page.waitForTimeout(1000);
-    v = await view(page);
-    const earlier = v.texts.filter(t => t.startsWith('E:'));
-    ok(
-      `[${scheme}] the noon conversation is back above, with his lines small`,
-      earlier.length === 4 &&
-        earlier.some(t => /Harness noon line two/.test(t)) &&
-        earlier.some(t => /^E:M:harness noon: explain afterload/.test(t)) &&
-        !v.texts.some(t => /morning/.test(t)),
-      JSON.stringify(earlier)
-    );
-    await pullOnce(page);
-    v = await view(page);
-    ok(`[${scheme}] the next pull loads this morning's 3`, v.pull === 'Loading 3 earlier messages', v.pull);
-    await page.waitForTimeout(1000);
-    v = await view(page);
-    ok(
-      `[${scheme}] this morning is back too`,
-      v.texts.filter(t => t.startsWith('E:')).length === 7 && v.texts.some(t => /Harness morning line/.test(t))
-    );
-    const mattPx = await page.evaluate(() => {
-      const m = [...document.querySelectorAll('#thread .msg.matt')].find(x => getComputedStyle(x).display !== 'none');
-      return m ? getComputedStyle(m.querySelector('.bubble')).fontSize : null;
-    });
-    ok(`[${scheme}] his earlier lines are ${A.matt}, grey`, mattPx === A.matt, String(mattPx));
-    await pullOnce(page);
-    await page.waitForTimeout(1000);
-    v = await view(page);
-    ok(
-      `[${scheme}] then: That's the start of today, and last night stays out`,
-      v.pull === 'That’s the start of today' && !v.texts.some(t => /harness night|Harness night/.test(t)),
-      JSON.stringify({ pull: v.pull, n: v.texts.length })
-    );
-    await page.screenshot({ path: `${shots}/captions-start-of-today-${scheme}.png` });
-    // D-128 as amended: the next full pull goes on into earlier days, one conversation at a time under a date divider,
-    // and stops at the read window's edge.
-    const divs = () => page.evaluate(() => [...document.querySelectorAll('#thread .cap-day')].map(d => d.textContent));
-    await pullAgain(page);
-    v = await view(page);
-    ok(
-      `[${scheme}] past today, the next full pull loads last night's 2`,
-      v.pull === 'Loading 2 earlier messages',
-      v.pull
-    );
-    await page.waitForTimeout(1000);
-    v = await view(page);
-    let dv = await divs();
-    ok(
-      `[${scheme}] last night comes back under Yesterday, today's under Today`,
-      v.texts.some(t => /Harness night line/.test(t)) && dv.join() === 'Yesterday,Today',
-      JSON.stringify(dv)
-    );
-    await pullAgain(page);
-    v = await view(page);
-    ok(`[${scheme}] then the conversation two days ago, its 3`, v.pull === 'Loading 3 earlier messages', v.pull);
-    await page.waitForTimeout(1000);
-    v = await view(page);
-    dv = await divs();
-    ok(
-      `[${scheme}] under its own date (${dayLabel(twoAgo)})`,
-      v.texts.some(t => /Harness two days ago line/.test(t)) &&
-        dv.join() === [dayLabel(twoAgo), 'Yesterday', 'Today'].join(),
-      JSON.stringify(dv)
-    );
-    await pullAgain(page);
-    await page.waitForTimeout(1000);
-    v = await view(page);
-    ok(
-      `[${scheme}] then: That's everything from the last 7 days, and nine days ago stays out`,
-      v.pull === 'That’s everything from the last 7 days' && !v.texts.some(t => /nine days ago/.test(t)),
-      JSON.stringify({ pull: v.pull })
+    // B-152 (D-176): the history pull block is advisory: its sub-checks are judged as one, printed, and a miss runs the
+    // block once more in place after the Back to now pill folds the earlier conversations away.
+    const pullBlock = async () => {
+      const sub = [];
+      const ck = (name, cond, detail = '') => sub.push([cond ? 'PASS' : 'FAIL', name, detail]);
+      // Pull to load: noon (4), then this morning (3), then the start of today; last night is never loaded.
+      await pullOnce(page);
+      v = await view(page);
+      ck(
+        `[${scheme}] a pull says it is loading the noon conversation's 4 messages`,
+        v.pull === 'Loading 4 earlier messages',
+        v.pull
+      );
+      await page.screenshot({ path: `${shots}/captions-pull-${scheme}.png` });
+      await page.waitForTimeout(1000);
+      v = await view(page);
+      const earlier = v.texts.filter(t => t.startsWith('E:'));
+      ck(
+        `[${scheme}] the noon conversation is back above, with his lines small`,
+        earlier.length === 4 &&
+          earlier.some(t => /Harness noon line two/.test(t)) &&
+          earlier.some(t => /^E:M:harness noon: explain afterload/.test(t)) &&
+          !v.texts.some(t => /morning/.test(t)),
+        JSON.stringify(earlier)
+      );
+      await pullOnce(page);
+      v = await view(page);
+      ck(`[${scheme}] the next pull loads this morning's 3`, v.pull === 'Loading 3 earlier messages', v.pull);
+      await page.waitForTimeout(1000);
+      v = await view(page);
+      ck(
+        `[${scheme}] this morning is back too`,
+        v.texts.filter(t => t.startsWith('E:')).length === 7 && v.texts.some(t => /Harness morning line/.test(t))
+      );
+      const mattPx = await page.evaluate(() => {
+        const m = [...document.querySelectorAll('#thread .msg.matt')].find(x => getComputedStyle(x).display !== 'none');
+        return m ? getComputedStyle(m.querySelector('.bubble')).fontSize : null;
+      });
+      ck(`[${scheme}] his earlier lines are ${A.matt}, grey`, mattPx === A.matt, String(mattPx));
+      await pullOnce(page);
+      await page.waitForTimeout(1000);
+      v = await view(page);
+      ck(
+        `[${scheme}] then: That's the start of today, and last night stays out`,
+        v.pull === 'That’s the start of today' && !v.texts.some(t => /harness night|Harness night/.test(t)),
+        JSON.stringify({ pull: v.pull, n: v.texts.length })
+      );
+      await page.screenshot({ path: `${shots}/captions-start-of-today-${scheme}.png` });
+      // D-128 as amended: the next full pull goes on into earlier days, one conversation at a time under a date divider,
+      // and stops at the read window's edge.
+      const divs = () =>
+        page.evaluate(() => [...document.querySelectorAll('#thread .cap-day')].map(d => d.textContent));
+      await pullAgain(page);
+      v = await view(page);
+      ck(
+        `[${scheme}] past today, the next full pull loads last night's 2`,
+        v.pull === 'Loading 2 earlier messages',
+        v.pull
+      );
+      await page.waitForTimeout(1000);
+      v = await view(page);
+      let dv = await divs();
+      ck(
+        `[${scheme}] last night comes back under Yesterday, today's under Today`,
+        v.texts.some(t => /Harness night line/.test(t)) && dv.join() === 'Yesterday,Today',
+        JSON.stringify(dv)
+      );
+      await pullAgain(page);
+      v = await view(page);
+      ck(`[${scheme}] then the conversation two days ago, its 3`, v.pull === 'Loading 3 earlier messages', v.pull);
+      await page.waitForTimeout(1000);
+      v = await view(page);
+      dv = await divs();
+      ck(
+        `[${scheme}] under its own date (${dayLabel(twoAgo)})`,
+        v.texts.some(t => /Harness two days ago line/.test(t)) &&
+          dv.join() === [dayLabel(twoAgo), 'Yesterday', 'Today'].join(),
+        JSON.stringify(dv)
+      );
+      await pullAgain(page);
+      await page.waitForTimeout(1000);
+      v = await view(page);
+      ck(
+        `[${scheme}] then: That's everything from the last 7 days, and nine days ago stays out`,
+        v.pull === 'That’s everything from the last 7 days' && !v.texts.some(t => /nine days ago/.test(t)),
+        JSON.stringify({ pull: v.pull })
+      );
+      return sub;
+    };
+    await advisory(
+      results,
+      'captions-history-pull',
+      `[${scheme}] the history pull (D-128): noon, this morning, the start of today, then earlier days under their dates to the read window's edge`,
+      pullBlock,
+      allPass,
+      {
+        reset: async () => {
+          if (await page.isVisible('#ev-now')) await page.click('#ev-now');
+          await page.waitForTimeout(900);
+        },
+      }
     );
     await page.evaluate(() => {
       document.getElementById('thread').scrollTop = 0;

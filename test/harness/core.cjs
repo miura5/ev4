@@ -78,6 +78,7 @@ async function openPage(page, { renderer } = {}) {
   });
   await page.waitForTimeout(600);
 }
+const { advisory, allPass } = require('./quarantine.cjs');
 const results = [];
 const ok = (name, cond, detail = '') => {
   results.push([cond ? 'PASS' : 'FAIL', name, detail]);
@@ -235,43 +236,49 @@ const SPEECH = `async (secs) => { const C = window.EVApp.core; const text = 'Pre
     await page.evaluate(() => window.EVApp.core.setRing(-1));
     ok(`[${scheme}] the progress ring draws round her`, ringed.lit > 0);
     if (scheme === 'phone') {
-      // The frame budget (D-135): 10 s of speech with wisps and the ring, 4x CPU throttle, DPR 3.
-      const cdp = await ctx.newCDPSession(page);
-      await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
-      await page.waitForTimeout(1500);
-      const m = await page.evaluate(`(${SPEECH})(10)`);
-      await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
-      const FB = L.frameBudget,
-        slow = m.frames.filter(f => f > FB.slowFrameMs).length;
-      budget.phone = {
-        renderer: (await canvasInfo(page)).renderer,
-        frames: m.frames.length,
-        framesOver25ms: slow,
-        slowSharePct: r2((100 * slow) / Math.max(1, m.frames.length)),
-        p95FrameMs: r2(p95(m.frames)),
-        p95CoreDrawMs: r2(p95(m.draws)),
-        medianFrameMs: r2(m.frames.slice().sort((a, b) => a - b)[m.frames.length >> 1]),
-        stepDownLevel: m.level,
-        dpr: 3,
-        throttle: 4,
-        viewport: '390x844',
+      // The frame budget (D-135): 10 s of speech with wisps and the ring, 4x CPU throttle, DPR 3. B-152 (D-176): advisory,
+      // its numbers printed, a miss measured once more before it fails.
+      const FB = L.frameBudget;
+      const measureBudget = async () => {
+        const cdp = await ctx.newCDPSession(page);
+        await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+        await page.waitForTimeout(1500);
+        const m = await page.evaluate(`(${SPEECH})(10)`);
+        await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
+        const slow = m.frames.filter(f => f > FB.slowFrameMs).length;
+        return {
+          renderer: (await canvasInfo(page)).renderer,
+          frames: m.frames.length,
+          framesOver25ms: slow,
+          slowSharePct: r2((100 * slow) / Math.max(1, m.frames.length)),
+          p95FrameMs: r2(p95(m.frames)),
+          p95CoreDrawMs: r2(p95(m.draws)),
+          medianFrameMs: r2(m.frames.slice().sort((a, b) => a - b)[m.frames.length >> 1]),
+          stepDownLevel: m.level,
+          dpr: 3,
+          throttle: 4,
+          viewport: '390x844',
+        };
       };
       // D-135 as amended: dropped frames are the measure, since rAF intervals cannot go below the harness's vsync floor
       // (about 16.8 ms); the p95 frame time is still reported.
-      ok(
-        `[phone] frame budget: at most ${FB.maxSlowShare * 100}% of frames over ${FB.slowFrameMs} ms over 10 s of speech, 4x throttle, DPR 3`,
-        slow <= FB.maxSlowShare * m.frames.length && m.frames.length > 300,
-        JSON.stringify(budget.phone)
-      );
-      ok(
-        `[phone] frame budget: the core's own draw ≤ ${L.frameBudget.p95CoreDrawMs} ms p95`,
-        budget.phone.p95CoreDrawMs <= L.frameBudget.p95CoreDrawMs,
-        JSON.stringify(budget.phone)
-      );
-      ok(
-        '[phone] she ran whole through it (no step-down during the measured speech)',
-        m.level === 0,
-        'level ' + m.level
+      budget.phone = await advisory(
+        results,
+        'core-frame-budget',
+        `[phone] frame budget: at most ${FB.maxSlowShare * 100}% of frames over ${FB.slowFrameMs} ms over 10 s of speech, 4x throttle, DPR 3; the core's own draw ≤ ${FB.p95CoreDrawMs} ms p95; no step-down while measured`,
+        measureBudget,
+        b => {
+          const v = allPass([
+            [
+              b.framesOver25ms <= FB.maxSlowShare * b.frames && b.frames > 300 ? 'PASS' : 'FAIL',
+              'slow frames',
+              `${b.framesOver25ms} of ${b.frames}`,
+            ],
+            [b.p95CoreDrawMs <= FB.p95CoreDrawMs ? 'PASS' : 'FAIL', 'core draw p95', `${b.p95CoreDrawMs} ms`],
+            [b.stepDownLevel === 0 ? 'PASS' : 'FAIL', 'she ran whole', `level ${b.stepDownLevel}`],
+          ]);
+          return { ok: v.ok, numbers: JSON.stringify(b) + (v.ok ? '' : ' · missed: ' + v.numbers) };
+        }
       );
     } else {
       const m = await page.evaluate(`(${SPEECH})(10)`);
@@ -412,41 +419,49 @@ const SPEECH = `async (secs) => { const C = window.EVApp.core; const text = 'Pre
   }
   // The run-time step-down (D-135 as amended): throttled hard, more than 10% of frames over 25 ms in a rolling 2 s turns
   // wisps off, then halves the points; the Silk outline stays.
-  {
-    const ctx = await browser.newContext({
-      viewport: { width: 390, height: 844 },
-      colorScheme: 'dark',
-      deviceScaleFactor: 3,
-    });
-    const page = await ctx.newPage();
-    await openPage(page);
-    const before = await page.evaluate(() => window.EVApp.core.cores()[0].eng.state().points);
-    const cdp = await ctx.newCDPSession(page);
-    await cdp.send('Emulation.setCPUThrottlingRate', { rate: 40 });
-    const sd = await page.evaluate(async () => {
-      const C = window.EVApp.core;
-      C.setMood('speaking');
-      const t0 = performance.now();
-      while (performance.now() - t0 < 14000 && C.stats().level < 2) {
-        C.speak('stretch');
-        await new Promise(r => setTimeout(r, 200));
-      }
-      C.speechEnd();
-      const s = C.stats();
-      return { level: s.level, steps: s.steps, log: s.log.filter(e => e.kind === 'stepDown').map(e => e.name) };
-    });
-    await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
-    await page.waitForTimeout(600);
-    const info = await canvasInfo(page);
-    await page.locator('#hero').screenshot({ path: `${shots}/core-stepdown-phone.png` });
-    ok(
-      '[step-down] under a 40x throttle: wisps off, then half the points',
-      sd.level === 2 && sd.log.join() === 'wisps,halfPoints',
-      JSON.stringify(sd)
-    );
-    ok('[step-down] the Silk outline is still drawn', info.lit > 1500 && before > 0, `lit ${info.lit}`);
-    await ctx.close();
-  }
+  // B-152 (D-176): advisory, its numbers printed; a miss is measured once more, on a fresh page, before it fails.
+  await advisory(
+    results,
+    'core-step-down',
+    '[step-down] under a 40x throttle: wisps off, then half the points; the Silk outline is still drawn',
+    async () => {
+      const ctx = await browser.newContext({
+        viewport: { width: 390, height: 844 },
+        colorScheme: 'dark',
+        deviceScaleFactor: 3,
+      });
+      const page = await ctx.newPage();
+      await openPage(page);
+      const before = await page.evaluate(() => window.EVApp.core.cores()[0].eng.state().points);
+      const cdp = await ctx.newCDPSession(page);
+      await cdp.send('Emulation.setCPUThrottlingRate', { rate: 40 });
+      const sd = await page.evaluate(async () => {
+        const C = window.EVApp.core;
+        C.setMood('speaking');
+        const t0 = performance.now();
+        while (performance.now() - t0 < 14000 && C.stats().level < 2) {
+          C.speak('stretch');
+          await new Promise(r => setTimeout(r, 200));
+        }
+        C.speechEnd();
+        const s = C.stats();
+        return { level: s.level, steps: s.steps, log: s.log.filter(e => e.kind === 'stepDown').map(e => e.name) };
+      });
+      await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
+      await page.waitForTimeout(600);
+      const info = await canvasInfo(page);
+      await page.locator('#hero').screenshot({ path: `${shots}/core-stepdown-phone.png` });
+      await ctx.close();
+      return { ...sd, lit: info.lit, before };
+    },
+    x => {
+      const v = allPass([
+        [x.level === 2 && x.log.join() === 'wisps,halfPoints' ? 'PASS' : 'FAIL', 'steps', JSON.stringify(x.log)],
+        [x.lit > 1500 && x.before > 0 ? 'PASS' : 'FAIL', 'outline', `lit ${x.lit}`],
+      ]);
+      return { ok: v.ok, numbers: JSON.stringify(x) + (v.ok ? '' : ' · missed: ' + v.numbers) };
+    }
+  );
   await browser.close();
   for (const [s, n, d] of results) console.log(s, n, d);
   const failed = results.filter(r => r[0] === 'FAIL').length;
