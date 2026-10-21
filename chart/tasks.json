@@ -2369,7 +2369,7 @@
   "milestone": "M14 UI",
   "status": "done",
   "depends": [],
-  "notes": "Oct 20, ea7cd75: a tab or view switch is one 0.18 s fade on the whole view (no staggered rise, no 0.9 s growth of bars, meters drawn at their value, the review bar 0.2 s, a new message 0.3 s); the look pass reads every CSS transition and animation on the bar and each view at 390 and 1280 against spec.ui.tenets.motion (450 ms, her stage, core, header avatar, reveal and echo exempt), requires the view settled 450 ms after the switch and its reduced-motion screenshot within 0.2% of the settled one (exempt elements masked; on E.V. after her reveal ends); the old stylesheet fails it on every view. npm run check GREEN, staging GREEN at ea7cd75. Question for Matt (not built around): three looping status lights pulse slower than 450 ms while busy (the header LED 1.2 s, her typing dots 1.1 s, the session LED 1.8 s); D-163 names no exception for them and the synthetic record never shows them busy. Keep them, or make them steady?",
+  "notes": "Oct 20, Matt: the status lights are steady (140157b): no pulse on the header light or the session bar's; a stylesheet test holds both. On staging at 86bdf3d (GREEN); not live yet. The captions fold check's flake (the session's own tick counted as filing) fixed in the same commit.",
   "commit": "ea7cd75",
   "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474",
   "board": {
