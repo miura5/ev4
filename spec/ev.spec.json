@@ -2321,6 +2321,14 @@
      "date": "2026-10-18",
      "run": "cse_014j5wumiXcSyTExE3GUe12x",
      "evidence": "runs/diagnostic-20261018-215636262, debug/diagnostic-20261018-215636262 (B-54, probe page-publish; the made-up page https://claude.ai/artifact/JMv8r31QoeGY2sBstzf37M)"
+    },
+    {
+     "capability": "git fetch --depth 1 origin <sha> of one commit outside the 50-deep clone, read-only (B-133): the fetched commit is then present (cat-file -t prints commit)",
+     "task": "staging.diagnostic (trig_01V9d1ED24oKHsEjZU6tPKWk, created Oct 18 06:19Z)",
+     "proven": true,
+     "date": "2026-10-21",
+     "run": "cse_01HZraLuKhujacoWNr7swfkD",
+     "evidence": "runs/diagnostic-20261021-110125159: git fetch --depth 1 origin f525c6e5 (167 commits behind main) exit 0, \"From https://github.com/miura5/ev4 * branch f525c6e5… -> FETCH_HEAD\"; cat-file -t printed commit; no safety-review refusal; nothing checked out or executed"
     }
    ],
    "limits": [
