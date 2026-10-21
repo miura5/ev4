@@ -1,7 +1,9 @@
 #!/usr/bin/env node
-// The build chat's hooks (.claude/settings.json; B-56, B-57, B-58). They load only in a session started in this
-// checkout: a scheduled pipeline run starts in /home/claude and never loads them (B-65, spec.environments). Each reads
-// the hook's JSON on stdin; exit 2 with a message on stderr is the hook's "no" (it reaches the session), exit 0 passes.
+// The build chat's hooks (.claude/settings.json; B-56, B-57, B-58). They may load in a scheduled pipeline run too: B-65
+// proved they did not for one kind of task, and the live watchdog, created from another kind of session, loaded them and
+// was refused at start (D-169, Oct 20). So every hook stands down while the session carries a fresh run marker, which
+// step 1 of every task prompt writes (pipelineRun; B-131). Each reads the hook's JSON on stdin; exit 2 with a message on
+// stderr is the hook's "no" (it reaches the session), exit 0 passes.
 //   node tools/hooks.mjs stop          B-56: npm test before the session ends; red is reported, nothing is changed
 //   node tools/hooks.mjs spec-format   B-57: after Edit or Write on spec/**/*.json, the file again at indent 1, no newline
 //   node tools/hooks.mjs live-guard    B-58: an ArtifactData write or an Artifact publish aimed at the live record or
@@ -10,10 +12,34 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { RUN_MARKER } from './prompts.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const LIVE_OK_HOURS = 2;
 const WRITES = new Set(['set', 'update', 'delete', 'str_replace', 'batch']);
+
+/** D-169 (B-131): the pipeline run this session is, from the marker step 1 of every task prompt writes, while it is
+ * younger than spec.constants.watchdog.runTimeoutMinutes; null when there is none, it does not parse, or it is stale. */
+export function pipelineRun({ file = RUN_MARKER, now = Date.now(), timeoutMinutes = 60 } = {}) {
+  let m;
+  try {
+    m = JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch {
+    return null;
+  }
+  const at = Date.parse(m && m.at);
+  if (!m || !m.pipeline || !Number.isFinite(at)) return null;
+  if (at > now + 5 * 60e3 || now - at >= timeoutMinutes * 60e3) return null; // from the future, or stale
+  return m;
+}
+const runTimeout = () => {
+  try {
+    const s = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec', 'ev.spec.json'), 'utf8'));
+    return s.constants.watchdog.runTimeoutMinutes || 60;
+  } catch {
+    return 60;
+  }
+};
 
 /** B-56: what the Stop hook says for a test run's result: null when green (or when it already spoke this stop). */
 export function stopVerdict(input, run) {
@@ -73,9 +99,15 @@ const no = msg => {
   return 2;
 };
 
-export function main(argv = process.argv.slice(2)) {
+export function main(argv = process.argv.slice(2), { marker = process.env.EV_RUN_MARKER || RUN_MARKER } = {}) {
   const input = readStdin(),
     cmd = argv[0];
+  // A pipeline run is not a build chat: no hook acts in it (D-169).
+  if (
+    ['stop', 'spec-format', 'live-guard'].includes(cmd) &&
+    pipelineRun({ file: marker, timeoutMinutes: runTimeout() })
+  )
+    return 0;
   if (cmd === 'stop') {
     const r = spawnSync(
       process.execPath,

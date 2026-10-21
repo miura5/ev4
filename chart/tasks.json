@@ -2487,9 +2487,9 @@
   "title": "Hooks pipeline-safe (D-169): step 1 of every task prompt writes the run marker /tmp/ev/pipeline-run (pipeline, record, UTC time); tools/hooks.mjs main() returns 0 for every hook while the marker is younger than spec.constants.watchdog.runTimeoutMinutes; the environments cloud-run hooks row corrected to \"hooks may load in a run; they are pipeline-safe\"",
   "dod": "test/hooks.test.mjs covers each of the three hooks with no marker, a fresh marker and a stale one; the prompt test asserts step 1 writes the marker; npm test green; ship staging green; the staging watchdog fired green with its runs/ document read back; live only on Matt's OK",
   "milestone": "v4.2 runs",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken Oct 21 in the v4.2 build chat: the run marker in the gate, hooks.mjs passes while it is fresh",
   "commit": null,
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },

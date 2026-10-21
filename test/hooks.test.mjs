@@ -4,6 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { ROOT, copyRepo } from './helpers.mjs';
 import * as H from '../tools/hooks.mjs';
@@ -118,4 +119,76 @@ test('B-58: a live write or publish is refused without dist/live-ok, passes with
     H.liveGuard({ tool_name: 'mcp__x__ArtifactData', tool_input: { action: 'batch', url } }, { liveId: LIVE }),
     /ArtifactData batch/
   );
+});
+
+test('D-169 (B-131): every hook stands down while a fresh run marker says this session is a pipeline run; none or a stale one changes nothing', () => {
+  const dir = copyRepo();
+  const marker = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-marker-')), 'pipeline-run');
+  const run = (cmd, input) => {
+    const r = spawnSync(process.execPath, [path.join(dir, 'tools', 'hooks.mjs'), cmd], {
+      input: JSON.stringify(input),
+      encoding: 'utf8',
+      env: { ...process.env, EV_RUN_MARKER: marker },
+    });
+    return { code: r.status, err: r.stderr };
+  };
+  const mark = minutesAgo =>
+    fs.writeFileSync(
+      marker,
+      JSON.stringify({
+        pipeline: 'watchdog',
+        record: 'live',
+        at: new Date(Date.now() - minutesAgo * 60e3).toISOString(),
+      }) + '\n'
+    );
+  const timeout = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec', 'ev.spec.json'), 'utf8')).constants.watchdog
+    .runTimeoutMinutes;
+  // stop: a red tree is reported, unless this is a run.
+  for (const f of fs.readdirSync(path.join(dir, 'test')))
+    if (f.endsWith('.test.mjs')) fs.rmSync(path.join(dir, 'test', f));
+  fs.writeFileSync(
+    path.join(dir, 'test', 'planted.test.mjs'),
+    "import test from 'node:test'; import assert from 'node:assert'; test('planted failure', () => assert.equal(1, 2));\n"
+  );
+  // live-guard: the watchdog's first write, as its run makes it.
+  const write = {
+    tool_name: 'ArtifactData',
+    tool_input: { action: 'set', url: `https://claude.ai/artifact/${LIVE}`, collection: 'runs', doc_id: 'w', data: {} },
+  };
+  // spec-format: a spec file left at indent 2.
+  const spec = path.join(dir, 'spec', 'schemas', 'days.schema.json');
+  const indent2 = JSON.stringify(JSON.parse(fs.readFileSync(spec, 'utf8')), null, 2) + '\n';
+  const edit = { tool_name: 'Edit', tool_input: { file_path: spec } };
+  const cases = [
+    ['no marker', null, 2, 2, false],
+    ['a fresh marker', 1, 0, 0, true],
+    ['a stale marker', timeout + 1, 2, 2, false],
+  ];
+  for (const [what, age, stopCode, guardCode, untouched] of cases) {
+    if (age == null) fs.rmSync(marker, { force: true });
+    else mark(age);
+    const stop = run('stop', {});
+    assert.equal(stop.code, stopCode, `stop with ${what}`);
+    if (stopCode) assert.match(stop.err, /npm test is red: planted failure/);
+    const guard = run('live-guard', write);
+    assert.equal(guard.code, guardCode, `live-guard with ${what}`);
+    if (guardCode) assert.match(guard.err, /^Refused: an ArtifactData set on the live record/);
+    fs.writeFileSync(spec, indent2);
+    assert.equal(run('spec-format', edit).code, 0, `spec-format with ${what}`);
+    assert.equal(
+      fs.readFileSync(spec, 'utf8') === indent2,
+      untouched,
+      `spec-format ${untouched ? 'stands down' : 'acts'} with ${what}`
+    );
+  }
+  // A marker that does not parse, names no pipeline or is dated in the future is no marker.
+  for (const bad of [
+    '{',
+    JSON.stringify({ at: new Date().toISOString() }),
+    JSON.stringify({ pipeline: 'morning', at: new Date(Date.now() + 36e5).toISOString() }),
+  ]) {
+    fs.writeFileSync(marker, bad);
+    assert.equal(run('live-guard', write).code, 2, bad);
+  }
+  assert.equal(H.pipelineRun({ file: path.join(dir, 'nothing-here') }), null);
 });

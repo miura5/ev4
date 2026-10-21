@@ -2311,7 +2311,7 @@
     "a batch holds at most 50 writes (the tool's own schema)",
     "the run checkout is shallow, 50 commits deep from main at the session start: a deployed commit more than 50 commits behind main is missing and the gate fails (\"this checkout does not have the deployed commit\"); deploy live before main runs that far ahead",
     "list_triggers ends a page early by response size (11 tasks of limit 100 here) with has_more and a next_cursor: the full list takes cursor paging",
-    "Hooks: a scheduled run starts in /home/claude, not in the checkout, and the repository's .claude/settings.json SessionStart hook did not run (no /tmp/ev4-hook-marker; B-65, session cse_0147TqGQdQEgvhe1Q1XX2RL6, runs/diagnostic-20261020-004959219, Oct 20). Pipeline runs do not load the repository's hooks."
+    "Hooks may load in a run; they are pipeline-safe (D-169, B-131). The B-65 diagnostic task (created from a session started in /home/claude) found no hooks loaded (no /tmp/ev4-hook-marker; session cse_0147TqGQdQEgvhe1Q1XX2RL6, runs/diagnostic-20261020-004959219, Oct 20), but the live watchdog task, created from a session started in the checkout, loaded them and its first write was refused by live-guard from Oct 20 03:55Z. Step 1 of every task prompt writes /tmp/ev/pipeline-run, and every hook stands down while that marker is younger than constants.watchdog.runTimeoutMinutes."
    ],
    "numbers": {
     "documentBytes": 262144,

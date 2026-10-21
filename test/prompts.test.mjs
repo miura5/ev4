@@ -8,7 +8,8 @@ import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { renderPrompt } from '../tools/prompts.mjs';
+import { renderPrompt, RUN_MARKER } from '../tools/prompts.mjs';
+import * as H from '../tools/hooks.mjs';
 import { build } from '../tools/build.mjs';
 import { ROOT, copyRepo, git } from './helpers.mjs';
 
@@ -172,4 +173,28 @@ test('B-49: no pipeline purpose describes re-firing or deploying (the live watch
   const spec = JSON.parse(fs.readFileSync(new URL('../spec/ev.spec.json', import.meta.url), 'utf8'));
   for (const [name, p] of Object.entries(spec.pipelines))
     if (p && p.purpose) assert.doesNotMatch(p.purpose, /re-?fir|deploy|trigger/i, name);
+});
+
+test('D-169 (B-131): step 1 of every task prompt writes the run marker, naming its pipeline and record, before any other call', () => {
+  const spec = JSON.parse(fs.readFileSync(new URL('../spec/ev.spec.json', import.meta.url), 'utf8'));
+  let n = 0;
+  for (const target of ['live', 'staging'])
+    for (const [key, task] of Object.entries(spec.tasks[target])) {
+      const prompt = renderPrompt({ key: `${target}.${key}`, task, spec, release: 'v4.0.0' });
+      if (!prompt) continue;
+      n++;
+      const step1 = prompt.split('\n').find(l => l.startsWith('1. '));
+      assert.ok(step1 && prompt.indexOf(step1) < prompt.indexOf('2. Load the ArtifactData tool'), key);
+      const cmd = /: (mkdir -p \/tmp\/ev && printf .+)$/.exec(step1)[1];
+      assert.ok(cmd.endsWith(`| tee ${RUN_MARKER}`), key);
+      // The shell line, run as written, writes the marker the hooks read.
+      const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-mark-'));
+      const out = execFileSync('bash', ['-c', cmd.replaceAll('/tmp/ev', dir)], { encoding: 'utf8' });
+      const m = JSON.parse(fs.readFileSync(path.join(dir, 'pipeline-run'), 'utf8'));
+      assert.deepEqual([m.pipeline, m.record], [task.pipeline, task.record], key);
+      assert.match(m.at, /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/, key);
+      assert.equal(out.trim(), JSON.stringify(m), `${key}: the start time is printed`);
+      assert.ok(H.pipelineRun({ file: path.join(dir, 'pipeline-run') }), `${key}: the hooks read it as a fresh run`);
+    }
+  assert.ok(n >= 12);
 });
