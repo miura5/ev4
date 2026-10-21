@@ -2913,5 +2913,24 @@
   "notes": "",
   "commit": null,
   "source": "plan Q6ioLu7LnKC2vvWJkwJWA6"
+ },
+ {
+  "id": "B-166",
+  "kind": "bug",
+  "title": "Bug (reported Oct 21): My answers, so you don't have to ask:\n- B-133: yes, fire the staging diagnostic with the git-fetch probe. Record the environments row; file the follow-up task if it is proven.\n- B-135 follow-up: YES  — something from the staging morning reached my phone around 3:59am [if yes: the line started with \"...\"].\n- B-108: I will archive miura5/ev-core on GitHub myself and tell you \"B-108 done\" in this chat; log it then.\n- B-45: fine. I found the draft card in the staging conversation, tapped \"Use this plan\", and Study > Plan switched to E4-2 (2 days, 10 tasks). Mark it done.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "My answers, so you don't have to ask:\n- B-133: yes, fire the staging diagnostic with the git-fetch probe. Record the environments row; file the follow-up task if it is proven.\n- B-135 follow-up: YES  — something from the staging morning reached my phone around 3:59am [if yes: the line started with \"...\"].\n- B-108: I will archive miura5/ev-core on GitHub myself and tell you \"B-108 done\" in this chat; log it then.\n- B-45: fine. I found the draft card in the staging conversation, tapped \"Use this plan\", and Study > Plan switched to E4-2 (2 days, 10 tasks). Mark it done.",
+  "reportedAt": "2026-10-21T10:56:18.571Z",
+  "board": {
+   "row": "v4 B-166: My answers, so you don't have to ask: - B-133: yes, fire the staging…",
+   "why": "My answers, so you don't have to ask:\n- B-133: yes, fire the staging diagnostic with the git-fetch probe. Record the environments row; file the follow-up task if it is proven.\n- B-135 follow-up: YES  — something from the staging morning reached my phone around 3:59am [if yes: the line started with \"...\"].\n- B-108: I will archive miura5/ev-core on GitHub myself and tell you \"B-108 done\" in this chat; log it then.\n- B-45: fine. I found the draft card in the staging conversation, tapped \"Use this plan\", and Study > Plan switched to E4-2 (2 days, 10 tasks). Mark it done.",
+   "notes": "Reported Oct 21 from build chat"
+  }
  }
 ]
