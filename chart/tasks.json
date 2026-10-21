@@ -1452,13 +1452,19 @@
   "title": "Surfaces (D-123, D-124, D-126): the existing cards as surfaces (Today, review set, dates, readiness, material, practice check), one at a time with the rest as pills; the phone sheet (330 to 410 px, five rows and a more) and the desktop side column; a glance as one opens, a nod and one line on a check-off without moving the list, closing to a pill; the review set as a surface with its pill; a caption's citation span opening the material surface in place of the open one",
   "dod": "the harness at 390 and 1280: a reply with three cards opens one surface and two pills; ticking a Today item keeps scroll and its neighbours in place (rule 6); a review answered in the surface leaves Review · n of 10 and closes when done; a citation in her current line and in an earlier one opens the passage with the previous surface as a pill; the core's event log shows glance and done; screenshots at both widths",
   "milestone": "M11",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-77"
   ],
-  "notes": "Oct 19, added by B-94 from the Build plan tab: it never reached BACKLOG.md, and B-81 depends on it. The Oct 19 page work (B-82 to B-91) may cover part of it: check before starting",
+  "notes": "Checked against the UI tenets before building (Oct 21); not built, by your rule. It rests on D-123, D-124 and D-126 (proposed, written before the tenets) and clashes with accepted ones: (a) pills: closing a surface to a pill above the composer (D-123, D-124) against D-160 (the way out is the thing folding to its own one-line summary with a chevron) and D-150 (no pill where a word does the job); (b) the phone sheet (330 to 410 px, five rows and a more) against D-148 (a list opens folded under a one-line count, rows open in place); (c) the desktop side column exists only from 1024 (D-158, D-159), so 600 to 1023 gets the phone stack and its sheet; D-123 does not say. Question: restate B-78 as one surface at a time that folds to its own line per D-160 and D-148 (supersede D-123 and D-124's pill parts), or keep the pills as a named exception to D-150 and D-160? Its DoD (one surface and two pills) changes with the answer.",
   "commit": null,
-  "source": "Build plan tab"
+  "source": "Build plan tab",
+  "board": {
+   "row": "v4 B-78: Surfaces in the E.V. tab",
+   "why": "One thing open at a time in the E.V. tab",
+   "notes": "Waiting on Matt: its pills and phone sheet clash with the fold tenets (D-148, D-150, D-160)"
+  },
+  "waitingOn": "Matt"
  },
  {
   "id": "B-79",
