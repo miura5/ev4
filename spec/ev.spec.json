@@ -1,5 +1,5 @@
 {
- "specVersion": "4.2",
+ "specVersion": "4.3",
  "purpose": "E.V. v4's machine-readable spec: collections, tasks, environments, capacity, boundaries and working agreements. Pipelines, build chats and the page read this instead of prose; the design is the E.V. Foundation v4 doc.",
  "roles": [
   "page",
