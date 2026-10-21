@@ -423,7 +423,7 @@
   "date": "Oct 18",
   "title": "E.V. comments on a note line only through core.commentGate: a line of at least 6 words she has not commented on; at the default level Some, at most one comment per 4 minutes and per 4 new lines (More: 2 and 2; Off: none); never while a check is open, during a break, in the minute before a check is due or while she is answering Matt; a correction backed by a library passage takes the next slot first; a comment is one line of at most 14 words that names, affirms or corrects (with its citation), never a question; Matt turns it up or down by saying so or from the session menu, stored as sessions/ss-*.comments and carried into his next session; the talk message carries note {file, title, line, quote ≤ 90 characters, identifier-scanned}",
   "why": "Comments make her read with him rather than only test him; rationed so they never interrupt him or crowd the checks",
-  "status": "proposed",
+  "status": "accepted",
   "supersedes": [],
   "amends": []
  },
