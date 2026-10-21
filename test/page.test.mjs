@@ -41,10 +41,27 @@ test('each target gets the shell and the four published files spec.ui.page names
 test("core.js is the pipelines' own core and validator, made globals", () => {
   const core = pages.staging['core.js'];
   const src = fs.readFileSync(path.join(ROOT, 'core/evcore.mjs'), 'utf8');
+  // B-155..B-160: each core module evcore imports comes first, as written but for its export; then evcore without
+  // its imports, byte for byte up to its export, the release written into its slot (B-149).
+  const factories = [...src.matchAll(/^import \{ (\w+) \} from '\.\/([\w-]+\.mjs)';$/gm)];
+  let at = 0;
+  for (const [, name, file] of factories) {
+    const part =
+      `// ---- core/${file}\n` +
+      fs.readFileSync(path.join(ROOT, 'core', file), 'utf8').replace(`export function ${name}`, `function ${name}`);
+    assert.equal(core.slice(at, at + part.length), part, `core/${file} as written, its factory not exported`);
+    at += part.length + 1;
+  }
   assert.ok(
-    core.startsWith(src.replaceAll('__EV_RELEASE__', release).replace(/export default EVCore;\s*$/, '')),
+    core.slice(at).startsWith(
+      src
+        .replace(/^import \{ \w+ \} from '\.\/[\w-]+\.mjs';\n/gm, '')
+        .replaceAll('__EV_RELEASE__', release)
+        .replace(/export default EVCore;\s*$/, '')
+    ),
     'evcore.mjs byte for byte up to its export, the release written into its slot (B-149)'
   );
+  assert.ok(!/^import |^export /m.test(core), 'core.js runs as a script: no import, no export');
   const window = {};
   vm.runInNewContext(core, { window, console, TextEncoder, Intl, Date, Math, JSON });
   assert.equal(window.EVCore.VERSION, release);

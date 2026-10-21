@@ -2778,10 +2778,10 @@
   "title": "Chart tests read a copy (T-5): test/helpers.mjs copies chart/ at test start and every Chart test reads the copy; a lint test greps test/.test.mjs for direct reads of chart/.json outside the helper",
   "dod": "the lint test fails on a planted direct read; npm test green with two chats' worth of planted record state",
   "milestone": "v4.2 tests",
-  "status": "open",
+  "status": "done",
   "depends": [],
-  "notes": "",
-  "commit": null,
+  "notes": "Chart tests read one copy of chart/ and its generated files taken as the tests start (helpers.mjs chartCopy); a lint test refuses a direct read (planted reads caught); the record checks hold with two chats' planted state in a copy. npm test green.",
+  "commit": "b0dd048",
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
@@ -2790,10 +2790,10 @@
   "title": "Skip, don't fail, without prettier (C-2): the lint test's format check skips with the reason when node_modules/.bin/prettier is missing; CI still runs it",
   "dod": "npm test green in a checkout without node_modules (the skip shown) and in CI (the check run)",
   "milestone": "v4.2 tests",
-  "status": "open",
+  "status": "done",
   "depends": [],
-  "notes": "",
-  "commit": null,
+  "notes": "The formatter check skips with its reason when node_modules/.bin/prettier is missing, never under CI. npm test green in a checkout without node_modules (403 pass, the skip shown) and in CI at 91d6b39 (run 39561910114, the check run).",
+  "commit": "91d6b39",
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
@@ -2802,9 +2802,9 @@
   "title": "Core split, library: the library section (searchLibrary, citeMaterial, readMaterial, libraryChunks, libraryIndex and their helpers) moves to core/library.mjs with test/library.test.mjs; evcore's export map re-exports; build exposes it to the page as the others; exports nothing calls are removed (D-166)",
   "dod": "npm test green; npm run check green; harness library checks green; ship staging green; live batched on Matt's OK",
   "milestone": "v4.2 core",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken Oct 21.",
   "commit": null,
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },

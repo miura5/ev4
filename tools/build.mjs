@@ -196,6 +196,22 @@ async function promptHashes(root, spec, release, tasks) {
 }
 
 // ------------------------------------------------------------------------------------------------ the page
+/** The modules evcore.mjs imports (one factory each, no imports of their own) and evcore without those lines. */
+export function coreParts(root, core) {
+  const parts = [];
+  const rest = core.replace(/^import \{ (\w+) \} from '\.\/([\w-]+\.mjs)';\n/gm, (_, name, file) => {
+    const text = fs.readFileSync(path.join(root, 'core', file), 'utf8');
+    if (/^import /m.test(text)) throw new Error(`core/${file} must not import: it runs in the page as written`);
+    if (!new RegExp(`^export function ${name}\\(`, 'm').test(text))
+      throw new Error(`core/${file} has no export function ${name}`);
+    if ((text.match(/^export /gm) || []).length !== 1) throw new Error(`core/${file} exports more than ${name}`);
+    parts.push(`// ---- core/${file}\n` + text.replace(/^export function /m, 'function '));
+    return '';
+  });
+  if (/^import /m.test(rest)) throw new Error('core/evcore.mjs imports something other than a core factory');
+  return { core: rest, parts: parts.join('\n') + (parts.length ? '\n' : '') };
+}
+
 /**
  * The page as a shell plus published files (Operational architecture, "Page delivery"), once per target:
  * {live: {'index.html': text, 'core.js', 'spec.json', 'app.js', 'styles.css'}, staging: {...}}, the shell first.
@@ -208,8 +224,12 @@ export function buildPages({ root, spec, schemas, release }) {
   const shellFile = path.join(root, 'page', 'index.src.html');
   if (!ui || !fs.existsSync(shellFile)) return null;
   const read = f => fs.readFileSync(path.join(root, f), 'utf8');
-  const core = read('core/evcore.mjs');
-  if (!/export default EVCore;\s*$/.test(core)) throw new Error('core/evcore.mjs must end with export default EVCore;');
+  const core0 = read('core/evcore.mjs');
+  if (!/export default EVCore;\s*$/.test(core0))
+    throw new Error('core/evcore.mjs must end with export default EVCore;');
+  // B-155..B-160 (D-166): core's sections that live in their own files. evcore.mjs imports each one's factory; core.js
+  // holds each file as written, without its export, ahead of E.V. core, and E.V. core without its imports.
+  const { core, parts } = coreParts(root, core0);
   const validate = read('core/validate.mjs');
   if (/^import /m.test(validate)) throw new Error('core/validate.mjs must not import: it runs in the page as written');
   const names = [...validate.matchAll(/^export function (\w+)/gm)].map(m => m[1]);
@@ -223,6 +243,7 @@ export function buildPages({ root, spec, schemas, release }) {
   const studyNames = [...study.matchAll(/^export (?:function|const) (\w+)/gm)].map(m => m[1]);
   if (!core.includes(RELEASE_SLOT)) throw new Error(`core/evcore.mjs has no ${RELEASE_SLOT} for the release`);
   const coreJs =
+    parts +
     core.replaceAll(RELEASE_SLOT, release).replace(/export default EVCore;\s*$/, 'window.EVCore = EVCore;\n') +
     '\n// ---- core/validate.mjs\n(function () {\n' +
     validate.replace(/^export function /gm, 'function ') +
