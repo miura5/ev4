@@ -880,19 +880,17 @@
   "title": "Exam plan draft on request (pick 3, D-102): plans/<examId>-<n> for later drafts, planedits.plan (schema bump) set when Matt accepts a draft from its card, planTasks reading the plan in force, and the one greeting line when the Canvas sync brings in a new exam-content module; nothing is drafted unasked",
   "dod": null,
   "milestone": "M8",
-  "status": "blocked",
+  "status": "done",
   "depends": [
    "B-39"
   ],
-  "notes": "Oct 20, on Matt's word: a plan job for E4 queued on staging as the page queues it (jobs/job-20261021-013207-exam-plan-exam-4) and the staging worker fired: runs/worker-20261021-013237412 ok at 6218f16; plans/E4-2 saved beside plans/E4 (untouched, still in force), the message in talk/2026-10-20 carries the job and plan cards and says the current plan stays in force. Left for the DoD: the page checks on staging (the card, Use this plan switching Study's plan to E4-2, and the greeting's offer after a planted exam module); Matt looks, or says to drive the staging page in his built-in browser.",
-  "commit": null,
+  "notes": "Oct 21, Matt on the staging page: found the draft card in the staging conversation, tapped Use this plan, and Study > Plan switched to E4-2 (2 days, 10 tasks); he said fine and to mark it done.",
+  "commit": "8e4b2f8",
   "source": "BACKLOG.md",
   "board": {
    "row": "v4 B-45: Exam plan drafts on request",
    "why": "the exam-plan job writes plans/<exam>-draft beside a plan and nothing reads it; there is no way to switch to a new plan"
-  },
-  "waitingOn": "Matt",
-  "waitingWhere": "staging"
+  }
  },
  {
   "id": "B-46",
