@@ -274,9 +274,9 @@ export function verify({ manifest, target, state, build, dist, sha256, now = new
               : `record ${live.manifest.commit.slice(0, 7)} is ${behind} commit${behind === 1 ? '' : 's'} behind and its content differs${prompts.length ? ` (prompts: ${prompts.slice(0, 3).join(', ')})` : ''}`
         );
       }
-      // B-110: every scheduled run checks the deployed commit out of a clone of main only spec.constants.runs.cloneDepth
-      // deep, so record commits can push it out of reach. D-170 (B-132): the gate then checks the same content at the
-      // clone's head and goes on, so the distance is a note, never a red; only a commit absent from origin/main is.
+      // B-110: every scheduled run starts in a clone of main only spec.constants.runs.cloneDepth deep, so record commits
+      // can push the deployed commit out of it. B-168: the gate then fetches that one commit (D-170's content check is
+      // only its fallback), so the distance is information, never a risk or a red; only a commit absent from origin/main is.
       if (typeof build.behindMain === 'function') {
         const R = (((dist && dist.spec) || {}).constants || {}).runs || {};
         const depth = R.cloneDepth || 50;
@@ -287,7 +287,7 @@ export function verify({ manifest, target, state, build, dist, sha256, now = new
           n == null
             ? `${live.manifest.commit.slice(0, 7)} is not on origin/main`
             : `${n} commit${n === 1 ? '' : 's'} behind origin/main; runs clone ${depth} deep` +
-                (n >= depth ? "; past it, the gate checks the same content at the clone's head (D-170)" : '')
+                (n >= depth ? '; past it, the gate fetches the deployed commit (B-168)' : '')
         );
       }
       add(

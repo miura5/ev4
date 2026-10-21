@@ -1174,7 +1174,7 @@
   },
   "runs": {
    "_rules": [
-    "B-110: every scheduled run starts in a clone of main cloneDepth commits deep. D-170 (B-132): when the deployed commit is out of that clone, the gate stays on the clone's head and goes on only if every file the manifest hashes is the same there; verify-deploy notes the distance and never reds on it.",
+    "B-110: every scheduled run starts in a clone of main cloneDepth commits deep. B-168: when the deployed commit is out of that clone, the gate fetches it from origin (depth 1), checks it out and verifies every hash; only when that fetch fails or is refused does it take D-170's fallback (B-132): stay on the clone's head and go on only if every file the manifest hashes is the same there, quoting the refusal. verify-deploy notes the distance and never reds on it.",
     "refreshAt (40, B-110) is retired: the same-content refresh it asked for is no longer needed (D-170, D-171)."
    ],
    "cloneDepth": 50
@@ -2345,7 +2345,7 @@
     "ArtifactData refuses a document over 262144 bytes serialized, before sending (\"the limit is 262144\")",
     "ArtifactData refuses a batch request over 1048576 bytes serialized (\"split it into smaller batches\")",
     "a batch holds at most 50 writes (the tool's own schema)",
-    "the run checkout is shallow, 50 commits deep from main at the session start: a deployed commit more than 50 commits behind main is missing from it; since D-170 (B-132) the gate then checks the same content at the clone's head and goes on when every hashed file matches",
+    "the run checkout is shallow, 50 commits deep from main at the session start: a deployed commit more than 50 commits behind main is missing from it; since B-168 the gate then fetches that one commit from origin and checks it out; D-170's content check at the clone's head (B-132) is only its fallback when the fetch fails",
     "list_triggers ends a page early by response size (11 tasks of limit 100 here) with has_more and a next_cursor: the full list takes cursor paging",
     "Hooks may load in a run; they are pipeline-safe (D-169, B-131). Proven per kind of task (D-179): the B-65 diagnostic, as staging.diagnostic (trig_01V9d1ED24oKHsEjZU6tPKWk, created Oct 18 06:19Z), found no hooks loaded (no /tmp/ev4-hook-marker; session cse_0147TqGQdQEgvhe1Q1XX2RL6, runs/diagnostic-20261020-004959219, Oct 20); the live watchdog task (trig_01GrcEzEwb4L3oXX7dsTdpwD, created Oct 18 15:19Z) loaded them and its first write was refused by live-guard from Oct 20 03:55Z. Step 1 of every task prompt writes /tmp/ev/pipeline-run, and every hook stands down while that marker is younger than constants.watchdog.runTimeoutMinutes."
    ],

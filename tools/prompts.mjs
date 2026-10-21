@@ -1,8 +1,8 @@
 // Every scheduled task's prompt, rendered from spec.tasks and the pipeline's entry in spec.pipelines (Operational
 // architecture, "Task registry"). The manifest carries each prompt's hash; verify-deploy compares the live task's.
 // A prompt is thin on purpose: it gates the checkout (the one place code is written in a prompt), then hands the run
-// to the commands, which print every call. No prompt fetches, clones or unpacks code, attaches a repository, or
-// names the page-only collection.
+// to the commands, which print every call. No prompt clones or unpacks code, attaches a repository, or names the
+// page-only collection; its one fetch is the gate's, of the deployed commit from the session's own origin (B-168).
 import { renderGate } from './gate.mjs';
 // The gate is tools/gate.mjs, a readable function rendered to the one line step 3 runs (B-132, D-170).
 const GATE = renderGate();
@@ -71,7 +71,8 @@ export function renderPrompt({ key, task, spec, release }) {
     // down, so a task created from a session that loads the repository's hooks still runs (the live watchdog, Oct 20).
     `1. Note the start time and mark this session as an E.V. run, so the repository's build-chat hooks stand down for it: mkdir -p /tmp/ev && printf '{"pipeline":"${task.pipeline}","record":"${task.record}","at":"%s"}\\n' "$(date -u +%FT%TZ)" | tee ${RUN_MARKER}`,
     '2. Load the ArtifactData tool (ToolSearch "select:ArtifactData" if it isn\'t loaded). Get collection "system", doc_id "manifest", with out_dir /tmp/ev.',
-    "3. Check out the deployed commit in this session's own checkout and verify it, with Bash (no cloning or downloading):",
+    // B-168: the one fetch a prompt makes is the gate's own, of the deployed commit, when the 50-deep clone lacks it.
+    "3. Check out the deployed commit in this session's own checkout and verify it, with Bash (no cloning; the gate fetches only that one commit, when this checkout lacks it):",
     `node -e '${GATE}'`,
     ...(p.input && p.input.probe
       ? [

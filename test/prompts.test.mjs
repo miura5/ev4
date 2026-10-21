@@ -1,6 +1,6 @@
-// Task prompts (B-09): rendered from the task table and the step lists; no fetch, no clone, no attached repository,
-// no mention of the page-only collection; the gate present, and the gate itself passes a clean checkout and refuses a
-// changed one.
+// Task prompts (B-09): rendered from the task table and the step lists; no clone, no attached repository, no fetch but
+// the gate's own of the deployed commit (B-168), no mention of the page-only collection; the gate present, and the gate
+// itself passes a clean checkout and refuses a changed one.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -79,7 +79,7 @@ test('every pipeline with steps has a prompt for live and staging; the rest wait
   );
 });
 
-test('no prompt fetches, clones, unpacks or attaches code, or names the page-only collection', () => {
+test("no prompt clones, unpacks or attaches code, or names the page-only collection; the one fetch is the gate's", () => {
   for (const [key, text] of Object.entries(all()).filter(([, t]) => t)) {
     assert.doesNotMatch(
       text,
@@ -87,6 +87,16 @@ test('no prompt fetches, clones, unpacks or attaches code, or names the page-onl
       key
     );
     assert.doesNotMatch(text, /journal/i, key);
+    if (key.startsWith('build.')) continue;
+    // B-168: step 3's gate fetches the deployed commit, depth 1, from origin, and nothing else in the prompt does.
+    const step3 = /\n3\. [^\n]*\nnode -e '([^']+)'/.exec(text);
+    assert.ok(step3, `${key}: step 3 carries the gate`);
+    assert.match(
+      step3[1],
+      /\["fetch", "-q", "--depth", "1", "origin", m\.commit\]/,
+      `${key}: the gate fetches the commit`
+    );
+    assert.equal(text.split('"fetch"').length - 1, 1, `${key}: one fetch, the gate's`);
   }
 });
 
@@ -146,17 +156,20 @@ test('D-170 (B-132): the rendered gate, run as the prompt carries it: commit pre
   );
   assert.equal(git(repo, 'rev-parse', 'HEAD').trim(), deployed);
   git(repo, 'checkout', '-q', 'main');
-  // 2. Absent from the clone, the same content at its head: goes on, saying so.
+  // 2. Absent from the clone and the fetch refused (this copy has no origin): the same content at its head goes on,
+  // the refusal quoted (B-168).
   const absent = 'a'.repeat(40);
   assert.match(
     run({ release, commit: absent, dirty: false, files }),
-    new RegExp(`${absent.slice(0, 12)} not in this checkout; same content at ${head.slice(0, 12)}, verified in`)
+    new RegExp(
+      `${absent.slice(0, 12)} not in this checkout; fetching it failed: .*origin.*; same content at ${head.slice(0, 12)}, verified in`
+    )
   );
   assert.equal(git(repo, 'rev-parse', 'HEAD').trim(), head, 'stays on the head');
   // 3. Absent, and one file differs at the head: fails naming it.
   assert.throws(
     () => run({ release, commit: absent, dirty: false, files: { ...files, 'core/evcore.mjs': '0'.repeat(64) } }),
-    /core\/evcore\.mjs differs from the deployed build \(the deployed commit a{12} is not in this checkout/
+    /core\/evcore\.mjs differs from the deployed build \(the deployed commit a{12} is not in this checkout and fetching it failed: .*origin/
   );
   // A changed file at the deployed commit fails as before, and so does a hashed file the checkout lacks.
   assert.throws(
@@ -179,6 +192,59 @@ test('D-170 (B-132): the rendered gate, run as the prompt carries it: commit pre
   assert.throws(
     () => run({ release, commit: deployed, dirty: false, files }, empty),
     /the E\.V\. repository is not checked out in this session/
+  );
+});
+
+test('B-168: past the shallow clone the gate fetches the deployed commit, checks it out and verifies it', () => {
+  const line = renderGate();
+  // A throwaway origin: the deployed commit, then a code commit after it, so the clone's head differs in a hashed
+  // file and the content fallback alone would refuse. The clone is one commit deep, so the deployed one is outside it.
+  const repo = copyRepo({ push: true });
+  const origin = git(repo, 'remote', 'get-url', 'origin').trim();
+  // GitHub serves any reachable commit by id; a local bare repository does so once told to.
+  execFileSync('git', ['-C', origin, 'config', 'uploadpack.allowReachableSHA1InWant', 'true']);
+  const deployed = git(repo, 'rev-parse', 'HEAD').trim();
+  const names = ['core/evcore.mjs', 'core/cli.mjs', 'spec/ev.spec.json'];
+  const hashOf = (dir, f) =>
+    crypto
+      .createHash('sha256')
+      .update(fs.readFileSync(path.join(dir, f)))
+      .digest('hex');
+  const files = Object.fromEntries(names.map(f => [f, hashOf(repo, f)]));
+  fs.appendFileSync(path.join(repo, 'core/evcore.mjs'), '\n// a change after the deploy\n');
+  git(repo, 'commit', '-qam', 'B-00: code after the deploy');
+  git(repo, 'push', '-q', 'origin', 'main');
+  const clone = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-shallow-')), 'ev4');
+  execFileSync('git', ['clone', '-q', '-b', 'main', '--depth', '1', 'file://' + origin, clone]);
+  assert.throws(() => git(clone, 'cat-file', '-e', deployed + '^{commit}'), 'the deployed commit is outside the clone');
+  const m = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-gate-')), 'manifest.json');
+  const run = manifest => {
+    fs.writeFileSync(m, JSON.stringify(manifest));
+    return execFileSync(
+      'node',
+      ['-e', line.replace('/tmp/ev/system/manifest.json', m).replace('"/home/claude/ev4"', '"/nonexistent"')],
+      { cwd: clone, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }
+    );
+  };
+  assert.match(
+    run({ release, commit: deployed, dirty: false, files }),
+    new RegExp(`${deployed.slice(0, 12)} fetched, checked out and verified in`)
+  );
+  assert.equal(git(clone, 'rev-parse', 'HEAD').trim(), deployed, 'the run is on the deployed commit');
+  assert.equal(hashOf(clone, 'core/evcore.mjs'), files['core/evcore.mjs']);
+  // A fetched build whose file differs from the manifest still fails, naming the file and the fetch.
+  git(clone, 'checkout', '-q', 'main');
+  assert.throws(
+    () => run({ release, commit: deployed, dirty: false, files: { ...files, 'core/cli.mjs': '0'.repeat(64) } }),
+    /core\/cli\.mjs differs from the deployed build/
+  );
+  // A fetch that fails (here the origin is gone) falls back to the content check at the head, quoting git's own words;
+  // the head's content differs, so the run fails naming the file and the refusal.
+  git(clone, 'remote', 'set-url', 'origin', path.join(os.tmpdir(), 'ev4-no-such-origin'));
+  git(clone, 'checkout', '-q', 'main');
+  assert.throws(
+    () => run({ release, commit: 'b'.repeat(40), dirty: false, files }),
+    /core\/evcore\.mjs differs from the deployed build \(the deployed commit b{12} is not in this checkout and fetching it failed: fatal: [^;]+; its head/
   );
 });
 
