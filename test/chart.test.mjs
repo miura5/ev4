@@ -812,7 +812,7 @@ test('B-96: brief is one page: the inbox, the task, its dependencies, decisions,
   ])
     assert.ok(b.includes(h), h);
   assert.match(b, /- B-93: done/);
-  assert.match(b, /R-01: ended \(D-145: /, "R-01 is kept and shown ended (B-141)");
+  assert.match(b, /R-01: ended \(D-145: /, 'R-01 is kept and shown ended (B-141)');
   const runs = C.nextRuns(
     {
       morning: { schedule: 'CRON_TZ=America/Chicago 25 4 * * *' },
