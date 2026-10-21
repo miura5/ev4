@@ -1393,14 +1393,20 @@
   "title": "Open-ended item schema and grading (D-132, D-133): kind open in spec.items and the sets and answers schemas (bump, migration, fixtures, idempotence test); the check function (2 or 3 key points of at most 12 words, each with keyword groups; a stem of at most 25 words; sourceRef; identifier scan); the grading prompt with its shape check and 8 s timeout; core.gradeOpenLocal; the grade rule (right, partial, wrong; partial counts as a miss; added text stored, grade unchanged); core.checkFormat; B-75 takes the next spec.items, sets and answers versions itself, and whichever of B-43 and B-75 lands second bumps again with its own migration",
   "dod": "core tests grade planted answers right, partial and wrong by a stubbed model reply and by the local fallback, send a malformed reply to the fallback, refuse an item with one key point, and walk checkFormat through multiple choice, open, and multiple choice when key points are missing; the harness answers one open check graded by the stub and one offline (hit and missed points, Add to it, Checked offline), screenshots at 390 and 1280",
   "milestone": "M11",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-39",
    "B-74"
   ],
-  "notes": "Oct 19, added by B-94 from the Build plan tab: it never reached BACKLOG.md, and B-81 depends on it. The Oct 19 page work (B-82 to B-91) may cover part of it: check before starting",
+  "notes": "Checked against the UI tenets before building (Oct 21); not started. Blocked on: D-132 and D-133 are proposed, not accepted (accept as written?), and it depends on B-74 (blocked). Tenet note for when it is built: the open answer's view follows D-165 as B-126 built it (verdict one line, Right, Partly right or Missed; hit and missed points as lines; Add to it once as a text action), not a separate card (D-147, D-150).",
   "commit": null,
-  "source": "Build plan tab"
+  "source": "Build plan tab",
+  "board": {
+   "row": "v4 B-75: Open-ended checks and grading",
+   "why": "Checks that ask for an answer in his own words",
+   "notes": "Waiting on Matt: D-132 and D-133 still proposed; after B-74"
+  },
+  "waitingOn": "Matt"
  },
  {
   "id": "B-76",
