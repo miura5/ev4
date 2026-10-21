@@ -251,7 +251,7 @@ test('an evening-mac run: Canvas folds into the record, the backup and mirror be
   );
   assert.match(
     plan.detail,
-    /Canvas: 1 new and 0 changed dates, 1 announcements, 0 files, 1 fetch errors · backup backup\/E\.V\.-v4-backup-sunday\.json \(\d+ documents, \d+ KB\), mirror \d+ files/
+    /Canvas: 1 new and 0 changed dates, 1 announcements, 0 files, 1 fetch errors · backup backup\/E\.V\.-v4-backup-sunday\.json \(\d+ documents, \d+ KB; schema versions [a-z:0-9 ]+\), mirror \d+ files/
   );
   // The Mac's files: staged under outputs, committed into E.V.'s own names in the staging folder.
   const folder = spec.tasks.staging['evening-mac'].folders[0];
@@ -365,7 +365,7 @@ test('restore drill: the newest backup restores into staging, counts and hashes 
     );
     assert.match(
       ok.plan.detail,
-      /^drill ok: E\.V\.-v4-backup-saturday\.json .* counts and hashes match its manifest; 1 restored, \d+ already identical/
+      /^drill ok: E\.V\.-v4-backup-saturday\.json .* counts and hashes match its manifest; every document already at this build.s schema; 1 restored, \d+ already identical/
     );
     const tampered = JSON.parse(JSON.stringify(b));
     tampered.collections.dates[0].title = 'changed after the backup';

@@ -93,6 +93,14 @@
           text: `${String(r.target || r.id).replace(/^(run|job) /, '')}: ${r.reason}, ${why[r.why] || r.why}. A build chat should look.`,
           v: 'bad',
         });
+      // B-163 (D-186): a backup older than this build's schemas still restores (the drill migrates it); amber, never red.
+      const bk = hl.backup;
+      if (bk && bk.behind > 0)
+        out.push({
+          text: `Your latest backup (${short(bk.at)}) is ${bk.behind} schema update${bk.behind === 1 ? '' : 's'} behind this build. It still restores: the drill moves it forward. Tonight’s backup catches up.`,
+          v: 'warn',
+          chip: 'backup',
+        });
       return out;
     }
     // B-119: a line of System that opens in place: one line, its whole text once opened.

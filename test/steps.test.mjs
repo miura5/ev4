@@ -224,7 +224,10 @@ test('B-139: mac-files writes the backup (and the mirror on a Sunday) under the 
     }
   }
   assert.ok(files[0].stagedPath.startsWith(path.join(outputs, 'evening-mac-2026-10-21')));
-  assert.match(wed.detail, /^backup backup\/E\.V\.-v4-backup-wednesday\.json \(\d+ documents, \d+ KB\)$/);
+  assert.match(
+    wed.detail,
+    /^backup backup\/E\.V\.-v4-backup-wednesday\.json \(\d+ documents, \d+ KB; schema versions [a-z:0-9 ]+\)$/
+  );
   // A Sunday adds the Markdown mirror, every file under mirror-v4 in the same folder.
   const sun = CODE_STEPS['mac-files'](db, ctx('2026-10-25'), base);
   const sunFiles = sun.device.flatMap(c => c.args.files);

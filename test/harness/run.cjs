@@ -2384,6 +2384,39 @@ const ok = (name, cond, detail = '') => {
         ),
         (await card.textContent()).slice(0, 400)
       );
+      // B-163 (D-186): a backup two schema bumps behind reads amber, as a sentence that says it still restores
+      await page.evaluate(async h => {
+        const db = await window.claude.use('db');
+        await db
+          .collection('health')
+          .doc('current')
+          .set({
+            ...h,
+            backup: {
+              run: 'evening-mac-20261018-012000000',
+              at: '2026-10-18T01:20:00.000Z',
+              file: 'backup/E.V.-v4-backup-saturday.json',
+              behind: 2,
+            },
+          });
+      }, h0);
+      for (const [w, hh] of [
+        [390, 844],
+        [1280, 860],
+      ]) {
+        await page.setViewportSize({ width: w, height: hh });
+        await card.scrollIntoViewIfNeeded();
+        await page.waitForTimeout(300);
+        const t = await card.textContent();
+        ok(
+          `[${w}] a backup behind this build's schemas is an amber line that says it still restores`,
+          /Your latest backup \(.+\) is 2 schema updates behind this build\. It still restores: the drill moves it forward\./.test(
+            t
+          ) && !/backup[^.]*failed/i.test(t),
+          t.slice(0, 500)
+        );
+        await card.screenshot({ path: `${shots}/health-backup-${w}.png` });
+      }
       await page.evaluate(async h => {
         const db = await window.claude.use('db');
         await db.collection('health').doc('current').set(h);

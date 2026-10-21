@@ -18,9 +18,10 @@ import { readState, withShell } from './verifystate.mjs';
 import { produce, classOf, factsSplitFor, examTomorrow } from './derive.mjs';
 import { watch, schedulerView } from './watch.mjs';
 import { canvasRaw } from './canvas.mjs';
-import { collectionHash } from './seed.mjs';
+import { collectionHash, migrateBackup, migratedLine } from './seed.mjs';
 import { lintRecord, lintSummary } from './lint.mjs';
-import { loadValidator } from './schemas.mjs';
+import { loadValidator, loadSchemas } from './schemas.mjs';
+import { describeErrors } from './validate.mjs';
 
 const models = db =>
   EV.buildWeakspots({
@@ -602,6 +603,97 @@ export function macBackup(db, { now, label, release }) {
   const hashes = Object.fromEntries(Object.entries(collections).map(([c, docs]) => [c, collectionHash(docs)]));
   return { ...b, hashes };
 }
+/** "schema versions days:2 exams:2" (collections past schema 1, in name order), or "schema versions all 1". */
+export function backupSchemaLine(collections) {
+  const v = Object.entries(collections || {})
+    .map(([c, docs]) => [c, Math.max(1, ...(docs || []).map(d => d.schema || 1))])
+    .filter(([, n]) => n > 1)
+    .sort(([a], [b]) => (a < b ? -1 : 1));
+  return 'schema versions ' + (v.length ? v.map(([c, n]) => `${c}:${n}`).join(' ') : 'all 1');
+}
+
+/** This build's schema version per collection, from the schema registry (spec/schemas, x-ev.schema). */
+export function registryVersions(schemas = loadSchemas()) {
+  return Object.fromEntries(Object.entries(schemas).map(([c, s]) => [c, (s['x-ev'] || {}).schema || 1]));
+}
+
+/**
+ * The restore a drill plans from a backup (D-186): {writes, detail, push, say, schemas} or {problems}. The backup is
+ * checked as written against its own manifest, migrated to `versions` (this build's schemas), then compared with the
+ * record. Pure but for the clock in ctx.now.
+ */
+export function planRestore(b, db, ctx, spec, name = 'backup', versions = registryVersions()) {
+  if (!b || b.kind !== 'E.V. record backup' || !b.hashes || !b.collections)
+    return { problems: ['not a v4 backup (no kind, hashes or collections)'] };
+  const problems = [];
+  for (const c of ['system']) if (b.collections[c]) problems.push(`the backup holds ${c}, which no backup may`); // the journal is in backups (D-113)
+  for (const [c, docs] of Object.entries(b.collections)) {
+    if (!spec.collections[c]) {
+      problems.push(`the backup holds ${c}, which is no collection`);
+      continue;
+    }
+    if (b.counts[c] !== docs.length) problems.push(`${c}: ${docs.length} documents, its manifest says ${b.counts[c]}`);
+    if (b.hashes[c] !== collectionHash(docs)) problems.push(`${c}: its documents do not hash to its manifest`);
+  }
+  for (const c of Object.keys(b.counts))
+    if (!b.collections[c]) problems.push(`${c}: in the manifest, not in the backup`);
+  if (problems.length) return { problems };
+  const m = migrateBackup(b.collections, versions, { at: ctx.now });
+  if (m.problems.length) return { problems: m.problems };
+  const target = m.collections;
+  // Linted as migrated: every document the restore would leave in the record validates against this build's schema.
+  const validate = loadValidator();
+  for (const [c, list] of Object.entries(target))
+    for (const d of list) {
+      const r = validate(c, EV.docData(d), { id: d.id });
+      if (!r.ok) problems.push(describeErrors(`${c}/${d.id} after migration`, r).split('\n')[0]);
+    }
+  if (problems.length) return { problems: problems.slice(0, 20) };
+  const same = (x, y) => EV.stableStringify(EV.docData(x)) === EV.stableStringify(EV.docData(y));
+  const writes = [];
+  let identical = 0,
+    logsKept = 0,
+    extra = 0;
+  const after = {};
+  for (const [c, docs] of Object.entries(target)) {
+    const have = Object.fromEntries((db[c] || []).map(d => [d.id, d]));
+    for (const d of docs) {
+      const cur = have[d.id];
+      if (cur && same(cur, d)) {
+        identical++;
+        continue;
+      }
+      if (cur && classOf(spec, c, d.id) === 'Log') {
+        logsKept++;
+        continue;
+      }
+      writes.push({ op: 'set', collection: c, id: d.id, data: EV.docData(d) });
+      have[d.id] = d;
+    }
+    const ids = new Set(docs.map(d => d.id));
+    extra += (db[c] || []).filter(d => !ids.has(d.id)).length;
+    after[c] = docs.map(d => have[d.id]);
+  }
+  for (const [c, docs] of Object.entries(after)) {
+    const kept = docs.filter((d, i) => !same(d, target[c][i]));
+    if (kept.some(d => classOf(spec, c, d.id) !== 'Log'))
+      problems.push(`${c}: the record would not match the backup after the restore`);
+    else if (!kept.length && collectionHash(docs) !== collectionHash(target[c]))
+      problems.push(`${c}: restored, but its hash would differ`);
+  }
+  if (problems.length) return { problems };
+  const docs = Object.values(b.counts).reduce((x, y) => x + y, 0);
+  const moved = migratedLine(m.schemas);
+  const detail = `drill ok: ${name} (${b.at}), ${Object.keys(b.collections).length} collections and ${docs} documents; counts and hashes match its manifest; ${moved ? 'migrated to this build: ' + moved : "every document already at this build's schema"}; ${writes.length} restored, ${identical} already identical, ${logsKept} log entries kept as they are, ${extra} documents not in the backup kept`;
+  return {
+    writes,
+    detail,
+    schemas: m.schemas,
+    push: `Restore drill passed: ${docs} documents match the backup${moved ? ', migrated to this build' : ''}.`,
+    say: [detail + '.'],
+  };
+}
+
 /**
  * The nightly backup (and, on Sundays or when the run is told to, the Markdown mirror) written under ctx.outputs and
  * handed to the Mac as device_commit_files calls the apply move prints. Nothing on the Mac is read or deleted.
@@ -633,7 +725,8 @@ CODE_STEPS['mac-files'] = function macFiles(db, ctx, spec) {
   const device = [];
   for (let i = 0; i < files.length; i += 50)
     device.push({ tool: 'mcp__remote-devices__device_commit_files', args: { files: files.slice(i, i + 50) } });
-  const detail = `backup ${MAC_FILES.backup(day)} (${docs} documents, ${Math.round(Buffer.byteLength(body) / 1024)} KB)${mirror ? `, mirror ${mirrored} files` : ''}`;
+  // B-163 (D-186): the backup's schema versions, so the watchdog can say how many bumps behind the latest backup is.
+  const detail = `backup ${MAC_FILES.backup(day)} (${docs} documents, ${Math.round(Buffer.byteLength(body) / 1024)} KB; ${backupSchemaLine(backup.collections)})${mirror ? `, mirror ${mirrored} files` : ''}`;
   return { device, detail, say: [`Mac files: ${detail}, to ${folder}.`] };
 };
 
@@ -1252,10 +1345,12 @@ export const AGENT_FOLDS = {
     return { writes, detail, say: [detail + '.'] };
   },
   /**
-   * {status, path?, problem?}: the restore drill. The backup's own counts and hashes are checked against its documents,
-   * then every document that differs from the record is set back to the backup's copy (Log entries the record already
-   * has are kept: a log is never rewritten), and the record as it will stand is checked against the backup's hashes.
-   * Documents the record has and the backup lacks are kept and counted (nothing is deleted). Any mismatch refuses the plan.
+   * {status, path?, problem?}: the restore drill. The backup's own counts and hashes are checked against its documents
+   * as written; then (D-186, B-163) every document below this build's schema is migrated up to it, and every document
+   * that differs from the record is set back to the backup's copy as migrated (Log entries the record already has are
+   * kept: a log is never rewritten), and the record as it will stand is checked against the migrated backup. Documents
+   * the record has and the backup lacks are kept and counted (nothing is deleted). A mismatch, a backup newer than this
+   * build's schema or a version with no migration refuses the plan, with the reason.
    */
   restore(answer, db, ctx, spec) {
     if (answer.status !== 'ok')
@@ -1270,59 +1365,7 @@ export const AGENT_FOLDS = {
     } catch (e) {
       return { problems: ['the backup does not parse: ' + e.message] };
     }
-    if (!b || b.kind !== 'E.V. record backup' || !b.hashes || !b.collections)
-      return { problems: ['not a v4 backup (no kind, hashes or collections)'] };
-    const problems = [];
-    for (const c of ['system']) if (b.collections[c]) problems.push(`the backup holds ${c}, which no backup may`); // the journal is in backups (D-113)
-    for (const [c, docs] of Object.entries(b.collections)) {
-      if (!spec.collections[c]) {
-        problems.push(`the backup holds ${c}, which is no collection`);
-        continue;
-      }
-      if (b.counts[c] !== docs.length)
-        problems.push(`${c}: ${docs.length} documents, its manifest says ${b.counts[c]}`);
-      if (b.hashes[c] !== collectionHash(docs)) problems.push(`${c}: its documents do not hash to its manifest`);
-    }
-    for (const c of Object.keys(b.counts))
-      if (!b.collections[c]) problems.push(`${c}: in the manifest, not in the backup`);
-    if (problems.length) return { problems };
-    const same = (x, y) => EV.stableStringify(EV.docData(x)) === EV.stableStringify(EV.docData(y));
-    const writes = [];
-    let identical = 0,
-      logsKept = 0,
-      extra = 0;
-    const after = {};
-    for (const [c, docs] of Object.entries(b.collections)) {
-      const have = Object.fromEntries((db[c] || []).map(d => [d.id, d]));
-      for (const d of docs) {
-        const cur = have[d.id];
-        if (cur && same(cur, d)) {
-          identical++;
-          continue;
-        }
-        if (cur && classOf(spec, c, d.id) === 'Log') {
-          logsKept++;
-          continue;
-        }
-        writes.push({ op: 'set', collection: c, id: d.id, data: EV.docData(d) });
-        have[d.id] = d;
-      }
-      const ids = new Set(docs.map(d => d.id));
-      extra += (db[c] || []).filter(d => !ids.has(d.id)).length;
-      after[c] = docs.map(d => have[d.id]);
-    }
-    for (const [c, docs] of Object.entries(after)) {
-      const kept = docs.filter((d, i) => !same(d, b.collections[c][i]));
-      if (kept.some(d => classOf(spec, c, d.id) !== 'Log'))
-        problems.push(`${c}: the record would not match the backup after the restore`);
-      else if (!kept.length && collectionHash(docs) !== b.hashes[c])
-        problems.push(`${c}: restored, but its hash would differ`);
-    }
-    if (problems.length) return { problems };
-    const docs = Object.values(b.counts).reduce((x, y) => x + y, 0);
-    const name = path.basename(String(answer.path || 'backup'));
-    const detail = `drill ok: ${name} (${b.at}), ${Object.keys(b.collections).length} collections and ${docs} documents; counts and hashes match its manifest; ${writes.length} restored, ${identical} already identical, ${logsKept} log entries kept as they are, ${extra} documents not in the backup kept`;
-    return { writes, detail, push: `Restore drill passed: ${docs} documents match the backup.`, say: [detail + '.'] };
+    return planRestore(b, db, ctx, spec, path.basename(String(answer.path || 'backup')));
   },
   /** {note}: the one short note the run ends with. */
   'evening-note'(answer) {

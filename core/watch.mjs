@@ -4,6 +4,7 @@
 // missed morning is re-fired until 6:00am Central and never after; the windows live in spec.constants.watchdog. A
 // mac-lane slot (evening-mac, the restore drill) is reported and never re-fired (D-087): only the Mac can run it. Pure.
 import EV from './evcore.mjs';
+import { BUMPS, currentVersion } from './migrate.mjs';
 
 const ms = x => EV.toMs(x);
 const W = spec => ({
@@ -231,6 +232,29 @@ export function watch(db, { now, record, spec, scheduler = null }) {
   return { pipelines, missing, stalledRuns, stalledJobs, refires, reported };
 }
 
+/**
+ * B-163 (D-186): the newest backup an evening-mac run wrote, read from its mac-files step ("... schema versions days:2
+ * exams:2)"), with `behind`, the schema bumps this build has that the backup predates (0 when current; null when the
+ * run predates the line). Null when no run wrote one.
+ */
+export function latestBackup(runs) {
+  const r = (runs || [])
+    .filter(x => x.pipeline === 'evening-mac' && ['ok', 'partial'].includes(x.status))
+    .map(x => ({ run: x, step: (x.steps || []).find(s => s.id === 'mac-files' && s.status === 'ok') }))
+    .filter(x => x.step && /^backup /.test(x.step.detail || ''))
+    .sort((a, b) => ms(b.run.startedAt) - ms(a.run.startedAt))[0];
+  if (!r) return null;
+  const file = (r.step.detail.match(/^backup (\S+)/) || [])[1] || null;
+  const m = r.step.detail.match(/schema versions (all 1|[a-z]+:\d+(?: [a-z]+:\d+)*)/);
+  let behind = null;
+  if (m) {
+    const v = m[1] === 'all 1' ? {} : Object.fromEntries(m[1].split(' ').map(p => [p.split(':')[0], +p.split(':')[1]]));
+    behind = 0;
+    for (const c of Object.keys(BUMPS)) behind += Math.max(0, currentVersion(c) - (v[c] || 1));
+  }
+  return { run: r.run.id, at: r.run.startedAt, file, behind };
+}
+
 /** health/current's own fields (the producer adds the envelope). */
 export function healthBody(db, { now, record, scheduler = null }, spec) {
   const v = watch(db, { now, record, spec, scheduler });
@@ -243,6 +267,7 @@ export function healthBody(db, { now, record, scheduler = null }, spec) {
   const drill =
     (db.runs || []).filter(r => r.pipeline === 'restore-drill').sort((a, b) => ms(b.startedAt) - ms(a.startedAt))[0] ||
     null;
+  const backup = latestBackup(db.runs);
   return {
     record,
     pipelines: v.pipelines,
@@ -261,6 +286,9 @@ export function healthBody(db, { now, record, scheduler = null }, spec) {
           days: Math.floor((ms(now) - ms(drill.startedAt)) / 864e5),
         }
       : null,
+    // B-163 (D-186): the newest backup an evening-mac run wrote, and how many schema bumps behind this build it is
+    // (absent while no run has written one, so a health check written before it still rebuilds byte for byte).
+    ...(backup ? { backup } : {}),
     // B-61: the scheduler's last firing per task as this run read it: an input, so a rebuild takes it as stored.
     ...(scheduler ? { scheduler } : {}),
   };
