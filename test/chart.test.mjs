@@ -5,13 +5,15 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { ROOT, copyRepo } from './helpers.mjs';
+import { ROOT, copyRepo, chartCopy, directRecordReads } from './helpers.mjs';
 import { build } from '../tools/build.mjs';
 import * as C from '../tools/chart.mjs';
 
-const IMPORT = path.join(ROOT, 'chart', 'import');
+// B-153 (T-5): every read of the record goes to one copy taken as the tests start (helpers.mjs chartCopy).
+const RECORD = chartCopy();
+const IMPORT = path.join(RECORD, 'chart', 'import');
 const read = f => fs.readFileSync(path.join(IMPORT, f), 'utf8');
-const rec = () => C.loadChart(ROOT);
+const rec = () => C.loadChart(RECORD);
 // The import as it ran, with each done task's commit taken from the record (so the test needs no git history).
 function imported() {
   const now = rec(),
@@ -384,7 +386,7 @@ test('B-143 (D-172): DECISIONS.md and CHANGELOG.md are generated from chart/ lik
   const r = rec();
   for (const [f, text] of Object.entries(C.generatedFiles(r)))
     assert.equal(
-      fs.readFileSync(path.join(ROOT, f), 'utf8'),
+      fs.readFileSync(path.join(RECORD, f), 'utf8'),
       text,
       `${f} differs from chart/: change the record with node tools/chart.mjs, never the file`
     );
@@ -403,14 +405,16 @@ test('B-143 (D-172): DECISIONS.md and CHANGELOG.md are generated from chart/ lik
   );
   assert.deepEqual({ by: r.views.retired.by, at: r.views.retired.at }, { by: 'D-172', at: '2026-10-21' });
   assert.ok(r.views.board.node && r.views.decisions.node, 'the doc ids are kept');
-  const out = execFileSync('node', [path.join(ROOT, 'tools', 'chart.mjs'), 'views'], { encoding: 'utf8' });
+  const out = execFileSync('node', [path.join(ROOT, 'tools', 'chart.mjs'), 'views', '--root', RECORD], {
+    encoding: 'utf8',
+  });
   assert.match(out, /^views: retired \(D-172, 2026-10-21\): .* no Docs calls\n$/);
   assert.doesNotMatch(out, /mcp__|Claude_Docs/);
 });
 
 test('BACKLOG.md is generated from chart/ (no hand edits)', () => {
   assert.equal(
-    fs.readFileSync(path.join(ROOT, 'BACKLOG.md'), 'utf8'),
+    fs.readFileSync(path.join(RECORD, 'BACKLOG.md'), 'utf8'),
     C.renderBacklog(rec()),
     'BACKLOG.md differs from chart/: change the record with node tools/chart.mjs log, never the file'
   );
@@ -1709,7 +1713,7 @@ test('B-141: a rule is marked ended with the decision that ended it, kept, left 
   assert.match(out.what, /rule R-01 \(pageOnlyLive, ended\)/);
   assert.equal(r.rules.length, 1, 'kept');
   assert.equal(r.rules[0].ended, 'D-002: the window closed');
-  const real = JSON.parse(fs.readFileSync(path.join(ROOT, 'chart', 'rules.json'), 'utf8'));
+  const real = C.loadChart(RECORD).rules;
   assert.match(real.find(x => x.id === 'R-01').ended, /^D-145/, 'the record marks R-01 ended');
 });
 
@@ -2019,4 +2023,53 @@ test('B-151 (T-1): the nightly workflow runs npm run check with Chromium, keeps 
   assert.match(out, /^inbox: empty/);
   assert.match(out, /Nightly: gh run list --workflow nightly\.yml --limit 1/);
   assert.match(out, /--source "nightly <id>"/);
+});
+
+// ------------------------------------------------------------------------------------------------ B-153 a copy
+test('B-153 (T-5): no test reads the real record; a planted direct read is caught', () => {
+  for (const f of fs.readdirSync(path.join(ROOT, 'test')).filter(f => f.endsWith('.test.mjs')))
+    assert.deepEqual(
+      directRecordReads(fs.readFileSync(path.join(ROOT, 'test', f), 'utf8')),
+      [],
+      `${f} reads the record directly`
+    );
+  // Spelled in pieces, so this file holds no direct read itself.
+  const R = 'RO' + 'OT';
+  for (const planted of [
+    `fs.readFileSync(path.join(${R}, 'chart', 'tasks.json'), 'utf8')`,
+    `fs.readFileSync(path.join(${R}, 'BACKLOG.md'), 'utf8')`,
+    `C.loadChart(${R})`,
+    "readJson('" + "chart/deploys.json')",
+  ])
+    assert.equal(directRecordReads(planted).length, 1, planted);
+  assert.deepEqual(directRecordReads("path.join(dir, 'chart', 'tasks.json')"), [], 'a throwaway copy is fine');
+});
+
+test("B-153 (T-5): the record checks hold with two chats' worth of planted state in the copy", () => {
+  const dir = chartCopy(RECORD);
+  const r = C.loadChart(dir);
+  // Chat one: a task taken and a decision logged; chat two: a bug reported from the chat and triaged into a task.
+  const open =
+    r.tasks.find(t => t.status === 'open' && !(t.depends || []).length) || r.tasks.find(t => t.status === 'open');
+  if (open) C.applyLog(r, { _: ['log', open.id], status: 'in progress', note: 'chat one' });
+  const d = 'D-' + String(Math.max(...r.decisions.map(x => Number(x.id.slice(2)))) + 1).padStart(3, '0');
+  C.applyLog(r, { _: ['log', 'decision', d], title: 'Planted by chat one', why: 'a test', status: 'proposed' });
+  C.applyReport(r, { _: ['report', 'bug', 'the planted bug from chat two'], source: 'chat two' });
+  const b = r.tasks.at(-1);
+  C.applyLog(r, { _: ['log', b.id], triage: 'task', dod: 'planted', milestone: 'v4.2 tests' });
+  C.saveChart(dir, r);
+  for (const [f, text] of Object.entries(C.generatedFiles(r))) fs.writeFileSync(path.join(dir, f), text);
+  const again = C.loadChart(dir);
+  assert.deepEqual(
+    C.lintChart(again).filter(x => x.level === 'error'),
+    [],
+    'lints green'
+  );
+  for (const [f, text] of Object.entries(C.generatedFiles(again)))
+    assert.equal(fs.readFileSync(path.join(dir, f), 'utf8'), text, `${f} matches its record`);
+  assert.ok(again.tasks.some(t => t.words === 'the planted bug from chat two'));
+  assert.ok(
+    !C.loadChart(RECORD).tasks.some(t => t.words === 'the planted bug from chat two'),
+    'the shared copy is untouched'
+  );
 });

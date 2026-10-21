@@ -44,3 +44,26 @@ export function copyRepo({ push = false } = {}) {
   }
   return dir;
 }
+
+// B-153 (T-5): the record files a test reads. Another chat may write chart/ while npm test runs here, so every Chart
+// test reads one copy taken when the tests start: chart/ (with its import folder) and the three files generated from
+// it, all from the same moment. A lint test (chart.test.mjs) refuses a direct read of the real ones.
+export const RECORD_FILES = ['chart', 'BACKLOG.md', 'DECISIONS.md', 'CHANGELOG.md'];
+let recordCopy = null;
+/** A folder holding a copy of the record as it was when first called, taken once per test process. */
+export function chartCopy(root = ROOT) {
+  if (recordCopy && root === ROOT) return recordCopy;
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-record-'));
+  for (const f of RECORD_FILES) fs.cpSync(path.join(root, f), path.join(dir, f), { recursive: true });
+  if (root === ROOT) recordCopy = dir;
+  return dir;
+}
+/** Direct reads of the real record in a test's source: ROOT joined to a record file, or loadChart(ROOT). */
+export function directRecordReads(text) {
+  const files = RECORD_FILES.map(f => f.replace('.', '\\.')).join('|');
+  const re = new RegExp(
+    `path\\.join\\(ROOT,\\s*'(?:${files})'|loadChart\\(ROOT\\)|read(?:FileSync|Json)\\(\\s*['"\`](?:\\.\\/)?chart\\/`,
+    'g'
+  );
+  return String(text).match(re) || [];
+}
