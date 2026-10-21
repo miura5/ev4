@@ -2534,7 +2534,7 @@
   "milestone": "v4.2 runs",
   "status": "done",
   "depends": [],
-  "notes": "Oct 21: Matt says something from the staging morning reached his phone around 3:59am; filed as B-166 with the evidence (staging tasks' push is off; the run documents' push fields carry no STAGING prefix).",
+  "notes": "Staging at cd06b51 (v4.1.0+39, Oct 21 09:00Z): system documents, page and the six cloud staging prompts deployed; verify-deploy staging RED only on staging.evening-mac and staging.restore-drill (Mac-bound: prompt and name change only from a chat linked to the Mac, with Matt). Fired on it and read back: staging watchdog runs/watchdog-20261021-085907643 ok (11 calls, all printed) and staging morning runs/morning-20261021-085907564 ok (20 calls, all printed). The staging morning fired from this chat at 08:59Z (the one Matt confirms): its run ended on its STAGING line in its own chat; Matt's part is to say whether anything reached his phone at about 3:59am Central. live at 8ec85c4 (v4.2.0) Oct 21 on Matt's OK: ship live GREEN; staging GREEN at the same commit first. Oct 21: Matt says something from the staging morning reached his phone around 3:59am; filed as B-166 with the evidence (staging tasks' push is off; the run documents' push fields carry no STAGING prefix).",
   "commit": "e735743",
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
