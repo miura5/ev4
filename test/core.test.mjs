@@ -49,7 +49,8 @@ function assertValid(w, existing = null) {
 }
 
 test('spec loads and the release lines up', () => {
-  assert.equal(EV.VERSION, 'v' + spec.specVersion);
+  // B-149: core carries no release; the build writes it into the published core.js.
+  assert.equal(EV.VERSION, '__EV_RELEASE__');
   assert.equal(EV.constants().review.flex.max, 15);
 });
 
@@ -1149,7 +1150,21 @@ test('snapshot reads runs/<id> and answers/<setId>, carries the release and the 
   assert.equal(s.health.runs.morning.id, 'morning-20261018-092500-bb22');
   assert.equal(s.health.runs.morning.status, 'failed');
   assert.equal(s.today.answered, 1);
-  assert.equal(s.release, EV.VERSION);
+  assert.equal(s.release, null, "B-149: the release is the run's own, passed in; none given here");
+  const given = EV.buildSnapshot({
+    date: '2026-10-18',
+    now: '2026-10-18T10:00:00Z',
+    exams: [E4],
+    weakspots: models,
+    sets: [review],
+    answers: [],
+    days: [],
+    runs,
+    dates: [],
+    counts: { weakspots: 1 },
+    versions: { spec: '4.2', release: 'v4.2.0' },
+  });
+  assert.deepEqual([given.release, given.specVersion], ['v4.2.0', '4.2']);
   assert.equal(s.derivedHash, EV.derivedHash(models));
   const c = EV.buildContext({
     date: '2026-10-18',
@@ -1164,7 +1179,8 @@ test('snapshot reads runs/<id> and answers/<setId>, carries the release and the 
 test('backup round-trips into a restore plan', () => {
   const b = EV.buildBackup({ weakspots: [ws('a')], exams: [E4] }, { now: '2026-10-18T01:00:00Z' });
   assert.equal(b.counts.weakspots, 1);
-  assert.equal(b.release, EV.VERSION);
+  assert.equal(b.release, null, 'B-149: no release unless the run gives its own');
+  assert.equal(EV.buildBackup({}, { now: '2026-10-18T01:00:00Z', release: 'v4.2.0' }).release, 'v4.2.0');
   const plan = EV.restorePlan(b);
   assert.equal(plan.length, 2);
   assert.equal(plan[0].op, 'set');

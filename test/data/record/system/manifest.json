@@ -7,7 +7,7 @@
  "commit": "f951d794b498dfb6d109c4ce7c1ba5c8305c763d",
  "dirty": false,
  "builtAt": "2026-10-16T14:00:00Z",
- "specVersion": "4.0.0",
+ "specVersion": "4.2",
  "files": {
   "core/schemas.mjs": "6c1c2889d18ee56b1fcdeea53d109035cd4284091865d146ad796cc61f61cbe0",
   "core/validate.mjs": "2d9bcc06c0253d5d73aba033e5fc27998635fc29e0060fbfe6e982fe1f047bd0",

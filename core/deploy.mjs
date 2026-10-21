@@ -583,16 +583,29 @@ export function deployCalls({
       });
       continue;
     }
-    if (t.macBound) skipped.push(`${key}: Mac-bound; change it only from a chat linked to the Mac, with Matt present`);
     const live = state && state.triggers && state.triggers.find(x => x.id === t.trigger);
     const livePrompt = live && live.derived_state && live.derived_state.prompt;
-    if (live && typeof livePrompt === 'string' && sha256(livePrompt) === t.promptSha256) continue;
-    if (!t.macBound)
-      calls.push({
-        step: `update ${key}`,
-        tool: 'mcp__claude-code-remote__update_trigger',
-        args: { trigger_id: t.trigger, prompt: `<the contents of ${promptFile}>` },
-      });
+    const promptSame = live && typeof livePrompt === 'string' && sha256(livePrompt) === t.promptSha256;
+    // B-149: a task's name carries the minor version, so a release renames it. A name changes freely from the
+    // cloud, a Mac-bound task's too, but changing a Mac-bound task at all needs Matt's explicit OK in a build chat.
+    const rename = live && live.name !== t.name ? { name: t.name } : {};
+    if (t.macBound) {
+      if (!promptSame)
+        skipped.push(`${key}: Mac-bound; its prompt changes only from a chat linked to the Mac, with Matt present`);
+      if (rename.name)
+        calls.push({
+          step: `rename ${key} (Mac-bound: the name alone, without the prompt, and only on Matt's explicit OK)`,
+          tool: 'mcp__claude-code-remote__update_trigger',
+          args: { trigger_id: t.trigger, ...rename },
+        });
+      continue;
+    }
+    if (promptSame && !rename.name) continue;
+    calls.push({
+      step: `update ${key}`,
+      tool: 'mcp__claude-code-remote__update_trigger',
+      args: { trigger_id: t.trigger, ...rename, ...(promptSame ? {} : { prompt: `<the contents of ${promptFile}>` }) },
+    });
   }
   return { ok: true, refusals: [], calls, skipped };
 }

@@ -1941,6 +1941,23 @@ async function ship(o) {
           `R-01 (D-139): D-085's rollback window is open (B-30 not done), so live takes page-only changes; since live's ${String(base).slice(0, 7)}: ${found.join('; ')}`
         );
     }
+    // B-149 (D-173): what goes live is a tagged release. With every other gate passed and the commit untagged, ship
+    // tags it here (pushed once live is recorded); the tag renames the build, so staging carries it first.
+    if (!refusals.length) {
+      const spec = readJson(path.join(root, 'spec', 'ev.spec.json'));
+      try {
+        const at = tagAt(root, manifest.commit);
+        if (!at) {
+          const tag = nextTag(root, { specVersion: spec.specVersion, minor: !!o.minor });
+          git(root, ['tag', '-a', tag, manifest.commit, '-m', `E.V. ${tag} (ship live, D-173)`]);
+          refusals.push(
+            `B-149 (D-173): tagged ${tag} at ${manifest.commit.slice(0, 7)} here (pushed once live is recorded). The release is now ${tag}, so staging must carry it: ship staging, then ship live again`
+          );
+        }
+      } catch (e) {
+        refusals.push(`B-149 (D-173): ${e.message}`);
+      }
+    }
   }
   const shipFile = path.join(dist, `ship-${target}.json`),
     last = fs.existsSync(shipFile) ? JSON.parse(fs.readFileSync(shipFile, 'utf8')) : null;
@@ -2088,12 +2105,54 @@ async function ship(o) {
   );
   return recordShip(root, o, { target, manifest, recorded: step.recorded });
 }
+/** B-149: the v4.* tag at a commit, or null. */
+export function tagAt(root, commit) {
+  return git(root, ['tag', '--points-at', commit, '--list', 'v4.*']).split('\n').filter(Boolean).sort().at(-1) || null;
+}
+/**
+ * B-149 (D-173): the tag the next live deploy takes. A patch is v<major.minor>.<n+1> on the newest tag of the spec's
+ * major.minor; a minor (--minor) is v<major.minor>.0 when that minor has no tag yet. The spec's specVersion names the
+ * major.minor being shipped.
+ */
+export function nextTag(root, { specVersion, minor = false }) {
+  const [M, m] = String(specVersion).split('.').map(Number);
+  const tags = git(root, ['tag', '--list', 'v4.*'])
+    .split('\n')
+    .map(t => /^v(\d+)\.(\d+)\.(\d+)$/.exec(t.trim()))
+    .filter(Boolean)
+    .map(x => x.slice(1).map(Number));
+  const same = tags.filter(([a, b]) => a === M && b === m);
+  if (minor) {
+    if (same.length) throw new Error(`v${M}.${m} is tagged already: a minor needs the next specVersion (D-173)`);
+    return `v${M}.${m}.0`;
+  }
+  if (!same.length)
+    throw new Error(`no v${M}.${m} tag yet: this live deploy is the minor (ship live --matt-ok --minor)`);
+  return `v${M}.${m}.${Math.max(...same.map(t => t[2])) + 1}`;
+}
+/** B-149: pushes the tag a live deploy carries; a refused push is Matt's one line ("push the tag"). */
+export function pushTag(root, tag) {
+  try {
+    git(root, ['push', '-q', 'origin', `refs/tags/${tag}`]);
+    return { pushed: true, line: `tag ${tag} pushed to origin` };
+  } catch (e) {
+    return {
+      pushed: false,
+      line: `the tag push was refused (${firstLine(e)}): push the tag with git push origin ${tag}`,
+    };
+  }
+}
+
 /**
  * The record half of a green ship: the deploy (once), and with --done B-nn[,B-mm] those tasks done at --commit (the
  * task's own commit; default the deployed one) in the same command (B-147, W-6). Exported for its test.
  */
 export function recordShip(root, o, { target, manifest, recorded = false }) {
   const short = manifest.commit.slice(0, 7);
+  if (target === 'live') {
+    const tag = tagAt(root, manifest.commit);
+    if (tag) console.log(pushTag(root, tag).line);
+  }
   if (typeof o.done === 'string')
     for (const id of list(o.done))
       record(
@@ -2905,6 +2964,7 @@ function args(argv) {
     '--correct',
     '--retire',
     '--matt',
+    '--minor',
   ]);
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];

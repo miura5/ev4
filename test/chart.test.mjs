@@ -1957,3 +1957,46 @@ test('B-148 (D-4, M-1): BACKLOG.md lists open work first, then Your turn by plac
   assert.equal(out.trimEnd(), ['# Your turn', '', ...C.yourTurnLines(rec())].join('\n'));
   assert.match(out, /### At the Mac\n\n- B-27 /);
 });
+
+test("B-149 (D-173): ship live tags the next release (a patch on the minor's newest tag, or the minor with --minor) and pushes the tag", () => {
+  const dir = copyRepo({ push: true });
+  const g = (...a) => execFileSync('git', ['-C', dir, ...a], { encoding: 'utf8' });
+  assert.throws(() => C.nextTag(dir, { specVersion: '4.2' }), /no v4\.2 tag yet: this live deploy is the minor/);
+  assert.equal(C.nextTag(dir, { specVersion: '4.2', minor: true }), 'v4.2.0');
+  g('tag', '-a', 'v4.1.0', '-m', 'v4.1.0');
+  g('tag', '-a', 'v4.2.0', '-m', 'v4.2.0');
+  assert.equal(C.tagAt(dir, 'HEAD'), 'v4.2.0');
+  assert.throws(() => C.nextTag(dir, { specVersion: '4.2', minor: true }), /v4\.2 is tagged already/);
+  g('tag', '-a', 'v4.2.1', '-m', 'v4.2.1');
+  assert.equal(C.nextTag(dir, { specVersion: '4.2' }), 'v4.2.2');
+  assert.equal(C.nextTag(dir, { specVersion: '4.3', minor: true }), 'v4.3.0');
+  // The push lands the tag on origin; a refused push is one line for Matt's list.
+  const pushed = C.pushTag(dir, 'v4.2.1');
+  assert.deepEqual([pushed.pushed, pushed.line], [true, 'tag v4.2.1 pushed to origin']);
+  const origin = g('remote', 'get-url', 'origin').trim();
+  assert.match(execFileSync('git', ['--git-dir', origin, 'tag', '--list'], { encoding: 'utf8' }), /v4\.2\.1/);
+  g('remote', 'set-url', '--push', 'origin', path.join(os.tmpdir(), 'no-remote-' + Date.now()));
+  assert.match(
+    C.pushTag(dir, 'v4.2.2').line,
+    /^the tag push was refused \(.+\): push the tag with git push origin v4\.2\.2$/
+  );
+});
+
+test("B-149 (D-173): the spec's specVersion is the newest tag's major.minor or the next minor being prepared", () => {
+  let tags = [];
+  try {
+    tags = execFileSync('git', ['-C', ROOT, 'tag', '--list', 'v4.*'], { encoding: 'utf8' })
+      .split('\n')
+      .map(t => /^v4\.(\d+)\.\d+$/.exec(t.trim()))
+      .filter(Boolean)
+      .map(m => Number(m[1]));
+  } catch {
+    /* no git */
+  }
+  const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec', 'ev.spec.json'), 'utf8'));
+  const [M, m] = spec.specVersion.split('.').map(Number);
+  assert.equal(M, 4);
+  if (!tags.length) return; // a clone without tags (CI's shallow checkout): nothing to compare with
+  const newest = Math.max(...tags);
+  assert.ok(m === newest || m === newest + 1, `specVersion ${spec.specVersion} against the newest tag v4.${newest}`);
+});

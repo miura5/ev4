@@ -1,5 +1,5 @@
 {
- "specVersion": "4.0.0",
+ "specVersion": "4.2",
  "purpose": "E.V. v4's machine-readable spec: collections, tasks, environments, capacity, boundaries and working agreements. Pipelines, build chats and the page read this instead of prose; the design is the E.V. Foundation v4 doc.",
  "roles": [
   "page",
@@ -1873,8 +1873,8 @@
    "Staging tasks are fire-only and never push. Old tasks are disabled and kept: their ids move to retired with the reason."
   ],
   "nameTemplate": {
-   "live": "E.V. <pipeline> (<release>)",
-   "staging": "E.V. staging · <pipeline> (<release>)"
+   "live": "E.V. <pipeline> (<minor>)",
+   "staging": "E.V. staging · <pipeline> (<minor>)"
   },
   "live": {
    "morning": {

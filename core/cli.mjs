@@ -435,7 +435,7 @@ const commands = {
             record: o.record || 'staging',
             at,
             dir,
-            release: o.release || (manifest && manifest.release) || EV.VERSION,
+            release: o.release || (manifest && manifest.release) || 'unknown',
             commit: (manifest && manifest.commit) || null,
             input: {
               ...(o.job ? { job: o.job } : {}),

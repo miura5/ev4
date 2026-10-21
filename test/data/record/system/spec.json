@@ -3,6 +3,6 @@
  "writer": "deploy",
  "at": "2026-10-16T14:00:00Z",
  "source": "deploy",
- "specVersion": "4.0.0",
+ "specVersion": "4.2",
  "collections": {}
 }

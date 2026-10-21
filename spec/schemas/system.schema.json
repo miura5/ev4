@@ -63,7 +63,7 @@
     },
     "specVersion": {
      "type": "string",
-     "pattern": "^4\\.\\d+\\.\\d+$"
+     "pattern": "^4\\.\\d+$"
     },
     "collections": {
      "type": "object"
@@ -155,7 +155,7 @@
     },
     "release": {
      "type": "string",
-     "pattern": "^v4\\.\\d+\\.\\d+$"
+     "pattern": "^v4\\.\\d+\\.\\d+(\\+[0-9a-z]+)?$"
     },
     "commit": {
      "type": "string",
@@ -170,7 +170,7 @@
     },
     "specVersion": {
      "type": "string",
-     "pattern": "^4\\.\\d+\\.\\d+$"
+     "pattern": "^4\\.\\d+$"
     },
     "files": {
      "type": "object",

@@ -6,7 +6,7 @@
 //   EVApp.boot({spec, db, use, record, say}) -> {changed(key, value), lost(key, error)}
 (function () {
   'use strict';
-  const VERSION = 'v4.0.0';
+  const VERSION = '__EV_RELEASE__'; // B-149: the build writes the release in (tools/build.mjs RELEASE_SLOT)
 
   function boot({ spec, db, use, say }) {
     const EV_SPEC = spec;

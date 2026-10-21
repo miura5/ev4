@@ -37,7 +37,8 @@ test('a clean tree builds a manifest that validates, with every file hash, task 
   const spec = JSON.parse(fs.readFileSync(path.join(dir, 'spec/ev.spec.json'), 'utf8'));
   assert.equal(manifest.dirty, false);
   assert.equal(manifest.commit, git(dir, 'rev-parse', 'HEAD').trim());
-  assert.equal(manifest.release, 'v' + spec.specVersion);
+  // B-149: no v4.* tag in this copy, so the release says so; tagged builds are B-149's own test.
+  assert.equal(manifest.release, `v${spec.specVersion}.0+untagged`);
   assert.equal(manifest.builtAt, NOW);
   assert.ok(validateAgainst({ $ref: '#/$defs/manifestBody', $defs: schemas.system.$defs }, manifest).ok);
   const onDisk = JSON.parse(fs.readFileSync(path.join(dir, 'dist/manifest.json'), 'utf8'));
@@ -54,7 +55,7 @@ test('a clean tree builds a manifest that validates, with every file hash, task 
     1 +
     Object.keys(spec.tasks.build).length;
   assert.equal(Object.keys(manifest.tasks).length, expected);
-  assert.equal(manifest.tasks['live.morning'].name, `E.V. morning (${manifest.release})`);
+  assert.equal(manifest.tasks['live.morning'].name, `E.V. morning (v${spec.specVersion})`, 'B-149: the minor');
   assert.equal(manifest.tasks['staging.evening-mac'].macBound, true);
   assert.equal(manifest.records.live.artifact, spec.registry.records.live.artifact);
   assert.deepEqual(manifest.records.live.systemDocs, ['system/manifest', 'system/spec', 'system/environments']);
@@ -117,8 +118,67 @@ test('registryProblems is empty for this repository', () => {
   assert.deepEqual(registryProblems(spec, loadSchemas()), []);
 });
 
-test('the build fails when core VERSION and the release differ', async () => {
+test('B-149: the build fails when core has no release slot to write the release into', async () => {
   const dir = copyRepo();
-  fs.writeFileSync(path.join(dir, 'core/evcore.mjs'), "export const VERSION = 'v3.9.9';\n");
-  await assert.rejects(build({ root: dir, now: NOW }), /core VERSION v3\.9\.9 differs from the release v4\.0\.0/);
+  const p = path.join(dir, 'core/evcore.mjs');
+  fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace("'__EV_RELEASE__'", "'v3.9.9'"));
+  await assert.rejects(build({ root: dir, now: NOW }), /core\/evcore\.mjs has no __EV_RELEASE__ for the release/);
+});
+
+test('B-149 (D-173): the release is the tag at a tagged commit, <tag>+<n> past it, and a bookkeeping commit never moves it', async () => {
+  const dir = copyRepo();
+  const g = (...a) => git(dir, '-c', 'user.name=Test', '-c', 'user.email=test@example.com', ...a);
+  g('tag', '-a', 'v4.2.0', '-m', 'E.V. v4.2.0');
+  let { manifest } = await build({ root: dir, now: NOW });
+  assert.equal(manifest.release, 'v4.2.0');
+  // Two product commits past it: v4.2.0+2.
+  for (const n of [1, 2]) {
+    fs.writeFileSync(path.join(dir, `core/extra${n}.mjs`), `export const x${n} = ${n};\n`);
+    g('add', '-A');
+    g('commit', '-q', '-m', `B-0${n}: a product change`);
+  }
+  ({ manifest } = await build({ root: dir, now: NOW }));
+  assert.equal(manifest.release, 'v4.2.0+2');
+  const commit = manifest.commit;
+  // A record commit after it: the build's commit and its release stay.
+  fs.writeFileSync(path.join(dir, 'BACKLOG.md'), 'changed\n');
+  fs.writeFileSync(path.join(dir, 'CHANGELOG.md'), 'changed\n');
+  g('add', '-A');
+  g('commit', '-q', '-m', 'B-01: notes (chart)');
+  ({ manifest } = await build({ root: dir, now: NOW }));
+  assert.deepEqual([manifest.commit, manifest.release], [commit, 'v4.2.0+2']);
+  // A run's build of its tagless clone takes the deployed release it is given.
+  ({ manifest } = await build({ root: dir, now: NOW, release: 'v4.2.0' }));
+  assert.equal(manifest.release, 'v4.2.0');
+  for (const t of ['live', 'staging']) {
+    const page = fs.readFileSync(path.join(dir, 'dist', 'page', t, 'app.js'), 'utf8');
+    assert.match(page, /const VERSION = 'v4\.2\.0'/);
+  }
+});
+
+test('B-149 (D-173): no version literal lives outside the spec: core, the page, the tools and the scripts carry none', () => {
+  const ROOT_ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+  const found = [];
+  const walk = d => {
+    for (const f of fs.readdirSync(path.join(ROOT_, d))) {
+      const rel = path.join(d, f);
+      if (fs.statSync(path.join(ROOT_, rel)).isDirectory()) walk(rel);
+      else if (/\.(mjs|cjs|js|html)$/.test(f)) {
+        const text = fs.readFileSync(path.join(ROOT_, rel), 'utf8');
+        for (const m of text.matchAll(/['"`]v4\.\d+\.\d+[^'"`]*['"`]/g)) found.push(`${rel}: ${m[0]}`);
+      }
+    }
+  };
+  for (const d of ['core', 'page', 'tools', 'scripts']) walk(d);
+  assert.deepEqual(found, []);
+});
+
+test('B-149: the bookkeeping patterns and the pathspecs that find the build commit name the same files', async () => {
+  const { BOOKKEEPING, BOOKKEEPING_PATHS } = await import('../tools/build.mjs');
+  for (const p of BOOKKEEPING_PATHS)
+    assert.ok(
+      BOOKKEEPING.some(re => re.test(p === 'chart' ? 'chart/x.json' : p)),
+      p
+    );
+  assert.equal(BOOKKEEPING.length, BOOKKEEPING_PATHS.length);
 });

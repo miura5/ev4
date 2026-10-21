@@ -55,6 +55,15 @@ export const BOOKKEEPING = [
   /^test\/chart\.test\.mjs$/,
 ];
 const bookkeeping = f => BOOKKEEPING.some(re => re.test(f));
+// The same list as pathspecs, for the log that finds the build's commit (one list, so the two never drift: B-149).
+export const BOOKKEEPING_PATHS = [
+  'chart',
+  'BACKLOG.md',
+  'DECISIONS.md',
+  'CHANGELOG.md',
+  'tools/chart.mjs',
+  'test/chart.test.mjs',
+];
 
 /**
  * The tree git would commit (tracked plus untracked-not-ignored), and whether it differs from HEAD. The build's
@@ -64,17 +73,7 @@ const bookkeeping = f => BOOKKEEPING.some(re => re.test(f));
 export function gitState(root) {
   let commit = '';
   try {
-    commit = git(root, [
-      'log',
-      '-1',
-      '--format=%H',
-      '--',
-      '.',
-      ':(exclude)chart',
-      ':(exclude)BACKLOG.md',
-      ':(exclude)tools/chart.mjs',
-      ':(exclude)test/chart.test.mjs',
-    ]).trim();
+    commit = git(root, ['log', '-1', '--format=%H', '--', '.', ...BOOKKEEPING_PATHS.map(p => `:(exclude)${p}`)]).trim();
   } catch {
     /* none in a shallow checkout */
   }
@@ -132,10 +131,31 @@ export function registryProblems(spec, schemas) {
   return problems;
 }
 
+/** B-149: where core and the page take the release the build writes in (no version literal lives in the code). */
+export const RELEASE_SLOT = '__EV_RELEASE__';
+/**
+ * B-149 (D-173): the release at a commit, from the newest v4.* tag reachable from it: the tag itself at a tagged
+ * commit, <tag>+<n> n commits past it (SemVer build metadata), null when no tag is reachable (a shallow clone).
+ */
+export function releaseOf(root, commit = 'HEAD') {
+  try {
+    const d = execFileSync('git', ['-C', root, 'describe', '--tags', '--long', '--match', 'v4.*', commit], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+    const m = /^(v4\.\d+\.\d+)-(\d+)-g[0-9a-f]+$/.exec(d);
+    return m ? (m[2] === '0' ? m[1] : `${m[1]}+${m[2]}`) : null;
+  } catch {
+    return null;
+  }
+}
 function taskEntries(spec, release) {
   const out = {};
   const name = (lane, pipeline) =>
-    spec.tasks.nameTemplate[lane].replace('<pipeline>', pipeline).replace('<release>', release);
+    spec.tasks.nameTemplate[lane]
+      .replace('<pipeline>', pipeline)
+      .replace('<minor>', 'v' + spec.specVersion)
+      .replace('<release>', release);
   const entry = (key, t, displayName, promptSha256) => {
     out[key] = {
       name: displayName,
@@ -200,8 +220,9 @@ export function buildPages({ root, spec, schemas, release }) {
   const study = read('core/study.mjs');
   if (/^import /m.test(study)) throw new Error('core/study.mjs must not import: it runs in the page as written');
   const studyNames = [...study.matchAll(/^export (?:function|const) (\w+)/gm)].map(m => m[1]);
+  if (!core.includes(RELEASE_SLOT)) throw new Error(`core/evcore.mjs has no ${RELEASE_SLOT} for the release`);
   const coreJs =
-    core.replace(/export default EVCore;\s*$/, 'window.EVCore = EVCore;\n') +
+    core.replaceAll(RELEASE_SLOT, release).replace(/export default EVCore;\s*$/, 'window.EVCore = EVCore;\n') +
     '\n// ---- core/validate.mjs\n(function () {\n' +
     validate.replace(/^export function /gm, 'function ') +
     '\nwindow.EVValidate = { ' +
@@ -217,10 +238,10 @@ export function buildPages({ root, spec, schemas, release }) {
     '\nwindow.EVStudy = { ' +
     studyNames.join(', ') +
     ' };\n})();\n';
-  const app = appSource(root);
-  const appVersion = (app.match(/const VERSION = '([^']+)'/) || [])[1];
-  if (appVersion !== release)
-    throw new Error(`page/app VERSION ${appVersion || '(none)'} differs from the release ${release}`);
+  // B-149: core and the page carry no release of their own; the build writes the one release into both.
+  const app0 = appSource(root);
+  if (!app0.includes(RELEASE_SLOT)) throw new Error(`page/app has no ${RELEASE_SLOT} for the release`);
+  const app = app0.replaceAll(RELEASE_SLOT, release);
   const out = {};
   for (const target of ['live', 'staging']) {
     const other = target === 'live' ? 'staging' : 'live';
@@ -294,19 +315,21 @@ export function buildPages({ root, spec, schemas, release }) {
   return out;
 }
 
-export async function build({ root = HERE, out = path.join(root, 'dist'), now = new Date().toISOString() } = {}) {
+export async function build({
+  root = HERE,
+  out = path.join(root, 'dist'),
+  now = new Date().toISOString(),
+  release: releaseOverride = null,
+} = {}) {
   const spec = JSON.parse(fs.readFileSync(path.join(root, 'spec', 'ev.spec.json'), 'utf8'));
   const schemas = loadSchemas(root);
   const problems = registryProblems(spec, schemas);
   if (problems.length) throw new Error('the spec and the schema registry disagree:\n  ' + problems.join('\n  '));
   const validate = makeValidator(schemas);
-  const release = 'v' + spec.specVersion;
-  const coreVersionFile = path.join(root, 'core', 'evcore.mjs');
-  if (fs.existsSync(coreVersionFile)) {
-    const m = fs.readFileSync(coreVersionFile, 'utf8').match(/VERSION\s*=\s*['"]([^'"]+)['"]/);
-    if (!m || m[1] !== release)
-      throw new Error(`core VERSION ${m ? m[1] : '(none)'} differs from the release ${release}`);
-  }
+  // B-149 (D-173): the release comes from the tag, through the build's own commit (so a bookkeeping commit never moves
+  // it); a run that builds its checkout to compare passes the deployed release instead (its clone has no tags).
+  const g0 = gitState(root);
+  const release = releaseOverride || releaseOf(root, g0.commit) || `v${spec.specVersion}.0+untagged`;
   // B-42 (D-099): the course table is sound, and the repository's own record names only its courses.
   const { courseProblems, unknownCourses } = await import(pathToFileURL(path.join(root, 'core', 'lint.mjs')).href);
   const cp = courseProblems(spec);
@@ -332,7 +355,7 @@ export async function build({ root = HERE, out = path.join(root, 'dist'), now = 
       );
   }
 
-  const g = gitState(root);
+  const g = g0;
   const files = {};
   for (const f of g.files.filter(f => HASHED.some(re => re.test(f))).sort())
     files[f] = sha256(fs.readFileSync(path.join(root, f)));
@@ -409,6 +432,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
       root: arg('root') ? path.resolve(arg('root')) : HERE,
       out: arg('out') ? path.resolve(arg('out')) : undefined,
       now: arg('now'),
+      release: arg('release') || null,
     });
     console.log(
       `E.V. ${manifest.release} at ${manifest.commit.slice(0, 12)}: ${Object.keys(manifest.files).length} files hashed, ${Object.keys(manifest.tasks).length} tasks -> ${path.relative(process.cwd(), out) || out}`

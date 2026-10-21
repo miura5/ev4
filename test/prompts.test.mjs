@@ -298,3 +298,11 @@ test('B-135 (O-10): a staging prompt ends in its chat with no notification and a
   }
   assert.ok(staging >= 6);
 });
+
+test('B-149 (D-173): no prompt carries a literal release; the fallback trace reads it from the saved manifest', () => {
+  for (const [key, text] of Object.entries(all()).filter(([, t]) => t)) {
+    assert.doesNotMatch(text, /v4\.\d+\.\d+/, key);
+    if (!key.startsWith('build.'))
+      assert.ok(text.includes('"release": <the release in /tmp/ev/system/manifest.json, or "unknown"'), key);
+  }
+});

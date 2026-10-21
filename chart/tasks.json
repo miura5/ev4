@@ -2712,10 +2712,10 @@
   "title": "BACKLOG.md order and Your turn (D-4, M-1): open and blocked tasks first, then a Your turn section of everything waitingOn Matt grouped by where it happens (the Mac, the staging page, GitHub, a decision), then done tasks under one heading; brief --matt prints the same list",
   "dod": "the drift test green on the new layout; a chart test plants two waitingOn tasks and finds them under Your turn and in brief --matt; npm test green",
   "milestone": "v4.2 record",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Taken Oct 21",
-  "commit": null,
+  "notes": "5ac40e2: BACKLOG.md regrouped with Your turn by place; brief --matt; log --where; tests green",
+  "commit": "5ac40e2",
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
@@ -2724,11 +2724,13 @@
   "title": "Release from the tag (D-173): build sets manifest.release from git describe --tags --match v4.*; spec.specVersion equals the tag's major.minor (spec test); core's VERSION literal removed and the page and runs read the release from the manifest; ship live tags v4.x.<n+1> at the deployed commit (a minor with --minor) and pushes the tag itself, printing \"push the tag\" for Matt's list only when the push is refused; task names carry the minor; prompts carry no literal release (the fallback trace reads it from /tmp/ev/system/manifest.json, \"unknown\" before step 2)",
   "dod": "build test: at a tagged commit release equals the tag, past it the +n form; a grep test finds no version literal outside the spec; a ship test tags in a throwaway repository; the prompt test finds no literal; npm test green; ship staging green; the first live deploy on Matt's OK is tagged v4.2.0 and the tag is on origin, pushed by the chat",
   "milestone": "v4.2 release",
-  "status": "open",
+  "status": "blocked",
   "depends": [],
-  "notes": "",
+  "notes": "Code done (commit follows): release from git describe at the build's commit (v4.2.0+n past the tag; bookkeeping commits, now including DECISIONS.md and CHANGELOG.md, never move it), no version literal in core or page, specVersion 4.2, task names (v4.2), ship live tags and pushes v4.2.<n>, prompts carry no literal release, deploy now prints name updates (a Mac-bound one by name alone, on Matt's OK). Left of the DoD: ship staging GREEN (needs the two Mac-bound staging prompts updated from a chat linked to the Mac) and the first live deploy tagged v4.2.0 on Matt's OK.",
   "commit": null,
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
+  "waitingOn": "Matt",
+  "waitingWhere": "mac"
  },
  {
   "id": "B-150",

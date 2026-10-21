@@ -79,7 +79,7 @@ test('top-level sections and a v4 release string', () => {
     'workingAgreements',
   ])
     assert.ok(k in spec, `missing ${k}`);
-  assert.match(spec.specVersion, /^4\.\d+\.\d+$/);
+  assert.match(spec.specVersion, /^4\.\d+$/);
   assert.deepEqual(Object.keys(spec.classes).sort(), CLASSES.slice().sort());
   assert.deepEqual(
     Object.keys(spec.pipelines)
@@ -202,9 +202,10 @@ test('staging is not a second live: no pushes, Mac writes only under staging/ ex
   }
 });
 
-test('tasks: name templates carry the release; retired is a list; the builder is registered', () => {
-  assert.match(spec.tasks.nameTemplate.live, /<release>/);
-  assert.match(spec.tasks.nameTemplate.staging, /<release>/);
+test('tasks: name templates carry the minor; retired is a list; the builder is registered', () => {
+  // B-149 (D-173): task names carry the minor, renamed only at a minor.
+  assert.match(spec.tasks.nameTemplate.live, /\(<minor>\)$/);
+  assert.match(spec.tasks.nameTemplate.staging, /\(<minor>\)$/);
   assert.ok(Array.isArray(spec.tasks.retired));
   assert.match(spec.tasks.build['ev4-builder'].trigger, /^trig_/);
 });

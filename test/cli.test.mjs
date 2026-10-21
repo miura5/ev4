@@ -211,7 +211,10 @@ test('deploy prints the system batch with expected versions, refuses dirty, unpu
     ]
   );
   assert.ok(!plan.calls.some(c => c.tool.endsWith('update_trigger')), 'prompts already match: no task updates');
-  assert.ok(plan.skipped.some(s => /staging\.evening-mac: Mac-bound/.test(s)));
+  assert.ok(
+    !plan.skipped.some(s => /staging\.evening-mac: Mac-bound/.test(s)),
+    'a Mac-bound task whose prompt matches is not named as skipped (B-149)'
+  );
   assert.match(cli(dir, 'deploy', 'live').out, /REFUSED[\s\S]*Matt's explicit OK/);
 
   // B-35: live refuses without a green staging verify at the same commit, even with Matt's OK.
@@ -285,6 +288,27 @@ test('deploy prints update_trigger for a task whose live prompt differs', async 
     [cloud.id]
   );
   assert.match(updates[0].args.prompt, /dist\/prompts\/staging\.[\w-]+\.txt/);
+});
+
+test("B-149: deploy renames a task whose name changed; a Mac-bound one by name alone, on Matt's OK", async () => {
+  const { dir, state } = await deployedStaging();
+  const p = path.join(state, 'triggers-2.json');
+  const page = JSON.parse(fs.readFileSync(p, 'utf8'));
+  const cloud = page.data.find(t => !t.bound_device_uuid && /^E\.V\. staging/.test(t.name));
+  const mac = page.data.find(t => t.bound_device_uuid && /^E\.V\. staging/.test(t.name));
+  const want = { cloud: cloud.name, mac: mac && mac.name };
+  cloud.name = 'E.V. old name';
+  if (mac) mac.name = 'E.V. old mac name';
+  write(p, page);
+  const plan = JSON.parse(cli(dir, 'deploy', 'staging', '--json').out);
+  const updates = plan.calls.filter(c => c.tool === 'mcp__claude-code-remote__update_trigger');
+  const c = updates.find(u => u.args.trigger_id === cloud.id);
+  assert.deepEqual(c.args, { trigger_id: cloud.id, name: want.cloud }, 'the name alone: the prompt already matches');
+  if (mac) {
+    const m = updates.find(u => u.args.trigger_id === mac.id);
+    assert.deepEqual(m.args, { trigger_id: mac.id, name: want.mac });
+    assert.match(m.step, /Mac-bound.*without the prompt.*Matt's explicit OK/);
+  }
 });
 
 test('helpers: page stamps and canonical JSON', () => {

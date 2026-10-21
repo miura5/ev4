@@ -186,7 +186,7 @@ export const CODE_STEPS = {
       at: ctx.now,
       commit: ctx.commit || null,
     });
-    const inputs = { date: ctx.date, now: ctx.now, specVersion: spec.specVersion, lint };
+    const inputs = { date: ctx.date, now: ctx.now, specVersion: spec.specVersion, release: ctx.release || null, lint };
     let data = produce(db, spec, 'state', inputs, { source: ctx.source });
     // B-37 (D-093): past its warnBytes, state/current keeps the snapshot and the fact hashes move per collection.
     const split = factsSplitFor(spec, data);
@@ -598,9 +598,9 @@ export function macBackup(db, { now, label, release }) {
     .filter(c => c !== 'system')
     .sort())
     collections[col] = [...db[col]].sort((a, b) => (a.id < b.id ? -1 : 1));
-  const b = EV.buildBackup(collections, { now, label });
+  const b = EV.buildBackup(collections, { now, label, release });
   const hashes = Object.fromEntries(Object.entries(collections).map(([c, docs]) => [c, collectionHash(docs)]));
-  return { ...b, release: release || b.release, hashes };
+  return { ...b, hashes };
 }
 /**
  * The nightly backup (and, on Sundays or when the run is told to, the Markdown mirror) written under ctx.outputs and
@@ -746,7 +746,17 @@ export const AGENT_MATERIAL = {
     if (!fs.existsSync(path.join(v.build, 'manifest.json')))
       execFileSync(
         process.execPath,
-        [path.join(ROOT, 'tools', 'build.mjs'), '--root', ROOT, '--out', v.build, '--now', ctx.now],
+        // B-149: the run's clone has no tags, so the build takes the deployed release to compare like with like.
+        [
+          path.join(ROOT, 'tools', 'build.mjs'),
+          '--root',
+          ROOT,
+          '--out',
+          v.build,
+          '--now',
+          ctx.now,
+          ...(ctx.release ? ['--release', ctx.release] : []),
+        ],
         { stdio: 'pipe' }
       );
     const manifest = JSON.parse(fs.readFileSync(path.join(v.build, 'manifest.json'), 'utf8'));

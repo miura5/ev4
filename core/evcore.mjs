@@ -12,7 +12,7 @@
 
 const EVCore = (() => {
   'use strict';
-  const VERSION = 'v4.0.0';
+  const VERSION = '__EV_RELEASE__'; // B-149: the build writes the release in (tools/build.mjs RELEASE_SLOT)
   const TZ = 'America/Chicago';
 
   // ---------------------------------------------------------------- constants
@@ -2102,7 +2102,7 @@ const EVCore = (() => {
       date,
       generatedAt: isoOf(now),
       specVersion: versions.spec || null,
-      release: VERSION,
+      release: versions.release || null,
       derivedHash: derivedHash(ws),
       nextExams,
       due: {
@@ -4453,7 +4453,7 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
   }
 
   // ---------------------------------------------------------------- backup
-  function buildBackup(collections, { now, label } = {}) {
+  function buildBackup(collections, { now, label, release } = {}) {
     const counts = {};
     for (const [k, v] of Object.entries(collections)) counts[k] = (v || []).length;
     return {
@@ -4461,7 +4461,7 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
       kind: 'E.V. record backup',
       label: label || null,
       at: isoOf(now),
-      release: VERSION,
+      release: release || null, // B-149: the run's own release, given by its caller
       counts,
       collections,
     };

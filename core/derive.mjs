@@ -226,7 +226,7 @@ function dayBody(db, { date, now }, spec, stored) {
 }
 
 /** state/current, the evening-cloud run: the snapshot, the derived hash, and every Fact's hash for lint. */
-function stateBody(all, { date, now, specVersion, part = null, split = null, lint = null }, spec) {
+function stateBody(all, { date, now, specVersion, release = null, part = null, split = null, lint = null }, spec) {
   // What the evening-cloud run pulls and nothing else, so a rebuild from a fuller export (debug, say) counts the same.
   const reads = new Set(((spec.pipelines['evening-cloud'] || {}).reads || []).map(r => r.collection));
   const db = reads.size ? Object.fromEntries(Object.entries(all).filter(([c]) => reads.has(c))) : all;
@@ -271,7 +271,8 @@ function stateBody(all, { date, now, specVersion, part = null, split = null, lin
     counts,
     bytes,
     budgets,
-    versions: { spec: specVersion || null },
+    // B-149: the release is the run's own (its manifest), an input like specVersion; core carries none.
+    versions: { spec: specVersion || null, release: release || null },
     lint: content,
     canvas: null,
     // B-107: tomorrow's prep check from the library the run reads (pictures not read yet left out) and his own items.
@@ -448,6 +449,7 @@ export const PRODUCERS = {
       date: (s.snapshot && s.snapshot.date) || EV.chicagoDate(s.at),
       now: s.at,
       specVersion: s.snapshot ? s.snapshot.specVersion : s.specVersion || null,
+      release: s.snapshot ? s.snapshot.release : null,
       part: s.facts || null,
       split: s.factsSplit || null,
       lint: s.lint || null,

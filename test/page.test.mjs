@@ -42,8 +42,8 @@ test("core.js is the pipelines' own core and validator, made globals", () => {
   const core = pages.staging['core.js'];
   const src = fs.readFileSync(path.join(ROOT, 'core/evcore.mjs'), 'utf8');
   assert.ok(
-    core.startsWith(src.replace(/export default EVCore;\s*$/, '')),
-    'evcore.mjs byte for byte up to its export'
+    core.startsWith(src.replaceAll('__EV_RELEASE__', release).replace(/export default EVCore;\s*$/, '')),
+    'evcore.mjs byte for byte up to its export, the release written into its slot (B-149)'
   );
   const window = {};
   vm.runInNewContext(core, { window, console, TextEncoder, Intl, Date, Math, JSON });
@@ -74,17 +74,21 @@ test('spec.json carries only its own target: no live task or record on staging, 
   );
 });
 
-test('the build refuses a page that would name the other target, an app from another release, a shell over budget', () => {
+test('the build refuses a page that would name the other target or a shell over budget, and writes its one release into every file', () => {
   const leaky = JSON.parse(JSON.stringify(spec));
   leaky.jobs = { ...leaky.jobs, note: 'see ' + spec.registry.records.live.artifact };
   assert.throws(() => buildPages({ root: ROOT, spec: leaky, schemas, release }), /the staging page would name live's/);
   const tight = JSON.parse(JSON.stringify(spec));
   tight.ui.page.shellBudgetBytes = 1000;
   assert.throws(() => buildPages({ root: ROOT, spec: tight, schemas, release }), /over its 1000-byte budget/);
-  assert.throws(
-    () => buildPages({ root: ROOT, spec, schemas, release: 'v9.9.9' }),
-    /page\/app VERSION v4\.0\.0 differs from the release v9\.9\.9/
-  );
+  // B-149: the app carries no release of its own; the one it is given is the one every file says.
+  const nine = buildPages({ root: ROOT, spec, schemas, release: 'v9.9.9' });
+  for (const t of ['live', 'staging']) {
+    assert.match(nine[t]['app.js'], /const VERSION = 'v9\.9\.9'/);
+    assert.match(nine[t]['core.js'], /const VERSION = 'v9\.9\.9'/);
+    assert.equal(JSON.parse(nine[t]['spec.json']).release, 'v9.9.9');
+    assert.doesNotMatch(nine[t]['app.js'] + nine[t]['core.js'], /__EV_RELEASE__/);
+  }
 });
 
 test('deploy prints one publish call: the shell, the four files by their published names, the capabilities whole', () => {
