@@ -1376,14 +1376,14 @@
   "title": "Talk and session data fields (D-128, D-130, D-131): a talk schema bump with session on messages written during a session and note {file, title, line, quote} on comment messages; a sessions schema bump with comments (more, some, off) and each check's format; core.conversations and the earlier-message count with spec.constants.conversation (idleGapMin 120, sessionLeadMin 2); the page shows the reader's title in the notes bar and the comment quote, and Your notes against a reader without it (the reader's own change is B-128); each bump with its migration, fixtures and idempotence test per the registry rule, migrated on staging only (D-136); and the session-boundary half of core.conversations (D-128) switched on in B-77's layout",
   "dod": "core tests split planted talk days at a 119- and a 121-minute gap, at a session's start (Matt's lead line included) and end, and across midnight, and keep a worker message in its conversation; page tests show the reader's title for a nested note and Your notes from a v1 reader stub; fixtures validate and the staging migration run twice changes nothing; the harness shows today's thread unchanged on the migrated staging talk, screenshots at 390 and 1280; npm test green",
   "milestone": "M11",
-  "status": "blocked",
+  "status": "in progress",
   "depends": [
    "B-25",
    "B-26",
    "B-39",
    "B-77"
   ],
-  "notes": "Checked against the UI tenets before building (Oct 21); not started. Already there: core.conversations and idleGapMin (B-77, D-128). Blocked on: (1) D-130 (commentGate) and D-131 (reader v2 file, title, line) are proposed, not accepted: accept them, or narrow B-74 to D-128's parts (talk.session, sessionLeadMin, the sessions comments level and check format) now? (2) Reader v2's latest_note needs the extension rebuilt at your Mac, which a cloud build chat cannot do: split it into its own Mac task? The notes-bar title itself sits fine with D-151 (shown only while a session reads notes).",
+  "notes": "Oct 20: taken on Matt's yes; D-130 and D-131 accepted; the reader's own change split off as B-128.",
   "commit": null,
   "source": "Build plan tab",
   "board": {
