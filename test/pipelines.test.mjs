@@ -773,7 +773,7 @@ test('B-55 (D-111): a 5-hour-old health/current is named first by the evening an
   for (const w of CODE_STEPS.state(db, ctx, spec).writes)
     db.state = [...(db.state || []).filter(d => d.id !== w.id), { ...w.data, id: w.id }];
   const evening = CODE_STEPS.push(db, ctx, spec).push;
-  assert.match(evening, /^Health check 5 h old · /, evening);
+  assert.match(evening, /^Health check 5 h old, a build chat will look · /, evening);
   assert.ok(evening.length <= spec.constants.push.maxChars, evening);
   const mctx = {
     date: '2026-10-17',
@@ -782,7 +782,7 @@ test('B-55 (D-111): a 5-hour-old health/current is named first by the evening an
     writer: 'morning',
   };
   const morning = CODE_STEPS.day(db, mctx, spec);
-  assert.match(morning.push, /^Health check 5 h old · /, morning.push);
+  assert.match(morning.push, /^Health check 5 h old, a build chat will look · /, morning.push);
   assert.ok(morning.push.length <= spec.constants.push.maxChars, morning.push);
   assert.ok(!/Health check/.test(morning.writes[0].data.push), 'the days document keeps its own push');
   // Fresh (under spec.constants.health.staleHours): nothing added. None at all: said so.
@@ -790,7 +790,7 @@ test('B-55 (D-111): a 5-hour-old health/current is named first by the evening an
   assert.ok(!/Health check/.test(CODE_STEPS.push(db, ctx, spec).push));
   assert.ok(!/Health check/.test(CODE_STEPS.day(db, mctx, spec).push));
   db.health = db.health.filter(d => d.id !== 'current');
-  assert.match(CODE_STEPS.push(db, ctx, spec).push, /^No health check yet · /);
+  assert.match(CODE_STEPS.push(db, ctx, spec).push, /^No health check yet, a build chat will look · /);
   // The morning pulls health/current for this, and no Derived document it writes reads it.
   assert.deepEqual(
     spec.pipelines.morning.reads.find(r => r.collection === 'health'),

@@ -151,9 +151,11 @@ export function eveningPush(db, ctx, spec) {
 export function healthStale(db, now, spec) {
   const hours = ((spec.constants || {}).health || {}).staleHours || 4;
   const h = (db.health || []).find(d => d.id === 'current');
-  if (!h) return 'No health check yet';
+  // B-138 (D-180): the words say who acts on them, so a stale line is never only an alarm for Matt.
+  const look = ', a build chat will look';
+  if (!h) return 'No health check yet' + look;
   const age = (EV.toMs(now) - EV.toMs(h.at)) / 3600e3;
-  return age > hours ? `Health check ${Math.floor(age)} h old` : null;
+  return age > hours ? `Health check ${Math.floor(age)} h old${look}` : null;
 }
 /** A push line led by the stale-health words when there are any, cut to spec.constants.push.maxChars. */
 export function withStale(line, db, ctx, spec) {

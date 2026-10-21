@@ -1934,7 +1934,38 @@ export function taskScope(t, override) {
 }
 export const tenetsFor = (rec, scope) =>
   rec.decisions.filter(d => kindOf(d) === 'tenet' && d.status === 'accepted' && d.scope.some(x => scope.includes(x)));
-export function brief(rec, id, { root = HERE, scope: override } = {}) {
+/**
+ * B-138 (D-180): the live record's health/current, from the copy a read saved under dist/state/live/record (the read is
+ * printed when there is none), and how old it is. Over spec.constants.health.staleHours it is the first thing to take.
+ */
+export function healthLines(root = HERE, now = Date.now()) {
+  const spec = readJson(path.join(root, 'spec', 'ev.spec.json'));
+  const hours = ((spec.constants || {}).health || {}).staleHours || 4;
+  const live = spec.registry.records.live.artifact;
+  const file = path.join(root, 'dist', 'state', 'live', 'record', 'health', 'current.json');
+  const read = `ArtifactData {"action":"get","url":"https://claude.ai/artifact/${live}","collection":"health","doc_id":"current","out_dir":"${path.join(root, 'dist', 'state', 'live', 'record')}"}`;
+  let h = null;
+  try {
+    h = readJson(file);
+  } catch {
+    /* none saved */
+  }
+  const at = h && Date.parse(h.at);
+  if (!Number.isFinite(at)) return { stale: null, lines: [`- Not read in this session: ${read}, then brief again.`] };
+  const age = (now - at) / 36e5;
+  const stale = age > hours;
+  return {
+    stale,
+    lines: [
+      `- health/current is ${age < 1 ? 'under an hour' : Math.floor(age) + ' h'} old (written ${h.at}; stale past ${hours} h).`,
+      stale
+        ? '- STALE: take this first (D-180). Read the live watchdog\'s last_run with list_triggers, file it with report bug --source "brief: health/current stale" unless an open task already covers it, and take that task before any other.'
+        : '- Fresh: go on.',
+    ],
+  };
+}
+
+export function brief(rec, id, { root = HERE, scope: override, now = Date.now() } = {}) {
   const ts = findTask(rec, id);
   if (!ts.length) throw new Error(`no task ${id}`);
   const t = ts[0],
@@ -1951,6 +1982,8 @@ export function brief(rec, id, { root = HERE, scope: override } = {}) {
     `Read first: CLAUDE.md (the hard limits and the every-session steps). Design: E.V. Foundation v4 (https://claude.ai/artifact/Fgb2KjoLKcRgCRrBmM6kEf, Build plan tab); the Chart's own: ${rec.views.design}.`,
     '',
   ];
+  // B-138 (D-180): a missing run outranks every open task, so the record's health leads the page.
+  out.push('## Health first (D-180)', ...healthLines(root, now).lines, '');
   out.push(
     '## Inbox first',
     inbox.length

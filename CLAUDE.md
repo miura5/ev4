@@ -26,7 +26,10 @@ Every command below is `node tools/chart.mjs <command>`; each that writes the re
 attribution lines with `--trailer`, one per line) and prints the Docs calls that bring the views in line. Make those
 calls exactly as printed, read the view again when asked, and run `views` until it says the views are in step.
 
-1. Read this file. Run `node core/cli.mjs verify-deploy staging` and read its answer.
+1. Read this file. Run `node core/cli.mjs verify-deploy staging` and read its answer. Then read the live record's
+   health/current (`brief` prints its age, or the read to make). Older than `spec.constants.health.staleHours`, a run
+   is missing (D-180): read the live watchdog's `last_run` with `list_triggers`, file it with `report bug` unless an
+   open task already covers it, and take that task before any other.
 2. Triage first: `inbox` lists the Board comments to file (`report bug|request --from-comment <id>`, then the printed
    reply) and every entry waiting in the inbox. Each becomes a task (`log <id> --triage task --dod ... --milestone
    ...`), joins one (`--triage join <id>`), or is declined with a reason (`--triage decline --reason ...`); nothing

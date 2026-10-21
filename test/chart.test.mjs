@@ -1623,3 +1623,40 @@ test('B-93: a Decisions call replaces cells before it inserts a row above them',
     ]
   );
 });
+
+test('B-138 (D-180): brief leads with the live health/current age from a saved read, stale past staleHours, or the read to make', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-health-'));
+  fs.mkdirSync(path.join(root, 'spec'), { recursive: true });
+  fs.copyFileSync(path.join(ROOT, 'spec', 'ev.spec.json'), path.join(root, 'spec', 'ev.spec.json'));
+  const now = Date.parse('2026-10-21T06:00:00Z');
+  let h = C.healthLines(root, now);
+  assert.equal(h.stale, null);
+  assert.match(
+    h.lines[0],
+    /^- Not read in this session: ArtifactData \{"action":"get",.*"collection":"health","doc_id":"current"/
+  );
+  const dir = path.join(root, 'dist', 'state', 'live', 'record', 'health');
+  fs.mkdirSync(dir, { recursive: true });
+  const plant = hoursAgo =>
+    fs.writeFileSync(
+      path.join(dir, 'current.json'),
+      JSON.stringify({ id: 'current', at: new Date(now - hoursAgo * 36e5).toISOString() })
+    );
+  plant(32.5);
+  h = C.healthLines(root, now);
+  assert.equal(h.stale, true);
+  assert.match(h.lines[0], /^- health\/current is 32 h old \(written 2026-10-19T21:30:00\.000Z; stale past 4 h\)\./);
+  assert.match(h.lines[1], /^- STALE: take this first \(D-180\)/);
+  plant(1.5);
+  h = C.healthLines(root, now);
+  assert.equal(h.stale, false);
+  assert.deepEqual(h.lines, [
+    '- health/current is 1 h old (written 2026-10-21T04:30:00.000Z; stale past 4 h).',
+    '- Fresh: go on.',
+  ]);
+  // brief puts it first, before the inbox.
+  const r = sample();
+  const page = C.brief(r, 'B-02', { root, now });
+  assert.ok(page.indexOf('## Health first (D-180)') < page.indexOf('## Inbox first'));
+  assert.match(page, /health\/current is 1 h old/);
+});

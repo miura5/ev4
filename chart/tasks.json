@@ -2487,11 +2487,12 @@
   "title": "Hooks pipeline-safe (D-169): step 1 of every task prompt writes the run marker /tmp/ev/pipeline-run (pipeline, record, UTC time); tools/hooks.mjs main() returns 0 for every hook while the marker is younger than spec.constants.watchdog.runTimeoutMinutes; the environments cloud-run hooks row corrected to \"hooks may load in a run; they are pipeline-safe\"",
   "dod": "test/hooks.test.mjs covers each of the three hooks with no marker, a fresh marker and a stale one; the prompt test asserts step 1 writes the marker; npm test green; ship staging green; the staging watchdog fired green with its runs/ document read back; live only on Matt's OK",
   "milestone": "v4.2 runs",
-  "status": "in progress",
+  "status": "blocked",
   "depends": [],
-  "notes": "Built ce39f4a: the marker in step 1 and the hooks standing down (hooks and prompt tests green). Staging proof at the v4.2 runs staging deploy, together with B-132, B-134, B-135 (the same prompts change for each; one update per task, once)",
-  "commit": null,
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
+  "notes": "Built and tested (B-131's commit on main). Staging at cc306a7 (Oct 21): system documents and page deployed, the six cloud staging prompts updated; staging watchdog fired green on it (runs/watchdog-20261021-061645855: ok, audit 11 calls all printed). verify-deploy staging is RED only on staging.evening-mac and staging.restore-drill: Mac-bound, their prompts change only from a chat linked to the Mac with Matt present (CLAUDE.md), so ship staging cannot reach GREEN until Matt's Mac session. Waiting on Matt: the Mac.",
+  "commit": "ce39f4a",
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-132",
@@ -2499,11 +2500,12 @@
   "title": "The gate verifies content, not commit (D-170): the gate's source lives as a readable function in tools/gate.mjs and prompts.mjs renders it into the one-line form; when the deployed commit is absent from the clone the gate stays on the clone's head, checks every manifest.files hash there, goes on when all match and prints \"same content at <head>\", fails naming the file when one differs; verify-deploy's 40-behind line becomes a note",
   "dod": "the prompt test runs the rendered gate in a throwaway repository for: commit present; commit absent with matching hashes; commit absent with one differing hash; a dirty manifest; no checkout; spec.constants.runs.refreshAt retired to a note; npm test green; ship staging green; a staging morning fired green; live only on Matt's OK",
   "milestone": "v4.2 runs",
-  "status": "in progress",
+  "status": "blocked",
   "depends": [],
-  "notes": "Taken Oct 21: tools/gate.mjs, the content fallback, verify-deploy's note",
-  "commit": null,
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
+  "notes": "Built and tested (B-132's commit on main). Staging at cc306a7 (Oct 21): system documents and page deployed, the six cloud staging prompts updated; staging watchdog fired green on it (runs/watchdog-20261021-061645855: ok, audit 11 calls all printed). verify-deploy staging is RED only on staging.evening-mac and staging.restore-drill: Mac-bound, their prompts change only from a chat linked to the Mac with Matt present (CLAUDE.md), so ship staging cannot reach GREEN until Matt's Mac session. Waiting on Matt: the Mac.",
+  "commit": "c339ea0",
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-133",
@@ -2524,11 +2526,12 @@
   "title": "Run limits rendered from the spec (D-175): each spec.boundaries rule gains a prompt phrasing and a lanes list (cloud, mac, canvas, build); tools/prompts.mjs renders LIMITS, CANVAS_LIMITS and the Mac lines from them",
   "dod": "a prompt test asserts every boundary with a prompt phrasing appears in every prompt of its lane and none other; a lint test asserts CLAUDE.md names every boundary id; npm test green; ship staging green; live only on Matt's OK",
   "milestone": "v4.2 runs",
-  "status": "in progress",
+  "status": "blocked",
   "depends": [],
-  "notes": "Taken Oct 21: prompt phrasings and lanes on spec.boundaries rules; prompts.mjs renders the limits",
-  "commit": null,
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
+  "notes": "Built and tested (B-134's commit on main). Staging at cc306a7 (Oct 21): system documents and page deployed, the six cloud staging prompts updated; staging watchdog fired green on it (runs/watchdog-20261021-061645855: ok, audit 11 calls all printed). verify-deploy staging is RED only on staging.evening-mac and staging.restore-drill: Mac-bound, their prompts change only from a chat linked to the Mac with Matt present (CLAUDE.md), so ship staging cannot reach GREEN until Matt's Mac session. Waiting on Matt: the Mac.",
+  "commit": "0ee7573",
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-135",
@@ -2536,11 +2539,12 @@
   "title": "Staging never pushes (O-10): find from a staging run's own transcript whether its last line reaches Matt's phone through the task's channel or through a notification tool the run calls; then the staging prompts end \"end with the line in this chat and send no notification\", no prompt names a notification tool, and if the platform sends it anyway the staging line starts with STAGING",
   "dod": "the prompt test asserts the staging prompts carry the no-notification line and no prompt names a notification tool; a staging morning fired from a build chat reaches Matt's phone with nothing, or with a line that starts STAGING (Matt confirms once); npm test green; ship staging green; live only on Matt's OK",
   "milestone": "v4.2 runs",
-  "status": "in progress",
+  "status": "blocked",
   "depends": [],
-  "notes": "Taken Oct 21: reading the staging runs' audits for a notification call",
-  "commit": null,
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
+  "notes": "Built and tested (B-135's commit on main). Staging at cc306a7 (Oct 21): system documents and page deployed, the six cloud staging prompts updated; staging watchdog fired green on it (runs/watchdog-20261021-061645855: ok, audit 11 calls all printed). verify-deploy staging is RED only on staging.evening-mac and staging.restore-drill: Mac-bound, their prompts change only from a chat linked to the Mac with Matt present (CLAUDE.md), so ship staging cannot reach GREEN until Matt's Mac session. Waiting on Matt: the Mac.",
+  "commit": "e735743",
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-136",
@@ -2548,11 +2552,12 @@
   "title": "Environments rows are proven per kind of session (D-179): the spec.environments._rules line, and every row gains the task its diagnostic ran as; the hooks row rewritten",
   "dod": "the spec test asserts every proven row names a task; npm test green; ship staging green; live only on Matt's OK",
   "milestone": "v4.2 runs",
-  "status": "in progress",
+  "status": "blocked",
   "depends": [],
-  "notes": "Taken Oct 21: each proven environments row names its task; the _rules line",
-  "commit": null,
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
+  "notes": "Built and tested (B-136's commit on main). Staging at cc306a7 (Oct 21): system documents and page deployed, the six cloud staging prompts updated; staging watchdog fired green on it (runs/watchdog-20261021-061645855: ok, audit 11 calls all printed). verify-deploy staging is RED only on staging.evening-mac and staging.restore-drill: Mac-bound, their prompts change only from a chat linked to the Mac with Matt present (CLAUDE.md), so ship staging cannot reach GREEN until Matt's Mac session. Waiting on Matt: the Mac.",
+  "commit": "c8c4264",
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-137",
@@ -2574,9 +2579,9 @@
   "title": "Stale health is the first task (D-180): CLAUDE.md step 1 reads health/current's age and, over spec.constants.health.staleHours, the chat reads the watchdog's last_run through list_triggers, files a bug with report and takes it first; brief prints the age; the morning and evening push lines add \"a build chat will look\" after the stale words",
   "dod": "the brief test prints the age from a planted health/current; the push test shows the added words; CLAUDE.md step 1 updated; npm test green; ship staging green; live only on Matt's OK",
   "milestone": "v4.2 watch",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken Oct 21: brief prints health/current's age; CLAUDE.md step 1; the push lines' added words",
   "commit": null,
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
