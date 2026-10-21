@@ -2022,5 +2022,22 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "6218f16",
+  "time": "2026-10-21T00:12:14.493Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "8e4b2f8",
+  "tasks": [
+   "B-45",
+   "B-68"
+  ],
+  "summary": "Exam plan drafts on request; Shadow scheduler",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
