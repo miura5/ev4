@@ -3141,13 +3141,13 @@
   "title": "The builder's trace (D-195): node tools/chart.mjs trace --job <id> --status done or failed --note \"<one line>\" prints exactly three calls, jobresults/<id> (writer builder, schema 1 to 2: status, result text at most 1,500 characters naming the task filed, the staging commit and GREEN, what waits), one talk/<date> append as E.V. with the job card (talk schema 2 to 3, the builder as an appender), and system/yourturn (writer deploy, a new fixed id: the Your turn groups by place with each task's ask), and writes dist/trace-ok naming them; tools/hooks.mjs liveGuard lets a live write through only when it matches a call named in dist/trace-ok younger than ten minutes; ship (either target) also writes system/yourturn; the environments build-chat row records the first staging trace (D-185)",
   "dod": "test/hooks.test.mjs: the named trace call passes, an unnamed call is refused, a stale dist/trace-ok is refused, a named id on another collection is refused, the pipeline-marker case is unchanged; chart tests for trace's three calls and ship's yourturn write; bump fixtures and idempotence tests for jobresults, talk and system; npm test green; ship staging green; the first staging trace from a builder run read back (jobresults, talk, system/yourturn) and its row written; live only on Matt's OK",
   "milestone": "v4.4 builder",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-177",
    "B-186",
    "B-187"
   ],
-  "notes": "Probe A's wait is now a dependency: B-187 (the builder's prompt waits for its fired text, and probe A fired again) proves the firing the trace rests on (D-179).",
+  "notes": "Taken after B-177, B-186 and B-187 (probe A proven): the trace's calls are the trace action's writes (core/actions.mjs), dist/trace-ok written from the row, the live-guard allowance tested before anything rests on it (D-185, D-201).",
   "commit": null,
   "source": "plan TbfWAoQEeQixyNKZnEZKvv"
  },
@@ -3262,7 +3262,7 @@
   "depends": [
    "B-177"
   ],
-  "notes": "Shipped to staging at af7bae6: ship staging GREEN.",
+  "notes": "Its code commit is 01a27a6 (af7bae6 is the staging build that carries it with B-187).",
   "commit": "af7bae6",
   "source": "plan TbfWAoQEeQixyNKZnEZKvv"
  },
