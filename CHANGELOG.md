@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 21 | v4 staging deployed at b9c59d5 (16:03 CT), from c8f5464: A greeting that reads the moment (B-129). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 21 | v4 live deployed at c8f5464 (15:19 CT), from c38c86b: The gate fetches before it falls back; A live worker that fails at the gate pushes 'E.V.' with no text: two…; Evidence counts in the weekly's health line; Open-ended checks and grading; Version-free task names (B-168, B-172, B-165, B-75, B-173). verify-deploy live GREEN. Rollback is a redeploy of c38c86b | Matt's OK | D-049 |
 | Oct 21 | v4 staging deployed at c8f5464 (15:15 CT), from b5aec79: Version-free task names (B-173). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 21 | v4 staging deployed at b5aec79 (14:39 CT), from c38c86b: The gate fetches before it falls back; A live worker that fails at the gate pushes 'E.V.' with no text: two…; Evidence counts in the weekly's health line; Open-ended checks and grading; Version-free task names (B-168, B-172, B-165, B-75, B-173). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
