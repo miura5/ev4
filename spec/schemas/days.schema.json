@@ -9,12 +9,12 @@
   "writers": [
    "morning"
   ],
-  "schema": 1
+  "schema": 2
  },
  "type": "object",
  "properties": {
   "schema": {
-   "const": 1
+   "const": 2
   },
   "writer": {
    "enum": [
@@ -92,6 +92,43 @@
      "type": "null"
     }
    ]
+  },
+  "shadow": {
+   "description": "B-68 (D-116): the other scheduler's pick for the day (spec.study.scheduler drives the list); null on a day written before it",
+   "anyOf": [
+    {
+     "type": "null"
+    },
+    {
+     "type": "object",
+     "properties": {
+      "scheduler": {
+       "enum": [
+        "fixed",
+        "adaptive"
+       ]
+      },
+      "ids": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      },
+      "deferred": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      }
+     },
+     "required": [
+      "scheduler",
+      "ids",
+      "deferred"
+     ],
+     "additionalProperties": false
+    }
+   ]
   }
  },
  "required": [
@@ -100,7 +137,8 @@
   "at",
   "source",
   "date",
-  "list"
+  "list",
+  "shadow"
  ],
  "additionalProperties": false
 }

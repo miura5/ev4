@@ -378,9 +378,12 @@ test('days split four ways: Derived day, dayedits (no nulls), runs/<id> per v3 r
     'plan',
     'push',
     'schema',
+    'shadow',
     'source',
     'writer',
   ]);
+  assert.equal(d.shadow, null, 'B-68: a v3 day had no shadow');
+  assert.equal(d.schema, 2);
   const e = write(r, 'dayedits', '2026-10-13').data;
   assert.deepEqual(Object.keys(e.checks), ['plan-t1']);
   assert.deepEqual(Object.keys(e.skipped), ['plan-t9']);

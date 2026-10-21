@@ -188,6 +188,10 @@ export function buildPages({ root, spec, schemas, release }) {
   const motion = read('core/motion.mjs');
   if (/^import /m.test(motion)) throw new Error('core/motion.mjs must not import: it runs in the page as written');
   const motionNames = [...motion.matchAll(/^export (?:function|const) (\w+)/gm)].map(m => m[1]);
+  // core/study.mjs (B-68): the review schedulers, as window.EVStudy; its functions take E.V. core as an argument.
+  const study = read('core/study.mjs');
+  if (/^import /m.test(study)) throw new Error('core/study.mjs must not import: it runs in the page as written');
+  const studyNames = [...study.matchAll(/^export (?:function|const) (\w+)/gm)].map(m => m[1]);
   const coreJs =
     core.replace(/export default EVCore;\s*$/, 'window.EVCore = EVCore;\n') +
     '\n// ---- core/validate.mjs\n(function () {\n' +
@@ -199,6 +203,11 @@ export function buildPages({ root, spec, schemas, release }) {
     motion.replace(/^export (function|const) /gm, '$1 ') +
     '\nwindow.EVMotion = { ' +
     motionNames.join(', ') +
+    ' };\n})();\n' +
+    '\n// ---- core/study.mjs\n(function () {\n' +
+    study.replace(/^export (function|const) /gm, '$1 ') +
+    '\nwindow.EVStudy = { ' +
+    studyNames.join(', ') +
     ' };\n})();\n';
   const app = appSource(root);
   const appVersion = (app.match(/const VERSION = '([^']+)'/) || [])[1];
@@ -216,6 +225,7 @@ export function buildPages({ root, spec, schemas, release }) {
       tasks: { [target]: spec.tasks[target], ...(target === 'staging' ? { diagnostic: spec.tasks.diagnostic } : {}) },
       constants: spec.constants,
       courses: spec.courses,
+      study: spec.study,
       capacity: spec.capacity,
       ui: spec.ui,
       jobs: spec.jobs,

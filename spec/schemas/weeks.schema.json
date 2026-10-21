@@ -124,6 +124,10 @@
   },
   "rollups": {
    "type": "object"
+  },
+  "study": {
+   "type": "object",
+   "description": "B-68 (D-116): the week's list and shadow compared (core/study.mjs compareWeek); absent before the shadow existed"
   }
  },
  "required": [

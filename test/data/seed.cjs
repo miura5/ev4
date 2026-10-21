@@ -83,7 +83,7 @@
     put('answers', 'review-' + yday, { ...env('page', 'E.V. Home', ct(yday, 19, 20)), setId: 'review-' + yday, answers: { 'q-fve-y': ans(1, [1], false), 'q-iv-y': ans(2, [1], false), 'q-k-y': ans(3, [0], true), 'q-preload-y': ans(4, [1], false), 'q-co-y': ans(5, [0], true), 'q-ortho-y': ans(6, [0], true) } });
 
     // ---- today's list and the calendar
-    put('days', today, { ...env('morning', 'morning 4:25', ct(today, 4, 32)), date: today, dayType: 'class',
+    put('days', today, { ...env('morning', 'morning 4:25', ct(today, 4, 32)), schema: 2, shadow: null, date: today, dayType: 'class',
       plan: { budget: { available: 180, planned: 85, over: 0 }, blocks: [], deferred: [], reviews: { load: { load: 8, base: 10, flex: null, reason: 'Class day, exam in 2 days: 8' }, ids: WS.slice(0, 8).map(w => w[0]), checks: [], target: 'E4' } },
       list: { items: [
         { id: 'read-ch39', text: 'Read Ch 39: Fluid, electrolyte and acid-base balance (~45 min)', tag: 'READING', minutes: 45 },

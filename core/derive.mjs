@@ -5,6 +5,7 @@
 // (core/run.mjs compute): each step sees the writes of the steps before it, and every write is stamped with the
 // run's one compute time, so the record a Derived document was computed from is exactly the record as of its `at`.
 import EV from './evcore.mjs';
+import * as STUDY from './study.mjs';
 import { healthBody } from './watch.mjs';
 import { loadSchemas } from './schemas.mjs';
 
@@ -171,9 +172,11 @@ export function factCheck(spec, collection, doc, stored, fields) {
 // Each: {writer, id(stored) -> the inputs it needs besides the record, build(db, inputs, spec) -> data (no envelope)}.
 
 /** days/<date>, the morning run: the plan and the list at 4:25am. */
-function dayBody(db, { date, now }) {
+function dayBody(db, { date, now }, spec, stored) {
   const v = views(db);
-  const day = EV.planDay({
+  // B-68 (D-116): spec.study.scheduler drives the day; the other scheduler's pick is the shadow beside it.
+  const scheduler = STUDY.schedulerOf(spec);
+  const dayCtx = sched => ({
     date,
     dates: db.dates || [],
     dateedits: db.dateedits || [],
@@ -184,7 +187,12 @@ function dayBody(db, { date, now }) {
     objectives: db.objectives || [],
     sets: v.sets,
     answers: v.answers,
+    pickReviews: STUDY.picker(EV, sched, spec),
   });
+  const day = EV.planDay(dayCtx(scheduler));
+  const other = STUDY.otherScheduler(scheduler);
+  // A day written before the shadow existed (migrated with shadow null) rebuilds as it was written.
+  const shadow = stored && stored.shadow === null ? null : STUDY.shadowOf(EV.planDay(dayCtx(other)), other);
   const reviewSet = v.sets.find(s => s.id === 'review-' + date) || null;
   const reviewSetId = reviewSet ? reviewSet.id : null;
   const newSets = v.sets.filter(
@@ -207,11 +215,13 @@ function dayBody(db, { date, now }) {
   const open = reviewSet ? (reviewSet.items || []).length - EV.answeredItems(reviewSet, v.answers).length : 0;
   list.push = list.push.replace(/\d+ reviews? ready/, `${open} review${open === 1 ? '' : 's'} ready`);
   return {
+    schema: 2, // B-68: the shadow
     date,
     dayType: day.dayType,
     plan: { budget: day.budget, blocks: day.blocks, deferred: day.deferred, reviews: day.reviews },
     list,
     push: list.push,
+    shadow,
   };
 }
 
@@ -377,6 +387,9 @@ function weekBody(db, { date, verify = null }, spec, stored) {
       runs: sorted(byPipeline),
     },
   };
+  // B-68 (D-116): the week's two schedulers side by side, when its days carry a shadow (none before B-68).
+  const study = STUDY.compareWeek(db.days || [], EV.collectAttempts(v.sets, v.answers).all, { from, to: date });
+  if (study) body.study = study;
   for (const k of authoredOf(spec, 'weeks')) if (stored && stored[k] !== undefined) body[k] = stored[k];
   return body;
 }
@@ -424,7 +437,11 @@ export const authoredOf = (spec, collection) => ((spec.collections || {})[collec
 export const AUTHORED = { weeks: ['review', 'reflection'] }; // the spec's list for weeks, kept for older callers
 
 export const PRODUCERS = {
-  days: { writer: 'morning', inputs: s => ({ date: s.date || s.id, now: s.at }), build: (db, i) => dayBody(db, i) },
+  days: {
+    writer: 'morning',
+    inputs: s => ({ date: s.date || s.id, now: s.at }),
+    build: (db, i, spec, stored) => dayBody(db, i, spec, stored),
+  },
   state: {
     writer: 'evening-cloud',
     inputs: s => ({

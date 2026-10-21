@@ -1,5 +1,5 @@
 {
- "schema": 1,
+ "schema": 2,
  "writer": "morning",
  "at": "2026-10-16T14:00:00Z",
  "source": "morning 4:25",
@@ -44,5 +44,10 @@
   },
   "deferred": []
  },
- "push": "Class day · 2 reviews ready · New on Canvas: Sample announcement"
+ "push": "Class day · 2 reviews ready · New on Canvas: Sample announcement",
+ "shadow": {
+  "scheduler": "adaptive",
+  "ids": [],
+  "deferred": []
+ }
 }

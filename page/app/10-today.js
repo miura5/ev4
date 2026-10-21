@@ -2,6 +2,8 @@
     function liveDay() {
       // the same plan the 4:25am run builds, computed here when the run hasn't saved one
       const plan = E.planDay({
+        // B-68: the scheduler the morning uses (spec.study.scheduler), so a live day agrees with it
+        pickReviews: window.EVStudy.picker(E, window.EVStudy.schedulerOf(EV_SPEC), EV_SPEC),
         date: today,
         dates: S.dates,
         exams: S.exams,

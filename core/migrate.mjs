@@ -480,6 +480,11 @@ export const BUMPS = {
       also: [],
     }),
   },
+  days: {
+    // B-68 (D-116): days gains shadow, the other scheduler's pick; a day written before it had none, so it is null and
+    // rebuild keeps it null.
+    1: d => ({ data: { ...d, schema: 2, shadow: null }, also: [] }),
+  },
   planedits: {
     // B-45 (D-102): planedits gains plan, the id of the plan in force; an Edit before it named none, so plans/<examId>
     // stays in force and the document only moves to the new version.

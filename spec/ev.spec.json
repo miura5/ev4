@@ -271,6 +271,10 @@
     },
     {
      "collection": "predictions"
+    },
+    {
+     "collection": "days",
+     "windowDays": 8
     }
    ],
    "steps": [
@@ -1328,6 +1332,17 @@
      "only": "syllabus"
     }
    ]
+  }
+ },
+ "study": {
+  "_rules": [
+   "B-68 (D-116): scheduler fixed (today's rule, E.V. core's pickReviews) or adaptive (D-117, core/study.mjs: solid weak spots come round again at base, 2 x base, 4 x base days, capped, nearExam inside an exam's window, after the open ones and inside the day's load). The morning writes the other one's pick as days/<date>.shadow and the weekly compares them in weeks/<date>.study. It flips to adaptive only on Matt's OK after a shadow week (B-69); it flips back the same way."
+  ],
+  "scheduler": "fixed",
+  "params": {
+   "base": 3,
+   "cap": 14,
+   "nearExam": 1
   }
  },
  "collections": {

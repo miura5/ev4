@@ -1297,7 +1297,8 @@ const EVCore = (() => {
       }
     }
     // Reviews and new checks.
-    const pr = pickReviews({ date, dayType: dt, weakspots, exams, objectives });
+    // B-68 (D-116): the scheduler the caller names (core/study.mjs picker); today's rule when none.
+    const pr = (ctx.pickReviews || pickReviews)({ date, dayType: dt, weakspots, exams, objectives });
     const baseN = Math.min(pr.picked.length, pr.load.base);
     const flexN = pr.picked.length - baseN;
     if (baseN)
