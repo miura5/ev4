@@ -617,8 +617,9 @@ export function deployCalls({
     const live = state && state.triggers && state.triggers.find(x => x.id === t.trigger);
     const livePrompt = live && live.derived_state && live.derived_state.prompt;
     const promptSame = live && typeof livePrompt === 'string' && sha256(livePrompt) === t.promptSha256;
-    // B-149: a task's name carries the minor version, so a release renames it. A name changes freely from the
-    // cloud, a Mac-bound task's too, but changing a Mac-bound task at all needs Matt's explicit OK in a build chat.
+    // D-192 (B-173): a task's name carries no version, so a release renames nothing; a rename prints only when the
+    // template itself changes (once, from B-149's versioned names). A name changes freely from the cloud, a Mac-bound
+    // task's too, but changing a Mac-bound task at all needs Matt's explicit OK in a build chat.
     const rename = live && live.name !== t.name ? { name: t.name } : {};
     if (t.macBound) {
       if (!promptSame)

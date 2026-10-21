@@ -150,13 +150,15 @@ export function releaseOf(root, commit = 'HEAD') {
     return null;
   }
 }
-function taskEntries(spec, release) {
+/** D-192 (B-173): every task's entry; its name comes from spec.tasks.nameTemplate, which carries no version. */
+export function taskEntries(spec, release) {
   const out = {};
-  const name = (lane, pipeline) =>
-    spec.tasks.nameTemplate[lane]
-      .replace('<pipeline>', pipeline)
-      .replace('<minor>', 'v' + spec.specVersion)
-      .replace('<release>', release);
+  const name = (lane, pipeline) => {
+    const t = spec.tasks.nameTemplate[lane];
+    // D-192: a version in a name renames every task at every release, and a Mac-bound rename needs Matt at the Mac.
+    if (/<minor>|<release>/.test(t)) throw new Error(`spec.tasks.nameTemplate.${lane} carries a version (D-192)`);
+    return t.replace('<pipeline>', pipeline);
+  };
   const entry = (key, t, displayName, promptSha256) => {
     out[key] = {
       name: displayName,

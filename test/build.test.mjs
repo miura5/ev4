@@ -55,7 +55,8 @@ test('a clean tree builds a manifest that validates, with every file hash, task 
     1 +
     Object.keys(spec.tasks.build).length;
   assert.equal(Object.keys(manifest.tasks).length, expected);
-  assert.equal(manifest.tasks['live.morning'].name, `E.V. morning (v${spec.specVersion})`, 'B-149: the minor');
+  assert.equal(manifest.tasks['live.morning'].name, 'E.V. morning', 'D-192: no version in a task name');
+  assert.equal(manifest.tasks['staging.worker'].name, 'E.V. staging · worker');
   assert.equal(manifest.tasks['staging.evening-mac'].macBound, true);
   assert.equal(manifest.records.live.artifact, spec.registry.records.live.artifact);
   assert.deepEqual(manifest.records.live.systemDocs, ['system/manifest', 'system/spec', 'system/environments']);

@@ -79,6 +79,13 @@ test('every pipeline with steps has a prompt for live and staging; the rest wait
   );
 });
 
+test('D-192 (B-173): every pipeline prompt carries its release by reading it from system/manifest, never as a literal', () => {
+  for (const [key, text] of Object.entries(all()).filter(([k, t]) => t && !k.startsWith('build.'))) {
+    assert.ok(text.includes('<the release in /tmp/ev/system/manifest.json'), `${key}: the release, from the manifest`);
+    assert.doesNotMatch(text, /\bv4\.\d+(\.\d+)?\b/, `${key}: no release literal, so a release changes no prompt`);
+  }
+});
+
 test("no prompt clones, unpacks or attaches code, or names the page-only collection; the one fetch is the gate's", () => {
   for (const [key, text] of Object.entries(all()).filter(([, t]) => t)) {
     assert.doesNotMatch(

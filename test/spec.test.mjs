@@ -202,10 +202,10 @@ test('staging is not a second live: no pushes, Mac writes only under staging/ ex
   }
 });
 
-test('tasks: name templates carry the minor; retired is a list; the builder is registered', () => {
-  // B-149 (D-173): task names carry the minor, renamed only at a minor.
-  assert.match(spec.tasks.nameTemplate.live, /\(<minor>\)$/);
-  assert.match(spec.tasks.nameTemplate.staging, /\(<minor>\)$/);
+test('tasks: name templates carry no version (D-192); retired is a list; the builder is registered', () => {
+  // D-192 (B-173), replacing B-149's versioned names: a release renames no task.
+  assert.equal(spec.tasks.nameTemplate.live, 'E.V. <pipeline>');
+  assert.equal(spec.tasks.nameTemplate.staging, 'E.V. staging · <pipeline>');
   assert.ok(Array.isArray(spec.tasks.retired));
   assert.match(spec.tasks.build['ev4-builder'].trigger, /^trig_/);
 });

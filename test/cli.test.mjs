@@ -7,7 +7,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { copyRepo, git, ROOT } from './helpers.mjs';
-import { build } from '../tools/build.mjs';
+import { build, taskEntries } from '../tools/build.mjs';
 import { verify, pageStamp, canonical, contentHash, deployCalls } from '../core/deploy.mjs';
 
 const CLI = new URL('../core/cli.mjs', import.meta.url).pathname;
@@ -325,6 +325,35 @@ test("B-149: deploy renames a task whose name changed; a Mac-bound one by name a
     assert.deepEqual(m.args, { trigger_id: mac.id, name: want.mac });
     assert.match(m.step, /Mac-bound.*without the prompt.*Matt's explicit OK/);
   }
+});
+
+test('D-192 (B-173): a minor or patch bump renames no task, and deploy prints no rename for it', async () => {
+  const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
+  const names = (sp, release) =>
+    Object.fromEntries(Object.entries(taskEntries(sp, release)).map(([k, t]) => [k, t.name]));
+  const now = names(spec, 'v' + spec.specVersion + '.0');
+  for (const n of Object.values(now)) assert.doesNotMatch(n, /\(v|v\d+\.\d/, `${n}: no version in a task name`);
+  assert.deepEqual(names({ ...spec, specVersion: '4.9' }, 'v4.9.0'), now, 'a minor bump on a planted spec');
+  assert.deepEqual(names(spec, 'v' + spec.specVersion + '.7+3'), now, 'a patch bump');
+  assert.throws(
+    () =>
+      names(
+        {
+          ...spec,
+          tasks: { ...spec.tasks, nameTemplate: { ...spec.tasks.nameTemplate, live: 'E.V. <pipeline> (<minor>)' } },
+        },
+        'v4.9.0'
+      ),
+    /carries a version \(D-192\)/
+  );
+  // The deployed tasks already carry the version-free names: the deploy's printout renames nothing.
+  const { dir } = await deployedStaging();
+  const plan = JSON.parse(cli(dir, 'deploy', 'staging', '--json').out);
+  assert.deepEqual(
+    plan.calls.filter(c => c.tool === 'mcp__claude-code-remote__update_trigger' && c.args.name),
+    [],
+    'no rename'
+  );
 });
 
 test('B-137 (O-5): a Mac task is created, never edited: its create_trigger printout carries notifications and folders', async () => {

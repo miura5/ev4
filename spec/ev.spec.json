@@ -1892,11 +1892,12 @@
   "_rules": [
    "Every scheduled task is a row here; tools/prompts.mjs renders its prompt from this table and its pipeline steps, and verify-deploy compares the live task with it.",
    "Cloud tasks are created from a build chat with this repository checked out; mac tasks from a chat linked to the Mac with only the folders listed, and only with Matt present.",
-   "Staging tasks are fire-only and never push. Old tasks are disabled and kept: their ids move to retired with the reason."
+   "Staging tasks are fire-only and never push. Old tasks are disabled and kept: their ids move to retired with the reason.",
+   "D-192 (B-173): a task's name carries no version, so no release renames a task; the release lives in each rendered prompt's manifest read and in system/manifest. The name template takes <pipeline> only."
   ],
   "nameTemplate": {
-   "live": "E.V. <pipeline> (<minor>)",
-   "staging": "E.V. staging · <pipeline> (<minor>)"
+   "live": "E.V. <pipeline>",
+   "staging": "E.V. staging · <pipeline>"
   },
   "live": {
    "morning": {
