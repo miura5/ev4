@@ -405,7 +405,7 @@
   "date": "Oct 18",
   "title": "spec.items gains kind open: a stem (one question, ≤ 25 words), 2 or 3 key points (each ≤ 12 words, with keyword groups for the fallback), a model answer and the sourceRef of the note line or passage; the answer goes in answers with its text (identifier-scanned, ≤ 600 characters), a hit per key point, grade right (all), partial (some) or wrong (none), gradedBy model or local, and an optional added text; the page grades with one model call returning a hit per point (8 s timeout, shape-checked), else core.gradeOpenLocal matches the keyword groups and the surface says Checked offline; partial offers Add to it once; the first answer's grade drives weak spots (partial counts as a miss); open items appear only in session and conversation checks, not in morning review sets",
   "why": "Explaining in his own words is the check multiple choice cannot give; a local fallback means a check never stalls on a failed call; review sets stay comparable until a later decision",
-  "status": "proposed",
+  "status": "accepted",
   "supersedes": [],
   "amends": []
  },
