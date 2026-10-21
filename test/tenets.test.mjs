@@ -152,3 +152,10 @@ test('B-125 (D-163): the stylesheet has no staggered rise and no growth of bars 
   assert.doesNotMatch(css, /\.panel\.enter>:nth-child/);
   assert.match(css, /\.panel\.enter\{animation:fade \.18s/);
 });
+
+test('B-125 (D-163, Matt Oct 20): the status lights are steady, the header one and the session bar one', () => {
+  const css = fs.readFileSync(path.join(ROOT, 'page', 'styles.css'), 'utf8');
+  const rules = [...css.matchAll(/([^{}]*\.(?:led|s-led)[^{}]*)\{([^}]*)\}/g)];
+  assert.ok(rules.length >= 4, 'the light rules are in the stylesheet');
+  for (const [, sel, body] of rules) assert.doesNotMatch(body, /animation|transition/, sel.trim());
+});

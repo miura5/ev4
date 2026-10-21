@@ -1346,7 +1346,17 @@ async function sideBySide(browser, left, right, out, vp) {
           h: Math.round(r.height),
           lineH: f ? Math.round(f.getBoundingClientRect().height) : 0,
           items: [...c.querySelectorAll('ol.check-items')].some(o => o.getBoundingClientRect().height > 0),
-          writes: (window.__writes || []).length,
+          // The session's own tick (who drives it, a skipped note read) is not filing: only other writes count.
+          writes: (window.__writes || []).filter(
+            ([op, col, , data]) =>
+              !(
+                op === 'update' &&
+                col === 'sessions' &&
+                data &&
+                Object.keys(data).every(k => k === 'driver' || k === 'events') &&
+                Object.values(data.events || {}).every(e => e && e.type === 'skip')
+              )
+          ).length,
         };
       });
     for (const vp of [

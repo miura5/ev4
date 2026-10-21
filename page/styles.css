@@ -31,7 +31,7 @@ body.on-ev.opening .top-av,body.on-ev.in-session .top-av,body.on-ev.core-big .to
 .wordmark .stg{font:500 12px var(--sans);color:var(--warn);margin-left:6px;vertical-align:2px}
 .readout{font:500 12px var(--sans);color:var(--soft);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .readout .led{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-right:7px;vertical-align:1px}
-.readout .led.busy{background:var(--plum);animation:pulse 1.2s ease-in-out infinite} .readout .led.off{background:var(--soft)} .readout .led.brk{background:var(--warn-solid)}
+/* Matt, Oct 20 (B-125, D-163): the status lights are steady; the word beside them says what E.V. is doing. */.readout .led.busy{background:var(--plum)} .readout .led.off{background:var(--soft)} .readout .led.brk{background:var(--warn-solid)}
 .top-right{flex:0 0 auto;display:flex;align-items:center;gap:6px}
 .status{flex:0 1 auto;min-width:0;font:500 12px var(--sans);color:var(--soft);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:36vw}
 .status:not(.ok){color:var(--warn);white-space:normal}.status.note{white-space:nowrap}
@@ -252,7 +252,7 @@ body.opening .msg.greet .msg-cards{display:grid;grid-template-columns:repeat(aut
 /* E.V.: a running study session (B-84, the Captions v2 artboard): one line, a dot, the minutes and the next check,
    Break, +5, End; its progress is the ring round her core */
 .sbar{display:flex;align-items:center;justify-content:center;flex-wrap:nowrap;gap:8px;min-height:32px;padding:0;min-width:0;font:500 13px var(--sans);font-variant-numeric:tabular-nums;color:var(--soft);transition:color .3s ease}
-.s-led{width:6px;height:6px;border-radius:50%;background:var(--accent);flex:0 0 6px;animation:pulse 1.8s ease-in-out infinite}
+.s-led{width:6px;height:6px;border-radius:50%;background:var(--accent);flex:0 0 6px}
 .sbar.brk .s-led{background:var(--warn-solid)} .sbar.busy .s-led{background:var(--plum)}
 .s-main{flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .s-clock{color:var(--ink2);font-variant-numeric:tabular-nums;transition:color .3s ease}
