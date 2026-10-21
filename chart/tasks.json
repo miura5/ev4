@@ -2534,7 +2534,7 @@
   "milestone": "v4.2 runs",
   "status": "done",
   "depends": [],
-  "notes": "live at 8ec85c4 (v4.2.0) Oct 21 on Matt's OK: ship live GREEN; staging GREEN at the same commit first.",
+  "notes": "Oct 21: Matt says something from the staging morning reached his phone around 3:59am; filed as B-166 with the evidence (staging tasks' push is off; the run documents' push fields carry no STAGING prefix).",
   "commit": "e735743",
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
