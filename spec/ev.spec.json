@@ -1044,6 +1044,7 @@
   },
   "watchdog": {
    "jobStallMinutes": 15,
+   "builderStallMinutes": 90,
    "runTimeoutMinutes": 60,
    "graceMinutes": 30,
    "refireWithinMinutes": 180,
@@ -1751,7 +1752,7 @@
     "page"
    ],
    "key": "job-<YYYYMMDD-HHMMSS>-<slug>",
-   "holds": "kind, title, brief, fired",
+   "holds": "kind, title, brief, fired; the kinds build, reply, design, plan and ship are the builder's (D-194, jobs schema 2)",
    "fromV3": "jobs request fields",
    "schema": "spec/schemas/jobs.schema.json",
    "marks": {
@@ -3035,7 +3036,8 @@
  "jobs": {
   "_rules": [
    "The page writes jobs/<id> and fires the worker with 'Job <id>'; the worker writes jobresults/<id>, what the job made, and one message in talk/<date>.",
-   "A job never touches graded work; a practice set's items follow the same rules as the morning's."
+   "A job never touches graded work; a practice set's items follow the same rules as the morning's.",
+   "D-194 (B-177): a job of kind build, reply, design, plan or ship (jobs.builderKinds) is the builder's: the worker never takes one, and the watchdog re-fires ev4-builder for it, never the worker, after constants.watchdog.builderStallMinutes."
   ],
   "kinds": {
    "study-guide": {
@@ -3066,7 +3068,14 @@
     "label": "Background task",
     "guide": "Do the asked work if it fits E.V.'s boundaries and needs only the record and the web. Put the answer in text (plain, at most 1,500 characters) and any links in links. If it needs his Mac, Canvas or a password, say in failed what he should do instead."
    }
-  }
+  },
+  "builderKinds": [
+   "build",
+   "reply",
+   "design",
+   "plan",
+   "ship"
+  ]
  },
  "persona": {
   "name": "E.V.",

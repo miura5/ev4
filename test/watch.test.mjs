@@ -301,3 +301,45 @@ test('B-27 (D-087): a missed mac-lane slot is listed in missing and never re-fir
   }
   assert.equal(base.tasks.staging['evening-mac'].watchSchedule, base.tasks.live['evening-mac'].schedule);
 });
+
+test('B-177 (D-194): a builder job waits 90 minutes, then ev4-builder is re-fired with its id, never the worker, and never twice', () => {
+  const spec = withTriggers('live');
+  const builder = spec.tasks.build['ev4-builder'].trigger;
+  assert.equal(spec.constants.watchdog.builderStallMinutes, 90);
+  const job = (id, kind) => ({
+    id,
+    schema: 2,
+    writer: 'page',
+    at: '2026-10-18T13:00:00Z',
+    source: 'x',
+    kind,
+    title: id,
+    brief: id,
+    fired: { at: '2026-10-18T13:00:00Z', ok: true },
+  });
+  const db = { runs: [], jobs: [job('job-build', 'build')] };
+  let v = watch(db, { now: '2026-10-18T14:00:00Z', record: 'live', spec }); // 60 minutes
+  assert.deepEqual(v.stalledJobs, [], 'a 60-minute-old build job is left alone');
+  v = watch(db, { now: '2026-10-18T14:31:00Z', record: 'live', spec }); // 91 minutes
+  assert.deepEqual(
+    v.stalledJobs.map(j => [j.id, j.minutes, j.to, j.refired]),
+    [['job-build', 91, 'builder', true]]
+  );
+  const r = v.refires.filter(x => x.target === 'job job-build');
+  assert.deepEqual(
+    r.map(x => [x.id, x.trigger, x.text]),
+    [['watchdog-refire-job-job-build', builder, 'Job job-build']]
+  );
+  assert.notEqual(builder, spec.tasks.live.worker.trigger);
+  // A worker job of the same age is the worker's, re-fired to the worker.
+  v = watch(
+    { runs: [], jobs: [job('job-set', 'practice-set')] },
+    { now: '2026-10-18T14:31:00Z', record: 'live', spec }
+  );
+  assert.equal(v.refires.find(x => x.target === 'job job-set').trigger, spec.tasks.live.worker.trigger);
+  // Once re-fired, a second watchdog reports it and fires nothing.
+  db.runs.push(run('watchdog-refire-job-job-build', 'watchdog', '2026-10-18T14:31:00Z'));
+  v = watch(db, { now: '2026-10-18T17:31:00Z', record: 'live', spec });
+  assert.ok(!v.refires.some(x => x.target === 'job job-build'));
+  assert.ok(v.reported.some(x => x.target === 'job job-build' && x.why === 'already re-fired once'));
+});

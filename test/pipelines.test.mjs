@@ -577,6 +577,41 @@ test('worker without a job id takes the oldest job with no result, and ends quie
   assert.equal(r.plan.writes, 0);
 });
 
+test('B-177 (D-194): the worker never takes a builder job: the oldest pick passes over it, and a named one is skipped', () => {
+  const at = '2026-10-17T19:34:00Z';
+  const job = (id, kind, t) => ({
+    id,
+    schema: 2,
+    writer: 'page',
+    at: t,
+    source: 'E.V. Home',
+    kind,
+    title: 'Made-up ' + kind,
+    brief: 'A made-up ' + kind + ' job.',
+    fired: { at: t, ok: true },
+  });
+  const db = recordDb();
+  db.jobs.push(job('job-20261017-190000-made-up-build', 'build', '2026-10-17T19:00:00Z'));
+  db.jobs.push(job('job-20261017-193000-made-up-set', 'practice-set', '2026-10-17T19:30:00Z'));
+  const { dir } = session('worker', at, db);
+  const w = RUN.compute({ spec, dir, validate, at });
+  assert.equal(w.status, 'waiting');
+  assert.equal(
+    w.question.material.job.id,
+    'job-20261017-193000-made-up-set',
+    'the practice set, not the older build job'
+  );
+  // Named in the firing, the build job is still the builder's: the step skips it and do-job never runs.
+  const ctx = { input: { job: 'job-20261017-190000-made-up-build' }, date: '2026-10-17', now: at };
+  const r = CODE_STEPS['job-brief'](db, ctx, spec);
+  assert.equal(ctx.job, null);
+  assert.match(r.say[0], /build job, the builder's/);
+  // Only builder jobs left: the worker ends quietly.
+  const ctx2 = { input: {}, date: '2026-10-17', now: at };
+  CODE_STEPS['job-brief']({ ...db, jobs: [db.jobs.find(j => j.kind === 'build')] }, ctx2, spec);
+  assert.deepEqual([ctx2.job, ctx2.jobSkip], [null, 'no job is waiting']);
+});
+
 test('diagnostic: the probe from the firing text, the findings in the ledger entry and debug/<run id>', () => {
   const at = '2026-10-18T06:30:00Z';
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-diag-'));

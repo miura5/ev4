@@ -1,0 +1,17 @@
+{
+ "schema": 1,
+ "writer": "page",
+ "at": "2026-10-19T09:00:00Z",
+ "source": "E.V. Home",
+ "kind": "study-guide",
+ "title": "Made-up guide on fluid balance",
+ "brief": "Make a made-up study guide on fluid balance.",
+ "fired": {
+  "at": "2026-10-19T09:00:01Z",
+  "ok": true
+ },
+ "migratedFrom": "jobs/job-20261019-090000-made-up-guide",
+ "migratedTo": "jobs/job-20261019-090000-made-up-guide",
+ "migratedAt": "2026-10-21T22:30:00.000Z",
+ "migration": "jobs schema 1 to 2"
+}

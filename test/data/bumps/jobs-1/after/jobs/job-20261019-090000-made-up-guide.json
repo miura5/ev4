@@ -1,0 +1,13 @@
+{
+ "schema": 2,
+ "writer": "page",
+ "at": "2026-10-19T09:00:00Z",
+ "source": "E.V. Home",
+ "kind": "study-guide",
+ "title": "Made-up guide on fluid balance",
+ "brief": "Make a made-up study guide on fluid balance.",
+ "fired": {
+  "at": "2026-10-19T09:00:01Z",
+  "ok": true
+ }
+}

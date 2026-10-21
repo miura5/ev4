@@ -840,3 +840,36 @@ test('B-72 (D-120): the weeks 3 to 4 bump adds insights null, matches its fixtur
   delete rec.journal;
   assert.equal(rebuildOne({ ...rec, weeks: applied.weeks }, spec, 'weeks', applied.weeks[0]).status, 'same');
 });
+
+test('B-177 (D-194): the jobs 1 to 2 bump only moves a job to the new version, matches its fixture, validates and is idempotent', async () => {
+  const { migrateBumps } = await import('../core/migrate.mjs');
+  const load = d => {
+    const db = {};
+    for (const { collection, id, doc } of readExport(d)) (db[collection] = db[collection] || []).push({ ...doc, id });
+    return db;
+  };
+  const sorted = l => (l || []).slice().sort((a, b) => (a.id < b.id ? -1 : 1));
+  const dir = path.join(ROOT, 'test/data/bumps/jobs-1');
+  const before = load(path.join(dir, 'before')),
+    after = load(path.join(dir, 'after'));
+  const r = migrateBumps(before, { at: '2026-10-21T22:30:00Z' });
+  const got = {};
+  for (const w of r.writes) (got[w.collection] = got[w.collection] || []).push({ ...w.data, id: w.id });
+  for (const [c, docs] of Object.entries(after))
+    assert.equal(EV.stableStringify(sorted(got[c])), EV.stableStringify(sorted(docs)), c);
+  for (const w of r.writes)
+    assert.ok(validate(w.collection, w.data, { id: w.id }).ok, `${w.collection}/${w.id} validates`);
+  for (const j of got.jobs) {
+    const was = before.jobs.find(b => b.id === j.id);
+    assert.deepEqual({ ...j, schema: 1 }, was, 'only the version moves');
+  }
+  assert.equal(got.legacy.length, 2, 'each job keeps its legacy copy');
+  const applied = applyWrites(before, r.writes);
+  assert.deepEqual(migrateBumps(applied, { at: '2026-10-22T22:30:00Z' }).writes, [], 'a second run writes nothing');
+  // The builder's kinds validate at schema 2 and not at schema 1.
+  const build = { ...after.jobs[0], kind: 'build' };
+  delete build.id;
+  for (const kind of ['build', 'reply', 'design', 'plan', 'ship'])
+    assert.ok(validate('jobs', { ...build, kind }).ok, kind);
+  assert.ok(!validate('jobs', { ...build, schema: 1 }).ok, 'schema 1 is no longer current');
+});

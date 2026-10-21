@@ -415,14 +415,21 @@ CODE_STEPS['week-brief'] = function weekBrief(db, ctx, spec) {
 CODE_STEPS['job-brief'] = function jobBrief(db, ctx, spec) {
   const results = new Map((db.jobresults || []).map(r => [r.id, r]));
   const wanted = ctx.input && ctx.input.job;
+  // D-194 (B-177): a build, reply, design, plan or ship job is the builder's; the worker never takes one.
+  const builders = new Set((spec.jobs && spec.jobs.builderKinds) || []);
   const job = wanted
     ? (db.jobs || []).find(j => j.id === wanted)
     : [...(db.jobs || [])]
-        .filter(j => !results.has(j.id))
+        .filter(j => !results.has(j.id) && !builders.has(j.kind))
         .sort((a, b) => EV.toMs(a.at) - EV.toMs(b.at) || (a.id < b.id ? -1 : 1))[0];
   if (!job) {
     ctx.job = null;
     ctx.jobSkip = wanted ? `no job ${wanted} in the record` : 'no job is waiting';
+    return { say: [ctx.jobSkip] };
+  }
+  if (builders.has(job.kind)) {
+    ctx.job = null;
+    ctx.jobSkip = `job ${job.id} is a ${job.kind} job, the builder's (D-194); the worker leaves it`;
     return { say: [ctx.jobSkip] };
   }
   const done = results.get(job.id);

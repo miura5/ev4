@@ -2,14 +2,14 @@
  "$schema": "https://json-schema.org/draft/2020-12/schema",
  "$id": "ev4/jobs",
  "title": "jobs/<id>",
- "description": "kind, title, brief, fired",
+ "description": "kind, title, brief, fired; kinds build, reply, design, plan and ship are the builder's (D-194, schema 2)",
  "x-ev": {
   "collection": "jobs",
   "class": "Fact",
   "writers": [
    "page"
   ],
-  "schema": 1,
+  "schema": 2,
   "marks": {
    "fired": [
     "page"
@@ -20,7 +20,7 @@
  "type": "object",
  "properties": {
   "schema": {
-   "const": 1
+   "const": 2
   },
   "writer": {
    "enum": [
@@ -43,7 +43,12 @@
     "exam-retro",
     "clinical-prep",
     "share-set",
-    "general"
+    "general",
+    "build",
+    "reply",
+    "design",
+    "plan",
+    "ship"
    ]
   },
   "title": {

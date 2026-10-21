@@ -170,7 +170,12 @@
         throw new Error('The brief looks like it has patient details. Leave real patient details out.');
       const st = new Date().toISOString().replace(/\D/g, '').slice(0, 14);
       const id = E.safeId(`job-${st.slice(0, 8)}-${st.slice(8)}-${E.slug(title, 24)}`);
-      await write({ op: 'set', collection: 'jobs', id, data: { ...envelope('E.V. Home'), kind, title, brief } });
+      await write({
+        op: 'set',
+        collection: 'jobs',
+        id,
+        data: { ...envelope('E.V. Home'), schema: 2, kind, title, brief },
+      }); // B-177: jobs schema 2
       const fired = await fire(TASKS.worker, jobText(id));
       await write({ op: 'update', collection: 'jobs', id, data: { fired } });
       return { id, fired };
@@ -183,6 +188,10 @@
     }
     function jobState(j) {
       const mins = iso => Math.round((Date.now() - E.toMs(iso)) / 60000);
+      // D-194 (B-177): a build, reply, design, plan or ship job is the builder's, with its own, longer window.
+      const forBuilder = ((EV_SPEC.jobs && EV_SPEC.jobs.builderKinds) || []).includes(j.kind);
+      const who = forBuilder ? 'the builder' : 'the worker';
+      const stall = forBuilder ? (EV_SPEC.constants.watchdog || {}).builderStallMinutes || 90 : 15;
       if (j.status === 'done')
         return {
           label: 'done',
@@ -197,27 +206,29 @@
         return {
           label: 'failed',
           v: 'bad',
-          detail: (j.result && (j.result.failed || j.result.text)) || 'The worker stopped before it finished.',
-          retry: true,
+          detail:
+            (j.result && (j.result.failed || j.result.text)) ||
+            `${forBuilder ? 'The builder' : 'The worker'} stopped before it finished.`,
+          retry: !forBuilder,
         };
       if (j.fired && j.fired.ok === false)
-        return { label: 'not started', v: 'bad', detail: fireCopy(j.fired.error), retry: true };
+        return { label: 'not started', v: 'bad', detail: fireCopy(j.fired.error), retry: !forBuilder };
       if (j.status === 'running')
-        return mins(j.startedAt) > 40
+        return mins(j.startedAt) > (forBuilder ? stall : 40)
           ? {
               label: 'running',
               v: 'warn',
               detail: `Running for ${mins(j.startedAt)} min. It may have stalled.`,
-              retry: true,
+              retry: !forBuilder,
             }
           : { label: 'running', v: 'info', detail: 'Working on it since ' + clock12(j.startedAt) + '.' };
-      if (!j.fired) return { label: 'queued', v: '', detail: 'Handing it to the worker…' };
-      return mins(j.fired.at) > 15
-        ? { label: 'queued', v: 'warn', detail: 'No word from the worker in 15 minutes.', retry: true }
+      if (!j.fired) return { label: 'queued', v: '', detail: `Handing it to ${who}…` };
+      return mins(j.fired.at) > stall
+        ? { label: 'queued', v: 'warn', detail: `No word from ${who} in ${stall} minutes.`, retry: !forBuilder }
         : {
             label: 'queued',
             v: 'info',
-            detail: 'Sent to the worker at ' + clock12(j.fired.at) + '. It usually starts within a few minutes.',
+            detail: `Sent to ${who} at ` + clock12(j.fired.at) + '. It usually starts within a few minutes.',
           };
     }
     /** D-104: the retro's numbers on its job card, the same ones the narrative was written over. */

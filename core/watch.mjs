@@ -9,6 +9,7 @@ import { BUMPS, currentVersion } from './migrate.mjs';
 const ms = x => EV.toMs(x);
 const W = spec => ({
   jobStallMinutes: 15,
+  builderStallMinutes: 90,
   runTimeoutMinutes: 60,
   graceMinutes: 30,
   refireWithinMinutes: 180,
@@ -217,16 +218,28 @@ export function watch(db, { now, record, spec, scheduler = null }) {
   }
   const results = new Map((db.jobresults || []).map(r => [r.id, r]));
   const worker = Object.values(tasks).find(x => x.pipeline === 'worker');
+  // D-194 (B-177): a builder-kind job has its own, longer window and is re-fired to ev4-builder, never the worker.
+  const builderKinds = new Set((spec.jobs && spec.jobs.builderKinds) || []);
+  const builder = (spec.tasks && spec.tasks.build && spec.tasks.build['ev4-builder']) || null;
   const stalledJobs = [];
   for (const j of (db.jobs || []).filter(j => j.fired && j.fired.ok).sort((a, b) => (a.id < b.id ? -1 : 1))) {
     const r = results.get(j.id);
     if (r && r.status !== 'running') continue;
-    if (minutes(j.fired.at) <= w.jobStallMinutes) continue;
+    const forBuilder = builderKinds.has(j.kind);
+    if (minutes(j.fired.at) <= (forBuilder ? w.builderStallMinutes : w.jobStallMinutes)) continue;
     stalledJobs.push({
       id: j.id,
       firedAt: j.fired.at,
       minutes: minutes(j.fired.at),
-      refired: consider(`watchdog-refire-job-${j.id}`, `job ${j.id}`, worker, 'queued too long', null, `Job ${j.id}`),
+      ...(forBuilder ? { to: 'builder' } : {}),
+      refired: consider(
+        `watchdog-refire-job-${j.id}`,
+        `job ${j.id}`,
+        forBuilder ? builder : worker,
+        'queued too long',
+        null,
+        `Job ${j.id}`
+      ),
     });
   }
   return { pipelines, missing, stalledRuns, stalledJobs, refires, reported };
