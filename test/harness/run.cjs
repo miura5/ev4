@@ -85,7 +85,7 @@ seed.system = {
     pages: { staging: { files: { 'page/staging/app.js': 'a'.repeat(64) } }, live: { files: {} } },
   },
 }; // B-38
-const env = (writer, source, at) => ({ schema: 1, writer, at: at || new Date().toISOString(), source });
+const env = (writer, source, at, schema = 1) => ({ schema, writer, at: at || new Date().toISOString(), source });
 const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date());
 const DAYTIME = new Date(today + 'T19:00:00Z'); // 2pm CDT: the page's clock (see openPage)
 // Today's review: the newest review set in the record, with its answers, as today's (so the summary is known).
@@ -387,7 +387,7 @@ if (seed.state && seed.state.current)
   };
 seed.jobs = {
   'job-20261017-150000-cardiac-output': {
-    ...env('page', 'E.V. Home', new Date(Date.now() - 7200e3).toISOString()),
+    ...env('page', 'E.V. Home', new Date(Date.now() - 7200e3).toISOString(), 2), // B-177: jobs schema 2
     kind: 'study-guide',
     title: 'Study guide: cardiac output',
     brief: 'harness',
@@ -408,8 +408,25 @@ seed.jobresults = {
   },
 };
 // B-47 (D-104): a finished exam-retro job with its numbers, for the retro card check
+// B-177 (review): builder jobs, older than the 3-hour live window so they never show as running work: one stalled past
+// the builder's 90 minutes, one failed long before he last looked (no greeting line).
+const fourHoursAgo = new Date(DAYTIME.getTime() - 4 * 3600e3).toISOString(); // the page's clock (openPage)
+seed.jobs['job-harness-build-stalled'] = {
+  ...env('page', 'E.V. Home', fourHoursAgo, 2),
+  kind: 'build',
+  title: 'build: the timer sat at 0:00',
+  brief: 'build: the timer sat at 0:00',
+  fired: { at: fourHoursAgo, ok: true },
+};
+seed.jobs['job-harness-reply-failed'] = {
+  ...env('page', 'E.V. Home', '2026-10-10T15:00:00Z', 2),
+  kind: 'reply',
+  title: 'B-01',
+  brief: 'yes',
+  fired: { at: '2026-10-10T15:00:01Z', ok: true },
+};
 seed.jobs['job-harness-retro'] = {
-  schema: 1,
+  schema: 2,
   writer: 'page',
   at: hourAgo,
   source: 'E.V. Home',
@@ -417,6 +434,16 @@ seed.jobs['job-harness-retro'] = {
   title: 'Retro: Harness Exam 3',
   brief: 'E3H: the retro after the score he entered',
   fired: { at: '2026-10-01T15:00:01Z', ok: true },
+};
+seed.jobresults['job-harness-reply-failed'] = {
+  ...env('worker', 'builder harness', '2026-10-10T15:20:00Z'),
+  release: RELEASE,
+  status: 'failed',
+  startedAt: '2026-10-10T15:05:00Z',
+  finishedAt: '2026-10-10T15:20:00Z',
+  result: null,
+  message: null,
+  error: null,
 };
 seed.jobresults['job-harness-retro'] = {
   schema: 1,
@@ -1037,6 +1064,30 @@ const ok = (name, cond, detail = '') => {
         .locator('#ev-surf')
         .first()
         .screenshot({ path: `${shots}/retro-card.png` });
+    }
+    // B-177 (review): a builder job's card names its kind, says the builder's own words, and never offers Try again
+    // (a retry would fire the worker; the watchdog re-fires the builder).
+    for (const [id, want] of [
+      ['job-harness-build-stalled', /No word from the builder in 90 minutes\./],
+      ['job-harness-reply-failed', /The builder stopped before it finished\./],
+    ]) {
+      await page.evaluate(i => {
+        window.__chatPre = '';
+        window.__chatScript = [{ tool: 'show_card', input: { type: 'job', id: i } }];
+        window.__chatReply = 'Here it is.';
+      }, id);
+      await send(page, 'Show me that job');
+      await page.waitForTimeout(300);
+      const surf = page.locator('#ev-surf');
+      const t = await surf.textContent();
+      ok(
+        `a builder job's card (${id}) names its kind and the builder, with no Try again`,
+        (id.includes('build') ? /^Build · queued/.test(t.trim()) : /^Your reply · failed/.test(t.trim())) &&
+          want.test(t) &&
+          (await surf.locator('button', { hasText: 'Try again' }).count()) === 0,
+        t.slice(0, 300)
+      );
+      await surf.first().screenshot({ path: `${shots}/builder-job-${id.split('-')[2]}.png` });
     }
     // Captions (B-77): the brand, like tapping her, returns to now from wherever he has scrolled
     await page.evaluate(() => {

@@ -55,6 +55,12 @@
           const all = items.filter(it => !it.deferred);
           return `Today’s list · ${all.filter(isDone).length} of ${all.length} done`;
         }
+        // B-177 (review): a job's line names its kind and its state (Build · queued), since the card's own head is
+        // the surface's line.
+        if (c.type === 'job') {
+          const j = S.jobs.find(x => x.id === c.id);
+          return j ? `${kindLabel(j.kind) || 'Background job'} · ${jobState(j).label}` : 'Background job';
+        }
         if (LINES[c.type]) return LINES[c.type](c).text;
         if (c.type === 'link') return c.title || 'Link';
         return sfTitle[c.type] || 'Card';

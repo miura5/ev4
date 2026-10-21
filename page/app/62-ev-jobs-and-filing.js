@@ -186,6 +186,10 @@
       await write({ op: 'update', collection: 'jobs', id: j.id, data: { fired } });
       if (!fired.ok) toast(fireCopy(fired.error));
     }
+    /** A job kind's label: the worker's kinds, then the builder's (B-177 review: a build job's card names its kind). */
+    function kindLabel(k) {
+      return (KINDS[k] || {}).label || ((EV_SPEC.jobs && EV_SPEC.jobs.builderLabels) || {})[k] || null;
+    }
     function jobState(j) {
       const mins = iso => Math.round((Date.now() - E.toMs(iso)) / 60000);
       // D-194 (B-177): a build, reply, design, plan or ship job is the builder's, with its own, longer window.

@@ -273,6 +273,7 @@ export function pageSpecFor(spec, schemas, { target, release }) {
     jobs: () => ({
       kinds: Object.fromEntries(Object.entries(spec.jobs.kinds || {}).map(([k, x]) => [k, { label: x.label }])),
       builderKinds: spec.jobs.builderKinds || [],
+      builderLabels: spec.jobs.builderLabels || {},
     }),
     persona: () => spec.persona || null,
     // ui.tenets is the look pass's (test/harness/look.cjs reads it from the spec), not the page's.

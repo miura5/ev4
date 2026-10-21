@@ -326,7 +326,7 @@
               'job-' + j.id,
               `${short(j.createdAt)} · ${j.title || j.id}`,
               s2.v === 'ok' ? null : s2.label,
-              [(KINDS[j.kind] || {}).label, s2.detail].filter(Boolean).join(' · ')
+              [kindLabel(j.kind), s2.detail].filter(Boolean).join(' · ')
             );
           })
         );

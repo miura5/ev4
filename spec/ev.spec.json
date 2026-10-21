@@ -3117,7 +3117,14 @@
    "design",
    "plan",
    "ship"
-  ]
+  ],
+  "builderLabels": {
+   "build": "Build",
+   "reply": "Your reply",
+   "design": "Design kickoff",
+   "plan": "Filing a design",
+   "ship": "Ship it"
+  }
  },
  "persona": {
   "name": "E.V.",

@@ -358,7 +358,7 @@
         }
         const st = jobState(j);
         const h = el('div', 'card-head');
-        h.append(el('h2', null, (KINDS[j.kind] || {}).label || 'Background job'), chip(st.label, st.v));
+        h.append(el('h2', null, kindLabel(j.kind) || 'Background job'), chip(st.label, st.v));
         box.append(h);
         box.append(el('p', 'job-title', j.title || j.id));
         const r = j.result || {};
