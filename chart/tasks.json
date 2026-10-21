@@ -2989,5 +2989,19 @@
    "outcome": "task",
    "at": "2026-10-21T12:07:40.314Z"
   }
+ },
+ {
+  "id": "B-170",
+  "kind": "task",
+  "title": "The morning targets the weakest objective from the latest weeks document (D-120's morning half, behind D-190): the morning's spare practice and drill items aim at weeks/<latest>.insights.weakestObjective; it ships behind a comparison first (the morning writes what it would target beside what it does, a week runs, the weekly compares), and flips on Matt's word",
+  "dod": "a core test: with insights naming E4-3 the morning's target is E4-3, without them today's rule; days/<date>.shadow (or its equivalent) carries the would-be target for a week on staging and the weekly's study comparison reports it; Matt reads the week and says flip; the flip is its own staging-proved deploy; npm test green",
+  "milestone": "v4.3 study",
+  "status": "open",
+  "depends": [
+   "B-72"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "B-72 split (D-190)"
  }
 ]
