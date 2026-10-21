@@ -211,6 +211,7 @@ export const PAGE_SPEC_KEYS = [
   'items',
   'workouts',
   'jobs',
+  'actions',
   'persona',
   'ui',
   'pipelines',
@@ -275,6 +276,14 @@ export function pageSpecFor(spec, schemas, { target, release }) {
       builderKinds: spec.jobs.builderKinds || [],
       builderLabels: spec.jobs.builderLabels || {},
     }),
+    // B-186 (D-203): the actions table, which the page's actor checks every call against.
+    // The rows without their does line (the node side's description); _rules stay in the spec.
+    actions: () =>
+      Object.fromEntries(
+        Object.entries(spec.actions || {})
+          .filter(([k]) => !k.startsWith('_'))
+          .map(([k, row]) => [k, Object.fromEntries(Object.entries(row).filter(([f]) => f !== 'does'))])
+      ),
     persona: () => spec.persona || null,
     // ui.tenets is the look pass's (test/harness/look.cjs reads it from the spec), not the page's.
     ui: () => Object.fromEntries(Object.entries(spec.ui).filter(([k]) => k !== 'tenets')),
@@ -355,6 +364,9 @@ export function buildPages({ root, spec, schemas, release }) {
   const study = read('core/study.mjs');
   if (/^import /m.test(study)) throw new Error('core/study.mjs must not import: it runs in the page as written');
   const studyNames = [...study.matchAll(/^export (?:function|const) (\w+)/gm)].map(m => m[1]);
+  // core/actions.mjs (B-186, D-203): act and its actors, as window.EVActions, over the validator above.
+  const actions = read('core/actions.mjs');
+  if (/^import /m.test(actions)) throw new Error('core/actions.mjs must not import: it runs in the page as written');
   if (!core.includes(RELEASE_SLOT)) throw new Error(`core/evcore.mjs has no ${RELEASE_SLOT} for the release`);
   const coreJs =
     parts +
@@ -373,7 +385,10 @@ export function buildPages({ root, spec, schemas, release }) {
     study.replace(/^export (function|const) /gm, '$1 ') +
     '\nwindow.EVStudy = { ' +
     studyNames.join(', ') +
-    ' };\n})();\n';
+    ' };\n})();\n' +
+    '\n// ---- core/actions.mjs\n(function () {\n' +
+    actions.replace(/^export (function|const) /gm, '$1 ') +
+    '\nif (window.EVValidate) window.EVActions = makeActions(window.EVValidate.validateAgainst);\n})();\n';
   // B-149: core and the page carry no release of their own; the build writes the one release into both.
   const app0 = appSource(root);
   if (!app0.includes(RELEASE_SLOT)) throw new Error(`page/app has no ${RELEASE_SLOT} for the release`);

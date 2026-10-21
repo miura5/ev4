@@ -38,7 +38,7 @@ test('B-184: the guarded list is in spec.boundaries, and CLAUDE.md has the secti
   const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec', 'ev.spec.json'), 'utf8'));
   const g = spec.boundaries.guarded;
   assert.deepEqual(g.files, ['chart/rules.json', 'tools/hooks.mjs', '.claude/settings.json', 'tools/gate.mjs']);
-  assert.deepEqual(g.spec, ['boundaries']);
+  assert.deepEqual(g.spec, ['boundaries', 'actions']); // B-186 (D-203): the actions table is guarded too
   assert.equal(g.decisions, 'tenet');
   for (const f of g.files) assert.ok(fs.existsSync(path.join(ROOT, f)), f);
   for (const s of g.sections)

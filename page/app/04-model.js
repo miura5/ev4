@@ -16,6 +16,12 @@
       }
       return { models, attempts, target, day, dayedit, latest };
     }
+    // B-186 (D-203): the page's two actors over spec.actions; the caller is fixed here, never by the call. A v4.4 tap
+    // (a build ask, a reply, Ship it) runs ACT.tap(...).writes through run and makes its effects; the model's tools
+    // move to ACT.tool as a task touches them.
+    const ACT = window.EVActions
+      ? { tap: window.EVActions.actor(EV_SPEC, 'tap'), tool: window.EVActions.actor(EV_SPEC, 'tool') }
+      : null;
     const answersOf = set => (M && set && M.latest[set.id]) || {};
     /** One write, checked against its collection's schema first (the page refuses what the pipelines refuse). */
     async function write(w) {

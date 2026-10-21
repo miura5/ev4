@@ -3050,7 +3050,8 @@
     "tools/gate.mjs"
    ],
    "spec": [
-    "boundaries"
+    "boundaries",
+    "actions"
    ],
    "sections": [
     {
@@ -3124,6 +3125,462 @@
    "design": "Design kickoff",
    "plan": "Filing a design",
    "ship": "Ship it"
+  }
+ },
+ "actions": {
+  "_rules": [
+   "B-186 (D-203): every new thing E.V. does from the page or a builder session is a row here: does (one line), args (a JSON schema the validator reads), writes (collection, key as a pattern, ops set or update, the fields it may set besides the envelope), effects (fire_trigger with a task key, or publish), callers (tap: the page's own code path; tool: the model's page tool; builder; worker) and cost (nothing; staging: R-02's check, staging green at the commit; ok: R-04's in either form, his words in a build chat or a ship job he wrote, or his tap on a row that is the OK).",
+   "core/actions.mjs act(spec, name, args, ctx) composes a call and checks it against its row: the row exists and is valid, the caller may call it, the args fit, every write stays inside the row's collections, keys and fields, every effect is the row's, and the cost is met; else it refuses with the reason. ctx.caller is set by code: each code path makes one actor (tap, tool, builder, worker) and the actor's caller overwrites any the call claims.",
+   "No row writes system/spec, where this table lives, or the table itself, and no effect creates, changes or deletes a scheduled task (D-200); act() and test/actions.test.mjs both refuse such a row. A deploy's system documents are core/deploy.mjs's printout, never a row's writes: ship-live is the gate (its caller and cost) and composes no writes.",
+   "Every page write site and every record write a tools command prints comes from act or a core composer; today's other page sites are the legacy list in test/data/actions-legacy.json, which only shrinks (test/actions.test.mjs). The 13 conversation tools become rows one at a time, when a task touches them (their schemas move here and the page builds the tool from the row)."
+  ],
+  "build-ask": {
+   "does": "A message starting build:, bug: or idea: on the page: a build job for ev4-builder (D-194, B-180)",
+   "args": {
+    "type": "object",
+    "properties": {
+     "brief": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1500
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 90
+     },
+     "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1600
+     }
+    },
+    "required": [
+     "brief"
+    ],
+    "additionalProperties": false
+   },
+   "writes": [
+    {
+     "collection": "jobs",
+     "key": "^job-\\d{8}-\\d{6}-[a-z0-9-]+$",
+     "ops": [
+      "set",
+      "update"
+     ],
+     "fields": [
+      "kind",
+      "title",
+      "brief",
+      "fired"
+     ]
+    }
+   ],
+   "effects": [
+    {
+     "kind": "fire_trigger",
+     "task": "build.ev4-builder"
+    }
+   ],
+   "callers": [
+    "tap"
+   ],
+   "cost": "nothing"
+  },
+  "reply": {
+   "does": "His answer to a Your turn item, by a chip or typed: a reply job for ev4-builder, filed with log --from-job (D-196, B-182)",
+   "args": {
+    "type": "object",
+    "properties": {
+     "brief": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1500
+     },
+     "title": {
+      "type": "string",
+      "pattern": "^B-\\d+$"
+     },
+     "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1600
+     }
+    },
+    "required": [
+     "title",
+     "brief"
+    ],
+    "additionalProperties": false
+   },
+   "writes": [
+    {
+     "collection": "jobs",
+     "key": "^job-\\d{8}-\\d{6}-[a-z0-9-]+$",
+     "ops": [
+      "set",
+      "update"
+     ],
+     "fields": [
+      "kind",
+      "title",
+      "brief",
+      "fired"
+     ]
+    }
+   ],
+   "effects": [
+    {
+     "kind": "fire_trigger",
+     "task": "build.ev4-builder"
+    }
+   ],
+   "callers": [
+    "tap"
+   ],
+   "cost": "nothing"
+  },
+  "design-ask": {
+   "does": "design or design: <theme> on the page: a job for ev4-builder to draft the next design chat's kickoff (D-197, B-183)",
+   "args": {
+    "type": "object",
+    "properties": {
+     "brief": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1500
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 90
+     },
+     "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1600
+     }
+    },
+    "required": [
+     "brief"
+    ],
+    "additionalProperties": false
+   },
+   "writes": [
+    {
+     "collection": "jobs",
+     "key": "^job-\\d{8}-\\d{6}-[a-z0-9-]+$",
+     "ops": [
+      "set",
+      "update"
+     ],
+     "fields": [
+      "kind",
+      "title",
+      "brief",
+      "fired"
+     ]
+    }
+   ],
+   "effects": [
+    {
+     "kind": "fire_trigger",
+     "task": "build.ev4-builder"
+    }
+   ],
+   "callers": [
+    "tap"
+   ],
+   "cost": "nothing"
+  },
+  "plan-ask": {
+   "does": "file: <doc link> on the page: a job for ev4-builder to file a design hand-off with plan --from (D-197, B-183)",
+   "args": {
+    "type": "object",
+    "properties": {
+     "brief": {
+      "type": "string",
+      "pattern": "^https://claude\\.ai/"
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 90
+     },
+     "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1600
+     }
+    },
+    "required": [
+     "brief"
+    ],
+    "additionalProperties": false
+   },
+   "writes": [
+    {
+     "collection": "jobs",
+     "key": "^job-\\d{8}-\\d{6}-[a-z0-9-]+$",
+     "ops": [
+      "set",
+      "update"
+     ],
+     "fields": [
+      "kind",
+      "title",
+      "brief",
+      "fired"
+     ]
+    }
+   ],
+   "effects": [
+    {
+     "kind": "fire_trigger",
+     "task": "build.ev4-builder"
+    }
+   ],
+   "callers": [
+    "tap"
+   ],
+   "cost": "nothing"
+  },
+  "ship-it": {
+   "does": "His Ship it tap on a staging-green build's card: a ship job naming one commit, which is his OK for that commit (D-198, B-185)",
+   "args": {
+    "type": "object",
+    "properties": {
+     "brief": {
+      "const": "ship it"
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 90
+     },
+     "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1600
+     },
+     "commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{7,40}$"
+     },
+     "tasks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+       "type": "string",
+       "pattern": "^B-\\d+$"
+      }
+     }
+    },
+    "required": [
+     "brief",
+     "commit",
+     "tasks"
+    ],
+    "additionalProperties": false
+   },
+   "writes": [
+    {
+     "collection": "jobs",
+     "key": "^job-\\d{8}-\\d{6}-[a-z0-9-]+$",
+     "ops": [
+      "set",
+      "update"
+     ],
+     "fields": [
+      "kind",
+      "title",
+      "brief",
+      "fired",
+      "commit",
+      "tasks"
+     ]
+    }
+   ],
+   "effects": [
+    {
+     "kind": "fire_trigger",
+     "task": "build.ev4-builder"
+    }
+   ],
+   "callers": [
+    "tap"
+   ],
+   "cost": "ok"
+  },
+  "trace": {
+   "does": "The builder's trace (D-195, B-178): its job's result, one talk line as E.V. with the job card, and system/yourturn",
+   "args": {
+    "type": "object",
+    "properties": {
+     "job": {
+      "type": "string",
+      "pattern": "^job-\\d{8}-\\d{6}-[a-z0-9-]+$"
+     },
+     "status": {
+      "enum": [
+       "done",
+       "failed"
+      ]
+     },
+     "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1500
+     },
+     "date": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+     },
+     "talkExists": {
+      "type": "boolean"
+     },
+     "release": {
+      "type": "string",
+      "minLength": 1
+     },
+     "startedAt": {
+      "type": "string"
+     },
+     "task": {
+      "type": "string",
+      "pattern": "^B-\\d+$"
+     },
+     "commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{7,40}$"
+     },
+     "schemas": {
+      "type": "object",
+      "properties": {
+       "jobresults": {
+        "type": "integer"
+       },
+       "talk": {
+        "type": "integer"
+       },
+       "system": {
+        "type": "integer"
+       }
+      },
+      "required": [
+       "jobresults",
+       "talk",
+       "system"
+      ],
+      "additionalProperties": false
+     },
+     "yourturn": {
+      "type": "object",
+      "properties": {
+       "commit": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{7,40}$"
+       },
+       "groups": {
+        "type": "array"
+       }
+      },
+      "required": [
+       "commit",
+       "groups"
+      ],
+      "additionalProperties": false
+     }
+    },
+    "required": [
+     "job",
+     "status",
+     "text",
+     "date",
+     "talkExists",
+     "release",
+     "schemas",
+     "yourturn"
+    ],
+    "additionalProperties": false
+   },
+   "writes": [
+    {
+     "collection": "jobresults",
+     "key": "^job-\\d{8}-\\d{6}-[a-z0-9-]+$",
+     "ops": [
+      "set"
+     ],
+     "fields": [
+      "release",
+      "status",
+      "startedAt",
+      "finishedAt",
+      "result",
+      "message",
+      "error"
+     ]
+    },
+    {
+     "collection": "talk",
+     "key": "^\\d{4}-\\d{2}-\\d{2}$",
+     "ops": [
+      "set",
+      "update"
+     ],
+     "fields": [
+      "date",
+      "messages"
+     ]
+    },
+    {
+     "collection": "system",
+     "key": "^yourturn$",
+     "ops": [
+      "set"
+     ],
+     "fields": [
+      "commit",
+      "groups"
+     ]
+    }
+   ],
+   "effects": [],
+   "callers": [
+    "builder"
+   ],
+   "cost": "nothing"
+  },
+  "ship-live": {
+   "does": "The builder's live deploy on a ship job (D-198, B-185): the gate for ship live --from-job; the deploy's calls are core/deploy.mjs's",
+   "args": {
+    "type": "object",
+    "properties": {
+     "job": {
+      "type": "string",
+      "minLength": 1
+     },
+     "commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{7,40}$"
+     }
+    },
+    "required": [
+     "job",
+     "commit"
+    ],
+    "additionalProperties": false
+   },
+   "writes": [],
+   "effects": [
+    {
+     "kind": "publish"
+    }
+   ],
+   "callers": [
+    "builder"
+   ],
+   "cost": "ok"
   }
  },
  "persona": {

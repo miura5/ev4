@@ -110,6 +110,7 @@ function specReads() {
     'core/evcore.mjs',
     ...[...core.matchAll(/^import \{ \w+ \} from '\.\/([\w-]+\.mjs)';$/gm)].map(m => 'core/' + m[1]),
     'core/study.mjs',
+    'core/actions.mjs', // B-186: act reads spec.actions
     'core/motion.mjs',
     'core/validate.mjs',
   ];
@@ -131,7 +132,10 @@ test('B-161 (A-3): the page gets exactly the spec keys its files read, and its s
   for (const t of ['live', 'staging']) {
     const json = pages[t]['spec.json'];
     assert.deepEqual(Object.keys(JSON.parse(json)), PAGE_SPEC_KEYS);
-    assert.ok(Buffer.byteLength(json) < 50000, `${t} spec.json is ${Buffer.byteLength(json)} bytes`);
+    // B-186 (D-203): actions is a key the v4.4 minor adds on purpose, with its own budget (test/actions.test.mjs);
+    // everything else keeps B-161's 50 KB.
+    const rest = Buffer.byteLength(json) - Buffer.byteLength(JSON.stringify(JSON.parse(json).actions || null));
+    assert.ok(rest < 50000, `${t} spec.json is ${rest} bytes without actions`);
     assert.ok(!json.includes('Documents/'), 'no Mac folder');
   }
   // The page's schemas lose only their notes: every field, definition and required list is kept (a field named
