@@ -45,6 +45,6 @@ from the tree only (they stay in history), and the record keeps everything it ho
 5. **Live.** `node tools/chart.mjs ship live --matt-ok`, making every call and read it prints, until GREEN. It refuses
    what `chart/rules.json` forbids (R-02 staging green with the same content, R-03 no study session running, R-04
    Matt's OK, R-05 not inside a live watchdog window). It records the deploy; its rollback field names the build left.
-6. **Record.** `node tools/chart.mjs log decision <next id> --title "Live went back to <sha>" --why "<what went wrong>"`,
-   then `views` until in step. Bringing the newer work back later is `git revert <the restore commit>`, then the normal
+6. **Record.** `node tools/chart.mjs log decision <next id> --title "Live went back to <sha>" --why "<what went wrong>"`;
+   DECISIONS.md carries it. Bringing the newer work back later is `git revert <the restore commit>`, then the normal
    path, once whatever went wrong is fixed.

@@ -7,13 +7,14 @@ repository is v4 from its first commit. The design is finished before you start;
 
 **The design lives in one doc:** E.V. Foundation v4, https://claude.ai/artifact/Fgb2KjoLKcRgCRrBmM6kEf
 (seven tabs: main · v3 audit · Data architecture · Operational architecture · Features · Build plan · UI and
-UX). Read it with the
-Claude Docs tools. The project record is **the Chart** (`chart/`, design https://claude.ai/artifact/8DVSMh5WdybjeHVV5m2uQT,
+UX), design history since D-184: a design doc is a hand-off, and no current fact is cited from it. The living truth is
+this file, the spec and its schemas, and the Chart. The project record is **the Chart** (`chart/`, design https://claude.ai/artifact/8DVSMh5WdybjeHVV5m2uQT,
 D-140): tasks, reports, decisions, deploys and the rules commands enforce, written only through `tools/chart.mjs`.
-BACKLOG.md, the Board and Changelog tabs of the v3 doc (https://claude.ai/artifact/AXwVp9xqpWaUKLE4SqZzwg), its
-Decisions tab and the overview doc's status line are printed from it; no view is edited by hand. Decisions keep their
-reasoning in the Decisions tab; `chart/decisions.json` holds id, title, status, supersedes, amends and kind, and `log
-decision` takes only the next free id. A design chat hands off through its doc's two tables, 'Tasks to add' and
+BACKLOG.md, DECISIONS.md and CHANGELOG.md are generated from it into the repository and drift-tested; none is edited by
+hand. The Docs views (the v3 doc's Board, Changelog and Decisions tabs, https://claude.ai/artifact/AXwVp9xqpWaUKLE4SqZzwg,
+and the overview's status line) are retired (D-172): nothing writes them, and the inbox still reads Board comments.
+`chart/decisions.json` holds every decision's id, title, why, status, supersedes, amends and kind, and `log decision`
+takes only the next free id. A design chat hands off through its doc's two tables, 'Tasks to add' and
 'Decisions proposed' (as P-1, P-2; D-141), plus 'Tenets proposed' for standing principles; a build chat reads that tab,
 then files them with `plan --from <doc link> --apply`. A tenet (B-109) is a decision of kind tenet with a scope (ui,
 data, ops, pipelines) and a check (harness, lint, ship, review); `brief` lists those in a task's scope and the review
@@ -24,8 +25,8 @@ needs it).
 ## Every session
 
 Every command below is `node tools/chart.mjs <command>`; each that writes the record commits it (pass the session's
-attribution lines with `--trailer`, one per line) and prints the Docs calls that bring the views in line. Make those
-calls exactly as printed, read the view again when asked, and run `views` until it says the views are in step.
+attribution lines with `--trailer`, one per line) and regenerates BACKLOG.md, DECISIONS.md and CHANGELOG.md with it.
+`--no-commit` leaves the change for the task's own commit.
 
 1. Read this file. Run `node core/cli.mjs verify-deploy staging` and read its answer. Then read the live record's
    health/current (`brief` prints its age, or the read to make). Older than `spec.constants.health.staleHours`, a run
@@ -38,8 +39,8 @@ calls exactly as printed, read the view again when asked, and run `views` until 
    "idea: ..." in the chat, file it at once with `report bug|request --from-chat` (his words come from the
    transcript, never retyped).
 3. Take the lowest `open` task in BACKLOG.md whose dependencies are `done`; `brief --task <id>` is its one page.
-   Start it with `log <id> --status "in progress" --note "..."` (`--name` and `--why` give it a Board row the first
-   time) and say which task you took. `log` refuses while an entry waits in the inbox.
+   Start it with `log <id> --status "in progress" --note "..."` and say which task you took. `log` refuses while an
+   entry waits in the inbox.
 4. A task is one id. If it needs a schema, a spec shape or a decision the design does not give, `log <id> --status
    blocked --note "<the question>" --waiting-on Matt`, and move to the next open task. Code-level choices are yours.
 5. Prove it exactly as its definition of done says. `npm test` green first (it runs the Chart's lint). Where a
@@ -48,14 +49,13 @@ calls exactly as printed, read the view again when asked, and run `views` until 
    record, then the look pass at phone and desktop width), and look at the screenshots it lists.
 6. Ship: commit with the task id first in the message (`B-07: lint and rebuild`), then the attribution lines the
    session gives you; push to `main`. Then `ship staging` and make every call and read it prints, running it again
-   each time, until it says GREEN: it records the deploy and prints the Changelog line. **Never deploy live** without
+   each time, until it says GREEN: it records the deploy, which CHANGELOG.md then carries. **Never deploy live** without
    Matt's explicit OK in the chat; `ship live --matt-ok` also refuses what `chart/rules.json` forbids (R-02 staging green
    at the same commit, B-35; R-03 no running study session, B-87; R-04 Matt's OK; R-05 not inside a live watchdog
    window, B-102; R-01, page-only live, ended with D-085's window, D-145, and is kept in `chart/rules.json` marked
    ended), so a build reaches live only through staging.
-7. Record: `log <id> --status done --commit <sha> --note "<one line>"` (`--board-note` for the Board's plain words),
-   then `views`, as above. A decision is `log decision <next id> --title ... --why ... --status ...`. Never a date on
-   anything that gates work.
+7. Record: `log <id> --status done --commit <sha> --note "<one line>"`. A decision is `log decision <next id> --title
+   ... --why ... --status ...`. Never a date on anything that gates work.
 8. Continue with the next open task until none is open or every open task is blocked. Then stop and leave a
    summary in the last task's notes (`log <id> --note ...`).
 

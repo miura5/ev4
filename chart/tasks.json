@@ -2623,10 +2623,10 @@
   "title": "Stale flags lint catches: log --status done or declined clears waitingOn; chart lint warns on waitingOn with a final status, on a rule whose decision is superseded or whose task is done (R-01 marked ended, kept), and on a retired reason that cites a superseded decision; B-42, B-67, B-68, B-74, B-81 and the four v3 retired reasons corrected through log",
   "dod": "chart lint catches each planted case and is green on the real record afterwards; npm test green",
   "milestone": "v4.2 watch",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Taken Oct 21",
-  "commit": null,
+  "notes": "0d01c19: three stale-flag warnings, log clears waitingOn, the record and the four retired reasons corrected; chart lint green with no warnings; npm test green",
+  "commit": "0d01c19",
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
@@ -2635,9 +2635,9 @@
   "title": "Docs views retired (D-172): views writes DECISIONS.md and CHANGELOG.md into the repository from the record, with the drift test BACKLOG.md has; it prints no Docs calls; chart/views.json keeps the doc ids under retired with the date; CLAUDE.md lines 12-13 corrected; the one-line history banner printed once on Foundation v4, the Chart design, the UI tenets doc and the overview, and the closing line on the v3 doc's Board, Changelog and Decisions tabs (Matt's OK given Oct 21)",
   "dod": "npm test fails on drift of either file; views prints nothing to make; the banner and closing lines are in the docs; npm test green",
   "milestone": "v4.2 record",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken Oct 21",
   "commit": null,
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },

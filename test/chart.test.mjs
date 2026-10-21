@@ -378,6 +378,34 @@ test('B-93: log writes the record, regenerates BACKLOG.md and commits both, noth
   assert.equal(fs.readFileSync(path.join(dir, 'BACKLOG.md'), 'utf8'), C.renderBacklog(C.loadChart(dir)));
 });
 
+test('B-143 (D-172): DECISIONS.md and CHANGELOG.md are generated from chart/ like BACKLOG.md; views prints no Docs call', () => {
+  const r = rec();
+  for (const [f, text] of Object.entries(C.generatedFiles(r)))
+    assert.equal(
+      fs.readFileSync(path.join(ROOT, f), 'utf8'),
+      text,
+      `${f} differs from chart/: change the record with node tools/chart.mjs, never the file`
+    );
+  assert.match(C.renderDecisions(r), /\n\| D-172 \| Oct 21 \| The Docs views are retired/);
+  assert.equal(
+    C.renderDecisions(r)
+      .split('\n')
+      .filter(l => /^\| D-\d+ \|/.test(l)).length,
+    r.decisions.length
+  );
+  assert.equal(
+    C.renderChangelog(r)
+      .split('\n')
+      .filter(l => /^\| \w{3} \d+ \|/.test(l)).length,
+    r.deploys.length
+  );
+  assert.deepEqual({ by: r.views.retired.by, at: r.views.retired.at }, { by: 'D-172', at: '2026-10-21' });
+  assert.ok(r.views.board.node && r.views.decisions.node, 'the doc ids are kept');
+  const out = execFileSync('node', [path.join(ROOT, 'tools', 'chart.mjs'), 'views'], { encoding: 'utf8' });
+  assert.match(out, /^views: retired \(D-172, 2026-10-21\): .* no Docs calls\n$/);
+  assert.doesNotMatch(out, /mcp__|Claude_Docs/);
+});
+
 test('BACKLOG.md is generated from chart/ (no hand edits)', () => {
   assert.equal(
     fs.readFileSync(path.join(ROOT, 'BACKLOG.md'), 'utf8'),

@@ -34,5 +34,16 @@
    "Superseded",
    "Proposed"
   ]
+ },
+ "retired": {
+  "by": "D-172",
+  "at": "2026-10-21",
+  "views": [
+   "board",
+   "changelog",
+   "decisions",
+   "overview"
+  ],
+  "note": "The ids above are kept for reading (the inbox still reads Board comments); nothing writes these views."
  }
 }

@@ -152,6 +152,58 @@ export function renderBacklog(rec, { header = BACKLOG_HEADER } = {}) {
   }
   return out.join('\n');
 }
+// B-143 (D-172): the Decisions tab and the Changelog, generated into the repository beside BACKLOG.md, with the same
+// drift test; the Docs views are retired and nothing prints a Docs call for them.
+const GENERATED =
+  '**Generated from the Chart by `node tools/chart.mjs`: never edit this file by hand** (D-140, D-172).';
+const decisionDate = d => d.date || (d.at ? ctDate(d.at) : '');
+/** DECISIONS.md: every decision and tenet in the record, newest first, with its reasoning and status. */
+export function renderDecisions(rec) {
+  const ds = [...rec.decisions].sort((a, b) => Number(b.id.slice(2)) - Number(a.id.slice(2)));
+  const kind = d =>
+    d.kind === 'tenet' ? `Tenet (${(d.scope || []).join(', ')}; checked by ${d.checkedBy || d.check || 'review'})` : '';
+  const links = d =>
+    [
+      d.supersedes && d.supersedes.length ? 'supersedes ' + d.supersedes.join(', ') : '',
+      d.amends && d.amends.length ? 'amends ' + d.amends.join(', ') : '',
+    ]
+      .filter(Boolean)
+      .join('; ');
+  return [
+    '# DECISIONS.md: E.V. v4 decisions and tenets',
+    '',
+    GENERATED,
+    'Change one with `log decision`; npm test fails when this file and chart/decisions.json differ. D-001 to D-043 are',
+    "in the v2 doc's decision log.",
+    '',
+    '| Id | Date | Decision | Why | Status | Links |',
+    '| --- | --- | --- | --- | --- | --- |',
+    ...ds.map(
+      d =>
+        `| ${d.id} | ${cell(decisionDate(d))} | ${cell([kind(d), d.title].filter(Boolean).join(': '))} | ${cell(d.why || '')} | ${d.status} | ${cell(links(d))} |`
+    ),
+  ].join('\n');
+}
+/** CHANGELOG.md: every deploy in the record, newest first, as the Changelog tab printed it. */
+export function renderChangelog(rec) {
+  const rows = [...rec.deploys].reverse().map(d => changelogLine(d));
+  return [
+    '# CHANGELOG.md: E.V. v4 deploys',
+    '',
+    GENERATED,
+    'A deploy reaches it through `ship` (or `log deploy`); npm test fails when this file and chart/deploys.json differ.',
+    '',
+    '| Date | Change | Why | Decision |',
+    '| --- | --- | --- | --- |',
+    ...rows.map(l => `| ${cell(l.date)} | ${cell(l.change)} | ${cell(l.why)} | ${cell(l.decision)} |`),
+  ].join('\n');
+}
+/** The three generated files, by name. */
+export const generatedFiles = rec => ({
+  'BACKLOG.md': renderBacklog(rec),
+  'DECISIONS.md': renderDecisions(rec),
+  'CHANGELOG.md': renderChangelog(rec),
+});
 /** A backlog table row as its six fields (the notes keep any " | " a hand edit left in them). */
 export function parseBacklogRow(line) {
   const c = line
@@ -2066,7 +2118,7 @@ export function brief(rec, id, { root = HERE, scope: override, now = Date.now() 
           )
           .join('\n')
       : '- None named in the task; the hard limits and D-139 below still hold.',
-    `Reasoning in full: ${rec.views.decisionsTab}`,
+    `Reasoning in full: ${rec.views.retired ? 'DECISIONS.md' : rec.views.decisionsTab}`,
     ''
   );
   const scope = taskScope(t, override),
@@ -2713,9 +2765,16 @@ export function testTexts(root) {
   return out;
 }
 function writeBacklog(root, rec) {
-  fs.writeFileSync(path.join(root, 'BACKLOG.md'), renderBacklog(rec));
+  for (const [f, text] of Object.entries(generatedFiles(rec))) fs.writeFileSync(path.join(root, f), text);
 }
 function printViews(rec, o, which) {
+  // B-143 (D-172): the Docs views are retired; the record's own files are their replacement, written with it.
+  if (rec.views.retired) {
+    console.log(
+      `views: retired (${rec.views.retired.by}, ${rec.views.retired.at}): BACKLOG.md, DECISIONS.md and CHANGELOG.md are written with the record; no Docs calls`
+    );
+    return { needs: [], calls: [], notes: [] };
+  }
   const file = o.transcript || newestTranscript();
   const reads = file ? viewReads(rec, fs.readFileSync(file, 'utf8')) : {};
   const plan = viewsPlan(rec, reads, which);
@@ -2749,20 +2808,21 @@ const commands = {
   },
   backlog(o) {
     const root = rootOf(o),
-      rec = loadChart(root),
-      text = renderBacklog(rec),
-      file = path.join(root, 'BACKLOG.md');
+      rec = loadChart(root);
     if (o.check) {
-      const same = fs.readFileSync(file, 'utf8') === text;
-      console.log(
-        same
-          ? 'BACKLOG.md: generated from chart/, in step'
-          : 'BACKLOG.md: differs from chart/ (node tools/chart.mjs backlog)'
-      );
-      return same ? 0 : 1;
+      let red = 0;
+      for (const [f, text] of Object.entries(generatedFiles(rec))) {
+        const p = path.join(root, f),
+          same = fs.existsSync(p) && fs.readFileSync(p, 'utf8') === text;
+        if (!same) red++;
+        console.log(
+          same ? `${f}: generated from chart/, in step` : `${f}: differs from chart/ (node tools/chart.mjs backlog)`
+        );
+      }
+      return red ? 1 : 0;
     }
-    fs.writeFileSync(file, text);
-    console.log('BACKLOG.md regenerated from chart/');
+    writeBacklog(root, rec);
+    console.log('BACKLOG.md, DECISIONS.md and CHANGELOG.md regenerated from chart/');
     return 0;
   },
   lint(o) {
@@ -2774,7 +2834,22 @@ const commands = {
     return f.some(x => x.level === 'error') ? 1 : 0;
   },
   views(o) {
-    printViews(loadChart(rootOf(o)), o);
+    const root = rootOf(o),
+      rec = loadChart(root);
+    // B-143 (D-172): retiring the Docs views keeps their doc ids, marked with the decision and the date.
+    if (o.retire) {
+      if (typeof o.by !== 'string' || !rec.decisions.some(d => d.id === o.by))
+        throw new Error('views --retire --by <the decision that retires them> [--at YYYY-MM-DD]');
+      rec.views.retired = {
+        by: o.by,
+        at: typeof o.at === 'string' ? o.at : ctDate(new Date().toISOString()),
+        views: ['board', 'changelog', 'decisions', 'overview'],
+        note: 'The ids above are kept for reading (the inbox still reads Board comments); nothing writes these views.',
+      };
+      saveChart(root, rec);
+      writeBacklog(root, rec);
+    }
+    printViews(rec, o);
     return 0;
   },
   inbox(o) {
