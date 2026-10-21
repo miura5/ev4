@@ -3,7 +3,7 @@
 //   fact-changed     a Fact whose own fields (not its marks or append maps) differ from the hash state/current kept,
 //                    unless a schema bump's legacy copy still matches that hash (an info note, fact-migrated)
 //   over-budget      a document over spec.capacity.documentBytes, a material over materialTextChars, a collection
-//                    over its budget once B-14 sets one
+//                    over its budget once B-14 sets one, a system document over spec.capacity.system (B-150)
 //   invalid          a document its collection's schema refuses
 //   derived-differs  a Derived document that rebuild does not reproduce byte for byte
 //   frozen           (info) D-090: a document carrying migratedAt or migratedTo is a frozen original, so is a v2 or v3
@@ -155,6 +155,24 @@ export function lintRecord(db, spec, validate, { date, commit = null } = {}) {
             add('error', 'over-budget', ref, `${size} bytes; the budget is ${cap.documentBytes}`);
           continue;
         }
+      }
+      // B-150 (D-183): a system document against its own per-document budget.
+      if (col === 'system' && cap.system) {
+        const b = cap.system;
+        if (b.failBytes != null && size >= b.failBytes)
+          add(
+            'error',
+            'over-budget',
+            ref,
+            `${size} bytes; a system document fails at ${b.failBytes} (spec.capacity.system)`
+          );
+        else if (b.warnBytes != null && size >= b.warnBytes)
+          add(
+            'warning',
+            'over-budget',
+            ref,
+            `${size} bytes; a system document warns at ${b.warnBytes} (spec.capacity.system)`
+          );
       }
       const r = validate(col, EV.docData(d), { id: d.id });
       if (!r.ok) add('error', 'invalid', ref, describeErrors(ref, r).split('\n').slice(0, 3).join(' · '));

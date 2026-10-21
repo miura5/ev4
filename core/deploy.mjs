@@ -4,6 +4,29 @@
 // deployCalls() prints the exact tool calls that make the live state match it.
 
 export const SYSTEM_IDS = ['manifest', 'spec', 'environments'];
+
+/**
+ * B-150 (D-183): each system document against spec.capacity.system, measured as the record stores it (compact JSON,
+ * UTF-8). Pure, so the page can call it. Returns {bytes, level: 'ok'|'warn'|'fail', line} for one document.
+ */
+export function systemSize(id, doc, budget = {}) {
+  const bytes = new TextEncoder().encode(JSON.stringify(doc)).length;
+  const kib = n => `${Math.round(n / 1024)} KiB`;
+  const level =
+    budget.failBytes != null && bytes >= budget.failBytes
+      ? 'fail'
+      : budget.warnBytes != null && bytes >= budget.warnBytes
+        ? 'warn'
+        : 'ok';
+  const limits = [
+    budget.warnBytes != null && `warns at ${kib(budget.warnBytes)}`,
+    budget.failBytes != null && `fails at ${kib(budget.failBytes)}`,
+  ]
+    .filter(Boolean)
+    .join(', ');
+  const line = `system/${id} is ${bytes} bytes (${kib(bytes)}${limits ? '; ' + limits : ''})${level === 'warn' ? ': WARNING, over the warning line' : ''}${level === 'fail' ? ': over the budget' : ''}`;
+  return { bytes, level, line };
+}
 // What verify reads from a record: the deployed system documents, plus staging's seed stamp (written by seed-staging).
 export const readIds = target => (target === 'staging' ? [...SYSTEM_IDS, 'seed'] : SYSTEM_IDS);
 export const ENVELOPE = ['schema', 'writer', 'at', 'source'];
@@ -285,6 +308,13 @@ export function verify({ manifest, target, state, build, dist, sha256, now = new
           same(strip(live[id]), strip(dist[id])) ? '' : 'its content differs from dist/system/' + id + '.json'
         );
     }
+    // B-150: the size of what this deploy writes, every time; red only past failBytes.
+    const budget = ((dist.spec || {}).capacity || {}).system || {};
+    for (const id of ['spec', 'environments'])
+      if (dist[id]) {
+        const z = systemSize(id, dist[id], budget);
+        add(z.level !== 'fail', `system/${id} size`, z.line.replace(/^system\/\S+ is /, ''));
+      }
     if (target === 'staging') {
       const seed = live.seed;
       if (!seed || !seed.exportedAt) add(false, 'staging seed', 'no system/seed: run seed-staging');

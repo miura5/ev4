@@ -182,3 +182,15 @@ test('B-149: the bookkeeping patterns and the pathspecs that find the build comm
     );
   assert.equal(BOOKKEEPING.length, BOOKKEEPING_PATHS.length);
 });
+
+test('B-150: build refuses to write a system document past spec.capacity.system.failBytes', async () => {
+  const dir = copyRepo();
+  const p = path.join(dir, 'spec/ev.spec.json');
+  const spec = JSON.parse(fs.readFileSync(p, 'utf8'));
+  spec.capacity.system = { ...spec.capacity.system, warnBytes: 40000, failBytes: 50000 };
+  fs.writeFileSync(p, JSON.stringify(spec, null, 1));
+  await assert.rejects(
+    build({ root: dir, now: NOW }),
+    /system\/spec is \d+ bytes \(\d+ KiB; warns at 39 KiB, fails at 49 KiB\): over the budget/
+  );
+});

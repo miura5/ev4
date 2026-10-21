@@ -580,3 +580,22 @@ test("B-32 follow-up (Matt, Oct 18): a refetched file's pages, chars and ocr are
     ['materials/NUR112-900002']
   );
 });
+
+test("B-150 (D-183): a planted 200 KiB system/spec warns, one past 240 KiB is an error, today's is clean", () => {
+  const clean = load();
+  assert.deepEqual(
+    codes(lint(clean), 'over-budget').filter(i => i.ref.startsWith('system/')),
+    [],
+    "the synthetic record's system documents are under budget"
+  );
+  const db = load();
+  const s = doc(db, 'system', 'spec');
+  s.padding = 'Made-up padding. '.repeat(Math.ceil((200 * 1024) / 17));
+  const warn = codes(lint(db), 'over-budget').filter(i => i.ref === 'system/spec');
+  assert.equal(warn.length, 1);
+  assert.equal(warn[0].severity, 'warning');
+  assert.match(warn[0].msg, /a system document warns at 196608 \(spec\.capacity\.system\)/);
+  s.padding = 'Made-up padding. '.repeat(Math.ceil((241 * 1024) / 17));
+  const fail = codes(lint(db), 'over-budget').filter(i => i.ref === 'system/spec');
+  assert.equal(fail[0].severity, 'error');
+});

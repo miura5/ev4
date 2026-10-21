@@ -125,6 +125,22 @@ test('verify-deploy is green when the saved state matches the manifest', async (
   assert.match(r.out, /^verify-deploy staging: GREEN/);
   assert.doesNotMatch(r.out, /NO  /);
   assert.match(r.out, /ok  staging seed: 3 documents from a live export taken 2026-10-18, \d+ days? old/);
+  // B-150: the size of each system document the deploy writes, with its budget.
+  assert.match(r.out, /ok  system\/spec size: \d+ bytes \(\d+ KiB; warns at 192 KiB, fails at 240 KiB\)/);
+  assert.match(r.out, /ok  system\/environments size: /);
+});
+
+test('B-150: systemSize measures compact JSON and marks the warning and failing lines', async () => {
+  const { systemSize } = await import('../core/deploy.mjs');
+  const budget = { warnBytes: 196608, failBytes: 245760 };
+  const doc = n => ({ pad: 'x'.repeat(n) });
+  assert.equal(systemSize('spec', doc(10), budget).bytes, JSON.stringify(doc(10)).length);
+  assert.equal(systemSize('spec', doc(100 * 1024), budget).level, 'ok');
+  const warn = systemSize('spec', doc(200 * 1024), budget);
+  assert.equal(warn.level, 'warn');
+  assert.match(warn.line, /^system\/spec is \d+ bytes \(200 KiB; warns at 192 KiB, fails at 240 KiB\): WARNING/);
+  assert.equal(systemSize('spec', doc(241 * 1024), budget).level, 'fail');
+  assert.equal(systemSize('spec', doc(241 * 1024), {}).level, 'ok', 'no budget, no verdict');
 });
 
 test('a planted wrong prompt hash and a stale page stamp are both reported', async () => {

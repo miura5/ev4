@@ -2738,11 +2738,13 @@
   "title": "A system budget (A-2, D-183): spec.capacity.system warns at 192 KiB and fails at 240 KiB; lint and verify-deploy report the size of system/spec",
   "dod": "lint warns on a planted 200 KiB system/spec; verify-deploy prints the line; npm test green; ship staging green; live only on Matt's OK",
   "milestone": "v4.2 release",
-  "status": "open",
+  "status": "blocked",
   "depends": [],
-  "notes": "",
+  "notes": "Code done (commit follows): spec.capacity.system warns at 196608 and fails at 245760 bytes per system document; record lint reports a stored one over either (a planted 200 KiB system/spec warns, 241 KiB errors); verify-deploy prints each system document's size line; build refuses past failBytes. system/spec is 118 KiB today. Left of the DoD: ship staging GREEN, waiting on the two Mac-bound staging prompts.",
   "commit": null,
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
+  "waitingOn": "Matt",
+  "waitingWhere": "mac"
  },
  {
   "id": "B-151",

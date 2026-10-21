@@ -2510,7 +2510,8 @@
   "_rules": [
    "Nothing is deleted, so capacity is managed by bounding what is read, not what is kept.",
    "documentBytes and batch rest on environments.cloud-run (B-14, runs/diagnostic-20261018-064940608): 262144 bytes per document and 1048576 bytes per batch request are the platform's own refusals. maxBytes keeps 4096 bytes of the request for the call's own fields.",
-   "Per-collection budgets (D-093) rest on read cost and the one measured ceiling (262144 bytes a document): state/current warns at 192 KiB and fails at 240 KiB, relieved by its factHashes split per collection into state/facts-<collection>; sets and answers warn at 400 documents each, relieved by the weekly roll-up; runs warns at 1,500, relieved by weekly run counts and cursor-paged pulls; materials warns at 4 MiB in total, relieved by the lazy library load. v3's 25,000-document cap is gone. Every other budget stays null: nothing measured calls for one."
+   "Per-collection budgets (D-093) rest on read cost and the one measured ceiling (262144 bytes a document): state/current warns at 192 KiB and fails at 240 KiB, relieved by its factHashes split per collection into state/facts-<collection>; sets and answers warn at 400 documents each, relieved by the weekly roll-up; runs warns at 1,500, relieved by weekly run counts and cursor-paged pulls; materials warns at 4 MiB in total, relieved by the lazy library load. v3's 25,000-document cap is gone. Every other budget stays null: nothing measured calls for one.",
+   "System documents (B-150, D-183): each of system/manifest, system/spec and system/environments is one document under documentBytes, so each has its own budget, spec.capacity.system: warnBytes 196608 (192 KiB, 75 percent of the 262144-byte ceiling) and failBytes 245760 (240 KiB). lint reports a stored one over either line, verify-deploy prints the size of what a deploy writes, and build refuses past failBytes."
   ],
   "documentBytes": 262144,
   "materialTextChars": 200000,
@@ -2753,6 +2754,12 @@
     "failBytes": null,
     "relief": null
    }
+  },
+  "system": {
+   "warnBytes": 196608,
+   "failBytes": 245760,
+   "each": "document",
+   "relief": "the page reads only its spec subset (B-161); a spec section no reader needs moves out of system/spec"
   }
  },
  "boundaries": {

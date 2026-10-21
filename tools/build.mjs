@@ -13,6 +13,7 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { makeValidator, validateAgainst, describeErrors } from '../core/validate.mjs';
+import { systemSize } from '../core/deploy.mjs';
 
 const HERE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // What the manifest hashes: everything that executes or is deployed. dist/ page outputs join when the page exists (B-15).
@@ -404,6 +405,9 @@ export async function build({
     // A dirty build may still be written, so the manifest says so; deploy refuses it (B-04).
     const errors = r.errors.filter(e => !(id === 'manifest' && g.dirty && e.path === '/dirty'));
     if (errors.length) throw new Error(`${key} does not validate:\n` + describeErrors(key, { errors }));
+    // B-150 (D-183): a deploy never writes a system document past its budget; the warning line is verify-deploy's.
+    const z = systemSize(id, doc, (spec.capacity || {}).system);
+    if (z.level === 'fail') throw new Error(`${z.line}: trim the spec (B-161 publishes the page only its subset)`);
   }
 
   fs.mkdirSync(path.join(out, 'system'), { recursive: true });

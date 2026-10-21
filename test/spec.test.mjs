@@ -260,6 +260,9 @@ test('capacity: the design constants, a budget row per collection, nothing guess
     );
   }
   assert.deepEqual(cap.readWindowDays, { talk: 7, days: 14, dayedits: 14, jobs: 30, runs: 7 });
+  // B-150 (D-183): 75 percent of the platform ceiling warns; the fail line stays under the ceiling.
+  assert.equal(cap.system.warnBytes, 0.75 * cap.documentBytes);
+  assert.ok(cap.system.failBytes > cap.system.warnBytes && cap.system.failBytes < cap.documentBytes);
   assert.deepEqual(Object.keys(cap.collections).sort(), COLLECTIONS.slice().sort());
   if (!cap.measured)
     for (const [k, b] of Object.entries(cap.collections)) {
