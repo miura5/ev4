@@ -791,12 +791,26 @@ test('B-172: every pipeline has plain failure words, and each failure line fits 
     if (!Array.isArray(p.steps)) continue;
     assert.equal(typeof p.failed, 'string', `${name}: spec.pipelines.${name}.failed`);
     assert.doesNotMatch(p.failed, /E\.V\./, `${name}: never led by, or carrying, 'E.V.'`);
-    for (const reason of ['gate', 'start', 'pull', 'compute', 'apply', 'canvas']) {
+    // The Oct 21 staging evening-mac pushes ended 'it stopped at backup device_commit_fil': a step's own words are
+    // said plainly or cut only at a word's end.
+    for (const reason of [
+      'gate',
+      'start',
+      'pull',
+      'compute',
+      'apply',
+      'canvas',
+      'backup device_commit_files',
+      'backup commit',
+      'mirror',
+      'a_very_long_step name that runs on',
+    ]) {
       const line = RUN.failLine({ failed: p.failed, pipeline: name, reason });
       assert.ok(line.length <= max, `${name} ${reason}: ${line.length} > ${max}`);
       assert.ok(line.includes(`(${name})`), line);
       assert.doesNotMatch(line.split('. ')[0], /^E\.V\.$/);
       assert.match(line, /^[^.]+: [^.]+\. A build chat will look\.$/, `${name} ${reason}: one plain sentence first`);
+      assert.doesNotMatch(line, /device_commit_fil\.|_/, `${name} ${reason}: no tool name, no word cut`);
     }
   }
 });

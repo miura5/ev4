@@ -366,7 +366,10 @@ test('B-137 (O-5): a Mac task is created, never edited: its create_trigger print
   const plan = JSON.parse(cli(dir, 'deploy', 'staging', '--json').out);
   const create = plan.calls.find(c => c.tool === 'mcp__claude-code-remote__create_trigger');
   assert.ok(create, JSON.stringify(plan.calls.map(c => c.step)));
-  assert.match(create.step, /create staging\.evening-mac \(only from a chat linked to the Mac, with Matt present\)/);
+  assert.match(
+    create.step,
+    /create staging\.evening-mac \(only from a chat linked to the Mac, with Matt present; then Matt approves its folder access in the Claude desktop app/
+  );
   assert.deepEqual(
     create.args.notifications,
     { push: false, email: false },

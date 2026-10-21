@@ -81,8 +81,26 @@ const FAIL_REASONS = {
   compute: "it couldn't work out its changes",
   apply: "it couldn't save its changes",
 };
+// A step of its own, said plainly: the backup or mirror on the Mac, Canvas; else its leading words, never cut mid-word.
+const FAIL_STEPS = [
+  [/\b(backup|mirror)\b/i, m => `it couldn't save the ${m[1].toLowerCase()}`],
+  [/\bcanvas\b/i, () => "it couldn't read Canvas"],
+];
+function stepWords(reason) {
+  const r = String(reason).trim();
+  for (const [re, say] of FAIL_STEPS) {
+    const m = re.exec(r);
+    if (m) return say(m);
+  }
+  let out = '';
+  for (const w of r.replace(/[_]+/g, ' ').split(/\s+/)) {
+    if ((out + ' ' + w).trim().length > 16) break;
+    out = (out + ' ' + w).trim();
+  }
+  return `it stopped at ${out || r.slice(0, 16)}`;
+}
 export function failLine({ failed, pipeline, reason }) {
-  const why = FAIL_REASONS[reason] || (reason ? `it stopped at ${String(reason).slice(0, 24)}` : 'it stopped');
+  const why = FAIL_REASONS[reason] || (reason ? stepWords(reason) : 'it stopped');
   return `${failed || `The ${pipeline} run didn't finish`} (${pipeline}): ${why}. A build chat will look.`;
 }
 

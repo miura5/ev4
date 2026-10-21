@@ -2005,7 +2005,7 @@
     ],
     "macBound": true,
     "push": false,
-    "trigger": "trig_01Ux4nvc4Db6ZQ9oAsigzgoa",
+    "trigger": "trig_01EQBnYdtbqUKkh8bjTiTvCA",
     "watchSchedule": "CRON_TZ=America/Chicago 20 20 * * *"
    },
    "weekly": {
@@ -2256,6 +2256,12 @@
     "was": "staging.restore-drill",
     "name": "E.V. staging · restore-drill (v4.3)",
     "reason": "B-173 (B-168, B-172): its name carried the release and its prompt the old gate; re-created Oct 21 from a build session with the repository and the Mac link as trig_011xnMqTq16qeEw68DPJzXVH under the version-free name, on Matt's OK; disabled and kept."
+   },
+   {
+    "trigger": "trig_01Ux4nvc4Db6ZQ9oAsigzgoa",
+    "was": "staging.evening-mac",
+    "name": "E.V. staging · evening-mac",
+    "reason": "B-173: created Oct 21 19:33Z before the chat had E.V.'s Mac folder granted; its two staging firings were refused the backup write, so it was re-created at 19:56Z as trig_01EQBnYdtbqUKkh8bjTiTvCA on Matt's OK, whose firing wrote once Matt approved its folder access in the desktop app; disabled and kept."
    }
   ]
  },
@@ -2401,19 +2407,19 @@
     },
     {
      "capability": "device_commit_files into the task's attached folder (staged under /mnt/user-data/outputs)",
-     "task": "staging.evening-mac (trig_01FHjw4mu745gorCZ5quGSJD, created Oct 18 10:26Z from a Mac-linked chat with the repository)",
+     "task": "staging.evening-mac (trig_01EQBnYdtbqUKkh8bjTiTvCA, created Oct 21 19:56Z from a Mac-linked build chat with the repository; folder access approved by Matt in the desktop app)",
      "proven": true,
-     "date": "2026-10-18",
-     "run": "cse_01QUW8ZBiN3XhM21Amz93Cib",
-     "evidence": "runs/evening-mac-20261018-103423119: backup (515 documents, 4.7 MB) and 61 mirror files written to staging/"
+     "date": "2026-10-21",
+     "run": "cse_01XvxPn43UjVRcNe7ancGa9c",
+     "evidence": "runs/evening-mac-20261021-200454123 ok at b5aec79: backup (677 documents, 5260 KB) written to staging/; the two firings before the approval were refused (runs/evening-mac-20261021-194822001, -195644576)"
     },
     {
      "capability": "built-in browser on the signed-in Canvas tab, scripts from the checkout run with javascript_tool (start, poll, unwrap)",
-     "task": "staging.evening-mac (trig_01FHjw4mu745gorCZ5quGSJD, created Oct 18 10:26Z from a Mac-linked chat with the repository)",
+     "task": "staging.evening-mac (trig_01EQBnYdtbqUKkh8bjTiTvCA, created Oct 21 19:56Z from a Mac-linked build chat with the repository; folder access approved by Matt in the desktop app)",
      "proven": true,
-     "date": "2026-10-18",
-     "run": "cse_01QUW8ZBiN3XhM21Amz93Cib",
-     "evidence": "runs/evening-mac-20261018-103423119 canvas step ok, audit 31 calls all printed; runs/evening-mac-20261018-102816525 the same"
+     "date": "2026-10-21",
+     "run": "cse_01XvxPn43UjVRcNe7ancGa9c",
+     "evidence": "runs/evening-mac-20261021-200454123 canvas step ok, audit 30 calls all printed"
     }
    ],
    "limits": [

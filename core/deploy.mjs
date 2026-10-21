@@ -598,7 +598,10 @@ export function deployCalls({
     if (!t.trigger) {
       // A Mac-bound task is created only from a chat linked to the Mac with Matt present: printed, marked as such.
       calls.push({
-        step: `create ${key}${t.macBound ? ' (only from a chat linked to the Mac, with Matt present)' : ''}`,
+        // Oct 21: three tasks created from a cloud chat listed their folders, yet every device_commit_files was refused
+        // ("Files can't be written here without a grant") until Matt approved each task's folder access in the
+        // Claude desktop app. The step says so; the task's first proof is a staging firing that writes there.
+        step: `create ${key}${t.macBound ? ' (only from a chat linked to the Mac, with Matt present; then Matt approves its folder access in the Claude desktop app, or its runs are refused every write there)' : ''}`,
         tool: 'mcp__claude-code-remote__create_trigger',
         args: {
           name: t.name,
