@@ -868,7 +868,8 @@
   "status": "open",
   "depends": [
    "B-42",
-   "B-43"
+   "B-43",
+   "B-98"
   ],
   "notes": "Matt's OK on the proposed objectives is given on the staging page",
   "commit": null,
@@ -1323,12 +1324,12 @@
   "title": "Learned parameters (D-118): a weekly code step fits per-weak-spot stability and difficulty from his answers (a small FSRS-style model with few parameters, fitted by a seeded search in code, no library) into models/current (Derived, producer weekly, rebuildable from answers; the one new collection: schema, spec row, budget, rebuild entry); the adaptive scheduler reads it when present and falls back to spec.study.params when not",
   "dod": null,
   "milestone": "M10",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-69"
   ],
   "dependsText": "B-69, and 300 answers in the record",
-  "notes": "",
+  "notes": "Blocked on evidence, not on anyone (D-188): learned parameters need 300 answers in the record; B-165 puts the count in the weekly's health line, and triage reads it there.",
   "commit": null,
   "source": "BACKLOG.md"
  },
@@ -1338,12 +1339,12 @@
   "title": "Calibration into readiness (D-119): after two exams with a prediction (D-094) and a score (examedits), readiness carries a calibrated estimate (the coverage number adjusted by the mean signed error, bounded), shown beside the coverage number and never replacing it; the weekly reports calibration error; the retro (D-104) is its input",
   "dod": null,
   "milestone": "M10",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-47",
    "B-48"
   ],
-  "notes": "",
+  "notes": "Blocked on evidence, not on anyone (D-188): calibration needs two exams that carry both a prediction (D-094) and a score (examedits); B-165 puts the count in the weekly's health line, and triage reads it there.",
   "commit": null,
   "source": "BACKLOG.md"
  },
@@ -1517,29 +1518,21 @@
  {
   "id": "B-81",
   "kind": "task",
-  "title": "Captions rollout (D-136, D-139): B-76 and B-77 go live at 6ad8a53 on Matt's OK, and B-78 and B-80 may follow the same way when done (no stored-document change); for the rest, a staging soak of B-74 to B-80 and Matt's phone and desktop check on staging, two minutes of a session included; then the talk, sessions, sets and answers migrations on live and the live page by the normal path (ship staging green at the commit, ship live on Matt's explicit OK; D-085's window is gone, D-145), never inside a live freeze Matt names.",
-  "dod": "Matt's OK recorded on the Board; verify-deploy live and staging green at one content hash; rebuild all green; the first live session read back with session, note and comments fields",
+  "title": "Captions rollout, narrowed (D-187, amending D-136 and D-139 as D-145 left them): the first live session after B-79 goes live is read back with the session, note and comments fields; B-75, B-78, B-79 and B-80 each ship by the normal path, staging green at the commit and live on Matt's OK",
+  "dod": "the first live study session after B-79 is live read back from the live record with its session, note and comments fields present and well-formed; npm test green",
   "milestone": "M11 gate",
-  "status": "blocked",
+  "status": "open",
   "depends": [
-   "B-76",
-   "B-77",
-   "B-78",
-   "B-79",
-   "B-80",
-   "B-30"
+   "B-79"
   ],
-  "dependsText": "B-76, B-77, B-78, B-79, B-80, B-30 and Matt's OK",
-  "notes": "The gate that takes Captions to live (Oct 21, v4.2 chat): B-76, B-77 and B-74 are live (f547c21); B-75 and B-78 to B-80 are open, the UI-tenet restatements D-123 to D-126 accepted Oct 21. Waiting on Matt: his phone and desktop check on staging once B-75 and B-78 to B-80 are on it, then his OK for the live rollout. The status-light question is answered (B-125: steady, no pulse). The Oct 20 build-chat summary that sat here is replaced by the v4.2 chat's summary.",
+  "notes": "Oct 21 (D-187): narrowed from one rollout gate on B-76 to B-80 to the read-back alone; B-76 and B-77 already went live by the normal path; nothing deleted (the old definition is in git history and DECISIONS.md D-136, D-139). Waits on B-79.",
   "commit": null,
   "source": "BACKLOG.md",
   "board": {
    "row": "v4 B-81: Captions rollout to live",
    "why": "The gate that takes Captions to live",
    "notes": "Gate: waits on B-74 to B-80 and Matt's OK"
-  },
-  "waitingOn": "Matt",
-  "waitingWhere": "staging"
+  }
  },
  {
   "id": "B-82",
@@ -2896,9 +2889,9 @@
   "title": "The study queue's gates (D-188): B-44 depends on B-98, B-73 on B-72, B-81 on B-79 alone; B-70 and B-71 marked blocked with their evidence named (300 answers in the record; two exams with a prediction and a score); B-81's notes and definition of done narrowed to the first live session read back (D-187)",
   "dod": "BACKLOG.md shows the three depends, the two blocked notes and B-81's new definition; chart lint green; npm test green",
   "milestone": "v4.3 study",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Setting the study queue's gates (D-188, D-187).",
   "commit": null,
   "source": "plan Q6ioLu7LnKC2vvWJkwJWA6"
  },
