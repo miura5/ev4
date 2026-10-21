@@ -2954,5 +2954,17 @@
    "outcome": "task",
    "at": "2026-10-21T10:59:53.547Z"
   }
+ },
+ {
+  "id": "B-168",
+  "kind": "task",
+  "title": "The gate fetches before it falls back (B-133 proven): when system/manifest's commit is not in the run's checkout, the gate runs git fetch --depth 1 origin <commit> and checks it out, verifying every hash as now; only when the fetch is refused or fails does it take the content fallback (D-170); tools/gate.mjs and the rendered prompts carry it, and verify-deploy stops noting the clone distance as a risk",
+  "dod": "a gate test in a throwaway repository: a commit outside a shallow clone is fetched and verified; a refused fetch falls back to the content check with the refusal quoted; the prompt test finds the fetch in step 3; a staging run fired with its deployed commit outside the 50-deep clone checks it out by fetch (its runs/ document read back), and if the run's safety review refuses running fetched code, that refusal is recorded as an environments row and the fallback stays; npm test green; ship staging green; live only on Matt's OK",
+  "milestone": "v4.3 ops",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "B-133 diagnostic runs/diagnostic-20261021-110125159"
  }
 ]
