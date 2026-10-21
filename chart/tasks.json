@@ -3029,5 +3029,24 @@
    "outcome": "task",
    "at": "2026-10-21T15:35:57.157Z"
   }
+ },
+ {
+  "id": "B-172",
+  "kind": "bug",
+  "title": "Bug (reported Oct 21): A live worker that fails at the gate pushes 'E.V.' with no text: two notifications titled 'E.V. worker (v4.2)' at 10:45 CT Oct 21 said only 'E.V.', not the failure line",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt's screenshot, build chat Oct 21",
+  "words": "A live worker that fails at the gate pushes 'E.V.' with no text: two notifications titled 'E.V. worker (v4.2)' at 10:45 CT Oct 21 said only 'E.V.', not the failure line",
+  "reportedAt": "2026-10-21T17:10:15.309Z",
+  "board": {
+   "row": "v4 B-172: A live worker that fails at the gate pushes 'E.V.' with no text: two…",
+   "why": "A live worker that fails at the gate pushes 'E.V.' with no text: two notifications titled 'E.V. worker (v4.2)' at 10:45 CT Oct 21 said only 'E.V.', not the failure line",
+   "notes": "Reported Oct 21 from Matt's screenshot, build chat Oct 21"
+  }
  }
 ]
