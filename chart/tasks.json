@@ -2917,7 +2917,7 @@
   "milestone": "v4.3 ops",
   "status": "blocked",
   "depends": [],
-  "notes": "Oct 21 ~15:45Z: Matt doesn't remember which line reached his phone. Fired the staging morning from this build chat (session cse_01LGhDgMn1e14Nw1TFsuEPPB; staging push and email off on every staging task) while Matt watches his phone: nothing arriving closes the build-chat path; the scheduled path has no staging schedule to test (staging tasks have no cron).",
+  "notes": "Staging morning fired from this build chat ran 15:44:24-15:46:23Z (runs/morning-20261021-154424342, ok, 20 calls all printed); its line: 'Health check 81 h old, a build chat will look · Exam day · 0 reviews ready · Final skim of weak-spot cards only'. Waiting on Matt: did anything reach his phone around 10:46am CT?",
   "commit": null,
   "source": "build chat",
   "words": "My answers, so you don't have to ask:\n- B-133: yes, fire the staging diagnostic with the git-fetch probe. Record the environments row; file the follow-up task if it is proven.\n- B-135 follow-up: YES  — something from the staging morning reached my phone around 3:59am [if yes: the line started with \"...\"].\n- B-108: I will archive miura5/ev-core on GitHub myself and tell you \"B-108 done\" in this chat; log it then.\n- B-45: fine. I found the draft card in the staging conversation, tapped \"Use this plan\", and Study > Plan switched to E4-2 (2 days, 10 tasks). Mark it done.",
