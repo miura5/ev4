@@ -1933,7 +1933,7 @@
     ],
     "macBound": true,
     "push": true,
-    "trigger": "trig_011rC4brSBYFubij7dY4NsDo"
+    "trigger": "trig_01AxnPF3iPyo2BpCQtMdAKP8"
    },
    "weekly": {
     "pipeline": "weekly",
@@ -2005,7 +2005,7 @@
     ],
     "macBound": true,
     "push": false,
-    "trigger": "trig_01FHjw4mu745gorCZ5quGSJD",
+    "trigger": "trig_01Ux4nvc4Db6ZQ9oAsigzgoa",
     "watchSchedule": "CRON_TZ=America/Chicago 20 20 * * *"
    },
    "weekly": {
@@ -2052,7 +2052,7 @@
     ],
     "macBound": true,
     "push": false,
-    "trigger": "trig_01Jz9FH9FvNUHYQCsVAGHyCJ",
+    "trigger": "trig_011xnMqTq16qeEw68DPJzXVH",
     "note": "Loads the latest live backup on the Mac into the staging record. Slot agreed with Matt Oct 18."
    }
   },
@@ -2238,6 +2238,24 @@
     "was": "live.evening-mac",
     "name": "E.V. evening-mac (v4.0.0)",
     "reason": "B-98 (O-3): its runs started without the repository checked out (Oct 20 and 21); re-created Oct 21 from a build session with the repository and the Mac link as trig_011rC4brSBYFubij7dY4NsDo on Matt's OK; disabled and kept."
+   },
+   {
+    "trigger": "trig_011rC4brSBYFubij7dY4NsDo",
+    "was": "live.evening-mac",
+    "name": "E.V. evening-mac (v4.3)",
+    "reason": "B-173 (B-168, B-172): its name carried the release and its prompt the old gate; re-created Oct 21 from a build session with the repository and the Mac link as trig_01AxnPF3iPyo2BpCQtMdAKP8 under the version-free name, on Matt's OK; disabled and kept."
+   },
+   {
+    "trigger": "trig_01FHjw4mu745gorCZ5quGSJD",
+    "was": "staging.evening-mac",
+    "name": "E.V. staging · evening-mac (v4.3)",
+    "reason": "B-173 (B-168, B-172): its name carried the release and its prompt the old gate; re-created Oct 21 from a build session with the repository and the Mac link as trig_01Ux4nvc4Db6ZQ9oAsigzgoa under the version-free name, on Matt's OK; disabled and kept."
+   },
+   {
+    "trigger": "trig_01Jz9FH9FvNUHYQCsVAGHyCJ",
+    "was": "staging.restore-drill",
+    "name": "E.V. staging · restore-drill (v4.3)",
+    "reason": "B-173 (B-168, B-172): its name carried the release and its prompt the old gate; re-created Oct 21 from a build session with the repository and the Mac link as trig_011xnMqTq16qeEw68DPJzXVH under the version-free name, on Matt's OK; disabled and kept."
    }
   ]
  },

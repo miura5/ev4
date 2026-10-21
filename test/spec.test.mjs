@@ -233,7 +233,9 @@ test('environments: the five surfaces, each capability with a proof', () => {
         assert.ok(key, `${s}: ${p.capability}: ${p.task}`);
         const task = spec.tasks[key[1]][key[2]] || (key[2] === 'diagnostic' && spec.tasks.diagnostic);
         assert.ok(task, `${s}: ${key[1]}.${key[2]} is a task`);
-        assert.equal(task.trigger, key[3], `${s}: ${key[1]}.${key[2]}'s trigger`);
+        // A proof stays with the task it ran as: the current one, or a predecessor re-created since and kept retired.
+        const retired = spec.tasks.retired.some(r => r.trigger === key[3] && r.was === `${key[1]}.${key[2]}`);
+        if (!retired) assert.equal(task.trigger, key[3], `${s}: ${key[1]}.${key[2]}'s trigger`);
       }
     }
     for (const p of env[s].unproven || []) assert.equal(p.proven, false);
