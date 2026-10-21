@@ -119,6 +119,24 @@
        }
       }
      ]
+    },
+    "evidence": {
+     "type": "object",
+     "description": "B-165 (D-188): the evidence B-70 and B-71 wait on, counted by the weekly: every answer in the record, and the exams that carry both a prediction and a score",
+     "required": [
+      "answers",
+      "scoredExams"
+     ],
+     "properties": {
+      "answers": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "scoredExams": {
+       "type": "integer",
+       "minimum": 0
+      }
+     }
     }
    }
   },

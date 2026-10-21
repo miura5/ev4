@@ -196,6 +196,18 @@
             `Backup restore drill: ${drill.status} ${drill.days === 0 ? 'today' : drill.days + ' days ago'}.`
           )
         );
+      // B-165 (D-188): the evidence two gated tasks wait on, from the latest weekly, against the spec's numbers.
+      const wk = [...(S.weeks || [])].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))[0];
+      const ev = wk && wk.health && wk.health.evidence;
+      const need = ((EV_SPEC.constants || {}).health || {}).evidence || {};
+      if (ev)
+        top.push(
+          el(
+            'p',
+            'meta sys-evidence',
+            `Evidence (week of ${short(wk.date)}): ${ev.answers} of ${need.answers || 300} answers for learned intervals · ${ev.scoredExams} of ${need.scoredExams || 2} exams with a prediction and a score for calibration.`
+          )
+        );
       $('health-top').replaceChildren(...top);
       const runs = [...S.runs].sort((a, b) => String(b.startedAt || '').localeCompare(String(a.startedAt || '')));
       const pipeEx = names.filter(([p]) => exception(last[p])).length;

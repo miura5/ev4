@@ -966,7 +966,8 @@
  },
  "constants": {
   "_rules": [
-   "The constants E.V. core reads (configure(spec)), ported from v3. Tuned with Matt over time; a change needs a Changelog line."
+   "The constants E.V. core reads (configure(spec)), ported from v3. Tuned with Matt over time; a change needs a Changelog line.",
+   "B-165 (D-188): health.evidence names the evidence B-70 (answers in the record) and B-71 (exams carrying both a prediction and a score) wait on; the weekly counts both into weeks/<date>.health.evidence and the System tab reads them against these numbers."
   ],
   "review": {
    "solidAfterRightDays": 2,
@@ -1069,7 +1070,11 @@
   },
   "health": {
    "_note": "D-111: a health/current older than this is named first in the morning and evening push lines and marked stale on the System tab (the watchdog writes it every 3 hours)",
-   "staleHours": 4
+   "staleHours": 4,
+   "evidence": {
+    "answers": 300,
+    "scoredExams": 2
+   }
   },
   "prep": {
    "_rules": [

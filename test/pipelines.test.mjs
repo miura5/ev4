@@ -10,7 +10,7 @@ import EV from '../core/evcore.mjs';
 import { readExport, loadValidator } from '../core/schemas.mjs';
 import * as RUN from '../core/run.mjs';
 import { CODE_STEPS, AGENT_MATERIAL, AGENT_FOLDS } from '../core/steps.mjs';
-import { rebuildOne } from '../core/derive.mjs';
+import { rebuildOne, produce } from '../core/derive.mjs';
 import { ROOT } from './helpers.mjs';
 
 const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
@@ -245,6 +245,25 @@ test('evening-cloud: auto-park and the snapshot, with no judgment; state/current
   assert.equal(rebuildOne(out, spec, 'state', state).status, 'same');
 });
 
+test('B-165 (D-188): the weekly counts the evidence B-70 and B-71 wait on into weeks/<date>.health.evidence', () => {
+  const db = recordDb();
+  const answers = EV.collectAttempts(db.sets || [], db.answers || []).all.length;
+  const at = '2026-10-18T22:57:00Z';
+  const before = produce(db, spec, 'weeks', { date: '2026-10-18', now: at }, { source: 'weekly test' });
+  assert.equal(before.health.evidence.answers, answers, 'every answer in the record, not only the week’s');
+  assert.ok(answers > 0, 'the fixture has answers to count');
+  const scored0 = before.health.evidence.scoredExams;
+  // Plant an exam with a prediction and a score, and one with a prediction only: only the first counts.
+  const exam = id => ({ ...db.exams[0], id, date: '2026-10-10' });
+  db.exams = [...db.exams, exam('E9-test'), exam('E8-test')];
+  const pred = id => ({ id, examId: id, predictedRange: [70, 80], at, schema: 1, writer: 'morning', source: 'test' });
+  db.predictions = [...(db.predictions || []), pred('E9-test'), pred('E8-test')];
+  db.examedits = [...(db.examedits || []), { id: 'E9-test', score: 82, scoreAt: at }];
+  const after = produce(db, spec, 'weeks', { date: '2026-10-18', now: at }, { source: 'weekly test' });
+  assert.deepEqual(after.health.evidence, { answers, scoredExams: scored0 + 1 });
+  assert.deepEqual(spec.constants.health.evidence, { answers: 300, scoredExams: 2 }, 'the gates the System tab reads');
+});
+
 test('weekly: the roll-ups, the verify reads, the review as written, weeks/<Sunday>; it rebuilds byte for byte with the text kept', () => {
   const at = '2026-10-18T22:57:00Z';
   const { dir, db } = session('weekly', at);
@@ -308,6 +327,7 @@ test('weekly: the roll-ups, the verify reads, the review as written, weeks/<Sund
   assert.ok(week.insights && Array.isArray(week.insights.lines), 'B-72: the week’s insights');
   assert.equal(typeof week.rollups.readiness, 'object', 'B-48: the week’s closing readiness');
   assert.equal(typeof week.health.summary, 'string');
+  assert.equal(typeof week.health.evidence.answers, 'number', 'B-165: the evidence in the run’s own week');
   const vr = week.health.verify;
   assert.deepEqual([vr.target, vr.green, vr.at], ['staging', false, new Date(at).toISOString()]);
   assert.ok(

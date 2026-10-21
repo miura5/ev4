@@ -492,12 +492,19 @@ function weekBody(db, { date, verify = null }, spec, stored) {
         ? `; failed: ${[...new Set(ended.filter(r => r.status !== 'ok').map(r => r.pipeline))].sort().join(', ')}`
         : '')
     : 'no runs this week';
+  // B-165 (D-188): the evidence B-70 and B-71 wait on, counted here so triage reads it instead of counting by hand:
+  // every answer in the record (not only this week's), and the exams that carry both a prediction and a score. An
+  // optional field (no bump): a week written before it has none and rebuilds as it was written.
+  const evidence =
+    stored && stored.health && !stored.health.evidence
+      ? undefined
+      : { answers: EV.collectAttempts(v.sets, v.answers).all.length, scoredExams: Object.keys(calibration).length };
   const body = {
     schema: 4, // B-29: health is {summary, verify}; B-48: rollups.readiness; B-72: insights
     date,
     calibration,
     // The verify result comes from the run's own reads of its record (verify-deploy, read-only), an input as stored.
-    health: { summary, verify },
+    health: { summary, verify, ...(evidence ? { evidence } : {}) },
     rollups: {
       from,
       to: date,
