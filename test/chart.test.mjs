@@ -531,6 +531,20 @@ test('B-95: triage comes first, then the entry becomes a task, joins one, or is 
     C.lintChart(r).filter(f => f.level === 'error'),
     []
   );
+  // Matt may decline a task after it left the inbox (B-67, Oct 20): open or blocked only, with his reason.
+  assert.throws(() => C.applyLog(r, { _: ['log', 'B-02'], triage: 'decline', reason: 'x' }), /in progress, not in/);
+  assert.throws(
+    () => C.applyLog(r, { _: ['log', 'B-04'], triage: 'task', dod: 'x', milestone: 'M1' }),
+    /not in the inbox/
+  );
+  assert.throws(() => C.applyLog(r, { _: ['log', 'B-04'], triage: 'decline' }), /needs --reason/);
+  C.applyLog(r, { _: ['log', 'B-04'], triage: 'decline', reason: 'Matt: not worth a session' });
+  const d = r.tasks.find(x => x.id === 'B-04');
+  assert.deepEqual([d.status, d.triage.outcome, C.boardRow(d, r).status.text], ['declined', 'declined', 'Declined']);
+  assert.deepEqual(
+    C.lintChart(r).filter(f => f.level === 'error'),
+    []
+  );
 });
 
 test('B-95: a Board comment is filed from the comment query and answered with its id', () => {

@@ -1200,8 +1200,11 @@ export function applyLog(rec, o, { now = new Date().toISOString() } = {}) {
     what.push(`renumbered from ${id} (it shared that id)`);
   }
   if (o.triage) {
-    if (t.status !== 'inbox') throw new Error(`${id} is ${t.status}, not in the inbox`);
     const how = o.triage === true ? '' : o.triage;
+    // A task Matt declines after it left the inbox (B-67, Oct 20) takes the same decline: open or blocked only, never one
+    // started or done, and always with his reason.
+    const declineTask = how === 'decline' && ['open', 'blocked'].includes(t.status);
+    if (t.status !== 'inbox' && !declineTask) throw new Error(`${id} is ${t.status}, not in the inbox`);
     if (how === 'task') {
       if (!o.dod || !o.milestone) throw new Error('--triage task needs --dod and --milestone');
       Object.assign(t, {
