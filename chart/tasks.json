@@ -898,15 +898,19 @@
   "id": "B-46",
   "kind": "task",
   "title": "Clinical-prep brief (pick 4, D-103): the clinical-prep job kind and its card, built from the next clinical's calendar entry, the clinical and lab materials, skill weak spots and announcements; the greeting offers it the day before a clinical day; a test proves the job's read set excludes graded paperwork by section and title and that the composer refuses identifiers in the brief's ask",
-  "dod": null,
+  "dod": "a staging worker firing posts a brief for a planted clinical day citing the Skills Packet pages, and the read-set test is green",
   "milestone": "M8",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-42"
   ],
-  "notes": "",
+  "notes": "Oct 20: taken (Matt's order: B-46 after B-43). DoD from the Build plan tab.",
   "commit": null,
-  "source": "BACKLOG.md"
+  "source": "BACKLOG.md",
+  "board": {
+   "row": "v4 B-46: Clinical-prep brief",
+   "why": "The night before clinical, one brief from his skills, lab and clinical materials instead of hunting"
+  }
  },
  {
   "id": "B-47",
