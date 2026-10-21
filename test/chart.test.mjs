@@ -1379,7 +1379,8 @@ test("B-111: a deploy credits each commit's own task, not every id a subject men
         'B-109: tenets; see B-106',
       ].join('\n')
     ),
-    ['B-109', 'B-60', 'B-111']
+    // B-144 (W-2): the record commit "B-111: ideas rows (chart)" ships nothing, so it credits nothing.
+    ['B-109', 'B-60']
   );
 });
 
@@ -1792,4 +1793,47 @@ test('B-142 (W-7): lint warns on stale flags (waiting on someone when finished, 
     real.filter(f => /^stale-/.test(f.check)),
     []
   );
+});
+
+test('B-144 (W-2): a deploy credits product commits only: a record commit ("(chart)") or one that touched only bookkeeping ships nothing', () => {
+  assert.deepEqual(
+    C.commitTasks([
+      { subject: 'B-80: open -> in progress, notes (chart)', files: ['chart/tasks.json', 'BACKLOG.md'] },
+      { subject: 'B-79: the record by hand', files: ['chart/tasks.json', 'DECISIONS.md', 'CHANGELOG.md'] },
+      { subject: 'B-43: dosage practice', files: ['core/evcore.mjs', 'chart/tasks.json'] },
+      { subject: 'B-93: log and the views', files: ['tools/chart.mjs', 'test/chart.test.mjs'] },
+      { subject: 'B-74: talk fields', files: ['spec/ev.spec.json'] },
+    ]),
+    ['B-74', 'B-43']
+  );
+  assert.deepEqual(C.commitTasks('B-78: open -> in progress (chart)\nB-60: the rollback'), ['B-60']);
+  // On a planted mixed log in a throwaway repository: the commits and the files each touched.
+  const dir = copyRepo();
+  const g = (...a) => execFileSync('git', ['-C', dir, ...a], { encoding: 'utf8' });
+  const base = g('rev-parse', 'HEAD').trim();
+  const commit = (subject, file, text) => {
+    fs.writeFileSync(path.join(dir, file), text);
+    g('add', file);
+    g('-c', 'commit.gpgsign=false', 'commit', '-q', '-m', subject);
+  };
+  commit('B-81: in progress (chart)', 'BACKLOG.md', 'x');
+  commit('B-75: the thing', 'core/new.mjs', 'export const x = 1;\n');
+  commit('B-78: notes', 'CHANGELOG.md', 'y');
+  assert.deepEqual(C.commitTasks(C.commitsIn(dir, `${base}..HEAD`)), ['B-75']);
+});
+
+test('B-144: a recorded deploy is corrected by a note, kept as it was; the Changelog carries the note', () => {
+  const r = sample();
+  r.deploys = [
+    { target: 'live', commit: 'f547c21', time: '2026-10-21T04:29:44Z', okFrom: 'Matt', tasks: ['B-01', 'B-02'] },
+  ];
+  assert.throws(
+    () => C.applyLog(r, { _: ['log', 'deploy'], target: 'live', commit: 'f547c21', correct: true }),
+    /needs --note/
+  );
+  C.applyLog(r, { _: ['log', 'deploy'], target: 'live', commit: 'f547c21', correct: true, note: 'shipped B-02 only' });
+  assert.deepEqual(r.deploys[0].tasks, ['B-01', 'B-02'], 'nothing rewritten');
+  assert.match(C.changelogLine(r.deploys[0]).change, / Note: shipped B-02 only$/);
+  const real = rec().deploys.find(d => d.target === 'live' && d.commit === 'f547c21');
+  assert.match(real.notes[0], /^B-144 \(W-2\): .* shipped B-125, B-128, B-74 and B-43/);
 });

@@ -37,7 +37,7 @@ import { newestTranscript, toolResults } from '../core/transcript.mjs';
 import { verify, verifyReads, deployCalls, formatDeploy, canonical, SYSTEM_IDS, contentHash } from '../core/deploy.mjs';
 import { commitsBehind, mainHead } from '../core/cli.mjs';
 import { readState, withShell } from '../core/verifystate.mjs';
-import { build } from './build.mjs';
+import { build, BOOKKEEPING } from './build.mjs';
 
 const HERE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const FILES = ['tasks', 'decisions', 'deploys', 'rules', 'views'];
@@ -853,7 +853,8 @@ export function changelogLine(d) {
   const verify = d.verify ? ` verify-deploy ${d.target} ${d.verify === 'green' ? 'GREEN' : d.verify}.` : '';
   const live =
     d.target === 'live' ? ` Rollback is a redeploy of ${d.rollback || '(none named)'}` : ' Live stays where it is';
-  const change = `v4 ${d.target} deployed at ${d.commit}${at}${d.from ? `, from ${d.from}` : ''}: ${d.summary || 'see the tasks'}${d.tasks && d.tasks.length ? ` (${d.tasks.join(', ')})` : ''}.${verify}${live}`;
+  const notes = (d.notes || []).map(n => ` Note: ${n}`).join('');
+  const change = `v4 ${d.target} deployed at ${d.commit}${at}${d.from ? `, from ${d.from}` : ''}: ${d.summary || 'see the tasks'}${d.tasks && d.tasks.length ? ` (${d.tasks.join(', ')})` : ''}.${verify}${live}${notes}`;
   return {
     date: ctDate(d.time),
     change: change.replace(/\.\./g, '.'),
@@ -1143,6 +1144,14 @@ export function applyLog(rec, o, { now = new Date().toISOString() } = {}) {
     const target = o.target;
     if (!['staging', 'live'].includes(target)) throw new Error('log deploy needs --target staging|live');
     if (!o.commit) throw new Error('log deploy needs --commit');
+    // B-144: a recorded deploy is corrected by a note, never rewritten or deleted.
+    if (o.correct) {
+      const had = rec.deploys.filter(x => x.target === target && x.commit === String(o.commit).slice(0, 7)).at(-1);
+      if (!had) throw new Error(`no ${target} deploy at ${o.commit} in the record`);
+      if (typeof o.note !== 'string' || !o.note) throw new Error('log deploy --correct needs --note');
+      had.notes = [...(had.notes || []), o.note];
+      return { rec, what: `${target} deploy at ${had.commit}: note`, id: 'deploy', views: [] };
+    }
     const live = rec.deploys.filter(d => d.target === 'live').at(-1);
     const d = {
       target,
@@ -1753,15 +1762,36 @@ export function versionsFrom(jsonl, url) {
 }
 /** The tasks a range of commits did, oldest first: each subject's leading id ("B-07: ..."), not every id it mentions
  * (a hand-off commit names the ids it filed, "D-146 to D-165, B-111 to B-126: plan ..."). */
-export function commitTasks(subjects) {
+/**
+ * The tasks a deploy ships: each product commit's own task, oldest first. B-144 (W-2): a record commit (its subject
+ * ends "(chart)") or a commit that touched only bookkeeping (tools/build.mjs BOOKKEEPING) ships nothing, so it credits
+ * nothing. Takes the subjects as text (one per line) or [{subject, files}].
+ */
+export function commitTasks(commits) {
+  const list = Array.isArray(commits)
+    ? commits
+    : String(commits)
+        .split('\n')
+        .map(subject => ({ subject }));
   return [
     ...new Set(
-      String(subjects)
-        .split('\n')
-        .map(l => (l.match(/^(B-\d{2,3})\b/) || [])[1])
+      list
+        .filter(c => !/\(chart\)\s*$/.test(c.subject))
+        .filter(c => !c.files || !c.files.length || !c.files.every(f => BOOKKEEPING.some(re => re.test(f))))
+        .map(c => (c.subject.match(/^(B-\d{2,3})\b/) || [])[1])
         .filter(Boolean)
     ),
   ].reverse();
+}
+/** The commits in a range, newest first, with their subjects and the files each touched. */
+export function commitsIn(root, range) {
+  return git(root, ['log', '--name-only', '--format=%x00%s', range])
+    .split('\0')
+    .filter(Boolean)
+    .map(block => {
+      const [subject, ...files] = block.split('\n');
+      return { subject, files: files.filter(Boolean) };
+    });
 }
 async function ship(o) {
   const root = rootOf(o),
@@ -1957,7 +1987,7 @@ async function ship(o) {
   let tasks = list(o.tasks);
   if (!tasks.length && prev) {
     try {
-      tasks = commitTasks(git(root, ['log', '--format=%s', `${prev.commit}..${manifest.commit}`]));
+      tasks = commitTasks(commitsIn(root, `${prev.commit}..${manifest.commit}`));
     } catch {
       /* history too shallow */
     }
@@ -2589,11 +2619,8 @@ async function rollback(o) {
       prompts = promptChanges(now.manifest, then.manifest);
     const tasksBetween = (() => {
       try {
-        return [
-          ...new Set(
-            ids(git(root, ['log', '--format=%s', `${toFull}..${from.commit}`])).filter(x => x.startsWith('B-'))
-          ),
-        ].reverse();
+        // B-144: the same attribution ship uses, so what going back undoes is what those deploys shipped.
+        return commitTasks(commitsIn(root, `${toFull}..${from.commit}`));
       } catch {
         return [];
       }
@@ -2741,6 +2768,8 @@ function args(argv) {
     '--force',
     '--apply',
     '--handoff-note',
+    '--correct',
+    '--retire',
   ]);
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];

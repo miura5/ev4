@@ -2635,10 +2635,10 @@
   "title": "Docs views retired (D-172): views writes DECISIONS.md and CHANGELOG.md into the repository from the record, with the drift test BACKLOG.md has; it prints no Docs calls; chart/views.json keeps the doc ids under retired with the date; CLAUDE.md lines 12-13 corrected; the one-line history banner printed once on Foundation v4, the Chart design, the UI tenets doc and the overview, and the closing line on the v3 doc's Board, Changelog and Decisions tabs (Matt's OK given Oct 21)",
   "dod": "npm test fails on drift of either file; views prints nothing to make; the banner and closing lines are in the docs; npm test green",
   "milestone": "v4.2 record",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Taken Oct 21",
-  "commit": null,
+  "notes": "c768bb5: DECISIONS.md and CHANGELOG.md generated with the record and drift-tested; views prints no Docs calls (views --retire marked chart/views.json, D-172, Oct 21); history banners on Foundation v4, the Chart design, the UI tenets doc, the overview and the v4.1 review; closing lines on the v3 doc's Board, Changelog and Decisions tabs and the overview status line (Matt's OK in the review, Oct 21). B-130 joined here.",
+  "commit": "c768bb5",
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
@@ -2647,9 +2647,9 @@
   "title": "Deploy attribution (W-2): commitTasks skips subjects ending \"(chart)\" and commits that touch only bookkeeping; the f547c21 live entry corrected by a note, nothing deleted",
   "dod": "a chart test with a planted mixed log attributes only product commits; rollback's dry run names the same list; npm test green",
   "milestone": "v4.2 record",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken Oct 21",
   "commit": null,
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },

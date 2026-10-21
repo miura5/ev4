@@ -45,7 +45,15 @@ function git(root, args) {
 
 // The project record (M12): chart/, the BACKLOG.md generated from it, and the Chart's own tool and test. Nothing that
 // ships is built from them.
-export const BOOKKEEPING = [/^chart\//, /^BACKLOG\.md$/, /^tools\/chart\.mjs$/, /^test\/chart\.test\.mjs$/];
+// B-143 (D-172): DECISIONS.md and CHANGELOG.md are generated with the record, like BACKLOG.md.
+export const BOOKKEEPING = [
+  /^chart\//,
+  /^BACKLOG\.md$/,
+  /^DECISIONS\.md$/,
+  /^CHANGELOG\.md$/,
+  /^tools\/chart\.mjs$/,
+  /^test\/chart\.test\.mjs$/,
+];
 const bookkeeping = f => BOOKKEEPING.some(re => re.test(f));
 
 /**

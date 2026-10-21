@@ -2159,6 +2159,9 @@
   "summary": "Open-ended checks and grading; Surfaces in the E.V. tab; Study session in Captions; Skills runner tuck rail; Captions rollout to live; Courses as data; Shadow scheduler; Exam plan drafts on request; Harness on the synthetic record; No motion on tab switches; Study Watch reader 0.3; A greeting that reads the moment; views across two build chats; Talk and reader data fields; log and the views; Dosage practice",
   "why": null,
   "decisions": [],
-  "source": "log"
+  "source": "log",
+  "notes": [
+   "B-144 (W-2): the tasks list above counted record commits. This deploy shipped B-125, B-128, B-74 and B-43; B-75, B-78 to B-81, B-42, B-68, B-45, B-67, B-129 and B-130 appeared only in record commits, and B-93 only in tool commits that ship nothing."
+  ]
  }
 ]
