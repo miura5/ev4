@@ -819,7 +819,7 @@
   "title": "Courses as data (pick 9, D-099): spec.courses with Canvas id, status, exam kinds, module and skip rules and day-type budget per course; registry.canvas.courses, registry.canvas.library.modules and constants.nurUnitExamKinds removed; core reads every course rule from the table and names no course in code; searchLibrary and the morning passages default to active courses; build and lint check exams.course and materials.course against it",
   "dod": null,
   "milestone": "M9",
-  "status": "blocked",
+  "status": "done",
   "depends": [
    "B-25",
    "B-31",
@@ -830,12 +830,13 @@
    "B-37",
    "B-39"
   ],
-  "notes": "Oct 20: code done and on staging (9277ed9, ship staging GREEN). npm run check GREEN; the morning's days rebuild byte for byte on the fixture and a synthetic record over 61 dates (before/after snapshot identical); BIO-E3 and BIO-LAB-BONES reach nextExams and the review load; a spec test fails a core file naming a course; build and lint check exams.course and materials.course (unknown-course). Changes Matt may want to know: a BIO 201 exam day (unit, lab, final) is now an exam day type (his default, D-099); lint's exam-passed info no longer flags BIO exams (only scoredKinds, NUR unit/final/dosage). Left: the DoD's staging morning firing. Firing E.V. staging · morning was refused by the session's auto-mode check (Run Routine Now needs Matt to name the task in the chat); not worked around. Unblocks when Matt says to fire the staging morning task, or fires it himself; then runs/ read back and verify-deploy staging",
-  "commit": null,
+  "notes": "Oct 20, on Matt's word: the staging morning fired at 6218f16 and read back ok (runs/morning-20261021-012802552: review set 5, prediction E4 61-69, day list 11); the weekly's verify step: verify-deploy staging GREEN. Live since 20:07 CT at 6218f16 on Matt's OK.",
+  "commit": "9277ed9",
   "source": "BACKLOG.md",
   "board": {
    "row": "v4 B-42: Courses as data",
-   "why": "core hardcodes NUR 112, so BIO 201 exams never reach the morning review and a finished course can't be retired by marking"
+   "why": "core hardcodes NUR 112, so BIO 201 exams never reach the morning review and a finished course can't be retired by marking",
+   "notes": "Done: courses are data; staging morning ran clean, live since Oct 20"
   },
   "waitingOn": "Matt"
  },
