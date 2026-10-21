@@ -2475,5 +2475,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "1a09695",
+  "time": "2026-10-21T22:03:02.262Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "b9c59d5",
+  "tasks": [
+   "B-78"
+  ],
+  "summary": "Surfaces in the E.V. tab",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
