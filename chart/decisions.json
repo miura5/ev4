@@ -396,7 +396,7 @@
   "date": "Oct 18",
   "title": "core.checkFormat picks each check's format: a session's first check is multiple choice, then the formats alternate (Quiz me now included); an open check falls back to multiple choice when its source gives no two grounded key points or the item fails its check function; a wrong answer does not change the alternation; the format is stored on the session's check",
   "why": "The demo's alternation as one testable rule; recall in his own words without E.V. inventing key points",
-  "status": "proposed",
+  "status": "accepted",
   "supersedes": [],
   "amends": []
  },
