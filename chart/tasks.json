@@ -3119,7 +3119,7 @@
   "milestone": "v4.4 builder",
   "status": "in progress",
   "depends": [],
-  "notes": "Filed from the v4.4 doc (plan --apply): D-193 to D-202 filed as accepted on Matt's Oct 21 OK (the doc's last section; P-6 explicitly), D-193 amends D-191 (v4.4 goes ahead of the study queue); D-200 to D-202 are tenets; depends set by the note above the Tasks table. Taking probe A first.",
+  "notes": "From the fired builder session itself (cse_01E8uRETL45FfPLHkrSyWY2p, session_01E8uRETL45FfPLHkrSyWY2p, fired 22:11:36Z): its one user turn was the configured prompt alone ('You are an E.V. v4 build session. Follow CLAUDE.md and BACKLOG.md in this repository exactly, including the Unattended runs section.'); the fired text never arrived as a further turn while it worked (to 22:47Z), so it filed nothing with report --from-chat and read no north star tab: fire_trigger's text did not reach a builder session's first turn, and the session keeps no turn open to receive it later. The worker and diagnostic prompts already end their first turn to wait for theirs ('Waiting for the job id'); the builder's prompt has no such step (B-179's marker step is where it belongs). Meanwhile it built B-177 (8c5cfaa).",
   "commit": null,
   "source": "plan TbfWAoQEeQixyNKZnEZKvv"
  },
