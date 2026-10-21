@@ -3274,7 +3274,7 @@
   "milestone": "v4.4 builder",
   "status": "in progress",
   "depends": [],
-  "notes": "Taken now, before B-186, because its re-probe runs in a builder session while B-186 is built here; B-178 rests on it.",
+  "notes": "Probe A re-fired (session cse_01V57XaMtYQSf8Et4sqf8Z2u): the builder's first turn ended with 'Waiting for the message.' and the fired text arrived as the next message; report --from-chat filed it as B-188 (1ba9377; the captured words carry a trailing '</routine-fire-payload>' line from the envelope), declined at triage with reason 'probe A' (5eaab56), pushed to main at 8f22f5f. Docs read answered: E.V. Foundation v4 has no tab named north star (tabs: E.V. Foundation v4, v3 audit, Data architecture, Operational architecture, Features, Build plan, UI and UX); its main tab's first heading is 'E.V. Foundation v4', first section 'The verdict'. Refused: ArtifactData get of live health/current (auto mode classifier, PII Data Handling), not worked around. Board comments: none. No task taken, builder not re-fired (the probe's instruction and B-187's DoD). Left for the build chat: the environments rows re-proven with this session id.",
   "commit": null,
   "source": "probe A (B-176), build chat",
   "words": "The builder never receives the text it is fired with: probe A's fired text did not arrive as the next message of the ev4-builder session (cse_01E8uRETL45FfPLHkrSyWY2p), because its prompt starts work at once and keeps no turn open; the worker and diagnostic prompts end their first turn with 'Waiting for the job id'.",
