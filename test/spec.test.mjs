@@ -329,7 +329,7 @@ test('B-32 (D-089): x-ev.marks in the five schemas match the spec, and the regis
   const schemas = loadSchemas(ROOT);
   const want = {
     jobs: ['fired'],
-    sessions: ['status', 'pending', 'endedAt'],
+    sessions: ['status', 'pending', 'endedAt', 'comments'], // comments: D-130, B-74
     ideas: ['status', 'kind'],
     dates: ['date', 'dueAt', 'syncedAt'],
     materials: ['text', 'fileUpdatedAt', 'fetchedAt', 'needsOcr', 'pages', 'chars', 'ocr'],

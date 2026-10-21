@@ -10,7 +10,7 @@
    "page",
    "worker"
   ],
-  "schema": 1,
+  "schema": 2,
   "documents": {
    "memory": "#/$defs/memory"
   }
@@ -19,7 +19,7 @@
  "type": "object",
  "properties": {
   "schema": {
-   "const": 1
+   "const": 2
   },
   "writer": {
    "enum": [
@@ -84,6 +84,43 @@
      },
      "error": {
       "type": "string"
+     },
+     "session": {
+      "type": "string",
+      "pattern": "^ss-[A-Za-z0-9-]+$",
+      "description": "B-74 (D-128): the study session the message was written during"
+     },
+     "note": {
+      "type": "object",
+      "description": "B-74 (D-130, D-131): the note line a comment is about",
+      "properties": {
+       "file": {
+        "type": "string",
+        "maxLength": 300
+       },
+       "title": {
+        "type": "string",
+        "maxLength": 200
+       },
+       "line": {
+        "type": [
+         "integer",
+         "null"
+        ],
+        "minimum": 1
+       },
+       "quote": {
+        "type": "string",
+        "maxLength": 90
+       }
+      },
+      "required": [
+       "file",
+       "title",
+       "line",
+       "quote"
+      ],
+      "additionalProperties": false
      }
     },
     "required": [
@@ -109,7 +146,7 @@
    "type": "object",
    "properties": {
     "schema": {
-     "const": 1
+     "const": 2
     },
     "writer": {
      "const": "page"

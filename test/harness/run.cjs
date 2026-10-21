@@ -2978,11 +2978,21 @@ const ok = (name, cond, detail = '') => {
           px: Math.round(h.querySelector('.ev-av').getBoundingClientRect().width),
           stage: Math.round(h.getBoundingClientRect().height),
           lines: document.querySelectorAll('#thread .msg.ev').length,
+          // B-74 (D-128): the session is its own conversation, opened by the line of his that started it.
+          thread: [...document.querySelectorAll('#thread .msg')].map(
+            m => (m.classList.contains('ev') ? 'ev: ' : 'matt: ') + m.textContent.trim().slice(0, 40)
+          ),
         };
       });
       ok(
-        'in a session: only her latest two lines, her core at 66% (172 px) on a 196 px stage',
-        cs.step === 'session' && cs.lines === 2 && Math.abs(cs.px - 172) <= 1 && cs.stage === 196,
+        'in a session: the thread is the session (his line that started it, her start line), her core at 66% (172 px) on a 196 px stage (D-128, B-74)',
+        cs.step === 'session' &&
+          cs.lines === 1 &&
+          cs.thread.length === 2 &&
+          /^matt: start a study session/i.test(cs.thread[0]) &&
+          /^ev: Session started/.test(cs.thread[1]) &&
+          Math.abs(cs.px - 172) <= 1 &&
+          cs.stage === 196,
         JSON.stringify(cs)
       );
     }
@@ -3039,11 +3049,23 @@ const ok = (name, cond, detail = '') => {
         chips: [...document.querySelectorAll('#qchips .qchip')].filter(c => c.offsetParent).map(c => c.textContent),
       }));
       ok(
-        'in a session: the Reading line names the course, note and his latest line, and Quiz me now is the one chip',
-        /^Reading · NUR 112 › Fluids and electrolytesIsotonic: 0\.9% NaCl stays in the vessels\.$/.test(
-          rv.reading || ''
-        ) && rv.chips.join() === 'Quiz me now',
+        'in a session, against a reader without titles (v1): the Reading line says Your notes and his latest line, and Quiz me now is the one chip (D-131)',
+        /^Reading · Your notesIsotonic: 0\.9% NaCl stays in the vessels\.$/.test(rv.reading || '') &&
+          rv.chips.join() === 'Quiz me now',
         JSON.stringify(rv)
+      );
+    }
+    {
+      // B-74 (D-131): reader 0.3 names the note (course › first heading); the next read puts its title on the line.
+      await ss.evaluate(() => {
+        window.__readerNote.note.title = 'NUR 112 › Fluids and electrolytes';
+      });
+      await jump(31e3, () => ss.evaluate(() => /›/.test(document.getElementById('sread').textContent)));
+      const reading = await ss.evaluate(() => document.getElementById('sread').textContent);
+      ok(
+        'in a session, against reader 0.3: the Reading line names the course and note by the reader title, then his latest line (D-131)',
+        /^Reading · NUR 112 › Fluids and electrolytesIsotonic: 0\.9% NaCl stays in the vessels\.$/.test(reading),
+        reading
       );
     }
     ok(

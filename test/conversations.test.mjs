@@ -9,7 +9,7 @@ import EV from '../core/evcore.mjs';
 const spec = JSON.parse(fs.readFileSync(new URL('../spec/ev.spec.json', import.meta.url)));
 EV.configure(spec);
 // Central daylight time in October: UTC-5.
-const at = (day, hh, mm) => new Date(Date.UTC(2026, 9, day, hh + 5, mm)).toISOString();
+const at = (day, hh, mm, ss = 0) => new Date(Date.UTC(2026, 9, day, hh + 5, mm, ss)).toISOString();
 const msg = (id, iso, role = 'ev') => ({ id, at: iso, role, text: id });
 
 test("the idle gap is the spec's: 120 minutes", () => {
@@ -150,4 +150,95 @@ test('past the start of today a further pull goes on into earlier days, one conv
   const c2 = EV.conversations([msg('g', at(18, 9, 0))]);
   assert.deepEqual(EV.earlierConversation(c2, 1, today), { edge: 'today' });
   assert.deepEqual(EV.earlierConversation(c2, 1, today, o), { edge: 'window' });
+});
+
+// B-74 (D-128's session half): messages written during a session carry session: ss-<id>.
+const smsg = (id, iso, role, session) => ({ ...msg(id, iso, role), ...(session ? { session } : {}) });
+
+test("the session lead is the spec's: 2 minutes", () => {
+  assert.equal(spec.constants.conversation.sessionLeadMin, 2);
+});
+
+test("a session is its own conversation: Matt's line that started it opens it, the first line after it ends it closes it", () => {
+  const S = 'ss-20261018-190000-cardiac';
+  const t = [
+    smsg('chat1', at(18, 18, 50), 'matt'),
+    smsg('chat2', at(18, 18, 51), 'ev'),
+    smsg('start', at(18, 18, 58, 30), 'matt'), // 1.5 minutes before the session's first message: its lead line
+    smsg('s1', at(18, 19, 0), 'ev', S),
+    smsg('s2', at(18, 19, 7), 'ev', S),
+    smsg('s3', at(18, 19, 8), 'matt', S),
+    smsg('after1', at(18, 19, 40), 'matt'),
+    smsg('after2', at(18, 19, 41), 'ev'),
+  ];
+  const cs = EV.conversations(t);
+  assert.deepEqual(
+    cs.map(c => [c.session, c.messages.map(m => m.id)]),
+    [
+      [null, ['chat1', 'chat2']],
+      [S, ['start', 's1', 's2', 's3']],
+      [null, ['after1', 'after2']],
+    ]
+  );
+  // A line more than 2 minutes before stays where it was.
+  const early = [smsg('x', at(18, 18, 57), 'matt'), smsg('s1', at(18, 19, 0), 'ev', S)];
+  assert.deepEqual(
+    EV.conversations(early).map(c => c.messages.map(m => m.id)),
+    [['x'], ['s1']]
+  );
+  // E.V.'s line just before a session is not a lead: only Matt's line opens it.
+  assert.equal(EV.conversations([smsg('e', at(18, 18, 59), 'ev'), smsg('s1', at(18, 19, 0), 'ev', S)]).length, 2);
+});
+
+test('two sessions back to back are two conversations; a session runs across midnight as one', () => {
+  const A = 'ss-a',
+    B = 'ss-b';
+  const two = [
+    smsg('a1', at(18, 20, 0), 'ev', A),
+    smsg('a2', at(18, 20, 30), 'matt', A),
+    smsg('b1', at(18, 20, 31), 'ev', B),
+  ];
+  assert.deepEqual(
+    EV.conversations(two).map(c => c.session),
+    [A, B]
+  );
+  const late = [
+    smsg('l1', at(18, 23, 50), 'ev', A),
+    smsg('l2', at(19, 0, 10), 'matt', A),
+    smsg('l3', at(19, 0, 20), 'ev', A),
+  ];
+  assert.deepEqual(
+    EV.conversations(late).map(c => c.messages.length),
+    [3]
+  );
+});
+
+test("a worker message joins the conversation it lands in, a session's included, and sets no session of its own", () => {
+  const S = 'ss-x';
+  const job = (id, iso) => ({ ...msg(id, iso), jobId: 'job-1' });
+  const inSession = [smsg('s1', at(18, 19, 0), 'ev', S), job('w', at(18, 19, 3)), smsg('s2', at(18, 19, 7), 'matt', S)];
+  assert.deepEqual(
+    EV.conversations(inSession).map(c => [c.session, c.messages.map(m => m.id)]),
+    [[S, ['s1', 'w', 's2']]]
+  );
+  const outside = [smsg('a', at(18, 9, 0), 'matt'), job('w', at(18, 9, 20)), smsg('b', at(18, 9, 30), 'ev')];
+  assert.deepEqual(
+    EV.conversations(outside).map(c => [c.session, c.messages.length]),
+    [[null, 3]]
+  );
+  // A worker message alone after a gap starts a conversation; the next line of Matt's or hers sets its session.
+  const lone = [job('w', at(18, 9, 0)), smsg('s1', at(18, 9, 2), 'ev', S)];
+  assert.deepEqual(
+    EV.conversations(lone).map(c => [c.session, c.messages.length]),
+    [[S, 2]]
+  );
+  // But the gap rule still holds for it: past 120 minutes it is a conversation of its own.
+  assert.equal(EV.conversations([smsg('a', at(18, 9, 0), 'matt'), job('w', at(18, 11, 30))]).length, 2);
+});
+
+test('D-131: the notes bar names the note by the reader title, else Your notes (a v1 reader sends none)', () => {
+  assert.equal(EV.noteTitle({ title: 'NUR 112 › Cardiac output', name: 'Cardiac output' }), 'NUR 112 › Cardiac output');
+  assert.equal(EV.noteTitle({ name: 'Cardiac output', folder: '2026/NUR 112' }), 'Your notes');
+  assert.equal(EV.noteTitle({ title: '  ' }), 'Your notes');
+  assert.equal(EV.noteTitle(null), 'Your notes');
 });

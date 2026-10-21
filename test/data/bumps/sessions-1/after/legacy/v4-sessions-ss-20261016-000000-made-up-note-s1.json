@@ -1,0 +1,53 @@
+{
+ "schema": 1,
+ "writer": "page",
+ "at": "2026-10-16T00:00:00Z",
+ "source": "E.V. Home",
+ "status": "ended",
+ "date": "2026-10-15",
+ "startedAt": "2026-10-16T00:00:00Z",
+ "endedAt": "2026-10-16T00:30:00Z",
+ "topic": "Made-up note",
+ "noteId": "x-made-up",
+ "folder": "2026/NUR 112",
+ "events": {
+  "page-20261016-000000000": {
+   "type": "start",
+   "len": 400,
+   "h": "abc"
+  },
+  "page-20261016-000700000": {
+   "type": "check",
+   "n": 1,
+   "len": 520,
+   "h": "def",
+   "at": "2026-10-16T00:07:00Z"
+  },
+  "page-20261016-000800000": {
+   "type": "answer",
+   "n": 1,
+   "at": "2026-10-16T00:08:00Z"
+  },
+  "page-20261016-001000000": {
+   "type": "check",
+   "comment": true,
+   "len": 560,
+   "h": "ghi",
+   "at": "2026-10-16T00:10:00Z"
+  },
+  "page-20261016-001400000": {
+   "type": "skip",
+   "why": "no-new-text",
+   "at": "2026-10-16T00:14:00Z"
+  },
+  "page-20261016-003000000": {
+   "type": "end",
+   "at": "2026-10-16T00:30:00Z"
+  }
+ },
+ "minutes": 30,
+ "migratedFrom": "sessions/ss-20261016-000000-made-up-note",
+ "migratedTo": "sessions/ss-20261016-000000-made-up-note",
+ "migratedAt": "2026-10-20T22:00:00.000Z",
+ "migration": "sessions schema 1 to 2"
+}

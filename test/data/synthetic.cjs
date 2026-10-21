@@ -57,7 +57,7 @@ function syntheticRecord(now = new Date()) {
   put('materials', 'NUR112-990003', { ...env('canvas-sync', 'Canvas sync', ct(d(-20), 20, 20)), course: 'NUR 112', kind: 'lab', title: 'Skills lab guide.pdf', module: 'Week 9', fileType: 'pdf', fileId: 990003, text: guide, pages: labs.length, chars: guide.length, needsOcr: false });
   // run.cjs: two filed sessions; one is a v3 session filed under its bare id, which the reader must leave alone. The
   // page's own study sessions are the harness's to start, so the seed's filed session is a Study Watch one here.
-  for (const x of Object.values(db.sessions)) x.source = 'Study Watch';
+  for (const x of Object.values(db.sessions)) { x.source = 'Study Watch'; delete x.comments; } // B-74: comments is a page session's
   { const [id0, s0] = Object.entries(db.sessions)[0], s1 = ct(d(-2), 0, 35), e1 = ct(d(-2), 1, 20);
     put('sessions', '2026-10-17-0035-Pharmacology-Chapter-50', { ...s0, at: e1, date: d(-2), startedAt: s1, endedAt: e1, topic: 'Pharmacology: made-up dosage practice', minutes: 45, events: { ['page-' + s1.replace(/[-:]/g, '').replace('T', '-').replace(/\.\d+Z$/, '')]: { type: 'start', len: 600, h: 'synth1' } }, summary: 'Dosage math on made-up orders.', cards: [] }); }
   // run.cjs: Exam 3 has its score, so the score card asks for the harness's own past exam.

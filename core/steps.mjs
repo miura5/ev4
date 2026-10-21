@@ -1027,7 +1027,12 @@ export const AGENT_FOLDS = {
             op: 'set',
             collection: 'talk',
             id: ctx.date,
-            data: { ...EV.envelope('worker', ctx.source, ctx.now), date: ctx.date, messages: { [key]: message } },
+            data: {
+              ...EV.envelope('worker', ctx.source, ctx.now),
+              schema: 2,
+              date: ctx.date,
+              messages: { [key]: message },
+            },
           }
     );
     writes.unshift({

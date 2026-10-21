@@ -69,6 +69,13 @@
       }
     }
     const sessOf = id => S.sessions.find(s => s.id === id) || null;
+    // D-130: the level his last study session (not a skills run) was left at, else Some.
+    const lastComments = () => {
+      const prev = S.sessions
+        .filter(x => String(x.id).startsWith('ss-') && x.kind !== 'skill' && x.comments)
+        .sort((a, b) => String(b.startedAt || '').localeCompare(String(a.startedAt || '')))[0];
+      return (prev && prev.comments) || 'some';
+    };
     const activeSession = () =>
       S.sessions
         .filter(s => s.source === 'E.V. Home' && s.kind !== 'skill' && (s.status === 'active' || s.status === 'ending'))
@@ -157,7 +164,10 @@
         id,
         data: {
           ...envelope('E.V. Home', at),
+          schema: 2, // B-74
           status: 'active',
+          // D-130: the comments level carries over from his last study session; Some until he changes it.
+          comments: lastComments(),
           date: today,
           startedAt: at,
           topic: String(n.name || 'Study session').slice(0, 120),
@@ -173,7 +183,7 @@
       SS.added = '';
       SS.said.clear();
       SS.seen = SS.text;
-      SS.note = { id: n.id, name: n.name, folder: n.folder || '' };
+      SS.note = { id: n.id, name: n.name, folder: n.folder || '', title: n.title || '' };
       SS.nextRead = Date.now() + (SWC.readSeconds || 30) * 1e3;
       SS.changedAt = Date.now();
       renderNotes();
@@ -269,6 +279,7 @@
         });
         await sessEvent(s, 'check', {
           n,
+          format: 'mc', // D-133: open checks come with B-75's checkFormat
           items: items.length,
           msgId: msg,
           noteId: note.id,
@@ -314,13 +325,15 @@
         if (!p || !p.found || p.graded) return;
         const note = p.note || {};
         const text = String(note.text || '');
-        const prev = SS.text;
+        const prev = SS.text,
+          was = SS.note && SS.note.title;
         SS.text = text;
-        SS.note = { id: note.id, name: note.name, folder: note.folder || '' };
+        SS.note = { id: note.id, name: note.name, folder: note.folder || '', title: note.title || '' };
         if (prev !== text) {
           SS.changedAt = Date.now();
           renderNotes();
-        }
+        } else if ((was || '') !== SS.note.title) renderNotes(); // a reader updated mid-session names the note
+
         if (SS.seen == null) {
           SS.seen = text;
           return;
@@ -453,10 +466,6 @@
       return null;
     }
     // What she is reading (B-88): a Reading line above the input, and on desktop the Your notes column beside her.
-    const noteCourse = n => {
-      const m = String((n && n.folder) || '').match(/\b(NUR|BIO)\s?(\d{3})\b/i);
-      return m ? m[1].toUpperCase() + ' ' + m[2] : '';
-    };
     const noteLines = t =>
       String(t || '')
         .split('\n')
@@ -470,14 +479,16 @@
       const last = lines[lines.length - 1] || '';
       rd.hidden = !on || !last;
       if (!rd.hidden) {
-        const c = noteCourse(SS.note);
-        const k = c + '|' + SS.note.name + '|' + last;
+        // D-131: the reader's title (NUR 112 › Cardiac output), else Your notes against a reader without it.
+        const t = E.noteTitle(SS.note);
+        const k = t + '|' + last;
         if (rd.dataset.k !== k) {
           rd.dataset.k = k;
-          const w = el('span', 'sr-where', 'Reading · ' + (c || SS.note.name));
-          if (c) w.append(el('span', 'sr-nm', ' › ' + SS.note.name));
+          const [where, ...rest] = t.split(' › ');
+          const w = el('span', 'sr-where', 'Reading · ' + where);
+          if (rest.length) w.append(el('span', 'sr-nm', ' › ' + rest.join(' › ')));
           rd.replaceChildren(w, el('span', 'sr-line', last));
-          rd.title = SS.note.name + ': ' + last;
+          rd.title = t + ': ' + last;
         }
       }
       let panel = $('snotes');
@@ -498,10 +509,7 @@
       if (panel.dataset.k === k) return;
       panel.dataset.k = k;
       const head = el('div', 'card-head');
-      head.append(
-        el('h2', null, 'Your notes'),
-        el('span', 'meta', ['Notes', noteCourse(SS.note), SS.note.name].filter(Boolean).join(' › '))
-      );
+      head.append(el('h2', null, 'Your notes'), el('span', 'meta', SS.note.title || ''));
       const ul = el('ul', 'sn-lines');
       show.forEach((l, i) => {
         const li = el(

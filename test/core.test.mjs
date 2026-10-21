@@ -1459,7 +1459,7 @@ test('closing a session: one session update, weak spots by objective, ideas, not
   assert.equal(sets.filter(w => w.collection === 'weakspots').length, 2, 'acid-base + the note to-do');
   assert.equal(sets.filter(w => w.collection === 'ideas').length, 2);
   assert.ok(sets.every(w => !w.data.sessionId || w.data.sessionId === s.id));
-  const sessionDoc = { ...s, schema: 1, writer: 'page', at: T0, source: 'E.V. Home', date: '2026-10-18' };
+  const sessionDoc = { ...s, schema: 2, writer: 'page', at: T0, source: 'E.V. Home', date: '2026-10-18' };
   const byId = Object.fromEntries([...existing, sessionDoc].map(({ derived, ...doc }) => [doc.id, doc]));
   for (const w of r.writes) assertValid(w, byId[w.id]);
   const d = EV.decideSessionQuestion({ ...s, pending: up.data.pending }, 'ws1', 'same', {

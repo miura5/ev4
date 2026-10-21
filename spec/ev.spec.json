@@ -1043,7 +1043,8 @@
    "sameItem": 0.3
   },
   "conversation": {
-   "idleGapMin": 120
+   "idleGapMin": 120,
+   "sessionLeadMin": 2
   },
   "push": {
    "_note": "B-40: the push lines E.V. has written since v3 fit 120 characters, what the notification shows on his phone without opening it",
@@ -1626,6 +1627,9 @@
      "page"
     ],
     "endedAt": [
+     "page"
+    ],
+    "comments": [
      "page"
     ]
    }

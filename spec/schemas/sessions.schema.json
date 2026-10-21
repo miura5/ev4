@@ -10,7 +10,7 @@
    "page",
    "filing"
   ],
-  "schema": 1,
+  "schema": 2,
   "marks": {
    "status": [
     "page"
@@ -20,6 +20,9 @@
    ],
    "endedAt": [
     "page"
+   ],
+   "comments": [
+    "page"
    ]
   }
  },
@@ -27,7 +30,7 @@
  "type": "object",
  "properties": {
   "schema": {
-   "const": 1
+   "const": 2
   },
   "writer": {
    "enum": [
@@ -183,6 +186,13 @@
        "pass",
        "miss"
       ]
+     },
+     "format": {
+      "enum": [
+       "mc",
+       "open"
+      ],
+      "description": "B-74 (D-133): a check event's format"
      }
     },
     "required": [
@@ -312,6 +322,14 @@
   "filedAt": {
    "type": "string",
    "format": "date-time"
+  },
+  "comments": {
+   "enum": [
+    "more",
+    "some",
+    "off"
+   ],
+   "description": "B-74 (D-130): how often E.V. comments on his notes in this session, carried into the next"
   }
  },
  "required": [

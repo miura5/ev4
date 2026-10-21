@@ -663,3 +663,62 @@ test('B-29 (Matt, Oct 18): the weeks 1 to 2 bump makes health {summary, verify: 
   const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
   assert.equal(rebuildOne(rec, spec, 'weeks', rec.weeks[0]).status, 'same');
 });
+
+test('B-74 (D-128, D-130, D-133): the talk and sessions 1 to 2 bumps match their fixtures, validate and are idempotent', async () => {
+  const { migrateBumps, BUMPS } = await import('../core/migrate.mjs');
+  const { readExport: read } = await import('../core/schemas.mjs');
+  const load = d => {
+    const db = {};
+    for (const { collection, id, doc } of read(d)) (db[collection] = db[collection] || []).push({ ...doc, id });
+    return db;
+  };
+  const sorted = l => (l || []).slice().sort((a, b) => (a.id < b.id ? -1 : 1));
+  for (const name of ['talk-1', 'sessions-1']) {
+    const dir = path.join(ROOT, 'test/data/bumps', name);
+    const before = load(path.join(dir, 'before')),
+      after = load(path.join(dir, 'after'));
+    const r = migrateBumps(before, { at: '2026-10-20T22:00:00Z' });
+    const got = {};
+    for (const w of r.writes) (got[w.collection] = got[w.collection] || []).push({ ...w.data, id: w.id });
+    for (const [c, docs] of Object.entries(after))
+      assert.equal(EV.stableStringify(sorted(got[c])), EV.stableStringify(sorted(docs)), `${name}: ${c}`);
+    for (const w of r.writes)
+      assert.ok(validate(w.collection, w.data, { id: w.id }).ok, `${w.collection}/${w.id} validates`);
+    assert.deepEqual(
+      migrateBumps(applyWrites(before, r.writes), { at: '2026-10-21T22:00:00Z' }).writes,
+      [],
+      `${name}: a second run writes nothing`
+    );
+  }
+  // talk: every document moves to 2 with its messages as they were, talk/memory included.
+  const talk = load(path.join(ROOT, 'test/data/bumps/talk-1/after')).talk;
+  assert.ok(talk.every(t => t.schema === 2));
+  // sessions: a page session gains comments Some and its question checks format mc (a comment's mark gets none); a filed
+  // session and a skills run gain no level; a level or a format already set is kept.
+  const ss = load(path.join(ROOT, 'test/data/bumps/sessions-1/after')).sessions;
+  const page = ss.find(s => s.id.startsWith('ss-2')),
+    filed = ss.find(s => s.id.startsWith('sw-')),
+    skill = ss.find(s => s.id.startsWith('ss-skill-'));
+  assert.equal(page.comments, 'some');
+  assert.deepEqual(
+    Object.values(page.events)
+      .filter(e => e.type === 'check')
+      .map(e => e.format),
+    ['mc', undefined]
+  );
+  assert.ok(
+    Object.values(page.events)
+      .filter(e => e.type !== 'check')
+      .every(e => !('format' in e))
+  );
+  assert.ok(!('comments' in filed) && !('comments' in skill));
+  const kept = BUMPS.sessions[1]({
+    id: 'ss-made-up',
+    schema: 1,
+    comments: 'off',
+    events: { 'page-20261016-000700000': { type: 'check', n: 1, format: 'open' } },
+  }).data;
+  assert.deepEqual([kept.comments, kept.events['page-20261016-000700000'].format], ['off', 'open']);
+  // A skills run is an ss- session that never comments on notes: no level.
+  assert.ok(!('comments' in BUMPS.sessions[1]({ id: 'ss-skill-made-up', schema: 1, kind: 'skill' }).data));
+});

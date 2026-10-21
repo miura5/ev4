@@ -3254,6 +3254,7 @@ Return JSON: {"pages": [{"page": <page number>, "text": "<the page's text>"}]}`;
       id,
       data: {
         ...envelope(writer, file.source === 'E.V. Home' ? 'E.V. Home' : 'Study Watch', at),
+        schema: 2, // B-74
         date: file.date || chicagoDate(file.startedAt || at),
         startedAt: file.startedAt || null,
         endedAt: file.endedAt || null,
@@ -4072,6 +4073,7 @@ Return JSON: {"pages": [{"page": <page number>, "text": "<the page's text>"}]}`;
       id,
       data: {
         ...envelope('page', 'E.V. Home', at),
+        schema: 2, // B-74
         kind: 'skill',
         status: 'active',
         date: date || chicagoDate(at),
@@ -4756,25 +4758,49 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
   // ---------------------------------------------------------------- conversations (B-77, D-128)
   /**
    * The current conversation is derived, not stored (D-128): talk splits into conversations at a gap of
-   * constants.conversation.idleGapMin minutes or more between one message and the next. Midnight is not a boundary.
-   * (The session boundary of D-128 comes with the talk session field, B-74.) msgs: [{id, at, ...}] in any order;
-   * returns [{start, end, messages}] oldest first, each conversation's messages in time order.
+   * constants.conversation.idleGapMin minutes or more between one message and the next, and where the session changes
+   * between Matt's or E.V.'s messages (B-74): a message written during a session carries session: ss-<id>, and Matt's
+   * line within constants.conversation.sessionLeadMin minutes before a session's first message (the line that started
+   * it) opens that session's conversation. A worker message (jobId) has no session of its own: it joins the
+   * conversation it lands in. Midnight is not a boundary. msgs: [{id, at, role, session?, jobId?, ...}] in any order;
+   * returns [{start, end, session, messages}] oldest first (session null outside one), messages in time order.
    */
   function conversations(msgs, o = {}) {
-    const gap = (o.idleGapMin != null ? o.idleGapMin : C.conversation.idleGapMin) * 60000;
+    const cc = C.conversation || {};
+    const gap = (o.idleGapMin != null ? o.idleGapMin : cc.idleGapMin) * 60000;
+    const lead =
+      (o.sessionLeadMin != null ? o.sessionLeadMin : cc.sessionLeadMin != null ? cc.sessionLeadMin : 2) * 60000;
     const xs = [...(msgs || [])]
       .filter(m => m && m.at && Number.isFinite(toMs(m.at)))
       .sort((a, b) => toMs(a.at) - toMs(b.at) || String(a.id || '').localeCompare(String(b.id || '')));
+    const first = new Map(); // session -> the time of its first message
+    for (const m of xs) if (m.session && !first.has(m.session)) first.set(m.session, toMs(m.at));
+    const sessionOf = m => {
+      if (m.session) return m.session;
+      if (m.role !== 'matt') return null;
+      const t = toMs(m.at);
+      let best = null;
+      for (const [s, f] of first) if (f >= t && f - t <= lead && (!best || f < best[1])) best = [s, f];
+      return best ? best[0] : null;
+    };
     const out = [];
     for (const m of xs) {
       const last = out[out.length - 1];
-      if (last && toMs(m.at) - toMs(last.end) < gap) {
+      const worker = !!m.jobId;
+      const s = worker ? undefined : sessionOf(m);
+      const near = last && toMs(m.at) - toMs(last.end) < gap;
+      // A conversation holding only worker messages so far has no session yet: the next message of Matt's or hers sets it.
+      const same = near && (worker || last.session === undefined || last.session === s);
+      if (same) {
         last.messages.push(m);
         last.end = m.at;
-      } else out.push({ start: m.at, end: m.at, messages: [m] });
+        if (!worker && last.session === undefined) last.session = s;
+      } else out.push({ start: m.at, end: m.at, session: s, messages: [m] });
     }
-    return out;
+    return out.map(c => ({ ...c, session: c.session || null }));
   }
+  /** D-131: the name the notes bar and a comment's quote give the note: the reader's title, else Your notes. */
+  const noteTitle = n => (n && typeof n.title === 'string' && n.title.trim()) || 'Your notes';
   /**
    * What a pull to load can bring back (D-128 as amended Oct 18): the conversation before the ones on screen, or the
    * edge a pull has reached. First the pulls stop at the start of today ({edge: 'today'}: "That's the start of today");
@@ -4950,6 +4976,7 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
     materialFromUpload,
     // conversations (Captions)
     conversations,
+    noteTitle,
     earlierConversation,
     // study sessions in E.V. Home
     sessionState,

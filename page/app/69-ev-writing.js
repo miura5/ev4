@@ -4,7 +4,11 @@
       const date = E.chicagoDate(m.at);
       body.text = String(body.text || '').slice(0, 4000);
       if (error) body.error = error;
-      T.local.set(id, { ...m, pending: false });
+      // B-74 (D-128): a line written while a study session or a skills run is going on carries its session, so the
+      // session is its own conversation.
+      const ss = !body.session && !body.jobId && (activeSession() || activeSkill());
+      if (ss && ss.status !== 'ended') body.session = ss.id;
+      T.local.set(id, { ...m, ...(body.session ? { session: body.session } : {}), pending: false });
       T.scrollTo = id;
       render();
       const p = talkQ.then(async () => {
@@ -17,7 +21,7 @@
             op: 'set',
             collection: 'talk',
             id: date,
-            data: { ...envelope('E.V. Home', m.at), date, messages: { [id]: clean(body) } },
+            data: { ...envelope('E.V. Home', m.at), schema: 2, date, messages: { [id]: clean(body) } },
           });
         T.created.add(date);
       });

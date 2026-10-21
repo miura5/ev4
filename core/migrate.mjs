@@ -490,6 +490,30 @@ export const BUMPS = {
     // stays in force and the document only moves to the new version.
     1: d => ({ data: { ...d, schema: 2 }, also: [] }),
   },
+  talk: {
+    // B-74 (D-128, D-130): a message may carry session (written during a session) and note (the line a comment is
+    // about); a message before it had neither, so talk/<date> and talk/memory only move to the new version.
+    1: d => ({ data: { ...d, schema: 2 }, also: [] }),
+  },
+  sessions: {
+    // B-74 (D-130, D-133): a study session started in the page (ss-*, not a skills run) gains its comments level, Some by
+    // default; each check (not a comment's or a quiet read's mark) gains its format, and every check before it was multiple choice. A Study Watch session or a
+    // skills run gains no level.
+    1: d => {
+      const events = {};
+      for (const [k, e] of Object.entries(d.events || {}))
+        events[k] = e && e.type === 'check' && !e.comment && !e.quiet && !e.format ? { ...e, format: 'mc' } : e;
+      return {
+        data: {
+          ...d,
+          schema: 2,
+          ...(d.events ? { events } : {}),
+          ...(String(d.id || '').startsWith('ss-') && d.kind !== 'skill' ? { comments: d.comments || 'some' } : {}),
+        },
+        also: [],
+      };
+    },
+  },
   ideas: {
     // D-109: ideas carry a kind; every idea before it came from study (sessions, Study Watch, the conversation), so
     // each becomes a learning idea, the only kind that can become a weak spot.

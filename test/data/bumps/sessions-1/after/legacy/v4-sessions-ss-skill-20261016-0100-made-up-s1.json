@@ -1,0 +1,33 @@
+{
+ "schema": 1,
+ "writer": "page",
+ "at": "2026-10-16T01:00:00Z",
+ "source": "E.V. Home",
+ "kind": "skill",
+ "status": "ended",
+ "date": "2026-10-15",
+ "startedAt": "2026-10-16T01:00:00Z",
+ "topic": "Made-up checklist",
+ "skill": {
+  "materialId": null,
+  "page": null,
+  "cite": "",
+  "steps": [
+   {
+    "n": 1,
+    "text": "A made-up step"
+   }
+  ],
+  "rule": {}
+ },
+ "events": {
+  "page-20261016-010000000": {
+   "type": "start",
+   "at": "2026-10-16T01:00:00Z"
+  }
+ },
+ "migratedFrom": "sessions/ss-skill-20261016-0100-made-up",
+ "migratedTo": "sessions/ss-skill-20261016-0100-made-up",
+ "migratedAt": "2026-10-20T22:00:00.000Z",
+ "migration": "sessions schema 1 to 2"
+}

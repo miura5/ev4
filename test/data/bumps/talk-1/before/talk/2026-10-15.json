@@ -1,0 +1,33 @@
+{
+ "schema": 1,
+ "writer": "page",
+ "at": "2026-10-15T14:00:00Z",
+ "source": "E.V. Home",
+ "date": "2026-10-15",
+ "messages": {
+  "m-20261015-140000000-matt": {
+   "role": "matt",
+   "text": "A made-up question",
+   "at": "2026-10-15T14:00:00Z"
+  },
+  "m-20261015-140001000-ev": {
+   "role": "ev",
+   "text": "A made-up answer",
+   "at": "2026-10-15T14:00:01Z",
+   "tier": "local",
+   "replyTo": "m-20261015-140000000-matt"
+  },
+  "m-20261015-150000000-job": {
+   "role": "ev",
+   "text": "A made-up study guide is ready.",
+   "at": "2026-10-15T15:00:00Z",
+   "cards": [
+    {
+     "type": "job",
+     "id": "job-made-up"
+    }
+   ],
+   "jobId": "job-made-up"
+  }
+ }
+}
