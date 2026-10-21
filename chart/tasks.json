@@ -3117,10 +3117,10 @@
   "title": "Probe A, the builder fired with a message: from a build chat, fire ev4-builder (trig_01Rubgkh9mfYXZaRh8jm6uP6) with the text \"idea: probe A, the builder was fired with this message; also read the north star tab and say its first heading in your summary\"; record what happened as an environments build-chat row for the builder task (the fired text as its next message, report --from-chat, the commit on main, the Docs read, the push line, the run's length) with the session id; decline the inbox entry as the probe (D-194)",
   "dod": "the environments row exists with the session id and the B-id the run filed, each capability proven or refused with the words; the inbox entry declined with the reason \"probe A\"; npm test green",
   "milestone": "v4.4 builder",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "From the fired builder session itself (cse_01E8uRETL45FfPLHkrSyWY2p, session_01E8uRETL45FfPLHkrSyWY2p, fired 22:11:36Z): its one user turn was the configured prompt alone ('You are an E.V. v4 build session. Follow CLAUDE.md and BACKLOG.md in this repository exactly, including the Unattended runs section.'); the fired text never arrived as a further turn while it worked (to 22:47Z), so it filed nothing with report --from-chat and read no north star tab: fire_trigger's text did not reach a builder session's first turn, and the session keeps no turn open to receive it later. The worker and diagnostic prompts already end their first turn to wait for theirs ('Waiting for the job id'); the builder's prompt has no such step (B-179's marker step is where it belongs). Meanwhile it built B-177 (8c5cfaa).",
-  "commit": null,
+  "notes": "Probe A answered, refused (D-179): the environments build-chat rows record it (session cse_01E8uRETL45FfPLHkrSyWY2p): the fired text never arrived as the builder's next message, so nothing was filed and nothing waits to decline; a fired builder run does build, ship staging and record (B-177). The fix and the re-probe are B-187, which B-178 now depends on.",
+  "commit": "7587a76",
   "source": "plan TbfWAoQEeQixyNKZnEZKvv"
  },
  {
@@ -3141,12 +3141,13 @@
   "title": "The builder's trace (D-195): node tools/chart.mjs trace --job <id> --status done or failed --note \"<one line>\" prints exactly three calls, jobresults/<id> (writer builder, schema 1 to 2: status, result text at most 1,500 characters naming the task filed, the staging commit and GREEN, what waits), one talk/<date> append as E.V. with the job card (talk schema 2 to 3, the builder as an appender), and system/yourturn (writer deploy, a new fixed id: the Your turn groups by place with each task's ask), and writes dist/trace-ok naming them; tools/hooks.mjs liveGuard lets a live write through only when it matches a call named in dist/trace-ok younger than ten minutes; ship (either target) also writes system/yourturn; the environments build-chat row records the first staging trace (D-185)",
   "dod": "test/hooks.test.mjs: the named trace call passes, an unnamed call is refused, a stale dist/trace-ok is refused, a named id on another collection is refused, the pipeline-marker case is unchanged; chart tests for trace's three calls and ship's yourturn write; bump fixtures and idempotence tests for jobresults, talk and system; npm test green; ship staging green; the first staging trace from a builder run read back (jobresults, talk, system/yourturn) and its row written; live only on Matt's OK",
   "milestone": "v4.4 builder",
-  "status": "blocked",
+  "status": "open",
   "depends": [
    "B-177",
-   "B-186"
+   "B-186",
+   "B-187"
   ],
-  "notes": "Waits on probe A (D-179, kickoff step 4): the builder fired at 22:11Z with the probe text (session cse_01E8uRETL45FfPLHkrSyWY2p) filed no inbox entry 45 minutes in and took B-177 instead, its note saying the probe 'waits on its fired message'; a fired text reaching a builder session is unproven, and the trace rests on it. Unblocked by a diagnostic firing that proves the text arrives (or by changing how the builder reads it), recorded in B-176.",
+  "notes": "Probe A's wait is now a dependency: B-187 (the builder's prompt waits for its fired text, and probe A fired again) proves the firing the trace rests on (D-179).",
   "commit": null,
   "source": "plan TbfWAoQEeQixyNKZnEZKvv"
  },
@@ -3264,5 +3265,28 @@
   "notes": "Filed from the amended v4.4 doc (P-11, addendum Oct 21) as D-203 (accepted). Taken right after B-177 and before the trace (B-178). D-200 (P-8) restated from the same doc: spec.actions joins the guarded paths and its lint check is test/actions.test.mjs; a tenet otherwise changes only by a superseding one, but this restates the hand-off it was filed from before any work rests on its check text, on Matt's addendum.",
   "commit": null,
   "source": "plan TbfWAoQEeQixyNKZnEZKvv"
+ },
+ {
+  "id": "B-187",
+  "kind": "bug",
+  "title": "Bug (reported Oct 21): The builder never receives the text it is fired with: probe A's fired text did not arrive as the next message of the ev4-builder session (cse_01E8uRETL45FfPLHkrSyWY2p), because its prompt starts work at once and keeps no turn open; the worker and diagnostic prompts end their first turn with 'Waiting for the job id'.",
+  "dod": "spec.tasks.build.ev4-builder.prompt gains, after its one line, the wait the worker's prompt has: the message after this one says what the run is for ('Job <id>', words to file starting bug:, idea: or request:, or 'continue'); if it is not in front of the session yet, it ends its first turn with exactly 'Waiting for the message.'; CLAUDE.md's Unattended runs fires the builder again with the text 'continue'; a test checks the prompt line and the CLAUDE.md text; the task's prompt is changed with update_trigger from a build chat and read back with list_triggers (a cloud task, not Mac-bound); probe A fired again with its text plus 'this is a probe: file it, decline it as the probe, read the north star tab, then end without taking a task', and its session files the idea (a B-id), the Docs read is answered, and the build-chat rows refused in B-176 are re-proven with that session id; npm test green",
+  "milestone": "v4.4 builder",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "probe A (B-176), build chat",
+  "words": "The builder never receives the text it is fired with: probe A's fired text did not arrive as the next message of the ev4-builder session (cse_01E8uRETL45FfPLHkrSyWY2p), because its prompt starts work at once and keeps no turn open; the worker and diagnostic prompts end their first turn with 'Waiting for the job id'.",
+  "reportedAt": "2026-10-21T22:56:41.106Z",
+  "board": {
+   "row": "v4 B-187: The builder never receives the text it is fired with: probe A's fired…",
+   "why": "The builder never receives the text it is fired with: probe A's fired text did not arrive as the next message of the ev4-builder session (cse_01E8uRETL45FfPLHkrSyWY2p), because its prompt starts work at once and keeps no turn open; the worker and diagnostic prompts end their first turn with 'Waiting for the job id'.",
+   "notes": "Reported Oct 21 from probe A (B-176), build chat"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-21T22:59:23.299Z"
+  }
  }
 ]
