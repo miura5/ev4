@@ -2437,7 +2437,7 @@
   "milestone": "M15 Voice",
   "status": "done",
   "depends": [],
-  "notes": "Shipped to staging at b9c59d5: ship staging GREEN.",
+  "notes": "Shipped to live at b9c59d5: ship live GREEN.",
   "commit": "b9c59d5",
   "source": "build chat",
   "words": "Idea/feedback for behavior: - Instead of hard-coded phrases, maybe there can be some sort of system where the greeting is influenced by tags, enums, states; or whatever is best practice here; the phrases get very repetitive. I want E.V.’s greeting to feel smart and alive rather than rigid and as if they are scheduled; you get what I'm getting at; whatever the best approach for this is per your take let me know and we can add that.",
