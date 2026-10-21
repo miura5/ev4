@@ -91,7 +91,10 @@ function collect() {
     lists,
     rows,
     coral,
-    urgent: document.querySelectorAll('li.brief-item[data-level="urgent"]').length,
+    // what is urgent on screen: the briefing's urgent items while it shows (in a conversation it folds away, B-90)
+    urgent: [...document.querySelectorAll('li.brief-item[data-level="urgent"]')].filter(
+      e => !e.closest('.msg.greet:not(.current)')
+    ).length,
     chips,
     monoOrSpacedCaps: fonts,
     closers,

@@ -223,6 +223,7 @@
         T.readyAt = setTimeout(() => {
           T.ready = true;
         }, 900);
+      renderSurface(); // B-78: the reply's cards as surfaces, beside her or in the sheet
       renderStage();
       // The newest line stays in view unless he has scrolled up to read.
       if ((CAP.stick || T.scrollTo) && ui.tab === 'ev') {

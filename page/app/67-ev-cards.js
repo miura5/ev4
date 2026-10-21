@@ -1,8 +1,9 @@
     // ---------------------------------------------------------------- cards (rendered live on every snapshot)
     const CARD_ROWS = 5; // a long list in a card shows five and a "more" (UI and UX, rule 3)
     // The "more": opens the item in its tab (D-125 as amended; the card never scrolls inside itself).
-    const cardMore = (label, go) => {
-      const b = btn(label, go);
+    const cardMore = (label, go, key) => {
+      // B-78 (D-123): in a surface the rest folds under one 'n more' line that opens in place; elsewhere it opens the tab
+      const b = btn(label, key ? () => (SF.more.add(key), renderThread()) : go);
       b.classList.add('card-more');
       return b;
     };
@@ -13,7 +14,7 @@
       return h;
     };
     const CARDS = {
-      today(box, c) {
+      today(box, c, key) {
         const { items, isDone } = dayState();
         const all = items.filter(it => !it.deferred);
         // An "open" card keeps what he ticked during this visit, shown done, so the rows never shift under his finger.
@@ -26,11 +27,11 @@
         if (!all.length) box.append(el('p', 'empty', 'Nothing planned yet. The 4:25am run builds the list.'));
         else if (!list.length) box.append(el('p', 'empty', 'Everything on today’s list is done.'));
         else {
-          const ul = el('ul', 'list');
-          list.slice(0, CARD_ROWS).forEach(it => ul.append(itemRow(it, isDone)));
+          const ul = el('ul', 'list'),
+            all5 = SF.more.has(key) ? list.length : CARD_ROWS;
+          list.slice(0, all5).forEach(it => ul.append(itemRow(it, isDone)));
           box.append(ul);
-          if (list.length > CARD_ROWS)
-            box.append(cardMore(`${list.length - CARD_ROWS} more in Today`, () => showTab('today')));
+          if (list.length > all5) box.append(cardMore(`${list.length - all5} more`, () => showTab('today'), key));
         }
         const a = el('div', 'actions');
         a.append(btn('Open Today', () => showTab('today')));
@@ -250,7 +251,7 @@
         );
         box.append(a);
       },
-      dates(box, c) {
+      dates(box, c, key) {
         const days = Math.max(1, Math.min(14, Number(c.days) || 7));
         const from = days === 1 ? E.addDays(today, 1) : today;
         const to = E.addDays(today, days);
@@ -267,16 +268,11 @@
           box.append(el('p', 'empty', days === 1 ? 'Nothing dated tomorrow.' : 'Nothing dated in that window.'));
           return;
         }
-        const ul = el('ul', 'list');
-        list.slice(0, CARD_ROWS).forEach(d => ul.append(dateRow(d)));
+        const ul = el('ul', 'list'),
+          all5 = SF.more.has(key) ? list.length : CARD_ROWS;
+        list.slice(0, all5).forEach(d => ul.append(dateRow(d)));
         box.append(ul);
-        if (list.length > CARD_ROWS)
-          box.append(
-            cardMore(`${list.length - CARD_ROWS} more in Record → Dates`, () => {
-              showTab('record');
-              $('seg-record').querySelector('[data-v="dates"]').click();
-            })
-          );
+        if (list.length > all5) box.append(cardMore(`${list.length - all5} more`, null, key));
       },
       weakspots(box) {
         const due = E.rankDue(M.models, today, S.exams);
@@ -669,15 +665,30 @@
         if (a.childElementCount) box.append(a);
       },
       material(box, c) {
-        const m = matById(c.id);
+        const m = c.id ? matById(c.id) : LIB.mats ? E.citeTarget(LIB.mats, c) : null;
         if (!m) {
-          box.append(el('p', 'empty', 'In your library.'));
+          box.append(el('p', 'empty', c.cite && LIB.mats ? `${c.title} isn’t in your library.` : 'In your library.'));
           if (!LIB.mats && !LIB.loading) library().catch(() => {});
           return;
         }
         box.append(head2((m.title || m.id).replace(/\.(pdf|docx|pptx)$/i, ''), matMeta(m)));
         if (m.status === 'removed') {
           box.append(el('p', 'meta', 'Removed from your library.'));
+          return;
+        }
+        // B-78 (D-126): a citation opens its passage: the words from that page on, the file and page, Read from here.
+        if (c.page) {
+          const r = E.readMaterial(m, { page: c.page, maxChars: 700 });
+          const txt = String(r.text || '')
+            .replace(/\[(?:p|s|Page |Slide )\d+\]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+          box.append(el('p', 'passage', txt.slice(0, 520) + (txt.length > 520 || r.more ? '…' : '')));
+          const where = `${(m.title || m.id).replace(/\.(pdf|docx|pptx)$/i, '')} · ${c.unit === 'slide' ? 'slide' : 'page'} ${c.page}`;
+          const a = el('div', 'actions');
+          a.append(el('span', 'grow meta', where));
+          a.append(btn('Read from here', () => chat(`Read ${c.cite || where} with me, from there on.`)));
+          box.append(a);
           return;
         }
         box.append(
@@ -708,9 +719,7 @@
         box.append(a);
       },
     };
-    // B-85 (Matt, Oct 19, the split-screen pane): a card that only informs is one tappable line that opens its tab; the
-    // cards he acts in (review, set, skill, workout, check-in, check, job, quizlet, session, material, link) stay whole, and
-    // so does Today's list when she shows what is still open, since he ticks it there.
+    // A surface's line for the cards that only inform (B-85's lines, read by sfLine since B-78).
     const exShort = ex => (ex.title || ex.id).replace(/:.*$/, '');
     function auditRows() {
       const ex = M.target;
@@ -802,28 +811,6 @@
         };
       },
     };
-    const isLine = c => !!(c && LINES[c.type]) && !(c.type === 'today' && c.filter === 'open');
-    const fullCards = m => shownCards(m).filter(c => !isLine(c));
-    const OPEN_ICON =
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
-    function cardLine(c) {
-      let v;
-      try {
-        v = LINES[c.type](c);
-      } catch (e) {
-        console.error(e);
-        v = { text: 'This card couldn’t load.', go: () => {} };
-      }
-      const b = el('button', 'card-line');
-      b.type = 'button';
-      b.dataset.type = c.type;
-      const g = el('span', 'cl-go');
-      g.insertAdjacentHTML('beforeend', OPEN_ICON); // B-91: plain text and a chevron, no pill
-      b.append(el('span', 'cl-t', v.text), g);
-      b.setAttribute('aria-label', v.text + '. Open');
-      b.addEventListener('click', () => v.go());
-      return b;
-    }
     // B-90 (Matt, Oct 19): the greeting is one line; what is behind it is a briefing folded under it on every open. As
     // Matt drew it: plain text, no pills or surfaces. The fold line counts the items, with one dot for the highest
     // priority in it (red urgent, else teal new); open, each item is one gray-bulleted line, cut with an ellipsis, a
@@ -1060,68 +1047,9 @@
       wrap.append(row, box);
       return wrap;
     }
-    function renderCards(rec, m) {
-      // live on every snapshot, but a card is swapped only when what it shows changed
-      // Until B-78's surfaces (B-77): a reply shows its first card under her line, the rest as one line "n more cards";
-      // A reply with cards steps her core down (stageState), so the card has a surface's height.
-      // Which card shows (D-125 as amended): the reply's cards come ordered with the one showing the change she made
-      // first, else the one that answers; "n more cards" swaps the next one in, the shown one joining the line.
-      // B-85: the lines first (each one row), then the one whole card, with "n more cards" over the other whole ones.
-      const shown = shownCards(m),
-        all = shown.filter(c => !isLine(c)),
-        at = all.length ? (T.cardAt.get(m.id) || 0) % all.length : 0;
-      const fresh = shown
-        .filter(isLine)
-        .map(cardLine)
-        .concat(
-          all.slice(at, at + 1).map(c => {
-            const box = el('div', 'card ev-card');
-            const i = shown.indexOf(c);
-            try {
-              (
-                CARDS[c && c.type] ||
-                (() => {
-                  throw new Error('unknown card');
-                })
-              )(box, c, m.id + '-' + i);
-            } catch (e) {
-              box.replaceChildren(el('p', 'empty', 'This card couldn’t load.'));
-              console.error(e);
-            }
-            return box;
-          })
-        );
-      if (all.length > 1) {
-        const mb = el('button', 'cap-cards-more', plural(all.length - 1, 'more card'));
-        mb.type = 'button';
-        mb.dataset.next = String((at + 1) % all.length);
-        fresh.push(mb);
-      }
-      const old = [...rec.cardsBox.children];
-      fresh.forEach((b, i) => {
-        const o = old[i];
-        if (!o) {
-          rec.cardsBox.append(b);
-          return;
-        }
-        if (o.outerHTML === b.outerHTML) return; // same card: keep it, with whatever he has typed or picked in it
-        const f = document.activeElement;
-        const lbl = f && o.contains(f) ? f.getAttribute('aria-label') : null;
-        o.replaceWith(b);
-        if (lbl) {
-          const t = [...b.querySelectorAll('[aria-label]')].find(x => x.getAttribute('aria-label') === lbl);
-          if (t) t.focus({ preventScroll: true });
-        }
-      });
-      old.slice(fresh.length).forEach(o => o.remove());
+    // B-78: a reply's cards are no longer drawn under her line; they are the surfaces (75-ev-surfaces.js).
+    function renderCards(rec) {
+      if (rec.cardsBox.firstChild) rec.cardsBox.replaceChildren();
     }
-    T.cardAt = new Map();
     T.checkFold = new Set();
-    capIn.addEventListener('click', e => {
-      const b = e.target.closest('.cap-cards-more');
-      if (!b) return;
-      const id = b.closest('.msg').dataset.id;
-      T.cardAt.set(id, Number(b.dataset.next) || 0);
-      renderThread();
-    });
 

@@ -181,6 +181,7 @@
           label: 'Done: ' + it.text,
           onChange: (on, c) => {
             T.ticked.add(it.id);
+            if (on) sfNod(c); // B-78: a check-off in a surface: her nod, and nothing he is ticking moves
             guard(c, () => tickWrite(it, on), on ? 'Checked off' : 'Unchecked');
           },
         },

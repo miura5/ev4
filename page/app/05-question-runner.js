@@ -319,6 +319,7 @@
             });
             await run(r.writes);
             if (r.correct) T.happyUntil = Date.now() + 1800;
+            sfNod(body); // B-78: answered in a surface, she nods
           } catch (e) {
             toast('Couldn’t save that answer: ' + (e.message || e.code));
             submit.disabled = false;

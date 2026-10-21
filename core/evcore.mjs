@@ -1617,6 +1617,7 @@ const EVCore = (() => {
     readMaterial,
     searchLibrary,
     stripHtml,
+    ...libMore // B-78: parseCite, citeTarget
   } = makeLibrary({
     get C() {
       return C;
@@ -2434,6 +2435,7 @@ const EVCore = (() => {
     materialRemove,
     normCourse,
     citeMaterial,
+    ...libMore,
     libStem,
     libTokens,
     libraryChunks,

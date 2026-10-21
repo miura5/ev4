@@ -754,11 +754,7 @@ const ok = (name, cond, detail = '') => {
       ok(
         '[desktop] Open the study guide opens it in a new tab, and her reply carries the job card with its link',
         JSON.stringify(op) === JSON.stringify([['https://claude.ai/artifact/harness', '_blank']]) &&
-          (await page
-            .locator('#thread .msg.ev')
-            .last()
-            .locator('.ev-card a[href="https://claude.ai/artifact/harness"]')
-            .count()) === 1,
+          (await page.locator('#ev-surf .ev-card a[href="https://claude.ai/artifact/harness"]').count()) === 1,
         JSON.stringify(op)
       );
       // B-47: the retro card at desktop width
@@ -771,11 +767,11 @@ const ok = (name, cond, detail = '') => {
       await page.waitForTimeout(300);
       ok(
         '[desktop] the retro card shows its numbers',
-        /you scored 90 \(2 above the range\)/.test(await page.locator('#thread .msg.ev').last().textContent())
+        /you scored 90 \(2 above the range\)/.test(await page.locator('#ev-surf').textContent())
       );
       await page
-        .locator('#thread .msg.ev')
-        .last()
+        .locator('#ev-surf')
+        .first()
         .screenshot({ path: `${shots}/retro-card-desktop.png` });
       // B-43 (D-100) at desktop width: Study → Practice, the dosage set, one numeric item answered.
       {
@@ -824,23 +820,20 @@ const ok = (name, cond, detail = '') => {
       JSON.stringify(m.map(x => [x.role, x.text.slice(0, 30)]))
     );
     ok(
-      'the dates card is one line that opens Record (B-85)',
+      'the dates card opens as a surface, its head line naming its count, nothing under her line (B-78)',
       /^\d+ dates? in the next week$|^Nothing dated in the next week$/.test(
         await page
-          .locator('#thread .msg.ev')
-          .last()
-          .locator('.card-line .cl-t')
-          .first()
+          .locator('#ev-surf .sf-head .sf-t')
           .textContent()
           .catch(() => '')
       ) && (await page.locator('#thread .msg.ev').last().locator('.ev-card').count()) === 0
     );
     // Captions (B-77): after his first message she stays on her stage at 80%; no core moves to the top bar or a message.
     ok(
-      'after his first message her core stays on her stage, a step down (a line card keeps the conversation step, B-85)',
+      'after his first message her core stays on her stage, a step down (an open surface takes the list step, B-78)',
       await page.evaluate(
         () =>
-          document.getElementById('hero').dataset.step === 'conversation' &&
+          document.getElementById('hero').dataset.step === (innerWidth >= 1024 ? 'surface' : 'list') &&
           document.querySelector('#top-av').getBoundingClientRect().width < 1
       )
     );
@@ -908,7 +901,7 @@ const ok = (name, cond, detail = '') => {
         last.replyTo === m[m.length - 2].id,
       JSON.stringify(last).slice(0, 200)
     );
-    ok('job card shows queued', /queued/.test(await page.locator('#thread .msg.ev').last().textContent()));
+    ok('job card shows queued', /queued/.test(await page.locator('#ev-surf').textContent()));
     ok(
       'Go deeper offered on the quick reply',
       (await page.locator('#thread .msg.ev').last().locator('button', { hasText: 'Go deeper' }).count()) === 1
@@ -954,7 +947,7 @@ const ok = (name, cond, detail = '') => {
     });
     // Ticking an item in a conversation card: the thread is patched in place (no replayed animations, no jump)
     {
-      const tc = page.locator('#thread .msg.ev').last();
+      const tc = page.locator('#ev-surf');
       await tc
         .locator('input.tick:not(:checked)')
         .first()
@@ -965,6 +958,11 @@ const ok = (name, cond, detail = '') => {
         document.addEventListener('animationstart', e => window.__anims.push(String(e.target.className)), true);
         window.__msgNode = document.querySelector('#thread .msg.ev:last-of-type');
         window.__firstMsg = document.querySelector('#thread .msg');
+        window.__rows0 = [...document.querySelectorAll('#ev-surf .row')].map(r =>
+          Math.round(r.getBoundingClientRect().top)
+        );
+        window.__sfTop0 = document.getElementById('ev-surf').scrollTop;
+        window.__log0 = window.EVApp.core.stats().log.length;
         return scrollY + document.getElementById('thread').scrollTop;
       });
       const bb = await tc.locator('input.tick:not(:checked)').first().boundingBox();
@@ -974,11 +972,26 @@ const ok = (name, cond, detail = '') => {
         y: scrollY + document.getElementById('thread').scrollTop,
         msgAnims: window.__anims.filter(c => /\bmsg\b/.test(c)).length,
         kept: window.__firstMsg.isConnected,
+        rows: [...document.querySelectorAll('#ev-surf .row')].map(r => Math.round(r.getBoundingClientRect().top)),
+        rows0: window.__rows0,
+        sfTop: [window.__sfTop0, document.getElementById('ev-surf').scrollTop],
+        nod: window.EVApp.core
+          .stats()
+          .log.slice(window.__log0)
+          .some(e => e.kind === 'gesture' && e.name === 'done'),
       }));
       ok(
         'ticking in a conversation card keeps the page still: no replayed messages, no scroll',
         t1.msgAnims === 0 && Math.abs(t1.y - t0) < 2 && t1.kept,
         JSON.stringify({ t0, ...t1 })
+      );
+      ok(
+        'B-78 (rule 6): ticking a Today item in its surface keeps the surface’s scroll and its neighbours in place, and she nods',
+        t1.rows.length === t1.rows0.length &&
+          t1.rows.every((y, i) => Math.abs(y - t1.rows0[i]) <= 1) &&
+          t1.sfTop[0] === t1.sfTop[1] &&
+          t1.nod,
+        JSON.stringify({ rows: t1.rows, rows0: t1.rows0, sfTop: t1.sfTop, nod: t1.nod })
       );
       ok(
         'the ticked item stays in the open card, shown done',
@@ -1009,7 +1022,7 @@ const ok = (name, cond, detail = '') => {
     await send(page, 'Show me my Exam 3 retro');
     await page.waitForTimeout(300);
     {
-      const t = await page.locator('#thread .msg.ev').last().textContent();
+      const t = await page.locator('#p-ev').textContent();
       ok(
         'the retro card shows prediction against score, practice, weak spots and plan',
         /Exam retro/.test(t) &&
@@ -1021,8 +1034,8 @@ const ok = (name, cond, detail = '') => {
         t.slice(0, 300)
       );
       await page
-        .locator('#thread .msg.ev')
-        .last()
+        .locator('#ev-surf')
+        .first()
         .screenshot({ path: `${shots}/retro-card.png` });
     }
     // Captions (B-77): the brand, like tapping her, returns to now from wherever he has scrolled
@@ -1088,7 +1101,7 @@ const ok = (name, cond, detail = '') => {
     });
     await send(page, 'I’m wiped');
     await page.waitForTimeout(150);
-    await page.locator('#thread .msg.ev').last().locator('.energy button').nth(1).click();
+    await page.locator('#ev-surf').locator('.energy button').nth(1).click();
     await page.waitForTimeout(300);
     const ci = await page.evaluate(() => {
       const d = (window.__db.dayedits || {})[
@@ -1102,7 +1115,7 @@ const ok = (name, cond, detail = '') => {
     await send(page, 'Weak spots to Quizlet');
     await page.waitForTimeout(250);
     {
-      const last = page.locator('#thread .msg.ev').last();
+      const last = page.locator('#p-ev');
       const t = await last.textContent();
       ok(
         'quick ask: weak spots to Quizlet posts a card with the copy button',
@@ -1133,7 +1146,7 @@ const ok = (name, cond, detail = '') => {
       jb && jb.fired && jb.fired.ok === false && jb.fired.error === 'server_not_connected',
       JSON.stringify(jb && jb.fired)
     );
-    const jc = page.locator('#thread .msg.ev').last();
+    const jc = page.locator('#ev-surf');
     ok(
       'job card says how to fix it',
       /Settings → Connectors/.test(await jc.textContent()) &&
@@ -1348,7 +1361,7 @@ const ok = (name, cond, detail = '') => {
         Object.keys(seed.dates || {})
       ))
     );
-    const lc = page.locator('#thread .msg.ev').last();
+    const lc = page.locator('#ev-surf');
     ok(
       'the reply carries today’s list with the new items',
       /Quizlets: Ch 7 & 8 lecture/.test(await lc.textContent()) && /added by E\.V\./.test(await lc.textContent())
@@ -1731,8 +1744,7 @@ const ok = (name, cond, detail = '') => {
       'the reply names it and carries its card',
       /Saved \*\*sample\.docx\*\* to your library/.test(lastE.text) &&
         lastE.cards[0].type === 'material' &&
-        (await page.locator('#thread .msg.ev').last().locator('button', { hasText: 'Remove from library' }).count()) ===
-          1,
+        (await page.locator('#ev-surf').locator('button', { hasText: 'Remove from library' }).count()) === 1,
       lastE.text
     );
     ok('his message shows the attachment', /Attached \*\*sample\.docx\*\*/.test((await msgs(page)).slice(-2)[0].text));
@@ -1813,11 +1825,12 @@ const ok = (name, cond, detail = '') => {
       );
     } else console.log('NOTE PDF attachment checks skipped: npm install --no-save pdfjs-dist@4.4.168');
     // Remove from library
-    await page
-      .locator('#thread .msg.ev', { hasText: 'Saved **sample.docx**'.replace(/\*/g, '') })
-      .first()
-      .locator('button', { hasText: 'Remove from library' })
-      .click();
+    // B-78: the surface holds the latest reply's card (the photo's); the docx is removed from Record → Library
+    await page.click('#tab-record');
+    await page.click('#seg-record [data-v="library"]');
+    await page.waitForTimeout(250);
+    await page.locator('#library .row', { hasText: 'sample' }).first().locator('button', { hasText: 'Remove' }).click();
+    await page.click('#tab-ev');
     await page.waitForTimeout(250);
     const rm = await page.evaluate(() => {
       const id = Object.keys(window.__db.materials).find(
@@ -2770,7 +2783,7 @@ const ok = (name, cond, detail = '') => {
           ' ' +
           JSON.stringify(await fp.evaluate(() => window.__toolResults))
       );
-      const card = () => fp.locator('#thread .msg.ev').last();
+      const card = () => fp.locator('#ev-surf[data-type="skill"]'); // B-78: a card is a surface
       // B-82: while the run goes the sheet is the whole runner; her line carries no card.
       ok(
         'the run shows in the sheet at step 1 with Did it and Missed it; her line carries no card',
@@ -2856,37 +2869,35 @@ const ok = (name, cond, detail = '') => {
       await send(fp, 'How ready am I?');
       await fp.waitForTimeout(1200);
       const hr = (await msgs(fp)).filter(m => m.role === 'ev').slice(-1)[0] || {};
-      const hl = await fp
-        .locator('#thread .msg.ev')
-        .last()
-        .evaluate(m => ({
-          lines: [...m.querySelectorAll('.card-line')].map(b => b.querySelector('.cl-t').textContent),
-          cards: m.querySelectorAll('.ev-card').length,
-        }));
+      const hl = await fp.evaluate(() => {
+        const sf = document.getElementById('ev-surf');
+        return {
+          head: sf && sf.querySelector('.sf-head .sf-t').textContent,
+          rows: sf ? [...sf.querySelectorAll('.sf-row .sf-t')].map(x => x.textContent) : [],
+          inLine: document.querySelectorAll('#thread .msg.ev .ev-card').length,
+        };
+      });
       ok(
-        'How ready am I? attaches readiness and the readiness audit, each one line that opens Progress (B-85)',
+        'How ready am I? attaches readiness and the readiness audit: readiness opens as a surface, the audit a row under its line (B-78)',
         (hr.cards || []).map(c => c.type).join() === 'readiness,audit' &&
-          hl.cards === 0 &&
-          hl.lines.length === 2 &&
-          /readiness · (\d+% solid|no weak spots yet) · /.test(hl.lines[0]) &&
-          /audit · \d+ objectives?/.test(hl.lines[1]),
+          hl.inLine === 0 &&
+          /readiness · (\d+% solid|no weak spots yet) · /.test(hl.head || '') &&
+          hl.rows.length === 1 &&
+          /audit · \d+ objectives?/.test(hl.rows[0]),
         JSON.stringify({ cards: hr.cards, hl })
       );
-      await fp.locator('#thread .msg.ev').last().locator('.card-line', { hasText: 'audit' }).click();
+      await fp.locator('#ev-surf .sf-row', { hasText: 'audit' }).click();
       await fp.waitForTimeout(600);
-      // B-118: the audit is the readiness list; its top objective opens to what to reread.
-      await fp.locator('#ready-card .obj-line').first().click();
-      await fp.waitForTimeout(200);
       const au = await fp.evaluate(() => ({
-        progress: !document.getElementById('p-progress').hidden,
-        readiness: !document.getElementById('progress-readiness').hidden,
-        text: document.getElementById('ready-card').textContent,
+        head: document.querySelector('#ev-surf .sf-head .sf-t').textContent,
+        rows: [...document.querySelectorAll('#ev-surf .sf-row .sf-t')].map(x => x.textContent),
+        text: document.querySelector('#ev-surf .sf-body').textContent,
       }));
       ok(
-        'its audit line opens Progress → Readiness, where the objective list opens to what to reread',
-        au.progress &&
-          au.readiness &&
-          /\d+ not yet/.test(au.text) &&
+        'its audit row opens in place, readiness folding to a row: per objective what to reread, from his materials',
+        /audit · \d+ objectives?/.test(au.head) &&
+          au.rows.length === 1 &&
+          /readiness/.test(au.rows[0]) &&
           /\d+ solid · \d+ right once · \d+ not yet/.test(au.text) &&
           /Reread: [^·]+, (p\.|slide) \d+/.test(au.text),
         JSON.stringify(au).slice(0, 400)
@@ -2926,7 +2937,7 @@ const ok = (name, cond, detail = '') => {
       });
       await send(dp, 'Run me through the head to toe validation');
       await dp.waitForTimeout(800);
-      const dcard = () => dp.locator('#thread .msg.ev').last();
+      const dcard = () => dp.locator('#ev-surf[data-type="skill"]'); // B-78: a card is a surface
       ok(
         '[desktop] the side panel shows the whole checklist beside the thread, the sheet hidden',
         (await dp.isVisible('#skpanel')) &&
@@ -3065,7 +3076,8 @@ const ok = (name, cond, detail = '') => {
         await wp.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
         await openPage(wp, 'staging');
         await wp.waitForTimeout(1500);
-        const last = () => wp.locator('#thread .msg.ev').last();
+        // B-78: the workout card is the open surface (beside the runner panel on desktop)
+        const last = () => wp.locator('#ev-surf');
         // The page's wall clock forward: not clock.fastForward, whose real-time sync can rewind it (CLAUDE.md, and jump below).
         const ahead = async ms => {
           await wp.clock.setSystemTime((await wp.evaluate(() => Date.now())) + ms);
@@ -3112,11 +3124,9 @@ const ok = (name, cond, detail = '') => {
         // Then the card's condition, not a fixed wait: its clock redraws on the next tick.
         await ahead(5 * 60e3 + 5000);
         await wp
-          .waitForFunction(
-            () => /rounds in 20 minutes/.test([...document.querySelectorAll('#thread .msg.ev')].pop().textContent),
-            null,
-            { timeout: 8000 }
-          )
+          .waitForFunction(() => /rounds in 20 minutes/.test(document.getElementById('p-ev').textContent), null, {
+            timeout: 8000,
+          })
           .catch(() => {});
         ok(
           `[${label}] at the cap the card asks for the extra reps`,
@@ -3579,8 +3589,8 @@ const ok = (name, cond, detail = '') => {
     ok(
       'check card rendered',
       /Two questions on what you just wrote/.test((await msgs(ss)).slice(-1)[0].text) &&
-        /Check 1 · 2 questions/.test(await ss.locator('#thread .msg.ev').last().textContent()) &&
-        (await ss.locator('#thread .msg.ev').last().locator('ol.check-items li').count()) === 2
+        /Check 1 · 2 questions/.test(await ss.locator('#p-ev').textContent()) &&
+        (await ss.locator('#ev-surf').locator('ol.check-items li').count()) === 2
     );
     // Answer in the composer: recorded on the session, and Claude sees the check's questions
     await ss.evaluate(() => {
@@ -3588,7 +3598,7 @@ const ok = (name, cond, detail = '') => {
         (window.__chatReply = 'Right: less solute outside, so water moves in. What happens to cell size?');
       window.__chatScript = [];
     });
-    await ss.locator('#thread .msg.ev').last().locator('button', { hasText: 'Answer' }).click();
+    await ss.locator('#ev-surf').locator('button', { hasText: 'Answer' }).click();
     ok(
       'Answer focuses the composer',
       await ss.evaluate(
@@ -3614,10 +3624,7 @@ const ok = (name, cond, detail = '') => {
         cc.input.some(t => /Why does 0\.45% NaCl move water into the cells\?/.test(t.content)) &&
         cc.tools.includes('study_session')
     );
-    ok(
-      'check card shows answered',
-      /answered/.test(await ss.locator('#thread .msg.ev', { hasText: 'Check 1 ·' }).textContent())
-    );
+    ok('check card shows answered', /Check 1 · answered/.test(await ss.locator('#ev-surf').textContent()));
     // Break and resume from the bar
     await ss.locator('#sbar button', { hasText: 'Break' }).click();
     await ss.waitForTimeout(300);
@@ -3713,7 +3720,7 @@ const ok = (name, cond, detail = '') => {
       S1.pending && S1.pending.ws1 && S1.pending.ws1.candidate.id === 'ws-2026-10-17-E4-3-fluid-volume-excess',
       JSON.stringify(S1.pending)
     );
-    const card = ss.locator('#thread .msg.ev').last();
+    const card = ss.locator('#ev-surf');
     ok(
       'wrap-up card: summary, sections, Quizlet copy, same-or-different',
       /Session saved/.test((await msgs(ss)).slice(-1)[0].text) &&

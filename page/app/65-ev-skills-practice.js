@@ -138,7 +138,7 @@
             btn(
               'Show the card',
               () => {
-                const n = [...document.querySelectorAll('#thread .wo-extra')].pop();
+                const n = [...document.querySelectorAll('#ev-surf .wo-extra')].pop(); // B-78: the card is a surface
                 if (n) n.scrollIntoView({ block: 'center' });
               },
               { primary: true }

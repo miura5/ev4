@@ -135,6 +135,22 @@ export function makeLibrary(core) {
   const citeMaterial = h =>
     String(h.title || h.id || '').replace(/\.(pdf|docx|pptx)$/i, '') +
     (h.page ? (h.unit === 'slide' ? ', slide ' : ', p. ') + h.page : '');
+  /** B-78 (D-126): a citation as E.V. writes one in a caption, "(SKILLS PACKET, p. 12)" or "(Chapter 7 ppt, slide 4)":
+   *  {cite, title, unit, page}, or null for anything else in parentheses. */
+  const CITE_RE = /^\s*([^()\n]{2,90}?),\s*(p\.|pp?\.|page|slide)\s*(\d{1,4})\s*$/i;
+  function parseCite(s) {
+    const x = CITE_RE.exec(String(s || ''));
+    if (!x || !/[a-z]/i.test(x[1])) return null;
+    return { cite: String(s).trim(), title: x[1].trim(), unit: /slide/i.test(x[2]) ? 'slide' : 'page', page: +x[3] };
+  }
+  /** The material a citation names: its title (extension dropped) equal to the cited one, else the one it begins. */
+  function citeTarget(mats, c) {
+    const t = norm(String((c && c.title) || ''));
+    if (!t) return null;
+    const live = (mats || []).filter(m => m && m.status !== 'removed');
+    const nm = m => norm(String(m.title || m.id || '').replace(/\.(pdf|docx|pptx)$/i, ''));
+    return live.find(m => nm(m) === t) || live.find(m => nm(m).startsWith(t) || t.startsWith(nm(m))) || null;
+  }
   /** A BM25 index over chunks (build once per page open or pipeline run). */
   function libraryIndex(chunks) {
     const docs = (chunks || []).map(c => {
@@ -501,6 +517,8 @@ Return JSON: {"pages": [{"page": <page number>, "text": "<the page's text>"}]}`;
     normCourse,
     libraryChunks,
     citeMaterial,
+    parseCite,
+    citeTarget,
     libraryIndex,
     searchLibrary,
     libraryCatalog,

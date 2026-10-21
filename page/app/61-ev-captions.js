@@ -96,7 +96,7 @@
       const convs = viewConvs();
       const cur = convs.length ? convs[convs.length - 1].messages : [];
       const last = cur[cur.length - 1];
-      if (last && last.role !== 'matt' && !last.greeting && fullCards(last).length) return 'list'; // a line card keeps her size (B-85)
+      if (SF.open >= 0 && SF.list.length) return 'list'; // B-78: an open surface steps her down (the desktop's surface step)
       if (cur.some(m => m.role === 'matt')) return 'conversation';
       return T.briefOpen ? 'list' : 'idle'; // B-90: her greeting's briefing open steps her down like a card
     }
@@ -409,9 +409,18 @@
 
     // Text: paragraphs, "- " bullets, **bold**, and https links. Built from text nodes only.
     function inline(parent, text) {
-      for (const part of String(text).split(/(\*\*[^*]+\*\*|https:\/\/[^\s)]+)/g)) {
+      for (const part of String(text).split(
+        /(\*\*[^*]+\*\*|https:\/\/[^\s)]+|\([^()\n]{2,90}?, (?:p\.|pp\.|page|slide) \d{1,4}\))/gi
+      )) {
         if (!part) continue;
-        if (/^\*\*[^*]+\*\*$/.test(part)) parent.append(el('b', null, part.slice(2, -2)));
+        const cite = /^\(.*\)$/.test(part) ? E.parseCite(part.slice(1, -1)) : null;
+        if (cite) {
+          // B-78 (D-126): a library citation is a teal underlined file · page span, revealed whole; it opens the passage
+          const a = el('a', 'cite', cite.cite);
+          a.href = '#';
+          a.dataset.cite = cite.cite;
+          parent.append('(', a, ')');
+        } else if (/^\*\*[^*]+\*\*$/.test(part)) parent.append(el('b', null, part.slice(2, -2)));
         else if (/^https:\/\//.test(part)) {
           const a = el('a', null, part.replace(/^https:\/\/(www\.)?/, '').slice(0, 60));
           a.href = part;

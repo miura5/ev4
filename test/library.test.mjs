@@ -295,3 +295,31 @@ test('library: Canvas files keep kind, type and link; a read handout survives an
   );
   assert.match(fresh.changes[0].text, /image-only: attach it in the conversation/);
 });
+
+test('B-78 (D-126): a citation in her line names its file and page; it finds the material it names', () => {
+  assert.deepEqual(EV.parseCite('SKILLS PACKET, p. 12'), {
+    cite: 'SKILLS PACKET, p. 12',
+    title: 'SKILLS PACKET',
+    unit: 'page',
+    page: 12,
+  });
+  assert.deepEqual(EV.parseCite('Chapter 7 ppt, slide 4'), {
+    cite: 'Chapter 7 ppt, slide 4',
+    title: 'Chapter 7 ppt',
+    unit: 'slide',
+    page: 4,
+  });
+  for (const s of ['see above', '2, p. 3', 'Ch 42 Fluids', '', null]) assert.equal(EV.parseCite(s), null, String(s));
+  const mats = [
+    { id: 'a', title: 'SKILLS PACKET.pdf' },
+    { id: 'b', title: 'Chapter 7 ppt.pptx' },
+    { id: 'c', title: 'Chapter 7 ppt.pptx', status: 'removed' },
+    { id: 'd', title: 'Harness Skills Packet Fall.pdf' },
+  ];
+  assert.equal(EV.citeTarget(mats, EV.parseCite('Chapter 7 ppt, slide 4')).id, 'b');
+  assert.equal(EV.citeTarget(mats, EV.parseCite('skills packet, p. 2')).id, 'a', 'the exact title first, any case');
+  assert.equal(EV.citeTarget(mats, EV.parseCite('Harness Skills Packet, p. 4')).id, 'd', 'else the one it begins');
+  assert.equal(EV.citeTarget(mats, EV.parseCite('Nursing Fundamentals, p. 9')), null);
+  // the cite E.V. writes from a search hit reads back to its material
+  assert.equal(EV.citeTarget(mats, EV.parseCite(EV.citeMaterial({ title: 'SKILLS PACKET.pdf', page: 12 }))).id, 'a');
+});

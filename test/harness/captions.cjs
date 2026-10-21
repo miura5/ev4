@@ -760,9 +760,10 @@ async function sideBySide(browser, left, right, out, vp) {
         }),
       })
     );
-    // B-85 (D-125 as amended): a card that only informs is one tappable line that opens its tab; of the cards he acts in,
-    // the first shows under her line (never scrolling inside itself) and the rest are one tappable line that swaps the
-    // next one in. A whole card steps her down to the list size; lines alone keep her conversation size.
+    // B-78 (D-123, D-125, D-160): a reply's cards are surfaces. The first opens under its head line (title and state, a
+    // chevron) and the others wait as one-line rows under that line, never pills; a row opens in place and folds the
+    // open one to a row; the head line folds the surface to that line and unfolds it. Below 1024 px the surface is the
+    // sheet over the composer, from 1024 px the side column. She glances toward a surface as it opens.
     await page.evaluate(() => {
       window.__chatScript = [
         { tool: 'show_card', input: { type: 'dates', days: 14 } },
@@ -772,131 +773,175 @@ async function sideBySide(browser, left, right, out, vp) {
       window.__chatPre = '';
       window.__chatReply = 'Here is the next two weeks. Nine things are dated.';
     });
+    const logAt = await page.evaluate(() => window.EVApp.core.stats().log.length);
     await page.fill('#ev-input', 'what is coming up');
     await page.click('#ev-send');
     await page.waitForTimeout(4500);
-    const cardView = () =>
+    const sfView = () =>
       page.evaluate(() => {
         const t = document.getElementById('thread').getBoundingClientRect(),
           hero = document.getElementById('hero'),
           cur = document.querySelector('#thread .msg.ev.current'),
           b = cur.querySelector('.bubble').getBoundingClientRect(),
-          card = cur.querySelector('.ev-card'),
-          cr = card && card.getBoundingClientRect();
+          s = document.getElementById('ev-surf'),
+          r = s && s.getBoundingClientRect(),
+          head = s && s.querySelector('.sf-head');
+        // a pill standing for a card: the old "n more cards", or a surface line drawn as a pill
+        const pills = [
+          ...document.querySelectorAll('.cap-cards-more'),
+          ...[...document.querySelectorAll('#ev-surf .sf-head, #ev-surf .sf-row')].filter(x =>
+            /999px/.test(getComputedStyle(x).borderRadius)
+          ),
+        ];
         return {
           step: hero.dataset.step,
           stage: Math.round(hero.getBoundingClientRect().height),
-          cards: cur.querySelectorAll('.ev-card').length,
-          lines: [...cur.querySelectorAll('.card-line .cl-t')].map(x => x.textContent),
-          lineH: [...cur.querySelectorAll('.card-line')].map(x => Math.round(x.getBoundingClientRect().height)),
-          title: card && (card.querySelector('h2') || {}).textContent,
-          more: (cur.querySelector('.cap-cards-more') || {}).textContent,
+          inThread: cur.querySelectorAll('.ev-card, .card-line').length,
+          head: head && head.querySelector('.sf-t').textContent,
+          open: head && head.getAttribute('aria-expanded') === 'true',
+          rows: s ? [...s.querySelectorAll('.sf-row .sf-t')].map(x => x.textContent) : [],
+          rowH: s ? [...s.querySelectorAll('.sf-row')].map(x => Math.round(x.getBoundingClientRect().height)) : [],
+          cards: s ? s.querySelectorAll('.sf-body .ev-card').length : 0,
+          type: s && s.dataset.type,
+          pills: pills.length,
+          closers: s
+            ? [...s.querySelectorAll('button')].filter(x => /^(close|hide|×|x)$/i.test(x.textContent.trim())).length
+            : 0,
+          surf: r && [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)],
           line: [Math.round(b.top), Math.round(b.bottom)],
-          card: cr && [Math.round(cr.top), Math.round(cr.bottom)],
-          scrollsInside: card ? card.scrollHeight > card.clientHeight + 1 : null,
-          thread: [Math.round(t.top), Math.round(t.bottom)],
+          thread: [Math.round(t.top), Math.round(t.bottom), Math.round(t.right)],
+          comp: Math.round(document.getElementById('composer').getBoundingClientRect().top),
+          surfaceOpen: document.body.classList.contains('surface-open'),
         };
       });
-    const lc = await cardView();
+    const lc = await sfView();
     const listStage = scheme === 'phone' ? 150 : 260;
     ok(
-      `[${scheme}] a reply with a whole card: her core steps down (the ${scheme === 'phone' ? '52%' : 'surface'} step, a ${listStage} px stage)`,
-      lc.step === (scheme === 'phone' ? 'list' : 'surface') && lc.stage === listStage,
+      `[${scheme}] a reply with three cards opens one surface with two rows under its head line, no pill and no close; none under her line`,
+      lc.cards === 1 &&
+        lc.open &&
+        /^\d+ dates? in the next two weeks$/.test(lc.head || '') &&
+        lc.rows.length === 2 &&
+        lc.rows[0] === 'Quizlet' &&
+        /^Review · /.test(lc.rows[1]) &&
+        lc.rowH.every(h => h <= 48) &&
+        !lc.pills &&
+        !lc.closers &&
+        !lc.inThread,
       JSON.stringify(lc)
     );
     ok(
-      `[${scheme}] the dates card is one line naming its count; the Quizlet card shows whole under her line, then "1 more card"`,
-      lc.lines.length === 1 &&
-        /^\d+ dates? in the next two weeks$/.test(lc.lines[0]) &&
-        lc.lineH[0] <= 48 &&
-        lc.cards === 1 &&
-        /Quizlet/.test(lc.title || '') &&
-        lc.more === '1 more card',
+      `[${scheme}] an open surface steps her down (the ${scheme === 'phone' ? '52%' : 'surface'} step, a ${listStage} px stage)`,
+      lc.step === (scheme === 'phone' ? 'list' : 'surface') && lc.stage === listStage && lc.surfaceOpen,
       JSON.stringify(lc)
     );
-    ok(`[${scheme}] the card never scrolls inside itself`, lc.scrollsInside === false, JSON.stringify(lc));
+    ok(
+      scheme === 'phone'
+        ? '[phone] below 1024 px the surface is the sheet over the composer, at most 410 px tall'
+        : '[desktop] from 1024 px the surface sits in the side column beside her captions',
+      scheme === 'phone'
+        ? lc.surf && lc.surf[1] >= lc.thread[1] - 1 && lc.surf[1] + lc.surf[3] <= lc.comp + 1 && lc.surf[3] <= 410
+        : lc.surf && lc.surf[0] >= lc.thread[2],
+      JSON.stringify(lc)
+    );
     ok(
       `[${scheme}] her line stays in view`,
       lc.line[0] >= lc.thread[0] - 1 && lc.line[1] <= lc.thread[1] + 1,
       JSON.stringify(lc)
     );
-    await page.screenshot({ path: `${shots}/captions-long-card-${scheme}.png` });
-    // D-122 as amended: now is the latest reply as a whole. Her stage stays put; scrolling down through the card shows no
-    // Back to now; above her line it shows; tapping her returns to the pinned spot.
-    const thru = await page.evaluate(async () => {
-      const t = document.getElementById('thread'),
-        h = document.getElementById('hero'),
-        h0 = Math.round(h.getBoundingClientRect().top);
-      const seen = [];
-      const max = t.scrollHeight - t.clientHeight;
-      for (let y = t.scrollTop; y <= max + 1; y += 60) {
-        t.scrollTop = Math.min(y, max);
-        t.dispatchEvent(new Event('scroll'));
-        await new Promise(r => setTimeout(r, 40));
-        seen.push(!document.getElementById('ev-now').hidden);
-      }
-      return {
-        steps: seen.length,
-        pill: seen.some(Boolean),
-        stageMoved: Math.round(h.getBoundingClientRect().top) !== h0,
-        step: h.dataset.step,
-      };
-    });
-    ok(
-      `[${scheme}] scrolling down through the card is still now: no Back to now, and her stage stays put`,
-      thru.steps > 1 && !thru.pill && !thru.stageMoved && thru.step === lc.step,
-      JSON.stringify(thru)
+    const glanced = await page.evaluate(
+      at =>
+        window.EVApp.core
+          .stats()
+          .log.slice(at)
+          .some(e => e.kind === 'gesture' && e.name === 'glance'),
+      logAt
     );
-    await page.evaluate(() => {
-      const t = document.getElementById('thread'),
-        c = t.querySelector('.msg.ev.current');
-      t.scrollTop = Math.max(170, t.scrollTop + c.getBoundingClientRect().top - t.getBoundingClientRect().top - 260);
-      t.dispatchEvent(new Event('scroll'));
-    });
-    await page.waitForTimeout(200);
-    const above = await page.evaluate(() => !document.getElementById('ev-now').hidden);
-    ok(`[${scheme}] above her latest line, Back to now shows`, above);
-    await page.screenshot({ path: `${shots}/captions-above-line-${scheme}.png` });
-    await page.click('#hero');
-    await page.waitForTimeout(900);
-    const back = await page.evaluate(() => !document.getElementById('ev-now').hidden);
-    ok(
-      `[${scheme}] tapping her returns to the pinned spot`,
-      !back && (await atNow(page)),
-      JSON.stringify({ pill: back })
-    );
-    const seenCards = [lc.title];
-    for (let k = 0; k < 2; k++) {
-      await page.click('#thread .msg.ev.current .cap-cards-more');
-      await page.waitForTimeout(300);
-      const x = await cardView();
-      seenCards.push(x.title);
-      if (k === 0)
-        ok(
-          `[${scheme}] tapping "1 more card" swaps the next whole card in, the line card staying put`,
-          x.cards === 1 &&
-            x.title !== lc.title &&
-            /Today.s review/.test(x.title || '') &&
-            x.more === '1 more card' &&
-            x.lines.join() === lc.lines.join(),
-          JSON.stringify(x)
-        );
-    }
-    ok(`[${scheme}] tapping on goes back to the first`, seenCards[2] === seenCards[0], JSON.stringify(seenCards));
-    await page.click('#thread .msg.ev.current .card-line');
+    ok(`[${scheme}] she glances toward the surface as it opens (the core's event log)`, glanced);
+    await page.screenshot({ path: `${shots}/captions-surface-${scheme}.png` });
+    await page.click('#ev-surf .sf-row[data-type="quizlet"]');
     await page.waitForTimeout(300);
-    const opened = await page.evaluate(() => ({
-      record: !document.getElementById('p-record').hidden,
-      dates: !document.getElementById('record-dates').hidden,
-    }));
+    const q = await sfView();
     ok(
-      `[${scheme}] the dates line opens it in its tab (Record → Dates)`,
-      opened.record && opened.dates,
-      JSON.stringify(opened)
+      `[${scheme}] tapping a row opens it in place and folds the open one to a row`,
+      q.head === 'Quizlet' &&
+        q.open &&
+        q.cards === 1 &&
+        /^\d+ dates? in the next two weeks$/.test(q.rows[0] || '') &&
+        /^Review · /.test(q.rows[1] || ''),
+      JSON.stringify(q)
     );
-    await page.click('#tab-ev');
-    await page.waitForTimeout(400);
-    // Lines alone keep her conversation size.
+    await page.click('#ev-surf .sf-head');
+    await page.waitForTimeout(300);
+    const f = await sfView();
+    ok(
+      `[${scheme}] its head line folds it to that one line (rows kept, her core back to the conversation size)`,
+      f.head === 'Quizlet' &&
+        !f.open &&
+        f.cards === 0 &&
+        f.rows.length === 2 &&
+        f.step === 'conversation' &&
+        !f.surfaceOpen,
+      JSON.stringify(f)
+    );
+    await page.click('#ev-surf .sf-head');
+    await page.waitForTimeout(300);
+    const u = await sfView();
+    ok(`[${scheme}] and unfolds from it`, u.head === 'Quizlet' && u.open && u.cards === 1, JSON.stringify(u));
+    // A review answered in the surface: she nods, and its line reads Review · n of N folded and open.
+    await page.click('#ev-surf .sf-row[data-type="review"]');
+    await page.waitForTimeout(300);
+    const r0 = await sfView();
+    const answered = await page.evaluate(() => {
+      const s = document.getElementById('ev-surf');
+      const radios = {};
+      for (const i of s.querySelectorAll('input[type=radio]')) if (!radios[i.name]) ((radios[i.name] = 1), i.click());
+      const cb = s.querySelector('input[type=checkbox]');
+      if (cb) cb.click();
+      const num = s.querySelector('input.num-in');
+      if (num) {
+        num.value = '1';
+        num.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      const ta = s.querySelector('textarea');
+      if (ta) {
+        ta.value = 'Fluid shifts.';
+        ta.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      const b = [...s.querySelectorAll('button')].find(x => x.textContent === 'Check answer');
+      if (!b || b.disabled) return false;
+      b.click();
+      return true;
+    });
+    await page.waitForTimeout(1200);
+    const r1 = await sfView();
+    const nodded = await page.evaluate(
+      at =>
+        window.EVApp.core
+          .stats()
+          .log.slice(at)
+          .some(e => e.kind === 'gesture' && e.name === 'done'),
+      logAt
+    );
+    await page.click('#ev-surf .sf-head');
+    await page.waitForTimeout(300);
+    const r2 = await sfView();
+    await page.click('#ev-surf .sf-head');
+    await page.waitForTimeout(300);
+    const r3 = await sfView();
+    const n0 = Number((/^Review · (\d+) of/.exec(r0.head || '') || [])[1]);
+    ok(
+      `[${scheme}] a review answered in the surface: she nods, it folds to Review · n of N and unfolds from that line`,
+      answered &&
+        nodded &&
+        r1.head === `Review · ${n0 + 1} of ${(/of (\d+)$/.exec(r0.head || '') || [])[1]}` &&
+        r2.head === r1.head &&
+        !r2.open &&
+        r3.open &&
+        r3.cards === 1,
+      JSON.stringify({ answered, nodded, r0: r0.head, r1: r1.head, r2: [r2.head, r2.open], r3: [r3.head, r3.open] })
+    );
+    // A reply with only cards that inform still opens one surface, its others as rows.
     await page.evaluate(() => {
       window.__chatScript = [
         { tool: 'show_card', input: { type: 'weakspots' } },
@@ -909,16 +954,14 @@ async function sideBySide(browser, left, right, out, vp) {
     await page.fill('#ev-input', 'how am I doing');
     await page.click('#ev-send');
     await page.waitForTimeout(4000);
-    const lo = await cardView();
+    const lo = await sfView();
     ok(
-      `[${scheme}] a reply with only info cards: three lines, no whole card, her core at the conversation size`,
-      lo.cards === 0 &&
-        lo.lines.length === 3 &&
-        !lo.more &&
-        lo.step === 'conversation' &&
-        /due now|No active weak spots/.test(lo.lines[0]) &&
-        /^(Today’s list · \d+ of \d+ done|Nothing on today’s list yet)$/.test(lo.lines[1]) &&
-        /^(Last 7 days · \d+ of \d+ right \(\d+%\)|No answers in the last week yet)$/.test(lo.lines[2]),
+      `[${scheme}] the next reply's cards replace them: the first open, the rest rows, each its title and state`,
+      lo.open &&
+        /due now|No active weak spots/.test(lo.head || '') &&
+        lo.rows.length === 2 &&
+        /^(Today’s list · \d+ of \d+ done|Nothing on today’s list yet)$/.test(lo.rows[0]) &&
+        /^(Last 7 days · \d+ of \d+ right \(\d+%\)|No answers in the last week yet)$/.test(lo.rows[1]),
       JSON.stringify(lo)
     );
     await page.screenshot({ path: `${shots}/captions-line-cards-${scheme}.png` });
@@ -974,6 +1017,11 @@ async function sideBySide(browser, left, right, out, vp) {
           };
         });
       };
+      // With no surface (taken off for this check; the next render brings it back).
+      await page.evaluate(() => {
+        const s = document.getElementById('ev-surf');
+        if (s) s.remove();
+      });
       const e1280 = await lay(1280),
         e900 = await lay(1024);
       ok(
@@ -1000,8 +1048,8 @@ async function sideBySide(browser, left, right, out, vp) {
         JSON.stringify(at900)
       );
       ok(
-        '[desktop] at 1023 px it wraps under the stage (the phone stack)',
-        at899.sideShown && at899.sideTop >= at899.comp.bottom - 1 && at899.sideLeft < at899.threadRight,
+        '[desktop] at 1023 px it is the sheet over the composer, in the phone stack (B-78)',
+        at899.sideShown && at899.sideTop < at899.comp.top && at899.sideLeft < at899.threadRight,
         JSON.stringify(at899)
       );
       const at1280 = await lay(1280);
@@ -1023,7 +1071,11 @@ async function sideBySide(browser, left, right, out, vp) {
       await page.setViewportSize({ width: 1280, height: 860 });
       await page.waitForTimeout(400);
       await page.screenshot({ path: `${shots}/captions-side-1280.png` });
-      await page.evaluate(() => document.getElementById('harness-surface').remove());
+      await page.evaluate(() => {
+        document.getElementById('harness-surface').remove();
+        const s = document.getElementById('ev-surf');
+        if (s) s.remove();
+      });
       const back = await lay(1280);
       ok(
         '[desktop] emptied, the column goes and her stage centres again',
@@ -1113,8 +1165,12 @@ async function sideBySide(browser, left, right, out, vp) {
         closers: [...document.querySelectorAll('button,[role=button]')]
           .map(b => b.textContent.trim() || b.getAttribute('aria-label') || '')
           .filter(t => /^(hide|close|dismiss)\b|^[×✕✖]$/i.test(t)),
-        cards: cur ? cur.querySelectorAll('.ev-card').length : -1,
-        cardText: cur && cur.querySelector('.ev-card') ? cur.querySelector('.ev-card').textContent.slice(0, 160) : '',
+        // B-78: a reply's card is a surface (#ev-surf), not under her line
+        cards: cur ? document.querySelectorAll('#ev-surf .sf-body .ev-card').length : -1,
+        cardText: (document.querySelector('#ev-surf .sf-body .ev-card') || { textContent: '' }).textContent.slice(
+          0,
+          160
+        ),
         greetCurrent: !!document.querySelector('#thread .msg.greet.current'),
         step: document.getElementById('hero').dataset.step,
         chips: [...document.querySelectorAll('#qchips .qchip')].filter(vis).map(c => c.textContent),
@@ -1370,12 +1426,13 @@ async function sideBySide(browser, left, right, out, vp) {
       );
     const card = page =>
       page.evaluate(() => {
-        const c = [...document.querySelectorAll('#thread .msg.ev.current .ev-card.check')].pop();
-        if (!c) return null;
-        const f = c.querySelector('.check-fold'),
+        // B-78: the check is a surface; its head line (#ev-surf .sf-head) folds it.
+        const c = document.getElementById('ev-surf');
+        if (!c || c.dataset.type !== 'check') return null;
+        const f = c.querySelector('.sf-head .sf-t') && c.querySelector('.sf-head'),
           r = c.getBoundingClientRect();
         return {
-          head: f && f.textContent,
+          head: f && f.querySelector('.sf-t').textContent,
           expanded: f && f.getAttribute('aria-expanded'),
           h: Math.round(r.height),
           lineH: f ? Math.round(f.getBoundingClientRect().height) : 0,
@@ -1407,12 +1464,12 @@ async function sideBySide(browser, left, right, out, vp) {
       await page.waitForTimeout(1500);
       await post(page, 1);
       await page
-        .waitForFunction(() => document.querySelector('#thread .msg.ev.current .check-fold'), null, { timeout: 8000 })
+        .waitForFunction(() => document.querySelector('#ev-surf .sf-head'), null, { timeout: 8000 })
         .catch(() => {});
       await page.waitForTimeout(800);
       const c0 = await card(page),
         w0 = c0 && c0.writes;
-      await page.click('#thread .msg.ev.current .check-fold');
+      await page.click('#ev-surf .sf-head');
       await page.waitForTimeout(300);
       const c1 = await card(page);
       await page.screenshot({ path: `${shots}/check-folded-${tag}.png` });
@@ -1428,18 +1485,18 @@ async function sideBySide(browser, left, right, out, vp) {
           c1.writes === c0.writes,
         JSON.stringify({ c0, c1 })
       );
-      await page.click('#thread .msg.ev.current .check-fold');
+      await page.click('#ev-surf .sf-head');
       await page.waitForTimeout(300);
       const c2 = await card(page);
       ok(`[check ${tag}] a second tap unfolds it`, c2 && c2.items && c2.expanded === 'true', JSON.stringify(c2));
-      await page.click('#thread .msg.ev.current .check-fold');
+      await page.click('#ev-surf .sf-head');
       await page.waitForTimeout(200);
       // The next checkpoint: a new check arrives open, the folded one stays folded.
       await page.waitForTimeout(1100);
       await post(page, 2);
       await page
         .waitForFunction(
-          () => /Check 2/.test((document.querySelector('#thread .msg.ev.current .check-fold') || {}).textContent || ''),
+          () => /Check 2/.test((document.querySelector('#ev-surf .sf-head') || {}).textContent || ''),
           null,
           { timeout: 6000 }
         )
@@ -1551,7 +1608,7 @@ async function sideBySide(browser, left, right, out, vp) {
       );
     const read = page =>
       page.evaluate(SET => {
-        const c = [...document.querySelectorAll('#thread .ev-card.check')].pop();
+        const c = [...document.querySelectorAll('#ev-surf .ev-card.check')].pop();
         const att = Object.values(((window.__db.answers || {})[SET] || { answers: {} }).answers.o1 || {}).pop() || null;
         return {
           verdict: c && (c.querySelector('.verdict') || {}).textContent,
@@ -1584,15 +1641,15 @@ async function sideBySide(browser, left, right, out, vp) {
               };
       }, mode);
       await post(page);
-      await page.waitForSelector('#thread .ev-card.check textarea.open-in', { timeout: 8000 }).catch(() => {});
+      await page.waitForSelector('#ev-surf .ev-card.check textarea.open-in', { timeout: 8000 }).catch(() => {});
       await page.fill(
-        '#thread .ev-card.check textarea.open-in',
+        '#ev-surf .ev-card.check textarea.open-in',
         mode === 'model'
           ? 'It pulls water toward where there is more stuff.'
           : 'Half-normal saline is hypotonic, so water moves into each cell.'
       );
-      await page.click('#thread .ev-card.check button:has-text("Check answer")');
-      await page.waitForSelector('#thread .ev-card.check .verdict', { timeout: 8000 }).catch(() => {});
+      await page.click('#ev-surf .ev-card.check button:has-text("Check answer")');
+      await page.waitForSelector('#ev-surf .ev-card.check .verdict', { timeout: 8000 }).catch(() => {});
       await page.waitForTimeout(400);
       const r = await read(page);
       if (mode === 'model') {
@@ -1609,9 +1666,9 @@ async function sideBySide(browser, left, right, out, vp) {
             r.att.correct === false,
           JSON.stringify(r)
         );
-        await page.click('#thread .ev-card.check .open-add');
-        await page.fill('#thread .ev-card.check textarea.open-in', 'Water follows the solute into the cells.');
-        await page.click('#thread .ev-card.check button:has-text("Save")');
+        await page.click('#ev-surf .ev-card.check .open-add');
+        await page.fill('#ev-surf .ev-card.check textarea.open-in', 'Water follows the solute into the cells.');
+        await page.click('#ev-surf .ev-card.check button:has-text("Save")');
         await page.waitForTimeout(600);
         const r2 = await read(page);
         ok(
@@ -1635,7 +1692,7 @@ async function sideBySide(browser, left, right, out, vp) {
             r.att.grade === 'right',
           JSON.stringify(r)
         );
-      const c = await page.$('#thread .ev-card.check');
+      const c = await page.$('#ev-surf .ev-card.check');
       if (c) await c.screenshot({ path: `${shots}/open-check-${mode}-${tag}.png` });
       ok(`[open ${tag}] no page errors`, errors.length === 0, errors.join(' | '));
       await ctx.close();
@@ -1860,6 +1917,119 @@ async function sideBySide(browser, left, right, out, vp) {
     );
     await page.screenshot({ path: `${shots}/captions-reduced-${label}.png` });
     await ctx.close();
+  }
+  // B-78 (D-123, D-125, D-126): the surfaces at 390, 735 and 1280 px. A reply with three cards opens one surface with
+  // two rows under its head line; the tenet checks hold on the E.V. tab with it open, with no new exception; a library
+  // citation in her current line and in an earlier one opens the passage (file, page, Read from here) in place of the
+  // open surface, which folds to a row under it.
+  {
+    const TEN = JSON.parse(fs.readFileSync(path.join(root, 'spec', 'ev.spec.json'), 'utf8')).ui.tenets;
+    const { collect, judge } = require('./tenets.cjs');
+    const sf = page =>
+      page.evaluate(() => {
+        const s = document.getElementById('ev-surf');
+        if (!s) return null;
+        return {
+          type: s.dataset.type,
+          head: s.querySelector('.sf-head .sf-t').textContent,
+          open: s.querySelector('.sf-head').getAttribute('aria-expanded') === 'true',
+          rows: [...s.querySelectorAll('.sf-row .sf-t')].map(x => x.textContent),
+          body: (s.querySelector('.sf-body') || { textContent: '' }).textContent,
+          read: [...s.querySelectorAll('button')].some(b => b.textContent === 'Read from here'),
+          pills: document.querySelectorAll('.cap-cards-more').length,
+        };
+      });
+    for (const vp of [
+      { width: 390, height: 844 },
+      { width: 735, height: 830 },
+      { width: 1280, height: 860 },
+    ]) {
+      const tag = vp.width;
+      const ctx = await browser.newContext({ viewport: vp, colorScheme: 'dark' });
+      const page = await ctx.newPage();
+      const errors = [];
+      page.on('pageerror', e => errors.push(e.message));
+      await openPage(page, skillSeed());
+      await page.waitForTimeout(1500);
+      await page.evaluate(() => {
+        window.__chatScript = [
+          { tool: 'show_card', input: { type: 'review' } },
+          { tool: 'show_card', input: { type: 'today', filter: 'open' } },
+          { tool: 'show_card', input: { type: 'dates', days: 7 } },
+        ];
+        window.__chatPre = '';
+        window.__chatReply = 'The bath starts with hand hygiene (Harness Skills Packet, p. 4). Three things below.';
+      });
+      await page.fill('#ev-input', 'what now');
+      await page.click('#ev-send');
+      await page.waitForTimeout(4500);
+      const s0 = await sf(page);
+      ok(
+        `[surfaces ${tag}] a reply with three cards opens one surface with two rows under its head line, no pill`,
+        s0 &&
+          s0.type === 'review' &&
+          s0.open &&
+          /^Review · \d+ of \d+$/.test(s0.head) &&
+          s0.rows.length === 2 &&
+          /^Today’s list · /.test(s0.rows[0]) &&
+          /in the next week$/.test(s0.rows[1]) &&
+          !s0.pills,
+        JSON.stringify(s0)
+      );
+      const snap = await page.evaluate(collect);
+      const bad = judge(snap, TEN.exceptions).filter(c => !c.ok);
+      ok(
+        `[surfaces ${tag}] the tenet checks pass on the E.V. tab with the surface open, with no new exception`,
+        !bad.length && Object.values(TEN.exceptions).every(x => !x.length),
+        JSON.stringify(bad)
+      );
+      await page.screenshot({ path: `${shots}/surfaces-${tag}.png` });
+      await page.evaluate(() => {
+        window.__chatScript = [];
+        window.__chatReply = 'Then the rail goes up before you step away (Harness Skills Packet, p. 5).';
+      });
+      await page.fill('#ev-input', 'and then');
+      await page.click('#ev-send');
+      await page.waitForTimeout(4500);
+      await page.click('#thread .msg.ev.current a.cite');
+      await page.waitForTimeout(400);
+      const s1 = await sf(page);
+      ok(
+        `[surfaces ${tag}] a citation in her current line opens the passage in place, the open surface folding to a row`,
+        s1 &&
+          s1.type === 'material' &&
+          s1.open &&
+          s1.head === 'Harness Skills Packet, p. 5' &&
+          /Raise the bed rail/.test(s1.body) &&
+          s1.read &&
+          s1.rows.length === 3 &&
+          /^Review · /.test(s1.rows[0]),
+        JSON.stringify(s1)
+      );
+      await page.screenshot({ path: `${shots}/surfaces-cite-${tag}.png` });
+      await page.evaluate(() => {
+        const a = [...document.querySelectorAll('#thread .msg.ev:not(.current) a.cite')].pop();
+        a.scrollIntoView({ block: 'center' });
+      });
+      await page.waitForTimeout(200);
+      await page.locator('#thread .msg.ev:not(.current) a.cite').last().click();
+      await page.waitForTimeout(400);
+      const s2 = await sf(page);
+      ok(
+        `[surfaces ${tag}] a citation in an earlier line opens its passage, the previous one folding to a row`,
+        s2 &&
+          s2.head === 'Harness Skills Packet, p. 4' &&
+          /Perform hand hygiene/.test(s2.body) &&
+          s2.rows.includes('Harness Skills Packet, p. 5'),
+        JSON.stringify(s2)
+      );
+      ok(
+        `[surfaces ${tag}] no sideways scroll`,
+        await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)
+      );
+      ok(`[surfaces ${tag}] no page errors`, errors.length === 0, errors.join(' | '));
+      await ctx.close();
+    }
   }
   await browser.close();
   // The measured layout against the Captions v2 artboards (V2.dc.html, V2Desktop.dc.html in E.V. Home: Captions).

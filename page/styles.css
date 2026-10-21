@@ -492,7 +492,36 @@ body.captions .composer>.cap-echo{max-width:none}
 }
 @keyframes ev-side-in{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){body.captions .reveal .w{opacity:1;filter:none;transform:none}body.captions.side-on #p-ev>#ev-side{animation:none}}
-/* body.captions.surface-open (her line at 17 px) waits for the surfaces of B-78, which set it. */
+/* B-78 (D-123, D-125, D-126, D-160): surfaces. One open at a time under its head line (title and state, a chevron),
+   the reply's other cards as one-line rows under that line, never pills; the head line folds it and unfolds it. Below
+   1024 px the sheet over the composer (growing to its content, 330 to 410 px); from 1024 px the side column. */
+.surf{display:flex;flex-direction:column;box-sizing:border-box;width:100%;padding:4px 14px 10px;border:1px solid var(--line);border-radius:18px;background:var(--glass);text-align:left}
+.sf-top,.sf-rows{display:flex;flex-direction:column}
+.sf-head,.sf-row{appearance:none;display:flex;align-items:center;gap:8px;width:100%;min-height:44px;padding:0 2px;border:0;border-radius:0;background:none;color:var(--ink);font:600 15px var(--sans);text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.sf-row{min-height:40px;border-top:1px solid var(--line);color:var(--ink2);font-weight:500;font-size:14px}
+.sf-head:hover,.sf-head:active,.sf-head:focus,.sf-row:hover,.sf-row:active,.sf-row:focus{background:none;transform:none;color:var(--ink)}
+.sf-head:focus-visible,.sf-row:focus-visible{outline:2px solid var(--accent-edge);outline-offset:2px}
+.sf-t{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sf-head .chev{transform:rotate(180deg)}
+.surf.folded .sf-head .chev,.sf-row .chev{transform:none}
+.sf-body:empty{display:none}
+.sf-body{padding-top:6px;border-top:1px solid var(--line)}
+.surf .ev-card{border:0;border-radius:0;background:none;padding:0;box-shadow:none;margin:0}
+.surf .ev-card>.card-head:first-child>h2,.surf .ev-card.check>.check-head{display:none}
+.surf .ev-card>.card-head:first-child:not(:has(> :not(h2))){display:none}
+.surf .passage{margin:2px 0 8px;font-size:15px;line-height:1.5;color:var(--ink2)}
+body.captions .bubble a.cite{color:var(--accent-text);text-decoration:underline;text-decoration-color:var(--accent-edge);text-underline-offset:3px;cursor:pointer}
+@media (max-width:1023px){
+  body.captions #p-ev>#ev-side{grid-row:4;justify-self:center;width:100%;max-width:660px}
+  body.captions #p-ev>.composer{grid-row:5}
+  body.captions #ev-surf{max-height:clamp(330px,46dvh,410px);overflow-y:auto;overscroll-behavior:contain;margin-top:6px;border-radius:18px 18px 14px 14px}
+  body.captions #ev-surf.folded{max-height:none;overflow:visible}
+}
+@media (min-width:1024px){body.captions #ev-side{display:flex;flex-direction:column;gap:12px;overflow-y:auto;scrollbar-width:thin}
+  /* a skills or workout run has the side as its panel (B-51): the surface sits under her captions in the main column */
+  body.captions.skill-on #p-ev>#ev-side{grid-column:1;grid-row:4;align-self:start;animation:none;overflow:visible}
+  body.captions.skill-on #p-ev>.composer{grid-row:5}
+  body.captions.skill-on.side-on #p-ev{grid-template-rows:auto auto minmax(0,1fr) auto auto}}
 /* With the skills or workout panel open on desktop (B-51), her captions still fill their row and scroll. */
 body.captions #p-ev,body.captions.skill-on #p-ev{align-items:stretch}
 body.captions.skill-on #p-ev>.sk-panel{align-self:start}
