@@ -3258,11 +3258,11 @@
   "title": "The actions table (D-203): spec.actions with its _rules, one row per thing E.V. does from the page or a builder session (name, args as a JSON schema, writes as collection, key pattern and fields, effects, callers among tap, tool, builder and worker, cost among nothing, staging and ok); core/actions.mjs act(spec, name, args, ctx) checks the row, the caller, the args, the writes and the cost (staging is R-02's check, ok is R-04's in either form) and returns the writes and effects or a refusal with the reason; the page runs them through run(writes) and the builder's commands print them; the v4.4 actions (build-ask, reply, design-ask, plan-ask, ship-it, trace, ship-live) are rows of this table and the trace, build ask, Your turn and ship it rows build on it; test/actions.test.mjs asserts that no row writes system/spec or carries a trigger-changing effect and that every write site in page/app and every record write a chart.mjs command prints comes from act or a core composer, with a legacy list of today's sites that may only shrink; the page's spec.json carries actions; the 13 conversation tools migrate to rows one at a time when a task touches them",
   "dod": "core tests: a valid call returns the row's writes and nothing outside its fields; a wrong caller, a bad shape, a write outside the row and an unmet cost are each refused with the reason; the lint fails on a planted page write site outside the list and on a planted row that names the actions table (system/spec) as a write, and act() refuses that same planted row at run time; ctx.caller is set by code, never by the caller (the page's composer sets it from where the call came, tap or tool; the builder's commands set it from the task prompt), and a test plants a tap call claiming to be a builder and sees it refused; the legacy list equals today's sites; npm test green; npm run check green (the page's spec.json carries actions and nothing the page used is lost); ship staging green; live only on Matt's OK",
   "milestone": "v4.4 builder",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-177"
   ],
-  "notes": "Filed from the amended v4.4 doc (P-11, addendum Oct 21) as D-203 (accepted). Taken right after B-177 and before the trace (B-178). D-200 (P-8) restated from the same doc: spec.actions joins the guarded paths and its lint check is test/actions.test.mjs; a tenet otherwise changes only by a superseding one, but this restates the hand-off it was filed from before any work rests on its check text, on Matt's addendum.",
+  "notes": "Taken right after B-177 (job kinds) as the addendum orders; probe A's re-run (B-187) runs in a builder session meanwhile.",
   "commit": null,
   "source": "plan TbfWAoQEeQixyNKZnEZKvv"
  },
