@@ -1408,13 +1408,13 @@
   "title": "Open-ended item schema and grading (D-132, D-133): kind open in spec.items and the sets and answers schemas (bump, migration, fixtures, idempotence test); the check function (2 or 3 key points of at most 12 words, each with keyword groups; a stem of at most 25 words; sourceRef; identifier scan); the grading prompt with its shape check and 8 s timeout; core.gradeOpenLocal; the grade rule (right, partial, wrong; partial counts as a miss; added text stored, grade unchanged); core.checkFormat; B-75 takes the next spec.items, sets and answers versions itself, and whichever of B-43 and B-75 lands second bumps again with its own migration",
   "dod": "core tests grade planted answers right, partial and wrong by a stubbed model reply and by the local fallback, send a malformed reply to the fallback, refuse an item with one key point, and walk checkFormat through multiple choice, open, and multiple choice when key points are missing; the harness answers one open check graded by the stub and one offline (hit and missed points, Add to it, Checked offline), screenshots at 390 and 1280",
   "milestone": "M11",
-  "status": "open",
+  "status": "done",
   "depends": [
    "B-39",
    "B-74"
   ],
-  "notes": "D-132 and D-133 accepted Oct 20; waits only on B-74. Tenet note for when it is built: the open answer's view follows D-165 as B-126 built it (the verdict one line: Right, Partly right or Missed; hit and missed points as lines; Add to it once as a text action), not a separate card (D-147, D-150)",
-  "commit": null,
+  "notes": "Staging and live at v4.3.1; the sets 2->3 and answers 1->2 bumps ran on staging (24 writes) and live (38 writes, every old form kept in legacy) Oct 21; the staging evening-mac backup after it lists sets:3 answers:2",
+  "commit": "e4bfe5a",
   "source": "Build plan tab",
   "board": {
    "row": "v4 B-75: Open-ended checks and grading",
@@ -2903,13 +2903,11 @@
   "title": "Evidence counts in the weekly's health line: the weekly's code step counts the answers in the record and the exams that carry both a prediction and a score, writes them into weeks/<date>.health, and the System tab shows them beside the health line, so B-70's and B-71's gates are read, not counted by hand",
   "dod": "a core test on a planted record returns both counts; a staging weekly firing carries them in weeks/<date>.health; the System tab shows them at 390 and 1280; npm test green; npm run check green; ship staging green; live only on Matt's OK",
   "milestone": "v4.3 study",
-  "status": "blocked",
+  "status": "done",
   "depends": [],
-  "notes": "6699104, 30e743f: weeks/<date>.health.evidence {answers, scoredExams} (every answer in the record; exams carrying both a prediction and a score), read on the System tab against spec.constants.health.evidence (300, 2); optional, so a week written before it rebuilds as written. Core test on a planted record; run harness check and screenshots health-evidence-390/1280 (the line reads quietly under the health lines). npm run check GREEN (447 look checks). Staging weekly fired 18:35Z: runs/weekly-20261021-183509736 ok at 4d1d521, weeks/2026-10-21 health.evidence {answers: 30, scoredExams: 0}. Left: ship staging green, blocked only by the Mac tasks' prompts (see B-168).",
+  "notes": "Live at v4.3.1 (c8f5464) Oct 21; the next live weekly (Sun 5:57pm) writes health.evidence",
   "commit": "30e743f",
-  "source": "plan Q6ioLu7LnKC2vvWJkwJWA6",
-  "waitingOn": "Matt",
-  "waitingWhere": "mac"
+  "source": "plan Q6ioLu7LnKC2vvWJkwJWA6"
  },
  {
   "id": "B-166",
@@ -2966,13 +2964,11 @@
   "title": "The gate fetches before it falls back (B-133 proven): when system/manifest's commit is not in the run's checkout, the gate runs git fetch --depth 1 origin <commit> and checks it out, verifying every hash as now; only when the fetch is refused or fails does it take the content fallback (D-170); tools/gate.mjs and the rendered prompts carry it, and verify-deploy stops noting the clone distance as a risk",
   "dod": "a gate test in a throwaway repository: a commit outside a shallow clone is fetched and verified; a refused fetch falls back to the content check with the refusal quoted; the prompt test finds the fetch in step 3; a staging run fired with its deployed commit outside the 50-deep clone checks it out by fetch (its runs/ document read back), and if the run's safety review refuses running fetched code, that refusal is recorded as an environments row and the fallback stays; npm test green; ship staging green; live only on Matt's OK",
   "milestone": "v4.3 ops",
-  "status": "blocked",
+  "status": "done",
   "depends": [],
-  "notes": "Built and proven on staging. cc4b02c: the gate fetches a deployed commit missing from the clone (depth 1 from origin), checks it out and verifies every hash; only a failed fetch takes D-170's content check, quoting git's fatal line; step 3 says so; verify-deploy's distance line is information. Tests: a throwaway origin with a 1-deep clone (fetched and verified; a gone origin falls back with the refusal quoted), the prompt test finds the one fetch in step 3. Staging proof: with system/manifest set to b25e2ad (a commit only on branch proof/b168-outside-clone, never on main, core/cli.mjs differing from main), the staging watchdog fired at 17:58Z ran ok at that commit: runs/watchdog-20261021-175825673, commit b25e2ad, 11 calls all printed. The run safety review did not refuse running fetched code, so no environments row. Left: ship staging green, which needs the two staging Mac tasks (evening-mac, restore-drill) re-created with the new prompts, since every prompt carries the gate; with Matt at the Mac, together with B-173's re-creation. Live waits on that; until then live keeps the old gate, so main must stay under 50 commits past c38c86b (18 now).",
-  "commit": "cc4b02c",
-  "source": "B-133 diagnostic runs/diagnostic-20261021-110125159",
-  "waitingOn": "Matt",
-  "waitingWhere": "mac"
+  "notes": "Proven on the Mac and in the cloud: the new gate ran in the staging evening-mac firing at b5aec79 and c8f5464 (runs/evening-mac-20261021-200454123 ok); live at v4.3.1 (c8f5464) Oct 21 with the three Mac tasks re-created on Matt's OK",
+  "commit": "c8f5464",
+  "source": "B-133 diagnostic runs/diagnostic-20261021-110125159"
  },
  {
   "id": "B-169",
@@ -3040,10 +3036,10 @@
   "title": "Bug (reported Oct 21): A live worker that fails at the gate pushes 'E.V.' with no text: two notifications titled 'E.V. worker (v4.2)' at 10:45 CT Oct 21 said only 'E.V.', not the failure line",
   "dod": "a live run that fails at any step, the gate included, ends on one line that names the pipeline and the reason in plain words (e.g. 'E.V. couldn't make your practice set: its code check failed. A build chat will look.'), so the push says what happened; the prompt test asserts it; a staging run failed at the gate on purpose ends on that line; npm test green; ship staging green",
   "milestone": "v4.3 ops",
-  "status": "blocked",
+  "status": "done",
   "depends": [],
-  "notes": "9b086aa, 82b3c58: every failure line is '<what Matt went without> (<pipeline>): <reason>. A build chat will look.' from spec.pipelines.<p>.failed and core/run.mjs failLine, never led by 'E.V.' (the Oct 21 push was most likely cut at the first sentence end, leaving 'E.V.'); the gate's failure, a refused start and the end move's push all use it, within push.maxChars; the gate's own trace now carries the same line as push. Staging proof (shared with B-168's fetch): manifest b25e2ad with core/evcore.mjs's hash zeroed on purpose; the staging watchdog fired 18:13Z wrote runs/watchdog-failed-20261021-181332637: detail 'step 3: core/evcore.mjs differs from the deployed build (fetched b25e2ad57621)', push 'The health check didn't finish (watchdog): its code check failed. A build chat will look.' Left: ship staging green, blocked on the Mac re-creation (see B-168).",
-  "commit": "82b3c58",
+  "notes": "Live at v4.3.1. Staging evening-mac firings showed the plain line; one ended 'it stopped at backup device_commit_fil', so c8f5464 says a step plainly (the backup, the mirror, Canvas) or cuts at a word's end",
+  "commit": "c8f5464",
   "source": "Matt's screenshot, build chat Oct 21",
   "words": "A live worker that fails at the gate pushes 'E.V.' with no text: two notifications titled 'E.V. worker (v4.2)' at 10:45 CT Oct 21 said only 'E.V.', not the failure line",
   "reportedAt": "2026-10-21T17:10:15.309Z",
@@ -3055,9 +3051,7 @@
   "triage": {
    "outcome": "task",
    "at": "2026-10-21T17:10:24.016Z"
-  },
-  "waitingOn": "Matt",
-  "waitingWhere": "mac"
+  }
  },
  {
   "id": "B-173",
