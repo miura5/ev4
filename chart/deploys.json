@@ -2300,5 +2300,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "f2f8dc4",
+  "time": "2026-10-21T12:10:46.730Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "322af46",
+  "tasks": [
+   "B-169"
+  ],
+  "summary": "A staging worker job fails at compute when staging runs a build past…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
