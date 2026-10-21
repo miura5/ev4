@@ -31,7 +31,7 @@
   },
   "release": {
    "type": "string",
-   "pattern": "^v\\d+(\\.\\d+){0,2}$"
+   "pattern": "^v\\d+(\\.\\d+){0,2}(\\+[0-9a-z]+)?$"
   },
   "run": {
    "type": "string",

@@ -176,3 +176,25 @@ test('validator basics: refs, anyOf, oneOf, not, patternProperties and real date
   refused(validateAgainst({ oneOf: [{ type: 'number' }, { type: 'integer' }] }, 3), '(document)');
   assert.ok(validateAgainst({ type: 'number' }, 3).ok);
 });
+
+test('B-169: run, job result and debug documents take the release system/manifest carries, a tag or its +n form', async () => {
+  const { loadValidator } = await import('../core/schemas.mjs');
+  const v = loadValidator();
+  const base = { schema: 1, writer: 'worker', at: '2026-10-21T12:00:00Z', source: 'worker run' };
+  const result = release => ({
+    ...base,
+    release,
+    status: 'done',
+    startedAt: '2026-10-21T12:00:00Z',
+    finishedAt: '2026-10-21T12:01:00Z',
+    result: { text: 'Done.', links: [] },
+    message: 'm-20261021-120100000-job',
+    error: null,
+  });
+  for (const r of ['v4.2.0', 'v4.2.0+30', 'v4.3'])
+    assert.ok(v('jobresults', result(r), { id: 'job-x' }).ok, r + ': ' + JSON.stringify(v('jobresults', result(r), { id: 'job-x' }).errors));
+  for (const r of ['4.2.0', 'v4.2.0+', 'v4.2.0-rc1', 'v4.2.0+30 '])
+    assert.ok(!v('jobresults', result(r), { id: 'job-x' }).ok, r + ' is refused');
+  const run = release => ({ ...base, writer: 'worker', release, pipeline: 'worker', startedAt: base.at, status: 'ok' });
+  assert.ok(v('runs', run('v4.2.0+30'), { id: 'worker-x' }).ok);
+});
