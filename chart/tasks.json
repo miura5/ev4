@@ -3017,7 +3017,7 @@
   "milestone": "M11",
   "status": "done",
   "depends": [],
-  "notes": "prettier --check . clean; npm test runs it (test/format.test.mjs); GitHub's npm test green again from 5cbcb94 (run 39627302146)",
+  "notes": "Live v4.3.0 at c38c86b GREEN on Matt's OK (Oct 21 ~17:10Z): 6 live tasks renamed (v4.3; evening-mac name-only on Matt's explicit OK), live days (4) and weeks (1) migrated to schemas 3 and 4 with legacy copies; days/2026-10-16 (a v3 'migrated' schema-1 leftover, already outside the schema) left as it is. Tag v4.3.0 made at c38c86b; its push was refused here: Matt pushes it.",
   "commit": "5cbcb94",
   "source": "npm test 39608192119",
   "words": "GitHub's npm test check red on every push since 11:14Z Oct 21: prettier --check . flags test/cli.test.mjs and test/schema.test.mjs; local npm test never runs that check",
