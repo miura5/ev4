@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 21 | v4 staging deployed at af7bae6 (18:52 CT), from 3f03df5: The actions table; The builder never receives the text it is fired with: probe A's fired… (B-186, B-187). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 21 | v4 staging deployed at 3f03df5 (18:25 CT), from 8c5cfaa: Probe A, the builder fired with a message; Builder job kinds (B-176, B-177). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 21 | v4 staging deployed at 8c5cfaa (17:48 CT), from 01d6e1f: Builder job kinds (B-177). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 21 | v4 staging deployed at 01d6e1f (17:23 CT), from 1a09695: Live deploys since v4.3.0 carry no patch tag on origin: ship live…; The hard line (B-175, B-184). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
