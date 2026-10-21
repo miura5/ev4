@@ -75,8 +75,15 @@ test('every pipeline with steps has a prompt for live and staging; the rest wait
     assert.doesNotMatch(p['staging.' + n], /Mac|Canvas|device_|browser/, n);
   assert.equal(
     p['build.ev4-builder'],
-    'You are an E.V. v4 build session. Follow CLAUDE.md and BACKLOG.md in this repository exactly, including the Unattended runs section.'
+    "You are an E.V. v4 build session. Follow CLAUDE.md and BACKLOG.md in this repository exactly, including the Unattended runs section. This run was fired with a message that says what it is for: 'Job <id>', words to file (starting bug:, idea: or request:), or 'continue'. It arrives as the message after this one; if it is not in front of you yet, end this turn with exactly: Waiting for the message."
   );
+  // B-187: the builder waits for its fired text as the worker does, and CLAUDE.md re-fires it with words it waits for.
+  const claude = fs.readFileSync(path.join(ROOT, 'CLAUDE.md'), 'utf8').replace(/\s+/g, ' ');
+  assert.match(
+    claude,
+    /fire the builder again through the Claude Code Remote `fire_trigger` tool with the text `continue`/
+  );
+  assert.match(claude, /its prompt ends its first turn until that arrives, B-187/);
 });
 
 test('D-192 (B-173): every pipeline prompt carries its release by reading it from system/manifest, never as a literal', () => {

@@ -67,7 +67,9 @@ attribution lines with `--trailer`, one per line) and regenerates BACKLOG.md, DE
 A build session may be a scheduled task with no one watching. Then: never wait for an answer; a question goes
 into Notes with the task marked `blocked`; anything irreversible or outside staging is `blocked`, not attempted.
 If the run was started by the `ev4-builder` task and open, unblocked tasks remain, fire the builder again
-through the Claude Code Remote `fire_trigger` tool before ending, at most once per run. Stop firing when
+through the Claude Code Remote `fire_trigger` tool with the text `continue` before ending, at most once per run. A
+builder run waits for the message it was fired with ('Job <id>', words to file, or `continue`; its prompt ends its
+first turn until that arrives, B-187), and a run fired with words to file files them first (`report --from-chat`). Stop firing when
 `BACKLOG.md` has no open unblocked task, or when the same task has been `in progress` across two runs (mark it
 `blocked` with what happened).
 

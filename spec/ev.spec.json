@@ -2080,7 +2080,7 @@
     "macBound": false,
     "push": true,
     "trigger": "trig_01Rubgkh9mfYXZaRh8jm6uP6",
-    "prompt": "You are an E.V. v4 build session. Follow CLAUDE.md and BACKLOG.md in this repository exactly, including the Unattended runs section."
+    "prompt": "You are an E.V. v4 build session. Follow CLAUDE.md and BACKLOG.md in this repository exactly, including the Unattended runs section. This run was fired with a message that says what it is for: 'Job <id>', words to file (starting bug:, idea: or request:), or 'continue'. It arrives as the message after this one; if it is not in front of you yet, end this turn with exactly: Waiting for the message."
    }
   },
   "retired": [
