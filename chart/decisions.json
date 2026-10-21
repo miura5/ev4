@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-168",
+  "date": "Oct 20",
+  "title": "v4.1.0 is the baseline: the live build at f547c21. Feature work pauses until the v4.1 review's tables are filed with plan --apply; bug fixes only, each as a patch (4.1.x).",
+  "why": "Matt, Oct 21: review a fixed point, not a moving one.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-167",
   "date": "Oct 20",
   "title": "E.V.'s greeting headline reads the moment: core builds a situation of tags and enums (segment, day type, time since his last visit, momentum from recent answers and sessions, exam distance, the urgent and new items, prep phase); one quick-tier call writes the one headline from that situation and his last 7 headlines; code checks it (every urgent item named, no number, name or date absent from the situation, at most 22 words, no question when something is urgent) and falls back to core's line on a 2 s timeout or a failed check; the last 7 headlines are kept with talk/memory, amending spec.ui's 'never stored'; the briefing under it stays code",
