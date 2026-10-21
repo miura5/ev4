@@ -1557,9 +1557,12 @@ export function applyReport(rec, o, { now = new Date().toISOString(), jsonl = nu
 }
 
 // ------------------------------------------------------------------------------------------------ Matt's words
+// B-187: a fired builder session receives its text inside a <routine-fire-payload> envelope; the words are what is
+// inside it, never the tags.
 const stripReminders = t =>
   String(t)
     .replace(/<system-reminder>[\s\S]*?<\/system-reminder>/g, '')
+    .replace(/<\/?routine-fire-payload[^>]*>/g, '')
     .trim();
 /** What Matt typed in this session, oldest first: his messages, and his own words in answers to a question. */
 export function chatMessages(jsonl) {

@@ -503,6 +503,9 @@ test("B-95: report takes Matt's words from his message, exactly as written", () 
     said: 'bug',
   });
   assert.equal(C.wordsFromChat(jsonl, 'nice work').words, 'also, nice work');
+  // B-187: a fired builder session's text comes inside the routine's envelope; the words never carry its tags.
+  const fired = human('<routine-fire-payload>\nidea: a planted probe\n</routine-fire-payload>');
+  assert.deepEqual(C.wordsFromChat(fired).words, 'a planted probe');
   const r = sample();
   const out = C.applyReport(r, { _: ['report', 'bug'], 'from-chat': true }, { jsonl });
   const t = r.tasks.at(-1);
