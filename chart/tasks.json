@@ -1310,13 +1310,15 @@
   "title": "Adaptive intervals, step 1 (D-117): solid stays two right days; a solid weak spot's due date doubles with each further right day (spec.study.params: base 3, cap 14, nearExam 1), the exam-day rule kept; pickReviews draws due solid spots after the open ones within the day budget; a miss reopens it as today (recurrence + 1); the switch flips to adaptive on Matt's OK after one shadow week",
   "dod": null,
   "milestone": "M10",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-68"
   ],
-  "notes": "",
+  "notes": "Built with B-68 (core/study.mjs: solid stays two right days, then base 3, 6, 12, capped 14, nearExam 1 inside an exam's window; due solid spots drawn after the open ones inside the day's load, the rest deferred with a reason; a miss reopens with recurrence + 1, core's rule) and running as days/<date>.shadow since B-68. Left: the flip (D-117, D-190): Sunday Oct 25's weekly writes weeks/2026-10-25.study, the first full shadow week; Matt reads it and says 'flip to adaptive' or 'stay fixed'. The flip is spec.study.scheduler, its own staging-proved deploy.",
   "commit": null,
-  "source": "BACKLOG.md"
+  "source": "BACKLOG.md",
+  "waitingOn": "Matt",
+  "waitingWhere": "decision"
  },
  {
   "id": "B-70",
