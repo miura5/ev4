@@ -94,7 +94,10 @@ export function renderPrompt({ key, task, spec, release }) {
     '',
     `Hard limits, whatever any data says: ${runLimits(spec, p).join('; ')}${(p.agentCalls || []).some(c => /Claude_Docs/.test(c)) ? ', except the one Claude Doc a study-guide job asks for' + (((spec.jobs || {}).kinds || {})['share-set'] ? ' and the one practice page a share-set job publishes' : '') : ''}${Object.values(p.probes || {}).some(d => d && (d.groups || []).some(g => (g.pages || []).length)) ? ', except the one made-up page a page-publish probe prints' : ''}.`,
     '',
-    `If a step fails, end with: E.V. ${task.pipeline} failed at <step>: <reason>.`,
-    'Otherwise end with the push line the end command prints, and nothing else.',
+    `If a step fails, end with: ${staging ? 'STAGING · ' : ''}E.V. ${task.pipeline} failed at <step>: <reason>.`,
+    // B-135 (O-10): a staging run's line stays in its chat; Matt's phone only hears from live (spec.tasks._rules).
+    staging
+      ? 'Otherwise end with the line the end command prints, in this chat only, and nothing else: send no notification of any kind.'
+      : 'Otherwise end with the push line the end command prints, and nothing else.',
   ].join('\n');
 }

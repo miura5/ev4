@@ -503,7 +503,10 @@ const commands = {
         });
         show(calls);
         const ended = maybeJson(calls[0].args.file_path) || {};
-        console.log(`\nPush: ${ended.push || `E.V. ${pipeline} ${o.status && o.status !== 'ok' ? o.status : 'done'}`}`);
+        const line = ended.push || `E.V. ${pipeline} ${o.status && o.status !== 'ok' ? o.status : 'done'}`;
+        // B-135 (O-10): a staging run's last line says so, should the platform ever send it to Matt's phone.
+        const staging = (maybeJson(path.join(dir, 'run.json')) || {}).record === 'staging';
+        console.log(`\nPush: ${staging ? 'STAGING · ' + line : line}`);
         return 0;
       }
       case 'audit': {

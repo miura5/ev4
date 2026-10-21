@@ -499,6 +499,9 @@ test('cli: the moves end to end, with the exit codes a run reads', () => {
   r = cli('end', '--no-audit');
   assert.equal(r.code, 0);
   assert.match(r.out, /"action": "update"/);
+  // B-135 (O-10): a staging run's last line says STAGING, should the platform ever send it to Matt's phone.
+  assert.equal(JSON.parse(fs.readFileSync(path.join(dir, 'run.json'), 'utf8')).record, 'staging');
+  assert.match(r.out, /\nPush: STAGING · Quiet evening\n/);
   r = cli('audit');
   assert.equal(r.code, 0, 'calls not made are reported, not failed: the run status says why');
   assert.match(r.out, /GREEN .*printed but not made/);

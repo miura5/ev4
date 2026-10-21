@@ -275,3 +275,26 @@ test('D-175 (B-134): every boundary with a prompt phrasing is in every prompt of
   assert.deepEqual(limitLanes(spec.pipelines['evening-mac']), ['mac', 'canvas', 'mac-writes']);
   assert.deepEqual(limitLanes(spec.pipelines['restore-drill']), ['mac', 'mac-reads']);
 });
+
+test('B-135 (O-10): a staging prompt ends in its chat with no notification and a STAGING failure line; a live one keeps its push line; no prompt names a notification tool', () => {
+  const p = all();
+  let staging = 0;
+  for (const [key, text] of Object.entries(p).filter(([, t]) => t)) {
+    assert.doesNotMatch(text, /PushNotification|push_notification|send_notification|notify/i, key);
+    if (key.startsWith('staging.')) {
+      staging++;
+      assert.ok(
+        text.endsWith(
+          'Otherwise end with the line the end command prints, in this chat only, and nothing else: send no notification of any kind.'
+        ),
+        key
+      );
+      assert.match(text, /If a step fails, end with: STAGING · E\.V\. /, key);
+      assert.doesNotMatch(text, /push line/, key);
+    } else if (key.startsWith('live.')) {
+      assert.ok(text.endsWith('Otherwise end with the push line the end command prints, and nothing else.'), key);
+      assert.doesNotMatch(text, /STAGING/, key);
+    }
+  }
+  assert.ok(staging >= 6);
+});

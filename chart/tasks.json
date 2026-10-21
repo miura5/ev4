@@ -2536,9 +2536,9 @@
   "title": "Staging never pushes (O-10): find from a staging run's own transcript whether its last line reaches Matt's phone through the task's channel or through a notification tool the run calls; then the staging prompts end \"end with the line in this chat and send no notification\", no prompt names a notification tool, and if the platform sends it anyway the staging line starts with STAGING",
   "dod": "the prompt test asserts the staging prompts carry the no-notification line and no prompt names a notification tool; a staging morning fired from a build chat reaches Matt's phone with nothing, or with a line that starts STAGING (Matt confirms once); npm test green; ship staging green; live only on Matt's OK",
   "milestone": "v4.2 runs",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken Oct 21: reading the staging runs' audits for a notification call",
   "commit": null,
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
