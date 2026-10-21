@@ -765,53 +765,6 @@ test('day type comes from exams and dates', () => {
   );
 });
 
-test('Canvas: Central dates, graded flags, change detection; documents carry the canvas-sync envelope', () => {
-  const raw = {
-    courses: { 'NUR 112': 199214 },
-    planner: [
-      {
-        plannable_id: 1,
-        plannable_type: 'assignment',
-        course_id: 199214,
-        plannable: { title: 'Older Adult', due_at: '2026-11-17T05:59:59Z', points_possible: 10 },
-      },
-    ],
-    announcements: [
-      {
-        id: 9,
-        title: 'Week of 10/19',
-        message: '<p>Monday lab: <b>Head-to-Toe</b></p>',
-        context_code: 'course_199214',
-        posted_at: '2026-10-15T14:00:00Z',
-      },
-    ],
-  };
-  let r = EV.normalizeCanvas(raw, {}, { now: '2026-10-17T20:15:00Z' });
-  assert.equal(r.dates[0].data.date, '2026-11-16');
-  assert.equal(r.dates[0].data.graded, true);
-  assert.equal(r.dates[0].data.writer, 'canvas-sync');
-  assert.equal(r.announcements[0].data.text, 'Monday lab: Head-to-Toe');
-  assertValid({ op: 'set', collection: 'dates', id: r.dates[0].id, data: r.dates[0].data });
-  assertValid({ op: 'set', collection: 'announcements', id: r.announcements[0].id, data: r.announcements[0].data });
-  r = EV.normalizeCanvas(raw, { dates: [{ id: 'canvas-1', ...r.dates[0].data }], announcements: [{ id: 'canvas-9' }] });
-  assert.equal(r.dates.length + r.announcements.length, 0, 'unchanged items are skipped');
-  // A hand-entered date that already carries the Canvas id is updated in place, never duplicated.
-  const hand = {
-    id: 'nur-2026-11-16-older-adult',
-    canvasId: 1,
-    date: '2026-11-15',
-    dueAt: '2026-11-16T05:59:59Z',
-    title: 'Older Adult (ATI)',
-    kind: 'due',
-  };
-  r = EV.normalizeCanvas(raw, { dates: [hand] });
-  assert.equal(r.dates.length, 1);
-  assert.equal(r.dates[0].id, 'nur-2026-11-16-older-adult');
-  assert.equal(r.dates[0].op, 'update');
-  assert.equal(r.dates[0].data.date, '2026-11-16');
-  assert.ok(!('title' in r.dates[0].data), 'the hand-written title is kept');
-});
-
 test('lint finds possible identifiers, duplicates and orphans (answers in their own document)', () => {
   const issues = EV.lint({
     weakspots: [ws('a'), ws('b', { topic: 'a' })],
@@ -906,17 +859,6 @@ test('snapshot reads runs/<id> and answers/<setId>, carries the release and the 
   });
   assert.equal(c.nextExam.id, 'E4');
   assert.equal(c.activeWeakSpots.length, 1);
-});
-
-test('backup round-trips into a restore plan', () => {
-  const b = EV.buildBackup({ weakspots: [ws('a')], exams: [E4] }, { now: '2026-10-18T01:00:00Z' });
-  assert.equal(b.counts.weakspots, 1);
-  assert.equal(b.release, null, 'B-149: no release unless the run gives its own');
-  assert.equal(EV.buildBackup({}, { now: '2026-10-18T01:00:00Z', release: 'v4.2.0' }).release, 'v4.2.0');
-  const plan = EV.restorePlan(b);
-  assert.equal(plan.length, 2);
-  assert.equal(plan[0].op, 'set');
-  assert.ok(!('id' in plan[0].data));
 });
 
 test('automatic park events are keyed by the evening run and validate', () => {
@@ -1418,126 +1360,19 @@ test('schemas: a reopen event is a weak spot event; an announcement with no Canv
   assertValid({ op: 'set', collection: 'announcements', id: a.id, data: a.data });
 });
 
-test('B-32: the Canvas ingress refuses a text with a patient identifier value and keeps the rest (positive and negative)', () => {
-  const raw = {
-    courses: { 'NUR 112': 199214 },
-    planner: [],
-    announcements: [
-      {
-        id: 21,
-        title: 'Clinical reminder',
-        message: '<p>Bring your stethoscope. Your client in room 12 (MRN: 4482913) needs a made-up care plan.</p>',
-        context_code: 'course_199214',
-        posted_at: '2026-10-15T14:00:00Z',
-      },
-      {
-        id: 22,
-        title: 'Lab moved',
-        message: '<p>Skills lab moves to room 214 on Tuesday.</p>',
-        context_code: 'course_199214',
-        posted_at: '2026-10-15T15:00:00Z',
-      },
-    ],
-    files: [
-      {
-        course: 'NUR 112',
-        courseId: 199214,
-        fileId: 501,
-        title: 'Made-up case study',
-        module: 'Exam 4 Content',
-        updatedAt: '2026-10-15T00:00:00Z',
-        text: '[p1] Case: patient born 03/14/1951, DOB 03/14/1951. ' + 'Made-up teaching text. '.repeat(20),
-      },
-      {
-        course: 'NUR 112',
-        courseId: 199214,
-        fileId: 502,
-        title: 'Made-up slides',
-        module: 'Exam 4 Content',
-        updatedAt: '2026-10-15T00:00:00Z',
-        text: "[s1] Label the specimen with the patient's name, DOB and MRN. " + 'Made-up teaching text. '.repeat(20),
-      },
-    ],
-  };
-  const r = EV.normalizeCanvas(raw, {}, { now: '2026-10-17T20:15:00Z' });
-  assert.deepEqual(
-    r.announcements.map(a => a.id),
-    ['canvas-22'],
-    'the clean announcement stays (a lab room is no identifier)'
-  );
-  assert.deepEqual(
-    r.materials.map(m => m.id),
-    ['NUR112-502'],
-    'the field names alone are no identifier'
-  );
-  assert.deepEqual(r.refused.map(x => x.ref).sort(), ['announcements/canvas-21', 'materials/NUR112-501']);
-  assert.ok(r.changes.some(c => c.type === 'refused' && /has a medical record number/.test(c.text)));
-});
-
-test('B-54 (D-110): only a calendar set over a chapter range is shared; the page holds questions and reasons, nothing of his', () => {
-  const item = (id, extra = {}) => ({
-    id,
-    type: 'single',
-    stem: 'A made-up client asks a sample question here.',
-    options: ['First', 'Second'],
-    correct: [1],
-    rationales: ['Not this one.', 'This one, because.'],
-    objective: 'E4-3',
-    topic: 'Sample topic',
-    cjStep: 'take-action',
-    ...extra,
-  });
-  const plans = EV.planViews(
-    [
-      {
-        id: 'E4',
-        exam: 'E4',
-        days: [
-          {
-            date: '2026-10-17',
-            tasks: [
-              { id: 'd6', text: 'Drill 6: Ch 42, 45', kind: 'drill', chapters: [42, 45] },
-              { id: 'd7', text: 'Drill 7: the group’s weak spots from the sim', kind: 'drill' },
-              { id: 'g1', text: 'ATI proctored practice', kind: 'drill', chapters: [3] },
-              { id: 'q1', text: 'Graded quiz 4', kind: 'graded' },
-            ],
-          },
-        ],
-      },
-    ],
-    []
-  );
-  const drill = {
-    id: 'E4-drill-6',
-    kind: 'drill',
-    planTaskId: 'd6',
-    title: 'Drill 6: Ch 42, 45',
-    items: [item('d1', { weakspotId: 'ws-made-up' }), item('d2')],
-  };
-  assert.deepEqual([EV.shareableSet(drill, plans).ok, EV.shareableSet(drill, plans).task.id], [true, 'd6']);
-  const no = s => EV.shareableSet(s, plans);
-  assert.match(
-    no({ ...drill, id: 'review-2026-10-18', kind: 'review', planTaskId: undefined }).why,
-    /review set is built for you/
-  );
-  assert.match(
-    no({ ...drill, id: 'E4-drill-7', planTaskId: 'd7', title: 'Drill 7: the group’s weak spots from the sim' }).why,
-    /weak-spot drill/
-  );
-  assert.match(no({ ...drill, planTaskId: 'g1', title: 'ATI proctored practice' }).why, /graded or proctored/);
-  assert.match(no({ ...drill, planTaskId: 'q1' }).why, /graded or proctored/);
-  assert.match(no({ ...drill, kind: 'job', planTaskId: undefined }).why, /job set/);
-  assert.match(no({ ...drill, planTaskId: undefined }).why, /exam plan’s calendar/);
-  assert.equal(no(null).why, 'no such set');
-  const html = EV.sharePage(drill);
-  assert.match(html, /<title>Drill 6: Ch 42, 45<\/title>/);
-  assert.match(html, /2 practice questions/);
-  assert.match(html, /This one, because\./);
-  assert.match(html, /class="why" hidden/, 'reasons start hidden');
-  assert.doesNotMatch(html, /ws-made-up|weakspot|E4-3|Sample topic|Matt|E4-drill-6/);
-  assert.equal(
-    EV.sharePage({ ...drill, title: '<b>x</b>' }).includes('<title>&lt;b&gt;x&lt;/b&gt;</title>'),
-    true,
-    'text is escaped'
-  );
+test("B-160: what stays in E.V. core is the record's rules, under 2,500 lines; each split file is imported once", () => {
+  const src = fs.readFileSync(new URL('../core/evcore.mjs', import.meta.url), 'utf8');
+  assert.ok(src.split('\n').length < 2500, `${src.split('\n').length} lines`);
+  const files = [...src.matchAll(/^import \{ (\w+) \} from '\.\/([\w-]+)\.mjs';$/gm)].map(m => m[2]);
+  assert.deepEqual(files.sort(), [
+    'canvas-rules',
+    'conversation',
+    'insights',
+    'library',
+    'mirror',
+    'prep',
+    'sessions',
+    'share',
+    'skills',
+  ]);
 });

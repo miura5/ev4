@@ -9,6 +9,8 @@
 // materialedits) and is merged into views here (dayView, liveDates, planView, liveMaterials); appended maps are keyed
 // <writer>-<YYYYMMDD-HHMMSSmmm> (eventKey); every document core creates carries the envelope (schema, writer, at,
 // source). Reading v2 and v3 shapes is the migration's job (core/migrate.mjs), never core's.
+// B-155..B-160 (D-166): the feature sections live in their own files, one factory each, bound where each section stood;
+// what stays here is the record's rules: weak spots, items, attempts, answering, the day plan, plans, dates, snapshot, lint.
 
 import { makeLibrary } from './library.mjs';
 import { makeSessions } from './sessions.mjs';
@@ -16,6 +18,9 @@ import { makeConversation } from './conversation.mjs';
 import { makeSkills } from './skills.mjs';
 import { makePrep } from './prep.mjs';
 import { makeInsights } from './insights.mjs';
+import { makeMirror } from './mirror.mjs';
+import { makeCanvasRules } from './canvas-rules.mjs';
+import { makeShare } from './share.mjs';
 const EVCore = (() => {
   'use strict';
   const VERSION = '__EV_RELEASE__'; // B-149: the build writes the release in (tools/build.mjs RELEASE_SLOT)
@@ -1601,9 +1606,8 @@ const EVCore = (() => {
     throw new Error('action must be add, remove, restore or check');
   }
 
-  // ---------------------------------------------------------------- library: course materials (D-079)
-  // B-155: the section lives in core/library.mjs; the names the rest of core uses, bound once, ahead of the prep
-  // checks and insights, whose factories read them as they are made.
+  // ---------------------------------------------------------------- library: course materials (D-079) · core/library.mjs (B-155)
+  // Bound ahead of the prep checks and insights: their factories read these names as they are made.
   const {
     MATERIAL_KINDS,
     citeMaterial,
@@ -1645,8 +1649,7 @@ const EVCore = (() => {
     slug,
   });
 
-  // ---------------------------------------------------------------- prep checks (D-143, D-144)
-  // B-159: the section lives in core/prep.mjs; the names the rest of core uses, bound once.
+  // ---------------------------------------------------------------- prep checks (D-143, D-144) · core/prep.mjs (B-159)
   const { isPrepAdded, prepBringItems, prepDay, prepEdit, prepKindOf, prepList } = makePrep({
     get C() {
       return C;
@@ -2044,8 +2047,7 @@ const EVCore = (() => {
     };
   }
 
-  // ---------------------------------------------------------------- insights
-  // B-159: the section lives in core/insights.mjs; the names the rest of core uses, bound once.
+  // ---------------------------------------------------------------- insights · core/insights.mjs (B-159)
   const { answerStats, calibrate, examRetro, examViews, predictReadiness, readiness, readinessAudit } = makeInsights({
     addDays,
     citeMaterial,
@@ -2176,249 +2178,35 @@ const EVCore = (() => {
       }));
   }
 
-  // ---------------------------------------------------------------- Markdown mirror (read-only, for Obsidian)
-  function toMarkdown(db, { date } = {}) {
-    const files = [];
-    const ws =
-      db.weakspotModels ||
-      buildWeakspots({
-        weakspots: db.weakspots || [],
-        sets: db.sets || [],
-        answers: db.answers || [],
-        exams: db.exams || [],
-      });
-    const link = (folder, id, label) => `[[${folder}/${id}|${String(label || id).replace(/[|\]\[]/g, ' ')}]]`;
-    const fm = obj =>
-      '---\n' +
-      Object.entries(obj)
-        .filter(([, v]) => v != null && v !== '')
-        .map(([k, v]) => `${k}: ${JSON.stringify(v)}`)
-        .join('\n') +
-      '\n---\n\n';
-    for (const w of ws)
-      files.push({
-        path: `weak-spots/${w.id}.md`,
-        content:
-          fm({
-            kind: w.kind,
-            status: w.derived.status,
-            objective: w.objective,
-            exam: examOf(w),
-            nextDue: w.derived.nextDue,
-            streak: w.derived.streak,
-            recurrence: w.derived.recurrence,
-          }) +
-          `# ${w.topic}\n\n- Objective: ${w.objective ? link('objectives', w.objective, w.objective) : 'none'}\n- Source: ${w.source}\n- Added: ${shortDate(w.addedAt)}\n` +
-          (w.derived.history.length
-            ? `\n## History\n\n${w.derived.history.map(h => `- ${h.date}: ${h.correct ? 'right' : 'missed'}`).join('\n')}\n`
-            : ''),
-      });
-    for (const o of db.objectives || [])
-      files.push({
-        path: `objectives/${o.id}.md`,
-        content:
-          fm({ exam: o.exam }) +
-          `# ${o.id}: ${o.text}\n\n${o.chapters || ''}\n\n## Weak spots\n\n${
-            ws
-              .filter(w => w.objective === o.id)
-              .map(w => '- ' + link('weak-spots', w.id, w.topic) + ` (${w.derived.status})`)
-              .join('\n') || '- none'
-          }\n`,
-      });
-    for (const e of examViews(db.exams, db.examedits, db.predictions))
-      files.push({
-        path: `exams/${e.id}.md`,
-        content:
-          fm({ date: e.date, course: e.course, kind: e.kind, score: e.score }) +
-          `# ${e.title}\n\n${(db.objectives || [])
-            .filter(o => o.exam === e.id)
-            .map(o => '- ' + link('objectives', o.id, o.id + ' ' + o.text))
-            .join('\n')}\n`,
-      });
-    for (const s of db.sessions || [])
-      files.push({
-        path: `sessions/${s.id}.md`,
-        content:
-          fm({ date: s.date, minutes: s.minutes, source: s.source }) +
-          `# ${s.topic || 'Study session'}\n\n${s.summary || ''}\n`,
-      });
-    // D-113 (B-62): the mirror holds the journal too, when the run read it.
-    for (const j of db.journal || [])
-      files.push({
-        path: `journal/${j.id}.md`,
-        content:
-          fm({ kind: j.kind, date: j.createdAt ? chicagoDate(j.createdAt) : null }) +
-          `# Journal${j.createdAt ? ': ' + shortDate(chicagoDate(j.createdAt)) : ''}\n\n${j.text || ''}\n`,
-      });
-    for (const i of db.ideas || [])
-      files.push({
-        path: `ideas/${i.id}.md`,
-        content:
-          fm({ status: i.status, objective: i.objective }) +
-          `# Idea\n\n${i.text}\n\n${(i.links || []).map(l => `- ${l.type}: [[${l.to}]]`).join('\n')}\n`,
-      });
-    files.push({
-      path: 'index.md',
-      content: `# E.V. record mirror\n\nRead-only copy written by the evening pipeline${date ? ' on ' + date : ''}. Edit in E.V. Home, not here.\n\n- Weak spots: ${ws.length}\n- Objectives: ${(db.objectives || []).length}\n- Sessions: ${(db.sessions || []).length}\n- Ideas: ${(db.ideas || []).length}\n`,
-    });
-    return files;
-  }
+  // ---------------------------------------------------------------- Markdown mirror and backup · core/mirror.mjs (B-160)
+  const { toMarkdown, buildBackup, restorePlan } = makeMirror({
+    isoOf,
+    buildWeakspots,
+    chicagoDate,
+    examOf,
+    examViews,
+    shortDate,
+  });
 
-  // ---------------------------------------------------------------- Canvas (code side of the read-only sync)
-  function canvasKind(p) {
-    const type = p.plannable_type || p.type || '';
-    const title = (p.plannable && p.plannable.title) || p.title || '';
-    if (/\bexam\b/i.test(title) || (type === 'quiz' && /\btest\b/i.test(title))) return 'exam';
-    if (type === 'calendar_event') return 'other';
-    return 'due';
-  }
-  /** Turns raw Canvas JSON (from the browser fetch script) into record documents, with change detection. */
-  function normalizeCanvas(raw, existing = {}, { now } = {}) {
-    const at = isoOf(now);
-    const env = () => envelope('canvas-sync', 'Canvas sync', at);
-    const out = { dates: [], announcements: [], materials: [], changes: [], candidates: [], refused: [] };
-    // The Canvas ingress (Data architecture, "Four ingresses, one scanner"): a text with a patient identifier value is
-    // refused here, never stored; the rest of the sync goes on, and the run's own scan of every write stays behind it.
-    const refuse = (ref, text) => {
-      const why = scanIdentifierValues(text);
-      if (!why.length) return false;
-      out.refused.push({ ref, why: why[0] });
-      out.changes.push({ type: 'refused', ref, text: `Left out ${ref}: it ${why[0]}` });
-      return true;
-    };
-    const courseName = id => {
-      for (const [n, cid] of Object.entries(raw.courses || {})) if (Number(cid) === Number(id)) return n;
-      return null;
-    };
-    const prev = (col, id) => (existing[col] || []).find(d => d.id === id) || null;
-    for (const p of raw.planner || []) {
-      if (!p || p.plannable_type === 'announcement') continue;
-      const course = courseName(p.course_id);
-      if (!course) continue;
-      const title = String((p.plannable && p.plannable.title) || p.title || 'Untitled').trim();
-      const dueAt = (p.plannable && (p.plannable.due_at || p.plannable.todo_date)) || p.plannable_date || null;
-      if (!dueAt) continue;
-      // A date already in the record for this Canvas item (hand-entered or synced) is updated in place, never duplicated.
-      const old =
-        (existing.dates || []).find(d => String(d.canvasId) === String(p.plannable_id)) ||
-        prev('dates', 'canvas-' + p.plannable_id);
-      const id = old ? old.id : 'canvas-' + p.plannable_id;
-      const points = p.plannable && p.plannable.points_possible;
-      const date = chicagoDate(dueAt);
-      const graded =
-        ['assignment', 'quiz', 'discussion_topic'].includes(p.plannable_type) ||
-        (typeof points === 'number' && points > 0);
-      const dueWords = `Due ${chicagoClock(dueAt) === '23:59' ? '11:59pm' : chicagoClock(dueAt)}`;
-      if (old) {
-        if (old.dueAt === dueAt && old.date === date) continue;
-        out.dates.push({ id, op: 'update', data: { date, dueAt, canvasId: p.plannable_id, syncedAt: at } });
-        out.changes.push({
-          type: 'changed-date',
-          ref: 'dates/' + id,
-          text: `Changed on Canvas: ${old.title || title} now ${shortDate(date)}${old.date && old.date !== date ? ' (was ' + shortDate(old.date) + ')' : ''}`,
-        });
-        continue;
-      }
-      const doc = {
-        ...env(),
-        date,
-        dueAt,
-        title,
-        course,
-        kind: canvasKind(p),
-        graded,
-        canvasType: p.plannable_type,
-        canvasId: p.plannable_id,
-        syncedAt: at,
-      };
-      if (graded) doc.notes = `${dueWords}. Graded.`;
-      out.dates.push({ id, op: 'set', data: doc });
-      out.changes.push({ type: 'new-date', ref: 'dates/' + id, text: `New on Canvas: ${title} (${shortDate(date)})` });
-      for (const d of liveDates(existing.dates, existing.dateedits))
-        if (d.date === date && d.id !== id && !d.canvasId && d.kind === doc.kind && similarity(d.title, title) < 0.3)
-          out.candidates.push({
-            a: 'dates/' + d.id,
-            b: 'dates/' + id,
-            why: `two ${doc.kind} items on ${shortDate(date)} with different titles`,
-          });
-    }
-    for (const a of raw.announcements || []) {
-      const id = 'canvas-' + a.id;
-      if (prev('announcements', id)) continue;
-      const course = courseName(String(a.context_code || '').replace('course_', '')) || a.course || null;
-      const text = a.message != null ? stripHtml(a.message) : String(a.text || '');
-      if (refuse('announcements/' + id, (a.title || '') + '\n' + text)) continue;
-      out.announcements.push({
-        id,
-        data: {
-          ...env(),
-          course,
-          title: a.title || '',
-          postedAt: a.posted_at || a.postedAt || null,
-          text: text.slice(0, 6000),
-          url: a.html_url || a.url || null,
-          syncedAt: at,
-        },
-      });
-      out.changes.push({
-        type: 'new-announcement',
-        ref: 'announcements/' + id,
-        text: `${course || 'Canvas'} announcement: ${a.title}`,
-      });
-    }
-    for (const f of raw.files || []) {
-      const course = f.course || courseName(f.courseId);
-      const key = String(course || 'X').replace(/\s+/g, '');
-      const id = key + '-' + f.fileId;
-      const old = prev('materials', id);
-      if (old && old.fileUpdatedAt === f.updatedAt) continue;
-      if (refuse('materials/' + id, (f.title || '') + '\n' + String(f.text || ''))) continue;
-      const exam =
-        f.exam ||
-        ((String(f.module || '').match(/\bExam\s+(\d+)/i) || [])[1]
-          ? 'E' + String(f.module).match(/\bExam\s+(\d+)/i)[1]
-          : null);
-      const kind = MATERIAL_KINDS.includes(f.kind) ? f.kind : materialKind({ title: f.title });
-      const needsOcr =
-        !!f.needsOcr ||
-        String(f.text || '')
-          .replace(/\[(?:p|s)\d+\]/g, '')
-          .trim().length < 200;
-      const data = {
-        ...env(),
-        course,
-        kind,
-        exam,
-        unit: (String(f.module || '').match(/\bUnit\s+\d+/i) || [])[0] || null,
-        module: f.module || null,
-        section: f.section || null,
-        title: f.title || '',
-        fileType: f.fileType || 'pdf',
-        fileId: f.fileId,
-        fileUpdatedAt: f.updatedAt || null,
-        url: raw.host && f.courseId ? `${raw.host}/courses/${f.courseId}/files/${f.fileId}` : null,
-        pages: f.pages || null,
-        chars: (f.text || '').length,
-        text: String(f.text || '').slice(0, C.library.maxChars),
-        needsOcr,
-        fetchedAt: at,
-      };
-      // A file read earlier from page images keeps that reading until the new version is read again.
-      if (needsOcr && old && old.ocr && old.text) {
-        data.text = old.text;
-        data.ocr = { ...old.ocr, stale: true };
-      }
-      out.materials.push({ id, data });
-      out.changes.push({
-        type: old ? 'changed-file' : 'new-file',
-        ref: 'materials/' + id,
-        text: `${old ? 'Updated' : 'New'} ${kind === 'slides' ? 'slides' : kind + ' file'}: ${f.title}${needsOcr && !data.ocr ? ' (image-only: attach it in the conversation and E.V. will read it)' : ''}`,
-      });
-    }
-    return out;
-  }
-  // ---------------------------------------------------------------- Study Watch session intake; study sessions in E.V. Home (D-073)
-  // B-156: the sections live in core/sessions.mjs; the names the rest of core uses, bound once.
+  // ---------------------------------------------------------------- Canvas (code side of the read-only sync) · core/canvas-rules.mjs (B-160)
+  const { normalizeCanvas } = makeCanvasRules({
+    get C() {
+      return C;
+    },
+    MATERIAL_KINDS,
+    chicagoClock,
+    chicagoDate,
+    envelope,
+    isoOf,
+    liveDates,
+    materialKind,
+    scanIdentifierValues,
+    shortDate,
+    similarity,
+    stripHtml,
+  });
+
+  // ---------------------------------------------------------------- Study Watch session intake; study sessions in E.V. Home (D-073) · core/sessions.mjs (B-156)
   const {
     checkPrompt,
     closeSession,
@@ -2455,8 +2243,7 @@ const EVCore = (() => {
     toMs,
   });
 
-  // ---------------------------------------------------------------- skills practice (Features: "Skills practice mode"); workouts (D-108)
-  // B-158: the sections live in core/skills.mjs; the names the rest of core uses, bound once.
+  // ---------------------------------------------------------------- skills practice (Features: "Skills practice mode"); workouts (D-108) · core/skills.mjs (B-158)
   const {
     cardsText,
     endSkill,
@@ -2498,116 +2285,14 @@ const EVCore = (() => {
     toMs,
   });
 
-  // ---------------------------------------------------------------- shareable practice pages (D-110)
-  /**
-   * Whether a set can be shared as a page for classmates: a calendar set the exam plan built over a range of chapters or
-   * theory content (a drill or sim of a plan task that names chapters). Daily review sets, weak-spot drills, his own
-   * extra sets and anything graded, proctored or an exam never qualify. {ok, why, task}.
-   */
-  function shareableSet(set, plans) {
-    if (!set) return { ok: false, why: 'no such set' };
-    if (['review', 'more', 'job', 'pool'].includes(set.kind))
-      return { ok: false, why: `a ${set.kind} set is built for you, not over a content range` };
-    if (!set.planTaskId) return { ok: false, why: 'only a set from the exam plan’s calendar can be shared' };
-    let task = null;
-    for (const p of plans || []) for (const t of planTasks(p)) if (t.id === set.planTaskId) task = t;
-    if (!task) return { ok: false, why: 'its plan task is not in the plan' };
-    if (
-      ['graded', 'exam', 'val', 'clinical'].includes(task.kind) ||
-      /\b(graded|proctored)\b/i.test((task.text || '') + ' ' + (set.title || ''))
-    )
-      return { ok: false, why: 'graded or proctored work is never shared' };
-    if (!['drill', 'sim'].includes(task.kind)) return { ok: false, why: 'only a drill or sim set can be shared' };
-    if (/weak spot/i.test(set.title || '') || /weak spot/i.test(task.text || ''))
-      return { ok: false, why: 'a weak-spot drill is built from your weak spots' };
-    if (!(task.chapters || []).length && !/\b(ch|chapter)s?\.?\s*\d/i.test(task.text || set.title || ''))
-      return { ok: false, why: 'it is not built over a chapter or content range' };
-    if (!validItems(set).length) return { ok: false, why: 'it has no questions' };
-    return { ok: true, why: null, task };
-  }
-  const esc = s =>
-    String(s == null ? '' : s).replace(
-      /[&<>"']/g,
-      c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]
-    );
-  /**
-   * The standalone page (D-110): the set's questions and options, each answer and rationale shown after an attempt.
-   * No name, no weak-spot data, no objectives, no record ids: only what a classmate needs to practise. One HTML file.
-   */
-  function sharePage(set) {
-    const items = validItems(set).map(q => ({
-      type: itemType(q),
-      stem: q.stem,
-      options: q.options || [],
-      correct: q.correct || [],
-      rationales: q.rationales || [],
-      matrix: q.matrix || null,
-    }));
-    const title = String(set.title || 'Practice set')
-      .replace(/\s+/g, ' ')
-      .trim();
-    const qs = items
-      .map((q, i) => {
-        const n = i + 1;
-        const name = 'q' + n;
-        let body;
-        if (q.type === 'matrix') {
-          const cols = q.matrix.columns || [];
-          body = `<table class="mx"><thead><tr><th></th>${cols.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${(q.matrix.rows || []).map((r, ri) => `<tr data-correct="${r.correct}"><th scope="row">${esc(r.text)}</th>${cols.map((c, ci) => `<td><input type="radio" name="${name}-${ri}" value="${ci}" aria-label="${esc(r.text)}: ${esc(c)}"></td>`).join('')}</tr><tr class="why" hidden><td colspan="${cols.length + 1}">${esc(cols[r.correct])}. ${esc(r.rationale || '')}</td></tr>`).join('')}</tbody></table>`;
-        } else {
-          const kind = q.type === 'sata' ? 'checkbox' : 'radio';
-          body = `<ul class="opts">${q.options.map((o, oi) => `<li data-ok="${q.correct.includes(oi) ? 1 : 0}"><label><input type="${kind}" name="${name}" value="${oi}"> <span>${esc(o)}</span></label><p class="why" hidden>${esc(q.rationales[oi] || '')}</p></li>`).join('')}</ul>`;
-        }
-        return `<section class="q" data-type="${q.type}"><h2><span>${n}.</span> ${esc(q.stem)}</h2>${q.type === 'sata' && !/select all/i.test(q.stem) ? '<p class="hint">Select all that apply.</p>' : ''}${body}<div class="row"><button type="button" class="check">Check</button><span class="res" role="status"></span></div></section>`;
-      })
-      .join('\n');
-    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title>
-<style>:root{color-scheme:light dark;--bg:#fbfaf7;--ink:#1d2024;--soft:#5b636b;--line:#dcd8d0;--ok:#1c7c5c;--ok-bg:#e3f3ec;--bad:#b4442f;--bad-bg:#f8e6e1;--btn:#1d2024;--btn-ink:#fff}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1117;--ink:#e6eaee;--soft:#9aa5ae;--line:#2a313a;--ok:#5ad1a6;--ok-bg:#12362b;--bad:#f09a86;--bad-bg:#3a1c16;--btn:#e6eaee;--btn-ink:#0e1117}}
-:root[data-theme="dark"]{--bg:#0e1117;--ink:#e6eaee;--soft:#9aa5ae;--line:#2a313a;--ok:#5ad1a6;--ok-bg:#12362b;--bad:#f09a86;--bad-bg:#3a1c16;--btn:#e6eaee;--btn-ink:#0e1117}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;padding:24px 16px 48px}main{max-width:720px;margin:0 auto}
-h1{font-size:24px;line-height:1.25;margin:0 0 6px}.lead{color:var(--soft);margin:0 0 24px}.q{border-top:1px solid var(--line);padding:20px 0}.q h2{font-size:17px;font-weight:600;margin:0 0 10px}.q h2 span{color:var(--soft)}
-.hint{color:var(--soft);font-size:14px;margin:-4px 0 8px}.opts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}.opts li{border:1px solid var(--line);border-radius:10px;padding:8px 12px}.opts label{display:flex;gap:10px;align-items:baseline;cursor:pointer}
-.opts li.ok{border-color:var(--ok);background:var(--ok-bg)}.opts li.no{border-color:var(--bad);background:var(--bad-bg)}.why{margin:6px 0 0;font-size:14px;color:var(--soft)}
-.mx{border-collapse:collapse;width:100%;font-size:15px}.mx th,.mx td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:center}.mx th[scope=row]{text-align:left;font-weight:500}.mx tr.ok th{color:var(--ok)}.mx tr.no th{color:var(--bad)}.mx .why td{text-align:left;color:var(--soft);font-size:14px}
-.row{display:flex;gap:12px;align-items:center;margin-top:12px}button{font:inherit;border:0;border-radius:999px;padding:8px 18px;background:var(--btn);color:var(--btn-ink);cursor:pointer;min-height:40px}.res{font-weight:600}.res.ok{color:var(--ok)}.res.no{color:var(--bad)}
-footer{color:var(--soft);font-size:13px;margin-top:28px}</style></head><body><main>
-<h1>${esc(title)}</h1><p class="lead">${items.length} practice question${items.length === 1 ? '' : 's'}. Pick your answer, then Check: the right answer and the reasons show after you try.</p>
-${qs}
-<footer>Practice for study.</footer></main>
-<script>document.querySelectorAll('.q').forEach(function(q){q.querySelector('.check').addEventListener('click',function(){var res=q.querySelector('.res'),right=true,any=false;
-if(q.dataset.type==='matrix'){q.querySelectorAll('tbody tr[data-correct]').forEach(function(r){var c=r.querySelector('input:checked');if(c)any=true;var ok=c&&c.value===r.dataset.correct;r.classList.toggle('ok',!!ok);r.classList.toggle('no',!ok);if(!ok)right=false;r.nextElementSibling.hidden=false;});}
-else{q.querySelectorAll('.opts li').forEach(function(li){var c=li.querySelector('input').checked;if(c)any=true;var want=li.dataset.ok==='1';if(c!==want)right=false;li.classList.toggle('ok',want);li.classList.toggle('no',c&&!want);li.querySelector('.why').hidden=false;});}
-if(!any){res.textContent='Pick an answer first.';res.className='res';q.querySelectorAll('.why').forEach(function(w){w.hidden=true});q.querySelectorAll('.ok,.no').forEach(function(e){e.classList.remove('ok','no')});return;}
-res.textContent=right?'Right':'Not quite: the right answer is marked';res.className='res '+(right?'ok':'no');});});</script></body></html>`;
-  }
+  // ---------------------------------------------------------------- shareable practice pages (D-110) · core/share.mjs (B-160)
+  const { sharePage, shareableSet } = makeShare({
+    itemType,
+    planTasks,
+    validItems,
+  });
 
-  // ---------------------------------------------------------------- backup
-  function buildBackup(collections, { now, label, release } = {}) {
-    const counts = {};
-    for (const [k, v] of Object.entries(collections)) counts[k] = (v || []).length;
-    return {
-      schema: 1,
-      kind: 'E.V. record backup',
-      label: label || null,
-      at: isoOf(now),
-      release: release || null, // B-149: the run's own release, given by its caller
-      counts,
-      collections,
-    };
-  }
-  function restorePlan(backup) {
-    const writes = [];
-    for (const [col, docs] of Object.entries(backup.collections || {}))
-      for (const d of docs || []) {
-        const { id, ...data } = d;
-        writes.push({ op: 'set', collection: col, id, data });
-      }
-    return writes;
-  }
-
-  // ---------------------------------------------------------------- conversation (E.V. tab); conversations (B-77, D-128)
-  // B-157: the sections live in core/conversation.mjs; the names the rest of core uses, bound once.
+  // ---------------------------------------------------------------- conversation (E.V. tab); conversations (B-77, D-128) · core/conversation.mjs (B-157)
   const { conversations, earlierConversation, greeting, noteTitle } = makeConversation({
     get C() {
       return C;
@@ -2645,7 +2330,6 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
     entryTime,
     envelope,
     docData,
-    editBase,
     // dates
     chicagoDate,
     chicagoClock,
@@ -2663,7 +2347,6 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
     isDosageMaterial,
     isDosageTopic,
     // answers and weak spots
-    answersIndex,
     answeredItems,
     collectAttempts,
     weakspotFacts,
@@ -2676,12 +2359,10 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
     derivedHash,
     examOf,
     planAnswer,
-    outcomeText,
     // plans
     planFromCards,
     planView,
     planViews,
-    planInForceId,
     planDrafts,
     nextPlanId,
     planAccept,
@@ -2689,13 +2370,9 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
     planTick,
     planTasks,
     taskDone,
-    unreadChapters,
     preReadFor,
-    parseChapters,
-    inferTaskKind,
     // planning
     courses,
-    courseRule,
     isCourse,
     defaultCourse,
     activeCourses,
@@ -2715,7 +2392,6 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
     dayView,
     dayeditBase,
     listEdit,
-    isFixedItem,
     // prep checks (D-143, D-144)
     prepKindOf,
     prepDay,
