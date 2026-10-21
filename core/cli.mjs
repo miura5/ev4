@@ -680,3 +680,6 @@ export function main(argv) {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url))
   process.exitCode = main(process.argv.slice(2));
+
+// B-168 proof: this commit lives only on proof/b168-outside-clone, never on main, so a run's 50-deep clone of main
+// cannot hold it; a staging run that verifies it got it by the gate's fetch.
