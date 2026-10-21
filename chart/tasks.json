@@ -2877,9 +2877,9 @@
   "title": "Restore migrates (D-186): seed-staging --from backup restores the backup as written, checks counts and hashes against the backup's manifest at that point, runs the migrations up to the checkout's schema and lints; it refuses only a backup whose schema is newer than the checkout's or a bump with no migration, each with the reason quoted; the drill's run document names the schema restored from and migrated to per collection; health/current shows how many bumps behind the latest backup is, amber when any",
   "dod": "a cli test restores a planted schema-1 backup into a throwaway store, migrates it, lint green, the run document names both schemas; a planted newer-schema backup and a planted missing migration are refused with the reason; the health fixture shows the amber line and the System tab renders it; npm test green; ship staging green; the next staging restore-drill firing is ok on a v4.2 backup; live only on Matt's OK",
   "milestone": "v4.3 ops",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken: restore migrates (D-186).",
   "commit": null,
   "source": "plan Q6ioLu7LnKC2vvWJkwJWA6"
  },
