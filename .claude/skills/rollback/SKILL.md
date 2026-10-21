@@ -10,8 +10,8 @@ main's head (a restore commit), then the normal path: `ship staging`, then `ship
 redeploy of the old commit itself: scheduled runs clone `main` only 50 commits deep (B-110), so an old commit falls out
 of their reach as main moves on, and deploying main's head again would undo the rollback.
 
-Every step that changes live needs Matt's explicit OK in the chat. Never deploy live between 6pm Tuesday and the end of
-Wednesday of an exam week unless Matt names that window himself. Nothing is deleted: the restore commit removes files
+Every step that changes live needs Matt's explicit OK in the chat; R-03 (no live deploy while a study session runs) and
+R-05 (the live watchdog windows) still apply, and no date gates it (D-178 dropped the exam-week freeze). Nothing is deleted: the restore commit removes files
 from the tree only (they stay in history), and the record keeps everything it holds.
 
 ## Steps

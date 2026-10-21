@@ -35,7 +35,7 @@ task or writes to a record. It never blocks anything by itself: the build chat d
    - nothing personal entered the repository (`fixtures/` and `dist/` stay ignored);
    - a pipeline's proof is a scheduled task fired against staging and its `runs/<id>` read back, not a hand replay;
      a page's proof is the harness at phone and desktop width with screenshots looked at;
-   - shipping steps that apply: pushed, `deploy staging` with every printed call, `verify-deploy staging` green,
+   - shipping steps that apply: pushed, `ship staging` with every printed call until it says GREEN,
      never live without Matt's explicit OK;
    - recording: the task's Notes line, a Board row, a Changelog line per staging deploy.
 6. Check the diff against each tenet in scope: one checked by `harness`, `lint` or `ship` needs that check named and

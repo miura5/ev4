@@ -2603,11 +2603,12 @@
   "title": "Collection map truth: spec.collections.health.writers drops evening-cloud (the only producer is the watchdog's health step, restore-drill writes the drill age); concepts marked unpopulated the way libindex is marked retired; schemas' x-ev agree",
   "dod": "the build's registry check green; lint green on the synthetic record and on a staging export; npm test green; ship staging green; live only on Matt's OK",
   "milestone": "v4.2 watch",
-  "status": "in progress",
+  "status": "blocked",
   "depends": [],
-  "notes": "Taken Oct 21",
-  "commit": null,
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
+  "notes": "Built c0c2816: spec, schemas and a spec test; npm test green; staging and live health/current validate. Staging proof with the watch theme's staging deploy; staging GREEN waits on the Mac-bound staging prompts (B-131 notes). Waiting on Matt: the Mac.",
+  "commit": "c0c2816",
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-141",
@@ -2615,9 +2616,9 @@
   "title": "CLAUDE.md sweep: line 9 (seven tabs), line 50 (R-01 ended, with chart/rules.json in step), line 124 (the staging record Pb6jQ6CvEbtxi6Rcshu9uC), line 125 (cutover done); review SKILL.md:38 says ship staging; the rollback skill drops the exam-week freeze (D-178); a lint test guards the staging record id, the tab count and the ship verb",
   "dod": "the lint test fails on the old text and passes on the new; npm test green",
   "milestone": "v4.2 watch",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken Oct 21",
   "commit": null,
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },

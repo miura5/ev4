@@ -5,7 +5,8 @@
   "decision": "D-139",
   "task": "B-30",
   "command": "ship live",
-  "check": "pageOnlyLive"
+  "check": "pageOnlyLive",
+  "ended": "D-145: Matt closed D-085's rollback window on Oct 19; live takes every change by the normal path"
  },
  {
   "id": "R-02",

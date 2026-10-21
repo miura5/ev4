@@ -6,7 +6,8 @@ disabled and kept, its legacy copies stay in the record, nothing is deleted. Thi
 repository is v4 from its first commit. The design is finished before you start; your job is to build it.
 
 **The design lives in one doc:** E.V. Foundation v4, https://claude.ai/artifact/Fgb2KjoLKcRgCRrBmM6kEf
-(tabs: main · v3 audit · Data architecture · Operational architecture · Features · Build plan). Read it with the
+(seven tabs: main · v3 audit · Data architecture · Operational architecture · Features · Build plan · UI and
+UX). Read it with the
 Claude Docs tools. The project record is **the Chart** (`chart/`, design https://claude.ai/artifact/8DVSMh5WdybjeHVV5m2uQT,
 D-140): tasks, reports, decisions, deploys and the rules commands enforce, written only through `tools/chart.mjs`.
 BACKLOG.md, the Board and Changelog tabs of the v3 doc (https://claude.ai/artifact/AXwVp9xqpWaUKLE4SqZzwg), its
@@ -50,7 +51,8 @@ calls exactly as printed, read the view again when asked, and run `views` until 
    each time, until it says GREEN: it records the deploy and prints the Changelog line. **Never deploy live** without
    Matt's explicit OK in the chat; `ship live --matt-ok` also refuses what `chart/rules.json` forbids (R-02 staging green
    at the same commit, B-35; R-03 no running study session, B-87; R-04 Matt's OK; R-05 not inside a live watchdog
-   window, B-102; R-01, page-only live, ended with D-085's window, D-145), so a build reaches live only through staging.
+   window, B-102; R-01, page-only live, ended with D-085's window, D-145, and is kept in `chart/rules.json` marked
+   ended), so a build reaches live only through staging.
 7. Record: `log <id> --status done --commit <sha> --note "<one line>"` (`--board-note` for the Board's plain words),
    then `views`, as above. A decision is `log decision <next id> --title ... --why ... --status ...`. Never a date on
    anything that gates work.
@@ -127,6 +129,6 @@ applied to live stays applied (its legacy copies are kept), and the dry run name
 | Project record (the Chart) | `chart/` via `tools/chart.mjs`; BACKLOG.md is generated from it (D-140) |
 | v3 source (retired, D-145) | `miura5/ev-core` |
 | Live record and page (v4) | https://claude.ai/artifact/Bu8RevP4r1twPdSGc77nfg |
-| v4 staging record + page | created in B-12 / B-15; ids go into `spec/ev.spec.json` `registry` |
-| Mac folder | Documents/E.V. Study Watch (v4 uses its `staging/` subfolder until cutover) |
+| v4 staging record + page | https://claude.ai/artifact/Pb6jQ6CvEbtxi6Rcshu9uC (`spec/ev.spec.json` `registry`) |
+| Mac folder | Documents/E.V. Study Watch (live since the Oct 18 cutover; staging uses its `staging/` subfolder) |
 | Code style, page source, CI | prettier at 120 columns (`npm run format`, B-64); the page logic is `page/app/*.js` by tab, joined by the build into the published app.js; GitHub Actions runs `npm test` on every push |

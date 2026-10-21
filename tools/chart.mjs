@@ -1166,11 +1166,17 @@ export function applyLog(rec, o, { now = new Date().toISOString() } = {}) {
       ['check', 'fn'],
     ])
       if (typeof o[f] === 'string') r[k] = o[f];
+    // B-141: a rule whose reason is gone is marked ended, with the decision that ended it, and kept (nothing deleted).
+    if (typeof o.ended === 'string') {
+      if (!rec.decisions.some(d => o.ended.startsWith(d.id)))
+        throw new Error('--ended starts with the decision that ended the rule (D-...)');
+      r.ended = o.ended;
+    }
     if (!r.rule || !r.decision || !r.command || !r.check)
       throw new Error('log rule needs --rule, --decision, --command and --fn');
     if (!rec.decisions.some(d => d.id === r.decision)) throw new Error(`${r.decision} is not in the record`);
     if (!had) rec.rules.push(r);
-    return { rec, what: `rule ${rid} (${r.check})`, id: r.task || rid, views: [] };
+    return { rec, what: `rule ${rid} (${r.check}${r.ended ? ', ended' : ''})`, id: r.task || rid, views: [] };
   }
   if (id === 'new') {
     // A task the design names that the record lacks (the Build plan tab's B-74, say): never an id already in use.
@@ -1705,7 +1711,8 @@ async function ship(o) {
       if (why) refusals.push(why);
     }
     const b30 = findTask(rec, 'B-30')[0];
-    if (!b30 || b30.status !== 'done') {
+    const r01 = rec.rules.find(r => r.check === 'pageOnlyLive');
+    if (r01 && !r01.ended && (!b30 || b30.status !== 'done')) {
       const base = (deployed && deployed.commit) || (rec.deploys.filter(d => d.target === 'live').at(-1) || {}).commit;
       const found = base ? pageOnlyFindings(root, base, manifest.commit) : ['no live build to compare with'];
       if (found.length)
@@ -2051,7 +2058,10 @@ export function brief(rec, id, { root = HERE, scope: override, now = Date.now() 
     '- The repository, on main; npm test green before every push.',
     '- Staging: deploy and verify through `node tools/chart.mjs ship staging`.',
     "- Never live without Matt's explicit OK in the chat (R-04); live goes through `ship live`, which refuses what rules.json forbids:",
-    ...rec.rules.map(r => `  - ${r.id} (${r.decision}${r.task ? ', ' + r.task : ''}): ${r.rule}`),
+    ...rec.rules.filter(r => !r.ended).map(r => `  - ${r.id} (${r.decision}${r.task ? ', ' + r.task : ''}): ${r.rule}`),
+    ...rec.rules
+      .filter(r => r.ended)
+      .map(r => `  - ${r.id}: ended (${r.ended}); kept in chart/rules.json, not enforced`),
     "- A change to tools/prompts.mjs, spec.pipelines or spec.tasks changes scheduled-task prompts: deploy prints update_trigger for the cloud ones; a Mac-bound one changes only from a chat linked to the Mac with Matt present; a task prompt's hard limits stay absolute.",
     '- The hard limits in CLAUDE.md: no help on graded work, no patient identifiers, Canvas read-only, nothing posted as Matt, nothing deleted.',
     ''

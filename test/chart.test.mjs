@@ -812,7 +812,7 @@ test('B-96: brief is one page: the inbox, the task, its dependencies, decisions,
   ])
     assert.ok(b.includes(h), h);
   assert.match(b, /- B-93: done/);
-  assert.match(b, /R-01 \(D-139, B-30\)/);
+  assert.match(b, /R-01: ended \(D-145: /, "R-01 is kept and shown ended (B-141)");
   const runs = C.nextRuns(
     {
       morning: { schedule: 'CRON_TZ=America/Chicago 25 4 * * *' },
@@ -1659,4 +1659,55 @@ test('B-138 (D-180): brief leads with the live health/current age from a saved r
   const page = C.brief(r, 'B-02', { root, now });
   assert.ok(page.indexOf('## Health first (D-180)') < page.indexOf('## Inbox first'));
   assert.match(page, /health\/current is 1 h old/);
+});
+
+test('B-141: a rule is marked ended with the decision that ended it, kept, left out of brief and of ship (R-01, D-145)', () => {
+  const r = sample();
+  r.rules = [
+    {
+      id: 'R-01',
+      rule: 'page-only live',
+      decision: 'D-002',
+      task: 'B-03',
+      command: 'ship live',
+      check: 'pageOnlyLive',
+    },
+  ];
+  assert.throws(() => C.applyLog(r, { _: ['log', 'rule', 'R-01'], ended: 'because' }), /starts with the decision/);
+  const out = C.applyLog(r, { _: ['log', 'rule', 'R-01'], ended: 'D-002: the window closed' });
+  assert.match(out.what, /rule R-01 \(pageOnlyLive, ended\)/);
+  assert.equal(r.rules.length, 1, 'kept');
+  assert.equal(r.rules[0].ended, 'D-002: the window closed');
+  const real = JSON.parse(fs.readFileSync(path.join(ROOT, 'chart', 'rules.json'), 'utf8'));
+  assert.match(real.find(x => x.id === 'R-01').ended, /^D-145/, 'the record marks R-01 ended');
+});
+
+test('B-141: CLAUDE.md and the skills say what is true: the staging record id, the Foundation doc tab count, ship staging, no exam-week freeze', () => {
+  const md = fs.readFileSync(path.join(ROOT, 'CLAUDE.md'), 'utf8');
+  const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec', 'ev.spec.json'), 'utf8'));
+  assert.ok(md.includes(spec.registry.records.staging.artifact), 'the staging record by its id');
+  assert.ok(md.includes(spec.registry.records.live.artifact), 'the live record by its id');
+  // The Foundation v4 doc's tabs as read on Oct 21: a tab added there is added here and in CLAUDE.md together.
+  const TABS = [
+    'main',
+    'v3 audit',
+    'Data architecture',
+    'Operational architecture',
+    'Features',
+    'Build plan',
+    'UI and UX',
+  ];
+  const line = md.replace(/\n/g, ' ').match(/\((\w+) tabs: ([^)]+)\)/);
+  assert.ok(line, 'CLAUDE.md lists the tabs');
+  assert.equal(line[1], ['', '', '', '', '', '', 'seven'][TABS.length - 1] || String(TABS.length));
+  assert.deepEqual(
+    line[2].split(' · ').map(t => t.trim().replace(/\s+/g, ' ')),
+    TABS
+  );
+  for (const f of ['CLAUDE.md', '.claude/skills/review/SKILL.md', '.claude/skills/rollback/SKILL.md']) {
+    const t = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    assert.doesNotMatch(t, /`deploy staging`|`deploy live`(?! --matt-ok)/, `${f}: the step is ship, not deploy`);
+    assert.doesNotMatch(t, /6pm Tuesday|exam week unless/, `${f}: no exam-week freeze (D-178)`);
+    assert.doesNotMatch(t, /created in B-12|until cutover/, `${f}: no pre-cutover wording`);
+  }
 });
