@@ -3262,7 +3262,7 @@
   "depends": [
    "B-177"
   ],
-  "notes": "Its code commit is 01a27a6 (af7bae6 is the staging build that carries it with B-187).",
+  "notes": "Review (a fresh reviewer, the review skill): eight gaps. Closed in the follow-up commit: raw act reachable from page code (the page now keeps only its two actors and deletes the factory), the lint's blind spots (by reference, aliases, direct db writes, writes inside a composed call, printed tools writes; each planted), the legacy list (39 page sites, 1 tools site), and untested cost branches. Carried: the builder caller set by a command moves to B-178 (trace makes actor(spec, 'builder')). Recorded: spec.boundaries.guarded gained actions in a build chat on Matt's addendum (P-8 as he amended it lists spec.actions as guarded); npm run check was green on the B-186 tree before 01a27a6 and runs again for the follow-up.",
   "commit": "af7bae6",
   "source": "plan TbfWAoQEeQixyNKZnEZKvv"
  },
