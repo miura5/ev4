@@ -2547,12 +2547,12 @@
   "title": "Mac tasks are created, never edited (O-5): deploy's create_trigger printout for a Mac task carries notifications and folders filled; CLAUDE.md's gotcha list gains \"never change a task in the desktop app; re-create it from a session with the Mac link and the repository\"; B-98's notes point here",
   "dod": "a cli test shows the printout with notifications and folders for the evening-mac row; the CLAUDE.md line present; npm test green",
   "milestone": "v4.2 mac",
-  "status": "open",
+  "status": "done",
   "depends": [
    "B-131"
   ],
-  "notes": "",
-  "commit": null,
+  "notes": "Shipped to staging at 52c5d65: ship staging GREEN.",
+  "commit": "52c5d65",
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
