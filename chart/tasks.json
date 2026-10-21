@@ -2548,9 +2548,9 @@
   "title": "Environments rows are proven per kind of session (D-179): the spec.environments._rules line, and every row gains the task its diagnostic ran as; the hooks row rewritten",
   "dod": "the spec test asserts every proven row names a task; npm test green; ship staging green; live only on Matt's OK",
   "milestone": "v4.2 runs",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken Oct 21: each proven environments row names its task; the _rules line",
   "commit": null,
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },

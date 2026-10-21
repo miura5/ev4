@@ -225,6 +225,15 @@ test('environments: the five surfaces, each capability with a proof', () => {
       assert.match(p.date, /^\d{4}-\d{2}-\d{2}$/, `${s}: ${p.capability} date`);
       assert.ok(p.run === null || /^cse_/.test(p.run), `${s}: ${p.capability} run`);
       assert.ok(p.evidence, `${s}: ${p.capability} evidence`);
+      // D-179 (B-136): every proven row names the task its proof ran as (or the session kind), a live one by its key.
+      assert.ok(typeof p.task === 'string' && p.task.length > 5, `${s}: ${p.capability} names its task`);
+      const key = /^(live|staging)\.([\w-]+) \((trig_\w+), created /.exec(p.task);
+      if (!/^(v3 |no task: )/.test(p.task)) {
+        assert.ok(key, `${s}: ${p.capability}: ${p.task}`);
+        const task = spec.tasks[key[1]][key[2]] || (key[2] === 'diagnostic' && spec.tasks.diagnostic);
+        assert.ok(task, `${s}: ${key[1]}.${key[2]} is a task`);
+        assert.equal(task.trigger, key[3], `${s}: ${key[1]}.${key[2]}'s trigger`);
+      }
     }
     for (const p of env[s].unproven || []) assert.equal(p.proven, false);
   }

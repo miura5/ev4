@@ -2214,12 +2214,14 @@
  "environments": {
   "_rules": [
    "A pipeline or page step may use only a capability listed here as proven. A new need gets a diagnostic run first, then a row, then code.",
-   "Seeded from what Oct 17 taught (v3). run is the session (cse_...) of the diagnostic or pipeline run that proved the row; evidence names its runs/<id> and debug/<id>. B-14 measured the ArtifactData ceilings; rows still run null were proven by v3 or by surfaces a cloud diagnostic cannot reach (the Mac, the browser tab, the page) and are re-proven by B-21 and B-19."
+   "Seeded from what Oct 17 taught (v3). run is the session (cse_...) of the diagnostic or pipeline run that proved the row; evidence names its runs/<id> and debug/<id>. B-14 measured the ArtifactData ceilings; rows still run null were proven by v3 or by surfaces a cloud diagnostic cannot reach (the Mac, the browser tab, the page) and are re-proven by B-21 and B-19.",
+   "D-179 (B-136): a row is proven for tasks created the way its task was (task names the scheduled task its proof ran as, with when it was created, or the session kind for a page or build chat). A task created differently, from another kind of session or re-saved in the desktop app, re-proves what it uses with a diagnostic before anything is built on it; a gate design must not rest on a row its tasks have not proven."
   ],
   "cloud-run": {
    "proven": [
     {
      "capability": "starts in a checkout of the task-creating chat's repository",
+     "task": "v3 staging diagnostic task (retired, D-145)",
      "proven": true,
      "date": "2026-10-17",
      "run": "cse_011FWtMqzgg6h8X7HeqwN2PV",
@@ -2227,6 +2229,7 @@
     },
     {
      "capability": "ArtifactData",
+     "task": "v3 staging morning task (retired, D-145)",
      "proven": true,
      "date": "2026-10-17",
      "run": "cse_011JXoZpuPnxy5dBeMAahLy3",
@@ -2234,6 +2237,7 @@
     },
     {
      "capability": "git fetch of the same repository",
+     "task": "v3 pipeline tasks (retired, D-145)",
      "proven": true,
      "date": "2026-10-17",
      "run": null,
@@ -2241,6 +2245,7 @@
     },
     {
      "capability": "fire_trigger",
+     "task": "staging.watchdog (trig_01QuaFkQ6qzBGQhtCSKzyxLA, created Oct 18 06:09Z)",
      "proven": true,
      "date": "2026-10-17",
      "run": null,
@@ -2248,6 +2253,7 @@
     },
     {
      "capability": "ArtifactData set of one document up to 262144 bytes serialized (256 KiB exactly)",
+     "task": "staging.diagnostic (trig_01V9d1ED24oKHsEjZU6tPKWk, created Oct 18 06:19Z)",
      "proven": true,
      "date": "2026-10-18",
      "run": "cse_0197QUKzUow8ypBAMqfnNm9W",
@@ -2255,6 +2261,7 @@
     },
     {
      "capability": "ArtifactData batch of 50 writes, committed atomically",
+     "task": "staging.diagnostic (trig_01V9d1ED24oKHsEjZU6tPKWk, created Oct 18 06:19Z)",
      "proven": true,
      "date": "2026-10-18",
      "run": "cse_01Rd9KvXY1kYU8srX414Am1m",
@@ -2262,6 +2269,7 @@
     },
     {
      "capability": "ArtifactData batch request up to 1048576 bytes serialized",
+     "task": "staging.diagnostic (trig_01V9d1ED24oKHsEjZU6tPKWk, created Oct 18 06:19Z)",
      "proven": true,
      "date": "2026-10-18",
      "run": "cse_0197QUKzUow8ypBAMqfnNm9W",
@@ -2269,6 +2277,7 @@
     },
     {
      "capability": "reads its own session transcript (~/.claude/projects) for the run audit",
+     "task": "staging.diagnostic (trig_01V9d1ED24oKHsEjZU6tPKWk, created Oct 18 06:19Z)",
      "proven": true,
      "date": "2026-10-18",
      "run": "cse_0197QUKzUow8ypBAMqfnNm9W",
@@ -2276,6 +2285,7 @@
     },
     {
      "capability": "the run checkout holds the deployed commit when it is within the clone depth: a shallow clone of main as the session started (one graft, 50 commits deep), so the gate can check out a deployed commit behind main",
+     "task": "staging.diagnostic (trig_01V9d1ED24oKHsEjZU6tPKWk, created Oct 18 06:19Z)",
      "proven": true,
      "date": "2026-10-18",
      "run": "cse_01JRvpNYTUiBpyAPsSjgGARw",
@@ -2283,6 +2293,7 @@
     },
     {
      "capability": "Artifact read of its own record page: the raw HTML, the published file count, the contract version and the <artifact-stored-declaration> block",
+     "task": "staging.diagnostic (trig_01V9d1ED24oKHsEjZU6tPKWk, created Oct 18 06:19Z)",
      "proven": true,
      "date": "2026-10-18",
      "run": "cse_016yPwhbhteeNtak5VT9ZHMh",
@@ -2290,6 +2301,7 @@
     },
     {
      "capability": "list_triggers (enabled: true) answers with ids, prompts, schedules, last_run and next_run_at",
+     "task": "staging.diagnostic (trig_01V9d1ED24oKHsEjZU6tPKWk, created Oct 18 06:19Z)",
      "proven": true,
      "date": "2026-10-18",
      "run": "cse_016yPwhbhteeNtak5VT9ZHMh",
@@ -2297,6 +2309,7 @@
     },
     {
      "capability": "Artifact publish of a new private page (no url) from a scheduled cloud run: accepted on the first call, the result returns the new page link and its version; the page stays private (sharing is the owner Share menu), and the run gets no live subscription to it",
+     "task": "staging.diagnostic (trig_01V9d1ED24oKHsEjZU6tPKWk, created Oct 18 06:19Z)",
      "proven": true,
      "date": "2026-10-18",
      "run": "cse_014j5wumiXcSyTExE3GUe12x",
@@ -2311,7 +2324,7 @@
     "a batch holds at most 50 writes (the tool's own schema)",
     "the run checkout is shallow, 50 commits deep from main at the session start: a deployed commit more than 50 commits behind main is missing from it; since D-170 (B-132) the gate then checks the same content at the clone's head and goes on when every hashed file matches",
     "list_triggers ends a page early by response size (11 tasks of limit 100 here) with has_more and a next_cursor: the full list takes cursor paging",
-    "Hooks may load in a run; they are pipeline-safe (D-169, B-131). The B-65 diagnostic task (created from a session started in /home/claude) found no hooks loaded (no /tmp/ev4-hook-marker; session cse_0147TqGQdQEgvhe1Q1XX2RL6, runs/diagnostic-20261020-004959219, Oct 20), but the live watchdog task, created from a session started in the checkout, loaded them and its first write was refused by live-guard from Oct 20 03:55Z. Step 1 of every task prompt writes /tmp/ev/pipeline-run, and every hook stands down while that marker is younger than constants.watchdog.runTimeoutMinutes."
+    "Hooks may load in a run; they are pipeline-safe (D-169, B-131). Proven per kind of task (D-179): the B-65 diagnostic, as staging.diagnostic (trig_01V9d1ED24oKHsEjZU6tPKWk, created Oct 18 06:19Z), found no hooks loaded (no /tmp/ev4-hook-marker; session cse_0147TqGQdQEgvhe1Q1XX2RL6, runs/diagnostic-20261020-004959219, Oct 20); the live watchdog task (trig_01GrcEzEwb4L3oXX7dsTdpwD, created Oct 18 15:19Z) loaded them and its first write was refused by live-guard from Oct 20 03:55Z. Step 1 of every task prompt writes /tmp/ev/pipeline-run, and every hook stands down while that marker is younger than constants.watchdog.runTimeoutMinutes."
    ],
    "numbers": {
     "documentBytes": 262144,
@@ -2324,6 +2337,7 @@
    "proven": [
     {
      "capability": "device_bash in attached folders",
+     "task": "v3 staging evening task (retired, D-145)",
      "proven": true,
      "date": "2026-10-17",
      "run": null,
@@ -2331,6 +2345,7 @@
     },
     {
      "capability": "device_commit_files into the task's attached folder (staged under /mnt/user-data/outputs)",
+     "task": "staging.evening-mac (trig_01FHjw4mu745gorCZ5quGSJD, created Oct 18 10:26Z from a Mac-linked chat with the repository)",
      "proven": true,
      "date": "2026-10-18",
      "run": "cse_01QUW8ZBiN3XhM21Amz93Cib",
@@ -2338,6 +2353,7 @@
     },
     {
      "capability": "built-in browser on the signed-in Canvas tab, scripts from the checkout run with javascript_tool (start, poll, unwrap)",
+     "task": "staging.evening-mac (trig_01FHjw4mu745gorCZ5quGSJD, created Oct 18 10:26Z from a Mac-linked chat with the repository)",
      "proven": true,
      "date": "2026-10-18",
      "run": "cse_01QUW8ZBiN3XhM21Amz93Cib",
@@ -2354,6 +2370,7 @@
    "proven": [
     {
      "capability": "javascript_tool with start-poll-collect",
+     "task": "v3 evening task, Canvas sync (retired, D-145)",
      "proven": true,
      "date": "2026-10-17",
      "run": null,
@@ -2361,6 +2378,7 @@
     },
     {
      "capability": "byte-range reads of Canvas files",
+     "task": "v3 library (retired, D-145)",
      "proven": true,
      "date": "2026-10-17",
      "run": null,
@@ -2380,6 +2398,7 @@
    "proven": [
     {
      "capability": "db",
+     "task": "no task: the E.V. Home page itself (v3)",
      "proven": true,
      "date": "2026-10-17",
      "run": null,
@@ -2387,6 +2406,7 @@
     },
     {
      "capability": "user",
+     "task": "no task: the E.V. Home page itself (v3)",
      "proven": true,
      "date": "2026-10-17",
      "run": null,
@@ -2394,6 +2414,7 @@
     },
     {
      "capability": "sample with images",
+     "task": "no task: the E.V. Home page itself (v3)",
      "proven": true,
      "date": "2026-10-17",
      "run": null,
@@ -2401,6 +2422,7 @@
     },
     {
      "capability": "mcp to Claude Code Remote (fire_trigger)",
+     "task": "no task: the E.V. Home page itself (v3)",
      "proven": true,
      "date": "2026-10-17",
      "run": null,
@@ -2408,6 +2430,7 @@
     },
     {
      "capability": "mcp to the E.V. Study Watch reader (desktop app only)",
+     "task": "no task: the E.V. Home page itself (v3)",
      "proven": true,
      "date": "2026-10-17",
      "run": null,
@@ -2445,6 +2468,7 @@
    "proven": [
     {
      "capability": "everything the other surfaces prove",
+     "task": "no task: a v3 build chat",
      "proven": true,
      "date": "2026-10-17",
      "run": null,
@@ -2452,6 +2476,7 @@
     },
     {
      "capability": "Artifact publish",
+     "task": "no task: a v3 build chat",
      "proven": true,
      "date": "2026-10-17",
      "run": null,
@@ -2459,6 +2484,7 @@
     },
     {
      "capability": "Claude Docs",
+     "task": "no task: a v3 build chat",
      "proven": true,
      "date": "2026-10-17",
      "run": null,
@@ -2466,6 +2492,7 @@
     },
     {
      "capability": "hooks from the checkout's .claude/settings.json (a cloud build session started in the checkout runs its SessionStart hook)",
+     "task": "no task: a v4 build chat started in the checkout (cse_01XNq9pktXaebtWwbLeeEGwE)",
      "proven": true,
      "date": "2026-10-20",
      "run": "cse_01XNq9pktXaebtWwbLeeEGwE",
