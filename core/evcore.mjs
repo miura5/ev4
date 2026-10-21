@@ -14,6 +14,8 @@ import { makeLibrary } from './library.mjs';
 import { makeSessions } from './sessions.mjs';
 import { makeConversation } from './conversation.mjs';
 import { makeSkills } from './skills.mjs';
+import { makePrep } from './prep.mjs';
+import { makeInsights } from './insights.mjs';
 const EVCore = (() => {
   'use strict';
   const VERSION = '__EV_RELEASE__'; // B-149: the build writes the release in (tools/build.mjs RELEASE_SLOT)
@@ -1599,252 +1601,72 @@ const EVCore = (() => {
     throw new Error('action must be add, remove, restore or check');
   }
 
+  // ---------------------------------------------------------------- library: course materials (D-079)
+  // B-155: the section lives in core/library.mjs; the names the rest of core uses, bound once, ahead of the prep
+  // checks and insights, whose factories read them as they are made.
+  const {
+    MATERIAL_KINDS,
+    citeMaterial,
+    guessCourse,
+    libStem,
+    libTokens,
+    libraryCatalog,
+    libraryChunks,
+    libraryIndex,
+    libraryPick,
+    liveMaterials,
+    materialFromUpload,
+    materialKind,
+    materialRemove,
+    mergeOcr,
+    normCourse,
+    ocrPrompt,
+    officeText,
+    parseOcr,
+    pdfText,
+    readMaterial,
+    searchLibrary,
+    stripHtml,
+  } = makeLibrary({
+    get C() {
+      return C;
+    },
+    STOP,
+    activeCourses,
+    chicagoDate,
+    courseTable,
+    defaultCourse,
+    editBase,
+    envelope,
+    isCourse,
+    isoOf,
+    norm,
+    safeId,
+    slug,
+  });
+
   // ---------------------------------------------------------------- prep checks (D-143, D-144)
-  // Clinical, lab, validation and class days are never urgent: they get a calm Prep marker and a tickable check, the
-  // night-before pack check in the evening and the morning-of bag check in the morning. Each list is built for that day
-  // from that day's own materials (no approve-once kit): the calendar entry says what the day is, the library search
-  // finds what it requires, and each item names its file and page. What Matt adds by hand lives in that day's
-  // dayedits/<date>.added with the tag PREP (kept off the day's list); his ticks are its checks, keyed
-  // prep-<night|morning>-<item>. A hand-added item comes back on later days of the same kind as "you usually bring".
-  // Paperwork is listed to bring, never filled in (graded clinical work stays his).
-  const PREP_KINDS = ['validation', 'clinical', 'lab', 'class'];
-  const PREP_TAG = 'PREP';
-  const isPrepAdded = a => !!a && a.tag === PREP_TAG;
-  /** What kind of prep day a calendar entry makes, or null: validations and clinicals by kind, labs and classes by name. */
-  function prepKindOf(d) {
-    if (!d) return null;
-    const t = String(d.title || '');
-    if (d.kind === 'validation') return 'validation';
-    if (d.kind === 'clinical') return 'clinical';
-    if (d.kind !== 'other') return null; // graded work and exams keep their own markers
-    if (/\bvalidat/i.test(t)) return 'validation';
-    if (/\bclinical\b/i.test(t)) return 'clinical';
-    if (/\blabs?\b/i.test(t)) return 'lab';
-    if (/\b(class|lecture)\b/i.test(t)) return 'class';
-    return null;
-  }
-  /** The prep day on a date: its kind (validation first, then clinical, lab, class), the entry's title and what it is
-   *  about (the title past its "Validation:" or "Lab:" lead), or null when that day needs no prep. */
-  function prepDay(dates, dateedits, date) {
-    const on = liveDates(dates, dateedits)
-      .filter(d => d.date === date)
-      .map(d => ({ d, kind: prepKindOf(d) }))
-      .filter(x => x.kind);
-    if (!on.length) return null;
-    on.sort(
-      (a, b) => PREP_KINDS.indexOf(a.kind) - PREP_KINDS.indexOf(b.kind) || String(a.d.id).localeCompare(String(b.d.id))
-    );
-    const { d, kind } = on[0];
-    const title = String(d.title || '').trim();
-    const subject = title
-      .replace(/^\s*(skills?\s+)?(validation|clinical|lab|class|lecture)s?\s*[:\-–]\s*/i, '')
-      .replace(/\s*\([^)]*\)\s*$/, '')
-      .trim();
-    return {
-      date,
-      kind,
-      title,
-      subject: subject && subject !== title ? subject : kind === 'validation' || kind === 'lab' ? subject : '',
-      dateId: d.id || null,
-      course: normCourse(d.course) || defaultCourse(),
-    };
-  }
-  const PAPERWORK = /paperwork|\bforms?\b|worksheet|care plan|concept map/i;
-  /** The bring-list entries in one passage: what follows "bring:", "you will need", "supplies needed" and the like. */
-  function prepBringItems(text) {
-    const P = C.prep || {};
-    const out = [];
-    // A list opens at a colon only (a dash is a page range in a table of contents), and a table of contents is no list.
-    if (/table of contents/i.test(String(text || ''))) return out;
-    const re = new RegExp('\\b' + (P.bring || 'bring') + '\\b[^:.;\\n]{0,40}?:\\s*([^.\\n]+)', 'gi');
-    let m;
-    while ((m = re.exec(String(text || ''))))
-      for (const raw of m[1].split(/[,;•]|\s+and\s+|\s+\+\s+/)) {
-        const t = raw
-          .replace(/^\s*(?:a|an|the|your|one|two|1|2)\s+/i, '')
-          .replace(/^[\s\-–*]+|[\s\-–*]+$/g, '')
-          .replace(/\s+/g, ' ')
-          .trim();
-        const looksLikeItem =
-          t.length >= 3 &&
-          t.length <= 60 &&
-          t.split(' ').length <= 7 &&
-          (t.match(/\d+/g) || []).length <= 1 &&
-          !/\d\s*[-–]\s*\d/.test(t);
-        if (looksLikeItem && !/^(the following|following|these|this)$/i.test(t))
-          out.push(t.charAt(0).toUpperCase() + t.slice(1));
-      }
-    return out;
-  }
-  /**
-   * The prep check for one day. o: {day (prepDay), phase ('night' | 'morning'), materials (live) or index (libraryIndex
-   * of their chunks), dates, dateedits, dayedits}. Returns {date, kind, title, subject, phase, items, empty, note, done}:
-   * items [{id, text, cite, source: {id, title, page, unit}, paperwork, added, usual, checked}] from the materials first
-   * (each with its file and page), then his own for this day, then the ones he usually brings on a day of this kind.
-   */
-  function prepList(o = {}) {
-    const day = o.day;
-    if (!day) return null;
-    const P = C.prep || {};
-    const phase = o.phase === 'morning' ? 'morning' : 'night';
-    const index = o.index || libraryIndex(libraryChunks(o.materials || []));
-    const subjectTokens = new Set(libTokens(day.subject || ''));
-    const kindToken = libStem(day.kind === 'validation' ? 'validation' : day.kind);
-    const query = [day.subject || day.title, (P.queryWords || {})[day.kind] || day.kind].join(' ');
-    const ranked = searchLibrary(index, query, { k: P.searchK || 12 });
-    // A passage belongs to the day when it names at least half of what the day is about. A clinical day also takes
-    // what any passage says about clinical days (its baseline, from the syllabus or the clinical objectives); a day with
-    // no subject takes its kind's passages.
-    const full = new Map();
-    for (const d of (index && index.docs) || []) {
-      const key = d.c.id + '#' + d.c.page;
-      if (!full.has(key)) full.set(key, []);
-      full.get(key).push(d);
-    }
-    const passages = [];
-    for (const h of ranked) {
-      for (const d of full.get(h.id + '#' + h.page) || []) {
-        if (passages.includes(d)) continue;
-        const has = w => d.tf.has(w);
-        const named = [...subjectTokens].filter(has).length;
-        if (
-          (subjectTokens.size && named * 2 >= subjectTokens.size) ||
-          ((!subjectTokens.size || day.kind === 'clinical') && has(kindToken))
-        )
-          passages.push(d);
-      }
-    }
-    const items = [];
-    const seen = new Set();
-    const add = (text, d, x = {}) => {
-      const key = norm(text);
-      if (!key || seen.has(key)) return;
-      seen.add(key);
-      items.push({
-        id: slug(text, 32) || 'item',
-        text,
-        cite: d ? citeMaterial(d.c) : null,
-        source: d ? { id: d.c.id, title: d.c.title, page: d.c.page, unit: d.c.unit } : null,
-        paperwork: PAPERWORK.test(text),
-        ...x,
-      });
-    };
-    const looks = ((P.lookFor || {})[day.kind] || []).map(l => ({ item: l.item, re: new RegExp(l.match, 'i') }));
-    for (const d of passages) {
-      for (const t of prepBringItems(d.c.text)) {
-        const seed = looks.find(l => l.re.test(t));
-        add(seed ? seed.item : t, d);
-      }
-      if (!/table of contents/i.test(d.c.text)) for (const l of looks) if (l.re.test(d.c.text)) add(l.item, d);
-    }
-    const fromMaterials = items.length;
-    const edits = {};
-    for (const e of o.dayedits || []) if (e) edits[e.id || e.date] = e;
-    const own = (edits[day.date] && edits[day.date].added) || {};
-    for (const [id, a] of Object.entries(own)
-      .filter(([, a]) => isPrepAdded(a))
-      .sort(([, a], [, b]) => String(a.at || '').localeCompare(String(b.at || '')))) {
-      const key = norm(a.text);
-      if (seen.has(key)) continue;
-      seen.add(key);
-      items.push({
-        id,
-        text: a.text,
-        cite: null,
-        source: null,
-        paperwork: PAPERWORK.test(a.text),
-        added: true,
-        by: a.by || 'Matt',
-      });
-    }
-    // Earlier days of the same kind, newest first: what he added there comes back as "you usually bring".
-    const before = Object.values(edits)
-      .filter(e => (e.id || e.date) < day.date && Object.values(e.added || {}).some(isPrepAdded))
-      .sort((a, b) => String(b.id || b.date).localeCompare(String(a.id || a.date)));
-    for (const e of before) {
-      const other = prepDay(o.dates, o.dateedits, e.id || e.date);
-      if (!other || other.kind !== day.kind) continue;
-      for (const a of Object.values(e.added).filter(isPrepAdded)) {
-        const key = norm(a.text);
-        if (seen.has(key)) continue;
-        seen.add(key);
-        items.push({
-          id: 'usual-' + (slug(a.text, 32) || 'item'),
-          text: a.text,
-          cite: null,
-          source: null,
-          paperwork: PAPERWORK.test(a.text),
-          usual: true,
-        });
-      }
-    }
-    const checks = (edits[day.date] && edits[day.date].checks) || {};
-    for (const it of items) it.checked = !!checks[prepCheckId(phase, it.id)];
-    const what =
-      day.subject && day.kind !== 'clinical'
-        ? `${day.kind === 'validation' ? 'the ' + day.subject + ' validation' : day.kind === 'lab' ? 'the ' + day.subject + ' lab' : day.title}`
-        : day.title;
-    const note = fromMaterials
-      ? null
-      : `Nothing in your materials says what to bring for ${what}. Add what you know and I’ll keep it for next time.`;
-    return {
-      date: day.date,
-      kind: day.kind,
-      title: day.title,
-      subject: day.subject,
-      phase,
-      items,
-      empty: !fromMaterials,
-      note,
-      done: items.length > 0 && items.every(it => it.checked),
-    };
-  }
-  const prepCheckId = (phase, id) => 'prep-' + (phase === 'morning' ? 'morning' : 'night') + '-' + id;
-  /** One edit to a day's prep check, on that day's dayedits/<date>. add {text} · remove {id} (his own item) · check {id,
-   *  phase, done?}. Returns {id, text, doc} with the whole new document (null when nothing changes, with a note). */
-  function prepEdit(dayedit, edit, { now, by = 'Matt', date } = {}) {
-    const action = edit && edit.action;
-    const ed = dayedit || {};
-    const forDate = date || ed.date || chicagoDate(now);
-    by = by === 'E.V.' ? 'E.V.' : 'Matt';
-    const next = () => dayeditBase(dayedit, forDate, now);
-    const added = ed.added || {};
-    if (action === 'add') {
-      const text = String(edit.text || '')
-        .replace(/\s+/g, ' ')
-        .trim()
-        .slice(0, 80);
-      if (!text) throw new Error('text is required');
-      const same = Object.entries(added).find(([, a]) => isPrepAdded(a) && norm(a.text) === norm(text));
-      if (same) return { id: same[0], text: same[1].text, doc: null, note: 'already on the check' };
-      const base = 'prep-' + (slug(text, 32) || 'item');
-      let id = safeId(base);
-      for (let n = 2; added[id]; n++) id = safeId(base + '-' + n);
-      const doc = next();
-      doc.added[id] = { text, tag: PREP_TAG, kind: 'todo', minutes: 0, course: '', at: isoOf(now), by };
-      return { id, text, doc };
-    }
-    const id = String((edit && edit.id) || '');
-    if (action === 'remove') {
-      if (!isPrepAdded(added[id])) throw new Error('only an item you added can come off the check');
-      const doc = next();
-      delete doc.added[id];
-      for (const p of ['night', 'morning']) delete doc.checks[prepCheckId(p, id)];
-      return { id, text: added[id].text, doc };
-    }
-    if (action === 'check') {
-      if (!id) throw new Error('id is required');
-      const key = prepCheckId(edit.phase, id);
-      const done = edit.done !== false;
-      const checks = ed.checks || {};
-      if (!!checks[key] === done) return { id, text: id, doc: null, note: done ? 'already ticked' : 'not ticked yet' };
-      const doc = next();
-      if (done) doc.checks[key] = { at: isoOf(now), by };
-      else delete doc.checks[key];
-      return { id, text: id, doc };
-    }
-    throw new Error('action must be add, remove or check');
-  }
+  // B-159: the section lives in core/prep.mjs; the names the rest of core uses, bound once.
+  const { isPrepAdded, prepBringItems, prepDay, prepEdit, prepKindOf, prepList } = makePrep({
+    get C() {
+      return C;
+    },
+    chicagoDate,
+    citeMaterial,
+    dayeditBase,
+    defaultCourse,
+    isoOf,
+    libStem,
+    libTokens,
+    libraryChunks,
+    libraryIndex,
+    liveDates,
+    norm,
+    normCourse,
+    safeId,
+    searchLibrary,
+    slug,
+  });
 
   // ---------------------------------------------------------------- graded work (B-99)
   // The graded-work limit speaks only when a request crosses it: no standing reminder anywhere, and a real ask to do,
@@ -2223,238 +2045,20 @@ const EVCore = (() => {
   }
 
   // ---------------------------------------------------------------- insights
-  function answerStats(attempts, { date, days = 7 } = {}) {
-    const tally = key => {
-      const m = {};
-      for (const a of attempts) {
-        const k = key(a);
-        if (k == null) continue;
-        const s = (m[k] = m[k] || { right: 0, n: 0, score: 0 });
-        s.n++;
-        s.score += a.score;
-        if (a.correct) s.right++;
-      }
-      return m;
-    };
-    const byDate = tally(a => a.date);
-    const lastDays = [];
-    if (date)
-      for (let i = days - 1; i >= 0; i--) {
-        const d = addDays(date, -i);
-        lastDays.push({ date: d, ...(byDate[d] || { right: 0, n: 0, score: 0 }) });
-      }
-    return {
-      byObjective: tally(a => a.objective || '—'),
-      byType: tally(a => a.type),
-      byCjStep: tally(a => a.cjStep || null),
-      byDate,
-      lastDays,
-      total: attempts.length,
-      right: attempts.filter(a => a.correct).length,
-    };
-  }
-  function readiness({ examId, weakspots }) {
-    const active = weakspots.filter(w => isActive(w) && examOf(w) === examId);
-    const solid = weakspots.filter(w => isSolid(w) && examOf(w) === examId).length;
-    const need = active.reduce((s, w) => s + reviewNeed(w), 0);
-    const one = active.filter(w => !w.derived.preRead && (w.derived.streak || 0) >= 1).length;
-    const preRead = active.filter(w => w.derived.preRead).length;
-    const total = active.length + solid;
-    return {
-      examId,
-      active: active.length,
-      solid,
-      need,
-      rightOnce: one,
-      preRead,
-      notYet: active.length - one - preRead,
-      pctSolid: total ? Math.round((100 * solid) / total) : null,
-    };
-  }
-  /**
-   * The readiness audit (Features: "Readiness audit"): per objective of an exam, its weak spots solid, right once and
-   * not yet, the topics not yet right, and with a library index the passages to reread for them (cited by file and
-   * page). Objectives with the most not yet first; objectives with no weak spots are left out.
-   * {examId, objectives, weakspots, index?, k?} -> [{id, text, solid, rightOnce, notYet, preRead, topics, passages}]
-   */
-  function readinessAudit({ examId, objectives = [], weakspots = [], index = null, k = 2 } = {}) {
-    const mine = weakspots.filter(
-      w =>
-        (w.kind || 'concept') === 'concept' &&
-        examOf(w) === examId &&
-        w.derived &&
-        !['parked', 'moved'].includes(w.derived.status)
-    );
-    const rows = [];
-    for (const o of objectives.filter(o => o.exam === examId || String(o.id).split('-')[0] === examId)) {
-      const ws = mine.filter(w => w.objective === o.id);
-      if (!ws.length) continue;
-      const open = ws.filter(isActive);
-      const notYetWs = open.filter(w => !w.derived.preRead && (w.derived.streak || 0) === 0);
-      const row = {
-        id: o.id,
-        text: o.text || '',
-        solid: ws.filter(isSolid).length,
-        rightOnce: open.filter(w => !w.derived.preRead && (w.derived.streak || 0) >= 1).length,
-        notYet: notYetWs.length,
-        preRead: open.filter(w => w.derived.preRead).length,
-        topics: notYetWs.map(w => w.topic).slice(0, 3),
-        passages: [],
-      };
-      if (index && (row.notYet || row.rightOnce)) {
-        const q = (row.topics.length ? row.topics : open.map(w => w.topic)).join(' ') + ' ' + row.text;
-        const seen = new Set();
-        for (const h of searchLibrary(index, q, { k: k + 3 })) {
-          const key = h.id + '#' + (h.page || '');
-          if (seen.has(key)) continue;
-          seen.add(key);
-          row.passages.push({ id: h.id, page: h.page || null, cite: citeMaterial(h) });
-          if (row.passages.length >= k) break;
-        }
-      }
-      rows.push(row);
-    }
-    return rows.sort(
-      (a, b) => b.notYet - a.notYet || b.rightOnce - a.rightOnce || String(a.id).localeCompare(String(b.id))
-    );
-  }
-  /** D-042 prediction: transparent, deterministic, and checked against the score afterward. */
-  function predictReadiness({ examId, exams, weakspots, attempts, date, now }) {
-    const past = (exams || []).filter(e => e.kind === 'unit' && typeof e.score === 'number');
-    const pastAvg = past.length ? past.reduce((s, e) => s + e.score, 0) / past.length : null;
-    const rel = (attempts || []).filter(a => a.objective && String(a.objective).startsWith(examId + '-'));
-    const last7 = rel.filter(a => a.date && diffDays(a.date, date) <= 7 && diffDays(a.date, date) >= 0);
-    const acc7 = last7.length ? last7.reduce((s, a) => s + a.score, 0) / last7.length : null;
-    const r = readiness({ examId, weakspots });
-    let center =
-      pastAvg != null && acc7 != null
-        ? 0.5 * pastAvg + 0.5 * 100 * acc7
-        : pastAvg != null
-          ? pastAvg
-          : acc7 != null
-            ? 100 * acc7
-            : null;
-    if (center == null) return null;
-    if (r.pctSolid != null) center += (r.pctSolid / 100 - 0.5) * 6;
-    const lo = Math.max(0, Math.round(center - 4)),
-      hi = Math.min(100, Math.round(center + 4));
-    return {
-      at: new Date(now || Date.now()).toISOString(),
-      percentSolid: r.pctSolid,
-      activeWeakSpots: r.active,
-      accuracyLast7: acc7 != null ? Math.round(1000 * acc7) / 10 : null,
-      answersLast7: last7.length,
-      predictedRange: [lo, hi],
-      basis: [
-        pastAvg != null ? `past unit exams average ${Math.round(pastAvg * 10) / 10}` : null,
-        acc7 != null
-          ? `${Math.round(acc7 * 100)}% on ${examId} questions in the last 7 days (${last7.length} answers)`
-          : null,
-        r.pctSolid != null ? `${r.pctSolid}% of ${examId} weak spots solid` : null,
-      ]
-        .filter(Boolean)
-        .join('; '),
-    };
-  }
-  /**
-   * An exam as readers see it (D-094): the Fact, with Matt's score and any status override from examedits/<id> and the
-   * night-before prediction from predictions/<id>. Nothing of either is stored on the exam.
-   */
-  function examView(exam, edit, prediction) {
-    if (!exam) return exam;
-    const v = { ...exam };
-    if (edit) {
-      if (typeof edit.score === 'number') v.score = edit.score;
-      if (edit.scoreAt) v.scoreAt = edit.scoreAt;
-      if (edit.status) v.status = edit.status;
-    }
-    if (prediction && Array.isArray(prediction.predictedRange)) {
-      const { schema, writer, source, examId, ...p } = prediction;
-      v.prediction = p;
-    }
-    return v;
-  }
-  function examViews(exams, examedits, predictions) {
-    const e = new Map((examedits || []).map(x => [x.id, x])),
-      p = new Map((predictions || []).map(x => [x.id, x]));
-    return (exams || []).map(x => examView(x, e.get(x.id), p.get(x.id)));
-  }
-  function calibrate(exam) {
-    if (!exam || !exam.prediction || typeof exam.score !== 'number') return null;
-    const [lo, hi] = exam.prediction.predictedRange;
-    const mid = (lo + hi) / 2;
-    return {
-      score: exam.score,
-      predictedRange: [lo, hi],
-      inRange: exam.score >= lo && exam.score <= hi,
-      error: Math.round((exam.score - mid) * 10) / 10,
-    };
-  }
-  /**
-   * The post-exam retro (D-104): the night-before prediction against the score Matt typed (calibrate on the exam's
-   * view), accuracy by objective from E.V.'s own practice answers on that exam up to its date, the exam's weak spots
-   * made solid and still open (an auto-parked one is still open: it was never made solid), and the plan tasks ticked
-   * and left. Only E.V.'s sets and his answers to them and the score he entered; never the exam's questions or his
-   * graded answers. Returns null for an unknown exam. weakspots are models (buildWeakspots); plans are planViews.
-   */
-  function examRetro({ examId, exams, examedits, predictions, sets, answers, weakspots, plans, objectives } = {}) {
-    const exam = examViews(exams || [], examedits || [], predictions || []).find(e => e.id === examId);
-    if (!exam) return null;
-    const until = exam.date || '9999-12-31';
-    const atts = collectAttempts(sets || [], answers || []).all.filter(
-      a => a.objective && String(a.objective).startsWith(examId + '-') && a.date <= until
-    );
-    const pctOf = (r, n) => (n ? Math.round((1000 * r) / n) / 10 : null);
-    const objText = new Map((objectives || []).map(o => [o.id, o.text || '']));
-    const byObjective = Object.entries(answerStats(atts).byObjective)
-      .map(([id, s]) => ({ id, text: objText.get(id) || '', right: s.right, n: s.n, pct: pctOf(s.right, s.n) }))
-      .sort((a, b) => a.right / a.n - b.right / b.n || b.n - a.n || (a.id < b.id ? -1 : 1));
-    const mine = (weakspots || []).filter(
-      w => (w.kind || 'concept') === 'concept' && examOf(w) === examId && w.derived && w.derived.status !== 'moved'
-    );
-    const byNeed = (a, b) =>
-      (b.derived.recurrence || 1) - (a.derived.recurrence || 1) ||
-      (b.derived.misses || 0) - (a.derived.misses || 0) ||
-      (a.id < b.id ? -1 : 1);
-    const solid = mine.filter(isSolid),
-      open = mine.filter(w => !isSolid(w)).sort(byNeed);
-    const ticked = [],
-      left = [];
-    for (const p of (plans || []).filter(x => (x.exam || x.id) === examId))
-      for (const t of planTasks(p)) {
-        if (t.date > until) continue;
-        (taskDone(p, t, until, sets, answers) ? ticked : left).push({
-          date: t.date,
-          text: t.text,
-          kind: t.kind || null,
-        });
-      }
-    const pred = exam.prediction
-      ? { predictedRange: exam.prediction.predictedRange, basis: exam.prediction.basis || '' }
-      : null;
-    return {
-      examId,
-      title: exam.title || examId,
-      date: exam.date || null,
-      score: typeof exam.score === 'number' ? exam.score : null,
-      prediction: pred,
-      calibration: calibrate(exam),
-      practice: {
-        answered: atts.length,
-        right: atts.filter(a => a.correct).length,
-        pct: pctOf(atts.filter(a => a.correct).length, atts.length),
-        byObjective,
-      },
-      weakSpots: {
-        solid: solid.length,
-        open: open.length,
-        openTopics: open
-          .slice(0, 8)
-          .map(w => ({ topic: w.topic, objective: w.objective || null, recurrence: w.derived.recurrence || 1 })),
-      },
-      plan: { tasks: ticked.length + left.length, ticked: ticked.length, left: left.slice(0, 10) },
-    };
-  }
+  // B-159: the section lives in core/insights.mjs; the names the rest of core uses, bound once.
+  const { answerStats, calibrate, examRetro, examViews, predictReadiness, readiness, readinessAudit } = makeInsights({
+    addDays,
+    citeMaterial,
+    collectAttempts,
+    diffDays,
+    examOf,
+    isActive,
+    isSolid,
+    planTasks,
+    reviewNeed,
+    searchLibrary,
+    taskDone,
+  });
 
   // ---------------------------------------------------------------- lint
   const ID_PATTERNS = [
@@ -2813,49 +2417,6 @@ const EVCore = (() => {
     }
     return out;
   }
-  // ---------------------------------------------------------------- library: course materials (D-079)
-  // B-155: the section lives in core/library.mjs; the names the rest of core uses, bound once.
-  const {
-    MATERIAL_KINDS,
-    citeMaterial,
-    guessCourse,
-    libStem,
-    libTokens,
-    libraryCatalog,
-    libraryChunks,
-    libraryIndex,
-    libraryPick,
-    liveMaterials,
-    materialFromUpload,
-    materialKind,
-    materialRemove,
-    mergeOcr,
-    normCourse,
-    ocrPrompt,
-    officeText,
-    parseOcr,
-    pdfText,
-    readMaterial,
-    searchLibrary,
-    stripHtml,
-  } = makeLibrary({
-    get C() {
-      return C;
-    },
-    STOP,
-    activeCourses,
-    chicagoDate,
-    courseTable,
-    defaultCourse,
-    editBase,
-    envelope,
-    isCourse,
-    isoOf,
-    norm,
-    safeId,
-    slug,
-  });
-
   // ---------------------------------------------------------------- Study Watch session intake; study sessions in E.V. Home (D-073)
   // B-156: the sections live in core/sessions.mjs; the names the rest of core uses, bound once.
   const {
@@ -3156,13 +2717,11 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
     listEdit,
     isFixedItem,
     // prep checks (D-143, D-144)
-    PREP_KINDS,
     prepKindOf,
     prepDay,
     prepBringItems,
     prepList,
     prepEdit,
-    prepCheckId,
     gradedAsk,
     DATE_KINDS,
     dateEdit,
@@ -3176,7 +2735,6 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
     lastRuns,
     capacity,
     weakspotCards,
-    examView,
     examViews,
     buildContext,
     answerStats,

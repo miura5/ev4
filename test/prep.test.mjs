@@ -358,3 +358,13 @@ test('a table of contents is never read as a bring list (a dash there is a page 
     'bare "equipment" opens no list'
   );
 });
+
+test('B-159: prep checks are their own file, one factory, and E.V. core still exports every name callers use', () => {
+  const src = fs.readFileSync(new URL('../core/prep.mjs', import.meta.url), 'utf8');
+  assert.doesNotMatch(src, /^import /m, 'no imports: it runs in the page as written');
+  assert.deepEqual(src.match(/^export .*/gm), ['export function makePrep(core) {']);
+  const core = fs.readFileSync(new URL('../core/evcore.mjs', import.meta.url), 'utf8');
+  assert.doesNotMatch(core, /function prepDay|function prepList|function prepEdit/, 'moved, not copied');
+  for (const n of ['prepDay', 'prepList', 'prepEdit', 'prepKindOf', 'prepBringItems'])
+    assert.equal(typeof EV[n], 'function', n);
+});
