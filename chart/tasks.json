@@ -2968,7 +2968,7 @@
   "milestone": "v4.3 ops",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Hit live Oct 21: main reached 58 commits past live's 8ec85c4 (record commits count), so the 50-deep clone lost it and the fallback refused on core/conversation.mjs; the live worker (and every live run) failed at the gate until the v4.3.0 deploy at c38c86b. Two practice-set jobs from 15:44Z were re-fired by the build chat after the deploy. This is the fix that stops a busy build day breaking live; take it next.",
   "commit": null,
   "source": "B-133 diagnostic runs/diagnostic-20261021-110125159"
  },
