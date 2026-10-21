@@ -1511,10 +1511,10 @@
  {
   "id": "B-81",
   "kind": "task",
-  "title": "Captions rollout (D-136, D-139): B-76 and B-77 go live at 6ad8a53 on Matt's OK, and B-78 and B-80 may follow the same way when done (no stored-document change); for the rest, a staging soak of B-74 to B-80 and Matt's phone and desktop check on staging, two minutes of a session included; then, after NUR Exam 4 (Wed Oct 21) and B-30's retirement steps close D-085's window, the talk, sessions, sets and answers migrations on live and the live page by deploy's printed calls on Matt's explicit OK.",
+  "title": "Captions rollout (D-136, D-139): B-76 and B-77 go live at 6ad8a53 on Matt's OK, and B-78 and B-80 may follow the same way when done (no stored-document change); for the rest, a staging soak of B-74 to B-80 and Matt's phone and desktop check on staging, two minutes of a session included; then the talk, sessions, sets and answers migrations on live and the live page by the normal path (ship staging green at the commit, ship live on Matt's explicit OK; D-085's window is gone, D-145), never inside a live freeze Matt names.",
   "dod": "Matt's OK recorded on the Board; verify-deploy live and staging green at one content hash; rebuild all green; the first live session read back with session, note and comments fields",
   "milestone": "M11 gate",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-76",
    "B-77",
@@ -1524,9 +1524,15 @@
    "B-30"
   ],
   "dependsText": "B-76, B-77, B-78, B-79, B-80, B-30 and Matt's OK",
-  "notes": "B-76 and B-77 are live under D-139: 6ad8a53 deployed live Oct 18 23:57 CT on Matt's OK (system batch to manifest v8, spec v19, environments v8; page version 23 with its capabilities whole), verify-deploy live GREEN and verify-deploy staging GREEN at 6ad8a53; the published files read back match the manifest and pass the Captions harness (100 checks) at 390 and 1280. Rollback is a redeploy of 42f35e9. The migrations and B-74, B-75, B-79 stay off live B-82 (skills runner fixes, EV-04) went live the same way at 329349f, Oct 19 00:48 CT",
+  "notes": "Title fixed (Oct 21): it no longer waits for D-085's window, which D-145 removed; live now takes migrations by the normal path. Blocked: B-78, B-79 and B-80 are blocked on Matt's answers (B-74, B-75 too), then the staging soak, Matt's phone and desktop check, and his OK.",
   "commit": null,
-  "source": "BACKLOG.md"
+  "source": "BACKLOG.md",
+  "board": {
+   "row": "v4 B-81: Captions rollout to live",
+   "why": "The gate that takes Captions to live",
+   "notes": "Gate: waits on B-74 to B-80 and Matt's OK"
+  },
+  "waitingOn": "Matt"
  },
  {
   "id": "B-82",
