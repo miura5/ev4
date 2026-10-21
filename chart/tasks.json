@@ -3087,5 +3087,28 @@
    "outcome": "task",
    "at": "2026-10-21T17:41:58.719Z"
   }
+ },
+ {
+  "id": "B-175",
+  "kind": "bug",
+  "title": "Bug (reported Oct 21): Live deploys since v4.3.0 carry no patch tag on origin: ship live tagged v4.3.1 (c8f5464) and v4.3.2 (b9c59d5) in the cloud session's checkout, but the session's git proxy refuses every tag push ('send-pack: unexpected disconnect', and the GitHub API refuses ref writes), so D-173's tag per live deploy never reaches origin and git describe on a fresh clone names v4.3.0",
+  "dod": "ship live records the release it tags on its deploy entry (release in chart/deploys.json); a GitHub Actions workflow (tags.yml) on every push that touches chart/deploys.json creates each live deploy's tag on origin that is missing (the recorded release, else the next patch after the last tag in deploy order, D-173), so a refused push from a cloud session no longer loses it; tests plant deploys and tags and check the tags it would make; v4.3.1 at c8f5464 and v4.3.2 at b9c59d5 are on origin, read back with git ls-remote",
+  "milestone": "v4.3 ops",
+  "status": "in progress",
+  "depends": [],
+  "notes": "Taken before the v4.4 design (kickoff step 2)",
+  "commit": null,
+  "source": "build chat Oct 21, v4.4 kickoff step 2",
+  "words": "Live deploys since v4.3.0 carry no patch tag on origin: ship live tagged v4.3.1 (c8f5464) and v4.3.2 (b9c59d5) in the cloud session's checkout, but the session's git proxy refuses every tag push ('send-pack: unexpected disconnect', and the GitHub API refuses ref writes), so D-173's tag per live deploy never reaches origin and git describe on a fresh clone names v4.3.0",
+  "reportedAt": "2026-10-21T22:03:55.273Z",
+  "board": {
+   "row": "v4 B-175: Live deploys since v4.3.0 carry no patch tag on origin: ship live…",
+   "why": "Live deploys since v4.3.0 carry no patch tag on origin: ship live tagged v4.3.1 (c8f5464) and v4.3.2 (b9c59d5) in the cloud session's checkout, but the session's git proxy refuses every tag push ('send-pack: unexpected disconnect', and the GitHub API refuses ref writes), so D-173's tag per live deploy never reaches origin and git describe on a fresh clone names v4.3.0",
+   "notes": "Reported Oct 21 from build chat Oct 21, v4.4 kickoff step 2"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-21T22:04:04.339Z"
+  }
  }
 ]

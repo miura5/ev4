@@ -2442,7 +2442,10 @@
   "summary": "The gate fetches before it falls back; A live worker that fails at the gate pushes 'E.V.' with no text: two…; Evidence counts in the weekly's health line; Open-ended checks and grading; Version-free task names",
   "why": null,
   "decisions": [],
-  "source": "log"
+  "source": "log",
+  "notes": [
+   "release v4.3.1 (B-175: tagged here; the cloud proxy refused the push, tags.yml makes it on origin)"
+  ]
  },
  {
   "target": "staging",
@@ -2474,7 +2477,10 @@
   "summary": "A greeting that reads the moment",
   "why": null,
   "decisions": [],
-  "source": "log"
+  "source": "log",
+  "notes": [
+   "release v4.3.2 (B-175: tagged here; the cloud proxy refused the push, tags.yml makes it on origin)"
+  ]
  },
  {
   "target": "staging",

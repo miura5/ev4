@@ -1212,6 +1212,11 @@ export function applyLog(rec, o, { now = new Date().toISOString() } = {}) {
       decisions: list(o.decisions),
       source: o.source || 'log',
     };
+    // B-175 (D-173): the release a live deploy carries, so tools/tags.mjs can put a refused tag on origin.
+    if (typeof o.release === 'string') {
+      if (!/^v\d+\.\d+\.\d+$/.test(o.release)) throw new Error('log deploy --release takes a tag like v4.3.2');
+      d.release = o.release;
+    }
     if (target === 'live' && d.okFrom !== 'Matt')
       throw new Error('a live deploy is recorded with --ok Matt: there is none without his OK');
     if (rec.deploys.some(x => x.target === target && x.commit === d.commit && !x.line))
@@ -2153,7 +2158,7 @@ export function nextTag(root, { specVersion, minor = false }) {
     throw new Error(`no v${M}.${m} tag yet: this live deploy is the minor (ship live --matt-ok --minor)`);
   return `v${M}.${m}.${Math.max(...same.map(t => t[2])) + 1}`;
 }
-/** B-149: pushes the tag a live deploy carries; a refused push is Matt's one line ("push the tag"). */
+/** B-149: pushes the tag a live deploy carries; a refused push is made by tags.yml from the recorded release (B-175). */
 export function pushTag(root, tag) {
   try {
     git(root, ['push', '-q', 'origin', `refs/tags/${tag}`]);
@@ -2161,7 +2166,7 @@ export function pushTag(root, tag) {
   } catch (e) {
     return {
       pushed: false,
-      line: `the tag push was refused (${firstLine(e)}): push the tag with git push origin ${tag}`,
+      line: `the tag push was refused (${firstLine(e)}): tags.yml makes ${tag} on origin from this deploy's release`,
     };
   }
 }
@@ -2172,10 +2177,9 @@ export function pushTag(root, tag) {
  */
 export function recordShip(root, o, { target, manifest, recorded = false }) {
   const short = manifest.commit.slice(0, 7);
-  if (target === 'live') {
-    const tag = tagAt(root, manifest.commit);
-    if (tag) console.log(pushTag(root, tag).line);
-  }
+  const tag = target === 'live' ? tagAt(root, manifest.commit) : null;
+  // B-175: the deploy records its release, so a refused push is made on origin by tags.yml.
+  if (tag) console.log(pushTag(root, tag).line);
   if (typeof o.done === 'string')
     for (const id of list(o.done))
       record(
@@ -2216,6 +2220,7 @@ export function recordShip(root, o, { target, manifest, recorded = false }) {
       commit: manifest.commit,
       verify: 'green',
       ok: target === 'live' ? 'Matt' : undefined,
+      release: tag || undefined,
       tasks: tasks.join(','),
       from: prev && prev.commit,
       summary: o.summary || names.join('; ') || null,

@@ -1,0 +1,24 @@
+# B-175 (D-173): every live deploy carries its release tag on origin. ship live tags the build and pushes the tag, but a
+# cloud session's git proxy refuses tag pushes; this makes each live deploy's missing tag from chart/deploys.json (the
+# recorded release, else the next patch after the last tag in deploy order). It never moves or deletes a tag.
+name: release tags
+on:
+  push:
+    branches: [main]
+    paths: [chart/deploys.json]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: release-tags
+jobs:
+  tags:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: git config --global user.name 'E.V. CI' && git config --global user.email 'ci@example.invalid'
+      - run: node tools/tags.mjs --push
