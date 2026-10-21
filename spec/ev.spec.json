@@ -1910,7 +1910,7 @@
     ],
     "macBound": true,
     "push": true,
-    "trigger": "trig_01GbvqgvbaSjvDDpNHum5Nxk"
+    "trigger": "trig_011rC4brSBYFubij7dY4NsDo"
    },
    "weekly": {
     "pipeline": "weekly",
@@ -2209,6 +2209,12 @@
     "was": "probe",
     "name": "E.V. watchdog one-shot probe 2 (B-49, CLAUDE.md fix)",
     "reason": "B-49: one scheduled firing of the live watchdog prompt after CLAUDE.md scoped its explicit-OK list to build chats, Oct 18; spent after it fired."
+   },
+   {
+    "trigger": "trig_01GbvqgvbaSjvDDpNHum5Nxk",
+    "was": "live.evening-mac",
+    "name": "E.V. evening-mac (v4.0.0)",
+    "reason": "B-98 (O-3): its runs started without the repository checked out (Oct 20 and 21); re-created Oct 21 from a build session with the repository and the Mac link as trig_011rC4brSBYFubij7dY4NsDo on Matt's OK; disabled and kept."
    }
   ]
  },

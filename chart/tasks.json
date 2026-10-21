@@ -1884,7 +1884,7 @@
   "depends": [
    "B-131"
   ],
-  "notes": "Taken in a build chat with Matt at the Mac: comparing live evening-mac (trig_01GbvqgvbaSjvDDpNHum5Nxk) with staging (trig_01FHjw4mu745gorCZ5quGSJD) before any change.",
+  "notes": "Oct 21, Matt at the Mac ('OK: re-create live evening-mac'): created trig_011rC4brSBYFubij7dY4NsDo from this build session (repository checked out, Mac linked), bound to the MacBook Air with the E.V. Study Watch folder, push on, 8:20pm Central, the v4.2 prompt; the old trig_01GbvqgvbaSjvDDpNHum5Nxk disabled and kept (spec.tasks.retired). Done when its first scheduled run (tonight 8:20pm) writes an ok runs/ document.",
   "commit": null,
   "source": "BACKLOG.md",
   "board": {
