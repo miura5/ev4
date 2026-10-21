@@ -501,6 +501,14 @@ export const BUMPS = {
     // B-43 (D-100): an item may be numeric (answer, unit, tolerance, steps); every item before it was single, select-all
     // or matrix, so a set only moves to the new version.
     1: d => ({ data: { ...d, schema: 2 }, also: [] }),
+    // B-75 (D-132): an item may be open (keyPoints, modelAnswer, a note/ sourceRef) and a set may be of kind check; every
+    // set before it holds only the closed types, so a set only moves to the new version.
+    2: d => ({ data: { ...d, schema: 3 }, also: [] }),
+  },
+  answers: {
+    // B-75 (D-132): an attempt on an open item keeps text, hits, grade, gradedBy and an optional added text; every
+    // attempt before it answered a closed item and has none of them, so a document only moves to the new version.
+    1: d => ({ data: { ...d, schema: 2 }, also: [] }),
   },
   talk: {
     // B-74 (D-128, D-130): a message may carry session (written during a session) and note (the line a comment is

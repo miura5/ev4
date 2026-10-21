@@ -173,6 +173,12 @@ button.quiet{background:transparent;border-color:var(--line2);color:var(--ink2)}
 .num-row.right .num-in{border-color:var(--accent)} .num-row.wrong .num-in{border-color:var(--bad-solid)}
 .num-unit{font-size:16px;color:var(--soft)}
 .num-answer{margin:0;font-weight:600}
+/* B-75 (D-132, D-165): an open answer: his words, then each key point as a line, hit or missed. */
+.open-in{display:block;width:100%;box-sizing:border-box;min-height:calc(var(--tap) * 2);font:inherit;font-size:16px;line-height:1.45;padding:10px 12px;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:rgba(255,255,255,.03);color:inherit;resize:vertical}
+.open-given{margin:0;padding-left:10px;border-left:2px solid rgba(255,255,255,.18);color:var(--soft);white-space:pre-wrap}
+.open-points{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.open-points li.hit{color:var(--accent-text)} .open-points li.miss{color:var(--bad)}
+.open-added{margin:0;color:var(--soft)}
 .num-steps{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px;color:var(--soft)}
 .opt.locked{cursor:default}
 .why{display:block;font-size:14px;color:#B4C1CB;margin-top:4px;line-height:1.45}

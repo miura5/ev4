@@ -9,13 +9,13 @@
   "writers": [
    "page"
   ],
-  "schema": 1
+  "schema": 2
  },
  "$comment": "answers: item id -> attempt key (<writer>-<time>) -> attempt; append-only.",
  "type": "object",
  "properties": {
   "schema": {
-   "const": 1
+   "const": 2
   },
   "writer": {
    "enum": [
@@ -88,6 +88,40 @@
       "endedAt": {
        "type": "string",
        "format": "date-time"
+      },
+      "text": {
+       "type": "string",
+       "maxLength": 600,
+       "description": "B-75 (D-132): an open answer's text, identifier-scanned"
+      },
+      "hits": {
+       "type": "array",
+       "items": {
+        "type": "boolean"
+       },
+       "minItems": 2,
+       "maxItems": 3,
+       "description": "B-75: a hit per key point"
+      },
+      "grade": {
+       "enum": [
+        "right",
+        "partial",
+        "wrong"
+       ],
+       "description": "B-75: right (every point), partial (some), wrong (none); partial counts as a miss"
+      },
+      "gradedBy": {
+       "enum": [
+        "model",
+        "local"
+       ],
+       "description": "B-75: the model call, or core.gradeOpenLocal when it failed or timed out"
+      },
+      "added": {
+       "type": "string",
+       "maxLength": 600,
+       "description": "B-75: what he added once after a partial grade; the grade is unchanged"
       }
      },
      "required": [

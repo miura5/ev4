@@ -31,11 +31,13 @@
       whyOpen = {},
       sumOpen = {};
     const verdictWord = (a, type) =>
-      a.correct
-        ? 'Right'
-        : type !== 'single' && a.score > 0
-          ? `Partly right (${Math.round(a.score * 100)}%)`
-          : 'Missed';
+      a.grade // B-75 (D-132, D-165): an open answer's grade, in a word
+        ? { right: 'Right', partial: 'Partly right', wrong: 'Missed' }[a.grade] || 'Missed'
+        : a.correct
+          ? 'Right'
+          : type !== 'single' && a.score > 0
+            ? `Partly right (${Math.round(a.score * 100)}%)`
+            : 'Missed';
     // The outcome core wrote ("Right. One more correct check on Wed 10/21 makes it solid.") as the verdict's second half.
     function outcomeLine(o) {
       let t = String(o || '')
@@ -105,7 +107,8 @@
       const a = answers[q.id];
       const type = E.itemType(q);
       const sel =
-        sels[key + q.id] || (sels[key + q.id] = type === 'matrix' ? [] : type === 'numeric' ? { v: '' } : new Set());
+        sels[key + q.id] ||
+        (sels[key + q.id] = type === 'matrix' ? [] : type === 'numeric' || type === 'open' ? { v: '' } : new Set());
       // B-116 (D-146, D-150): the stem leads; what kind of question it is follows as one quiet line, no chips, no second count.
       const tags = el(
         'p',
@@ -114,7 +117,13 @@
           q.weakspotId ? 'Weak spot' : q.kind === 'check' ? 'New check' : 'Practice',
           q.objective,
           q.cjStep ? cjLabel(q.cjStep) : '',
-          type === 'sata' ? 'Select all that apply' : type === 'matrix' ? 'One choice per row' : '',
+          type === 'sata'
+            ? 'Select all that apply'
+            : type === 'matrix'
+              ? 'One choice per row'
+              : type === 'open'
+                ? 'In your own words'
+                : '',
         ]
           .filter(Boolean)
           .join(' · ')
@@ -143,8 +152,11 @@
           ? q.matrix.rows.every((_, i) => Number.isInteger(sel[i]))
           : type === 'numeric'
             ? !!E.numericGiven(sel.v)
-            : sel.size > 0;
-      if (type === 'numeric') {
+            : type === 'open'
+              ? !!String(sel.v).trim()
+              : sel.size > 0;
+      if (type === 'open') parts.push(...openParts(key, set, q, a, sel, () => (submit.disabled = !ready())));
+      else if (type === 'numeric') {
         // B-43 (D-100): a number and its unit; answered, his number, the answer when he missed, and the worked steps.
         const row = el('div', 'num-row');
         const inp = document.createElement('input');
@@ -275,12 +287,21 @@
         submit.addEventListener('click', async () => {
           submit.disabled = true;
           submit.textContent = 'Saving…';
-          const chosen =
+          let chosen =
             type === 'matrix'
               ? q.matrix.rows.map((_, i) => sel[i])
               : type === 'numeric'
                 ? { value: E.numericGiven(sel.v).value, unit: E.numericGiven(sel.v).unit || q.unit }
-                : [...sel].sort((x, y) => x - y);
+                : [...(sel.size != null ? sel : [])].sort((x, y) => x - y);
+          if (type === 'open') {
+            submit.textContent = 'Checking…';
+            chosen = await gradeOpen(q, String(sel.v).trim());
+            if (!chosen) {
+              submit.disabled = false;
+              submit.textContent = 'Check answer';
+              return;
+            }
+          }
           try {
             const r = E.planAnswer({
               set,
@@ -332,6 +353,112 @@
       body.classList.remove('q-beside');
       body.replaceChildren(...parts);
     }
+    // B-75 (D-132): an open answer. Graded by one model call (a hit per key point, shape-checked, gradeTimeoutMs),
+    // else by core.gradeOpenLocal from the keyword groups, and the answer says Checked offline. His text is scanned for
+    // identifiers before anything is sent or saved.
+    async function gradeOpen(q, text) {
+      const o = (EV_SPEC.items && EV_SPEC.items.open) || {};
+      text = text.slice(0, o.answerMaxChars || 600);
+      const ids = E.scanIdentifiers(text);
+      if (ids.length) {
+        toast(`Your answer ${ids[0]}. Take it out and check again.`);
+        return null;
+      }
+      let hits = null;
+      if (sample && !T.sampleOff)
+        try {
+          const out = await Promise.race([
+            sample.json(E.gradePrompt(q, text), { modelTier: 'quick', cache: false }),
+            new Promise(ok => setTimeout(() => ok(null), o.gradeTimeoutMs || 8000)),
+          ]);
+          hits = E.parseGrade(out, q);
+        } catch (e) {
+          hits = null;
+        }
+      return hits ? { text, hits, gradedBy: 'model' } : { text, gradedBy: 'local' };
+    }
+    const addOpen = {};
+    // Answered, the verdict line stays above; under it his answer, then each key point as a line, hit or missed; Checked
+    // offline when the keyword groups graded it; the model answer; and after a partial grade, Add to it once (D-165).
+    function openParts(key, set, q, a, sel, changed) {
+      const parts = [];
+      if (!a) {
+        const ta = document.createElement('textarea');
+        ta.className = 'open-in';
+        ta.rows = 3;
+        ta.maxLength = ((EV_SPEC.items && EV_SPEC.items.open) || {}).answerMaxChars || 600;
+        ta.placeholder = 'Explain it in a few sentences';
+        ta.setAttribute('aria-label', 'Your answer');
+        ta.value = sel.v;
+        ta.addEventListener('input', () => {
+          sel.v = ta.value;
+          changed();
+        });
+        parts.push(ta);
+        return parts;
+      }
+      parts.push(el('p', 'open-given', a.text || a.chosen || ''));
+      const ul = el('ul', 'open-points');
+      (q.keyPoints || []).forEach((k, i) => {
+        const hit = !!(a.hits || [])[i];
+        ul.append(el('li', hit ? 'hit' : 'miss', (hit ? 'Hit: ' : 'Missed: ') + k.text));
+      });
+      parts.push(ul);
+      if (a.gradedBy === 'local') parts.push(el('p', 'meta open-offline', 'Checked offline'));
+      if (a.added) parts.push(el('p', 'open-added', 'You added: ' + a.added));
+      parts.push(el('p', 'meta open-model', 'Model answer: ' + q.modelAnswer));
+      if (a.grade === 'partial' && !a.added) {
+        const k = key + q.id;
+        if (!addOpen[k]) {
+          const t = el('button', 'tlink open-add', 'Add to it');
+          t.type = 'button';
+          t.addEventListener('click', () => {
+            addOpen[k] = { v: '' };
+            render();
+          });
+          parts.push(t);
+        } else {
+          const ta = document.createElement('textarea');
+          ta.className = 'open-in';
+          ta.rows = 2;
+          ta.maxLength = 600;
+          ta.setAttribute('aria-label', 'Add to your answer');
+          ta.value = addOpen[k].v;
+          const save = btn('Save', null, { primary: true });
+          save.disabled = !ta.value.trim();
+          ta.addEventListener('input', () => {
+            addOpen[k].v = ta.value;
+            save.disabled = !ta.value.trim();
+          });
+          save.addEventListener('click', async () => {
+            const text = ta.value.trim().slice(0, 600);
+            const ids = E.scanIdentifiers(text);
+            if (ids.length) return toast(`That ${ids[0]}. Take it out first.`);
+            const doc = S.answers.find(x => x.id === set.id || x.setId === set.id);
+            const tries = (doc && doc.answers && doc.answers[q.id]) || {};
+            const atKey = Object.keys(tries)
+              .filter(x => tries[x] && tries[x].at === a.at)
+              .pop();
+            if (!doc || !atKey) return toast('Couldn’t find that answer to add to.');
+            save.disabled = true;
+            // Stored on the same attempt; the grade it was given stays as it was (D-132).
+            await run([
+              {
+                op: 'update',
+                collection: 'answers',
+                id: doc.id,
+                data: { answers: { [q.id]: { [atKey]: { added: text } } } },
+              },
+            ]);
+            delete addOpen[k];
+          });
+          const row = el('div', 'actions');
+          row.append(el('span', 'grow'), save);
+          parts.push(ta, row);
+        }
+      }
+      return parts;
+    }
     function choiceText(q, idx) {
       return (idx || [])
         .map(i => q.options[i])
@@ -359,7 +486,13 @@
         const more = el('div', 'sum-more'),
           type = E.itemType(q),
           R = q.rationales || [];
-        if (type === 'numeric') {
+        if (type === 'open') {
+          // B-75: his answer, then the points it hit and missed.
+          more.append(el('p', 'meta', 'You wrote: ' + (a.text || a.chosen || '')));
+          (q.keyPoints || []).forEach((kp, i) =>
+            more.append(el('p', 'meta', ((a.hits || [])[i] ? 'Hit: ' : 'Missed: ') + kp.text))
+          );
+        } else if (type === 'numeric') {
           const given = a.chosen && typeof a.chosen.value === 'number' ? `${a.chosen.value} ${q.unit}` : 'nothing';
           if (!a.correct) more.append(el('p', 'meta', 'You gave: ' + given + '.'));
           more.append(

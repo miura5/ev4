@@ -21,6 +21,7 @@ import { makeInsights } from './insights.mjs';
 import { makeMirror } from './mirror.mjs';
 import { makeCanvasRules } from './canvas-rules.mjs';
 import { makeShare } from './share.mjs';
+import { makeItemKinds } from './item-kinds.mjs';
 const EVCore = (() => {
   'use strict';
   const VERSION = '__EV_RELEASE__'; // B-149: the build writes the release in (tools/build.mjs RELEASE_SLOT)
@@ -363,11 +364,28 @@ const EVCore = (() => {
     return `${WD[weekday(day)]} ${m}/${d}`;
   }
 
+  // ---------------------------------------------------------------- numeric (B-43) and open (B-75) items · core/item-kinds.mjs
+  const {
+    gradeOpenLocal,
+    gradePrompt,
+    isDosageMaterial,
+    isDosageTopic,
+    numericGiven,
+    openAnswer,
+    openGrade,
+    openItemErrors,
+    parseGrade,
+    unitOf,
+  } = makeItemKinds({
+    get SPEC() {
+      return SPEC;
+    },
+    scanIdentifiers: t => scanIdentifiers(t),
+  });
   // ---------------------------------------------------------------- items
   function itemType(q) {
     if (!q) return 'single';
-    if (q.type === 'matrix') return 'matrix';
-    if (q.type === 'numeric') return 'numeric'; // B-43 (D-100)
+    if (['matrix', 'numeric', 'open'].includes(q.type)) return q.type; // B-43 (D-100) numeric, B-75 (D-132) open
     return q.type === 'sata' || (Array.isArray(q.correct) && q.correct.length > 1) ? 'sata' : 'single';
   }
   const SELECT_N = /\bselect\s+(?:two|three|four|five|\d+)\b|\bchoose\s+(?:two|three|\d+)\b/i;
@@ -379,9 +397,11 @@ const EVCore = (() => {
     if (!q.id || typeof q.id !== 'string') errors.push('missing id');
     if (!q.stem || typeof q.stem !== 'string' || q.stem.trim().length < 10) errors.push('missing or too-short stem');
     const t = q.type || 'single';
-    if (!['single', 'sata', 'matrix', 'numeric'].includes(t)) errors.push('unknown type ' + t);
+    if (!['single', 'sata', 'matrix', 'numeric', 'open'].includes(t)) errors.push('unknown type ' + t);
     if (SELECT_N.test(q.stem || '')) errors.push('uses "select N" wording');
-    if (t === 'numeric') {
+    if (t === 'open') {
+      errors.push(...openItemErrors(q));
+    } else if (t === 'numeric') {
       // B-43 (D-100): a number with its unit, the rounding the stem states as the tolerance, and the worked steps.
       if (typeof q.answer !== 'number' || !Number.isFinite(q.answer)) errors.push('numeric needs a number answer');
       if (!unitOf(q.unit)) errors.push('numeric needs a unit from spec.items.units, not ' + JSON.stringify(q.unit));
@@ -431,48 +451,13 @@ const EVCore = (() => {
     return (set && Array.isArray(set.items) ? set.items : []).filter(q => validateItem(q, opts).ok);
   }
   /**
-   * B-43 (D-100): dosage material, the only ground a numeric item stands on: a library file whose title or module matches
-   * spec.items.dosage.match and not .skip (the syllabus, a calendar, drug cards or a medication table, B-01).
-   */
-  function isDosageMaterial(m) {
-    const d = (SPEC && SPEC.items && SPEC.items.dosage) || {};
-    const t = `${(m && m.title) || ''} ${(m && m.module) || ''}`;
-    return new RegExp(d.match || 'dosage', 'i').test(t) && !new RegExp(d.skip || '(?!)', 'i').test(t);
-  }
-  /** B-43: a topic that asks for dosage practice (make_practice, a plan's drill title). */
-  const isDosageTopic = t =>
-    /\b(dosage|dose calc\w*|drug calc\w*|med(ication)?[ -]?math|drip rates?|iv rates?|infusion rates?)\b/i.test(
-      String(t || '')
-    );
-  /** B-43 (D-100): a unit as spec.items.units names it (mL, mg, gtt/min, ...), matched without case or spaces; null if not one. */
-  function unitOf(u) {
-    const k = String(u == null ? '' : u)
-      .toLowerCase()
-      .replace(/\s+/g, '');
-    if (!k) return null;
-    return (
-      ((SPEC && SPEC.items && SPEC.items.units) || []).find(x => x.toLowerCase().replace(/\s+/g, '') === k) || null
-    );
-  }
-  /** A numeric answer as given: a number, a string ("2.5" or "2.5 mL") or {value, unit}; {value, unit} or null. */
-  function numericGiven(chosen) {
-    if (chosen && typeof chosen === 'object' && !Array.isArray(chosen))
-      return typeof chosen.value === 'number' && Number.isFinite(chosen.value)
-        ? { value: chosen.value, unit: chosen.unit || null }
-        : null;
-    if (typeof chosen === 'number') return Number.isFinite(chosen) ? { value: chosen, unit: null } : null;
-    const m = String(chosen == null ? '' : chosen)
-      .trim()
-      .match(/^(-?\d+(?:\.\d+)?|-?\.\d+)\s*(.*)$/);
-    return m ? { value: Number(m[1]), unit: m[2] || null } : null;
-  }
-  /**
    * Scores an answer. chosen: option indexes (single/sata), one column index per row (matrix), or for a numeric item
    * (B-43, D-100) the number given, right when it is within the item's tolerance of its answer and any unit given is its
    * unit.
    */
   function scoreAnswer(q, chosen) {
     const t = itemType(q);
+    if (t === 'open') return openAnswer(q, chosen); // B-75 (D-132)
     if (t === 'numeric') {
       const g = numericGiven(chosen);
       const tol = typeof q.tolerance === 'number' && q.tolerance > 0 ? q.tolerance : 0;
@@ -783,8 +768,9 @@ const EVCore = (() => {
     const plans = ctx.planedits ? planViews(ctx.plans, ctx.planedits) : ctx.plans || [];
     const at = isoOf(now);
     const date = chicagoDate(at);
-    const { correct, score } = scoreAnswer(q, chosen);
-    const answer = { chosen, correct, score, at };
+    const scored = scoreAnswer(q, chosen);
+    const { correct, score } = scored;
+    const answer = { ...(scored.attempt || { chosen }), correct, score, at }; // B-75: an open answer's text, hits, grade
     const attemptKey = eventKey('page', at);
     const writes = [];
     const models = ctx.weakspots || [];
@@ -861,7 +847,7 @@ const EVCore = (() => {
             op: 'set',
             collection: 'answers',
             id: set.id,
-            data: { ...envelope('page', 'E.V. Home', at), setId: set.id, answers: entry },
+            data: { ...envelope('page', 'E.V. Home', at), schema: 2, setId: set.id, answers: entry }, // B-75
           }
     );
     return { answer, attemptKey, writes, outcome, correct, score, weakspotId, state };
@@ -2208,6 +2194,9 @@ const EVCore = (() => {
 
   // ---------------------------------------------------------------- Study Watch session intake; study sessions in E.V. Home (D-073) · core/sessions.mjs (B-156)
   const {
+    checkFormat,
+    openCheckPrompt,
+    parseOpenCheck,
     checkPrompt,
     closeSession,
     commentPrompt,
@@ -2241,6 +2230,8 @@ const EVCore = (() => {
     similarity,
     slug,
     toMs,
+    openItemErrors,
+    scanIdentifiers,
   });
 
   // ---------------------------------------------------------------- skills practice (Features: "Skills practice mode"); workouts (D-108) · core/skills.mjs (B-158)
@@ -2342,6 +2333,11 @@ const EVCore = (() => {
     validateItem,
     validItems,
     scoreAnswer,
+    gradeOpenLocal,
+    openGrade,
+    gradePrompt,
+    parseGrade,
+    openItemErrors,
     unitOf,
     numericGiven,
     isDosageMaterial,
@@ -2463,6 +2459,9 @@ const EVCore = (() => {
     sessionContext,
     checkPrompt,
     parseCheck,
+    checkFormat,
+    openCheckPrompt,
+    parseOpenCheck,
     commentPrompt,
     parseComment,
     wrapPrompt,

@@ -11,13 +11,13 @@
    "worker",
    "page"
   ],
-  "schema": 2
+  "schema": 3
  },
  "$comment": "Items never change once written; answers live in answers/<setId>.",
  "type": "object",
  "properties": {
   "schema": {
-   "const": 2
+   "const": 3
   },
   "writer": {
    "enum": [
@@ -40,7 +40,8 @@
     "drill",
     "sim",
     "more",
-    "job"
+    "job",
+    "check"
    ]
   },
   "title": {
@@ -93,7 +94,8 @@
        "single",
        "sata",
        "matrix",
-       "numeric"
+       "numeric",
+       "open"
       ]
      },
      "stem": {
@@ -209,12 +211,13 @@
       "anyOf": [
        {
         "type": "string",
-        "pattern": "^materials/"
+        "pattern": "^(materials|note)/"
        },
        {
         "type": "null"
        }
-      ]
+      ],
+      "description": "materials/<id> for a passage; note/<note id>#<the line> for an open check on his note (B-75)"
      },
      "chapters": {
       "anyOf": [
@@ -231,6 +234,43 @@
         "type": "string"
        }
       ]
+     },
+     "keyPoints": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 3,
+      "description": "B-75 (D-132): an open item's key points, each at most 12 words, with keyword groups for the local grade",
+      "items": {
+       "type": "object",
+       "properties": {
+        "text": {
+         "type": "string",
+         "minLength": 1
+        },
+        "keywords": {
+         "type": "array",
+         "minItems": 1,
+         "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+           "type": "string",
+           "minLength": 1
+          }
+         }
+        }
+       },
+       "required": [
+        "text",
+        "keywords"
+       ],
+       "additionalProperties": false
+      }
+     },
+     "modelAnswer": {
+      "type": "string",
+      "minLength": 1,
+      "description": "B-75 (D-132): an open item's model answer, shown after he answers"
      }
     },
     "required": [

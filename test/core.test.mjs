@@ -273,7 +273,7 @@ const SET = {
 };
 const answersDoc = (setId, answers) => ({
   id: setId,
-  schema: 1,
+  schema: 2, // B-75: answers schema 2
   writer: 'page',
   at: at('2026-10-17'),
   source: 'E.V. Home',
@@ -1368,6 +1368,7 @@ test("B-160: what stays in E.V. core is the record's rules, under 2,500 lines; e
     'canvas-rules',
     'conversation',
     'insights',
+    'item-kinds',
     'library',
     'mirror',
     'prep',

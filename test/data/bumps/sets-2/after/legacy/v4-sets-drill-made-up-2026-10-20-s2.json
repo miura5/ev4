@@ -1,0 +1,40 @@
+{
+ "schema": 2,
+ "writer": "morning",
+ "at": "2026-10-15T09:31:00Z",
+ "source": "morning 4:25",
+ "kind": "drill",
+ "date": "2026-10-15",
+ "title": "Drill · made-up",
+ "createdAt": "2026-10-15T09:31:00Z",
+ "items": [
+  {
+   "id": "q1",
+   "kind": "review",
+   "type": "single",
+   "stem": "A made-up client has a made-up finding. Which action comes first?",
+   "options": [
+    "Made-up A",
+    "Made-up B",
+    "Made-up C",
+    "Made-up D"
+   ],
+   "correct": [
+    0
+   ],
+   "rationales": [
+    "Right.",
+    "No.",
+    "No.",
+    "No."
+   ],
+   "objective": "E9-1",
+   "topic": "Made-up topic",
+   "cjStep": "take-action"
+  }
+ ],
+ "migratedFrom": "sets/drill-made-up-2026-10-20",
+ "migratedTo": "sets/drill-made-up-2026-10-20",
+ "migratedAt": "2026-10-21T20:00:00.000Z",
+ "migration": "sets schema 2 to 3"
+}

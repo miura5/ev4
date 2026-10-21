@@ -1179,7 +1179,7 @@ export const AGENT_FOLDS = {
           id: setId,
           data: {
             ...EV.envelope('worker', ctx.source, ctx.now),
-            schema: 2, // B-43
+            schema: 3, // B-43, B-75
             kind: 'job',
             date: ctx.date,
             ...(target ? { exam: target.id } : {}),
@@ -1295,7 +1295,7 @@ export const AGENT_FOLDS = {
       }
       return q;
     };
-    const env = () => ({ ...EV.envelope('morning', ctx.source, ctx.now), schema: 2 }); // sets schema 2 (B-43)
+    const env = () => ({ ...EV.envelope('morning', ctx.source, ctx.now), schema: 3 }); // sets schema 3 (B-43, B-75)
     if (!b.review.exists && (b.review.targets.length || b.review.checks.length)) {
       const want = new Set(b.review.targets.map(t => t.weakspotId));
       const wantChecks = new Set(b.review.checks.map(c => c.objective));

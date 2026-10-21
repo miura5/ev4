@@ -1455,6 +1455,192 @@ async function sideBySide(browser, left, right, out, vp) {
       await ctx.close();
     }
   }
+  // B-75 (D-132, D-165): an open check answered in his own words, once graded by the stubbed model and once offline
+  // (the model call failing): the verdict one line, hit and missed points as lines, Checked offline, Add to it once.
+  {
+    const SET = 'check-ss-harness-open-2';
+    const ITEM = {
+      id: 'o1',
+      kind: 'check',
+      type: 'open',
+      stem: 'Why does 0.45% saline move water into the cells?',
+      keyPoints: [
+        { text: 'It is hypotonic to the blood', keywords: [['hypotonic']] },
+        { text: 'Water moves toward the higher concentration in the cells', keywords: [['water'], ['cell']] },
+      ],
+      modelAnswer: 'Half-normal saline is hypotonic, so water moves by osmosis into the cells, which hold more solute.',
+      sourceRef: 'note/x-coredata://open#0.45% saline is hypotonic',
+      topic: 'Hypotonic fluids',
+    };
+    const openSeed = () => {
+      const db = JSON.parse(JSON.stringify(seed)),
+        t0 = new Date(NOW.getTime() - 20 * 60e3).toISOString();
+      db.sessions = {
+        ...(db.sessions || {}),
+        'ss-harness-open': {
+          schema: 2,
+          writer: 'page',
+          at: t0,
+          source: 'E.V. Home',
+          status: 'active',
+          date: today,
+          startedAt: t0,
+          topic: 'Harness open check',
+          noteId: 'x-coredata://open',
+          driver: { view: 'gone', at: t0 },
+          events: { ['start-' + t0.replace(/[-:.TZ]/g, '').slice(0, 14)]: { type: 'start', at: t0 } },
+        },
+      };
+      db.sets = {
+        ...(db.sets || {}),
+        [SET]: {
+          schema: 3,
+          writer: 'page',
+          at: t0,
+          source: 'Study session',
+          kind: 'check',
+          title: 'Check 2 · Harness open check',
+          date: today,
+          exam: null,
+          items: [ITEM],
+        },
+      };
+      return db;
+    };
+    const post = page =>
+      page.evaluate(
+        async ({ today, SET, stem }) => {
+          const db = await window.claude.use('db'),
+            at = new Date(Date.now()).toISOString(),
+            id = 'm-' + at.replace(/[-:]/g, '').replace('T', '-').replace('.', '').replace('Z', '') + '-ev';
+          const doc = (window.__db.talk || {})[today] || {
+            schema: 2,
+            writer: 'page',
+            at,
+            source: 'E.V. Home',
+            date: today,
+            messages: {},
+          };
+          await db
+            .collection('talk')
+            .doc(today)
+            .set({
+              ...doc,
+              messages: {
+                ...(doc.messages || {}),
+                [id]: {
+                  role: 'ev',
+                  text: 'One question on what you just wrote. Answer it in your own words.',
+                  cards: [
+                    {
+                      type: 'check',
+                      session: 'ss-harness-open',
+                      n: 2,
+                      format: 'open',
+                      setId: SET,
+                      items: [{ text: stem, kind: 'why' }],
+                    },
+                  ],
+                  at,
+                  tier: 'quick',
+                },
+              },
+            });
+        },
+        { today, SET, stem: ITEM.stem }
+      );
+    const read = page =>
+      page.evaluate(SET => {
+        const c = [...document.querySelectorAll('#thread .ev-card.check')].pop();
+        const att = Object.values(((window.__db.answers || {})[SET] || { answers: {} }).answers.o1 || {}).pop() || null;
+        return {
+          verdict: c && (c.querySelector('.verdict') || {}).textContent,
+          given: c && (c.querySelector('.open-given') || {}).textContent,
+          points: c ? [...c.querySelectorAll('.open-points li')].map(l => l.className + ':' + l.textContent) : [],
+          offline: !!(c && c.querySelector('.open-offline')),
+          add: !!(c && c.querySelector('.open-add')),
+          added: c && (c.querySelector('.open-added') || {}).textContent,
+          att,
+        };
+      }, SET);
+    for (const [tag, vp, mode] of [
+      [390, { width: 390, height: 844 }, 'model'],
+      [1280, { width: 1280, height: 860 }, 'offline'],
+    ]) {
+      const ctx = await browser.newContext({ viewport: vp, colorScheme: 'dark' });
+      const page = await ctx.newPage();
+      const errors = [];
+      page.on('pageerror', e => errors.push(e.message));
+      await openPage(page, openSeed());
+      await page.waitForTimeout(1500);
+      await page.evaluate(mode => {
+        window.__sampleFn =
+          mode === 'model'
+            ? p => (/Key points:/.test(p) ? { hits: [true, false] } : { items: [] })
+            : () => {
+                const e = new Error('stub');
+                e.code = 'upstream_error';
+                throw e;
+              };
+      }, mode);
+      await post(page);
+      await page.waitForSelector('#thread .ev-card.check textarea.open-in', { timeout: 8000 }).catch(() => {});
+      await page.fill(
+        '#thread .ev-card.check textarea.open-in',
+        mode === 'model'
+          ? 'It pulls water toward where there is more stuff.'
+          : 'Half-normal saline is hypotonic, so water moves into each cell.'
+      );
+      await page.click('#thread .ev-card.check button:has-text("Check answer")');
+      await page.waitForSelector('#thread .ev-card.check .verdict', { timeout: 8000 }).catch(() => {});
+      await page.waitForTimeout(400);
+      const r = await read(page);
+      if (mode === 'model') {
+        ok(
+          `[open ${tag}] graded by the model: Partly right, one point hit and one missed, as lines under his answer`,
+          /^Partly right/.test(r.verdict || '') &&
+            r.points.length === 2 &&
+            /^hit:Hit: It is hypotonic/.test(r.points[0]) &&
+            /^miss:Missed: Water moves/.test(r.points[1]) &&
+            !r.offline &&
+            r.att &&
+            r.att.gradedBy === 'model' &&
+            r.att.grade === 'partial' &&
+            r.att.correct === false,
+          JSON.stringify(r)
+        );
+        await page.click('#thread .ev-card.check .open-add');
+        await page.fill('#thread .ev-card.check textarea.open-in', 'Water follows the solute into the cells.');
+        await page.click('#thread .ev-card.check button:has-text("Save")');
+        await page.waitForTimeout(600);
+        const r2 = await read(page);
+        ok(
+          `[open ${tag}] Add to it once: stored on the same attempt, the grade unchanged, offered no more`,
+          r2.att &&
+            r2.att.added === 'Water follows the solute into the cells.' &&
+            r2.att.grade === 'partial' &&
+            /^Partly right/.test(r2.verdict || '') &&
+            /You added: Water follows/.test(r2.added || '') &&
+            !r2.add,
+          JSON.stringify(r2)
+        );
+      } else
+        ok(
+          `[open ${tag}] the model call failing, the keyword groups grade it: Right, Checked offline`,
+          /^Right/.test(r.verdict || '') &&
+            r.points.every(p => p.startsWith('hit:')) &&
+            r.offline &&
+            r.att &&
+            r.att.gradedBy === 'local' &&
+            r.att.grade === 'right',
+          JSON.stringify(r)
+        );
+      const c = await page.$('#thread .ev-card.check');
+      if (c) await c.screenshot({ path: `${shots}/open-check-${mode}-${tag}.png` });
+      ok(`[open ${tag}] no page errors`, errors.length === 0, errors.join(' | '));
+      await ctx.close();
+    }
+  }
   // B-112 (D-153): at short heights (390x450 is the phone with its keyboard open) the composer's bottom edge and her
   // current line stay inside the viewport, idle, in a conversation and in a session.
   {

@@ -3086,7 +3086,8 @@
    "single": "options 3-6, exactly one correct index, a rationale per option",
    "sata": "options 5-6, two or more correct, a rationale per option; never 'select N' or 'select two'",
    "matrix": "matrix.columns 2-4 labels, matrix.rows 3-6 of {text, correct: column index, rationale}; scored per row, correct only when every row is right",
-   "numeric": "B-43 (D-100): dosage work. answer (a number), unit (one of units), tolerance (absolute; the rounding the stem states, default 0), steps (the worked solution, one line each, shown after answering); no options"
+   "numeric": "B-43 (D-100): dosage work. answer (a number), unit (one of units), tolerance (absolute; the rounding the stem states, default 0), steps (the worked solution, one line each, shown after answering); no options",
+   "open": "B-75 (D-132): explain in his own words. stem (one question, at most 25 words), keyPoints (2 or 3, each at most 12 words, with keywords: groups of words that can stand for one idea), modelAnswer, sourceRef (note/<id>#<line> or materials/<id>); no options. Only in session and conversation checks (sets of kind check), never in morning review sets."
   },
   "fields": [
    "id",
@@ -3104,6 +3105,8 @@
    "unit (numeric)",
    "tolerance (numeric)",
    "steps (numeric)",
+   "keyPoints (open)",
+   "modelAnswer (open)",
    "cjStep",
    "verify",
    "sourceRef (materials/<id>)",
@@ -3158,6 +3161,15 @@
    "skip": "syllabus|calendar|schedule|drug cards?|medication tables?",
    "query": "dosage calculation desired dose have quantity mg mL tablets infusion rate mL/hr gtt/min drop factor weight mg/kg",
    "count": 10
+  },
+  "open": {
+   "_note": "B-75 (D-132): the limits an open item and its answer keep; the page's model grade waits gradeTimeoutMs, then core.gradeOpenLocal grades",
+   "stemMaxWords": 25,
+   "keyPointsMin": 2,
+   "keyPointsMax": 3,
+   "keyPointMaxWords": 12,
+   "answerMaxChars": 600,
+   "gradeTimeoutMs": 8000
   }
  },
  "ui": {

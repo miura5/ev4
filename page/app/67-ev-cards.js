@@ -512,10 +512,13 @@
         });
         box.append(g, el('p', 'meta', 'Saved to today in your record. A number, not a diagnosis.'));
       },
-      check(box, c) {
+      check(box, c, k) {
         const s = sessOf(c.session);
         const st = s ? E.sessionState(s, now()) : null;
-        const answered = st && st.answered[c.n];
+        // B-75 (D-132): an open check is one question in its own set, answered here in his own words.
+        const oset = c.setId ? S.sets.find(x => x.id === c.setId) : null;
+        const oans = oset ? answersOf(oset) : null;
+        const answered = (st && st.answered[c.n]) || (oset && Object.keys(oans).length > 0);
         const live = !answered && !!s && s.status === 'active';
         box.classList.add('check', live ? 'live' : 'done');
         // B-122 (D-160, D-161): its head line folds it to that one line and back; folding files nothing, and the next
@@ -538,6 +541,18 @@
           chip(answered ? 'answered' : live ? 'your turn' : 'session over', answered ? 'ok' : live ? 'accent' : '')
         );
         box.append(h);
+        if (oset) {
+          const body = el('div', 'check-open');
+          box.append(body);
+          runner({
+            key: 'chk-' + key,
+            set: oset,
+            items: E.validItems(oset),
+            body,
+            label: 'E.V. · ' + (oset.title || ''),
+          });
+          return;
+        }
         const ol = el('ol', 'check-items');
         const KIND = { why: 'Why', gap: 'Gap', link: 'Link', weakspot: 'Revisit' };
         (c.items || []).forEach(x => {

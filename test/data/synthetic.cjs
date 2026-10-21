@@ -38,14 +38,14 @@ function syntheticRecord(now = new Date()) {
     { date: d(1), label: 'Weak spots', tasks: [{ id: 'e4-drill-weak', text: 'Drill: Exam 4 weak spots, 10 questions', tag: 'DRILL', kind: 'drill' }] },
   ] });
   const q = (id, stem, options, rationales, objective, topic) => ({ id, kind: 'drill', type: 'single', stem, options, correct: [0], rationales, objective, topic, cjStep: 'recognize-cues' });
-  put('sets', 'drill-E4-ch39', { ...env('morning', 'morning 4:25', ct(d(-1), 4, 31)), schema: 2, kind: 'drill', title: 'Drill: Ch 39 fluids and electrolytes', date: d(-1), exam: 'E4', planTaskId: 'e4-drill-39', items: [
+  put('sets', 'drill-E4-ch39', { ...env('morning', 'morning 4:25', ct(d(-1), 4, 31)), schema: 3, kind: 'drill', title: 'Drill: Ch 39 fluids and electrolytes', date: d(-1), exam: 'E4', planTaskId: 'e4-drill-39', items: [
     q('d1', 'Which made-up finding best shows fluid volume deficit?', ['Weight down 1 kg in a day', 'Bounding pulse', 'Crackles', 'Distended neck veins'], ['Right: a kilogram is about a litre lost.', 'That is excess.', 'That is excess.', 'That is excess.'], 'E4-1', 'Fluid volume deficit'),
     q('d2', 'Normal serum sodium is:', ['135 to 145 mEq/L', '3.5 to 5.0 mEq/L', '95 to 105 mEq/L', '8.5 to 10.5 mg/dL'], ['Right.', 'That is potassium.', 'That is chloride.', 'That is calcium.'], 'E4-2', 'Sodium range'),
   ] });
   // Yesterday's chapter drill, answered through (its summary carries All sets).
   const ans = (n, right) => { const when = ct(d(-1), 19, n); return { ['page-' + when.replace(/[-:]/g, '').replace('T', '-').replace(/\.\d+Z$/, '')]: { chosen: [right ? 0 : 1], correct: right, score: right ? 1 : 0, at: when, outcome: right ? 'right' : 'wrong' } }; };
-  put('answers', 'drill-E4-ch39', { ...env('page', 'E.V. Home', ct(d(-1), 19, 5)), setId: 'drill-E4-ch39', answers: { d1: ans(1, true), d2: ans(2, false) } });
-  put('sets', 'drill-E4-weak', { ...env('morning', 'morning 4:25', ct(d(-1), 4, 31)), schema: 2, kind: 'drill', title: 'Drill: Exam 4 weak spots', date: d(-1), exam: 'E4', planTaskId: 'e4-drill-weak', items: [
+  put('answers', 'drill-E4-ch39', { ...env('page', 'E.V. Home', ct(d(-1), 19, 5)), schema: 2, setId: 'drill-E4-ch39', answers: { d1: ans(1, true), d2: ans(2, false) } });
+  put('sets', 'drill-E4-weak', { ...env('morning', 'morning 4:25', ct(d(-1), 4, 31)), schema: 3, kind: 'drill', title: 'Drill: Exam 4 weak spots', date: d(-1), exam: 'E4', planTaskId: 'e4-drill-weak', items: [
     q('w1', 'Cardiac output equals:', ['Heart rate × stroke volume', 'Stroke volume ÷ heart rate', 'Preload minus afterload', 'Heart rate × afterload'], ['Right.', 'Backwards.', 'Not a formula.', 'Not a formula.'], 'E4-3', 'What raises cardiac output'),
   ] });
   // run.cjs: its own skills packet (p. 12) is the one checklist in the library.

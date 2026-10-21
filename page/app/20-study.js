@@ -466,7 +466,7 @@
         id,
         data: {
           ...envelope('More practice'),
-          schema: 2,
+          schema: 3,
           kind: 'more',
           date: today,
           ...(ex ? { exam: ex.id } : {}),
@@ -575,7 +575,7 @@
           id,
           data: {
             ...envelope('More practice'),
-            schema: 2, // B-43
+            schema: 3, // B-43, B-75
             kind: 'more',
             date: today,
             ...(exId ? { exam: exId } : {}),

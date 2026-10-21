@@ -255,18 +255,72 @@
           await skip('identifiers', `Your new writing ${idWhy(ids[0])}. I skipped this check.`);
           return;
         }
-        const out = await sample.json(
-          E.checkPrompt({ noteName: note.name, text, added: d.added, n, context: sessCtx(), rewritten: d.rewritten }),
-          { modelTier: 'quick', cache: false }
-        );
+        const msg = msgId('e');
+        const m2 = E.noteMark(text);
+        const switched = st.lastMark && st.lastMark.noteId && st.lastMark.noteId !== note.id;
+        const pargs = { noteName: note.name, text, added: d.added, n, context: sessCtx(), rewritten: d.rewritten };
+        // B-75 (D-133): the formats alternate from multiple choice; an open check whose note gives no two grounded key
+        // points, or whose item fails its check function, falls back to multiple choice and is stored as one.
+        if (E.checkFormat(s, now()) === 'open') {
+          const item = E.parseOpenCheck(
+            await sample.json(E.openCheckPrompt(pargs), { modelTier: 'quick', cache: false }),
+            {
+              text,
+              noteId: note.id,
+              id: 'o1',
+              topic: note.name,
+            }
+          );
+          if (item) {
+            const setId = E.safeId(`check-${s.id}-${n}`);
+            await write({
+              op: 'set',
+              collection: 'sets',
+              id: setId,
+              data: {
+                ...envelope('Study session', now()),
+                schema: 3,
+                kind: 'check',
+                title: `Check ${n} · ${note.name}`,
+                date: E.chicagoDate(now()),
+                exam: null,
+                items: [item],
+              },
+            });
+            await postMsg({
+              id: msg,
+              role: 'ev',
+              text: `One question on what you just wrote${switched ? ' in **' + note.name + '**' : ''}. Answer it in your own words.`,
+              cards: [
+                { type: 'check', session: s.id, n, format: 'open', setId, items: [{ text: item.stem, kind: 'why' }] },
+              ],
+              at: now(),
+              tier: 'quick',
+            });
+            await sessEvent(s, 'check', {
+              n,
+              format: 'open',
+              items: 1,
+              msgId: msg,
+              noteId: note.id,
+              len: m2.len,
+              h: m2.h,
+              modifiedAt: note.modifiedAt || null,
+            });
+            SS.text = text;
+            SS.added = d.added;
+            SS.alertUntil = Date.now() + 4500;
+            chime();
+            if (SS.seen != null && text.startsWith(SS.seen)) SS.seen = text;
+            return;
+          }
+        }
+        const out = await sample.json(E.checkPrompt(pargs), { modelTier: 'quick', cache: false });
         const items = E.parseCheck(out);
         if (!items.length) {
           await skip('no-items');
           return;
         }
-        const msg = msgId('e');
-        const m2 = E.noteMark(text);
-        const switched = st.lastMark && st.lastMark.noteId && st.lastMark.noteId !== note.id;
         const count =
           ['One question', 'Two questions', 'Three questions'][items.length - 1] || plural(items.length, 'question');
         await postMsg({
@@ -279,7 +333,7 @@
         });
         await sessEvent(s, 'check', {
           n,
-          format: 'mc', // D-133: open checks come with B-75's checkFormat
+          format: 'mc', // D-133 (B-75): an open check that fell back is stored as multiple choice
           items: items.length,
           msgId: msg,
           noteId: note.id,

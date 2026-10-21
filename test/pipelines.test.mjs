@@ -1205,7 +1205,7 @@ test('B-43 (D-100): a dosage exam five days out gives the morning a dosage drill
   assert.equal(r.status, 'planned', JSON.stringify(r.problems));
   const set = r.plan.batches.flat().find(x => x.collection === 'sets' && x.doc_id === drill.setId);
   const data = JSON.parse(fs.readFileSync(set.file_path, 'utf8'));
-  assert.equal(data.schema, 2);
+  assert.equal(data.schema, 3);
   assert.deepEqual(
     data.items.map(q => q.topic),
     ['Liquid oral doses', 'IV rate']

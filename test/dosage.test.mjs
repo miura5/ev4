@@ -78,9 +78,9 @@ test('a numeric item validates only with a number answer, a known unit, a tolera
     const v = EV.validateItem(num(o), { strict: true });
     assert.equal(v.ok, false, why);
   }
-  // It fits the sets schema at version 2.
+  // It fits the sets schema at this build's version (2 since B-43, 3 since B-75).
   const set = {
-    schema: 2,
+    schema: 3,
     writer: 'morning',
     at: '2026-10-20T09:31:00Z',
     source: 'morning 4:25',
@@ -92,7 +92,7 @@ test('a numeric item validates only with a number answer, a known unit, a tolera
   assert.ok(validate('sets', set, { id: 'D1-dosage-2026-10-20' }).ok);
 });
 
-test('the sets 1 to 2 bump matches its fixture, keeps every item as it was, validates and is idempotent', () => {
+test('the sets 1 to 2 bump (chained to 3 by B-75) matches its fixture, keeps every item as it was, validates and is idempotent', () => {
   const load = d => {
     const db = {};
     for (const { collection, id, doc } of readExport(d)) (db[collection] = db[collection] || []).push({ ...doc, id });
