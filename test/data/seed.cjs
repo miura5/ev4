@@ -83,7 +83,9 @@
     put('answers', 'review-' + yday, { ...env('page', 'E.V. Home', ct(yday, 19, 20)), setId: 'review-' + yday, answers: { 'q-fve-y': ans(1, [1], false), 'q-iv-y': ans(2, [1], false), 'q-k-y': ans(3, [0], true), 'q-preload-y': ans(4, [1], false), 'q-co-y': ans(5, [0], true), 'q-ortho-y': ans(6, [0], true) } });
 
     // ---- today's list and the calendar
-    put('days', today, { ...env('morning', 'morning 4:25', ct(today, 4, 32)), schema: 2, shadow: null, date: today, dayType: 'class',
+    // B-48 (D-105): each morning stamps readiness per upcoming exam; the week before today climbs toward Exam 4.
+    const stamp = (e4, e5) => ({ E4: { pctSolid: e4, active: 8, solid: Math.round(e4 / 12), accuracy7: e4 ? 40 + e4 : null, answers7: 6 + e4 / 5 }, E5: { pctSolid: e5, active: 4, solid: 0, accuracy7: null, answers7: 0 } });
+    put('days', today, { ...env('morning', 'morning 4:25', ct(today, 4, 32)), schema: 3, shadow: null, readiness: stamp(20, 0), date: today, dayType: 'class',
       plan: { budget: { available: 180, planned: 85, over: 0 }, blocks: [], deferred: [], reviews: { load: { load: 8, base: 10, flex: null, reason: 'Class day, exam in 2 days: 8' }, ids: WS.slice(0, 8).map(w => w[0]), checks: [], target: 'E4' } },
       list: { items: [
         { id: 'read-ch39', text: 'Read Ch 39: Fluid, electrolyte and acid-base balance (~45 min)', tag: 'READING', minutes: 45 },
@@ -93,6 +95,11 @@
         { id: 'exam-E4', text: 'Exam 4: Fluids, electrolytes and perfusion (in 2 days)', tag: 'EXAM', minutes: 0, note: 'Scheduled only', ref: 'exams/E4' },
       ], focus: [], push: 'Class day · 8 reviews ready · Read Ch 39', budget: { available: 180, planned: 85, over: 0 }, deferred: [] },
       push: 'Class day · 8 reviews ready · Read Ch 39' });
+    // The six mornings before today, as their runs wrote them (the trend's points).
+    [0, 5, 5, 10, 10, 15].forEach((pct, i) => {
+      const k = 6 - i;
+      put('days', d(-k), { ...db.days[today], ...env('morning', 'morning 4:25', ct(d(-k), 4, 32)), schema: 3, date: d(-k), readiness: stamp(pct, 0) });
+    });
     const date = (id, n, title, kind, graded) => put('dates', id, { ...env('page', 'owner', ct(d(-7), 18)), addedAt: ct(d(-7), 18), date: d(n), title, kind, course: 'NUR 112', graded });
     date('demo-quiz', 1, 'Unit quiz: fluids and electrolytes', 'due', true);
     date('demo-clinical', 3, 'Clinical: med-surg unit, 0630–1500', 'clinical', false);

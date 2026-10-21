@@ -1,0 +1,35 @@
+{
+ "schema": 3,
+ "writer": "weekly",
+ "at": "2026-10-16T14:00:00Z",
+ "source": "weekly 5:57",
+ "date": "2026-10-11",
+ "calibration": {},
+ "health": {
+  "summary": "1 of 1 runs ok",
+  "verify": null
+ },
+ "rollups": {
+  "from": "2026-10-05",
+  "to": "2026-10-11",
+  "answered": 0,
+  "right": 0,
+  "byObjective": {},
+  "byType": {},
+  "newWeakSpots": [],
+  "solid": [],
+  "active": 1,
+  "sessions": 0,
+  "studyMinutes": 0,
+  "runs": {
+   "morning": {
+    "ok": 1,
+    "failed": 0,
+    "running": 0
+   }
+  },
+  "readiness": null
+ },
+ "review": "A made-up week.",
+ "reflection": "A made-up prompt?"
+}

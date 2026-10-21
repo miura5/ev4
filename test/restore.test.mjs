@@ -37,14 +37,17 @@ function pullFixture(dir) {
 function oldBackup(db) {
   const down = {
     days: d => {
-      const { shadow, ...r } = d;
+      const { shadow, readiness, ...r } = d;
       return { ...r, schema: 1 };
     },
     ideas: d => {
       const { kind, ...r } = d;
       return { ...r, schema: 1 };
     },
-    weeks: d => ({ ...d, schema: 1, health: d.health.summary }),
+    weeks: d => {
+      const { readiness, ...rollups } = d.rollups || {};
+      return { ...d, schema: 1, health: d.health.summary, rollups };
+    },
     exams: d => {
       const edit = (db.examedits || []).find(e => e.id === d.id);
       return {
@@ -60,7 +63,7 @@ function oldBackup(db) {
   const collections = {};
   for (const [c, docs] of Object.entries(db)) {
     if (c === 'journal' || c === 'system') continue;
-    collections[c] = docs.map(d => (down[c] && d.schema === 2 ? down[c](d) : d));
+    collections[c] = docs.map(d => (down[c] && d.schema > 1 ? down[c](d) : d));
   }
   return seal(collections);
 }
@@ -100,13 +103,18 @@ test('B-163: a schema-1 backup restores into a throwaway store, migrated to this
   // The run document names, per collection, the schema restored from and the one migrated to.
   assert.match(r.plan.detail, /counts and hashes match its manifest; migrated to this build: /);
   for (const c of ['days', 'exams', 'ideas', 'planedits', 'sets', 'talk', 'weeks'])
-    assert.match(r.plan.detail, new RegExp(`\\b${c} schema 1 to 2 \\(\\d+\\)`), c);
-  // Migrated, the backup is the fixture again, but for the one thing schema 1 never held: the fixture day's shadow pick
-  // (B-68), which a migrated day carries as null. Only that day is written back.
+    assert.match(
+      r.plan.detail,
+      new RegExp(`\\b${c} schema 1 to ${c === 'days' || c === 'weeks' ? 3 : 2} \\(\\d+\\)`),
+      c
+    );
+  // Migrated, the backup is the fixture again, but for what schema 1 never held: the fixture day's shadow pick (B-68)
+  // and the day's and the week's readiness stamps (B-48), which a migrated document carries as null. Only those two
+  // documents are written back.
   assert.notEqual(db.days[0].shadow, null, 'the fixture day has a shadow pick');
   assert.deepEqual(
     r.plan.batches.flat().map(w => `${w.collection}/${w.doc_id}`),
-    ['days/2026-10-16'],
+    ['days/2026-10-16', 'weeks/2026-10-11'],
     'only what the migration cannot rebuild differs'
   );
   // The throwaway store as the restore leaves it lints with no errors.
@@ -156,16 +164,16 @@ test('B-163: a backup newer than this build, and a version with no migration, ar
   const db = RUN.loadPulled(src);
   // Newer: a days document at schema 3, written by a build past this one.
   const newer = oldBackup(db);
-  newer.collections.days[0] = { ...newer.collections.days[0], schema: 3 };
+  newer.collections.days[0] = { ...newer.collections.days[0], schema: 4 };
   const n = drill(seal(newer.collections)).r;
   assert.equal(n.status, 'refused');
-  assert.match(n.problems.join(' '), /days\/2026-10-16 is at schema 3, newer than this build's 2/);
+  assert.match(n.problems.join(' '), /days\/2026-10-16 is at schema 4, newer than this build's 3/);
   // No migration: this build's registry at days 3 with no bump from 2 to 3.
   const ctx = { now: AT };
-  const m = steps.planRestore(seal(oldBackup(db).collections), db, ctx, spec, 'backup', { ...versionsOf(), days: 3 });
+  const m = steps.planRestore(seal(oldBackup(db).collections), db, ctx, spec, 'backup', { ...versionsOf(), days: 4 });
   assert.match(
     m.problems.join(' '),
-    /days\/2026-10-16 is at schema 1 and this build's is 3, but there is no migration from schema 2 to 3/
+    /days\/2026-10-16 is at schema 1 and this build's is 4, but there is no migration from schema 3 to 4/
   );
   // Today's refusal (B-27, Oct 21) was this backup's shape: it now restores.
   assert.equal(drill(oldBackup(db)).r.status, 'planned');
@@ -191,7 +199,7 @@ test('B-163: a backup newer than this build, and a version with no migration, ar
 test('B-163: evening-mac names its backup schema versions; health says how many bumps behind the latest backup is', async () => {
   const { backupSchemaLine } = await import('../core/steps.mjs');
   const { latestBackup, healthBody } = await import('../core/watch.mjs');
-  const { BUMPS } = await import('../core/migrate.mjs');
+  const { BUMPS, currentVersion } = await import('../core/migrate.mjs');
   const src = tmp('ev4-src-');
   pullFixture(src);
   const db = RUN.loadPulled(src);
@@ -203,7 +211,7 @@ test('B-163: evening-mac names its backup schema versions; health says how many 
       Object.keys(BUMPS)
         .sort()
         .filter(c => (db[c] || []).length)
-        .map(c => c + ':2')
+        .map(c => c + ':' + currentVersion(c))
         .join(' ')
   );
   assert.equal(backupSchemaLine({ days: [{ id: 'x', schema: 1 }] }), 'schema versions all 1');
@@ -223,13 +231,12 @@ test('B-163: evening-mac names its backup schema versions; health says how many 
     '2026-10-19T01:20:00Z'
   );
   const pre = run('backup backup/E.V.-v4-backup-saturday.json (370 documents, 800 KB)', '2026-10-18T01:20:00Z');
-  const behindNow = Object.keys(BUMPS).length - Object.keys(BUMPS).filter(c => (db[c] || []).length).length;
+  const allBehind = Object.keys(BUMPS).reduce((n, c) => n + currentVersion(c) - 1, 0);
+  const behindNow = Object.keys(BUMPS)
+    .filter(c => !(db[c] || []).length)
+    .reduce((n, c) => n + currentVersion(c) - 1, 0);
   assert.equal(latestBackup([old, cur, pre]).behind, behindNow, 'the newest backup is the one counted');
-  assert.equal(
-    latestBackup([old, pre]).behind,
-    Object.keys(BUMPS).length,
-    'all at 1: one bump behind per bumped collection'
-  );
+  assert.equal(latestBackup([old, pre]).behind, allBehind, 'all at 1: every bump this build has');
   assert.equal(latestBackup([pre]).behind, null, 'a run before the line: unknown, not a count');
   assert.equal(latestBackup([{ ...cur, status: 'failed' }]), null);
   // health/current carries it.
@@ -242,6 +249,6 @@ test('B-163: evening-mac names its backup schema versions; health says how many 
     run: old.id,
     at: old.startedAt,
     file: 'backup/E.V.-v4-backup-sunday.json',
-    behind: Object.keys(BUMPS).length,
+    behind: allBehind,
   });
 });

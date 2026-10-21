@@ -1,5 +1,5 @@
 {
- "schema": 2,
+ "schema": 3,
  "writer": "weekly",
  "at": "2026-10-16T14:00:00Z",
  "source": "weekly 5:57",
@@ -27,7 +27,8 @@
     "failed": 0,
     "running": 0
    }
-  }
+  },
+  "readiness": null
  },
  "review": "A made-up week.",
  "reflection": "A made-up prompt?"

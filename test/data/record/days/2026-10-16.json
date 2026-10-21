@@ -1,5 +1,5 @@
 {
- "schema": 2,
+ "schema": 3,
  "writer": "morning",
  "at": "2026-10-16T14:00:00Z",
  "source": "morning 4:25",
@@ -49,5 +49,14 @@
   "scheduler": "adaptive",
   "ids": [],
   "deferred": []
+ },
+ "readiness": {
+  "E9": {
+   "pctSolid": 0,
+   "active": 1,
+   "solid": 0,
+   "accuracy7": null,
+   "answers7": 0
+  }
  }
 }

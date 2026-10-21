@@ -9,7 +9,7 @@
   "writers": [
    "weekly"
   ],
-  "schema": 2,
+  "schema": 3,
   "authored": [
    "review",
    "reflection"
@@ -19,7 +19,7 @@
  "type": "object",
  "properties": {
   "schema": {
-   "const": 2
+   "const": 3
   },
   "writer": {
    "enum": [
@@ -123,7 +123,69 @@
    }
   },
   "rollups": {
-   "type": "object"
+   "type": "object",
+   "properties": {
+    "readiness": {
+     "description": "B-48 (D-105): readiness per upcoming exam of every active course as of this document (percent solid, active and solid weak spots, accuracy over the last seven days); null on a document written before it",
+     "anyOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "object",
+       "additionalProperties": {
+        "type": "object",
+        "properties": {
+         "pctSolid": {
+          "anyOf": [
+           {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+           },
+           {
+            "type": "null"
+           }
+          ]
+         },
+         "active": {
+          "type": "integer",
+          "minimum": 0
+         },
+         "solid": {
+          "type": "integer",
+          "minimum": 0
+         },
+         "accuracy7": {
+          "anyOf": [
+           {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+           },
+           {
+            "type": "null"
+           }
+          ]
+         },
+         "answers7": {
+          "type": "integer",
+          "minimum": 0
+         }
+        },
+        "required": [
+         "pctSolid",
+         "active",
+         "solid",
+         "accuracy7",
+         "answers7"
+        ],
+        "additionalProperties": false
+       }
+      }
+     ]
+    }
+   }
   },
   "study": {
    "type": "object",

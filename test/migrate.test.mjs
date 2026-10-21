@@ -377,13 +377,14 @@ test('days split four ways: Derived day, dayedits (no nulls), runs/<id> per v3 r
     'list',
     'plan',
     'push',
+    'readiness',
     'schema',
     'shadow',
     'source',
     'writer',
   ]);
   assert.equal(d.shadow, null, 'B-68: a v3 day had no shadow');
-  assert.equal(d.schema, 2);
+  assert.equal(d.schema, 3);
   const e = write(r, 'dayedits', '2026-10-13').data;
   assert.deepEqual(Object.keys(e.checks), ['plan-t1']);
   assert.deepEqual(Object.keys(e.skipped), ['plan-t9']);
@@ -721,4 +722,92 @@ test('B-74 (D-128, D-130, D-133): the talk and sessions 1 to 2 bumps match their
   assert.deepEqual([kept.comments, kept.events['page-20261016-000700000'].format], ['off', 'open']);
   // A skills run is an ss- session that never comments on notes: no level.
   assert.ok(!('comments' in BUMPS.sessions[1]({ id: 'ss-skill-made-up', schema: 1, kind: 'skill' }).data));
+});
+
+test('B-48 (D-105): the days and weeks 2 to 3 bumps add readiness null, match their fixtures, validate, rebuild and are idempotent', async () => {
+  const { migrateBumps } = await import('../core/migrate.mjs');
+  const { rebuildOne } = await import('../core/derive.mjs');
+  const { readExport: read } = await import('../core/schemas.mjs');
+  const load = d => {
+    const db = {};
+    for (const { collection, id, doc } of read(d)) (db[collection] = db[collection] || []).push({ ...doc, id });
+    return db;
+  };
+  const sorted = l => (l || []).slice().sort((a, b) => (a.id < b.id ? -1 : 1));
+  const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
+  const rec = load(path.join(ROOT, 'test/data/record'));
+  delete rec.journal;
+  for (const [name, c] of [
+    ['days-2', 'days'],
+    ['weeks-2', 'weeks'],
+  ]) {
+    const dir = path.join(ROOT, 'test/data/bumps', name);
+    const before = load(path.join(dir, 'before')),
+      after = load(path.join(dir, 'after'));
+    const r = migrateBumps(before, { at: '2026-10-21T12:00:00Z' });
+    const got = {};
+    for (const w of r.writes) (got[w.collection] = got[w.collection] || []).push({ ...w.data, id: w.id });
+    for (const [col, docs] of Object.entries(after))
+      assert.equal(EV.stableStringify(sorted(got[col])), EV.stableStringify(sorted(docs)), `${name}: ${col}`);
+    for (const w of r.writes)
+      assert.ok(validate(w.collection, w.data, { id: w.id }).ok, `${w.collection}/${w.id} validates`);
+    const doc = got[c][0];
+    assert.equal(doc.schema, 3);
+    assert.equal(
+      c === 'days' ? doc.readiness : doc.rollups.readiness,
+      null,
+      'a document from before the stamp has none'
+    );
+    const applied = applyWrites(before, r.writes);
+    assert.deepEqual(
+      migrateBumps(applied, { at: '2026-10-22T12:00:00Z' }).writes,
+      [],
+      `${name}: a second run writes nothing`
+    );
+    // The migrated document rebuilds as written (readiness stays null), in the record it came from.
+    assert.equal(rebuildOne({ ...rec, [c]: applied[c] }, spec, c, applied[c][0]).status, 'same', name);
+  }
+});
+
+test('B-48 (D-105): a day stamps readiness per upcoming exam of every active course, as of its morning', async () => {
+  const { rebuildOne, readinessStamp } = await import('../core/derive.mjs');
+  const { readExport: read } = await import('../core/schemas.mjs');
+  const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
+  const rec = {};
+  for (const { collection, id, doc } of read(path.join(ROOT, 'test/data/record')))
+    if (collection !== 'journal') (rec[collection] = rec[collection] || []).push({ ...doc, id });
+  const day = rec.days[0];
+  assert.deepEqual(Object.keys(day.readiness), ['E9']);
+  assert.deepEqual(Object.keys(day.readiness.E9).sort(), ['accuracy7', 'active', 'answers7', 'pctSolid', 'solid']);
+  assert.equal(rebuildOne(rec, spec, 'days', day).status, 'same', 'the fixture day rebuilds with its stamp');
+  assert.equal(rebuildOne(rec, spec, 'weeks', rec.weeks[0]).status, 'same', 'the fixture week rebuilds with its stamp');
+  // Seven-day accuracy counts only the exam's own objectives, within seven days before the date.
+  const v = {
+    exams: [{ id: 'E9', date: '2026-10-30', course: 'NUR 112', kind: 'unit' }],
+    sets: [
+      {
+        id: 's1',
+        items: [
+          { id: 'a', objective: 'E9-1', type: 'single', correct: [0] },
+          { id: 'b', objective: 'E9-2', type: 'single', correct: [0] },
+          { id: 'c', objective: 'E8-1', type: 'single', correct: [0] },
+        ],
+      },
+    ],
+    answers: [
+      {
+        id: 's1',
+        setId: 's1',
+        answers: {
+          a: { 'page-1': { chosen: [0], correct: true, score: 1, at: '2026-10-20T15:00:00Z' } },
+          b: { 'page-2': { chosen: [1], correct: false, score: 0, at: '2026-10-20T15:01:00Z' } },
+          c: { 'page-3': { chosen: [0], correct: true, score: 1, at: '2026-10-20T15:02:00Z' } },
+        },
+      },
+    ],
+    models: [],
+  };
+  const s = readinessStamp(v, '2026-10-21');
+  assert.deepEqual(s.E9, { pctSolid: null, active: 0, solid: 0, accuracy7: 50, answers7: 2 });
+  assert.deepEqual(readinessStamp(v, '2026-10-30'), {}, 'an exam today is no longer upcoming');
 });

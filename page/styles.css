@@ -585,3 +585,16 @@ button.tlink{all:unset;cursor:pointer;color:var(--accent-text);font-size:14px;pa
 .plan-past[hidden]{display:none}
 .plan-item .title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}.plan-item.open .title{white-space:normal}
 #plan-card .row{padding:8px 0;align-items:center}
+
+/* B-48 (D-105): readiness over time. Thin line, recessive grid; the night-before prediction a ring of its own. */
+.trend-wrap{display:flex;flex-direction:column;gap:4px;margin:4px 0 8px}
+.trend{width:100%;max-width:400px;height:auto;display:block;overflow:visible}
+.trend-grid{stroke:var(--line);stroke-width:1}
+.trend-axis{fill:var(--soft);font:11px var(--sans)}
+.trend-line{fill:none;stroke:var(--accent);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.trend-link{stroke:var(--violet);stroke-width:1.5;stroke-dasharray:3 3}
+.trend-pt{fill:var(--accent);stroke:var(--bg);stroke-width:2}
+.trend-pt.week{fill:var(--bg);stroke:var(--accent)}
+.trend-pred{fill:var(--bg);stroke:var(--violet);stroke-width:2}
+.trend-label{fill:var(--ink2);font:600 11px var(--sans)}
+.trend-cap{margin:0}

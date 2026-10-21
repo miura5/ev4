@@ -2185,6 +2185,62 @@ const ok = (name, cond, detail = '') => {
     }
     const rd = await page.textContent('#ready-card');
     ok('readiness shows E4', /Exam 4/.test(rd) && /% solid/.test(rd), rd.slice(0, 100));
+    {
+      // B-48 (D-105): the mornings' stamps draw E4's line; the night-before prediction is its last, marked point.
+      const pts = await page.locator('#ready-card svg.trend circle.trend-pt').count();
+      const cap = (await page.textContent('#ready-card .trend-cap')) || '';
+      ok(
+        'readiness draws its line from the mornings, nothing stored by the page',
+        pts === 7 && /Solid over 7 mornings: 0% to 20%\./.test(cap),
+        JSON.stringify({ pts, cap })
+      );
+      const tomorrow = await page.evaluate(() => window.EVCore.addDays(window.EVCore.chicagoDate(new Date()), 1));
+      await page.evaluate(async t => {
+        const db = await window.claude.use('db');
+        await db
+          .collection('predictions')
+          .doc('E4')
+          .set({
+            schema: 1,
+            writer: 'morning',
+            at: new Date().toISOString(),
+            source: 'morning 4:25',
+            examId: 'E4',
+            date: t,
+            percentSolid: 25,
+            activeWeakSpots: 8,
+            accuracyLast7: 60,
+            answersLast7: 10,
+            predictedRange: [78, 86],
+            basis: 'harness',
+          });
+      }, tomorrow);
+      await page.waitForTimeout(300);
+      await page.click('#seg-progress [data-v="weak"]');
+      await page.click('#seg-progress [data-v="readiness"]');
+      await page.waitForTimeout(200);
+      const pred = await page.locator('#ready-card svg.trend circle.trend-pred').count();
+      const cap2 = (await page.textContent('#ready-card .trend-cap')) || '';
+      const tip = await page.evaluate(() => {
+        const t = document.querySelector('#ready-card svg.trend circle.trend-pred title');
+        return t ? t.textContent : '';
+      });
+      ok(
+        'the night-before prediction is the last marked point',
+        pred === 1 && /the night before, 25%/.test(cap2) && /predicted score 78 to 86/.test(tip),
+        JSON.stringify({ pred, cap2, tip })
+      );
+      for (const [w, h] of [
+        [390, 844],
+        [1280, 860],
+      ]) {
+        await page.setViewportSize({ width: w, height: h });
+        await page.locator('#ready-card').scrollIntoViewIfNeeded();
+        await page.waitForTimeout(200);
+        await page.locator('#ready-card').screenshot({ path: `${shots}/readiness-trend-${w}.png` });
+      }
+      await page.setViewportSize(scheme === 'phone' ? { width: 390, height: 844 } : { width: 1280, height: 860 });
+    }
     await page.click('#seg-progress [data-v="weak"]');
     await page.waitForTimeout(100);
     ok(

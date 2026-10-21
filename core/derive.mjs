@@ -171,6 +171,34 @@ export function factCheck(spec, collection, doc, stored, fields) {
 // ------------------------------------------------------------------------------------------------ producers
 // Each: {writer, id(stored) -> the inputs it needs besides the record, build(db, inputs, spec) -> data (no envelope)}.
 
+/**
+ * D-105 (B-48): readiness per upcoming exam of every active course as of `date`: percent solid, active and solid weak
+ * spots, and accuracy on the exam's objectives over the last seven days (the window predictReadiness uses), so the
+ * Progress tab can draw it over time. {<examId>: {pctSolid, active, solid, accuracy7, answers7}}.
+ */
+export function readinessStamp(v, date) {
+  const atts = EV.collectAttempts(v.sets, v.answers).all.filter(a => a.date && a.date <= date);
+  const out = {};
+  for (const e of EV.nextExams(v.exams, date)) {
+    const r = EV.readiness({ examId: e.id, weakspots: v.models });
+    const last7 = atts.filter(
+      a =>
+        String(a.objective || '').startsWith(e.id + '-') &&
+        EV.diffDays(a.date, date) <= 7 &&
+        EV.diffDays(a.date, date) >= 0
+    );
+    const score = last7.reduce((s, a) => s + a.score, 0);
+    out[e.id] = {
+      pctSolid: r.pctSolid,
+      active: r.active,
+      solid: r.solid,
+      accuracy7: last7.length ? Math.round((1000 * score) / last7.length) / 10 : null,
+      answers7: last7.length,
+    };
+  }
+  return out;
+}
+
 /** days/<date>, the morning run: the plan and the list at 4:25am. */
 function dayBody(db, { date, now }, spec, stored) {
   const v = views(db);
@@ -215,13 +243,15 @@ function dayBody(db, { date, now }, spec, stored) {
   const open = reviewSet ? (reviewSet.items || []).length - EV.answeredItems(reviewSet, v.answers).length : 0;
   list.push = list.push.replace(/\d+ reviews? ready/, `${open} review${open === 1 ? '' : 's'} ready`);
   return {
-    schema: 2, // B-68: the shadow
+    schema: 3, // B-68: the shadow; B-48: readiness
     date,
     dayType: day.dayType,
     plan: { budget: day.budget, blocks: day.blocks, deferred: day.deferred, reviews: day.reviews },
     list,
     push: list.push,
     shadow,
+    // A day written before the stamp existed (migrated with readiness null) rebuilds as it was written.
+    readiness: stored && stored.readiness === null ? null : readinessStamp(v, date),
   };
 }
 
@@ -368,7 +398,7 @@ function weekBody(db, { date, verify = null }, spec, stored) {
         : '')
     : 'no runs this week';
   const body = {
-    schema: 2, // B-29: health is {summary, verify}
+    schema: 3, // B-29: health is {summary, verify}; B-48: rollups.readiness
     date,
     calibration,
     // The verify result comes from the run's own reads of its record (verify-deploy, read-only), an input as stored.
@@ -386,6 +416,8 @@ function weekBody(db, { date, verify = null }, spec, stored) {
       sessions: sessions.length,
       studyMinutes: sessions.reduce((s, x) => s + (Number(x.minutes) || 0), 0),
       runs: sorted(byPipeline),
+      // D-105 (B-48): the week's closing readiness per exam; a week written before it (migrated, null) rebuilds as it was.
+      readiness: stored && stored.rollups && stored.rollups.readiness === null ? null : readinessStamp(v, date),
     },
   };
   // B-68 (D-116): the week's two schedulers side by side, when its days carry a shadow (none before B-68).

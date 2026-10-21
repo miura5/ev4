@@ -49,6 +49,112 @@
       }
       if (!c.hidden) render(body);
     }
+    // B-48 (D-105): readiness over time for one exam: the mornings' stamps (days/<date>.readiness) inside the 14-day
+    // window, each week's closing stamp (weeks/<date>.rollups.readiness) before it, and the night-before prediction
+    // (predictions/<examId>, its percentSolid) as the last marked point. Nothing drawn here is stored by the page.
+    function readinessTrend(examId) {
+      const from = E.addDays(today, -13);
+      const pts = [];
+      for (const w of S.weeks || []) {
+        const r = w.rollups && w.rollups.readiness && w.rollups.readiness[examId];
+        if (r && r.pctSolid != null && w.date && w.date < from) pts.push({ date: w.date, v: r.pctSolid, week: true });
+      }
+      for (const d of S.days || []) {
+        const r = d.readiness && d.readiness[examId];
+        if (r && r.pctSolid != null && (d.date || d.id) >= from) pts.push({ date: d.date || d.id, v: r.pctSolid });
+      }
+      pts.sort((a, b) => a.date.localeCompare(b.date));
+      const p = (S.predictions || []).find(x => (x.examId || x.id) === examId);
+      const pred =
+        p && p.percentSolid != null && p.date ? { date: p.date, v: p.percentSolid, range: p.predictedRange } : null;
+      return { pts, pred };
+    }
+    function trendChart(examId) {
+      const { pts, pred } = readinessTrend(examId);
+      if (pts.length + (pred ? 1 : 0) < 2) return null;
+      const all = [...pts, ...(pred ? [pred] : [])];
+      const t0 = Date.parse(all[0].date + 'T12:00:00Z'),
+        t1 = Date.parse(all[all.length - 1].date + 'T12:00:00Z');
+      const W = 320,
+        H = 96,
+        L = 30,
+        R = 40,
+        T = 8,
+        B = 18;
+      const x = d => L + (t1 > t0 ? ((Date.parse(d + 'T12:00:00Z') - t0) / (t1 - t0)) * (W - L - R) : (W - L - R) / 2);
+      const y = v => T + (1 - v / 100) * (H - T - B);
+      const NS = 'http://www.w3.org/2000/svg';
+      const mk = (tag, attrs, text) => {
+        const n = document.createElementNS(NS, tag);
+        for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+        if (text != null) n.textContent = text;
+        return n;
+      };
+      const day = d => E.shortDate(d);
+      const svg = mk('svg', {
+        viewBox: `0 0 ${W} ${H}`,
+        class: 'trend',
+        role: 'img',
+        'aria-label':
+          'Percent solid by morning: ' +
+          pts.map(p => `${day(p.date)} ${p.v}%`).join(', ') +
+          (pred ? `; night before the exam ${pred.v}% (prediction)` : ''),
+      });
+      for (const v of [0, 50, 100]) {
+        svg.append(mk('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), class: 'trend-grid' }));
+        svg.append(mk('text', { x: L - 6, y: y(v) + 3, class: 'trend-axis', 'text-anchor': 'end' }, v + '%'));
+      }
+      if (pts.length > 1)
+        svg.append(mk('polyline', { points: pts.map(p => `${x(p.date)},${y(p.v)}`).join(' '), class: 'trend-line' }));
+      if (pred && pts.length)
+        svg.append(
+          mk('line', {
+            x1: x(pts[pts.length - 1].date),
+            y1: y(pts[pts.length - 1].v),
+            x2: x(pred.date),
+            y2: y(pred.v),
+            class: 'trend-link',
+          })
+        );
+      for (const p of pts) {
+        const c = mk('circle', { cx: x(p.date), cy: y(p.v), r: 4, class: 'trend-pt' + (p.week ? ' week' : '') });
+        c.append(mk('title', {}, `${day(p.date)}${p.week ? ' (week’s close)' : ''}: ${p.v}% solid`));
+        svg.append(c);
+      }
+      const last = pts[pts.length - 1];
+      if (last && !pred)
+        svg.append(mk('text', { x: x(last.date) + 7, y: y(last.v) + 4, class: 'trend-label' }, last.v + '%'));
+      if (pred) {
+        const c = mk('circle', { cx: x(pred.date), cy: y(pred.v), r: 5, class: 'trend-pred' });
+        c.append(
+          mk(
+            'title',
+            {},
+            `Night before (${day(pred.date)}): ${pred.v}% solid${pred.range ? `, predicted score ${pred.range[0]} to ${pred.range[1]}` : ''}`
+          )
+        );
+        svg.append(c, mk('text', { x: x(pred.date) + 8, y: y(pred.v) + 4, class: 'trend-label' }, pred.v + '%'));
+      }
+      svg.append(mk('text', { x: L, y: H - 4, class: 'trend-axis' }, day(all[0].date)));
+      svg.append(
+        mk('text', { x: W - R, y: H - 4, class: 'trend-axis', 'text-anchor': 'end' }, day(all[all.length - 1].date))
+      );
+      const wrap = el('div', 'trend-wrap');
+      const first = pts[0];
+      wrap.append(
+        svg,
+        el(
+          'p',
+          'meta trend-cap',
+          first && last && first !== last
+            ? `Solid over ${plural(pts.length, 'morning')}: ${first.v}% to ${last.v}%${pred ? `; the night before, ${pred.v}%` : ''}.`
+            : pred
+              ? `The night before, ${pred.v}% solid.`
+              : ''
+        )
+      );
+      return wrap;
+    }
     function renderReadiness() {
       const card = $('ready-card');
       const ex = M.target;
@@ -77,7 +183,8 @@
         ];
         const ul = el('ul', 'list obj-list');
         rows.forEach((o, i) => ul.append(objRow(o, st.byObjective[o.id], i >= 5 && !ui.objAll)));
-        const kids = [el('h2', null, 'Readiness · ' + (ex.title || ex.id)), lead, ul];
+        const trend = trendChart(ex.id);
+        const kids = [el('h2', null, 'Readiness · ' + (ex.title || ex.id)), lead, ...(trend ? [trend] : []), ul];
         if (rows.length > 5) {
           const f = el('button', 'fold-line');
           f.type = 'button';
