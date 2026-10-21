@@ -2568,6 +2568,30 @@
      "date": "2026-10-21",
      "run": "cse_01E8uRETL45FfPLHkrSyWY2p",
      "evidence": "B-176 probe A (fired 22:11:36Z by the build chat): the session took B-177 and pushed 8c5cfaa, the staging deploy 499403f and done 7673277 (22:53Z), with a staging worker firing read back (runs/worker-20261021-224934320); Matt stopped it after B-177 so it would not take B-186"
+    },
+    {
+     "capability": "fire_trigger's text as the builder session's next message",
+     "task": "build.ev4-builder (trig_01Rubgkh9mfYXZaRh8jm6uP6, created 2026-10-18T04:25Z from a chat with the repository, push on, permission mode auto, prompt updated 2026-10-21T23:27Z to wait for its fired message, B-187)",
+     "proven": true,
+     "date": "2026-10-21",
+     "run": "cse_01V57XaMtYQSf8Et4sqf8Z2u",
+     "evidence": "B-187 probe A re-fired at 23:27Z: the first turn ended with 'Waiting for the message.' and the fired text arrived as the next message (its note on B-187, 856d442). The text comes inside a <routine-fire-payload> envelope, which report --from-chat now strips"
+    },
+    {
+     "capability": "report --from-chat files a fired text in Matt's words",
+     "task": "build.ev4-builder (trig_01Rubgkh9mfYXZaRh8jm6uP6, created 2026-10-18T04:25Z from a chat with the repository, push on, permission mode auto, prompt updated 2026-10-21T23:27Z to wait for its fired message, B-187)",
+     "proven": true,
+     "date": "2026-10-21",
+     "run": "cse_01V57XaMtYQSf8Et4sqf8Z2u",
+     "evidence": "filed as B-188 (1ba9377) and declined at triage as 'probe A' (5eaab56)"
+    },
+    {
+     "capability": "a Claude Docs read in a scheduled builder session",
+     "task": "build.ev4-builder (trig_01Rubgkh9mfYXZaRh8jm6uP6, created 2026-10-18T04:25Z from a chat with the repository, push on, permission mode auto, prompt updated 2026-10-21T23:27Z to wait for its fired message, B-187)",
+     "proven": true,
+     "date": "2026-10-21",
+     "run": "cse_01V57XaMtYQSf8Et4sqf8Z2u",
+     "evidence": "read E.V. Foundation v4's tabs and its main tab's first heading ('E.V. Foundation v4'; it has no tab named north star), its note on B-187"
     }
    ],
    "limits": [
@@ -2576,36 +2600,20 @@
    ],
    "unproven": [
     {
-     "capability": "fire_trigger's text as the builder session's next message",
-     "task": "build.ev4-builder (trig_01Rubgkh9mfYXZaRh8jm6uP6, created 2026-10-18T04:25Z from a chat with the repository, push on, permission mode auto)",
-     "proven": false,
-     "date": "2026-10-21",
-     "run": "cse_01E8uRETL45FfPLHkrSyWY2p",
-     "evidence": "refused: probe A's text ('idea: probe A, the builder was fired with this message; …') never arrived; the session's one user turn was the configured prompt, and it kept no turn open to receive one (its own note on B-176). The worker and diagnostic prompts end their first turn with 'Waiting for the job id'; the builder's prompt has no such step"
-    },
-    {
-     "capability": "report --from-chat files a fired text in Matt's words (no B-id filed)",
-     "task": "build.ev4-builder (trig_01Rubgkh9mfYXZaRh8jm6uP6, created 2026-10-18T04:25Z from a chat with the repository, push on, permission mode auto)",
-     "proven": false,
-     "date": "2026-10-21",
-     "run": "cse_01E8uRETL45FfPLHkrSyWY2p",
-     "evidence": "refused: nothing arrived to file, so no inbox entry and no B-id; nothing to decline as the probe"
-    },
-    {
-     "capability": "a Claude Docs read in a scheduled builder session",
-     "task": "build.ev4-builder (trig_01Rubgkh9mfYXZaRh8jm6uP6, created 2026-10-18T04:25Z from a chat with the repository, push on, permission mode auto)",
-     "proven": false,
-     "date": "2026-10-21",
-     "run": "cse_01E8uRETL45FfPLHkrSyWY2p",
-     "evidence": "not reached: the request rode the fired text, which never arrived"
-    },
-    {
      "capability": "the builder run's end line on Matt's phone (push on)",
      "task": "build.ev4-builder (trig_01Rubgkh9mfYXZaRh8jm6uP6, created 2026-10-18T04:25Z from a chat with the repository, push on, permission mode auto)",
      "proven": false,
      "date": "2026-10-21",
      "run": "cse_01E8uRETL45FfPLHkrSyWY2p",
      "evidence": "not reached: Matt stopped the session after B-177 (about 50 minutes in, 22:11Z to after 22:53Z), before it ended on its own"
+    },
+    {
+     "capability": "a read of the live record in a scheduled builder session (CLAUDE.md step 1's health/current)",
+     "task": "build.ev4-builder (trig_01Rubgkh9mfYXZaRh8jm6uP6, created 2026-10-18T04:25Z from a chat with the repository, push on, permission mode auto, prompt updated 2026-10-21T23:27Z to wait for its fired message, B-187)",
+     "proven": false,
+     "date": "2026-10-21",
+     "run": "cse_01V57XaMtYQSf8Et4sqf8Z2u",
+     "evidence": "refused: the ArtifactData get of live health/current was refused by the auto-mode classifier (PII data handling); not worked around (its note on B-187). A builder run reads health from staging or leaves step 1's live read to a build chat until this is proven"
     }
    ]
   }
