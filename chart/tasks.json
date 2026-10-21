@@ -1466,12 +1466,12 @@
   "title": "Surfaces (D-123, D-124, D-126, as restated Oct 20): the existing cards as surfaces (Today, review set, dates, readiness, material, practice check), one open at a time with the rest as one-line rows under its head line; below 1024 px the bottom sheet (330 to 410 px; five rows, the rest folded under an 'n more' line), from 1024 the side column (D-125); a glance as one opens, a nod and one line on a check-off without moving the list; every surface folds to its own summary line with a chevron and unfolds from it (swipe down on the phone), with no pill, close or × anywhere; the review set as a surface whose folded line is Review · n of 10; a caption's citation span opening the material surface in place of the open one, which folds to a row",
   "dod": "the harness at 390, 735 and 1280: a reply with three cards opens one surface with two rows under its head line and no pill; tapping a row opens it in place and folds the open one to a row; ticking a Today item keeps scroll and its neighbours in place (rule 6); a review answered in the surface folds to Review · n of 10 and unfolds from that line; a citation in her current line and in an earlier one opens the passage with the previous surface folded to a row; the core's event log shows glance and done; the tenet checks (B-115) pass on the E.V. tab with no new exception; screenshots at all three widths",
   "milestone": "M11",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-77"
   ],
-  "notes": "Taken after B-129; surfaces on #ev-side (sheet below 1024, side column from 1024)",
-  "commit": null,
+  "notes": "Shipped to staging at 1a09695: ship staging GREEN.",
+  "commit": "1a09695",
   "source": "Build plan tab",
   "board": {
    "row": "v4 B-78: Surfaces in the E.V. tab",
