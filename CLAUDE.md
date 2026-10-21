@@ -102,6 +102,9 @@ live write or publish unless `deploy live --matt-ok` wrote dist/live-ok; pipelin
   inside a pipeline prompt.
 - A scheduled task inherits the repository and Mac link of the chat that created it. Create cloud tasks from a chat
   with this repository checked out; Mac-bound tasks only from a chat linked to the Mac, and only with Matt present.
+  Mac tasks are created, never edited (O-5, B-137): never change a task in the desktop app; re-create it from a
+  session with the Mac link and the repository (deploy's create_trigger printout names every notification channel and
+  the folders; the old task is disabled and listed in spec.tasks.retired, never deleted).
 - `javascript_tool` stops at 45 s and the device bridge cuts results above ~250 KB: browser work is start, poll,
   collect through saved files. Never retype a result.
 - A partial `capabilities` on an Artifact publish wipes the rest; `deploy` prints it whole.

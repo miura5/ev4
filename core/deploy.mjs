@@ -605,11 +605,12 @@ export function deployCalls({
           prompt: `<the contents of ${promptFile}>`,
           initiation: 'human_request',
           ...(t.schedule ? { cron_expression: t.schedule } : {}),
-          notifications: { push: t.push },
+          // B-137 (O-5): every channel named, so nothing is left to a default the desktop app may later re-save.
+          notifications: { push: Boolean(t.push), email: false },
           requires_local_device: Boolean(t.macBound),
           ...(t.macBound ? { folders: t.folders } : {}),
         },
-        then: `record the returned id as spec.tasks.${key}.trigger, commit, push and build again`,
+        then: `record the returned id as spec.tasks.${key}.trigger${t.macBound ? '; a task it replaces is disabled (update_trigger enabled false) and listed in spec.tasks.retired, never deleted' : ''}; commit, push and build again`,
       });
       continue;
     }

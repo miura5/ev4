@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { copyRepo, git } from './helpers.mjs';
+import { copyRepo, git, ROOT } from './helpers.mjs';
 import { build } from '../tools/build.mjs';
 import { verify, pageStamp, canonical, contentHash, deployCalls } from '../core/deploy.mjs';
 
@@ -325,6 +325,27 @@ test("B-149: deploy renames a task whose name changed; a Mac-bound one by name a
     assert.deepEqual(m.args, { trigger_id: mac.id, name: want.mac });
     assert.match(m.step, /Mac-bound.*without the prompt.*Matt's explicit OK/);
   }
+});
+
+test('B-137 (O-5): a Mac task is created, never edited: its create_trigger printout carries notifications and folders', async () => {
+  const { dir, dist } = await deployedStaging();
+  const mp = path.join(dist, 'manifest.json');
+  const manifest = JSON.parse(fs.readFileSync(mp, 'utf8'));
+  const want = manifest.tasks['staging.evening-mac'];
+  delete want.trigger;
+  write(mp, manifest);
+  const plan = JSON.parse(cli(dir, 'deploy', 'staging', '--json').out);
+  const create = plan.calls.find(c => c.tool === 'mcp__claude-code-remote__create_trigger');
+  assert.ok(create, JSON.stringify(plan.calls.map(c => c.step)));
+  assert.match(create.step, /create staging\.evening-mac \(only from a chat linked to the Mac, with Matt present\)/);
+  assert.deepEqual(create.args.notifications, { push: false, email: false }, 'every channel named, none left to a default');
+  assert.equal(create.args.requires_local_device, true);
+  assert.deepEqual(create.args.folders, ['/Users/peachfritter/Documents/E.V. Study Watch/staging']);
+  assert.equal(create.args.cron_expression, undefined, 'staging evening-mac is fire-only');
+  assert.match(create.then, /spec\.tasks\.staging\.evening-mac\.trigger/);
+  assert.match(create.then, /retired/, 'the old task is disabled and listed as retired, never deleted');
+  const claude = fs.readFileSync(path.join(ROOT, 'CLAUDE.md'), 'utf8').replace(/\s+/g, ' ');
+  assert.match(claude, /never change a task in the desktop app; re-create it from a session with the Mac link and the repository/);
 });
 
 test('helpers: page stamps and canonical JSON', () => {
