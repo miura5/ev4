@@ -15,7 +15,7 @@ export function makeConversation(core) {
    *       nextExams:[{id,title,date,course,kind}], readiness:{examId,pctSolid,need}|null, dueCount,
    *       jobs:[{id,title,status,finishedAt}], lastSeenAt, runs:{<pipeline>:{status,startedAt,detail}},
    *       tomorrow:{dates:[{title,kind,graded}]}, quizlet:{refresh}|null, checkin:{energy}|null, sessionActive, skillRun (a Resume chip, B-82),
-   *       prep:{today: prepDay|null, tomorrow: prepDay|null} (D-143)}
+   *       prep:{today: prepDay|null, tomorrow: prepDay|null} (D-143), clinicalOffer:{date,title}|null (D-103)}
    */
   const JOB_NOUN = {
     'study-guide': 'study guide',
@@ -23,6 +23,7 @@ export function makeConversation(core) {
     'exam-plan': 'exam plan',
     'exam-retro': 'exam retro',
     'share-set': 'practice page',
+    'clinical-prep': 'clinical brief',
   };
   function greeting(ctx) {
     const c = ctx || {};
@@ -299,6 +300,15 @@ export function makeConversation(core) {
           prepPhase === 'night'
             ? 'Tonight’s pack check is under my greeting.'
             : 'This morning’s bag check is under my greeting.',
+      });
+    // B-46 (D-103): the day before a clinical day, one line offers the prep brief; written only on his tap.
+    if (c.clinicalOffer)
+      put('prep', 'clinical-prep', 'Prep brief for ' + short(c.clinicalOffer.title, 40), {
+        when: 'tomorrow',
+        detail:
+          'The skills to review with their packet pages, your skill weak spots and any instructor note. Never your graded paperwork.',
+        action: { label: 'Brief me', chip: 'Brief me for clinical' },
+        date: c.clinicalOffer.date,
       });
     if (tmrClinical && !(prepDayNow && prepPhase === 'night' && prepDayNow.kind === 'clinical'))
       put('normal', 'clinical', tmrClinical.title, { when: 'tomorrow', tab: 'record' });

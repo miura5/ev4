@@ -1150,6 +1150,78 @@ const ok = (name, cond, detail = '') => {
       jb.fired.ok === true && !jb.fired.error,
       JSON.stringify(jb.fired)
     );
+    {
+      // B-46 (D-103): the clinical-prep brief. Its ask never carries patient details; the day before a clinical day the
+      // briefing offers it, and the chip starts the job for that day.
+      await page.evaluate(() => {
+        window.__chatScript = [
+          {
+            tool: 'start_job',
+            input: {
+              kind: 'clinical-prep',
+              title: 'Clinical prep: room 412',
+              brief: 'Prep me for my patient in room 412, DOB 3/4/51',
+            },
+          },
+        ];
+        window.__chatReply = 'Leaving that out.';
+      });
+      await send(page, 'Prep me for my patient in room 412');
+      await page.waitForTimeout(300);
+      ok(
+        'a clinical-prep ask with patient details writes no job and starts nothing',
+        (
+          await page.evaluate(() =>
+            Object.values(window.__db.jobs).filter(j => j.kind === 'clinical-prep' || /412/.test(j.title + j.brief))
+          )
+        ).length === 0
+      );
+      const tomorrow = await page.evaluate(() => window.EVCore.addDays(window.EVCore.chicagoDate(new Date()), 1));
+      await page.evaluate(async t => {
+        const db = await window.claude.use('db');
+        await db.collection('dates').doc('harness-clinical').set({
+          schema: 1,
+          writer: 'page',
+          at: new Date().toISOString(),
+          source: 'harness',
+          addedAt: new Date().toISOString(),
+          date: t,
+          title: 'Clinical: Med-surg (made-up site)',
+          kind: 'clinical',
+          course: 'NUR 112',
+          graded: false,
+        });
+      }, tomorrow);
+      await page.waitForTimeout(300);
+      const offer = await page.evaluate(() =>
+        window.EVCore.clinicalPrepOffer({
+          dates: Object.entries(window.__db.dates).map(([id, d]) => ({ id, ...d })),
+          dateedits: [],
+          jobs: Object.values(window.__db.jobs),
+          date: window.EVCore.chicagoDate(new Date()),
+        })
+      );
+      ok(
+        'the day before a clinical day, the brief is offered',
+        offer && offer.date === tomorrow,
+        JSON.stringify(offer)
+      );
+      const fires = await page.evaluate(() => window.__mcpCalls.length);
+      await send(page, 'Brief me for clinical');
+      await page.waitForTimeout(400);
+      const cj = await page.evaluate(() => Object.values(window.__db.jobs).find(j => j.kind === 'clinical-prep'));
+      const fired = await page.evaluate(n => window.__mcpCalls.slice(n), fires);
+      ok(
+        'the chip starts the clinical-prep job for that day and fires the worker',
+        cj &&
+          cj.brief.startsWith(tomorrow + ': ') &&
+          /^Clinical prep: /.test(cj.title) &&
+          fired.some(c => c[1] === 'fire_trigger') &&
+          /Never your paperwork/.test((await msgs(page)).slice(-1)[0].text),
+        JSON.stringify({ cj, fired: fired.map(c => c[1]) })
+      );
+      await page.screenshot({ path: `${shots}/clinical-prep-${scheme}.png`, fullPage: false });
+    }
     // Claude errors are branched by code
     await page.evaluate(() => {
       window.__chatFail = 'rate_limited';

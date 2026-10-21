@@ -23,6 +23,23 @@
             ]
           : ['Couldn’t start it: ' + fireCopy(r.fired && r.fired.error), []];
       },
+      // B-46 (D-103): the briefing's clinical offer; the brief is written only on this tap.
+      'brief me for clinical': async () => {
+        const item = ((T.greet && T.greet.brief) || []).find(b => b.kind === 'clinical-prep' && b.date);
+        const day = item ? E.prepDay(S.dates, [], item.date) : E.nextClinical(S.dates, [], today);
+        if (!day || day.kind !== 'clinical') return ['There’s no clinical day coming up on your calendar.', []];
+        const r = await startJob({
+          kind: 'clinical-prep',
+          title: 'Clinical prep: ' + (day.subject || day.title.replace(/\s*\([^)]*\)\s*$/, '')),
+          brief: day.date + ': a prep brief for ' + day.title,
+        });
+        return r.fired && r.fired.ok
+          ? [
+              'Writing your clinical prep brief in the background: the skills with their packet pages, your skill weak spots and any instructor note. Never your paperwork.',
+              [{ type: 'job', id: r.id }],
+            ]
+          : ['Couldn’t start it: ' + fireCopy(r.fired && r.fired.error), []];
+      },
       'start review': () => {
         const { rs, left } = reviewState();
         return left

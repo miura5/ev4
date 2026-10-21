@@ -63,7 +63,7 @@ export const seedAgeDays = (seed, now) => Math.max(0, Math.floor((EV.toMs(now) -
 /**
  * D-186 (B-163): a backup's documents carried to the checkout's schemas, as a restore drill needs them. `collections` is
  * the backup as written (its manifest already checked); `versions` is {collection: the version this build's schema
- * registry is at}. Each document below its collection's version goes through the bumps (core/migrate.mjs) one by one;
+ * registry is at, or null for a collection of copies kept as written}. Each document below its collection's version goes through the bumps (core/migrate.mjs) one by one;
  * documents a bump implies (an exam's score becoming examedits/<id>) are added unless the backup has that document. It
  * refuses, with the reason, a document newer than this build's schema (a backup taken by a later build) and a version
  * with no migration to the next. Returns {collections, schemas: {collection: {from: [versions], to, docs}}, problems}.
@@ -75,6 +75,10 @@ export function migrateBackup(collections, versions, { at } = {}) {
   const problems = [];
   const implied = [];
   for (const [c, docs] of Object.entries(collections)) {
+    if (versions[c] === null) {
+      out[c] = [...docs]; // a collection of copies (legacy): kept as written, whatever version each copy carries
+      continue;
+    }
     const to = versions[c] || 1;
     const steps = BUMPS[c] || {};
     out[c] = [];

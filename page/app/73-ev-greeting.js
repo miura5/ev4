@@ -85,6 +85,8 @@
             since: (S.memory && S.memory.lastSeenAt) || null,
             date: today,
           }),
+          // B-46 (D-103): tomorrow is a clinical day with no prep brief asked for yet.
+          clinicalOffer: E.clinicalPrepOffer({ dates: S.dates, dateedits: [], jobs: S.jobs, date: today }),
           checkin: (M.dayedit && M.dayedit.checkin) || null,
           sessionActive: !!activeSession(),
           skillRun: resumeChip(),

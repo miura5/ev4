@@ -1650,7 +1650,7 @@ const EVCore = (() => {
   });
 
   // ---------------------------------------------------------------- prep checks (D-143, D-144) · core/prep.mjs (B-159)
-  const { isPrepAdded, prepBringItems, prepDay, prepEdit, prepKindOf, prepList } = makePrep({
+  const { isPrepAdded, prepBringItems, prepDay, prepEdit, prepKindOf, prepList, ...clinicalPrep } = makePrep({
     get C() {
       return C;
     },
@@ -2398,6 +2398,7 @@ const EVCore = (() => {
     prepBringItems,
     prepList,
     prepEdit,
+    ...clinicalPrep, // clinical-prep brief (D-103, B-46)
     gradedAsk,
     DATE_KINDS,
     dateEdit,

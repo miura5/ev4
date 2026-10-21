@@ -452,6 +452,36 @@ CODE_STEPS['job-brief'] = function jobBrief(db, ctx, spec) {
       .map(d => ({ date: d.date, title: d.title, kind: d.kind, graded: !!d.graded }));
     context.passages = passages(idx, q, 4);
   }
+  if (kind === 'clinical-prep') {
+    // D-103 (B-46): the clinical the brief names by date, else the next one; its read set leaves out the graded clinical
+    // paperwork by section and title (core.clinicalReadSet), so the worker is never handed a form to draft.
+    const named = (q.match(/\b\d{4}-\d{2}-\d{2}\b/) || [])[0];
+    const day = EV.nextClinical(db.dates, db.dateedits, named || ctx.date);
+    const set = EV.clinicalReadSet(
+      EV.liveMaterials(db.materials, db.materialedits).filter(m => !(m.needsOcr && !m.ocr)),
+      day && day.course
+    );
+    const clinicalIdx = EV.libraryIndex(EV.libraryChunks(set.read));
+    context.day = day ? { date: day.date, title: day.title, course: day.course, subject: day.subject || null } : null;
+    context.passages = passages(
+      clinicalIdx,
+      `${(day && (day.subject || day.title)) || ''} skills packet steps checklist clinical lab ${job.brief}`,
+      8
+    );
+    context.skillWeakSpots = ms
+      .filter(w => w.kind === 'skill' && w.derived && w.derived.status === 'open')
+      .sort((a, b) => String(b.addedAt || b.at || '').localeCompare(String(a.addedAt || a.at || '')))
+      .slice(0, 8)
+      .map(w => ({ weakspotId: w.id, topic: w.topic }));
+    const since = EV.addDays(ctx.date, -21);
+    context.instructorNotes = (db.announcements || [])
+      .filter(a => String(a.postedAt || a.at || '').slice(0, 10) >= since)
+      .filter(a => /\b(clinical|lab|skills?|validation|uniform|bring)\b/i.test(`${a.title || ''} ${a.text || ''}`))
+      .sort((a, b) => String(b.postedAt || '').localeCompare(String(a.postedAt || '')))
+      .slice(0, 4)
+      .map(a => ({ title: a.title, postedAt: a.postedAt || null, text: String(a.text || '').slice(0, 500) }));
+    context.notRead = set.left.map(x => `${x.title} (${x.why})`);
+  }
   if (kind === 'exam-retro') {
     // D-104: the exam the brief names, else the latest one with a score; core computes every number, the agent only
     // writes the narrative over them.
@@ -612,9 +642,18 @@ export function backupSchemaLine(collections) {
   return 'schema versions ' + (v.length ? v.map(([c, n]) => `${c}:${n}`).join(' ') : 'all 1');
 }
 
-/** This build's schema version per collection, from the schema registry (spec/schemas, x-ev.schema). */
+/**
+ * This build's schema version per collection: the version its documents must carry (the registry's schema const). A
+ * collection whose schema fixes none (legacy, which keeps copies of other documents as they were) maps to null: its
+ * documents are restored as written, never migrated or refused for their version.
+ */
 export function registryVersions(schemas = loadSchemas()) {
-  return Object.fromEntries(Object.entries(schemas).map(([c, s]) => [c, (s['x-ev'] || {}).schema || 1]));
+  return Object.fromEntries(
+    Object.entries(schemas).map(([c, s]) => {
+      const v = ((s.properties || {}).schema || {}).const;
+      return [c, Number.isInteger(v) ? v : null];
+    })
+  );
 }
 
 /**

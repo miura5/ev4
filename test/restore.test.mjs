@@ -169,6 +169,23 @@ test('B-163: a backup newer than this build, and a version with no migration, ar
   );
   // Today's refusal (B-27, Oct 21) was this backup's shape: it now restores.
   assert.equal(drill(oldBackup(db)).r.status, 'planned');
+  // The first staging drill on B-163 (runs/restore-drill-20261021-112917045): legacy keeps copies as they were, so a
+  // copy at schema 2 is restored as written, never refused or migrated.
+  const copy = {
+    id: 'v3-materials-NUR112-1',
+    schema: 2,
+    writer: 'canvas-sync',
+    at: '2026-10-18T00:00:00Z',
+    source: 'x',
+    migratedTo: 'materials/NUR112-1',
+  };
+  const withCopy = oldBackup(db);
+  withCopy.collections.legacy = [...(withCopy.collections.legacy || []), copy];
+  const rec = { ...db, legacy: [...(db.legacy || []), copy] };
+  const kept = steps.planRestore(seal(withCopy.collections), rec, ctx, spec, 'backup');
+  assert.ok(!kept.problems, JSON.stringify(kept.problems));
+  assert.match(kept.detail, /^drill ok: /);
+  assert.ok(!kept.writes.some(w => w.collection === 'legacy'), 'the copy is already identical: kept as written');
 });
 
 test('B-163: evening-mac names its backup schema versions; health says how many bumps behind the latest backup is', async () => {
