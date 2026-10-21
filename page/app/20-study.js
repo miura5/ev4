@@ -409,6 +409,84 @@
 
     // More practice: asks Claude from the page, validated by E.V. core before it's saved.
     let morePending = false;
+    // B-43 (D-100): make_practice on dosage. Five numeric items, each on a passage of his dosage material (never the
+    // syllabus, a calendar, drug cards or a medication table); none when the library has no dosage material.
+    async function moreDosage(opt, { say, out }) {
+      const L = await library().catch(() => null);
+      const mats = ((L && L.mats) || []).filter(m => E.isDosageMaterial(m));
+      if (!mats.length) {
+        out.textContent = 'No dosage material in your library yet.';
+        say(
+          'Your library has no dosage material to work from, so I won’t make up dosage math. Attach the dosage chapter or handout and ask again.'
+        );
+        return false;
+      }
+      const cfg = EV_SPEC.items.dosage || {};
+      const hits = E.searchLibrary(E.libraryIndex(E.libraryChunks(mats)), `${cfg.query || ''} ${opt.topic || ''}`, {
+        k: 6,
+      });
+      const passages = hits.map(h => ({
+        ref: 'materials/' + h.id,
+        page: h.page || null,
+        title: h.title,
+        text: String(h.text).slice(0, 600),
+      }));
+      const refs = new Set(passages.map(p => p.ref));
+      const ex = S.exams
+        .filter(e => e.kind === 'dosage' && e.date >= today)
+        .sort((a, b) => (a.date < b.date ? -1 : 1))[0];
+      const prompt = [
+        'You write dosage calculation practice for Matt, a first-semester ADN nursing student. Return JSON only.',
+        ex ? `Exam: ${ex.title} on ${ex.date}.` : '',
+        'He asked for: ' + String(opt.topic).slice(0, 200),
+        'Passages from his dosage material (ground every question in one; work the numbers with its method): ' +
+          JSON.stringify(passages),
+        'Write exactly 5 numeric questions. Each: type "numeric"; stem with the order, what is on hand and the rounding asked for; answer (a number); unit, one of ' +
+          JSON.stringify(EV_SPEC.items.units) +
+          '; tolerance (half the rounding step: 0.05 for tenths, 0.5 for whole drops, 0 when exact); steps (the worked solution, one line each); objective (or omit); topic (short); cjStep "take-action"; sourceRef, the ref of the passage it rests on. Never from his medication table or drug cards, never graded work.',
+        'Rules: ' + (EV_SPEC.items.writingGuide || []).join(' '),
+        'Shape: {"items":[{"type":"numeric","topic":"...","stem":"...","answer":10,"unit":"mL","tolerance":0.05,"steps":["..."],"cjStep":"take-action","sourceRef":"materials/<id>"}]}',
+      ]
+        .filter(Boolean)
+        .join('\n');
+      const res = await sample.json(prompt, { modelTier: 'default', cache: false });
+      const fresh = (res && Array.isArray(res.items) ? res.items : [])
+        .map((q, i) => ({ ...q, id: 'm' + (i + 1), kind: 'check', type: 'numeric' }))
+        .filter(q => E.validateItem(q).ok && refs.has(q.sourceRef));
+      if (!fresh.length) {
+        out.textContent = 'That batch didn’t come back in a usable shape. Try again in a moment.';
+        say('That batch came back without usable numbers, so I binned it. Ask again in a moment.');
+        return false;
+      }
+      const n = S.sets.filter(s => s.kind === 'more' && s.date === today).length + 1;
+      const id = `more-${today}-${n}`;
+      await write({
+        op: 'set',
+        collection: 'sets',
+        id,
+        data: {
+          ...envelope('More practice'),
+          schema: 2,
+          kind: 'more',
+          date: today,
+          ...(ex ? { exam: ex.id } : {}),
+          title: 'Dosage practice · ' + short(today) + (n > 1 ? ' · ' + n : ''),
+          createdAt: now(),
+          items: fresh,
+        },
+      });
+      out.textContent = plural(fresh.length, 'question') + ' ready in Practice.';
+      if (opt.announce)
+        await say(plural(fresh.length, 'dosage question') + ', each worked out after you answer.', [
+          { type: 'set', id },
+        ]);
+      else {
+        ui.openSet = id;
+        setStudy('practice');
+      }
+      render();
+      return true;
+    }
     async function morePractice(opt = {}) {
       // opt: {announce: post the result in E.V.'s conversation, topic: a focus he named}
       if (morePending || !sample) return false;
@@ -419,6 +497,7 @@
       out.textContent = 'Writing 5 questions…';
       const say = (text, cards) => (opt.announce ? evSay(text, cards || [], { tier: 'default' }) : null);
       try {
+        if (E.isDosageTopic(opt.topic)) return await moreDosage(opt, { say, out });
         const ex = M.target;
         const exId = ex ? ex.id : null;
         const objs = S.objectives
@@ -489,6 +568,7 @@
           id,
           data: {
             ...envelope('More practice'),
+            schema: 2, // B-43
             kind: 'more',
             date: today,
             ...(exId ? { exam: exId } : {}),

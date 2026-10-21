@@ -88,7 +88,7 @@
     {
      "id": "write-practice",
      "kind": "agent",
-     "judgment": "Write today's review and drill questions from the brief: one review item per target weak spot (from a new angle if it has history), one check per objective listed, and each drill's count of items on its chapters and objectives. Ground every item in the passages given; match their terms and values. Each item: type single|sata|matrix, stem (10+ characters), options (2 to 6) and correct (indexes) or a matrix, rationales, objective, topic, cjStep (one of the six clinical-judgment steps), sourceRef (materials/<id> it rests on) or verify: true when the point is not in his materials; a review item names its weakspotId target; never select-N; only exam content, never graded work.",
+     "judgment": "Write today's review and drill questions from the brief: one review item per target weak spot (from a new angle if it has history), one check per objective listed, and each drill's count of items on its chapters and objectives. Ground every item in the passages given; match their terms and values. Each item: type single|sata|matrix (numeric only in a numeric drill), stem (10+ characters), options (2 to 6) and correct (indexes) or a matrix, rationales, objective, topic, cjStep (one of the six clinical-judgment steps), sourceRef (materials/<id> it rests on) or verify: true when the point is not in his materials; a review item names its weakspotId target; never select-N; only exam content, never graded work. A drill marked numeric is a dosage drill (D-100): only type numeric items, each with stem (the order, what is on hand, and the rounding asked for), answer (a number), unit (one of spec.items.units), tolerance (half the rounding step: 0.05 for tenths, 0.5 for whole drops; 0 when exact), steps (the worked solution, one line each), objective, topic, cjStep and sourceRef (one of that drill's passages); work the numbers from the passages' methods; never from his medication table or drug cards.",
      "material": "practice-brief",
      "output": {
       "type": "object",
@@ -2919,7 +2919,8 @@
   "types": {
    "single": "options 3-6, exactly one correct index, a rationale per option",
    "sata": "options 5-6, two or more correct, a rationale per option; never 'select N' or 'select two'",
-   "matrix": "matrix.columns 2-4 labels, matrix.rows 3-6 of {text, correct: column index, rationale}; scored per row, correct only when every row is right"
+   "matrix": "matrix.columns 2-4 labels, matrix.rows 3-6 of {text, correct: column index, rationale}; scored per row, correct only when every row is right",
+   "numeric": "B-43 (D-100): dosage work. answer (a number), unit (one of units), tolerance (absolute; the rounding the stem states, default 0), steps (the worked solution, one line each, shown after answering); no options"
   },
   "fields": [
    "id",
@@ -2933,6 +2934,10 @@
    "correct",
    "rationales",
    "matrix",
+   "answer (numeric)",
+   "unit (numeric)",
+   "tolerance (numeric)",
+   "steps (numeric)",
    "cjStep",
    "verify",
    "sourceRef (materials/<id>)",
@@ -2962,7 +2967,32 @@
    "Tag every item to its objective and one clinical-judgment step.",
    "Ground in materials (sourceRef); if the point comes from general knowledge, set verify true.",
    "No graded coursework, no drug cards before that week's medication table is turned in."
-  ]
+  ],
+  "units": [
+   "mL",
+   "L",
+   "mg",
+   "mcg",
+   "g",
+   "kg",
+   "units",
+   "mEq",
+   "tablets",
+   "capsules",
+   "gtt/min",
+   "mL/hr",
+   "mg/kg",
+   "mg/hr",
+   "mcg/min",
+   "units/hr"
+  ],
+  "dosage": {
+   "_why": "B-43 (D-100): a dosage drill rests only on dosage material: a library file whose title or module matches, never the syllabus, a calendar, drug cards or a medication table (B-01)",
+   "match": "dosage|dose calc|drug calc|med(ication)?[ -]?math|calculations?|dimensional analysis|IV (flow|rate)s?|infusion",
+   "skip": "syllabus|calendar|schedule|drug cards?|medication tables?",
+   "query": "dosage calculation desired dose have quantity mg mL tablets infusion rate mL/hr gtt/min drop factor weight mg/kg",
+   "count": 10
+  }
  },
  "ui": {
   "tabs": [

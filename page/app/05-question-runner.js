@@ -104,7 +104,8 @@
       const q = items.find(x => x.id === view);
       const a = answers[q.id];
       const type = E.itemType(q);
-      const sel = sels[key + q.id] || (sels[key + q.id] = type === 'matrix' ? [] : new Set());
+      const sel =
+        sels[key + q.id] || (sels[key + q.id] = type === 'matrix' ? [] : type === 'numeric' ? { v: '' } : new Set());
       // B-116 (D-146, D-150): the stem leads; what kind of question it is follows as one quiet line, no chips, no second count.
       const tags = el(
         'p',
@@ -137,8 +138,41 @@
         return s;
       };
       const submit = btn('Check answer', null, { primary: true });
-      const ready = () => (type === 'matrix' ? q.matrix.rows.every((_, i) => Number.isInteger(sel[i])) : sel.size > 0);
-      if (type === 'matrix') {
+      const ready = () =>
+        type === 'matrix'
+          ? q.matrix.rows.every((_, i) => Number.isInteger(sel[i]))
+          : type === 'numeric'
+            ? !!E.numericGiven(sel.v)
+            : sel.size > 0;
+      if (type === 'numeric') {
+        // B-43 (D-100): a number and its unit; answered, his number, the answer when he missed, and the worked steps.
+        const row = el('div', 'num-row');
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.inputMode = 'decimal';
+        inp.autocomplete = 'off';
+        inp.className = 'num-in';
+        inp.setAttribute('aria-label', 'Your answer in ' + q.unit);
+        inp.value = a ? String((a.chosen && a.chosen.value) ?? '') : sel.v;
+        inp.disabled = !!a;
+        inp.addEventListener('input', () => {
+          sel.v = inp.value;
+          submit.disabled = !ready();
+        });
+        inp.addEventListener('keydown', e => {
+          if (e.key === 'Enter' && !submit.disabled) submit.click();
+        });
+        row.append(inp, el('span', 'num-unit', q.unit));
+        if (a) row.classList.add(a.correct ? 'right' : 'wrong');
+        parts.push(row);
+        if (a) {
+          if (!a.correct) parts.push(el('p', 'num-answer', `Answer: ${q.answer} ${q.unit}`));
+          const ol = el('ol', 'num-steps');
+          ol.setAttribute('aria-label', 'Worked steps');
+          (q.steps || []).forEach(t => ol.append(el('li', null, t)));
+          parts.push(ol);
+        }
+      } else if (type === 'matrix') {
         const wrap = el('div', 'scroll');
         const t = el('table', 'mx');
         const hr = el('tr');
@@ -241,7 +275,12 @@
         submit.addEventListener('click', async () => {
           submit.disabled = true;
           submit.textContent = 'Saving…';
-          const chosen = type === 'matrix' ? q.matrix.rows.map((_, i) => sel[i]) : [...sel].sort((x, y) => x - y);
+          const chosen =
+            type === 'matrix'
+              ? q.matrix.rows.map((_, i) => sel[i])
+              : type === 'numeric'
+                ? { value: E.numericGiven(sel.v).value, unit: E.numericGiven(sel.v).unit || q.unit }
+                : [...sel].sort((x, y) => x - y);
           try {
             const r = E.planAnswer({
               set,
@@ -320,7 +359,17 @@
         const more = el('div', 'sum-more'),
           type = E.itemType(q),
           R = q.rationales || [];
-        if (type === 'matrix')
+        if (type === 'numeric') {
+          const given = a.chosen && typeof a.chosen.value === 'number' ? `${a.chosen.value} ${q.unit}` : 'nothing';
+          if (!a.correct) more.append(el('p', 'meta', 'You gave: ' + given + '.'));
+          more.append(
+            el(
+              'p',
+              'meta',
+              (a.correct ? 'Your answer: ' : 'Answer: ') + `${q.answer} ${q.unit}. ` + (q.steps || []).join(' · ')
+            )
+          );
+        } else if (type === 'matrix')
           q.matrix.rows.forEach((r, ri) => {
             const ok = (a.chosen || [])[ri] === r.correct;
             if (!ok || a.correct)

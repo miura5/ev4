@@ -72,12 +72,12 @@
       dehydr: it('q-dehydr', 'ws-demo-dehydr', 'E4-1', 'Older adults and the thirst response', 'single', 'Why are older adults at higher risk of dehydration?', { options: ['Their thirst response is blunted', 'They need far less water', 'Their kidneys hold on to more water', 'They sweat much more'], correct: [0], rationales: ['Right: they feel thirst later, so intake falls behind.', 'Needs fall a little, not far.', 'Ageing kidneys concentrate urine less well, so they lose more.', 'Older adults sweat less, not more.'] }) };
     for (const ago of [-8, -6]) {
       const day = d(ago), sid = 'review-' + day;
-      put('sets', sid, { ...env('morning', 'morning 4:25', ct(day, 4, 31)), kind: 'review', date: day, exam: 'E4', items: [older.pulse, older.dehydr].map(x => ({ ...x, id: x.id + ago })) });
+      put('sets', sid, { ...env('morning', 'morning 4:25', ct(day, 4, 31)), schema: 2, kind: 'review', date: day, exam: 'E4', items: [older.pulse, older.dehydr].map(x => ({ ...x, id: x.id + ago })) });
       const a = (n, id) => { const at = ct(day, 18, n); return { [id + ago]: { [key('page', at)]: { chosen: [0], correct: true, score: 1, at, outcome: 'right' } } }; };
       put('answers', sid, { ...env('page', 'E.V. Home', ct(day, 18, 10)), setId: sid, answers: { ...a(1, 'q-pulse'), ...a(2, 'q-dehydr') } });
     }
-    put('sets', 'review-' + yday, { ...env('morning', 'morning 4:25', ct(yday, 4, 31)), kind: 'review', date: yday, exam: 'E4', items: [Q.fve, Q.iv, Q.k, Q.preload, Q.co, Q.ortho].map(x => ({ ...x, id: x.id + '-y' })) });
-    put('sets', 'review-' + today, { ...env('morning', 'morning 4:25', ct(today, 4, 31)), kind: 'review', date: today, exam: 'E4', items: [Q.fve, Q.iv, Q.k, Q.na, Q.preload, Q.co, Q.ortho, Q.weight] });
+    put('sets', 'review-' + yday, { ...env('morning', 'morning 4:25', ct(yday, 4, 31)), schema: 2, kind: 'review', date: yday, exam: 'E4', items: [Q.fve, Q.iv, Q.k, Q.preload, Q.co, Q.ortho].map(x => ({ ...x, id: x.id + '-y' })) });
+    put('sets', 'review-' + today, { ...env('morning', 'morning 4:25', ct(today, 4, 31)), schema: 2, kind: 'review', date: today, exam: 'E4', items: [Q.fve, Q.iv, Q.k, Q.na, Q.preload, Q.co, Q.ortho, Q.weight] });
     // Yesterday he got the cardiac-output and orthostatic questions right and missed the rest.
     const ans = (n, chosen, right) => { const at = ct(yday, 19, 10 + n); return { [key('page', at)]: { chosen, correct: right, score: right ? 1 : 0, at, outcome: right ? 'right' : 'wrong' } }; };
     put('answers', 'review-' + yday, { ...env('page', 'E.V. Home', ct(yday, 19, 20)), setId: 'review-' + yday, answers: { 'q-fve-y': ans(1, [1], false), 'q-iv-y': ans(2, [1], false), 'q-k-y': ans(3, [0], true), 'q-preload-y': ans(4, [1], false), 'q-co-y': ans(5, [0], true), 'q-ortho-y': ans(6, [0], true) } });

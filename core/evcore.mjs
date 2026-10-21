@@ -356,6 +356,7 @@ const EVCore = (() => {
   function itemType(q) {
     if (!q) return 'single';
     if (q.type === 'matrix') return 'matrix';
+    if (q.type === 'numeric') return 'numeric'; // B-43 (D-100)
     return q.type === 'sata' || (Array.isArray(q.correct) && q.correct.length > 1) ? 'sata' : 'single';
   }
   const SELECT_N = /\bselect\s+(?:two|three|four|five|\d+)\b|\bchoose\s+(?:two|three|\d+)\b/i;
@@ -367,9 +368,18 @@ const EVCore = (() => {
     if (!q.id || typeof q.id !== 'string') errors.push('missing id');
     if (!q.stem || typeof q.stem !== 'string' || q.stem.trim().length < 10) errors.push('missing or too-short stem');
     const t = q.type || 'single';
-    if (!['single', 'sata', 'matrix'].includes(t)) errors.push('unknown type ' + t);
+    if (!['single', 'sata', 'matrix', 'numeric'].includes(t)) errors.push('unknown type ' + t);
     if (SELECT_N.test(q.stem || '')) errors.push('uses "select N" wording');
-    if (t === 'matrix') {
+    if (t === 'numeric') {
+      // B-43 (D-100): a number with its unit, the rounding the stem states as the tolerance, and the worked steps.
+      if (typeof q.answer !== 'number' || !Number.isFinite(q.answer)) errors.push('numeric needs a number answer');
+      if (!unitOf(q.unit)) errors.push('numeric needs a unit from spec.items.units, not ' + JSON.stringify(q.unit));
+      if (q.tolerance != null && !(typeof q.tolerance === 'number' && q.tolerance >= 0))
+        errors.push('tolerance must be a number of 0 or more');
+      if (!Array.isArray(q.steps) || !q.steps.length || q.steps.some(x => typeof x !== 'string' || !x.trim()))
+        errors.push('numeric needs its worked steps');
+      if (q.options || q.correct || q.matrix) errors.push('a numeric item has no options');
+    } else if (t === 'matrix') {
       const m = q.matrix;
       if (!m || !Array.isArray(m.columns) || m.columns.length < 2 || m.columns.length > 4)
         errors.push('matrix needs 2-4 columns');
@@ -409,9 +419,56 @@ const EVCore = (() => {
   function validItems(set, opts) {
     return (set && Array.isArray(set.items) ? set.items : []).filter(q => validateItem(q, opts).ok);
   }
-  /** Scores an answer. chosen: option indexes (single/sata) or one column index per row (matrix). */
+  /**
+   * B-43 (D-100): dosage material, the only ground a numeric item stands on: a library file whose title or module matches
+   * spec.items.dosage.match and not .skip (the syllabus, a calendar, drug cards or a medication table, B-01).
+   */
+  function isDosageMaterial(m) {
+    const d = (SPEC && SPEC.items && SPEC.items.dosage) || {};
+    const t = `${(m && m.title) || ''} ${(m && m.module) || ''}`;
+    return new RegExp(d.match || 'dosage', 'i').test(t) && !new RegExp(d.skip || '(?!)', 'i').test(t);
+  }
+  /** B-43: a topic that asks for dosage practice (make_practice, a plan's drill title). */
+  const isDosageTopic = t =>
+    /\b(dosage|dose calc\w*|drug calc\w*|med(ication)?[ -]?math|drip rates?|iv rates?|infusion rates?)\b/i.test(
+      String(t || '')
+    );
+  /** B-43 (D-100): a unit as spec.items.units names it (mL, mg, gtt/min, ...), matched without case or spaces; null if not one. */
+  function unitOf(u) {
+    const k = String(u == null ? '' : u)
+      .toLowerCase()
+      .replace(/\s+/g, '');
+    if (!k) return null;
+    return (
+      ((SPEC && SPEC.items && SPEC.items.units) || []).find(x => x.toLowerCase().replace(/\s+/g, '') === k) || null
+    );
+  }
+  /** A numeric answer as given: a number, a string ("2.5" or "2.5 mL") or {value, unit}; {value, unit} or null. */
+  function numericGiven(chosen) {
+    if (chosen && typeof chosen === 'object' && !Array.isArray(chosen))
+      return typeof chosen.value === 'number' && Number.isFinite(chosen.value)
+        ? { value: chosen.value, unit: chosen.unit || null }
+        : null;
+    if (typeof chosen === 'number') return Number.isFinite(chosen) ? { value: chosen, unit: null } : null;
+    const m = String(chosen == null ? '' : chosen)
+      .trim()
+      .match(/^(-?\d+(?:\.\d+)?|-?\.\d+)\s*(.*)$/);
+    return m ? { value: Number(m[1]), unit: m[2] || null } : null;
+  }
+  /**
+   * Scores an answer. chosen: option indexes (single/sata), one column index per row (matrix), or for a numeric item
+   * (B-43, D-100) the number given, right when it is within the item's tolerance of its answer and any unit given is its
+   * unit.
+   */
   function scoreAnswer(q, chosen) {
     const t = itemType(q);
+    if (t === 'numeric') {
+      const g = numericGiven(chosen);
+      const tol = typeof q.tolerance === 'number' && q.tolerance > 0 ? q.tolerance : 0;
+      const unitOk = !g || !g.unit || unitOf(g.unit) === unitOf(q.unit);
+      const correct = !!g && unitOk && Math.abs(g.value - q.answer) <= tol + 1e-9;
+      return { correct, score: correct ? 1 : 0 };
+    }
     if (t === 'matrix') {
       const rows = (q.matrix && q.matrix.rows) || [];
       const right = rows.filter((r, i) => Array.isArray(chosen) && chosen[i] === r.correct).length;
@@ -4855,6 +4912,10 @@ res.textContent=right?'Right':'Not quite: the right answer is marked';res.classN
     validateItem,
     validItems,
     scoreAnswer,
+    unitOf,
+    numericGiven,
+    isDosageMaterial,
+    isDosageTopic,
     // answers and weak spots
     answersIndex,
     answeredItems,

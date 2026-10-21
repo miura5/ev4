@@ -167,6 +167,13 @@ button.quiet{background:transparent;border-color:var(--line2);color:var(--ink2)}
 .opt:hover{border-color:var(--accent-edge)}
 .opt input{flex:0 0 auto;margin-top:3px;accent-color:var(--accent);width:18px;height:18px}
 .opt.right{border-color:var(--accent);background:rgba(63,224,197,.10)} .opt.wrong{border-color:var(--bad-solid);background:rgba(240,138,120,.10)}
+/* B-43 (D-100): a numeric answer: the number and its unit on one line, the worked steps a short list under the verdict. */
+.num-row{display:flex;align-items:center;gap:10px;margin:0}
+.num-in{flex:0 0 9rem;width:9rem;max-width:9rem;min-height:var(--tap);font-size:18px;padding:8px 12px;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:rgba(255,255,255,.03);color:inherit}
+.num-row.right .num-in{border-color:var(--accent)} .num-row.wrong .num-in{border-color:var(--bad-solid)}
+.num-unit{font-size:16px;color:var(--soft)}
+.num-answer{margin:0;font-weight:600}
+.num-steps{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px;color:var(--soft)}
 .opt.locked{cursor:default}
 .why{display:block;font-size:14px;color:#B4C1CB;margin-top:4px;line-height:1.45}
 table.mx{width:100%;border-collapse:separate;border-spacing:0 6px;font-size:15px}

@@ -11,13 +11,13 @@
    "worker",
    "page"
   ],
-  "schema": 1
+  "schema": 2
  },
  "$comment": "Items never change once written; answers live in answers/<setId>.",
  "type": "object",
  "properties": {
   "schema": {
-   "const": 1
+   "const": 2
   },
   "writer": {
    "enum": [
@@ -92,7 +92,8 @@
       "enum": [
        "single",
        "sata",
-       "matrix"
+       "matrix",
+       "numeric"
       ]
      },
      "stem": {
@@ -164,6 +165,30 @@
        "rows"
       ],
       "additionalProperties": false
+     },
+     "answer": {
+      "type": "number",
+      "description": "B-43 (D-100): a numeric item's answer"
+     },
+     "unit": {
+      "type": "string",
+      "minLength": 1,
+      "description": "B-43: one of spec.items.units"
+     },
+     "tolerance": {
+      "type": "number",
+      "minimum": 0,
+      "description": "B-43: absolute; the rounding the stem states"
+     },
+     "steps": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "minLength": 1
+      },
+      "minItems": 1,
+      "maxItems": 12,
+      "description": "B-43: the worked solution, shown after answering"
      },
      "weakspotId": {
       "type": "string"

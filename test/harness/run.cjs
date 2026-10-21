@@ -134,6 +134,7 @@ function E_DATE(iso) {
 seed.sets = seed.sets || {};
 seed.sets['more-' + today + '-1'] = {
   ...env('page', 'More practice'),
+  schema: 2,
   kind: 'more',
   date: today,
   exam: 'E4',
@@ -198,6 +199,43 @@ seed.sets['more-' + today + '-1'] = {
           { text: 'Slower reaction time', correct: 0, rationale: 'Normal aging.' },
         ],
       },
+    },
+  ],
+};
+// B-43 (D-100): a dosage set of numeric items, answered once right and once missed at each width.
+seed.sets['more-' + today + '-dose'] = {
+  ...env('page', 'More practice'),
+  schema: 2,
+  kind: 'more',
+  date: today,
+  title: 'Harness dosage',
+  createdAt: new Date().toISOString(),
+  items: [
+    {
+      id: 'n1',
+      kind: 'check',
+      type: 'numeric',
+      topic: 'Liquid oral dose',
+      cjStep: 'take-action',
+      stem: 'Order: a drug 250 mg by mouth. On hand: 125 mg per 5 mL. How many mL do you give?',
+      answer: 10,
+      unit: 'mL',
+      tolerance: 0,
+      steps: ['Desired over have: 250 mg / 125 mg = 2', '2 x 5 mL = 10 mL'],
+      sourceRef: 'materials/harness-dosage',
+    },
+    {
+      id: 'n2',
+      kind: 'check',
+      type: 'numeric',
+      topic: 'IV rate',
+      cjStep: 'take-action',
+      stem: 'Infuse 1,000 mL over 8 hours by pump. What rate do you set? Round to the whole mL/hr.',
+      answer: 125,
+      unit: 'mL/hr',
+      tolerance: 0.5,
+      steps: ['1,000 mL / 8 hr = 125 mL/hr'],
+      sourceRef: 'materials/harness-dosage',
     },
   ],
 };
@@ -735,6 +773,37 @@ const ok = (name, cond, detail = '') => {
         .locator('#thread .msg.ev')
         .last()
         .screenshot({ path: `${shots}/retro-card-desktop.png` });
+      // B-43 (D-100) at desktop width: Study → Practice, the dosage set, one numeric item answered.
+      {
+        await page.click('#tab-study');
+        await page.waitForTimeout(150);
+        if (await page.isVisible('#seg-study [data-v="practice"]')) await page.click('#seg-study [data-v="practice"]');
+        await page.waitForTimeout(150);
+        const lead = page.locator('#pr-body .pr-lead', { hasText: 'Harness dosage' });
+        if (await lead.count()) await lead.locator('button.primary').click();
+        else {
+          if (await page.locator('#pr-done-fold[aria-expanded="false"]').count()) await page.click('#pr-done-fold');
+          const r = page.locator('#pr-body .row', { hasText: 'Harness dosage' }).first();
+          await r.locator('.pr-line').click();
+          await page.waitForTimeout(80);
+          await r.locator('.pr-acts button').first().click();
+        }
+        await page.waitForTimeout(150);
+        await page.locator('#pr-body input.num-in').fill('10 mL');
+        await page.click('#pr-body button:has-text("Check answer")');
+        await page.waitForTimeout(150);
+        const d = await page.evaluate(() => ({
+          verdict: document.querySelector('#pr-body .verdict').textContent,
+          steps: document.querySelectorAll('#pr-body .num-steps li').length,
+          unit: document.querySelector('#pr-body .num-unit').textContent,
+        }));
+        ok(
+          '[desktop] a numeric item answered with its unit typed (10 mL) is Right, with its worked steps (B-43)',
+          /^Right\b/.test(d.verdict) && d.steps === 2 && d.unit === 'mL',
+          JSON.stringify(d)
+        );
+        await page.screenshot({ path: `${shots}/dosage-desktop.png`, fullPage: false });
+      }
       await page.close();
       continue;
     }
@@ -1820,6 +1889,61 @@ const ok = (name, cond, detail = '') => {
     const prePre = await model('e4-preschooler'); // the export can already hold his answers on it
     const preStreak =
       prePre && prePre.lastResult === 'right' ? (prePre.lastReviewed === today ? prePre.streak - 1 : prePre.streak) : 0;
+    // B-43 (D-100): a numeric item takes a number beside its unit; answered, the verdict, the answer when missed, and
+    // the worked steps; the answer lands as {value, unit}.
+    {
+      await openSet('Harness dosage');
+      await page.waitForTimeout(120);
+      const field = page.locator('#pr-body input.num-in');
+      const unit = await page.textContent('#pr-body .num-unit').catch(() => '');
+      const check = page.locator('#pr-body button', { hasText: 'Check answer' });
+      const off = await check.isDisabled();
+      await field.fill('10');
+      await check.click();
+      await page.waitForTimeout(150);
+      const n1 = await page.evaluate(t => {
+        const a = ((window.__db.answers || {})['more-' + t + '-dose'] || {}).answers || {};
+        return {
+          verdict: document.querySelector('#pr-body .verdict').textContent,
+          steps: document.querySelectorAll('#pr-body .num-steps li').length,
+          shown: !!document.querySelector('#pr-body .num-answer'),
+          saved: Object.values(a.n1 || {}).map(x => [x.chosen, x.correct]),
+        };
+      }, today);
+      ok(
+        `[${scheme}] a numeric item: a number field beside its unit (mL), Check answer waits for a number; 10 is Right, the worked steps show, saved as {value, unit} (B-43)`,
+        unit === 'mL' &&
+          off &&
+          /^Right\b/.test(n1.verdict) &&
+          n1.steps === 2 &&
+          !n1.shown &&
+          JSON.stringify(n1.saved) === JSON.stringify([[{ value: 10, unit: 'mL' }, true]]),
+        JSON.stringify({ unit, off, ...n1 })
+      );
+      await page.click('#pr-body button:has-text("Next question")');
+      await page.waitForTimeout(100);
+      await page.locator('#pr-body input.num-in').fill('126');
+      await page.click('#pr-body button:has-text("Check answer")');
+      await page.waitForTimeout(150);
+      const n2 = await page.evaluate(() => ({
+        verdict: document.querySelector('#pr-body .verdict').textContent,
+        answer: (document.querySelector('#pr-body .num-answer') || {}).textContent || '',
+        steps: document.querySelectorAll('#pr-body .num-steps li').length,
+      }));
+      ok(
+        `[${scheme}] past its tolerance (126 for 125 ± 0.5 mL/hr) is Missed, with the answer and its worked step (B-43)`,
+        /^Missed\b/.test(n2.verdict) && n2.answer === 'Answer: 125 mL/hr' && n2.steps === 1,
+        JSON.stringify(n2)
+      );
+      await page.screenshot({ path: `${shots}/dosage-${scheme}.png`, fullPage: false });
+      await page
+        .locator('#pr-body button', { hasText: /See results/ })
+        .first()
+        .click();
+      await page.waitForTimeout(150);
+      await page.locator('#pr-body button', { hasText: 'All sets' }).first().click();
+      await page.waitForTimeout(150);
+    }
     await openSet('Harness set');
     await page.waitForTimeout(100);
     ok('a set made for him offers no Share', !(await page.isVisible('#pr-share')));

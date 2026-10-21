@@ -1,0 +1,40 @@
+{
+ "schema": 1,
+ "writer": "morning",
+ "at": "2026-10-15T09:31:00Z",
+ "source": "morning 4:25",
+ "kind": "review",
+ "date": "2026-10-15",
+ "title": "Review · Thu 10/15",
+ "createdAt": "2026-10-15T09:31:00Z",
+ "items": [
+  {
+   "id": "q1",
+   "kind": "review",
+   "type": "single",
+   "stem": "A made-up client has a made-up finding. Which action comes first?",
+   "options": [
+    "Made-up A",
+    "Made-up B",
+    "Made-up C",
+    "Made-up D"
+   ],
+   "correct": [
+    0
+   ],
+   "rationales": [
+    "Right.",
+    "No.",
+    "No.",
+    "No."
+   ],
+   "objective": "E9-1",
+   "topic": "Made-up topic",
+   "cjStep": "take-action"
+  }
+ ],
+ "migratedFrom": "sets/review-2026-10-15",
+ "migratedTo": "sets/review-2026-10-15",
+ "migratedAt": "2026-10-20T23:00:00.000Z",
+ "migration": "sets schema 1 to 2"
+}

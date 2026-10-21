@@ -490,6 +490,11 @@ export const BUMPS = {
     // stays in force and the document only moves to the new version.
     1: d => ({ data: { ...d, schema: 2 }, also: [] }),
   },
+  sets: {
+    // B-43 (D-100): an item may be numeric (answer, unit, tolerance, steps); every item before it was single, select-all
+    // or matrix, so a set only moves to the new version.
+    1: d => ({ data: { ...d, schema: 2 }, also: [] }),
+  },
   talk: {
     // B-74 (D-128, D-130): a message may carry session (written during a session) and note (the line a comment is
     // about); a message before it had neither, so talk/<date> and talk/memory only move to the new version.

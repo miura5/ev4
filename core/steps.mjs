@@ -37,6 +37,10 @@ const ITEM_FIELDS = [
   'correct',
   'rationales',
   'matrix',
+  'answer',
+  'unit',
+  'tolerance',
+  'steps',
   'weakspotId',
   'objective',
   'topic',
@@ -240,8 +244,21 @@ export const CODE_STEPS = {
 };
 
 // ------------------------------------------------------------------------------------------------ morning
+/**
+ * B-43 (D-100): the library's dosage material (spec.items.dosage: a file whose title or module matches, never the
+ * syllabus, a calendar, drug cards or a medication table), the only ground a dosage drill or numeric item stands on.
+ */
+function dosageLibrary(db, spec) {
+  const mats = EV.liveMaterials(db.materials, db.materialedits)
+    .filter(m => !(m.needsOcr && !m.ocr))
+    .filter(m => EV.isDosageMaterial(m));
+  return {
+    ids: new Set(mats.map(m => 'materials/' + m.id)),
+    index: mats.length ? EV.libraryIndex(EV.libraryChunks(mats)) : null,
+  };
+}
 /** The day's practice to write: review targets, new checks, drills the plan calls for, each with its passages. */
-CODE_STEPS['practice-brief'] = function practiceBrief(db, ctx) {
+CODE_STEPS['practice-brief'] = function practiceBrief(db, ctx, spec) {
   const ms = models(db);
   const byId = Object.fromEntries(ms.map(w => [w.id, w]));
   const day = EV.planDay({
@@ -315,10 +332,50 @@ CODE_STEPS['practice-brief'] = function practiceBrief(db, ctx) {
       passages: topics.slice(0, 8).flatMap(t => passages(idx, t, 1)),
     });
   }
-  ctx.brief = { date: ctx.date, dayType: day.dayType, review: { setId, exists: have, targets, checks }, drills };
+  // B-43 (D-100): dosage drills. A plan's drill on dosage is one, and so is a drill of its own on each day within
+  // nearExamWithinDays of an exam of kind dosage; each is numeric items only, on dosage material passages alone.
+  const dcfg = ((spec && spec.items) || {}).dosage || {};
+  const dose = dosageLibrary(db, spec);
+  const dosePassages = extra =>
+    dose.index ? passages(dose.index, `${dcfg.query || 'dosage calculation'} ${extra || ''}`, 6) : [];
+  for (const d of drills)
+    if (EV.isDosageTopic(d.title)) {
+      d.numeric = true;
+      d.passages = dosePassages(d.title);
+    }
+  const near = EV.constants().review.nearExamWithinDays;
+  const doneExam = id => (db.examedits || []).some(x => x.id === id && x.status === 'done');
+  for (const ex of db.exams || []) {
+    if (ex.kind !== 'dosage' || ex.status === 'done' || doneExam(ex.id) || !ex.date || ex.date < ctx.date) continue;
+    if (EV.diffDays(ctx.date, ex.date) > near) continue;
+    const id = `${ex.id}-dosage-${ctx.date}`;
+    if ((db.sets || []).some(x => x.id === id) || drills.some(d => d.numeric && d.exam === ex.id)) continue;
+    drills.push({
+      setId: id,
+      exam: ex.id,
+      title: 'Dosage drill · ' + String(ex.title || ex.id).replace(/:.*$/, ''),
+      count: dcfg.count || 10,
+      numeric: true,
+      chapters: [],
+      objectives: (db.objectives || []).filter(o => o.exam === ex.id).map(o => o.id),
+      targets: [],
+      passages: dosePassages(ex.title),
+    });
+  }
+  const ungrounded = drills.filter(d => d.numeric && !d.passages.length);
+  const kept = drills.filter(d => !ungrounded.includes(d));
+  ctx.brief = {
+    date: ctx.date,
+    dayType: day.dayType,
+    review: { setId, exists: have, targets, checks },
+    drills: kept,
+    dosageRefs: [...dose.ids],
+  };
   const say = [
-    `Practice to write: ${targets.length} review target(s), ${checks.length} check(s), ${drills.length} drill(s).`,
+    `Practice to write: ${targets.length} review target(s), ${checks.length} check(s), ${kept.length} drill(s).`,
   ];
+  for (const d of ungrounded)
+    say.push(`${d.title}: not written, no dosage material in the library to ground it in (spec.items.dosage).`);
   if (day.deferred.length) say.push('Deferred: ' + day.deferred.map(d => `${d.title} (${d.reason})`).join('; '));
   return { say };
 };
@@ -970,6 +1027,7 @@ export const AGENT_FOLDS = {
           id: setId,
           data: {
             ...EV.envelope('worker', ctx.source, ctx.now),
+            schema: 2, // B-43
             kind: 'job',
             date: ctx.date,
             ...(target ? { exam: target.id } : {}),
@@ -1059,16 +1117,33 @@ export const AGENT_FOLDS = {
     const writes = [];
     const say = [];
     const rejects = [];
-    const keep = (raw, kind, id, where) => {
+    const doseRefs = new Set(b.dosageRefs || []);
+    const keep = (raw, kind, id, where, drill) => {
       const q = { id, kind, ...pick(raw || {}, ITEM_FIELDS) };
       const v = EV.validateItem(q, { strict: true });
+      const name = `${where} ${raw && raw.topic ? raw.topic : id}`;
       if (!v.ok) {
-        rejects.push(`${where} ${raw && raw.topic ? raw.topic : id}: ${v.errors.join(', ')}`);
+        rejects.push(`${name}: ${v.errors.join(', ')}`);
         return null;
+      }
+      // B-43 (D-100): a numeric item rests on dosage material, and a dosage drill holds numeric items on its passages.
+      if (q.type === 'numeric' && !doseRefs.has(q.sourceRef)) {
+        rejects.push(`${name}: a numeric item cites dosage material`);
+        return null;
+      }
+      if (drill && drill.numeric) {
+        if (q.type !== 'numeric') {
+          rejects.push(`${name}: a dosage drill is numeric items only`);
+          return null;
+        }
+        if (!drill.passages.some(p => p.ref === q.sourceRef)) {
+          rejects.push(`${name}: not one of the drill's passages`);
+          return null;
+        }
       }
       return q;
     };
-    const env = () => EV.envelope('morning', ctx.source, ctx.now);
+    const env = () => ({ ...EV.envelope('morning', ctx.source, ctx.now), schema: 2 }); // sets schema 2 (B-43)
     if (!b.review.exists && (b.review.targets.length || b.review.checks.length)) {
       const want = new Set(b.review.targets.map(t => t.weakspotId));
       const wantChecks = new Set(b.review.checks.map(c => c.objective));
@@ -1111,7 +1186,7 @@ export const AGENT_FOLDS = {
     for (const d of b.drills) {
       const items = [];
       for (const raw of (answer.drills || {})[d.setId] || []) {
-        const q = keep(raw, 'drill', 'd' + (items.length + 1), d.setId);
+        const q = keep(raw, 'drill', 'd' + (items.length + 1), d.setId, d);
         if (!q) continue;
         if (q.weakspotId && !(db.weakspots || []).some(w => w.id === q.weakspotId)) delete q.weakspotId;
         items.push(q);
@@ -1126,7 +1201,7 @@ export const AGENT_FOLDS = {
             kind: 'drill',
             exam: d.exam,
             title: d.title,
-            planTaskId: d.planTaskId,
+            ...(d.planTaskId ? { planTaskId: d.planTaskId } : {}),
             objectives: d.objectives,
             items,
             createdAt: ctx.now,

@@ -1076,3 +1076,115 @@ test('B-45 (D-102): an exam-plan job for an exam that has a plan saves a draft a
   assert.match(msg.text, /stays in force/);
   assert.ok(validate('jobresults', EV.docData(res), { id: jobId }).ok);
 });
+
+test('B-43 (D-100): a dosage exam five days out gives the morning a dosage drill on dosage material; only numeric items on its passages are kept', () => {
+  const at = '2026-10-17T09:25:00Z';
+  const db = recordDb();
+  db.exams.push({
+    id: 'D9',
+    schema: 2,
+    writer: 'canvas-sync',
+    at: '2026-09-01T00:00:00Z',
+    source: 'test',
+    course: 'NUR 112',
+    kind: 'dosage',
+    title: 'Dosage Exam 9: made up',
+    date: '2026-10-22',
+    status: 'upcoming',
+  });
+  const text =
+    '[p1] Made-up dosage calculation method: desired dose over dose on hand times quantity. Order 250 mg, on hand 125 mg per 5 mL, give 10 mL. Round liquid doses to the tenth of a mL. ' +
+    '[p2] Made-up IV rate: total volume in mL divided by hours gives mL/hr; with a drop factor, mL/hr times drop factor over 60 gives gtt/min, rounded to the whole drop.';
+  const mat = (id, title, t) => ({
+    id,
+    schema: 1,
+    writer: 'page',
+    at: '2026-09-01T00:00:00Z',
+    source: 'test',
+    course: 'NUR 112',
+    kind: 'reading',
+    title,
+    module: 'Dosage',
+    fileType: 'pdf',
+    text: t,
+    pages: 2,
+    chars: t.length,
+    needsOcr: false,
+  });
+  db.materials.push(mat('made-up-dosage', 'Made-up dosage calculation workbook.pdf', text));
+  // The syllabus names the exam but teaches no math: never a dosage source.
+  db.materials.push(
+    mat('made-up-syllabus', 'Made-up syllabus.pdf', '[p1] Dosage exam on a made-up date; dosage calculation counts.')
+  );
+  const { dir } = session('morning', at, db);
+  const w = RUN.compute({ spec, dir, validate, at });
+  assert.equal(w.status, 'waiting', JSON.stringify(w));
+  const drill = w.question.material.drills.find(d => d.numeric);
+  assert.ok(drill, JSON.stringify(w.question.material.drills));
+  assert.equal(drill.setId, 'D9-dosage-2026-10-17');
+  assert.ok(drill.passages.length && drill.passages.every(p => p.ref === 'materials/made-up-dosage'));
+  const n = o => ({
+    type: 'numeric',
+    stem: 'Order: a made-up drug 250 mg by mouth. On hand: 125 mg per 5 mL. How many mL? Round to the tenth.',
+    answer: 10,
+    unit: 'mL',
+    tolerance: 0.05,
+    steps: ['250 / 125 = 2', '2 x 5 mL = 10 mL'],
+    objective: 'D9-1',
+    topic: 'Liquid oral doses',
+    cjStep: 'take-action',
+    sourceRef: 'materials/made-up-dosage',
+    ...o,
+  });
+  answer(dir, 'write-practice', {
+    review: [],
+    drills: {
+      [drill.setId]: [
+        n(),
+        n({ topic: 'IV rate', answer: 125, unit: 'mL/hr', steps: ['1000 mL / 8 hr = 125 mL/hr'] }),
+        n({ topic: 'From the syllabus', sourceRef: 'materials/made-up-syllabus' }),
+        n({ topic: 'No steps', steps: [] }),
+        {
+          type: 'single',
+          stem: 'A made-up dosage question with options?',
+          options: ['1', '2'],
+          correct: [0],
+          rationales: ['y', 'n'],
+          objective: 'D9-1',
+          topic: 'Not numeric',
+          cjStep: 'take-action',
+          sourceRef: 'materials/made-up-dosage',
+        },
+      ],
+    },
+  });
+  const r = RUN.compute({ spec, dir, validate, at });
+  assert.equal(r.status, 'planned', JSON.stringify(r.problems));
+  const set = r.plan.batches.flat().find(x => x.collection === 'sets' && x.doc_id === drill.setId);
+  const data = JSON.parse(fs.readFileSync(set.file_path, 'utf8'));
+  assert.equal(data.schema, 2);
+  assert.deepEqual(
+    data.items.map(q => q.topic),
+    ['Liquid oral doses', 'IV rate']
+  );
+  assert.ok(data.items.every(q => q.type === 'numeric' && q.sourceRef === 'materials/made-up-dosage'));
+  assert.ok(validate('sets', data, { id: drill.setId }).ok);
+  const detail = r.plan.steps.find(s => s.id === 'write-practice').detail;
+  assert.match(detail, /cites dosage material/);
+  assert.match(detail, /numeric items only/);
+
+  // Without dosage material the drill is not written, and the run says why.
+  const db2 = recordDb();
+  db2.exams.push({ ...db.exams.find(e => e.id === 'D9') });
+  const s2 = session('morning', at, db2);
+  const w2 = RUN.compute({ spec, dir: s2.dir, validate, at });
+  const brief2 = w2.status === 'waiting' ? w2.question.material : null;
+  assert.ok(!brief2 || !brief2.drills.some(d => d.numeric));
+  // Six days out is outside nearExamWithinDays (5): no drill.
+  const db3 = recordDb();
+  db3.exams.push({ ...db.exams.find(e => e.id === 'D9'), date: '2026-10-23' });
+  db3.materials.push(db.materials.find(m => m.id === 'made-up-dosage'));
+  const s3 = session('morning', at, db3);
+  const w3 = RUN.compute({ spec, dir: s3.dir, validate, at });
+  assert.ok(w3.status !== 'waiting' || !w3.question.material.drills.some(d => d.numeric));
+});
