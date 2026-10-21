@@ -1472,15 +1472,21 @@
   "title": "Study session in Captions (D-129, D-130, D-133): started by talking; the session bar and ring; listening; the notes bar with reader v2's title and a glance at each new line; comments through core.commentGate with the quote, the notes bar holding while she speaks; the session menu (Comments More, Some, Off; Quiz me now) and the level carried to the next session; the seven-minute check on the surface with alert mood and chips hidden, its format from checkFormat, a recoil and one line on a wrong pick, hit and missed points and Add to it once on an open answer; Break (sleepy, ring dimmed, clock paused, checks held); End's one filing line; desktop Your notes",
   "dod": "core tests on commentGate: the 4-minute and 4-line limits at Some, 2 and 2 at More, none at Off, none during a check, a break, the minute before a check or while answering, a correction taking the next slot; the harness runs the proposal's Study session sequence step by step on fake time against the reader stub at 390 and 1280 with a screenshot per step; a staging session's sessions/ss-* and talk read back with session, note and comments",
   "milestone": "M11",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-74",
    "B-75",
    "B-78"
   ],
-  "notes": "Oct 19, added by B-94 from the Build plan tab: it never reached BACKLOG.md, and B-81 depends on it. The Oct 19 page work (B-82 to B-91) may cover part of it: check before starting",
+  "notes": "Checked against the UI tenets before building (Oct 21); not started. Depends on B-74, B-75 and B-78 (all blocked) and rests on D-129, D-130 and D-133 (proposed). Tenet points to settle with B-78's answer: D-129's script has the check rise as a surface with chips hidden, where D-161 (accepted) has the check fold like the briefing to its head line, and D-160 rules out pills for anything closed; the 44 px session bar (D-124) is fine with D-153 if it gives way at short heights. Question: accept D-129 read through D-160 and D-161 (the check folds, no pills)?",
   "commit": null,
-  "source": "Build plan tab"
+  "source": "Build plan tab",
+  "board": {
+   "row": "v4 B-79: Study session in Captions",
+   "why": "A session run by talking to her, with comments and checks",
+   "notes": "Waiting on Matt: proposed decisions, and after B-74, B-75, B-78"
+  },
+  "waitingOn": "Matt"
  },
  {
   "id": "B-80",
