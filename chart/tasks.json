@@ -2943,9 +2943,9 @@
   "id": "B-167",
   "kind": "bug",
   "title": "Bug (reported Oct 21): Live health/current is 37 h old (written 2026-10-19T21:56Z): the live watchdog's firings since Oct 20 00:56Z leave no runs/ document, the latest at 09:55Z Oct 21 (last_run SUCCEEDED, on v4.0.0 with the pre-v4.2 prompt, 28 minutes before v4.2.0 went live with B-131's hook fix)",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "the live watchdog's first firing on v4.2.0 (12:55Z Oct 21) writes runs/watchdog-<id> with status ok and a health/current younger than spec.constants.health.staleHours, both read back; if it does not, the cause found from its run trace and fixed through staging",
+  "milestone": "v4.2 runs",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -2956,6 +2956,10 @@
    "row": "v4 B-167: Live health/current is 37 h old (written 2026-10-19T21:56Z): the live…",
    "why": "Live health/current is 37 h old (written 2026-10-19T21:56Z): the live watchdog's firings since Oct 20 00:56Z leave no runs/ document, the latest at 09:55Z Oct 21 (last_run SUCCEEDED, on v4.0.0 with the pre-v4.2 prompt, 28 minutes before v4.2.0 went live with B-131's hook fix)",
    "notes": "Reported Oct 21 from brief: health/current stale"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-21T10:59:53.547Z"
   }
  }
 ]
