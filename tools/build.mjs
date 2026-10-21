@@ -196,6 +196,116 @@ async function promptHashes(root, spec, release, tasks) {
 }
 
 // ------------------------------------------------------------------------------------------------ the page
+// B-161 (A-3): the page gets only the top-level spec keys it reads, the page logic, the shell and core.js together;
+// test/page.test.mjs holds this list to what they read. The Mac folder and the task table stay out: the page needs
+// one task, its target's worker, by trigger id.
+export const PAGE_SPEC_KEYS = [
+  'release',
+  'target',
+  'specVersion',
+  'constants',
+  'courses',
+  'study',
+  'items',
+  'workouts',
+  'jobs',
+  'persona',
+  'ui',
+  'pipelines',
+  'reader',
+  'schedules',
+  'schemas',
+  'worker',
+];
+// Notes the validator ignores (core/validate.mjs) leave the page's schemas; x-ev keeps only its documents map. A map
+// of names to schemas (properties, $defs and the like) keeps every name: a field called title is not a note.
+const NOTE_KEYS = new Set(['description', '$comment', 'title', 'examples']);
+const NAME_MAPS = new Set(['properties', 'patternProperties', '$defs', 'definitions', 'dependentSchemas']);
+const schemaForPage = o =>
+  Array.isArray(o)
+    ? o.map(schemaForPage)
+    : o && typeof o === 'object'
+      ? Object.fromEntries(
+          Object.entries(o)
+            .filter(([k]) => !NOTE_KEYS.has(k))
+            .map(([k, v]) => [
+              k,
+              k === 'x-ev'
+                ? v && v.documents
+                  ? { documents: v.documents }
+                  : {}
+                : NAME_MAPS.has(k) && v && typeof v === 'object'
+                  ? Object.fromEntries(Object.entries(v).map(([n, x]) => [n, schemaForPage(x)]))
+                  : schemaForPage(v),
+            ])
+        )
+      : o;
+// The spec's prose (_rules, _note and every other key starting with _) is for people and build chats; no page file
+// reads it, so it stays out of spec.json.
+const withoutProse = o =>
+  Array.isArray(o)
+    ? o.map(withoutProse)
+    : o && typeof o === 'object'
+      ? Object.fromEntries(
+          Object.entries(o)
+            .filter(([k]) => !k.startsWith('_'))
+            .map(([k, v]) => [k, withoutProse(v)])
+        )
+      : o;
+/** What spec.json holds for one target's page: PAGE_SPEC_KEYS, each made here. */
+export function pageSpecFor(spec, schemas, { target, release }) {
+  const pageWrites = Object.entries(spec.collections)
+    .filter(([c, x]) => !c.startsWith('_') && x && (x.writers || []).includes('page'))
+    .map(([c]) => c);
+  const worker = (spec.tasks[target] || {}).worker;
+  const make = {
+    release: () => release,
+    target: () => target,
+    specVersion: () => spec.specVersion,
+    constants: () => spec.constants,
+    courses: () => spec.courses,
+    study: () => spec.study,
+    items: () => spec.items || null,
+    workouts: () => spec.workouts || null,
+    // A job kind by its label: each kind's guide is the worker's, read in its run (core/steps.mjs), not the page's.
+    jobs: () => ({
+      kinds: Object.fromEntries(Object.entries(spec.jobs.kinds || {}).map(([k, x]) => [k, { label: x.label }])),
+    }),
+    persona: () => spec.persona || null,
+    // ui.tenets is the look pass's (test/harness/look.cjs reads it from the spec), not the page's.
+    ui: () => Object.fromEntries(Object.entries(spec.ui).filter(([k]) => k !== 'tenets')),
+    pipelines: () =>
+      Object.fromEntries(
+        Object.entries(spec.pipelines)
+          .filter(([k]) => !k.startsWith('_'))
+          .map(([k, p]) => [k, { lane: p.lane, purpose: p.purpose, steps: p.steps ? p.steps.length : null }])
+      ),
+    // The Study Watch reader by the host the page calls (the rest of its row is the Mac's).
+    reader: () => {
+      const r = (spec.registry.studyWatch || {}).reader;
+      return r ? { name: r.name, host: r.host, tools: r.tools } : null;
+    },
+    // When each runs live (no task ids); a pipeline with no live task (the restore drill, which drills into staging)
+    // shows its staging task's schedule.
+    schedules: () =>
+      Object.fromEntries([
+        ...Object.values(spec.tasks.staging || {})
+          .filter(t => t && t.pipeline && t.schedule)
+          .map(t => [t.pipeline, t.schedule]),
+        ...Object.values(spec.tasks.live || {})
+          .filter(t => t && t.pipeline)
+          .map(t => [t.pipeline, t.schedule || null]),
+      ]),
+    // The page validates what it writes: the schemas of the collections it writes, without their notes.
+    schemas: () => Object.fromEntries(pageWrites.filter(c => schemas[c]).map(c => [c, schemaForPage(schemas[c])])),
+    worker: () => (worker && worker.trigger ? { trigger: worker.trigger } : null),
+  };
+  const missing = PAGE_SPEC_KEYS.filter(k => !make[k]);
+  if (missing.length || Object.keys(make).length !== PAGE_SPEC_KEYS.length)
+    throw new Error(`PAGE_SPEC_KEYS and pageSpecFor disagree: ${missing.join(', ') || 'an extra maker'}`);
+  return Object.fromEntries(PAGE_SPEC_KEYS.map(k => [k, k === 'schemas' ? make[k]() : withoutProse(make[k]())]));
+}
+
 /** The modules evcore.mjs imports (one factory each, no imports of their own) and evcore without those lines. */
 export function coreParts(root, core) {
   const parts = [];
@@ -268,42 +378,7 @@ export function buildPages({ root, spec, schemas, release }) {
   for (const target of ['live', 'staging']) {
     const other = target === 'live' ? 'staging' : 'live';
     const rec = spec.registry.records[target] || {};
-    const pageSpec = {
-      release,
-      target,
-      specVersion: spec.specVersion,
-      record: { artifact: rec.artifact || null, name: rec.name || null },
-      tasks: { [target]: spec.tasks[target], ...(target === 'staging' ? { diagnostic: spec.tasks.diagnostic } : {}) },
-      constants: spec.constants,
-      courses: spec.courses,
-      study: spec.study,
-      capacity: spec.capacity,
-      ui: spec.ui,
-      jobs: spec.jobs,
-      workouts: spec.workouts || null,
-      boundaries: spec.boundaries,
-      workingAgreements: spec.workingAgreements,
-      persona: spec.persona || null,
-      items: spec.items || null,
-      pipelines: Object.fromEntries(
-        Object.entries(spec.pipelines)
-          .filter(([k]) => !k.startsWith('_'))
-          .map(([k, p]) => [k, { lane: p.lane, purpose: p.purpose, steps: p.steps ? p.steps.length : null }])
-      ),
-      reader: (spec.registry.studyWatch || {}).reader || null,
-      // When each runs live (no task ids); a pipeline with no live task (the restore drill, which drills into staging)
-      // shows its staging task's schedule.
-      schedules: Object.fromEntries([
-        ...Object.values(spec.tasks.staging || {})
-          .filter(t => t && t.pipeline && t.schedule)
-          .map(t => [t.pipeline, t.schedule]),
-        ...Object.values(spec.tasks.live || {})
-          .filter(t => t && t.pipeline)
-          .map(t => [t.pipeline, t.schedule || null]),
-      ]),
-      collections: spec.collections,
-      schemas,
-    };
+    const pageSpec = pageSpecFor(spec, schemas, { target, release });
     const specJson = JSON.stringify(pageSpec);
     const foreign = [
       ...Object.values(spec.tasks[other] || {})

@@ -5,9 +5,7 @@
     const P = EV_SPEC.persona || {};
     const KINDS = (EV_SPEC.jobs && EV_SPEC.jobs.kinds) || {};
     const TASKS = {
-      worker: ((EV_SPEC.tasks && EV_SPEC.tasks[EV_SPEC.target]) || {}).worker
-        ? EV_SPEC.tasks[EV_SPEC.target].worker.trigger
-        : null,
+      worker: (EV_SPEC.worker && EV_SPEC.worker.trigger) || null, // B-161: the one task the page fires, by id
       jobText: 'Job {id}',
     };
     const STAGING = EV_SPEC.target === 'staging';

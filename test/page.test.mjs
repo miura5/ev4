@@ -6,8 +6,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
-import { buildPages, loadSchemas } from '../tools/build.mjs';
+import { buildPages, loadSchemas, PAGE_SPEC_KEYS } from '../tools/build.mjs';
 import { deployCalls, verify } from '../core/deploy.mjs';
+import { makeValidator } from '../core/validate.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
@@ -77,9 +78,10 @@ test('spec.json carries only its own target: no live task or record on staging, 
   assert.equal(s.target, 'staging');
   assert.equal(l.target, 'live');
   assert.equal(s.release, release);
-  assert.equal(s.record.artifact, spec.registry.records.staging.artifact);
-  assert.deepEqual(Object.keys(s.tasks).sort(), ['diagnostic', 'staging']);
-  assert.deepEqual(Object.keys(l.tasks), ['live']);
+  // B-161: one task, the target's own worker, by trigger id; no task table, no record id.
+  assert.deepEqual(s.worker, { trigger: spec.tasks.staging.worker.trigger });
+  assert.deepEqual(l.worker, { trigger: spec.tasks.live.worker.trigger });
+  assert.ok(!('tasks' in s) && !('record' in s));
   for (const t of Object.values(spec.tasks.live))
     if (t && t.trigger) assert.ok(!pages.staging['spec.json'].includes(t.trigger), t.trigger);
   for (const t of Object.values(spec.tasks.staging))
@@ -91,9 +93,76 @@ test('spec.json carries only its own target: no live task or record on staging, 
   );
 });
 
+// B-161 (A-3): the keys a page file reads, comments left out: EV_SPEC.<key> and spec.<key> in page/app and the shell,
+// SPEC.<key> and spec.<key> in what core.js holds.
+const uncomment = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"`\\])\/\/.*$/gm, '$1');
+function specReads() {
+  const reads = {};
+  const scan = (file, re) => {
+    for (const m of uncomment(fs.readFileSync(path.join(ROOT, file), 'utf8')).matchAll(re))
+      (reads[m[1]] = reads[m[1]] || new Set()).add(file);
+  };
+  for (const f of fs.readdirSync(path.join(ROOT, 'page/app')).filter(f => f.endsWith('.js')))
+    scan('page/app/' + f, /\b(?:EV_SPEC|spec)\.(\w+)/g);
+  scan('page/index.src.html', /\bspec\.(\w+)/g);
+  const core = fs.readFileSync(path.join(ROOT, 'core/evcore.mjs'), 'utf8');
+  const coreFiles = [
+    'core/evcore.mjs',
+    ...[...core.matchAll(/^import \{ \w+ \} from '\.\/([\w-]+\.mjs)';$/gm)].map(m => 'core/' + m[1]),
+    'core/study.mjs',
+    'core/motion.mjs',
+    'core/validate.mjs',
+  ];
+  for (const f of coreFiles) scan(f, /\b(?:SPEC|spec)\.(\w+)/g);
+  delete reads.json; // spec.json, the file's own name
+  return reads;
+}
+// Read by core only in node: the Canvas libraries (registry.canvas) are the evening run's.
+const NODE_ONLY = ['registry'];
+
+test('B-161 (A-3): the page gets exactly the spec keys its files read, and its spec.json is under 50 KB', () => {
+  const reads = specReads();
+  const read = Object.keys(reads).filter(k => !NODE_ONLY.includes(k));
+  const unread = PAGE_SPEC_KEYS.filter(k => !reads[k] && k !== 'worker');
+  const unpublished = read.filter(k => !PAGE_SPEC_KEYS.includes(k));
+  assert.deepEqual(unpublished, [], `read but not published: ${unpublished.map(k => k + ' (' + [...reads[k]] + ')')}`);
+  assert.deepEqual(unread, [], 'published but read by no page file');
+  assert.ok(reads.worker, 'the page reads its worker');
+  for (const t of ['live', 'staging']) {
+    const json = pages[t]['spec.json'];
+    assert.deepEqual(Object.keys(JSON.parse(json)), PAGE_SPEC_KEYS);
+    assert.ok(Buffer.byteLength(json) < 50000, `${t} spec.json is ${Buffer.byteLength(json)} bytes`);
+    assert.ok(!json.includes('Documents/'), 'no Mac folder');
+  }
+  // The page's schemas lose only their notes: every field, definition and required list is kept (a field named
+  // title is a field), so the page refuses exactly what the pipelines refuse.
+  const page = JSON.parse(pages.live['spec.json']).schemas;
+  for (const c of Object.keys(page)) {
+    assert.deepEqual(Object.keys(page[c].properties || {}), Object.keys(schemas[c].properties || {}), c + ' fields');
+    assert.deepEqual(Object.keys(page[c].$defs || {}), Object.keys(schemas[c].$defs || {}), c + ' definitions');
+    assert.deepEqual(page[c].required, schemas[c].required, c + ' required');
+  }
+  const v = { full: makeValidator(schemas), page: makeValidator(page) };
+  const run = { id: 'w1', schema: 1, writer: 'page', at: '2026-10-21T08:00:00Z', source: 'E.V. Home', title: 'CINDY' };
+  assert.equal(v.page('workouts', run, { id: 'w1' }).ok, v.full('workouts', run, { id: 'w1' }).ok);
+  assert.ok(page.workouts.properties.title, 'the workouts title field is kept');
+  assert.deepEqual(
+    JSON.parse(pages.live['spec.json']).jobs.kinds.general,
+    { label: spec.jobs.kinds.general.label },
+    "a job kind by its label; the guide is the worker's"
+  );
+  // A planted read of a key the page does not get is caught.
+  const planted = 'const x = EV_SPEC.boundaries;';
+  assert.deepEqual(
+    [...uncomment(planted).matchAll(/\b(?:EV_SPEC|spec)\.(\w+)/g)].map(m => m[1]),
+    ['boundaries']
+  );
+  assert.ok(!PAGE_SPEC_KEYS.includes('boundaries'));
+});
+
 test('the build refuses a page that would name the other target or a shell over budget, and writes its one release into every file', () => {
   const leaky = JSON.parse(JSON.stringify(spec));
-  leaky.jobs = { ...leaky.jobs, note: 'see ' + spec.registry.records.live.artifact };
+  leaky.persona = { ...leaky.persona, tagline: 'see ' + spec.registry.records.live.artifact };
   assert.throws(() => buildPages({ root: ROOT, spec: leaky, schemas, release }), /the staging page would name live's/);
   const tight = JSON.parse(JSON.stringify(spec));
   tight.ui.page.shellBudgetBytes = 1000;
