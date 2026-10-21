@@ -9,6 +9,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import EV from '../core/evcore.mjs';
 import { appSource } from '../tools/build.mjs';
+import { renderPrompt } from '../tools/prompts.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
@@ -23,7 +24,8 @@ test('no standing graded-work or made-up client wording in what E.V. says or wri
     ['spec.items', JSON.stringify(spec.items)],
     ['spec.workingAgreements', JSON.stringify(spec.workingAgreements)],
     ['spec.ui', JSON.stringify(spec.ui)],
-    ['spec.boundaries', JSON.stringify(spec.boundaries)],
+    // The run prompts' own limits live in spec.boundaries since D-175 and keep B-99's exemption there.
+    ['spec.boundaries', JSON.stringify(spec.boundaries.rules.map(({ prompt, ...r }) => r))],
     ['spec.pipelines', JSON.stringify(spec.pipelines)],
     ['spec.jobs', JSON.stringify(spec.jobs)],
     ['page/app', appSource(ROOT)],
@@ -82,6 +84,10 @@ test('the identifier scan still stops a real identifier', () => {
   assert.ok(EV.scanIdentifiers('Pt John Smith, MRN 12345678, room 412').length > 0);
 });
 
-test('the scheduled tasks keep their hard limits word for word (tools/prompts.mjs is untouched by B-99)', () => {
-  assert.match(read('tools/prompts.mjs'), /never patient identifiers/);
+test('the scheduled tasks keep their hard limits word for word (rendered from spec.boundaries since D-175, untouched by B-99)', () => {
+  for (const target of ['live', 'staging'])
+    for (const [key, task] of Object.entries(spec.tasks[target])) {
+      const prompt = renderPrompt({ key: `${target}.${key}`, task, spec, release: 'v4.0.0' });
+      if (prompt) assert.match(prompt, /made-up clients only, never patient identifiers/, key);
+    }
 });

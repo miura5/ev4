@@ -258,10 +258,10 @@ test('capacity: the design constants, a budget row per collection, nothing guess
     }
 });
 
-test('boundaries B-01 to B-14 ported, the explicit-OK list and the working agreements', () => {
+test('boundaries B-01 to B-14 ported (B-15 to B-18 added with D-175), the explicit-OK list and the working agreements', () => {
   assert.deepEqual(
     spec.boundaries.rules.map(b => b.id),
-    Array.from({ length: 14 }, (_, i) => `B-${String(i + 1).padStart(2, '0')}`)
+    Array.from({ length: 18 }, (_, i) => `B-${String(i + 1).padStart(2, '0')}`)
   );
   for (const b of spec.boundaries.rules) assert.ok(b.rule.length > 10, b.id);
   for (const ok of ['publishing the live page', 'creating or changing a Mac-bound task', 'touching the live record'])
@@ -355,4 +355,14 @@ test('B-37 (D-093): the budgets rest on read cost and the measured ceiling, each
       !/cap: 25000/.test(fs.readFileSync(path.join(ROOT, 'core/evcore.mjs'), 'utf8')),
     'the 25,000 cap is gone'
   );
+});
+
+test('lint, D-175 (B-134): CLAUDE.md names every boundary id, and every prompt phrasing names known lanes', () => {
+  const md = fs.readFileSync(new URL('../CLAUDE.md', import.meta.url), 'utf8');
+  for (const b of spec.boundaries.rules) assert.match(md, new RegExp(`\\b${b.id}\\b`), `CLAUDE.md names ${b.id}`);
+  const lanes = ['cloud', 'mac', 'canvas', 'mac-writes', 'mac-reads'];
+  for (const b of spec.boundaries.rules.filter(r => r.prompt)) {
+    assert.ok(b.prompt.lanes.length && b.prompt.lanes.every(l => lanes.includes(l)), b.id);
+    if (typeof b.prompt.text !== 'string') for (const l of b.prompt.lanes) assert.ok(b.prompt.text[l], `${b.id} ${l}`);
+  }
 });

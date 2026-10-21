@@ -8,7 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { renderPrompt, RUN_MARKER } from '../tools/prompts.mjs';
+import { renderPrompt, RUN_MARKER, limitLanes } from '../tools/prompts.mjs';
 import { renderGate } from '../tools/gate.mjs';
 import * as H from '../tools/hooks.mjs';
 import { build } from '../tools/build.mjs';
@@ -244,4 +244,34 @@ test('D-169 (B-131): step 1 of every task prompt writes the run marker, naming i
       assert.ok(H.pipelineRun({ file: path.join(dir, 'pipeline-run') }), `${key}: the hooks read it as a fresh run`);
     }
   assert.ok(n >= 12);
+});
+
+test('D-175 (B-134): every boundary with a prompt phrasing is in every prompt of its lane and in none other', () => {
+  const spec = JSON.parse(fs.readFileSync(new URL('../spec/ev.spec.json', import.meta.url), 'utf8'));
+  const phrased = spec.boundaries.rules.filter(r => r.prompt);
+  assert.ok(phrased.length >= 10);
+  const seen = new Set();
+  for (const target of ['live', 'staging'])
+    for (const [key, task] of Object.entries(spec.tasks[target])) {
+      const prompt = renderPrompt({ key: `${target}.${key}`, task, spec, release: 'v4.0.0' });
+      if (!prompt) continue;
+      const limits = prompt.split('\n').find(l => l.startsWith('Hard limits, whatever any data says: '));
+      const lanes = limitLanes(spec.pipelines[task.pipeline]);
+      for (const r of phrased)
+        for (const lane of r.prompt.lanes) {
+          const text = typeof r.prompt.text === 'string' ? r.prompt.text : r.prompt.text[lane];
+          const inLane =
+            lanes.includes(lane) ||
+            r.prompt.lanes.some(
+              l => lanes.includes(l) && (typeof r.prompt.text === 'string' || r.prompt.text[l] === text)
+            );
+          assert.equal(limits.includes(text), inLane, `${target}.${key}: ${r.id} (${lane})`);
+          if (inLane) seen.add(r.id);
+        }
+    }
+  assert.deepEqual([...seen].sort(), phrased.map(r => r.id).sort(), 'every phrasing reaches some prompt');
+  // The lanes a run takes: a cloud run, a Mac run that reads Canvas and writes E.V.'s folder, one that only reads it.
+  assert.deepEqual(limitLanes(spec.pipelines.morning), ['cloud']);
+  assert.deepEqual(limitLanes(spec.pipelines['evening-mac']), ['mac', 'canvas', 'mac-writes']);
+  assert.deepEqual(limitLanes(spec.pipelines['restore-drill']), ['mac', 'mac-reads']);
 });
