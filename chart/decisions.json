@@ -1,5 +1,125 @@
 [
  {
+  "id": "D-202",
+  "date": "Oct 21",
+  "title": "She tells him once, in a line: a build's outcome is one greeting line and one card, what waits on him is one chip, a kickoff is one message with a Copy chip, and nothing she sends him about building repeats a fact his phone already carried",
+  "why": "B-14's tone rule and the north star's guardian line (tells him once when something broke, never three times); one-interface adds three kinds of news to a greeting that must stay one line",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan TbfWAoQEeQixyNKZnEZKvv P-10",
+  "kind": "tenet",
+  "scope": [
+   "ui"
+  ],
+  "check": "harness",
+  "how": "harness: the greeting carries at most one build line and one Your turn chip, each only while it applies; a planted done build shows once and not after lastSeenAt moves"
+ },
+ {
+  "id": "D-201",
+  "date": "Oct 21",
+  "title": "A build session writes the live record only through a printed call that an allowance file names (dist/live-ok for a deploy, dist/trace-ok for a trace), never by hand; a new allowance is a safeguard change: a decision, a hooks test, a probe on every kind of session it can reach, and an environments row before anything rests on it",
+  "why": "The live-guard took the watchdog down once when a safeguard was generalized from one session kind (D-185); the trace is the first allowance since, and it must not be the last by accident",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan TbfWAoQEeQixyNKZnEZKvv P-9",
+  "kind": "tenet",
+  "scope": [
+   "ops"
+  ],
+  "check": "review",
+  "how": "review: test/hooks.test.mjs names every allowance and its refusals; the review skill reports a live write in a build session's transcript that no printed call covers, and an allowance with no decision, test, probe or row"
+ },
+ {
+  "id": "D-200",
+  "date": "Oct 21",
+  "title": "From her page or a builder session E.V. never: deploys live without Matt's OK bound to one commit; writes the live record outside her trace and the deploy his OK names; creates, changes or deletes a scheduled task, or fires one other than ev4-builder once per run and what ship prints on his OK; touches the Mac, the desktop app or a Mac-bound task; changes a guarded path (spec.boundaries, chart/rules.json, the hooks and their settings, tools/gate.mjs, CLAUDE.md's Hard limits, any tenet), which reaches main only from a chat with Matt present; answers a Your-turn item, picks a model, starts a design chat or files a task from the north star; deletes anything, posts as him, touches graded work or stores a patient identifier",
+  "why": "What stays Matt's under any model (the north star): the direction, live, anything irreversible, the Mac, the hard limits; v5's trust harness needs the list written before the models that would test it arrive",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan TbfWAoQEeQixyNKZnEZKvv P-8",
+  "kind": "tenet",
+  "scope": [
+   "ops"
+  ],
+  "check": "lint",
+  "how": "lint: a commit under the builder marker that touches a guarded path fails npm test and log and ship refuse to push it, log decision refuses a tenet under the marker; ship: ship live refuses without --matt-ok or a bound ship job; harness: start_job refuses kinds reply and ship from the model's tool path; review: the review skill reports any diff to a guarded path and any trigger call in a builder run"
+ },
+ {
+  "id": "D-199",
+  "date": "Oct 21",
+  "title": "The builder's outcome is a job result, not a runs/ document: the builder is not a pipeline, its card and its greeting line read jobresults/, and the watchdog treats builder job kinds with their own stall window and re-fires the builder, never the worker",
+  "why": "The jobs mechanism already draws the card, the greeting line and the stall report end to end; a runs/ writer would add a schema bump for nothing, and without the watchdog line a build job would be handed to the worker after 15 minutes",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan TbfWAoQEeQixyNKZnEZKvv P-7"
+ },
+ {
+  "id": "D-198",
+  "date": "Oct 21",
+  "title": "R-04 has two forms: Matt's words in a build chat (--matt-ok), or a ship job he wrote on his page naming one commit, one shot, under 24 hours old, from the chip's code path; both write dist/live-ok; a builder run may deploy live only on a ship job; R-02, R-03 and R-05 apply to both; rollback stays a build-chat act with Matt present",
+  "why": "The live OK was the last thing that needed a build chat; the page is owner-only (B-07), so the write is his act; binding the OK to a commit is stricter than the chat form, which binds to nothing; Matt accepted an unattended live deploy in principle on Oct 21, bound to one commit",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan TbfWAoQEeQixyNKZnEZKvv P-6"
+ },
+ {
+  "id": "D-197",
+  "date": "Oct 21",
+  "title": "The design kickoff is a draft E.V. hands him as text with a Copy chip; the kickoff command reads the north star only to draft and files nothing from it, and the north star's rule line says so; the model and the design chat stay Matt's; a design doc's hand-off is filed from the page through a plan job",
+  "why": "The north star's own line that once one-interface lands E.V. drafts the kickoff from the Chart and that page; what stays Matt's (the direction, through a design chat he starts); his OK on Oct 21 to amend the rule line",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan TbfWAoQEeQixyNKZnEZKvv P-5"
+ },
+ {
+  "id": "D-196",
+  "date": "Oct 21",
+  "title": "Your turn lives in the record as system/yourturn, written at every ship and every trace, never on every log; a reply from the page is a job of kind reply filed with log --from-job; a reply never carries a live deploy, a task's creation or change, a Mac task or a tenet",
+  "why": "D-181 batched his asks into one list; the list now reaches the one place he looks, and two write moments cover every change he can act on without the Docs-views ceremony W-1 retired",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan TbfWAoQEeQixyNKZnEZKvv P-4"
+ },
+ {
+  "id": "D-195",
+  "date": "Oct 21",
+  "title": "The builder's trace is the only live write a build session makes without Matt's OK: jobresults/<job>, one talk line as E.V. and system/yourturn, each printed by trace and allowed by the live-guard only as named in dist/trace-ok for ten minutes; everything else stays refused; the allowance lands by D-185's process (the hooks test, the first staging trace read back, the environments row)",
+  "why": "A build never ends without a trace he can read on his page (D-180's rule, applied to builds); the hook keeps its refuse-by-default and names exact calls, the pattern dist/live-ok already set",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan TbfWAoQEeQixyNKZnEZKvv P-3"
+ },
+ {
+  "id": "D-194",
+  "date": "Oct 21",
+  "title": "The builder is E.V.'s build hand: a job of kind build, reply, design, plan or ship goes to ev4-builder, never the worker; Matt's words reach the Chart only through report --from-chat and log --from-job, never retyped; the builder writes the definition of done from his words (D-182) and takes a build job's task first in that run, the one exception to D-191's order",
+  "why": "Matt chose passive building on Oct 21: a wrong definition costs a staging build, never a live one; the north star's rule that his plain words become precise work without him speaking the system's language",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan TbfWAoQEeQixyNKZnEZKvv P-2"
+ },
+ {
+  "id": "D-193",
+  "date": "Oct 21",
+  "title": "v4.4 is the one-interface release: it opens with the first live deploy that carries the build job kind and the builder's trace, shipped with ship live --minor and tagged v4.4.0; every live deploy before it is a v4.3.x patch; it goes ahead of the study queue, so D-191's order resumes after it",
+  "why": "The versioning rule (D-173): four additive schema bumps, a reader-facing spec shape and a task row change; Matt's call on Oct 21 to take one-interface first because it removes the touch points every later task costs him",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [
+   "D-191"
+  ],
+  "source": "plan TbfWAoQEeQixyNKZnEZKvv P-1"
+ },
+ {
   "id": "D-192",
   "date": "Oct 21",
   "title": "A scheduled task's name carries no version. The release lives in its prompt and in system/manifest. A release renames no task",
