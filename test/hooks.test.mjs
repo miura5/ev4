@@ -192,3 +192,38 @@ test('D-169 (B-131): every hook stands down while a fresh run marker says this s
   }
   assert.equal(H.pipelineRun({ file: path.join(dir, 'nothing-here') }), null);
 });
+
+test('B-146 (W-3): the Stop hook runs npm test once per tree: an unchanged tree skips with a line saying so, a changed one runs', () => {
+  const dir = copyRepo();
+  for (const f of fs.readdirSync(path.join(dir, 'test')))
+    if (f.endsWith('.test.mjs')) fs.rmSync(path.join(dir, 'test', f));
+  fs.writeFileSync(path.join(dir, 'test', 'ok.test.mjs'), "import test from 'node:test'; test('fine', () => {});\n");
+  const stop = () => {
+    const r = spawnSync(process.execPath, [path.join(dir, 'tools', 'hooks.mjs'), 'stop'], {
+      input: '{}',
+      encoding: 'utf8',
+      env: { ...process.env, EV_RUN_MARKER: path.join(dir, 'no-marker') },
+    });
+    return { code: r.status, out: r.stdout, err: r.stderr };
+  };
+  let r = stop();
+  assert.deepEqual([r.code, r.out], [0, ''], 'first run: tests run, green, quiet');
+  assert.ok(JSON.parse(fs.readFileSync(path.join(dir, 'dist', 'test-ok'), 'utf8')).tree);
+  r = stop();
+  assert.equal(r.code, 0);
+  assert.match(r.out, /^npm test: skipped, the tree is unchanged since its last green run \(.+; B-146\)\n$/);
+  // A changed file, tracked or not, runs the tests again; a red run leaves no green hash to skip on.
+  fs.writeFileSync(
+    path.join(dir, 'test', 'planted.test.mjs'),
+    "import test from 'node:test'; import assert from 'node:assert'; test('planted failure', () => assert.equal(1, 2));\n"
+  );
+  r = stop();
+  assert.equal(r.code, 2);
+  assert.match(r.err, /npm test is red: planted failure/);
+  r = stop();
+  assert.equal(r.code, 2, 'still red: run again, never skipped');
+  fs.rmSync(path.join(dir, 'test', 'planted.test.mjs'));
+  fs.appendFileSync(path.join(dir, 'README.md'), '\nA tracked edit.\n');
+  assert.notEqual(H.treeHash(dir), JSON.parse(fs.readFileSync(path.join(dir, 'dist', 'test-ok'), 'utf8')).tree);
+  assert.deepEqual([stop().code, stop().out.startsWith('npm test: skipped')], [0, true]);
+});

@@ -11,6 +11,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { RUN_MARKER } from './prompts.mjs';
 
@@ -81,6 +82,28 @@ export function liveGuard(input, { liveId, liveOk = null, now = Date.now() }) {
   return `Refused: ${what}. Live changes only through deploy live --matt-ok (Matt's explicit OK in the chat), which writes dist/live-ok for ${LIVE_OK_HOURS} hours (B-58)${liveOk ? '; the one there is older than that' : ''}.`;
 }
 
+/**
+ * B-146 (W-3): the tree npm test would see, as one hash: the index (git ls-files -s), the working tree's changes against
+ * it (git diff) and every untracked file not ignored, with its content. The Stop hook skips when it equals the hash
+ * the last green run left in dist/test-ok.
+ */
+export function treeHash(root = ROOT) {
+  const g = a => spawnSync('git', ['-C', root, ...a], { encoding: 'utf8' }).stdout || '';
+  const h = createHash('sha256');
+  h.update(g(['ls-files', '-s']));
+  h.update('\0' + g(['diff', '--no-color', '--no-ext-diff']));
+  for (const f of g(['ls-files', '-o', '--exclude-standard']).split('\n').filter(Boolean).sort()) {
+    h.update('\0' + f + '\0');
+    try {
+      h.update(fs.readFileSync(path.join(root, f)));
+    } catch {
+      /* gone since the listing */
+    }
+  }
+  return h.digest('hex');
+}
+const testOkFile = root => path.join(root, 'dist', 'test-ok');
+
 // Its own test run, never a child of another (node:test skips the files when NODE_TEST_CONTEXT is set at all).
 const ownRun = () => {
   const env = { ...process.env };
@@ -109,6 +132,17 @@ export function main(argv = process.argv.slice(2), { marker = process.env.EV_RUN
   )
     return 0;
   if (cmd === 'stop') {
+    const tree = treeHash(ROOT);
+    let ok = null;
+    try {
+      ok = JSON.parse(fs.readFileSync(testOkFile(ROOT), 'utf8'));
+    } catch {
+      /* no green run recorded */
+    }
+    if (ok && ok.tree === tree) {
+      process.stdout.write(`npm test: skipped, the tree is unchanged since its last green run (${ok.at}; B-146)\n`);
+      return 0;
+    }
     const r = spawnSync(
       process.execPath,
       [
@@ -122,6 +156,10 @@ export function main(argv = process.argv.slice(2), { marker = process.env.EV_RUN
       { cwd: ROOT, encoding: 'utf8', env: ownRun() }
     );
     const v = stopVerdict(input, { status: r.status, out: (r.stdout || '') + (r.stderr || '') });
+    if (r.status === 0) {
+      fs.mkdirSync(path.dirname(testOkFile(ROOT)), { recursive: true });
+      fs.writeFileSync(testOkFile(ROOT), JSON.stringify({ tree, at: new Date().toISOString() }));
+    }
     return v ? no(v) : 0;
   }
   if (cmd === 'spec-format') {

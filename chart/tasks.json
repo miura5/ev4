@@ -2659,10 +2659,10 @@
   "title": "Atomic record changes (D-177): log, report, ship and plan fetch and rebase before they commit and push right after, printing the refusal and the next step when the push is refused",
   "dod": "a chart test runs two log calls from two clones of a throwaway remote and both entries land in order; npm test green",
   "milestone": "v4.2 record",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Taken Oct 21",
-  "commit": null,
+  "notes": "7e51ec3: record changes sync with origin first and push after (record() and plan); the two-clone test green",
+  "commit": "7e51ec3",
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
@@ -2671,9 +2671,9 @@
   "title": "Stop hook runs tests once per tree (W-3): the hook hashes git ls-files -s and skips when it equals the last green run's hash kept in dist/test-ok",
   "dod": "test/hooks.test.mjs: an unchanged tree skips with a line saying so, a changed tree runs; npm test green",
   "milestone": "v4.2 record",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken Oct 21",
   "commit": null,
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
