@@ -1711,3 +1711,57 @@ test('B-141: CLAUDE.md and the skills say what is true: the staging record id, t
     assert.doesNotMatch(t, /created in B-12|until cutover/, `${f}: no pre-cutover wording`);
   }
 });
+
+test('B-142 (W-7): lint warns on stale flags (waiting on someone when finished, a rule whose condition is done, a retired reason on a superseded decision); done and declined clear waitingOn', () => {
+  const r = sample();
+  r.decisions.push({ id: 'D-003', title: 'three', why: '', status: 'accepted', supersedes: ['D-002'], amends: [] });
+  r.decisions.find(d => d.id === 'D-002').status = 'superseded';
+  r.tasks[1].waitingOn = 'Matt';
+  r.tasks[2].waitingOn = 'Matt';
+  r.tasks[2].status = 'done';
+  r.tasks[2].commit = 'abc1234';
+  r.rules = [
+    {
+      id: 'R-01',
+      rule: 'page-only while B-01 is not done',
+      decision: 'D-003',
+      task: 'B-01',
+      command: 'ship live',
+      check: 'pageOnlyLive',
+    },
+    {
+      id: 'R-02',
+      rule: 'staging green first',
+      decision: 'D-003',
+      task: 'B-01',
+      command: 'ship live',
+      check: 'stagingGate',
+    },
+  ];
+  const spec = {
+    tasks: {
+      retired: [
+        { trigger: 'trig_a', reason: 'D-002: kept for the rollback' },
+        { trigger: 'trig_b', reason: 'D-003 closed the window (D-002); kept' },
+      ],
+    },
+  };
+  const got = C.lintChart(r, { spec })
+    .filter(f => f.level === 'warn')
+    .map(f => `${f.check} ${f.id}`);
+  assert.deepEqual(got.sort(), ['stale-retired trig_a', 'stale-rule R-01', 'stale-waiting B-03'].sort());
+  // log clears waitingOn when a task is done, and when it is declined.
+  C.applyLog(r, { _: ['log', 'B-02'], status: 'done', commit: 'def5678' });
+  assert.equal(r.tasks[1].waitingOn, undefined);
+  r.tasks.push({ ...r.tasks[2], id: 'B-04', status: 'open', waitingOn: 'Matt', commit: null });
+  C.applyLog(r, { _: ['log', 'B-04'], triage: 'decline', reason: 'Matt: no' });
+  assert.equal(r.tasks.at(-1).waitingOn, undefined);
+  // The real record carries none of these after B-142's corrections.
+  const real = C.lintChart(rec(), {
+    spec: JSON.parse(fs.readFileSync(path.join(ROOT, 'spec', 'ev.spec.json'), 'utf8')),
+  });
+  assert.deepEqual(
+    real.filter(f => /^stale-/.test(f.check)),
+    []
+  );
+});

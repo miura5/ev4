@@ -2076,25 +2076,25 @@
     "trigger": "trig_01R7242YzwUXFyNVcmqT8vob",
     "was": "v3.live.morning",
     "name": "E.V. morning (v3.6)",
-    "reason": "D-085: v3 live, replaced by v4 at the Oct 18 cutover; disabled and kept. The rollback procedure in CLAUDE.md re-enables it only with Matt's explicit OK."
+    "reason": "v3 live, replaced by v4 at the Oct 18 cutover; disabled and kept. D-145 (Oct 19) closed the v3 rollback (D-085), so it is never re-enabled."
    },
    {
     "trigger": "trig_0148JgXzDzGX1zghMymdvMmL",
     "was": "v3.live.evening",
     "name": "E.V. evening (v3.6)",
-    "reason": "D-085: v3 live, replaced by v4 at the Oct 18 cutover; disabled and kept. The rollback procedure in CLAUDE.md re-enables it only with Matt's explicit OK. Mac-bound: re-enabled only from a chat linked to the Mac, with Matt present."
+    "reason": "v3 live, replaced by v4 at the Oct 18 cutover; disabled and kept. D-145 (Oct 19) closed the v3 rollback (D-085), so it is never re-enabled. Mac-bound: a change to it is made only from a chat linked to the Mac, with Matt present."
    },
    {
     "trigger": "trig_01GHogoFx9Ns7uE1uUmi2i2G",
     "was": "v3.live.weekly",
     "name": "E.V. weekly review (v3.6)",
-    "reason": "D-085: v3 live, replaced by v4 at the Oct 18 cutover; disabled and kept. The rollback procedure in CLAUDE.md re-enables it only with Matt's explicit OK."
+    "reason": "v3 live, replaced by v4 at the Oct 18 cutover; disabled and kept. D-145 (Oct 19) closed the v3 rollback (D-085), so it is never re-enabled."
    },
    {
     "trigger": "trig_01PxKp1tsgddna4Kt1FzpNhv",
     "was": "v3.live.worker",
     "name": "E.V. worker (v3.6)",
-    "reason": "D-085: v3 live, replaced by v4 at the Oct 18 cutover; disabled and kept. The rollback procedure in CLAUDE.md re-enables it only with Matt's explicit OK."
+    "reason": "v3 live, replaced by v4 at the Oct 18 cutover; disabled and kept. D-145 (Oct 19) closed the v3 rollback (D-085), so it is never re-enabled."
    },
    {
     "trigger": "trig_01VK4WrkLh2361Bc7MgvcDUY",

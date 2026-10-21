@@ -837,8 +837,7 @@
    "row": "v4 B-42: Courses as data",
    "why": "core hardcodes NUR 112, so BIO 201 exams never reach the morning review and a finished course can't be retired by marking",
    "notes": "Done: courses are data; staging morning ran clean, live since Oct 20"
-  },
-  "waitingOn": "Matt"
+  }
  },
  {
   "id": "B-43",
@@ -1278,10 +1277,9 @@
   "depends": [
    "B-64"
   ],
-  "notes": "Oct 20, not taken: it isn't cheap. The synthetic half is nearly there (run.cjs already defaults to a generated synthetic record and passes 273 of 273 in npm run check); putting it in npm test would add about two minutes to every npm test, and so to the end-of-turn hook and CI, which has no Chromium (it would skip there). The DoD's other half, the harness on a staging export, fails 21 of 273 today, all predating this session (same set at b47e04c): checks written against the synthetic record's shape (greeting text, briefing order, the ladder workout, study-session and filing stubs). Making those hold on real data is a session's work of its own. Question for Matt: take B-67 in its own session (and is a real-record pass still wanted), or decline it?",
+  "notes": "Oct 20, not taken: it isn't cheap. The synthetic half is nearly there (run.cjs already defaults to a generated synthetic record and passes 273 of 273 in npm run check); putting it in npm test would add about two minutes to every npm test. The harness on a staging export fails 21 of 273 (checks written against the synthetic record's shape). Matt declined it Oct 20; the v4.2 nightly harness (B-151) runs it on the synthetic record instead.",
   "commit": null,
   "source": "BACKLOG.md",
-  "waitingOn": "Matt",
   "triage": {
    "outcome": "declined",
    "reason": "Matt declined it Oct 20: the harness already runs on a generated synthetic record in npm run check before every deploy and the staging deploy check covers the rest; in npm test it would add about two minutes a turn and skip on CI, which has no browser",
@@ -1304,8 +1302,7 @@
    "row": "v4 B-68: Shadow scheduler",
    "why": "a scheduler change costs a week of study when wrong, so the new rule runs beside today's first and the week compares them (D-116)",
    "notes": "Done: the shadow scheduler runs beside today's; a week of comparison before B-69"
-  },
-  "waitingOn": "Matt"
+  }
  },
  {
   "id": "B-69",
@@ -1399,8 +1396,7 @@
    "row": "v4 B-74: Talk and reader data fields",
    "why": "Sessions and note comments need fields on talk and sessions",
    "notes": "Done on staging: conversations split at sessions, talk and sessions v2; live on Matt's OK"
-  },
-  "waitingOn": "Matt"
+  }
  },
  {
   "id": "B-75",
@@ -1535,7 +1531,7 @@
    "B-30"
   ],
   "dependsText": "B-76, B-77, B-78, B-79, B-80, B-30 and Matt's OK",
-  "notes": "Build chat summary (Oct 20 to 21). DONE: B-125 (no motion on tab switches, ea7cd75), B-126 (Study's answered and done views, 3afcf73), B-64 (prettier, app.js split by tab, GitHub Actions npm test, green). ON STAGING (GREEN at 6218f16, 8 behind main): those three plus B-42 (courses as data, 9277ed9), B-45 (exam plan drafts, 8e4b2f8) and B-68 (shadow scheduler, 6218f16); staging days and planedits migrated, legacy copies kept. LIVE: untouched, still d33e08a; nothing goes live without Matt's OK, and not through the end of Wed Oct 21. BLOCKED, on Matt: B-42, B-45 and B-68 wait only on a staging firing (say: fire the E.V. staging morning, worker and weekly tasks; the auto-mode check refuses fire_trigger unless you name them); B-67 (not cheap: own session or decline?); B-74 and B-75 (proposed D-130 to D-133; reader v2 needs your Mac); B-78, B-79, B-80 (pills and the phone sheet clash with D-148, D-150, D-160, D-161: fold or keep pills?); B-81 (title fixed for D-145; waits on B-74 to B-80 and your OK). Question still open from B-125: keep the status light's pulse, or make it steady? WAITING ON A BLOCKED TASK: B-43, B-44, B-46, B-48 (after B-42); B-69 (after B-68, a shadow week and your OK); B-70 to B-73 (chained after B-69, B-48, B-68). NOT MINE: B-98, B-27 part 2 (a chat at Matt's Mac), B-108 (Matt's GitHub step).",
+  "notes": "The gate that takes Captions to live (Oct 21, v4.2 chat): B-76, B-77 and B-74 are live (f547c21); B-75 and B-78 to B-80 are open, the UI-tenet restatements D-123 to D-126 accepted Oct 21. Waiting on Matt: his phone and desktop check on staging once B-75 and B-78 to B-80 are on it, then his OK for the live rollout. The status-light question is answered (B-125: steady, no pulse). The Oct 20 build-chat summary that sat here is replaced by the v4.2 chat's summary.",
   "commit": null,
   "source": "BACKLOG.md",
   "board": {
@@ -2053,8 +2049,7 @@
   "triage": {
    "outcome": "task",
    "at": "2026-10-20T00:11:33.591Z"
-  },
-  "waitingOn": "none"
+  }
  },
  {
   "id": "B-107",
@@ -2616,10 +2611,10 @@
   "title": "CLAUDE.md sweep: line 9 (seven tabs), line 50 (R-01 ended, with chart/rules.json in step), line 124 (the staging record Pb6jQ6CvEbtxi6Rcshu9uC), line 125 (cutover done); review SKILL.md:38 says ship staging; the rollback skill drops the exam-week freeze (D-178); a lint test guards the staging record id, the tab count and the ship verb",
   "dod": "the lint test fails on the old text and passes on the new; npm test green",
   "milestone": "v4.2 watch",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Taken Oct 21",
-  "commit": null,
+  "notes": "1ec406a (+ format fix): CLAUDE.md lines, R-01 ended in rules.json via log rule --ended, both skills; tests guard them; npm test green",
+  "commit": "1ec406a",
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
@@ -2628,9 +2623,9 @@
   "title": "Stale flags lint catches: log --status done or declined clears waitingOn; chart lint warns on waitingOn with a final status, on a rule whose decision is superseded or whose task is done (R-01 marked ended, kept), and on a retired reason that cites a superseded decision; B-42, B-67, B-68, B-74, B-81 and the four v3 retired reasons corrected through log",
   "dod": "chart lint catches each planted case and is green on the real record afterwards; npm test green",
   "milestone": "v4.2 watch",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken Oct 21",
   "commit": null,
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },

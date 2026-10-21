@@ -535,7 +535,7 @@ export const PAGE_ONLY = {
  * superseded or missing decision, a done task with no commit, a malformed entry. Warnings: an inbox entry left
  * untriaged (log refuses to start a task while one waits, so triage comes first). Returns [{level, check, id, detail}].
  */
-export function lintChart(rec, { tests = {} } = {}) {
+export function lintChart(rec, { tests = {}, spec = null } = {}) {
   const out = [],
     add = (level, check, id, detail) => out.push({ level, check, id, detail });
   const seen = {};
@@ -634,6 +634,31 @@ export function lintChart(rec, { tests = {} } = {}) {
       add('error', 'missing-dependency', r.id, `names ${r.task}, which is not in the record`);
   }
   for (const [id, n] of Object.entries(rseen)) if (n > 1) add('error', 'duplicate-id', id, `${n} rules carry ${id}`);
+  // B-142 (W-7): stale flags, each a small lie the next session reads as true. A finished task still waiting on
+  // someone; a rule still enforced whose own condition is a task now done (R-01's "B-30 not done"); a retired task's
+  // reason that leans on a superseded decision.
+  for (const t of rec.tasks)
+    if (t.waitingOn && ['done', 'declined'].includes(t.status))
+      add('warn', 'stale-waiting', t.id, `is ${t.status} but still waiting on ${t.waitingOn}`);
+  const taskOf = Object.fromEntries(rec.tasks.map(t => [t.id, t]));
+  for (const r of rec.rules)
+    if (!r.ended && r.task && ids(r.rule).includes(r.task) && taskOf[r.task] && taskOf[r.task].status === 'done')
+      add(
+        'warn',
+        'stale-rule',
+        r.id,
+        `still enforced, but ${r.task} is done: mark it ended (log rule ${r.id} --ended "D-...")`
+      );
+  const superseded = new Set(rec.decisions.filter(d => d.status === 'superseded').map(d => d.id));
+  for (const x of ((spec && spec.tasks && spec.tasks.retired) || []).filter(x => x && x.reason)) {
+    const cited = ids(x.reason);
+    // Citing a superseded decision is fine beside the one that superseded it ("D-145 closed the rollback (D-085)").
+    const stale = cited.filter(
+      i => superseded.has(i) && !rec.decisions.some(d => cited.includes(d.id) && (d.supersedes || []).includes(i))
+    );
+    if (stale.length)
+      add('warn', 'stale-retired', x.trigger || x.name, `retired reason cites ${stale.join(', ')}, superseded`);
+  }
   for (const d of rec.deploys)
     if (!['staging', 'live'].includes(d.target) || !d.commit)
       add('error', 'bad-deploy', d.commit || '?', `deploy to ${d.target} with commit ${d.commit}`);
@@ -1253,6 +1278,8 @@ export function applyLog(rec, o, { now = new Date().toISOString() } = {}) {
       Object.assign(t, { status: 'declined', triage: { outcome: 'declined', reason: o.reason, at: now } });
       what.push('declined');
     } else throw new Error('--triage task|join <id>|decline');
+    // B-142: a declined or joined task waits on no one.
+    if (t.status === 'declined' && t.waitingOn) delete t.waitingOn;
   }
   if (o.status) {
     if (!TASK_STATUS.includes(o.status) || ['inbox', 'declined'].includes(o.status))
@@ -1268,6 +1295,11 @@ export function applyLog(rec, o, { now = new Date().toISOString() } = {}) {
       throw new Error(`${id} done needs --commit (the commit that did it)`);
     what.push(`${t.status} -> ${o.status}`);
     t.status = o.status;
+    // B-142: a finished task waits on no one.
+    if (o.status === 'done' && t.waitingOn && o['waiting-on'] == null) {
+      delete t.waitingOn;
+      what.push('no longer waiting');
+    }
   }
   // A task's definition of done or title, rewritten when a decision changes it (outside triage, which sets both).
   if (!o.triage && typeof o.dod === 'string') {
@@ -2734,7 +2766,10 @@ const commands = {
     return 0;
   },
   lint(o) {
-    const f = lintChart(loadChart(rootOf(o)), { tests: testTexts(rootOf(o)) });
+    const f = lintChart(loadChart(rootOf(o)), {
+      tests: testTexts(rootOf(o)),
+      spec: readJson(path.join(rootOf(o), 'spec', 'ev.spec.json')),
+    });
     console.log(o.json ? JSON.stringify(f, null, 1) : formatLint(f));
     return f.some(x => x.level === 'error') ? 1 : 0;
   },
