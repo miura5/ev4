@@ -2423,5 +2423,25 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "live",
+  "commit": "c8f5464",
+  "time": "2026-10-21T20:19:29.744Z",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "c38c86b",
+  "from": "c38c86b",
+  "tasks": [
+   "B-168",
+   "B-172",
+   "B-165",
+   "B-75",
+   "B-173"
+  ],
+  "summary": "The gate fetches before it falls back; A live worker that fails at the gate pushes 'E.V.' with no text: two…; Evidence counts in the weekly's health line; Open-ended checks and grading; Version-free task names",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
