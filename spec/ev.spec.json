@@ -2560,11 +2560,53 @@
      "date": "2026-10-20",
      "run": "cse_01XNq9pktXaebtWwbLeeEGwE",
      "evidence": "B-65: /tmp/ev4-hook-marker written 2026-10-20T00:09:21Z as this build session started; the scheduled diagnostic the same hour found none (cloud-run limits)"
+    },
+    {
+     "capability": "a fired builder run builds, ships staging and records the task (commits pushed to main)",
+     "task": "build.ev4-builder (trig_01Rubgkh9mfYXZaRh8jm6uP6, created 2026-10-18T04:25Z from a chat with the repository, push on, permission mode auto)",
+     "proven": true,
+     "date": "2026-10-21",
+     "run": "cse_01E8uRETL45FfPLHkrSyWY2p",
+     "evidence": "B-176 probe A (fired 22:11:36Z by the build chat): the session took B-177 and pushed 8c5cfaa, the staging deploy 499403f and done 7673277 (22:53Z), with a staging worker firing read back (runs/worker-20261021-224934320); Matt stopped it after B-177 so it would not take B-186"
     }
    ],
    "limits": [
     "publish reads the whole live page back first",
     "a partial capabilities object wipes the rest"
+   ],
+   "unproven": [
+    {
+     "capability": "fire_trigger's text as the builder session's next message",
+     "task": "build.ev4-builder (trig_01Rubgkh9mfYXZaRh8jm6uP6, created 2026-10-18T04:25Z from a chat with the repository, push on, permission mode auto)",
+     "proven": false,
+     "date": "2026-10-21",
+     "run": "cse_01E8uRETL45FfPLHkrSyWY2p",
+     "evidence": "refused: probe A's text ('idea: probe A, the builder was fired with this message; …') never arrived; the session's one user turn was the configured prompt, and it kept no turn open to receive one (its own note on B-176). The worker and diagnostic prompts end their first turn with 'Waiting for the job id'; the builder's prompt has no such step"
+    },
+    {
+     "capability": "report --from-chat files a fired text in Matt's words (no B-id filed)",
+     "task": "build.ev4-builder (trig_01Rubgkh9mfYXZaRh8jm6uP6, created 2026-10-18T04:25Z from a chat with the repository, push on, permission mode auto)",
+     "proven": false,
+     "date": "2026-10-21",
+     "run": "cse_01E8uRETL45FfPLHkrSyWY2p",
+     "evidence": "refused: nothing arrived to file, so no inbox entry and no B-id; nothing to decline as the probe"
+    },
+    {
+     "capability": "a Claude Docs read in a scheduled builder session",
+     "task": "build.ev4-builder (trig_01Rubgkh9mfYXZaRh8jm6uP6, created 2026-10-18T04:25Z from a chat with the repository, push on, permission mode auto)",
+     "proven": false,
+     "date": "2026-10-21",
+     "run": "cse_01E8uRETL45FfPLHkrSyWY2p",
+     "evidence": "not reached: the request rode the fired text, which never arrived"
+    },
+    {
+     "capability": "the builder run's end line on Matt's phone (push on)",
+     "task": "build.ev4-builder (trig_01Rubgkh9mfYXZaRh8jm6uP6, created 2026-10-18T04:25Z from a chat with the repository, push on, permission mode auto)",
+     "proven": false,
+     "date": "2026-10-21",
+     "run": "cse_01E8uRETL45FfPLHkrSyWY2p",
+     "evidence": "not reached: Matt stopped the session after B-177 (about 50 minutes in, 22:11Z to after 22:53Z), before it ended on its own"
+    }
    ]
   }
  },

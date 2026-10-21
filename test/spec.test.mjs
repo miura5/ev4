@@ -228,7 +228,7 @@ test('environments: the five surfaces, each capability with a proof', () => {
       assert.ok(p.evidence, `${s}: ${p.capability} evidence`);
       // D-179 (B-136): every proven row names the task its proof ran as (or the session kind), a live one by its key.
       assert.ok(typeof p.task === 'string' && p.task.length > 5, `${s}: ${p.capability} names its task`);
-      const key = /^(live|staging)\.([\w-]+) \((trig_\w+), created /.exec(p.task);
+      const key = /^(live|staging|build)\.([\w-]+) \((trig_\w+), created /.exec(p.task);
       if (!/^(v3 |no task: )/.test(p.task)) {
         assert.ok(key, `${s}: ${p.capability}: ${p.task}`);
         const task = spec.tasks[key[1]][key[2]] || (key[2] === 'diagnostic' && spec.tasks.diagnostic);
