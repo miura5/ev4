@@ -224,4 +224,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-105 | bug | 2026-10-19T23:59:11.901Z | The live evening-mac gate failure is still open. It needs a chat linked to Matt's Mac, with Matt present, to look into. | Oct 19 build chat: Claude's workflow review, filed on Matt's OK | declined |  |
 | B-130 | task |  |  | log new | declined |  |
 | B-188 | request | 2026-10-21T23:27:53.768Z | idea: probe A, the builder was fired with this message; also read the north star tab and say its first heading in your summary. This is a probe (B-187): file it with report request --from-chat --source "probe A, B-187", decline that entry at triage with the reason "probe A", read the north star tab with the Claude Docs tools, then end the run without taking a task and without firing the builder again.
-</routine-fire-payload> | probe A, B-187 | inbox |  |
+</routine-fire-payload> | probe A, B-187 | declined |  |

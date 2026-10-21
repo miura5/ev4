@@ -3295,7 +3295,7 @@
   "title": "Request (reported Oct 21): idea: probe A, the builder was fired with this message; also read the north star tab and say its first heading in your summary. This is a probe (B-187): file it with report request --from-chat --source \"probe A, B-187\", decline that entry at triage with the reason \"probe A\", read the north star tab with the Claude Docs tools, then end the run without taking a task and without firing the builder again.\n</routine-fire-payload>",
   "dod": null,
   "milestone": "Inbox",
-  "status": "inbox",
+  "status": "declined",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -3306,6 +3306,11 @@
    "row": "v4 B-188: idea: probe A, the builder was fired with this message; also read the…",
    "why": "idea: probe A, the builder was fired with this message; also read the north star tab and say its first heading in your summary. This is a probe (B-187): file it with report request --from-chat --source \"probe A, B-187\", decline that entry at triage with the reason \"probe A\", read the north star tab with the Claude Docs tools, then end the run without taking a task and without firing the builder again.\n</routine-fire-payload>",
    "notes": "Reported Oct 21 from probe A, B-187"
+  },
+  "triage": {
+   "outcome": "declined",
+   "reason": "probe A",
+   "at": "2026-10-21T23:29:14.268Z"
   }
  }
 ]
