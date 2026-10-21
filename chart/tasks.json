@@ -2710,7 +2710,7 @@
   "milestone": "v4.2 release",
   "status": "done",
   "depends": [],
-  "notes": "live at 8ec85c4 (v4.2.0) Oct 21 on Matt's OK: ship live GREEN; staging GREEN at the same commit first. ship live --minor tagged v4.2.0 at 8ec85c4 locally; pushing the tag was refused by this session's git proxy (HTTP 403 on refs/tags, twice; main pushes fine). Not worked around: the tag waits for a push from a session or machine that may push tags (git push origin v4.2.0).",
+  "notes": "Oct 21: Matt pushed v4.2.0 from his own clone; origin has the annotated tag 283fc5a on 8ec85c4, the live build. This session's copy now matches it.",
   "commit": "07304da",
   "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
