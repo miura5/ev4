@@ -1506,6 +1506,24 @@ test('two new deploys reach the Changelog as one insert, newest first (Docs refu
   );
 });
 
+test('log sets depends on a filed task, and an open task joins another (the v4.1 review, Oct 21)', () => {
+  const r = sample();
+  const out = C.applyLog(r, { _: ['log', 'B-03'], depends: 'B-01, B-02' });
+  assert.equal(out.what, 'depends');
+  assert.deepEqual(r.tasks[2].depends, ['B-01', 'B-02']);
+  assert.throws(() => C.applyLog(r, { _: ['log', 'B-03'], depends: 'B-99' }), /--depends B-99: no such task/);
+  assert.throws(() => C.applyLog(r, { _: ['log', 'B-03'], depends: 'B-03' }), /cannot depend on itself/);
+  assert.match(C.renderBacklog(r), /\| B-03 \| [^\n]*\| B-01, B-02 \|/);
+  const open = r.tasks.find(x => x.status === 'open' && x.id !== 'B-03') || r.tasks[2];
+  const into = r.tasks.find(x => x.id !== open.id).id;
+  C.applyLog(r, { _: ['log', open.id, into], triage: 'join' });
+  assert.deepEqual([open.status, open.triage.outcome, open.triage.into], ['declined', 'joined', into]);
+  assert.deepEqual(
+    C.lintChart(r).filter(f => f.level === 'error'),
+    []
+  );
+});
+
 test("log rewrites a task's definition of done or title outside triage", () => {
   const r = sample();
   const out = C.applyLog(r, { _: ['log', 'B-03'], dod: 'a new definition', title: 'a new title' });

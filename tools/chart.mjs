@@ -1219,8 +1219,9 @@ export function applyLog(rec, o, { now = new Date().toISOString() } = {}) {
   if (o.triage) {
     const how = o.triage === true ? '' : o.triage;
     // A task Matt declines after it left the inbox (B-67, Oct 20) takes the same decline: open or blocked only, never one
-    // started or done, and always with his reason.
-    const declineTask = how === 'decline' && ['open', 'blocked'].includes(t.status);
+    // started or done, and always with his reason. An open or blocked task joins another the same way (B-130 into
+    // B-143, Oct 21: the task that retires the views it fixed).
+    const declineTask = ['decline', 'join'].includes(how) && ['open', 'blocked'].includes(t.status);
     if (t.status !== 'inbox' && !declineTask) throw new Error(`${id} is ${t.status}, not in the inbox`);
     if (how === 'task') {
       if (!o.dod || !o.milestone) throw new Error('--triage task needs --dod and --milestone');
@@ -1270,6 +1271,18 @@ export function applyLog(rec, o, { now = new Date().toISOString() } = {}) {
   if (!o.triage && typeof o.title === 'string') {
     t.title = o.title;
     what.push('title');
+  }
+  // Depends set after filing (a design hand-off's rows get ids only when plan files them; Oct 21, the v4.1 review):
+  // the list replaces the task's own, each id must be in the record, and a task never depends on itself.
+  if (!o.triage && typeof o.depends === 'string') {
+    const deps = list(o.depends).filter(x => /^B-\d+$/.test(x));
+    for (const d of deps) {
+      if (d === t.id) throw new Error(`${t.id} cannot depend on itself`);
+      if (!findTask(rec, d).length) throw new Error(`--depends ${d}: no such task`);
+    }
+    t.depends = deps;
+    delete t.dependsText;
+    what.push('depends');
   }
   if (o.commit) {
     t.commit = String(o.commit).slice(0, 7);

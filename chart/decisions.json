@@ -1,5 +1,214 @@
 [
  {
+  "id": "D-185",
+  "date": "Oct 21",
+  "title": "A safeguard that acts on tool calls is a capability: it is probed on every kind of session it can reach, tested for the pipeline case, and recorded in the environments registry before it is relied on",
+  "why": "The live-guard hook was probed in one session kind, generalized, and took the watchdog down for a day (the v4.1 review's privacy finding on hooks; O-1)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq P-17",
+  "kind": "tenet",
+  "scope": [
+   "ops"
+  ],
+  "check": "review",
+  "how": "review: a new hook or guard lands with its probe's run id and a pipeline-case test, or the review reports the gap",
+  "restated": "Oct 21"
+ },
+ {
+  "id": "D-184",
+  "date": "Oct 21",
+  "title": "A design doc is a hand-off: once plan --apply has filed it, no current fact is cited from it; the living truth is CLAUDE.md, the spec and its schemas, and the Chart, and a design truth goes into the spec's _rules beside its data",
+  "why": "Five docs state v3 facts D-145 retired; Matt reads none of them; the generated views were the only part in step (D-1, D-3)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq P-16",
+  "kind": "tenet",
+  "scope": [
+   "ops"
+  ],
+  "check": "review",
+  "how": "review: a commit or a task note that cites a design doc for a current fact is a gap; CLAUDE.md names the three living sources"
+ },
+ {
+  "id": "D-183",
+  "date": "Oct 21",
+  "title": "Every document a deploy writes has a budget, system documents included: lint warns at 75 percent of the platform ceiling and fails at 90",
+  "why": "system/spec is 43 percent of a 256 KiB ceiling after four days with no budget and no reader (A-2)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq P-15",
+  "kind": "tenet",
+  "scope": [
+   "data"
+  ],
+  "check": "lint",
+  "how": "lint: spec.capacity names a budget for every fixed-id document the deploy writes, and lint reports each"
+ },
+ {
+  "id": "D-182",
+  "date": "Oct 21",
+  "title": "A definition of done asks Matt to look only for what no check can decide (taste, fit, whether a line reads right); every checkable clause names its test, harness check or run id",
+  "why": "Three definitions of done mix taste with checkable facts and each costs a session of his (M-4)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq P-14",
+  "kind": "tenet",
+  "scope": [
+   "ops"
+  ],
+  "check": "review",
+  "how": "review: the review skill reports a definition of done with a checkable clause that only Matt's look covers"
+ },
+ {
+  "id": "D-181",
+  "date": "Oct 21",
+  "title": "Nothing unattended asks Matt: what needs him is queued under waitingOn with where it happens (the Mac, the staging page, GitHub, a decision) and raised once, in his list; a build chat never stops a task to ask what can wait",
+  "why": "Ten asks arrived one at a time this week, three of them at the Mac; batched they are one session (M-1)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq P-13",
+  "kind": "tenet",
+  "scope": [
+   "ops"
+  ],
+  "check": "review",
+  "how": "review: a task left blocked on Matt names its place; brief --matt lists them; the review skill flags a question asked in chat that the list could have carried"
+ },
+ {
+  "id": "D-180",
+  "date": "Oct 21",
+  "title": "A missing run outranks every open task: a build chat that finds health/current older than spec.constants.health.staleHours, or a scheduled firing with no run document, files it and takes it before anything else; brief shows it first",
+  "why": "A refused start leaves no trace, the watchdog cannot watch itself, and the only one who could look was Matt on exam morning (O-4)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq P-12",
+  "kind": "tenet",
+  "scope": [
+   "ops"
+  ],
+  "check": "review",
+  "how": "review: brief prints the health age and any firing without a run document at the top; the review skill treats a task taken ahead of a stale health as a gap"
+ },
+ {
+  "id": "D-179",
+  "date": "Oct 21",
+  "title": "An environments row is proven for tasks created the way its diagnostic's task was: each row names that task, and a task created differently re-proves what it uses before anything is built on it",
+  "why": "The hooks row generalized from one session kind to all and the watchdog paid for it (A-6, O-1)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq P-11"
+ },
+ {
+  "id": "D-178",
+  "date": "Oct 21",
+  "title": "The exam-week freeze is dropped from the rollback skill; R-03 (no live deploy during a study session) and R-05 (watchdog windows) stay",
+  "why": "Matt overrode it twice in its first week; the two rules that protect studying are the other two (M-6)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq P-10"
+ },
+ {
+  "id": "D-177",
+  "date": "Oct 21",
+  "title": "A record change is one move: log, report, ship and plan fetch and rebase before they commit and push right after, printing the refusal and the next step when the push is refused",
+  "why": "Two deliberate parallel chats collide on the record's arrays and on main; an unpushed record commit is the window (W-4)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq P-9"
+ },
+ {
+  "id": "D-176",
+  "date": "Oct 21",
+  "title": "Flaky timing checks are quarantined, not deleted: the captions history-pull block, the D-137 pace check and the core step-down and frame-budget checks report their numbers as advisory and fail only on a second consecutive miss in one run; a quarantined check returns to blocking after 20 green nightly runs",
+  "why": "A re-run that passes proves the check is timing-sensitive, not that the page is right; today a flake is waved through and a real step-down regression would be too (T-2)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq P-8"
+ },
+ {
+  "id": "D-175",
+  "date": "Oct 21",
+  "title": "The run limits are rendered from spec.boundaries: each rule carries a prompt phrasing and the lanes it applies to; prompts.mjs renders them and a test holds every prompt to them; CLAUDE.md names every boundary id",
+  "why": "The limits are written by hand in three places that agree only because one person wrote them in one week (the v4.1 review's privacy finding on the hard limits)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq P-7",
+  "restated": "Oct 21"
+ },
+ {
+  "id": "D-174",
+  "date": "Oct 21",
+  "title": "One ship live per build chat by default, at the chat's end, once every task it finished has its staging proof; a bug that breaks studying ships alone; never a date",
+  "why": "21 live OKs in three days with a median of four minutes from staging (O-6); a work-unit gate, not a time gate",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq P-6"
+ },
+ {
+  "id": "D-173",
+  "date": "Oct 21",
+  "title": "The versioning rule: a patch is any live deploy that changes no document shape, step list, task row, published file set or capability, tagged v4.x.<n+1> by ship live; a minor bumps a schema, a step or task row, a reader-facing spec shape, a published file or capability, or runs a migration, declared by a decision and tagged v4.x.0 with ship live --minor; a major breaks a promise all at once and is a design question; build sets release from the tag, specVersion is the tag's major.minor, core carries no version literal, task names carry the minor, prompts carry no literal release",
+  "why": "Live says v4.0.0 after 21 deploys and the tag says v4.1.0; a version that costs a prompt update per task never gets bumped (O-7)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq P-5"
+ },
+ {
+  "id": "D-172",
+  "date": "Oct 21",
+  "title": "The Docs views are retired: views writes DECISIONS.md and CHANGELOG.md into the repository beside BACKLOG.md and prints no Docs calls; the v3 doc's Board, Changelog and Decisions tabs and the overview's status line get one closing line; a design doc gets a one-line history banner after plan --apply files it",
+  "why": "Matt reads none of them, every task paid Docs calls for them, and they are where two chats collided (W-1, B-130); the record already holds every decision's why",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq P-4"
+ },
+ {
+  "id": "D-171",
+  "date": "Oct 21",
+  "title": "A system/manifest-only refresh at the same content hash is not a live change: ship prints and records it, and it needs no OK from Matt; everything that changes a hash still does",
+  "why": "Matt's OK is for what changes what runs for him tomorrow; a refresh changes nothing that runs, and after D-170 none should be needed (the v4.1 review's privacy finding on Matt's OK)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq P-3",
+  "restated": "Oct 21"
+ },
+ {
+  "id": "D-170",
+  "date": "Oct 21",
+  "title": "The gate verifies content, not commit: a run executes the clone's head when the deployed commit is out of reach and every manifest hash matches there, and fails only when a hash differs; verify-deploy's 40-behind line is a note, not a red",
+  "why": "Two clone-distance incidents in two days, one lost morning, and a live refresh deploy as the only fix (O-2); D-114 already compares content for verify, and the gate is the same question",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq P-2"
+ },
+ {
+  "id": "D-169",
+  "date": "Oct 21",
+  "title": "Hooks are pipeline-safe: every task prompt's first step writes a run marker (/tmp/ev/pipeline-run) and the three build-chat hooks pass while that marker is younger than the run timeout, whatever directory the session started in; the environments registry says hooks may load in a run",
+  "why": "The live watchdog has been refused at start by the live-guard hook since Oct 20 03:55Z (O-1); the B-65 probe proved the opposite for one kind of session and the watchdog's task is another kind",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq P-1"
+ },
+ {
   "id": "D-168",
   "date": "Oct 20",
   "title": "v4.1.0 is the baseline: the live build at f547c21. Feature work pauses until the v4.1 review's tables are filed with plan --apply; bug fixes only, each as a patch (4.1.x).",
