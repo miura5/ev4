@@ -1494,13 +1494,19 @@
   "title": "Skills runner with the desktop tuck rail (D-124, D-107): the skills runner as a surface over core.skillSteps, step dots on the phone and the full list on desktop, Passed and Missed per step, a miss with her recoil filing a weak spot of kind skill, the next step read aloud; on desktop the 64 px tuck rail (step dots, Passed, Missed, hold-to-peek) while she says only the step number and earlier step lines blur; the pill Vital signs · step n of 7; takes over B-51's page part for the E.V. tab, noted on B-51 in BACKLOG.md",
   "dod": "the harness runs a planted checklist at 390 and 1280: every step marked from the surface and from the rail without scrolling; a miss files one weak spot of kind skill; tucking blurs earlier step captions and shortens her lines to the step number; hold-to-peek shows the list and releases; screenshots at both widths, rail tucked and open",
   "milestone": "M11",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-78"
   ],
-  "notes": "Oct 19, added by B-94 from the Build plan tab: it never reached BACKLOG.md, and B-81 depends on it. The Oct 19 page work (B-82 to B-91) may cover part of it: check before starting",
+  "notes": "Checked against the UI tenets before building (Oct 21); not started. Depends on B-78 (blocked) and rests on D-124 (proposed). Clash: the pill 'Vital signs · step n of 7' against D-150 and D-160, where D-161 already makes the runner's peek line its fold line. Question: is that pill simply the peek line (no pill)? The 64 px tuck rail is a desktop part, so from 1024 only (D-159); below that the bottom sheet of D-107 stands.",
   "commit": null,
-  "source": "Build plan tab"
+  "source": "Build plan tab",
+  "board": {
+   "row": "v4 B-80: Skills runner tuck rail",
+   "why": "The skills checklist beside her on desktop",
+   "notes": "Waiting on Matt: the step pill clashes with D-150 and D-160; after B-78"
+  },
+  "waitingOn": "Matt"
  },
  {
   "id": "B-81",
