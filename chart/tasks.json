@@ -2938,5 +2938,24 @@
   },
   "waitingOn": "Matt",
   "waitingWhere": "decision"
+ },
+ {
+  "id": "B-167",
+  "kind": "bug",
+  "title": "Bug (reported Oct 21): Live health/current is 37 h old (written 2026-10-19T21:56Z): the live watchdog's firings since Oct 20 00:56Z leave no runs/ document, the latest at 09:55Z Oct 21 (last_run SUCCEEDED, on v4.0.0 with the pre-v4.2 prompt, 28 minutes before v4.2.0 went live with B-131's hook fix)",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "brief: health/current stale",
+  "words": "Live health/current is 37 h old (written 2026-10-19T21:56Z): the live watchdog's firings since Oct 20 00:56Z leave no runs/ document, the latest at 09:55Z Oct 21 (last_run SUCCEEDED, on v4.0.0 with the pre-v4.2 prompt, 28 minutes before v4.2.0 went live with B-131's hook fix)",
+  "reportedAt": "2026-10-21T10:59:43.246Z",
+  "board": {
+   "row": "v4 B-167: Live health/current is 37 h old (written 2026-10-19T21:56Z): the live…",
+   "why": "Live health/current is 37 h old (written 2026-10-19T21:56Z): the live watchdog's firings since Oct 20 00:56Z leave no runs/ document, the latest at 09:55Z Oct 21 (last_run SUCCEEDED, on v4.0.0 with the pre-v4.2 prompt, 28 minutes before v4.2.0 went live with B-131's hook fix)",
+   "notes": "Reported Oct 21 from brief: health/current stale"
+  }
  }
 ]
