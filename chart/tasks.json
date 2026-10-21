@@ -2877,7 +2877,7 @@
   "milestone": "v4.3 ops",
   "status": "in progress",
   "depends": [],
-  "notes": "Taken: restore migrates (D-186).",
+  "notes": "Proven on staging Oct 21: runs/restore-drill-20261021-115939317 ok, the Oct 18 schema-1 backup migrated and restored; legacy copies kept as written after the first try (runs/restore-drill-20261021-112917045) refused them. Done when tonight's v4.2 backup restores too (the DoD's v4.2 backup).",
   "commit": null,
   "source": "plan Q6ioLu7LnKC2vvWJkwJWA6"
  },
