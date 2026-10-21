@@ -2499,13 +2499,11 @@
   "title": "Fetch diagnostic: fire the staging diagnostic with \"Probe: git fetch --depth 1 origin <the deployed sha> from a cloud run, nothing executed from it\"; record the result as a cloud-run environments row (proven or refused) with the run id; when proven, file one task that adds the fetch as the gate's second layer before the content fallback",
   "dod": "the environments row exists with the run id and the refusal text or the proof; the follow-up task filed when proven; npm test green",
   "milestone": "v4.2 runs",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Oct 21: Matt said 'yes, fire the staging diagnostic with the git-fetch probe'.",
-  "commit": null,
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
-  "waitingOn": "Matt",
-  "waitingWhere": "decision"
+  "notes": "Proven Oct 21 (run cse_01HZraLuKhujacoWNr7swfkD, runs/diagnostic-20261021-110125159): git fetch --depth 1 origin f525c6e5 (167 behind main) exit 0 and cat-file prints commit; environments cloud-run row added; follow-up B-168 (the gate fetches before it falls back).",
+  "commit": "5d76820",
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
   "id": "B-134",
