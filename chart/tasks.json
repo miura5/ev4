@@ -2429,5 +2429,24 @@
    "notes": "Waiting on Matt: install the new reader file in the desktop app"
   },
   "waitingOn": "Matt"
+ },
+ {
+  "id": "B-129",
+  "kind": "request",
+  "title": "Request (reported Oct 20): Idea/feedback for behavior: - Instead of hard-coded phrases, maybe there can be some sort of system where the greeting is influenced by tags, enums, states; or whatever is best practice here; the phrases get very repetitive. I want E.V.’s greeting to feel smart and alive rather than rigid and as if they are scheduled; you get what I'm getting at; whatever the best approach for this is per your take let me know and we can add that.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "Idea/feedback for behavior: - Instead of hard-coded phrases, maybe there can be some sort of system where the greeting is influenced by tags, enums, states; or whatever is best practice here; the phrases get very repetitive. I want E.V.’s greeting to feel smart and alive rather than rigid and as if they are scheduled; you get what I'm getting at; whatever the best approach for this is per your take let me know and we can add that.",
+  "reportedAt": "2026-10-21T03:13:55.626Z",
+  "board": {
+   "row": "v4 B-129: Idea/feedback for behavior: - Instead of hard-coded phrases, maybe…",
+   "why": "Idea/feedback for behavior: - Instead of hard-coded phrases, maybe there can be some sort of system where the greeting is influenced by tags, enums, states; or whatever is best practice here; the phrases get very repetitive. I want E.V.’s greeting to feel smart and alive rather than rigid and as if they are scheduled; you get what I'm getting at; whatever the best approach for this is per your take let me know and we can add that.",
+   "notes": "Reported Oct 20 from build chat"
+  }
  }
 ]
