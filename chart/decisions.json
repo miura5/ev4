@@ -414,7 +414,7 @@
   "date": "Oct 18",
   "title": "Reader v2's latest_note returns the note's file (its path under the notes folder), title (the course folder › the first heading, else the file name without extension) and line beside the text; the notes bar and the comment quote show the title; against a reader without it the page shows Your notes; Matt rebuilds the extension",
   "why": "The notes bar names the note he is writing (NUR 112 › Cardiac output), and a comment's note field needs the file and line",
-  "status": "proposed",
+  "status": "accepted",
   "supersedes": [],
   "amends": []
  },
