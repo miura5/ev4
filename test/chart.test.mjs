@@ -360,12 +360,14 @@ test('B-93: log writes the record, regenerates BACKLOG.md and commits both, noth
       },
     });
   const before = execFileSync('git', ['-C', dir, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
-  const open = C.loadChart(dir).tasks.find(t => t.status === 'open' && t.id === 'B-43');
+  // Any open task with one record entry: the real record moves on as tasks are taken (B-43 was, Oct 20).
+  const rec = C.loadChart(dir);
+  const open = rec.tasks.find(t => t.status === 'open' && rec.tasks.filter(x => x.id === t.id).length === 1);
   assert.ok(open);
-  const out = run('log', 'B-43', '--note', 'a note from the test', '--trailer', 'Test-Trailer: yes');
-  assert.match(out, /log B-43: notes; committed [0-9a-f]{7}/);
+  const out = run('log', open.id, '--note', 'a note from the test', '--trailer', 'Test-Trailer: yes');
+  assert.match(out, new RegExp(`log ${open.id}: notes; committed [0-9a-f]{7}`));
   const show = execFileSync('git', ['-C', dir, 'show', '--stat', '--format=%B', 'HEAD'], { encoding: 'utf8' });
-  assert.match(show, /^B-43: notes \(chart\)\n\nTest-Trailer: yes/);
+  assert.match(show, new RegExp(`^${open.id}: notes \\(chart\\)\\n\\nTest-Trailer: yes`));
   assert.deepEqual(
     execFileSync('git', ['-C', dir, 'diff', '--name-only', before, 'HEAD'], { encoding: 'utf8' })
       .trim()
