@@ -2497,5 +2497,22 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "01d6e1f",
+  "time": "2026-10-21T22:23:14.613Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "1a09695",
+  "tasks": [
+   "B-175",
+   "B-184"
+  ],
+  "summary": "Live deploys since v4.3.0 carry no patch tag on origin: ship live…; The hard line",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
