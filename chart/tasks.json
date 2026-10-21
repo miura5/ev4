@@ -3129,9 +3129,9 @@
   "title": "Builder job kinds (D-194, D-199): jobs.kind gains build, reply, design, plan and ship (jobs schema 1 to 2, identity migration, fixtures, idempotence test); the worker's oldest-job pick and job-brief skip those kinds; the watchdog gives them their own window, constants.watchdog.builderStallMinutes (90), and re-fires ev4-builder once with \"Job <id>\", never the worker; the page's stall copy for them says \"No word from the builder\" at 90 minutes",
   "dod": "core tests: the worker skips a planted build job; the watchdog leaves a 60-minute-old build job alone, re-fires the builder and not the worker at 91 minutes, and never twice; the bump fixtures and the idempotence test; npm test green; ship staging green; a staging worker firing with a planted build job in the queue takes a planted practice-set job instead, read back from runs/; live only on Matt's OK",
   "milestone": "v4.4 builder",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "The builder stall window is 90 minutes as a spec constant (constants.watchdog.builderStallMinutes); Matt was unsure (doc, Oct 21), so it stays 90 until a real build says otherwise; nothing gates on it.",
+  "notes": "Taken by the builder session fired at 22:11Z (session_01E8uRETL45FfPLHkrSyWY2p) while B-176's probe waits on its fired message; D-193 puts v4.4 ahead of the study queue.",
   "commit": null,
   "source": "plan TbfWAoQEeQixyNKZnEZKvv"
  },
