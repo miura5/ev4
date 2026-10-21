@@ -2206,5 +2206,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "8ec85c4",
+  "time": "2026-10-21T10:23:32.152Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "cd06b51",
+  "tasks": [
+   "B-98"
+  ],
+  "summary": "the Mac evening run starts without its code",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
