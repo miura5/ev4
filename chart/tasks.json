@@ -2889,10 +2889,10 @@
   "title": "The study queue's gates (D-188): B-44 depends on B-98, B-73 on B-72, B-81 on B-79 alone; B-70 and B-71 marked blocked with their evidence named (300 answers in the record; two exams with a prediction and a score); B-81's notes and definition of done narrowed to the first live session read back (D-187)",
   "dod": "BACKLOG.md shows the three depends, the two blocked notes and B-81's new definition; chart lint green; npm test green",
   "milestone": "v4.3 study",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Setting the study queue's gates (D-188, D-187).",
-  "commit": null,
+  "notes": "Depends set (B-44 on B-42, B-43, B-98; B-73 on B-72; B-81 on B-79 alone), B-70 and B-71 blocked on their evidence, B-81 retitled and its definition narrowed to the first live session read back (D-187); npm test green.",
+  "commit": "e0df7ec",
   "source": "plan Q6ioLu7LnKC2vvWJkwJWA6"
  },
  {
