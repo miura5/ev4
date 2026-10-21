@@ -11,7 +11,7 @@
 //   log deploy --target <staging|live> --commit sha [--time ISO] [--ok Matt] [--verify green] [--rollback sha]
 //              [--tasks ids] [--summary s] [--why w] [--decisions ids]
 //   log rule <R-id> --rule t --decision D-id --command c --fn name [--task B-id]   a rule ship enforces
-//   log decision <D-id> --title t [--status s] [--why w] [--supersedes ids] [--amends ids]
+//   log decision <D-id> --title t [--status s] [--why w] [--supersedes ids] [--amends ids] [--restated]
 //            each writes one change to chart/, regenerates BACKLOG.md, commits (--no-commit to skip; --trailer adds a
 //            commit trailer line, repeatable), then prints the view updates to make (views)
 //   views [--transcript f]   the exact Docs calls that bring the Board, the Changelog and the overview's status line in
@@ -845,6 +845,20 @@ export function decisionsCalls(rec, read, intro) {
       });
       notes.push(`${d.id}: a tenet`);
     }
+    if (d.restated)
+      for (const [col, text] of [
+        [2, tabTitle(d)],
+        [3, d.why || ''],
+      ])
+        if (rows[i].cells[col].text !== text) {
+          ops.push({
+            op: 'replace',
+            target: { kind: 'cell', table: v.table, row: i + 1, col },
+            ifRev: read.rev,
+            with: { as: 'markdown', from: { kind: 'inline', content: mdEscape(text) } },
+          });
+          notes.push(`${d.id}: ${col === 2 ? 'restated' : 'why'}`);
+        }
     const c = rows[i].cells[4];
     if (!sameStatus(c, { option: word(d) }, opts)) {
       ops.push({
@@ -1095,6 +1109,9 @@ export function applyLog(rec, o, { now = new Date().toISOString() } = {}) {
       amends: [],
       source: 'log',
     };
+    // A decision restated after it was filed (Matt, Oct 20: D-123 to D-126 to the UI tenets) carries its new words
+    // to the Decisions tab: views replaces its title and why cells while they differ.
+    if (old && (o.restated || (o.title && o.title !== d.title) || (o.why && o.why !== d.why))) d.restated = ctDate(now);
     if (o.title) d.title = o.title;
     if (o.why) d.why = o.why;
     if (o.status) d.status = o.status;

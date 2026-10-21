@@ -1539,6 +1539,44 @@ test('a decision filed with a source (log --source, plan) still gets its Decisio
   );
 });
 
+test('a decision restated after it was filed carries its new title and why to the Decisions tab (Oct 20)', () => {
+  const r = sample();
+  r.views.decisions = {
+    node: 'DN',
+    table: 's1.40',
+    statusEnum: 'E2',
+    statusOptions: ['Accepted', 'Revisit', 'Superseded', 'Proposed'],
+  };
+  const dcell = (id, t, i) =>
+    `<cell id='${id}'><paragraph id='${id}p'>${i != null ? `<dropdown id='${id}d' enum='E2' index='${i}'>${t}</dropdown>` : `<text id='${id}t'>${t}</text>`}</paragraph></cell>`;
+  const row = (id, d, t, w, st, i) =>
+    `<row id='${id}'>${dcell(id + '1', 'Oct 18')}${dcell(id + '2', d)}${dcell(id + '3', t)}${dcell(id + '4', w)}${dcell(id + '5', st, i)}</row>`;
+  const d1 = r.decisions.find(d => d.id === 'D-001'),
+    d2 = r.decisions.find(d => d.id === 'D-002');
+  const read = C.parseTableXml(
+    `<doc rev='7'><table id='s1.40'>${row('.41', 'ID', 'Decision', 'Why', 'Status')}${row('.50', 'D-002', d2.title, d2.why || '', 'Proposed', 3)}${row('.60', 'D-001', d1.title, d1.why || '', 'Superseded', 2)}</table></doc>`
+  );
+  r.decisions.find(d => d.id === 'D-002').status = 'proposed';
+  assert.equal(C.decisionsCalls(r, read, null).length, 0, 'in step before the restatement');
+  C.applyLog(
+    r,
+    { _: ['log', 'decision', 'D-002'], title: 'two, folding', why: 'restated', status: 'accepted' },
+    { now: '2026-10-21T03:00:00Z' }
+  );
+  assert.equal(r.decisions.find(d => d.id === 'D-002').restated, 'Oct 20');
+  const ops = C.decisionsCalls(r, read, null)[0].args.payload.ops;
+  assert.deepEqual(
+    ops.map(o => [o.target.row, o.target.col, o.ifRev, o.with.from.content]),
+    [
+      [1, 2, 7, 'two, folding'],
+      [1, 3, 7, 'restated'],
+      [1, 4, 7, '<?claude block st?>'],
+    ]
+  );
+  C.applyLog(r, { _: ['log', 'decision', 'D-001'], title: 'one', status: 'superseded' });
+  assert.ok(!r.decisions.find(d => d.id === 'D-001').restated, 'the same words restate nothing');
+});
+
 test('B-93: a Decisions call replaces cells before it inserts a row above them', () => {
   const r = sample();
   r.views.decisions = {

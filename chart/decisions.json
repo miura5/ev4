@@ -444,7 +444,8 @@
   "why": "Matt asked for this demo behaviour to carry into the build exactly; restated Oct 20 on Matt's word to the UI tenets written after it (D-160, D-161); the demo's ten-times clock went with the demo (D-166)",
   "status": "accepted",
   "supersedes": [],
-  "amends": []
+  "amends": [],
+  "restated": "Oct 20"
  },
  {
   "id": "D-128",
@@ -471,7 +472,8 @@
   "why": "Rule 7 kept and drawn for captions: the passage opens beside her without leaving the conversation; restated Oct 20 on Matt's word to the UI tenets written after it: what it replaces folds (D-160) instead of becoming a pill (D-150)",
   "status": "accepted",
   "supersedes": [],
-  "amends": []
+  "amends": [],
+  "restated": "Oct 20"
  },
  {
   "id": "D-125",
@@ -480,7 +482,8 @@
   "why": "On desktop she barely shrinks and the surface sits beside her; one layout still collapses to the phone; restated Oct 20 on Matt's word to the UI tenets written after it: 1024, not 900 (D-159), and the top-bar tabs, not the bottom dock",
   "status": "accepted",
   "supersedes": [],
-  "amends": []
+  "amends": [],
+  "restated": "Oct 20"
  },
  {
   "id": "D-124",
@@ -489,7 +492,8 @@
   "why": "A pinned strip over a thread has no thread to sit over; the ring keeps the session's time on her, where he is looking; restated Oct 20 on Matt's word to the UI tenets written after it: the closed state is the thing folded (D-160), not a pill (D-150)",
   "status": "accepted",
   "supersedes": [],
-  "amends": []
+  "amends": [],
+  "restated": "Oct 20"
  },
  {
   "id": "D-123",
@@ -498,7 +502,8 @@
   "why": "No card scrolls the conversation away and E.V. stays on screen; restated Oct 20 on Matt's word to the UI tenets written after it (its pills and five-row sheet clashed with D-148, D-150 and D-160)",
   "status": "accepted",
   "supersedes": [],
-  "amends": []
+  "amends": [],
+  "restated": "Oct 20"
  },
  {
   "id": "D-122",
@@ -570,7 +575,8 @@
   "why": "Decided before B-43, the next sets bump (O-2): materials (4 MB budget) is the collection a whole copy would double; accepted by Matt Oct 20",
   "status": "accepted",
   "supersedes": [],
-  "amends": []
+  "amends": [],
+  "restated": "Oct 20"
  },
  {
   "id": "D-114",
