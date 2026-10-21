@@ -3017,7 +3017,7 @@
   "milestone": "M11",
   "status": "in progress",
   "depends": [],
-  "notes": "Formatted the two test files; test/format.test.mjs now runs prettier --check . like CI",
+  "notes": "Live deploy (Matt's OK, Oct 21): specVersion 4.3 (D-173) renames every task; staging's 7 renames done, staging.evening-mac (Mac-bound) name-only rename refused by the session's permission classifier ('Cowork Scheduled Task Write'), not retried; ship staging stays not-green on that rename, and live.evening-mac needs the same. Waiting on Matt's explicit OK for the two Mac-bound renames.",
   "commit": null,
   "source": "npm test 39608192119",
   "words": "GitHub's npm test check red on every push since 11:14Z Oct 21: prettier --check . flags test/cli.test.mjs and test/schema.test.mjs; local npm test never runs that check",
