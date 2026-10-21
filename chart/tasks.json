@@ -1376,20 +1376,20 @@
   "title": "Talk and session data fields (D-128, D-130, D-131): a talk schema bump with session on messages written during a session and note {file, title, line, quote} on comment messages; a sessions schema bump with comments (more, some, off) and each check's format; core.conversations and the earlier-message count with spec.constants.conversation (idleGapMin 120, sessionLeadMin 2); the page shows the reader's title in the notes bar and the comment quote, and Your notes against a reader without it (the reader's own change is B-128); each bump with its migration, fixtures and idempotence test per the registry rule, migrated on staging only (D-136); and the session-boundary half of core.conversations (D-128) switched on in B-77's layout",
   "dod": "core tests split planted talk days at a 119- and a 121-minute gap, at a session's start (Matt's lead line included) and end, and across midnight, and keep a worker message in its conversation; page tests show the reader's title for a nested note and Your notes from a v1 reader stub; fixtures validate and the staging migration run twice changes nothing; the harness shows today's thread unchanged on the migrated staging talk, screenshots at 390 and 1280; npm test green",
   "milestone": "M11",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-25",
    "B-26",
    "B-39",
    "B-77"
   ],
-  "notes": "Oct 20: taken on Matt's yes; D-130 and D-131 accepted; the reader's own change split off as B-128.",
-  "commit": null,
+  "notes": "Oct 20: 09aa915 on staging (GREEN). Core tests split talk at 119/121 minutes, at a session's start (his lead line within 2 minutes opens it; E.V.'s does not) and end, two sessions back to back, a session across midnight, and keep a worker message in the conversation it lands in. Run harness at 390 and 1280: a session's thread is his start line and hers (the session its own conversation); the Reading line says Your notes against a v1 reader and NUR 112 › Fluids and electrolytes against reader 0.3. talk and sessions at schema 2 with fixtures, legacy copies and an idempotence test; comments is a mark (D-130 lets him change it). Staging migrated: 10 documents (talk 5, sessions 5), 10 legacy copies; a second run: nothing to do. Today's thread on the migrated staging talk: 39 messages and 8 conversations identical before and after; the E.V. tab at 390 and 1280 the same but for her core's frame. npm run check GREEN. Not live: the talk and sessions bumps wait for Matt's OK (D-136).",
+  "commit": "09aa915",
   "source": "Build plan tab",
   "board": {
    "row": "v4 B-74: Talk and reader data fields",
    "why": "Sessions and note comments need fields on talk and sessions",
-   "notes": "Waiting on Matt: two proposed decisions (D-130, D-131) and a Mac step for reader v2"
+   "notes": "Done on staging: conversations split at sessions, talk and sessions v2; live on Matt's OK"
   },
   "waitingOn": "Matt"
  },
