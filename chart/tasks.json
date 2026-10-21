@@ -2969,9 +2969,9 @@
   "id": "B-169",
   "kind": "bug",
   "title": "Bug (reported Oct 21): A staging worker job fails at compute when staging runs a build past its tag: jobresults/<id> /release does not match ^v\\d+(\\.\\d+){0,2}$ (manifest release v4.2.0+30, B-149's +n form); runs/worker-20261021-115949480",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "debug, jobresults and runs accept a release of the +n form system/manifest carries (v4.2.0+30), and still refuse anything else; a worker test at a +n release plans its job result; npm test green; ship staging green; the staging clinical-prep job (B-46) fired again posts its result",
+  "milestone": "v4.2 release",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -2982,6 +2982,10 @@
    "row": "v4 B-169: A staging worker job fails at compute when staging runs a build past…",
    "why": "A staging worker job fails at compute when staging runs a build past its tag: jobresults/<id> /release does not match ^v\\d+(\\.\\d+){0,2}$ (manifest release v4.2.0+30, B-149's +n form); runs/worker-20261021-115949480",
    "notes": "Reported Oct 21 from staging worker runs/worker-20261021-115949480"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-21T12:07:40.314Z"
   }
  }
 ]
