@@ -2425,18 +2425,16 @@
   "title": "Study Watch reader 0.3 (D-131), split from B-74 on Matt's word Oct 20: latest_note returns the note's file (its path under the notes folder), title (the course folder › its first heading, else its name without an extension) and line (the line being written); a graded note's title from its name only, with no line; the extension file built here, Matt installs it on his Mac (Settings > Extensions > Advanced settings > Install Extension, replacing 0.2.0)",
   "dod": "reader tests return file, title and line for a nested note with a heading, the name without extension when there is no heading, Study Watch's own line when it sends one, the title on unchanged, and nothing of a graded note's text; the extension file unpacks and its server starts at 0.3.0; Matt installs it and the reader's status on his Mac reports 0.3.0",
   "milestone": "M11",
-  "status": "blocked",
+  "status": "done",
   "depends": [],
-  "notes": "Built 86bdf3d: reader tests green (9), the extension file packed here as a zip of studywatch/reader (the mcpb packer is an outside download the session refused) and checked: it unpacks and its server starts at 0.3.0 with its four tools. Sent to Matt Oct 20. Matt's part: Claude desktop app > Settings > Extensions > Advanced settings > Install Extension, pick ev-study-watch-reader-0.3.0.mcpb (it replaces 0.2.0). Done when the reader's status on his Mac says 0.3.0.",
-  "commit": null,
+  "notes": "Oct 21: Matt installed the update; the reader's status on his Mac reports 0.3.0 (folder found, latest note read by name and times only).",
+  "commit": "86bdf3d",
   "source": "log new",
   "board": {
    "row": "v4 B-128: Study Watch reader 0.3",
    "why": "The notes bar and E.V.'s comments name the note and line he is writing",
    "notes": "Waiting on Matt: install the new reader file in the desktop app"
-  },
-  "waitingOn": "Matt",
-  "waitingWhere": "mac"
+  }
  },
  {
   "id": "B-129",
@@ -2488,13 +2486,11 @@
   "title": "Hooks pipeline-safe (D-169): step 1 of every task prompt writes the run marker /tmp/ev/pipeline-run (pipeline, record, UTC time); tools/hooks.mjs main() returns 0 for every hook while the marker is younger than spec.constants.watchdog.runTimeoutMinutes; the environments cloud-run hooks row corrected to \"hooks may load in a run; they are pipeline-safe\"",
   "dod": "test/hooks.test.mjs covers each of the three hooks with no marker, a fresh marker and a stale one; the prompt test asserts step 1 writes the marker; npm test green; ship staging green; the staging watchdog fired green with its runs/ document read back; live only on Matt's OK",
   "milestone": "v4.2 runs",
-  "status": "blocked",
+  "status": "done",
   "depends": [],
-  "notes": "Staging at cd06b51 (v4.1.0+39, Oct 21 09:00Z): system documents, page and the six cloud staging prompts deployed; verify-deploy staging RED only on staging.evening-mac and staging.restore-drill (Mac-bound: prompt and name change only from a chat linked to the Mac, with Matt). Fired on it and read back: staging watchdog runs/watchdog-20261021-085907643 ok (11 calls, all printed) and staging morning runs/morning-20261021-085907564 ok (20 calls, all printed).",
+  "notes": "live at 8ec85c4 (v4.2.0) Oct 21 on Matt's OK: ship live GREEN; staging GREEN at the same commit first.",
   "commit": "ce39f4a",
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
-  "waitingOn": "Matt",
-  "waitingWhere": "mac"
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
   "id": "B-132",
@@ -2502,13 +2498,11 @@
   "title": "The gate verifies content, not commit (D-170): the gate's source lives as a readable function in tools/gate.mjs and prompts.mjs renders it into the one-line form; when the deployed commit is absent from the clone the gate stays on the clone's head, checks every manifest.files hash there, goes on when all match and prints \"same content at <head>\", fails naming the file when one differs; verify-deploy's 40-behind line becomes a note",
   "dod": "the prompt test runs the rendered gate in a throwaway repository for: commit present; commit absent with matching hashes; commit absent with one differing hash; a dirty manifest; no checkout; spec.constants.runs.refreshAt retired to a note; npm test green; ship staging green; a staging morning fired green; live only on Matt's OK",
   "milestone": "v4.2 runs",
-  "status": "blocked",
+  "status": "done",
   "depends": [],
-  "notes": "Staging at cd06b51 (v4.1.0+39, Oct 21 09:00Z): system documents, page and the six cloud staging prompts deployed; verify-deploy staging RED only on staging.evening-mac and staging.restore-drill (Mac-bound: prompt and name change only from a chat linked to the Mac, with Matt). Fired on it and read back: staging watchdog runs/watchdog-20261021-085907643 ok (11 calls, all printed) and staging morning runs/morning-20261021-085907564 ok (20 calls, all printed).",
+  "notes": "live at 8ec85c4 (v4.2.0) Oct 21 on Matt's OK: ship live GREEN; staging GREEN at the same commit first.",
   "commit": "c339ea0",
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
-  "waitingOn": "Matt",
-  "waitingWhere": "mac"
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
   "id": "B-133",
@@ -2530,13 +2524,11 @@
   "title": "Run limits rendered from the spec (D-175): each spec.boundaries rule gains a prompt phrasing and a lanes list (cloud, mac, canvas, build); tools/prompts.mjs renders LIMITS, CANVAS_LIMITS and the Mac lines from them",
   "dod": "a prompt test asserts every boundary with a prompt phrasing appears in every prompt of its lane and none other; a lint test asserts CLAUDE.md names every boundary id; npm test green; ship staging green; live only on Matt's OK",
   "milestone": "v4.2 runs",
-  "status": "blocked",
+  "status": "done",
   "depends": [],
-  "notes": "Staging at cd06b51 (v4.1.0+39, Oct 21 09:00Z): system documents, page and the six cloud staging prompts deployed; verify-deploy staging RED only on staging.evening-mac and staging.restore-drill (Mac-bound: prompt and name change only from a chat linked to the Mac, with Matt). Fired on it and read back: staging watchdog runs/watchdog-20261021-085907643 ok (11 calls, all printed) and staging morning runs/morning-20261021-085907564 ok (20 calls, all printed).",
+  "notes": "live at 8ec85c4 (v4.2.0) Oct 21 on Matt's OK: ship live GREEN; staging GREEN at the same commit first.",
   "commit": "0ee7573",
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
-  "waitingOn": "Matt",
-  "waitingWhere": "mac"
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
   "id": "B-135",
@@ -2544,13 +2536,11 @@
   "title": "Staging never pushes (O-10): find from a staging run's own transcript whether its last line reaches Matt's phone through the task's channel or through a notification tool the run calls; then the staging prompts end \"end with the line in this chat and send no notification\", no prompt names a notification tool, and if the platform sends it anyway the staging line starts with STAGING",
   "dod": "the prompt test asserts the staging prompts carry the no-notification line and no prompt names a notification tool; a staging morning fired from a build chat reaches Matt's phone with nothing, or with a line that starts STAGING (Matt confirms once); npm test green; ship staging green; live only on Matt's OK",
   "milestone": "v4.2 runs",
-  "status": "blocked",
+  "status": "done",
   "depends": [],
-  "notes": "Staging at cd06b51 (v4.1.0+39, Oct 21 09:00Z): system documents, page and the six cloud staging prompts deployed; verify-deploy staging RED only on staging.evening-mac and staging.restore-drill (Mac-bound: prompt and name change only from a chat linked to the Mac, with Matt). Fired on it and read back: staging watchdog runs/watchdog-20261021-085907643 ok (11 calls, all printed) and staging morning runs/morning-20261021-085907564 ok (20 calls, all printed). The staging morning fired from this chat at 08:59Z (the one Matt confirms): its run ended on its STAGING line in its own chat; Matt's part is to say whether anything reached his phone at about 3:59am Central.",
+  "notes": "live at 8ec85c4 (v4.2.0) Oct 21 on Matt's OK: ship live GREEN; staging GREEN at the same commit first.",
   "commit": "e735743",
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
-  "waitingOn": "Matt",
-  "waitingWhere": "mac"
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
   "id": "B-136",
@@ -2558,13 +2548,11 @@
   "title": "Environments rows are proven per kind of session (D-179): the spec.environments._rules line, and every row gains the task its diagnostic ran as; the hooks row rewritten",
   "dod": "the spec test asserts every proven row names a task; npm test green; ship staging green; live only on Matt's OK",
   "milestone": "v4.2 runs",
-  "status": "blocked",
+  "status": "done",
   "depends": [],
-  "notes": "Staging at cd06b51 (v4.1.0+39, Oct 21 09:00Z): system documents, page and the six cloud staging prompts deployed; verify-deploy staging RED only on staging.evening-mac and staging.restore-drill (Mac-bound: prompt and name change only from a chat linked to the Mac, with Matt). Fired on it and read back: staging watchdog runs/watchdog-20261021-085907643 ok (11 calls, all printed) and staging morning runs/morning-20261021-085907564 ok (20 calls, all printed).",
+  "notes": "live at 8ec85c4 (v4.2.0) Oct 21 on Matt's OK: ship live GREEN; staging GREEN at the same commit first.",
   "commit": "c8c4264",
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
-  "waitingOn": "Matt",
-  "waitingWhere": "mac"
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
   "id": "B-137",
@@ -2586,13 +2574,11 @@
   "title": "Stale health is the first task (D-180): CLAUDE.md step 1 reads health/current's age and, over spec.constants.health.staleHours, the chat reads the watchdog's last_run through list_triggers, files a bug with report and takes it first; brief prints the age; the morning and evening push lines add \"a build chat will look\" after the stale words",
   "dod": "the brief test prints the age from a planted health/current; the push test shows the added words; CLAUDE.md step 1 updated; npm test green; ship staging green; live only on Matt's OK",
   "milestone": "v4.2 watch",
-  "status": "blocked",
+  "status": "done",
   "depends": [],
-  "notes": "Staging at cd06b51 (v4.1.0+39, Oct 21 09:00Z): system documents, page and the six cloud staging prompts deployed; verify-deploy staging RED only on staging.evening-mac and staging.restore-drill (Mac-bound: prompt and name change only from a chat linked to the Mac, with Matt). Fired on it and read back: staging watchdog runs/watchdog-20261021-085907643 ok (11 calls, all printed) and staging morning runs/morning-20261021-085907564 ok (20 calls, all printed).",
+  "notes": "live at 8ec85c4 (v4.2.0) Oct 21 on Matt's OK: ship live GREEN; staging GREEN at the same commit first.",
   "commit": "4666003",
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
-  "waitingOn": "Matt",
-  "waitingWhere": "mac"
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
   "id": "B-139",
@@ -2612,13 +2598,11 @@
   "title": "Collection map truth: spec.collections.health.writers drops evening-cloud (the only producer is the watchdog's health step, restore-drill writes the drill age); concepts marked unpopulated the way libindex is marked retired; schemas' x-ev agree",
   "dod": "the build's registry check green; lint green on the synthetic record and on a staging export; npm test green; ship staging green; live only on Matt's OK",
   "milestone": "v4.2 watch",
-  "status": "blocked",
+  "status": "done",
   "depends": [],
-  "notes": "Staging at cd06b51 (v4.1.0+39, Oct 21 09:00Z): system documents, page and the six cloud staging prompts deployed; verify-deploy staging RED only on staging.evening-mac and staging.restore-drill (Mac-bound: prompt and name change only from a chat linked to the Mac, with Matt). Fired on it and read back: staging watchdog runs/watchdog-20261021-085907643 ok (11 calls, all printed) and staging morning runs/morning-20261021-085907564 ok (20 calls, all printed).",
+  "notes": "live at 8ec85c4 (v4.2.0) Oct 21 on Matt's OK: ship live GREEN; staging GREEN at the same commit first.",
   "commit": "c0c2816",
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
-  "waitingOn": "Matt",
-  "waitingWhere": "mac"
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
   "id": "B-141",
@@ -2724,13 +2708,11 @@
   "title": "Release from the tag (D-173): build sets manifest.release from git describe --tags --match v4.*; spec.specVersion equals the tag's major.minor (spec test); core's VERSION literal removed and the page and runs read the release from the manifest; ship live tags v4.x.<n+1> at the deployed commit (a minor with --minor) and pushes the tag itself, printing \"push the tag\" for Matt's list only when the push is refused; task names carry the minor; prompts carry no literal release (the fallback trace reads it from /tmp/ev/system/manifest.json, \"unknown\" before step 2)",
   "dod": "build test: at a tagged commit release equals the tag, past it the +n form; a grep test finds no version literal outside the spec; a ship test tags in a throwaway repository; the prompt test finds no literal; npm test green; ship staging green; the first live deploy on Matt's OK is tagged v4.2.0 and the tag is on origin, pushed by the chat",
   "milestone": "v4.2 release",
-  "status": "blocked",
+  "status": "done",
   "depends": [],
-  "notes": "Staging at cd06b51 (v4.1.0+39, Oct 21 09:00Z): system documents, page and the six cloud staging prompts deployed; verify-deploy staging RED only on staging.evening-mac and staging.restore-drill (Mac-bound: prompt and name change only from a chat linked to the Mac, with Matt). Fired on it and read back: staging watchdog runs/watchdog-20261021-085907643 ok (11 calls, all printed) and staging morning runs/morning-20261021-085907564 ok (20 calls, all printed).",
-  "commit": null,
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
-  "waitingOn": "Matt",
-  "waitingWhere": "mac"
+  "notes": "live at 8ec85c4 (v4.2.0) Oct 21 on Matt's OK: ship live GREEN; staging GREEN at the same commit first. ship live --minor tagged v4.2.0 at 8ec85c4 locally; pushing the tag was refused by this session's git proxy (HTTP 403 on refs/tags, twice; main pushes fine). Not worked around: the tag waits for a push from a session or machine that may push tags (git push origin v4.2.0).",
+  "commit": "07304da",
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
   "id": "B-150",
@@ -2738,13 +2720,11 @@
   "title": "A system budget (A-2, D-183): spec.capacity.system warns at 192 KiB and fails at 240 KiB; lint and verify-deploy report the size of system/spec",
   "dod": "lint warns on a planted 200 KiB system/spec; verify-deploy prints the line; npm test green; ship staging green; live only on Matt's OK",
   "milestone": "v4.2 release",
-  "status": "blocked",
+  "status": "done",
   "depends": [],
-  "notes": "Staging at cd06b51 (v4.1.0+39, Oct 21 09:00Z): system documents, page and the six cloud staging prompts deployed; verify-deploy staging RED only on staging.evening-mac and staging.restore-drill (Mac-bound: prompt and name change only from a chat linked to the Mac, with Matt). Fired on it and read back: staging watchdog runs/watchdog-20261021-085907643 ok (11 calls, all printed) and staging morning runs/morning-20261021-085907564 ok (20 calls, all printed).",
-  "commit": null,
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
-  "waitingOn": "Matt",
-  "waitingWhere": "mac"
+  "notes": "live at 8ec85c4 (v4.2.0) Oct 21 on Matt's OK: ship live GREEN; staging GREEN at the same commit first.",
+  "commit": "71ccc59",
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
   "id": "B-151",
@@ -2802,13 +2782,11 @@
   "title": "Core split, library: the library section (searchLibrary, citeMaterial, readMaterial, libraryChunks, libraryIndex and their helpers) moves to core/library.mjs with test/library.test.mjs; evcore's export map re-exports; build exposes it to the page as the others; exports nothing calls are removed (D-166)",
   "dod": "npm test green; npm run check green; harness library checks green; ship staging green; live batched on Matt's OK",
   "milestone": "v4.2 core",
-  "status": "blocked",
+  "status": "done",
   "depends": [],
-  "notes": "Staging at cd06b51 (v4.1.0+39, Oct 21 09:00Z): system documents, page and the six cloud staging prompts deployed; verify-deploy staging RED only on staging.evening-mac and staging.restore-drill (Mac-bound: prompt and name change only from a chat linked to the Mac, with Matt). Fired on it and read back: staging watchdog runs/watchdog-20261021-085907643 ok (11 calls, all printed) and staging morning runs/morning-20261021-085907564 ok (20 calls, all printed).",
-  "commit": null,
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
-  "waitingOn": "Matt",
-  "waitingWhere": "mac"
+  "notes": "live at 8ec85c4 (v4.2.0) Oct 21 on Matt's OK: ship live GREEN; staging GREEN at the same commit first.",
+  "commit": "761c377",
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
   "id": "B-156",
@@ -2816,15 +2794,13 @@
   "title": "Core split, study sessions: the study sessions section (sessionState, closeSession, intakeSession, sessionFindings, commentGate and helpers) to core/sessions.mjs with its tests, the same way",
   "dod": "npm test green; npm run check green; ship staging green; live batched on Matt's OK",
   "milestone": "v4.2 core",
-  "status": "blocked",
+  "status": "done",
   "depends": [
    "B-155"
   ],
-  "notes": "Staging at cd06b51 (v4.1.0+39, Oct 21 09:00Z): system documents, page and the six cloud staging prompts deployed; verify-deploy staging RED only on staging.evening-mac and staging.restore-drill (Mac-bound: prompt and name change only from a chat linked to the Mac, with Matt). Fired on it and read back: staging watchdog runs/watchdog-20261021-085907643 ok (11 calls, all printed) and staging morning runs/morning-20261021-085907564 ok (20 calls, all printed).",
-  "commit": null,
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
-  "waitingOn": "Matt",
-  "waitingWhere": "mac"
+  "notes": "live at 8ec85c4 (v4.2.0) Oct 21 on Matt's OK: ship live GREEN; staging GREEN at the same commit first.",
+  "commit": "a35f84f",
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
   "id": "B-157",
@@ -2832,15 +2808,13 @@
   "title": "Core split, conversation: the conversation and conversations sections (greeting, chips, conversations, the E.V. tab rules) to core/conversation.mjs with its tests, the same way",
   "dod": "npm test green; npm run check green; ship staging green; live batched on Matt's OK",
   "milestone": "v4.2 core",
-  "status": "blocked",
+  "status": "done",
   "depends": [
    "B-156"
   ],
-  "notes": "Staging at cd06b51 (v4.1.0+39, Oct 21 09:00Z): system documents, page and the six cloud staging prompts deployed; verify-deploy staging RED only on staging.evening-mac and staging.restore-drill (Mac-bound: prompt and name change only from a chat linked to the Mac, with Matt). Fired on it and read back: staging watchdog runs/watchdog-20261021-085907643 ok (11 calls, all printed) and staging morning runs/morning-20261021-085907564 ok (20 calls, all printed).",
-  "commit": null,
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
-  "waitingOn": "Matt",
-  "waitingWhere": "mac"
+  "notes": "live at 8ec85c4 (v4.2.0) Oct 21 on Matt's OK: ship live GREEN; staging GREEN at the same commit first.",
+  "commit": "9bcb2d2",
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
   "id": "B-158",
@@ -2848,15 +2822,13 @@
   "title": "Core split, skills and workouts: the skills practice and workouts sections to core/skills.mjs with their tests, the same way",
   "dod": "npm test green; npm run check green; ship staging green; live batched on Matt's OK",
   "milestone": "v4.2 core",
-  "status": "blocked",
+  "status": "done",
   "depends": [
    "B-157"
   ],
-  "notes": "Staging at cd06b51 (v4.1.0+39, Oct 21 09:00Z): system documents, page and the six cloud staging prompts deployed; verify-deploy staging RED only on staging.evening-mac and staging.restore-drill (Mac-bound: prompt and name change only from a chat linked to the Mac, with Matt). Fired on it and read back: staging watchdog runs/watchdog-20261021-085907643 ok (11 calls, all printed) and staging morning runs/morning-20261021-085907564 ok (20 calls, all printed).",
-  "commit": null,
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
-  "waitingOn": "Matt",
-  "waitingWhere": "mac"
+  "notes": "live at 8ec85c4 (v4.2.0) Oct 21 on Matt's OK: ship live GREEN; staging GREEN at the same commit first.",
+  "commit": "1be5cea",
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
   "id": "B-159",
@@ -2864,15 +2836,13 @@
   "title": "Core split, prep and insights: the prep checks and insights sections to core/prep.mjs and core/insights.mjs with their tests, the same way",
   "dod": "npm test green; npm run check green; ship staging green; live batched on Matt's OK",
   "milestone": "v4.2 core",
-  "status": "blocked",
+  "status": "done",
   "depends": [
    "B-158"
   ],
-  "notes": "Staging at cd06b51 (v4.1.0+39, Oct 21 09:00Z): system documents, page and the six cloud staging prompts deployed; verify-deploy staging RED only on staging.evening-mac and staging.restore-drill (Mac-bound: prompt and name change only from a chat linked to the Mac, with Matt). Fired on it and read back: staging watchdog runs/watchdog-20261021-085907643 ok (11 calls, all printed) and staging morning runs/morning-20261021-085907564 ok (20 calls, all printed).",
-  "commit": null,
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
-  "waitingOn": "Matt",
-  "waitingWhere": "mac"
+  "notes": "live at 8ec85c4 (v4.2.0) Oct 21 on Matt's OK: ship live GREEN; staging GREEN at the same commit first.",
+  "commit": "b856f56",
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
   "id": "B-160",
@@ -2880,15 +2850,13 @@
   "title": "Core split, Canvas, mirror and share: the Canvas, Markdown mirror and shareable practice pages sections to core/canvas-rules.mjs, core/mirror.mjs and core/share.mjs with their tests, the same way; what remains in evcore is the record's rules (weak spots, items, attempts, answering, day plan, plans, dates, snapshot, lint, helpers)",
   "dod": "npm test green; npm run check green; ship staging green; live batched on Matt's OK; evcore under 2,500 lines",
   "milestone": "v4.2 core",
-  "status": "blocked",
+  "status": "done",
   "depends": [
    "B-159"
   ],
-  "notes": "Staging at cd06b51 (v4.1.0+39, Oct 21 09:00Z): system documents, page and the six cloud staging prompts deployed; verify-deploy staging RED only on staging.evening-mac and staging.restore-drill (Mac-bound: prompt and name change only from a chat linked to the Mac, with Matt). Fired on it and read back: staging watchdog runs/watchdog-20261021-085907643 ok (11 calls, all printed) and staging morning runs/morning-20261021-085907564 ok (20 calls, all printed).",
-  "commit": null,
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
-  "waitingOn": "Matt",
-  "waitingWhere": "mac"
+  "notes": "live at 8ec85c4 (v4.2.0) Oct 21 on Matt's OK: ship live GREEN; staging GREEN at the same commit first.",
+  "commit": "96d9244",
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
   "id": "B-161",
@@ -2896,13 +2864,11 @@
   "title": "The page's spec subset (A-3): build publishes to the page only the top-level keys the page reads, listed in one array in tools/build.mjs; a test greps page/app/*.js for spec.<key> and fails when the list and the page disagree; the Mac folder and the task table leave spec.json",
   "dod": "the test green; dist/page/live/spec.json under 50 KB; npm test green; npm run check green; ship staging green; live only on Matt's OK",
   "milestone": "v4.2 core",
-  "status": "blocked",
+  "status": "done",
   "depends": [],
-  "notes": "Staging at cd06b51 (v4.1.0+39, Oct 21 09:00Z): system documents, page and the six cloud staging prompts deployed; verify-deploy staging RED only on staging.evening-mac and staging.restore-drill (Mac-bound: prompt and name change only from a chat linked to the Mac, with Matt). Fired on it and read back: staging watchdog runs/watchdog-20261021-085907643 ok (11 calls, all printed) and staging morning runs/morning-20261021-085907564 ok (20 calls, all printed).",
-  "commit": null,
-  "source": "plan VXkqn1a6HSmiPDzr5MrNxq",
-  "waitingOn": "Matt",
-  "waitingWhere": "mac"
+  "notes": "live at 8ec85c4 (v4.2.0) Oct 21 on Matt's OK: ship live GREEN; staging GREEN at the same commit first.",
+  "commit": "7b75e25",
+  "source": "plan VXkqn1a6HSmiPDzr5MrNxq"
  },
  {
   "id": "B-162",
