@@ -43,7 +43,7 @@
       'afterbegin',
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>'
     );
-    $('p-ev').append(capNow);
+    $('mh').append(capNow); // B-209 (D-213): Back to now sits in the pane's header
     const capSide = el('aside');
     capSide.id = 'ev-side';
     capSide.setAttribute('aria-label', 'Beside E.V.');
@@ -119,18 +119,20 @@
       desktop: { idle: 132, conversation: 104, surface: 92 },
     };
     function renderStage() {
+      // B-209 (D-213): one size per layout (MO_SIZE), 70% in a session; folded to the header's 24 px flower while he
+      // reads back or on a screen under 560 px tall.
       const z = MO_SIZE(innerWidth, stageState());
       const h = $('hero');
-      const full = STAGE_PX[z.layout][z.step] || z.px + 24,
-        low =
-          (innerHeight < 560 && STAGE_TINY[z.layout][z.step]) || (innerHeight < 800 && STAGE_SHORT[z.layout][z.step]),
-        stage = low || full;
-      const k = low ? Math.max(0.3, (low - 24) / Math.max(1, full - 24)) : 1;
-      h.style.setProperty('--core-scale', String((z.pct / 100) * k));
-      h.style.setProperty('--stage-h', stage + 'px');
+      const folded = innerHeight < FZ.foldBelowHeightPx || !capNow.hidden;
+      const pad = innerWidth < 600 ? 14 : innerWidth < 1200 ? 24 : 36;
+      heroOrb.resize(z.px);
+      h.style.setProperty('--core-scale', '1');
+      h.style.setProperty('--stage-h', folded ? '0px' : z.px + pad + 12 + 'px');
+      h.style.setProperty('--stage-pad', pad + 'px');
       h.dataset.step = z.step;
-      h.dataset.px = String(Math.round(z.px * k));
-      h.dataset.short = low ? '1' : '';
+      h.dataset.px = String(folded ? 24 : z.px);
+      h.dataset.short = folded ? '1' : '';
+      document.body.classList.toggle('her-folded', folded);
     }
     // The talk the page holds (the shell's read window, spec.ui.page.subscribe): the edge a pull past today stops at.
     const TALK_DAYS = (
@@ -164,7 +166,7 @@
         const away = CAP.anchorTop != null ? t.scrollTop < CAP.anchorTop - 40 : fromBottom > 140;
         if (capNow.hidden === away) {
           capNow.hidden = !away;
-          if (away) capNow.style.bottom = $('composer').offsetHeight + 12 + 'px';
+          renderStage();
         }
         // Leaving the top after an edge (the start of today, the 7-day edge) readies the next full pull.
         if ((CAP.pull === 'start' || CAP.pull === 'window') && t.scrollTop > 40) CAP.pull = null;
@@ -215,6 +217,7 @@
       CAP.pull = null;
       CAP.stick = true;
       capNow.hidden = true;
+      renderStage();
       renderThread();
       requestAnimationFrame(() => {
         if (CAP.anchorTop == null) capBox.scrollTo({ top: capBox.scrollHeight, behavior: REDUCE ? 'auto' : 'smooth' });

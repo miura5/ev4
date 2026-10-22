@@ -693,12 +693,43 @@
       return { make, gesture, speak, speechEnd, setMood, setRing, stats, resetStats, sample, cores: () => [...cores] };
     })();
     window.EVApp.core = CORE;
-    const coreStage = () => MO_SIZE(innerWidth, 'idle');
-    function MO_SIZE(w, state) {
-      return window.EVMotion.coreSize(w, state, EV_SPEC.ui.look.core.sizes);
+    // B-209 (D-213): her stage size follows the layout and what is on screen, from spec.ui.look.flower.sizes: 104 px on
+    // the phone, 112 or 128 px beside the sidebar (under or from 900 px wide), 140 or 168 px with the details panel
+    // (from 1000 px tall), 70% of that in a session. The step names the state (idle, conversation, list or surface,
+    // session, skills) as the Captions layout reads it.
+    const FZ = EV_SPEC.ui.look.flower.sizes;
+    function stagePx(state) {
+      const w = innerWidth,
+        h = innerHeight;
+      let px =
+        w < 600
+          ? FZ.phone
+          : w < 1200
+            ? w < FZ.sidebarNarrowBelowPx
+              ? FZ.sidebarNarrow
+              : FZ.sidebar
+            : h > FZ.wideTallFromPx
+              ? FZ.wideTall
+              : FZ.wide;
+      if (state === 'session') px = Math.round(px * FZ.sessionShare);
+      return px;
     }
+    function MO_SIZE(w, state) {
+      return { ...window.EVMotion.coreSize(w, state, EV_SPEC.ui.look.core.sizes), px: stagePx(state), pct: 100 };
+    }
+    const coreStage = () => MO_SIZE(innerWidth, 'idle');
     const heroOrb = CORE.make(coreStage().px, { follow: true, pointer: true });
     $('hero').append(heroOrb.el);
+    // While he reads back, or on a screen under 560 px tall, her stage folds and she is the 24 px flower in the pane's
+    // header (D-213); tapping her there is tapping her.
+    if ($('mh-her')) {
+      $('mh-her').append(
+        CORE.make(24, { follow: true, when: () => document.body.classList.contains('her-folded') }).el
+      );
+      $('mh-her').addEventListener('click', () => (ui.tab === 'ev' ? backToNow() : showTab('ev')));
+    }
+    // The send is a quiet circle that fills when he types (D-214).
+    $('ev-input').addEventListener('input', () => $('ev-send').classList.toggle('on', !!$('ev-input').value.trim()));
     // The top bar's core is tucked away (styles.css) while her stage core is up or a session runs; then it does not draw.
     const topOrb = CORE.make(24, {
       follow: true,

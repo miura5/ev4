@@ -3728,12 +3728,12 @@
   "title": "The E.V. tab in C (D-213)",
   "dod": "Captions in the pane; stage sizes by layout and state (phone 104, sidebar 112 or 128, wide 140 or 168, session 70%); reading back and short heights fold her to 24 px in the pane header with Back to now; neutral send that fills when he types; the proof",
   "milestone": "v4.5 ui",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-206",
    "B-208"
   ],
-  "notes": "",
+  "notes": "Taken Oct 22.",
   "commit": null,
   "source": "plan BridyLzngcGUtpeLQorX1U"
  },
