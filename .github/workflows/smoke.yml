@@ -1,0 +1,53 @@
+# B-199: the smoke tier on every push, beside npm test (test.yml): a two-minute subset of the page harnesses on the
+# synthetic record at 390 and 1280 (boot with no page error, the greeting, each tab, a check-off that keeps the scroll,
+# a review answer that scores, a Your-turn reply that files). Then each plant must turn it red, so a smoke tier that
+# stopped catching anything fails here. The full `npm run check` stays nightly (nightly.yml) and before live.
+name: smoke
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: smoke-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: git config --global user.name 'E.V. CI' && git config --global user.email 'ci@example.invalid'
+      # The harness tries the build container's Chromium first and falls back to Playwright's own.
+      - run: npx playwright install --with-deps chromium
+      - run: npm run smoke -- shots
+      # Each plant must turn the tier red, for the check it plants against and nothing else.
+      - name: a planted page error turns it red
+        run: |
+          if out=$(node test/harness/smoke.cjs synthetic shots-planted --plant page-error 2>&1); then
+            echo "$out"; echo "smoke stayed green with a planted page error"; exit 1
+          fi
+          echo "$out" | tail -3
+          echo "$out" | grep -q '^FAIL \[390\] no page errors · planted page error'
+      - name: a planted broken tab turns it red
+        run: |
+          if out=$(node test/harness/smoke.cjs synthetic shots-planted --plant broken-tab 2>&1); then
+            echo "$out"; echo "smoke stayed green with a planted broken tab"; exit 1
+          fi
+          echo "$out" | tail -3
+          echo "$out" | grep -q '^FAIL \[390\] each tab opens its panel · did not open: progress'
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: smoke-shots-${{ github.run_id }}
+          path: shots/
+          retention-days: 7
+          if-no-files-found: ignore

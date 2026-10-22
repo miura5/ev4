@@ -47,8 +47,10 @@ attribution lines with `--trailer`, one per line) and regenerates BACKLOG.md, DE
    blocked --note "<the question>" --waiting-on Matt`, and move to the next open task. Code-level choices are yours.
 5. Prove it exactly as its definition of done says. `npm test` green first (it runs the Chart's lint). Where a
    pipeline is involved, the proof is a scheduled task fired against staging and its `runs/<id>` read back, never a
-   hand replay. Where the page is involved, `npm run check` (npm test, the build, every harness on the synthetic
-   record, then the look pass at phone and desktop width), and look at the screenshots it lists.
+   hand replay. Where the page is involved, run `npm run smoke` while working (B-199: the build, then boot, greeting,
+   each tab, a check-off, a review answer and a Your-turn reply at 390 and 1280, in about 10 seconds; the smoke
+   workflow runs it on every push), and `npm run check` once before ship (npm test, the build, every harness on the
+   synthetic record, then the look pass at phone and desktop width), and look at the screenshots it lists.
 6. Ship: commit with the task id first in the message (`B-07: lint and rebuild`), then the attribution lines the
    session gives you; push to `main`. Then `ship staging` and make every call and read it prints, running it again
    each time, until it says GREEN: it records the deploy, which CHANGELOG.md then carries. **Never deploy live** without
