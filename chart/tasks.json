@@ -2892,7 +2892,7 @@
   "depends": [
    "B-197"
   ],
-  "notes": "Taken in the build chat after Matt's reply (Ask me on the page): the reply run recorded it and stopped. Building: runs never pass a fresh candidate themselves; they hold it and the page asks him (It's made up / Keep it out), his answer kept as <key>-matt for every later run.",
+  "notes": "Built on the builder's branch (3a2cd26) plus 304fdc1: Your turn asks once per place a run held from, one tap keeping an answer per value; a held drill's push says partly done with the count, never passed. Main f8ee77e, staging GREEN v4.4.0+32; GitHub nightly check green on the branch (run 39800339043). Proof left: the staging drill holds the Oct 19 DOB, Matt taps It's made up on the staging page, the next drill is ok.",
   "commit": null,
   "source": "plan Q6ioLu7LnKC2vvWJkwJWA6",
   "ask": "A scheduled run isn't allowed to approve a date of birth by itself, even a practice one. Should runs hold anything they find and ask you on the page, so you tap It's made up once?",
