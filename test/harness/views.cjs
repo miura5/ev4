@@ -12,9 +12,12 @@ const SIZES = [
   [1280, 800],
   [1470, 830],
   [1920, 1080],
+  // B-203 (D-219): a third and a half of his 5120 x 1440 ultrawide, where E.V. lives most of the time.
+  [1706, 1240],
+  [2560, 1240],
 ].map(([width, height]) => ({ width, height, tag: `${width}x${height}` }));
-// The shots to look at first: the phone, half the laptop and the laptop (B-113).
-const FIRST = ['390x844', '735x830', '1280x800'];
+// The shots to look at first (B-113, B-203, D-219): the phone, half the laptop, a third and a half of the ultrawide.
+const FIRST = ['390x844', '735x830', '1706x1240', '2560x1240'];
 function viewsOf(html) {
   const tabs = [...new Set([...String(html).matchAll(/data-tab="([a-z-]+)"/g)].map(m => m[1]))];
   const out = [];
