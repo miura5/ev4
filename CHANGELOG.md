@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 22 | v4 staging deployed at da6e36e (14:57 CT), from f8ee77e: The smoke tier; Harness sizes for the ultrawide (B-199, B-203). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 22 | v4 live deployed at f8ee77e (10:40 CT), from 5085cfd: * I asked E.V. what to bring to lab/class today. She said she didn’t…; Let's clarify for the record I did NOT request to turn of patient…; The design kickoff; Ship it from the page; Restore migrates; greet: [exam-tomorrow] the model's line is the headline, held to the… (B-190, B-197, B-183, B-185, B-163, B-198). verify-deploy live GREEN. Rollback is a redeploy of 5085cfd | Matt's OK | D-049 |
 | Oct 22 | v4 staging deployed at f8ee77e (10:18 CT), from 871e435: Restore migrates; greet: [exam-tomorrow] the model's line is the headline, held to the… (B-163, B-198). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 22 | v4 staging deployed at 871e435 (00:48 CT), from d067020: Ship it from the page (B-185). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |

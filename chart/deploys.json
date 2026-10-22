@@ -2882,5 +2882,22 @@
   "decisions": [],
   "source": "log",
   "release": "v4.4.1"
+ },
+ {
+  "target": "staging",
+  "commit": "da6e36e",
+  "time": "2026-10-22T19:57:09.888Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "f8ee77e",
+  "tasks": [
+   "B-199",
+   "B-203"
+  ],
+  "summary": "The smoke tier; Harness sizes for the ultrawide",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
