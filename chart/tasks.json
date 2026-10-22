@@ -2892,7 +2892,7 @@
   "depends": [
    "B-197"
   ],
-  "notes": "Oct 22 04:32Z staging drill (cse_01VkvqwEeq4nbdw7KnZMKzMD, runs/restore-drill-20261022-043233095) at 98caa77: fetch and the restore plan went through to the B-197 identifiers step; the run judged the Oct 19 checklist DOB practice, and writing that verdict was refused by the run's own safety review ('Auto-Mode Bypass'). The run ended failed with its trace; not worked around. So an unattended run may not pass a value on its own judgment: only Matt can. Proposed (B-197 follow-up): runs never pass a fresh candidate themselves; they hold it and keep it as waiting on Matt; the page lists what a run held (where, what kind, never the value) with It's made up / Keep it out, his answer kept as <key>-matt, which the next run reads first. The drill then passes on its next firing after his tap.",
+  "notes": "Oct 22 04:32Z staging drill (cse_01VkvqwEeq4nbdw7KnZMKzMD, runs/restore-drill-20261022-043233095) at 98caa77: fetch and the restore plan went through to the B-197 identifiers step; the run judged the Oct 19 checklist DOB practice, and writing that verdict was refused by the run's own safety review ('Auto-Mode Bypass'). The run ended failed with its trace; not worked around. So an unattended run may not pass a value on its own judgment: only Matt can. Proposed (B-197 follow-up): runs never pass a fresh candidate themselves; they hold it and keep it as waiting on Matt; the page lists what a run held (where, what kind, never the value) with It's made up / Keep it out, his answer kept as <key>-matt, which the next run reads first. The drill then passes on its next firing after his tap.\nMatt's reply (job job-20261022-132435-b-163, Oct 22): Ask me on the page",
   "commit": null,
   "source": "plan Q6ioLu7LnKC2vvWJkwJWA6",
   "ask": "A scheduled run isn't allowed to approve a date of birth by itself, even a practice one. Should runs hold anything they find and ask you on the page, so you tap It's made up once?",
@@ -2900,7 +2900,9 @@
    "Ask me on the page",
    "Just keep holding"
   ],
-  "waitingOn": "Matt"
+  "jobs": [
+   "job-20261022-132435-b-163"
+  ]
  },
  {
   "id": "B-164",
