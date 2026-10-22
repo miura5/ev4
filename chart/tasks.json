@@ -3888,7 +3888,7 @@
   "milestone": "v4.5 ops",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Matt, Oct 22 in the chat: take it next, right after B-203 ships, ahead of B-204.",
   "commit": null,
   "source": "build chat",
   "words": "run npm run check only for what a task touched, full set nightly and before live",
