@@ -2553,7 +2553,7 @@
     },
     {
      "capability": "a build ask from the page: jobs/<id> written, ev4-builder fired with Job <id> and his message, the request filed in his words with the job on the task, and the trace back on the page",
-     "task": "staging page (E.V. Home Staging v4) at eac0a02, with build.ev4-builder (trig_01Rubgkh9mfYXZaRh8jm6uP6)",
+     "task": "build.ev4-builder (trig_01Rubgkh9mfYXZaRh8jm6uP6, created 2026-10-18T04:25Z from a chat with the repository, push on, permission mode auto, prompt updated 2026-10-22T01:15Z with the marker step, B-179), fired by the staging page at eac0a02",
      "proven": true,
      "date": "2026-10-21",
      "run": "cse_013kEAqR4RSk9DpAt9tA4ah7",
