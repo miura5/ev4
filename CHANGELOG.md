@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 22 | v4 staging deployed at f8ee77e (10:18 CT), from 871e435: Restore migrates; greet: [exam-tomorrow] the model's line is the headline, held to the… (B-163, B-198). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 22 | v4 staging deployed at 871e435 (00:48 CT), from d067020: Ship it from the page (B-185). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 22 | v4 staging deployed at d067020 (00:20 CT), from 98caa77: The design kickoff (B-183). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 21 | v4 staging deployed at 98caa77 (23:31 CT), from e4a9d27: Restore migrates (B-163). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
