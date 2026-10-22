@@ -714,7 +714,7 @@ body.on-ev.opening .side .top-av,body.on-ev.in-session .side .top-av,body.on-ev.
 .side .wordmark{font-size:14px}
 .side .tabs{display:flex;flex-direction:column;align-items:stretch;gap:1px}
 .side .tabs .tab,.side .tab-sys{appearance:none;position:static;display:flex;align-items:center;justify-content:flex-start;gap:10px;width:100%;height:32px;min-width:0;padding:0 10px;border:0;border-radius:7px;background:transparent;color:var(--faint);font:500 13px var(--sans);cursor:pointer;flex:0 0 auto}
-.side .tabs .tab svg,.side .tab-sys svg{width:16px;height:16px;flex:0 0 16px}
+.side .tabs .tab > svg,.side .tab-sys > svg{width:16px;height:16px;flex:0 0 16px}
 .side .tabs .tab span,.side .tab-sys span{position:static;width:auto;height:auto;overflow:visible;clip:auto;white-space:nowrap}
 .side .tabs .tab:hover,.side .tab-sys:hover{color:var(--text);background:var(--surface)}
 .side .tabs .tab[aria-selected="true"],.side .tab-sys[aria-current="page"]{color:var(--text);background:var(--bg);box-shadow:inset 0 0 0 1px var(--line);font-weight:500;border-color:transparent}
@@ -727,8 +727,9 @@ body.on-ev.opening .side .top-av,body.on-ev.in-session .side .top-av,body.on-ev.
   .side .tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));height:60px;gap:0}
   .side .tabs .tab{flex-direction:column;justify-content:center;gap:3px;height:60px;padding:0;border-radius:0;font-size:11px;color:var(--faint)}
   .side .tabs .tab[aria-selected="true"]{background:transparent;box-shadow:none;color:var(--text)}
-  .side .tabs #tab-ev svg{display:none}
+  .side .tabs #tab-ev > svg{display:none}
   .side .tabs #tab-ev .tab-her{display:grid;place-items:center}
+  .side .tabs #tab-ev .tab-her,.side .tabs #tab-ev .ev-av{width:24px;height:24px;flex:0 0 24px}
   .side .tab-sys{position:fixed;top:calc(2px + env(safe-area-inset-top,0px));right:max(6px,env(safe-area-inset-right,0px));width:40px;height:40px;padding:0;justify-content:center;z-index:10;border-radius:10px}
   .side .tab-sys span{display:none}
   .mh{padding-right:52px}
