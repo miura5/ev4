@@ -6,6 +6,7 @@
 export function makePrep(core) {
   'use strict';
   const {
+    chicagoClock,
     chicagoDate,
     citeMaterial,
     dayeditBase,
@@ -22,6 +23,21 @@ export function makePrep(core) {
     searchLibrary,
     slug,
   } = core;
+  // B-189: date arithmetic on YYYY-MM-DD (UTC noon, so no clock change moves a day), kept here so the factory stays
+  // free of imports.
+  const utc = iso => Date.parse(String(iso).slice(0, 10) + 'T12:00:00Z');
+  const addDays = (iso, n) => new Date(utc(iso) + n * 864e5).toISOString().slice(0, 10);
+  const weekday = iso => new Date(utc(iso)).getUTCDay();
+  const shortDate = x => {
+    const d = String(x).length === 10 ? x : chicagoDate(x);
+    return (
+      ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][weekday(d)] +
+      ' ' +
+      Number(d.slice(5, 7)) +
+      '/' +
+      Number(d.slice(8, 10))
+    );
+  };
 
   // ---------------------------------------------------------------- prep checks (D-143, D-144)
   // Clinical, lab, validation and class days are never urgent: they get a calm Prep marker and a tickable check, the
@@ -34,13 +50,17 @@ export function makePrep(core) {
   const PREP_KINDS = ['validation', 'clinical', 'lab', 'class'];
   const PREP_TAG = 'PREP';
   const isPrepAdded = a => !!a && a.tag === PREP_TAG;
-  /** What kind of prep day a calendar entry makes, or null: validations and clinicals by kind, labs and classes by name. */
+  /** What kind of prep day a calendar entry makes, or null: validations and clinicals by kind, labs and classes by name.
+   *  B-189: an exam is sat in a lab or a classroom, so it makes a lab day when its title names a lab or a practical and
+   *  a class day otherwise; it keeps its own exam marker as well (the Prep marker is its own calm level, D-143). Graded
+   *  work due is never a prep day. */
   function prepKindOf(d) {
     if (!d) return null;
     const t = String(d.title || '');
     if (d.kind === 'validation') return 'validation';
     if (d.kind === 'clinical') return 'clinical';
-    if (d.kind !== 'other') return null; // graded work and exams keep their own markers
+    if (d.kind === 'exam') return /\blabs?\b|\bpracticals?\b/i.test(t) ? 'lab' : 'class';
+    if (d.kind !== 'other') return null; // graded work due keeps its own marker
     if (/\bvalidat/i.test(t)) return 'validation';
     if (/\bclinical\b/i.test(t)) return 'clinical';
     if (/\blabs?\b/i.test(t)) return 'lab';
@@ -60,10 +80,7 @@ export function makePrep(core) {
     );
     const { d, kind } = on[0];
     const title = String(d.title || '').trim();
-    const subject = title
-      .replace(/^\s*(skills?\s+)?(validation|clinical|lab|class|lecture)s?\s*[:\-–]\s*/i, '')
-      .replace(/\s*\([^)]*\)\s*$/, '')
-      .trim();
+    const subject = prepSubject(title);
     return {
       date,
       kind,
@@ -71,7 +88,128 @@ export function makePrep(core) {
       subject: subject && subject !== title ? subject : kind === 'validation' || kind === 'lab' ? subject : '',
       dateId: d.id || null,
       course: normCourse(d.course) || defaultCourse(),
+      // B-189: every prep entry that day (a lab exam and a class exam on one day both count), in rank order.
+      entries: on.map(x => ({
+        id: x.d.id || null,
+        kind: x.kind,
+        title: String(x.d.title || '').trim(),
+        course: normCourse(x.d.course) || defaultCourse(),
+        text: [x.d.title, x.d.notes, x.d.canvasNote].filter(Boolean).join('. '),
+      })),
     };
+  }
+  /** What an entry's title is about, past a course code and its "Lab:", "Validation:" or "Lab Exam:" lead. */
+  function prepSubject(title) {
+    return String(title || '')
+      .replace(/^\s*[A-Z]{2,5}\s?\d{3}[A-Z]?\s+(?=\S)/, '')
+      .replace(/^\s*(skills?\s+)?(validation|clinical|lab|class|lecture)s?(\s+(exam|practical|quiz))?\s*[:\-–]\s*/i, '')
+      .replace(/\s*\([^)]*\)\s*$/, '')
+      .trim();
+  }
+  const PREP_LABEL = { clinical: 'Clinical day', validation: 'Validation day', lab: 'Lab day', class: 'Class day' };
+  /** B-189: the prep day on a date from the calendar, or, when the calendar has none and he said what the day is ("I
+   *  have lab today"), that kind of day from his words. Kinds he named, in rank order; null when neither says. */
+  function prepDaySaid(dates, dateedits, date, said = []) {
+    const day = prepDay(dates, dateedits, date);
+    if (day) return day;
+    const kinds = PREP_KINDS.filter(k => (said || []).includes(k));
+    if (!kinds.length) return null;
+    const title = PREP_LABEL[kinds[0]] + ' (from what you said)';
+    return {
+      date,
+      kind: kinds[0],
+      title,
+      subject: '',
+      dateId: null,
+      course: defaultCourse(),
+      said: true,
+      entries: kinds.map(k => ({ id: null, kind: k, title: PREP_LABEL[k], course: defaultCourse(), text: '' })),
+    };
+  }
+  /** Patterns for a date written out in a calendar or an announcement: 10/21, 10/21/26, Oct 21, October 21st. */
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June?', 'July?', 'Aug', 'Sept?', 'Oct', 'Nov', 'Dec'];
+  const MONTH_LONG = ['uary', 'ruary', 'ch', 'il', '', '', '', 'ust', 'ember', 'ober', 'ember', 'ember'];
+  function dateRe(date) {
+    const [y, m, d] = String(date).split('-').map(Number);
+    const yy = String(y).slice(2);
+    const num = `(?<![\\d/.])0?${m}[/.]0?${d}(?:[/.](?:${y}|${yy}))?(?![\\d/])`;
+    const name = `\\b${MONTHS[m - 1]}(?:${MONTH_LONG[m - 1]})?\\.?\\s+0?${d}(?:st|nd|rd|th)?\\b`;
+    return new RegExp(`${num}|${name}`, 'i');
+  }
+  const ANY_DATE =
+    /(?<![\d/.])\d{1,2}[/.]\d{1,2}(?![\d])|\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2}\b/gi;
+  const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  /** The stretches of a text about one date: from each mention of the date to the next date it names (at most 240
+   *  characters), so a calendar row or an announcement sentence about another day is not this day's. */
+  function dateStretches(text, re) {
+    const s = String(text || '');
+    const out = [];
+    const g = new RegExp(re.source, 'gi');
+    let m;
+    while ((m = g.exec(s)) && out.length < 6) {
+      const start = m.index;
+      ANY_DATE.lastIndex = start + m[0].length;
+      const next = ANY_DATE.exec(s);
+      const end = Math.min(next ? next.index : s.length, start + 240);
+      out.push(s.slice(start, end).trim());
+      g.lastIndex = Math.max(g.lastIndex, end);
+    }
+    return out;
+  }
+  /** The sentences of an announcement that are about a date: they name it, or (an announcement from that week) its
+   *  weekday. */
+  function announcementLines(a, date) {
+    const text = [a.title, a.text].filter(Boolean).join('. ');
+    const re = dateRe(date);
+    const posted = a.postedAt ? chicagoDate(a.postedAt) : null;
+    if (posted && posted > date) return [];
+    const sameWeek = posted && posted >= addDays(date, -6);
+    const wd = new RegExp('\\b' + WEEKDAYS[weekday(date)] + '\\b', 'i');
+    const out = [];
+    for (const sentence of text.split(/(?<=[.!?])\s+|\n+/)) {
+      const t = sentence.trim();
+      if (!t) continue;
+      if (re.test(t)) out.push(...dateStretches(t, re));
+      else if (sameWeek && wd.test(t)) out.push(t.slice(0, 240));
+    }
+    return out;
+  }
+  /** B-189: in a stretch already about the day ("10/21 Lab Exam: bring a pencil and your lab manual"), "bring" opens a
+   *  list without a colon too. */
+  function looseBring(text) {
+    const out = [];
+    const re = /\bbring\s+(?!up\b|back\b|down\b|over\b|it\b|them\b)([^.;:!?]{3,90})/gi;
+    let m;
+    while ((m = re.exec(String(text || ''))))
+      for (const raw of m[1].split(/,|\s+and\s+|\s+&\s+|\s+or\s+/)) {
+        const t = raw
+          .replace(/^\s*(?:a|an|the|your|my|one|two|1|2)\s+/i, '')
+          .replace(/\s+(?:to|for|with|on|at|in)\b.*$/i, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+        if (t.length >= 3 && t.split(' ').length <= 5 && !/\d/.test(t))
+          out.push(t.charAt(0).toUpperCase() + t.slice(1));
+      }
+    return out;
+  }
+  /** B-189: the materials a stretch of text names for the day (the textbook and its chapters, a lab guide, a handbook),
+   *  by spec.constants.prep.named; "{1}" in an item is the pattern's first group. */
+  function namedMaterials(text) {
+    const out = [];
+    for (const r of (core.C.prep || {}).named || []) {
+      const g = new RegExp(r.match, 'gi');
+      let m;
+      while ((m = g.exec(String(text || '')))) {
+        const raw = r.take ? m[0] : String(r.item || '').replace('{1}', (m[1] || '').replace(/\s+/g, ' ').trim());
+        const t = raw
+          .replace(/\s+/g, ' ')
+          .replace(/^(?:your|the|a|an|my|our)\s+/i, '')
+          .trim();
+        if (t) out.push(t.charAt(0).toUpperCase() + t.slice(1));
+        if (!m[0]) g.lastIndex++;
+      }
+    }
+    return out;
   }
   const PAPERWORK = /paperwork|\bforms?\b|worksheet|care plan|concept map/i;
   /** The bring-list entries in one passage: what follows "bring:", "you will need", "supplies needed" and the like. */
@@ -126,7 +264,8 @@ export function makePrep(core) {
       full.get(key).push(d);
     }
     const passages = [];
-    for (const h of ranked) {
+    // B-189: a day known only from his words has no subject to tell one lab's passages from another's.
+    for (const h of day.said ? [] : ranked) {
       for (const d of full.get(h.id + '#' + h.page) || []) {
         if (passages.includes(d)) continue;
         const has = w => d.tf.has(w);
@@ -153,7 +292,50 @@ export function makePrep(core) {
         ...x,
       });
     };
-    const looks = ((P.lookFor || {})[day.kind] || []).map(l => ({ item: l.item, re: new RegExp(l.match, 'i') }));
+    // B-189: every kind the day is (a lab exam and a class exam on one day), each kind's look-fors and kit.
+    const kinds = [...new Set([day.kind, ...(day.entries || []).map(e => e.kind)])].filter(Boolean);
+    const looks = kinds.flatMap(k =>
+      ((P.lookFor || {})[k] || []).map(l => ({ item: l.item, re: new RegExp(l.match, 'i') }))
+    );
+    // B-189: what the record says about the day itself comes first, each with the place that names it: the calendar
+    // entry (its title and notes), the Canvas announcements that name the day, and the course calendar's row for it.
+    const fromText = (text, cite, source) => {
+      for (const t of [...prepBringItems(text), ...looseBring(text)]) {
+        const seed = looks.find(l => l.re.test(t));
+        add(seed ? seed.item : t, null, { cite, source });
+      }
+      for (const l of looks) if (l.re.test(text)) add(l.item, null, { cite, source });
+      for (const t of namedMaterials(text)) add(t, null, { cite, source });
+    };
+    for (const e of day.entries || [])
+      if (e.text) fromText(e.text, 'Your calendar: ' + e.title, { type: 'date', id: e.id, title: e.title });
+    for (const a of o.announcements || []) {
+      for (const line of announcementLines(a, day.date))
+        fromText(
+          line,
+          'Canvas announcement: ' + (a.title || 'untitled') + (a.postedAt ? ', ' + shortDate(a.postedAt) : ''),
+          {
+            type: 'announcement',
+            id: a.id || null,
+            title: a.title || '',
+          }
+        );
+    }
+    const dre = dateRe(day.date);
+    let rows = 0;
+    for (const d of (index && index.docs) || []) {
+      if (rows >= 8 || !dre.test(d.c.text)) continue;
+      for (const s of dateStretches(d.c.text, dre)) {
+        rows++;
+        fromText(s, citeMaterial(d.c), {
+          id: d.c.id,
+          title: d.c.title,
+          page: d.c.page,
+          unit: d.c.unit,
+          type: 'calendar',
+        });
+      }
+    }
     for (const d of passages) {
       for (const t of prepBringItems(d.c.text)) {
         const seed = looks.find(l => l.re.test(t));
@@ -202,26 +384,108 @@ export function makePrep(core) {
         });
       }
     }
+    // B-189 (D-144 as amended): the kit for each kind the day is, his to edit in spec.constants.prep.kit, completes what
+    // the record names; an item the record already names keeps the record's source.
+    const kitKinds = [];
+    for (const k of kinds) {
+      const kit = ((o.kit || P.kit || {})[k] || []).filter(t => typeof t === 'string' && t.trim());
+      if (kit.length) kitKinds.push(k);
+      for (const t of kit) {
+        const key = norm(t);
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        items.push({
+          id: 'kit-' + (slug(t, 32) || 'item'),
+          text: t.trim(),
+          cite: 'your ' + k + ' kit',
+          source: { type: 'kit', kind: k },
+          paperwork: PAPERWORK.test(t),
+          kit: true,
+        });
+      }
+    }
     const checks = (edits[day.date] && edits[day.date].checks) || {};
     for (const it of items) it.checked = !!checks[prepCheckId(phase, it.id)];
     const what =
       day.subject && day.kind !== 'clinical'
         ? `${day.kind === 'validation' ? 'the ' + day.subject + ' validation' : day.kind === 'lab' ? 'the ' + day.subject + ' lab' : day.title}`
         : day.title;
+    const kitLine = kitKinds.length ? `Your ${kitKinds.join(' and ')} kit is below. ` : '';
     const note = fromMaterials
       ? null
-      : `Nothing in your materials says what to bring for ${what}. Add what you know and I’ll keep it for next time.`;
+      : `Nothing in your materials says what to bring for ${what}. ${kitLine}Add what you know and I’ll keep it for next time.`;
     return {
       date: day.date,
       kind: day.kind,
+      kinds,
       title: day.title,
       subject: day.subject,
       phase,
       items,
+      fromRecord: fromMaterials,
+      kitKinds,
       empty: !fromMaterials,
       note,
       done: items.length > 0 && items.every(it => it.checked),
     };
+  }
+  /** B-189: what E.V. says when he asks what to bring: which day, how many items the record names (each card row
+   *  names its place) and what the kit fills in; plain when the day is not a class, lab, clinical or validation day. */
+  function prepReply(list, date, today) {
+    const when = date === today ? 'today' : date === addDays(today, 1) ? 'tomorrow' : shortDate(date);
+    if (!list)
+      return `Nothing on your calendar makes ${when} a class, lab, clinical or validation day, so I have no list for it. Tell me which it is ("what do I bring to lab ${when}") or add it under Record, Dates, and I’ll build the list from your materials.`;
+    const rec = list.fromRecord;
+    const kit = list.items.filter(i => i.kit).length;
+    const own = list.items.length - rec - kit;
+    const parts = [];
+    if (rec) parts.push(`${rec} named in your record (each line says where)`);
+    if (own) parts.push(`${own} you added before`);
+    if (kit) parts.push(`${kit} from your ${(list.kitKinds || [list.kind]).join(' and ')} kit`);
+    const head = `For ${list.title} ${when}: `;
+    if (!list.items.length)
+      return (
+        head +
+        'nothing in your record says what to bring, and your kit for that kind of day is empty. Add what you know on the check and I’ll keep it.'
+      );
+    return (
+      head +
+      parts.join(', ') +
+      '.' +
+      (rec
+        ? ''
+        : ' Your materials don’t name anything for this day, so the list is your kit; add what you know on the check.')
+    );
+  }
+  /** B-189: an ask for what to bring ("what do I bring to lab today", "make a prep list of items to bring"): the date
+   *  it is for (today, tomorrow, a weekday or 10/22; with no day named, tomorrow from 5pm on) and the kinds of day he
+   *  named. Null when the text is not that ask. */
+  function prepAsk(text, now) {
+    const t = String(text || '');
+    const ask =
+      /\b(what|which|items?|things?|stuff|list|anything)\b[^.?!]{0,50}\b(bring|pack|take with)\b(?!\s+(?:up|back|down|over)\b)/i.test(
+        t
+      ) ||
+      /\b(prep|pack(?:ing)?|bag)\s+(list|check)\b/i.test(t) ||
+      /\bwhat\b[^.?!]{0,30}\bneed\b[^.?!]{0,20}\bfor (?:lab|class|clinical|validation)\b/i.test(t);
+    if (!ask) return null;
+    const today = chicagoDate(now);
+    let date = null;
+    const md = /\b(\d{1,2})\/(\d{1,2})\b/.exec(t);
+    if (/\btomorrow\b/i.test(t)) date = addDays(today, 1);
+    else if (/\b(today|this morning|tonight)\b/i.test(t)) date = today;
+    else if (md) date = `${today.slice(0, 4)}-${md[1].padStart(2, '0')}-${md[2].padStart(2, '0')}`;
+    else {
+      const w = WEEKDAYS.findIndex(d => new RegExp('\\b' + d + '\\b', 'i').test(t));
+      if (w >= 0) date = addDays(today, (w - weekday(today) + 7) % 7);
+    }
+    if (!date) date = Number(String(chicagoClock(now)).slice(0, 2)) >= 17 ? addDays(today, 1) : today;
+    const said = [];
+    if (/\bclinicals?\b/i.test(t)) said.push('clinical');
+    if (/\bvalidat/i.test(t)) said.push('validation');
+    if (/\blabs?\b/i.test(t)) said.push('lab');
+    if (/\b(class|lecture)\b/i.test(t)) said.push('class');
+    return { date, said };
   }
   const prepCheckId = (phase, id) => 'prep-' + (phase === 'morning' ? 'morning' : 'night') + '-' + id;
   /** One edit to a day's prep check, on that day's dayedits/<date>. add {text} · remove {id} (his own item) · check {id,
@@ -339,6 +603,9 @@ export function makePrep(core) {
     isPrepAdded,
     prepKindOf,
     prepDay,
+    prepDaySaid,
+    prepAsk,
+    prepReply,
     prepBringItems,
     prepList,
     prepEdit,

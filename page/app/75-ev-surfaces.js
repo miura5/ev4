@@ -61,6 +61,12 @@
           const j = S.jobs.find(x => x.id === c.id);
           return j ? `${kindLabel(j.kind) || 'Background job'} · ${jobState(j).label}` : 'Background job';
         }
+        // B-189: a prep card's line is its day and how much of the check is ticked.
+        if (c.type === 'prep') {
+          const l = prepNow(c);
+          const n = l && l.items ? l.items.filter(i => i.checked).length : 0;
+          return `Prep · ${c.title || 'what to bring'}${l && l.items && l.items.length ? ` · ${n} of ${l.items.length}` : ''}`;
+        }
         if (LINES[c.type]) return LINES[c.type](c).text;
         if (c.type === 'link') return c.title || 'Link';
         return sfTitle[c.type] || 'Card';

@@ -228,6 +228,12 @@
         await quick(text);
         return;
       }
+      const pa = E.prepAsk(text, now());
+      if (pa) {
+        input.placeholder = placeholder();
+        await prepAnswer(text, pa);
+        return;
+      }
       input.placeholder = placeholder();
       const mid = await mattSay(text);
       noteAnswer(mid);

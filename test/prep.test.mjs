@@ -71,10 +71,13 @@ const MATS = [
 ];
 const day = d => EV.prepDay(DATES, [], d);
 
-test('prepKindOf: validations and clinicals by kind, labs and classes by name; graded work and exams are not prep days', () => {
+test('prepKindOf: validations and clinicals by kind, labs and classes by name; graded work due is not a prep day', () => {
   assert.deepEqual(DATES.map(EV.prepKindOf), ['validation', 'lab', 'clinical', 'clinical', 'class', null]);
   assert.equal(EV.prepKindOf(date('x', '2026-10-21', 'Lab quiz due', 'due', { graded: true })), null);
-  assert.equal(EV.prepKindOf(date('x', '2026-10-21', 'NUR Exam 4', 'exam')), null);
+  // B-189: an exam is sat somewhere: a lab exam or practical makes a lab day, any other exam a class day.
+  assert.equal(EV.prepKindOf(date('x', '2026-10-21', 'NUR Exam 4', 'exam')), 'class');
+  assert.equal(EV.prepKindOf(date('x', '2026-10-21', 'BIO 201 Lab Exam: bones (Group A or B slot)', 'exam')), 'lab');
+  assert.equal(EV.prepKindOf(date('x', '2026-10-21', 'Skills practical', 'exam')), 'lab');
   assert.equal(day('2026-10-21').kind, 'validation', 'a validation outranks the graded due item on the same day');
   assert.equal(day('2026-10-21').subject, 'Head-to-toe assessment', 'a validation names its skill');
   assert.equal(day('2026-10-24'), null);
@@ -84,7 +87,14 @@ test('three planted days with their own materials yield three different lists, e
   const lists = ['2026-10-21', '2026-10-22', '2026-10-23'].map(d =>
     EV.prepList({ day: day(d), phase: 'night', materials: MATS, dates: DATES })
   );
-  const texts = lists.map(l => l.items.map(i => i.text));
+  // B-189: the kit (spec.constants.prep.kit) completes each list after the materials; the materials' items lead.
+  const texts = lists.map(l => l.items.filter(i => !i.kit).map(i => i.text));
+  assert.deepEqual(
+    lists.map(l => l.items.filter(i => i.kit).map(i => i.text)),
+    [['Black pen'], ['Lab kit'], ['Watch with a second hand', 'Penlight']],
+    'only the kit items the materials did not already name, each after them'
+  );
+  for (const l of lists) assert.ok(l.items.filter(i => i.kit).every(i => /^your \w+ kit$/.test(i.cite)));
   assert.deepEqual(texts[0], ['Stethoscope', 'Penlight', 'Watch with a second hand', 'Skills packet']);
   assert.deepEqual(texts[1], ['Sterile gloves', 'Catheter kit', 'Practice manikin pass']);
   assert.ok(
@@ -107,7 +117,7 @@ test('three planted days with their own materials yield three different lists, e
   for (const l of lists) {
     assert.equal(l.empty, false);
     assert.equal(l.note, null);
-    for (const it of l.items)
+    for (const it of l.items.filter(i => !i.kit))
       assert.match(it.cite, /, (p|slide)\. ?\d+$|, slide \d+$/, it.text + ' cites its file and page');
   }
   assert.equal(lists[0].items[0].cite, 'Skills Validation Guide, p. 3');
@@ -301,7 +311,7 @@ test('the evening snapshot carries tomorrow’s prep check, each item cited; non
     assert.equal(p.empty, false);
     if (first) assert.equal(p.items[0].text, first);
     assert.ok(
-      p.items.every(i => /, (p\.|slide) \d+$/.test(i.cite)),
+      p.items.every(i => /, (p\.|slide) \d+$/.test(i.cite) || /^your \w+ kit$/.test(i.cite)),
       JSON.stringify(p.items)
     );
     assert.ok(p.items.some(i => i.cite === cite));
@@ -333,8 +343,12 @@ test('the 8:15pm push carries the pack-check line, first after a stale health wa
       { date: d, now: d + 'T01:15:00Z' },
       SPEC
     );
-  assert.match(push('2026-10-20', MATS), /^Pack 4 for Validation: Head-to-toe assessment/);
-  assert.match(push('2026-10-21', MATS), /^Pack 3 for Lab: Urinary catheter insertion/);
+  assert.match(
+    push('2026-10-20', MATS),
+    /^Pack 5 for Validation: Head-to-toe assessment/,
+    'four named, one from the kit'
+  );
+  assert.match(push('2026-10-21', MATS), /^Pack 4 for Lab: Urinary catheter insertion/, 'three named, the lab kit');
   assert.match(push('2026-10-25', MATS), /^Prep: nothing in your materials for Class: Unit 5 fluids lecture/);
   for (const d of ['2026-10-20', '2026-10-21', '2026-10-22', '2026-10-25'])
     assert.ok(push(d, MATS).length <= SPEC.constants.push.maxChars);

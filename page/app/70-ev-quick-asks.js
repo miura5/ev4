@@ -154,6 +154,33 @@
       }
       return [`${j.title || 'Your job'}${url ? ', opening in a new tab.' : '.'}`, [{ type: 'job', id: j.id }]];
     }
+    // B-189: "what do I bring to lab today" is answered from his record, never from general knowledge: that day's
+    // calendar entries, the announcements and course-calendar rows that name it, his library and his kit, as the
+    // day's prep check (the same check the greeting shows), each item naming its source.
+    async function prepAnswer(text, pa) {
+      T.bigCore = false;
+      const mid = await mattSay(text);
+      if (!LIB.mats) await library().catch(() => {});
+      const today = E.chicagoDate(now());
+      const said = pa.said || [];
+      const day = said.length ? E.prepDaySaid(S.dates, [], pa.date, said) : E.prepDay(S.dates, [], pa.date);
+      const phase = pa.date > today ? 'night' : 'morning';
+      const list = day
+        ? E.prepList({
+            day,
+            phase,
+            index: LIB.idx,
+            dates: S.dates,
+            dayedits: S.dayedits,
+            announcements: S.announcements,
+          })
+        : null;
+      const card = day
+        ? [{ type: 'prep', date: pa.date, phase, title: day.title, ...(day.said ? { said } : {}) }]
+        : [{ type: 'dates', days: 7 }];
+      await evSay(E.prepReply(list, pa.date, today), card, { tier: 'local', replyTo: mid });
+      return true;
+    }
     async function quick(label) {
       const job = T.greet && T.greet.job && /^Open the /.test(label) ? T.greet.job : null;
       const opened = job ? openJob(job) : null; // before any await: the tab opens inside his tap

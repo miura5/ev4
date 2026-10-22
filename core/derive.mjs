@@ -403,6 +403,7 @@ function stateBody(all, { date, now, specVersion, release = null, part = null, s
     // B-107: tomorrow's prep check from the library the run reads (pictures not read yet left out) and his own items.
     materials: EV.liveMaterials(db.materials || [], db.materialedits || []).filter(m => !(m.needsOcr && !m.ocr)),
     dayedits: db.dayedits || [],
+    announcements: db.announcements || [], // B-189: the Canvas announcements that name tomorrow
   });
   const factHashes = {};
   const fieldLists = {};

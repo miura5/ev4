@@ -1641,6 +1641,7 @@ const EVCore = (() => {
     get C() {
       return C;
     },
+    chicagoClock,
     chicagoDate,
     citeMaterial,
     dayeditBase,
@@ -1880,6 +1881,7 @@ const EVCore = (() => {
           dates: ctx.dates,
           dateedits: ctx.dateedits,
           dayedits: ctx.dayedits || [],
+          announcements: ctx.announcements || [],
         })
       : null;
     const dates = liveDates(ctx.dates, ctx.dateedits);

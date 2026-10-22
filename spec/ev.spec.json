@@ -1080,7 +1080,8 @@
   },
   "prep": {
    "_rules": [
-    "D-143, D-144 (B-104): clinical, lab, validation and class days get a Prep check built for that day from its own materials, never urgent. lookFor is what a day of that kind looks for in the passages that day's search finds; an item is listed only where a passage names it, with that passage's file and page. Matt's clinical items (Oct 20) seed clinical. bring is the wording that opens a list of things to bring in a passage."
+    "D-143, D-144 (B-104): clinical, lab, validation and class days get a Prep check built for that day from its own materials, never urgent. lookFor is what a day of that kind looks for in the passages that day's search finds; an item is listed only where a passage names it, with that passage's file and page. Matt's clinical items (Oct 20) seed clinical. bring is the wording that opens a list of things to bring in a passage.",
+    "B-189 (D-144 as amended): kit is Matt's per-kind kit (edit it here): it completes each prep check after what his record names (the calendar entry, the Canvas announcements and course-calendar rows that name the day, his library), each kit item marked 'your <kind> kit'. named is what a calendar entry, announcement or calendar row names for the day: the textbook and its chapters, a lab guide or sheet, a handbook; take keeps the words as written, {1} is the first group."
    ],
    "searchK": 12,
    "lookFor": {
@@ -1186,7 +1187,52 @@
     "lab": "lab bring supplies",
     "validation": "validation checklist bring supplies",
     "class": "class bring"
-   }
+   },
+   "kit": {
+    "clinical": [
+     "Stethoscope",
+     "Clinical badge",
+     "Watch with a second hand",
+     "Penlight",
+     "Black pen"
+    ],
+    "validation": [
+     "Stethoscope",
+     "Penlight",
+     "Watch with a second hand",
+     "Black pen"
+    ],
+    "lab": [
+     "Lab kit"
+    ],
+    "class": []
+   },
+   "named": [
+    {
+     "item": "Jarvis handbook",
+     "match": "\\bjarvis\\b"
+    },
+    {
+     "item": "Drug handbook",
+     "match": "\\bdrug (?:hand)?book\\b|\\bdrug guide\\b"
+    },
+    {
+     "take": true,
+     "match": "\\b(?:[a-z]+ )?lab (?:guide|manual|packet|sheet|book)s?\\b"
+    },
+    {
+     "take": true,
+     "match": "\\bskills? (?:packet|checklist)s?\\b"
+    },
+    {
+     "item": "Textbook: {1}",
+     "match": "\\b(ch(?:apter)?s?\\.?\\s*\\d{1,2}(?:\\s*(?:&|and|,|-|–)\\s*\\d{1,2})*)\\b"
+    },
+    {
+     "item": "Textbook",
+     "match": "\\btext ?books?\\b"
+    }
+   ]
   },
   "runs": {
    "_rules": [

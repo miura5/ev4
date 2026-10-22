@@ -14,6 +14,24 @@
       return h;
     };
     const CARDS = {
+      // B-189: what to bring on a class, lab, clinical or validation day, asked in words: that day's prep check, open,
+      // each item naming where it came from (calendar, announcement, course calendar, library, his kit).
+      prep(box, c, key) {
+        const t0 = E.chicagoDate(now());
+        const lead =
+          c.date === t0
+            ? 'Bag check: '
+            : c.date === E.addDays(t0, 1)
+              ? 'Pack for tomorrow: '
+              : 'Pack for ' + E.shortDate(c.date) + ': ';
+        const pe = prepEl(
+          { id: key, prep: { date: c.date, phase: c.phase, title: c.title, said: c.said, lead } },
+          { open: true }
+        );
+        if (pe) box.append(pe);
+        else
+          box.append(el('p', 'empty', 'Nothing on your calendar makes that a class, lab, clinical or validation day.'));
+      },
       today(box, c, key) {
         const { items, isDone } = dayState();
         const all = items.filter(it => !it.deferred);
@@ -939,9 +957,17 @@
         library().catch(() => {});
         return { loading: true };
       }
-      const day = E.prepDay(S.dates, [], p.date);
+      // B-189: a day he named the kind of ("I have lab today") stands in when the calendar has no entry for it.
+      const day = p.said && p.said.length ? E.prepDaySaid(S.dates, [], p.date, p.said) : E.prepDay(S.dates, [], p.date);
       if (!day) return null;
-      return E.prepList({ day, phase: p.phase, index: LIB.idx, dates: S.dates, dayedits: S.dayedits });
+      return E.prepList({
+        day,
+        phase: p.phase,
+        index: LIB.idx,
+        dates: S.dates,
+        dayedits: S.dayedits,
+        announcements: S.announcements,
+      });
     }
     async function prepWrite(date, edit) {
       const r = E.prepEdit(dayEditDoc(date), edit, { now: now(), by: 'Matt', date });
@@ -960,7 +986,7 @@
       row.type = 'button';
       row.append(
         el('span', 'prep-mark', 'Prep'),
-        el('span', 'prep-t', (night ? 'Pack for tomorrow: ' : 'Bag check: ') + p.title)
+        el('span', 'prep-t', (p.lead || (night ? 'Pack for tomorrow: ' : 'Bag check: ')) + p.title)
       );
       if (l.loading) {
         row.append(el('span', 'prep-n', 'reading your materials…'));
@@ -971,7 +997,8 @@
       const n = l.items.filter(i => i.checked).length;
       if (l.done) {
         wrap.classList.add('done');
-        row.querySelector('.prep-t').textContent = (night ? 'Packed for tomorrow: ' : 'Bag checked: ') + p.title;
+        row.querySelector('.prep-t').textContent =
+          (p.lead ? 'Packed: ' : night ? 'Packed for tomorrow: ' : 'Bag checked: ') + p.title;
       }
       row.append(el('span', 'prep-n', l.items.length ? `${n} of ${l.items.length}` : ''));
       row.insertAdjacentHTML('beforeend', CHEV);

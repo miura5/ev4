@@ -221,11 +221,13 @@ async function tickAll(page) {
         s.open && /^Prep\s*Pack for tomorrow: Validation: Head-to-toe assessment/.test(s.row),
         s.row
       );
+      // B-189: the materials' items first, each citing its file and page; then what his validation kit adds.
       ok(
-        `[${scheme}] night: its items are the validation's, each citing its file and page`,
+        `[${scheme}] night: its items are the validation's, each citing its file and page, then his kit's`,
         JSON.stringify(s.items.map(i => i.t)) ===
-          JSON.stringify(['Stethoscope', 'Penlight', 'Watch with a second hand', 'Skills packet']) &&
-          s.items.every(i => i.c === 'Skills Validation Guide, p. 3'),
+          JSON.stringify(['Stethoscope', 'Penlight', 'Watch with a second hand', 'Skills packet', 'Black pen']) &&
+          s.items.slice(0, 4).every(i => i.c === 'Skills Validation Guide, p. 3') &&
+          s.items[4].c === 'your validation kit',
         JSON.stringify(s.items)
       );
       await page.click('#thread .msg.greet .brief-row');
@@ -241,7 +243,7 @@ async function tickAll(page) {
       ok(
         `[${scheme}] night: a tick shows and writes tomorrow's dayedits (prep-night-…)`,
         s.items[0].on &&
-          /1 of 4/.test(s.row) &&
+          /1 of 5/.test(s.row) &&
           s.writes.some(w => w[0] === tomorrow && w[1].includes('prep-night-stethoscope')),
         JSON.stringify([s.row, s.writes])
       );
@@ -282,7 +284,8 @@ async function tickAll(page) {
         `[${scheme}] morning: the bag check lists the clinical's items, each citing its file and page`,
         /^Prep\s*Bag check: Clinical: Mercy Hospital 4 West/.test(s.row) &&
           s.items.length >= 7 &&
-          s.items.every(i => /^Clinical Orientation Mercy, p\. 2/.test(i.c)) &&
+          s.items.every(i => /^Clinical Orientation Mercy, p\. 2|^your clinical kit$/.test(i.c)) &&
+          s.items.some(i => i.t === 'Penlight' && i.c === 'your clinical kit') &&
           s.items.some(i => i.t === 'Clinical folder with your paperwork' && /filling it in is yours/.test(i.c)),
         JSON.stringify(s.items)
       );
@@ -463,6 +466,143 @@ async function tickAll(page) {
       ok(`[today ${w}] morning: no sideways scroll, no page errors`, !o.sideways && !errors.length, errors.join(' | '));
       await ctx.close();
     }
+  }
+  // B-189: asked in words on a planted lab day (a lab exam and a class exam today, as on Oct 21), E.V. answers from the
+  // record without a model call: the greeting already carries the Prep marker for the day, and the reply's card is the
+  // day's check with each item naming its source (the calendar entry, the announcement, the course calendar's row, the
+  // lab kit). Then a day the calendar does not know, named in his words.
+  const labRecord = () => {
+    const db = record();
+    delete db.dates['prep-val'];
+    delete db.dates['prep-clin'];
+    const later = addDays(today, 2); // the day only his words name
+    for (const [id, d] of Object.entries(db.dates)) if (d.date === later) delete db.dates[id];
+    db.dates['prep-lab-exam'] = {
+      ...env,
+      addedAt: env.at,
+      date: today,
+      title: 'BIO 201 Lab Exam: bones (Group A or B slot)',
+      kind: 'exam',
+      course: 'BIO 201',
+      graded: true,
+      notes: 'Study from the bones list. Bring a pencil.',
+    };
+    db.dates['prep-class-exam'] = {
+      ...env,
+      addedAt: env.at,
+      date: today,
+      title: 'Exam 4: Health Promotion, Pharmacology, Functional Ability',
+      kind: 'exam',
+      course: 'NUR 112',
+      graded: true,
+    };
+    const [, m, d] = today.split('-').map(Number);
+    db.announcements = {
+      ...(db.announcements || {}),
+      'canvas-prep-1': {
+        ...env,
+        writer: 'canvas-sync',
+        source: 'Canvas',
+        course: 'BIO 201',
+        title: 'Lab exam reminders',
+        postedAt: new Date(Date.parse(addDays(today, -2) + 'T15:00:00Z')).toISOString(),
+        text: `On ${m}/${d} bring your bones lab sheet for the spelling section.`,
+      },
+    };
+    db.materials['BIO201-7001'] = {
+      ...env,
+      writer: 'canvas-sync',
+      source: 'Canvas',
+      course: 'BIO 201',
+      kind: 'course',
+      title: 'BIO 201 Lab Calendar.pdf',
+      fileType: 'pdf',
+      fileId: 7001,
+      pages: 2,
+      text: `[p2] ${m}/${d} Lab Exam 2 (bones), lab manual Ch 7 and 8 ${addDays(today, 7).slice(5).replace('-', '/')} Ch 9 joints lab`,
+    };
+    return db;
+  };
+  const surf = page =>
+    page.evaluate(() => {
+      const s = document.getElementById('ev-surf'),
+        cur = document.querySelector('#thread .msg.ev.current .bubble'),
+        p = s && s.querySelector('.sf-body .prep');
+      return {
+        line: cur ? cur.textContent : '',
+        head: s ? (s.querySelector('.sf-head .sf-t') || {}).textContent : null,
+        row: p ? p.querySelector('.prep-row').textContent : null,
+        open: !!(p && !p.querySelector('.prep-box').hidden),
+        items: p
+          ? [...p.querySelectorAll('.prep-item')].map(li => ({
+              t: li.querySelector('.pi-t').textContent,
+              c: (li.querySelector('.pi-c') || {}).textContent || '',
+            }))
+          : [],
+        asked: (window.__sampled || []).length,
+        sideways: document.documentElement.scrollWidth > innerWidth + 1,
+      };
+    });
+  for (const scheme of ['phone', 'desktop']) {
+    const viewport = scheme === 'phone' ? { width: 390, height: 844 } : { width: 1280, height: 860 };
+    const ctx = await browser.newContext({ viewport, colorScheme: 'dark' });
+    const page = await ctx.newPage();
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    page.on('console', m => {
+      if (m.type() === 'error') errors.push(m.text());
+    });
+    await openPage(page, ct(today, 7, 20), labRecord());
+    let s = await state(page);
+    ok(
+      `[ask ${scheme}] the lab-exam day carries the Prep marker and the bag check (the tag that was off on Oct 21)`,
+      s.briefPrep[0] === 'BIO 201 Lab Exam: bones (Group A or B slot)' &&
+        /Bag check: BIO 201 Lab Exam/.test(s.row || ''),
+      JSON.stringify([s.briefPrep, s.row])
+    );
+    await page.fill('#ev-input', 'I have lab/class today. Make a prep list of items to bring');
+    await page.click('#ev-send');
+    await page
+      .waitForFunction(() => document.querySelector('#ev-surf .sf-body .prep .prep-item'), null, { timeout: 10000 })
+      .catch(() => {});
+    await page.waitForTimeout(2500);
+    let a = await surf(page);
+    const by = Object.fromEntries(a.items.map(i => [i.t, i.c]));
+    ok(
+      `[ask ${scheme}] she answers from the record: which day, how many items the record names, what the kit adds`,
+      /^For BIO 201 Lab Exam: bones \(Group A or B slot\) today: \d+ named in your record/.test(a.line) &&
+        /from your lab kit/.test(a.line),
+      a.line
+    );
+    ok(
+      `[ask ${scheme}] the card is that day's check, open, every item naming its source`,
+      a.open &&
+        /^Prep · BIO 201 Lab Exam/.test(a.head || '') &&
+        by['Pencil'] === 'Your calendar: BIO 201 Lab Exam: bones (Group A or B slot)' &&
+        /^Canvas announcement: Lab exam reminders, /.test(by['Bones lab sheet'] || '') &&
+        by['Lab manual'] === 'BIO 201 Lab Calendar, p. 2' &&
+        by['Lab kit'] === 'your lab kit' &&
+        a.items.every(i => i.c.trim()) &&
+        !a.items.some(i => /Ch 9/.test(i.t)),
+      JSON.stringify(a)
+    );
+    await page.screenshot({ path: `${shots}/ask-lab-day-${scheme}.png` });
+    // A day the calendar has nothing on, named in his words: his lab kit, said plainly.
+    await page.fill('#ev-input', 'what do I bring to lab on ' + addDays(today, 2).slice(5).replace('-', '/'));
+    await page.click('#ev-send');
+    await page.waitForTimeout(3000);
+    a = await surf(page);
+    ok(
+      `[ask ${scheme}] a day only his words name: the lab kit, and she says the materials name nothing`,
+      /: 1 from your lab kit\. Your materials don’t name anything for this day/.test(a.line) &&
+        a.items.length === 1 &&
+        a.items[0].t === 'Lab kit',
+      JSON.stringify(a)
+    );
+    await page.screenshot({ path: `${shots}/ask-said-day-${scheme}.png` });
+    ok(`[ask ${scheme}] no sideways scroll`, !a.sideways);
+    ok(`[ask ${scheme}] no page errors`, errors.length === 0, errors.join(' | '));
+    await ctx.close();
   }
   await browser.close();
   for (const [st, n, d] of results) console.log(`${st}  ${n}${d && st === 'FAIL' ? '  -- ' + d : ''}`);

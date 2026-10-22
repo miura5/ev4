@@ -241,7 +241,7 @@
         {
           name: 'show_card',
           description:
-            'Attach a live card under your reply. today: today\'s list (filter "open" or "all"). review: today\'s review, answerable inline. readiness: the next exam. audit: the readiness audit, per objective of the next exam with what to reread. dates: next N days (days 1 = tomorrow). weakspots: most due. set: a practice set by id, answerable inline. job: a background job by id. chart: accuracy over the last 7 days. checkin: energy check. quizlet: the open weak spots as Quizlet import cards, copied on his tap. Returns "shown".',
+            'Attach a live card under your reply. today: today\'s list (filter "open" or "all"). review: today\'s review, answerable inline. readiness: the next exam. audit: the readiness audit, per objective of the next exam with what to reread. dates: next N days (days 1 = tomorrow). weakspots: most due. set: a practice set by id, answerable inline. job: a background job by id. chart: accuracy over the last 7 days. checkin: energy check. quizlet: the open weak spots as Quizlet import cards, copied on his tap. prep: what to bring on a class, lab, clinical or validation day (date YYYY-MM-DD, default today), built from his calendar, announcements, course calendar, library and kit, each item naming its source; when he asks what to bring, show it instead of listing things yourself. Returns "shown".',
           inputSchema: {
             type: 'object',
             properties: {
@@ -259,8 +259,10 @@
                   'chart',
                   'checkin',
                   'quizlet',
+                  'prep',
                 ],
               },
+              date: { type: 'string', description: 'prep only: the day, YYYY-MM-DD' },
               filter: { type: 'string', enum: ['open', 'all'] },
               days: { type: 'integer', minimum: 1, maximum: 14 },
               id: { type: 'string' },
@@ -278,6 +280,16 @@
             if (type === 'job') {
               if (!S.jobs.some(j => j.id === i.id)) throw new Error('no job with id ' + i.id);
               c.id = String(i.id);
+            }
+            if (type === 'prep') {
+              const t0 = E.chicagoDate(now());
+              const d = /^\d{4}-\d{2}-\d{2}$/.test(String(i.date || '')) ? String(i.date) : t0;
+              const day = E.prepDay(S.dates, [], d);
+              if (!day)
+                throw new Error(
+                  'no class, lab, clinical or validation day on ' + d + ' in his calendar; ask him which it is'
+                );
+              Object.assign(c, { date: d, phase: d > t0 ? 'night' : 'morning', title: day.title });
             }
             if (type === 'today') c.filter = i.filter === 'all' ? 'all' : 'open';
             if (type === 'dates') c.days = Math.max(1, Math.min(14, Number(i.days) || 7));
