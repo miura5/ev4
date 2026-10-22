@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 21 | v4 staging deployed at 476e5e0 (21:51 CT), from b1c57a8: * Better randomizing of answer choices; and maybequestions…; * Option to close practice sets; go back and forward between…; * Better randomizing of answer choices; and maybequestions… (B-192, B-191, B-193). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 21 | v4 staging deployed at b1c57a8 (21:38 CT), from 3f5bd7e: Restore migrates; Your turn as chips (B-163, B-182). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 21 | v4 staging deployed at 3f5bd7e (21:27 CT), from 0901286: Your turn as chips (B-182). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 21 | v4 staging deployed at 0901286 (21:09 CT), from 136bdad: The build ask on the page; The morning-after line; Your turn as chips (B-180, B-181, B-182). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
