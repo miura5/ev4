@@ -462,3 +462,80 @@ test('B-129: the headline check holds a model line to the situation; a failing l
   assert.match(p, /- Morning, Matt\. How can I help today\?/);
   assert.match(p, /at most 22 words/);
 });
+
+// ------------------------------------------------------------------------------------------------ B-181 the build line
+const buildJob = (status, result, finishedAt = '2026-10-18T21:00:00Z') => ({
+  id: 'job-20261018-200000-build-the-timer',
+  kind: 'build',
+  title: 'bug: the timer resets when I switch tabs',
+  brief: 'bug: the timer resets when I switch tabs',
+  status,
+  finishedAt,
+  result,
+});
+const buildCtx = (jobs, extra = {}) => ({
+  now: '2026-10-19T13:00:00Z',
+  date: '2026-10-19',
+  items: [],
+  reviewLeft: 0,
+  nextExams: [],
+  jobs,
+  lastSeenAt: '2026-10-18T20:00:00Z',
+  runs: {},
+  tomorrow: { dates: [] },
+  ...extra,
+});
+const buildLines = g => g.lines.filter(l => /your “the timer resets/i.test(l));
+
+test('B-181: the morning after a build, one line: the task, his words shortened, green at the commit and what waits', () => {
+  const g = EV.greeting(
+    buildCtx([buildJob('done', { task: 'B-201', commit: 'abc1234def', text: 'Say ship it when you want it live.' })])
+  );
+  assert.deepEqual(buildLines(g), [
+    'B-201 (your “the timer resets when I switch tabs”) is green on staging at abc1234. Say ship it when you want it live.',
+  ]);
+  const b = g.brief.find(x => x.kind === 'build');
+  assert.equal(b.title, buildLines(g)[0].replace(/\.$/, ''));
+  assert.equal(b.when, 'built');
+  assert.ok(g.offers.some(c => c.type === 'job' && c.id === 'job-20261018-200000-build-the-timer'));
+  // A build is never the plain "Finished in the background" line or its Open chip.
+  assert.ok(!g.lines.some(l => /Finished in the background/.test(l)));
+  assert.ok(!g.chips.some(c => /^Open the/.test(c)));
+  // Filed but not built: no commit.
+  const f = EV.greeting(buildCtx([buildJob('done', { task: 'B-201', text: 'It waits on your answer: which tab?' })]));
+  assert.deepEqual(buildLines(f), [
+    'B-201 (your “the timer resets when I switch tabs”) is filed. It waits on your answer: which tab?',
+  ]);
+});
+
+test('B-181: a failed build says where it stopped; no build, or one older than his last look, adds nothing', () => {
+  const g = EV.greeting(
+    buildCtx([buildJob('failed', { task: 'B-202', failed: 'npm test failed on the new harness check' })])
+  );
+  assert.deepEqual(buildLines(g), [
+    'B-202 (your “the timer resets when I switch tabs”) stopped: npm test failed on the new harness check.',
+  ]);
+  assert.equal(g.mood, 'alert');
+  assert.equal(g.brief.find(x => x.kind === 'build').when, 'stopped');
+  for (const jobs of [[], [buildJob('done', { task: 'B-201', commit: 'abc1234' }, '2026-10-18T19:00:00Z')]]) {
+    const n = EV.greeting(buildCtx(jobs));
+    assert.deepEqual(buildLines(n), []);
+    assert.ok(!n.brief.some(x => x.kind === 'build'));
+  }
+});
+
+test('B-181: the build line ranks after a failed run and inside the two-insight cap', () => {
+  const run = { evening: { status: 'failed', startedAt: '2026-10-19T01:15:00Z', detail: 'Mac asleep' } };
+  const g = EV.greeting(
+    buildCtx([buildJob('done', { task: 'B-201', commit: 'abc1234', text: 'Say ship it.' })], {
+      runs: run,
+      checkin: { energy: 1 },
+    })
+  );
+  const ins = g.lines.filter(l => /run failed|your “the timer|low energy/.test(l));
+  assert.equal(ins.length, 2, JSON.stringify(g.lines));
+  assert.match(ins[0], /The evening run failed/);
+  assert.match(ins[1], /^B-201 \(your “the timer/);
+  const kinds = g.brief.map(x => x.kind);
+  assert.ok(kinds.indexOf('system') < kinds.indexOf('build'), kinds.join(','));
+});

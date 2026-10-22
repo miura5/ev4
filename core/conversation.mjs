@@ -13,7 +13,7 @@ export function makeConversation(core) {
    * the page already has, and picks at most two insights (B-14). Returns {segment, mood, lines, cards, chips}.
    * ctx: {now, date, dayType, items:[{id,text,tag,done,deferred,minutes,set}], reviewLeft, reviewTotal, push,
    *       nextExams:[{id,title,date,course,kind}], readiness:{examId,pctSolid,need}|null, dueCount,
-   *       jobs:[{id,title,status,finishedAt}], lastSeenAt, runs:{<pipeline>:{status,startedAt,detail}},
+   *       jobs:[{id,kind,title,brief,status,finishedAt,result}], lastSeenAt, runs:{<pipeline>:{status,startedAt,detail}},
    *       tomorrow:{dates:[{title,kind,graded}]}, quizlet:{refresh}|null, checkin:{energy}|null, sessionActive, skillRun (a Resume chip, B-82),
    *       prep:{today: prepDay|null, tomorrow: prepDay|null} (D-143), clinicalOffer:{date,title}|null (D-103)}
    */
@@ -130,9 +130,11 @@ export function makeConversation(core) {
 
     // Insights, at most two, most useful first.
     const seen = c.lastSeenAt ? toMs(c.lastSeenAt) : 0;
-    for (const j of (c.jobs || []).filter(j => j.status === 'done' && toMs(j.finishedAt) > seen).slice(0, 1))
+    // B-181: a build job has its own line (after any failed run), so the plain job lines leave it out.
+    const plainJobs = (c.jobs || []).filter(j => j.kind !== 'build');
+    for (const j of plainJobs.filter(j => j.status === 'done' && toMs(j.finishedAt) > seen).slice(0, 1))
       insights.push({ line: `Finished in the background: ${j.title}.`, card: { type: 'job', id: j.id } });
-    for (const j of (c.jobs || []).filter(j => j.status === 'failed' && toMs(j.finishedAt) > seen).slice(0, 1))
+    for (const j of plainJobs.filter(j => j.status === 'failed' && toMs(j.finishedAt) > seen).slice(0, 1))
       insights.push({
         line: `A job hit a wall: ${j.title}. Details on the card.`,
         card: { type: 'job', id: j.id },
@@ -146,6 +148,33 @@ export function makeConversation(core) {
         line: `The ${failed[0][0]} run failed${failed[0][1].detail ? ': ' + String(failed[0][1].detail).slice(0, 80) : ''}. I’m flagging it, not ignoring it.`,
         alert: true,
       });
+    // B-181 (D-195): the morning after a build, one line from its trace (jobresults.result): the task, his words
+    // shortened, green on staging at the commit and what waits, or where it stopped.
+    const build = (c.jobs || [])
+      .filter(j => j.kind === 'build' && ['done', 'failed'].includes(j.status) && toMs(j.finishedAt) > seen)
+      .sort((a, b) => toMs(b.finishedAt) - toMs(a.finishedAt))[0];
+    let buildLine = null;
+    if (build) {
+      const r = build.result || {};
+      const words = short(String(build.brief || build.title || '').replace(/^\s*(build|bug|idea)\s*:\s*/i, ''), 40);
+      const who = r.task ? `${r.task} (your “${words}”)` : `Your build “${words}”`;
+      const said = t => {
+        const x = short(String(t || '').trim(), 90);
+        return /[.?!…]$/.test(x) ? x : x + '.';
+      };
+      buildLine =
+        build.status === 'failed'
+          ? {
+              line: `${who} stopped: ${said(r.failed || r.text || 'before it finished')}`,
+              card: { type: 'job', id: build.id },
+              alert: true,
+            }
+          : {
+              line: `${who} ${r.commit ? 'is green on staging at ' + String(r.commit).slice(0, 7) : 'is filed'}${r.text ? '. ' + said(r.text) : '.'}`,
+              card: { type: 'job', id: build.id },
+            };
+      insights.push(buildLine);
+    }
     // B-45 (D-102): a new exam-content module from the Canvas sync offers a plan draft, once, as one line.
     if (c.planOffer)
       insights.push({
@@ -180,7 +209,7 @@ export function makeConversation(core) {
     // by priority: the open review, a finished job (Open the study guide), sessions waiting to be filed, what's due
     // (the first to drop: the Today tab covers it). During a session all three go by priority. Usual asks fill gaps.
     const chips = [],
-      finished = (c.jobs || []).find(j => j.status === 'done' && toMs(j.finishedAt) > seen);
+      finished = (c.jobs || []).find(j => j.kind !== 'build' && j.status === 'done' && toMs(j.finishedAt) > seen);
     const room = c.sessionActive ? 3 : 2,
       add = x => {
         if (x && chips.length < room && !chips.includes(x)) chips.push(x);
@@ -253,7 +282,7 @@ export function makeConversation(core) {
         tab: 'today',
       });
     }
-    for (const j of (c.jobs || []).filter(j => j.status === 'done' && toMs(j.finishedAt) > seen).slice(0, 2))
+    for (const j of plainJobs.filter(j => j.status === 'done' && toMs(j.finishedAt) > seen).slice(0, 2))
       put('new', 'job', j.title, {
         when: 'done',
         detail: 'Finished in the background.',
@@ -261,7 +290,7 @@ export function makeConversation(core) {
           ? { action: { label: 'Open', chip: 'Open the ' + (JOB_NOUN[j.kind] || 'result') } }
           : { tab: 'system' }),
       });
-    for (const j of (c.jobs || []).filter(j => j.status === 'failed' && toMs(j.finishedAt) > seen).slice(0, 1))
+    for (const j of plainJobs.filter(j => j.status === 'failed' && toMs(j.finishedAt) > seen).slice(0, 1))
       put('new', 'job', `${j.title} hit a wall`, {
         when: 'failed',
         detail: 'The background job stopped. System has the details and a Try again.',
@@ -322,6 +351,12 @@ export function makeConversation(core) {
     if (failed.length)
       put('normal', 'system', `The ${failed[0][0]} run failed`, {
         detail: failed[0][1].detail ? String(failed[0][1].detail).slice(0, 200) : '',
+        tab: 'system',
+      });
+    // B-181: the build line sits after any failed run, the same words as her line.
+    if (buildLine)
+      put('normal', 'build', buildLine.line.replace(/\.$/, ''), {
+        when: build.status === 'failed' ? 'stopped' : 'built',
         tab: 'system',
       });
     if (c.checkin && c.checkin.energy != null && c.checkin.energy <= 2)

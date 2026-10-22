@@ -215,6 +215,82 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         await ctx.close();
       }
     }
+    // B-181: the morning after a build, its line sits in her greeting's briefing, after a planted failed run.
+    {
+      const now = ct(today, 7, 30);
+      const ctx = await browser.newContext({
+        viewport: w === 390 ? { width: 390, height: 844 } : { width: 1280, height: 860 },
+        colorScheme: 'dark',
+      });
+      const page = await ctx.newPage();
+      const errors = [];
+      page.on('pageerror', e => errors.push(e.message));
+      const db = base();
+      const ago = h => new Date(now.getTime() - h * 36e5).toISOString();
+      const words = 'bug: the timer resets when I switch tabs';
+      db.talk.memory.lastSeenAt = ago(10);
+      db.runs = db.runs || {};
+      db.runs['evening-cloud-planted-failed'] = {
+        schema: 1,
+        writer: 'evening-cloud',
+        at: ago(9),
+        source: 'harness',
+        release: 'v4',
+        pipeline: 'evening-cloud',
+        startedAt: ago(9),
+        endedAt: ago(9),
+        status: 'failed',
+        detail: 'Planted: the record refused a write',
+        steps: [],
+        push: 'A planted failure',
+      };
+      db.jobs['job-harness-build-morning'] = {
+        schema: 2,
+        writer: 'page',
+        at: ago(8),
+        source: 'E.V. Home',
+        kind: 'build',
+        title: words,
+        brief: words,
+        fired: { at: ago(8), ok: true },
+      };
+      db.jobresults = db.jobresults || {};
+      db.jobresults['job-harness-build-morning'] = {
+        schema: 2,
+        writer: 'builder',
+        at: ago(3),
+        source: 'trace job-harness-build-morning',
+        release: 'v4',
+        status: 'done',
+        startedAt: ago(7),
+        finishedAt: ago(3),
+        result: { text: 'Say ship it when you want it live.', task: 'B-201', commit: 'abc1234def' },
+        message: null,
+        error: null,
+      };
+      await openPage(page, now, db, FAIL);
+      await page.click('#thread .msg.greet .brief-row');
+      await page.waitForTimeout(1200);
+      const r = await page.evaluate(() =>
+        [...document.querySelectorAll('#thread .msg.greet .brief-item')].map(li => ({
+          kind: li.dataset.kind,
+          t: li.querySelector('.bi-t').textContent,
+        }))
+      );
+      const iRun = r.findIndex(x => x.kind === 'system'),
+        iBuild = r.findIndex(x => x.kind === 'build');
+      ok(
+        `[morning-after-build ${w}] the build line sits under her greeting, after the failed run`,
+        iRun >= 0 &&
+          iBuild > iRun &&
+          r[iBuild].t ===
+            'B-201 (your “the timer resets when I switch tabs”) is green on staging at abc1234. Say ship it when you want it live',
+        JSON.stringify(r)
+      );
+      ok(`[morning-after-build ${w}] no page errors`, errors.length === 0, errors.join(' | '));
+      await page.screenshot({ path: `${shots}/greet-build-${w}.png` });
+      await ctx.close();
+    }
   }
   await browser.close();
   for (const [s, n, d] of results) console.log(`${s}  ${n}${d && s === 'FAIL' ? '  -- ' + d : ''}`);

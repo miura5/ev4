@@ -67,6 +67,7 @@
             title: j.title,
             status: j.status,
             finishedAt: j.finishedAt,
+            ...(j.kind === 'build' ? { brief: j.brief, result: j.result } : {}), // B-181: the build line reads its trace
           })),
           dueSoon: S.dates.filter(d => d.date >= today && d.date <= E.addDays(today, 7)).length,
           lastSeenAt: (S.memory && S.memory.lastSeenAt) || new Date(Date.now() - 864e5).toISOString(),
