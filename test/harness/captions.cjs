@@ -477,6 +477,15 @@ async function sideBySide(browser, left, right, out, vp) {
       return {
         all: b.querySelectorAll('.w.on').length === b.querySelectorAll('.w').length,
         teal: em && getComputedStyle(em).color,
+        // B-204 (D-211): teal is the theme's --do token, whatever the theme.
+        want: (() => {
+          const p = document.createElement('i');
+          p.style.color = 'var(--do)';
+          document.body.appendChild(p);
+          const c = getComputedStyle(p).color;
+          p.remove();
+          return c;
+        })(),
         speaks: log.filter(e => e.kind === 'speak').length,
         emph: log.filter(e => e.kind === 'speak' && e.detail === 'emphasis').map(e => e.name),
         settled: log.filter(e => e.kind === 'gesture').slice(-1)[0],
@@ -485,7 +494,7 @@ async function sideBySide(browser, left, right, out, vp) {
     ok(
       `[${scheme}] her core spoke each word, emphasis in teal, and settled`,
       done.all &&
-        done.teal === 'rgb(127, 240, 220)' &&
+        done.teal === done.want &&
         done.speaks >= 14 &&
         done.emph.includes('stretch') &&
         done.settled &&

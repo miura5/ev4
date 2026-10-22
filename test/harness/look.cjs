@@ -132,11 +132,70 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
     await ctx.close();
   }
+  // B-204 (D-211, D-221): every text and shape token on every ground, in both themes, as the built page computes them:
+  // the system theme by prefers-color-scheme, and the stored toggle (ev.theme) over a system that says the other.
+  {
+    const C = require('./contrast.cjs');
+    for (const [label, scheme, stored, want] of [
+      ['system dark', 'dark', null, 'dark'],
+      ['system light', 'light', null, 'light'],
+      ['stored light over a dark system', 'dark', 'light', 'light'],
+      ['stored dark over a light system', 'light', 'dark', 'dark'],
+    ]) {
+      const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: scheme });
+      const page = await ctx.newPage();
+      await page.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));
+      await page.route(ORIGIN + '/**', r => {
+        const name = new URL(r.request().url()).pathname.replace(/^\//, '') || 'index.html';
+        if (name === 'index.html')
+          return r.fulfill({
+            body: skeleton(fs.readFileSync(path.join(pageDir, 'index.html'), 'utf8')),
+            contentType: 'text/html',
+          });
+        const f = path.join(pageDir, name);
+        return fs.existsSync(f)
+          ? r.fulfill({
+              body: fs.readFileSync(f),
+              contentType: TYPES[path.extname(name)] || 'application/octet-stream',
+            })
+          : r.fulfill({ status: 404, body: 'not published' });
+      });
+      if (stored) await page.addInitScript(`try{localStorage.setItem('ev.theme','${stored}')}catch(e){}`);
+      await page.addInitScript('window.__db=' + JSON.stringify(seed) + ';' + stub);
+      await page.goto(ORIGIN + '/');
+      await page
+        .waitForFunction(() => document.querySelector('#thread .msg.ev'), null, { timeout: 8000 })
+        .catch(() => {});
+      const got = await page.evaluate(names => {
+        const cs = getComputedStyle(document.documentElement);
+        return {
+          tokens: Object.fromEntries(names.map(n => [n, cs.getPropertyValue(n).trim()])),
+          scheme: cs.colorScheme,
+          body: getComputedStyle(document.body).backgroundColor,
+        };
+      }, C.TOKENS);
+      const bad = C.judge(got.tokens, label);
+      ok(
+        `[390x844] B-204: ${label}: every text pair 4.5:1, every shape 3:1 on every ground`,
+        !bad.length,
+        bad.join('; ')
+      );
+      const ground = want === 'light' ? '#F7F2E8' : '#19161C';
+      ok(
+        `[390x844] B-204: ${label}: the page is ${want}`,
+        got.tokens['--bg'].toUpperCase() === ground && String(got.scheme).trim() === want,
+        `--bg ${got.tokens['--bg']}, color-scheme ${got.scheme}`
+      );
+      await page.screenshot({ path: `${shots}/theme-${label.replace(/\W+/g, '-')}-390x844.png` });
+      await ctx.close();
+    }
+  }
   for (const size of SIZES.filter(z => !process.env.LOOK_SIZES || process.env.LOOK_SIZES.split(',').includes(z.tag))) {
     // LOOK_SIZES=390x844: a quicker pass while working (check.mjs runs them all)
     const width = size.tag,
       viewport = { width: size.width, height: size.height };
-    const page = await browser.newPage({ viewport, colorScheme: 'dark' });
+    // B-204: each size in the theme its canvas draws (views.cjs): the phone and a third of the ultrawide light.
+    const page = await browser.newPage({ viewport, colorScheme: size.scheme });
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
     page.on('console', m => {
@@ -516,7 +575,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           .filter(vis)
           .map(li => (li.querySelector('.ti-t') || li).textContent.trim());
         const ahead = [...document.querySelectorAll('#ahead li')].filter(vis);
-        const coralRgb = /rgba?\((240, 138, 120|244, 167, 151)/,
+        const coralRgb = /rgba?\((240, 138, 120|244, 167, 151|184, 58, 38)/,
           panel = document.getElementById('p-today');
         const coral = [...panel.querySelectorAll('*')].filter(
           e =>

@@ -1,10 +1,11 @@
 <title>{{TITLE}}</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="color-scheme" content="dark">
+<meta name="color-scheme" content="light dark">
 <meta name="ev-release" content="{{RELEASE}}">
 <meta name="ev-target" content="{{TARGET}}">
 <link rel="stylesheet" href="styles.css">
-<style>/* Before styles.css arrives: the page's ground, so nothing flashes light. */:root{color-scheme:dark}html,body{background:#070A12;color:#E6EEF2}</style>
+<script>/* B-204 (D-211): the stored theme toggle, before first paint; without one the page follows the system. */try{var t=localStorage.getItem('ev.theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<style>/* Before styles.css arrives: the page's ground in its theme, so nothing flashes. */:root{color-scheme:dark}html,body{background:#19161C;color:#ECE8E1}@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){color-scheme:light}:root:not([data-theme="dark"]) body,html:not([data-theme="dark"]){background:#F7F2E8;color:#221E1A}}:root[data-theme="light"]{color-scheme:light}html[data-theme="light"],html[data-theme="light"] body{background:#F7F2E8;color:#221E1A}</style>
 
 <header class="top" id="top">
   <div class="top-in">

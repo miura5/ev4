@@ -15,7 +15,14 @@ const SIZES = [
   // B-203 (D-219): a third and a half of his 5120 x 1440 ultrawide, where E.V. lives most of the time.
   [1706, 1240],
   [2560, 1240],
-].map(([width, height]) => ({ width, height, tag: `${width}x${height}` }));
+].map(([width, height]) => ({
+  width,
+  height,
+  tag: `${width}x${height}`,
+  // B-204 (D-211): the theme each size is shot in, as the direction C canvases draw it: the phone and a third of the
+  // ultrawide light, the rest dark. The contrast check covers both themes at every token whatever the shots show.
+  scheme: width < 600 || width === 1706 ? 'light' : 'dark',
+}));
 // The shots to look at first (B-113, B-203, D-219): the phone, half the laptop, a third and a half of the ultrawide.
 const FIRST = ['390x844', '735x830', '1706x1240', '2560x1240'];
 function viewsOf(html) {

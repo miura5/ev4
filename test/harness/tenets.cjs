@@ -59,7 +59,7 @@ function collect() {
   const rows = [...(panel ? panel.querySelectorAll('li.row, li.brief-item') : [])]
     .filter(vis)
     .map(r => ({ text: r.textContent.trim().slice(0, 40), h: Math.round(r.getBoundingClientRect().height) }));
-  const coralRgb = /rgba?\((240, 138, 120|244, 167, 151)(, (1|0\.[3-9]\d*))?\)/;
+  const coralRgb = /rgba?\((240, 138, 120|244, 167, 151|184, 58, 38)(, (1|0\.[3-9]\d*))?\)/;
   const coralAll = all('*').filter(e => {
     const s = getComputedStyle(e);
     return (coralRgb.test(s.color) && own(e)) || coralRgb.test(s.backgroundColor);
