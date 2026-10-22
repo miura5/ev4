@@ -2149,6 +2149,31 @@ export function shipJobRefusals({ id, job, result, commit, now = Date.now() }) {
   return why;
 }
 
+/**
+ * R-06 (D-226, B-219): null when the full check passed at this commit, here (dist/check-full.json) or as a green
+ * nightly run on GitHub (read through gh, when it answers); else the refusal, with the two ways to get one.
+ */
+export function fullCheckRefusal(root, commit, runs = null) {
+  const file = path.join(root, 'dist', 'check-full.json');
+  const here = fs.existsSync(file) ? readJson(file) : null;
+  if (here && here.commit === commit) return null;
+  let list = runs;
+  if (!list)
+    try {
+      list = JSON.parse(
+        execFileSync(
+          'gh',
+          ['run', 'list', '--workflow', 'nightly.yml', '--limit', '30', '--json', 'headSha,conclusion,databaseId'],
+          { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 30000 }
+        )
+      );
+    } catch {
+      list = [];
+    }
+  if (list.some(r => r.headSha === commit && r.conclusion === 'success')) return null;
+  return `R-06 (D-226): live takes only a commit the full check passed; ${commit.slice(0, 7)} has none${here ? ` (the last full check here was at ${String(here.commit).slice(0, 7)})` : ''}. Run npm run check in the background (about 30 min), or gh workflow run nightly.yml --ref main and wait for it green, then ship live again`;
+}
+
 async function ship(o) {
   const root = rootOf(o),
     target = o._[1];
@@ -2194,6 +2219,12 @@ async function ship(o) {
     if (rec.rules.some(r => r.check === 'watchdogWindow')) {
       const live = (readJson(path.join(root, 'spec', 'ev.spec.json')).tasks.live || {}).watchdog;
       const why = live && watchdogRefusal(live.schedule, new Date());
+      if (why) refusals.push(why);
+    }
+    // R-06 (D-226, B-219): the touched check is for working; live takes a commit the full check passed: a full GREEN
+    // here (dist/check-full.json, which check writes for the build's commit) or a green nightly at it.
+    if (rec.rules.some(r => r.check === 'fullCheck' && !r.ended)) {
+      const why = fullCheckRefusal(root, manifest.commit);
       if (why) refusals.push(why);
     }
     const b30 = findTask(rec, 'B-30')[0];

@@ -49,14 +49,16 @@ attribution lines with `--trailer`, one per line) and regenerates BACKLOG.md, DE
    pipeline is involved, the proof is a scheduled task fired against staging and its `runs/<id>` read back, never a
    hand replay. Where the page is involved, run `npm run smoke` while working (B-199: the build, then boot, greeting,
    each tab, a check-off, a review answer and a Your-turn reply at 390 and 1280, in about 10 seconds; the smoke
-   workflow runs it on every push), and `npm run check` once before ship (npm test, the build, every harness on the
-   synthetic record, then the look pass at phone and desktop width), and look at the screenshots it lists.
+   workflow runs it on every push), and `npm run check -- --touched` once before ship staging (B-219, D-226: npm test,
+   the build, only the harnesses the change since the last staging deploy touched, the look pass at 390x844, 735x830,
+   1706x1240 and 2560x1240), and look at the screenshots it lists. The full `npm run check` runs nightly and before live:
+   `ship live` refuses a commit with no full GREEN here (dist/check-full.json) or green nightly at it (R-06).
 6. Ship: commit with the task id first in the message (`B-07: lint and rebuild`), then the attribution lines the
    session gives you; push to `main`. Then `ship staging` and make every call and read it prints, running it again
    each time, until it says GREEN: it records the deploy, which CHANGELOG.md then carries. **Never deploy live** without
    Matt's explicit OK in the chat; `ship live --matt-ok` also refuses what `chart/rules.json` forbids (R-02 staging green
    at the same commit, B-35; R-03 no running study session, B-87; R-04 Matt's OK; R-05 not inside a live watchdog
-   window, B-102; R-01, page-only live, ended with D-085's window, D-145, and is kept in `chart/rules.json` marked
+   window, B-102; R-06 a full check green at the commit, B-219; R-01, page-only live, ended with D-085's window, D-145, and is kept in `chart/rules.json` marked
    ended), so a build reaches live only through staging.
 7. Record: `log <id> --status done --commit <sha> --note "<one line>"`, or in the same move as step 6 with `ship staging
    --done <id> --commit <sha>` once staging is the task's last proof (B-147). A decision is `log decision <next id>

@@ -43,8 +43,9 @@ test('B-199: the harness names its six checks and both plants', () => {
   assert.ok(h.includes("['390', { width: 390") && h.includes("['1280', { width: 1280"));
 });
 
-test('B-199: CLAUDE.md step 5 says smoke while working and check before ship', () => {
+test('B-199, B-219: CLAUDE.md step 5 says smoke while working, the touched check before ship, the full one before live', () => {
   const md = read('CLAUDE.md');
   assert.match(md, /run `npm run smoke` while working/);
-  assert.match(md, /`npm run check` once before ship/);
+  assert.match(md, /`npm run check -- --touched` once before ship staging/);
+  assert.match(md, /The full `npm run check` runs nightly and before live/);
 });

@@ -39,5 +39,13 @@
   "task": "B-102",
   "command": "ship live",
   "check": "watchdogWindow"
+ },
+ {
+  "id": "R-06",
+  "rule": "A live deploy takes only a commit the full check passed: a full npm run check GREEN here at the build's commit (dist/check-full.json) or a green nightly at it",
+  "decision": "D-226",
+  "task": "B-219",
+  "command": "ship live",
+  "check": "fullCheck"
  }
 ]

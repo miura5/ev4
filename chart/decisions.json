@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-226",
+  "date": "Oct 22",
+  "title": "The full check gates live, not every task: a task proves itself with npm run check -- --touched (npm test, the build, the harnesses its change touched, the look pass at the four first sizes); the full npm run check runs nightly and before live, and ship live refuses a commit with no full GREEN here or green nightly at it (R-06).",
+  "why": "Matt, Oct 22: run npm run check only for what a task touched, full set nightly and before live. The full check takes about 30 minutes a task.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-225",
   "date": "Oct 22",
   "title": "Built for his real windows, 375 px to 2560 px: under 600 px the tab bar, 600 to 1199 px the sidebar and pane, from 1200 px the details panel too; reading width at most 680 px, extra width becomes margin; rows 32 px from 600 px wide and 44 px on the phone; the chat box and his current task stay on screen at short heights. Supersedes D-153.",

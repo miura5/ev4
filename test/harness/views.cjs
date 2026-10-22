@@ -30,11 +30,11 @@ function viewsOf(html) {
   return out;
 }
 const shotName = (view, size) => `look-${view.id}-${size.tag}.png`;
-/** The screenshots the look pass owes for this page that are not in the folder. */
-function missingShots(files, html) {
+/** The screenshots the look pass owes for this page that are not in the folder (at these size tags, or all). */
+function missingShots(files, html, tags = null) {
   const have = new Set(files);
   return viewsOf(html)
-    .flatMap(v => SIZES.map(s => shotName(v, s)))
+    .flatMap(v => SIZES.filter(s => !tags || tags.includes(s.tag)).map(s => shotName(v, s)))
     .filter(f => !have.has(f));
 }
 module.exports = { SIZES, FIRST, viewsOf, shotName, missingShots };
