@@ -3220,7 +3220,7 @@
   "depends": [
    "B-179"
   ],
-  "notes": "",
+  "notes": "The north star is its own doc, E.V. north star (https://claude.ai/artifact/4SJmAvp26TbGAXFUwfGqcd, one tab), Matt's link in the build chat on Oct 21; kickoff reads that doc's tab (the designRead pattern).",
   "commit": null,
   "source": "plan TbfWAoQEeQixyNKZnEZKvv"
  },
