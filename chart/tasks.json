@@ -3525,10 +3525,10 @@
  {
   "id": "B-197",
   "kind": "request",
-  "title": "Request (reported Oct 21): Let's clarify for the record I did NOT request to turn of patient identifier checks; that was your idea. Sorry to throw you under the bus for the log. While it's frustrating to get flagged just for asking E.V. and her fictional character's name & date of birth during a skill validation practice, I understand why the guardrails are there. My proposal: make the guardrails BETTER. I shouldn't get falsely flagged just for participating in a fictional scenario and I didn't even state a reasonably questionable input; I literally just asked E.V. per the checklist. So to avoid false flagging me, make the system better. Make it so it collects a potential violation, then some actual judgment is used to determine if it's a false flag or not. Because that is ridiculous I get flagged for a skill validation checklist.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "title": "Identifier check, two stages: the pattern scan only nominates a candidate; a judgment step with the surrounding context decides whether it is a real person's identifier or a made-up practice client (skills checklist, sim, E.V.'s role-play), and the wording is never accusatory",
+  "dod": "the scan returns candidates, not refusals, at every ingress (composer, uploads, Canvas, agent-written fields, the run's write check, the restore drill); a judgment step reads each candidate with its context and returns practice | real | unsure with a one-line reason, kept with the document; practice passes; real or unsure holds only that value back and asks Matt in neutral words (no 'flagged', no 'violation'), and his 'made up' answer releases it; a verdict already kept is reused, so a restore never re-judges what passed; tests: the Oct 19 skills-checklist exchange (E.V.'s fictional client's name and DOB) passes, a planted real-looking MRN with no practice context is held, a wording lint refuses 'flag' and 'violation' in any identifier message; B-04's rule text unchanged; npm test green; npm run check green; ship staging green; live only on Matt's OK",
+  "milestone": "v4.3 feedback",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -3539,6 +3539,10 @@
    "row": "v4 B-197: Let's clarify for the record I did NOT request to turn of patient…",
    "why": "Let's clarify for the record I did NOT request to turn of patient identifier checks; that was your idea. Sorry to throw you under the bus for the log. While it's frustrating to get flagged just for asking E.V. and her fictional character's name & date of birth during a skill validation practice, I understand why the guardrails are there. My proposal: make the guardrails BETTER. I shouldn't get falsely flagged just for participating in a fictional scenario and I didn't even state a reasonably questionable input; I literally just asked E.V. per the checklist. So to avoid false flagging me, make the system better. Make it so it collects a potential violation, then some actual judgment is used to determine if it's a false flag or not. Because that is ridiculous I get flagged for a skill validation checklist.",
    "notes": "Reported Oct 21 from build chat"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-22T03:30:32.211Z"
   }
  }
 ]
