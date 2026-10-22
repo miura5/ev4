@@ -48,8 +48,8 @@ const results = [];
 const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', name, detail]);
 
 /** A page with the published files served from dist (overrides: {file: body | null to fail it}) and the stub. */
-async function open(browser, { viewport, pre = '', overrides = {}, db = seed }) {
-  const page = await browser.newPage({ viewport, colorScheme: 'dark' });
+async function open(browser, { viewport, pre = '', overrides = {}, db = seed, scheme = 'dark' }) {
+  const page = await browser.newPage({ viewport, colorScheme: scheme });
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => {
@@ -218,6 +218,55 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
     );
     await page.close();
   }
+  // B-221 (Matt, Oct 22): from 600 px the sidebar sits on the sunken ground and the view in a raised, outlined pane, in
+  // both themes; nothing the shell paints before the stylesheet covers them. The sidebar's sections, the status word.
+  for (const scheme of ['light', 'dark'])
+    for (const w of [735, 1706]) {
+      const { page } = await open(browser, { viewport: { width: w, height: 860 }, scheme });
+      await page.waitForTimeout(600);
+      const v = await page.evaluate(() => {
+        const cs = getComputedStyle,
+          root = cs(document.documentElement),
+          pane = cs(document.body, '::before'),
+          tok = n => root.getPropertyValue(n).trim();
+        const rgb = h => {
+          const x = document.createElement('i');
+          x.style.color = h;
+          document.body.append(x);
+          const c = cs(x).color;
+          x.remove();
+          return c;
+        };
+        return {
+          html: root.backgroundColor,
+          body: cs(document.body).backgroundColor,
+          pane: pane.backgroundColor,
+          outline: pane.boxShadow !== 'none',
+          sunken: rgb(tok('--sunken')),
+          bg: rgb(tok('--bg')),
+          today:
+            !document.getElementById('side-today').hidden &&
+            [...document.querySelectorAll('#side-today .si .t')].every(t => t.textContent.trim().length > 2),
+          readout: document.getElementById('readout').textContent,
+          first:
+            document.querySelector('#tab-ev .lab-side') &&
+            cs(document.querySelector('#tab-ev .lab-side')).display !== 'none',
+        };
+      });
+      ok(
+        `[${w} ${scheme}] the sidebar on the sunken ground, the view in a raised, outlined pane; Today in the sidebar; her status word; Conversation`,
+        v.html === v.sunken &&
+          v.pane === v.bg &&
+          v.html !== v.pane &&
+          v.outline &&
+          /rgba\(0, 0, 0, 0\)|transparent/.test(v.body) &&
+          v.today &&
+          !/EV-04/.test(v.readout) &&
+          v.first,
+        JSON.stringify(v)
+      );
+      await page.close();
+    }
   // B-208 (D-151, D-210): the pane's header names the view; the status line shows only a problem, by name.
   for (const w of [390, 735, 1280]) {
     const { page } = await open(browser, { viewport: { width: w, height: 844 } });

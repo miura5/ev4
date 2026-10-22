@@ -38,10 +38,17 @@
           : MOOD_NOW === 'sleepy' && activeSession()
             ? 'on a break'
             : MOOD_WORD[MOOD_NOW] || 'online';
+      // B-221 (D-210): her status word beside her name; the readout code has left the screen.
       const txt = [
-        P.unit || 'EV-04',
-        word,
-        running ? plural(running, 'job') + ' running' : '',
+        off && !T.busy
+          ? word
+          : activeSession()
+            ? MOOD_NOW === 'sleepy'
+              ? 'on a break'
+              : 'in a session'
+            : running
+              ? 'working'
+              : word,
         STAGING ? 'staging' : '',
       ]
         .filter(Boolean)

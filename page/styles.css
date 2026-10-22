@@ -777,3 +777,21 @@ body:not(.on-ev) .mh .cap-now{display:none}
 /* the send: a quiet circle that fills in the text colour when he types (D-214) */
 .compose-row #ev-send{background:var(--raised);border:0;box-shadow:inset 0 0 0 1px var(--line2);color:var(--quiet);width:36px;height:36px;min-height:36px;flex:0 0 36px;align-self:center}
 .compose-row #ev-send.on{background:var(--text);color:var(--bg);box-shadow:none}
+
+/* ============================================================ B-221: the shade, the pane, the sidebar's sections ======
+   (Matt's staging look, Oct 22.) The sidebar's sections: Today and Working, one 32 px row each, absent while empty. */
+@media (min-width:600px){
+  html{background:var(--sunken)}
+  body{background:transparent}
+}
+.side-sec{display:flex;flex-direction:column}
+.side-sec .sec{font:500 12px var(--sans);color:var(--faint);margin:0;padding:18px 10px 6px}
+.side-sec .si{appearance:none;border:0;background:transparent;height:32px;display:flex;align-items:center;gap:9px;padding:0 10px;border-radius:7px;font:400 13px var(--sans);color:var(--quiet);white-space:nowrap;overflow:hidden;text-align:left;width:100%;cursor:pointer}
+.side-sec .si .t{overflow:hidden;text-overflow:ellipsis}
+.side-sec .si:hover{background:var(--surface);color:var(--text)}
+.sdot{width:6px;height:6px;border-radius:3px;flex:0 0 6px}
+.sdot.d-urg{background:var(--urg)} .sdot.d-att{background:var(--att)} .sdot.d-q{background:var(--faint)} .sdot.d-her{background:var(--her)}
+.side .lab-side{display:none}
+@media (min-width:600px){.side .tabs .tab .lab-bar{display:none}.side .tabs .tab .lab-side{display:inline}}
+@media (max-width:599px){.side-sec{display:none}}
+.readout .led{display:none}

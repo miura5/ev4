@@ -118,6 +118,12 @@
       phone: { idle: 132, conversation: 104, session: 92, list: 88, skills: 80 },
       desktop: { idle: 132, conversation: 104, surface: 92 },
     };
+    // B-209: when her stage folds or unfolds while he is at now, keep now in view once its height has settled.
+    $('hero').addEventListener('transitionend', e => {
+      if (e.propertyName !== 'height' || !CAP.stick) return;
+      pinNow();
+      capBox.dispatchEvent(new Event('scroll'));
+    });
     function renderStage() {
       // B-209 (D-213): one size per layout (MO_SIZE), 70% in a session; folded to the header's 24 px flower while he
       // reads back or on a screen under 560 px tall.

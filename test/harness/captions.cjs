@@ -348,8 +348,26 @@ async function sideBySide(browser, left, right, out, vp) {
   // The artboards' numbers, read from their source (E.V. Home: Captions, V2.dc.html and V2Desktop.dc.html: the core's
   // size and scale, stageH, evStyle, mattStyle); D-122 as amended takes the desktop artboard's 16 px for earlier lines.
   const art = {
-    phone: { core: 260, stage: 300, convCore: 208, convStage: 232, now: '20px', past: '15px', matt: '13px' },
-    desktop: { core: 340, stage: 370, convCore: 272, convStage: 290, now: '24px', past: '16px', matt: '14px' },
+    // B-209 (D-213): her stage is one size per layout now, 104 px on the phone, 140 px wide at 1280 (no step down in a
+    // conversation or for a surface); the stage is her size and its padding.
+    phone: {
+      core: 104,
+      stage: [104, 164],
+      convCore: 104,
+      convStage: [104, 164],
+      now: '20px',
+      past: '15px',
+      matt: '13px',
+    },
+    desktop: {
+      core: 140,
+      stage: [140, 200],
+      convCore: 140,
+      convStage: [140, 200],
+      now: '24px',
+      past: '16px',
+      matt: '14px',
+    },
   };
   const measured = {},
     rendered = {};
@@ -417,8 +435,8 @@ async function sideBySide(browser, left, right, out, vp) {
       JSON.stringify(gc)
     );
     ok(
-      `[${scheme}] opening: her core at 100% (${A.core} px) on a ${A.stage} px stage, no bubbles`,
-      v.step === 'idle' && v.corePx === A.core && v.stageH === A.stage && !v.bubbles,
+      `[${scheme}] opening: her flower at ${A.core} px on her stage (D-213), no bubbles`,
+      v.step === 'idle' && v.corePx === A.core && v.stageH >= A.stage[0] && v.stageH <= A.stage[1] && !v.bubbles,
       JSON.stringify({ step: v.step, px: v.corePx, stage: v.stageH })
     );
     ok(
@@ -508,10 +526,11 @@ async function sideBySide(browser, left, right, out, vp) {
       JSON.stringify(v.texts)
     );
     ok(
-      `[${scheme}] in conversation: core at 80% on a ${A.convStage} px stage, her line ${A.now}, earlier ${A.past} at 60%`,
+      `[${scheme}] in conversation: her flower the same ${A.convCore} px (D-213), her line ${A.now}, earlier ${A.past} at 60%`,
       v.step === 'conversation' &&
         Math.abs(v.corePx - A.convCore) <= 1 &&
-        v.stageH === A.convStage &&
+        v.stageH >= A.convStage[0] &&
+        v.stageH <= A.convStage[1] &&
         v.nowSize === A.now &&
         v.pastSize === A.past &&
         Math.abs(parseFloat(v.pastOpacity) - 0.6) < 0.01,
@@ -826,7 +845,7 @@ async function sideBySide(browser, left, right, out, vp) {
         };
       });
     const lc = await sfView();
-    const listStage = scheme === 'phone' ? 150 : 260;
+    const listStage = A.stage; // B-209 (D-213): a surface does not step her down
     ok(
       `[${scheme}] a reply with three cards opens one surface with two rows under its head line, no pill and no close; none under her line`,
       lc.cards === 1 &&
@@ -842,8 +861,11 @@ async function sideBySide(browser, left, right, out, vp) {
       JSON.stringify(lc)
     );
     ok(
-      `[${scheme}] an open surface steps her down (the ${scheme === 'phone' ? '52%' : 'surface'} step, a ${listStage} px stage)`,
-      lc.step === (scheme === 'phone' ? 'list' : 'surface') && lc.stage === listStage && lc.surfaceOpen,
+      `[${scheme}] an open surface keeps her at her size (the ${scheme === 'phone' ? 'list' : 'surface'} step, D-213)`,
+      lc.step === (scheme === 'phone' ? 'list' : 'surface') &&
+        lc.stage >= listStage[0] &&
+        lc.stage <= listStage[1] &&
+        lc.surfaceOpen,
       JSON.stringify(lc)
     );
     ok(
