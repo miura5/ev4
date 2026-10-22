@@ -121,3 +121,32 @@ export function pushRefusal(root = ROOT, run = builderRun()) {
     ? `a builder run never changes a guarded path (D-200): ${found.join('; ')}. It reaches main only from a chat with Matt present`
     : null;
 }
+/**
+ * B-179 (D-194): a builder run's first step. Writes the marker, {at, head}: when the run started and main's head then
+ * (after the session's checkout is brought to origin/main), so every later command knows this session is the builder.
+ */
+export function markBuilderRun({
+  file = process.env.EV_BUILDER_MARKER || BUILDER_MARKER,
+  root = ROOT,
+  now = new Date(),
+} = {}) {
+  let head = null;
+  try {
+    head = git(root, ['rev-parse', 'HEAD']).trim();
+  } catch {
+    /* no git here: the marker still says when the run began */
+  }
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const m = { at: now.toISOString(), head };
+  fs.writeFileSync(file, JSON.stringify(m));
+  return m;
+}
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  if (process.argv[2] === '--mark') {
+    const m = markBuilderRun();
+    console.log(`builder run marked: ${BUILDER_MARKER} ${JSON.stringify(m)}`);
+  } else {
+    console.error("node tools/guard.mjs --mark   (a builder run's first step, B-179)");
+    process.exitCode = 2;
+  }
+}

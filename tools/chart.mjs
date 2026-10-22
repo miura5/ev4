@@ -1219,7 +1219,7 @@ export function formatViews(plan) {
 
 // ------------------------------------------------------------------------------------------------ log, report
 /** One change to the record. Returns {rec, what, views: [view names it touches]}; throws on a refusal. */
-export function applyLog(rec, o, { now = new Date().toISOString(), builder = builderRun() } = {}) {
+export function applyLog(rec, o, { now = new Date().toISOString(), builder = builderRun(), jsonl = null } = {}) {
   const [, id] = o._;
   if (id === 'deploy') {
     const target = o.target;
@@ -1490,7 +1490,18 @@ export function applyLog(rec, o, { now = new Date().toISOString(), builder = bui
     t.commit = String(o.commit).slice(0, 7);
     what.push(`commit ${t.commit}`);
   }
-  if (o.note != null) {
+  if (o['from-job']) {
+    // B-179 (D-194): Matt's reply reaches the task from his job, the words from this session's get of it, never retyped.
+    const j = jobFrom(jsonl, o['from-job']);
+    if (!j) throw new Error(jobReadMissing(o['from-job']));
+    if (typeof o.note === 'string' && o.note.trim() !== j.words)
+      throw new Error(`--from-job ${j.id}: the words come from the job, never retyped (give --note with no text)`);
+    t.notes = [t.notes, `Matt's reply (job ${j.id}, ${ctDate(j.doc.at || now)}): ${j.words}`]
+      .filter(Boolean)
+      .join('\n');
+    t.jobs = [...new Set([...(t.jobs || []), j.id])];
+    what.push(`notes from job ${j.id}`);
+  } else if (o.note != null) {
     t.notes = o.note;
     what.push('notes');
   }
@@ -1509,7 +1520,7 @@ export function applyLog(rec, o, { now = new Date().toISOString(), builder = bui
     what.push('board');
   }
   if (o['waiting-on'] != null) {
-    if (o['waiting-on']) t.waitingOn = o['waiting-on'];
+    if (o['waiting-on'] && o['waiting-on'] !== 'none') t.waitingOn = o['waiting-on'];
     else {
       delete t.waitingOn;
       delete t.waitingWhere;
@@ -1529,7 +1540,7 @@ export function applyReport(rec, o, { now = new Date().toISOString(), jsonl = nu
   const [, kind, ...rest] = o._;
   let words = rest.join(' '),
     at = o.at || null;
-  if (o['from-chat']) {
+  if (o['from-chat'] && !o.job) {
     // Matt's words come from his message in this session's transcript, never retyped.
     const w = jsonl && wordsFromChat(jsonl, o['from-chat'] === true ? null : o['from-chat']);
     if (!w)
@@ -1550,9 +1561,22 @@ export function applyReport(rec, o, { now = new Date().toISOString(), jsonl = nu
     o.source = `Board comment ${c.id}`;
     o.reply = c.id;
   }
+  let job = null;
+  if (o.job) {
+    // B-179 (D-194): a build job from the page. Its words are the fired message's lines after "Job <id>", or the job's
+    // brief from this session's get of jobs/<id>; the get is required either way, and nothing is retyped.
+    job = jobFrom(jsonl, o.job);
+    if (!job) throw new Error(jobReadMissing(o.job));
+    if (rest.length) throw new Error(`--job ${job.id}: the words come from the job, never retyped`);
+    if (rec.tasks.some(t => t.job === job.id)) throw new Error(`job ${job.id} is already filed`);
+    const fired = o['from-chat'] ? firedJobWords(jsonl, job.id) : null;
+    words = (fired && fired.words) || job.words;
+    at = o.at || (fired && fired.at) || job.doc.at || null;
+    o.source = o.source && o.source !== 'build chat' ? o.source : `E.V. page, job ${job.id}`;
+  }
   if (!['bug', 'request'].includes(kind) || !words)
     throw new Error(
-      'report <bug|request> "<the words as written>" --source <where> | --from-chat ["<words to find>"] | --from-comment <id>'
+      'report <bug|request> "<the words as written>" --source <where> | --from-chat ["<words to find>"] | --from-comment <id> | --job <id>'
     );
   if (!o.source) throw new Error('report needs --source (the chat, a Board comment, the page)');
   now = at || now;
@@ -1574,6 +1598,7 @@ export function applyReport(rec, o, { now = new Date().toISOString(), jsonl = nu
     source: o.source,
     words,
     reportedAt: now,
+    ...(job ? { job: job.id } : {}),
     board: { row: `v4 ${id}: ${name}`, why: words, notes: `Reported ${ctDate(now)} from ${o.source}` },
   });
   return {
@@ -1970,6 +1995,42 @@ export function docVersionFrom(jsonl, url, collection, id) {
     else if (/^No document /.test(text.trim())) out = 0;
   }
   return out;
+}
+/**
+ * B-179 (D-194): a builder job from this session's newest ArtifactData get of jobs/<id> (either record): the document
+ * from the file the get saved, and its words (the brief, as Matt typed it). null when no get of it was made or saved.
+ */
+export function jobFrom(jsonl, id) {
+  let out = null;
+  for (const r of toolResults(jsonl || '', 'ArtifactData')) {
+    const i = r.input || {};
+    if (i.action !== 'get' || i.collection !== 'jobs' || i.doc_id !== id || r.isError) continue;
+    const text = r.texts.join('\n');
+    const file = (text.match(/"(\/[^"]+\.json)"/) || [])[1];
+    let doc = null;
+    try {
+      doc = file ? JSON.parse(fs.readFileSync(file, 'utf8')) : null;
+    } catch {
+      doc = null;
+    }
+    out =
+      doc && typeof doc.brief === 'string' && doc.brief.trim()
+        ? { id, url: i.url, doc, words: doc.brief.trim() }
+        : null;
+  }
+  return out;
+}
+const jobReadMissing = id =>
+  `no read of job ${id} in this session: make ArtifactData {"action":"get","url":"<the record the job is in>","collection":"jobs","doc_id":"${id}"} first`;
+/** B-179: the words of the message a builder run was fired with, the lines after "Job <id>" (null when none). */
+export function firedJobWords(jsonl, id) {
+  const first = t => t.trimStart().split('\n')[0].trim();
+  const m = chatMessages(jsonl || '')
+    .filter(x => first(x.text) === `Job ${id}`)
+    .at(-1);
+  if (!m) return null;
+  const words = m.text.trimStart().split('\n').slice(1).join('\n').trim();
+  return words ? { words, at: m.at } : null;
 }
 /** The tasks a range of commits did, oldest first: each subject's leading id ("B-07: ..."), not every id it mentions
  * (a hand-off commit names the ids it filed, "D-146 to D-165, B-111 to B-126: plan ..."). */
@@ -2495,9 +2556,21 @@ export const tenetsFor = (rec, scope) =>
  * B-138 (D-180): the live record's health/current, from the copy a read saved under dist/state/live/record (the read is
  * printed when there is none), and how old it is. Over spec.constants.health.staleHours it is the first thing to take.
  */
-export function healthLines(root = HERE, now = Date.now()) {
+export function healthLines(root = HERE, now = Date.now(), builder = builderRun()) {
   const spec = readJson(path.join(root, 'spec', 'ev.spec.json'));
   const hours = ((spec.constants || {}).health || {}).staleHours || 4;
+  // B-179: a builder session cannot read the live record (its auto mode refuses it, B-187), so its health read is the
+  // live watchdog's last_run, which list_triggers gives it.
+  if (builder) {
+    const w = ((spec.tasks || {}).live || {}).watchdog || {};
+    return {
+      stale: null,
+      lines: [
+        `- A builder run reads no live record: read the live watchdog's last_run with list_triggers (${w.trigger || 'live.watchdog'}).`,
+        `- Older than ${hours} h: file it with report bug --source "builder: live watchdog last_run stale" unless an open task already covers it, and take that task before any other. Fresher: go on.`,
+      ],
+    };
+  }
   const live = spec.registry.records.live.artifact;
   const file = path.join(root, 'dist', 'state', 'live', 'record', 'health', 'current.json');
   const read = `ArtifactData {"action":"get","url":"https://claude.ai/artifact/${live}","collection":"health","doc_id":"current","out_dir":"${path.join(root, 'dist', 'state', 'live', 'record')}"}`;

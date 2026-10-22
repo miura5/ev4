@@ -149,6 +149,14 @@ test("B-184: the review skill reports a guarded path's diff and a builder run's 
   assert.match(skill, /any create_trigger or update_trigger call in a builder run's transcript/);
 });
 
+test("B-179: the builder prompt's first step writes the marker builderRun reads", async () => {
+  const { markBuilderRun } = await import('../tools/guard.mjs');
+  const f = path.join(tmp(), 'sub', 'builder-run');
+  const m = markBuilderRun({ file: f, now: new Date('2026-10-22T02:00:00Z') });
+  assert.match(m.head, /^[0-9a-f]{40}$/);
+  assert.deepEqual(builderRun({ file: f, now: Date.parse('2026-10-22T02:30:00Z') }), m);
+});
+
 test('B-184 (D-200 lint): under the builder marker, no commit of this run touches a guarded path', () => {
   const run = builderRun();
   if (!run) return; // a hand chat or CI: nothing to hold

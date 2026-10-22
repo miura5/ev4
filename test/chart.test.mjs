@@ -1667,7 +1667,7 @@ test('B-138 (D-180): brief leads with the live health/current age from a saved r
   fs.mkdirSync(path.join(root, 'spec'), { recursive: true });
   fs.copyFileSync(path.join(ROOT, 'spec', 'ev.spec.json'), path.join(root, 'spec', 'ev.spec.json'));
   const now = Date.parse('2026-10-21T06:00:00Z');
-  let h = C.healthLines(root, now);
+  let h = C.healthLines(root, now, null);
   assert.equal(h.stale, null);
   assert.match(
     h.lines[0],
@@ -1681,17 +1681,21 @@ test('B-138 (D-180): brief leads with the live health/current age from a saved r
       JSON.stringify({ id: 'current', at: new Date(now - hoursAgo * 36e5).toISOString() })
     );
   plant(32.5);
-  h = C.healthLines(root, now);
+  h = C.healthLines(root, now, null);
   assert.equal(h.stale, true);
   assert.match(h.lines[0], /^- health\/current is 32 h old \(written 2026-10-19T21:30:00\.000Z; stale past 4 h\)\./);
   assert.match(h.lines[1], /^- STALE: take this first \(D-180\)/);
   plant(1.5);
-  h = C.healthLines(root, now);
+  h = C.healthLines(root, now, null);
   assert.equal(h.stale, false);
   assert.deepEqual(h.lines, [
     '- health/current is 1 h old (written 2026-10-21T04:30:00.000Z; stale past 4 h).',
     '- Fresh: go on.',
   ]);
+  // B-179: a builder run reads no live record; its health read is the live watchdog's last_run.
+  h = C.healthLines(root, now, { at: new Date(now).toISOString(), head: null });
+  assert.equal(h.stale, null);
+  assert.match(h.lines[0], /^- A builder run reads no live record: .*list_triggers \(trig_01GrcEzEwb4L3oXX7dsTdpwD\)/);
   // brief puts it first, before the inbox.
   const r = sample();
   const page = C.brief(r, 'B-02', { root, now });
@@ -2088,4 +2092,80 @@ test("B-153 (T-5): the record checks hold with two chats' worth of planted state
 
 test('B-174: the same checks hold on a copy taken while a report waits in the inbox', () => {
   plantTwoChats(chartCopy(RECORD), { inbox: true });
+});
+
+// ------------------------------------------------------------------------------------------------ B-179 the builder's steps
+const STAGING = 'https://claude.ai/artifact/Pb6jQ6CvEbtxi6Rcshu9uC';
+/** A planted ArtifactData get of jobs/<id>: the document saved to a file, the result naming it as the tool does. */
+function jobGet(id, doc, n = 'g1') {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev-job-'));
+  const file = path.join(dir, `${id}.json`);
+  fs.writeFileSync(file, JSON.stringify(doc));
+  return toolPair(
+    n,
+    'ArtifactData',
+    { action: 'get', url: STAGING, collection: 'jobs', doc_id: id },
+    `1 document from collection "jobs" saved as JSON files under "${dir}":\n- "${id}"  120 bytes  version 1  "${file}"`
+  );
+}
+const JOB = 'job-20261022-010000-the-timer-resets';
+const jobDoc = (kind, brief) => ({
+  schema: 2,
+  writer: 'page',
+  at: '2026-10-22T01:00:00.000Z',
+  source: 'E.V. Home',
+  kind,
+  title: brief.slice(0, 40),
+  brief,
+});
+
+test('B-179: report --job files the job in its own words, with the job id on the task', () => {
+  const jsonl = [
+    human('<routine-fire-payload>\nJob ' + JOB + '\nthe timer resets when I switch tabs\n</routine-fire-payload>'),
+    ...jobGet(JOB, jobDoc('build', 'the timer resets when I switch tabs')),
+  ].join('\n');
+  assert.deepEqual(C.firedJobWords(jsonl, JOB).words, 'the timer resets when I switch tabs');
+  const r = sample();
+  const out = C.applyReport(r, { _: ['report', 'bug'], 'from-chat': true, job: JOB }, { jsonl });
+  const t = r.tasks.at(-1);
+  assert.deepEqual(
+    [out.id, t.kind, t.status, t.words, t.source, t.job],
+    ['B-04', 'bug', 'inbox', 'the timer resets when I switch tabs', `E.V. page, job ${JOB}`, JOB]
+  );
+  // The brief carries the words when the fired message has none past its first line.
+  const bare = [human('Job ' + JOB), ...jobGet(JOB, jobDoc('build', 'a quieter end screen'))].join('\n');
+  const r2 = sample();
+  C.applyReport(r2, { _: ['report', 'request'], 'from-chat': true, job: JOB }, { jsonl: bare });
+  assert.equal(r2.tasks.at(-1).words, 'a quieter end screen');
+  // Refused: no get of the job, words retyped beside it, the same job twice.
+  assert.throws(
+    () => C.applyReport(sample(), { _: ['report', 'bug'], job: JOB }, { jsonl: human('Job ' + JOB) }),
+    /no read of job .* make ArtifactData/
+  );
+  assert.throws(
+    () => C.applyReport(sample(), { _: ['report', 'bug', 'my', 'retelling'], job: JOB }, { jsonl }),
+    /never retyped/
+  );
+  assert.throws(() => C.applyReport(r, { _: ['report', 'bug'], job: JOB }, { jsonl }), /already filed/);
+});
+
+test("B-179: log --from-job carries Matt's reply from a planted get into the task's notes; a retyped text is refused", () => {
+  const RJOB = 'job-20261022-011500-reply-b-02';
+  const jsonl = jobGet(RJOB, jobDoc('reply', 'use the blue one, and keep it short')).join('\n');
+  const r = sample();
+  const t = r.tasks.find(x => x.id === 'B-02');
+  Object.assign(t, { status: 'blocked', notes: 'Which colour?', waitingOn: 'Matt', waitingWhere: 'decision' });
+  C.applyLog(r, { _: ['log', 'B-02'], note: true, 'from-job': RJOB, 'waiting-on': 'none' }, { jsonl });
+  assert.equal(t.notes, "Which colour?\nMatt's reply (job " + RJOB + ', Oct 21): use the blue one, and keep it short');
+  assert.deepEqual([t.waitingOn, t.waitingWhere, t.jobs], [undefined, undefined, [RJOB]]);
+  // The same words given as text pass; any other text is a retelling and is refused.
+  C.applyLog(r, { _: ['log', 'B-02'], note: 'use the blue one, and keep it short', 'from-job': RJOB }, { jsonl });
+  assert.throws(
+    () => C.applyLog(r, { _: ['log', 'B-02'], note: 'use blue, keep it short', 'from-job': RJOB }, { jsonl }),
+    /never retyped/
+  );
+  assert.throws(
+    () => C.applyLog(sample(), { _: ['log', 'B-02'], note: true, 'from-job': RJOB }, { jsonl: '' }),
+    /no read of job/
+  );
 });

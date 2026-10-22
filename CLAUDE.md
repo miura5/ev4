@@ -73,6 +73,26 @@ first turn until that arrives, B-187), and a run fired with words to file files 
 `BACKLOG.md` has no open unblocked task, or when the same task has been `in progress` across two runs (mark it
 `blocked` with what happened).
 
+## Builder runs
+
+A session started by the `ev4-builder` task is the builder (D-194). Its prompt's first step is `node tools/guard.mjs
+--mark`, which writes /tmp/ev/builder-run: under it `log`, `plan` and `ship` refuse a push that touches a guarded path,
+`log decision` refuses a tenet and deploy prints no trigger call (B-184, D-200). A builder run reads no live record, so
+its step 1 health read is the live watchdog's `last_run` from `list_triggers` (`brief` prints it). The message it was
+fired with says what it is for:
+
+- `Job <id>`: one ArtifactData get of jobs/<id> (from live; from staging when live has no such document), then by the
+  job's kind. **build**: `report bug|request --from-chat --job <id>` (the words come from the fired message or the job,
+  never retyped; the source is "E.V. page, job <id>"), triaged into a task whose definition of done is written from his
+  words (D-182), and that task taken first in this run, the one exception to the BACKLOG order (D-191); built, shipped
+  to staging and traced. **reply**: `log <task> --note --from-job <id> --waiting-on none`, then that task taken when it
+  was blocked only on that. **design**, **plan** and **ship**: as B-183 and B-185 say once they are built.
+- Words to file (bug:, idea: or request:): `report --from-chat` first, then as Every session says.
+- `continue`: Every session, from step 1.
+
+Every run started with a job ends with `trace --job <id> --record <the job's record> --status done|failed --note "..."`
+and the calls it prints, done or not, so the page shows what happened.
+
 ## Scheduled pipeline runs
 
 A session started by one of E.V.'s own scheduled tasks (its prompt begins "E.V. <pipeline> run" and names one record) is
