@@ -2729,5 +2729,39 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "live",
+  "commit": "5085cfd",
+  "time": "2026-10-22T03:01:38.868Z",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "b9c59d5",
+  "from": "b9c59d5",
+  "tasks": [
+   "B-78",
+   "B-175",
+   "B-184",
+   "B-176",
+   "B-177",
+   "B-187",
+   "B-186",
+   "B-194",
+   "B-178",
+   "B-179",
+   "B-189",
+   "B-180",
+   "B-181",
+   "B-163",
+   "B-182",
+   "B-192",
+   "B-191",
+   "B-193"
+  ],
+  "summary": "Surfaces in the E.V. tab; Live deploys since v4.3.0 carry no patch tag on origin: ship live…; The hard line; Probe A, the builder fired with a message; Builder job kinds; The builder never receives the text it is fired with: probe A's fired…; The actions table; • ⁃ I requested a study plan for the dosage calculations and received…; The builder's trace; The builder's steps; * I asked E.V. what to bring to lab/class today. She said she didn’t…; The build ask on the page; The morning-after line; Restore migrates; Your turn as chips; * Better randomizing of answer choices; and maybequestions…; * Option to close practice sets; go back and forward between…; * Better randomizing of answer choices; and maybequestions…",
+  "why": null,
+  "decisions": [],
+  "source": "log",
+  "release": "v4.4.0"
  }
 ]
