@@ -1203,7 +1203,7 @@ const ok = (name, cond, detail = '') => {
     );
     await page.click('#tab-today');
     await page.waitForTimeout(100);
-    // B-125 (D-163): a switch shows the tab at once, one fade of at most 0.2 s on the whole; its cards do not rise.
+    // B-125 (D-222): a switch shows the tab at once, one fade of at most 0.2 s on the whole; its cards do not rise.
     ok(
       `[${scheme}] switching tabs shows the tab at once: one short fade, nothing rising`,
       await page.evaluate(() => {

@@ -1698,7 +1698,7 @@ async function sideBySide(browser, left, right, out, vp) {
       await ctx.close();
     }
   }
-  // B-112 (D-153): at short heights (390x450 is the phone with its keyboard open) the composer's bottom edge and her
+  // B-112 (D-225): at short heights (390x450 is the phone with its keyboard open) the composer's bottom edge and her
   // current line stay inside the viewport, idle, in a conversation and in a session.
   {
     const sessionSeed = () => {

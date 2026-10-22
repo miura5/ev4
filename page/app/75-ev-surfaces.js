@@ -251,7 +251,7 @@
       if (gk && gk !== SF.glanced && T.ready) CORE.gesture('glance', host);
       SF.glanced = gk;
     }
-    // A check-off made in a surface: her nod (D-163: nothing he is ticking moves).
+    // A check-off made in a surface: her nod (D-222: nothing he is ticking moves).
     function sfNod(node) {
       if (node && node.closest && node.closest('#ev-surf')) CORE.gesture('done');
     }

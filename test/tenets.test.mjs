@@ -30,7 +30,7 @@ const failing = s =>
     .map(c => c.tenet);
 
 test('B-115: the look pass checks D-146 to D-151 at 390, 735 and 1280, with E.V. on and the other tabs reporting', () => {
-  assert.deepEqual(spec.ui.tenets.checks, ['D-146', 'D-147', 'D-148', 'D-149', 'D-150', 'D-151', 'D-160']);
+  assert.deepEqual(spec.ui.tenets.checks, ['D-146', 'D-147', 'D-148', 'D-221', 'D-150', 'D-151', 'D-160']);
   assert.deepEqual(spec.ui.tenets.onFor, { 'D-160': ['ev', 'study'] });
   assert.deepEqual(spec.ui.tenets.widths, [390, 735, 1280]);
   assert.deepEqual(
@@ -95,10 +95,10 @@ test('B-115: the other checks each fail on what their tenet forbids', () => {
   assert.deepEqual(failing(tall), ['D-148']);
   const coral = ev();
   coral.coral.push('graded', 'graded');
-  assert.deepEqual(failing(coral), ['D-149']);
+  assert.deepEqual(failing(coral), ['D-221']);
   const none = ev();
   none.coral = [];
-  assert.deepEqual(failing(none), ['D-149'], 'an urgent item with nothing coral on the E.V. tab');
+  assert.deepEqual(failing(none), ['D-221'], 'an urgent item with nothing coral on the E.V. tab');
   const study = ev();
   study.tab = 'study';
   study.coral = [];
@@ -119,7 +119,7 @@ test('B-115: the other checks each fail on what their tenet forbids', () => {
   assert.deepEqual(failing(hide), ['D-160'], 'B-122: a Hide button');
 });
 
-test('B-125 (D-163): the motion check fails a planted long move, a view still moving at 450 ms and a fading panel', () => {
+test('B-125 (D-222): the motion check fails a planted long move, a view still moving at 450 ms and a fading panel', () => {
   const { judgeMotion } = createRequire(import.meta.url)('./harness/tenets.cjs');
   const still = { tab: 'today', over: [], declared: 12, running: [], opacity: 1 };
   assert.equal(judgeMotion(still, still).ok, true);
@@ -146,14 +146,14 @@ test('B-125 (D-163): the motion check fails a planted long move, a view still mo
   assert.match(look, /reducedMotion: 'reduce'/);
 });
 
-test('B-125 (D-163): the stylesheet has no staggered rise and no growth of bars on a tab switch', () => {
+test('B-125 (D-222): the stylesheet has no staggered rise and no growth of bars on a tab switch', () => {
   const css = fs.readFileSync(path.join(ROOT, 'page', 'styles.css'), 'utf8');
   assert.doesNotMatch(css, /grow-[xy]/);
   assert.doesNotMatch(css, /\.panel\.enter>:nth-child/);
   assert.match(css, /\.panel\.enter\{animation:fade \.18s/);
 });
 
-test('B-125 (D-163, Matt Oct 20): the status lights are steady, the header one and the session bar one', () => {
+test('B-125 (D-222, Matt Oct 20): the status lights are steady, the header one and the session bar one', () => {
   const css = fs.readFileSync(path.join(ROOT, 'page', 'styles.css'), 'utf8');
   const rules = [...css.matchAll(/([^{}]*\.(?:led|s-led)[^{}]*)\{([^}]*)\}/g)];
   assert.ok(rules.length >= 4, 'the light rules are in the stylesheet');

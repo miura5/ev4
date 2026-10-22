@@ -5,7 +5,9 @@
   "title": "Built for his real windows, 375 px to 2560 px: under 600 px the tab bar, 600 to 1199 px the sidebar and pane, from 1200 px the details panel too; reading width at most 680 px, extra width becomes margin; rows 32 px from 600 px wide and 44 px on the phone; the chat box and his current task stay on screen at short heights. Supersedes D-153.",
   "why": "He uses E.V. in a third of his ultrawide, in Claude's side panel, half his laptop and his phone",
   "status": "accepted",
-  "supersedes": [],
+  "supersedes": [
+   "D-153"
+  ],
   "amends": [],
   "source": "plan BridyLzngcGUtpeLQorX1U P-16",
   "kind": "tenet",
@@ -20,7 +22,9 @@
   "title": "Her frame budget is measured: 10 s of speech at 390 × 844 (DPR 3, 4× CPU throttle) keeps at most 5% of frames over 25 ms; she redraws only while she moves, at most eight times a second; a still idle draws nothing outside the falling petal. Supersedes D-135.",
   "why": "D-135 measured the Silk core; the 2D flower needs its own budget",
   "status": "accepted",
-  "supersedes": [],
+  "supersedes": [
+   "D-135"
+  ],
   "amends": [],
   "source": "plan BridyLzngcGUtpeLQorX1U P-15",
   "kind": "tenet",
@@ -50,7 +54,9 @@
   "title": "Two clocks: she moves on held frames (eight drawings a second, eased spacing, a held first frame, a one-frame counter-turn to face); everything else moves at full frame rate with short eases: a view settles within 0.16 s and is legible on the tap frame, a fold takes 0.28 s, nothing over 0.45 s; only a change of layout moves; nothing he is reading or ticking moves; her reveal ends within 6 s and a tap completes it; reduced motion gives the same end state with no movement. Supersedes D-163.",
   "why": "Matt: the interface felt slow when it used her frame rate; the contrast is what makes her read as hand-drawn",
   "status": "accepted",
-  "supersedes": [],
+  "supersedes": [
+   "D-163"
+  ],
   "amends": [],
   "source": "plan BridyLzngcGUtpeLQorX1U P-13",
   "kind": "tenet",
@@ -65,7 +71,9 @@
   "title": "The interface is grey; colour is meaning, and her blue is hers: teal only for done or right, amber for attention, coral only for an exam today or tomorrow, graded work due today and not ticked, and errors; her blue only on her and what comes from her; buttons, links, focus and selection neutral; colours that must be told apart also differ in lightness. Supersedes D-149.",
   "why": "One colour per meaning, her identity unmistakable, and nothing reads as a link but a link",
   "status": "accepted",
-  "supersedes": [],
+  "supersedes": [
+   "D-149"
+  ],
   "amends": [],
   "source": "plan BridyLzngcGUtpeLQorX1U P-12",
   "kind": "tenet",
@@ -140,7 +148,9 @@
   "title": "Her colour is forget-me-not blue, #7AA7FF dark and #2B5BD0 light, used only by her: the flower, her caret, the job spinner and her ideas. The interface is grey: links are text with an underline, focus rings neutral, the primary button solid text colour, send a quiet circle that fills when he types. Violet is retired; secondary tags go grey.",
   "why": "The flower and her colour tell one story; a grey interface keeps blue from meaning \"click\"; Matt: the teal buttons clashed with her",
   "status": "accepted",
-  "supersedes": [],
+  "supersedes": [
+   "D-077"
+  ],
   "amends": [],
   "source": "plan BridyLzngcGUtpeLQorX1U P-5"
  },
@@ -151,7 +161,9 @@
   "why": "Matt: the sizes are right across every width",
   "status": "accepted",
   "supersedes": [],
-  "amends": [],
+  "amends": [
+   "D-122"
+  ],
   "source": "plan BridyLzngcGUtpeLQorX1U P-4"
  },
  {
@@ -160,7 +172,9 @@
   "title": "Her avatar is the 2D forget-me-not: one flat SVG, five edged petals in a slight pinwheel, a pale eye with three streaks per petal; tipping away is drawn by squashing the plane, lifting the eye, shortening near petals and shading far ones; she moves on held frames, eight drawings a second with eased spacing; the seven moods and five gestures map one to one and the page API is unchanged. Supersedes D-134.",
   "why": "Faster and simpler than 3D or particles, the same in every browser including Safari on his phone, and rated 8.5 of 10 on the brief's six criteria",
   "status": "accepted",
-  "supersedes": [],
+  "supersedes": [
+   "D-134"
+  ],
   "amends": [],
   "source": "plan BridyLzngcGUtpeLQorX1U P-3"
  },
@@ -170,7 +184,9 @@
   "title": "Two themes from one token set, following the system with a toggle in System. Dark: ground #19161C, sunken #141217, surface #221E26, raised #2A2530, text #ECE8E1, quiet #B3ACA2, faint #958E85. Light: ground #F7F2E8, sunken #EFE9DD, surface #FFFDF8, raised #FFFFFF, text #221E1A, quiet #5F5850, faint #6B6359. Supersedes D-077's dark only.",
   "why": "Matt asked for light and dark and chose the warm tint of the flower playground; every text pair passes 4.5:1 on both grounds",
   "status": "accepted",
-  "supersedes": [],
+  "supersedes": [
+   "D-077"
+  ],
   "amends": [],
   "source": "plan BridyLzngcGUtpeLQorX1U P-2"
  },
@@ -180,8 +196,12 @@
   "title": "E.V. Home takes direction C, Linear's inverted L: a dim sidebar (sections, today's three items, Working, System), a raised pane for the current view, a details panel from 1200 px, and on the phone a bottom tab bar whose E.V. tab is her. Captions stays the E.V. tab's content; his sent lines stay as quiet right-aligned lines instead of a 3 s echo. Supersedes D-077's layout and amends D-122.",
   "why": "Matt chose C from three directions on Oct 22 after trying the prototype; it gives Today and running jobs a permanent home without a side column and is the closest to Linear",
   "status": "accepted",
-  "supersedes": [],
-  "amends": [],
+  "supersedes": [
+   "D-077"
+  ],
+  "amends": [
+   "D-122"
+  ],
   "source": "plan BridyLzngcGUtpeLQorX1U P-1"
  },
  {
@@ -730,7 +750,7 @@
   "date": "Oct 19",
   "title": "Motion shows where things went and never makes him wait: only a change of layout moves (her stage stepping down as a fold opens, the side column sliding in from its side, a line opening in place); everything else appears at once; UI moves take at most 0.45 s; her stage and core keep their own pace (0.8 s at most), as do the reveal and the echo of his line (D-122); her reveal ends within 6 s and a tap completes it; nothing he is reading or ticking moves; reduced motion gives the same end state with no movement",
   "why": "The reveal at speech pace capped at 6 s with tap to finish (D-137); the stage's fixed steps (D-122); the column sliding in (D-125); check-offs never move the page (v4 rule 6); reduced motion (D-127); the frame budget (D-135)",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [],
   "amends": [],
   "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474 P-18",
@@ -842,7 +862,7 @@
   "date": "Oct 19",
   "title": "Built for his real windows: every size from a 375 px phone to a 1920 px screen gets one clear layout (his usual is half the laptop, about 735 x 830); chrome gives way so his content gets the room, and the chat box and his current task stay on screen at short heights",
   "why": "In the split pane her words had 129 px in a session, now 391 (B-85, B-86)",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [],
   "amends": [],
   "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474 P-8",
@@ -906,7 +926,7 @@
   "date": "Oct 19",
   "title": "Colour has one meaning and urgent is rare: coral only for an exam today or tomorrow, graded work due today and not ticked, and errors; teal do or done, violet secondary, amber attention; predictable days stay calm",
   "why": "Predictable days read as emergencies (D-143); one job per accent (D-077)",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [],
   "amends": [],
   "source": "plan fab263d8-241e-4c24-b53b-a837df1c9474 P-4",
@@ -1074,7 +1094,7 @@
   "date": "Oct 18",
   "title": "The core's frame budget is measured, not assumed: the harness plays 10 s of speech with wisps and the ring at 390×844 (DPR 3, Chromium, 4× CPU throttle) and passes when at most 5% of frames take longer than 25 ms (one and a half frames at 60 Hz) and the core's own draw is ≤ 8 ms p95 (amended Oct 18: frame intervals cannot go below the harness's vsync floor of about 16.8 ms, so dropped frames are the measure), recording 1280 px too; at run time more than 10% of frames over 25 ms in a rolling 2 s turns wisps off, then halves the body's points, never the Silk outline; Matt's phone check on staging closes it",
   "why": "Silk draws about 3,300 points plus wisps a frame; a jittery or hot core on his phone costs more than a plainer one",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [],
   "amends": []
  },
@@ -1083,7 +1103,7 @@
   "date": "Oct 18",
   "title": "Core v2 replaces the ORB module: Silk body (five translucent bands round v3's hot core and filaments), the nucleus leading on a soft spring, rubato idle drift with glances every 5 to 11 s and a lean toward the pointer, wisps (about 3 a second at 40% opacity, two-octave curl noise, short trails), the ripple, the particle progress ring, and the speech envelope (each streamed word nudges a target over a low floor, followed on a critically damped spring, at most 0.35% of her radius per frame); spec.ui.look.core carries every parameter (the Silk preset's values from the Core Variations canvas) and the size steps of D-122; the page raises five gestures, send, done, error, glance with a direction or target, settle, plus speak(word) and speechEnd; moods stay computeMood's seven; teal and violet only, coral on error; drawn with WebGL, the Canvas 2D path kept as the fallback when WebGL is missing or its context is lost (spec.ui.look.core.renderer; added Oct 18)",
   "why": "The core can nod, look, recoil and settle, not only change state; the speech jitter Matt saw is fixed by a spring, not a random envelope; tuning is data, not code",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [],
   "amends": []
  },
@@ -1606,7 +1626,7 @@
   "date": "Oct 17",
   "title": "E.V. Home looks like A · Aurora: E.V. is a particle core that always stays teal and violet and shows its state by motion; the page is dark only, with one job per accent (teal do it or done, violet secondary, amber needs attention, coral graded or errors), a top bar and a five-tab dock",
   "why": "Your pick from four directions on the design canvas; one shared animation loop keeps it light",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [],
   "amends": []
  },

@@ -112,7 +112,7 @@
       phone: { idle: 236, conversation: 168, session: 128, list: 120, skills: 108 },
       desktop: { idle: 290, conversation: 220, surface: 200 },
     };
-    // B-112 (D-153): under 560 px tall (the phone with its keyboard open) she steps down again, so the composer and her
+    // B-112 (D-225): under 560 px tall (the phone with its keyboard open) she steps down again, so the composer and her
     // current line stay on screen; her words scroll under her as before.
     const STAGE_TINY = {
       phone: { idle: 132, conversation: 104, session: 92, list: 88, skills: 80 },

@@ -4618,7 +4618,7 @@
     "D-146",
     "D-147",
     "D-148",
-    "D-149",
+    "D-221",
     "D-150",
     "D-151",
     "D-160"
@@ -4647,7 +4647,7 @@
     ]
    },
    "motion": {
-    "note": "B-125 (D-163): the look pass reads every CSS transition and animation on the bar and each view at 390 and 1280; none may run longer than maxMs (delay included) outside exempt: her stage (#hero), her core and the header avatar (.ev-av, #top-av), the reveal (.reveal) and the echo of his line (.cap-echo). A view is settled maxMs after the switch, and its reduced-motion screenshot differs from the settled one in at most shotTolerance of its pixels.",
+    "note": "B-125 (D-222): the look pass reads every CSS transition and animation on the bar and each view at 390 and 1280; none may run longer than maxMs (delay included) outside exempt: her stage (#hero), her core and the header avatar (.ev-av, #top-av), the reveal (.reveal) and the echo of his line (.cap-echo). A view is settled maxMs after the switch, and its reduced-motion screenshot differs from the settled one in at most shotTolerance of its pixels.",
     "maxMs": 450,
     "exempt": [
      "#hero",

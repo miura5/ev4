@@ -31,7 +31,7 @@
       } // the audit card (B-85; M is not set yet on the first call)
     }
     function enter(node) {
-      // B-125 (D-163): the view shows at once, one fade of at most 0.2 s on the whole (CSS: .enter)
+      // B-125 (D-222): the view shows at once, one fade of at most 0.2 s on the whole (CSS: .enter)
       if (!node) return;
       node.classList.remove('enter');
       void node.offsetWidth;

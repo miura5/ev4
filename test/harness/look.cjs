@@ -715,7 +715,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
       );
       await page.screenshot({ path: `${shots}/look-weak-marked-${width}.png`, fullPage: true });
     }
-    // B-125 (D-163): every view at 390 and 1280: no transition or animation over 450 ms outside her stage, her core (the
+    // B-125 (D-222): every view at 390 and 1280: no transition or animation over 450 ms outside her stage, her core (the
     // header avatar too), the reveal and the echo of his line; the view settled 450 ms after the switch; and the
     // reduced-motion screenshot the same as the settled one.
     if (['390x844', '1280x800'].includes(width)) {
@@ -780,11 +780,11 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
                   .slice(0, 3)
               );
         ok(
-          `[${width}] ${view.id}: D-163 motion`,
+          `[${width}] ${view.id}: D-222 motion`,
           c.ok && s0 === s1,
           c.detail + (s0 === s1 ? '' : '; the layout still moved after 450 ms: ' + JSON.stringify(moved))
         );
-        // On E.V. the end state is after her reveal, which ends within 6 s (D-163); the settled shot waits it out.
+        // On E.V. the end state is after her reveal, which ends within 6 s (D-222); the settled shot waits it out.
         const ENDS = view.tab === 'ev' ? 6000 : 0;
         if (ENDS) await page.waitForTimeout(ENDS);
         const moving = await settledShot();

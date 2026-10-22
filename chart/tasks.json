@@ -3674,11 +3674,12 @@
   "dod": "One SVG module draws her from spec.ui.look.flower; the seven moods and five gestures map one to one; setMood, gesture, speak and speechEnd unchanged; reduced motion is one still drawing per mood; the WebGL Silk renderer and its fallback removed (git keeps them); the proof",
   "milestone": "v4.5 ui",
   "status": "open",
-  "depends": [],
+  "depends": [
+   "B-205"
+  ],
   "notes": "",
   "commit": null,
-  "source": "plan BridyLzngcGUtpeLQorX1U",
-  "dependsText": "row 3"
+  "source": "plan BridyLzngcGUtpeLQorX1U"
  },
  {
   "id": "B-207",
@@ -3687,11 +3688,12 @@
   "dod": "The harness plays 10 s of speech at 390 × 844 (DPR 3, 4× CPU throttle) and passes at most 5% of frames over 25 ms; a still idle records zero redraws outside the falling petal; the proof",
   "milestone": "v4.5 ui",
   "status": "open",
-  "depends": [],
+  "depends": [
+   "B-206"
+  ],
   "notes": "",
   "commit": null,
-  "source": "plan BridyLzngcGUtpeLQorX1U",
-  "dependsText": "row 4"
+  "source": "plan BridyLzngcGUtpeLQorX1U"
  },
  {
   "id": "B-208",
@@ -3700,11 +3702,12 @@
   "dod": "Three layouts by width: under 600 the tab bar with her as the E.V. tab; 600 to 1199 the dim sidebar beside the raised pane; from 1200 the right panel too; the top bar and dock gone; content capped at 680 px; the proof",
   "milestone": "v4.5 ui",
   "status": "open",
-  "depends": [],
+  "depends": [
+   "B-204"
+  ],
   "notes": "",
   "commit": null,
-  "source": "plan BridyLzngcGUtpeLQorX1U",
-  "dependsText": "row 2"
+  "source": "plan BridyLzngcGUtpeLQorX1U"
  },
  {
   "id": "B-209",
@@ -3713,11 +3716,13 @@
   "dod": "Captions in the pane; stage sizes by layout and state (phone 104, sidebar 112 or 128, wide 140 or 168, session 70%); reading back and short heights fold her to 24 px in the pane header with Back to now; neutral send that fills when he types; the proof",
   "milestone": "v4.5 ui",
   "status": "open",
-  "depends": [],
+  "depends": [
+   "B-206",
+   "B-208"
+  ],
   "notes": "",
   "commit": null,
-  "source": "plan BridyLzngcGUtpeLQorX1U",
-  "dependsText": "rows 4, 6"
+  "source": "plan BridyLzngcGUtpeLQorX1U"
  },
  {
   "id": "B-210",
@@ -3726,11 +3731,12 @@
   "dod": "Surfaces open in the right panel from 1200 px and in the sheet below; jobs are one line in the pane and one row under Working; your-turn cards act in place and paint on the tap frame; the proof",
   "milestone": "v4.5 ui",
   "status": "open",
-  "depends": [],
+  "depends": [
+   "B-209"
+  ],
   "notes": "",
   "commit": null,
-  "source": "plan BridyLzngcGUtpeLQorX1U",
-  "dependsText": "row 7"
+  "source": "plan BridyLzngcGUtpeLQorX1U"
  },
  {
   "id": "B-211",
@@ -3739,11 +3745,12 @@
   "dod": "Session bar in the pane header; one petal lit per answer, the ring gone; answers numbered with keys 1 to 4; the right panel lists the set; each answer saved as given; the result shows on Today, Progress and Record at once; folds to its bar; a reload keeps it; the proof",
   "milestone": "v4.5 ui",
   "status": "open",
-  "depends": [],
+  "depends": [
+   "B-209"
+  ],
   "notes": "",
   "commit": null,
-  "source": "plan BridyLzngcGUtpeLQorX1U",
-  "dependsText": "row 7"
+  "source": "plan BridyLzngcGUtpeLQorX1U"
  },
  {
   "id": "B-212",
@@ -3752,11 +3759,12 @@
   "dod": "Both follow the session pattern of row 9: bar in the pane header, steps in the pane, list in the right panel; their logic unchanged; the proof",
   "milestone": "v4.5 ui",
   "status": "open",
-  "depends": [],
+  "depends": [
+   "B-211"
+  ],
   "notes": "",
   "commit": null,
-  "source": "plan BridyLzngcGUtpeLQorX1U",
-  "dependsText": "row 9"
+  "source": "plan BridyLzngcGUtpeLQorX1U"
  },
  {
   "id": "B-213",
@@ -3765,11 +3773,12 @@
   "dod": "32 px rows (44 on the phone), folds, the view switch in the pane header or a row on the phone, details in the right panel from 1200 px; status as coloured words; the proof",
   "milestone": "v4.5 ui",
   "status": "open",
-  "depends": [],
+  "depends": [
+   "B-208"
+  ],
   "notes": "",
   "commit": null,
-  "source": "plan BridyLzngcGUtpeLQorX1U",
-  "dependsText": "row 6"
+  "source": "plan BridyLzngcGUtpeLQorX1U"
  },
  {
   "id": "B-214",
@@ -3778,11 +3787,13 @@
   "dod": "System follows row 11's pattern; the toggle (system, light, dark) stored per device; the proof",
   "milestone": "v4.5 ui",
   "status": "open",
-  "depends": [],
+  "depends": [
+   "B-204",
+   "B-213"
+  ],
   "notes": "",
   "commit": null,
-  "source": "plan BridyLzngcGUtpeLQorX1U",
-  "dependsText": "rows 2, 11"
+  "source": "plan BridyLzngcGUtpeLQorX1U"
  },
  {
   "id": "B-215",
@@ -3791,11 +3802,13 @@
   "dod": "When a job finishes or a your-turn arrives off the E.V. tab, her sidebar or tab-bar flower turns to face him with the top petal lit and her status reads something's ready, until he opens it; no badge anywhere; the proof",
   "milestone": "v4.5 ui",
   "status": "open",
-  "depends": [],
+  "depends": [
+   "B-206",
+   "B-210"
+  ],
   "notes": "",
   "commit": null,
-  "source": "plan BridyLzngcGUtpeLQorX1U",
-  "dependsText": "rows 4, 8"
+  "source": "plan BridyLzngcGUtpeLQorX1U"
  },
  {
   "id": "B-216",
@@ -3804,11 +3817,12 @@
   "dod": "Interface transitions at full frame rate with eases (view settle 0.16 s, folds 0.28 s, cap 0.45 s); a check fails any stepped timing outside her module; reduced motion gives the same end states; the proof",
   "milestone": "v4.5 ui",
   "status": "open",
-  "depends": [],
+  "depends": [
+   "B-208"
+  ],
   "notes": "",
   "commit": null,
-  "source": "plan BridyLzngcGUtpeLQorX1U",
-  "dependsText": "row 6"
+  "source": "plan BridyLzngcGUtpeLQorX1U"
  },
  {
   "id": "B-217",
@@ -3817,11 +3831,13 @@
   "dod": "No open task, rule or test cites D-149, D-163, D-135 or D-153 as current; they cite the new tenets; lint green; the proof",
   "milestone": "v4.5 ui",
   "status": "open",
-  "depends": [],
+  "depends": [
+   "B-215",
+   "B-216"
+  ],
   "notes": "",
   "commit": null,
-  "source": "plan BridyLzngcGUtpeLQorX1U",
-  "dependsText": "rows 13, 14"
+  "source": "plan BridyLzngcGUtpeLQorX1U"
  },
  {
   "id": "B-218",
@@ -3830,10 +3846,25 @@
   "dod": "Matt uses staging at 735 × 830, a third of the ultrawide and his phone, and says yes; ship live on his OK",
   "milestone": "v4.5 ui",
   "status": "open",
-  "depends": [],
+  "depends": [
+   "B-203",
+   "B-204",
+   "B-205",
+   "B-206",
+   "B-207",
+   "B-208",
+   "B-209",
+   "B-210",
+   "B-211",
+   "B-212",
+   "B-213",
+   "B-214",
+   "B-215",
+   "B-216",
+   "B-217"
+  ],
   "notes": "",
   "commit": null,
-  "source": "plan BridyLzngcGUtpeLQorX1U",
-  "dependsText": "rows 1 to 15"
+  "source": "plan BridyLzngcGUtpeLQorX1U"
  }
 ]
