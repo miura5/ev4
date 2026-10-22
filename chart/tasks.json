@@ -512,7 +512,7 @@
   "depends": [
    "B-26"
   ],
-  "notes": "Oct 21: part 2's drill proven on staging with B-163's migration: runs/restore-drill-20261021-115939317 ok at 322af46, the Oct 18 Sunday backup (515 documents, 24 collections) checked against its manifest, migrated to this build (days, exams, ideas, planedits, sessions, sets, talk, weeks schema 1 to 2; 3 examedits added) and restored (15 written, 501 identical, 2 log entries kept); the first try at 52c5d65 refused legacy copies for their own schema, fixed in 322af46. Left of part 2: the drill stamping system/seed and logging its run in live (a staging restore-drill prompt change, Mac-bound, with Matt at the Mac).",
+  "notes": "Oct 21: part 2's drill proven on staging with B-163's migration: runs/restore-drill-20261021-115939317 ok at 322af46, the Oct 18 Sunday backup (515 documents, 24 collections) checked against its manifest, migrated to this build (days, exams, ideas, planedits, sessions, sets, talk, weeks schema 1 to 2; 3 examedits added) and restored (15 written, 501 identical, 2 log entries kept); the first try at 52c5d65 refused legacy copies for their own schema, fixed in 322af46. Left of part 2: the drill stamping system/seed and logging its run in live (a staging restore-drill prompt change, Mac-bound, with Matt at the Mac).\nMatt's reply (job job-20261022-021528-b-27, Oct 21): Done",
   "commit": null,
   "source": "BACKLOG.md",
   "board": {
@@ -520,8 +520,9 @@
    "why": "A night the Mac was asleep shows on the System tab and is never retried by the cloud",
    "notes": "Oct 18, e99382d (part 1). Part 1 proved: tonight's missed staging Mac evening showed up in the watchdog's report (runs/watchdog-20261019-020143411) and was not retried. evening-mac's push is on. Left: the drill stamping the seed, with you at the Mac"
   },
-  "waitingOn": "Matt",
-  "waitingWhere": "mac"
+  "jobs": [
+   "job-20261022-021528-b-27"
+  ]
  },
  {
   "id": "B-28",
