@@ -1360,11 +1360,12 @@
   "depends": [
    "B-68"
   ],
-  "notes": "Built and on staging (b80eea4): staging weeks migrated to schema 4; the staging weekly (runs/weekly-20261021-132341297) wrote weeks/2026-10-21.insights: weakest E4-8 (1 of 4), what came back most, study against next-day accuracy. Fixture rebuilds byte for byte; harness checks the fold line and make_practice's target. Left (DoD): Matt opens Progress on the staging page, reads the week's three findings and says which line he acted on. The morning's half is B-170. SESSION SUMMARY (Oct 21, v4.2 next steps): filed the hand-off (D-186 to D-190, B-163 to B-165); done B-164, B-137, B-133 (fetch proven, B-168 filed), B-46 (clinical prep brief, staging brief cites Skills Packet pages), B-48 (readiness trend, days 3 and weeks 3), B-167 (live watchdog writes again on v4.2.0), B-169 (release +n in run schemas), B-108, B-45; B-163 restore migrates, proven on the Oct 18 backup, last proof tonight's v4.2 backup; B-72 on staging; B-69 waits on the shadow week; B-166 waits on one line from Matt. Staging at b80eea4 is green; live is 8ec85c4 (v4.2.0). Next open task: B-75.",
+  "notes": "Built and on staging (b80eea4): staging weeks migrated to schema 4; the staging weekly (runs/weekly-20261021-132341297) wrote weeks/2026-10-21.insights: weakest E4-8 (1 of 4), what came back most, study against next-day accuracy. Fixture rebuilds byte for byte; harness checks the fold line and make_practice's target. Left (DoD): Matt opens Progress on the staging page, reads the week's three findings and says which line he acted on. The morning's half is B-170. SESSION SUMMARY (Oct 21, v4.2 next steps): filed the hand-off (D-186 to D-190, B-163 to B-165); done B-164, B-137, B-133 (fetch proven, B-168 filed), B-46 (clinical prep brief, staging brief cites Skills Packet pages), B-48 (readiness trend, days 3 and weeks 3), B-167 (live watchdog writes again on v4.2.0), B-169 (release +n in run schemas), B-108, B-45; B-163 restore migrates, proven on the Oct 18 backup, last proof tonight's v4.2 backup; B-72 on staging; B-69 waits on the shadow week; B-166 waits on one line from Matt. Staging at b80eea4 is green; live is 8ec85c4 (v4.2.0). Next open task: B-75.\nMatt's reply (job job-20261022-021531-b-72, Oct 21): Done",
   "commit": "b80eea4",
   "source": "BACKLOG.md",
-  "waitingOn": "Matt",
-  "waitingWhere": "staging"
+  "jobs": [
+   "job-20261022-021531-b-72"
+  ]
  },
  {
   "id": "B-73",
