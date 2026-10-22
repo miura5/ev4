@@ -335,10 +335,8 @@ function identifierStage({ planned, push, detail, pulledDb, dir, run, def, now, 
     for (const c of EV.identifierCandidates(text))
       if (!found.has(c.key)) found.set(c.key, { ...c, ref, around: EV.idContext(text, c) });
   };
-  for (const w of planned) {
-    if (w.collection === 'idchecks') continue;
-    for (const t of strings(w.data)) look(`${w.collection}/${w.id}`, t);
-  }
+  // A document's strings joined in order, so the words around a value include its neighbors (a reply's question).
+  for (const w of planned) if (w.collection !== 'idchecks') look(`${w.collection}/${w.id}`, strings(w.data).join('\n'));
   if (push) look(`runs/${run.id}`, push);
   if (detail) look(`runs/${run.id}`, detail);
   const fresh = [...found.values()].filter(c => !kept[c.key]);
@@ -554,9 +552,12 @@ export function compute({ spec, dir, validate, at }) {
           problems.push(`${ref}: ${k} is write-once on a Fact (not a mark)`);
       }
     }
-    const vr = validate(w.collection, doc, { id: w.id });
+    // B-163: the restore drill's copies of documents as the backup holds them (a v3-era run, a legacy copy that keeps
+    // the writer it was made by) were checked against the backup by planRestore; only the drill may mark one so.
+    const asWritten = w.asWritten === true && run.pipeline === 'restore-drill';
+    const vr = asWritten ? { ok: true } : validate(w.collection, doc, { id: w.id });
     if (!vr.ok) problems.push(describeErrors(ref, vr).split('\n').slice(0, 2).join(' · '));
-    if (w.op === 'set' && doc.writer && !writersOf(spec, w.collection, w.id).includes(doc.writer))
+    if (!asWritten && w.op === 'set' && doc.writer && !writersOf(spec, w.collection, w.id).includes(doc.writer))
       problems.push(`${ref}: written as ${doc.writer}, not a writer of ${w.collection}`);
     for (const [field, allowed] of Object.entries(spec.collections[w.collection].appends || {})) {
       for (const [p, k] of appendEntries(w.data[field], appendDepth(w.collection, field))) {

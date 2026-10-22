@@ -727,7 +727,10 @@ export function planRestore(b, db, ctx, spec, name = 'backup', versions = regist
         logsKept++;
         continue;
       }
-      writes.push({ op: 'set', collection: c, id: d.id, data: EV.docData(d) });
+      // asWritten (B-163): the record already holds this document as the backup does; planRestore has checked its shape
+      // (a pre-v4 one has none to check), so the run's write check takes its shape and writer from here. The run's
+      // identifier stage still looks at every word of it (B-197).
+      writes.push({ op: 'set', collection: c, id: d.id, data: EV.docData(d), asWritten: true });
       have[d.id] = d;
     }
     const ids = new Set(docs.map(d => d.id));

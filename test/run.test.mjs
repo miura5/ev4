@@ -776,3 +776,30 @@ test('B-197: a pipeline with no judgment step holds a candidate as unsure and go
     delete CODE_STEPS['test-say'];
   }
 });
+
+test('B-163: only the restore drill may mark a write as written; any other pipeline still has its writer checked', () => {
+  const s2 = {
+    ...spec,
+    pipelines: { ...spec.pipelines, 'evening-cloud': { ...DEF, steps: [{ id: 'test-copy', kind: 'code' }] } },
+  };
+  CODE_STEPS['test-copy'] = () => ({
+    writes: [
+      {
+        op: 'set',
+        collection: 'legacy',
+        id: 'v4-x',
+        asWritten: true,
+        data: { schema: 1, writer: 'page', at: AT, source: 'x', migratedTo: 'x/y' },
+      },
+    ],
+  });
+  try {
+    const { dir, lines } = begin();
+    RUN.pulled({ spec: s2, dir, transcript: lines.join('\n') });
+    const r = RUN.compute({ spec: s2, dir, validate, at: AT });
+    assert.equal(r.status, 'refused');
+    assert.match(r.problems.join(' '), /legacy\/v4-x: written as page, not a writer of legacy/);
+  } finally {
+    delete CODE_STEPS['test-copy'];
+  }
+});

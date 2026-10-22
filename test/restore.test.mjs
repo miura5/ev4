@@ -277,3 +277,61 @@ test('B-163: evening-mac names its backup schema versions; health says how many 
     behind: allBehind,
   });
 });
+
+// B-163 as the Oct 21 drills found it: the Wednesday backup held v3-era runs with no v4 envelope, legacy copies that
+// keep the writer that made them (page, worker, …), and the Oct 19 skills-checklist exchange. Each is restored as the
+// backup holds it; the identifier stage (B-197) still looks at every word, and a practice verdict passes it.
+test('B-163, B-197: v3-era runs and legacy copies restore as written; the checklist DOB waits on the judgment and passes', () => {
+  const src = tmp('ev4-src-');
+  pullFixture(src);
+  const db = RUN.loadPulled(src);
+  const v3run = {
+    id: '2026-10-17-daily',
+    at: '2026-10-17T04:47:00-05:00',
+    routine: 'daily',
+    status: 'ok',
+    detail: 'v3 daily run',
+    migratedTo: null,
+    migratedAt: '2026-10-18T10:00:00Z',
+  };
+  const copy = {
+    id: 'v4-talk-2026-10-19-s1',
+    schema: 1,
+    writer: 'page',
+    at: '2026-10-19T18:20:00Z',
+    source: 'E.V. Home',
+    date: '2026-10-19',
+    messages: {
+      'm-20261019-182000000-matt': {
+        role: 'matt',
+        text: 'Skills validation run-through: what is your client’s name and date of birth?',
+      },
+      'm-20261019-182005000-ev': { role: 'ev', text: 'Per the checklist: my name is Ana Reyes, DOB: 04/12/1961.' },
+    },
+    migratedTo: 'talk/2026-10-19',
+  };
+  const b = seal({
+    ...Object.fromEntries(Object.entries(db).filter(([c]) => c !== 'journal' && c !== 'system')),
+    runs: [...(db.runs || []), v3run],
+    legacy: [...(db.legacy || []), copy],
+  });
+  const { dir, r } = drill(b);
+  assert.deepEqual([r.status, r.step], ['waiting', 'identifiers'], JSON.stringify(r.problems));
+  const [c] = r.question.material.candidates;
+  assert.equal(c.where, 'legacy/v4-talk-2026-10-19-s1');
+  assert.match(c.around, /Skills validation run-through/);
+  fs.writeFileSync(
+    path.join(dir, 'answers/identifiers.json'),
+    JSON.stringify({
+      verdicts: [{ key: c.key, verdict: 'practice', reason: 'E.V. playing a skills-checklist client.' }],
+    })
+  );
+  const p = RUN.compute({ spec, dir, validate, at: AT });
+  assert.equal(p.status, 'planned', JSON.stringify(p.problems));
+  const files = p.plan.batches.flat();
+  const read = id => JSON.parse(fs.readFileSync(files.find(f => f.doc_id === id).file_path, 'utf8'));
+  assert.equal(read('2026-10-17-daily').routine, 'daily', 'the v3-era run, as written');
+  assert.equal(read('v4-talk-2026-10-19-s1').writer, 'page', 'the legacy copy keeps its writer');
+  assert.match(JSON.stringify(read('v4-talk-2026-10-19-s1')), /DOB: 04\/12\/1961/, 'practice passes whole');
+  assert.equal(read(c.key).verdict, 'practice', 'and the verdict is kept, so the next drill does not ask again');
+});
