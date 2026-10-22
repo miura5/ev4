@@ -1873,12 +1873,12 @@
   "title": "Live evening-mac runs with its checkout: its first scheduled run (Oct 18, 8:20pm) failed at the gate, \"the E.V. repository is not checked out in this session\" (runs/evening-mac-failed-20261019-012057581), while the staging evening-mac of the same shape ran with it; find the cause (the task was re-saved Oct 18 18:13Z in the desktop app when its push was turned on) and fix the task so its runs start in this repository; nothing deleted (a replacement task retires the old one under spec.tasks.retired)",
   "dod": null,
   "milestone": "M7",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-131"
   ],
-  "notes": "Oct 21 8:20pm: the first scheduled run of the new live evening-mac (trig_01AxnPF3iPyo2BpCQtMdAKP8) failed at the backup (runs/evening-mac-20261022-012105007: canvas, note, mac-files and audit ok; device_commit_files refused: 'Files can't be written here without a grant'). The task's folder access has not been approved in the Claude desktop app. Matt approves it there, then the next run (or one firing) proves it.",
-  "commit": null,
+  "notes": "Proven Oct 21: after Matt approved the task's folder access in the desktop app, one firing of live evening-mac (trig_01AxnPF3iPyo2BpCQtMdAKP8, session cse_01KYzLRapBweDnzi8DPFSt4M) wrote runs/evening-mac-20261022-015207543 ok: Canvas read, backup/E.V.-v4-backup-wednesday.json saved (563 documents), audit 29 calls all printed.",
+  "commit": "b5aec79",
   "source": "BACKLOG.md",
   "board": {
    "row": "v4 B-98: the Mac evening run starts without its code",
@@ -1888,9 +1888,7 @@
     "v4 B-83: the Mac evening run starts without its code"
    ]
   },
-  "waitingOn": "Matt",
-  "renumberedFrom": "B-83",
-  "waitingWhere": "mac"
+  "renumberedFrom": "B-83"
  },
  {
   "id": "B-99",
