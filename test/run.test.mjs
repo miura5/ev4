@@ -219,8 +219,10 @@ test('compute refuses a bad answer, an identifier, a delete, and an append by a 
   RUN.pulled({ spec, dir, transcript: lines.join('\n') });
   answer(dir, { push: 'x'.repeat(200) });
   assert.match(RUN.compute({ spec, dir, validate, at: AT }).problems[0], /note: the answer does not fit its shape/);
+  // B-197: an identifier value no longer refuses outright; it waits on the run's identifiers judgment (tests below).
   answer(dir, { push: 'Room 412 patient, MRN 12345678, asked about insulin' });
-  assert.match(RUN.compute({ spec, dir, validate, at: AT }).problems.join(' '), /medical record number/);
+  const w = RUN.compute({ spec, dir, validate, at: AT });
+  assert.deepEqual([w.status, w.step], ['waiting', 'identifiers']);
   answer(dir, { push: 'Fine' });
   CODE_STEPS['test-delete'] = () => ({ writes: [{ op: 'delete', collection: 'ideas', id: 'x' }] });
   CODE_STEPS['test-append'] = db => ({
@@ -649,4 +651,128 @@ test('B-34: the run keeps its deployed commit, so the nightly lint can tell a st
   });
   assert.equal(JSON.parse(fs.readFileSync(path.join(dir, 'run.json'), 'utf8')).commit, commit);
   assert.equal(JSON.parse(fs.readFileSync(calls[0].args.file_path, 'utf8')).commit, commit);
+});
+
+// ---------------------------------------------------------------- B-197: the identifier check's two stages in a run
+const idAnswer = (dir, verdicts) => {
+  fs.mkdirSync(path.join(dir, 'answers'), { recursive: true });
+  fs.writeFileSync(path.join(dir, 'answers', 'identifiers.json'), JSON.stringify({ verdicts }));
+};
+const planOf = r => {
+  assert.equal(r.status, 'planned', JSON.stringify(r.problems || r.step));
+  const files = r.plan.batches.flat();
+  return {
+    push: r.plan.push,
+    detail: r.plan.detail,
+    steps: r.plan.steps,
+    files,
+    read: f => JSON.parse(fs.readFileSync(f.file_path, 'utf8')),
+  };
+};
+// Oct 19: in a skills validation run-through Matt asked E.V. for her client's name and date of birth, per the checklist.
+const CHECKLIST =
+  'Skills check, step 2 of the validation checklist: client Ana Reyes, DOB: 04/12/1961, here for a head-to-toe.';
+
+test('B-197: the Oct 19 skills-checklist exchange waits on the judgment, and a practice verdict passes it whole', () => {
+  const { dir, lines } = begin();
+  RUN.pulled({ spec, dir, transcript: lines.join('\n') });
+  answer(dir, { push: CHECKLIST.slice(0, 118) });
+  const w = RUN.compute({ spec, dir, validate, at: AT });
+  assert.deepEqual([w.status, w.step], ['waiting', 'identifiers']);
+  assert.equal(w.question.judgment, EV.ID_JUDGMENT);
+  const [c] = w.question.material.candidates;
+  assert.equal(c.kind, 'has a date of birth');
+  assert.match(c.around, /validation checklist/, 'the judgment sees the words around it');
+  idAnswer(dir, [{ key: c.key, verdict: 'practice', reason: 'A step of a skills validation checklist.' }]);
+  const p = planOf(RUN.compute({ spec, dir, validate, at: AT }));
+  assert.equal(p.push, CHECKLIST.slice(0, 118), 'practice passes untouched');
+  const kept = p.files.find(f => f.collection === 'idchecks');
+  assert.equal(kept.doc_id, c.key);
+  const doc = p.read(kept);
+  assert.deepEqual(
+    [doc.verdict, doc.by, doc.writer, doc.kind],
+    ['practice', 'judgment', 'evening-cloud', 'has a date of birth']
+  );
+  assert.ok(!JSON.stringify(doc).includes('04/12/1961'), 'the verdict keeps a fingerprint, never the value');
+  assert.match(p.steps.find(x => x.id === 'identifiers').detail, /1 detail checked: from practice, kept/);
+  assert.equal(p.detail, undefined, 'practice adds nothing to the run line');
+});
+
+test('B-197: a real-looking MRN with no practice context is held back alone, and a missing verdict counts as unsure', () => {
+  const { dir, lines } = begin();
+  RUN.pulled({ spec, dir, transcript: lines.join('\n') });
+  answer(dir, { push: 'Asked about insulin for MRN 4417920 tonight' });
+  const w = RUN.compute({ spec, dir, validate, at: AT });
+  const [c] = w.question.material.candidates;
+  idAnswer(dir, [{ key: c.key, verdict: 'real', reason: 'Reads as a patient from clinical.' }]);
+  const p = planOf(RUN.compute({ spec, dir, validate, at: AT }));
+  assert.equal(p.push, 'Asked about insulin for [left out] tonight', 'only that value is held back');
+  assert.equal(p.read(p.files.find(f => f.collection === 'idchecks')).verdict, 'real');
+  assert.match(p.detail, /1 detail that could be a real patient's left out \(B-04\)/);
+  idAnswer(dir, []);
+  const q = planOf(RUN.compute({ spec, dir, validate, at: AT }));
+  assert.equal(q.push, 'Asked about insulin for [left out] tonight');
+  assert.equal(q.read(q.files.find(f => f.collection === 'idchecks')).verdict, 'unsure');
+});
+
+test("B-197: a verdict already kept is reused (a restore never re-judges what passed); Matt's own answer overrides", () => {
+  const key = EV.idKey('DOB: 04/12/1961');
+  const kept = (by, verdict) => ({
+    op: 'set',
+    collection: 'idchecks',
+    id: by === 'matt' ? key + '-matt' : key,
+    data: {
+      schema: 1,
+      writer: 'evening-cloud',
+      at: AT,
+      source: 'restore',
+      release: 'v4.0.0',
+      key,
+      verdict,
+      reason: 'kept',
+      kind: 'has a date of birth',
+      ref: 'talk/2026-10-19',
+      by,
+    },
+  });
+  for (const [rows, push] of [
+    [[kept('judgment', 'practice')], CHECKLIST.slice(0, 118)],
+    [[kept('judgment', 'unsure')], CHECKLIST.slice(0, 118).replace('DOB: 04/12/1961', '[left out]')],
+    [[kept('judgment', 'unsure'), kept('matt', 'practice')], CHECKLIST.slice(0, 118)],
+  ]) {
+    CODE_STEPS['test-restore'] = () => ({ writes: rows });
+    try {
+      const s2 = {
+        ...spec,
+        pipelines: {
+          ...spec.pipelines,
+          'evening-cloud': { ...DEF, steps: [{ id: 'test-restore', kind: 'code' }, ...DEF.steps] },
+        },
+      };
+      const { dir, lines } = begin();
+      RUN.pulled({ spec: s2, dir, transcript: lines.join('\n') });
+      answer(dir, { push: CHECKLIST.slice(0, 118) });
+      const p = planOf(RUN.compute({ spec: s2, dir, validate, at: AT }));
+      assert.equal(p.push, push, JSON.stringify(rows.map(r => r.data.verdict)));
+    } finally {
+      delete CODE_STEPS['test-restore'];
+    }
+  }
+});
+
+test('B-197: a pipeline with no judgment step holds a candidate as unsure and goes on', () => {
+  const s2 = {
+    ...spec,
+    pipelines: { ...spec.pipelines, 'evening-cloud': { ...DEF, steps: [{ id: 'test-say', kind: 'code' }] } },
+  };
+  CODE_STEPS['test-say'] = () => ({ push: 'Tonight: MRN 4417920 asked about insulin' });
+  try {
+    const { dir, lines } = begin();
+    RUN.pulled({ spec: s2, dir, transcript: lines.join('\n') });
+    const p = planOf(RUN.compute({ spec: s2, dir, validate, at: AT }));
+    assert.equal(p.push, 'Tonight: [left out] asked about insulin');
+    assert.ok(!p.files.some(f => f.collection === 'idchecks'), 'no verdict is kept where no judgment looked');
+  } finally {
+    delete CODE_STEPS['test-say'];
+  }
 });

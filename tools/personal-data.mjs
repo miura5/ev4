@@ -24,6 +24,7 @@ export const RECORD_COLLECTIONS = [
   'weeks',
   'runs',
   'health',
+  'idchecks',
   'state',
   'sessions',
   'ideas',

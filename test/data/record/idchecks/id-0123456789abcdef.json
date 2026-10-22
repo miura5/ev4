@@ -1,0 +1,13 @@
+{
+ "schema": 1,
+ "writer": "restore-drill",
+ "at": "2026-10-01T18:20:00.000Z",
+ "source": "restore-drill restore-drill-20261001-182000000",
+ "release": "v4.4.0",
+ "key": "id-0123456789abcdef",
+ "verdict": "practice",
+ "reason": "Part of a skills validation run-through: the client belongs to the practice scenario.",
+ "kind": "has a date of birth",
+ "ref": "talk/2026-10-01",
+ "by": "judgment"
+}

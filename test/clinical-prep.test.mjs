@@ -193,18 +193,27 @@ test('B-46: the worker gets the clinical day, the packet passages with their pag
   assert.match(res.result.text, /SKILLS PACKET, p\. 12/);
 });
 
-test('B-46 (B-04): a brief that names what could be a patient is refused before anything is written', () => {
+test('B-46 (B-04), B-197: a brief that names what could be a real patient waits on the judgment; real holds it back', () => {
   const db = workerDb();
   const dir = worker(db, 'job-20261021-193000-clinical-prep');
   RUN.compute({ spec, dir, validate, at: AT });
   answer(dir, { text: 'Your patient in room 412 is on a cardiac diet; review vitals (SKILLS PACKET, p. 14).' });
-  const r = RUN.compute({ spec, dir, validate, at: AT });
-  assert.equal(r.status, 'refused');
-  assert.match(r.problems.join(' '), /room number/);
-  assert.ok(
-    !fs.existsSync(path.join(dir, 'plan.json')) ||
-      !/room 412/.test(fs.readFileSync(path.join(dir, 'plan.json'), 'utf8'))
+  const w = RUN.compute({ spec, dir, validate, at: AT });
+  assert.deepEqual([w.status, w.step], ['waiting', 'identifiers']);
+  const [c] = w.question.material.candidates;
+  assert.match(c.kind, /room number/);
+  fs.writeFileSync(
+    path.join(dir, 'answers', 'identifiers.json'),
+    JSON.stringify({ verdicts: [{ key: c.key, verdict: 'real', reason: 'A patient on his clinical unit.' }] })
   );
+  const r = RUN.compute({ spec, dir, validate, at: AT });
+  assert.equal(r.status, 'planned', JSON.stringify(r.problems));
+  const written = r.plan.batches
+    .flat()
+    .map(f => fs.readFileSync(f.file_path, 'utf8'))
+    .join('\n');
+  assert.ok(!/room 412/.test(written), 'the value is held back from every write');
+  assert.match(written, /\[left out\]/);
 });
 
 test('B-46: the greeting offers the brief the day before a clinical day, once, and never after one was asked for', () => {

@@ -210,9 +210,9 @@
           inp.focus();
           return;
         }
-        const w = E.scanIdentifiers(t);
+        const w = idUnpassed(t); // B-197: values only
         if (w.length) {
-          toast('That ' + w[0] + '. Leave real patient details out.');
+          toast('That looks like it ' + w[0].why + '. Take that detail out first.');
           return;
         }
         guard(

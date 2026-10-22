@@ -209,9 +209,15 @@
           r = { text: got[1] ? '[p1] ' + got[1] + '\n' : '', pages: 1 };
           ocrPages = got[1] ? [1] : [];
         }
-        const flagged = E.scanIdentifierValues(r.text);
-        if (flagged.length)
-          return finish(`**${name}** ${flagged[0]}, so I didn't save it. Remove the detail and attach it again.`);
+        // B-197: a value that could be an identifier is looked at with the words around it (a case study's client is
+        // practice and stays); one that could be a real patient's is left out of what is saved, and the rest is kept.
+        const g = await idGate(r.text, {
+          ref: 'materials/upload',
+          strict: false,
+          context: 'A course file Matt attached: ' + name,
+        });
+        const leftOut = g.ok ? 0 : g.held.length;
+        if (leftOut) r = { ...r, text: g.left };
         const existingIds = [...(LIB.mats || []).map(m => m.id), ...T.uploads.keys()];
         const u = E.materialFromUpload(
           { title: name, text: r.text, fileType: type === 'text' ? 'text' : type, pages: r.pages, ocrPages },
@@ -229,8 +235,11 @@
         const gaps = unread.length
           ? ` I couldn't read ${plural(unread.length, 'page')} that ${unread.length > 1 ? 'are' : 'is'} only a picture${canSee ? '' : ' (reading pictures isn’t available in this view)'}.`
           : '';
+        const held = leftOut
+          ? ` I left out ${leftOut === 1 ? 'one detail' : leftOut + ' details'} that could be a real patient’s.`
+          : '';
         return finish(
-          `Saved **${name}** to your library (${bits}).${gaps} Ask me anything about it, or say "quiz me on it".`,
+          `Saved **${name}** to your library (${bits}).${gaps}${held} Ask me anything about it, or say "quiz me on it".`,
           [{ type: 'material', id: u.id }]
         );
       } catch (e) {

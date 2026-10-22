@@ -223,7 +223,8 @@ export const PAGE_SPEC_KEYS = [
 ];
 // Notes the validator ignores (core/validate.mjs) leave the page's schemas; x-ev keeps only its documents map. A map
 // of names to schemas (properties, $defs and the like) keeps every name: a field called title is not a note.
-const NOTE_KEYS = new Set(['description', '$comment', 'title', 'examples']);
+// $schema and $id too: the validator ignores both (core/validate.mjs), so the page's copies leave them out (B-197).
+const NOTE_KEYS = new Set(['description', '$comment', 'title', 'examples', '$schema', '$id']);
 const NAME_MAPS = new Set(['properties', 'patternProperties', '$defs', 'definitions', 'dependentSchemas']);
 const schemaForPage = o =>
   Array.isArray(o)

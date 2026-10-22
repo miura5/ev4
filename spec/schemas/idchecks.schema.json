@@ -1,0 +1,97 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/idchecks",
+ "title": "idchecks/<id-key>[-matt]",
+ "description": "B-197: one kept identifier verdict, under the value's fingerprint, never the value",
+ "x-ev": {
+  "collection": "idchecks",
+  "class": "Log",
+  "writers": [
+   "page",
+   "morning",
+   "evening-cloud",
+   "evening-mac",
+   "weekly",
+   "worker",
+   "watchdog",
+   "restore-drill"
+  ],
+  "schema": 1
+ },
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "page",
+    "morning",
+    "evening-cloud",
+    "evening-mac",
+    "weekly",
+    "worker",
+    "watchdog",
+    "restore-drill"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "release": {
+   "type": "string",
+   "pattern": "^v\\d+(\\.\\d+){0,2}(\\+[0-9a-z]+)?$"
+  },
+  "key": {
+   "type": "string",
+   "pattern": "^id-[0-9a-f]{16}$"
+  },
+  "verdict": {
+   "enum": [
+    "practice",
+    "real",
+    "unsure"
+   ]
+  },
+  "reason": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 200
+  },
+  "kind": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 80
+  },
+  "ref": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 120
+  },
+  "by": {
+   "enum": [
+    "judgment",
+    "matt"
+   ]
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "release",
+  "key",
+  "verdict",
+  "reason",
+  "kind",
+  "ref",
+  "by"
+ ],
+ "additionalProperties": false
+}

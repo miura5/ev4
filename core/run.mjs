@@ -311,6 +311,113 @@ const strings = (v, out = []) => {
  * Runs the steps. Returns {status: 'waiting', step, question} while an agent answer is missing, {status: 'refused',
  * problems} when any write fails a check (nothing is planned), or {status: 'planned', plan}.
  */
+/** Every string in a value, with a function that rebuilds the value with each string mapped (for holding values back). */
+function mapStrings(v, f) {
+  if (typeof v === 'string') return f(v);
+  if (Array.isArray(v)) return v.map(x => mapStrings(x, f));
+  if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, mapStrings(x, f)]));
+  return v;
+}
+/**
+ * B-197: the identifier check in a run, after every step has planned its writes. Candidates come from the patterns
+ * (EV.identifierCandidates) in every planned write and in the push and detail lines. One with a kept verdict (idchecks,
+ * pulled or among this plan's own writes, as a restore's are) is decided by it, so nothing is judged twice. The rest wait
+ * on this run's identifiers step: its answer, one verdict per candidate, is kept as idchecks/<key>. A pipeline with no
+ * judgment step (its prompt has no way to answer one) holds them as unsure and says so. Practice passes; real and
+ * unsure hold back only that value ([left out]); the detail line says how many, in plain words.
+ */
+function identifierStage({ planned, push, detail, pulledDb, dir, run, def, now, spec }) {
+  const writer = def.writer || run.pipeline;
+  const own = planned.filter(w => w.collection === 'idchecks').map(w => ({ id: w.id, ...w.data }));
+  const kept = EV.keptVerdicts([...(pulledDb.idchecks || []), ...own]);
+  const found = new Map();
+  const look = (ref, text) => {
+    for (const c of EV.identifierCandidates(text))
+      if (!found.has(c.key)) found.set(c.key, { ...c, ref, around: EV.idContext(text, c) });
+  };
+  for (const w of planned) {
+    if (w.collection === 'idchecks') continue;
+    for (const t of strings(w.data)) look(`${w.collection}/${w.id}`, t);
+  }
+  if (push) look(`runs/${run.id}`, push);
+  if (detail) look(`runs/${run.id}`, detail);
+  const fresh = [...found.values()].filter(c => !kept[c.key]);
+  const same = { planned, push, detail, problems: [], judged: null };
+  if (!found.size) return same;
+  let judged = [];
+  let answered = false;
+  if (fresh.length) {
+    const canAsk = (def.steps || []).some(s => s.kind === 'agent');
+    const answerPath = path.join(dir, 'answers', 'identifiers.json');
+    if (canAsk && !fs.existsSync(answerPath))
+      return {
+        waiting: {
+          status: 'waiting',
+          step: 'identifiers',
+          question: {
+            judgment: EV.ID_JUDGMENT,
+            material: { candidates: fresh.map(c => ({ key: c.key, kind: c.why, where: c.ref, around: c.around })) },
+            output: EV.ID_ANSWER_SHAPE,
+            answerPath,
+          },
+        },
+      };
+    if (canAsk) {
+      const answer = readJson(answerPath);
+      const v = validateAgainst(EV.ID_ANSWER_SHAPE, answer);
+      if (!v.ok)
+        return {
+          ...same,
+          problems: [`identifiers: the answer does not fit its shape: ${describeErrors('answer', v).split('\n')[0]}`],
+        };
+      judged = EV.readVerdicts(fresh, answer);
+      answered = true;
+    } else
+      judged = fresh.map(c => ({ ...c, verdict: 'unsure', reason: 'held where no judgment step could look at it' }));
+  }
+  const verdictOf = c => (kept[c.key] ? kept[c.key].verdict : judged.find(j => j.key === c.key).verdict);
+  const held = [...found.values()].filter(c => verdictOf(c) !== 'practice');
+  const hold = t =>
+    EV.holdBack(
+      t,
+      held.map(c => c.value)
+    );
+  const out = held.length
+    ? planned.map(w => (w.collection === 'idchecks' ? w : { ...w, data: mapStrings(w.data, hold) }))
+    : planned.slice();
+  // Only an answered judgment is kept: a value held where none could look is looked at the next time one can.
+  for (const j of answered ? judged : [])
+    out.push({
+      op: 'set',
+      collection: 'idchecks',
+      id: j.key,
+      data: {
+        schema: 1,
+        writer,
+        at: now,
+        source: `${run.pipeline} ${run.id}`,
+        release: run.release,
+        key: j.key,
+        verdict: j.verdict,
+        reason: EV.holdBack(j.reason, [j.value]).slice(0, 200) || 'no reason given',
+        kind: String(j.why).slice(0, 80),
+        ref: String(j.ref).slice(0, 120),
+        by: 'judgment',
+      },
+    });
+  const n = held.length;
+  const said = n
+    ? `${n} detail${n === 1 ? '' : 's'} that could be a real patient's left out (B-04); ${found.size - n} from practice kept`
+    : `${found.size} detail${found.size === 1 ? '' : 's'} checked: from practice, kept`;
+  return {
+    planned: out,
+    push: push && hold(push),
+    detail: detail ? hold(detail) + (n ? ' · ' + said : '') : n ? said : detail,
+    problems: [],
+    judged: said,
+  };
+}
+
 export function compute({ spec, dir, validate, at }) {
   const run = loadRun(dir);
   const def = pipelineDef(spec, run.pipeline);
@@ -372,12 +479,6 @@ export function compute({ spec, dir, validate, at }) {
         steps.push({ id: s.id, status: 'refused' });
         continue;
       }
-      const ids = strings(answer).flatMap(t => EV.scanIdentifierValues(t));
-      if (ids.length) {
-        problems.push(`${s.id}: the answer ${ids[0]}`);
-        steps.push({ id: s.id, status: 'refused' });
-        continue;
-      }
       r = AGENT_FOLDS[s.fold](answer, db, ctx, spec);
     } else {
       steps.push({ id: s.id, status: 'skipped', detail: `${s.kind} step: printed by its own move` });
@@ -416,7 +517,16 @@ export function compute({ spec, dir, validate, at }) {
       detail: (r.say || []).join(' ').slice(0, 300) || `${(r.writes || []).length} write(s)`,
     });
   }
-  const planned = coalesce(writes);
+  let planned = coalesce(writes);
+  // B-197: the identifier check's two stages. The patterns nominate candidates; a kept verdict decides one already seen;
+  // the rest go to this run's judgment step (or are held as unsure where the pipeline has none).
+  const ids = identifierStage({ planned, push, detail, pulledDb, dir, run, def, now, spec });
+  if (ids.waiting) return ids.waiting;
+  planned = ids.planned;
+  push = ids.push;
+  detail = ids.detail;
+  for (const x of ids.problems) problems.push(x);
+  if (ids.judged) steps.push({ id: 'identifiers', status: 'ok', detail: ids.judged });
   const files = [];
   for (const w of planned) {
     const ref = `${w.collection}/${w.id}`;
@@ -455,8 +565,6 @@ export function compute({ spec, dir, validate, at }) {
           problems.push(`${ref}: ${field}.${p} appended by ${by}; ${field} is appended by ${allowed.join(', ')}`);
       }
     }
-    const found = strings(w.data).flatMap(t => EV.scanIdentifierValues(t));
-    if (found.length) problems.push(`${ref}: ${found[0]}`);
     const size = Buffer.byteLength(JSON.stringify(doc));
     if (spec.capacity.documentBytes && size > spec.capacity.documentBytes)
       problems.push(`${ref}: ${size} bytes, over the ${spec.capacity.documentBytes}-byte budget`);

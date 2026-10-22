@@ -49,16 +49,23 @@
         'Date added'
       );
     });
+    // B-197: nothing is said while he writes; on save a value that could be an identifier is looked at with the entry
+    // around it, and one that could be a real patient's waits on his It's made up or Leave it out.
     $('j-text').addEventListener('input', () => {
-      const w = E.scanIdentifiers($('j-text').value);
-      $('j-warn').textContent = w.length ? 'Check before saving: this ' + w[0] + '. No patient details.' : '';
+      $('j-warn').textContent = '';
     });
-    $('j-add').addEventListener('submit', ev => {
+    $('j-add').addEventListener('submit', async ev => {
       ev.preventDefault();
       const text = $('j-text').value.trim();
       if (!text) return;
-      guard(
-        ev.submitter,
+      const b = ev.submitter;
+      const g = await idGate(text, { ref: 'journal', context: 'A journal entry Matt is saving.' });
+      if (!g.ok) return idChoice($('j-warn'), g, t => saveEntry(b, t));
+      saveEntry(b, text);
+    });
+    function saveEntry(b, text) {
+      return guard(
+        b,
         async () => {
           const at = now();
           const data = { ...envelope('E.V. Home', at), text, kind: $('j-kind').value, createdAt: at };
@@ -72,7 +79,7 @@
         },
         'Entry saved'
       );
-    });
+    }
     render();
     return { changed, lost };
   }

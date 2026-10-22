@@ -171,11 +171,11 @@
       grow();
       syncChips();
       typing(!!input.value.trim());
-      const w = E.scanIdentifiers(input.value);
-      guardEl.hidden = !w.length;
-      guardEl.textContent = w.length
-        ? `This ${w[0]}. Leave real patient details out.${guardFor === input.value || BUILD_ASK.test(input.value) || REPLY_ASK.test(input.value) ? '' : ' Send again to send it anyway.'}`
-        : '';
+      // B-197: nothing is said while he types; a field name alone is never a candidate, and a value is looked at on send.
+      if (!guardEl.hidden && guardFor !== input.value) {
+        guardEl.hidden = true;
+        guardEl.textContent = '';
+      }
     });
     input.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && matchMedia('(pointer: fine)').matches) {
@@ -195,14 +195,14 @@
         toast('Still loading your record.');
         return;
       }
-      const w = E.scanIdentifiers(text);
-      // B-180: a build ask goes into the project record, so an identifier holds it every time, never sent anyway.
-      // B-182: so does a typed reply to a Your turn item ("reply B-12: ...").
+      // B-180: a build ask goes into the project record, so a value that could be an identifier holds it every time,
+      // practice or not (B-197: a field name alone passes). B-182: so does a typed reply to a Your turn item.
       if (BUILDER_HERE && (BUILD_ASK.test(text) || REPLY_ASK.test(text))) {
         guardFor = null;
+        const w = E.identifierCandidates(text, { strict: true });
         if (w.length) {
           guardEl.hidden = false;
-          guardEl.textContent = `This ${w[0]}. A build ask goes into the project record, so take real patient details out first.`;
+          guardEl.textContent = `That looks like it ${w[0].why}. A build ask goes into the project record, so take that detail out first.`;
           return;
         }
         guardEl.hidden = true;
@@ -214,14 +214,39 @@
         else await buildAsk(text);
         return;
       }
-      if (w.length && guardFor !== text) {
+      // B-197: a value that might be an identifier is looked at with the words around it; practice goes straight on.
+      let g = { ok: true };
+      if (E.identifierCandidates(text, { strict: true }).length) {
         guardFor = text;
         guardEl.hidden = false;
-        guardEl.textContent = `This ${w[0]}. Leave real patient details out. Send again to send it anyway.`;
+        guardEl.textContent = 'Checking one detail first…';
+        g = await idGate(text, { ref: 'talk/' + today, context: recentLines(8) });
+        if (input.value.trim() !== text) return; // he changed it meanwhile: his new words are checked on their own send
+      }
+      if (!g.ok) {
+        heldChoice(g);
         return;
       }
       guardFor = null;
       guardEl.hidden = true;
+      await sendText(text);
+    });
+    /** The last n lines of this conversation, as "Matt:" and "E.V.:", for the identifier judgment's context. */
+    function recentLines(n) {
+      return allMsgs()
+        .filter(m => !m.pending && m.text)
+        .slice(-n)
+        .map(m => (m.role === 'matt' ? 'Matt: ' : 'E.V.: ') + String(m.text).replace(/\s+/g, ' ').slice(0, 300))
+        .join('\n');
+    }
+    function heldChoice(g) {
+      idChoice(guardEl, g, t => {
+        guardFor = null;
+        guardEl.hidden = true;
+        return sendText(t);
+      });
+    }
+    async function sendText(text) {
       input.value = '';
       grow();
       typing(false);
@@ -240,5 +265,5 @@
       const mid = await mattSay(text);
       noteAnswer(mid);
       await chat(text, { replyTo: mid });
-    });
+    }
 

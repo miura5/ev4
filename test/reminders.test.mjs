@@ -91,3 +91,33 @@ test('the scheduled tasks keep their hard limits word for word (rendered from sp
       if (prompt) assert.match(prompt, /made-up clients only, never patient identifiers/, key);
     }
 });
+
+// B-197 (Matt, Oct 21: "I shouldn't get falsely flagged just for participating in a fictional scenario"): every message
+// about a possible identifier is a plain question, never an accusation. A string in the page, core or the spec that is
+// about patients, identifiers or a held detail may not say flag, violation, accuse or suspicious.
+const ACCUSING = /\b(?:flag(?:s|ged|ging)?|violat(?:e|es|ed|ion|ions)|accus\w*|suspicious)\b/i;
+const ABOUT_IDS =
+  /\b(?:patient|identifier|detail|DOB|date of birth|record number|room number|made up|practice scenario)/i;
+function accusingStrings(src) {
+  const out = [];
+  for (const m of src.matchAll(/'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`\\]|\\.)*`/g)) {
+    const words = m[0].replace(/\$\{[^}]*\}/g, ' '); // a template's code is not its words
+    if (ACCUSING.test(words) && ABOUT_IDS.test(words)) out.push(m[0].slice(0, 120));
+  }
+  return out;
+}
+test('B-197: no identifier message says flag, violation or accuse, in the page, core or the spec', () => {
+  const files = [
+    ['page/app', appSource(ROOT)],
+    ...fs
+      .readdirSync(path.join(ROOT, 'core'))
+      .filter(f => f.endsWith('.mjs'))
+      .map(f => ['core/' + f, read('core/' + f)]),
+    ['spec/ev.spec.json', read('spec/ev.spec.json')],
+  ];
+  for (const [name, src] of files) assert.deepEqual(accusingStrings(src), [], name);
+  // Planted: the lint catches the old kind of line, and passes the new one.
+  assert.equal(accusingStrings("toast('This was flagged as a patient identifier violation');").length, 1);
+  assert.equal(accusingStrings(`const x = ${JSON.stringify(EV.idHeldLine(1))};`).length, 0);
+  assert.equal(accusingStrings(`const x = ${JSON.stringify(EV.ID_JUDGMENT)};`).length, 0);
+});

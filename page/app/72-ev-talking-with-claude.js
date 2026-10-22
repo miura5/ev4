@@ -233,9 +233,15 @@
           .replace(/\s+/g, ' ')
           .trim()
           .slice(0, n);
+      // B-197: a value no kept verdict has passed is not stored; Matt can say it is from practice, and it goes on.
       const noIds = t => {
-        const w = E.scanIdentifiers(t);
-        if (w.length) throw new Error('That text ' + w[0] + '. Patient identifiers are never stored.');
+        const w = idUnpassed(t);
+        if (w.length)
+          throw new Error(
+            'That text looks like it ' +
+              w[0].why +
+              '. It isn’t stored unless it is from a practice scenario: leave it out, or ask Matt.'
+          );
       };
       const tools = [
         {

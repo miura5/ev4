@@ -14,7 +14,6 @@ export function makeCanvasRules(core) {
     isoOf,
     liveDates,
     materialKind,
-    scanIdentifierValues,
     shortDate,
     similarity,
     stripHtml,
@@ -33,15 +32,10 @@ export function makeCanvasRules(core) {
     const at = isoOf(now);
     const env = () => envelope('canvas-sync', 'Canvas sync', at);
     const out = { dates: [], announcements: [], materials: [], changes: [], candidates: [], refused: [] };
-    // The Canvas ingress (Data architecture, "Four ingresses, one scanner"): a text with a patient identifier value is
-    // refused here, never stored; the rest of the sync goes on, and the run's own scan of every write stays behind it.
-    const refuse = (ref, text) => {
-      const why = scanIdentifierValues(text);
-      if (!why.length) return false;
-      out.refused.push({ ref, why: why[0] });
-      out.changes.push({ type: 'refused', ref, text: `Left out ${ref}: it ${why[0]}` });
-      return true;
-    };
+    // The Canvas ingress (Data architecture, "Four ingresses, one scanner"), B-197: the door no longer refuses a text
+    // with what looks like an identifier value. A case study or a sim's client in a course file is practice; the run's
+    // identifier stage (core/run.mjs) sees every write this sync plans, judges each candidate with the words around it
+    // and holds back only a value that could be a real patient's. refused stays, empty, for the readers that list it.
     const courseName = id => {
       for (const [n, cid] of Object.entries(raw.courses || {})) if (Number(cid) === Number(id)) return n;
       return null;
@@ -103,7 +97,6 @@ export function makeCanvasRules(core) {
       if (prev('announcements', id)) continue;
       const course = courseName(String(a.context_code || '').replace('course_', '')) || a.course || null;
       const text = a.message != null ? stripHtml(a.message) : String(a.text || '');
-      if (refuse('announcements/' + id, (a.title || '') + '\n' + text)) continue;
       out.announcements.push({
         id,
         data: {
@@ -128,7 +121,6 @@ export function makeCanvasRules(core) {
       const id = key + '-' + f.fileId;
       const old = prev('materials', id);
       if (old && old.fileUpdatedAt === f.updatedAt) continue;
-      if (refuse('materials/' + id, (f.title || '') + '\n' + String(f.text || ''))) continue;
       const exam =
         f.exam ||
         ((String(f.module || '').match(/\bExam\s+(\d+)/i) || [])[1]

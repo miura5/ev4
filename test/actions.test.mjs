@@ -35,6 +35,7 @@ test('B-186: spec.actions has its _rules and the v4.4 rows, each a valid row wit
   assert.deepEqual(rows.map(([k]) => k).sort(), [
     'build-ask',
     'design-ask',
+    'id-check',
     'job-fired',
     'plan-ask',
     'reply',
@@ -48,7 +49,7 @@ test('B-186: spec.actions has its _rules and the v4.4 rows, each a valid row wit
     assert.ok(row.callers.every(c => CALLERS.includes(c)) && COSTS.includes(row.cost), name);
   }
   // The tap rows are the page's; the trace and the live deploy are the builder's; the row is the OK for ship-it.
-  for (const n of ['build-ask', 'reply', 'design-ask', 'plan-ask', 'ship-it', 'job-fired'])
+  for (const n of ['build-ask', 'reply', 'design-ask', 'plan-ask', 'ship-it', 'job-fired', 'id-check'])
     assert.deepEqual(spec.actions[n].callers, ['tap']);
   assert.deepEqual([spec.actions.trace.callers, spec.actions['ship-live'].callers], [['builder'], ['builder']]);
   assert.deepEqual(

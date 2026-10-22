@@ -80,6 +80,9 @@
      "collection": "health",
      "derived": false,
      "why": "D-111: the push line names a stale health check; no Derived document reads it"
+    },
+    {
+     "collection": "idchecks"
     }
    ],
    "steps": [
@@ -220,6 +223,9 @@
     },
     {
      "collection": "predictions"
+    },
+    {
+     "collection": "idchecks"
     }
    ],
    "steps": [
@@ -284,6 +290,9 @@
     {
      "collection": "dayedits",
      "windowDays": 8
+    },
+    {
+     "collection": "idchecks"
     }
    ],
    "steps": [
@@ -440,6 +449,9 @@
     {
      "collection": "journal",
      "for": "mac-files"
+    },
+    {
+     "collection": "idchecks"
     }
    ],
    "agentCalls": [
@@ -569,6 +581,9 @@
     {
      "collection": "talk",
      "windowDays": 7
+    },
+    {
+     "collection": "idchecks"
     }
    ],
    "agentCalls": [
@@ -658,6 +673,9 @@
     },
     {
      "collection": "state"
+    },
+    {
+     "collection": "idchecks"
     }
    ],
    "steps": [
@@ -757,6 +775,9 @@
     },
     {
      "collection": "legacy"
+    },
+    {
+     "collection": "idchecks"
     }
    ],
    "agentCalls": [
@@ -1933,6 +1954,23 @@
    "fromV3": "legacy plus v3 originals at cutover",
    "frozen": true,
    "schema": "spec/schemas/legacy.schema.json"
+  },
+  "idchecks": {
+   "class": "Log",
+   "writers": [
+    "page",
+    "morning",
+    "evening-cloud",
+    "evening-mac",
+    "weekly",
+    "worker",
+    "watchdog",
+    "restore-drill"
+   ],
+   "key": "<id-key>[-matt]",
+   "holds": "B-197: one kept identifier verdict, under the value's fingerprint, never the value",
+   "fromV3": "new",
+   "schema": "spec/schemas/idchecks.schema.json"
   }
  },
  "legacyCollections": [
@@ -2837,6 +2875,13 @@
     "failBytes": null,
     "relief": null
    },
+   "idchecks": {
+    "warnDocs": null,
+    "failDocs": null,
+    "warnBytes": null,
+    "failBytes": null,
+    "relief": null
+   },
    "state": {
     "warnDocs": null,
     "failDocs": null,
@@ -3721,6 +3766,92 @@
     "builder"
    ],
    "cost": "ok"
+  },
+  "id-check": {
+   "does": "The page keeps identifier verdicts (B-197): its judgment's practice | real | unsure on a candidate in what Matt typed or uploaded, or his own 'It's made up' (by matt); under the value's fingerprint, never the value",
+   "args": {
+    "type": "object",
+    "properties": {
+     "checks": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": {
+       "type": "object",
+       "properties": {
+        "key": {
+         "type": "string",
+         "pattern": "^id-[0-9a-f]{16}$"
+        },
+        "verdict": {
+         "enum": [
+          "practice",
+          "real",
+          "unsure"
+         ]
+        },
+        "reason": {
+         "type": "string",
+         "minLength": 1,
+         "maxLength": 200
+        },
+        "kind": {
+         "type": "string",
+         "minLength": 1,
+         "maxLength": 80
+        },
+        "ref": {
+         "type": "string",
+         "minLength": 1,
+         "maxLength": 120
+        },
+        "by": {
+         "enum": [
+          "judgment",
+          "matt"
+         ]
+        }
+       },
+       "required": [
+        "key",
+        "verdict",
+        "reason",
+        "kind",
+        "ref",
+        "by"
+       ],
+       "additionalProperties": false
+      }
+     }
+    },
+    "required": [
+     "checks"
+    ],
+    "additionalProperties": false
+   },
+   "writes": [
+    {
+     "collection": "idchecks",
+     "key": "^id-[0-9a-f]{16}(-matt)?$",
+     "ops": [
+      "set"
+     ],
+     "fields": [
+      "key",
+      "verdict",
+      "reason",
+      "kind",
+      "ref",
+      "by",
+      "release"
+     ]
+    }
+   ],
+   "effects": [],
+   "callers": [
+    "tap"
+   ],
+   "cost": "nothing"
   }
  },
  "persona": {
@@ -3989,13 +4120,13 @@
     "check",
     "session"
    ],
-   "guard": "Messages that look like they carry patient identifiers (EVCore.scanIdentifiers) are held once; tools refuse to store them.",
+   "guard": "B-197: a value that could be an identifier (a field name alone never is) gets one quick judgment with the words around it; practice goes on, real or unsure waits on It's made up or Leave it out. Verdicts are kept in idchecks.",
    "errors": "sample and mcp failures are branched by code; nothing retries on its own. Writes to the connector are re-sent only from a 'Try again' click.",
    "sessions": {
     "where": "Entirely in the E.V. conversation (D-073). Nothing in the Study tab.",
     "start": "'Start a study session' (chip, typed, or the study_session tool) binds to the school note Study Watch saved last, read through the reader connector. Without the reader (a browser tab, the iPhone) E.V. says to open E.V. Home in the Claude desktop app on the Mac.",
     "checks": "Every checkMinutes (breaks and +5 min shift it), the page reads latest_note, computes the new writing with EVCore.noteDelta, and asks sample.json with EVCore.checkPrompt for 1 to 3 items. E.V. posts them as a check card; Matt answers in the card or in the composer, and E.V. replies as a study partner. No new writing for idleChecksToEnd checks wraps the session up.",
-    "guard": "#graded notes and new text with what looks like a patient identifier (EVCore.scanIdentifiers) skip that check and say why.",
+    "guard": "#graded notes and new writing with a value no kept verdict has passed (B-197) skip that check and say why.",
     "end": "End (bar, chip, typed or tool) asks sample.json with EVCore.wrapPrompt, then EVCore.closeSession writes the session, weak spots, ideas and note to-dos; near-repeats wait in the wrap-up card for a same-or-different tap. Cards copy as Quizlet text."
    },
    "listEdits": "E.V. edits the daily list with edit_list (D-078): add a study task he or E.V. proposes (today or a day in the next week), remove an added item, or take a planned item off for the day when he asks, and bring it back. Graded work, exams, clinicals and validations stay. Rules in EVCore.listEdit and EVCore.dayView; The calendar is edited the same way with edit_dates (dateEdits).",
@@ -4459,6 +4590,9 @@
     {
      "collection": "system",
      "doc": "yourturn"
+    },
+    {
+     "collection": "idchecks"
     }
    ],
    "onDemand": [

@@ -23,7 +23,7 @@
   "at": "2026-10-16T14:00:00Z"
  },
  "capacity": {
-  "docs": 30,
+  "docs": 31,
   "level": "ok",
   "budgets": [
    {

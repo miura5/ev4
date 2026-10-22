@@ -1525,18 +1525,81 @@ const ok = (name, cond, detail = '') => {
         !ws2[0].derived,
       JSON.stringify(ws2[0] && { o: ws2[0].objective, s: ws2[0].source })
     );
-    // Identifier guard: first send is held, nothing is written
+    // B-197: the identifier check, two stages. A question that only names the fields (his Oct 19 skills checklist ask)
+    // is no candidate and goes straight on; a value is looked at with the words around it (the stand-in model answers
+    // the judgment); practice goes on whole; real or unsure waits on It's made up or Leave it out, in plain words.
+    const idDocs = () => page.evaluate(() => Object.values(window.__db.idchecks || {}));
+    const before0 = (await msgs(page)).length;
+    await send(page, 'What is your client’s name and date of birth?');
+    await page.waitForTimeout(200);
+    ok(
+      'a question that names the fields is no candidate: it is sent, with nothing said and no judgment asked',
+      (await page.isHidden('#ev-guard')) &&
+        (await msgs(page)).some(m => /client’s name and date of birth/.test(m.text)) &&
+        (await msgs(page)).length > before0 &&
+        !(await page.evaluate(() => (window.__jsonCalls || []).some(c => /Candidates \(JSON\)/.test(c.prompt))))
+    );
+    await page.evaluate(() => {
+      window.__sampleFn = p => {
+        if (!/Candidates \(JSON\)/.test(p)) return { items: [] };
+        const rows = JSON.parse(p.split('Candidates (JSON): ')[1].split('\n')[0]);
+        return {
+          verdicts: rows.map(r => ({
+            key: r.key,
+            verdict: /checklist/.test(r.around) ? 'practice' : 'unsure',
+            reason: /checklist/.test(r.around) ? 'A step of a skills validation checklist.' : 'Nothing says.',
+          })),
+        };
+      };
+    });
+    await send(page, 'For the checklist: the client is Ana Reyes, DOB: 04/12/1961');
+    await page.waitForTimeout(300);
+    const kept1 = await idDocs();
+    ok(
+      'a practice value passes whole after one judgment, and its verdict is kept without the value',
+      (await page.isHidden('#ev-guard')) &&
+        (await msgs(page)).some(m => /DOB: 04\/12\/1961/.test(m.text)) &&
+        kept1.some(d => d.verdict === 'practice' && d.by === 'judgment' && d.writer === 'page') &&
+        !JSON.stringify(kept1).includes('04/12/1961'),
+      JSON.stringify(kept1)
+    );
     const before2 = (await msgs(page)).length;
     await page.fill('#ev-input', 'The resident in room 12 was confused');
     await page.click('#ev-send');
-    await page.waitForTimeout(150);
+    await page.waitForTimeout(300);
+    const guardText = await page.textContent('#ev-guard');
     ok(
-      'identifier guard holds the message',
+      'an unsure value waits on him in plain words, with It’s made up and Leave it out, and nothing is sent',
       !(await page.isHidden('#ev-guard')) &&
         (await msgs(page)).length === before2 &&
-        /room number/.test(await page.textContent('#ev-guard')),
-      await page.textContent('#ev-guard')
+        /could be a real patient’s/.test(guardText) &&
+        !/flag|violation/i.test(guardText) &&
+        (await page.locator('#ev-guard button').count()) === 2,
+      guardText
     );
+    await page.screenshot({ path: `${shots}/id-held-${scheme}.png` });
+    await page.locator('#ev-guard button', { hasText: 'Leave it out' }).click();
+    await page.waitForTimeout(300);
+    ok(
+      'Leave it out sends his words with only that detail left out',
+      (await page.isHidden('#ev-guard')) && (await msgs(page)).some(m => m.text === 'The [left out] was confused'),
+      JSON.stringify((await msgs(page)).slice(-2).map(m => m.text))
+    );
+    await page.fill('#ev-input', 'Sim lab: the resident in room 7 was confused');
+    await page.click('#ev-send');
+    await page.waitForTimeout(300);
+    await page.locator('#ev-guard button', { hasText: 'It’s made up' }).click();
+    await page.waitForTimeout(300);
+    const kept2 = await idDocs();
+    ok(
+      'It’s made up sends his words whole and keeps his answer, which every later check reads first',
+      (await msgs(page)).some(m => m.text === 'Sim lab: the resident in room 7 was confused') &&
+        kept2.some(d => d.by === 'matt' && d.verdict === 'practice'),
+      JSON.stringify(kept2.map(d => [d.by, d.verdict]))
+    );
+    await page.evaluate(() => {
+      window.__sampleFn = null;
+    });
     await page.fill('#ev-input', '');
     // Check-in: local quick ask, energy picker writes days/<today>.checkin and posts advice
     await page.evaluate(() => {
@@ -2230,7 +2293,8 @@ const ok = (name, cond, detail = '') => {
         ocrCall.tier === 'default',
       JSON.stringify(ph && { t: ph.text, o: ph.ocr })
     );
-    // A text file with a real-looking record number is refused, nothing saved
+    // B-197: a text file with a real-looking record number the judgment can't call practice is saved with only that
+    // detail left out, and she says so in plain words.
     const before4 = (await mats()).length;
     await page.setInputFiles('#ev-file', {
       name: 'notes.txt',
@@ -2238,10 +2302,14 @@ const ok = (name, cond, detail = '') => {
       buffer: Buffer.from('Client notes. MRN: 4482913. Ambulated twice.'),
     });
     await page.waitForTimeout(500);
+    const notes = (await mats()).find(u => /notes/.test(u.id));
     ok(
-      'an attachment with a record number is refused',
-      (await mats()).length === before4 &&
-        /has a medical record number, so I didn't save it/.test((await msgs(page)).slice(-1)[0].text),
+      'an attachment with a record number is saved with that detail left out',
+      (await mats()).length === before4 + 1 &&
+        notes &&
+        /\[left out\]/.test(notes.text) &&
+        !/4482913/.test(notes.text) &&
+        /I left out one detail that could be a real patient’s/.test((await msgs(page)).slice(-1)[0].text),
       (await msgs(page)).slice(-1)[0].text
     );
     // A PDF: text pages with pdf.js, the image-only page read by Claude
@@ -2856,9 +2924,27 @@ const ok = (name, cond, detail = '') => {
       await page.screenshot({ path: `${shots}/ideas-${scheme}.png`, fullPage: false });
     }
     await page.click('#seg-record [data-v="journal"]');
+    // B-197: nothing is said while he writes; on save an unsure value waits on his choice, and Leave it out saves.
     await page.fill('#j-text', 'Resident in room 12 was confused.');
     await page.waitForTimeout(50);
-    ok('journal warns about identifiers', /room number/.test(await page.textContent('#j-warn')));
+    const jWarn0 = await page.textContent('#j-warn');
+    await page.locator('#j-add button[type="submit"]').click();
+    await page.waitForTimeout(300);
+    ok(
+      'the journal asks about an unsure value on save, in plain words, and saves nothing yet',
+      !jWarn0 &&
+        /could be a real patient’s/.test(await page.textContent('#j-warn')) &&
+        !(await page.evaluate(() => Object.values(window.__db.journal || {}).some(j => /room 12/.test(j.text || '')))),
+      await page.textContent('#j-warn')
+    );
+    await page.locator('#j-warn button', { hasText: 'Leave it out' }).click();
+    await page.waitForTimeout(300);
+    ok(
+      'Leave it out saves the entry with that detail left out',
+      await page.evaluate(() =>
+        Object.values(window.__db.journal || {}).some(j => j.text === '[left out] was confused.')
+      )
+    );
     // System
     await page.click('#tab-system');
     await page.waitForTimeout(100);

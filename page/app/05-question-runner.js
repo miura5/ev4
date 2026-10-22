@@ -379,9 +379,9 @@
     async function gradeOpen(q, text) {
       const o = (EV_SPEC.items && EV_SPEC.items.open) || {};
       text = text.slice(0, o.answerMaxChars || 600);
-      const ids = E.scanIdentifiers(text);
+      const ids = idUnpassed(text); // B-197: values only; a field name alone is no candidate
       if (ids.length) {
-        toast(`Your answer ${ids[0]}. Take it out and check again.`);
+        toast(`Your answer looks like it ${ids[0].why}, so I didn’t send it. Take that detail out and check again.`);
         return null;
       }
       let hits = null;
@@ -452,8 +452,8 @@
           });
           save.addEventListener('click', async () => {
             const text = ta.value.trim().slice(0, 600);
-            const ids = E.scanIdentifiers(text);
-            if (ids.length) return toast(`That ${ids[0]}. Take it out first.`);
+            const ids = idUnpassed(text);
+            if (ids.length) return toast(`That looks like it ${ids[0].why}. Take that detail out first.`);
             const doc = S.answers.find(x => x.id === set.id || x.setId === set.id);
             const tries = (doc && doc.answers && doc.answers[q.id]) || {};
             const atKey = Object.keys(tries)

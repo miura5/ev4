@@ -56,6 +56,7 @@
       concepts: [],
       memory: null,
       yourturn: null, // B-182: system/yourturn, what waits on him by place
+      idchecks: [], // B-197: kept identifier verdicts, by the value's fingerprint
     };
     const NAME = { weakspots: 'weak', 'talk/memory': 'memory' };
     const loaded = new Set();

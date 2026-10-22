@@ -61,6 +61,91 @@
         if (b) b.disabled = false;
       }
     };
+    // B-197 (Matt, Oct 21: "make it so it collects a potential violation, then some actual judgment is used"): the page's
+    // identifier check, two stages. The patterns only nominate values (a field name alone is never one); a verdict kept
+    // in idchecks decides a value seen before; the rest go to one quick model call with the words around them and the
+    // conversation just before. Practice passes. Real or unsure is held, and he decides with It's made up (kept as his
+    // own verdict) or Leave it out. With no model to ask, a candidate is unsure. {ok, text, held, line, release}.
+    async function idGate(text, { ref, context = '', strict = true, judge = true } = {}) {
+      const cands = E.identifierCandidates(text, { strict }).map(c => ({ ...c, around: E.idContext(text, c) }));
+      if (!cands.length) return { ok: true, text, held: [] };
+      const kept = E.keptVerdicts(S.idchecks);
+      const fresh = cands.filter(c => !kept[c.key]);
+      // Unsure until a judgment answers; only an answered judgment is kept, so a later one can still look.
+      let judged = fresh.map(c => ({ ...c, verdict: 'unsure', reason: 'no judgment could run here' }));
+      let answered = false;
+      if (fresh.length && judge && sample && !T.sampleOff)
+        try {
+          const out = await Promise.race([
+            sample.json(E.idJudgmentPrompt(fresh, { context }), { modelTier: 'quick', cache: false }),
+            new Promise(ok => setTimeout(() => ok(null), 6000)),
+          ]);
+          if (out && Array.isArray(out.verdicts)) {
+            judged = E.readVerdicts(fresh, out);
+            answered = true;
+          }
+        } catch {}
+      const keep = (rows, by) => ({
+        checks: rows.map(c => ({
+          key: c.key,
+          verdict: by === 'matt' ? 'practice' : c.verdict,
+          reason:
+            by === 'matt'
+              ? 'Matt: it’s from a practice scenario'
+              : E.holdBack(c.reason, [c.value]).slice(0, 200) || 'no reason given',
+          kind: c.why.slice(0, 80),
+          ref: String(ref || 'E.V. Home').slice(0, 120),
+          by,
+        })),
+      });
+      const ctx = () => ({ now: now(), release: EV_SPEC.release });
+      if (answered && ACT) await run(ACT.tap('id-check', keep(judged, 'judgment'), ctx()).writes).catch(() => {});
+      const verdict = c => (kept[c.key] ? kept[c.key].verdict : judged.find(j => j.key === c.key).verdict);
+      const held = cands.filter(c => verdict(c) !== 'practice');
+      if (!held.length) return { ok: true, text, held: [] };
+      return {
+        ok: false,
+        text,
+        held,
+        line: E.idHeldLine(held.length),
+        left: E.holdBack(
+          text,
+          held.map(c => c.value)
+        ),
+        // His own answer: kept as <key>-matt, which every later check (here and in the runs) reads before a judged one.
+        madeUp: async () => {
+          if (ACT) await run(ACT.tap('id-check', keep(held, 'matt'), ctx()).writes);
+        },
+      };
+    }
+    /**
+     * B-197: the quick form, where no judgment fits the moment (a tool's argument, a session note's new writing, an open
+     * answer): the candidates no kept practice verdict has passed. Field names alone are never candidates.
+     */
+    function idUnpassed(text, { strict = true } = {}) {
+      const kept = E.keptVerdicts(S.idchecks);
+      return E.identifierCandidates(text, { strict }).filter(c => !(kept[c.key] && kept[c.key].verdict === 'practice'));
+    }
+    /** A held value's one neutral line and his two choices, in host; go(text) sends what he chose. */
+    function idChoice(host, g, go) {
+      host.hidden = false;
+      host.textContent = '';
+      const made = el('button', 'qchip', 'It’s made up');
+      const leave = el('button', 'qchip', 'Leave it out');
+      made.type = leave.type = 'button';
+      made.addEventListener('click', async () => {
+        made.disabled = leave.disabled = true;
+        await g.madeUp().catch(() => {});
+        await go(g.text);
+      });
+      leave.addEventListener('click', async () => {
+        made.disabled = leave.disabled = true;
+        await go(g.left);
+      });
+      const row = el('span', 'guard-row');
+      row.append(made, leave);
+      host.append(el('span', 'guard-line', g.line), row);
+    }
     let lastKey = '';
     /** A key for an appended entry written by the page: page-<time>, never the same twice on this page. */
     function pageKey(at) {

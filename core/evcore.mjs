@@ -22,6 +22,7 @@ import { makeMirror } from './mirror.mjs';
 import { makeCanvasRules } from './canvas-rules.mjs';
 import { makeShare } from './share.mjs';
 import { makeItemKinds } from './item-kinds.mjs';
+import { makeIdCheck } from './idcheck.mjs';
 const EVCore = (() => {
   'use strict';
   const VERSION = '__EV_RELEASE__'; // B-149: the build writes the release in (tools/build.mjs RELEASE_SLOT)
@@ -2069,28 +2070,7 @@ const EVCore = (() => {
     for (const p of ID_PATTERNS) if (p.re.test(String(text || ''))) out.push(p.why);
     return out;
   }
-  // For whole files (uploads): course documents name these fields ("label with the patient's name, DOB, MRN"), so only
-  // a value next to them counts. Messages keep the stricter scan above.
-  const ID_VALUE_PATTERNS = [
-    {
-      re: /\b(?:MRN|medical record (?:no\.?|number)|record\s*#)\s*[:#]?\s*\d{4,}/i,
-      why: 'has a medical record number',
-    },
-    {
-      re: /\b(?:DOB|date of birth|born)\s*[:#]?\s*(?:\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.? \d{1,2},? \d{4})/i,
-      why: 'has a date of birth',
-    },
-    {
-      re: /\b(?:patient|pt|resident|client)\b[^.\n]{0,30}\broom\s*#?\s*\d{1,4}[a-z]?\b|\broom\s*#?\s*\d{1,4}[a-z]?\b[^.\n]{0,30}\b(?:patient|pt|resident|client)\b/i,
-      why: "has a patient's room number",
-    },
-    { re: /\b(0?[1-9]|1[0-2])\/(0?[1-9]|[12]\d|3[01])\/(19[2-9]\d|200\d)\b/, why: 'has what looks like a birth date' },
-  ];
-  function scanIdentifierValues(text) {
-    const out = [];
-    for (const p of ID_VALUE_PATTERNS) if (p.re.test(String(text || ''))) out.push(p.why);
-    return out;
-  }
+  const IDC = makeIdCheck(); // B-197: the value patterns only nominate; core/idcheck.mjs judges
   function lint(db, { date } = {}) {
     const issues = [];
     const add = (severity, code, ref, msg) => issues.push({ severity, code, ref, msg });
@@ -2136,8 +2116,12 @@ const EVCore = (() => {
       ...(db.ideas || []).map(i => ['ideas/' + i.id, i.text || '']),
       ...(db.weakspots || []).map(w => ['weakspots/' + w.id, w.topic || '']),
     ];
+    // B-197: a value the patterns nominate and no kept verdict has looked at yet; practice ones are kept and say nothing.
+    const kept = IDC.keptVerdicts(db.idchecks);
     for (const [ref, t] of texts)
-      for (const why of scanIdentifiers(t)) add('error', 'possible-identifier', ref, why + ' (B-04): check and remove');
+      for (const c of IDC.identifierCandidates(t))
+        if (!kept[c.key] || kept[c.key].verdict !== 'practice')
+          add('warning', 'possible-identifier', ref, c.why + ': not yet looked at with the words around it (B-04)');
     if (date)
       for (const e of examViews(db.exams, db.examedits, db.predictions).sort((a, b) => (a.id < b.id ? -1 : 1)))
         if (e.date && e.date < date && e.status !== 'done' && typeof e.score !== 'number' && examIs(e, 'scoredKinds'))
@@ -2192,7 +2176,6 @@ const EVCore = (() => {
     isoOf,
     liveDates,
     materialKind,
-    scanIdentifierValues,
     shortDate,
     similarity,
     stripHtml,
@@ -2421,7 +2404,7 @@ const EVCore = (() => {
     // trust
     lint,
     scanIdentifiers,
-    scanIdentifierValues,
+    ...IDC, // B-197: candidates, fingerprints, the judgment and its kept verdicts
     autoParkEvents,
     toMarkdown,
     buildBackup,

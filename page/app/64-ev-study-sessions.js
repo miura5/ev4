@@ -120,7 +120,7 @@
         });
       } catch {}
     }
-    const idWhy = w => (/^(mentions|looks)/.test(w) ? w : 'has a ' + w);
+    const idWhy = w => (/^(mentions|looks|has)/.test(w) ? w : 'has a ' + w);
 
     async function startSession() {
       unlockAudio();
@@ -250,7 +250,7 @@
           await sessEvent(s, 'idle');
           return;
         }
-        const ids = E.scanIdentifiers(d.added);
+        const ids = idUnpassed(d.added).map(c => c.why); // B-197: values only (a note's "verify DOB" is no candidate)
         if (ids.length) {
           await skip('identifiers', `Your new writing ${idWhy(ids[0])}. I skipped this check.`);
           return;
@@ -405,7 +405,7 @@
           return;
         const seenNext = grew ? SS.seen + added : text;
         const before = grew ? SS.seen.slice(-800) : '';
-        const ids = E.scanIdentifiers(added);
+        const ids = idUnpassed(added).map(c => c.why);
         if (ids.length) {
           SS.seen = seenNext;
           if (!SS.said.has('identifiers')) {

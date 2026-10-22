@@ -105,7 +105,7 @@ test('Canvas: Central dates, graded flags, change detection; documents carry the
   assert.ok(!('title' in r.dates[0].data), 'the hand-written title is kept');
 });
 
-test('B-32: the Canvas ingress refuses a text with a patient identifier value and keeps the rest (positive and negative)', () => {
+test("B-197: the Canvas door passes every text on; its candidates go to the run's judgment, which a case study passes", () => {
   const raw = {
     courses: { 'NUR 112': 199214 },
     planner: [],
@@ -147,16 +147,14 @@ test('B-32: the Canvas ingress refuses a text with a patient identifier value an
     ],
   };
   const r = EV.normalizeCanvas(raw, {}, { now: '2026-10-17T20:15:00Z' });
-  assert.deepEqual(
-    r.announcements.map(a => a.id),
-    ['canvas-22'],
-    'the clean announcement stays (a lab room is no identifier)'
-  );
-  assert.deepEqual(
-    r.materials.map(m => m.id),
-    ['NUR112-502'],
-    'the field names alone are no identifier'
-  );
-  assert.deepEqual(r.refused.map(x => x.ref).sort(), ['announcements/canvas-21', 'materials/NUR112-501']);
-  assert.ok(r.changes.some(c => c.type === 'refused' && /has a medical record number/.test(c.text)));
+  assert.deepEqual(r.announcements.map(a => a.id).sort(), ['canvas-21', 'canvas-22'], 'nothing is refused at the door');
+  assert.deepEqual(r.materials.map(m => m.id).sort(), ['NUR112-501', 'NUR112-502']);
+  assert.deepEqual(r.refused, []);
+  // What the run's identifier stage will look at: a value in the announcement and in the case study, none where a
+  // course file only names the fields.
+  const cands = d => EV.identifierCandidates(JSON.stringify(d.data));
+  assert.equal(cands(r.announcements.find(a => a.id === 'canvas-21')).length, 2, 'the room and the record number');
+  assert.equal(cands(r.announcements.find(a => a.id === 'canvas-22')).length, 0, 'a lab room is no candidate');
+  assert.ok(cands(r.materials.find(m => m.id === 'NUR112-501')).some(c => c.why === 'has a date of birth'));
+  assert.equal(cands(r.materials.find(m => m.id === 'NUR112-502')).length, 0, 'the field names alone are no candidate');
 });

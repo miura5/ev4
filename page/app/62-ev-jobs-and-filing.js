@@ -166,8 +166,8 @@
       brief = String(brief || '')
         .trim()
         .slice(0, 1500);
-      if (E.scanIdentifiers(title + ' ' + brief).length)
-        throw new Error('The brief looks like it has patient details. Leave real patient details out.');
+      const ids = idUnpassed(title + ' ' + brief); // B-197: values only; a practice one he passed goes on
+      if (ids.length) throw new Error(`The brief looks like it ${ids[0].why}. Take that detail out first.`);
       const st = new Date().toISOString().replace(/\D/g, '').slice(0, 14);
       const id = E.safeId(`job-${st.slice(0, 8)}-${st.slice(8)}-${E.slug(title, 24)}`);
       await write({

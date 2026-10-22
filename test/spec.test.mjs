@@ -41,6 +41,7 @@ const COLLECTIONS = [
   'weeks',
   'runs',
   'health',
+  'idchecks',
   'state',
   'sessions',
   'ideas',
