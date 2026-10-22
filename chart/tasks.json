@@ -3884,9 +3884,9 @@
   "id": "B-219",
   "kind": "request",
   "title": "Request (reported Oct 22): run npm run check only for what a task touched, full set nightly and before live",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "npm run check -- --touched runs npm test, the build and only the harnesses whose files or page sources the change since the last staging deploy touched (a map from each harness to the paths it covers, page/app files to the harness that drives that tab; tools/, chart/ and docs touch none; an unmapped path runs everything), and lists the look shots for the views it touched at the four first sizes; the full npm run check stays the nightly and the gate before live: ship live refuses a commit with no full check green at it, recorded by check itself; CLAUDE.md step 5 says so; a test plants a touched path per harness and an unmapped one; the proof",
+  "milestone": "v4.5 ops",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -3897,6 +3897,10 @@
    "row": "v4 B-219: run npm run check only for what a task touched, full set nightly and…",
    "why": "run npm run check only for what a task touched, full set nightly and before live",
    "notes": "Reported Oct 22 from build chat"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-22T19:53:03.944Z"
   }
  }
 ]
