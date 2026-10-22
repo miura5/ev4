@@ -3662,10 +3662,10 @@
   "title": "Theme tokens, light and dark (D-211)",
   "dod": "styles.css carries one token set per theme with D-211's values; the page follows prefers-color-scheme and a stored toggle; a harness check computes every text and shape pair on both grounds (text 4.5:1, shapes 3:1) and fails below; the proof",
   "milestone": "v4.5 ui",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Taken Oct 22.",
-  "commit": null,
+  "notes": "Shipped to staging at 8421d39: ship staging GREEN.",
+  "commit": "8421d39",
   "source": "plan BridyLzngcGUtpeLQorX1U"
  },
  {
