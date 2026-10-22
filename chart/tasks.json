@@ -2890,7 +2890,7 @@
   "milestone": "v4.3 ops",
   "status": "in progress",
   "depends": [],
-  "notes": "Oct 21 drill on the Wednesday v4 backup (runs/restore-drill-20261022-015856964) refused safely, nothing planned: v3-era documents in the live record fail the schema after migration (days/2026-10-16: writer missing; runs/2026-10-17-canvas, runs/2026-10-17-practice: writer missing; 8 runs/2026-10-17-*: schema missing). The Oct 18 backup predates them. Next: restore treats pre-cutover documents without an envelope as written (kept, reported), or a migration gives them one; then the drill again.",
+  "notes": "Oct 21 second drill at b1c57a8 (runs/restore-drill-20261022-023927430) refused safely, nothing planned. The whole-backup shape check is stricter than what live holds: v3-era runs/2026-10-17-* carry schema and writer but no release; 66 legacy/v4-* copies keep their original writer (page, morning, worker…), which legacy's schema does not list; and the identifier check flags talk/2026-10-19 and its legacy copy as holding a date of birth. Next: legacy copies and pre-cutover documents (dated before Oct 18) are kept as written; a flagged identifier is reported to Matt, not silently restored or refused; then the drill again.",
   "commit": null,
   "source": "plan Q6ioLu7LnKC2vvWJkwJWA6"
  },
