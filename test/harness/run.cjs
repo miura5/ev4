@@ -425,6 +425,22 @@ seed.jobs['job-harness-reply-failed'] = {
   brief: 'yes',
   fired: { at: '2026-10-10T15:00:01Z', ok: true },
 };
+// B-194: a second plan in force (a dosage plan), dated well ahead so it adds nothing to today.
+const later = new Date(DAYTIME.getTime() + 20 * 864e5).toISOString().slice(0, 10);
+seed.plans = seed.plans || {};
+seed.plans['ATI-DOSE'] = {
+  ...env('worker', 'Exam plan job', fourHoursAgo),
+  exam: 'ATI-DOSE',
+  title: 'Dosage plan (harness)',
+  days: [
+    {
+      date: later,
+      label: 'Later',
+      dayLabel: '',
+      tasks: [{ id: 'dose-1', kind: 'drill', text: '10 min: conversions' }],
+    },
+  ],
+};
 seed.jobs['job-harness-retro'] = {
   schema: 2,
   writer: 'page',
@@ -1088,6 +1104,45 @@ const ok = (name, cond, detail = '') => {
         t.slice(0, 300)
       );
       await surf.first().screenshot({ path: `${shots}/builder-job-${id.split('-')[2]}.png` });
+    }
+    // B-194: a plan card's Open the plan shows that plan in Study, Plan, which names the other plans in force to switch to.
+    {
+      // The worker's reply to a plan job, as it lands: one message carrying the plan's card.
+      await page.evaluate(async () => {
+        const db = await window.claude.use('db');
+        const at = new Date().toISOString();
+        const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date(at));
+        const key = 'm-' + at.replace(/\D/g, '').slice(0, 8) + '-' + at.replace(/\D/g, '').slice(8, 17) + '-job';
+        await db
+          .collection('talk')
+          .doc(day)
+          .update({
+            messages: {
+              [key]: { role: 'ev', text: 'Your dosage plan is ready.', cards: [{ type: 'plan', id: 'ATI-DOSE' }], at },
+            },
+          });
+      });
+      await page.waitForTimeout(500);
+      const surf = await page.locator('#ev-surf').textContent();
+      await page.locator('#ev-surf button', { hasText: 'Open the plan' }).click();
+      await page.waitForTimeout(300);
+      const t = await page.locator('#plan-card').textContent();
+      ok(
+        "a plan card's Open the plan shows that plan, with the other plans in force named",
+        /Dosage plan \(harness\)/.test(t) && /Other plans: Exam 4 plan/.test(t),
+        t.slice(0, 200) + ' | surface: ' + surf.slice(0, 200)
+      );
+      await page.screenshot({ path: `${shots}/plan-from-card.png` });
+      await page.locator('#plan-card .plan-others button', { hasText: 'Exam 4 plan' }).click();
+      await page.waitForTimeout(200);
+      const t2 = await page.locator('#plan-card').textContent();
+      ok(
+        'switching to another plan shows it',
+        /Exam 4 plan/.test(t2) && /Other plans: Dosage plan/.test(t2),
+        t2.slice(0, 200)
+      );
+      await page.click('#tab-ev');
+      await page.waitForTimeout(200);
     }
     // Captions (B-77): the brand, like tapping her, returns to now from wherever he has scrolled
     await page.evaluate(() => {

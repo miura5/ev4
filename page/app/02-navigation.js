@@ -1,6 +1,13 @@
     // ------------------------------------------------------------ navigation
     const tabs = [...document.querySelectorAll('.tab')];
-    const ui = { tab: 'ev', study: 'review', progress: 'readiness', record: 'sessions', openSet: null };
+    const ui = {
+      tab: 'ev',
+      study: 'review',
+      progress: 'readiness',
+      record: 'sessions',
+      openSet: null,
+      planShown: null,
+    }; // B-194
     function showTab(t) {
       const was = ui.tab;
       ui.tab = t;

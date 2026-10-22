@@ -279,7 +279,9 @@
     }
     function renderPlan() {
       const card = $('plan-card');
+      // B-194: the plan a card opened (or he switched to) first; else the target exam's; else the newest.
       const plan =
+        (ui.planShown && S.plans.find(p => p.id === ui.planShown)) ||
         (M.target && S.plans.find(p => (p.exam || p.id) === M.target.id)) ||
         S.plans
           .slice()
@@ -342,6 +344,26 @@
       head.append(el('h2', null, plan.title || 'Exam plan'));
       const kids = [head, el('p', 'big plan-lead', `${doneN} of ${tasks.length} done`)];
       if (exDay) kids.push(el('p', 'meta', exDay));
+      // B-194: every other plan in force, one line each, to switch to (a dosage plan beside the exam's).
+      const others = S.plans.filter(p => p.id !== plan.id);
+      if (others.length) {
+        const sw = el('p', 'meta plan-others');
+        sw.append('Other plans: ');
+        others.forEach((p, i) => {
+          if (i) sw.append(' · ');
+          sw.append(
+            btn(
+              p.title || 'Exam plan ' + (p.exam || p.id),
+              () => {
+                ui.planShown = p.id;
+                render();
+              },
+              { cls: 'tlink' }
+            )
+          );
+        });
+        kids.push(sw);
+      }
       const upcoming = plan.days.filter(d => d.date >= today),
         past = plan.days.filter(d => d.date < today);
       for (const d of upcoming) {

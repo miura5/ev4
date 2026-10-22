@@ -327,8 +327,10 @@
           box.append(el('p', 'meta', 'This is the plan in force.'));
           a.append(
             btn('Open the plan', () => {
+              ui.planShown = p.id; // B-194: this card's plan, not the target exam's
               showTab('study');
               setStudy('plan');
+              render();
             })
           );
         } else
