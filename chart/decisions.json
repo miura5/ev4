@@ -1,5 +1,190 @@
 [
  {
+  "id": "D-225",
+  "date": "Oct 22",
+  "title": "Built for his real windows, 375 px to 2560 px: under 600 px the tab bar, 600 to 1199 px the sidebar and pane, from 1200 px the details panel too; reading width at most 680 px, extra width becomes margin; rows 32 px from 600 px wide and 44 px on the phone; the chat box and his current task stay on screen at short heights. Supersedes D-153.",
+  "why": "He uses E.V. in a third of his ultrawide, in Claude's side panel, half his laptop and his phone",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan BridyLzngcGUtpeLQorX1U P-16",
+  "kind": "tenet",
+  "scope": [
+   "ui"
+  ],
+  "check": "harness"
+ },
+ {
+  "id": "D-224",
+  "date": "Oct 22",
+  "title": "Her frame budget is measured: 10 s of speech at 390 × 844 (DPR 3, 4× CPU throttle) keeps at most 5% of frames over 25 ms; she redraws only while she moves, at most eight times a second; a still idle draws nothing outside the falling petal. Supersedes D-135.",
+  "why": "D-135 measured the Silk core; the 2D flower needs its own budget",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan BridyLzngcGUtpeLQorX1U P-15",
+  "kind": "tenet",
+  "scope": [
+   "ui"
+  ],
+  "check": "harness"
+ },
+ {
+  "id": "D-223",
+  "date": "Oct 22",
+  "title": "She is one being at every size: the same drawing from 24 px to the stage, never a second icon for her; she faces him when she attends (listening, speaking, an alert, a good moment) and tips away when she thinks or rests; she holds his eye 1 s before tipping away; at rest she costs nothing but a falling petal now and then.",
+  "why": "Presence comes from posture and timing; one drawing keeps her recognisable in the corner",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan BridyLzngcGUtpeLQorX1U P-14",
+  "kind": "tenet",
+  "scope": [
+   "ui"
+  ],
+  "check": "review"
+ },
+ {
+  "id": "D-222",
+  "date": "Oct 22",
+  "title": "Two clocks: she moves on held frames (eight drawings a second, eased spacing, a held first frame, a one-frame counter-turn to face); everything else moves at full frame rate with short eases: a view settles within 0.16 s and is legible on the tap frame, a fold takes 0.28 s, nothing over 0.45 s; only a change of layout moves; nothing he is reading or ticking moves; her reveal ends within 6 s and a tap completes it; reduced motion gives the same end state with no movement. Supersedes D-163.",
+  "why": "Matt: the interface felt slow when it used her frame rate; the contrast is what makes her read as hand-drawn",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan BridyLzngcGUtpeLQorX1U P-13",
+  "kind": "tenet",
+  "scope": [
+   "ui"
+  ],
+  "check": "harness"
+ },
+ {
+  "id": "D-221",
+  "date": "Oct 22",
+  "title": "The interface is grey; colour is meaning, and her blue is hers: teal only for done or right, amber for attention, coral only for an exam today or tomorrow, graded work due today and not ticked, and errors; her blue only on her and what comes from her; buttons, links, focus and selection neutral; colours that must be told apart also differ in lightness. Supersedes D-149.",
+  "why": "One colour per meaning, her identity unmistakable, and nothing reads as a link but a link",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan BridyLzngcGUtpeLQorX1U P-12",
+  "kind": "tenet",
+  "scope": [
+   "ui"
+  ],
+  "check": "harness"
+ },
+ {
+  "id": "D-220",
+  "date": "Oct 22",
+  "title": "When UI tenets disagree in a case, D-208 and D-152 win, then D-146, then the rest; a case still open becomes a blocked question to Matt, never an invented answer.",
+  "why": "The build meets features this doc does not draw; this keeps those cases decided the same way every time",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan BridyLzngcGUtpeLQorX1U P-11"
+ },
+ {
+  "id": "D-219",
+  "date": "Oct 22",
+  "title": "The look pass adds 1706 × 1240 and 2560 × 1240, a third and a half of Matt's 5120 × 1440 monitor, with 1706 among the first shots.",
+  "why": "E.V. lives in a third of his ultrawide most of the time",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan BridyLzngcGUtpeLQorX1U P-10"
+ },
+ {
+  "id": "D-218",
+  "date": "Oct 22",
+  "title": "The command bar is parked; nothing in v4.5 depends on it.",
+  "why": "Matt: not a concern for now",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan BridyLzngcGUtpeLQorX1U P-9"
+ },
+ {
+  "id": "D-217",
+  "date": "Oct 22",
+  "title": "A study session lights one petal per answer; each answer is saved as he gives it; at the end the result shows on Today, Progress and Record at once, and her summary offers Open in Record.",
+  "why": "Replaces the particle ring; Matt asked how progress is recorded and tried it in the prototype",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan BridyLzngcGUtpeLQorX1U P-8"
+ },
+ {
+  "id": "D-216",
+  "date": "Oct 22",
+  "title": "Turning to face him is the notification: when a job finishes or a your-turn arrives while he is elsewhere, her small flower turns to him with the top petal lit and her status reads something's ready until he opens it; no badge.",
+  "why": "Presence instead of chrome (D-150); readable at 24 px",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan BridyLzngcGUtpeLQorX1U P-7"
+ },
+ {
+  "id": "D-215",
+  "date": "Oct 22",
+  "title": "Speech drives her through a three-pose chart, closed, open and wide, chosen from her voice each frame and held two frames at least; the caption carries her words.",
+  "why": "The weakest criterion of the 3D version; the chart is how 2D animation handles speech and never jitters",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan BridyLzngcGUtpeLQorX1U P-6"
+ },
+ {
+  "id": "D-214",
+  "date": "Oct 22",
+  "title": "Her colour is forget-me-not blue, #7AA7FF dark and #2B5BD0 light, used only by her: the flower, her caret, the job spinner and her ideas. The interface is grey: links are text with an underline, focus rings neutral, the primary button solid text colour, send a quiet circle that fills when he types. Violet is retired; secondary tags go grey.",
+  "why": "The flower and her colour tell one story; a grey interface keeps blue from meaning \"click\"; Matt: the teal buttons clashed with her",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan BridyLzngcGUtpeLQorX1U P-5"
+ },
+ {
+  "id": "D-213",
+  "date": "Oct 22",
+  "title": "Her size follows the layout and what is on screen: stage 104 px on the phone, 112 px (under 900 px wide) or 128 px with the sidebar, 140 px or 168 px (taller than 1000 px) wide, 70% in a session; she folds to the 24 px flower in the pane header while reading back or when the screen is shorter than 560 px; on other tabs the 24 px flower in the sidebar or tab bar is her, still while her stage is on screen. Amends D-122's sizes.",
+  "why": "Matt: the sizes are right across every width",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan BridyLzngcGUtpeLQorX1U P-4"
+ },
+ {
+  "id": "D-212",
+  "date": "Oct 22",
+  "title": "Her avatar is the 2D forget-me-not: one flat SVG, five edged petals in a slight pinwheel, a pale eye with three streaks per petal; tipping away is drawn by squashing the plane, lifting the eye, shortening near petals and shading far ones; she moves on held frames, eight drawings a second with eased spacing; the seven moods and five gestures map one to one and the page API is unchanged. Supersedes D-134.",
+  "why": "Faster and simpler than 3D or particles, the same in every browser including Safari on his phone, and rated 8.5 of 10 on the brief's six criteria",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan BridyLzngcGUtpeLQorX1U P-3"
+ },
+ {
+  "id": "D-211",
+  "date": "Oct 22",
+  "title": "Two themes from one token set, following the system with a toggle in System. Dark: ground #19161C, sunken #141217, surface #221E26, raised #2A2530, text #ECE8E1, quiet #B3ACA2, faint #958E85. Light: ground #F7F2E8, sunken #EFE9DD, surface #FFFDF8, raised #FFFFFF, text #221E1A, quiet #5F5850, faint #6B6359. Supersedes D-077's dark only.",
+  "why": "Matt asked for light and dark and chose the warm tint of the flower playground; every text pair passes 4.5:1 on both grounds",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan BridyLzngcGUtpeLQorX1U P-2"
+ },
+ {
+  "id": "D-210",
+  "date": "Oct 22",
+  "title": "E.V. Home takes direction C, Linear's inverted L: a dim sidebar (sections, today's three items, Working, System), a raised pane for the current view, a details panel from 1200 px, and on the phone a bottom tab bar whose E.V. tab is her. Captions stays the E.V. tab's content; his sent lines stay as quiet right-aligned lines instead of a 3 s echo. Supersedes D-077's layout and amends D-122.",
+  "why": "Matt chose C from three directions on Oct 22 after trying the prototype; it gives Today and running jobs a permanent home without a side column and is the closest to Linear",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan BridyLzngcGUtpeLQorX1U P-1"
+ },
+ {
   "id": "D-209",
   "date": "Oct 22",
   "title": "Agent work is one line until opened: a builder or worker job shows as one line with its state (queued, running, shipped to staging, waiting on Matt, done, failed) and its detail opens in place; no feed, no stream of steps",
