@@ -3521,5 +3521,24 @@
   "jobs": [
    "job-20261022-022842-b-196"
   ]
+ },
+ {
+  "id": "B-197",
+  "kind": "request",
+  "title": "Request (reported Oct 21): Let's clarify for the record I did NOT request to turn of patient identifier checks; that was your idea. Sorry to throw you under the bus for the log. While it's frustrating to get flagged just for asking E.V. and her fictional character's name & date of birth during a skill validation practice, I understand why the guardrails are there. My proposal: make the guardrails BETTER. I shouldn't get falsely flagged just for participating in a fictional scenario and I didn't even state a reasonably questionable input; I literally just asked E.V. per the checklist. So to avoid false flagging me, make the system better. Make it so it collects a potential violation, then some actual judgment is used to determine if it's a false flag or not. Because that is ridiculous I get flagged for a skill validation checklist.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "Let's clarify for the record I did NOT request to turn of patient identifier checks; that was your idea. Sorry to throw you under the bus for the log. While it's frustrating to get flagged just for asking E.V. and her fictional character's name & date of birth during a skill validation practice, I understand why the guardrails are there. My proposal: make the guardrails BETTER. I shouldn't get falsely flagged just for participating in a fictional scenario and I didn't even state a reasonably questionable input; I literally just asked E.V. per the checklist. So to avoid false flagging me, make the system better. Make it so it collects a potential violation, then some actual judgment is used to determine if it's a false flag or not. Because that is ridiculous I get flagged for a skill validation checklist.",
+  "reportedAt": "2026-10-22T03:29:40.418Z",
+  "board": {
+   "row": "v4 B-197: Let's clarify for the record I did NOT request to turn of patient…",
+   "why": "Let's clarify for the record I did NOT request to turn of patient identifier checks; that was your idea. Sorry to throw you under the bus for the log. While it's frustrating to get flagged just for asking E.V. and her fictional character's name & date of birth during a skill validation practice, I understand why the guardrails are there. My proposal: make the guardrails BETTER. I shouldn't get falsely flagged just for participating in a fictional scenario and I didn't even state a reasonably questionable input; I literally just asked E.V. per the checklist. So to avoid false flagging me, make the system better. Make it so it collects a potential violation, then some actual judgment is used to determine if it's a false flag or not. Because that is ridiculous I get flagged for a skill validation checklist.",
+   "notes": "Reported Oct 21 from build chat"
+  }
  }
 ]
