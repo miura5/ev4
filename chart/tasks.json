@@ -3157,13 +3157,13 @@
   "title": "The builder's steps (D-194): CLAUDE.md gains a Builder runs section and the ev4-builder prompt a first step that writes /tmp/ev/builder-run; a run started with \"Job <id>\" reads the job with one ArtifactData get and, by kind: build is report bug or request --from-chat --source \"E.V. page, job <id>\" --job <id>, a triage with a definition of done written from Matt's words (D-182), that task taken first in the run (the one exception to D-191's order), built, shipped to staging and traced; reply is log <task> --note --from-job <id> --waiting-on none, then the task taken when it was blocked only on that; design, plan and ship as their rows say; every run ends with trace --job <id>; report gains --job and log gains --from-job (the words from the saved get, never retyped)",
   "dod": "chart tests for report --job (the job id on the task) and log --from-job (the words from a planted get result; a retyped text refused); a lint test greps CLAUDE.md and the rendered builder prompt for the marker step and the section; the builder's prompt hash moves and verify-deploy staging shows its task updated; npm test green; ship staging green; live only on Matt's OK",
   "milestone": "v4.4 builder",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-177",
    "B-178"
   ],
-  "notes": "Taken after B-178: the Builder runs section, the prompt's marker step, report --job and log --from-job.",
-  "commit": null,
+  "notes": "Built and on staging at 3d1e1c3: guard.mjs --mark as the prompt's first step, the Builder runs section, report --job and log --from-job (words from the job's get; a retyped text refused), brief's builder health read from the watchdog's last_run; the builder's prompt updated (update_trigger 01:15Z) and verify-deploy staging shows build.ev4-builder ok.",
+  "commit": "3d1e1c3",
   "source": "plan TbfWAoQEeQixyNKZnEZKvv"
  },
  {
