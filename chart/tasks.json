@@ -1877,7 +1877,7 @@
   "depends": [
    "B-131"
   ],
-  "notes": "Oct 21, Matt at the Mac ('OK: re-create live evening-mac'): created trig_011rC4brSBYFubij7dY4NsDo from this build session (repository checked out, Mac linked), bound to the MacBook Air with the E.V. Study Watch folder, push on, 8:20pm Central, the v4.2 prompt; the old trig_01GbvqgvbaSjvDDpNHum5Nxk disabled and kept (spec.tasks.retired). Done when its first scheduled run (tonight 8:20pm) writes an ok runs/ document.",
+  "notes": "Oct 21 8:20pm: the first scheduled run of the new live evening-mac (trig_01AxnPF3iPyo2BpCQtMdAKP8) failed at the backup (runs/evening-mac-20261022-012105007: canvas, note, mac-files and audit ok; device_commit_files refused: 'Files can't be written here without a grant'). The task's folder access has not been approved in the Claude desktop app. Matt approves it there, then the next run (or one firing) proves it.",
   "commit": null,
   "source": "BACKLOG.md",
   "board": {
@@ -2881,7 +2881,7 @@
   "milestone": "v4.3 ops",
   "status": "in progress",
   "depends": [],
-  "notes": "Proven on staging Oct 21: runs/restore-drill-20261021-115939317 ok, the Oct 18 schema-1 backup migrated and restored; legacy copies kept as written after the first try (runs/restore-drill-20261021-112917045) refused them. Done when tonight's v4.2 backup restores too (the DoD's v4.2 backup).",
+  "notes": "Waits on B-98: tonight's live evening-mac wrote no backup (folder access refused), so the drill on the v4.2 backup waits for the first one that saves.",
   "commit": null,
   "source": "plan Q6ioLu7LnKC2vvWJkwJWA6"
  },
