@@ -25,6 +25,29 @@ export function makeConversation(core) {
     'share-set': 'practice page',
     'clinical-prep': 'clinical brief',
   };
+  /** The part of the Central day an instant falls in: morning (4 to 11), midday (11 to 17), evening (17 to 22), late. */
+  function partOfDay(iso) {
+    const hour = Number((chicagoClock(iso) || '12:00').slice(0, 2));
+    return hour >= 4 && hour < 11
+      ? 'morning'
+      : hour >= 11 && hour < 17
+        ? 'midday'
+        : hour >= 17 && hour < 22
+          ? 'evening'
+          : 'late';
+  }
+  /**
+   * B-190 (Matt, Oct 21): a reopen soon after he left returns him to the conversation where he left it, not a new
+   * greeting. True when he was last on the page within `withinMinutes` and the last greeting he saw was this same
+   * Central day and part of the day; otherwise (the first open in a part of the day, or after the window) she greets.
+   */
+  function resumes({ now, lastSeenAt, lastGreetingAt, withinMinutes = 90 } = {}) {
+    if (!lastSeenAt || !lastGreetingAt) return false;
+    const t = toMs(now || new Date());
+    const seen = toMs(lastSeenAt);
+    if (!(seen <= t) || t - seen > withinMinutes * 60e3) return false;
+    return chicagoDate(lastGreetingAt) === chicagoDate(t) && partOfDay(lastGreetingAt) === partOfDay(t);
+  }
   function greeting(ctx) {
     const c = ctx || {};
     const date = c.date;
@@ -570,5 +593,15 @@ export function makeConversation(core) {
     return { index: i, count: c.messages.length, conversation: c };
   }
 
-  return { greeting, situation, headlinePrompt, checkHeadline, conversations, noteTitle, earlierConversation };
+  return {
+    greeting,
+    situation,
+    headlinePrompt,
+    checkHeadline,
+    conversations,
+    noteTitle,
+    earlierConversation,
+    resumes,
+    partOfDay,
+  };
 }

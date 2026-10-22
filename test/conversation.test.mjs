@@ -547,3 +547,27 @@ test('B-182: Your turn is one chip with its count, inside the three-chip rule, o
   assert.deepEqual(g.chips, ['Start review', 'Your turn (2)', 'Start a study session']);
   assert.ok(EV.greeting({ ...ctx(1), sessionActive: true }).chips.length <= 3);
 });
+
+// ------------------------------------------------------------------------------------------------ B-190 resume on reopen
+test('B-190: a reopen within the window and the same part of the day resumes; otherwise she greets', () => {
+  const r = o => EV.resumes({ withinMinutes: 90, ...o });
+  const now = '2026-10-21T23:30:00Z'; // 6:30pm Central: evening
+  // Back 20 minutes after an evening greeting: resume where he left it.
+  assert.equal(r({ now, lastSeenAt: '2026-10-21T23:10:00Z', lastGreetingAt: '2026-10-21T22:40:00Z' }), true);
+  // Past the window: a new greeting.
+  assert.equal(r({ now, lastSeenAt: '2026-10-21T21:50:00Z', lastGreetingAt: '2026-10-21T22:05:00Z' }), false);
+  // Inside the window but a new part of the day (his last greeting was the afternoon's): a new greeting.
+  assert.equal(r({ now, lastSeenAt: '2026-10-21T22:50:00Z', lastGreetingAt: '2026-10-21T21:30:00Z' }), false);
+  // A new Central day, even a few minutes later: a new greeting.
+  assert.equal(
+    r({ now: '2026-10-22T05:05:00Z', lastSeenAt: '2026-10-22T04:55:00Z', lastGreetingAt: '2026-10-22T04:30:00Z' }),
+    false
+  );
+  // First open ever, or no greeting kept yet: a greeting.
+  assert.equal(r({ now }), false);
+  assert.equal(r({ now, lastSeenAt: '2026-10-21T23:10:00Z' }), false);
+  assert.deepEqual(
+    ['2026-10-21T12:00:00Z', '2026-10-21T18:00:00Z', '2026-10-21T23:00:00Z', '2026-10-22T04:00:00Z'].map(EV.partOfDay),
+    ['morning', 'midday', 'evening', 'late']
+  );
+});

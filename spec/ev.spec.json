@@ -4001,7 +4001,8 @@
    "listEdits": "E.V. edits the daily list with edit_list (D-078): add a study task he or E.V. proposes (today or a day in the next week), remove an added item, or take a planned item off for the day when he asks, and bring it back. Graded work, exams, clinicals and validations stay. Rules in EVCore.listEdit and EVCore.dayView; The calendar is edited the same way with edit_dates (dateEdits).",
    "library": "His course materials (D-079). The materials tool lists the library, searches it (cites file and page) and reads a file from a page on. The composer's attach button adds a PDF, Word, PowerPoint, text file or photo: text is extracted on the page (pdf.js, EVCore.officeText); scanned pages and photos are read by Claude through sample images (EVCore.ocrPrompt); the result is saved as materials/up-… (EVCore.materialFromUpload). Patient identifiers block the save. Graded work stays his alone even when its instructions are in the library.",
    "dateEdits": "E.V. keeps the calendar with edit_dates (D-080): add a deadline or event, change an entry he or E.V. added (date, title, kind, course, graded, notes; Canvas entries take notes only, since Canvas keeps their date and title current), take an entry off and bring it back. Graded work, exams, clinicals and validations from Canvas stay. Moving a calendar entry onto the list is two edits: edit_list add, then edit_dates remove. Rules in EVCore.dateEdit, EVCore.liveDates and EVCore.isFixedDate; Record → Dates has Remove and Bring back too.",
-   "headlineTimeoutMs": 2000
+   "headlineTimeoutMs": 2000,
+   "resumeWithinMinutes": 90
   },
   "look": {
    "name": "A · Aurora (D-077)",

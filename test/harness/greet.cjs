@@ -215,6 +215,70 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         await ctx.close();
       }
     }
+    // B-190: a reopen 20 minutes after an evening greeting returns to the conversation where he left it: the greeting he
+    // saw at its own time, his line after it, no new headline and no model call; only lastSeenAt moves.
+    {
+      const now = ct(today, 19, 30);
+      const ctx = await browser.newContext({
+        viewport: w === 390 ? { width: 390, height: 844 } : { width: 1280, height: 860 },
+        colorScheme: 'dark',
+      });
+      const page = await ctx.newPage();
+      const errors = [];
+      page.on('pageerror', e => errors.push(e.message));
+      const db = base();
+      const ago = m => new Date(now.getTime() - m * 6e4).toISOString();
+      const said = 'Evening, Matt. A line from earlier this evening.';
+      db.talk.memory.lastSeenAt = ago(20);
+      db.talk.memory.headlines = [...db.talk.memory.headlines, { at: ago(50), text: said, by: 'code' }];
+      const id = (m, who) => {
+        const d = ago(m).replace(/\D/g, '');
+        return 'm-' + d.slice(0, 8) + '-' + d.slice(8, 14) + d.slice(14, 17) + '-' + who;
+      };
+      const reply = 'Potassium runs 3.5 to 5.0. Want two quick questions on it before you go?';
+      db.talk[today] = {
+        schema: 3,
+        writer: 'page',
+        at: ago(40),
+        source: 'E.V. Home',
+        date: today,
+        messages: {
+          [id(40, 'matt')]: { role: 'matt', text: 'Quick question about potassium before I go', at: ago(40) },
+          [id(39, 'ev')]: { role: 'ev', text: reply, at: ago(39) },
+        },
+      };
+      await openPage(page, now, db, MODEL);
+      const r = await page.evaluate(() => {
+        const g = document.querySelector('#thread .msg.greet');
+        const mem = (window.__db.talk || {}).memory || {};
+        const mine = [...document.querySelectorAll('#thread .msg.matt')].map(x => x.textContent);
+        const cur = document.querySelector('#thread .msg.ev.current');
+        const box = cur && cur.getBoundingClientRect();
+        return {
+          head: g ? g.querySelector('.bubble').textContent.trim() : null,
+          asked: window.__headlineAsked || 0,
+          n: (mem.headlines || []).length,
+          seen: mem.lastSeenAt,
+          mine: mine.some(t => /potassium before I go/.test(t)),
+          current: cur ? cur.querySelector('.bubble').textContent.trim() : null,
+          visible: !!box && box.height > 0 && box.top >= 0 && box.bottom <= innerHeight,
+        };
+      });
+      ok(
+        `[reopen-within-window ${w}] he returns to the conversation where he left it, with no new greeting`,
+        r.head === said &&
+          r.asked === 0 &&
+          r.n === 2 &&
+          r.mine &&
+          r.current === reply &&
+          r.visible &&
+          Date.parse(r.seen) > Date.parse(ago(2)),
+        JSON.stringify(r)
+      );
+      ok(`[reopen-within-window ${w}] no page errors`, errors.length === 0, errors.join(' | '));
+      await page.screenshot({ path: `${shots}/greet-resume-${w}.png` });
+      await ctx.close();
+    }
     // B-181: the morning after a build, its line sits in her greeting's briefing, after a planted failed run.
     {
       const now = ct(today, 7, 30);

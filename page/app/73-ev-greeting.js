@@ -112,6 +112,43 @@
         })
       );
       const at = now();
+      // B-190: back soon after he left, in the same part of the day: the conversation where he left it, with the greeting
+      // he last saw at its own time (no new headline, no model call); only this visit is marked seen.
+      const lastG = ((S.memory && S.memory.headlines) || []).slice(-1)[0] || null;
+      const conv = (EV_SPEC.ui && EV_SPEC.ui.conversation) || {};
+      if (
+        lastG &&
+        E.resumes({
+          now: at,
+          lastSeenAt: S.memory && S.memory.lastSeenAt,
+          lastGreetingAt: lastG.at,
+          withinMinutes: conv.resumeWithinMinutes || 90,
+        })
+      ) {
+        T.greet = {
+          id: 'm-' + E.compactTime(lastG.at) + '-greeting',
+          role: 'ev',
+          greeting: true,
+          resumed: true,
+          text: lastG.text,
+          lines: g.lines,
+          brief: g.brief,
+          cards: g.cards,
+          at: lastG.at,
+          day: E.chicagoDate(lastG.at),
+          mood: g.mood,
+          chips: g.chips,
+          job: g.job,
+          prep: g.prep,
+        };
+        T.briefOpen = false;
+        T.briefItem = new Set();
+        const msgs = allMsgs();
+        T.scrollTo = (msgs[msgs.length - 1] || T.greet).id;
+        T.firstScroll = true;
+        keepSeen(at, null);
+        return;
+      }
       T.greet = {
         id: msgId('g'),
         role: 'ev',
@@ -153,14 +190,18 @@
           render();
         }
         const shown = { at, text: r.ok ? r.line : g.headline, by: r.ok ? 'model' : 'code' };
-        setTimeout(() => {
-          write({
-            op: 'set',
-            collection: 'talk',
-            id: 'memory',
-            data: memoryEdit({ lastSeenAt: at, headlines: [...last, shown].slice(-7) }, at),
-          }).catch(() => {});
-        }, 1500);
+        keepSeen(at, [...last, shown].slice(-7));
       });
+    }
+    /** This visit marked seen, and the greeting's headline kept with his last 7 (null: a resume keeps them as they are). */
+    function keepSeen(at, headlines) {
+      setTimeout(() => {
+        write({
+          op: 'set',
+          collection: 'talk',
+          id: 'memory',
+          data: memoryEdit(headlines ? { lastSeenAt: at, headlines } : { lastSeenAt: at }, at),
+        }).catch(() => {});
+      }, 1500);
     }
 
