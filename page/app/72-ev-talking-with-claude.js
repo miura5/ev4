@@ -933,7 +933,7 @@
     /** talk/memory as written: the stored fields with these changes, the whole document (an Edit, D-096). */
     function memoryEdit(data, at) {
       const { id, ...cur } = S.memory || {};
-      return { ...(S.memory ? cur : { ...envelope('E.V. Home', at), schema: 2, summary: '', upTo: null }), ...data };
+      return { ...(S.memory ? cur : { ...envelope('E.V. Home', at), schema: 3, summary: '', upTo: null }), ...data };
     }
     // Older turns fold into talk/memory so the context stays small (at most 1,200 characters).
     async function summarize() {

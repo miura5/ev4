@@ -1,0 +1,16 @@
+{
+ "schema": 1,
+ "writer": "deploy",
+ "at": "2026-10-18T06:00:00Z",
+ "source": "seed-staging",
+ "from": "live export",
+ "exportedAt": "2026-10-18T05:00:00Z",
+ "migration": null,
+ "counts": {
+  "days": 1
+ },
+ "hashes": {
+  "days": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+ },
+ "command": "seed-staging --from made-up"
+}

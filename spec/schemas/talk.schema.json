@@ -8,9 +8,10 @@
   "class": "Fact",
   "writers": [
    "page",
-   "worker"
+   "worker",
+   "builder"
   ],
-  "schema": 2,
+  "schema": 3,
   "documents": {
    "memory": "#/$defs/memory"
   }
@@ -19,12 +20,13 @@
  "type": "object",
  "properties": {
   "schema": {
-   "const": 2
+   "const": 3
   },
   "writer": {
    "enum": [
     "page",
-    "worker"
+    "worker",
+    "builder"
    ]
   },
   "at": {
@@ -146,7 +148,7 @@
    "type": "object",
    "properties": {
     "schema": {
-     "const": 2
+     "const": 3
     },
     "writer": {
      "const": "page"

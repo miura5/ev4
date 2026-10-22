@@ -13,7 +13,8 @@
   "filing",
   "deploy",
   "restore-drill",
-  "diagnostic"
+  "diagnostic",
+  "builder"
  ],
  "pipelines": {
   "_rules": [
@@ -1723,7 +1724,8 @@
    "class": "Fact",
    "writers": [
     "page",
-    "worker"
+    "worker",
+    "builder"
    ],
    "key": "YYYY-MM-DD",
    "holds": "messages map, keys m-<time>-<by>",
@@ -1731,7 +1733,8 @@
    "appends": {
     "messages": [
      "page",
-     "worker"
+     "worker",
+     "builder"
     ]
    },
    "documents": {
@@ -1764,10 +1767,11 @@
   "jobresults": {
    "class": "Log",
    "writers": [
-    "worker"
+    "worker",
+    "builder"
    ],
    "key": "<the job id>",
-   "holds": "status, result, posted message key",
+   "holds": "status, result, posted message key; B-178 (D-195): the builder writes one for a builder job (its trace)",
    "fromV3": "jobs status and result fields",
    "schema": "spec/schemas/jobresults.schema.json"
   },
@@ -1861,15 +1865,17 @@
     "spec",
     "manifest",
     "environments",
-    "seed"
+    "seed",
+    "yourturn"
    ],
-   "holds": "the spec; the release pointer; proven capabilities; the staging seed stamp",
+   "holds": "the spec; the release pointer; proven capabilities; the staging seed stamp; B-178 (D-196): yourturn, the Chart's Your turn as of the last ship or builder trace",
    "fromV3": "system/spec, system/code",
    "fixedIds": [
     "spec",
     "manifest",
     "environments",
-    "seed"
+    "seed",
+    "yourturn"
    ],
    "schema": "spec/schemas/system.schema.json"
   },

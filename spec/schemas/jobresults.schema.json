@@ -7,18 +7,20 @@
   "collection": "jobresults",
   "class": "Log",
   "writers": [
-   "worker"
+   "worker",
+   "builder"
   ],
-  "schema": 1
+  "schema": 2
  },
  "type": "object",
  "properties": {
   "schema": {
-   "const": 1
+   "const": 2
   },
   "writer": {
    "enum": [
-    "worker"
+    "worker",
+    "builder"
    ]
   },
   "at": {
@@ -97,6 +99,16 @@
        "type": "string",
        "pattern": "^https://claude\\.ai/",
        "description": "share-set: the link of the page the job published (D-110)"
+      },
+      "task": {
+       "type": "string",
+       "pattern": "^B-\\d+$",
+       "description": "B-178 (D-195): a builder job: the task it filed or answered"
+      },
+      "commit": {
+       "type": "string",
+       "pattern": "^[0-9a-f]{7,40}$",
+       "description": "B-178 (D-195): a builder job: the commit staging is green at"
       }
      },
      "required": [],

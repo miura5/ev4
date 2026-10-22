@@ -498,6 +498,7 @@ export function deployCalls({
   stagingVerify = null,
   duringSession = false,
   builder = false,
+  extraWrites = [],
   now = Date.now(),
   stateDir = null,
 }) {
@@ -547,6 +548,8 @@ export function deployCalls({
     if (versions[id]) w.if_version = versions[id];
     return w;
   });
+  // B-178 (D-196): ship (either target) also writes system/yourturn, the Chart's Your turn as of this ship.
+  writes.push(...extraWrites);
   calls.push({
     step: 'system documents',
     tool: 'ArtifactData',

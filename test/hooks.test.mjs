@@ -227,3 +227,76 @@ test('B-146 (W-3): the Stop hook runs npm test once per tree: an unchanged tree 
   assert.notEqual(H.treeHash(dir), JSON.parse(fs.readFileSync(path.join(dir, 'dist', 'test-ok'), 'utf8')).tree);
   assert.deepEqual([stop().code, stop().out.startsWith('npm test: skipped')], [0, true]);
 });
+
+test('B-178 (D-195, D-201): the trace allowance: a live write dist/trace-ok names passes for ten minutes; nothing else does', () => {
+  const dir = copyRepo(),
+    url = `https://claude.ai/artifact/${LIVE}`;
+  const call = (action, collection, doc_id, extra = {}) => ({
+    tool_name: 'ArtifactData',
+    tool_input: { action, url, collection, doc_id, file_path: '/tmp/x.json', ...extra },
+  });
+  const named = [
+    { action: 'set', collection: 'jobresults', doc_id: 'job-20261021-233000-the-timer' },
+    { action: 'update', collection: 'talk', doc_id: '2026-10-21' },
+    { action: 'set', collection: 'system', doc_id: 'yourturn' },
+  ];
+  fs.mkdirSync(path.join(dir, 'dist'), { recursive: true });
+  const okFile = path.join(dir, 'dist', 'trace-ok');
+  const plant = (at, record = 'live') =>
+    fs.writeFileSync(okFile, JSON.stringify({ at, record, url, job: 'job-x', calls: named }));
+  plant(Date.now());
+  // The named trace calls pass, one by one and as one batch.
+  for (const c of named)
+    assert.equal(hook(dir, 'live-guard', call(c.action, c.collection, c.doc_id)).code, 0, c.doc_id);
+  const batch = {
+    tool_name: 'ArtifactData',
+    tool_input: {
+      action: 'batch',
+      url,
+      writes: named.map(c => ({ op: c.action, collection: c.collection, doc_id: c.doc_id })),
+    },
+  };
+  assert.equal(hook(dir, 'live-guard', batch).code, 0, 'the three as a batch');
+  // An unnamed call is refused: another document, a named id on another collection, another action, a batch with one
+  // more write, a delete.
+  for (const [what, c] of [
+    ['an unnamed document', call('set', 'days', '2026-10-21')],
+    ['a named id on another collection', call('set', 'jobs', 'job-20261021-233000-the-timer')],
+    ['another action on a named document', call('set', 'talk', '2026-10-21')],
+    ['a delete', call('delete', 'system', 'yourturn')],
+    [
+      'a batch with one more write',
+      {
+        ...batch,
+        tool_input: {
+          ...batch.tool_input,
+          writes: [...batch.tool_input.writes, { op: 'set', collection: 'weakspots', doc_id: 'w' }],
+        },
+      },
+    ],
+  ]) {
+    const r = hook(dir, 'live-guard', c);
+    assert.equal(r.code, 2, what);
+    assert.match(r.err, /^Refused: an ArtifactData \w+ on the live record/, what);
+  }
+  // The page is never published by a trace.
+  assert.equal(hook(dir, 'live-guard', { tool_name: 'Artifact', tool_input: { url } }).code, 2, 'a publish');
+  // A stale dist/trace-ok, one for the staging record, or one from the future is refused.
+  plant(Date.now() - (H.TRACE_OK_MINUTES * 60e3 + 1000));
+  assert.equal(hook(dir, 'live-guard', call('set', 'system', 'yourturn')).code, 2, 'stale');
+  plant(Date.now(), 'staging');
+  assert.equal(hook(dir, 'live-guard', call('set', 'system', 'yourturn')).code, 2, 'a staging trace-ok');
+  plant(Date.now() + 5 * 60e3);
+  assert.equal(hook(dir, 'live-guard', call('set', 'system', 'yourturn')).code, 2, 'from the future');
+  // The pipeline-marker case is unchanged: a fresh marker stands the hook down whatever trace-ok says.
+  fs.rmSync(okFile);
+  const marker = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-marker-')), 'pipeline-run');
+  fs.writeFileSync(marker, JSON.stringify({ pipeline: 'watchdog', record: 'live', at: new Date().toISOString() }));
+  const r = spawnSync(process.execPath, [path.join(dir, 'tools', 'hooks.mjs'), 'live-guard'], {
+    input: JSON.stringify(call('set', 'runs', 'w')),
+    encoding: 'utf8',
+    env: { ...process.env, EV_RUN_MARKER: marker },
+  });
+  assert.equal(r.status, 0, 'a pipeline run is never guarded');
+  assert.equal(hook(dir, 'live-guard', call('set', 'runs', 'w')).code, 2, 'and without it, refused');
+});

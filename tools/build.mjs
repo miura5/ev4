@@ -508,7 +508,7 @@ export async function build({
   const system = schemas.system;
   const body = validateAgainst({ $ref: '#/$defs/manifestBody', $defs: system.$defs }, manifest);
   if (!body.ok) throw new Error('dist/manifest.json does not validate:\n' + describeErrors('manifest', body));
-  const envelope = { schema: 1, writer: 'deploy', at: now, source: `deploy ${release}` };
+  const envelope = { schema: 2, writer: 'deploy', at: now, source: `deploy ${release}` }; // B-178: system schema 2
   const docs = {
     'system/manifest': { ...envelope, ...manifest },
     'system/spec': { ...envelope, ...spec },

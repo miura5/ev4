@@ -1,0 +1,22 @@
+{
+ "schema": 2,
+ "writer": "worker",
+ "at": "2026-10-20T15:05:00Z",
+ "source": "worker run",
+ "release": "v4.3.0",
+ "status": "done",
+ "startedAt": "2026-10-20T15:00:30Z",
+ "finishedAt": "2026-10-20T15:05:00Z",
+ "result": {
+  "text": "A made-up study guide is ready.",
+  "links": [
+   {
+    "title": "E.V. study guide: made-up",
+    "url": "https://claude.ai/artifact/made-up"
+   }
+  ],
+  "docUrl": "https://claude.ai/artifact/made-up"
+ },
+ "message": "m-20261020-150500000-job",
+ "error": null
+}

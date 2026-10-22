@@ -43,6 +43,7 @@ export function seedStaging(exp, { at, exportedAt, from = 'live export', command
   }
   const seed = {
     ...EV.envelope('deploy', 'seed-staging', at),
+    schema: 2, // B-178: system schema 2
     from,
     exportedAt: new Date(exportedAt).toISOString(),
     migration: isV3 ? 'v3-to-v4' : null,

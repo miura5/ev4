@@ -17,6 +17,7 @@ import { RUN_MARKER } from './prompts.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const LIVE_OK_HOURS = 2;
+export const TRACE_OK_MINUTES = 10; // B-178 (D-195): the builder's trace allowance
 const WRITES = new Set(['set', 'update', 'delete', 'str_replace', 'batch']);
 
 /** D-169 (B-131): the pipeline run this session is, from the marker step 1 of every task prompt writes, while it is
@@ -66,8 +67,28 @@ export function specForm(text) {
   }
 }
 
+/**
+ * B-178 (D-195, D-201): whether the builder's trace names this ArtifactData call: dist/trace-ok for the live record,
+ * younger than ten minutes, naming each write's action, collection and document (a batch: every one of its writes).
+ * Only set and update; never a delete, a str_replace or anything on another document.
+ */
+export function traceAllows(a, traceOk, { liveId, now = Date.now() }) {
+  if (!traceOk || traceOk.record !== 'live' || !String(traceOk.url || '').includes(liveId)) return false;
+  if (!Number.isFinite(traceOk.at) || now - traceOk.at >= TRACE_OK_MINUTES * 60e3 || traceOk.at > now + 60e3)
+    return false;
+  const named = new Set((traceOk.calls || []).map(c => `${c.action} ${c.collection}/${c.doc_id}`));
+  const writes =
+    a.action === 'batch'
+      ? (a.writes || []).map(w => ({ action: w.op, collection: w.collection, doc_id: w.doc_id }))
+      : [{ action: a.action, collection: a.collection, doc_id: a.doc_id }];
+  return (
+    writes.length > 0 &&
+    writes.every(w => ['set', 'update'].includes(w.action) && named.has(`${w.action} ${w.collection}/${w.doc_id}`))
+  );
+}
+
 /** B-58: the refusal for a tool call aimed at the live record or page, or null when it may go. */
-export function liveGuard(input, { liveId, liveOk = null, now = Date.now() }) {
+export function liveGuard(input, { liveId, liveOk = null, traceOk = null, now = Date.now() }) {
   const name = String((input && input.tool_name) || ''),
     a = (input && input.tool_input) || {};
   const aimed = String(a.url || a.from_url || '').includes(liveId);
@@ -79,6 +100,7 @@ export function liveGuard(input, { liveId, liveOk = null, now = Date.now() }) {
   if (!what) return null;
   const fresh = liveOk && Number.isFinite(liveOk.at) && now - liveOk.at < LIVE_OK_HOURS * 36e5;
   if (fresh) return null;
+  if (/(^|__)ArtifactData$/.test(name) && traceAllows(a, traceOk, { liveId, now })) return null; // B-178
   return `Refused: ${what}. Live changes only through deploy live --matt-ok (Matt's explicit OK in the chat), which writes dist/live-ok for ${LIVE_OK_HOURS} hours (B-58)${liveOk ? '; the one there is older than that' : ''}.`;
 }
 
@@ -180,7 +202,13 @@ export function main(argv = process.argv.slice(2), { marker = process.env.EV_RUN
     } catch {
       /* none */
     }
-    const v = liveGuard(input, { liveId: spec.registry.records.live.artifact, liveOk });
+    let traceOk = null;
+    try {
+      traceOk = JSON.parse(fs.readFileSync(path.join(ROOT, 'dist', 'trace-ok'), 'utf8'));
+    } catch {
+      /* none */
+    }
+    const v = liveGuard(input, { liveId: spec.registry.records.live.artifact, liveOk, traceOk });
     return v ? no(v) : 0;
   }
   return no('usage: node tools/hooks.mjs stop|spec-format|live-guard');

@@ -691,9 +691,9 @@ test('B-74 (D-128, D-130, D-133): the talk and sessions 1 to 2 bumps match their
       `${name}: a second run writes nothing`
     );
   }
-  // talk: every document moves to 2 with its messages as they were, talk/memory included.
+  // talk: every document moves to today's version (2, then 3 with B-178) with its messages as they were, memory included.
   const talk = load(path.join(ROOT, 'test/data/bumps/talk-1/after')).talk;
-  assert.ok(talk.every(t => t.schema === 2));
+  assert.ok(talk.every(t => t.schema === 3));
   // sessions: a page session gains comments Some and its question checks format mc (a comment's mark gets none); a filed
   // session and a skills run gain no level; a level or a format already set is kept.
   const ss = load(path.join(ROOT, 'test/data/bumps/sessions-1/after')).sessions;
@@ -872,4 +872,51 @@ test('B-177 (D-194): the jobs 1 to 2 bump only moves a job to the new version, m
   for (const kind of ['build', 'reply', 'design', 'plan', 'ship'])
     assert.ok(validate('jobs', { ...build, kind }).ok, kind);
   assert.ok(!validate('jobs', { ...build, schema: 1 }).ok, 'schema 1 is no longer current');
+});
+
+test('B-178 (D-195, D-196): the jobresults 1 to 2, talk 2 to 3 and system 1 to 2 bumps match their fixtures, validate and are idempotent', async () => {
+  const { migrateBumps, BUMPS } = await import('../core/migrate.mjs');
+  const { readExport, loadValidator } = await import('../core/schemas.mjs');
+  const EV = (await import('../core/evcore.mjs')).default;
+  const validate = loadValidator();
+  const load = d => {
+    const db = {};
+    for (const { collection, id, doc } of readExport(d)) (db[collection] = db[collection] || []).push({ ...doc, id });
+    return db;
+  };
+  const sorted = l => (l || []).slice().sort((a, b) => (a.id < b.id ? -1 : 1));
+  const apply = (db, writes) => {
+    const out = JSON.parse(JSON.stringify(db));
+    for (const w of writes) {
+      const list = (out[w.collection] = out[w.collection] || []);
+      const i = list.findIndex(d => d.id === w.id);
+      if (i >= 0) list[i] = { ...w.data, id: w.id };
+      else list.push({ ...w.data, id: w.id });
+    }
+    return out;
+  };
+  for (const [name, col, from, to] of [
+    ['jobresults-1', 'jobresults', 1, 2],
+    ['talk-2', 'talk', 2, 3],
+    ['system-1', 'system', 1, 2],
+  ]) {
+    assert.ok(BUMPS[col][from], `${name}: a migration keyed by collection and version`);
+    const dir = path.join(ROOT, 'test/data/bumps', name);
+    const before = load(path.join(dir, 'before')),
+      after = load(path.join(dir, 'after'));
+    const r = migrateBumps(before, { at: '2026-10-22T01:00:00Z' });
+    const got = {};
+    for (const w of r.writes) (got[w.collection] = got[w.collection] || []).push({ ...w.data, id: w.id });
+    for (const [c, docs] of Object.entries(after))
+      assert.equal(EV.stableStringify(sorted(got[c])), EV.stableStringify(sorted(docs)), `${name}: ${c}`);
+    for (const w of r.writes) assert.ok(validate(w.collection, w.data, { id: w.id }).ok, `${w.collection}/${w.id}`);
+    // Identity: each document moves to the new version and nothing else changes; its original is kept in legacy.
+    for (const d of before[col]) {
+      const moved = after[col].find(x => x.id === d.id);
+      assert.deepEqual({ ...moved, schema: from }, d, `${name}: ${d.id} only moves to ${to}`);
+      assert.equal(moved.schema, to);
+      assert.ok(after.legacy.some(l => l.migratedFrom === `${col}/${d.id}` && l.schema === from));
+    }
+    assert.deepEqual(migrateBumps(apply(before, r.writes), { at: '2026-10-23T01:00:00Z' }).writes, [], name);
+  }
 });

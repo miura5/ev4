@@ -1246,7 +1246,7 @@ export const AGENT_FOLDS = {
             id: ctx.date,
             data: {
               ...EV.envelope('worker', ctx.source, ctx.now),
-              schema: 2,
+              schema: 3, // B-178: talk schema 3
               date: ctx.date,
               messages: { [key]: message },
             },
@@ -1258,6 +1258,7 @@ export const AGENT_FOLDS = {
       id: job.id,
       data: {
         ...EV.envelope('worker', ctx.source, ctx.now),
+        schema: 2, // B-178: jobresults schema 2
         release: ctx.release,
         status: failed ? 'failed' : 'done',
         startedAt: ctx.startedAt,

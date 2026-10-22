@@ -38,6 +38,12 @@ import { fileURLToPath } from 'node:url';
 import { newestTranscript, toolResults } from '../core/transcript.mjs';
 import { verify, verifyReads, deployCalls, formatDeploy, canonical, SYSTEM_IDS, contentHash } from '../core/deploy.mjs';
 import { builderRun, pushRefusal } from './guard.mjs';
+import { makeActions } from '../core/actions.mjs';
+import { validateAgainst } from '../core/validate.mjs';
+import { currentVersion } from '../core/migrate.mjs';
+import EVCORE from '../core/evcore.mjs';
+
+const ACTIONS = makeActions(validateAgainst);
 import { commitsBehind, mainHead } from '../core/cli.mjs';
 import { readState, withShell } from '../core/verifystate.mjs';
 import { build, BOOKKEEPING } from './build.mjs';
@@ -150,6 +156,35 @@ export function yourTurn(rec) {
       tasks: waiting.filter(t => (PLACES[t.waitingWhere] ? t.waitingWhere : 'decision') === k),
     }))
     .filter(g => g.tasks.length);
+}
+/** A waiting task's ask: the last sentence of its notes (B-148), at most 300 characters, or its title's first line. */
+export function askOf(t) {
+  const last = String(t.notes || '')
+    .split(/(?<=[.!?])\s+/)
+    .map(s => s.trim())
+    .filter(Boolean)
+    .at(-1);
+  const s = last || String(t.title || t.id).split(/[:;(]/)[0];
+  return s.length > 300 ? s.slice(0, 299).replace(/\s+\S*$/, '') + '…' : s;
+}
+/** B-178 (D-196): system/yourturn's body: the Chart's Your turn by place, each task with its ask and status. */
+export function yourTurnDoc(rec, { at, commit, source }) {
+  return {
+    schema: currentVersion('system'),
+    writer: 'deploy',
+    at,
+    source,
+    commit,
+    groups: yourTurn(rec).map(g => ({
+      place: g.place,
+      label: g.label,
+      tasks: g.tasks.map(t => ({
+        id: t.id,
+        ask: askOf(t),
+        status: ['open', 'in progress', 'blocked'].includes(t.status) ? t.status : 'open',
+      })),
+    })),
+  };
 }
 /** The Your turn section as Markdown lines: per place, each task with what it waits on (its notes' last sentence). */
 export function yourTurnLines(rec) {
@@ -1908,10 +1943,31 @@ export function versionsFrom(jsonl, url) {
   const out = {};
   for (const r of toolResults(jsonl || '', 'ArtifactData')) {
     const i = r.input || {};
-    if (i.action !== 'get' || i.collection !== 'system' || i.url !== url || !SYSTEM_IDS.includes(i.doc_id) || r.isError)
+    if (
+      i.action !== 'get' ||
+      i.collection !== 'system' ||
+      i.url !== url ||
+      ![...SYSTEM_IDS, 'yourturn'].includes(i.doc_id) ||
+      r.isError
+    )
       continue;
-    const m = r.texts.join('\n').match(/\bversion\D{0,4}(\d+)/i);
+    const text = r.texts.join('\n');
+    const m = text.match(/\bversion\D{0,4}(\d+)/i);
     if (m) out[i.doc_id] = Number(m[1]);
+    else if (/^No document /.test(text.trim())) out[i.doc_id] = 0; // B-178: absent, so it is created
+  }
+  return out;
+}
+/** B-178: a document's version from this session's newest ArtifactData get of it: n, 0 when absent, null unread. */
+export function docVersionFrom(jsonl, url, collection, id) {
+  let out = null;
+  for (const r of toolResults(jsonl || '', 'ArtifactData')) {
+    const i = r.input || {};
+    if (i.action !== 'get' || i.collection !== collection || i.doc_id !== id || i.url !== url || r.isError) continue;
+    const text = r.texts.join('\n');
+    const m = text.match(/\bversion\D{0,4}(\d+)/i);
+    if (m) out = Number(m[1]);
+    else if (/^No document /.test(text.trim())) out = 0;
   }
   return out;
 }
@@ -2045,8 +2101,26 @@ async function ship(o) {
   const stagingVerify = fs.existsSync(path.join(dist, 'verify-staging.json'))
     ? JSON.parse(fs.readFileSync(path.join(dist, 'verify-staging.json'), 'utf8'))
     : null;
+  // B-178 (D-196): the Chart's Your turn as of this ship, written beside the system documents.
+  const yourturnFile = path.join(dist, 'system', 'yourturn.json');
+  fs.mkdirSync(path.dirname(yourturnFile), { recursive: true });
+  fs.writeFileSync(
+    yourturnFile,
+    JSON.stringify(
+      yourTurnDoc(loadChart(root), {
+        at: new Date().toISOString(),
+        commit: manifest.commit.slice(0, 7),
+        source: `ship ${target}`,
+      }),
+      null,
+      1
+    )
+  );
+  const yourturnWrite = { op: 'set', collection: 'system', doc_id: 'yourturn', file_path: yourturnFile };
+  if (versions.yourturn) yourturnWrite.if_version = versions.yourturn;
   const deploy = deployCalls({
     builder: Boolean(builderRun()), // B-184 (D-200)
+    extraWrites: [yourturnWrite],
     manifest,
     target,
     distDir: dist,
@@ -2084,6 +2158,13 @@ async function ship(o) {
     return 1;
   }
   if (step.kind === 'deploy') {
+    if (!('yourturn' in versions)) {
+      const url = `https://claude.ai/artifact/${manifest.records[target].artifact}`;
+      console.log(
+        `${head}: read system/yourturn first, so its write carries its version (or creates it):\n  ArtifactData ${JSON.stringify({ action: 'get', url, collection: 'system', doc_id: 'yourturn', out_dir: path.join(stateDir, 'record') })}\n  then run ship ${target} again (or pass --version yourturn=<n>, 0 when it does not exist yet).`
+      );
+      return 1;
+    }
     const missingV = SYSTEM_IDS.filter(id => state.record && state.record[id] && !versions[id]);
     if (missingV.length) {
       console.log(
@@ -2125,6 +2206,8 @@ async function ship(o) {
         '',
         'Reads after the calls (only what they change):',
         ...again.map(r => `  ${r.tool} ${JSON.stringify(r.args)}`),
+        // B-178: system/yourturn's new version, for the next ship's write and the builder's trace
+        `  ArtifactData ${JSON.stringify({ action: 'get', url: `https://claude.ai/artifact/${manifest.records[target].artifact}`, collection: 'system', doc_id: 'yourturn', out_dir: path.join(stateDir, 'record') })}`,
       ].join('\n')
     );
     return 0;
@@ -2254,6 +2337,117 @@ export function recordShip(root, o, { target, manifest, recorded = false }) {
     },
     applyLog
   );
+}
+
+// ------------------------------------------------------------------------------------------------ trace (B-178)
+export const TRACE_OK_MINUTES = 10;
+/**
+ * B-178 (D-195, D-203): the builder's trace, the trace action's writes as calls: its job's result, one talk line as
+ * E.V. with the job card, and system/yourturn. Composed and checked by core/actions.mjs act with the builder's actor
+ * (the caller is this command's, never the call's), printed as one ArtifactData call each, and named in
+ * dist/trace-ok, which the live-guard reads (tools/hooks.mjs): a live write it names passes for ten minutes.
+ * Returns {reads} when a document's version is unknown, else {calls, traceOk}.
+ */
+export function traceCalls(root, o, { jsonl = '', now = new Date().toISOString() } = {}) {
+  const spec = readJson(path.join(root, 'spec', 'ev.spec.json'));
+  const record = o.record || 'staging';
+  if (!['staging', 'live'].includes(record)) throw new Error('trace --record staging|live');
+  const art = spec.registry.records[record] && spec.registry.records[record].artifact;
+  if (!art) throw new Error(`no ${record} record in spec.registry.records`);
+  const url = `https://claude.ai/artifact/${art}`;
+  if (typeof o.job !== 'string') throw new Error('trace --job <id> --status done|failed --note "<one line>"');
+  if (!['done', 'failed'].includes(o.status)) throw new Error('trace --status done|failed');
+  if (typeof o.note !== 'string' || !o.note.trim()) throw new Error('trace --note "<one line>"');
+  const date = EVCORE.chicagoDate(now);
+  const given = o.version
+    ? Object.fromEntries(
+        list(o.version)
+          .map(kv => kv.split('='))
+          .map(([k, v]) => [k, Number(v)])
+      )
+    : {};
+  const ver = {
+    talk: 'talk' in given ? given.talk : docVersionFrom(jsonl, url, 'talk', date),
+    yourturn: 'yourturn' in given ? given.yourturn : docVersionFrom(jsonl, url, 'system', 'yourturn'),
+  };
+  const outDir = path.join(root, 'dist', 'state', record, 'record');
+  const reads = [
+    ver.talk == null && { action: 'get', url, collection: 'talk', doc_id: date, out_dir: outDir },
+    ver.yourturn == null && { action: 'get', url, collection: 'system', doc_id: 'yourturn', out_dir: outDir },
+  ].filter(Boolean);
+  if (reads.length) return { reads };
+  let release = typeof o.release === 'string' ? o.release : null;
+  if (!release)
+    try {
+      release = readJson(path.join(outDir, 'system', 'manifest.json')).release;
+    } catch {
+      throw new Error(`pass --release, or read the ${record} record's system/manifest first`);
+    }
+  const commit = git(root, ['rev-parse', '--short=7', 'HEAD']).trim();
+  const args = {
+    job: o.job,
+    status: o.status,
+    text: o.note.trim().slice(0, 1500),
+    date,
+    talkExists: ver.talk > 0,
+    release,
+    ...(typeof o.task === 'string' ? { task: o.task } : {}),
+    ...(typeof o.commit === 'string' ? { commit: String(o.commit).slice(0, 7) } : {}),
+    schemas: {
+      jobresults: currentVersion('jobresults'),
+      talk: currentVersion('talk'),
+      system: currentVersion('system'),
+    },
+    yourturn: { commit, groups: yourTurnDoc(loadChart(root), { at: now, commit, source: 'trace' }).groups },
+  };
+  const r = ACTIONS.actor(spec, 'builder')('trace', args, { now });
+  if (!r.ok) throw new Error(r.refused);
+  const dir = path.join(root, 'dist', 'trace');
+  fs.mkdirSync(dir, { recursive: true });
+  const calls = r.writes.map((w, i) => {
+    const file = path.join(dir, `${i + 1}-${w.collection}-${w.id}.json`);
+    fs.writeFileSync(file, JSON.stringify(w.data, null, 1));
+    const v = w.collection === 'talk' ? ver.talk : w.collection === 'system' ? ver.yourturn : 0;
+    return {
+      action: w.op,
+      url,
+      collection: w.collection,
+      doc_id: w.id,
+      file_path: file,
+      ...(v > 0 ? { if_version: v } : {}),
+    };
+  });
+  const traceOk = {
+    at: Date.parse(now),
+    record,
+    url,
+    job: o.job,
+    calls: calls.map(c => ({ action: c.action, collection: c.collection, doc_id: c.doc_id })),
+  };
+  fs.writeFileSync(path.join(root, 'dist', 'trace-ok'), JSON.stringify(traceOk));
+  return { calls, traceOk };
+}
+function trace(o) {
+  const root = rootOf(o),
+    file = o.transcript || newestTranscript();
+  const jsonl = file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+  const t = traceCalls(root, o, { jsonl });
+  if (t.reads) {
+    console.log(
+      [
+        `trace ${o.job}: ${t.reads.length} read${t.reads.length > 1 ? 's' : ''} first (the versions its writes carry), then trace again:`,
+        ...t.reads.map(r => `  ArtifactData ${JSON.stringify(r)}`),
+      ].join('\n')
+    );
+    return 1;
+  }
+  console.log(
+    [
+      `trace ${o.job}: ${t.calls.length} calls, in order (dist/trace-ok names them for ${TRACE_OK_MINUTES} minutes):`,
+      ...t.calls.map((c, i) => `${i + 1}. ArtifactData\n${JSON.stringify(c, null, 1)}`),
+    ].join('\n')
+  );
+  return 0;
 }
 
 // ------------------------------------------------------------------------------------------------ brief
@@ -3168,6 +3362,9 @@ const commands = {
   },
   ship(o) {
     return ship(o);
+  },
+  trace(o) {
+    return trace(o);
   },
   rollback(o) {
     return rollback(o);

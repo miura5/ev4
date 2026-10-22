@@ -514,6 +514,19 @@ export const BUMPS = {
     // B-74 (D-128, D-130): a message may carry session (written during a session) and note (the line a comment is
     // about); a message before it had neither, so talk/<date> and talk/memory only move to the new version.
     1: d => ({ data: { ...d, schema: 2 }, also: [] }),
+    // B-178 (D-195): the builder appends its trace line as E.V. (and writes the day's document when it is the first);
+    // every document before it was the page's or the worker's, so it only moves to the new version.
+    2: d => ({ data: { ...d, schema: 3 }, also: [] }),
+  },
+  jobresults: {
+    // B-178 (D-195): the builder writes a builder job's result, which may name its task and staging commit; every
+    // result before it is the worker's and names neither, so it only moves to the new version.
+    1: d => ({ data: { ...d, schema: 2 }, also: [] }),
+  },
+  system: {
+    // B-178 (D-196): system gains yourturn, written by ship and the builder's trace; the documents before it keep
+    // their shapes, so each only moves to the new version (deploy rewrites spec, manifest and environments anyway).
+    1: d => ({ data: { ...d, schema: 2 }, also: [] }),
   },
   sessions: {
     // B-74 (D-130, D-133): a study session started in the page (ss-*, not a skills run) gains its comments level, Some by
