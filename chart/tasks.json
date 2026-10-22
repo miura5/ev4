@@ -3233,11 +3233,11 @@
   "title": "The design kickoff (D-197): node tools/chart.mjs kickoff assembles the next design chat's opening, at most 4,000 characters, from the north star tab as read in the session (the designRead pattern, never retyped), the Chart (the live release and commit, task counts, open and blocked tasks, Your turn, decisions since the last plan source), the latest weeks/<date>.insights as fetched, and the template tools/kickoff.md (the role line, read-first links, the goal, the pieces in order, the rules, the doc and its three table headings); \"design\" or \"design: <theme>\" on the page writes jobs/<id> (kind design) and fires the builder, whose trace's talk line is the kickoff with a Copy chip; \"file: <doc link>\" writes jobs/<id> (kind plan) and the builder reads the tab, runs plan --from <link> --apply, sets depends where a row says so, and its trace names what was filed; the build chat prints the north star's amended rule line on Matt's OK (given Oct 21)",
   "dod": "a chart test builds a kickoff from planted reads and checks every section and the length; a chart test for the plan job's trace text; the harness at 390 and 1280 for the Copy chip; the rule line printed in the north star; npm test green; npm run check green; ship staging green; one kickoff drafted on staging and read by Matt once (whether it reads like a kickoff he would paste); live only on Matt's OK",
   "milestone": "v4.4 kickoff",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-179"
   ],
-  "notes": "The north star is its own doc, E.V. north star (https://claude.ai/artifact/4SJmAvp26TbGAXFUwfGqcd, one tab), Matt's link in the build chat on Oct 21; kickoff reads that doc's tab (the designRead pattern).",
+  "notes": "Taken after B-197 shipped; B-163 waits on Matt's choice (runs may not pass a value themselves). Survey first: designRead, the design and plan job kinds, the builder's trace.",
   "commit": null,
   "source": "plan TbfWAoQEeQixyNKZnEZKvv"
  },
