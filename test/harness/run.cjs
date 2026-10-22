@@ -4234,6 +4234,18 @@ const ok = (name, cond, detail = '') => {
     await page.screenshot({ path: `${shots}/your-turn-${w}.png` });
     const fires0 = await page.evaluate(() => window.__mcpCalls.filter(c => c[1] === 'fire_trigger').length);
     await page.locator('#ev-surf .yt-item[data-task="B-210"] .yt-chips button', { hasText: 'Blue' }).click();
+    await page.waitForTimeout(300);
+    const armed = await page.evaluate(() => ({
+      confirm: (document.querySelector('#ev-surf .yt-item[data-task="B-210"] .yt-confirm') || {}).textContent || '',
+      fires: window.__mcpCalls.filter(c => c[1] === 'fire_trigger').length,
+      jobs: Object.values(window.__db.jobs || {}).filter(j => j.kind === 'reply' && j.title === 'B-210').length,
+    }));
+    ok(
+      `${tag} a chip asks before it sends: nothing written or fired until Send`,
+      /^Send “Blue” on B-210 to the builder\?/.test(armed.confirm) && armed.fires === fires0 && armed.jobs === 0,
+      JSON.stringify(armed)
+    );
+    await page.locator('#ev-surf .yt-item[data-task="B-210"] .yt-chips button', { hasText: 'Send' }).click();
     await page.waitForTimeout(500);
     const after = await page.evaluate(() => ({
       jobs: Object.entries(window.__db.jobs || {}).filter(([, j]) => j.kind === 'reply' && j.title === 'B-210'),

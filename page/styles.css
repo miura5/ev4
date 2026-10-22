@@ -642,3 +642,4 @@ button.tlink{all:unset;cursor:pointer;color:var(--accent-text);font-size:14px;pa
 .yt-item{padding:8px 0}
 .yt-ask{margin:0;line-height:1.4}
 .yt-chips{margin-top:8px;justify-content:flex-start}
+.yt-confirm{margin:6px 0 0;color:var(--ink2);line-height:1.4}

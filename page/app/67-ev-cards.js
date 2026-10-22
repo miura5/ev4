@@ -55,8 +55,31 @@
               el('p', 'meta', t.id + (t.status === 'blocked' ? ' · blocked on you' : ''))
             );
             const sent = T.replied.get(t.id);
+            const armed = T.ytArmed && T.ytArmed.task === t.id ? T.ytArmed.words : null;
             if (sent) body.append(el('p', 'meta yt-sent', `Sent: ${sent}. The builder takes it from here.`));
-            else {
+            else if (armed) {
+              // Oct 21: one tap must never start a builder run; the chip asks first and Send fires it.
+              body.append(
+                el('p', 'yt-confirm', `Send “${armed}” on ${t.id} to the builder? It starts a build session.`)
+              );
+              const a = el('div', 'actions yt-chips');
+              a.append(
+                btn(
+                  'Send',
+                  ev =>
+                    guard(ev.target, async () => {
+                      T.ytArmed = null;
+                      await replyAsk(t.id, armed);
+                    }),
+                  { primary: true }
+                ),
+                btn('Cancel', () => {
+                  T.ytArmed = null;
+                  render();
+                })
+              );
+              body.append(a);
+            } else {
               const a = el('div', 'actions yt-chips');
               const words =
                 g.place === 'decision'
@@ -64,7 +87,13 @@
                     ? t.choices
                     : ['Yes', 'No', 'Later']
                   : ['Done', 'Fine'];
-              for (const w of words) a.append(btn(w, ev => guard(ev.target, () => replyAsk(t.id, w))));
+              for (const w of words)
+                a.append(
+                  btn(w, () => {
+                    T.ytArmed = { task: t.id, words: w };
+                    render();
+                  })
+                );
               a.append(btn(g.place === 'decision' ? 'Reply' : 'What’s off', () => startReply(t.id)));
               body.append(a);
             }
