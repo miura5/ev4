@@ -243,6 +243,28 @@ seed.sets['more-' + today + '-dose'] = {
     },
   ],
 };
+// B-191: three single questions to close, go back and forward in, and answer out of order, at each width.
+seed.sets['more-' + today + '-nav'] = {
+  ...env('page', 'More practice'),
+  schema: 2,
+  kind: 'more',
+  date: today,
+  exam: 'E4',
+  title: 'Harness nav',
+  createdAt: new Date(Date.now() - 864e5).toISOString(),
+  items: ['Erikson', 'Piaget', 'Kohlberg'].map((who, i) => ({
+    id: 'v' + (i + 1),
+    kind: 'check',
+    objective: 'E4-1',
+    topic: who + ' basics',
+    type: 'single',
+    cjStep: 'recognize-cues',
+    stem: `Which theorist is question ${i + 1} about? (${who})`,
+    options: [who, 'Freud', 'Maslow', 'Skinner'],
+    correct: [0],
+    rationales: [who + ' is right.', 'Not Freud.', 'Not Maslow.', 'Not Skinner.'],
+  })),
+};
 const hourAgo = new Date(Date.now() - 3600e3).toISOString();
 // A small library file (D-079): the skills packet's head-to-toe checklist sits on page 12.
 seed.materials = seed.materials || {};
@@ -450,6 +472,130 @@ for (const [id, task, commit, text, error] of [
 }
 /** B-180, at the width it runs: the build card's states, the build ask (no model call, the job, the builder fired by
  * id with the two-line text, both lines in talk) and an identifier that holds a build ask with nothing written. */
+// B-191: an open set closes back to the list with its answers kept; Back and Next walk it in its order, an answered
+// question showing its answer and why, an unanswered one open; answered out of order, then reopened where he left. Run
+// at both widths from Study, Practice with a set open.
+async function practiceNav(page, scheme) {
+  const openSet = async title => {
+    const lead = page.locator('#pr-body .pr-lead', { hasText: title });
+    if (await lead.count()) return lead.locator('button.primary').click();
+    if (
+      (await page.locator('#pr-done-fold[aria-expanded="false"]').count()) &&
+      !(await page.locator('#pr-body .row', { hasText: title }).first().isVisible())
+    )
+      await page.click('#pr-done-fold');
+    const r = page.locator('#pr-body .row', { hasText: title }).first();
+    if (!(await r.locator('.pr-acts').isVisible())) await r.locator('.pr-line').click(); // a line keeps its fold
+    await page.waitForTimeout(80);
+    return page.locator('#pr-body .row', { hasText: title }).first().locator('.pr-acts button').first().click();
+  };
+  await page.click('#pr-close');
+  await page.waitForTimeout(150);
+  ok(
+    `[${scheme}] Close takes an open set back to the list it was opened from`,
+    !(await page.isVisible('#pr-close')) &&
+      (await page.locator('#pr-body .pr-lead, #pr-body .row').count()) > 0 &&
+      !(await page.isVisible('#pr-body .q-stem')),
+    (await page.textContent('#pr-body')).slice(0, 120)
+  );
+  const navId = 'more-' + today + '-nav';
+  const q = () =>
+    page.evaluate(() => ({
+      stem: (document.querySelector('#pr-body .q-stem') || {}).textContent || '',
+      verdict: (document.querySelector('#pr-body .verdict') || {}).textContent || '',
+      whys: [...document.querySelectorAll('#pr-body .why:not([hidden])')].map(x => x.textContent),
+      check:
+        !!document.querySelector('#pr-body button.primary') &&
+        /Check answer/.test(document.querySelector('#pr-body button.primary').textContent),
+      back: !!document.querySelector('#pr-body .q-back'),
+      next: !!document.querySelector('#pr-body .q-next'),
+      count: (document.getElementById('pr-qcount') || {}).textContent || '',
+      sideways: document.documentElement.scrollWidth > innerWidth + 1,
+    }));
+  await openSet('Harness nav');
+  await page.waitForTimeout(150);
+  let v = await q();
+  ok(
+    `[${scheme}] a fresh set opens on question 1, open to answer, with Next and no Back`,
+    /question 1/.test(v.stem) && v.check && v.next && !v.back,
+    JSON.stringify(v)
+  );
+  await page.click('#pr-body .q-next');
+  await page.waitForTimeout(120);
+  await page.locator('#pr-body label.opt', { hasText: 'Piaget' }).click();
+  await page.click('#pr-body button:has-text("Check answer")');
+  await page.waitForTimeout(150);
+  v = await q();
+  ok(
+    `[${scheme}] answered out of order: question 2 first, Right with its why, 1 of 3`,
+    /question 2/.test(v.stem) &&
+      /^Right\b/.test(v.verdict) &&
+      v.whys.includes('Piaget is right.') &&
+      v.count === '1 of 3',
+    JSON.stringify(v)
+  );
+  await page.screenshot({ path: `${shots}/practice-nav-answered-${scheme}.png` });
+  await page.click('#pr-body .q-back');
+  await page.waitForTimeout(120);
+  v = await q();
+  ok(
+    `[${scheme}] Back to question 1: still open to answer, nothing marked`,
+    /question 1/.test(v.stem) && v.check && !v.verdict && !v.back,
+    JSON.stringify(v)
+  );
+  await page.screenshot({ path: `${shots}/practice-nav-back-${scheme}.png` });
+  await page.click('#pr-body .q-next');
+  await page.waitForTimeout(120);
+  v = await q();
+  ok(
+    `[${scheme}] Next to question 2: its answer and why are still there`,
+    /question 2/.test(v.stem) && /^Right\b/.test(v.verdict) && v.whys.includes('Piaget is right.') && v.back,
+    JSON.stringify(v)
+  );
+  await page.click('#pr-close');
+  await page.waitForTimeout(150);
+  const saved = await page.evaluate(id => Object.keys(((window.__db.answers || {})[id] || {}).answers || {}), navId);
+  const line = await page
+    .locator('#pr-body .pr-lead, #pr-body .row', { hasText: 'Harness nav' })
+    .first()
+    .textContent()
+    .catch(() => '');
+  ok(
+    `[${scheme}] closed mid-set, the answer is kept and the list says one is answered`,
+    JSON.stringify(saved) === '["v2"]' && /1 of 3|1 answered/.test(line),
+    JSON.stringify([saved, line])
+  );
+  await openSet('Harness nav');
+  await page.waitForTimeout(150);
+  v = await q();
+  ok(
+    `[${scheme}] reopened, it is where he left it`,
+    /question 2/.test(v.stem) && /^Right\b/.test(v.verdict),
+    JSON.stringify(v)
+  );
+  await page.click('#pr-body .q-back');
+  await page.waitForTimeout(100);
+  await page.locator('#pr-body label.opt', { hasText: 'Erikson' }).click();
+  await page.click('#pr-body button:has-text("Check answer")');
+  await page.waitForTimeout(150);
+  await page.click('#pr-body button:has-text("Next question")');
+  await page.waitForTimeout(100);
+  await page.click('#pr-body button:has-text("Next question")');
+  await page.waitForTimeout(100);
+  await page.locator('#pr-body label.opt', { hasText: 'Kohlberg' }).click();
+  await page.click('#pr-body button:has-text("Check answer")');
+  await page.waitForTimeout(150);
+  await page.locator('#pr-body button', { hasText: 'See results' }).first().click();
+  await page.waitForTimeout(150);
+  ok(
+    `[${scheme}] the last answer, whichever order, brings the results`,
+    /3 of 3|All sets/.test(await page.textContent('#pr-body')) && !v.sideways,
+    (await page.textContent('#pr-body')).slice(0, 160)
+  );
+  await page.screenshot({ path: `${shots}/practice-nav-done-${scheme}.png` });
+  await page.locator('#pr-body button', { hasText: 'All sets' }).first().click();
+  await page.waitForTimeout(150);
+}
 async function buildAskChecks(page, scheme) {
   const tag = `[${scheme}] `;
   for (const [id, want] of [
@@ -976,6 +1122,7 @@ const ok = (name, cond, detail = '') => {
         );
         await page.screenshot({ path: `${shots}/dosage-desktop.png`, fullPage: false });
       }
+      await practiceNav(page, scheme); // B-191
       await page.click('#tab-ev');
       await page.waitForTimeout(150);
       await buildAskChecks(page, scheme); // B-180
@@ -2359,6 +2506,7 @@ const ok = (name, cond, detail = '') => {
       );
       await page.screenshot({ path: `${shots}/retake-${scheme}.png`, fullPage: false });
     }
+    await practiceNav(page, scheme); // B-191
     // Plan: tick a task (B-121: from 1024 px the plan sits beside review and practice, with no Plan button)
     if (scheme === 'desktop') {
       ok(

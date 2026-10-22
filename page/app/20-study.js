@@ -131,6 +131,30 @@
       const list = practiceSets();
       const d = ui.openSet && list.find(x => x.id === ui.openSet);
       $('pr-prog').hidden = !d;
+      // B-191: an open set closes from its head line, back to the list he opened it from; every answer stays saved (each
+      // is written as he checks it) and the set reopens on the question he left.
+      let close = $('pr-close');
+      if (!close) {
+        close = btn(
+          'Close',
+          () => {
+            ui.openSet = null;
+            render();
+            const li = document.querySelector(
+              '#pr-body [data-id="' + CSS.escape(String(close.dataset.set || '')) + '"]'
+            );
+            if (li) li.scrollIntoView({ block: 'nearest' });
+          },
+          { cls: 'quiet pr-close' }
+        );
+        close.id = 'pr-close';
+        $('pr-count').after(close);
+      }
+      close.hidden = !d;
+      if (d) {
+        close.dataset.set = d.id;
+        close.setAttribute('aria-label', 'Close ' + (d.title || 'this set') + '; your answers are kept');
+      }
       if (!d) {
         if ($('pr-share')) $('pr-share').hidden = true;
         $('pr-title').textContent = 'Drills and practice';

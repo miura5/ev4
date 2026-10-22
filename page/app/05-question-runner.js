@@ -269,16 +269,27 @@
           )
         );
       const actions = el('div', 'actions');
+      // B-191: Back and Next walk the set in its order; an answered question shows its answer and why, an unanswered one
+      // stays open to answer, so he can answer out of order. The score waits for the last answer.
+      const at = items.findIndex(x => x.id === q.id),
+        prev = items[at - 1],
+        after = items[at + 1],
+        go = id => {
+          views[key] = id;
+          render();
+        };
+      if (prev) {
+        const b = btn('Back', () => go(prev.id), { cls: 'quiet q-back' });
+        b.setAttribute('aria-label', 'Back to question ' + at);
+        actions.append(b);
+      }
       if (a) {
         if (q.verify) parts.push(el('p', 'meta', 'Built from general knowledge: check it against your materials.'));
-        const next = items.find(x => !answers[x.id] && x.id !== q.id);
+        const open = items.find(x => !answers[x.id] && x.id !== q.id);
         actions.append(
           btn(
-            next ? 'Next question' : 'See results',
-            () => {
-              views[key] = next ? next.id : '__summary';
-              render();
-            },
+            after ? 'Next question' : open ? 'Next unanswered' : 'See results',
+            () => go(after ? after.id : open ? open.id : '__summary'),
             { primary: true }
           )
         );
@@ -326,14 +337,12 @@
             submit.textContent = 'Check answer';
           }
         });
-        const later = items.find(x => !answers[x.id] && x.id !== q.id);
-        if (later)
-          actions.append(
-            btn('Skip for now', () => {
-              views[key] = later.id;
-              render();
-            })
-          );
+        const later = after || items.find(x => !answers[x.id] && x.id !== q.id);
+        if (later) {
+          const b = btn('Next', () => go(later.id), { cls: 'quiet q-next' });
+          b.setAttribute('aria-label', 'Next question, leaving this one open');
+          actions.append(b);
+        }
         actions.append(submit);
       }
       parts.push(actions);

@@ -163,7 +163,10 @@
         }
         const cnt = el('span', 'meta');
         const h = head2(s.title || 'Practice set');
-        h.append(cnt);
+        // B-191: Close folds the set back into the conversation it came from; his answers are kept as he checks them.
+        const close = btn('Close', () => sfFold(), { cls: 'quiet pr-close' });
+        close.setAttribute('aria-label', 'Close ' + (s.title || 'this set') + '; your answers are kept');
+        h.append(cnt, close);
         box.append(h);
         const bar = el('i');
         bar.style.width = '0';

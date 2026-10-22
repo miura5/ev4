@@ -153,6 +153,9 @@ textarea{min-height:110px;resize:vertical;line-height:1.55}
 button.quiet{background:transparent;border-color:var(--line2);color:var(--ink2)}
 .actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;align-items:center}
 .actions .grow{flex:1;min-width:0}
+/* B-191: Back sits at the left of a question's actions, Next and the check at the right; an open set closes from its head. */
+.actions .q-back{margin-right:auto}
+.card-head .pr-close{margin-left:auto}
 /* question runner */
 .q-head{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .stem{font-size:17px;line-height:1.55;margin:2px 0 0;white-space:pre-wrap}
