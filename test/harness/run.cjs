@@ -756,6 +756,71 @@ async function buildAskChecks(page, scheme) {
     await page.textContent('#ev-guard')
   );
   await page.fill('#ev-input', '');
+  // B-183 (D-197): "design: <theme>" and "file: <doc link>" are builder jobs of their own kinds, fired like a build ask;
+  // the builder's trace lands the kickoff as her line with a Copy chip that copies it exactly.
+  const b2 = await count();
+  await send(page, 'design: voice in');
+  await page.waitForTimeout(400);
+  const a2 = await count();
+  const did = a2.jobs.find(k => !b2.jobs.includes(k));
+  const dj = did ? await page.evaluate(i => window.__db.jobs[i], did) : null;
+  ok(
+    `${tag}"design: voice in" writes a design job with the theme and fires the builder`,
+    dj && dj.kind === 'design' && dj.brief === 'voice in' && a2.fires === b2.fires + 1 && a2.chats === b2.chats,
+    JSON.stringify(dj)
+  );
+  await send(page, 'file: https://claude.ai/artifact/AbCdEfGhIjKlMnOpQrStUv');
+  await page.waitForTimeout(400);
+  const a3 = await count();
+  const pid = a3.jobs.find(k => !a2.jobs.includes(k));
+  const pj = pid ? await page.evaluate(i => window.__db.jobs[i], pid) : null;
+  ok(
+    `${tag}"file: <doc link>" writes a plan job with the link and fires the builder`,
+    pj &&
+      pj.kind === 'plan' &&
+      pj.brief === 'https://claude.ai/artifact/AbCdEfGhIjKlMnOpQrStUv' &&
+      a3.fires === a2.fires + 1,
+    JSON.stringify(pj)
+  );
+  // A kickoff as long as a real one: the template with its slots named.
+  const kickoff = fs
+    .readFileSync(path.join(root, 'tools/kickoff.md'), 'utf8')
+    .replace(/^<!--[\s\S]*?-->\n/, '')
+    .replace(/\{\{(\w+)\}\}/g, (_, k) => `[${k}]`)
+    .trim();
+  await page.evaluate(
+    async ([job, text]) => {
+      window.__copied = null;
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: { writeText: async t => void (window.__copied = t) },
+      });
+      const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date());
+      const at = new Date().toISOString();
+      const key = 'm-' + at.replace(/\D/g, '').slice(0, 8) + '-' + at.replace(/\D/g, '').slice(8, 17) + '-job';
+      const db = await window.claude.use('db');
+      await db
+        .collection('talk')
+        .doc(day)
+        .update({
+          messages: {
+            [key]: { role: 'ev', text, cards: [{ type: 'job', id: job }, { type: 'copy' }], at, jobId: job },
+          },
+        });
+    },
+    [did, kickoff]
+  );
+  await page.waitForTimeout(500);
+  const chip = page.locator('#thread .copy-chip').last();
+  const shown = (await chip.count()) === 1 && (await chip.isVisible());
+  if (shown) await chip.click();
+  await page.waitForTimeout(200);
+  ok(
+    `${tag}the kickoff lands as her line with a Copy chip that copies it as written, and no surface for it`,
+    shown && (await page.evaluate(() => window.__copied)) === kickoff && (await chip.textContent()) === 'Copied',
+    String(await page.evaluate(() => window.__copied))
+  );
+  await page.screenshot({ path: `${shots}/kickoff-copy-${scheme}.png` });
 }
 // B-194: a second plan in force (a dosage plan), dated well ahead so it adds nothing to today.
 const later = new Date(DAYTIME.getTime() + 20 * 864e5).toISOString().slice(0, 10);

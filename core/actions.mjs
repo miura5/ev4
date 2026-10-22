@@ -116,7 +116,16 @@ export function makeActions(validateAgainst) {
   function trace(args, ctx) {
     const at = ctx.now || new Date().toISOString();
     const key = `m-${compact(at).slice(0, 8)}-${compact(at).slice(8)}000-job`;
-    const message = { role: 'ev', text: args.text, cards: [{ type: 'job', id: args.job }], at, jobId: args.job };
+    // B-183 (D-197): a design job's line is the kickoff itself, with a Copy chip under it.
+    const message = args.kickoff
+      ? {
+          role: 'ev',
+          text: args.kickoff,
+          cards: [{ type: 'job', id: args.job }, { type: 'copy' }],
+          at,
+          jobId: args.job,
+        }
+      : { role: 'ev', text: args.text, cards: [{ type: 'job', id: args.job }], at, jobId: args.job };
     const result = {
       text: args.text,
       ...(args.task ? { task: args.task } : {}),

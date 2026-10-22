@@ -648,3 +648,7 @@ button.tlink{all:unset;cursor:pointer;color:var(--accent-text);font-size:14px;pa
 .yt-ask{margin:0;line-height:1.4}
 .yt-chips{margin-top:8px;justify-content:flex-start}
 .yt-confirm{margin:6px 0 0;color:var(--ink2);line-height:1.4}
+
+/* B-183: the design kickoff, a long text to paste: a short left-aligned preview fading out, the Copy chip under it. */
+.bubble.to-copy,body.captions .msg.ev .bubble.to-copy,body.captions .msg.ev.current .bubble.to-copy{font-size:14px;line-height:1.5;text-align:left;max-height:9em;overflow:hidden;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent);color:var(--soft);opacity:1}
+.copy-chip{align-self:center;margin-top:6px}

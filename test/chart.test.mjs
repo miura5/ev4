@@ -2209,3 +2209,103 @@ test('B-182: log --ask sets the one line Your turn asks, --choices a decision’
   C.applyLog(r, { _: ['log', 'B-02'], ask: '' });
   assert.deepEqual([t.ask, t.choices], [undefined, undefined]);
 });
+
+// ------------------------------------------------------------------------------------------------ B-183 kickoff
+test('B-183: the kickoff is built from planted reads (the north star tab, a weeks fetch) and the Chart, under 4,000 characters', () => {
+  const nsId = C.docIdOf(C.NORTH_STAR);
+  const cell = (t, j) => `<cell id='.c${j}'><paragraph id='.c${j}p'><text id='.c${j}t'>${t}</text></paragraph></cell>`;
+  const row = (i, cells) => `<row id='.r${i}'>${cells.map((c, j) => cell(c, `${i}${j}`)).join('')}</row>`;
+  const xml =
+    `<doc node='4cdfbcea-659b' rev='6'><paragraph id='a' heading='1'><text id='a1'>E.V. north star</text></paragraph>` +
+    `<paragraph id='b' heading='2'><text id='b1'>The six workflows</text></paragraph><table id='t'>` +
+    row(0, ['#', 'Workflow', 'What she does', 'Where it stands']) +
+    row(1, ['1', 'The brief before the day', 'One paragraph before he wakes', 'Planted: prep checks exist']) +
+    row(2, ['4', 'The night-before model', 'A calibrated prediction', 'Planted: insights are next']) +
+    `</table><paragraph id='c'><text id='c1'><bold>When v5 may start.</bold></text><text id='c2'> Planted: thirty days of green health.</text></paragraph></doc>`;
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-kickoff-'));
+  const wf = path.join(dir, 'weeks', '2026-10-18.json');
+  fs.mkdirSync(path.dirname(wf), { recursive: true });
+  fs.writeFileSync(
+    wf,
+    JSON.stringify({ insights: { lines: ['Planted line one.', 'Planted line two.'], weakestObjective: null } })
+  );
+  const jsonl = [
+    ...toolPair(
+      'n1',
+      'mcp__Claude_Docs__read',
+      { ref: { object: 'node', id: '4cdfbcea-659b' }, container: { kind: 'project', id: nsId } },
+      JSON.stringify({ verdict: 'allow', rev: 6, data: { rev: 6, xml, complete: true } })
+    ),
+    ...toolPair(
+      'w1',
+      'ArtifactData',
+      { action: 'list', url: 'https://claude.ai/artifact/x', collection: 'weeks', out_dir: dir },
+      `1 document from collection "weeks" saved as JSON files:\n- "2026-10-18"  10 bytes  version 3  "${wf}"`
+    ),
+  ].join('\n');
+  const k = C.kickoffFrom(RECORD, jsonl, { theme: 'voice in', now: '2026-10-22T05:00:00Z' });
+  assert.deepEqual(k.missing, []);
+  assert.ok(k.length <= C.KICKOFF_MAX && k.text.length === k.length, `${k.length} characters`);
+  const r = rec();
+  for (const want of [
+    /^You are a design chat for E\.V\. v4/,
+    new RegExp(
+      `Live is ${r.deploys
+        .filter(d => d.target === 'live')
+        .at(-1)
+        .release.replace(/\./g, '\\.')} at`
+    ),
+    new RegExp(`north star ${C.NORTH_STAR}`),
+    /The goal: design "voice in"/,
+    /\d+ tasks done, \d+ in progress, \d+ open, \d+ blocked\./,
+    /1\. The brief before the day: Planted: prep checks exist\n4\. The night-before model: Planted: insights are next/,
+    /When v5 may start\. Planted: thirty days of green health\./,
+    /The latest insights \(weeks\/2026-10-18\)\nPlanted line one\.\nPlanted line two\./,
+    /Waiting on Matt\n/,
+    /Decisions since the last design hand-off\n/,
+    /Tasks to add: Task \| Depends \| Definition of done \| Milestone/,
+    /Decisions proposed: P-n \| Decision \| Why/,
+    /Tenets proposed: P-n \| Tenet \| Scope \| Check \| Why/,
+    /"file: <the doc link>"/,
+  ])
+    assert.match(k.text, want);
+  assert.ok(!/\{\{\w+\}\}|<!--/.test(k.text), 'every slot filled, the template note left out');
+  // Without the reads, each slot says so and the command names what to read, never a guess.
+  const bare = C.kickoffFrom(RECORD, '', {});
+  assert.equal(bare.missing.length, 2);
+  assert.match(bare.text, /\(the north star was not read in this session\)/);
+  assert.match(bare.text, /The goal: pick the next theme with Matt/);
+  // A long record still fits: the lists shorten, the frame stays.
+  const big = C.loadChart(RECORD);
+  for (let i = 0; i < 80; i++)
+    big.tasks.push({
+      ...big.tasks.find(t => t.status === 'done'),
+      id: `B-${900 + i}`,
+      status: 'open',
+      title: 'A planted open task with a long enough title to fill the kickoff'.repeat(2),
+    });
+  const t = C.kickoffText(big, { template: fs.readFileSync(path.join(ROOT, 'tools/kickoff.md'), 'utf8') });
+  assert.ok(t.length <= C.KICKOFF_MAX && /Tenets proposed/.test(t.text), `${t.length}`);
+});
+
+test("B-183: a plan job's trace line names what was filed from the doc, in ids, from the record", () => {
+  const r = rec();
+  const docId = 'TbfWAoQEeQixyNKZnEZKvv';
+  const f = C.filedFrom(r, docId);
+  assert.ok(f.decisions.length && f.tasks.length, 'the v4.4 plan filed both');
+  const line = C.planTraceText(f, docId);
+  const d = f.decisions.filter(x => x.kind !== 'tenet');
+  assert.match(
+    line,
+    new RegExp(`^Filed from the design doc ${docId}: ${d.length} decisions \\(${d[0].id} to ${d.at(-1).id}\\)`)
+  );
+  assert.match(line, new RegExp(`${f.tasks.length} tasks \\(${f.tasks[0].id} to ${f.tasks.at(-1).id}\\)\\.$`));
+  assert.equal(
+    C.planTraceText({ decisions: [], tasks: [], skipped: [{}, {}] }, 'X'),
+    'Nothing new to file from the design doc X: all 2 rows were filed before.'
+  );
+  assert.equal(
+    C.planTraceText({ decisions: [{ id: 'D-9', kind: 'tenet' }], tasks: [{ id: 'B-1' }], skipped: [] }, 'X'),
+    'Filed from the design doc X: 1 tenet (D-9), 1 task (B-1).'
+  );
+});

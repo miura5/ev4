@@ -86,7 +86,13 @@ fired with says what it is for:
   never retyped; the source is "E.V. page, job <id>"), triaged into a task whose definition of done is written from his
   words (D-182), and that task taken first in this run, the one exception to the BACKLOG order (D-191); built, shipped
   to staging and traced. **reply**: `log <task> --note --from-job <id> --waiting-on none`, then that task taken when it
-  was blocked only on that. **design**, **plan** and **ship**: as B-183 and B-185 say once they are built.
+  was blocked only on that. **design** (B-183, D-197): read the north star's tab (Claude Docs read of
+  https://claude.ai/artifact/4SJmAvp26TbGAXFUwfGqcd, then its tab's node) and list the job's record's weeks with an
+  out_dir, then `trace --job <id> --record <the job's record> --status done --kickoff`: the kickoff is built from those
+  reads and the Chart (its theme is the job's brief), lands as E.V.'s line with a Copy chip, and nothing is filed from
+  it. **plan**: read the tab of the doc the job's brief links, `plan --from <that link> --apply` (a row's Depends sets
+  depends), then `trace --job <id> --record <the job's record> --status done --filed`, whose line names what was filed.
+  **ship**: as B-185 says once it is built.
 - Words to file (bug:, idea: or request:): `report --from-chat` first, then as Every session says.
 - `continue`: Every session, from step 1.
 

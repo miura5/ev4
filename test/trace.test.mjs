@@ -205,3 +205,84 @@ test('B-178 (D-196): ship writes system/yourturn in its system batch, and asks f
     JSON.stringify(validate('system', doc, { id: 'yourturn' }))
   );
 });
+
+// B-183 (D-197): a design job's trace lands the kickoff (built from this session's reads, its theme the job's brief) as
+// the talk line with a Copy card; a plan job's trace names what the record holds from the doc its brief links.
+const pair = (id, name, input, text) => [
+  JSON.stringify({ message: { content: [{ type: 'tool_use', id, name, input }] } }),
+  JSON.stringify({
+    type: 'user',
+    message: { content: [{ type: 'tool_result', tool_use_id: id, content: [{ type: 'text', text }] }] },
+  }),
+];
+function jobRead(dir, id, kind, brief) {
+  const f = path.join(dir, 'dist', 'state', 'jobs', id + '.json');
+  fs.mkdirSync(path.dirname(f), { recursive: true });
+  fs.writeFileSync(f, JSON.stringify({ schema: 2, writer: 'page', kind, title: 't', brief }));
+  return pair(
+    'j-' + id,
+    'ArtifactData',
+    { action: 'get', url: 'https://claude.ai/artifact/x', collection: 'jobs', doc_id: id },
+    `saved "${f}"`
+  );
+}
+test('B-183: a design job traces the kickoff with a Copy card; a plan job traces what was filed from its doc', () => {
+  const dir = copyRepo();
+  const ns = pair(
+    'n1',
+    'mcp__Claude_Docs__read',
+    { ref: { object: 'node', id: '4cdfbcea-659b' }, container: { kind: 'project', id: C.docIdOf(C.NORTH_STAR) } },
+    JSON.stringify({
+      verdict: 'allow',
+      data: {
+        rev: 6,
+        xml: "<doc node='n'><paragraph id='a' heading='2'><text id='b'>The six workflows</text></paragraph><table id='t'><row id='r0'><cell id='c0'><paragraph id='p0'><text id='x0'>#</text></paragraph></cell><cell id='c1'><paragraph id='p1'><text id='x1'>Workflow</text></paragraph></cell><cell id='c2'><paragraph id='p2'><text id='x2'>What she does</text></paragraph></cell><cell id='c3'><paragraph id='p3'><text id='x3'>Where it stands</text></paragraph></cell></row><row id='r1'><cell id='d0'><paragraph id='q0'><text id='y0'>2</text></paragraph></cell><cell id='d1'><paragraph id='q1'><text id='y1'>The debrief after it</text></paragraph></cell><cell id='d2'><paragraph id='q2'><text id='y2'>He talks</text></paragraph></cell><cell id='d3'><paragraph id='q3'><text id='y3'>Voice in is the missing half</text></paragraph></cell></row></table></doc>",
+      },
+    })
+  );
+  const wf = path.join(dir, 'dist', 'state', 'weeks', '2026-10-18.json');
+  fs.mkdirSync(path.dirname(wf), { recursive: true });
+  fs.writeFileSync(wf, JSON.stringify({ insights: { lines: ['Accuracy rose on E4-3.'] } }));
+  const wk = pair('w1', 'ArtifactData', { action: 'list', collection: 'weeks', url: 'u' }, `saved "${wf}"`);
+  const DJ = 'job-20261022-010000-design-kickoff';
+  const jsonl = [...ns, ...wk, ...jobRead(dir, DJ, 'design', 'voice in')].join('\n');
+  const t = C.traceCalls(
+    dir,
+    { ...opts({ version: 'talk=7,yourturn=2' }), job: DJ, kickoff: true, note: undefined },
+    { now: NOW, jsonl }
+  );
+  const talk = JSON.parse(fs.readFileSync(t.calls[1].file_path, 'utf8'));
+  const msg = Object.values(talk.messages)[0];
+  assert.match(msg.text, /^You are a design chat for E\.V\. v4/);
+  assert.match(msg.text, /The goal: design "voice in"/);
+  assert.match(msg.text, /2\. The debrief after it: Voice in is the missing half/);
+  assert.match(msg.text, /Accuracy rose on E4-3\./);
+  assert.ok(msg.text.length <= C.KICKOFF_MAX);
+  assert.deepEqual(msg.cards, [{ type: 'job', id: DJ }, { type: 'copy' }]);
+  const res = JSON.parse(fs.readFileSync(t.calls[0].file_path, 'utf8'));
+  assert.equal(res.result.text, 'Your design kickoff is ready: copy it into a new design chat.');
+  // Without the reads it refuses and names them; without the job read it says which get to make.
+  assert.throws(
+    () =>
+      C.traceCalls(
+        dir,
+        { ...opts({ version: 'talk=7,yourturn=2' }), job: DJ, kickoff: true },
+        { now: NOW, jsonl: jobRead(dir, DJ, 'design', 'x').join('\n') }
+      ),
+    /read the north star and the latest weeks document/
+  );
+  assert.throws(
+    () => C.traceCalls(dir, { ...opts(), job: DJ, kickoff: true }, { now: NOW, jsonl: '' }),
+    /no read of job/
+  );
+  // A plan job: its brief is the doc link; the line names what the record holds from that doc.
+  const PJ = 'job-20261022-011000-file-a-design';
+  const doc = 'https://claude.ai/artifact/TbfWAoQEeQixyNKZnEZKvv';
+  const p = C.traceCalls(
+    dir,
+    { ...opts({ version: 'talk=7,yourturn=2' }), job: PJ, filed: true, note: undefined },
+    { now: NOW, jsonl: jobRead(dir, PJ, 'plan', doc).join('\n') }
+  );
+  const pres = JSON.parse(fs.readFileSync(p.calls[0].file_path, 'utf8'));
+  assert.match(pres.result.text, /^Filed from the design doc TbfWAoQEeQixyNKZnEZKvv: \d+ decisions \(D-\d+ to D-\d+\)/);
+});

@@ -2446,6 +2446,23 @@ export function traceCalls(root, o, { jsonl = '', now = new Date().toISOString()
   const url = `https://claude.ai/artifact/${art}`;
   if (typeof o.job !== 'string') throw new Error('trace --job <id> --status done|failed --note "<one line>"');
   if (!['done', 'failed'].includes(o.status)) throw new Error('trace --status done|failed');
+  // B-183: a design job's trace carries the kickoff (built here from this session's reads, never typed), a plan job's
+  // its line from what the record now holds from that doc; either stands in for --note.
+  let kickoff = null;
+  const job = o.kickoff || o.filed === true ? jobFrom(jsonl, o.job) : null;
+  if ((o.kickoff || o.filed === true) && !job) throw new Error(jobReadMissing(o.job));
+  if (o.kickoff) {
+    // The theme is the job's own brief, as fetched ("design" alone asks for the next theme).
+    const theme = job.words === 'the next theme' ? null : job.words;
+    const k = kickoffFrom(root, jsonl, { theme, now });
+    if (k.missing.length) throw new Error(`trace --kickoff: read ${k.missing.join(' and ')} in this session first`);
+    kickoff = k.text;
+    if (typeof o.note !== 'string') o = { ...o, note: 'Your design kickoff is ready: copy it into a new design chat.' };
+  }
+  if (o.filed === true) {
+    const docId = docIdOf(job.words); // the doc link is the plan job's brief, as fetched
+    if (typeof o.note !== 'string') o = { ...o, note: planTraceText(filedFrom(loadChart(root), docId), docId) };
+  }
   if (typeof o.note !== 'string' || !o.note.trim()) throw new Error('trace --note "<one line>"');
   const date = EVCORE.chicagoDate(now);
   const given = o.version
@@ -2477,6 +2494,7 @@ export function traceCalls(root, o, { jsonl = '', now = new Date().toISOString()
     job: o.job,
     status: o.status,
     text: o.note.trim().slice(0, 1500),
+    ...(kickoff ? { kickoff } : {}),
     date,
     talkExists: ver.talk > 0,
     release,
@@ -2537,6 +2555,204 @@ function trace(o) {
     ].join('\n')
   );
   return 0;
+}
+
+// ------------------------------------------------------------------------------------------------ kickoff (B-183)
+// D-197: the design kickoff is a draft E.V. hands Matt as text with a Copy chip. It is assembled from what this session
+// read (the north star's tab, the latest weeks insights, never retyped), the Chart and tools/kickoff.md, at most
+// KICKOFF_MAX characters. It reads the north star only to draft and files nothing from it.
+export const NORTH_STAR = 'https://claude.ai/artifact/4SJmAvp26TbGAXFUwfGqcd';
+export const CHART_DESIGN = 'https://claude.ai/artifact/8DVSMh5WdybjeHVV5m2uQT';
+export const KICKOFF_MAX = 4000;
+/** The newest Docs read in the transcript of a tab of the doc docId: {rev, xml}, or null. */
+export function docTabRead(jsonl, docId) {
+  const rs = toolResults(jsonl || '', '*').filter(
+    r =>
+      isDocsTool(r.name, 'read') &&
+      !r.isError &&
+      r.input &&
+      r.input.container &&
+      docIdOf(r.input.container.id) === docId &&
+      r.input.ref &&
+      r.input.ref.object === 'node'
+  );
+  // A whole tab: a view of one block (parent=) or a search is not the page.
+  for (const r of rs.reverse()) {
+    const b = readBody(r.texts);
+    if (b && b.xml && !/^<doc\b[^>]*\bparent='/.test(b.xml) && !(r.input.payload && r.input.payload.kind === 'search'))
+      return b;
+  }
+  return null;
+}
+const xmlWords = x =>
+  String(x || '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ')
+    .trim();
+/** The north star as read: its six workflows (name, where it stands) and its "When v5 may start" line. */
+export function northStarFrom(read) {
+  if (!read || !read.xml) return null;
+  const rows = tableUnder(read.xml, 'The six workflows') || [];
+  const workflows = rows
+    .slice(1)
+    .filter(r => r.length >= 4 && r[1])
+    .map(r => ({ n: r[0], name: r[1], stands: r[3] }));
+  const para = [...read.xml.matchAll(/<paragraph\b[^>]*>([\s\S]*?)<\/paragraph>/g)]
+    .map(m => xmlWords(m[1]))
+    .find(t => /^When v5 may start\./.test(t));
+  return { workflows, v5: para || null };
+}
+/** The newest weeks document this session fetched (a get, list or query with out_dir): {date, insights} or null. */
+export function weekFrom(jsonl) {
+  let best = null;
+  for (const r of toolResults(jsonl || '', 'ArtifactData')) {
+    const i = r.input || {};
+    if (r.isError || i.collection !== 'weeks' || !['get', 'list', 'query'].includes(i.action)) continue;
+    for (const m of r.texts.join('\n').matchAll(/"(\/[^"]+\/weeks\/([^"/]+)\.json)"/g)) {
+      let doc = null;
+      try {
+        doc = JSON.parse(fs.readFileSync(m[1], 'utf8'));
+      } catch {
+        doc = null;
+      }
+      if (doc && (!best || m[2] > best.date)) best = { date: m[2], insights: doc.insights || null };
+    }
+  }
+  return best;
+}
+/** The decisions filed after the last design hand-off: numbered above the newest decision a plan filed. */
+export function decisionsSincePlan(rec) {
+  const num = id => Number(String(id).slice(2));
+  const planned = rec.decisions.filter(d => /^plan /.test(d.source || '')).map(d => num(d.id));
+  const floor = planned.length ? Math.max(...planned) : 0;
+  return rec.decisions.filter(d => num(d.id) > floor).sort((a, b) => num(a.id) - num(b.id));
+}
+/** What the record holds from one design doc's hand-off, in planTraceText's shape. */
+export function filedFrom(rec, docId) {
+  const src = `plan ${docId}`;
+  const num = id => Number(String(id).slice(2));
+  const by = (a, b) => num(a.id) - num(b.id);
+  return {
+    decisions: rec.decisions.filter(d => d.source === src || String(d.source || '').startsWith(src + ' ')).sort(by),
+    tasks: rec.tasks.filter(t => t.source === src).sort(by),
+    skipped: [],
+  };
+}
+const shortTitle = (t, n = 60) => {
+  const s = String(t || '')
+    .replace(/^(?:Bug|Request) \(reported [^)]*\): /, '')
+    .split(/ \(|: /)[0]
+    .trim();
+  return s.length > n ? s.slice(0, n - 1).trimEnd() + '…' : s;
+};
+/**
+ * The kickoff text from the Chart and the reads: {text, length, missing}. Lists shorten to fit KICKOFF_MAX, the longest
+ * first; a read this session did not make says so in its slot (missing names it), never a guess.
+ */
+export function kickoffText(
+  rec,
+  { ns = null, week = null, theme = null, template, now = new Date().toISOString() } = {}
+) {
+  if (!template) throw new Error('kickoff: no template (tools/kickoff.md)');
+  const missing = [];
+  const live = [...rec.deploys].reverse().find(d => d.target === 'live');
+  const by = s => rec.tasks.filter(t => t.status === s);
+  const open = by('open'),
+    blocked = by('blocked'),
+    going = by('in progress');
+  const list = (ts, n) =>
+    ts
+      .slice(0, n)
+      .map(t => `${t.id} ${shortTitle(t.title)}`)
+      .join('; ') + (ts.length > n ? '; …' : '');
+  const yt = yourTurnDoc(rec, { at: now, commit: 'kickoff', source: 'kickoff' }).groups.flatMap(g => g.tasks);
+  const decided = decisionsSincePlan(rec);
+  const ins = week && week.insights;
+  const fill = n => {
+    const slots = {
+      live: live ? `${live.release || '?'} at ${live.commit}` : 'not deployed yet',
+      northStar: NORTH_STAR,
+      chartDesign: CHART_DESIGN,
+      goal: theme
+        ? `design "${theme}". Read the north star with that in mind, then ask Matt what he wants from it.`
+        : 'pick the next theme with Matt: the workflow the north star and the insights say moves most, his call.',
+      chart: [
+        `${rec.tasks.filter(t => t.status === 'done').length} tasks done, ${going.length} in progress, ${open.length} open, ${blocked.length} blocked.`,
+        going.length ? `In progress: ${list(going, n)}.` : '',
+        open.length ? `Open: ${list(open, n)}.` : '',
+        blocked.length ? `Blocked: ${list(blocked, n)}.` : '',
+      ]
+        .filter(Boolean)
+        .join('\n'),
+      workflows:
+        ns && ns.workflows.length
+          ? ns.workflows.map(w => `${w.n}. ${w.name}: ${w.stands}`).join('\n') + (ns.v5 ? `\n${ns.v5}` : '')
+          : '(the north star was not read in this session)',
+      weekDate: week ? `weeks/${week.date}` : 'none read',
+      insights:
+        ins && ((ins.lines || []).length || ins.weakestObjective)
+          ? [
+              ...(ins.lines || []).slice(0, 3),
+              ...(ins.weakestObjective ? [`Weakest objective: ${JSON.stringify(ins.weakestObjective)}`] : []),
+            ].join('\n')
+          : week
+            ? '(that week has no insights yet)'
+            : '(no weeks document was read in this session)',
+      yourTurn: yt.length
+        ? yt
+            .slice(0, n)
+            .map(t => `${t.id}: ${t.ask}`)
+            .join('\n')
+        : 'Nothing.',
+      decisions: decided.length
+        ? decided
+            .slice(-n)
+            .map(d => `${d.id} ${shortTitle(d.title, 110)}`)
+            .join('\n')
+        : 'None.',
+    };
+    return template
+      .replace(/^<!--[\s\S]*?-->\n/, '')
+      .replace(/\{\{(\w+)\}\}/g, (_, k) => (k in slots ? slots[k] : `{{${k}}}`))
+      .trim();
+  };
+  if (!ns) missing.push('the north star');
+  if (!week) missing.push('the latest weeks document');
+  let text = fill(12);
+  for (let n = 11; text.length > KICKOFF_MAX && n >= 1; n--) text = fill(n);
+  if (text.length > KICKOFF_MAX) text = text.slice(0, KICKOFF_MAX - 1) + '…';
+  return { text, length: text.length, missing };
+}
+/** The kickoff from this session's reads (the north star's tab, the weeks fetch), as the command and trace use it. */
+export function kickoffFrom(root, jsonl, { theme = null, now } = {}) {
+  const template = fs.readFileSync(new URL('./kickoff.md', import.meta.url), 'utf8'); // the template is code, beside this file
+  return kickoffText(loadChart(root), {
+    ns: northStarFrom(docTabRead(jsonl, docIdOf(NORTH_STAR))),
+    week: weekFrom(jsonl),
+    theme,
+    template,
+    now,
+  });
+}
+/** B-183: the plan job's trace line, from plan's own result: what was filed from which doc, in ids. */
+export function planTraceText(p, docId) {
+  const span = xs => (xs.length > 1 ? `${xs[0]} to ${xs.at(-1)}` : xs[0]);
+  const d = p.decisions.filter(x => x.kind !== 'tenet').map(x => x.id),
+    t = p.decisions.filter(x => x.kind === 'tenet').map(x => x.id),
+    k = p.tasks.map(x => x.id);
+  const parts = [
+    d.length && `${d.length} decision${d.length > 1 ? 's' : ''} (${span(d)})`,
+    t.length && `${t.length} tenet${t.length > 1 ? 's' : ''} (${span(t)})`,
+    k.length && `${k.length} task${k.length > 1 ? 's' : ''} (${span(k)})`,
+  ].filter(Boolean);
+  return parts.length
+    ? `Filed from the design doc ${docId}: ${parts.join(', ')}.${p.skipped.length ? ` ${p.skipped.length} already filed, skipped.` : ''}`
+    : `Nothing new to file from the design doc ${docId}${p.skipped.length ? `: all ${p.skipped.length} rows were filed before` : ''}.`;
 }
 
 // ------------------------------------------------------------------------------------------------ brief
@@ -3466,6 +3682,32 @@ const commands = {
   },
   trace(o) {
     return trace(o);
+  },
+  // B-183 (D-197): the design kickoff, printed; kickoff [--theme "<theme>"].
+  kickoff(o) {
+    const root = rootOf(o),
+      file = o.transcript || newestTranscript();
+    const jsonl = file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+    const k = kickoffFrom(root, jsonl, { theme: typeof o.theme === 'string' ? o.theme : null });
+    const reads = [
+      ...(k.missing.some(m => /north star/.test(m))
+        ? [
+            `  Claude_Docs read ${JSON.stringify({ ref: { object: 'project', id: docIdOf(NORTH_STAR) } })}, then its tab's node`,
+          ]
+        : []),
+      ...(k.missing.some(m => /weeks/.test(m))
+        ? [
+            `  ArtifactData {"action":"list","url":"<the record>","collection":"weeks","query":{"limit":5},"out_dir":"${path.join(root, 'dist', 'state', 'weeks')}"}`,
+          ]
+        : []),
+    ];
+    if (reads.length) {
+      console.log(`kickoff: read ${k.missing.join(' and ')} first, then kickoff again:\n${reads.join('\n')}`);
+      return 1;
+    }
+    console.log(k.text);
+    console.log(`\n(kickoff: ${k.length} of ${KICKOFF_MAX} characters)`);
+    return 0;
   },
   rollback(o) {
     return rollback(o);

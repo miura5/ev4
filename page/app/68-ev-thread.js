@@ -47,7 +47,9 @@
         } else kids.push(el('span', 'av-slot'));
       }
       // A line that arrives while the page is open (a reply from its first dots) reveals word by word; history shows whole.
-      if (m.role !== 'matt' && !rec && (m.greeting || T.ready)) revealQueue(m);
+      // B-183: a line to copy (the design kickoff) shows at once as a short preview; it is text to paste, not speech.
+      const toCopy = m.role !== 'matt' && !!m.text && (m.cards || []).some(c => c && c.type === 'copy');
+      if (m.role !== 'matt' && !rec && (m.greeting || T.ready) && !toCopy) revealQueue(m);
       const body = el('div', 'msg-body');
       if (m.pending && !m.text) {
         const b = el('div', 'bubble');
@@ -57,8 +59,8 @@
         b.append(d);
         body.append(b);
       } else if (m.text) {
-        const b = el('div', 'bubble' + (m.error ? ' err' : ''));
-        b.append(m.role === 'matt' ? fmt(m.text) : capWords(fmt(m.text)));
+        const b = el('div', 'bubble' + (m.error ? ' err' : '') + (toCopy ? ' to-copy' : ''));
+        b.append(m.role === 'matt' || toCopy ? fmt(m.text) : capWords(fmt(m.text)));
         body.append(b);
         const st = CAP.rv.get(m.id);
         if (st && CAP.queue.includes(m.id)) {
@@ -82,6 +84,21 @@
       }
       const cardsBox = el('div', 'msg-cards');
       body.append(cardsBox);
+      // B-183 (D-197): a line with a copy card (the design kickoff) carries a Copy chip: the text as written, to paste.
+      if (toCopy) {
+        const cp = el('button', 'qchip copy-chip', 'Copy');
+        cp.type = 'button';
+        cp.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(m.text);
+            cp.textContent = 'Copied';
+            toast('Copied. Paste it into a new design chat.');
+          } catch {
+            toast('Couldn’t copy here. Select the text and copy it.');
+          }
+        });
+        body.append(cp);
+      }
       const meta = el('div', 'msg-meta');
       meta.append(
         el(

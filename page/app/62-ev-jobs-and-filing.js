@@ -184,29 +184,43 @@
     // writes jobs/<id> (kind build, his words) and fires the builder with "Job <id>" and his message as typed; the
     // job-fired row records the answer. An identifier holds it outright: a build ask's words go into the Chart.
     const BUILD_ASK = /^\s*(build|bug|idea)\s*:/i;
+    // B-183 (D-197): "design" or "design: <theme>" asks the builder for the next design chat's kickoff; "file: <doc link>"
+    // asks it to file a design doc's hand-off. Both are builder jobs like a build ask, each its own row.
+    const DESIGN_ASK = /^\s*design\s*(?::\s*(\S[\s\S]*?))?\s*$/i;
+    const FILE_ASK = /^\s*file\s*:\s*(https:\/\/claude\.ai\/\S+)\s*$/i;
+    const SENT = {
+      'build-ask':
+        'Sent to the builder. It files this as a task in your words, builds it and puts it on staging; this card follows it.',
+      'design-ask':
+        'Sent to the builder. It drafts your design kickoff from the Chart and the north star; it lands here with a Copy chip.',
+      'plan-ask': 'Sent to the builder. It reads that doc’s tables and files them; this card follows it.',
+    };
     async function buildAsk(text) {
       const typed = String(text).trim();
+      const design = DESIGN_ASK.exec(typed),
+        file = FILE_ASK.exec(typed);
+      const row = file ? 'plan-ask' : design ? 'design-ask' : 'build-ask';
       await mattSay(typed);
       const args = {
-        title: typed.replace(/\s+/g, ' ').slice(0, 90),
-        brief: typed.slice(0, 1500),
+        title: (file ? 'File ' + file[1] : design ? 'Design kickoff' + (design[1] ? ': ' + design[1] : '') : typed)
+          .replace(/\s+/g, ' ')
+          .slice(0, 90),
+        brief: (file ? file[1] : design ? design[1] || 'the next theme' : typed).slice(0, 1500),
         text: typed.slice(0, 1600),
       };
       const ctx = { now: new Date().toISOString() }; // one time, so the composition below is this one
-      const a = ACT ? ACT.tap('build-ask', args, ctx) : { ok: false, refused: 'the actions table did not load' };
+      const a = ACT ? ACT.tap(row, args, ctx) : { ok: false, refused: 'the actions table did not load' };
       if (!a.ok) {
         await evSay('I couldn’t hand that to the builder (' + a.refused + ').', [], { tier: 'local' });
         return;
       }
-      await run(ACT.tap('build-ask', args, ctx).writes);
+      await run(ACT.tap(row, args, ctx).writes);
       const id = a.writes[0].id;
       let fired = { at: now(), ok: false, error: 'no_task' };
       for (const e of a.effects) if (e.kind === 'fire_trigger') fired = await fire(TASKS.builder, e.text);
       await run(ACT.tap('job-fired', { job: id, fired }).writes);
       await evSay(
-        fired.ok
-          ? 'Sent to the builder. It files this as a task in your words, builds it and puts it on staging; this card follows it.'
-          : 'Saved it, but I couldn’t start the builder. ' + fireCopy(fired.error),
+        fired.ok ? SENT[row] : 'Saved it, but I couldn’t start the builder. ' + fireCopy(fired.error),
         [{ type: 'job', id }],
         { tier: 'local' }
       );
@@ -317,6 +331,17 @@
       const r = j.result || {};
       const failed = j.status === 'failed';
       const ul = el('ul', 'list build-steps');
+      // B-183: a kickoff or a filing has one row: what the builder said (the kickoff itself is the line above, to copy).
+      if (j.kind === 'design' || j.kind === 'plan') {
+        const said = failed ? r.failed || r.text || 'The builder stopped before it finished.' : r.text || '';
+        ul.append(
+          row({
+            title: failed ? 'Where it stopped' : j.kind === 'design' ? 'Kickoff' : 'Filed',
+            detail: said || (j.kind === 'design' ? 'Not drafted yet' : 'Not filed yet'),
+          })
+        );
+        return ul;
+      }
       ul.append(row({ title: 'Filed', detail: r.task ? 'As ' + r.task : failed ? 'Not filed' : 'Not filed yet' }));
       ul.append(
         row({

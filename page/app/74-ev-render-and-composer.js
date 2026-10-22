@@ -197,7 +197,10 @@
       }
       // B-180: a build ask goes into the project record, so a value that could be an identifier holds it every time,
       // practice or not (B-197: a field name alone passes). B-182: so does a typed reply to a Your turn item.
-      if (BUILDER_HERE && (BUILD_ASK.test(text) || REPLY_ASK.test(text))) {
+      if (
+        BUILDER_HERE &&
+        (BUILD_ASK.test(text) || REPLY_ASK.test(text) || DESIGN_ASK.test(text) || FILE_ASK.test(text))
+      ) {
         guardFor = null;
         const w = E.identifierCandidates(text, { strict: true });
         if (w.length) {
