@@ -3879,5 +3879,24 @@
   "notes": "",
   "commit": null,
   "source": "plan BridyLzngcGUtpeLQorX1U"
+ },
+ {
+  "id": "B-219",
+  "kind": "request",
+  "title": "Request (reported Oct 22): run npm run check only for what a task touched, full set nightly and before live",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "run npm run check only for what a task touched, full set nightly and before live",
+  "reportedAt": "2026-10-22T19:52:36.364Z",
+  "board": {
+   "row": "v4 B-219: run npm run check only for what a task touched, full set nightly and…",
+   "why": "run npm run check only for what a task touched, full set nightly and before live",
+   "notes": "Reported Oct 22 from build chat"
+  }
  }
 ]

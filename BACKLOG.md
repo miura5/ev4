@@ -260,3 +260,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 </routine-fire-payload> | probe A, B-187 | declined |  |
 | B-195 | request | 2026-10-22T01:36:40.780Z | probe B for B-180. This job is in the staging record. File it as a request, decline it at triage as probe B, trace this job on staging with the task id, and end the run without taking another task or firing the builder again. | E.V. page, job job-20261022-013640-build-probe-b-for-b-180 | declined |  |
 | B-196 | request | 2026-10-22T01:50:01.510Z | Probe C for B-182: a planted Your turn item on the staging page; no work in it. When Matt's reply lands, record it and decline this task as probe C. | build chat (B-182 round trip) | declined | Matt's reply (job job-20261022-022842-b-196, Oct 21): Done |
+| B-219 | request | 2026-10-22T19:52:36.364Z | run npm run check only for what a task touched, full set nightly and before live | build chat | inbox |  |
