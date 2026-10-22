@@ -3271,7 +3271,7 @@
    "B-178",
    "B-186"
   ],
-  "notes": "Built and staging green at 871e435 (npm test 515, check GREEN; chart tests for each refusal and the pass; the run harness at phone and desktop for the chip only at the staging commit, its confirm and its ship job; R-04 carries the second form; CLAUDE.md's unattended line and the builder's ship steps). Left: the first page OK on a real build, read back: Matt taps Ship it on a staging-green build's card, the builder runs ship live --from-job (dist/live-ok by --from-job), traces, and verify-deploy live is GREEN. Live only on that tap.",
+  "notes": "Summary, Oct 22: the v4.4 rows are done or wait on Matt. Live: v4.4.0 at 5085cfd, its first live watchdog run ok (03:56Z), the tag on origin. Staging green at 871e435 carries B-190 (resume a conversation on reopen), B-197 (identifier check in two stages: patterns nominate, a judgment with context decides, verdicts kept by fingerprint, neutral words), B-163's restore-as-written, B-183 (design kickoff, design: and file: asks, Copy chip, the north star's rule line) and B-185 (Ship it). Waiting on Matt: B-163 (an unattended run may not pass a value itself: hold and ask him on the page?), B-183 (read one staging kickoff), B-185 (his first Ship it tap on a real build), B-69 (adaptive intervals after Sunday's weekly). Nothing here is live without his OK.",
   "commit": null,
   "source": "plan TbfWAoQEeQixyNKZnEZKvv",
   "ask": "Next time a build you asked for is green on staging, tap Ship it on its card. That one tap is your OK for live; I'll read back that it landed.",
