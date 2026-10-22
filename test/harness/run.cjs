@@ -2033,9 +2033,7 @@ const ok = (name, cond, detail = '') => {
     const rr = await page.evaluate(async () => {
       const n = document.querySelectorAll('#today-list .row').length;
       const t = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date());
-      await (
-        await window.claude.use('db')
-      )
+      await (await window.claude.use('db'))
         .collection('dayedits')
         .doc(t)
         .update({ updatedAt: new Date().toISOString() });
@@ -4742,6 +4740,81 @@ const ok = (name, cond, detail = '') => {
     );
     await page.close();
   }
+  // B-163 (Matt, Oct 22: "Ask me on the page"): what a run kept out waits in Your turn, where and what kind, never the
+  // value; It's made up keeps his answer as <key>-matt and takes it off the list. At 390 and 1280.
+  for (const w of [390, 1280]) {
+    const tag = `[held ${w}]`;
+    delete seed.system.yourturn;
+    const KEY = 'id-0123456789abcdef';
+    seed.idchecks = {
+      [KEY]: {
+        schema: 1,
+        writer: 'restore-drill',
+        at: '2026-10-22T04:33:00Z',
+        source: 'restore-drill restore-drill-20261022-043233095',
+        release: 'v4.3.0',
+        key: KEY,
+        verdict: 'unsure',
+        reason: 'held for Matt: a run never passes a value on its own',
+        kind: 'has a date of birth',
+        ref: 'legacy/v4-talk-2026-10-19-s1',
+        by: 'held',
+      },
+    };
+    const page = await browser.newPage({ viewport: { width: w, height: w === 390 ? 844 : 860 }, colorScheme: 'dark' });
+    const errs = [];
+    page.on('pageerror', e => errs.push(e.message));
+    await page.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
+    await servePdfjs(page);
+    await openPage(page);
+    await page.waitForTimeout(1500);
+    const chips = await page.evaluate(() =>
+      [...document.querySelectorAll('#qchips button')].map(b => b.textContent.trim())
+    );
+    ok(
+      `${tag} the greeting offers Your turn for what a run kept out`,
+      chips.includes('Your turn (1)'),
+      chips.join(' | ')
+    );
+    await page.locator('#qchips button', { hasText: 'Your turn (1)' }).click();
+    await page.waitForTimeout(500);
+    const card = await page.evaluate(() => {
+      const li = document.querySelector('#ev-surf .yt-place[data-place="held"] .yt-held');
+      return li
+        ? {
+            key: li.dataset.key,
+            text: li.textContent,
+            chips: [...li.querySelectorAll('.yt-chips button')].map(b => b.textContent.trim()),
+          }
+        : null;
+    });
+    ok(
+      `${tag} the card names where and what kind, never the value, with It's made up and Keep it out`,
+      card &&
+        card.key === KEY &&
+        /A run left out a date of birth that could be a real patient’s/.test(card.text) &&
+        /legacy\/v4-talk-2026-10-19-s1/.test(card.text) &&
+        !/\d{2}\/\d{2}\/\d{4}/.test(card.text) &&
+        !/flag|violation/i.test(card.text) &&
+        JSON.stringify(card.chips) === JSON.stringify(['It’s made up', 'Keep it out']),
+      JSON.stringify(card)
+    );
+    await page.screenshot({ path: `${shots}/held-${w}.png` });
+    await page.locator('#ev-surf .yt-held .yt-chips button', { hasText: 'It’s made up' }).click();
+    await page.waitForTimeout(600);
+    const after = await page.evaluate(k => {
+      const d = (window.__db.idchecks || {})[k + '-matt'];
+      return { d, left: document.querySelectorAll('#ev-surf .yt-held').length };
+    }, KEY);
+    ok(
+      `${tag} It's made up keeps his answer as <key>-matt (practice, by matt) and the item leaves the list`,
+      after.d && after.d.verdict === 'practice' && after.d.by === 'matt' && after.d.key === KEY && after.left === 0,
+      JSON.stringify(after)
+    );
+    ok(`${tag} no page errors`, errs.length === 0, errs.join(' | '));
+    await page.close();
+  }
+  delete seed.idchecks;
   delete seed.system.yourturn;
   await browser.close();
   for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : '');

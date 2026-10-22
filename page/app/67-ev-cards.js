@@ -35,11 +35,70 @@
       // B-182 (D-196): what waits on him, grouped by where it happens; each ask with its chips.
       yourturn(box) {
         const groups = ((S.yourturn && S.yourturn.groups) || []).filter(g => (g.tasks || []).length);
-        const n = groups.reduce((s, g) => s + g.tasks.length, 0);
+        const held = E.heldForMatt(S.idchecks);
+        const n = groups.reduce((s, g) => s + g.tasks.length, 0) + held.length;
         box.append(head2('Your turn', n ? `${n} waiting` : ''));
         if (!n) {
           box.append(el('p', 'empty', 'Nothing waits on you.'));
           return;
+        }
+        // B-163 (Matt, Oct 22: "Ask me on the page"): what a run kept out because it could be a real patient's. A run
+        // never passes one on its own; he does, once. Where and what kind, never the value.
+        if (held.length) {
+          const sec = el('div', 'yt-place');
+          sec.dataset.place = 'held';
+          sec.append(el('h3', 'yt-label', 'Kept out by a run'));
+          const ul = el('ul', 'list');
+          for (const h of held) {
+            const li = el('li', 'row yt-item yt-held');
+            li.dataset.key = h.key;
+            const body = el('div', 'grow');
+            const what = String(h.kind || 'has a detail').replace(/^has /, '');
+            body.append(
+              el(
+                'p',
+                'yt-ask',
+                `A run left out ${/^(a|an) /.test(what) ? what : 'a detail: ' + what} that could be a real patient’s. Is it from a practice scenario?`
+              ),
+              el('p', 'meta', `In ${h.ref} · ${String(h.source || '').split(' ')[0] || 'a run'}${h.at ? ' · ' + E.shortDate(h.at) : ''}`)
+            );
+            const answer = (verdict, reason) => ev =>
+              guard(
+                ev.target,
+                async () => {
+                  if (!ACT) throw new Error('no actions here');
+                  await run(
+                    ACT.tap(
+                      'id-check',
+                      {
+                        checks: [
+                          {
+                            key: h.key,
+                            verdict,
+                            reason,
+                            kind: String(h.kind || 'a detail').slice(0, 80),
+                            ref: String(h.ref || 'a run').slice(0, 120),
+                            by: 'matt',
+                          },
+                        ],
+                      },
+                      { now: now(), release: EV_SPEC.release }
+                    ).writes
+                  );
+                },
+                verdict === 'practice' ? 'Thanks. The next run keeps it.' : 'Kept out. No run asks again.'
+              );
+            const a = el('div', 'actions yt-chips');
+            a.append(
+              btn('It’s made up', answer('practice', 'Matt: it’s from a practice scenario'), { primary: true }),
+              btn('Keep it out', answer('real', 'Matt: keep it out'))
+            );
+            body.append(a);
+            li.append(body);
+            ul.append(li);
+          }
+          sec.append(ul);
+          box.append(sec);
         }
         for (const g of groups) {
           const sec = el('div', 'yt-place');
