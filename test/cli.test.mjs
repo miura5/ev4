@@ -3,12 +3,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { copyRepo, git, ROOT } from './helpers.mjs';
 import { build, taskEntries } from '../tools/build.mjs';
 import { verify, pageStamp, canonical, contentHash, deployCalls } from '../core/deploy.mjs';
+
+// B-198 follow-up (Oct 22): these tests prove what a hand chat with Matt present can do (a tenet, a trigger printout, the
+// live health read), so they run as one whatever session runs them: a builder's own /tmp/ev/builder-run would refuse
+// those by design and fail six of them. A test of the builder passes its own marker (EV_BUILDER_MARKER) explicitly.
+process.env.EV_BUILDER_MARKER = path.join(os.tmpdir(), `ev-hand-chat-${process.pid}`, 'no-builder-run');
 
 const CLI = new URL('../core/cli.mjs', import.meta.url).pathname;
 const NOW = '2026-10-17T12:00:00Z';

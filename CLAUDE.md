@@ -151,6 +151,11 @@ live write or publish unless `deploy live --matt-ok` wrote dist/live-ok; pipelin
 - Scheduled runs clone `main` 50 commits deep and check out the deployed commit from it (B-110). When record commits
   push it out of that clone, the gate stays on the clone's head and goes on only if every file the manifest hashes is
   the same there (D-170, B-132; its source is `tools/gate.mjs`); verify-deploy notes the distance and never reds on it.
+- `npm run check` takes about 25 minutes and one foreground tool call is cut at 10 (Oct 22: a builder's `timeout 900`
+  foreground check died at 10 minutes). Run it in the background writing to a log (`npm run check > /tmp/check.log
+  2>&1; echo "exit $?" >> /tmp/check.log`) and wait for that exit line; it stops at the first red step, so to retry
+  one page check run its harness alone (`node test/harness/<name>.cjs synthetic <shots dir>` after `node
+  tools/build.mjs`).
 - Spec edits: JSON with indent 1, no trailing newline (a PostToolUse hook re-writes spec files so, B-57). `node --test test/*.test.mjs > /tmp/t.log 2>&1; grep -E
   "^# (pass|fail)" /tmp/t.log` (never pipe node through grep inside `&&`).
 
