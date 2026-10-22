@@ -2879,7 +2879,7 @@
   "milestone": "v4.3 ops",
   "status": "in progress",
   "depends": [],
-  "notes": "Waits on B-98: tonight's live evening-mac wrote no backup (folder access refused), so the drill on the v4.2 backup waits for the first one that saves.",
+  "notes": "Oct 21 drill on the Wednesday v4 backup (runs/restore-drill-20261022-015856964) refused safely, nothing planned: v3-era documents in the live record fail the schema after migration (days/2026-10-16: writer missing; runs/2026-10-17-canvas, runs/2026-10-17-practice: writer missing; 8 runs/2026-10-17-*: schema missing). The Oct 18 backup predates them. Next: restore treats pre-cutover documents without an envelope as written (kept, reported), or a migration gives them one; then the drill again.",
   "commit": null,
   "source": "plan Q6ioLu7LnKC2vvWJkwJWA6"
  },
