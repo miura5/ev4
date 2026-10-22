@@ -276,6 +276,7 @@ export function pageSpecFor(spec, schemas, { target, release }) {
       kinds: Object.fromEntries(Object.entries(spec.jobs.kinds || {}).map(([k, x]) => [k, { label: x.label }])),
       builderKinds: spec.jobs.builderKinds || [],
       builderLabels: spec.jobs.builderLabels || {},
+      builderOnLive: !!spec.jobs.builderOnLive,
     }),
     // B-186 (D-203): the actions table, which the page's actor checks every call against.
     // The rows without their does line (the node side's description); _rules stay in the spec.

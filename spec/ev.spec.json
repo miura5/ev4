@@ -3156,7 +3156,8 @@
   "_rules": [
    "The page writes jobs/<id> and fires the worker with 'Job <id>'; the worker writes jobresults/<id>, what the job made, and one message in talk/<date>.",
    "A job never touches graded work; a practice set's items follow the same rules as the morning's.",
-   "D-194 (B-177): a job of kind build, reply, design, plan or ship (jobs.builderKinds) is the builder's: the worker never takes one, and the watchdog re-fires ev4-builder for it, never the worker, after constants.watchdog.builderStallMinutes."
+   "D-194 (B-177): a job of kind build, reply, design, plan or ship (jobs.builderKinds) is the builder's: the worker never takes one, and the watchdog re-fires ev4-builder for it, never the worker, after constants.watchdog.builderStallMinutes.",
+   "B-182: jobs.builderOnLive says whether the live page offers the builder's asks (the build ask and Your turn's replies); false until a scheduled builder session's read of the live record is proven (environments build-chat), so a live ask never waits on a job the builder cannot read. Staging always offers them."
   ],
   "kinds": {
    "study-guide": {
@@ -3201,7 +3202,8 @@
    "design": "Design kickoff",
    "plan": "Filing a design",
    "ship": "Ship it"
-  }
+  },
+  "builderOnLive": false
  },
  "actions": {
   "_rules": [

@@ -37,6 +37,7 @@
     }
     /** B-182: how many asks wait on him in system/yourturn, less the ones he answered on this visit. */
     function yourTurnCount() {
+      if (!BUILDER_HERE) return 0;
       const g = (S.yourturn && S.yourturn.groups) || [];
       return g.reduce((n, x) => n + (x.tasks || []).filter(t => !T.replied.has(t.id)).length, 0);
     }

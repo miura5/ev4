@@ -4279,6 +4279,35 @@ const ok = (name, cond, detail = '') => {
     ok(`${tag} no page errors`, errs.length === 0, errs.join(' | '));
     await page.close();
   }
+  {
+    // The live page while jobs.builderOnLive is false: no Your turn chip, and "bug: ..." is no build ask.
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 }, colorScheme: 'dark' });
+    await page.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
+    await servePdfjs(page);
+    await openPage(page, 'live');
+    await page.waitForTimeout(1500);
+    const chips = await page.evaluate(() =>
+      [...document.querySelectorAll('#qchips button')].map(b => b.textContent.trim())
+    );
+    const jobs0 = await page.evaluate(
+      () => Object.values(window.__db.jobs || {}).filter(j => j.kind === 'build').length
+    );
+    await page.evaluate(() => {
+      window.__chatScript = [];
+      window.__chatReply = 'Noted.';
+    });
+    await send(page, 'bug: the timer resets when I switch tabs');
+    await page.waitForTimeout(400);
+    const jobs1 = await page.evaluate(
+      () => Object.values(window.__db.jobs || {}).filter(j => j.kind === 'build').length
+    );
+    ok(
+      '[live 390] while the builder cannot read live: no Your turn chip and no build ask',
+      !chips.some(c => /^Your turn/.test(c)) && jobs1 === jobs0,
+      JSON.stringify({ chips, jobs0, jobs1 })
+    );
+    await page.close();
+  }
   delete seed.system.yourturn;
   await browser.close();
   for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : '');

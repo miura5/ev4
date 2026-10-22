@@ -198,7 +198,7 @@
       const w = E.scanIdentifiers(text);
       // B-180: a build ask goes into the project record, so an identifier holds it every time, never sent anyway.
       // B-182: so does a typed reply to a Your turn item ("reply B-12: ...").
-      if (BUILD_ASK.test(text) || REPLY_ASK.test(text)) {
+      if (BUILDER_HERE && (BUILD_ASK.test(text) || REPLY_ASK.test(text))) {
         guardFor = null;
         if (w.length) {
           guardEl.hidden = false;

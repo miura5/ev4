@@ -10,6 +10,8 @@
       jobText: 'Job {id}',
     };
     const STAGING = EV_SPEC.target === 'staging';
+    // B-182: the builder's asks (a build ask, a Your turn reply) only where the builder can read the job's record.
+    const BUILDER_HERE = STAGING || !!(EV_SPEC.jobs && EV_SPEC.jobs.builderOnLive);
     const T = {
       replied: new Map(), // B-182: task id -> what he sent from Your turn, until system/yourturn is rewritten
       greet: null,
