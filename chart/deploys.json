@@ -2860,5 +2860,27 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "live",
+  "commit": "f8ee77e",
+  "time": "2026-10-22T15:40:44.298Z",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "5085cfd",
+  "from": "5085cfd",
+  "tasks": [
+   "B-190",
+   "B-197",
+   "B-183",
+   "B-185",
+   "B-163",
+   "B-198"
+  ],
+  "summary": "* I asked E.V. what to bring to lab/class today. She said she didn’t…; Let's clarify for the record I did NOT request to turn of patient…; The design kickoff; Ship it from the page; Restore migrates; greet: [exam-tomorrow] the model's line is the headline, held to the…",
+  "why": null,
+  "decisions": [],
+  "source": "log",
+  "release": "v4.4.1"
  }
 ]
