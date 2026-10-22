@@ -3589,9 +3589,9 @@
   "title": "The smoke tier: a two-minute subset of the page harnesses (the page boots with no page error, the greeting renders, each tab opens, one check-off keeps scroll, one review answer scores, one Your-turn reply files) at 390 and 1280 px on the synthetic record, run as npm run smoke and by a GitHub Actions workflow on every push beside npm test; the full npm run check stays nightly and before live; CLAUDE.md step 5 says a page task runs npm run smoke while working and npm run check before ship",
   "dod": "the smoke workflow is green on main in under 3 minutes; a planted page error and a planted broken tab each turn it red in a test run; npm test green; npm run check green",
   "milestone": "v4.4 tests",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken first on Matt's word (Oct 22), ahead of the queue.",
   "commit": null,
   "source": "plan XCT16iH6fggp4MxPNRZtHK"
  },
