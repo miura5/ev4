@@ -3650,10 +3650,10 @@
   "title": "Harness sizes for the ultrawide: add 1706 × 1240 and 2560 × 1240 to the look pass, with 1706 among the first shots",
   "dod": "views.cjs lists both sizes and FIRST names 1706x1240; the look pass writes their shots; the proof",
   "milestone": "v4.5 ui",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Taken Oct 22: 1706x1240 and 2560x1240 into views.cjs, 1706 among the first shots.",
-  "commit": null,
+  "notes": "Shipped to staging at da6e36e: ship staging GREEN.",
+  "commit": "da6e36e",
   "source": "plan BridyLzngcGUtpeLQorX1U"
  },
  {
