@@ -3582,5 +3582,53 @@
    "outcome": "task",
    "at": "2026-10-22T14:31:54.218Z"
   }
+ },
+ {
+  "id": "B-199",
+  "kind": "task",
+  "title": "The smoke tier: a two-minute subset of the page harnesses (the page boots with no page error, the greeting renders, each tab opens, one check-off keeps scroll, one review answer scores, one Your-turn reply files) at 390 and 1280 px on the synthetic record, run as npm run smoke and by a GitHub Actions workflow on every push beside npm test; the full npm run check stays nightly and before live; CLAUDE.md step 5 says a page task runs npm run smoke while working and npm run check before ship",
+  "dod": "the smoke workflow is green on main in under 3 minutes; a planted page error and a planted broken tab each turn it red in a test run; npm test green; npm run check green",
+  "milestone": "v4.4 tests",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan XCT16iH6fggp4MxPNRZtHK"
+ },
+ {
+  "id": "B-200",
+  "kind": "task",
+  "title": "Speed on Your turn and the job cards (D-208): a tap on a Your-turn reply, a job card action or a check-off shows its new state in the same frame (sent, queued, ticked) and the record write catches up; a refused write puts the old state back with one line saying why",
+  "dod": "the harness measures tap-to-paint on a Your-turn reply, a check-off, a review answer and a chip at 390 and 1280, each under 100 ms with the record stub delayed 2 s; a planted refused write restores the state and shows the line; npm test green; npm run check green; ship staging green; live only on Matt's OK",
+  "milestone": "v4.4 ui",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan XCT16iH6fggp4MxPNRZtHK"
+ },
+ {
+  "id": "B-201",
+  "kind": "task",
+  "title": "Build recap in the weekly: the weekly's health line gains one sentence from the Chart, \"this week she shipped n to live, m wait on you\", shown on the Sunday card",
+  "dod": "a core test on a planted Chart and deploy record composes the sentence; a staging weekly firing carries it in weeks/<date>.health; the harness shows it on the Sunday card at 390 and 1280; npm test green; npm run check green; ship staging green; live only on Matt's OK",
+  "milestone": "v4.4 ops",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan XCT16iH6fggp4MxPNRZtHK"
+ },
+ {
+  "id": "B-202",
+  "kind": "task",
+  "title": "Command bar probe and build: first check in the Claude desktop app and in a browser tab which of Cmd-K, Ctrl-K and \"/\" reach the page without the host taking them, and record it as an environments page row; then the key that works focuses the composer with a filtered list of the quick asks and the tabs, Enter runs one, Esc closes; 1 to 6 switch tabs when the composer is not focused",
+  "dod": "the environments row with the keys that reach the page; the harness opens the bar by the recorded key at 1280, filters to \"review\", runs Start review, and switches tabs by number; nothing changes at 390; npm test green; npm run check green; ship staging green; live only on Matt's OK",
+  "milestone": "v4.4 ui",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan XCT16iH6fggp4MxPNRZtHK"
  }
 ]
