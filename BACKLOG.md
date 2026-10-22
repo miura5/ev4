@@ -32,6 +32,7 @@ Status: `open` · `in progress` · `blocked` · `done`. A task opens when every 
 * A practice question for NUR 112 on vitamin C drew in information from BIO 201’s bones slides. It is correct information, but should this be encouraged? At first it was unexpected then I started weighing if hmm this is actually an awesome thing. What’s your take Done when: Answer options are shuffled per item and a matrix's rows per item (the same order on every reload: seeded by the set and item ids), the correct answers remapped; within a set no three questions in a row have their correct answer at the same or consecutive positions, and closely related questions (one topic, e.g. ROME) are not left in order; done in core for every set the morning, the worker and make_practice write; core tests on a planted ROME-style set; npm test and npm run check green; ship staging green; live only on Matt's OK | — | v4.3 feedback | open |  |
 | B-193 | Request (reported Oct 21): * Better randomizing of answer choices; and maybequestions themselves? so that matrixes dont go 1, 2, 3, 4; or questions don’t go A, B, C, D when testing material that’s closely related like (ROME)
 * A practice question for NUR 112 on vitamin C drew in information from BIO 201’s bones slides. It is correct information, but should this be encouraged? At first it was unexpected then I started weighing if hmm this is actually an awesome thing. What’s your take Done when: Matt's decision first (his fifth bullet, these words): whether a NUR 112 question may rest on a BIO 201 passage. Proposed: yes when the concept is the same (vitamin C, collagen, bone and wound healing), the item names its source course and file, and it still targets a NUR 112 objective; never when it would count toward an objective it does not map to. Then: the item generators and the grounding check follow the decision, with core tests; npm test green; ship staging green; live only on Matt's OK | — | v4.3 feedback | blocked | Your call: may a NUR 112 question draw on a BIO 201 passage when it is the same concept, naming its source course and file? My recommendation: yes, labeled, still aimed at a NUR 112 objective. |
+| B-196 | Request (reported Oct 21): Probe C for B-182: a planted Your turn item on the staging page; no work in it. When Matt's reply lands, record it and decline this task as probe C. Done when: No work: Matt's reply from the staging page's Your turn reaches this task through log --from-job, then it is declined as probe C (B-182's round trip) | — | v4.4 one interface | blocked |  |
 
 ## Your turn
 
@@ -45,6 +46,7 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 ### On the staging page
 
 - B-72 (blocked): weeks/<date>.insights
+- B-196 (blocked): Probe C for B-182: a planted Your turn item on the staging page; no…
 
 ### A decision (a reply in a build chat)
 

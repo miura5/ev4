@@ -3478,5 +3478,30 @@
    "reason": "probe B",
    "at": "2026-10-22T01:37:40.672Z"
   }
+ },
+ {
+  "id": "B-196",
+  "kind": "request",
+  "title": "Request (reported Oct 21): Probe C for B-182: a planted Your turn item on the staging page; no work in it. When Matt's reply lands, record it and decline this task as probe C.",
+  "dod": "No work: Matt's reply from the staging page's Your turn reaches this task through log --from-job, then it is declined as probe C (B-182's round trip)",
+  "milestone": "v4.4 one interface",
+  "status": "blocked",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat (B-182 round trip)",
+  "words": "Probe C for B-182: a planted Your turn item on the staging page; no work in it. When Matt's reply lands, record it and decline this task as probe C.",
+  "reportedAt": "2026-10-22T01:50:01.510Z",
+  "board": {
+   "row": "v4 B-196: Probe C for B-182: a planted Your turn item on the staging page; no…",
+   "why": "Probe C for B-182: a planted Your turn item on the staging page; no work in it. When Matt's reply lands, record it and decline this task as probe C.",
+   "notes": "Reported Oct 21 from build chat (B-182 round trip)"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-22T01:50:01.796Z"
+  },
+  "waitingOn": "Matt",
+  "waitingWhere": "staging"
  }
 ]
