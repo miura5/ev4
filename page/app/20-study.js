@@ -609,6 +609,7 @@
         const fresh = (res && Array.isArray(res.items) ? res.items : [])
           .map((q, i) => ({ ...q, id: 'm' + (i + 1), kind: q.weakspotId ? 'review' : 'check' }))
           .filter(q => E.validateItem(q).ok)
+          .filter(q => !E.crossCourse(q, { materials: LIB.mats || [], exams: S.exams }).errors.length) // B-193
           .filter(q => !q.weakspotId || M.models.some(w => w.id === q.weakspotId));
         if (!fresh.length) {
           out.textContent = 'That batch didn’t come back in a usable shape. Try again in a moment.';

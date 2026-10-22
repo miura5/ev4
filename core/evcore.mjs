@@ -377,6 +377,7 @@ const EVCore = (() => {
     parseGrade,
     unitOf,
     displayOrder,
+    crossCourse,
   } = makeItemKinds({
     get SPEC() {
       return SPEC;
@@ -817,7 +818,7 @@ const EVCore = (() => {
           topic,
           objective: q.objective || '',
           exam: String(q.objective || '').split('-')[0] || (set && set.exam) || '',
-          course: (set && set.course) || defaultCourse(),
+          course: crossCourse(q, { exams: ctx.exams, set }).course || (set && set.course) || defaultCourse(), // B-193
           kind: 'concept',
           addedBy: 'page',
           origin: { set: set && set.id, item: q.id, at },
@@ -2340,6 +2341,7 @@ const EVCore = (() => {
     validItems,
     scoreAnswer,
     displayOrder, // B-192
+    crossCourse, // B-193
     gradeOpenLocal,
     openGrade,
     gradePrompt,

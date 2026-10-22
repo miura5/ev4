@@ -265,9 +265,44 @@ seed.sets['more-' + today + '-nav'] = {
     rationales: [who + ' is right.', 'Not Freud.', 'Not Maslow.', 'Not Skinner.'],
   })),
 };
+// B-193 (D-205): a NUR question resting on a BIO passage names its source under the stem.
+seed.sets['more-' + today + '-cross'] = {
+  ...env('page', 'More practice'),
+  schema: 2,
+  kind: 'more',
+  date: today,
+  exam: 'E4',
+  title: 'Harness cross',
+  createdAt: new Date(Date.now() - 2 * 864e5).toISOString(),
+  items: [
+    {
+      id: 'x1',
+      kind: 'check',
+      objective: 'E4-6',
+      topic: 'Vitamin C and wound healing',
+      type: 'single',
+      cjStep: 'analyze-cues',
+      stem: 'A client’s wound heals slowly. Which vitamin builds the collagen it needs?',
+      options: ['Vitamin C', 'Vitamin A', 'Vitamin D', 'Vitamin K'],
+      correct: [0],
+      rationales: ['Collagen needs it (from BIO 201: Bones slides).', 'No.', 'No.', 'No.'],
+      sourceRef: 'materials/BIO201-harness-bones',
+    },
+  ],
+};
 const hourAgo = new Date(Date.now() - 3600e3).toISOString();
 // A small library file (D-079): the skills packet's head-to-toe checklist sits on page 12.
 seed.materials = seed.materials || {};
+seed.materials['BIO201-harness-bones'] = {
+  ...env('canvas-sync', 'Canvas'),
+  course: 'BIO 201',
+  kind: 'slides',
+  title: 'Bones slides.pptx',
+  fileType: 'pptx',
+  pages: 40,
+  module: 'Chapter 7',
+  text: '[s12] Vitamin C is needed to make collagen, the protein frame of bone matrix.\n',
+};
 seed.materials['NUR112-harness-skills'] = {
   ...env('canvas-sync', 'Canvas'),
   course: 'NUR 112',
@@ -594,6 +629,18 @@ async function practiceNav(page, scheme) {
   );
   await page.screenshot({ path: `${shots}/practice-nav-done-${scheme}.png` });
   await page.locator('#pr-body button', { hasText: 'All sets' }).first().click();
+  await page.waitForTimeout(150);
+  // B-193 (D-205): a question on another course's passage names its source under the stem, from the data.
+  await openSet('Harness cross');
+  await page.waitForFunction(() => document.querySelector('#pr-body .q-src'), null, { timeout: 8000 }).catch(() => {});
+  const src = await page.textContent('#pr-body .q-src').catch(() => '');
+  ok(
+    `[${scheme}] a NUR question on a BIO passage names its source: From BIO 201: Bones slides`,
+    src === 'From BIO 201: Bones slides',
+    src
+  );
+  await page.screenshot({ path: `${shots}/practice-cross-${scheme}.png` });
+  await page.click('#pr-close');
   await page.waitForTimeout(150);
 }
 async function buildAskChecks(page, scheme) {

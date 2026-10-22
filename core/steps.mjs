@@ -1169,6 +1169,12 @@ export const AGENT_FOLDS = {
     if (!failed && job.kind === 'practice-set') {
       const raw = answer.items || [];
       const items = [];
+      const target = EV.targetExam({
+        exams: db.exams || [],
+        objectives: db.objectives || [],
+        weakspots: models(db),
+        date: ctx.date,
+      });
       for (const r of raw) {
         const q = {
           id: 'p' + (items.length + 1),
@@ -1176,16 +1182,16 @@ export const AGENT_FOLDS = {
           ...pick(r || {}, ITEM_FIELDS),
         };
         if (q.weakspotId && !(db.weakspots || []).some(w => w.id === q.weakspotId)) delete q.weakspotId;
-        if (EV.validateItem(q, { strict: true }).ok) items.push(q);
+        const cross = EV.crossCourse(q, {
+          materials: db.materials,
+          exams: db.exams,
+          objectives: db.objectives,
+          set: { exam: target ? target.id : null },
+        }); // B-193
+        if (EV.validateItem(q, { strict: true }).ok && !cross.errors.length) items.push(q);
       }
       if (items.length) {
         const setId = 'job-' + job.id.replace(/^job-/, '');
-        const target = EV.targetExam({
-          exams: db.exams || [],
-          objectives: db.objectives || [],
-          weakspots: models(db),
-          date: ctx.date,
-        });
         writes.push({
           op: 'set',
           collection: 'sets',
@@ -1290,6 +1296,17 @@ export const AGENT_FOLDS = {
       const name = `${where} ${raw && raw.topic ? raw.topic : id}`;
       if (!v.ok) {
         rejects.push(`${name}: ${v.errors.join(', ')}`);
+        return null;
+      }
+      // B-193 (D-205): an item on another course's passage still targets an objective of its own course.
+      const cc = EV.crossCourse(q, {
+        materials: db.materials,
+        exams: db.exams,
+        objectives: db.objectives,
+        set: { exam: drill ? drill.exam : b.exam || null },
+      });
+      if (cc.errors.length) {
+        rejects.push(`${name}: ${cc.errors[0]}`);
         return null;
       }
       // B-43 (D-100): a numeric item rests on dosage material, and a dosage drill holds numeric items on its passages.

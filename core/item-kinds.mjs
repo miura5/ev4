@@ -173,6 +173,42 @@ export function makeItemKinds(core) {
     return { correct: grade === 'right', score, grade, ...g, attempt: { chosen: g.text, ...g, grade } };
   }
 
+  // ---------------------------------------------------------------- cross-course items (B-193, D-205)
+  // A question may rest on another course's passage when it is the same concept, names its source and still targets an
+  // objective of its own course; a miss files one weak spot, under that objective. No course is named here (B-42): an
+  // item's source is its sourceRef (materials/<id>), its own course is its objective's exam's course (else its set's
+  // exam's), and the two are compared as data.
+  const sameCourse = (a, b) =>
+    String(a || '')
+      .replace(/\s+/g, '')
+      .toUpperCase() ===
+    String(b || '')
+      .replace(/\s+/g, '')
+      .toUpperCase();
+  /**
+   * B-193: where an item stands across courses. ctx: {materials, exams, objectives, set}. Returns {course: the course
+   * it counts toward or null, source: {course, title, label: "from <course>: <file title>"} when it rests on another
+   * course's material, else null, errors: why it may not be kept}.
+   */
+  function crossCourse(q, ctx = {}) {
+    const exams = ctx.exams || [];
+    const obj = q && q.objective ? (ctx.objectives || []).find(o => o && o.id === q.objective) : null;
+    const examId = (obj && obj.exam) || (q && q.objective ? String(q.objective).split('-')[0] : '') || '';
+    const exam = exams.find(e => e && e.id === examId) || exams.find(e => e && ctx.set && e.id === ctx.set.exam);
+    const course = (exam && exam.course) || null;
+    const ref = /^materials\/(.+)$/.exec(String((q && q.sourceRef) || ''));
+    const m = ref ? (ctx.materials || []).find(x => x && x.id === ref[1]) : null;
+    if (!m || !m.course || !course || sameCourse(m.course, course)) return { course, source: null, errors: [] };
+    const title = String(m.title || m.id).replace(/\.(pdf|docx|pptx|txt|md)$/i, '');
+    const source = { course: String(m.course), title, label: 'from ' + m.course + ': ' + title };
+    const own = !!(q.objective && (obj || exams.some(e => e && e.id === examId)));
+    return {
+      course,
+      source,
+      errors: own ? [] : [`rests on ${m.course} material (${title}) but targets no objective of its own course`],
+    };
+  }
+
   // ---------------------------------------------------------------- display order (B-192)
   // Answer options and a matrix's rows are shown shuffled at render, seeded by the set's id and each item's id, never
   // by its place, so the order is the same on every reload and after a rebuild. The stored item is untouched: answers stay keyed by item id and record the item's own option
@@ -254,6 +290,7 @@ export function makeItemKinds(core) {
   }
 
   return {
+    crossCourse,
     displayOrder,
     gradeOpenLocal,
     gradePrompt,
