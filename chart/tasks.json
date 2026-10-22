@@ -3172,12 +3172,12 @@
   "title": "The build ask on the page (D-194): spec.json gains builder.trigger beside worker.trigger (tools/build.mjs pageSpecFor); a message starting \"build:\", \"bug:\" or \"idea:\" is a quick ask with no model call: the identifier scan holds it once, it writes jobs/<id> (kind build, title the first 90 characters, brief his words at most 1,500 characters) and fires builder.trigger with \"Job <id>\" and his message as typed on the next line; his message and her reply land in talk; the job card for kind build shows filed as B-nnn, built, staging green at the commit, and what waits, from jobresults.result",
   "dod": "the harness at 390 and 1280: the ask writes the job and fires the builder id with the two-line text, the card's states from planted jobresults, an identifier in the words is held and nothing is written; npm test green; npm run check green; ship staging green; probe B from the staging page read back (the trace in the staging record and the card showing it) and its environments page row written; live only on Matt's OK",
   "milestone": "v4.4 page",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-179",
    "B-186"
   ],
-  "notes": "P-11 (D-203, addendum Oct 21): its job writes are action rows (spec.actions) with caller tap, composed by core/actions.mjs act, never page code.",
+  "notes": "Taken after B-179; built on a branch while B-194's check ran: build:, bug:, idea: asks through the build-ask row, job-fired, the build card, harness at 390 and 1280 (306 pass).",
   "commit": null,
   "source": "plan TbfWAoQEeQixyNKZnEZKvv"
  },
