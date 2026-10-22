@@ -49,18 +49,13 @@ test('B-152: a planted miss fails only on the second; a pass on the re-run is re
   );
 });
 
-test('B-152: the three named timing checks are quarantined, and each harness routes them through advisory()', () => {
-  assert.deepEqual(Object.keys(LIST.checks).sort(), [
-    'captions-history-pull',
-    'captions-pace',
-    'core-frame-budget',
-    'core-step-down',
-  ]);
+test('B-152: the named timing checks are quarantined, and each harness routes them through advisory() (B-206: the Silk step-down went with its renderer)', () => {
+  assert.deepEqual(Object.keys(LIST.checks).sort(), ['captions-history-pull', 'captions-pace', 'core-frame-budget']);
   assert.equal(LIST.returnAfterGreenNightlies, 20);
   const captions = fs.readFileSync(path.join(ROOT, 'test/harness/captions.cjs'), 'utf8');
   const core = fs.readFileSync(path.join(ROOT, 'test/harness/core.cjs'), 'utf8');
   for (const id of ['captions-history-pull', 'captions-pace']) assert.ok(captions.includes(`'${id}'`), id);
-  for (const id of ['core-frame-budget', 'core-step-down']) assert.ok(core.includes(`'${id}'`), id);
+  for (const id of ['core-frame-budget']) assert.ok(core.includes(`'${id}'`), id);
 });
 
 test('B-152: a quarantined check returns to blocking after 20 green scheduled nightlies in a row since its date', () => {

@@ -38,1069 +38,602 @@
     };
     let talkQ = Promise.resolve();
     let lastStamp = '';
-    // E.V.'s core v2 (B-76; D-134, D-135): the Silk body, five translucent bands round the hot core and its short inner
-    // filaments; the nucleus leads and the body follows on a soft spring; rubato idle drift with glances every 5 to 11 s
-    // and a lean toward the pointer; faint wisps on curl noise, the send ripple, the particle progress ring; teal and
-    // violet, coral only on an error. Every parameter is spec.ui.look.core; the springs, the speech envelope, the gesture
-    // blend and the step-down are core/motion.mjs (window.EVMotion). One shared loop draws every core on the page: cores
-    // that follow E.V.'s state move, others hold one still frame; off-screen cores and hidden tabs are skipped, cores
-    // under 128 px run at 30 fps, and reduced motion shows a still frame per mood (a gesture is a short brightness change).
-    // The page talks to her through CORE.setMood, CORE.gesture, CORE.speak and CORE.speechEnd (also EVApp.core).
+    // ------------------------------------------------------------ Her: the 2D forget-me-not (B-206; D-212, D-215, D-223)
+    // One flat SVG per place she shows (her stage, the top bar, a message), every one the same drawing (D-223). Each pose
+    // is a flat drawing: to tip her away the plane squashes, her eye lifts, the near petals shorten and the far ones
+    // shade. She moves on one held clock, spec.ui.look.flower.clock.heldFps drawings a second (D-222): a drawing is made
+    // only on a new held frame and only when its pose differs from the last, so a still idle draws nothing but the
+    // falling petal (D-224). Every value is spec.ui.look.flower; the page talks to her through CORE.setMood, CORE.gesture,
+    // CORE.speak, CORE.speechEnd and CORE.setRing (also EVApp.core), as it did to the Silk core it replaced (D-134).
     let MOOD_NOW = 'idle';
     const CORE = (() => {
-      const L = (EV_SPEC.ui && EV_SPEC.ui.look && EV_SPEC.ui.look.core) || null,
-        MO = window.EVMotion;
-      if (!L || !MO) throw new Error('core v2 needs spec.ui.look.core and core.js with EVMotion');
-      const PAL = L.palette,
-        MOOD = L.moods,
-        B = L.body;
+      const F = (EV_SPEC.ui && EV_SPEC.ui.look && EV_SPEC.ui.look.flower) || null;
+      if (!F) throw new Error('her renderer needs spec.ui.look.flower');
+      const SVG = 'http://www.w3.org/2000/svg';
+      const FPS = F.clock.heldFps;
+      const MOODS = Object.keys(F.moods);
+      const FACE = new Set(F.view.facing);
       const reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-      const hash = (i, j) => {
-        let h = Math.imul(i | 0, 374761393) ^ Math.imul(j | 0, 668265263);
-        h = Math.imul(h ^ (h >>> 13), 1274126177);
-        h ^= h >>> 16;
-        return (h >>> 0) / 4294967296;
+      const cl = x => Math.max(0, Math.min(1, x));
+      const eIO = x => 0.5 - 0.5 * Math.cos(Math.PI * cl(x));
+      const eOut = (x, p) => 1 - Math.pow(1 - cl(x), p);
+      const backOut = (x, c) => {
+        const y = cl(x) - 1;
+        return 1 + (c + 1) * y * y * y + c * y * y;
       };
-      const n2 = (x, y) => {
-        const xi = Math.floor(x),
-          yi = Math.floor(y),
-          xf = x - xi,
-          yf = y - yi,
-          u = xf * xf * (3 - 2 * xf),
-          v = yf * yf * (3 - 2 * yf);
-        const a = hash(xi, yi),
-          b = hash(xi + 1, yi),
-          c = hash(xi, yi + 1),
-          d = hash(xi + 1, yi + 1);
-        return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+      const trk = (keys, t) => {
+        if (t <= keys[0][0]) return keys[0][1];
+        for (let i = 1; i < keys.length; i++) {
+          const [t1, v1] = keys[i],
+            [t0, v0] = keys[i - 1];
+          if (t <= t1) return v0 + (v1 - v0) * eIO((t - t0) / (t1 - t0));
+        }
+        return keys[keys.length - 1][1];
       };
-      const curl = (x, y, out) => {
-        const e = 0.07;
-        out[0] = (n2(x, y + e) - n2(x, y - e)) / (2 * e);
-        out[1] = -(n2(x + e, y) - n2(x - e, y)) / (2 * e);
-        return out;
+      const hash1 = n => {
+        const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+        return x - Math.floor(x);
       };
-      // Shared signals: one mood, one speech envelope and one list of gestures, applied by every core that follows her.
-      const sig = {
-        mood: 'idle',
-        talking: false,
-        word: null,
-        env: MO.envelopeStart(),
-        gestures: [],
-        gid: 0,
-        vid: 0,
-        ring: -1,
-        flashUntil: 0,
+      const r3 = v => Math.round(v * 1000) / 1000;
+      const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
+      const RNG = seed => () => {
+        seed |= 0;
+        seed = (seed + 0x6d2b79f5) | 0;
+        let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
       };
+
+      // ---- the drawing: five petals, their streaks and the eye, made once from the seed (the hand's wobble included)
+      const S = F.shape,
+        H = F.hand;
+      const PROF = {
+        disc: t => Math.pow(Math.max(0, 1 - Math.pow((t - 0.55) / 0.55, 2)), 0.5),
+      };
+      function curve(P) {
+        let d = `M${f1(P[0][0])} ${f1(P[0][1])}`;
+        for (let i = 0; i < P.length - 1; i++) {
+          const p0 = P[i - 1] || P[i],
+            p1 = P[i],
+            p2 = P[i + 1],
+            p3 = P[i + 2] || p2;
+          d += ` C${f1(p1[0] + (p2[0] - p0[0]) / 6)} ${f1(p1[1] + (p2[1] - p0[1]) / 6)} ${f1(p2[0] - (p3[0] - p1[0]) / 6)} ${f1(p2[1] - (p3[1] - p1[1]) / 6)} ${f1(p2[0])} ${f1(p2[1])}`;
+        }
+        return d + 'Z';
+      }
+      function petalBase(rnd, h) {
+        const off = [];
+        for (let k = 0; k < 40; k++) off.push([(rnd() - 0.5) * H.offsetPx * h, (rnd() - 0.5) * H.offsetPx * h]);
+        return {
+          off,
+          wm: 1 + (rnd() - 0.5) * H.widthJitter * h,
+          lm: 1 + (rnd() - 0.5) * H.lengthJitter * h,
+          ts: (rnd() - 0.5) * H.tipLeanDeg * h,
+          rr: [(rnd() - 0.5) * 3 * h, (rnd() - 0.5) * 3 * h],
+        };
+      }
+      function petalPath(b, rnd, amp) {
+        const N = H.curvePoints,
+          W = S.widthPx * b.wm,
+          len = S.lengthPx * b.lm,
+          top = 100 - len,
+          ts = b.ts;
+        const j = k => [b.off[k][0] + (rnd() - 0.5) * 2 * amp, b.off[k][1] + (rnd() - 0.5) * 2 * amp];
+        const left = [],
+          right = [];
+        for (let k = 1; k < N; k++) {
+          const t = k / N,
+            w = W * PROF[S.profile](t),
+            y = 100 - len * t,
+            lean = ts * t * t,
+            jl = j(k),
+            jr = j(N + k);
+          left.push([30 - w + lean + jl[0], y + jl[1]]);
+          right.push([30 + w + lean + jr[0], y + jr[1]]);
+        }
+        const jt = j(2 * N);
+        return curve([[30, 100], ...left, [30 + ts + jt[0] * 0.4, top - 1.5], ...right.reverse(), [30, 100]]);
+      }
+      const circ = (cx, cy, r) =>
+        `M${f1(cx - r)} ${f1(cy)}a${f1(r)} ${f1(r)} 0 1 0 ${f1(2 * r)} 0a${f1(r)} ${f1(r)} 0 1 0 ${f1(-2 * r)} 0`;
+      function eyeOf(rnd, h) {
+        const J = () => (rnd() - 0.5) * 0.8 * h,
+          E = S.eyeRing,
+          P = [];
+        for (let i = 0; i < 40; i++) {
+          const a = (i / 40) * Math.PI * 2 - Math.PI / 2,
+            r = E.radius * (1 + E.bumpAmp * Math.cos(E.bumps * (a + Math.PI / 2))) + J() * 0.4;
+          P.push([20 + Math.cos(a) * r, 20 + Math.sin(a) * r]);
+        }
+        return {
+          ring: 'M' + P.map(p => f1(p[0]) + ' ' + f1(p[1])).join('L') + 'Z' + circ(20, 20, E.hole),
+          core: circ(20 + J() * 0.3, 20 + J() * 0.3, E.core),
+        };
+      }
+      function streaks(b, rnd, h) {
+        const T = S.streaks;
+        const one = (dx, ang, len, w) => {
+          const x0 = 30 + dx,
+            y0 = T.fromY,
+            a = ang + (rnd() - 0.5) * 0.16 * h,
+            L = len * (1 + (rnd() - 0.5) * 0.24 * h);
+          const tx = x0 + Math.sin(a) * L + b.ts * 0.25,
+            ty = y0 - Math.cos(a) * L,
+            mx = (x0 + tx) / 2,
+            my = (y0 + ty) / 2;
+          return `M${f1(x0 - w)} ${f1(y0)} Q${f1(mx - w * 0.55)} ${f1(my)} ${f1(tx)} ${f1(ty)} Q${f1(mx + w * 0.55)} ${f1(my)} ${f1(x0 + w)} ${f1(y0)}Z`;
+        };
+        return (
+          one(0, 0, T.mainLen, T.mainWidth) +
+          one(-T.sideOffset, -T.sideAngleRad, T.sideLen, T.sideWidth) +
+          one(T.sideOffset, T.sideAngleRad, T.sideLen, T.sideWidth)
+        );
+      }
+      function build(small) {
+        const h = H.amount,
+          rnd = RNG(H.seed),
+          petals = [],
+          hh = small ? h * H.smallHandScale : h;
+        for (let i = 0; i < S.petals; i++) {
+          const b = petalBase(rnd, hh),
+            amp = small ? 0 : H.boilAmpBase + h * H.boilAmpPerHand;
+          petals.push({
+            r: i * S.spreadDeg + (i ? (rnd() - 0.5) * S.pinwheelJitterDeg * hh : 0),
+            s: 1 + (rnd() - 0.5) * S.sizeJitter * hh,
+            d: [petalPath(b, rnd, 0), petalPath(b, rnd, amp), petalPath(b, rnd, amp)],
+            vein: streaks(b, rnd, hh),
+          });
+        }
+        return { petals, eye: eyeOf(rnd, hh), fall: petalPath(petalBase(rnd, hh), rnd, 0) };
+      }
+      const SHAPES = { l: build(false), s: build(true) };
+
+      // ---- the clock and the pose: shared signals, then each flower's own view (she turns on her own time per place)
+      const sig = { mood: 'idle', talking: false, voice: 0, voiceAt: 0, g: null, gAt: 0, gid: 0, ring: -1 };
       const log = [];
       const note = (kind, name, detail) => {
         log.push({ at: Date.now(), kind, name, ...(detail != null ? { detail } : {}) });
         if (log.length > 200) log.shift();
       };
-      let down = MO.stepDownStart();
-      const frames = [];
-      const draws = [];
-
-      // How her points reach the screen. She is additive light: every point adds its colour times its coverage, each
-      // channel and the alpha clamping at 1 (the canvas's 'lighter'), so the order points are drawn in never matters.
-      // WebGL draws them on the GPU (blendFunc ONE, ONE is that clamp, and each point is an exact box-coverage square in
-      // the fragment shader); the page's own thread only fills one vertex buffer a frame. Where WebGL is missing or
-      // lost, the same sums are made in a buffer here, touching only the pixels points land on, and handed to a 2D canvas
-      // in one putImageData. Thousands of separate antialiased 2D fills were most of her cost (D-135's frame budget).
-      // A renderer: resize(W, dpr), begin(), put(rgb, alpha, x, y, size) in CSS px, glow(x, y, r, stops), end(), read().
-      function glRenderer(canvas, onLost) {
-        let gl = null;
-        try {
-          gl = canvas.getContext('webgl', {
-            alpha: true,
-            premultipliedAlpha: true,
-            antialias: false,
-            depth: false,
-            stencil: false,
-            preserveDrawingBuffer: true,
-          });
-        } catch {}
-        if (!gl) return null;
-        canvas.__gl = true;
-        const hp = gl.getShaderPrecisionFormat && gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT);
-        const prec = hp && hp.precision > 0 ? 'highp' : 'mediump';
-        const sh = (type, src) => {
-          const s = gl.createShader(type);
-          gl.shaderSource(s, src);
-          gl.compileShader(s);
-          if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
-          return s;
-        };
-        const prog = (vs, fs) => {
-          const p = gl.createProgram();
-          gl.attachShader(p, sh(gl.VERTEX_SHADER, vs));
-          gl.attachShader(p, sh(gl.FRAGMENT_SHADER, fs));
-          gl.linkProgram(p);
-          if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
-          return p;
-        };
-        let P,
-          G,
-          buf,
-          gbuf,
-          maxPt = 64,
-          n = 0,
-          data = new Float32Array(7 * 4096),
-          H = 1,
-          Wd = 1,
-          lost = false,
-          glowArgs = null;
-        const init = () => {
-          P = prog(
-            `attribute vec2 aPos; attribute float aSize; attribute vec4 aCol; uniform vec2 uRes; varying vec4 vCol; varying vec2 vC; varying float vS;
-          void main() { gl_Position = vec4(aPos.x / uRes.x * 2.0 - 1.0, 1.0 - aPos.y / uRes.y * 2.0, 0.0, 1.0); gl_PointSize = ceil(aSize) + 1.0; vCol = aCol; vC = aPos; vS = aSize; }`,
-            `precision ${prec} float; varying vec4 vCol; varying vec2 vC; varying float vS; uniform vec2 uRes;
-          void main() { vec2 q = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y); vec2 c = max(min(q + 0.5, vC + 0.5 * vS) - max(q - 0.5, vC - 0.5 * vS), 0.0); gl_FragColor = vCol * (c.x * c.y); }`
-          );
-          G = prog(
-            `attribute vec2 aPos; uniform vec2 uRes; varying vec2 vP; void main() { vP = aPos; gl_Position = vec4(aPos.x / uRes.x * 2.0 - 1.0, 1.0 - aPos.y / uRes.y * 2.0, 0.0, 1.0); }`,
-            `precision ${prec} float; varying vec2 vP; uniform vec2 uC; uniform float uR; uniform vec4 uC0; uniform vec4 uC1; uniform vec4 uC2; uniform vec4 uC3; uniform vec3 uT;
-          void main() { float r = length(vP - uC) / uR; vec4 c; if (r < uT.x) c = mix(uC0, uC1, r / uT.x); else if (r < uT.y) c = mix(uC1, uC2, (r - uT.x) / (uT.y - uT.x)); else if (r < uT.z) c = mix(uC2, uC3, (r - uT.y) / (uT.z - uT.y)); else c = vec4(0.0);
-            gl_FragColor = vec4(c.rgb * c.a, c.a); }`
-          );
-          buf = gl.createBuffer();
-          gbuf = gl.createBuffer();
-          const r = gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE);
-          maxPt = r ? r[1] : 64;
-          gl.disable(gl.DEPTH_TEST);
-          gl.enable(gl.BLEND);
-          gl.blendFunc(gl.ONE, gl.ONE);
-        };
-        try {
-          init();
-        } catch (e) {
-          console.warn('E.V. core: WebGL unavailable, drawing on 2D (' + e.message + ')');
-          return null;
-        }
-        // A lost context hands her to the 2D path for good (D-134): the engine swaps in a fresh canvas.
-        canvas.addEventListener('webglcontextlost', e => {
-          e.preventDefault();
-          if (lost) return;
-          lost = true;
-          if (onLost) onLost();
-        });
-        let dpr = 1;
-        return {
-          kind: 'webgl',
-          resize(W, d) {
-            Wd = H = W;
-            dpr = d;
-            gl.viewport(0, 0, W, W);
-          },
-          begin() {
-            n = 0;
-            glowArgs = null;
-          },
-          put(col, a, x, y, z) {
-            if (a > 1) a = 1;
-            let s = z * dpr;
-            if (s + 1 > maxPt) s = maxPt - 1;
-            if (n + 7 > data.length) {
-              const nd = new Float32Array(data.length * 2);
-              nd.set(data);
-              data = nd;
-            }
-            data[n] = x * dpr;
-            data[n + 1] = y * dpr;
-            data[n + 2] = s;
-            data[n + 3] = (col[0] / 255) * a;
-            data[n + 4] = (col[1] / 255) * a;
-            data[n + 5] = (col[2] / 255) * a;
-            data[n + 6] = a;
-            n += 7;
-          },
-          glow(x, y, r, stops) {
-            glowArgs = [x * dpr, y * dpr, r * dpr, stops];
-          },
-          end() {
-            if (lost) return;
-            gl.clearColor(0, 0, 0, 0);
-            gl.clear(gl.COLOR_BUFFER_BIT);
-            if (n) {
-              gl.useProgram(P);
-              gl.uniform2f(gl.getUniformLocation(P, 'uRes'), Wd, H);
-              gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-              gl.bufferData(gl.ARRAY_BUFFER, data.subarray(0, n), gl.STREAM_DRAW);
-              const at = k => gl.getAttribLocation(P, k),
-                F = 4;
-              const lp = at('aPos'),
-                ls = at('aSize'),
-                lc = at('aCol');
-              gl.enableVertexAttribArray(lp);
-              gl.vertexAttribPointer(lp, 2, gl.FLOAT, false, 7 * F, 0);
-              gl.enableVertexAttribArray(ls);
-              gl.vertexAttribPointer(ls, 1, gl.FLOAT, false, 7 * F, 2 * F);
-              gl.enableVertexAttribArray(lc);
-              gl.vertexAttribPointer(lc, 4, gl.FLOAT, false, 7 * F, 3 * F);
-              gl.drawArrays(gl.POINTS, 0, n / 7);
-              gl.disableVertexAttribArray(ls);
-              gl.disableVertexAttribArray(lc);
-            }
-            if (glowArgs) {
-              const [x, y, r, st] = glowArgs;
-              gl.useProgram(G);
-              const u = k => gl.getUniformLocation(G, k);
-              gl.uniform2f(u('uRes'), Wd, H);
-              gl.uniform2f(u('uC'), x, y);
-              gl.uniform1f(u('uR'), r);
-              st.slice(0, 4).forEach(([, c, a], i) => gl.uniform4f(u('uC' + i), c[0] / 255, c[1] / 255, c[2] / 255, a));
-              gl.uniform3f(u('uT'), st[1][0], st[2][0], st[3][0]);
-              gl.bindBuffer(gl.ARRAY_BUFFER, gbuf);
-              gl.bufferData(
-                gl.ARRAY_BUFFER,
-                new Float32Array([x - r, y - r, x + r, y - r, x - r, y + r, x + r, y + r]),
-                gl.STREAM_DRAW
-              );
-              const lp = gl.getAttribLocation(G, 'aPos');
-              gl.enableVertexAttribArray(lp);
-              gl.vertexAttribPointer(lp, 2, gl.FLOAT, false, 0, 0);
-              gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-            }
-          },
-          read() {
-            const px = new Uint8Array(Wd * H * 4);
-            gl.readPixels(0, 0, Wd, H, gl.RGBA, gl.UNSIGNED_BYTE, px);
-            return px;
-          },
-        };
+      const newGroup = () => ({
+        mood: 'idle',
+        g: null,
+        gT0: 0,
+        mT0: 0,
+        vw: { from: 1, to: 1, t0: -9 },
+        lastFace: null,
+        sp: { lv: 1, t: -9 },
+      });
+      const viewTarget = (G, tq, hold) => {
+        if (FACE.has(G.mood) || (G.g === 'error' && F.view.faceOnError)) return 0;
+        if (G.mood !== 'sleepy' && G.lastFace != null && tq - G.lastFace < hold) return 0;
+        return G.mood === 'sleepy' ? F.view.sleepyView : F.view.awayView;
+      };
+      // A turn to face him holds the first frame a hair the wrong way, then eases round past and back; a turn away holds
+      // the first frame, then eases out (the listening -> idle technique of the canvas).
+      function vAt(vw, tq) {
+        const toward = vw.to < vw.from,
+          C = toward ? F.view.toward : F.view.away,
+          n = Math.max(C.minFrames, Math.round(C.framesPerSec * FPS)),
+          i = Math.round((tq - vw.t0) * FPS);
+        if (i < 0) return vw.from;
+        if (i >= n) return vw.to;
+        const c = i === 0 ? C.firstFrame : toward ? backOut(i / (n - 1), C.overshoot) : eOut(i / (n - 1), C.power);
+        return vw.from + (vw.to - vw.from) * c;
       }
-      function splatRenderer(canvas) {
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return null;
-        const px = {
-          W: 0,
-          img: null,
-          u32: null,
-          acc: null,
-          mark: null,
-          hit: new Int32Array(1 << 16),
-          n: 0,
-          bx0: 0,
-          by0: 0,
-          bx1: 0,
-          by1: 0,
-          dpr: 1,
-        };
-        const CX = new Float32Array(8);
-        let glowArgs = null;
-        return {
-          kind: '2d',
-          resize(W, d) {
-            px.W = W;
-            px.dpr = d;
-            px.img = ctx.createImageData(W, W);
-            px.u32 = new Uint32Array(px.img.data.buffer);
-            px.acc = new Float32Array(W * W * 4);
-            px.mark = new Uint8Array(W * W);
-            px.n = 0;
-            px.bx0 = px.by0 = W;
-            px.bx1 = px.by1 = -1;
-          },
-          begin() {
-            glowArgs = null;
-            ctx.setTransform(1, 0, 0, 1, 0, 0);
-            ctx.globalCompositeOperation = 'source-over';
-            ctx.globalAlpha = 1;
-            ctx.clearRect(0, 0, px.W, px.W);
-          },
-          put(col, a, x, y, z) {
-            if (a > 1) a = 1;
-            const d = px.dpr,
-              W = px.W,
-              h = z * d * 0.5,
-              X = x * d,
-              Y = y * d;
-            const x0 = X - h,
-              x1 = X + h,
-              y0 = Y - h,
-              y1 = Y + h;
-            let i0 = Math.floor(x0),
-              i1 = Math.ceil(x1) - 1,
-              j0 = Math.floor(y0),
-              j1 = Math.ceil(y1) - 1;
-            if (i0 < 0) i0 = 0;
-            if (j0 < 0) j0 = 0;
-            if (i1 >= W) i1 = W - 1;
-            if (j1 >= W) j1 = W - 1;
-            if (i1 < i0 || j1 < j0 || i1 - i0 > 7) return;
-            if (i0 < px.bx0) px.bx0 = i0;
-            if (i1 > px.bx1) px.bx1 = i1;
-            if (j0 < px.by0) px.by0 = j0;
-            if (j1 > px.by1) px.by1 = j1;
-            const ni = i1 - i0 + 1;
-            for (let u = 0; u < ni; u++) {
-              const i = i0 + u;
-              CX[u] = ((x1 < i + 1 ? x1 : i + 1) - (x0 > i ? x0 : i)) * a;
-            }
-            if (px.n + 64 > px.hit.length) {
-              const nh = new Int32Array(px.hit.length * 2);
-              nh.set(px.hit);
-              px.hit = nh;
-            }
-            const acc = px.acc,
-              mark = px.mark,
-              hit = px.hit,
-              r = col[0] / 255,
-              g = col[1] / 255,
-              b = col[2] / 255;
-            for (let j = j0; j <= j1; j++) {
-              const cy = (y1 < j + 1 ? y1 : j + 1) - (y0 > j ? y0 : j);
-              let k = j * W + i0;
-              for (let u = 0; u < ni; u++, k++) {
-                const cov = CX[u] * cy,
-                  o = k << 2;
-                if (mark[k] === 0) {
-                  mark[k] = 1;
-                  hit[px.n++] = k;
-                }
-                acc[o] += r * cov;
-                acc[o + 1] += g * cov;
-                acc[o + 2] += b * cov;
-                acc[o + 3] += cov;
-              }
-            }
-          },
-          glow(x, y, r, stops) {
-            glowArgs = [x, y, r, stops];
-          },
-          end() {
-            if (px.bx1 >= px.bx0) {
-              const u32 = px.u32,
-                acc = px.acc,
-                mark = px.mark,
-                hit = px.hit,
-                n = px.n;
-              // One 32-bit store a pixel (ImageData is RGBA in memory: little-endian, so alpha is the high byte).
-              for (let q = 0; q < n; q++) {
-                const k = hit[q],
-                  o = k * 4;
-                let A = acc[o + 3];
-                if (A > 1) A = 1;
-                const f = 255 / A,
-                  r = acc[o] > 1 ? 255 : acc[o] * f,
-                  g = acc[o + 1] > 1 ? 255 : acc[o + 1] * f,
-                  b = acc[o + 2] > 1 ? 255 : acc[o + 2] * f;
-                u32[k] =
-                  (((A * 255 + 0.5) << 24) |
-                    ((b > 255 ? 255 : b + 0.5) << 16) |
-                    ((g > 255 ? 255 : g + 0.5) << 8) |
-                    (r > 255 ? 255 : r + 0.5)) >>>
-                  0;
-                acc[o] = acc[o + 1] = acc[o + 2] = acc[o + 3] = 0;
-                mark[k] = 0;
-              }
-              ctx.putImageData(px.img, 0, 0, px.bx0, px.by0, px.bx1 - px.bx0 + 1, px.by1 - px.by0 + 1);
-              for (let q = 0; q < n; q++) u32[hit[q]] = 0;
-              px.n = 0;
-              px.bx0 = px.by0 = px.W;
-              px.bx1 = px.by1 = -1;
-            }
-            if (glowArgs) {
-              const [x, y, r, st] = glowArgs,
-                d = px.dpr;
-              ctx.setTransform(d, 0, 0, d, 0, 0);
-              ctx.globalCompositeOperation = 'lighter';
-              const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-              for (const [at, c, a] of st) g.addColorStop(at, 'rgba(' + c.join(',') + ',' + a + ')');
-              ctx.fillStyle = g;
-              ctx.fillRect(x - r, y - r, r * 2, r * 2);
-              ctx.globalCompositeOperation = 'source-over';
-            }
-          },
-          // Rows top to bottom (the WebGL read is bottom up; read()'s users only count and hash).
-          read() {
-            return ctx.getImageData(0, 0, px.W, px.W).data;
-          },
-        };
-      }
-
-      function engine(canvas, onSwap) {
-        let seed = 11;
-        const rnd = () => {
-          seed |= 0;
-          seed = (seed + 0x6d2b79f5) | 0;
-          let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-        };
-        const C = [0, 0],
-          C2 = [0, 0];
-        // spec.ui.look.core.renderer: webgl, falling back to the 2D buffer when WebGL is missing or its context is lost
-        // (D-134); or 2d. A canvas that held a WebGL context cannot give a 2D one, so the fallback takes a fresh canvas.
-        let rd = null,
-          sized = false;
-        const toTwoD = why => {
-          const old = canvas,
-            c2 = canvas.cloneNode();
-          if (canvas.parentNode) canvas.replaceWith(c2);
-          canvas = c2;
-          rd = splatRenderer(canvas);
-          sized = false;
-          note('renderer', '2d', why);
-          if (onSwap) onSwap(canvas, old);
-        };
-        if (L.renderer !== '2d') rd = glRenderer(canvas, () => toTwoD('webgl context lost'));
-        if (!rd) {
-          if (canvas.__gl) toTwoD('webgl unavailable');
-          else rd = splatRenderer(canvas);
+      const GD = name => F.gestures[name].durationSec;
+      function step(G, tq, mood, g, amp) {
+        if (mood !== G.mood) {
+          G.mood = mood;
+          G.mT0 = tq;
         }
-        const st = {
-          size: 0,
-          p: { ...MOOD.idle },
-          t: rnd() * 100,
+        if (g !== G.g) {
+          G.g = g;
+          G.gT0 = tq;
+        }
+        if (FACE.has(mood) || g === 'error') G.lastFace = tq;
+        const tgt = viewTarget(G, tq, F.view.holdSec);
+        if (tgt !== G.vw.to) G.vw = { from: vAt(G.vw, tq), to: tgt, t0: tq };
+        const [lo, hi] = F.speech.thresholds;
+        const lv = mood === 'speaking' ? (amp < lo ? 0 : amp < hi ? 1 : 2) : 1;
+        if (lv !== G.sp.lv && tq - G.sp.t >= F.speech.minHoldFrames / FPS - 1e-6) {
+          G.sp = { lv, t: tq };
+          (G.spLog || (G.spLog = [])).push([Math.round(tq * FPS), lv]);
+          if (G.spLog.length > 200) G.spLog.shift();
+        }
+      }
+      const POSES = [F.speech.poses.closed, F.speech.poses.open, F.speech.poses.wide];
+      function pose(G, tq, rm, gl) {
+        const el = tq - G.mT0,
+          ge = tq - G.gT0,
+          m = G.mood,
+          g = rm ? (G.g === 'error' ? 'error' : null) : G.g,
+          M = F.moods;
+        const o = {
+          // Reduced motion: the end state of the turn, no hold: facing him when she attends, else tipped away.
+          v: rm
+            ? FACE.has(m) || g === 'error'
+              ? 0
+              : m === 'sleepy'
+                ? F.view.sleepyView
+                : F.view.awayView
+            : vAt(G.vw, tq),
+          h: 0,
           rot: 0,
-          ptr: null,
-          lx: 0,
-          ly: 0,
-          n: { x: 0, y: 0 },
-          s: { x: 0, y: 0, vx: 0, vy: 0 },
-          wt: rnd() * 50,
-          lookT: 4,
-          look: null,
-          wisps: [],
-          ripples: [],
-          wAcc: 0,
-          alertT: 0,
-          ringShown: 0,
-          gid: sig.gid,
-          vid: sig.vid,
-          fired: new Set(),
+          rs: 1,
+          sx: 1,
+          sy: 1,
+          bob: 0,
+          es: 1,
+          eyeOp: 1,
+          err: false,
+          len: [1, 1, 1, 1, 1],
+          wid: [1, 1, 1, 1, 1],
+          hi: -1,
+          fall: -1,
+          sleepy: m === 'sleepy',
         };
-        const build = size => {
-          seed = 11;
-          st.size = size;
-          st.wisps = [];
-          st.ripples = [];
-          const sc = Math.max(B.scaleMin, Math.min(B.scaleMax, size / B.refSizePx));
-          st.minis = [];
-          for (let i = 0; i < B.filaments; i++)
-            st.minis.push({
-              ang: (i / B.filaments) * 6.283 + (rnd() - 0.5) * 0.5,
-              len: 0.24 + rnd() * 0.18,
-              w1: 0.3 + rnd() * 0.6,
-              p1: rnd() * 6.28,
-              p2: rnd() * 6.28,
-              w3: 0.6 + rnd(),
-              p3: rnd() * 6.28,
-              dir: rnd() < 0.5 ? -1 : 1,
-              col: rnd(),
-            });
-          st.miniP = Math.max(B.filamentPointsMin, Math.round(B.filamentPoints * sc));
-          st.ribbons = [];
-          for (let b = 0; b < B.bands; b++)
-            st.ribbons.push({
-              ax: 1.1 + (rnd() - 0.5) * 1.4,
-              az: (b / B.bands) * Math.PI + (rnd() - 0.5) * 0.4,
-              speed: (0.25 + rnd() * 0.35) * (rnd() < 0.5 ? -1 : 1),
-              width: 0.7 + rnd() * 0.6,
-              phase: rnd() * 6.28,
-              col: b / Math.max(1, B.bands - 1),
-            });
-          st.silkM = Math.max(B.pointsPerBandMin, Math.round(B.pointsPerBand * sc));
+        const each = f => {
+          for (let i = 0; i < 5; i++) f(i);
         };
-        const spawnW = (x, y, vx, vy, life, kind) => {
-          if (st.wisps.length > L.wisps.max) return;
-          st.wisps.push({ x, y, vx, vy, age: 0, life, sz: 0.7 + rnd() * 1.1, c: kind, tr: [] });
-        };
-        function frame(dt, o) {
-          const size = o.size,
-            still = !!o.still,
-            dpr = Math.min(B.canvasDprMax, window.devicePixelRatio || 1);
-          if (st.size !== size || canvas.width !== Math.round(size * dpr)) {
-            canvas.width = Math.round(size * dpr);
-            canvas.height = Math.round(size * dpr);
-            build(size);
-            sized = false;
-          }
-          if (!sized) {
-            rd.resize(canvas.width, canvas.width / size);
-            sized = true;
-          }
-          const R = size * L.radiusOfSize,
-            cx0 = size / 2,
-            cy0 = size / 2,
-            dot = Math.max(1, size / 190),
-            turbK = L.turbulence,
-            follow = !!o.follow;
-          const lvl = follow ? down.level : 0,
-            noWisps = L.stepDown.order.slice(0, lvl).includes('wisps') || !L.wisps.on,
-            half = L.stepDown.order.slice(0, lvl).includes('halfPoints');
-          // A word just spoken may shed a wisp; a send ripples; a done bursts once, at its contraction.
-          if (follow && sig.vid !== st.vid) {
-            st.vid = sig.vid;
-            if (!noWisps && !still && rnd() < L.speech.wispChance) {
-              const a = rnd() * 6.283,
-                v = R * (0.5 + rnd() * 0.4);
-              spawnW(
-                cx0 + st.n.x + Math.cos(a) * R * 0.15,
-                cy0 + st.n.y + Math.sin(a) * R * 0.15,
-                Math.cos(a) * v,
-                Math.sin(a) * v,
-                0.9 + rnd() * 0.6,
-                rnd() < 0.5 ? 1 : 0
-              );
-            }
-          }
-          const gs = follow ? sig.gestures : [];
-          for (const g of gs) {
-            if (g.id > st.gid) {
-              st.gid = Math.max(st.gid, g.id);
-              if (g.name === 'send' && !still)
-                st.ripples.push({ el: 0, seed: rnd() * 20, c: 'ring', x: cx0 + st.n.x, y: cy0 + st.n.y });
-            }
-            if (g.name === 'done' && g.el >= 0.42 && !st.fired.has(g.id) && !still) {
-              st.fired.add(g.id);
-              if (!noWisps)
-                for (let i = 0; i < 14; i++) {
-                  const a = rnd() * 6.283,
-                    v = R * (0.8 + rnd() * 0.7);
-                  spawnW(
-                    cx0 + st.s.x + Math.cos(a) * R * 0.3,
-                    cy0 + st.s.y + Math.sin(a) * R * 0.3,
-                    Math.cos(a) * v,
-                    Math.sin(a) * v,
-                    1 + rnd() * 0.7,
-                    rnd() < 0.5 ? 1 : 0
-                  );
-                }
-            }
-          }
-          const target = MOOD[follow ? sig.mood : o.mood || 'idle'] || MOOD.idle,
-            p = st.p,
-            k = still ? 1 : 1 - Math.exp(-dt * L.moodEase);
-          for (const key in target) p[key] += (target[key] - p[key]) * k;
-          // Gestures: the blend for this core (a glance at a target is measured from this core's centre).
-          const angOf = g => {
-            if (g.name !== 'glance') return 0;
-            if (g.target && g.target.isConnected) {
-              const a = canvas.getBoundingClientRect(),
-                b = g.target.getBoundingClientRect();
-              return MO.glanceAngle(
-                { x: b.left + b.width / 2, y: b.top + b.height / 2 },
-                { x: a.left + a.width / 2, y: a.top + a.height / 2 }
-              );
-            }
-            return g.angle || 0;
-          };
-          const gb = still
-            ? MO.blendAll([], L)
-            : MO.blendAll(
-                gs.map(g => ({ name: g.name, el: g.el, angle: angOf(g) })),
-                L
-              );
-          let gBright = gb.bright + (still && Date.now() < sig.flashUntil ? 0.25 : 0);
-          let tx = gb.dx * R,
-            ty = gb.dy * R;
-          if (L.rubato.on && !still && follow) {
-            st.wt += dt * (0.45 + 0.9 * n2(st.t * 0.07, 3.3));
-            const amp = R * L.rubato.amp * p.roam;
-            tx += (n2(st.wt * 0.35, 1.7) - 0.5) * 2 * amp;
-            ty += (n2(5.1, st.wt * 0.31) - 0.5) * 1.6 * amp;
-            st.lookT -= dt;
-            if (st.lookT <= 0 && !gs.length) {
-              const [lo, hi] = L.rubato.glanceEverySec;
-              st.lookT = lo + rnd() * (hi - lo);
-              st.look = { a: rnd() * 6.283, el: 0 };
-            }
-            if (st.look) {
-              const Lk = st.look,
-                e = (Lk.el += dt),
-                env = Math.min(1, e / 0.5) * (e > 1.2 ? Math.max(0, 1 - (e - 1.2) / 0.9) : 1);
-              tx += Math.cos(Lk.a) * R * L.rubato.glanceReach * env * p.roam;
-              ty += Math.sin(Lk.a) * R * L.rubato.glanceReach * env * p.roam;
-              if (e > L.rubato.glanceSec) st.look = null;
-            }
-          }
-          if (st.ptr != null && L.pointer.on) {
-            tx += Math.cos(st.ptr) * R * L.pointer.reach;
-            ty += Math.sin(st.ptr) * R * L.pointer.reach;
-          }
-          if (still) {
-            st.n = { x: tx, y: ty };
-            st.s = { x: tx, y: ty, vx: 0, vy: 0 };
-          } else {
-            const r = MO.nucleusStep(st.n, st.s, { x: tx, y: ty }, L.nucleus, dt);
-            st.n = r.n;
-            st.s = r.s;
-          }
-          const NX = cx0 + st.n.x,
-            NY = cy0 + st.n.y,
-            SX = cx0 + st.s.x,
-            SY = cy0 + st.s.y;
-          const ox = f => NX + (SX - NX) * f,
-            oy = f => NY + (SY - NY) * f;
-          st.t += dt * gb.flow;
-          st.rot += dt * (0.05 + p.spin + gb.spin);
-          const vAmp = follow ? (still ? (sig.mood === 'speaking' ? L.speech.floor : 0) : sig.env.env) : 0;
-          const t = st.t,
-            breath = 1 + 0.05 * Math.sin(t * 1.1 * (0.5 + p.pulse)),
-            bright = Math.max(0.08, p.bright + gBright);
-          const hasPtr = st.ptr != null,
-            glanceOn = gb.lean > 0.001,
-            kl = still ? 1 : 1 - Math.exp(-dt * 3.5);
-          const tA = glanceOn ? gb.leanAngle : hasPtr ? st.ptr : Math.PI / 2,
-            tS = glanceOn ? Math.max(gb.lean, p.lean) : hasPtr ? Math.max(L.pointer.leanMin, p.lean) : p.lean;
-          st.lx += (Math.cos(tA) * tS - st.lx) * kl;
-          st.ly += (Math.sin(tA) * tS - st.ly) * kl;
-          const lx = st.lx,
-            ly = st.ly,
-            hueExp = Math.pow(2, (0.5 - p.hue) * 2.4),
-            open = p.len * gb.len * breath * (1 + vAmp * L.speech.swell),
-            tint = gb.tint;
-          const mixRGB = m => {
-            m = Math.pow(Math.max(0, Math.min(1, m)), hueExp);
-            const c = [0, 1, 2].map(i => PAL.a[i] + (PAL.b[i] - PAL.a[i]) * m);
-            return tint > 0.01 ? c.map((v, i) => v + (PAL.coral[i] - v) * tint * 0.45) : c;
-          };
-          const css = c => 'rgb(' + (c[0] | 0) + ',' + (c[1] | 0) + ',' + (c[2] | 0) + ')';
-          rd.begin();
-          // The Silk body: five bands of points, each a slowly turning ring that widens when she speaks. Each band's tilt is
-          // a fixed rotation, so a point's place is linear in its offset across the band: the rotation is worked out once
-          // per band position and stepped for its six points (the same picture, a third of the arithmetic).
-          {
-            const M = half ? Math.max(8, Math.round(st.silkM / 2)) : st.silkM,
-              Wn = B.widthPoints,
-              gy = st.rot * 0.4,
-              cgy = Math.cos(gy),
-              sgy = Math.sin(gy),
-              flowK = 0.4 + 0.6 * Math.abs(p.flow),
-              curlD = R * 0.03 * turbK;
-            const dxN = SX - NX,
-              dyN = SY - NY,
-              lxR = lx * R * 0.2,
-              lyR = ly * R * 0.2,
-              iR8 = 1 / (R * 0.8),
-              rad = R * B.radius * open,
-              wid = R * B.bandWidth * (0.8 + 0.4 * p.width) * (1 + vAmp * B.bandWidthSwell),
-              zcK = R * 0.035 * p.curl,
-              aK = bright * 0.5;
-            const VS = [],
-              VA = [];
-            for (let q = 0; q < Wn; q++) {
-              const v = (q / (Wn - 1)) * 2 - 1;
-              VS.push(v);
-              VA.push(0.3 + 0.7 * Math.abs(v));
-            }
-            for (const b of st.ribbons) {
-              const ci = mixRGB(b.col);
-              const cax = Math.cos(b.ax),
-                sax = Math.sin(b.ax),
-                caz = Math.cos(b.az),
-                saz = Math.sin(b.az);
-              // d/dZ of (X3, Y2, Z3) for this band
-              const dX2 = sax * saz,
-                dY2 = -sax * caz,
-                dX3 = dX2 * cgy + cax * sgy,
-                dZ3 = -dX2 * sgy + cax * cgy;
-              const bw = wid * b.width,
-                sp = t * b.speed * flowK + b.phase;
-              for (let i = 0; i < M; i++) {
-                const ph = (i / M) * 6.2832 + sp;
-                const rr = rad * (1 + 0.05 * Math.sin(3 * ph + t * 1.1 + b.phase));
-                const w = bw * (0.5 + 0.5 * Math.sin(2 * ph + t * 1.3 + b.phase));
-                const flowB = 0.6 + 0.4 * Math.sin(ph * 2 - t * p.flow * 3 + b.phase),
-                  zc = Math.sin(ph * 4 + t * 2 + b.phase) * zcK;
-                const X = Math.cos(ph) * rr,
-                  Y = Math.sin(ph) * rr;
-                const Y1 = Y * cax - zc * sax,
-                  Z1 = Y * sax + zc * cax,
-                  X2 = X * caz - Y1 * saz,
-                  Y2c = X * saz + Y1 * caz,
-                  X3c = X2 * cgy + Z1 * sgy,
-                  Z3c = -X2 * sgy + Z1 * cgy;
-                // One curl sample per band position: the six points across the band move together.
-                let cxo = 0,
-                  cyo = 0;
-                if (turbK > 0.01) {
-                  curl(((NX + dxN * 0.9 + X3c) / R) * 1.5 + 5.3, ((NY + dyN * 0.9 + Y2c) / R) * 1.5 - t * 0.2, C);
-                  cxo = C[0] * curlD;
-                  cyo = C[1] * curlD;
-                }
-                const aB = aK * flowB;
-                for (let q = 0; q < Wn; q++) {
-                  const zo = VS[q] * w,
-                    Z3 = Z3c + zo * dZ3,
-                    depth = (Z3 * iR8 + 1) / 2;
-                  const a = aB * (0.15 + 0.85 * depth) * VA[q];
-                  if (a < 0.02) continue;
-                  const f = 0.8 + 0.2 * depth;
-                  rd.put(
-                    ci,
-                    a,
-                    NX + dxN * f + X3c + zo * dX3 + lxR * depth + cxo,
-                    NY + dyN * f + Y2c + zo * dY2 + lyR * depth + cyo,
-                    dot * (0.7 + 0.6 * depth)
-                  );
-                }
-              }
-            }
-          }
-          // The progress ring follows her body and dims with her.
-          const rp = follow ? sig.ring : -1;
-          st.ringShown += ((rp >= 0 ? 1 : 0) - st.ringShown) * (still ? 1 : 1 - Math.exp(-dt * 2.5));
-          if (st.ringShown > 0.02) {
-            const prog = Math.max(0, Math.min(1, rp < 0 ? 0 : rp)),
-              Rr = R * L.ring.radius,
-              n = Math.max(L.ring.pointsMin, Math.round(size * L.ring.pointsPerPx)),
-              head = prog * n,
-              dim = st.ringShown * Math.min(1, bright / 0.85);
-            const ci = PAL.ring;
-            for (let q = 0; q < n; q++) {
-              const th = -Math.PI / 2 + (q / n) * 6.2832,
-                cs = Math.cos(th),
-                sn = Math.sin(th);
-              const r = Rr * (1 + 0.014 * (n2(cs * 1.6 + t * 0.3, sn * 1.6 - t * 0.25) - 0.5) * 2 * (0.4 + turbK));
-              const on = q < head,
-                wave = 0.45 + 0.55 * n2(cs * 2.4 - t * 0.5, sn * 2.4 + t * 0.4),
-                near = on ? Math.exp(-(head - q) / (n * 0.05)) : 0;
-              const a = dim * (on ? 0.2 + 0.3 * wave + 0.55 * near : 0.05);
-              if (a < 0.015) continue;
-              rd.put(ci, a, SX + cs * r, SY + sn * r, dot * (on ? 1.1 + 0.9 * near : 0.9));
-            }
-            if (!noWisps && !still && prog > 0 && rnd() < dt * 5 * dim) {
-              const th = -Math.PI / 2 + prog * 6.2832;
-              spawnW(
-                SX + Math.cos(th) * Rr,
-                SY + Math.sin(th) * Rr,
-                -Math.sin(th) * R * 0.25,
-                Math.cos(th) * R * 0.25,
-                0.8 + rnd() * 0.6,
-                4
-              );
-            }
-          }
-          // Wisps: about three a second at 40%, carried off by two-octave curl noise with short trails.
-          if (!still && !noWisps) {
-            st.wAcc += dt * L.wisps.perSecond * p.spark * (1 + vAmp * 1.2);
-            const [l0, l1] = L.wisps.lifeSec;
-            while (st.wAcc >= 1) {
-              st.wAcc -= 1;
-              const a = rnd() * 6.283,
-                r0 = R * (0.25 + 0.5 * rnd()),
-                v = R * 0.15;
-              spawnW(
-                SX + Math.cos(a) * r0,
-                SY + Math.sin(a) * r0,
-                Math.cos(a) * v,
-                Math.sin(a) * v,
-                l0 + rnd() * (l1 - l0),
-                rnd() < 0.6 ? 0 : rnd() < 0.5 ? 1 : 2
-              );
-            }
-          }
-          if (!still && st.wisps.length) {
-            const wcol = [PAL.spark, mixRGB(0.1), mixRGB(0.9), PAL.ring, PAL.ring];
-            const ta = R * (0.2 + 0.75 * turbK) * (0.6 + 0.4 * Math.min(1.5, Math.abs(p.flow) + 0.3)),
-              kv = Math.min(1, dt * 2.4),
-              op = L.wisps.opacity,
-              tp = L.wisps.trailPoints * 2;
-            for (let i = st.wisps.length - 1; i >= 0; i--) {
-              const w = st.wisps[i];
-              w.age += dt;
-              if (w.age > w.life || (noWisps && w.c !== 3)) {
-                st.wisps.splice(i, 1);
-                continue;
-              }
-              const dx = w.x - SX,
-                dy = w.y - SY,
-                d = Math.hypot(dx, dy) || 1;
-              curl((w.x / R) * 1.25 + 7.7, (w.y / R) * 1.25 - t * 0.3, C);
-              curl((w.x / R) * 2.7 - 3.3, (w.y / R) * 2.7 + t * 0.5, C2);
-              const out = R * 0.16 * (0.5 + 0.5 * Math.abs(p.flow));
-              w.vx += ((dx / d) * out + (C[0] + 0.5 * C2[0]) * ta - w.vx) * kv;
-              w.vy += ((dy / d) * out + (C[1] + 0.5 * C2[1]) * ta - w.vy) * kv;
-              w.x += w.vx * dt;
-              w.y += w.vy * dt;
-              w.tr.push(w.x, w.y);
-              if (w.tr.length > tp) w.tr.splice(0, 2);
-              const strength =
-                w.c === 3 ? 0.85 : w.c === 4 ? 0.35 * Math.min(1, bright / 0.85) : op * Math.min(1, p.spark + 0.25);
-              const life = Math.pow(Math.sin((Math.PI * w.age) / w.life), 0.8) * strength;
-              const ci = wcol[w.c],
-                nn = w.tr.length / 2;
-              for (let q = 0; q < nn; q++) {
-                const fq = (q + 1) / nn,
-                  a = life * fq * fq;
-                if (a < 0.015) continue;
-                rd.put(ci, a, w.tr[q * 2], w.tr[q * 2 + 1], dot * w.sz * (0.5 + 0.8 * fq) * 1.15);
-              }
-            }
-          }
-          // The ripple: a wobbling ring pushed by the same field, breaking into strands (a send, or alert's pulse).
-          if (!still) {
-            st.alertT += dt;
-            if (p.ring > 0.4 && st.alertT > L.ripple.alertEverySec) {
-              st.alertT = 0;
-              st.ripples.push({ el: 0, seed: rnd() * 20, c: 'alert', x: NX, y: NY });
-            }
-            for (let i = st.ripples.length - 1; i >= 0; i--) {
-              const rg = st.ripples[i];
-              rg.el += dt;
-              const dur = L.ripple.durationSec;
-              if (rg.el > dur) {
-                st.ripples.splice(i, 1);
-                continue;
-              }
-              const e = rg.el / dur,
-                rr = R * (0.3 + e * 1.15),
-                A = Math.pow(1 - e, 1.3) * 0.9,
-                n = Math.max(80, Math.round(size * 0.75));
-              const ci = rg.c === 'alert' ? mixRGB(0.95) : PAL.ring;
-              for (let q = 0; q < n; q++) {
-                const th = (q / n) * 6.2832,
-                  cs = Math.cos(th),
-                  sn = Math.sin(th);
-                const seg = n2(cs * 2.6 + rg.seed * 3, sn * 2.6 + rg.el * 2.5),
-                  a = A * Math.pow(seg, 1.8) * 1.7;
-                if (a < 0.02) continue;
-                const wob = (n2(cs * 1.4 + rg.seed, sn * 1.4 + rg.el * 1.6) - 0.5) * 2,
-                  r = rr * (1 + 0.1 * wob * (0.35 + e) * (0.4 + turbK));
-                let x = rg.x + cs * r,
-                  y = rg.y + sn * r;
-                curl((x / R) * 1.6 + rg.seed, (y / R) * 1.6 + rg.el * 0.8, C);
-                const dk = R * 0.08 * e * (0.3 + turbK);
-                x += C[0] * dk;
-                y += C[1] * dk;
-                const z = dot * 1.25;
-                rd.put(ci, a, x, y, z);
-                if (seg > 0.62) rd.put(ci, a * 0.4, x - cs * dot * 2.2, y - sn * dot * 2.2, z);
-              }
-              if (!noWisps && rnd() < dt * 26 * (1 - e)) {
-                const th = rnd() * 6.283,
-                  x = rg.x + Math.cos(th) * rr,
-                  y = rg.y + Math.sin(th) * rr,
-                  v = R * 0.35;
-                spawnW(
-                  x,
-                  y,
-                  Math.cos(th) * v - Math.sin(th) * v * 0.5,
-                  Math.sin(th) * v + Math.cos(th) * v * 0.5,
-                  0.8 + rnd() * 0.7,
-                  3
-                );
-              }
-            }
-          }
-          // v3's short inner filaments, then the hot core on top.
-          {
-            const P = half ? Math.max(6, Math.round(st.miniP / 2)) : st.miniP;
-            for (const f of st.minis) {
-              const ci = mixRGB(f.col);
-              const a0 = f.ang + st.rot * 1.2 * f.dir,
-                Lf = R * f.len * (0.85 + 0.15 * open) * (1 + vAmp * 0.1),
-                bend = Math.sin(t * f.w1 + f.p1) * p.curl * 0.7;
-              for (let j = 0; j < P; j++) {
-                const s = (j + 1) / P,
-                  ang = a0 + bend * s * s + Math.sin(s * 5 + t * f.w3 + f.p3) * 0.15 * s;
-                const a =
-                  Math.pow(1 - s, 0.8) *
-                  bright *
-                  (0.35 + 0.65 * (0.5 + 0.5 * Math.sin(s * 13 - t * p.flow * 4.2 + f.p2))) *
-                  0.95;
-                if (a < 0.02) continue;
-                const r = s * Lf,
-                  ff = s * 0.35,
-                  x = ox(ff) + Math.cos(ang) * r + lx * R * 0.12 * s,
-                  y = oy(ff) + Math.sin(ang) * r + ly * R * 0.12 * s;
-                rd.put(ci, a, x, y, dot);
-              }
-            }
-          }
-          // The hot core on top: a radial glow, white at the centre into the glow blue.
-          const cr = R * B.coreRadius * gb.len * (1 + 0.12 * Math.sin(t * 2.2 * p.pulse) + vAmp * B.coreSwell);
-          rd.glow(NX, NY, cr, [
-            [0, PAL.core, 0.95 * Math.min(1, bright + 0.1)],
-            [0.16, PAL.core, Math.min(1, 0.6 * bright)],
-            [0.42, PAL.glow, Math.min(1, 0.26 * bright)],
-            [1, PAL.glow, 0],
-          ]);
-          rd.end();
-        }
-        // A still frame (reduced motion, held cores) is drawn from the same start every time, so one mood is one picture.
-        const t0 = st.t,
-          wt0 = st.wt;
-        const reset = () => {
-          Object.assign(st, {
-            p: { ...MOOD.idle },
-            t: t0,
-            rot: 0,
-            lx: 0,
-            ly: 0,
-            n: { x: 0, y: 0 },
-            s: { x: 0, y: 0, vx: 0, vy: 0 },
-            wt: wt0,
-            lookT: 4,
-            look: null,
-            wAcc: 0,
-            alertT: 0,
-            ringShown: 0,
+        if (m === 'alert' && M.alert.topPetal) o.hi = 0;
+        if (m === 'sleepy') {
+          each(i => {
+            o.len[i] *= M.sleepy.len;
+            o.wid[i] *= M.sleepy.wid;
           });
-          if (st.size) build(st.size);
-        };
-        return {
-          frame,
-          reset,
-          get canvas() {
-            return canvas;
-          },
-          get renderer() {
-            return rd.kind;
-          },
-          read: () => rd.read(),
-          setPointer: a => {
-            st.ptr = a;
-          },
-          state: () => ({
-            n: { ...st.n },
-            s: { ...st.s },
-            wisps: st.wisps.length,
-            ripples: st.ripples.length,
-            points: st.silkM,
-            mood: { ...st.p },
-          }),
-        };
+          o.bob = M.sleepy.bob;
+          o.eyeOp = M.sleepy.eye;
+        }
+        if (!rm) {
+          if (m === 'thinking') {
+            const T = M.thinking,
+              b = Math.floor(el / T.beatSec),
+              x = el / T.beatSec - b;
+            o.rot = T.stepDeg * (b + (x < T.holdShare ? 0 : eIO((x - T.holdShare) / (1 - T.holdShare))));
+            o.v += T.sway * Math.sin((el * Math.PI * 2) / T.swaySec);
+          }
+          if (m === 'listening') {
+            const T = M.listening;
+            o.rs = T.scale;
+            each(i => (o.len[i] *= 1 + T.breathe * Math.sin((el * Math.PI * 2) / T.breatheSec - i * T.phasePerPetal)));
+          }
+          if (m === 'happy') {
+            const T = M.happy,
+              c = el % T.cycleSec,
+              n = Math.floor(el / T.cycleSec),
+              hop = u => trk(T.hopKeys, u);
+            o.rot = 144 * n + (c < T.hopSec ? hop(c) : c < 2 * T.hopSec ? 72 + hop(c - T.hopSec) : 144);
+            if (c < 2 * T.hopSec) {
+              const u = c % T.hopSec;
+              o.sx = trk(T.squashKeys, u);
+              o.sy = trk(T.stretchKeys, u);
+            }
+          }
+          if (m === 'alert') {
+            const T = M.alert,
+              c = el % T.cycleSec,
+              K = T.flickKeys;
+            o.len[0] *= 1 - T.flick * trk([...K, [T.cycleSec, 0]], c);
+            o.eyeOp = (c > K[1][0] && c < K[2][0]) || (c > K[3][0] && c < K[4][0]) ? T.eyeDim : 1;
+          }
+          if (m === 'sleepy') o.rs = 1 - M.sleepy.breathe * (Math.floor(el / M.sleepy.breatheSec) % 2);
+          if (m === 'speaking') {
+            const s = POSES[G.sp.lv] || {};
+            o.rs *= s.scale ?? 1;
+            o.es *= s.eye ?? 1;
+            o.bob += s.bob ?? 0;
+            each(i => {
+              o.len[i] *= s.len ?? 1;
+              o.wid[i] *= s.wid ?? 1;
+            });
+          }
+          if (m === 'idle' && !g && M.idle.fallingPetal) {
+            const P = M.idle.fallingPetal,
+              u = el - P.afterSec;
+            if (u >= 0 && u % P.everySec < P.forSec) o.fall = u % P.everySec;
+          }
+        }
+        if (g && ge < GD(g)) {
+          const X = F.gestures[g];
+          if (g === 'send') {
+            o.v -= X.viewDip * trk(X.viewKeys, ge);
+            each(i => (o.len[i] *= 1 + X.petalSwell * trk(X.swellKeys, ge - (i * X.staggerFrames) / FPS)));
+          }
+          if (g === 'done') {
+            o.rot += trk(X.turnKeys, ge);
+            o.rs *= trk(X.scaleKeys, ge);
+          }
+          if (g === 'error') {
+            o.err = true;
+            if (!rm) {
+              const d = trk(X.depthKeys, ge);
+              o.v -= X.viewDip * d;
+              o.bob += X.bow * d;
+              o.rot += trk(X.shakeKeys, ge);
+              each(i => (o.len[i] *= 1 - X.shrink * d));
+            }
+          }
+          if (g === 'glance') o.h = trk(X.keys, ge) * (gl || 1);
+          if (g === 'settle') {
+            const d = trk(X.keys, ge);
+            o.v += X.viewAway * d;
+            o.rs *= 1 - X.shrink * d;
+          }
+        }
+        return o;
+      }
+
+      // ---- one flower in the page: its SVG, made once; a drawing sets transforms, classes and paths on it
+      const zoneOf = px => (px <= 32 ? 's' : px <= 64 ? 'm' : 'l');
+      let uid = 0;
+      function makeSvg(id) {
+        const svg = document.createElementNS(SVG, 'svg');
+        svg.setAttribute('viewBox', '-100 -100 200 200');
+        svg.setAttribute('class', 'fl');
+        svg.setAttribute('aria-hidden', 'true');
+        svg.innerHTML =
+          `<defs><linearGradient id="${id}-g" x1="0" y1="1" x2="0" y2="0"><stop offset="0" class="s0"/><stop offset="0.36" class="s0"/><stop offset="0.6" class="s1"/><stop offset="1" class="s1"/></linearGradient>` +
+          `<clipPath id="${id}-c" clipPathUnits="userSpaceOnUse"><rect x="-100" y="-100" width="130" height="300"/></clipPath></defs>` +
+          `<g class="fall"><path class="fpet"/></g><g class="root">` +
+          [0, 1, 2, 3, 4, 5]
+            .map(
+              k =>
+                `<g class="p"${k === 5 ? ` clip-path="url(#${id}-c)"` : ''}><path class="pet" fill="url(#${id}-g)"/><path class="shade"/><path class="vein"/><path class="edge"/></g>`
+            )
+            .join('') +
+          `<g class="eye"><path class="ering" fill-rule="evenodd"/><path class="ecore"/></g></g>`;
+        return svg;
+      }
+      function draw(o, z, fl, fi, lean, moving, boil, svg, ringOn, ringP) {
+        const D = F.depth,
+          tilt = z === 's' ? D.tiltCornerDeg : z === 'm' ? (D.tiltStageDeg + D.tiltCornerDeg) / 2 : D.tiltStageDeg;
+        const kMin = Math.cos((tilt * Math.PI) / 180),
+          dep = D.amount,
+          av = Math.abs(o.v),
+          dir = o.v < 0 ? -1 : 1;
+        let k = Math.max(D.minSquash, 1 - av * (1 - kMin)),
+          kx = 1 - D.glanceSquashX * Math.abs(o.h);
+        const T = 1 - k,
+          facing = av < 0.02 && !o.h;
+        const jr = moving ? (hash1(fi) - 0.5) * F.clock.jitterDeg : 0,
+          jk = moving ? (hash1(fi + 7) - 0.5) * F.clock.jitterSquash : 0;
+        const LN = F.lean,
+          ln = facing ? lean : [0, 0];
+        kx *= 1 - (LN.squashPct / 100) * Math.abs(ln[0]) * LN.weight;
+        k *= 1 - (LN.squashPct / 100) * Math.abs(ln[1]) * LN.weight;
+        const eyeY = -dir * T * D.eyeLift * dep,
+          cy = -eyeY * D.coreShift;
+        const ex = 10 * o.h + ln[0] * LN.eyePx[0] * LN.weight,
+          ey = eyeY + ln[1] * LN.eyePx[1] * LN.weight;
+        const gs = svg.querySelectorAll('g.p');
+        const order = [0, 1, 2, 3, 4, 0];
+        for (let n = 0; n < 6; n++) {
+          const i = order[n],
+            p = fl.petals[i],
+            g = gs[n],
+            [pet, shade, vein, edge] = g.children;
+          const a = p.r + o.rot + jr,
+            d = Math.cos((a * Math.PI) / 180) * dir;
+          const persp = 1 - D.nearShorten * T * dep * Math.max(0, d),
+            cup = 1 + D.farCup * T * dep * d;
+          const L = S.petalScale * p.s * o.len[i] * persp * cup,
+            W = S.petalScale * p.s * o.wid[i] * persp;
+          g.setAttribute(
+            'transform',
+            `scale(${r3(kx + jk)} ${r3(k - jk)}) rotate(${r3(a)}) scale(${r3(W)} ${r3(L)}) translate(-30 -100)`
+          );
+          const path = boil && z !== 's' ? p.d[fi % H.boilDrawings] : p.d[0];
+          pet.setAttribute('d', path);
+          shade.setAttribute('d', path);
+          edge.setAttribute('d', path);
+          vein.setAttribute('d', p.vein);
+          shade.setAttribute(
+            'opacity',
+            r3(Math.min(D.shadeMax, D.shadeGain * T * dep * Math.max(0, d)) + (o.sleepy ? D.sleepyShade : 0))
+          );
+          pet.setAttribute(
+            'class',
+            'pet' + (ringOn && i / 5 >= ringP - 1e-6 ? ' dim' : '') + (o.hi === i ? ' hi' : '')
+          );
+        }
+        const fall = svg.querySelector('g.fall'),
+          fp = fall.firstChild;
+        if (z === 'l' && o.fall >= 0) {
+          const P = F.moods.idle.fallingPetal,
+            c = o.fall,
+            x = 58 - 34 * eIO(c / P.forSec) + 12 * Math.sin((c * Math.PI * 2) / 1.5),
+            y = -34 + 128 * eIO(c / P.forSec),
+            rk = 30 * Math.sin((c * Math.PI * 2) / 1.5);
+          fall.setAttribute(
+            'transform',
+            `translate(${r3(x)} ${r3(y)}) rotate(${r3(rk)}) scale(${P.scale} ${r3(P.scale * k * 0.7)}) translate(-30 -100)`
+          );
+          fall.setAttribute('opacity', r3(c > 3 ? 1 - (c - 3) / 0.6 : 1));
+          fp.setAttribute('d', fl.fall);
+        } else {
+          fall.setAttribute('transform', 'scale(0)');
+          fall.setAttribute('opacity', '0');
+        }
+        svg
+          .querySelector('g.root')
+          .setAttribute(
+            'transform',
+            `translate(${r3(jr * 0.3)} ${r3(o.bob + cy)}) scale(${r3(o.rs * o.sx)} ${r3(o.rs * o.sy)})`
+          );
+        const eye = svg.querySelector('g.eye'),
+          [ring, core] = eye.children;
+        eye.setAttribute(
+          'transform',
+          `translate(${r3(ex)} ${r3(ey)}) scale(${r3(S.eyeScale * o.es * kx)} ${r3(S.eyeScale * o.es * k)}) translate(-20 -20)`
+        );
+        ring.setAttribute('d', fl.eye.ring);
+        core.setAttribute('d', fl.eye.core);
+        core.setAttribute('opacity', o.eyeOp);
       }
 
       const cores = new Set();
       let raf = 0,
-        last = 0;
-      // A core counts as on screen only when some of it shows: one tucked to zero width (the top bar's while her stage is up) is skipped.
+        t0 = performance.now(),
+        lastFi = -1,
+        lastTs = 0;
+      const frames = [],
+        draws = [];
+      let redraws = 0;
       const io = window.IntersectionObserver
         ? new IntersectionObserver(
             es =>
               es.forEach(e => {
                 if (e.target.__core) e.target.__core.vis = e.intersectionRatio > 0;
               }),
-            { threshold: [0, 0.01, 0.5, 1] }
+            { threshold: [0, 0.01] }
           )
         : null;
+      // Her voice: each word lifts it, it decays between words, and a floor holds while she talks (the canvas's word()).
+      const voiceAt = now => {
+        if (!sig.talking) return 0;
+        const W = F.speech.word,
+          dt = (now - sig.voiceAt) / 1000;
+        return Math.min(1, sig.voice * Math.exp(-dt * W.decay) + W.floor);
+      };
+      function drawCore(o, fi, tq, now) {
+        const mood = o.follow ? sig.mood : o.mood;
+        const g = o.follow && sig.g && now - sig.gAt < GD(sig.g) * 1000 ? sig.g : null;
+        const gl = o.follow && g === 'glance' ? sig.glance || 1 : 1;
+        step(o.G, tq, mood, g, mood === 'speaking' ? voiceAt(now) : 0);
+        const rm = reduce || o.still;
+        const p = pose(o.G, tq, rm, gl);
+        const ringOn = o.follow && sig.ring >= 0;
+        const z = zoneOf(o.size);
+        if (o.el.dataset.z !== z) o.el.dataset.z = z;
+        const moving = !rm && o.sig !== undefined && JSON.stringify(p) !== o.lastPose;
+        const active = !rm && ((mood !== 'idle' && mood !== 'sleepy') || !!g || moving);
+        const boil = active && H.boil !== 'off';
+        const key =
+          JSON.stringify(p) +
+          (boil ? fi % H.boilDrawings : '') +
+          (moving ? fi : '') +
+          JSON.stringify(o.lean) +
+          (ringOn ? Math.round(sig.ring * 5) : '') +
+          z;
+        o.lastPose = JSON.stringify(p);
+        if (key === o.sig) return false;
+        o.sig = key;
+        o.pose = p;
+        o.el.classList.toggle('err', p.err);
+        draw(p, z, SHAPES[z === 's' ? 's' : 'l'], fi, o.lean, moving, boil, o.svg, ringOn, sig.ring);
+        o.draws++;
+        return true;
+      }
       function tick(ts) {
         raf = requestAnimationFrame(tick);
-        const dt = last ? Math.min(0.05, Math.max(0, (ts - last) / 1000)) : 0,
-          frameMs = last ? ts - last : null;
-        last = ts;
+        if (lastTs) {
+          frames.push(ts - lastTs);
+          if (frames.length > 1200) frames.shift();
+        }
+        lastTs = ts;
         if (document.hidden) return;
-        // Shared signals advance once a frame: the speech envelope, then each gesture (gone once it has settled).
-        sig.env = MO.envelopeStep(sig.env, { talking: sig.talking, word: sig.word }, dt, L);
-        sig.word = null;
-        for (const g of sig.gestures) g.el += dt;
-        sig.gestures = sig.gestures.filter(g => g.el < L.gestures[g.name].durationSec);
-        const t0 = performance.now();
+        const now = performance.now(),
+          fi = Math.floor(((now - t0) / 1000) * FPS);
+        if (fi === lastFi) return;
+        lastFi = fi;
+        const tq = fi / FPS,
+          start = performance.now();
         let drew = false;
         for (const o of cores) {
           if (!o.vis || !o.el.isConnected || (o.when && !o.when())) continue;
-          const mood = o.follow ? sig.mood : o.mood;
-          if (o.still || reduce) {
-            const k =
-              o.size +
-              mood +
-              (o.follow && Date.now() < sig.flashUntil ? '!' : '') +
-              (o.follow ? Math.round(sig.ring * 50) : '');
-            if (o.k !== k) {
-              o.k = k;
-              o.eng.reset();
-              for (let i = 0; i < 45; i++) o.eng.frame(1 / 30, { size: o.size, mood, still: true, follow: o.follow });
-              drew = true;
-            }
-            continue;
+          if (drawCore(o, fi, tq, now)) {
+            drew = true;
+            redraws++;
           }
-          o.k = '';
-          o.acc += dt;
-          if (o.size < 128 && o.acc < 1 / 31) continue;
-          o.eng.frame(o.acc, { size: o.size, mood, follow: o.follow });
-          o.acc = 0;
-          drew = true;
         }
-        const drawMs = performance.now() - t0;
-        if (frameMs != null) {
-          frames.push(frameMs);
-          if (frames.length > 1200) frames.shift();
-          if (drew) {
-            draws.push(drawMs);
-            if (draws.length > 1200) draws.shift();
-          }
-          const lvl = down.level;
-          down = MO.stepDownStep(down, frameMs, ts, L);
-          if (down.level !== lvl) note('stepDown', L.stepDown.order[down.level - 1]);
+        if (drew) {
+          draws.push(performance.now() - start);
+          if (draws.length > 1200) draws.shift();
         }
       }
       function make(size, opt = {}) {
+        const id = 'evf' + ++uid;
         const el = document.createElement('span');
         el.className = 'ev-av';
         el.setAttribute('aria-hidden', 'true');
         el.style.setProperty('--s', size + 'px');
-        const cv0 = document.createElement('canvas');
-        el.append(cv0);
-        // What a canvas carries: its core (for the observer) and, on her stage, the pointer lean. A 2D fallback after a
-        // lost WebGL context brings a fresh canvas, which gets the same.
-        const attach = cv => {
-          cv.__core = core;
-          if (io) io.observe(cv);
-          if (opt.pointer) {
-            cv.addEventListener('pointermove', e => {
-              const r = cv.getBoundingClientRect();
-              core.eng.setPointer(Math.atan2(e.clientY - r.top - r.height / 2, e.clientX - r.left - r.width / 2));
-            });
-            cv.addEventListener('pointerleave', () => core.eng.setPointer(null));
-          }
-        };
+        const svg = makeSvg(id);
+        el.append(svg);
         const core = {
           el,
+          svg,
           size,
           mood: opt.mood || 'idle',
           follow: !!opt.follow,
           still: !!opt.still,
           when: opt.when || null,
-          acc: 0,
-          k: '',
           vis: true,
-          eng: null,
+          G: newGroup(),
+          lean: [0, 0],
+          sig: undefined,
+          draws: 0,
         };
-        core.eng = engine(cv0, (cv, old) => {
-          if (!core.eng) return;
-          if (io) io.unobserve(old);
-          attach(cv);
-          core.k = '';
-        });
+        svg.__core = core;
+        if (io) io.observe(svg);
+        // Facing him, her eye follows a mouse pointer on the page (D-223's attention), in steps of a quarter.
+        if (opt.pointer && F.lean.mouseOnly !== undefined)
+          addEventListener('pointermove', e => {
+            if (F.lean.mouseOnly && e.pointerType && e.pointerType !== 'mouse') return;
+            const r = svg.getBoundingClientRect(),
+              q = v => Math.round(Math.max(-1, Math.min(1, v)) / F.lean.step) * F.lean.step;
+            core.lean = [
+              q((e.clientX - r.left - r.width / 2) / F.lean.reachPx),
+              q((e.clientY - r.top - r.height / 2) / F.lean.reachPx),
+            ];
+          });
         core.resize = px => {
           px = Math.round(px);
           if (px === core.size) return;
           core.size = px;
           el.style.setProperty('--s', px + 'px');
-          core.k = '';
+          core.sig = undefined;
         };
-        attach(core.eng.canvas);
         cores.add(core);
+        // The first drawing is made now, so she is never an empty box before the clock's next frame.
+        drawCore(core, Math.max(0, lastFi), Math.max(0, lastFi) / FPS, performance.now());
         if (!raf) raf = requestAnimationFrame(tick);
         return core;
       }
-      // The page API (D-134). A glance takes a direction ('left', 'right', 'up', 'down', an angle) or a target element.
+      // The page API (D-134, unchanged by D-212). A glance takes a direction ('left', 'right') or a target element.
       function gesture(name, detail) {
-        if (!L.gestures[name]) throw new Error('unknown gesture ' + name);
-        const g = { id: ++sig.gid, name, el: 0 };
+        if (!F.gestures[name]) throw new Error('unknown gesture ' + name);
+        sig.g = name;
+        sig.gAt = performance.now();
+        sig.gid++;
         if (name === 'glance') {
-          if (detail && detail.nodeType === 1) g.target = detail;
-          else g.angle = MO.glanceAngle(detail);
+          let dx = -1;
+          if (detail && detail.nodeType === 1) {
+            const hero = [...cores].find(c => c.follow && c.vis && c.el.isConnected);
+            const a = detail.getBoundingClientRect(),
+              b = hero ? hero.svg.getBoundingClientRect() : { left: innerWidth / 2, width: 0 };
+            dx = a.left + a.width / 2 < b.left + b.width / 2 ? 1 : -1;
+          } else if (detail === 'right') dx = -1;
+          else if (detail === 'left') dx = 1;
+          sig.glance = dx;
         }
-        sig.gestures.push(g);
-        if (reduce) sig.flashUntil = Date.now() + 400;
         note(
           'gesture',
           name,
-          name === 'glance' ? (g.target ? g.target.id || g.target.className || 'element' : detail) : null
+          name === 'glance' && detail
+            ? detail.nodeType === 1
+              ? detail.id || detail.className || 'element'
+              : detail
+            : null
         );
       }
-      // speak(word, {emphasis}) or speak(word, true): the Build plan names the second argument as emphasis either way.
+      // speak(word, {emphasis}) or speak(word, true): each word lifts her voice; emphasis lifts it to the top.
       function speak(word, o = {}) {
         const em = o === true || !!(o && o.emphasis);
+        const now = performance.now();
+        sig.voice = em ? 1 : Math.min(0.9, 0.3 + 0.07 * String(word).length);
+        sig.voiceAt = now;
         sig.talking = true;
-        sig.vid++;
-        sig.word = Math.max(sig.word || 0, MO.wordVoice(word, em, L.speech));
         note('speak', String(word).slice(0, 40), em ? 'emphasis' : null);
       }
       function speechEnd() {
@@ -1108,55 +641,53 @@
         sig.talking = false;
       }
       function setMood(m) {
-        if (!MOOD[m]) return;
+        if (!F.moods[m]) return;
         if (m !== sig.mood) note('mood', m);
         sig.mood = m;
       }
+      // A session's progress (D-217: one petal per answer): the petals past it are drawn quiet.
       function setRing(p) {
         sig.ring = typeof p === 'number' && p >= 0 ? Math.min(1, p) : -1;
       }
       const stats = () => ({
         frames: frames.slice(),
-        draws: frames.length ? draws.slice() : [],
-        level: down.level,
-        steps: L.stepDown.order.slice(0, down.level),
-        envelope: { ...sig.env },
-        gestures: sig.gestures.map(g => ({ name: g.name, el: g.el })),
+        draws: draws.slice(),
+        redraws,
+        heldFps: FPS,
+        level: 0,
+        steps: [],
+        gestures: sig.g && performance.now() - sig.gAt < GD(sig.g) * 1000 ? [{ name: sig.g }] : [],
         mood: sig.mood,
         ring: sig.ring,
         reduce,
+        renderer: 'svg',
         log: log.slice(),
       });
       const resetStats = () => {
         frames.length = 0;
         draws.length = 0;
+        redraws = 0;
       };
-      // The last frame a core drew, as numbers: lit pixels, the mean colour of what is lit, a hash (harness checks).
+      // The last drawing of one flower, as numbers (harness checks): its size, how many petals it shows, whether she
+      // faces him, its colour, and a hash of the drawing.
       function sample(i = 0) {
         const c = [...cores][i];
         if (!c) return null;
-        const d = c.eng.read();
-        let lit = 0,
-          r = 0,
-          g = 0,
-          b = 0,
-          h = 0;
-        for (let k = 0; k < d.length; k += 4) {
-          if (d[k + 3] > 20) {
-            lit++;
-            r += (d[k] * 255) / d[k + 3];
-            g += (d[k + 1] * 255) / d[k + 3];
-            b += (d[k + 2] * 255) / d[k + 3];
-          }
-          h = (h * 31 + d[k] + d[k + 1] * 7 + d[k + 2] * 13 + d[k + 3]) >>> 0;
-        }
+        const s = c.svg.innerHTML;
+        let h = 0;
+        for (let k = 0; k < s.length; k++) h = (h * 31 + s.charCodeAt(k)) >>> 0;
+        const pet = c.svg.querySelector('.pet');
         return {
-          lit,
-          r: lit ? r / lit : 0,
-          g: lit ? g / lit : 0,
-          b: lit ? b / lit : 0,
+          renderer: 'svg',
+          size: c.size,
+          petals: c.svg.querySelectorAll('g.p').length - 1,
+          facing: !!c.pose && Math.abs(c.pose.v) < 0.02,
+          turned: c.G.vw.to === 0,
+          view: c.pose ? c.pose.v : null,
+          colour: pet ? getComputedStyle(pet).fill : null,
+          lit: c.size * c.size,
+          draws: c.draws,
           hash: h,
-          renderer: c.eng.renderer,
         };
       }
       return { make, gesture, speak, speechEnd, setMood, setRing, stats, resetStats, sample, cores: () => [...cores] };

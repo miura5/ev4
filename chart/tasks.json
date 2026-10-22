@@ -3686,11 +3686,11 @@
   "title": "The 2D flower renderer (D-212)",
   "dod": "One SVG module draws her from spec.ui.look.flower; the seven moods and five gestures map one to one; setMood, gesture, speak and speechEnd unchanged; reduced motion is one still drawing per mood; the WebGL Silk renderer and its fallback removed (git keeps them); the proof",
   "milestone": "v4.5 ui",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-205"
   ],
-  "notes": "",
+  "notes": "Taken Oct 22.",
   "commit": null,
   "source": "plan BridyLzngcGUtpeLQorX1U"
  },

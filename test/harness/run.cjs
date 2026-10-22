@@ -1039,7 +1039,7 @@ const ok = (name, cond, detail = '') => {
       await page.evaluate(
         () =>
           document.body.classList.contains('opening') &&
-          !!document.querySelector('#hero canvas') &&
+          !!document.querySelector('#hero svg.fl') &&
           document.querySelector('#hero').getBoundingClientRect().height > 150 &&
           document.querySelector('#top-av').getBoundingClientRect().width < 4
       )
@@ -1047,9 +1047,9 @@ const ok = (name, cond, detail = '') => {
     ok(
       `[${scheme}] core is drawing`,
       await page.evaluate(() => {
+        // B-206 (D-212): her flower, five petals, drawn.
         const sm = window.EVApp.core.sample(0);
-        let lit = sm ? sm.lit : 0;
-        return lit > 500;
+        return !!sm && sm.renderer === 'svg' && sm.petals === 5 && sm.draws > 0;
       })
     );
     // B-38: the page follows system/manifest; a newer build asks for a reload, nothing reloads on its own
@@ -1348,7 +1348,7 @@ const ok = (name, cond, detail = '') => {
     );
     ok(
       'one live core, her stage: none on the messages',
-      (await page.locator('#thread .ev-av canvas').count()) === 0 && (await page.locator('#hero canvas').count()) === 1
+      (await page.locator('#thread .ev-av svg').count()) === 0 && (await page.locator('#hero svg.fl').count()) === 1
     );
     // Chat that starts a background job through the page tools and the Claude Code Remote connector
     await page.evaluate(() => {
@@ -4037,7 +4037,7 @@ const ok = (name, cond, detail = '') => {
           top: Math.round(r.top),
           heroBottom: Math.round(h.bottom),
           threadTop: Math.round(th.top),
-          cores: b.querySelectorAll('canvas').length,
+          cores: b.querySelectorAll('canvas, svg.fl').length,
           ring: window.EVApp.core.stats().ring,
           label: b.getAttribute('aria-label'),
           bg: cs.backgroundColor,

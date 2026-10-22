@@ -4,9 +4,20 @@
  ],
  "returnAfterGreenNightlies": 20,
  "checks": {
-  "captions-history-pull": { "since": "2026-10-21", "by": "D-176", "what": "the captions history pull block (D-128): pulls past today under date dividers, its waits timed" },
-  "captions-pace": { "since": "2026-10-21", "by": "D-176", "what": "the D-137 reveal pace: first sentence at speech pace, the reply within 6 s, speech ending with the last word" },
-  "core-frame-budget": { "since": "2026-10-21", "by": "D-176", "what": "the core's frame budget at 4x CPU, DPR 3 (D-135): slow-frame share, the core's own draw p95, no step-down" },
-  "core-step-down": { "since": "2026-10-21", "by": "D-176", "what": "the run-time step-down under a 40x throttle (D-135): wisps off, then half the points" }
+  "captions-history-pull": {
+   "since": "2026-10-21",
+   "by": "D-176",
+   "what": "the captions history pull block (D-128): pulls past today under date dividers, its waits timed"
+  },
+  "captions-pace": {
+   "since": "2026-10-21",
+   "by": "D-176",
+   "what": "the D-137 reveal pace: first sentence at speech pace, the reply within 6 s, speech ending with the last word"
+  },
+  "core-frame-budget": {
+   "since": "2026-10-21",
+   "by": "D-176",
+   "what": "her frame budget at 4x CPU, DPR 3 (D-224, was D-135): slow-frame share and drawings a second over 10 s of speech; the Silk step-down went with its renderer (B-206)"
+  }
  }
 }
