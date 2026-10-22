@@ -1233,8 +1233,10 @@ async function sideBySide(browser, left, right, out, vp) {
     await openPage(page, skillSeed());
     await page.waitForTimeout(1500);
     ok(
-      `[skills ${scheme}] the readout names the unit EV-04`,
-      /^EV-04 · /.test((await skillView(page)).unit),
+      `[skills ${scheme}] beside her name, her status word; the readout code has left the screen (D-210)`,
+      /^(online|replying|listening|thinking|working|in a session|on a break|check ready|resting)\b/.test(
+        (await skillView(page)).unit
+      ) && !/EV-04/.test((await skillView(page)).unit),
       (await skillView(page)).unit
     );
     await page.evaluate(() => {
