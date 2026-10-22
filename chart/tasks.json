@@ -3358,12 +3358,12 @@
   "title": "Request (reported Oct 21): * I asked E.V. what to bring to lab/class today. She said she didn’t know. I also noticed the prep tag wasn’t on last night despite today being a lab/class day. E.V. just listed general things to bring to school. I expected: stethoscope, clinical badge, watch, textbook being used per the calendar or course material like announcements; pen, penlight, lab kit , jarvis etc. those are the things off the top of my head that I will probably bring today. and again not everyday is the same so E.V. should be able to have better judgment on this; hopefully from the record of class material alone.\n* Instead of greeting everytime I reopen the page, reopening the page after briefly closing it should return the latest conversation. If a certain time limit is hit, then the greeting reappears; or possibly the greeting is limited to once every few hours (morning, afternoon, evening, night); whichever one is best practice",
   "dod": "His second bullet in these words (the greeting): reopening the page within spec.conversation.resumeWithinMinutes (90) returns him to the latest conversation where he left it; the greeting shows on the first open in each part of the day (morning, afternoon, evening, night, Central) or after that window, never on every reopen; conversation tests for each case; the harness reopens at 390 and 1280; npm test and npm run check green; ship staging green; live only on Matt's OK. Built after B-181 (the morning-after line), which shares the greeting.",
   "milestone": "v4.3 feedback",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-181"
   ],
-  "notes": "Reopen within 90 minutes in the same part of the day resumes the conversation; harness proves it at 390 and 1280.",
-  "commit": null,
+  "notes": "Shipped to staging at 87fb8bd: ship staging GREEN.",
+  "commit": "87fb8bd",
   "source": "Matt's feedback notes, build chat Oct 21",
   "words": "* I asked E.V. what to bring to lab/class today. She said she didn’t know. I also noticed the prep tag wasn’t on last night despite today being a lab/class day. E.V. just listed general things to bring to school. I expected: stethoscope, clinical badge, watch, textbook being used per the calendar or course material like announcements; pen, penlight, lab kit , jarvis etc. those are the things off the top of my head that I will probably bring today. and again not everyday is the same so E.V. should be able to have better judgment on this; hopefully from the record of class material alone.\n* Instead of greeting everytime I reopen the page, reopening the page after briefly closing it should return the latest conversation. If a certain time limit is hit, then the greeting reappears; or possibly the greeting is limited to once every few hours (morning, afternoon, evening, night); whichever one is best practice",
   "reportedAt": "2026-10-22T00:43:36.615Z",
