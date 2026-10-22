@@ -3210,13 +3210,13 @@
   "title": "Your turn as chips (D-196): log <id> --ask \"<one line>\" and the ask in system/yourturn; the page subscribes to system/yourturn; the greeting shows one chip \"Your turn (n)\" when n is above zero, inside the three-chip rule, opening a line card grouped by place (the Mac, the staging page, GitHub, a decision); each item's chips (a decision's named choices, or yes, no and later, plus Reply; Done, Fine and What's off for the other places) write jobs/<id> (kind reply, title B-nn, brief his words or the chip's word) and fire the builder with \"Job <id>\" and \"reply B-nn: <words>\"; start_job refuses kinds reply and ship from the model's tool path",
   "dod": "the harness at 390, 735 and 1280: the chip only when the list is not empty, the card by place, a tap writes the reply job and fires the builder, the tool path refuses the kind; chart tests for --ask and --from-job; npm test green; npm run check green; ship staging green; a staging round trip read back (a planted waiting task, the chip, the reply job, the builder's log clearing waitingOn, system/yourturn rewritten); live only on Matt's OK",
   "milestone": "v4.4 page",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-179",
    "B-186"
   ],
-  "notes": "Built on a branch after B-180 (morning-after line / Your turn chips); harness green at 390, 735 and 1280 where asked; full check running.",
-  "commit": null,
+  "notes": "Shipped to staging at b1c57a8: ship staging GREEN.",
+  "commit": "3f5bd7e",
   "source": "plan TbfWAoQEeQixyNKZnEZKvv"
  },
  {
