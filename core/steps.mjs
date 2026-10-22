@@ -696,11 +696,17 @@ export function planRestore(b, db, ctx, spec, name = 'backup', versions = regist
   if (m.problems.length) return { problems: m.problems };
   const target = m.collections;
   // Linted as migrated: every document the restore would leave in the record validates against this build's schema.
+  // A document with no v4 envelope (no schema or no writer) predates v4 (the v3 era before the Oct 18 cutover): no v4
+  // writer made it, so it is restored as written, never refused for its shape, and the drill's line names how many.
   const validate = loadValidator();
+  const preV4 = [];
   for (const [c, list] of Object.entries(target))
     for (const d of list) {
-      const r = validate(c, EV.docData(d), { id: d.id });
-      if (!r.ok) problems.push(describeErrors(`${c}/${d.id} after migration`, r).split('\n')[0]);
+      const data = EV.docData(d);
+      const r = validate(c, data, { id: d.id });
+      if (r.ok) continue;
+      if (data && (data.schema == null || data.writer == null)) preV4.push(`${c}/${d.id}`);
+      else problems.push(describeErrors(`${c}/${d.id} after migration`, r).split('\n')[0]);
     }
   if (problems.length) return { problems: problems.slice(0, 20) };
   const same = (x, y) => EV.stableStringify(EV.docData(x)) === EV.stableStringify(EV.docData(y));
@@ -738,7 +744,7 @@ export function planRestore(b, db, ctx, spec, name = 'backup', versions = regist
   if (problems.length) return { problems };
   const docs = Object.values(b.counts).reduce((x, y) => x + y, 0);
   const moved = migratedLine(m.schemas);
-  const detail = `drill ok: ${name} (${b.at}), ${Object.keys(b.collections).length} collections and ${docs} documents; counts and hashes match its manifest; ${moved ? 'migrated to this build: ' + moved : "every document already at this build's schema"}; ${writes.length} restored, ${identical} already identical, ${logsKept} log entries kept as they are, ${extra} documents not in the backup kept`;
+  const detail = `drill ok: ${name} (${b.at}), ${Object.keys(b.collections).length} collections and ${docs} documents; counts and hashes match its manifest; ${moved ? 'migrated to this build: ' + moved : "every document already at this build's schema"}; ${writes.length} restored, ${identical} already identical, ${logsKept} log entries kept as they are, ${extra} documents not in the backup kept${preV4.length ? `; ${preV4.length} pre-v4 documents (no envelope) kept as written: ${preV4.slice(0, 6).join(', ')}${preV4.length > 6 ? ', …' : ''}` : ''}`;
   return {
     writes,
     detail,

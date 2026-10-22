@@ -195,6 +195,30 @@ test('B-163: a backup newer than this build, and a version with no migration, ar
   assert.ok(!kept.problems, JSON.stringify(kept.problems));
   assert.match(kept.detail, /^drill ok: /);
   assert.ok(!kept.writes.some(w => w.collection === 'legacy'), 'the copy is already identical: kept as written');
+  // The Oct 21 drill on the Wednesday backup (runs/restore-drill-20261022-015856964): v3-era documents with no envelope
+  // (a run log with no schema or writer, from before the Oct 18 cutover) are kept as written and named, never refused.
+  const v3run = { id: '2026-10-17-canvas', at: '2026-10-17T01:15:00Z', pipeline: 'canvas', status: 'ok' };
+  const withV3 = oldBackup(db);
+  withV3.collections.runs = [...(withV3.collections.runs || []), v3run];
+  const pre = steps.planRestore(
+    seal(withV3.collections),
+    { ...db, runs: [...(db.runs || []), v3run] },
+    ctx,
+    spec,
+    'backup'
+  );
+  assert.ok(!pre.problems, JSON.stringify(pre.problems));
+  assert.match(pre.detail, /1 pre-v4 documents \(no envelope\) kept as written: runs\/2026-10-17-canvas/);
+  // A v4 document (it has an envelope) that fails its shape is still refused.
+  const bad = oldBackup(db);
+  bad.collections.runs = [
+    ...(bad.collections.runs || []),
+    { ...v3run, id: 'x-bad', schema: 1, writer: 'morning', source: 's' },
+  ];
+  assert.match(
+    steps.planRestore(seal(bad.collections), db, ctx, spec, 'backup').problems.join(' '),
+    /runs\/x-bad after migration/
+  );
 });
 
 test('B-163: evening-mac names its backup schema versions; health says how many bumps behind the latest backup is', async () => {
