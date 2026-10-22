@@ -3835,7 +3835,7 @@
    "B-215",
    "B-216"
   ],
-  "notes": "",
+  "notes": "Filing (Oct 22): recording the supersedes made lint red, so the tests, harness and spec.ui.tenets.checks were re-cited D-149->D-221, D-163->D-222, D-153->D-225 in fcf449b; behaviour unchanged. Left here: hold each check to the new tenets' words (violet retired, two clocks, 0.16 s settle, the 680 px cap).",
   "commit": null,
   "source": "plan BridyLzngcGUtpeLQorX1U"
  },
