@@ -3909,7 +3909,7 @@
   "title": "Bug (reported Oct 22): run npm run check only for what a task touched, full set nightly and before live",
   "dod": null,
   "milestone": "Inbox",
-  "status": "inbox",
+  "status": "declined",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -3920,6 +3920,11 @@
    "row": "v4 B-220: run npm run check only for what a task touched, full set nightly and…",
    "why": "run npm run check only for what a task touched, full set nightly and before live",
    "notes": "Reported Oct 22 from build chat"
+  },
+  "triage": {
+   "outcome": "declined",
+   "reason": "Filed with the wrong words: the report tool took the earlier idea's text (B-219's). B-221 carries Matt's report.",
+   "at": "2026-10-22T22:36:24.945Z"
   }
  },
  {
