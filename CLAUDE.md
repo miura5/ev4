@@ -66,7 +66,7 @@ attribution lines with `--trailer`, one per line) and regenerates BACKLOG.md, DE
 
 A build session may be a scheduled task with no one watching. Then: never wait for an answer; a question goes
 into Notes with the task marked `blocked`; anything irreversible or outside staging is `blocked`, not attempted.
-If the run was started by the `ev4-builder` task and open, unblocked tasks remain, fire the builder again
+If the run was started by the `ev4-builder` task with `continue` and open, unblocked tasks remain, fire the builder again
 through the Claude Code Remote `fire_trigger` tool with the text `continue` before ending, at most once per run. A
 builder run waits for the message it was fired with ('Job <id>', words to file, or `continue`; its prompt ends its
 first turn until that arrives, B-187), and a run fired with words to file files them first (`report --from-chat`). Stop firing when
@@ -91,7 +91,9 @@ fired with says what it is for:
 - `continue`: Every session, from step 1.
 
 Every run started with a job ends with `trace --job <id> --record <the job's record> --status done|failed --note "..."`
-and the calls it prints, done or not, so the page shows what happened.
+and the calls it prints, done or not, so the page shows what happened. A run started with a job or with words to file
+does that one thing and ends: it takes no other task and never fires the builder again (Oct 21: a reply run's
+`continue` started a run that would have taken a build chat's next task).
 
 ## Scheduled pipeline runs
 
