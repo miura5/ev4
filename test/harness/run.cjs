@@ -2422,7 +2422,8 @@ const ok = (name, cond, detail = '') => {
     await openSet('Harness set');
     await page.waitForTimeout(100);
     ok('a set made for him offers no Share', !(await page.isVisible('#pr-share')));
-    await page.locator('#pr-body label.opt').nth(0).click();
+    // B-192: options show in a seeded order, so the harness picks them by their words.
+    await page.locator('#pr-body label.opt', { hasText: 'Forward-facing seat with harness' }).click();
     await page.click('#pr-body button:has-text("Check answer")');
     await page.waitForTimeout(150);
     ok('single answered and scored', /^Right\b/.test(await page.textContent('#pr-body .verdict')));
@@ -2445,8 +2446,8 @@ const ok = (name, cond, detail = '') => {
     );
     await page.click('#pr-body button:has-text("Next question")');
     await page.waitForTimeout(100);
-    await page.locator('#pr-body label.opt').nth(0).click();
-    await page.locator('#pr-body label.opt').nth(2).click();
+    await page.locator('#pr-body label.opt', { hasText: 'Sit at eye level' }).click();
+    await page.locator('#pr-body label.opt', { hasText: 'Speak quickly to save time' }).click();
     await page.click('#pr-body button:has-text("Check answer")');
     await page.waitForTimeout(150);
     const t2 = await page.textContent('#pr-body');
@@ -2457,9 +2458,9 @@ const ok = (name, cond, detail = '') => {
     await page.waitForTimeout(100);
     const radios = page.locator('#pr-body table.mx input[type=radio]');
     ok('matrix renders 3 rows x 2 columns', (await radios.count()) === 6);
-    await radios.nth(0).check();
-    await radios.nth(3).check();
-    await radios.nth(4).check();
+    await page.check('#pr-body table.mx input[aria-label="Thinner, drier skin: Expected"]');
+    await page.check('#pr-body table.mx input[aria-label="New confusion since yesterday: Unexpected"]');
+    await page.check('#pr-body table.mx input[aria-label="Slower reaction time: Expected"]');
     await page.click('#pr-body button:has-text("Check answer")');
     await page.waitForTimeout(150);
     ok('matrix answered correctly', /^Right\b/.test(await page.textContent('#pr-body .verdict')));

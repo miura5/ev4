@@ -312,11 +312,14 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           const stem = document.querySelector('#rv-body .q-stem').textContent;
           for (const x of Object.values(window.__db.sets))
             for (const q of x.items || [])
-              if (q.stem === stem && q.options && q.correct)
-                return q.options.findIndex((_, i) => !q.correct.includes(i));
-          return 1;
+              if (q.stem === stem && q.options && q.correct) return q.options.find((_, i) => !q.correct.includes(i)); // B-192: by its words, not its place
+          return null;
         });
-        await page.locator('#rv-body label.opt').nth(pick).click();
+        await (
+          pick
+            ? page.locator('#rv-body label.opt', { hasText: pick }).first()
+            : page.locator('#rv-body label.opt').nth(1)
+        ).click();
         await page.locator('#rv-body button:has-text("Check answer")').scrollIntoViewIfNeeded();
         const where = () =>
           page.evaluate(() => ({

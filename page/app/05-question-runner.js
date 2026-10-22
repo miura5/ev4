@@ -106,6 +106,9 @@
       const q = items.find(x => x.id === view);
       const a = answers[q.id];
       const type = E.itemType(q);
+      // B-192: options and matrix rows show in the set's seeded order (set id and item id, never the place); his picks and
+      // the answers stay in the item's own indices, so nothing is remapped.
+      const shown = E.displayOrder(set, items)[q.id] || {};
       const sel =
         sels[key + q.id] ||
         (sels[key + q.id] = type === 'matrix' ? [] : type === 'numeric' || type === 'open' ? { v: '' } : new Set());
@@ -194,7 +197,8 @@
         th.append(hr);
         t.append(th);
         const tb = el('tbody');
-        q.matrix.rows.forEach((r, ri) => {
+        (shown.rows || q.matrix.rows.map((_, i) => i)).forEach(ri => {
+          const r = q.matrix.rows[ri];
           const tr = el('tr');
           const name = el('td');
           name.append(document.createTextNode(r.text));
@@ -227,7 +231,8 @@
         parts.push(wrap);
       } else {
         const opts = el('fieldset', 'opts');
-        q.options.forEach((txt, i) => {
+        (shown.options || q.options.map((_, i) => i)).forEach(i => {
+          const txt = q.options[i];
           const lab = el('label', 'opt' + (a ? ' locked' : ''));
           const inp = document.createElement('input');
           inp.type = type === 'sata' ? 'checkbox' : 'radio';

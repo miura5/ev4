@@ -376,6 +376,7 @@ const EVCore = (() => {
     openItemErrors,
     parseGrade,
     unitOf,
+    displayOrder,
   } = makeItemKinds({
     get SPEC() {
       return SPEC;
@@ -1637,7 +1638,7 @@ const EVCore = (() => {
   });
 
   // ---------------------------------------------------------------- prep checks (D-143, D-144) · core/prep.mjs (B-159)
-  const { isPrepAdded, prepBringItems, prepDay, prepEdit, prepKindOf, prepList, ...clinicalPrep } = makePrep({
+  const PREP = makePrep({
     get C() {
       return C;
     },
@@ -1658,6 +1659,7 @@ const EVCore = (() => {
     searchLibrary,
     slug,
   });
+  const { isPrepAdded, prepDay, prepKindOf, prepList } = PREP;
 
   // ---------------------------------------------------------------- graded work (B-99)
   // The graded-work limit speaks only when a request crosses it: no standing reminder anywhere, and a real ask to do,
@@ -2337,6 +2339,7 @@ const EVCore = (() => {
     validateItem,
     validItems,
     scoreAnswer,
+    displayOrder, // B-192
     gradeOpenLocal,
     openGrade,
     gradePrompt,
@@ -2392,13 +2395,7 @@ const EVCore = (() => {
     dayView,
     dayeditBase,
     listEdit,
-    // prep checks (D-143, D-144)
-    prepKindOf,
-    prepDay,
-    prepBringItems,
-    prepList,
-    prepEdit,
-    ...clinicalPrep, // clinical-prep brief (D-103, B-46)
+    ...PREP, // prep checks (D-143, D-144, D-204) and the clinical-prep brief (D-103, B-46)
     gradedAsk,
     DATE_KINDS,
     dateEdit,
