@@ -3185,12 +3185,12 @@
   "title": "The morning-after line: core/conversation.mjs adds the build variant of the finished-job and failed-job insights, one line at most, from jobresults.result (the task id, his words shortened, the staging commit and what waits, or the step it stopped at), ranked after any failed-run line and inside the two-insight cap",
   "dod": "conversation tests for done, failed, none, and a build older than lastSeenAt; a harness check at 390 and 1280 that the line sits under the greeting and after a planted failed run; npm test green; npm run check green; ship staging green; live only on Matt's OK",
   "milestone": "v4.4 page",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-179"
   ],
-  "notes": "Built on a branch after B-180 (morning-after line / Your turn chips); harness green at 390, 735 and 1280 where asked; full check running.",
-  "commit": null,
+  "notes": "On staging at 0901286 (GREEN): the build line from the trace, after any failed run, inside the cap; conversation tests (done, failed, none, older than lastSeenAt, ranking); greet harness at 390 and 1280; npm run check green.",
+  "commit": "7050fee",
   "source": "plan TbfWAoQEeQixyNKZnEZKvv"
  },
  {
