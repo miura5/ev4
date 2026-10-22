@@ -2598,6 +2598,14 @@
      "date": "2026-10-21",
      "run": "cse_01V57XaMtYQSf8Et4sqf8Z2u",
      "evidence": "read E.V. Foundation v4's tabs and its main tab's first heading ('E.V. Foundation v4'; it has no tab named north star), its note on B-187"
+    },
+    {
+     "capability": "a builder run writes its trace to staging (trace --job: jobresults, the talk line, system/yourturn)",
+     "task": "build.ev4-builder (trig_01Rubgkh9mfYXZaRh8jm6uP6, created 2026-10-18T04:25Z from a chat with the repository, push on, permission mode auto, prompt updated 2026-10-21T23:27Z to wait for its fired message, B-187)",
+     "proven": true,
+     "date": "2026-10-21",
+     "run": "cse_015GoqcUvNAoBZ45o9ttFyAn",
+     "evidence": "B-178: fired by the build chat for job-20261022-004000-b178-trace-probe; read back from staging: jobresults (schema 2, writer builder, release v4.3.2+43), talk/2026-10-21 (version 6, the job card line) and system/yourturn (version 2, source trace, commit 183c7e5), all at 00:47:44Z"
     }
    ],
    "limits": [
