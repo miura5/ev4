@@ -3439,7 +3439,7 @@
   "milestone": "v4.3 feedback",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Cause (read on live, Oct 21): the job (job-20261021-234954-study-plan-dosage-calcul) and its plan (plans/ATI-DOSE, 14 days, in force as the exam's first plan) are both there; the card's Open the plan opens Study, Plan, whose renderPlan shows only the target exam's plan (E4), so the dosage plan never shows. Fix: the card opens its own plan, and Study, Plan names the other plans in force to switch between.",
   "commit": null,
   "source": "Matt's feedback notes, build chat Oct 21",
   "words": "• ⁃ I requested a study plan for the dosage calculations and received a plan card with a link to the study page to see the plan. but the study plan doesn’t show the plan",
