@@ -79,11 +79,17 @@ function seal(collections) {
   return { kind: 'E.V. record backup', at: '2026-10-18T01:20:00Z', release: 'v4.0.0', counts, hashes, collections };
 }
 
-function drill(b) {
+function drill(b, { record = [] } = {}) {
   const dir = tmp('ev4-restore-');
   RUN.start({ spec, pipeline: 'restore-drill', record: 'staging', at: AT, dir, release: 'v4.3.0' });
   RUN.pull({ spec, dir, at: AT });
   pullFixture(dir);
+  // Documents the staging record holds beside the fixture (his answers on the page, B-163).
+  for (const d of record) {
+    const f = path.join(dir, 'pull', d.collection, d.id + '.json');
+    fs.mkdirSync(path.dirname(f), { recursive: true });
+    fs.writeFileSync(f, JSON.stringify(d.data));
+  }
   assert.equal(RUN.compute({ spec, dir, validate, at: AT }).status, 'waiting');
   fs.mkdirSync(path.join(dir, 'in'), { recursive: true });
   fs.writeFileSync(path.join(dir, 'in/backup.json'), JSON.stringify(b));
@@ -280,8 +286,10 @@ test('B-163: evening-mac names its backup schema versions; health says how many 
 
 // B-163 as the Oct 21 drills found it: the Wednesday backup held v3-era runs with no v4 envelope, legacy copies that
 // keep the writer that made them (page, worker, …), and the Oct 19 skills-checklist exchange. Each is restored as the
-// backup holds it; the identifier stage (B-197) still looks at every word, and a practice verdict passes it.
-test('B-163, B-197: v3-era runs and legacy copies restore as written; the checklist DOB waits on the judgment and passes', () => {
+// backup holds it; the identifier stage still looks at every word. Oct 22: the drill's own safety review refused it
+// passing the checklist DOB on its own judgment, and Matt chose "Ask me on the page": the drill holds the value for
+// him, leaves that document as the record has it and ends partial; after his It's made up the next drill passes it.
+test('B-163, B-197: v3-era runs and legacy copies restore as written; the checklist DOB is held for Matt, then passes on his answer', () => {
   const src = tmp('ev4-src-');
   pullFixture(src);
   const db = RUN.loadPulled(src);
@@ -315,23 +323,76 @@ test('B-163, B-197: v3-era runs and legacy copies restore as written; the checkl
     runs: [...(db.runs || []), v3run],
     legacy: [...(db.legacy || []), copy],
   });
-  const { dir, r } = drill(b);
-  assert.deepEqual([r.status, r.step], ['waiting', 'identifiers'], JSON.stringify(r.problems));
-  const [c] = r.question.material.candidates;
-  assert.equal(c.where, 'legacy/v4-talk-2026-10-19-s1');
-  assert.match(c.around, /Skills validation run-through/);
-  fs.writeFileSync(
-    path.join(dir, 'answers/identifiers.json'),
-    JSON.stringify({
-      verdicts: [{ key: c.key, verdict: 'practice', reason: 'E.V. playing a skills-checklist client.' }],
-    })
-  );
-  const p = RUN.compute({ spec, dir, validate, at: AT });
-  assert.equal(p.status, 'planned', JSON.stringify(p.problems));
-  const files = p.plan.batches.flat();
+  const key = EV.idKey('DOB: 04/12/1961');
+  // 1. No judgment step: the run never waits to pass a value itself; it holds it.
+  const first = drill(b);
+  const r = first.r;
+  assert.equal(r.status, 'planned', JSON.stringify(r.problems || r.step));
+  const files = r.plan.batches.flat();
   const read = id => JSON.parse(fs.readFileSync(files.find(f => f.doc_id === id).file_path, 'utf8'));
   assert.equal(read('2026-10-17-daily').routine, 'daily', 'the v3-era run, as written');
-  assert.equal(read('v4-talk-2026-10-19-s1').writer, 'page', 'the legacy copy keeps its writer');
-  assert.match(JSON.stringify(read('v4-talk-2026-10-19-s1')), /DOB: 04\/12\/1961/, 'practice passes whole');
-  assert.equal(read(c.key).verdict, 'practice', 'and the verdict is kept, so the next drill does not ask again');
+  assert.ok(!files.some(f => f.doc_id === 'v4-talk-2026-10-19-s1'), 'the copy holding it is left as the record has it');
+  const held = read(key);
+  assert.deepEqual(
+    [held.verdict, held.by, held.writer, held.ref],
+    ['unsure', 'held', 'restore-drill', 'legacy/v4-talk-2026-10-19-s1']
+  );
+  assert.ok(!JSON.stringify(held).includes('04/12/1961'), 'the hold keeps a fingerprint, never the value');
+  assert.ok(!files.some(f => fs.readFileSync(f.file_path, 'utf8').includes('04/12/1961')), 'nowhere in the plan');
+  assert.match(
+    r.plan.detail,
+    /1 detail that could be a real patient's held for Matt to answer in E.V. Home \(B-04\); 1 document left as the record has it/
+  );
+  assert.equal(r.plan.held, 1);
+  assert.deepEqual(
+    EV.heldForMatt([{ ...held, id: key }]).map(h => [h.key, h.kind, h.ref]),
+    [[key, 'has a date of birth', 'legacy/v4-talk-2026-10-19-s1']]
+  );
+  RUN.end({ dir: first.dir, at: AT });
+  const end1 = JSON.parse(fs.readFileSync(path.join(first.dir, 'out/runs', r.plan.runId + '.end.json'), 'utf8'));
+  assert.equal(end1.status, 'partial', 'a drill that left a document is not ok until he answers');
+  // 2. His It's made up on the page (idchecks/<key>-matt, practice) is read first: the next drill restores it whole.
+  const matt = verdict => ({
+    collection: 'idchecks',
+    id: key + '-matt',
+    data: {
+      schema: 1,
+      writer: 'page',
+      at: AT,
+      source: 'E.V. Home',
+      release: 'v4.3.0',
+      key,
+      verdict,
+      reason: 'Matt: it’s from a practice scenario',
+      kind: 'has a date of birth',
+      ref: 'legacy/v4-talk-2026-10-19-s1',
+      by: 'matt',
+    },
+  });
+  const heldDoc = { collection: 'idchecks', id: key, data: held };
+  const second = drill(b, { record: [heldDoc, matt('practice')] });
+  assert.equal(second.r.status, 'planned', JSON.stringify(second.r.problems));
+  const f2 = second.r.plan.batches.flat();
+  const copied = f2.find(f => f.doc_id === 'v4-talk-2026-10-19-s1');
+  assert.ok(copied, 'restored now');
+  assert.match(fs.readFileSync(copied.file_path, 'utf8'), /DOB: 04\/12\/1961/, 'practice passes whole');
+  assert.ok(!f2.some(f => f.collection === 'idchecks'), 'nothing held again');
+  assert.equal(second.r.plan.held, undefined);
+  RUN.end({ dir: second.dir, at: AT });
+  assert.equal(
+    JSON.parse(fs.readFileSync(path.join(second.dir, 'out/runs', second.r.plan.runId + '.end.json'), 'utf8')).status,
+    'ok'
+  );
+  assert.deepEqual(
+    EV.heldForMatt([
+      { ...held, id: key },
+      { ...matt('practice').data, id: key + '-matt' },
+    ]),
+    [],
+    'answered: off his list'
+  );
+  // 3. His Keep it out (real) keeps it held, and no run asks again.
+  const third = drill(b, { record: [heldDoc, matt('real')] });
+  const f3 = third.r.plan.batches.flat();
+  assert.ok(!f3.some(f => f.doc_id === 'v4-talk-2026-10-19-s1') && !f3.some(f => f.collection === 'idchecks'));
 });

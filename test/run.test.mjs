@@ -219,10 +219,12 @@ test('compute refuses a bad answer, an identifier, a delete, and an append by a 
   RUN.pulled({ spec, dir, transcript: lines.join('\n') });
   answer(dir, { push: 'x'.repeat(200) });
   assert.match(RUN.compute({ spec, dir, validate, at: AT }).problems[0], /note: the answer does not fit its shape/);
-  // B-197: an identifier value no longer refuses outright; it waits on the run's identifiers judgment (tests below).
+  // B-197, B-163: an identifier value no longer refuses outright; a run holds it for Matt (tests below).
   answer(dir, { push: 'Room 412 patient, MRN 12345678, asked about insulin' });
   const w = RUN.compute({ spec, dir, validate, at: AT });
-  assert.deepEqual([w.status, w.step], ['waiting', 'identifiers']);
+  assert.equal(w.status, 'planned');
+  assert.ok(!/12345678/.test(w.plan.push));
+  fs.rmSync(path.join(dir, 'plan.json')); // the checks below plan nothing
   answer(dir, { push: 'Fine' });
   CODE_STEPS['test-delete'] = () => ({ writes: [{ op: 'delete', collection: 'ideas', id: 'x' }] });
   CODE_STEPS['test-append'] = db => ({
@@ -673,46 +675,39 @@ const planOf = r => {
 const CHECKLIST =
   'Skills check, step 2 of the validation checklist: client Ana Reyes, DOB: 04/12/1961, here for a head-to-toe.';
 
-test('B-197: the Oct 19 skills-checklist exchange waits on the judgment, and a practice verdict passes it whole', () => {
+test("B-197, B-163: the Oct 19 skills-checklist exchange is held for Matt (never passed on a run's own judgment), and his answer passes it whole", () => {
   const { dir, lines } = begin();
   RUN.pulled({ spec, dir, transcript: lines.join('\n') });
   answer(dir, { push: CHECKLIST.slice(0, 118) });
-  const w = RUN.compute({ spec, dir, validate, at: AT });
-  assert.deepEqual([w.status, w.step], ['waiting', 'identifiers']);
-  assert.equal(w.question.judgment, EV.ID_JUDGMENT);
-  const [c] = w.question.material.candidates;
-  assert.equal(c.kind, 'has a date of birth');
-  assert.match(c.around, /validation checklist/, 'the judgment sees the words around it');
-  idAnswer(dir, [{ key: c.key, verdict: 'practice', reason: 'A step of a skills validation checklist.' }]);
   const p = planOf(RUN.compute({ spec, dir, validate, at: AT }));
-  assert.equal(p.push, CHECKLIST.slice(0, 118), 'practice passes untouched');
+  assert.equal(p.push, CHECKLIST.slice(0, 118).replace('DOB: 04/12/1961', '[left out]'), 'held until he answers');
+  assert.ok(!fs.existsSync(path.join(dir, 'answers', 'identifiers.json')));
   const kept = p.files.find(f => f.collection === 'idchecks');
-  assert.equal(kept.doc_id, c.key);
+  const key = EV.idKey('DOB: 04/12/1961');
+  assert.equal(kept.doc_id, key);
   const doc = p.read(kept);
   assert.deepEqual(
-    [doc.verdict, doc.by, doc.writer, doc.kind],
-    ['practice', 'judgment', 'evening-cloud', 'has a date of birth']
+    [doc.verdict, doc.by, doc.writer, doc.kind, doc.reason],
+    ['unsure', 'held', 'evening-cloud', 'has a date of birth', EV.ID_HELD_REASON]
   );
-  assert.ok(!JSON.stringify(doc).includes('04/12/1961'), 'the verdict keeps a fingerprint, never the value');
-  assert.match(p.steps.find(x => x.id === 'identifiers').detail, /1 detail checked: from practice, kept/);
-  assert.equal(p.detail, undefined, 'practice adds nothing to the run line');
+  assert.ok(!JSON.stringify(doc).includes('04/12/1961'), 'the hold keeps a fingerprint, never the value');
+  assert.match(
+    p.steps.find(x => x.id === 'identifiers').detail,
+    /1 detail that could be a real patient's held for Matt/
+  );
+  assert.equal(p.steps.find(x => x.id === 'identifiers').status, 'held');
+  assert.match(p.detail, /held for Matt to answer in E\.V\. Home \(B-04\)/);
 });
 
-test('B-197: a real-looking MRN with no practice context is held back alone, and a missing verdict counts as unsure', () => {
+test('B-163: a real-looking MRN with no practice context is held back alone, and kept as held, not judged', () => {
   const { dir, lines } = begin();
   RUN.pulled({ spec, dir, transcript: lines.join('\n') });
   answer(dir, { push: 'Asked about insulin for MRN 4417920 tonight' });
-  const w = RUN.compute({ spec, dir, validate, at: AT });
-  const [c] = w.question.material.candidates;
-  idAnswer(dir, [{ key: c.key, verdict: 'real', reason: 'Reads as a patient from clinical.' }]);
   const p = planOf(RUN.compute({ spec, dir, validate, at: AT }));
   assert.equal(p.push, 'Asked about insulin for [left out] tonight', 'only that value is held back');
-  assert.equal(p.read(p.files.find(f => f.collection === 'idchecks')).verdict, 'real');
-  assert.match(p.detail, /1 detail that could be a real patient's left out \(B-04\)/);
-  idAnswer(dir, []);
-  const q = planOf(RUN.compute({ spec, dir, validate, at: AT }));
-  assert.equal(q.push, 'Asked about insulin for [left out] tonight');
-  assert.equal(q.read(q.files.find(f => f.collection === 'idchecks')).verdict, 'unsure');
+  const d = p.read(p.files.find(f => f.collection === 'idchecks'));
+  assert.deepEqual([d.verdict, d.by], ['unsure', 'held']);
+  assert.match(p.detail, /1 detail that could be a real patient's held for Matt/);
 });
 
 test("B-197: a verdict already kept is reused (a restore never re-judges what passed); Matt's own answer overrides", () => {
@@ -760,7 +755,7 @@ test("B-197: a verdict already kept is reused (a restore never re-judges what pa
   }
 });
 
-test('B-197: a pipeline with no judgment step holds a candidate as unsure and goes on', () => {
+test('B-197, B-163: a pipeline with no agent step holds a candidate the same way and goes on', () => {
   const s2 = {
     ...spec,
     pipelines: { ...spec.pipelines, 'evening-cloud': { ...DEF, steps: [{ id: 'test-say', kind: 'code' }] } },
@@ -771,7 +766,7 @@ test('B-197: a pipeline with no judgment step holds a candidate as unsure and go
     RUN.pulled({ spec: s2, dir, transcript: lines.join('\n') });
     const p = planOf(RUN.compute({ spec: s2, dir, validate, at: AT }));
     assert.equal(p.push, 'Tonight: [left out] asked about insulin');
-    assert.ok(!p.files.some(f => f.collection === 'idchecks'), 'no verdict is kept where no judgment looked');
+    assert.equal(p.read(p.files.find(f => f.collection === 'idchecks')).by, 'held', 'kept as held for Matt');
   } finally {
     delete CODE_STEPS['test-say'];
   }

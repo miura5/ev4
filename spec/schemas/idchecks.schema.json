@@ -2,7 +2,7 @@
  "$schema": "https://json-schema.org/draft/2020-12/schema",
  "$id": "ev4/idchecks",
  "title": "idchecks/<id-key>[-matt]",
- "description": "B-197: one kept identifier verdict, under the value's fingerprint, never the value",
+ "description": "B-197: one kept identifier verdict, under the value's fingerprint, never the value; B-163: by held is a run's hold, waiting on Matt's own answer (-matt)",
  "x-ev": {
   "collection": "idchecks",
   "class": "Log",
@@ -76,7 +76,8 @@
   "by": {
    "enum": [
     "judgment",
-    "matt"
+    "matt",
+    "held"
    ]
   }
  },

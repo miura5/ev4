@@ -134,6 +134,20 @@ export function makeIdCheck() {
     for (const d of docs) if (d.by === 'matt') out[d.key] = d;
     return out;
   }
+  // B-163 (Matt, Oct 22: "Ask me on the page"): a scheduled run never passes a value on its own judgment. It holds a
+  // fresh candidate and keeps it as held (by: held, unsure) until Matt answers on the page: It's made up or Keep it out,
+  // kept as <key>-matt, which every later run reads first.
+  const ID_HELD_REASON = 'held for Matt: a run never passes a value on its own';
+  /** What runs held that Matt has not answered yet: where and what kind, never the value. Oldest first. */
+  function heldForMatt(idchecks) {
+    const docs = (idchecks || []).filter(d => d && d.key);
+    const answered = new Set(docs.filter(d => d.by === 'matt').map(d => d.key));
+    const seen = new Set();
+    return docs
+      .filter(d => d.by === 'held' && !answered.has(d.key) && !seen.has(d.key) && seen.add(d.key))
+      .map(d => ({ key: d.key, kind: d.kind, ref: d.ref, at: d.at, source: d.source }))
+      .sort((a, b) => String(a.at).localeCompare(String(b.at)));
+  }
   /**
    * Answers to the judgment in a usable form: one verdict per candidate key; a candidate the answer leaves out, or an
    * answer that is not one of the three, is unsure (held, never passed).
@@ -169,6 +183,8 @@ export function makeIdCheck() {
     ID_ANSWER_SHAPE,
     idJudgmentPrompt,
     keptVerdicts,
+    ID_HELD_REASON,
+    heldForMatt,
     readVerdicts,
     idHeldLine,
   };

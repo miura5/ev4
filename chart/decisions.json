@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-206",
+  "date": "Oct 22",
+  "title": "A scheduled run never passes a possible identifier on its own judgment; it holds it and Matt answers on the page",
+  "why": "Oct 22: the staging restore drill's own safety review refused writing its practice verdict on the Oct 19 checklist DOB ('Auto-Mode Bypass'). Matt chose 'Ask me on the page' (job job-20261022-132435-b-163): a run holds a fresh candidate ([left out]) and keeps it in idchecks as by held; Your turn lists it (where and what kind, never the value) with It's made up / Keep it out, kept as <key>-matt, which every later run reads first. A restore drill leaves a document holding one as the record has it and ends partial until he answers. B-04 unchanged; amends B-197's run-side judgment.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-205",
   "date": "Oct 21",
   "title": "A practice question may draw on another course's passage when it is the same concept, the question names its source ('from BIO 201: Bones slides') and it still targets an objective of its own course (NUR 112); a cross-course miss files one weak spot, under that objective, never a second under the other course; no course is named in code (B-42): the source is data on the item (its sourceRef), and the courses are what the material and the objective's exam say",
