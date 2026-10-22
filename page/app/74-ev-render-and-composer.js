@@ -174,7 +174,7 @@
       const w = E.scanIdentifiers(input.value);
       guardEl.hidden = !w.length;
       guardEl.textContent = w.length
-        ? `This ${w[0]}. Leave real patient details out.${guardFor === input.value ? '' : ' Send again to send it anyway.'}`
+        ? `This ${w[0]}. Leave real patient details out.${guardFor === input.value || BUILD_ASK.test(input.value) ? '' : ' Send again to send it anyway.'}`
         : '';
     });
     input.addEventListener('keydown', e => {
@@ -196,6 +196,22 @@
         return;
       }
       const w = E.scanIdentifiers(text);
+      // B-180: a build ask goes into the project record, so an identifier holds it every time, never sent anyway.
+      if (BUILD_ASK.test(text)) {
+        guardFor = null;
+        if (w.length) {
+          guardEl.hidden = false;
+          guardEl.textContent = `This ${w[0]}. A build ask goes into the project record, so take real patient details out first.`;
+          return;
+        }
+        guardEl.hidden = true;
+        input.value = '';
+        grow();
+        typing(false);
+        T.bigCore = false;
+        await buildAsk(text);
+        return;
+      }
       if (w.length && guardFor !== text) {
         guardFor = text;
         guardEl.hidden = false;

@@ -365,7 +365,8 @@
         box.append(el('p', 'job-title', j.title || j.id));
         const r = j.result || {};
         if (j.status === 'done' && r.retro) box.append(retroList(r.retro));
-        if (j.status === 'done' && r.text) {
+        if (j.kind === 'build' && (j.status === 'done' || j.status === 'failed')) box.append(buildList(j));
+        else if (j.status === 'done' && r.text) {
           const p = el('div', 'result');
           p.append(fmt(r.text));
           box.append(p);

@@ -35,6 +35,7 @@ test('B-186: spec.actions has its _rules and the v4.4 rows, each a valid row wit
   assert.deepEqual(rows.map(([k]) => k).sort(), [
     'build-ask',
     'design-ask',
+    'job-fired',
     'plan-ask',
     'reply',
     'ship-it',
@@ -47,7 +48,7 @@ test('B-186: spec.actions has its _rules and the v4.4 rows, each a valid row wit
     assert.ok(row.callers.every(c => CALLERS.includes(c)) && COSTS.includes(row.cost), name);
   }
   // The tap rows are the page's; the trace and the live deploy are the builder's; the row is the OK for ship-it.
-  for (const n of ['build-ask', 'reply', 'design-ask', 'plan-ask', 'ship-it'])
+  for (const n of ['build-ask', 'reply', 'design-ask', 'plan-ask', 'ship-it', 'job-fired'])
     assert.deepEqual(spec.actions[n].callers, ['tap']);
   assert.deepEqual([spec.actions.trace.callers, spec.actions['ship-live'].callers], [['builder'], ['builder']]);
   assert.deepEqual(
@@ -123,6 +124,16 @@ test('B-186: a valid call returns only the row writes and effects', () => {
     ['set jobresults/job-20261021-233000-the-timer', 'update talk/2026-10-21', 'set system/yourturn']
   );
   assert.equal(builder('ship-live', { job: 'job-x', commit: 'abc1234' }, { ok: { mattOk: true } }).ok, true);
+  // B-180: the fire's answer lands on the job it fired, and only there; a model tool may not mark one.
+  const job = 'job-20261021-233000-build-the-timer-sat-at-0';
+  const f = tap('job-fired', { job, fired: { at: NOW, ok: false, error: 'mcp_unavailable' } });
+  assert.equal(f.ok, true, f.refused);
+  assert.deepEqual(f.writes, [
+    { op: 'update', collection: 'jobs', id: job, data: { fired: { at: NOW, ok: false, error: 'mcp_unavailable' } } },
+  ]);
+  assert.deepEqual(f.effects, []);
+  assert.match(tap('job-fired', { job: 'talk', fired: { at: NOW, ok: true } }).refused, /do not fit/);
+  assert.match(tap('job-fired', { job, fired: { at: NOW, ok: true, status: 'done' } }).refused, /do not fit/);
 });
 
 test('B-186: a wrong caller, a bad shape, a write outside the row and an unmet cost are each refused with the reason', () => {

@@ -180,6 +180,11 @@ export function makeActions(validateAgainst) {
     'design-ask': jobAsk('design'),
     'plan-ask': jobAsk('plan'),
     'ship-it': jobAsk('ship'),
+    // B-180: the fire_trigger's answer on the job the page just fired, so its card says queued or not started.
+    'job-fired': args => ({
+      writes: [{ op: 'update', collection: 'jobs', id: args.job, data: { fired: args.fired } }],
+      effects: [],
+    }),
     trace,
     // The live deploy's gate (D-198): its caller and cost; the deploy itself is core/deploy.mjs's printout, never a row's
     // writes (no row writes system/spec).

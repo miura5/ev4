@@ -180,6 +180,37 @@
       await write({ op: 'update', collection: 'jobs', id, data: { fired } });
       return { id, fired };
     }
+    // B-180 (D-194): a message starting build:, bug: or idea: is a build ask, with no model call: the build-ask row
+    // writes jobs/<id> (kind build, his words) and fires the builder with "Job <id>" and his message as typed; the
+    // job-fired row records the answer. An identifier holds it outright: a build ask's words go into the Chart.
+    const BUILD_ASK = /^\s*(build|bug|idea)\s*:/i;
+    async function buildAsk(text) {
+      const typed = String(text).trim();
+      await mattSay(typed);
+      const args = {
+        title: typed.replace(/\s+/g, ' ').slice(0, 90),
+        brief: typed.slice(0, 1500),
+        text: typed.slice(0, 1600),
+      };
+      const ctx = { now: new Date().toISOString() }; // one time, so the composition below is this one
+      const a = ACT ? ACT.tap('build-ask', args, ctx) : { ok: false, refused: 'the actions table did not load' };
+      if (!a.ok) {
+        await evSay('I couldn’t hand that to the builder (' + a.refused + ').', [], { tier: 'local' });
+        return;
+      }
+      await run(ACT.tap('build-ask', args, ctx).writes);
+      const id = a.writes[0].id;
+      let fired = { at: now(), ok: false, error: 'no_task' };
+      for (const e of a.effects) if (e.kind === 'fire_trigger') fired = await fire(TASKS.builder, e.text);
+      await run(ACT.tap('job-fired', { job: id, fired }).writes);
+      await evSay(
+        fired.ok
+          ? 'Sent to the builder. It files this as a task in your words, builds it and puts it on staging; this card follows it.'
+          : 'Saved it, but I couldn’t start the builder. ' + fireCopy(fired.error),
+        [{ type: 'job', id }],
+        { tier: 'local' }
+      );
+    }
     async function refire(j) {
       await write({ op: 'update', collection: 'jobs', id: j.id, data: { fired: null } }); // null first: update merges nested maps, and the new attempt must not inherit the old error
       const fired = await fire(TASKS.worker, jobText(j.id));
@@ -234,6 +265,27 @@
             v: 'info',
             detail: `Sent to ${who} at ` + clock12(j.fired.at) + '. It usually starts within a few minutes.',
           };
+    }
+    /** B-180 (D-194): a build job's card from its jobresults.result (the builder's trace): filed as B-nnn, built and
+     * green on staging at the commit, and what waits, or where it stopped. */
+    function buildList(j) {
+      const r = j.result || {};
+      const failed = j.status === 'failed';
+      const ul = el('ul', 'list build-steps');
+      ul.append(row({ title: 'Filed', detail: r.task ? 'As ' + r.task : failed ? 'Not filed' : 'Not filed yet' }));
+      ul.append(
+        row({
+          title: 'Built',
+          detail: r.commit
+            ? 'Staging green at ' + String(r.commit).slice(0, 7)
+            : failed
+              ? 'Stopped before staging'
+              : 'Not built in this run',
+        })
+      );
+      const said = failed ? r.failed || r.text || 'The builder stopped before it finished.' : r.text || '';
+      if (said) ul.append(row({ title: failed ? 'Where it stopped' : 'What waits', detail: said }));
+      return ul;
     }
     /** D-104: the retro's numbers on its job card, the same ones the narrative was written over. */
     function retroList(x) {

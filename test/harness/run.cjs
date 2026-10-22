@@ -425,6 +425,135 @@ seed.jobs['job-harness-reply-failed'] = {
   brief: 'yes',
   fired: { at: '2026-10-10T15:00:01Z', ok: true },
 };
+// B-180: two build jobs the builder traced long ago: one green on staging, one that stopped before it got there.
+for (const [id, task, commit, text, error] of [
+  ['job-harness-build-green', 'B-201', 'abc1234def', 'Say ship it when you want it live.', null],
+  ['job-harness-build-failed', 'B-202', null, null, 'npm test failed on the new harness check'],
+]) {
+  seed.jobs[id] = {
+    ...env('page', 'E.V. Home', '2026-10-10T14:00:00Z', 2),
+    kind: 'build',
+    title: 'build: ' + id,
+    brief: 'build: ' + id,
+    fired: { at: '2026-10-10T14:00:01Z', ok: true },
+  };
+  seed.jobresults[id] = {
+    ...env('builder', 'trace ' + id, '2026-10-10T14:40:00Z', 2),
+    release: RELEASE,
+    status: error ? 'failed' : 'done',
+    startedAt: '2026-10-10T14:05:00Z',
+    finishedAt: '2026-10-10T14:40:00Z',
+    result: { text: text || error, task, ...(commit ? { commit } : {}) },
+    message: null,
+    error,
+  };
+}
+/** B-180, at the width it runs: the build card's states, the build ask (no model call, the job, the builder fired by
+ * id with the two-line text, both lines in talk) and an identifier that holds a build ask with nothing written. */
+async function buildAskChecks(page, scheme) {
+  const tag = `[${scheme}] `;
+  for (const [id, want] of [
+    [
+      'job-harness-build-green',
+      /Filed\s*As B-201[\s\S]*Built\s*Staging green at abc1234[\s\S]*What waits\s*Say ship it/,
+    ],
+    [
+      'job-harness-build-failed',
+      /Filed\s*As B-202[\s\S]*Built\s*Stopped before staging[\s\S]*Where it stopped\s*npm test failed/,
+    ],
+  ]) {
+    await page.evaluate(i => {
+      window.__chatPre = '';
+      window.__chatScript = [{ tool: 'show_card', input: { type: 'job', id: i } }];
+      window.__chatReply = 'Here it is.';
+    }, id);
+    await send(page, 'Show me that build');
+    await page.waitForTimeout(300);
+    const t = await page.locator('#ev-surf').textContent();
+    ok(
+      `${tag}a build job's card (${id}) shows filed, built and what waits from its trace`,
+      want.test(t),
+      t.slice(0, 300)
+    );
+    await page
+      .locator('#ev-surf')
+      .first()
+      .screenshot({ path: `${shots}/build-card-${id.split('-')[3]}-${scheme}.png` });
+  }
+  const count = () =>
+    page.evaluate(() => ({
+      jobs: Object.keys(window.__db.jobs || {}),
+      fires: window.__mcpCalls.filter(c => c[1] === 'fire_trigger').length,
+      chats: window.__chatCalls.length,
+    }));
+  const typed = 'bug: the timer resets when I switch tabs';
+  const before = await count();
+  const m0 = (await msgs(page)).length;
+  await send(page, typed);
+  await page.waitForTimeout(400);
+  const after = await count();
+  const id = after.jobs.find(k => !before.jobs.includes(k));
+  const job = id ? await page.evaluate(i => window.__db.jobs[i], id) : null;
+  ok(
+    `${tag}a build ask writes the build job in his words, with no model call`,
+    job &&
+      job.kind === 'build' &&
+      job.writer === 'page' &&
+      job.schema === 2 &&
+      job.title === typed &&
+      job.brief === typed &&
+      job.fired &&
+      job.fired.ok === true &&
+      after.chats === before.chats,
+    JSON.stringify({ id, job, chats: [before.chats, after.chats] })
+  );
+  const fire = await page.evaluate(n => window.__mcpCalls.filter(c => c[1] === 'fire_trigger')[n], before.fires);
+  ok(
+    `${tag}it fires the builder by id with "Job <id>" and his message as typed`,
+    after.fires === before.fires + 1 &&
+      fire &&
+      fire[0] === 'Claude Code Remote' &&
+      fire[2].trigger_id === spec.tasks.build['ev4-builder'].trigger &&
+      fire[2].text === `Job ${id}\n${typed}`,
+    JSON.stringify(fire)
+  );
+  const m = await msgs(page);
+  const [mine, hers] = m.slice(-2);
+  ok(
+    `${tag}his message and her reply land in talk, hers with the job card`,
+    m.length === m0 + 2 &&
+      mine.role === 'matt' &&
+      mine.text === typed &&
+      hers.role === 'ev' &&
+      /Sent to the builder/.test(hers.text) &&
+      hers.cards.some(c => c.type === 'job' && c.id === id),
+    JSON.stringify(m.slice(-2)).slice(0, 300)
+  );
+  const surf = await page.locator('#ev-surf').textContent();
+  ok(
+    `${tag}the new build's card says it is queued for the builder`,
+    /^Build · queued/.test(surf.trim()) && /Sent to the builder at/.test(surf),
+    surf.slice(0, 200)
+  );
+  await page.screenshot({ path: `${shots}/build-ask-${scheme}.png` });
+  const held = 'idea: a bigger font for the resident in room 12';
+  for (let i = 0; i < 2; i++) {
+    await page.fill('#ev-input', held);
+    await page.click('#ev-send');
+    await page.waitForTimeout(200);
+  }
+  const still = await count();
+  ok(
+    `${tag}an identifier holds a build ask every time and nothing is written or fired`,
+    !(await page.isHidden('#ev-guard')) &&
+      /project record/.test(await page.textContent('#ev-guard')) &&
+      still.jobs.length === after.jobs.length &&
+      still.fires === after.fires &&
+      (await msgs(page)).length === m.length,
+    await page.textContent('#ev-guard')
+  );
+  await page.fill('#ev-input', '');
+}
 // B-194: a second plan in force (a dosage plan), dated well ahead so it adds nothing to today.
 const later = new Date(DAYTIME.getTime() + 20 * 864e5).toISOString().slice(0, 10);
 seed.plans = seed.plans || {};
@@ -847,6 +976,9 @@ const ok = (name, cond, detail = '') => {
         );
         await page.screenshot({ path: `${shots}/dosage-desktop.png`, fullPage: false });
       }
+      await page.click('#tab-ev');
+      await page.waitForTimeout(150);
+      await buildAskChecks(page, scheme); // B-180
       await page.close();
       continue;
     }
@@ -1105,6 +1237,7 @@ const ok = (name, cond, detail = '') => {
       );
       await surf.first().screenshot({ path: `${shots}/builder-job-${id.split('-')[2]}.png` });
     }
+    await buildAskChecks(page, scheme); // B-180
     // B-194: a plan card's Open the plan shows that plan in Study, Plan, which names the other plans in force to switch to.
     {
       // The worker's reply to a plan job, as it lands: one message carrying the plan's card.

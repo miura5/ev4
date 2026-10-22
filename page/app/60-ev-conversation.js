@@ -6,6 +6,7 @@
     const KINDS = (EV_SPEC.jobs && EV_SPEC.jobs.kinds) || {};
     const TASKS = {
       worker: (EV_SPEC.worker && EV_SPEC.worker.trigger) || null, // B-161: the one task the page fires, by id
+      builder: (EV_SPEC.builder && EV_SPEC.builder.trigger) || null, // B-180 (D-194): a build ask's task, by id
       jobText: 'Job {id}',
     };
     const STAGING = EV_SPEC.target === 'staging';

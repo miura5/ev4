@@ -3434,6 +3434,60 @@
    ],
    "cost": "ok"
   },
+  "job-fired": {
+   "does": "The page marks a builder job it just fired: jobs/<id>.fired, the fire_trigger's answer (B-180)",
+   "args": {
+    "type": "object",
+    "properties": {
+     "job": {
+      "type": "string",
+      "pattern": "^job-\\d{8}-\\d{6}-[a-z0-9-]+$"
+     },
+     "fired": {
+      "type": "object",
+      "properties": {
+       "at": {
+        "type": "string",
+        "minLength": 1
+       },
+       "ok": {
+        "type": "boolean"
+       },
+       "error": {
+        "type": "string"
+       }
+      },
+      "required": [
+       "at",
+       "ok"
+      ],
+      "additionalProperties": false
+     }
+    },
+    "required": [
+     "job",
+     "fired"
+    ],
+    "additionalProperties": false
+   },
+   "writes": [
+    {
+     "collection": "jobs",
+     "key": "^job-\\d{8}-\\d{6}-[a-z0-9-]+$",
+     "ops": [
+      "update"
+     ],
+     "fields": [
+      "fired"
+     ]
+    }
+   ],
+   "effects": [],
+   "callers": [
+    "tap"
+   ],
+   "cost": "nothing"
+  },
   "trace": {
    "does": "The builder's trace (D-195, B-178): its job's result, one talk line as E.V. with the job card, and system/yourturn",
    "args": {

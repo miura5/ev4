@@ -219,6 +219,7 @@ export const PAGE_SPEC_KEYS = [
   'schedules',
   'schemas',
   'worker',
+  'builder',
 ];
 // Notes the validator ignores (core/validate.mjs) leave the page's schemas; x-ev keeps only its documents map. A map
 // of names to schemas (properties, $defs and the like) keeps every name: a field called title is not a note.
@@ -312,6 +313,11 @@ export function pageSpecFor(spec, schemas, { target, release }) {
     // The page validates what it writes: the schemas of the collections it writes, without their notes.
     schemas: () => Object.fromEntries(pageWrites.filter(c => schemas[c]).map(c => [c, schemaForPage(schemas[c])])),
     worker: () => (worker && worker.trigger ? { trigger: worker.trigger } : null),
+    // B-180 (D-194): the builder is one task for both pages; a build ask fires it by id.
+    builder: () => {
+      const b = (spec.tasks.build || {})['ev4-builder'];
+      return b && b.trigger ? { trigger: b.trigger } : null;
+    },
   };
   const missing = PAGE_SPEC_KEYS.filter(k => !make[k]);
   if (missing.length || Object.keys(make).length !== PAGE_SPEC_KEYS.length)

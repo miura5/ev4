@@ -1570,7 +1570,7 @@ export function applyReport(rec, o, { now = new Date().toISOString(), jsonl = nu
     if (rest.length) throw new Error(`--job ${job.id}: the words come from the job, never retyped`);
     if (rec.tasks.some(t => t.job === job.id)) throw new Error(`job ${job.id} is already filed`);
     const fired = o['from-chat'] ? firedJobWords(jsonl, job.id) : null;
-    words = (fired && fired.words) || job.words;
+    words = ((fired && fired.words) || job.words).replace(/^\s*(build|bug|idea|request)\s*:\s*/i, '');
     at = o.at || (fired && fired.at) || job.doc.at || null;
     o.source = o.source && o.source !== 'build chat' ? o.source : `E.V. page, job ${job.id}`;
   }

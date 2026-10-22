@@ -2137,6 +2137,13 @@ test('B-179: report --job files the job in its own words, with the job id on the
   const r2 = sample();
   C.applyReport(r2, { _: ['report', 'request'], 'from-chat': true, job: JOB }, { jsonl: bare });
   assert.equal(r2.tasks.at(-1).words, 'a quieter end screen');
+  // B-180: the page sends his message as typed; the marker that made it a build ask is not his words.
+  const typed = [human('Job ' + JOB + '\nbuild: a quieter end screen'), ...jobGet(JOB, jobDoc('build', 'x'))].join(
+    '\n'
+  );
+  const r3 = sample();
+  C.applyReport(r3, { _: ['report', 'request'], 'from-chat': true, job: JOB }, { jsonl: typed });
+  assert.equal(r3.tasks.at(-1).words, 'a quieter end screen');
   // Refused: no get of the job, words retyped beside it, the same job twice.
   assert.throws(
     () => C.applyReport(sample(), { _: ['report', 'bug'], job: JOB }, { jsonl: human('Job ' + JOB) }),
