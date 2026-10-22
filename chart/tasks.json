@@ -3233,13 +3233,19 @@
   "title": "The design kickoff (D-197): node tools/chart.mjs kickoff assembles the next design chat's opening, at most 4,000 characters, from the north star tab as read in the session (the designRead pattern, never retyped), the Chart (the live release and commit, task counts, open and blocked tasks, Your turn, decisions since the last plan source), the latest weeks/<date>.insights as fetched, and the template tools/kickoff.md (the role line, read-first links, the goal, the pieces in order, the rules, the doc and its three table headings); \"design\" or \"design: <theme>\" on the page writes jobs/<id> (kind design) and fires the builder, whose trace's talk line is the kickoff with a Copy chip; \"file: <doc link>\" writes jobs/<id> (kind plan) and the builder reads the tab, runs plan --from <link> --apply, sets depends where a row says so, and its trace names what was filed; the build chat prints the north star's amended rule line on Matt's OK (given Oct 21)",
   "dod": "a chart test builds a kickoff from planted reads and checks every section and the length; a chart test for the plan job's trace text; the harness at 390 and 1280 for the Copy chip; the rule line printed in the north star; npm test green; npm run check green; ship staging green; one kickoff drafted on staging and read by Matt once (whether it reads like a kickoff he would paste); live only on Matt's OK",
   "milestone": "v4.4 kickoff",
-  "status": "in progress",
+  "status": "blocked",
   "depends": [
    "B-179"
   ],
-  "notes": "Taken after B-197 shipped; B-163 waits on Matt's choice (runs may not pass a value themselves). Survey first: designRead, the design and plan job kinds, the builder's trace.",
+  "notes": "Built and staging green at d067020 (npm test 514, check GREEN; kickoff and plan-trace chart tests, the trace test, the run harness at phone and desktop for design, file: and the Copy chip; the north star's rule line amended on Matt's Oct 21 OK). Left: one kickoff drafted on staging and read by Matt: he types 'design' (or 'design: <theme>') on the staging page, the builder drafts it, and he says whether it reads like a kickoff he would paste.",
   "commit": null,
-  "source": "plan TbfWAoQEeQixyNKZnEZKvv"
+  "source": "plan TbfWAoQEeQixyNKZnEZKvv",
+  "ask": "Type “design” on the staging page once. Does the kickoff E.V. sends back read like something you'd paste into a design chat?",
+  "choices": [
+   "Reads right",
+   "Something's off"
+  ],
+  "waitingOn": "Matt"
  },
  {
   "id": "B-184",
