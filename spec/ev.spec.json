@@ -3833,7 +3833,7 @@
    "A rationale for every option says why it is right or wrong.",
    "Tag every item to its objective and one clinical-judgment step.",
    "Ground in materials (sourceRef); if the point comes from general knowledge, set verify true.",
-   "Another course's passage (B-193, D-205): only for the same concept, still tagged to an objective of this question's own course, with its sourceRef on that material and the stem or rationale naming it (\"from BIO 201: Bones slides\"); never tagged to the other course's objectives.",
+   "Another course's passage only for the same concept: still tag this course's objective and name the source (\"from BIO 201: Bones slides\") (D-205).",
    "No graded coursework, no drug cards before that week's medication table is turned in."
   ],
   "units": [
