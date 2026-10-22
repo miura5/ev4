@@ -1314,12 +1314,18 @@
   "depends": [
    "B-68"
   ],
-  "notes": "Built with B-68 (core/study.mjs: solid stays two right days, then base 3, 6, 12, capped 14, nearExam 1 inside an exam's window; due solid spots drawn after the open ones inside the day's load, the rest deferred with a reason; a miss reopens with recurrence + 1, core's rule) and running as days/<date>.shadow since B-68. Left: the flip (D-117, D-190): Sunday Oct 25's weekly writes weeks/2026-10-25.study, the first full shadow week; Matt reads it and says 'flip to adaptive' or 'stay fixed'. The flip is spec.study.scheduler, its own staging-proved deploy.\nMatt's reply (job job-20261022-021545-b-69, Oct 21): Yes",
+  "notes": "Built with B-68 (core/study.mjs: solid stays two right days, then base 3, 6, 12, capped 14, nearExam 1 inside an exam's window; due solid spots drawn after the open ones inside the day's load, the rest deferred with a reason; a miss reopens with recurrence + 1, core's rule) and running as days/<date>.shadow since B-68. Left: the flip (D-117, D-190): Sunday Oct 25's weekly writes weeks/2026-10-25.study, the first full shadow week; Matt reads it and says 'flip to adaptive' or 'stay fixed'. The flip is spec.study.scheduler, its own staging-proved deploy.\nMatt's reply (job job-20261022-021545-b-69, Oct 21): Yes\nBuilder run Oct 21 (job-20261022-021545-b-69): his Yes answered the Your turn line, which showed only the notes' last sentence (no ask was set), not the question. D-190 needs the full shadow week read first and weeks/2026-10-25.study does not exist until Sunday's weekly, so the flip is not made on it; re-asked with named choices for after Sunday.",
   "commit": null,
   "source": "BACKLOG.md",
   "jobs": [
    "job-20261022-021545-b-69"
-  ]
+  ],
+  "ask": "After Sunday's weekly (Oct 25) writes the first full shadow week: flip reviews to adaptive intervals, or stay fixed?",
+  "choices": [
+   "Flip to adaptive",
+   "Stay fixed"
+  ],
+  "waitingOn": "Matt"
  },
  {
   "id": "B-70",
