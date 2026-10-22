@@ -3172,13 +3172,13 @@
   "title": "The build ask on the page (D-194): spec.json gains builder.trigger beside worker.trigger (tools/build.mjs pageSpecFor); a message starting \"build:\", \"bug:\" or \"idea:\" is a quick ask with no model call: the identifier scan holds it once, it writes jobs/<id> (kind build, title the first 90 characters, brief his words at most 1,500 characters) and fires builder.trigger with \"Job <id>\" and his message as typed on the next line; his message and her reply land in talk; the job card for kind build shows filed as B-nnn, built, staging green at the commit, and what waits, from jobresults.result",
   "dod": "the harness at 390 and 1280: the ask writes the job and fires the builder id with the two-line text, the card's states from planted jobresults, an identifier in the words is held and nothing is written; npm test green; npm run check green; ship staging green; probe B from the staging page read back (the trace in the staging record and the card showing it) and its environments page row written; live only on Matt's OK",
   "milestone": "v4.4 page",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-179",
    "B-186"
   ],
-  "notes": "Probe B ran (builder session session_013kEAqR4RSk9DpAt9tA4ah7): the staging page's job job-20261022-013640-build-probe-b-for-b-180 reached the builder as 'Job <id>' plus his words; filed as B-195, declined as probe B; trace written to staging (jobresults v1, talk/2026-10-21 v9, system/yourturn v5). Still open: the card read back on the staging page and the environments page row.",
-  "commit": null,
+  "notes": "Built and on staging at eac0a02; probe B proven: Matt's staging build ask filed as B-195 in his words, declined as probe B, traced back to the page (jobresults and talk read back); environments page row in 8767e86. Live jobs need the builder to read the live record (the unproven build-chat row); probe B's job named staging in its words.",
+  "commit": "eac0a02",
   "source": "plan TbfWAoQEeQixyNKZnEZKvv"
  },
  {
