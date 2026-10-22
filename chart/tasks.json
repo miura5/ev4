@@ -3700,12 +3700,12 @@
   "title": "Her frame budget (D-224)",
   "dod": "The harness plays 10 s of speech at 390 × 844 (DPR 3, 4× CPU throttle) and passes at most 5% of frames over 25 ms; a still idle records zero redraws outside the falling petal; the proof",
   "milestone": "v4.5 ui",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-206"
   ],
-  "notes": "Taken Oct 22.",
-  "commit": null,
+  "notes": "Shipped to staging at b440288: ship staging GREEN.",
+  "commit": "b440288",
   "source": "plan BridyLzngcGUtpeLQorX1U"
  },
  {
