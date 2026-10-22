@@ -3674,10 +3674,10 @@
   "title": "Her spec: spec.ui.look.flower (D-212, D-213, D-215)",
   "dod": "The flower's values copied once from the 2D canvas: petal shape and seed, edges, tilts 34° stage and 52° corner, depth cues, held-frame clock 8 a second, view curves (hold, then eased; one-frame counter-turn to face), hold 1 s, lean 5°, speech chart, size steps; spec.ui.look.core marked retired, kept in history; schema test green; the proof",
   "milestone": "v4.5 ui",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Taken Oct 22.",
-  "commit": null,
+  "notes": "Shipped to staging at efe51ee: ship staging GREEN.",
+  "commit": "efe51ee",
   "source": "plan BridyLzngcGUtpeLQorX1U"
  },
  {
