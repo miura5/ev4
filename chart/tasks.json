@@ -1314,11 +1314,12 @@
   "depends": [
    "B-68"
   ],
-  "notes": "Built with B-68 (core/study.mjs: solid stays two right days, then base 3, 6, 12, capped 14, nearExam 1 inside an exam's window; due solid spots drawn after the open ones inside the day's load, the rest deferred with a reason; a miss reopens with recurrence + 1, core's rule) and running as days/<date>.shadow since B-68. Left: the flip (D-117, D-190): Sunday Oct 25's weekly writes weeks/2026-10-25.study, the first full shadow week; Matt reads it and says 'flip to adaptive' or 'stay fixed'. The flip is spec.study.scheduler, its own staging-proved deploy.",
+  "notes": "Built with B-68 (core/study.mjs: solid stays two right days, then base 3, 6, 12, capped 14, nearExam 1 inside an exam's window; due solid spots drawn after the open ones inside the day's load, the rest deferred with a reason; a miss reopens with recurrence + 1, core's rule) and running as days/<date>.shadow since B-68. Left: the flip (D-117, D-190): Sunday Oct 25's weekly writes weeks/2026-10-25.study, the first full shadow week; Matt reads it and says 'flip to adaptive' or 'stay fixed'. The flip is spec.study.scheduler, its own staging-proved deploy.\nMatt's reply (job job-20261022-021545-b-69, Oct 21): Yes",
   "commit": null,
   "source": "BACKLOG.md",
-  "waitingOn": "Matt",
-  "waitingWhere": "decision"
+  "jobs": [
+   "job-20261022-021545-b-69"
+  ]
  },
  {
   "id": "B-70",
