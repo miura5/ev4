@@ -4153,6 +4153,7 @@
    "layout": "Sticky top bar (small E.V. core, readout, status, System button); one centred column; a floating dock with E.V., Today, Study, Progress and Record. The E.V. tab opens with a large core above the greeting; after his first message today, or while a session runs, the core moves to the top bar (or into the session ring) and each E.V. message gets its own small core.",
    "motion": "New messages rise in over 0.6 s; the core eases between states over about half a second; timers move once a second; reduced motion turns animation off.",
    "core": {
+    "retired": "B-205 (D-212): Silk core v2 is replaced by spec.ui.look.flower; kept as history until B-206 removes the WebGL renderer that reads it, and then as history only (D-134 superseded)",
     "_": [
      "Core v2 (B-76; D-134, D-135): the Silk body from the E.V. Core Variations canvas, its Silk preset's values copied here once on Oct 18; from then on the spec owns them, and the canvas is not read again.",
      "Units: lengths are fractions of her radius R (R is radiusOfSize times the canvas size) unless named Px; rates are per second; times in seconds unless named Ms.",
@@ -4440,6 +4441,570 @@
      "_note": "D-135 as amended Oct 18: dropped frames are the measure, since frame intervals cannot go below the harness vsync floor of about 16.8 ms"
     },
     "reducedMotion": "a still frame per mood; a gesture is a short brightness change (D-127)"
+   },
+   "flower": {
+    "_": [
+     "Her, the 2D forget-me-not (B-205; D-212, D-213, D-215, D-223, D-224): the values of the E.V. flower canvas, drawn in 2D (https://claude.ai/artifact/VFsMV9mtAbFEvC9YHxcbTJ, project/Main.dc.html), copied here once on Oct 22; from then on the spec owns them and the canvas is not read again.",
+     "Units: petal geometry is in the petal's own 60 x 100 box (base at 30,100, tip toward y 0) and the eye's 40 x 40 box; angles in degrees; times in seconds; rates per second; sizes in CSS px.",
+     "She moves on one held-frame clock (heldFps drawings a second); everything else in the page moves at full frame rate (D-222)."
+    ],
+    "renderer": "svg",
+    "shape": {
+     "flower": "forget-me-not",
+     "petals": 5,
+     "profile": "disc",
+     "widthPx": 37,
+     "lengthPx": 90,
+     "tip": "round",
+     "cup": -12,
+     "eye": "ring",
+     "eyeScale": 1.3,
+     "petalScale": 0.8,
+     "spreadDeg": 72,
+     "pinwheelJitterDeg": 8,
+     "sizeJitter": 0.1,
+     "eyeRing": {
+      "radius": 9.4,
+      "bumpAmp": 0.05,
+      "bumps": 5,
+      "hole": 5,
+      "core": 4.1
+     },
+     "streaks": {
+      "perPetal": 3,
+      "mainLen": 27,
+      "mainWidth": 2.3,
+      "sideLen": 19,
+      "sideWidth": 1.7,
+      "sideAngleRad": 0.42,
+      "sideOffset": 3.2,
+      "fromY": 75
+     }
+    },
+    "hand": {
+     "seed": 5,
+     "amount": 0.5,
+     "offsetPx": 2.6,
+     "widthJitter": 0.16,
+     "lengthJitter": 0.08,
+     "tipLeanDeg": 5,
+     "boilAmpBase": 0.6,
+     "boilAmpPerHand": 0.9,
+     "boilDrawings": 3,
+     "boil": "while active",
+     "smallHandScale": 0.5,
+     "curvePoints": 12
+    },
+    "edges": {
+     "amount": 1,
+     "widthBySize": {
+      "stage": 1.5,
+      "header": 0.9,
+      "corner": 0.7
+     }
+    },
+    "depth": {
+     "tiltStageDeg": 34,
+     "tiltCornerDeg": 52,
+     "amount": 1,
+     "eyeLift": 40,
+     "coreShift": 0.4,
+     "nearShorten": 0.22,
+     "farCup": 0.55,
+     "shadeMax": 0.34,
+     "shadeGain": 0.6,
+     "sleepyShade": 0.1,
+     "minSquash": 0.2,
+     "glanceSquashX": 0.24
+    },
+    "clock": {
+     "heldFps": 8,
+     "tickMs": 25,
+     "jitterDeg": 1.6,
+     "jitterSquash": 0.016
+    },
+    "view": {
+     "facing": [
+      "listening",
+      "speaking",
+      "alert",
+      "happy"
+     ],
+     "faceOnError": true,
+     "awayView": 1,
+     "sleepyView": 1.45,
+     "holdSec": 1,
+     "toward": {
+      "framesPerSec": 0.6,
+      "minFrames": 3,
+      "firstFrame": -0.14,
+      "ease": "backOut",
+      "overshoot": 1.2
+     },
+     "away": {
+      "framesPerSec": 0.8,
+      "minFrames": 3,
+      "firstFrame": 0,
+      "ease": "easeOut",
+      "power": 2.2
+     }
+    },
+    "lean": {
+     "weight": 0.6,
+     "squashPct": 5,
+     "eyePx": [
+      6,
+      5
+     ],
+     "reachPx": 360,
+     "step": 0.25,
+     "mouseOnly": true,
+     "onlyFacing": true
+    },
+    "speech": {
+     "chart": "petal chart",
+     "minHoldFrames": 2,
+     "thresholds": [
+      0.4,
+      0.72
+     ],
+     "poses": {
+      "closed": {
+       "len": 0.94,
+       "wid": 0.97,
+       "scale": 0.975,
+       "eye": 0.9
+      },
+      "open": {},
+      "wide": {
+       "len": 1.06,
+       "wid": 1.03,
+       "scale": 1.03,
+       "eye": 1.12,
+       "bob": -1.5
+      }
+     },
+     "word": {
+      "perSec": 2.5,
+      "decay": 3.2,
+      "floor": 0.18
+     }
+    },
+    "moods": {
+     "idle": {
+      "fallingPetal": {
+       "afterSec": 2.5,
+       "everySec": 12,
+       "forSec": 3.6,
+       "scale": 0.42
+      }
+     },
+     "listening": {
+      "scale": 1.02,
+      "breathe": 0.025,
+      "breatheSec": 3.2,
+      "phasePerPetal": 1.25
+     },
+     "thinking": {
+      "beatSec": 0.9,
+      "stepDeg": 72,
+      "holdShare": 0.36,
+      "sway": 0.05,
+      "swaySec": 2.7
+     },
+     "speaking": {},
+     "alert": {
+      "topPetal": true,
+      "cycleSec": 6,
+      "flick": 0.34,
+      "flickKeys": [
+       [
+        0,
+        0
+       ],
+       [
+        0.2,
+        1
+       ],
+       [
+        0.42,
+        0
+       ],
+       [
+        0.6,
+        0.85
+       ],
+       [
+        0.84,
+        0
+       ]
+      ],
+      "eyeDim": 0.45
+     },
+     "happy": {
+      "cycleSec": 2.4,
+      "hopSec": 0.8,
+      "hopKeys": [
+       [
+        0,
+        0
+       ],
+       [
+        0.15,
+        -5
+       ],
+       [
+        0.5,
+        79
+       ],
+       [
+        0.68,
+        72
+       ]
+      ],
+      "squashKeys": [
+       [
+        0,
+        1
+       ],
+       [
+        0.15,
+        1.05
+       ],
+       [
+        0.4,
+        0.97
+       ],
+       [
+        0.68,
+        1
+       ]
+      ],
+      "stretchKeys": [
+       [
+        0,
+        1
+       ],
+       [
+        0.15,
+        0.95
+       ],
+       [
+        0.4,
+        1.03
+       ],
+       [
+        0.68,
+        1
+       ]
+      ]
+     },
+     "sleepy": {
+      "len": 0.9,
+      "wid": 0.88,
+      "bob": 4,
+      "eye": 0.55,
+      "breatheSec": 3.2,
+      "breathe": 0.018
+     }
+    },
+    "gestures": {
+     "send": {
+      "durationSec": 1.2,
+      "viewDip": 0.38,
+      "viewKeys": [
+       [
+        0,
+        0
+       ],
+       [
+        0.25,
+        1
+       ],
+       [
+        0.9,
+        0
+       ]
+      ],
+      "petalSwell": 0.06,
+      "swellKeys": [
+       [
+        0,
+        0
+       ],
+       [
+        0.25,
+        1
+       ],
+       [
+        0.8,
+        0
+       ]
+      ],
+      "staggerFrames": 1
+     },
+     "done": {
+      "durationSec": 1.6,
+      "turnKeys": [
+       [
+        0,
+        0
+       ],
+       [
+        0.15,
+        -7
+       ],
+       [
+        1.1,
+        150
+       ],
+       [
+        1.35,
+        144
+       ]
+      ],
+      "scaleKeys": [
+       [
+        0,
+        1
+       ],
+       [
+        0.15,
+        0.9
+       ],
+       [
+        0.6,
+        1.07
+       ],
+       [
+        1.1,
+        1
+       ]
+      ]
+     },
+     "error": {
+      "durationSec": 1.8,
+      "coral": true,
+      "depthKeys": [
+       [
+        0,
+        0
+       ],
+       [
+        0.3,
+        1
+       ],
+       [
+        1.35,
+        1
+       ],
+       [
+        1.8,
+        0
+       ]
+      ],
+      "viewDip": 0.32,
+      "bow": 5,
+      "shakeKeys": [
+       [
+        0,
+        0
+       ],
+       [
+        0.3,
+        -5
+       ],
+       [
+        0.48,
+        4
+       ],
+       [
+        0.66,
+        -2
+       ],
+       [
+        0.84,
+        0
+       ]
+      ],
+      "shrink": 0.05
+     },
+     "glance": {
+      "durationSec": 2.2,
+      "keys": [
+       [
+        0,
+        0
+       ],
+       [
+        0.36,
+        -1
+       ],
+       [
+        0.9,
+        -1
+       ],
+       [
+        1.3,
+        0.8
+       ],
+       [
+        1.75,
+        0.8
+       ],
+       [
+        2.2,
+        0
+       ]
+      ]
+     },
+     "settle": {
+      "durationSec": 2.4,
+      "keys": [
+       [
+        0,
+        0
+       ],
+       [
+        0.6,
+        1
+       ],
+       [
+        1.5,
+        1
+       ],
+       [
+        2.2,
+        0
+       ]
+      ],
+      "viewAway": 0.4,
+      "shrink": 0.05
+     }
+    },
+    "reducedMotion": "one still drawing per mood: the pose's end state, no clock, no falling petal; an error still shows coral",
+    "inks": {
+     "her": {
+      "dark": "#7AA7FF",
+      "light": "#2B5BD0"
+     },
+     "coral": {
+      "dark": "#F08A78",
+      "light": "#B83A26"
+     },
+     "mix": {
+      "dark": {
+       "ink2": [
+        "ground",
+        0.55
+       ],
+       "under": [
+        "ground",
+        0.42
+       ],
+       "eyering": [
+        "white",
+        0.8
+       ],
+       "core": [
+        "black",
+        0.3
+       ],
+       "stem": [
+        "ground",
+        0.5
+       ],
+       "crease": [
+        "white",
+        0.45
+       ],
+       "edge": [
+        "ground",
+        0.58
+       ],
+       "deep": [
+        "black",
+        0.2
+       ],
+       "hi": [
+        "white",
+        0.42
+       ]
+      },
+      "light": {
+       "ink2": [
+        "white",
+        0.58
+       ],
+       "under": [
+        "white",
+        0.5
+       ],
+       "eyering": [
+        "white",
+        0.86
+       ],
+       "core": [
+        "black",
+        0.45
+       ],
+       "stem": [
+        "black",
+        0.25
+       ],
+       "crease": [
+        "black",
+        0.35
+       ],
+       "edge": [
+        "black",
+        0.42
+       ],
+       "deep": [
+        "black",
+        0.24
+       ],
+       "hi": [
+        "white",
+        0.3
+       ]
+      }
+     },
+     "shadow": {
+      "dark": "rgba(0,0,0,.5)",
+      "light": "rgba(60,40,20,.2)"
+     }
+    },
+    "sizes": {
+     "_": "D-213: her stage size by layout and state, and the 24 px flower that is her everywhere else",
+     "phone": 104,
+     "sidebarNarrow": 112,
+     "sidebarNarrowBelowPx": 900,
+     "sidebar": 128,
+     "wide": 140,
+     "wideTall": 168,
+     "wideTallFromPx": 1000,
+     "sessionShare": 0.7,
+     "corner": 24,
+     "header": 44,
+     "foldBelowHeightPx": 560,
+     "zoom": {
+      "stage": "l",
+      "header": "m",
+      "corner": "s"
+     }
+    },
+    "budget": {
+     "_": "D-224",
+     "speechSec": 10,
+     "viewport": "390x844",
+     "dpr": 3,
+     "cpuThrottle": 4,
+     "slowFrameMs": 25,
+     "maxSlowSharePct": 5,
+     "maxRedrawsPerSec": 8,
+     "idleRedraws": 0
+    }
    }
   },
   "page": {

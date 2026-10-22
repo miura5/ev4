@@ -289,7 +289,16 @@ export function pageSpecFor(spec, schemas, { target, release }) {
       ),
     persona: () => spec.persona || null,
     // ui.tenets is the look pass's (test/harness/look.cjs reads it from the spec), not the page's.
-    ui: () => Object.fromEntries(Object.entries(spec.ui).filter(([k]) => k !== 'tenets')),
+    // B-205: ui.look.flower waits for its renderer (B-206), which reads it in place of ui.look.core.
+    ui: () =>
+      Object.fromEntries(
+        Object.entries(spec.ui)
+          .filter(([k]) => k !== 'tenets')
+          .map(([k, v]) => [
+            k,
+            k === 'look' ? Object.fromEntries(Object.entries(v).filter(([n]) => n !== 'flower')) : v,
+          ])
+      ),
     pipelines: () =>
       Object.fromEntries(
         Object.entries(spec.pipelines)
