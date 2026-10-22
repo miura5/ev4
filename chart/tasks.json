@@ -2888,11 +2888,18 @@
   "title": "Restore migrates (D-186): seed-staging --from backup restores the backup as written, checks counts and hashes against the backup's manifest at that point, runs the migrations up to the checkout's schema and lints; it refuses only a backup whose schema is newer than the checkout's or a bump with no migration, each with the reason quoted; the drill's run document names the schema restored from and migrated to per collection; health/current shows how many bumps behind the latest backup is, amber when any",
   "dod": "a cli test restores a planted schema-1 backup into a throwaway store, migrates it, lint green, the run document names both schemas; a planted newer-schema backup and a planted missing migration are refused with the reason; the health fixture shows the amber line and the System tab renders it; npm test green; ship staging green; the next staging restore-drill firing is ok on a v4.2 backup; live only on Matt's OK",
   "milestone": "v4.3 ops",
-  "status": "in progress",
+  "status": "blocked",
   "depends": [],
-  "notes": "Oct 21 second drill at b1c57a8 (runs/restore-drill-20261022-023927430) refused safely, nothing planned. The whole-backup shape check is stricter than what live holds: v3-era runs/2026-10-17-* carry schema and writer but no release; 66 legacy/v4-* copies keep their original writer (page, morning, worker…), which legacy's schema does not list; and the identifier check flags talk/2026-10-19 and its legacy copy as holding a date of birth. Next: legacy copies and pre-cutover documents (dated before Oct 18) are kept as written; a flagged identifier is reported to Matt, not silently restored or refused; then the drill again.",
+  "notes": "Oct 21: the drill on the Wednesday backup refused at the run's write check (core/run.mjs plan: shape, writer and identifier scan on every write). A fix that let the restore drill's own as-written documents skip that check was refused by the session's safety review (it loosens the identifier scan, B-04), so it needs Matt's decision, not a workaround. Options: keep the scan on restores and teach it that a skills practice's made-up client is not a patient (narrower), or exempt the drill's as-written copies of documents already in his record. Matt on Oct 21: the DOB was a fictional client from a skills validation run, not a patient.",
   "commit": null,
-  "source": "plan Q6ioLu7LnKC2vvWJkwJWA6"
+  "source": "plan Q6ioLu7LnKC2vvWJkwJWA6",
+  "ask": "The restore drill re-checks every restored document for identifiers and authors; your Oct 19 skills practice (a made-up client's DOB) and 66 kept old copies trip it. Keep checking restores, or trust the backup's own documents?",
+  "choices": [
+   "Keep checking",
+   "Trust backups"
+  ],
+  "waitingOn": "Matt",
+  "waitingWhere": "decision"
  },
  {
   "id": "B-164",
