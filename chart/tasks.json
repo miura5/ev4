@@ -1496,7 +1496,7 @@
   "title": "Study session in Captions (D-129 as restated Oct 20, D-130, D-133): started by talking; the session line under her and the ring (D-124); listening; the notes bar with reader v2's title and a glance at each new line; comments through core.commentGate with the quote, the notes bar holding while she speaks; the session menu (Comments More, Some, Off; Quiz me now) and the level carried to the next session; the seven-minute check as the surface with alert mood and chips hidden, folding by its head line and unfolding at the next checkpoint or on a tap (D-161), its format from checkFormat, a recoil and one line on a wrong pick, hit and missed points and Add to it once on an open answer; Break (sleepy, ring dimmed, clock paused, checks held); End's one filing line; Your notes in the side column from 1024 (D-125); nothing closes to a pill",
   "dod": "core tests on commentGate: the 4-minute and 4-line limits at Some, 2 and 2 at More, none at Off, none during a check, a break, the minute before a check or while answering, a correction taking the next slot; the harness runs the proposal's Study session sequence step by step on fake time against the reader stub at 390, 735 and 1280 with a screenshot per step, with no pill, close or × at any step and the tenet checks (B-115) passing; a staging session's sessions/ss-* and talk read back with session, note and comments",
   "milestone": "M11",
-  "status": "open",
+  "status": "declined",
   "depends": [
    "B-74",
    "B-75",
@@ -1509,6 +1509,12 @@
    "row": "v4 B-79: Study session in Captions",
    "why": "A session run by talking to her, with comments and checks",
    "notes": "Ready after B-74, B-75 and B-78: restated to fold, no pills"
+  },
+  "triage": {
+   "outcome": "joined",
+   "into": "B-211",
+   "reason": "joins B-211 (Matt, Oct 22): v4.5 redraws the study session in C (D-217, the ring gone); B-79's logic carries over",
+   "at": "2026-10-22T19:34:17.365Z"
   }
  },
  {
@@ -1517,7 +1523,7 @@
   "title": "Skills runner with the desktop tuck rail (D-124 as restated Oct 20, D-107, D-161): the skills runner as a surface over core.skillSteps, step dots below 1024 px and the full list from 1024, Passed and Missed per step, a miss with her recoil filing a weak spot of kind skill, the next step read aloud; from 1024 the 64 px tuck rail (step dots, Passed, Missed, hold-to-peek) while she says only the step number and earlier step lines blur; below 1024 D-107's bottom sheet, whose peek line (Vital signs · step n of 7, with a chevron) is its folded state, with no pill and no Hide; End inside it (D-161); takes over B-51's page part for the E.V. tab",
   "dod": "the harness runs a planted checklist at 390, 735 and 1280: every step marked from the surface and, from 1024, from the rail without scrolling; a miss files one weak spot of kind skill; tucking blurs earlier step captions and shortens her lines to the step number; hold-to-peek shows the list and releases; below 1024 the sheet folds to its peek line and unfolds from it, with no pill or Hide; screenshots at all three widths, rail tucked and open",
   "milestone": "M11",
-  "status": "open",
+  "status": "declined",
   "depends": [
    "B-78"
   ],
@@ -1528,6 +1534,12 @@
    "row": "v4 B-80: Skills runner tuck rail",
    "why": "The skills checklist beside her on desktop",
    "notes": "Ready after B-78: the step pill is now the sheet's own peek line"
+  },
+  "triage": {
+   "outcome": "joined",
+   "into": "B-212",
+   "reason": "joins B-212 (Matt, Oct 22): v4.5 redraws the skills runner in C; B-80's logic carries over",
+   "at": "2026-10-22T19:34:17.527Z"
   }
  },
  {
@@ -1538,9 +1550,9 @@
   "milestone": "M11 gate",
   "status": "open",
   "depends": [
-   "B-79"
+   "B-211"
   ],
-  "notes": "Oct 21 (D-187): narrowed from one rollout gate on B-76 to B-80 to the read-back alone; B-76 and B-77 already went live by the normal path; nothing deleted (the old definition is in git history and DECISIONS.md D-136, D-139). Waits on B-79.",
+  "notes": "Oct 22: B-79 joined B-211 (Matt), so this waits on B-211, the study session in C.",
   "commit": null,
   "source": "BACKLOG.md",
   "board": {
@@ -3625,11 +3637,12 @@
   "title": "Command bar probe and build: first check in the Claude desktop app and in a browser tab which of Cmd-K, Ctrl-K and \"/\" reach the page without the host taking them, and record it as an environments page row; then the key that works focuses the composer with a filtered list of the quick asks and the tabs, Enter runs one, Esc closes; 1 to 6 switch tabs when the composer is not focused",
   "dod": "the environments row with the keys that reach the page; the harness opens the bar by the recorded key at 1280, filters to \"review\", runs Start review, and switches tabs by number; nothing changes at 390; npm test green; npm run check green; ship staging green; live only on Matt's OK",
   "milestone": "v4.4 ui",
-  "status": "open",
+  "status": "blocked",
   "depends": [],
-  "notes": "",
+  "notes": "Parked by D-218 (Matt, Oct 22): the command bar waits until he picks it up again.",
   "commit": null,
-  "source": "plan XCT16iH6fggp4MxPNRZtHK"
+  "source": "plan XCT16iH6fggp4MxPNRZtHK",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-203",
