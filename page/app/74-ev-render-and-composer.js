@@ -174,7 +174,7 @@
       const w = E.scanIdentifiers(input.value);
       guardEl.hidden = !w.length;
       guardEl.textContent = w.length
-        ? `This ${w[0]}. Leave real patient details out.${guardFor === input.value || BUILD_ASK.test(input.value) ? '' : ' Send again to send it anyway.'}`
+        ? `This ${w[0]}. Leave real patient details out.${guardFor === input.value || BUILD_ASK.test(input.value) || REPLY_ASK.test(input.value) ? '' : ' Send again to send it anyway.'}`
         : '';
     });
     input.addEventListener('keydown', e => {
@@ -197,7 +197,8 @@
       }
       const w = E.scanIdentifiers(text);
       // B-180: a build ask goes into the project record, so an identifier holds it every time, never sent anyway.
-      if (BUILD_ASK.test(text)) {
+      // B-182: so does a typed reply to a Your turn item ("reply B-12: ...").
+      if (BUILD_ASK.test(text) || REPLY_ASK.test(text)) {
         guardFor = null;
         if (w.length) {
           guardEl.hidden = false;
@@ -209,7 +210,8 @@
         grow();
         typing(false);
         T.bigCore = false;
-        await buildAsk(text);
+        if (REPLY_ASK.test(text)) await replyTyped(text);
+        else await buildAsk(text);
         return;
       }
       if (w.length && guardFor !== text) {
@@ -224,7 +226,7 @@
       grow();
       typing(false);
       T.bigCore = false;
-      if (LOCAL[key(text)]) {
+      if (LOCAL[key(text)] || YOUR_TURN.test(text)) {
         await quick(text);
         return;
       }

@@ -32,6 +32,49 @@
         else
           box.append(el('p', 'empty', 'Nothing on your calendar makes that a class, lab, clinical or validation day.'));
       },
+      // B-182 (D-196): what waits on him, grouped by where it happens; each ask with its chips.
+      yourturn(box) {
+        const groups = ((S.yourturn && S.yourturn.groups) || []).filter(g => (g.tasks || []).length);
+        const n = groups.reduce((s, g) => s + g.tasks.length, 0);
+        box.append(head2('Your turn', n ? `${n} waiting` : ''));
+        if (!n) {
+          box.append(el('p', 'empty', 'Nothing waits on you.'));
+          return;
+        }
+        for (const g of groups) {
+          const sec = el('div', 'yt-place');
+          sec.dataset.place = g.place;
+          sec.append(el('h3', 'yt-label', g.label));
+          const ul = el('ul', 'list');
+          for (const t of g.tasks) {
+            const li = el('li', 'row yt-item');
+            li.dataset.task = t.id;
+            const body = el('div', 'grow');
+            body.append(
+              el('p', 'yt-ask', t.ask),
+              el('p', 'meta', t.id + (t.status === 'blocked' ? ' · blocked on you' : ''))
+            );
+            const sent = T.replied.get(t.id);
+            if (sent) body.append(el('p', 'meta yt-sent', `Sent: ${sent}. The builder takes it from here.`));
+            else {
+              const a = el('div', 'actions yt-chips');
+              const words =
+                g.place === 'decision'
+                  ? t.choices && t.choices.length
+                    ? t.choices
+                    : ['Yes', 'No', 'Later']
+                  : ['Done', 'Fine'];
+              for (const w of words) a.append(btn(w, ev => guard(ev.target, () => replyAsk(t.id, w))));
+              a.append(btn(g.place === 'decision' ? 'Reply' : 'What’s off', () => startReply(t.id)));
+              body.append(a);
+            }
+            li.append(body);
+            ul.append(li);
+          }
+          sec.append(ul);
+          box.append(sec);
+        }
+      },
       today(box, c, key) {
         const { items, isDone } = dayState();
         const all = items.filter(it => !it.deferred);

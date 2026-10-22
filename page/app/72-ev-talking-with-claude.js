@@ -314,6 +314,9 @@
             required: ['kind', 'title', 'brief'],
           },
           execute: async i => {
+            // B-182 (D-196): a builder job (a reply, Ship it, a build) is his to start from the page, never the model's.
+            if (((EV_SPEC.jobs && EV_SPEC.jobs.builderKinds) || []).includes(i.kind))
+              return `refused: a ${i.kind} job starts only from his own tap or words on the page`;
             const r = await startJob({ kind: str(i.kind, 20), title: str(i.title, 90), brief: String(i.brief || '') });
             addCard({ type: 'job', id: r.id });
             pend.jobId = r.id;

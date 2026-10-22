@@ -8,6 +8,7 @@
 //   inbox                    session start: the Board comments to file and the entries to triage, as commands
 //   quarantine --runs <file> the quarantined timing checks and their green nightlies in a row (B-152)
 //   log <id> [--status s] [--note t] [--board-note t] [--commit sha] [--name n] [--why w] [--waiting-on who] [--dod d] [--title t]
+//            [--ask "<one line>" [--choices "A|B"]] [--note --from-job <job id>]
 //            [--triage task --dod d --milestone m [--depends ids] | --triage join <id> | --triage decline --reason r]
 //   log deploy --target <staging|live> --commit sha [--time ISO] [--ok Matt] [--verify green] [--rollback sha]
 //              [--tasks ids] [--summary s] [--why w] [--decisions ids]
@@ -159,6 +160,7 @@ export function yourTurn(rec) {
 }
 /** A waiting task's ask: the last sentence of its notes (B-148), at most 300 characters, or its title's first line. */
 export function askOf(t) {
+  if (t.ask) return String(t.ask).slice(0, 300); // B-182: the ask log --ask set
   const last = String(t.notes || '')
     .split(/(?<=[.!?])\s+/)
     .map(s => s.trim())
@@ -182,6 +184,7 @@ export function yourTurnDoc(rec, { at, commit, source }) {
         id: t.id,
         ask: askOf(t),
         status: ['open', 'in progress', 'blocked'].includes(t.status) ? t.status : 'open',
+        ...(g.place === 'decision' && Array.isArray(t.choices) && t.choices.length ? { choices: t.choices } : {}),
       })),
     })),
   };
@@ -1518,6 +1521,29 @@ export function applyLog(rec, o, { now = new Date().toISOString(), builder = bui
     if (o.why) t.board.why = o.why;
     if (o['board-note'] != null) t.board.notes = o['board-note'];
     what.push('board');
+  }
+  // B-182 (D-196): what Your turn asks him, one line, and a decision's named choices (2 to 4, each a chip).
+  if (o.ask != null) {
+    const ask = o.ask === true ? '' : String(o.ask).replace(/\s+/g, ' ').trim();
+    if (ask.length > 300) throw new Error('--ask is one line of at most 300 characters');
+    if (ask) t.ask = ask;
+    else {
+      delete t.ask;
+      delete t.choices;
+    }
+    what.push(ask ? 'ask' : 'ask cleared');
+  }
+  if (o.choices != null) {
+    const cs = String(o.choices === true ? '' : o.choices)
+      .split('|')
+      .map(x => x.trim())
+      .filter(Boolean);
+    if (cs.length && (cs.length < 2 || cs.length > 4 || cs.some(x => x.length > 24)))
+      throw new Error('--choices "A|B": 2 to 4 choices, each at most 24 characters');
+    if (cs.length && !(t.ask || o.ask)) throw new Error('--choices goes with an --ask');
+    if (cs.length) t.choices = cs;
+    else delete t.choices;
+    what.push(cs.length ? 'choices' : 'choices cleared');
   }
   if (o['waiting-on'] != null) {
     if (o['waiting-on'] && o['waiting-on'] !== 'none') t.waitingOn = o['waiting-on'];

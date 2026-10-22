@@ -211,6 +211,51 @@
         { tier: 'local' }
       );
     }
+    // B-182 (D-196): his answer to a Your turn item, a chip's word or his typed words: the reply row writes jobs/<id>
+    // (kind reply, title the task, brief his words) and fires the builder with "Job <id>" and "reply B-nn: <words>".
+    const REPLY_ASK = /^\s*reply\s+(B-\d+)\s*:\s*(\S[\s\S]*)$/i;
+    async function replyAsk(task, words) {
+      const said = String(words).trim();
+      const args = { title: task, brief: said.slice(0, 1500), text: `reply ${task}: ${said}`.slice(0, 1600) };
+      const ctx = { now: new Date().toISOString() };
+      const a = ACT ? ACT.tap('reply', args, ctx) : { ok: false, refused: 'the actions table did not load' };
+      if (!a.ok) throw new Error('I couldn’t hand that to the builder (' + a.refused + ').');
+      await run(ACT.tap('reply', args, ctx).writes);
+      const id = a.writes[0].id;
+      let fired = { at: now(), ok: false, error: 'no_task' };
+      for (const e of a.effects) if (e.kind === 'fire_trigger') fired = await fire(TASKS.builder, e.text);
+      await run(ACT.tap('job-fired', { job: id, fired }).writes);
+      T.replied.set(task, said);
+      if (!fired.ok) toast('Saved your reply, but I couldn’t start the builder. ' + fireCopy(fired.error));
+      try {
+        regreet();
+      } catch {}
+      render();
+      return { id, fired };
+    }
+    async function replyTyped(text) {
+      const [, task, words] = REPLY_ASK.exec(text);
+      await mattSay(text.trim());
+      try {
+        const r = await replyAsk(task.toUpperCase(), words);
+        await evSay(
+          r.fired.ok
+            ? `Sent to the builder for ${task.toUpperCase()}. It picks it up from your words.`
+            : 'Saved it, but I couldn’t start the builder. ' + fireCopy(r.fired.error),
+          [{ type: 'job', id: r.id }],
+          { tier: 'local' }
+        );
+      } catch (e) {
+        await evSay(e.message, [], { tier: 'local' });
+      }
+    }
+    /** The Reply and What's off chips: his own words, typed, as "reply B-nn: ...". */
+    function startReply(task) {
+      const i = $('ev-input');
+      i.value = `reply ${task}: `;
+      i.focus();
+      i.dispatchEvent(new Event('input'));
+    }
     async function refire(j) {
       await write({ op: 'update', collection: 'jobs', id: j.id, data: { fired: null } }); // null first: update merges nested maps, and the new attempt must not inherit the old error
       const fired = await fire(TASKS.worker, jobText(j.id));

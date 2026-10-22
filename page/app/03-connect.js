@@ -55,6 +55,7 @@
       materialedits: [],
       concepts: [],
       memory: null,
+      yourturn: null, // B-182: system/yourturn, what waits on him by place
     };
     const NAME = { weakspots: 'weak', 'talk/memory': 'memory' };
     const loaded = new Set();
@@ -106,6 +107,15 @@
       if (key === 'system/manifest') {
         S.manifest = value;
         manifestChanged(value);
+        return;
+      }
+      if (key === 'system/yourturn') {
+        S.yourturn = value; // B-182 (D-196): rewritten at every ship and every builder trace
+        loaded.add('yourturn');
+        try {
+          regreet();
+        } catch {}
+        render();
         return;
       }
       if (key === 'talk/memory') S.memory = value;

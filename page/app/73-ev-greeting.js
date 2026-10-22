@@ -8,6 +8,7 @@
         unfiled: fileUnfiled(),
         sessionActive: !!activeSession(),
         skillRun: resumeChip(),
+        yourTurn: yourTurnCount(),
       }).chips;
       if (c.join('|') !== (T.greet.chips || []).join('|')) {
         T.greet.chips = c;
@@ -34,6 +35,11 @@
           render();
         });
     }
+    /** B-182: how many asks wait on him in system/yourturn, less the ones he answered on this visit. */
+    function yourTurnCount() {
+      const g = (S.yourturn && S.yourturn.groups) || [];
+      return g.reduce((n, x) => n + (x.tasks || []).filter(t => !T.replied.has(t.id)).length, 0);
+    }
     function greetNow() {
       const { day, items, isDone } = dayState();
       const { left, total } = reviewState();
@@ -43,6 +49,7 @@
           now: new Date(),
           date: today,
           unfiled: fileUnfiled(),
+          yourTurn: yourTurnCount(), // B-182
           dayType: day.dayType,
           items: items.map(it => ({
             id: it.id,

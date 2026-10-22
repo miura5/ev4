@@ -539,3 +539,11 @@ test('B-181: the build line ranks after a failed run and inside the two-insight 
   const kinds = g.brief.map(x => x.kind);
   assert.ok(kinds.indexOf('system') < kinds.indexOf('build'), kinds.join(','));
 });
+
+test('B-182: Your turn is one chip with its count, inside the three-chip rule, only when something waits', () => {
+  const ctx = n => ({ ...buildCtx([]), yourTurn: n, reviewLeft: 3 });
+  assert.ok(!EV.greeting(ctx(0)).chips.some(c => /^Your turn/.test(c)));
+  const g = EV.greeting(ctx(2));
+  assert.deepEqual(g.chips, ['Start review', 'Your turn (2)', 'Start a study session']);
+  assert.ok(EV.greeting({ ...ctx(1), sessionActive: true }).chips.length <= 3);
+});

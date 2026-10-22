@@ -491,6 +491,17 @@
             "in progress",
             "blocked"
            ]
+          },
+          "choices": {
+           "type": "array",
+           "minItems": 2,
+           "maxItems": 4,
+           "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 24
+           },
+           "$comment": "B-182: a decision's named choices, one chip each (log --choices)"
           }
          },
          "required": [

@@ -5,7 +5,13 @@
         .replace(/[’‘]/g, "'")
         .replace(/[?.!\s]+$/, '')
         .trim();
+    const YOUR_TURN = /^\s*your turn\b/i; // B-182: "Your turn (n)", the count changing
     const LOCAL = {
+      // B-182 (D-196): what waits on him, as one card grouped by where it happens.
+      'your turn': async () =>
+        yourTurnCount()
+          ? ['Here’s what waits on you, by where it happens.', [{ type: 'yourturn' }]]
+          : ['Nothing waits on you right now.', []],
       // B-45 (D-102): the briefing's plan offer, the one way a draft starts without his asking in words.
       'draft its plan': async () => {
         const item = ((T.greet && T.greet.brief) || []).find(b => b.kind === 'plan' && b.exam);
@@ -184,7 +190,7 @@
     async function quick(label) {
       const job = T.greet && T.greet.job && /^Open the /.test(label) ? T.greet.job : null;
       const opened = job ? openJob(job) : null; // before any await: the tab opens inside his tap
-      const fn = opened ? () => opened : LOCAL[key(label)];
+      const fn = opened ? () => opened : LOCAL[key(label)] || (YOUR_TURN.test(label) ? LOCAL['your turn'] : null);
       if (!fn) return false;
       T.bigCore = false;
       await mattSay(label);

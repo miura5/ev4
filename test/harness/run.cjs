@@ -4129,6 +4129,157 @@ const ok = (name, cond, detail = '') => {
       await tk.close();
     }
   }
+  // B-182 (D-196): Your turn at 390, 735 and 1280. The main passes carry no system/yourturn, so no chip; here a planted
+  // one: the chip with its count, the card by place, a chip's tap writes the reply job and fires the builder, the model's
+  // tool path refuses the kind.
+  {
+    // Nothing waiting (an empty system/yourturn): no chip.
+    seed.system.yourturn = {
+      schema: 2,
+      writer: 'deploy',
+      at: DAYTIME.toISOString(),
+      source: 'ship',
+      commit: 'abc1234',
+      groups: [],
+    };
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 }, colorScheme: 'dark' });
+    await page.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
+    await servePdfjs(page);
+    await openPage(page);
+    await page.waitForTimeout(1500);
+    const chips = await page.evaluate(() =>
+      [...document.querySelectorAll('#qchips button')].map(b => b.textContent.trim())
+    );
+    ok(
+      '[your turn 390] no Your turn chip while nothing waits',
+      chips.length > 0 && !chips.some(c => /^Your turn/.test(c)),
+      chips.join(' | ')
+    );
+    await page.close();
+  }
+  for (const w of [390, 735, 1280]) {
+    const tag = `[your turn ${w}]`;
+    seed.system.yourturn = {
+      schema: 2,
+      writer: 'deploy',
+      at: DAYTIME.toISOString(),
+      source: 'ship staging at abc1234',
+      commit: 'abc1234',
+      groups: [
+        {
+          place: 'staging',
+          label: 'On the staging page',
+          tasks: [{ id: 'B-183', ask: 'Read the kickoff once.', status: 'open' }],
+        },
+        {
+          place: 'decision',
+          label: 'A decision (a reply in a build chat)',
+          tasks: [
+            { id: 'B-210', ask: 'Blue or red for the timer?', status: 'blocked', choices: ['Blue', 'Red'] },
+            { id: 'B-211', ask: 'Keep the old chime?', status: 'blocked' },
+          ],
+        },
+      ],
+    };
+    const page = await browser.newPage({
+      viewport: { width: w, height: w === 735 ? 830 : w === 390 ? 844 : 860 },
+      colorScheme: 'dark',
+    });
+    const errs = [];
+    page.on('pageerror', e => errs.push(e.message));
+    await page.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
+    await servePdfjs(page);
+    await openPage(page);
+    await page.waitForTimeout(1500);
+    const chips = await page.evaluate(() =>
+      [...document.querySelectorAll('#qchips button')].map(b => b.textContent.trim())
+    );
+    ok(
+      `${tag} the greeting offers Your turn with its count`,
+      chips.includes('Your turn (3)') && chips.length <= 3,
+      chips.join(' | ')
+    );
+    await page.locator('#qchips button', { hasText: 'Your turn (3)' }).click();
+    await page.waitForTimeout(500);
+    const card = await page.evaluate(() =>
+      [...document.querySelectorAll('#ev-surf .yt-place')].map(g => ({
+        place: g.dataset.place,
+        label: g.querySelector('.yt-label').textContent,
+        items: [...g.querySelectorAll('.yt-item')].map(li => ({
+          id: li.dataset.task,
+          chips: [...li.querySelectorAll('.yt-chips button')].map(b => b.textContent.trim()),
+        })),
+      }))
+    );
+    ok(
+      `${tag} the card groups each ask by place, with its chips`,
+      JSON.stringify(card) ===
+        JSON.stringify([
+          {
+            place: 'staging',
+            label: 'On the staging page',
+            items: [{ id: 'B-183', chips: ['Done', 'Fine', 'What’s off'] }],
+          },
+          {
+            place: 'decision',
+            label: 'A decision (a reply in a build chat)',
+            items: [
+              { id: 'B-210', chips: ['Blue', 'Red', 'Reply'] },
+              { id: 'B-211', chips: ['Yes', 'No', 'Later', 'Reply'] },
+            ],
+          },
+        ]),
+      JSON.stringify(card)
+    );
+    await page.screenshot({ path: `${shots}/your-turn-${w}.png` });
+    const fires0 = await page.evaluate(() => window.__mcpCalls.filter(c => c[1] === 'fire_trigger').length);
+    await page.locator('#ev-surf .yt-item[data-task="B-210"] .yt-chips button', { hasText: 'Blue' }).click();
+    await page.waitForTimeout(500);
+    const after = await page.evaluate(() => ({
+      jobs: Object.entries(window.__db.jobs || {}).filter(([, j]) => j.kind === 'reply' && j.title === 'B-210'),
+      fires: window.__mcpCalls.filter(c => c[1] === 'fire_trigger'),
+      sent: (document.querySelector('#ev-surf .yt-item[data-task="B-210"] .yt-sent') || {}).textContent || '',
+    }));
+    const [jid, job] = after.jobs[0] || [];
+    const fire = after.fires[fires0];
+    ok(
+      `${tag} a tap writes the reply job and fires the builder with "Job <id>" and "reply B-210: Blue"`,
+      after.jobs.length === 1 &&
+        job.brief === 'Blue' &&
+        job.writer === 'page' &&
+        job.fired &&
+        job.fired.ok === true &&
+        after.fires.length === fires0 + 1 &&
+        fire[2].trigger_id === spec.tasks.build['ev4-builder'].trigger &&
+        fire[2].text === `Job ${jid}\nreply B-210: Blue` &&
+        /^Sent: Blue\./.test(after.sent),
+      JSON.stringify({ job, fire, sent: after.sent })
+    );
+    // The model's tool path may not start a builder job of any kind.
+    await page.evaluate(() => {
+      window.__chatPre = '';
+      window.__toolResults = [];
+      window.__chatScript = [
+        { tool: 'start_job', input: { kind: 'reply', title: 'B-211', brief: 'yes' } },
+        { tool: 'start_job', input: { kind: 'ship', title: 'Ship it', brief: 'ship it' } },
+      ];
+      window.__chatReply = 'Tried.';
+    });
+    const jobs0 = await page.evaluate(() => Object.keys(window.__db.jobs || {}).length);
+    await send(page, 'answer B-211 for me with yes');
+    await page.waitForTimeout(400);
+    const tr = await page.evaluate(() => ({ r: window.__toolResults, n: Object.keys(window.__db.jobs || {}).length }));
+    ok(
+      `${tag} start_job refuses reply and ship from the model's tool path`,
+      tr.r.length === 2 &&
+        tr.r.every(x => /^refused: a (reply|ship) job starts only from his own tap/.test(x)) &&
+        tr.n === jobs0,
+      JSON.stringify(tr)
+    );
+    ok(`${tag} no page errors`, errs.length === 0, errs.join(' | '));
+    await page.close();
+  }
+  delete seed.system.yourturn;
   await browser.close();
   for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : '');
   const failed = results.filter(r => r[0] === 'FAIL').length;

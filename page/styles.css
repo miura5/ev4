@@ -636,3 +636,9 @@ button.tlink{all:unset;cursor:pointer;color:var(--accent-text);font-size:14px;pa
 /* B-72 (D-120): the week's three lines. */
 .ins-list{margin:0}
 .ins-line{padding:6px 0;line-height:1.4}
+/* B-182: Your turn, grouped by place; a place is a quiet label, each ask a row with its chips. */
+.yt-place + .yt-place{margin-top:10px}
+.yt-label{font:600 12.5px var(--sans);color:var(--soft);letter-spacing:.02em;margin:10px 0 2px}
+.yt-item{padding:8px 0}
+.yt-ask{margin:0;line-height:1.4}
+.yt-chips{margin-top:8px;justify-content:flex-start}

@@ -216,6 +216,8 @@ export function makeConversation(core) {
       };
     if (c.skillRun) add(c.skillRun); // a skills run waiting for him (B-82): its Resume chip comes first
     if (rl) add('Start review');
+    // B-182 (D-196): what waits on him, one chip with its count, inside the three-chip rule.
+    if (c.yourTurn > 0) add(`Your turn (${c.yourTurn})`);
     if (finished) add('Open the ' + (JOB_NOUN[finished.kind] || 'result'));
     if (c.unfiled > 0) add('File it');
     if (c.dueSoon == null || c.dueSoon > 0) add('What’s due this week?');

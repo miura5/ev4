@@ -2176,3 +2176,32 @@ test("B-179: log --from-job carries Matt's reply from a planted get into the tas
     /no read of job/
   );
 });
+
+test('B-182: log --ask sets the one line Your turn asks, --choices a decision’s named chips; yourturn carries both', () => {
+  const r = sample();
+  const t = r.tasks.find(x => x.id === 'B-02');
+  Object.assign(t, { status: 'blocked', notes: 'Long notes. The last sentence.', waitingOn: 'Matt' });
+  assert.equal(C.askOf(t), 'The last sentence.');
+  C.applyLog(r, { _: ['log', 'B-02'], ask: 'Blue or red for the timer?', choices: 'Blue|Red' });
+  assert.deepEqual(
+    [t.ask, t.choices, C.askOf(t)],
+    ['Blue or red for the timer?', ['Blue', 'Red'], 'Blue or red for the timer?']
+  );
+  const doc = C.yourTurnDoc(r, { at: '2026-10-22T02:00:00.000Z', commit: 'abc1234', source: 'test' });
+  assert.deepEqual(doc.groups, [
+    {
+      place: 'decision',
+      label: C.PLACES.decision,
+      tasks: [{ id: 'B-02', ask: 'Blue or red for the timer?', status: 'blocked', choices: ['Blue', 'Red'] }],
+    },
+  ]);
+  // A place other than a decision carries no choices (its chips are Done, Fine, What's off).
+  C.applyLog(r, { _: ['log', 'B-02'], where: 'staging' });
+  assert.ok(!('choices' in C.yourTurnDoc(r, { at: 'x', commit: 'abc1234', source: 't' }).groups[0].tasks[0]));
+  assert.throws(() => C.applyLog(r, { _: ['log', 'B-02'], choices: 'One' }), /2 to 4 choices/);
+  assert.throws(() => C.applyLog(r, { _: ['log', 'B-02'], choices: 'A|B|C|D|E' }), /2 to 4 choices/);
+  assert.throws(() => C.applyLog(sample(), { _: ['log', 'B-03'], choices: 'A|B' }), /goes with an --ask/);
+  assert.throws(() => C.applyLog(r, { _: ['log', 'B-02'], ask: 'x'.repeat(301) }), /at most 300/);
+  C.applyLog(r, { _: ['log', 'B-02'], ask: '' });
+  assert.deepEqual([t.ask, t.choices], [undefined, undefined]);
+});

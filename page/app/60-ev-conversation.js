@@ -11,6 +11,7 @@
     };
     const STAGING = EV_SPEC.target === 'staging';
     const T = {
+      replied: new Map(), // B-182: task id -> what he sent from Your turn, until system/yourturn is rewritten
       greet: null,
       local: new Map(),
       els: new Map(),
