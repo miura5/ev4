@@ -3589,10 +3589,10 @@
   "title": "The smoke tier: a two-minute subset of the page harnesses (the page boots with no page error, the greeting renders, each tab opens, one check-off keeps scroll, one review answer scores, one Your-turn reply files) at 390 and 1280 px on the synthetic record, run as npm run smoke and by a GitHub Actions workflow on every push beside npm test; the full npm run check stays nightly and before live; CLAUDE.md step 5 says a page task runs npm run smoke while working and npm run check before ship",
   "dod": "the smoke workflow is green on main in under 3 minutes; a planted page error and a planted broken tab each turn it red in a test run; npm test green; npm run check green",
   "milestone": "v4.4 tests",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Taken first on Matt's word (Oct 22), ahead of the queue.",
-  "commit": null,
+  "notes": "npm run smoke: 14 checks at 390 and 1280 in about 7 s locally; smoke workflow green on main in 50 s including setup (run 39807476605), both plants proved red in it; npm test 520 green; npm run check green on GitHub (nightly run 39807642252). Pause for Matt's avatar and UI redesign (D-207): live at v4.4.1 (f8ee77e), B-163 and B-198 done; B-200 to B-202 open, next after the mock-up design chat.",
+  "commit": "e45575c",
   "source": "plan XCT16iH6fggp4MxPNRZtHK"
  },
  {
