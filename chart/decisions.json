@@ -1,5 +1,18 @@
 [
  {
+  "id": "D-204",
+  "date": "Oct 21",
+  "title": "Exams are prep days (a lab exam or practical a lab day, any other exam a class day, each keeping its exam marker), and every prep check ends with Matt's per-kind kit (spec.constants.prep.kit, his to edit) after what his record names: the calendar entry, the Canvas announcements and course-calendar rows that name the day, his library; asked what to bring, E.V. answers from that check, each item naming its source, never from general knowledge",
+  "why": "Matt, Oct 22 parallel fixes chat (B-189): what to bring answered from the record plus a per-kind kit he can edit (clinical: stethoscope, badge, watch, penlight, pen; lab: lab kit). On Oct 21 his lab and class day (BIO 201 Lab Exam, NUR Exam 4) got no prep tag because prepKindOf left every exam out, and E.V. answered from general knowledge. Amends D-143 (an exam day now also gets the calm Prep marker) and D-144 (a kit completes, never replaces, what the materials name)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [
+   "D-143",
+   "D-144"
+  ],
+  "source": "log"
+ },
+ {
   "id": "D-203",
   "date": "Oct 21",
   "title": "Every new thing E.V. does from the page or a builder session is a row of spec.actions (name, argument shape, the collections and fields it may write, its effects, who may call it, what it costs: nothing, a staging proof or Matt's OK), composed and checked by one core function, never page code; the 13 conversation tools migrate to rows when touched, not all at once; no row may write the actions table or create, change or delete a scheduled task",
