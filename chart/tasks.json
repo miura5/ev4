@@ -2888,12 +2888,12 @@
   "title": "Restore migrates (D-186): seed-staging --from backup restores the backup as written, checks counts and hashes against the backup's manifest at that point, runs the migrations up to the checkout's schema and lints; it refuses only a backup whose schema is newer than the checkout's or a bump with no migration, each with the reason quoted; the drill's run document names the schema restored from and migrated to per collection; health/current shows how many bumps behind the latest backup is, amber when any",
   "dod": "a cli test restores a planted schema-1 backup into a throwaway store, migrates it, lint green, the run document names both schemas; a planted newer-schema backup and a planted missing migration are refused with the reason; the health fixture shows the amber line and the System tab renders it; npm test green; ship staging green; the next staging restore-drill firing is ok on a v4.2 backup; live only on Matt's OK",
   "milestone": "v4.3 ops",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-197"
   ],
-  "notes": "Built on the builder's branch (3a2cd26) plus 304fdc1: Your turn asks once per place a run held from, one tap keeping an answer per value; a held drill's push says partly done with the count, never passed. Main f8ee77e, staging GREEN v4.4.0+32; GitHub nightly check green on the branch (run 39800339043). Proof left: the staging drill holds the Oct 19 DOB, Matt taps It's made up on the staging page, the next drill is ok.",
-  "commit": null,
+  "notes": "Proved on staging at v4.4.0+32: drill restore-drill-20261022-151931186 held the Oct 19 DOB (partial, push 'partly done: 1 detail waiting on you'); Matt tapped It's made up (idchecks/id-5b21170eb1a1b44d-matt, 15:32Z); drill restore-drill-20261022-153419026 ok, 563 documents match, identifiers 'from practice, kept'.",
+  "commit": "f8ee77e",
   "source": "plan Q6ioLu7LnKC2vvWJkwJWA6",
   "ask": "A scheduled run isn't allowed to approve a date of birth by itself, even a practice one. Should runs hold anything they find and ask you on the page, so you tap It's made up once?",
   "choices": [
