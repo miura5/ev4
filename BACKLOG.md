@@ -30,7 +30,6 @@ Builder run Oct 21 (job-20261022-021545-b-69): his Yes answered the Your turn li
 * A practice question for NUR 112 on vitamin C drew in information from BIO 201’s bones slides. It is correct information, but should this be encouraged? At first it was unexpected then I started weighing if hmm this is actually an awesome thing. What’s your take Done when: Answer options are shuffled per item and a matrix's rows per item (the same order on every reload: seeded by the set and item ids), the correct answers remapped; within a set no three questions in a row have their correct answer at the same or consecutive positions, and closely related questions (one topic, e.g. ROME) are not left in order; done in core for every set the morning, the worker and make_practice write; core tests on a planted ROME-style set; npm test and npm run check green; ship staging green; live only on Matt's OK | — | v4.3 feedback | in progress | Taken by the parallel fixes chat. Matt's words in this chat lead where the DoD differs: shuffle at render (not at write in each writer), seeded from the set id plus each item's id, never its place; answers stay keyed by item id. |
 | B-193 | Request (reported Oct 21): * Better randomizing of answer choices; and maybequestions themselves? so that matrixes dont go 1, 2, 3, 4; or questions don’t go A, B, C, D when testing material that’s closely related like (ROME)
 * A practice question for NUR 112 on vitamin C drew in information from BIO 201’s bones slides. It is correct information, but should this be encouraged? At first it was unexpected then I started weighing if hmm this is actually an awesome thing. What’s your take Done when: Matt's decision first (his fifth bullet, these words): whether a NUR 112 question may rest on a BIO 201 passage. Proposed: yes when the concept is the same (vitamin C, collagen, bone and wound healing), the item names its source course and file, and it still targets a NUR 112 objective; never when it would count toward an objective it does not map to. Then: the item generators and the grounding check follow the decision, with core tests; npm test green; ship staging green; live only on Matt's OK | — | v4.3 feedback | in progress | Unblocked: Matt's decision, Oct 22 parallel fixes chat: yes, as proposed (D-205). Allowed when it is the same concept, the question names its source (from BIO 201: Bones slides) and it still targets a NUR 112 objective; a cross-course miss files one weak spot, under the NUR 112 objective, never a second one under BIO. No course named in code (B-42); the source is data on the item. Taken by the parallel fixes chat. |
-| B-196 | Request (reported Oct 21): Probe C for B-182: a planted Your turn item on the staging page; no work in it. When Matt's reply lands, record it and decline this task as probe C. Done when: No work: Matt's reply from the staging page's Your turn reaches this task through log --from-job, then it is declined as probe C (B-182's round trip) | — | v4.4 one interface | blocked |  |
 
 ## Your turn
 
@@ -39,10 +38,6 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 ### At the Mac
 
 - B-27 (in progress): a missed evening on the Mac
-
-### On the staging page
-
-- B-196 (blocked): Probe C for B-182: a planted Your turn item on the staging page; no…
 
 ### A decision (a reply in a build chat)
 
@@ -240,3 +235,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-188 | request | 2026-10-21T23:27:53.768Z | idea: probe A, the builder was fired with this message; also read the north star tab and say its first heading in your summary. This is a probe (B-187): file it with report request --from-chat --source "probe A, B-187", decline that entry at triage with the reason "probe A", read the north star tab with the Claude Docs tools, then end the run without taking a task and without firing the builder again.
 </routine-fire-payload> | probe A, B-187 | declined |  |
 | B-195 | request | 2026-10-22T01:36:40.780Z | probe B for B-180. This job is in the staging record. File it as a request, decline it at triage as probe B, trace this job on staging with the task id, and end the run without taking another task or firing the builder again. | E.V. page, job job-20261022-013640-build-probe-b-for-b-180 | declined |  |
+| B-196 | request | 2026-10-22T01:50:01.510Z | Probe C for B-182: a planted Your turn item on the staging page; no work in it. When Matt's reply lands, record it and decline this task as probe C. | build chat (B-182 round trip) | declined | Matt's reply (job job-20261022-022842-b-196, Oct 21): Done |
