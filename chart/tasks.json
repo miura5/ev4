@@ -3422,10 +3422,10 @@
   "title": "Request (reported Oct 21): * Better randomizing of answer choices; and maybequestions themselves? so that matrixes dont go 1, 2, 3, 4; or questions don’t go A, B, C, D when testing material that’s closely related like (ROME)\n* A practice question for NUR 112 on vitamin C drew in information from BIO 201’s bones slides. It is correct information, but should this be encouraged? At first it was unexpected then I started weighing if hmm this is actually an awesome thing. What’s your take",
   "dod": "Matt's decision first (his fifth bullet, these words): whether a NUR 112 question may rest on a BIO 201 passage. Proposed: yes when the concept is the same (vitamin C, collagen, bone and wound healing), the item names its source course and file, and it still targets a NUR 112 objective; never when it would count toward an objective it does not map to. Then: the item generators and the grounding check follow the decision, with core tests; npm test green; ship staging green; live only on Matt's OK",
   "milestone": "v4.3 feedback",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Unblocked: Matt's decision, Oct 22 parallel fixes chat: yes, as proposed (D-205). Allowed when it is the same concept, the question names its source (from BIO 201: Bones slides) and it still targets a NUR 112 objective; a cross-course miss files one weak spot, under the NUR 112 objective, never a second one under BIO. No course named in code (B-42); the source is data on the item. Taken by the parallel fixes chat.",
-  "commit": null,
+  "notes": "Built per Matt's decision (D-205). core crossCourse (no course in code, B-42) reads the item's sourceRef material and its objective's exam; the morning drill/review writer, the worker's practice sets and the page's More practice drop a cross-course item with no objective of its own course and add 'from <course>: <file>' to a stem that does not already name it; a miss files one weak spot under the item's own objective and course (weak spots now take the objective's exam's course); the runner shows the source under the stem when the library is already open; spec.items.writingGuide and the worker practice-set guide state the rule. Not changed: the morning writer's prompt (spec.pipelines, out of this chat's scope) - its grounding check enforces the rule instead. Proof: core tests, run harness at 390 and 1280; npm run check GREEN; ship staging GREEN. Deployed commit 476e5e0. Note for the v4.4 chat: the page spec.json sits about 30 bytes under its 50 KB cap (B-161) after both chats' additions.",
+  "commit": "476e5e0",
   "source": "Matt's feedback notes, build chat Oct 21",
   "words": "* Better randomizing of answer choices; and maybequestions themselves? so that matrixes dont go 1, 2, 3, 4; or questions don’t go A, B, C, D when testing material that’s closely related like (ROME)\n* A practice question for NUR 112 on vitamin C drew in information from BIO 201’s bones slides. It is correct information, but should this be encouraged? At first it was unexpected then I started weighing if hmm this is actually an awesome thing. What’s your take",
   "reportedAt": "2026-10-22T00:43:36.615Z",
@@ -3437,8 +3437,7 @@
   "triage": {
    "outcome": "task",
    "at": "2026-10-22T00:44:42.811Z"
-  },
-  "waitingOn": "Matt"
+  }
  },
  {
   "id": "B-194",
