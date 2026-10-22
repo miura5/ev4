@@ -2033,7 +2033,9 @@ const ok = (name, cond, detail = '') => {
     const rr = await page.evaluate(async () => {
       const n = document.querySelectorAll('#today-list .row').length;
       const t = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date());
-      await (await window.claude.use('db'))
+      await (
+        await window.claude.use('db')
+      )
         .collection('dayedits')
         .doc(t)
         .update({ updatedAt: new Date().toISOString() });
@@ -4782,7 +4784,7 @@ const ok = (name, cond, detail = '') => {
       const li = document.querySelector('#ev-surf .yt-place[data-place="held"] .yt-held');
       return li
         ? {
-            key: li.dataset.key,
+            key: li.dataset.keys,
             text: li.textContent,
             chips: [...li.querySelectorAll('.yt-chips button')].map(b => b.textContent.trim()),
           }
@@ -4809,6 +4811,91 @@ const ok = (name, cond, detail = '') => {
     ok(
       `${tag} It's made up keeps his answer as <key>-matt (practice, by matt) and the item leaves the list`,
       after.d && after.d.verdict === 'practice' && after.d.by === 'matt' && after.d.key === KEY && after.left === 0,
+      JSON.stringify(after)
+    );
+    ok(`${tag} no page errors`, errs.length === 0, errs.join(' | '));
+    await page.close();
+  }
+  // B-163 (Matt, Oct 22): a case-study handout holds several values; Your turn asks once per place, and his one tap keeps
+  // an answer per value. Two from one file and one from another: two asks, and It's made up on the file answers both.
+  for (const w of [390, 1280]) {
+    const tag = `[held grouped ${w}]`;
+    delete seed.system.yourturn;
+    const held = (key, kind, ref, at) => ({
+      schema: 1,
+      writer: 'canvas-sync',
+      at,
+      source: 'canvas-sync canvas-sync-20261022-1200',
+      release: 'v4.3.0',
+      key,
+      verdict: 'unsure',
+      reason: 'held for Matt: a run never passes a value on its own',
+      kind,
+      ref,
+      by: 'held',
+    });
+    const A = 'id-aaaaaaaaaaaaaaaa';
+    const B = 'id-bbbbbbbbbbbbbbbb';
+    const C = 'id-cccccccccccccccc';
+    seed.idchecks = {
+      [A]: held(A, 'has a date of birth', 'files/case-study-3', '2026-10-22T12:00:00Z'),
+      [B]: held(B, 'has a medical record number', 'files/case-study-3', '2026-10-22T12:00:01Z'),
+      [C]: held(C, 'has a date of birth', 'files/case-study-4', '2026-10-22T12:00:02Z'),
+    };
+    const page = await browser.newPage({ viewport: { width: w, height: w === 390 ? 844 : 860 }, colorScheme: 'dark' });
+    const errs = [];
+    page.on('pageerror', e => errs.push(e.message));
+    await page.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
+    await servePdfjs(page);
+    await openPage(page);
+    await page.waitForTimeout(1500);
+    const chips = await page.evaluate(() =>
+      [...document.querySelectorAll('#qchips button')].map(b => b.textContent.trim())
+    );
+    ok(`${tag} the greeting counts one ask per file`, chips.includes('Your turn (2)'), chips.join(' | '));
+    await page.locator('#qchips button', { hasText: 'Your turn (2)' }).click();
+    await page.waitForTimeout(500);
+    const rows = await page.evaluate(() =>
+      [...document.querySelectorAll('#ev-surf .yt-held')].map(li => ({ ref: li.dataset.ref, text: li.textContent }))
+    );
+    ok(
+      `${tag} one row per file; the handout's row names how many and what kinds, never a value`,
+      rows.length === 2 &&
+        rows[0].ref === 'files/case-study-3' &&
+        /A run left out 2 details that could be a real patient’s \(a date of birth, a medical record number\)/.test(
+          rows[0].text
+        ) &&
+        /A run left out a date of birth/.test(rows[1].text),
+      JSON.stringify(rows)
+    );
+    await page.screenshot({ path: `${shots}/held-grouped-${w}.png` });
+    await page
+      .locator('#ev-surf .yt-held[data-ref="files/case-study-3"] .yt-chips button', { hasText: 'It’s made up' })
+      .click();
+    await page.waitForTimeout(600);
+    const after = await page.evaluate(
+      ([a, b, c]) => {
+        const db = window.__db.idchecks || {};
+        return {
+          a: db[a + '-matt'],
+          b: db[b + '-matt'],
+          c: db[c + '-matt'] || null,
+          left: [...document.querySelectorAll('#ev-surf .yt-held')].map(li => li.dataset.ref),
+        };
+      },
+      [A, B, C]
+    );
+    ok(
+      `${tag} one tap keeps an answer per value in that file, each with its own kind; the other file still asks`,
+      after.a &&
+        after.a.verdict === 'practice' &&
+        after.a.by === 'matt' &&
+        after.a.kind === 'has a date of birth' &&
+        after.b &&
+        after.b.verdict === 'practice' &&
+        after.b.kind === 'has a medical record number' &&
+        after.c === null &&
+        JSON.stringify(after.left) === JSON.stringify(['files/case-study-4']),
       JSON.stringify(after)
     );
     ok(`${tag} no page errors`, errs.length === 0, errs.join(' | '));

@@ -149,6 +149,23 @@ export function makeIdCheck() {
       .sort((a, b) => String(a.at).localeCompare(String(b.at)));
   }
   /**
+   * B-163 (Matt, Oct 22): course files carry many fictional case-study clients, so Your turn asks once per place a run
+   * held from, not once per value: { ref, source, at, items: [{ key, kind }], kinds }, oldest first. His one tap still
+   * keeps an answer per key, so a re-imported file asks only about values he has not answered.
+   */
+  function heldByPlace(idchecks) {
+    const by = new Map();
+    for (const h of heldForMatt(idchecks)) {
+      const ref = h.ref || 'a run';
+      if (!by.has(ref)) by.set(ref, { ref, source: h.source, at: h.at, items: [], kinds: [] });
+      const g = by.get(ref);
+      g.items.push({ key: h.key, kind: h.kind });
+      const kind = String(h.kind || 'has a detail').replace(/^has /, '');
+      if (!g.kinds.includes(kind)) g.kinds.push(kind);
+    }
+    return [...by.values()];
+  }
+  /**
    * Answers to the judgment in a usable form: one verdict per candidate key; a candidate the answer leaves out, or an
    * answer that is not one of the three, is unsure (held, never passed).
    */
@@ -185,6 +202,7 @@ export function makeIdCheck() {
     keptVerdicts,
     ID_HELD_REASON,
     heldForMatt,
+    heldByPlace,
     readVerdicts,
     idHeldLine,
   };

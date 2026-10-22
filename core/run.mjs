@@ -742,10 +742,16 @@ export function end({ dir, at, status, detail, transcript }) {
           .trim()
           .slice(0, 40)
       : '';
+  // B-163 (Matt, Oct 22): a drill that held values never says "passed"; it says how many wait on him and where.
+  const heldPush =
+    final === 'partial' && !status && plan && plan.held && run.pipeline === 'restore-drill'
+      ? `Restore drill partly done: ${plan.held} detail${plan.held === 1 ? '' : 's'} waiting on you in Your turn; the rest matches the backup.`
+      : null;
   const push =
-    final === 'ok' || (final === 'partial' && !status && plan && plan.held)
+    heldPush ||
+    (final === 'ok' || (final === 'partial' && !status && plan && plan.held)
       ? (plan && plan.push) || null
-      : failLine({ failed: run.failed, pipeline: run.pipeline, reason: failedAt });
+      : failLine({ failed: run.failed, pipeline: run.pipeline, reason: failedAt }));
   const data = {
     endedAt: EV.envelope('x', '', at).at,
     status: final,

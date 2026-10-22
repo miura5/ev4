@@ -351,6 +351,12 @@ test('B-163, B-197: v3-era runs and legacy copies restore as written; the checkl
   RUN.end({ dir: first.dir, at: AT });
   const end1 = JSON.parse(fs.readFileSync(path.join(first.dir, 'out/runs', r.plan.runId + '.end.json'), 'utf8'));
   assert.equal(end1.status, 'partial', 'a drill that left a document is not ok until he answers');
+  assert.equal(
+    end1.push,
+    'Restore drill partly done: 1 detail waiting on you in Your turn; the rest matches the backup.',
+    'a held drill never says passed'
+  );
+  assert.match(end1.detail, /1 detail that could be a real patient's held for Matt/);
   // 2. His It's made up on the page (idchecks/<key>-matt, practice) is read first: the next drill restores it whole.
   const matt = verdict => ({
     collection: 'idchecks',
@@ -395,4 +401,44 @@ test('B-163, B-197: v3-era runs and legacy copies restore as written; the checkl
   const third = drill(b, { record: [heldDoc, matt('real')] });
   const f3 = third.r.plan.batches.flat();
   assert.ok(!f3.some(f => f.doc_id === 'v4-talk-2026-10-19-s1') && !f3.some(f => f.collection === 'idchecks'));
+});
+
+test('B-163: Your turn asks once per place a run held from; each value keeps its own kind; answered ones drop out', () => {
+  const h = (key, kind, ref, at) => ({
+    id: key,
+    key,
+    kind,
+    ref,
+    at,
+    by: 'held',
+    verdict: 'unsure',
+    source: 'canvas-sync x',
+  });
+  const docs = [
+    h('id-b', 'has a medical record number', 'files/case-study-3', '2026-10-22T12:00:01Z'),
+    h('id-a', 'has a date of birth', 'files/case-study-3', '2026-10-22T12:00:00Z'),
+    h('id-c', 'has a date of birth', 'files/case-study-4', '2026-10-22T12:00:02Z'),
+    h('id-d', 'has a date of birth', 'files/case-study-3', '2026-10-22T12:00:03Z'),
+    { id: 'id-d-matt', key: 'id-d', by: 'matt', verdict: 'practice' },
+  ];
+  assert.deepEqual(EV.heldByPlace(docs), [
+    {
+      ref: 'files/case-study-3',
+      source: 'canvas-sync x',
+      at: '2026-10-22T12:00:00Z',
+      items: [
+        { key: 'id-a', kind: 'has a date of birth' },
+        { key: 'id-b', kind: 'has a medical record number' },
+      ],
+      kinds: ['a date of birth', 'a medical record number'],
+    },
+    {
+      ref: 'files/case-study-4',
+      source: 'canvas-sync x',
+      at: '2026-10-22T12:00:02Z',
+      items: [{ key: 'id-c', kind: 'has a date of birth' }],
+      kinds: ['a date of birth'],
+    },
+  ]);
+  assert.deepEqual(EV.heldByPlace([]), []);
 });

@@ -35,7 +35,8 @@
       // B-182 (D-196): what waits on him, grouped by where it happens; each ask with its chips.
       yourturn(box) {
         const groups = ((S.yourturn && S.yourturn.groups) || []).filter(g => (g.tasks || []).length);
-        const held = E.heldForMatt(S.idchecks);
+        // One ask per place a run held from (Matt, Oct 22: a case-study handout is one tap, not one per client).
+        const held = E.heldByPlace(S.idchecks);
         const n = groups.reduce((s, g) => s + g.tasks.length, 0) + held.length;
         box.append(head2('Your turn', n ? `${n} waiting` : ''));
         if (!n) {
@@ -51,42 +52,51 @@
           const ul = el('ul', 'list');
           for (const h of held) {
             const li = el('li', 'row yt-item yt-held');
-            li.dataset.key = h.key;
+            li.dataset.ref = h.ref;
+            li.dataset.keys = h.items.map(i => i.key).join(' ');
             const body = el('div', 'grow');
-            const what = String(h.kind || 'has a detail').replace(/^has /, '');
+            const one = h.items.length === 1;
+            const what = h.kinds[0];
             body.append(
               el(
                 'p',
                 'yt-ask',
-                `A run left out ${/^(a|an) /.test(what) ? what : 'a detail: ' + what} that could be a real patient’s. Is it from a practice scenario?`
+                one
+                  ? `A run left out ${/^(a|an) /.test(what) ? what : 'a detail: ' + what} that could be a real patient’s. Is it from a practice scenario?`
+                  : `A run left out ${h.items.length} details that could be a real patient’s (${h.kinds.join(', ')}). Are they from a practice scenario?`
               ),
-              el('p', 'meta', `In ${h.ref} · ${String(h.source || '').split(' ')[0] || 'a run'}${h.at ? ' · ' + E.shortDate(h.at) : ''}`)
+              el(
+                'p',
+                'meta',
+                `In ${h.ref} · ${String(h.source || '').split(' ')[0] || 'a run'}${h.at ? ' · ' + E.shortDate(h.at) : ''}`
+              )
             );
+            // One tap answers every value held from this place, each kept as its own <key>-matt; the record takes 50
+            // writes a batch, so a long handout goes in batches.
             const answer = (verdict, reason) => ev =>
               guard(
                 ev.target,
                 async () => {
                   if (!ACT) throw new Error('no actions here');
-                  await run(
-                    ACT.tap(
-                      'id-check',
-                      {
-                        checks: [
-                          {
-                            key: h.key,
-                            verdict,
-                            reason,
-                            kind: String(h.kind || 'a detail').slice(0, 80),
-                            ref: String(h.ref || 'a run').slice(0, 120),
-                            by: 'matt',
-                          },
-                        ],
-                      },
-                      { now: now(), release: EV_SPEC.release }
-                    ).writes
-                  );
+                  const checks = h.items.map(i => ({
+                    key: i.key,
+                    verdict,
+                    reason,
+                    kind: String(i.kind || 'a detail').slice(0, 80),
+                    ref: String(h.ref).slice(0, 120),
+                    by: 'matt',
+                  }));
+                  for (let i = 0; i < checks.length; i += 50)
+                    await run(
+                      ACT.tap('id-check', { checks: checks.slice(i, i + 50) }, { now: now(), release: EV_SPEC.release })
+                        .writes
+                    );
                 },
-                verdict === 'practice' ? 'Thanks. The next run keeps it.' : 'Kept out. No run asks again.'
+                verdict === 'practice'
+                  ? one
+                    ? 'Thanks. The next run keeps it.'
+                    : `Thanks. The next run keeps all ${h.items.length}.`
+                  : 'Kept out. No run asks again.'
               );
             const a = el('div', 'actions yt-chips');
             a.append(
