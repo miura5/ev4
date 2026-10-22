@@ -1040,7 +1040,7 @@ const ok = (name, cond, detail = '') => {
         () =>
           document.body.classList.contains('opening') &&
           !!document.querySelector('#hero svg.fl') &&
-          document.querySelector('#hero').getBoundingClientRect().height > 150 &&
+          document.querySelector('#hero').getBoundingClientRect().height >= 100 &&
           (innerWidth < 600 || document.querySelector('#top-av svg.fl').getBoundingClientRect().width >= 20)
       )
     );
@@ -4009,14 +4009,14 @@ const ok = (name, cond, detail = '') => {
         };
       });
       ok(
-        'in a session: the thread is the session (his line that started it, her start line), her core at 66% (172 px) on a 196 px stage (D-128, B-74)',
+        'in a session: the thread is the session (his line that started it, her start line), her flower at 70% (73 px on the phone) on its stage (D-213)',
         cs.step === 'session' &&
           cs.lines === 1 &&
           cs.thread.length === 2 &&
           /^matt: start a study session/i.test(cs.thread[0]) &&
           /^ev: Session started/.test(cs.thread[1]) &&
-          Math.abs(cs.px - 172) <= 1 &&
-          cs.stage === 196,
+          Math.abs(cs.px - 73) <= 1 &&
+          cs.stage === 73 + 14 + 12,
         JSON.stringify(cs)
       );
     }

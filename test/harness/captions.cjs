@@ -627,7 +627,9 @@ async function sideBySide(browser, left, right, out, vp) {
     v = await view(page);
     ok(`[${scheme}] scrolling away shows Back to now`, v.now, JSON.stringify({ top: v.scrollTop, max: v.maxScroll }));
     await page.screenshot({ path: `${shots}/captions-back-to-now-${scheme}.png` });
-    await page.click('#hero');
+    // B-209 (D-213): reading back, her stage is folded and she is the flower in the pane's header.
+    ok(`[${scheme}] reading back folds her stage to the header's 24 px flower`, await page.isVisible('#mh-her'));
+    await page.click((await page.isVisible('#mh-her')) ? '#mh-her' : '#hero');
     await page.waitForTimeout(900);
     v = await view(page);
     ok(
