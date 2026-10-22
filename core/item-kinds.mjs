@@ -187,7 +187,8 @@ export function makeItemKinds(core) {
       .toUpperCase();
   /**
    * B-193: where an item stands across courses. ctx: {materials, exams, objectives, set}. Returns {course: the course
-   * it counts toward or null, source: {course, title, label: "from <course>: <file title>"} when it rests on another
+   * it counts toward or null, item: the item to keep (its stem naming its source when it rests on another course's
+   * material and does not say so already; open items are left as written), source: {course, title, label: "from <course>: <file title>"} when it rests on another
    * course's material, else null, errors: why it may not be kept}.
    */
   function crossCourse(q, ctx = {}) {
@@ -198,13 +199,19 @@ export function makeItemKinds(core) {
     const course = (exam && exam.course) || null;
     const ref = /^materials\/(.+)$/.exec(String((q && q.sourceRef) || ''));
     const m = ref ? (ctx.materials || []).find(x => x && x.id === ref[1]) : null;
-    if (!m || !m.course || !course || sameCourse(m.course, course)) return { course, source: null, errors: [] };
+    if (!m || !m.course || !course || sameCourse(m.course, course))
+      return { course, source: null, errors: [], item: q };
     const title = String(m.title || m.id).replace(/\.(pdf|docx|pptx|txt|md)$/i, '');
     const source = { course: String(m.course), title, label: 'from ' + m.course + ': ' + title };
     const own = !!(q.objective && (obj || exams.some(e => e && e.id === examId)));
+    // The question names its source: a stem that does not already say where it comes from gets the label added.
+    const says = new RegExp('from\\s+' + String(m.course).replace(/[^A-Za-z0-9]+/g, '\\s*'), 'i').test(q.stem || '');
+    const item =
+      says || q.type === 'open' ? q : { ...q, stem: String(q.stem || '').trim() + ' (' + source.label + ')' };
     return {
       course,
       source,
+      item,
       errors: own ? [] : [`rests on ${m.course} material (${title}) but targets no objective of its own course`],
     };
   }

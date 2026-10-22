@@ -131,29 +131,30 @@
       const list = practiceSets();
       const d = ui.openSet && list.find(x => x.id === ui.openSet);
       $('pr-prog').hidden = !d;
-      // B-191: an open set closes from its head line, back to the list he opened it from; every answer stays saved (each
-      // is written as he checks it) and the set reopens on the question he left.
-      let close = $('pr-close');
-      if (!close) {
-        close = btn(
-          'Close',
-          () => {
-            ui.openSet = null;
-            render();
-            const li = document.querySelector(
-              '#pr-body [data-id="' + CSS.escape(String(close.dataset.set || '')) + '"]'
-            );
-            if (li) li.scrollIntoView({ block: 'nearest' });
-          },
-          { cls: 'quiet pr-close' }
-        );
-        close.id = 'pr-close';
-        $('pr-count').after(close);
+      // B-191 (D-160): an open set folds back into the list from its own head line (its title with a chevron), never a
+      // Close button; every answer stays saved (each is written as he checks it) and it reopens on the question he left.
+      let fold = $('pr-fold');
+      if (!fold) {
+        fold = foldLine('', true, () => {
+          const id = fold.dataset.set || '';
+          ui.openSet = null;
+          render();
+          const li = document.querySelector('#pr-body [data-id="' + CSS.escape(id) + '"]');
+          if (li) li.scrollIntoView({ block: 'nearest' });
+        });
+        fold.id = 'pr-fold';
+        fold.classList.add('pr-fold');
+        $('pr-title').before(fold);
       }
-      close.hidden = !d;
+      fold.hidden = !d;
+      $('pr-title').hidden = !!d;
       if (d) {
-        close.dataset.set = d.id;
-        close.setAttribute('aria-label', 'Close ' + (d.title || 'this set') + '; your answers are kept');
+        fold.dataset.set = d.id;
+        fold.textContent = d.title || 'Practice';
+        fold.setAttribute(
+          'aria-label',
+          (d.title || 'This set') + ': fold it back into the list; your answers are kept'
+        );
       }
       if (!d) {
         if ($('pr-share')) $('pr-share').hidden = true;
@@ -609,7 +610,9 @@
         const fresh = (res && Array.isArray(res.items) ? res.items : [])
           .map((q, i) => ({ ...q, id: 'm' + (i + 1), kind: q.weakspotId ? 'review' : 'check' }))
           .filter(q => E.validateItem(q).ok)
-          .filter(q => !E.crossCourse(q, { materials: LIB.mats || [], exams: S.exams }).errors.length) // B-193
+          .map(q => E.crossCourse(q, { materials: LIB.mats || [], exams: S.exams })) // B-193 (D-205)
+          .filter(c => !c.errors.length)
+          .map(c => c.item)
           .filter(q => !q.weakspotId || M.models.some(w => w.id === q.weakspotId));
         if (!fresh.length) {
           out.textContent = 'That batch didn’t come back in a usable shape. Try again in a moment.';

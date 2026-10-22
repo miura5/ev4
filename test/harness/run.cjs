@@ -524,11 +524,11 @@ async function practiceNav(page, scheme) {
     await page.waitForTimeout(80);
     return page.locator('#pr-body .row', { hasText: title }).first().locator('.pr-acts button').first().click();
   };
-  await page.click('#pr-close');
+  await page.click('#pr-fold');
   await page.waitForTimeout(150);
   ok(
-    `[${scheme}] Close takes an open set back to the list it was opened from`,
-    !(await page.isVisible('#pr-close')) &&
+    `[${scheme}] the open set's head line folds it back into the list it was opened from (D-160)`,
+    !(await page.isVisible('#pr-fold')) &&
       (await page.locator('#pr-body .pr-lead, #pr-body .row').count()) > 0 &&
       !(await page.isVisible('#pr-body .q-stem')),
     (await page.textContent('#pr-body')).slice(0, 120)
@@ -587,7 +587,7 @@ async function practiceNav(page, scheme) {
     /question 2/.test(v.stem) && /^Right\b/.test(v.verdict) && v.whys.includes('Piaget is right.') && v.back,
     JSON.stringify(v)
   );
-  await page.click('#pr-close');
+  await page.click('#pr-fold');
   await page.waitForTimeout(150);
   const saved = await page.evaluate(id => Object.keys(((window.__db.answers || {})[id] || {}).answers || {}), navId);
   const line = await page
@@ -630,7 +630,17 @@ async function practiceNav(page, scheme) {
   await page.screenshot({ path: `${shots}/practice-nav-done-${scheme}.png` });
   await page.locator('#pr-body button', { hasText: 'All sets' }).first().click();
   await page.waitForTimeout(150);
-  // B-193 (D-205): a question on another course's passage names its source under the stem, from the data.
+  // B-193 (D-205): a question on another course's passage names its source under the stem, from the data, once the
+  // library is open (the page never loads it just for this): open Record, Library first, then the set.
+  await page.click('#tab-record');
+  await page.click('#seg-record [data-v="library"]');
+  await page
+    .waitForFunction(() => document.querySelectorAll('#library li').length > 0, null, { timeout: 8000 })
+    .catch(() => {});
+  await page.click('#seg-record [data-v="sessions"]'); // Record back on its first view for the checks after
+  await page.click('#tab-study');
+  await page.click('#seg-study [data-v="practice"]');
+  await page.waitForTimeout(150);
   await openSet('Harness cross');
   await page.waitForFunction(() => document.querySelector('#pr-body .q-src'), null, { timeout: 8000 }).catch(() => {});
   const src = await page.textContent('#pr-body .q-src').catch(() => '');
@@ -640,7 +650,7 @@ async function practiceNav(page, scheme) {
     src
   );
   await page.screenshot({ path: `${shots}/practice-cross-${scheme}.png` });
-  await page.click('#pr-close');
+  await page.click('#pr-fold');
   await page.waitForTimeout(150);
 }
 async function buildAskChecks(page, scheme) {

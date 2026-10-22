@@ -132,13 +132,11 @@
           .join(' · ')
       );
       const parts = [el('p', 'stem q-stem', q.stem), tags];
-      // B-193 (D-205): a question resting on another course's passage names its source under the stem, from the data.
-      if (/^materials\//.test(q.sourceRef || '') && !LIB.mats && !T.libAsked) {
-        T.libAsked = true; // once: a failed load is not retried on every render
-        library().catch(() => {});
-      }
-      const cross = E.crossCourse(q, { materials: LIB.mats || [], exams: S.exams, set }).source;
-      if (cross) parts.push(el('p', 'meta q-src', cross.label.charAt(0).toUpperCase() + cross.label.slice(1)));
+      // B-193 (D-205): a question resting on another course's passage names its source; its writer adds it to the stem, and
+      // one written before that shows it under the stem once the library is open (it is never loaded just for this).
+      const cross = LIB.mats ? E.crossCourse(q, { materials: LIB.mats, exams: S.exams, set }) : null;
+      if (cross && cross.source && cross.item !== q)
+        parts.push(el('p', 'meta q-src', cross.source.label.charAt(0).toUpperCase() + cross.source.label.slice(1)));
       // B-126 (D-165): answered, the verdict is one line under the stem (nothing above it moves); his pick and the right
       // answer carry their why; the other whys fold under one line.
       if (a) {

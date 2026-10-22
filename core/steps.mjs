@@ -1188,7 +1188,7 @@ export const AGENT_FOLDS = {
           objectives: db.objectives,
           set: { exam: target ? target.id : null },
         }); // B-193
-        if (EV.validateItem(q, { strict: true }).ok && !cross.errors.length) items.push(q);
+        if (EV.validateItem(q, { strict: true }).ok && !cross.errors.length) items.push(cross.item);
       }
       if (items.length) {
         const setId = 'job-' + job.id.replace(/^job-/, '');
@@ -1324,7 +1324,7 @@ export const AGENT_FOLDS = {
           return null;
         }
       }
-      return q;
+      return cc.item; // B-193: its stem names its source when it rests on another course's passage
     };
     const env = () => ({ ...EV.envelope('morning', ctx.source, ctx.now), schema: 3 }); // sets schema 3 (B-43, B-75)
     if (!b.review.exists && (b.review.targets.length || b.review.checks.length)) {

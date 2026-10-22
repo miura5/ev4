@@ -53,6 +53,13 @@ test('B-193: an item on another course’s passage names its source and counts t
   assert.equal(c.course, 'NUR 112');
   assert.deepEqual(c.source, { course: 'BIO 201', title: 'Bones slides', label: 'from BIO 201: Bones slides' });
   assert.deepEqual(c.errors, []);
+  assert.equal(c.item.stem, item().stem, 'a stem that already names its source is kept as written');
+  const bare = EV.crossCourse(item({ stem: 'A client’s wound heals slowly. Which vitamin builds its collagen?' }), ctx);
+  assert.equal(
+    bare.item.stem,
+    'A client’s wound heals slowly. Which vitamin builds its collagen? (from BIO 201: Bones slides)',
+    'a stem that does not say where it comes from gets its source added'
+  );
   // Its own course's material is not cross-course; nor is an item with no material behind it.
   assert.equal(EV.crossCourse(item({ sourceRef: 'materials/NUR112-502' }), ctx).source, null);
   assert.equal(EV.crossCourse(item({ sourceRef: null, verify: true }), ctx).source, null);
