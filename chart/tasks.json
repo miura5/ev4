@@ -3460,7 +3460,7 @@
   "title": "Request (reported Oct 21): probe B for B-180. This job is in the staging record. File it as a request, decline it at triage as probe B, trace this job on staging with the task id, and end the run without taking another task or firing the builder again.",
   "dod": null,
   "milestone": "Inbox",
-  "status": "inbox",
+  "status": "declined",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -3472,6 +3472,11 @@
    "row": "v4 B-195: probe B for B-180. This job is in the staging record. File it as a…",
    "why": "probe B for B-180. This job is in the staging record. File it as a request, decline it at triage as probe B, trace this job on staging with the task id, and end the run without taking another task or firing the builder again.",
    "notes": "Reported Oct 21 from E.V. page, job job-20261022-013640-build-probe-b-for-b-180"
+  },
+  "triage": {
+   "outcome": "declined",
+   "reason": "probe B",
+   "at": "2026-10-22T01:37:40.672Z"
   }
  }
 ]
