@@ -522,7 +522,9 @@
   },
   "jobs": [
    "job-20261022-021528-b-27"
-  ]
+  ],
+  "waitingOn": "Matt",
+  "waitingWhere": "mac"
  },
  {
   "id": "B-28",

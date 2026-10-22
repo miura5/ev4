@@ -36,6 +36,10 @@ Builder run Oct 21 (job-20261022-021545-b-69): his Yes answered the Your turn li
 
 What waits on Matt, by where it happens (`brief --matt` prints the same list).
 
+### At the Mac
+
+- B-27 (in progress): a missed evening on the Mac
+
 ### On the staging page
 
 - B-196 (blocked): Probe C for B-182: a planted Your turn item on the staging page; no…
