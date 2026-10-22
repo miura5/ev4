@@ -3312,5 +3312,146 @@
    "reason": "probe A",
    "at": "2026-10-21T23:29:14.268Z"
   }
+ },
+ {
+  "id": "B-189",
+  "kind": "bug",
+  "title": "Bug (reported Oct 21): * I asked E.V. what to bring to lab/class today. She said she didn’t know. I also noticed the prep tag wasn’t on last night despite today being a lab/class day. E.V. just listed general things to bring to school. I expected: stethoscope, clinical badge, watch, textbook being used per the calendar or course material like announcements; pen, penlight, lab kit , jarvis etc. those are the things off the top of my head that I will probably bring today. and again not everyday is the same so E.V. should be able to have better judgment on this; hopefully from the record of class material alone.\n* Instead of greeting everytime I reopen the page, reopening the page after briefly closing it should return the latest conversation. If a certain time limit is hit, then the greeting reappears; or possibly the greeting is limited to once every few hours (morning, afternoon, evening, night); whichever one is best practice",
+  "dod": "First the cause, recorded: why last night's prep tag was missing for today's lab/class day (read the live record's days/ and the evening runs). Then: asked what to bring on a class, lab or clinical day, E.V. answers from the record (that day's dates and their kinds, the course calendar and announcements, the materials the day names, e.g. the textbook or lab guide), each item with the source that names it, completed by a per-kind kit in the spec (clinical: stethoscope, badge, watch, penlight, pen; lab: lab kit; Matt edits it), and the evening prep tag is on for every such day; core tests on planted days, dates and announcements; the harness at 390 and 1280 asks it on a planted lab day; npm test and npm run check green; ship staging green; live only on Matt's OK",
+  "milestone": "v4.3 feedback",
+  "status": "open",
+  "depends": [],
+  "notes": "Taken next if no other chat takes it: a bug that breaks studying goes before other open tasks (CLAUDE.md step 2).",
+  "commit": null,
+  "source": "Matt's feedback notes, build chat Oct 21",
+  "words": "* I asked E.V. what to bring to lab/class today. She said she didn’t know. I also noticed the prep tag wasn’t on last night despite today being a lab/class day. E.V. just listed general things to bring to school. I expected: stethoscope, clinical badge, watch, textbook being used per the calendar or course material like announcements; pen, penlight, lab kit , jarvis etc. those are the things off the top of my head that I will probably bring today. and again not everyday is the same so E.V. should be able to have better judgment on this; hopefully from the record of class material alone.\n* Instead of greeting everytime I reopen the page, reopening the page after briefly closing it should return the latest conversation. If a certain time limit is hit, then the greeting reappears; or possibly the greeting is limited to once every few hours (morning, afternoon, evening, night); whichever one is best practice",
+  "reportedAt": "2026-10-22T00:43:36.615Z",
+  "board": {
+   "row": "v4 B-189: * I asked E.V. what to bring to lab/class today. She said she didn’t…",
+   "why": "* I asked E.V. what to bring to lab/class today. She said she didn’t know. I also noticed the prep tag wasn’t on last night despite today being a lab/class day. E.V. just listed general things to bring to school. I expected: stethoscope, clinical badge, watch, textbook being used per the calendar or course material like announcements; pen, penlight, lab kit , jarvis etc. those are the things off the top of my head that I will probably bring today. and again not everyday is the same so E.V. should be able to have better judgment on this; hopefully from the record of class material alone.\n* Instead of greeting everytime I reopen the page, reopening the page after briefly closing it should return the latest conversation. If a certain time limit is hit, then the greeting reappears; or possibly the greeting is limited to once every few hours (morning, afternoon, evening, night); whichever one is best practice",
+   "notes": "Reported Oct 21 from Matt's feedback notes, build chat Oct 21"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-22T00:44:42.062Z"
+  }
+ },
+ {
+  "id": "B-190",
+  "kind": "request",
+  "title": "Request (reported Oct 21): * I asked E.V. what to bring to lab/class today. She said she didn’t know. I also noticed the prep tag wasn’t on last night despite today being a lab/class day. E.V. just listed general things to bring to school. I expected: stethoscope, clinical badge, watch, textbook being used per the calendar or course material like announcements; pen, penlight, lab kit , jarvis etc. those are the things off the top of my head that I will probably bring today. and again not everyday is the same so E.V. should be able to have better judgment on this; hopefully from the record of class material alone.\n* Instead of greeting everytime I reopen the page, reopening the page after briefly closing it should return the latest conversation. If a certain time limit is hit, then the greeting reappears; or possibly the greeting is limited to once every few hours (morning, afternoon, evening, night); whichever one is best practice",
+  "dod": "His second bullet in these words (the greeting): reopening the page within spec.conversation.resumeWithinMinutes (90) returns him to the latest conversation where he left it; the greeting shows on the first open in each part of the day (morning, afternoon, evening, night, Central) or after that window, never on every reopen; conversation tests for each case; the harness reopens at 390 and 1280; npm test and npm run check green; ship staging green; live only on Matt's OK. Built after B-181 (the morning-after line), which shares the greeting.",
+  "milestone": "v4.3 feedback",
+  "status": "open",
+  "depends": [
+   "B-181"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "Matt's feedback notes, build chat Oct 21",
+  "words": "* I asked E.V. what to bring to lab/class today. She said she didn’t know. I also noticed the prep tag wasn’t on last night despite today being a lab/class day. E.V. just listed general things to bring to school. I expected: stethoscope, clinical badge, watch, textbook being used per the calendar or course material like announcements; pen, penlight, lab kit , jarvis etc. those are the things off the top of my head that I will probably bring today. and again not everyday is the same so E.V. should be able to have better judgment on this; hopefully from the record of class material alone.\n* Instead of greeting everytime I reopen the page, reopening the page after briefly closing it should return the latest conversation. If a certain time limit is hit, then the greeting reappears; or possibly the greeting is limited to once every few hours (morning, afternoon, evening, night); whichever one is best practice",
+  "reportedAt": "2026-10-22T00:43:36.615Z",
+  "board": {
+   "row": "v4 B-190: * I asked E.V. what to bring to lab/class today. She said she didn’t…",
+   "why": "* I asked E.V. what to bring to lab/class today. She said she didn’t know. I also noticed the prep tag wasn’t on last night despite today being a lab/class day. E.V. just listed general things to bring to school. I expected: stethoscope, clinical badge, watch, textbook being used per the calendar or course material like announcements; pen, penlight, lab kit , jarvis etc. those are the things off the top of my head that I will probably bring today. and again not everyday is the same so E.V. should be able to have better judgment on this; hopefully from the record of class material alone.\n* Instead of greeting everytime I reopen the page, reopening the page after briefly closing it should return the latest conversation. If a certain time limit is hit, then the greeting reappears; or possibly the greeting is limited to once every few hours (morning, afternoon, evening, night); whichever one is best practice",
+   "notes": "Reported Oct 21 from Matt's feedback notes, build chat Oct 21"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-22T00:44:42.214Z"
+  }
+ },
+ {
+  "id": "B-191",
+  "kind": "request",
+  "title": "Request (reported Oct 21): * Option to close practice sets; go back and forward between questions while in the set.",
+  "dod": "In a practice set he can close it (back to where he opened it; the set keeps every answer) and move Back and Next between questions (an answered one shows its answer and rationale, an unanswered one stays open to answer); the harness at 390 and 1280 closes, goes back and forward, and answers out of order; npm test and npm run check green; ship staging green; live only on Matt's OK",
+  "milestone": "v4.3 feedback",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt's feedback notes, build chat Oct 21",
+  "words": "* Option to close practice sets; go back and forward between questions while in the set.",
+  "reportedAt": "2026-10-22T00:43:36.615Z",
+  "board": {
+   "row": "v4 B-191: * Option to close practice sets; go back and forward between…",
+   "why": "* Option to close practice sets; go back and forward between questions while in the set.",
+   "notes": "Reported Oct 21 from Matt's feedback notes, build chat Oct 21"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-22T00:44:42.409Z"
+  }
+ },
+ {
+  "id": "B-192",
+  "kind": "request",
+  "title": "Request (reported Oct 21): * Better randomizing of answer choices; and maybequestions themselves? so that matrixes dont go 1, 2, 3, 4; or questions don’t go A, B, C, D when testing material that’s closely related like (ROME)\n* A practice question for NUR 112 on vitamin C drew in information from BIO 201’s bones slides. It is correct information, but should this be encouraged? At first it was unexpected then I started weighing if hmm this is actually an awesome thing. What’s your take",
+  "dod": "Answer options are shuffled per item and a matrix's rows per item (the same order on every reload: seeded by the set and item ids), the correct answers remapped; within a set no three questions in a row have their correct answer at the same or consecutive positions, and closely related questions (one topic, e.g. ROME) are not left in order; done in core for every set the morning, the worker and make_practice write; core tests on a planted ROME-style set; npm test and npm run check green; ship staging green; live only on Matt's OK",
+  "milestone": "v4.3 feedback",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt's feedback notes, build chat Oct 21",
+  "words": "* Better randomizing of answer choices; and maybequestions themselves? so that matrixes dont go 1, 2, 3, 4; or questions don’t go A, B, C, D when testing material that’s closely related like (ROME)\n* A practice question for NUR 112 on vitamin C drew in information from BIO 201’s bones slides. It is correct information, but should this be encouraged? At first it was unexpected then I started weighing if hmm this is actually an awesome thing. What’s your take",
+  "reportedAt": "2026-10-22T00:43:36.615Z",
+  "board": {
+   "row": "v4 B-192: * Better randomizing of answer choices; and maybequestions…",
+   "why": "* Better randomizing of answer choices; and maybequestions themselves? so that matrixes dont go 1, 2, 3, 4; or questions don’t go A, B, C, D when testing material that’s closely related like (ROME)\n* A practice question for NUR 112 on vitamin C drew in information from BIO 201’s bones slides. It is correct information, but should this be encouraged? At first it was unexpected then I started weighing if hmm this is actually an awesome thing. What’s your take",
+   "notes": "Reported Oct 21 from Matt's feedback notes, build chat Oct 21"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-22T00:44:42.612Z"
+  }
+ },
+ {
+  "id": "B-193",
+  "kind": "request",
+  "title": "Request (reported Oct 21): * Better randomizing of answer choices; and maybequestions themselves? so that matrixes dont go 1, 2, 3, 4; or questions don’t go A, B, C, D when testing material that’s closely related like (ROME)\n* A practice question for NUR 112 on vitamin C drew in information from BIO 201’s bones slides. It is correct information, but should this be encouraged? At first it was unexpected then I started weighing if hmm this is actually an awesome thing. What’s your take",
+  "dod": "Matt's decision first (his fifth bullet, these words): whether a NUR 112 question may rest on a BIO 201 passage. Proposed: yes when the concept is the same (vitamin C, collagen, bone and wound healing), the item names its source course and file, and it still targets a NUR 112 objective; never when it would count toward an objective it does not map to. Then: the item generators and the grounding check follow the decision, with core tests; npm test green; ship staging green; live only on Matt's OK",
+  "milestone": "v4.3 feedback",
+  "status": "blocked",
+  "depends": [],
+  "notes": "Your call: may a NUR 112 question draw on a BIO 201 passage when it is the same concept, naming its source course and file? My recommendation: yes, labeled, still aimed at a NUR 112 objective.",
+  "commit": null,
+  "source": "Matt's feedback notes, build chat Oct 21",
+  "words": "* Better randomizing of answer choices; and maybequestions themselves? so that matrixes dont go 1, 2, 3, 4; or questions don’t go A, B, C, D when testing material that’s closely related like (ROME)\n* A practice question for NUR 112 on vitamin C drew in information from BIO 201’s bones slides. It is correct information, but should this be encouraged? At first it was unexpected then I started weighing if hmm this is actually an awesome thing. What’s your take",
+  "reportedAt": "2026-10-22T00:43:36.615Z",
+  "board": {
+   "row": "v4 B-193: * Better randomizing of answer choices; and maybequestions…",
+   "why": "* Better randomizing of answer choices; and maybequestions themselves? so that matrixes dont go 1, 2, 3, 4; or questions don’t go A, B, C, D when testing material that’s closely related like (ROME)\n* A practice question for NUR 112 on vitamin C drew in information from BIO 201’s bones slides. It is correct information, but should this be encouraged? At first it was unexpected then I started weighing if hmm this is actually an awesome thing. What’s your take",
+   "notes": "Reported Oct 21 from Matt's feedback notes, build chat Oct 21"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-22T00:44:42.811Z"
+  },
+  "waitingOn": "Matt"
+ },
+ {
+  "id": "B-194",
+  "kind": "bug",
+  "title": "Bug (reported Oct 21): • ⁃ I requested a study plan for the dosage calculations and received a plan card with a link to the study page to see the plan. but the study plan doesn’t show the plan",
+  "dod": "First the cause, recorded (the dosage plan job's result and plans/ document on live). Then: a plan card from a plan job opens Study, Plan showing that plan, a draft (plans/<exam>-<n>, D-102) included with its Use this plan; core or harness test with a planted dosage plan job result; the harness at 390 and 1280 taps the card's link and sees the plan; npm test and npm run check green; ship staging green; live only on Matt's OK",
+  "milestone": "v4.3 feedback",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt's feedback notes, build chat Oct 21",
+  "words": "• ⁃ I requested a study plan for the dosage calculations and received a plan card with a link to the study page to see the plan. but the study plan doesn’t show the plan",
+  "reportedAt": "2026-10-22T00:43:36.615Z",
+  "board": {
+   "row": "v4 B-194: • ⁃ I requested a study plan for the dosage calculations and received…",
+   "why": "• ⁃ I requested a study plan for the dosage calculations and received a plan card with a link to the study page to see the plan. but the study plan doesn’t show the plan",
+   "notes": "Reported Oct 21 from Matt's feedback notes, build chat Oct 21"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-22T00:44:43.174Z"
+  }
  }
 ]
