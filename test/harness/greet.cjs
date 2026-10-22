@@ -58,10 +58,14 @@ function base() {
   );
   seed.jobs = {};
   seed.talk = seed.talk || {};
+  // B-198: last seen and the kept headline are planted the evening before, on the planted day's clock, never the real
+  // one: two hours before the real clock fell within B-190's 90-minute resume of the 07:30 state whenever the check ran
+  // between 08:00 and 09:30 Central (the 09:03 nightly), and the page rightly resumed the planted headline.
+  const seenBefore = ct(addDays(today, -1), 21, 0).toISOString();
   seed.talk.memory = {
     ...(seed.talk.memory || { schema: 2, writer: 'page', at: env.at, source: 'E.V. Home', summary: '', upTo: null }),
-    lastSeenAt: new Date(Date.now() - 2 * 36e5).toISOString(),
-    headlines: [{ at: env.at, text: 'Evening, Matt. How can I help?', by: 'code' }],
+    lastSeenAt: seenBefore,
+    headlines: [{ at: seenBefore, text: 'Evening, Matt. How can I help?', by: 'code' }],
   };
   delete seed.talk[today];
   return seed;

@@ -3559,5 +3559,28 @@
    "outcome": "task",
    "at": "2026-10-22T03:30:32.211Z"
   }
+ },
+ {
+  "id": "B-198",
+  "kind": "bug",
+  "title": "Bug (reported Oct 22): greet: [exam-tomorrow] the model's line is the headline, held to the facts (and 5 more exam-tomorrow checks): the page resumed the planted 'Evening, Matt. How can I help?'",
+  "dod": "greet.cjs plants last-seen and the kept headline relative to the planted day (the evening before), never the real clock, so B-190's resume never takes a planted state; the greet harness green whatever hour it runs (proved with the real clock set to 08:00, 09:03 and 09:30 Central); npm run check green",
+  "milestone": "v4.3 ops",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "nightly 39792387960",
+  "words": "greet: [exam-tomorrow] the model's line is the headline, held to the facts (and 5 more exam-tomorrow checks): the page resumed the planted 'Evening, Matt. How can I help?'",
+  "reportedAt": "2026-10-22T14:31:48.142Z",
+  "board": {
+   "row": "v4 B-198: greet: [exam-tomorrow] the model's line is the headline, held to the…",
+   "why": "greet: [exam-tomorrow] the model's line is the headline, held to the facts (and 5 more exam-tomorrow checks): the page resumed the planted 'Evening, Matt. How can I help?'",
+   "notes": "Reported Oct 22 from nightly 39792387960"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-22T14:31:54.218Z"
+  }
  }
 ]
