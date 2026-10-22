@@ -65,7 +65,8 @@ attribution lines with `--trailer`, one per line) and regenerates BACKLOG.md, DE
 ## Unattended runs
 
 A build session may be a scheduled task with no one watching. Then: never wait for an answer; a question goes
-into Notes with the task marked `blocked`; anything irreversible or outside staging is `blocked`, not attempted.
+into Notes with the task marked `blocked`; anything irreversible or outside staging is `blocked`, not attempted, with one
+exception: a builder run started with a ship job deploys live through `ship live --from-job <id>` (D-198, B-185).
 If the run was started by the `ev4-builder` task with `continue` and open, unblocked tasks remain, fire the builder again
 through the Claude Code Remote `fire_trigger` tool with the text `continue` before ending, at most once per run. A
 builder run waits for the message it was fired with ('Job <id>', words to file, or `continue`; its prompt ends its
@@ -92,7 +93,11 @@ fired with says what it is for:
   reads and the Chart (its theme is the job's brief), lands as E.V.'s line with a Copy chip, and nothing is filed from
   it. **plan**: read the tab of the doc the job's brief links, `plan --from <that link> --apply` (a row's Depends sets
   depends), then `trace --job <id> --record <the job's record> --status done --filed`, whose line names what was filed.
-  **ship**: as B-185 says once it is built.
+  **ship** (B-185, D-198): his Ship it tap is his OK for that one commit. Get jobresults/<id> too (a result means the
+  tap was spent), then `ship live --from-job <id>` with every call and read it prints until GREEN, as ship live does;
+  it refuses a job that is not kind ship, not written by his page, names another commit, has a result or is over 24
+  hours old. Then the trace names live at the commit GREEN, or where it stopped. Rollback stays a build chat's act
+  with Matt present.
 - Words to file (bug:, idea: or request:): `report --from-chat` first, then as Every session says.
 - `continue`: Every session, from step 1.
 

@@ -2093,12 +2093,69 @@ export function commitsIn(root, range) {
       return { subject, files: files.filter(Boolean) };
     });
 }
+// ------------------------------------------------------------------------------------------------ ship it (B-185)
+// D-198: R-04's second form. Matt's Ship it tap writes a ship job naming one commit; a builder run deploys live on it
+// with ship live --from-job <id>, which holds the job, as fetched in this session, to exactly that: kind ship, writer
+// page, the build's own commit, no result yet (one shot) and under SHIP_JOB_HOURS old. Rollback stays a build chat's act.
+export const SHIP_JOB_HOURS = 24;
+/** The newest fetch of jobs/<id> in the transcript: the document as saved, or null. */
+export function shipJobFrom(jsonl, id) {
+  let out = null;
+  for (const r of toolResults(jsonl || '', 'ArtifactData')) {
+    const i = r.input || {};
+    if (i.action !== 'get' || i.collection !== 'jobs' || i.doc_id !== id || r.isError) continue;
+    const file = (r.texts.join('\n').match(/"(\/[^"]+\.json)"/) || [])[1];
+    try {
+      out = file ? JSON.parse(fs.readFileSync(file, 'utf8')) : null;
+    } catch {
+      out = null;
+    }
+  }
+  return out;
+}
+/** Whether this session read jobresults/<id>: 'none' (no such document), 'exists', or null (not read). */
+export function jobResultSeen(jsonl, id) {
+  let out = null;
+  for (const r of toolResults(jsonl || '', 'ArtifactData')) {
+    const i = r.input || {};
+    if (i.action !== 'get' || i.collection !== 'jobresults' || i.doc_id !== id) continue;
+    const t = r.texts.join('\n');
+    out =
+      /"(\/[^"]+\.json)"/.test(t) && !r.isError
+        ? 'exists'
+        : /not found|no (such )?document|does not exist|0 documents/i.test(t)
+          ? 'none'
+          : out;
+  }
+  return out;
+}
+/** The reasons a ship job does not carry Matt's OK for this commit (empty when it does). */
+export function shipJobRefusals({ id, job, result, commit, now = Date.now() }) {
+  const why = [];
+  const r = s => why.push(`R-04 (D-198): ship job ${id} ${s}`);
+  if (!job) return [`R-04 (D-198): no fetch of jobs/${id} in this session: ArtifactData get it first`];
+  if (job.kind !== 'ship') r(`is a ${job.kind || 'kindless'} job, not a ship job`);
+  if (job.writer !== 'page') r(`was written by ${job.writer || 'no one'}, not his page`);
+  const c = String(job.commit || '');
+  if (!/^[0-9a-f]{7,40}$/.test(c) || !String(commit).startsWith(c))
+    r(`names ${c ? c.slice(0, 7) : 'no commit'}, not this build's ${String(commit).slice(0, 7)}`);
+  if (result === 'exists') r('has a result already: one tap is one deploy');
+  if (result == null) r(`has no jobresults read in this session: ArtifactData get jobresults/${id} first`);
+  const age = now - Date.parse(job.at || '');
+  if (!(age >= 0) || age > SHIP_JOB_HOURS * 3600e3)
+    r(
+      `is ${Number.isFinite(age) ? Math.round(age / 3600e3) + ' hours' : 'of no known'} old; a ship job holds ${SHIP_JOB_HOURS} hours`
+    );
+  return why;
+}
+
 async function ship(o) {
   const root = rootOf(o),
     target = o._[1];
   if (!['staging', 'live'].includes(target)) throw new Error('ship <staging|live>');
   const rec = loadChart(root),
     refusals = [];
+  let shipJobOk = null;
   const red = lintChart(rec).filter(f => f.level === 'error');
   if (red.length) refusals.push(`the Chart lints red (${red.length}): node tools/chart.mjs lint`);
   const dist = path.join(root, 'dist'),
@@ -2117,7 +2174,22 @@ async function ship(o) {
   const deployed = state.record && state.record.manifest;
   if (target === 'live') {
     // R-04 (D-083): Matt's explicit OK. R-01 (D-139): page-only while D-085's window is open (B-30 not done).
-    if (!o['matt-ok'])
+    // R-04 in its second form (D-198, B-185): a ship job he wrote for this commit, as fetched in this session, checked
+    // here and by the ship-live row; it stands in for his words in the chat.
+    const fromJob = typeof o['from-job'] === 'string' ? o['from-job'] : null;
+    if (fromJob) {
+      const file = o.transcript || newestTranscript(),
+        jl = file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+      const job = shipJobFrom(jl, fromJob);
+      const why = shipJobRefusals({ id: fromJob, job, result: jobResultSeen(jl, fromJob), commit: manifest.commit });
+      if (!why.length) {
+        const spec = readJson(path.join(root, 'spec', 'ev.spec.json'));
+        const a = ACTIONS.actor(spec, 'builder')('ship-live', { job: fromJob, commit: job.commit }, { ok: { job } });
+        if (!a.ok) why.push(a.refused);
+      }
+      refusals.push(...why);
+      shipJobOk = why.length ? null : fromJob;
+    } else if (!o['matt-ok'])
       refusals.push("R-04 (D-083): a live deploy needs Matt's explicit OK in the chat (then pass --matt-ok)");
     if (rec.rules.some(r => r.check === 'watchdogWindow')) {
       const live = (readJson(path.join(root, 'spec', 'ev.spec.json')).tasks.live || {}).watchdog;
@@ -2215,7 +2287,7 @@ async function ship(o) {
     distDir: dist,
     build: buildInfo,
     versions,
-    mattOk: Boolean(o['matt-ok']),
+    mattOk: Boolean(o['matt-ok'] || shipJobOk),
     duringSession: Boolean(o['during-session']),
     state,
     sha256,
@@ -2265,7 +2337,12 @@ async function ship(o) {
     if (target === 'live')
       fs.writeFileSync(
         path.join(dist, 'live-ok'),
-        JSON.stringify({ at: Date.now(), commit: manifest.commit, by: 'ship live --matt-ok' })
+        JSON.stringify({
+          at: Date.now(),
+          commit: manifest.commit,
+          by: shipJobOk ? `ship live --from-job ${shipJobOk}` : 'ship live --matt-ok',
+          ...(shipJobOk ? { job: shipJobOk } : {}),
+        })
       );
     fs.writeFileSync(
       shipFile,

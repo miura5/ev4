@@ -332,14 +332,11 @@
       const failed = j.status === 'failed';
       const ul = el('ul', 'list build-steps');
       // B-183: a kickoff or a filing has one row: what the builder said (the kickoff itself is the line above, to copy).
-      if (j.kind === 'design' || j.kind === 'plan') {
+      if (j.kind === 'design' || j.kind === 'plan' || j.kind === 'ship') {
         const said = failed ? r.failed || r.text || 'The builder stopped before it finished.' : r.text || '';
-        ul.append(
-          row({
-            title: failed ? 'Where it stopped' : j.kind === 'design' ? 'Kickoff' : 'Filed',
-            detail: said || (j.kind === 'design' ? 'Not drafted yet' : 'Not filed yet'),
-          })
-        );
+        const name = { design: 'Kickoff', plan: 'Filed', ship: 'Live' }[j.kind];
+        const yet = { design: 'Not drafted yet', plan: 'Not filed yet', ship: 'Not live yet' }[j.kind];
+        ul.append(row({ title: failed ? 'Where it stopped' : name, detail: said || yet }));
         return ul;
       }
       ul.append(row({ title: 'Filed', detail: r.task ? 'As ' + r.task : failed ? 'Not filed' : 'Not filed yet' }));
@@ -355,7 +352,84 @@
       );
       const said = failed ? r.failed || r.text || 'The builder stopped before it finished.' : r.text || '';
       if (said) ul.append(row({ title: failed ? 'Where it stopped' : 'What waits', detail: said }));
+      const ship = shipChip(j);
+      if (ship) ul.append(ship);
       return ul;
+    }
+    // B-185 (D-198): Ship it, on a build that is staging green at the commit staging runs now: one confirm, then a ship
+    // job naming that commit and its tasks, which is his OK for live, and the builder fired with it. A ship job already
+    // sent for the commit shows as sent; nothing is offered for a build that staging has moved past.
+    function shipChip(j) {
+      const r = j.result || {};
+      const c = String(r.commit || '');
+      const here = String((S.manifest && S.manifest.commit) || '');
+      if (
+        !BUILDER_HERE ||
+        j.kind !== 'build' ||
+        j.status !== 'done' ||
+        !/^[0-9a-f]{7,40}$/.test(c) ||
+        !here.startsWith(c)
+      )
+        return null;
+      const tasks = r.task ? [r.task] : [];
+      if (!tasks.length) return null; // a ship job names the tasks it ships
+      const sent = S.jobs.find(x => x.kind === 'ship' && x.commit === c);
+      const li = el('li', 'row ship-row');
+      if (sent) {
+        li.append(el('span', 'meta', `Ship it sent for ${c.slice(0, 7)}${sent.status === 'done' ? ': live' : ''}`));
+        return li;
+      }
+      const go = el('button', 'qchip go', `Ship it (${c.slice(0, 7)})`);
+      go.type = 'button';
+      go.addEventListener('click', () => {
+        li.replaceChildren();
+        const ok = el('button', 'qchip go', 'Ship');
+        const no = el('button', 'qchip', 'Cancel');
+        ok.type = no.type = 'button';
+        no.addEventListener('click', () => li.replaceChildren(go));
+        ok.addEventListener('click', async () => {
+          ok.disabled = no.disabled = true;
+          await shipIt(c, tasks);
+        });
+        li.append(
+          el(
+            'span',
+            'meta ship-ask',
+            `Ship ${c.slice(0, 7)}${tasks.length ? ' (' + tasks.join(', ') + ')' : ''} to live? This tap is your OK.`
+          ),
+          ok,
+          no
+        );
+      });
+      li.append(go);
+      return li;
+    }
+    async function shipIt(commit, tasks) {
+      const args = {
+        brief: 'ship it',
+        title: `Ship ${commit.slice(0, 7)}`,
+        commit,
+        tasks,
+        text: `ship it ${commit.slice(0, 7)}`,
+      };
+      const ctx = { now: new Date().toISOString() };
+      const a = ACT ? ACT.tap('ship-it', args, ctx) : { ok: false, refused: 'the actions table did not load' };
+      if (!a.ok) {
+        toast('I couldn’t hand that to the builder (' + a.refused + ').');
+        return;
+      }
+      await run(ACT.tap('ship-it', args, ctx).writes);
+      const id = a.writes[0].id;
+      let fired = { at: now(), ok: false, error: 'no_task' };
+      for (const e of a.effects) if (e.kind === 'fire_trigger') fired = await fire(TASKS.builder, e.text);
+      await run(ACT.tap('job-fired', { job: id, fired }).writes);
+      await evSay(
+        fired.ok
+          ? `Sent: the builder ships ${commit.slice(0, 7)} to live, checks it and says how it went here.`
+          : 'Saved it, but I couldn’t start the builder. ' + fireCopy(fired.error),
+        [{ type: 'job', id }],
+        { tier: 'local' }
+      );
     }
     /** D-104: the retro's numbers on its job card, the same ones the narrative was written over. */
     function retroList(x) {

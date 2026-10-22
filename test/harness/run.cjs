@@ -821,6 +821,71 @@ async function buildAskChecks(page, scheme) {
     String(await page.evaluate(() => window.__copied))
   );
   await page.screenshot({ path: `${shots}/kickoff-copy-${scheme}.png` });
+  // B-185 (D-198): Ship it shows only on a build that is staging green at the commit staging runs now; its tap asks
+  // once, then writes a ship job naming that commit and its task and fires the builder with it.
+  const showJob = async i => {
+    await page.evaluate(i => {
+      window.__chatPre = '';
+      window.__chatScript = [{ tool: 'show_card', input: { type: 'job', id: i } }];
+      window.__chatReply = 'Here it is.';
+    }, i);
+    await send(page, 'Show me that build');
+    await page.waitForTimeout(300);
+  };
+  const shipBtn = () => page.locator('#ev-surf button', { hasText: /^Ship it \(/ });
+  await showJob('job-harness-build-green');
+  ok(`${tag}no Ship it while staging runs another commit`, (await shipBtn().count()) === 0);
+  const setManifest = c =>
+    page.evaluate(async c => {
+      const m = JSON.parse(JSON.stringify(window.__db.system.manifest));
+      m.commit = c;
+      const db = await window.claude.use('db');
+      await db.collection('system').doc('manifest').set(m);
+    }, c);
+  const was = await page.evaluate(() => window.__db.system.manifest.commit);
+  await setManifest('abc1234def' + '0'.repeat(30));
+  await showJob('job-harness-build-failed');
+  ok(`${tag}no Ship it on a build that stopped before staging`, (await shipBtn().count()) === 0);
+  await showJob('job-harness-build-green');
+  ok(`${tag}Ship it names the commit on a build that is staging green at it`, (await shipBtn().count()) === 1);
+  await page
+    .locator('#ev-surf')
+    .first()
+    .screenshot({ path: `${shots}/ship-chip-${scheme}.png` });
+  const b4 = await count();
+  await shipBtn().click();
+  await page.waitForTimeout(150);
+  const ask = await page.locator('#ev-surf .ship-ask').textContent();
+  const mid = await count();
+  ok(
+    `${tag}the tap asks once, naming the commit and its task, and writes nothing yet`,
+    /^Ship abc1234 \(B-201\) to live\? This tap is your OK\.$/.test(ask) && mid.jobs.length === b4.jobs.length,
+    ask
+  );
+  await page.locator('#ev-surf button', { hasText: /^Ship$/ }).click();
+  await page.waitForTimeout(400);
+  const a4 = await count();
+  const sid = a4.jobs.find(k => !b4.jobs.includes(k));
+  const sj = sid ? await page.evaluate(i => window.__db.jobs[i], sid) : null;
+  const sf = await page.evaluate(n => window.__mcpCalls.filter(c => c[1] === 'fire_trigger')[n], b4.fires);
+  ok(
+    `${tag}Ship writes a ship job for that commit and task (his OK) and fires the builder with it`,
+    sj &&
+      sj.kind === 'ship' &&
+      sj.writer === 'page' &&
+      sj.commit === 'abc1234def' &&
+      JSON.stringify(sj.tasks) === '["B-201"]' &&
+      sj.brief === 'ship it' &&
+      sf &&
+      sf[2].text === `Job ${sid}\nship it abc1234`,
+    JSON.stringify({ sj, sf })
+  );
+  await showJob('job-harness-build-green');
+  ok(
+    `${tag}once sent, the card says so and offers no second tap`,
+    (await shipBtn().count()) === 0 && /Ship it sent for abc1234/.test(await page.locator('#ev-surf').textContent())
+  );
+  await setManifest(was);
 }
 // B-194: a second plan in force (a dosage plan), dated well ahead so it adds nothing to today.
 const later = new Date(DAYTIME.getTime() + 20 * 864e5).toISOString().slice(0, 10);

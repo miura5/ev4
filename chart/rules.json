@@ -26,9 +26,9 @@
  },
  {
   "id": "R-04",
-  "rule": "A live deploy needs Matt's explicit OK in the chat",
+  "rule": "A live deploy needs Matt's explicit OK: his words in the chat (--matt-ok), or his Ship it tap on the page (D-198): a ship job naming the build's commit, written by his page, with no result yet and under 24 hours old (--from-job <id>)",
   "decision": "D-083",
-  "task": null,
+  "task": "B-185",
   "command": "ship live (deploy live --matt-ok)",
   "check": "mattOk"
  },

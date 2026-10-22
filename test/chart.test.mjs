@@ -2309,3 +2309,63 @@ test("B-183: a plan job's trace line names what was filed from the doc, in ids, 
     'Filed from the design doc X: 1 tenet (D-9), 1 task (B-1).'
   );
 });
+
+// ------------------------------------------------------------------------------------------------ B-185 ship it
+test('B-185: ship live --from-job holds the fetched job to R-04 in its second form: each refusal, and the pass', () => {
+  const COMMIT = 'abc1234def5678abc1234def5678abc1234def5';
+  const NOW = Date.parse('2026-10-22T18:00:00Z');
+  const job = (x = {}) => ({
+    schema: 2,
+    writer: 'page',
+    at: '2026-10-22T17:00:00Z',
+    source: 'E.V. Home',
+    kind: 'ship',
+    title: 'Ship abc1234',
+    brief: 'ship it',
+    commit: 'abc1234',
+    tasks: ['B-201'],
+    ...x,
+  });
+  const check = (j, result = 'none', commit = COMMIT) =>
+    C.shipJobRefusals({ id: 'job-x', job: j, result, commit, now: NOW });
+  assert.deepEqual(check(job()), [], 'the pass: his tap, this commit, one shot, an hour old');
+  assert.match(check(job({ commit: 'fff0000' })).join(), /names fff0000, not this build's abc1234/);
+  assert.match(check(job(), 'exists').join(), /has a result already: one tap is one deploy/);
+  assert.match(check(job({ at: '2026-10-21T17:00:00Z' })).join(), /is 25 hours old; a ship job holds 24 hours/);
+  assert.match(check(job({ kind: 'build' })).join(), /is a build job, not a ship job/);
+  assert.match(check(job({ writer: 'builder' })).join(), /was written by builder, not his page/);
+  assert.match(check(null).join(), /no fetch of jobs\/job-x in this session/);
+  assert.match(check(job(), null).join(), /no jobresults read in this session/);
+  // The fetch and the result read, as the transcript holds them.
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-ship-'));
+  const f = path.join(dir, 'job-x.json');
+  fs.writeFileSync(f, JSON.stringify(job()));
+  const get = (id, col, text, isError) => [
+    JSON.stringify({
+      message: {
+        content: [
+          {
+            type: 'tool_use',
+            id,
+            name: 'ArtifactData',
+            input: { action: 'get', collection: col, doc_id: 'job-x', url: 'u' },
+          },
+        ],
+      },
+    }),
+    JSON.stringify({
+      type: 'user',
+      message: {
+        content: [{ type: 'tool_result', tool_use_id: id, is_error: !!isError, content: [{ type: 'text', text }] }],
+      },
+    }),
+  ];
+  const jl = [
+    ...get('a', 'jobs', `saved "${f}"`),
+    ...get('b', 'jobresults', 'Document "jobresults"/"job-x" not found.'),
+  ].join('\n');
+  assert.equal(C.shipJobFrom(jl, 'job-x').commit, 'abc1234');
+  assert.equal(C.jobResultSeen(jl, 'job-x'), 'none');
+  assert.equal(C.jobResultSeen(get('c', 'jobresults', `saved "${f}"`).join('\n'), 'job-x'), 'exists');
+  assert.equal(C.jobResultSeen('', 'job-x'), null);
+});
