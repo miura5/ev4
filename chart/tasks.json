@@ -3930,10 +3930,10 @@
  {
   "id": "B-221",
   "kind": "bug",
-  "title": "Bug (reported Oct 22): I've attached the UI mock-up and staging. are the sidebars supposed to be missing their shade; the open page doesn't have it's visual separation. are these the changes you're working towards in upcoming tasks? just let me know what's expected and unexpected. sorry to micromanage but I just want to make sure these aren't bugs; otherwise, if it's ended just let me know and I'll leave you to it",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "title": "The C shell's shade and pane, and what B-208 left out of the sidebar (Matt's staging look, Oct 22)",
+  "dod": "From 600 px the sidebar sits on the sunken ground and the view in a raised, outlined pane, in both themes (the shell's pre-paint style no longer covers them); the sidebar carries D-210's Today (today's three items) and Working (running jobs, one row each) sections, each absent while empty; the brand reads E.V. and her status word (online, working, in a session, something's ready), the readout code gone; the first section reads Conversation in the sidebar and E.V. on the phone's tab bar; a shell check holds the pane's ground against the sidebar's in both themes; the proof",
+  "milestone": "v4.5 ui",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -3944,6 +3944,10 @@
    "row": "v4 B-221: I've attached the UI mock-up and staging. are the sidebars supposed…",
    "why": "I've attached the UI mock-up and staging. are the sidebars supposed to be missing their shade; the open page doesn't have it's visual separation. are these the changes you're working towards in upcoming tasks? just let me know what's expected and unexpected. sorry to micromanage but I just want to make sure these aren't bugs; otherwise, if it's ended just let me know and I'll leave you to it",
    "notes": "Reported Oct 22 from build chat"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-22T22:36:35.014Z"
   }
  }
 ]
