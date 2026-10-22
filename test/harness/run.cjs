@@ -1035,13 +1035,13 @@ const ok = (name, cond, detail = '') => {
     await page.screenshot({ path: `${shots}/ev-${scheme}.png`, fullPage: false });
     ok(`[${scheme}] opens on E.V.`, (await page.isVisible('#p-ev')) && !(await page.isVisible('#p-today')));
     ok(
-      `[${scheme}] opening: large core above the greeting, top-bar core tucked away`,
+      `[${scheme}] opening: her stage above the greeting, her 24 px flower kept in the sidebar (D-213)`,
       await page.evaluate(
         () =>
           document.body.classList.contains('opening') &&
           !!document.querySelector('#hero svg.fl') &&
           document.querySelector('#hero').getBoundingClientRect().height > 150 &&
-          document.querySelector('#top-av').getBoundingClientRect().width < 4
+          (innerWidth < 600 || document.querySelector('#top-av svg.fl').getBoundingClientRect().width >= 20)
       )
     );
     ok(
@@ -1086,15 +1086,11 @@ const ok = (name, cond, detail = '') => {
     await page.waitForTimeout(100);
     ok(`[${scheme}] back on this page's build, the bar goes away`, !(await page.isVisible('#ev-update')));
     ok(
-      `[${scheme}] five tabs as icons in the top bar beside System, no dock (B-85)`,
+      `[${scheme}] five sections and System in the sidebar or the tab bar; no top bar, no dock (D-210)`,
       (await page.locator('#top .tabs .tab').count()) === 5 &&
         (await page.isVisible('#tab-system')) &&
         (await page.locator('.dock').count()) === 0 &&
-        (await page.evaluate(() => {
-          const t = document.getElementById('top').getBoundingClientRect().height,
-            lab = getComputedStyle(document.querySelector('#tab-today span')).position;
-          return t <= 54 && (innerWidth >= 900 ? lab === 'static' : lab === 'absolute');
-        }))
+        (await page.locator('header.top').count()) === 0
     );
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
     ok(`[${scheme}] no sideways scroll`, !overflow);
@@ -1618,7 +1614,8 @@ const ok = (name, cond, detail = '') => {
       t.dispatchEvent(new Event('scroll'));
     });
     await page.waitForTimeout(150);
-    await page.click('#brand');
+    // B-208 (D-210): her flower: the sidebar's from 600 px, the E.V. tab's on the phone.
+    await page.click((await page.isVisible('#brand')) ? '#brand' : '#tab-ev');
     await page.waitForTimeout(900);
     // Now is the bottom, or, when her current line and its card are taller than the captions, her line pinned at the top.
     const bn = await page.evaluate(() => {
@@ -2062,11 +2059,11 @@ const ok = (name, cond, detail = '') => {
     }
     dd = await dayDoc();
     ok(
-      'top bar stays one line while jobs run',
+      'her name and status stay one row while jobs run (D-210: the sidebar, or the header on the phone)',
       await page.evaluate(() => {
         const b = document.getElementById('brand').getBoundingClientRect(),
-          y = document.getElementById('tab-system').getBoundingClientRect();
-        return Math.abs((b.top + b.bottom) / 2 - (y.top + y.bottom) / 2) < 6;
+          h = document.getElementById('mh').getBoundingClientRect();
+        return b.width === 0 || (b.height <= 44 && h.height <= 52);
       }),
       await page.textContent('#readout')
     );

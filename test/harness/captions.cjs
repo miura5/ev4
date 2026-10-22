@@ -1034,8 +1034,9 @@ async function sideBySide(browser, left, right, out, vp) {
       const e1280 = await lay(1280),
         e900 = await lay(1024);
       ok(
-        '[desktop] with nothing beside her: no side column, her stage centred in the window (640 px at 1280, 512 at 1024)',
-        !e1280.sideShown && !e900.sideShown && Math.abs(e1280.coreX - 640) <= 2 && Math.abs(e900.coreX - 512) <= 2,
+        // B-208 (D-210): centred in the pane, which starts after the 212 px sidebar and ends 8 px from the edge.
+        '[desktop] with nothing beside her: no side column, her stage centred in the pane (742 px at 1280, 614 at 1024)',
+        !e1280.sideShown && !e900.sideShown && Math.abs(e1280.coreX - 742) <= 2 && Math.abs(e900.coreX - 614) <= 2,
         JSON.stringify({ e1280, e900 })
       );
       await page.evaluate(() => {
@@ -1088,7 +1089,7 @@ async function sideBySide(browser, left, right, out, vp) {
       const back = await lay(1280);
       ok(
         '[desktop] emptied, the column goes and her stage centres again',
-        !back.sideShown && Math.abs(back.coreX - 640) <= 2,
+        !back.sideShown && Math.abs(back.coreX - 742) <= 2,
         JSON.stringify(back)
       );
     }
@@ -1850,11 +1851,9 @@ async function sideBySide(browser, left, right, out, vp) {
       const v = await layout(page),
         desk = w >= 1024;
       ok(
-        `[breakpoints ${w}] ${desk ? 'the desktop layout: named tabs, the status line, the notes in the side column' : 'the phone stack: icon tabs, no status line, no side column, the notes under the stage'}`,
-        !v.sideways &&
-          (desk
-            ? !v.iconTabs && v.statusLine && v.notesPanel && v.sideColumn
-            : v.iconTabs && !v.statusLine && !v.notesPanel && !v.sideColumn && v.notesUnder),
+        // B-208: the sections' layout is the shell's (shell.cjs); the side column keeps 1024 px until B-210 moves it.
+        `[breakpoints ${w}] ${desk ? 'the notes in the side column' : 'no side column, the notes under the stage'}`,
+        !v.sideways && (desk ? v.notesPanel && v.sideColumn : !v.notesPanel && !v.sideColumn && v.notesUnder),
         JSON.stringify(v)
       );
       if ([735, 960].includes(w)) await page.screenshot({ path: `${shots}/breakpoints-${w}.png` });

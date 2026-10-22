@@ -18,6 +18,10 @@
       );
       document.querySelectorAll('section.panel').forEach(s => (s.hidden = s.id !== 'p-' + t));
       document.body.classList.toggle('on-ev', t === 'ev');
+      // B-208 (D-210): the pane's header names the view (the conversation is E.V. on the phone, as its tab says).
+      const head = $('mh-title'),
+        b = $('tab-' + t);
+      if (head && b) head.textContent = t === 'ev' ? (innerWidth < 600 ? 'E.V.' : 'Conversation') : b.title;
       if (was !== t) {
         window.scrollTo(0, t === 'ev' && was ? document.documentElement.scrollHeight : 0);
         enter($('p-' + t));
@@ -39,7 +43,13 @@
       clearTimeout(node.__enterT);
       node.__enterT = setTimeout(() => node.classList.remove('enter'), 250);
     }
-    tabs.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+    tabs.forEach(b =>
+      b.addEventListener('click', () => {
+        // B-208 (D-210): on the phone her flower is the E.V. tab; tapping her there, already on E.V., is tapping her.
+        if (b.dataset.tab === 'ev' && ui.tab === 'ev' && innerWidth < 600) return backToNow();
+        showTab(b.dataset.tab);
+      })
+    );
     $('brand').addEventListener('click', () => {
       // on E.V., the small core brings the large one back (and tucks it away again)
       if (ui.tab !== 'ev') {

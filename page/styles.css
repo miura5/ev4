@@ -681,3 +681,80 @@ button.tlink{all:unset;cursor:pointer;color:var(--accent-text);font-size:14px;pa
 /* B-183: the design kickoff, a long text to paste: a short left-aligned preview fading out, the Copy chip under it. */
 .bubble.to-copy,body.captions .msg.ev .bubble.to-copy,body.captions .msg.ev.current .bubble.to-copy{font-size:14px;line-height:1.5;text-align:left;max-height:9em;overflow:hidden;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent);color:var(--soft);opacity:1}
 .copy-chip{align-self:center;margin-top:6px}
+
+/* ============================================================ B-208 (D-210, D-225): the shell in direction C ==========
+   Linear's inverted L. Under 600 px: the pane is the page and the sections are a tab bar at the bottom, her flower as
+   the E.V. tab. 600 to 1199 px: a dim sidebar (her, the five sections, System at its foot) beside the raised pane.
+   From 1200 px: a details panel on the right too, holding the view's side column, present only while it has one (D-151).
+   The document still scrolls (the pane is drawn behind it), so every scroll, sticky and anchor keeps working. Reading
+   width is at most 680 px; extra width is margin. Rows and the view switch come with B-213, the motion with B-216. */
+:root{--side-w:0px;--right-w:0px;--pane-l:0px;--pane-r:0px;--mh-h:44px;--top-h:44px}
+html{background:var(--bg)}
+body{background:transparent}
+.wrap{max-width:680px}
+@media (max-width:1023px){.wrap{max-width:680px}}
+body:not(.on-ev) .wrap{max-width:680px}
+.top-in,.top-right{display:contents}
+/* the pane's header: the view's name, and the page's one status line */
+.mh{position:sticky;top:0;z-index:8;display:flex;align-items:center;gap:10px;min-height:var(--mh-h);
+  margin:0 calc(-1 * max(16px,env(safe-area-inset-right,0px))) 0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));
+  padding:calc(env(safe-area-inset-top,0px)) 16px 0;background:rgba(var(--ground),.96);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.mh-title{font:600 14px/1.3 var(--sans);color:var(--text);flex:0 0 auto}
+.mh .status{flex:1 1 auto;min-width:0;max-width:none;text-align:left;margin:0;font:500 12px var(--sans);color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mh .status:not(.ok){color:var(--att);white-space:normal}
+/* D-151: the status line speaks only of a problem or a note; Live stays off the header. */
+.mh .status.ok{display:none}
+.ptitle{display:none}
+/* the sidebar's rows */
+.side{z-index:9}
+.side .brand{flex:0 0 auto;display:flex;align-items:center;gap:8px;min-height:40px;padding:0 8px 0 6px;margin:0 0 6px;border-radius:8px;max-width:none}
+.side .brand:hover{background:var(--surface)}
+.side .top-av{width:24px;height:24px;flex:0 0 24px}
+body.on-ev.opening .side .top-av,body.on-ev.in-session .side .top-av,body.on-ev.core-big .side .top-av{opacity:1;transform:none;width:24px;flex-basis:24px;margin-right:0;overflow:visible}
+.side .wordmark{font-size:14px}
+.side .tabs{display:flex;flex-direction:column;align-items:stretch;gap:1px}
+.side .tabs .tab,.side .tab-sys{appearance:none;position:static;display:flex;align-items:center;justify-content:flex-start;gap:10px;width:100%;height:32px;min-width:0;padding:0 10px;border:0;border-radius:7px;background:transparent;color:var(--faint);font:500 13px var(--sans);cursor:pointer;flex:0 0 auto}
+.side .tabs .tab svg,.side .tab-sys svg{width:16px;height:16px;flex:0 0 16px}
+.side .tabs .tab span,.side .tab-sys span{position:static;width:auto;height:auto;overflow:visible;clip:auto;white-space:nowrap}
+.side .tabs .tab:hover,.side .tab-sys:hover{color:var(--text);background:var(--surface)}
+.side .tabs .tab[aria-selected="true"],.side .tab-sys[aria-current="page"]{color:var(--text);background:var(--bg);box-shadow:inset 0 0 0 1px var(--line);font-weight:500;border-color:transparent}
+.tab-her{display:none;width:24px;height:24px;flex:0 0 24px}
+/* Under 600 px: the tab bar at the bottom; her flower is the E.V. tab; System sits at the header's end. */
+@media (max-width:599px){
+  :root{--dock-h:60px}
+  .side{position:fixed;left:0;right:0;bottom:0;height:calc(60px + env(safe-area-inset-bottom,0px));padding:0 0 env(safe-area-inset-bottom,0px);background:var(--sunken);border-top:1px solid var(--line)}
+  .side .brand{display:none}
+  .side .tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));height:60px;gap:0}
+  .side .tabs .tab{flex-direction:column;justify-content:center;gap:3px;height:60px;padding:0;border-radius:0;font-size:11px;color:var(--faint)}
+  .side .tabs .tab[aria-selected="true"]{background:transparent;box-shadow:none;color:var(--text)}
+  .side .tabs #tab-ev svg{display:none}
+  .side .tabs #tab-ev .tab-her{display:grid;place-items:center}
+  .side .tab-sys{position:fixed;top:calc(2px + env(safe-area-inset-top,0px));right:max(6px,env(safe-area-inset-right,0px));width:40px;height:40px;padding:0;justify-content:center;z-index:10;border-radius:10px}
+  .side .tab-sys span{display:none}
+  .mh{padding-right:52px}
+  /* the surface sheet gives the tab bar its height back, so her line keeps its room */
+  body.captions #ev-surf{max-height:clamp(300px,calc(46dvh - var(--dock-h)),410px)}
+}
+/* From 600 px: the dim sidebar and the raised pane, drawn behind the document's flow. */
+@media (min-width:600px){
+  :root{--side-w:212px;--pane-l:calc(var(--side-w));--pane-r:8px}
+  html{background:var(--sunken)}
+  body{padding-left:calc(var(--pane-l) + 16px);padding-right:calc(var(--pane-r) + 16px)}
+  body::before{content:"";position:fixed;z-index:-1;top:8px;bottom:8px;left:var(--pane-l);right:var(--pane-r);background:var(--bg);border-radius:12px;box-shadow:0 0 0 1px var(--line)}
+  .side{position:fixed;left:0;top:0;bottom:0;width:var(--side-w);display:flex;flex-direction:column;padding:8px 8px 10px;overflow-y:auto;scrollbar-width:none}
+  .side .tab-sys{margin-top:auto}
+  .mh{top:8px;margin-top:8px;border-radius:12px 12px 0 0;padding-top:0}
+}
+@media (min-width:600px) and (max-width:699px){:root{--side-w:184px}}
+@media (min-width:1600px){:root{--side-w:236px}}
+/* Below 1200 px the view's side column reads under its main column, inside the 680 px column. */
+.cols,.col-main,.col-side{display:contents}
+@media (min-width:1024px){.cols,.col-main,.col-side{display:contents}}
+/* From 1200 px: the details panel on the right holds the view's side column, while the view has one. */
+@media (min-width:1200px){
+  :root{--right-w:320px}
+  body:has(section.panel:not([hidden]) > .cols > .col-side, section.panel:not([hidden]) > .panel:not([hidden]) > .cols > .col-side){--pane-r:calc(var(--right-w) + 16px)}
+  section.panel > .cols > .col-side,section.panel > .panel > .cols > .col-side{position:fixed;top:8px;bottom:8px;right:8px;width:var(--right-w);display:flex;flex-direction:column;gap:8px;overflow-y:auto;scrollbar-width:thin;z-index:5}
+  .col-main{display:flex;flex-direction:column;gap:14px;min-width:0}
+}
+@media (min-width:2000px){:root{--right-w:380px}}

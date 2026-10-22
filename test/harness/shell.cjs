@@ -168,51 +168,74 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
     }
     await page.close();
   }
-  // B-114 (D-159): the header changes only at 1024 px: icon tabs and no status line at 560, 735, 960 and 1023; named
-  // tabs and the status line at 1024 and 1470. Between 600 and 1024 the column is centred at most 660 px wide.
-  for (const w of [560, 735, 960, 1023, 1024, 1470]) {
+  // B-208 (D-210, D-225): three layouts by width. Under 600 px the sections are a tab bar along the bottom; 600 to 1199
+  // px a sidebar on the left beside the pane; from 1200 px the details panel on the right too (Today has a side
+  // column). The top bar is gone; the reading column is at most 680 px and centred in the pane; nothing scrolls sideways.
+  for (const w of [390, 560, 599, 600, 735, 960, 1199, 1200, 1706, 2560]) {
     const { page } = await open(browser, { viewport: { width: w, height: 860 } });
     await page.waitForTimeout(500);
     const v = await page
       .evaluate(() => {
-        const vis = e => !!e && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().width > 1;
         document.getElementById('tab-today').click();
-        const wrap = document.querySelector('.wrap').getBoundingClientRect();
+        const side = document.getElementById('top').getBoundingClientRect(),
+          wrap = document.querySelector('.wrap').getBoundingClientRect(),
+          tabs = [...document.querySelectorAll('#top .tabs .tab')].map(t => t.getBoundingClientRect()),
+          right = document.querySelector('#p-today .col-side'),
+          rr = right && right.firstElementChild && right.getBoundingClientRect(),
+          pane = parseFloat(getComputedStyle(document.body).paddingLeft);
         return {
-          iconTabs: [...document.querySelectorAll('#top .tabs .tab span')].every(s => !vis(s)),
-          statusLine: vis(document.getElementById('status')),
+          bar:
+            Math.round(side.bottom) === innerHeight &&
+            side.width === innerWidth &&
+            tabs.every(t => Math.abs(t.top - tabs[0].top) < 1),
+          sidebar:
+            side.left === 0 && side.top === 0 && side.height === innerHeight && side.width >= 180 && side.width <= 240,
+          right: !!rr && getComputedStyle(right).position === 'fixed' && rr.left >= wrap.right,
           wrapW: Math.round(wrap.width),
-          centred: Math.abs(wrap.left - (innerWidth - wrap.right)) <= 2,
+          centred:
+            Math.abs(
+              wrap.left - pane - (innerWidth - parseFloat(getComputedStyle(document.body).paddingRight) - wrap.right)
+            ) <= 2,
+          topBar: !!document.querySelector('header.top'),
           sideways: document.documentElement.scrollWidth > innerWidth + 1,
         };
       })
       .catch(e => ({ error: e.message }));
-    const desk = w >= 1024;
+    const want =
+      w < 600
+        ? 'the tab bar'
+        : w < 1200
+          ? 'the sidebar beside the pane'
+          : 'the sidebar, the pane and the details panel';
     ok(
-      `[${w}] ${desk ? 'the desktop header: named tabs and the status line' : 'one layout: icon tabs, no status line, the column centred at most 660 px'}`,
-      !v.sideways && (desk ? !v.iconTabs && v.statusLine : v.iconTabs && !v.statusLine && v.centred && v.wrapW <= 660),
+      `[${w}] ${want}; no top bar; the column at most 680 px, centred`,
+      !v.sideways &&
+        !v.topBar &&
+        v.wrapW <= 680 &&
+        v.centred &&
+        (w < 600 ? v.bar && !v.sidebar && !v.right : w < 1200 ? v.sidebar && !v.right : v.sidebar && v.right),
       JSON.stringify(v)
     );
     await page.close();
   }
-  // B-120 (D-156, D-157): the page title only from 1024 px; the status line reads Live, or the one problem by name.
+  // B-208 (D-151, D-210): the pane's header names the view; the status line shows only a problem, by name.
   for (const w of [390, 735, 1280]) {
     const { page } = await open(browser, { viewport: { width: w, height: 844 } });
     await page.waitForTimeout(500);
     await page.click('#tab-today');
     await page.waitForTimeout(300);
     const v = await page.evaluate(() => {
-      const t = document.querySelector('#p-today .ptitle'),
-        s = document.getElementById('status');
+      const s = document.getElementById('status');
       return {
-        title: !!t && getComputedStyle(t).display !== 'none' && t.getBoundingClientRect().height > 0,
+        head: document.getElementById('mh-title').textContent,
         status: s.textContent,
+        ok: s.classList.contains('ok'),
         shown: getComputedStyle(s).display !== 'none',
       };
     });
     ok(
-      `[${w}] ${w >= 1024 ? 'the page title and the status line Live' : 'no page title, no status line'}`,
-      w >= 1024 ? v.title && v.status === 'Live' && v.shown : !v.title && !v.shown,
+      `[${w}] the header names the view; the status line hides while all is well`,
+      v.head === 'Today' && (v.ok ? !v.shown : v.shown),
       JSON.stringify(v)
     );
     await page.close();

@@ -3714,11 +3714,11 @@
   "title": "The shell in C (D-210, D-225)",
   "dod": "Three layouts by width: under 600 the tab bar with her as the E.V. tab; 600 to 1199 the dim sidebar beside the raised pane; from 1200 the right panel too; the top bar and dock gone; content capped at 680 px; the proof",
   "milestone": "v4.5 ui",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-204"
   ],
-  "notes": "",
+  "notes": "Taken Oct 22.",
   "commit": null,
   "source": "plan BridyLzngcGUtpeLQorX1U"
  },

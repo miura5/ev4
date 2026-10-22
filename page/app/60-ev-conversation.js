@@ -700,11 +700,13 @@
     const heroOrb = CORE.make(coreStage().px, { follow: true, pointer: true });
     $('hero').append(heroOrb.el);
     // The top bar's core is tucked away (styles.css) while her stage core is up or a session runs; then it does not draw.
-    const topOrb = CORE.make(40, {
+    const topOrb = CORE.make(24, {
       follow: true,
       when: () => !document.body.matches('.on-ev.captions, .on-ev.opening, .on-ev.in-session, .on-ev.core-big'),
     });
     $('top-av').append(topOrb.el);
+    // B-208 (D-210, D-223): on the phone her flower is the E.V. tab, the same drawing at 24 px.
+    if ($('tab-her')) $('tab-her').append(CORE.make(24, { follow: true, when: () => innerWidth < 600 }).el);
     // A resize keeps the newest line in view when he was reading it (the layout steps at 1024 px move everything).
     addEventListener('resize', () => {
       heroOrb.resize(coreStage().px);
