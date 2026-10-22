@@ -97,10 +97,10 @@ const hold = (page, m) =>
   }, m);
 // 10 s of speech in the page: the reply pacing of the canvas, words through speak(), repeated until the time is up.
 const SPEECH = `async (secs) => { const C = window.EVApp.core; const text = 'Preload is the *stretch* before the squeeze. More filling, more stretch, a stronger contraction, up to a point. Done. Three preload questions are first in tonight’s review.';
-  const words = text.split(' '); const end = performance.now() + secs * 1000; window.__holdMood = 'speaking'; C.setMood('speaking'); C.resetStats(); let i = 0;
+  const words = text.split(' '); const end = performance.now() + secs * 1000; window.__holdMood = 'speaking'; C.setMood('speaking'); C.resetStats(); const hero = C.cores()[0], d0 = hero.draws, t0 = performance.now(); let i = 0;
   while (performance.now() < end) { const raw = words[i++ % words.length], w = raw.replace(/\\*/g, ''); C.speak(w, { emphasis: raw.startsWith('*') });
     await new Promise(r => setTimeout(r, 60 + w.length * 15 + (/[,;:]$/.test(w) ? 210 : 0) + (/[.?!]$/.test(w) ? 400 : 0))); }
-  C.speechEnd(); const s = C.stats(); return { frames: s.frames, draws: s.draws, redraws: s.redraws }; }`;
+  C.speechEnd(); const s = C.stats(); return { frames: s.frames, draws: s.draws, redraws: s.redraws, heroPerSec: (hero.draws - d0) / ((performance.now() - t0) / 1000) }; }`;
 
 (async () => {
   const browser = await chromium
@@ -179,7 +179,7 @@ const SPEECH = `async (secs) => { const C = window.EVApp.core; const text = 'Pre
     });
     ok(
       `[${scheme}] she moves on held frames: ${rate} drawings a second, at most ${F.clock.heldFps}`,
-      rate > 2 && rate <= F.clock.heldFps + 0.5,
+      rate > 2 && rate <= F.clock.heldFps,
       String(rate)
     );
     // A still idle draws nothing outside the falling petal (D-224): 2 s after the petal has fallen, before the next.
@@ -188,21 +188,20 @@ const SPEECH = `async (secs) => { const C = window.EVApp.core; const text = 'Pre
     const idle = await page.evaluate(async P => {
       const C = window.EVApp.core,
         c = C.cores()[0];
-      // wait until no petal is falling, then count drawings over 2 s with none due
+      // wait for a petal to fall and land: the next one is due everySec - forSec later, so 2 s after that are still.
+      const falling = () => c.svg.querySelector('g.fall').getAttribute('opacity') !== '0';
       const t0 = performance.now();
-      while (performance.now() - t0 < 14000) {
-        const g = c.svg.querySelector('g.fall');
-        if (g.getAttribute('opacity') === '0') break;
-        await new Promise(r => setTimeout(r, 100));
-      }
+      while (!falling() && performance.now() - t0 < 14000) await new Promise(r => setTimeout(r, 50));
+      while (falling() && performance.now() - t0 < 20000) await new Promise(r => setTimeout(r, 50));
+      await new Promise(r => setTimeout(r, 300));
       const a = c.draws;
       await new Promise(r => setTimeout(r, 2000));
       const fell = c.svg.querySelector('g.fall').getAttribute('opacity') !== '0';
       return { draws: c.draws - a, fell };
     }, F.moods.idle.fallingPetal);
     ok(
-      `[${scheme}] a still idle draws nothing (a falling petal aside)`,
-      idle.fell || idle.draws === 0,
+      `[${scheme}] a still idle draws nothing between falling petals (D-224)`,
+      !idle.fell && idle.draws === 0,
       JSON.stringify(idle)
     );
     // Each gesture: a screenshot while it plays; coral on an error only; settled within its duration.
@@ -306,7 +305,7 @@ const SPEECH = `async (secs) => { const C = window.EVApp.core; const text = 'Pre
           slowSharePct: r2((100 * slow) / Math.max(1, m.frames.length)),
           p95FrameMs: r2(p95(m.frames)),
           p95DrawMs: r2(p95(m.draws)),
-          redrawsPerSec: r2(m.redraws / B.speechSec),
+          redrawsPerSec: r2(m.heroPerSec),
           dpr: B.dpr,
           throttle: B.cpuThrottle,
           viewport: B.viewport,
