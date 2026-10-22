@@ -166,7 +166,9 @@ export function askOf(t) {
     .map(s => s.trim())
     .filter(Boolean)
     .at(-1);
-  const s = last || String(t.title || t.id).split(/[:;(]/)[0];
+  // A reported task's title starts "Bug (reported Oct 21): ..."; its ask is what follows, his words.
+  const title = String(t.title || t.id).replace(/^(Bug|Request) \(reported [^)]*\):\s*/, '');
+  const s = last || title.split(/[:;(]/)[0];
   return s.length > 300 ? s.slice(0, 299).replace(/\s+\S*$/, '') + '…' : s;
 }
 /** B-178 (D-196): system/yourturn's body: the Chart's Your turn by place, each task with its ask and status. */

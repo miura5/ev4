@@ -2182,6 +2182,7 @@ test('B-182: log --ask sets the one line Your turn asks, --choices a decision’
   const t = r.tasks.find(x => x.id === 'B-02');
   Object.assign(t, { status: 'blocked', notes: 'Long notes. The last sentence.', waitingOn: 'Matt' });
   assert.equal(C.askOf(t), 'The last sentence.');
+  assert.equal(C.askOf({ id: 'B-9', title: 'Request (reported Oct 21): a quieter chime; and later', notes: '' }), 'a quieter chime');
   C.applyLog(r, { _: ['log', 'B-02'], ask: 'Blue or red for the timer?', choices: 'Blue|Red' });
   assert.deepEqual(
     [t.ask, t.choices, C.askOf(t)],
