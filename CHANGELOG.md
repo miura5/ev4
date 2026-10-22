@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 21 | v4 staging deployed at 136bdad (20:42 CT), from eac0a02: * I asked E.V. what to bring to lab/class today. She said she didn’t… (B-189). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 21 | v4 staging deployed at eac0a02 (20:35 CT), from 3d1e1c3: The build ask on the page (B-180). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 21 | v4 staging deployed at 3d1e1c3 (20:16 CT), from 20c0a7f: • ⁃ I requested a study plan for the dosage calculations and received…; The builder's trace; The builder's steps (B-194, B-178, B-179). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 21 | v4 staging deployed at 20c0a7f (19:46 CT), from 1f41392: The builder's trace (B-178). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
