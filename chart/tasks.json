@@ -3829,11 +3829,11 @@
   "title": "The motion pass (D-222)",
   "dod": "Interface transitions at full frame rate with eases (view settle 0.16 s, folds 0.28 s, cap 0.45 s); a check fails any stepped timing outside her module; reduced motion gives the same end states; the proof",
   "milestone": "v4.5 ui",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-208"
   ],
-  "notes": "",
+  "notes": "Taken Oct 23; built on the b213 worktree branch.",
   "commit": null,
   "source": "plan BridyLzngcGUtpeLQorX1U"
  },
