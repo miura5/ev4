@@ -544,6 +544,78 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
     );
     await page.close();
   }
+  // B-228 (D-208): with the record 2 s slow, Enter adds three Today items and two dates: each lands in its list before
+  // the record answers, focus stays in a fresh row, and Esc leaves it. At 390 and 1280.
+  for (const w of [390, 1280]) {
+    const { page } = await open(browser, { viewport: { width: w, height: 844 } });
+    await page.waitForTimeout(700);
+    await page.evaluate(() => (window.__writeDelayMs = 2000));
+    await page.click('#tab-today');
+    await page.click('#today-add');
+    const added = [];
+    for (const t of ['Harness item one', 'Harness item two', 'Harness item three']) {
+      await page.keyboard.type(t);
+      const t0 = Date.now();
+      await page.keyboard.press('Enter');
+      const r = await page.evaluate(
+        t =>
+          new Promise(ok =>
+            requestAnimationFrame(() =>
+              ok({
+                listed: [...document.querySelectorAll('#today-list .ti-t')].some(x => x.textContent.trim() === t),
+                fresh:
+                  document.activeElement && document.activeElement.id === 'today-add' && !document.activeElement.value,
+              })
+            )
+          ),
+        t
+      );
+      added.push({ t, ...r, ms: Date.now() - t0 });
+    }
+    const listedBefore = await page.evaluate(() => (window.__writes || []).filter(x => x[1] === 'dayedits').length);
+    await page.keyboard.press('Escape');
+    const left = await page.evaluate(() => !document.activeElement || document.activeElement.id !== 'today-add');
+    ok(
+      `[${w}] Enter adds three Today items on their frame, the row fresh and focused each time; Esc leaves (D-208)`,
+      added.every(a => a.listed && a.fresh) && listedBefore === 0 && left,
+      JSON.stringify({ added, listedBefore, left })
+    );
+    await page.click('#tab-record');
+    await page.click('#seg-record [data-v="dates"]');
+    const day = await page.evaluate(() => {
+      const d = new Date(Date.now() + 3 * 864e5);
+      return d.toISOString().slice(0, 10);
+    });
+    await page.fill('#d-date', day);
+    const dates = [];
+    for (const t of ['Harness date A', 'Harness date B']) {
+      await page.fill('#d-title', t);
+      await page.press('#d-title', 'Enter');
+      const r = await page.evaluate(
+        t =>
+          new Promise(ok =>
+            requestAnimationFrame(() =>
+              ok({
+                listed: document.getElementById('dates').textContent.includes(t),
+                fresh:
+                  document.activeElement && document.activeElement.id === 'd-title' && !document.activeElement.value,
+              })
+            )
+          ),
+        t
+      );
+      dates.push({ t, ...r });
+    }
+    await page.keyboard.press('Escape');
+    const leftD = await page.evaluate(() => !document.activeElement || document.activeElement.id !== 'd-title');
+    ok(
+      `[${w}] Enter adds two dates on their frame, the title fresh and focused each time; Esc leaves (D-208)`,
+      dates.every(d => d.listed && d.fresh) && leftD,
+      JSON.stringify({ dates, leftD })
+    );
+    if (w === 390) await page.screenshot({ path: `${shots}/enter-dates-${w}.png` });
+    await page.close();
+  }
   await browser.close();
   for (const [s, n, d] of results) console.log(`${s}  ${n}${d && s === 'FAIL' ? '  -- ' + d : ''}`);
   const failed = results.filter(x => x[0] === 'FAIL').length;

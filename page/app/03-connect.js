@@ -103,8 +103,55 @@
       }
       bar.hidden = false;
     }
+    // B-228 (D-208): a list edit, an added item or an added date paints on its tap. A set write to one of these
+    // collections shows at once as if the record had it (paintSet), until the record carries that document at least as
+    // new, or the write is refused (unpaint).
+    const PAINT = new Set(['dayedits', 'dates', 'dateedits']);
+    const painting = new Map(); // `${collection}/${id}` -> data
+    const lastRaw = {};
+    function withPaintedRows(key, rows) {
+      if (!PAINT.has(key)) return rows;
+      let out = rows || [];
+      for (const [pk, data] of painting) {
+        const [c, id] = [pk.slice(0, pk.indexOf('/')), pk.slice(pk.indexOf('/') + 1)];
+        if (c !== key) continue;
+        const cur = out.find(r => r.id === id);
+        // caught up when the record holds the same document (an Edit keeps its first at, so at alone cannot tell)
+        if (cur && (same(cur, { id, ...data }) || String(cur.at || '') > String(data.at || ''))) painting.delete(pk);
+        else out = [...out.filter(r => r.id !== id), { id, ...data }];
+      }
+      return out;
+    }
+    const stable = v =>
+      Array.isArray(v)
+        ? '[' + v.map(stable).join(',') + ']'
+        : v && typeof v === 'object'
+          ? '{' +
+            Object.keys(v)
+              .sort()
+              .map(k => JSON.stringify(k) + ':' + stable(v[k]))
+              .join(',') +
+            '}'
+          : JSON.stringify(v);
+    const same = (a, b) => stable(a) === stable(b);
+    function paintSet(collection, id, data) {
+      if (!PAINT.has(collection)) return false;
+      painting.set(collection + '/' + id, data);
+      if (collection in lastRaw) changed(collection, lastRaw[collection]);
+      return true;
+    }
+    function unpaint(collection, id, data) {
+      const pk = collection + '/' + id;
+      if (painting.get(pk) !== data) return;
+      painting.delete(pk);
+      if (collection in lastRaw) changed(collection, lastRaw[collection]);
+    }
     function changed(key, value) {
       const k = NAME[key] || key;
+      if (PAINT.has(key)) {
+        lastRaw[key] = value;
+        value = withPaintedRows(key, value);
+      }
       if (key === 'system/manifest') {
         S.manifest = value;
         manifestChanged(value);

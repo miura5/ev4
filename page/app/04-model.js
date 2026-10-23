@@ -38,7 +38,16 @@
               (r.errors[0] ? r.errors[0].path + ' ' + r.errors[0].message : '')
           );
       }
-      if (w.op === 'set') return ref.set(w.data);
+      if (w.op === 'set') {
+        // B-228 (D-208): paints first where the page shows it at once; a refusal takes the paint back
+        const painted = paintSet(w.collection, w.id, w.data);
+        try {
+          return await ref.set(w.data);
+        } catch (e) {
+          if (painted) unpaint(w.collection, w.id, w.data);
+          throw e;
+        }
+      }
       return ref.update(w.data);
     }
     async function run(writes, okText) {

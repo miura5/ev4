@@ -215,16 +215,26 @@
           toast('That looks like it ' + w[0].why + '. Take that detail out first.');
           return;
         }
+        // B-228 (D-208): the item lands on Enter's frame and the row is fresh and focused for the next one; the
+        // button stays live (a disabled default button would stop the next Enter). A refusal puts his words back.
+        inp.value = '';
+        inp.focus();
         guard(
-          b,
+          null,
           async () => {
             const r = await editList(today, { action: 'add', text: t }, 'Matt');
-            inp.value = '';
-            b.disabled = false;
             if (r.note) toast('Already on the list');
           },
-          'Added to today'
+          'Added to today',
+          () => {
+            if (!inp.value) inp.value = t;
+          }
         );
+      });
+      inp.addEventListener('keydown', e => {
+        if (e.key !== 'Escape') return;
+        inp.value = '';
+        inp.blur();
       });
       return (addForm = f);
     }

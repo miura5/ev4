@@ -28,8 +28,12 @@
       const date = $('d-date').value,
         title = $('d-title').value.trim();
       if (!date || !title) return;
+      // B-228 (D-208): the date lands on Enter's frame and the title is fresh and focused for the next one (the date
+      // and kind stay, for a run of dates); a refusal puts the title back.
+      $('d-title').value = '';
+      $('d-title').focus();
       guard(
-        ev.submitter,
+        null,
         async () => {
           const r = await editDates(
             {
@@ -43,11 +47,18 @@
             'Matt'
           );
           if (r.note && r.note !== 'back on the calendar') throw new Error(r.note);
-          $('d-title').value = '';
           $('d-graded').checked = false;
         },
-        'Date added'
+        'Date added',
+        () => {
+          if (!$('d-title').value) $('d-title').value = title;
+        }
       );
+    });
+    $('date-add').addEventListener('keydown', e => {
+      if (e.key !== 'Escape') return;
+      $('d-title').value = '';
+      document.activeElement && document.activeElement.blur();
     });
     // B-197: nothing is said while he writes; on save a value that could be an identifier is looked at with the entry
     // around it, and one that could be a real patient's waits on his It's made up or Leave it out.
