@@ -45,6 +45,26 @@ export function copyRepo({ push = false } = {}) {
   return dir;
 }
 
+/** The ids of n open tasks in a copied repository (from copyRepo). The real record can have none open (the freeze
+ *  week, D-246, parks every feature task), so when it has fewer, the first blocked ones are reopened in the copy only,
+ *  committed and, when the copy has an origin, pushed. */
+export function openTasks(dir, n = 1) {
+  const file = path.join(dir, 'chart', 'tasks.json');
+  const tasks = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const open = tasks.filter(t => t.status === 'open');
+  if (open.length < n) {
+    for (const t of tasks.filter(t => t.status === 'blocked').slice(0, n - open.length)) {
+      t.status = 'open';
+      delete t.waitingOn;
+      open.push(t);
+    }
+    fs.writeFileSync(file, JSON.stringify(tasks, null, 1));
+    git(dir, 'commit', '-q', '-am', 'test: reopen tasks in the copy');
+    if (git(dir, 'remote').trim()) git(dir, 'push', '-q', 'origin', 'main');
+  }
+  return open.slice(0, n).map(t => t.id);
+}
+
 // B-153 (T-5): the record files a test reads. Another chat may write chart/ while npm test runs here, so every Chart
 // test reads one copy taken when the tests start: chart/ (with its import folder) and the three files generated from
 // it, all from the same moment. A lint test (chart.test.mjs) refuses a direct read of the real ones.

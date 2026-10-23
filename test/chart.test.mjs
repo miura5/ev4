@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { ROOT, copyRepo, chartCopy, directRecordReads } from './helpers.mjs';
+import { ROOT, copyRepo, chartCopy, directRecordReads, openTasks } from './helpers.mjs';
 import { build } from '../tools/build.mjs';
 import * as C from '../tools/chart.mjs';
 
@@ -368,11 +368,10 @@ test('B-93: log writes the record, regenerates BACKLOG.md and commits both, noth
         GIT_COMMITTER_EMAIL: 't@example.com',
       },
     });
+  // Any open task: the real record moves on as tasks are taken (B-43 was, Oct 20) and can have none open (D-246).
+  const open = { id: openTasks(dir)[0] };
+  assert.ok(open.id);
   const before = execFileSync('git', ['-C', dir, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
-  // Any open task with one record entry: the real record moves on as tasks are taken (B-43 was, Oct 20).
-  const rec = C.loadChart(dir);
-  const open = rec.tasks.find(t => t.status === 'open' && rec.tasks.filter(x => x.id === t.id).length === 1);
-  assert.ok(open);
   const out = run('log', open.id, '--note', 'a note from the test', '--trailer', 'Test-Trailer: yes');
   assert.match(out, new RegExp(`log ${open.id}: notes; committed [0-9a-f]{7}`));
   const show = execFileSync('git', ['-C', dir, 'show', '--stat', '--format=%B', 'HEAD'], { encoding: 'utf8' });
@@ -1868,13 +1867,10 @@ test('B-144: a recorded deploy is corrected by a note, kept as it was; the Chang
 
 test('B-145 (D-177): two chats log from two clones of one remote; each takes origin first and pushes after, and both entries land in order', () => {
   const a = copyRepo({ push: true });
+  const [one, two] = openTasks(a, 2);
   const origin = execFileSync('git', ['-C', a, 'remote', 'get-url', 'origin'], { encoding: 'utf8' }).trim();
   const b = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-second-chat-'));
   execFileSync('git', ['clone', '-q', '-b', 'main', origin, b]);
-  const open = JSON.parse(fs.readFileSync(path.join(a, 'chart', 'tasks.json'), 'utf8')).filter(
-    t => t.status === 'open'
-  );
-  const [one, two] = [open[0].id, open[1].id];
   const log = (dir, id, note) =>
     execFileSync('node', [path.join(dir, 'tools', 'chart.mjs'), 'log', id, '--note', note, '--root', dir], {
       encoding: 'utf8',
@@ -1910,9 +1906,9 @@ test('B-145 (D-177): two chats log from two clones of one remote; each takes ori
 
 test('B-147 (W-6): ship staging --done B-nn --commit <sha> records the task done and the deploy in one command, and CHANGELOG.md carries it', () => {
   const dir = copyRepo();
+  const task = openTasks(dir)[0];
   const head = execFileSync('git', ['-C', dir, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
   const before = JSON.parse(fs.readFileSync(path.join(dir, 'chart', 'tasks.json'), 'utf8'));
-  const task = before.find(t => t.status === 'open').id;
   const nDeploys = JSON.parse(fs.readFileSync(path.join(dir, 'chart', 'deploys.json'), 'utf8')).length;
   const log = [];
   const was = console.log;
