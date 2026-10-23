@@ -819,9 +819,14 @@
       // Mark where the current round's text ends whenever a tool runs; later text belongs to a later round.
       for (const t of tools) {
         const exec = t.execute;
-        t.execute = (input, ctx) => {
+        t.execute = async (input, ctx) => {
           pend.cut = pend.raw.length;
-          return exec(input, ctx);
+          WORK.collect = pend.wrote; // B-227: what this tool writes is what her reply changed
+          try {
+            return await exec(input, ctx);
+          } finally {
+            WORK.collect = null;
+          }
         };
       }
       if (toolMax > 0 && tools.length > toolMax)
@@ -874,6 +879,7 @@
         text: '',
         cards: [],
         changed: new Set(),
+        wrote: new Set(), // B-227: <collection>/<id> her tools wrote
         at,
         tier,
         pending: true,
@@ -881,6 +887,7 @@
         raw: '',
         cut: 0,
       };
+      const t0 = Date.now(); // B-227: her work line's duration runs from his send to her line
       const ctl = new AbortController();
       T.busy = true;
       T.ctl = ctl;
@@ -947,6 +954,10 @@
         ...(o.replyTo ? { replyTo: o.replyTo } : {}),
         ...(pend.jobId ? { jobId: pend.jobId } : {}),
         ...(error && error !== 'cancelled' ? { error } : {}),
+        // B-227 (D-232): a reply that changed something carries its work: how long it took and what it changed.
+        ...(pend.wrote.size
+          ? { work: { ms: Math.max(0, Date.now() - t0), changed: [...pend.wrote].slice(0, 10) } }
+          : {}),
       }).catch(() => {});
       summarize();
     }
@@ -954,7 +965,7 @@
     /** talk/memory as written: the stored fields with these changes, the whole document (an Edit, D-096). */
     function memoryEdit(data, at) {
       const { id, ...cur } = S.memory || {};
-      return { ...(S.memory ? cur : { ...envelope('E.V. Home', at), schema: 3, summary: '', upTo: null }), ...data };
+      return { ...(S.memory ? cur : { ...envelope('E.V. Home', at), schema: 4, summary: '', upTo: null }), ...data };
     }
     // Older turns fold into talk/memory so the context stays small (at most 1,200 characters).
     async function summarize() {

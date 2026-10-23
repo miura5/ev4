@@ -58,9 +58,17 @@
         }
         // B-177 (review): a job's line names its kind and its state (Build · queued), since the card's own head is
         // the surface's line.
+        // B-227 (D-232): queued or running, the line is its one-line plan (its title); done, how long it worked.
         if (c.type === 'job') {
           const j = jobSeen(S.jobs.find(x => x.id === c.id));
-          return j ? `${kindLabel(j.kind) || 'Background job'} · ${jobState(j).label}` : 'Background job';
+          if (!j) return 'Background job';
+          const kind = kindLabel(j.kind) || 'Background job',
+            st = jobState(j);
+          if (j.status === 'done' && j.startedAt && j.finishedAt)
+            return `${kind} · Worked for ${workFor(E.toMs(j.finishedAt) - E.toMs(j.startedAt))}`;
+          if (st.label === 'running') return j.title || `${kind} · running`;
+          if (st.label === 'queued') return `${j.title || kind} · queued`;
+          return `${kind} · ${st.label}`;
         }
         // B-189: a prep card's line is its day and how much of the check is ticked.
         if (c.type === 'prep') {

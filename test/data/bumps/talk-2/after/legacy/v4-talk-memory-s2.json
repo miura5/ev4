@@ -10,5 +10,5 @@
  "migratedFrom": "talk/memory",
  "migratedTo": "talk/memory",
  "migratedAt": "2026-10-22T01:00:00.000Z",
- "migration": "talk schema 2 to 3"
+ "migration": "talk schema 2 to 4"
 }

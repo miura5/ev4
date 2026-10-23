@@ -27,6 +27,8 @@
         T.busy,
         T.retry.has(m.id),
         m.greeting && m.prep ? prepNow(m.prep) : null,
+        m.work || null,
+        m.work ? T.workOpen.has(m.id) : null,
       ]);
       if (rec && rec.sig === sig) {
         rec.msg = m;
@@ -84,6 +86,8 @@
       }
       const cardsBox = el('div', 'msg-cards');
       body.append(cardsBox);
+      // B-227 (D-232): a reply that changed something carries its work line, opening in place to what it changed.
+      if (m.role !== 'matt' && m.work && !m.pending) body.append(workEl(m.work, m.id));
       // B-183 (D-197): a line with a copy card (the design kickoff) carries a Copy chip: the text as written, to paste.
       if (toCopy) {
         const cp = el('button', 'qchip copy-chip', 'Copy');

@@ -1,0 +1,25 @@
+{
+ "schema": 3,
+ "writer": "page",
+ "at": "2026-10-16T14:00:00Z",
+ "source": "E.V. Home",
+ "date": "2026-10-16",
+ "messages": {
+  "m-20261016-140000123-matt": {
+   "role": "matt",
+   "text": "A made-up question",
+   "at": "2026-10-16T14:00:00Z"
+  },
+  "m-20261016-140001456-ev": {
+   "role": "ev",
+   "text": "A made-up answer",
+   "at": "2026-10-16T14:00:01Z",
+   "tier": "local",
+   "replyTo": "m-20261016-140000123-matt"
+  }
+ },
+ "migratedFrom": "talk/2026-10-16",
+ "migratedTo": "talk/2026-10-16",
+ "migratedAt": "2026-10-22T01:00:00.000Z",
+ "migration": "talk schema 3 to 4"
+}

@@ -693,9 +693,10 @@ test('B-74 (D-128, D-130, D-133): the talk and sessions 1 to 2 bumps match their
       `${name}: a second run writes nothing`
     );
   }
-  // talk: every document moves to today's version (2, then 3 with B-178) with its messages as they were, memory included.
+  // talk: every document moves to today's version (2, then 3 with B-178, 4 with B-227) with its messages as they were,
+  // memory included.
   const talk = load(path.join(ROOT, 'test/data/bumps/talk-1/after')).talk;
-  assert.ok(talk.every(t => t.schema === 3));
+  assert.ok(talk.every(t => t.schema === 4));
   // sessions: a page session gains comments Some and its question checks format mc (a comment's mark gets none); a filed
   // session and a skills run gain no level; a level or a format already set is kept.
   const ss = load(path.join(ROOT, 'test/data/bumps/sessions-1/after')).sessions;
@@ -899,7 +900,8 @@ test('B-178 (D-195, D-196): the jobresults 1 to 2, talk 2 to 3 and system 1 to 2
   };
   for (const [name, col, from, to] of [
     ['jobresults-1', 'jobresults', 1, 2],
-    ['talk-2', 'talk', 2, 3],
+    ['talk-2', 'talk', 2, 4], // B-227: the chain runs on to 4
+    ['talk-3', 'talk', 3, 4], // B-227 (D-232): a message may carry work; the documents only move
     ['system-1', 'system', 1, 2],
   ]) {
     assert.ok(BUMPS[col][from], `${name}: a migration keyed by collection and version`);

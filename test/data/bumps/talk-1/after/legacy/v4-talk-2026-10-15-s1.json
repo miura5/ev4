@@ -33,5 +33,5 @@
  "migratedFrom": "talk/2026-10-15",
  "migratedTo": "talk/2026-10-15",
  "migratedAt": "2026-10-20T22:00:00.000Z",
- "migration": "talk schema 1 to 3"
+ "migration": "talk schema 1 to 4"
 }

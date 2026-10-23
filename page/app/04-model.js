@@ -25,7 +25,10 @@
     delete window.EVActions; // the two actors are all the page keeps: no other code path names its own caller
     const answersOf = set => (M && set && M.latest[set.id]) || {};
     /** One write, checked against its collection's schema first (the page refuses what the pipelines refuse). */
+    // B-227 (D-232): while one of her tools runs, the documents it writes are what her reply changed (her work line).
+    const WORK = { collect: null };
     async function write(w) {
+      if (WORK.collect && !['talk', 'jobs'].includes(w.collection)) WORK.collect.add(w.collection + '/' + w.id);
       const ref = db.collection(w.collection).doc(w.id);
       if (validate && w.op === 'set') {
         const r = validate(w.collection, w.data, { id: w.id });

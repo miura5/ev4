@@ -34,6 +34,7 @@
       waking: null,
       ticked: new Set(),
       retrying: new Set(), // B-200: jobs whose Try again was tapped and whose write has not landed yet
+      workOpen: new Set(), // B-227: the work lines opened in place (message ids, job:<id>)
       uploads: new Map(),
       reading: false,
     };

@@ -27,7 +27,7 @@ const traceArgs = {
   release: 'v4.4.0+1',
   task: 'B-190',
   commit: 'abc1234',
-  schemas: { jobresults: 2, talk: 3, system: 2 },
+  schemas: { jobresults: 2, talk: 4, system: 2 },
   yourturn: { commit: 'abc1234', groups: [] },
 };
 

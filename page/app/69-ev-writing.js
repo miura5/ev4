@@ -21,7 +21,7 @@
             op: 'set',
             collection: 'talk',
             id: date,
-            data: { ...envelope('E.V. Home', m.at), schema: 3, date, messages: { [id]: clean(body) } }, // B-178: talk 3
+            data: { ...envelope('E.V. Home', m.at), schema: 4, date, messages: { [id]: clean(body) } }, // B-178: talk 3; B-227: talk 4
           });
         T.created.add(date);
       });

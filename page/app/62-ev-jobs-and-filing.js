@@ -280,6 +280,101 @@
       i.dispatchEvent(new Event('input'));
     }
     /** B-200 (D-208): a job as he sees it: queued from his Try again tap until the record catches up or refuses. */
+    // ---------------------------------------------------------------- her work line (B-227, D-232)
+    // While a job runs, its line is its one-line plan (its title); once done, "Worked for 40 s". Opened in place, what
+    // she changed, each a link that opens its place. A reply whose tools changed something carries the same line.
+    function workFor(ms) {
+      const s = Math.max(1, Math.round((Number(ms) || 0) / 1000));
+      if (s < 60) return s + ' s';
+      const m = Math.round(s / 60);
+      if (m < 60) return m + ' min';
+      return Math.floor(m / 60) + ' h' + (m % 60 ? ' ' + (m % 60) + ' min' : '');
+    }
+    const openSeg = (tab, seg) => () => {
+      showTab(tab);
+      const b = seg && $('seg-' + tab) && $('seg-' + tab).querySelector('[data-v="' + seg + '"]');
+      if (b) b.click();
+    };
+    /** A changed document as {label, go} (go opens its place; href for a page outside), or null for one with none. */
+    function changeLink(ref) {
+      if (/^https:\/\//.test(ref)) return { label: ref.replace(/^https:\/\/(www\.)?/, '').slice(0, 60), href: ref };
+      const i = ref.indexOf('/'),
+        col = ref.slice(0, i),
+        id = ref.slice(i + 1);
+      const cut = t => String(t || id).slice(0, 70);
+      if (col === 'ideas') {
+        const x = (S.ideas || []).find(d => d.id === id);
+        return { label: 'Idea: ' + cut(x && x.text), go: openSeg('record', 'sessions') };
+      }
+      if (col === 'weakspots') {
+        const x = M.models.find(w => w.id === id);
+        return { label: 'Weak spot: ' + cut(x && x.topic), go: openSeg('progress', 'weak') };
+      }
+      if (col === 'dates' || col === 'dateedits') {
+        const x = S.dates.find(d => d.id === id);
+        return { label: 'Date: ' + cut(x && x.title), go: openSeg('record', 'dates') };
+      }
+      if (col === 'dayedits')
+        return { label: id === today ? 'Today’s list' : short(id) + '’s list', go: () => showTab('today') };
+      if (col === 'sets') {
+        const x = S.sets.find(d => d.id === id);
+        return {
+          label: 'Practice: ' + cut(x && x.title),
+          go: () => {
+            ui.openSet = id;
+            showTab('study');
+            setStudy('practice');
+            render();
+          },
+        };
+      }
+      return null;
+    }
+    /** What a job changed: its set, and the pages it made outside (a Claude Doc, a shared page). */
+    function jobChanges(j) {
+      const r = j.result || {};
+      return [
+        ...(r.setId ? ['sets/' + r.setId] : []),
+        ...[r.docUrl, r.pageUrl].filter(u => /^https:\/\//.test(u || '')),
+      ];
+    }
+    /** The work line: one line, "Worked for <duration>", opening in place to the changes as links. */
+    function workEl(work, key) {
+      const box = el('div', 'work');
+      const open = T.workOpen.has(key);
+      const links = (work.changed || []).map(changeLink).filter(Boolean);
+      const line = el('button', 'fold-line work-line', 'Worked for ' + workFor(work.ms));
+      line.type = 'button';
+      line.setAttribute('aria-expanded', String(open && links.length > 0));
+      if (!links.length) line.disabled = true;
+      line.addEventListener('click', () => {
+        if (T.workOpen.has(key)) T.workOpen.delete(key);
+        else T.workOpen.add(key);
+        render();
+      });
+      box.append(line);
+      if (open && links.length) {
+        const ul = el('ul', 'list work-changes');
+        for (const l of links) {
+          const li = el('li');
+          if (l.href) {
+            const a = el('a', 'tlink', l.label);
+            a.href = l.href;
+            a.target = '_blank';
+            a.rel = 'noopener';
+            li.append(a);
+          } else {
+            const b = el('button', 'tlink', l.label);
+            b.type = 'button';
+            b.addEventListener('click', l.go);
+            li.append(b);
+          }
+          ul.append(li);
+        }
+        box.append(ul);
+      }
+      return box;
+    }
     function jobSeen(j) {
       return j && T.retrying.has(j.id) ? { ...j, status: 'queued', fired: null, result: null } : j;
     }

@@ -11,7 +11,7 @@
    "worker",
    "builder"
   ],
-  "schema": 3,
+  "schema": 4,
   "documents": {
    "memory": "#/$defs/memory"
   }
@@ -20,7 +20,7 @@
  "type": "object",
  "properties": {
   "schema": {
-   "const": 3
+   "const": 4
   },
   "writer": {
    "enum": [
@@ -123,6 +123,29 @@
        "quote"
       ],
       "additionalProperties": false
+     },
+     "work": {
+      "type": "object",
+      "description": "B-227 (D-232): her work line: how long the reply took (ms, from his send to her line) and the documents it changed (<collection>/<id>, each opening its place on the page)",
+      "properties": {
+       "ms": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "changed": {
+        "type": "array",
+        "maxItems": 10,
+        "items": {
+         "type": "string",
+         "pattern": "^[a-z]+/.+"
+        }
+       }
+      },
+      "required": [
+       "ms",
+       "changed"
+      ],
+      "additionalProperties": false
      }
     },
     "required": [
@@ -148,7 +171,7 @@
    "type": "object",
    "properties": {
     "schema": {
-     "const": 3
+     "const": 4
     },
     "writer": {
      "const": "page"

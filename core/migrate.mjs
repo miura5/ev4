@@ -520,6 +520,9 @@ export const BUMPS = {
     // B-178 (D-195): the builder appends its trace line as E.V. (and writes the day's document when it is the first);
     // every document before it was the page's or the worker's, so it only moves to the new version.
     2: d => ({ data: { ...d, schema: 3 }, also: [] }),
+    // B-227 (D-232): her message may carry work (how long the reply took and what it changed); every message before it
+    // had none, so talk/<date> and talk/memory only move to the new version.
+    3: d => ({ data: { ...d, schema: 4 }, also: [] }),
   },
   jobresults: {
     // B-178 (D-195): the builder writes a builder job's result, which may name its task and staging commit; every

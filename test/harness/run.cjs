@@ -522,6 +522,154 @@ for (const [id, task, commit, text, error] of [
     error,
   };
 }
+/** B-227 (D-232), at the width it runs: a running job's line is its plan; a finished one is one line with how long it
+ * worked, opening in place to what it changed, each a link to its place; a reply that filed an idea carries the same. */
+async function workLineChecks(page, scheme) {
+  const tag = `[${scheme}] `;
+  await page.click('#tab-ev');
+  // The two jobs, planted now through the record (a seed would change the briefing and the Working rows earlier on).
+  await page.evaluate(async () => {
+    const db = await window.claude.use('db');
+    const iso = ms => new Date(Date.now() + ms).toISOString();
+    const env = (writer, at) => ({ schema: 2, writer, at, source: writer === 'page' ? 'E.V. Home' : 'worker x' });
+    for (const [id, title, res] of [
+      [
+        'job-harness-work-run',
+        'Writing 5 questions on what’s due soonest',
+        { status: 'running', startedAt: iso(-60e3), finishedAt: null, result: null },
+      ],
+      [
+        'job-harness-work-done',
+        'Practice set: fluids, 10 questions',
+        {
+          status: 'done',
+          startedAt: iso(-10 * 60e3),
+          finishedAt: iso(-10 * 60e3 + 40e3),
+          result: { text: 'Ten questions on fluids.', setId: 'drill-E4-ch39' },
+        },
+      ],
+    ]) {
+      await db
+        .collection('jobs')
+        .doc(id)
+        .set({
+          ...env('page', iso(-11 * 60e3)),
+          kind: 'practice-set',
+          title,
+          brief: title,
+          fired: { at: iso(-11 * 60e3), ok: true },
+        });
+      await db
+        .collection('jobresults')
+        .doc(id)
+        .set({
+          ...env('worker', iso(-30e3)),
+          release: window.__db.system.manifest.release,
+          ...res,
+          message: null,
+          error: null,
+        });
+    }
+  });
+  await page.waitForTimeout(200);
+  await page.evaluate(() => {
+    window.__chatPre = '';
+    window.__chatScript = [
+      { tool: 'show_card', input: { type: 'job', id: 'job-harness-work-run' } },
+      { tool: 'show_card', input: { type: 'job', id: 'job-harness-work-done' } },
+    ];
+    window.__chatReply = 'Here are both.';
+  });
+  await send(page, 'How are my practice jobs going?');
+  await page.waitForTimeout(400);
+  const lines = await page.evaluate(() =>
+    [...document.querySelectorAll('#ev-surf .sf-head, #ev-surf .sf-row')].map(b => ({
+      t: b.textContent.trim(),
+      h: Math.round(b.getBoundingClientRect().height),
+    }))
+  );
+  const run = lines.find(l => /Writing 5 questions/.test(l.t)),
+    done = lines.find(l => /Worked for/.test(l.t));
+  ok(
+    `${tag}B-227: a running job's line is its one-line plan`,
+    !!run && run.t === 'Writing 5 questions on what’s due soonest' && run.h <= 44,
+    JSON.stringify(lines)
+  );
+  ok(
+    `${tag}B-227: a finished job is one line, at most 44 px, with how long it worked`,
+    !!done && /^Practice set · Worked for 40 s$/.test(done.t) && done.h <= 44,
+    JSON.stringify(lines)
+  );
+  await page.locator('#ev-surf .sf-row', { hasText: 'Worked for' }).click();
+  await page.waitForTimeout(200);
+  await page.locator('#ev-surf .work-line').click();
+  await page.waitForTimeout(200);
+  const link = page.locator('#ev-surf .work-changes .tlink').first();
+  const label = (await link.count()) ? (await link.textContent()).trim() : '';
+  await page
+    .locator('#ev-surf')
+    .first()
+    .screenshot({ path: `${shots}/work-job-${scheme}.png` });
+  if (label) await link.click();
+  await page.waitForTimeout(300);
+  const opened = await page.evaluate(() => ({
+    study: !document.getElementById('p-study').hidden,
+    practice: !document.getElementById('study-practice').hidden,
+  }));
+  ok(
+    `${tag}B-227: opened, the job's change is a link that opens its place`,
+    /^Practice: /.test(label) && opened.study && opened.practice,
+    JSON.stringify({ label, opened })
+  );
+  // A reply whose tool filed an idea: its message carries how long it took and the idea, which opens Record › Sessions.
+  await page.click('#tab-ev');
+  await page.evaluate(() => {
+    window.__chatPre = '';
+    window.__chatScript = [
+      { tool: 'save_idea', input: { text: 'Harness work idea: albumin holds fluid in the vessels', kind: 'learning' } },
+    ];
+    window.__chatReply = 'Saved that idea.';
+  });
+  await send(page, 'Save this: albumin holds fluid in the vessels');
+  await page.waitForTimeout(500);
+  const m = (await msgs(page)).filter(x => x.role === 'ev').pop();
+  ok(
+    `${tag}B-227: the reply that filed an idea stores its work (ms and the idea it changed)`,
+    !!m &&
+      m.work &&
+      Number.isInteger(m.work.ms) &&
+      m.work.changed.length === 1 &&
+      /^ideas\/idea-/.test(m.work.changed[0]),
+    JSON.stringify(m && m.work)
+  );
+  const wl = page.locator('#thread .msg.ev').last().locator('.work-line');
+  const wlh = (await wl.count()) ? await wl.evaluate(e => Math.round(e.getBoundingClientRect().height)) : null;
+  ok(
+    `${tag}B-227: her line carries one work line, at most 44 px`,
+    wlh != null && wlh <= 44 && /^Worked for \d+ s$/.test((await wl.textContent()).trim()),
+    String(wlh)
+  );
+  if (wlh != null) await wl.click();
+  await page.waitForTimeout(200);
+  const il = page.locator('#thread .msg.ev').last().locator('.work-changes .tlink').first();
+  const ilabel = (await il.count()) ? (await il.textContent()).trim() : '';
+  await page
+    .locator('#thread .msg.ev')
+    .last()
+    .screenshot({ path: `${shots}/work-reply-${scheme}.png` });
+  if (ilabel) await il.click();
+  await page.waitForTimeout(300);
+  const rec = await page.evaluate(() => ({
+    record: !document.getElementById('p-record').hidden,
+    sessions: !document.getElementById('record-sessions').hidden,
+  }));
+  ok(
+    `${tag}B-227: opened, the idea is a link that opens Record, Sessions`,
+    /^Idea: Harness work idea/.test(ilabel) && rec.record && rec.sessions,
+    JSON.stringify({ ilabel, rec })
+  );
+  await page.click('#tab-ev');
+}
 /** B-180, at the width it runs: the build card's states, the build ask (no model call, the job, the builder fired by
  * id with the two-line text, both lines in talk) and an identifier that holds a build ask with nothing written. */
 // B-191: an open set closes back to the list with its answers kept; Back and Next walk it in its order, an answered
@@ -752,7 +900,7 @@ async function buildAskChecks(page, scheme) {
   const surf = await page.locator('#ev-surf').textContent();
   ok(
     `${tag}the new build's card says it is queued for the builder`,
-    /^Build · queued/.test(surf.trim()) && /Sent to the builder at/.test(surf),
+    /^bug: the timer resets when I switch tabs · queued/.test(surf.trim()) && /Sent to the builder at/.test(surf), // B-227: its plan
     surf.slice(0, 200)
   );
   await page.screenshot({ path: `${shots}/build-ask-${scheme}.png` });
@@ -1345,6 +1493,7 @@ const ok = (name, cond, detail = '') => {
       await page.click('#tab-ev');
       await page.waitForTimeout(150);
       await buildAskChecks(page, scheme); // B-180
+      await workLineChecks(page, scheme); // B-227
       await page.close();
       continue;
     }
@@ -1615,7 +1764,7 @@ const ok = (name, cond, detail = '') => {
       const t = await surf.textContent();
       ok(
         `a builder job's card (${id}) names its kind and the builder, with no Try again`,
-        (id.includes('build') ? /^Build · queued/.test(t.trim()) : /^Your reply · failed/.test(t.trim())) &&
+        (id.includes('build') ? /^build: .+ · queued/.test(t.trim()) : /^Your reply · failed/.test(t.trim())) && // B-227: a queued job reads its plan
           want.test(t) &&
           (await surf.locator('button', { hasText: 'Try again' }).count()) === 0,
         t.slice(0, 300)
@@ -3430,6 +3579,7 @@ const ok = (name, cond, detail = '') => {
       await page.waitForTimeout(200);
       await page.setViewportSize({ width: 390, height: 844 });
     }
+    await workLineChecks(page, scheme); // B-227: last, since its links leave a set open in Study
     ok('no page errors after interactions', errors.length === 0, errors.join(' | '));
     // Visitor
     const v = await browser.newPage({ viewport: { width: 390, height: 700 } });

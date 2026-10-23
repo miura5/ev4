@@ -942,3 +942,6 @@ body[data-view="today"] #side-today{display:none}
 .sk-tog::after{transition-duration:.16s}
 .sk-tog[aria-expanded="true"]::after{transition-duration:.28s}
 body.captions.her-folded .hero{transition-duration:.16s}
+/* B-227 (D-232): her work line, one quiet line that opens in place to what she changed */
+.work{margin-top:2px}.work-line{font-size:calc(13px * var(--ts));padding:2px 0}.work-line:disabled{cursor:default}.work-line:disabled::after{content:''}
+.work-changes{margin:2px 0 0}.work-changes li{padding:4px 0;border:0}.work-changes .tlink{text-align:left}

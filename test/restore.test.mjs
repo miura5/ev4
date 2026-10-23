@@ -112,7 +112,7 @@ test('B-163: a schema-1 backup restores into a throwaway store, migrated to this
   for (const c of ['days', 'exams', 'ideas', 'planedits', 'sets', 'talk', 'weeks'])
     assert.match(
       r.plan.detail,
-      new RegExp(`\\b${c} schema 1 to ${{ days: 4, sets: 3, talk: 3, weeks: 4 }[c] || 2} \\(\\d+\\)`),
+      new RegExp(`\\b${c} schema 1 to ${{ days: 4, sets: 3, talk: 4, weeks: 4 }[c] || 2} \\(\\d+\\)`),
       c
     );
   // Migrated, the backup is the fixture again, but for what schema 1 never held: the fixture day's shadow pick (B-68)

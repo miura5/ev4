@@ -67,7 +67,7 @@ test('B-178: trace prints exactly three calls, each a trace-row write, and names
   const day = JSON.parse(fs.readFileSync(fresh.calls[1].file_path, 'utf8'));
   assert.deepEqual(
     [fresh.calls[1].action, fresh.calls[1].if_version, day.schema, day.writer],
-    ['set', undefined, 3, 'builder']
+    ['set', undefined, 4, 'builder']
   );
   assert.ok(
     validate('talk', day, { id: '2026-10-21' }).ok,

@@ -524,6 +524,9 @@
         h.append(el('h2', null, kindLabel(j.kind) || 'Background job'), chip(st.label, st.v));
         box.append(h);
         box.append(el('p', 'job-title', j.title || j.id));
+        // B-227 (D-232): done, how long it worked, opening in place to what it changed.
+        if (j.status === 'done' && j.startedAt && j.finishedAt)
+          box.append(workEl({ ms: E.toMs(j.finishedAt) - E.toMs(j.startedAt), changed: jobChanges(j) }, 'job:' + j.id));
         const r = j.result || {};
         if (j.status === 'done' && r.retro) box.append(retroList(r.retro));
         if (j.kind === 'build' && (j.status === 'done' || j.status === 'failed')) box.append(buildList(j));

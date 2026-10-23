@@ -1271,7 +1271,7 @@ export const AGENT_FOLDS = {
             id: ctx.date,
             data: {
               ...EV.envelope('worker', ctx.source, ctx.now),
-              schema: 3, // B-178: talk schema 3
+              schema: 4, // B-178: talk schema 3; B-227: 4
               date: ctx.date,
               messages: { [key]: message },
             },
