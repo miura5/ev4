@@ -1,5 +1,17 @@
 [
  {
+  "id": "D-249",
+  "date": "Oct 23",
+  "title": "Study's Plan is a tab at every width, like Review and Practice; the pane shows one view at a time in its centred reading column, and the right panel keeps the open set's questions. Supersedes the plan beside Review and Practice from 1024 px (B-121, D-158 for Study).",
+  "why": "Matt, Oct 23: from 1024 px the Plan tab vanished and the plan beside the question squeezed it off centre; Linear keeps one reading column and the same tabs at every width",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [
+   "D-158"
+  ],
+  "source": "log"
+ },
+ {
   "id": "D-248",
   "date": "Oct 23",
   "title": "Freeze week ships staging per batch: one commit and npm run smoke per fix, then one check --touched and one ship staging for the batch; live stays on Matt's ship it",

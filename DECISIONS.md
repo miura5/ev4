@@ -6,6 +6,7 @@ in the v2 doc's decision log.
 
 | Id | Date | Decision | Why | Status | Links |
 | --- | --- | --- | --- | --- | --- |
+| D-249 | Oct 23 | Study's Plan is a tab at every width, like Review and Practice; the pane shows one view at a time in its centred reading column, and the right panel keeps the open set's questions. Supersedes the plan beside Review and Practice from 1024 px (B-121, D-158 for Study). | Matt, Oct 23: from 1024 px the Plan tab vanished and the plan beside the question squeezed it off centre; Linear keeps one reading column and the same tabs at every width | accepted | amends D-158 |
 | D-248 | Oct 23 | Freeze week ships staging per batch: one commit and npm run smoke per fix, then one check --touched and one ship staging for the batch; live stays on Matt's ship it | Matt, Oct 23: the touched check takes about 13 minutes for any styles.css change, since it touches every page harness | accepted | amends D-246 |
 | D-247 | Oct 23 | From 1024 px her current line is 20 px and her earlier lines 14 px, the direction C prototype's sizes; the phone keeps 20 and 15. Amends D-122's desktop sizes. | Matt, Oct 23: at his laptop size on live the 24 px line is way too big and hard to read; the prototype he chose C from (D-210) reads right | accepted | amends D-122 |
 | D-246 | Oct 23 | Freeze week: bugs and interface polish only, from Oct 23 until Matt ends it in a build chat. | The features exist and the polish has to come from use. No date gates it; it ends when Matt says so. | accepted |  |
