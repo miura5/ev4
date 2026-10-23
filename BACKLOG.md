@@ -29,7 +29,7 @@ Status: `open` · `in progress` · `blocked` · `done`. A task opens when every 
 The morning after an exam, that exam's weak spots are still open and overdue, so they fill the whole review. They're only parked that evening.
 High
 The day after Exam N, your review is all Exam N and none of the next exam.
-Freeze Done when: The morning after an exam, its weak spots are not in the review set or the day's list (the morning's pick skips a spot whose exam has passed, as auto-park will that evening); a core test plants the day after an exam; proven by a staging morning run read back | — | v4.5.x ops | open | Matt, Oct 23: exception D-251; own batch after the UI batch, one at a time, each a practice rep |
+Freeze Done when: The morning after an exam, its weak spots are not in the review set or the day's list (the morning's pick skips a spot whose exam has passed, as auto-park will that evening); a core test plants the day after an exam; proven by a staging morning run read back | — | v4.5.x ops | in progress | rule touched: invariant 4, the review set and the day's list pick the same weak spots |
 | B-253 | Bug (reported Oct 23): 4
 Making a parked weak spot active again is undone that night by auto-park.
 High
