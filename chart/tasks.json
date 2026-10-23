@@ -3799,12 +3799,12 @@
   "title": "System in C, with the theme toggle",
   "dod": "System follows row 11's pattern; the toggle (system, light, dark) stored per device; the proof",
   "milestone": "v4.5 ui",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-204",
    "B-213"
   ],
-  "notes": "",
+  "notes": "Taken Oct 23; built on the b213 worktree branch.",
   "commit": null,
   "source": "plan BridyLzngcGUtpeLQorX1U"
  },
