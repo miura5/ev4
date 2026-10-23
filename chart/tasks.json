@@ -4514,5 +4514,24 @@
    "at": "2026-10-23T18:10:46.770Z"
   },
   "waitingOn": "Matt"
+ },
+ {
+  "id": "B-252",
+  "kind": "bug",
+  "title": "Bug (reported Oct 23): 3.\nThe morning after an exam, that exam's weak spots are still open and overdue, so they fill the whole review. They're only parked that evening.\nHigh\nThe day after Exam N, your review is all Exam N and none of the next exam.\nFreeze",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "3.\nThe morning after an exam, that exam's weak spots are still open and overdue, so they fill the whole review. They're only parked that evening.\nHigh\nThe day after Exam N, your review is all Exam N and none of the next exam.\nFreeze",
+  "reportedAt": "2026-10-23T18:58:39.146Z",
+  "board": {
+   "row": "v4 B-252: 3. The morning after an exam, that exam's weak spots are still open…",
+   "why": "3.\nThe morning after an exam, that exam's weak spots are still open and overdue, so they fill the whole review. They're only parked that evening.\nHigh\nThe day after Exam N, your review is all Exam N and none of the next exam.\nFreeze",
+   "notes": "Reported Oct 23 from build chat"
+  }
  }
 ]
