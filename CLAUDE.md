@@ -110,6 +110,12 @@ and the calls it prints, done or not, so the page shows what happened. A run sta
 does that one thing and ends: it takes no other task and never fires the builder again (Oct 21: a reply run's
 `continue` started a run that would have taken a build chat's next task).
 
+## Trimmer runs
+
+A session told "You are a trimmer" follows `docs/trim-brief.md` (D-259): one cut per branch and pull request, nothing
+written to `chart/`, no deploys, and the Every session steps don't apply. A build chat merges a trim only on Matt's OK,
+as the brief says.
+
 ## Scheduled pipeline runs
 
 A session started by one of E.V.'s own scheduled tasks (its prompt begins "E.V. <pipeline> run" and names one record) is
