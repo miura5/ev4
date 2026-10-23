@@ -18,7 +18,7 @@
   "date": "Oct 23",
   "title": "When Matt's instruction conflicts with how shipping works (a deploy is one commit, the gates bind to it, ship works from main's head), the build chat stops and sets out the options with their cost in time and risk before acting, unless one path is plainly cheaper and reversible.",
   "why": "Oct 23: asked to ship the UI batch while B-252 was in its check, the freeze chat reverted B-252 and restarted the checks without saying that cost about as much as waiting; a costly path that could reasonably go either way is Matt's call",
-  "status": "proposed",
+  "status": "accepted",
   "supersedes": [],
   "amends": [],
   "source": "log"
