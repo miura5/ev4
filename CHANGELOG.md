@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 22 | v4 staging deployed at 2893f84 (20:38 CT), from 33ba36f: Study sessions in C (B-211). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 22 | v4 staging deployed at 33ba36f (20:07 CT), from 70087cf: The E.V. tab in C; Surfaces, jobs and your turn in C (B-209, B-210). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 22 | v4 staging deployed at 70087cf (18:04 CT), from e195a36: The E.V. tab in C; I've attached the UI mock-up and staging. are the sidebars supposed… (B-209, B-221). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 22 | v4 staging deployed at e195a36 (17:17 CT), from b440288: The shell in C (B-208). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
