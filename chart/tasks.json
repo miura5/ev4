@@ -4101,7 +4101,7 @@
   "depends": [
    "B-231"
   ],
-  "notes": "Rests on D-236 (triage marks weak spots: schema 2 gains proposed, words, links and the accept, snooze and decline events), still proposed, as are D-242 (the four outcomes) and D-232 (her work line, which B-227 built on). The question, a decision in a build chat: accept D-236, D-242 and D-232 as written?",
+  "notes": "Session summary, Oct 23: v4.4.3 live GREEN (B-230). Done on staging: B-231 typed links, B-201 build recap, B-227 work line; B-170 step one (shadow aim) proven by staging morning and weekly runs. Staging days 3 to 4 and talk 3 to 4 applied. Waiting on Matt: B-233 (spec.actions), B-44 and B-73 (definitions of done), B-170 (where the shadow week runs), B-202 (key probe), B-232 (accept D-236, D-242, D-232), B-27 (Mac). Everything else open depends on those.",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z",
   "waitingOn": "Matt"
