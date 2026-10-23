@@ -4186,7 +4186,7 @@
    "B-236",
    "B-237"
   ],
-  "notes": "",
+  "notes": "Matt, Oct 23: the hand-off says v4.6.0 (and D-234), but under D-173 the next minor after v4.4.x is v4.5.0. Ask Matt which tag before ship live --minor; do not choose.",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  }
