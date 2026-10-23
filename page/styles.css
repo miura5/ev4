@@ -795,3 +795,10 @@ body:not(.on-ev) .mh .cap-now{display:none}
 @media (min-width:600px){.side .tabs .tab .lab-bar{display:none}.side .tabs .tab .lab-side{display:inline}}
 @media (max-width:599px){.side-sec{display:none}}
 .readout .led{display:none}
+
+/* B-209 (D-210, amending D-122): his sent lines stay, quiet and right-aligned under a small "You"; no echo. */
+body.captions .msg.matt.last{display:flex}
+body.captions .msg.matt{justify-content:flex-end;text-align:right;align-self:flex-end;max-width:80%}
+body.captions .msg.matt .bubble{font-size:14px;color:var(--quiet);opacity:1}
+body.captions .msg.matt .bubble::before{content:"You";display:block;font-size:12px;font-weight:500;color:var(--faint)}
+body.captions .cap-echo{display:none}

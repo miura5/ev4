@@ -452,14 +452,23 @@ async function sideBySide(browser, left, right, out, vp) {
     const said0 = (await view(page)).say.length;
     await send(page, 'explain preload', REPLY);
     await page.waitForTimeout(250);
-    const echo = await page.evaluate(() => {
-      const e = document.getElementById('ev-echo');
-      return { on: e.classList.contains('on'), text: e.textContent };
+    // B-209 (D-210): his line stays in the conversation, quiet and right-aligned; there is no echo.
+    const mine = await page.evaluate(() => {
+      const m = [...document.querySelectorAll('#thread .msg.matt')].pop(),
+        e = document.getElementById('ev-echo');
+      const r = m && m.getBoundingClientRect(),
+        t = document.getElementById('thread').getBoundingClientRect();
+      return {
+        shown: !!m && r.height > 0,
+        text: m && m.textContent,
+        right: !!m && Math.abs(r.right - t.right) < t.width / 4 && getComputedStyle(m).textAlign === 'right',
+        echo: !!e && getComputedStyle(e).display !== 'none' && e.classList.contains('on'),
+      };
     });
     ok(
-      `[${scheme}] his line echoes above the composer`,
-      echo.on && echo.text === 'You · explain preload',
-      JSON.stringify(echo)
+      `[${scheme}] his line stays as a quiet right-aligned line; no echo above the composer`,
+      mine.shown && /explain preload/.test(mine.text) && mine.right && !mine.echo,
+      JSON.stringify(mine)
     );
     const seen = [];
     for (let i = 0; i < 8; i++) {
@@ -519,10 +528,9 @@ async function sideBySide(browser, left, right, out, vp) {
         done.settled.name === 'settle',
       JSON.stringify(done)
     );
-    const echoOff = await page.evaluate(() => !document.getElementById('ev-echo').classList.contains('on'));
     ok(
-      `[${scheme}] the echo fades after about 3 s; his line is not a bubble in the captions`,
-      echoOff && !v.texts.some(t => /^M:explain preload/.test(t)),
+      `[${scheme}] his line is still there once she has answered`,
+      v.texts.some(t => /explain preload/.test(t)),
       JSON.stringify(v.texts)
     );
     ok(

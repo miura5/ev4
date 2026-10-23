@@ -229,12 +229,9 @@
         if (CAP.anchorTop == null) capBox.scrollTo({ top: capBox.scrollHeight, behavior: REDUCE ? 'auto' : 'smooth' });
       });
     }
-    // Matt's line echoes above the composer for about 3 s, then fades; it is announced once.
+    // B-209 (D-210, amending D-122): his line stays in the conversation as a quiet right-aligned line instead of a 3 s
+    // echo above the composer; it is announced once.
     function capEcho(id, text) {
-      capEchoEl.textContent = 'You · ' + String(text).replace(/\s+/g, ' ').slice(0, 200);
-      capEchoEl.classList.add('on');
-      clearTimeout(CAP.echoT);
-      CAP.echoT = setTimeout(() => capEchoEl.classList.remove('on'), 3200);
       announce(id, 'You: ' + text);
     }
     // A caption's words, each its own span (the Breath reveal), from the same paragraphs, bullets and bold fmt() makes.
