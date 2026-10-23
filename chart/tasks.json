@@ -3785,11 +3785,11 @@
   "title": "Today, Study, Progress and Record in C (D-225)",
   "dod": "32 px rows (44 on the phone), folds, the view switch in the pane header or a row on the phone, details in the right panel from 1200 px; status as coloured words; the proof",
   "milestone": "v4.5 ui",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-208"
   ],
-  "notes": "",
+  "notes": "Taken Oct 23.",
   "commit": null,
   "source": "plan BridyLzngcGUtpeLQorX1U"
  },
