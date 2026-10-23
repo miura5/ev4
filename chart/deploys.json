@@ -3265,5 +3265,21 @@
   "decisions": [],
   "source": "log",
   "release": "v4.4.3"
+ },
+ {
+  "target": "staging",
+  "commit": "fc3af45",
+  "time": "2026-10-23T11:46:48.104Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "da38721",
+  "tasks": [
+   "B-231"
+  ],
+  "summary": "Typed links",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
