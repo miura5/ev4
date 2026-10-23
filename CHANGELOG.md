@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 23 | v4 staging deployed at 2d19c7d (07:51 CT), from e115c56: Build recap in the weekly (B-201). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 23 | v4 staging deployed at e115c56 (07:18 CT), from fc3af45: The morning targets the weakest objective from the latest weeks document (B-170). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 23 | v4 staging deployed at fc3af45 (06:46 CT), from da38721: Typed links (B-231). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 23 | v4 live deployed at da38721 (06:36 CT), from 98d23e1: Speed on Your turn and the job cards; Answers paint on the tap frame; One right panel, each thing once; System's Preferences; Views cut, folds close fast; Enter keeps a fresh row; His words are his (B-200, B-222, B-223, B-224, B-225, B-228, B-229). verify-deploy live GREEN. Rollback is a redeploy of 98d23e1 | Matt's OK | D-049 |
