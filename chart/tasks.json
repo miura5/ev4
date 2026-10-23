@@ -4497,9 +4497,9 @@
   "title": "Request (reported Oct 23): For B-250 I'd remove the pause but I'd still implement the placeholder lines at some point; we don't know where the wait is present but you are right that the conversation history write isn't an issue. So \"removing the pause\" gets added to the batch?",
   "dod": "Matt's words: placeholder lines while something loads, like the mock-up's",
   "milestone": "v4.6 triage",
-  "status": "open",
+  "status": "blocked",
   "depends": [],
-  "notes": "",
+  "notes": "parked for the freeze week: adds an element; B-250 removes the pause instead",
   "commit": null,
   "source": "build chat",
   "words": "For B-250 I'd remove the pause but I'd still implement the placeholder lines at some point; we don't know where the wait is present but you are right that the conversation history write isn't an issue. So \"removing the pause\" gets added to the batch?",
@@ -4512,6 +4512,7 @@
   "triage": {
    "outcome": "task",
    "at": "2026-10-23T18:10:46.770Z"
-  }
+  },
+  "waitingOn": "Matt"
  }
 ]
