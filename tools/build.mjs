@@ -486,6 +486,10 @@ export async function build({
   const { courseProblems, unknownCourses } = await import(pathToFileURL(path.join(root, 'core', 'lint.mjs')).href);
   const cp = courseProblems(spec);
   if (cp.length) throw new Error('spec.courses:\n  ' + cp.join('\n  '));
+  // B-231 (D-241): every typed link names a collection and a field the schemas have, and a target that exists.
+  const { linkProblems } = await import(pathToFileURL(path.join(root, 'core', 'links.mjs')).href);
+  const lp = linkProblems(spec, schemas);
+  if (lp.length) throw new Error('spec.links:\n  ' + lp.join('\n  '));
   {
     const EVm = (await import(pathToFileURL(path.join(root, 'core', 'evcore.mjs')).href)).default;
     EVm.configure(spec);

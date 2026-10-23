@@ -1991,6 +1991,231 @@
   "links",
   "reviews"
  ],
+ "links": {
+  "_rules": [
+   "B-231 (D-241): typed links are referential integrity, not relation types. One row per id field that points at another collection or a spec map: collection, field (a.b nested, a[] each entry of a list, a.* each value of a map), to and link.",
+   "to is a collection, a spec map (spec.courses), named (the value is <collection>/<id>, the ideas link shape and a passage's sourceRef; a prefix that is no collection, as note/ for his note's line, points outside the record and is not checked) or plans.tasks (a task id inside any plan). link is required, optional or external: lint (core/lint.mjs through core/links.mjs) reports a dangling required link as an error and a dangling optional one as a note; an external link points outside the record and is not checked.",
+   "tools/build.mjs refuses a row naming a collection or field the schemas lack, or a target that is no collection and no spec map. linked(db, doc, field) in core/links.mjs resolves one document's link. weakspots.origin.item is left out: an item lives inside its set. weakspots.links[].to joins with its schema (B-232)."
+  ],
+  "rows": [
+   {
+    "collection": "answers",
+    "field": "setId",
+    "to": "sets",
+    "link": "required"
+   },
+   {
+    "collection": "objectives",
+    "field": "exam",
+    "to": "exams",
+    "link": "required"
+   },
+   {
+    "collection": "plans",
+    "field": "exam",
+    "to": "exams",
+    "link": "required"
+   },
+   {
+    "collection": "predictions",
+    "field": "examId",
+    "to": "exams",
+    "link": "required"
+   },
+   {
+    "collection": "materials",
+    "field": "course",
+    "to": "spec.courses",
+    "link": "required"
+   },
+   {
+    "collection": "libindex",
+    "field": "course",
+    "to": "spec.courses",
+    "link": "required"
+   },
+   {
+    "collection": "concepts",
+    "field": "weakspots[]",
+    "to": "weakspots",
+    "link": "required"
+   },
+   {
+    "collection": "weakspots",
+    "field": "objective",
+    "to": "objectives",
+    "link": "required"
+   },
+   {
+    "collection": "weakspots",
+    "field": "exam",
+    "to": "exams",
+    "link": "optional"
+   },
+   {
+    "collection": "weakspots",
+    "field": "course",
+    "to": "spec.courses",
+    "link": "optional"
+   },
+   {
+    "collection": "weakspots",
+    "field": "origin.set",
+    "to": "sets",
+    "link": "optional"
+   },
+   {
+    "collection": "weakspots",
+    "field": "origin.session",
+    "to": "sessions",
+    "link": "optional"
+   },
+   {
+    "collection": "sets",
+    "field": "exam",
+    "to": "exams",
+    "link": "optional"
+   },
+   {
+    "collection": "sets",
+    "field": "items[].weakspotId",
+    "to": "weakspots",
+    "link": "optional"
+   },
+   {
+    "collection": "sets",
+    "field": "items[].objective",
+    "to": "objectives",
+    "link": "optional"
+   },
+   {
+    "collection": "sets",
+    "field": "items[].sourceRef",
+    "to": "named",
+    "link": "optional"
+   },
+   {
+    "collection": "sets",
+    "field": "planTaskId",
+    "to": "plans.tasks",
+    "link": "optional"
+   },
+   {
+    "collection": "exams",
+    "field": "course",
+    "to": "spec.courses",
+    "link": "optional"
+   },
+   {
+    "collection": "exams",
+    "field": "planId",
+    "to": "plans",
+    "link": "optional"
+   },
+   {
+    "collection": "planedits",
+    "field": "plan",
+    "to": "plans",
+    "link": "optional"
+   },
+   {
+    "collection": "materials",
+    "field": "exam",
+    "to": "exams",
+    "link": "optional"
+   },
+   {
+    "collection": "ideas",
+    "field": "objective",
+    "to": "objectives",
+    "link": "optional"
+   },
+   {
+    "collection": "ideas",
+    "field": "weakspotId",
+    "to": "weakspots",
+    "link": "optional"
+   },
+   {
+    "collection": "ideas",
+    "field": "sessionId",
+    "to": "sessions",
+    "link": "optional"
+   },
+   {
+    "collection": "ideas",
+    "field": "links[].to",
+    "to": "named",
+    "link": "optional"
+   },
+   {
+    "collection": "sessions",
+    "field": "skill.materialId",
+    "to": "materials",
+    "link": "optional"
+   },
+   {
+    "collection": "sessions",
+    "field": "noteId",
+    "to": "the Study Watch note",
+    "link": "external"
+   },
+   {
+    "collection": "dates",
+    "field": "course",
+    "to": "spec.courses",
+    "link": "optional"
+   },
+   {
+    "collection": "dateedits",
+    "field": "overrides.course",
+    "to": "spec.courses",
+    "link": "optional"
+   },
+   {
+    "collection": "dayedits",
+    "field": "added.*.course",
+    "to": "spec.courses",
+    "link": "optional"
+   },
+   {
+    "collection": "announcements",
+    "field": "course",
+    "to": "spec.courses",
+    "link": "optional"
+   },
+   {
+    "collection": "jobresults",
+    "field": "result.setId",
+    "to": "sets",
+    "link": "optional"
+   },
+   {
+    "collection": "talk",
+    "field": "messages.*.jobId",
+    "to": "jobs",
+    "link": "optional"
+   },
+   {
+    "collection": "talk",
+    "field": "messages.*.session",
+    "to": "sessions",
+    "link": "optional"
+   },
+   {
+    "collection": "weeks",
+    "field": "insights.missedEvery[].objective",
+    "to": "objectives",
+    "link": "optional"
+   },
+   {
+    "collection": "weeks",
+    "field": "insights.recurrence[].weakspotId",
+    "to": "weakspots",
+    "link": "optional"
+   }
+  ]
+ },
  "tasks": {
   "_rules": [
    "Every scheduled task is a row here; tools/prompts.mjs renders its prompt from this table and its pipeline steps, and verify-deploy compares the live task with it.",

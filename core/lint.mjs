@@ -6,6 +6,8 @@
 //                    over its budget once B-14 sets one, a system document over spec.capacity.system (B-150)
 //   invalid          a document its collection's schema refuses
 //   derived-differs  a Derived document that rebuild does not reproduce byte for byte
+//   dangling-link    a typed link (spec.links, B-231) naming a document that is not there: an error when the link is
+//                    required, a note when it is optional
 //   frozen           (info) D-090: a document carrying migratedAt or migratedTo is a frozen original, so is a v2 or v3
 //                    leftover (B-34), and a collection in spec.legacyCollections is v3's, kept by rule; each is one note
 //                    per collection, never an error
@@ -23,6 +25,7 @@ import {
   keyWriter,
 } from './derive.mjs';
 import { describeErrors } from './validate.mjs';
+import { linkIssues } from './links.mjs';
 
 /** The legacy copy a schema bump kept of collection/id (legacy/v4-<collection>-<id>-s<n>) that passes ok(copy), if any. */
 function migratedCopy(rec, col, id, ok) {
@@ -295,7 +298,12 @@ export function lintRecord(db, spec, validate, { date, commit = null } = {}) {
     else if (r.status === 'skipped') add('info', 'not-rebuilt', r.ref, r.reason);
   }
 
-  for (const i of EV.lint(rec, { date })) add(i.severity, i.code, i.ref, i.msg);
+  // B-231 (D-241): typed links; a dangling required link is an error, a dangling optional one a note. They replace core's
+  // orphan-item and unknown-objective warnings, which named the same two links.
+  const skip = (col, d) => isFrozen(d) || isLeftover(d, spec.collections[col]);
+  for (const i of linkIssues(rec, spec, { skip })) add(i.severity, i.code, i.ref, i.msg);
+  for (const i of EV.lint(rec, { date }))
+    if (i.code !== 'orphan-item' && i.code !== 'unknown-objective') add(i.severity, i.code, i.ref, i.msg);
   const rank = { error: 0, warning: 1, info: 2 };
   issues.sort((a, b) => rank[a.severity] - rank[b.severity] || (a.ref < b.ref ? -1 : a.ref > b.ref ? 1 : 0));
   return { issues, rebuilt };
