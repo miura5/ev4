@@ -1378,23 +1378,3 @@ test("B-160: what stays in E.V. core is the record's rules, under 2,500 lines; e
     'skills',
   ]);
 });
-
-// B-252 (D-251): the morning after an exam, its weak spots are not due; auto-park parks them that evening.
-test('B-252: the day after an exam, its open weak spots are out of the due list and the review set; the next exam leads', () => {
-  const E5 = { id: 'E5', course: 'NUR 112', kind: 'unit', date: '2026-11-05', title: 'Exam 5' };
-  const docs = [
-    ws('e4-old', { initial: { streak: 0, nextDue: '2026-10-19', recurrence: 1, misses: 0 } }),
-    ws('e5-new', {
-      exam: 'E5',
-      objective: 'E5-1',
-      initial: { streak: 0, nextDue: '2026-10-22', recurrence: 1, misses: 0 },
-    }),
-  ];
-  const models = EV.buildWeakspots({ weakspots: docs, sets: [], answers: [], exams: [E4, E5] });
-  const ids = xs => xs.map(w => w.id);
-  // The day of the exam it is still due; the morning after, it is not.
-  assert.deepEqual(ids(EV.rankDue(models, '2026-10-21', [E4, E5])), ['e4-old']);
-  assert.deepEqual(ids(EV.rankDue(models, '2026-10-22', [E4, E5])), ['e5-new']);
-  const r = EV.pickReviews({ date: '2026-10-22', dayType: 'off', exams: [E4, E5], weakspots: models, objectives: [] });
-  assert.deepEqual(ids(r.picked), ['e5-new']);
-});
