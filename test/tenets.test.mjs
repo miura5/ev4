@@ -150,7 +150,7 @@ test('B-125 (D-222): the stylesheet has no staggered rise and no growth of bars 
   const css = fs.readFileSync(path.join(ROOT, 'page', 'styles.css'), 'utf8');
   assert.doesNotMatch(css, /grow-[xy]/);
   assert.doesNotMatch(css, /\.panel\.enter>:nth-child/);
-  assert.match(css, /\.panel\.enter\{animation:fade \.18s/);
+  assert.match(css, /\.panel\.enter\{animation:fade \.16s/);
 });
 
 test('B-125 (D-222, Matt Oct 20): the status lights are steady, the header one and the session bar one', () => {
