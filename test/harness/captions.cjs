@@ -1050,6 +1050,11 @@ async function sideBySide(browser, left, right, out, vp) {
       const lay = async w => {
         await page.setViewportSize({ width: w, height: 860 });
         await page.waitForTimeout(700);
+        // B-223: crossing 1200 px re-renders (Study's panel follows the width), which brings a removed surface back
+        if (await page.evaluate(() => !!window.__noSurface && !!document.getElementById('ev-surf'))) {
+          await page.evaluate(() => document.getElementById('ev-surf').remove());
+          await page.waitForTimeout(150);
+        }
         return page.evaluate(() => {
           const r = id => document.getElementById(id).getBoundingClientRect();
           const s = r('ev-side'),
@@ -1058,6 +1063,10 @@ async function sideBySide(browser, left, right, out, vp) {
             av = document.querySelector('#hero .ev-av').getBoundingClientRect();
           return {
             sideShown: getComputedStyle(document.getElementById('ev-side')).display !== 'none',
+            // B-223 (D-245): with nothing beside her, from 1200 px the panel holds the dates after today
+            datesOnly: [...document.getElementById('ev-side').children]
+              .filter(c => getComputedStyle(c).display !== 'none')
+              .every(c => c.id === 'ev-dates'),
             sideLeft: Math.round(s.left),
             sideTop: Math.round(s.top),
             sideW: Math.round(s.width),
@@ -1076,18 +1085,25 @@ async function sideBySide(browser, left, right, out, vp) {
       };
       // With no surface (taken off for this check; the next render brings it back).
       await page.evaluate(() => {
+        window.__noSurface = true;
         const s = document.getElementById('ev-surf');
         if (s) s.remove();
       });
       const e1280 = await lay(1280),
         e900 = await lay(1024);
       ok(
-        // B-208 (D-210): centred in the pane, which starts after the 212 px sidebar and ends 8 px from the edge.
-        '[desktop] with nothing beside her: no side column, her stage centred in the pane (742 px at 1280, 614 at 1024)',
-        !e1280.sideShown && !e900.sideShown && Math.abs(e1280.coreX - 742) <= 2 && Math.abs(e900.coreX - 614) <= 2,
+        // B-208 (D-210): centred in the pane, which starts after the 212 px sidebar and ends 8 px from the edge; from
+        // 1200 px (B-223, D-245) the right panel holds the dates after today, and the pane ends where it begins.
+        '[desktop] with nothing beside her: at 1280 the panel holds only the dates and her stage centres in the pane (578 px), at 1024 no side column (614 px)',
+        e1280.sideShown &&
+          e1280.datesOnly &&
+          Math.abs(e1280.coreX - 578) <= 2 &&
+          !e900.sideShown &&
+          Math.abs(e900.coreX - 614) <= 2,
         JSON.stringify({ e1280, e900 })
       );
       await page.evaluate(() => {
+        window.__noSurface = false;
         const d = document.createElement('div');
         d.className = 'card';
         d.id = 'harness-surface';
@@ -1132,14 +1148,15 @@ async function sideBySide(browser, left, right, out, vp) {
       await page.waitForTimeout(400);
       await page.screenshot({ path: `${shots}/captions-side-1280.png` });
       await page.evaluate(() => {
+        window.__noSurface = true;
         document.getElementById('harness-surface').remove();
         const s = document.getElementById('ev-surf');
         if (s) s.remove();
       });
       const back = await lay(1280);
       ok(
-        '[desktop] emptied, the column goes and her stage centres again',
-        !back.sideShown && Math.abs(back.coreX - 742) <= 2,
+        '[desktop] emptied, what was beside her goes; the panel keeps the dates (D-245) and her stage centres in the pane',
+        back.sideShown && back.datesOnly && Math.abs(back.coreX - 578) <= 2,
         JSON.stringify(back)
       );
     }
