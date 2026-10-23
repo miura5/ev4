@@ -475,6 +475,12 @@ async function sideBySide(browser, left, right, out, vp) {
       mine.shown && /explain preload/.test(mine.text) && mine.right && !mine.echo,
       JSON.stringify(mine)
     );
+    // B-264: her lines read left-aligned at every width, the phone's too
+    const herAlign = await page.evaluate(() => {
+      const b = document.querySelector('#thread .msg.ev .bubble');
+      return b ? getComputedStyle(b).textAlign : null;
+    });
+    ok(`[${scheme}] her lines read left-aligned (B-264)`, /^(left|start)$/.test(herAlign || ''), herAlign);
     const seen = [];
     for (let i = 0; i < 8; i++) {
       seen.push(
