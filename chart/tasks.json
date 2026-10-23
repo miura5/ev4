@@ -3037,7 +3037,7 @@
    "B-72",
    "B-230"
   ],
-  "notes": "Matt, Oct 23: the shadow week runs on live. It goes live with v4.5.0 (Oct 23, with B-201, B-227, B-231); after a week of live mornings, the weekly's weeks/<date>.study.aim is his to read, then he says flip (its own staging-proved deploy).",
+  "notes": "Oct 23: the shadow is live in v4.5.0; from tomorrow's 4:25 run each live day carries days/<date>.aim, and the weekly writes weeks/<date>.study.aim. A week from now Matt reads it and says flip or not.",
   "commit": null,
   "source": "B-72 split (D-190)",
   "waitingOn": "Matt"
