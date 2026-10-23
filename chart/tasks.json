@@ -4191,7 +4191,7 @@
   "title": "Matt's look at triage, then v4.5.0 live (D-234)",
   "dod": "on staging, at 735 × 830 and on his phone, Matt ends a real set with misses and accepts, joins, snoozes and declines at least one candidate each, and says yes; ship live --minor on his OK, tagged v4.5.0 (D-173), with the release on its deploy entry (B-175)",
   "milestone": "v4.6 triage",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-230",
    "B-231",
@@ -4202,9 +4202,10 @@
    "B-236",
    "B-237"
   ],
-  "notes": "Oct 23: v4.5.0 went live with B-201, B-227, B-231 and B-170's shadow (Matt: deploy what is ready), so triage ships as v4.6.0, which its milestone already names (v4.6 triage).",
+  "notes": "parked for the freeze week",
   "commit": null,
-  "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
+  "source": "plan SyfKhhZHXubJo4RN8CEw7Z",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-239",
