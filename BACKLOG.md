@@ -35,6 +35,7 @@ Status: `open` · `in progress` · `blocked` · `done`. A task opens when every 
 | B-261 | Bug (reported Oct 23): Live record: exams/E4 (Exam 4, dated 2026-10-21) still has status upcoming on Oct 23, two days after the exam. Found by Claude reading the live exams collection for the roadmap; Matt asked to send it to the build chat. Done when: An exam whose date has passed no longer reads as upcoming: either its status is marked done by the run or page that should, or the page and runs treat a past-dated exam as done. Exam 4 on live shows done. A core test plants an exam dated yesterday; proven on staging. | — | v4.5.x ops | open |  |
 | B-262 | Trim during the freeze (D-259): the cuts from docs/trim-brief.md, each merged as B-262: trim <what> on Matt's OK Done when: Stays in progress while cuts land; each merged cut is a squash commit 'B-262: trim <what>' with its inventory row marked done; closed when the inventory has no shrink or retire row left or Matt ends it | — | trim | in progress | Started Oct 23 with docs/trim-brief.md and the Trimmer runs section of CLAUDE.md; the first trimmer job is the inventory (B-258) |
 | B-265 | Bug (reported Oct 23): e.v. Center aligned on phone Done when: A reply that failed on a transient error keeps a Try again (never Go deeper) after a reload while it is her last line; captions harness checks a stored failed line at 390 and 1280; staging GREEN. The hiccups themselves did not reproduce (Oct 23, staging, Mac browser): a 2-minute service blip | — | v4.5.x ui | open |  |
+| B-266 | Bug (reported Oct 23): e.v. Center aligned on phone Done when: Post-freeze design: E.V. records an exam score he gives her where scores live (examedits), including exams with no date (E1-E3), and never says Logged for something she did not store; his 92/84/96 (now in an idea note) move there | — | v4.6 triage | blocked | Parked for the post-freeze review (Matt, Oct 23): a design question, not a freeze fix. Scores live in examedits, written only by Progress's score card, which skips dateless exams; E.V. has no tool for it and wrote ideas/idea-2026-10-23-nur-112-self-reported-exam-sco instead |
 
 ## Your turn
 
@@ -63,6 +64,7 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 - B-251 (blocked): For B-250 I'd remove the pause but I'd still implement the…
 - B-254 (blocked): Staging lint: 8 fact-changed errors on jobs/ (5) and talk/2026-10-18,…
 - B-257 (open): Freeze exit 3, understood
+- B-266 (blocked): e.v. Center aligned on
 
 ## Done
 
@@ -337,4 +339,3 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-240 | bug | 2026-10-23T04:32:33.683Z | E.V.'s Conversation tab doesn't have the right panel (see the screenshots), and the panel doesn't show up on the Study tab either. | build chat | declined |  |
 | B-241 | bug | 2026-10-23T04:32:33.683Z | When I do a review on the Conversation tab, the right panel does show up, but it's not the right shade. | build chat | declined |  |
 | B-242 | request | 2026-10-23T04:32:33.683Z | question: Should the right panel be the same on all tabs? It's on Record, Progress, Today and System but not on Study or Conversation, and each one shows its own page's info when there is any. | build chat | declined |  |
-| B-266 | bug | 2026-10-23T22:54:47.074Z | e.v. Center aligned on phone | build chat | inbox |  |

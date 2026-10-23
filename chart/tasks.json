@@ -4777,11 +4777,11 @@
   "id": "B-266",
   "kind": "bug",
   "title": "Bug (reported Oct 23): e.v. Center aligned on phone",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Post-freeze design: E.V. records an exam score he gives her where scores live (examedits), including exams with no date (E1-E3), and never says Logged for something she did not store; his 92/84/96 (now in an idea note) move there",
+  "milestone": "v4.6 triage",
+  "status": "blocked",
   "depends": [],
-  "notes": "",
+  "notes": "Parked for the post-freeze review (Matt, Oct 23): a design question, not a freeze fix. Scores live in examedits, written only by Progress's score card, which skips dateless exams; E.V. has no tool for it and wrote ideas/idea-2026-10-23-nur-112-self-reported-exam-sco instead",
   "commit": null,
   "source": "build chat",
   "words": "e.v. Center aligned on phone",
@@ -4790,6 +4790,11 @@
    "row": "v4 B-266: e.v. Center aligned on",
    "why": "e.v. Center aligned on phone",
    "notes": "Reported Oct 23 from build chat"
-  }
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-23T23:58:35.523Z"
+  },
+  "waitingOn": "Matt"
  }
 ]
