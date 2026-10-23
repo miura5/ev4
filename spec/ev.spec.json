@@ -71,6 +71,11 @@
      "windowDays": 14
     },
     {
+     "collection": "weeks",
+     "windowDays": 14,
+     "why": "B-170 (D-120): the latest week's insights name the weakest objective the new checks may lead with"
+    },
+    {
      "collection": "examedits"
     },
     {
@@ -1428,9 +1433,11 @@
  },
  "study": {
   "_rules": [
-   "B-68 (D-116): scheduler fixed (today's rule, E.V. core's pickReviews) or adaptive (D-117, core/study.mjs: solid weak spots come round again at base, 2 x base, 4 x base days, capped, nearExam inside an exam's window, after the open ones and inside the day's load). The morning writes the other one's pick as days/<date>.shadow and the weekly compares them in weeks/<date>.study. It flips to adaptive only on Matt's OK after a shadow week (B-69); it flips back the same way."
+   "B-68 (D-116): scheduler fixed (today's rule, E.V. core's pickReviews) or adaptive (D-117, core/study.mjs: solid weak spots come round again at base, 2 x base, 4 x base days, capped, nearExam inside an exam's window, after the open ones and inside the day's load). The morning writes the other one's pick as days/<date>.shadow and the weekly compares them in weeks/<date>.study. It flips to adaptive only on Matt's OK after a shadow week (B-69); it flips back the same way.",
+   "B-170 (D-120, D-190): aim today (core's rule: the target exam's objectives in their own order) or weakest (core/study.mjs: the latest week's insights.weakestObjective leads the new checks when it belongs to their exam; the practice brief and days/<date> pick alike). The morning writes the other aim's checks as days/<date>.aim and the weekly compares them in weeks/<date>.study.aim. It flips to weakest only on Matt's word after a week of the comparison; it flips back the same way."
   ],
   "scheduler": "fixed",
+  "aim": "today",
   "params": {
    "base": 3,
    "cap": 14,

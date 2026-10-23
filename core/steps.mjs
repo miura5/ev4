@@ -17,6 +17,7 @@ import { verify, verifyReads } from './deploy.mjs';
 import { readState, withShell } from './verifystate.mjs';
 import { produce, classOf, factsSplitFor, examTomorrow } from './derive.mjs';
 import { watch, schedulerView } from './watch.mjs';
+import * as STUDY from './study.mjs';
 import { canvasRaw } from './canvas.mjs';
 import { collectionHash, migrateBackup, migratedLine } from './seed.mjs';
 import { lintRecord, lintSummary } from './lint.mjs';
@@ -275,6 +276,9 @@ CODE_STEPS['practice-brief'] = function practiceBrief(db, ctx, spec) {
     objectives: db.objectives || [],
     sets: db.sets || [],
     answers: db.answers || [],
+    // B-170: the same pick days/<date> shows, by spec.study's scheduler and aim (B-68's scheduler too, so a flip of
+    // either writes the review set it lists).
+    pickReviews: STUDY.dayPicker(EV, spec, { weeks: db.weeks || [], date: ctx.date }),
   });
   const setId = 'review-' + ctx.date;
   const existing = (db.sets || []).find(x => x.id === setId);

@@ -53,5 +53,5 @@
  "migratedFrom": "days/2026-10-16",
  "migratedTo": "days/2026-10-16",
  "migratedAt": "2026-10-21T12:00:00.000Z",
- "migration": "days schema 2 to 3"
+ "migration": "days schema 2 to 4"
 }

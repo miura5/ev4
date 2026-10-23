@@ -116,3 +116,85 @@ export function compareWeek(days, attempts, { from, to } = {}) {
   }
   return out;
 }
+
+// ---------------------------------------------------------------- the aim (B-170, D-120's morning half, behind D-190)
+// Which objective the day's new checks lead with. today: the target exam's objectives in their own order (core's rule);
+// weakest: the latest week's insights.weakestObjective first, when it belongs to the exam the checks are for.
+// spec.study.aim says which one drives the morning; the morning writes the other one's checks beside the list as
+// days/<date>.aim, and the weekly compares the two into weeks/<date>.study.aim. It flips only on Matt's word after a
+// week of the comparison (D-190), and flips back the same way.
+
+export const AIMS = ['today', 'weakest'];
+/** The aim that drives the morning, from spec.study.aim (today when unset). */
+export function aimOf(spec) {
+  const a = spec && spec.study && spec.study.aim;
+  return AIMS.includes(a) ? a : 'today';
+}
+export const otherAim = a => (a === 'weakest' ? 'today' : 'weakest');
+
+/** The weakest objective the latest week before date names (its weeks document within 14 days), else null. */
+export function weakestOf(EV, weeks, date) {
+  const latest = (weeks || [])
+    .map(w => ({ w, on: w.date || w.id }))
+    .filter(x => x.on && x.on <= date && EV.diffDays(x.on, date) < 14)
+    .sort((a, b) => (a.on < b.on ? 1 : a.on > b.on ? -1 : 0))[0];
+  return (latest && latest.w.insights && latest.w.insights.weakestObjective) || null;
+}
+
+/** A pick whose new checks lead with objective, when the day writes checks for the exam that objective belongs to. */
+export function aimed(EV, pick, objective) {
+  if (!objective) return pick;
+  return ctx => {
+    const pr = pick(ctx);
+    const C = EV.constants().review;
+    if (!pr.target || !(pr.load && pr.load.load > 0) || !C.newChecksOn.includes(ctx.dayType)) return pr;
+    if (!(ctx.objectives || []).some(o => o.id === objective && o.exam === pr.target)) return pr;
+    return { ...pr, checks: [objective, ...pr.checks.filter(x => x !== objective)].slice(0, C.newChecksPerDay) };
+  };
+}
+
+/** The morning's pick for date: the scheduler and the aim spec.study names (or the ones given), over the weeks given. */
+export function dayPicker(EV, spec, { weeks, date }, { scheduler = schedulerOf(spec), aim = aimOf(spec) } = {}) {
+  const base = picker(EV, scheduler, spec);
+  return aim === 'weakest' ? aimed(EV, base, weakestOf(EV, weeks, date)) : base;
+}
+
+/** days/<date>.aim: the aim that drove the day, the weakest objective it had to go on, and the other aim's checks. */
+export function aimRecord(rule, weakest, otherDay) {
+  return {
+    rule,
+    weakest: weakest || null,
+    other: { rule: otherAim(rule), checks: [...((otherDay && otherDay.reviews && otherDay.reviews.checks) || [])] },
+  };
+}
+
+/**
+ * weeks/<date>.study.aim: over the week's days that carry an aim, how many days the other aim would have written
+ * different checks, the weakest objectives it went on, and how his answers on those objectives went that week. Null
+ * when no day of the week carries one.
+ */
+export function compareAim(days, attempts, { from, to } = {}) {
+  const withAim = (days || [])
+    .filter(d => d && d.aim && d.aim.other && (!from || d.date >= from) && (!to || d.date <= to))
+    .sort((a, b) => (a.date < b.date ? -1 : 1));
+  if (!withAim.length) return null;
+  const same = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
+  const weakest = [...new Set(withAim.map(d => d.aim.weakest).filter(Boolean))].sort();
+  const out = {
+    rule: withAim[0].aim.rule,
+    other: withAim[0].aim.other.rule,
+    days: withAim.length,
+    differed: 0,
+    weakest,
+    onWeakest: { right: 0, missed: 0 },
+  };
+  for (const d of withAim) {
+    const mine = (d.plan && d.plan.reviews && d.plan.reviews.checks) || [];
+    if (!same(mine, d.aim.other.checks || [])) out.differed++;
+  }
+  const lo = from || withAim[0].date;
+  for (const a of attempts || [])
+    if (a.objective && weakest.includes(a.objective) && a.date >= lo && (!to || a.date <= to))
+      out.onWeakest[a.correct ? 'right' : 'missed']++;
+  return out;
+}

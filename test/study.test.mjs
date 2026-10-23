@@ -181,19 +181,21 @@ test('B-68: the days 1 to 2 bump adds shadow null, validates and is idempotent; 
   const d = JSON.parse(fs.readFileSync(path.join(ROOT, 'test/data/record/days/2026-10-16.json'), 'utf8'));
   const old = { ...d, schema: 1 };
   delete old.shadow;
-  delete old.readiness; // B-48: neither existed at schema 1; the bumps chain through 2 to 3
+  delete old.readiness; // B-48: neither existed at schema 1; the bumps chain through 2 and 3 to 4
+  delete old.aim; // B-170: nor did the aim
   const before = { days: [{ ...old, id: '2026-10-16' }] };
   const r = migrateBumps(before, { at: '2026-10-20T17:00:00Z' });
   const main = r.writes.find(w => w.collection === 'days');
-  assert.equal(main.data.schema, 3);
+  assert.equal(main.data.schema, currentVersion('days'));
   assert.equal(main.data.shadow, null);
   assert.equal(main.data.readiness, null);
+  assert.equal(main.data.aim, null, 'B-170: a day from before the aim has none');
   assert.ok(
     r.writes.some(w => w.collection === 'legacy' && w.id === 'v4-days-2026-10-16-s1'),
     'the old form is kept'
   );
   for (const w of r.writes) assert.ok(validate(w.collection, w.data, { id: w.id }).ok, `${w.collection}/${w.id}`);
-  assert.equal(currentVersion('days'), 3);
+  assert.equal(currentVersion('days'), 4);
   assert.deepEqual(migrateBumps(applyWrites(before, r.writes), { at: '2026-10-21T17:00:00Z' }).writes, []);
   assert.ok(validate('days', d, { id: '2026-10-16' }).ok, 'the fixture day, rebuilt with its shadow');
   assert.deepEqual(d.shadow.scheduler, 'adaptive');
@@ -207,6 +209,6 @@ test('B-68: the weekly reads the days of its week, and core.js carries the sched
   ];
   assert.match(
     core,
-    /window\.EVStudy = \{ SCHEDULERS, schedulerOf, otherScheduler, solidDue, picker, shadowOf, compareWeek \}/
+    /window\.EVStudy = \{ SCHEDULERS, schedulerOf, otherScheduler, solidDue, picker, shadowOf, compareWeek, AIMS, aimOf, otherAim, weakestOf, aimed, dayPicker, aimRecord, compareAim \}/
   );
 });

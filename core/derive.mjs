@@ -81,9 +81,11 @@ export function asOf(db, at, spec, { since = null, self = null } = {}) {
         out[col].push(d);
         continue;
       }
-      // A Derived document rewritten since: the version this time saw is gone.
+      // A Derived document rewritten since: the version this time saw is gone. One dated after this time (days/<date>,
+      // weeks/<date>: B-170's morning reads the weeks) did not exist yet, so nothing was lost.
       if (Number.isFinite(ms(d.at)) && ms(d.at) > t) {
-        if (cls === 'Derived') inexact.push(`${col}/${d.id}`);
+        if (cls === 'Derived' && !(/^\d{4}-\d{2}-\d{2}$/.test(d.id) && d.id > EV.chicagoDate(at)))
+          inexact.push(`${col}/${d.id}`);
         continue;
       }
       if (during(col, d)) inexact.push(`${col}/${d.id}`);
@@ -299,7 +301,10 @@ function dayBody(db, { date, now }, spec, stored) {
   const v = views(db);
   // B-68 (D-116): spec.study.scheduler drives the day; the other scheduler's pick is the shadow beside it.
   const scheduler = STUDY.schedulerOf(spec);
-  const dayCtx = sched => ({
+  // B-170 (D-120, D-190): spec.study.aim says what the new checks lead with; the other aim's checks are the day's aim.
+  const aim = STUDY.aimOf(spec);
+  const weeks = db.weeks || [];
+  const dayCtx = (sched, a = aim) => ({
     date,
     dates: db.dates || [],
     dateedits: db.dateedits || [],
@@ -310,12 +315,17 @@ function dayBody(db, { date, now }, spec, stored) {
     objectives: db.objectives || [],
     sets: v.sets,
     answers: v.answers,
-    pickReviews: STUDY.picker(EV, sched, spec),
+    pickReviews: STUDY.dayPicker(EV, spec, { weeks, date }, { scheduler: sched, aim: a }),
   });
   const day = EV.planDay(dayCtx(scheduler));
   const other = STUDY.otherScheduler(scheduler);
   // A day written before the shadow existed (migrated with shadow null) rebuilds as it was written.
   const shadow = stored && stored.shadow === null ? null : STUDY.shadowOf(EV.planDay(dayCtx(other)), other);
+  // A day written before the aim existed (migrated with aim null) rebuilds as it was written.
+  const aimDoc =
+    stored && stored.aim === null
+      ? null
+      : STUDY.aimRecord(aim, STUDY.weakestOf(EV, weeks, date), EV.planDay(dayCtx(scheduler, STUDY.otherAim(aim))));
   const reviewSet = v.sets.find(s => s.id === 'review-' + date) || null;
   const reviewSetId = reviewSet ? reviewSet.id : null;
   const newSets = v.sets.filter(
@@ -338,7 +348,7 @@ function dayBody(db, { date, now }, spec, stored) {
   const open = reviewSet ? (reviewSet.items || []).length - EV.answeredItems(reviewSet, v.answers).length : 0;
   list.push = list.push.replace(/\d+ reviews? ready/, `${open} review${open === 1 ? '' : 's'} ready`);
   return {
-    schema: 3, // B-68: the shadow; B-48: readiness
+    schema: 4, // B-68: the shadow; B-48: readiness; B-170: the aim
     date,
     dayType: day.dayType,
     plan: { budget: day.budget, blocks: day.blocks, deferred: day.deferred, reviews: day.reviews },
@@ -347,6 +357,7 @@ function dayBody(db, { date, now }, spec, stored) {
     shadow,
     // A day written before the stamp existed (migrated with readiness null) rebuilds as it was written.
     readiness: stored && stored.readiness === null ? null : readinessStamp(v, date),
+    aim: aimDoc,
   };
 }
 
@@ -526,8 +537,11 @@ function weekBody(db, { date, verify = null }, spec, stored) {
   // D-120 (B-72): the week's insights; a week written before them (migrated, null) rebuilds as it was.
   body.insights = stored && stored.insights === null ? null : weekInsights(v, db, date);
   // B-68 (D-116): the week's two schedulers side by side, when its days carry a shadow (none before B-68).
-  const study = STUDY.compareWeek(db.days || [], EV.collectAttempts(v.sets, v.answers).all, { from, to: date });
-  if (study) body.study = study;
+  const weekAtts = EV.collectAttempts(v.sets, v.answers).all;
+  const study = STUDY.compareWeek(db.days || [], weekAtts, { from, to: date });
+  // B-170 (D-190): the week's two aims side by side, when its days carry one (none before B-170).
+  const aimed = STUDY.compareAim(db.days || [], weekAtts, { from, to: date });
+  if (study || aimed) body.study = { ...(study || {}), ...(aimed ? { aim: aimed } : {}) };
   for (const k of authoredOf(spec, 'weeks')) if (stored && stored[k] !== undefined) body[k] = stored[k];
   return body;
 }

@@ -491,6 +491,9 @@ export const BUMPS = {
     // B-48 (D-105): days gains readiness, the morning's stamp per upcoming exam; a day written before it had none, so it
     // is null and rebuild keeps it null.
     2: d => ({ data: { ...d, schema: 3, readiness: null }, also: [] }),
+    // B-170 (D-120, D-190): days gains aim, the other aim's checks beside the list; a day written before it had none, so
+    // it is null and rebuild keeps it null.
+    3: d => ({ data: { ...d, schema: 4, aim: null }, also: [] }),
   },
   planedits: {
     // B-45 (D-102): planedits gains plan, the id of the plan in force; an Edit before it named none, so plans/<examId>

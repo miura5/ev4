@@ -9,12 +9,12 @@
   "writers": [
    "morning"
   ],
-  "schema": 3
+  "schema": 4
  },
  "type": "object",
  "properties": {
   "schema": {
-   "const": 3
+   "const": 4
   },
   "writer": {
    "enum": [
@@ -189,6 +189,59 @@
      }
     }
    ]
+  },
+  "aim": {
+   "description": "B-170 (D-120, D-190): the aim that drove the day's new checks (spec.study.aim), the weakest objective the latest week named, and the other aim's checks; null on a day written before it",
+   "anyOf": [
+    {
+     "type": "null"
+    },
+    {
+     "type": "object",
+     "properties": {
+      "rule": {
+       "enum": [
+        "today",
+        "weakest"
+       ]
+      },
+      "weakest": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "other": {
+       "type": "object",
+       "properties": {
+        "rule": {
+         "enum": [
+          "today",
+          "weakest"
+         ]
+        },
+        "checks": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         }
+        }
+       },
+       "required": [
+        "rule",
+        "checks"
+       ],
+       "additionalProperties": false
+      }
+     },
+     "required": [
+      "rule",
+      "weakest",
+      "other"
+     ],
+     "additionalProperties": false
+    }
+   ]
   }
  },
  "required": [
@@ -199,7 +252,8 @@
   "date",
   "list",
   "shadow",
-  "readiness"
+  "readiness",
+  "aim"
  ],
  "additionalProperties": false
 }

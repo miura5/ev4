@@ -1,0 +1,62 @@
+{
+ "schema": 3,
+ "writer": "morning",
+ "at": "2026-10-16T14:00:00Z",
+ "source": "morning 4:25",
+ "date": "2026-10-16",
+ "dayType": "class",
+ "plan": {
+  "budget": {
+   "available": 180,
+   "planned": 0,
+   "over": 0
+  },
+  "blocks": [],
+  "deferred": [],
+  "reviews": {
+   "load": {
+    "load": 10,
+    "base": 10,
+    "flex": null,
+    "reason": "Class day: 10"
+   },
+   "ids": [],
+   "checks": [],
+   "target": "E9"
+  }
+ },
+ "list": {
+  "items": [
+   {
+    "id": "canvas-canvas-900003",
+    "text": "New on Canvas: Sample announcement",
+    "tag": "CANVAS",
+    "minutes": 0,
+    "ref": "announcements/canvas-900003"
+   }
+  ],
+  "focus": [],
+  "push": "Class day · 2 reviews ready · New on Canvas: Sample announcement",
+  "budget": {
+   "available": 180,
+   "planned": 0,
+   "over": 0
+  },
+  "deferred": []
+ },
+ "push": "Class day · 2 reviews ready · New on Canvas: Sample announcement",
+ "shadow": {
+  "scheduler": "adaptive",
+  "ids": [],
+  "deferred": []
+ },
+ "readiness": {
+  "E9": {
+   "pctSolid": 0,
+   "active": 1,
+   "solid": 0,
+   "accuracy7": null,
+   "answers7": 0
+  }
+ }
+}

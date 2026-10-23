@@ -112,7 +112,7 @@ test('B-163: a schema-1 backup restores into a throwaway store, migrated to this
   for (const c of ['days', 'exams', 'ideas', 'planedits', 'sets', 'talk', 'weeks'])
     assert.match(
       r.plan.detail,
-      new RegExp(`\\b${c} schema 1 to ${{ days: 3, sets: 3, talk: 3, weeks: 4 }[c] || 2} \\(\\d+\\)`),
+      new RegExp(`\\b${c} schema 1 to ${{ days: 4, sets: 3, talk: 3, weeks: 4 }[c] || 2} \\(\\d+\\)`),
       c
     );
   // Migrated, the backup is the fixture again, but for what schema 1 never held: the fixture day's shadow pick (B-68)
@@ -169,18 +169,18 @@ test('B-163: a backup newer than this build, and a version with no migration, ar
   const src = tmp('ev4-src-');
   pullFixture(src);
   const db = RUN.loadPulled(src);
-  // Newer: a days document at schema 3, written by a build past this one.
+  // Newer: a days document at a schema past this build's, written by a later build.
   const newer = oldBackup(db);
-  newer.collections.days[0] = { ...newer.collections.days[0], schema: 4 };
+  newer.collections.days[0] = { ...newer.collections.days[0], schema: 5 };
   const n = drill(seal(newer.collections)).r;
   assert.equal(n.status, 'refused');
-  assert.match(n.problems.join(' '), /days\/2026-10-16 is at schema 4, newer than this build's 3/);
-  // No migration: this build's registry at days 3 with no bump from 2 to 3.
+  assert.match(n.problems.join(' '), /days\/2026-10-16 is at schema 5, newer than this build's 4/);
+  // No migration: a registry at days 5 with no bump from 4 to 5.
   const ctx = { now: AT };
-  const m = steps.planRestore(seal(oldBackup(db).collections), db, ctx, spec, 'backup', { ...versionsOf(), days: 4 });
+  const m = steps.planRestore(seal(oldBackup(db).collections), db, ctx, spec, 'backup', { ...versionsOf(), days: 5 });
   assert.match(
     m.problems.join(' '),
-    /days\/2026-10-16 is at schema 1 and this build's is 4, but there is no migration from schema 3 to 4/
+    /days\/2026-10-16 is at schema 1 and this build's is 5, but there is no migration from schema 4 to 5/
   );
   // Today's refusal (B-27, Oct 21) was this backup's shape: it now restores.
   assert.equal(drill(oldBackup(db)).r.status, 'planned');

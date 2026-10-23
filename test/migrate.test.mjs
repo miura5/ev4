@@ -371,6 +371,7 @@ test('days split four ways: Derived day, dayedits (no nulls), runs/<id> per v3 r
   const r = migrateV3(V3, { at: AT });
   const d = write(r, 'days', '2026-10-13').data;
   assert.deepEqual(Object.keys(d).sort(), [
+    'aim',
     'at',
     'date',
     'dayType',
@@ -384,7 +385,8 @@ test('days split four ways: Derived day, dayedits (no nulls), runs/<id> per v3 r
     'writer',
   ]);
   assert.equal(d.shadow, null, 'B-68: a v3 day had no shadow');
-  assert.equal(d.schema, 3);
+  assert.equal(d.aim, null, 'B-170: nor an aim');
+  assert.equal(d.schema, 4);
   const e = write(r, 'dayedits', '2026-10-13').data;
   assert.deepEqual(Object.keys(e.checks), ['plan-t1']);
   assert.deepEqual(Object.keys(e.skipped), ['plan-t9']);
@@ -752,7 +754,7 @@ test('B-48 (D-105): the days and weeks 2 to 3 bumps add readiness null, match th
     for (const w of r.writes)
       assert.ok(validate(w.collection, w.data, { id: w.id }).ok, `${w.collection}/${w.id} validates`);
     const doc = got[c][0];
-    assert.equal(doc.schema, c === 'weeks' ? 4 : 3, 'the bumps chain to this build');
+    assert.equal(doc.schema, 4, 'the bumps chain to this build');
     assert.equal(
       c === 'days' ? doc.readiness : doc.rollups.readiness,
       null,
