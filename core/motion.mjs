@@ -1,4 +1,5 @@
-// E.V. core v2's motion as pure functions (B-76; D-134, D-135). The page's core engine draws; these decide how she
+// E.V. core v2's motion as pure functions (B-76; history since D-212 and D-224 superseded D-134 and D-135, except coreSize,
+// which still steps her stage). The page's core engine draws; these decide how she
 // moves: the springs her body follows, the speech envelope streamed words drive, the gesture blend, the size steps of
 // D-122 and the run-time step-down. No imports, no DOM, no clock and no randomness: every function returns its next
 // state from its inputs, so core tests can drive them frame by frame. Every parameter comes from spec.ui.look.core
@@ -207,7 +208,7 @@ export function stepDownStart() {
   return { level: 0, samples: [], lastStepAt: null };
 }
 
-/** The share (0 to 1) of frame times longer than ms; 0 for an empty list. D-135 counts dropped frames this way. */
+/** The share (0 to 1) of frame times longer than ms; 0 for an empty list. The retired core v2 counted dropped frames this way (D-224 measures the flower). */
 export function slowShare(xs, ms) {
   if (!xs.length) return 0;
   let n = 0;
@@ -216,7 +217,7 @@ export function slowShare(xs, ms) {
 }
 
 /**
- * The run-time step-down (D-135 as amended Oct 18): frame times over a rolling stepDown.windowSec; when more than
+ * The retired core v2's run-time step-down (history; D-224 superseded D-135): frame times over a rolling stepDown.windowSec; when more than
  * stepDown.maxSlowShare of a full window's frames take longer than stepDown.slowFrameMs, the level rises by one
  * (stepDown.order: wisps off, then half the points; the Silk outline is never dropped), then waits a window before it
  * can rise again. A frame longer than stepDown.ignoreAboveMs (a hidden tab, a page stall) is not a sample. level

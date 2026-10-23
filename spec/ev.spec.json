@@ -4153,9 +4153,9 @@
    "layout": "Sticky top bar (small E.V. core, readout, status, System button); one centred column; a floating dock with E.V., Today, Study, Progress and Record. The E.V. tab opens with a large core above the greeting; after his first message today, or while a session runs, the core moves to the top bar (or into the session ring) and each E.V. message gets its own small core.",
    "motion": "New messages rise in over 0.6 s; the core eases between states over about half a second; timers move once a second; reduced motion turns animation off.",
    "core": {
-    "retired": "B-205 (D-212): Silk core v2 is replaced by spec.ui.look.flower; kept as history until B-206 removes the WebGL renderer that reads it, and then as history only (D-134 superseded)",
+    "retired": "B-205 (D-212): Silk core v2 is replaced by spec.ui.look.flower; history only since B-206 (D-134 superseded by D-212, D-135 by D-224, whose budget is spec.ui.look.flower.budget); only sizes is still read",
     "_": [
-     "Core v2 (B-76; D-134, D-135): the Silk body from the E.V. Core Variations canvas, its Silk preset's values copied here once on Oct 18; from then on the spec owns them, and the canvas is not read again.",
+     "Core v2 (B-76; D-134 and D-135, superseded by D-212 and D-224): the Silk body from the E.V. Core Variations canvas, its Silk preset's values copied here once on Oct 18; from then on the spec owns them, and the canvas is not read again.",
      "Units: lengths are fractions of her radius R (R is radiusOfSize times the canvas size) unless named Px; rates are per second; times in seconds unless named Ms.",
      "core/motion.mjs reads speech, nucleus, gestures, sizes and stepDown; the page's core engine reads the rest."
     ],
@@ -4431,14 +4431,14 @@
       "halfPoints"
      ],
      "never": "the Silk outline",
-     "_note": "D-135 as amended Oct 18: more than 10% of frames over 25 ms in a rolling 2 s takes one step"
+     "_note": "history: D-135 as amended Oct 18 (superseded by D-224): more than 10% of frames over 25 ms in a rolling 2 s took one step"
     },
     "frameBudget": {
      "slowFrameMs": 25,
      "maxSlowShare": 0.05,
      "p95CoreDrawMs": 8,
-     "measuredAt": "10 s of speech at 390x844, DPR 3, Chromium, 4x CPU throttle (D-135)",
-     "_note": "D-135 as amended Oct 18: dropped frames are the measure, since frame intervals cannot go below the harness vsync floor of about 16.8 ms"
+     "measuredAt": "10 s of speech at 390x844, DPR 3, Chromium, 4x CPU throttle (D-135, superseded by D-224)",
+     "_note": "history: D-135 as amended Oct 18 (superseded by D-224): dropped frames were the measure, since frame intervals cannot go below the harness vsync floor of about 16.8 ms"
     },
     "reducedMotion": "a still frame per mood; a gesture is a short brightness change (D-127)"
    },

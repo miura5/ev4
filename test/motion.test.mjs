@@ -1,4 +1,5 @@
-// core/motion.mjs (B-76; D-134, D-135): core v2's speech envelope, gesture blend, springs, size steps and step-down,
+// core/motion.mjs (B-76): history since D-212 and D-224 superseded D-134 and D-135 (the flower draws her; its budget is
+// D-224's, spec.ui.look.flower.budget). These pin the retired Silk core v2's speech envelope, gesture blend, springs, size steps and step-down,
 // driven frame by frame with the spec's own parameters (spec.ui.look.core), and spec.ui.look.core validated.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -226,7 +227,7 @@ test('the step-down: more than 10% of frames over 25 ms in a rolling 2 s turns w
   assert.deepEqual(
     { w: D.windowSec, ms: D.slowFrameMs, share: D.maxSlowShare },
     { w: 2, ms: 25, share: 0.1 },
-    'D-135 as amended'
+    'the retired core v2 step-down (history; D-224 is the budget now)'
   );
   const run = (ms, secs) => {
     for (const end = t + secs * 1000; t < end; t += ms) st = MO.stepDownStep(st, ms, t, P);
@@ -267,7 +268,7 @@ test('the step-down: more than 10% of frames over 25 ms in a rolling 2 s turns w
   assert.equal(MO.percentile([], 95), null);
 });
 
-test('spec.ui.look.core: every core v2 parameter, the seven moods, five gestures, D-122 sizes and D-135 budgets', () => {
+test('spec.ui.look.core (history since D-212): every core v2 parameter, the seven moods, five gestures, its sizes and its budgets', () => {
   const num = (v, where) => assert.ok(typeof v === 'number' && Number.isFinite(v), where + ' is a number');
   const moods = spec.persona.avatar.moods;
   assert.deepEqual(Object.keys(P.moods), moods, 'the seven moods of computeMood, in order');
@@ -312,7 +313,7 @@ test('spec.ui.look.core: every core v2 parameter, the seven moods, five gestures
   assert.deepEqual(
     { ms: P.frameBudget.slowFrameMs, share: P.frameBudget.maxSlowShare, d: P.frameBudget.p95CoreDrawMs },
     { ms: 25, share: 0.05, d: 8 },
-    'D-135 as amended: at most 5% of frames over 25 ms, draw p95 at most 8 ms'
+    'the retired core v2 budget (history; D-224 holds the flower to its own)'
   );
   // Teal and violet carry her; coral is reserved for the error gesture.
   assert.deepEqual(P.palette.a, [36, 214, 186]);

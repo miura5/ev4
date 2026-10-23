@@ -290,6 +290,9 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         rows: [...document.querySelectorAll('#today-list li.today-item, #ahead li.week-item')]
           .filter(li => li.getBoundingClientRect().height > 0)
           .map(li => Math.round(li.getBoundingClientRect().height)),
+        col: Math.max(
+          ...[...document.querySelectorAll('#p-today .card')].map(c => Math.round(c.getBoundingClientRect().width))
+        ),
         pill: [...document.querySelectorAll('.bi-prep')].some(
           b =>
             getComputedStyle(b).backgroundColor !== 'rgba(0, 0, 0, 0)' ||
@@ -310,10 +313,11 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
       });
       const want = size.width < 600 ? 44 : 32;
       ok(
-        `[${width}] Today's rows are ${want} px, the view switch is ${size.width < 600 ? 'a full-width row' : "the pane header's"}, Prep is a word (D-225, D-150)`,
+        `[${width}] Today's rows are ${want} px, the view switch is ${size.width < 600 ? 'a full-width row' : "the pane header's"}, Prep is a word, the reading column at most 680 px (D-225, D-150)`,
         r.rows.length > 0 &&
           r.rows.every(h => h === want) &&
           !r.pill &&
+          r.col <= 680 &&
           (size.width < 600 ? !sg.inHeader && sg.w >= sg.pw - 40 : sg.inHeader && sg.h <= 28),
         JSON.stringify({ ...r, sg })
       );
