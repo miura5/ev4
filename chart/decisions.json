@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-257",
+  "date": "Oct 23",
+  "title": "When Matt's instruction conflicts with how shipping works (a deploy is one commit, the gates bind to it, ship works from main's head), the build chat stops and sets out the options with their cost in time and risk before acting, unless one path is plainly cheaper and reversible.",
+  "why": "Oct 23: asked to ship the UI batch while B-252 was in its check, the freeze chat reverted B-252 and restarted the checks without saying that cost about as much as waiting; a costly path that could reasonably go either way is Matt's call",
+  "status": "proposed",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-256",
   "date": "Oct 23",
   "title": "E.V. Engineering, after the freeze: the freeze reps (D-250, D-252) become a small standing course in E.V., designed in a design chat. Matt answers first and E.V. checks him; E.V. never does the learning for him. Support fades by the 'Where you are' table, the course takes about two hours a week at most, and it pauses in exam weeks. Nursing always comes first. Until that design, the reps stay in the build chat.",
