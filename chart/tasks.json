@@ -3814,12 +3814,12 @@
   "title": "Her notifications (D-216)",
   "dod": "When a job finishes or a your-turn arrives off the E.V. tab, her sidebar or tab-bar flower turns to face him with the top petal lit and her status reads something's ready, until he opens it; no badge anywhere; the proof",
   "milestone": "v4.5 ui",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-206",
    "B-210"
   ],
-  "notes": "",
+  "notes": "Taken Oct 23; built on the b213 worktree branch.",
   "commit": null,
   "source": "plan BridyLzngcGUtpeLQorX1U"
  },
