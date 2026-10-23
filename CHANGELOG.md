@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 23 | v4 staging deployed at 7fd63af (14:31 CT), from 6454333: 3. The morning after an exam, that exam's weak spots are still open… (B-252). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 23 | v4 staging deployed at 6454333 (14:18 CT), from e563381: 1. Collapsing/expanding review in conversation - expanding is pretty…; 1. Collapsing/expanding review in conversation - expanding is pretty… (B-248, B-250). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 23 | v4 staging deployed at e563381 (12:03 CT), from cfefc35: 1. I was looking at the study tab and I think the review questions…; 1. I was looking at the study tab and I think the review questions…; 1. I was looking at the study tab and I think the review questions… (B-245, B-246, B-247). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 23 | v4 staging deployed at cfefc35 (11:16 CT), from c8d8d8a: E.V's text is nice but can we check the cards to make sure their the… (B-244). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
