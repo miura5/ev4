@@ -3629,11 +3629,11 @@
   "title": "Build recap in the weekly: the weekly's health line gains one sentence from the Chart, \"this week she shipped n to live, m wait on you\", shown on the Sunday card",
   "dod": "a core test on a planted Chart and deploy record composes the sentence; a staging weekly firing carries it in weeks/<date>.health; the harness shows it on the Sunday card at 390 and 1280; npm test green; npm run check green; ship staging green; live only on Matt's OK",
   "milestone": "v4.4 ops",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-230"
   ],
-  "notes": "Waits behind B-230's live patch like the rest, so main stays patch-clean until it ships.",
+  "notes": "Taken Oct 23: the Chart read from origin/main in the run's own clone (Matt's answer).",
   "commit": null,
   "source": "plan XCT16iH6fggp4MxPNRZtHK"
  },
