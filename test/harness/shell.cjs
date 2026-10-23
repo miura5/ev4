@@ -5,6 +5,7 @@
 // Run `node tools/build.mjs` first: the harness reads dist/page/<target>/. Exit code 1 when any check fails.
 const { chromium } = require('playwright');
 const PANEL = require('./panel.cjs');
+const png = require('./png.cjs');
 const fs = require('fs');
 const path = require('path');
 const root = path.resolve(__dirname, '../..');
@@ -421,6 +422,96 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
       );
       await page.close();
     }
+  // B-224 (D-229): System's Preferences. Larger puts every text one step up (x1.125) with no sideways scroll at Matt's
+  // sizes; Reduce motion On gives the same screenshots as the system's reduced motion; both survive a reload.
+  {
+    const texts = page =>
+      page.evaluate(() =>
+        [...document.querySelectorAll('body *')]
+          .filter(e => {
+            if (e.closest('[hidden]') || getComputedStyle(e).display === 'none') return false;
+            return [...e.childNodes].some(n => n.nodeType === 3 && n.textContent.trim());
+          })
+          .map(e => parseFloat(getComputedStyle(e).fontSize))
+      );
+    for (const w of [390, 735]) {
+      const { page } = await open(browser, { viewport: { width: w, height: 844 } });
+      await page.waitForTimeout(600);
+      await page.click('#tab-system');
+      await page.waitForTimeout(300);
+      const before = await texts(page);
+      await page.click('#text-seg [data-p="larger"]');
+      await page.waitForTimeout(200);
+      const after = await texts(page);
+      const off = before.map((b, i) => [b, after[i]]).filter(([b, a]) => Math.abs(a - b * 1.125) > 0.6);
+      ok(
+        `[${w}] Text size Larger puts every text one step up (x1.125) (D-229)`,
+        before.length > 20 && before.length === after.length && !off.length,
+        `${before.length} texts; off: ${JSON.stringify(off.slice(0, 5))}`
+      );
+      await page.click('#motion-seg [data-p="reduce"]');
+      await page.reload();
+      await page.waitForTimeout(700);
+      await page.click('#tab-system');
+      await page.waitForTimeout(200);
+      const kept = await page.evaluate(() => ({
+        text: document.documentElement.getAttribute('data-text'),
+        motion: document.documentElement.getAttribute('data-motion'),
+        pressed: [
+          ...document.querySelectorAll('#text-seg [aria-pressed="true"], #motion-seg [aria-pressed="true"]'),
+        ].map(b => b.dataset.p),
+      }));
+      ok(
+        `[${w}] Larger and Reduce motion On survive a reload (D-229)`,
+        kept.text === 'larger' && kept.motion === 'reduce' && kept.pressed.join() === 'larger,reduce',
+        JSON.stringify(kept)
+      );
+      await page.close();
+    }
+    const larger = 'try{localStorage.setItem("ev.text","larger")}catch(e){};';
+    for (const [w, h] of [
+      [390, 844],
+      [735, 830],
+      [1706, 1240],
+      [2560, 1240],
+    ]) {
+      const { page } = await open(browser, { viewport: { width: w, height: h }, pre: larger });
+      await page.waitForTimeout(600);
+      const wide = [];
+      for (const t of ['ev', 'today', 'study', 'progress', 'record', 'system']) {
+        await page.click('#tab-' + t);
+        await page.waitForTimeout(250);
+        if (await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)) wide.push(t);
+      }
+      const on = await page.evaluate(() => document.documentElement.getAttribute('data-text'));
+      ok(`[${w}x${h}] Larger: no sideways scroll on any tab (D-229)`, on === 'larger' && !wide.length, wide.join(', '));
+      if (w === 390) await page.screenshot({ path: `${shots}/prefs-larger-${w}.png` });
+      await page.close();
+    }
+    // the same view twice, once under the system's reduced motion, once under his On: the same pixels
+    for (const w of [390, 735])
+      for (const t of ['today', 'progress']) {
+        // (not System: its Preferences show which setting is on)
+        const shot = async (pre, reduce) => {
+          const { page } = await open(browser, { viewport: { width: w, height: 844 }, pre });
+          await page.emulateMedia({ reducedMotion: reduce ? 'reduce' : 'no-preference' });
+          await page.waitForTimeout(700);
+          await page.click('#tab-' + t);
+          await page.waitForTimeout(800);
+          const b = await page.screenshot();
+          await page.close();
+          return b;
+        };
+        const sys = await shot('', true),
+          mine = await shot('try{localStorage.setItem("ev.motion","reduce")}catch(e){};', false);
+        const d = png.diff(sys, mine);
+        ok(
+          `[${w}] ${t}: Reduce motion On matches the system's reduced motion (D-229)`,
+          d.share <= 0.002,
+          JSON.stringify(d)
+        );
+      }
+  }
   await browser.close();
   for (const [s, n, d] of results) console.log(`${s}  ${n}${d && s === 'FAIL' ? '  -- ' + d : ''}`);
   const failed = results.filter(x => x[0] === 'FAIL').length;

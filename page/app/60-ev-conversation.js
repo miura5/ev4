@@ -54,7 +54,9 @@
       const FPS = F.clock.heldFps;
       const MOODS = Object.keys(F.moods);
       const FACE = new Set(F.view.facing);
-      const reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      // B-224 (D-229): the system's setting or his Reduce motion On, read when she draws
+      const reduceMq = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+      const isReduced = () => reduceMq.matches || document.documentElement.getAttribute('data-motion') === 'reduce';
       const cl = x => Math.max(0, Math.min(1, x));
       const eIO = x => 0.5 - 0.5 * Math.cos(Math.PI * cl(x));
       const eOut = (x, p) => 1 - Math.pow(1 - cl(x), p);
@@ -502,7 +504,7 @@
         const g = o.follow && sig.g && now - sig.gAt < GD(sig.g) * 1000 ? sig.g : null;
         const gl = o.follow && g === 'glance' ? sig.glance || 1 : 1;
         step(o.G, tq, mood, g, mood === 'speaking' ? voiceAt(now) : 0);
-        const rm = reduce || o.still;
+        const rm = isReduced() || o.still;
         const p = pose(o.G, tq, rm, gl);
         const ringOn = o.follow && sig.ring >= 0;
         const z = zoneOf(o.size);
@@ -660,7 +662,7 @@
         gestures: sig.g && performance.now() - sig.gAt < GD(sig.g) * 1000 ? [{ name: sig.g }] : [],
         mood: sig.mood,
         ring: sig.ring,
-        reduce,
+        reduce: isReduced(),
         renderer: 'svg',
         log: log.slice(),
       });

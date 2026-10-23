@@ -66,7 +66,7 @@
         if (st && CAP.queue.includes(m.id)) {
           b.classList.add('reveal');
           [...b.querySelectorAll('.w')].slice(0, st.n).forEach(w => w.classList.add('on'));
-        } else if (REDUCE && m.role !== 'matt' && !m.pending && (m.greeting || T.ready)) {
+        } else if (reduced() && m.role !== 'matt' && !m.pending && (m.greeting || T.ready)) {
           announce(m.id + ':0', [...b.querySelectorAll('.w')].map(w => w.textContent).join(' '));
           if (!CAP.said.has(m.id + ':end')) {
             CAP.said.add(m.id + ':end');

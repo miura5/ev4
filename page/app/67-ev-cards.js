@@ -1094,7 +1094,7 @@
                 t.scrollTop += Math.min(r.bottom - tr.bottom + 12, Math.max(0, r.top - tr.top - 8));
             }
           },
-          REDUCE ? 50 : 850
+          reduced() ? 50 : 850
         );
       });
       wrap.append(row, ul);

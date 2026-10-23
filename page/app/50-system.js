@@ -363,3 +363,27 @@
       );
       paint(cur());
     }
+    // B-224 (D-229): Text size (Default, Larger) and Reduce motion (Follow the system, On), stored per device the same
+    // way (ev.text, ev.motion) and set on <html> before first paint by the head script.
+    for (const [segId, key, attr, off] of [
+      ['text-seg', 'ev.text', 'data-text', 'default'],
+      ['motion-seg', 'ev.motion', 'data-motion', 'system'],
+    ]) {
+      const seg = $(segId);
+      if (!seg) continue;
+      const paint = v =>
+        seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.p === v)));
+      seg.querySelectorAll('button').forEach(b =>
+        b.addEventListener('click', () => {
+          const v = b.dataset.p;
+          if (v === off) document.documentElement.removeAttribute(attr);
+          else document.documentElement.setAttribute(attr, v);
+          try {
+            if (v === off) localStorage.removeItem(key);
+            else localStorage.setItem(key, v);
+          } catch {}
+          paint(v);
+        })
+      );
+      paint(document.documentElement.getAttribute(attr) || off);
+    }

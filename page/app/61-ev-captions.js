@@ -4,7 +4,10 @@
     // now, and pull to load one earlier conversation at a time (core.conversations, the idle-gap rule). Screen readers
     // get each finished sentence once, from a polite live region of its own.
     document.body.classList.add('captions');
-    const REDUCE = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    // B-224 (D-229): the system's reduced motion, or his Reduce motion On in Preferences (read each time, so a switch
+    // takes effect at once).
+    const reduceQ = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+    const reduced = () => reduceQ.matches || document.documentElement.getAttribute('data-motion') === 'reduce';
     const CAP = {
       loaded: 0,
       pastToday: false,
@@ -231,7 +234,8 @@
       renderStage();
       renderThread();
       requestAnimationFrame(() => {
-        if (CAP.anchorTop == null) capBox.scrollTo({ top: capBox.scrollHeight, behavior: REDUCE ? 'auto' : 'smooth' });
+        if (CAP.anchorTop == null)
+          capBox.scrollTo({ top: capBox.scrollHeight, behavior: reduced() ? 'auto' : 'smooth' });
       });
     }
     // B-209 (D-210, amending D-122): his line stays in the conversation as a quiet right-aligned line instead of a 3 s
@@ -285,7 +289,7 @@
       if (b) b.classList.remove('reveal');
     }
     function revealQueue(m) {
-      if (REDUCE || CAP.rv.has(m.id)) return;
+      if (reduced() || CAP.rv.has(m.id)) return;
       while (CAP.queue.length) revealFinish(CAP.queue.shift());
       CAP.rv.set(m.id, { n: 0, from: 0, t0: null, first: true, all: false });
       CAP.queue.push(m.id);
