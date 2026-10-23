@@ -34,6 +34,11 @@ Status: `open` · `in progress` · `blocked` · `done`. A task opens when every 
 2. Scrolling up to view previous conversation is especially buggy - I scroll up; it doesn't feel really graceful like a scrolling behavior like this would usually have; E.V. disappears the indicator arrow fills up and drops down like a scrolling behavior should but then the conversation jumps back up now that E.V. is gone and it feels pretty buggy. then the scrolling behavior seems to break the tenet for instant states with write catching up; so maybe we could make room; do that little thing where there's a placeholder with those clean minimal placeholder lines (attached screenshot example from mock-up); that's what I noticed linear did in order to give instant feedback while waiting for the write. then the issue with continuing to scroll up for the past history is that the page looks like it briefly scrolls down; E.V. appears for a split second (these two may be relate); then it scrolls down but it jumps back down which I guess is the pattern of the issue here. Also at that point in the video it very obviously in a buggy manner stutters between scrolling up and down with E.V. disappearing and reappearing. and then it finally show yesterday's chat history.
 3. Polish: this would probably be that aforementioned placeholder lines indicated in the second point and attached with the reference image from the mock-up Done when: A pull shows the earlier messages as soon as he holds at the top, with no fixed pause; his place held as B-249 holds it; the captions check sees the lines within a frame or two of the hold | — | v4.5.x ui | in progress | Matt approved, Oct 23 (practice rep) |
 | B-251 | Request (reported Oct 23): For B-250 I'd remove the pause but I'd still implement the placeholder lines at some point; we don't know where the wait is present but you are right that the conversation history write isn't an issue. So "removing the pause" gets added to the batch? Done when: Matt's words: placeholder lines while something loads, like the mock-up's | — | v4.6 triage | blocked | parked for the freeze week: adds an element; B-250 removes the pause instead |
+| B-252 | Bug (reported Oct 23): 3.
+The morning after an exam, that exam's weak spots are still open and overdue, so they fill the whole review. They're only parked that evening.
+High
+The day after Exam N, your review is all Exam N and none of the next exam.
+Freeze Done when: The morning after an exam, its weak spots are not in the review set or the day's list (the morning's pick skips a spot whose exam has passed, as auto-park will that evening); a core test plants the day after an exam; proven by a staging morning run read back | — | v4.5.x ops | open |  |
 
 ## Your turn
 
@@ -313,11 +318,6 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-240 | bug | 2026-10-23T04:32:33.683Z | E.V.'s Conversation tab doesn't have the right panel (see the screenshots), and the panel doesn't show up on the Study tab either. | build chat | declined |  |
 | B-241 | bug | 2026-10-23T04:32:33.683Z | When I do a review on the Conversation tab, the right panel does show up, but it's not the right shade. | build chat | declined |  |
 | B-242 | request | 2026-10-23T04:32:33.683Z | question: Should the right panel be the same on all tabs? It's on Record, Progress, Today and System but not on Study or Conversation, and each one shows its own page's info when there is any. | build chat | declined |  |
-| B-252 | bug | 2026-10-23T18:58:39.146Z | 3.
-The morning after an exam, that exam's weak spots are still open and overdue, so they fill the whole review. They're only parked that evening.
-High
-The day after Exam N, your review is all Exam N and none of the next exam.
-Freeze | build chat | inbox |  |
 | B-253 | bug | 2026-10-23T18:58:39.146Z | 4
 Making a parked weak spot active again is undone that night by auto-park.
 High
