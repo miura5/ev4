@@ -3039,7 +3039,7 @@
    "B-72",
    "B-230"
   ],
-  "notes": "The staging weekly runs/weekly-20261023-125141375 wrote weeks/2026-10-23.study.aim {rule today, other weakest, days 1, differed 0, weakest [E4-8], onWeakest 21 right 5 missed}: the comparison reads back.",
+  "notes": "Staging days 2026-10-17..21 bumped 3 to 4 (migrate bumps, legacy v4-days-<date>-s3 kept); days/2026-10-16 is a B-34 leftover (no writer), kept as it is.",
   "commit": null,
   "source": "B-72 split (D-190)",
   "waitingOn": "Matt"
