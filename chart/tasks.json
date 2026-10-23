@@ -3743,12 +3743,12 @@
   "title": "Surfaces, jobs and your turn in C (D-209)",
   "dod": "Surfaces open in the right panel from 1200 px and in the sheet below; jobs are one line in the pane and one row under Working; your-turn cards act in place and paint on the tap frame; the proof",
   "milestone": "v4.5 ui",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-209"
   ],
-  "notes": "Taken Oct 22.",
-  "commit": null,
+  "notes": "Shipped to staging at 33ba36f: ship staging GREEN.",
+  "commit": "33ba36f",
   "source": "plan BridyLzngcGUtpeLQorX1U"
  },
  {
