@@ -4569,7 +4569,7 @@
   "milestone": "v4.5.x ops",
   "status": "blocked",
   "depends": [],
-  "notes": "found during the B-253 staging proof; parked: outside this goal's scope",
+  "notes": "the next run (evening-cloud-20261023-204511616) linted 0 errors: the 8 were documents changed between Oct 22's snapshot and today's, re-hashed by the 20:41 run; whether those changes were legitimate is the open question",
   "commit": null,
   "source": "build chat, B-253 staging proof",
   "words": "Staging lint: 8 fact-changed errors on jobs/ (5) and talk/2026-10-18, -20, -21: a Fact's write-once fields changed since state/current last hashed them (Oct 22). Seen in evening-cloud-20261023-204137072; not from B-253, which only changes auto-park.",
