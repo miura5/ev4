@@ -3858,7 +3858,7 @@
   "title": "Matt's look at his sizes, then live",
   "dod": "Matt uses staging at 735 × 830, a third of the ultrawide and his phone, and says yes; ship live on his OK",
   "milestone": "v4.5 ui",
-  "status": "blocked",
+  "status": "done",
   "depends": [
    "B-203",
    "B-204",
@@ -3876,10 +3876,9 @@
    "B-216",
    "B-217"
   ],
-  "notes": "Staging holds all of v4.5 (B-203 to B-217, last deploy 98d23e1 GREEN; a full npm run check is GREEN at 98d23e1 for R-06). Waiting on Matt's look at 735x830, a third of the ultrawide and his phone, then his explicit OK in the chat to ship live.",
-  "commit": null,
-  "source": "plan BridyLzngcGUtpeLQorX1U",
-  "waitingOn": "Matt"
+  "notes": "Live at v4.4.2 (98d23e1) on Matt's OK in the build chat, Oct 22 after 23:05 CT: all of v4.5 (B-203 to B-217); full check GREEN at the commit, staging GREEN at the commit, no running session.",
+  "commit": "98d23e1",
+  "source": "plan BridyLzngcGUtpeLQorX1U"
  },
  {
   "id": "B-219",
