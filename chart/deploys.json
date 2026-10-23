@@ -3365,5 +3365,21 @@
   "decisions": [],
   "source": "log",
   "release": "v4.5.0"
+ },
+ {
+  "target": "staging",
+  "commit": "c8d8d8a",
+  "time": "2026-10-23T15:56:57.008Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "3c42555",
+  "tasks": [
+   "B-243"
+  ],
+  "summary": "See the difference in text sizes between the live app and the…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
