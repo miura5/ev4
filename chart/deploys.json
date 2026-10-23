@@ -3210,5 +3210,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "a4b8a22",
+  "time": "2026-10-23T08:29:10.000Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "12d6a7d",
+  "tasks": [
+   "B-228"
+  ],
+  "summary": "Enter keeps a fresh row",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
