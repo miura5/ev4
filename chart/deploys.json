@@ -3096,5 +3096,39 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "live",
+  "commit": "98d23e1",
+  "time": "2026-10-23T04:09:51.776Z",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "f8ee77e",
+  "from": "f8ee77e",
+  "tasks": [
+   "B-199",
+   "B-203",
+   "B-219",
+   "B-204",
+   "B-205",
+   "B-206",
+   "B-207",
+   "B-208",
+   "B-221",
+   "B-209",
+   "B-210",
+   "B-211",
+   "B-212",
+   "B-213",
+   "B-214",
+   "B-216",
+   "B-215",
+   "B-217"
+  ],
+  "summary": "The smoke tier; Harness sizes for the ultrawide; run npm run check only for what a task touched, full set nightly and…; Theme tokens, light and dark; Her spec; The 2D flower renderer; Her frame budget; The shell in C; I've attached the UI mock-up and staging. are the sidebars supposed…; The E.V. tab in C; Surfaces, jobs and your turn in C; Study sessions in C; Skills runner and workouts in C; Today, Study, Progress and Record in C; System in C, with the theme toggle; The motion pass; Her notifications; Tenet sweep for D-221, D-222, D-224 and D-225",
+  "why": null,
+  "decisions": [],
+  "source": "log",
+  "release": "v4.4.2"
  }
 ]
