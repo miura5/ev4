@@ -4072,7 +4072,7 @@
    "B-228",
    "B-229"
   ],
-  "notes": "Matt, Oct 23: v4.5 went live as v4.4.2 (98d23e1); 'the next v4.5 patch' in the hand-off means the next v4.4.x patch",
+  "notes": "Oct 23 build chat: B-222, B-223, B-224, B-225, B-228 and B-229 are done and on staging (GREEN at da38721). This waits on B-226, which needs B-202 (parked by D-218), and B-227 (blocked on Matt's choice for her reply line). To ship v4.4.3 now, take B-226 (and B-227's reply half) out of this task's depends; otherwise unpark B-202. v4.6 triage work (B-231 on) is held until this ships, so main carries only patch-level change.",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },
