@@ -3785,12 +3785,12 @@
   "title": "Today, Study, Progress and Record in C (D-225)",
   "dod": "32 px rows (44 on the phone), folds, the view switch in the pane header or a row on the phone, details in the right panel from 1200 px; status as coloured words; the proof",
   "milestone": "v4.5 ui",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-208"
   ],
-  "notes": "Taken Oct 23.",
-  "commit": null,
+  "notes": "Today, Study, Progress and Record in C: sections of rows under quiet 12 px headings (44 px on the phone, 32 px from 600 px), the one thing to do now keeps its surface box, ticks are rings that fill teal, the view switch (grey, chosen view on the ground) is the pane header's from 600 px and a full-width row on the phone, the right panel's cards sit on the ground with a hairline, Prep is a grey word and text links are underlined text. Study's plan still sits beside at 1024+ inside the pane; B-217 can move it. Proof: look adds the D-225 row/switch check at the four sizes; run/captions/prep/greet/look green.",
+  "commit": "a2265bb",
   "source": "plan BridyLzngcGUtpeLQorX1U"
  },
  {
