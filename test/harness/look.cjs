@@ -187,6 +187,37 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         `--bg ${got.tokens['--bg']}, color-scheme ${got.scheme}`
       );
       await page.screenshot({ path: `${shots}/theme-${label.replace(/\W+/g, '-')}-390x844.png` });
+      if (!stored && want === 'dark') {
+        // B-214 (D-211): System's switch: Light stores light on this device and paints it now; System forgets it.
+        await page.click('#tab-system');
+        await page.click('#theme-seg [data-t="light"]');
+        const a = await page.evaluate(() => ({
+          attr: document.documentElement.getAttribute('data-theme'),
+          stored: localStorage.getItem('ev.theme'),
+          bg: getComputedStyle(document.documentElement).getPropertyValue('--bg').trim().toUpperCase(),
+          pressed: document.querySelector('#theme-seg [aria-pressed="true"]').dataset.t,
+        }));
+        await page.screenshot({ path: `${shots}/theme-switch-light-390x844.png` });
+        await page.click('#theme-seg [data-t="system"]');
+        const b = await page.evaluate(() => ({
+          attr: document.documentElement.getAttribute('data-theme'),
+          stored: localStorage.getItem('ev.theme'),
+          bg: getComputedStyle(document.documentElement).getPropertyValue('--bg').trim().toUpperCase(),
+          pressed: document.querySelector('#theme-seg [aria-pressed="true"]').dataset.t,
+        }));
+        ok(
+          "[390x844] B-214: System's switch: Light paints light at once and is stored on this device; System forgets it and follows the device again",
+          a.attr === 'light' &&
+            a.stored === 'light' &&
+            a.bg === '#F7F2E8' &&
+            a.pressed === 'light' &&
+            b.attr === null &&
+            b.stored === null &&
+            b.bg === '#19161C' &&
+            b.pressed === 'system',
+          JSON.stringify({ a, b })
+        );
+      }
       await ctx.close();
     }
   }
@@ -677,7 +708,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
             .some(c => /^ok$/i.test(c.textContent.trim())),
           empty: [...panel.querySelectorAll('.empty')].filter(vis).length,
           emptyCards: [...panel.querySelectorAll('.card')]
-            .filter(c => vis(c) && !c.querySelector('li, #health-top *'))
+            .filter(c => vis(c) && !c.querySelector('li, #health-top *, .seg button'))
             .map(c => c.id),
           listsOpen: ['pipes', 'runs'].filter(id => vis(document.getElementById(id))),
         };

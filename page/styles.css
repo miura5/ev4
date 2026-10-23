@@ -837,30 +837,30 @@ body.captions.on-ev .wrap{max-width:680px}
    from 600 px wide; the one thing to do now keeps its box (surface, hairline); the switch is the pane header's from
    600 px (a full-width row on the phone); the right panel's cards sit on the ground with a hairline; status is a
    coloured word. */
-:where(#p-today,#p-study,#p-progress,#p-record) .card{background:none;border:0;border-radius:0;box-shadow:none;padding:0;gap:4px}
-:where(#p-today,#p-study,#p-progress,#p-record) .card.now{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);border-radius:12px;padding:14px 14px 12px;gap:8px}
-:where(#p-today,#p-study,#p-progress,#p-record) .card>h2,:where(#p-today,#p-study,#p-progress,#p-record) .card>.card-head h2,:where(#p-today,#p-study,#p-progress,#p-record) .card>.card-head{font:500 12px/1.3 var(--sans);color:var(--faint)}
-:where(#p-today,#p-study,#p-progress,#p-record) .card>h2,:where(#p-today,#p-study,#p-progress,#p-record) .card>.card-head{min-height:28px;align-items:center;display:flex;margin:0}
-:where(#p-today,#p-study,#p-progress,#p-record) .card>.card-head .meta{font-size:12px;color:var(--faint);margin:0}
-:where(#p-today,#p-study,#p-progress,#p-record) .row{border-top:0;padding:6px 0;min-height:44px;align-items:baseline;gap:10px;font-size:14px;box-sizing:border-box}
-:where(#p-today,#p-study,#p-progress,#p-record) .row.today-item,:where(#p-today,#p-study,#p-progress,#p-record) .row.week-item{align-items:center;padding:0}
-:where(#p-today,#p-study,#p-progress,#p-record) .row .meta{font-size:12px;color:var(--faint)}
-:where(#p-today,#p-study,#p-progress,#p-record) .when{font-size:12px;color:var(--faint);min-width:4.6rem;padding:0}
-:where(#p-today,#p-study,#p-progress,#p-record) .ti-line,:where(#p-today,#p-study,#p-progress,#p-record) .wk-line{align-items:center;min-height:44px;padding:0}
-:where(#p-today,#p-study,#p-progress,#p-record) .ti-min,:where(#p-today,#p-study,#p-progress,#p-record) .wk-k{font-size:12px;color:var(--faint)}
-:where(#p-today,#p-study,#p-progress,#p-record) .ti-t.urgent,:where(#p-today,#p-study,#p-progress,#p-record) .wk-k.urgent{color:var(--urg)}
-:where(#p-today,#p-study,#p-progress,#p-record) input.tick{flex:0 0 16px;width:16px;height:16px;margin:0;border:0;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--line2)}
-:where(#p-today,#p-study,#p-progress,#p-record) input.tick:checked{background:var(--do);box-shadow:none}
-:where(#p-today,#p-study,#p-progress,#p-record) input.tick:checked::after{width:3px;height:7px;border-color:var(--bg);border-width:0 2px 2px 0}
-:where(#p-today,#p-study,#p-progress,#p-record) .row.done .ti-t{color:var(--faint)}
+:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .card{background:none;border:0;border-radius:0;box-shadow:none;padding:0;gap:4px}
+:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .card.now{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);border-radius:12px;padding:14px 14px 12px;gap:8px}
+:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .card>h2,:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .card>.card-head h2,:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .card>.card-head{font:500 12px/1.3 var(--sans);color:var(--faint)}
+:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .card>h2,:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .card>.card-head{min-height:28px;align-items:center;display:flex;margin:0}
+:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .card>.card-head .meta{font-size:12px;color:var(--faint);margin:0}
+:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .row{border-top:0;padding:6px 0;min-height:44px;align-items:baseline;gap:10px;font-size:14px;box-sizing:border-box}
+:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .row.today-item,:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .row.week-item{align-items:center;padding:0}
+:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .row .meta{font-size:12px;color:var(--faint)}
+:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .when{font-size:12px;color:var(--faint);min-width:4.6rem;padding:0}
+:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .ti-line,:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .wk-line{align-items:center;min-height:44px;padding:0}
+:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .ti-min,:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .wk-k{font-size:12px;color:var(--faint)}
+:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .ti-t.urgent,:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .wk-k.urgent{color:var(--urg)}
+:where(#p-today,#p-study,#p-progress,#p-record,#p-system) input.tick{flex:0 0 16px;width:16px;height:16px;margin:0;border:0;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--line2)}
+:where(#p-today,#p-study,#p-progress,#p-record,#p-system) input.tick:checked{background:var(--do);box-shadow:none}
+:where(#p-today,#p-study,#p-progress,#p-record,#p-system) input.tick:checked::after{width:3px;height:7px;border-color:var(--bg);border-width:0 2px 2px 0}
+:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .row.done .ti-t{color:var(--faint)}
 .bi-prep,.prep-mark{padding:0;border-radius:0;background:none;color:var(--quiet);font:500 12px/1.3 var(--sans);letter-spacing:0}
 @media (min-width:600px){
-  :where(#p-today,#p-study,#p-progress,#p-record) .row,:where(#p-today,#p-study,#p-progress,#p-record) .ti-line,:where(#p-today,#p-study,#p-progress,#p-record) .wk-line{min-height:32px;font-size:13px}
-  :where(#p-today,#p-study,#p-progress,#p-record) .row{padding:4px 0}
-  :where(#p-today,#p-study,#p-progress,#p-record) .row.today-item,:where(#p-today,#p-study,#p-progress,#p-record) .row.week-item{padding:0}
-  :where(#p-today,#p-study,#p-progress,#p-record) .card.now button.primary{min-height:32px;padding:0 12px;border-radius:8px;font:500 13px var(--sans)}
-  :where(#p-today,#p-study,#p-progress,#p-record) input[type=text]{min-height:32px;padding:4px 10px;border-radius:8px;font-size:13px}
-  :where(#p-today,#p-study,#p-progress,#p-record) form button,#p-today .add-row button{min-height:32px;border-radius:8px;padding:0 12px;font-size:13px}
+  :where(#p-today,#p-study,#p-progress,#p-record,#p-system) .row,:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .ti-line,:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .wk-line{min-height:32px;font-size:13px}
+  :where(#p-today,#p-study,#p-progress,#p-record,#p-system) .row{padding:4px 0}
+  :where(#p-today,#p-study,#p-progress,#p-record,#p-system) .row.today-item,:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .row.week-item{padding:0}
+  :where(#p-today,#p-study,#p-progress,#p-record,#p-system) .card.now button.primary{min-height:32px;padding:0 12px;border-radius:8px;font:500 13px var(--sans)}
+  :where(#p-today,#p-study,#p-progress,#p-record,#p-system) input[type=text]{min-height:32px;padding:4px 10px;border-radius:8px;font-size:13px}
+  :where(#p-today,#p-study,#p-progress,#p-record,#p-system) form button,#p-today .add-row button{min-height:32px;border-radius:8px;padding:0 12px;font-size:13px}
 }
 /* the switch: grey, the chosen view on the ground (no teal: D-221) */
 .seg{gap:2px;padding:2px;border:0;border-radius:8px;background:var(--sunken);box-shadow:inset 0 0 0 1px var(--line)}
@@ -879,3 +879,8 @@ body.captions.on-ev .wrap{max-width:680px}
 /* D-221: a text link is text with an underline, never teal */
 button.tlink{color:var(--text);text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:3px}
 button.tlink:hover{text-decoration-color:currentColor}
+
+/* B-214: System in C; the theme switch */
+#theme-card .seg{align-self:flex-start}
+#theme-card .meta{margin:4px 0 0;font-size:12px;color:var(--faint)}
+@media (max-width:599px){#theme-card .seg{align-self:stretch}}

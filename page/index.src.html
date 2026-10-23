@@ -193,6 +193,8 @@
     <div class="card fold-card" id="jobs-card" hidden><button type="button" class="fold-line" id="jobs-card-line" aria-expanded="false" aria-controls="jobs">Background jobs</button><ul class="list" id="jobs" hidden></ul></div>
     <div class="card fold-card" id="cap-card" hidden><button type="button" class="fold-line" id="cap-card-line" aria-expanded="false" aria-controls="capacity">Capacity</button><div id="capacity" hidden></div></div>
     <div class="card fold-card" id="lint-card" hidden><button type="button" class="fold-line" id="lint-card-line" aria-expanded="false" aria-controls="lint-body">Checks</button><div id="lint-body" hidden><ul class="list" id="lint"></ul></div></div>
+    <!-- B-214 (D-211): the theme, this device's own: the system's, or light or dark -->
+    <div class="card" id="theme-card"><h2>Appearance</h2><div class="seg theme-seg" id="theme-seg" role="group" aria-label="Theme"><button type="button" data-t="system" aria-pressed="true">System</button><button type="button" data-t="light" aria-pressed="false">Light</button><button type="button" data-t="dark" aria-pressed="false">Dark</button></div><p class="meta" id="theme-note">On this device only.</p></div>
     <p class="meta sys-foot" id="versions"></p>
     <p class="meta sys-foot" id="sys-privacy"><span id="sys-note">E.V. logs your conversations to your record. Only you can read it.</span> <span id="sys-staging" hidden>Staging copy. Jobs here run the staging worker on the staging record.</span></p>
     </div></div>
