@@ -1,4 +1,4 @@
-// B-216 (D-222): two clocks. She moves on held frames inside her own module (page/app/60-ev-conversation.js); every
+// B-216 (D-230): two clocks. She moves on held frames inside her own module (page/app/60-ev-conversation.js); every
 // other part of the interface moves at full frame rate with short eases: a view settles within 0.16 s, a fold takes
 // 0.28 s, nothing runs over 0.45 s (an indicator that loops, a spinner or a pulse, is not a move), no stepped timing,
 // and reduced motion keeps the end states with no movement.
@@ -27,13 +27,13 @@ export function timings(text) {
   return out;
 }
 
-test('B-216 (D-222): no stepped timing outside her module', () => {
+test('B-216 (D-230): no stepped timing outside her module', () => {
   assert.equal(/steps\s*\(/.test(css), false, 'styles.css uses steps()');
   const stepped = appFiles.filter(([f, t]) => f !== HER && /steps\(\s*\d/.test(t)).map(([f]) => f);
   assert.deepEqual(stepped, []);
 });
 
-test('B-216 (D-222): no interface move runs over 0.45 s (a looping indicator aside)', () => {
+test('B-216 (D-230): no interface move runs over 0.45 s (a looping indicator aside)', () => {
   const long = timings(css).filter(t => !t.loops && t.secs.some(s => s > 0.45));
   assert.deepEqual(
     long.map(t => `${t.prop}: ${t.value}`),
@@ -41,14 +41,16 @@ test('B-216 (D-222): no interface move runs over 0.45 s (a looping indicator asi
   );
 });
 
-test('B-216 (D-222): a view settles within 0.16 s and folds take 0.28 s', () => {
-  const enter = css.match(/\.panel\.enter\{animation:fade ([\d.]+)s/);
-  assert.ok(enter && Number(enter[1]) <= 0.16, 'the view fade: ' + (enter && enter[1]));
+test('B-225 (D-230): a view switch is a cut; folds open in 0.28 s and close in 0.16 s', () => {
+  assert.doesNotMatch(css, /\.panel\.enter\{animation/, 'no fade on a view switch');
   const hero = css.match(/body\.captions \.hero,[^{]*\{[^}]*transition:height ([\d.]+)s/);
-  assert.ok(hero && Number(hero[1]) === 0.28, "her stage's fold: " + (hero && hero[1]));
+  assert.ok(hero && Number(hero[1]) === 0.28, "her stage's fold opens in 0.28 s: " + (hero && hero[1]));
+  assert.match(css, /body\.captions\.her-folded \.hero\{transition-duration:\.16s\}/, 'and closes in 0.16 s');
+  assert.match(css, /\.chev,\.prep-row \.chev\{transition-duration:\.16s\}/, 'a chevron closes in 0.16 s');
+  assert.match(css, /\[aria-expanded="true"\] \.chev[^{]*\{transition-duration:\.28s\}/, 'and opens in 0.28 s');
 });
 
-test('B-216 (D-222): reduced motion stops every interface move and keeps the end states', () => {
+test('B-216 (D-230): reduced motion stops every interface move and keeps the end states', () => {
   assert.match(
     css,
     /@media \(prefers-reduced-motion:reduce\)\{\*,\*::before,\*::after\{transition:none!important;animation:none!important\}\}/

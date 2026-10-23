@@ -512,6 +512,38 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
         );
       }
   }
+  // B-225 (D-230): a fold opens in at most 0.28 s and closes in at most 0.16 s (the chevron of her briefing line and of
+  // a surface's head line, each read in its open and its closed state), at 390 and 1280.
+  for (const w of [390, 1280]) {
+    const { page } = await open(browser, { viewport: { width: w, height: 844 } });
+    await page.waitForTimeout(900);
+    const dur = sel =>
+      page.evaluate(sel => {
+        const e = document.querySelector(sel);
+        if (!e) return null;
+        return Math.max(
+          ...getComputedStyle(e)
+            .transitionDuration.split(',')
+            .map(x => parseFloat(x) * 1000)
+        );
+      }, sel);
+    const fold = async (line, chev) => {
+      if (!(await page.locator(line).count())) return null;
+      await page.locator(line).first().click();
+      await page.waitForTimeout(350);
+      const open = await dur(chev);
+      await page.locator(line).first().click();
+      await page.waitForTimeout(350);
+      return { open, closed: await dur(chev) };
+    };
+    const brief = await fold('#thread .brief-row', '#thread .brief-row .chev');
+    ok(
+      `[${w}] a fold opens in 0.28 s and closes in 0.16 s (D-230)`,
+      !!brief && brief.open > 0 && brief.open <= 280 && brief.closed > 0 && brief.closed <= 160,
+      JSON.stringify({ brief })
+    );
+    await page.close();
+  }
   await browser.close();
   for (const [s, n, d] of results) console.log(`${s}  ${n}${d && s === 'FAIL' ? '  -- ' + d : ''}`);
   const failed = results.filter(x => x[0] === 'FAIL').length;

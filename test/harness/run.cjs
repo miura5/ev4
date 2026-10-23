@@ -1200,16 +1200,15 @@ const ok = (name, cond, detail = '') => {
     );
     await page.click('#tab-today');
     await page.waitForTimeout(100);
-    // B-125 (D-222): a switch shows the tab at once, one fade of at most 0.2 s on the whole; its cards do not rise.
+    // B-225 (D-230): a switch is a cut: the tab at full opacity on the tap frame, no fade, its cards do not rise.
     ok(
-      `[${scheme}] switching tabs shows the tab at once: one short fade, nothing rising`,
+      `[${scheme}] switching tabs shows the tab at once: a cut, nothing rising`,
       await page.evaluate(() => {
         const p = document.getElementById('p-today'),
           s = getComputedStyle(p);
         return (
-          p.classList.contains('enter') &&
-          s.animationName === 'fade' &&
-          parseFloat(s.animationDuration) <= 0.2 &&
+          s.animationName === 'none' &&
+          parseFloat(s.opacity) === 1 &&
           getComputedStyle(document.querySelector('#p-today .card')).animationName === 'none'
         );
       })

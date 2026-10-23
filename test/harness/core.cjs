@@ -168,7 +168,7 @@ const SPEECH = `async (secs) => { const C = window.EVApp.core; const text = 'Pre
           await page.evaluate(() => !!document.querySelector('#hero .pet.hi'))
         );
     }
-    // She draws on held frames: at most heldFps drawings a second while she moves (D-222), counted over 2 s of thinking.
+    // She draws on held frames: at most heldFps drawings a second while she moves (D-230), counted over 2 s of thinking.
     await hold(page, 'thinking');
     await page.waitForTimeout(400);
     const rate = await page.evaluate(async () => {

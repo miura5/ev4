@@ -42,7 +42,7 @@
     // ------------------------------------------------------------ Her: the 2D forget-me-not (B-206; D-212, D-215, D-223)
     // One flat SVG per place she shows (her stage, the top bar, a message), every one the same drawing (D-223). Each pose
     // is a flat drawing: to tip her away the plane squashes, her eye lifts, the near petals shorten and the far ones
-    // shade. She moves on one held clock, spec.ui.look.flower.clock.heldFps drawings a second (D-222): a drawing is made
+    // shade. She moves on one held clock, spec.ui.look.flower.clock.heldFps drawings a second (D-230): a drawing is made
     // only on a new held frame and only when its pose differs from the last, so a still idle draws nothing but the
     // falling petal (D-224). Every value is spec.ui.look.flower; the page talks to her through CORE.setMood, CORE.gesture,
     // CORE.speak, CORE.speechEnd and CORE.setRing (also EVApp.core), as it did to the Silk core it replaced (D-134).

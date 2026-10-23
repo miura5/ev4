@@ -64,7 +64,7 @@ test('B-205: spec.ui.look.flower holds every value her renderer needs, of the ri
 test('B-205: the values the decisions name', () => {
   assert.equal(F.depth.tiltStageDeg, 34);
   assert.equal(F.depth.tiltCornerDeg, 52);
-  assert.equal(F.clock.heldFps, 8, 'eight drawings a second (D-212, D-222)');
+  assert.equal(F.clock.heldFps, 8, 'eight drawings a second (D-212, D-230)');
   assert.equal(F.view.holdSec, 1, 'she holds his eye 1 s (D-223)');
   assert.deepEqual(F.view.facing, ['listening', 'speaking', 'alert', 'happy']);
   assert.equal(F.speech.minHoldFrames, 2, 'each speech pose held two frames at least (D-215)');

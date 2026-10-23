@@ -1,4 +1,4 @@
-// B-217: the sweep after D-221, D-222, D-224 and D-225 superseded the four tenets in GONE. No open task, rule or
+// B-217: the sweep after D-221, D-230, D-224 and D-225 superseded the four tenets in GONE. No open task, rule or
 // test cites a superseded tenet as current (history may name it, marked as such), and the checks hold to the new
 // tenets' words: violet retired (its tokens are grey), two clocks (test/interface-motion.test.mjs), a 0.16 s settle,
 // and the 680 px reading cap (the look pass measures it).
@@ -55,7 +55,7 @@ test('B-217 (D-221, D-214): violet is retired; its old tokens resolve to grey', 
   for (const t of ['--violet', '--plum']) assert.match(css, new RegExp(`${t}:var\\(--quiet\\)`), t);
 });
 
-test("B-217 (D-221, D-222, D-225): spec.ui.tenets' checks cite the new tenets", () => {
+test("B-217 (D-221, D-230, D-225): spec.ui.tenets' checks cite the new tenets", () => {
   const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
   const checks = JSON.stringify((spec.ui && spec.ui.tenets) || {});
   assert.equal(OLD.test(checks.replace(/[^"]*(superseded|history|was D-)[^"]*/gi, '')), false);

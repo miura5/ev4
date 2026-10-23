@@ -4446,7 +4446,7 @@
     "_": [
      "Her, the 2D forget-me-not (B-205; D-212, D-213, D-215, D-223, D-224): the values of the E.V. flower canvas, drawn in 2D (https://claude.ai/artifact/VFsMV9mtAbFEvC9YHxcbTJ, project/Main.dc.html), copied here once on Oct 22; from then on the spec owns them and the canvas is not read again.",
      "Units: petal geometry is in the petal's own 60 x 100 box (base at 30,100, tip toward y 0) and the eye's 40 x 40 box; angles in degrees; times in seconds; rates per second; sizes in CSS px.",
-     "She moves on one held-frame clock (heldFps drawings a second); everything else in the page moves at full frame rate (D-222)."
+     "She moves on one held-frame clock (heldFps drawings a second); everything else in the page moves at full frame rate (D-230)."
     ],
     "renderer": "svg",
     "shape": {
@@ -5212,7 +5212,7 @@
     ]
    },
    "motion": {
-    "note": "B-125 (D-222): the look pass reads every CSS transition and animation on the bar and each view at 390 and 1280; none may run longer than maxMs (delay included) outside exempt: her stage (#hero), her core and the header avatar (.ev-av, #top-av), the reveal (.reveal) and the echo of his line (.cap-echo). A view is settled maxMs after the switch, and its reduced-motion screenshot differs from the settled one in at most shotTolerance of its pixels.",
+    "note": "B-125 (D-230): the look pass reads every CSS transition and animation on the bar and each view at 390 and 1280; none may run longer than maxMs (delay included) outside exempt: her stage (#hero), her core and the header avatar (.ev-av, #top-av), the reveal (.reveal) and the echo of his line (.cap-echo). A view is a cut, at full opacity on the tap (B-225), and settled maxMs after the switch, and its reduced-motion screenshot differs from the settled one in at most shotTolerance of its pixels.",
     "maxMs": 450,
     "exempt": [
      "#hero",

@@ -181,8 +181,10 @@
   "date": "Oct 22",
   "title": "Two clocks: she moves on held frames (eight drawings a second, eased spacing, a held first frame, a one-frame counter-turn to face); everything else moves at full frame rate with short eases: a view switch is a cut, its settled view painted on the tap frame; a fold opens in 0.28 s and closes in 0.16 s; nothing over 0.45 s; only a change of layout moves; nothing he is reading or ticking moves; her reveal ends within 6 s and a tap completes it; reduced motion, the system's or Preferences' On, gives the same end state with no movement. Supersedes D-222",
   "why": "Linear's tab switch lands in one frame with nothing after it, and its modal closes about twice as fast as it opens (captures 19 and 21, measured); the 0.16 s fade only delays a view he has already chosen",
-  "status": "proposed",
-  "supersedes": [],
+  "status": "accepted",
+  "supersedes": [
+   "D-222"
+  ],
   "amends": [],
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z P-4",
   "kind": "tenet",
@@ -292,7 +294,7 @@
   "date": "Oct 22",
   "title": "Two clocks: she moves on held frames (eight drawings a second, eased spacing, a held first frame, a one-frame counter-turn to face); everything else moves at full frame rate with short eases: a view settles within 0.16 s and is legible on the tap frame, a fold takes 0.28 s, nothing over 0.45 s; only a change of layout moves; nothing he is reading or ticking moves; her reveal ends within 6 s and a tap completes it; reduced motion gives the same end state with no movement. Supersedes D-163.",
   "why": "Matt: the interface felt slow when it used her frame rate; the contrast is what makes her read as hand-drawn",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [
    "D-163"
   ],

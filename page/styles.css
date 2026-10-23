@@ -322,7 +322,7 @@ body.opening .msg.greet .msg-cards{display:grid;grid-template-columns:repeat(aut
 /* motion (B-125, D-163): a view's content shows at once on a switch, with one fade of at most 0.2 s on the view as a
    whole; nothing rises or staggers, and bars, meters and the week chart are drawn at their value. Folds, her stage and
    the side column keep their own moves. */
-.panel.enter{animation:fade .16s ease both}
+/* B-225 (D-230): a view switch is a cut: the settled view paints on the tap frame (no fade). */
 @keyframes fade{from{opacity:0}to{opacity:1}}
 .rise{animation:rise .3s var(--ease) both}
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -934,3 +934,11 @@ body[data-view="today"] #side-today{display:none}
 #theme-card .pref{display:flex;flex-direction:column;gap:6px;margin:0}
 #theme-card .pref+.pref{margin-top:10px}
 #theme-card .pref>.lbl{font:500 calc(12px * var(--ts)) var(--sans);color:var(--faint)}
+
+/* ============================================================ B-225 (D-230): folds open in 0.28 s and close in 0.16 s ==
+   A transition takes the duration of the state it goes to: closed is quick, open a little slower. */
+.chev,.prep-row .chev{transition-duration:.16s}
+.open>.brief-row .chev,.brief-item.open .chev,.prep.open .chev,[aria-expanded="true"] .chev,[aria-expanded="true"]>.chev{transition-duration:.28s}
+.sk-tog::after{transition-duration:.16s}
+.sk-tog[aria-expanded="true"]::after{transition-duration:.28s}
+body.captions.her-folded .hero{transition-duration:.16s}

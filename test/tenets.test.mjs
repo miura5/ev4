@@ -119,7 +119,7 @@ test('B-115: the other checks each fail on what their tenet forbids', () => {
   assert.deepEqual(failing(hide), ['D-160'], 'B-122: a Hide button');
 });
 
-test('B-125 (D-222): the motion check fails a planted long move, a view still moving at 450 ms and a fading panel', () => {
+test('B-125 (D-230): the motion check fails a planted long move, a view still moving at 450 ms and a fading panel', () => {
   const { judgeMotion } = createRequire(import.meta.url)('./harness/tenets.cjs');
   const still = { tab: 'today', over: [], declared: 12, running: [], opacity: 1 };
   assert.equal(judgeMotion(still, still).ok, true);
@@ -134,6 +134,8 @@ test('B-125 (D-222): the motion check fails a planted long move, a view still mo
     'a bar still growing at 450 ms'
   );
   assert.equal(judgeMotion(still, { ...still, opacity: 0.6 }).ok, false, 'the view still fading in');
+  // B-225 (D-230): a planted 0.2 s view fade shows at the tap as a view not yet opaque
+  assert.equal(judgeMotion({ ...still, opacity: 0.1 }, still).ok, false, 'a 0.2 s view fade on the switch');
   const m = spec.ui.tenets.motion;
   assert.equal(m.maxMs, 450);
   assert.deepEqual(
@@ -146,14 +148,14 @@ test('B-125 (D-222): the motion check fails a planted long move, a view still mo
   assert.match(look, /reducedMotion: 'reduce'/);
 });
 
-test('B-125 (D-222): the stylesheet has no staggered rise and no growth of bars on a tab switch', () => {
+test('B-125 (D-230): the stylesheet has no staggered rise and no growth of bars on a tab switch', () => {
   const css = fs.readFileSync(path.join(ROOT, 'page', 'styles.css'), 'utf8');
   assert.doesNotMatch(css, /grow-[xy]/);
   assert.doesNotMatch(css, /\.panel\.enter>:nth-child/);
-  assert.match(css, /\.panel\.enter\{animation:fade \.16s/);
+  assert.doesNotMatch(css, /\.panel\.enter\{animation/, 'B-225 (D-230): a view switch is a cut, no fade');
 });
 
-test('B-125 (D-222, Matt Oct 20): the status lights are steady, the header one and the session bar one', () => {
+test('B-125 (D-230, Matt Oct 20): the status lights are steady, the header one and the session bar one', () => {
   const css = fs.readFileSync(path.join(ROOT, 'page', 'styles.css'), 'utf8');
   const rules = [...css.matchAll(/([^{}]*\.(?:led|s-led)[^{}]*)\{([^}]*)\}/g)];
   assert.ok(rules.length >= 4, 'the light rules are in the stylesheet');
