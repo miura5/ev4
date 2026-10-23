@@ -3843,13 +3843,13 @@
   "title": "Tenet sweep for D-221, D-222, D-224 and D-225",
   "dod": "No open task, rule or test cites D-149, D-163, D-135 or D-153 as current; they cite the new tenets; lint green; the proof",
   "milestone": "v4.5 ui",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-215",
    "B-216"
   ],
-  "notes": "Taken Oct 23.",
-  "commit": null,
+  "notes": "B-214 System in C with the theme switch (System/Light/Dark, stored per device); B-215 her notification (a finished job or new ask off the E.V. tab: small flower faces him, top petal lit, status says something's ready, until E.V. opens; no badge); B-216 motion pass (view 0.16 s, folds 0.28 s, nothing over 0.45 s; a test fails stepped or long timings outside her module); B-217 tenet sweep (D-135 re-cited as history, a sweep test, violet grey, the 680 px cap measured, the session chip grey). Full check GREEN at 98d23e1.",
+  "commit": "98d23e1",
   "source": "plan BridyLzngcGUtpeLQorX1U"
  },
  {
