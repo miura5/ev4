@@ -4306,5 +4306,24 @@
    "reason": "folded into B-223 with the right-panel rule Matt set (D-245), Oct 23",
    "at": "2026-10-23T04:40:01.761Z"
   }
+ },
+ {
+  "id": "B-243",
+  "kind": "bug",
+  "title": "Bug (reported Oct 23): See the difference in text sizes between the live app and the prototype interface. The text gets way to big on the live app",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "See the difference in text sizes between the live app and the prototype interface. The text gets way to big on the live app",
+  "reportedAt": "2026-10-23T15:24:30.477Z",
+  "board": {
+   "row": "v4 B-243: See the difference in text sizes between the live app and the…",
+   "why": "See the difference in text sizes between the live app and the prototype interface. The text gets way to big on the live app",
+   "notes": "Reported Oct 23 from build chat"
+  }
  }
 ]
