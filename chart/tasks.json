@@ -1319,7 +1319,7 @@
   "depends": [
    "B-68"
   ],
-  "notes": "Matt, Oct 23 morning: flip to adaptive. Made once Sunday's weekly writes weeks/2026-10-25.study, the first full shadow week D-190 reads first.",
+  "notes": "Oct 23 (B-170, e115c56): the practice brief picked reviews by today's rule whatever spec.study.scheduler said; e115c56 makes it pick through the same scheduler as days/<date>. The flip goes live only once e115c56 (or later) is live.",
   "commit": null,
   "source": "BACKLOG.md",
   "jobs": [
