@@ -125,12 +125,13 @@
  {
   "id": "D-234",
   "date": "Oct 22",
-  "title": "v4.6 is the triage release: it opens with the first live deploy that carries weakspots schema 2, shipped with ship live --minor and tagged v4.6.0; v4.5.x patches ship before it, and talk/guidance rides the same minor",
-  "why": "D-173: a schema bump, a new actions row and a new document are a minor, as D-189 and D-193 set v4.3 and v4.4",
-  "status": "proposed",
+  "title": "v4.5.0 is the next minor: it opens with the first live deploy that carries a schema bump (weakspots schema 2, and B-44's objectives), shipped with ship live --minor and tagged v4.5.0 (D-173); the v4.4.x patches (B-230) ship before it, and talk/guidance rides the same minor; the milestone keeps its name v4.6 triage",
+  "why": "D-173: a schema bump, a new actions row and a new document are a minor; v4.5 (direction C) went live as patch v4.4.2, so the next minor after v4.4.x is v4.5.0 (Matt, Oct 23)",
+  "status": "accepted",
   "supersedes": [],
   "amends": [],
-  "source": "plan SyfKhhZHXubJo4RN8CEw7Z P-8"
+  "source": "plan SyfKhhZHXubJo4RN8CEw7Z P-8",
+  "restated": "Oct 22"
  },
  {
   "id": "D-233",

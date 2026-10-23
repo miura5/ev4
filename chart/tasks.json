@@ -872,9 +872,10 @@
   "depends": [
    "B-42",
    "B-43",
-   "B-98"
+   "B-98",
+   "B-230"
   ],
-  "notes": "Matt's OK on the proposed objectives is given on the staging page",
+  "notes": "Matt, Oct 23: v4.5.x first; B-44 bumps a schema, so it waits until B-230 has shipped the v4.4.x patch, and goes live in the v4.5.0 minor",
   "commit": null,
   "source": "BACKLOG.md"
  },
@@ -1385,9 +1386,10 @@
   "milestone": "M10",
   "status": "open",
   "depends": [
-   "B-72"
+   "B-72",
+   "B-230"
   ],
-  "notes": "",
+  "notes": "Oct 23: waits behind B-230 like B-44 (Matt: v4.5.x first); it changes a document shape or step, so it ships in the v4.5.0 minor",
   "commit": null,
   "source": "BACKLOG.md"
  },
@@ -1548,18 +1550,19 @@
   "title": "Captions rollout, narrowed (D-187, amending D-136 and D-139 as D-145 left them): the first live session after B-79 goes live is read back with the session, note and comments fields; B-75, B-78, B-79 and B-80 each ship by the normal path, staging green at the commit and live on Matt's OK",
   "dod": "the first live study session after B-79 is live read back from the live record with its session, note and comments fields present and well-formed; npm test green",
   "milestone": "M11 gate",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-211"
   ],
-  "notes": "Oct 22: B-79 joined B-211 (Matt), so this waits on B-211, the study session in C.",
+  "notes": "Oct 23: B-211 is live at v4.4.2 (98d23e1); this waits on Matt's first live study session in C, then its read-back",
   "commit": null,
   "source": "BACKLOG.md",
   "board": {
    "row": "v4 B-81: Captions rollout to live",
    "why": "The gate that takes Captions to live",
    "notes": "Gate: waits on B-74 to B-80 and Matt's OK"
-  }
+  },
+  "waitingOn": "Matt"
  },
  {
   "id": "B-82",
@@ -3032,9 +3035,10 @@
   "milestone": "v4.3 study",
   "status": "open",
   "depends": [
-   "B-72"
+   "B-72",
+   "B-230"
   ],
-  "notes": "",
+  "notes": "Oct 23: waits behind B-230 like B-44 (Matt: v4.5.x first); it changes a document shape or step, so it ships in the v4.5.0 minor",
   "commit": null,
   "source": "B-72 split (D-190)"
  },
@@ -4172,8 +4176,8 @@
  {
   "id": "B-238",
   "kind": "task",
-  "title": "Matt's look at triage, then v4.6.0 live (D-234)",
-  "dod": "on staging, at 735 × 830 and on his phone, Matt ends a real set with misses and accepts, joins, snoozes and declines at least one candidate each, and says yes; ship live --minor on his OK, tagged v4.6.0 (D-173), with the release on its deploy entry (B-175)",
+  "title": "Matt's look at triage, then v4.5.0 live (D-234)",
+  "dod": "on staging, at 735 × 830 and on his phone, Matt ends a real set with misses and accepts, joins, snoozes and declines at least one candidate each, and says yes; ship live --minor on his OK, tagged v4.5.0 (D-173), with the release on its deploy entry (B-175)",
   "milestone": "v4.6 triage",
   "status": "open",
   "depends": [
@@ -4186,7 +4190,7 @@
    "B-236",
    "B-237"
   ],
-  "notes": "Matt, Oct 23: the hand-off says v4.6.0 (and D-234), but under D-173 the next minor after v4.4.x is v4.5.0. Ask Matt which tag before ship live --minor; do not choose.",
+  "notes": "Matt, Oct 23: the minor is v4.5.0 (D-173), not v4.6.0; the milestone keeps its name 'v4.6 triage'",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },
