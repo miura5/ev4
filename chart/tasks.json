@@ -3728,13 +3728,13 @@
   "title": "The E.V. tab in C (D-213)",
   "dod": "Captions in the pane; stage sizes by layout and state (phone 104, sidebar 112 or 128, wide 140 or 168, session 70%); reading back and short heights fold her to 24 px in the pane header with Back to now; neutral send that fills when he types; the proof",
   "milestone": "v4.5 ui",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-206",
    "B-208"
   ],
-  "notes": "Paused Oct 22 for B-221 (Matt's staging look): the Captions size checks are being moved to D-213's sizes; back to now after a fold waits on the stage's height transition.",
-  "commit": null,
+  "notes": "Shipped to staging at 33ba36f: ship staging GREEN.",
+  "commit": "33ba36f",
   "source": "plan BridyLzngcGUtpeLQorX1U"
  },
  {
