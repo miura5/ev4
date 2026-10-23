@@ -1166,6 +1166,58 @@ async function sideBySide(browser, left, right, out, vp) {
         JSON.stringify(back)
       );
     }
+    // B-265: a stored line that failed on a transient error (as after a reload) offers Try again, never Go deeper
+    await page.evaluate(async () => {
+      const db = await window.claude.use('db'),
+        today = window.EVCore.chicagoDate(new Date()),
+        t = Date.now(),
+        stamp = ms => new Date(ms).toISOString(),
+        mid = (ms, r) =>
+          'm-' + stamp(ms).replace(/[-:]/g, '').replace('T', '-').replace('.', '').replace('Z', '') + '-' + r;
+      const doc = (window.__db.talk || {})[today] || {
+        schema: 4,
+        writer: 'page',
+        at: stamp(t),
+        source: 'E.V. Home',
+        date: today,
+        messages: {},
+      };
+      const q = mid(t + 60000, 'matt');
+      await db
+        .collection('talk')
+        .doc(today)
+        .set({
+          ...doc,
+          messages: {
+            ...(doc.messages || {}),
+            [q]: { role: 'matt', text: 'Tell me my past exam scores', at: stamp(t + 60000) },
+            [mid(t + 60200, 'ev')]: {
+              role: 'ev',
+              text: 'Connection hiccup. Tap Try again.',
+              cards: [],
+              error: 'upstream_error',
+              replyTo: q,
+              tier: 'quick',
+              at: stamp(t + 60200),
+            },
+          },
+        });
+    });
+    await page.waitForTimeout(600);
+    const failed = await page.evaluate(() => {
+      const m = [...document.querySelectorAll('#thread .msg.ev')].pop();
+      const bs = m ? [...m.querySelectorAll('button')].map(b => b.textContent.trim()) : [];
+      return {
+        text: m && m.textContent.slice(0, 60),
+        tryAgain: bs.includes('Try again'),
+        deeper: bs.includes('Go deeper'),
+      };
+    });
+    ok(
+      `[${scheme}] a stored failed line offers Try again, not Go deeper (B-265)`,
+      failed.tryAgain && !failed.deeper,
+      JSON.stringify(failed)
+    );
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
     ok(`[${scheme}] no sideways scroll`, !overflow);
     ok(`[${scheme}] no page errors`, errors.length === 0, errors.join(' | '));

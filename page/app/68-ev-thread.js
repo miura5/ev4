@@ -113,7 +113,9 @@
         )
       );
       if (m.role !== 'matt' && !m.pending && !T.busy) {
-        const ask = T.retry.get(m.id);
+        // B-265: a line that failed on a transient error keeps its Try again after a reload, while it is her last line
+        const asked = isLastEv && m.error === 'upstream_error' && m.replyTo && allMsgs().find(x => x.id === m.replyTo);
+        const ask = T.retry.get(m.id) || (asked && { text: asked.text, tier: m.tier, replyTo: m.replyTo });
         if (ask)
           meta.append(
             btn('Try again', () => {

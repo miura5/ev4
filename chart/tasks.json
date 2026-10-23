@@ -4754,9 +4754,9 @@
   "id": "B-265",
   "kind": "bug",
   "title": "Bug (reported Oct 23): e.v. Center aligned on phone",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "A reply that failed on a transient error keeps a Try again (never Go deeper) after a reload while it is her last line; captions harness checks a stored failed line at 390 and 1280; staging GREEN. The hiccups themselves did not reproduce (Oct 23, staging, Mac browser): a 2-minute service blip",
+  "milestone": "v4.5.x ui",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -4767,6 +4767,10 @@
    "row": "v4 B-265: e.v. Center aligned on",
    "why": "e.v. Center aligned on phone",
    "notes": "Reported Oct 23 from build chat"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-23T23:50:15.287Z"
   }
  }
 ]
