@@ -512,7 +512,7 @@
   "depends": [
    "B-26"
   ],
-  "notes": "Oct 21: part 2's drill proven on staging with B-163's migration: runs/restore-drill-20261021-115939317 ok at 322af46, the Oct 18 Sunday backup (515 documents, 24 collections) checked against its manifest, migrated to this build (days, exams, ideas, planedits, sessions, sets, talk, weeks schema 1 to 2; 3 examedits added) and restored (15 written, 501 identical, 2 log entries kept); the first try at 52c5d65 refused legacy copies for their own schema, fixed in 322af46. Left of part 2: the drill stamping system/seed and logging its run in live (a staging restore-drill prompt change, Mac-bound, with Matt at the Mac).\nMatt's reply (job job-20261022-021528-b-27, Oct 21): Done",
+  "notes": "Matt, Oct 23 morning: Okay.",
   "commit": null,
   "source": "BACKLOG.md",
   "board": {
@@ -1318,7 +1318,7 @@
   "depends": [
    "B-68"
   ],
-  "notes": "Built with B-68 (core/study.mjs: solid stays two right days, then base 3, 6, 12, capped 14, nearExam 1 inside an exam's window; due solid spots drawn after the open ones inside the day's load, the rest deferred with a reason; a miss reopens with recurrence + 1, core's rule) and running as days/<date>.shadow since B-68. Left: the flip (D-117, D-190): Sunday Oct 25's weekly writes weeks/2026-10-25.study, the first full shadow week; Matt reads it and says 'flip to adaptive' or 'stay fixed'. The flip is spec.study.scheduler, its own staging-proved deploy.\nMatt's reply (job job-20261022-021545-b-69, Oct 21): Yes\nBuilder run Oct 21 (job-20261022-021545-b-69): his Yes answered the Your turn line, which showed only the notes' last sentence (no ask was set), not the question. D-190 needs the full shadow week read first and weeks/2026-10-25.study does not exist until Sunday's weekly, so the flip is not made on it; re-asked with named choices for after Sunday.",
+  "notes": "Matt, Oct 23 morning: flip to adaptive. Made once Sunday's weekly writes weeks/2026-10-25.study, the first full shadow week D-190 reads first.",
   "commit": null,
   "source": "BACKLOG.md",
   "jobs": [
@@ -1328,8 +1328,7 @@
   "choices": [
    "Flip to adaptive",
    "Stay fixed"
-  ],
-  "waitingOn": "Matt"
+  ]
  },
  {
   "id": "B-70",
@@ -1554,7 +1553,7 @@
   "depends": [
    "B-211"
   ],
-  "notes": "Oct 23: B-211 is live at v4.4.2 (98d23e1); this waits on Matt's first live study session in C, then its read-back",
+  "notes": "Matt, Oct 23 morning: Okay.",
   "commit": null,
   "source": "BACKLOG.md",
   "board": {
@@ -3251,19 +3250,18 @@
   "title": "The design kickoff (D-197): node tools/chart.mjs kickoff assembles the next design chat's opening, at most 4,000 characters, from the north star tab as read in the session (the designRead pattern, never retyped), the Chart (the live release and commit, task counts, open and blocked tasks, Your turn, decisions since the last plan source), the latest weeks/<date>.insights as fetched, and the template tools/kickoff.md (the role line, read-first links, the goal, the pieces in order, the rules, the doc and its three table headings); \"design\" or \"design: <theme>\" on the page writes jobs/<id> (kind design) and fires the builder, whose trace's talk line is the kickoff with a Copy chip; \"file: <doc link>\" writes jobs/<id> (kind plan) and the builder reads the tab, runs plan --from <link> --apply, sets depends where a row says so, and its trace names what was filed; the build chat prints the north star's amended rule line on Matt's OK (given Oct 21)",
   "dod": "a chart test builds a kickoff from planted reads and checks every section and the length; a chart test for the plan job's trace text; the harness at 390 and 1280 for the Copy chip; the rule line printed in the north star; npm test green; npm run check green; ship staging green; one kickoff drafted on staging and read by Matt once (whether it reads like a kickoff he would paste); live only on Matt's OK",
   "milestone": "v4.4 kickoff",
-  "status": "blocked",
+  "status": "done",
   "depends": [
    "B-179"
   ],
-  "notes": "Built and staging green at d067020 (npm test 514, check GREEN; kickoff and plan-trace chart tests, the trace test, the run harness at phone and desktop for design, file: and the Copy chip; the north star's rule line amended on Matt's Oct 21 OK). Left: one kickoff drafted on staging and read by Matt: he types 'design' (or 'design: <theme>') on the staging page, the builder drafts it, and he says whether it reads like a kickoff he would paste.",
-  "commit": null,
+  "notes": "Matt, Oct 23 morning: the staging kickoff reads like one he would paste: Yes.",
+  "commit": "d067020",
   "source": "plan TbfWAoQEeQixyNKZnEZKvv",
   "ask": "Type “design” on the staging page once. Does the kickoff E.V. sends back read like something you'd paste into a design chat?",
   "choices": [
    "Reads right",
    "Something's off"
-  ],
-  "waitingOn": "Matt"
+  ]
  },
  {
   "id": "B-184",
@@ -3289,7 +3287,7 @@
    "B-178",
    "B-186"
   ],
-  "notes": "Summary, Oct 22: the v4.4 rows are done or wait on Matt. Live: v4.4.0 at 5085cfd, its first live watchdog run ok (03:56Z), the tag on origin. Staging green at 871e435 carries B-190 (resume a conversation on reopen), B-197 (identifier check in two stages: patterns nominate, a judgment with context decides, verdicts kept by fingerprint, neutral words), B-163's restore-as-written, B-183 (design kickoff, design: and file: asks, Copy chip, the north star's rule line) and B-185 (Ship it). Waiting on Matt: B-163 (an unattended run may not pass a value itself: hold and ask him on the page?), B-183 (read one staging kickoff), B-185 (his first Ship it tap on a real build), B-69 (adaptive intervals after Sunday's weekly). Nothing here is live without his OK.",
+  "notes": "Matt, Oct 23 morning: Okay.",
   "commit": null,
   "source": "plan TbfWAoQEeQixyNKZnEZKvv",
   "ask": "Next time a build you asked for is green on staging, tap Ship it on its card. That one tap is your OK for live; I'll read back that it landed.",
@@ -3629,12 +3627,13 @@
   "title": "Build recap in the weekly: the weekly's health line gains one sentence from the Chart, \"this week she shipped n to live, m wait on you\", shown on the Sunday card",
   "dod": "a core test on a planted Chart and deploy record composes the sentence; a staging weekly firing carries it in weeks/<date>.health; the harness shows it on the Sunday card at 390 and 1280; npm test green; npm run check green; ship staging green; live only on Matt's OK",
   "milestone": "v4.4 ops",
-  "status": "blocked",
-  "depends": [],
-  "notes": "Oct 23 build chat: the weekly runs at the deployed commit and its record holds no Chart, so 'shipped n to live, m wait on you' needs a path the design does not give. Choices: (a) ship writes the last 14 days of live deploys into system/yourturn (an optional field, beside what already waits on him) and the weekly reads that document (a new read for its pull); or (b) the weekly reads chart/deploys.json and chart/tasks.json from origin/main in its own clone. (a) keeps weeks rebuildable from the record; (b) needs no new read but ties a Derived document to the repository. Which?",
+  "status": "open",
+  "depends": [
+   "B-230"
+  ],
+  "notes": "Waits behind B-230's live patch like the rest, so main stays patch-clean until it ships.",
   "commit": null,
-  "source": "plan XCT16iH6fggp4MxPNRZtHK",
-  "waitingOn": "Matt"
+  "source": "plan XCT16iH6fggp4MxPNRZtHK"
  },
  {
   "id": "B-202",
@@ -3644,7 +3643,7 @@
   "milestone": "v4.4 ui",
   "status": "blocked",
   "depends": [],
-  "notes": "Parked by D-218 (Matt, Oct 22): the command bar waits until he picks it up again.",
+  "notes": "Matt, Oct 23 morning: unpark after B-230 goes live.",
   "commit": null,
   "source": "plan XCT16iH6fggp4MxPNRZtHK",
   "waitingOn": "Matt"
@@ -4023,12 +4022,13 @@
   "title": "Her work line (D-232): a job line reads its one-line plan while queued or running (its title, as the prototype's \"Writing 5 questions on what's due soonest\"), then \"Worked for 40 s\" or \"Worked for 6 min\" from startedAt and finishedAt; opened in place, it lists what she changed as links that open their place (a set in Study, a filed task, a doc); the same line closes her replies that wrote something",
   "dod": "the harness plants a running and a finished make-practice job and a reply that filed an idea at 390 and 1280: running shows the plan line; finished is one line at most 44 px high with its duration; opened, each change is a link that opens its place; D-209's check stays green; npm test green; npm run smoke green; npm run check green; screenshots at 390 × 844, 735 × 830, 1706 × 1240 and 2560 × 1240 looked at; ship staging green; live only on Matt's OK",
   "milestone": "v4.5.x ui",
-  "status": "blocked",
-  "depends": [],
-  "notes": "Oct 23 build chat: the job half needs nothing new (jobresults holds startedAt, finishedAt, setId, docUrl, links, task), but 'the same line closes her replies that wrote something' does: a reply keeps nothing of what it wrote or how long it took, and talk messages refuse new fields (additionalProperties false). Choices: (a) a talk schema bump adding work {ms, changed:[{kind,id,title}]} to her messages (a minor, so it rides v4.5.0); (b) a 'work' card in the reply's cards (no schema change; uses one of its three card slots and is drawn as the closing line, never a surface); or (c) do the job line now as a patch and leave replies to the v4.5.0 minor. Which?",
+  "status": "open",
+  "depends": [
+   "B-230"
+  ],
+  "notes": "Matt asked for a recommendation: (a) a talk schema bump giving her messages a work field (ms, changed), riding v4.5.0 with B-231; going with (a) unless he says otherwise.",
   "commit": null,
-  "source": "plan SyfKhhZHXubJo4RN8CEw7Z",
-  "waitingOn": "Matt"
+  "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },
  {
   "id": "B-228",
@@ -4067,12 +4067,10 @@
    "B-223",
    "B-224",
    "B-225",
-   "B-226",
-   "B-227",
    "B-228",
    "B-229"
   ],
-  "notes": "Oct 23 build chat: B-222, B-223, B-224, B-225, B-228 and B-229 are done and on staging (GREEN at da38721). This waits on B-226, which needs B-202 (parked by D-218), and B-227 (blocked on Matt's choice for her reply line). To ship v4.4.3 now, take B-226 (and B-227's reply half) out of this task's depends; otherwise unpark B-202. v4.6 triage work (B-231 on) is held until this ships, so main carries only patch-level change.",
+  "notes": "Matt, Oct 23 morning: 'Go live then unpark': B-226 and B-227 leave this task's depends and follow it; his OK for live is given in the build chat; shipped after his 6:30am unattended window ends, full check first (R-06).",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },
@@ -4082,12 +4080,13 @@
   "title": "Typed links (D-241): spec.links holds one row per id field in this doc's list (collection, field, target collection or spec map, required, optional or external); tools/build.mjs fails when a row names a collection or field the schemas lack; lint reports a dangling required link as an error and an optional one as info; core gains linked(db, doc, field); no schema bump",
   "dod": "the build fails on a planted row naming weakspots.objectiv; lint on the synthetic record is clean; a planted weak spot whose objective is missing reports an error and a planted set item with a missing weakspotId reports info; a core test resolves linked() for a required, an optional and a missing link; npm test green; ship staging green; live only with B-238",
   "milestone": "v4.6 triage",
-  "status": "blocked",
-  "depends": [],
-  "notes": "Addendum, 04:05 CT: why B-231 waits rather than builds. Its definition of done says live only with B-238, yet anything on main ships with B-230's patch; a branch build cannot reach staging (ship refuses a commit not on origin/main, core/deploy.mjs, and that refusal is not worked around). So it needs your word on order. Guarded paths: tonight's commits (c13448c, f57924e, this one) change only BACKLOG.md and chart/tasks.json; spec.boundaries, spec.actions, chart/rules.json, .claude hooks and settings, tools/gate.mjs, CLAUDE.md and every tenet are untouched tonight. The spec.actions._rules note and spec.collections his marks came from B-229 in the Oct 23 build chat, before tonight's rules; please confirm or ask me to take them out.",
+  "status": "open",
+  "depends": [
+   "B-230"
+  ],
+  "notes": "Matt, Oct 23 morning: Yes, it may go on main. Taken after B-230 ships live, so the v4.4.3 patch stays clean; then v4.5.0 opens with it.",
   "commit": null,
-  "source": "plan SyfKhhZHXubJo4RN8CEw7Z",
-  "waitingOn": "Matt"
+  "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },
  {
   "id": "B-232",
