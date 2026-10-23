@@ -4027,7 +4027,7 @@
   "depends": [
    "B-230"
   ],
-  "notes": "Run harness at 390 and 1280: running job reads its plan, finished one line 40 px 'Practice set · Worked for 40 s', opened its set link opens Study › Practice; a reply that filed an idea stores work {ms, changed} and its line opens Record › Sessions; D-209's check green; full npm run check GREEN at d003e2e; ship staging GREEN; staging talk bumped 3 to 4 (legacy -s3 copies kept). Built on D-232, still proposed: Matt to accept. Live only on Matt's OK, with v4.5.0 (talk schema bump).",
+  "notes": "Oct 23: v4.5.0 live GREEN at 3c42555 on Matt's OK ('deploy to live whatever is ready'); live days 3 to 4 (2026-10-17..23) and talk 3 to 4 (7 days and memory) applied in one pinned batch, legacy v4-<col>-<id>-s3 kept; days/2026-10-16 is a B-34 leftover, kept as it is.",
   "commit": "d003e2e",
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },
