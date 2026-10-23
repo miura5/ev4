@@ -4023,11 +4023,12 @@
   "title": "Her work line (D-232): a job line reads its one-line plan while queued or running (its title, as the prototype's \"Writing 5 questions on what's due soonest\"), then \"Worked for 40 s\" or \"Worked for 6 min\" from startedAt and finishedAt; opened in place, it lists what she changed as links that open their place (a set in Study, a filed task, a doc); the same line closes her replies that wrote something",
   "dod": "the harness plants a running and a finished make-practice job and a reply that filed an idea at 390 and 1280: running shows the plan line; finished is one line at most 44 px high with its duration; opened, each change is a link that opens its place; D-209's check stays green; npm test green; npm run smoke green; npm run check green; screenshots at 390 × 844, 735 × 830, 1706 × 1240 and 2560 × 1240 looked at; ship staging green; live only on Matt's OK",
   "milestone": "v4.5.x ui",
-  "status": "open",
+  "status": "blocked",
   "depends": [],
-  "notes": "",
+  "notes": "Oct 23 build chat: the job half needs nothing new (jobresults holds startedAt, finishedAt, setId, docUrl, links, task), but 'the same line closes her replies that wrote something' does: a reply keeps nothing of what it wrote or how long it took, and talk messages refuse new fields (additionalProperties false). Choices: (a) a talk schema bump adding work {ms, changed:[{kind,id,title}]} to her messages (a minor, so it rides v4.5.0); (b) a 'work' card in the reply's cards (no schema change; uses one of its three card slots and is drawn as the closing line, never a surface); or (c) do the job line now as a patch and leave replies to the v4.5.0 minor. Which?",
   "commit": null,
-  "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
+  "source": "plan SyfKhhZHXubJo4RN8CEw7Z",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-228",
