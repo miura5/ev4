@@ -6,6 +6,7 @@
 // Run `node tools/build.mjs` first (`npm run smoke` does both). Exit code 1 when any check fails. --plant breaks the
 // served page on purpose, to prove the tier turns red (the workflow runs both plants and expects red).
 const { chromium } = require('playwright');
+const { paintAnswer, painted } = require('./paint.cjs');
 const fs = require('fs');
 const path = require('path');
 const root = path.resolve(__dirname, '../..');
@@ -226,9 +227,51 @@ async function open(browser, viewport) {
     await page.click('#tab-study');
     await page.click('#seg-study [data-v="review"]');
     const hasQ = await until(page, () => !!document.querySelector('#rv-body label.opt'), null, 2000);
+    // B-222 (D-227): Check answer paints the verdict and its why on the tap's next frame, the record 2 s behind; a
+    // refused write puts the question back unanswered (his pick kept) with one line saying why.
+    const checkAnswer = (root, fail, delay) =>
+      page.evaluate(
+        async ([root, fail, delay]) => {
+          const box = document.querySelector(root);
+          const opt = box && box.querySelector('label.opt input');
+          const check = box && [...box.querySelectorAll('button')].find(b => b.textContent.trim() === 'Check answer');
+          if (!opt || !check) return { none: (box ? box.textContent : 'no box').slice(0, 300) };
+          opt.click();
+          window.__writeDelayMs = delay;
+          window.__writeFail = fail;
+          const t0 = performance.now();
+          check.click();
+          await new Promise(r => requestAnimationFrame(() => r()));
+          const ms = Math.round(performance.now() - t0);
+          const verdict = () =>
+            [...document.querySelectorAll(root + ' .verdict')].find(
+              e => !e.closest('[hidden]') && e.getBoundingClientRect().height > 0
+            );
+          const v = verdict();
+          const painted = {
+            verdict: v ? v.textContent.trim().slice(0, 80) : '',
+            ms,
+            saving: /Saving/.test(box.textContent),
+          };
+          if (fail) await new Promise(r => setTimeout(r, delay + 300));
+          window.__writeDelayMs = 0;
+          window.__writeFail = null;
+          const t = document.getElementById('toast');
+          const again = [...document.querySelectorAll(root + ' button')].some(
+            b => b.textContent.trim() === 'Check answer'
+          );
+          const kept = !!document.querySelector(root + ' label.opt input:checked');
+          return { ...painted, back: !verdict() && again, kept, line: t && !t.hidden ? t.textContent.trim() : '' };
+        },
+        [root, fail, delay]
+      );
     if (hasQ) {
-      await page.locator('#rv-body label.opt').first().click();
-      await page.locator('#rv-body button:has-text("Check answer")').click();
+      const slow = await checkAnswer('#rv-body', null, 2000);
+      ok(
+        `${tag} Check answer paints the verdict on the tap's frame, the record 2 s behind (D-227)`,
+        !!slow && /^(Right|Missed|Partly)\b/.test(slow.verdict) && !slow.saving && slow.ms < 100,
+        JSON.stringify(slow)
+      );
       const scored = await until(
         page,
         () => {
@@ -249,7 +292,45 @@ async function open(browser, viewport) {
           .textContent()
           .catch(() => '')
       );
+      // the next question (the record's own copy of the answer may land and redraw meanwhile)
+      await until(
+        page,
+        () => {
+          const b = [...document.querySelectorAll('#rv-body button')].find(x =>
+            /^Next (question|unanswered)/.test(x.textContent.trim())
+          );
+          if (b) b.click();
+          return (
+            !!document.querySelector('#rv-body label.opt input:not(:checked)') &&
+            [...document.querySelectorAll('#rv-body button')].some(x => x.textContent.trim() === 'Check answer')
+          );
+        },
+        null,
+        3000
+      );
+      const refused = await checkAnswer('#rv-body', 'permission_denied', 300);
+      ok(
+        `${tag} a refused answer puts the question back unanswered, his pick kept, and says why (D-227)`,
+        !!refused &&
+          !!refused.verdict &&
+          refused.back &&
+          refused.kept &&
+          /^Couldn’t save that answer: .*permission_denied/.test(refused.line),
+        JSON.stringify(refused)
+      );
     } else ok(`${tag} a review answer scores`, false, 'no open review question');
+
+    // B-222 (D-227): Practice's question runner paints the same way (the lead drill, its first question).
+    await page.click('#seg-study [data-v="practice"]');
+    const lead = page.locator('#pr-body .pr-lead button.primary');
+    if (await lead.count()) await lead.first().click();
+    await until(page, () => !!document.querySelector('#pr-body label.opt input'), null, 2000);
+    const pr = await paintAnswer(page, '#pr-body');
+    ok(
+      `${tag} Practice paints Check answer's verdict on the tap's frame, the record 2 s behind (D-227)`,
+      painted(pr),
+      JSON.stringify(pr)
+    );
 
     // 6. One Your-turn reply files: the chip asks, Send writes the reply job and fires the builder.
     await page.click('#tab-ev');

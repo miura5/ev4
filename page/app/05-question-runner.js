@@ -5,7 +5,26 @@
     // every new answer is appended like any other, the weak spots see all of them, and outside the retake the page shows
     // each item's latest attempt.
     const retakes = {};
+    // B-222 (D-227): an answer paints on Check answer, before the record answers: painted[setId][itemId] holds it until
+    // the record carries an attempt at least as new (then the record's own is shown), or a refusal takes it back.
+    const painted = {};
+    function withPainted(set, out) {
+      const p = set && painted[set.id];
+      if (!p) return out;
+      const res = { ...out },
+        from = retakes[set.id],
+        rec = answersOf(set);
+      for (const [qid, a] of Object.entries(p)) {
+        if (rec[qid] && rec[qid].at >= a.at)
+          delete p[qid]; // the record has it now
+        else if (!(from && a.at < from)) res[qid] = a; // a retake shows only what came after it
+      }
+      return res;
+    }
     function answersFor(set) {
+      return withPainted(set, answersRecorded(set));
+    }
+    function answersRecorded(set) {
       const from = set && retakes[set.id];
       if (!from) return answersOf(set);
       const doc = S.answers.find(a => a.id === set.id || a.setId === set.id);
@@ -310,7 +329,6 @@
         submit.disabled = !ready();
         submit.addEventListener('click', async () => {
           submit.disabled = true;
-          submit.textContent = 'Saving…';
           let chosen =
             type === 'matrix'
               ? q.matrix.rows.map((_, i) => sel[i])
@@ -326,8 +344,9 @@
               return;
             }
           }
+          let r;
           try {
-            const r = E.planAnswer({
+            r = E.planAnswer({
               set,
               item: q,
               chosen,
@@ -341,13 +360,24 @@
               byWeakspot: M.attempts.byWeakspot,
               label: o.label,
             });
-            await run(r.writes);
-            if (r.correct) T.happyUntil = Date.now() + 1800;
-            sfNod(body); // B-78: answered in a surface, she nods
           } catch (e) {
-            toast('Couldn’t save that answer: ' + (e.message || e.code));
+            toast('Couldn’t check that answer: ' + (e.message || e.code));
             submit.disabled = false;
             submit.textContent = 'Check answer';
+            return;
+          }
+          // The verdict and its why paint now; the write catches up (D-227). A refusal puts the question back unanswered,
+          // his pick still in it, with one line saying why.
+          (painted[set.id] = painted[set.id] || {})[q.id] = r.answer;
+          if (r.correct) T.happyUntil = Date.now() + 1800;
+          render();
+          sfNod(body); // B-78: answered in a surface, she nods
+          try {
+            await run(r.writes);
+          } catch (e) {
+            if (painted[set.id] && painted[set.id][q.id] === r.answer) delete painted[set.id][q.id];
+            render();
+            toast('Couldn’t save that answer: ' + (e.message || e.code));
           }
         });
         const later = after || items.find(x => !answers[x.id] && x.id !== q.id);

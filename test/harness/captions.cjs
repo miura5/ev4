@@ -12,6 +12,7 @@
 //   node test/harness/captions.cjs [record dir | synthetic] [screenshots dir] [--artboards <dir>]
 // Run `node tools/build.mjs` first. Exit code 1 when any check fails.
 const { chromium } = require('playwright');
+const { paintAnswer, painted } = require('./paint.cjs');
 const fs = require('fs');
 const path = require('path');
 const root = path.resolve(__dirname, '../..');
@@ -982,6 +983,21 @@ async function sideBySide(browser, left, right, out, vp) {
         r3.cards === 1,
       JSON.stringify({ answered, nodded, r0: r0.head, r1: r1.head, r2: [r2.head, r2.open], r3: [r3.head, r3.open] })
     );
+    // B-222 (D-227): the surface's next question paints its verdict on the tap's frame, the record 2 s behind.
+    await page.evaluate(() => {
+      const b = [...document.querySelectorAll('#ev-surf button')].find(x =>
+        /^Next (question|unanswered)/.test(x.textContent.trim())
+      );
+      if (b) b.click();
+    });
+    await page.waitForTimeout(200);
+    const sfPaint = await paintAnswer(page, '#ev-surf');
+    ok(
+      `[${scheme}] a surface's set paints Check answer's verdict on the tap's frame, the record 2 s behind (D-227)`,
+      painted(sfPaint),
+      JSON.stringify(sfPaint)
+    );
+    await page.waitForTimeout(2200);
     // A reply with only cards that inform still opens one surface, its others as rows.
     await page.evaluate(() => {
       window.__chatScript = [
@@ -1697,9 +1713,16 @@ async function sideBySide(browser, left, right, out, vp) {
           ? 'It pulls water toward where there is more stuff.'
           : 'Half-normal saline is hypotonic, so water moves into each cell.'
       );
-      await page.click('#ev-surf .ev-card.check button:has-text("Check answer")');
+      // B-222 (D-227): an open answer shows Checking… until grading returns, then its verdict at once, before the
+      // record's write (2 s behind) lands.
+      const openPaint = await paintAnswer(page, '#ev-surf .ev-card.check');
+      ok(
+        `[open ${tag}] a session check's open answer paints its verdict when grading returns, before the record (D-227)`,
+        painted(openPaint),
+        JSON.stringify(openPaint)
+      );
       await page.waitForSelector('#ev-surf .ev-card.check .verdict', { timeout: 8000 }).catch(() => {});
-      await page.waitForTimeout(400);
+      await page.waitForTimeout(2400);
       const r = await read(page);
       if (mode === 'model') {
         ok(

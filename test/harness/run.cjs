@@ -6,6 +6,7 @@
 //   node test/harness/run.cjs [record dir | synthetic] [screenshots dir]   (default: the synthetic record, B-100)
 // Run `node tools/build.mjs` first. Exit code 1 when any check fails. The shell's own checks are test/harness/shell.cjs.
 const { chromium } = require('playwright');
+const { paintAnswer, painted } = require('./paint.cjs');
 const fs = require('fs');
 const path = require('path');
 const root = path.resolve(__dirname, '../..');
@@ -2849,6 +2850,21 @@ const ok = (name, cond, detail = '') => {
         `${before} -> ${await tries()}`
       );
       await page.screenshot({ path: `${shots}/retake-${scheme}.png`, fullPage: false });
+      // B-222 (D-227): Practice's next question paints its verdict on the tap's frame, the record 2 s behind.
+      await page.evaluate(() => {
+        const b = [...document.querySelectorAll('#pr-body button')].find(x =>
+          /^Next (question|unanswered)/.test(x.textContent.trim())
+        );
+        if (b) b.click();
+      });
+      await page.waitForTimeout(150);
+      const prPaint = await paintAnswer(page, '#pr-body');
+      ok(
+        `[${scheme}] Practice paints Check answer's verdict on the tap's frame, the record 2 s behind (D-227)`,
+        painted(prPaint),
+        JSON.stringify(prPaint)
+      );
+      await page.waitForTimeout(2200);
     }
     await practiceNav(page, scheme); // B-191
     // Plan: tick a task (B-121: from 1024 px the plan sits beside review and practice, with no Plan button)
