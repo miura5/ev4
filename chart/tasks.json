@@ -3771,12 +3771,12 @@
   "title": "Skills runner and workouts in C",
   "dod": "Both follow the session pattern of row 9: bar in the pane header, steps in the pane, list in the right panel; their logic unchanged; the proof",
   "milestone": "v4.5 ui",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-211"
   ],
-  "notes": "Taken Oct 23.",
-  "commit": null,
+  "notes": "Skills runs and workouts follow the session pattern: the run's line and End (Finish/Stop here for a workout) in the pane header, the current step and its buttons in the pane at every width, the checklist in the right panel from 1200 px (a workout's card is already the right panel's surface, so no second copy). Proof: run/captions/prep/look green; shots at 390, 735, 1280.",
+  "commit": "4189e21",
   "source": "plan BridyLzngcGUtpeLQorX1U"
  },
  {
