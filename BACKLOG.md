@@ -22,7 +22,7 @@ Builder run Oct 21 (job-20261022-021545-b-69): his Yes answered the Your turn li
 | B-200 | Speed on Your turn and the job cards (D-208): a tap on a Your-turn reply, a job card action or a check-off shows its new state in the same frame (sent, queued, ticked) and the record write catches up; a refused write puts the old state back with one line saying why Done when: the harness measures tap-to-paint on a Your-turn reply, a check-off, a review answer and a chip at 390 and 1280, each under 100 ms with the record stub delayed 2 s; a planted refused write restores the state and shows the line; npm test green; npm run check green; ship staging green; live only on Matt's OK | — | v4.4 ui | open |  |
 | B-201 | Build recap in the weekly: the weekly's health line gains one sentence from the Chart, "this week she shipped n to live, m wait on you", shown on the Sunday card Done when: a core test on a planted Chart and deploy record composes the sentence; a staging weekly firing carries it in weeks/<date>.health; the harness shows it on the Sunday card at 390 and 1280; npm test green; npm run check green; ship staging green; live only on Matt's OK | — | v4.4 ops | open |  |
 | B-202 | Command bar probe and build: first check in the Claude desktop app and in a browser tab which of Cmd-K, Ctrl-K and "/" reach the page without the host taking them, and record it as an environments page row; then the key that works focuses the composer with a filtered list of the quick asks and the tabs, Enter runs one, Esc closes; 1 to 6 switch tabs when the composer is not focused Done when: the environments row with the keys that reach the page; the harness opens the bar by the recorded key at 1280, filters to "review", runs Start review, and switches tabs by number; nothing changes at 390; npm test green; npm run check green; ship staging green; live only on Matt's OK | — | v4.4 ui | blocked | Parked by D-218 (Matt, Oct 22): the command bar waits until he picks it up again. |
-| B-218 | Matt's look at his sizes, then live Done when: Matt uses staging at 735 × 830, a third of the ultrawide and his phone, and says yes; ship live on his OK | B-203, B-204, B-205, B-206, B-207, B-208, B-209, B-210, B-211, B-212, B-213, B-214, B-215, B-216, B-217 | v4.5 ui | open |  |
+| B-218 | Matt's look at his sizes, then live Done when: Matt uses staging at 735 × 830, a third of the ultrawide and his phone, and says yes; ship live on his OK | B-203, B-204, B-205, B-206, B-207, B-208, B-209, B-210, B-211, B-212, B-213, B-214, B-215, B-216, B-217 | v4.5 ui | blocked | Staging holds all of v4.5 (B-203 to B-217, last deploy 98d23e1 GREEN; a full npm run check is GREEN at 98d23e1 for R-06). Waiting on Matt's look at 735x830, a third of the ultrawide and his phone, then his explicit OK in the chat to ship live. |
 
 ## Your turn
 
@@ -38,6 +38,7 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 - B-183 (blocked): The design kickoff
 - B-185 (blocked): Ship it from the page
 - B-202 (blocked): Command bar probe and build
+- B-218 (blocked): Matt's look at his sizes, then live
 
 ## Done
 
