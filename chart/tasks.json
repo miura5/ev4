@@ -868,16 +868,17 @@
   "title": "BIO 201 objectives and practice (pick 2, D-101): the seed-objectives job kind proposing objectives/<exam>-<n> with sourceRef and course from the unit slides (schema bump), the proposal card with strike-outs and the page write on Matt's OK, and the morning's review and new checks for BIO 201's next exam under the day budget",
   "dod": "a core test that a planted BIO 201 unit's slides seed objectives/<exam>-<n> each with sourceRef and course and nothing invented; the objectives 1 to 2 migration with its legacy copies, idempotent; the harness strikes one line on the proposal card and the page writes the rest; a staging seed-objectives worker firing read back; the morning's next BIO 201 review drawn from them inside the day budget; npm test green; npm run check green; ship staging green; live only on Matt's OK",
   "milestone": "M8",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-42",
    "B-43",
    "B-98",
    "B-230"
   ],
-  "notes": "Matt, Oct 23: accepts the proposed definition of done. The page's objectives write: a spec.actions row is a guarded path; ask before adding one.",
+  "notes": "parked for the freeze week",
   "commit": null,
-  "source": "BACKLOG.md"
+  "source": "BACKLOG.md",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-45",
