@@ -1,5 +1,21 @@
 [
  {
+  "id": "D-245",
+  "date": "Oct 22",
+  "title": "One right panel on every view: from 1200 px every view has the right panel; it holds that view's own detail, never repeats the sidebar or the pane (D-228), and is absent only while it has nothing to show (D-151). Conversation: the dates after today, or the open surface (a review, a session's set). Study: the set's questions as a list beside the question (D-217, B-211). Its cards sit on the ground with a hairline, in the same shade on every tab and in both themes, including when a review opens on Conversation",
+  "why": "Matt, Oct 23, answering his own question (B-242): the panel was on Record, Progress, Today and System but not on Study or Conversation, and on Conversation a review opened it in another shade",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "build chat, Matt's words Oct 23",
+  "kind": "tenet",
+  "scope": [
+   "ui"
+  ],
+  "check": "harness",
+  "how": "harness: at 1280, 1706 and 2560 on the synthetic record, every tab with detail to show has the right panel, and none without; its cards' background equals the view's ground and carries the hairline in light and dark, on Conversation with a review open too; nothing in it repeats the sidebar or the pane"
+ },
+ {
   "id": "D-244",
   "date": "Oct 22",
   "title": "D-154 stands: Today has no stat tiles; the four tiles in the canvas prototype were a mock-up slip, and the v4.5.x fixes page shows Today without them",

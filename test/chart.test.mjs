@@ -511,6 +511,16 @@ test("B-95: report takes Matt's words from his message, exactly as written", () 
   // B-187: a fired builder session's text comes inside the routine's envelope; the words never carry its tags.
   const fired = human('<routine-fire-payload>\nidea: a planted probe\n</routine-fire-payload>');
   assert.deepEqual(C.wordsFromChat(fired).words, 'a planted probe');
+  // Several reports on consecutive lines: a match files only its own line.
+  const many = human(
+    'File these:\n\nbug: the panel is centred\nbug: no right panel on Study\nquestion: same panel on all tabs?'
+  );
+  assert.deepEqual(C.wordsFromChat(many, 'no right panel'), {
+    words: 'no right panel on Study',
+    at: '2026-10-19T23:40:00.000Z',
+    said: 'bug',
+  });
+  assert.equal(C.wordsFromChat(many, 'all tabs').words, 'question: same panel on all tabs?');
   const r = sample();
   const out = C.applyReport(r, { _: ['report', 'bug'], 'from-chat': true }, { jsonl });
   const t = r.tasks.at(-1);

@@ -1700,7 +1700,20 @@ export function wordsFromChat(jsonl, match) {
   if (para > 0) words = words.slice(0, para);
   if (match && !words.toLowerCase().includes(String(match).toLowerCase()))
     words = m.text.split('\n\n').find(p => p.toLowerCase().includes(String(match).toLowerCase()));
-  return { words: words.trim(), at: m.at, said: (m.text.match(MARK) || [])[1] };
+  // Several reports on consecutive lines ("bug: …\nbug: …\nquestion: …"): the match takes only its own line, from its
+  // mark, so each is filed on its own (Oct 23: four lines filed as one entry).
+  let said = (m.text.match(MARK) || [])[1];
+  if (match) {
+    const lines = words.split('\n');
+    const led = lines.filter(l => /^\s*[a-z]+\s*:\s/i.test(l)).length;
+    const own = lines.find(l => l.toLowerCase().includes(String(match).toLowerCase()));
+    if (led > 1 && own) {
+      const mk = own.match(MARK);
+      said = mk ? mk[1] : said;
+      words = mk ? own.replace(MARK, '') : own;
+    }
+  }
+  return { words: words.trim(), at: m.at, said };
 }
 /** The comment threads of the newest comment query on a node in this session: [{id, body, by, self}]. */
 export function commentsFrom(jsonl, node) {
