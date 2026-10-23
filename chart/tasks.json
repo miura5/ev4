@@ -3617,9 +3617,9 @@
   "title": "Speed on Your turn and the job cards (D-208): a tap on a Your-turn reply, a job card action or a check-off shows its new state in the same frame (sent, queued, ticked) and the record write catches up; a refused write puts the old state back with one line saying why",
   "dod": "the harness measures tap-to-paint on a Your-turn reply, a check-off, a review answer and a chip at 390 and 1280, each under 100 ms with the record stub delayed 2 s; a planted refused write restores the state and shows the line; npm test green; npm run check green; ship staging green; live only on Matt's OK",
   "milestone": "v4.4 ui",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Oct 23 build chat: taking it; harness tap-to-paint with the stub delayed 2 s",
   "commit": null,
   "source": "plan XCT16iH6fggp4MxPNRZtHK"
  },
