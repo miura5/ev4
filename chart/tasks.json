@@ -4313,9 +4313,9 @@
   "title": "Bug (reported Oct 23): See the difference in text sizes between the live app and the prototype interface. The text gets way to big on the live app",
   "dod": "From 1024 px her current line and earlier lines match the direction C prototype's sizes (about 20 px and 14 px, not D-122's 24 and 16); the captions harness asserts the new numbers; before and after at 1706x1240 shown to Matt",
   "milestone": "v4.5.x ui",
-  "status": "open",
+  "status": "blocked",
   "depends": [],
-  "notes": "",
+  "notes": "parked: not a freeze fix as is; D-122 fixes her line at 24 px and earlier lines at 16 px from 1024 px, and the prototype is about 20 and 14. Amend D-122 to the prototype's sizes?",
   "commit": null,
   "source": "build chat",
   "words": "See the difference in text sizes between the live app and the prototype interface. The text gets way to big on the live app",
@@ -4328,6 +4328,7 @@
   "triage": {
    "outcome": "task",
    "at": "2026-10-23T15:26:25.609Z"
-  }
+  },
+  "waitingOn": "Matt"
  }
 ]
