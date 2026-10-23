@@ -4036,9 +4036,9 @@
   "title": "Enter keeps a fresh row: Today's add row and Record › Dates' Add a date save on Enter and leave a fresh, focused row below; Esc leaves",
   "dod": "the harness adds three Today items and two dates with Enter only at 390 and 1280; each lands in its list on the tap frame (D-208) and focus stays in a fresh row; npm test green; npm run smoke green; npm run check green; screenshots at 390 × 844, 735 × 830, 1706 × 1240 and 2560 × 1240 looked at; ship staging green; live only on Matt's OK",
   "milestone": "v4.5.x ui",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Oct 23 build chat: taking it",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },
