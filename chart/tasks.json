@@ -4060,7 +4060,7 @@
   "title": "Matt's look at v4.5.x, then live",
   "dod": "Matt uses staging at 735 × 830, a third of the ultrawide and his phone and says yes; ship live on his OK, tagged as the next v4.4.x patch (v4.5 went live as patch v4.4.2, so there is no v4.5 line)",
   "milestone": "v4.5.x ui",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-218",
    "B-222",
@@ -4070,7 +4070,7 @@
    "B-228",
    "B-229"
   ],
-  "notes": "Matt, Oct 23 morning: 'Go live then unpark': B-226 and B-227 leave this task's depends and follow it; his OK for live is given in the build chat; shipped after his 6:30am unattended window ends, full check first (R-06).",
+  "notes": "Oct 23 morning: full npm run check at the head for R-06, then ship live at 6:31 or later on Matt's OK ('Go live').",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },
