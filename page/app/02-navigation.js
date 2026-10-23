@@ -55,7 +55,7 @@
           sg.before(SEG_HOME[id]);
         }
         if (innerWidth >= 600) {
-          if (sg.parentNode !== mh) mh.insertBefore(sg, $('status').nextSibling);
+          if (sg.parentNode !== mh) mh.insertBefore(sg, $('status')); // B-246: beside the title, before any status line, so it never moves
           sg.hidden = id !== t;
         } else {
           if (sg.previousSibling !== SEG_HOME[id]) SEG_HOME[id].after(sg);

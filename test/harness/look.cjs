@@ -309,9 +309,36 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           w: Math.round(b.width),
           pw: Math.round(document.getElementById('p-study').getBoundingClientRect().width),
           h: Math.round(s.querySelector('button').getBoundingClientRect().height),
+          left: Math.round(b.left),
+          gap: Math.round(b.left - document.getElementById('mh-title').getBoundingClientRect().right),
         };
       });
       const want = size.width < 600 ? 44 : 32;
+      // B-246: from 600 px the switch sits beside the title and stays put from view to view (Practice has no right panel)
+      if (size.width >= 600) {
+        await page.evaluate(() => {
+          const s = document.getElementById('status');
+          window.__statusWas = [s.className, s.textContent];
+          s.classList.remove('ok');
+          s.textContent = 'A planted status line, to show the switch does not move';
+        });
+        await page.click('#seg-study [data-v="practice"]');
+        await page.waitForTimeout(200);
+        const pr = await page.evaluate(() =>
+          Math.round(document.getElementById('seg-study').getBoundingClientRect().left)
+        );
+        await page.click('#seg-study [data-v="review"]');
+        await page.waitForTimeout(200);
+        await page.evaluate(() => {
+          const s = document.getElementById('status');
+          [s.className, s.textContent] = window.__statusWas;
+        });
+        ok(
+          `[${width}] the view switch sits beside the title and stays put with a status line and on Practice (B-246)`,
+          sg.gap >= 0 && sg.gap <= 16 && Math.abs(pr - sg.left) <= 1,
+          JSON.stringify({ gap: sg.gap, review: sg.left, practice: pr })
+        );
+      }
       ok(
         `[${width}] Today's rows are ${want} px, the view switch is ${size.width < 600 ? 'a full-width row' : "the pane header's"}, Prep is a word, the reading column at most 680 px (D-225, D-150)`,
         r.rows.length > 0 &&

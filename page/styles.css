@@ -868,9 +868,8 @@ body.captions.on-ev .wrap{max-width:680px}
 .seg button{min-height:26px;padding:0 10px;border-radius:6px;font:500 calc(13px * var(--ts)) var(--sans);color:var(--faint)}
 .seg button:hover{background:none;color:var(--text)}
 .seg button[aria-pressed="true"]{background:var(--bg);color:var(--text);box-shadow:0 0 0 1px var(--line2)}
-.mh .seg{flex:0 0 auto;margin-left:auto;align-self:center}
+.mh .seg{flex:0 0 auto;align-self:center}
 .mh .seg[hidden],body.on-ev .mh .seg{display:none}
-.mh .status~.seg{margin-left:0}
 @media (max-width:599px){.seg{align-self:stretch;width:100%}.seg button{min-height:32px;flex:1}}
 /* the right panel's cards: on the ground, a hairline, 32 px rows */
 @media (min-width:1200px){
