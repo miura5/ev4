@@ -4117,7 +4117,7 @@
   "depends": [
    "B-232"
   ],
-  "notes": "Matt, Oct 23: okay, stays blocked on spec.actions.",
+  "notes": "parked for the freeze week",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z",
   "waitingOn": "Matt"
