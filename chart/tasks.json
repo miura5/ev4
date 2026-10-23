@@ -3973,9 +3973,9 @@
   "title": "One right panel, each thing once (D-245, D-228, flag 4; Matt's B-239 to B-242): from 1200 px every view has the right panel holding its own detail and absent only while empty; Conversation's panel holds the dates after today, or the open surface (a review, a session's set), never today's items; Study's holds the set's questions as a list beside the question; its cards sit on the ground with a hairline in one shade on every tab and both themes, a review on Conversation included; the sidebar's Today is absent while Today is the view; a surface's count shows once (its head line, not again under it); her greeting and lines on Conversation are left-aligned as in the direction C mock-up; D-228's and D-245's checks join the shell harness",
   "dod": "the shell harness at 735, 1280, 1470, 1706 and 2560 on the synthetic record, light and dark: Conversation shows the right panel with the dates after today and no item from today, and with a review open shows the review there in the same card shade as Today's panel (ground plus hairline), its count once; Study's Review and Practice show the set's questions as a list in the panel beside the question; Today, Progress, Record and System keep theirs; a view with nothing to show has no panel; no record item appears in two of sidebar, pane and right panel on any tab; the sidebar's Today is absent on Today and present on Study; her greeting and lines are left-aligned on Conversation at 735 and wider; planted repeats, a planted off-shade card and a planted empty panel each fail the check in a test; npm test green; npm run smoke green; npm run check -- --touched green; screenshots at 390 × 844, 735 × 830, 1706 × 1240 and 2560 × 1240 looked at; ship staging green; live only on Matt's OK",
   "milestone": "v4.5.x ui",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Oct 23 build chat: taking it (D-245)",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },
