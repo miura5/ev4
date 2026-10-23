@@ -4048,9 +4048,9 @@
   "title": "His words are his (D-233): spec.collections marks the fields only Matt writes (a journal entry's text, a date he added, an idea's text, his own weak spot's words, plan ticks, his talk lines); lint fails any actions row with a tool, worker or builder caller whose writes include one; where she drafts beside his text she offers Use mine and Use hers",
   "dod": "lint fails a planted actions row whose worker caller writes journal text, and passes the real table; a test lists every marked field; npm test green; ship staging green; live only on Matt's OK",
   "milestone": "v4.5.x ui",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Oct 23 build chat: taking it",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },
