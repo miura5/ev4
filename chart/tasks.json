@@ -4334,9 +4334,9 @@
   "id": "B-244",
   "kind": "bug",
   "title": "Bug (reported Oct 23): E.V's text is nice but can we check the cards to make sure their the appropriate size? I've attached the screenshot when I start a review with E.V.; her text is still appropriate but the card is huge in proportion. I'm not sure what the correct size is but intuitively it feels too large at first sight",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "In the conversation's surface the review card's question is no larger than her line (17 px) and its options are smaller; the captions harness checks it at 390, 735 and 1280; before and after shown to Matt",
+  "milestone": "v4.5.x ui",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -4347,6 +4347,10 @@
    "row": "v4 B-244: E.V's text is nice but can we check the cards to make sure their the…",
    "why": "E.V's text is nice but can we check the cards to make sure their the appropriate size? I've attached the screenshot when I start a review with E.V.; her text is still appropriate but the card is huge in proportion. I'm not sure what the correct size is but intuitively it feels too large at first sight",
    "notes": "Reported Oct 23 from build chat"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-23T16:00:42.312Z"
   }
  }
 ]
