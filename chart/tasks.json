@@ -4731,12 +4731,12 @@
   "id": "B-264",
   "kind": "bug",
   "title": "Bug (reported Oct 23): e.v. Center aligned on phone",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Her lines and greeting read left-aligned on the phone as on desktop, flower centred; captions harness checks text-align at 390 and 1280; staging GREEN",
+  "milestone": "v4.5.x ui",
+  "status": "done",
   "depends": [],
-  "notes": "",
-  "commit": null,
+  "notes": "left alignment at every width; the .cap-in rule itself left-aligned (no override); staging GREEN v4.5.2+33",
+  "commit": "6ce26b7",
   "source": "build chat",
   "words": "e.v. Center aligned on phone",
   "reportedAt": "2026-10-23T22:54:47.074Z",
@@ -4744,6 +4744,10 @@
    "row": "v4 B-264: e.v. Center aligned on",
    "why": "e.v. Center aligned on phone",
    "notes": "Reported Oct 23 from build chat"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-23T23:26:42.328Z"
   }
  }
 ]

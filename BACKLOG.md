@@ -314,6 +314,7 @@ High
 "Revisit for ATI and the final" can't stick.
 Freeze Done when: A weak spot he made active again after it was parked stays active: auto-park parks a spot once for its exam, never after an activate; a core test plants park then activate; proven by a staging evening-cloud run read back | — | v4.5.x ops | done | Matt approved, Oct 23 (practice rep, worked through); to live with v4.5.2 |
 | B-263 | Bug (reported Oct 23): E.V. can't pull from the dosage calculations exam plan. She can see the job finished but can't get the details and proposes to make a new exam plan. But it can be seen in the study "plan" tab that the dosage calculation exam plan exists and even handles the 2 exam dates. Done when: E.V.'s plan lookup finds the plan he asks about (by exam or plan title, e.g. dosage), else the target exam's, else the soonest upcoming exam's plan; a core/page test covers a plan whose exam has no objectives; smoke green; staging: asking E.V. for the dosage plan overview returns its days | — | M5 | done | Shipped to staging at 6ce26b7: ship staging GREEN. |
+| B-264 | Bug (reported Oct 23): e.v. Center aligned on phone Done when: Her lines and greeting read left-aligned on the phone as on desktop, flower centred; captions harness checks text-align at 390 and 1280; staging GREEN | — | v4.5.x ui | done | left alignment at every width; the .cap-in rule itself left-aligned (no override); staging GREEN v4.5.2+33 |
 
 ## Inbox
 
@@ -335,4 +336,3 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-240 | bug | 2026-10-23T04:32:33.683Z | E.V.'s Conversation tab doesn't have the right panel (see the screenshots), and the panel doesn't show up on the Study tab either. | build chat | declined |  |
 | B-241 | bug | 2026-10-23T04:32:33.683Z | When I do a review on the Conversation tab, the right panel does show up, but it's not the right shade. | build chat | declined |  |
 | B-242 | request | 2026-10-23T04:32:33.683Z | question: Should the right panel be the same on all tabs? It's on Record, Progress, Today and System but not on Study or Conversation, and each one shows its own page's info when there is any. | build chat | declined |  |
-| B-264 | bug | 2026-10-23T22:54:47.074Z | e.v. Center aligned on phone | build chat | inbox |  |
