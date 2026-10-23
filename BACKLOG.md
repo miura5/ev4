@@ -318,3 +318,8 @@ The morning after an exam, that exam's weak spots are still open and overdue, so
 High
 The day after Exam N, your review is all Exam N and none of the next exam.
 Freeze | build chat | inbox |  |
+| B-253 | bug | 2026-10-23T18:58:39.146Z | 4
+Making a parked weak spot active again is undone that night by auto-park.
+High
+"Revisit for ATI and the final" can't stick.
+Freeze | build chat | inbox |  |
