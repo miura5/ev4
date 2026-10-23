@@ -1,5 +1,17 @@
 [
  {
+  "id": "D-252",
+  "date": "Oct 23",
+  "title": "Practice reps are worked examples first, the support fading as Matt grows: a thesis (what was wrong and why, the idea to take away); two to four supporting points, each a named concept in one plain sentence with its exact lines (file:line, under 10 lines), explained the first time it comes up; one hint per question; two questions answerable from the card (applying it, not discovering), answers held until he replies, 'I don't know, but my guess is…' welcome; then the review card. Support fades by the 'Where you are' table in How E.V. Works: new or rusty gets the full worked example, familiar gets the thesis and he finds the lines, solid gets the original format (what's broken, where do you think it lives, questions without hints). Each rep ends with one line naming the concepts it exercised.",
+  "why": "Matt, Oct 23: worked examples teach a rusty engineer faster than discovery; the fade keeps the reps short as he grows",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [
+   "D-250"
+  ],
+  "source": "log"
+ },
+ {
   "id": "D-251",
   "date": "Oct 23",
   "title": "Freeze exception: a verified bug in study or data logic (core, runs, writes) may be fixed during the freeze when all of these hold: it fixes behavior that's wrong, not missing; it adds no field, schema bump or new step; it's under about 100 lines; and it's proven by firing the affected staging runs and reading their results back. Features, redesigns and new behavior stay out. It covers B-252 and B-253 (audit findings 3 and 4), audit findings 1 and 2, and 5, 7, 8 and 9 if they need core changes; each is its own batch after the UI batch, one fix at a time, each a practice rep.",
