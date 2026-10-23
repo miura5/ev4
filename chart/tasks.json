@@ -4523,7 +4523,7 @@
   "milestone": "v4.5.x ops",
   "status": "done",
   "depends": [],
-  "notes": "staging green at 1939f15; morning-20261023-201944657: 0 review targets, nothing deferred (the 12:19 pre-fix run had 10 with Exam 4 spots deferred); staging data: 3 Exam 4 spots due before, 0 after; waiting on Matt's rep",
+  "notes": "Matt approved, Oct 23 (practice rep, worked through); to live with v4.5.2",
   "commit": "1939f15",
   "source": "build chat",
   "words": "3.\nThe morning after an exam, that exam's weak spots are still open and overdue, so they fill the whole review. They're only parked that evening.\nHigh\nThe day after Exam N, your review is all Exam N and none of the next exam.\nFreeze",

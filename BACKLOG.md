@@ -304,7 +304,7 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 The morning after an exam, that exam's weak spots are still open and overdue, so they fill the whole review. They're only parked that evening.
 High
 The day after Exam N, your review is all Exam N and none of the next exam.
-Freeze Done when: The morning after an exam, its weak spots are not in the review set or the day's list (the morning's pick skips a spot whose exam has passed, as auto-park will that evening); a core test plants the day after an exam; proven by a staging morning run read back | — | v4.5.x ops | done | staging green at 1939f15; morning-20261023-201944657: 0 review targets, nothing deferred (the 12:19 pre-fix run had 10 with Exam 4 spots deferred); staging data: 3 Exam 4 spots due before, 0 after; waiting on Matt's rep |
+Freeze Done when: The morning after an exam, its weak spots are not in the review set or the day's list (the morning's pick skips a spot whose exam has passed, as auto-park will that evening); a core test plants the day after an exam; proven by a staging morning run read back | — | v4.5.x ops | done | Matt approved, Oct 23 (practice rep, worked through); to live with v4.5.2 |
 | B-253 | Bug (reported Oct 23): 4
 Making a parked weak spot active again is undone that night by auto-park.
 High
