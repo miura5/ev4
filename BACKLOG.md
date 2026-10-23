@@ -296,3 +296,6 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-245 | bug | 2026-10-23T16:25:39.283Z | 1. I was looking at the study tab and I think the review questions here are still too large. Comparing it to the size in the conversation tab and in the review tab under 'study'. 
 2. Also is the practice tab under the study page supposed to not have a right sidebar? it seems to be a UX error because it moves the tabs as it expands the elevated section beyond where the right sidebar would be. and 
 3. when I go to that larger window size here where the right sidebar would appear, the plan tab totally disappears. | build chat | inbox |  |
+| B-246 | bug | 2026-10-23T16:25:39.283Z | 1. I was looking at the study tab and I think the review questions here are still too large. Comparing it to the size in the conversation tab and in the review tab under 'study'. 
+2. Also is the practice tab under the study page supposed to not have a right sidebar? it seems to be a UX error because it moves the tabs as it expands the elevated section beyond where the right sidebar would be. and 
+3. when I go to that larger window size here where the right sidebar would appear, the plan tab totally disappears. | build chat | inbox |  |
