@@ -4052,7 +4052,7 @@
   "id": "B-230",
   "kind": "task",
   "title": "Matt's look at v4.5.x, then live",
-  "dod": "Matt uses staging at 735 × 830, a third of the ultrawide and his phone and says yes; ship live on his OK, tagged as the next v4.5 patch",
+  "dod": "Matt uses staging at 735 × 830, a third of the ultrawide and his phone and says yes; ship live on his OK, tagged as the next v4.4.x patch (v4.5 went live as patch v4.4.2, so there is no v4.5 line)",
   "milestone": "v4.5.x ui",
   "status": "open",
   "depends": [
@@ -4066,7 +4066,7 @@
    "B-228",
    "B-229"
   ],
-  "notes": "",
+  "notes": "Matt, Oct 23: v4.5 went live as v4.4.2 (98d23e1); 'the next v4.5 patch' in the hand-off means the next v4.4.x patch",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },
