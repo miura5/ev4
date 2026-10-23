@@ -3994,7 +3994,7 @@
   "milestone": "v4.5.x ui",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "D-230 supersedes D-222 (Matt, Oct 23 build chat): record it in this task's commit with log decision D-230 --supersedes D-222 --status accepted --no-commit, since lint reds on the 8 tests citing D-222 until this sweep re-cites them",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },
