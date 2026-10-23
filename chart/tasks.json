@@ -4490,5 +4490,24 @@
    "outcome": "task",
    "at": "2026-10-23T17:30:07.344Z"
   }
+ },
+ {
+  "id": "B-251",
+  "kind": "request",
+  "title": "Request (reported Oct 23): For B-250 I'd remove the pause but I'd still implement the placeholder lines at some point; we don't know where the wait is present but you are right that the conversation history write isn't an issue. So \"removing the pause\" gets added to the batch?",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "For B-250 I'd remove the pause but I'd still implement the placeholder lines at some point; we don't know where the wait is present but you are right that the conversation history write isn't an issue. So \"removing the pause\" gets added to the batch?",
+  "reportedAt": "2026-10-23T18:10:13.342Z",
+  "board": {
+   "row": "v4 B-251: For B-250 I'd remove the pause but I'd still implement the…",
+   "why": "For B-250 I'd remove the pause but I'd still implement the placeholder lines at some point; we don't know where the wait is present but you are right that the conversation history write isn't an issue. So \"removing the pause\" gets added to the batch?",
+   "notes": "Reported Oct 23 from build chat"
+  }
  }
 ]
