@@ -35,7 +35,7 @@ Making a parked weak spot active again is undone that night by auto-park.
 High
 "Revisit for ATI and the final" can't stick.
 Freeze Done when: A weak spot he made active again after it was parked stays active: auto-park parks a spot once for its exam, never after an activate; a core test plants park then activate; proven by a staging evening-cloud run read back | — | v4.5.x ops | in progress | rule touched: invariant 5, a choice he makes sticks; same once-only rule as B-252 (awaitingPark) |
-| B-254 | Bug (reported Oct 23): Staging lint: 8 fact-changed errors on jobs/ (5) and talk/2026-10-18, -20, -21: a Fact's write-once fields changed since state/current last hashed them (Oct 22). Seen in evening-cloud-20261023-204137072; not from B-253, which only changes auto-park. Done when: Find what rewrote the write-once fields of those jobs and talk documents on staging, and whether live has the same; Matt's call first (outside today's scope) | — | v4.5.x ops | open |  |
+| B-254 | Bug (reported Oct 23): Staging lint: 8 fact-changed errors on jobs/ (5) and talk/2026-10-18, -20, -21: a Fact's write-once fields changed since state/current last hashed them (Oct 22). Seen in evening-cloud-20261023-204137072; not from B-253, which only changes auto-park. Done when: Find what rewrote the write-once fields of those jobs and talk documents on staging, and whether live has the same; Matt's call first (outside today's scope) | — | v4.5.x ops | blocked | found during the B-253 staging proof; parked: outside this goal's scope |
 
 ## Your turn
 
@@ -62,6 +62,7 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 - B-237 (blocked): How E.V. talks to you
 - B-238 (blocked): Matt's look at triage, then v4.5.0 live
 - B-251 (blocked): For B-250 I'd remove the pause but I'd still implement the…
+- B-254 (blocked): Staging lint: 8 fact-changed errors on jobs/ (5) and talk/2026-10-18,…
 
 ## Done
 

@@ -4567,9 +4567,9 @@
   "title": "Bug (reported Oct 23): Staging lint: 8 fact-changed errors on jobs/ (5) and talk/2026-10-18, -20, -21: a Fact's write-once fields changed since state/current last hashed them (Oct 22). Seen in evening-cloud-20261023-204137072; not from B-253, which only changes auto-park.",
   "dod": "Find what rewrote the write-once fields of those jobs and talk documents on staging, and whether live has the same; Matt's call first (outside today's scope)",
   "milestone": "v4.5.x ops",
-  "status": "open",
+  "status": "blocked",
   "depends": [],
-  "notes": "",
+  "notes": "found during the B-253 staging proof; parked: outside this goal's scope",
   "commit": null,
   "source": "build chat, B-253 staging proof",
   "words": "Staging lint: 8 fact-changed errors on jobs/ (5) and talk/2026-10-18, -20, -21: a Fact's write-once fields changed since state/current last hashed them (Oct 22). Seen in evening-cloud-20261023-204137072; not from B-253, which only changes auto-park.",
@@ -4582,6 +4582,7 @@
   "triage": {
    "outcome": "task",
    "at": "2026-10-23T20:45:04.328Z"
-  }
+  },
+  "waitingOn": "Matt"
  }
 ]
