@@ -4079,12 +4079,12 @@
   "title": "Typed links (D-241): spec.links holds one row per id field in this doc's list (collection, field, target collection or spec map, required, optional or external); tools/build.mjs fails when a row names a collection or field the schemas lack; lint reports a dangling required link as an error and an optional one as info; core gains linked(db, doc, field); no schema bump",
   "dod": "the build fails on a planted row naming weakspots.objectiv; lint on the synthetic record is clean; a planted weak spot whose objective is missing reports an error and a planted set item with a missing weakspotId reports info; a core test resolves linked() for a required, an optional and a missing link; npm test green; ship staging green; live only with B-238",
   "milestone": "v4.6 triage",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-230"
   ],
-  "notes": "Taken Oct 23 after v4.4.3 went live.",
-  "commit": null,
+  "notes": "Shipped to staging at fc3af45: ship staging GREEN.",
+  "commit": "fc3af45",
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },
  {
