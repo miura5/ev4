@@ -3051,16 +3051,12 @@ const ok = (name, cond, detail = '') => {
       await page.waitForTimeout(2200);
     }
     await practiceNav(page, scheme); // B-191
-    // Plan: tick a task (B-121: from 1024 px the plan sits beside review and practice, with no Plan button)
-    if (scheme === 'desktop') {
-      ok(
-        '[desktop] the plan sits beside the study view, folded to its title, with no Plan button',
-        (await page.isVisible('#plan-card .fold-line')) &&
-          !(await page.isVisible('#plan-card .plan-day')) &&
-          !(await page.isVisible('#seg-study [data-v="plan"]'))
-      );
-      await page.click('#plan-card .fold-line');
-    } else await page.click('#seg-study [data-v="plan"]');
+    // Plan: tick a task (D-249: Plan is a tab at every width, and the plan is hidden until it is chosen)
+    ok(
+      `[${scheme}] Plan is a tab, and the plan stays hidden until it is chosen (D-249)`,
+      (await page.isVisible('#seg-study [data-v="plan"]')) && !(await page.isVisible('#plan-card'))
+    );
+    await page.click('#seg-study [data-v="plan"]');
     await page.waitForTimeout(100);
     const planRows = page.locator('#plan-card .plan-day').first().locator('input.tick');
     ok('plan shows tasks', (await planRows.count()) > 0);

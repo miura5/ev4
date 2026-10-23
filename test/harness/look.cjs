@@ -253,7 +253,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
     for (const view of VIEWS) {
       await page.click('#tab-' + view.tab);
       if (view.v && (await page.isVisible(`#seg-${view.tab} [data-v="${view.v}"]`)))
-        await page.click(`#seg-${view.tab} [data-v="${view.v}"]`); // B-121: from 1024 px Study's plan sits beside, with no button
+        await page.click(`#seg-${view.tab} [data-v="${view.v}"]`); // D-249: every view is a tab at every width
       await page.waitForTimeout(500); // past the panel's fade-in
       await page.screenshot({ path: `${shots}/${shotName(view, size)}`, fullPage: true });
       ok(
@@ -337,6 +337,23 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           `[${width}] the view switch sits beside the title and stays put with a status line and on Practice (B-246)`,
           sg.gap >= 0 && sg.gap <= 16 && Math.abs(pr - sg.left) <= 1,
           JSON.stringify({ gap: sg.gap, review: sg.left, practice: pr })
+        );
+        // B-247 (D-249): Plan is a tab at every width, and the open view is one column centred in the pane
+        const c = await page.evaluate(() => {
+          const r = e => e.getBoundingClientRect(),
+            pane = r(document.getElementById('p-study')),
+            v = r(document.querySelector('#study-review .card')),
+            plan = document.querySelector('#seg-study [data-v="plan"]');
+          return {
+            plan: !!plan && getComputedStyle(plan).display !== 'none' && r(plan).width > 0,
+            off: Math.round(v.left + v.width / 2 - (pane.left + pane.width / 2)),
+            planShown: !document.getElementById('study-plan').hidden,
+          };
+        });
+        ok(
+          `[${width}] Plan is a tab, the plan hidden on Review, and Review's card centred in the pane (D-249)`,
+          c.plan && !c.planShown && Math.abs(c.off) <= 2,
+          JSON.stringify(c)
         );
       }
       ok(
@@ -629,9 +646,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         await page.locator('#rv-body .sum-line').first().click();
         await page.waitForTimeout(100);
         for (const v of ['practice', 'plan']) {
-          const seg = await page.isVisible(`#seg-study [data-v="${v}"]`);
-          if (seg) await page.click(`#seg-study [data-v="${v}"]`);
-          else await page.click('#plan-card .fold-line');
+          await page.click(`#seg-study [data-v="${v}"]`); // D-249: Plan is a tab at every width
           await page.waitForTimeout(300);
           const r = await page.evaluate(
             box => {
@@ -661,7 +676,6 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
             JSON.stringify(r)
           );
           await page.screenshot({ path: `${shots}/look-study-${v}-led-${width}.png`, fullPage: true });
-          if (!seg) await page.click('#plan-card .fold-line');
         }
         await page.click('#seg-study [data-v="review"]');
         await page.waitForTimeout(150);
@@ -812,9 +826,11 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         if (first) await first.click();
         await page.waitForTimeout(500);
         const c = await columns();
+        // D-249: Study shows one view at a time, one column (its set's questions go to the right panel from 1200 px)
+        const n = tab === 'study' ? 1 : 2;
         ok(
-          `[${width}] ${tab}: two columns, the lead and the primary on the left`,
-          c.lefts.length === 2 && c.lead === c.lefts[0] && c.prim.every(x => x === c.lefts[0]) && !c.sideways,
+          `[${width}] ${tab}: ${n === 1 ? 'one column' : 'two columns'}, the lead and the primary on the left`,
+          c.lefts.length === n && c.lead === c.lefts[0] && c.prim.every(x => x === c.lefts[0]) && !c.sideways,
           JSON.stringify(c)
         );
         if (size.width === 1280) {

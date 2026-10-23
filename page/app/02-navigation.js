@@ -90,18 +90,16 @@
     });
     const WIDE = window.matchMedia ? matchMedia('(min-width:1024px)') : { matches: false, addEventListener() {} }; // B-121 (D-158)
     function wireSeg(id, key, prefix) {
-      // A view marked data-beside sits beside the others from 1024 px (Study's plan): never chosen there, never hidden.
+      // D-249: every view is a tab at every width (Study's plan no longer sits beside from 1024 px).
       const seg = $(id);
       const set = v => {
-        const beside = $(prefix + '-' + v) && $(prefix + '-' + v).dataset.beside;
-        if (WIDE.matches && beside) v = seg.querySelector('button').dataset.v;
         if (ui[key] !== v && seg.dataset.ready) enter($(prefix + '-' + v));
         ui[key] = v;
         seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v)));
         $('p-' + key) // B-213: the switch may sit in the pane header; its views are its tab's
           .querySelectorAll(':scope > [id^="' + prefix + '-"]')
-          .forEach(p => (p.hidden = p.id !== prefix + '-' + v && !(WIDE.matches && p.dataset.beside)));
-        if (!(WIDE.matches && beside)) store.set(key, v);
+          .forEach(p => (p.hidden = p.id !== prefix + '-' + v));
+        store.set(key, v);
         if (key === 'study') renderStudySide(); // B-223: the panel follows the open view
       };
       seg.querySelectorAll('button').forEach(b => b.addEventListener('click', () => set(b.dataset.v)));

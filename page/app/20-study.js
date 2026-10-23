@@ -439,19 +439,7 @@
         a.rel = 'noopener';
         kids.push(a);
       }
-      // B-121 (D-158): from 1024 px the plan sits beside Review and Practice, folded to its title until opened.
-      card.classList.toggle('fold-card', WIDE.matches);
-      if (WIDE.matches) {
-        const f = foldLine(
-          (plan.title || 'Exam plan') + ' · ' + plural(tasks.length - doneN, 'item') + ' to do',
-          !!ui.planOpen,
-          () => {
-            ui.planOpen = !ui.planOpen;
-            render();
-          }
-        );
-        card.replaceChildren(f, ...(ui.planOpen ? kids.slice(1) : []));
-      } else card.replaceChildren(...kids);
+      card.replaceChildren(...kids); // D-249: Plan is its own tab at every width
     }
 
     // More practice: asks Claude from the page, validated by E.V. core before it's saved.

@@ -596,11 +596,6 @@ body.captions #p-ev,body.captions.skill-on #p-ev{align-items:stretch}
   .cols{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:start}
   .col-main,.col-side{display:flex;flex-direction:column;gap:14px;min-width:0}
   .col-side .sys-foot{margin:2px 4px 0}
-  #p-study{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);column-gap:16px;row-gap:14px;align-items:start}
-  #p-study>.ptitle,#p-study>.seg{grid-column:1/-1}#p-study>.seg{justify-self:start}
-  #p-study>#study-review,#p-study>#study-practice{grid-column:1;grid-row:3}
-  #p-study>#study-plan{grid-column:2;grid-row:3}
-  #seg-study [data-v="plan"]{display:none}
 }
 /* B-122 (D-160, D-161): a check folds to its head line; the skills panel to its head line */
 .check-head .check-fold{color:var(--ink);font-weight:600;font-size:calc(15px * var(--ts))}
