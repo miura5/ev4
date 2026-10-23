@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-256",
+  "date": "Oct 23",
+  "title": "E.V. Engineering, after the freeze: the freeze reps (D-250, D-252) become a small standing course in E.V., designed in a design chat. Matt answers first and E.V. checks him; E.V. never does the learning for him. Support fades by the 'Where you are' table, the course takes about two hours a week at most, and it pauses in exam weeks. Nursing always comes first. Until that design, the reps stay in the build chat.",
+  "why": "Matt, Oct 23: learning the system instead of offloading it is what makes E.V. worth the investment; the risks are the course becoming the next feature project and taking nursing's evenings",
+  "status": "proposed",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-255",
   "date": "Oct 23",
   "title": "The ratings table is a projection with evidence, not a grade. Each score names what must be true to earn it: Operations 9, no live incident that went unnoticed for eight weeks; Harness 7, the nightly green with no quarantined check older than two weeks; Logic 8, no high audit finding open and each logic fix carrying its test; Construction 7, a new session can find where a change lives from the System Map alone. It is re-scored at the end of the semester and at a year. It rates the system: the tooling earns Data and Operations, and Matt's learning is what moves Logic, Construction and Harness.",
