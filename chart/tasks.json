@@ -4703,5 +4703,24 @@
   "notes": "Started Oct 23 with docs/trim-brief.md and the Trimmer runs section of CLAUDE.md; the first trimmer job is the inventory (B-258)",
   "commit": null,
   "source": "log new"
+ },
+ {
+  "id": "B-263",
+  "kind": "bug",
+  "title": "Bug (reported Oct 23): E.V. can't pull from the dosage calculations exam plan. She can see the job finished but can't get the details and proposes to make a new exam plan. But it can be seen in the study \"plan\" tab that the dosage calculation exam plan exists and even handles the 2 exam dates.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "E.V. can't pull from the dosage calculations exam plan. She can see the job finished but can't get the details and proposes to make a new exam plan. But it can be seen in the study \"plan\" tab that the dosage calculation exam plan exists and even handles the 2 exam dates.",
+  "reportedAt": "2026-10-23T22:25:13.887Z",
+  "board": {
+   "row": "v4 B-263: E.V. can't pull from the dosage calculations exam plan. She can see…",
+   "why": "E.V. can't pull from the dosage calculations exam plan. She can see the job finished but can't get the details and proposes to make a new exam plan. But it can be seen in the study \"plan\" tab that the dosage calculation exam plan exists and even handles the 2 exam dates.",
+   "notes": "Reported Oct 23 from build chat"
+  }
  }
 ]
