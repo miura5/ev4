@@ -3242,5 +3242,28 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "live",
+  "commit": "da38721",
+  "time": "2026-10-23T11:36:27.038Z",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "98d23e1",
+  "from": "98d23e1",
+  "tasks": [
+   "B-200",
+   "B-222",
+   "B-223",
+   "B-224",
+   "B-225",
+   "B-228",
+   "B-229"
+  ],
+  "summary": "Speed on Your turn and the job cards; Answers paint on the tap frame; One right panel, each thing once; System's Preferences; Views cut, folds close fast; Enter keeps a fresh row; His words are his",
+  "why": null,
+  "decisions": [],
+  "source": "log",
+  "release": "v4.4.3"
  }
 ]
