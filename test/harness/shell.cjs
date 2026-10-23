@@ -4,6 +4,7 @@
 // record dir: a folder of <collection>/<id>.json (default: the synthetic record in test/data/record).
 // Run `node tools/build.mjs` first: the harness reads dist/page/<target>/. Exit code 1 when any check fails.
 const { chromium } = require('playwright');
+const PANEL = require('./panel.cjs');
 const fs = require('fs');
 const path = require('path');
 const root = path.resolve(__dirname, '../..');
@@ -358,6 +359,68 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
   );
   await r.page.screenshot({ path: `${shots}/boot-failed-phone.png` });
   await r.page.close();
+  // B-223 (D-245, D-228): one right panel on every view, each thing once, in both themes at Matt's widths; her lines
+  // left-aligned on Conversation. Each view and state is judged by panel.cjs (planted failures in test/panel.test.mjs).
+  for (const scheme of ['light', 'dark'])
+    for (const w of [735, 1280, 1470, 1706, 2560]) {
+      const { page, errors } = await open(browser, { viewport: { width: w, height: 1000 }, scheme });
+      await page.waitForTimeout(700);
+      const judged = [];
+      const look = async (label, shot) => {
+        await page.waitForTimeout(350);
+        const snap = await page.evaluate(PANEL.collect);
+        for (const j of PANEL.judge(snap)) judged.push([label, j]);
+        if (shot && scheme === 'light') await page.screenshot({ path: `${shots}/panel-${label}-${w}.png` });
+      };
+      await look('ev', true);
+      // a review opened on Conversation: the panel holds it, in the same shade, its count once
+      const chip = page.locator('#qchips button', { hasText: /^Start review/ });
+      if (await chip.count()) {
+        await chip.first().click();
+        await page.waitForSelector('#ev-surf', { timeout: 4000 }).catch(() => {});
+        await look('ev-review', true);
+        const once = await page.evaluate(() => {
+          const s = document.getElementById('ev-surf');
+          if (!s) return null;
+          const t = s.innerText;
+          const m = t.match(/\b(\d+) of (\d+)\b/g) || [];
+          return { counts: m.length, text: t.slice(0, 120) };
+        });
+        ok(
+          `[${w} ${scheme}] a review on Conversation shows its count once (D-228)`,
+          !!once && once.counts === 1,
+          JSON.stringify(once)
+        );
+        await page
+          .locator('#ev-surf .sf-head')
+          .click()
+          .catch(() => {});
+      } else
+        ok(`[${w} ${scheme}] a review on Conversation shows its count once (D-228)`, false, 'no Start review chip');
+      for (const t of ['today', 'progress', 'record', 'system']) {
+        await page.click('#tab-' + t);
+        await look(t, t === 'today');
+      }
+      await page.click('#tab-study');
+      await page.click('#seg-study [data-v="review"]');
+      await look('study-review', true);
+      await page.click('#seg-study [data-v="practice"]');
+      const lead = page.locator('#pr-body .pr-lead button.primary');
+      if (await lead.count()) await lead.first().click();
+      await look('study-practice', true);
+      const bad = judged.filter(([, j]) => !j.ok);
+      ok(
+        `[${w} ${scheme}] one right panel on every view with detail, one shade, nothing twice, Today steps aside, her lines left (D-245, D-228)`,
+        !bad.length && judged.length > 0 && !errors.length,
+        bad.length
+          ? bad
+              .slice(0, 4)
+              .map(([l, j]) => `${l}: ${j.rule}: ${j.detail}`)
+              .join(' || ')
+          : errors.slice(0, 2).join(' | ')
+      );
+      await page.close();
+    }
   await browser.close();
   for (const [s, n, d] of results) console.log(`${s}  ${n}${d && s === 'FAIL' ? '  -- ' + d : ''}`);
   const failed = results.filter(x => x[0] === 'FAIL').length;

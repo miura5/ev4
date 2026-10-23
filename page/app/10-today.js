@@ -426,14 +426,8 @@
         );
       }
       // Next 7 days
-      // The exam leaves the tick list for Next 7 days (B-117): exams in the window join the calendar's dates, once each.
-      const inWeek = d => d.date >= today && d.date <= E.addDays(today, 7);
-      const examDates = S.exams
-        .filter(e => e.date && inWeek(e) && !S.dates.some(d => d.kind === 'exam' && d.date === e.date))
-        .map(e => ({ id: 'exam-' + e.id, date: e.date, title: e.title || e.id, kind: 'exam' }));
-      const week = [...S.dates.filter(inWeek), ...examDates].sort(
-        (a, b) => a.date.localeCompare(b.date) || String(a.title).localeCompare(b.title)
-      );
+      const week = weekDates();
+      renderEvDates(week);
       const ahead = $('ahead'),
         open = week.length <= 5 || ui.aheadOpen;
       let fold = $('ahead-fold');
@@ -453,6 +447,38 @@
       } else if (fold) fold.remove();
       ahead.hidden = !open;
       ahead.replaceChildren(...(week.length ? week.map(weekRow) : [empty('No dates in the next week.')]));
+    }
+    // The exam leaves the tick list for Next 7 days (B-117): exams in the window join the calendar's dates, once each.
+    function weekDates() {
+      const inWeek = d => d.date >= today && d.date <= E.addDays(today, 7);
+      const examDates = S.exams
+        .filter(e => e.date && inWeek(e) && !S.dates.some(d => d.kind === 'exam' && d.date === e.date))
+        .map(e => ({ id: 'exam-' + e.id, date: e.date, title: e.title || e.id, kind: 'exam' }));
+      return [...S.dates.filter(inWeek), ...examDates].sort(
+        (a, b) => a.date.localeCompare(b.date) || String(a.title).localeCompare(b.title)
+      );
+    }
+    // B-223 (D-245, D-228): the Conversation's right panel, while no surface is open: the dates after today (today's are
+    // the sidebar's), absent when there are none. It lives in her side column; CSS shows it from 1200 px only.
+    function renderEvDates(week) {
+      const side = $('ev-side');
+      if (!side) return;
+      const after = week.filter(d => d.date > today);
+      let card = $('ev-dates');
+      if (!after.length) {
+        if (card) card.remove();
+        document.body.classList.remove('ev-dates-on');
+        return;
+      }
+      if (!card) {
+        card = el('div', 'card ev-dates');
+        card.id = 'ev-dates';
+        side.append(card);
+      }
+      const ul = el('ul', 'list');
+      ul.append(...after.map(weekRow));
+      card.replaceChildren(el('h2', null, 'This week'), ul);
+      document.body.classList.add('ev-dates-on');
     }
     // B-117: a date in Next 7 days is one line (its day, its title, its kind in grey); a clinical, lab, validation or class
     // day carries the calm Prep marker (D-143); coral only for graded work due today (D-221). It opens Record's Dates.

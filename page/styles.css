@@ -887,3 +887,38 @@ button.tlink:hover{text-decoration-color:currentColor}
 /* B-217 (D-221): the session chip is grey like every chip (teal is done or right only); the chips wrap, never clip */
 .qchip.go{background:none;border-color:var(--line2);color:var(--quiet);font-weight:500}
 .qchip.go:hover{color:var(--text)}
+
+/* ============================================================ B-223 (D-245, D-228): one right panel, each thing once ==
+   From 1200 px every view has the right panel while it has something to show: Today, Progress, Record and System their
+   side column; Study the open set's questions; the Conversation the dates after today, or what is beside her (an open
+   surface, a session's set). Its cards sit on the ground with a hairline, one shade on every tab and in both themes. */
+body[data-view="today"] #side-today{display:none}
+#study-side{display:none}
+#ev-dates{display:none}
+@media (max-width:1199px){body.captions:not(.side-on) #p-ev>#ev-side{display:none}}
+@media (min-width:1200px){
+  body:has(#p-study:not([hidden]) > #study-side:not([hidden])){--pane-r:calc(var(--right-w) + 16px)}
+  #study-side:not([hidden]){position:fixed;top:8px;bottom:8px;right:8px;width:var(--right-w);display:flex;flex-direction:column;gap:8px;overflow-y:auto;scrollbar-width:thin;z-index:5}
+  body.captions.on-ev.ev-dates-on{--pane-r:calc(var(--right-w) + 16px)}
+  body.captions.ev-dates-on #p-ev>#ev-side{position:fixed;top:8px;bottom:8px;right:8px;width:var(--right-w);z-index:5;grid-column:auto;grid-row:auto;align-self:auto;margin:0;display:flex;flex-direction:column;gap:8px;overflow-y:auto;scrollbar-width:thin}
+  body.captions:not(.side-on) #ev-dates{display:flex}
+  /* the panel's cards, wherever the panel is: the ground, a hairline, 12 px corners */
+  #study-side .card,#ev-dates,body.captions #ev-side>.surf,body.captions #ev-side>.sk-panel,body.captions #ev-side>.card{background:var(--bg);border:0;border-radius:12px;box-shadow:0 0 0 1px var(--line);-webkit-backdrop-filter:none;backdrop-filter:none}
+  #study-side .card,#ev-dates{padding:6px 10px 10px;gap:0}
+  #study-side .card>h2,#ev-dates>h2{min-height:36px;display:flex;align-items:center;margin:0;font:600 13px var(--sans);color:var(--text)}
+  #study-side .set-list{margin:0}
+}
+/* A surface's own head line carries its title, count and state; the card under it never says them again (D-228). */
+.surf .ev-card>.card-head:first-child>:is(.meta,.chip){display:none}
+.surf .ev-card>.card-head:first-child:not(:has(> :not(h2,.meta,.chip))){display:none}
+/* B-223 (Matt, Oct 23): from 600 px her greeting and her lines read left-aligned, as in direction C; his lines sit to the
+   right; her flower stays centred above them. */
+@media (min-width:600px){
+  body.captions .cap-in{align-items:stretch;text-align:left}
+  body.captions .msg-body,body.captions.opening .msg.greet{align-items:flex-start;text-align:left}
+  body.captions .msg.matt .msg-body{align-items:flex-end;text-align:right}
+  body.captions .msg-meta{justify-content:flex-start}
+  body.captions .cap-cards-more{align-self:flex-start}
+  body.captions .brief{margin-left:0;align-items:flex-start}
+  body.captions .brief-row{padding-left:0}
+}

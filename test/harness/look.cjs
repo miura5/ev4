@@ -418,18 +418,26 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         await page.click('#rv-count');
         await page.waitForTimeout(150);
         const sl = await page.evaluate(() => {
-          const l = document.querySelector('#rv-body .set-list');
+          // B-223 (D-245): from 1200 px the set is the right panel's list, open beside the question from the start
+          const l = document.querySelector(innerWidth >= 1200 ? '#study-side .set-list' : '#rv-body .set-list');
           return {
             tag: document.getElementById('rv-count').tagName,
             list: l ? l.querySelectorAll('.set-item').length : 0,
-            beside: !!document.querySelector('#rv-body.q-beside .q-set .set-list'),
+            beside:
+              innerWidth >= 1200
+                ? !!l && !document.querySelector('#rv-body .set-list')
+                : !!document.querySelector('#rv-body.q-beside .q-set .set-list'),
             expanded: document.getElementById('rv-count').getAttribute('aria-expanded'),
             allQ: [...document.querySelectorAll('#p-study button')].some(b => /All questions/.test(b.textContent)),
           };
         });
         ok(
-          `[${width}] study: the counter is the set's fold line, opening the set ${size.width >= 1024 ? 'beside' : 'above'} the question; no All questions`,
-          sl.tag === 'BUTTON' && sl.list >= 2 && sl.expanded === 'true' && sl.beside === size.width >= 1024 && !sl.allQ,
+          `[${width}] study: the counter is the set's fold line, opening the set ${size.width >= 1200 ? 'in the right panel' : size.width >= 1024 ? 'beside' : 'above'} the question; no All questions`,
+          sl.tag === 'BUTTON' &&
+            sl.list >= 2 &&
+            (size.width >= 1200 || sl.expanded === 'true') &&
+            sl.beside === size.width >= 1024 &&
+            !sl.allQ,
           JSON.stringify(sl)
         );
         await page.screenshot({ path: `${shots}/look-study-set-${width}.png`, fullPage: true });
@@ -759,7 +767,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
             e.getBoundingClientRect().height > 0;
           const panel = document.querySelector('section.panel:not([hidden])'),
             cards = [...panel.querySelectorAll('.card, .sys-foot')].filter(
-              c => vis(c) && !c.parentElement.closest('.card')
+              c => vis(c) && !c.parentElement.closest('.card') && !c.closest('#study-side') // B-223: the panel's own
             );
           const L = c => Math.round(c.getBoundingClientRect().left - parseFloat(getComputedStyle(c).marginLeft)),
             lefts = [...new Set(cards.map(L))].sort((a, b) => a - b);

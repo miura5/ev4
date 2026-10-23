@@ -53,9 +53,12 @@ function collect() {
         .map(block)
     ),
   ].map(b => b.textContent.trim().slice(0, 40));
-  const lists = [...(panel ? panel.querySelectorAll('ul,ol') : [])]
-    .filter(vis)
-    .map(l => ({ id: l.id || l.className, rows: [...l.children].filter(vis).length }));
+  const lists = [...(panel ? panel.querySelectorAll('ul,ol') : [])].filter(vis).map(l => ({
+    id: l.id || l.className,
+    rows: [...l.children].filter(vis).length,
+    // B-223 (D-245, Matt's rule): from 1200 px the right panel lists the open set's questions beside the question
+    inPanel: !!l.closest('#study-side'),
+  }));
   const rows = [...(panel ? panel.querySelectorAll('li.row, li.brief-item') : [])]
     .filter(vis)
     .map(r => ({ text: r.textContent.trim().slice(0, 40), h: Math.round(r.getBoundingClientRect().height) }));
@@ -108,7 +111,7 @@ function judge(s, exceptions = {}) {
   const r = (tenet, ok, detail) => ({ tenet, ok: !!ok, detail });
   const infoOnly = s.cards.filter(c => !c.controls && !c.emptyOnly && !excused('D-147', c));
   const emptyCards = s.cards.filter(c => c.emptyOnly && !excused('D-151', c));
-  const open = s.lists.filter(l => l.rows > 5),
+  const open = s.lists.filter(l => l.rows > 5 && !l.inPanel),
     tall = s.rows.filter(x => x.h > 44);
   return [
     r(

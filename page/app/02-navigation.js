@@ -8,6 +8,11 @@
       openSet: null,
       planShown: null,
     }; // B-194
+    // B-223 (D-245): from 1200 px every view has the right panel while it has something to show.
+    const PANEL = window.matchMedia ? matchMedia('(min-width:1200px)') : { matches: false, addEventListener() {} };
+    // From 1200 px Study's open question has the set's questions as a list in the right panel. Each Study runner leaves
+    // its list here by its body; renderStudySide (05) shows the one whose view is open.
+    const studyLists = new Map();
     function showTab(t) {
       const was = ui.tab;
       ui.tab = t;
@@ -18,11 +23,13 @@
       );
       document.querySelectorAll('section.panel').forEach(s => (s.hidden = s.id !== 'p-' + t));
       document.body.classList.toggle('on-ev', t === 'ev');
+      document.body.dataset.view = t; // B-223 (D-228): the sidebar's Today steps aside while Today is the view
       // B-208 (D-210): the pane's header names the view (the conversation is E.V. on the phone, as its tab says).
       const head = $('mh-title'),
         b = $('tab-' + t);
       if (head && b) head.textContent = t === 'ev' ? (innerWidth < 600 ? 'E.V.' : 'Conversation') : b.title;
       placeSegs(t);
+      renderStudySide(); // B-223 (D-245): the Study panel only while Study is the view
       if (was !== t) {
         window.scrollTo(0, t === 'ev' && was ? document.documentElement.scrollHeight : 0);
         enter($('p-' + t));
@@ -95,6 +102,7 @@
           .querySelectorAll(':scope > [id^="' + prefix + '-"]')
           .forEach(p => (p.hidden = p.id !== prefix + '-' + v && !(WIDE.matches && p.dataset.beside)));
         if (!(WIDE.matches && beside)) store.set(key, v);
+        if (key === 'study') renderStudySide(); // B-223: the panel follows the open view
       };
       seg.querySelectorAll('button').forEach(b => b.addEventListener('click', () => set(b.dataset.v)));
       const saved = store.get(key);
@@ -107,6 +115,7 @@
       });
       return set;
     }
+    PANEL.addEventListener('change', () => render());
     const setStudy = wireSeg('seg-study', 'study', 'study');
     wireSeg('seg-progress', 'progress', 'progress');
     wireSeg('seg-record', 'record', 'record');

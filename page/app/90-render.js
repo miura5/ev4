@@ -12,6 +12,7 @@
       renderSystem();
       renderEV();
       renderSide();
+      renderStudySide(); // B-223 (D-245)
       // B-120 (D-157): Live, or the one problem System leads with; never counts.
       setStatus(sysProblem || 'Live', !sysProblem, !!sysProblem);
     }

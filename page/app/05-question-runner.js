@@ -38,6 +38,18 @@
       }
       return out;
     }
+    function renderStudySide() {
+      const side = $('study-side');
+      if (!side) return;
+      const shown = [...studyLists.entries()].find(
+        ([b]) => b.isConnected && !b.closest('[hidden]') && PANEL.matches && ui.tab === 'study'
+      );
+      side.hidden = !shown;
+      if (!shown) return side.replaceChildren();
+      const card = el('div', 'card');
+      card.append(head2('Questions'), shown[1].list);
+      side.replaceChildren(card);
+    }
     function retake(set, key) {
       retakes[set.id] = now();
       views[key] = null;
@@ -99,6 +111,8 @@
     function runner(o) {
       // o: {key, set, items, body, countEl, barEl, label, summaryExtra, more, next}
       const { key, set, items, body } = o;
+      const inStudy = key === 'rv' || key.startsWith('pr-');
+      if (inStudy) studyLists.delete(body);
       const answers = answersFor(set);
       const done = items.filter(q => answers[q.id]).length;
       if (o.barEl) o.barEl.style.width = items.length ? (100 * done) / items.length + '%' : '0';
@@ -389,8 +403,10 @@
         actions.append(submit);
       }
       parts.push(actions);
-      // From 1024 px the set sits beside the question; below, it opens in place above it.
-      if (setOpen[key]) {
+      if (inStudy && PANEL.matches) studyLists.set(body, { key, list: setLines(key, items, answers, q.id) });
+      // From 1024 px the set sits beside the question; below, it opens in place above it (from 1200 px in Study, the
+      // right panel holds it instead).
+      if (setOpen[key] && !(inStudy && PANEL.matches)) {
         const list = setLines(key, items, answers, q.id);
         if (WIDE.matches) {
           const main = el('div', 'q-main'),
