@@ -3034,14 +3034,15 @@
   "title": "The morning targets the weakest objective from the latest weeks document (D-120's morning half, behind D-190): the morning's spare practice and drill items aim at weeks/<latest>.insights.weakestObjective; it ships behind a comparison first (the morning writes what it would target beside what it does, a week runs, the weekly compares), and flips on Matt's word",
   "dod": "a core test: with insights naming E4-3 the morning's target is E4-3, without them today's rule; days/<date>.shadow (or its equivalent) carries the would-be target for a week on staging and the weekly's study comparison reports it; Matt reads the week and says flip; the flip is its own staging-proved deploy; npm test green",
   "milestone": "v4.3 study",
-  "status": "in progress",
+  "status": "blocked",
   "depends": [
    "B-72",
    "B-230"
   ],
-  "notes": "Taken Oct 23: step one, the shadow (the morning writes the would-be target beside today's), then a week on staging.",
+  "notes": "Step one GREEN on staging at e115c56: core tests in test/aim.test.mjs; staging morning run runs/morning-20261023-121943938 ok, days/2026-10-23 schema 4 with aim {rule today, weakest E4-8, other weakest}. Waits on the week of comparison (D-190). The question, a decision in a build chat: the staging morning is fire-only and its record is synthetic, so a staging week says little; run the shadow week on live (it rides v4.5.0 with B-238, adds only days.aim, changes nothing he sees), or fire the staging morning daily for a week? Then you read weeks/<date>.study.aim and say flip.",
   "commit": null,
-  "source": "B-72 split (D-190)"
+  "source": "B-72 split (D-190)",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-171",
