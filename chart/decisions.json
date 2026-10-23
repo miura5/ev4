@@ -1,5 +1,17 @@
 [
  {
+  "id": "D-250",
+  "date": "Oct 23",
+  "title": "Freeze week practice reps: every onboarding-sized freeze fix is also Matt's own code review: before coding, one line on what is broken and 'Where do you think this lives?', then where it is and why; after, a review card (what changed, where to look in under 30 lines, what it could break, the invariant it touches), two understanding questions he answers, an honest reaction, and his verdict (approve, explain more, or this looks wrong because) before anything goes to staging. 'Skip the rep' skips one trivial fix, never two in a row; a fix that is not a good rep still gets the review card. The invariants that come up are kept as a list, each with the fix that taught it.",
+  "why": "Matt, Oct 23: he has been handing his thinking to the build chat instead of knowing the system; short reps, a few minutes each, a patient senior teammate's tone",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [
+   "D-246"
+  ],
+  "source": "log"
+ },
+ {
   "id": "D-249",
   "date": "Oct 23",
   "title": "Study's Plan is a tab at every width, like Review and Practice; the pane shows one view at a time in its centred reading column, and the right panel keeps the open set's questions. Supersedes the plan beside Review and Practice from 1024 px (B-121, D-158 for Study).",
