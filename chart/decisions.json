@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-246",
+  "date": "Oct 23",
+  "title": "Freeze week: bugs and interface polish only, from Oct 23 until Matt ends it in a build chat.",
+  "why": "The features exist and the polish has to come from use. No date gates it; it ends when Matt says so.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-245",
   "date": "Oct 22",
   "title": "One right panel on every view: from 1200 px every view has the right panel; it holds that view's own detail, never repeats the sidebar or the pane (D-228), and is absent only while it has nothing to show (D-151). Conversation: the dates after today, or the open surface (a review, a session's set). Study: the set's questions as a list beside the question (D-217, B-211). Its cards sit on the ground with a hairline, in the same shade on every tab and in both themes, including when a review opens on Conversation",
