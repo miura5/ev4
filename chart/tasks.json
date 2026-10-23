@@ -3644,11 +3644,12 @@
   "title": "Command bar probe and build: first check in the Claude desktop app and in a browser tab which of Cmd-K, Ctrl-K and \"/\" reach the page without the host taking them, and record it as an environments page row; then the key that works focuses the composer with a filtered list of the quick asks and the tabs, Enter runs one, Esc closes; 1 to 6 switch tabs when the composer is not focused",
   "dod": "the environments row with the keys that reach the page; the harness opens the bar by the recorded key at 1280, filters to \"review\", runs Start review, and switches tabs by number; nothing changes at 390; npm test green; npm run check green; ship staging green; live only on Matt's OK",
   "milestone": "v4.4 ui",
-  "status": "open",
+  "status": "blocked",
   "depends": [],
-  "notes": "Unparked on Matt's answer (Oct 23): after B-230's live.",
+  "notes": "Oct 23: the probe is yours, at the Mac: open E.V. in the Claude desktop app and in a browser tab, click into the page (not the composer), press Cmd-K, Ctrl-K and / in turn, and say which ones the page gets (the app or browser does nothing with it) and which the host takes. The environments row and the bar build on that answer.",
   "commit": null,
-  "source": "plan XCT16iH6fggp4MxPNRZtHK"
+  "source": "plan XCT16iH6fggp4MxPNRZtHK",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-203",
