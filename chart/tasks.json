@@ -4664,5 +4664,24 @@
    "why": "Also let's get that bug to the build chat as you said. Also another bug in live I noticed is it says today is a class day even though it's friday. I only have class on monday and wednesday.",
    "notes": "Reported Oct 23 from build chat"
   }
+ },
+ {
+  "id": "B-261",
+  "kind": "bug",
+  "title": "Bug (reported Oct 23): Live record: exams/E4 (Exam 4, dated 2026-10-21) still has status upcoming on Oct 23, two days after the exam. Found by Claude reading the live exams collection for the roadmap; Matt asked to send it to the build chat.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat, Oct 23 (Claude's read of live exams)",
+  "words": "Live record: exams/E4 (Exam 4, dated 2026-10-21) still has status upcoming on Oct 23, two days after the exam. Found by Claude reading the live exams collection for the roadmap; Matt asked to send it to the build chat.",
+  "reportedAt": "2026-10-23T21:36:26.035Z",
+  "board": {
+   "row": "v4 B-261: Live record: exams/E4 (Exam 4, dated 2026-10-21) still has status…",
+   "why": "Live record: exams/E4 (Exam 4, dated 2026-10-21) still has status upcoming on Oct 23, two days after the exam. Found by Claude reading the live exams collection for the roadmap; Matt asked to send it to the build chat.",
+   "notes": "Reported Oct 23 from build chat, Oct 23 (Claude's read of live exams)"
+  }
  }
 ]
