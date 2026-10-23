@@ -132,11 +132,14 @@
       pinNow();
       capBox.dispatchEvent(new Event('scroll'));
     });
-    function renderStage() {
+    function renderStage(o) {
       // B-209 (D-213): one size per layout (MO_SIZE), 70% in a session; folded to the header's 24 px flower while he
       // reads back or on a screen under 560 px tall.
       const z = MO_SIZE(innerWidth, stageState());
       const h = $('hero');
+      const hold = o && o.hold,
+        was = hold ? h.getBoundingClientRect().height : 0,
+        st = capBox.scrollTop;
       const folded = innerHeight < FZ.foldBelowHeightPx || !capNow.hidden;
       const pad = innerWidth < 600 ? 14 : innerWidth < 1200 ? 24 : 36;
       heroOrb.resize(z.px);
@@ -147,6 +150,25 @@
       h.dataset.px = String(folded ? 24 : z.px);
       h.dataset.short = folded ? '1' : '';
       document.body.classList.toggle('her-folded', folded);
+      if (hold) {
+        // B-249: at once, and the thread scrolls by what her stage gave or took, so the lines he reads stay put.
+        h.classList.add('snap');
+        const now = h.getBoundingClientRect().height;
+        // From the scroll before the fold, which may clamp it. At the top of a short thread there is no scroll above
+        // his place to give: the room under the pull grows by what is missing (the lift), and goes again at now.
+        let to = st - (was - now);
+        if (to < 0) {
+          CAP.lift = (CAP.lift || 0) - to;
+          to = 0;
+        } else if (!folded && CAP.lift) {
+          const r = Math.min(CAP.lift, to);
+          CAP.lift -= r;
+          to -= r;
+        }
+        capPull.style.marginBottom = CAP.lift ? CAP.lift + 'px' : '';
+        if (to !== st) capBox.scrollTop = to;
+        requestAnimationFrame(() => requestAnimationFrame(() => h.classList.remove('snap')));
+      }
     }
     // The talk the page holds (the shell's read window, spec.ui.page.subscribe): the edge a pull past today stops at.
     const TALK_DAYS = (
@@ -177,10 +199,17 @@
         // still now; Back to now shows once he scrolls above her latest line into earlier ones.
         const atAnchor = CAP.anchorTop != null && Math.abs(t.scrollTop - CAP.anchorTop) < 30;
         CAP.stick = fromBottom < 30 || atAnchor;
-        const away = CAP.anchorTop != null ? t.scrollTop < CAP.anchorTop - 40 : fromBottom > 140;
+        // B-248: the bottom of the thread is always now. A fold above (the surface closing) clamps the scroll under a
+        // pinned anchor; the anchor follows it rather than reading as reading back.
+        if (fromBottom < 2 && CAP.anchorTop != null && t.scrollTop < CAP.anchorTop) CAP.anchorTop = t.scrollTop;
+        // B-249: reading back holds until he is back at now (no flip at one line), and her stage folds once, at once,
+        // with his place held.
+        const atNow = fromBottom < 30 || (CAP.anchorTop != null && t.scrollTop >= CAP.anchorTop - 30);
+        const away =
+          !atNow && (!capNow.hidden || (CAP.anchorTop != null ? t.scrollTop < CAP.anchorTop - 40 : fromBottom > 140));
         if (capNow.hidden === away) {
           capNow.hidden = !away;
-          renderStage();
+          renderStage({ hold: true });
         }
         // Leaving the top after an edge (the start of today, the 7-day edge) readies the next full pull.
         if ((CAP.pull === 'start' || CAP.pull === 'window') && t.scrollTop > 40) CAP.pull = null;
@@ -215,12 +244,35 @@
       CAP.pullN = nx.count;
       pullView(1, 'loading');
       setTimeout(() => {
-        const h = capBox.scrollHeight,
+        // B-249: his place is held by the lines he was reading (her latest line), not by the scroll height, which a
+        // short thread's room does not change; the lines loaded above take the room over it.
+        const at = () => {
+          const c = capBox.querySelector('.msg.ev.current') || capBox.querySelector('.msg');
+          return c ? c.getBoundingClientRect().top : null;
+        };
+        const was = at(),
+          h = capBox.scrollHeight,
           top = capBox.scrollTop;
         CAP.loaded++;
         CAP.pull = null;
         renderThread();
-        capBox.scrollTop = capBox.scrollHeight - h + top;
+        const now = at();
+        let want = was != null && now != null ? top + now - was : capBox.scrollHeight - h + top;
+        // The lines loaded take the lift's place first (it was only there to hold him).
+        if (CAP.lift) {
+          const r = Math.min(CAP.lift, want);
+          CAP.lift -= r;
+          capPull.style.marginBottom = CAP.lift ? CAP.lift + 'px' : '';
+          want -= r;
+        }
+        const max = capBox.scrollHeight - capBox.clientHeight;
+        // A thread shorter than the window has no scroll to hold him with: it gets the room under it (past now, with
+        // 60 px to spare so the hold is not read as now), until Back to now.
+        if (want > max - 60) {
+          CAP.room = (CAP.room || 0) + want - max + 60;
+          capIn.style.minHeight = `calc(100% + ${160 + CAP.room}px)`;
+        }
+        capBox.scrollTop = want;
         pullView(0, null);
       }, 800);
     }
@@ -231,6 +283,10 @@
       CAP.pull = null;
       CAP.stick = true;
       capNow.hidden = true;
+      CAP.room = 0;
+      capIn.style.minHeight = '';
+      CAP.lift = 0;
+      capPull.style.marginBottom = '';
       renderStage();
       renderThread();
       requestAnimationFrame(() => {

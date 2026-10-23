@@ -2131,6 +2131,87 @@ async function sideBySide(browser, left, right, out, vp) {
       await ctx.close();
     }
   }
+  // B-248, B-249: at his laptop's pane (1150 wide, short and tall), folding the review surface and scrolling up through
+  // a pull never flip her in and out: each frame is sampled (Back to now, her stage's height, her latest line's top).
+  {
+    const watch = (page, ms) =>
+      page.evaluate(
+        ms =>
+          new Promise(res => {
+            const out = [],
+              t0 = performance.now();
+            const tick = () => {
+              const n = document.querySelector('.cap-now'),
+                cur = document.querySelector('#thread .msg.ev.current');
+              out.push({
+                back: !!n && !n.hidden,
+                hero: Math.round(document.getElementById('hero').getBoundingClientRect().height),
+                top: cur ? Math.round(cur.getBoundingClientRect().top) : null,
+              });
+              if (performance.now() - t0 < ms) requestAnimationFrame(tick);
+              else res(out);
+            };
+            tick();
+          }),
+        ms
+      );
+    const flips = (xs, f) => xs.slice(1).filter((x, i) => f(x) !== f(xs[i])).length;
+    for (const vp of [
+      { width: 1150, height: 700 },
+      { width: 1150, height: 840 },
+    ]) {
+      const tag = `${vp.width}x${vp.height}`;
+      const ctx = await browser.newContext({ viewport: vp, colorScheme: 'light' });
+      const page = await ctx.newPage();
+      const errors = [];
+      page.on('pageerror', e => errors.push(e.message));
+      await openPage(page);
+      await page.waitForTimeout(1500);
+      await page.evaluate(() => {
+        window.__chatScript = [{ tool: 'show_card', input: { type: 'review' } }];
+        window.__chatPre = '';
+        window.__chatReply = '10 reviews left. One at a time; every answer updates your weak spots.';
+      });
+      await page.fill('#ev-input', 'start review');
+      await page.click('#ev-send');
+      await page.waitForTimeout(4500);
+      await page.click('#ev-surf .sf-head');
+      await page.waitForTimeout(800);
+      await page.click('#ev-surf .sf-head');
+      await page.waitForTimeout(800);
+      const w = watch(page, 900);
+      await page.click('#ev-surf .sf-head');
+      const f = await w;
+      ok(
+        `[jank ${tag}] folding the review surface at now shows no Back to now and keeps her stage (B-248)`,
+        !f.some(x => x.back) && Math.max(...f.map(x => x.hero)) - Math.min(...f.map(x => x.hero)) <= 1,
+        JSON.stringify({ back: f.filter(x => x.back).length, hero: [...new Set(f.map(x => x.hero))] })
+      );
+      const b = await (await page.$('#thread')).boundingBox();
+      await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
+      const s = watch(page, 4200);
+      for (let i = 0; i < 40; i++) {
+        await page.mouse.wheel(0, -40);
+        await page.waitForTimeout(60);
+      }
+      const r = await s;
+      const jumps = r
+        .slice(1)
+        .map((x, i) => (x.top != null && r[i].top != null ? Math.abs(x.top - r[i].top) : 0))
+        .filter(d => d > 90);
+      ok(
+        `[jank ${tag}] scrolling up through a pull: Back to now comes once, her stage folds at most once and never comes back, no jump (B-249)`,
+        flips(r, x => x.back) <= 1 &&
+          flips(r, x => x.hero > 30) <= 1 &&
+          !(r[r.length - 1].hero > 30 && r.some(x => x.hero <= 30)) &&
+          !jumps.length,
+        JSON.stringify({ back: flips(r, x => x.back), hero: flips(r, x => x.hero > 30), jumps })
+      );
+      await page.screenshot({ path: `${shots}/jank-pull-${tag}.png` });
+      ok(`[jank ${tag}] no page errors`, errors.length === 0, errors.join(' | '));
+      await ctx.close();
+    }
+  }
   await browser.close();
   // The measured layout against the Captions v2 artboards (V2.dc.html, V2Desktop.dc.html in E.V. Home: Captions).
   console.log(
