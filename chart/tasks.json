@@ -4560,5 +4560,24 @@
    "outcome": "task",
    "at": "2026-10-23T18:59:42.073Z"
   }
+ },
+ {
+  "id": "B-254",
+  "kind": "bug",
+  "title": "Bug (reported Oct 23): Staging lint: 8 fact-changed errors on jobs/ (5) and talk/2026-10-18, -20, -21: a Fact's write-once fields changed since state/current last hashed them (Oct 22). Seen in evening-cloud-20261023-204137072; not from B-253, which only changes auto-park.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat, B-253 staging proof",
+  "words": "Staging lint: 8 fact-changed errors on jobs/ (5) and talk/2026-10-18, -20, -21: a Fact's write-once fields changed since state/current last hashed them (Oct 22). Seen in evening-cloud-20261023-204137072; not from B-253, which only changes auto-park.",
+  "reportedAt": "2026-10-23T20:44:50.732Z",
+  "board": {
+   "row": "v4 B-254: Staging lint: 8 fact-changed errors on jobs/ (5) and talk/2026-10-18,…",
+   "why": "Staging lint: 8 fact-changed errors on jobs/ (5) and talk/2026-10-18, -20, -21: a Fact's write-once fields changed since state/current last hashed them (Oct 22). Seen in evening-cloud-20261023-204137072; not from B-253, which only changes auto-park.",
+   "notes": "Reported Oct 23 from build chat, B-253 staging proof"
+  }
  }
 ]
