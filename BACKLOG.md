@@ -30,6 +30,9 @@ Status: `open` · `in progress` · `blocked` · `done`. A task opens when every 
 | B-246 | Bug (reported Oct 23): 1. I was looking at the study tab and I think the review questions here are still too large. Comparing it to the size in the conversation tab and in the review tab under 'study'. 
 2. Also is the practice tab under the study page supposed to not have a right sidebar? it seems to be a UX error because it moves the tabs as it expands the elevated section beyond where the right sidebar would be. and 
 3. when I go to that larger window size here where the right sidebar would appear, the plan tab totally disappears. Done when: The view switch in the pane header sits beside the view's title at every width, whether or not a status line shows and whether or not the right panel is open; a look check asserts its left edge is the same on Review and Practice | — | v4.5.x ui | open |  |
+| B-247 | Bug (reported Oct 23): 1. I was looking at the study tab and I think the review questions here are still too large. Comparing it to the size in the conversation tab and in the review tab under 'study'. 
+2. Also is the practice tab under the study page supposed to not have a right sidebar? it seems to be a UX error because it moves the tabs as it expands the elevated section beyond where the right sidebar would be. and 
+3. when I go to that larger window size here where the right sidebar would appear, the plan tab totally disappears. Done when: Matt's call first: where Study's plan lives from 1024 px | — | v4.5.x ui | open |  |
 
 ## Your turn
 
@@ -299,6 +302,3 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-240 | bug | 2026-10-23T04:32:33.683Z | E.V.'s Conversation tab doesn't have the right panel (see the screenshots), and the panel doesn't show up on the Study tab either. | build chat | declined |  |
 | B-241 | bug | 2026-10-23T04:32:33.683Z | When I do a review on the Conversation tab, the right panel does show up, but it's not the right shade. | build chat | declined |  |
 | B-242 | request | 2026-10-23T04:32:33.683Z | question: Should the right panel be the same on all tabs? It's on Record, Progress, Today and System but not on Study or Conversation, and each one shows its own page's info when there is any. | build chat | declined |  |
-| B-247 | bug | 2026-10-23T16:25:39.283Z | 1. I was looking at the study tab and I think the review questions here are still too large. Comparing it to the size in the conversation tab and in the review tab under 'study'. 
-2. Also is the practice tab under the study page supposed to not have a right sidebar? it seems to be a UX error because it moves the tabs as it expands the elevated section beyond where the right sidebar would be. and 
-3. when I go to that larger window size here where the right sidebar would appear, the plan tab totally disappears. | build chat | inbox |  |

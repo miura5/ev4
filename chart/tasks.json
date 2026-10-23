@@ -4403,9 +4403,9 @@
   "id": "B-247",
   "kind": "bug",
   "title": "Bug (reported Oct 23): 1. I was looking at the study tab and I think the review questions here are still too large. Comparing it to the size in the conversation tab and in the review tab under 'study'. \n2. Also is the practice tab under the study page supposed to not have a right sidebar? it seems to be a UX error because it moves the tabs as it expands the elevated section beyond where the right sidebar would be. and \n3. when I go to that larger window size here where the right sidebar would appear, the plan tab totally disappears.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Matt's call first: where Study's plan lives from 1024 px",
+  "milestone": "v4.5.x ui",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -4416,6 +4416,10 @@
    "row": "v4 B-247: 1. I was looking at the study tab and I think the review questions…",
    "why": "1. I was looking at the study tab and I think the review questions here are still too large. Comparing it to the size in the conversation tab and in the review tab under 'study'. \n2. Also is the practice tab under the study page supposed to not have a right sidebar? it seems to be a UX error because it moves the tabs as it expands the elevated section beyond where the right sidebar would be. and \n3. when I go to that larger window size here where the right sidebar would appear, the plan tab totally disappears.",
    "notes": "Reported Oct 23 from build chat"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-23T16:27:22.866Z"
   }
  }
 ]
