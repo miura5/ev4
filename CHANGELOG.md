@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 22 | v4 staging deployed at 98d23e1 (22:42 CT), from a2265bb: System in C, with the theme toggle; The motion pass; Her notifications; Tenet sweep for D-221, D-222, D-224 and D-225 (B-214, B-216, B-215, B-217). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 22 | v4 staging deployed at a2265bb (21:39 CT), from 4189e21: Today, Study, Progress and Record in C (B-213). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 22 | v4 staging deployed at 4189e21 (21:14 CT), from 2893f84: Skills runner and workouts in C (B-212). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 22 | v4 staging deployed at 2893f84 (20:38 CT), from 33ba36f: Study sessions in C (B-211). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
