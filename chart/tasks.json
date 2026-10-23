@@ -4060,7 +4060,7 @@
   "title": "Matt's look at v4.5.x, then live",
   "dod": "Matt uses staging at 735 × 830, a third of the ultrawide and his phone and says yes; ship live on his OK, tagged as the next v4.4.x patch (v4.5 went live as patch v4.4.2, so there is no v4.5 line)",
   "milestone": "v4.5.x ui",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-218",
    "B-222",
@@ -4070,8 +4070,8 @@
    "B-228",
    "B-229"
   ],
-  "notes": "Oct 23 morning: full npm run check at the head for R-06, then ship live at 6:31 or later on Matt's OK ('Go live').",
-  "commit": null,
+  "notes": "Live GREEN at v4.4.3 (da38721) on Matt's OK ('Go live'), Oct 23 6:40 CT; B-226/B-227 not in it.",
+  "commit": "da38721",
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },
  {
