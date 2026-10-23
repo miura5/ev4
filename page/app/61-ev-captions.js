@@ -14,7 +14,6 @@
       stick: true,
       holdT: null,
       pull: null,
-      pullN: 0,
       queue: [],
       rv: new Map(),
       said: new Set(),
@@ -174,21 +173,28 @@
     const TALK_DAYS = (
       EV_SPEC.ui.page.subscribe.find(x => x.collection === 'talk' && x.windowDays) || { windowDays: 7 }
     ).windowDays;
+    // The conversation a pull would bring next (D-128): its count, or the edge it stops at.
+    const nextEarlier = () =>
+      E.earlierConversation(viewConvs(), 1 + CAP.loaded, today, {
+        pastToday: CAP.pastToday,
+        windowStart: E.addDays(today, -TALK_DAYS),
+      });
     function pullView(p, mode) {
       capPull.style.setProperty('--pull-o', String(mode ? 1 : Math.pow(p, 1.4).toFixed(2)));
       capPull.style.setProperty('--pull-dash', (94.25 * (1 - (mode ? 1 : p))).toFixed(1));
       capPull.style.setProperty('--pull-rot', Math.round((mode ? 1 : p) * 180) + 'deg');
-      capPull.classList.toggle('loading', mode === 'loading');
+      // B-250: the lines are already on the page, so a pull shows them at once; the count (D-128) is on the hold line.
+      const n = !mode && p > 0.96 ? nextEarlier() : null;
       capPull.querySelector('.lbl').textContent =
-        mode === 'loading'
-          ? `Loading ${CAP.pullN} earlier message${CAP.pullN === 1 ? '' : 's'}`
-          : mode === 'start'
-            ? 'That’s the start of today'
-            : mode === 'window'
-              ? `That’s everything from the last ${TALK_DAYS} days`
-              : p > 0.96
-                ? 'Hold for earlier'
-                : 'Keep scrolling for earlier';
+        mode === 'start'
+          ? 'That’s the start of today'
+          : mode === 'window'
+            ? `That’s everything from the last ${TALK_DAYS} days`
+            : p > 0.96
+              ? n && !n.edge && n.count
+                ? `Hold for ${n.count} earlier message${n.count === 1 ? '' : 's'}`
+                : 'Hold for earlier'
+              : 'Keep scrolling for earlier';
     }
     capBox.addEventListener(
       'scroll',
@@ -216,19 +222,16 @@
         const p = Math.max(0, Math.min(1, (160 - t.scrollTop) / 160));
         if (!CAP.pull) pullView(p, null);
         // Reaching the top and holding there for 0.3 s loads the conversation before the ones on screen (D-128).
-        if (t.scrollTop <= 3 && !CAP.holdT && CAP.pull !== 'loading') CAP.holdT = setTimeout(pullHold, 300);
+        if (t.scrollTop <= 3 && !CAP.holdT) CAP.holdT = setTimeout(pullHold, 300);
       },
       { passive: true }
     );
     function pullHold() {
       CAP.holdT = null;
-      if (capBox.scrollTop > 6 || CAP.pull === 'loading') return;
+      if (capBox.scrollTop > 6) return;
       // D-128 as amended: first the pulls stop at the start of today; the next full pull goes on into earlier days, one
       // conversation at a time under a date divider, to the read window's edge.
-      const nx = E.earlierConversation(viewConvs(), 1 + CAP.loaded, today, {
-        pastToday: CAP.pastToday,
-        windowStart: E.addDays(today, -TALK_DAYS),
-      });
+      const nx = nextEarlier();
       if (nx.edge === 'today') {
         CAP.pull = 'start';
         CAP.pastToday = true;
@@ -240,10 +243,7 @@
         pullView(1, 'window');
         return;
       }
-      CAP.pull = 'loading';
-      CAP.pullN = nx.count;
-      pullView(1, 'loading');
-      setTimeout(() => {
+      {
         // B-249: his place is held by the lines he was reading (her latest line), not by the scroll height, which a
         // short thread's room does not change; the lines loaded above take the room over it.
         const at = () => {
@@ -274,7 +274,7 @@
         }
         capBox.scrollTop = want;
         pullView(0, null);
-      }, 800);
+      }
     }
     function backToNow() {
       if (ui.tab !== 'ev') return;

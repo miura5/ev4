@@ -408,9 +408,7 @@ body.captions .cap-pull .r .t{fill:none;stroke:rgba(var(--tint),.1);stroke-width
 body.captions .cap-pull .r .a{fill:none;stroke:var(--accent);stroke-width:1.8;stroke-linecap:round;stroke-dasharray:94.25;stroke-dashoffset:var(--pull-dash,94.25);transform:rotate(-90deg);transform-origin:17px 17px}
 body.captions .cap-pull .arrow{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--accent-text);transform:rotate(var(--pull-rot,0deg));transition:transform .2s var(--ease)}
 body.captions .cap-pull .arrow svg{width:14px;height:14px}
-body.captions .cap-pull.loading .r{animation:evspin 1s linear infinite}
 body.captions .cap-pull .lbl{font-size:calc(12px * var(--ts));color:var(--soft)}
-@keyframes evspin{to{transform:rotate(360deg)}}
 body.captions .cap-div{align-self:stretch;display:flex;align-items:center;gap:10px;font:500 calc(12px * var(--ts)) var(--sans);color:var(--soft)}
 body.captions .cap-div::before,body.captions .cap-div::after{content:"";flex:1;height:1px;background:rgba(var(--tint),.09)}
 /* No bubbles: her lines are captions; his earlier lines are small and grey. */

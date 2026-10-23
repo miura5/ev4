@@ -217,13 +217,17 @@ const atNow = page =>
       (!!cr && cr.height > t.clientHeight - 16 && Math.abs(cr.top - tr.top - 8) < 4)
     );
   });
+// Returns the pull's line as he holds at the top, before the 0.3 s hold loads (B-250: the count is on it).
 async function pullOnce(page) {
   await page.evaluate(() => {
     const t = document.getElementById('thread');
     t.scrollTop = 0;
     t.dispatchEvent(new Event('scroll'));
   });
-  await page.waitForTimeout(450);
+  await page.waitForTimeout(120);
+  const held = await page.evaluate(() => document.querySelector('.cap-pull .lbl').textContent);
+  await page.waitForTimeout(330);
+  return held;
 }
 // A full pull after an edge: away from the top first (the next pull starts over), then up and hold.
 async function pullAgain(page) {
@@ -233,7 +237,7 @@ async function pullAgain(page) {
     t.dispatchEvent(new Event('scroll'));
   });
   await page.waitForTimeout(120);
-  await pullOnce(page);
+  return pullOnce(page);
 }
 // When each word of her current line came on (D-137), from a MutationObserver started before the reply.
 const watchReveal = page =>
@@ -671,15 +675,14 @@ async function sideBySide(browser, left, right, out, vp) {
       const sub = [];
       const ck = (name, cond, detail = '') => sub.push([cond ? 'PASS' : 'FAIL', name, detail]);
       // Pull to load: noon (4), then this morning (3), then the start of today; last night is never loaded.
-      await pullOnce(page);
-      v = await view(page);
+      let held = await pullOnce(page);
       ck(
-        `[${scheme}] a pull says it is loading the noon conversation's 4 messages`,
-        v.pull === 'Loading 4 earlier messages',
-        v.pull
+        `[${scheme}] holding at the top names the noon conversation's 4 messages`,
+        held === 'Hold for 4 earlier messages',
+        held
       );
       await page.screenshot({ path: `${shots}/captions-pull-${scheme}.png` });
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(50); // B-250: no pause; the lines are there as the hold lands
       v = await view(page);
       const earlier = v.texts.filter(t => t.startsWith('E:'));
       ck(
@@ -690,10 +693,9 @@ async function sideBySide(browser, left, right, out, vp) {
           !v.texts.some(t => /morning/.test(t)),
         JSON.stringify(earlier)
       );
-      await pullOnce(page);
-      v = await view(page);
-      ck(`[${scheme}] the next pull loads this morning's 3`, v.pull === 'Loading 3 earlier messages', v.pull);
-      await page.waitForTimeout(1000);
+      held = await pullOnce(page);
+      ck(`[${scheme}] the next pull names this morning's 3`, held === 'Hold for 3 earlier messages', held);
+      await page.waitForTimeout(50);
       v = await view(page);
       ck(
         `[${scheme}] this morning is back too`,
@@ -717,14 +719,13 @@ async function sideBySide(browser, left, right, out, vp) {
       // and stops at the read window's edge.
       const divs = () =>
         page.evaluate(() => [...document.querySelectorAll('#thread .cap-day')].map(d => d.textContent));
-      await pullAgain(page);
-      v = await view(page);
+      held = await pullAgain(page);
       ck(
-        `[${scheme}] past today, the next full pull loads last night's 2`,
-        v.pull === 'Loading 2 earlier messages',
-        v.pull
+        `[${scheme}] past today, the next full pull names last night's 2`,
+        held === 'Hold for 2 earlier messages',
+        held
       );
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(50);
       v = await view(page);
       let dv = await divs();
       ck(
@@ -732,10 +733,9 @@ async function sideBySide(browser, left, right, out, vp) {
         v.texts.some(t => /Harness night line/.test(t)) && dv.join() === 'Yesterday,Today',
         JSON.stringify(dv)
       );
-      await pullAgain(page);
-      v = await view(page);
-      ck(`[${scheme}] then the conversation two days ago, its 3`, v.pull === 'Loading 3 earlier messages', v.pull);
-      await page.waitForTimeout(1000);
+      held = await pullAgain(page);
+      ck(`[${scheme}] then the conversation two days ago, its 3`, held === 'Hold for 3 earlier messages', held);
+      await page.waitForTimeout(50);
       v = await view(page);
       dv = await divs();
       ck(
