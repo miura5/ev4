@@ -35,6 +35,7 @@ Making a parked weak spot active again is undone that night by auto-park.
 High
 "Revisit for ATI and the final" can't stick.
 Freeze Done when: A weak spot he made active again after it was parked stays active: auto-park parks a spot once for its exam, never after an activate; a core test plants park then activate; proven by a staging evening-cloud run read back | — | v4.5.x ops | in progress | rule touched: invariant 5, a choice he makes sticks; same once-only rule as B-252 (awaitingPark) |
+| B-254 | Bug (reported Oct 23): Staging lint: 8 fact-changed errors on jobs/ (5) and talk/2026-10-18, -20, -21: a Fact's write-once fields changed since state/current last hashed them (Oct 22). Seen in evening-cloud-20261023-204137072; not from B-253, which only changes auto-park. Done when: Find what rewrote the write-once fields of those jobs and talk documents on staging, and whether live has the same; Matt's call first (outside today's scope) | — | v4.5.x ops | open |  |
 
 ## Your turn
 
@@ -323,4 +324,3 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-240 | bug | 2026-10-23T04:32:33.683Z | E.V.'s Conversation tab doesn't have the right panel (see the screenshots), and the panel doesn't show up on the Study tab either. | build chat | declined |  |
 | B-241 | bug | 2026-10-23T04:32:33.683Z | When I do a review on the Conversation tab, the right panel does show up, but it's not the right shade. | build chat | declined |  |
 | B-242 | request | 2026-10-23T04:32:33.683Z | question: Should the right panel be the same on all tabs? It's on Record, Progress, Today and System but not on Study or Conversation, and each one shows its own page's info when there is any. | build chat | declined |  |
-| B-254 | bug | 2026-10-23T20:44:50.732Z | Staging lint: 8 fact-changed errors on jobs/ (5) and talk/2026-10-18, -20, -21: a Fact's write-once fields changed since state/current last hashed them (Oct 22). Seen in evening-cloud-20261023-204137072; not from B-253, which only changes auto-park. | build chat, B-253 staging proof | inbox |  |
