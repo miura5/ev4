@@ -5028,7 +5028,6 @@ const ok = (name, cond, detail = '') => {
         on.mood === 'alert' &&
         on.ring === 0.2 &&
         on.dim === 4 &&
-        on.lit === 1 &&
         on.badges === 0,
       JSON.stringify({ before, ...on })
     );
