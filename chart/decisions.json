@@ -1,5 +1,17 @@
 [
  {
+  "id": "D-251",
+  "date": "Oct 23",
+  "title": "Freeze exception: a verified bug in study or data logic (core, runs, writes) may be fixed during the freeze when all of these hold: it fixes behavior that's wrong, not missing; it adds no field, schema bump or new step; it's under about 100 lines; and it's proven by firing the affected staging runs and reading their results back. Features, redesigns and new behavior stay out. It covers B-252 and B-253 (audit findings 3 and 4), audit findings 1 and 2, and 5, 7, 8 and 9 if they need core changes; each is its own batch after the UI batch, one fix at a time, each a practice rep.",
+  "why": "Matt, Oct 23: findings 3 and 4 are high-severity study bugs (the day after an exam the review is all that exam; a reactivated weak spot is re-parked that night) that D-246's no-pipeline-change test would otherwise hold until the freeze ends",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [
+   "D-246"
+  ],
+  "source": "log"
+ },
+ {
   "id": "D-250",
   "date": "Oct 23",
   "title": "Freeze week practice reps: every onboarding-sized freeze fix is also Matt's own code review: before coding, one line on what is broken and 'Where do you think this lives?', then where it is and why; after, a review card (what changed, where to look in under 30 lines, what it could break, the invariant it touches), two understanding questions he answers, an honest reaction, and his verdict (approve, explain more, or this looks wrong because) before anything goes to staging. 'Skip the rep' skips one trivial fix, never two in a row; a fix that is not a good rep still gets the review card. The invariants that come up are kept as a list, each with the fix that taught it.",
