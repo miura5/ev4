@@ -1205,7 +1205,10 @@ async function sideBySide(browser, left, right, out, vp) {
         panelBtns: [...document.querySelectorAll('#skpanel button')].map(b => b.textContent),
         sheetOpen: !!sh && sh.classList.contains('open'),
         panelH: pn ? Math.round(pn.getBoundingClientRect().height) : 0,
-        panelActs: !!document.querySelector('#skpanel .sk-acts'),
+        panelActs: !!document.querySelector('#skpanel .sk-step'),
+        bar: (document.querySelector('#kbar .s-clock') || {}).textContent || null,
+        barBtns: [...document.querySelectorAll('#kbar button')].map(b => b.textContent),
+        barInHeader: !!document.querySelector('#mh > #kbar'),
         closers: [...document.querySelectorAll('button,[role=button]')]
           .map(b => b.textContent.trim() || b.getAttribute('aria-label') || '')
           .filter(t => /^(hide|close|dismiss)\b|^[×✕✖]$/i.test(t)),
@@ -1261,8 +1264,8 @@ async function sideBySide(browser, left, right, out, vp) {
     await page.waitForTimeout(4500);
     let v = await skillView(page);
     ok(
-      `[skills ${scheme}] a run starts: her line carries no card, the ${phone ? 'bottom sheet' : 'side panel'} is the runner`,
-      v.cards === 0 && (phone ? v.sheet && !v.panel : v.panel),
+      `[skills ${scheme}] a run starts: her line carries no card; the step is in the pane${phone ? '' : ', the list in the right panel'} (D-217)`,
+      v.cards === 0 && v.sheet && (phone ? !v.panel : v.panel),
       JSON.stringify(v)
     );
     ok(
@@ -1270,27 +1273,23 @@ async function sideBySide(browser, left, right, out, vp) {
       v.step === (phone ? 'skills' : 'surface'),
       JSON.stringify(v)
     );
-    if (phone)
-      ok(
-        `[skills ${scheme}] the sheet's count line has End, beside Missed it and Did it; no Hide`,
-        v.count === 'Step 1 of 6' && v.minis.join(',') === 'End',
-        JSON.stringify(v)
-      );
-    else
-      ok(
-        '[skills desktop] the panel has End and no Hide',
-        v.panelBtns.includes('End') && !v.panelBtns.includes('Hide') && !v.panelBtns.includes('Stop'),
-        JSON.stringify(v.panelBtns)
-      );
+    ok(
+      `[skills ${scheme}] the pane header bar says Step 1 of 6 and holds End; the pane and the panel hold no End and no Hide (D-217)`,
+      v.barInHeader &&
+        v.bar === 'Step 1 of 6' &&
+        v.barBtns.join(',') === 'End' &&
+        /Step 1 of 6$/.test(v.count) &&
+        !v.minis.length &&
+        !v.panelBtns.some(b => /^(End|Hide|Stop)$/.test(b)),
+      JSON.stringify({ bar: v.bar, barBtns: v.barBtns, count: v.count, minis: v.minis, panelBtns: v.panelBtns })
+    );
     ok(
       `[skills ${scheme}] no button named Hide, Close or × anywhere on the page`,
       !v.closers.length,
       JSON.stringify(v.closers)
     );
     await page.screenshot({ path: `${shots}/skills-run-${scheme}.png` });
-    await page.click(
-      phone ? '#sksheet .sk-acts button:has-text("Did it")' : '#skpanel .sk-acts button:has-text("Did it")'
-    );
+    await page.click('#sksheet .sk-acts button:has-text("Did it")');
     await page.waitForTimeout(500);
     // The way out is the thing folding (D-160): the peek line on the phone, the head line beside her on the desktop.
     if (phone) {
@@ -1302,7 +1301,7 @@ async function sideBySide(browser, left, right, out, vp) {
       v = await skillView(page);
       ok(
         `[skills ${scheme}] the peek line unfolds the sheet to the whole list and folds it again`,
-        o.sheetOpen && !v.sheetOpen && v.sheet && v.count === 'Step 2 of 6',
+        o.sheetOpen && !v.sheetOpen && v.sheet && /Step 2 of 6$/.test(v.count),
         JSON.stringify({ o: o.sheetOpen, v: v.sheetOpen, count: v.count })
       );
     } else {
@@ -1320,7 +1319,7 @@ async function sideBySide(browser, left, right, out, vp) {
         JSON.stringify({ h0, folded: f.panelH, acts: f.panelActs, back: v.panelH })
       );
     }
-    await page.click(phone ? '#sksheet .sk-mini:has-text("End")' : '#skpanel button:has-text("End")');
+    await page.click('#kbar button:has-text("End")');
     await page.waitForTimeout(900);
     v = await skillView(page);
     const st = await skillState(page);

@@ -114,9 +114,53 @@
       a.append(miss, did);
       return a;
     }
+    // B-212 (D-217): a run follows the session pattern: its one quiet line in the pane header (where it is, and End),
+    // its current step and buttons in the pane, its whole list in the right panel from 1200 px.
+    function runBar(text, acts, label) {
+      let bar = $('kbar');
+      if (!bar) {
+        bar = el('div', 'sbar kbar');
+        bar.id = 'kbar';
+        bar.setAttribute('role', 'region');
+        $('mh').insertBefore(bar, $('status').nextSibling);
+      }
+      if (!text) {
+        if (!bar.hidden) {
+          bar.hidden = true;
+          bar.replaceChildren();
+          bar.dataset.k = '';
+        }
+        return bar;
+      }
+      bar.hidden = false;
+      bar.setAttribute('aria-label', label);
+      const k = text + '|' + acts.map(b => b.textContent).join(',');
+      if (bar.dataset.k !== k) {
+        bar.dataset.k = k;
+        const led = el('span', 's-led');
+        led.setAttribute('aria-hidden', 'true');
+        const main = el('span', 's-main');
+        main.append(el('span', 's-clock', text));
+        const a = el('div', 's-acts');
+        a.append(...acts);
+        bar.replaceChildren(led, main, a);
+      }
+      return bar;
+    }
+    const runWide = () => innerWidth >= 1200;
+    function placePanel(panel, on) {
+      if (on && runWide()) {
+        if (panel.parentNode !== capSide) capSide.append(panel);
+      } else if (panel.parentNode) panel.remove();
+    }
+    addEventListener('resize', () => {
+      const p = $('skpanel') || SK.panel;
+      if (p) placePanel(p, document.body.classList.contains('skill-on'));
+    });
     // D-108 on the runner pattern: a running workout keeps its clock, the round's moves and its buttons in the same dock.
     function renderWorkoutDock(w, q, sheet, panel) {
       const st = E.workoutState(w, q, now());
+      placePanel(panel, true);
       const k = ['wo', w.id, st.done, st.over].join('|');
       if (sheet.dataset.k === k && panel.dataset.k === k) return;
       sheet.dataset.k = panel.dataset.k = k;
@@ -149,11 +193,7 @@
           a.style.gridTemplateColumns = '1fr';
           return a;
         }
-        a.append(
-          btn(q.kind === 'ladder' ? 'Stop here' : 'Finish', ev =>
-            guard(ev.target, () => write(E.endWorkout(w, q, { now: now(), stopped: true })), 'Workout saved')
-          )
-        );
+        a.style.gridTemplateColumns = '1fr';
         a.append(
           btn(
             'Round done',
@@ -169,6 +209,17 @@
         );
         return a;
       };
+      const stop = st.over
+        ? []
+        : [
+            btn(q.kind === 'ladder' ? 'Stop here' : 'Finish', ev =>
+              guard(ev.target, () => write(E.endWorkout(w, q, { now: now(), stopped: true })), 'Workout saved')
+            ),
+          ];
+      if (stop[0]) stop[0].classList.add('end');
+      runBar(q.title + ' · ' + where, stop, 'Workout: ' + q.title);
+      const bc = $('kbar').querySelector('.s-clock');
+      if (bc && !bc.querySelector('[data-wo-clock]')) bc.append(document.createTextNode(' · '), clock());
       const moves = st.over
         ? 'Time! Enter the reps into your next round on the card.'
         : st.moves.map(m => m.reps + ' ' + m.move).join(' · ');
@@ -196,7 +247,6 @@
         ph,
         big,
         ...(st.over ? [el('p', 'meta', moves)] : [ul]),
-        acts(),
         el('p', 'meta', q.source || '')
       );
     }
@@ -219,11 +269,11 @@
         sheet.setAttribute('aria-label', 'Skills checklist');
         $('composer').prepend(sheet);
       }
+      if (!panel) panel = SK.panel;
       if (!panel) {
-        panel = el('aside', 'sk-panel');
+        panel = SK.panel = el('section', 'sk-panel');
         panel.id = 'skpanel';
         panel.setAttribute('aria-label', 'Skills checklist');
-        $('p-ev').append(panel);
       }
       if (!live) {
         const w = activeWorkout();
@@ -241,10 +291,13 @@
           panel.hidden = true;
           panel.replaceChildren();
         }
+        placePanel(panel, false);
+        runBar(null);
         sheet.dataset.k = panel.dataset.k = '';
         SK.open = false;
         return;
       }
+      placePanel(panel, true);
       const k = [s.id, JSON.stringify(st.results), SK.open, SK.pfold].join('|');
       if (sheet.dataset.k === k && panel.dataset.k === k) return;
       sheet.dataset.k = panel.dataset.k = k;
@@ -252,16 +305,15 @@
       const step = st.next;
       const count = `Step ${step.n} of ${st.total}`;
       const tally = `${st.done} of ${st.total} done${st.missed.length ? ' · ' + st.missed.length + ' missed' : ''}`;
+      const endB = btn('End', ev => guard(ev.target, () => finishSkill(s, 'ended'), 'Skills run saved'));
+      endB.classList.add('end');
+      runBar(count + (st.missed.length ? ' · ' + st.missed.length + ' missed' : ''), [endB], 'Skills run: ' + s.topic);
       // Phone: the peek bar, and the list above it when open.
       sheet.classList.toggle('open', SK.open);
       const peek = el('div', 'sk-peek');
-      // The count line carries End (the run ends here, saved): B-82; no Hide, its peek line folds the sheet (B-122, D-161).
+      // B-212: End is the header bar's; no Hide, its peek line folds the sheet (B-122, D-161).
       const top = el('div', 'sk-top');
-      top.append(
-        el('span', 'sk-count', count),
-        el('span', 'grow'),
-        btn('End', ev => guard(ev.target, () => finishSkill(s, 'ended'), 'Skills run saved'), { cls: 'sk-mini' })
-      );
+      top.append(el('span', 'sk-count', s.topic + ' · ' + count));
       const tog = el('button', 'sk-tog');
       tog.type = 'button';
       tog.setAttribute('aria-expanded', String(SK.open));
@@ -280,10 +332,7 @@
         const h = el('div', 'sk-head');
         const t = el('div', 'sk-headtxt');
         t.append(el('span', 'sk-title', s.topic), el('span', 'meta', tally));
-        h.append(
-          t,
-          btn('End', ev => guard(ev.target, () => finishSkill(s, 'ended'), 'Skills run saved'))
-        );
+        h.append(t);
         body.append(h, skillList(s, st));
       }
       sheet.replaceChildren(body, peek);
@@ -302,15 +351,9 @@
       const bar = el('i');
       bar.style.width = (st.total ? (100 * st.done) / st.total : 0) + '%';
       pr.append(bar);
-      const cur = el('p', 'sk-cur');
-      cur.append(el('b', null, count + '. '), document.createTextNode(step.text));
-      const pa = el('div', 'actions');
-      pa.append(btn('End', ev => guard(ev.target, () => finishSkill(s, 'ended'), 'Skills run saved')));
       panel.classList.toggle('folded', !!SK.pfold);
-      panel.replaceChildren(
-        ph,
-        ...(SK.pfold ? [] : [pr, cur, skillButtons(s, step), skillList(s, st), pa, el('p', 'meta', s.skill.cite || '')])
-      );
+      // B-212: the right panel is the list; the current step and its buttons are the pane's.
+      panel.replaceChildren(ph, ...(SK.pfold ? [] : [pr, skillList(s, st), el('p', 'meta', s.skill.cite || '')]));
       const curLi = sheet.querySelector('.sk-step.cur');
       if (curLi && SK.open) curLi.scrollIntoView({ block: 'nearest' });
     }
