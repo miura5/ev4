@@ -25,11 +25,6 @@ Status: `open` · `in progress` · `blocked` · `done`. A task opens when every 
 | B-237 | How E.V. talks to you (D-229): talk/guidance, a document only the page writes, holds his guidance in his words (at most 1,500 characters), edited in System's Preferences; every prompt that carries her voice reads it after spec.persona.voice and never over spec.boundaries; when he corrects her tone she offers one line with Save, and nothing is saved without his tap; its write is an actions row, tap only Done when: the talk schema's documents gain guidance; a prompt test shows the guidance after the voice with the boundaries unchanged; the harness edits it at 735 and finds it after a reload; a planted correction shows the Save line and saves only on the tap; npm test green; npm run smoke green; npm run check green; screenshots at 390 × 844, 735 × 830, 1706 × 1240 and 2560 × 1240 looked at; ship staging green; live only with B-238 | B-224, B-233 | v4.6 triage | blocked | parked for the freeze week |
 | B-238 | Matt's look at triage, then v4.5.0 live (D-234) Done when: on staging, at 735 × 830 and on his phone, Matt ends a real set with misses and accepts, joins, snoozes and declines at least one candidate each, and says yes; ship live --minor on his OK, tagged v4.5.0 (D-173), with the release on its deploy entry (B-175) | B-230, B-231, B-232, B-233, B-234, B-235, B-236, B-237 | v4.6 triage | blocked | parked for the freeze week |
 | B-251 | Request (reported Oct 23): For B-250 I'd remove the pause but I'd still implement the placeholder lines at some point; we don't know where the wait is present but you are right that the conversation history write isn't an issue. So "removing the pause" gets added to the batch? Done when: Matt's words: placeholder lines while something loads, like the mock-up's | — | v4.6 triage | blocked | parked for the freeze week: adds an element; B-250 removes the pause instead |
-| B-253 | Bug (reported Oct 23): 4
-Making a parked weak spot active again is undone that night by auto-park.
-High
-"Revisit for ATI and the final" can't stick.
-Freeze Done when: A weak spot he made active again after it was parked stays active: auto-park parks a spot once for its exam, never after an activate; a core test plants park then activate; proven by a staging evening-cloud run read back | — | v4.5.x ops | in progress | rule touched: invariant 5, a choice he makes sticks; same once-only rule as B-252 (awaitingPark) |
 | B-254 | Bug (reported Oct 23): Staging lint: 8 fact-changed errors on jobs/ (5) and talk/2026-10-18, -20, -21: a Fact's write-once fields changed since state/current last hashed them (Oct 22). Seen in evening-cloud-20261023-204137072; not from B-253, which only changes auto-park. Done when: Find what rewrote the write-once fields of those jobs and talk documents on staging, and whether live has the same; Matt's call first (outside today's scope) | — | v4.5.x ops | blocked | found during the B-253 staging proof; parked: outside this goal's scope |
 
 ## Your turn
@@ -304,6 +299,11 @@ The morning after an exam, that exam's weak spots are still open and overdue, so
 High
 The day after Exam N, your review is all Exam N and none of the next exam.
 Freeze Done when: The morning after an exam, its weak spots are not in the review set or the day's list (the morning's pick skips a spot whose exam has passed, as auto-park will that evening); a core test plants the day after an exam; proven by a staging morning run read back | — | v4.5.x ops | done | staging green at 1939f15; morning-20261023-201944657: 0 review targets, nothing deferred (the 12:19 pre-fix run had 10 with Exam 4 spots deferred); staging data: 3 Exam 4 spots due before, 0 after; waiting on Matt's rep |
+| B-253 | Bug (reported Oct 23): 4
+Making a parked weak spot active again is undone that night by auto-park.
+High
+"Revisit for ATI and the final" can't stick.
+Freeze Done when: A weak spot he made active again after it was parked stays active: auto-park parks a spot once for its exam, never after an activate; a core test plants park then activate; proven by a staging evening-cloud run read back | — | v4.5.x ops | done | staging green at 37b72bb; evening-cloud-20261023-204137072 parked the 3 open Exam 4 spots once; after one was made active (page-style activate event), evening-cloud-20261023-204511616 wrote 0 and it stays active and due; waiting on Matt's rep |
 
 ## Inbox
 
