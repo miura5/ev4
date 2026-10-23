@@ -4050,7 +4050,7 @@
   "milestone": "v4.5.x ui",
   "status": "done",
   "depends": [],
-  "notes": "Shipped to staging at da38721: ship staging GREEN.",
+  "notes": "Session summary, Oct 23 build chat: filed the Linear field notes hand-off (D-227 to D-244, B-222 to B-238) and Matt's right-panel reports (B-239 to B-242, joined into B-223; tenet D-245). Done on staging: B-200, B-222, B-223, B-224, B-225 (D-230 supersedes D-222), B-228, B-229. Blocked on Matt: B-201 (where the weekly reads the Chart), B-227 (her reply line's shape), B-81 (first live session in C). B-44, B-73 and B-170 wait behind B-230; the next minor is v4.5.0. Nothing went live.",
   "commit": "da38721",
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },
