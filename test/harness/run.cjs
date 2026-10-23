@@ -4964,6 +4964,84 @@ const ok = (name, cond, detail = '') => {
   }
   delete seed.idchecks;
   delete seed.system.yourturn;
+  // B-215 (D-216): a job that finishes while he is on another tab: her small flower faces him with the top petal lit, her
+  // status says something's ready, no badge anywhere; opening E.V. ends it.
+  for (const [tag, vp, flower] of [
+    ['[notice 390]', { width: 390, height: 844 }, '#tab-her svg'],
+    ['[notice 1280]', { width: 1280, height: 860 }, '#top-av svg'],
+  ]) {
+    const page = await browser.newPage({ viewport: vp, colorScheme: 'dark' });
+    const errs = [];
+    page.on('pageerror', e => errs.push(e.message));
+    await openPage(page, 'staging');
+    await page.waitForTimeout(1500);
+    await page.click('#tab-today');
+    await page.waitForTimeout(400);
+    const before = await page.evaluate(() => document.getElementById('readout').textContent);
+    await page.evaluate(async () => {
+      const db = await window.claude.use('db');
+      const at = new Date().toISOString();
+      const env = { schema: 2, writer: 'page', at, source: 'E.V. Home' };
+      await db
+        .collection('jobs')
+        .doc('job-notice-harness')
+        .set({ ...env, kind: 'study-guide', title: 'Study guide: notice', brief: 'harness', fired: { at, ok: true } });
+      await db
+        .collection('jobresults')
+        .doc('job-notice-harness')
+        .set({
+          schema: 1,
+          writer: 'worker',
+          at,
+          source: 'worker harness',
+          status: 'done',
+          startedAt: at,
+          finishedAt: at,
+          result: { text: 'Done.' },
+        });
+    });
+    await page
+      .waitForFunction(() => /something’s ready/.test(document.getElementById('readout').textContent), null, {
+        timeout: 4000,
+      })
+      .catch(() => {});
+    await page.waitForTimeout(400);
+    const on = await page.evaluate(sel => {
+      const st = window.EVApp.core.stats();
+      const f = document.querySelector(sel);
+      return {
+        readout: document.getElementById('readout').textContent,
+        mood: st.mood,
+        ring: st.ring,
+        dim: f ? f.querySelectorAll('.pet.dim').length : -1,
+        lit: f ? f.querySelectorAll('.pet:not(.dim)').length : -1,
+        badges: [...document.querySelectorAll('.badge, .count, .dot-count, [class*="badge"]')].filter(
+          b => b.getBoundingClientRect().height > 0
+        ).length,
+      };
+    }, flower);
+    await page.screenshot({ path: `${shots}/notice-${vp.width}.png` });
+    ok(
+      `${tag} a job finished off the E.V. tab: her small flower faces him (alert) with the top petal lit, her status says something’s ready, no badge (D-216)`,
+      !/something’s ready/.test(before) &&
+        /^something’s ready/.test(on.readout) &&
+        on.mood === 'alert' &&
+        on.ring === 0.2 &&
+        on.dim === 4 &&
+        on.lit === 1 &&
+        on.badges === 0,
+      JSON.stringify({ before, ...on })
+    );
+    await page.click(vp.width < 600 ? '#tab-ev' : '#brand');
+    await page.waitForTimeout(600);
+    const off = await page.evaluate(() => ({
+      readout: document.getElementById('readout').textContent,
+      ring: window.EVApp.core.stats().ring,
+    }));
+    ok(`${tag} opening E.V. ends it`, !/something’s ready/.test(off.readout) && off.ring === -1, JSON.stringify(off));
+    ok(`${tag} no page errors`, errs.length === 0, errs.join(' | '));
+    await page.close();
+  }
   await browser.close();
   for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : '');
   const failed = results.filter(r => r[0] === 'FAIL').length;
