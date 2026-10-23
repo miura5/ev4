@@ -2070,6 +2070,19 @@ async function sideBySide(browser, left, right, out, vp) {
         !bad.length && Object.values(TEN.exceptions).every(x => !x.length),
         JSON.stringify(bad)
       );
+      // B-244: the review card in the surface reads no larger than her line above it
+      const sizes = await page.evaluate(() => {
+        const px = q => {
+          const e = document.querySelector(q);
+          return e ? parseFloat(getComputedStyle(e).fontSize) : null;
+        };
+        return { line: px('#thread .msg.ev.current .bubble'), stem: px('#ev-surf .q-stem'), opt: px('#ev-surf .opt') };
+      });
+      ok(
+        `[surfaces ${tag}] the card's question is no larger than her line, its options smaller`,
+        sizes.line && sizes.stem && sizes.opt && sizes.stem <= sizes.line && sizes.opt < sizes.line,
+        JSON.stringify(sizes)
+      );
       await page.screenshot({ path: `${shots}/surfaces-${tag}.png` });
       await page.evaluate(() => {
         window.__chatScript = [];

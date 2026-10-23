@@ -537,6 +537,9 @@ body.captions .composer>.cap-echo{max-width:none}
 .surf .ev-card{border:0;border-radius:0;background:none;padding:0;box-shadow:none;margin:0}
 .surf .ev-card>.card-head:first-child>h2,.surf .ev-card.check>.check-head{display:none}
 .surf .ev-card>.card-head:first-child:not(:has(> :not(h2))){display:none}
+/* B-244: in the surface the question matches her line (17 px) and the options sit under it */
+.surf .q-stem{font-size:calc(17px * var(--ts))}
+.surf .opt{padding:9px 12px;font-size:calc(15px * var(--ts))}
 .surf .passage{margin:2px 0 8px;font-size:calc(15px * var(--ts));line-height:1.5;color:var(--ink2)}
 body.captions .bubble a.cite{color:var(--accent-text);text-decoration:underline;text-decoration-color:var(--accent-edge);text-underline-offset:3px;cursor:pointer}
 @media (max-width:1199px){
