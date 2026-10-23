@@ -4143,15 +4143,16 @@
   "title": "The review surface (D-238, D-242): her end-of-set and end-of-session line with Accept all and Review; the surface's rows (dashed ring, her topic, her suggestion in grey, opening to his words and the reason) with A, D, H and X shown; select several; change a suggestion from the exam's seeded objectives or as \"New topic: …\"; Progress › Weak spots leads with \"To review · n\" above Due today, absent at zero; after an accept, her line names where they went with Quiz me on these (the Give me 5 more job aimed at them), leading when their exam is two days off or less; every tap paints on its frame",
   "dod": "the harness at 390, 735, 1470 and 1706 on a planted set ending with 3 misses: the end line shows; Accept all makes three open spots in tomorrow's picks; one row each decided by A, D, H and X at 1280 and by tap at 390 lands as section 3 says; To review is absent at zero; tap-to-paint under 100 ms with the stub delayed 2 s; D-228's and D-231's checks green; npm test green; npm run smoke green; npm run check green; screenshots at 390 × 844, 735 × 830, 1706 × 1240 and 2560 × 1240 looked at; ship staging green; live only with B-238",
   "milestone": "v4.6 triage",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-234",
    "B-222",
    "B-226"
   ],
-  "notes": "",
+  "notes": "parked for the freeze week",
   "commit": null,
-  "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
+  "source": "plan SyfKhhZHXubJo4RN8CEw7Z",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-236",
