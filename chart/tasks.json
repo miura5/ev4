@@ -4546,7 +4546,7 @@
   "milestone": "v4.5.x ops",
   "status": "done",
   "depends": [],
-  "notes": "staging green at 37b72bb; evening-cloud-20261023-204137072 parked the 3 open Exam 4 spots once; after one was made active (page-style activate event), evening-cloud-20261023-204511616 wrote 0 and it stays active and due; waiting on Matt's rep",
+  "notes": "Matt approved, Oct 23 (practice rep, worked through); to live with v4.5.2",
   "commit": "37b72bb",
   "source": "build chat",
   "words": "4\nMaking a parked weak spot active again is undone that night by auto-park.\nHigh\n\"Revisit for ATI and the final\" can't stick.\nFreeze",

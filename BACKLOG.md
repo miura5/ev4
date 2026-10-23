@@ -309,7 +309,7 @@ Freeze Done when: The morning after an exam, its weak spots are not in the revie
 Making a parked weak spot active again is undone that night by auto-park.
 High
 "Revisit for ATI and the final" can't stick.
-Freeze Done when: A weak spot he made active again after it was parked stays active: auto-park parks a spot once for its exam, never after an activate; a core test plants park then activate; proven by a staging evening-cloud run read back | — | v4.5.x ops | done | staging green at 37b72bb; evening-cloud-20261023-204137072 parked the 3 open Exam 4 spots once; after one was made active (page-style activate event), evening-cloud-20261023-204511616 wrote 0 and it stays active and due; waiting on Matt's rep |
+Freeze Done when: A weak spot he made active again after it was parked stays active: auto-park parks a spot once for its exam, never after an activate; a core test plants park then activate; proven by a staging evening-cloud run read back | — | v4.5.x ops | done | Matt approved, Oct 23 (practice rep, worked through); to live with v4.5.2 |
 
 ## Inbox
 
