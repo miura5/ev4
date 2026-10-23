@@ -2142,10 +2142,11 @@ const EVCore = (() => {
   // ---------------------------------------------------------------- automatic events
   /** Weak spots whose exam has passed get parked (deterministic rule). Returns event writes. */
   function autoParkEvents({ weakspots, exams, date, now, writer = 'evening-cloud' }) {
-    const passed = new Set((exams || []).filter(e => e.date && e.date < date).map(e => e.id));
+    // B-253 (D-251): once per exam, and never over his choice: a spot he made active again stays active.
+    const ed = examDateMap(exams);
     const at = isoOf(now);
     return (weakspots || [])
-      .filter(w => isActive(w) && passed.has(examOf(w)))
+      .filter(w => awaitingPark(w, date, ed))
       .map(w => ({
         op: 'update',
         collection: 'weakspots',

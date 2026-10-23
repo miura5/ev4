@@ -1398,3 +1398,30 @@ test('B-252: the day after an exam, its open weak spots are out of the due list 
   const r = EV.pickReviews({ date: '2026-10-22', dayType: 'off', exams: [E4, E5], weakspots: models, objectives: [] });
   assert.deepEqual(ids(r.picked), ['e5-new']);
 });
+
+// B-253 (D-251): auto-park parks a weak spot once for its exam; one he made active again after that stays active.
+test('B-253: auto-park never re-parks a weak spot he made active again after its exam', () => {
+  const E3 = { id: 'E3', course: 'NUR 112', kind: 'unit', date: '2026-10-01', title: 'Exam 3' };
+  const docs = [
+    // parked by the evening after Exam 3, then made active again by him ("revisit for ATI and the final")
+    ws('kept', {
+      exam: 'E3',
+      objective: 'E3-1',
+      events: {
+        ...ev('2026-10-02T01:15:00Z', { type: 'park', by: 'E.V.' }, 'evening-cloud'),
+        ...ev(at('2026-10-17'), { type: 'activate', by: 'owner' }),
+      },
+    }),
+    // open since before the exam and never parked: the evening parks it
+    ws('fresh', { exam: 'E3', objective: 'E3-2' }),
+  ];
+  const models = EV.buildWeakspots({ weakspots: docs, sets: [], answers: [], exams: [E3] });
+  assert.equal(models.find(w => w.id === 'kept').derived.status, 'open');
+  const w = EV.autoParkEvents({ weakspots: models, exams: [E3], date: '2026-10-18', now: '2026-10-18T01:15:00Z' });
+  assert.deepEqual(
+    w.map(x => x.id),
+    ['fresh']
+  );
+  // and the one he kept is due in the review like any open weak spot
+  assert.ok(EV.rankDue(models, '2026-10-18', [E3]).some(x => x.id === 'kept'));
+});
