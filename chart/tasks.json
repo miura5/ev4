@@ -3039,7 +3039,7 @@
    "B-72",
    "B-230"
   ],
-  "notes": "Step one GREEN on staging at e115c56: core tests in test/aim.test.mjs; staging morning run runs/morning-20261023-121943938 ok, days/2026-10-23 schema 4 with aim {rule today, weakest E4-8, other weakest}. Waits on the week of comparison (D-190). The question, a decision in a build chat: the staging morning is fire-only and its record is synthetic, so a staging week says little; run the shadow week on live (it rides v4.5.0 with B-238, adds only days.aim, changes nothing he sees), or fire the staging morning daily for a week? Then you read weeks/<date>.study.aim and say flip.",
+  "notes": "The staging weekly runs/weekly-20261023-125141375 wrote weeks/2026-10-23.study.aim {rule today, other weakest, days 1, differed 0, weakest [E4-8], onWeakest 21 right 5 missed}: the comparison reads back.",
   "commit": null,
   "source": "B-72 split (D-190)",
   "waitingOn": "Matt"
