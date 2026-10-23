@@ -3814,13 +3814,13 @@
   "title": "Her notifications (D-216)",
   "dod": "When a job finishes or a your-turn arrives off the E.V. tab, her sidebar or tab-bar flower turns to face him with the top petal lit and her status reads something's ready, until he opens it; no badge anywhere; the proof",
   "milestone": "v4.5 ui",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-206",
    "B-210"
   ],
-  "notes": "Taken Oct 23; built on the b213 worktree branch.",
-  "commit": null,
+  "notes": "B-214 System in C with the theme switch (System/Light/Dark, stored per device); B-215 her notification (a finished job or new ask off the E.V. tab: small flower faces him, top petal lit, status says something's ready, until E.V. opens; no badge); B-216 motion pass (view 0.16 s, folds 0.28 s, nothing over 0.45 s; a test fails stepped or long timings outside her module); B-217 tenet sweep (D-135 re-cited as history, a sweep test, violet grey, the 680 px cap measured, the session chip grey). Full check GREEN at 98d23e1.",
+  "commit": "98d23e1",
   "source": "plan BridyLzngcGUtpeLQorX1U"
  },
  {
