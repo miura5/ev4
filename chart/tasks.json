@@ -4542,9 +4542,9 @@
   "id": "B-253",
   "kind": "bug",
   "title": "Bug (reported Oct 23): 4\nMaking a parked weak spot active again is undone that night by auto-park.\nHigh\n\"Revisit for ATI and the final\" can't stick.\nFreeze",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "A weak spot he made active again after it was parked stays active: auto-park parks a spot once for its exam, never after an activate; a core test plants park then activate; proven by a staging evening-cloud run read back",
+  "milestone": "v4.5.x ops",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -4555,6 +4555,10 @@
    "row": "v4 B-253: 4 Making a parked weak spot active again is undone that night by…",
    "why": "4\nMaking a parked weak spot active again is undone that night by auto-park.\nHigh\n\"Revisit for ATI and the final\" can't stick.\nFreeze",
    "notes": "Reported Oct 23 from build chat"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-23T18:59:42.073Z"
   }
  }
 ]

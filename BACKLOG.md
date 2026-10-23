@@ -39,6 +39,11 @@ The morning after an exam, that exam's weak spots are still open and overdue, so
 High
 The day after Exam N, your review is all Exam N and none of the next exam.
 Freeze Done when: The morning after an exam, its weak spots are not in the review set or the day's list (the morning's pick skips a spot whose exam has passed, as auto-park will that evening); a core test plants the day after an exam; proven by a staging morning run read back | — | v4.5.x ops | open |  |
+| B-253 | Bug (reported Oct 23): 4
+Making a parked weak spot active again is undone that night by auto-park.
+High
+"Revisit for ATI and the final" can't stick.
+Freeze Done when: A weak spot he made active again after it was parked stays active: auto-park parks a spot once for its exam, never after an activate; a core test plants park then activate; proven by a staging evening-cloud run read back | — | v4.5.x ops | open |  |
 
 ## Your turn
 
@@ -318,8 +323,3 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-240 | bug | 2026-10-23T04:32:33.683Z | E.V.'s Conversation tab doesn't have the right panel (see the screenshots), and the panel doesn't show up on the Study tab either. | build chat | declined |  |
 | B-241 | bug | 2026-10-23T04:32:33.683Z | When I do a review on the Conversation tab, the right panel does show up, but it's not the right shade. | build chat | declined |  |
 | B-242 | request | 2026-10-23T04:32:33.683Z | question: Should the right panel be the same on all tabs? It's on Record, Progress, Today and System but not on Study or Conversation, and each one shows its own page's info when there is any. | build chat | declined |  |
-| B-253 | bug | 2026-10-23T18:58:39.146Z | 4
-Making a parked weak spot active again is undone that night by auto-park.
-High
-"Revisit for ATI and the final" can't stick.
-Freeze | build chat | inbox |  |
