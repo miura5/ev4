@@ -127,7 +127,7 @@
       const cur = activeSession();
       if (cur)
         return [
-          `A session on **${cur.topic}** is already running. End it from the line under my core when you’re done.`,
+          `A session on **${cur.topic}** is already running. End it from the bar at the top when you’re done.`,
           [],
         ];
       if (!sample || T.sampleOff)
@@ -189,11 +189,11 @@
       renderNotes();
       if (COMMENT)
         return [
-          `Session started on **${n.name}**. I’m reading along as you write and I’ll only chime in when a line makes a connection. Tap Quiz me now whenever you want questions. Break and End are on the line under my core.`,
+          `Session started on **${n.name}**. I’m reading along as you write and I’ll only chime in when a line makes a connection. Tap Quiz me now whenever you want questions. Break and End are in the bar at the top.`,
           [],
         ];
       return [
-        `Session started on **${n.name}**. I’ll check your new writing every ${SWC.checkMinutes || 7} minutes and post the questions here. Break, +5 and End are on the line under my core.`,
+        `Session started on **${n.name}**. I’ll check your new writing every ${SWC.checkMinutes || 7} minutes and post the questions here. Break, +5 and End are in the bar at the top.`,
         [],
       ];
     }
@@ -712,6 +712,9 @@
     // +5 and End as text buttons), not a pill above her; the note's title is in the line's label and tooltip.
     function renderBar() {
       const bar = $('sbar');
+      // B-211 (D-217): the session's bar is the pane header's, after its title, on every tab; the session folds to it.
+      const mh = $('mh');
+      if (bar.parentNode !== mh) mh.insertBefore(bar, $('status').nextSibling);
       const s = activeSession();
       document.body.classList.toggle('in-session', !!s);
       if (!s) {
@@ -771,11 +774,7 @@
             : st.onBreak
               ? `On a break · ${st.minutes} min`
               : `${st.minutes} min · ${SS.thinking ? 'thinking about that line' : 'reading along'}`;
-        const per = (SWC.readSeconds || 30) * 1e3;
-        const left = SS.nextRead - Date.now();
-        CORE.setRing(
-          ending || SS.busy === true || SS.thinking ? 1 : st.onBreak ? 0 : Math.max(0, Math.min(1, 1 - left / per))
-        );
+        CORE.setRing(petals(st, ending));
         return;
       }
       bar.querySelector('.s-clock').textContent = ending
@@ -785,10 +784,13 @@
           : st.onBreak
             ? `On a break · ${tickClock(st.breakRemainingMs)} to the check`
             : `${st.minutes} min · check ${tickClock(Date.parse(st.nextCheckAt) - Date.now())}`;
-      const per = (SWC.checkMinutes || 7) * 60e3;
-      const left = st.onBreak ? st.breakRemainingMs : Date.parse(st.nextCheckAt) - Date.now();
-      const frac = Number.isFinite(left) ? Math.max(0, Math.min(1, 1 - left / per)) : 1;
-      CORE.setRing(ending || SS.busy ? 1 : frac); // the ring round her core fills toward the next check
+      CORE.setRing(petals(st, ending));
+    }
+    // B-211 (D-217): the particle ring is gone; one of her petals lights per check he has answered in this session,
+    // all five once the session ends.
+    function petals(st, ending) {
+      if (ending) return 1;
+      return Math.min(5, Object.keys(st.answered || {}).length) / 5;
     }
     function sessionTick() {
       const sk = activeSkill(); // B-82: a skills run left alone for the conversation idle gap ends itself, saved as left unfinished

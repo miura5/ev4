@@ -3757,11 +3757,11 @@
   "title": "Study sessions in C (D-217)",
   "dod": "Session bar in the pane header; one petal lit per answer, the ring gone; answers numbered with keys 1 to 4; the right panel lists the set; each answer saved as given; the result shows on Today, Progress and Record at once; folds to its bar; a reload keeps it; the proof",
   "milestone": "v4.5 ui",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-209"
   ],
-  "notes": "",
+  "notes": "Taken Oct 22.",
   "commit": null,
   "source": "plan BridyLzngcGUtpeLQorX1U"
  },

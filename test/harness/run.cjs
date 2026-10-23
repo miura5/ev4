@@ -2694,7 +2694,26 @@ const ok = (name, cond, detail = '') => {
     await page.waitForTimeout(100);
     ok('a set made for him offers no Share', !(await page.isVisible('#pr-share')));
     // B-192: options show in a seeded order, so the harness picks them by their words.
-    await page.locator('#pr-body label.opt', { hasText: 'Forward-facing seat with harness' }).click();
+    {
+      // B-211 (D-217): each answer carries its number, and that key picks it.
+      const kb = await page.evaluate(() => {
+        const labs = [...document.querySelectorAll('#pr-body label.opt')];
+        return {
+          nums: labs.map(l => (l.querySelector('kbd.opt-n') || {}).textContent).join(''),
+          at: labs.findIndex(l => /Forward-facing seat with harness/.test(l.textContent)),
+        };
+      });
+      await page.keyboard.press(String(kb.at + 1));
+      const picked = await page
+        .locator('#pr-body label.opt', { hasText: 'Forward-facing seat with harness' })
+        .locator('input')
+        .isChecked();
+      ok(
+        'the answers are numbered 1 to 4 and a number key picks one (D-217)',
+        kb.nums === '1234' && picked,
+        JSON.stringify(kb)
+      );
+    }
     await page.click('#pr-body button:has-text("Check answer")');
     await page.waitForTimeout(150);
     ok('single answered and scored', /^Right\b/.test(await page.textContent('#pr-body .verdict')));
@@ -4039,12 +4058,13 @@ const ok = (name, cond, detail = '') => {
         JSON.stringify(cs)
       );
     }
-    // B-86 (Matt, Oct 19): the session's stats are one quiet line under her core (no pill above her); its progress is
-    // the ring round her own core (B-84).
+    // B-211 (D-217): the session's stats are one quiet line in the pane header (no pill, no box); its progress is her
+    // petals, one lit per answered check (none yet).
     const lineView = () =>
       ss.evaluate(() => {
         const b = document.getElementById('sbar'),
           r = b.getBoundingClientRect(),
+          mh = document.getElementById('mh').getBoundingClientRect(),
           h = document.getElementById('hero').getBoundingClientRect(),
           th = document.getElementById('thread').getBoundingClientRect(),
           cs = getComputedStyle(b);
@@ -4053,6 +4073,8 @@ const ok = (name, cond, detail = '') => {
           top: Math.round(r.top),
           heroBottom: Math.round(h.bottom),
           threadTop: Math.round(th.top),
+          inHeader: b.parentNode.id === 'mh' && r.top >= mh.top - 1 && r.bottom <= mh.bottom + 1,
+          right: Math.round(mh.right - r.right),
           cores: b.querySelectorAll('canvas, svg.fl').length,
           ring: window.EVApp.core.stats().ring,
           label: b.getAttribute('aria-label'),
@@ -4065,10 +4087,9 @@ const ok = (name, cond, detail = '') => {
     {
       const pr = await lineView();
       ok(
-        'the session is one quiet line under her core (at most 34 px, no box), above her words; her own core carries the ring',
+        'the session is one quiet line in the pane header (at most 34 px, no box); no petal is lit before an answer (D-217)',
         pr.h <= 34 &&
-          pr.top >= pr.heroBottom - 8 &&
-          pr.top + pr.h <= pr.threadTop + 1 &&
+          pr.inHeader &&
           /rgba\(0, 0, 0, 0\)|transparent/.test(pr.bg) &&
           pr.border === '0px' &&
           pr.cores === 0 &&
@@ -4116,20 +4137,15 @@ const ok = (name, cond, detail = '') => {
       (await ss.locator('#qchips .qchip', { hasText: 'Start a study session' }).count()) === 0
     );
     await ss.screenshot({ path: `${shots}/session-bar.png` });
-    // The same line at 1280, under her core in the middle column.
+    // The same line at 1280, at the right of the pane header.
     await ss.setViewportSize({ width: 1280, height: 860 });
     await ss.waitForTimeout(500);
     {
       const pd = await lineView();
-      const c = await ss.evaluate(() => {
-        const b = document.getElementById('sbar').getBoundingClientRect(),
-          a = document.querySelector('#hero .ev-av').getBoundingClientRect();
-        return Math.round(Math.abs((b.left + b.right) / 2 - (a.left + a.right) / 2));
-      });
       ok(
-        '[desktop] the line stays one line, under her core and centred on it',
-        pd.h <= 34 && pd.top >= pd.heroBottom - 8 && c <= 2 && !pd.over,
-        JSON.stringify({ ...pd, offCentre: c })
+        '[desktop] the line stays one line, in the pane header at its right',
+        pd.h <= 34 && pd.inHeader && pd.right <= 24 && !pd.over,
+        JSON.stringify(pd)
       );
     }
     await ss.screenshot({ path: `${shots}/session-bar-desktop.png` });
@@ -4302,6 +4318,14 @@ const ok = (name, cond, detail = '') => {
         cc.tools.includes('study_session')
     );
     ok('check card shows answered', /Check 1 · answered/.test(await ss.locator('#ev-surf').textContent()));
+    {
+      // B-211 (D-217): one petal lights per answered check, and the four petals past it stay quiet.
+      const pt = await ss.evaluate(() => ({
+        ring: window.EVApp.core.stats().ring,
+        dim: document.querySelectorAll('#hero svg.fl .pet.dim').length,
+      }));
+      ok('one answered check lights one of her petals (D-217)', Math.abs(pt.ring - 0.2) < 1e-6, JSON.stringify(pt));
+    }
     // Break and resume from the bar
     await ss.locator('#sbar button', { hasText: 'Break' }).click();
     await ss.waitForTimeout(300);

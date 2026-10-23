@@ -236,7 +236,7 @@
         parts.push(wrap);
       } else {
         const opts = el('fieldset', 'opts');
-        (shown.options || q.options.map((_, i) => i)).forEach(i => {
+        (shown.options || q.options.map((_, i) => i)).forEach((i, pos) => {
           const txt = q.options[i];
           const lab = el('label', 'opt' + (a ? ' locked' : ''));
           const inp = document.createElement('input');
@@ -261,7 +261,10 @@
             else if (picked) lab.classList.add('wrong');
             if (q.rationales && q.rationales[i]) span.append(why(q.rationales[i], right || picked));
           }
-          lab.append(inp, span);
+          // B-211 (D-217): answers numbered, and keys 1 to 4 (or as many as there are) pick them
+          const kb = el('kbd', 'opt-n', String(pos + 1));
+          kb.setAttribute('aria-hidden', 'true');
+          lab.append(inp, kb, span);
           opts.append(lab);
         });
         parts.push(opts);
@@ -642,4 +645,19 @@
       o.body.classList.remove('q-beside');
       o.body.replaceChildren(...parts);
     }
-
+    // B-211 (D-217): a number key picks that answer on the one open question in view (not while he types).
+    document.addEventListener('keydown', e => {
+      if (e.ctrlKey || e.metaKey || e.altKey || !/^[1-9]$/.test(e.key)) return;
+      const t = e.target;
+      if (t && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName) && t.type !== 'radio' && t.type !== 'checkbox'))
+        return;
+      const vis = n => !!n && n.getClientRects().length > 0;
+      const open = [...document.querySelectorAll('fieldset.opts')].filter(
+        f => vis(f) && f.querySelector('input:not(:disabled)')
+      );
+      if (open.length !== 1) return;
+      const inp = open[0].querySelectorAll('label.opt input')[Number(e.key) - 1];
+      if (!inp || inp.disabled) return;
+      e.preventDefault();
+      inp.click();
+    });
