@@ -4708,9 +4708,9 @@
   "id": "B-263",
   "kind": "bug",
   "title": "Bug (reported Oct 23): E.V. can't pull from the dosage calculations exam plan. She can see the job finished but can't get the details and proposes to make a new exam plan. But it can be seen in the study \"plan\" tab that the dosage calculation exam plan exists and even handles the 2 exam dates.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "E.V.'s plan lookup finds the plan he asks about (by exam or plan title, e.g. dosage), else the target exam's, else the soonest upcoming exam's plan; a core/page test covers a plan whose exam has no objectives; smoke green; staging: asking E.V. for the dosage plan overview returns its days",
+  "milestone": "M5",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -4721,6 +4721,10 @@
    "row": "v4 B-263: E.V. can't pull from the dosage calculations exam plan. She can see…",
    "why": "E.V. can't pull from the dosage calculations exam plan. She can see the job finished but can't get the details and proposes to make a new exam plan. But it can be seen in the study \"plan\" tab that the dosage calculation exam plan exists and even handles the 2 exam dates.",
    "notes": "Reported Oct 23 from build chat"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-23T22:26:21.795Z"
   }
  }
 ]

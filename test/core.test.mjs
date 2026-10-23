@@ -1425,3 +1425,22 @@ test('B-253: auto-park never re-parks a weak spot he made active again after its
   // and the one he kept is due in the review like any open weak spot
   assert.ok(EV.rankDue(models, '2026-10-18', [E3]).some(x => x.id === 'kept'));
 });
+
+test('B-263: planFor finds the plan he names, else the target exam, else the soonest upcoming exam', () => {
+  const exams = [
+    { id: 'E4', date: '2026-10-21', title: 'Exam 4' },
+    { id: 'ATI-DOSE', date: '2026-11-02', title: 'ATI Proctored Dosage Assessment' },
+    { id: 'E5', date: '2026-11-16', title: 'Exam 5: Functional Ability' },
+  ];
+  const plans = [
+    { id: 'E4', exam: 'E4', title: 'Exam 4 Study Plan', days: [] },
+    { id: 'ATI-DOSE', exam: 'ATI-DOSE', title: 'Dosage calculation: ATI and Dosage Exam 1', days: [] },
+  ];
+  const date = '2026-10-23';
+  const E5 = exams[2];
+  assert.equal(EV.planFor({ plans, exams, target: E5, query: 'dosage calculations exam', date }).id, 'ATI-DOSE');
+  assert.equal(EV.planFor({ plans, exams, target: E5, query: 'exam 4', date }).id, 'E4');
+  // the target exam (E5) has no plan and no query: the soonest upcoming exam's plan, not the past Exam 4's
+  assert.equal(EV.planFor({ plans, exams, target: E5, date }).id, 'ATI-DOSE');
+  assert.equal(EV.planFor({ plans: [plans[0]], exams, target: E5, date }), null);
+});

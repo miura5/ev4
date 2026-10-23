@@ -482,7 +482,7 @@
         {
           name: 'lookup',
           description:
-            "Read more of his record when the summary above isn't enough. what: weakspots (optionally matching query), missed (recent wrong answers), sessions, ideas, plan (the target exam plan, next 5 days), announcements, objectives, dates (his calendar from today, or any date matching query, with ids; off = taken off). Returns small JSON.",
+            "Read more of his record when the summary above isn't enough. what: weakspots (optionally matching query), missed (recent wrong answers), sessions, ideas, plan (an exam plan, next 5 days: the one matching query, e.g. dosage, else the target exam's, else the soonest exam's), announcements, objectives, dates (his calendar from today, or any date matching query, with ids; off = taken off). Returns small JSON.",
           inputSchema: {
             type: 'object',
             properties: {
@@ -553,22 +553,26 @@
                   }));
                 break;
               case 'plan': {
-                const p = M.target && S.plans.find(x => (x.exam || x.id) === M.target.id);
+                const p = E.planFor({ plans: S.plans, exams: S.exams, target: M.target, query: i.query, date: today });
                 out = p
-                  ? (p.days || [])
-                      .filter(d => d.date >= today)
-                      .slice(0, 5)
-                      .map(d => ({
-                        date: d.date,
-                        label: d.label,
-                        tasks: d.tasks.map(t => ({
-                          id: t.id,
-                          text: t.text,
-                          kind: t.kind,
-                          done: !!(p.done && p.done[t.id]),
+                  ? {
+                      title: p.title,
+                      exam: p.exam || p.id,
+                      days: (p.days || [])
+                        .filter(d => d.date >= today)
+                        .slice(0, 5)
+                        .map(d => ({
+                          date: d.date,
+                          label: d.label,
+                          tasks: d.tasks.map(t => ({
+                            id: t.id,
+                            text: t.text,
+                            kind: t.kind,
+                            done: !!(p.done && p.done[t.id]),
+                          })),
                         })),
-                      }))
-                  : 'no plan for the target exam';
+                    }
+                  : 'no plan in the record for an upcoming exam';
                 break;
               }
               case 'announcements':

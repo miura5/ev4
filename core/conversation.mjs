@@ -593,6 +593,52 @@ export function makeConversation(core) {
     return { index: i, count: c.messages.length, conversation: c };
   }
 
+  /** B-263: the plan E.V. reads when he asks: the one whose exam or title matches his words, else the target exam's,
+   * else the plan of the soonest exam not yet past. Plans are the views in force. */
+  function planFor({ plans, exams, target, query, date }) {
+    const ps = plans || [];
+    const norm = t => String(t || '').toLowerCase();
+    const GENERIC = new Set([
+      'exam',
+      'exams',
+      'plan',
+      'plans',
+      'study',
+      'the',
+      'for',
+      'and',
+      'of',
+      'my',
+      'test',
+      'overview',
+    ]);
+    const planExam = p => p.exam || p.id;
+    const ex = id => (exams || []).find(e => e.id === id) || {};
+    // "exam 4" is the exam id e4; words match whole tokens, or a stem of four letters on (calculations, calculation)
+    const tokens = t =>
+      norm(t)
+        .replace(/\bexam\s*(\d+)\b/g, 'e$1')
+        .split(/[^a-z0-9]+/)
+        .filter(Boolean);
+    const words = tokens(query).filter(w => !GENERIC.has(w));
+    const same = (a, b) => a === b || (a.length > 3 && b.length > 3 && (a.startsWith(b) || b.startsWith(a)));
+    if (words.length) {
+      const score = p => {
+        const t = tokens([p.title, planExam(p), ex(planExam(p)).title].join(' '));
+        return words.filter(w => t.some(x => same(w, x))).length;
+      };
+      const best = ps.map(p => [score(p), p]).sort((x, y) => y[0] - x[0])[0];
+      if (best && best[0]) return best[1];
+    }
+    return (
+      (target && ps.find(p => planExam(p) === target.id)) ||
+      ps
+        .filter(p => (ex(planExam(p)).date || '') >= date)
+        .sort((a, b) => String(ex(planExam(a)).date).localeCompare(String(ex(planExam(b)).date)))[0] ||
+      null
+    );
+  }
+
   return {
     greeting,
     situation,
@@ -603,5 +649,6 @@ export function makeConversation(core) {
     earlierConversation,
     resumes,
     partOfDay,
+    planFor,
   };
 }
