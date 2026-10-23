@@ -4082,11 +4082,12 @@
   "title": "Typed links (D-241): spec.links holds one row per id field in this doc's list (collection, field, target collection or spec map, required, optional or external); tools/build.mjs fails when a row names a collection or field the schemas lack; lint reports a dangling required link as an error and an optional one as info; core gains linked(db, doc, field); no schema bump",
   "dod": "the build fails on a planted row naming weakspots.objectiv; lint on the synthetic record is clean; a planted weak spot whose objective is missing reports an error and a planted set item with a missing weakspotId reports info; a core test resolves linked() for a required, an optional and a missing link; npm test green; ship staging green; live only with B-238",
   "milestone": "v4.6 triage",
-  "status": "open",
+  "status": "blocked",
   "depends": [],
-  "notes": "",
+  "notes": "Oct 24 unattended run: held, not built. It adds spec.links (a reader-facing spec shape, so a minor under D-173), and on main it would ride B-230's v4.4.x patch to live. May it go on main before B-230 ships (B-230 then becomes v4.5.0), or does it wait until after?",
   "commit": null,
-  "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
+  "source": "plan SyfKhhZHXubJo4RN8CEw7Z",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-232",
