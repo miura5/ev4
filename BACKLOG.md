@@ -58,6 +58,7 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 - B-238 (blocked): Matt's look at triage, then v4.5.0 live
 - B-251 (blocked): For B-250 I'd remove the pause but I'd still implement the…
 - B-254 (blocked): Staging lint: 8 fact-changed errors on jobs/ (5) and talk/2026-10-18,…
+- B-257 (open): Freeze exit 3, understood
 
 ## Done
 
