@@ -234,12 +234,21 @@
       const ctx = { now: new Date().toISOString() };
       const a = ACT ? ACT.tap('reply', args, ctx) : { ok: false, refused: 'the actions table did not load' };
       if (!a.ok) throw new Error('I couldn’t hand that to the builder (' + a.refused + ').');
-      await run(ACT.tap('reply', args, ctx).writes);
+      // B-210 (D-208): the tap shows its result in the same frame; the write catches up, and a refused write puts the
+      // card back with one line saying why (the guard's toast).
+      T.replied.set(task, said);
+      render();
+      try {
+        await run(ACT.tap('reply', args, ctx).writes);
+      } catch (e) {
+        T.replied.delete(task);
+        render();
+        throw e;
+      }
       const id = a.writes[0].id;
       let fired = { at: now(), ok: false, error: 'no_task' };
       for (const e of a.effects) if (e.kind === 'fire_trigger') fired = await fire(TASKS.builder, e.text);
       await run(ACT.tap('job-fired', { job: id, fired }).writes);
-      T.replied.set(task, said);
       if (!fired.ok) toast('Saved your reply, but I couldn’t start the builder. ' + fireCopy(fired.error));
       try {
         regreet();

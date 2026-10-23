@@ -229,7 +229,25 @@ async function open(browser, viewport) {
       const item = page.locator('#ev-surf .yt-item[data-task="B-910"]');
       await until(page, () => !!document.querySelector('#ev-surf .yt-item[data-task="B-910"]'));
       await item.locator('.yt-chips button', { hasText: 'Blue' }).click();
-      await item.locator('.yt-chips button', { hasText: 'Send' }).click();
+      await item.locator('.yt-chips button', { hasText: 'Send' }).waitFor({ timeout: 3000 });
+      // B-210 (D-208): with the record 2 s slow, Send shows the reply as sent on the tap's next frame.
+      const painted = await page.evaluate(async () => {
+        window.__writeDelayMs = 2000;
+        const b = [...document.querySelectorAll('#ev-surf .yt-item[data-task="B-910"] .yt-chips button')].find(
+          x => x.textContent.trim() === 'Send'
+        );
+        const t0 = performance.now();
+        b.click();
+        await new Promise(r => requestAnimationFrame(() => r()));
+        const sent = !!document.querySelector('#ev-surf .yt-item[data-task="B-910"] .yt-sent');
+        window.__writeDelayMs = 0;
+        return { sent, ms: Math.round(performance.now() - t0) };
+      });
+      ok(
+        `${tag} a Your-turn Send paints its sent state on the tap's frame, the record 2 s behind (D-208)`,
+        painted.sent && painted.ms < 100,
+        JSON.stringify(painted)
+      );
       const filed = await until(
         page,
         trig =>
@@ -237,7 +255,7 @@ async function open(browser, viewport) {
             j => j.kind === 'reply' && j.title === 'B-910' && j.brief === 'Blue'
           ) && window.__mcpCalls.some(c => c[1] === 'fire_trigger' && c[2] && c[2].trigger_id === trig),
         spec.tasks.build['ev4-builder'].trigger,
-        3000
+        6000
       );
       ok(`${tag} a Your-turn reply files its job and fires the builder`, filed);
     } else ok(`${tag} a Your-turn reply files its job and fires the builder`, false, 'no Your turn chip');

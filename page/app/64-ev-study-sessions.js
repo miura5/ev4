@@ -546,7 +546,7 @@
         }
       }
       let panel = $('snotes');
-      const wide = innerWidth >= 1024; // D-159
+      const wide = innerWidth >= 1200; // B-210 (D-210): the details panel from 1200 px
       if (!on || !wide) {
         if (panel) panel.remove();
         return;

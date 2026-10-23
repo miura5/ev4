@@ -1,7 +1,7 @@
     // ---------------------------------------------------------------- surfaces (B-78; D-123, D-125, D-126, D-160)
     // The cards of her latest reply that carries any are surfaces: one open at a time, the others one-line rows under
-    // its head line (each its title and state, never a pill), opening in place and folding the open one. Below 1024 px
-    // they sit in the sheet over the composer (330 to 410 px, growing to its content); from 1024 px in the side column
+    // its head line (each its title and state, never a pill), opening in place and folding the open one. Below 1200 px
+    // they sit in the sheet over the composer (330 to 410 px, growing to its content); from 1200 px in the details panel
     // (#ev-side), which slides in while it holds something. Every surface folds to its own line with a chevron by
     // tapping that line (on the phone the sheet also swipes down) and unfolds the same way; nothing closes it. An open
     // check holds the surface and a card that arrives meanwhile waits as a row. A library citation in her line, current

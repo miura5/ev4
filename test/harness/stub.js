@@ -4,9 +4,11 @@
 // sample(): runs window.__chatScript ([{tool, input}]) through the page's own tools, then replies window.__chatReply.
 // mcp.callTool(): records the call in window.__mcpCalls; window.__mcpFail = '<code>' makes it reject with that code.
 // update() merges nested objects like the real store; set() replaces; where() filters in memory.
+// window.__writeDelayMs holds every write that long before the record answers (D-208: a tap paints before it does).
 (function () {
   const db = window.__db || {};
   window.__writes = [];
+  const lag = () => (window.__writeDelayMs ? new Promise(r => setTimeout(r, window.__writeDelayMs)) : null);
   const subs = [];
   const clone = v => JSON.parse(JSON.stringify(v));
   function merge(t, s) {
@@ -51,11 +53,13 @@
       },
       doc: id => ({
         async set(data) {
+          await lag();
           (db[c] = db[c] || {})[id] = clone(data);
           window.__writes.push(['set', c, id, clone(data)]);
           emit(c);
         },
         async update(data) {
+          await lag();
           const col = (db[c] = db[c] || {});
           if (!col[id]) {
             const e = new Error('not found');
@@ -84,6 +88,7 @@
         },
       }),
       async add(data) {
+        await lag();
         const id = 'x' + Math.random().toString(36).slice(2, 10);
         (db[c] = db[c] || {})[id] = clone(data);
         window.__writes.push(['add', c, id, clone(data)]);

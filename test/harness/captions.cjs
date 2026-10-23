@@ -357,7 +357,7 @@ async function sideBySide(browser, left, right, out, vp) {
       convStage: [104, 164],
       now: '20px',
       past: '15px',
-      matt: '13px',
+      matt: '14px', // B-209 (D-210): his lines are quiet 14 px lines at every width
     },
     desktop: {
       core: 140,
@@ -878,8 +878,8 @@ async function sideBySide(browser, left, right, out, vp) {
     );
     ok(
       scheme === 'phone'
-        ? '[phone] below 1024 px the surface is the sheet over the composer, at most 410 px tall'
-        : '[desktop] from 1024 px the surface sits in the side column beside her captions',
+        ? '[phone] below 1200 px the surface is the sheet over the composer, at most 410 px tall'
+        : '[desktop] from 1200 px the surface is the details panel beside her captions',
       scheme === 'phone'
         ? lc.surf && lc.surf[1] >= lc.thread[1] - 1 && lc.surf[1] + lc.surf[3] <= lc.comp + 1 && lc.surf[3] <= 410
         : lc.surf && lc.surf[0] >= lc.thread[2],
@@ -1078,19 +1078,21 @@ async function sideBySide(browser, left, right, out, vp) {
         d.textContent = 'Harness surface (a stand-in for B-78)';
         document.getElementById('ev-side').append(d);
       });
-      const at900 = await lay(1024),
-        at899 = await lay(1023);
+      // B-210 (D-210): from 1200 px a surface is the details panel on the right (320 px, 380 from 2000); below, the
+      // sheet over the composer.
+      const at900 = await lay(1200),
+        at899 = await lay(1199);
       ok(
-        '[desktop] something beside her: at 1024 px the column sits beside her stage (300 to 440 px)',
+        '[desktop] something beside her: at 1200 px it is the details panel on the right of the pane',
         at900.sideShown &&
           at900.sideLeft >= at900.threadRight &&
-          at900.sideTop < at900.comp.top &&
           at900.sideW >= 300 &&
-          at900.sideW <= 440,
+          at900.sideW <= 400 &&
+          at900.sideLeft + at900.sideW >= 1200 - 10,
         JSON.stringify(at900)
       );
       ok(
-        '[desktop] at 1023 px it is the sheet over the composer, in the phone stack (B-78)',
+        '[desktop] at 1199 px it is the sheet over the composer, in the pane (B-78)',
         at899.sideShown && at899.sideTop < at899.comp.top && at899.sideLeft < at899.threadRight,
         JSON.stringify(at899)
       );
@@ -1857,7 +1859,7 @@ async function sideBySide(browser, left, right, out, vp) {
           sideways: document.documentElement.scrollWidth > innerWidth + 1,
         };
       });
-    for (const w of [560, 735, 960, 1023, 1024, 1470]) {
+    for (const w of [560, 735, 960, 1199, 1200, 1470]) {
       const ctx = await browser.newContext({ viewport: { width: w, height: 860 }, colorScheme: 'dark' });
       const page = await ctx.newPage();
       await page.addInitScript(() => {
@@ -1883,7 +1885,7 @@ async function sideBySide(browser, left, right, out, vp) {
         .catch(() => {});
       await page.waitForTimeout(1200);
       const v = await layout(page),
-        desk = w >= 1024;
+        desk = w >= 1200; // B-210: the details panel from 1200 px
       ok(
         // B-208: the sections' layout is the shell's (shell.cjs); the side column keeps 1024 px until B-210 moves it.
         `[breakpoints ${w}] ${desk ? 'the notes in the side column' : 'no side column, the notes under the stage'}`,

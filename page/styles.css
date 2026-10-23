@@ -517,8 +517,7 @@ body.captions .composer>.cap-echo{max-width:none}
   body.captions .hero{--stage-h:370px}
   /* Nothing beside her: her stage centres in the window. Something beside her: the column slides in from the right
      and her stage re-centres in what is left. */
-  body.captions.side-on #p-ev{grid-template-columns:minmax(0,1fr) clamp(300px,30vw,440px);column-gap:28px;grid-template-rows:auto auto minmax(0,1fr) auto}
-  body.captions.side-on #p-ev>#ev-side{grid-column:2;grid-row:1/span 4;align-self:stretch;animation:ev-side-in .45s var(--ease) both}
+
   body.captions .msg.ev .bubble{font-size:16px}
   body.captions .msg.ev.current .bubble{font-size:24px}
   body.captions .msg.matt .bubble{font-size:14px}
@@ -545,13 +544,13 @@ body.captions .composer>.cap-echo{max-width:none}
 .surf .ev-card>.card-head:first-child:not(:has(> :not(h2))){display:none}
 .surf .passage{margin:2px 0 8px;font-size:15px;line-height:1.5;color:var(--ink2)}
 body.captions .bubble a.cite{color:var(--accent-text);text-decoration:underline;text-decoration-color:var(--accent-edge);text-underline-offset:3px;cursor:pointer}
-@media (max-width:1023px){
+@media (max-width:1199px){
   body.captions #p-ev>#ev-side{grid-row:4;justify-self:center;width:100%;max-width:660px}
   body.captions #p-ev>.composer{grid-row:5}
   body.captions #ev-surf{max-height:clamp(330px,46dvh,410px);overflow-y:auto;overscroll-behavior:contain;margin-top:6px;border-radius:18px 18px 14px 14px}
   body.captions #ev-surf.folded{max-height:none;overflow:visible}
 }
-@media (min-width:1024px){body.captions #ev-side{display:flex;flex-direction:column;gap:12px;overflow-y:auto;scrollbar-width:thin}
+@media (min-width:1200px){body.captions #ev-side{display:flex;flex-direction:column;gap:12px;overflow-y:auto;scrollbar-width:thin}
   /* a skills or workout run has the side as its panel (B-51): the surface sits under her captions in the main column */
   body.captions.skill-on #p-ev>#ev-side{grid-column:1;grid-row:4;align-self:start;animation:none;overflow:visible}
   body.captions.skill-on #p-ev>.composer{grid-row:5}
@@ -802,3 +801,13 @@ body.captions .msg.matt{justify-content:flex-end;text-align:right;align-self:fle
 body.captions .msg.matt .bubble{font-size:14px;color:var(--quiet);opacity:1}
 body.captions .msg.matt .bubble::before{content:"You";display:block;font-size:12px;font-weight:500;color:var(--faint)}
 body.captions .cap-echo{display:none}
+
+/* ============================================================ B-210 (D-209, D-210): surfaces, jobs and Your turn in C ==
+   Below 1200 px a surface is the sheet over the composer; from 1200 px it is the details panel on the right (the same
+   fixed column as a view's side column), and the pane gives it room. Her captions stay one column at most 680 px. */
+body.captions.on-ev .wrap{max-width:680px}
+@media (min-width:1200px){
+  body.captions.on-ev.side-on:not(.skill-on){--pane-r:calc(var(--right-w) + 16px)}
+  body.captions.side-on:not(.skill-on) #p-ev>#ev-side{position:fixed;top:8px;bottom:8px;right:8px;width:var(--right-w);z-index:5;grid-column:auto;grid-row:auto;align-self:auto;margin:0}
+  body.captions:not(.on-ev) #ev-side{display:none}
+}
