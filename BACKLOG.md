@@ -43,7 +43,7 @@ Freeze Done when: The morning after an exam, its weak spots are not in the revie
 Making a parked weak spot active again is undone that night by auto-park.
 High
 "Revisit for ATI and the final" can't stick.
-Freeze Done when: A weak spot he made active again after it was parked stays active: auto-park parks a spot once for its exam, never after an activate; a core test plants park then activate; proven by a staging evening-cloud run read back | — | v4.5.x ops | blocked | not a freeze fix by D-246's tests: it changes what the morning and evening-cloud pipelines do (core/evcore.mjs); Matt's call on an exception |
+Freeze Done when: A weak spot he made active again after it was parked stays active: auto-park parks a spot once for its exam, never after an activate; a core test plants park then activate; proven by a staging evening-cloud run read back | — | v4.5.x ops | open | Matt, Oct 23: exception D-251; own batch after the UI batch, one at a time, each a practice rep |
 
 ## Your turn
 
@@ -70,7 +70,6 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 - B-237 (blocked): How E.V. talks to you
 - B-238 (blocked): Matt's look at triage, then v4.5.0 live
 - B-251 (blocked): For B-250 I'd remove the pause but I'd still implement the…
-- B-253 (blocked): 4 Making a parked weak spot active again is undone that night by…
 
 ## Done
 
