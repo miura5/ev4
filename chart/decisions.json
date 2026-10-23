@@ -1,5 +1,17 @@
 [
  {
+  "id": "D-247",
+  "date": "Oct 23",
+  "title": "From 1024 px her current line is 20 px and her earlier lines 14 px, the direction C prototype's sizes; the phone keeps 20 and 15. Amends D-122's desktop sizes.",
+  "why": "Matt, Oct 23: at his laptop size on live the 24 px line is way too big and hard to read; the prototype he chose C from (D-210) reads right",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [
+   "D-122"
+  ],
+  "source": "log"
+ },
+ {
   "id": "D-246",
   "date": "Oct 23",
   "title": "Freeze week: bugs and interface polish only, from Oct 23 until Matt ends it in a build chat.",
