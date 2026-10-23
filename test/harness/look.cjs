@@ -250,6 +250,43 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           })
         );
     }
+    // B-213 (D-225, D-150): Today's rows are 44 px on the phone and 32 px from 600 px wide; the view switch is the pane
+    // header's from 600 px and a full-width row on the phone; a Prep word has no pill behind it.
+    {
+      await page.click('#tab-today');
+      await page.waitForTimeout(300);
+      const r = await page.evaluate(() => ({
+        rows: [...document.querySelectorAll('#today-list li.today-item, #ahead li.week-item')]
+          .filter(li => li.getBoundingClientRect().height > 0)
+          .map(li => Math.round(li.getBoundingClientRect().height)),
+        pill: [...document.querySelectorAll('.bi-prep')].some(
+          b =>
+            getComputedStyle(b).backgroundColor !== 'rgba(0, 0, 0, 0)' ||
+            parseFloat(getComputedStyle(b).borderRadius) > 0
+        ),
+      }));
+      await page.click('#tab-study');
+      await page.waitForTimeout(200);
+      const sg = await page.evaluate(() => {
+        const s = document.getElementById('seg-study'),
+          b = s.getBoundingClientRect();
+        return {
+          inHeader: s.parentNode.id === 'mh',
+          w: Math.round(b.width),
+          pw: Math.round(document.getElementById('p-study').getBoundingClientRect().width),
+          h: Math.round(s.querySelector('button').getBoundingClientRect().height),
+        };
+      });
+      const want = size.width < 600 ? 44 : 32;
+      ok(
+        `[${width}] Today's rows are ${want} px, the view switch is ${size.width < 600 ? 'a full-width row' : "the pane header's"}, Prep is a word (D-225, D-150)`,
+        r.rows.length > 0 &&
+          r.rows.every(h => h === want) &&
+          !r.pill &&
+          (size.width < 600 ? !sg.inHeader && sg.w >= sg.pw - 40 : sg.inHeader && sg.h <= 28),
+        JSON.stringify({ ...r, sg })
+      );
+    }
     // B-118: Progress, Readiness: at most 1.5 screens at 390 with every row closed; each objective once; an opened row
     // shows its passages to reread; the one-row format table absent: the record as planted answers one format (before the Study block below answers a matrix).
     if (TENETS.widths.includes(size.width) && [844, 830, 800].includes(size.height)) {

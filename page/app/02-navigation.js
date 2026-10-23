@@ -22,6 +22,7 @@
       const head = $('mh-title'),
         b = $('tab-' + t);
       if (head && b) head.textContent = t === 'ev' ? (innerWidth < 600 ? 'E.V.' : 'Conversation') : b.title;
+      placeSegs(t);
       if (was !== t) {
         window.scrollTo(0, t === 'ev' && was ? document.documentElement.scrollHeight : 0);
         enter($('p-' + t));
@@ -34,6 +35,28 @@
         }
       } // the audit card (B-85; M is not set yet on the first call)
     }
+    // B-213 (D-225): a view's switch is the pane header's from 600 px, and a full-width row at the top of the view on the
+    // phone. Each switch keeps its id, so everything that reads or clicks it works where it sits.
+    const SEG_HOME = {};
+    function placeSegs(t) {
+      const mh = $('mh');
+      for (const id of ['study', 'progress', 'record']) {
+        const sg = $('seg-' + id);
+        if (!sg || !mh) continue;
+        if (!SEG_HOME[id]) {
+          SEG_HOME[id] = document.createComment('seg-' + id);
+          sg.before(SEG_HOME[id]);
+        }
+        if (innerWidth >= 600) {
+          if (sg.parentNode !== mh) mh.insertBefore(sg, $('status').nextSibling);
+          sg.hidden = id !== t;
+        } else {
+          if (sg.previousSibling !== SEG_HOME[id]) SEG_HOME[id].after(sg);
+          sg.hidden = false;
+        }
+      }
+    }
+    addEventListener('resize', () => placeSegs(ui.tab));
     function enter(node) {
       // B-125 (D-222): the view shows at once, one fade of at most 0.2 s on the whole (CSS: .enter)
       if (!node) return;
@@ -68,7 +91,7 @@
         if (ui[key] !== v && seg.dataset.ready) enter($(prefix + '-' + v));
         ui[key] = v;
         seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v)));
-        seg.parentElement
+        $('p-' + key) // B-213: the switch may sit in the pane header; its views are its tab's
           .querySelectorAll(':scope > [id^="' + prefix + '-"]')
           .forEach(p => (p.hidden = p.id !== prefix + '-' + v && !(WIDE.matches && p.dataset.beside)));
         if (!(WIDE.matches && beside)) store.set(key, v);
