@@ -4645,5 +4645,24 @@
   "notes": "",
   "commit": null,
   "source": "log new"
+ },
+ {
+  "id": "B-260",
+  "kind": "bug",
+  "title": "Bug (reported Oct 23): Also let's get that bug to the build chat as you said. Also another bug in live I noticed is it says today is a class day even though it's friday. I only have class on monday and wednesday.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "Also let's get that bug to the build chat as you said. Also another bug in live I noticed is it says today is a class day even though it's friday. I only have class on monday and wednesday.",
+  "reportedAt": "2026-10-23T21:36:11.136Z",
+  "board": {
+   "row": "v4 B-260: Also let's get that bug to the build chat as you said. Also another…",
+   "why": "Also let's get that bug to the build chat as you said. Also another bug in live I noticed is it says today is a class day even though it's friday. I only have class on monday and wednesday.",
+   "notes": "Reported Oct 23 from build chat"
+  }
  }
 ]
