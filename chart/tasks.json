@@ -4620,5 +4620,17 @@
   "notes": "",
   "commit": null,
   "source": "log new"
+ },
+ {
+  "id": "B-258",
+  "kind": "task",
+  "title": "Freeze exit 4, the inventory for the cut (D-253, D-258): every rule, gate, hook, workflow and pipeline listed with the failure it prevents and whether it has ever fired",
+  "dod": "A table, one row each, with the failure it prevents, the last time it fired (or never) and a keep or retire suggestion; nothing is cut in this task",
+  "milestone": "freeze exit",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "log new"
  }
 ]
