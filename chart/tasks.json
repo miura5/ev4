@@ -3630,12 +3630,12 @@
   "title": "Build recap in the weekly: the weekly's health line gains one sentence from the Chart, \"this week she shipped n to live, m wait on you\", shown on the Sunday card",
   "dod": "a core test on a planted Chart and deploy record composes the sentence; a staging weekly firing carries it in weeks/<date>.health; the harness shows it on the Sunday card at 390 and 1280; npm test green; npm run check green; ship staging green; live only on Matt's OK",
   "milestone": "v4.4 ops",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-230"
   ],
-  "notes": "Taken Oct 23: the Chart read from origin/main in the run's own clone (Matt's answer).",
-  "commit": null,
+  "notes": "Core tests (test/recap.test.mjs); staging weekly runs/weekly-20261023-125141375 ok at 2d19c7d wrote weeks/2026-10-23.health.recap 'This week she shipped 142 tasks to live; 5 wait on you.' (the cutover week; checked against chart/deploys.json); run harness shows it on the Sunday card at 390 and 1280; full npm run check GREEN at 2d19c7d; ship staging GREEN. Live only on Matt's OK.",
+  "commit": "2d19c7d",
   "source": "plan XCT16iH6fggp4MxPNRZtHK"
  },
  {
