@@ -3843,12 +3843,12 @@
   "title": "Tenet sweep for D-221, D-222, D-224 and D-225",
   "dod": "No open task, rule or test cites D-149, D-163, D-135 or D-153 as current; they cite the new tenets; lint green; the proof",
   "milestone": "v4.5 ui",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-215",
    "B-216"
   ],
-  "notes": "Filing (Oct 22): recording the supersedes made lint red, so the tests, harness and spec.ui.tenets.checks were re-cited D-149->D-221, D-163->D-222, D-153->D-225 in fcf449b; behaviour unchanged. Left here: hold each check to the new tenets' words (violet retired, two clocks, 0.16 s settle, the 680 px cap).",
+  "notes": "Taken Oct 23.",
   "commit": null,
   "source": "plan BridyLzngcGUtpeLQorX1U"
  },
