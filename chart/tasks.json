@@ -3997,9 +3997,9 @@
   "title": "Views cut, folds close fast (D-230, the sweep for D-222): .panel.enter's 0.16 s fade goes, so a view switch paints its settled view on the tap frame; a fold opens in 0.28 s and closes in 0.16 s; no open task, rule or test cites D-222 as current",
   "dod": "the look harness switches every tab at 390 and 1280 and finds the new view at full opacity on the first frame after the tap; a fold's close measures at most 0.16 s and its open at most 0.28 s; the motion check fails a planted 0.2 s view fade; lint finds no current cite of D-222; npm test green; npm run smoke green; npm run check green; screenshots at 390 × 844, 735 × 830, 1706 × 1240 and 2560 × 1240 looked at; ship staging green; live only on Matt's OK",
   "milestone": "v4.5.x ui",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "D-230 supersedes D-222 (Matt, Oct 23 build chat): record it in this task's commit with log decision D-230 --supersedes D-222 --status accepted --no-commit, since lint reds on the 8 tests citing D-222 until this sweep re-cites them",
+  "notes": "Oct 23 build chat: taking it",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },
