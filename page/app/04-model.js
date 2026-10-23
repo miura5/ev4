@@ -51,14 +51,21 @@
       for (const w of order) await write(w);
       if (okText) toast(okText);
     }
-    const guard = async (b, fn, okText) => {
-      if (b) b.disabled = true;
+    // B-200 (D-208): the tap has already painted its new state; the write catches up. A tick stays live while it saves
+    // (a disabled box reads as not done); a button is held so it cannot fire twice. A refused write puts the old state
+    // back (the tick unticks, undo() restores what the tap painted) and says why in one line.
+    const guard = async (b, fn, okText, undo) => {
+      const tick = b && b.type === 'checkbox';
+      const was = tick ? !b.checked : null;
+      if (b && !tick) b.disabled = true;
       try {
         await fn();
         if (okText) toast(okText);
       } catch (e) {
+        if (tick) b.checked = was;
+        if (undo) undo();
         toast('Couldn’t save: ' + ((e && (e.message || e.code)) || 'error'));
-        if (b) b.disabled = false;
+        if (b && !tick) b.disabled = false;
       }
     };
     // B-197 (Matt, Oct 21: "make it so it collects a potential violation, then some actual judgment is used"): the page's

@@ -33,6 +33,7 @@
       earlier: null,
       waking: null,
       ticked: new Set(),
+      retrying: new Set(), // B-200: jobs whose Try again was tapped and whose write has not landed yet
       uploads: new Map(),
       reading: false,
     };

@@ -1804,11 +1804,64 @@ const ok = (name, cond, detail = '') => {
       /Settings → Connectors/.test(await jc.textContent()) &&
         (await jc.locator('button', { hasText: 'Try again' }).count()) === 1
     );
+    // B-200 (D-208): a refused Try again puts the card back as it was and says why in one line.
+    const tryAgain = (fail, delay) =>
+      page.evaluate(
+        async ([fail, delay]) => {
+          const card = () => document.querySelector('#ev-surf');
+          const b = [...card().querySelectorAll('button')].find(x => x.textContent.trim() === 'Try again');
+          if (!b) return null;
+          window.__writeDelayMs = delay;
+          window.__writeFail = fail;
+          const t0 = performance.now();
+          b.click();
+          await new Promise(r => requestAnimationFrame(() => r()));
+          const ms = Math.round(performance.now() - t0);
+          const queued = /queued/i.test(card().textContent) && !/not started/i.test(card().textContent);
+          const said = card().textContent.slice(0, 160);
+          await new Promise(r => setTimeout(r, delay + 300));
+          window.__writeDelayMs = 0;
+          window.__writeFail = null;
+          const t = document.getElementById('toast');
+          return {
+            queued,
+            said,
+            ms,
+            back: /not started/.test(card().textContent),
+            line: t && !t.hidden ? t.textContent.trim() : '',
+          };
+        },
+        [fail, delay]
+      );
     await page.evaluate(() => {
       window.__mcpFail = null;
     });
-    await jc.locator('button', { hasText: 'Try again' }).click();
-    await page.waitForTimeout(300);
+    const refusedRetry = await tryAgain('permission_denied', 300);
+    ok(
+      'a refused Try again shows queued on the tap, then puts the card back and says why (B-200, D-208)',
+      !!refusedRetry &&
+        refusedRetry.queued &&
+        refusedRetry.back &&
+        /^Couldn’t save: .*permission_denied/.test(refusedRetry.line),
+      JSON.stringify(refusedRetry)
+    );
+    // B-200 (D-208): with the record 2 s slow, Try again shows the job queued on the tap's next frame.
+    const slowRetry = await tryAgain(null, 2000);
+    ok(
+      'Try again shows the job queued on the tap frame, the record 2 s behind (B-200, D-208)',
+      !!slowRetry && slowRetry.queued && slowRetry.ms < 100,
+      JSON.stringify(slowRetry)
+    );
+    await page
+      .waitForFunction(
+        () => {
+          const j = Object.values(window.__db.jobs).find(x => x.title === 'Practice: acid-base');
+          return j && j.fired && j.fired.ok === true;
+        },
+        null,
+        { timeout: 4000 }
+      )
+      .catch(() => {});
     jb = await page.evaluate(() => Object.values(window.__db.jobs).find(j => j.title === 'Practice: acid-base'));
     ok(
       'Try again re-fires the job with a clean attempt',

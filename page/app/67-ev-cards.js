@@ -512,7 +512,9 @@
         box.append(a);
       },
       job(box, c) {
-        const j = S.jobs.find(x => x.id === c.id);
+        const j0 = S.jobs.find(x => x.id === c.id);
+        // B-200 (D-208): Try again shows the job queued on the tap; the record catches up (or a refusal puts it back).
+        const j = jobSeen(j0);
         if (!j) {
           box.append(head2('Background job'), el('p', 'empty', 'Setting it up…'));
           return;
@@ -569,7 +571,17 @@
           any = true;
         }
         if (st.retry) {
-          a.append(btn('Try again', ev => guard(ev.target, () => refire(j))));
+          a.append(
+            btn('Try again', () => {
+              T.retrying.add(j.id);
+              render();
+              const done = () => {
+                T.retrying.delete(j.id);
+                render();
+              };
+              guard(null, () => refire(j0).then(done), null, done);
+            })
+          );
           any = true;
         }
         if (any) box.append(a);

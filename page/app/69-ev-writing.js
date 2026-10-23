@@ -25,7 +25,12 @@
           });
         T.created.add(date);
       });
-      talkQ = p.catch(e => toast('Couldn’t save to the conversation: ' + ((e && (e.code || e.message)) || 'error')));
+      // B-200 (D-208): the line painted on his tap; a refused write takes it back out and says why in one line.
+      talkQ = p.catch(e => {
+        T.local.delete(id);
+        render();
+        toast('Couldn’t save to the conversation: ' + ((e && (e.code || e.message)) || 'error'));
+      });
       return p;
     }
     const evSay = (text, cards = [], o = {}) =>

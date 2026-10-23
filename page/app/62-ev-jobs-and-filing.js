@@ -279,6 +279,10 @@
       i.focus();
       i.dispatchEvent(new Event('input'));
     }
+    /** B-200 (D-208): a job as he sees it: queued from his Try again tap until the record catches up or refuses. */
+    function jobSeen(j) {
+      return j && T.retrying.has(j.id) ? { ...j, status: 'queued', fired: null, result: null } : j;
+    }
     async function refire(j) {
       await write({ op: 'update', collection: 'jobs', id: j.id, data: { fired: null } }); // null first: update merges nested maps, and the new attempt must not inherit the old error
       const fired = await fire(TASKS.worker, jobText(j.id));

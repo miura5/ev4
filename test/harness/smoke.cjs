@@ -188,6 +188,40 @@ async function open(browser, viewport) {
       );
     } else ok(`${tag} a Today check-off ticks and keeps the scroll and the rows in place`, false, 'no item to tick');
 
+    // B-200 (D-208): with the record 2 s slow, the next check-off paints ticked (and live) on the tap's next frame; a
+    // refused one unticks and says why in one line.
+    const tapTick = (fail, delay) =>
+      page.evaluate(
+        async ([fail, delay]) => {
+          const c = document.querySelector('#today-list input.tick:not(:checked)');
+          if (!c) return null;
+          window.__writeDelayMs = delay;
+          window.__writeFail = fail;
+          const t0 = performance.now();
+          c.click();
+          await new Promise(r => requestAnimationFrame(() => r()));
+          const painted = { ticked: c.checked, live: !c.disabled, ms: Math.round(performance.now() - t0) };
+          if (fail) await new Promise(r => setTimeout(r, delay + 300));
+          window.__writeDelayMs = 0;
+          window.__writeFail = null;
+          const toast = document.getElementById('toast');
+          return { ...painted, after: c.checked, line: toast && !toast.hidden ? toast.textContent.trim() : '' };
+        },
+        [fail, delay]
+      );
+    const slowTick = await tapTick(null, 2000);
+    ok(
+      `${tag} a check-off paints ticked on the tap's frame, the record 2 s behind (D-208)`,
+      !!slowTick && slowTick.ticked && slowTick.live && slowTick.ms < 100,
+      JSON.stringify(slowTick)
+    );
+    const refused = await tapTick('permission_denied', 300);
+    ok(
+      `${tag} a refused check-off unticks and says why in one line (D-208)`,
+      !!refused && refused.ticked && !refused.after && /^Couldn’t save: .*permission_denied/.test(refused.line),
+      JSON.stringify(refused)
+    );
+
     // 5. One review answer scores.
     await page.click('#tab-study');
     await page.click('#seg-study [data-v="review"]');
@@ -259,6 +293,28 @@ async function open(browser, viewport) {
       );
       ok(`${tag} a Your-turn reply files its job and fires the builder`, filed);
     } else ok(`${tag} a Your-turn reply files its job and fires the builder`, false, 'no Your turn chip');
+
+    // B-200 (D-208): a quick-ask chip puts his line in the thread on the tap's next frame, the record 2 s behind.
+    const chipPaint = await page.evaluate(async () => {
+      const b = [...document.querySelectorAll('#qchips button')].find(x => !/^Your turn|^Resume /.test(x.textContent));
+      if (!b) return null;
+      const said = b.textContent.trim();
+      window.__writeDelayMs = 2000;
+      const t0 = performance.now();
+      b.click();
+      await new Promise(r => requestAnimationFrame(() => r()));
+      const ms = Math.round(performance.now() - t0);
+      const shown = [...document.querySelectorAll('#thread .msg.matt, #thread .cap-echo')].some(m =>
+        m.textContent.trim().includes(said)
+      );
+      window.__writeDelayMs = 0;
+      return { said, shown, ms };
+    });
+    ok(
+      `${tag} a chip shows his line on the tap's frame, the record 2 s behind (D-208)`,
+      !!chipPaint && chipPaint.shown && chipPaint.ms < 100,
+      JSON.stringify(chipPaint)
+    );
 
     await page.screenshot({ path: `${shots}/smoke-${scheme}.png` });
     ok(`${tag} no page errors`, errors.length === 0, errors.slice(0, 3).join(' | '));

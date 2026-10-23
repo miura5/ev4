@@ -4,11 +4,19 @@
 // sample(): runs window.__chatScript ([{tool, input}]) through the page's own tools, then replies window.__chatReply.
 // mcp.callTool(): records the call in window.__mcpCalls; window.__mcpFail = '<code>' makes it reject with that code.
 // update() merges nested objects like the real store; set() replaces; where() filters in memory.
-// window.__writeDelayMs holds every write that long before the record answers (D-208: a tap paints before it does).
+// window.__writeDelayMs holds every write that long before the record answers (D-208: a tap paints before it does);
+// window.__writeFail = '<code>' then refuses it with that code (B-200: a refused write puts the old state back).
 (function () {
   const db = window.__db || {};
   window.__writes = [];
-  const lag = () => (window.__writeDelayMs ? new Promise(r => setTimeout(r, window.__writeDelayMs)) : null);
+  const lag = async () => {
+    if (window.__writeDelayMs) await new Promise(r => setTimeout(r, window.__writeDelayMs));
+    if (window.__writeFail) {
+      const e = new Error('refused: ' + window.__writeFail);
+      e.code = window.__writeFail;
+      throw e;
+    }
+  };
   const subs = [];
   const clone = v => JSON.parse(JSON.stringify(v));
   function merge(t, s) {
