@@ -884,3 +884,6 @@ button.tlink:hover{text-decoration-color:currentColor}
 #theme-card .seg{align-self:flex-start}
 #theme-card .meta{margin:4px 0 0;font-size:12px;color:var(--faint)}
 @media (max-width:599px){#theme-card .seg{align-self:stretch}}
+/* B-217 (D-221): the session chip is grey like every chip (teal is done or right only); the chips wrap, never clip */
+.qchip.go{background:none;border-color:var(--line2);color:var(--quiet);font-weight:500}
+.qchip.go:hover{color:var(--text)}
