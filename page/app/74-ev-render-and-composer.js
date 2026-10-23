@@ -7,7 +7,36 @@
       '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>';
     // E.V.'s state, shown by every core that follows it and by the readout: streaming → speaking, Claude working → thinking,
     // a check just posted → check ready, a session break → resting, a right answer → pleased, typing → listening.
+    // B-215 (D-216): turning to face him is the notification. A job that finishes, or a new ask in Your turn, while he is on
+    // another tab: her small flower faces him with the top petal lit and her status reads something's ready, until he
+    // opens E.V. What the page found on load is not news.
+    const NT = { seen: null, yt: 0, on: false, ring: false };
+    function noticeSync() {
+      if (!loaded.has('jobs') || !T.ready) return;
+      const fin = (S.jobs || []).filter(j => j.status === 'done' || j.status === 'failed').map(j => j.id);
+      const yt = yourTurnCount();
+      if (NT.seen === null) {
+        NT.seen = new Set(fin);
+        NT.yt = yt;
+        return;
+      }
+      const fresh = fin.filter(id => !NT.seen.has(id));
+      fresh.forEach(id => NT.seen.add(id));
+      const more = yt > NT.yt;
+      NT.yt = yt;
+      if (ui.tab === 'ev') NT.on = false;
+      else if (fresh.length || more) NT.on = true;
+      // the top petal lit (a session's petals win while one runs)
+      if (NT.on && !activeSession()) {
+        CORE.setRing(0.2);
+        NT.ring = true;
+      } else if (NT.ring) {
+        NT.ring = false;
+        if (!activeSession()) CORE.setRing(-1);
+      }
+    }
     function computeMood() {
+      if (NT.on && ui.tab !== 'ev') return 'alert';
       if (T.revealing) return 'speaking';
       if (T.busy) return T.streaming ? 'speaking' : 'thinking';
       if (SS.busy || T.reading) return 'thinking';
@@ -28,6 +57,7 @@
       sleepy: 'resting',
     };
     function renderMood() {
+      noticeSync();
       MOOD_NOW = computeMood();
       CORE.setMood(MOOD_NOW);
       const off = !sample || T.sampleOff;
@@ -37,7 +67,9 @@
           ? 'quick asks only'
           : MOOD_NOW === 'sleepy' && activeSession()
             ? 'on a break'
-            : MOOD_WORD[MOOD_NOW] || 'online';
+            : NT.on && ui.tab !== 'ev'
+              ? 'something’s ready'
+              : MOOD_WORD[MOOD_NOW] || 'online';
       // B-221 (D-210): her status word beside her name; the readout code has left the screen.
       const txt = [
         off && !T.busy
@@ -46,9 +78,11 @@
             ? MOOD_NOW === 'sleepy'
               ? 'on a break'
               : 'in a session'
-            : running
-              ? 'working'
-              : word,
+            : NT.on && ui.tab !== 'ev'
+              ? word
+              : running
+                ? 'working'
+                : word,
         STAGING ? 'staging' : '',
       ]
         .filter(Boolean)
