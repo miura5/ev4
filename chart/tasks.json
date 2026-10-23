@@ -4608,5 +4608,17 @@
   "notes": "",
   "commit": null,
   "source": "log new"
+ },
+ {
+  "id": "B-257",
+  "kind": "task",
+  "title": "Freeze exit 3, understood (D-253): Matt traces one tap from the page to the record and explains what a deploy ships and why the gates bind to one commit, without the doc",
+  "dod": "In a build chat Matt gives both explanations in his own words; the How E.V. Works 'Where you are' rows for the page, the record and shipping read at least familiar",
+  "milestone": "freeze exit",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "log new"
  }
 ]
