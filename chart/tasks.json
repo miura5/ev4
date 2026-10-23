@@ -3961,9 +3961,9 @@
   "title": "Answers paint on the tap frame (D-227, flag 1): in the question runner that Study's Review and Practice, a session's check and a surface's set share, Check answer (or Enter) paints a scored item's verdict and its why from E.planAnswer before the record write, with no Saving… state (the pick already paints on its tap); the write catches up; a refused write puts the question back unanswered with one line saying why; an open answer shows Checking… until grading returns, then its verdict at once",
   "dod": "the harness answers a planted set with the record stub delayed 2 s at 390 and 1280 and measures Check answer to verdict paint under 100 ms in Review, Practice, a session check and a surface set; a planted refused write restores the question and shows the line; a planted open item paints its verdict within 100 ms of grading returning; npm test green; npm run smoke green; npm run check green; screenshots at 390 × 844, 735 × 830, 1706 × 1240 and 2560 × 1240 looked at; ship staging green; live only on Matt's OK",
   "milestone": "v4.5.x ui",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Oct 23 build chat: taking it",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },
