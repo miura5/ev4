@@ -4050,7 +4050,7 @@
   "milestone": "v4.5.x ui",
   "status": "in progress",
   "depends": [],
-  "notes": "Oct 23 build chat: taking it",
+  "notes": "Oct 23 build chat: marked journal.text, dateedits.title, ideas.text and planedits.ticks; a weak spot's words join with weakspots schema 2 (B-232), his talk lines with talk/guidance (B-237). No place yet drafts beside his text, so Use mine and Use hers come with the first that does (B-237's Save line is the next).",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },

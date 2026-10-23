@@ -15,8 +15,8 @@ const FORBIDDEN_EFFECT = /\b(create|update|delete)_trigger\b|\btrigger_(create|u
 const ENVELOPE = ['schema', 'writer', 'at', 'source'];
 const OPS = ['set', 'update'];
 
-/** Why a row may not exist, or null: the shape the lint and act() both hold it to. */
-export function rowProblem(name, row) {
+/** Why a row may not exist, or null: the shape the lint and act() both hold it to. his: core/his.mjs hisFields(spec), node side only. */
+export function rowProblem(name, row, his = {}) {
   if (!row || typeof row !== 'object') return `${name}: not a row`;
   if (!Array.isArray(row.callers) || !row.callers.length || row.callers.some(c => !CALLERS.includes(c)))
     return `${name}: callers must be among ${CALLERS.join(', ')}`;
@@ -31,6 +31,12 @@ export function rowProblem(name, row) {
       return `${name}: no row may write the actions table (D-203)`;
     if ((w.ops || OPS).some(o => !OPS.includes(o)))
       return `${name}: a write is a set or an update, never a delete (B-11)`;
+    // B-229 (D-233): his words are his: only his own tap writes a field spec marks as his
+    const mine = (his[w.collection] || []).filter(f => w.fields.includes(f));
+    if (mine.length && row.callers.some(c => c !== 'tap'))
+      return `${name}: ${w.collection}.${mine.join(', ')} is his to write: only a tap may (D-233), not ${row.callers
+        .filter(c => c !== 'tap')
+        .join(' or ')}`;
   }
   for (const e of row.effects || []) {
     const s = JSON.stringify(e);
@@ -229,7 +235,7 @@ export function makeActions(validateAgainst) {
     const no = refused => ({ ok: false, refused: `${name}: ${refused}`, writes: [], effects: [] });
     const row = ((spec && spec.actions) || {})[name];
     if (!row || name.startsWith('_')) return no('no such action in spec.actions');
-    const bad = rowProblem(name, row);
+    const bad = rowProblem(name, row); // his fields (D-233) are the build's check: spec.collections stays off the page
     if (bad) return no(bad.replace(`${name}: `, ''));
     if (!CALLERS.includes(ctx.caller)) return no('no caller set by code');
     if (!row.callers.includes(ctx.caller))

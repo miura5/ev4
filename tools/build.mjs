@@ -14,6 +14,8 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { makeValidator, validateAgainst, describeErrors } from '../core/validate.mjs';
 import { systemSize } from '../core/deploy.mjs';
+import { rowProblem } from '../core/actions.mjs';
+import { hisFields } from '../core/his.mjs';
 
 const HERE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // What the manifest hashes: everything that executes or is deployed. dist/ page outputs join when the page exists (B-15).
@@ -468,6 +470,13 @@ export async function build({
   const schemas = loadSchemas(root);
   const problems = registryProblems(spec, schemas);
   if (problems.length) throw new Error('the spec and the schema registry disagree:\n  ' + problems.join('\n  '));
+  // B-229 (D-233): every actions row in its shape, and none with a tool, worker or builder caller writes his words.
+  const his = hisFields(spec);
+  const rowBad = Object.entries(spec.actions || {})
+    .filter(([k]) => !k.startsWith('_'))
+    .map(([k, row]) => rowProblem(k, row, his))
+    .filter(Boolean);
+  if (rowBad.length) throw new Error('the actions table refuses its own rows:\n  ' + rowBad.join('\n  '));
   const validate = makeValidator(schemas);
   // B-149 (D-173): the release comes from the tag, through the build's own commit (so a bookkeeping commit never moves
   // it); a run that builds its checkout to compare passes the deployed release instead (its clone has no tags).

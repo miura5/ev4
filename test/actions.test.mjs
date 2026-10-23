@@ -8,6 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT } from './helpers.mjs';
 import { makeActions, rowProblem, CALLERS, COSTS } from '../core/actions.mjs';
+import { hisFields } from '../core/his.mjs';
 import { validateAgainst, checkSchema } from '../core/validate.mjs';
 
 const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec', 'ev.spec.json'), 'utf8'));
@@ -407,4 +408,44 @@ test('B-186: the page gets EVActions in core.js, over the validator, and its tap
   const pageTap = g.EVActions.actor(pageSpec, 'tap');
   assert.equal(pageTap('build-ask', { brief: 'idea: a planted ask' }, { now: NOW }).ok, true);
   assert.match(pageTap('trace', traceArgs, { caller: 'builder', now: NOW }).refused, /a tap may not call it/);
+});
+
+test('B-229 (D-233) lint: his words are his: no row with a tool, worker or builder caller writes a field spec marks as his', () => {
+  const his = hisFields(spec);
+  // every marked field, listed: his journal text, the dates he adds, his ideas' text, his plan ticks
+  assert.deepEqual(his, {
+    dateedits: ['title'],
+    ideas: ['text'],
+    journal: ['text'],
+    planedits: ['ticks'],
+  });
+  for (const [c, fields] of Object.entries(his))
+    for (const f of fields) {
+      const schema = fs.readFileSync(path.join(ROOT, 'spec', 'schemas', `${c}.schema.json`), 'utf8');
+      assert.ok(schema.includes(`"${f}"`), `${c}.${f} is in its schema`);
+    }
+  // the real table passes
+  for (const [name, row] of rows) assert.equal(rowProblem(name, row, his), null, name);
+  // a planted row whose worker caller writes journal text fails the lint, and act() refuses it
+  const planted = {
+    ...spec,
+    actions: {
+      ...spec.actions,
+      'planted-journal': {
+        does: 'a worker writes a journal entry',
+        args: { type: 'object' },
+        writes: [{ collection: 'journal', key: '^.+$', ops: ['set'], fields: ['text'] }],
+        effects: [],
+        callers: ['worker'],
+        cost: 'nothing',
+      },
+    },
+  };
+  assert.match(rowProblem('planted-journal', planted.actions['planted-journal'], his), /journal\.text is his to write/);
+  // and the build refuses to build with it (tools/build.mjs runs the same check over spec.actions)
+  const build = fs.readFileSync(path.join(ROOT, 'tools', 'build.mjs'), 'utf8');
+  assert.match(build, /rowProblem\(k, row, his\)/);
+  // the same row as his own tap is fine
+  const tapRow = { ...planted.actions['planted-journal'], callers: ['tap'] };
+  assert.equal(rowProblem('planted-journal', tapRow, his), null);
 });

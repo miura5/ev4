@@ -1557,7 +1557,10 @@
    "key": "<exam id>",
    "holds": "task ticks",
    "fromV3": "plans.done",
-   "schema": "spec/schemas/planedits.schema.json"
+   "schema": "spec/schemas/planedits.schema.json",
+   "his": [
+    "ticks"
+   ]
   },
   "dates": {
    "class": "Fact",
@@ -1592,7 +1595,10 @@
    "key": "<the date's id>",
    "holds": "removed, notes, field overrides",
    "fromV3": "dates.removed, .notes, .edited*",
-   "schema": "spec/schemas/dateedits.schema.json"
+   "schema": "spec/schemas/dateedits.schema.json",
+   "his": [
+    "title"
+   ]
   },
   "days": {
    "class": "Derived",
@@ -1742,7 +1748,10 @@
     "kind": [
      "page"
     ]
-   }
+   },
+   "his": [
+    "text"
+   ]
   },
   "workouts": {
    "class": "Fact",
@@ -1785,7 +1794,10 @@
    "holds": "entries; pipelines never read; not in backups",
    "fromV3": "journal",
    "private": true,
-   "schema": "spec/schemas/journal.schema.json"
+   "schema": "spec/schemas/journal.schema.json",
+   "his": [
+    "text"
+   ]
   },
   "talk": {
    "class": "Fact",
@@ -3263,7 +3275,8 @@
    "B-186 (D-203): every new thing E.V. does from the page or a builder session is a row here: does (one line), args (a JSON schema the validator reads), writes (collection, key as a pattern, ops set or update, the fields it may set besides the envelope), effects (fire_trigger with a task key, or publish), callers (tap: the page's own code path; tool: the model's page tool; builder; worker) and cost (nothing; staging: R-02's check, staging green at the commit; ok: R-04's in either form, his words in a build chat or a ship job he wrote, or his tap on a row that is the OK).",
    "core/actions.mjs act(spec, name, args, ctx) composes a call and checks it against its row: the row exists and is valid, the caller may call it, the args fit, every write stays inside the row's collections, keys and fields, every effect is the row's, and the cost is met; else it refuses with the reason. ctx.caller is set by code: each code path makes one actor (tap, tool, builder, worker) and the actor's caller overwrites any the call claims.",
    "No row writes system/spec, where this table lives, or the table itself, and no effect creates, changes or deletes a scheduled task (D-200); act() and test/actions.test.mjs both refuse such a row. A deploy's system documents are core/deploy.mjs's printout, never a row's writes: ship-live is the gate (its caller and cost) and composes no writes.",
-   "Every page write site and every record write a tools command prints comes from act or a core composer; today's other page sites are the legacy list in test/data/actions-legacy.json, which only shrinks (test/actions.test.mjs). The 13 conversation tools become rows one at a time, when a task touches them (their schemas move here and the page builds the tool from the row)."
+   "Every page write site and every record write a tools command prints comes from act or a core composer; today's other page sites are the legacy list in test/data/actions-legacy.json, which only shrinks (test/actions.test.mjs). The 13 conversation tools become rows one at a time, when a task touches them (their schemas move here and the page builds the tool from the row).",
+   "B-229 (D-233): a collection's his lists the fields only Matt writes (his words and his ticks): no actions row with a tool, worker or builder caller may write one (core/actions.mjs rowProblem, held by test/actions.test.mjs). A weak spot's words join with weakspots schema 2 (B-232), his talk lines with talk/guidance (B-237)."
   ],
   "build-ask": {
    "does": "A message starting build:, bug: or idea: on the page: a build job for ev4-builder (D-194, B-180)",
