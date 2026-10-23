@@ -56,14 +56,15 @@
  {
   "id": "D-253",
   "date": "Oct 23",
-  "title": "The freeze ends on evidence, not a date: Matt ends it in a build chat once all five hold. (1) Correct: audit findings 1 to 4 fixed, each proven by its staging run read back; every medium and low finding fixed or filed as a post-freeze task with its reason. (2) Stable: the nightly full check green seven nights in a row, and no bug that broke studying reached live in that time. (3) Understood: without the doc, Matt traces one tap from the page to the record (Chapter 0) and explains what a deploy ships and why the gates bind to one commit; the 'Where you are' rows for the page, the record and shipping read at least familiar. (4) Smaller: one cut pass, where each rule, gate, workflow and doc nominated as dead weight is retired by marking or kept with a one-line reason. (5) Handed off: the post-freeze design brief (How E.V. Works, the parked tasks, the course idea, D-254 to D-257) is ready for a design chat.",
-  "why": "Matt, Oct 23: a date or a mood can't tell whether the freeze did its job; these name what it is for (correct, stable, understood, smaller, ready), so it ends on evidence and leads straight into the next design chat",
-  "status": "proposed",
+  "title": "The freeze ends on evidence, not a date: Matt ends it in a build chat once all five hold. (1) Correct: audit findings 1 to 4 fixed, each proven by its staging run read back; every medium and low finding fixed or filed as a post-freeze task with its reason. (2) Stable: the nightly full check green seven nights in a row, and no bug that broke studying reached live in that time. (3) Understood: without the doc, Matt traces one tap from the page to the record (Chapter 0) and explains what a deploy ships and why the gates bind to one commit; the 'Where you are' rows for the page, the record and shipping read at least familiar. (4) Smaller: one cut pass, where each rule, gate, workflow and doc nominated as dead weight is retired by marking or kept with a one-line reason. (5) Handed off: the post-freeze design brief (How E.V. Works, the parked tasks, the course idea, D-255 to D-258) is ready for a design chat.",
+  "why": "Matt, Oct 23: a date or a mood can't tell whether the freeze did its job; these name what it is for (correct, stable, understood, smaller, ready), so it ends on evidence and leads straight into the next design chat Accepted by Matt in the chat, Oct 23.",
+  "status": "accepted",
   "supersedes": [],
   "amends": [
    "D-246"
   ],
-  "source": "log"
+  "source": "log",
+  "restated": "Oct 23"
  },
  {
   "id": "D-252",
