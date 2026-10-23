@@ -1,5 +1,19 @@
 [
  {
+  "id": "D-258",
+  "date": "Oct 23",
+  "title": "Small enough to understand: after the freeze, E.V. gets smaller, not just no bigger, and nothing is added to make up for not understanding it. (1) Every rule, gate, hook, workflow and pipeline names the failure it prevents. It stays only while it is cheaper than understanding that failure, and it is retired by marking when it has never fired or when knowing the system now prevents the failure. (2) Starting budgets, for the design chat to tune: CLAUDE.md under 1,200 words (about 2,800 today); the process code (the Chart, ship, deploy, gates, guards and hooks) at most half the size of the study core (about equal today); the full check under 10 minutes (about 25 today). (3) A new feature names what it retires, or says in one line why the extra surface is worth it. (4) The cut comes after the freeze, layer by layer, process first, and each cut is a practice rep, because only what Matt understands can safely go; D-253's fourth condition becomes the inventory for that cut (each rule, gate, workflow and pipeline with the failure it prevents and whether it has fired), not the cut itself. (5) Once a month Matt answers one question: did E.V. give him more study time than it cost him? Two months of no starts another freeze.",
+  "why": "Matt, Oct 23: his top concern, the thing he could not put into words. The build grew fast, and rules and gates were added to make up for a gap in understanding rather than to solve a problem, which is the slide toward the SDE I row (slowed by its own complexity). Measured Oct 23: about 7,900 lines of process code against 8,000 of study core, 32,000 lines of tests, 214 decisions, and twelve decisions in one day.",
+  "status": "proposed",
+  "supersedes": [
+   "D-254"
+  ],
+  "amends": [
+   "D-253"
+  ],
+  "source": "log"
+ },
+ {
   "id": "D-257",
   "date": "Oct 23",
   "title": "When Matt's instruction conflicts with how shipping works (a deploy is one commit, the gates bind to it, ship works from main's head), the build chat stops and sets out the options with their cost in time and risk before acting, unless one path is plainly cheaper and reversible.",
@@ -34,7 +48,7 @@
   "date": "Oct 23",
   "title": "After the freeze E.V. stays about this size and pays for itself. Every new feature names what it retires or simplifies, or says in one line why the added surface is worth it; the target is the Senior row, smaller than today and green for months. Once a month Matt answers one question: did E.V. give him more study time than it cost him? Two months of no starts another freeze.",
   "why": "Oct 23 review: size is the biggest risk (about 250 decisions, a long build contract), and the SDE I row's ending, slowed by its own complexity, is where adding features at September's pace leads; E.V. is worth it only while it saves more nursing time than it takes",
-  "status": "proposed",
+  "status": "superseded",
   "supersedes": [],
   "amends": [],
   "source": "log"
