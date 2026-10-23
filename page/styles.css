@@ -356,15 +356,9 @@ body.opening .msg.greet .msg-cards{display:grid;grid-template-columns:repeat(aut
 .sk-crit{font:500 12px var(--sans);color:var(--warn);white-space:nowrap}
 .sk-cur{margin:0;font-size:17px;line-height:1.5}
 .sk-panel{display:none}
-@media (max-width:1023px){body.skill-on .qchips{display:none}}
-@media (min-width:1024px){
-  .sk-sheet{display:none}
-  body.skill-on.on-ev .wrap{max-width:1120px}
-  body.skill-on #p-ev{display:grid;grid-template-columns:minmax(0,1fr) 340px;column-gap:28px;align-items:start}
-  body.skill-on #p-ev>*{grid-column:1}
-  body.skill-on #p-ev>.sk-panel{display:flex;flex-direction:column;gap:12px;grid-column:2;grid-row:1/span 20;position:sticky;top:calc(var(--top-h) + 16px);max-height:calc(100vh - var(--top-h) - var(--dock-h) - 40px);overflow:auto;padding:16px 18px;background:rgba(var(--do-rgb),.05);border:1px solid var(--accent-edge);border-radius:var(--r)}
-  .sk-panel .actions{margin-top:2px}
-}
+body.skill-on .qchips{display:none}
+/* B-212 (D-217): the run's steps stay in the pane at every width; from 1200 px its list is the right panel's */
+
 /* D-108: the workout card */
 .wo-clock{margin:0;font:600 34px var(--sans);font-variant-numeric:tabular-nums;color:var(--ink)}
 .wo-moves{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
@@ -551,13 +545,9 @@ body.captions .bubble a.cite{color:var(--accent-text);text-decoration:underline;
   body.captions #ev-surf.folded{max-height:none;overflow:visible}
 }
 @media (min-width:1200px){body.captions #ev-side{display:flex;flex-direction:column;gap:12px;overflow-y:auto;scrollbar-width:thin}
-  /* a skills or workout run has the side as its panel (B-51): the surface sits under her captions in the main column */
-  body.captions.skill-on #p-ev>#ev-side{grid-column:1;grid-row:4;align-self:start;animation:none;overflow:visible}
-  body.captions.skill-on #p-ev>.composer{grid-row:5}
-  body.captions.skill-on.side-on #p-ev{grid-template-rows:auto auto minmax(0,1fr) auto auto}}
+}
 /* With the skills or workout panel open on desktop (B-51), her captions still fill their row and scroll. */
 body.captions #p-ev,body.captions.skill-on #p-ev{align-items:stretch}
-body.captions.skill-on #p-ev>.sk-panel{align-self:start}
 /* B-104 (D-143, D-144): the calm Prep marker (violet, the secondary accent; never the coral of urgent) and the prep
    check under her greeting: one line that opens to a tickable list, each item with the file and page it came from. */
 .bi-prep,.prep-mark{flex:none;margin-left:8px;padding:0 7px;border-radius:999px;background:var(--plum-bg);color:var(--plum);font:600 11.5px/20px var(--sans);letter-spacing:.02em}
@@ -807,8 +797,8 @@ body.captions .cap-echo{display:none}
    fixed column as a view's side column), and the pane gives it room. Her captions stay one column at most 680 px. */
 body.captions.on-ev .wrap{max-width:680px}
 @media (min-width:1200px){
-  body.captions.on-ev.side-on:not(.skill-on){--pane-r:calc(var(--right-w) + 16px)}
-  body.captions.side-on:not(.skill-on) #p-ev>#ev-side{position:fixed;top:8px;bottom:8px;right:8px;width:var(--right-w);z-index:5;grid-column:auto;grid-row:auto;align-self:auto;margin:0}
+  body.captions.on-ev.side-on{--pane-r:calc(var(--right-w) + 16px)}
+  body.captions.side-on #p-ev>#ev-side{position:fixed;top:8px;bottom:8px;right:8px;width:var(--right-w);z-index:5;grid-column:auto;grid-row:auto;align-self:auto;margin:0}
   body.captions:not(.on-ev) #ev-side{display:none}
 }
 
@@ -825,3 +815,19 @@ body.captions.on-ev .wrap{max-width:680px}
 .opt kbd.opt-n{flex:0 0 22px;width:22px;height:22px;border-radius:6px;display:inline-grid;place-items:center;font:500 12px var(--sans);color:var(--faint);background:none;box-shadow:inset 0 0 0 1px var(--line2)}
 .opt input:checked~kbd.opt-n{color:var(--text);box-shadow:inset 0 0 0 1px var(--quiet)}
 @media (hover:none){.opt kbd.opt-n{display:none}}
+
+/* B-212 (D-217): skills runs and workouts follow the session: bar in the pane header, steps in the pane, list right */
+#ev-side>.sk-panel{display:none}
+@media (min-width:1200px){
+  body.captions #ev-side>.sk-panel{display:flex;flex-direction:column;gap:12px;padding:14px 16px;border-radius:12px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2)}
+  body.skill-on .sk-sheet .sk-tog{pointer-events:none;padding-right:2px}
+  body.skill-on .sk-sheet .sk-tog::after{display:none}
+  body.skill-on .sk-sheet .sk-body{display:none}
+}
+.sk-sheet{background:var(--surface);-webkit-backdrop-filter:none;backdrop-filter:none;border:0;box-shadow:inset 0 0 0 1px var(--line2);border-radius:12px}
+.sk-count{color:var(--quiet)}
+.sk-step.cur{background:var(--raised)}
+.sk-mark{color:var(--do)}
+.sk-step.miss .sk-mark{color:var(--urg)}
+.sk-panel .sk-head{min-width:0}
+.sk-panel .sk-pfold{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}

@@ -3538,9 +3538,18 @@ const ok = (name, cond, detail = '') => {
       await fp.screenshot({ path: `${shots}/skills-sheet-phone.png` });
       await fp.locator('#sksheet .sk-tog').click();
       await fp.waitForTimeout(200);
-      await fp.locator('#sksheet .sk-mini', { hasText: 'End' }).click();
+      ok(
+        "[phone] End is the pane header bar's, beside the step count (D-217)",
+        /^Step 4 of \d+ · 1 missed$/.test(await fp.textContent('#kbar .s-clock')) &&
+          (await fp.locator('#sksheet button', { hasText: 'End' }).count()) === 0,
+        await fp.textContent('#kbar')
+      );
+      await fp.locator('#kbar button', { hasText: 'End' }).click();
       await fp.waitForTimeout(400);
-      ok('[phone] the sheet goes when the run ends', !(await fp.isVisible('#sksheet')));
+      ok(
+        '[phone] the sheet and the bar go when the run ends',
+        !(await fp.isVisible('#sksheet')) && !(await fp.isVisible('#kbar'))
+      );
       const ended = await fp.evaluate(id => window.__db.sessions[id], sk.id);
       ok(
         'Stop ends the run with its summary, and the summary card comes back under her line',
@@ -3619,7 +3628,7 @@ const ok = (name, cond, detail = '') => {
       ok('B-18: no page errors', fErr.length === 0, fErr.join(' | '));
       await fp.close();
     }
-    // ---- B-51 (D-107): at 1024px and up the checklist is a side panel beside the thread
+    // ---- B-212 (D-217): from 1200 px the checklist is the right panel; the step and its buttons stay in the pane
     {
       const dp = await browser.newPage({ viewport: { width: 1280, height: 860 } });
       const dErr = [];
@@ -3635,28 +3644,32 @@ const ok = (name, cond, detail = '') => {
       await dp.waitForTimeout(800);
       const dcard = () => dp.locator('#ev-surf[data-type="skill"]'); // B-78: a card is a surface
       ok(
-        '[desktop] the side panel shows the whole checklist beside the thread, the sheet hidden',
-        (await dp.isVisible('#skpanel')) &&
-          !(await dp.isVisible('#sksheet')) &&
+        '[desktop] the right panel shows the whole checklist; the pane holds the step with Did it; the header bar says Step 1 with End',
+        (await dp.isVisible('#ev-side #skpanel')) &&
+          (await dp.isVisible('#sksheet')) &&
           (await dp.locator('#skpanel .sk-step').count()) >= 4 &&
-          /Step 1 of \d+/.test(await dp.textContent('#skpanel'))
+          (await dp.locator('#skpanel .sk-acts').count()) === 0 &&
+          /Step 1 of \d+/.test(await dp.textContent('#sksheet')) &&
+          /^Step 1 of \d+$/.test(await dp.textContent('#kbar .s-clock')) &&
+          (await dp.locator('#kbar button').allTextContents()).join() === 'End',
+        await dp.evaluate(() => (document.getElementById('kbar') || {}).textContent)
       );
       const pb = await dp.locator('#skpanel').boundingBox(),
         tb = await dp.locator('#thread').boundingBox();
       ok(
-        '[desktop] the panel sits to the right of the thread, in view',
+        '[desktop] the panel sits to the right of the pane, in view',
         pb && tb && pb.x >= tb.x + tb.width && pb.y < 860 && pb.x + pb.width <= 1280,
         JSON.stringify({ pb, tb })
       );
-      await dp.locator('#skpanel .sk-acts button', { hasText: 'Did it' }).click();
+      await dp.locator('#sksheet .sk-acts button', { hasText: 'Did it' }).click();
       await dp.waitForTimeout(400);
-      await dp.locator('#skpanel .sk-acts button', { hasText: 'Missed it' }).click();
+      await dp.locator('#sksheet .sk-acts button', { hasText: 'Missed it' }).click();
       await dp.waitForTimeout(400);
       const marks = await dp.evaluate(() =>
         [...document.querySelectorAll('#skpanel .sk-step')].map(li => (li.className.match(/pass|miss|cur/) || [''])[0])
       );
       ok(
-        '[desktop] marking from the panel ticks the list, with the tally',
+        "[desktop] marking in the pane ticks the right panel's list, with the tally",
         marks.slice(0, 3).join(',') === 'pass,miss,cur' &&
           /2 of \d+ done · 1 missed/.test(await dp.textContent('#skpanel')),
         marks.join(',')
@@ -3670,11 +3683,12 @@ const ok = (name, cond, detail = '') => {
         '[desktop] no horizontal scroll with the panel open',
         await dp.evaluate(() => document.documentElement.scrollWidth <= innerWidth)
       );
-      await dp.locator('#skpanel button', { hasText: 'End' }).click();
+      await dp.locator('#kbar button', { hasText: 'End' }).click();
       await dp.waitForTimeout(400);
       ok(
-        '[desktop] End on the panel ends the run and the panel goes',
+        '[desktop] End in the header bar ends the run; the panel and the bar go',
         !(await dp.isVisible('#skpanel')) &&
+          !(await dp.isVisible('#kbar')) &&
           (await dp.evaluate(() =>
             Object.values(window.__db.sessions).some(x => x.kind === 'skill' && x.status === 'ended')
           ))
@@ -3808,14 +3822,21 @@ const ok = (name, cond, detail = '') => {
           (await last().textContent()).slice(0, 200)
         );
         ok(
-          `[${label}] the running workout sits in the dock too, with its round and buttons`,
-          label === 'phone'
-            ? (await wp.isVisible('#sksheet')) &&
-                /CINDY · Round 4/.test(await wp.textContent('#sksheet')) &&
-                (await wp.locator('#sksheet button', { hasText: 'Round done' }).count()) === 1
-            : (await wp.isVisible('#skpanel')) &&
-                /Workout · CINDY/.test(await wp.textContent('#skpanel')) &&
-                (await wp.locator('#skpanel button', { hasText: 'Round done' }).count()) === 1
+          `[${label}] the running workout follows the session pattern: its line in the pane header with Finish, its round and Round done in the pane, its card the right panel's surface from 1200 px (D-217)`,
+          (await wp.isVisible('#sksheet')) &&
+            /CINDY · Round 4/.test(await wp.textContent('#sksheet')) &&
+            (await wp.locator('#sksheet button', { hasText: 'Round done' }).count()) === 1 &&
+            (await wp.evaluate(() => document.getElementById('kbar').parentNode.id)) === 'mh' &&
+            /^CINDY · Round 4 · \d/.test(await wp.textContent('#kbar .s-clock')) &&
+            (await wp.locator('#kbar button', { hasText: 'Finish' }).count()) === 1 &&
+            (label === 'phone'
+              ? !(await wp.isVisible('#skpanel'))
+              : !(await wp.isVisible('#skpanel')) && (await wp.isVisible('#ev-side #ev-surf[data-type="workout"]'))),
+          await wp.evaluate(() =>
+            [document.getElementById('kbar'), document.getElementById('sksheet')]
+              .map(n => n && n.textContent)
+              .join(' | ')
+          )
         );
         // Then the card's condition, not a fixed wait: its clock redraws on the next tick.
         await ahead(5 * 60e3 + 5000);
