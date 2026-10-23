@@ -649,7 +649,11 @@
     document.addEventListener('keydown', e => {
       if (e.ctrlKey || e.metaKey || e.altKey || !/^[1-9]$/.test(e.key)) return;
       const t = e.target;
-      if (t && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName) && t.type !== 'radio' && t.type !== 'checkbox'))
+      if (
+        t &&
+        (t.isContentEditable ||
+          (['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName) && t.type !== 'radio' && t.type !== 'checkbox'))
+      )
         return;
       const vis = n => !!n && n.getClientRects().length > 0;
       const open = [...document.querySelectorAll('fieldset.opts')].filter(
