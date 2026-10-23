@@ -4048,10 +4048,10 @@
   "title": "His words are his (D-233): spec.collections marks the fields only Matt writes (a journal entry's text, a date he added, an idea's text, his own weak spot's words, plan ticks, his talk lines); lint fails any actions row with a tool, worker or builder caller whose writes include one; where she drafts beside his text she offers Use mine and Use hers",
   "dod": "lint fails a planted actions row whose worker caller writes journal text, and passes the real table; a test lists every marked field; npm test green; ship staging green; live only on Matt's OK",
   "milestone": "v4.5.x ui",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Oct 23 build chat: marked journal.text, dateedits.title, ideas.text and planedits.ticks; a weak spot's words join with weakspots schema 2 (B-232), his talk lines with talk/guidance (B-237). No place yet drafts beside his text, so Use mine and Use hers come with the first that does (B-237's Save line is the next).",
-  "commit": null,
+  "notes": "Shipped to staging at da38721: ship staging GREEN.",
+  "commit": "da38721",
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },
  {
