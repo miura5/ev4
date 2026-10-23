@@ -32,7 +32,7 @@ Status: `open` · `in progress` · `blocked` · `done`. A task opens when every 
 3. when I go to that larger window size here where the right sidebar would appear, the plan tab totally disappears. Done when: The view switch in the pane header sits beside the view's title at every width, whether or not a status line shows and whether or not the right panel is open; a look check asserts its left edge is the same on Review and Practice | — | v4.5.x ui | in progress | the switch sits before the status line, beside the title |
 | B-247 | Bug (reported Oct 23): 1. I was looking at the study tab and I think the review questions here are still too large. Comparing it to the size in the conversation tab and in the review tab under 'study'. 
 2. Also is the practice tab under the study page supposed to not have a right sidebar? it seems to be a UX error because it moves the tabs as it expands the elevated section beyond where the right sidebar would be. and 
-3. when I go to that larger window size here where the right sidebar would appear, the plan tab totally disappears. Done when: Matt's call first: where Study's plan lives from 1024 px | — | v4.5.x ui | blocked | design question, parked: from 1024 px the plan is not a tab by design (B-121, D-158); it sits folded beside Review and Practice as the 'Dosage calculation ... 31 items to do' line. Keep that, or give Plan its tab back at every width? |
+3. when I go to that larger window size here where the right sidebar would appear, the plan tab totally disappears. Done when: Plan is a Study tab at every width (D-249); from 1024 px the pane shows one view, centred, and the question keeps its full reading width; the look pass checks the Plan button is there at 1280 and 1706 and the stem column is centred | — | v4.5.x ui | in progress | Matt, Oct 23: Plan as a tab everywhere (D-249) |
 
 ## Your turn
 
@@ -58,7 +58,6 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 - B-236 (blocked): Phone capture
 - B-237 (blocked): How E.V. talks to you
 - B-238 (blocked): Matt's look at triage, then v4.5.0 live
-- B-247 (blocked): 1. I was looking at the study tab and I think the review questions…
 
 ## Done
 
