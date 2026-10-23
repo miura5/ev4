@@ -1318,7 +1318,7 @@
   "depends": [
    "B-68"
   ],
-  "notes": "Oct 23 (B-170, e115c56): the practice brief picked reviews by today's rule whatever spec.study.scheduler said; e115c56 makes it pick through the same scheduler as days/<date>. The flip goes live only once e115c56 (or later) is live.",
+  "notes": "Oct 23: e115c56 is live in v4.5.0, so the review set now picks through spec.study.scheduler; the flip after Sunday's weekly is clear on that count.",
   "commit": null,
   "source": "BACKLOG.md",
   "jobs": [
