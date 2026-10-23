@@ -4545,9 +4545,9 @@
   "title": "Bug (reported Oct 23): 4\nMaking a parked weak spot active again is undone that night by auto-park.\nHigh\n\"Revisit for ATI and the final\" can't stick.\nFreeze",
   "dod": "A weak spot he made active again after it was parked stays active: auto-park parks a spot once for its exam, never after an activate; a core test plants park then activate; proven by a staging evening-cloud run read back",
   "milestone": "v4.5.x ops",
-  "status": "open",
+  "status": "blocked",
   "depends": [],
-  "notes": "",
+  "notes": "not a freeze fix by D-246's tests: it changes what the morning and evening-cloud pipelines do (core/evcore.mjs); Matt's call on an exception",
   "commit": null,
   "source": "build chat",
   "words": "4\nMaking a parked weak spot active again is undone that night by auto-park.\nHigh\n\"Revisit for ATI and the final\" can't stick.\nFreeze",
@@ -4560,6 +4560,7 @@
   "triage": {
    "outcome": "task",
    "at": "2026-10-23T18:59:42.073Z"
-  }
+  },
+  "waitingOn": "Matt"
  }
 ]
