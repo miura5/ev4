@@ -179,13 +179,13 @@ button.quiet{background:transparent;border-color:var(--line2);color:var(--ink2)}
 .q-head{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .stem{font-size:calc(17px * var(--ts));line-height:1.55;margin:2px 0 0;white-space:pre-wrap}
 /* B-116: the question's stem leads at 20 px; its kind is one quiet line under it; the one count sits at the bar. */
-.q-stem{font-size:calc(20px * var(--ts));line-height:1.5}
+.q-stem{font-size:calc(17px * var(--ts));line-height:1.5} /* B-245: one size everywhere, her line's with a card open */
 .q-tags{margin:2px 0 4px}
 .bar-row{display:flex;align-items:center;gap:10px}.bar-row .progress{flex:1}.bar-row .meta{flex:none;font-variant-numeric:tabular-nums}
 .more-line{flex-direction:row;align-items:center;gap:12px;padding-top:12px;padding-bottom:12px}
 #more-btn{flex:none}
 .opts{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;border:0;min-width:0}
-.opt{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid rgba(var(--tint),.10);border-radius:14px;cursor:pointer;background:rgba(var(--tint),.02);min-height:var(--tap);transition:border-color .2s,background .2s}
+.opt{display:flex;gap:12px;align-items:flex-start;padding:9px 12px;font-size:calc(15px * var(--ts));border:1px solid rgba(var(--tint),.10);border-radius:14px;cursor:pointer;background:rgba(var(--tint),.02);min-height:var(--tap);transition:border-color .2s,background .2s}
 .opt:hover{border-color:var(--accent-edge)}
 .opt input{flex:0 0 auto;margin-top:3px;accent-color:var(--accent);width:18px;height:18px}
 .opt.right{border-color:var(--accent);background:rgba(var(--do-rgb),.10)} .opt.wrong{border-color:var(--bad-solid);background:rgba(var(--urg-rgb),.10)}
@@ -537,9 +537,6 @@ body.captions .composer>.cap-echo{max-width:none}
 .surf .ev-card{border:0;border-radius:0;background:none;padding:0;box-shadow:none;margin:0}
 .surf .ev-card>.card-head:first-child>h2,.surf .ev-card.check>.check-head{display:none}
 .surf .ev-card>.card-head:first-child:not(:has(> :not(h2))){display:none}
-/* B-244: in the surface the question matches her line (17 px) and the options sit under it */
-.surf .q-stem{font-size:calc(17px * var(--ts))}
-.surf .opt{padding:9px 12px;font-size:calc(15px * var(--ts))}
 .surf .passage{margin:2px 0 8px;font-size:calc(15px * var(--ts));line-height:1.5;color:var(--ink2)}
 body.captions .bubble a.cite{color:var(--accent-text);text-decoration:underline;text-decoration-color:var(--accent-edge);text-underline-offset:3px;cursor:pointer}
 @media (max-width:1199px){

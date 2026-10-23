@@ -409,8 +409,8 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         };
       });
       ok(
-        `[${width}] study: the stem leads at 20 px with no chip above it, one count on the screen, no More practice mid-set`,
-        q.stem === 20 && !q.chipAbove && q.counts.length === 1 && !q.more,
+        `[${width}] study: the stem leads at 17 px (B-245: the conversation card's size) with no chip above it, one count on the screen, no More practice mid-set`,
+        q.stem === 17 && !q.chipAbove && q.counts.length === 1 && !q.more,
         JSON.stringify(q)
       );
       // B-126 (D-165): the counter is the set's fold line, opening the set above the question (beside it from 1024 px).
