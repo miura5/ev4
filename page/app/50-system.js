@@ -335,3 +335,31 @@
         `Release ${EV_BUILD} · core ${E.VERSION} · spec ${EV_SPEC.specVersion} · ${EV_SPEC.target === 'staging' ? 'staging record' : 'your record'}${st ? ' · snapshot ' + short(st.generatedAt) + ' ' + E.chicagoClock(st.generatedAt) : ''}`;
     }
 
+    // B-214 (D-211): the theme switch. System follows the device; Light or Dark is stored on this device (ev.theme), read
+    // again before first paint by the page's head script. A storage that throws still switches this visit.
+    {
+      const seg = $('theme-seg');
+      const cur = () => {
+        try {
+          const t = localStorage.getItem('ev.theme');
+          return t === 'light' || t === 'dark' ? t : 'system';
+        } catch {
+          return document.documentElement.getAttribute('data-theme') || 'system';
+        }
+      };
+      const paint = t =>
+        seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.t === t)));
+      seg.querySelectorAll('button').forEach(b =>
+        b.addEventListener('click', () => {
+          const t = b.dataset.t;
+          if (t === 'system') document.documentElement.removeAttribute('data-theme');
+          else document.documentElement.setAttribute('data-theme', t);
+          try {
+            if (t === 'system') localStorage.removeItem('ev.theme');
+            else localStorage.setItem('ev.theme', t);
+          } catch {}
+          paint(t);
+        })
+      );
+      paint(cur());
+    }
