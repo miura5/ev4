@@ -4596,5 +4596,17 @@
   "notes": "",
   "commit": null,
   "source": "log new"
+ },
+ {
+  "id": "B-256",
+  "kind": "task",
+  "title": "Freeze exit 2, stable (D-253): the nightly full check green seven nights in a row, with no bug that broke studying reaching live",
+  "dod": "Seven consecutive green nightly runs (gh run list --workflow nightly.yml), and no bug filed in that span that broke studying on live; a red night restarts the count",
+  "milestone": "freeze exit",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "log new"
  }
 ]
