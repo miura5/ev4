@@ -4712,7 +4712,7 @@
   "milestone": "M5",
   "status": "done",
   "depends": [],
-  "notes": "staging GREEN at 6ce26b7 (v4.5.2+33); the DoD's last proof, asking E.V. on staging for the dosage plan, is Matt's to make on staging (the conversation runs on his page)",
+  "notes": "staging proof read back: m-20261023-232733036-ev answers the dosage plan question with its days (runs today through Nov 4)",
   "commit": "6ce26b7",
   "source": "build chat",
   "words": "E.V. can't pull from the dosage calculations exam plan. She can see the job finished but can't get the details and proposes to make a new exam plan. But it can be seen in the study \"plan\" tab that the dosage calculation exam plan exists and even handles the 2 exam dates.",
