@@ -4084,7 +4084,7 @@
   "milestone": "v4.6 triage",
   "status": "blocked",
   "depends": [],
-  "notes": "Oct 24 unattended run: held, not built. It adds spec.links (a reader-facing spec shape, so a minor under D-173), and on main it would ride B-230's v4.4.x patch to live. May it go on main before B-230 ships (B-230 then becomes v4.5.0), or does it wait until after?",
+  "notes": "Morning summary (unattended run, Oct 24, ended 04:00 CT with no open unblocked task). Shipped to staging, each GREEN: B-200 4569645, B-222 b29e8e9, B-223 261e0f7, B-224 d979153, B-225 12d6a7d, B-228 a4b8a22, B-229 da38721 (all from the Oct 23 build chat; nothing new built overnight). Nothing went live. Blocked, one question each: B-231 may typed links go on main before B-230 ships? B-230 drop B-226 from its depends, or unpark B-202? B-227 her reply line: talk schema bump, a work card, or leave replies for v4.5.0? B-201 weekly recap: Chart via system/yourturn or read from the repository? B-81 waits on your first live study session in C. Look at first: B-229 added one note to spec.actions._rules and the his marks to spec.collections (before tonight's guard on spec.actions); please confirm that's fine.",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z",
   "waitingOn": "Matt"
