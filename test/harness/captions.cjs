@@ -365,8 +365,8 @@ async function sideBySide(browser, left, right, out, vp) {
       stage: [140, 200],
       convCore: 140,
       convStage: [140, 200],
-      now: '24px',
-      past: '16px',
+      now: '20px', // D-247: the direction C prototype's sizes (D-122 had 24 and 16)
+      past: '14px',
       matt: '14px',
     },
   };

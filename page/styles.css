@@ -512,8 +512,9 @@ body.captions .composer>.cap-echo{max-width:none}
   /* Nothing beside her: her stage centres in the window. Something beside her: the column slides in from the right
      and her stage re-centres in what is left. */
 
-  body.captions .msg.ev .bubble{font-size:calc(16px * var(--ts))}
-  body.captions .msg.ev.current .bubble{font-size:calc(24px * var(--ts))}
+  /* D-247: the direction C prototype's sizes (D-122 had 16 and 24) */
+  body.captions .msg.ev .bubble{font-size:calc(14px * var(--ts))}
+  body.captions .msg.ev.current .bubble{font-size:calc(20px * var(--ts))}
   body.captions .msg.matt .bubble{font-size:calc(14px * var(--ts))}
   body.captions.surface-open .msg.ev.current .bubble{font-size:calc(17px * var(--ts))}
 }
