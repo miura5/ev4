@@ -868,16 +868,17 @@
   "title": "BIO 201 objectives and practice (pick 2, D-101): the seed-objectives job kind proposing objectives/<exam>-<n> with sourceRef and course from the unit slides (schema bump), the proposal card with strike-outs and the page write on Matt's OK, and the morning's review and new checks for BIO 201's next exam under the day budget",
   "dod": null,
   "milestone": "M8",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-42",
    "B-43",
    "B-98",
    "B-230"
   ],
-  "notes": "Matt, Oct 23: v4.5.x first; B-44 bumps a schema, so it waits until B-230 has shipped the v4.4.x patch, and goes live in the v4.5.0 minor",
+  "notes": "Oct 23: no definition of done (D-182 asks every checkable clause to name its check). The question, a decision in a build chat: what proves pick 2 done? Proposed: a core test that a planted BIO 201 unit's slides seed objectives/<exam>-<n> each with sourceRef and course and nothing invented; the objectives 1-to-2 migration with its legacy copies, idempotent; the harness strikes one line on the proposal card and the page writes the rest; a staging seed-objectives worker firing read back; the morning's next BIO 201 review drawn from them inside the day budget; also whether the page's objectives write is a spec.actions row (guarded).",
   "commit": null,
-  "source": "BACKLOG.md"
+  "source": "BACKLOG.md",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-45",
