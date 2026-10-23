@@ -427,6 +427,8 @@
           el('h2', null, 'Weekly review'),
           ...(wk.review ? [el('p', 'stem', wk.review)] : []),
           ...(wk.reflection ? [el('p', 'meta', 'Reflection: ' + wk.reflection)] : []),
+          // B-201: the build recap, the Chart's one sentence for the week
+          ...(wk.health && wk.health.recap ? [el('p', 'meta wk-recap', wk.health.recap)] : []),
           btn('Write a reflection', () => {
             showTab('record');
             $('seg-record').querySelector('[data-v="journal"]').click();

@@ -137,6 +137,11 @@
        "minimum": 0
       }
      }
+    },
+    "recap": {
+     "type": "string",
+     "maxLength": 200,
+     "description": "B-201: the build recap, one sentence from the Chart on origin/main: what shipped to live this week and how many tasks wait on Matt"
     }
    }
   },

@@ -89,6 +89,22 @@ seed.system = {
 const env = (writer, source, at, schema = 1) => ({ schema, writer, at: at || new Date().toISOString(), source });
 const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date());
 const DAYTIME = new Date(today + 'T19:00:00Z'); // 2pm CDT: the page's clock (see openPage)
+// B-201: a weekly written today, as Sunday's is, so Today shows its card with the build recap.
+{
+  const lastWeek = Object.keys(seed.weeks || {})
+    .sort()
+    .pop();
+  if (lastWeek && lastWeek !== today) {
+    const w = seed.weeks[lastWeek];
+    seed.weeks[today] = {
+      ...w,
+      date: today,
+      review: 'A made-up week: fluids came along; potassium still trips you.',
+      reflection: 'What helped most this week?',
+      health: { ...(w.health || {}), recap: 'This week she shipped 8 tasks to live; 4 wait on you.' },
+    };
+  }
+}
 // Today's review: the newest review set in the record, with its answers, as today's (so the summary is known).
 const lastReview = Object.keys(seed.sets || {})
   .filter(k => /^review-\d{4}-\d{2}-\d{2}$/.test(k))
@@ -1200,6 +1216,26 @@ const ok = (name, cond, detail = '') => {
     );
     await page.click('#tab-today');
     await page.waitForTimeout(100);
+    // B-201: the Sunday card carries the build recap, one sentence from the Chart.
+    {
+      const wk = await page.evaluate(() => {
+        const c = document.getElementById('weekly'),
+          r = c && c.querySelector('.wk-recap');
+        return {
+          shown: !!c && !c.hidden && c.getBoundingClientRect().height > 0,
+          recap: r ? r.textContent : '',
+          inside: !!r && r.getBoundingClientRect().right <= innerWidth + 1,
+        };
+      });
+      ok(
+        `[${scheme}] B-201: the Sunday card shows the build recap`,
+        wk.shown && wk.recap === 'This week she shipped 8 tasks to live; 4 wait on you.' && wk.inside,
+        JSON.stringify(wk)
+      );
+      await page.locator('#weekly').scrollIntoViewIfNeeded();
+      await page.locator('#weekly').screenshot({ path: `${shots}/recap-${scheme}.png` });
+      await page.evaluate(() => scrollTo(0, 0));
+    }
     // B-225 (D-230): a switch is a cut: the tab at full opacity on the tap frame, no fade, its cards do not rise.
     ok(
       `[${scheme}] switching tabs shows the tab at once: a cut, nothing rising`,

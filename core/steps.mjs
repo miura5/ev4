@@ -18,6 +18,7 @@ import { readState, withShell } from './verifystate.mjs';
 import { produce, classOf, factsSplitFor, examTomorrow } from './derive.mjs';
 import { watch, schedulerView } from './watch.mjs';
 import * as STUDY from './study.mjs';
+import { buildRecap, chartFromMain } from './recap.mjs';
 import { canvasRaw } from './canvas.mjs';
 import { collectionHash, migrateBackup, migratedLine } from './seed.mjs';
 import { lintRecord, lintSummary } from './lint.mjs';
@@ -389,7 +390,11 @@ CODE_STEPS['practice-brief'] = function practiceBrief(db, ctx, spec) {
 
 // ------------------------------------------------------------------------------------------------ weekly
 CODE_STEPS['week-brief'] = function weekBrief(db, ctx, spec) {
-  const week = produce(db, spec, 'weeks', { date: ctx.date, now: ctx.now }, { source: ctx.source });
+  // B-201: the build recap, from the Chart on origin/main in this run's clone; a run whose clone cannot give it says so
+  // and writes the week without one.
+  const chart = ctx.chart || chartFromMain(ROOT);
+  ctx.recap = chart.refused ? null : buildRecap(chart, { from: EV.addDays(ctx.date, -6), to: ctx.date });
+  const week = produce(db, spec, 'weeks', { date: ctx.date, now: ctx.now, recap: ctx.recap }, { source: ctx.source });
   const ms = models(db);
   const ahead = EV.liveDates(db.dates, db.dateedits)
     .filter(d => d.date > ctx.date && d.date <= EV.addDays(ctx.date, 7))
@@ -410,6 +415,7 @@ CODE_STEPS['week-brief'] = function weekBrief(db, ctx, spec) {
   return {
     say: [
       `Week ${week.rollups.from}..${week.rollups.to}: ${week.rollups.right}/${week.rollups.answered} right, ${week.rollups.newWeakSpots.length} new weak spots, ${week.rollups.solid.length} made solid.`,
+      chart.refused ? `No build recap: the Chart on origin/main could not be read (${chart.refused}).` : ctx.recap,
     ],
   };
 };
@@ -1462,7 +1468,7 @@ export const AGENT_FOLDS = {
       db,
       spec,
       'weeks',
-      { date: ctx.date, now: ctx.now, verify: ctx.verify || null },
+      { date: ctx.date, now: ctx.now, verify: ctx.verify || null, recap: ctx.recap || null },
       { source: ctx.source, stored: { review: answer.review, reflection: answer.reflection } }
     );
     return {

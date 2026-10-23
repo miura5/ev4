@@ -470,7 +470,7 @@ export function knownFacts(stateDocs) {
 
 /** weeks/<Sunday>, the weekly run: the week's roll-ups, calibration and health line. The review and reflection are
  *  the run's own writing (an agent step), kept as written. */
-function weekBody(db, { date, verify = null }, spec, stored) {
+function weekBody(db, { date, verify = null, recap = null }, spec, stored) {
   const v = views(db);
   const from = EV.addDays(date, -6);
   const atts = EV.collectAttempts(v.sets, v.answers).all.filter(a => a.date >= from && a.date <= date);
@@ -516,7 +516,9 @@ function weekBody(db, { date, verify = null }, spec, stored) {
     date,
     calibration,
     // The verify result comes from the run's own reads of its record (verify-deploy, read-only), an input as stored.
-    health: { summary, verify, ...(evidence ? { evidence } : {}) },
+    // B-201: the build recap is the Chart's sentence, read by the run from origin/main: an input as stored, and an
+    // optional field (no bump): a week written before it has none.
+    health: { summary, verify, ...(evidence ? { evidence } : {}), ...(recap ? { recap } : {}) },
     rollups: {
       from,
       to: date,
@@ -613,6 +615,7 @@ export const PRODUCERS = {
       date: s.date || s.id,
       now: s.at,
       verify: (s.health && typeof s.health === 'object' && s.health.verify) || null,
+      recap: (s.health && typeof s.health === 'object' && s.health.recap) || null,
     }),
     build: (db, i, spec, stored) => weekBody(db, i, spec, stored),
   },
