@@ -3629,11 +3629,12 @@
   "title": "Build recap in the weekly: the weekly's health line gains one sentence from the Chart, \"this week she shipped n to live, m wait on you\", shown on the Sunday card",
   "dod": "a core test on a planted Chart and deploy record composes the sentence; a staging weekly firing carries it in weeks/<date>.health; the harness shows it on the Sunday card at 390 and 1280; npm test green; npm run check green; ship staging green; live only on Matt's OK",
   "milestone": "v4.4 ops",
-  "status": "open",
+  "status": "blocked",
   "depends": [],
-  "notes": "",
+  "notes": "Oct 23 build chat: the weekly runs at the deployed commit and its record holds no Chart, so 'shipped n to live, m wait on you' needs a path the design does not give. Choices: (a) ship writes the last 14 days of live deploys into system/yourturn (an optional field, beside what already waits on him) and the weekly reads that document (a new read for its pull); or (b) the weekly reads chart/deploys.json and chart/tasks.json from origin/main in its own clone. (a) keeps weeks rebuildable from the record; (b) needs no new read but ties a Derived document to the repository. Which?",
   "commit": null,
-  "source": "plan XCT16iH6fggp4MxPNRZtHK"
+  "source": "plan XCT16iH6fggp4MxPNRZtHK",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-202",
