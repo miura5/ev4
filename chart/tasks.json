@@ -3034,12 +3034,12 @@
   "title": "The morning targets the weakest objective from the latest weeks document (D-120's morning half, behind D-190): the morning's spare practice and drill items aim at weeks/<latest>.insights.weakestObjective; it ships behind a comparison first (the morning writes what it would target beside what it does, a week runs, the weekly compares), and flips on Matt's word",
   "dod": "a core test: with insights naming E4-3 the morning's target is E4-3, without them today's rule; days/<date>.shadow (or its equivalent) carries the would-be target for a week on staging and the weekly's study comparison reports it; Matt reads the week and says flip; the flip is its own staging-proved deploy; npm test green",
   "milestone": "v4.3 study",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-72",
    "B-230"
   ],
-  "notes": "Oct 23: waits behind B-230 like B-44 (Matt: v4.5.x first); it changes a document shape or step, so it ships in the v4.5.0 minor",
+  "notes": "Taken Oct 23: step one, the shadow (the morning writes the would-be target beside today's), then a week on staging.",
   "commit": null,
   "source": "B-72 split (D-190)"
  },
