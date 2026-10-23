@@ -4632,5 +4632,17 @@
   "notes": "",
   "commit": null,
   "source": "log new"
+ },
+ {
+  "id": "B-259",
+  "kind": "task",
+  "title": "Freeze exit 5, handed off (D-253): the post-freeze design brief ready for a design chat",
+  "dod": "One brief linking How E.V. Works, the System Map, the parked tasks, the course idea (D-256), D-255, D-257, D-258 and B-258's inventory, with the size budgets as the first question",
+  "milestone": "freeze exit",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "log new"
  }
 ]

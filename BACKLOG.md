@@ -30,6 +30,7 @@ Status: `open` · `in progress` · `blocked` · `done`. A task opens when every 
 | B-256 | Freeze exit 2, stable (D-253): the nightly full check green seven nights in a row, with no bug that broke studying reaching live Done when: Seven consecutive green nightly runs (gh run list --workflow nightly.yml), and no bug filed in that span that broke studying on live; a red night restarts the count | — | freeze exit | open |  |
 | B-257 | Freeze exit 3, understood (D-253): Matt traces one tap from the page to the record and explains what a deploy ships and why the gates bind to one commit, without the doc Done when: In a build chat Matt gives both explanations in his own words; the How E.V. Works 'Where you are' rows for the page, the record and shipping read at least familiar | — | freeze exit | open |  |
 | B-258 | Freeze exit 4, the inventory for the cut (D-253, D-258): every rule, gate, hook, workflow and pipeline listed with the failure it prevents and whether it has ever fired Done when: A table, one row each, with the failure it prevents, the last time it fired (or never) and a keep or retire suggestion; nothing is cut in this task | — | freeze exit | open |  |
+| B-259 | Freeze exit 5, handed off (D-253): the post-freeze design brief ready for a design chat Done when: One brief linking How E.V. Works, the System Map, the parked tasks, the course idea (D-256), D-255, D-257, D-258 and B-258's inventory, with the size budgets as the first question | — | freeze exit | open |  |
 
 ## Your turn
 
