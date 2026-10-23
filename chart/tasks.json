@@ -4329,5 +4329,24 @@
    "outcome": "task",
    "at": "2026-10-23T15:26:25.609Z"
   }
+ },
+ {
+  "id": "B-244",
+  "kind": "bug",
+  "title": "Bug (reported Oct 23): E.V's text is nice but can we check the cards to make sure their the appropriate size? I've attached the screenshot when I start a review with E.V.; her text is still appropriate but the card is huge in proportion. I'm not sure what the correct size is but intuitively it feels too large at first sight",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "E.V's text is nice but can we check the cards to make sure their the appropriate size? I've attached the screenshot when I start a review with E.V.; her text is still appropriate but the card is huge in proportion. I'm not sure what the correct size is but intuitively it feels too large at first sight",
+  "reportedAt": "2026-10-23T15:59:12.613Z",
+  "board": {
+   "row": "v4 B-244: E.V's text is nice but can we check the cards to make sure their the…",
+   "why": "E.V's text is nice but can we check the cards to make sure their the appropriate size? I've attached the screenshot when I start a review with E.V.; her text is still appropriate but the card is huge in proportion. I'm not sure what the correct size is but intuitively it feels too large at first sight",
+   "notes": "Reported Oct 23 from build chat"
+  }
  }
 ]
