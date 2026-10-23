@@ -3472,5 +3472,21 @@
   "decisions": [],
   "source": "log",
   "release": "v4.5.1"
+ },
+ {
+  "target": "staging",
+  "commit": "1939f15",
+  "time": "2026-10-23T20:18:50.320Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "7fd63af",
+  "tasks": [
+   "B-252"
+  ],
+  "summary": "3. The morning after an exam, that exam's weak spots are still open…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
