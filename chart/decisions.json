@@ -1,5 +1,17 @@
 [
  {
+  "id": "D-248",
+  "date": "Oct 23",
+  "title": "Freeze week ships staging per batch: one commit and npm run smoke per fix, then one check --touched and one ship staging for the batch; live stays on Matt's ship it",
+  "why": "Matt, Oct 23: the touched check takes about 13 minutes for any styles.css change, since it touches every page harness",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [
+   "D-246"
+  ],
+  "source": "log"
+ },
+ {
   "id": "D-247",
   "date": "Oct 23",
   "title": "From 1024 px her current line is 20 px and her earlier lines 14 px, the direction C prototype's sizes; the phone keeps 20 and 15. Amends D-122's desktop sizes.",
