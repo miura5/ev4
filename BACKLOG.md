@@ -38,7 +38,7 @@ Status: `open` · `in progress` · `blocked` · `done`. A task opens when every 
 The morning after an exam, that exam's weak spots are still open and overdue, so they fill the whole review. They're only parked that evening.
 High
 The day after Exam N, your review is all Exam N and none of the next exam.
-Freeze Done when: The morning after an exam, its weak spots are not in the review set or the day's list (the morning's pick skips a spot whose exam has passed, as auto-park will that evening); a core test plants the day after an exam; proven by a staging morning run read back | — | v4.5.x ops | open |  |
+Freeze Done when: The morning after an exam, its weak spots are not in the review set or the day's list (the morning's pick skips a spot whose exam has passed, as auto-park will that evening); a core test plants the day after an exam; proven by a staging morning run read back | — | v4.5.x ops | blocked | not a freeze fix by D-246's tests: it changes what the morning and evening-cloud pipelines do (core/evcore.mjs); Matt's call on an exception |
 | B-253 | Bug (reported Oct 23): 4
 Making a parked weak spot active again is undone that night by auto-park.
 High
@@ -70,6 +70,7 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 - B-237 (blocked): How E.V. talks to you
 - B-238 (blocked): Matt's look at triage, then v4.5.0 live
 - B-251 (blocked): For B-250 I'd remove the pause but I'd still implement the…
+- B-252 (blocked): 3. The morning after an exam, that exam's weak spots are still open…
 
 ## Done
 
