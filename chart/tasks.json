@@ -4726,5 +4726,24 @@
    "outcome": "task",
    "at": "2026-10-23T22:26:21.795Z"
   }
+ },
+ {
+  "id": "B-264",
+  "kind": "bug",
+  "title": "Bug (reported Oct 23): e.v. Center aligned on phone",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "e.v. Center aligned on phone",
+  "reportedAt": "2026-10-23T22:54:47.074Z",
+  "board": {
+   "row": "v4 B-264: e.v. Center aligned on",
+   "why": "e.v. Center aligned on phone",
+   "notes": "Reported Oct 23 from build chat"
+  }
  }
 ]
