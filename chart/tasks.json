@@ -3985,9 +3985,9 @@
   "title": "System's Preferences (D-229, flag 3): under B-214's theme switch, Text size (Default, Larger: every text size one step up, stored per device) and Reduce motion (Follow the system, On: the end states prefers-reduced-motion gives), as mocked on the canvas's v4.5.x fixes page",
   "dod": "the harness at 390 and 735 sets Larger and finds every text one step up with no sideways scroll at any listed size; Reduce motion On gives screenshots equal to the reduced-motion ones; both survive a reload; npm test green; npm run smoke green; npm run check green; screenshots at 390 × 844, 735 × 830, 1706 × 1240 and 2560 × 1240 looked at; ship staging green; live only on Matt's OK",
   "milestone": "v4.5.x ui",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Oct 23 build chat: taking it",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },
