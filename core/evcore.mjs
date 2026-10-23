@@ -1167,9 +1167,18 @@ const EVCore = (() => {
     }
     return out;
   }
+  /** B-252, B-253 (D-251): its exam is over and the evening's auto-park has not parked it yet: open, its exam before
+   *  date, never parked, and not made active again by him on or after the exam. Not due; the evening parks it, once. */
+  function awaitingPark(w, date, ed) {
+    const ex = ed[examOf(w)];
+    if (!isActive(w) || !ex || ex >= date) return false;
+    return !Object.values(w.events || {}).some(
+      e => e && (e.type === 'park' || (e.type === 'activate' && e.at && chicagoDate(e.at) >= ex))
+    );
+  }
   function rankDueSorted(weakspots, date, ed) {
     return (weakspots || [])
-      .filter(w => isDue(w, date))
+      .filter(w => isDue(w, date) && !awaitingPark(w, date, ed))
       .sort(
         (a, b) =>
           (a.derived.nextDue < date ? 0 : 1) - (b.derived.nextDue < date ? 0 : 1) ||
