@@ -400,7 +400,7 @@ body.captions .hero>.ev-av{transform:scale(var(--core-scale,1));transition:trans
 /* Her captions: a scroller with the pull zone above them; the newest line sits just under her. */
 body.captions .thread{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;gap:0;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 20px,#000 calc(100% - 16px),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 20px,#000 calc(100% - 16px),transparent 100%)}
 body.captions .thread::-webkit-scrollbar{display:none}
-body.captions .cap-in{min-height:calc(100% + 160px);display:flex;flex-direction:column;align-items:center;gap:12px;padding:0 8px 18px;box-sizing:border-box;text-align:center;max-width:660px;margin:0 auto;width:100%}
+body.captions .cap-in{min-height:calc(100% + 160px);display:flex;flex-direction:column;align-items:stretch;gap:12px;padding:0 8px 18px;box-sizing:border-box;text-align:left;max-width:660px;margin:0 auto;width:100%}
 body.captions .cap-pull{height:160px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding-bottom:8px;box-sizing:border-box;opacity:var(--pull-o,0);transition:opacity .15s linear}
 body.captions .cap-pull .ring{position:relative;width:34px;height:34px}
 body.captions .cap-pull svg.r{position:absolute;inset:0}
@@ -906,7 +906,6 @@ body[data-view="today"] #side-today{display:none}
 .surf .ev-card>.card-head:first-child:not(:has(> :not(h2,.meta,.chip))){display:none}
 /* B-223 (Matt, Oct 23), B-264: at every width her greeting and her lines read left-aligned, as in direction C; his lines
    sit to the right; her flower stays centred above them. */
-body.captions .cap-in{align-items:stretch;text-align:left}
 body.captions .msg-body,body.captions.opening .msg.greet{align-items:flex-start;text-align:left}
 body.captions .msg.matt .msg-body{align-items:flex-end;text-align:right}
 body.captions .msg-meta{justify-content:flex-start}
