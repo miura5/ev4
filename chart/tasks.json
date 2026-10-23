@@ -4175,14 +4175,15 @@
   "title": "How E.V. talks to you (D-229): talk/guidance, a document only the page writes, holds his guidance in his words (at most 1,500 characters), edited in System's Preferences; every prompt that carries her voice reads it after spec.persona.voice and never over spec.boundaries; when he corrects her tone she offers one line with Save, and nothing is saved without his tap; its write is an actions row, tap only",
   "dod": "the talk schema's documents gain guidance; a prompt test shows the guidance after the voice with the boundaries unchanged; the harness edits it at 735 and finds it after a reload; a planted correction shows the Save line and saves only on the tap; npm test green; npm run smoke green; npm run check green; screenshots at 390 × 844, 735 × 830, 1706 × 1240 and 2560 × 1240 looked at; ship staging green; live only with B-238",
   "milestone": "v4.6 triage",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-224",
    "B-233"
   ],
-  "notes": "",
+  "notes": "parked for the freeze week",
   "commit": null,
-  "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
+  "source": "plan SyfKhhZHXubJo4RN8CEw7Z",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-238",
