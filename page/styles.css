@@ -42,7 +42,7 @@ a{color:var(--accent-text)}
 .top-in{max-width:1120px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px}
 .brand{flex:1 1 0;display:flex;align-items:center;gap:10px;min-width:0;background:none;border:0;padding:0 6px 0 0;color:inherit;text-align:left;min-height:44px;border-radius:14px;cursor:pointer;font:inherit}
 .brand:hover{background:none}
-.top-av{width:36px;height:36px;flex:0 0 36px;display:grid;place-items:center;transition:opacity .45s ease,transform .55s var(--ease),width .55s var(--ease),flex-basis .55s var(--ease),margin .55s var(--ease)}
+.top-av{width:36px;height:36px;flex:0 0 36px;display:grid;place-items:center;transition:opacity .28s ease,transform .28s var(--ease),width .28s var(--ease),flex-basis .28s var(--ease),margin .28s var(--ease)}
 body.on-ev.opening .top-av,body.on-ev.in-session .top-av,body.on-ev.core-big .top-av{overflow:hidden;opacity:0;transform:scale(.5);width:0;flex-basis:0;margin-right:-10px}
 .brand-txt{display:flex;flex-direction:column;gap:1px;min-width:0}
 .wordmark{font-size:16px;font-weight:600;line-height:1.2}
@@ -231,7 +231,7 @@ body.on-ev .toast{bottom:calc(var(--dock-h) + 150px + env(safe-area-inset-bottom
 .ev-av .ering{fill:var(--eyering)} .ev-av .ecore{fill:var(--core)} .ev-av.err .ecore{fill:var(--coral)}
 .ev-av .fpet{fill:var(--ink1);stroke:var(--edge);stroke-width:var(--ew);vector-effect:non-scaling-stroke}
 /* E.V.: opening hero, thread, composer */
-.hero{display:flex;justify-content:center;max-height:0;opacity:0;overflow:hidden;margin:0;transition:max-height .6s var(--ease),opacity .45s ease,margin .6s var(--ease)}
+.hero{display:flex;justify-content:center;max-height:0;opacity:0;overflow:hidden;margin:0;transition:max-height .28s var(--ease),opacity .28s ease,margin .28s var(--ease)}
 body.opening .hero,body.core-big .hero{max-height:360px;opacity:1;margin:0 0 -10px}
 .thread{display:flex;flex-direction:column;gap:18px;min-width:0}
 .thread>button{align-self:center;min-height:34px;font-size:13px;color:var(--soft)}
@@ -322,7 +322,7 @@ body.opening .msg.greet .msg-cards{display:grid;grid-template-columns:repeat(aut
 /* motion (B-125, D-163): a view's content shows at once on a switch, with one fade of at most 0.2 s on the view as a
    whole; nothing rises or staggers, and bars, meters and the week chart are drawn at their value. Folds, her stage and
    the side column keep their own moves. */
-.panel.enter{animation:fade .18s ease both}
+.panel.enter{animation:fade .16s ease both}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 .rise{animation:rise .3s var(--ease) both}
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -395,8 +395,8 @@ body.captions #p-ev>.composer{grid-row:4}
 body.captions #p-ev>#ev-side{grid-row:5}
 /* The side column exists only while it holds something (D-122 as amended): an open surface, or in a session his notes. */
 body.captions #p-ev>#ev-side:empty{display:none}
-body.captions .hero,body.captions.opening .hero,body.captions.core-big .hero{max-height:none;opacity:1;margin:0;overflow:visible;height:var(--stage-h,300px);align-items:center;transition:height .8s var(--ease);cursor:pointer;-webkit-tap-highlight-color:transparent}
-body.captions .hero>.ev-av{transform:scale(var(--core-scale,1));transition:transform .8s var(--ease)}
+body.captions .hero,body.captions.opening .hero,body.captions.core-big .hero{max-height:none;opacity:1;margin:0;overflow:visible;height:var(--stage-h,300px);align-items:center;transition:height .28s var(--ease);cursor:pointer;-webkit-tap-highlight-color:transparent}
+body.captions .hero>.ev-av{transform:scale(var(--core-scale,1));transition:transform .28s var(--ease)}
 /* Her captions: a scroller with the pull zone above them; the newest line sits just under her. */
 body.captions .thread{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;gap:0;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 20px,#000 calc(100% - 16px),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 20px,#000 calc(100% - 16px),transparent 100%)}
 body.captions .thread::-webkit-scrollbar{display:none}
@@ -495,11 +495,11 @@ body.chips-quiet #qchips{display:none}
 /* The Breath reveal: each word fades and un-blurs in; emphasised words are teal. */
 body.captions .w{display:inline-block}
 body.captions .reveal .w{opacity:0;filter:blur(6px);transform:translateY(6px)}
-body.captions .reveal .w.on{opacity:1;filter:none;transform:none;transition:opacity .55s ease,filter .55s ease,transform .55s var(--ease)}
+body.captions .reveal .w.on{opacity:1;filter:none;transform:none;transition:opacity .4s ease,filter .4s ease,transform .4s var(--ease)}
 /* Matt's line echoes above the composer for about 3 s; Back to now floats over the captions. */
 body.captions .composer{position:relative;bottom:auto;padding-top:34px;background:none}
 body.captions .composer::after{display:none}
-body.captions .cap-echo{position:absolute;left:0;right:0;top:6px;margin:0;text-align:center;font-size:13.5px;color:var(--quiet);pointer-events:none;opacity:0;transform:translateY(-8px);transition:opacity .8s ease,transform .8s ease;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.captions .cap-echo{position:absolute;left:0;right:0;top:6px;margin:0;text-align:center;font-size:13.5px;color:var(--quiet);pointer-events:none;opacity:0;transform:translateY(-8px);transition:opacity .28s ease,transform .28s ease;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 body.captions .cap-echo.on{opacity:1;transform:none}
 body.captions .cap-now{position:absolute;left:50%;transform:translateX(-50%);z-index:5;min-height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--accent-edge);background:var(--surface);color:var(--accent-text);font-size:13px;display:flex;align-items:center;gap:6px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
 body.captions .cap-now svg{width:14px;height:14px}
