@@ -4098,13 +4098,14 @@
   "title": "Weak-spot schema 2 (D-236, D-240): weakspots gain proposed, words and links (ideas' link shape, types plus duplicate-of); events gain accept (with objective), snooze (with until) and decline; derived statuses gain proposed, snoozed, declined and duplicate; review picks and readiness read open and reviewed only; collectAttempts credits a duplicate's answers to its survivor; migration 1 to 2 with its legacy copy (D-115), fixtures and an idempotence test; spec.links rows for links[].to, and lint fails a duplicate-of that reaches another duplicate",
   "dod": "core tests: a proposed spot is in no pick and no readiness count; accept makes it open and due tomorrow; snooze hides it until its date, then it is proposed again; decline hides it and keeps it; a duplicate's two answers count on its survivor; the migration turns every schema-1 fixture into schema 2 with nothing else changed and runs twice to the same result; lint fails a planted duplicate chain; the staging migration run reads back; npm test green; npm run check green; screenshots at 390 × 844, 735 × 830, 1706 × 1240 and 2560 × 1240 looked at; ship staging green; live only with B-238",
   "milestone": "v4.6 triage",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-231"
   ],
-  "notes": "Matt, Oct 23: D-236, D-242 and D-232 accepted as written. Ready to take.",
+  "notes": "parked for the freeze week",
   "commit": null,
-  "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
+  "source": "plan SyfKhhZHXubJo4RN8CEw7Z",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-233",
