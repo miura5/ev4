@@ -5038,13 +5038,14 @@
   "title": "Study, Progress and Record in the system (D-275)",
   "dod": "All three match the Shipped board and this doc's view table at 1280, and the view table at 390, including the category tags, the deck cards' state badges and the Card n of m label; a review answer through Again, Hard, Good and Easy still records as before; Progress's chart uses one coded colour per series with a legend; staging GREEN",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-279"
   ],
-  "notes": "",
+  "notes": "Held with B-278 on Matt's word (Oct 24). Question for Matt: send the interactive demo page, so this task can be re-planned from the fuller redesign hand-off.",
   "commit": null,
-  "source": "plan 5reEBoToU1W5pmnq5q48ij"
+  "source": "plan 5reEBoToU1W5pmnq5q48ij",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-282",
