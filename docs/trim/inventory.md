@@ -187,14 +187,16 @@ because other runs are cutting there. Ranked by value for the long term (D-264):
     show her drawing exactly as before.
 13. Small leftovers in `tools/chart.mjs` after #15 (`trim/chart-leftovers-2`, about 15 lines; take it after #15
     merges, since both edit the file):
-    - `--force` and `--retire` in `args()`'s flag set: nothing reads `o.force` or `o.retire` (the only other `force`
-      in the file is `git worktree remove --force`).
+    - `--force` and `--retire` in `args()`'s flag set: nothing reads `o.force` or `o.retire` (the other `force`s in
+      the file are two `git worktree remove --force` calls).
     - `d.checkedBy ||` in the tenet line of DECISIONS.md: 0 of 221 decisions carry `checkedBy`; it was the v3 import's
       name for `check`.
     - `decisionDate`'s `d.at` fallback: all 221 decisions carry `date`, and `log decision` always writes it.
-    - The test fixture keys nothing reads: `SAMPLE_VIEWS`' `decisionsTab`, `changelog`, `overview`, `board.table`,
-      `statusEnum`, `statusOptions` (test/chart.test.mjs 33 to 44), and the sample tasks' `board.why`/`board.notes`
-      (60 to 61). Keep `board.node` and `decisions.node`: the inbox and the B-143 test read them.
+    - The test fixture keys nothing reads: `SAMPLE_VIEWS`' `changelog`, `overview`, `board.table`, `statusEnum` and
+      `statusOptions` (test/chart.test.mjs 33 to 44). Once #15 has merged (it removes `brief`'s `decisionsTab`
+      fallback and the writers of `board.why`/`board.notes`), also `decisionsTab` and the sample tasks'
+      `board.why`/`board.notes` (60 to 61); until then `brief` still reads `decisionsTab`, since the sample views have
+      no `retired`. Keep `board.node` and `decisions.node`: the inbox and the B-143 test read them.
 14. Duplicates in `tools/chart.mjs` (`trim/chart-dupes`, restructuring under D-264, about 15 lines out): `docTabRead`
     and `designRead` both take the newest successful Docs read of a doc id from the transcript and differ only in
     their filters (`docTabRead` wants a whole tab read by node; `designRead` wants the 'Tasks to add', 'Decisions
