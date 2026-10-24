@@ -15,7 +15,7 @@ read from its job log. `check.mjs` prints `== <step>: ok (<n> s)` after each ste
 - `npm run check` (`tools/check.mjs`) runs npm test, then the build, then seven harnesses one after another:
   shell, run, captions, prep, core, greet and look (`HARNESSES`, check.mjs:27). It stops at the first one that fails.
   Each harness takes a record folder or `synthetic`, and a screenshots folder.
-- `--touched` runs only the harnesses whose paths changed since the last staging deploy (`harnessesFor`, check.mjs:76).
+- `--touched` runs only the harnesses whose paths changed since the last staging deploy (`harnessesFor`, check.mjs:78).
   A path it doesn't know runs all of them.
 - `smoke.cjs` is not one of check's steps. It runs only through `npm run smoke` and `.github/workflows/smoke.yml`
   (B-199), and it is a subset of run.cjs by design.
