@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 23 | v4 live deployed at d81db0a (23:37 CT), from 2eba0a6: per-task review skill; Trim during the freeze (B-59, B-262). verify-deploy live GREEN. Rollback is a redeploy of 2eba0a6 | Matt's OK | D-049 |
 | Oct 23 | v4 staging deployed at d81db0a (23:11 CT), from 2eba0a6: per-task review skill; Trim during the freeze (B-59, B-262). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 23 | v4 live deployed at 2eba0a6 (19:44 CT), from 37b72bb: Trim during the freeze; E.V. can't pull from the dosage calculations exam plan. She can see…; e.v. Center aligned on; e.v. Center aligned on (B-262, B-263, B-264, B-265). verify-deploy live GREEN. Rollback is a redeploy of 37b72bb | Matt's OK | D-049 |
 | Oct 23 | v4 staging deployed at 2eba0a6 (19:14 CT), from 37b72bb: Trim during the freeze; E.V. can't pull from the dosage calculations exam plan. She can see…; e.v. Center aligned on; e.v. Center aligned on (B-262, B-263, B-264, B-265). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |

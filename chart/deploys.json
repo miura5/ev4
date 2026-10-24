@@ -3578,5 +3578,23 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "live",
+  "commit": "d81db0a",
+  "time": "2026-10-24T04:37:57.618Z",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "2eba0a6",
+  "from": "2eba0a6",
+  "tasks": [
+   "B-59",
+   "B-262"
+  ],
+  "summary": "per-task review skill; Trim during the freeze",
+  "why": null,
+  "decisions": [],
+  "source": "log",
+  "release": "v4.5.4"
  }
 ]
