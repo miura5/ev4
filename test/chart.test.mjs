@@ -30,18 +30,7 @@ import { execFileSync } from 'node:child_process';
 // live health read), so they run as one whatever session runs them: a builder's own /tmp/ev/builder-run would refuse
 // those by design and fail six of them. A test of the builder passes its own marker (EV_BUILDER_MARKER) explicitly.
 process.env.EV_BUILDER_MARKER = path.join(os.tmpdir(), `ev-hand-chat-${process.pid}`, 'no-builder-run');
-const SAMPLE_VIEWS = {
-  doc: 'DOC',
-  decisionsTab: 'tab',
-  board: {
-    node: 'BN',
-    table: 's1.10',
-    statusEnum: 'E1',
-    statusOptions: ['Done', 'In progress', 'Next', 'Waiting on Matt', 'Later'],
-  },
-  changelog: { node: 'CN', table: 's1.20' },
-  overview: { doc: 'OV', node: 'ON', paragraph: 's9.5' },
-};
+const SAMPLE_VIEWS = { doc: 'DOC', board: { node: 'BN' } };
 const task = (id, o = {}) => ({
   id,
   kind: 'task',
@@ -57,8 +46,8 @@ const task = (id, o = {}) => ({
 });
 const sample = () => ({
   tasks: [
-    task('B-01', { status: 'done', commit: 'abc1234', board: { row: 'v4 B-01: one', why: 'why one', notes: 'n1' } }),
-    task('B-02', { board: { row: 'v4 B-02: two', why: 'why two', notes: 'n2' } }),
+    task('B-01', { status: 'done', commit: 'abc1234', board: { row: 'v4 B-01: one' } }),
+    task('B-02', { board: { row: 'v4 B-02: two' } }),
     task('B-03'),
   ],
   decisions: [

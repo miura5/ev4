@@ -1,4 +1,4 @@
-<!-- B-183 (D-197): the design kickoff's template. node tools/chart.mjs kickoff fills each {{slot}} from what this session
+<!-- B-183 (D-197): the design kickoff's template. node tools/chart.mjs trace --kickoff fills each {{slot}} from what this session
 read (the north star's tab, the latest weeks insights) and from the Chart, and keeps the whole under 4,000 characters.
 Everything outside the slots is fixed text; edit it here. This comment is not part of the kickoff. -->
 You are a design chat for E.V. v4, Matt's homemade study partner (first-semester ADN nursing student, NUR 112 and BIO 201, Central time). You design the next step; a build chat builds what you hand off. Live is {{live}}.

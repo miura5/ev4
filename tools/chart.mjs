@@ -13,7 +13,7 @@
 //   log deploy --target <staging|live> --commit sha [--time ISO] [--ok Matt] [--verify green] [--rollback sha]
 //              [--tasks ids] [--summary s] [--why w] [--decisions ids]
 //   log rule <R-id> --rule t --decision D-id --command c --fn name [--task B-id]   a rule ship enforces
-//   log decision <D-id> --title t [--status s] [--why w] [--supersedes ids] [--amends ids] [--restated]
+//   log decision <D-id> --title t [--status s] [--why w] [--supersedes ids] [--amends ids]
 //            each writes one change to chart/, regenerates BACKLOG.md, commits (--no-commit to skip; --trailer adds a
 //            commit trailer line, repeatable)
 //   plan --from <doc link> [--apply]   a design doc's hand-off (D-141, B-106): from this session's
@@ -26,6 +26,8 @@
 //            head, as a restore commit, then ship staging and ship live; without --apply a dry run that prints it all
 //   brief --task <id>        one page for a new session: the inbox, the task, its dependencies, decisions, limits
 //   backlog [--check]        regenerate BACKLOG.md (--check: exit 1 when the file differs)
+//   trace --job <id> --record <staging|live> --status done|failed [--note t] [--kickoff | --filed]   a builder run's
+//            trace of its job, as the calls that write it (B-178, B-183)
 // Options: --root <repo> (default this checkout). Exit 0 green, 1 red or refused, 2 usage.
 import fs from 'node:fs';
 import os from 'node:os';
@@ -192,11 +194,11 @@ export function yourTurnLines(rec) {
  * BACKLOG.md from the record (B-148, D-4): the open, blocked and in-progress tasks first, then Your turn (what waits on
  * Matt, by place), then the done tasks under one heading, then the inbox (reports untriaged or declined).
  */
-export function renderBacklog(rec, { header = BACKLOG_HEADER } = {}) {
+export function renderBacklog(rec) {
   const tasks = rec.tasks.filter(t => !INBOX.has(t.status) && t.status !== 'done'),
     done = rec.tasks.filter(t => t.status === 'done'),
     inbox = rec.tasks.filter(t => INBOX.has(t.status));
-  const out = [...header, '', COLUMNS, ...tasks.map(backlogRow)];
+  const out = [...BACKLOG_HEADER, '', COLUMNS, ...tasks.map(backlogRow)];
   out.push(
     '',
     '## Your turn',
@@ -227,12 +229,11 @@ export function renderBacklog(rec, { header = BACKLOG_HEADER } = {}) {
 // drift test; the Docs views are retired and nothing prints a Docs call for them.
 const GENERATED =
   '**Generated from the Chart by `node tools/chart.mjs`: never edit this file by hand** (D-140, D-172).';
-const decisionDate = d => d.date || (d.at ? ctDate(d.at) : '');
 /** DECISIONS.md: every decision and tenet in the record, newest first, with its reasoning and status. */
 export function renderDecisions(rec) {
   const ds = [...rec.decisions].sort((a, b) => Number(b.id.slice(2)) - Number(a.id.slice(2)));
   const kind = d =>
-    d.kind === 'tenet' ? `Tenet (${(d.scope || []).join(', ')}; checked by ${d.checkedBy || d.check || 'review'})` : '';
+    d.kind === 'tenet' ? `Tenet (${(d.scope || []).join(', ')}; checked by ${d.check || 'review'})` : '';
   const links = d =>
     [
       d.supersedes && d.supersedes.length ? 'supersedes ' + d.supersedes.join(', ') : '',
@@ -251,7 +252,7 @@ export function renderDecisions(rec) {
     '| --- | --- | --- | --- | --- | --- |',
     ...ds.map(
       d =>
-        `| ${d.id} | ${cell(decisionDate(d))} | ${cell([kind(d), d.title].filter(Boolean).join(': '))} | ${cell(d.why || '')} | ${d.status} | ${cell(links(d))} |`
+        `| ${d.id} | ${cell(d.date || '')} | ${cell([kind(d), d.title].filter(Boolean).join(': '))} | ${cell(d.why || '')} | ${d.status} | ${cell(links(d))} |`
     ),
   ].join('\n');
 }
@@ -596,7 +597,7 @@ export function applyLog(rec, o, { now = new Date().toISOString(), builder = bui
       source: 'log',
     };
     // A decision restated after it was filed (Matt, Oct 20: D-123 to D-126 to the UI tenets) is marked with the date.
-    if (old && (o.restated || (o.title && o.title !== d.title) || (o.why && o.why !== d.why))) d.restated = ctDate(now);
+    if (old && ((o.title && o.title !== d.title) || (o.why && o.why !== d.why))) d.restated = ctDate(now);
     if (o.title) d.title = o.title;
     if (o.why) d.why = o.why;
     if (o.status) d.status = o.status;
@@ -681,9 +682,7 @@ export function applyLog(rec, o, { now = new Date().toISOString(), builder = bui
       source: o.source || 'log new',
     };
     if (o.depends && list(o.depends).join(', ') !== t.depends.join(', ')) t.dependsText = o.depends;
-    const at = o.after ? rec.tasks.findIndex(x => x.id === o.after) : -1;
-    if (o.after && at < 0) throw new Error(`--after ${o.after}: no such task`);
-    rec.tasks.splice(at < 0 ? rec.tasks.length : at + 1, 0, t);
+    rec.tasks.push(t);
     return { rec, what: `new task (${t.milestone})`, id: nid };
   }
   const tasks = findTask(rec, id);
@@ -724,7 +723,7 @@ export function applyLog(rec, o, { now = new Date().toISOString(), builder = bui
       if (o.title) t.title = o.title;
       what.push('triaged into a task');
     } else if (how === 'join') {
-      const into = o._[2] || o.into;
+      const into = o._[2];
       if (!into || !findTask(rec, into).length) throw new Error('--triage join needs the task it joins');
       Object.assign(t, {
         status: 'declined',
@@ -2104,7 +2103,7 @@ export function kickoffText(
   if (text.length > KICKOFF_MAX) text = text.slice(0, KICKOFF_MAX - 1) + '…';
   return { text, length: text.length, missing };
 }
-/** The kickoff from this session's reads (the north star's tab, the weeks fetch), as the command and trace use it. */
+/** The kickoff from this session's reads (the north star's tab, the weeks fetch), as trace --kickoff uses it. */
 export function kickoffFrom(root, jsonl, { theme = null, now } = {}) {
   const template = fs.readFileSync(new URL('./kickoff.md', import.meta.url), 'utf8'); // the template is code, beside this file
   return kickoffText(loadChart(root), {
@@ -2864,10 +2863,8 @@ function args(argv) {
     '--no-commit',
     '--matt-ok',
     '--during-session',
-    '--force',
     '--apply',
     '--correct',
-    '--retire',
     '--matt',
     '--minor',
   ]);
@@ -2971,32 +2968,6 @@ const commands = {
   trace(o) {
     return trace(o);
   },
-  // B-183 (D-197): the design kickoff, printed; kickoff [--theme "<theme>"].
-  kickoff(o) {
-    const root = rootOf(o),
-      file = o.transcript || newestTranscript();
-    const jsonl = file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
-    const k = kickoffFrom(root, jsonl, { theme: typeof o.theme === 'string' ? o.theme : null });
-    const reads = [
-      ...(k.missing.some(m => /north star/.test(m))
-        ? [
-            `  Claude_Docs read ${JSON.stringify({ ref: { object: 'project', id: docIdOf(NORTH_STAR) } })}, then its tab's node`,
-          ]
-        : []),
-      ...(k.missing.some(m => /weeks/.test(m))
-        ? [
-            `  ArtifactData {"action":"list","url":"<the record>","collection":"weeks","query":{"limit":5},"out_dir":"${path.join(root, 'dist', 'state', 'weeks')}"}`,
-          ]
-        : []),
-    ];
-    if (reads.length) {
-      console.log(`kickoff: read ${k.missing.join(' and ')} first, then kickoff again:\n${reads.join('\n')}`);
-      return 1;
-    }
-    console.log(k.text);
-    console.log(`\n(kickoff: ${k.length} of ${KICKOFF_MAX} characters)`);
-    return 0;
-  },
   rollback(o) {
     return rollback(o);
   },
@@ -3066,9 +3037,7 @@ export async function main(argv) {
   const o = args(argv),
     cmd = commands[o._[0]];
   if (!cmd) {
-    console.error(
-      'Commands: report, inbox, log, lint, ship <staging|live>, brief --task <id>, plan --from <doc link> [--apply], backlog [--check]'
-    );
+    console.error(`Commands: ${Object.keys(commands).join(', ')} (usage in the header of tools/chart.mjs)`);
     return 2;
   }
   try {
