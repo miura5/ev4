@@ -5195,7 +5195,7 @@
   "depends": [
    "B-288"
   ],
-  "notes": "claimed by lane ev",
+  "notes": "built: the page already draws D-213's sizes and C-2's captions (since B-209, B-247); added the measured check to the captions harness (light and dark, 390, 1280x900, 1280x1100, idle and session): 30 checks pass",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
