@@ -2,10 +2,28 @@
 # synthetic record at 390 and 1280 (boot with no page error, the greeting, each tab, a check-off that keeps the scroll,
 # a review answer that scores, a Your-turn reply that files). Then each plant must turn it red, so a smoke tier that
 # stopped catching anything fails here. The full `npm run check` stays nightly (nightly.yml) and before live.
+# B-262: not for a push that changes only the record's bookkeeping (tools/build.mjs BOOKKEEPING) or docs/: the build
+# reads neither, so the page it smokes is the same.
 name: smoke
 on:
   push:
+    paths-ignore:
+      - 'chart/**'
+      - 'BACKLOG.md'
+      - 'DECISIONS.md'
+      - 'CHANGELOG.md'
+      - 'tools/chart.mjs'
+      - 'test/chart.test.mjs'
+      - 'docs/**'
   pull_request:
+    paths-ignore:
+      - 'chart/**'
+      - 'BACKLOG.md'
+      - 'DECISIONS.md'
+      - 'CHANGELOG.md'
+      - 'tools/chart.mjs'
+      - 'test/chart.test.mjs'
+      - 'docs/**'
   workflow_dispatch:
 permissions:
   contents: read

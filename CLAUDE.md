@@ -49,7 +49,7 @@ attribution lines with `--trailer`, one per line) and regenerates BACKLOG.md, DE
    pipeline is involved, the proof is a scheduled task fired against staging and its `runs/<id>` read back, never a
    hand replay. Where the page is involved, run `npm run smoke` while working (B-199: the build, then boot, greeting,
    each tab, a check-off, a review answer and a Your-turn reply at 390 and 1280, in about 10 seconds; the smoke
-   workflow runs it on every push), and `npm run check -- --touched` once before ship staging (B-219, D-226: npm test,
+   workflow runs it on every push but bookkeeping and docs), and `npm run check -- --touched` once before ship staging (B-219, D-226: npm test,
    the build, only the harnesses the change since the last staging deploy touched, the look pass at 390x844, 735x830,
    1706x1240 and 2560x1240), and look at the screenshots it lists. The full `npm run check` runs nightly and before live:
    `ship live` refuses a commit with no full GREEN here (dist/check-full.json) or green nightly at it (R-06).
