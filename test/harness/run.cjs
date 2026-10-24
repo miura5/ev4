@@ -1212,9 +1212,9 @@ const ok = (name, cond, detail = '') => {
     ok(
       `[${scheme}] core is drawing`,
       await page.evaluate(() => {
-        // B-206 (D-212): her flower, five petals, drawn.
+        // B-272 (D-265): her Dial Arc, 12 segments less her gap, drawn.
         const sm = window.EVApp.core.sample(0);
-        return !!sm && sm.renderer === 'svg' && sm.petals === 5 && sm.draws > 0;
+        return !!sm && sm.renderer === 'svg' && sm.segments >= 10 && sm.draws > 0;
       })
     );
     // B-38: the page follows system/manifest; a newer build asks for a reload, nothing reloads on its own
@@ -4590,12 +4590,16 @@ const ok = (name, cond, detail = '') => {
     );
     ok('check card shows answered', /Check 1 · answered/.test(await ss.locator('#ev-surf').textContent()));
     {
-      // B-211 (D-217): one petal lights per answered check, and the four petals past it stay quiet.
+      // B-211 (D-217): her session progress moves with each answered check (one of five: 0.2, two of her 12 segments).
       const pt = await ss.evaluate(() => ({
         ring: window.EVApp.core.stats().ring,
-        dim: document.querySelectorAll('#hero svg.fl .pet.dim').length,
+        filled: window.EVApp.core.sample(0).filled,
       }));
-      ok('one answered check lights one of her petals (D-217)', Math.abs(pt.ring - 0.2) < 1e-6, JSON.stringify(pt));
+      ok(
+        'one answered check moves her session progress (D-217)',
+        Math.abs(pt.ring - 0.2) < 1e-6 && pt.filled === 2,
+        JSON.stringify(pt)
+      );
     }
     // Break and resume from the bar
     await ss.locator('#sbar button', { hasText: 'Break' }).click();
@@ -5214,8 +5218,8 @@ const ok = (name, cond, detail = '') => {
   }
   delete seed.idchecks;
   delete seed.system.yourturn;
-  // B-215 (D-216): a job that finishes while he is on another tab: her small flower faces him with the top petal lit, her
-  // status says something's ready, no badge anywhere; opening E.V. ends it.
+  // B-215 (D-216): a job that finishes while he is on another tab: her small dial turns to face him, closed, with the
+  // segments at twelve lit (B-272), her status says something's ready, no badge anywhere; opening E.V. ends it.
   for (const [tag, vp, flower] of [
     ['[notice 390]', { width: 390, height: 844 }, '#tab-her svg'],
     ['[notice 1280]', { width: 1280, height: 860 }, '#top-av svg'],
@@ -5257,14 +5261,18 @@ const ok = (name, cond, detail = '') => {
       .catch(() => {});
     await page.waitForTimeout(400);
     const on = await page.evaluate(sel => {
-      const st = window.EVApp.core.stats();
-      const f = document.querySelector(sel);
+      const C = window.EVApp.core,
+        st = C.stats();
+      const f = document.querySelector(sel),
+        i = C.cores().findIndex(c => c.svg === f),
+        sm = i >= 0 ? C.sample(i) : null;
       return {
         readout: document.getElementById('readout').textContent,
         mood: st.mood,
         ring: st.ring,
-        dim: f ? f.querySelectorAll('.pet.dim').length : -1,
-        lit: f ? f.querySelectorAll('.pet:not(.dim)').length : -1,
+        facing: sm ? sm.facing : null,
+        lit: sm ? sm.solid : -1,
+        halftone: sm ? sm.back : -1,
         badges: [...document.querySelectorAll('.badge, .count, .dot-count, [class*="badge"]')].filter(
           b => b.getBoundingClientRect().height > 0
         ).length,
@@ -5272,12 +5280,13 @@ const ok = (name, cond, detail = '') => {
     }, flower);
     await page.screenshot({ path: `${shots}/notice-${vp.width}.png` });
     ok(
-      `${tag} a job finished off the E.V. tab: her small flower faces him (alert) with the top petal lit, her status says something’s ready, no badge (D-216)`,
+      `${tag} a job finished off the E.V. tab: her small dial faces him (alert), closed, lit at twelve, her status says something’s ready, no badge (D-216)`,
       !/something’s ready/.test(before) &&
         /^something’s ready/.test(on.readout) &&
         on.mood === 'alert' &&
-        on.ring === 0.2 &&
-        on.dim === 4 &&
+        on.facing === true &&
+        on.lit === 2 &&
+        on.halftone === 10 &&
         on.badges === 0,
       JSON.stringify({ before, ...on })
     );

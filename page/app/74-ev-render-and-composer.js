@@ -8,9 +8,9 @@
     // E.V.'s state, shown by every core that follows it and by the readout: streaming → speaking, Claude working → thinking,
     // a check just posted → check ready, a session break → resting, a right answer → pleased, typing → listening.
     // B-215 (D-216): turning to face him is the notification. A job that finishes, or a new ask in Your turn, while he is on
-    // another tab: her small flower faces him with the top petal lit and her status reads something's ready, until he
-    // opens E.V. What the page found on load is not news.
-    const NT = { seen: null, yt: 0, on: false, ring: false };
+    // another tab: her small dial turns to face him, closed, with the segments at twelve lit (alert, B-272), and her
+    // status reads something's ready, until he opens E.V. What the page found on load is not news.
+    const NT = { seen: null, yt: 0, on: false };
     function noticeSync() {
       if (!loaded.has('jobs') || !T.ready) return;
       const fin = (S.jobs || []).filter(j => j.status === 'done' || j.status === 'failed').map(j => j.id);
@@ -26,14 +26,6 @@
       NT.yt = yt;
       if (ui.tab === 'ev') NT.on = false;
       else if (fresh.length || more) NT.on = true;
-      // the top petal lit (a session's petals win while one runs)
-      if (NT.on && !activeSession()) {
-        CORE.setRing(0.2);
-        NT.ring = true;
-      } else if (NT.ring) {
-        NT.ring = false;
-        if (!activeSession()) CORE.setRing(-1);
-      }
     }
     function computeMood() {
       if (NT.on && ui.tab !== 'ev') return 'alert';

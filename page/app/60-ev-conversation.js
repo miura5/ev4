@@ -40,450 +40,439 @@
     };
     let talkQ = Promise.resolve();
     let lastStamp = '';
-    // ------------------------------------------------------------ Her: the 2D forget-me-not (B-206; D-212, D-215, D-223)
-    // One flat SVG per place she shows (her stage, the top bar, a message), every one the same drawing (D-223). Each pose
-    // is a flat drawing: to tip her away the plane squashes, her eye lifts, the near petals shorten and the far ones
-    // shade. She moves on one held clock, spec.ui.look.flower.clock.heldFps drawings a second (D-230): a drawing is made
-    // only on a new held frame and only when its pose differs from the last, so a still idle draws nothing but the
-    // falling petal (D-224). Every value is spec.ui.look.flower; the page talks to her through CORE.setMood, CORE.gesture,
-    // CORE.speak, CORE.speechEnd and CORE.setRing (also EVApp.core), as it did to the Silk core it replaced (D-134).
+    // ------------------------------------------------------------ Her: the Dial Arc (B-272; D-265, D-266, D-213, D-216)
+    // Ported from the round 15 canvas's Avatar.dc.html (https://claude.ai/artifact/GwFwpuVtVMuyUKF8kJA8Sw), Ember with
+    // halftone, gentle tilt, 12 segments, narrow gap, Pointer sessions. A tilted ring of 12 segments (radii 16 and 28 of a
+    // 100-unit box, 0.08 rad apart), each flipping on its spoke between a solid front (--av1) and a halftone back (--av2)
+    // over an underlay in the ground colour. At rest an arc with a 1.6-segment gap at two o'clock: the gap is her pointer.
+    // One SVG per place she shows (her stage, the sidebar, the pane header, the phone's tab), every one the same drawing.
+    // Each frame eases toward the state's targets with frame-rate-independent smoothing, k(b) = 1 - (1 - b)^(dt x 30);
+    // a still idle or sleepy dial draws nothing. The page talks to her through CORE.setMood, CORE.gesture, CORE.speak,
+    // CORE.speechEnd and CORE.setRing (also EVApp.core), as it did to the flower it replaced (D-134).
     let MOOD_NOW = 'idle';
     const CORE = (() => {
-      const F = (EV_SPEC.ui && EV_SPEC.ui.look && EV_SPEC.ui.look.flower) || null;
-      if (!F) throw new Error('her renderer needs spec.ui.look.flower');
       const SVG = 'http://www.w3.org/2000/svg';
-      const FPS = F.clock.heldFps;
-      const MOODS = Object.keys(F.moods);
-      const FACE = new Set(F.view.facing);
+      const TAU = Math.PI * 2,
+        PI = Math.PI;
+      const MOODS = ['idle', 'listening', 'thinking', 'speaking', 'alert', 'happy', 'sleepy'];
+      const GD = { send: 1.2, done: 1.6, error: 1.8, glance: 2.2, settle: 2.4 };
+      const LIVE = { thinking: 1, speaking: 1, alert: 1, happy: 1 };
+      const N = 12,
+        R0 = 16,
+        R1 = 28,
+        GAP = 0.08,
+        GW = 1.6,
+        TILT = { rx: 0.45, ry: -0.35 };
       // B-224 (D-229): the system's setting or his Reduce motion On, read when she draws
       const reduceMq = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
       const isReduced = () => reduceMq.matches || document.documentElement.getAttribute('data-motion') === 'reduce';
-      const cl = x => Math.max(0, Math.min(1, x));
-      const eIO = x => 0.5 - 0.5 * Math.cos(Math.PI * cl(x));
-      const eOut = (x, p) => 1 - Math.pow(1 - cl(x), p);
-      const backOut = (x, c) => {
-        const y = cl(x) - 1;
-        return 1 + (c + 1) * y * y * y + c * y * y;
-      };
-      const trk = (keys, t) => {
-        if (t <= keys[0][0]) return keys[0][1];
-        for (let i = 1; i < keys.length; i++) {
-          const [t1, v1] = keys[i],
-            [t0, v0] = keys[i - 1];
-          if (t <= t1) return v0 + (v1 - v0) * eIO((t - t0) / (t1 - t0));
+      const f1 = v => Math.round(v * 100) / 100;
+      const cl = x => Math.max(0, Math.min(1, x)),
+        ease = x => 0.5 - 0.5 * Math.cos(PI * cl(x));
+      const pd = pts => (pts.length < 2 ? '' : 'M' + pts.map(p => f1(p[0]) + ' ' + f1(p[1])).join('L') + 'Z');
+      const lerpObj = (cur, tgt, k) => {
+        let mv = 0;
+        for (const key in tgt) {
+          const d = tgt[key] - cur[key];
+          cur[key] += d * k;
+          mv += Math.abs(d);
         }
-        return keys[keys.length - 1][1];
+        return mv;
       };
-      const hash1 = n => {
-        const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
-        return x - Math.floor(x);
-      };
-      const r3 = v => Math.round(v * 1000) / 1000;
-      const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
-      const RNG = seed => () => {
-        seed |= 0;
-        seed = (seed + 0x6d2b79f5) | 0;
-        let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-      };
-
-      // ---- the drawing: five petals, their streaks and the eye, made once from the seed (the hand's wobble included)
-      const S = F.shape,
-        H = F.hand;
-      const PROF = {
-        disc: t => Math.pow(Math.max(0, 1 - Math.pow((t - 0.55) / 0.55, 2)), 0.5),
-      };
-      function curve(P) {
-        let d = `M${f1(P[0][0])} ${f1(P[0][1])}`;
-        for (let i = 0; i < P.length - 1; i++) {
-          const p0 = P[i - 1] || P[i],
-            p1 = P[i],
-            p2 = P[i + 1],
-            p3 = P[i + 2] || p2;
-          d += ` C${f1(p1[0] + (p2[0] - p0[0]) / 6)} ${f1(p1[1] + (p2[1] - p0[1]) / 6)} ${f1(p2[0] - (p3[0] - p1[0]) / 6)} ${f1(p2[1] - (p3[1] - p1[1]) / 6)} ${f1(p2[0])} ${f1(p2[1])}`;
-        }
-        return d + 'Z';
-      }
-      function petalBase(rnd, h) {
-        const off = [];
-        for (let k = 0; k < 40; k++) off.push([(rnd() - 0.5) * H.offsetPx * h, (rnd() - 0.5) * H.offsetPx * h]);
+      const cam = (rx, ry) => {
+        const cx = Math.cos(rx),
+          sx = Math.sin(rx),
+          cy = Math.cos(ry),
+          sy = Math.sin(ry);
+        const rot = p => {
+          const x1 = p[0] * cy + p[2] * sy,
+            z1 = -p[0] * sy + p[2] * cy;
+          return [x1, p[1] * cx - z1 * sx, p[1] * sx + z1 * cx];
+        };
         return {
-          off,
-          wm: 1 + (rnd() - 0.5) * H.widthJitter * h,
-          lm: 1 + (rnd() - 0.5) * H.lengthJitter * h,
-          ts: (rnd() - 0.5) * H.tipLeanDeg * h,
-          rr: [(rnd() - 0.5) * 3 * h, (rnd() - 0.5) * 3 * h],
+          rot,
+          proj: p => {
+            const r = rot(p),
+              s = 150 / (150 - r[2]);
+            return [r[0] * s, r[1] * s, r[2]];
+          },
         };
-      }
-      function petalPath(b, rnd, amp) {
-        const N = H.curvePoints,
-          W = S.widthPx * b.wm,
-          len = S.lengthPx * b.lm,
-          top = 100 - len,
-          ts = b.ts;
-        const j = k => [b.off[k][0] + (rnd() - 0.5) * 2 * amp, b.off[k][1] + (rnd() - 0.5) * 2 * amp];
-        const left = [],
-          right = [];
-        for (let k = 1; k < N; k++) {
-          const t = k / N,
-            w = W * PROF[S.profile](t),
-            y = 100 - len * t,
-            lean = ts * t * t,
-            jl = j(k),
-            jr = j(N + k);
-          left.push([30 - w + lean + jl[0], y + jl[1]]);
-          right.push([30 + w + lean + jr[0], y + jr[1]]);
-        }
-        const jt = j(2 * N);
-        return curve([[30, 100], ...left, [30 + ts + jt[0] * 0.4, top - 1.5], ...right.reverse(), [30, 100]]);
-      }
-      const circ = (cx, cy, r) =>
-        `M${f1(cx - r)} ${f1(cy)}a${f1(r)} ${f1(r)} 0 1 0 ${f1(2 * r)} 0a${f1(r)} ${f1(r)} 0 1 0 ${f1(-2 * r)} 0`;
-      function eyeOf(rnd, h) {
-        const J = () => (rnd() - 0.5) * 0.8 * h,
-          E = S.eyeRing,
-          P = [];
-        for (let i = 0; i < 40; i++) {
-          const a = (i / 40) * Math.PI * 2 - Math.PI / 2,
-            r = E.radius * (1 + E.bumpAmp * Math.cos(E.bumps * (a + Math.PI / 2))) + J() * 0.4;
-          P.push([20 + Math.cos(a) * r, 20 + Math.sin(a) * r]);
-        }
-        return {
-          ring: 'M' + P.map(p => f1(p[0]) + ' ' + f1(p[1])).join('L') + 'Z' + circ(20, 20, E.hole),
-          core: circ(20 + J() * 0.3, 20 + J() * 0.3, E.core),
-        };
-      }
-      function streaks(b, rnd, h) {
-        const T = S.streaks;
-        const one = (dx, ang, len, w) => {
-          const x0 = 30 + dx,
-            y0 = T.fromY,
-            a = ang + (rnd() - 0.5) * 0.16 * h,
-            L = len * (1 + (rnd() - 0.5) * 0.24 * h);
-          const tx = x0 + Math.sin(a) * L + b.ts * 0.25,
-            ty = y0 - Math.cos(a) * L,
-            mx = (x0 + tx) / 2,
-            my = (y0 + ty) / 2;
-          return `M${f1(x0 - w)} ${f1(y0)} Q${f1(mx - w * 0.55)} ${f1(my)} ${f1(tx)} ${f1(ty)} Q${f1(mx + w * 0.55)} ${f1(my)} ${f1(x0 + w)} ${f1(y0)}Z`;
-        };
-        return (
-          one(0, 0, T.mainLen, T.mainWidth) +
-          one(-T.sideOffset, -T.sideAngleRad, T.sideLen, T.sideWidth) +
-          one(T.sideOffset, T.sideAngleRad, T.sideLen, T.sideWidth)
-        );
-      }
-      function build(small) {
-        const h = H.amount,
-          rnd = RNG(H.seed),
-          petals = [],
-          hh = small ? h * H.smallHandScale : h;
-        for (let i = 0; i < S.petals; i++) {
-          const b = petalBase(rnd, hh),
-            amp = small ? 0 : H.boilAmpBase + h * H.boilAmpPerHand;
-          petals.push({
-            r: i * S.spreadDeg + (i ? (rnd() - 0.5) * S.pinwheelJitterDeg * hh : 0),
-            s: 1 + (rnd() - 0.5) * S.sizeJitter * hh,
-            d: [petalPath(b, rnd, 0), petalPath(b, rnd, amp), petalPath(b, rnd, amp)],
-            vein: streaks(b, rnd, hh),
-          });
-        }
-        return { petals, eye: eyeOf(rnd, hh), fall: petalPath(petalBase(rnd, hh), rnd, 0) };
-      }
-      const SHAPES = { l: build(false), s: build(true) };
+      };
+      const rodr = (v, u, a) => {
+        const c = Math.cos(a),
+          s = Math.sin(a),
+          d = u[0] * v[0] + u[1] * v[1] + u[2] * v[2],
+          cr = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+        return [
+          v[0] * c + cr[0] * s + u[0] * d * (1 - c),
+          v[1] * c + cr[1] * s + u[1] * d * (1 - c),
+          v[2] * c + cr[2] * s + u[2] * d * (1 - c),
+        ];
+      };
+      const near = (tg, cur) => tg + TAU * Math.round((cur - tg) / TAU);
+      const cdist = (a, b, n) => {
+        const d = (((a - b) % n) + n) % n;
+        return Math.min(d, n - d);
+      };
+      const circ = (from, to, n) => ((((to - from) % n) + n * 1.5) % n) - n / 2;
+      const zoneOf = px => (px <= 28 ? 's' : px <= 64 ? 'm' : 'l');
 
-      // ---- the clock and the pose: shared signals, then each flower's own view (she turns on her own time per place)
-      const sig = { mood: 'idle', talking: false, voice: 0, voiceAt: 0, g: null, gAt: 0, gid: 0, ring: -1 };
+      // ---- shared signals: the page sets them; every dial that follows her reads them
+      const sig = {
+        mood: 'idle',
+        talking: false,
+        voice: 0,
+        voiceAt: 0,
+        words: 0,
+        g: null,
+        gAt: 0,
+        gid: 0,
+        glance: 1,
+        ring: -1,
+      };
       const log = [];
       const note = (kind, name, detail) => {
         log.push({ at: Date.now(), kind, name, ...(detail != null ? { detail } : {}) });
         if (log.length > 200) log.shift();
       };
-      const newGroup = () => ({
-        mood: 'idle',
-        g: null,
-        gT0: 0,
-        mT0: 0,
-        vw: { from: 1, to: 1, t0: -9 },
-        lastFace: null,
-        sp: { lv: 1, t: -9 },
-      });
-      const viewTarget = (G, tq, hold) => {
-        if (FACE.has(G.mood) || (G.g === 'error' && F.view.faceOnError)) return 0;
-        if (G.mood !== 'sleepy' && G.lastFace != null && tq - G.lastFace < hold) return 0;
-        return G.mood === 'sleepy' ? F.view.sleepyView : F.view.awayView;
-      };
-      // A turn to face him holds the first frame a hair the wrong way, then eases round past and back; a turn away holds
-      // the first frame, then eases out (the listening -> idle technique of the canvas).
-      function vAt(vw, tq) {
-        const toward = vw.to < vw.from,
-          C = toward ? F.view.toward : F.view.away,
-          n = Math.max(C.minFrames, Math.round(C.framesPerSec * FPS)),
-          i = Math.round((tq - vw.t0) * FPS);
-        if (i < 0) return vw.from;
-        if (i >= n) return vw.to;
-        const c = i === 0 ? C.firstFrame : toward ? backOut(i / (n - 1), C.overshoot) : eOut(i / (n - 1), C.power);
-        return vw.from + (vw.to - vw.from) * c;
-      }
-      const GD = name => F.gestures[name].durationSec;
-      function step(G, tq, mood, g, amp) {
-        if (mood !== G.mood) {
-          G.mood = mood;
-          G.mT0 = tq;
-        }
-        if (g !== G.g) {
-          G.g = g;
-          G.gT0 = tq;
-        }
-        if (FACE.has(mood) || g === 'error') G.lastFace = tq;
-        const tgt = viewTarget(G, tq, F.view.holdSec);
-        if (tgt !== G.vw.to) G.vw = { from: vAt(G.vw, tq), to: tgt, t0: tq };
-        const [lo, hi] = F.speech.thresholds;
-        const lv = mood === 'speaking' ? (amp < lo ? 0 : amp < hi ? 1 : 2) : 1;
-        if (lv !== G.sp.lv && tq - G.sp.t >= F.speech.minHoldFrames / FPS - 1e-6) {
-          G.sp = { lv, t: tq };
-          (G.spLog || (G.spLog = [])).push([Math.round(tq * FPS), lv]);
-          if (G.spLog.length > 200) G.spLog.shift();
-        }
-      }
-      const POSES = [F.speech.poses.closed, F.speech.poses.open, F.speech.poses.wide];
-      function pose(G, tq, rm, gl) {
-        const el = tq - G.mT0,
-          ge = tq - G.gT0,
-          m = G.mood,
-          g = rm ? (G.g === 'error' ? 'error' : null) : G.g,
-          M = F.moods;
-        const o = {
-          // Reduced motion: the end state of the turn, no hold: facing him when she attends, else tipped away.
-          v: rm
-            ? FACE.has(m) || g === 'error'
-              ? 0
-              : m === 'sleepy'
-                ? F.view.sleepyView
-                : F.view.awayView
-            : vAt(G.vw, tq),
-          h: 0,
-          rot: 0,
-          rs: 1,
-          sx: 1,
-          sy: 1,
-          bob: 0,
-          es: 1,
-          eyeOp: 1,
-          err: false,
-          len: [1, 1, 1, 1, 1],
-          wid: [1, 1, 1, 1, 1],
-          hi: -1,
-          fall: -1,
-          sleepy: m === 'sleepy',
-        };
-        const each = f => {
-          for (let i = 0; i < 5; i++) f(i);
-        };
-        if (m === 'alert' && M.alert.topPetal) o.hi = 0;
-        if (m === 'sleepy') {
-          each(i => {
-            o.len[i] *= M.sleepy.len;
-            o.wid[i] *= M.sleepy.wid;
-          });
-          o.bob = M.sleepy.bob;
-          o.eyeOp = M.sleepy.eye;
-        }
-        if (!rm) {
-          if (m === 'thinking') {
-            const T = M.thinking,
-              b = Math.floor(el / T.beatSec),
-              x = el / T.beatSec - b;
-            o.rot = T.stepDeg * (b + (x < T.holdShare ? 0 : eIO((x - T.holdShare) / (1 - T.holdShare))));
-            o.v += T.sway * Math.sin((el * Math.PI * 2) / T.swaySec);
-          }
-          if (m === 'listening') {
-            const T = M.listening;
-            o.rs = T.scale;
-            each(i => (o.len[i] *= 1 + T.breathe * Math.sin((el * Math.PI * 2) / T.breatheSec - i * T.phasePerPetal)));
-          }
-          if (m === 'happy') {
-            const T = M.happy,
-              c = el % T.cycleSec,
-              n = Math.floor(el / T.cycleSec),
-              hop = u => trk(T.hopKeys, u);
-            o.rot = 144 * n + (c < T.hopSec ? hop(c) : c < 2 * T.hopSec ? 72 + hop(c - T.hopSec) : 144);
-            if (c < 2 * T.hopSec) {
-              const u = c % T.hopSec;
-              o.sx = trk(T.squashKeys, u);
-              o.sy = trk(T.stretchKeys, u);
-            }
-          }
-          if (m === 'alert') {
-            const T = M.alert,
-              c = el % T.cycleSec,
-              K = T.flickKeys;
-            o.len[0] *= 1 - T.flick * trk([...K, [T.cycleSec, 0]], c);
-            o.eyeOp = (c > K[1][0] && c < K[2][0]) || (c > K[3][0] && c < K[4][0]) ? T.eyeDim : 1;
-          }
-          if (m === 'sleepy') o.rs = 1 - M.sleepy.breathe * (Math.floor(el / M.sleepy.breatheSec) % 2);
-          if (m === 'speaking') {
-            const s = POSES[G.sp.lv] || {};
-            o.rs *= s.scale ?? 1;
-            o.es *= s.eye ?? 1;
-            o.bob += s.bob ?? 0;
-            each(i => {
-              o.len[i] *= s.len ?? 1;
-              o.wid[i] *= s.wid ?? 1;
-            });
-          }
-          if (m === 'idle' && !g && M.idle.fallingPetal) {
-            const P = M.idle.fallingPetal,
-              u = el - P.afterSec;
-            if (u >= 0 && u % P.everySec < P.forSec) o.fall = u % P.everySec;
-          }
-        }
-        if (g && ge < GD(g)) {
-          const X = F.gestures[g];
-          if (g === 'send') {
-            o.v -= X.viewDip * trk(X.viewKeys, ge);
-            each(i => (o.len[i] *= 1 + X.petalSwell * trk(X.swellKeys, ge - (i * X.staggerFrames) / FPS)));
-          }
-          if (g === 'done') {
-            o.rot += trk(X.turnKeys, ge);
-            o.rs *= trk(X.scaleKeys, ge);
-          }
-          if (g === 'error') {
-            o.err = true;
-            if (!rm) {
-              const d = trk(X.depthKeys, ge);
-              o.v -= X.viewDip * d;
-              o.bob += X.bow * d;
-              o.rot += trk(X.shakeKeys, ge);
-              each(i => (o.len[i] *= 1 - X.shrink * d));
-            }
-          }
-          if (g === 'glance') o.h = trk(X.keys, ge) * (gl || 1);
-          if (g === 'settle') {
-            const d = trk(X.keys, ge);
-            o.v += X.viewAway * d;
-            o.rs *= 1 - X.shrink * d;
-          }
-        }
-        return o;
-      }
+      // Her voice: each word lifts it and it decays between words over a floor while she talks (the canvas's word()).
+      const voiceAt = now =>
+        sig.talking ? Math.min(1, sig.voice * Math.exp(((now - sig.voiceAt) / 1000) * -8.84) + 0.12) : 0;
+      // Where the speaking nod is, in words: one step per word, eased in (the canvas's wordPos()).
+      const wordPos = now => sig.words - 1 + ease(((now - sig.voiceAt) / 1000) * 6.5);
 
-      // ---- one flower in the page: its SVG, made once; a drawing sets transforms, classes and paths on it
-      const zoneOf = px => (px <= 32 ? 's' : px <= 64 ? 'm' : 'l');
-      let uid = 0;
-      function makeSvg(id) {
-        const svg = document.createElementNS(SVG, 'svg');
-        svg.setAttribute('viewBox', '-100 -100 200 200');
-        svg.setAttribute('class', 'fl');
-        svg.setAttribute('aria-hidden', 'true');
-        svg.innerHTML =
-          `<defs><linearGradient id="${id}-g" x1="0" y1="1" x2="0" y2="0"><stop offset="0" class="s0"/><stop offset="0.36" class="s0"/><stop offset="0.6" class="s1"/><stop offset="1" class="s1"/></linearGradient>` +
-          `<clipPath id="${id}-c" clipPathUnits="userSpaceOnUse"><rect x="-100" y="-100" width="130" height="300"/></clipPath></defs>` +
-          `<g class="fall"><path class="fpet"/></g><g class="root">` +
-          [0, 1, 2, 3, 4, 5]
-            .map(
-              k =>
-                `<g class="p"${k === 5 ? ` clip-path="url(#${id}-c)"` : ''}><path class="pet" fill="url(#${id}-g)"/><path class="shade"/><path class="vein"/><path class="edge"/></g>`
-            )
-            .join('') +
-          `<g class="eye"><path class="ering" fill-rule="evenodd"/><path class="ecore"/></g></g>`;
-        return svg;
+      // ---- one frame's inputs for one dial
+      function ctxOf(o, t, now, snap) {
+        const rm = isReduced() || o.still;
+        const mood = o.follow ? sig.mood : o.mood;
+        const g = !rm && o.follow && sig.g && now - sig.gAt < GD[sig.g] * 1000 ? sig.g : '';
+        const ge = g ? (now - sig.gAt) / 1000 : 0;
+        let gd =
+          g === 'glance' && ge < 2.2
+            ? (ge < 1.1 ? -ease(ge / 0.35) : ease((ge - 1.1) / 0.35)) * (ge > 1.85 ? 1 - ease((ge - 1.85) / 0.35) : 1)
+            : 0;
+        gd *= sig.glance || 1;
+        const sh = g === 'error' && ge < 1.4 ? 3.5 * Math.exp(-3 * ge) * Math.sin(ge * 46) : 0;
+        let sq = 1;
+        if (g === 'send' && ge < 0.6) sq = 1 - 0.12 * Math.sin((PI * ge) / 0.6);
+        if (g === 'settle' && ge < 2.4) sq = 1 - 0.07 * Math.exp(-2 * ge) * Math.cos(ge * 7);
+        const dt = snap ? 0.05 : Math.min(0.1, o.lt == null ? 0 : t - o.lt);
+        if (!snap) o.lt = t;
+        return {
+          t,
+          dt,
+          now,
+          rm,
+          mood,
+          g,
+          ge,
+          z: zoneOf(o.size),
+          snap,
+          gd: Math.abs(gd) > 0.02 ? gd : 0,
+          sess: o.follow ? sig.ring : -1,
+          amp: mood === 'speaking' && !rm ? voiceAt(now) : 0,
+          k: b => (snap ? 1 : 1 - Math.pow(1 - b, dt * 30)),
+          ap: p => [p[0] * sq + sh, p[1] * sq],
+        };
       }
-      function draw(o, z, fl, fi, lean, moving, boil, svg, ringOn, ringP) {
-        const D = F.depth,
-          tilt = z === 's' ? D.tiltCornerDeg : z === 'm' ? (D.tiltStageDeg + D.tiltCornerDeg) / 2 : D.tiltStageDeg;
-        const kMin = Math.cos((tilt * Math.PI) / 180),
-          dep = D.amount,
-          av = Math.abs(o.v),
-          dir = o.v < 0 ? -1 : 1;
-        let k = Math.max(D.minSquash, 1 - av * (1 - kMin)),
-          kx = 1 - D.glanceSquashX * Math.abs(o.h);
-        const T = 1 - k,
-          facing = av < 0.02 && !o.h;
-        const jr = moving ? (hash1(fi) - 0.5) * F.clock.jitterDeg : 0,
-          jk = moving ? (hash1(fi + 7) - 0.5) * F.clock.jitterSquash : 0;
-        const LN = F.lean,
-          ln = facing ? lean : [0, 0];
-        kx *= 1 - (LN.squashPct / 100) * Math.abs(ln[0]) * LN.weight;
-        k *= 1 - (LN.squashPct / 100) * Math.abs(ln[1]) * LN.weight;
-        const eyeY = -dir * T * D.eyeLift * dep,
-          cy = -eyeY * D.coreShift;
-        const ex = 10 * o.h + ln[0] * LN.eyePx[0] * LN.weight,
-          ey = eyeY + ln[1] * LN.eyePx[1] * LN.weight;
-        const gs = svg.querySelectorAll('g.p');
-        const order = [0, 1, 2, 3, 4, 0];
-        for (let n = 0; n < 6; n++) {
-          const i = order[n],
-            p = fl.petals[i],
-            g = gs[n],
-            [pet, shade, vein, edge] = g.children;
-          const a = p.r + o.rot + jr,
-            d = Math.cos((a * Math.PI) / 180) * dir;
-          const persp = 1 - D.nearShorten * T * dep * Math.max(0, d),
-            cup = 1 + D.farCup * T * dep * d;
-          const L = S.petalScale * p.s * o.len[i] * persp * cup,
-            W = S.petalScale * p.s * o.wid[i] * persp;
-          g.setAttribute(
-            'transform',
-            `scale(${r3(kx + jk)} ${r3(k - jk)}) rotate(${r3(a)}) scale(${r3(W)} ${r3(L)}) translate(-30 -100)`
-          );
-          const path = boil && z !== 's' ? p.d[fi % H.boilDrawings] : p.d[0];
-          pet.setAttribute('d', path);
-          shade.setAttribute('d', path);
-          edge.setAttribute('d', path);
-          vein.setAttribute('d', p.vein);
-          shade.setAttribute(
-            'opacity',
-            r3(Math.min(D.shadeMax, D.shadeGain * T * dep * Math.max(0, d)) + (o.sleepy ? D.sleepyShade : 0))
-          );
-          pet.setAttribute(
-            'class',
-            'pet' + (ringOn && i / 5 >= ringP - 1e-6 ? ' dim' : '') + (o.hi === i ? ' hi' : '')
-          );
+      const newK = () => ({
+        ph: Array(N).fill(0),
+        s: Array(N).fill(1),
+        o: Array(N).fill(1),
+        cam: null,
+        dir: N * (2 / 12),
+        w: GW,
+        fall: Array(N).fill(-9),
+        filled: -1,
+      });
+      // where the gap points (in segment units, 0 = twelve o'clock, clockwise) and how wide it is
+      function gapT(c) {
+        const { mood, g, ge, amp, gd } = c;
+        if (g === 'done' && ge < 1.6) return { dir: null, w: 0 };
+        if (gd) return { dir: gd < 0 ? N * 0.75 : N * 0.25, w: GW };
+        if (g === 'send' && ge < 1.0) return { dir: N * (1.5 / 12), w: GW + 1.2 * Math.sin(PI * Math.min(1, ge)) };
+        switch (mood) {
+          case 'listening':
+            return { dir: N / 2, w: GW };
+          case 'thinking':
+            return { dir: 'spin', speed: N / 13, w: GW * 0.85 };
+          case 'speaking':
+            return { dir: N * (4.5 / 12), w: 1 + amp * 2.8 };
+          case 'alert':
+            return { dir: null, w: 0 };
+          case 'happy':
+            return { dir: 'spin', speed: N / 4.5, w: GW };
+          case 'sleepy':
+            return { dir: N / 2, w: 0.6 };
+          default:
+            return { dir: N * (2 / 12), w: GW };
         }
-        const fall = svg.querySelector('g.fall'),
-          fp = fall.firstChild;
-        if (z === 'l' && o.fall >= 0) {
-          const P = F.moods.idle.fallingPetal,
-            c = o.fall,
-            x = 58 - 34 * eIO(c / P.forSec) + 12 * Math.sin((c * Math.PI * 2) / 1.5),
-            y = -34 + 128 * eIO(c / P.forSec),
-            rk = 30 * Math.sin((c * Math.PI * 2) / 1.5);
-          fall.setAttribute(
-            'transform',
-            `translate(${r3(x)} ${r3(y)}) rotate(${r3(rk)}) scale(${P.scale} ${r3(P.scale * k * 0.7)}) translate(-30 -100)`
-          );
-          fall.setAttribute('opacity', r3(c > 3 ? 1 - (c - 3) / 0.6 : 1));
-          fp.setAttribute('d', fl.fall);
-        } else {
-          fall.setAttribute('transform', 'scale(0)');
-          fall.setAttribute('opacity', '0');
+      }
+      function camT(c) {
+        const { t, mood, ge, gd } = c,
+          B = TILT;
+        if (c.sess >= 0) return { rx: B.rx + 0.04, ry: B.ry + (c.rm ? 0 : 0.05 * Math.sin(t * 0.5)), sp: 1 };
+        if (c.g === 'done' && ge < 1.6) return { rx: B.rx * 0.4, ry: 0, sp: 1.03 };
+        if (gd) return { rx: B.rx * 0.7, ry: gd * 0.4, sp: 1 };
+        const w = c.rm ? 0 : 1;
+        switch (mood) {
+          case 'thinking':
+            return { rx: B.rx, ry: B.ry + w * 0.2 * Math.sin(t * 0.4), sp: 1 };
+          case 'speaking':
+            return { rx: B.rx * 0.6, ry: B.ry * 0.5, sp: 1 };
+          case 'listening':
+            return { rx: Math.min(B.rx, 0.1) - 0.12, ry: 0, sp: 1 };
+          case 'alert':
+            return { rx: 0, ry: 0, sp: 1.07 };
+          case 'happy':
+            return { rx: B.rx, ry: B.ry + w * 0.15 * Math.sin(t * 2), sp: 1 + w * 0.02 * Math.sin(t * 6) };
+          case 'sleepy':
+            return { rx: Math.max(B.rx, 1.05), ry: B.ry, sp: 0.95 };
+          default:
+            return { rx: B.rx, ry: B.ry, sp: 1 };
         }
-        svg
-          .querySelector('g.root')
-          .setAttribute(
-            'transform',
-            `translate(${r3(jr * 0.3)} ${r3(o.bob + cy)}) scale(${r3(o.rs * o.sx)} ${r3(o.rs * o.sy)})`
-          );
-        const eye = svg.querySelector('g.eye'),
-          [ring, core] = eye.children;
-        eye.setAttribute(
-          'transform',
-          `translate(${r3(ex)} ${r3(ey)}) scale(${r3(S.eyeScale * o.es * kx)} ${r3(S.eyeScale * o.es * k)}) translate(-20 -20)`
-        );
-        ring.setAttribute('d', fl.eye.ring);
-        core.setAttribute('d', fl.eye.core);
-        core.setAttribute('opacity', o.eyeOp);
+      }
+      function segT(K, c, k, gapMask) {
+        const { t, mood, g, ge, amp } = c,
+          w = c.rm ? 0 : 1;
+        let ph = 0,
+          s = 1,
+          o = 1;
+        const hide = gapMask(k);
+        if (g === 'done' && ge < 1.6) {
+          const on = ge * 2.4 > (k + 1) / N;
+          return { ph: on ? 0 : PI, s: on ? 1.04 : 1, o: 1 };
+        }
+        switch (mood) {
+          case 'thinking': {
+            const behind = (((K.dir - (k + 0.5)) % N) + N) % N,
+              wk = behind > 0.5 && behind < 3.5 ? 1 - (behind - 0.5) / 3 : 0;
+            ph = PI * ease(wk * 1.2);
+            break;
+          }
+          case 'speaking': {
+            if (!w) break;
+            const head = (wordPos(c.now) * 1.7) % N,
+              d = cdist(k, head, N),
+              pulse = Math.exp((-d * d) / 1.6);
+            ph = pulse * (0.5 + amp * 0.55);
+            s = 1 + amp * 0.05 + pulse * 0.05;
+            break;
+          }
+          case 'listening': {
+            const ang = -PI / 2 + ((k + 0.5) * TAU) / N,
+              low = Math.max(0, Math.sin(ang));
+            s = 1 + 0.06 * low;
+            break;
+          }
+          case 'alert': {
+            const top = k === 0 || k === N - 1;
+            ph = top ? 0 : PI;
+            s = top ? 1.15 * (1 + w * 0.05 * Math.abs(Math.sin(t * 4))) : 0.95;
+            break;
+          }
+          case 'happy':
+            ph = w * Math.max(0, Math.sin(t * 2.4 - (k / N) * TAU)) * PI * 0.5;
+            break;
+          case 'sleepy':
+            ph = PI;
+            s = 0.96;
+            break;
+        }
+        if (g === 'settle' && ge < 2.4) s *= 1 + 0.04 * Math.exp(-2 * ge) * Math.sin(ge * 6 + k * 0.4);
+        if (g === 'error' && ge < 1.4 && hide > 0.01) o *= 0.35 + 0.65 * (Math.sin(ge * 40) > 0 ? 1 : 0);
+        if (hide > 0) {
+          s += 0.14 * hide;
+          o *= 1 - hide;
+        }
+        return { ph, s, o };
+      }
+      // One step toward the targets; returns how much moved (0 when she is still).
+      function step(K, c) {
+        let mv = 0;
+        const CT = camT(c);
+        if (!K.cam || c.snap) K.cam = Object.assign({}, CT);
+        else mv += lerpObj(K.cam, CT, c.k(0.08));
+        if (c.sess >= 0) return stepSession(K, c) + mv;
+        K.filled = -1;
+        const G = gapT(c);
+        if (G.dir === 'spin') K.dir = (K.dir + c.dt * G.speed) % N;
+        else if (G.dir !== null) {
+          const d = circ(K.dir, G.dir, N);
+          K.dir = (K.dir + d * c.k(0.1) + N) % N;
+          mv += Math.abs(d);
+        }
+        const dw = G.w - K.w;
+        K.w += dw * c.k(0.12);
+        mv += Math.abs(dw);
+        // a gap narrower than 0.6 of a segment fades out with it, so a closed ring (alert, done) shows all 12
+        const mask = k => ease(cl((K.w / 2 + 0.5 - cdist(k + 0.5, K.dir, N)) / 0.3)) * cl(K.w / 0.6);
+        for (let k = 0; k < N; k++) {
+          const T = segT(K, c, k, mask),
+            tp = near(T.ph, K.ph[k]),
+            kk = c.snap ? 1 : c.k(0.13);
+          mv += Math.abs(tp - K.ph[k]) * 2 + Math.abs(T.s - K.s[k]) * 10 + Math.abs(T.o - K.o[k]) * 2;
+          K.ph[k] += (tp - K.ph[k]) * kk;
+          K.s[k] += (T.s - K.s[k]) * kk;
+          K.o[k] += (T.o - K.o[k]) * kk;
+        }
+        return mv + (!c.rm && (LIVE[c.mood] || c.g) ? 5 : 0);
+      }
+      // A session in Pointer mode (D-267): filled segments fall in clockwise from twelve, the rest halftone, the gap at
+      // the next unfilled slot.
+      function stepSession(K, c) {
+        const filled = Math.min(N, Math.floor(c.sess * N + 1e-6));
+        if (K.filled < 0 || filled < K.filled) {
+          K.filled = filled;
+          K.fall = Array(N).fill(-99);
+        }
+        while (K.filled < filled) {
+          K.fall[K.filled] = c.rm ? -99 : c.t;
+          K.filled++;
+        }
+        const kk = c.snap ? 1 : c.k(0.12);
+        for (let k = 0; k < N; k++) {
+          const tp = near(0, K.ph[k]);
+          K.ph[k] += (tp - K.ph[k]) * kk;
+          K.s[k] += (1 - K.s[k]) * kk;
+          K.o[k] += (1 - K.o[k]) * kk;
+        }
+        return 6;
+      }
+      // The drawing: each segment's outline through the camera, sorted so the near side draws last.
+      function draw(o, c) {
+        const K = o.K,
+          C = cam(K.cam.rx, K.cam.ry),
+          sp = K.cam.sp,
+          span = TAU / N,
+          items = [],
+          cs = Math.floor(c.t / 7) * 7;
+        const P = v => c.ap(C.proj([v[0] * sp, v[1] * sp, v[2] * sp]));
+        const sess = c.sess >= 0;
+        for (let k = 0; k < N; k++) {
+          const a0 = -PI / 2 + k * span + GAP / 2,
+            a1 = a0 + span - GAP,
+            am = (a0 + a1) / 2,
+            ax = [Math.cos(am), Math.sin(am), 0];
+          let yo = 0,
+            op = K.o[k],
+            show = true,
+            slot = false;
+          if (sess) {
+            const isNow = k === K.filled && K.filled < N;
+            slot = !isNow && K.o[k] >= 0.05;
+            if (k >= K.filled) show = false;
+            else if (!c.rm) {
+              const fe = c.t - K.fall[k];
+              if (fe < 1.1) {
+                const e = ease(fe / 1.1);
+                yo = -40 * (1 - e);
+                op *= e;
+              } else {
+                const re = c.t - (cs + 0.6 + k * 0.16);
+                if (re > 0 && re < 0.8) {
+                  const e = ease(re / 0.8);
+                  yo = -8 * (1 - e);
+                  op *= 0.3 + 0.7 * e;
+                }
+              }
+            }
+          }
+          if (op < 0.02 && !slot) continue;
+          const s = K.s[k],
+            r0 = R0 * s,
+            r1 = R1 * s,
+            ph = K.ph[k],
+            m = 6;
+          const ring = (flip, yy) => {
+            const pts = [];
+            for (let i = 0; i <= m; i++) {
+              const a = a0 + (a1 - a0) * (i / m);
+              pts.push([Math.cos(a) * r1, Math.sin(a) * r1, 0]);
+            }
+            for (let i = m; i >= 0; i--) {
+              const a = a0 + (a1 - a0) * (i / m);
+              pts.push([Math.cos(a) * r0, Math.sin(a) * r0, 0]);
+            }
+            return pts.map(p => {
+              const v = rodr(p, ax, flip);
+              return [v[0], v[1] + yy, v[2]];
+            });
+          };
+          const front = C.rot(rodr([0, 0, 1], ax, ph))[2] > 0,
+            cz = C.rot(rodr([Math.cos(am) * 22, Math.sin(am) * 22, 0], ax, ph))[2];
+          if (slot) items.push({ z: cz - 60, back: true, d: pd(ring(0, 0).map(P)), o: K.o[k] });
+          if (show && op > 0.02) items.push({ z: cz, back: !front, d: pd(ring(ph, yo).map(P)), o: op });
+        }
+        items.sort((a, b) => a.z - b.z);
+        const out = [];
+        for (const it of items) {
+          const op = f1(it.o);
+          if (!it.back) out.push(['c1', '', it.d, op]);
+          else if (c.z === 's') out.push(['c2', '', it.d, f1(it.o * 0.6)]);
+          else {
+            out.push(['under', '', it.d, op]);
+            out.push(['tex', 'url(#' + o.id + '-h)', it.d, op]);
+          }
+        }
+        return out;
+      }
+      // Puts one drawing into the dial's SVG, reusing its paths.
+      function paint(o, c) {
+        const out = draw(o, c),
+          g = o.body;
+        while (g.childNodes.length < out.length) g.appendChild(document.createElementNS(SVG, 'path'));
+        const kids = g.childNodes;
+        for (let i = 0; i < kids.length; i++) {
+          const p = kids[i],
+            r = out[i];
+          if (!r) {
+            if (p.getAttribute('d')) p.setAttribute('d', '');
+            continue;
+          }
+          if (p.getAttribute('class') !== r[0]) p.setAttribute('class', r[0]);
+          if (r[1]) p.setAttribute('fill', r[1]);
+          else p.removeAttribute('fill');
+          p.setAttribute('d', r[2]);
+          p.setAttribute('opacity', r[3]);
+        }
+        g.setAttribute('opacity', c.mood === 'sleepy' && c.sess < 0 ? '0.78' : '1');
+        if (o.el.dataset.z !== c.z) o.el.dataset.z = c.z;
+        o.draws++;
+      }
+      // One dial's frame; true when it drew.
+      function frameCore(o, t, now) {
+        const c = ctxOf(o, t, now, false);
+        if (!o.K) o.K = newK();
+        if (c.rm) {
+          // Reduced motion: one still per mood (and per session step), its settled end frame; gestures are not shown.
+          const key = c.mood + '|' + (c.sess >= 0 ? Math.floor(c.sess * N + 1e-6) : '-') + '|' + c.z;
+          if (key === o.rk) return false;
+          o.rk = key;
+          o.K = newK();
+          const s = ctxOf(o, 0, now, true);
+          for (let i = 0; i < 60; i++) step(o.K, s);
+          paint(o, Object.assign(s, { t: 0 }));
+          return true;
+        }
+        o.rk = null;
+        const mv = step(o.K, c);
+        const still = (c.mood === 'idle' || c.mood === 'sleepy') && !c.g && c.sess < 0;
+        if (mv > 0.04 || !still || o.dirty) o.q = 0;
+        else if ((o.q = (o.q || 0) + 1) >= 4) return false;
+        o.dirty = false;
+        paint(o, c);
+        return true;
       }
 
       const cores = new Set();
       let raf = 0,
-        t0 = performance.now(),
-        lastFi = -1,
-        lastTs = 0;
+        lastTs = 0,
+        uid = 0,
+        redraws = 0;
+      const t0 = performance.now();
       const frames = [],
         draws = [];
-      let redraws = 0;
       const io = window.IntersectionObserver
         ? new IntersectionObserver(
             es =>
@@ -493,42 +482,6 @@
             { threshold: [0, 0.01] }
           )
         : null;
-      // Her voice: each word lifts it, it decays between words, and a floor holds while she talks (the canvas's word()).
-      const voiceAt = now => {
-        if (!sig.talking) return 0;
-        const W = F.speech.word,
-          dt = (now - sig.voiceAt) / 1000;
-        return Math.min(1, sig.voice * Math.exp(-dt * W.decay) + W.floor);
-      };
-      function drawCore(o, fi, tq, now) {
-        const mood = o.follow ? sig.mood : o.mood;
-        const g = o.follow && sig.g && now - sig.gAt < GD(sig.g) * 1000 ? sig.g : null;
-        const gl = o.follow && g === 'glance' ? sig.glance || 1 : 1;
-        step(o.G, tq, mood, g, mood === 'speaking' ? voiceAt(now) : 0);
-        const rm = isReduced() || o.still;
-        const p = pose(o.G, tq, rm, gl);
-        const ringOn = o.follow && sig.ring >= 0;
-        const z = zoneOf(o.size);
-        if (o.el.dataset.z !== z) o.el.dataset.z = z;
-        const moving = !rm && o.sig !== undefined && JSON.stringify(p) !== o.lastPose;
-        const active = !rm && ((mood !== 'idle' && mood !== 'sleepy') || !!g || moving);
-        const boil = active && H.boil !== 'off';
-        const key =
-          JSON.stringify(p) +
-          (boil ? fi % H.boilDrawings : '') +
-          (moving ? fi : '') +
-          JSON.stringify(o.lean) +
-          (ringOn ? Math.round(sig.ring * 5) : '') +
-          z;
-        o.lastPose = JSON.stringify(p);
-        if (key === o.sig) return false;
-        o.sig = key;
-        o.pose = p;
-        o.el.classList.toggle('err', p.err);
-        draw(p, z, SHAPES[z === 's' ? 's' : 'l'], fi, o.lean, moving, boil, o.svg, ringOn, sig.ring);
-        o.draws++;
-        return true;
-      }
       function tick(ts) {
         raf = requestAnimationFrame(tick);
         if (lastTs) {
@@ -538,15 +491,16 @@
         lastTs = ts;
         if (document.hidden) return;
         const now = performance.now(),
-          fi = Math.floor(((now - t0) / 1000) * FPS);
-        if (fi === lastFi) return;
-        lastFi = fi;
-        const tq = fi / FPS,
-          start = performance.now();
+          t = (now - t0) / 1000,
+          start = now;
         let drew = false;
         for (const o of cores) {
-          if (!o.vis || !o.el.isConnected || (o.when && !o.when())) continue;
-          if (drawCore(o, fi, tq, now)) {
+          if (!o.vis || !o.el.isConnected || (o.when && !o.when())) {
+            o.lt = null;
+            o.dirty = true;
+            continue;
+          }
+          if (frameCore(o, t, now)) {
             drew = true;
             redraws++;
           }
@@ -557,56 +511,60 @@
         }
       }
       function make(size, opt = {}) {
-        const id = 'evf' + ++uid;
+        const id = 'evd' + ++uid;
         const el = document.createElement('span');
         el.className = 'ev-av';
         el.setAttribute('aria-hidden', 'true');
         el.style.setProperty('--s', size + 'px');
-        const svg = makeSvg(id);
+        const svg = document.createElementNS(SVG, 'svg');
+        svg.setAttribute('viewBox', '-50 -50 100 100');
+        svg.setAttribute('class', 'fl dial');
+        svg.setAttribute('aria-hidden', 'true');
+        svg.innerHTML =
+          `<defs><pattern id="${id}-h" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(30)">` +
+          `<circle cx="1.5" cy="1.5" r="0.95" class="c2"/></pattern></defs><g class="body"></g>`;
         el.append(svg);
         const core = {
+          id,
           el,
           svg,
+          body: svg.querySelector('g.body'),
           size,
           mood: opt.mood || 'idle',
           follow: !!opt.follow,
           still: !!opt.still,
           when: opt.when || null,
           vis: true,
-          G: newGroup(),
-          lean: [0, 0],
-          sig: undefined,
+          K: null,
+          lt: null,
+          q: 0,
+          rk: null,
+          dirty: true,
           draws: 0,
         };
         svg.__core = core;
         if (io) io.observe(svg);
-        // Facing him, her eye follows a mouse pointer on the page (D-223's attention), in steps of a quarter.
-        if (opt.pointer && F.lean.mouseOnly !== undefined)
-          addEventListener('pointermove', e => {
-            if (F.lean.mouseOnly && e.pointerType && e.pointerType !== 'mouse') return;
-            const r = svg.getBoundingClientRect(),
-              q = v => Math.round(Math.max(-1, Math.min(1, v)) / F.lean.step) * F.lean.step;
-            core.lean = [
-              q((e.clientX - r.left - r.width / 2) / F.lean.reachPx),
-              q((e.clientY - r.top - r.height / 2) / F.lean.reachPx),
-            ];
-          });
         core.resize = px => {
           px = Math.round(px);
           if (px === core.size) return;
           core.size = px;
           el.style.setProperty('--s', px + 'px');
-          core.sig = undefined;
+          core.dirty = true;
+          core.rk = null;
         };
         cores.add(core);
-        // The first drawing is made now, so she is never an empty box before the clock's next frame.
-        drawCore(core, Math.max(0, lastFi), Math.max(0, lastFi) / FPS, performance.now());
+        // The first drawing is made now, settled, so she is never an empty box before the next frame.
+        const now = performance.now();
+        core.K = newK();
+        const s = ctxOf(core, (now - t0) / 1000, now, true);
+        for (let i = 0; i < 30; i++) step(core.K, s);
+        paint(core, s);
         if (!raf) raf = requestAnimationFrame(tick);
         return core;
       }
-      // The page API (D-134, unchanged by D-212). A glance takes a direction ('left', 'right') or a target element.
+      // The page API (D-134, unchanged by D-265). A glance takes a direction ('left', 'right') or a target element.
       function gesture(name, detail) {
-        if (!F.gestures[name]) throw new Error('unknown gesture ' + name);
+        if (!GD[name]) throw new Error('unknown gesture ' + name);
         sig.g = name;
         sig.gAt = performance.now();
         sig.gid++;
@@ -634,9 +592,9 @@
       // speak(word, {emphasis}) or speak(word, true): each word lifts her voice; emphasis lifts it to the top.
       function speak(word, o = {}) {
         const em = o === true || !!(o && o.emphasis);
-        const now = performance.now();
         sig.voice = em ? 1 : Math.min(0.9, 0.3 + 0.07 * String(word).length);
-        sig.voiceAt = now;
+        sig.voiceAt = performance.now();
+        sig.words++;
         sig.talking = true;
         note('speak', String(word).slice(0, 40), em ? 'emphasis' : null);
       }
@@ -645,11 +603,11 @@
         sig.talking = false;
       }
       function setMood(m) {
-        if (!F.moods[m]) return;
+        if (!MOODS.includes(m)) return;
         if (m !== sig.mood) note('mood', m);
         sig.mood = m;
       }
-      // A session's progress (D-217: one petal per answer): the petals past it are drawn quiet.
+      // A session's progress, 0 to 1 (-1 off): her segments fill clockwise from twelve (D-267's Pointer mode).
       function setRing(p) {
         sig.ring = typeof p === 'number' && p >= 0 ? Math.min(1, p) : -1;
       }
@@ -657,10 +615,9 @@
         frames: frames.slice(),
         draws: draws.slice(),
         redraws,
-        heldFps: FPS,
         level: 0,
         steps: [],
-        gestures: sig.g && performance.now() - sig.gAt < GD(sig.g) * 1000 ? [{ name: sig.g }] : [],
+        gestures: sig.g && performance.now() - sig.gAt < GD[sig.g] * 1000 ? [{ name: sig.g }] : [],
         mood: sig.mood,
         ring: sig.ring,
         reduce: isReduced(),
@@ -672,24 +629,40 @@
         draws.length = 0;
         redraws = 0;
       };
-      // The last drawing of one flower, as numbers (harness checks): its size, how many petals it shows, whether she
-      // faces him, its colour, and a hash of the drawing.
+      // The last drawing of one dial, as numbers (harness checks): its size, the segments it shows, how many are solid
+      // and how many halftone, whether she faces him (the ring flat to the screen), her gap, her colours and a hash.
       function sample(i = 0) {
         const c = [...cores][i];
         if (!c) return null;
         const s = c.svg.innerHTML;
         let h = 0;
         for (let k = 0; k < s.length; k++) h = (h * 31 + s.charCodeAt(k)) >>> 0;
-        const pet = c.svg.querySelector('.pet');
+        const drawn = [...c.body.childNodes].filter(p => p.getAttribute('d'));
+        const solid = drawn.filter(p => p.getAttribute('class') === 'c1').length,
+          back = drawn.filter(p => /^(c2|tex)$/.test(p.getAttribute('class'))).length;
+        const one = sel => {
+          const p = drawn.find(x => x.getAttribute('class') === sel);
+          return p ? getComputedStyle(p).fill : null;
+        };
+        const K = c.K;
         return {
           renderer: 'svg',
           size: c.size,
-          petals: c.svg.querySelectorAll('g.p').length - 1,
-          facing: !!c.pose && Math.abs(c.pose.v) < 0.02,
-          turned: c.G.vw.to === 0,
-          view: c.pose ? c.pose.v : null,
-          colour: pet ? getComputedStyle(pet).fill : null,
-          lit: c.size * c.size,
+          z: zoneOf(c.size),
+          segments: solid + back,
+          solid,
+          back,
+          facing: !!K && Math.abs(K.cam.rx) < 0.03 && Math.abs(K.cam.ry) < 0.03,
+          gap: K ? Math.round(K.dir * 100) / 100 : null,
+          gapWidth: K ? Math.round(K.w * 100) / 100 : null,
+          filled: K ? K.filled : -1,
+          colour: one('c1'),
+          back2:
+            one('c2') ||
+            (drawn.some(p => p.getAttribute('class') === 'tex')
+              ? getComputedStyle(c.svg.querySelector('pattern circle')).fill
+              : null),
+          dim: c.body.getAttribute('opacity'),
           draws: c.draws,
           hash: h,
         };

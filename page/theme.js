@@ -74,6 +74,8 @@
   var EMBER = { base: { h: 70, c: 3.2 }, accL: 48, acc: { h: 52, c: 62 }, acc2: { h: 32, c: 56 } };
   var SEM = { green: 145, yellow: 82, red: 28, blue: 265, violet: 305 };
   var CONTRASTS = [30, 60, 100];
+  // Her two faces (D-266): the Dial Arc's solid front and halftone back, per theme, at every contrast.
+  var HER = { light: ['#b5530f', '#a8402f'], dark: ['#f2a35e', '#f08a78'] };
 
   /** Every token of one theme: mode 'light' or 'dark', contrast 30 to 100. */
   var genTheme = function (mode, contrast) {
@@ -159,6 +161,8 @@
       '--her': T.accent,
       '--her2': T.accent2,
       '--on-her': T.onAccent,
+      '--av1': HER[T.mode][0],
+      '--av2': HER[T.mode][1],
       '--sem-green': g.green,
       '--sem-yellow': g.yellow,
       '--sem-red': g.red,

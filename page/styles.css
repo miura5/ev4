@@ -6,10 +6,7 @@
    --sem-blue and --sem-violet, and the names this sheet already used: --sunken (chrome), --raised (surface), --do,
    --att and --urg (green, yellow, red), --do-ink, and the r,g,b forms --tint, --ground, --her-rgb, --do-rgb, --att-rgb,
    --urg-rgb. The system theme follows prefers-color-scheme; the stored toggle (ev.theme, <html data-theme>) overrides
-   it. Her flower's inks mix from --her. */
-:root{--f-ink2:color-mix(in srgb,var(--her) 45%,var(--bg)); --f-edge:color-mix(in srgb,var(--her) 42%,var(--bg)); --f-deep:color-mix(in srgb,var(--her) 80%,black); --f-eyering:color-mix(in srgb,var(--her) 20%,white); --f-core:color-mix(in srgb,var(--her) 70%,black); --f-hi:color-mix(in srgb,var(--her) 58%,white);}
-@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--f-ink2:color-mix(in srgb,var(--her) 42%,white); --f-edge:color-mix(in srgb,var(--her) 58%,black); --f-deep:color-mix(in srgb,var(--her) 76%,black); --f-eyering:color-mix(in srgb,var(--her) 14%,white); --f-core:color-mix(in srgb,var(--her) 55%,black); --f-hi:color-mix(in srgb,var(--her) 70%,white);}}
-:root[data-theme="light"]{--f-ink2:color-mix(in srgb,var(--her) 42%,white); --f-edge:color-mix(in srgb,var(--her) 58%,black); --f-deep:color-mix(in srgb,var(--her) 76%,black); --f-eyering:color-mix(in srgb,var(--her) 14%,white); --f-core:color-mix(in srgb,var(--her) 55%,black); --f-hi:color-mix(in srgb,var(--her) 70%,white);}
+   it. Her two faces are --av1 and --av2 (D-266). */
 :root{color-scheme:dark;
   /* The names the stylesheet already used, each now one of the tokens above (D-214: violet retired, secondary grey). */
   --glass:rgba(var(--tint),.04); --glass2:rgba(var(--tint),.07);
@@ -211,19 +208,11 @@ table.mx input{width:20px;height:20px;accent-color:var(--accent)}
 body.on-ev .toast{bottom:calc(var(--dock-h) + 150px + env(safe-area-inset-bottom,0px))}
 .plan-day{display:flex;flex-direction:column;gap:2px}
 .plan-day.today{background:rgba(var(--do-rgb),.06);border:1px solid rgba(var(--do-rgb),.22);border-radius:16px;padding:10px 12px;margin-inline:-12px}
-/* E.V.: particle core avatars */
-/* B-206 (D-212, D-214): her flower. One flat SVG; her inks are her blue mixed toward the ground and toward white and
-   black, as the 2D canvas mixes them (--f-* in the theme blocks); coral only on an error; she moves on her own held clock. */
-.ev-av{display:inline-grid;place-items:center;width:var(--s,32px);height:var(--s,32px);flex:0 0 var(--s,32px);
-  --ink1:var(--her);--ink2:var(--f-ink2);--edge:var(--f-edge);--deep:var(--f-deep);--eyering:var(--f-eyering);--core:var(--f-core);--hi:var(--f-hi);--coral:var(--urg);--ew:1.5px}
-.ev-av[data-z="m"]{--ew:.9px} .ev-av[data-z="s"]{--ew:.7px} .ev-av[data-z="s"] .vein{display:none}
+/* B-272 (D-265, D-266): her avatar, the Dial Arc. One SVG of 12 segments; a solid front in --av1, a halftone back in
+   --av2 over an underlay in the ground colour (both faces from the theme generator); at 24 px the back is drawn flat. */
+.ev-av{display:inline-grid;place-items:center;width:var(--s,32px);height:var(--s,32px);flex:0 0 var(--s,32px)}
 .ev-av .fl{width:100%;height:100%;overflow:visible;display:block}
-.ev-av .s0{stop-color:var(--deep)} .ev-av .s1{stop-color:var(--ink1)}
-.ev-av .pet.dim{fill:var(--ink2)} .ev-av .pet.hi{fill:var(--hi)} .ev-av.err .pet{fill:var(--coral)}
-.ev-av .shade{fill:var(--edge)} .ev-av .vein{fill:var(--eyering);opacity:.88}
-.ev-av .edge{fill:none;stroke:var(--edge);stroke-width:var(--ew);stroke-linejoin:round;vector-effect:non-scaling-stroke}
-.ev-av .ering{fill:var(--eyering)} .ev-av .ecore{fill:var(--core)} .ev-av.err .ecore{fill:var(--coral)}
-.ev-av .fpet{fill:var(--ink1);stroke:var(--edge);stroke-width:var(--ew);vector-effect:non-scaling-stroke}
+.ev-av .c1{fill:var(--av1)} .ev-av .c2{fill:var(--av2)} .ev-av .under{fill:var(--bg)}
 /* E.V.: opening hero, thread, composer */
 .hero{display:flex;justify-content:center;max-height:0;opacity:0;overflow:hidden;margin:0;transition:max-height .28s var(--ease),opacity .28s ease,margin .28s var(--ease)}
 body.opening .hero,body.core-big .hero{max-height:360px;opacity:1;margin:0 0 -10px}

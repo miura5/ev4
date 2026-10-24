@@ -1,10 +1,10 @@
-// Her harness (B-206; D-212, D-215, D-223, D-224; was core v2's, B-76): the built staging page with her drawn as the 2D
-// forget-me-not, driven through its page API (EVApp.core: setMood, gesture, speak, speechEnd, setRing), on real time
-// (no fake clock: it would fake the held frames being checked). At 390 and 1280 px it draws each of the seven moods and
-// the five gestures with screenshots, checks the pose each one names (facing him or tipped away, the top petal, coral
-// only on an error, the speech chart's poses held two frames), that each gesture settles, that she draws on held frames
-// (at most heldFps drawings a second) and nothing at a still idle, the session's petals, and reduced motion's one still
-// drawing per mood. Her frame budget (D-224) is measured over 10 s of speech at 390x844, DPR 3, 4x CPU throttle.
+// Her harness (B-272; D-265, D-266, D-213, D-216; was the flower's, B-206): the built staging page with her drawn as the
+// Dial Arc, driven through its page API (EVApp.core: setMood, gesture, speak, speechEnd, setRing), on real time. At 390
+// and 1280 px, in light and dark, it draws a 128 px and a 24 px dial side by side and screenshots each of the seven moods
+// and the five gestures, checking what the round 15 canvas's States board says of each (where the gap points, how wide,
+// solid or halftone, closed, flat to him), that each gesture settles, that a still idle draws nothing, a session's
+// filled segments, and that the sidebar's 24 px dial turns to face him for a notice (D-216). Reduced motion gives one
+// still per mood. Her frame budget is measured over 10 s of speech at 390x844, DPR 3, 4x CPU throttle.
 //   node test/harness/core.cjs [record dir | synthetic] [screenshots dir] [--json <file>]
 // Run `node tools/build.mjs` first. Exit code 1 when any check fails.
 const { chromium } = require('playwright');
@@ -42,7 +42,8 @@ if (seed.talk) delete seed.talk[today];
 for (const c of ['sessions', 'workouts'])
   for (const [id, d] of Object.entries(seed[c] || {})) if ((d.date || dayOf(d.startedAt)) === today) delete seed[c][id];
 const spec = JSON.parse(fs.readFileSync(path.join(root, 'spec/ev.spec.json'), 'utf8'));
-const F = spec.ui.look.flower;
+const F = spec.ui.look.flower; // her stage sizes and budget (D-213, D-272)
+const GDUR = { send: 1.2, done: 1.6, error: 1.8, glance: 2.2, settle: 2.4 };
 const stub = fs.readFileSync(path.join(__dirname, 'stub.js'), 'utf8');
 const ORIGIN = 'https://ev.local';
 const TYPES = { '.js': 'text/javascript', '.json': 'application/json', '.css': 'text/css' };
@@ -67,9 +68,13 @@ async function openPage(page) {
   });
   await page.addInitScript('window.__db=' + JSON.stringify(seed) + ';' + stub);
   await page.goto(ORIGIN + '/');
-  await page.waitForFunction(() => window.EVApp && window.EVApp.core && document.querySelector('#hero svg.fl'), null, {
-    timeout: 15000,
-  });
+  await page.waitForFunction(
+    () => window.EVApp && window.EVApp.core && document.querySelector('#hero svg.dial'),
+    null,
+    {
+      timeout: 15000,
+    }
+  );
   await page.waitForTimeout(600);
 }
 const { advisory, allPass } = require('./quarantine.cjs');
@@ -107,6 +112,39 @@ const SPEECH = `async (secs) => { const C = window.EVApp.core; const text = 'Pre
     .launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' })
     .catch(() => chromium.launch());
   const budget = {};
+  // Her two test dials, 128 px and 24 px, side by side on the page's ground (both follow her signals like the page's own).
+  const dials = page =>
+    page.evaluate(() => {
+      const C = window.EVApp.core;
+      if (!window.__dials) {
+        const box = document.createElement('div');
+        box.id = 'dial-box';
+        box.style.cssText =
+          'position:fixed;left:8px;top:8px;z-index:999;display:flex;align-items:center;gap:20px;padding:16px;background:var(--bg)';
+        const big = C.make(128, { follow: true }),
+          small = C.make(24, { follow: true });
+        box.append(big.el, small.el);
+        document.body.append(box);
+        window.__dials = [big, small];
+      }
+      const all = C.cores();
+      return window.__dials.map(d => all.indexOf(d));
+    });
+  const both = (page, idx) => page.evaluate(idx => idx.map(i => window.EVApp.core.sample(i)), idx);
+  const near = (a, b, d = 0.35) => a != null && Math.abs(((((a - b) % 12) + 18) % 12) - 6) <= d;
+  const shot = (page, name) => page.locator('#dial-box').screenshot({ path: `${shots}/${name}.png` });
+  const speakFor = (page, ms) =>
+    page.evaluate(async ms => {
+      const C = window.EVApp.core,
+        words = 'Preload is the stretch before the squeeze. More filling, more stretch.'.split(' ');
+      const t0 = performance.now();
+      let i = 0;
+      while (performance.now() - t0 < ms) {
+        const w = words[i++ % words.length];
+        C.speak(w, { emphasis: w === 'stretch' });
+        await new Promise(r => setTimeout(r, 60 + w.length * 15));
+      }
+    }, ms);
   for (const scheme of ['phone', 'desktop']) {
     const ctx = await browser.newContext({
       viewport: scheme === 'phone' ? { width: 390, height: 844 } : { width: 1280, height: 860 },
@@ -122,8 +160,8 @@ const SPEECH = `async (secs) => { const C = window.EVApp.core; const text = 'Pre
     await openPage(page);
     const first = await info(page);
     ok(
-      `[${scheme}] she is one SVG flower of five petals, no canvas`,
-      first.renderer === 'svg' && first.petals === 5,
+      `[${scheme}] she is one SVG Dial Arc of 12 segments, no canvas`,
+      first.renderer === 'svg' && first.segments >= 10 && first.segments <= 12,
       JSON.stringify(first)
     );
     ok(
@@ -136,159 +174,131 @@ const SPEECH = `async (secs) => { const C = window.EVApp.core; const text = 'Pre
         ['setMood', 'gesture', 'speak', 'speechEnd', 'setRing'].every(k => typeof window.EVApp.core[k] === 'function')
       )
     );
-    ok(
-      `[${scheme}] her petals are her blue (D-214)`,
-      /rgb\(122, 167, 255\)|url\(/.test(first.colour || '') ||
-        (await page.evaluate(() =>
-          getComputedStyle(document.querySelector('#hero .ev-av')).getPropertyValue('--ink1').trim()
-        )) !== '',
-      first.colour
-    );
     // The greeting reveals word by word on opening and ends on a settle; let it finish before timing anything.
     await page.waitForFunction(
       () => !document.querySelector('#thread .reveal') && window.EVApp.core.stats().gestures.length === 0,
       null,
       { timeout: 30000 }
     );
-    // Each mood (D-223): facing him when she attends (listening, speaking, alert, happy), tipped away otherwise.
-    for (const m of spec.persona.avatar.moods) {
-      await hold(page, m);
-      await page.waitForTimeout(F.view.holdSec * 1000 + 900);
-      const s = await info(page);
-      await page.locator('#hero').screenshot({ path: `${shots}/core-mood-${m}-${scheme}.png` });
-      const faces = F.view.facing.includes(m);
+    const idx = await dials(page);
+    for (const theme of ['light', 'dark']) {
+      await page.evaluate(t => document.documentElement.setAttribute('data-theme', t), theme);
+      const tag = `[${scheme} ${theme}]`;
+      const inks = await page.evaluate(() => {
+        const s = getComputedStyle(document.documentElement);
+        return [s.getPropertyValue('--av1').trim(), s.getPropertyValue('--av2').trim()];
+      });
+      const want = theme === 'light' ? ['#b5530f', '#a8402f'] : ['#f2a35e', '#f08a78'];
       ok(
-        `[${scheme}] mood ${m}: drawn, ${faces ? 'facing him' : 'tipped away'}`,
-        s.petals === 5 && s.facing === faces && (await page.evaluate(() => window.EVApp.core.stats().mood)) === m,
-        JSON.stringify({ facing: s.facing, view: s.view })
+        `${tag} her faces are Ember with halftone (D-266)`,
+        JSON.stringify(inks) === JSON.stringify(want),
+        inks.join(' ')
       );
-      if (m === 'alert')
+      for (const m of spec.persona.avatar.moods) {
+        await hold(page, m);
+        if (m === 'speaking') await speakFor(page, 1400);
+        else await page.waitForTimeout(1400);
+        const [a, s] = await both(page, idx);
+        await page.waitForTimeout(m === 'thinking' || m === 'happy' ? 600 : 0);
+        const [a2] = await both(page, idx);
+        await shot(page, `core-mood-${m}-${scheme}-${theme}`);
+        if (m === 'speaking') await page.evaluate(() => window.EVApp.core.speechEnd());
+        const d = JSON.stringify({ big: a, small: s });
+        const desc = {
+          idle: ['an arc, the gap at two o’clock, all solid', near(a.gap, 2) && a.back === 0 && a.segments >= 10],
+          listening: ['the gap turned down to six', near(a.gap, 6)],
+          thinking: ['the gap travels; halftone in its wake', a2.gap !== a.gap && a.back > 0],
+          speaking: ['the gap near half past four', near(a.gap, 4.5, 0.8)],
+          alert: [
+            'closed, flat to him, the two segments at twelve solid, the rest halftone',
+            a.segments === 12 && a.facing && a.solid === 2 && a.back === 10,
+          ],
+          happy: ['the gap spins', a2.gap !== a.gap],
+          sleepy: [
+            'all halftone, a sliver of gap at six, dimmed',
+            a.solid === 0 && a.back >= 11 && near(a.gap, 6) && a.dim === '0.78',
+          ],
+        }[m];
+        ok(`${tag} mood ${m} at 128 px: ${desc[0]}`, desc[1], d);
         ok(
-          `[${scheme}] alert: the top petal is lit`,
-          await page.evaluate(() => !!document.querySelector('#hero .pet.hi'))
+          `${tag} mood ${m} at 24 px: the same state, drawn flat (no halftone texture)`,
+          (s.z === 's' && Math.abs(s.segments - a.segments) <= 1 && s.solid === a.solid) ||
+            ((m === 'thinking' || m === 'happy' || m === 'speaking') && s.z === 's' && s.segments >= 10),
+          d
         );
-    }
-    // She draws on held frames: at most heldFps drawings a second while she moves (D-230), counted over 2 s of thinking.
-    await hold(page, 'thinking');
-    await page.waitForTimeout(400);
-    const rate = await page.evaluate(async () => {
-      const C = window.EVApp.core;
-      const a = C.cores()[0].draws;
-      await new Promise(r => setTimeout(r, 2000));
-      return (C.cores()[0].draws - a) / 2;
-    });
-    ok(
-      `[${scheme}] she moves on held frames: ${rate} drawings a second, at most ${F.clock.heldFps}`,
-      rate > 2 && rate <= F.clock.heldFps,
-      String(rate)
-    );
-    // A still idle draws nothing outside the falling petal (D-224): 2 s after the petal has fallen, before the next.
-    await hold(page, 'idle');
-    await page.waitForTimeout(F.view.holdSec * 1000 + 1500);
-    const idle = await page.evaluate(async P => {
-      const C = window.EVApp.core,
-        c = C.cores()[0];
-      // wait for a petal to fall and land: the next one is due everySec - forSec later, so 2 s after that are still.
-      const falling = () => c.svg.querySelector('g.fall').getAttribute('opacity') !== '0';
-      const t0 = performance.now();
-      while (!falling() && performance.now() - t0 < 14000) await new Promise(r => setTimeout(r, 50));
-      while (falling() && performance.now() - t0 < 20000) await new Promise(r => setTimeout(r, 50));
-      await new Promise(r => setTimeout(r, 300));
-      const a = c.draws;
-      await new Promise(r => setTimeout(r, 2000));
-      const fell = c.svg.querySelector('g.fall').getAttribute('opacity') !== '0';
-      return { draws: c.draws - a, fell };
-    }, F.moods.idle.fallingPetal);
-    ok(
-      `[${scheme}] a still idle draws nothing between falling petals (D-224)`,
-      !idle.fell && idle.draws === 0,
-      JSON.stringify(idle)
-    );
-    // Each gesture: a screenshot while it plays; coral on an error only; settled within its duration.
-    for (const g of ['send', 'done', 'error', 'glance', 'settle']) {
-      await page.evaluate(g => window.EVApp.core.gesture(g, g === 'glance' ? 'left' : undefined), g);
-      await page.waitForTimeout(g === 'glance' || g === 'error' ? 700 : 300);
-      const coral = await page.evaluate(() => document.querySelector('#hero .ev-av').classList.contains('err'));
-      await page.locator('#hero').screenshot({ path: `${shots}/core-gesture-${g}-${scheme}.png` });
-      if (g === 'error') ok(`[${scheme}] error: coral, the only gesture that is`, coral);
-      else ok(`[${scheme}] ${g}: no coral`, !coral);
-      if (g === 'error') ok(`[${scheme}] error: she turns to him`, (await info(page)).turned);
-      await page.waitForTimeout(F.gestures[g].durationSec * 1000 + 200);
-      const left = await page.evaluate(() => window.EVApp.core.stats().gestures);
-      ok(`[${scheme}] ${g} settles within ${F.gestures[g].durationSec} s`, left.length === 0, JSON.stringify(left));
-    }
-    // Speech (D-215): the three-pose chart, each pose held two held frames at least.
-    const sp = await page.evaluate(async () => {
-      const C = window.EVApp.core,
-        c = C.cores()[0];
-      window.__holdMood = 'speaking';
-      C.setMood('speaking');
-      c.G.spLog = [];
-      const words = 'Preload is the stretch before the squeeze. More filling, more stretch.'.split(' ');
-      const t0 = performance.now();
-      let i = 0;
-      while (performance.now() - t0 < 4000) {
-        const w = words[i++ % words.length];
-        C.speak(w, { emphasis: w === 'stretch' });
-        await new Promise(r => setTimeout(r, 60 + w.length * 15 + (/[.,]$/.test(w) ? 300 : 0)));
+        if (m === 'idle') {
+          await page.waitForTimeout(1500);
+          const n0 = await page.evaluate(i => window.EVApp.core.sample(i).draws, idx[0]);
+          await page.waitForTimeout(1500);
+          const n1 = await page.evaluate(i => window.EVApp.core.sample(i).draws, idx[0]);
+          ok(`${tag} a still idle draws nothing`, n1 === n0, `${n0} -> ${n1}`);
+        }
       }
-      C.speechEnd();
-      const log = c.G.spLog.slice();
-      // each pose's run, in held frames, from one change to the next
-      const runs = log.slice(1).map((x, k) => [log[k][1], x[0] - log[k][0]]);
-      return { poses: [...new Set(log.map(x => x[1]))].sort(), runs };
-    });
-    ok(
-      `[${scheme}] speech moves through the three poses, each held at least ${F.speech.minHoldFrames} frames`,
-      sp.poses.length >= 2 && sp.runs.every(([, n]) => n >= F.speech.minHoldFrames),
-      JSON.stringify(sp)
-    );
-    const emph = await page.evaluate(() => {
-      const C = window.EVApp.core;
-      C.speak('stretch', true);
-      C.speak('stretch', { emphasis: true });
-      C.speak('plain');
-      C.speechEnd();
-      return C.stats()
-        .log.filter(e => e.kind === 'speak')
-        .slice(-3)
-        .map(e => e.detail || null);
-    });
-    ok(
-      `[${scheme}] speak(word, emphasis) takes a boolean or {emphasis}`,
-      JSON.stringify(emph) === JSON.stringify(['emphasis', 'emphasis', null]),
-      JSON.stringify(emph)
-    );
-    // A session's progress (D-217): the petals past it are drawn quiet.
-    await hold(page, 'idle');
-    // Held against the page's own session render, which sets it again as the page changes.
-    await page.evaluate(() => {
-      const C = window.EVApp.core;
-      C.__ring = C.setRing;
-      C.setRing = () => {};
-      C.__ring(0.4);
-    });
-    await page.waitForTimeout(500);
-    const dim = await page.evaluate(() => document.querySelectorAll('#hero .pet.dim').length);
-    const dimInfo = await page.evaluate(() => {
-      const c = window.EVApp.core.cores()[0];
-      return {
-        vis: c.vis,
-        connected: c.el.isConnected,
-        ring: window.EVApp.core.stats().ring,
-        draws: c.draws,
-        box: c.svg.getBoundingClientRect().height,
-      };
-    });
-    await page.locator('#hero').screenshot({ path: `${shots}/core-session-${scheme}.png` });
-    await page.evaluate(() => window.EVApp.core.setRing(-1));
-    ok(
-      `[${scheme}] two answers of five: the other petals quiet`,
-      dim >= 3 && dim <= 4,
-      JSON.stringify({ dim, ...dimInfo })
-    );
+      // Each gesture: a screenshot while it plays, its look checked, then settled within its duration.
+      await hold(page, 'idle');
+      await page.waitForTimeout(800);
+      for (const g of ['send', 'done', 'error', 'glance', 'settle']) {
+        await page.evaluate(g => window.EVApp.core.gesture(g, g === 'glance' ? 'left' : undefined), g);
+        await page.waitForTimeout({ send: 350, done: 700, error: 250, glance: 800, settle: 500 }[g]);
+        const [a, s] = await both(page, idx);
+        await shot(page, `core-gesture-${g}-${scheme}-${theme}`);
+        const desc = {
+          send: ['the gap flicks to the top right and widens', near(a.gap, 1.5, 0.6) && a.gapWidth > 1.8],
+          done: ['the ring closes with a sweep', a.segments === 12],
+          error: ['a shudder at rest', a.segments >= 9],
+          glance: ['the gap looks left, to nine', near(a.gap, 9, 0.8)],
+          settle: ['a breath through the ring at rest', near(a.gap, 2, 0.6)],
+        }[g];
+        ok(`${tag} ${g}: ${desc[0]}`, desc[1], JSON.stringify({ big: a, small: s }));
+        await page.waitForTimeout(GDUR[g] * 1000 + 200);
+        const left = await page.evaluate(() => window.EVApp.core.stats().gestures);
+        ok(`${tag} ${g} settles within ${GDUR[g]} s`, left.length === 0, JSON.stringify(left));
+      }
+      // A session in Pointer mode: 5 of 12 filled, the gap at the next slot; held against the page's own session render.
+      await page.evaluate(() => {
+        const C = window.EVApp.core;
+        if (!C.__ring) {
+          C.__ring = C.setRing;
+          C.setRing = () => {};
+        }
+        C.__ring(5 / 12);
+      });
+      await page.waitForTimeout(1600);
+      const [sa, ss] = await both(page, idx);
+      await shot(page, `core-session-${scheme}-${theme}`);
+      await page.evaluate(() => window.EVApp.core.__ring(-1));
+      ok(
+        `${tag} a session at 5 of 12: five solid, a halftone slot behind every segment but the sixth, where the gap rides`,
+        sa.filled === 5 && sa.solid === 5 && sa.back === 11 && ss.solid === 5,
+        JSON.stringify({ big: sa, small: ss })
+      );
+      await page.waitForTimeout(900);
+    }
+    await page.evaluate(() => document.documentElement.removeAttribute('data-theme'));
+    // D-216: off the E.V. tab, the sidebar's 24 px dial turns to face him for a notice (alert: closed, flat, lit at twelve).
+    if (scheme === 'desktop') {
+      await page.click((await page.isVisible('#side-today')) ? '#side-today' : '#tab-today').catch(() => {});
+      await hold(page, 'alert');
+      await page.waitForTimeout(1400);
+      const side = await page.evaluate(() => {
+        const C = window.EVApp.core,
+          all = C.cores(),
+          i = all.findIndex(c => c.el.closest('#top-av'));
+        return i < 0 ? null : { ...C.sample(i), shown: all[i].el.getBoundingClientRect().width };
+      });
+      await page
+        .locator('#top-av')
+        .screenshot({ path: `${shots}/core-notice-sidebar-${scheme}.png` })
+        .catch(() => {});
+      ok(
+        `[${scheme}] the sidebar's 24 px dial turns to face him for a notice (D-216)`,
+        !!side && side.size === 24 && side.shown >= 20 && side.facing && side.segments === 12 && side.solid === 2,
+        JSON.stringify(side)
+      );
+      await hold(page, 'idle');
+    }
     if (scheme === 'phone') {
-      // Her frame budget (D-224): 10 s of speech, 4x CPU throttle, DPR 3. B-152 (D-176): advisory here, its numbers
+      // Her frame budget (D-272): 10 s of speech, 4x CPU throttle, DPR 3. B-152 (D-176): advisory here, its numbers
       // printed; B-207 holds it.
       const B = F.budget;
       const measureBudget = async () => {
@@ -314,7 +324,7 @@ const SPEECH = `async (secs) => { const C = window.EVApp.core; const text = 'Pre
       budget.phone = await advisory(
         results,
         'core-frame-budget',
-        `[phone] frame budget (D-224): at most ${B.maxSlowSharePct}% of frames over ${B.slowFrameMs} ms over ${B.speechSec} s of speech, ${B.cpuThrottle}x throttle, DPR ${B.dpr}; at most ${B.maxRedrawsPerSec} drawings a second`,
+        `[phone] frame budget (D-272): at most ${B.maxSlowSharePct}% of frames over ${B.slowFrameMs} ms over ${B.speechSec} s of speech, ${B.cpuThrottle}x throttle, DPR ${B.dpr}`,
         measureBudget,
         b => {
           const v = allPass([
@@ -322,11 +332,6 @@ const SPEECH = `async (secs) => { const C = window.EVApp.core; const text = 'Pre
               b.framesOver25ms <= (B.maxSlowSharePct / 100) * b.frames && b.frames > 300 ? 'PASS' : 'FAIL',
               'slow frames',
               `${b.framesOver25ms} of ${b.frames}`,
-            ],
-            [
-              b.redrawsPerSec <= B.maxRedrawsPerSec + 0.5 ? 'PASS' : 'FAIL',
-              'drawings a second',
-              String(b.redrawsPerSec),
             ],
           ]);
           return { ok: v.ok, numbers: JSON.stringify(b) + (v.ok ? '' : ' · missed: ' + v.numbers) };
@@ -352,7 +357,7 @@ const SPEECH = `async (secs) => { const C = window.EVApp.core; const text = 'Pre
     ok(`[${scheme}] no page errors`, errors.length === 0, errors.join(' | '));
     await ctx.close();
   }
-  // Reduced motion: one still drawing per mood; an error still shows coral.
+  // Reduced motion: one still drawing per mood, at 128 and 24 px.
   {
     const ctx = await browser.newContext({
       viewport: { width: 390, height: 844 },
@@ -361,25 +366,23 @@ const SPEECH = `async (secs) => { const C = window.EVApp.core; const text = 'Pre
     });
     const page = await ctx.newPage();
     await openPage(page);
+    const idx = await dials(page);
     const seen = new Set();
     for (const m of spec.persona.avatar.moods) {
       await hold(page, m);
       await page.waitForTimeout(400);
-      const a = await info(page);
+      const [a, s] = await both(page, idx);
       await page.waitForTimeout(900);
-      const b = await info(page);
+      const [b, t] = await both(page, idx);
       seen.add(b.hash);
-      await page.locator('#hero').screenshot({ path: `${shots}/core-reduced-${m}-phone.png` });
-      ok(`[reduced motion] ${m}: one still drawing`, a.hash === b.hash && a.petals === 5, `${a.hash} ${b.hash}`);
+      await shot(page, `core-reduced-${m}-phone`);
+      ok(
+        `[reduced motion] ${m}: one still drawing at 128 and 24 px`,
+        a.hash === b.hash && s.hash === t.hash && a.segments >= 10,
+        `${a.hash} ${b.hash} ${s.hash} ${t.hash}`
+      );
     }
-    ok('[reduced motion] each mood its own drawing where its pose differs', seen.size >= 3, String(seen.size));
-    await hold(page, 'idle');
-    await page.evaluate(() => window.EVApp.core.gesture('error'));
-    await page.waitForTimeout(300);
-    ok(
-      '[reduced motion] an error still shows coral',
-      await page.evaluate(() => document.querySelector('#hero .ev-av').classList.contains('err'))
-    );
+    ok('[reduced motion] each mood its own drawing where its state differs', seen.size >= 5, String(seen.size));
     await ctx.close();
   }
   await browser.close();
