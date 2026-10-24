@@ -4891,12 +4891,7 @@
   "dod": "At contrast 60 the generated values equal this doc's token and colour tables to the hex; a harness walks all three contrasts in both themes and asserts D-273's floors on every text, faint, accent and coded pair; no hex colour remains in page CSS outside the generator (lint); npm run check -- --touched green; staging GREEN",
   "milestone": "v4.7 look",
   "status": "open",
-  "depends": [
-   "B-255",
-   "B-256",
-   "B-257",
-   "B-258"
-  ],
+  "depends": [],
   "notes": "",
   "commit": null,
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
@@ -4909,10 +4904,7 @@
   "milestone": "v4.7 look",
   "status": "open",
   "depends": [
-   "B-255",
-   "B-256",
-   "B-257",
-   "B-258"
+   "B-271"
   ],
   "notes": "",
   "commit": null,
@@ -4926,10 +4918,7 @@
   "milestone": "v4.7 look",
   "status": "open",
   "depends": [
-   "B-255",
-   "B-256",
-   "B-257",
-   "B-258"
+   "B-272"
   ],
   "notes": "",
   "commit": null,
@@ -4943,10 +4932,7 @@
   "milestone": "v4.7 look",
   "status": "open",
   "depends": [
-   "B-255",
-   "B-256",
-   "B-257",
-   "B-258"
+   "B-272"
   ],
   "notes": "",
   "commit": null,
@@ -4960,10 +4946,7 @@
   "milestone": "v4.7 look",
   "status": "open",
   "depends": [
-   "B-255",
-   "B-256",
-   "B-257",
-   "B-258"
+   "B-271"
   ],
   "notes": "",
   "commit": null,
@@ -4977,10 +4960,7 @@
   "milestone": "v4.7 look",
   "status": "open",
   "depends": [
-   "B-255",
-   "B-256",
-   "B-257",
-   "B-258"
+   "B-274"
   ],
   "notes": "",
   "commit": null,
@@ -4994,10 +4974,12 @@
   "milestone": "v4.7 look",
   "status": "open",
   "depends": [
-   "B-255",
-   "B-256",
-   "B-257",
-   "B-258"
+   "B-271",
+   "B-272",
+   "B-273",
+   "B-274",
+   "B-275",
+   "B-276"
   ],
   "notes": "",
   "commit": null,
@@ -5011,10 +4993,7 @@
   "milestone": "v4.8 redesign",
   "status": "open",
   "depends": [
-   "B-255",
-   "B-256",
-   "B-257",
-   "B-258"
+   "B-271"
   ],
   "notes": "",
   "commit": null,
@@ -5028,10 +5007,8 @@
   "milestone": "v4.8 redesign",
   "status": "open",
   "depends": [
-   "B-255",
-   "B-256",
-   "B-257",
-   "B-258"
+   "B-278",
+   "B-272"
   ],
   "notes": "",
   "commit": null,
@@ -5045,10 +5022,7 @@
   "milestone": "v4.8 redesign",
   "status": "open",
   "depends": [
-   "B-255",
-   "B-256",
-   "B-257",
-   "B-258"
+   "B-279"
   ],
   "notes": "",
   "commit": null,
@@ -5062,10 +5036,7 @@
   "milestone": "v4.8 redesign",
   "status": "open",
   "depends": [
-   "B-255",
-   "B-256",
-   "B-257",
-   "B-258"
+   "B-279"
   ],
   "notes": "",
   "commit": null,
@@ -5079,10 +5050,8 @@
   "milestone": "v4.8 redesign",
   "status": "open",
   "depends": [
-   "B-255",
-   "B-256",
-   "B-257",
-   "B-258"
+   "B-280",
+   "B-281"
   ],
   "notes": "",
   "commit": null,
@@ -5096,10 +5065,12 @@
   "milestone": "v4.8 redesign",
   "status": "open",
   "depends": [
-   "B-255",
-   "B-256",
-   "B-257",
-   "B-258"
+   "B-277",
+   "B-278",
+   "B-279",
+   "B-280",
+   "B-281",
+   "B-282"
   ],
   "notes": "",
   "commit": null,
