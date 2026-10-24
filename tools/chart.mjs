@@ -440,6 +440,10 @@ export function applyLog(rec, o, { now = new Date().toISOString(), builder = bui
       throw new Error(
         `triage first: ${waiting.map(x => x.id).join(', ')} wait${waiting.length === 1 ? 's' : ''} in the inbox`
       );
+    // A claim is the lock (CLAUDE.md step 3): a task already in progress is held by another session, so a second claim
+    // is refused rather than taken twice (Oct 24, several builders on main). Notes alone still land.
+    if (o.status === 'in progress' && t.status === 'in progress')
+      throw new Error(`${id} is already in progress: another session holds it; take nothing`);
     if (o.status === 'done' && !(o.commit || t.commit))
       throw new Error(`${id} done needs --commit (the commit that did it)`);
     what.push(`${t.status} -> ${o.status}`);

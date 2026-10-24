@@ -285,6 +285,12 @@ test('B-95: triage comes first, then the entry becomes a task, joins one, or is 
     /\| B-04 \| Bug \(reported Oct 19\): the timer sat at 0:00 Done when: the clock resumes/
   );
   C.applyLog(r, { _: ['log', 'B-02'], status: 'in progress' });
+  // A claim is the lock: a second claim on a task in progress is refused; a note alone still lands.
+  assert.throws(
+    () => C.applyLog(r, { _: ['log', 'B-02'], status: 'in progress', note: 'a second run' }),
+    /already in progress: another session holds it/
+  );
+  C.applyLog(r, { _: ['log', 'B-02'], note: 'a milestone' });
   // join and decline keep the entry, marked.
   C.applyReport(r, { _: ['report', 'request', 'reorder', 'the', 'briefing'], source: 'build chat' });
   C.applyLog(r, { _: ['log', 'B-05', 'B-02'], triage: 'join' });
