@@ -13,7 +13,8 @@ code, the tests and the spec.
   `insights`, `mirror`, `canvas-rules`, `share`, `item-kinds`, `idcheck`). Each factory file has no imports, so it runs
   in node (evcore imports it) and in the page (`tools/build.mjs` `coreParts` writes each one into core.js, ahead of
   E.V. core, without its export). `validate.mjs`, `motion.mjs` and `study.mjs` go into the page the same way as their
-  own globals. A new split file therefore needs a line in `tools/build.mjs` as well as in evcore.
+  own globals. `coreParts` finds a new factory from evcore's own `import { x } from './f.mjs'` lines (one export, no
+  imports), so `tools/build.mjs` needs no change; the B-160 test's file list (`test/core.test.mjs` 1365) does.
 - **The run side** is `run.mjs` (the six moves of the run protocol) calling `steps.mjs` (each pipeline's code steps,
   agent materials and folds), with `derive.mjs` (derived documents), `watch.mjs` (watchdog judgment), `batches.mjs`
   and `transcript.mjs`.
@@ -142,7 +143,9 @@ and the full check, and none lands in the days around an exam.
 
 ### 3. split: the Edit rules, the planning block and the snapshot out of evcore.mjs
 
-These are three factories in the B-155 to B-160 pattern. Each needs its line in `tools/build.mjs` `coreParts` as well.
+These are three factories in the B-155 to B-160 pattern. `tools/build.mjs` picks each up from its import line, but
+the B-160 test (`test/core.test.mjs` 1365, a `deepEqual` of the split files) needs each new name added. That is a test
+change beyond imports, so each pull request must say so plainly.
 
 - **`trim/split-edits` (about 270 lines):** dayView, listEdit, dateView, liveDates and dateEdit, at 1485-1606 and
   1707-1853. They depend only on editBase, courses, norm, slug, safeId and isPrepAdded. The factory has to be bound
@@ -195,13 +198,14 @@ Take `trim/api-spread` first, so each split adds one spread line instead of thre
 - **Fixed kinds:** they are listed four times: FIXED_KINDS 1234, the `required` list 1355, FIXED_TAGS 1491 and
   isFixedDate 1733.
 - **Size:** about 30 lines.
-- **Risk:** low to medium, because the planner reads it.
+- **Risk:** low, but the planner reads it, so each caller's result must stay exactly the same.
 
 ### 8. duplicate: identifier patterns in evcore.mjs and idcheck.mjs (`trim/one-id-scan`)
 
 - **What:**
   - `ID_PATTERNS` (evcore 2068) and `ID_VALUE_PATTERNS` (idcheck 8) both carry the date-of-birth, MRN and room rules.
-  - The birth-date pattern is identical.
+  - They are not the same rules: evcore's flags any mention of MRN or date of birth, while idcheck's needs a value
+    after the keyword (for example a number of 4 or more digits after MRN).
   - Sessions, skills and item-kinds use evcore's `scanIdentifiers`; lint uses the idcheck one.
 - **Size:** about 15 lines.
 - **Risk:** **high**. This is the patient-identifier hard limit (B-04). Merging them can change what gets held back.
@@ -255,7 +259,7 @@ Risk is none for both.
   - `minutes = 0` overriding values just set (1321).
 - **A hard-coded phrase:** outcomeText says "two different days" while `solidAfterRightDays` is configurable.
 - **Size:** about 40 lines.
-- **Risk:** medium. Moving constants into spec.constants touches the spec, and that is a build chat's call.
+- **Risk:** low for studying if the values stay the same. Moving constants into spec.constants touches the spec, and that is a build chat's call.
 
 ### 13. small
 
