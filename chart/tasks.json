@@ -4962,7 +4962,7 @@
   "depends": [
    "B-274"
   ],
-  "notes": "claimed by this run",
+  "notes": "built: forget-me-not drawing values and the stepped-clock fields out of the spec, tests and harnesses rewritten to D-271/D-272, a B-276 sweep test added; npm test green",
   "commit": null,
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
