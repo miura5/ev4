@@ -88,11 +88,7 @@ test('B-93: log changes one task and refuses what it must', () => {
   const out = C.applyLog(r, { _: ['log', 'B-02'], status: 'done', commit: 'def5678abc', note: 'shipped' });
   assert.equal(out.what, 'open -> done, commit def5678, notes');
   assert.equal(r.tasks[1].status, 'done');
-  assert.throws(
-    () => C.applyLog(r, { _: ['log', 'B-03'], status: 'in progress', why: 'w' }),
-    /has no Board row yet: give --name/
-  );
-  C.applyLog(r, { _: ['log', 'B-03'], status: 'in progress', name: 'three', why: 'why three' });
+  C.applyLog(r, { _: ['log', 'B-03'], status: 'in progress', name: 'three' });
   assert.equal(r.tasks[2].board.row, 'v4 B-03: three');
   assert.throws(() => C.applyLog(r, { _: ['log', 'B-09'], status: 'done' }), /no task B-09/);
   assert.throws(() => C.applyLog(r, { _: ['log', 'B-01'] }), /nothing to log/);
@@ -658,7 +654,6 @@ test("B-106: plan files a design doc's Tasks to add and Decisions proposed with 
   const again = C.planFrom(r, C.designRead(jsonl, id), id);
   assert.deepEqual([again.commands, again.skipped.length], [[], 3], 'a second run files nothing');
   assert.match(C.formatPlan(again), /nothing to file/);
-  assert.equal(C.handoffNoteCall().args.payload.ops[0].source.from.content, C.HANDOFF_NOTE);
 });
 
 // ------------------------------------------------------------------------------------------------ B-109 tenets

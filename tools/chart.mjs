@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 // The Chart: E.V.'s project record (M12; design https://claude.ai/artifact/8DVSMh5WdybjeHVV5m2uQT, approved by Matt
-// Oct 19). chart/ holds the facts; BACKLOG.md, the Board and Changelog tables of the v3 doc and the overview doc's status
-// line are generated from them; these commands are the only way in. chart/ and this file sit outside the manifest's
+// Oct 19). chart/ holds the facts; BACKLOG.md, DECISIONS.md and CHANGELOG.md are generated from them; these commands are
+// the only way in. chart/ and this file sit outside the manifest's
 // file list (tools/build.mjs HASHED), so a bookkeeping commit never changes what a deploy ships.
 //   report <bug|request> --from-chat ["<words>"] | --from-comment <id> | "<words>" --source <where> [--reworded "<his point>"]
 //            in Matt's words as written, taken from this session's transcript (his message, a Board comment) (B-95)
 //   inbox                    session start: the Board comments to file and the entries to triage, as commands
 //   quarantine --runs <file> the quarantined timing checks and their green nightlies in a row (B-152)
-//   log <id> [--status s] [--note t] [--board-note t] [--commit sha] [--name n] [--why w] [--waiting-on who] [--dod d] [--title t]
+//   log <id> [--status s] [--note t] [--commit sha] [--name n] [--waiting-on who] [--dod d] [--title t]
 //            [--ask "<one line>" [--choices "A|B"]] [--note --from-job <job id>]
 //            [--triage task --dod d --milestone m [--depends ids] | --triage join <id> | --triage decline --reason r]
 //   log deploy --target <staging|live> --commit sha [--time ISO] [--ok Matt] [--verify green] [--rollback sha]
@@ -16,7 +16,7 @@
 //   log decision <D-id> --title t [--status s] [--why w] [--supersedes ids] [--amends ids] [--restated]
 //            each writes one change to chart/, regenerates BACKLOG.md, commits (--no-commit to skip; --trailer adds a
 //            commit trailer line, repeatable)
-//   plan --from <doc link> [--apply] [--handoff-note]   a design doc's hand-off (D-141, B-106): from this session's
+//   plan --from <doc link> [--apply]   a design doc's hand-off (D-141, B-106): from this session's
 //            read of the doc, its 'Tasks to add' and 'Decisions proposed' tables as the log new and log decision commands
 //            that file them (the next free ids, P-n rewritten to its D-id); --apply runs them; filed rows are skipped
 //   lint [--json]            the record's checks: ids, dependencies, decisions, commits, the inbox (B-94; npm test runs it)
@@ -50,7 +50,7 @@ const HERE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const FILES = ['tasks', 'decisions', 'deploys', 'rules', 'views'];
 export const TASK_STATUS = ['inbox', 'open', 'in progress', 'blocked', 'done', 'declined'];
 export const TASK_KINDS = ['task', 'bug', 'request'];
-// The design's three, plus revisit: three rows of the Decisions tab carry it and the import keeps what it finds.
+// The design's three, plus revisit, which three decisions carry.
 export const DECISION_STATUS = ['proposed', 'accepted', 'superseded', 'revisit'];
 // B-109: a decision is one-time; a tenet is a standing principle, with the parts of E.V. it governs and how it is checked.
 export const DECISION_KINDS = ['decision', 'tenet'];
@@ -275,14 +275,6 @@ export const generatedFiles = rec => ({
   'DECISIONS.md': renderDecisions(rec),
   'CHANGELOG.md': renderChangelog(rec),
 });
-/** A backlog table row as its six fields (the notes keep any " | " a hand edit left in them). */
-export function parseBacklogRow(line) {
-  const c = line
-    .slice(2, line.endsWith(' |') ? -2 : -1)
-    .split(/(?<!\\) \| /)
-    .map(s => s.replace(/\\\|/g, '|'));
-  return [c[0], c[1], c[2], c[3], c[4], c.slice(5).join(' | ')];
-}
 
 // ------------------------------------------------------------------------------------------------ Docs reads
 /** A Docs read's prose XML as {rev, rows: [{id, h, cells: [{id, h, text, dropdown}]}]} for one table (ids in full). */
@@ -484,18 +476,9 @@ export function formatLint(findings) {
   ].join('\n');
 }
 
-// ------------------------------------------------------------------------------------------------ the views
+// ------------------------------------------------------------------------------------------------ names and lines
 export const boardName = t => (t.board && t.board.row) || `v4 ${t.id}: ${t.name || t.title.split(/[:(]/)[0].trim()}`;
 
-const docCall = (doc, node, ops) => ({
-  tool: 'mcp__Claude_Docs__update',
-  args: {
-    ref: { object: 'node', id: node },
-    engine: 'prose',
-    container: { kind: 'project', id: doc },
-    payload: { ops },
-  },
-});
 /** The Changelog line the record gives a deploy (newest first in the tab), unless it came from the tab itself. */
 export function changelogLine(d) {
   if (d.line) return d.line;
@@ -715,7 +698,6 @@ export function applyLog(rec, o, { now = new Date().toISOString(), builder = bui
   if (o.renumber) {
     if (o.renumber !== nextTaskId(rec)) throw new Error(`renumber to the next free id, ${nextTaskId(rec)}`);
     if (t.board && t.board.row) {
-      t.board.were = [...(t.board.were || []), t.board.row];
       t.board.row = t.board.row.replace(`v4 ${t.id}:`, `v4 ${o.renumber}:`);
     }
     t.renumberedFrom = t.id;
@@ -820,18 +802,8 @@ export function applyLog(rec, o, { now = new Date().toISOString(), builder = bui
     t.notes = o.note;
     what.push('notes');
   }
-  if (o.name || o.why || o['board-note'] != null || o.board) {
-    t.board = t.board || {};
-    if (!t.board.row && !o.name && !t.name)
-      throw new Error(`${id} has no Board row yet: give --name (its short Board title)`);
-    if (o.name) {
-      if (t.board.row) {
-        t.board.were = [...(t.board.were || []), t.board.row];
-      }
-      t.board.row = `v4 ${t.id}: ${o.name}`;
-    }
-    if (o.why) t.board.why = o.why;
-    if (o['board-note'] != null) t.board.notes = o['board-note'];
+  if (o.name) {
+    t.board = { ...t.board, row: `v4 ${t.id}: ${o.name}` };
     what.push('board');
   }
   // B-182 (D-196): what Your turn asks him, one line, and a decision's named choices (2 to 4, each a chip).
@@ -871,7 +843,7 @@ export function applyLog(rec, o, { now = new Date().toISOString(), builder = bui
     t.waitingWhere = o.where;
     what.push('where');
   }
-  if (!what.length) throw new Error('nothing to log: give --status, --note, --commit, --triage or a board field');
+  if (!what.length) throw new Error('nothing to log: give --status, --note, --commit, --triage or --name');
   return { rec, what: what.join(', '), id: t.id };
 }
 export function applyReport(rec, o, { now = new Date().toISOString(), jsonl = null } = {}) {
@@ -949,7 +921,7 @@ export function applyReport(rec, o, { now = new Date().toISOString(), jsonl = nu
     ...(reworded ? { reworded: true } : {}),
     reportedAt: now,
     ...(job ? { job: job.id } : {}),
-    board: { row: `v4 ${id}: ${name}`, why: words, notes: `Reported ${ctDate(now)} from ${o.source}` },
+    board: { row: `v4 ${id}: ${name}` },
   });
   return {
     rec,
@@ -2312,7 +2284,7 @@ export function brief(rec, id, { root = HERE, scope: override, now = Date.now() 
           )
           .join('\n')
       : '- None named in the task; the hard limits and D-139 below still hold.',
-    `Reasoning in full: ${rec.views.retired ? 'DECISIONS.md' : rec.views.decisionsTab}`,
+    'Reasoning in full: DECISIONS.md',
     ''
   );
   const scope = taskScope(t, override),
@@ -2452,18 +2424,6 @@ function runWindows(root, now = new Date()) {
 // ------------------------------------------------------------------------------------------------ the design hand-off
 // D-141: a design chat proposes decisions as P-1, P-2 ... and tasks in a 'Tasks to add' table; a build chat files both
 // through plan, which takes the ids. The Build plan tab is design history from then on.
-const BUILD_PLAN = { doc: 'Fgb2KjoLKcRgCRrBmM6kEf', node: '199e3b19-3ad3', after: 'mzaay4nq4t8.5147' };
-export const HANDOFF_NOTE =
-  "New tasks enter through the Chart (D-140, D-141): a design chat lists them in its doc's Tasks to add table, with its proposed decisions as P-1, P-2 and so on, and a build chat files them with node tools/chart.mjs plan --from <doc link>. This table is design history; BACKLOG.md is the backlog.";
-export const handoffNoteCall = () =>
-  docCall(BUILD_PLAN.doc, BUILD_PLAN.node, [
-    {
-      op: 'insert',
-      target: { kind: 'blocks', ids: [BUILD_PLAN.after] },
-      side: 'after',
-      source: { from: { kind: 'inline', content: HANDOFF_NOTE }, as: 'markdown' },
-    },
-  ]);
 /** The doc id a link ends with (or the id itself). */
 export const docIdOf = link =>
   String(link || '')
@@ -2932,7 +2892,6 @@ function args(argv) {
     '--during-session',
     '--force',
     '--apply',
-    '--handoff-note',
     '--correct',
     '--retire',
     '--matt',
@@ -3068,11 +3027,6 @@ const commands = {
     return rollback(o);
   },
   plan(o) {
-    if (o['handoff-note']) {
-      const c = handoffNoteCall();
-      console.log(`plan: the Build plan tab's hand-off line (once): ${c.tool}\n${JSON.stringify(c.args)}`);
-      return 0;
-    }
     if (!o.from || o.from === true) throw new Error('plan --from <design doc link> [--apply]');
     const root = rootOf(o),
       file = o.transcript || newestTranscript(),
