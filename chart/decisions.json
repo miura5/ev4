@@ -1,5 +1,115 @@
 [
  {
+  "id": "D-273",
+  "date": "Oct 23",
+  "title": "Contrast floors hold at every contrast setting in both themes: text 4.5:1 on its ground, faint 4.6:1 on chrome and surface, onAccent on accent 4.5:1, coded colours 3:1 on surface.",
+  "why": "The generator guarantees them by construction; the look pass proves no hand-set colour slipped past it.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan UpaXAj6qMmWqkAbmN9P7Jy P-9",
+  "kind": "tenet",
+  "scope": [
+   "ui"
+  ],
+  "check": "harness"
+ },
+ {
+  "id": "D-272",
+  "date": "Oct 23",
+  "title": "Her frame budget is measured: 10 s of speech at 390 × 844 (DPR 3, 4× CPU throttle) keeps at most 5% of frames over 25 ms; an idle Dial Arc with no gesture or session draws no frame. Supersedes D-224.",
+  "why": "Full frame rate is only safe if the phone budget holds; the measure stays, the eight-drawings cap goes.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan UpaXAj6qMmWqkAbmN9P7Jy P-8",
+  "kind": "tenet",
+  "scope": [
+   "ui"
+  ],
+  "check": "harness"
+ },
+ {
+  "id": "D-271",
+  "date": "Oct 23",
+  "title": "One clock: she and the interface move on requestAnimationFrame at the display's rate with frame-rate-independent smoothing; she draws nothing while nothing moves; a view switch is a cut; a fold opens in 0.28 s and closes in 0.16 s; nothing over 0.45 s except her own gestures (at most 2.4 s); nothing he is reading or ticking moves. Supersedes D-230.",
+  "why": "Held frames made the Dial Arc's flips stutter; at full rate with dt smoothing she is calm at 60 or 120 Hz and still costs nothing at rest.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan UpaXAj6qMmWqkAbmN9P7Jy P-7",
+  "kind": "tenet",
+  "scope": [
+   "ui"
+  ],
+  "check": "harness"
+ },
+ {
+  "id": "D-270",
+  "date": "Oct 23",
+  "title": "The interface is neutral; the accent is hers and colour is meaning: Ember only on her, the primary button and send; links, focus, selection, nav and secondary buttons neutral; any other colour is a coded colour from the generator, used for its one meaning (green done or right, yellow attention, red an exam today or tomorrow, graded work due today and errors, blue information, violet study). Supersedes D-221.",
+  "why": "Matt (Oct 24): the rest of the UI doesn't need an accent; teal and blue left over from older rules read as noise.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan UpaXAj6qMmWqkAbmN9P7Jy P-6",
+  "kind": "tenet",
+  "scope": [
+   "ui"
+  ],
+  "check": "harness"
+ },
+ {
+  "id": "D-269",
+  "date": "Oct 23",
+  "title": "Coded colours share one lightness and chroma (L52 C54 light, L72 C48 dark) at hues green 145, yellow 82, red 28, blue 265, violet 305, with the meanings in this doc's colour table; in light they colour icons, dots, bars and tinted lines, never body text.",
+  "why": "One lightness means no colour outshouts another, and 4.1:1 on light surfaces is enough for marks but not for reading.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan UpaXAj6qMmWqkAbmN9P7Jy P-5"
+ },
+ {
+  "id": "D-268",
+  "date": "Oct 23",
+  "title": "The theme is generated in LCH (D50 to sRGB) from a warm-grey base (H70, C3.2), the Ember accent (L48, C62, H52) and a contrast setting (30, 60, 100; default 60), by the rules in this doc's token table; light and dark follow the system with a toggle, and contrast is a Preferences control. No hex token is stored. Supersedes D-211's fixed tokens; its system-following toggle stays.",
+  "why": "Linear's redesign: perceptual lightness makes even steps in both themes, and one contrast knob serves Matt's screens without a second theme.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan UpaXAj6qMmWqkAbmN9P7Jy P-4"
+ },
+ {
+  "id": "D-267",
+  "date": "Oct 23",
+  "title": "A study session shows on her in Pointer mode: filled segments fall in clockwise from twelve (40 units over 1.1 s), the rest stay halftone as time left, the gap rides at the next unfilled slot like a clock hand, and every 7 s the filled segments re-drop 8 units 0.16 s apart.",
+  "why": "Matt's choice of the four on the Sessions board: \"now\" is visible at a glance and she still has her gap.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan UpaXAj6qMmWqkAbmN9P7Jy P-3"
+ },
+ {
+  "id": "D-266",
+  "date": "Oct 23",
+  "title": "Her colour is Ember with halftone: front #B5530F and halftone #A8402F light, #F2A35E and #F08A78 dark; both faces follow the palette. The UI accent is the generator's Ember (#b6541d light, #f4905b dark), used only on her, the primary button and send. Supersedes D-214.",
+  "why": "Matt's pick over Teal with wireframe (Oct 24): warm against the warm-grey base, and the accent stays a mark of her rather than of the interface.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan UpaXAj6qMmWqkAbmN9P7Jy P-2"
+ },
+ {
+  "id": "D-265",
+  "date": "Oct 23",
+  "title": "Her avatar is the Dial Arc: one SVG, a ring of 12 segments (radii 16 and 28 of 64, 0.08 rad apart) tilted gently (rx 0.45, ry −0.35), each flipping on its spoke between a solid front and a halftone back over a ground-colour underlay; at rest an arc with a 1.6-segment gap at two o'clock, the gap her pointer; the seven moods and five gestures map one to one as this doc's state table gives them, and the page API (mood, gesture, size, session, reduce) is unchanged; reduced motion shows one still per mood. Supersedes D-212.",
+  "why": "Matt chose it on Oct 24 after 15 rounds: it reads at 24 px, every state is a different use of one gap, and the halftone back gives thinking and sleep a texture without a second colour.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan UpaXAj6qMmWqkAbmN9P7Jy P-1"
+ },
+ {
   "id": "D-264",
   "date": "Oct 23",
   "title": "The trim scans the whole codebase and may restructure. Parallel scan runs each map one large area and write findings to docs/trim/scan/<area>.md; the build chat folds approved findings into the queue. Findings are dead code, duplicates, patch layers (special cases stacked by one-session fixes), files to split into modules, and things to keep. Study logic and the page may now be restructured, with no behavior change: tests and harnesses pass unchanged, it ships through staging and the full check, and nothing lands in the days around an exam. The record, schemas, prompts and what runs write stay out of scope. The maps stay as a guide that a build chat reads before changing a mapped file.",

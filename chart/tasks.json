@@ -4883,5 +4883,124 @@
    "outcome": "task",
    "at": "2026-10-24T04:13:15.061Z"
   }
+ },
+ {
+  "id": "B-271",
+  "kind": "task",
+  "title": "LCH tokens (D-268, D-269, D-273): genTheme in the page source generates every colour from base, accent and contrast; the fixed D-211 tokens are removed; Preferences gains Contrast (30, 60, 100) beside the theme switch",
+  "dod": "At contrast 60 the generated values equal this doc's token and colour tables to the hex; a harness walks all three contrasts in both themes and asserts D-273's floors on every text, faint, accent and coded pair; no hex colour remains in page CSS outside the generator (lint); npm run check -- --touched green; staging GREEN",
+  "milestone": "v4.7 look",
+  "status": "open",
+  "depends": [
+   "B-255",
+   "B-256",
+   "B-257",
+   "B-258"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
+ },
+ {
+  "id": "B-272",
+  "kind": "task",
+  "title": "Dial Arc (D-265, D-266): the avatar module is the Dial Arc ported from the round 15 canvas's Avatar.dc.html, replacing the forget-me-not at every size D-213 names, with the same page API",
+  "dod": "The avatar harness renders each of the seven moods and five gestures at 128 px and 24 px in both themes and the screenshots match the States board's descriptions; reduced motion gives one still per mood; the 24 px form in the sidebar turns its gap to face him for D-216; npm run smoke and npm run check -- --touched green; staging GREEN",
+  "milestone": "v4.7 look",
+  "status": "open",
+  "depends": [
+   "B-255",
+   "B-256",
+   "B-257",
+   "B-258"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
+ },
+ {
+  "id": "B-273",
+  "kind": "task",
+  "title": "Session pointer (D-267): her session prop is fed by the study session's elapsed fraction, in Pointer mode",
+  "dod": "With Playwright's clock at 0, 25%, 50% and 100% of a 25-minute session the screenshots show 0, 3, 6 and 12 filled segments with the gap at the next slot; the 7 s re-drop runs only while a session runs; staging GREEN",
+  "milestone": "v4.7 look",
+  "status": "open",
+  "depends": [
+   "B-255",
+   "B-256",
+   "B-257",
+   "B-258"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
+ },
+ {
+  "id": "B-274",
+  "kind": "task",
+  "title": "One clock (D-271, D-272): her loop runs on requestAnimationFrame with dt smoothing and stops when she is still; the frame-budget harness measures D-272",
+  "dod": "The budget harness at 390 × 844, DPR 3, 4× throttle shows at most 5% of frames over 25 ms across 10 s of speech, and zero frames over 3 s of idle; staging GREEN",
+  "milestone": "v4.7 look",
+  "status": "open",
+  "depends": [
+   "B-255",
+   "B-256",
+   "B-257",
+   "B-258"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
+ },
+ {
+  "id": "B-275",
+  "kind": "task",
+  "title": "Sweep for D-270 (superseding D-221): every teal, amber, coral and forget-me-not blue in page source, harnesses and tests moves to its coded colour or to neutral; links, focus and selection are neutral; lint names no open task or test that cites D-221, D-214 or D-212",
+  "dod": "grep of page/ and test/ finds none of the old hex values; the look pass at 390 × 844 and 1280 shows Ember only on her, the primary button and send; lint clean; npm test green",
+  "milestone": "v4.7 look",
+  "status": "open",
+  "depends": [
+   "B-255",
+   "B-256",
+   "B-257",
+   "B-258"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
+ },
+ {
+  "id": "B-276",
+  "kind": "task",
+  "title": "Sweep for D-271 and D-272 (superseding D-230 and D-224): held-frame code, the eight-a-second cap and the tests that assert them are removed or rewritten to the new tenets",
+  "dod": "No reference to held frames or an 8 fps cap remains in page/ or test/; lint names no open task or test citing D-230 or D-224; npm test green",
+  "milestone": "v4.7 look",
+  "status": "open",
+  "depends": [
+   "B-255",
+   "B-256",
+   "B-257",
+   "B-258"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
+ },
+ {
+  "id": "B-277",
+  "kind": "task",
+  "title": "Matt's look at Dial Arc and Ember, then live",
+  "dod": "On staging, on his phone and at 1280, Matt sees every mood, a study session in Pointer mode and both themes at the three contrasts, and answers the yellow question (shared L52 or L60); then ship live on his explicit OK",
+  "milestone": "v4.7 look",
+  "status": "open",
+  "depends": [
+   "B-255",
+   "B-256",
+   "B-257",
+   "B-258"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  }
 ]
