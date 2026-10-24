@@ -32,8 +32,8 @@ attribution lines with `--trailer`, one per line) and regenerates BACKLOG.md, DE
    is deleted. A red last nightly check (`.github/workflows/nightly.yml`, B-151; `inbox` prints the read) is an inbox
    entry: file it with `report bug --source "nightly <run id>"` unless an open task covers it. A bug that breaks
    studying is taken before any other open task. When Matt says "bug: ..." or
-   "idea: ..." in the chat, file it at once with `report bug|request --from-chat` (his words come from the
-   transcript, never retyped).
+   "idea: ..." in the chat, file it at once with `report bug|request --from-chat --reworded "<his point>"`. The repository is public,
+   so his words are never stored as written: reword them into a clear, neutral sentence that keeps every point (D-263).
 3. Take the lowest `open` task in BACKLOG.md whose dependencies are `done`; `brief --task <id>` is its one page.
    Start it with `log <id> --status "in progress" --note "..."` and say which task you took. `log` refuses while an
    entry waits in the inbox.
@@ -70,7 +70,7 @@ exception: a builder run started with a ship job deploys live through `ship live
 If the run was started by the `ev4-builder` task with `continue` and open, unblocked tasks remain, fire the builder again
 through the Claude Code Remote `fire_trigger` tool with the text `continue` before ending, at most once per run. A
 builder run waits for the message it was fired with ('Job <id>', words to file, or `continue`; its prompt ends its
-first turn until that arrives, B-187), and a run fired with words to file files them first (`report --from-chat`). Stop firing when
+first turn until that arrives, B-187), and a run fired with words to file files them first (`report --from-chat --reworded`). Stop firing when
 `BACKLOG.md` has no open unblocked task, or when the same task has been `in progress` across two runs (mark it
 `blocked` with what happened).
 
@@ -83,8 +83,8 @@ its step 1 health read is the live watchdog's `last_run` from `list_triggers` (`
 fired with says what it is for:
 
 - `Job <id>`: one ArtifactData get of jobs/<id> (from live; from staging when live has no such document), then by the
-  job's kind. **build**: `report bug|request --from-chat --job <id>` (the words come from the fired message or the job,
-  never retyped; the source is "E.V. page, job <id>"), triaged into a task whose definition of done is written from his
+  job's kind. **build**: `report bug|request --from-chat --job <id> --reworded "<his point>"` (the job proves his request; the
+  words are reworded, D-263; the source is "E.V. page, job <id>"), triaged into a task whose definition of done is written from his
   words (D-182), and that task taken first in this run, the one exception to the BACKLOG order (D-191); built, shipped
   to staging and traced. **reply**: `log <task> --note --from-job <id> --waiting-on none`, then that task taken when it
   was blocked only on that. **design** (B-183, D-197): read the north star's tab (Claude Docs read of
@@ -98,7 +98,7 @@ fired with says what it is for:
   it refuses a job that is not kind ship, not written by his page, names another commit, has a result or is over 24
   hours old. Then the trace names live at the commit GREEN, or where it stopped. Rollback stays a build chat's act
   with Matt present.
-- Words to file (bug:, idea: or request:): `report --from-chat` first, then as Every session says.
+- Words to file (bug:, idea: or request:): `report --from-chat --reworded` first, then as Every session says.
 - `continue`: Every session, from step 1.
 
 Every run started with a job ends with `trace --job <id> --record <the job's record> --status done|failed --note "..."`

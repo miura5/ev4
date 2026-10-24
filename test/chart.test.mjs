@@ -2334,3 +2334,24 @@ test('B-185: ship live --from-job holds the fetched job to R-04 in its second fo
   assert.equal(C.jobResultSeen(get('c', 'jobresults', `saved "${f}"`).join('\n'), 'job-x'), 'exists');
   assert.equal(C.jobResultSeen('', 'job-x'), null);
 });
+
+test('D-263: report --reworded files his point in neutral words, still proven by his message', () => {
+  const jsonl = human('bug: ugh the timer sat at 0:00 after i came back, so annoying', '2026-10-23T23:41:00.000Z');
+  const r = sample();
+  C.applyReport(
+    r,
+    { _: ['report', 'bug'], 'from-chat': true, reworded: 'The session timer stayed at 0:00 after he came back to it.' },
+    { jsonl }
+  );
+  const t = r.tasks.at(-1);
+  assert.equal(t.words, 'The session timer stayed at 0:00 after he came back to it.');
+  assert.equal(t.reworded, true);
+  assert.equal(t.reportedAt, '2026-10-23T23:41:00.000Z');
+  assert.ok(!JSON.stringify(r.tasks).includes('so annoying'), 'his own words are not stored');
+  // Rewording needs a real message to reword.
+  assert.throws(
+    () =>
+      C.applyReport(sample(), { _: ['report', 'bug'], 'from-chat': true, reworded: 'x' }, { jsonl: human('nothing') }),
+    /no message in this session/
+  );
+});

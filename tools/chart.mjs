@@ -3,7 +3,7 @@
 // Oct 19). chart/ holds the facts; BACKLOG.md, the Board and Changelog tables of the v3 doc and the overview doc's status
 // line are generated from them; these commands are the only way in. chart/ and this file sit outside the manifest's
 // file list (tools/build.mjs HASHED), so a bookkeeping commit never changes what a deploy ships.
-//   report <bug|request> --from-chat ["<words>"] | --from-comment <id> | "<words>" --source <where>   an inbox entry
+//   report <bug|request> --from-chat ["<words>"] | --from-comment <id> | "<words>" --source <where> [--reworded "<his point>"]
 //            in Matt's words as written, taken from this session's transcript (his message, a Board comment) (B-95)
 //   inbox                    session start: the Board comments to file and the entries to triage, as commands
 //   quarantine --runs <file> the quarantined timing checks and their green nightlies in a row (B-152)
@@ -1571,9 +1571,20 @@ export function applyReport(rec, o, { now = new Date().toISOString(), jsonl = nu
     at = o.at || (fired && fired.at) || job.doc.at || null;
     o.source = o.source && o.source !== 'build chat' ? o.source : `E.V. page, job ${job.id}`;
   }
+  // D-263: the repository is public, so Matt's words are filed reworded: the lookup above still proves his message,
+  // comment or job exists, and --reworded carries his point in clear, neutral words instead of his own.
+  let reworded = false;
+  if (typeof o.reworded === 'string') {
+    if (!words)
+      throw new Error(
+        '--reworded rewords a message, comment or job it found: give --from-chat, --from-comment or --job'
+      );
+    words = o.reworded.replace(/\s+/g, ' ').trim();
+    reworded = true;
+  }
   if (!['bug', 'request'].includes(kind) || !words)
     throw new Error(
-      'report <bug|request> "<the words as written>" --source <where> | --from-chat ["<words to find>"] | --from-comment <id> | --job <id>'
+      'report <bug|request> "<the words as written>" --source <where> | --from-chat ["<words to find>"] | --from-comment <id> | --job <id>, each with --reworded "<his point>"'
     );
   if (!o.source) throw new Error('report needs --source (the chat, a Board comment, the page)');
   now = at || now;
@@ -1594,6 +1605,7 @@ export function applyReport(rec, o, { now = new Date().toISOString(), jsonl = nu
     commit: null,
     source: o.source,
     words,
+    ...(reworded ? { reworded: true } : {}),
     reportedAt: now,
     ...(job ? { job: job.id } : {}),
     board: { row: `v4 ${id}: ${name}`, why: words, notes: `Reported ${ctDate(now)} from ${o.source}` },

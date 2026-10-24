@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-263",
+  "date": "Oct 23",
+  "title": "Matt's words are never stored as written. Every report, decision, note, commit message and pull request rewords them into a clear, neutral sentence that keeps every point: what he saw, what he wants, how much it matters. report takes --reworded \"<his point>\" beside --from-chat, --from-comment or --job, so the lookup still proves his message exists. Entries filed before this stay as they are.",
+  "why": "Matt, Oct 23: he is making the repository public so its checks run free. He's fine with what's there, but from now on his voice is paraphrased, which also reads better than quick typing.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-262",
   "date": "Oct 23",
   "title": "Retire R-05 (live deploys wait out the watchdog windows) and the SessionStart probe hook. R-05 never refused a deploy in 18 live deploys, and its worst case is one wrong health line, not lost data. The hook was a one-time probe for B-65, answered on Oct 20. Both stay in history: R-05 is marked ended in chart/rules.json, and git keeps the hook.",
