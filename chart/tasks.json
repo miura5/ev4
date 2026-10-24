@@ -5181,7 +5181,7 @@
    "B-286",
    "B-287"
   ],
-  "notes": "claimed by lane chrome",
+  "notes": "built: phone System tab 44 px; shell harness check for the four widths (tab bar, avatar, targets, right panel); npm test and smoke green",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
