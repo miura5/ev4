@@ -97,59 +97,114 @@
       CANVAS: 'info',
       NOTES: '',
     };
-    // B-117 (D-147, D-148, D-150): an item of today's list is one line: its tick, its words, its minutes once in grey,
-    // no type pill. Red only for graded work due today and not ticked (D-270). An item someone added opens in place to
-    // its Remove (D-078); a set opens where it lives.
+    // B-291 (D-270, D-276, C-1, C-13, D-282): an item of today's list is one row: its tick, its name, at most one badge,
+    // Start on the first startable row only, and its time. Graded work is neutral and red only while it is due today or
+    // tomorrow and not ticked. No Remove on a row (D-282: it lives in the task's panel); a set opens where it lives, any
+    // other item opens in place to its note and who added it.
+    const BADGE = {
+      REVIEW: ['Review', 'x-violet'],
+      'ATI REVIEW': ['ATI review', 'x-violet'],
+      PRACTICE: ['Practice', 'x-violet'],
+      READING: ['Reading', ''],
+      NOTES: ['Notes', 'x-blue'],
+      CANVAS: ['Canvas', 'x-blue'],
+      CLINICAL: ['Clinical', ''],
+      'CLINICAL PREP': ['Clinical prep', ''],
+      VALIDATION: ['Validation', ''],
+      'VALIDATION PREP': ['Validation prep', ''],
+      GRADED: ['Graded', ''],
+    };
+    // When graded work on the list is due: its calendar entry (date-, soon-), else the graded date it names.
+    function gradedDue(it) {
+      const m = /^dates\/(.+)$/.exec(it.ref || '');
+      const d = m && S.dates.find(x => x.id === m[1]);
+      if (d && d.date) return d.date;
+      if (/^soon-/.test(it.id || '')) return E.addDays(today, 1);
+      if (/^date-/.test(it.id || '')) return today;
+      const named = S.dates
+        .filter(x => x.graded && x.date >= today)
+        .find(x => E.similarity(x.title || '', it.text || '') >= 0.3);
+      return named ? named.date : null;
+    }
     const openRows = new Set();
-    function todayRow(it, isDone) {
+    function todayRow(it, isDone, o = {}) {
       const doneNow = isDone(it);
       const go = openItem(it);
-      const li = el('li', 'row today-item' + (doneNow ? ' done' : '') + (openRows.has(it.id) ? ' open' : ''));
+      const text = String(it.text || '').replace(/\s*\(~?\d+\s*min\)\s*$/i, '');
+      const li = el('li', 'li today-item' + (doneNow ? ' done' : '') + (openRows.has(it.id) ? ' open' : ''));
       li.dataset.id = it.id;
+      const tk = el('label', 'tk');
       const c = document.createElement('input');
       c.type = 'checkbox';
       c.className = 'tick';
       c.checked = c.defaultChecked = doneNow;
-      c.setAttribute('aria-label', 'Done: ' + it.text);
+      c.setAttribute('aria-label', 'Done: ' + text);
       c.addEventListener('change', () => {
         T.ticked.add(it.id);
         guard(c, () => tickWrite(it, c.checked), c.checked ? 'Checked off' : 'Unchecked');
       });
-      const text = String(it.text || '').replace(/\s*\(~?\d+\s*min\)\s*$/i, '');
-      const line = el('button', 'ti-line');
-      line.type = 'button';
-      line.setAttribute('aria-expanded', String(openRows.has(it.id)));
-      const t = el('span', 'ti-t' + (it.tag === 'GRADED' && !doneNow ? ' urgent' : ''), text);
-      line.append(t);
-      if (it.minutes) line.append(el('span', 'ti-min', it.minutes + ' min'));
-      const more = el('div', 'ti-more');
+      tk.append(c);
+      const nm = el('button', 'nm ti-nm');
+      nm.type = 'button';
+      nm.append(el('span', 'ti-t', text));
       const bits = [
-        it.note,
+        it.note && it.note !== 'Graded' ? it.note : '',
         it.deferred ? 'deferred: over today’s budget' : '',
         it.added ? 'added by ' + (it.by === 'Matt' ? 'you' : 'E.V.') : '',
       ]
         .filter(Boolean)
         .join(' · ');
-      if (bits) more.append(el('p', 'meta', bits));
-      if (it.added) {
-        const rm = btn('Remove', null, { cls: 'quiet' });
-        rm.setAttribute('aria-label', 'Remove from today: ' + it.text);
-        rm.addEventListener('click', () =>
-          guard(rm, () => editList(today, { action: 'remove', id: it.id }, 'Matt'), 'Removed')
-        );
-        more.append(rm);
-      }
-      line.addEventListener('click', () => {
-        if (go && !it.added) return go();
+      if (!go) nm.setAttribute('aria-expanded', String(openRows.has(it.id)));
+      nm.addEventListener('click', () => {
+        if (go) return go();
         const on = !openRows.has(it.id);
         on ? openRows.add(it.id) : openRows.delete(it.id);
         li.classList.toggle('open', on);
-        line.setAttribute('aria-expanded', String(on));
+        nm.setAttribute('aria-expanded', String(on));
       });
-      const g = el('div', 'grow');
-      g.append(line, more);
-      li.append(c, g);
+      li.append(tk, nm);
+      const due = it.tag === 'GRADED' ? gradedDue(it) : null;
+      const b = BADGE[it.tag];
+      if (b) {
+        const red = due && !doneNow && due <= E.addDays(today, 1);
+        li.append(el('span', 'badge' + (red ? ' x-red' : b[1] ? ' ' + b[1] : ''), b[0]));
+      }
+      if (o.start && go) {
+        const st = btn('Start', go, { cls: 'btn neutral sm ti-start' });
+        st.setAttribute('aria-label', 'Start: ' + text);
+        li.append(st);
+      }
+      const when = doneNow
+        ? 'Done'
+        : it.minutes
+          ? it.minutes + ' min'
+          : due
+            ? due === today
+              ? 'Today'
+              : due === E.addDays(today, 1)
+                ? 'Tomorrow'
+                : short(due)
+            : '';
+      li.append(el('span', 't', when));
+      if (bits) li.append(el('p', 'meta ti-more', bits));
       return li;
+    }
+    // A row that can start: not done, not graded, not over the budget, and something to open (a review or practice set).
+    const startable = (it, isDone) => !isDone(it) && !it.deferred && it.tag !== 'GRADED' && !!openItem(it);
+    // A fold under the list: one line that opens in place to its rows (D-150).
+    function todayFold(key, label, rows, open) {
+      const f = el('button', 'fold-line ti-fold');
+      f.type = 'button';
+      f.textContent = label;
+      f.setAttribute('aria-expanded', String(!!open));
+      const ul = el('ul', 'list ti-folded');
+      ul.hidden = !open;
+      ul.append(...rows);
+      f.addEventListener('click', () => {
+        ui.todayFolds = { ...(ui.todayFolds || {}), [key]: !open };
+        render();
+      });
+      return [f, ul];
     }
     function itemRow(it, isDone, o = {}) {
       const doneNow = isDone(it);
@@ -189,142 +244,28 @@
       });
     }
     function renderToday() {
-      const { rs, left: rLeft } = reviewState();
-      const due = E.rankDue(M.models, today, S.exams);
       const { day, items, isDone, budget, skipped } = dayState();
-      // Now card: one primary action.
-      const nowCard = $('now');
-      const parts = [];
-      const openDrill = S.sets
-        .filter(s => s.kind !== 'review' && E.chicagoDate(s.createdAt || '') === today)
-        .find(s => E.validItems(s).some(q => !answersOf(s)[q.id]));
-      const nextTask = items.find(
-        it =>
-          !isDone(it) &&
-          !it.deferred &&
-          it.tag !== 'GRADED' &&
-          it.minutes > 0 &&
-          !/^review/.test(it.id) &&
-          it.id !== 'checks' &&
-          !it.id.startsWith('set-')
-      );
-      if (rLeft) {
-        parts.push(
-          el('p', 'big', `Start review · ${rLeft}`),
-          el('p', 'meta', reviewReason()),
-          btn(
-            'Start review',
-            () => {
-              showTab('study');
-              setStudy('review');
-            },
-            { primary: true }
-          )
-        );
-      } else if (openDrill) {
-        parts.push(
-          el('p', 'big', openDrill.title),
-          el('p', 'meta', 'Built for today from your plan. Your answers update your weak spots.'),
-          btn(
-            'Start',
-            () => {
-              ui.openSet = openDrill.id;
-              showTab('study');
-              setStudy('practice');
-              render();
-            },
-            { primary: true }
-          )
-        );
-      } else if (nextTask) {
-        parts.push(
-          el('p', 'big', 'Next: ' + nextTask.text),
-          el(
-            'p',
-            'meta',
-            rs
-              ? 'Today’s review is done.'
-              : due.length
-                ? `${plural(due.length, 'weak spot')} due. The review set arrives with the 4:25am run.`
-                : 'Nothing due for review.'
-          )
-        );
-      } else {
-        parts.push(
-          el('p', 'big', rs ? 'Today’s review is done.' : 'Nothing urgent right now.'),
-          el(
-            'p',
-            'meta',
-            sample
-              ? 'Want more? E.V. can write 5 new questions on your weakest spots.'
-              : 'Check the plan for what’s next.'
-          )
-        );
-        if (sample)
-          parts.push(
-            btn(
-              'More practice',
-              () => {
-                showTab('study');
-                setStudy('review');
-              },
-              { primary: true }
-            )
-          );
-      }
-      // B-117 (D-154): no stat tiles; the Now card's second line carries the exam countdown, readiness lives in Progress.
-      const ex =
-        ((S.state && S.state.nextExams) || []).find(e => e.date >= today) ||
-        E.nextExams(S.exams, E.addDays(today, -1))[0];
-      if (ex && parts[1] && parts[1].classList.contains('meta')) {
-        const n = E.diffDays(today, ex.date);
-        parts[1].textContent += ` ${(ex.title || ex.id).replace(/:.*$/, '')} ${n === 0 ? 'is today' : n === 1 ? 'is tomorrow' : 'in ' + plural(n, 'day')}.`;
-      }
-      // B-124 (D-164): a prep day. From the evening before, the Now card is the pack check until it is ticked through,
-      // then it folds to one line under the usual Now card; on the day itself the Now card is the day (place, hours)
-      // with the bag check folded under it. Each is the same list as the greeting's: a tick in one is a tick in both.
-      const hr = Number(String(E.chicagoClock(now()) || '12:00').split(':')[0]),
-        eve = hr >= 17 || hr < 4;
-      const pd = E.prepDay(S.dates, [], eve ? E.addDays(today, 1) : today),
-        pp = pd ? { phase: eve ? 'night' : 'morning', date: pd.date, kind: pd.kind, title: pd.title } : null;
-      const pl = pp && prepNow(pp),
-        prepBox = pl && !pl.loading ? prepEl({ id: 'today', prep: pp }, { open: eve }) : null;
-      let nowHead = (E.DAY_LABELS[day.dayType] || 'Today') + ' · ' + short(today);
-      if (prepBox && eve && !pl.done) {
-        parts.length = 0;
-        nowHead = 'Tonight · ' + short(today);
-      } else if (prepBox && !eve) {
-        const hm = String(pd.title).match(/(\d{1,2}):?(\d{2})\s*[–-]\s*(\d{1,2}):?(\d{2})/),
-          t12 = (h, m) => `${+h % 12 || 12}${m === '00' ? '' : ':' + m}${+h < 12 ? 'am' : 'pm'}`;
-        const place =
-          String(pd.subject || pd.title)
-            .replace(hm ? hm[0] : /$^/, '')
-            .replace(/[,\s·–-]+$/, '')
-            .trim() || pd.title;
-        nowHead = (E.DAY_LABELS[pd.kind] || 'Today') + ' · ' + short(today);
-        parts.length = 0;
-        parts.push(
-          el('p', 'big', `${pd.kind[0].toUpperCase() + pd.kind.slice(1)} · ${place}`),
-          el('p', 'meta', hm ? `${t12(hm[1], hm[2])} to ${t12(hm[3], hm[4])}.` : 'Today.')
-        );
-      }
-      const nc = el('div');
-      nc.style.cssText = 'display:flex;flex-direction:column;gap:8px;align-items:flex-start';
-      nc.append(el('h2', null, nowHead), ...parts, ...(prepBox ? [prepBox] : []));
-      nowCard.replaceChildren(nc);
-      $('stats').replaceChildren();
-      $('stats').hidden = true;
+      // B-291 (D-286): no Now card; the prep check is under her greeting and the exam countdown on Study.
       // List
       const box = $('today-list');
       const head = el('div', 'card-head');
       head.append(el('h2', null, 'Today’s list'));
       const b = budget;
       if (b) head.append(el('span', 'meta', `${b.planned} of ${b.available} min planned`));
-      const ul = el('ul', 'list');
-      for (const it of items.filter(i => i.tag !== 'EXAM')) ul.append(todayRow(it, isDone)); // the exam is in Next 7 days (B-117)
+      // B-291: the open rows, then Done, then "Deferred: over today's budget" and "Taken off today" folded under the list.
+      // A row he ticks on this visit stays where it is (rule 6); only rows done before it sit in Done.
+      const shown = items.filter(i => i.tag !== 'EXAM'); // the exam is in Next 7 days (B-117)
+      const inDone = it => isDone(it) && !T.ticked.has(it.id);
+      const rest = shown.filter(it => !inDone(it) && !it.deferred),
+        done = shown.filter(inDone),
+        later = shown.filter(it => !inDone(it) && it.deferred);
+      const first = rest.find(it => startable(it, isDone));
+      const ul = el('ul', 'list ti-list');
+      for (const it of rest) ul.append(todayRow(it, isDone, { start: it === first }));
+      const folds = ui.todayFolds || {};
       const kids = [head];
-      const after = []; // Focus and notes follow the list
-      if (items.length) kids.push(ul);
+      const after = [];
+      if (shown.length) kids.push(ul);
       else
         kids.push(
           el(
@@ -333,33 +274,22 @@
             'Nothing planned for today yet. The 4:25am run builds the list; add your own with New or ask E.V.'
           )
         );
-      const focus = (day.list && day.list.focus) || [];
-      if (focus.length) {
-        const f = el('ul', 'list');
-        focus.forEach(t => f.append(row({ title: t })));
-        after.push(el('h2', null, 'Focus'), f);
-      }
+      if (done.length)
+        after.push(...todayFold('done', 'Done · ' + done.length, done.map(it => todayRow(it, isDone)), folds.done !== false));
       const deferred = ((day.plan && day.plan.deferred) || []).filter(d => d.kind !== 'weakspot');
       const deferredWs = ((day.plan && day.plan.deferred) || []).filter(d => d.kind === 'weakspot');
-      if (deferred.length || deferredWs.length)
-        after.push(
-          el(
-            'p',
-            'meta',
-            'Deferred: ' +
-              [
-                ...deferred.map(d => d.title),
-                deferredWs.length ? plural(deferredWs.length, 'weak spot') + ' over today’s review load' : '',
-              ]
-                .filter(Boolean)
-                .join('; ') +
-              '.'
-          )
-        );
-      if (skipped.length)
-        after.push(
-          el('p', 'meta', 'Taken off today: ' + skipped.map(x => x.text).join('; ') + '. Ask E.V. to put one back.')
-        );
+      const dRows = [
+        ...later.map(it => todayRow(it, isDone)),
+        ...deferred.filter(d => !later.some(it => it.text === d.title)).map(d => row({ title: d.title })),
+        ...(deferredWs.length ? [row({ title: plural(deferredWs.length, 'weak spot') + ' over today’s review load' })] : []),
+      ];
+      if (dRows.length)
+        after.push(...todayFold('deferred', 'Deferred: over today’s budget · ' + dRows.length, dRows, !!folds.deferred));
+      if (skipped.length) {
+        const sRows = skipped.map(x => row({ title: x.text }));
+        sRows.push(row({ title: 'Ask E.V. to put one back.', cls: 'ti-hint' }));
+        after.push(...todayFold('off', 'Taken off today · ' + skipped.length, sRows, !!folds.off));
+      }
       if (day.live) after.push(el('p', 'meta', 'Built live from your record. The 4:25am run saves the day’s plan.'));
       // B-287 (C-7): no Add row; the header's New is the one way to put a task on today's list
       box.replaceChildren(...kids, ...after);
@@ -463,17 +393,6 @@
       });
       li.append(b);
       return li;
-    }
-    function reviewReason() {
-      const L = E.reviewLoad({
-        date: today,
-        dayType: E.dayType({ date: today, dates: S.dates, exams: S.exams }),
-        exams: S.exams,
-        weakspots: M.models,
-      });
-      return L.flex
-        ? `${L.flex.need} correct reviews still needed for ${L.flex.exam} over ${plural(L.flex.daysLeft, 'day')}.`
-        : 'Due weak spots, oldest misses first.';
     }
     function dateRow(d, o = {}) {
       // o.edit: Remove (or Bring back) for entries that can leave the calendar (D-080)

@@ -4271,8 +4271,9 @@
     "label": "Today",
     "answers": "What now?",
     "holds": [
-     "Now card (one primary action)",
-     "today's list with checkboxes; an add row; items added by Matt or E.V. carry a Remove button (D-078)",
+     "today's list: a row each with a tick, one badge, the time, and Start on the first startable row (B-291)",
+     "folds under the list: Done, Deferred: over today's budget, Taken off today",
+     "the Sunday weekly review",
      "next 7 days"
     ]
    },

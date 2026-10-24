@@ -169,14 +169,14 @@ async function open(browser, viewport) {
       await page.waitForTimeout(150);
       const before = await page.evaluate(() => ({
         y: Math.round(scrollY),
-        rows: [...document.querySelectorAll('#today-list .row')].map(r => Math.round(r.getBoundingClientRect().top)),
+        rows: [...document.querySelectorAll('#today-list .li')].map(r => Math.round(r.getBoundingClientRect().top)),
         n: document.querySelectorAll('#today-list input.tick:checked').length,
       }));
       await tick.click();
       await page.waitForTimeout(400);
       const after = await page.evaluate(() => ({
         y: Math.round(scrollY),
-        rows: [...document.querySelectorAll('#today-list .row')].map(r => Math.round(r.getBoundingClientRect().top)),
+        rows: [...document.querySelectorAll('#today-list .li')].map(r => Math.round(r.getBoundingClientRect().top)),
         n: document.querySelectorAll('#today-list input.tick:checked').length,
       }));
       ok(

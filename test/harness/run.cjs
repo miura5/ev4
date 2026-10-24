@@ -2164,15 +2164,20 @@ const ok = (name, cond, detail = '') => {
       }),
       await page.textContent('#status')
     );
+    // B-291 (D-286, D-287, C-7, D-282): no Now card, no Focus heading, no Add and no Remove on Today.
     ok(
-      'now card has an action',
-      (await page.textContent('#now')).length > 10,
-      (await page.textContent('#now')).slice(0, 120)
+      'Today has no Now card, Focus heading, Add or Remove',
+      await page.evaluate(
+        () =>
+          !document.getElementById('now') &&
+          ![...document.querySelectorAll('#p-today h2, #p-today h3')].some(h => /^Focus$/.test(h.textContent.trim())) &&
+          ![...document.querySelectorAll('#p-today button')].some(b => /^(Add|Remove)$/.test(b.textContent.trim()))
+      )
     );
     ok(
       'today list rendered',
-      (await page.locator('#today-list .row').count()) > 0,
-      String(await page.locator('#today-list .row').count())
+      (await page.locator('#today-list .li').count()) > 0,
+      String(await page.locator('#today-list .li').count())
     );
     // ---- List edits (D-078): E.V. adds to the day's list and takes items off; Matt can add and remove on Today
     const dayDoc = () =>
@@ -2258,11 +2263,12 @@ const ok = (name, cond, detail = '') => {
     await page.click('#tab-today');
     await page.waitForTimeout(150);
     ok(
-      'Today lists the added items with Remove, and counts their minutes',
-      (await page
-        .locator('#today-list .row', { hasText: 'Review the Chapter 8 lecture' })
-        .locator('button', { hasText: 'Remove' })
-        .count()) === 1 &&
+      'Today lists the added items with no Remove on the row (D-282), and counts their minutes',
+      (await page.locator('#today-list .li', { hasText: 'Review the Chapter 8 lecture' }).count()) === 1 &&
+        (await page
+          .locator('#today-list .li', { hasText: 'Review the Chapter 8 lecture' })
+          .locator('button', { hasText: 'Remove' })
+          .count()) === 0 &&
         (Number.isNaN(min0)
           ? /~25 min · added by E\.V\./.test(await page.textContent('#today-list'))
           : (await budgetMin()) === min0 + 55),
@@ -2281,13 +2287,13 @@ const ok = (name, cond, detail = '') => {
       mine &&
         mine[1].by === 'Matt' &&
         !(await page.evaluate(() => document.getElementById('new-dlg').open)) &&
-        (await page.locator('#today-list .row', { hasText: 'Flashcards for the bones lab' }).count()) === 1
+        (await page.locator('#today-list .li', { hasText: 'Flashcards for the bones lab' }).count()) === 1
     );
     await page.click('#new-btn');
     await page.click('#new-menu [data-new="task"]');
     await page.fill('#new-title', 'half typed');
     const rr = await page.evaluate(async () => {
-      const n = document.querySelectorAll('#today-list .row').length;
+      const n = document.querySelectorAll('#today-list .li').length;
       const t = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date());
       await (
         await window.claude.use('db')
@@ -2306,16 +2312,25 @@ const ok = (name, cond, detail = '') => {
     );
     await page.fill('#new-title', '');
     await page.keyboard.press('Escape');
-    // B-117 (D-078): an added item opens in place to its Remove.
+    // B-291 (D-282): an added item opens in place to who added it, with no Remove; until the task panel (B-296) he
+    // takes it off by asking E.V., through the same list edit.
     {
-      const fr = page.locator('#today-list .row', { hasText: 'Flashcards for the bones lab' });
+      const fr = page.locator('#today-list .li', { hasText: 'Flashcards for the bones lab' });
+      await fr.locator('.nm').click();
       ok(
-        'an added item shows its Remove only once its line is opened',
-        !(await fr.locator('button', { hasText: 'Remove' }).isVisible())
+        'an added item opens in place to who added it, with no Remove',
+        /added by you/.test(await fr.textContent()) && (await fr.locator('button', { hasText: 'Remove' }).count()) === 0
       );
-      await fr.locator('.ti-line').click();
-      await fr.locator('button', { hasText: 'Remove' }).click();
-      await page.waitForTimeout(200);
+      await page.click('#tab-ev');
+      await page.evaluate(id => {
+        window.__toolResults = [];
+        window.__chatScript = [{ tool: 'edit_list', input: { action: 'remove', id } }];
+        window.__chatReply = 'Taken off.';
+      }, mine[0]);
+      await send(page, 'Take the flashcards off today');
+      await page.waitForTimeout(300);
+      await page.click('#tab-today');
+      await page.waitForTimeout(150);
     }
     dd = await dayDoc();
     ok(
@@ -2328,9 +2343,9 @@ const ok = (name, cond, detail = '') => {
       await page.textContent('#readout')
     );
     ok(
-      'Remove takes his item off',
+      'taking it off removes his item',
       !(mine[0] in dd.added) &&
-        (await page.locator('#today-list .row', { hasText: 'Flashcards for the bones lab' }).count()) === 0
+        (await page.locator('#today-list .li', { hasText: 'Flashcards for the bones lab' }).count()) === 0
     );
     await page.evaluate(() => document.querySelector('#today-list').scrollIntoView({ block: 'end' }));
     await page.waitForTimeout(2800);
@@ -5330,8 +5345,9 @@ const ok = (name, cond, detail = '') => {
         facing: sm ? sm.facing : null,
         lit: sm ? sm.solid : -1,
         halftone: sm ? sm.back : -1,
+        // D-216 is about a count on her or the nav; a row's one word badge (D-276, B-291) is not a notice
         badges: [...document.querySelectorAll('.badge, .count, .dot-count, [class*="badge"]')].filter(
-          b => b.getBoundingClientRect().height > 0
+          b => b.getBoundingClientRect().height > 0 && !b.closest('.li')
         ).length,
       };
     }, flower);

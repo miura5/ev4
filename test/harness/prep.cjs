@@ -322,9 +322,9 @@ async function tickAll(page) {
       await ctx.close();
     }
   }
-  // B-124 (D-164): Today on prep days, at 390, 735 and 1280. The evening before a clinical day the Now card is the pack
-  // check (the greeting's own list: a tick in one shows in the other), folding to one line once ticked through; on the
-  // day's morning the Now card names the place and hours with the bag check folded under it. Every item shows its source.
+  // B-124 (D-164) is retired by D-286 (B-291): Today has no Now card, so the pack and bag checks live only under her
+  // greeting (checked above). What stays: on a prep evening and morning Today shows no prep check of its own and the
+  // greeting still carries it, at 390, 735 and 1280.
   const clinicalRecord = () => {
     const db = record();
     delete db.dates['prep-val'];
@@ -340,133 +340,202 @@ async function tickAll(page) {
     db.dates['prep-clin'] = { ...db.dates['prep-clin'], title: 'Clinical: Mercy Hospital 4 West, 0630–1500' };
     return db;
   };
-  const nowCard = page =>
-    page.evaluate(() => {
-      const n = document.getElementById('now'),
-        p = n.querySelector('.prep'),
-        box = p && p.querySelector('.prep-box');
-      return {
-        head: (n.querySelector('h2') || {}).textContent,
-        big: (n.querySelector('.big') || {}).textContent || '',
-        meta: (n.querySelector('p.meta') || {}).textContent || '',
-        row: p ? p.querySelector('.prep-row').textContent : null,
-        open: !!(box && !box.hidden && box.getBoundingClientRect().height > 0),
-        done: !!(p && p.classList.contains('done')),
-        rowH: p ? Math.round(p.getBoundingClientRect().height) : 0,
-        items: p
-          ? [...p.querySelectorAll('.prep-item')].map(li => ({
-              t: li.querySelector('.pi-t').textContent,
-              c: (li.querySelector('.pi-c') || {}).textContent || '',
-              on: li.querySelector('input').checked,
-            }))
-          : [],
-        sideways: document.documentElement.scrollWidth > innerWidth + 1,
-      };
-    });
   for (const viewport of [
     { width: 390, height: 844 },
     { width: 735, height: 830 },
     { width: 1280, height: 860 },
   ]) {
     const w = viewport.width;
-    {
+    for (const [when, at] of [
+      ['evening', ct(today, 19, 0)],
+      ['morning', ct(today, 7, 0)],
+    ]) {
       const ctx = await browser.newContext({ viewport, colorScheme: 'dark' });
       const page = await ctx.newPage();
       const errors = [];
       page.on('pageerror', e => errors.push(e.message));
-      await openPage(page, ct(today, 19, 0), clinicalRecord());
-      await page.click('#tab-today');
-      await page
-        .waitForFunction(() => document.querySelector('#now .prep .prep-item'), null, { timeout: 10000 })
-        .catch(() => {});
-      await page.waitForTimeout(400);
-      let n = await nowCard(page);
-      ok(
-        `[today ${w}] evening before a clinical: the Now card is the pack check, open, every item with its source`,
-        /Pack for tomorrow: Clinical: Mercy Hospital 4 West/.test(n.row || '') &&
-          n.open &&
-          !n.big &&
-          n.items.length >= 3 &&
-          n.items.every(i => i.c.trim()),
-        JSON.stringify(n)
-      );
-      await page.screenshot({ path: `${shots}/today-prep-night-${w}.png`, fullPage: true });
-      // A tick on Today shows in the greeting, and an untick there shows back on Today.
-      await page.click('#now .prep .prep-item input');
-      await page.waitForTimeout(400);
-      await page.click('#tab-ev');
-      await page.waitForTimeout(500);
-      let g = await state(page);
-      const first = n.items[0].t;
-      ok(
-        `[today ${w}] a tick on Today shows ticked in the greeting`,
-        g.items.find(i => i.t === first) && g.items.find(i => i.t === first).on,
-        JSON.stringify(g.items)
-      );
-      await page.$eval('#thread .msg.greet .prep', e => e.scrollIntoView({ block: 'center' }));
-      if (!g.open) {
-        await page.click('#thread .msg.greet .prep-row');
-        await page.waitForTimeout(300);
-      }
-      await page.click('#thread .msg.greet .prep .prep-item input');
-      await page.waitForTimeout(400);
+      await openPage(page, at, clinicalRecord());
+      const g = await state(page);
       await page.click('#tab-today');
       await page.waitForTimeout(400);
-      n = await nowCard(page);
+      const t = await page.evaluate(() => ({
+        now: !!document.getElementById('now'),
+        prep: !!document.querySelector('#p-today .prep'),
+        sideways: document.documentElement.scrollWidth > innerWidth + 1,
+      }));
       ok(
-        `[today ${w}] and an untick in the greeting shows back on Today`,
-        n.items.length && !n.items[0].on,
-        JSON.stringify(n.items)
+        `[today ${w}] ${when} of a clinical: no Now card or prep check on Today; the greeting carries the check`,
+        !t.now && !t.prep && !!g.row && g.items.length >= 3,
+        JSON.stringify({ t, row: g.row, n: g.items.length })
       );
-      for (let i = 0; i < 20; i++) {
-        const b = await page.$('#now .prep .prep-item:not(.on) input');
-        if (!b) break;
-        await b.click();
-        await page.waitForTimeout(250);
-      }
-      await page.waitForTimeout(500);
-      n = await nowCard(page);
-      ok(
-        `[today ${w}] ticked through, the pack check folds to one line under the usual Now card`,
-        n.done && !n.open && /Packed for tomorrow/.test(n.row || '') && n.rowH <= 60 && !!n.big,
-        JSON.stringify(n)
-      );
-      await page.screenshot({ path: `${shots}/today-prep-night-done-${w}.png`, fullPage: true });
-      ok(`[today ${w}] evening: no sideways scroll, no page errors`, !n.sideways && !errors.length, errors.join(' | '));
-      await ctx.close();
-    }
-    {
-      const ctx = await browser.newContext({ viewport, colorScheme: 'dark' });
-      const page = await ctx.newPage();
-      const errors = [];
-      page.on('pageerror', e => errors.push(e.message));
-      await openPage(page, ct(today, 7, 0), clinicalRecord());
-      await page.click('#tab-today');
-      await page.waitForFunction(() => document.querySelector('#now .prep'), null, { timeout: 10000 }).catch(() => {});
-      await page.waitForTimeout(400);
-      const n = await nowCard(page);
-      ok(
-        `[today ${w}] the morning of: the Now card names the place and hours, the bag check folded under it`,
-        /^Clinical day · /.test(n.head) &&
-          /Clinical · Mercy Hospital 4 West$/.test(n.big) &&
-          /6:30am to 3pm/.test(n.meta) &&
-          /Bag check: Clinical: Mercy Hospital 4 West/.test(n.row || '') &&
-          !n.open,
-        JSON.stringify(n)
-      );
-      await page.click('#now .prep-row');
-      await page.waitForTimeout(300);
-      const o = await nowCard(page);
-      ok(
-        `[today ${w}] the morning of: one tap opens the bag check, every item with its source`,
-        o.open && o.items.length >= 3 && o.items.every(i => i.c.trim()),
-        JSON.stringify(o.items)
-      );
-      await page.screenshot({ path: `${shots}/today-prep-morning-${w}.png`, fullPage: true });
-      ok(`[today ${w}] morning: no sideways scroll, no page errors`, !o.sideways && !errors.length, errors.join(' | '));
+      await page.screenshot({ path: `${shots}/today-prep-${when}-${w}.png`, fullPage: true });
+      ok(`[today ${w}] ${when}: no sideways scroll, no page errors`, !t.sideways && !errors.length, errors.join(' | '));
       await ctx.close();
     }
   }
+  // B-291 (C-1, C-13, D-270, D-276, D-282, D-286, D-287): Today's list on a planted day, at 390 and 1280 in light and
+  // dark. Rows are 32 px from 600 px and 44 px on the phone, each row's time on its line; graded work due tomorrow shows
+  // a red badge, graded work due in three days a neutral one; the phone tick's green fill stays in its 18 px box, clear
+  // of the name; Start shows on one row at most; no Add, Remove, Now card or Focus heading; Done, Deferred and Taken off
+  // fold under the list.
+  const listRecord = () => {
+    const db = record();
+    const in3 = addDays(today, 3);
+    db.dates['p291-tmr'] = {
+      ...env,
+      addedAt: env.at,
+      date: tomorrow,
+      title: 'NUR 112 quiz: fluid balance',
+      kind: 'due',
+      course: 'NUR 112',
+      graded: true,
+    };
+    db.dates['p291-3d'] = {
+      ...env,
+      addedAt: env.at,
+      date: in3,
+      title: 'BIO 201 lab report draft',
+      kind: 'due',
+      course: 'BIO 201',
+      graded: true,
+    };
+    const day = db.days && db.days[today];
+    if (day && day.list) {
+      day.list.items = [
+        {
+          id: 'soon-p291-tmr',
+          text: 'NUR 112 quiz: fluid balance (due tomorrow)',
+          tag: 'GRADED',
+          note: 'Graded',
+          minutes: 0,
+          ref: 'dates/p291-tmr',
+        },
+        { id: 'p291-lab', text: 'BIO 201 lab report draft', tag: 'GRADED', minutes: 30, ref: null },
+        {
+          id: 'p291-long',
+          text: 'Read chapter 39, fluid, electrolyte and acid-base balance, the whole section on potassium',
+          tag: 'READING',
+          minutes: 45,
+          ref: null,
+        },
+        {
+          id: 'p291-set',
+          text: 'Practice: fluid balance, 5 questions',
+          tag: 'PRACTICE',
+          minutes: 10,
+          ref: 'sets/p291-set',
+          set: 'p291-set',
+        },
+        { id: 'p291-done', text: 'Flashcards: cranial nerves', tag: 'PRACTICE', minutes: 15, ref: null },
+        { id: 'p291-skip', text: 'Watch the IV pump video', tag: 'READING', minutes: 10, ref: null },
+        { id: 'p291-later', text: 'Care plan outline', tag: 'NOTES', minutes: 20, ref: null, deferred: true },
+        ...day.list.items.filter(i => i.tag !== 'GRADED' && !/^(date|soon)-/.test(i.id)),
+      ];
+      delete day.list.focus;
+    }
+    db.dayedits = db.dayedits || {};
+    db.dayedits[today] = {
+      ...env,
+      date: today,
+      checks: { 'p291-done': { at: env.at, by: 'Matt' } },
+      added: {},
+      skipped: { 'p291-skip': { at: env.at, by: 'Matt' } },
+      checkin: null,
+    };
+    return db;
+  };
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 1280, height: 860 },
+  ])
+    for (const scheme of ['light', 'dark']) {
+      const w = viewport.width,
+        tag = `[list ${w} ${scheme}]`;
+      const ctx = await browser.newContext({ viewport, colorScheme: scheme });
+      const page = await ctx.newPage();
+      const errors = [];
+      page.on('pageerror', e => errors.push(e.message));
+      await openPage(page, ct(today, 10, 0), listRecord());
+      await page.click('#tab-today');
+      await page.waitForTimeout(400);
+      const r = await page.evaluate(() => {
+        const box = e => e && e.getBoundingClientRect();
+        const rows = [...document.querySelectorAll('#today-list .ti-list > li.today-item')];
+        const byText = t => rows.find(li => li.querySelector('.ti-t').textContent.includes(t));
+        const badge = li => li && li.querySelector('.badge');
+        return {
+          heights: rows.map(li => Math.round(box(li).height)),
+          timeOnLine: rows.every(li => {
+            const t = box(li.querySelector('.t')),
+              l = box(li);
+            return t.top >= l.top - 1 && t.bottom <= l.bottom + 1 && t.right <= l.right + 1;
+          }),
+          tomorrow: (badge(byText('fluid balance')) || {}).className,
+          in3: (badge(byText('lab report draft')) || {}).className,
+          ticks: rows.map(li => {
+            const c = box(li.querySelector('input.tick')),
+              n = box(li.querySelector('.nm'));
+            return { w: Math.round(c.width), h: Math.round(c.height), clear: c.right <= n.left };
+          }),
+          starts: document.querySelectorAll('#today-list .ti-start').length,
+          banned:
+            !!document.getElementById('now') ||
+            [...document.querySelectorAll('#p-today h2, #p-today h3')].some(h =>
+              /^Focus$/.test(h.textContent.trim())
+            ) ||
+            [...document.querySelectorAll('#p-today button')].some(b => /^(Add|Remove)$/.test(b.textContent.trim())),
+          folds: [...document.querySelectorAll('#today-list .ti-fold')].map(f => f.textContent),
+          sideways: document.documentElement.scrollWidth > innerWidth + 1,
+        };
+      });
+      const want = w < 600 ? 44 : 32;
+      ok(
+        `${tag} rows are ${want} px and each row's time stays on its line`,
+        r.heights.length >= 4 && r.heights.every(h => h === want) && r.timeOnLine,
+        JSON.stringify(r.heights)
+      );
+      ok(
+        `${tag} graded due tomorrow is red, graded due in three days neutral`,
+        /\bx-red\b/.test(r.tomorrow || '') && /^badge$/.test(r.in3 || ''),
+        JSON.stringify([r.tomorrow, r.in3])
+      );
+      ok(
+        `${tag} the tick's box is ${w < 600 ? 18 : 16} px and clear of the name`,
+        r.ticks.every(t => t.w === (w < 600 ? 18 : 16) && t.h === t.w && t.clear),
+        JSON.stringify(r.ticks)
+      );
+      ok(
+        `${tag} Start on exactly one row; no Add, Remove, Now card or Focus heading`,
+        r.starts === 1 && !r.banned,
+        JSON.stringify({ starts: r.starts })
+      );
+      ok(
+        `${tag} Done, Deferred and Taken off today fold under the list`,
+        r.folds.length === 3 &&
+          /^Done/.test(r.folds[0]) &&
+          /^Deferred: over today’s budget/.test(r.folds[1]) &&
+          /^Taken off today/.test(r.folds[2]),
+        JSON.stringify(r.folds)
+      );
+      await page.locator('#p-today').screenshot({ path: `${shots}/today-list-${w}-${scheme}.png` });
+      // the phone tick: ticked, its green fill stays in the 18 px box
+      const first = page.locator('#today-list .ti-list input.tick:not(:checked)').first();
+      await first.click();
+      await page.waitForTimeout(300);
+      const f = await page.evaluate(() => {
+        const c = document.querySelector('#today-list .ti-list input.tick:checked');
+        const b = c.getBoundingClientRect(),
+          n = c.closest('li').querySelector('.nm').getBoundingClientRect();
+        return { w: Math.round(b.width), green: getComputedStyle(c).backgroundColor, clear: b.right <= n.left };
+      });
+      ok(
+        `${tag} a ticked box fills green inside its box only`,
+        f.w === (w < 600 ? 18 : 16) && f.clear && f.green !== 'rgba(0, 0, 0, 0)',
+        JSON.stringify(f)
+      );
+      ok(`${tag} no sideways scroll, no page errors`, !r.sideways && !errors.length, errors.join(' | '));
+      await ctx.close();
+    }
   // B-189: asked in words on a planted lab day (a lab exam and a class exam today, as on Oct 21), E.V. answers from the
   // record without a model call: the greeting already carries the Prep marker for the day, and the reply's card is the
   // day's check with each item naming its source (the calendar entry, the announcement, the course calendar's row, the
