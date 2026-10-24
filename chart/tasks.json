@@ -4916,12 +4916,12 @@
   "title": "Session pointer (D-267): her session prop is fed by the study session's elapsed fraction, in Pointer mode",
   "dod": "With Playwright's clock at 0, 25%, 50% and 100% of a 25-minute session the screenshots show 0, 3, 6 and 12 filled segments with the gap at the next slot; the 7 s re-drop runs only while a session runs; staging GREEN",
   "milestone": "v4.7 look",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-272"
   ],
-  "notes": "Shipped to staging GREEN at 68ada6d; now the independent review. Matt's answer (kept): a full ring is the time until the next check-in (checkMinutes, 7); answered checks still show as they do now (D-217).",
-  "commit": null,
+  "notes": "Matt's card. What changes when you study: during a study session, E.V.'s ring is now a clock to her next check-in (every 7 minutes). Segments fill clockwise from twelve: a quarter of the ring at about 2 minutes, half at 3.5, full when the check is due. It starts over after each check. A break holds it where it was. +5 makes the stretch longer, so the ring slows down instead of jumping back. Why: your answer that the ring should track her check-ins, not a fixed session length. Parts of E.V. it touches: the study session in the conversation and her ring. Nothing in the record changes. Answered checks now show only on their check cards ('Check 1 · answered'); they no longer fill her ring. What could break and how we'd notice: if a check never lands, her ring would sit full; you'd see a full ring and no new check. Size: about 15 lines of app code, plus tests. Easy to undo. Checks: npm test green; smoke green; touched check GREEN; her harness shows 0, 3, 6 and 12 segments at 0, 25, 50 and 100% in both themes on phone and desktop; the session test moves the clock to 25%, 50% and 100% and sees 3 and 6 segments, then a full ring that starts over once the check lands; the 7 s re-drop runs only during a session. Reviewer (second review): one gap open, for you: D-217 said one petal lights per answer, and nothing in the record replaces it yet. Your note says the answered checks 'still show as they do now'. This build reads that as 'on their check cards'. If you meant they should also show on her, say so and a build chat will add it back; if not, a build chat with you present records the change to D-217. Checks retired: the ring test that counted answered checks (one answer = 2 segments) was replaced by the stretch test; the 25-minute session in the definition of done became the 7-minute stretch, from your answer. Size +162 -37. First review's gap (proof through the page's own feed on Playwright's clock) was fixed in c82d066. No board difference: this is not a view task. Look at it on staging: https://claude.ai/artifact/Pb6jQ6CvEbtxi6Rcshu9uC, start a study session and watch her ring over 7 minutes.",
+  "commit": "c82d066",
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
  {
