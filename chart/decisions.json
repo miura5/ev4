@@ -1,5 +1,17 @@
 [
  {
+  "id": "D-262",
+  "date": "Oct 23",
+  "title": "Retire R-05 (live deploys wait out the watchdog windows) and the SessionStart probe hook. R-05 never refused a deploy in 18 live deploys, and its worst case is one wrong health line, not lost data. The hook was a one-time probe for B-65, answered on Oct 20. Both stay in history: R-05 is marked ended in chart/rules.json, and git keeps the hook.",
+  "why": "Matt, Oct 23, on the first trimmer's inventory (pull request #1): both were nominated for retirement, and both sit on paths a trimmer can't touch",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [
+   "D-142"
+  ],
+  "source": "log"
+ },
+ {
   "id": "D-261",
   "date": "Oct 23",
   "title": "Each fix or trim comes to Matt as a product review card, not a code review: what changes for him, why, which parts of E.V. it touches, what could break and how we would notice, size and undo-ability, checks done; no code, file paths or CSS; at most one optional question answerable from the card. B-257's freeze exit is product-level too",
