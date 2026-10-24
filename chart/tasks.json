@@ -5308,7 +5308,7 @@
   "depends": [
    "B-288"
   ],
-  "notes": "built: Objectives, Plan and Weak spots tabs; objective rows with Quiz me; npm test and smoke green; harness run next",
+  "notes": "proofs green (npm test, smoke, check --touched GREEN before rebase); pushed ef0c4d4; review next",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
