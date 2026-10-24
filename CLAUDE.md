@@ -58,10 +58,11 @@ attribution lines with `--trailer`, one per line) and regenerates BACKLOG.md, DE
    at the same commit, B-35; R-03 no running study session, B-87; R-04 Matt's OK; R-06 a full check green at the
    commit, B-219; R-01 and R-05 are ended, D-145 and D-262, and kept in `chart/rules.json` marked ended), so a build
    reaches live only through staging.
-7. Before a task goes to Matt or is marked done, run the review skill (`.claude/skills/review`) in a fresh subagent
-   that has not seen the work; its verdict ("No gaps" or the gaps), with its Checks and Size lines, is the reviewer
+7. Before step 6's `ship staging` (and so before a task goes to Matt or is marked done), once the proofs of step 5
+   are green, run the review skill (`.claude/skills/review`) in a fresh subagent that has not seen the work; its verdict ("No gaps" or the gaps), with its Checks and Size lines, is the reviewer
    line on his product review card (D-261), and a card without one is not ready. Fix the gaps once and review once
-   more with a new subagent; a gap still named then goes on the card as open, never into a loop. Record: `log <id> --status done --commit <sha> --note "<one line>"`, or in the same move as step 6 with `ship staging
+   more with a new subagent; a gap still named then goes on the card as open, never into a loop. Then ship staging
+   once: a staging GREEN in the definition of done is proved by that ship, not by the review. Record: `log <id> --status done --commit <sha> --note "<one line>"`, or in the same move as step 6 with `ship staging
    --done <id> --commit <sha>` once staging is the task's last proof (B-147). A decision is `log decision <next id>
    --title ... --why ... --status ...`. Never a date on anything that gates work.
 8. Continue with the next open task until none is open or every open task is blocked. Then stop and leave a

@@ -25,7 +25,9 @@ task or writes to a record. It never blocks anything by itself: the build chat d
    read the diffs that matter.
 4. Check each clause of the definition of done against evidence you can point to: a test by name that exists and
    passes (`node --test test/*.test.mjs > /tmp/review.log 2>&1; grep -E "^# (pass|fail)" /tmp/review.log`), a run id
-   read back, a harness check by name, a verify-deploy result. A clause with no evidence is a gap.
+   read back, a harness check by name, a verify-deploy result. A clause with no evidence is a gap. The review runs
+   before `ship staging`, so a clause that only the staging deploy can prove (staging GREEN, a staging page read) is
+   not a gap: name it on the Size line as "staging: after review".
 5. Check the work against `CLAUDE.md`:
    - every new branch of logic in `core/` has a test that reaches it;
    - spec edits are JSON at indent 1 with no trailing newline (`test/spec.test.mjs` checks the file; look at the diff);
