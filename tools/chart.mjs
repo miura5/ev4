@@ -34,7 +34,16 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { newestTranscript, toolResults } from '../core/transcript.mjs';
-import { verify, verifyReads, deployCalls, formatDeploy, canonical, SYSTEM_IDS, contentHash } from '../core/deploy.mjs';
+import {
+  verify,
+  verifyReads,
+  deployCalls,
+  formatDeploy,
+  canonical,
+  SYSTEM_IDS,
+  contentHash,
+  artifactUrl,
+} from '../core/deploy.mjs';
 import { builderRun, pushRefusal } from './guard.mjs';
 import { makeActions } from '../core/actions.mjs';
 import { validateAgainst } from '../core/validate.mjs';
@@ -1219,10 +1228,13 @@ export function skips({ manifest, target, deployed, rec }) {
     from: String(deployed.commit).slice(0, 7),
   };
 }
-const isTaskRead = r => /list_triggers/.test(r.tool),
-  isPageRead = r => r.tool === 'Artifact';
-const isTaskLine = l => /^(task |scheduled tasks read|retired tasks)/.test(l.what),
-  isPageLine = l => /^(\w+ page read|page stamp|published page files|page capability declaration)/.test(l.what);
+/** Which part of a deploy a read or call (by its tool) or a verify line (by its what) is about: 'tasks' or 'pages'. */
+const PARTS = [
+  ['tasks', /trigger/, /^(task |scheduled tasks read|retired tasks)/],
+  ['pages', /^Artifact$/, /^(\w+ page read|page stamp|published page files|page capability declaration)/],
+];
+const partOf = x =>
+  (PARTS.find(([, tool, what]) => (x.tool !== undefined ? tool : what).test(x.tool ?? x.what)) || [])[0];
 /**
  * The deploy checklist as one pure step: the refusals; else the reads still to make; else, when verify is green, the
  * deploy to record; else deploy's calls (minus the task and page calls the skips make needless).
@@ -1230,16 +1242,10 @@ const isTaskLine = l => /^(task |scheduled tasks read|retired tasks)/.test(l.wha
 export function shipStep({ target, manifest, state, verifyResult, reads, deploy, rec, refusals, skip, stale }) {
   if (refusals.length) return { kind: 'refused', refusals };
   const deployedRead = state.record && state.record.manifest;
-  const need = reads.filter(
-    r =>
-      !(skip.tasks && isTaskRead(r)) &&
-      !(skip.pages && isPageRead(r)) &&
-      !(!deployedRead && (isTaskRead(r) || isPageRead(r)))
-  );
+  const need = reads.filter(r => !partOf(r) || (deployedRead && !skip[partOf(r)]));
   const missing = need.filter(r => !r.have);
   // After the calls, only what they changed is read again: a deploy with no task or page call leaves those reads true.
-  const changed = r =>
-    (!isTaskRead(r) && !isPageRead(r)) || (stale.tasks && isTaskRead(r)) || (stale.pages && isPageRead(r));
+  const changed = r => !partOf(r) || stale[partOf(r)];
   if (stale)
     return {
       kind: 'reads',
@@ -1255,11 +1261,7 @@ export function shipStep({ target, manifest, state, verifyResult, reads, deploy,
   const why = what =>
     `not read: the build's ${what} equal the deployed manifest's (${skip.from}, green when deployed), so this deploy changes none`;
   const lines = verifyResult.lines.map(l =>
-    !l.ok && skip.tasks && isTaskLine(l)
-      ? { ...l, ok: true, detail: why('tasks') }
-      : !l.ok && skip.pages && isPageLine(l)
-        ? { ...l, ok: true, detail: why('page files') }
-        : l
+    !l.ok && skip[partOf(l)] ? { ...l, ok: true, detail: why(partOf(l) === 'tasks' ? 'tasks' : 'page files') } : l
   );
   if (lines.every(l => l.ok))
     return {
@@ -1268,9 +1270,7 @@ export function shipStep({ target, manifest, state, verifyResult, reads, deploy,
       recorded: rec.deploys.some(d => d.target === target && d.commit === manifest.commit.slice(0, 7) && !d.line),
     };
   if (!deploy.ok) return { kind: 'refused', refusals: deploy.refusals, lines };
-  const calls = deploy.calls.filter(
-    c => !(skip.tasks && /trigger/.test(c.tool)) && !(skip.pages && c.tool === 'Artifact')
-  );
+  const calls = deploy.calls.filter(c => !skip[partOf(c)]);
   return {
     kind: 'deploy',
     lines,
@@ -1547,8 +1547,9 @@ async function ship(o) {
   const verifyResult = verify({ manifest, target, state, build: buildInfo, dist: distDocs, sha256 });
   const file = o.transcript || newestTranscript(),
     jsonl = file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+  const recordUrl = artifactUrl(manifest.records[target].artifact);
   const versions = {
-    ...versionsFrom(jsonl, `https://claude.ai/artifact/${manifest.records[target].artifact}`),
+    ...versionsFrom(jsonl, recordUrl),
     ...(o.version
       ? Object.fromEntries(
           list(o.version)
@@ -1618,9 +1619,8 @@ async function ship(o) {
   }
   if (step.kind === 'deploy') {
     if (!('yourturn' in versions)) {
-      const url = `https://claude.ai/artifact/${manifest.records[target].artifact}`;
       console.log(
-        `${head}: read system/yourturn first, so its write carries its version (or creates it):\n  ArtifactData ${JSON.stringify({ action: 'get', url, collection: 'system', doc_id: 'yourturn', out_dir: path.join(stateDir, 'record') })}\n  then run ship ${target} again (or pass --version yourturn=<n>, 0 when it does not exist yet).`
+        `${head}: read system/yourturn first, so its write carries its version (or creates it):\n  ArtifactData ${JSON.stringify({ action: 'get', url: recordUrl, collection: 'system', doc_id: 'yourturn', out_dir: path.join(stateDir, 'record') })}\n  then run ship ${target} again (or pass --version yourturn=<n>, 0 when it does not exist yet).`
       );
       return 1;
     }
@@ -1631,6 +1631,10 @@ async function ship(o) {
       );
       return 1;
     }
+    const touched = {
+      tasks: step.calls.some(c => partOf(c) === 'tasks'),
+      pages: step.calls.some(c => partOf(c) === 'pages'),
+    };
     // B-58: ship live prints these calls only on Matt's OK (R-04), so the live-write guard lets them through for a while.
     if (target === 'live')
       fs.writeFileSync(
@@ -1648,10 +1652,7 @@ async function ship(o) {
         commit: manifest.commit,
         at: Date.now(),
         skip,
-        touched: {
-          tasks: step.calls.some(c => /trigger/.test(c.tool)),
-          pages: step.calls.some(c => c.tool === 'Artifact'),
-        },
+        touched,
       })
     );
     console.log(
@@ -1659,19 +1660,14 @@ async function ship(o) {
         .replace(`deploy ${target}:`, `${head}:`)
         .replace(`then run verify-deploy ${target}.`, `then make the reads below again and run ship ${target}.`)
     );
-    const again = reads.filter(
-      r =>
-        (!isTaskRead(r) && !isPageRead(r)) ||
-        (isTaskRead(r) && step.calls.some(c => /trigger/.test(c.tool))) ||
-        (isPageRead(r) && step.calls.some(c => c.tool === 'Artifact'))
-    );
+    const again = reads.filter(r => !partOf(r) || touched[partOf(r)]);
     console.log(
       [
         '',
         'Reads after the calls (only what they change):',
         ...again.map(r => `  ${r.tool} ${JSON.stringify(r.args)}`),
         // B-178: system/yourturn's new version, for the next ship's write and the builder's trace
-        `  ArtifactData ${JSON.stringify({ action: 'get', url: `https://claude.ai/artifact/${manifest.records[target].artifact}`, collection: 'system', doc_id: 'yourturn', out_dir: path.join(stateDir, 'record') })}`,
+        `  ArtifactData ${JSON.stringify({ action: 'get', url: recordUrl, collection: 'system', doc_id: 'yourturn', out_dir: path.join(stateDir, 'record') })}`,
       ].join('\n')
     );
     return 0;
