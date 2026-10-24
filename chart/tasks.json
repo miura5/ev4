@@ -5436,5 +5436,17 @@
   "notes": "",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG (parked)"
+ },
+ {
+  "id": "B-306",
+  "kind": "task",
+  "title": "The claim is the lock: log refuses a second in-progress claim on a task already in progress, so several builders on main never build the same task twice (record audit finding, Oct 24)",
+  "dod": "log refuses a second in-progress claim on a task already in progress, and still takes a note alone; a test covers both; npm test green; an independent review finds no gaps",
+  "milestone": "v4.8 redesign",
+  "status": "in progress",
+  "depends": [],
+  "notes": "Built in the managing chat on Matt's OK (Oct 24). The code commit 0915add went out without its task id in the message (a filing step failed first); it is this task's work.",
+  "commit": null,
+  "source": "build chat (Matt's OK, Oct 24)"
  }
 ]
