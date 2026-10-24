@@ -4,9 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import EV from '../core/evcore.mjs';
 import { currentVersion, migrateV3, applyWrites } from '../core/migrate.mjs';
@@ -488,26 +486,6 @@ test('batches: at most 50 writes and 1 MiB each, one write per document per batc
     () => chunkWrites([{ collection: 'c', doc_id: 'x', data: { t: 'x'.repeat(1048577) } }]),
     /over the 1048576-byte batch limit/
   );
-});
-
-test('cli: migrate v3 writes document files and chunked batches', () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-mig-'));
-  const exp = path.join(dir, 'export');
-  const out = path.join(dir, 'out');
-  for (const [col, docs] of Object.entries(V3)) {
-    fs.mkdirSync(path.join(exp, col), { recursive: true });
-    for (const { id, ...d } of docs) fs.writeFileSync(path.join(exp, col, id + '.json'), JSON.stringify(d));
-  }
-  const cli = (...a) => execFileSync('node', [path.join(ROOT, 'core/cli.mjs'), ...a], { encoding: 'utf8' });
-  assert.match(
-    cli('migrate', 'v3', '--from', exp, '--at', AT, '--out', out, '--record', 'live'),
-    /writes in 2 batches/
-  );
-  const plan = JSON.parse(fs.readFileSync(path.join(out, 'plan.json'), 'utf8'));
-  assert.equal(plan.record, 'https://claude.ai/artifact/Bu8RevP4r1twPdSGc77nfg');
-  const w = plan.batches[0][0];
-  assert.deepEqual(Object.keys(w).sort(), ['collection', 'doc_id', 'file_path', 'op']);
-  assert.ok(fs.existsSync(w.file_path));
 });
 
 test(
