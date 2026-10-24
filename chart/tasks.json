@@ -4920,7 +4920,7 @@
   "depends": [
    "B-272"
   ],
-  "notes": "Built: the ring is fed by the stretch to the next check; npm test green; now smoke and the touched check. Matt's answer (kept): a full ring is the time until the next check-in (checkMinutes, 7), sweeping toward each check and starting over after it; answered checks still show as they do now (D-217).",
+  "notes": "Tests green, touched check GREEN (core, run, look); pushed 68ada6d; shipping to staging.",
   "commit": null,
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
