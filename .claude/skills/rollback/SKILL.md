@@ -10,8 +10,8 @@ main's head (a restore commit), then the normal path: `ship staging`, then `ship
 redeploy of the old commit itself: scheduled runs clone `main` only 50 commits deep (B-110), so an old commit falls out
 of their reach as main moves on, and deploying main's head again would undo the rollback.
 
-Every step that changes live needs Matt's explicit OK in the chat; R-03 (no live deploy while a study session runs) and
-R-05 (the live watchdog windows) still apply, and no date gates it (D-178 dropped the exam-week freeze). Nothing is deleted: the restore commit removes files
+Every step that changes live needs Matt's explicit OK in the chat; R-03 (no live deploy while a study session runs)
+still applies, and no date gates it (D-178 dropped the exam-week freeze). Nothing is deleted: the restore commit removes files
 from the tree only (they stay in history), and the record keeps everything it holds.
 
 ## Steps
@@ -44,7 +44,7 @@ from the tree only (they stay in history), and the record keeps everything it ho
    crossed, fire the staging evening-cloud and watchdog and read their runs back before going on.
 5. **Live.** `node tools/chart.mjs ship live --matt-ok`, making every call and read it prints, until GREEN. It refuses
    what `chart/rules.json` forbids (R-02 staging green with the same content, R-03 no study session running, R-04
-   Matt's OK, R-05 not inside a live watchdog window). It records the deploy; its rollback field names the build left.
+   Matt's OK). It records the deploy; its rollback field names the build left.
 6. **Record.** `node tools/chart.mjs log decision <next id> --title "Live went back to <sha>" --why "<what went wrong>"`;
    DECISIONS.md carries it. Bringing the newer work back later is `git revert <the restore commit>`, then the normal
    path, once whatever went wrong is fixed.
