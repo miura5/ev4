@@ -106,7 +106,11 @@ The brief's order, with what each trimmer may reach:
 3. Dead code in `tools/chart.mjs`: the Docs-view calls (`trim/docs-views`), then the one-time v3 import
    (`trim/v3-import`).
 4. Test and check time: smoke on page changes only (`trim/smoke-scope`, **done: #7**).
-5. Small text, low value (from #5's Found next): CLAUDE.md's "Where things live" repeats the v3 repository row the
+5. **First, before item 6:** GitHub Actions minutes (`trim/ci-minutes`). On Oct 23 the account ran out of its free monthly
+   minutes and GitHub stopped every job (about 640 npm test runs, 350 smoke runs and 6 nightlies since Oct 21; most test
+   runs were record-only commits). Run npm test on pull requests and on pushes that change code, not on pushes that touch
+   only `chart/`, the generated files or `docs/` (build chats and trimmers run it locally first); keep the nightly.
+6. Small text, low value (from #5's Found next): CLAUDE.md's "Where things live" repeats the v3 repository row the
    opening now names (`trim/where-v3-row`).
 
 ## Keeping this queue current
