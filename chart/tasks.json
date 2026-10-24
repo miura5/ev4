@@ -4962,7 +4962,7 @@
   "depends": [
    "B-274"
   ],
-  "notes": "Matt's OK, given in the build chat on Oct 24: the held-frame and eight-a-second tests belong to the old avatar and motion and go with them; rewriting them to the one-clock and measured-budget rules (D-271, D-272) is his call, not a gap, and no test is to be bent back to the old rules. The build chat records D-271 and D-272 as superseding D-230 and D-224 right after this task lands, so the lint then proves the no-citation clause; recording it now would turn main red while these files are mid-rewrite.",
+  "notes": "proofs green (npm test 553 pass, smoke 28/28, check --touched GREEN), first review's one gap fixed in 6bdfbe5; second review next. Matt's OK on the retired held-frame tests stands as the managing chat recorded it on Oct 24.",
   "commit": null,
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
