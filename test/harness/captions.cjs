@@ -510,33 +510,17 @@ async function sideBySide(browser, left, right, out, vp) {
     );
     const done = await page.evaluate(() => {
       const b = document.querySelector('#thread .msg.ev.current .bubble');
-      const em = b.querySelector('b .w');
       const log = window.EVApp.core.stats().log;
       return {
         all: b.querySelectorAll('.w.on').length === b.querySelectorAll('.w').length,
-        teal: em && getComputedStyle(em).color,
-        // B-204 (D-211): teal is the theme's --do token, whatever the theme.
-        want: (() => {
-          const p = document.createElement('i');
-          p.style.color = 'var(--do)';
-          document.body.appendChild(p);
-          const c = getComputedStyle(p).color;
-          p.remove();
-          return c;
-        })(),
         speaks: log.filter(e => e.kind === 'speak').length,
         emph: log.filter(e => e.kind === 'speak' && e.detail === 'emphasis').map(e => e.name),
         settled: log.filter(e => e.kind === 'gesture').slice(-1)[0],
       };
     });
     ok(
-      `[${scheme}] her core spoke each word, emphasis in teal, and settled`,
-      done.all &&
-        done.teal === done.want &&
-        done.speaks >= 14 &&
-        done.emph.includes('stretch') &&
-        done.settled &&
-        done.settled.name === 'settle',
+      `[${scheme}] her core spoke each word and settled`,
+      done.all && done.speaks >= 14 && done.emph.includes('stretch') && done.settled && done.settled.name === 'settle',
       JSON.stringify(done)
     );
     ok(

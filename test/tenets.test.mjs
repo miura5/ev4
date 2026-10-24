@@ -18,7 +18,6 @@ const ev = () => ({
   leads: ['Evening, Matt. ATI Engage is due tonight.'],
   lists: [{ id: 'brief-list', rows: 0 }],
   rows: [],
-  coral: ['br-dot urgent'],
   urgent: 1,
   chips: ['Start review', 'What’s due this week?', 'Start a study session'],
   monoOrSpacedCaps: 0,
@@ -30,7 +29,7 @@ const failing = s =>
     .map(c => c.tenet);
 
 test('B-115: the look pass checks D-146 to D-151 at 390, 735 and 1280, with E.V. on and the other tabs reporting', () => {
-  assert.deepEqual(spec.ui.tenets.checks, ['D-146', 'D-147', 'D-148', 'D-221', 'D-150', 'D-151', 'D-160']);
+  assert.deepEqual(spec.ui.tenets.checks, ['D-146', 'D-147', 'D-148', 'D-150', 'D-151', 'D-160']);
   assert.deepEqual(spec.ui.tenets.onFor, { 'D-160': ['ev', 'study'] });
   assert.deepEqual(spec.ui.tenets.widths, [390, 735, 1280]);
   assert.deepEqual(
@@ -93,16 +92,6 @@ test('B-115: the other checks each fail on what their tenet forbids', () => {
   const tall = ev();
   tall.rows.push({ text: 'a two-line row', h: 70 });
   assert.deepEqual(failing(tall), ['D-148']);
-  const coral = ev();
-  coral.coral.push('graded', 'graded');
-  assert.deepEqual(failing(coral), ['D-221']);
-  const none = ev();
-  none.coral = [];
-  assert.deepEqual(failing(none), ['D-221'], 'an urgent item with nothing coral on the E.V. tab');
-  const study = ev();
-  study.tab = 'study';
-  study.coral = [];
-  assert.deepEqual(failing(study), [], 'another tab need not repeat it');
   const chips = ev();
   chips.chips.push('due', 'graded');
   assert.deepEqual(failing(chips), ['D-150']);

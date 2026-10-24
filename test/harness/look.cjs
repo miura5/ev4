@@ -661,7 +661,9 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           /set-score/.test(fin.first || '') &&
             /^\d+ of \d+ right$/.test(fin.score || '') &&
             fin.misses >= 1 &&
-            fin.rightFolded &&
+            // the right answers fold when there are any: a set with none right has nothing to fold (B-271: the
+            // synthetic set scores 0 of 8 on Oct 24, when the first option is never the right one)
+            (fin.rightFolded || /^0 of /.test(fin.score || '')) &&
             fin.primaries.length === 1 &&
             fin.primaries[0] === 'Give me 5 more' &&
             !fin.pills,
@@ -715,8 +717,8 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         await page.waitForTimeout(150);
       }
     }
-    // B-117: Today: no stat tile, no item's minutes twice, the exam in Next 7 days only, coral equal to core's urgent
-    // count, a Prep marker on the clinical day; ticking keeps the scroll (v4 rule 6).
+    // B-117: Today: no stat tile, no item's minutes twice, the exam in Next 7 days only, a Prep marker on the clinical
+    // day (the coral count went with D-221, B-271 on Matt's word); ticking keeps the scroll (v4 rule 6).
     if (TENETS.widths.includes(size.width) && [844, 830, 800].includes(size.height)) {
       await page.click('#tab-today');
       await page.waitForTimeout(450); // B-125: settled within 450 ms
@@ -730,29 +732,19 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           .filter(vis)
           .map(li => (li.querySelector('.ti-t') || li).textContent.trim());
         const ahead = [...document.querySelectorAll('#ahead li')].filter(vis);
-        const coralRgb = /rgba?\((240, 138, 120|244, 167, 151|184, 58, 38)/,
-          panel = document.getElementById('p-today');
-        const coral = [...panel.querySelectorAll('*')].filter(
-          e =>
-            vis(e) &&
-            [...e.childNodes].some(n => n.nodeType === 3 && n.textContent.trim()) &&
-            coralRgb.test(getComputedStyle(e).color)
-        ).length;
         return {
           tiles: [...document.querySelectorAll('#stats .stat')].filter(vis).length,
           minsTwice: items.filter(x => (x.match(/\d+\s*min/g) || []).length > 1),
           examInList: items.some(x => /^Exam \d/.test(x)),
           examAhead: ahead.some(li => /Exam/.test(li.textContent)) || !document.querySelector('#ahead'),
-          coral,
-          urgent: document.querySelectorAll('li.brief-item[data-level="urgent"]').length,
           prepOnClinical:
             ahead.filter(li => /clinical/i.test(li.textContent)).every(li => li.querySelector('.bi-prep')) &&
             ahead.some(li => /clinical/i.test(li.textContent)),
         };
       });
       ok(
-        `[${width}] today: no stat tile, minutes once, the exam in Next 7 days only, coral equal to the urgent count, Prep on the clinical day`,
-        !t.tiles && !t.minsTwice.length && !t.examInList && t.coral === t.urgent && t.prepOnClinical,
+        `[${width}] today: no stat tile, minutes once, the exam in Next 7 days only, Prep on the clinical day`,
+        !t.tiles && !t.minsTwice.length && !t.examInList && t.prepOnClinical,
         JSON.stringify(t)
       );
       const tick = page.locator('#today-list li.today-item input.tick').first();

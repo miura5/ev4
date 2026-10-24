@@ -62,14 +62,6 @@ function collect() {
   const rows = [...(panel ? panel.querySelectorAll('li.row, li.brief-item') : [])]
     .filter(vis)
     .map(r => ({ text: r.textContent.trim().slice(0, 40), h: Math.round(r.getBoundingClientRect().height) }));
-  const coralRgb = /rgba?\((240, 138, 120|244, 167, 151|184, 58, 38)(, (1|0\.[3-9]\d*))?\)/;
-  const coralAll = all('*').filter(e => {
-    const s = getComputedStyle(e);
-    return (coralRgb.test(s.color) && own(e)) || coralRgb.test(s.backgroundColor);
-  });
-  const coral = coralAll
-    .filter(e => !coralAll.some(o => o !== e && o.contains(e)))
-    .map(e => (own(e) || e.className).slice(0, 30));
   const chips = all('.chip, .qchip')
     .filter(first)
     .map(c => c.textContent.trim().slice(0, 30));
@@ -93,7 +85,6 @@ function collect() {
     leads,
     lists,
     rows,
-    coral,
     // what is urgent on screen: the briefing's urgent items while it shows (in a conversation it folds away, B-90)
     urgent: [...document.querySelectorAll('li.brief-item[data-level="urgent"]')].filter(
       e => !e.closest('.msg.greet:not(.current)')
@@ -137,12 +128,6 @@ function judge(s, exceptions = {}) {
               .join(', ')} px)`
           : 'every row one line'
       }`
-    ),
-    // Coral never outnumbers what is urgent; the E.V. tab, which carries the briefing, also shows it when there is any.
-    r(
-      'D-221',
-      s.coral.length <= s.urgent && (s.tab !== 'ev' || !s.urgent || s.coral.length >= 1),
-      `coral elements: ${s.coral.length} (${s.coral.join(', ')}); urgent in the record: ${s.urgent}`
     ),
     r(
       'D-150',
