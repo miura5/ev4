@@ -1456,7 +1456,6 @@ test('B-60: the rollback names the schemas it crosses and the live prompts that 
 
 // ------------------------------------------------------------------------------------------------ log rule
 test('log rule takes the next free id, on a decision in the record; --fn names the check', () => {
-  // log rule: the next free id, on a decision in the record; --fn names the check.
   const s = sample();
   assert.throws(
     () => C.applyLog(s, { _: ['log', 'rule', 'R-07'], rule: 'r', decision: 'D-002', command: 'ship live', fn: 'f' }),
