@@ -5259,7 +5259,18 @@ const ok = (name, cond, detail = '') => {
         timeout: 4000,
       })
       .catch(() => {});
-    await page.waitForTimeout(400);
+    // her turn to face him eases in over about half a second (B-272)
+    await page
+      .waitForFunction(
+        sel => {
+          const C = window.EVApp.core,
+            i = C.cores().findIndex(c => c.svg === document.querySelector(sel));
+          return i >= 0 && C.sample(i).facing;
+        },
+        flower,
+        { timeout: 3000 }
+      )
+      .catch(() => {});
     const on = await page.evaluate(sel => {
       const C = window.EVApp.core,
         st = C.stats();
