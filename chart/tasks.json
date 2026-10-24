@@ -4979,9 +4979,10 @@
    "B-273",
    "B-274",
    "B-275",
-   "B-276"
+   "B-276",
+   "B-284"
   ],
-  "notes": "",
+  "notes": "B-284 (the avatar resting at Idle) joins Matt's look: he sees the fixed avatar, not the stuck Alert.",
   "commit": null,
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
