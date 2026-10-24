@@ -2229,7 +2229,7 @@ async function ship(o) {
       shipJobOk = why.length ? null : fromJob;
     } else if (!o['matt-ok'])
       refusals.push("R-04 (D-083): a live deploy needs Matt's explicit OK in the chat (then pass --matt-ok)");
-    if (rec.rules.some(r => r.check === 'watchdogWindow')) {
+    if (rec.rules.some(r => r.check === 'watchdogWindow' && !r.ended)) {
       const live = (readJson(path.join(root, 'spec', 'ev.spec.json')).tasks.live || {}).watchdog;
       const why = live && watchdogRefusal(live.schedule, new Date());
       if (why) refusals.push(why);

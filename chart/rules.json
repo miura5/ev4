@@ -38,7 +38,8 @@
   "decision": "D-142",
   "task": "B-102",
   "command": "ship live",
-  "check": "watchdogWindow"
+  "check": "watchdogWindow",
+  "ended": "D-262: Matt retired it on Oct 23 (never refused a deploy in 18; worst case one wrong health line)"
  },
  {
   "id": "R-06",

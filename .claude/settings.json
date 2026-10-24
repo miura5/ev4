@@ -1,8 +1,5 @@
 {
  "hooks": {
-  "SessionStart": [
-   { "hooks": [ { "type": "command", "command": "date -u +%FT%TZ > /tmp/ev4-hook-marker 2>/dev/null || true" } ] }
-  ],
   "PreToolUse": [
    { "matcher": "ArtifactData|Artifact|mcp__.*ArtifactData|mcp__.*__Artifact", "hooks": [ { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/tools/hooks.mjs\" live-guard" } ] }
   ],
