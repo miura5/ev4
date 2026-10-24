@@ -3,7 +3,7 @@
 // and 1280 px, in light and dark, it draws a 128 px and a 24 px dial side by side and screenshots each of the seven moods
 // and the five gestures, checking what the round 15 canvas's States board says of each (where the gap points, how wide,
 // solid or halftone, closed, flat to him), that each gesture settles, that a still idle draws nothing, a session's
-// filled segments, and that the sidebar's 24 px dial turns to face him for a notice (D-216). Reduced motion gives one
+// filled segments at 0, 25, 50 and 100% of the stretch to its next check (B-273), and that the sidebar's 24 px dial turns to face him for a notice (D-216). Reduced motion gives one
 // still per mood. Her frame budget is measured over 10 s of speech at 390x844, DPR 3, 4x CPU throttle, and 3 s of idle
 // there records no frame at all (B-274).
 //   node test/harness/core.cjs [record dir | synthetic] [screenshots dir] [--json <file>]
@@ -255,24 +255,62 @@ const SPEECH = `async (secs) => { const C = window.EVApp.core; const text = 'Pre
         const left = await page.evaluate(() => window.EVApp.core.stats().gestures);
         ok(`${tag} ${g} settles within ${GDUR[g]} s`, left.length === 0, JSON.stringify(left));
       }
-      // A session in Pointer mode: 5 of 12 filled, the gap at the next slot; held against the page's own session render.
-      await page.evaluate(() => {
-        const C = window.EVApp.core;
-        if (!C.__ring) {
-          C.__ring = C.setRing;
-          C.setRing = () => {};
-        }
-        C.__ring(5 / 12);
-      });
-      await page.waitForTimeout(1600);
-      const [sa, ss] = await both(page, idx);
-      await shot(page, `core-session-${scheme}-${theme}`);
+      // B-273 (D-267): a session in Pointer mode, fed the way the page feeds it: the session's stretch to its next check
+      // (checkMinutes) read at 0, 25%, 50% and 100% of it. 0, 3, 6 and 12 segments fall in, the gap at the next slot.
+      for (const [p, want] of [
+        [0, 0],
+        [0.25, 3],
+        [0.5, 6],
+        [1, 12],
+      ]) {
+        const fed = await page.evaluate(
+          ([p, step]) => {
+            const C = window.EVApp.core;
+            if (!C.__ring) {
+              C.__ring = C.setRing;
+              C.setRing = () => {};
+            }
+            const t0 = Date.parse('2026-10-20T14:00:00.000Z');
+            const s = { status: 'active', startedAt: new Date(t0).toISOString(), events: {} };
+            s.events[s.startedAt] = { type: 'start' };
+            const r = window.EVCore.sessionState(s, new Date(t0 + p * step).toISOString()).toCheck;
+            C.__ring(r);
+            return r;
+          },
+          [p, spec.constants.studyWatch.checkMinutes * 60e3]
+        );
+        await page.waitForTimeout(1600);
+        const [sa, ss] = await both(page, idx);
+        await shot(page, `core-session-${Math.round(p * 100)}-${scheme}-${theme}`);
+        ok(
+          `${tag} a session ${Math.round(p * 100)}% of the way to its check: ${want} solid, the gap at the next slot`,
+          Math.abs(fed - p) < 1e-9 &&
+            sa.filled === want &&
+            sa.solid === want &&
+            sa.back === (want < 12 ? 11 : 12) &&
+            ss.solid === want,
+          JSON.stringify({ fed, big: sa, small: ss })
+        );
+      }
+      if (scheme === 'phone' && theme === 'light') {
+        // the 7 s re-drop: her loop runs while a session runs, and stops once it is off
+        await page.evaluate(() => window.EVApp.core.__ring(0.5));
+        await page.waitForTimeout(400);
+        await page.evaluate(() => window.EVApp.core.resetStats());
+        await page.waitForTimeout(7600);
+        const on = await page.evaluate(() => window.EVApp.core.stats());
+        await page.evaluate(() => window.EVApp.core.__ring(-1));
+        await page.waitForTimeout(2500);
+        await page.evaluate(() => window.EVApp.core.resetStats());
+        await page.waitForTimeout(2000);
+        const off = await page.evaluate(() => window.EVApp.core.stats());
+        ok(
+          `${tag} the 7 s re-drop runs only while a session runs`,
+          on.running && on.frames.length > 0 && !off.running && off.frames.length === 0,
+          JSON.stringify({ on: [on.running, on.frames.length], off: [off.running, off.frames.length] })
+        );
+      }
       await page.evaluate(() => window.EVApp.core.__ring(-1));
-      ok(
-        `${tag} a session at 5 of 12: five solid, a halftone slot behind every segment but the sixth, where the gap rides`,
-        sa.filled === 5 && sa.solid === 5 && sa.back === 11 && ss.solid === 5,
-        JSON.stringify({ big: sa, small: ss })
-      );
       await page.waitForTimeout(900);
     }
     await page.evaluate(() => document.documentElement.removeAttribute('data-theme'));

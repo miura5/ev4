@@ -766,7 +766,7 @@
         bar.replaceChildren(led, main, acts);
       }
       if (COMMENT) {
-        // B-88: she reads along; the ring sweeps toward her next read, and fills while she thinks about a line
+        // B-88: she reads along; the ring sweeps toward the next check (B-273)
         bar.querySelector('.s-clock').textContent = ending
           ? 'Wrapping up…'
           : SS.busy === true
@@ -774,7 +774,7 @@
             : st.onBreak
               ? `On a break · ${st.minutes} min`
               : `${st.minutes} min · ${SS.thinking ? 'thinking about that line' : 'reading along'}`;
-        CORE.setRing(petals(st, ending));
+        CORE.setRing(ringFill(st, ending));
         return;
       }
       bar.querySelector('.s-clock').textContent = ending
@@ -784,13 +784,12 @@
           : st.onBreak
             ? `On a break · ${tickClock(st.breakRemainingMs)} to the check`
             : `${st.minutes} min · check ${tickClock(Date.parse(st.nextCheckAt) - Date.now())}`;
-      CORE.setRing(petals(st, ending));
+      CORE.setRing(ringFill(st, ending));
     }
-    // B-211 (D-217): the particle ring is gone; one of her petals lights per check he has answered in this session,
-    // all five once the session ends.
-    function petals(st, ending) {
-      if (ending) return 1;
-      return Math.min(5, Object.keys(st.answered || {}).length) / 5;
+    // B-273 (D-267, Matt's answer): her ring is the stretch to the next check. Her segments fill clockwise toward it and
+    // start over after it; the checks he answered show on their cards (D-217). The ring is full while she wraps up.
+    function ringFill(st, ending) {
+      return ending ? 1 : st.toCheck;
     }
     function sessionTick() {
       const sk = activeSkill(); // B-82: a skills run left alone for the conversation idle gap ends itself, saved as left unfinished

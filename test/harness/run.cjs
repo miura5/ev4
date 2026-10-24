@@ -4329,8 +4329,8 @@ const ok = (name, cond, detail = '') => {
         JSON.stringify(cs)
       );
     }
-    // B-211 (D-217): the session's stats are one quiet line in the pane header (no pill, no box); its progress is her
-    // petals, one lit per answered check (none yet).
+    // B-211 (D-217): the session's stats are one quiet line in the pane header (no pill, no box); B-273: its progress is
+    // her ring, the stretch to the next check (just started).
     const lineView = () =>
       ss.evaluate(() => {
         const b = document.getElementById('sbar'),
@@ -4358,7 +4358,7 @@ const ok = (name, cond, detail = '') => {
     {
       const pr = await lineView();
       ok(
-        'the session is one quiet line in the pane header (at most 34 px, no box); no petal is lit before an answer (D-217)',
+        'the session is one quiet line in the pane header (at most 34 px, no box); her ring has only just started toward the first check (B-273)',
         pr.h <= 34 &&
           pr.inHeader &&
           /rgba\(0, 0, 0, 0\)|transparent/.test(pr.bg) &&
@@ -4590,14 +4590,19 @@ const ok = (name, cond, detail = '') => {
     );
     ok('check card shows answered', /Check 1 · answered/.test(await ss.locator('#ev-surf').textContent()));
     {
-      // B-211 (D-217): her session progress moves with each answered check (one of five: 0.2, two of her 12 segments).
-      const pt = await ss.evaluate(() => ({
-        ring: window.EVApp.core.stats().ring,
-        filled: window.EVApp.core.sample(0).filled,
-      }));
+      // B-273 (D-267): her ring is the stretch to the next check, which the quiz just started over; the answer shows on
+      // its card, not on her (D-217).
+      const pt = await ss.evaluate(() => {
+        const s = Object.values(window.__db.sessions || {}).find(x => x.source === 'E.V. Home' && x.kind !== 'skill');
+        return {
+          ring: window.EVApp.core.stats().ring,
+          toCheck: window.EVCore.sessionState(s, new Date().toISOString()).toCheck,
+          filled: window.EVApp.core.sample(0).filled,
+        };
+      });
       ok(
-        'one answered check moves her session progress (D-217)',
-        Math.abs(pt.ring - 0.2) < 1e-6 && pt.filled === 2,
+        'after the quiz her ring starts over toward the next check, and the answer leaves it where the clock has it (B-273)',
+        pt.ring >= 0 && pt.ring < 0.1 && Math.abs(pt.ring - pt.toCheck) < 0.01 && pt.filled === 0,
         JSON.stringify(pt)
       );
     }

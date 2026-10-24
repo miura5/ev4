@@ -120,6 +120,33 @@ test('session timer: checks every 7 min; breaks keep the remaining time; +5 min;
   assert.equal(st.minutes, 40);
 });
 
+test('B-273 (D-267): her ring is the stretch to the next check: 0, a quarter, a half, full; it starts over after a check', () => {
+  const at = p => new Date(Date.parse(T0) + p * 7 * 60e3).toISOString();
+  const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, a + ' is not ' + b);
+  assert.deepEqual(
+    [0, 0.25, 0.5, 1].map(p => EV.sessionState(session({}), at(p)).toCheck),
+    [0, 0.25, 0.5, 1]
+  );
+  // past due it stays full until the checkpoint lands, then starts over
+  assert.equal(EV.sessionState(session({}), plus(9)).toCheck, 1);
+  const checked = session({ [plus(7)]: { type: 'check', n: 1, items: 2 } });
+  assert.equal(EV.sessionState(checked, plus(7)).toCheck, 0);
+  near(EV.sessionState(checked, plus(10, 30)).toCheck, 0.5);
+  // an answer does not move it (the answer shows on the check's card, D-217)
+  const answered = session({ [plus(7)]: { type: 'check', n: 1, items: 2 }, [plus(8)]: { type: 'answer', n: 1 } });
+  near(EV.sessionState(answered, plus(10, 30)).toCheck, 0.5);
+  // +5 lengthens the stretch to 12 minutes: 3 of 12 done at minute 3, and it never runs backward
+  const ext = session({ [plus(2)]: { type: 'extend' } });
+  near(EV.sessionState(ext, plus(2)).toCheck, 2 / 12);
+  near(EV.sessionState(ext, plus(3)).toCheck, 3 / 12);
+  // a break holds it where it was
+  const brk = session({ [plus(2)]: { type: 'break' } });
+  near(EV.sessionState(brk, plus(2)).toCheck, 2 / 7);
+  near(EV.sessionState(brk, plus(20)).toCheck, 2 / 7);
+  // an ended session shows no stretch
+  assert.equal(EV.sessionState(session({}, { status: 'ended', endedAt: plus(3) }), plus(4)).toCheck, 0);
+});
+
 test('session note delta: only the new writing; nothing new is idle; a rewrite falls back to the end', () => {
   const a = 'Fluid balance\nIsotonic: 0.9% NaCl.';
   const m = EV.noteMark(a);

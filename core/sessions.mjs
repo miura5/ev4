@@ -240,7 +240,9 @@ export function makeSessions(core) {
   });
   const SESSION_SOURCE = 'Study session';
 
-  /** {status, onBreak, nextCheckAt, breakRemainingMs, due, checks, questions, comments, reads, idleChecks, shouldWrap, lastCheck, lastMark, lastQuizMark, answered, minutes, overdueMs}
+  /** {status, onBreak, nextCheckAt, breakRemainingMs, due, checks, questions, comments, reads, idleChecks, shouldWrap, lastCheck, lastMark, lastQuizMark, answered, minutes, overdueMs, toCheck}
+   * B-273 (D-267, Matt's answer): toCheck is how far the session is through the stretch to its next check, 0 to 1. It
+   * starts at 0 when the session starts and after every checkpoint, +5 lengthens the stretch, and a break holds it.
    * B-88: in comment mode (studyWatch.mode) a check event is one of three: a quiz (items asked, counted in checks),
    * a comment (comment: true, her one line on what he wrote) or a quiet checkpoint (quiet: true: he wrote, she said
    * nothing). All three move the note's mark and reset the idle count; only a quiz counts as a check. */
@@ -268,8 +270,10 @@ export function makeSessions(core) {
       answered: {},
       minutes: 0,
       overdueMs: 0,
+      toCheck: 0,
     };
     let next = Number.isFinite(t0) ? t0 + step : null,
+      span = step,
       breakAt = null,
       remaining = 0,
       breakMs = 0,
@@ -301,6 +305,7 @@ export function makeSessions(core) {
         } else if (e.quiet) {
           st.reads++;
           next = t + step;
+          span = step;
         } else {
           st.checks++;
           st.reads++;
@@ -309,12 +314,15 @@ export function makeSessions(core) {
           st.lastFormat = e.format === 'open' ? 'open' : 'mc';
           if (mk) st.lastQuizMark = mk;
           next = t + step;
+          span = step;
         }
       } else if (e.type === 'idle') {
         st.idleChecks++;
         next = t + step;
+        span = step;
       } else if (e.type === 'skip') {
         next = t + step;
+        span = step;
       } // the check couldn't run: no note yet, a #graded note, or what looked like an identifier
       else if (e.type === 'break') {
         if (!st.onBreak) {
@@ -333,6 +341,7 @@ export function makeSessions(core) {
         const add = (Number(e.minutes) || c.extendMinutes) * 60e3;
         if (st.onBreak) remaining += add;
         else next = (next == null ? t : next) + add;
+        span += add;
       } else if (e.type === 'answer') {
         st.answered[e.n] = e.msgId || true;
       } else if (e.type === 'end') {
@@ -351,6 +360,8 @@ export function makeSessions(core) {
     st.nextCheckAt = st.status === 'active' && !st.onBreak && next != null ? new Date(next).toISOString() : null;
     st.due = !!st.nextCheckAt && nowMs >= next;
     st.overdueMs = st.due ? nowMs - next : 0;
+    const left = st.onBreak ? remaining : next == null ? span : next - nowMs;
+    st.toCheck = st.status === 'active' ? Math.max(0, Math.min(1, 1 - left / span)) : 0;
     st.shouldWrap = st.status === 'active' && st.idleChecks >= c.idleChecksToEnd;
     return st;
   }
