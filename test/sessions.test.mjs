@@ -368,3 +368,17 @@ test('B-88 comment prompt and parser: silence by default, one short line, a quot
   assert.equal(EV.parseComment({ say: 'Nice.', quote: 'not in his note', kind: 'odd' }, 'SV falls').quote, null);
   assert.equal(EV.parseComment({ say: 'Nice.', kind: 'odd' }, 'SV falls').kind, 'connection');
 });
+
+test('B-287 (C-7): a note from the header’s New is one ideas write: his words, kind general, open, no course', () => {
+  const w = EV.noteIdea('  Rounding to   tenths for mL ', { at: T0, date: '2026-10-18' });
+  assert.equal(w.op, 'set');
+  assert.equal(w.collection, 'ideas');
+  assert.match(w.id, /^idea-2026-10-18-rounding/);
+  assert.equal(w.data.text, 'Rounding to tenths for mL');
+  assert.equal(w.data.kind, 'general');
+  assert.equal(w.data.status, 'open');
+  assert.equal(w.data.source, 'New note');
+  assert.ok(!('course' in w.data));
+  assertValid(w);
+  assert.throws(() => EV.noteIdea('   ', { at: T0, date: '2026-10-18' }), /needs words/);
+});
