@@ -4948,7 +4948,7 @@
   "depends": [
    "B-271"
   ],
-  "notes": "claimed by this run",
+  "notes": "tests green (npm test 551 pass, smoke 28 of 28); touched check running",
   "commit": null,
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
