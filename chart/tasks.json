@@ -5473,7 +5473,7 @@
    "B-287",
    "B-291"
   ],
-  "notes": "proofs green: npm test, smoke, check --touched GREEN",
+  "notes": "Card for Matt (D-261). What changes when you study: the New task window now asks four things besides the name: Category (To-do, Reading, Practice, Review or Notes), Estimate in minutes (15 to start), When (today or tomorrow) and Course. A task saved for today shows on Today's list with its badge, its course and its minutes, and the 'min planned' count goes up by those minutes; one saved for tomorrow goes on tomorrow's list instead. Why: so a task you add counts against the day's time, which the budget card (B-292) needs. Touches: the header's New window and Today's list; nothing else. What could break and how we'd notice: a task landing on the wrong day, or the planned count not moving; the shell check adds a 20-minute Reading task and a tomorrow task at phone and desktop and checks both. Size: small (about 70 lines of page code and a harness check); undone by reverting one commit. Checks: reviewer (fresh subagent): No gaps; Checks: none retired or loosened; Size: +167 -5, staging after review. npm test, smoke and check --touched GREEN; screenshots of the open window at 390 and 1280, light and dark, looked at. Kept from the demo, with reasons: Category uses the list's own kinds instead of the demo's Classes/Study, so each shows as the list's badge; Estimate is a minutes field instead of 5/15/30/45 buttons, so a 20-minute task is possible; no Cancel button (D-160), Esc or a tap outside closes it as before. Staging page: https://claude.ai/artifact/Pb6jQ6CvEbtxi6Rcshu9uC (Today, then New > Task for Today).",
   "commit": null,
   "source": "build chat (Matt's OK, Oct 24)"
  }
