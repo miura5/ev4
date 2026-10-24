@@ -5087,7 +5087,7 @@
   "depends": [
    "B-276"
   ],
-  "notes": "proofs: npm test and smoke green; touched check rerunning after steadying the new greet check",
+  "notes": "proofs green: npm test, smoke 28/28, touched check GREEN; review next",
   "commit": null,
   "source": "build chat",
   "words": "E.V.'s avatar holds the Alert look for the whole visit instead of resting at Idle: the greeting picks Alert when something can't wait (an exam tomorrow) and that greeting mood becomes her resting state, so short replies barely show Speaking before she drops back to it. Matt's call: cut the greeting's mood; she rests at Idle, and Alert keeps only its two jobs (something ready while he is on another tab, and a check-in ready during a session); no exam-day look on her.",
