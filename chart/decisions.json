@@ -93,7 +93,9 @@
   "title": "Her frame budget is measured: 10 s of speech at 390 × 844 (DPR 3, 4× CPU throttle) keeps at most 5% of frames over 25 ms; an idle Dial Arc with no gesture or session draws no frame. Supersedes D-224.",
   "why": "Full frame rate is only safe if the phone budget holds; the measure stays, the eight-drawings cap goes.",
   "status": "accepted",
-  "supersedes": [],
+  "supersedes": [
+   "D-224"
+  ],
   "amends": [],
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy P-8",
   "kind": "tenet",
@@ -108,7 +110,9 @@
   "title": "One clock: she and the interface move on requestAnimationFrame at the display's rate with frame-rate-independent smoothing; she draws nothing while nothing moves; a view switch is a cut; a fold opens in 0.28 s and closes in 0.16 s; nothing over 0.45 s except her own gestures (at most 2.4 s); nothing he is reading or ticking moves. Supersedes D-230.",
   "why": "Held frames made the Dial Arc's flips stutter; at full rate with dt smoothing she is calm at 60 or 120 Hz and still costs nothing at rest.",
   "status": "accepted",
-  "supersedes": [],
+  "supersedes": [
+   "D-230"
+  ],
   "amends": [],
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy P-7",
   "kind": "tenet",
@@ -598,7 +602,7 @@
   "date": "Oct 22",
   "title": "Two clocks: she moves on held frames (eight drawings a second, eased spacing, a held first frame, a one-frame counter-turn to face); everything else moves at full frame rate with short eases: a view switch is a cut, its settled view painted on the tap frame; a fold opens in 0.28 s and closes in 0.16 s; nothing over 0.45 s; only a change of layout moves; nothing he is reading or ticking moves; her reveal ends within 6 s and a tap completes it; reduced motion, the system's or Preferences' On, gives the same end state with no movement. Supersedes D-222",
   "why": "Linear's tab switch lands in one frame with nothing after it, and its modal closes about twice as fast as it opens (captures 19 and 21, measured); the 0.16 s fade only delays a view he has already chosen",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [
    "D-222"
   ],
@@ -679,7 +683,7 @@
   "date": "Oct 22",
   "title": "Her frame budget is measured: 10 s of speech at 390 × 844 (DPR 3, 4× CPU throttle) keeps at most 5% of frames over 25 ms; she redraws only while she moves, at most eight times a second; a still idle draws nothing outside the falling petal. Supersedes D-135.",
   "why": "D-135 measured the Silk core; the 2D flower needs its own budget",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [
    "D-135"
   ],
