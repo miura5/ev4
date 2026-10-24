@@ -180,7 +180,7 @@ because other runs are cutting there. Ranked by value for the long term (D-264):
     `gestureBlend`, `blendAll`, `glanceAngle`, `percentile`, `stepDownStart`, `slowShare`, `stepDownStep`, `smooth`)
     over page/, core/, scripts/ and tools/ finds none (the only `smooth` hits are CSS `behavior: 'smooth'`). Their tests
     are 10 of the 13 in `test/motion.test.mjs` (lines 58 to 270, about 210 lines); the `coreSize` test (205), the spec
-    test (271) and the EVMotion-in-core.js test (323) stay. About 200 code and 210 test lines, so it comes in two parts
+    test (271) and the EVMotion-in-core.js test (323) stay, though 323's check that `envelopeStep` and `gestureBlend` reach `window.EVMotion` changes to `coreSize`. About 200 code and 210 test lines, so it comes in two parts
     under the budget: the functions with their tests, then any `spec.ui.look.core` parameters only they read (spec is
     hashed; leave the parameters if the spec test or the look harness reads them). Risk to studying: low; it changes
     the published core.js, so it ships through staging and the full check, and `npm run smoke` and the look pass must
