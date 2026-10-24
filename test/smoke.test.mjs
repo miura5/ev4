@@ -14,9 +14,9 @@ test('B-199: npm run smoke builds, then runs the smoke harness on the synthetic 
   assert.equal(pkg.scripts.smoke, 'node tools/build.mjs && node test/harness/smoke.cjs synthetic');
 });
 
-test('B-199: the smoke workflow runs on every push, runs the tier, and expects each plant to turn it red', () => {
+test('B-199: the smoke workflow runs on every push but bookkeeping and docs, runs the tier, and expects each plant to turn it red', () => {
   const wf = read('.github/workflows/smoke.yml');
-  assert.match(wf, /^on:\n {2}push:\n/m, 'on every push');
+  assert.match(wf, /^on:\n {2}push:\n {4}paths-ignore:\n/m, 'on every push but bookkeeping and docs');
   assert.match(wf, /run: npm run smoke -- shots/);
   for (const [plant, line] of [
     ['page-error', 'no page errors'],
