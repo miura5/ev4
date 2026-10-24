@@ -4906,7 +4906,7 @@
   "depends": [
    "B-271"
   ],
-  "notes": "shipped to staging at 87adbaf (GREEN); reviewed: one gap (alert lit two segments, board says one), fixed in 1c60bce; touched check re-running",
+  "notes": "second review: two gaps (proofs pending at the fix's commit; the sidebar notice shot was covered by the test box), the shot fixed; touched check re-running before ship",
   "commit": null,
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
