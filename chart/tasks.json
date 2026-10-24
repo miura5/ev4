@@ -5137,7 +5137,7 @@
   "depends": [
    "B-271"
   ],
-  "notes": "built: the component set in the stylesheet, its own harness (components.cjs) and the look pass's switch and button-kind checks; proofs next",
+  "notes": "proofs: npm test green, smoke 28/28, the touched harnesses green (components 54/54, look 283/283); official touched check rerunning at 9c5d151; review next",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
