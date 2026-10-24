@@ -4962,7 +4962,7 @@
   "depends": [
    "B-274"
   ],
-  "notes": "proofs green (npm test 553 pass, smoke 28/28, check --touched GREEN), first review's one gap fixed in 6bdfbe5; second review next. Matt's OK on the retired held-frame tests stands as the managing chat recorded it on Oct 24.",
+  "notes": "reviewed twice: No gaps in B-276. Shipping to staging.",
   "commit": null,
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
