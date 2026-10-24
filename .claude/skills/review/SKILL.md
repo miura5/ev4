@@ -16,9 +16,9 @@ task or writes to a record. It never blocks anything by itself: the build chat d
 
 ## Steps
 
-1. Read the task's row in `BACKLOG.md` (Task, Depends, Notes) and its definition of done. The definition of done is
-   the "Definition of done" column of the Build plan tab of E.V. Foundation v4 (read it with the Claude Docs tools);
-   when that tab is not reachable, use the "Done when" text in the row's Notes and say so.
+1. Read the task's definition of done from the Chart: `node tools/chart.mjs brief --task <id>` prints it after "Done
+   when:", with the task's notes, which can carry Matt's answers that refine it. The Chart is the source; a design doc
+   is a hand-off and is never read for it (D-184).
 2. Read `CLAUDE.md`, then the task's tenets in scope: `node tools/chart.mjs brief --task <id>` lists them under
    "Tenets in scope" (B-109), each with its scope and how it is checked.
 3. Find the work: `git log --format='%h %s' --grep='^<id>'` (and the range if given); `git show --stat` each commit and
