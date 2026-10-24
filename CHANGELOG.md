@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 24 | v4 live deployed at 368b104 (09:03 CT), from d81db0a: LCH tokens; Dial Arc; One clock; Sweep for D-270; Session pointer; Trim during the freeze; Sweep for D-271 and D-272; E.V.'s avatar holds the Alert look for the whole visit instead of… (B-271, B-272, B-274, B-275, B-273, B-262, B-276, B-284). verify-deploy live GREEN. Rollback is a redeploy of d81db0a | Matt's OK | D-049 |
 | Oct 24 | v4 staging deployed at 368b104 (08:34 CT), from 6bdfbe5: E.V.'s avatar holds the Alert look for the whole visit instead of… (B-284). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 24 | v4 staging deployed at 6bdfbe5 (07:34 CT), from c82d066: Trim during the freeze; Sweep for D-271 and D-272 (B-262, B-276). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 24 | v4 staging deployed at c82d066 (06:24 CT), from 68ada6d: Session pointer (B-273). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
