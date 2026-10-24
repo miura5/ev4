@@ -339,10 +339,14 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
                   `${e.tagName.toLowerCase()}${e.id ? '#' + e.id : ''}.${String(e.className.baseVal ?? e.className).split(' ')[0]} ${what}`
                 );
           }
+          // and selected text is the neutral wash, not the system highlight
+          const sel = getComputedStyle(document.body, '::selection').backgroundColor,
+            want = `rgba(${cs.getPropertyValue('--tint').trim().split(',').join(', ')}, 0.18)`;
+          if (sel !== want) out.push(`::selection ${sel}, want ${want}`);
           return out.slice(0, 8);
         });
         ok(
-          `[${width}] ${view.id}: B-275: Ember only on her, a primary button and send`,
+          `[${width}] ${view.id}: B-275: Ember only on her, a primary button and send; selection neutral`,
           !strays.length,
           strays.join('; ')
         );
