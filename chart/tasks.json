@@ -5219,12 +5219,12 @@
   "title": "Today list (folds B-280's Today part; D-270, D-276, C-1, C-7, C-13, D-282, D-286, D-287): rows with a tick, one badge, the time, and Start on the first startable row only. Graded is neutral and red only when due today or tomorrow. The Done fold. \"Deferred: over today's budget\" and \"Taken off today\" fold under the list. The Sunday weekly review card on Sundays. No Add, no Remove on rows, no Now card, no Focus lines.",
   "dod": "Screenshots at 390 and 1280 in light and dark. Rows are 32 px at 1280 and 44 px at 390, and each row's time stays on its line at 390. A graded item due in three days shows a neutral badge; one due tomorrow shows red. The phone tick's green fill stays in its 18 px box and never covers the name. No Add, Remove, Now card or Focus heading on the view.",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-287"
   ],
-  "notes": "reviewed twice: first gap (dead styles) fixed; second review names two small gaps left open on the card",
-  "commit": null,
+  "notes": "Shipped to staging at bd479f8: ship staging GREEN.",
+  "commit": "bd479f8",
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
  {
