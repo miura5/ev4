@@ -5133,11 +5133,11 @@
   "title": "Component set (replaces B-278; D-274, D-278, D-285): buttons, badge, segmented control, card, row, toolbar, progress bar and composer as one stylesheet. Rows 32 px from 600 px and 44 px on the phone (C-1). Segmented switches expose the picked option (C-15). A \"Proposed\" badge. No × button. Coded colours at D-269's lightness, yellow included.",
   "dod": "A component harness renders every part in both themes at contrast 60. Screenshots at 390 and 1280 in light and dark. A row measures 32 px at 1280 and 44 px at 390. A screen-reader tree check names the picked option of every segmented switch. Yellow equals D-269's L52 C54 (light) and L72 C48 (dark) at hue 82. A check finds no button outside the five kinds and at most one primary per view.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-271"
   ],
-  "notes": "",
+  "notes": "claimed by lane chrome",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
