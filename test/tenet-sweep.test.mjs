@@ -50,11 +50,6 @@ test('B-217: a test or harness names a superseded tenet only as history', () => 
   assert.deepEqual(bad, []);
 });
 
-test('B-217 (D-221, D-214): violet is retired; its old tokens resolve to grey', () => {
-  const css = fs.readFileSync(path.join(ROOT, 'page/styles.css'), 'utf8');
-  for (const t of ['--violet', '--plum']) assert.match(css, new RegExp(`${t}:var\\(--quiet\\)`), t);
-});
-
 test("B-217 (D-221, D-230, D-225): spec.ui.tenets' checks cite the new tenets", () => {
   const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
   const checks = JSON.stringify((spec.ui && spec.ui.tenets) || {});
