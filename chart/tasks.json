@@ -4617,7 +4617,7 @@
   "milestone": "freeze exit",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "D-261: product-level. Matt explains in product terms what one tap does (what he sees, where it is kept, how the rest of E.V. finds it) and what a ship delivers and why it goes as one tested whole; no code or file names",
   "commit": null,
   "source": "log new",
   "waitingOn": "Matt"
