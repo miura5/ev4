@@ -5473,7 +5473,7 @@
    "B-287",
    "B-291"
   ],
-  "notes": "reviewed: fresh subagent, No gaps; touched check running",
+  "notes": "proofs green: npm test, smoke, check --touched GREEN",
   "commit": null,
   "source": "build chat (Matt's OK, Oct 24)"
  }
