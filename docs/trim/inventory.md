@@ -174,3 +174,98 @@ re-checked by grep. Git history on main is squashed before 75c2b59, so evidence 
 - **When every item is done or claimed,** the next trimmer run refills the queue instead of cutting. It maps the
   largest process files (tools/chart.mjs first, then core/deploy.mjs and the test suite) with helpers, and opens a pull
   request that adds new ranked items here, with evidence for each.
+
+## Round 2: from the scans (Oct 23)
+
+The five scans in `docs/trim/scan/` and the two queue refills (#18, #19) were folded into this one list by the build
+chat. Each item names its scan finding, so the cutter reads the evidence there first. Items are grouped in waves by
+where they land, and ordered inside each wave by long-term value: what makes the next change smaller and safer.
+
+**Rules for this round:**
+- Waves A and B never reach the deployed build, so they can run any time, in parallel when their files differ.
+- Waves C and D change the deployed build. They ship through staging and the full check, batched into one live deploy
+  per wave. None lands live in the days around an exam: not Nov 1 to 4 (ATI Dosage, Dosage Exam 1), Nov 14 to 16
+  (Exam 5), or Nov 28 to Dec 9 (ATI Fundamentals, Exam 6, the final).
+- Wave D is restructuring (D-264): no behavior changes, and no test changes except imports, unless the card says so
+  plainly.
+- **While the redesign is being built (D-279, B-271 to B-283), only A, C4 and D1 to D5 run.** Wave B, C1 to C3 and D6
+  touch the redesign's files (the page, the harnesses, the motion code and the spec's ui section), so they wait until
+  B-282 is done. Then each is re-checked against the new page before it is cut, since the redesign may already have
+  replaced what it names.
+
+### Wave A: the build tools and unit tests (not deployed; risk to studying none)
+
+- A1. `trim/chart-readers`: one ArtifactData and Docs-read helper in tools/chart.mjs (scan tools-tests 1; folds #19's
+  chart-dupes). About 110 out. Goes first: ship, trace, kickoff and plan all read through it.
+- A2. `trim/chart-dead-flags`: switches and options nothing reads, the standalone `kickoff` command, and #19's
+  never-taken branches in the other tools (tools-tests 4 and 5; #19 items 13 and 15). About 50 out.
+- A3. `trim/ship-classify`: one task-or-page classifier in ship, and #18's ship code that repeats core/deploy.mjs
+  (tools-tests 8; #18 item 12). After A1. About 40 out.
+- A4. `trim/chart-helpers`: the repeated small helpers in tools/chart.mjs (tools-tests 9). After A1. About 40 out.
+- A5. `trim/test-preamble`: the fixture block copied into seven test files moves into test/helpers.mjs (tools-tests
+  2). About 200 out.
+- A6. `trim/test-repeats`: tests that prove the same thing twice: the watchdog pairs, the small repeated asserts, the
+  unused `idAnswer`, #18's test leftovers, and the nine copies of the split-file test (tools-tests 6, 7 and 12; #18
+  items 13 and 14; scan core 13). About 200 out.
+- A7. `trim/chart-split`: tools/chart.mjs into a `tools/chart/` folder, one module per job, chart.mjs as the CLI
+  (tools-tests 10). After A1 to A4, one module per pull request.
+- A8. `trim/test-split`: the four largest test files split by topic (tools-tests 11). Last in this wave.
+
+### Wave B: the page harnesses (not deployed; risk to studying none; proven by the full check)
+
+- B1. `trim/harness-common`: one shared setup module for the eight harnesses (scan harness 1). Goes first.
+- B2. `trim/harness-dead`: unused definitions, arms that never run, checks that can't fail, and stale comments
+  (harness 5 and 6). About 25 out.
+- B3. `trim/harness-repeats`: checks that prove the same thing twice, keeping the stricter copy (harness 4). About 100
+  to 150 out.
+- B4. `trim/harness-waits`: one wait-until helper in place of fixed sleeps, captions first (harness 2). Each part
+  needs two green full checks. This is the one that shortens the full check.
+- B5. `trim/harness-run-split`: run.cjs into a seed module and one module per section (harness 3). After B1; the PASS
+  count must match.
+- B6. `trim/touched-helpers`: map the remaining helpers in check.mjs's `--touched` (harness 7). About 5 lines.
+
+### Wave C: dead code in the deployed build (one batched deploy; risk low)
+
+- C1. `trim/page-dead`: the page's dead code and unused CSS, including the pre-sidebar top bar's CSS (scan page 1, 2,
+  3, 5 and 6). About 120 out.
+- C2. `trim/motion-v2`: the retired Silk core. First its tests and dead exports, then core/motion.mjs down to
+  `coreSize`, then the spec block (scan spec 1, tools-tests 3, #19 item 12). About 700 out in three parts.
+- C3. `trim/spec-dead`: spec keys no code reads: the duplicate clinical-judgment steps, `items.types` and
+  `items.fields`, every collection's `fromV3`, `registry.docs` and `registry.studyWatch.app`, the prose in `ui`, and
+  `capacity.readWindowDays` (spec 2 to 7). Keep `registry.repos` until the prompt fix below lands. About 220 out.
+- C4. `trim/core-dead`: exports with no importer and branches no pipeline reaches in core/, and #19's unused exports
+  (core 10 and 11, spec 9, #19 item 16). About 30 out.
+
+### Wave D: restructuring the study logic and the page (one batched deploy per part; risk low)
+
+- D1. `trim/api-spread`: evcore's returned API spreads each factory instead of naming every function three times
+  (core 2). Goes first. About 100 out.
+- D2. `trim/steps-per-pipeline`: steps.mjs into one file per pipeline (core 1).
+- D3. `trim/split-edits`, `trim/split-planning`, `trim/split-snapshot`: three factories out of evcore.mjs (core 3).
+  After D1.
+- D4. `trim/steps-tables`: job kinds as one table, one item-vetting helper, the push length and schema numbers read
+  once, and the small shared lookups (core 4, 5, 6 and 9). About 85 out.
+- D5. `trim/exam-date-once`: one exam-date lookup and one fixed-kind list (core 7). The planner reads it, so each
+  caller's result must stay exactly the same.
+- D6. `trim/page-split-cards`, `trim/page-split-tools`, `trim/page-split-core`: the three largest page files split by
+  job (page 16, 17 and 18), each a pure move. After the redesign.
+- Waits for the redesign: the page's duplicate helpers and fold buttons (page 9 to 12), the re-declared CSS (page 15)
+  and the pre-Captions message shape (page 7).
+
+### For a build chat or Matt, not a trimmer
+
+- **High risk, a build chat only:** one identifier-pattern list (core 8): the patient-identifier hard limit (B-04).
+  Merging the two lists can change what gets held back.
+- **High risk, a quiet week only:** one kind table per course (spec 12). These drive review load and exam days.
+- **Prompt and spec shapes:**
+  - the planner's tuning constants into the spec (core 12);
+  - one job-kinds map (spec 8);
+  - the hard-coded course names in the task prompts (spec 13);
+  - the spec's card-kind and tool lists that lag the code (scan page, "not page work");
+  - `DEFAULTS` duplicating the spec (spec 10);
+  - the two retired spec keys the page still reads (page 8).
+- **Kept by decision:** the duplicate-id repair command (item 11), `log rule`, `ship --during-session`, `environments`,
+  `boundaries`, `tasks.retired`, look.cjs, and smoke's overlap with run.cjs.
+- **Nightly:** cache the browser install (harness 8). Low value now that minutes are free.
+- **Filed as bugs:** B-268 (the rollback keep list), B-269 (an open surface showing the wrong card), and B-270 (staging
+  re-seed blocked by the leftover day).

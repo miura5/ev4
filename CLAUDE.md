@@ -153,6 +153,8 @@ you, are in `docs/lessons.md`.
   (`npm run check > /tmp/check.log 2>&1; echo "exit $?" >> /tmp/check.log`) and wait for that exit line. To retry one
   page check, run its harness alone (`node test/harness/<name>.cjs synthetic <shots dir>` after `node tools/build.mjs`).
 - Spec files are JSON with indent 1 and no trailing newline (B-57; a hook rewrites them so).
+- Before changing a large file, read its map in `docs/trim/scan/` (core, harness, page, spec, tools-tests): it names
+  what each part does, what reads it and what is dead (D-264).
 
 ## Rollback (D-145)
 
