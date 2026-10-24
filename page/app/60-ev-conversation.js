@@ -473,23 +473,38 @@
       const t0 = performance.now();
       const frames = [],
         draws = [];
+      // B-274 (D-271, D-272): one clock. Her loop runs on requestAnimationFrame at the display's rate (dt smoothing is
+      // ctxOf's k) and stops when no dial drew, so a still idle costs no frame at all; anything that could change a
+      // drawing (a signal, a size, a dial coming into view, the page shown again, his motion setting) wakes it.
+      function wake() {
+        if (raf) return;
+        lastTs = 0;
+        for (const o of cores) o.lt = null;
+        raf = requestAnimationFrame(tick);
+      }
       const io = window.IntersectionObserver
         ? new IntersectionObserver(
             es =>
               es.forEach(e => {
-                if (e.target.__core) e.target.__core.vis = e.intersectionRatio > 0;
+                const o = e.target.__core;
+                if (!o) return;
+                const vis = e.intersectionRatio > 0;
+                if (vis !== o.vis) {
+                  o.vis = vis;
+                  if (vis) wake();
+                }
               }),
             { threshold: [0, 0.01] }
           )
         : null;
       function tick(ts) {
-        raf = requestAnimationFrame(tick);
+        raf = 0;
+        if (document.hidden) return;
         if (lastTs) {
           frames.push(ts - lastTs);
           if (frames.length > 1200) frames.shift();
         }
         lastTs = ts;
-        if (document.hidden) return;
         const now = performance.now(),
           t = (now - t0) / 1000,
           start = now;
@@ -508,7 +523,19 @@
         if (drew) {
           draws.push(performance.now() - start);
           if (draws.length > 1200) draws.shift();
-        }
+          raf = requestAnimationFrame(tick);
+        } else lastTs = 0;
+      }
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) wake();
+      });
+      addEventListener('resize', wake);
+      if (reduceMq.addEventListener) reduceMq.addEventListener('change', wake);
+      // A dial shown by a class (her folded 24 px form) or his Reduce motion setting changes what she draws.
+      if (window.MutationObserver) {
+        const mo = new MutationObserver(wake);
+        mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-motion'] });
+        if (document.body) mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
       }
       function make(size, opt = {}) {
         const id = 'evd' + ++uid;
@@ -551,6 +578,7 @@
           el.style.setProperty('--s', px + 'px');
           core.dirty = true;
           core.rk = null;
+          wake();
         };
         cores.add(core);
         // The first drawing is made now, settled, so she is never an empty box before the next frame.
@@ -559,7 +587,7 @@
         const s = ctxOf(core, (now - t0) / 1000, now, true);
         for (let i = 0; i < 30; i++) step(core.K, s);
         paint(core, s);
-        if (!raf) raf = requestAnimationFrame(tick);
+        wake();
         return core;
       }
       // The page API (D-134, unchanged by D-265). A glance takes a direction ('left', 'right') or a target element.
@@ -568,6 +596,7 @@
         sig.g = name;
         sig.gAt = performance.now();
         sig.gid++;
+        wake();
         if (name === 'glance') {
           let dx = -1;
           if (detail && detail.nodeType === 1) {
@@ -596,20 +625,29 @@
         sig.voiceAt = performance.now();
         sig.words++;
         sig.talking = true;
+        wake();
         note('speak', String(word).slice(0, 40), em ? 'emphasis' : null);
       }
       function speechEnd() {
-        if (sig.talking) note('speechEnd');
+        if (sig.talking) {
+          note('speechEnd');
+          wake();
+        }
         sig.talking = false;
       }
       function setMood(m) {
         if (!MOODS.includes(m)) return;
-        if (m !== sig.mood) note('mood', m);
+        if (m !== sig.mood) {
+          note('mood', m);
+          wake();
+        }
         sig.mood = m;
       }
       // A session's progress, 0 to 1 (-1 off): her segments fill clockwise from twelve (D-267's Pointer mode).
       function setRing(p) {
-        sig.ring = typeof p === 'number' && p >= 0 ? Math.min(1, p) : -1;
+        const r = typeof p === 'number' && p >= 0 ? Math.min(1, p) : -1;
+        if (r !== sig.ring) wake();
+        sig.ring = r;
       }
       const stats = () => ({
         frames: frames.slice(),
@@ -621,6 +659,7 @@
         mood: sig.mood,
         ring: sig.ring,
         reduce: isReduced(),
+        running: !!raf,
         renderer: 'svg',
         log: log.slice(),
       });

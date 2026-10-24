@@ -5248,7 +5248,8 @@
      "slowFrameMs": 25,
      "maxSlowSharePct": 5,
      "maxRedrawsPerSec": 8,
-     "idleRedraws": 0
+     "idleRedraws": 0,
+     "idleSec": 3
     }
    }
   },

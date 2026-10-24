@@ -4,7 +4,8 @@
 // and the five gestures, checking what the round 15 canvas's States board says of each (where the gap points, how wide,
 // solid or halftone, closed, flat to him), that each gesture settles, that a still idle draws nothing, a session's
 // filled segments, and that the sidebar's 24 px dial turns to face him for a notice (D-216). Reduced motion gives one
-// still per mood. Her frame budget is measured over 10 s of speech at 390x844, DPR 3, 4x CPU throttle.
+// still per mood. Her frame budget is measured over 10 s of speech at 390x844, DPR 3, 4x CPU throttle, and 3 s of idle
+// there records no frame at all (B-274).
 //   node test/harness/core.cjs [record dir | synthetic] [screenshots dir] [--json <file>]
 // Run `node tools/build.mjs` first. Exit code 1 when any check fails.
 const { chromium } = require('playwright');
@@ -339,6 +340,38 @@ const SPEECH = `async (secs) => { const C = window.EVApp.core; const text = 'Pre
           return { ok: v.ok, numbers: JSON.stringify(b) + (v.ok ? '' : ' · missed: ' + v.numbers) };
         }
       );
+      // Idle costs nothing (D-271, D-272; B-274): once she settles, her loop stops, so idle at the same throttle
+      // records no frame at all, not merely no drawing.
+      {
+        const cdp = await ctx.newCDPSession(page);
+        await cdp.send('Emulation.setCPUThrottlingRate', { rate: B.cpuThrottle });
+        await hold(page, 'idle');
+        await page.waitForTimeout(2500);
+        await page.evaluate(() => window.EVApp.core.resetStats());
+        await page.waitForTimeout(B.idleSec * 1000);
+        const s = await page.evaluate(() => {
+          const x = window.EVApp.core.stats();
+          return { frames: x.frames.length, redraws: x.redraws, running: x.running };
+        });
+        await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
+        budget.idle = s;
+        ok(
+          `[phone] ${B.idleSec} s of idle at ${B.cpuThrottle}x throttle, DPR ${B.dpr}: zero frames, her loop stopped (D-272)`,
+          s.frames === 0 && s.redraws === B.idleRedraws && !s.running,
+          JSON.stringify(s)
+        );
+        // and a word wakes her again
+        await hold(page, 'speaking');
+        await page.evaluate(() => window.EVApp.core.speak('again'));
+        await page.waitForTimeout(600);
+        const w = await page.evaluate(() => {
+          const x = window.EVApp.core.stats();
+          return { frames: x.frames.length, running: x.running };
+        });
+        ok('[phone] a word wakes her loop again', w.frames > 10 && w.running, JSON.stringify(w));
+        await page.evaluate(() => window.EVApp.core.speechEnd());
+        await hold(page, 'idle');
+      }
     } else {
       const m = await page.evaluate(`(${SPEECH})(10)`);
       budget.desktop = {
