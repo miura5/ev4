@@ -4916,13 +4916,14 @@
   "title": "Session pointer (D-267): her session prop is fed by the study session's elapsed fraction, in Pointer mode",
   "dod": "With Playwright's clock at 0, 25%, 50% and 100% of a 25-minute session the screenshots show 0, 3, 6 and 12 filled segments with the gap at the next slot; the 7 s re-drop runs only while a session runs; staging GREEN",
   "milestone": "v4.7 look",
-  "status": "in progress",
+  "status": "blocked",
   "depends": [
    "B-272"
   ],
-  "notes": "claimed by this run",
+  "notes": "Question for Matt: his study sessions have no set length (they run until he ends them or three quiet checks wrap them up), so what should a full ring mean: a fixed 25 minutes (then it stays full), a length he picks when he starts (a new field on the session), or the time until the next 7-minute check? Found this run: the Pointer drawing from B-272 is already in place and the 7 s re-drop already runs only while a session runs; today the ring is fed by checks answered out of 5 (D-217), so only the feed and the clock harness remain once he answers. Nothing built or shipped.",
   "commit": null,
-  "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
+  "source": "plan UpaXAj6qMmWqkAbmN9P7Jy",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-274",
