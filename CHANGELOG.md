@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 24 | v4 staging deployed at 6bdfbe5 (07:34 CT), from c82d066: Trim during the freeze; Sweep for D-271 and D-272 (B-262, B-276). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 24 | v4 staging deployed at c82d066 (06:24 CT), from 68ada6d: Session pointer (B-273). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 24 | v4 staging deployed at 68ada6d (06:14 CT), from 9bf0b06: Sweep for D-270; Trim during the freeze; Session pointer (B-275, B-262, B-273). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 24 | v4 staging deployed at 9bf0b06 (05:26 CT), from 2750dce: Trim during the freeze; Sweep for D-270 (B-262, B-275). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
