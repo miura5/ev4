@@ -1,5 +1,17 @@
 [
  {
+  "id": "D-280",
+  "date": "Oct 24",
+  "title": "Nav icons are neutral: colour only where it carries a meaning (D-270). This replaces D-275's clause giving each view's nav icon its coded colour; the rest of D-275 stands.",
+  "why": "Matt, Oct 24, answering the v3 UI review: a calmer interface where colour keeps its meaning.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [
+   "D-275"
+  ],
+  "source": "log"
+ },
+ {
   "id": "D-279",
   "date": "Oct 23",
   "title": "The avatar and theme (hand-off 1, B-271 to B-277) and the mini UI redesign (hand-off 2, B-278 to B-283) are built now, during the freeze, rather than waiting for its exits. A scheduled redesign builder takes them in dependency order, one task a run, on main and staging only. Each task reaches Matt as a product review card with an independent reviewer's verdict. Nothing goes live without his explicit OK, and none of it lands live in the days around an exam (Nov 1 to 4, Nov 14 to 16, Nov 28 to Dec 9). Hand-off 1 goes live before hand-off 2. The page trims that touch the same files (waves B, C1 to C3 and D6 of the trim queue) wait until the redesign has landed on main.",
