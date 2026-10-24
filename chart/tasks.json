@@ -4935,7 +4935,7 @@
   "depends": [
    "B-272"
   ],
-  "notes": "claimed by this run",
+  "notes": "built: her loop stops when no dial drew and wakes on any signal; core harness green (0 of 630 speech frames over 25 ms; 3 s idle records zero frames)",
   "commit": null,
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
