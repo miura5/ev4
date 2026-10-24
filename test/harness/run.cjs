@@ -4038,7 +4038,7 @@ const ok = (name, cond, detail = '') => {
         await wp.waitForTimeout(1500);
         // B-78: the workout card is the open surface (beside the runner panel on desktop)
         const last = () => wp.locator('#ev-surf');
-        // The page's wall clock forward: not clock.fastForward, whose real-time sync can rewind it (CLAUDE.md, and jump below).
+        // The page's wall clock forward: not clock.fastForward, whose real-time sync can rewind it (docs/lessons.md, and jump below).
         const ahead = async ms => {
           await wp.clock.setSystemTime((await wp.evaluate(() => Date.now())) + ms);
           await wp.waitForTimeout(150);

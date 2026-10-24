@@ -142,34 +142,23 @@ required for: publishing the live page, creating or changing a Mac-bound task, t
 (.claude/settings.json, B-56 to B-58): npm test at the end of a turn, the spec's JSON form, and a guard that refuses a
 live write or publish unless `deploy live --matt-ok` wrote dist/live-ok; pipeline runs never load them (B-65).
 
-## Gotchas carried from v3, each with its rule
+## Rules from past failures
 
-- The run safety review refuses code a run fetched or unpacked itself ("Code from External"). Runs execute the
-  checkout their session started in, moved to the tag `system/manifest` names. Never `add_repo`, clone or unpack
-  inside a pipeline prompt.
+Each rule here still names a failure a build chat could repeat. Their stories, and the lessons the tools now carry for
+you, are in `docs/lessons.md`.
+
+- Never `add_repo`, clone or unpack inside a pipeline prompt: the run safety review refuses code a run fetched itself.
 - A scheduled task inherits the repository and Mac link of the chat that created it. Create cloud tasks from a chat
-  with this repository checked out; Mac-bound tasks only from a chat linked to the Mac, and only with Matt present.
-  A new Mac task writes nothing until Matt approves its folder access in the Claude desktop app (Oct 21: three tasks
-  listed their folders and were refused every write until he did); prove it with one staging firing that writes.
-  Mac tasks are created, never edited (O-5, B-137): never change a task in the desktop app; re-create it from a
-  session with the Mac link and the repository (deploy's create_trigger printout names every notification channel and
-  the folders; the old task is disabled and listed in spec.tasks.retired, never deleted).
-- `javascript_tool` stops at 45 s and the device bridge cuts results above ~250 KB: browser work is start, poll,
-  collect through saved files. Never retype a result.
-- A partial `capabilities` on an Artifact publish wipes the rest; `deploy` prints it whole.
-- ArtifactData: every write to an existing document carries `if_version`; batches are atomic, 50 writes / 1 MiB.
-  The page's `update` merges nested maps; Edits documents are replaced whole.
-- Playwright's fake clock races its real-time sync: `setSystemTime` plus condition waits.
-- Scheduled runs clone `main` 50 commits deep and check out the deployed commit from it (B-110). When record commits
-  push it out of that clone, the gate stays on the clone's head and goes on only if every file the manifest hashes is
-  the same there (D-170, B-132; its source is `tools/gate.mjs`); verify-deploy notes the distance and never reds on it.
-- `npm run check` takes about 25 minutes and one foreground tool call is cut at 10 (Oct 22: a builder's `timeout 900`
-  foreground check died at 10 minutes). Run it in the background writing to a log (`npm run check > /tmp/check.log
-  2>&1; echo "exit $?" >> /tmp/check.log`) and wait for that exit line; it stops at the first red step, so to retry
-  one page check run its harness alone (`node test/harness/<name>.cjs synthetic <shots dir>` after `node
-  tools/build.mjs`).
-- Spec edits: JSON with indent 1, no trailing newline (a PostToolUse hook re-writes spec files so, B-57). `node --test test/*.test.mjs > /tmp/t.log 2>&1; grep -E
-  "^# (pass|fail)" /tmp/t.log` (never pipe node through grep inside `&&`).
+  with this repository checked out; Mac-bound tasks only from a chat linked to the Mac, with Matt present, proven by
+  one staging firing that writes (a new Mac task writes nothing until he approves its folders in the desktop app). Mac
+  tasks are created, never edited (O-5, B-137): never change a task in the desktop app; re-create it from a session
+  with the Mac link and the repository, and list the old one, disabled, in spec.tasks.retired.
+- Browser work is start, poll, collect through saved files (`javascript_tool` stops at 45 s; the device bridge cuts
+  results above ~250 KB). Never retype a result.
+- `npm run check` takes about 25 minutes and a foreground call is cut at 10: run it in the background
+  (`npm run check > /tmp/check.log 2>&1; echo "exit $?" >> /tmp/check.log`) and wait for that exit line. To retry one
+  page check, run its harness alone (`node test/harness/<name>.cjs synthetic <shots dir>` after `node tools/build.mjs`).
+- Spec files are JSON with indent 1 and no trailing newline (B-57; a hook rewrites them so).
 
 ## Rollback (D-145)
 
