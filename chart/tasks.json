@@ -5162,12 +5162,12 @@
   "title": "Header and New (folds B-279's header part; C-4, C-7): the 48 px header with the view's title (\"E.V.\" on her view). New is the only create, with a menu of Task for Today and Note. The New task and New note dialogs are modal and keep focus inside. Esc closes the menu or dialog and returns focus to New. A note saves to ideas, with no course field.",
   "dod": "Screenshots at 390 and 1280 in light and dark, menu open and dialog open. Tab and Shift+Tab never leave the open dialog (20 presses each). Esc returns focus to New from the menu and from the dialog. A new task lands on today's list through the existing list edit; a new note lands in ideas. No other create button exists on any view.",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-285"
   ],
-  "notes": "proofs green (npm test, smoke, check --touched GREEN, shell 105/105, run 413/413); first review: 2 gaps, unit test added; the create-button clause stays open for Matt",
-  "commit": null,
+  "notes": "Shipped to staging at 698f19e: ship staging GREEN.",
+  "commit": "698f19e",
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
  {
