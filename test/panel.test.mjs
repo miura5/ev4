@@ -1,4 +1,4 @@
-// B-223 (D-245, D-228): the right-panel judge, held to planted failures (the shell harness runs it on the real page).
+// B-223 (D-245, D-294): the right-panel judge, held to planted failures (the shell harness runs it on the real page).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
@@ -28,9 +28,9 @@ test('B-223: a good Conversation at 1706 passes every rule', () => {
   assert.deepEqual(failed(good()), []);
 });
 
-test('B-223 (D-228): a planted repeat across the sidebar and the panel fails', () => {
+test('B-223 (D-294): a planted repeat across the sidebar and the panel fails', () => {
   const s = good({ panel: { ...good().panel, titles: ['Read Ch 39: Fluid, electrolyte and acid-base balance'] } });
-  assert.deepEqual(failed(s), ['D-228 once']);
+  assert.deepEqual(failed(s), ['D-294 once']);
 });
 
 test('B-223 (D-245): a planted off-shade card fails, in the surface shade and without its hairline', () => {
@@ -49,10 +49,10 @@ test('B-223 (D-245, D-151): a planted empty panel fails, and so do a missing one
   assert.deepEqual(failed(good({ width: 1100 })), ['D-245 panel']);
 });
 
-test("B-223 (D-228): the sidebar's Today steps aside on Today and stays on Study", () => {
-  assert.deepEqual(failed(good({ view: 'today', greet: null })), ['D-228 Today steps aside']);
+test("B-223 (D-294): the sidebar's Today steps aside on Today and stays on Study", () => {
+  assert.deepEqual(failed(good({ view: 'today', greet: null })), ['D-294 Today steps aside']);
   assert.deepEqual(failed(good({ view: 'study', sideToday: false, greet: null })), [
-    'D-228 Today in the sidebar elsewhere',
+    'D-294 Today in the sidebar elsewhere',
   ]);
 });
 

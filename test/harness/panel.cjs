@@ -1,9 +1,9 @@
-// B-223 (D-245, D-228): one right panel on every view, each thing once. collect() runs in the page and snapshots the
+// B-223 (D-245, D-294): one right panel on every view, each thing once. collect() runs in the page and snapshots the
 // three regions (sidebar, pane, right panel); judge() is pure, so a test can plant a repeat, an off-shade card or an
 // empty panel and see each fail.
 //   D-245: from 1200 px a view with detail to show has the right panel and a view without has none; its cards sit on
 //          the ground with a hairline, in one shade on every tab and both themes, a review on Conversation included.
-//   D-228: no record item shows in two of the sidebar, the pane and the right panel; the sidebar's Today steps aside
+//   D-294: no record item shows in two of the sidebar, the pane and the right panel; the sidebar's Today steps aside
 //          while Today is the view.
 //   Matt, Oct 23: from 600 px her greeting and her lines read left-aligned on Conversation.
 
@@ -118,13 +118,13 @@ function judge(s) {
     for (const t of new Set(list)) (seen[t] = seen[t] || []).push(name);
   const twice = Object.entries(seen).filter(([, w]) => w.length > 1);
   r(
-    'D-228 once',
+    'D-294 once',
     !twice.length,
     twice.length ? twice.map(([t, w]) => `"${t.slice(0, 40)}" in ${w.join(' and ')}`).join(' | ') : 'nothing twice'
   );
-  if (base === 'today') r('D-228 Today steps aside', !s.sideToday, `sidebar Today shown: ${s.sideToday}`);
+  if (base === 'today') r('D-294 Today steps aside', !s.sideToday, `sidebar Today shown: ${s.sideToday}`);
   if (base === 'study' && s.width >= 600 && s.sideTodayItems)
-    r('D-228 Today in the sidebar elsewhere', s.sideToday, `sidebar Today shown: ${s.sideToday}`);
+    r('D-294 Today in the sidebar elsewhere', s.sideToday, `sidebar Today shown: ${s.sideToday}`);
   if (base === 'ev' && s.width >= 600 && s.greet)
     r(
       'left-aligned (Matt, Oct 23)',

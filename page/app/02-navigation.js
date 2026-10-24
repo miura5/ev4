@@ -23,7 +23,7 @@
       );
       document.querySelectorAll('section.panel').forEach(s => (s.hidden = s.id !== 'p-' + t));
       document.body.classList.toggle('on-ev', t === 'ev');
-      document.body.dataset.view = t; // B-223 (D-228): the sidebar's Today steps aside while Today is the view
+      document.body.dataset.view = t; // B-223 (D-294): the sidebar's Today steps aside while Today is the view
       // B-208 (D-210): the pane's header names the view (the conversation is E.V. on the phone, as its tab says).
       const head = $('mh-title'),
         b = $('tab-' + t);

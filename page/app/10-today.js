@@ -470,7 +470,7 @@
         (a, b) => a.date.localeCompare(b.date) || String(a.title).localeCompare(b.title)
       );
     }
-    // B-223 (D-245, D-228): the Conversation's right panel, while no surface is open: the dates after today (today's are
+    // B-223 (D-245, D-294): the Conversation's right panel, while no surface is open: the dates after today (today's are
     // the sidebar's), absent when there are none. It lives in her side column; CSS shows it from 1200 px only.
     function renderEvDates(week) {
       const side = $('ev-side');
