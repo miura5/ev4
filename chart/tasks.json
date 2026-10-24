@@ -5308,7 +5308,7 @@
   "depends": [
    "B-288"
   ],
-  "notes": "claimed by lane views",
+  "notes": "built: Objectives, Plan and Weak spots tabs; objective rows with Quiz me; npm test and smoke green; harness run next",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
