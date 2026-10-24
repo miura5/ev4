@@ -3800,5 +3800,21 @@
   "decisions": [],
   "source": "log",
   "release": "v4.5.5"
+ },
+ {
+  "target": "staging",
+  "commit": "1fbd99f",
+  "time": "2026-10-24T15:25:23.246Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "368b104",
+  "tasks": [
+   "B-262"
+  ],
+  "summary": "Trim during the freeze",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
