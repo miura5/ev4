@@ -151,7 +151,7 @@ export function eveningPush(db, ctx, spec) {
  * D-111 (trace or caught): the words a push line leads with when health/current is older than
  * spec.constants.health.staleHours (the watchdog that writes it may have stopped), or null when it is fresh.
  */
-export function healthStale(db, now, spec) {
+function healthStale(db, now, spec) {
   const hours = ((spec.constants || {}).health || {}).staleHours || 4;
   const h = (db.health || []).find(d => d.id === 'current');
   // B-138 (D-180): the words say who acts on them, so a stale line is never only an alarm for Matt.
@@ -161,7 +161,7 @@ export function healthStale(db, now, spec) {
   return age > hours ? `Health check ${Math.floor(age)} h old${look}` : null;
 }
 /** A push line led by the stale-health words when there are any, cut to spec.constants.push.maxChars. */
-export function withStale(line, db, ctx, spec) {
+function withStale(line, db, ctx, spec) {
   const stale = healthStale(db, ctx.now, spec);
   if (!stale) return line;
   const max = ((spec.constants || {}).push || {}).maxChars || 120;
@@ -640,7 +640,7 @@ CODE_STEPS.health = function healthStep(db, ctx, spec) {
 // ------------------------------------------------------------------------------------------------ evening-mac
 const WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 /** The Mac folder this run's record writes to (spec.tasks.<record>.evening-mac.folders[0]). */
-export function macFolder(spec, record) {
+function macFolder(spec, record) {
   const t = ((spec.tasks || {})[record] || {})['evening-mac'];
   if (!t || !(t.folders || []).length) throw new Error(`spec.tasks.${record}.evening-mac names no Mac folder`);
   return t.folders[0];
@@ -672,7 +672,7 @@ export function backupSchemaLine(collections) {
  * collection whose schema fixes none (legacy, which keeps copies of other documents as they were) maps to null: its
  * documents are restored as written, never migrated or refused for their version.
  */
-export function registryVersions(schemas = loadSchemas()) {
+function registryVersions(schemas = loadSchemas()) {
   return Object.fromEntries(
     Object.entries(schemas).map(([c, s]) => {
       const v = ((s.properties || {}).schema || {}).const;
@@ -690,7 +690,7 @@ export function planRestore(b, db, ctx, spec, name = 'backup', versions = regist
   if (!b || b.kind !== 'E.V. record backup' || !b.hashes || !b.collections)
     return { problems: ['not a v4 backup (no kind, hashes or collections)'] };
   const problems = [];
-  for (const c of ['system']) if (b.collections[c]) problems.push(`the backup holds ${c}, which no backup may`); // the journal is in backups (D-113)
+  if (b.collections.system) problems.push('the backup holds system, which no backup may'); // the journal is in backups (D-113)
   for (const [c, docs] of Object.entries(b.collections)) {
     if (!spec.collections[c]) {
       problems.push(`the backup holds ${c}, which is no collection`);
@@ -807,9 +807,7 @@ export const AGENT_MATERIAL = {
   /** The probe this diagnostic run answers, and the surfaces the environments registry tracks. */
   'probe-brief'(db, ctx, spec) {
     if (!ctx.input || !ctx.input.probe) return { skip: 'no probe named' };
-    const surfaces = Object.keys((spec.environments && spec.environments.surfaces) || spec.environments || {}).filter(
-      k => !k.startsWith('_')
-    );
+    const surfaces = Object.keys(spec.environments || {}).filter(k => !k.startsWith('_'));
     const named = probeNamed(spec, ctx.input.probe);
     if (!named) return { probe: ctx.input.probe, surfaces };
     return { probe: ctx.input.probe, surfaces, measures: named.def.measures, groups: probeGroups(named, ctx) };
@@ -954,7 +952,7 @@ export const AGENT_MATERIAL = {
 
 // ------------------------------------------------------------------------------------------------ named probes
 /** The named probe a firing text asks for ('ceilings', or 'Probe: ceilings'), or null for a free-form probe. */
-export function probeNamed(spec, text) {
+function probeNamed(spec, text) {
   const probes = (spec.pipelines.diagnostic || {}).probes || {};
   const name = String(text || '')
     .trim()
@@ -966,7 +964,7 @@ export function probeNamed(spec, text) {
 }
 const PAD = 'E.V. probe padding, not study data. ';
 /** One probe document of about `bytes` bytes as JSON: the envelope, its label and padding. */
-export function probeDoc(ctx, label, bytes) {
+function probeDoc(ctx, label, bytes) {
   const base = {
     schema: 1,
     writer: 'diagnostic',
@@ -987,7 +985,7 @@ const kib = n => String(n).padStart(4, '0');
  * The groups of exact calls a named probe makes, each document written to <ctx.dir>/probe/ first (so a call names a
  * file, never inline data). Ids are debug/<run id>-<label>; nothing is created twice and nothing is deleted.
  */
-export function probeGroups(named, ctx) {
+function probeGroups(named, ctx) {
   const dir = path.join(ctx.dir, 'probe');
   const file = (label, bytes) => {
     const f = path.join(dir, label + '.json');
@@ -1059,7 +1057,7 @@ const verifyPaths = ctx => ({
   state: path.join(ctx.dir, 'verify', ctx.record),
 });
 /** The weekly's verify result (B-29): what verify-deploy <record> says against this checkout's build, from the reads saved. */
-export function verifyOutcome(answer, ctx) {
+function verifyOutcome(answer, ctx) {
   const v = verifyPaths(ctx);
   const base = { at: ctx.now, target: ctx.record };
   const mp = path.join(v.build, 'manifest.json');
@@ -1105,7 +1103,7 @@ export function verifyOutcome(answer, ctx) {
 }
 
 /** The scheduler pages a watchdog run's pull saved (triggers-1.json, -2, ... in its run folder), oldest first (B-61). */
-export function schedulerPages(ctx) {
+function schedulerPages(ctx) {
   const dir = path.join(ctx.dir, 'scheduler');
   if (!fs.existsSync(dir)) return [];
   return fs
