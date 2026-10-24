@@ -2,7 +2,7 @@
 
 E.V. works, but the machinery around it grew as big as the study logic itself. The trim makes it smaller and easier
 for Matt to understand **without changing what studying feels like**. It runs during the freeze, in parallel with
-Matt's onboarding: every cut becomes one of his practice reps, and nothing reaches main until he approves it.
+Matt's onboarding: every cut comes to him as a product review card (D-261), and nothing reaches main until he approves it.
 
 **To start a trimmer:** open a new Claude Code session on `miura5/ev4` with the prompt "You are a trimmer. Read
 docs/trim-brief.md and do the next job." **To review a cut:** a fresh session or subagent gets the pull request and
@@ -14,7 +14,7 @@ this brief, nothing else.
 | --- | --- | --- |
 | Trimmer | One cut per branch and pull request | Merges, deploys, writes `chart/`, or adds new machinery |
 | Reviewer | Checks one pull request against this brief, without the trimmer's reasoning first | Writes code |
-| Freeze chat | Turns an approved pull request into Matt's practice rep, then merges it on his OK | Merges without Matt's OK |
+| Freeze chat | Turns an approved pull request into Matt's product review card (D-261), then merges it on his OK | Merges without Matt's OK |
 | Matt | Approves each cut once he can explain it in a sentence | |
 
 ## Trimmer: the next job
@@ -84,7 +84,7 @@ Verdict, in one line: approve, change (what) or reject (why).
 
 When a pull request has the reviewer's approve:
 
-1. Turn it into a practice rep (D-250, D-252) and wait for Matt's verdict.
+1. Turn it into a product review card (D-261: what changes for him, why, the parts it touches, what could break, size, checks done; no code) and wait for Matt's verdict.
 2. On his OK, squash-merge to main with the message `B-262: trim <what>` and the session's attribution lines.
 3. Ship as the files require:
    - **Only `tools/`, `.github/`, `.claude/`, `docs/` or CLAUDE.md changed:** npm test green is enough. These files
