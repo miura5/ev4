@@ -5152,7 +5152,7 @@
    "B-285",
    "B-272"
   ],
-  "notes": "built: E.V. first in the nav, five-item Today with n more, Theme and Contrast in the foot, Working gone; shell harness 85/85, npm test green",
+  "notes": "proofs green (touched check GREEN, smoke 28/28); review 1 named 2 gaps (old Working check in run harness, dead CSS), both fixed; run harness 414/414",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
