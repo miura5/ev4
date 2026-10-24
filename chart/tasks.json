@@ -5075,5 +5075,23 @@
   "notes": "",
   "commit": null,
   "source": "plan 5reEBoToU1W5pmnq5q48ij"
+ },
+ {
+  "id": "B-284",
+  "kind": "bug",
+  "title": "Bug (reported Oct 24): E.V.'s avatar holds the Alert look for the whole visit instead of resting at Idle: the greeting picks Alert when something can't wait (an exam tomorrow) and that greeting mood becomes her resting state, so short replies barely show Speaking before she drops back to it. Matt's call: cut the greeting's mood; she rests at Idle, and Alert keeps only its two jobs (something ready while he is on another tab, and a check-in ready during a session); no exam-day look on her.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "E.V.'s avatar holds the Alert look for the whole visit instead of resting at Idle: the greeting picks Alert when something can't wait (an exam tomorrow) and that greeting mood becomes her resting state, so short replies barely show Speaking before she drops back to it. Matt's call: cut the greeting's mood; she rests at Idle, and Alert keeps only its two jobs (something ready while he is on another tab, and a check-in ready during a session); no exam-day look on her.",
+  "reworded": true,
+  "reportedAt": "2026-10-24T11:27:55.914Z",
+  "board": {
+   "row": "v4 B-284: E.V.'s avatar holds the Alert look for the whole visit instead of…"
+  }
  }
 ]
