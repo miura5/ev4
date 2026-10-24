@@ -45,7 +45,7 @@ test('Greeting: morning leads with the review; late night before clinical says s
     tomorrow: { dates: [{ title: 'Clinical, 0630–1500', kind: 'clinical' }] },
   });
   assert.equal(late.segment, 'late');
-  assert.equal(late.mood, 'sleepy');
+  assert.ok(!('mood' in late), 'the greeting sets no mood: she rests at Idle (B-284)');
   assert.ok(late.lines.some(l => /Sleep is on tomorrow/.test(l)));
 });
 
@@ -77,7 +77,6 @@ test('Greeting: at most two insights, finished jobs first, exam countdown with r
   assert.deepEqual(g.cards, []);
   assert.equal(g.chips[0], 'Open the study guide', 'a finished job is a chip, first when no review is open');
   assert.equal(g.job, 'j1');
-  assert.equal(g.mood, 'alert');
 });
 
 test('greeting names open items as short phrases, cut at a word', () => {
@@ -211,7 +210,6 @@ test('B-90 greeting: one strict line; urgent only for what cannot wait; a folded
     ],
   });
   assert.equal(one.headline, 'Afternoon, Matt. ATI Engage Fundamentals is due tonight.');
-  assert.equal(one.mood, 'alert');
   assert.deepEqual([one.brief[0].level, one.brief[0].when], ['urgent', 'tonight']);
   const two = EV.greeting({
     ...base,
@@ -458,7 +456,6 @@ test('B-181: a failed build says where it stopped; no build, or one older than h
   assert.deepEqual(buildLines(g), [
     'B-202 (your “the timer resets when I switch tabs”) stopped: npm test failed on the new harness check.',
   ]);
-  assert.equal(g.mood, 'alert');
   assert.equal(g.brief.find(x => x.kind === 'build').when, 'stopped');
   for (const jobs of [[], [buildJob('done', { task: 'B-201', commit: 'abc1234' }, '2026-10-18T19:00:00Z')]]) {
     const n = EV.greeting(buildCtx(jobs));

@@ -10,7 +10,7 @@ export function makeConversation(core) {
   // ---------------------------------------------------------------- conversation (E.V. tab)
   /**
    * What E.V. says when the page opens. Pure and free: no model call. It reads the time of day and the record
-   * the page already has, and picks at most two insights (B-14). Returns {segment, mood, lines, cards, chips}.
+   * the page already has, and picks at most two insights (B-14). Returns {segment, lines, cards, chips}; it sets no mood (B-284).
    * ctx: {now, date, dayType, items:[{id,text,tag,done,deferred,minutes,set}], reviewLeft, reviewTotal, push,
    *       nextExams:[{id,title,date,course,kind}], readiness:{examId,pctSolid,need}|null, dueCount,
    *       jobs:[{id,kind,title,brief,status,finishedAt,result}], lastSeenAt, runs:{<pipeline>:{status,startedAt,detail}},
@@ -67,7 +67,6 @@ export function makeConversation(core) {
     const lines = [];
     const cards = [];
     const insights = [];
-    let mood = 'idle';
     const short = (t, n = 48) => {
       // a list item as a phrase: no minutes, no trailing parenthetical, cut at a word
       const s = String(t || '')
@@ -111,7 +110,6 @@ export function makeConversation(core) {
         lines.push(`${rl} review${rl === 1 ? '' : 's'} still waiting.`);
         cards.push({ type: 'review' });
       } else if (open.length) cards.push({ type: 'today', filter: 'open' });
-      if (!open.length && !rl && items.length) mood = 'happy';
     } else if (segment === 'evening') {
       lines.push('Evening, Matt.');
       if (rl) {
@@ -124,7 +122,6 @@ export function makeConversation(core) {
         cards.push({ type: 'today', filter: 'open' });
       } else if (items.length) {
         lines.push('Today’s list is clear.');
-        mood = 'happy';
       }
     } else {
       lines.push('Still up? Logging this as dedication, not insomnia.');
@@ -143,12 +140,10 @@ export function makeConversation(core) {
         lines.push(
           'Sleep is on tomorrow’s plan too. Strongly recommended by me, your circadian rhythm and the nursing literature.'
         );
-        mood = 'sleepy';
-      } else if (segment === 'late') mood = 'sleepy';
+      }
     }
     if (todayExam) {
       lines.push(`${todayExam.title.replace(/:.*$/, '')} is today. No new reviews; trust the reps.`);
-      mood = 'alert';
     }
 
     // Insights, at most two, most useful first.
@@ -161,7 +156,6 @@ export function makeConversation(core) {
       insights.push({
         line: `A job hit a wall: ${j.title}. Details on the card.`,
         card: { type: 'job', id: j.id },
-        alert: true,
       });
     const failed = Object.entries(c.runs || {}).filter(
       ([, r]) => r && r.status === 'failed' && date && diffDays(chicagoDate(r.startedAt), date) <= 1
@@ -169,7 +163,6 @@ export function makeConversation(core) {
     if (failed.length)
       insights.push({
         line: `The ${failed[0][0]} run failed${failed[0][1].detail ? ': ' + String(failed[0][1].detail).slice(0, 80) : ''}. I’m flagging it, not ignoring it.`,
-        alert: true,
       });
     // B-181 (D-195): the morning after a build, one line from its trace (jobresults.result): the task, his words
     // shortened, green on staging at the commit and what waits, or where it stopped.
@@ -190,7 +183,6 @@ export function makeConversation(core) {
           ? {
               line: `${who} stopped: ${said(r.failed || r.text || 'before it finished')}`,
               card: { type: 'job', id: build.id },
-              alert: true,
             }
           : {
               line: `${who} ${r.commit ? 'is green on staging at ' + String(r.commit).slice(0, 7) : 'is filed'}${r.text ? '. ' + said(r.text) : '.'}`,
@@ -224,7 +216,6 @@ export function makeConversation(core) {
     for (const ins of insights.slice(0, 2)) {
       lines.push(ins.line);
       if (ins.card && !cards.some(x => x.type === ins.card.type && x.id === ins.card.id)) cards.push(ins.card);
-      if (ins.alert) mood = 'alert';
     }
 
     // The greeting is her first line, with no card (D-125 as amended Oct 18): what its cards offered becomes the chips,
@@ -395,7 +386,6 @@ export function makeConversation(core) {
     const headline = urg.length
       ? `${hello} ${cap(urg[0].say)}${urg.length === 2 ? ', and ' + urg[1].say : urg.length > 2 ? `, plus ${urg.length - 1} more that can’t wait` : ''}.`
       : `${hello} How can I help${segment === 'morning' ? ' today' : ''}?`;
-    if (urg.length) mood = 'alert';
     const prep = prepDayNow
       ? { phase: prepPhase, date: prepDayNow.date, kind: prepDayNow.kind, title: prepDayNow.title }
       : null;
@@ -447,7 +437,6 @@ export function makeConversation(core) {
     return {
       situation,
       segment,
-      mood,
       lines,
       cards: [],
       offers: cards.slice(0, 3),

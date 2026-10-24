@@ -213,6 +213,36 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
             JSON.stringify(r.kept)
           );
         }
+        // B-284: the greeting sets no mood. With an exam tomorrow she rests at Idle before and after a reply, and shows
+        // Speaking while it appears.
+        if (st.name === 'exam-tomorrow' && mode === 'model') {
+          const mood = () => page.evaluate(() => window.EVApp.core.stats().mood);
+          const before = await mood();
+          await page.evaluate(() => {
+            window.__chatReply =
+              'Potassium runs 3.5 to 5.0. Below that, watch the heart: flat T waves, U waves, and an irregular rhythm. ' +
+              'Above it, peaked T waves. Want two quick questions on it?';
+          });
+          await page.fill('#ev-input', 'What is the normal potassium range?');
+          await page.click('#ev-send');
+          const seen = new Set();
+          let after = null;
+          for (let i = 0; i < 80; i++) {
+            const m = await mood();
+            seen.add(m);
+            if (seen.has('speaking') && m === 'idle') {
+              await page.waitForTimeout(700);
+              after = await mood();
+              break;
+            }
+            await page.waitForTimeout(150);
+          }
+          ok(
+            `${tag} she rests at Idle with an exam tomorrow, shows Speaking while a reply appears, then rests at Idle again`,
+            before === 'idle' && seen.has('speaking') && !seen.has('alert') && after === 'idle',
+            JSON.stringify({ before, seen: [...seen], after })
+          );
+        }
         ok(`${tag} the briefing stays code, folded under the line`, r.brief, '');
         ok(`${tag} no page errors`, errors.length === 0, errors.join(' | '));
         await page.screenshot({ path: `${shots}/greet-${st.name}-${mode}-${w}.png` });

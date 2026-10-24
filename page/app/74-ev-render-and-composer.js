@@ -37,7 +37,8 @@
       if (s && s.status === 'active' && E.sessionState(s, now()).onBreak) return 'sleepy';
       if (Date.now() < (T.happyUntil || 0)) return 'happy';
       if (T.typing) return 'listening';
-      return (T.greet && T.greet.mood) || 'idle';
+      // B-284: the greeting sets no mood; she rests at Idle.
+      return 'idle';
     }
     const MOOD_WORD = {
       idle: 'online',

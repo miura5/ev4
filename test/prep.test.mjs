@@ -254,7 +254,6 @@ test('the greeting never marks a clinical, lab, validation or class day urgent; 
     assert.ok(p && p.kind === 'prep' && p.when === 'today', d + ': the Prep marker');
     assert.equal(g.prep.phase, 'morning');
     assert.equal(g.prep.date, d);
-    assert.notEqual(g.mood, 'alert');
   }
   // The night before: the pack check is for tomorrow.
   const eve = EV.greeting({
