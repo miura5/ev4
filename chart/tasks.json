@@ -4920,7 +4920,7 @@
   "depends": [
    "B-272"
   ],
-  "notes": "claimed by this run",
+  "notes": "claimed by this run. Matt answered: the ring should track E.V.'s check-in questions, not a fixed session length. So a full ring is the time until the next check-in (checkMinutes, 7 today): the pointer sweeps toward each check and starts over after it, and the checks answered still show as they do now (D-217).",
   "commit": null,
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
