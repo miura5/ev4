@@ -4,7 +4,7 @@
 //   deploy <live|staging>          print the exact calls that deploy this build (refuses dirty, unpushed, live w/o OK,
 //                                  live unless dist/verify-staging.json is green at the same commit: B-35, live while
 //                                  a study session runs on it: B-87)
-//   migrate v3 --from <export>     the v4 writes for a v3 record export, as document files and chunked batches
+//   migrate bumps --from <export>  the schema bumps a v4 record export needs, as pinned batch calls
 //   seed-staging --from <export>   the batches that make the staging record a copy of an export, stamped system/seed
 //   lint --from <record>           the record against its rules: writers, unchanged Facts, budgets, schemas, every
 //                                  Derived document rebuilt byte for byte, and the content checks (--date, --json)
@@ -18,8 +18,8 @@
 //                                  --status <ok|partial|failed>, --detail, --job <id> (worker), --probe <text> (diagnostic)
 // Options: --root <repo> (default: this checkout), --dist <dir> (default <root>/dist), --state <dir> (default
 // <dist>/state/<target>), --version <manifest|spec|environments>=<n> (deploy: the version a get printed),
-// --matt-ok (deploy live), --during-session (deploy live while a session runs, B-87), --json; migrate: --from <export dir>, --at <ISO stamp> (default now), --out <dir>
-// (default <dist>/migration), --record <live|staging> (the batch target). Exit 0 green, 1 red or refused, 2 usage.
+// --matt-ok (deploy live), --during-session (deploy live while a session runs, B-87), --json; migrate bumps: --from <export dir>, --at <ISO stamp> (default now), --out <dir>
+// (default <dist>/bumps), --record <live|staging> (the batch target). Exit 0 green, 1 red or refused, 2 usage.
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -38,7 +38,7 @@ import {
 import { readState, withShell } from './verifystate.mjs';
 export { readState, withShell };
 import { seedStaging } from './seed.mjs';
-import { migrateV3, migrateBumps } from './migrate.mjs';
+import { migrateBumps } from './migrate.mjs';
 import { chunkWrites } from './batches.mjs';
 import { readExport, loadValidator } from './schemas.mjs';
 import { describeErrors } from './validate.mjs';
@@ -145,64 +145,10 @@ function loadExport(dir) {
     (db[collection] = db[collection] || []).push({ ...doc, id });
   return db;
 }
-function migration(o) {
-  const root = o.root ? path.resolve(o.root) : HERE;
-  EV.configure(readJson(path.join(root, 'spec', 'ev.spec.json')));
-  const v3 = loadExport(o.from);
-  const at = o.at || new Date().toISOString();
-  return { root, v3, at, result: migrateV3(v3, { at }) };
-}
-
 const commands = {
   migrate(o) {
     if (o._[1] === 'bumps') return commands['migrate-bumps'](o);
-    if (o._[1] !== 'v3')
-      throw new Error(
-        'usage: migrate v3 --from <export dir> | migrate bumps --from <v4 export dir> --record <target> [--versions <file>]'
-      );
-    const { root, at, result } = migration(o);
-    const spec = readJson(path.join(root, 'spec', 'ev.spec.json'));
-    const validate = loadValidator(path.join(root, 'spec', 'schemas'));
-    const invalid = result.writes
-      .map(w => ({ w, r: validate(w.collection, w.data, { id: w.id }) }))
-      .filter(x => !x.r.ok);
-    if (invalid.length) {
-      console.log(`migrate v3: REFUSED, ${invalid.length} write(s) do not validate`);
-      for (const { w, r } of invalid.slice(0, 20))
-        console.log('  ' + describeErrors(`${w.collection}/${w.id}`, r).split('\n')[0]);
-      return 1;
-    }
-    const out = o.out ? path.resolve(o.out) : path.join(root, 'dist', 'migration');
-    fs.rmSync(out, { recursive: true, force: true });
-    const files = result.writes.map(w => {
-      const f = path.join(out, 'docs', w.collection, w.id + '.json');
-      fs.mkdirSync(path.dirname(f), { recursive: true });
-      fs.writeFileSync(f, JSON.stringify(w.data));
-      return { op: 'set', collection: w.collection, doc_id: w.id, file_path: f, data: w.data };
-    });
-    const batches = chunkWrites(files, spec.capacity.batch).map(b => b.map(({ data, ...w }) => w));
-    const rec = o.record && spec.registry.records[o.record];
-    const plan = {
-      migration: 'v3-to-v4',
-      at,
-      record: rec ? artifactUrl(rec.artifact) : null,
-      counts: result.counts,
-      skipped: result.skipped,
-      batches,
-    };
-    fs.writeFileSync(path.join(out, 'plan.json'), JSON.stringify(plan, null, 1));
-    console.log(
-      `migrate v3: ${result.writes.length} writes in ${batches.length} batches (at ${at}) -> ${path.relative(process.cwd(), out) || out}/plan.json`
-    );
-    console.log(
-      '  ' +
-        Object.entries(result.counts)
-          .map(([k, v]) => `${k} ${v}`)
-          .join(', ')
-    );
-    if (result.skipped.length)
-      console.log(`  kept in legacy only or skipped: ${result.skipped.length} (listed in plan.json)`);
-    return 0;
+    throw new Error('usage: migrate bumps --from <v4 export dir> --record <target> [--versions <file>]');
   },
   /**
    * The schema bumps a v4 record needs (Data architecture, "Schema registry"), printed as pinned batch calls: --from a
@@ -287,7 +233,7 @@ const commands = {
     if (!exportedAt)
       throw new Error('give --exported-at <ISO>: when the export was taken (or an EXPORTED.txt beside it)');
     const at = o.at || new Date().toISOString();
-    const { writes, seed, migrated } = seedStaging(exp, {
+    const { writes, seed } = seedStaging(exp, {
       at,
       exportedAt,
       from: o.kind === 'backup' ? 'backup' : 'live export',
@@ -318,13 +264,12 @@ const commands = {
       target: 'staging',
       at,
       exportedAt: seed.exportedAt,
-      migrated,
       counts: seed.counts,
       batches,
     };
     fs.writeFileSync(path.join(out, 'plan.json'), JSON.stringify(plan, null, 1));
     console.log(
-      `seed-staging: ${writes.length} writes in ${batches.length} batches to the staging record (${rec.artifact}), export taken ${seed.exportedAt}${migrated ? ', migrated from v3' : ''} -> ${path.relative(process.cwd(), out) || out}/plan.json`
+      `seed-staging: ${writes.length} writes in ${batches.length} batches to the staging record (${rec.artifact}), export taken ${seed.exportedAt} -> ${path.relative(process.cwd(), out) || out}/plan.json`
     );
     console.log(
       "Apply each batch in order with ArtifactData batch (url: the plan's record); a set on a document that already exists needs its if_version from a get."
@@ -643,7 +588,7 @@ export function main(argv) {
   const cmd = commands[o._[0]];
   if (!cmd || (TARGETED.includes(o._[0]) && !['live', 'staging'].includes(o._[1]))) {
     console.error(
-      'Commands: verify-deploy <live|staging>, deploy <live|staging>, migrate v3 --from <dir>, canvas-script <part> --dir <run>, unwrap <file> --to <json>, seed-staging --from <dir>, lint --from <dir>, rebuild <collection|all> --from <dir>, run <pipeline> <move>, steps [pipeline]'
+      'Commands: verify-deploy <live|staging>, deploy <live|staging>, migrate bumps --from <dir>, canvas-script <part> --dir <run>, unwrap <file> --to <json>, seed-staging --from <dir>, lint --from <dir>, rebuild <collection|all> --from <dir>, run <pipeline> <move>, steps [pipeline]'
     );
     return 2;
   }

@@ -1,4 +1,4 @@
-// seed-staging (B-12): a v4 export is copied as it is, a v3 export is migrated first, the journal and the source's
+// seed-staging (B-12): a v4 export is copied as it is, the journal and the source's
 // system/* never travel, and system/seed (counts, hashes, export time) is written last and alone. The record used
 // here is the synthetic one in test/data/record; the real seed ran from an export that never enters the repository.
 import test from 'node:test';
@@ -28,8 +28,7 @@ const recordExport = ({ journal = false } = {}) => {
 
 test('a v4 export is copied as it is, without system/*, and the seed stamp comes last', () => {
   const exp = recordExport();
-  const { writes, seed, migrated } = seedStaging(exp, { at: AT, exportedAt: EXPORTED });
-  assert.equal(migrated, false);
+  const { writes, seed } = seedStaging(exp, { at: AT, exportedAt: EXPORTED });
   const last = writes.at(-1);
   assert.deepEqual([last.collection, last.id], ['system', 'seed']);
   assert.equal(writes.filter(w => w.collection === 'system').length, 1, 'only the seed stamp is a system write');
@@ -63,28 +62,6 @@ test('the journal is never seeded', () => {
 test('a seed needs both its own time and the export time', () => {
   assert.throws(() => seedStaging(recordExport(), { at: AT }), /needs opts.at and opts.exportedAt/);
   assert.throws(() => seedStaging(recordExport(), { exportedAt: EXPORTED }), /needs opts.at and opts.exportedAt/);
-});
-
-test('a v3 export is migrated first, with legacy copies, and stamped v3-to-v4', () => {
-  const v3 = {
-    exams: [
-      { id: 'E9', schema: 1, course: 'NUR 112', kind: 'unit', title: 'Exam 9', status: 'upcoming', source: 'made up' },
-    ],
-  };
-  const { writes, seed, migrated } = seedStaging(v3, { at: AT, exportedAt: EXPORTED });
-  assert.equal(migrated, true);
-  assert.equal(seed.migration, 'v3-to-v4');
-  const exam = writes.find(w => w.collection === 'exams' && w.id === 'E9');
-  assert.ok(
-    exam && exam.data.schema === 2 && typeof exam.data.writer === 'string',
-    "the exam is a v4 document at today's version"
-  );
-  assert.ok(
-    writes.some(w => w.collection === 'legacy' && w.id === 'v3-exams-E9'),
-    'the v3 original is kept in legacy'
-  );
-  for (const w of writes)
-    assert.ok(validate(w.collection, w.data, { id: w.id }).ok, `${w.collection}/${w.id} validates`);
 });
 
 test('collectionHash ignores order and envelope; seedAgeDays counts whole days and never goes negative', () => {
