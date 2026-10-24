@@ -4992,13 +4992,14 @@
   "title": "Component set (D-274, D-278): the buttons, badge, segmented control, card, row, toolbar, progress bar and composer as one stylesheet in page source, with Inter and the 16 px icon set",
   "dod": "A component harness renders every part in both themes at contrast 60 and the screenshots match the theme canvas's Shipped board; a check finds no button outside the five kinds and at most one primary per view; npm run check -- --touched green; staging GREEN",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-271"
   ],
-  "notes": "",
+  "notes": "Held by Matt on Oct 24: the mini redesign waits for a fuller hand-off. He and the design chat are building an interactive demo page that covers every feature, and the tasks for B-278 to B-283 will be re-planned from it. No builder takes this until the new hand-off is filed.",
   "commit": null,
-  "source": "plan 5reEBoToU1W5pmnq5q48ij"
+  "source": "plan 5reEBoToU1W5pmnq5q48ij",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-279",
