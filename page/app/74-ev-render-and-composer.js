@@ -8,7 +8,7 @@
     // E.V.'s state, shown by every core that follows it and by the readout: streaming → speaking, Claude working → thinking,
     // a check just posted → check ready, a session break → resting, a right answer → pleased, typing → listening.
     // B-215 (D-216): turning to face him is the notification. A job that finishes, or a new ask in Your turn, while he is on
-    // another tab: her small dial turns to face him, closed, with the segments at twelve lit (alert, B-272), and her
+    // another tab: her small dial turns to face him, closed, with one segment lit at twelve (alert, B-272), and her
     // status reads something's ready, until he opens E.V. What the page found on load is not news.
     const NT = { seen: null, yt: 0, on: false };
     function noticeSync() {

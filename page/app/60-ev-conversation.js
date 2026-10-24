@@ -266,7 +266,7 @@
             break;
           }
           case 'alert': {
-            const top = k === 0 || k === N - 1;
+            const top = k === 0; // one solid segment at twelve (the States board and the hand-off; D-216's lit one)
             ph = top ? 0 : PI;
             s = top ? 1.15 * (1 + w * 0.05 * Math.abs(Math.sin(t * 4))) : 0.95;
             break;

@@ -210,8 +210,8 @@ const SPEECH = `async (secs) => { const C = window.EVApp.core; const text = 'Pre
           thinking: ['the gap travels; halftone in its wake', a2.gap !== a.gap && a.back > 0],
           speaking: ['the gap near half past four', near(a.gap, 4.5, 0.8)],
           alert: [
-            'closed, flat to him, the two segments at twelve solid, the rest halftone',
-            a.segments === 12 && a.facing && a.solid === 2 && a.back === 10,
+            'closed, flat to him, one solid segment at twelve, the rest halftone',
+            a.segments === 12 && a.facing && a.solid === 1 && a.back === 11,
           ],
           happy: ['the gap spins', a2.gap !== a.gap],
           sleepy: [
@@ -292,7 +292,7 @@ const SPEECH = `async (secs) => { const C = window.EVApp.core; const text = 'Pre
         .catch(() => {});
       ok(
         `[${scheme}] the sidebar's 24 px dial turns to face him for a notice (D-216)`,
-        !!side && side.size === 24 && side.shown >= 20 && side.facing && side.segments === 12 && side.solid === 2,
+        !!side && side.size === 24 && side.shown >= 20 && side.facing && side.segments === 12 && side.solid === 1,
         JSON.stringify(side)
       );
       await hold(page, 'idle');

@@ -5218,8 +5218,8 @@ const ok = (name, cond, detail = '') => {
   }
   delete seed.idchecks;
   delete seed.system.yourturn;
-  // B-215 (D-216): a job that finishes while he is on another tab: her small dial turns to face him, closed, with the
-  // segments at twelve lit (B-272), her status says something's ready, no badge anywhere; opening E.V. ends it.
+  // B-215 (D-216): a job that finishes while he is on another tab: her small dial turns to face him, closed, with one
+  // segment lit at twelve (B-272), her status says something's ready, no badge anywhere; opening E.V. ends it.
   for (const [tag, vp, flower] of [
     ['[notice 390]', { width: 390, height: 844 }, '#tab-her svg'],
     ['[notice 1280]', { width: 1280, height: 860 }, '#top-av svg'],
@@ -5296,8 +5296,8 @@ const ok = (name, cond, detail = '') => {
         /^something’s ready/.test(on.readout) &&
         on.mood === 'alert' &&
         on.facing === true &&
-        on.lit === 2 &&
-        on.halftone === 10 &&
+        on.lit === 1 &&
+        on.halftone === 11 &&
         on.badges === 0,
       JSON.stringify({ before, ...on })
     );
