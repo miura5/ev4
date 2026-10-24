@@ -3596,5 +3596,21 @@
   "decisions": [],
   "source": "log",
   "release": "v4.5.4"
+ },
+ {
+  "target": "staging",
+  "commit": "81e6a6a",
+  "time": "2026-10-24T05:41:46.449Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "d81db0a",
+  "tasks": [
+   "B-271"
+  ],
+  "summary": "LCH tokens",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
