@@ -4902,11 +4902,11 @@
   "title": "Dial Arc (D-265, D-266): the avatar module is the Dial Arc ported from the round 15 canvas's Avatar.dc.html, replacing the forget-me-not at every size D-213 names, with the same page API",
   "dod": "The avatar harness renders each of the seven moods and five gestures at 128 px and 24 px in both themes and the screenshots match the States board's descriptions; reduced motion gives one still per mood; the 24 px form in the sidebar turns its gap to face him for D-216; npm run smoke and npm run check -- --touched green; staging GREEN",
   "milestone": "v4.7 look",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-271"
   ],
-  "notes": "",
+  "notes": "claimed by this run",
   "commit": null,
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
