@@ -1981,6 +1981,98 @@ async function sideBySide(browser, left, right, out, vp) {
       await ctx.close();
     }
   }
+  // B-289 (D-213, C-2, C-3, C-15): her stage and captions, measured. Her flower is 104 px at 390, 140 px at 1280 x 900
+  // and 168 px when taller than 1000 px, 70% of that in a session; her current line 20 px, earlier lines 15 px on the
+  // phone and 14 px at 1280; her two faces are her own palette (--av1, --av2), never the accent. Light and dark, idle
+  // and in a session (on desktop the session's notes beside her name the step 'surface'; her size is the session's),
+  // each screenshotted.
+  {
+    const FZ = spec.ui.look.flower.sizes;
+    const inSession = () => {
+      const db = JSON.parse(JSON.stringify(seed)),
+        t0 = new Date(NOW.getTime() - 3 * 60e3).toISOString(),
+        k = 'start-' + t0.replace(/[-:.TZ]/g, '').slice(0, 14);
+      db.sessions = {
+        ...(db.sessions || {}),
+        'ss-harness-stage': {
+          schema: 1,
+          writer: 'page',
+          at: t0,
+          source: 'E.V. Home',
+          status: 'active',
+          date: today,
+          startedAt: t0,
+          topic: 'Harness stage',
+          noteId: 'x-coredata://stage',
+          driver: { view: 'gone', at: t0 },
+          events: { [k]: { type: 'start', at: t0, len: 5, h: 'zz', noteId: 'x-coredata://stage' } },
+        },
+      };
+      return db;
+    };
+    for (const [tag, vp, idle, past] of [
+      ['390', { width: 390, height: 844 }, FZ.phone, '15px'],
+      ['1280x900', { width: 1280, height: 900 }, FZ.wide, '14px'],
+      ['1280x1100', { width: 1280, height: 1100 }, FZ.wideTall, '14px'],
+    ])
+      for (const scheme of ['light', 'dark'])
+        for (const state of ['idle', 'session']) {
+          const ctx = await browser.newContext({ viewport: vp, colorScheme: scheme });
+          const page = await ctx.newPage();
+          await openPage(page, state === 'session' ? inSession() : seed);
+          if (state === 'session')
+            await page
+              .waitForFunction(() => document.getElementById('hero').dataset.step === 'session', null, {
+                timeout: 8000,
+              })
+              .catch(() => {});
+          else await send(page, 'explain preload', REPLY);
+          await page.waitForTimeout(2500);
+          const v = await page.evaluate(() => {
+            const av = document.querySelector('#hero .ev-av'),
+              root = getComputedStyle(document.documentElement),
+              c1 = av && av.querySelector('.c1'),
+              size = sel => {
+                const e = document.querySelector(sel);
+                return e ? getComputedStyle(e).fontSize : null;
+              };
+            return {
+              step: document.getElementById('hero').dataset.step,
+              px: Math.round(av.getBoundingClientRect().width),
+              now: size('#thread .msg.ev.current .bubble'),
+              past: size('#thread .msg.ev:not(.current) .bubble'),
+              face: c1 && getComputedStyle(c1).fill,
+              av1: root.getPropertyValue('--av1').trim(),
+              her: root.getPropertyValue('--her').trim(),
+            };
+          });
+          const want = state === 'session' ? Math.round(idle * FZ.sessionShare) : idle;
+          ok(
+            `[stage ${tag} ${scheme} ${state}] her flower measures ${want} px (D-213)`,
+            v.px === want,
+            JSON.stringify(v)
+          );
+          if (state === 'idle')
+            ok(
+              `[stage ${tag} ${scheme}] her current line 20 px, earlier lines ${past} (C-2)`,
+              v.now === '20px' && v.past === past,
+              JSON.stringify(v)
+            );
+          const hex = c =>
+            '#' +
+            (String(c).match(/\d+/g) || [])
+              .slice(0, 3)
+              .map(n => (+n).toString(16).padStart(2, '0'))
+              .join('');
+          ok(
+            `[stage ${tag} ${scheme} ${state}] her faces come from her own palette, not the accent (C-15)`,
+            !!v.face && hex(v.face) === v.av1.toLowerCase() && v.av1.toLowerCase() !== v.her.toLowerCase(),
+            JSON.stringify(v)
+          );
+          await page.screenshot({ path: `${shots}/stage-${tag}-${scheme}-${state}.png` });
+          await ctx.close();
+        }
+  }
   // Reduced motion, at both widths: the line whole at once, announced once, her core still, its gesture still raised.
   for (const [label, vp] of [
     ['phone', { width: 390, height: 844 }],
