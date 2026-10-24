@@ -5084,8 +5084,10 @@
   "dod": "The greeting no longer sets her mood: with an exam tomorrow in the record she rests at Idle on the E.V. tab before and between replies, and shows Speaking while a reply appears (harness); Alert shows only for something ready while he is on another tab (D-216) and a check-in ready during a session (D-129); the greeting's mood code and its tests are removed, not bypassed; npm run smoke and npm run check -- --touched green; staging GREEN",
   "milestone": "v4.7 look",
   "status": "open",
-  "depends": [],
-  "notes": "",
+  "depends": [
+   "B-276"
+  ],
+  "notes": "Built after B-276 by the redesign builder, before Matt's look (B-277): the same avatar code, so not in parallel with hand-off 1's last tasks.",
   "commit": null,
   "source": "build chat",
   "words": "E.V.'s avatar holds the Alert look for the whole visit instead of resting at Idle: the greeting picks Alert when something can't wait (an exam tomorrow) and that greeting mood becomes her resting state, so short replies barely show Speaking before she drops back to it. Matt's call: cut the greeting's mood; she rests at Idle, and Alert keeps only its two jobs (something ready while he is on another tab, and a check-in ready during a session); no exam-day look on her.",
