@@ -4949,7 +4949,7 @@
   "depends": [
    "B-271"
   ],
-  "notes": "built: links, focus and selection neutral; primary and send Ember; done, right and progress name green; the old blue inks out of the spec; a look check and two sweep tests",
+  "notes": "tests green (npm test, smoke 28 of 28); touched check GREEN (every harness; look 0 fails); pushed",
   "commit": null,
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
