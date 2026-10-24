@@ -4906,7 +4906,7 @@
   "depends": [
    "B-271"
   ],
-  "notes": "built: the Dial Arc replaces the flower in the page source; harness rewritten; proving now",
+  "notes": "tests green: npm test, smoke, core harness 127 of 127; touched check running",
   "commit": null,
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
