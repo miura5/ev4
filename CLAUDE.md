@@ -14,7 +14,9 @@ Board is retired (D-172); `inbox` still reads its comments. A design chat hands 
 add', 'Decisions proposed' (as P-1, P-2; D-141) and 'Tenets proposed'; a build chat files them with `plan --from <doc
 link> --apply`. A tenet (B-109) is a decision of kind tenet with a scope (ui, data, ops, pipelines) and a check
 (harness, lint, ship, review); `brief` lists those in a task's scope and the review skill holds the diff to them. A
-tenet is changed only by a superseding tenet plus a sweep task for what still follows the old one.
+tenet is changed only by a superseding tenet plus a sweep task for what still follows the old one. When Matt replaces a
+rule, a build chat with him present records the superseding decision. From then on, no work bends to a check written
+for the old rule: the check is brought in line with the new one or retired, and named on his card.
 
 ## Every session
 
@@ -36,7 +38,9 @@ attribution lines with `--trailer`, one per line) and regenerates BACKLOG.md, DE
    so his words are never stored as written: reword them into a clear, neutral sentence that keeps every point (D-263).
 3. Take the lowest `open` task in BACKLOG.md whose dependencies are `done`; `brief --task <id>` is its one page.
    Start it with `log <id> --status "in progress" --note "..."` and say which task you took. `log` refuses while an
-   entry waits in the inbox.
+   entry waits in the inbox. That claim is the lock: it pushes at once, and a refused push means another session holds
+   the task, so take nothing. Log a note at each milestone, so the claim never looks stale; a claim with no note for 90
+   minutes is stale.
 4. A task is one id. If it needs a schema, a spec shape or a decision the design does not give, `log <id> --status
    blocked --note "<the question>" --waiting-on Matt`, and move to the next open task. Code-level choices are yours.
 5. Prove it exactly as its definition of done says. `npm test` green first (it runs the Chart's lint). Where a
@@ -55,8 +59,9 @@ attribution lines with `--trailer`, one per line) and regenerates BACKLOG.md, DE
    commit, B-219; R-01 and R-05 are ended, D-145 and D-262, and kept in `chart/rules.json` marked ended), so a build
    reaches live only through staging.
 7. Before a task goes to Matt or is marked done, run the review skill (`.claude/skills/review`) in a fresh subagent
-   that has not seen the work; its verdict ("No gaps" or the gaps) is the reviewer line on his product review card
-   (D-261), and a card without one is not ready. Record: `log <id> --status done --commit <sha> --note "<one line>"`, or in the same move as step 6 with `ship staging
+   that has not seen the work; its verdict ("No gaps" or the gaps), with its Checks and Size lines, is the reviewer
+   line on his product review card (D-261), and a card without one is not ready. Fix the gaps once and review once
+   more with a new subagent; a gap still named then goes on the card as open, never into a loop. Record: `log <id> --status done --commit <sha> --note "<one line>"`, or in the same move as step 6 with `ship staging
    --done <id> --commit <sha>` once staging is the task's last proof (B-147). A decision is `log decision <next id>
    --title ... --why ... --status ...`. Never a date on anything that gates work.
 8. Continue with the next open task until none is open or every open task is blocked. Then stop and leave a
