@@ -5137,7 +5137,7 @@
   "depends": [
    "B-271"
   ],
-  "notes": "proofs: npm test green, smoke 28/28, the touched harnesses green (components 54/54, look 283/283); official touched check rerunning at 9c5d151; review next",
+  "notes": "reviewed twice; second review's three gaps go on the card as open; shipping to staging",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
