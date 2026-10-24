@@ -1,5 +1,125 @@
 [
  {
+  "id": "D-293",
+  "date": "Oct 24",
+  "title": "Her view is named \"E.V.\" everywhere: the tab bar, the sidebar and the header; on the phone its tab is her 24 px avatar. Amends D-275's view table, which named it Conversation.",
+  "why": "Build correction C-4 from the v4 review, and D-210's \"the E.V. tab is her\".",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG P-12"
+ },
+ {
+  "id": "D-292",
+  "date": "Oct 24",
+  "title": "The sidebar's Today list is hidden while Today is the open view. Accepts this clause of D-228, which stays proposed for the rest.",
+  "why": "Build correction C-14 from the v4 review: the same items never show twice on one screen.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG P-11"
+ },
+ {
+  "id": "D-291",
+  "date": "Oct 24",
+  "title": "The sidebar's Working section is retired; background jobs show in Conversation. Amends D-210, which listed Working among the sidebar's sections.",
+  "why": "Matt's answer to the v4 review (Oct 24). The sidebar holds nav and today; her work shows where she talks.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG P-10"
+ },
+ {
+  "id": "D-290",
+  "date": "Oct 24",
+  "title": "Turning an idea into a weak spot or a plan item is retired. Supersedes D-109's \"only learning ideas offer make it a weak spot\"; ideas keep their kinds.",
+  "why": "Matt's answer to the v4 review (Oct 24). Weak spots come from her suggestion or his own words (D-235), not from an idea's button.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG P-9"
+ },
+ {
+  "id": "D-289",
+  "date": "Oct 24",
+  "title": "The note and skill weak-spot actions (Done for a note spot, Practiced for a skill spot) are retired; weak spots have Drill and Mark solid. Amends D-162's row actions.",
+  "why": "Matt's answer to the v4 review (Oct 24). One action per weak spot, whatever its kind.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG P-8"
+ },
+ {
+  "id": "D-288",
+  "date": "Oct 24",
+  "title": "Parked weak spots and \"Make active\" are retired. A spot he doesn't want now is snoozed through triage's Not now (D-242). Amends D-162's folds, which included Parked.",
+  "why": "Matt's answer to the v4 review (Oct 24). One way to set a spot aside.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG P-7"
+ },
+ {
+  "id": "D-287",
+  "date": "Oct 24",
+  "title": "Today's Focus lines under the list are retired. Retires page part 10's Focus block; no earlier decision named it.",
+  "why": "Matt's answer to the v4 review (Oct 24). The list, its folds and her line already say what matters today.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG P-6"
+ },
+ {
+  "id": "D-286",
+  "date": "Oct 24",
+  "title": "Today's Now card is retired. The night-before prep check moves under her greeting on Conversation (D-144), and the exam countdown lives on Study's exam header. Supersedes D-164 and amends D-154, which placed both on the Now card.",
+  "why": "Matt's answer to the v4 review (Oct 24). One main action per view; the prep check is something she tells him.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG P-5"
+ },
+ {
+  "id": "D-285",
+  "date": "Oct 24",
+  "title": "Coded yellow uses the shared lightness of the tag colours (D-269: L52 C54 light, L72 C48 dark, hue 82), not the demo's lighter honey yellow. Confirms D-269 against the v4 demo; it supersedes nothing.",
+  "why": "Matt's answer to the v4 review (Oct 24). One lightness for every coded colour.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG P-4"
+ },
+ {
+  "id": "D-284",
+  "date": "Oct 24",
+  "title": "The triage action for a duplicate is named \"Join\", key J. Supersedes D-242's name \"Duplicate\" and key D; the rest of D-242 stands. The stored link stays duplicate-of (D-240), so no schema changes.",
+  "why": "Matt's answer to the v4 review (Oct 24). \"Join\" says what happens to the row.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG P-3"
+ },
+ {
+  "id": "D-283",
+  "date": "Oct 24",
+  "title": "The Practice list of prepared sets is retired. Its sets feed \"Quiz me\" on an objective, falling back to the practice-set job when an objective has none. Study's views are Objectives, Plan (unchanged) and Weak spots. The daily review set opens from Today's review row in the same quiz card. Amends D-249 and D-165, which named Review and Practice as Study's views.",
+  "why": "Matt's answer to the v4 review (Oct 24). One way to start a quiz on Study; the sets still serve, through the objective they belong to.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG P-2"
+ },
+ {
+  "id": "D-282",
+  "date": "Oct 24",
+  "title": "\"Remove from today\" leaves the rows and lives in the task's panel, beside Snooze to tomorrow, which stays. Amends D-078: the rule is unchanged, only where Remove is offered.",
+  "why": "Matt's answer to the v4 review (Oct 24). Rows keep one action; removing is a deliberate act made from the task.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG P-1"
+ },
+ {
   "id": "D-281",
   "date": "Oct 24",
   "title": "Weak spots live in Study, with 'To review · n' at the top. This replaces D-162's placement under Progress; the rest of D-162 stands (no Log a weak spot form).",
