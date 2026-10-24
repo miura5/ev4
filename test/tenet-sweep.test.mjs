@@ -103,11 +103,9 @@ test("B-217 (D-225 and the tenets since superseded): spec.ui.tenets' checks cite
 
 // B-276: the sweep for D-271 and D-272, which took the place of the two Oct 22 motion tenets (two clocks, her own a
 // stepped one, and a cap on how often she draws). Their ids are written here by number only, so this file cites neither:
-// the Chart lint fails any test that names a superseded tenet at all, history or not. No test names them, no open task
-// but the sweep names them without the new ones, spec.ui.tenets does not, and page/ and test/ keep no word of the old
-// stepped clock or its cap.
+// the Chart lint's superseded-tenet check fails any test or open task that names one, once the supersessions are
+// recorded. Here: spec.ui.tenets does not name them, and page/ and test/ keep no word of the old stepped clock or its cap.
 const MOTION_GONE = new RegExp(`\\bD-(${['230', '224'].join('|')})\\b`);
-const MOTION_NEW = /\bD-(271|272)\b/;
 const HELD = new RegExp(
   [
     'he' + 'ld[- ]?frames?',
@@ -120,24 +118,9 @@ const HELD = new RegExp(
   'i'
 );
 
-test('B-276: no test cites the two superseded motion tenets, and no open task but with the tenets that replaced them', () => {
-  const bad = sources(['test', 'test/harness'])
-    .filter(([, text]) => MOTION_GONE.test(text))
-    .map(([f]) => f);
-  assert.deepEqual(bad, []);
-  const tasks = JSON.parse(fs.readFileSync(path.join(ROOT, 'chart/tasks.json'), 'utf8'));
-  const list = Array.isArray(tasks) ? tasks : tasks.tasks || Object.values(tasks);
-  const open = list.filter(t => {
-    if (!t || !['open', 'in progress', 'blocked'].includes(t.status)) return false;
-    const text = [t.title, t.dod, ...(Array.isArray(t.notes) ? t.notes : [t.notes || ''])].join(' ');
-    return MOTION_GONE.test(text) && !MOTION_NEW.test(text);
-  });
-  assert.deepEqual(
-    open.map(t => t.id),
-    []
-  );
+test("B-276: spec.ui.tenets' checks cite neither superseded motion tenet (the Chart lint covers tests and open tasks)", () => {
   const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
-  assert.equal(MOTION_GONE.test(JSON.stringify(spec.ui.tenets || {})), false, "spec.ui.tenets' checks cite D-271");
+  assert.equal(MOTION_GONE.test(JSON.stringify(spec.ui.tenets || {})), false);
 });
 
 test('B-276: page/ and test/ keep no word of her old stepped clock or its cap', () => {
