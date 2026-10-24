@@ -106,13 +106,14 @@ The brief's order, with what each trimmer may reach:
 3. Dead code in `tools/chart.mjs`: the Docs-view calls (`trim/docs-views`, **done: #8**), then the one-time v3 import
    (`trim/v3-import`, **done: #9**). The tool went from 3,924 lines to 3,308.
 4. Test and check time: smoke on page changes only (`trim/smoke-scope`, **done: #7**).
-5. The rest of the retired Docs views in `tools/chart.mjs` (`trim/docs-views-2`, from #8 and #9's Found next):
+5. The rest of the retired Docs views in `tools/chart.mjs` (`trim/docs-views-2`, **done: #12**):
    `changelogCalls`, `decisionsCalls`, `mdEscape`, `tenetLabel`, `tabTitle`, `textCell` and `sameStatus` with their tests
    (only tests call them now, about 110 code and 150 test lines); then the `views` command, `printViews` and the
    `views: [...]` arrays `applyLog` and `applyReport` return, which now only print "retired"; and `brief`'s Finish line
    that still says "views prints the Board call".
 6. Low value since the repository went public on Oct 23 (its Actions minutes are free now): GitHub Actions minutes
-   (`trim/ci-minutes`). Run npm test on pull requests and on pushes that change code, not on pushes that touch only
+   (`trim/ci-minutes`). **Declined by Matt, #11:** it would also skip the personal-data scan on those pushes, which
+   matters more on a public repository. Run npm test on pull requests and on pushes that change code, not on pushes that touch only
    `chart/`, the generated files or `docs/`; keep the nightly. Worth it only to cut noise.
 7. Small text, low value: CLAUDE.md's "Where things live" repeated the v3 row (`trim/where-v3-row`, **done: #10**).
 
@@ -143,7 +144,7 @@ re-checked by grep. Git history on main is squashed before 75c2b59, so evidence 
    runs `migrate v3` or `verify-migration`; only `core/cli.mjs`, `core/seed.mjs` and tests reach `migrateV3`. About
    515 lines in `core/migrate.mjs`, 70 in `core/cli.mjs`, 5 in `core/seed.mjs`, and about 510 test lines, so it
    comes in parts under the 400-line budget:
-   1. `verify-migration`: the command, `verifyMigration`, `comparable` and `DERIVED_FIELDS`, and their tests.
+   1. **Done: #14.** `verify-migration`: the command, `verifyMigration`, `comparable` and `DERIVED_FIELDS`, and their tests.
    2. `migrate v3` and `seed-staging`'s v3 branch, then `migrateV3` and its helpers, and the v3 tests in
       `test/migrate.test.mjs` (including the "real v3 export" test, which always skips: `fixtures/` is ignored) and
       `test/seed.test.mjs` (lines 68 to 88).

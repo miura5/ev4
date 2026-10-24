@@ -1,5 +1,17 @@
 [
  {
+  "id": "D-264",
+  "date": "Oct 23",
+  "title": "The trim scans the whole codebase and may restructure. Parallel scan runs each map one large area and write findings to docs/trim/scan/<area>.md; the build chat folds approved findings into the queue. Findings are dead code, duplicates, patch layers (special cases stacked by one-session fixes), files to split into modules, and things to keep. Study logic and the page may now be restructured, with no behavior change: tests and harnesses pass unchanged, it ships through staging and the full check, and nothing lands in the days around an exam. The record, schemas, prompts and what runs write stay out of scope. The maps stay as a guide that a build chat reads before changing a mapped file.",
+  "why": "Matt, Oct 23: the trim loop works, so it should reach the large files, break them into reviewable parts, and stop one-session fixes from adding bloat, and the same habit should carry into build chats",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [
+   "D-259"
+  ],
+  "source": "log"
+ },
+ {
   "id": "D-263",
   "date": "Oct 23",
   "title": "Matt's words are never stored as written. Every report, decision, note, commit message and pull request rewords them into a clear, neutral sentence that keeps every point: what he saw, what he wants, how much it matters. report takes --reworded \"<his point>\" beside --from-chat, --from-comment or --job, so the lookup still proves his message exists. Entries filed before this stay as they are.",

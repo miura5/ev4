@@ -46,7 +46,12 @@ no backlog task and write nothing to `chart/`.
    3. Dead code.
    4. Test and check time.
 
-   Study logic, the record, schemas and pipeline behavior are out of scope.
+   5. Restructuring (D-264): splitting a large file into modules, or removing duplication, without changing what it
+      does.
+
+   The record, its schemas, prompts and what a run writes stay out of scope. Study logic and the page are in scope
+   only for restructuring that changes no behavior: the existing tests and page harnesses pass with no test changed
+   except imports, the cut ships through staging and the full check, and none lands in the days around an exam.
 3. **One cut per branch** (`trim/<what>`, from main's head). The pull request is titled `B-262: trim <what>`, and its
    body has these headings:
    - **What goes**
@@ -94,3 +99,24 @@ When a pull request has the reviewer's approve:
 4. Mark its inventory row done, and update How E.V. Works or the System Map if the cut changes what they describe.
 
 No merges in the days around an exam, and a bug that breaks studying always comes first.
+
+## Scan runs (D-264)
+
+A scan run maps one area of the code and writes findings; it changes no code. It writes
+`docs/trim/scan/<area>.md` on branch `trim/scan-<area>`, opens it as a pull request, and has it reviewed like a cut.
+The queue cap doesn't apply to it. The file has two parts:
+
+- **A map,** so a later session can find its way without reading everything: the area's sections in order, what each
+  does in one line, its size, and what it depends on.
+- **Findings,** each with evidence (a search, a test name, a commit):
+  - **dead:** nothing reaches it;
+  - **duplicate:** the same thing done twice;
+  - **patch layer:** special cases stacked by one-session fixes where one general rule would do;
+  - **split:** a file doing several jobs that would read better as modules;
+  - **keep:** looks big but earns its place.
+
+  Each gets a size, a risk to studying (none, low or high), and a suggested branch name. Rank them by value for the
+  long term: what makes the next change smaller and safer, not what is quickest to delete.
+
+The build chat folds approved findings into the queue in `docs/trim/inventory.md`. The maps stay as a guide: a
+build chat about to change a mapped file reads its map first.

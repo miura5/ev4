@@ -15,9 +15,7 @@
 //   log rule <R-id> --rule t --decision D-id --command c --fn name [--task B-id]   a rule ship enforces
 //   log decision <D-id> --title t [--status s] [--why w] [--supersedes ids] [--amends ids] [--restated]
 //            each writes one change to chart/, regenerates BACKLOG.md, commits (--no-commit to skip; --trailer adds a
-//            commit trailer line, repeatable), then prints the view updates to make (views)
-//   views [--transcript f]   the exact Docs calls that bring the Board, the Changelog and the overview's status line in
-//            line with the record, from this session's newest read of each (or the reads to make first)
+//            commit trailer line, repeatable)
 //   plan --from <doc link> [--apply] [--handoff-note]   a design doc's hand-off (D-141, B-106): from this session's
 //            read of the doc, its 'Tasks to add' and 'Decisions proposed' tables as the log new and log decision commands
 //            that file them (the next free ids, P-n rewritten to its D-id); --apply runs them; filed rows are skipped
@@ -487,8 +485,6 @@ export function formatLint(findings) {
 }
 
 // ------------------------------------------------------------------------------------------------ the views
-export const tenetLabel = d => `Tenet (${(d.scope || []).join(', ')}; checked by ${d.check}): `;
-const tabTitle = d => (kindOf(d) === 'tenet' ? tenetLabel(d) : '') + d.title;
 export const boardName = t => (t.board && t.board.row) || `v4 ${t.id}: ${t.name || t.title.split(/[:(]/)[0].trim()}`;
 
 const docCall = (doc, node, ops) => ({
@@ -500,15 +496,6 @@ const docCall = (doc, node, ops) => ({
     payload: { ops },
   },
 });
-const textCell = s => ({
-  type: 'cell',
-  content: [{ type: 'paragraph', content: s ? [{ type: 'text', text: s }] : [] }],
-});
-const sameStatus = (c, want, opts) =>
-  want.option != null ? c.dropdown && opts[c.dropdown.index] === want.option : !c.dropdown && c.text === want.text;
-
-const mdEscape = s => String(s).replace(/([\\`*_[\]<>|])/g, '\\$1');
-
 /** The Changelog line the record gives a deploy (newest first in the tab), unless it came from the tab itself. */
 export function changelogLine(d) {
   if (d.line) return d.line;
@@ -528,114 +515,6 @@ export function changelogLine(d) {
         : 'The B-35 gate: staging first'),
     decision: (d.decisions || []).join(', ') || 'D-049',
   };
-}
-export function changelogCalls(rec, read) {
-  const v = rec.views.changelog,
-    have = new Set(read.rows.slice(1).map(r => r.cells[1].text));
-  const header = read.rows[0].id,
-    rows = [],
-    notes = [];
-  for (const d of rec.deploys.filter(d => !d.line)) {
-    const l = changelogLine(d);
-    if (have.has(l.change)) continue;
-    rows.push({ type: 'row', content: [textCell(l.date), textCell(l.change), textCell(l.why), textCell(l.decision)] });
-    notes.push(`${d.target} ${d.commit}`);
-  }
-  // One insert right under the header, newest first (Docs refuses two inserts on one anchor: they would read reversed).
-  const ops = rows.length
-    ? [
-        {
-          op: 'insert',
-          target: { kind: 'blocks', ids: [header] },
-          side: 'after',
-          source: { as: 'blocks', from: { kind: 'inline', content: rows.reverse() } },
-        },
-      ]
-    : [];
-  return ops.length ? [{ step: `Changelog: ${notes.join(', ')}`, ...docCall(rec.views.doc, v.node, ops) }] : [];
-}
-/** The Decisions tab: a row per decision logged since the import (newest on top), its Status chip, and the intro's next id. */
-export function decisionsCalls(rec, read, intro) {
-  const v = rec.views.decisions;
-  if (!v) return [];
-  const ops = [],
-    notes = [],
-    added = [];
-  const rows = read.rows.slice(1),
-    header = read.rows[0].id,
-    opts = v.statusOptions;
-  const word = d => d.status.charAt(0).toUpperCase() + d.status.slice(1);
-  for (const d of [...rec.decisions].reverse()) {
-    const i = rows.findIndex(r => r.cells[1].text === d.id);
-    if (i < 0) {
-      if (!d.source) continue; // imported (B-92): its row was in the tab; one filed since (log, plan) is added
-      added.push({
-        type: 'row',
-        content: [textCell(d.date), textCell(d.id), textCell(tabTitle(d)), textCell(d.why), textCell(word(d))],
-      });
-      notes.push(`${d.id}: a new row`);
-      continue;
-    }
-    // A tenet's row says so (B-109), also when an imported decision is given the kind later.
-    if (kindOf(d) === 'tenet' && !rows[i].cells[2].text.startsWith(tenetLabel(d))) {
-      ops.push({
-        op: 'replace',
-        target: { kind: 'cell', table: v.table, row: i + 1, col: 2 },
-        ifRev: read.rev,
-        with: { as: 'markdown', from: { kind: 'inline', content: mdEscape(tabTitle(d)) } },
-      });
-      notes.push(`${d.id}: a tenet`);
-    }
-    if (d.restated)
-      for (const [col, text] of [
-        [2, tabTitle(d)],
-        [3, d.why || ''],
-      ])
-        if (rows[i].cells[col].text !== text) {
-          ops.push({
-            op: 'replace',
-            target: { kind: 'cell', table: v.table, row: i + 1, col },
-            ifRev: read.rev,
-            with: { as: 'markdown', from: { kind: 'inline', content: mdEscape(text) } },
-          });
-          notes.push(`${d.id}: ${col === 2 ? 'restated' : 'why'}`);
-        }
-    const c = rows[i].cells[4];
-    if (!sameStatus(c, { option: word(d) }, opts)) {
-      ops.push({
-        op: 'replace',
-        target: { kind: 'cell', table: v.table, row: i + 1, col: 4 },
-        ifRev: read.rev,
-        with: {
-          as: 'markdown',
-          from: { kind: 'inline', content: '<?claude block st?>' },
-          blocks: { st: { type: 'dropdown', enum: v.statusEnum, index: opts.indexOf(word(d)) } },
-        },
-      });
-      notes.push(`${d.id}: status ${word(d)}`);
-    }
-  }
-  // One insert under the header, newest first (Docs refuses two inserts on one anchor).
-  if (added.length)
-    ops.unshift({
-      op: 'insert',
-      target: { kind: 'blocks', ids: [header] },
-      side: 'after',
-      source: { as: 'blocks', from: { kind: 'inline', content: added.reverse() } },
-    });
-  const m = intro && intro.text.match(/next id (D-\d{3})/),
-    next = nextDecisionId(rec);
-  if (m && m[1] !== next) {
-    ops.push({
-      op: 'replace',
-      target: { kind: 'find', text: m[0] },
-      with: { as: 'text', from: { kind: 'inline', content: `next id ${next}` } },
-    });
-    notes.push(`next id ${next}`);
-  }
-  // Cell replaces address rows by position on the table as read, so they go before an insert that would shift them.
-  ops.sort((a, b) => (a.op === 'insert') - (b.op === 'insert'));
-  return ops.length ? [{ step: `Decisions: ${notes.join('; ')}`, ...docCall(rec.views.doc, v.node, ops) }] : [];
 }
 
 /** A Docs read result's {rev, xml}, following the file a large result was saved to. */
@@ -657,7 +536,7 @@ const DOCS = '(?:Claude_Docs|1a59c906-04da-521d-bda7-7f71b9f9e01c)__';
 export const isDocsTool = (name, tool) => new RegExp(DOCS + '(?:' + tool + ')$').test(String(name));
 
 // ------------------------------------------------------------------------------------------------ log, report
-/** One change to the record. Returns {rec, what, views: [view names it touches]}; throws on a refusal. */
+/** One change to the record. Returns {rec, what, id}; throws on a refusal. */
 export function applyLog(rec, o, { now = new Date().toISOString(), builder = builderRun(), jsonl = null } = {}) {
   const [, id] = o._;
   if (id === 'deploy') {
@@ -670,7 +549,7 @@ export function applyLog(rec, o, { now = new Date().toISOString(), builder = bui
       if (!had) throw new Error(`no ${target} deploy at ${o.commit} in the record`);
       if (typeof o.note !== 'string' || !o.note) throw new Error('log deploy --correct needs --note');
       had.notes = [...(had.notes || []), o.note];
-      return { rec, what: `${target} deploy at ${had.commit}: note`, id: 'deploy', views: [] };
+      return { rec, what: `${target} deploy at ${had.commit}: note`, id: 'deploy' };
     }
     const live = rec.deploys.filter(d => d.target === 'live').at(-1);
     const d = {
@@ -701,7 +580,6 @@ export function applyLog(rec, o, { now = new Date().toISOString(), builder = bui
       rec,
       what: `${target} deploy at ${d.commit}`,
       id: d.tasks.at(-1) || 'deploy',
-      views: target === 'live' ? ['changelog', 'overview'] : ['changelog'],
     };
   }
   if (id === 'decision') {
@@ -733,8 +611,7 @@ export function applyLog(rec, o, { now = new Date().toISOString(), builder = bui
       amends: [],
       source: 'log',
     };
-    // A decision restated after it was filed (Matt, Oct 20: D-123 to D-126 to the UI tenets) carries its new words
-    // to the Decisions tab: views replaces its title and why cells while they differ.
+    // A decision restated after it was filed (Matt, Oct 20: D-123 to D-126 to the UI tenets) is marked with the date.
     if (old && (o.restated || (o.title && o.title !== d.title) || (o.why && o.why !== d.why))) d.restated = ctDate(now);
     if (o.title) d.title = o.title;
     if (o.why) d.why = o.why;
@@ -770,7 +647,6 @@ export function applyLog(rec, o, { now = new Date().toISOString(), builder = bui
       rec,
       what: `${kindOf(d)} ${did} (${d.status}${kindOf(d) === 'tenet' ? `, ${d.scope.join(', ')}, ${d.check}` : ''})`,
       id: o.task || did,
-      views: ['decisions', 'decisionsIntro'],
     };
   }
   if (id === 'rule') {
@@ -800,7 +676,7 @@ export function applyLog(rec, o, { now = new Date().toISOString(), builder = bui
       throw new Error('log rule needs --rule, --decision, --command and --fn');
     if (!rec.decisions.some(d => d.id === r.decision)) throw new Error(`${r.decision} is not in the record`);
     if (!had) rec.rules.push(r);
-    return { rec, what: `rule ${rid} (${r.check}${r.ended ? ', ended' : ''})`, id: r.task || rid, views: [] };
+    return { rec, what: `rule ${rid} (${r.check}${r.ended ? ', ended' : ''})`, id: r.task || rid };
   }
   if (id === 'new') {
     // A task the design names that the record lacks (the Build plan tab's B-74, say): never an id already in use.
@@ -824,7 +700,7 @@ export function applyLog(rec, o, { now = new Date().toISOString(), builder = bui
     const at = o.after ? rec.tasks.findIndex(x => x.id === o.after) : -1;
     if (o.after && at < 0) throw new Error(`--after ${o.after}: no such task`);
     rec.tasks.splice(at < 0 ? rec.tasks.length : at + 1, 0, t);
-    return { rec, what: `new task (${t.milestone})`, id: nid, views: [] };
+    return { rec, what: `new task (${t.milestone})`, id: nid };
   }
   const tasks = findTask(rec, id);
   if (!tasks.length) throw new Error(`no task ${id} in the record`);
@@ -996,7 +872,7 @@ export function applyLog(rec, o, { now = new Date().toISOString(), builder = bui
     what.push('where');
   }
   if (!what.length) throw new Error('nothing to log: give --status, --note, --commit, --triage or a board field');
-  return { rec, what: what.join(', '), id: t.id, views: t.board || t.kind !== 'task' ? ['board'] : [] };
+  return { rec, what: what.join(', '), id: t.id };
 }
 export function applyReport(rec, o, { now = new Date().toISOString(), jsonl = null } = {}) {
   const [, kind, ...rest] = o._;
@@ -1079,7 +955,6 @@ export function applyReport(rec, o, { now = new Date().toISOString(), jsonl = nu
     rec,
     what: `${kind} reported`,
     id,
-    views: ['board'],
     reply: o.reply
       ? commentReply(
           rec,
@@ -2479,7 +2354,7 @@ export function brief(rec, id, { root = HERE, scope: override, now = Date.now() 
   out.push(
     '## Record as you go',
     `- Start: node tools/chart.mjs log ${t.id} --status "in progress" --note "..."`,
-    `- Finish: node tools/chart.mjs log ${t.id} --status done --commit <sha> --note "one line"; then views prints the Board call.`
+    `- Finish: node tools/chart.mjs log ${t.id} --status done --commit <sha> --note "one line"`
   );
   return out.join('\n');
 }
@@ -3088,12 +2963,6 @@ export function testTexts(root) {
 function writeBacklog(root, rec) {
   for (const [f, text] of Object.entries(generatedFiles(rec))) fs.writeFileSync(path.join(root, f), text);
 }
-function printViews(rec) {
-  // B-143 (D-172): the Docs views are retired; the record's own files are their replacement, written with it.
-  console.log(
-    `views: retired (${rec.views.retired.by}, ${rec.views.retired.at}): BACKLOG.md, DECISIONS.md and CHANGELOG.md are written with the record; no Docs calls`
-  );
-}
 
 const commands = {
   backlog(o) {
@@ -3122,25 +2991,6 @@ const commands = {
     });
     console.log(o.json ? JSON.stringify(f, null, 1) : formatLint(f));
     return f.some(x => x.level === 'error') ? 1 : 0;
-  },
-  views(o) {
-    const root = rootOf(o),
-      rec = loadChart(root);
-    // B-143 (D-172): retiring the Docs views keeps their doc ids, marked with the decision and the date.
-    if (o.retire) {
-      if (typeof o.by !== 'string' || !rec.decisions.some(d => d.id === o.by))
-        throw new Error('views --retire --by <the decision that retires them> [--at YYYY-MM-DD]');
-      rec.views.retired = {
-        by: o.by,
-        at: typeof o.at === 'string' ? o.at : ctDate(new Date().toISOString()),
-        views: ['board', 'changelog', 'decisions', 'overview'],
-        note: 'The ids above are kept for reading (the inbox still reads Board comments); nothing writes these views.',
-      };
-      saveChart(root, rec);
-      writeBacklog(root, rec);
-    }
-    printViews(rec, o);
-    return 0;
   },
   inbox(o) {
     const file = o.transcript || newestTranscript();
@@ -3238,11 +3088,9 @@ const commands = {
     if (!o['no-commit']) syncRecord(root);
     const rec = loadChart(root),
       filed = [];
-    let views = [];
     for (const c of p.commands) {
-      const r = applyLog(rec, args(c));
+      applyLog(rec, args(c));
       filed.push(c[2]);
-      views = [...new Set([...views, ...r.views])];
     }
     const errors = lintChart(rec).filter(f => f.level === 'error' && filed.includes(f.id));
     if (errors.length)
@@ -3261,7 +3109,6 @@ const commands = {
       `plan: filed ${filed.join(', ')}${sha ? pushedText(sha, pushRecord(root)) : '; not committed (--no-commit)'}`
     );
     console.log('BACKLOG.md regenerated.');
-    if (views.length) printViews(rec, o, views);
     return 0;
   },
 };
@@ -3271,7 +3118,7 @@ function record(o, apply) {
   const rec = loadChart(root);
   const file = o.transcript || newestTranscript();
   const jsonl = file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
-  const { what, id, views, reply } = apply(rec, o, { jsonl });
+  const { what, id, reply } = apply(rec, o, { jsonl });
   const errors = lintChart(rec).filter(f => f.level === 'error' && f.id === id);
   if (errors.length) throw new Error('the record would not lint: ' + errors.map(f => f.detail).join('; '));
   saveChart(root, rec);
@@ -3284,7 +3131,6 @@ function record(o, apply) {
   console.log('BACKLOG.md regenerated.');
   if (reply)
     console.log(`Reply in the comment's thread with the id it got: ${reply.tool}\n${JSON.stringify(reply.args)}`);
-  if (views.length) printViews(rec, o, views);
   return 0;
 }
 
@@ -3293,7 +3139,7 @@ export async function main(argv) {
     cmd = commands[o._[0]];
   if (!cmd) {
     console.error(
-      'Commands: report, inbox, log, views, lint, ship <staging|live>, brief --task <id>, plan --from <doc link> [--apply], backlog [--check]'
+      'Commands: report, inbox, log, lint, ship <staging|live>, brief --task <id>, plan --from <doc link> [--apply], backlog [--check]'
     );
     return 2;
   }
