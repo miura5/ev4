@@ -5233,12 +5233,12 @@
   "title": "Today budget card (C-5): what's left against the time left (\"55 min left · 60 free\"), done minutes on their own line, and the bar in the warning colour when the day is over budget. Built from planDay's budget, never a fixed figure.",
   "dod": "Screenshots at 390 and 1280 in light and dark: one under budget, one over. On a planted day, ticking a task moves its minutes from left to done and never makes the day look emptier. Over budget turns the bar to the warning colour with its text at 4.5:1.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-291",
    "B-308"
   ],
-  "notes": "Waits on B-308, so new tasks carry their minutes into the budget (Matt, Oct 24).",
+  "notes": "claimed by lane today",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
