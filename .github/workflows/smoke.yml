@@ -13,6 +13,7 @@ on:
       - 'DECISIONS.md'
       - 'CHANGELOG.md'
       - 'tools/chart.mjs'
+      - 'tools/chart/**'
       - 'test/chart.test.mjs'
       - 'docs/**'
   pull_request:
@@ -22,6 +23,7 @@ on:
       - 'DECISIONS.md'
       - 'CHANGELOG.md'
       - 'tools/chart.mjs'
+      - 'tools/chart/**'
       - 'test/chart.test.mjs'
       - 'docs/**'
   workflow_dispatch:
