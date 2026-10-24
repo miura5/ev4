@@ -96,10 +96,22 @@ Pipeline behavior is out of the trim's scope; these rows are for the picture onl
 The brief's order, with what each trimmer may reach:
 
 1. Process that can't fire again, and text-only cuts:
-   1. R-01's leftover check in `tools/chart.mjs` (`trim/r01-check`). The rules.json row stays.
+   1. R-01's leftover check in `tools/chart.mjs` (`trim/r01-check`). The rules.json row stays. **Done: #2.**
    2. The SessionStart probe hook: **skip for trimmers** (`.claude/settings.json`); a build chat can do it on Matt's OK.
+      **Done Oct 23 (D-262).**
+   3. R-05's leftover check: the watchdog-window code in `tools/chart.mjs` and its test (`trim/r05-check`). R-05 was
+      retired Oct 23 (D-262) and its rules.json row stays, marked ended.
 2. CLAUDE.md: the gotchas move to a lessons file (`trim/gotchas`), then the opening (`trim/claude-opening`) and the
    rollback paragraph (`trim/rollback-text`).
 3. Dead code in `tools/chart.mjs`: the Docs-view calls (`trim/docs-views`), then the one-time v3 import
    (`trim/v3-import`).
 4. Test and check time: smoke on page changes only (`trim/smoke-scope`).
+
+## Keeping this queue current
+
+- **When a cut merges,** the build chat marks its item done here, with its pull request number.
+- **A trimmer that spots another candidate** while cutting lists it under "Found next" in its pull request. The build
+  chat adds it here when it merges that pull request.
+- **When every item is done or claimed,** the next trimmer run refills the queue instead of cutting. It maps the
+  largest process files (tools/chart.mjs first, then core/deploy.mjs and the test suite) with helpers, and opens a pull
+  request that adds new ranked items here, with evidence for each.
