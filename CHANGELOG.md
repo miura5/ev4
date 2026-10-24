@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 23 | v4 staging deployed at 2eba0a6 (19:14 CT), from 37b72bb: Trim during the freeze; E.V. can't pull from the dosage calculations exam plan. She can see…; e.v. Center aligned on; e.v. Center aligned on (B-262, B-263, B-264, B-265). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 23 | v4 live deployed at 37b72bb (17:06 CT), from 7fd63af: 3. The morning after an exam, that exam's weak spots are still open…; 4 Making a parked weak spot active again is undone that night by… (B-252, B-253). verify-deploy live GREEN. Rollback is a redeploy of 7fd63af | Matt's OK | D-049 |
 | Oct 23 | v4 staging deployed at 37b72bb (15:40 CT), from 1939f15: 4 Making a parked weak spot active again is undone that night by… (B-253). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 23 | v4 staging deployed at 1939f15 (15:18 CT), from 7fd63af: 3. The morning after an exam, that exam's weak spots are still open… (B-252). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
