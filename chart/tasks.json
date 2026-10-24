@@ -4945,11 +4945,11 @@
   "title": "Sweep for D-270 (superseding D-221): every teal, amber, coral and forget-me-not blue in page source, harnesses and tests moves to its coded colour or to neutral; links, focus and selection are neutral; lint names no open task or test that cites D-221, D-214 or D-212",
   "dod": "grep of page/ and test/ finds none of the old hex values; the look pass at 390 × 844 and 1280 shows Ember only on her, the primary button and send; lint clean; npm test green",
   "milestone": "v4.7 look",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-271"
   ],
-  "notes": "",
+  "notes": "claimed by this run",
   "commit": null,
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
