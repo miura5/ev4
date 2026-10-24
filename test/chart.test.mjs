@@ -156,15 +156,6 @@ const sample = () => ({
 });
 const cellX = (id, text, dd) =>
   `<cell id='${id}' h='h${id.slice(-2)}'><paragraph id='${id}p'>${dd != null ? `<dropdown id='${id}d' enum='E1' index='${dd}'>${['Done', 'In progress', 'Next', 'Waiting on Matt', 'Later'][dd]}</dropdown>` : `<text id='${id}t'>${text}</text>`}</paragraph></cell>`;
-const boardXml = rows =>
-  `<doc node='BN' rev='7' parent='s1.10'><table id='s1.10' h='t'><row id='.11' h='r0'>${cellX('.12', 'Task')}${cellX('.13', 'Why')}${cellX('.14', 'Status')}${cellX('.15', 'Notes')}</row>` +
-  rows
-    .map(
-      (r, i) =>
-        `<row id='.${30 + i * 10}' h='r${i}'>${cellX(`.${31 + i * 10}`, r[0])}${cellX(`.${32 + i * 10}`, r[1])}${cellX(`.${33 + i * 10}`, r[2], r[3])}${cellX(`.${34 + i * 10}`, r[4])}</row>`
-    )
-    .join('') +
-  '</table></doc>';
 
 test('B-93: log changes one task and refuses what it must', () => {
   const r = sample();
@@ -205,62 +196,6 @@ test('B-93: log changes one task and refuses what it must', () => {
   assert.equal(r.decisions.find(x => x.id === 'D-002').status, 'superseded');
 });
 
-test('B-93: the Board calls replace changed cells in place and add missing rows, chip on the next run', () => {
-  const r = sample();
-  r.tasks[1].status = 'in progress';
-  const read = C.parseTableXml(
-    boardXml([
-      ['v4 B-01: one', 'why one', 'Done', 0, 'n1'],
-      ['v4 B-02: two', 'why two', 'Next', 2, 'n2'],
-    ])
-  );
-  assert.equal(read.rev, 7);
-  assert.equal(read.rows[1].id, 's1.30', 'short ids read in full');
-  const calls = C.boardCalls(r, read);
-  assert.equal(calls.length, 1);
-  const ops = calls[0].args.payload.ops;
-  assert.deepEqual(ops, [
-    {
-      op: 'replace',
-      target: { kind: 'cell', table: 's1.10', row: 2, col: 2 },
-      ifRev: 7,
-      with: {
-        as: 'markdown',
-        from: { kind: 'inline', content: '<?claude block st?>' },
-        blocks: { st: { type: 'dropdown', enum: 'E1', index: 1 } },
-      },
-    },
-  ]);
-  assert.match(calls[0].step, /B-02: status Next -> In progress/);
-  // A task with a Board entry and no row: appended, its status as text; the next read sees the text and chips it.
-  r.tasks[2].board = { row: 'v4 B-03: three', why: 'w3', notes: '' };
-  const add = C.boardCalls(r, read)[0].args.payload.ops.at(-1);
-  assert.equal(add.op, 'insert');
-  assert.equal(add.side, 'end');
-  assert.equal(add.source.from.content[0].content[2].content[0].content[0].text, 'Next');
-  const after = C.parseTableXml(
-    boardXml([
-      ['v4 B-01: one', 'why one', 'Done', 0, 'n1'],
-      ['v4 B-02: two', 'why two', 'In progress', 1, 'n2'],
-      ['v4 B-03: three', 'w3', 'Next', null, ''],
-    ])
-  );
-  const chip = C.boardCalls(r, after)[0].args.payload.ops;
-  assert.deepEqual(
-    chip.map(o => [o.op, o.target.row, o.with.blocks.st.index]),
-    [['replace', 3, 2]]
-  );
-  r.tasks[2].status = 'open';
-  const inStep = C.parseTableXml(
-    boardXml([
-      ['v4 B-01: one', 'why one', 'Done', 0, 'n1'],
-      ['v4 B-02: two', 'why two', 'In progress', 1, 'n2'],
-      ['v4 B-03: three', 'w3', 'Next', 2, ''],
-    ])
-  );
-  assert.deepEqual(C.boardCalls(r, inStep), [], 'in step: nothing to print');
-});
-
 test('B-93: the Changelog gets a row per logged deploy, newest on top; imported rows are never re-added', () => {
   const r = sample();
   const read = C.parseTableXml(
@@ -289,70 +224,6 @@ test('B-93: the Changelog gets a row per logged deploy, newest on top; imported 
       'D-002',
     ]
   );
-});
-
-test('B-93: the overview status line follows the newest live deploy', () => {
-  const r = sample();
-  const para = C.parseParagraphXml(
-    `<doc rev='3'><paragraph id='s9.5' h='p'><text id='.6'>The live page has been on build </text><text id='.7'>0000000 since 4pm on Oct 19, after a day</text></paragraph></doc>`,
-    's9.5'
-  );
-  const [call] = C.overviewCalls(r, para);
-  assert.deepEqual(call.args.payload.ops, [
-    {
-      op: 'replace',
-      target: { kind: 'find', text: 'on build 0000000 since 4pm on Oct 19' },
-      with: { as: 'text', from: { kind: 'inline', content: 'on build 1111111 since 4:20pm on Oct 19' } },
-    },
-  ]);
-  assert.deepEqual(C.overviewCalls(r, { ...para, text: 'on build 1111111 since 4:20pm on Oct 19' }), []);
-});
-
-test('B-93: views finds the newest read of each view in the transcript, stale once the view is updated', () => {
-  const r = sample(),
-    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-views-'));
-  const saved = path.join(dir, 'big.txt');
-  const verdict = xml => JSON.stringify({ verdict: 'allow', rev: 7, data: { rev: 7, xml } });
-  fs.writeFileSync(
-    saved,
-    JSON.stringify([
-      { type: 'text', text: '<artifact-content-authored-by-others/>' },
-      { type: 'text', text: verdict(boardXml([['v4 B-01: one', 'why one', 'Done', 0, 'n1']])) },
-    ])
-  );
-  const line = (id, name, input, result) => [
-    JSON.stringify({ message: { content: [{ type: 'tool_use', id, name, input }] } }),
-    JSON.stringify({
-      message: { content: [{ type: 'tool_result', tool_use_id: id, content: [{ type: 'text', text: result }] }] },
-    }),
-  ];
-  const boardRead = {
-    ref: { object: 'node', id: 'BN' },
-    engine: 'prose',
-    container: { kind: 'project', id: 'DOC' },
-    payload: { kind: 'view', parentId: 's1.10' },
-  };
-  let jsonl = line(
-    'a',
-    'mcp__Claude_Docs__read',
-    boardRead,
-    `Error: result (88,413 characters) exceeds maximum allowed tokens. Output has been saved to ${saved}.`
-  ).join('\n');
-  let plan = C.viewsPlan(r, C.viewReads(r, jsonl), ['board']);
-  assert.deepEqual(plan.needs, []);
-  assert.match(plan.calls[0].step, /B-02: a new row/);
-  jsonl +=
-    '\n' +
-    line(
-      'b',
-      'mcp__Claude_Docs__update',
-      { ref: { object: 'node', id: 'BN' }, payload: {} },
-      '{"verdict":"allow"}'
-    ).join('\n');
-  plan = C.viewsPlan(r, C.viewReads(r, jsonl), ['board']);
-  assert.equal(plan.needs[0].why, 'updated since the last read');
-  assert.deepEqual(plan.needs[0].args, boardRead);
-  assert.equal(C.viewsPlan(r, {}, ['changelog']).needs[0].why, 'no read in this session');
 });
 
 test('B-93: log writes the record, regenerates BACKLOG.md and commits both, nothing else', () => {
@@ -527,7 +398,6 @@ test("B-95: report takes Matt's words from his message, exactly as written", () 
     [out.id, t.kind, t.status, t.words, t.source, t.reportedAt],
     ['B-04', 'bug', 'inbox', 'the timer sat at 0:00 after I came back', 'build chat', '2026-10-19T23:41:00.000Z']
   );
-  assert.deepEqual(C.boardRow(t, r).status, { text: 'New report' });
   assert.match(
     C.renderBacklog(r),
     /## Inbox[\s\S]*\| B-04 \| bug \| 2026-10-19T23:41:00.000Z \| the timer sat at 0:00 after I came back \| build chat \| inbox \|/
@@ -560,7 +430,6 @@ test('B-95: triage comes first, then the entry becomes a task, joins one, or is 
   });
   const t = r.tasks.find(x => x.id === 'B-04');
   assert.deepEqual([t.status, t.milestone, t.triage.outcome], ['open', 'M11', 'task']);
-  assert.deepEqual(C.boardRow(t, r).status, { option: 'Next' });
   assert.match(
     C.renderBacklog(r),
     /\| B-04 \| Bug \(reported Oct 19\): the timer sat at 0:00 Done when: the clock resumes/
@@ -573,13 +442,13 @@ test('B-95: triage comes first, then the entry becomes a task, joins one, or is 
   assert.throws(() => C.applyLog(r, { _: ['log', 'B-06'], triage: 'decline' }), /needs --reason/);
   C.applyLog(r, { _: ['log', 'B-06'], triage: 'decline', reason: 'the page is dark only by design (D-077)' });
   assert.deepEqual(
-    r.tasks.slice(-2).map(x => [x.id, x.status, C.boardRow(x, r).status.text]),
+    r.tasks.slice(-2).map(x => [x.id, x.status, x.triage.outcome, x.triage.into]),
     [
-      ['B-05', 'declined', 'Joined B-02'],
-      ['B-06', 'declined', 'Declined'],
+      ['B-05', 'declined', 'joined', 'B-02'],
+      ['B-06', 'declined', 'declined', undefined],
     ]
   );
-  assert.match(C.boardRow(r.tasks.at(-1), r).notes, /^the page is dark only by design \(D-077\)/);
+  assert.equal(r.tasks.at(-1).triage.reason, 'the page is dark only by design (D-077)');
   assert.deepEqual(
     C.lintChart(r).filter(f => f.level === 'error'),
     []
@@ -593,7 +462,7 @@ test('B-95: triage comes first, then the entry becomes a task, joins one, or is 
   assert.throws(() => C.applyLog(r, { _: ['log', 'B-04'], triage: 'decline' }), /needs --reason/);
   C.applyLog(r, { _: ['log', 'B-04'], triage: 'decline', reason: 'Matt: not worth a session' });
   const d = r.tasks.find(x => x.id === 'B-04');
-  assert.deepEqual([d.status, d.triage.outcome, C.boardRow(d, r).status.text], ['declined', 'declined', 'Declined']);
+  assert.deepEqual([d.status, d.triage.outcome], ['declined', 'declined']);
   assert.deepEqual(
     C.lintChart(r).filter(f => f.level === 'error'),
     []

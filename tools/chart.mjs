@@ -110,11 +110,6 @@ export const ctClock = iso => {
   const p = parts(new Date(iso), { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
   return `${p.hour}:${p.minute}`;
 };
-/** "4:20pm", or "4pm" on the hour, in Central time. */
-export const ctTwelve = iso => {
-  const p = parts(new Date(iso), { hour: 'numeric', minute: '2-digit', hour12: true });
-  return `${p.hour}${p.minute === '00' ? '' : ':' + p.minute}${p.dayPeriod.toLowerCase()}`;
-};
 
 // ------------------------------------------------------------------------------------------------ BACKLOG.md
 // As BACKLOG.md stood when the Chart imported it (B-92), and as it reads since the cutover (B-97, D-140).
@@ -388,23 +383,6 @@ export function parseTableXml(xml) {
     }
   }
   return { rev, rows };
-}
-/** The text of one paragraph in a prose read, with its id. */
-export function parseParagraphXml(xml, id) {
-  const ent = s =>
-    s
-      .replace(/&apos;/g, "'")
-      .replace(/&quot;/g, '"')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&amp;/g, '&');
-  const rev = Number((xml.match(/<doc [^>]*rev='(\d+)'/) || [])[1]);
-  const i = xml.indexOf(`<paragraph id='${id}'`);
-  if (i < 0) return null;
-  const end = xml.indexOf('</paragraph>', i);
-  const body = xml.slice(i, end),
-    h = (body.match(/\bh='([^']+)'/) || [])[1];
-  return { rev, h, text: ent(body.replace(/<[^>]+>/g, '')) };
 }
 
 // A deploy sentence names a target and a commit it put there; these are the words that say so.
@@ -783,26 +761,7 @@ export function formatLint(findings) {
 // ------------------------------------------------------------------------------------------------ the views
 export const tenetLabel = d => `Tenet (${(d.scope || []).join(', ')}; checked by ${d.check}): `;
 const tabTitle = d => (kindOf(d) === 'tenet' ? tenetLabel(d) : '') + d.title;
-// Board status: the record's status in the Board's own words (its Status dropdown), or plain text where it has none.
-export function boardStatus(t, rec) {
-  if (t.status === 'inbox') return { text: 'New report' };
-  if (t.status === 'declined') return { text: t.triage && t.triage.into ? `Joined ${t.triage.into}` : 'Declined' };
-  if (t.waitingOn && t.status !== 'done') return { option: 'Waiting on Matt' };
-  if (t.status === 'blocked') return { option: 'Waiting on Matt' };
-  return { option: { done: 'Done', 'in progress': 'In progress', open: 'Next' }[t.status] };
-}
 export const boardName = t => (t.board && t.board.row) || `v4 ${t.id}: ${t.name || t.title.split(/[:(]/)[0].trim()}`;
-/** The Board row the record says a task has: [task, why, status, notes]. */
-export function boardRow(t, rec) {
-  const b = t.board || {};
-  const notes =
-    t.status === 'declined'
-      ? `${t.triage.reason}${b.notes ? '. ' + b.notes : ''}`
-      : b.notes != null
-        ? b.notes
-        : t.notes;
-  return { name: boardName(t), why: b.why != null ? b.why : t.words || t.title, status: boardStatus(t, rec), notes };
-}
 
 const docCall = (doc, node, ops) => ({
   tool: 'mcp__Claude_Docs__update',
@@ -820,85 +779,6 @@ const textCell = s => ({
 const sameStatus = (c, want, opts) =>
   want.option != null ? c.dropdown && opts[c.dropdown.index] === want.option : !c.dropdown && c.text === want.text;
 
-/**
- * The calls that make the Board match the record, from a read of its table. Changed cells are replaced in place by
- * position (guarded on the read's rev); a task with no row gets one at the end (its status as text: the dropdown
- * chip goes in on the next run, which sees the text and replaces it).
- */
-export function boardCalls(rec, read) {
-  const v = rec.views.board,
-    opts = v.statusOptions,
-    calls = [],
-    notes = [];
-  const rows = read.rows.slice(1),
-    ops = [];
-  const used = new Set();
-  for (const t of rec.tasks.filter(t => t.board || t.kind !== 'task')) {
-    const want = boardRow(t, rec);
-    const names = [want.name, ...((t.board && t.board.were) || [])];
-    const i = rows.findIndex((r, k) => !used.has(k) && names.includes(r.cells[0].text));
-    if (i < 0) {
-      ops.push({
-        op: 'insert',
-        target: { kind: 'blocks', ids: [v.table] },
-        side: 'end',
-        source: {
-          as: 'blocks',
-          from: {
-            kind: 'inline',
-            content: [
-              {
-                type: 'row',
-                content: [
-                  textCell(want.name),
-                  textCell(want.why),
-                  textCell(want.status.option || want.status.text),
-                  textCell(want.notes),
-                ],
-              },
-            ],
-          },
-        },
-      });
-      notes.push(`${t.id}: a new row`);
-      continue;
-    }
-    used.add(i);
-    const r = rows[i],
-      row = i + 1;
-    const replace = (col, md, blocks) =>
-      ops.push({
-        op: 'replace',
-        target: { kind: 'cell', table: v.table, row, col },
-        ifRev: read.rev,
-        with: { as: 'markdown', from: { kind: 'inline', content: md }, ...(blocks ? { blocks } : {}) },
-      });
-    if (r.cells[0].text !== want.name) {
-      replace(0, mdEscape(want.name));
-      notes.push(`${t.id}: name "${r.cells[0].text}" -> "${want.name}"`);
-    }
-    if (r.cells[1].text !== want.why) {
-      replace(1, mdEscape(want.why));
-      notes.push(`${t.id}: why`);
-    }
-    if (!sameStatus(r.cells[2], want.status, opts)) {
-      if (want.status.option != null)
-        replace(2, '<?claude block st?>', {
-          st: { type: 'dropdown', enum: v.statusEnum, index: opts.indexOf(want.status.option) },
-        });
-      else replace(2, mdEscape(want.status.text));
-      notes.push(
-        `${t.id}: status ${r.cells[2].dropdown ? opts[r.cells[2].dropdown.index] : `"${r.cells[2].text}"`} -> ${want.status.option || want.status.text}`
-      );
-    }
-    if (r.cells[3].text !== want.notes) {
-      replace(3, mdEscape(want.notes));
-      notes.push(`${t.id}: notes`);
-    }
-  }
-  if (ops.length) calls.push({ step: `Board: ${notes.join('; ')}`, ...docCall(rec.views.doc, v.node, ops) });
-  return calls;
-}
 const mdEscape = s => String(s).replace(/([\\`*_[\]<>|])/g, '\\$1');
 
 /** The Changelog line the record gives a deploy (newest first in the tab), unless it came from the tab itself. */
@@ -1029,34 +909,6 @@ export function decisionsCalls(rec, read, intro) {
   ops.sort((a, b) => (a.op === 'insert') - (b.op === 'insert'));
   return ops.length ? [{ step: `Decisions: ${notes.join('; ')}`, ...docCall(rec.views.doc, v.node, ops) }] : [];
 }
-const STATUS_LINE = /on build ([0-9a-f]{7,}) since (\S+?) on ([A-Z][a-z]{2} \d{1,2})/;
-/** The overview doc's status line: the build live runs and since when, from the newest live deploy. */
-export function overviewCalls(rec, para) {
-  const live = rec.deploys.filter(d => d.target === 'live').at(-1);
-  if (!live || !para) return [];
-  const m = para.text.match(STATUS_LINE);
-  if (!m)
-    return [
-      {
-        note: `the overview's status line no longer reads "on build <commit> since <time> on <date>"; nothing printed`,
-      },
-    ];
-  const want = `on build ${live.commit} since ${live.time.length > 10 ? ctTwelve(live.time) : 'the deploy'} on ${ctDate(live.time)}`;
-  if (m[0] === want) return [];
-  const v = rec.views.overview;
-  return [
-    {
-      step: `overview status line: "${m[0]}" -> "${want}"`,
-      ...docCall(v.doc, v.node, [
-        {
-          op: 'replace',
-          target: { kind: 'find', text: m[0] },
-          with: { as: 'text', from: { kind: 'inline', content: want } },
-        },
-      ]),
-    },
-  ];
-}
 
 /** A Docs read result's {rev, xml}, following the file a large result was saved to. */
 export function readBody(texts) {
@@ -1072,124 +924,9 @@ export function readBody(texts) {
   const v = JSON.parse(t.slice(i, t.lastIndexOf('}') + 1));
   return v.verdict === 'allow' && v.data ? { rev: v.data.rev, xml: v.data.xml } : null;
 }
-/**
- * The newest read of each view in a transcript (a Claude_Docs read whose parentId is the view's table or paragraph),
- * and whether a Docs update to that node came after it (then the read is stale).
- */
 // The Claude Docs connector's tools: named Claude_Docs in most sessions, by the connector's id in others.
 const DOCS = '(?:Claude_Docs|1a59c906-04da-521d-bda7-7f71b9f9e01c)__';
 export const isDocsTool = (name, tool) => new RegExp(DOCS + '(?:' + tool + ')$').test(String(name));
-export function viewReads(rec, jsonl) {
-  const all = toolResults(jsonl, '*');
-  const isRead = r => isDocsTool(r.name, 'read'),
-    isUpdate = r => isDocsTool(r.name, 'update|batch');
-  const want = {
-    board: [rec.views.board.node, rec.views.board.table],
-    changelog: [rec.views.changelog.node, rec.views.changelog.table],
-    overview: [rec.views.overview.node, rec.views.overview.paragraph],
-  };
-  if (rec.views.decisions)
-    Object.assign(want, {
-      decisions: [rec.views.decisions.node, rec.views.decisions.table],
-      decisionsIntro: [rec.views.decisions.node, rec.views.decisions.intro],
-    });
-  const out = {};
-  for (const [k, [node, parent]] of Object.entries(want)) {
-    let at = -1;
-    all.forEach((r, i) => {
-      if (
-        isRead(r) &&
-        r.input &&
-        r.input.ref &&
-        r.input.ref.id === node &&
-        r.input.payload &&
-        r.input.payload.parentId === parent &&
-        !r.isError
-      )
-        at = i;
-    });
-    const updated = all.some((r, i) => i > at && isUpdate(r) && r.input && r.input.ref && r.input.ref.id === node);
-    out[k] = at < 0 ? { missing: true } : { stale: updated, body: readBody(all[at].texts) };
-  }
-  return out;
-}
-export const readCall = (doc, node, parentId) => ({
-  tool: 'mcp__Claude_Docs__read',
-  args: {
-    ref: { object: 'node', id: node },
-    engine: 'prose',
-    container: { kind: 'project', id: doc },
-    payload: { kind: 'view', parentId },
-  },
-});
-/** Views: the reads still to make, else the calls. which: the views to cover (default all three). */
-export function viewsPlan(
-  rec,
-  reads,
-  which = ['board', 'changelog', 'overview', ...(rec.views.decisions ? ['decisions', 'decisionsIntro'] : [])]
-) {
-  const v = rec.views,
-    needs = [],
-    calls = [],
-    notes = [];
-  const call = {
-    board: () => readCall(v.doc, v.board.node, v.board.table),
-    changelog: () => readCall(v.doc, v.changelog.node, v.changelog.table),
-    overview: () => readCall(v.overview.doc, v.overview.node, v.overview.paragraph),
-    decisions: () => readCall(v.doc, v.decisions.node, v.decisions.table),
-    decisionsIntro: () => readCall(v.doc, v.decisions.node, v.decisions.intro),
-  };
-  for (const k of which) {
-    const r = reads[k];
-    if (!r || r.missing || r.stale || !r.body) {
-      needs.push({
-        view: k,
-        ...call[k](),
-        why:
-          !r || r.missing
-            ? 'no read in this session'
-            : r.stale
-              ? 'updated since the last read'
-              : 'the last read was refused',
-      });
-      continue;
-    }
-    if (k === 'board') calls.push(...boardCalls(rec, parseTableXml(r.body.xml)));
-    if (k === 'changelog') calls.push(...changelogCalls(rec, parseTableXml(r.body.xml)));
-    if (k === 'decisions')
-      calls.push(
-        ...decisionsCalls(
-          rec,
-          parseTableXml(r.body.xml),
-          reads.decisionsIntro && reads.decisionsIntro.body && !reads.decisionsIntro.stale
-            ? parseParagraphXml(reads.decisionsIntro.body.xml, v.decisions.intro)
-            : null
-        )
-      );
-    if (k === 'overview')
-      for (const c of overviewCalls(rec, parseParagraphXml(r.body.xml, v.overview.paragraph)))
-        (c.note ? notes : calls).push(c.note || c);
-  }
-  return { needs, calls, notes };
-}
-export function formatViews(plan) {
-  const out = [];
-  if (plan.needs.length) {
-    out.push(
-      `views: ${plan.needs.length} read${plan.needs.length === 1 ? '' : 's'} first (the results stay in this session's transcript; nothing to save), then run views again:`
-    );
-    for (const n of plan.needs) out.push(`  ${n.view} (${n.why}): ${n.tool}`, '  ' + JSON.stringify(n.args));
-  }
-  if (plan.calls.length) {
-    out.push(
-      `views: ${plan.calls.length} call${plan.calls.length === 1 ? '' : 's'}. Make each exactly as printed, then read the view again and run views (in step when it prints nothing to do).`
-    );
-    plan.calls.forEach((c, i) => out.push('', `${i + 1}. ${c.step}: ${c.tool}`, JSON.stringify(c.args)));
-  }
-  for (const n of plan.notes) out.push('note: ' + n);
-  if (!plan.needs.length && !plan.calls.length) out.push('views: in step with the record; nothing to do');
-  return out.join('\n');
-}
 
 // ------------------------------------------------------------------------------------------------ log, report
 /** One change to the record. Returns {rec, what, views: [view names it touches]}; throws on a refusal. */
@@ -3623,19 +3360,11 @@ export function testTexts(root) {
 function writeBacklog(root, rec) {
   for (const [f, text] of Object.entries(generatedFiles(rec))) fs.writeFileSync(path.join(root, f), text);
 }
-function printViews(rec, o, which) {
+function printViews(rec) {
   // B-143 (D-172): the Docs views are retired; the record's own files are their replacement, written with it.
-  if (rec.views.retired) {
-    console.log(
-      `views: retired (${rec.views.retired.by}, ${rec.views.retired.at}): BACKLOG.md, DECISIONS.md and CHANGELOG.md are written with the record; no Docs calls`
-    );
-    return { needs: [], calls: [], notes: [] };
-  }
-  const file = o.transcript || newestTranscript();
-  const reads = file ? viewReads(rec, fs.readFileSync(file, 'utf8')) : {};
-  const plan = viewsPlan(rec, reads, which);
-  console.log(formatViews(plan));
-  return plan;
+  console.log(
+    `views: retired (${rec.views.retired.by}, ${rec.views.retired.at}): BACKLOG.md, DECISIONS.md and CHANGELOG.md are written with the record; no Docs calls`
+  );
 }
 
 const commands = {
