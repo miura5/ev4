@@ -24,10 +24,10 @@
       document.querySelectorAll('section.panel').forEach(s => (s.hidden = s.id !== 'p-' + t));
       document.body.classList.toggle('on-ev', t === 'ev');
       document.body.dataset.view = t; // B-223 (D-294): the sidebar's Today steps aside while Today is the view
-      // B-208 (D-210): the pane's header names the view (the conversation is E.V. on the phone, as its tab says).
+      // B-208 (D-210), B-287 (C-4): the pane's header names the view; hers is "E.V." at every width, as its tab says.
       const head = $('mh-title'),
         b = $('tab-' + t);
-      if (head && b) head.textContent = t === 'ev' ? (innerWidth < 600 ? 'E.V.' : 'Conversation') : b.title;
+      if (head && b) head.textContent = b.title;
       placeSegs(t);
       renderStudySide(); // B-223 (D-245): the Study panel only while Study is the view
       if (was !== t) {

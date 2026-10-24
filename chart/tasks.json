@@ -5166,7 +5166,7 @@
   "depends": [
    "B-285"
   ],
-  "notes": "claimed by lane chrome",
+  "notes": "built: New menu and dialogs in the header, Today's Add row retired, header 48 px named E.V.; npm test and smoke green",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },

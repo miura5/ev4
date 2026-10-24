@@ -35,6 +35,14 @@
   <button class="mh-her" id="mh-her" type="button" aria-label="Back to now"></button>
   <b class="mh-title" id="mh-title">E.V.</b>
   <p class="status" id="status" role="status">Connecting to your record…</p>
+  <!-- B-287 (C-7): New is the page's one way to create: Task for Today and Note -->
+  <div class="new-wrap" id="new-wrap">
+    <button type="button" class="btn neutral sm" id="new-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="new-menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New</button>
+    <div class="menu" id="new-menu" role="menu" aria-label="Create" hidden>
+      <button type="button" class="btn ghost mi" role="menuitem" data-new="task"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>Task for Today</button>
+      <button type="button" class="btn ghost mi" role="menuitem" data-new="note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v4h4M9 12h6M9 16h4"/></svg>Note</button>
+    </div>
+  </div>
 </header>
 
 <div class="wrap">
@@ -213,6 +221,17 @@
     </div></div>
   </section>
 </div>
+<dialog class="new-dlg" id="new-dlg" aria-labelledby="new-head">
+  <form id="new-form" autocomplete="off">
+    <h2 class="new-head" id="new-head">New task</h2>
+    <div class="new-body">
+      <input type="text" id="new-title" aria-labelledby="new-head">
+      <textarea id="new-text" rows="4" aria-labelledby="new-head" hidden></textarea>
+      <p class="meta" id="new-warn" role="status"></p>
+    </div>
+    <div class="new-foot"><span class="meta grow" id="new-hint"></span><button type="submit" class="btn primary sm" id="new-save">Add task</button></div>
+  </form>
+</dialog>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 

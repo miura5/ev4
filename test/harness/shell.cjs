@@ -669,16 +669,164 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
     );
     await page.close();
   }
-  // B-228 (D-208): with the record 2 s slow, Enter adds three Today items and two dates: each lands in its list before
-  // the record answers, focus stays in a fresh row, and Esc leaves it. At 390 and 1280.
+  // B-287 (C-4, C-7): the 48 px header names the view ("E.V." on hers) and ends with New, the one way to create. New
+  // opens a menu of Task for Today and Note; each opens a modal dialog that Tab and Shift+Tab never leave (20 presses
+  // each); Esc closes the menu or the dialog and gives focus back to New. A note lands in ideas with no course. No other
+  // button on any view creates a task or a note (the exam prep check's "Add", one more thing to bring, is neither).
+  for (const w of [390, 1280])
+    for (const scheme of ['light', 'dark']) {
+      const { page, errors } = await open(browser, { viewport: { width: w, height: w < 600 ? 844 : 900 }, scheme });
+      await page.waitForTimeout(700);
+      const tag = `[${w} ${scheme}]`;
+      const head = await page.evaluate(() => ({
+        title: document.getElementById('mh-title').textContent,
+        h: Math.round(document.getElementById('mh').getBoundingClientRect().height),
+        newShown: !!document.getElementById('new-btn').offsetParent,
+      }));
+      ok(
+        `${tag} the header is 48 px, names her view "E.V." and ends with New (B-287)`,
+        head.title === 'E.V.' && head.h === 48 && head.newShown,
+        JSON.stringify(head)
+      );
+      const focusId = () => page.evaluate(() => (document.activeElement && document.activeElement.id) || '');
+      await page.click('#new-btn');
+      await page.waitForTimeout(80);
+      const menu = await page.evaluate(() => ({
+        shown: !document.getElementById('new-menu').hidden,
+        items: [...document.querySelectorAll('#new-menu [role="menuitem"]')].map(b => b.textContent.trim()),
+        expanded: document.getElementById('new-btn').getAttribute('aria-expanded'),
+        first: document.activeElement && document.activeElement.dataset.new,
+      }));
+      await page.screenshot({ path: `${shots}/new-menu-${w}-${scheme}.png` });
+      await page.keyboard.press('Escape');
+      const fromMenu = {
+        hidden: await page.evaluate(() => document.getElementById('new-menu').hidden),
+        focus: await focusId(),
+      };
+      ok(
+        `${tag} New opens a menu of Task for Today and Note; Esc closes it and gives focus back to New (B-287)`,
+        menu.shown &&
+          menu.items.join('|') === 'Task for Today|Note' &&
+          menu.expanded === 'true' &&
+          menu.first === 'task' &&
+          fromMenu.hidden &&
+          fromMenu.focus === 'new-btn',
+        JSON.stringify({ menu, fromMenu })
+      );
+      const trap = async kind => {
+        await page.click('#new-btn');
+        await page.click(`#new-menu [data-new="${kind}"]`);
+        await page.waitForTimeout(80);
+        const out = { open: await page.evaluate(() => document.getElementById('new-dlg').open), left: [] };
+        for (const key of ['Tab', 'Shift+Tab'])
+          for (let i = 0; i < 20; i++) {
+            await page.keyboard.press(key);
+            const inside = await page.evaluate(
+              () => !!(document.activeElement && document.activeElement.closest('#new-dlg'))
+            );
+            if (!inside) out.left.push(key + ' ' + (i + 1));
+          }
+        return out;
+      };
+      const t = await trap('task');
+      await page.screenshot({ path: `${shots}/new-task-${w}-${scheme}.png` });
+      await page.keyboard.press('Escape');
+      const fromTask = {
+        open: await page.evaluate(() => document.getElementById('new-dlg').open),
+        focus: await focusId(),
+      };
+      const n = await trap('note');
+      const noteShape = await page.evaluate(() => ({
+        head: document.getElementById('new-head').textContent,
+        fields: [...document.querySelectorAll('#new-dlg :is(input,textarea,select)')]
+          .filter(x => !x.hidden)
+          .map(x => x.id),
+      }));
+      await page.screenshot({ path: `${shots}/new-note-${w}-${scheme}.png` });
+      await page.keyboard.press('Escape');
+      const fromNote = {
+        open: await page.evaluate(() => document.getElementById('new-dlg').open),
+        focus: await focusId(),
+      };
+      ok(
+        `${tag} the New task and New note dialogs are modal: 20 Tabs and 20 Shift+Tabs stay inside; Esc gives focus back to New (B-287)`,
+        t.open &&
+          n.open &&
+          !t.left.length &&
+          !n.left.length &&
+          !fromTask.open &&
+          fromTask.focus === 'new-btn' &&
+          !fromNote.open &&
+          fromNote.focus === 'new-btn',
+        JSON.stringify({ t, n, fromTask, fromNote })
+      );
+      if (scheme === 'light') {
+        await page.click('#new-btn');
+        await page.click('#new-menu [data-new="note"]');
+        await page.keyboard.type('Rounding to tenths for mL');
+        await page.click('#new-save');
+        await page.waitForTimeout(150);
+        const note = await page.evaluate(() => {
+          const w = (window.__writes || []).find(
+            x => x[1] === 'ideas' && x[3] && x[3].text === 'Rounding to tenths for mL'
+          );
+          return { data: w && w[3], focus: document.activeElement && document.activeElement.id };
+        });
+        await page.click('#tab-record');
+        await page.waitForTimeout(150);
+        const listed = await page.evaluate(() =>
+          document.getElementById('ideas').textContent.includes('Rounding to tenths for mL')
+        );
+        ok(
+          `${tag} a new note lands in ideas, with no course, and shows in Record (B-287)`,
+          !!note.data &&
+            !('course' in note.data) &&
+            note.data.status === 'open' &&
+            listed &&
+            note.focus === 'new-btn' &&
+            noteShape.fields.join() === 'new-text',
+          JSON.stringify({ note, listed, noteShape })
+        );
+        const creates = [];
+        for (const v of ['ev', 'today', 'study', 'progress', 'record', 'system']) {
+          await page.evaluate(v => document.getElementById('tab-' + v).click(), v);
+          await page.waitForTimeout(120);
+          creates.push(
+            ...(await page.evaluate(
+              v =>
+                [...document.querySelectorAll('button, input[type=submit]')]
+                  .filter(b => b.offsetParent && !b.closest('#new-wrap, #new-dlg, .prep-add'))
+                  .map(b => (b.textContent || b.value || '').trim())
+                  .filter(t =>
+                    /^(\+\s*)?(add|new|create|log something|add task|add note|save note|new task|new note)$/i.test(t)
+                  )
+                  .map(t => v + ': ' + t),
+              v
+            ))
+          );
+        }
+        const addRow = await page.evaluate(() => !!document.querySelector('#today-add, .add-row'));
+        ok(
+          `${tag} no other button on any view creates a task or a note (B-287)`,
+          !creates.length && !addRow,
+          JSON.stringify({ creates, addRow })
+        );
+      }
+      ok(`${tag} no page errors with New`, errors.length === 0, errors.join(' | '));
+      await page.close();
+    }
+  // B-228 (D-208), B-287 (C-7): with the record 2 s slow, a task from New lands on Today's list on Enter's frame, before
+  // the record answers, and focus is back on New; Enter adds two dates the same way, the title fresh and focused, and
+  // Esc leaves it. At 390 and 1280.
   for (const w of [390, 1280]) {
     const { page } = await open(browser, { viewport: { width: w, height: 844 } });
     await page.waitForTimeout(700);
     await page.evaluate(() => (window.__writeDelayMs = 2000));
     await page.click('#tab-today');
-    await page.click('#today-add');
     const added = [];
     for (const t of ['Harness item one', 'Harness item two', 'Harness item three']) {
+      await page.click('#new-btn');
+      await page.click('#new-menu [data-new="task"]');
       await page.keyboard.type(t);
       const t0 = Date.now();
       await page.keyboard.press('Enter');
@@ -688,8 +836,7 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
             requestAnimationFrame(() =>
               ok({
                 listed: [...document.querySelectorAll('#today-list .ti-t')].some(x => x.textContent.trim() === t),
-                fresh:
-                  document.activeElement && document.activeElement.id === 'today-add' && !document.activeElement.value,
+                fresh: document.activeElement && document.activeElement.id === 'new-btn',
               })
             )
           ),
@@ -698,12 +845,10 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
       added.push({ t, ...r, ms: Date.now() - t0 });
     }
     const listedBefore = await page.evaluate(() => (window.__writes || []).filter(x => x[1] === 'dayedits').length);
-    await page.keyboard.press('Escape');
-    const left = await page.evaluate(() => !document.activeElement || document.activeElement.id !== 'today-add');
     ok(
-      `[${w}] Enter adds three Today items on their frame, the row fresh and focused each time; Esc leaves (D-208)`,
-      added.every(a => a.listed && a.fresh) && listedBefore === 0 && left,
-      JSON.stringify({ added, listedBefore, left })
+      `[${w}] a task from New lands on Today's list on Enter's frame, before the record answers, focus back on New (D-208)`,
+      added.every(a => a.listed && a.fresh) && listedBefore === 0,
+      JSON.stringify({ added, listedBefore })
     );
     await page.click('#tab-record');
     await page.click('#seg-record [data-v="dates"]');

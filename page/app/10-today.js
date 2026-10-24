@@ -188,56 +188,6 @@
         action: go ? btn('Open', go) : rm,
       });
     }
-    let addForm = null;
-    function todayAdd() {
-      // built once and kept, so a refresh never wipes what he is typing
-      if (addForm) return addForm;
-      const f = el('form', 'add-row');
-      const inp = el('input');
-      inp.type = 'text';
-      inp.id = 'today-add';
-      inp.maxLength = 140;
-      inp.placeholder = 'Add to today’s list';
-      inp.setAttribute('aria-label', 'Add to today’s list');
-      inp.autocomplete = 'off';
-      const b = el('button', null, 'Add');
-      b.type = 'submit';
-      f.append(inp, b);
-      f.addEventListener('submit', e => {
-        e.preventDefault();
-        const t = inp.value.replace(/\s+/g, ' ').trim();
-        if (!t) {
-          inp.focus();
-          return;
-        }
-        const w = idUnpassed(t); // B-197: values only
-        if (w.length) {
-          toast('That looks like it ' + w[0].why + '. Take that detail out first.');
-          return;
-        }
-        // B-228 (D-208): the item lands on Enter's frame and the row is fresh and focused for the next one; the
-        // button stays live (a disabled default button would stop the next Enter). A refusal puts his words back.
-        inp.value = '';
-        inp.focus();
-        guard(
-          null,
-          async () => {
-            const r = await editList(today, { action: 'add', text: t }, 'Matt');
-            if (r.note) toast('Already on the list');
-          },
-          'Added to today',
-          () => {
-            if (!inp.value) inp.value = t;
-          }
-        );
-      });
-      inp.addEventListener('keydown', e => {
-        if (e.key !== 'Escape') return;
-        inp.value = '';
-        inp.blur();
-      });
-      return (addForm = f);
-    }
     function renderToday() {
       const { rs, left: rLeft } = reviewState();
       const due = E.rankDue(M.models, today, S.exams);
@@ -373,14 +323,14 @@
       const ul = el('ul', 'list');
       for (const it of items.filter(i => i.tag !== 'EXAM')) ul.append(todayRow(it, isDone)); // the exam is in Next 7 days (B-117)
       const kids = [head];
-      const after = []; // the add row sits right under the list; Focus and notes follow it
+      const after = []; // Focus and notes follow the list
       if (items.length) kids.push(ul);
       else
         kids.push(
           el(
             'p',
             'empty',
-            'Nothing planned for today yet. The 4:25am run builds the list; add your own below or ask E.V.'
+            'Nothing planned for today yet. The 4:25am run builds the list; add your own with New or ask E.V.'
           )
         );
       const focus = (day.list && day.list.focus) || [];
@@ -411,11 +361,8 @@
           el('p', 'meta', 'Taken off today: ' + skipped.map(x => x.text).join('; ') + '. Ask E.V. to put one back.')
         );
       if (day.live) after.push(el('p', 'meta', 'Built live from your record. The 4:25am run saves the day’s plan.'));
-      const form = todayAdd();
-      for (const n of [...box.childNodes]) if (n !== form) n.remove();
-      if (!form.isConnected) box.append(form);
-      form.before(...kids);
-      form.after(...after);
+      // B-287 (C-7): no Add row; the header's New is the one way to put a task on today's list
+      box.replaceChildren(...kids, ...after);
       // Weekly review (Sundays)
       const wk = S.weeks
         .filter(w => w.id <= today && w.id >= E.addDays(today, -1))

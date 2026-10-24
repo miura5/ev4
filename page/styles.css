@@ -162,7 +162,6 @@ input[type=text],input[type=date],input[type=number],select,textarea{font:inheri
 select option{background:var(--surface);color:var(--ink)}
 input::placeholder,textarea::placeholder{color:var(--faint)}
 textarea{min-height:110px;resize:vertical;line-height:1.55}
-.add-row{flex-direction:row;align-items:center;gap:8px;margin:12px 0 4px}.add-row input{flex:1 1 auto;min-width:0}.add-row button{flex:0 0 auto;min-height:44px}
 button.quiet{background:transparent;border-color:var(--line2);color:var(--ink2)}
 .actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;align-items:center}
 .actions .grow{flex:1;min-width:0}
@@ -656,7 +655,7 @@ button.tlink{all:unset;cursor:pointer;color:var(--accent-text);font-size:calc(14
    From 1200 px: a details panel on the right too, holding the view's side column, present only while it has one (D-151).
    The document still scrolls (the pane is drawn behind it), so every scroll, sticky and anchor keeps working. Reading
    width is at most 680 px; extra width is margin. Rows and the view switch come with B-213, the motion with B-216. */
-:root{--side-w:0px;--right-w:0px;--pane-l:0px;--pane-r:0px;--mh-h:44px;--top-h:44px}
+:root{--side-w:0px;--right-w:0px;--pane-l:0px;--pane-r:0px;--mh-h:48px;--top-h:44px}
 html{background:var(--bg)}
 body{background:transparent}
 .wrap{max-width:680px}
@@ -849,7 +848,7 @@ body.captions.on-ev .wrap{max-width:680px}
   :where(#p-today,#p-study,#p-progress,#p-record,#p-system) .row.today-item,:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .row.week-item{padding:0}
   :where(#p-today,#p-study,#p-progress,#p-record,#p-system) .card.now button.primary{min-height:32px;padding:0 12px;border-radius:8px;font:500 calc(13px * var(--ts)) var(--sans)}
   :where(#p-today,#p-study,#p-progress,#p-record,#p-system) input[type=text]{min-height:32px;padding:4px 10px;border-radius:8px;font-size:calc(13px * var(--ts))}
-  :where(#p-today,#p-study,#p-progress,#p-record,#p-system) form button,#p-today .add-row button{min-height:32px;border-radius:8px;padding:0 12px;font-size:calc(13px * var(--ts))}
+  :where(#p-today,#p-study,#p-progress,#p-record,#p-system) form button{min-height:32px;border-radius:8px;padding:0 12px;font-size:calc(13px * var(--ts))}
 }
 /* the switch is a part of the component set (B-285, at the end of this sheet); here only where it sits */
 .mh .seg{flex:0 0 auto;align-self:center}
@@ -992,4 +991,31 @@ button.btn:disabled{opacity:.45;cursor:default}
   .li .hov{visibility:visible}
   .toolbar{padding:8px 12px}
   .field{min-height:56px;padding:0 6px 0 16px}
+}
+/* ============================================================ B-287 (C-4, C-7): the header and New ==================
+   The pane's 48 px header names the view ("E.V." on hers) and ends with New, the page's one way to create: a menu of
+   Task for Today and Note, each a modal dialog. The way out is Esc or a tap outside (D-160). */
+
+.mh .new-wrap{position:relative;order:10;flex:0 0 auto}
+.mh .seg{flex-shrink:1;min-width:0} /* a view's switch scrolls inside itself before New leaves the header */
+/* a spacer before the header's right end, so Back to now, the session line and New end it whatever else shows */
+.mh::after{content:"";order:8;flex:1 1 0;min-width:0}
+.mh > :is(.cap-now,.sbar){order:9;margin-left:0}
+.new-wrap .menu{position:absolute;right:0;top:calc(100% + 6px);z-index:30;width:220px;padding:5px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.16);display:flex;flex-direction:column;gap:1px}
+.new-wrap .menu[hidden]{display:none}
+.new-wrap .menu button.btn.mi{justify-content:flex-start;width:100%;color:var(--text);font-weight:400}
+.new-wrap .menu button.btn.mi svg{color:var(--quiet)}
+.new-dlg{width:min(520px,calc(100vw - 32px));max-height:calc(100dvh - 32px);margin:12vh auto auto;padding:0;border:0;border-radius:12px;background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line2),0 24px 60px rgba(0,0,0,.24)}
+.new-dlg::backdrop{background:rgba(var(--ground),.6)}
+.new-dlg form{display:flex;flex-direction:column;margin:0}
+.new-head{margin:0;padding:14px 16px;border-bottom:1px solid var(--line);font:600 calc(14px * var(--ts)) var(--sans)}
+.new-body{display:flex;flex-direction:column;gap:8px;padding:16px}
+.new-body :is(input,textarea){width:100%;box-sizing:border-box}
+.new-body #new-warn{margin:0;color:var(--att)}
+.new-body #new-warn:empty{display:none}
+.new-foot{display:flex;align-items:center;gap:8px;padding:12px 16px;border-top:1px solid var(--line)}
+.new-foot #new-hint{flex:1;min-width:0}
+@media (max-width:599px){
+  .new-dlg{margin:max(16px,env(safe-area-inset-top,0px)) auto auto}
+  .new-wrap .menu{width:min(240px,calc(100vw - 32px))}
 }

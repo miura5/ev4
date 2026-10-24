@@ -752,6 +752,23 @@ export function makeSessions(core) {
     );
     return [...f.writes, { op: 'update', collection: 'sessions', id: s.id, data: { pending: { [key]: null } } }];
   }
+  /** B-287 (C-7): a note he writes from the header's New, as one ideas write: his words, no course, kind general. */
+  function noteIdea(text, { at, date }) {
+    const t = String(text || '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!t) throw new Error('a note needs words');
+    const data = {
+      ...envelope('page', 'New note', at),
+      schema: 2,
+      kind: 'general',
+      text: t,
+      objective: '',
+      status: 'open',
+      links: [],
+    };
+    return { op: 'set', collection: 'ideas', id: safeId('idea-' + date + '-' + slug(t, 30)), data };
+  }
   /** Flashcards as Quizlet import text: term<TAB>definition per line. */
 
   return {
@@ -773,5 +790,6 @@ export function makeSessions(core) {
     parseWrap,
     closeSession,
     decideSessionQuestion,
+    noteIdea,
   };
 }

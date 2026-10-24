@@ -2268,21 +2268,24 @@ const ok = (name, cond, detail = '') => {
           : (await budgetMin()) === min0 + 55),
       `${min0} -> ${await budgetMin()}`
     );
-    // Matt adds one himself, then removes it
-    await page.fill('#today-add', 'Flashcards for the bones lab');
-    await page.press('#today-add', 'Enter');
+    // Matt adds one himself from the header's New (B-287, C-7), then removes it
+    await page.click('#new-btn');
+    await page.click('#new-menu [data-new="task"]');
+    await page.fill('#new-title', 'Flashcards for the bones lab');
+    await page.press('#new-title', 'Enter');
     await page.waitForTimeout(200);
     dd = await dayDoc();
     const mine = Object.entries(dd.added || {}).find(([, a]) => a && a.text === 'Flashcards for the bones lab');
     ok(
-      'the add row writes his item and clears',
+      'New writes his task to today and closes',
       mine &&
         mine[1].by === 'Matt' &&
-        (await page.inputValue('#today-add')) === '' &&
+        !(await page.evaluate(() => document.getElementById('new-dlg').open)) &&
         (await page.locator('#today-list .row', { hasText: 'Flashcards for the bones lab' }).count()) === 1
     );
-    await page.fill('#today-add', 'half typed');
-    await page.focus('#today-add');
+    await page.click('#new-btn');
+    await page.click('#new-menu [data-new="task"]');
+    await page.fill('#new-title', 'half typed');
     const rr = await page.evaluate(async () => {
       const n = document.querySelectorAll('#today-list .row').length;
       const t = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date());
@@ -2296,12 +2299,13 @@ const ok = (name, cond, detail = '') => {
     });
     await page.waitForTimeout(150);
     ok(
-      'a refresh keeps what he is typing',
+      'a refresh keeps what he is typing in New',
       rr > 0 &&
-        (await page.inputValue('#today-add')) === 'half typed' &&
-        (await page.evaluate(() => document.activeElement && document.activeElement.id === 'today-add'))
+        (await page.inputValue('#new-title')) === 'half typed' &&
+        (await page.evaluate(() => document.activeElement && document.activeElement.id === 'new-title'))
     );
-    await page.fill('#today-add', '');
+    await page.fill('#new-title', '');
+    await page.keyboard.press('Escape');
     // B-117 (D-078): an added item opens in place to its Remove.
     {
       const fr = page.locator('#today-list .row', { hasText: 'Flashcards for the bones lab' });
@@ -2324,19 +2328,11 @@ const ok = (name, cond, detail = '') => {
       await page.textContent('#readout')
     );
     ok(
-      'the add row is one line: field and Add',
-      await page.evaluate(() => {
-        const i = document.getElementById('today-add').getBoundingClientRect(),
-          b = document.querySelector('.add-row button').getBoundingClientRect();
-        return Math.abs(i.top - b.top) < 8 && b.left > i.right;
-      })
-    );
-    ok(
       'Remove takes his item off',
       !(mine[0] in dd.added) &&
         (await page.locator('#today-list .row', { hasText: 'Flashcards for the bones lab' }).count()) === 0
     );
-    await page.evaluate(() => document.querySelector('#today-add').scrollIntoView({ block: 'center' }));
+    await page.evaluate(() => document.querySelector('#today-list').scrollIntoView({ block: 'end' }));
     await page.waitForTimeout(2800);
     await page.screenshot({ path: `${shots}/today-edited.png`, fullPage: false });
     await page.click('#tab-ev');
@@ -4344,7 +4340,8 @@ const ok = (name, cond, detail = '') => {
           heroBottom: Math.round(h.bottom),
           threadTop: Math.round(th.top),
           inHeader: b.parentNode.id === 'mh' && r.top >= mh.top - 1 && r.bottom <= mh.bottom + 1,
-          right: Math.round(mh.right - r.right),
+          // B-287 (C-7): New ends the header, so the line's right is measured to New's left
+          right: Math.round(document.getElementById('new-wrap').getBoundingClientRect().left - r.right),
           cores: b.querySelectorAll('canvas, svg.fl').length,
           ring: window.EVApp.core.stats().ring,
           label: b.getAttribute('aria-label'),
@@ -4413,7 +4410,7 @@ const ok = (name, cond, detail = '') => {
     {
       const pd = await lineView();
       ok(
-        '[desktop] the line stays one line, in the pane header at its right',
+        '[desktop] the line stays one line, in the pane header at its right, just before New',
         pd.h <= 34 && pd.inHeader && pd.right <= 24 && !pd.over,
         JSON.stringify(pd)
       );
