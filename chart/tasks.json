@@ -4892,7 +4892,7 @@
   "milestone": "v4.7 look",
   "status": "in progress",
   "depends": [],
-  "notes": "claimed by this run",
+  "notes": "built: generator in page/theme.js inlined in the shell, fixed tokens gone, Contrast in Preferences; npm test green",
   "commit": null,
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
