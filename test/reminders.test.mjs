@@ -31,6 +31,8 @@ test('no standing graded-work or made-up client wording in what E.V. says or wri
     ['page/index.src.html', read('page/index.src.html')],
     ['core/evcore.mjs', read('core/evcore.mjs')],
     ['core/steps.mjs', read('core/steps.mjs')],
+    ['core/steps-worker.mjs', read('core/steps-worker.mjs')],
+    ['core/steps-shared.mjs', read('core/steps-shared.mjs')],
     ['test/data/seed.cjs', read('test/data/seed.cjs')],
   ]) {
     const m = text.match(new RegExp('.{0,40}(' + STANDING.source + ').{0,40}', 'i'));
