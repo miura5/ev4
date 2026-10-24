@@ -4949,7 +4949,7 @@
   "depends": [
    "B-271"
   ],
-  "notes": "claimed by this run",
+  "notes": "built: links, focus and selection neutral; primary and send Ember; done, right and progress name green; the old blue inks out of the spec; a look check and two sweep tests",
   "commit": null,
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
