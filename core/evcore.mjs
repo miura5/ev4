@@ -373,7 +373,6 @@ const EVCore = (() => {
     isDosageTopic,
     numericGiven,
     openAnswer,
-    openGrade,
     openItemErrors,
     parseGrade,
     unitOf,
@@ -2336,10 +2335,8 @@ const EVCore = (() => {
     displayOrder, // B-192
     crossCourse, // B-193
     gradeOpenLocal,
-    openGrade,
     gradePrompt,
     parseGrade,
-    openItemErrors,
     unitOf,
     numericGiven,
     isDosageMaterial,

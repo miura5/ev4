@@ -583,7 +583,7 @@ test('B-63 (D-114): verify compares content, not commit; the B-35 gate compares 
   );
 });
 
-test("B-110: verify goes red when the deployed commit is too far behind origin/main for the runs' 50-deep clone", async () => {
+test('B-110, B-168: verify notes how far the deployed commit is behind origin/main, and goes red only when it is not on main', async () => {
   const { dist, state, manifest } = await deployedStaging();
   const read = p => JSON.parse(fs.readFileSync(p, 'utf8'));
   const triggers = [

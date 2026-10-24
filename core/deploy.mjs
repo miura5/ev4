@@ -29,7 +29,7 @@ export function systemSize(id, doc, budget = {}) {
 }
 // What verify reads from a record: the deployed system documents, plus staging's seed stamp (written by seed-staging).
 const readIds = target => (target === 'staging' ? [...SYSTEM_IDS, 'seed'] : SYSTEM_IDS);
-export const ENVELOPE = ['schema', 'writer', 'at', 'source'];
+const ENVELOPE = ['schema', 'writer', 'at', 'source'];
 const STAMP = /<meta\s+name=["']ev-release["']\s+content=["']([^"']+)["']/i;
 
 export const artifactUrl = id => `https://claude.ai/artifact/${id}`;

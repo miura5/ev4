@@ -305,7 +305,6 @@ export function makeItemKinds(core) {
     isDosageTopic,
     numericGiven,
     openAnswer,
-    openGrade,
     openItemErrors,
     parseGrade,
     unitOf,
