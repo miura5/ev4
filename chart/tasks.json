@@ -4906,7 +4906,7 @@
   "depends": [
    "B-271"
   ],
-  "notes": "tests green: npm test, smoke, core harness 127 of 127; touched check running",
+  "notes": "shipped to staging at 87adbaf (GREEN); reviewed: one gap (alert lit two segments, board says one), fixed in 1c60bce; touched check re-running",
   "commit": null,
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
