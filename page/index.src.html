@@ -225,6 +225,13 @@
     <div class="new-body">
       <input type="text" id="new-title" aria-labelledby="new-head">
       <textarea id="new-text" rows="4" aria-labelledby="new-head" hidden></textarea>
+      <!-- B-308 (C-7): a task's Category, Estimate, When and Course, written through the list edit -->
+      <div class="new-fields" id="new-fields" hidden>
+        <div class="frow"><span class="lbl" id="new-kind-lbl">Category</span><div class="seg" id="new-kind" role="group" aria-labelledby="new-kind-lbl"></div></div>
+        <div class="frow"><label class="lbl" for="new-min">Estimate</label><span class="new-min"><input type="number" id="new-min" min="0" max="240" step="5" inputmode="numeric"> min</span></div>
+        <div class="frow"><span class="lbl" id="new-when-lbl">When</span><div class="seg" id="new-when" role="group" aria-labelledby="new-when-lbl"></div></div>
+        <div class="frow"><span class="lbl" id="new-course-lbl">Course</span><div class="seg" id="new-course" role="group" aria-labelledby="new-course-lbl"></div></div>
+      </div>
       <p class="meta" id="new-warn" role="status"></p>
     </div>
     <div class="new-foot"><span class="meta grow" id="new-hint"></span><button type="submit" class="btn primary sm" id="new-save">Add task</button></div>

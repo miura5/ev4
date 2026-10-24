@@ -1003,6 +1003,16 @@ button.btn:disabled{opacity:.45;cursor:default}
 .new-body{display:flex;flex-direction:column;gap:8px;padding:16px}
 .new-body :is(input,textarea){width:100%;box-sizing:border-box}
 .new-body #new-warn{margin:0;color:var(--att)}
+/* B-308 (C-7): a task's fields, one row each: its label, then its choices; under 600 px the label sits above them. */
+.new-fields{display:flex;flex-direction:column;gap:10px;padding-top:4px}
+.new-fields[hidden]{display:none}
+.new-fields .frow{display:flex;align-items:center;gap:12px;min-width:0}
+.new-fields .lbl{flex:0 0 76px;color:var(--quiet);font:500 calc(13px * var(--ts)) var(--sans)}
+.new-fields .seg{min-width:0}
+.new-fields .seg button{white-space:nowrap}
+.new-min{display:inline-flex;align-items:center;gap:6px;color:var(--quiet);font:calc(13px * var(--ts)) var(--sans)}
+.new-body .new-min input{width:5.5em}
+@media (max-width:599px){.new-fields .frow{flex-direction:column;align-items:flex-start;gap:6px}.new-fields .lbl{flex:none}.new-fields .seg{align-self:stretch}.new-fields .seg button{padding:0 6px}}
 .new-body #new-warn:empty{display:none}
 .new-foot{display:flex;align-items:center;gap:8px;padding:12px 16px;border-top:1px solid var(--line)}
 .new-foot #new-hint{flex:1;min-width:0}

@@ -864,6 +864,94 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
             noteShape.fields.join() === 'new-text',
           JSON.stringify({ note, listed, noteShape })
         );
+        // B-308 (C-7): the New task window's Category, Estimate, When and Course go through the list edit: a 20-minute
+        // Reading task for today lands on Today's list with its badge, course and 20 min, and the budget counts it; one
+        // saved for tomorrow lands on tomorrow's list.
+        await page.evaluate(() => document.getElementById('tab-today').click());
+        await page.waitForTimeout(120);
+        const planned = () =>
+          page.evaluate(() => {
+            const m = /(\d+) of \d+ min planned/.exec(document.getElementById('today-list').textContent);
+            return m ? Number(m[1]) : null;
+          });
+        const before = await planned();
+        await page.click('#new-btn');
+        await page.click('#new-menu [data-new="task"]');
+        const shape = await page.evaluate(() => ({
+          fields: !document.getElementById('new-fields').hidden,
+          kinds: [...document.querySelectorAll('#new-kind button')].map(b => b.textContent),
+          whens: [...document.querySelectorAll('#new-when button')].map(b => b.textContent),
+          courses: [...document.querySelectorAll('#new-course button')].map(b => b.textContent),
+        }));
+        await page.keyboard.type('Harness reading chapter 12');
+        await page.click('#new-kind [data-v="reading"]');
+        await page.fill('#new-min', '20');
+        const course = shape.courses[shape.courses.length - 1];
+        await page.click(`#new-course [data-v="${course}"]`);
+        await page.click('#new-save');
+        await page.waitForTimeout(150);
+        const added = await page.evaluate(
+          ({ course }) => {
+            const today = window.EVCore.chicagoDate(new Date());
+            const w = (window.__writes || [])
+              .filter(x => x[1] === 'dayedits' && x[2] === today)
+              .map(x => Object.values((x[3] && x[3].added) || {}).find(a => a.text === 'Harness reading chapter 12'))
+              .find(Boolean);
+            const row = [...document.querySelectorAll('#today-list .today-item')].find(li =>
+              li.textContent.includes('Harness reading chapter 12')
+            );
+            return {
+              w,
+              badge: row && row.querySelector('.badge') && row.querySelector('.badge').textContent,
+              time: row && row.querySelector('.t') && row.querySelector('.t').textContent,
+              more: row && row.querySelector('.ti-more') && row.querySelector('.ti-more').textContent,
+              course,
+            };
+          },
+          { course }
+        );
+        const after = await planned();
+        await page.click('#new-btn');
+        await page.click('#new-menu [data-new="task"]');
+        const reset = await page.evaluate(() => ({
+          min: document.getElementById('new-min').value,
+          when: (document.querySelector('#new-when [aria-pressed="true"]') || {}).textContent,
+        }));
+        await page.keyboard.type('Harness tomorrow task');
+        await page.click('#new-when [data-v="tomorrow"]');
+        await page.click('#new-save');
+        await page.waitForTimeout(150);
+        const tom = await page.evaluate(() => {
+          const t = window.EVCore.addDays(window.EVCore.chicagoDate(new Date()), 1);
+          const w = (window.__writes || []).find(
+            x =>
+              x[1] === 'dayedits' &&
+              x[2] === t &&
+              Object.values((x[3] && x[3].added) || {}).some(a => a.text === 'Harness tomorrow task')
+          );
+          const onToday = document.getElementById('today-list').textContent.includes('Harness tomorrow task');
+          return { written: !!w, onToday };
+        });
+        ok(
+          `${tag} New task's Category, Estimate, When and Course: 20 min of Reading lands on today with its badge and course and the budget counts it; Tomorrow lands on tomorrow's list (B-308)`,
+          shape.fields &&
+            shape.kinds.join('|') === 'To-do|Reading|Practice|Review|Notes' &&
+            shape.whens.join('|') === 'Today|Tomorrow' &&
+            shape.courses.length > 0 &&
+            !!added.w &&
+            added.w.kind === 'reading' &&
+            added.w.minutes === 20 &&
+            added.w.course === course &&
+            added.badge === 'Reading' &&
+            added.time === '20 min' &&
+            String(added.more).includes(course) &&
+            (before == null || after === before + 20) &&
+            reset.min === '15' &&
+            reset.when === 'Today' &&
+            tom.written &&
+            !tom.onToday,
+          JSON.stringify({ shape, added, before, after, reset, tom })
+        );
         const creates = [];
         for (const v of ['ev', 'today', 'study', 'progress', 'record', 'system']) {
           await page.evaluate(v => document.getElementById('tab-' + v).click(), v);

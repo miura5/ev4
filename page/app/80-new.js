@@ -27,6 +27,53 @@
       dlg = $('new-dlg');
     let newKind = null;
     const drafts = { task: '', note: '' };
+    // B-308 (C-7): a task's Category, Estimate, When and Course, written through the list edit (kind, minutes, date,
+    // course), so it counts against that day's budget. Category is the list's own kinds; a To-do has no badge (B-291).
+    const TASK_KINDS = [
+      ['todo', 'To-do'],
+      ['reading', 'Reading'],
+      ['practice', 'Practice'],
+      ['review', 'Review'],
+      ['notes', 'Notes'],
+    ];
+    const TASK_WHENS = [
+      ['today', 'Today'],
+      ['tomorrow', 'Tomorrow'],
+    ];
+    const taskCourses = () => E.activeCourses().sort((a, b) => (b === E.defaultCourse()) - (a === E.defaultCourse()));
+    const taskDefaults = () => ({ kind: 'todo', minutes: 15, when: 'today', course: taskCourses()[0] || '' });
+    let taskOpts = taskDefaults();
+    function segPaint(id, opts, key) {
+      $(id).replaceChildren(
+        ...opts.map(([v, n]) => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.textContent = n;
+          b.dataset.v = v;
+          b.setAttribute('aria-pressed', String(taskOpts[key] === v));
+          b.addEventListener('click', () => {
+            taskOpts[key] = v;
+            for (const x of $(id).children) x.setAttribute('aria-pressed', String(x.dataset.v === v));
+          });
+          return b;
+        })
+      );
+    }
+    function taskFields(on) {
+      $('new-fields').hidden = !on;
+      $('new-min').hidden = !on;
+      if (!on) return;
+      if (!taskCourses().includes(taskOpts.course)) taskOpts.course = taskCourses()[0] || '';
+      segPaint('new-kind', TASK_KINDS, 'kind');
+      segPaint('new-when', TASK_WHENS, 'when');
+      segPaint(
+        'new-course',
+        taskCourses().map(c => [c, c]),
+        'course'
+      );
+      $('new-min').value = String(taskOpts.minutes);
+    }
+    const readMinutes = () => Math.max(0, Math.min(240, Math.round(Number($('new-min').value) || 0)));
     const menuItems = () => [...newMenu.querySelectorAll('[role="menuitem"]')];
     function newMenuOpen(on) {
       newMenu.hidden = !on;
@@ -34,9 +81,11 @@
       if (on) menuItems()[0].focus();
     }
     const newField = () => (newKind === 'note' ? $('new-text') : $('new-title'));
-    function newOpen(kind, text = drafts[kind]) {
+    function newOpen(kind, text = drafts[kind], opts) {
       newMenuOpen(false);
       newKind = kind;
+      if (opts) taskOpts = { ...opts };
+      taskFields(kind === 'task');
       const k = NEW[kind];
       $('new-head').textContent = k.head;
       $('new-hint').textContent = k.hint;
@@ -53,6 +102,7 @@
     }
     function newClose() {
       if (newKind) drafts[newKind] = newField().value;
+      if (newKind === 'task') taskOpts.minutes = readMinutes();
       if (dlg.open) dlg.close();
       newKind = null;
       newBtn.focus();
@@ -61,6 +111,7 @@
       const kind = newKind,
         t = newField().value.replace(/\s+/g, ' ').trim();
       if (!kind) return;
+      if (kind === 'task') taskOpts.minutes = readMinutes();
       if (!t) return newField().focus();
       const w = idUnpassed(t); // B-197: values only
       if (w.length) {
@@ -69,16 +120,20 @@
       }
       newClose();
       drafts[kind] = '';
+      const o = { ...taskOpts },
+        tomorrow = kind === 'task' && o.when === 'tomorrow';
+      if (kind === 'task') taskOpts = taskDefaults();
       guard(
         null,
         async () => {
           if (kind === 'task') {
-            const r = await editList(today, { action: 'add', text: t }, 'Matt');
+            const edit = { action: 'add', text: t, kind: o.kind, minutes: o.minutes, course: o.course };
+            const r = await editList(tomorrow ? E.addDays(today, 1) : today, edit, 'Matt');
             if (r.note) toast('Already on the list');
           } else await write(E.noteIdea(t, { at: now(), date: today }));
         },
-        NEW[kind].ok,
-        () => newOpen(kind, t)
+        tomorrow ? 'Added to tomorrow' : NEW[kind].ok,
+        () => newOpen(kind, t, kind === 'task' ? o : null)
       );
     }
     newBtn.addEventListener('click', () => newMenuOpen(newMenu.hidden));
@@ -107,7 +162,9 @@
         newClose();
       } else if (e.key === 'Tab') {
         // keep focus inside the dialog, both ways
-        const f = [...dlg.querySelectorAll('button:not([disabled]),input,textarea')].filter(x => !x.hidden);
+        const f = [...dlg.querySelectorAll('button:not([disabled]),input,textarea')].filter(
+          x => !x.hidden && x.getClientRects().length
+        );
         const i = f.indexOf(document.activeElement);
         e.preventDefault();
         f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
