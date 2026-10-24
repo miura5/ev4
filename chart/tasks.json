@@ -4612,8 +4612,8 @@
  {
   "id": "B-257",
   "kind": "task",
-  "title": "Freeze exit 3, understood (D-253): Matt traces one tap from the page to the record and explains what a deploy ships and why the gates bind to one commit, without the doc",
-  "dod": "In a build chat Matt gives both explanations in his own words; the How E.V. Works 'Where you are' rows for the page, the record and shipping read at least familiar",
+  "title": "Freeze exit 3, understood (D-253, D-261): Matt explains in plain words how E.V. works and why a change goes through staging",
+  "dod": "In a build chat Matt explains, in his own words and without the doc, the page, the runs, the record and how a change reaches live, and why staging comes first; product-level, no code",
   "milestone": "freeze exit",
   "status": "open",
   "depends": [],
