@@ -6,7 +6,7 @@
 //   node test/harness/run.cjs [record dir | synthetic] [screenshots dir]   (default: the synthetic record, B-100)
 // Run `node tools/build.mjs` first. Exit code 1 when any check fails. The shell's own checks are test/harness/shell.cjs.
 const { chromium } = require('playwright');
-const { paintAnswer, painted } = require('./paint.cjs');
+const { paintAnswer, painted, studyView } = require('./paint.cjs');
 const fs = require('fs');
 const path = require('path');
 const root = path.resolve(__dirname, '../..');
@@ -524,6 +524,129 @@ for (const [id, task, commit, text, error] of [
 }
 /** B-227 (D-232), at the width it runs: a running job's line is its plan; a finished one is one line with how long it
  * worked, opening in place to what it changed, each a link to its place; a reply that filed an idea carries the same. */
+// B-297 (D-283, C-8, C-13): Study's overview. The view's one primary is Start session; the toolbar holds no Quiz me
+// and the view no mini-quiz card; at 390 the toolbar is one row. Objective rows are 32 px from 600 px and 44 px on the
+// phone. An objective's Quiz me opens a set of its own existing questions; with none, it starts the practice-set job.
+async function quizMeChecks(page, scheme) {
+  await page.click('#tab-study');
+  await page.click('#seg-study [data-v="objectives"]');
+  await page.waitForTimeout(200);
+  const o = await page.evaluate(() => {
+    const vis = e =>
+      !!e &&
+      !e.closest('[hidden]') &&
+      getComputedStyle(e).display !== 'none' &&
+      getComputedStyle(e).visibility !== 'hidden' &&
+      e.getBoundingClientRect().height > 0;
+    const r = e => e.getBoundingClientRect(),
+      mid = e => r(e).top + r(e).height / 2;
+    const bar = document.getElementById('sbar-study');
+    const kids = [...bar.children].filter(e => vis(e) && !e.classList.contains('sp'));
+    const buttons = ['p-study', 'mh']
+      .flatMap(id => [...document.getElementById(id).querySelectorAll('button')])
+      .filter(vis);
+    return {
+      primaries: buttons.filter(b => b.classList.contains('primary')).map(b => b.id || b.textContent.trim()),
+      barQuiz: [...bar.querySelectorAll('button')].filter(vis).filter(b => /quiz/i.test(b.textContent)).length,
+      mini: /mini quiz|take the quiz/i.test(document.getElementById('p-study').innerText),
+      oneRow:
+        kids.length > 0 &&
+        kids.every(e => Math.abs(mid(e) - mid(kids[0])) <= 4) &&
+        bar.scrollWidth <= bar.clientWidth + 1,
+      rows: [...document.querySelectorAll('#ov-card .ov-li')].filter(vis).map(e => Math.round(r(e).height)),
+    };
+  });
+  const want = scheme === 'phone' ? 44 : 32;
+  ok(
+    `[${scheme}] Study's overview: one primary (Start session), no Quiz me in the toolbar and no mini-quiz card, the toolbar one row, objective rows ${want} px (B-297)`,
+    o.primaries.length === 1 &&
+      o.primaries[0] === 'study-start' &&
+      !o.barQuiz &&
+      !o.mini &&
+      o.oneRow &&
+      o.rows.length > 0 &&
+      o.rows.every(h => h === want),
+    JSON.stringify(o)
+  );
+  // which objectives have questions in his practice sets, and which have none
+  const has = await page.evaluate(() => {
+    const ids = [...document.querySelectorAll('#ov-card .ov')].map(e => e.dataset.id);
+    const sets = Object.values(window.__db.sets || {}).filter(x => x.kind !== 'review');
+    const n = id => sets.reduce((k, x) => k + window.EVCore.validItems(x).filter(q => q.objective === id).length, 0);
+    // a set that also holds other objectives' questions shows the filter (only this objective's are opened)
+    const mixed = id =>
+      sets.every(x => {
+        const qs = window.EVCore.validItems(x);
+        return !qs.some(q => q.objective === id) || qs.some(q => q.objective !== id);
+      });
+    return {
+      yes: ids.find(id => n(id) > 0 && mixed(id)) || ids.find(id => n(id) > 0) || null,
+      no: ids.find(id => !n(id)) || null,
+    };
+  });
+  const quiz = async id => {
+    const row = page.locator(`#ov-card .ov[data-id="${id}"]`);
+    if (scheme === 'phone') {
+      await row.locator('.ov-nm').click(); // the phone: the detail opens in place, Quiz me in it
+      await page.waitForTimeout(100);
+      await row.locator('.ov-more button', { hasText: 'Quiz me' }).click();
+    } else {
+      await row.locator('.ov-li').hover();
+      await row.locator('.ov-q').click();
+    }
+    await page.waitForTimeout(250);
+  };
+  if (has.yes) {
+    await quiz(has.yes);
+    const got = await page.evaluate(id => {
+      const shown = !document.getElementById('study-practice').hidden;
+      return {
+        shown,
+        back: !document.getElementById('study-back').hidden,
+        count: (document.getElementById('pr-qcount') || {}).textContent,
+      };
+    });
+    const items = await page.evaluate(id => {
+      const fold = document.getElementById('pr-fold'),
+        set = fold && window.__db.sets[fold.dataset.set];
+      const all = set ? window.EVCore.validItems(set) : [];
+      return { all: all.length, mine: all.filter(q => q.objective === id).length };
+    }, has.yes);
+    const n = Number(String(got.count || '').split(' of ')[1]);
+    ok(
+      `[${scheme}] an objective's Quiz me opens a set of its own existing questions, with the way back in the toolbar (B-297)`,
+      got.shown && got.back && n === items.mine && items.mine > 0,
+      JSON.stringify({ ...got, ...items })
+    );
+    await page.click('#study-back');
+    await page.waitForTimeout(150);
+  } else
+    ok(
+      `[${scheme}] an objective's Quiz me opens a set of its own existing questions (B-297)`,
+      false,
+      'no objective has questions'
+    );
+  if (has.no) {
+    await quiz(has.no);
+    const job = await page.evaluate(
+      id =>
+        Object.values(window.__db.jobs || {}).find(
+          j => j.kind === 'practice-set' && String(j.brief || '').startsWith(id + ':')
+        ) || null,
+      has.no
+    );
+    ok(
+      `[${scheme}] an objective with no questions starts the practice-set job on it, and the view stays on Objectives (B-297)`,
+      !!job && (await page.evaluate(() => !document.getElementById('study-objectives').hidden)),
+      JSON.stringify(job && { kind: job.kind, brief: job.brief })
+    );
+  } else
+    ok(
+      `[${scheme}] an objective with no questions starts the practice-set job (B-297)`,
+      false,
+      'every objective has questions'
+    );
+}
 async function workLineChecks(page, scheme) {
   const tag = `[${scheme}] `;
   await page.click('#tab-ev');
@@ -803,8 +926,7 @@ async function practiceNav(page, scheme) {
     .waitForFunction(() => document.querySelectorAll('#library li').length > 0, null, { timeout: 8000 })
     .catch(() => {});
   await page.click('#seg-record [data-v="sessions"]'); // Record back on its first view for the checks after
-  await page.click('#tab-study');
-  await page.click('#seg-study [data-v="practice"]');
+  await studyView(page, 'practice'); // B-297: through an objective's Quiz me, then back to the sets
   await page.waitForTimeout(150);
   await openSet('Harness cross');
   await page.waitForFunction(() => document.querySelector('#pr-body .q-src'), null, { timeout: 8000 }).catch(() => {});
@@ -1500,9 +1622,7 @@ const ok = (name, cond, detail = '') => {
         .screenshot({ path: `${shots}/retro-card-desktop.png` });
       // B-43 (D-100) at desktop width: Study → Practice, the dosage set, one numeric item answered.
       {
-        await page.click('#tab-study');
-        await page.waitForTimeout(150);
-        if (await page.isVisible('#seg-study [data-v="practice"]')) await page.click('#seg-study [data-v="practice"]');
+        await studyView(page, 'practice'); // B-297
         await page.waitForTimeout(150);
         const lead = page.locator('#pr-body .pr-lead', { hasText: 'Harness dosage' });
         if (await lead.count()) await lead.locator('button.primary').click();
@@ -1534,6 +1654,7 @@ const ok = (name, cond, detail = '') => {
       await page.waitForTimeout(150);
       await buildAskChecks(page, scheme); // B-180
       await workLineChecks(page, scheme); // B-227
+      await quizMeChecks(page, scheme); // B-297
       await page.close();
       continue;
     }
@@ -2811,8 +2932,8 @@ const ok = (name, cond, detail = '') => {
       window.__sampleFn = null;
     });
     // Study > Review: the migrated set, all answered
-    await page.click('#tab-study');
-    await page.click('#seg-study [data-v="review"]');
+    await quizMeChecks(page, scheme); // B-297
+    await studyView(page, 'review'); // B-297 (D-283): today's review opens from Today
     await page.waitForTimeout(100);
     const rv = await page.textContent('#rv-body');
     ok(
@@ -2821,7 +2942,7 @@ const ok = (name, cond, detail = '') => {
       (reviewExpect || '(unanswered)') + ' · ' + rv.slice(0, 80)
     );
     // Practice: open the harness set, answer single (right), sata (wrong), matrix (right)
-    await page.click('#seg-study [data-v="practice"]');
+    await studyView(page, 'practice');
     await page.waitForTimeout(100);
     ok(
       'practice lists sets',
@@ -3206,8 +3327,8 @@ const ok = (name, cond, detail = '') => {
           });
       }, tomorrow);
       await page.waitForTimeout(300);
-      await page.click('#seg-progress [data-v="weak"]');
-      await page.click('#seg-progress [data-v="readiness"]');
+      await page.click('#tab-study'); // B-297: Progress has one view now; leaving and coming back repaints it
+      await page.click('#tab-progress');
       await page.waitForTimeout(200);
       const pred = await page.locator('#ready-card svg.trend circle.trend-pred').count();
       const cap2 = (await page.textContent('#ready-card .trend-cap')) || '';
@@ -3275,12 +3396,12 @@ const ok = (name, cond, detail = '') => {
       await page.click('#tab-progress');
       await page.waitForTimeout(150);
     }
-    await page.click('#seg-progress [data-v="weak"]');
+    await studyView(page, 'weak'); // B-297 (D-281): weak spots live in Study
     await page.waitForTimeout(100);
     ok(
       'weak spots listed',
-      (await page.locator('#progress-weak li.ws-item').count()) > 10,
-      String(await page.locator('#progress-weak li.ws-item').count())
+      (await page.locator('#study-weak li.ws-item').count()) > 10,
+      String(await page.locator('#study-weak li.ws-item').count())
     );
     ok(
       'previews listed',
@@ -3858,8 +3979,7 @@ const ok = (name, cond, detail = '') => {
           /missed step 2/.test(await card().textContent()),
         ended.summary
       );
-      await fp.click('#tab-progress');
-      await fp.locator('#seg-progress [data-v="weak"]').click();
+      await studyView(fp, 'weak'); // B-297 (D-281)
       await fp.waitForTimeout(200);
       ok(
         'Progress lists it as a skill to practice',

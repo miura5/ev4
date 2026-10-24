@@ -34,8 +34,8 @@ test('B-115: the look pass checks D-146 to D-151 at 390, 735 and 1280, with E.V.
   assert.deepEqual(spec.ui.tenets.widths, [390, 735, 1280]);
   assert.deepEqual(
     spec.ui.tenets.on,
-    ['ev', 'today', 'study', 'progress-readiness', 'system', 'progress-weak'],
-    'B-126: every Study view'
+    ['ev', 'today', 'study', 'progress-readiness', 'system'],
+    'B-126: every Study view (B-297: Weak spots is one of them, D-281)'
   );
   assert.deepEqual(
     judge(ev())

@@ -85,6 +85,7 @@ const TENETS = JSON.parse(fs.readFileSync(path.join(root, 'spec', 'ev.spec.json'
 const { collect, judge, motion, judgeMotion } = require('./tenets.cjs');
 const { collectButtons, judgeKinds } = require('./components.cjs'); // B-285
 const png = require('./png.cjs');
+const { studyView } = require('./paint.cjs'); // B-297
 const reports = [];
 const results = [];
 const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', name, detail]);
@@ -421,27 +422,27 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           s.classList.remove('ok');
           s.textContent = 'A planted status line, to show the switch does not move';
         });
-        await page.click('#seg-study [data-v="practice"]');
+        await page.click('#seg-study [data-v="weak"]'); // B-297: the tabs are Objectives, Plan and Weak spots
         await page.waitForTimeout(200);
         const pr = await page.evaluate(() =>
           Math.round(document.getElementById('seg-study').getBoundingClientRect().left)
         );
-        await page.click('#seg-study [data-v="review"]');
+        await page.click('#seg-study [data-v="objectives"]');
         await page.waitForTimeout(200);
         await page.evaluate(() => {
           const s = document.getElementById('status');
           [s.className, s.textContent] = window.__statusWas;
         });
         ok(
-          `[${width}] the view switch sits beside the title and stays put with a status line and on Practice (B-246)`,
+          `[${width}] the view switch sits beside the title and stays put with a status line and on Weak spots (B-246)`,
           sg.gap >= 0 && sg.gap <= 16 && Math.abs(pr - sg.left) <= 1,
-          JSON.stringify({ gap: sg.gap, review: sg.left, practice: pr })
+          JSON.stringify({ gap: sg.gap, objectives: sg.left, weak: pr })
         );
         // B-247 (D-249): Plan is a tab at every width, and the open view is one column centred in the pane
         const c = await page.evaluate(() => {
           const r = e => e.getBoundingClientRect(),
             pane = r(document.getElementById('p-study')),
-            v = r(document.querySelector('#study-review .card')),
+            v = r(document.getElementById('ov-card')),
             plan = document.querySelector('#seg-study [data-v="plan"]');
           return {
             plan: !!plan && getComputedStyle(plan).display !== 'none' && r(plan).width > 0,
@@ -450,26 +451,25 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           };
         });
         ok(
-          `[${width}] Plan is a tab, the plan hidden on Review, and Review's card centred in the pane (D-249)`,
+          `[${width}] Plan is a tab, the plan hidden on Objectives, and the overview centred in the pane (D-249)`,
           c.plan && !c.planShown && Math.abs(c.off) <= 2,
           JSON.stringify(c)
         );
       }
       ok(
-        `[${width}] Today's rows are ${want} px, the view switch is ${size.width < 600 ? 'a full-width row' : "the pane header's"}, Prep is a word, the reading column at most 680 px (D-225, D-150)`,
+        `[${width}] Today's rows are ${want} px, the view switch is ${size.width < 600 ? "in Study's toolbar" : "the pane header's"}, Prep is a word, the reading column at most 680 px (D-225, D-150)`,
         r.rows.length > 0 &&
           r.rows.every(h => h === want) &&
           !r.pill &&
           r.col <= 680 &&
-          (size.width < 600 ? !sg.inHeader && sg.w >= sg.pw - 40 : sg.inHeader && sg.h <= 28),
+          (size.width < 600 ? !sg.inHeader && sg.h >= 44 : sg.inHeader && sg.h <= 28),
         JSON.stringify({ ...r, sg })
       );
     }
     // B-118: Progress, Readiness: at most 1.5 screens at 390 with every row closed; each objective once; an opened row
     // shows its passages to reread; the one-row format table absent: the record as planted answers one format (before the Study block below answers a matrix).
     if (TENETS.widths.includes(size.width) && [844, 830, 800].includes(size.height)) {
-      await page.click('#tab-progress');
-      await page.click('#seg-progress [data-v="readiness"]');
+      await page.click('#tab-progress'); // B-297: Readiness is Progress's one view
       await page
         .waitForFunction(
           () =>
@@ -526,8 +526,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
     // B-116: the question view: the stem leads with no chip above it, one count on the screen, no More practice while
     // the set is unfinished; after the last answer, More practice is one line.
     if (TENETS.widths.includes(size.width) && [844, 830, 800].includes(size.height)) {
-      await page.click('#tab-study');
-      await page.click('#seg-study [data-v="review"]');
+      await studyView(page, 'review'); // B-297 (D-283): today's review opens from Today
       await page.waitForTimeout(300);
       const q = await page.evaluate(() => {
         const vis = e =>
@@ -760,7 +759,9 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         await page.locator('#rv-body .sum-line').first().click();
         await page.waitForTimeout(100);
         for (const v of ['practice', 'plan']) {
-          await page.click(`#seg-study [data-v="${v}"]`); // D-249: Plan is a tab at every width
+          if (v === 'plan')
+            await page.click('#seg-study [data-v="plan"]'); // D-249: Plan is a tab at every width
+          else await studyView(page, v); // B-297: the sets, back from an objective's Quiz me
           await page.waitForTimeout(300);
           const r = await page.evaluate(
             box => {
@@ -791,7 +792,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           );
           await page.screenshot({ path: `${shots}/look-study-${v}-led-${width}.png`, fullPage: true });
         }
-        await page.click('#seg-study [data-v="review"]');
+        await studyView(page, 'review');
         await page.waitForTimeout(150);
       }
     }
@@ -911,12 +912,14 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
             getComputedStyle(e).display !== 'none' &&
             e.getBoundingClientRect().height > 0;
           const panel = document.querySelector('section.panel:not([hidden])'),
-            cards = [...panel.querySelectorAll('.card, .sys-foot')].filter(
+            cards = [...panel.querySelectorAll('.card, .ui-card, .sys-foot')].filter(
               c => vis(c) && !c.parentElement.closest('.card') && !c.closest('#study-side') // B-223: the panel's own
             );
           const L = c => Math.round(c.getBoundingClientRect().left - parseFloat(getComputedStyle(c).marginLeft)),
             lefts = [...new Set(cards.map(L))].sort((a, b) => a - b);
-          const prim = [...panel.querySelectorAll('button.primary')].filter(vis).map(b => L(b.closest('.card')));
+          const prim = [...panel.querySelectorAll('button.primary')] // B-297: a view's primary may sit in its toolbar
+            .filter(vis)
+            .map(b => L(b.closest('.card, .ui-card, .toolbar')));
           return {
             lefts,
             lead: cards.length && L(cards[0]),
@@ -927,7 +930,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
       for (const tab of ['today', 'study', 'progress', 'record', 'system']) {
         await page.click('#tab-' + tab);
         const first = await page.$(`#seg-${tab} button`);
-        if (first) await first.click();
+        if (first && (await first.isVisible())) await first.click(); // a one-view switch is hidden (B-297)
         await page.waitForTimeout(500);
         const c = await columns();
         // D-249: Study shows one view at a time, one column (its set's questions go to the right panel from 1200 px)
@@ -951,8 +954,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
     // B-123 (D-162): Weak spots at 390, 735 and 1470: no due pill and no Mark solid at load; Due today open, the other
     // sections closed; an opened row shows Mark solid, and marking one moves it to Solid without moving the page.
     if ([390, 735, 1470].includes(size.width) && [844, 830].includes(size.height)) {
-      await page.click('#tab-progress');
-      await page.click('#seg-progress [data-v="weak"]');
+      await studyView(page, 'weak'); // B-297 (D-281): weak spots live in Study
       await page.waitForTimeout(500);
       const w = await page.evaluate(() => {
         const vis = e =>
@@ -960,7 +962,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
             !e.closest('[hidden]') &&
             getComputedStyle(e).display !== 'none' &&
             e.getBoundingClientRect().height > 0,
-          p = document.getElementById('progress-weak');
+          p = document.getElementById('study-weak');
         return {
           lead: (document.getElementById('weak-lead') || {}).textContent,
           pills: [...p.querySelectorAll('.chip')].filter(vis).map(c => c.textContent),
@@ -1096,7 +1098,8 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
     for (const v of VIEWS.filter(x => x.v))
       if (VIEWS.find(x => x.tab === v.tab).v === v.v) {
         await page.click('#tab-' + v.tab);
-        await page.click(`#seg-${v.tab} [data-v="${v.v}"]`);
+        if (await page.isVisible(`#seg-${v.tab} [data-v="${v.v}"]`))
+          await page.click(`#seg-${v.tab} [data-v="${v.v}"]`); // a one-view switch is hidden (B-297)
       }
     if (['390x844', '1280x800'].includes(width)) {
       // B-111: the long idea's text is at most 3 lines and at least 80% of its card's width; opening it shows its controls.

@@ -6,6 +6,7 @@
 const { chromium } = require('playwright');
 const PANEL = require('./panel.cjs');
 const png = require('./png.cjs');
+const { studyView } = require('./paint.cjs');
 const fs = require('fs');
 const path = require('path');
 const root = path.resolve(__dirname, '../..');
@@ -605,9 +606,10 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
         await look(t, t === 'today');
       }
       await page.click('#tab-study');
-      await page.click('#seg-study [data-v="review"]');
+      await look('study-objectives', false); // B-297: the overview has no right panel
+      await studyView(page, 'review'); // B-297 (D-283): today's review opens from Today
       await look('study-review', true);
-      await page.click('#seg-study [data-v="practice"]');
+      await studyView(page, 'practice');
       const lead = page.locator('#pr-body .pr-lead button.primary');
       if (await lead.count()) await lead.first().click();
       await look('study-practice', true);

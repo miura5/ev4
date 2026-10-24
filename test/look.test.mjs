@@ -33,11 +33,10 @@ test('B-113, B-203: the look pass shoots every view of every tab at the twelve s
     [
       'ev',
       'today',
-      'study-review',
-      'study-practice',
+      'study-objectives',
       'study-plan',
+      'study-weak',
       'progress-readiness',
-      'progress-weak',
       'record-sessions',
       'record-dates',
       'record-journal',
@@ -47,7 +46,7 @@ test('B-113, B-203: the look pass shoots every view of every tab at the twelve s
     ]
   );
   const all = V.viewsOf(html).flatMap(v => V.SIZES.map(s => V.shotName(v, s)));
-  assert.equal(all.length, 156);
+  assert.equal(all.length, 144); // B-297: 12 views (Study: Objectives, Plan, Weak spots; Progress: Readiness)
   assert.deepEqual(V.missingShots(all, html), []);
   assert.match(
     flatSource('test/harness/look.cjs'),

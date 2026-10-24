@@ -4915,8 +4915,7 @@
     "today",
     "study",
     "progress-readiness",
-    "system",
-    "progress-weak"
+    "system"
    ],
    "exceptions": {
     "D-147": [],

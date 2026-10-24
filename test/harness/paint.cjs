@@ -49,4 +49,63 @@ async function paintAnswer(page, root, { delay = 2000, text = 'Fluid shifts into
 function painted(r) {
   return !!r && !!r.verdict && !r.saving && !r.recordLanded && (r.open || r.ms < 100);
 }
-module.exports = { paintAnswer, painted };
+// B-297 (D-283): Study's tabs are Objectives, Plan and Weak spots. A set opens in the quiz card the way he opens it:
+// today's review from its row on Today, a practice set from an objective's Quiz me (its fold line then leads back to
+// the sets).
+// Resolves true once the view shows.
+async function studyView(page, v) {
+  const shown = () => page.evaluate(v => !document.getElementById('study-' + v).hidden, v);
+  if (v === 'review') {
+    // today's list carries the review as the morning writes it (core buildDayList: ref sets/review-<date>); a seed
+    // whose list has no such row gets one, written as the morning would and kept out of the page's own writes
+    await page.evaluate(async () => {
+      const today = window.EVCore.chicagoDate(new Date()),
+        id = 'review-' + today;
+      if (!(window.__db.sets || {})[id]) return;
+      const db = await window.claude.use('db'),
+        ref = db.collection('days').doc(today),
+        d = (await ref.get()).data();
+      if (!d || !d.list || d.list.items.some(i => i.ref === 'sets/' + id)) return;
+      d.list.items.push({
+        id: 'review-base',
+        text: 'Review · today’s set',
+        tag: 'REVIEW',
+        minutes: 16,
+        ref: 'sets/' + id,
+      });
+      await ref.set(d);
+      window.__writes.pop();
+    });
+    await page.click('#tab-today');
+    await page.waitForTimeout(150);
+    const row = page.locator('#today-list .ti-nm', { hasText: /^Review/ });
+    if (await row.count()) await row.first().click();
+    await page.waitForTimeout(100);
+    return shown();
+  }
+  await page.click('#tab-study');
+  if (v !== 'practice') {
+    await page.click(`#seg-study [data-v="${v}"]`);
+    return shown();
+  }
+  if (await shown()) return true;
+  await page.click('#seg-study [data-v="objectives"]');
+  await page.waitForTimeout(100);
+  const rows = page.locator('#ov-card .ov');
+  for (let i = 0; i < (await rows.count()) && !(await shown()); i++) {
+    const q = rows.nth(i).locator('.ov-q');
+    if (await q.isVisible().catch(() => false)) await q.click();
+    else {
+      await rows.nth(i).locator('.ov-nm').click(); // the phone: the detail opens in place, Quiz me in it
+      await page.waitForTimeout(80);
+      const q2 = rows.nth(i).locator('.ov-more button');
+      if (await q2.count()) await q2.first().click();
+    }
+    await page.waitForTimeout(150);
+    if (!(await shown())) await page.click('#seg-study [data-v="objectives"]').catch(() => {});
+  }
+  if (await page.isVisible('#pr-fold')) await page.click('#pr-fold'); // back to the list of sets
+  await page.waitForTimeout(100);
+  return shown();
+}
+module.exports = { paintAnswer, painted, studyView };

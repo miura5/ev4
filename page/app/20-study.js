@@ -56,6 +56,195 @@
         next: nextSet(null),
       });
     }
+    // B-297 (D-283, C-8, C-13): Study's overview. The exam header with its readiness bar, then one row per objective:
+    // its state, its weak spots and, on hover or focus, Quiz me. A tap on the words opens its detail in place. The
+    // toolbar's Start session is the view's one primary; a set he opens shows in the quiz card (the Review and Practice
+    // views), whose toolbar shows the way back instead.
+    const OBJ_STATE = {
+      solid: ['Solid', 'x-green'],
+      almost: ['Almost', 'x-yellow'],
+      notyet: ['Not yet', ''],
+    };
+    const openObjRows = new Set();
+    function syncStudyBar() {
+      const v = ui.study,
+        quiz = v === 'review' || v === 'practice';
+      $('study-back').hidden = !quiz;
+      $('study-course').hidden = v !== 'objectives' || $('study-course').children.length < 2;
+      $('study-start').hidden = v !== 'objectives' || $('study-start').dataset.off === '1';
+    }
+    /** The courses with an upcoming exam that has objectives, each with that exam (the soonest). */
+    function studyCourses() {
+      const out = [];
+      for (const c of E.activeCourses()) {
+        const ex = S.exams
+          .filter(e => e.date && e.date >= today && E.courseOf(e) === c && S.objectives.some(o => o.exam === e.id))
+          .sort((a, b) => a.date.localeCompare(b.date))[0];
+        if (ex) out.push({ course: c, exam: ex });
+      }
+      return out;
+    }
+    /** An objective's state from its weak spots and answers: Not yet while one is not yet right (or none answered),
+     *  Almost while its open ones are right once, Solid once none is open. */
+    function objState(o, acc) {
+      const ws = M.models.filter(
+        w =>
+          (w.kind || 'concept') === 'concept' &&
+          w.objective === o.id &&
+          w.derived &&
+          !['parked', 'moved'].includes(w.derived.status)
+      );
+      const open = ws.filter(E.isActive);
+      const notYet = open.filter(w => !w.derived.preRead && !((w.derived.streak || 0) > 0));
+      const state = notYet.length
+        ? 'notyet'
+        : open.length
+          ? 'almost'
+          : ws.length || (acc && acc.n)
+            ? 'solid'
+            : 'notyet';
+      return { state, open, ws };
+    }
+    function quizObjective(o, b) {
+      // the objective's items in his practice sets: the set with most of them left, newest first; with none, the job
+      const mine = s => E.validItems(s).filter(q => q.objective === o.id);
+      const left = s => mine(s).filter(q => !answersOf(s)[q.id]).length;
+      const pick = practiceSets()
+        .filter(s => mine(s).length)
+        .sort((x, y) => left(y) - left(x))[0];
+      if (pick) {
+        ui.openSet = pick.id;
+        ui.openObj = { set: pick.id, obj: o.id, text: o.text };
+        setStudy('practice');
+        render();
+        return;
+      }
+      const going = S.jobs.find(
+        j =>
+          j.kind === 'practice-set' &&
+          String(j.brief || '').startsWith(o.id + ':') &&
+          ['queued', 'running'].includes(j.status) &&
+          !(j.fired && j.fired.ok === false)
+      );
+      if (going) return toast('E.V. is writing questions on it. They show here when they’re ready.');
+      return guard(b, async () => {
+        const r = await startJob({
+          kind: 'practice-set',
+          title: 'Quiz me: ' + String(o.text || o.id).slice(0, 60),
+          brief: o.id + ': 10 questions on this objective: ' + String(o.text || '').slice(0, 200),
+        });
+        toast(
+          r.fired.ok
+            ? 'No questions on it yet, so E.V. is writing 10. They show here in a few minutes.'
+            : 'Couldn’t start it: ' + fireCopy(r.fired.error)
+        );
+      });
+    }
+    function renderObjectives() {
+      const card = $('ov-card'),
+        list = studyCourses();
+      const start = $('study-start');
+      start.dataset.off = activeSession() ? '1' : '';
+      if (!list.some(x => x.course === ui.studyCourse))
+        ui.studyCourse = ((M.target && list.find(x => x.exam.id === M.target.id)) || list[0] || {}).course || null;
+      const cs = $('study-course');
+      const ck = list.map(x => x.course).join('|') + '#' + ui.studyCourse;
+      if (cs.dataset.k !== ck) {
+        cs.dataset.k = ck;
+        cs.replaceChildren(
+          ...list.map(x => {
+            const b = el('button');
+            b.type = 'button';
+            b.setAttribute('aria-pressed', String(x.course === ui.studyCourse));
+            b.append(el('span', 'full', x.course), el('span', 'code', String(x.course).split(' ')[0]));
+            b.setAttribute('aria-label', x.course);
+            b.addEventListener('click', () => {
+              ui.studyCourse = x.course;
+              render();
+            });
+            return b;
+          })
+        );
+      }
+      syncStudyBar();
+      const cur = list.find(x => x.course === ui.studyCourse);
+      if (!cur) {
+        card.replaceChildren(el('p', 'empty', 'Objectives appear once an upcoming exam has them.'));
+        return;
+      }
+      const ex = cur.exam,
+        acc = E.answerStats(M.attempts.all).byObjective;
+      const objs = S.objectives
+        .filter(o => o.exam === ex.id)
+        .sort((a, b) => String(a.id).localeCompare(String(b.id), undefined, { numeric: true }));
+      const rows = objs.map(o => ({ o, ...objState(o, acc[o.id]) }));
+      const n = k => rows.filter(r => r.state === k).length;
+      const pctOf = k => (rows.length ? (100 * n(k)) / rows.length : 0) + '%';
+      const days = E.diffDays(today, ex.date);
+      const head = el('div', 'ov-head');
+      head.append(
+        el('b', 'ov-ex', (ex.title || ex.id).replace(/:.*$/, '')),
+        el(
+          'span',
+          'meta',
+          short(ex.date) + ' · ' + (days <= 0 ? 'today' : days === 1 ? 'tomorrow' : 'in ' + days + ' days')
+        ),
+        el('span', 'meta ov-count', n('solid') + ' of ' + rows.length + ' solid')
+      );
+      const bar = el('div', 'pbar ov-bar');
+      bar.setAttribute('role', 'img');
+      bar.setAttribute('aria-label', `${n('solid')} solid, ${n('almost')} almost, ${n('notyet')} not yet`);
+      const g = el('i', 'x-green'),
+        y = el('i', 'x-yellow');
+      g.style.width = pctOf('solid');
+      y.style.width = pctOf('almost');
+      bar.append(g, y);
+      const box = el('div', 'ov-rows');
+      for (const r of rows) {
+        const [word, cls] = OBJ_STATE[r.state];
+        const on = openObjRows.has(r.o.id);
+        const wrap = el('div', 'ov' + (on ? ' open' : ''));
+        wrap.dataset.id = r.o.id;
+        const li = el('div', 'li ov-li');
+        const nm = el('button', 'nm ov-nm', r.o.text || r.o.id);
+        nm.type = 'button';
+        nm.title = r.o.text || r.o.id;
+        nm.setAttribute('aria-expanded', String(on));
+        nm.addEventListener('click', () => {
+          on ? openObjRows.delete(r.o.id) : openObjRows.add(r.o.id);
+          render();
+        });
+        const q = btn('Quiz me', ev => quizObjective(r.o, ev.currentTarget), { cls: 'btn ghost sm hov ov-q' });
+        q.setAttribute('aria-label', 'Quiz me on ' + (r.o.text || r.o.id));
+        li.append(
+          el('span', 'badge ov-st' + (cls ? ' ' + cls : ''), word),
+          nm,
+          el('span', 't', r.open.length ? plural(r.open.length, 'weak spot') : ''),
+          q
+        );
+        wrap.append(li);
+        if (on) {
+          const more = el('div', 'ov-more');
+          const a = acc[r.o.id];
+          more.append(el('p', 'meta', [r.o.id, a ? `${a.right} of ${a.n} right` : 'no answers yet'].join(' · ')));
+          if (r.open.length) {
+            const ul = el('ul', 'ov-ws');
+            r.open.forEach(w =>
+              ul.append(
+                el('li', null, w.topic + ' · ' + ((w.derived.streak || 0) > 0 ? 'right once' : 'not yet right'))
+              )
+            );
+            more.append(ul);
+          }
+          const q2 = btn('Quiz me', ev => quizObjective(r.o, ev.currentTarget), { cls: 'btn neutral sm' });
+          q2.setAttribute('aria-label', 'Quiz me on ' + (r.o.text || r.o.id));
+          more.append(q2);
+          wrap.append(more);
+        }
+        box.append(wrap);
+      }
+      card.replaceChildren(head, bar, box);
+    }
     function giveFive() {
       // a finished practice set's Give me 5 more
       const b = btn('Give me 5 more', null, { primary: true });
@@ -130,6 +319,9 @@
       const body = $('pr-body');
       const list = practiceSets();
       const d = ui.openSet && list.find(x => x.id === ui.openSet);
+      // B-297: a set opened by an objective's Quiz me holds that objective's questions only
+      const of = d && ui.openObj && ui.openObj.set === d.id ? ui.openObj : null;
+      if (!of) ui.openObj = null;
       $('pr-prog').hidden = !d;
       // B-191 (D-160): an open set folds back into the list from its own head line (its title with a chevron), never a
       // Close button; every answer stays saved (each is written as he checks it) and it reopens on the question he left.
@@ -243,13 +435,13 @@
       );
       $('pr-count').textContent = '';
       runner({
-        key: 'pr-' + d.id,
+        key: 'pr-' + d.id + (of ? '@' + of.obj : ''),
         set: d,
-        items: E.validItems(d),
+        items: of ? E.validItems(d).filter(q => q.objective === of.obj) : E.validItems(d),
         body,
         countEl: $('pr-qcount'),
         barEl: $('pr-bar'),
-        label: 'E.V. · ' + (d.title || d.id),
+        label: 'E.V. · ' + (of ? of.text || of.obj : d.title || d.id),
         more: sample ? giveFive : null,
         next: nextSet(d.id),
         summaryExtra: () => {
@@ -659,5 +851,16 @@
         })
     );
     $('more-btn').addEventListener('click', () => morePractice());
+    $('study-back').addEventListener('click', () => {
+      ui.openSet = null;
+      ui.openObj = null;
+      setStudy('objectives');
+      render();
+    });
+    $('study-start').addEventListener('click', ev => {
+      const b = ev.currentTarget;
+      showTab('ev');
+      guard(b, () => quick('Start a study session'));
+    });
     $('weak-quizlet-btn').addEventListener('click', () => copyQuizlet($('weak-quizlet')));
 

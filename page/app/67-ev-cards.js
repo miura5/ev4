@@ -449,8 +449,8 @@
         const a = el('div', 'actions');
         a.append(
           btn('All weak spots', () => {
-            showTab('progress');
-            $('seg-progress').querySelector('[data-v="weak"]').click();
+            showTab('study'); // B-297 (D-281): weak spots live in Study
+            $('seg-study').querySelector('[data-v="weak"]').click();
           })
         );
         box.append(a);
@@ -950,7 +950,7 @@
           act = M.models.filter(w => E.isActive(w) && !w.derived.preRead).length;
         return {
           text: act ? `${due} due now · ${plural(act, 'active weak spot')}` : 'No active weak spots',
-          go: openIn('progress', 'progress', 'weak'),
+          go: openIn('study', 'study', 'weak'),
         };
       },
       readiness() {

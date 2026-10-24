@@ -3,6 +3,7 @@
       if (!['weak', 'sets', 'exams'].every(k => loaded.has(k))) return;
       M = model();
       renderToday();
+      renderObjectives(); // B-297
       renderReview();
       renderPractice();
       renderPlan();

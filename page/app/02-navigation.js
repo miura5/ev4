@@ -56,10 +56,10 @@
         }
         if (innerWidth >= 600) {
           if (sg.parentNode !== mh) mh.insertBefore(sg, $('status')); // B-246: beside the title, before any status line, so it never moves
-          sg.hidden = id !== t;
+          sg.hidden = id !== t || sg.children.length < 2; // a switch of one view is no switch (B-297: Progress)
         } else {
           if (sg.previousSibling !== SEG_HOME[id]) SEG_HOME[id].after(sg);
-          sg.hidden = false;
+          sg.hidden = sg.children.length < 2;
         }
       }
     }
@@ -100,7 +100,10 @@
           .querySelectorAll(':scope > [id^="' + prefix + '-"]')
           .forEach(p => (p.hidden = p.id !== prefix + '-' + v));
         store.set(key, v);
-        if (key === 'study') renderStudySide(); // B-223: the panel follows the open view
+        if (key === 'study') {
+          renderStudySide(); // B-223: the panel follows the open view
+          syncStudyBar(); // B-297: the toolbar follows it too
+        }
       };
       seg.querySelectorAll('button').forEach(b => b.addEventListener('click', () => set(b.dataset.v)));
       const saved = store.get(key);

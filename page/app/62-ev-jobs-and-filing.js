@@ -308,7 +308,7 @@
       }
       if (col === 'weakspots') {
         const x = M.models.find(w => w.id === id);
-        return { label: 'Weak spot: ' + cut(x && x.topic), go: openSeg('progress', 'weak') };
+        return { label: 'Weak spot: ' + cut(x && x.topic), go: openSeg('study', 'weak') };
       }
       if (col === 'dates' || col === 'dateedits') {
         const x = S.dates.find(d => d.id === id);

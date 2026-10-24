@@ -79,12 +79,21 @@
   <!-- STUDY -->
   <section class="panel" id="p-study" role="tabpanel" aria-labelledby="tab-study" hidden>
     <h2 class="ptitle">Study</h2>
-    <div class="seg" id="seg-study" role="group" aria-label="Study views">
-      <button type="button" data-v="review" aria-pressed="true">Review</button>
-      <button type="button" data-v="practice" aria-pressed="false">Practice</button>
-      <button type="button" data-v="plan" aria-pressed="false">Plan</button>
+    <div class="toolbar sbar-study" id="sbar-study">
+      <div class="seg" id="seg-study" role="group" aria-label="Study views">
+        <button type="button" data-v="objectives" aria-pressed="true">Objectives</button>
+        <button type="button" data-v="plan" aria-pressed="false">Plan</button>
+        <button type="button" data-v="weak" aria-pressed="false">Weak spots</button>
+      </div>
+      <button type="button" class="btn ghost sm" id="study-back" hidden>‹ Objectives</button>
+      <div class="seg course-seg" id="study-course" role="group" aria-label="Course"></div>
+      <span class="sp"></span>
+      <button type="button" class="btn primary sm" id="study-start" aria-label="Start session"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg><span class="lbl">Start session</span></button>
     </div>
-    <div id="study-review" class="panel">
+    <div id="study-objectives" class="panel">
+      <div class="ui-card ov-card" id="ov-card"></div>
+    </div>
+    <div id="study-review" class="panel" hidden>
       <div class="card">
         <div class="card-head"><h2>Today's review</h2></div>
         <div class="bar-row"><div class="progress" aria-hidden="true"><i id="rv-bar" style="width:0"></i></div><button type="button" class="fold-line set-count" id="rv-count" aria-expanded="false" aria-controls="rv-body" hidden></button></div>
@@ -105,30 +114,8 @@
     <div id="study-plan" class="panel" hidden>
       <div class="card" id="plan-card"><h2>Exam plan</h2><p class="empty">The exam plan appears here once it's in the record.</p></div>
     </div>
-    <!-- B-223 (D-245): from 1200 px the open set's questions, as a list in the right panel -->
-    <aside class="study-side" id="study-side" aria-label="The set's questions" hidden></aside>
-  </section>
-
-  <!-- PROGRESS -->
-  <section class="panel" id="p-progress" role="tabpanel" aria-labelledby="tab-progress" hidden>
-    <h2 class="ptitle">Progress</h2>
-    <div class="seg" id="seg-progress" role="group" aria-label="Progress views">
-      <button type="button" data-v="readiness" aria-pressed="true">Readiness</button>
-      <button type="button" data-v="weak" aria-pressed="false">Weak spots</button>
-    </div>
-    <div id="progress-readiness" class="panel"><div class="cols"><div class="col-main">
-      <div class="card" id="ready-card"><h2>Readiness</h2><p class="empty">Readiness appears once an upcoming exam has weak spots.</p></div>
-      </div><div class="col-side"><div class="card fold-card" id="insights-card" hidden><button type="button" class="fold-line" id="insights-line" aria-expanded="false" aria-controls="insights-list"></button><ul class="list ins-list" id="insights-list" hidden></ul></div><div class="card" id="audit-card" hidden></div>
-      <div class="card" id="score-card" hidden></div>
-      <!-- B-118 (D-155): accuracy by objective lives in the readiness list; the other tables fold to one line each and are
-           absent while they hold one row. -->
-      <div class="card fold-card" id="fmt-card" hidden><button type="button" class="fold-line" aria-expanded="false" aria-controls="acc-fmt">By question format</button><div class="scroll" id="acc-fmt" hidden></div></div>
-      <div class="card fold-card" id="cj-card" hidden><button type="button" class="fold-line" aria-expanded="false" aria-controls="acc-cj">By clinical-judgment step</button><div class="scroll" id="acc-cj" hidden></div></div>
-      <div class="card fold-card" id="days-card" hidden><button type="button" class="fold-line" aria-expanded="false" aria-controls="acc-days">Last 7 days</button><div class="scroll" id="acc-days" hidden></div></div>
-    </div></div></div>
-    <!-- B-123 (D-162): the count due today leads; Due today open (five rows, the rest under a line), the other sections
-         folded under their own lines; each weak spot one line opening in place to its source and Mark solid. -->
-    <div id="progress-weak" class="panel" hidden><div class="cols"><div class="col-main">
+    <!-- B-123 (D-162): weak spots, one line each; in Study since B-297 (D-281) -->
+    <div id="study-weak" class="panel" hidden><div class="cols"><div class="col-main">
       <div class="card" id="weak-card">
         <p class="big ws-lead" id="weak-lead"></p>
         <ul class="list" id="weak-due"></ul>
@@ -142,6 +129,26 @@
       <div class="card" id="weak-notes-card" hidden><h2>To do: notes and skills</h2><ul class="list" id="weak-notes"></ul><p class="meta" id="weak-formats" style="margin:0"></p></div>
       <div class="card fold-card" id="weak-parked-card" hidden><button type="button" class="fold-line" id="weak-parked-fold" aria-expanded="false" aria-controls="weak-parked"></button><ul class="list" id="weak-parked" hidden></ul></div>
       <div class="card fold-card" id="weak-solid-card" hidden><button type="button" class="fold-line" id="weak-solid-fold" aria-expanded="false" aria-controls="weak-solid"></button><ul class="list" id="weak-solid" hidden></ul></div>
+    </div></div></div>
+    <!-- B-223 (D-245): from 1200 px the open set's questions, as a list in the right panel -->
+    <aside class="study-side" id="study-side" aria-label="The set's questions" hidden></aside>
+  </section>
+
+  <!-- PROGRESS -->
+  <section class="panel" id="p-progress" role="tabpanel" aria-labelledby="tab-progress" hidden>
+    <h2 class="ptitle">Progress</h2>
+    <div class="seg" id="seg-progress" role="group" aria-label="Progress views">
+      <button type="button" data-v="readiness" aria-pressed="true">Readiness</button>
+    </div>
+    <div id="progress-readiness" class="panel"><div class="cols"><div class="col-main">
+      <div class="card" id="ready-card"><h2>Readiness</h2><p class="empty">Readiness appears once an upcoming exam has weak spots.</p></div>
+      </div><div class="col-side"><div class="card fold-card" id="insights-card" hidden><button type="button" class="fold-line" id="insights-line" aria-expanded="false" aria-controls="insights-list"></button><ul class="list ins-list" id="insights-list" hidden></ul></div><div class="card" id="audit-card" hidden></div>
+      <div class="card" id="score-card" hidden></div>
+      <!-- B-118 (D-155): accuracy by objective lives in the readiness list; the other tables fold to one line each and are
+           absent while they hold one row. -->
+      <div class="card fold-card" id="fmt-card" hidden><button type="button" class="fold-line" aria-expanded="false" aria-controls="acc-fmt">By question format</button><div class="scroll" id="acc-fmt" hidden></div></div>
+      <div class="card fold-card" id="cj-card" hidden><button type="button" class="fold-line" aria-expanded="false" aria-controls="acc-cj">By clinical-judgment step</button><div class="scroll" id="acc-cj" hidden></div></div>
+      <div class="card fold-card" id="days-card" hidden><button type="button" class="fold-line" aria-expanded="false" aria-controls="acc-days">Last 7 days</button><div class="scroll" id="acc-days" hidden></div></div>
     </div></div></div>
   </section>
 

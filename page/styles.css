@@ -642,8 +642,7 @@ button.tlink{all:unset;cursor:pointer;color:var(--accent-text);font-size:calc(14
 .bubble.to-copy,body.captions .msg.ev .bubble.to-copy,body.captions .msg.ev.current .bubble.to-copy{font-size:calc(14px * var(--ts));line-height:1.5;text-align:left;max-height:9em;overflow:hidden;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent);color:var(--soft);opacity:1}
 .copy-chip{align-self:center;margin-top:6px}
 
-/* ============================================================ B-208 (D-210, D-225): the shell in direction C ==========
-   Linear's inverted L. Under 600 px: the pane is the page and the sections are a tab bar at the bottom, her flower as
+/* ============================================================ B-208 (D-210, D-225): the shell in direction C ===   Linear's inverted L. Under 600 px: the pane is the page and the sections are a tab bar at the bottom, her flower as
    the E.V. tab. 600 to 1199 px: a dim sidebar (her, the five sections, System at its foot) beside the raised pane.
    From 1200 px: a details panel on the right too, holding the view's side column, present only while it has one (D-151).
    The document still scrolls (the pane is drawn behind it), so every scroll, sticky and anchor keeps working. Reading
@@ -1064,4 +1063,40 @@ button.btn:disabled{opacity:.45;cursor:default}
   #today-list .li .ti-start{display:none} /* the demo's phone: the name opens the same set, and the time keeps its line */
   #today-list .ti-folded .row{min-height:44px}
   #today-list .ti-fold{min-height:44px}
+}
+/* ============================================================ B-297 (D-283, C-1, C-8, C-13): Study's overview ========
+   The toolbar (the view tabs sit beside the title from 600 px), then the exam header with its readiness bar and one
+   32 px row per objective (44 px on the phone): its state badge, its words, its weak spots and Quiz me on hover or
+   focus. On the phone the toolbar is one row: the course codes and Start session's icon, and Quiz me sits in the
+   objective's detail, which a tap on its words opens in place. */
+#p-study .sbar-study{flex-wrap:nowrap;min-height:0;padding:0 0 8px;border-bottom:0}
+#p-study .sbar-study:not(:has(> :not([hidden],.sp))){display:none}
+#p-study .sbar-study .seg{align-self:center}
+#study-course .code{display:none}
+#study-start svg{fill:currentColor;stroke:none}
+.ov-card{gap:8px}
+.ov-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.ov-head .ov-ex{font:600 calc(14px * var(--ts)) var(--sans)}
+.ov-head .ov-count{margin-left:auto}
+.ov-bar{margin:2px 0 6px}
+.ov-rows{display:flex;flex-direction:column}
+.ov-li{padding:0 4px}
+.ov-li .badge{min-width:64px;justify-content:flex-start}
+.ov-li .nm{height:100%;padding:0;border:0;background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.ov-more{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:8px 4px 12px 80px;border-bottom:1px solid var(--line)}
+.ov-more .meta{margin:0}
+.ov-ws{margin:0;padding-left:16px;color:var(--quiet);font-size:calc(13px * var(--ts))}
+.ov.open .ov-li{border-bottom:0}
+@media (max-width:599px){
+  #p-study .sbar-study{gap:6px;padding:0 0 8px}
+  #p-study .sbar-study .seg{width:auto;align-self:center;flex:0 1 auto;min-width:0}
+  #p-study .sbar-study .seg button{flex:0 0 auto;padding:0 9px}
+  #study-course .full{display:none}
+  #study-course .code{display:inline}
+  #study-start{width:44px;padding:0}
+  #study-start .lbl{display:none}
+  .ov-li{padding:0}
+  .ov-li .ov-q{display:none}
+  .ov-li .badge{min-width:0}
+  .ov-more{padding:8px 0 12px}
 }

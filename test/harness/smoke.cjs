@@ -6,7 +6,7 @@
 // Run `node tools/build.mjs` first (`npm run smoke` does both). Exit code 1 when any check fails. --plant breaks the
 // served page on purpose, to prove the tier turns red (the workflow runs both plants and expects red).
 const { chromium } = require('playwright');
-const { paintAnswer, painted } = require('./paint.cjs');
+const { paintAnswer, painted, studyView } = require('./paint.cjs');
 const fs = require('fs');
 const path = require('path');
 const root = path.resolve(__dirname, '../..');
@@ -224,8 +224,7 @@ async function open(browser, viewport) {
     );
 
     // 5. One review answer scores.
-    await page.click('#tab-study');
-    await page.click('#seg-study [data-v="review"]');
+    await studyView(page, 'review'); // B-297: from Today, as he opens it
     const hasQ = await until(page, () => !!document.querySelector('#rv-body label.opt'), null, 2000);
     // B-222 (D-227): Check answer paints the verdict and its why on the tap's next frame, the record 2 s behind; a
     // refused write puts the question back unanswered (his pick kept) with one line saying why.
@@ -321,7 +320,7 @@ async function open(browser, viewport) {
     } else ok(`${tag} a review answer scores`, false, 'no open review question');
 
     // B-222 (D-227): Practice's question runner paints the same way (the lead drill, its first question).
-    await page.click('#seg-study [data-v="practice"]');
+    await studyView(page, 'practice');
     const lead = page.locator('#pr-body .pr-lead button.primary');
     if (await lead.count()) await lead.first().click();
     await until(page, () => !!document.querySelector('#pr-body label.opt input'), null, 2000);
