@@ -56,7 +56,8 @@ code, the tests and the spec.
 ## Map: core/steps.mjs (1,484 lines, 17 exports)
 
 Since `trim/steps-per-pipeline` part 1, the shared helpers live in `core/steps-shared.mjs` and the worker's job-brief,
-its material and the job-result fold in `core/steps-worker.mjs`; steps.mjs merges them into its three tables in the same
+its material and the job-result fold in `core/steps-worker.mjs`; since part 2, the diagnostic's probe-brief, named
+probes and probe-result in `core/steps-diagnostic.mjs`; steps.mjs merges them into its three tables in the same
 key order. The line numbers below are from before that move.
 
 | Lines | Size | Section | Pipelines |
