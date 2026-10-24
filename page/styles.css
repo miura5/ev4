@@ -686,7 +686,8 @@ body.on-ev.opening .side .top-av,body.on-ev.in-session .side .top-av,body.on-ev.
 .side .tabs .tab:hover,.side .tab-sys:hover{color:var(--text);background:var(--surface)}
 .side .tabs .tab[aria-selected="true"],.side .tab-sys[aria-current="page"]{color:var(--text);background:var(--bg);box-shadow:inset 0 0 0 1px var(--line);font-weight:500;border-color:transparent}
 .tab-her{display:none;width:24px;height:24px;flex:0 0 24px}
-/* Under 600 px: the tab bar at the bottom; her flower is the E.V. tab; System sits at the header's end. */
+/* Under 600 px: the tab bar at the bottom; her 24 px avatar is the E.V. tab; System sits at the header's end, 44 px
+   like every tab (B-288). */
 @media (max-width:599px){
   :root{--dock-h:60px}
   .side{position:fixed;left:0;right:0;bottom:0;height:calc(60px + env(safe-area-inset-bottom,0px));padding:0 0 env(safe-area-inset-bottom,0px);background:var(--sunken);border-top:1px solid var(--line)}
@@ -697,9 +698,9 @@ body.on-ev.opening .side .top-av,body.on-ev.in-session .side .top-av,body.on-ev.
   .side .tabs #tab-ev > svg{display:none}
   .side .tabs #tab-ev .tab-her{display:grid;place-items:center}
   .side .tabs #tab-ev .tab-her,.side .tabs #tab-ev .ev-av{width:24px;height:24px;flex:0 0 24px}
-  .side .tab-sys{position:fixed;top:calc(2px + env(safe-area-inset-top,0px));right:max(6px,env(safe-area-inset-right,0px));width:40px;height:40px;padding:0;justify-content:center;z-index:10;border-radius:10px}
+  .side .tab-sys{position:fixed;top:calc(2px + env(safe-area-inset-top,0px));right:max(4px,env(safe-area-inset-right,0px));width:44px;height:44px;padding:0;justify-content:center;z-index:10;border-radius:10px}
   .side .tab-sys span{display:none}
-  .mh{padding-right:52px}
+  .mh{padding-right:56px}
   /* the surface sheet gives the tab bar its height back, so her line keeps its room */
   body.captions #ev-surf{max-height:clamp(300px,calc(46dvh - var(--dock-h)),410px)}
 }

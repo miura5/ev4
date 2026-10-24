@@ -220,6 +220,83 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
     );
     await page.close();
   }
+  // B-288 (D-225, C-4): at 390, 700, 1000 and 1280 in both themes. The tab bar shows only at 390, its E.V. tab is her
+  // 24 px avatar (no icon) and every tab target there, System's included, is 44 px or more each way. The right panel
+  // shows only from 1200 px; below that, each view's side column follows its main column inside the pane.
+  for (const scheme of ['light', 'dark'])
+    for (const w of [390, 700, 1000, 1280]) {
+      const { page, errors } = await open(browser, { viewport: { width: w, height: w < 600 ? 844 : 900 }, scheme });
+      await page.waitForTimeout(600);
+      await page.screenshot({ path: `${shots}/widths-ev-${w}-${scheme}.png` });
+      const bar = await page.evaluate(() => {
+        const side = document.getElementById('top').getBoundingClientRect(),
+          her = document.getElementById('tab-her'),
+          hr = her.getBoundingClientRect(),
+          icon = document.querySelector('#tab-ev > svg'),
+          targets = [...document.querySelectorAll('#top .tabs .tab'), document.getElementById('tab-system')].map(t => {
+            const r = t.getBoundingClientRect();
+            return [t.id, Math.round(r.width), Math.round(r.height)];
+          });
+        return {
+          bar: Math.round(side.bottom) === innerHeight && Math.round(side.width) === innerWidth,
+          avatar:
+            getComputedStyle(her).display !== 'none' &&
+            !!her.querySelector('.ev-av') &&
+            Math.round(hr.width) === 24 &&
+            Math.round(hr.height) === 24 &&
+            getComputedStyle(icon).display === 'none',
+          targets,
+        };
+      });
+      const phone = w < 600;
+      ok(
+        `[${w} ${scheme}] the tab bar shows only on the phone, its E.V. tab her 24 px avatar (B-288)`,
+        phone ? bar.bar && bar.avatar : !bar.bar && !bar.avatar,
+        JSON.stringify({ bar: bar.bar, avatar: bar.avatar })
+      );
+      if (phone)
+        ok(
+          `[${w} ${scheme}] every tab target, System's too, is 44 px or more each way (B-288)`,
+          bar.targets.length === 6 && bar.targets.every(([, tw, th]) => tw >= 44 && th >= 44),
+          JSON.stringify(bar.targets)
+        );
+      const panels = [];
+      for (const t of ['today', 'progress', 'record', 'system']) {
+        await page.click('#tab-' + t);
+        await page.waitForTimeout(250);
+        if (t === 'today') await page.screenshot({ path: `${shots}/widths-today-${w}-${scheme}.png` });
+        panels.push(
+          await page.evaluate(t => {
+            const p = document.getElementById('p-' + t),
+              open = [...p.querySelectorAll('.cols')].find(c => !c.closest('[hidden]')),
+              side = open && open.querySelector(':scope > .col-side'),
+              main = open && open.querySelector(':scope > .col-main'),
+              vis = el =>
+                [...el.children].filter(x => x.getClientRects().length && getComputedStyle(x).display !== 'none'),
+              wrap = document.querySelector('.wrap').getBoundingClientRect();
+            if (!side || !vis(side).length) return { t, none: true };
+            const s = vis(side)[0].getBoundingClientRect(),
+              m = vis(main),
+              mb = m.length ? Math.max(...m.map(x => x.getBoundingClientRect().bottom)) : s.top;
+            return {
+              t,
+              fixed: getComputedStyle(side).position === 'fixed',
+              right: s.left >= wrap.right - 1,
+              follows: s.top >= mb - 1 && s.left >= wrap.left - 1 && s.right <= wrap.right + 1,
+            };
+          }, t)
+        );
+      }
+      const shown = panels.filter(p => !p.none);
+      ok(
+        `[${w} ${scheme}] the right panel shows only from 1200 px; below that its content follows the pane (B-288)`,
+        shown.length > 0 &&
+          !errors.length &&
+          shown.every(p => (w >= 1200 ? p.fixed && p.right : !p.fixed && p.follows)),
+        JSON.stringify(panels) + (errors.length ? ' errors: ' + errors.slice(0, 2).join(' | ') : '')
+      );
+      await page.close();
+    }
   // B-221 (Matt, Oct 22): from 600 px the sidebar sits on the sunken ground and the view in a raised, outlined pane, in
   // both themes; nothing the shell paints before the stylesheet covers them. The sidebar's sections, the status word.
   for (const scheme of ['light', 'dark'])
