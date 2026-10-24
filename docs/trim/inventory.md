@@ -166,6 +166,52 @@ re-checked by grep. Git history on main is squashed before 75c2b59, so evidence 
     but lint's `duplicate-id` check would still need a repair path after a hand edit. Keep unless Matt prefers fixing
     such a slip by hand.
 
+Added by the queue refill of Oct 24 03:50Z (`trim/queue-refill-2`, at origin/main a9b9c40), when items 1 to 10 were
+all done, declined or held by an open pull request (#15 holds item 8, #17 item 9.2, #16 item 10) and item 11 is a keep.
+`core/deploy.mjs` and the test suite were mapped by read-only helpers and each finding below re-checked by grep. The
+deploy map found no dead function in `core/deploy.mjs` (every export has a caller); what it does have is copies in
+`tools/chart.mjs`.
+
+12. The ship code in `tools/chart.mjs` repeats `core/deploy.mjs` and `core/cli.mjs` (`trim/ship-dedupe`, restructuring
+    under D-264, about 40 lines; only `tools/` changes if it imports what core already exports, so npm test is enough).
+    Take it after #16 merges: #16 drops the `export` on `tasksFor`, which this cut would import again.
+    - `skips()`' task filter (chart.mjs around 1237) is `tasksFor` (deploy.mjs 143) word for word.
+    - The pushed check, the build read and the built-system-documents read (chart.mjs around 1507 to 1515 and 1577 to
+      1582) repeat `isPushed` and `load()` in `core/cli.mjs` (97 to 131).
+    - Three hand-built `https://claude.ai/artifact/...` URLs (chart.mjs around 1587, 1657, 1710) where `artifactUrl`
+      exists; the `verify-staging.json` read (1596) and the `verify-<target>.json` write (1716 to 1731) repeat
+      `core/cli.mjs` 592 to 613; the reads printout (1641 to 1644) copies `formatVerify`'s lines.
+    - Must stay: ship's own R-04 refusal (it answers first, in `shipStep`); deployCalls' copy of the same check stays
+      too, since rules.json and hooks are out of reach and it guards the `deploy` command (item 15).
+    - Nothing a deploy does changes: same calls, same refusals, same files.
+13. Nine copies of the "split page file: no imports, moved not copied" test (`trim/split-file-tests`, about 100 test
+    lines to about 30). The same `doesNotMatch(src, /^import /m, 'no imports: it runs in the page as written')` check,
+    with its export and "moved, not copied" checks against `core/evcore.mjs`, sits in canvas-rules, conversation,
+    insights, library, mirror, prep, sessions, share and skills `.test.mjs` (grep finds all nine); `core.test.mjs`
+    around 1363 already lists the split files. One table-driven test keeps every file's own export list exactly. Low
+    risk: tests only, nothing built or shipped changes.
+14. Small test leftovers (`trim/test-leftovers`, about 25 lines):
+    - "every real fixture document validates (fixtures/v4, local only)" (`test/schema.test.mjs` 88 to 99) always skips:
+      `fixtures/` is ignored and nothing in the repository writes `fixtures/v4` (grep). `readExport` stays tested on
+      the synthetic record (line 75).
+    - "BACKLOG.md is generated from chart/ (no hand edits)" (`test/chart.test.mjs` 178) repeats the B-143 test above
+      it, which loops over `generatedFiles` and that already includes BACKLOG.md (tools/chart.mjs 273).
+    - Optional: the record-trivia asserts in that B-143 test that pin D-172's row and `views.retired`'s values.
+15. **Skip for trimmers:** the `deploy` command in `core/cli.mjs` (610 to 637, its `--matt-ok` and `--during-session`
+    flags, help text, and `dist/deploy-<target>.json`, which only a test reads). Only `test/cli.test.mjs` runs it;
+    every live and staging deploy goes through `ship`, which writes `dist/live-ok` itself (chart.mjs around 1671).
+    Cutting it would make live stricter (no path to `dist/live-ok` without ship's lint, R-06 and tag steps), but
+    CLAUDE.md's Hard limits, `tools/hooks.mjs`' refusal message and R-04's `command` in rules.json all name
+    `deploy live --matt-ok`. A build chat's call on Matt's OK; its tests of `deployCalls` would call it directly
+    instead of being deleted (about 45 code lines go).
+16. Low value, pair with another `core/` change (hashed, ships through staging):
+    - `ENVELOPE` is exported from `core/deploy.mjs` (32) with no importer, and `core/actions.mjs` (15) defines the
+      same array.
+    - The test "B-110: verify goes red when the deployed commit is too far behind origin/main" (`test/cli.test.mjs`
+      581) has an out-of-date title: since B-168 being behind is only reported.
+    - The no-artifact branches in `verify`/`verifyReads`/`deployCalls`: both records in `spec.registry` have one, and
+      only test fixtures set `artifact: null`. About 6 lines, but those fixtures change too; keep unless it rides along.
+
 ## Keeping this queue current
 
 - **When a cut merges,** the build chat marks its item done here, with its pull request number.
