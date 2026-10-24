@@ -140,8 +140,12 @@
   /** The page's custom properties for one theme. The generator's names, then the names styles.css already uses, each
    *  one of them (her accent is --her until B-275 sweeps the old --accent; the meanings follow D-269's hues). */
   var vars = function (T) {
+    // Ink on a green fill (a ticked box, a pressed chip): her ink when it reaches 4.5:1 on green, else the base's
+    // neutral, darkened until it does (light green is mid-tone: white gives 4.2:1).
     var g = T.sem,
-      ink = cratio(T.onAccent, g.green) >= cratio(T.text, g.green) ? T.onAccent : T.text;
+      ink = T.onAccent,
+      L = 13;
+    while (cratio(ink, g.green) < 4.5 && L >= 0) ink = lch2hex(L--, EMBER.base.c * 1.5, EMBER.base.h);
     return {
       '--bg': T.bg,
       '--chrome': T.chrome,

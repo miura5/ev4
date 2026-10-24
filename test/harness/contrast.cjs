@@ -10,8 +10,12 @@ const TEXT_GROUNDS = ['--bg', '--chrome', '--surface', '--hover'];
 const TEXT = ['--text', '--quiet'];
 const FAINT_GROUNDS = ['--chrome', '--surface'];
 const CODED = ['--sem-green', '--sem-yellow', '--sem-red', '--sem-blue', '--sem-violet'];
-// Ink on a solid fill: her accent's ink on her (the primary button and send, D-273).
-const INK = [['--on-her', '--her']];
+// Ink on a solid fill: her accent's ink on her (the primary button and send, D-273), and the ink on a green fill (a
+// ticked box, a pressed chip), which is text too.
+const INK = [
+  ['--on-her', '--her'],
+  ['--do-ink', '--do'],
+];
 const MIN = { text: 4.5, faint: 4.6, ink: 4.5, coded: 3 };
 
 function rgb(c) {

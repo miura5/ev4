@@ -241,8 +241,9 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
             );
             if (g.pressed !== String(c) || g.stored !== (c === 60 ? null : String(c)))
               walk.push(`${t} ${c}: pressed ${g.pressed}, stored ${g.stored}`);
-            if (c === 100 || (t === 'light' && c === 30))
-              await page.screenshot({ path: `${shots}/theme-${t}-contrast-${c}-390x844.png` });
+            await page.mouse.move(0, 0);
+            await page.waitForTimeout(450); // the buttons' fills settle (B-125: within 450 ms) before the shot
+            await page.screenshot({ path: `${shots}/theme-${t}-contrast-${c}-390x844.png` });
           }
         ok(
           "[390x844] B-271: Contrast 30, 60 and 100 in light and dark: the generator's tokens, D-273's floors, stored on this device",
@@ -606,7 +607,22 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           const rows = await page.locator('#rv-body table.mx tbody tr').count();
           for (let r = 0; r < rows; r++)
             await page.locator('#rv-body table.mx tbody tr').nth(r).locator('input[type=radio]').first().check();
-        } else await page.locator('#rv-body label.opt').first().click();
+        } else {
+          // B-271: the right answer by its words (options are shuffled by the set's id, so their place changes daily),
+          // so the finished set always holds right answers to fold
+          const right = await page.evaluate(() => {
+            const stem = (document.querySelector('#rv-body .q-stem') || {}).textContent;
+            for (const x of Object.values(window.__db.sets))
+              for (const q of x.items || [])
+                if (q.stem === stem && q.options && q.correct) return q.options[q.correct[0]];
+            return null;
+          });
+          await (
+            right
+              ? page.locator('#rv-body label.opt', { hasText: right }).first()
+              : page.locator('#rv-body label.opt').first()
+          ).click();
+        }
         await page.click('#rv-body button:has-text("Check answer")');
         await page.waitForTimeout(120);
         const next = page.locator('#rv-body button', { hasText: /Next question|See results/ }).first();
@@ -661,9 +677,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           /set-score/.test(fin.first || '') &&
             /^\d+ of \d+ right$/.test(fin.score || '') &&
             fin.misses >= 1 &&
-            // the right answers fold when there are any: a set with none right has nothing to fold (B-271: the
-            // synthetic set scores 0 of 8 on Oct 24, when the first option is never the right one)
-            (fin.rightFolded || /^0 of /.test(fin.score || '')) &&
+            fin.rightFolded &&
             fin.primaries.length === 1 &&
             fin.primaries[0] === 'Give me 5 more' &&
             !fin.pills,
