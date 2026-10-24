@@ -101,11 +101,13 @@ The brief's order, with what each trimmer may reach:
       **Done Oct 23 (D-262).**
    3. R-05's leftover check: the watchdog-window code in `tools/chart.mjs` and its test (`trim/r05-check`). R-05 was
       retired Oct 23 (D-262) and its rules.json row stays, marked ended. **Done: #3** (and CLAUDE.md's step 6 no longer lists it).
-2. CLAUDE.md: the gotchas move to a lessons file (`trim/gotchas`, **done: #4**), then the opening (`trim/claude-opening`) and the
-   rollback paragraph (`trim/rollback-text`).
+2. CLAUDE.md: the gotchas move to a lessons file (`trim/gotchas`, **done: #4**), then the opening (`trim/claude-opening`, **done: #5**) and the
+   rollback paragraph (`trim/rollback-text`, **done: #6**).
 3. Dead code in `tools/chart.mjs`: the Docs-view calls (`trim/docs-views`), then the one-time v3 import
    (`trim/v3-import`).
-4. Test and check time: smoke on page changes only (`trim/smoke-scope`).
+4. Test and check time: smoke on page changes only (`trim/smoke-scope`, **done: #7**).
+5. Small text, low value (from #5's Found next): CLAUDE.md's "Where things live" repeats the v3 repository row the
+   opening now names (`trim/where-v3-row`).
 
 ## Keeping this queue current
 
