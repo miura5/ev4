@@ -1,5 +1,17 @@
 [
  {
+  "id": "D-260",
+  "date": "Oct 23",
+  "title": "Freeze week: live ships at most three a day, up from two; each still only on Matt's ship it and never during a study session",
+  "why": "Matt, Oct 23: a third fix batch (B-263 to B-265) was green on staging the same day as v4.5.1 and v4.5.2, and he chose to raise the limit rather than wait a day",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [
+   "D-246"
+  ],
+  "source": "log"
+ },
+ {
   "id": "D-259",
   "date": "Oct 23",
   "title": "The trim runs during the freeze, in parallel with Matt's onboarding, and merges during it. Trimmer sessions follow docs/trim-brief.md: one cut per short trim/<what> branch and pull request, nothing written to chart/, no deploys, and no new machinery in place of what they cut. A fresh reviewer checks each pull request against the brief before reading the trimmer's reasoning. The freeze chat turns an approved cut into Matt's practice rep and merges it on his OK. A cut to tools, workflows, hooks, docs or CLAUDE.md needs npm test green; a cut to deployed files ships through staging, the full check and live on his OK. No merges in the days around an exam, and a bug that breaks studying comes first. Amends D-258's 'the cut comes after the freeze' and D-246's bugs-and-polish-only.",
