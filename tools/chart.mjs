@@ -277,6 +277,14 @@ export const generatedFiles = rec => ({
 });
 
 // ------------------------------------------------------------------------------------------------ Docs reads
+/** XML's five entities decoded (&amp; last, so "&amp;lt;" stays "&lt;"). */
+const ent = s =>
+  s
+    .replace(/&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
 /** A Docs read's prose XML as {rev, rows: [{id, h, cells: [{id, h, text, dropdown}]}]} for one table (ids in full). */
 export function parseTableXml(xml) {
   let session = null;
@@ -286,13 +294,6 @@ export function parseTableXml(xml) {
     session = id.split('.')[0];
     return id;
   };
-  const ent = s =>
-    s
-      .replace(/&apos;/g, "'")
-      .replace(/&quot;/g, '"')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&amp;/g, '&');
   const rev = Number((xml.match(/<doc [^>]*rev='(\d+)'/) || [])[1]);
   const rows = [];
   let row = null,
@@ -1281,62 +1282,63 @@ export function shipStep({ target, manifest, state, verifyResult, reads, deploy,
     ],
   };
 }
+/** This session's ArtifactData reads that succeeded and whose input passes `match`, oldest first. */
+const dataReads = (jsonl, match) =>
+  toolResults(jsonl || '', 'ArtifactData').filter(r => !r.isError && match(r.input || {}));
+/** A get's version: n, 0 when the document is absent (B-178: so it is created), undefined when the text names neither. */
+const versionIn = r => {
+  const text = r.texts.join('\n');
+  const m = text.match(/\bversion\D{0,4}(\d+)/i);
+  return m ? Number(m[1]) : /^No document /.test(text.trim()) ? 0 : undefined;
+};
 /** The record's versions of the system documents, from this session's ArtifactData gets of them. */
 export function versionsFrom(jsonl, url) {
   const out = {};
-  for (const r of toolResults(jsonl || '', 'ArtifactData')) {
-    const i = r.input || {};
-    if (
-      i.action !== 'get' ||
-      i.collection !== 'system' ||
-      i.url !== url ||
-      ![...SYSTEM_IDS, 'yourturn'].includes(i.doc_id) ||
-      r.isError
-    )
-      continue;
-    const text = r.texts.join('\n');
-    const m = text.match(/\bversion\D{0,4}(\d+)/i);
-    if (m) out[i.doc_id] = Number(m[1]);
-    else if (/^No document /.test(text.trim())) out[i.doc_id] = 0; // B-178: absent, so it is created
+  const ids = [...SYSTEM_IDS, 'yourturn'];
+  for (const r of dataReads(
+    jsonl,
+    i => i.action === 'get' && i.collection === 'system' && i.url === url && ids.includes(i.doc_id)
+  )) {
+    const v = versionIn(r);
+    if (v !== undefined) out[r.input.doc_id] = v;
   }
   return out;
 }
 /** B-178: a document's version from this session's newest ArtifactData get of it: n, 0 when absent, null unread. */
 export function docVersionFrom(jsonl, url, collection, id) {
   let out = null;
-  for (const r of toolResults(jsonl || '', 'ArtifactData')) {
-    const i = r.input || {};
-    if (i.action !== 'get' || i.collection !== collection || i.doc_id !== id || i.url !== url || r.isError) continue;
-    const text = r.texts.join('\n');
-    const m = text.match(/\bversion\D{0,4}(\d+)/i);
-    if (m) out = Number(m[1]);
-    else if (/^No document /.test(text.trim())) out = 0;
+  for (const r of dataReads(
+    jsonl,
+    i => i.action === 'get' && i.collection === collection && i.doc_id === id && i.url === url
+  )) {
+    const v = versionIn(r);
+    if (v !== undefined) out = v;
   }
   return out;
+}
+/** The newest get of collection/id: {url, doc} with the document from the file it saved (doc null when none), or null. */
+function savedGet(jsonl, collection, id) {
+  const r = dataReads(jsonl, i => i.action === 'get' && i.collection === collection && i.doc_id === id).at(-1);
+  if (!r) return null;
+  const file = (r.texts.join('\n').match(/"(\/[^"]+\.json)"/) || [])[1];
+  let doc = null;
+  try {
+    doc = file ? JSON.parse(fs.readFileSync(file, 'utf8')) : null;
+  } catch {
+    doc = null;
+  }
+  return { url: r.input.url, doc };
 }
 /**
  * B-179 (D-194): a builder job from this session's newest ArtifactData get of jobs/<id> (either record): the document
  * from the file the get saved, and its words (the brief, as Matt typed it). null when no get of it was made or saved.
  */
 export function jobFrom(jsonl, id) {
-  let out = null;
-  for (const r of toolResults(jsonl || '', 'ArtifactData')) {
-    const i = r.input || {};
-    if (i.action !== 'get' || i.collection !== 'jobs' || i.doc_id !== id || r.isError) continue;
-    const text = r.texts.join('\n');
-    const file = (text.match(/"(\/[^"]+\.json)"/) || [])[1];
-    let doc = null;
-    try {
-      doc = file ? JSON.parse(fs.readFileSync(file, 'utf8')) : null;
-    } catch {
-      doc = null;
-    }
-    out =
-      doc && typeof doc.brief === 'string' && doc.brief.trim()
-        ? { id, url: i.url, doc, words: doc.brief.trim() }
-        : null;
-  }
-  return out;
+  const g = savedGet(jsonl, 'jobs', id);
+  const doc = g && g.doc;
+  return doc && typeof doc.brief === 'string' && doc.brief.trim()
+    ? { id, url: g.url, doc, words: doc.brief.trim() }
+    : null;
 }
 const jobReadMissing = id =>
   `no read of job ${id} in this session: make ArtifactData {"action":"get","url":"<the record the job is in>","collection":"jobs","doc_id":"${id}"} first`;
@@ -1390,18 +1392,8 @@ export function commitsIn(root, range) {
 export const SHIP_JOB_HOURS = 24;
 /** The newest fetch of jobs/<id> in the transcript: the document as saved, or null. */
 export function shipJobFrom(jsonl, id) {
-  let out = null;
-  for (const r of toolResults(jsonl || '', 'ArtifactData')) {
-    const i = r.input || {};
-    if (i.action !== 'get' || i.collection !== 'jobs' || i.doc_id !== id || r.isError) continue;
-    const file = (r.texts.join('\n').match(/"(\/[^"]+\.json)"/) || [])[1];
-    try {
-      out = file ? JSON.parse(fs.readFileSync(file, 'utf8')) : null;
-    } catch {
-      out = null;
-    }
-  }
-  return out;
+  const g = savedGet(jsonl, 'jobs', id);
+  return g && g.doc;
 }
 /** Whether this session read jobresults/<id>: 'none' (no such document), 'exists', or null (not read). */
 export function jobResultSeen(jsonl, id) {
@@ -1949,32 +1941,35 @@ export const CHART_DESIGN = 'https://claude.ai/artifact/8DVSMh5WdybjeHVV5m2uQT';
 export const KICKOFF_MAX = 4000;
 /** The newest Docs read in the transcript of a tab of the doc docId: {rev, xml}, or null. */
 export function docTabRead(jsonl, docId) {
+  // A whole tab: a view of one block (parent=) or a search is not the page.
+  return newestDocsRead(
+    jsonl,
+    docId,
+    (b, i) =>
+      i.ref &&
+      i.ref.object === 'node' &&
+      !/^<doc\b[^>]*\bparent='/.test(b.xml) &&
+      !(i.payload && i.payload.kind === 'search')
+  );
+}
+/** The newest Docs read of the doc docId whose body passes accept(body, input): {rev, xml}, or null. */
+function newestDocsRead(jsonl, docId, accept) {
   const rs = toolResults(jsonl || '', '*').filter(
     r =>
       isDocsTool(r.name, 'read') &&
       !r.isError &&
       r.input &&
       r.input.container &&
-      docIdOf(r.input.container.id) === docId &&
-      r.input.ref &&
-      r.input.ref.object === 'node'
+      docIdOf(r.input.container.id) === docId
   );
-  // A whole tab: a view of one block (parent=) or a search is not the page.
   for (const r of rs.reverse()) {
     const b = readBody(r.texts);
-    if (b && b.xml && !/^<doc\b[^>]*\bparent='/.test(b.xml) && !(r.input.payload && r.input.payload.kind === 'search'))
-      return b;
+    if (b && b.xml && accept(b, r.input)) return b;
   }
   return null;
 }
 const xmlWords = x =>
-  String(x || '')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&apos;/g, "'")
-    .replace(/&quot;/g, '"')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&')
+  ent(String(x || '').replace(/<[^>]+>/g, ''))
     .replace(/\s+/g, ' ')
     .trim();
 /** The north star as read: its six workflows (name, where it stands) and its "When v5 may start" line. */
@@ -1993,9 +1988,7 @@ export function northStarFrom(read) {
 /** The newest weeks document this session fetched (a get, list or query with out_dir): {date, insights} or null. */
 export function weekFrom(jsonl) {
   let best = null;
-  for (const r of toolResults(jsonl || '', 'ArtifactData')) {
-    const i = r.input || {};
-    if (r.isError || i.collection !== 'weeks' || !['get', 'list', 'query'].includes(i.action)) continue;
+  for (const r of dataReads(jsonl, i => i.collection === 'weeks' && ['get', 'list', 'query'].includes(i.action))) {
     for (const m of r.texts.join('\n').matchAll(/"(\/[^"]+\/weeks\/([^"/]+)\.json)"/g)) {
       let doc = null;
       try {
@@ -2434,13 +2427,6 @@ export const docIdOf = link =>
     .replace(/^.*-(?=[A-Za-z0-9]{22}$)/, '');
 /** The table under the heading that reads `title` in a prose read, as rows of cell texts (header row first). */
 export function tableUnder(xml, title) {
-  const ent = s =>
-    s
-      .replace(/&apos;/g, "'")
-      .replace(/&quot;/g, '"')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&amp;/g, '&');
   for (const m of xml.matchAll(/<paragraph\b[^>]*\bheading='\d'[^>]*>([\s\S]*?)<\/paragraph>/g)) {
     if (
       ent(m[1].replace(/<[^>]+>/g, ''))
@@ -2458,19 +2444,7 @@ export function tableUnder(xml, title) {
 }
 /** The newest Docs read in the transcript of the doc that holds a 'Tasks to add', 'Decisions proposed' or 'Tenets proposed' heading. */
 export function designRead(jsonl, docId) {
-  const rs = toolResults(jsonl, '*').filter(
-    r =>
-      isDocsTool(r.name, 'read') &&
-      !r.isError &&
-      r.input &&
-      r.input.container &&
-      docIdOf(r.input.container.id) === docId
-  );
-  for (const r of rs.reverse()) {
-    const b = readBody(r.texts);
-    if (b && b.xml && /Tasks to add|Decisions proposed|Tenets proposed/i.test(b.xml)) return b;
-  }
-  return null;
+  return newestDocsRead(jsonl, docId, b => /Tasks to add|Decisions proposed|Tenets proposed/i.test(b.xml));
 }
 /** A Check cell's kind: the first of harness, lint, ship or review it names (the look pass is the harness's). */
 export function checkOf(text) {
