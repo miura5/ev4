@@ -5147,12 +5147,12 @@
   "title": "Sidebar (folds B-279's sidebar part; D-280, C-4, C-14, C-15, D-291, D-292, D-293): the 24 px Dial Arc in her palette and her status line; five neutral nav items, the first named \"E.V.\". The Today list with its dots and \"n more in Today\", hidden while Today is open. Theme and Contrast in the foot. No Working section.",
   "dod": "Screenshots at 390 and 1280 in light and dark. With Today open, the sidebar shows no Today list. The nav reads E.V., Today, Study, Progress, Record with neutral icons. The avatar's colours come from her palette, not --accent. No Working heading. Every nav item answers Tab and Enter with a visible ring of 3:1 or more.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-285",
    "B-272"
   ],
-  "notes": "",
+  "notes": "claimed by lane chrome",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
