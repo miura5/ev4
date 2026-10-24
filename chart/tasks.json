@@ -4931,12 +4931,12 @@
   "title": "One clock (D-271, D-272): her loop runs on requestAnimationFrame with dt smoothing and stops when she is still; the frame-budget harness measures D-272",
   "dod": "The budget harness at 390 × 844, DPR 3, 4× throttle shows at most 5% of frames over 25 ms across 10 s of speech, and zero frames over 3 s of idle; staging GREEN",
   "milestone": "v4.7 look",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-272"
   ],
-  "notes": "touched check GREEN (all seven harnesses, 242 of 242 look checks); shipped to staging at b48f0e9, GREEN; review next",
-  "commit": null,
+  "notes": "Product review card. What changes when he studies: nothing he can see; E.V. moves exactly as before while she talks, thinks or gestures, but once she is sitting still she stops asking the phone for frames altogether, so an open E.V. page at rest costs no battery or processor time. Why: the one-clock and frame-budget rules Matt accepted with the avatar (she animates at the screen's full rate and costs nothing at rest); before this she stopped drawing at rest but kept a timer ticking 60 times a second. Touches: her avatar on every screen (the conversation stage, the sidebar, the phone tab bar, the folded header). What could break and how we'd notice: she could freeze on an old pose if something changed her without waking her; every change to her (a mood, a word, a gesture, a session's ring, a resize, the page coming back into view, the motion setting) now wakes her, and the avatar check proves both that 3 s of idle records zero frames and that one word wakes her again. Size: small, one part of her drawing code plus one check; undone by reverting one commit. Checks: npm test green; smoke green; the full touched check GREEN (all seven page checks, 242 of 242 look checks); the frame budget at phone size, 4x slowed processor: 0 of 630 frames over 25 ms during 10 s of speech, and 0 frames over 3 s of idle; staging GREEN at b48f0e9. Reviewer (fresh subagent): No gaps in B-274. Not a view task, so no board comparison. Retires: the always-on timer behind her. Left for B-276: the old eight-a-second cap and held-frame wording. Staging page: https://claude.ai/artifact/Pb6jQ6CvEbtxi6Rcshu9uC",
+  "commit": "b48f0e9",
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
  {
