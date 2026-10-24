@@ -275,16 +275,27 @@
           )
         );
       if (done.length)
-        after.push(...todayFold('done', 'Done · ' + done.length, done.map(it => todayRow(it, isDone)), folds.done !== false));
+        after.push(
+          ...todayFold(
+            'done',
+            'Done · ' + done.length,
+            done.map(it => todayRow(it, isDone)),
+            folds.done !== false
+          )
+        );
       const deferred = ((day.plan && day.plan.deferred) || []).filter(d => d.kind !== 'weakspot');
       const deferredWs = ((day.plan && day.plan.deferred) || []).filter(d => d.kind === 'weakspot');
       const dRows = [
         ...later.map(it => todayRow(it, isDone)),
         ...deferred.filter(d => !later.some(it => it.text === d.title)).map(d => row({ title: d.title })),
-        ...(deferredWs.length ? [row({ title: plural(deferredWs.length, 'weak spot') + ' over today’s review load' })] : []),
+        ...(deferredWs.length
+          ? [row({ title: plural(deferredWs.length, 'weak spot') + ' over today’s review load' })]
+          : []),
       ];
       if (dRows.length)
-        after.push(...todayFold('deferred', 'Deferred: over today’s budget · ' + dRows.length, dRows, !!folds.deferred));
+        after.push(
+          ...todayFold('deferred', 'Deferred: over today’s budget · ' + dRows.length, dRows, !!folds.deferred)
+        );
       if (skipped.length) {
         const sRows = skipped.map(x => row({ title: x.text }));
         sRows.push(row({ title: 'Ask E.V. to put one back.', cls: 'ti-hint' }));
