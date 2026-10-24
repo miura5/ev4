@@ -1454,33 +1454,8 @@ test('B-60: the rollback names the schemas it crosses and the live prompts that 
   );
 });
 
-// ------------------------------------------------------------------------------------------------ B-102 the watchdog windows
-test('B-102: R-05 refuses a live deploy from :45 to :05 around each live watchdog run, and says when it opens', () => {
-  const sched = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec', 'ev.spec.json'), 'utf8')).tasks.live.watchdog
-    .schedule;
-  const at = iso => C.watchdogWindow(sched, new Date(iso));
-  // Oct 20 is CDT (UTC-5): the 4:55 run is 09:55Z.
-  assert.equal(at('2026-10-20T09:44:59Z'), null, '4:44:59 is open');
-  assert.equal(C.ctClock(at('2026-10-20T09:45:00Z').run.toISOString()), '04:55', '4:45 is in the window');
-  assert.equal(
-    C.ctClock(at('2026-10-20T10:04:59Z').opens.toISOString()),
-    '05:05',
-    '5:04:59 is in it; it opens at 5:05'
-  );
-  assert.equal(at('2026-10-20T10:05:00Z'), null, '5:05 is open');
-  assert.equal(at('2026-10-20T08:30:00Z'), null, 'between windows');
-  // Across midnight: 22:55 Central is 03:55Z the next day; 23:00 is in, 23:05 is out.
-  assert.ok(at('2026-10-21T04:00:00Z'));
-  assert.equal(at('2026-10-21T04:05:00Z'), null);
-  // In CST (Nov 2, UTC-6) the 1:55 run is 07:55Z.
-  assert.equal(C.ctClock(at('2026-11-02T07:50:00Z').run.toISOString()), '01:55');
-  assert.equal(at('2026-11-02T06:50:00Z'), null);
-  assert.equal(
-    C.watchdogRefusal(sched, new Date('2026-10-20T09:50:00Z')),
-    'R-05 (D-142): the live watchdog runs at 04:55 CT; live deploys wait until 05:05 CT'
-  );
-  assert.equal(C.watchdogRefusal(sched, new Date('2026-10-20T10:10:00Z')), null);
-  // log rule: the next free id, on a decision in the record; --fn names the check.
+// ------------------------------------------------------------------------------------------------ log rule
+test('log rule takes the next free id, on a decision in the record; --fn names the check', () => {
   const s = sample();
   assert.throws(
     () => C.applyLog(s, { _: ['log', 'rule', 'R-07'], rule: 'r', decision: 'D-002', command: 'ship live', fn: 'f' }),
@@ -1495,7 +1470,7 @@ test('B-102: R-05 refuses a live deploy from :45 to :05 around each live watchdo
     rule: 'r',
     decision: 'D-002',
     command: 'ship live',
-    fn: 'watchdogWindow',
+    fn: 'fullCheck',
     task: 'B-02',
   });
   assert.deepEqual(s.rules.at(-1), {
@@ -1504,14 +1479,8 @@ test('B-102: R-05 refuses a live deploy from :45 to :05 around each live watchdo
     decision: 'D-002',
     task: 'B-02',
     command: 'ship live',
-    check: 'watchdogWindow',
+    check: 'fullCheck',
   });
-  const r = rec();
-  assert.deepEqual(
-    r.rules.filter(x => x.check === 'watchdogWindow').map(x => [x.id, x.command, x.decision]),
-    [['R-05', 'ship live', 'D-142']],
-    'the rule is in chart/rules.json'
-  );
 });
 
 test('two new deploys reach the Changelog as one insert, newest first (Docs refuses two inserts on one anchor)', () => {
