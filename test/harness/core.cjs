@@ -277,6 +277,8 @@ const SPEECH = `async (secs) => { const C = window.EVApp.core; const text = 'Pre
     await page.evaluate(() => document.documentElement.removeAttribute('data-theme'));
     // D-216: off the E.V. tab, the sidebar's 24 px dial turns to face him for a notice (alert: closed, flat, lit at twelve).
     if (scheme === 'desktop') {
+      // the test dials' box sits over the sidebar's corner: out of the way for this look
+      await page.evaluate(() => (document.getElementById('dial-box').style.display = 'none'));
       await page.click((await page.isVisible('#side-today')) ? '#side-today' : '#tab-today').catch(() => {});
       await hold(page, 'alert');
       await page.waitForTimeout(1400);
