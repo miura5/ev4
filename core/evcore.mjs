@@ -1606,31 +1606,7 @@ const EVCore = (() => {
 
   // ---------------------------------------------------------------- library: course materials (D-079) · core/library.mjs (B-155)
   // Bound ahead of the prep checks and insights: their factories read these names as they are made.
-  const {
-    MATERIAL_KINDS,
-    citeMaterial,
-    guessCourse,
-    libStem,
-    libTokens,
-    libraryCatalog,
-    libraryChunks,
-    libraryIndex,
-    libraryPick,
-    liveMaterials,
-    materialFromUpload,
-    materialKind,
-    materialRemove,
-    mergeOcr,
-    normCourse,
-    ocrPrompt,
-    officeText,
-    parseOcr,
-    pdfText,
-    readMaterial,
-    searchLibrary,
-    stripHtml,
-    ...libMore // B-78: parseCite, citeTarget
-  } = makeLibrary({
+  const { stripHtml, ...LIB } = makeLibrary({
     get C() {
       return C;
     },
@@ -1647,6 +1623,17 @@ const EVCore = (() => {
     safeId,
     slug,
   });
+  const {
+    MATERIAL_KINDS,
+    citeMaterial,
+    libStem,
+    libTokens,
+    libraryChunks,
+    libraryIndex,
+    materialKind,
+    normCourse,
+    searchLibrary,
+  } = LIB;
 
   // ---------------------------------------------------------------- prep checks (D-143, D-144) · core/prep.mjs (B-159)
   const PREP = makePrep({
@@ -2050,7 +2037,7 @@ const EVCore = (() => {
   }
 
   // ---------------------------------------------------------------- insights · core/insights.mjs (B-159)
-  const { answerStats, calibrate, examRetro, examViews, predictReadiness, readiness, readinessAudit } = makeInsights({
+  const INSIGHTS = makeInsights({
     addDays,
     citeMaterial,
     collectAttempts,
@@ -2063,6 +2050,7 @@ const EVCore = (() => {
     searchLibrary,
     taskDone,
   });
+  const { examViews } = INSIGHTS;
 
   // ---------------------------------------------------------------- lint
   const ID_PATTERNS = [
@@ -2165,7 +2153,7 @@ const EVCore = (() => {
   }
 
   // ---------------------------------------------------------------- Markdown mirror and backup · core/mirror.mjs (B-160)
-  const { toMarkdown, buildBackup, restorePlan } = makeMirror({
+  const MIRROR = makeMirror({
     isoOf,
     buildWeakspots,
     chicagoDate,
@@ -2175,7 +2163,7 @@ const EVCore = (() => {
   });
 
   // ---------------------------------------------------------------- Canvas (code side of the read-only sync) · core/canvas-rules.mjs (B-160)
-  const { normalizeCanvas } = makeCanvasRules({
+  const CANVAS = makeCanvasRules({
     get C() {
       return C;
     },
@@ -2192,24 +2180,7 @@ const EVCore = (() => {
   });
 
   // ---------------------------------------------------------------- Study Watch session intake; study sessions in E.V. Home (D-073) · core/sessions.mjs (B-156)
-  const {
-    checkFormat,
-    openCheckPrompt,
-    parseOpenCheck,
-    checkPrompt,
-    closeSession,
-    commentPrompt,
-    decideSessionQuestion,
-    intakeSession,
-    noteDelta,
-    noteMark,
-    parseCheck,
-    parseComment,
-    parseWrap,
-    sessionContext,
-    sessionState,
-    wrapPrompt,
-  } = makeSessions({
+  const SESSIONS = makeSessions({
     get C() {
       return C;
     },
@@ -2234,25 +2205,7 @@ const EVCore = (() => {
   });
 
   // ---------------------------------------------------------------- skills practice (Features: "Skills practice mode"); workouts (D-108) · core/skills.mjs (B-158)
-  const {
-    cardsText,
-    endSkill,
-    endWorkout,
-    skillIdle,
-    skillResumeChip,
-    skillState,
-    skillStep,
-    skillSteps,
-    startSkill,
-    startWorkout,
-    weakspotCards,
-    workoutCheckin,
-    workoutMoves,
-    workoutRound,
-    workoutSequences,
-    workoutState,
-    workoutSummary,
-  } = makeSkills({
+  const SKILLS = makeSkills({
     get C() {
       return C;
     },
@@ -2276,7 +2229,7 @@ const EVCore = (() => {
   });
 
   // ---------------------------------------------------------------- shareable practice pages (D-110) · core/share.mjs (B-160)
-  const { sharePage, shareableSet } = makeShare({
+  const SHARE = makeShare({
     itemType,
     planTasks,
     validItems,
@@ -2298,7 +2251,17 @@ const EVCore = (() => {
   });
 
   return {
+    // B-155..B-160: each factory's names, spread whole (library keeps stripHtml to itself)
     ...CONV, // B-129: greeting, situation, headlinePrompt, checkHeadline and the conversation names
+    ...PREP, // prep checks (D-143, D-144, D-204) and the clinical-prep brief (D-103, B-46)
+    ...IDC, // B-197: candidates, fingerprints, the judgment and its kept verdicts
+    ...LIB, // course materials (D-079); B-78: parseCite, citeTarget
+    ...INSIGHTS, // readiness, prediction, calibration, retrospectives and the readiness audit
+    ...MIRROR, // the Markdown mirror and the backup's restore plan
+    ...CANVAS, // Canvas sync's code side
+    ...SESSIONS, // Study Watch intake and study sessions in E.V. Home
+    ...SKILLS, // skills practice, Quizlet cards, weak-spot cards and workouts (D-108)
+    ...SHARE, // shareable practice pages (D-110)
     VERSION,
     TZ,
     CJ_STEPS,
@@ -2390,7 +2353,6 @@ const EVCore = (() => {
     dayView,
     dayeditBase,
     listEdit,
-    ...PREP, // prep checks (D-143, D-144, D-204) and the clinical-prep brief (D-103, B-46)
     gradedAsk,
     DATE_KINDS,
     dateEdit,
@@ -2399,91 +2361,15 @@ const EVCore = (() => {
     isRemovedDate,
     isFixedDate,
     fromCanvas,
-    // snapshot, context, insights
+    // snapshot and context
     buildSnapshot,
     lastRuns,
     capacity,
-    weakspotCards,
-    examViews,
     buildContext,
-    answerStats,
-    readiness,
-    predictReadiness,
-    calibrate,
-    examRetro,
     // trust
     lint,
     scanIdentifiers,
-    ...IDC, // B-197: candidates, fingerprints, the judgment and its kept verdicts
     autoParkEvents,
-    toMarkdown,
-    buildBackup,
-    restorePlan,
-    // intake
-    normalizeCanvas,
-    intakeSession,
-    // library (course materials)
-    MATERIAL_KINDS,
-    materialKind,
-    liveMaterials,
-    materialRemove,
-    normCourse,
-    citeMaterial,
-    ...libMore,
-    libStem,
-    libTokens,
-    libraryChunks,
-    libraryIndex,
-    searchLibrary,
-    libraryCatalog,
-    readMaterial,
-    libraryPick,
-    officeText,
-    pdfText,
-    ocrPrompt,
-    parseOcr,
-    mergeOcr,
-    guessCourse,
-    materialFromUpload,
-    // conversations (Captions)
-    // study sessions in E.V. Home
-    sessionState,
-    noteMark,
-    noteDelta,
-    sessionContext,
-    checkPrompt,
-    parseCheck,
-    checkFormat,
-    openCheckPrompt,
-    parseOpenCheck,
-    commentPrompt,
-    parseComment,
-    wrapPrompt,
-    parseWrap,
-    closeSession,
-    decideSessionQuestion,
-    cardsText,
-    // skills practice and the readiness audit
-    skillSteps,
-    skillState,
-    skillStep,
-    startSkill,
-    endSkill,
-    skillIdle,
-    skillResumeChip,
-    readinessAudit,
-    // workouts (D-108)
-    shareableSet,
-    sharePage,
-    workoutSequences,
-    workoutMoves,
-    startWorkout,
-    workoutState,
-    workoutRound,
-    endWorkout,
-    workoutCheckin,
-    workoutSummary,
-    // conversation
   };
 })();
 
