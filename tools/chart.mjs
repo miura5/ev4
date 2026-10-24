@@ -28,7 +28,6 @@
 //            head, as a restore commit, then ship staging and ship live; without --apply a dry run that prints it all
 //   brief --task <id>        one page for a new session: the inbox, the task, its dependencies, decisions, limits
 //   backlog [--check]        regenerate BACKLOG.md (--check: exit 1 when the file differs)
-//   import --from <dir>      the one-time import (B-92) from saved copies of BACKLOG.md and the doc tabs
 // Options: --root <repo> (default this checkout). Exit 0 green, 1 red or refused, 2 usage.
 import fs from 'node:fs';
 import os from 'node:os';
@@ -112,14 +111,7 @@ export const ctClock = iso => {
 };
 
 // ------------------------------------------------------------------------------------------------ BACKLOG.md
-// As BACKLOG.md stood when the Chart imported it (B-92), and as it reads since the cutover (B-97, D-140).
-export const BACKLOG_HEADER_IMPORTED = [
-  '# E.V. v4 build backlog',
-  '',
-  'The sequence every build session follows. Full definitions of done are in the Build plan tab of E.V. Foundation',
-  'v4; this file is the live status board. Status: `open` · `in progress` · `blocked` · `done`. A task opens when',
-  'every id in Depends is `done`. Edit only the Status and Notes columns; commit every change.',
-];
+// As BACKLOG.md reads since the cutover (B-97, D-140); the Chart imported it once from v3 (B-92).
 export const BACKLOG_HEADER = [
   '# E.V. v4 build backlog',
   '',
@@ -294,42 +286,7 @@ export function parseBacklogRow(line) {
   return [c[0], c[1], c[2], c[3], c[4], c.slice(5).join(' | ')];
 }
 
-// ------------------------------------------------------------------------------------------------ the import (B-92)
-const unescapeMd = s => s.replace(/\\([\\`*_{}[\]()#+\-.!<>|~])/g, '$1');
-/** The body rows of a Markdown table (header and separator dropped), as cell arrays. */
-export function mdRows(md) {
-  const rows = md.split('\n').filter(l => l.startsWith('| ') && !/^\| ?---/.test(l));
-  return rows.slice(1).map(l => l.slice(2, -2).split(' | ').map(unescapeMd));
-}
-const DECISION_REFS = [
-  { re: /\bsupersed(?:es|ing) (D-\d{3})/g, rel: 'supersedes' },
-  { re: /\b(?:refines|amends|narrows|withdraws) (D-\d{3})/g, rel: 'amends' },
-  { re: /\bclause of (D-\d{3}) withdrawn/g, rel: 'amends' },
-];
-/** Decisions from the Decisions tab (Date | ID | Decision | Why | Status), with supersedes and amends read from the text. */
-export function importDecisions(md) {
-  const out = mdRows(md).map(([date, id, title, why, status]) => ({
-    id,
-    date,
-    title,
-    why,
-    status: status.toLowerCase(),
-    supersedes: [],
-    amends: [],
-  }));
-  const byId = Object.fromEntries(out.map(d => [d.id, d]));
-  for (const d of out) {
-    for (const { re, rel } of DECISION_REFS)
-      for (const m of d.title.matchAll(re)) if (m[1] !== d.id && !d[rel].includes(m[1])) d[rel].push(m[1]);
-    // "(narrowed by D-139: ...)" in D-136 is D-139 amending D-136.
-    for (const m of d.title.matchAll(/\bnarrowed by (D-\d{3})/g))
-      if (byId[m[1]] && !byId[m[1]].amends.includes(d.id)) byId[m[1]].amends.push(d.id);
-    for (const m of d.title.matchAll(/\bsuperseded by (D-\d{3})/gi))
-      if (byId[m[1]] && !byId[m[1]].supersedes.includes(d.id)) byId[m[1]].supersedes.push(d.id);
-  }
-  return out;
-}
-
+// ------------------------------------------------------------------------------------------------ Docs reads
 /** A Docs read's prose XML as {rev, rows: [{id, h, cells: [{id, h, text, dropdown}]}]} for one table (ids in full). */
 export function parseTableXml(xml) {
   let session = null;
@@ -385,235 +342,6 @@ export function parseTableXml(xml) {
   return { rev, rows };
 }
 
-// A deploy sentence names a target and a commit it put there; these are the words that say so.
-const DEPLOY_VERB =
-  /\b(deployed|redeployed|republished|deploy to|at builds?|builds? [0-9a-f]{7}|at [0-9a-f]{7}|then live|live on|staging: )/i;
-const NOT_DEPLOYED =
-  /\b(?:from|was|stays at|redeploy of|since|ahead of|runs at|proof runs at|until)\s+(?:a |the )?([0-9a-f]{7})\b|\b([0-9a-f]{7}) plus notes/g;
-/** A Changelog line's sentences: split at ". " and "; " outside parentheses, never after "E.V". */
-function sentences(text) {
-  const out = [];
-  let depth = 0,
-    start = 0;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (c === '(') depth++;
-    else if (c === ')') depth = Math.max(0, depth - 1);
-    else if (
-      !depth &&
-      (c === '.' || c === ';') &&
-      text[i + 1] === ' ' &&
-      !(c === '.' && /E\.V$/.test(text.slice(Math.max(0, i - 3), i)))
-    ) {
-      out.push(text.slice(start, i));
-      start = i + 2;
-    }
-  }
-  out.push(text.slice(start));
-  return out.filter(Boolean);
-}
-/** The target(s) a deploy sentence names: both for "staging then live" or "staging and live", else the first named. */
-function targetsOf(s) {
-  if (/staging (?:\([^)]*\) )?then live|staging and live/i.test(s)) return ['staging', 'live'];
-  const l = s.search(/\blive\b/i),
-    st = s.search(/\bstaging\b/i);
-  if (/^Live stays/i.test(s)) return [];
-  if (l < 0 && st < 0) return [];
-  return [st >= 0 && (l < 0 || st < l) ? 'staging' : 'live'];
-}
-/**
- * Deploys from the Changelog's v4 rows (Date | Change | Why | Decision), sentence by sentence: each sentence that
- * deploys names its target(s) and the commits it put there (one entry each), the time when given (CT), the OK, the
- * verify result and the rollback commit. Each entry keeps its row whole in `line`, so nothing is lost to the parse.
- */
-export function importDeploys(rows, { year = 2026, isCommit = () => true } = {}) {
-  const out = [];
-  for (const r of rows) {
-    if (!/^Oct (1[89]|[23]\d)$/.test(r.date)) continue; // v4 deploys start Oct 18; earlier rows are v3's
-    const day = String(Number(r.date.slice(4))).padStart(2, '0'),
-      row = [];
-    const rollback =
-      (r.change.match(/Rollback is a redeploy of ([0-9a-f]{7})/) ||
-        r.change.match(/\b(?:from|was) ([0-9a-f]{7})\b/) ||
-        [])[1] || null;
-    const verifyOf = target => {
-      const v = (r.change.match(new RegExp(`verify-deploy (?:staging and live|${target})[^.;]*`, 'i')) ||
-        r.change.match(/verify-deploy[^.;]*/i) || [''])[0];
-      return /green/i.test(v) ? (/but for|except/i.test(v) ? 'green with exceptions' : 'green') : v ? 'red' : null;
-    };
-    let carried = null; // "Staging redeployed three times: at d69f67b, ..." carries its target into the next sentence
-    for (const s of sentences(r.change)) {
-      if (!DEPLOY_VERB.test(s) || /^verify-deploy|^Rollback/i.test(s.trim())) continue;
-      let targets = targetsOf(s);
-      if (!targets.length && carried) targets = carried;
-      if (!targets.length) continue;
-      carried = targets;
-      const not = new Set([...s.matchAll(NOT_DEPLOYED)].map(m => m[1] || m[2]));
-      const shas = [...new Set([...s.matchAll(/\b([0-9a-f]{7})\b/g)].map(m => m[1]))].filter(
-        x => /\d/.test(x) && !not.has(x) && isCommit(x)
-      );
-      if (!shas.length) continue;
-      const times = [...s.matchAll(/\((\d{1,2}):(\d\d) CT\)/g)].map(m => `${m[1].padStart(2, '0')}:${m[2]}`);
-      targets.forEach((target, i) => {
-        const clock = times[Math.min(i, times.length - 1)];
-        for (const commit of shas)
-          row.push({
-            target,
-            commit,
-            time: clock ? `${year}-10-${day}T${clock}:00-05:00` : `${year}-10-${day}`,
-            okFrom: target === 'live' ? 'Matt' : null,
-            verify: verifyOf(target),
-            rollback: target === 'live' ? rollback : null,
-            tasks: [...new Set(ids(r.change).filter(x => x.startsWith('B-')))],
-            line: { date: r.date, change: r.change, why: r.why, decision: r.decision },
-            source: 'Changelog tab',
-          });
-      });
-    }
-    out.push(...row.reverse()); // the tab is newest first, so is a row's own order once reversed with it
-  }
-  return out.reverse(); // oldest first
-}
-
-/** Board rows "v4 B-nn: ..." (and "v4 B-nn to B-mm: ...") onto their tasks, in order where an id repeats (B-83). */
-function attachBoard(tasks, boardRows) {
-  const seen = {};
-  for (const r of boardRows) {
-    const m = r.cells[0].text.match(/^v4 (B-\d{2})(?: to (B-\d{2}))?: /);
-    if (!m) continue;
-    const n = (seen[m[1]] = (seen[m[1]] || 0) + 1);
-    const t = tasks.filter(x => x.id === m[1])[n - 1];
-    if (!t) continue;
-    const status = r.cells[2].dropdown ? null : r.cells[2].text;
-    const waiting = r.cells[2].text === 'Waiting on Matt';
-    t.board = {
-      row: r.cells[0].text,
-      why: r.cells[1].text,
-      notes: r.cells[3].text,
-      ...(m[2] ? { covers: rangeIds(m[1], m[2]) } : {}),
-    };
-    if (waiting) t.waitingOn = 'Matt';
-    if (status && status !== 'Waiting on Matt') t.board.was = status;
-  }
-}
-const rangeIds = (a, b) => {
-  const out = [];
-  for (let i = Number(a.slice(2)); i <= Number(b.slice(2)); i++) out.push('B-' + String(i).padStart(2, '0'));
-  return out;
-};
-
-/** The commit a done task names in its notes (one this repository has), else the newest commit whose subject leads with its id. */
-export function commitFinder(root) {
-  const has = sha => {
-    try {
-      git(root, ['rev-parse', '--verify', '-q', sha + '^{commit}']);
-      return true;
-    } catch {
-      return false;
-    }
-  };
-  const subjects = git(root, ['log', '--format=%h %s'])
-    .split('\n')
-    .filter(Boolean)
-    .map(l => [l.slice(0, l.indexOf(' ')), l.slice(l.indexOf(' ') + 1)]);
-  const leads = (subject, id) => {
-    const lead = subject.split(':')[0];
-    return ids(lead).includes(id);
-  };
-  return {
-    isCommit: has,
-    commitOf(id, notes) {
-      for (const m of String(notes || '').matchAll(/\b([0-9a-f]{7,12})\b/g))
-        if (/[a-f]/.test(m[1]) && /\d/.test(m[1]) && has(m[1])) return m[1].slice(0, 7);
-      const mine = subjects.filter(([, s]) => leads(s, id));
-      const work = mine.find(([, s]) => !/^[^:]*: (done|in progress|blocked)\b/.test(s));
-      return (work || mine[0] || [])[0] || null;
-    },
-  };
-}
-
-/**
- * The one-time import: BACKLOG.md as it stood (row for row), the Decisions tab, the Board and Changelog tables (from
- * their Docs reads, so the views compare like with like) and the doc locations. commitOf(id, notes) finds a done
- * task's commit; isCommit(sha) says whether a short sha is one of this repository's.
- */
-export function importChart({
-  backlog,
-  decisionsMd,
-  boardXml,
-  changelogXml,
-  commitOf = () => null,
-  isCommit = () => true,
-  views,
-}) {
-  const tasks = backlog
-    .split('\n')
-    .filter(l => l.startsWith('| B-'))
-    .map(l => {
-      const [id, text, deps, milestone, status, notes] = parseBacklogRow(l);
-      const k = text.indexOf(' Done when: ');
-      const depends = deps === '—' ? [] : ids(deps).filter(x => x.startsWith('B-'));
-      const t = {
-        id,
-        kind: 'task',
-        title: k < 0 ? text : text.slice(0, k),
-        dod: k < 0 ? null : text.slice(k + 12),
-        milestone,
-        status,
-        depends,
-      };
-      if (deps !== '—' && deps !== depends.join(', ')) t.dependsText = deps;
-      return { ...t, notes, commit: status === 'done' ? commitOf(id, notes) : null, source: 'BACKLOG.md' };
-    });
-  const board = parseTableXml(boardXml).rows.slice(1);
-  attachBoard(tasks, board);
-  const changelog = parseTableXml(changelogXml)
-    .rows.slice(1)
-    .map(r => ({ date: r.cells[0].text, change: r.cells[1].text, why: r.cells[2].text, decision: r.cells[3].text }));
-  return {
-    tasks,
-    decisions: importDecisions(decisionsMd),
-    deploys: importDeploys(changelog, { isCommit }),
-    rules: RULES,
-    views,
-  };
-}
-
-// The rules commands enforce, as the import seeded chart/rules.json (later ones arrive through log rule). `check` names the function in ship that checks it.
-export const RULES = [
-  {
-    id: 'R-01',
-    rule: "While D-085's rollback window is open (B-30 not done), a live deploy changes no stored document, pipeline step, prompt, schema or migration since the live build; anything else waits for the window to close",
-    decision: 'D-139',
-    task: 'B-30',
-    command: 'ship live',
-    check: 'pageOnlyLive',
-  },
-  {
-    id: 'R-02',
-    rule: 'A build reaches live only through staging: verify-deploy staging green at the same commit',
-    decision: 'D-049',
-    task: 'B-35',
-    command: 'ship live (deploy live)',
-    check: 'stagingGate',
-  },
-  {
-    id: 'R-03',
-    rule: "A live deploy waits while a study session or skills run is going on live (an explicit --during-session on Matt's OK overrides)",
-    decision: 'D-139',
-    task: 'B-87',
-    command: 'ship live (deploy live)',
-    check: 'sessionGate',
-  },
-  {
-    id: 'R-04',
-    rule: "A live deploy needs Matt's explicit OK in the chat",
-    decision: 'D-083',
-    task: null,
-    command: 'ship live (deploy live --matt-ok)',
-    check: 'mattOk',
-  },
-];
 // ------------------------------------------------------------------------------------------------ lint (B-94)
 /**
  * The record against its rules. Errors: a duplicate id, a dependency on a task that doesn't exist, a rule resting on a
@@ -3368,29 +3096,6 @@ function printViews(rec) {
 }
 
 const commands = {
-  import(o) {
-    const root = rootOf(o),
-      from = path.resolve(o.from || path.join(chartDir(root), 'import'));
-    if (fs.existsSync(path.join(chartDir(root), 'tasks.json')) && !o.force)
-      throw new Error('chart/tasks.json exists: the import runs once');
-    const r = f => fs.readFileSync(path.join(from, f), 'utf8');
-    const body = f => readBody([r(f)]).xml;
-    const { commitOf, isCommit } = commitFinder(root);
-    const rec = importChart({
-      backlog: r('BACKLOG.md'),
-      decisionsMd: r('Decisions.md'),
-      boardXml: body('board-read.json'),
-      changelogXml: body('changelog-read.json'),
-      commitOf,
-      isCommit,
-      views: readJson(path.join(from, 'views.json')),
-    });
-    saveChart(root, rec);
-    console.log(
-      `import: ${rec.tasks.length} tasks, ${rec.decisions.length} decisions, ${rec.deploys.length} deploys, ${rec.rules.length} rules -> chart/`
-    );
-    return 0;
-  },
   backlog(o) {
     const root = rootOf(o),
       rec = loadChart(root);
@@ -3588,7 +3293,7 @@ export async function main(argv) {
     cmd = commands[o._[0]];
   if (!cmd) {
     console.error(
-      'Commands: report, inbox, log, views, lint, ship <staging|live>, brief --task <id>, plan --from <doc link> [--apply], backlog [--check], import --from <dir>'
+      'Commands: report, inbox, log, views, lint, ship <staging|live>, brief --task <id>, plan --from <doc link> [--apply], backlog [--check]'
     );
     return 2;
   }
