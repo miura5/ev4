@@ -762,6 +762,16 @@ body:not(.on-ev) .mh .cap-now{display:none}
 .side .lab-side{display:none}
 @media (min-width:600px){.side .tabs .tab .lab-bar{display:none}.side .tabs .tab .lab-side{display:inline}}
 @media (max-width:599px){.side-sec{display:none}}
+/* B-286 (C-4, C-14, C-15, D-291): the sidebar's foot holds Theme and Contrast above System; "n more in Today" is quiet;
+   her dial sits on the sidebar's own ground. The phone's tab bar has no foot. */
+.side .ev-av .under{fill:var(--sunken)}
+.side-sec .si.more{color:var(--faint);font-size:calc(12.5px * var(--ts))}
+.side-foot{display:flex;flex-direction:column;gap:8px;margin-top:auto;padding:12px 10px 8px}
+.side-foot .pref{display:flex;flex-direction:column;gap:4px;margin:0}
+.side-foot .pref>.lbl{font:500 calc(12px * var(--ts)) var(--sans);color:var(--faint)}
+.side-foot .seg{align-self:flex-start}
+.side .side-foot~.tab-sys{margin-top:0}
+@media (max-width:599px){.side-foot{display:none}}
 .readout .led{display:none}
 
 /* B-209 (D-210, amending D-122): his sent lines stay, quiet and right-aligned under a small "You"; no echo. */

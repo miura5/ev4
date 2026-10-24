@@ -337,8 +337,9 @@
 
     // B-214 (D-211): the theme switch. System follows the device; Light or Dark is stored on this device (ev.theme), read
     // again before first paint by the page's head script. A storage that throws still switches this visit.
+    // B-286: the sidebar's foot carries the same switch (its "Auto" is System); a press paints both.
     {
-      const seg = $('theme-seg');
+      const segs = ['theme-seg', 'side-theme-seg'].map(id => $(id)).filter(Boolean);
       const cur = () => {
         try {
           const t = localStorage.getItem('ev.theme');
@@ -348,45 +349,53 @@
         }
       };
       const paint = t =>
-        seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.t === t)));
-      seg.querySelectorAll('button').forEach(b =>
-        b.addEventListener('click', () => {
-          const t = b.dataset.t;
-          if (t === 'system') document.documentElement.removeAttribute('data-theme');
-          else document.documentElement.setAttribute('data-theme', t);
-          try {
-            if (t === 'system') localStorage.removeItem('ev.theme');
-            else localStorage.setItem('ev.theme', t);
-          } catch {}
-          paint(t);
-        })
+        segs.forEach(seg =>
+          seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.t === t)))
+        );
+      segs.forEach(seg =>
+        seg.querySelectorAll('button').forEach(b =>
+          b.addEventListener('click', () => {
+            const t = b.dataset.t;
+            if (t === 'system') document.documentElement.removeAttribute('data-theme');
+            else document.documentElement.setAttribute('data-theme', t);
+            try {
+              if (t === 'system') localStorage.removeItem('ev.theme');
+              else localStorage.setItem('ev.theme', t);
+            } catch {}
+            paint(t);
+          })
+        )
       );
       paint(cur());
     }
     // B-271 (D-268): Contrast (30, 60, 100), stored on this device (ev.contrast) and read again before first paint by the
-    // head script; a press runs the generator now. 60 is the default and is not stored.
+    // head script; a press runs the generator now. 60 is the default and is not stored. B-286: the sidebar's foot too.
     {
-      const seg = $('contrast-seg'),
+      const segs = ['contrast-seg', 'side-contrast-seg'].map(id => $(id)).filter(Boolean),
         T = window.EVTheme;
-      if (seg && T) {
+      if (segs.length && T) {
         const paint = c =>
-          seg
-            .querySelectorAll('button')
-            .forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.c) === c)));
+          segs.forEach(seg =>
+            seg
+              .querySelectorAll('button')
+              .forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.c) === c)))
+          );
         let now = 60;
         try {
           now = T.contrastOf(localStorage.getItem('ev.contrast'));
         } catch {}
-        seg.querySelectorAll('button').forEach(b =>
-          b.addEventListener('click', () => {
-            const c = T.contrastOf(b.dataset.c);
-            T.apply(document, c);
-            try {
-              if (c === 60) localStorage.removeItem('ev.contrast');
-              else localStorage.setItem('ev.contrast', String(c));
-            } catch {}
-            paint(c);
-          })
+        segs.forEach(seg =>
+          seg.querySelectorAll('button').forEach(b =>
+            b.addEventListener('click', () => {
+              const c = T.contrastOf(b.dataset.c);
+              T.apply(document, c);
+              try {
+                if (c === 60) localStorage.removeItem('ev.contrast');
+                else localStorage.setItem('ev.contrast', String(c));
+              } catch {}
+              paint(c);
+            })
+          )
         );
         paint(now);
       }

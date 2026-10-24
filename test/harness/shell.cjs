@@ -252,11 +252,12 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
           readout: document.getElementById('readout').textContent,
           first:
             document.querySelector('#tab-ev .lab-side') &&
-            cs(document.querySelector('#tab-ev .lab-side')).display !== 'none',
+            cs(document.querySelector('#tab-ev .lab-side')).display !== 'none' &&
+            document.querySelector('#tab-ev .lab-side').textContent.trim() === 'E.V.',
         };
       });
       ok(
-        `[${w} ${scheme}] the sidebar on the sunken ground, the view in a raised, outlined pane; Today in the sidebar; her status word; Conversation`,
+        `[${w} ${scheme}] the sidebar on the sunken ground, the view in a raised, outlined pane; Today in the sidebar; her status word; E.V. first (D-293)`,
         v.html === v.sunken &&
           v.pane === v.bg &&
           v.html !== v.pane &&
@@ -269,6 +270,130 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
       );
       await page.close();
     }
+  // B-286 (D-280, D-291, D-292, D-293, C-4, C-14, C-15): the sidebar at 1280 in both themes. The nav reads E.V., Today,
+  // Study, Progress, Record, its icons in the label's own neutral colour; her 24 px dial in her palette (--av1, --av2),
+  // never the accent; no Working heading; Theme and Contrast in the foot; today's first five open items, then "n more in
+  // Today", and no Today list while Today is open. Every nav item takes Tab with a ring of 3:1 or more against the
+  // sidebar, and Enter opens its view.
+  {
+    const many = JSON.parse(JSON.stringify(seed));
+    const dayId = Object.keys(many.days || {})
+      .sort()
+      .pop();
+    for (let i = 1; i <= 4; i++)
+      many.days[dayId].list.items.push({ id: 'b286-' + i, text: 'Planted item ' + i, tag: 'READING', minutes: 10 });
+    for (const scheme of ['light', 'dark']) {
+      const { page, errors } = await open(browser, { viewport: { width: 1280, height: 900 }, scheme, db: many });
+      await page.waitForTimeout(700);
+      const v = await page.evaluate(() => {
+        const cs = getComputedStyle,
+          root = cs(document.documentElement),
+          side = document.getElementById('top');
+        const rgb = h => {
+          const x = document.createElement('i');
+          x.style.color = h;
+          document.body.append(x);
+          const c = x.ownerDocument.defaultView.getComputedStyle(x).color;
+          x.remove();
+          return c;
+        };
+        const tok = n => rgb(root.getPropertyValue(n).trim());
+        const nav = [...side.querySelectorAll('.tabs .tab')];
+        const coded = ['--her', '--her2', '--sem-green', '--sem-yellow', '--sem-red', '--sem-blue', '--sem-violet'].map(
+          tok
+        );
+        const c1 = side.querySelector('.top-av .c1'),
+          c2 = side.querySelector('.top-av .c2');
+        return {
+          names: nav.map(b => b.innerText.trim()),
+          neutral: nav.every(b => {
+            const ic = b.querySelector(':scope > svg');
+            return ic && cs(ic).color === cs(b).color && !coded.includes(cs(ic).color);
+          }),
+          av1: c1 && cs(c1).fill === tok('--av1') && cs(c1).fill !== tok('--her'),
+          av2: c2 ? cs(c2).fill === tok('--av2') : true,
+          avSize: Math.round(side.querySelector('.top-av').getBoundingClientRect().width),
+          working:
+            [...side.querySelectorAll('.sec')].some(x => /working/i.test(x.textContent)) ||
+            !!document.getElementById('side-work'),
+          foot: ['side-theme-seg', 'side-contrast-seg'].every(id => {
+            const g = document.getElementById(id);
+            return g && g.offsetParent && g.querySelectorAll('[aria-pressed="true"]').length === 1;
+          }),
+          rows: [...document.querySelectorAll('#side-today .si:not(.more)')].length,
+          more: (document.querySelector('#side-today .si.more') || {}).textContent || '',
+        };
+      });
+      ok(
+        `[1280 ${scheme}] sidebar: E.V., Today, Study, Progress, Record with neutral icons; her dial in her palette; Theme and Contrast in the foot; no Working (B-286)`,
+        v.names.join(',') === 'E.V.,Today,Study,Progress,Record' &&
+          v.neutral &&
+          v.av1 &&
+          v.av2 &&
+          v.avSize === 24 &&
+          !v.working &&
+          v.foot,
+        JSON.stringify(v)
+      );
+      ok(
+        `[1280 ${scheme}] sidebar Today: five open items, then "n more in Today" (B-286)`,
+        v.rows === 5 && /^2 more in Today$/.test(v.more.trim()),
+        JSON.stringify({ rows: v.rows, more: v.more })
+      );
+      // Tab from the brand through the five nav items: each takes the focus with a visible ring, and Enter opens it.
+      await page.focus('#brand');
+      const ring = [];
+      for (const t of ['ev', 'today', 'study', 'progress', 'record']) {
+        await page.keyboard.press('Tab');
+        const f = await page.evaluate(() => {
+          const a = document.activeElement,
+            c = getComputedStyle(a);
+          const lum = s => {
+            const m = s.match(/[\d.]+/g).map(Number);
+            const [r, g, b] = m.slice(0, 3).map(v => {
+              v /= 255;
+              return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+            });
+            return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+          };
+          const ground = getComputedStyle(document.documentElement).backgroundColor;
+          const x = lum(c.outlineColor),
+            y = lum(ground);
+          return {
+            id: a.id,
+            ring: c.outlineStyle !== 'none' && parseFloat(c.outlineWidth) >= 2,
+            ratio: Math.round(((Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05)) * 100) / 100,
+          };
+        });
+        await page.keyboard.press('Enter');
+        await page.waitForTimeout(150);
+        const opened = await page.evaluate(t => !document.getElementById('p-' + t).hidden, t);
+        ring.push({ t, ...f, opened });
+      }
+      ok(
+        `[1280 ${scheme}] every nav item takes Tab with a ring of 3:1 or more, and Enter opens it (B-286)`,
+        ring.every(
+          (r, i) =>
+            r.id === 'tab-' + ['ev', 'today', 'study', 'progress', 'record'][i] && r.ring && r.ratio >= 3 && r.opened
+        ),
+        JSON.stringify(ring)
+      );
+      // Today is open now (the walk passed it); open it again and read the sidebar.
+      await page.click('#tab-today');
+      await page.waitForTimeout(150);
+      const hiddenOnToday = await page.evaluate(() => {
+        const t = document.getElementById('side-today');
+        return t.hidden || getComputedStyle(t).display === 'none';
+      });
+      ok(
+        `[1280 ${scheme}] with Today open, the sidebar shows no Today list (D-292)`,
+        hiddenOnToday && !errors.length,
+        errors.slice(0, 2).join(' | ')
+      );
+      await page.screenshot({ path: `${shots}/shell-sidebar-1280-${scheme}.png` });
+      await page.close();
+    }
+  }
   // B-208 (D-151, D-210): the pane's header names the view; the status line shows only a problem, by name.
   for (const w of [390, 735, 1280]) {
     const { page } = await open(browser, { viewport: { width: w, height: 844 } });
