@@ -5191,12 +5191,12 @@
   "title": "Conversation stage and captions (folds B-280's Conversation part; D-213, C-2, C-3, C-15): her stage at 104 px on the phone, 140 px or 168 px beside the right panel, 70% in a session. Captions at 20 px for the current line and 14 px for earlier lines from 1024 px; 20 px and 15 px on the phone. Her colours from her own palette.",
   "dod": "Screenshots at 390 and 1280 in light and dark, idle and in a session. Measured: stage 104 px at 390, 140 px at 1280 × 900, 168 px when taller than 1000 px, 70% of that in a session. Caption sizes 20/14 at 1280 and 20/15 at 390.",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-288"
   ],
-  "notes": "reviewed twice; check --touched GREEN; shipping to staging",
-  "commit": null,
+  "notes": "Product review card (D-261). What changes when he studies: nothing he will see. E.V.'s stage and captions already had the sizes this task asks for (they came in with B-209 and B-247): her dial is 104 px on the phone, 140 px on a 1280 screen, 168 px on a tall one, and 70% of that in a study session (73, 98, 118 px); her current line is 20 px and earlier lines 15 px on the phone and 14 px on a wide screen; her two colours are her own palette, not the interface accent. This task adds the measurement that holds those numbers, in light and dark, idle and in a session, with a screenshot of each. Why: the hand-off (C-2, C-3, C-15) overrides the drawing's single 128 px size and its accent-coloured avatar; a check now catches any later change that drifts from D-213. Touches: the conversation view's automated checks only; no page code, record, run or data change. What could break and how we'd notice: nothing in use; if a later change resizes her or recolours her, the captions check fails with the measured numbers. Size: about 105 lines of check code added; undone by reverting two commits. Also in this run: the Today list's code from B-291 was not in the formatter's layout, which turned the automatic tests red for every lane; it was reformatted (line breaks only, no behaviour change). Checks done: npm test 557 pass; smoke 28 of 28; captions check 210 of 210 with 30 stage checks; check --touched GREEN, look pass screenshots looked at; staging GREEN at bd479f8 (shipped by the Today lane's ship, which carried these commits). Reviewer (first): two gaps, both fixed: the colour check now compares both faces against her palette and the real neutral accent, and the session wait no longer idles 8 s at 1280. Reviewer (second): one gap left open: the new idle-size checks at 390 and 1280 repeat older opening checks (B-209) in the same harness; one copy could go. Checks: none retired or loosened (the session wait accepts the desktop's 'surface' step, the size still has to measure 70%). Size: +115 -10 in the captions check. Differences from the demo kept: her dial is 140/168 px, not the drawing's 128 px (D-213, C-3); her colours are her palette, not the accent (C-15); the session card and Coming up are B-290's. Staging page: https://claude.ai/artifact/Pb6jQ6CvEbtxi6Rcshu9uC",
+  "commit": "bd479f8",
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
  {
