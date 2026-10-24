@@ -60,7 +60,7 @@ function collect() {
   const greet = document.querySelector('#thread .msg.greet .bubble, #thread .msg.ev.current .bubble');
   const capIn = document.querySelector('#thread .cap-in');
   const has = {
-    ev: !!document.querySelector('#ev-dates') || document.body.classList.contains('side-on'),
+    ev: !!document.querySelector('#ev-dates, #ev-sess') || document.body.classList.contains('side-on'),
     study: [...document.querySelectorAll('#rv-body .q-stem, #pr-body .q-stem')].some(vis),
   };
   const v = document.body.dataset.view || 'ev';

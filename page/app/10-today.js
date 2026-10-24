@@ -358,27 +358,30 @@
         (a, b) => a.date.localeCompare(b.date) || String(a.title).localeCompare(b.title)
       );
     }
-    // B-223 (D-245, D-294): the Conversation's right panel, while no surface is open: the dates after today (today's are
-    // the sidebar's), absent when there are none. It lives in her side column; CSS shows it from 1200 px only.
+    // B-223 (D-245, D-294), B-290: Coming up, in the Conversation's right panel under the session card: the dates after
+    // today that the sidebar doesn't already show (its Today rows can carry tomorrow's graded work), absent when there
+    // are none. It lives in her side column; CSS shows it from 1200 px only, while no surface is open.
     function renderEvDates(week) {
       const side = $('ev-side');
       if (!side) return;
-      const after = week.filter(d => d.date > today);
+      const inSide = new Set(sideShown().map(it => it.ref));
+      const after = week.filter(
+        d =>
+          d.date > today && !inSide.has('dates/' + d.id) && !inSide.has('exams/' + String(d.id).replace(/^exam-/, ''))
+      );
       let card = $('ev-dates');
       if (!after.length) {
         if (card) card.remove();
-        document.body.classList.remove('ev-dates-on');
         return;
       }
       if (!card) {
-        card = el('div', 'card ev-dates');
+        card = el('div', 'card ev-dates rest');
         card.id = 'ev-dates';
         side.append(card);
       }
       const ul = el('ul', 'list');
       ul.append(...after.map(weekRow));
-      card.replaceChildren(el('h2', null, 'This week'), ul);
-      document.body.classList.add('ev-dates-on');
+      card.replaceChildren(el('h2', null, 'Coming up'), ul);
     }
     // B-117: a date in Next 7 days is one line (its day, its title, its kind in grey); a clinical, lab, validation or class
     // day carries the calm Prep marker (D-143); red only for graded work due today (D-270). It opens Record's Dates.

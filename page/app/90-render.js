@@ -20,11 +20,15 @@
     // Today"; absent while empty (D-151) and while Today is the view (D-292, styles.css). A row opens Today. No Working
     // section: background jobs show in the conversation (D-291).
     const SIDE_MAX = 5;
+    function sideOpen() {
+      const { items, isDone } = dayState();
+      return items.filter(it => it.tag !== 'EXAM' && !isDone(it) && !it.deferred); // as Today's list shows them (B-117)
+    }
+    const sideShown = () => sideOpen().slice(0, SIDE_MAX); // B-290: what the sidebar shows, for Coming up to leave out
     function renderSide() {
       const t = $('side-today');
       if (!t) return;
-      const { items, isDone } = dayState();
-      const open = items.filter(it => it.tag !== 'EXAM' && !isDone(it) && !it.deferred); // as Today's list shows them (B-117)
+      const open = sideOpen();
       const row = (dot, text, go, cls = 'si') => {
         const b = el('button', cls);
         b.type = 'button';

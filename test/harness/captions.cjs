@@ -1053,10 +1053,11 @@ async function sideBySide(browser, left, right, out, vp) {
             av = document.querySelector('#hero .ev-av').getBoundingClientRect();
           return {
             sideShown: getComputedStyle(document.getElementById('ev-side')).display !== 'none',
-            // B-223 (D-245): with nothing beside her, from 1200 px the panel holds the dates after today
+            // B-223 (D-245), B-290: with nothing beside her, from 1200 px the panel holds its resting content only:
+            // the session card and Coming up
             datesOnly: [...document.getElementById('ev-side').children]
               .filter(c => getComputedStyle(c).display !== 'none')
-              .every(c => c.id === 'ev-dates'),
+              .every(c => c.id === 'ev-dates' || c.id === 'ev-sess'),
             sideLeft: Math.round(s.left),
             sideTop: Math.round(s.top),
             sideW: Math.round(s.width),
@@ -1084,7 +1085,7 @@ async function sideBySide(browser, left, right, out, vp) {
       ok(
         // B-208 (D-210): centred in the pane, which starts after the 212 px sidebar and ends 8 px from the edge; from
         // 1200 px (B-223, D-245) the right panel holds the dates after today, and the pane ends where it begins.
-        '[desktop] with nothing beside her: at 1280 the panel holds only the dates and her stage centres in the pane (578 px), at 1024 no side column (614 px)',
+        '[desktop] with nothing beside her: at 1280 the panel holds only the session card and the dates, and her stage centres in the pane (578 px), at 1024 no side column (614 px)',
         e1280.sideShown &&
           e1280.datesOnly &&
           Math.abs(e1280.coreX - 578) <= 2 &&

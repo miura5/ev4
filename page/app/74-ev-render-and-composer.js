@@ -283,11 +283,30 @@
         return sendText(t);
       });
     }
+    // B-290 (P-5): "note: …" saves his words as a note in Record's ideas, the same save as New › Note, with no model
+    // call; "idea: …" stays a build ask (BUILD_ASK).
+    const NOTE_ASK = /^\s*note\s*:\s*(\S[\s\S]*)$/i;
+    async function noteSave(text, words) {
+      await mattSay(text);
+      try {
+        await write(E.noteIdea(words.replace(/\s+/g, ' ').trim().slice(0, 400), { at: now(), date: today }));
+        await evSay('Saved to Record as a note.', [], { tier: 'local' });
+      } catch (e) {
+        await evSay('I couldn’t save that note (' + ((e && (e.message || e.code)) || 'error') + ').', [], {
+          tier: 'local',
+        });
+      }
+    }
     async function sendText(text) {
       input.value = '';
       grow();
       typing(false);
       T.bigCore = false;
+      const nt = NOTE_ASK.exec(text);
+      if (nt) {
+        await noteSave(text, nt[1]);
+        return;
+      }
       if (LOCAL[key(text)] || YOUR_TURN.test(text)) {
         await quick(text);
         return;

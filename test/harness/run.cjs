@@ -921,6 +921,46 @@ async function buildAskChecks(page, scheme) {
     await page.textContent('#ev-guard')
   );
   await page.fill('#ev-input', '');
+  // B-290 (P-5): "idea: …" still files a build request; "note: …" saves his words in Record's ideas, the same save as
+  // New › Note, with no model call, no job and no fire.
+  {
+    const b = await count();
+    await send(page, 'idea: show the week on Today');
+    await page.waitForTimeout(400);
+    const a = await count();
+    const iid = a.jobs.find(k => !b.jobs.includes(k));
+    const ij = iid ? await page.evaluate(i => window.__db.jobs[i], iid) : null;
+    ok(
+      `${tag}"idea: …" still files a build request and fires the builder (B-290)`,
+      ij &&
+        ij.kind === 'build' &&
+        ij.title === 'idea: show the week on Today' &&
+        a.fires === b.fires + 1 &&
+        a.chats === b.chats,
+      JSON.stringify(ij)
+    );
+    const ideas0 = await page.evaluate(() => Object.keys(window.__db.ideas || {}));
+    await send(page, 'note: rounding to tenths');
+    await page.waitForTimeout(400);
+    const n = await page.evaluate(k0 => {
+      const k = Object.keys(window.__db.ideas || {}).find(x => !k0.includes(x));
+      return k ? window.__db.ideas[k] : null;
+    }, ideas0);
+    const c = await count();
+    const [mine, hers] = (await msgs(page)).slice(-2);
+    ok(
+      `${tag}"note: rounding to tenths" lands in ideas as his note, with no model call, job or fire (B-290)`,
+      n &&
+        n.text === 'rounding to tenths' &&
+        n.status === 'open' &&
+        c.jobs.length === a.jobs.length &&
+        c.fires === a.fires &&
+        c.chats === a.chats &&
+        mine.text === 'note: rounding to tenths' &&
+        /Saved to Record as a note/.test(hers.text),
+      JSON.stringify({ n, hers })
+    );
+  }
   // B-183 (D-197): "design: <theme>" and "file: <doc link>" are builder jobs of their own kinds, fired like a build ask;
   // the builder's trace lands the kickoff as her line with a Copy chip that copies it exactly.
   const b2 = await count();
@@ -4205,6 +4245,56 @@ const ok = (name, cond, detail = '') => {
       }
     }
 
+    // ---- B-290 (D-245): Coming up in E.V.'s right panel lists the dates after today that the sidebar doesn't show.
+    // Graded work due tomorrow is on today's list (a heads-up), so it can be in the sidebar; then it is not Coming up.
+    {
+      const cp = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      await cp.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
+      await openPage(cp);
+      await cp.waitForTimeout(900);
+      await cp.evaluate(async () => {
+        const db = await window.claude.use('db');
+        const E = window.EVCore;
+        await db
+          .collection('dates')
+          .doc('h-b290-tomorrow')
+          .set({
+            schema: 1,
+            writer: 'page',
+            at: new Date().toISOString(),
+            source: 'Harness',
+            date: E.addDays(E.chicagoDate(new Date()), 1),
+            title: 'Harness care plan',
+            kind: 'due',
+            graded: true,
+            course: 'NUR 112',
+          });
+      });
+      await cp.waitForTimeout(500);
+      const cu = await cp.evaluate(() => {
+        const vis = e => !!e && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().width > 1;
+        const card = document.getElementById('ev-dates');
+        return {
+          shown: vis(card),
+          head: card ? card.querySelector('h2').textContent : '',
+          up: card ? [...card.querySelectorAll('.wk-t')].map(e => e.textContent) : [],
+          side: [...document.querySelectorAll('#side-today .si .t')].filter(vis).map(e => e.textContent),
+        };
+      });
+      const inSide = cu.side.some(t => /^Harness care plan/.test(t)),
+        inUp = cu.up.includes('Harness care plan');
+      ok(
+        "B-290: Coming up (the dates after today) shares no item with the sidebar; tomorrow's graded work shows once, in one of them",
+        cu.shown &&
+          cu.head === 'Coming up' &&
+          cu.up.length > 0 &&
+          inSide !== inUp &&
+          !cu.up.some(t => cu.side.some(x => x.startsWith(t))),
+        JSON.stringify(cu)
+      );
+      await cp.close();
+    }
+
     // ---- Study session, entirely in the E.V. conversation (D-073). A fake clock fast-forwards to each check.
     const ss = await browser.newPage({ viewport: { width: 390, height: 844 } });
     const sErr = [];
@@ -4279,10 +4369,72 @@ const ok = (name, cond, detail = '') => {
     await send(ss, 'Start a study session');
     await ss.waitForTimeout(300);
     ok('graded note refused', /#graded/.test((await msgs(ss)).slice(-1)[0].text) && !(await sess()));
-    // Start
+    // Start: B-290 (D-245), from 1200 px from the right panel's card, the chip's call; below it the card is absent
     await setNote(note1);
-    await send(ss, 'start a study session');
-    await ss.waitForTimeout(400);
+    const sessCard = () =>
+      ss.evaluate(() => {
+        const v = e => !!e && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().width > 1;
+        const c = document.getElementById('ev-sess'),
+          q = sel => (c && c.querySelector(sel) ? c.querySelector(sel).textContent : '');
+        return {
+          strip: v(document.getElementById('sbar')),
+          card: v(c),
+          head: q('h2'),
+          left: q('.ss-left'),
+          badge: q('.badge'),
+          topic: q('.ss-topic'),
+          btns: c ? [...c.querySelectorAll('button')].filter(v).map(b => b.textContent) : [],
+          inPanel: !!c && c.parentNode.id === 'ev-side' && c.getBoundingClientRect().left > innerWidth / 2,
+          minutesShown: [...document.querySelectorAll('#ev-sess .ss-left, #sbar .s-clock')].filter(
+            e => v(e) && v(e.closest('#ev-sess, #sbar'))
+          ).length,
+        };
+      });
+    const sessShots = async name => {
+      for (const scheme of ['light', 'dark']) {
+        await ss.emulateMedia({ colorScheme: scheme });
+        await ss.waitForTimeout(200);
+        await ss.screenshot({ path: `${shots}/b290-${name}-${scheme}.png` });
+      }
+      await ss.emulateMedia({ colorScheme: null });
+    };
+    const idle390 = await sessCard();
+    await sessShots('idle-390');
+    await ss.setViewportSize({ width: 1280, height: 900 });
+    await ss.waitForTimeout(600);
+    const idle1280 = await sessCard();
+    await sessShots('idle-1280');
+    ok(
+      'B-290: idle, the right panel offers Start a study session from 1200 px, and the card is absent at 390',
+      !idle390.card &&
+        idle1280.card &&
+        idle1280.inPanel &&
+        idle1280.head === 'Start a study session' &&
+        idle1280.btns.join() === 'Start study session',
+      JSON.stringify({ idle390, idle1280 })
+    );
+    await ss.locator('#ev-sess button', { hasText: 'Start study session' }).click();
+    await ss.waitForTimeout(500);
+    const wide = await sessCard();
+    await sessShots('session-1280');
+    await ss.setViewportSize({ width: 390, height: 844 });
+    await ss.waitForTimeout(600);
+    const phone = await sessCard();
+    await sessShots('session-390');
+    ok(
+      'B-290: in a session the minutes show once per width: at 1280 the card (Running, the topic, n min left, Break and End) and no header line; at 390 the strip and no card',
+      wide.card &&
+        !wide.strip &&
+        wide.minutesShown === 1 &&
+        wide.badge === 'Running' &&
+        wide.topic === 'Fluids and electrolytes' &&
+        /^\d+ min left$/.test(wide.left) &&
+        wide.btns.join() === 'Break,End' &&
+        phone.strip &&
+        !phone.card &&
+        phone.minutesShown === 1,
+      JSON.stringify({ wide, phone })
+    );
     let S1 = await sess();
     ok(
       'session saved as active with a start mark, no note text',
@@ -4419,18 +4571,21 @@ const ok = (name, cond, detail = '') => {
       (await ss.locator('#qchips .qchip', { hasText: 'Start a study session' }).count()) === 0
     );
     await ss.screenshot({ path: `${shots}/session-bar.png` });
-    // The same line at 1280, at the right of the pane header.
+    // The same line at 1280, at the right of the pane header, on the other views; on hers it gives way to the right
+    // panel's session card from 1200 px (B-290), so the check reads it on Today.
     await ss.setViewportSize({ width: 1280, height: 860 });
+    await ss.click('#tab-today');
     await ss.waitForTimeout(500);
     {
       const pd = await lineView();
       ok(
-        '[desktop] the line stays one line, in the pane header at its right, just before New',
+        '[desktop] on another view the line stays one line, in the pane header at its right, just before New',
         pd.h <= 34 && pd.inHeader && pd.right <= 24 && !pd.over,
         JSON.stringify(pd)
       );
     }
     await ss.screenshot({ path: `${shots}/session-bar-desktop.png` });
+    await ss.click('#tab-ev');
     await ss.setViewportSize({ width: 390, height: 844 });
     await ss.waitForTimeout(400);
     // B-88: she reads along every 30 s; a line that earns it gets one short comment quoting it (the quote in memory only)

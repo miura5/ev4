@@ -867,19 +867,31 @@ button.tlink:hover{text-decoration-color:currentColor}
    surface, a session's set). Its cards sit on the ground with a hairline, one shade on every tab and in both themes. */
 body[data-view="today"] #side-today{display:none}
 #study-side{display:none}
-#ev-dates{display:none}
+#ev-dates,#ev-sess{display:none}
 @media (max-width:1199px){body.captions:not(.side-on) #p-ev>#ev-side{display:none}}
 @media (min-width:1200px){
   body:has(#p-study:not([hidden]) > #study-side:not([hidden])){--pane-r:calc(var(--right-w) + 16px)}
   #study-side:not([hidden]){position:fixed;top:8px;bottom:8px;right:8px;width:var(--right-w);display:flex;flex-direction:column;gap:8px;overflow-y:auto;scrollbar-width:thin;z-index:5}
-  body.captions.on-ev.ev-dates-on{--pane-r:calc(var(--right-w) + 16px)}
-  body.captions.ev-dates-on #p-ev>#ev-side{position:fixed;top:8px;bottom:8px;right:8px;width:var(--right-w);z-index:5;grid-column:auto;grid-row:auto;align-self:auto;margin:0;display:flex;flex-direction:column;gap:8px;overflow-y:auto;scrollbar-width:thin}
+  body.captions.on-ev.ev-rest-on{--pane-r:calc(var(--right-w) + 16px)}
+  body.captions.ev-rest-on #p-ev>#ev-side{position:fixed;top:8px;bottom:8px;right:8px;width:var(--right-w);z-index:5;grid-column:auto;grid-row:auto;align-self:auto;margin:0;display:flex;flex-direction:column;gap:8px;overflow-y:auto;scrollbar-width:thin}
   body.captions:not(.side-on) #ev-dates{display:flex}
   /* the panel's cards, wherever the panel is: the ground, a hairline, 12 px corners */
   #study-side .card,#ev-dates,body.captions #ev-side>.surf,body.captions #ev-side>.sk-panel,body.captions #ev-side>.card{background:var(--bg);border:0;border-radius:12px;box-shadow:0 0 0 1px var(--line);-webkit-backdrop-filter:none;backdrop-filter:none}
   #study-side .card,#ev-dates{padding:6px 10px 10px;gap:0}
   #study-side .card>h2,#ev-dates>h2{min-height:36px;display:flex;align-items:center;margin:0;font:600 calc(13px * var(--ts)) var(--sans);color:var(--text)}
   #study-side .set-list{margin:0}
+  /* B-290: the session card leads the panel, even beside an open surface; on her view the header's session line gives
+     way to it, so the minutes left show once */
+  body.captions #ev-side>#ev-sess{display:flex;flex-direction:column;gap:4px;order:-1;padding:6px 12px 12px;flex:none}
+  #ev-sess .card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:36px;margin:0}
+  #ev-sess>h2,#ev-sess .card-head>h2{min-height:36px;display:flex;align-items:center;margin:0;font:600 calc(13px * var(--ts)) var(--sans);color:var(--text)}
+  #ev-sess .ss-topic{margin:0;font:600 calc(13.5px * var(--ts)) var(--sans);color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #ev-sess .ss-left{margin:6px 0 0;font:600 calc(28px * var(--ts))/1.1 var(--sans);letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--text)}
+  #ev-sess .meta{margin:0}
+  #ev-sess .ss-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  #ev-sess button.btn.wide{width:100%;margin-top:8px}
+  #ev-sess button.btn svg{width:12px;height:12px;fill:currentColor;stroke:none}
+  body.captions.on-ev .mh #sbar{display:none}
 }
 /* A surface's own head line carries its title, count and state; the card under it never says them again (D-228). */
 .surf .ev-card>.card-head:first-child>:is(.meta,.chip){display:none}

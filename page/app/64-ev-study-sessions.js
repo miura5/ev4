@@ -707,6 +707,34 @@
         b.disabled = false;
       }
     }
+    // Break (or Resume), +5 and End (or Finish) for a running session: the header's line and the right panel's card
+    // (B-290) make the same calls. o.cls styles them; o.long names +5 as "+5 min".
+    function sessButtons(s, st, ending, o = {}) {
+      const mk = (label, fn) => {
+        const b = btn(label, () => barPress(b, fn));
+        if (o.cls) b.className = o.cls;
+        return b;
+      };
+      const out = [];
+      if (!ending) {
+        out.push(
+          mk(st.onBreak ? 'Resume' : 'Break', async () => toast(await sessionCmd(st.onBreak ? 'resume' : 'break')))
+        );
+        if (!COMMENT) {
+          const ext = mk(o.long ? '+5 min' : '+5', async () => toast(await sessionCmd('extend')));
+          ext.setAttribute('aria-label', 'Add 5 minutes before the next check');
+          out.push(ext);
+        }
+      }
+      const end = mk(ending ? 'Finish' : 'End', async () => {
+        const [t, c] = await endSession('ended');
+        await evSay(t, c, { tier: 'local' });
+      });
+      end.classList.add('end');
+      if (SS.busy === true) end.disabled = true;
+      out.push(end);
+      return out;
+    }
     // B-84 (the Captions v2 artboard): a session's progress to the next check is the particle ring round her own core.
     // B-86 (Matt, Oct 19): its stats are one quiet line under her core (a dot, the minutes and the next check, then Break,
     // +5 and End as text buttons), not a pill above her; the note's title is in the line's label and tooltip.
@@ -715,6 +743,7 @@
       // B-211 (D-217): the session's bar is the pane header's, after its title, on every tab; the session folds to it.
       const mh = $('mh');
       if (bar.parentNode !== mh) mh.insertBefore(bar, $('status').nextSibling);
+      renderSessCard();
       const s = activeSession();
       document.body.classList.toggle('in-session', !!s);
       if (!s) {
@@ -743,26 +772,7 @@
         bar.setAttribute('aria-label', 'Study session: ' + (s.topic || 'untitled'));
         bar.title = s.topic || '';
         const acts = el('div', 's-acts');
-        if (!ending) {
-          const brk = btn(st.onBreak ? 'Resume' : 'Break', () =>
-            barPress(brk, async () => toast(await sessionCmd(st.onBreak ? 'resume' : 'break')))
-          );
-          acts.append(brk);
-          if (!COMMENT) {
-            const ext = btn('+5', () => barPress(ext, async () => toast(await sessionCmd('extend'))));
-            ext.setAttribute('aria-label', 'Add 5 minutes before the next check');
-            acts.append(ext);
-          }
-        }
-        const end = btn(ending ? 'Finish' : 'End', () =>
-          barPress(end, async () => {
-            const [t, c] = await endSession('ended');
-            await evSay(t, c, { tier: 'local' });
-          })
-        );
-        end.classList.add('end');
-        if (SS.busy === true) end.disabled = true;
-        acts.append(end);
+        acts.append(...sessButtons(s, st, ending));
         bar.replaceChildren(led, main, acts);
       }
       if (COMMENT) {
@@ -785,6 +795,74 @@
             ? `On a break · ${tickClock(st.breakRemainingMs)} to the check`
             : `${st.minutes} min · check ${tickClock(Date.parse(st.nextCheckAt) - Date.now())}`;
       CORE.setRing(ringFill(st, ending));
+    }
+    // B-290 (D-245): the session in E.V.'s right panel, shown from 1200 px (CSS), where the header's line gives way to
+    // it on her view so the minutes show once. Idle, it starts a session on his Study Watch note (the chip's call);
+    // running, it shows the session's state, the minutes left to her next check, and Break, +5 min and End.
+    function renderSessCard() {
+      let card = $('ev-sess');
+      if (!card) {
+        card = el('section', 'card ev-sess rest');
+        card.id = 'ev-sess';
+        capSide.append(card);
+      }
+      const s = activeSession();
+      if (!s) {
+        if (card.dataset.k === 'idle') return;
+        card.dataset.k = 'idle';
+        card.setAttribute('aria-label', 'Start a study session');
+        const go = btn('Start study session', () => guard(go, () => quick('Start a study session')), {
+          cls: 'btn neutral sm wide',
+        });
+        go.insertAdjacentHTML('afterbegin', PLAY_ICON);
+        card.replaceChildren(
+          el('h2', null, 'Start a study session'),
+          el('p', 'ss-topic', 'Your Study Watch note'),
+          el('p', 'meta', 'Its latest line in ' + E.courses().join(' or ') + ', read when you start.'),
+          go
+        );
+        return;
+      }
+      const st = E.sessionState(s, now());
+      const ending = s.status === 'ending';
+      const k = [s.id, s.status, st.onBreak, !!SS.busy].join('|');
+      if (card.dataset.k !== k) {
+        card.dataset.k = k;
+        card.setAttribute('aria-label', 'Study session: ' + (s.topic || 'untitled'));
+        const head = el('div', 'card-head');
+        head.append(
+          el('h2', null, 'Study session'),
+          el(
+            'span',
+            'badge ' + (ending ? '' : st.onBreak ? 'x-yellow' : 'x-green'),
+            ending ? 'Ending' : st.onBreak ? 'On a break' : 'Running'
+          )
+        );
+        const acts = el('div', 'ss-acts');
+        acts.append(...sessButtons(s, st, ending, { cls: 'btn neutral sm', long: true }));
+        card.replaceChildren(
+          head,
+          el('p', 'ss-topic', s.topic || 'Your Study Watch note'),
+          el('p', 'ss-left'),
+          el('p', 'meta ss-sub'),
+          acts
+        );
+      }
+      const mins = ms => Math.max(0, Math.ceil(ms / 60e3));
+      const next = Date.parse(st.nextCheckAt);
+      card.querySelector('.ss-left').textContent = ending
+        ? 'Wrapping up'
+        : st.onBreak
+          ? mins(st.breakRemainingMs) + ' min left'
+          : Number.isFinite(next)
+            ? mins(next - Date.now()) + ' min left'
+            : st.minutes + ' min';
+      card.querySelector('.ss-sub').textContent = ending
+        ? st.minutes + ' min in'
+        : (st.onBreak ? 'on the break' : COMMENT ? 'until she reads along again' : 'to the next check') +
+          ' · ' +
+          st.minutes +
+          ' min in';
     }
     // B-273 (D-267, Matt's answer): her ring is the stretch to the next check. Her segments fill clockwise toward it and
     // start over after it; the checks he answered show on their cards (D-217). The ring is full while she wraps up.

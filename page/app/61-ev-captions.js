@@ -52,12 +52,19 @@
     $('p-ev').append(capSide);
     // The side column is there only while it holds something (D-122 as amended): B-78's surfaces and a session's notes
     // go in #ev-side; with nothing in it her stage centres in the window.
-    // B-223: the dates card (ev-dates) is the panel's resting content from 1200 px, not something beside her.
-    const sideSync = () =>
+    // B-223, B-290: the session card (ev-sess) and Coming up (ev-dates) are the panel's resting content from 1200 px
+    // (class rest), not something beside her.
+    const sideSync = () => {
+      const kids = [...capSide.children];
       document.body.classList.toggle(
         'side-on',
-        [...capSide.children].some(c => c.id !== 'ev-dates')
+        kids.some(c => !c.classList.contains('rest'))
       );
+      document.body.classList.toggle(
+        'ev-rest-on',
+        kids.some(c => c.classList.contains('rest'))
+      );
+    };
     new MutationObserver(() => {
       sideSync();
       requestAnimationFrame(() => {
