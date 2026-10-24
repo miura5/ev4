@@ -243,12 +243,17 @@ test('deploy prints the system batch with expected versions, refuses dirty, unpu
   const live = () => cli(dir, 'deploy', 'live', '--matt-ok').out;
   fs.rmSync(path.join(dist, 'verify-staging.json'), { force: true });
   assert.match(live(), /REFUSED[\s\S]*no dist\/verify-staging\.json/);
-  const commit = JSON.parse(fs.readFileSync(path.join(dist, 'manifest.json'), 'utf8')).commit;
-  write(path.join(dist, 'verify-staging.json'), { target: 'staging', commit: 'f'.repeat(40), green: true, lines: [] });
-  assert.match(live(), /REFUSED[\s\S]*verify-deploy staging ran at ffffffffffff/);
-  write(path.join(dist, 'verify-staging.json'), { target: 'staging', commit, green: false, lines: [] });
+  const built = JSON.parse(fs.readFileSync(path.join(dist, 'manifest.json'), 'utf8'));
+  const commit = built.commit;
+  const hash = contentHash(built, JSON.parse(fs.readFileSync(path.join(dist, 'system/spec.json'), 'utf8')), sha256);
+  const saveVerify = v => write(path.join(dist, 'verify-staging.json'), { target: 'staging', lines: [], ...v });
+  saveVerify({ commit: 'f'.repeat(40), contentHash: '2'.repeat(64), green: true });
+  assert.match(live(), /REFUSED[\s\S]*verify-deploy staging ran on other content \(at ffffffffffff\)/);
+  saveVerify({ commit, green: true });
+  assert.match(live(), /REFUSED[\s\S]*ran on other content/, 'a verify without a content hash never passes');
+  saveVerify({ commit, contentHash: hash, green: false });
   assert.match(live(), /REFUSED[\s\S]*verify-deploy staging is red/);
-  write(path.join(dist, 'verify-staging.json'), { target: 'staging', commit, green: true, lines: [] });
+  saveVerify({ commit, contentHash: hash, green: true });
   assert.doesNotMatch(live(), /verify-staging|verify-deploy staging/, 'green at this commit: the staging rule passes');
 
   // B-87: live waits for a running study session, and it needs a fresh read of the live record's running sessions.
