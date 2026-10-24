@@ -3541,5 +3541,25 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "live",
+  "commit": "2eba0a6",
+  "time": "2026-10-24T00:44:43.162Z",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "37b72bb",
+  "from": "37b72bb",
+  "tasks": [
+   "B-262",
+   "B-263",
+   "B-264",
+   "B-265"
+  ],
+  "summary": "Trim during the freeze; E.V. can't pull from the dosage calculations exam plan. She can see…; e.v. Center aligned on; e.v. Center aligned on",
+  "why": null,
+  "decisions": [],
+  "source": "log",
+  "release": "v4.5.3"
  }
 ]
