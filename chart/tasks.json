@@ -5166,7 +5166,7 @@
   "depends": [
    "B-285"
   ],
-  "notes": "built: New menu and dialogs in the header, Today's Add row retired, header 48 px named E.V.; npm test and smoke green",
+  "notes": "proofs green (npm test, smoke, check --touched GREEN, shell 105/105, run 413/413); first review: 2 gaps, unit test added; the create-button clause stays open for Matt",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
