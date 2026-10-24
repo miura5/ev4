@@ -43,7 +43,7 @@ Status: `open` · `in progress` · `blocked` · `done`. A task opens when every 
 | B-279 | Chrome (D-274, D-275): the sidebar with the 24 px Dial Arc, coded nav icons, Today dots and the Theme and Contrast controls in its foot; the floating main panel; the 48 px header; the 320 px right panel from 1200 px; the tab bar's icons in the same colours under 600 px Done when: The look pass at 390 × 844, 735 × 830, 1706 × 1240 and 2560 × 1240 shows the chrome as this doc's chrome table gives it; npm run smoke green; staging GREEN | B-278, B-272 | v4.8 redesign | blocked | Held with B-278 on Matt's word (Oct 24). Question for Matt: send the interactive demo page, so this task can be re-planned from the fuller redesign hand-off. |
 | B-280 | Conversation and Today in the system (D-275) Done when: Both views match the Shipped board and this doc's view table at 1280, and the view table at 390; the session card shows minutes left, Pause and End, and folds from its head line (D-160); a check-off and a Your-turn reply still pass the smoke; staging GREEN | B-279 | v4.8 redesign | blocked | Held with B-278 on Matt's word (Oct 24). Question for Matt: send the interactive demo page, so this task can be re-planned from the fuller redesign hand-off. |
 | B-281 | Study, Progress and Record in the system (D-275) Done when: All three match the Shipped board and this doc's view table at 1280, and the view table at 390, including the category tags, the deck cards' state badges and the Card n of m label; a review answer through Again, Hard, Good and Easy still records as before; Progress's chart uses one coded colour per series with a legend; staging GREEN | B-279 | v4.8 redesign | blocked | Held with B-278 on Matt's word (Oct 24). Question for Matt: send the interactive demo page, so this task can be re-planned from the fuller redesign hand-off. |
-| B-282 | Sweep for D-276 (superseding D-150) and D-277 (amending D-243): rows that spelled a type or state in grey text take the badge where they are scanned; lint names no open task or test citing D-150 Done when: No row carries two badges (harness); lint clean of D-150 citations; npm test green | B-280, B-281 | v4.8 redesign | open |  |
+| B-282 | Sweep for D-276 (superseding D-150) and D-277 (amending D-243): rows that spelled a type or state in grey text take the badge where they are scanned; lint names no open task or test citing D-150 Done when: No row carries two badges (harness); lint clean of D-150 citations; npm test green | B-280, B-281 | v4.8 redesign | blocked | Held with B-278 on Matt's word (Oct 24). Question for Matt: send the interactive demo page, so this task can be re-planned from the fuller redesign hand-off. |
 | B-283 | Matt's look at the redesign, then live Done when: On staging, on his phone and at 1280, Matt walks all five views in both themes and says whether the phone layout holds; then ship live on his explicit OK | B-277, B-278, B-279, B-280, B-281, B-282 | v4.8 redesign | open |  |
 
 ## Your turn
@@ -79,6 +79,7 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 - B-279 (blocked): Chrome
 - B-280 (blocked): Conversation and Today in the system
 - B-281 (blocked): Study, Progress and Record in the system
+- B-282 (blocked): Sweep for D-276
 
 ## Done
 

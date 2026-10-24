@@ -5053,14 +5053,15 @@
   "title": "Sweep for D-276 (superseding D-150) and D-277 (amending D-243): rows that spelled a type or state in grey text take the badge where they are scanned; lint names no open task or test citing D-150",
   "dod": "No row carries two badges (harness); lint clean of D-150 citations; npm test green",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-280",
    "B-281"
   ],
-  "notes": "",
+  "notes": "Held with B-278 on Matt's word (Oct 24). Question for Matt: send the interactive demo page, so this task can be re-planned from the fuller redesign hand-off.",
   "commit": null,
-  "source": "plan 5reEBoToU1W5pmnq5q48ij"
+  "source": "plan 5reEBoToU1W5pmnq5q48ij",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-283",
