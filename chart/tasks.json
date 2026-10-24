@@ -5137,7 +5137,7 @@
   "depends": [
    "B-271"
   ],
-  "notes": "claimed by lane chrome",
+  "notes": "built: the component set in the stylesheet, its own harness (components.cjs) and the look pass's switch and button-kind checks; proofs next",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
