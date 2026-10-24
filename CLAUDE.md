@@ -166,7 +166,6 @@ restored at main's head and shipped through staging like any change.
 | --- | --- |
 | v4 design | E.V. Foundation v4 (link above) |
 | Project record (the Chart) | `chart/` via `tools/chart.mjs`; BACKLOG.md is generated from it (D-140) |
-| v3 source (retired, D-145) | `miura5/ev-core` |
 | Live record and page (v4) | https://claude.ai/artifact/Bu8RevP4r1twPdSGc77nfg |
 | v4 staging record + page | https://claude.ai/artifact/Pb6jQ6CvEbtxi6Rcshu9uC (`spec/ev.spec.json` `registry`) |
 | Mac folder | Documents/E.V. Study Watch (live since the Oct 18 cutover; staging uses its `staging/` subfolder) |
