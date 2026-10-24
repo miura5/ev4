@@ -5191,11 +5191,11 @@
   "title": "Conversation stage and captions (folds B-280's Conversation part; D-213, C-2, C-3, C-15): her stage at 104 px on the phone, 140 px or 168 px beside the right panel, 70% in a session. Captions at 20 px for the current line and 14 px for earlier lines from 1024 px; 20 px and 15 px on the phone. Her colours from her own palette.",
   "dod": "Screenshots at 390 and 1280 in light and dark, idle and in a session. Measured: stage 104 px at 390, 140 px at 1280 × 900, 168 px when taller than 1000 px, 70% of that in a session. Caption sizes 20/14 at 1280 and 20/15 at 390.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-288"
   ],
-  "notes": "",
+  "notes": "claimed by lane ev",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
