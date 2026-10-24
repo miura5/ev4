@@ -55,6 +55,7 @@ export const BOOKKEEPING = [
   /^DECISIONS\.md$/,
   /^CHANGELOG\.md$/,
   /^tools\/chart\.mjs$/,
+  /^tools\/chart(\/|$)/,
   /^test\/chart\.test\.mjs$/,
 ];
 const bookkeeping = f => BOOKKEEPING.some(re => re.test(f));
@@ -65,6 +66,7 @@ export const BOOKKEEPING_PATHS = [
   'DECISIONS.md',
   'CHANGELOG.md',
   'tools/chart.mjs',
+  'tools/chart',
   'test/chart.test.mjs',
 ];
 
