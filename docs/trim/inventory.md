@@ -87,7 +87,7 @@ Pipeline behavior is out of the trim's scope; these rows are for the picture onl
 | Trimmer runs | Points to the trim brief | Trimmers following build-chat steps | This run | 5 (44) | none | keep |
 | Scheduled pipeline runs | Pipeline runs aren't build chats | A pipeline refusing its own job | Every pipeline run | 8 (109) | low | keep |
 | Hard limits | spec.boundaries B-01 to B-18 in words | Every hard limit | Always | 14 (258) | high | keep (outside a trimmer's reach) |
-| Gotchas carried from v3 | Eight lessons, each with its rule | Repeating v3's and v4's incidents | Read every build session | 28 (432) | none | **shrink**: brief order 2; the lessons move to a lessons file, and only the rules that still name a failure stay |
+| Rules from past failures (was Gotchas carried from v3; moved to docs/lessons.md, #4) | Eight lessons, each with its rule | Repeating v3's and v4's incidents | Read every build session | 28 (432) | none | **shrink**: brief order 2; the lessons move to a lessons file, and only the rules that still name a failure stay |
 | Rollback (D-145) | How going back works now | A rollback done by hand | Never run on live (no rollback deploy in deploys.json) | 9 (125) | low | **shrink**: its first paragraph retells v3's ended window; the skill holds the steps |
 | Where things live | Links and paths | Sessions hunting for links | Every build chat | 10 (138) | none | keep |
 
@@ -101,7 +101,7 @@ The brief's order, with what each trimmer may reach:
       **Done Oct 23 (D-262).**
    3. R-05's leftover check: the watchdog-window code in `tools/chart.mjs` and its test (`trim/r05-check`). R-05 was
       retired Oct 23 (D-262) and its rules.json row stays, marked ended. **Done: #3** (and CLAUDE.md's step 6 no longer lists it).
-2. CLAUDE.md: the gotchas move to a lessons file (`trim/gotchas`), then the opening (`trim/claude-opening`) and the
+2. CLAUDE.md: the gotchas move to a lessons file (`trim/gotchas`, **done: #4**), then the opening (`trim/claude-opening`) and the
    rollback paragraph (`trim/rollback-text`).
 3. Dead code in `tools/chart.mjs`: the Docs-view calls (`trim/docs-views`), then the one-time v3 import
    (`trim/v3-import`).
