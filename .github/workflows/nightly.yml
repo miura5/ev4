@@ -1,5 +1,5 @@
-# B-151 (T-1): the page harnesses and the look pass, every night, on the synthetic record. npm test runs on every
-# push (test.yml); this runs the rest of `npm run check`, which needs Chromium, and keeps the screenshots. A red
+# B-151 (T-1): the page harnesses and the look pass, every night, on the synthetic record. npm test runs on pull
+# requests and code pushes (test.yml); this runs the rest of `npm run check`, which needs Chromium, and keeps the screenshots. A red
 # nightly is an inbox entry for the next build chat (CLAUDE.md step 2). workflow_dispatch lets a build chat run it
 # on demand: gh workflow run nightly.yml, then gh run watch.
 name: nightly check
