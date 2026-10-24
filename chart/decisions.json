@@ -1,5 +1,17 @@
 [
  {
+  "id": "D-295",
+  "date": "Oct 24",
+  "title": "When Matt saves a note or idea he typed, E.V. stores a concise rewrite of it automatically, keeping every point, with his original kept beside it (nothing is deleted, B-11); there is no Use mine / Use hers choice. His ticks, his date titles and his journal are never rewritten, and no run, worker or builder writes his fields after the save. Amends D-233.",
+  "why": "Matt, Oct 24: he would rather his words be restated more concisely than kept as typed; D-233's guard that only his own save writes his fields stays.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [
+   "D-233"
+  ],
+  "source": "log"
+ },
+ {
   "id": "D-294",
   "date": "Oct 24",
   "title": "D-228 is closed as covered: its sidebar clause is D-292, and the rest (each thing shows once on a screen; the right panel holds what the view doesn't) is D-245. Supersedes D-228.",
@@ -715,7 +727,7 @@
   "date": "Oct 22",
   "title": "His words are his: a field he typed changes only by his tap; where she has a better version she offers it beside his, Use mine and Use hers, and never writes over it; spec marks those fields",
   "why": "Linear's agent found his draft and asked before replacing it, but offered only its own version as a button (capture 3); E.V. never posts as him, and should never rewrite him either (north star, the guardian)",
-  "status": "proposed",
+  "status": "accepted",
   "supersedes": [],
   "amends": [],
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z P-7",

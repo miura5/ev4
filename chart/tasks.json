@@ -5447,5 +5447,17 @@
   "notes": "Review card (D-261). What changes for him: nothing he sees; when several builders work at once, two can no longer take the same task, so no screen gets built twice or in two clashing versions. Touches: the build tools only. Could break: a builder resuming its own claim would be refused; it would block the task with what happened, and we'd see it in the record. Size: +10 lines with its test; undone by one revert; no deploy. Checks: reviewer (independent subagent): No gaps in B-306. Checks retired or loosened: none. Size: +10 -0, in line with the definition of done. The red tests it saw at a31fafe were from closing D-228 and were fixed at 8ece3cc.",
   "commit": "0915add",
   "source": "build chat (Matt's OK, Oct 24)"
+ },
+ {
+  "id": "B-307",
+  "kind": "task",
+  "title": "Concise rewrite on save (D-295, amending D-233): a note or idea he types is stored as E.V.'s concise rewrite, every point kept, with his original beside it; ticks, date titles and the journal are untouched",
+  "dod": "Saving a planted note stores her rewrite as the text and his original beside it, through his own save (the D-233 guard still refuses any run, worker or builder writing the field); a journal entry, a tick and a date title save exactly as typed; with sampling off, his text saves as typed; npm test green; npm run smoke; staging GREEN",
+  "milestone": "freeze exit",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat (Matt, Oct 24)"
  }
 ]
