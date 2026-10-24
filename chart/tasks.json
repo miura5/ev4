@@ -4906,7 +4906,7 @@
   "depends": [
    "B-271"
   ],
-  "notes": "claimed by this run",
+  "notes": "built: the Dial Arc replaces the flower in the page source; harness rewritten; proving now",
   "commit": null,
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
