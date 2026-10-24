@@ -57,9 +57,9 @@ attribution lines with `--trailer`, one per line) and regenerates BACKLOG.md, DE
    session gives you; push to `main`. Then `ship staging` and make every call and read it prints, running it again
    each time, until it says GREEN: it records the deploy, which CHANGELOG.md then carries. **Never deploy live** without
    Matt's explicit OK in the chat; `ship live --matt-ok` also refuses what `chart/rules.json` forbids (R-02 staging green
-   at the same commit, B-35; R-03 no running study session, B-87; R-04 Matt's OK; R-05 not inside a live watchdog
-   window, B-102; R-06 a full check green at the commit, B-219; R-01, page-only live, ended with D-085's window, D-145, and is kept in `chart/rules.json` marked
-   ended), so a build reaches live only through staging.
+   at the same commit, B-35; R-03 no running study session, B-87; R-04 Matt's OK; R-06 a full check green at the
+   commit, B-219; R-01 and R-05 are ended, D-145 and D-262, and kept in `chart/rules.json` marked ended), so a build
+   reaches live only through staging.
 7. Before a task goes to Matt or is marked done, run the review skill (`.claude/skills/review`) in a fresh subagent
    that has not seen the work; its verdict ("No gaps" or the gaps) is the reviewer line on his product review card
    (D-261), and a card without one is not ready. Record: `log <id> --status done --commit <sha> --note "<one line>"`, or in the same move as step 6 with `ship staging
