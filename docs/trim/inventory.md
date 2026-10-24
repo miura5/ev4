@@ -103,15 +103,18 @@ The brief's order, with what each trimmer may reach:
       retired Oct 23 (D-262) and its rules.json row stays, marked ended. **Done: #3** (and CLAUDE.md's step 6 no longer lists it).
 2. CLAUDE.md: the gotchas move to a lessons file (`trim/gotchas`, **done: #4**), then the opening (`trim/claude-opening`, **done: #5**) and the
    rollback paragraph (`trim/rollback-text`, **done: #6**).
-3. Dead code in `tools/chart.mjs`: the Docs-view calls (`trim/docs-views`), then the one-time v3 import
-   (`trim/v3-import`).
+3. Dead code in `tools/chart.mjs`: the Docs-view calls (`trim/docs-views`, **done: #8**), then the one-time v3 import
+   (`trim/v3-import`, **done: #9**). The tool went from 3,924 lines to 3,308.
 4. Test and check time: smoke on page changes only (`trim/smoke-scope`, **done: #7**).
-5. **First, before item 6:** GitHub Actions minutes (`trim/ci-minutes`). On Oct 23 the account ran out of its free monthly
-   minutes and GitHub stopped every job (about 640 npm test runs, 350 smoke runs and 6 nightlies since Oct 21; most test
-   runs were record-only commits). Run npm test on pull requests and on pushes that change code, not on pushes that touch
-   only `chart/`, the generated files or `docs/` (build chats and trimmers run it locally first); keep the nightly.
-6. Small text, low value (from #5's Found next): CLAUDE.md's "Where things live" repeats the v3 repository row the
-   opening now names (`trim/where-v3-row`).
+5. The rest of the retired Docs views in `tools/chart.mjs` (`trim/docs-views-2`, from #8 and #9's Found next):
+   `changelogCalls`, `decisionsCalls`, `mdEscape`, `tenetLabel`, `tabTitle`, `textCell` and `sameStatus` with their tests
+   (only tests call them now, about 110 code and 150 test lines); then the `views` command, `printViews` and the
+   `views: [...]` arrays `applyLog` and `applyReport` return, which now only print "retired"; and `brief`'s Finish line
+   that still says "views prints the Board call".
+6. Low value since the repository went public on Oct 23 (its Actions minutes are free now): GitHub Actions minutes
+   (`trim/ci-minutes`). Run npm test on pull requests and on pushes that change code, not on pushes that touch only
+   `chart/`, the generated files or `docs/`; keep the nightly. Worth it only to cut noise.
+7. Small text, low value: CLAUDE.md's "Where things live" repeated the v3 row (`trim/where-v3-row`, **done: #10**).
 
 ## Keeping this queue current
 
