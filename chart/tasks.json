@@ -4958,12 +4958,12 @@
   "title": "Sweep for D-271 and D-272 (superseding D-230 and D-224): held-frame code, the eight-a-second cap and the tests that assert them are removed or rewritten to the new tenets",
   "dod": "No reference to held frames or an 8 fps cap remains in page/ or test/; lint names no open task or test citing D-230 or D-224; npm test green",
   "milestone": "v4.7 look",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-274"
   ],
-  "notes": "reviewed twice: No gaps in B-276. Shipping to staging.",
-  "commit": null,
+  "notes": "Shipped to staging at 6bdfbe5: ship staging GREEN.",
+  "commit": "6bdfbe5",
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
  {
