@@ -4972,7 +4972,7 @@
   "title": "Matt's look at Dial Arc and Ember, then live",
   "dod": "On staging, on his phone and at 1280, Matt sees every mood, a study session in Pointer mode and both themes at the three contrasts, and answers the yellow question (shared L52 or L60); then ship live on his explicit OK",
   "milestone": "v4.7 look",
-  "status": "open",
+  "status": "done",
   "depends": [
    "B-271",
    "B-272",
@@ -4982,8 +4982,8 @@
    "B-276",
    "B-284"
   ],
-  "notes": "Matt's look, Oct 24: he used E.V. on staging and passed it. The moods, a study session with the countdown ring, the states, and both themes at every contrast setting work well. He expects small tweaks once the full flow is on live and the UI redesign lands. Live waits for B-284 (resting at Idle) and his OK in the chat.",
-  "commit": null,
+  "notes": "Live at v4.5.5 (368b104) on Matt's OK, after his look passed and the full check went GREEN; the batch carried hand-off 1, the B-284 fix and trims #32 to #34.",
+  "commit": "368b104",
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
  {
