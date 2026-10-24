@@ -1,4 +1,5 @@
-// B-205 (D-212, D-213, D-215, D-223, D-224): her values live once in spec.ui.look.flower; the Silk core is retired in
+// B-205 (D-213, D-215, D-223, D-224; the flower's own D-212 is history, superseded by the Dial Arc, D-265): her values
+// live once in spec.ui.look.flower; B-275 (D-270) took out its inks, the forget-me-not blue no page reads. The Silk core is retired in
 // place, kept as history until B-206 removes its renderer.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -21,7 +22,7 @@ function problems(f) {
       ? v.every((k, i) => !i || k[0] >= v[i - 1][0]) || out.push(`${at}: keys out of order`)
       : out.push(`${at}: not [time, value] keys`);
   if (!f) return ['spec.ui.look.flower is missing'];
-  if (f.renderer !== 'svg') out.push('renderer: svg (D-212)');
+  if (f.renderer !== 'svg') out.push('renderer: svg');
   num(f.shape.petals, 'shape.petals', 5, 5);
   num(f.shape.widthPx, 'shape.widthPx', 1);
   num(f.shape.lengthPx, 'shape.lengthPx', 1, 100);
@@ -49,7 +50,6 @@ function problems(f) {
   }
   for (const [k, v] of Object.entries(f.moods))
     for (const [kk, vv] of Object.entries(v)) if (/Keys$/.test(kk)) keys(vv, `moods.${k}.${kk}`);
-  for (const t of ['dark', 'light']) if (!/^#[0-9A-F]{6}$/i.test(f.inks.her[t])) out.push(`inks.her.${t}`);
   for (const k of ['phone', 'sidebarNarrow', 'sidebar', 'wide', 'wideTall', 'corner'])
     num(f.sizes[k], `sizes.${k}`, 24, 240);
   num(f.sizes.sessionShare, 'sizes.sessionShare', 0.1, 1);
@@ -64,11 +64,11 @@ test('B-205: spec.ui.look.flower holds every value her renderer needs, of the ri
 test('B-205: the values the decisions name', () => {
   assert.equal(F.depth.tiltStageDeg, 34);
   assert.equal(F.depth.tiltCornerDeg, 52);
-  assert.equal(F.clock.heldFps, 8, 'eight drawings a second (D-212, D-230)');
+  assert.equal(F.clock.heldFps, 8, 'eight drawings a second (D-230)');
   assert.equal(F.view.holdSec, 1, 'she holds his eye 1 s (D-223)');
   assert.deepEqual(F.view.facing, ['listening', 'speaking', 'alert', 'happy']);
   assert.equal(F.speech.minHoldFrames, 2, 'each speech pose held two frames at least (D-215)');
-  assert.deepEqual(F.inks.her, { dark: '#7AA7FF', light: '#2B5BD0' }, 'her blue (D-214)');
+  assert.equal(F.inks, undefined, 'B-275 (D-270): no fixed ink for her; her two faces come from the theme generator');
   const z = F.sizes;
   assert.deepEqual(
     [z.phone, z.sidebarNarrow, z.sidebar, z.wide, z.wideTall, z.sessionShare, z.corner, z.foldBelowHeightPx],

@@ -324,7 +324,7 @@
     // The Breath reveal (D-122, paced by D-137): words fade and un-blur in, the first sentence at speech pace (about 3
     // words a second, pausing at punctuation), then faster, so the whole reply is out within 6 s; a tap on her line, a
     // scroll or a newer line shows the rest at once. Each word shown is one speak() to her core (emphasis, bold, in
-    // teal), so her swell ends with the last word; a finished sentence is announced; the reply's gesture comes when the
+    // the text colour), so her swell ends with the last word; a finished sentence is announced; the reply's gesture comes when the
     // last word is out. Reduced motion shows the line whole and announces it once.
     function revealFinish(id) {
       const rec = T.els.get(id),
@@ -376,7 +376,7 @@
       w.length * PACE.charMs +
       (/[,;:—]$/.test(w) ? PACE.commaMs : 0) +
       (/[.?!…]["”’)]*$/.test(w) ? PACE.stopMs : 0);
-    // How a reply ends on her core: an error recoils (coral), a reply that changed the record nods, the rest settle.
+    // How a reply ends on her core: an error recoils, a reply that changed the record nods, the rest settle.
     const endGesture = m =>
       m.error && m.error !== 'cancelled' ? 'error' : (m.cards || []).length && !m.greeting ? 'done' : 'settle';
     function revealTick() {
@@ -486,7 +486,7 @@
         if (!part) continue;
         const cite = /^\(.*\)$/.test(part) ? E.parseCite(part.slice(1, -1)) : null;
         if (cite) {
-          // B-78 (D-126): a library citation is a teal underlined file · page span, revealed whole; it opens the passage
+          // B-78 (D-126): a library citation is an underlined file · page span, revealed whole; it opens the passage
           const a = el('a', 'cite', cite.cite);
           a.href = '#';
           a.dataset.cite = cite.cite;

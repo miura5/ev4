@@ -93,7 +93,7 @@
           text: `${String(r.target || r.id).replace(/^(run|job) /, '')}: ${r.reason}, ${why[r.why] || r.why}. A build chat should look.`,
           v: 'bad',
         });
-      // B-163 (D-186): a backup older than this build's schemas still restores (the drill migrates it); amber, never red.
+      // B-163 (D-186): a backup older than this build's schemas still restores (the drill migrates it); yellow, never red.
       const bk = hl.backup;
       if (bk && bk.behind > 0)
         out.push({

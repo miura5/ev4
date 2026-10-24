@@ -139,7 +139,7 @@ test('each gesture settles within its duration: exactly at rest at its end, cont
     }
     assert.ok(moved > 0.02, `${name} does something`);
   }
-  // Coral is the error gesture's alone.
+  // The retired core v2 (history): its coral tint is the error gesture's alone.
   for (const name of MO.GESTURES.filter(n => n !== 'error'))
     for (let el = 0; el < 3; el += 0.05) assert.equal(MO.gestureBlend(name, el, P).tint, 0, name);
   assert.ok(MO.gestureBlend('error', 0.1, P).tint > 0.5);
@@ -315,7 +315,7 @@ test('spec.ui.look.core (history since D-212): every core v2 parameter, the seve
     { ms: 25, share: 0.05, d: 8 },
     'the retired core v2 budget (history; D-224 holds the flower to its own)'
   );
-  // Teal and violet carry her; coral is reserved for the error gesture.
+  // The retired core v2's palette (history, not the page's colours: D-270): teal and violet, coral for the error.
   assert.deepEqual(P.palette.a, [36, 214, 186]);
   assert.deepEqual(P.palette.b, [150, 96, 255]);
 });

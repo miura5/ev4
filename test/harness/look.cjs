@@ -307,6 +307,46 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           else reports.push([c.ok ? 'ok  ' : 'NOT ', `[${width}] ${view.id}: ${c.tenet}`, c.detail]);
         }
       }
+      // B-275 (D-270): Ember is hers alone: on this view, the sidebar and the header, no visible element draws in her
+      // accent or her two faces except her avatar, a primary button and send.
+      if (['390x844', '1280x800'].includes(width)) {
+        const strays = await page.evaluate(() => {
+          const cs = getComputedStyle(document.documentElement),
+            probe = document.createElement('i');
+          document.body.append(probe);
+          const rgbOf = v => ((probe.style.color = v), getComputedStyle(probe).color);
+          const ember = new Set(['--her', '--her2', '--av1', '--av2'].map(n => rgbOf(cs.getPropertyValue(n).trim())));
+          probe.remove();
+          const mine = e => e.closest('.ev-av, button.primary, #ev-send');
+          const out = [];
+          for (const e of document.querySelectorAll('body *')) {
+            if (mine(e) || (e.checkVisibility && !e.checkVisibility({ visibilityProperty: true }))) continue;
+            const s = getComputedStyle(e),
+              r = e.getBoundingClientRect();
+            if (!r.width || !r.height) continue;
+            const used = [
+              ['color', s.color, e.childNodes.length > 0],
+              ['background', s.backgroundColor, true],
+              ['border', s.borderTopColor, parseFloat(s.borderTopWidth) > 0],
+              ['outline', s.outlineColor, s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) > 0],
+              ['fill', s.fill, e instanceof SVGElement],
+              ['stroke', s.stroke, e instanceof SVGElement && s.stroke !== 'none'],
+              ['shadow', s.boxShadow, s.boxShadow !== 'none'],
+            ];
+            for (const [what, v, on] of used)
+              if (on && [...ember].some(c => String(v).includes(c)))
+                out.push(
+                  `${e.tagName.toLowerCase()}${e.id ? '#' + e.id : ''}.${String(e.className.baseVal ?? e.className).split(' ')[0]} ${what}`
+                );
+          }
+          return out.slice(0, 8);
+        });
+        ok(
+          `[${width}] ${view.id}: B-275: Ember only on her, a primary button and send`,
+          !strays.length,
+          strays.join('; ')
+        );
+      }
       if (view.tab === 'ev')
         ok(
           `[${width}] ev: the composer is in view`,
@@ -732,7 +772,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
       }
     }
     // B-117: Today: no stat tile, no item's minutes twice, the exam in Next 7 days only, a Prep marker on the clinical
-    // day (the coral count went with D-221, B-271 on Matt's word); ticking keeps the scroll (v4 rule 6).
+    // day (the coral count is retired: D-221, superseded by D-270; B-271 on Matt's word); ticking keeps the scroll (v4 rule 6).
     if (TENETS.widths.includes(size.width) && [844, 830, 800].includes(size.height)) {
       await page.click('#tab-today');
       await page.waitForTimeout(450); // B-125: settled within 450 ms

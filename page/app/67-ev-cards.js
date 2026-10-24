@@ -990,7 +990,7 @@
     };
     // B-90 (Matt, Oct 19): the greeting is one line; what is behind it is a briefing folded under it on every open. As
     // Matt drew it: plain text, no pills or surfaces. The fold line counts the items, with one dot for the highest
-    // priority in it (red urgent, else teal new); open, each item is one gray-bulleted line, cut with an ellipsis, a
+    // priority in it (red urgent, else blue new); open, each item is one gray-bulleted line, cut with an ellipsis, a
     // small accent mark at its end for urgent or new, and a chevron that opens it in place to the full text and its
     // action as a text link.
     T.briefOpen = false;

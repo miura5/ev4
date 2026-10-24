@@ -98,7 +98,7 @@
       NOTES: '',
     };
     // B-117 (D-147, D-148, D-150): an item of today's list is one line: its tick, its words, its minutes once in grey,
-    // no type pill. Coral only for graded work due today and not ticked (D-221). An item someone added opens in place to
+    // no type pill. Red only for graded work due today and not ticked (D-270). An item someone added opens in place to
     // its Remove (D-078); a set opens where it lives.
     const openRows = new Set();
     function todayRow(it, isDone) {
@@ -493,7 +493,7 @@
       document.body.classList.add('ev-dates-on');
     }
     // B-117: a date in Next 7 days is one line (its day, its title, its kind in grey); a clinical, lab, validation or class
-    // day carries the calm Prep marker (D-143); coral only for graded work due today (D-221). It opens Record's Dates.
+    // day carries the calm Prep marker (D-143); red only for graded work due today (D-270). It opens Record's Dates.
     function weekRow(d) {
       const li = el('li', 'row week-item');
       const b = el('button', 'wk-line');

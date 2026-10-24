@@ -744,7 +744,7 @@
       );
       $('mh-her').addEventListener('click', () => (ui.tab === 'ev' ? backToNow() : showTab('ev')));
     }
-    // The send is a quiet circle that fills when he types (D-214).
+    // The send is a quiet circle that fills in Ember when he types (D-270).
     $('ev-input').addEventListener('input', () => $('ev-send').classList.toggle('on', !!$('ev-input').value.trim()));
     // The top bar's core is tucked away (styles.css) while her stage core is up or a session runs; then it does not draw.
     const topOrb = CORE.make(24, {

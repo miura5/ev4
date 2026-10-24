@@ -50,6 +50,49 @@ test('B-217: a test or harness names a superseded tenet only as history', () => 
   assert.deepEqual(bad, []);
 });
 
+// B-275: the sweep for D-270, which took the place of D-221 (and of D-214's blue and D-212's flower). No open task but the
+// sweep's own and no test names them except as history, and no old teal, amber, coral or forget-me-not blue hex is
+// left in page/ or test/. #F08A78 was dark coral and is now her own dark halftone (D-266), so it is not on the list.
+const SWEPT = /\bD-(221|214|212)\b/;
+const OLD_HEX = /#(7AA7FF|2B5BD0|3FE0C5|0B2A24|F2B45A|0F766E|9A5800|B83A26)\b/i;
+const sources = dirs =>
+  dirs.flatMap(d =>
+    fs
+      .readdirSync(path.join(ROOT, d), { withFileTypes: true })
+      .filter(f => f.isFile() && /\.(mjs|cjs|js|json|css|html)$/.test(f.name))
+      .map(f => [`${d}/${f.name}`, fs.readFileSync(path.join(ROOT, d, f.name), 'utf8')])
+  );
+
+test('B-275: no open task but the sweep, and no test, cites D-221, D-214 or D-212 except as history', () => {
+  const tasks = JSON.parse(fs.readFileSync(path.join(ROOT, 'chart/tasks.json'), 'utf8'));
+  const list = Array.isArray(tasks) ? tasks : tasks.tasks || Object.values(tasks);
+  const open = list.filter(
+    t =>
+      t &&
+      t.id !== 'B-275' &&
+      ['open', 'in progress', 'blocked'].includes(t.status) &&
+      SWEPT.test([t.title, t.dod].join(' '))
+  );
+  assert.deepEqual(
+    open.map(t => t.id),
+    []
+  );
+  const bad = [];
+  for (const [f, text] of sources(['test', 'test/harness']))
+    if (f !== 'test/tenet-sweep.test.mjs')
+      text.split('\n').forEach((line, i) => {
+        if (SWEPT.test(line) && !HISTORY.test(line)) bad.push(`${f}:${i + 1}: ${line.trim().slice(0, 120)}`);
+      });
+  assert.deepEqual(bad, []);
+});
+
+test('B-275: page/ and test/ hold none of the old teal, amber, coral or forget-me-not blue values', () => {
+  const bad = sources(['page', 'page/app', 'test', 'test/harness'])
+    .filter(([f]) => f !== 'test/tenet-sweep.test.mjs')
+    .flatMap(([f, text]) => (text.match(new RegExp(OLD_HEX, 'gi')) || []).map(h => `${f}: ${h}`));
+  assert.deepEqual(bad, []);
+});
+
 test("B-217 (D-221, D-230, D-225): spec.ui.tenets' checks cite the new tenets", () => {
   const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
   const checks = JSON.stringify((spec.ui && spec.ui.tenets) || {});
