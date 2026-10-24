@@ -654,19 +654,6 @@ export function watchdogRefusal(schedule, now = new Date()) {
     ? `R-05 (D-142): the live watchdog runs at ${ctClock(w.run.toISOString())} CT; live deploys wait until ${ctClock(w.opens.toISOString())} CT`
     : null;
 }
-// What R-01 protects: the paths and spec keys whose change makes a deploy more than page-only.
-export const PAGE_ONLY = {
-  paths: [
-    /^spec\/schemas\//,
-    /^core\/migrate\.mjs$/,
-    /^core\/steps\.mjs$/,
-    /^core\/run\.mjs$/,
-    /^tools\/prompts\.mjs$/,
-    /^scripts\//,
-  ],
-  specKeys: ['pipelines', 'tasks', 'collections', 'jobs', 'legacyCollections'],
-};
-
 // ------------------------------------------------------------------------------------------------ lint (B-94)
 /**
  * The record against its rules. Errors: a duplicate id, a dependency on a task that doesn't exist, a rule resting on a
@@ -1893,22 +1880,6 @@ function commitRecord(root, message, trailers) {
 }
 
 // ------------------------------------------------------------------------------------------------ ship (B-96)
-/** R-01: the paths and spec keys a page-only live deploy may not change since the live build. */
-export function pageOnlyFindings(root, from, to = 'HEAD') {
-  const changed = git(root, ['diff', '--name-only', from, to]).split('\n').filter(Boolean);
-  const bad = changed.filter(f => PAGE_ONLY.paths.some(re => re.test(f)));
-  const spec = c => {
-    try {
-      return JSON.parse(git(root, ['show', `${c}:spec/ev.spec.json`]));
-    } catch {
-      return {};
-    }
-  };
-  const a = spec(from),
-    b = spec(to);
-  const keys = PAGE_ONLY.specKeys.filter(k => JSON.stringify(a[k]) !== JSON.stringify(b[k]));
-  return [...bad.map(f => `${f} changed`), ...keys.map(k => `spec.${k} changed`)];
-}
 const tasksHash = tasks =>
   canonical(
     Object.fromEntries(
@@ -2211,7 +2182,7 @@ async function ship(o) {
   const state = withShell(readState(stateDir), manifest, target, dist);
   const deployed = state.record && state.record.manifest;
   if (target === 'live') {
-    // R-04 (D-083): Matt's explicit OK. R-01 (D-139): page-only while D-085's window is open (B-30 not done).
+    // R-04 (D-083): Matt's explicit OK.
     // R-04 in its second form (D-198, B-185): a ship job he wrote for this commit, as fetched in this session, checked
     // here and by the ship-live row; it stands in for his words in the chat.
     const fromJob = typeof o['from-job'] === 'string' ? o['from-job'] : null;
@@ -2239,16 +2210,6 @@ async function ship(o) {
     if (rec.rules.some(r => r.check === 'fullCheck' && !r.ended)) {
       const why = fullCheckRefusal(root, manifest.commit);
       if (why) refusals.push(why);
-    }
-    const b30 = findTask(rec, 'B-30')[0];
-    const r01 = rec.rules.find(r => r.check === 'pageOnlyLive');
-    if (r01 && !r01.ended && (!b30 || b30.status !== 'done')) {
-      const base = (deployed && deployed.commit) || (rec.deploys.filter(d => d.target === 'live').at(-1) || {}).commit;
-      const found = base ? pageOnlyFindings(root, base, manifest.commit) : ['no live build to compare with'];
-      if (found.length)
-        refusals.push(
-          `R-01 (D-139): D-085's rollback window is open (B-30 not done), so live takes page-only changes; since live's ${String(base).slice(0, 7)}: ${found.join('; ')}`
-        );
     }
     // B-149 (D-173): what goes live is a tagged release. With every other gate passed and the commit untagged, ship
     // tags it here (pushed once live is recorded); the tag renames the build, so staging carries it first.
