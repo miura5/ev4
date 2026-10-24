@@ -81,6 +81,9 @@ Read the diff and this brief, and only then the pull request's text. Check that:
   unless the pull request says so plainly.
 - **The hard limits are intact.**
 - **No replacement machinery was added.**
+- **Every check removed has a twin or Matt's word:** a removed test or assertion either has a twin that proves the same
+  thing or more (name it), or Matt's recorded OK covers it (a superseding decision, or his approval on the pull
+  request). Anything else is a change.
 - **Lines went down,** and the explanation for Matt is true and plain.
 
 Verdict, in one line: approve, change (what) or reject (why).

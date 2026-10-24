@@ -45,7 +45,18 @@ task or writes to a record. It never blocks anything by itself: the build chat d
 6. Check the diff against each tenet in scope: one checked by `harness`, `lint` or `ship` needs that check named and
    green for this work; one checked by `review` is judged here, from the diff. A change that goes against a tenet is a
    gap unless a superseding tenet and its sweep task are in the record.
-7. Report.
+7. Checks retired or loosened: list every test, harness check or assertion the diff removes or weakens (a narrower
+   condition, a wider tolerance, a skip). Each one is either:
+   - **Matt's call:** a superseding decision in the record covers it, or the task's Notes carry his OK for it. List it
+     on the Checks line below. It is not a gap: never ask for it back, and never ask the work to bend to it. Matt
+     overrides checks that the work would otherwise route around for the task's sake at the milestone's expense
+     (Oct 24).
+   - **Unrecorded:** a gap: bring it in line with the tenets now in force, keep it, or record Matt's OK.
+8. Size: count lines added and removed in the diff. Judge any growth against the area's map in `docs/trim/scan/`
+   (core, harness, page, spec, tools-tests). Growth the definition of done doesn't call for is a gap that names what to
+   fold: a second copy of something that exists, a special case where one general rule would do, or scaffolding left
+   behind.
+9. Report.
 
 ## Report
 
@@ -55,9 +66,12 @@ leaves unproved) and what would close it:
 ```
 Gaps in B-nn:
 - <where>: <what is missing or wrong>; <what would close it>
+Checks retired or loosened: <each, with "Matt's call (D-nnn or the note)">, or none
+Size: +<added> -<removed> lines; <in line with the definition of done, or the growth named as a gap above>
 ```
 
-If there are none, the whole report is: `No gaps in B-nn.`
+If there are no gaps, the first line is `No gaps in B-nn.` and the Checks and Size lines still follow: they go on
+Matt's card either way.
 
-Never list what is fine, never praise, never restate the work, never propose features. A judgment call the definition
-of done does not settle is not a gap; leave it out.
+Beyond those two lines: never list what is fine, never praise, never restate the work, never propose features. A
+judgment call the definition of done does not settle is not a gap; leave it out.
