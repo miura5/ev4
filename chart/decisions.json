@@ -2,8 +2,8 @@
  {
   "id": "D-261",
   "date": "Oct 23",
-  "title": "Matt reviews at product level, not code level, through the semester. Each change comes to him as one product review card, with no code, file paths, line numbers or styling:\n(1) what changes for him when he studies;\n(2) why: the bug or request behind it;\n(3) which parts of E.V. it touches, named as the System Map names them (the page, a run, the record, shipping);\n(4) what could break for his studying, and how we would notice;\n(5) size and whether it can be undone;\n(6) the checks done: tests, the reviewer's verdict, staging.\nThen his call: approve, ask, or no. At most one question, answerable from the card in a line or a tap, and optional. Code-level quality is held by the tests, the independent reviewer and staging, not by Matt reading code. D-253's third freeze-exit condition becomes: Matt explains in plain words how E.V. works (the page, the runs, the record, how a change reaches live) and why a change goes through staging. Under D-256, the course this semester is E.V. at a high level; engineering topics wait for winter break. D-258's and D-259's practice reps for each cut become this card.",
-  "why": "Matt, Oct 23: the reps' code questions are long and frustrating mid-semester. He needs to understand enough to act as E.V.'s product manager and make good decisions, not to read CSS or code; the goal is quality that lasts, held by process, with his judgment at the product level.",
+  "title": "Each fix or trim comes to Matt as a product review card, not a code review: what changes for him, why, which parts of E.V. it touches, what could break and how we would notice, size and undo-ability, checks done; no code, file paths or CSS; at most one optional question answerable from the card. B-257's freeze exit is product-level too",
+  "why": "Matt, Oct 23: the practice reps asked him to review code; he wants to judge changes as the product's owner",
   "status": "accepted",
   "supersedes": [
    "D-250",
@@ -15,7 +15,8 @@
    "D-258",
    "D-259"
   ],
-  "source": "log"
+  "source": "log",
+  "restated": "Oct 23"
  },
  {
   "id": "D-260",
