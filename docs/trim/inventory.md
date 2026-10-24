@@ -117,7 +117,7 @@ The brief's order, with what each trimmer may reach:
 7. Small text, low value: CLAUDE.md's "Where things live" repeated the v3 row (`trim/where-v3-row`, **done: #10**).
 
 Added by the queue refill of Oct 24 (`trim/queue-refill`, at origin/main 239e72b), when items 1 to 7 were all done or
-claimed (#11 holds item 6, a run claimed item 5 at 03:16Z). Each was mapped by a read-only helper and its key callers
+claimed (#11 holds item 6, #12 holds item 5). Each was mapped by a read-only helper and its key callers
 re-checked by grep. Git history on main is squashed before 75c2b59, so evidence comes from the Chart and the code.
 
 8. Leftovers in `tools/chart.mjs` that #8 and #9 left behind (`trim/chart-leftovers`, about 45 lines; take it after
@@ -130,8 +130,9 @@ re-checked by grep. Git history on main is squashed before 75c2b59, so evidence 
      tools/, core/, .claude/, .github/ or CLAUDE.md passes the flag.
    - `docCall`: once item 5 and the hand-off note are gone, nothing calls it.
    - Board-only fields written and never read: `board.why`, `board.notes` and `board.were` (the `--why` and
-     `--board-note` options of `log`, and the `why`/`notes` that `applyReport` stores). Their readers (`boardRow`,
-     `boardCalls`) went in #8. `board.row`, `--name` and `boardName` stay: the deploy summary and Your turn read them.
+     `--board-note` options of `log <task>`, and the `why`/`notes` that `applyReport` stores; `log decision --why` and a
+     deploy's `why` stay). Their readers (`boardRow`, `boardCalls`) went in #8; `board.were` is also written by the
+     renumber path (item 11), which the cutter edits too. `board.row`, `--name` and `boardName` stay: the deploy summary and Your turn read them.
    - `brief`'s `rec.views.retired ? 'DECISIONS.md' : rec.views.decisionsTab` (one line; `retired` is always set) and
      the header comments that still describe the Board, Changelog and overview views and the import.
    - Must stay: everything the inbox's Board-comment read uses (`commentsFrom`, `commentQuery`, `commentReply`,
@@ -154,7 +155,8 @@ re-checked by grep. Git history on main is squashed before 75c2b59, so evidence 
     and is low value on its own: pair it with another `core/` change if one is going anyway):
     - The commit-only fallback for a `dist/verify-staging.json` saved before content hashes existed (`deployCalls`, its
       own comment says so); both writers always include `contentHash` now, and dist/ is rebuilt for every deploy. Its
-      test in `test/cli.test.mjs` changes with it.
+      test in `test/cli.test.mjs` changes with it. The fallback sits inside R-02's staging-green check, so cutting it
+      makes that check stricter, never looser; that cut's pull request should say so.
     - The "(created in B-12)" wording it still prints, which a chart test bans elsewhere as pre-cutover text, and
       `deployCalls`' doc comment, which sits above `liveSessions`.
     - The `export` keyword on `readIds`, `tasksFor`, `liveSessions` and `RUNNING_READ` (no importer).
