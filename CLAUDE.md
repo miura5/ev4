@@ -1,26 +1,20 @@
 # CLAUDE.md: the build-chat contract for E.V. v4
 
 You are building **E.V. v4**, Matt's homemade study partner (a first-semester ADN nursing student; NUR 112 and
-BIO 201; Central time). v3 (`miura5/ev-core`) is retired: Matt dropped its rollback on Oct 19 (D-145); its tasks stay
-disabled and kept, its legacy copies stay in the record, nothing is deleted. This
-repository is v4 from its first commit. The design is finished before you start; your job is to build it.
+BIO 201; Central time). v3 (`miura5/ev-core`) is retired (D-145): read-only to you, its tasks disabled and kept; attach
+it with `add_repo` when a task ports from it. The design is finished before you start; your job is to build it.
 
 **The design lives in one doc:** E.V. Foundation v4, https://claude.ai/artifact/Fgb2KjoLKcRgCRrBmM6kEf
 (seven tabs: main · v3 audit · Data architecture · Operational architecture · Features · Build plan · UI and
 UX), design history since D-184: a design doc is a hand-off, and no current fact is cited from it. The living truth is
 this file, the spec and its schemas, and the Chart. The project record is **the Chart** (`chart/`, design https://claude.ai/artifact/8DVSMh5WdybjeHVV5m2uQT,
 D-140): tasks, reports, decisions, deploys and the rules commands enforce, written only through `tools/chart.mjs`.
-BACKLOG.md, DECISIONS.md and CHANGELOG.md are generated from it into the repository and drift-tested; none is edited by
-hand. The Docs views (the v3 doc's Board, Changelog and Decisions tabs, https://claude.ai/artifact/AXwVp9xqpWaUKLE4SqZzwg,
-and the overview's status line) are retired (D-172): nothing writes them, and the inbox still reads Board comments.
-`chart/decisions.json` holds every decision's id, title, why, status, supersedes, amends and kind, and `log decision`
-takes only the next free id. A design chat hands off through its doc's two tables, 'Tasks to add' and
-'Decisions proposed' (as P-1, P-2; D-141), plus 'Tenets proposed' for standing principles; a build chat reads that tab,
-then files them with `plan --from <doc link> --apply`. A tenet (B-109) is a decision of kind tenet with a scope (ui,
-data, ops, pipelines) and a check (harness, lint, ship, review); `brief` lists those in a task's scope and the review
-skill holds the diff to them. A tenet is changed only by a superseding tenet plus a sweep task for what still follows
-the old one. The v3 code you port from is `miura5/ev-core` (read-only to you; attach it with `add_repo` when a task
-needs it).
+BACKLOG.md, DECISIONS.md and CHANGELOG.md are generated from it and drift-tested; none is edited by hand. The v3 doc's
+Board is retired (D-172); `inbox` still reads its comments. A design chat hands off through its doc's tables, 'Tasks to
+add', 'Decisions proposed' (as P-1, P-2; D-141) and 'Tenets proposed'; a build chat files them with `plan --from <doc
+link> --apply`. A tenet (B-109) is a decision of kind tenet with a scope (ui, data, ops, pipelines) and a check
+(harness, lint, ship, review); `brief` lists those in a task's scope and the review skill holds the diff to them. A
+tenet is changed only by a superseding tenet plus a sweep task for what still follows the old one.
 
 ## Every session
 
