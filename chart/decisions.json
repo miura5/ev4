@@ -1,5 +1,17 @@
 [
  {
+  "id": "D-281",
+  "date": "Oct 24",
+  "title": "Weak spots live in Study, with 'To review · n' at the top. This replaces D-162's placement under Progress; the rest of D-162 stands (no Log a weak spot form).",
+  "why": "Matt, Oct 24, answering the v3 UI review: weak spots sit where he acts on them.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [
+   "D-162"
+  ],
+  "source": "log"
+ },
+ {
   "id": "D-280",
   "date": "Oct 24",
   "title": "Nav icons are neutral: colour only where it carries a meaning (D-270). This replaces D-275's clause giving each view's nav icon its coded colour; the rest of D-275 stands.",
