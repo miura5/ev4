@@ -5473,7 +5473,7 @@
    "B-287",
    "B-291"
   ],
-  "notes": "built: the four fields in the New task window, through the list edit; shell harness, npm test and smoke green",
+  "notes": "reviewed: fresh subagent, No gaps; touched check running",
   "commit": null,
   "source": "build chat (Matt's OK, Oct 24)"
  }
