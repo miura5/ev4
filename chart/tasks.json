@@ -5007,14 +5007,15 @@
   "title": "Chrome (D-274, D-275): the sidebar with the 24 px Dial Arc, coded nav icons, Today dots and the Theme and Contrast controls in its foot; the floating main panel; the 48 px header; the 320 px right panel from 1200 px; the tab bar's icons in the same colours under 600 px",
   "dod": "The look pass at 390 × 844, 735 × 830, 1706 × 1240 and 2560 × 1240 shows the chrome as this doc's chrome table gives it; npm run smoke green; staging GREEN",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-278",
    "B-272"
   ],
-  "notes": "",
+  "notes": "Held with B-278 on Matt's word (Oct 24). Question for Matt: send the interactive demo page, so this task can be re-planned from the fuller redesign hand-off.",
   "commit": null,
-  "source": "plan 5reEBoToU1W5pmnq5q48ij"
+  "source": "plan 5reEBoToU1W5pmnq5q48ij",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-280",
