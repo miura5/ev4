@@ -116,6 +116,55 @@ The brief's order, with what each trimmer may reach:
    `chart/`, the generated files or `docs/`; keep the nightly. Worth it only to cut noise.
 7. Small text, low value: CLAUDE.md's "Where things live" repeated the v3 row (`trim/where-v3-row`, **done: #10**).
 
+Added by the queue refill of Oct 24 (`trim/queue-refill`, at origin/main 239e72b), when items 1 to 7 were all done or
+claimed (#11 holds item 6, #12 holds item 5). Each was mapped by a read-only helper and its key callers
+re-checked by grep. Git history on main is squashed before 75c2b59, so evidence comes from the Chart and the code.
+
+8. Leftovers in `tools/chart.mjs` that #8 and #9 left behind (`trim/chart-leftovers`, about 45 lines; take it after
+   item 5 merges, since both edit the same file):
+   - `parseBacklogRow` (about 8 lines): no caller anywhere, tests included; its only caller was `importChart`, removed
+     by #9.
+   - `plan --handoff-note`: `BUILD_PLAN`, `HANDOFF_NOTE`, `handoffNoteCall`, the branch in `plan`, the flag and its
+     usage text (about 20 lines), and the one assert at the end of the B-106 plan test. It wrote one line to the design
+     doc's Build plan tab once; B-106 is done ("Build plan tab line and CLAUDE.md hand-off line in"), and nothing in
+     tools/, core/, .claude/, .github/ or CLAUDE.md passes the flag.
+   - `docCall`: once item 5 and the hand-off note are gone, nothing calls it.
+   - Board-only fields written and never read: `board.why`, `board.notes` and `board.were` (the `--why` and
+     `--board-note` options of `log <task>`, and the `why`/`notes` that `applyReport` stores; `log decision --why` and a
+     deploy's `why` stay). Their readers (`boardRow`, `boardCalls`) went in #8; `board.were` is also written by the
+     renumber path (item 11), which the cutter edits too. `board.row`, `--name` and `boardName` stay: the deploy summary and Your turn read them.
+   - `brief`'s `rec.views.retired ? 'DECISIONS.md' : rec.views.decisionsTab` (one line; `retired` is always set) and
+     the header comments that still describe the Board, Changelog and overview views and the import.
+   - Must stay: everything the inbox's Board-comment read uses (`commentsFrom`, `commentQuery`, `commentReply`,
+     `inboxPlan`, `applyReport --from-comment`, `rec.views.doc` and `'views'` in `FILES`).
+9. The v3-to-v4 migration (`trim/v3-migration`). A hashed change (`core/`), so it ships through staging and the full
+   check on merge. Live was migrated at the Oct 19 cutover (B-24, 10c6b3c) after `verify-migration` was green on the
+   live v3 export (B-06), staging at B-12, and D-145 ends any going back to v3. No pipeline, prompt, workflow or skill
+   runs `migrate v3` or `verify-migration`; only `core/cli.mjs`, `core/seed.mjs` and tests reach `migrateV3`. About
+   515 lines in `core/migrate.mjs`, 70 in `core/cli.mjs`, 5 in `core/seed.mjs`, and about 510 test lines, so it
+   comes in parts under the 400-line budget:
+   1. `verify-migration`: the command, `verifyMigration`, `comparable` and `DERIVED_FIELDS`, and their tests.
+   2. `migrate v3` and `seed-staging`'s v3 branch, then `migrateV3` and its helpers, and the v3 tests in
+      `test/migrate.test.mjs` (including the "real v3 export" test, which always skips: `fixtures/` is ignored) and
+      `test/seed.test.mjs` (lines 68 to 88).
+   - Must stay: the schema bumps (`BUMPS`, `migrateBumps`, `bumpWrite`, `currentVersion`: `migrate bumps`, seed,
+     restores and core/watch.mjs use them), `applyWrites` and `chunkWrites` with their tests, `iso`, and the
+     `migration` field in system.schema.json (schemas are out of scope). The cutter should say plainly what
+     `seed-staging` does with an export that has a document without the v4 envelope once the v3 branch is gone.
+10. Small leftovers in `core/deploy.mjs` (`trim/deploy-leftovers`, about 15 lines; hashed, so it ships through staging,
+    and is low value on its own: pair it with another `core/` change if one is going anyway):
+    - The commit-only fallback for a `dist/verify-staging.json` saved before content hashes existed (`deployCalls`, its
+      own comment says so); both writers always include `contentHash` now, and dist/ is rebuilt for every deploy. Its
+      test in `test/cli.test.mjs` changes with it. The fallback sits inside R-02's staging-green check, so cutting it
+      makes that check stricter, never looser; that cut's pull request should say so.
+    - The "(created in B-12)" wording it still prints, which a chart test bans elsewhere as pre-cutover text, and
+      `deployCalls`' doc comment, which sits above `liveSessions`.
+    - The `export` keyword on `readIds`, `tasksFor`, `liveSessions` and `RUNNING_READ` (no importer).
+11. Judgement call, Matt's: `log <id> --which <n> --renumber <id>` in `tools/chart.mjs` (about 18 lines). The only
+    duplicate id ever was B-83 from the v3 import (B-98 carries `renumberedFrom`), and nothing files a duplicate now,
+    but lint's `duplicate-id` check would still need a repair path after a hand edit. Keep unless Matt prefers fixing
+    such a slip by hand.
+
 ## Keeping this queue current
 
 - **When a cut merges,** the build chat marks its item done here, with its pull request number.
