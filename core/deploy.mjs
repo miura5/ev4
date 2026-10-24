@@ -28,7 +28,7 @@ export function systemSize(id, doc, budget = {}) {
   return { bytes, level, line };
 }
 // What verify reads from a record: the deployed system documents, plus staging's seed stamp (written by seed-staging).
-export const readIds = target => (target === 'staging' ? [...SYSTEM_IDS, 'seed'] : SYSTEM_IDS);
+const readIds = target => (target === 'staging' ? [...SYSTEM_IDS, 'seed'] : SYSTEM_IDS);
 export const ENVELOPE = ['schema', 'writer', 'at', 'source'];
 const STAMP = /<meta\s+name=["']ev-release["']\s+content=["']([^"']+)["']/i;
 
@@ -140,7 +140,7 @@ const retiredOf = dist =>
   dist && dist.spec && dist.spec.tasks && Array.isArray(dist.spec.tasks.retired) ? dist.spec.tasks.retired : [];
 
 /** The tasks a target's verify and deploy cover: that target's pipeline tasks, plus the build tasks on staging. */
-export function tasksFor(manifest, target) {
+function tasksFor(manifest, target) {
   return Object.entries(manifest.tasks).filter(
     ([key, t]) => t.record === target || (target === 'staging' && key.startsWith('build.'))
   );
@@ -233,8 +233,7 @@ export function verify({ manifest, target, state, build, dist, sha256, now = new
       : `${manifest.commit.slice(0, 12)} is not on origin/main; scheduled runs check out pushed commits only`
   );
 
-  if (!rec.artifact)
-    add(false, `${target} record exists`, `no ${target} record in spec.registry.records (created in B-12)`);
+  if (!rec.artifact) add(false, `${target} record exists`, `no ${target} record in spec.registry.records`);
   else if (!state.record) add(false, `${target} record read`, 'no saved system/* documents; run the reads below');
   else {
     const live = state.record;
@@ -447,16 +446,9 @@ export function formatVerify(target, result, reads) {
   return out.join('\n');
 }
 
-/**
- * The calls that make the target match the manifest, in order. versions: {manifest, spec, environments} as the
- * chat's last get printed them (absent: the document does not exist yet). Refuses a dirty or unpushed build, a
- * missing record, live without Matt's OK, and live unless stagingVerify (dist/verify-staging.json) is green at the same
- * commit (B-35). state (optional): the saved verify state, used to skip tasks whose
- * prompt already matches.
- */
 /** B-87: the sessions a deploy would interrupt: active or ending, with activity in the last 45 minutes (an abandoned
  * session left active does not block deploys forever). */
-export function liveSessions(running, nowMs) {
+function liveSessions(running, nowMs) {
   const t = v => {
     const n = Date.parse(v);
     return Number.isFinite(n) ? n : null;
@@ -483,9 +475,15 @@ export function liveSessions(running, nowMs) {
     })
     .filter(s => s.lastMs != null && nowMs - s.lastMs < 45 * 60e3);
 }
-export const RUNNING_READ = (stateDir, url) =>
+const RUNNING_READ = (stateDir, url) =>
   `read the live record's running sessions first: ArtifactData query on ${url} collection "sessions" with query {"where": [["status", "in", ["active", "ending"]]], "limit": 20} and out_dir ${stateDir}/running (empty that folder first), then: node tools/tool-result.mjs ArtifactData ${stateDir}/running.txt`;
 
+/**
+ * The calls that make the target match the manifest, in order. versions: {manifest, spec, environments} as the
+ * chat's last get printed them (absent: the document does not exist yet). Refuses a dirty or unpushed build, a
+ * missing record, live without Matt's OK, and live unless stagingVerify (dist/verify-staging.json) is green with the
+ * same content (B-35, B-63). state (optional): the saved verify state, used to skip tasks whose prompt already matches.
+ */
 export function deployCalls({
   manifest,
   target,
@@ -522,13 +520,10 @@ export function deployCalls({
   if (target === 'live') {
     const v = stagingVerify;
     if (!v) refusals.push('no dist/verify-staging.json: deploy staging and run verify-deploy staging first');
-    // B-63: the same content passes even at another commit (a notes-only commit since); a verify saved before content
-    // hashes existed is held to the commit.
-    else if (v.contentHash ? v.contentHash !== (build.contentHash || null) : v.commit !== manifest.commit)
+    // B-63: the same content passes even at another commit (a notes-only commit since).
+    else if (!v.contentHash || v.contentHash !== build.contentHash)
       refusals.push(
-        v.contentHash
-          ? `verify-deploy staging ran on other content (at ${String(v.commit).slice(0, 12)}): deploy staging with this build's content first`
-          : `verify-deploy staging ran at ${String(v.commit).slice(0, 12)}, this build is ${manifest.commit.slice(0, 12)}: deploy staging at this commit first`
+        `verify-deploy staging ran on other content (at ${String(v.commit).slice(0, 12)}): deploy staging with this build's content first`
       );
     else if (!v.green)
       refusals.push(`verify-deploy staging is red at ${manifest.commit.slice(0, 12)}: make it green first`);
