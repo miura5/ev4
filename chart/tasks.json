@@ -5223,7 +5223,7 @@
   "depends": [
    "B-287"
   ],
-  "notes": "proofs green: npm test, smoke, check --touched GREEN; prep harness carries the B-291 list checks at 390 and 1280 in both themes",
+  "notes": "reviewed twice: first gap (dead styles) fixed; second review names two small gaps left open on the card",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
