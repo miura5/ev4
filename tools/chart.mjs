@@ -636,24 +636,6 @@ export const RULES = [
     check: 'mattOk',
   },
 ];
-/**
- * R-05 (B-102): the live watchdog window `now` falls in, from the watchdog's cron schedule, as {run, opens}: the run
- * it surrounds and when live deploys may go again; null outside every window.
- */
-export function watchdogWindow(schedule, now = new Date(), margin = 10) {
-  const m = margin * 60e3;
-  const run = nextRuns({ watchdog: { schedule } }, new Date(now.getTime() - m))
-    .map(r => r.at)
-    .find(at => now >= at.getTime() - m && now < at.getTime() + m);
-  return run ? { run, opens: new Date(run.getTime() + m) } : null;
-}
-/** ship live's R-05 refusal at `now`, or null outside the windows. */
-export function watchdogRefusal(schedule, now = new Date()) {
-  const w = watchdogWindow(schedule, now);
-  return w
-    ? `R-05 (D-142): the live watchdog runs at ${ctClock(w.run.toISOString())} CT; live deploys wait until ${ctClock(w.opens.toISOString())} CT`
-    : null;
-}
 // ------------------------------------------------------------------------------------------------ lint (B-94)
 /**
  * The record against its rules. Errors: a duplicate id, a dependency on a task that doesn't exist, a rule resting on a
@@ -2200,11 +2182,6 @@ async function ship(o) {
       shipJobOk = why.length ? null : fromJob;
     } else if (!o['matt-ok'])
       refusals.push("R-04 (D-083): a live deploy needs Matt's explicit OK in the chat (then pass --matt-ok)");
-    if (rec.rules.some(r => r.check === 'watchdogWindow' && !r.ended)) {
-      const live = (readJson(path.join(root, 'spec', 'ev.spec.json')).tasks.live || {}).watchdog;
-      const why = live && watchdogRefusal(live.schedule, new Date());
-      if (why) refusals.push(why);
-    }
     // R-06 (D-226, B-219): the touched check is for working; live takes a commit the full check passed: a full GREEN
     // here (dist/check-full.json, which check writes for the build's commit) or a green nightly at it.
     if (rec.rules.some(r => r.check === 'fullCheck' && !r.ended)) {
