@@ -307,8 +307,8 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
             ok(`[${width}] ${view.id}: ${c.tenet}`, c.ok, c.detail);
           else reports.push([c.ok ? 'ok  ' : 'NOT ', `[${width}] ${view.id}: ${c.tenet}`, c.detail]);
         }
-        // B-285 (D-278): the view's buttons against the component set's five kinds, reported until its view's task
-        // moves it onto the set (the sweep, B-303, makes it fail).
+        // B-285 (D-278): the view's buttons against the component set's five kinds, reported while the views move onto
+        // the set in their own tasks; no task yet turns it into a failure (a question for Matt on B-285's card).
         const kinds = judgeKinds(await page.evaluate(collectButtons, `#top, #mh, #p-${view.tab}`));
         reports.push([kinds.ok ? 'ok  ' : 'NOT ', `[${width}] ${view.id}: D-278`, kinds.detail]);
         // B-285 (C-15): the screen-reader tree names the picked option of every switch on screen.
