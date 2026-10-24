@@ -4920,7 +4920,7 @@
   "depends": [
    "B-272"
   ],
-  "notes": "Tests green, touched check GREEN (core, run, look); pushed 68ada6d; shipping to staging.",
+  "notes": "Shipped to staging GREEN at 68ada6d; now the independent review. Matt's answer (kept): a full ring is the time until the next check-in (checkMinutes, 7); answered checks still show as they do now (D-217).",
   "commit": null,
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
