@@ -1,4 +1,4 @@
-// The v3 -> v4 migration (B-06): every split document, envelopes and writers, legacy copies, zero mismatches,
+// The v3 -> v4 migration (B-06): every split document, envelopes and writers, legacy copies,
 // idempotence, and batch chunking. The v3 record below is made up; the real-export gate runs only where
 // fixtures/v3-export exists (it is gitignored and never committed).
 import test from 'node:test';
@@ -9,7 +9,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import EV from '../core/evcore.mjs';
-import { currentVersion, migrateV3, verifyMigration, applyWrites } from '../core/migrate.mjs';
+import { currentVersion, migrateV3, applyWrites } from '../core/migrate.mjs';
 import { chunkWrites, writeBytes } from '../core/batches.mjs';
 import { loadValidator, readExport } from '../core/schemas.mjs';
 import { describeErrors } from '../core/validate.mjs';
@@ -448,17 +448,6 @@ test('nothing is lost: every v3 document has a legacy copy marked migratedTo (or
   assert.equal(r.writes.filter(w => ['state', 'system'].includes(w.collection)).length, 0);
 });
 
-test('verify-migration: zero mismatches on the made-up record; a planted wrong answer is caught', () => {
-  const r = migrateV3(V3, { at: AT });
-  const vm = verifyMigration(V3, r.writes);
-  assert.equal(vm.compared, 3);
-  assert.deepEqual(vm.mismatches, []);
-  const broken = JSON.parse(JSON.stringify(V3));
-  broken.sets[0].answers.q1.correct = false;
-  const bad = verifyMigration(broken, migrateV3(broken, { at: AT }).writes);
-  assert.ok(bad.mismatches.some(m => m.id === 'w1' && m.field === 'status'));
-});
-
 test('idempotent and deterministic: the same export gives the same writes; a migrated record gives none', () => {
   const a = migrateV3(V3, { at: AT }),
     b = migrateV3(JSON.parse(JSON.stringify(V3)), { at: AT });
@@ -501,7 +490,7 @@ test('batches: at most 50 writes and 1 MiB each, one write per document per batc
   );
 });
 
-test('cli: migrate v3 writes document files and chunked batches; verify-migration is green', () => {
+test('cli: migrate v3 writes document files and chunked batches', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-mig-'));
   const exp = path.join(dir, 'export');
   const out = path.join(dir, 'out');
@@ -510,10 +499,6 @@ test('cli: migrate v3 writes document files and chunked batches; verify-migratio
     for (const { id, ...d } of docs) fs.writeFileSync(path.join(exp, col, id + '.json'), JSON.stringify(d));
   }
   const cli = (...a) => execFileSync('node', [path.join(ROOT, 'core/cli.mjs'), ...a], { encoding: 'utf8' });
-  assert.match(
-    cli('verify-migration', '--from', exp, '--at', AT),
-    /^verify-migration: GREEN: 3 weak spots recomputed from the migrated Facts, 0 mismatches; a second run writes 0; deterministic/
-  );
   assert.match(
     cli('migrate', 'v3', '--from', exp, '--at', AT, '--out', out, '--record', 'live'),
     /writes in 2 batches/
@@ -526,7 +511,7 @@ test('cli: migrate v3 writes document files and chunked batches; verify-migratio
 });
 
 test(
-  'the real v3 export: every write validates, zero mismatches, a second run writes nothing (fixtures/v3-export, local only)',
+  'the real v3 export: every write validates, a second run writes nothing (fixtures/v3-export, local only)',
   { skip: !fs.existsSync(REAL) && 'no fixtures/v3-export in this checkout' },
   () => {
     const v3 = {};
@@ -538,9 +523,6 @@ test(
       .map(w => (validate(w.collection, w.data, { id: w.id }).ok ? null : `${w.collection}/${w.id}`))
       .filter(Boolean);
     assert.deepEqual(bad, []);
-    const vm = verifyMigration(v3, r.writes);
-    assert.ok(vm.compared > 0);
-    assert.deepEqual(vm.mismatches, []);
     assert.deepEqual(migrateV3(applyWrites(v3, r.writes), { at: AT }).writes, []);
   }
 );

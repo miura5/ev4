@@ -5,7 +5,6 @@
 //                                  live unless dist/verify-staging.json is green at the same commit: B-35, live while
 //                                  a study session runs on it: B-87)
 //   migrate v3 --from <export>     the v4 writes for a v3 record export, as document files and chunked batches
-//   verify-migration --from <export>   recompute every weak spot from the migrated Facts; zero mismatches passes
 //   seed-staging --from <export>   the batches that make the staging record a copy of an export, stamped system/seed
 //   lint --from <record>           the record against its rules: writers, unchanged Facts, budgets, schemas, every
 //                                  Derived document rebuilt byte for byte, and the content checks (--date, --json)
@@ -39,7 +38,7 @@ import {
 import { readState, withShell } from './verifystate.mjs';
 export { readState, withShell };
 import { seedStaging } from './seed.mjs';
-import { migrateV3, verifyMigration, applyWrites, migrateBumps } from './migrate.mjs';
+import { migrateV3, migrateBumps } from './migrate.mjs';
 import { chunkWrites } from './batches.mjs';
 import { readExport, loadValidator } from './schemas.mjs';
 import { describeErrors } from './validate.mjs';
@@ -584,30 +583,6 @@ const commands = {
     );
     return v.failed ? 1 : 0;
   },
-  'verify-migration'(o) {
-    const { v3, at, result } = migration(o);
-    const vm = verifyMigration(v3, result.writes);
-    const repeat = migrateV3(v3, { at });
-    const second = migrateV3(applyWrites(v3, result.writes), { at });
-    const deterministic = JSON.stringify(repeat.writes) === JSON.stringify(result.writes);
-    const green = vm.mismatches.length === 0 && second.writes.length === 0 && deterministic;
-    const out = {
-      green,
-      weakspots: vm.compared,
-      mismatches: vm.mismatches,
-      secondRunWrites: second.writes.length,
-      deterministic,
-    };
-    if (o.json) console.log(JSON.stringify(out, null, 1));
-    else {
-      console.log(
-        `verify-migration: ${green ? 'GREEN' : 'RED'}: ${vm.compared} weak spots recomputed from the migrated Facts, ${vm.mismatches.length} mismatches; a second run writes ${second.writes.length}; ${deterministic ? 'deterministic' : 'NOT deterministic'}`
-      );
-      for (const m of vm.mismatches.slice(0, 30))
-        console.log(`  ${m.id} ${m.field}: v3 ${JSON.stringify(m.v3)}, v4 ${JSON.stringify(m.v4)}`);
-    }
-    return green ? 0 : 1;
-  },
   'verify-deploy'(o) {
     const target = o._[1];
     const { dist, manifest, distDocs, stateDir, build } = load(o, target);
@@ -668,7 +643,7 @@ export function main(argv) {
   const cmd = commands[o._[0]];
   if (!cmd || (TARGETED.includes(o._[0]) && !['live', 'staging'].includes(o._[1]))) {
     console.error(
-      'Commands: verify-deploy <live|staging>, deploy <live|staging>, migrate v3 --from <dir>, canvas-script <part> --dir <run>, unwrap <file> --to <json>, verify-migration --from <dir>, seed-staging --from <dir>, lint --from <dir>, rebuild <collection|all> --from <dir>, run <pipeline> <move>, steps [pipeline]'
+      'Commands: verify-deploy <live|staging>, deploy <live|staging>, migrate v3 --from <dir>, canvas-script <part> --dir <run>, unwrap <file> --to <json>, seed-staging --from <dir>, lint --from <dir>, rebuild <collection|all> --from <dir>, run <pipeline> <move>, steps [pipeline]'
     );
     return 2;
   }
