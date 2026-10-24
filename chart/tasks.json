@@ -4892,7 +4892,7 @@
   "milestone": "v4.7 look",
   "status": "in progress",
   "depends": [],
-  "notes": "tests green; coral/teal checks dropped on Matt's word; touched check rerunning",
+  "notes": "shipped to staging GREEN at 81e6a6a; review next",
   "commit": null,
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
