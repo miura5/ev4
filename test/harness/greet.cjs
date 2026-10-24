@@ -217,7 +217,21 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         // Speaking while it appears.
         if (st.name === 'exam-tomorrow' && mode === 'model') {
           const mood = () => page.evaluate(() => window.EVApp.core.stats().mood);
-          const before = await mood();
+          const seen = new Set();
+          // Idle held for 1.5 s: her own line may still be appearing (Speaking), and a reply pauses between lines.
+          const settle = async () => {
+            let calm = 0;
+            for (let i = 0; i < 100 && calm < 10; i++) {
+              const m = await mood();
+              seen.add(m);
+              calm = m === 'idle' ? calm + 1 : 0;
+              await page.waitForTimeout(150);
+            }
+            return calm >= 10 ? 'idle' : await mood();
+          };
+          const before = await settle();
+          const greeted = new Set(seen);
+          seen.clear();
           await page.evaluate(() => {
             window.__chatReply =
               'Potassium runs 3.5 to 5.0. Below that, watch the heart: flat T waves, U waves, and an irregular rhythm. ' +
@@ -225,22 +239,19 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           });
           await page.fill('#ev-input', 'What is the normal potassium range?');
           await page.click('#ev-send');
-          const seen = new Set();
-          let after = null;
-          for (let i = 0; i < 80; i++) {
-            const m = await mood();
-            seen.add(m);
-            if (seen.has('speaking') && m === 'idle') {
-              await page.waitForTimeout(700);
-              after = await mood();
-              break;
-            }
+          for (let i = 0; i < 40 && !seen.has('speaking'); i++) {
+            seen.add(await mood());
             await page.waitForTimeout(150);
           }
+          const after = await settle();
           ok(
             `${tag} she rests at Idle with an exam tomorrow, shows Speaking while a reply appears, then rests at Idle again`,
-            before === 'idle' && seen.has('speaking') && !seen.has('alert') && after === 'idle',
-            JSON.stringify({ before, seen: [...seen], after })
+            before === 'idle' &&
+              !greeted.has('alert') &&
+              seen.has('speaking') &&
+              !seen.has('alert') &&
+              after === 'idle',
+            JSON.stringify({ before, greeted: [...greeted], seen: [...seen], after })
           );
         }
         ok(`${tag} the briefing stays code, folded under the line`, r.brief, '');
