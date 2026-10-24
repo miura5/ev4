@@ -4796,5 +4796,24 @@
    "at": "2026-10-23T23:58:35.523Z"
   },
   "waitingOn": "Matt"
+ },
+ {
+  "id": "B-267",
+  "kind": "bug",
+  "title": "Bug (reported Oct 23): past exam weak spots coming back via past exam review/practice questions. I thought past exam weak spots would be parked. Maybe we should as park review questions and content tagged for past exams.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "past exam weak spots coming back via past exam review/practice questions. I thought past exam weak spots would be parked. Maybe we should as park review questions and content tagged for past exams.",
+  "reportedAt": "2026-10-24T00:01:29.198Z",
+  "board": {
+   "row": "v4 B-267: past exam weak spots coming back via past exam review/practice…",
+   "why": "past exam weak spots coming back via past exam review/practice questions. I thought past exam weak spots would be parked. Maybe we should as park review questions and content tagged for past exams.",
+   "notes": "Reported Oct 23 from build chat"
+  }
  }
 ]
