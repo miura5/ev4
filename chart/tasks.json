@@ -5442,10 +5442,10 @@
   "title": "The claim is the lock: log refuses a second in-progress claim on a task already in progress, so several builders on main never build the same task twice (record audit finding, Oct 24)",
   "dod": "log refuses a second in-progress claim on a task already in progress, and still takes a note alone; a test covers both; npm test green; an independent review finds no gaps",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Built in the managing chat on Matt's OK (Oct 24). The code commit 0915add went out without its task id in the message (a filing step failed first); it is this task's work.",
-  "commit": null,
+  "notes": "Review card (D-261). What changes for him: nothing he sees; when several builders work at once, two can no longer take the same task, so no screen gets built twice or in two clashing versions. Touches: the build tools only. Could break: a builder resuming its own claim would be refused; it would block the task with what happened, and we'd see it in the record. Size: +10 lines with its test; undone by one revert; no deploy. Checks: reviewer (independent subagent): No gaps in B-306. Checks retired or loosened: none. Size: +10 -0, in line with the definition of done. The red tests it saw at a31fafe were from closing D-228 and were fixed at 8ece3cc.",
+  "commit": "0915add",
   "source": "build chat (Matt's OK, Oct 24)"
  }
 ]
