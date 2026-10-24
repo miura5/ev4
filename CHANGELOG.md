@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 24 | v4 staging deployed at 3ff4f6e (01:08 CT), from 81e6a6a: LCH tokens (B-271). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 24 | v4 staging deployed at 81e6a6a (00:41 CT), from d81db0a: LCH tokens (B-271). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 23 | v4 live deployed at d81db0a (23:37 CT), from 2eba0a6: per-task review skill; Trim during the freeze (B-59, B-262). verify-deploy live GREEN. Rollback is a redeploy of 2eba0a6 | Matt's OK | D-049 |
 | Oct 23 | v4 staging deployed at d81db0a (23:11 CT), from 2eba0a6: per-task review skill; Trim during the freeze (B-59, B-262). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
