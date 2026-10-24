@@ -3320,7 +3320,7 @@
    },
    {
     "id": "B-10",
-    "rule": "Study Watch classic mode refuses to run if ANTHROPIC_API_KEY is set (no API billing). Reader mode and sessions in E.V. Home use no API key: checks run through sample on Matt's plan."
+    "rule": "The Claude API key lives only as a secret on the PWA's Cloudflare Worker (D-296): never in the repository, the page, the record or a browser. Study Watch classic mode refuses to run if ANTHROPIC_API_KEY is set. E.V. Home on claude.ai uses no API key: its checks run through sample on Matt's plan."
    },
    {
     "id": "B-11",

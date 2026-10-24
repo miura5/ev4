@@ -16,7 +16,10 @@ phone (installed app) ──/api + token──► Worker ──► D1 (the recor
 - `sw.js`, `manifest.webmanifest`, `icon-*.png`: what makes it installable.
 - `../tools/build-pwa.mjs`: builds `public/` from the normal build's staging page.
 
-Not in the demo: Claude calls (B-10, no API key), scheduled runs, the Study Watch reader, your real record.
+- Claude: the shim's `sample` goes to the Worker's `/api/claude`, which adds your API key and asks Haiku (D-296, B-10).
+  The key is a Cloudflare secret: never in this repository, the page or a browser.
+
+Not in the demo: images to Claude (library photo reading), scheduled runs, the Study Watch reader, your real record.
 
 ## Deploy (about 30 minutes, once)
 
@@ -30,6 +33,7 @@ npx wrangler d1 execute ev-demo --remote --file schema.sql
 npm run seed
 npx wrangler d1 execute ev-demo --remote --file seed.sql
 npx wrangler secret put EV_TOKEN        # type a long password; this is your token
+npx wrangler secret put ANTHROPIC_API_KEY   # paste your key from console.anthropic.com
 npm run deploy                          # prints https://ev-demo.<you>.workers.dev
 ```
 
@@ -46,7 +50,7 @@ the install prompt in Chrome (Android, desktop).
 npm install && npm run build && npm run seed
 npx wrangler d1 execute ev-demo --local --file schema.sql
 npx wrangler d1 execute ev-demo --local --file seed.sql
-echo 'EV_TOKEN=demo-token' > .dev.vars
+printf 'EV_TOKEN=demo-token\nANTHROPIC_API_KEY=<your key>\n' > .dev.vars
 npm run dev                             # http://localhost:8787, token demo-token
 ```
 

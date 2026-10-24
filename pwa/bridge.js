@@ -3,7 +3,7 @@
 //   db:     the whole record is loaded once, kept in memory, and checked for changes every 10 s and on focus.
 //           A write goes to the Worker first; only when it is saved does the page's copy change.
 //   user:   whoever holds the token is the owner (one person).
-//   sample: none in the demo (B-10, no API key), so E.V.'s Claude features show as unavailable.
+//   sample: Claude on Haiku through the Worker's /api/claude (D-296); the key stays on the Worker.
 //   mcp:    none (the scheduled runs and the Study Watch reader live on claude.ai and the Mac).
 (function () {
   const KEY = 'ev.token';
@@ -174,10 +174,123 @@
     },
   };
 
+  // sample: the claude.ai call shape (sample(input, opts), sample.json, sample.limits), answered by Haiku through
+  // /api/claude. Every tier is Haiku. Page tools run here, in rounds, as on claude.ai. No images (limits() says so).
+  const fail = (code, message, text) => Object.assign({ code, message }, text ? { text } : {});
+  const ROUNDS = 6;
+  async function ask(input, opts = {}, wantJson = false) {
+    let turns = typeof input === 'string' ? [{ role: 'user', content: input }] : (input || []).map(t => ({ ...t }));
+    if (!turns.length || turns[turns.length - 1].role !== 'user')
+      throw fail('invalid_request', 'input must end on a user turn');
+    if (opts.images) throw fail('images_unavailable', 'the PWA sends no images');
+    // consecutive turns of one role read as one, as on claude.ai
+    turns = turns.reduce((a, t) => {
+      const last = a[a.length - 1];
+      if (last && last.role === t.role) last.content += '\n\n' + t.content;
+      else a.push({ role: t.role, content: String(t.content) });
+      return a;
+    }, []);
+    if (wantJson)
+      turns[turns.length - 1].content +=
+        '\n\nYour reply is machine-parsed: reply with only the JSON value, no other text and no code fence.';
+    const tools = (opts.tools || []).map(t => ({
+      name: t.name,
+      description: t.description,
+      input_schema: t.inputSchema || { type: 'object', properties: {} },
+    }));
+    const messages = turns;
+    let text = '';
+    let truncated = false;
+    for (let round = 0; round < ROUNDS; round++) {
+      let r;
+      try {
+        r = await api('claude', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            messages,
+            tools,
+            ...(tools.length && round === ROUNDS - 1 ? { tool_choice: { type: 'none' } } : {}),
+          }),
+          signal: opts.signal,
+        });
+      } catch (e) {
+        throw opts.signal && opts.signal.aborted
+          ? fail('cancelled', 'stopped', text)
+          : fail('upstream_error', e.message, text);
+      }
+      if (!r.ok) {
+        const why = await r.text().catch(() => '');
+        throw fail(
+          r.status === 429 ? 'rate_limited' : r.status === 401 ? 'not_granted' : 'upstream_error',
+          r.status + ' ' + why.slice(0, 300),
+          text
+        );
+      }
+      const res = await r.json();
+      if (res.stop_reason === 'refusal') throw fail('refused', 'Claude declined');
+      const said = res.content
+        .filter(b => b.type === 'text')
+        .map(b => b.text)
+        .join('');
+      if (said.trim()) {
+        const before = text;
+        text = text ? text + '\n\n' + said : said;
+        if (opts.onText) opts.onText({ text, delta: text.slice(before.length) });
+      }
+      truncated = res.stop_reason === 'max_tokens';
+      const uses = res.content.filter(b => b.type === 'tool_use');
+      if (res.stop_reason !== 'tool_use' || !uses.length) break;
+      messages.push({ role: 'assistant', content: res.content });
+      const results = await Promise.all(
+        uses.map(async u => {
+          const t = opts.tools.find(x => x.name === u.name);
+          try {
+            if (!t) throw new Error('no tool ' + u.name);
+            const out = await t.execute(u.input || {}, { signal: opts.signal || new AbortController().signal });
+            return {
+              type: 'tool_result',
+              tool_use_id: u.id,
+              content: typeof out === 'string' ? out : JSON.stringify(out ?? null),
+            };
+          } catch (e) {
+            return { type: 'tool_result', tool_use_id: u.id, content: 'Error: ' + e.message, is_error: true };
+          }
+        })
+      );
+      messages.push({ role: 'user', content: results });
+    }
+    if (!text.trim()) throw fail('empty_completion', 'Claude wrote nothing');
+    return { text, truncated, modelTierApplied: opts.modelTier || 'default' };
+  }
+  const parseJson = raw => {
+    const tries = [raw, (raw.match(/```(?:json)?\s*([\s\S]*?)```/) || [])[1]];
+    const a = raw.search(/[[{]/),
+      b = Math.max(raw.lastIndexOf('}'), raw.lastIndexOf(']'));
+    if (a >= 0 && b > a) tries.push(raw.slice(a, b + 1));
+    for (const t of tries)
+      if (t != null)
+        try {
+          return JSON.parse(t);
+        } catch (e) {}
+    throw fail('invalid_json', 'no JSON in the reply', raw);
+  };
+  const sample = Object.assign((input, opts) => ask(input, opts), {
+    json: async (input, opts = {}) => {
+      // on tool calls only the final round's text is parsed, as on claude.ai
+      let last = '';
+      const res = await ask(input, { ...opts, onText: u => ((last = u.delta), opts.onText && opts.onText(u)) }, true);
+      if (res.truncated) throw fail('invalid_json', 'cut short', res.text);
+      return parseJson((opts.tools ? last : res.text).trim());
+    },
+    limits: async () => ({ maxPromptBytes: 262144, maxInputBytes: 262144, tools: { maxCount: 16 } }),
+  });
+
   window.claude = {
     use: async n => {
       if (n === 'db') return ready.then(() => DB);
       if (n === 'user') return { isOwner: async () => true };
+      if (n === 'sample') return sample;
       return null;
     },
   };
