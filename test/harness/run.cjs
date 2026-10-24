@@ -4606,6 +4606,51 @@ const ok = (name, cond, detail = '') => {
         JSON.stringify(pt)
       );
     }
+    {
+      // B-273 (D-267): Playwright's clock at 25%, 50% and 100% of the stretch to the next check, through the page's own
+      // feed (its session tick, then her ring): 3 and 6 segments fall in, and at the check the ring is full, then starts
+      // over once the checkpoint lands.
+      const at = await ss.evaluate(() => {
+        const s = Object.values(window.__db.sessions || {}).find(x => x.source === 'E.V. Home' && x.kind !== 'skill');
+        const C = window.EVApp.core,
+          set = C.setRing;
+        window.__rings = [];
+        C.setRing = r => {
+          window.__rings.push(r);
+          return set(r);
+        };
+        return Date.parse(window.EVCore.sessionState(s, new Date().toISOString()).nextCheckAt);
+      });
+      const step = spec.constants.studyWatch.checkMinutes * 60e3;
+      for (const [p, want] of [
+        [0.25, 3],
+        [0.5, 6],
+      ]) {
+        await ss.clock.setSystemTime(at - (1 - p) * step);
+        await ss.waitForTimeout(1800);
+        const pt = await ss.evaluate(() => ({
+          ring: window.EVApp.core.stats().ring,
+          filled: window.EVApp.core.sample(0).filled,
+        }));
+        await ss.screenshot({ path: `${shots}/session-pointer-${p * 100}.png` });
+        ok(
+          `with the clock ${p * 100}% of the way to the next check, her ring has ${want} of 12 segments (B-273)`,
+          Math.abs(pt.ring - p) < 0.01 && pt.filled === want,
+          JSON.stringify(pt)
+        );
+      }
+      const n0 = Object.keys((await sess()).events).length;
+      await ss.evaluate(() => (window.__rings = []));
+      await ss.clock.setSystemTime(at);
+      for (let i = 0; i < 50 && Object.keys((await sess()).events).length === n0; i++) await ss.waitForTimeout(100);
+      await ss.waitForTimeout(1500);
+      const full = await ss.evaluate(() => ({ fed: window.__rings.slice(), ring: window.EVApp.core.stats().ring }));
+      ok(
+        'at 100% the page feeds her a full ring, and once the check lands it starts over (B-273)',
+        full.fed.includes(1) && full.ring >= 0 && full.ring < 0.05,
+        JSON.stringify({ fed: [...new Set(full.fed)].slice(0, 6), ring: full.ring })
+      );
+    }
     // Break and resume from the bar
     await ss.locator('#sbar button', { hasText: 'Break' }).click();
     await ss.waitForTimeout(300);
