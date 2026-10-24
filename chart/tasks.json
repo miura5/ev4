@@ -4916,11 +4916,11 @@
   "title": "Session pointer (D-267): her session prop is fed by the study session's elapsed fraction, in Pointer mode",
   "dod": "With Playwright's clock at 0, 25%, 50% and 100% of a 25-minute session the screenshots show 0, 3, 6 and 12 filled segments with the gap at the next slot; the 7 s re-drop runs only while a session runs; staging GREEN",
   "milestone": "v4.7 look",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-272"
   ],
-  "notes": "",
+  "notes": "claimed by this run",
   "commit": null,
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
