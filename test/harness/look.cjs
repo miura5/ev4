@@ -83,6 +83,7 @@ const VIEWS = viewsOf(fs.readFileSync(path.join(pageDir, 'index.html'), 'utf8'))
 // B-115: the tenet checks, on every view at spec.ui.tenets.widths; a tab in spec.ui.tenets.on fails the pass.
 const TENETS = JSON.parse(fs.readFileSync(path.join(root, 'spec', 'ev.spec.json'), 'utf8')).ui.tenets;
 const { collect, judge, motion, judgeMotion } = require('./tenets.cjs');
+const { collectButtons, judgeKinds } = require('./components.cjs'); // B-285
 const png = require('./png.cjs');
 const reports = [];
 const results = [];
@@ -305,6 +306,25 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           )
             ok(`[${width}] ${view.id}: ${c.tenet}`, c.ok, c.detail);
           else reports.push([c.ok ? 'ok  ' : 'NOT ', `[${width}] ${view.id}: ${c.tenet}`, c.detail]);
+        }
+        // B-285 (D-278): the view's buttons against the component set's five kinds, reported until its view's task
+        // moves it onto the set (the sweep, B-303, makes it fail).
+        const kinds = judgeKinds(await page.evaluate(collectButtons, `#top, #mh, #p-${view.tab}`));
+        reports.push([kinds.ok ? 'ok  ' : 'NOT ', `[${width}] ${view.id}: D-278`, kinds.detail]);
+        // B-285 (C-15): the screen-reader tree names the picked option of every switch on screen.
+        for (const id of await page.$$eval('.seg[id]', s =>
+          s.filter(x => !x.closest('[hidden]') && x.getBoundingClientRect().width > 1).map(x => x.id)
+        )) {
+          const tree = await page.locator('#' + id).ariaSnapshot();
+          const picked = await page.$eval('#' + id, s =>
+            ((s.querySelector('[aria-pressed="true"],[aria-checked="true"]') || {}).textContent || '').trim()
+          );
+          const named = [...tree.matchAll(/button "([^"]+)" \[(?:pressed|checked)\]/g)].map(m => m[1]);
+          ok(
+            `[${width}] ${view.id}: C-15: the screen-reader tree names ${id}'s picked option`,
+            named.length === 1 && named[0] === picked,
+            `picked ${picked || 'none'}; tree: ${tree.replace(/\n/g, ' | ')}`
+          );
         }
       }
       // B-275 (D-270): Ember is hers alone: on this view, the sidebar and the header, no visible element draws in her

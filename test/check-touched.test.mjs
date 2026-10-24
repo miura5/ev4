@@ -12,6 +12,7 @@ import { fullCheckRefusal } from '../tools/chart.mjs';
 test('B-219: each harness is chosen by a path it covers (planted), and only it', () => {
   const planted = {
     shell: 'test/harness/shell.cjs',
+    components: 'test/harness/components.cjs',
     run: 'page/app/40-record.js',
     captions: 'test/harness/captions.cjs',
     prep: 'test/harness/prep.cjs',
@@ -21,9 +22,14 @@ test('B-219: each harness is chosen by a path it covers (planted), and only it',
   };
   for (const h of HARNESSES) assert.ok(harnessesFor([planted[h]]).includes(h), `${planted[h]} runs ${h}`);
   assert.deepEqual(harnessesFor(['test/harness/greet.cjs']), ['greet']);
+  assert.deepEqual(
+    harnessesFor(['test/harness/components.cjs']),
+    ['components', 'look'],
+    'B-285: look uses its checks'
+  );
   assert.deepEqual(harnessesFor(['page/app/30-progress.js']), ['run', 'look']);
   assert.deepEqual(harnessesFor(['page/app/73-ev-greeting.js']), ['run', 'captions', 'prep', 'greet', 'look']);
-  assert.deepEqual(harnessesFor(['page/styles.css']), ['run', 'captions', 'prep', 'look']);
+  assert.deepEqual(harnessesFor(['page/styles.css']), ['components', 'run', 'captions', 'prep', 'look']);
 });
 
 test('B-219: the record of the work, docs, CI and tools touch no harness; an unknown path runs them all', () => {
@@ -52,7 +58,7 @@ test('B-219: the record of the work, docs, CI and tools touch no harness; an unk
 test('B-219: --touched keeps npm test and the build and drops the harnesses not chosen', () => {
   const names = steps({ record: 'synthetic', shots: '/tmp/x', only: ['run', 'look'] }).map(s => s[0]);
   assert.deepEqual(names, ['npm test', 'build', 'run', 'look']);
-  assert.equal(steps({ record: 'synthetic', shots: '/tmp/x' }).length, 9, 'the full check runs every step');
+  assert.equal(steps({ record: 'synthetic', shots: '/tmp/x' }).length, 10, 'the full check runs every step');
   const src = flatSource('tools/check.mjs');
   assert.match(src, /LOOK_SIZES = FIRST\.join/, 'the touched look pass shoots the four first sizes');
   assert.match(src, /check-full\.json/, 'a full GREEN is recorded for ship live');

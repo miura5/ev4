@@ -841,14 +841,9 @@ body.captions.on-ev .wrap{max-width:680px}
   :where(#p-today,#p-study,#p-progress,#p-record,#p-system) input[type=text]{min-height:32px;padding:4px 10px;border-radius:8px;font-size:calc(13px * var(--ts))}
   :where(#p-today,#p-study,#p-progress,#p-record,#p-system) form button,#p-today .add-row button{min-height:32px;border-radius:8px;padding:0 12px;font-size:calc(13px * var(--ts))}
 }
-/* the switch: grey, the chosen view on the ground (neutral: D-270) */
-.seg{gap:2px;padding:2px;border:0;border-radius:8px;background:var(--sunken);box-shadow:inset 0 0 0 1px var(--line)}
-.seg button{min-height:26px;padding:0 10px;border-radius:6px;font:500 calc(13px * var(--ts)) var(--sans);color:var(--faint)}
-.seg button:hover{background:none;color:var(--text)}
-.seg button[aria-pressed="true"]{background:var(--bg);color:var(--text);box-shadow:0 0 0 1px var(--line2)}
+/* the switch is a part of the component set (B-285, at the end of this sheet); here only where it sits */
 .mh .seg{flex:0 0 auto;align-self:center}
 .mh .seg[hidden],body.on-ev .mh .seg{display:none}
-@media (max-width:599px){.seg{align-self:stretch;width:100%}.seg button{min-height:32px;flex:1}}
 /* the right panel's cards: on the ground, a hairline, 32 px rows */
 @media (min-width:1200px){
   section.panel > .cols > .col-side .card,section.panel > .panel > .cols > .col-side .card{background:var(--bg);border:0;border-radius:12px;box-shadow:0 0 0 1px var(--line);padding:6px 10px 10px;gap:0}
@@ -921,3 +916,70 @@ body.captions .hero.snap{transition:none} /* B-249: a fold he scrolled into is a
 /* B-227 (D-232): her work line, one quiet line that opens in place to what she changed */
 .work{margin-top:2px}.work-line{font-size:calc(13px * var(--ts));padding:2px 0}.work-line:disabled{cursor:default}.work-line:disabled::after{content:''}
 .work-changes{margin:2px 0 0}.work-changes li{padding:4px 0;border:0}.work-changes .tlink{text-align:left}
+
+/* ============================================================ B-285 (D-274, D-278, D-269, C-1, C-15): the component set
+   Every part a view is built from: five kinds of button (primary, neutral, coded tint, ghost, icon; .sm is the small
+   size of any), the badge, the segmented switch, the card, the row, the toolbar, the progress bar and the composer.
+   Every colour is a token of the generator (page/theme.js). A coded colour is one class, x-green, x-yellow, x-red,
+   x-blue or x-violet, which sets --x for the part it is on; D-269 gives all five one lightness. A view uses at most one
+   primary. No part only closes or hides (D-160). Rows are 32 px from 600 px and 44 px on the phone (C-1);
+   on the phone every button and switch segment is a 44 px target. The views move onto these parts in their own tasks. */
+.x-green{--x:var(--sem-green)}.x-yellow{--x:var(--sem-yellow)}.x-red{--x:var(--sem-red)}.x-blue{--x:var(--sem-blue)}.x-violet{--x:var(--sem-violet)}
+/* buttons */
+button.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:32px;min-height:32px;padding:0 12px;border:0;border-radius:8px;background:none;color:var(--text);font:500 calc(13px * var(--ts)) var(--sans);white-space:nowrap;cursor:pointer;box-shadow:none;transition:background .12s ease,color .12s ease}
+button.btn svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+button.btn.primary{background:var(--her);color:var(--on-her);font-weight:600}
+button.btn.primary:not(:disabled):hover{background:color-mix(in srgb,var(--her) 88%,var(--text))}
+button.btn.neutral{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2)}
+button.btn.neutral:not(:disabled):hover{background:var(--hover)}
+button.btn.tint{background:color-mix(in srgb,var(--x,var(--faint)) 13%,var(--surface));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--x,var(--faint)) 45%,var(--line2))}
+button.btn.tint svg{color:var(--x)}
+button.btn.tint:not(:disabled):hover{background:color-mix(in srgb,var(--x,var(--faint)) 20%,var(--surface))}
+button.btn:is(.ghost,.icon):not(.primary,.neutral,.tint){color:var(--quiet)}
+button.btn:is(.ghost,.icon):not(.primary,.neutral,.tint,:disabled):hover{background:var(--hover);color:var(--text)}
+button.btn.icon{width:32px;padding:0}
+button.btn.sm{height:28px;min-height:28px;padding:0 10px;font-size:calc(12.5px * var(--ts))}
+button.btn.icon.sm{width:28px;padding:0}
+button.btn.send{border-radius:16px}
+button.btn:disabled{opacity:.45;cursor:default}
+/* badge: words first, one per row (D-276); the dot carries the coded colour, the words stay text */
+.badge{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:11px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);color:var(--text);font:500 calc(12px * var(--ts)) var(--sans);white-space:nowrap;flex:none}
+.badge::before{content:"";width:6px;height:6px;border-radius:3px;background:var(--x,var(--faint));flex:none}
+.badge.proposed{--x:var(--sem-blue)}
+.badge:is(.x-green,.x-yellow,.x-red,.x-blue,.x-violet,.proposed){background:color-mix(in srgb,var(--x) 13%,var(--surface));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--x) 45%,var(--line2))}
+/* segmented switch: grey, the picked option on the ground; it says which is picked (aria-pressed or aria-checked, C-15) */
+.seg{display:inline-flex;gap:2px;padding:2px;border:0;border-radius:8px;background:var(--sunken);box-shadow:inset 0 0 0 1px var(--line);align-self:flex-start;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.seg button{flex:0 0 auto;min-height:26px;padding:0 10px;border:0;border-radius:6px;background:none;color:var(--faint);font:500 calc(13px * var(--ts)) var(--sans);cursor:pointer}
+.seg button:hover{background:none;color:var(--text)}
+.seg button:is([aria-pressed="true"],[aria-checked="true"]){background:var(--bg);color:var(--text);box-shadow:0 0 0 1px var(--line2)}
+/* card */
+.ui-card{display:flex;flex-direction:column;gap:10px;min-width:0;padding:14px;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line)}
+.ui-card>h3{margin:0;font:600 calc(13.5px * var(--ts)) var(--sans);color:var(--text)}
+/* row: the name, then at most one badge, the time, and actions that show on hover or focus */
+.li{display:flex;align-items:center;gap:12px;height:32px;padding:0 12px;border-bottom:1px solid var(--line);color:var(--text);font-size:calc(13.5px * var(--ts));min-width:0}
+.li:hover{background:var(--hover)}
+.li .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li .t{flex:none;color:var(--quiet);font-size:calc(12.5px * var(--ts));font-variant-numeric:tabular-nums}
+.li .hov{visibility:hidden}
+.li:hover .hov,.li:focus-within .hov{visibility:visible}
+/* toolbar: a view's tabs, its switches and its one primary */
+.toolbar{display:flex;align-items:center;gap:8px;min-height:48px;padding:8px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.toolbar .sp{flex:1}
+/* progress bar: green is done (D-270); a coded class gives another meaning */
+.pbar{display:flex;height:6px;border-radius:3px;background:var(--hover);overflow:hidden}
+.pbar>i{display:block;height:100%;background:var(--x,var(--sem-green))}
+/* composer: the field and send, the one place besides her and the primary that carries her colour (D-270) */
+.field{display:flex;flex-direction:row;align-items:center;gap:8px;min-height:50px;padding:0 9px 0 16px;border-radius:14px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2)}
+.field:focus-within{box-shadow:inset 0 0 0 2px var(--text)}
+.field :is(input,textarea){flex:1;min-width:0;min-height:0;height:auto;margin:0;padding:14px 0;border:0;border-radius:0;background:none;box-shadow:none;color:var(--text);font:400 calc(14.5px * var(--ts)) var(--sans);resize:none;outline:none}
+.field ::placeholder{color:var(--faint)}
+@media (max-width:599px){
+  button.btn,button.btn.sm{height:44px;min-height:44px}
+  button.btn.icon,button.btn.icon.sm{width:44px}
+  .seg{align-self:stretch;width:100%}
+  .seg button{min-height:44px;flex:1}
+  .li{height:44px;padding:0 16px}
+  .li .hov{visibility:visible}
+  .toolbar{padding:8px 12px}
+  .field{min-height:56px;padding:0 6px 0 16px}
+}

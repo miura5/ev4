@@ -24,7 +24,7 @@ const opt = (argv, name, dflt) => {
   return i >= 0 && argv[i + 1] ? path.resolve(argv[i + 1]) : dflt;
 };
 
-export const HARNESSES = ['shell', 'run', 'captions', 'prep', 'core', 'greet', 'look'];
+export const HARNESSES = ['shell', 'components', 'run', 'captions', 'prep', 'core', 'greet', 'look'];
 const ALL = HARNESSES;
 const PAGE = ['shell', 'run', 'captions', 'prep', 'greet', 'look']; // everything that boots the page but core's timing
 // Paths no harness reads: the record of the work, the docs, CI, the Chart and every tool but the build. npm test runs
@@ -80,9 +80,11 @@ export function harnessesFor(paths) {
   for (const p of paths) {
     if (NONE.some(re => re.test(p))) continue;
     let m;
-    if ((m = p.match(/^test\/harness\/([a-z]+)\.cjs$/)) && HARNESSES.includes(m[1])) need.add(m[1]);
+    if (p === 'test/harness/components.cjs')
+      ['components', 'look'].forEach(h => need.add(h)); // B-285: look uses its checks
+    else if ((m = p.match(/^test\/harness\/([a-z]+)\.cjs$/)) && HARNESSES.includes(m[1])) need.add(m[1]);
     else if (/^test\/harness\/(views|contrast)\.cjs$/.test(p)) need.add('look');
-    else if (p === 'page/styles.css') ['run', 'captions', 'prep', 'look'].forEach(h => need.add(h));
+    else if (p === 'page/styles.css') ['components', 'run', 'captions', 'prep', 'look'].forEach(h => need.add(h));
     else if ((m = p.match(/^page\/app\/(\d\d)-[a-z0-9-]+\.js$/)) && PARTS[m[1]]) PARTS[m[1]].forEach(h => need.add(h));
     else ALL.forEach(h => need.add(h));
   }
@@ -120,6 +122,7 @@ export function steps({ record, shots, only = null }) {
     ],
     ['build', process.execPath, ['tools/build.mjs']],
     h('shell', record, path.join(shots, 'shell')),
+    h('components', record, path.join(shots, 'components')), // B-285: the component set's own sheet
     h('run', record, path.join(shots, 'run')),
     h('captions', record, path.join(shots, 'captions')),
     h('prep', record, path.join(shots, 'prep')),
