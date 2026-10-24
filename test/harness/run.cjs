@@ -1580,8 +1580,8 @@ const ok = (name, cond, detail = '') => {
         mc[2].text === 'Job ' + (jobs[0] || {}).id,
       JSON.stringify(mc)
     );
-    // B-210 (D-209): the job is one line in the pane (its surface line or its card line, at most 44 px) and one row
-    // under Working in the sidebar from 600 px.
+    // B-210 (D-209): the job is one line in the pane (its surface line or its card line, at most 44 px). B-286 (D-291):
+    // the sidebar has no Working section; the job shows only in the conversation.
     await page.waitForTimeout(300);
     const jl = await page.evaluate(() => {
       const line = [...document.querySelectorAll('#ev-surf .sf-head, #ev-surf .sf-row, #thread .card-line')].find(x =>
@@ -1590,13 +1590,12 @@ const ok = (name, cond, detail = '') => {
       const w = document.getElementById('side-work');
       return {
         h: line ? Math.round(line.getBoundingClientRect().height) : null,
-        side: !!w && !w.hidden && w.querySelectorAll('.si').length,
-        wide: innerWidth >= 600,
+        side: !!w || [...document.querySelectorAll('#top .sec')].some(x => /working/i.test(x.textContent)),
       };
     });
     ok(
-      'a running job is one line in the pane and one row under Working (D-209)',
-      jl.h != null && jl.h <= 44 && (!jl.wide || jl.side === 1),
+      'a running job is one line in the pane, and the sidebar has no Working section (D-209, D-291)',
+      jl.h != null && jl.h <= 44 && !jl.side,
       JSON.stringify(jl)
     );
     m = await msgs(page);

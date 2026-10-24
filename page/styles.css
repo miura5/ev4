@@ -747,7 +747,7 @@ body:not(.on-ev) .mh .cap-now{display:none}
 .compose-row #ev-send.on{background:var(--her);color:var(--on-her);box-shadow:none}
 
 /* ============================================================ B-221: the shade, the pane, the sidebar's sections ======
-   (Matt's staging look, Oct 22.) The sidebar's sections: Today and Working, one 32 px row each, absent while empty. */
+   (Matt's staging look, Oct 22.) The sidebar's Today section, one 32 px row each, absent while empty (B-286: no Working). */
 @media (min-width:600px){
   html{background:var(--sunken)}
   body{background:transparent}
@@ -758,7 +758,7 @@ body:not(.on-ev) .mh .cap-now{display:none}
 .side-sec .si .t{overflow:hidden;text-overflow:ellipsis}
 .side-sec .si:hover{background:var(--surface);color:var(--text)}
 .sdot{width:6px;height:6px;border-radius:3px;flex:0 0 6px}
-.sdot.d-urg{background:var(--urg)} .sdot.d-att{background:var(--att)} .sdot.d-q{background:var(--faint)} .sdot.d-her{background:var(--sem-blue)}
+.sdot.d-urg{background:var(--urg)} .sdot.d-att{background:var(--att)} .sdot.d-q{background:var(--faint)}
 .side .lab-side{display:none}
 @media (min-width:600px){.side .tabs .tab .lab-bar{display:none}.side .tabs .tab .lab-side{display:inline}}
 @media (max-width:599px){.side-sec{display:none}}
