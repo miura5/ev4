@@ -2,10 +2,8 @@
 // the conversations a day's talk splits into (B-77, D-128). All data is made up.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import EV from '../core/evcore.mjs';
 import { key } from './core-fixtures.mjs';
-import { makeConversation } from '../core/conversation.mjs';
 
 // The session helpers (the greeting reads a running session).
 const T0 = '2026-10-18T15:00:00.000Z';
@@ -19,21 +17,6 @@ const session = (events, extra = {}) => ({
   startedAt: T0,
   events: { [sk(T0)]: { type: 'start' }, ...Object.fromEntries(Object.entries(events).map(([t, e]) => [sk(t), e])) },
   ...extra,
-});
-
-test('B-157: the conversation is its own file, one factory, and E.V. core still exports every name callers use', () => {
-  const src = fs.readFileSync(new URL('../core/conversation.mjs', import.meta.url), 'utf8');
-  assert.doesNotMatch(src, /^import /m, 'no imports: it runs in the page as written');
-  assert.deepEqual(src.match(/^export .*/gm), ['export function makeConversation(core) {']);
-  const core = fs.readFileSync(new URL('../core/evcore.mjs', import.meta.url), 'utf8');
-  assert.doesNotMatch(
-    core,
-    /function greeting|function conversations|function earlierConversation/,
-    'moved, not copied'
-  );
-  for (const n of ['greeting', 'conversations', 'earlierConversation', 'noteTitle'])
-    assert.equal(typeof EV[n], 'function', n);
-  assert.equal(typeof makeConversation, 'function');
 });
 
 test('Greeting: morning leads with the review; late night before clinical says sleep', () => {

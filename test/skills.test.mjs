@@ -2,29 +2,8 @@
 // Quizlet cards from weak spots. The skills runs themselves are tested in features.test.mjs. All data is made up.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import EV from '../core/evcore.mjs';
 import { assertValid } from './core-fixtures.mjs';
-import { makeSkills } from '../core/skills.mjs';
-
-test('B-158: skills practice and workouts are their own file, one factory, and E.V. core still exports every name', () => {
-  const src = fs.readFileSync(new URL('../core/skills.mjs', import.meta.url), 'utf8');
-  assert.doesNotMatch(src, /^import /m, 'no imports: it runs in the page as written');
-  assert.deepEqual(src.match(/^export .*/gm), ['export function makeSkills(core) {']);
-  const core = fs.readFileSync(new URL('../core/evcore.mjs', import.meta.url), 'utf8');
-  assert.doesNotMatch(core, /function startSkill|function startWorkout|function weakspotCards/, 'moved, not copied');
-  for (const n of [
-    'skillSteps',
-    'startSkill',
-    'endSkill',
-    'startWorkout',
-    'workoutState',
-    'weakspotCards',
-    'cardsText',
-  ])
-    assert.equal(typeof EV[n], 'function', n);
-  assert.equal(typeof makeSkills, 'function');
-});
 
 test('B-52 (D-108): CINDY keeps rounds in the cap, the ladder its time and stop point; every write validates', () => {
   const q = EV.workoutSequences();

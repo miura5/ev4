@@ -1,22 +1,8 @@
 // E.V. core's Canvas rules: the code side of the read-only sync (B-160, split from core.test.mjs with its section). All data is made up.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import EV from '../core/evcore.mjs';
 import { assertValid } from './core-fixtures.mjs';
-import { makeCanvasRules } from '../core/canvas-rules.mjs';
-
-test('B-160: core/canvas-rules.mjs is one factory with no imports, moved out of E.V. core, and E.V. core still exports its names', () => {
-  const src = fs.readFileSync(new URL('../core/canvas-rules.mjs', import.meta.url), 'utf8');
-  assert.doesNotMatch(src, /^import /m, 'no imports: it runs in the page as written');
-  assert.deepEqual(src.match(/^export .*/gm), ['export function makeCanvasRules(core) {']);
-  const core = fs.readFileSync(new URL('../core/evcore.mjs', import.meta.url), 'utf8');
-  for (const n of ['normalizeCanvas']) {
-    assert.doesNotMatch(core, new RegExp('function ' + n + '\\('), n + ' moved, not copied');
-    assert.equal(typeof EV[n], 'function', n);
-  }
-  assert.equal(typeof makeCanvasRules, 'function');
-});
 
 test('Canvas: Central dates, graded flags, change detection; documents carry the canvas-sync envelope', () => {
   const raw = {

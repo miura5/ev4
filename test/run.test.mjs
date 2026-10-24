@@ -656,10 +656,6 @@ test('B-34: the run keeps its deployed commit, so the nightly lint can tell a st
 });
 
 // ---------------------------------------------------------------- B-197: the identifier check's two stages in a run
-const idAnswer = (dir, verdicts) => {
-  fs.mkdirSync(path.join(dir, 'answers'), { recursive: true });
-  fs.writeFileSync(path.join(dir, 'answers', 'identifiers.json'), JSON.stringify({ verdicts }));
-};
 const planOf = r => {
   assert.equal(r.status, 'planned', JSON.stringify(r.problems || r.step));
   const files = r.plan.batches.flat();

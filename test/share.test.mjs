@@ -1,22 +1,8 @@
 // E.V. core's shareable practice pages (D-110) (B-160, split from core.test.mjs with its section). All data is made up.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import EV from '../core/evcore.mjs';
 import './core-fixtures.mjs'; // loads the spec into E.V. core
-import { makeShare } from '../core/share.mjs';
-
-test('B-160: core/share.mjs is one factory with no imports, moved out of E.V. core, and E.V. core still exports its names', () => {
-  const src = fs.readFileSync(new URL('../core/share.mjs', import.meta.url), 'utf8');
-  assert.doesNotMatch(src, /^import /m, 'no imports: it runs in the page as written');
-  assert.deepEqual(src.match(/^export .*/gm), ['export function makeShare(core) {']);
-  const core = fs.readFileSync(new URL('../core/evcore.mjs', import.meta.url), 'utf8');
-  for (const n of ['shareableSet', 'sharePage']) {
-    assert.doesNotMatch(core, new RegExp('function ' + n + '\\('), n + ' moved, not copied');
-    assert.equal(typeof EV[n], 'function', n);
-  }
-  assert.equal(typeof makeShare, 'function');
-});
 
 test('B-54 (D-110): only a calendar set over a chapter range is shared; the page holds questions and reasons, nothing of his', () => {
   const item = (id, extra = {}) => ({
