@@ -3899,5 +3899,22 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "3a51928",
+  "time": "2026-10-24T23:32:14.603Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "bd479f8",
+  "tasks": [
+   "B-308",
+   "B-290"
+  ],
+  "summary": "New task window fields; Conversation surfaces",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
