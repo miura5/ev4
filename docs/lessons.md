@@ -1,7 +1,7 @@
 # Lessons (B-262)
 
-The stories behind CLAUDE.md's "Rules from past failures", and the lessons whose rule now lives in the tools. Moved
-out of CLAUDE.md's old "Gotchas carried from v3" on Oct 24, 2026; read this when one of them bites.
+The stories behind CLAUDE.md's "Rules from past failures", the lessons whose rule now lives in the tools, and one
+tip. Moved out of CLAUDE.md's old "Gotchas carried from v3" on Oct 24, 2026; read this when one of them bites.
 
 ## Behind the rules in CLAUDE.md
 
@@ -27,9 +27,12 @@ out of CLAUDE.md's old "Gotchas carried from v3" on Oct 24, 2026; read this when
   The page's `update` merges nested maps; Edits documents are replaced whole. The core write paths do this.
 - **Playwright's fake clock** races its real-time sync: the harnesses use `setSystemTime` plus condition waits, not
   `clock.fastForward`.
-- **The runs' shallow clone.** Scheduled runs clone `main` 50 commits deep and check out the deployed commit (B-110).
-  When record commits push it out of that clone, the gate stays on the clone's head and goes on only if every file the
-  manifest hashes is the same there (D-170, B-132, `tools/gate.mjs`); verify-deploy notes the distance and never reds
-  on it.
+- **The runs' shallow clone.** Scheduled runs clone `main` 50 commits deep (B-110). When record commits push the
+  deployed commit out of that clone, the gate fetches that one commit from origin and checks it out (B-168); only when
+  the fetch fails does it stay on the clone's head and go on if every file the manifest hashes is the same there
+  (D-170, B-132, `tools/gate.mjs`). verify-deploy notes the distance and never reds on it.
+
+## Advice no tool enforces
+
 - **Reading test results.** `node --test test/*.test.mjs > /tmp/t.log 2>&1; grep -E "^# (pass|fail)" /tmp/t.log`;
   never pipe node through grep inside `&&`, which hides node's exit code.
