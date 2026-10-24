@@ -4931,11 +4931,11 @@
   "title": "One clock (D-271, D-272): her loop runs on requestAnimationFrame with dt smoothing and stops when she is still; the frame-budget harness measures D-272",
   "dod": "The budget harness at 390 × 844, DPR 3, 4× throttle shows at most 5% of frames over 25 ms across 10 s of speech, and zero frames over 3 s of idle; staging GREEN",
   "milestone": "v4.7 look",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-272"
   ],
-  "notes": "",
+  "notes": "claimed by this run",
   "commit": null,
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
