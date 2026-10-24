@@ -363,6 +363,34 @@
       );
       paint(cur());
     }
+    // B-271 (D-268): Contrast (30, 60, 100), stored on this device (ev.contrast) and read again before first paint by the
+    // head script; a press runs the generator now. 60 is the default and is not stored.
+    {
+      const seg = $('contrast-seg'),
+        T = window.EVTheme;
+      if (seg && T) {
+        const paint = c =>
+          seg
+            .querySelectorAll('button')
+            .forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.c) === c)));
+        let now = 60;
+        try {
+          now = T.contrastOf(localStorage.getItem('ev.contrast'));
+        } catch {}
+        seg.querySelectorAll('button').forEach(b =>
+          b.addEventListener('click', () => {
+            const c = T.contrastOf(b.dataset.c);
+            T.apply(document, c);
+            try {
+              if (c === 60) localStorage.removeItem('ev.contrast');
+              else localStorage.setItem('ev.contrast', String(c));
+            } catch {}
+            paint(c);
+          })
+        );
+        paint(now);
+      }
+    }
     // B-224 (D-229): Text size (Default, Larger) and Reduce motion (Follow the system, On), stored per device the same
     // way (ev.text, ev.motion) and set on <html> before first paint by the head script.
     for (const [segId, key, attr, off] of [

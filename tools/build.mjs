@@ -422,6 +422,15 @@ export function buildPages({ root, spec, schemas, release }) {
   const app0 = appSource(root);
   if (!app0.includes(RELEASE_SLOT)) throw new Error(`page/app has no ${RELEASE_SLOT} for the release`);
   const app = app0.replaceAll(RELEASE_SLOT, release);
+  // Inlined without its comments and indentation, to keep the shell inside its budget; the lines stay as written.
+  const theme = read('page/theme.js')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split('\n')
+    .map(l => l.trim())
+    .filter(l => l && !l.startsWith('//'))
+    .join('\n');
+  if (/<\/script|\{\{/i.test(theme))
+    throw new Error('page/theme.js cannot hold a closing script tag or a {{ placeholder');
   const out = {};
   for (const target of ['live', 'staging']) {
     const other = target === 'live' ? 'staging' : 'live';
@@ -439,7 +448,9 @@ export function buildPages({ root, spec, schemas, release }) {
     const shell = read('page/index.src.html')
       .replaceAll('{{TITLE}}', rec.name || 'E.V. Home')
       .replaceAll('{{RELEASE}}', release)
-      .replaceAll('{{TARGET}}', target);
+      .replaceAll('{{TARGET}}', target)
+      // B-271 (D-268): the theme generator, run in the head before first paint.
+      .replace('{{THEME}}', () => theme);
     if (/\{\{\w+\}\}/.test(shell))
       throw new Error(
         'page/index.src.html has a placeholder the build does not fill: ' + shell.match(/\{\{\w+\}\}/)[0]

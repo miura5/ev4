@@ -132,10 +132,11 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
     await ctx.close();
   }
-  // B-204 (D-211, D-221): every text and shape token on every ground, in both themes, as the built page computes them:
-  // the system theme by prefers-color-scheme, and the stored toggle (ev.theme) over a system that says the other.
+  // B-204 (D-211), B-271 (D-273): D-273's floors on the tokens the built page computes, in both themes: the system
+  // theme by prefers-color-scheme, and the stored toggle (ev.theme) over a system that says the other.
   {
-    const C = require('./contrast.cjs');
+    const C = require('./contrast.cjs'),
+      TH = C.load();
     for (const [label, scheme, stored, want] of [
       ['system dark', 'dark', null, 'dark'],
       ['system light', 'light', null, 'light'],
@@ -176,11 +177,11 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
       }, C.TOKENS);
       const bad = C.judge(got.tokens, label);
       ok(
-        `[390x844] B-204: ${label}: every text pair 4.5:1, every shape 3:1 on every ground`,
+        `[390x844] B-271: ${label}: D-273's floors (text 4.5, faint 4.6, her ink 4.5, coded 3:1)`,
         !bad.length,
         bad.join('; ')
       );
-      const ground = want === 'light' ? '#F7F2E8' : '#19161C';
+      const ground = TH.genTheme(want, 60).bg.toUpperCase();
       ok(
         `[390x844] B-204: ${label}: the page is ${want}`,
         got.tokens['--bg'].toUpperCase() === ground && String(got.scheme).trim() === want,
@@ -209,14 +210,47 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           "[390x844] B-214: System's switch: Light paints light at once and is stored on this device; System forgets it and follows the device again",
           a.attr === 'light' &&
             a.stored === 'light' &&
-            a.bg === '#F7F2E8' &&
+            a.bg === TH.genTheme('light', 60).bg.toUpperCase() &&
             a.pressed === 'light' &&
             b.attr === null &&
             b.stored === null &&
-            b.bg === '#19161C' &&
+            b.bg === TH.genTheme('dark', 60).bg.toUpperCase() &&
             b.pressed === 'system',
           JSON.stringify({ a, b })
         );
+        // B-271 (D-268, D-273): Contrast walks 30, 60 and 100 in both themes; each press runs the generator at once,
+        // the page's tokens equal the generator's, the floors hold, and the choice is stored on this device.
+        const walk = [];
+        for (const t of ['light', 'dark'])
+          for (const c of [30, 60, 100]) {
+            await page.click(`#theme-seg [data-t="${t}"]`);
+            await page.click(`#contrast-seg [data-c="${c}"]`);
+            const g = await page.evaluate(names => {
+              const cs = getComputedStyle(document.documentElement);
+              return {
+                tokens: Object.fromEntries(names.map(n => [n, cs.getPropertyValue(n).trim()])),
+                stored: localStorage.getItem('ev.contrast'),
+                pressed: document.querySelector('#contrast-seg [aria-pressed="true"]').dataset.c,
+              };
+            }, C.TOKENS);
+            const gen = TH.vars(TH.genTheme(t, c)),
+              off = C.TOKENS.filter(k => g.tokens[k].toLowerCase() !== gen[k]);
+            walk.push(
+              ...C.judge(g.tokens, `${t} ${c}`),
+              ...off.map(k => `${t} ${c}: ${k} ${g.tokens[k]}, generator ${gen[k]}`)
+            );
+            if (g.pressed !== String(c) || g.stored !== (c === 60 ? null : String(c)))
+              walk.push(`${t} ${c}: pressed ${g.pressed}, stored ${g.stored}`);
+            if (c === 100 || (t === 'light' && c === 30))
+              await page.screenshot({ path: `${shots}/theme-${t}-contrast-${c}-390x844.png` });
+          }
+        ok(
+          "[390x844] B-271: Contrast 30, 60 and 100 in light and dark: the generator's tokens, D-273's floors, stored on this device",
+          !walk.length,
+          walk.join('; ')
+        );
+        await page.click('#contrast-seg [data-c="60"]');
+        await page.click('#theme-seg [data-t="system"]');
       }
       await ctx.close();
     }

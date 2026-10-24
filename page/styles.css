@@ -1,24 +1,18 @@
-/* E.V. Home's stylesheet. Light and dark (D-211, B-204); colour is meaning and her blue is hers (D-221).
+/* E.V. Home's stylesheet. Light and dark (D-211, B-204), generated in LCH (D-268, B-271); colour is meaning (D-221).
    Layout: a sticky top bar (small E.V. + readout, the five tabs as icons, System), one centered column (B-85: no dock). */
-/* B-204 (D-211, D-214, D-221): two warm themes from one token set. The system theme follows prefers-color-scheme;
-   the stored toggle (localStorage ev.theme, set on <html data-theme>) overrides it. Grounds: bg, sunken, surface, raised.
-   Words: text, quiet, faint. Meanings: do (teal, done or right), att (amber, attention), urg (coral, urgent or an error).
-   Her blue is hers alone (D-214). --tint is the theme's ink as r,g,b for lifts and lines: rgba(var(--tint),a). */
-:root,:root[data-theme="dark"]{--bg:#19161C; --sunken:#141217; --surface:#221E26; --raised:#2A2530; --text:#ECE8E1; --quiet:#B3ACA2; --faint:#958E85;
-  --her:#7AA7FF; --do:#3FE0C5; --do-ink:#0B2A24; --att:#F2B45A; --urg:#F08A78;
-  --tint:236,232,225; --ground:25,22,28; --her-rgb:122,167,255; --do-rgb:63,224,197; --att-rgb:242,180,90; --urg-rgb:240,138,120;
-  --f-ink2:color-mix(in srgb,var(--her) 45%,var(--bg)); --f-edge:color-mix(in srgb,var(--her) 42%,var(--bg)); --f-deep:color-mix(in srgb,var(--her) 80%,black); --f-eyering:color-mix(in srgb,var(--her) 20%,white); --f-core:color-mix(in srgb,var(--her) 70%,black); --f-hi:color-mix(in srgb,var(--her) 58%,white);}
-@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#F7F2E8; --sunken:#EFE9DD; --surface:#FFFDF8; --raised:#FFFFFF; --text:#221E1A; --quiet:#5F5850; --faint:#6B6359;
-  --her:#2B5BD0; --do:#0F766E; --do-ink:#FFFFFF; --att:#9A5800; --urg:#B83A26;
-  --tint:34,30,26; --ground:247,242,232; --her-rgb:43,91,208; --do-rgb:15,118,110; --att-rgb:154,88,0; --urg-rgb:184,58,38;
-  --f-ink2:color-mix(in srgb,var(--her) 42%,white); --f-edge:color-mix(in srgb,var(--her) 58%,black); --f-deep:color-mix(in srgb,var(--her) 76%,black); --f-eyering:color-mix(in srgb,var(--her) 14%,white); --f-core:color-mix(in srgb,var(--her) 55%,black); --f-hi:color-mix(in srgb,var(--her) 70%,white);}}
-:root[data-theme="light"]{--bg:#F7F2E8; --sunken:#EFE9DD; --surface:#FFFDF8; --raised:#FFFFFF; --text:#221E1A; --quiet:#5F5850; --faint:#6B6359;
-  --her:#2B5BD0; --do:#0F766E; --do-ink:#FFFFFF; --att:#9A5800; --urg:#B83A26;
-  --tint:34,30,26; --ground:247,242,232; --her-rgb:43,91,208; --do-rgb:15,118,110; --att-rgb:154,88,0; --urg-rgb:184,58,38;
-  --f-ink2:color-mix(in srgb,var(--her) 42%,white); --f-edge:color-mix(in srgb,var(--her) 58%,black); --f-deep:color-mix(in srgb,var(--her) 76%,black); --f-eyering:color-mix(in srgb,var(--her) 14%,white); --f-core:color-mix(in srgb,var(--her) 55%,black); --f-hi:color-mix(in srgb,var(--her) 70%,white);}
+/* B-271 (D-268, D-269, D-273): every colour token is generated in LCH by page/theme.js, which the shell runs before
+   first paint (base, her Ember accent, contrast 30, 60 or 100). It writes --bg, --chrome, --surface, --hover, --line,
+   --line2, --text, --quiet, --faint, her --her, --her2 and --on-her, the coded --sem-green, --sem-yellow, --sem-red,
+   --sem-blue and --sem-violet, and the names this sheet already used: --sunken (chrome), --raised (surface), --do,
+   --att and --urg (green, yellow, red), --do-ink, and the r,g,b forms --tint, --ground, --her-rgb, --do-rgb, --att-rgb,
+   --urg-rgb. The system theme follows prefers-color-scheme; the stored toggle (ev.theme, <html data-theme>) overrides
+   it. Her flower's inks mix from --her. */
+:root{--f-ink2:color-mix(in srgb,var(--her) 45%,var(--bg)); --f-edge:color-mix(in srgb,var(--her) 42%,var(--bg)); --f-deep:color-mix(in srgb,var(--her) 80%,black); --f-eyering:color-mix(in srgb,var(--her) 20%,white); --f-core:color-mix(in srgb,var(--her) 70%,black); --f-hi:color-mix(in srgb,var(--her) 58%,white);}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--f-ink2:color-mix(in srgb,var(--her) 42%,white); --f-edge:color-mix(in srgb,var(--her) 58%,black); --f-deep:color-mix(in srgb,var(--her) 76%,black); --f-eyering:color-mix(in srgb,var(--her) 14%,white); --f-core:color-mix(in srgb,var(--her) 55%,black); --f-hi:color-mix(in srgb,var(--her) 70%,white);}}
+:root[data-theme="light"]{--f-ink2:color-mix(in srgb,var(--her) 42%,white); --f-edge:color-mix(in srgb,var(--her) 58%,black); --f-deep:color-mix(in srgb,var(--her) 76%,black); --f-eyering:color-mix(in srgb,var(--her) 14%,white); --f-core:color-mix(in srgb,var(--her) 55%,black); --f-hi:color-mix(in srgb,var(--her) 70%,white);}
 :root{color-scheme:dark;
   /* The names the stylesheet already used, each now one of the tokens above (D-214: violet retired, secondary grey). */
-  --glass:rgba(var(--tint),.04); --glass2:rgba(var(--tint),.07); --line:rgba(var(--tint),.09); --line2:rgba(var(--tint),.15);
+  --glass:rgba(var(--tint),.04); --glass2:rgba(var(--tint),.07);
   --ink:var(--text); --ink2:var(--quiet); --soft:var(--faint); --chip:rgba(var(--tint),.06);
   --accent:var(--do); --accent-ink:var(--do-ink); --accent-text:var(--do); --accent-bg:rgba(var(--do-rgb),.12); --accent-edge:rgba(var(--do-rgb),.34);
   --violet:var(--quiet); --violet-ink:var(--bg); --plum:var(--quiet); --plum-bg:rgba(var(--tint),.07);
