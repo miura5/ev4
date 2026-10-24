@@ -5181,7 +5181,7 @@
    "B-286",
    "B-287"
   ],
-  "notes": "proofs green: npm test, smoke 28/28, check --touched GREEN (shell 123/123)",
+  "notes": "reviewed: fresh reviewer, No gaps",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
