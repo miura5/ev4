@@ -70,6 +70,18 @@ export const TENET_CHECKS = ['harness', 'lint', 'ship', 'review'];
 export const kindOf = d => d.kind || 'decision';
 const TZ = 'America/Chicago';
 const readJson = p => JSON.parse(fs.readFileSync(p, 'utf8'));
+const readJsonIf = p => (fs.existsSync(p) ? readJson(p) : null);
+const readSpec = root => readJson(path.join(root, 'spec', 'ev.spec.json'));
+// This session's transcript (--transcript, else the newest), or '' when there is none.
+const transcriptOf = o => {
+  const file = o.transcript || newestTranscript();
+  return file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+};
+const waitOnNoOne = t => {
+  delete t.waitingOn;
+  delete t.waitingWhere;
+};
+const commitMessage = (message, trailers) => [message, ...(trailers.length ? ['', ...trailers] : [])].join('\n');
 // Same as the spec: indent 1, no trailing newline.
 const writeJson = (p, v) => fs.writeFileSync(p, JSON.stringify(v, null, 1));
 const sha256 = s => crypto.createHash('sha256').update(s).digest('hex');
@@ -745,10 +757,7 @@ export function applyLog(rec, o, { now = new Date().toISOString(), builder = bui
       what.push('declined');
     } else throw new Error('--triage task|join <id>|decline');
     // B-142: a declined or joined task waits on no one.
-    if (t.status === 'declined' && t.waitingOn) {
-      delete t.waitingOn;
-      delete t.waitingWhere;
-    }
+    if (t.status === 'declined' && t.waitingOn) waitOnNoOne(t);
   }
   if (o.status) {
     if (!TASK_STATUS.includes(o.status) || ['inbox', 'declined'].includes(o.status))
@@ -766,8 +775,7 @@ export function applyLog(rec, o, { now = new Date().toISOString(), builder = bui
     t.status = o.status;
     // B-142: a finished task waits on no one.
     if (o.status === 'done' && t.waitingOn && o['waiting-on'] == null) {
-      delete t.waitingOn;
-      delete t.waitingWhere;
+      waitOnNoOne(t);
       what.push('no longer waiting');
     }
   }
@@ -840,10 +848,7 @@ export function applyLog(rec, o, { now = new Date().toISOString(), builder = bui
   }
   if (o['waiting-on'] != null) {
     if (o['waiting-on'] && o['waiting-on'] !== 'none') t.waitingOn = o['waiting-on'];
-    else {
-      delete t.waitingOn;
-      delete t.waitingWhere;
-    }
+    else waitOnNoOne(t);
     what.push('waiting on');
   }
   // B-148: where what waits on Matt happens (mac, staging, github, decision).
@@ -1190,7 +1195,7 @@ function commitRecord(root, message, trailers) {
   git(root, ['add', 'chart', 'BACKLOG.md', 'DECISIONS.md', 'CHANGELOG.md']);
   const staged = git(root, ['diff', '--cached', '--name-only']).trim();
   if (!staged) return null;
-  git(root, ['commit', '-q', '-m', [message, ...(trailers.length ? ['', ...trailers] : [])].join('\n')]);
+  git(root, ['commit', '-q', '-m', commitMessage(message, trailers)]);
   return git(root, ['rev-parse', '--short=7', 'HEAD']).trim();
 }
 
@@ -1322,7 +1327,7 @@ function savedGet(jsonl, collection, id) {
   const file = (r.texts.join('\n').match(/"(\/[^"]+\.json)"/) || [])[1];
   let doc = null;
   try {
-    doc = file ? JSON.parse(fs.readFileSync(file, 'utf8')) : null;
+    doc = file ? readJson(file) : null;
   } catch {
     doc = null;
   }
@@ -1467,7 +1472,7 @@ async function ship(o) {
   const dist = path.join(root, 'dist'),
     stateDir = path.join(dist, 'state', target);
   const { manifest } = await build({ root, out: dist });
-  const read = f => JSON.parse(fs.readFileSync(path.join(dist, 'system', f + '.json'), 'utf8'));
+  const read = f => readJson(path.join(dist, 'system', f + '.json'));
   const distDocs = { spec: read('spec'), environments: read('environments') };
   let pushed = false;
   try {
@@ -1484,12 +1489,11 @@ async function ship(o) {
     // here and by the ship-live row; it stands in for his words in the chat.
     const fromJob = typeof o['from-job'] === 'string' ? o['from-job'] : null;
     if (fromJob) {
-      const file = o.transcript || newestTranscript(),
-        jl = file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+      const jl = transcriptOf(o);
       const job = shipJobFrom(jl, fromJob);
       const why = shipJobRefusals({ id: fromJob, job, result: jobResultSeen(jl, fromJob), commit: manifest.commit });
       if (!why.length) {
-        const spec = readJson(path.join(root, 'spec', 'ev.spec.json'));
+        const spec = readSpec(root);
         const a = ACTIONS.actor(spec, 'builder')('ship-live', { job: fromJob, commit: job.commit }, { ok: { job } });
         if (!a.ok) why.push(a.refused);
       }
@@ -1506,7 +1510,7 @@ async function ship(o) {
     // B-149 (D-173): what goes live is a tagged release. With every other gate passed and the commit untagged, ship
     // tags it here (pushed once live is recorded); the tag renames the build, so staging carries it first.
     if (!refusals.length) {
-      const spec = readJson(path.join(root, 'spec', 'ev.spec.json'));
+      const spec = readSpec(root);
       try {
         const at = tagAt(root, manifest.commit);
         if (!at) {
@@ -1522,7 +1526,7 @@ async function ship(o) {
     }
   }
   const shipFile = path.join(dist, `ship-${target}.json`),
-    last = fs.existsSync(shipFile) ? JSON.parse(fs.readFileSync(shipFile, 'utf8')) : null;
+    last = readJsonIf(shipFile);
   // Once the calls ship printed are made, the deployed manifest is this build's own: keep the skips it printed them on.
   const skip =
     deployed && last && last.skip && deployed.commit === manifest.commit && last.commit === manifest.commit
@@ -1557,9 +1561,7 @@ async function ship(o) {
         )
       : {}),
   };
-  const stagingVerify = fs.existsSync(path.join(dist, 'verify-staging.json'))
-    ? JSON.parse(fs.readFileSync(path.join(dist, 'verify-staging.json'), 'utf8'))
-    : null;
+  const stagingVerify = readJsonIf(path.join(dist, 'verify-staging.json'));
   // B-178 (D-196): the Chart's Your turn as of this ship, written beside the system documents.
   const yourturnFile = path.join(dist, 'system', 'yourturn.json');
   fs.mkdirSync(path.dirname(yourturnFile), { recursive: true });
@@ -1808,7 +1810,7 @@ export const TRACE_OK_MINUTES = 10;
  * Returns {reads} when a document's version is unknown, else {calls, traceOk}.
  */
 export function traceCalls(root, o, { jsonl = '', now = new Date().toISOString() } = {}) {
-  const spec = readJson(path.join(root, 'spec', 'ev.spec.json'));
+  const spec = readSpec(root);
   const record = o.record || 'staging';
   if (!['staging', 'live'].includes(record)) throw new Error('trace --record staging|live');
   const art = spec.registry.records[record] && spec.registry.records[record].artifact;
@@ -1906,8 +1908,7 @@ export function traceCalls(root, o, { jsonl = '', now = new Date().toISOString()
 }
 function trace(o) {
   const root = rootOf(o),
-    file = o.transcript || newestTranscript();
-  const jsonl = file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+    jsonl = transcriptOf(o);
   const t = traceCalls(root, o, { jsonl });
   if (t.reads) {
     console.log(
@@ -1987,7 +1988,7 @@ export function weekFrom(jsonl) {
     for (const m of r.texts.join('\n').matchAll(/"(\/[^"]+\/weeks\/([^"/]+)\.json)"/g)) {
       let doc = null;
       try {
-        doc = JSON.parse(fs.readFileSync(m[1], 'utf8'));
+        doc = readJson(m[1]);
       } catch {
         doc = null;
       }
@@ -2172,7 +2173,7 @@ export const tenetsFor = (rec, scope) =>
  * printed when there is none), and how old it is. Over spec.constants.health.staleHours it is the first thing to take.
  */
 export function healthLines(root = HERE, now = Date.now(), builder = builderRun()) {
-  const spec = readJson(path.join(root, 'spec', 'ev.spec.json'));
+  const spec = readSpec(root);
   const hours = ((spec.constants || {}).health || {}).staleHours || 4;
   // B-179: a builder session cannot read the live record (its auto mode refuses it, B-187), so its health read is the
   // live watchdog's last_run, which list_triggers gives it.
@@ -2324,7 +2325,7 @@ export function whereToLook(root, text) {
     seen = new Set();
   let spec = {};
   try {
-    spec = readJson(path.join(root, 'spec', 'ev.spec.json'));
+    spec = readSpec(root);
   } catch {
     /* none */
   }
@@ -2392,7 +2393,7 @@ export function nextRuns(tasks, now = new Date()) {
 }
 function runWindows(root, now = new Date()) {
   try {
-    const spec = readJson(path.join(root, 'spec', 'ev.spec.json'));
+    const spec = readSpec(root);
     const runs = nextRuns(spec.tasks.live, now);
     return runs.length
       ? runs
@@ -2789,9 +2790,10 @@ async function rollback(o) {
     // session's last get; the file paths are where ship builds, dist/).
     const stateDir = path.join(root, 'dist', 'state', 'live'),
       state = withShell(readState(stateDir), restored.manifest, 'live', restored.out);
-    const file = o.transcript || newestTranscript(),
-      jsonl = file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
-    const versions = versionsFrom(jsonl, `https://claude.ai/artifact/${restored.manifest.records.live.artifact}`);
+    const versions = versionsFrom(
+      transcriptOf(o),
+      `https://claude.ai/artifact/${restored.manifest.records.live.artifact}`
+    );
     const calls = deployCalls({
       builder: Boolean(builderRun()), // B-184 (D-200)
       manifest: { ...restored.manifest, dirty: false },
@@ -2826,15 +2828,8 @@ async function rollback(o) {
         throw new Error('the checkout has uncommitted changes: commit or stash them first');
       applyRestore(root, toFull, files);
       git(root, ['add', '-A', '--', ...files.restore]);
-      git(root, [
-        'commit',
-        '-q',
-        '-m',
-        [
-          `B-60: roll live back to ${to.commit}'s content, from ${from.commit} (restore commit, on Matt's OK)`,
-          ...(o.trailer.length ? ['', ...o.trailer] : []),
-        ].join('\n'),
-      ]);
+      const message = `B-60: roll live back to ${to.commit}'s content, from ${from.commit} (restore commit, on Matt's OK)`;
+      git(root, ['commit', '-q', '-m', commitMessage(message, o.trailer)]);
       out.push('', `restore commit ${git(root, ['rev-parse', '--short=7', 'HEAD']).trim()} made: go on with step 2`);
     }
     console.log(out.join('\n'));
@@ -2913,27 +2908,24 @@ const commands = {
   lint(o) {
     const f = lintChart(loadChart(rootOf(o)), {
       tests: testTexts(rootOf(o)),
-      spec: readJson(path.join(rootOf(o), 'spec', 'ev.spec.json')),
+      spec: readSpec(rootOf(o)),
     });
     console.log(o.json ? JSON.stringify(f, null, 1) : formatLint(f));
     return f.some(x => x.level === 'error') ? 1 : 0;
   },
   inbox(o) {
-    const file = o.transcript || newestTranscript();
-    console.log(
-      formatInbox(inboxPlan(loadChart(rootOf(o)), file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null))
-    );
+    console.log(formatInbox(inboxPlan(loadChart(rootOf(o)), transcriptOf(o))));
     return 0;
   },
   quarantine(o) {
     // B-152 (D-176): which quarantined timing checks have had their green nightlies.
     const root = rootOf(o);
-    const q = JSON.parse(fs.readFileSync(path.join(root, 'test/harness/quarantine.json'), 'utf8'));
+    const q = readJson(path.join(root, 'test/harness/quarantine.json'));
     if (!o.runs)
       throw new Error(
         'quarantine --runs <file>: save gh run list --workflow nightly.yml --limit 60 --json conclusion,createdAt,event first'
       );
-    const rows = quarantineDue(q, JSON.parse(fs.readFileSync(o.runs, 'utf8')));
+    const rows = quarantineDue(q, readJson(o.runs));
     const n = q.returnAfterGreenNightlies || 20;
     for (const r of rows)
       console.log(
@@ -2970,13 +2962,8 @@ const commands = {
   plan(o) {
     if (!o.from || o.from === true) throw new Error('plan --from <design doc link> [--apply]');
     const root = rootOf(o),
-      file = o.transcript || newestTranscript(),
       docId = docIdOf(o.from);
-    const p = planFrom(
-      loadChart(root),
-      designRead(file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '', docId),
-      docId
-    );
+    const p = planFrom(loadChart(root), designRead(transcriptOf(o), docId), docId);
     console.log(formatPlan(p));
     if (!o.apply || !p.commands.length) return 0;
     // One commit for the whole hand-off (each record write would be its own, and runs clone main only so deep, B-110).
@@ -3011,9 +2998,7 @@ function record(o, apply) {
   const root = rootOf(o);
   if (!o['no-commit']) syncRecord(root);
   const rec = loadChart(root);
-  const file = o.transcript || newestTranscript();
-  const jsonl = file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
-  const { what, id, reply } = apply(rec, o, { jsonl });
+  const { what, id, reply } = apply(rec, o, { jsonl: transcriptOf(o) });
   const errors = lintChart(rec).filter(f => f.level === 'error' && f.id === id);
   if (errors.length) throw new Error('the record would not lint: ' + errors.map(f => f.detail).join('; '));
   saveChart(root, rec);
