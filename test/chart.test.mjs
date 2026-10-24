@@ -23,7 +23,7 @@ test('chart/ and tools/chart.mjs stay outside the manifest, so a bookkeeping com
   );
 });
 
-// ------------------------------------------------------------------------------------------------ B-93 log and views
+// ------------------------------------------------------------------------------------------------ B-93 log
 import { execFileSync } from 'node:child_process';
 
 // B-198 follow-up (Oct 22): these tests prove what a hand chat with Matt present can do (a tenet, a trigger printout, the
@@ -81,15 +81,12 @@ const sample = () => ({
   rules: [{ id: 'R-01', rule: 'r', decision: 'D-002', task: 'B-01', command: 'ship live', check: 'mattOk' }],
   views: SAMPLE_VIEWS,
 });
-const cellX = (id, text, dd) =>
-  `<cell id='${id}' h='h${id.slice(-2)}'><paragraph id='${id}p'>${dd != null ? `<dropdown id='${id}d' enum='E1' index='${dd}'>${['Done', 'In progress', 'Next', 'Waiting on Matt', 'Later'][dd]}</dropdown>` : `<text id='${id}t'>${text}</text>`}</paragraph></cell>`;
 
 test('B-93: log changes one task and refuses what it must', () => {
   const r = sample();
   assert.throws(() => C.applyLog(r, { _: ['log', 'B-02'], status: 'done' }), /needs --commit/);
   const out = C.applyLog(r, { _: ['log', 'B-02'], status: 'done', commit: 'def5678abc', note: 'shipped' });
   assert.equal(out.what, 'open -> done, commit def5678, notes');
-  assert.deepEqual(out.views, ['board']);
   assert.equal(r.tasks[1].status, 'done');
   assert.throws(
     () => C.applyLog(r, { _: ['log', 'B-03'], status: 'in progress', why: 'w' }),
@@ -100,7 +97,7 @@ test('B-93: log changes one task and refuses what it must', () => {
   assert.throws(() => C.applyLog(r, { _: ['log', 'B-09'], status: 'done' }), /no task B-09/);
   assert.throws(() => C.applyLog(r, { _: ['log', 'B-01'] }), /nothing to log/);
   // A deploy, a decision.
-  const d = C.applyLog(r, {
+  C.applyLog(r, {
     _: ['log', 'deploy'],
     target: 'staging',
     commit: '2222222',
@@ -109,7 +106,6 @@ test('B-93: log changes one task and refuses what it must', () => {
     summary: 'two',
     time: '2026-10-19T21:05:00-05:00',
   });
-  assert.deepEqual(d.views, ['changelog']);
   assert.throws(() => C.applyLog(r, { _: ['log', 'deploy'], target: 'live', commit: '2222222' }), /--ok Matt/);
   assert.throws(() => C.applyLog(r, { _: ['log', 'decision', 'D-009'], title: 'x' }), /next free decision id is D-003/);
   C.applyLog(r, {
@@ -121,36 +117,6 @@ test('B-93: log changes one task and refuses what it must', () => {
   });
   assert.equal(r.decisions[0].id, 'D-003');
   assert.equal(r.decisions.find(x => x.id === 'D-002').status, 'superseded');
-});
-
-test('B-93: the Changelog gets a row per logged deploy, newest on top; imported rows are never re-added', () => {
-  const r = sample();
-  const read = C.parseTableXml(
-    `<doc node='CN' rev='4'><table id='s1.20'><row id='.21'>${cellX('.22', 'Date')}${cellX('.23', 'Change')}${cellX('.24', 'Why')}${cellX('.25', 'Decision')}</row><row id='.31'>${cellX('.32', 'Oct 19')}${cellX('.33', 'old row')}${cellX('.34', 'w')}${cellX('.35', 'D-002')}</row></table></doc>`
-  );
-  assert.deepEqual(C.changelogCalls(r, read), []);
-  C.applyLog(r, {
-    _: ['log', 'deploy'],
-    target: 'staging',
-    commit: '2222222abc',
-    verify: 'green',
-    tasks: 'B-02',
-    summary: 'the second task',
-    time: '2026-10-19T21:05:00-05:00',
-    decisions: 'D-002',
-  });
-  const [call] = C.changelogCalls(r, read);
-  const op = call.args.payload.ops[0];
-  assert.deepEqual([op.op, op.target.ids, op.side], ['insert', ['s1.21'], 'after']);
-  assert.deepEqual(
-    op.source.from.content[0].content.map(c => c.content[0].content[0].text),
-    [
-      'Oct 19',
-      'v4 staging deployed at 2222222 (21:05 CT): the second task (B-02). verify-deploy staging GREEN. Live stays where it is',
-      'The B-35 gate: staging first',
-      'D-002',
-    ]
-  );
 });
 
 test('B-93: log writes the record, regenerates BACKLOG.md and commits both, nothing else', () => {
@@ -184,7 +150,7 @@ test('B-93: log writes the record, regenerates BACKLOG.md and commits both, noth
   assert.equal(fs.readFileSync(path.join(dir, 'BACKLOG.md'), 'utf8'), C.renderBacklog(C.loadChart(dir)));
 });
 
-test('B-143 (D-172): DECISIONS.md and CHANGELOG.md are generated from chart/ like BACKLOG.md; views prints no Docs call', () => {
+test('B-143 (D-172): DECISIONS.md and CHANGELOG.md are generated from chart/ like BACKLOG.md', () => {
   const r = rec();
   for (const [f, text] of Object.entries(C.generatedFiles(r)))
     assert.equal(
@@ -207,11 +173,6 @@ test('B-143 (D-172): DECISIONS.md and CHANGELOG.md are generated from chart/ lik
   );
   assert.deepEqual({ by: r.views.retired.by, at: r.views.retired.at }, { by: 'D-172', at: '2026-10-21' });
   assert.ok(r.views.board.node && r.views.decisions.node, 'the doc ids are kept');
-  const out = execFileSync('node', [path.join(ROOT, 'tools', 'chart.mjs'), 'views', '--root', RECORD], {
-    encoding: 'utf8',
-  });
-  assert.match(out, /^views: retired \(D-172, 2026-10-21\): .* no Docs calls\n$/);
-  assert.doesNotMatch(out, /mcp__|Claude_Docs/);
 });
 
 test('BACKLOG.md is generated from chart/ (no hand edits)', () => {
@@ -979,50 +940,6 @@ test('B-109: plan files a Tenets proposed table with scope and check, numbered w
       ),
     /P-2 needs a check/
   );
-  // The Decisions tab: a new tenet's row says so; an existing row given the kind is relabelled.
-  r.views = {
-    ...r.views,
-    decisions: {
-      node: 'DN',
-      table: 'DT',
-      statusEnum: 'E2',
-      statusOptions: ['Accepted', 'Proposed', 'Superseded', 'Revisit'],
-    },
-  };
-  const tab = {
-    rev: 9,
-    rows: [
-      { id: 'h', cells: ['Date', 'Id', 'Decision', 'Why', 'Status'].map(text => ({ text })) },
-      ...['D-002', 'D-001'].map(d => ({
-        id: d,
-        cells: ['Oct 19', d, d === 'D-002' ? 'two' : 'one', '', d === 'D-002' ? 'Accepted' : 'Superseded'].map(
-          text => ({ text, option: ['Accepted', 'Superseded'].includes(text) ? text : undefined })
-        ),
-      })),
-    ],
-  };
-  r.decisions.find(d => d.id === 'D-002').kind = 'tenet';
-  Object.assign(
-    r.decisions.find(d => d.id === 'D-002'),
-    { scope: ['ops'], check: 'lint' }
-  );
-  const calls = C.decisionsCalls(r, tab, null);
-  assert.equal(calls.length, 1);
-  const ops = calls[0].args.payload.ops,
-    ins = ops.find(o => o.op === 'insert'),
-    rel = ops.find(o => o.op === 'replace' && o.target.col === 2);
-  assert.deepEqual(
-    ins.source.from.content.map(x => x.content[2].content[0].content[0].text),
-    [
-      'Tenet (ui, data; checked by review): Words before icons',
-      'Tenet (ui; checked by harness): One primary action per screen',
-      'The greeting moves up',
-    ]
-  );
-  assert.deepEqual(
-    [rel.target.row, rel.with.from.content],
-    [1, 'Tenet (ui, data; checked by lint): two'.replace('ui, data', 'ops')]
-  );
 });
 
 test('B-109: the review skill checks the diff against the tenets in scope; CLAUDE.md says how a tenet changes', () => {
@@ -1252,35 +1169,6 @@ test('log rule takes the next free id, on a decision in the record; --fn names t
   });
 });
 
-test('two new deploys reach the Changelog as one insert, newest first (Docs refuses two inserts on one anchor)', () => {
-  const r = sample();
-  C.applyLog(r, {
-    _: ['log', 'deploy'],
-    target: 'staging',
-    commit: '3333333',
-    verify: 'green',
-    tasks: 'B-02',
-    time: '2026-10-19T20:00:00-05:00',
-  });
-  C.applyLog(r, {
-    _: ['log', 'deploy'],
-    target: 'staging',
-    commit: '4444444',
-    verify: 'green',
-    tasks: 'B-03',
-    time: '2026-10-19T20:05:00-05:00',
-  });
-  const read = { rev: 1, rows: [{ id: 's1.20', cells: [{ text: 'Date' }, { text: 'Change' }] }] };
-  const [call] = C.changelogCalls(r, read);
-  assert.equal(call.args.payload.ops.length, 1);
-  assert.deepEqual(
-    call.args.payload.ops[0].source.from.content.map(
-      row => row.content[1].content[0].content[0].text.match(/at (\d{7})/)[1]
-    ),
-    ['4444444', '3333333']
-  );
-});
-
 test('log sets depends on a filed task, and an open task joins another (the v4.1 review, Oct 21)', () => {
   const r = sample();
   const out = C.applyLog(r, { _: ['log', 'B-03'], depends: 'B-01, B-02' });
@@ -1306,97 +1194,16 @@ test("log rewrites a task's definition of done or title outside triage", () => {
   assert.deepEqual([r.tasks[2].dod, r.tasks[2].title], ['a new definition', 'a new title']);
 });
 
-test('a decision filed with a source (log --source, plan) still gets its Decisions row; an imported one is left alone', () => {
+test('a decision restated after it was filed is marked with the date (Oct 20)', () => {
   const r = sample();
-  r.views = {
-    ...r.views,
-    decisions: { node: 'DN', table: 's1.30', statusEnum: 'E2', statusOptions: ['Accepted', 'Proposed', 'Superseded'] },
-  };
-  C.applyLog(r, { _: ['log', 'decision', 'D-003'], title: 'three', status: 'accepted', source: 'plan DOC P-1' });
-  const read = {
-    rev: 1,
-    rows: [
-      {
-        id: 's1.31',
-        cells: [{ text: 'Date' }, { text: 'Id' }, { text: 'Decision' }, { text: 'Why' }, { text: 'Status' }],
-      },
-    ],
-  };
-  const [call] = C.decisionsCalls(r, read, null);
-  assert.match(call.step, /^Decisions: D-003: a new row$/, 'D-001 and D-002 (imported, no source) are not re-added');
-  C.applyLog(r, { _: ['log', 'decision', 'D-004'], title: 'four', status: 'accepted', source: 'log' });
-  const two = C.decisionsCalls(r, read, null)[0].args.payload.ops;
-  assert.equal(two.filter(o => o.op === 'insert').length, 1, 'one insert for two new rows');
-  assert.deepEqual(
-    two[0].source.from.content.map(row => row.content[1].content[0].content[0].text),
-    ['D-004', 'D-003'],
-    'newest first'
-  );
-});
-
-test('a decision restated after it was filed carries its new title and why to the Decisions tab (Oct 20)', () => {
-  const r = sample();
-  r.views.decisions = {
-    node: 'DN',
-    table: 's1.40',
-    statusEnum: 'E2',
-    statusOptions: ['Accepted', 'Revisit', 'Superseded', 'Proposed'],
-  };
-  const dcell = (id, t, i) =>
-    `<cell id='${id}'><paragraph id='${id}p'>${i != null ? `<dropdown id='${id}d' enum='E2' index='${i}'>${t}</dropdown>` : `<text id='${id}t'>${t}</text>`}</paragraph></cell>`;
-  const row = (id, d, t, w, st, i) =>
-    `<row id='${id}'>${dcell(id + '1', 'Oct 18')}${dcell(id + '2', d)}${dcell(id + '3', t)}${dcell(id + '4', w)}${dcell(id + '5', st, i)}</row>`;
-  const d1 = r.decisions.find(d => d.id === 'D-001'),
-    d2 = r.decisions.find(d => d.id === 'D-002');
-  const read = C.parseTableXml(
-    `<doc rev='7'><table id='s1.40'>${row('.41', 'ID', 'Decision', 'Why', 'Status')}${row('.50', 'D-002', d2.title, d2.why || '', 'Proposed', 3)}${row('.60', 'D-001', d1.title, d1.why || '', 'Superseded', 2)}</table></doc>`
-  );
-  r.decisions.find(d => d.id === 'D-002').status = 'proposed';
-  assert.equal(C.decisionsCalls(r, read, null).length, 0, 'in step before the restatement');
   C.applyLog(
     r,
     { _: ['log', 'decision', 'D-002'], title: 'two, folding', why: 'restated', status: 'accepted' },
     { now: '2026-10-21T03:00:00Z' }
   );
   assert.equal(r.decisions.find(d => d.id === 'D-002').restated, 'Oct 20');
-  const ops = C.decisionsCalls(r, read, null)[0].args.payload.ops;
-  assert.deepEqual(
-    ops.map(o => [o.target.row, o.target.col, o.ifRev, o.with.from.content]),
-    [
-      [1, 2, 7, 'two, folding'],
-      [1, 3, 7, 'restated'],
-      [1, 4, 7, '<?claude block st?>'],
-    ]
-  );
   C.applyLog(r, { _: ['log', 'decision', 'D-001'], title: 'one', status: 'superseded' });
   assert.ok(!r.decisions.find(d => d.id === 'D-001').restated, 'the same words restate nothing');
-});
-
-test('B-93: a Decisions call replaces cells before it inserts a row above them', () => {
-  const r = sample();
-  r.views.decisions = {
-    node: 'DN',
-    table: 's1.40',
-    intro: 's1.39',
-    statusEnum: 'E2',
-    statusOptions: ['Accepted', 'Revisit', 'Superseded', 'Proposed'],
-  };
-  const dcell = (id, t, i) =>
-    `<cell id='${id}'><paragraph id='${id}p'>${i != null ? `<dropdown id='${id}d' enum='E2' index='${i}'>${t}</dropdown>` : `<text id='${id}t'>${t}</text>`}</paragraph></cell>`;
-  const row = (id, d, st, i) =>
-    `<row id='${id}'>${dcell(id + '1', 'Oct 18')}${dcell(id + '2', d)}${dcell(id + '3', 't')}${dcell(id + '4', 'w')}${dcell(id + '5', st, i)}</row>`;
-  const read = C.parseTableXml(
-    `<doc rev='5'><table id='s1.40'>${row('.41', 'ID', 'Status')}${row('.50', 'D-002', 'Accepted', 0)}${row('.60', 'D-001', 'Accepted', 0)}</table></doc>`
-  );
-  C.applyLog(r, { _: ['log', 'decision', 'D-003'], title: 'three', status: 'accepted', supersedes: 'D-001' });
-  const ops = C.decisionsCalls(r, read, null)[0].args.payload.ops;
-  assert.deepEqual(
-    ops.map(o => [o.op, o.target.row || null]),
-    [
-      ['replace', 2],
-      ['insert', null],
-    ]
-  );
 });
 
 test('B-138 (D-180): brief leads with the live health/current age from a saved read, stale past staleHours, or the read to make', () => {
