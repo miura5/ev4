@@ -5322,7 +5322,7 @@
    "B-297",
    "B-234"
   ],
-  "notes": "",
+  "notes": "Matt, Oct 24: after exams, with the weak-spot work (B-232 to B-235); the redesign goes live without this screen.",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
@@ -5337,7 +5337,7 @@
    "B-298",
    "B-235"
   ],
-  "notes": "",
+  "notes": "Matt, Oct 24: after exams, with the weak-spot work (B-232 to B-235); the redesign goes live without this screen.",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
@@ -5355,7 +5355,7 @@
    "B-234",
    "B-235"
   ],
-  "notes": "",
+  "notes": "Matt, Oct 24: after exams, with the weak-spot work (B-232 to B-235); the redesign goes live without this screen.",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
@@ -5400,12 +5400,11 @@
    "B-294",
    "B-295",
    "B-296",
-   "B-299",
-   "B-300",
+   "B-297",
    "B-301",
    "B-302"
   ],
-  "notes": "",
+  "notes": "Matt, Oct 24: the redesign goes live without the three Study screens that wait on the weak-spot work (B-298, B-299, B-300); those follow after exams with B-232 to B-235. The sweep no longer waits on them.",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },

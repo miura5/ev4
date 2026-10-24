@@ -1,5 +1,17 @@
 [
  {
+  "id": "D-294",
+  "date": "Oct 24",
+  "title": "D-228 is closed as covered: its sidebar clause is D-292, and the rest (each thing shows once on a screen; the right panel holds what the view doesn't) is D-245. Supersedes D-228.",
+  "why": "Matt, Oct 24, on the record audit: a rule built in code but still marked proposed never reaches the reviewer; the accepted decisions already carry it.",
+  "status": "accepted",
+  "supersedes": [
+   "D-228"
+  ],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-293",
   "date": "Oct 24",
   "title": "Her view is named \"E.V.\" everywhere: the tab bar, the sidebar and the header; on the phone its tab is her 24 px avatar. Amends D-275's view table, which named it Conversation.",
@@ -774,7 +786,7 @@
   "date": "Oct 22",
   "title": "Each thing shows once on a screen: the sidebar, the pane and the right panel never show the same item twice; the panel holds what the view doesn't, and the sidebar's Today steps aside while Today is the view",
   "why": "Flag 4: in the prototype at 1706, Exam 4 showed twice and the insulin drill up to three times on one screen; Linear's project page drops its Activity block from the panel while the Activity tab is open (captures 17 and 19)",
-  "status": "proposed",
+  "status": "superseded",
   "supersedes": [],
   "amends": [],
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z P-2",
