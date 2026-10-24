@@ -4949,7 +4949,7 @@
   "depends": [
    "B-271"
   ],
-  "notes": "tests green (npm test, smoke 28 of 28); touched check GREEN (every harness; look 0 fails); pushed",
+  "notes": "shipped to staging GREEN at 2750dce; review next",
   "commit": null,
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
