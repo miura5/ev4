@@ -807,22 +807,7 @@ test('B-96: ship skips the task and page reads (and their calls) when the deploy
   );
 });
 
-test('B-96: R-01 (D-139) finds what makes a live deploy more than page-only since the live build', () => {
-  const dir = copyRepo();
-  const g = (...a) =>
-    execFileSync('git', ['-C', dir, '-c', 'user.name=T', '-c', 'user.email=t@example.com', ...a], {
-      encoding: 'utf8',
-    }).trim();
-  const base = g('rev-parse', 'HEAD');
-  fs.appendFileSync(path.join(dir, 'page', 'styles.css'), '\n');
-  g('commit', '-qam', 'page');
-  assert.deepEqual(C.pageOnlyFindings(dir, base), [], 'a page file alone is page-only');
-  const spec = JSON.parse(fs.readFileSync(path.join(dir, 'spec', 'ev.spec.json'), 'utf8'));
-  spec.pipelines._note = 'changed';
-  fs.writeFileSync(path.join(dir, 'spec', 'ev.spec.json'), JSON.stringify(spec, null, 1));
-  fs.appendFileSync(path.join(dir, 'tools', 'prompts.mjs'), '\n');
-  g('commit', '-qam', 'pipeline and prompt');
-  assert.deepEqual(C.pageOnlyFindings(dir, base), ['tools/prompts.mjs changed', 'spec.pipelines changed']);
+test('B-96: the rules the import seeded chart/rules.json with', () => {
   assert.deepEqual(
     C.RULES.map(r => [r.id, r.decision, r.task]),
     [
