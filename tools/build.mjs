@@ -293,8 +293,7 @@ export function pageSpecFor(spec, schemas, { target, release }) {
       ),
     persona: () => spec.persona || null,
     // ui.tenets is the look pass's (test/harness/look.cjs reads it from the spec), not the page's.
-    // B-206 (D-212): her renderer reads ui.look.flower; of the retired Silk core (B-205) the page keeps only the stage
-    // sizes it still lays her out by.
+    // Of ui.look.flower (B-276) and the retired Silk core (B-205) the page keeps only the stage sizes it lays her out by.
     ui: () =>
       Object.fromEntries(
         Object.entries(spec.ui)
@@ -305,10 +304,8 @@ export function pageSpecFor(spec, schemas, { target, release }) {
               ? {
                   ...v,
                   core: { sizes: v.core.sizes },
-                  // her inks are the stylesheet's (--f-*), her budget the harness's
-                  flower: Object.fromEntries(
-                    Object.entries(v.flower).filter(([n]) => !['inks', 'budget', 'reducedMotion'].includes(n))
-                  ),
+                  // her budget is the harness's
+                  flower: { sizes: v.flower.sizes },
                 }
               : v,
           ])

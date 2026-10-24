@@ -147,7 +147,7 @@ function judge(s, exceptions = {}) {
   ];
 }
 
-/** In the page (B-125, D-230): every CSS transition and animation declared on the bar and the tab on screen, with the
+/** In the page (B-125, D-271): every CSS transition and animation declared on the bar and the tab on screen, with the
  * ones longer than maxMs (delay included) outside the exempt elements (her stage, her core and the header avatar, the
  * reveal, the echo of his line); and whether the tab has settled: nothing finite still running, the panel opaque.
  * Self-contained; the look pass calls it right after a switch and again at maxMs. */
@@ -221,14 +221,14 @@ function motion({ maxMs, exempt }) {
   };
 }
 
-/** D-230 on two motion reads: the one taken at the switch and the one taken maxMs after it. */
+/** D-271 on two motion reads: the one taken at the switch and the one taken maxMs after it. */
 function judgeMotion(atSwitch, settled, maxMs = 450) {
   const over = [...new Set([...(atSwitch.over || []), ...(settled.over || [])])];
-  // B-225 (D-230): a view switch is a cut: full opacity on the first read after the tap, not only once settled.
+  // B-225 (D-271): a view switch is a cut: full opacity on the first read after the tap, not only once settled.
   const cut = atSwitch.opacity == null || atSwitch.opacity >= 0.999;
   const ok = !over.length && !settled.running.length && settled.opacity >= 0.999 && cut;
   return {
-    tenet: 'D-230',
+    tenet: 'D-271',
     ok,
     detail: `${over.length ? 'over ' + maxMs + ' ms: ' + over.slice(0, 6).join('; ') + (over.length > 6 ? ` (+${over.length - 6})` : '') : `nothing over ${maxMs} ms (${atSwitch.declared} declared)`}; at ${maxMs} ms ${settled.running.length ? 'still running: ' + settled.running.slice(0, 4).join(', ') : 'settled'}, opacity ${settled.opacity}${cut ? '' : '; at the tap the view was still fading in (opacity ' + atSwitch.opacity + ')'}`,
   };

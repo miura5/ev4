@@ -65,7 +65,7 @@
     }
     addEventListener('resize', () => placeSegs(ui.tab));
     function enter(node) {
-      // B-225 (D-230): the view shows at once, a cut: .enter carries no animation; it only marks the switch
+      // B-225 (D-271): the view shows at once, a cut: .enter carries no animation; it only marks the switch
       if (!node) return;
       node.classList.remove('enter');
       void node.offsetWidth;

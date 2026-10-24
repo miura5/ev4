@@ -1384,7 +1384,7 @@ const ok = (name, cond, detail = '') => {
       await page.locator('#weekly').screenshot({ path: `${shots}/recap-${scheme}.png` });
       await page.evaluate(() => scrollTo(0, 0));
     }
-    // B-225 (D-230): a switch is a cut: the tab at full opacity on the tap frame, no fade, its cards do not rise.
+    // B-225 (D-271): a switch is a cut: the tab at full opacity on the tap frame, no fade, its cards do not rise.
     ok(
       `[${scheme}] switching tabs shows the tab at once: a cut, nothing rising`,
       await page.evaluate(() => {

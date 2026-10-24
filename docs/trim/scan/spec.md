@@ -8,7 +8,7 @@ that commit. Sizes are lines in the file as written (indent 1, 5,548 lines in al
 `tools/chart.mjs`, `tools/guard.mjs`, `tools/hooks.mjs`, `core/links.mjs`). `EV.configure(spec)` (core/evcore.mjs)
 deep-merges `constants` over its own `DEFAULTS` and keeps the rest for lazy reads. The page never gets the whole spec:
 `tools/build.mjs` `PAGE_SPEC_KEYS` picks sections, trims some (pipelines to lane, purpose and step count; `ui` without
-`tenets`, `look.core` cut to `sizes`, `look.flower` without `inks`, `budget`, `reducedMotion`; `actions` without
+`tenets`, `look.core` cut to `sizes`, `look.flower` cut to `sizes`; `actions` without
 `does`) and drops every `_`-key. Scheduled-task prompts are rendered from `pipelines` and `boundaries.rules[].prompt` by
 `tools/prompts.mjs`. Two sections are also published into the record as system documents: `environments`
 (`system/environments`) and `capacity.system`.
@@ -42,7 +42,7 @@ the record (`environments`). They are mapped here for the picture; findings in t
 | actions | The nine actions: args, writes, effects, callers, cost | 602 | core/actions.mjs; the page's actor (04-model) validates every call; build.mjs checks every row |
 | persona | E.V.'s name, unit, role, voice, never-list, tagline, avatar | 56 | page 60, 72 (name to never); avatar: look harnesses only; tagline: nothing |
 | items | Question types and fields, clinical-judgment steps, writing guide, units, dosage, open answers | 92 | item-kinds.mjs, steps.mjs; page 05, 20 (open, dosage, units, writingGuide). types, fields, cjSteps, cjStepLabels: nothing |
-| ui | tabs, kit, rules, conversation, look (flower 564, retired core 290), page (shell, files, capabilities, subscribe), tenets | 1,218 | build.mjs (page.shell, files, capabilities, subscribe); page (flower, core.sizes, two conversation numbers, subscribe); look harnesses (tenets) |
+| ui | tabs, kit, rules, conversation, look (flower about 40 since B-276, retired core 290), page (shell, files, capabilities, subscribe), tenets | 1,218 | build.mjs (page.shell, files, capabilities, subscribe); page (flower, core.sizes, two conversation numbers, subscribe); look harnesses (tenets) |
 | workouts | Skills-practice sequences | 76 | skills.mjs |
 
 Of `ui`'s 1,218 lines, about 640 are values code reads (flower without its test-only keys, page, two conversation
@@ -119,7 +119,7 @@ Keep, and why they look big:
 
 - **pipelines** (968): run.mjs executes them and every task prompt is rendered from them.
 - **actions** (602): the page's actor validates every call against it; guarded.
-- **ui.look.flower** (564): her renderer's values; `inks` could later move to the stylesheet that already stands in.
+- **ui.look.flower** (about 40 since B-276): her stage sizes, which the page reads, and her frame budget, which the core harness reads; the forget-me-not's drawing values went with B-276.
 - **collections** (548): derive, lint and the schema cross-check run on it.
 - **links** (225): every row is checked against the schemas at build.
 - **capacity.collections** (233): read by derive, evcore and the page, though only 5 of 33 have a number; collapsing

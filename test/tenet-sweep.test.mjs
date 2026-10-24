@@ -1,8 +1,8 @@
-// B-217: the sweep after D-230, D-224, D-225 and the Oct 22 grey-interface tenet (itself now superseded by D-270)
-// superseded the four tenets in GONE. No open task, rule or
-// test cites a superseded tenet as current (history may name it, marked as such), and the checks hold to the new
-// tenets' words: violet retired (its tokens are grey), two clocks (test/interface-motion.test.mjs), a 0.16 s settle,
-// and the 680 px reading cap (the look pass measures it).
+// B-217: the sweep after four Oct 22 tenets (D-225 and three since superseded themselves: the two motion tenets by
+// D-271 and D-272, swept by B-276 below; the grey interface by D-270) superseded the four tenets in GONE. No open task,
+// rule or test cites a superseded tenet as current (history may name it, marked as such), and the checks hold to the
+// new tenets' words: violet retired, one clock (test/interface-motion.test.mjs), a 0.16 s settle, and the 680 px
+// reading cap (the look pass measures it).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -95,8 +95,57 @@ test('B-275: page/ and test/ hold none of the old teal, amber, coral or forget-m
   assert.deepEqual(bad, []);
 });
 
-test("B-217 (D-230, D-225 and the grey-interface tenet): spec.ui.tenets' checks cite the new tenets", () => {
+test("B-217 (D-225 and the tenets since superseded): spec.ui.tenets' checks cite the new tenets", () => {
   const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
   const checks = JSON.stringify((spec.ui && spec.ui.tenets) || {});
   assert.equal(OLD.test(checks.replace(/[^"]*(superseded|history|was D-)[^"]*/gi, '')), false);
+});
+
+// B-276: the sweep for D-271 and D-272, which took the place of the two Oct 22 motion tenets (two clocks, her own a
+// stepped one, and a cap on how often she draws). Their ids are written here by number only, so this file cites neither:
+// the Chart lint fails any test that names a superseded tenet at all, history or not. No test names them, no open task
+// but the sweep names them without the new ones, spec.ui.tenets does not, and page/ and test/ keep no word of the old
+// stepped clock or its cap.
+const MOTION_GONE = new RegExp(`\\bD-(${['230', '224'].join('|')})\\b`);
+const MOTION_NEW = /\bD-(271|272)\b/;
+const HELD = new RegExp(
+  [
+    'he' + 'ld[- ]?frames?',
+    'he' + 'ldFps',
+    'minHo' + 'ldFrames',
+    'maxRedr' + 'awsPerSec',
+    '\\b8 ?fps\\b',
+    'eight (drawings|times) a second',
+  ].join('|'),
+  'i'
+);
+
+test('B-276: no test cites the two superseded motion tenets, and no open task but with the tenets that replaced them', () => {
+  const bad = sources(['test', 'test/harness'])
+    .filter(([, text]) => MOTION_GONE.test(text))
+    .map(([f]) => f);
+  assert.deepEqual(bad, []);
+  const tasks = JSON.parse(fs.readFileSync(path.join(ROOT, 'chart/tasks.json'), 'utf8'));
+  const list = Array.isArray(tasks) ? tasks : tasks.tasks || Object.values(tasks);
+  const open = list.filter(t => {
+    if (!t || !['open', 'in progress', 'blocked'].includes(t.status)) return false;
+    const text = [t.title, t.dod, ...(Array.isArray(t.notes) ? t.notes : [t.notes || ''])].join(' ');
+    return MOTION_GONE.test(text) && !MOTION_NEW.test(text);
+  });
+  assert.deepEqual(
+    open.map(t => t.id),
+    []
+  );
+  const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
+  assert.equal(MOTION_GONE.test(JSON.stringify(spec.ui.tenets || {})), false, "spec.ui.tenets' checks cite D-271");
+});
+
+test('B-276: page/ and test/ keep no word of her old stepped clock or its cap', () => {
+  const bad = sources(['page', 'page/app', 'test', 'test/harness']).flatMap(([f, text]) =>
+    text
+      .split('\n')
+      .map((line, i) => (HELD.test(line) ? `${f}:${i + 1}: ${line.trim().slice(0, 120)}` : null))
+      .filter(Boolean)
+  );
+  assert.deepEqual(bad, []);
 });

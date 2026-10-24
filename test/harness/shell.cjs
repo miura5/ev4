@@ -512,7 +512,7 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
         );
       }
   }
-  // B-225 (D-230): a fold opens in at most 0.28 s and closes in at most 0.16 s (the chevron of her briefing line and of
+  // B-225 (D-271): a fold opens in at most 0.28 s and closes in at most 0.16 s (the chevron of her briefing line and of
   // a surface's head line, each read in its open and its closed state), at 390 and 1280.
   for (const w of [390, 1280]) {
     const { page } = await open(browser, { viewport: { width: w, height: 844 } });
@@ -538,7 +538,7 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
     };
     const brief = await fold('#thread .brief-row', '#thread .brief-row .chev');
     ok(
-      `[${w}] a fold opens in 0.28 s and closes in 0.16 s (D-230)`,
+      `[${w}] a fold opens in 0.28 s and closes in 0.16 s (D-271)`,
       !!brief && brief.open > 0 && brief.open <= 280 && brief.closed > 0 && brief.closed <= 160,
       JSON.stringify({ brief })
     );

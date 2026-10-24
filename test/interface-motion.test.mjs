@@ -1,7 +1,7 @@
-// B-216 (D-230): two clocks. She moves on held frames inside her own module (page/app/60-ev-conversation.js); every
-// other part of the interface moves at full frame rate with short eases: a view settles within 0.16 s, a fold takes
-// 0.28 s, nothing runs over 0.45 s (an indicator that loops, a spinner or a pulse, is not a move), no stepped timing,
-// and reduced motion keeps the end states with no movement.
+// B-216, B-276 (D-271): one clock. She (page/app/60-ev-conversation.js) and the rest of the interface move at the
+// display's rate: no stepped timing anywhere; a view switch is a cut, a fold opens in 0.28 s and closes in 0.16 s,
+// nothing in the interface runs over 0.45 s (an indicator that loops, a spinner or a pulse, is not a move); and reduced
+// motion (B-224) keeps the end states with no movement.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -27,13 +27,13 @@ export function timings(text) {
   return out;
 }
 
-test('B-216 (D-230): no stepped timing outside her module', () => {
+test('B-276 (D-271): no stepped timing anywhere, her module included', () => {
   assert.equal(/steps\s*\(/.test(css), false, 'styles.css uses steps()');
-  const stepped = appFiles.filter(([f, t]) => f !== HER && /steps\(\s*\d/.test(t)).map(([f]) => f);
+  const stepped = appFiles.filter(([, t]) => /steps\(\s*\d/.test(t)).map(([f]) => f);
   assert.deepEqual(stepped, []);
 });
 
-test('B-216 (D-230): no interface move runs over 0.45 s (a looping indicator aside)', () => {
+test('B-216 (D-271): no interface move runs over 0.45 s (a looping indicator aside)', () => {
   const long = timings(css).filter(t => !t.loops && t.secs.some(s => s > 0.45));
   assert.deepEqual(
     long.map(t => `${t.prop}: ${t.value}`),
@@ -41,7 +41,7 @@ test('B-216 (D-230): no interface move runs over 0.45 s (a looping indicator asi
   );
 });
 
-test('B-225 (D-230): a view switch is a cut; folds open in 0.28 s and close in 0.16 s', () => {
+test('B-225 (D-271): a view switch is a cut; folds open in 0.28 s and close in 0.16 s', () => {
   assert.doesNotMatch(css, /\.panel\.enter\{animation/, 'no fade on a view switch');
   const hero = css.match(/body\.captions \.hero,[^{]*\{[^}]*transition:height ([\d.]+)s/);
   assert.ok(hero && Number(hero[1]) === 0.28, "her stage's fold opens in 0.28 s: " + (hero && hero[1]));
@@ -50,7 +50,7 @@ test('B-225 (D-230): a view switch is a cut; folds open in 0.28 s and close in 0
   assert.match(css, /\[aria-expanded="true"\] \.chev[^{]*\{transition-duration:\.28s\}/, 'and opens in 0.28 s');
 });
 
-test('B-216 (D-230): reduced motion stops every interface move and keeps the end states', () => {
+test('B-216 (B-224): reduced motion stops every interface move and keeps the end states', () => {
   assert.match(
     css,
     /@media \(prefers-reduced-motion:reduce\)\{\*,\*::before,\*::after\{transition:none!important;animation:none!important\}\}/

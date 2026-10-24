@@ -1,5 +1,5 @@
-// core/motion.mjs (B-76): history since D-212 and D-224 superseded D-134 and D-135 (the flower draws her; its budget is
-// D-224's, spec.ui.look.flower.budget). These pin the retired Silk core v2's speech envelope, gesture blend, springs, size steps and step-down,
+// core/motion.mjs (B-76): history since D-134 and D-135 were superseded (the Dial Arc draws her, D-265; her budget is
+// D-272's, spec.ui.look.flower.budget). These pin the retired Silk core v2's speech envelope, gesture blend, springs, size steps and step-down,
 // driven frame by frame with the spec's own parameters (spec.ui.look.core), and spec.ui.look.core validated.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -227,7 +227,7 @@ test('the step-down: more than 10% of frames over 25 ms in a rolling 2 s turns w
   assert.deepEqual(
     { w: D.windowSec, ms: D.slowFrameMs, share: D.maxSlowShare },
     { w: 2, ms: 25, share: 0.1 },
-    'the retired core v2 step-down (history; D-224 is the budget now)'
+    'the retired core v2 step-down (history; D-272 is the budget now)'
   );
   const run = (ms, secs) => {
     for (const end = t + secs * 1000; t < end; t += ms) st = MO.stepDownStep(st, ms, t, P);
@@ -313,7 +313,7 @@ test('spec.ui.look.core (history since D-212): every core v2 parameter, the seve
   assert.deepEqual(
     { ms: P.frameBudget.slowFrameMs, share: P.frameBudget.maxSlowShare, d: P.frameBudget.p95CoreDrawMs },
     { ms: 25, share: 0.05, d: 8 },
-    'the retired core v2 budget (history; D-224 holds the flower to its own)'
+    'the retired core v2 budget (history; D-272 holds her to her own)'
   );
   // The retired core v2's palette (history, not the page's colours: D-270): teal and violet, coral for the error.
   assert.deepEqual(P.palette.a, [36, 214, 186]);

@@ -17,7 +17,7 @@
   "core-frame-budget": {
    "since": "2026-10-21",
    "by": "D-176",
-   "what": "her frame budget at 4x CPU, DPR 3 (D-224, was D-135): slow-frame share and drawings a second over 10 s of speech; the Silk step-down went with its renderer (B-206)"
+   "what": "her frame budget at 4x CPU, DPR 3 (D-272): slow-frame share over 10 s of speech, and an idle that draws no frame; the Silk step-down went with its renderer (B-206)"
   }
  }
 }
