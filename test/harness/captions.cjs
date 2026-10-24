@@ -2022,9 +2022,13 @@ async function sideBySide(browser, left, right, out, vp) {
           await openPage(page, state === 'session' ? inSession() : seed);
           if (state === 'session')
             await page
-              .waitForFunction(() => document.getElementById('hero').dataset.step === 'session', null, {
-                timeout: 8000,
-              })
+              .waitForFunction(
+                () => ['session', 'surface'].includes(document.getElementById('hero').dataset.step),
+                null,
+                {
+                  timeout: 8000,
+                }
+              )
               .catch(() => {});
           else await send(page, 'explain preload', REPLY);
           await page.waitForTimeout(2500);
@@ -2032,6 +2036,7 @@ async function sideBySide(browser, left, right, out, vp) {
             const av = document.querySelector('#hero .ev-av'),
               root = getComputedStyle(document.documentElement),
               c1 = av && av.querySelector('.c1'),
+              c2 = av && av.querySelector('.c2'),
               size = sel => {
                 const e = document.querySelector(sel);
                 return e ? getComputedStyle(e).fontSize : null;
@@ -2042,8 +2047,10 @@ async function sideBySide(browser, left, right, out, vp) {
               now: size('#thread .msg.ev.current .bubble'),
               past: size('#thread .msg.ev:not(.current) .bubble'),
               face: c1 && getComputedStyle(c1).fill,
+              back: c2 && getComputedStyle(c2).fill,
               av1: root.getPropertyValue('--av1').trim(),
-              her: root.getPropertyValue('--her').trim(),
+              av2: root.getPropertyValue('--av2').trim(),
+              accent: root.getPropertyValue('--accent').trim(),
             };
           });
           const want = state === 'session' ? Math.round(idle * FZ.sessionShare) : idle;
@@ -2059,14 +2066,20 @@ async function sideBySide(browser, left, right, out, vp) {
               JSON.stringify(v)
             );
           const hex = c =>
-            '#' +
-            (String(c).match(/\d+/g) || [])
-              .slice(0, 3)
-              .map(n => (+n).toString(16).padStart(2, '0'))
-              .join('');
+            /^#/.test(String(c))
+              ? String(c).toLowerCase()
+              : '#' +
+                (String(c).match(/\d+/g) || [])
+                  .slice(0, 3)
+                  .map(n => (+n).toString(16).padStart(2, '0'))
+                  .join('');
           ok(
             `[stage ${tag} ${scheme} ${state}] her faces come from her own palette, not the accent (C-15)`,
-            !!v.face && hex(v.face) === v.av1.toLowerCase() && v.av1.toLowerCase() !== v.her.toLowerCase(),
+            !!v.face &&
+              !!v.back &&
+              hex(v.face) === v.av1.toLowerCase() &&
+              hex(v.back) === v.av2.toLowerCase() &&
+              ![hex(v.face), hex(v.back)].includes(hex(v.accent)),
             JSON.stringify(v)
           );
           await page.screenshot({ path: `${shots}/stage-${tag}-${scheme}-${state}.png` });
