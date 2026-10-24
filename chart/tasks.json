@@ -5166,7 +5166,7 @@
   "depends": [
    "B-285"
   ],
-  "notes": "Card for Matt (D-261). What changes when you study: the top bar of every view now ends with New. Tap it for Task for Today or Note; each opens a small window where you type and press Enter. A task appears on today's list at once; a note goes to Record under Ideas, with no course. Esc or a tap outside closes it and keeps what you typed. Today's own Add box is gone, and her view is called E.V. in the top bar at every width. Why: one way to create (hand-off correction C-7) and one name for her view (C-4). Touches: the top bar on every view, Today's list, Record's ideas. What could break: adding to Today (you'd see the item not appear, or a 'Couldn't save' line; the window then reopens with your words). Size: small to medium, one new part plus tests; undone by rolling back the build. Checks: npm test, smoke, check --touched GREEN; the shell harness proves 20 Tab and 20 Shift+Tab stay in the window, Esc returns to New, a note lands in ideas, at 390 and 1280 in light and dark. Reviewer (second, fresh): one gap, open for you: the clause 'no other create button on any view' is not met. Record's Add date and Journal Save entry and the exam prep check's Add (something to bring) still create. The hand-off's C-7 names only tasks and notes, and B-302 (Record) and B-290 (prep check) rework those views. Your call: should dates and journal entries move into New, or stay where they are? First review's other gap (no unit test for the note write) is fixed. Checks loosened, each because Today's Add row is gone: Enter now returns focus to New instead of a fresh row; 'the add row is one line' retired; the session line's right edge is measured to New. Differences from the demo kept: the New task window has no Category, Estimate, When or Course choices (today's list takes the words only; the demo's numbers are demo-only), and no Cancel button (D-160: no button only closes). Staging page: E.V. Home Staging v4.",
+  "notes": "Matt, Oct 24, on the open gap: in-context adds (Record's dates, the journal, the prep check) stay; the window's fields come in B-308.",
   "commit": "698f19e",
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
@@ -5209,7 +5209,7 @@
   "depends": [
    "B-289"
   ],
-  "notes": "",
+  "notes": "Matt, Oct 24: the prep check's Add (something to bring) stays where it is; New is the one create for tasks and notes only (B-287's open gap).",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
@@ -5235,9 +5235,10 @@
   "milestone": "v4.8 redesign",
   "status": "open",
   "depends": [
-   "B-291"
+   "B-291",
+   "B-308"
   ],
-  "notes": "",
+  "notes": "Waits on B-308, so new tasks carry their minutes into the budget (Matt, Oct 24).",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
@@ -5383,15 +5384,15 @@
   "depends": [
    "B-288"
   ],
-  "notes": "",
+  "notes": "Matt, Oct 24: Record's Add date and Journal's Save entry stay where they are; New is the one create for tasks and notes only (B-287's open gap).",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
  {
   "id": "B-303",
   "kind": "task",
-  "title": "Sweep (replaces B-282; D-276, D-277, D-282 to D-293): rows that spelled a type or state in grey take the badge. Retired features leave the page with their checks: the Now card, Focus lines, Practice list, parked weak spots with Make active, note and skill weak-spot actions, idea to weak spot or plan item, the sidebar's Working, Remove on rows. No text, test or task calls the triage action \"Duplicate\".",
-  "dod": "No row carries two badges (harness). grep finds no rendered Now card, Focus, Practice list, Make active, Practiced, promote, Working or row Remove. Lint clean of D-150 citations. npm test green. Screenshots of all five views at 390 and 1280 in light and dark.",
+  "title": "Sweep (replaces B-282; D-276, D-277, D-282 to D-293): rows that spelled a type or state in grey take the badge. Retired features leave the page with their checks: the Now card, Focus lines, Practice list, parked weak spots with Make active, note and skill weak-spot actions, idea to weak spot or plan item, the sidebar's Working, Remove on rows. No text, test or task calls the triage action \"Duplicate\". The five-kinds, one-primary check fails on the real views. Inter becomes the page's font.",
+  "dod": "No row carries two badges (harness). grep finds no rendered Now card, Focus, Practice list, Make active, Practiced, promote, Working or row Remove. Lint clean of D-150 citations. The look pass fails any real view with a button outside the five kinds or more than one primary, and passes on all five views. Inter loads (Google Fonts, with the system font as fallback) and the look pass reads it as the computed font at 390 and 1280. npm test green. Screenshots of all five views at 390 and 1280 in light and dark.",
   "milestone": "v4.8 redesign",
   "status": "open",
   "depends": [
@@ -5402,9 +5403,10 @@
    "B-296",
    "B-297",
    "B-301",
-   "B-302"
+   "B-302",
+   "B-308"
   ],
-  "notes": "Matt, Oct 24: the redesign goes live without the three Study screens that wait on the weak-spot work (B-298, B-299, B-300); those follow after exams with B-232 to B-235. The sweep no longer waits on them.",
+  "notes": "Matt, Oct 24: the one-primary check becomes a failure here, once every view is rebuilt (B-285's open gap), and Inter, which fell out between the hand-offs, is added here.",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
@@ -5459,5 +5461,20 @@
   "notes": "",
   "commit": null,
   "source": "build chat (Matt, Oct 24)"
+ },
+ {
+  "id": "B-308",
+  "kind": "task",
+  "title": "New task window fields (C-7, B-287's open gap): Category, Estimate, When (today or tomorrow) and Course in the New task window, written through the existing list edit (kind, minutes, date, course), so a new task counts against the day's budget",
+  "dod": "Screenshots at 390 and 1280 in light and dark with the window open. A task saved with an estimate of 20 minutes lands on today's list with 20 minutes, and the budget counts it; one saved for tomorrow lands on tomorrow's list; Category and Course show as its badge and course. Tab and Esc behave as B-287 proved. npm test green; npm run smoke.",
+  "milestone": "v4.8 redesign",
+  "status": "open",
+  "depends": [
+   "B-287",
+   "B-291"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "build chat (Matt's OK, Oct 24)"
  }
 ]
