@@ -5023,13 +5023,14 @@
   "title": "Conversation and Today in the system (D-275)",
   "dod": "Both views match the Shipped board and this doc's view table at 1280, and the view table at 390; the session card shows minutes left, Pause and End, and folds from its head line (D-160); a check-off and a Your-turn reply still pass the smoke; staging GREEN",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-279"
   ],
-  "notes": "",
+  "notes": "Held with B-278 on Matt's word (Oct 24). Question for Matt: send the interactive demo page, so this task can be re-planned from the fuller redesign hand-off.",
   "commit": null,
-  "source": "plan 5reEBoToU1W5pmnq5q48ij"
+  "source": "plan 5reEBoToU1W5pmnq5q48ij",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-281",
