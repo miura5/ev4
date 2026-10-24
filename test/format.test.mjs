@@ -51,7 +51,7 @@ test('B-64: page/app/*.js join to app.js, opening the closure and closing it, ea
   assert.ok(!fs.existsSync(path.join(ROOT, 'page', 'app.js')), 'no second copy of the page logic');
 });
 
-test('B-64: the formatter and CI are set up: printWidth 120, prettier pinned beside Playwright, npm test on every push', () => {
+test('B-64: the formatter and CI are set up: printWidth 120, prettier pinned beside Playwright, npm test on every push but record and docs ones', () => {
   const rc = JSON.parse(fs.readFileSync(path.join(ROOT, '.prettierrc.json'), 'utf8'));
   assert.equal(rc.printWidth, 120);
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));

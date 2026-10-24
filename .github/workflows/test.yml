@@ -1,8 +1,17 @@
 # B-64 (O-3): npm test on every push and pull request, the personal-data test included. The page harnesses and the
 # look pass need Chromium and the synthetic record, so they stay `npm run check` in a build session.
+# B-262: not for a push that changes only the record (chart/ and the files generated from it) or docs/. Those are most
+# pushes, and on Oct 23 they used up the account's free Actions minutes; npm test runs locally before each of them.
+# Every pull request still runs it.
 name: npm test
 on:
   push:
+    paths-ignore:
+      - 'chart/**'
+      - 'BACKLOG.md'
+      - 'DECISIONS.md'
+      - 'CHANGELOG.md'
+      - 'docs/**'
   pull_request:
 permissions:
   contents: read

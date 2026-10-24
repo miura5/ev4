@@ -170,4 +170,4 @@ restored at main's head and shipped through staging like any change.
 | Live record and page (v4) | https://claude.ai/artifact/Bu8RevP4r1twPdSGc77nfg |
 | v4 staging record + page | https://claude.ai/artifact/Pb6jQ6CvEbtxi6Rcshu9uC (`spec/ev.spec.json` `registry`) |
 | Mac folder | Documents/E.V. Study Watch (live since the Oct 18 cutover; staging uses its `staging/` subfolder) |
-| Code style, page source, CI | prettier at 120 columns (`npm run format`, B-64); the page logic is `page/app/*.js` by tab, joined by the build into the published app.js; GitHub Actions runs `npm test` on every push and `npm run check` nightly with its screenshots (B-151; `gh workflow run nightly.yml` runs it now) |
+| Code style, page source, CI | prettier at 120 columns (`npm run format`, B-64); the page logic is `page/app/*.js` by tab, joined by the build into the published app.js; GitHub Actions runs `npm test` on every pull request and every push but record and docs ones, and `npm run check` nightly with its screenshots (B-151; `gh workflow run nightly.yml` runs it now) |
