@@ -5176,12 +5176,12 @@
   "title": "Phone tab bar and widths (folds B-279's tab bar part; D-225, C-4): under 600 px, a bottom tab bar with E.V., Today, Study, Progress and Record. The E.V. tab is her 24 px avatar; the others use neutral icons, all 44 px. From 600 to 1199 px, the sidebar and pane. From 1200 px, the right panel too.",
   "dod": "Screenshots at 390, 700, 1000 and 1280 in light and dark. The tab bar shows only at 390, and its E.V. tab is the avatar. Every tab target measures 44 px or more. The right panel shows only from 1200 px; below that, its content follows the pane.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-286",
    "B-287"
   ],
-  "notes": "",
+  "notes": "claimed by lane chrome",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
