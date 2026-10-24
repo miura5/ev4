@@ -36,6 +36,7 @@ Status: `open` · `in progress` · `blocked` · `done`. A task opens when every 
 | B-262 | Trim during the freeze (D-259): the cuts from docs/trim-brief.md, each merged as B-262: trim <what> on Matt's OK Done when: Stays in progress while cuts land; each merged cut is a squash commit 'B-262: trim <what>' with its inventory row marked done; closed when the inventory has no shrink or retire row left or Matt ends it | — | trim | in progress | Started Oct 23 with docs/trim-brief.md and the Trimmer runs section of CLAUDE.md; the first trimmer job is the inventory (B-258) |
 | B-265 | Bug (reported Oct 23): e.v. Center aligned on phone Done when: A reply that failed on a transient error keeps a Try again (never Go deeper) after a reload while it is her last line; captions harness checks a stored failed line at 390 and 1280; staging GREEN. The hiccups themselves did not reproduce (Oct 23, staging, Mac browser): a 2-minute service blip | — | v4.5.x ui | open |  |
 | B-266 | Bug (reported Oct 23): e.v. Center aligned on phone Done when: Post-freeze design: E.V. records an exam score he gives her where scores live (examedits), including exams with no date (E1-E3), and never says Logged for something she did not store; his 92/84/96 (now in an idea note) move there | — | v4.6 triage | blocked | Parked for the post-freeze review (Matt, Oct 23): a design question, not a freeze fix. Scores live in examedits, written only by Progress's score card, which skips dateless exams; E.V. has no tool for it and wrote ideas/idea-2026-10-23-nur-112-self-reported-exam-sco instead |
+| B-267 | Bug (reported Oct 23): past exam weak spots coming back via past exam review/practice questions. I thought past exam weak spots would be parked. Maybe we should as park review questions and content tagged for past exams. Done when: Post-freeze design: what happens to a past exam's practice sets and to a solid spot reopened by an answer on one (park at once, and the answer's line saying so, instead of 'comes back tomorrow'); the review side is B-252 (live v4.5.2), whose first morning set is Oct 24 | — | v4.6 triage | blocked | Review: sets/review-2026-10-23 was built 12:19Z, before B-252 shipped; from the Oct 24 morning run past-exam spots are not picked. A solid spot reopened by an answer is re-parked by evening-cloud (awaitingPark). Open, parked for post-freeze: past-exam practice sets and the reopen copy. |
 
 ## Your turn
 
@@ -65,6 +66,7 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 - B-254 (blocked): Staging lint: 8 fact-changed errors on jobs/ (5) and talk/2026-10-18,…
 - B-257 (open): Freeze exit 3, understood
 - B-266 (blocked): e.v. Center aligned on
+- B-267 (blocked): past exam weak spots coming back via past exam review/practice…
 
 ## Done
 
@@ -339,4 +341,3 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-240 | bug | 2026-10-23T04:32:33.683Z | E.V.'s Conversation tab doesn't have the right panel (see the screenshots), and the panel doesn't show up on the Study tab either. | build chat | declined |  |
 | B-241 | bug | 2026-10-23T04:32:33.683Z | When I do a review on the Conversation tab, the right panel does show up, but it's not the right shade. | build chat | declined |  |
 | B-242 | request | 2026-10-23T04:32:33.683Z | question: Should the right panel be the same on all tabs? It's on Record, Progress, Today and System but not on Study or Conversation, and each one shows its own page's info when there is any. | build chat | declined |  |
-| B-267 | bug | 2026-10-24T00:01:29.198Z | past exam weak spots coming back via past exam review/practice questions. I thought past exam weak spots would be parked. Maybe we should as park review questions and content tagged for past exams. | build chat | inbox |  |

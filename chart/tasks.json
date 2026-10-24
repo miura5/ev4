@@ -4801,11 +4801,11 @@
   "id": "B-267",
   "kind": "bug",
   "title": "Bug (reported Oct 23): past exam weak spots coming back via past exam review/practice questions. I thought past exam weak spots would be parked. Maybe we should as park review questions and content tagged for past exams.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Post-freeze design: what happens to a past exam's practice sets and to a solid spot reopened by an answer on one (park at once, and the answer's line saying so, instead of 'comes back tomorrow'); the review side is B-252 (live v4.5.2), whose first morning set is Oct 24",
+  "milestone": "v4.6 triage",
+  "status": "blocked",
   "depends": [],
-  "notes": "",
+  "notes": "Review: sets/review-2026-10-23 was built 12:19Z, before B-252 shipped; from the Oct 24 morning run past-exam spots are not picked. A solid spot reopened by an answer is re-parked by evening-cloud (awaitingPark). Open, parked for post-freeze: past-exam practice sets and the reopen copy.",
   "commit": null,
   "source": "build chat",
   "words": "past exam weak spots coming back via past exam review/practice questions. I thought past exam weak spots would be parked. Maybe we should as park review questions and content tagged for past exams.",
@@ -4814,6 +4814,11 @@
    "row": "v4 B-267: past exam weak spots coming back via past exam review/practice…",
    "why": "past exam weak spots coming back via past exam review/practice questions. I thought past exam weak spots would be parked. Maybe we should as park review questions and content tagged for past exams.",
    "notes": "Reported Oct 23 from build chat"
-  }
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-24T00:02:34.578Z"
+  },
+  "waitingOn": "Matt"
  }
 ]
