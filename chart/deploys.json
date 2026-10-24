@@ -3816,5 +3816,23 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "4bc109c",
+  "time": "2026-10-24T19:39:11.173Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "1fbd99f",
+  "tasks": [
+   "B-283",
+   "B-303",
+   "B-285"
+  ],
+  "summary": "Matt's look at the redesign, then live; Sweep; Component set",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
