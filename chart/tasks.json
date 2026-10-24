@@ -4944,14 +4944,13 @@
   "title": "Sweep for D-270 (superseding D-221): every teal, amber, coral and forget-me-not blue in page source, harnesses and tests moves to its coded colour or to neutral; links, focus and selection are neutral; lint names no open task or test that cites D-221, D-214 or D-212",
   "dod": "grep of page/ and test/ finds none of the old hex values; the look pass at 390 × 844 and 1280 shows Ember only on her, the primary button and send; lint clean; npm test green",
   "milestone": "v4.7 look",
-  "status": "blocked",
+  "status": "open",
   "depends": [
    "B-271"
   ],
-  "notes": "Built and on staging GREEN at 9bf0b06; one reviewer gap needs Matt: may a build chat record D-270, D-266 and D-265 as superseding D-221, D-214 and D-212 (a tenet record change, guarded), so the lint enforces this sweep?",
+  "notes": "Matt agreed: the new theme replaces the old colour rules, which are no longer in force. Recorded D-270, D-266 and D-265 as superseding D-221, D-214 and D-212, so the lint now enforces the new theme; two test comments that still named the old tenet were reworded. Never bend the new theme to satisfy a check written for the old interface. Left for the next builder run: review once more and record the card.",
   "commit": null,
-  "source": "plan UpaXAj6qMmWqkAbmN9P7Jy",
-  "waitingOn": "Matt"
+  "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
  {
   "id": "B-276",

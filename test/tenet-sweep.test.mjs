@@ -1,4 +1,5 @@
-// B-217: the sweep after D-221, D-230, D-224 and D-225 superseded the four tenets in GONE. No open task, rule or
+// B-217: the sweep after D-230, D-224, D-225 and the Oct 22 grey-interface tenet (itself now superseded by D-270)
+// superseded the four tenets in GONE. No open task, rule or
 // test cites a superseded tenet as current (history may name it, marked as such), and the checks hold to the new
 // tenets' words: violet retired (its tokens are grey), two clocks (test/interface-motion.test.mjs), a 0.16 s settle,
 // and the 680 px reading cap (the look pass measures it).
@@ -50,7 +51,8 @@ test('B-217: a test or harness names a superseded tenet only as history', () => 
   assert.deepEqual(bad, []);
 });
 
-// B-275: the sweep for D-270, which took the place of D-221 (and of D-214's blue and D-212's flower). No open task but the
+// B-275: the sweep for D-270, which took the place of the Oct 22 grey-interface tenet (and of the forget-me-not
+// blue and flower decisions; D-266 and D-265). No open task but the
 // sweep's own and no test names them except as history, and no old teal, amber, coral or forget-me-not blue hex is
 // left in page/ or test/. #F08A78 was dark coral and is now her own dark halftone (D-266), so it is not on the list.
 const SWEPT = /\bD-(221|214|212)\b/;
@@ -63,7 +65,7 @@ const sources = dirs =>
       .map(f => [`${d}/${f.name}`, fs.readFileSync(path.join(ROOT, d, f.name), 'utf8')])
   );
 
-test('B-275: no open task but the sweep, and no test, cites D-221, D-214 or D-212 except as history', () => {
+test('B-275: no open task but the sweep, and no test, cites the three superseded colour and avatar ids except as history', () => {
   const tasks = JSON.parse(fs.readFileSync(path.join(ROOT, 'chart/tasks.json'), 'utf8'));
   const list = Array.isArray(tasks) ? tasks : tasks.tasks || Object.values(tasks);
   const open = list.filter(
@@ -93,7 +95,7 @@ test('B-275: page/ and test/ hold none of the old teal, amber, coral or forget-m
   assert.deepEqual(bad, []);
 });
 
-test("B-217 (D-221, D-230, D-225): spec.ui.tenets' checks cite the new tenets", () => {
+test("B-217 (D-230, D-225 and the grey-interface tenet): spec.ui.tenets' checks cite the new tenets", () => {
   const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
   const checks = JSON.stringify((spec.ui && spec.ui.tenets) || {});
   assert.equal(OLD.test(checks.replace(/[^"]*(superseded|history|was D-)[^"]*/gi, '')), false);

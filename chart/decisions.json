@@ -123,7 +123,9 @@
   "title": "The interface is neutral; the accent is hers and colour is meaning: Ember only on her, the primary button and send; links, focus, selection, nav and secondary buttons neutral; any other colour is a coded colour from the generator, used for its one meaning (green done or right, yellow attention, red an exam today or tomorrow, graded work due today and errors, blue information, violet study). Supersedes D-221.",
   "why": "Matt (Oct 24): the rest of the UI doesn't need an accent; teal and blue left over from older rules read as noise.",
   "status": "accepted",
-  "supersedes": [],
+  "supersedes": [
+   "D-221"
+  ],
   "amends": [],
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy P-6",
   "kind": "tenet",
@@ -168,7 +170,9 @@
   "title": "Her colour is Ember with halftone: front #B5530F and halftone #A8402F light, #F2A35E and #F08A78 dark; both faces follow the palette. The UI accent is the generator's Ember (#b6541d light, #f4905b dark), used only on her, the primary button and send. Supersedes D-214.",
   "why": "Matt's pick over Teal with wireframe (Oct 24): warm against the warm-grey base, and the accent stays a mark of her rather than of the interface.",
   "status": "accepted",
-  "supersedes": [],
+  "supersedes": [
+   "D-214"
+  ],
   "amends": [],
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy P-2"
  },
@@ -178,7 +182,9 @@
   "title": "Her avatar is the Dial Arc: one SVG, a ring of 12 segments (radii 16 and 28 of 64, 0.08 rad apart) tilted gently (rx 0.45, ry −0.35), each flipping on its spoke between a solid front and a halftone back over a ground-colour underlay; at rest an arc with a 1.6-segment gap at two o'clock, the gap her pointer; the seven moods and five gestures map one to one as this doc's state table gives them, and the page API (mood, gesture, size, session, reduce) is unchanged; reduced motion shows one still per mood. Supersedes D-212.",
   "why": "Matt chose it on Oct 24 after 15 rounds: it reads at 24 px, every state is a different use of one gap, and the halftone back gives thinking and sleep a texture without a second colour.",
   "status": "accepted",
-  "supersedes": [],
+  "supersedes": [
+   "D-212"
+  ],
   "amends": [],
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy P-1"
  },
@@ -722,7 +728,7 @@
   "date": "Oct 22",
   "title": "The interface is grey; colour is meaning, and her blue is hers: teal only for done or right, amber for attention, coral only for an exam today or tomorrow, graded work due today and not ticked, and errors; her blue only on her and what comes from her; buttons, links, focus and selection neutral; colours that must be told apart also differ in lightness. Supersedes D-149.",
   "why": "One colour per meaning, her identity unmistakable, and nothing reads as a link but a link",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [
    "D-149"
   ],
@@ -799,7 +805,7 @@
   "date": "Oct 22",
   "title": "Her colour is forget-me-not blue, #7AA7FF dark and #2B5BD0 light, used only by her: the flower, her caret, the job spinner and her ideas. The interface is grey: links are text with an underline, focus rings neutral, the primary button solid text colour, send a quiet circle that fills when he types. Violet is retired; secondary tags go grey.",
   "why": "The flower and her colour tell one story; a grey interface keeps blue from meaning \"click\"; Matt: the teal buttons clashed with her",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [
    "D-077"
   ],
@@ -823,7 +829,7 @@
   "date": "Oct 22",
   "title": "Her avatar is the 2D forget-me-not: one flat SVG, five edged petals in a slight pinwheel, a pale eye with three streaks per petal; tipping away is drawn by squashing the plane, lifting the eye, shortening near petals and shading far ones; she moves on held frames, eight drawings a second with eased spacing; the seven moods and five gestures map one to one and the page API is unchanged. Supersedes D-134.",
   "why": "Faster and simpler than 3D or particles, the same in every browser including Safari on his phone, and rated 8.5 of 10 on the brief's six criteria",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [
    "D-134"
   ],

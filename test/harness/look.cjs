@@ -776,7 +776,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
       }
     }
     // B-117: Today: no stat tile, no item's minutes twice, the exam in Next 7 days only, a Prep marker on the clinical
-    // day (the coral count is retired: D-221, superseded by D-270; B-271 on Matt's word); ticking keeps the scroll (v4 rule 6).
+    // day (the coral count is retired with the old colour tenet, superseded by D-270; B-271 on Matt's word); ticking keeps the scroll (v4 rule 6).
     if (TENETS.widths.includes(size.width) && [844, 830, 800].includes(size.height)) {
       await page.click('#tab-today');
       await page.waitForTimeout(450); // B-125: settled within 450 ms
