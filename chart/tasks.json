@@ -5195,7 +5195,7 @@
   "depends": [
    "B-288"
   ],
-  "notes": "built: the page already draws D-213's sizes and C-2's captions (since B-209, B-247); added the measured check to the captions harness (light and dark, 390, 1280x900, 1280x1100, idle and session): 30 checks pass",
+  "notes": "proofs green: npm test 557/0, smoke 28/28, captions harness 210/210 with the 30 stage checks; first review's two gaps fixed; check --touched running",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
