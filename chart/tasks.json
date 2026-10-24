@@ -5468,12 +5468,12 @@
   "title": "New task window fields (C-7, B-287's open gap): Category, Estimate, When (today or tomorrow) and Course in the New task window, written through the existing list edit (kind, minutes, date, course), so a new task counts against the day's budget",
   "dod": "Screenshots at 390 and 1280 in light and dark with the window open. A task saved with an estimate of 20 minutes lands on today's list with 20 minutes, and the budget counts it; one saved for tomorrow lands on tomorrow's list; Category and Course show as its badge and course. Tab and Esc behave as B-287 proved. npm test green; npm run smoke.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-287",
    "B-291"
   ],
-  "notes": "",
+  "notes": "claimed by lane today",
   "commit": null,
   "source": "build chat (Matt's OK, Oct 24)"
  }
