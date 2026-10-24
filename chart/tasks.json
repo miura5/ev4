@@ -4948,7 +4948,7 @@
   "depends": [
    "B-271"
   ],
-  "notes": "tests green (npm test 551 pass, smoke 28 of 28); touched check running",
+  "notes": "touched check GREEN (255 of 255 look checks; screenshots looked at); reviewed: no gaps",
   "commit": null,
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
