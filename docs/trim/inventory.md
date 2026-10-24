@@ -166,6 +166,68 @@ re-checked by grep. Git history on main is squashed before 75c2b59, so evidence 
     but lint's `duplicate-id` check would still need a repair path after a hand edit. Keep unless Matt prefers fixing
     such a slip by hand.
 
+Added by the second queue refill of Oct 24 (`trim/queue-refill`, at origin/main a9b9c40), when items 1 to 10 were all
+done, claimed or declined (#15 holds item 8, #16 holds item 10, and item 9's second part sits with the v3-migration
+run). Two read-only helpers mapped `tools/chart.mjs` and the rest of `tools/` with the test suite; their key claims
+were re-checked by grep. `core/migrate.mjs`, `core/cli.mjs`, `core/seed.mjs` and `core/deploy.mjs` were left alone
+because other runs are cutting there. Ranked by value for the long term (D-264):
+
+12. Core v2's motion functions (`trim/motion-v2`). The biggest dead block left, and it is in the page's own code.
+    `core/motion.mjs` (244 lines) is "history since D-212 and D-224" by its own header, but the build still publishes
+    all 16 of its functions as `window.EVMotion` (tools/build.mjs, the core.js join). The page calls only
+    `EVMotion.coreSize` (page/app/60-ev-conversation.js and 61-ev-captions.js). A word grep of the other 15 names
+    (`critSpring`, `nucleusStep`, `wordVoice`, `envelopeRadius`, `envelopeStart`, `envelopeStep`, `GESTURES`,
+    `gestureBlend`, `blendAll`, `glanceAngle`, `percentile`, `stepDownStart`, `slowShare`, `stepDownStep`, `smooth`)
+    over page/, core/, scripts/ and tools/ finds none (the only `smooth` hits are CSS `behavior: 'smooth'`). Their tests
+    are 10 of the 13 in `test/motion.test.mjs` (lines 58 to 270, about 210 lines); the `coreSize` test (205), the spec
+    test (271) and the EVMotion-in-core.js test (323) stay. About 200 code and 210 test lines, so it comes in two parts
+    under the budget: the functions with their tests, then any `spec.ui.look.core` parameters only they read (spec is
+    hashed; leave the parameters if the spec test or the look harness reads them). Risk to studying: low; it changes
+    the published core.js, so it ships through staging and the full check, and `npm run smoke` and the look pass must
+    show her drawing exactly as before.
+13. Small leftovers in `tools/chart.mjs` after #15 (`trim/chart-leftovers-2`, about 15 lines; take it after #15
+    merges, since both edit the file):
+    - `--force` and `--retire` in `args()`'s flag set: nothing reads `o.force` or `o.retire` (the only other `force`
+      in the file is `git worktree remove --force`).
+    - `d.checkedBy ||` in the tenet line of DECISIONS.md: 0 of 221 decisions carry `checkedBy`; it was the v3 import's
+      name for `check`.
+    - `decisionDate`'s `d.at` fallback: all 221 decisions carry `date`, and `log decision` always writes it.
+    - The test fixture keys nothing reads: `SAMPLE_VIEWS`' `decisionsTab`, `changelog`, `overview`, `board.table`,
+      `statusEnum`, `statusOptions` (test/chart.test.mjs 33 to 44), and the sample tasks' `board.why`/`board.notes`
+      (60 to 61). Keep `board.node` and `decisions.node`: the inbox and the B-143 test read them.
+14. Duplicates in `tools/chart.mjs` (`trim/chart-dupes`, restructuring under D-264, about 15 lines out): `docTabRead`
+    and `designRead` both take the newest successful Docs read of a doc id from the transcript and differ only in
+    their filters (`docTabRead` wants a whole tab read by node; `designRead` wants the 'Tasks to add', 'Decisions
+    proposed' or 'Tenets proposed' tables), so one helper taking a predicate would do;
+    `CHART_DESIGN` repeats `rec.views.design` (brief already reads the latter); the `boardName(t).replace(/^v4 B-\d+: /,
+    '')` pair (yourTurnLines, recordShip) and the "(Bug|Request) (reported ...):" title strip in `askOf` and
+    `shortTitle` are each written twice. No behavior changes; the existing tests pass unchanged.
+15. Never-taken branches in the other tools (`trim/tools-leftovers`, about 15 lines; tools/ is not hashed, but
+    tools/build.mjs makes dist/, so the cutter shows a build before and after gives the same manifest hashes):
+    - tools/build.mjs: the "no tools/prompts.mjs" return (the file is always there), the "no page/index.src.html"
+      fallbacks (the shell is committed), `taskEntries`' unread `release` parameter, and `const g = g0`.
+    - tools/format-app.mjs `--check`: nothing passes it (package.json runs the file without it).
+    - tools/tool-result.mjs re-exports `newestTranscript`, `toolResults` and `resultBody`, which only
+      test/tool-result.test.mjs imports; it can import them from core/transcript.mjs.
+    - Not a cut: `check.mjs --since` (hand use) and build.mjs's `legacy` case (the frozen collection D-145 keeps).
+16. The `export` keyword on names nothing imports (`trim/unused-exports`, about 40 one-word edits, no lines out):
+    about 30 in tools/chart.mjs (TASK_STATUS, findTask, nextTaskId, ctDate, backlogRow, jobFrom, tenetsFor and others
+    the chart helper listed) and 8 in the other tools (build.mjs `gitState`, `releaseOf`, `coreParts`; check.mjs
+    `changedSince`, `lastStaging`, `main`; prompts.mjs `runLimits`; format-app.mjs `formatApp`). Lowest value: it only
+    makes a file's public face honest. Pair it with item 13 or 15 rather than opening it alone.
+
+Looked at and kept:
+- test/schema.test.mjs "every real fixture document validates (fixtures/v4, local only)" always skips in CI (fixtures/
+  is ignored and nothing writes fixtures/v4), but it is a 12-line check a build chat can run against a real export it
+  drops in; keep unless Matt says no one does.
+- The PDF attachment checks in test/harness/run.cjs (about 22 lines) skip in CI because pdfjs-dist is not installed
+  there. That is a coverage gap, not dead code; closing it would add an install step, which a trimmer does not do.
+  Flagged for a build chat.
+- test/spec.test.mjs 331 to 339 asserts the six v3 task ids stay in `spec.tasks.retired`, citing a rollback D-145
+  dropped. The list itself still records disabled tasks (CLAUDE.md: v3's tasks disabled and kept), so the check
+  stays; only its comment is stale.
+- R-01's fixture in the B-141 and B-142 tests: those tests exercise the live ended-rule listing and stale-rule lint.
+
 ## Keeping this queue current
 
 - **When a cut merges,** the build chat marks its item done here, with its pull request number.
