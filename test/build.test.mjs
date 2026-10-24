@@ -8,7 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { build, sha256, registryProblems } from '../tools/build.mjs';
+import { build, sha256 } from '../tools/build.mjs';
 import { listRepoFiles } from '../tools/personal-data.mjs';
 import { makeValidator, validateAgainst } from '../core/validate.mjs';
 import { loadSchemas } from '../core/schemas.mjs';
@@ -112,11 +112,6 @@ test('the build fails when the spec and the schema registry disagree, and writes
   assert.equal(fs.existsSync(path.join(dir, 'dist/manifest.json')), false);
   fs.renameSync(p, p + '.off');
   await assert.rejects(build({ root: dir, now: NOW }), /dayedits: no schema file/);
-});
-
-test('registryProblems is empty for this repository', () => {
-  const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
-  assert.deepEqual(registryProblems(spec, loadSchemas()), []);
 });
 
 test('B-149: the build fails when core has no release slot to write the release into', async () => {

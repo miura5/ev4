@@ -1339,6 +1339,65 @@ test("B-160: what stays in E.V. core is the record's rules, under 2,500 lines; e
   ]);
 });
 
+// B-155 to B-160: each split file is one factory with no imports, so it runs in the page as written; what it took out of
+// E.V. core is moved, not copied, and E.V. core still exports every name callers use.
+const SPLIT_FILES = [
+  ['canvas-rules', 'makeCanvasRules', /function normalizeCanvas\(/, ['normalizeCanvas']],
+  [
+    'conversation',
+    'makeConversation',
+    /function greeting|function conversations|function earlierConversation/,
+    ['greeting', 'conversations', 'earlierConversation', 'noteTitle'],
+  ],
+  [
+    'insights',
+    'makeInsights',
+    /function readiness\(|function examRetro|function calibrate/,
+    ['readiness', 'predictReadiness', 'answerStats', 'calibrate', 'examRetro', 'examViews', 'readinessAudit'],
+  ],
+  [
+    'library',
+    'makeLibrary',
+    /function searchLibrary|function libraryChunks|function readMaterial/,
+    ['searchLibrary', 'citeMaterial', 'readMaterial', 'libraryChunks', 'libraryIndex', 'liveMaterials', 'normCourse'],
+  ],
+  [
+    'mirror',
+    'makeMirror',
+    /function (toMarkdown|buildBackup|restorePlan)\(/,
+    ['toMarkdown', 'buildBackup', 'restorePlan'],
+  ],
+  [
+    'prep',
+    'makePrep',
+    /function prepDay|function prepList|function prepEdit/,
+    ['prepDay', 'prepList', 'prepEdit', 'prepKindOf', 'prepBringItems'],
+  ],
+  [
+    'sessions',
+    'makeSessions',
+    /function sessionState|function closeSession|function intakeSession/,
+    ['sessionState', 'closeSession', 'intakeSession', 'commentPrompt', 'parseComment', 'noteDelta'],
+  ],
+  ['share', 'makeShare', /function (shareableSet|sharePage)\(/, ['shareableSet', 'sharePage']],
+  [
+    'skills',
+    'makeSkills',
+    /function startSkill|function startWorkout|function weakspotCards/,
+    ['skillSteps', 'startSkill', 'endSkill', 'startWorkout', 'workoutState', 'weakspotCards', 'cardsText'],
+  ],
+];
+for (const [file, factory, moved, names] of SPLIT_FILES)
+  test(`B-155 to B-160: core/${file}.mjs is one factory with no imports, moved out of E.V. core, which still exports its names`, async () => {
+    const src = fs.readFileSync(new URL(`../core/${file}.mjs`, import.meta.url), 'utf8');
+    assert.doesNotMatch(src, /^import /m, 'no imports: it runs in the page as written');
+    assert.deepEqual(src.match(/^export .*/gm), [`export function ${factory}(core) {`]);
+    const core = fs.readFileSync(new URL('../core/evcore.mjs', import.meta.url), 'utf8');
+    assert.doesNotMatch(core, moved, 'moved, not copied');
+    for (const n of names) assert.equal(typeof EV[n], 'function', n);
+    assert.equal(typeof (await import(`../core/${file}.mjs`))[factory], 'function');
+  });
+
 // B-252 (D-251): the morning after an exam, its weak spots are not due; auto-park parks them that evening.
 test('B-252: the day after an exam, its open weak spots are out of the due list and the review set; the next exam leads', () => {
   const E5 = { id: 'E5', course: 'NUR 112', kind: 'unit', date: '2026-11-05', title: 'Exam 5' };

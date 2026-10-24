@@ -103,13 +103,6 @@ test('every pipeline with steps has a prompt for live and staging; the rest wait
     assert.match(section, step);
 });
 
-test('D-192 (B-173): every pipeline prompt carries its release by reading it from system/manifest, never as a literal', () => {
-  for (const [key, text] of Object.entries(all()).filter(([k, t]) => t && !k.startsWith('build.'))) {
-    assert.ok(text.includes('<the release in /tmp/ev/system/manifest.json'), `${key}: the release, from the manifest`);
-    assert.doesNotMatch(text, /\bv4\.\d+(\.\d+)?\b/, `${key}: no release literal, so a release changes no prompt`);
-  }
-});
-
 test("no prompt clones, unpacks or attaches code, or names the page-only collection; the one fetch is the gate's", () => {
   for (const [key, text] of Object.entries(all()).filter(([, t]) => t)) {
     assert.doesNotMatch(
@@ -418,10 +411,11 @@ test('B-135 (O-10): a staging prompt ends in its chat with no notification and a
   assert.ok(staging >= 6);
 });
 
-test('B-149 (D-173): no prompt carries a literal release; the fallback trace reads it from the saved manifest', () => {
+test('B-149 (D-173), D-192 (B-173): no prompt carries a literal release; each pipeline prompt and its fallback trace read it from the saved manifest', () => {
   for (const [key, text] of Object.entries(all()).filter(([, t]) => t)) {
     assert.doesNotMatch(text, /v4\.\d+\.\d+/, key);
-    if (!key.startsWith('build.'))
-      assert.ok(text.includes('"release": <the release in /tmp/ev/system/manifest.json, or "unknown"'), key);
+    if (key.startsWith('build.')) continue;
+    assert.ok(text.includes('"release": <the release in /tmp/ev/system/manifest.json, or "unknown"'), key);
+    assert.doesNotMatch(text, /\bv4\.\d+(\.\d+)?\b/, `${key}: no release literal, so a release changes no prompt`);
   }
 });

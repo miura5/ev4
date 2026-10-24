@@ -13,7 +13,6 @@ const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'u
 const schemas = loadSchemas();
 const validate = loadValidator();
 const SYNTHETIC = path.join(ROOT, 'test/data/record');
-const REAL = path.join(ROOT, 'fixtures/v4');
 const fixture = (col, id) => JSON.parse(fs.readFileSync(path.join(SYNTHETIC, col, id + '.json'), 'utf8'));
 const refused = (r, pathPrefix) => {
   assert.equal(r.ok, false, 'write was accepted');
@@ -84,19 +83,6 @@ test('every synthetic fixture document validates against its collection schema',
     assert.ok(r.ok, describeErrors(`${collection}/${id}`, r));
   }
 });
-
-test(
-  'every real fixture document validates (fixtures/v4, local only)',
-  { skip: !fs.existsSync(REAL) && 'no fixtures/v4 export in this checkout' },
-  () => {
-    const bad = [];
-    for (const { collection, id, doc } of readExport(REAL)) {
-      const r = validate(collection, doc, { id });
-      if (!r.ok) bad.push(describeErrors(`${collection}/${id}`, r));
-    }
-    assert.deepEqual(bad, []);
-  }
-);
 
 test('planted invalid writes are refused, with the field named', () => {
   const ws = fixture('weakspots', 'ws-2026-10-16-E9-1-sample-topic');

@@ -2,10 +2,8 @@
 // statistics, calibration and the exam retrospective. All data is made up.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import EV from '../core/evcore.mjs';
 import { at, key, ws, E4 } from './core-fixtures.mjs';
-import { makeInsights } from '../core/insights.mjs';
 
 const answersDoc = (setId, answers) => ({
   id: setId,
@@ -15,25 +13,6 @@ const answersDoc = (setId, answers) => ({
   source: 'E.V. Home',
   setId,
   answers,
-});
-
-test('B-159: insights are their own file, one factory, and E.V. core still exports every name callers use', () => {
-  const src = fs.readFileSync(new URL('../core/insights.mjs', import.meta.url), 'utf8');
-  assert.doesNotMatch(src, /^import /m, 'no imports: it runs in the page as written');
-  assert.deepEqual(src.match(/^export .*/gm), ['export function makeInsights(core) {']);
-  const core = fs.readFileSync(new URL('../core/evcore.mjs', import.meta.url), 'utf8');
-  assert.doesNotMatch(core, /function readiness\(|function examRetro|function calibrate/, 'moved, not copied');
-  for (const n of [
-    'readiness',
-    'predictReadiness',
-    'answerStats',
-    'calibrate',
-    'examRetro',
-    'examViews',
-    'readinessAudit',
-  ])
-    assert.equal(typeof EV[n], 'function', n);
-  assert.equal(typeof makeInsights, 'function');
 });
 
 test('readiness prediction is deterministic and explains itself', () => {

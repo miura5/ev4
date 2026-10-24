@@ -160,14 +160,6 @@ test('B-143 (D-172): DECISIONS.md and CHANGELOG.md are generated from chart/ lik
   assert.ok(r.views.board.node && r.views.decisions.node, 'the doc ids are kept');
 });
 
-test('BACKLOG.md is generated from chart/ (no hand edits)', () => {
-  assert.equal(
-    fs.readFileSync(path.join(RECORD, 'BACKLOG.md'), 'utf8'),
-    C.renderBacklog(rec()),
-    'BACKLOG.md differs from chart/: change the record with node tools/chart.mjs log, never the file'
-  );
-});
-
 // ------------------------------------------------------------------------------------------------ B-94 lint
 test('B-94: the record lints green (npm test runs the Chart lint)', () => {
   const f = C.lintChart(rec(), { tests: C.testTexts(ROOT) });

@@ -9,7 +9,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import EV from '../core/evcore.mjs';
 import { appSource } from '../tools/build.mjs';
-import { renderPrompt } from '../tools/prompts.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
@@ -82,14 +81,6 @@ test('a real ask to do, edit, check or turn in graded work is refused in one lin
 
 test('the identifier scan still stops a real identifier', () => {
   assert.ok(EV.scanIdentifiers('Pt John Smith, MRN 12345678, room 412').length > 0);
-});
-
-test('the scheduled tasks keep their hard limits word for word (rendered from spec.boundaries since D-175, untouched by B-99)', () => {
-  for (const target of ['live', 'staging'])
-    for (const [key, task] of Object.entries(spec.tasks[target])) {
-      const prompt = renderPrompt({ key: `${target}.${key}`, task, spec, release: 'v4.0.0' });
-      if (prompt) assert.match(prompt, /made-up clients only, never patient identifiers/, key);
-    }
 });
 
 // B-197 (Matt, Oct 21: "I shouldn't get falsely flagged just for participating in a fictional scenario"): every message

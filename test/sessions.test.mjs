@@ -3,10 +3,8 @@
 // comment mode, closing. All data is made up.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import EV from '../core/evcore.mjs';
 import { at, key, ws, E4, assertValid } from './core-fixtures.mjs';
-import { makeSessions } from '../core/sessions.mjs';
 
 // The session helpers (shared with the greeting test in core.test.mjs).
 const T0 = '2026-10-18T15:00:00.000Z';
@@ -20,17 +18,6 @@ const session = (events, extra = {}) => ({
   startedAt: T0,
   events: { [sk(T0)]: { type: 'start' }, ...Object.fromEntries(Object.entries(events).map(([t, e]) => [sk(t), e])) },
   ...extra,
-});
-
-test('B-156: study sessions are their own file, one factory, and E.V. core still exports every name callers use', () => {
-  const src = fs.readFileSync(new URL('../core/sessions.mjs', import.meta.url), 'utf8');
-  assert.doesNotMatch(src, /^import /m, 'no imports: it runs in the page as written');
-  assert.deepEqual(src.match(/^export .*/gm), ['export function makeSessions(core) {']);
-  const core = fs.readFileSync(new URL('../core/evcore.mjs', import.meta.url), 'utf8');
-  assert.doesNotMatch(core, /function sessionState|function closeSession|function intakeSession/, 'moved, not copied');
-  for (const n of ['sessionState', 'closeSession', 'intakeSession', 'commentPrompt', 'parseComment', 'noteDelta'])
-    assert.equal(typeof EV[n], 'function', n);
-  assert.equal(typeof makeSessions, 'function');
 });
 
 test('Study Watch intake: repeats bump, near-repeats ask, non-objectives become ideas, gaps become note to-dos; every write validates', () => {

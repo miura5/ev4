@@ -5,7 +5,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import EV from '../core/evcore.mjs';
-import { makeLibrary } from '../core/library.mjs';
 import { loadValidator } from '../core/schemas.mjs';
 import { describeErrors } from '../core/validate.mjs';
 
@@ -17,25 +16,6 @@ function assertValid(w) {
   const r = validate(w.collection, w.data, { id: w.id });
   assert.ok(r.ok, describeErrors(`${w.collection}/${w.id}`, r));
 }
-
-test('B-155: the library is its own file, one factory, and E.V. core still exports every name it did', () => {
-  const src = fs.readFileSync(new URL('../core/library.mjs', import.meta.url), 'utf8');
-  assert.doesNotMatch(src, /^import /m, 'no imports: it runs in the page as written');
-  assert.deepEqual(src.match(/^export .*/gm), ['export function makeLibrary(core) {']);
-  const core = fs.readFileSync(new URL('../core/evcore.mjs', import.meta.url), 'utf8');
-  assert.doesNotMatch(core, /function searchLibrary|function libraryChunks|function readMaterial/, 'moved, not copied');
-  for (const n of [
-    'searchLibrary',
-    'citeMaterial',
-    'readMaterial',
-    'libraryChunks',
-    'libraryIndex',
-    'liveMaterials',
-    'normCourse',
-  ])
-    assert.equal(typeof EV[n], 'function', n);
-  assert.equal(typeof makeLibrary, 'function');
-});
 
 // ---------------------------------------------------------------- library, with removal in materialedits
 test('library: chunks keep their page, search ranks the right passage, read continues by page (D-079)', () => {
