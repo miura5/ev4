@@ -642,7 +642,8 @@ button.tlink{all:unset;cursor:pointer;color:var(--accent-text);font-size:calc(14
 .bubble.to-copy,body.captions .msg.ev .bubble.to-copy,body.captions .msg.ev.current .bubble.to-copy{font-size:calc(14px * var(--ts));line-height:1.5;text-align:left;max-height:9em;overflow:hidden;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent);color:var(--soft);opacity:1}
 .copy-chip{align-self:center;margin-top:6px}
 
-/* ============================================================ B-208 (D-210, D-225): the shell in direction C ===   Linear's inverted L. Under 600 px: the pane is the page and the sections are a tab bar at the bottom, her flower as
+/* ============================================================ B-208 (D-210, D-225): the shell in direction C ==========
+   Linear's inverted L. Under 600 px: the pane is the page and the sections are a tab bar at the bottom, her flower as
    the E.V. tab. 600 to 1199 px: a dim sidebar (her, the five sections, System at its foot) beside the raised pane.
    From 1200 px: a details panel on the right too, holding the view's side column, present only while it has one (D-151).
    The document still scrolls (the pane is drawn behind it), so every scroll, sticky and anchor keeps working. Reading

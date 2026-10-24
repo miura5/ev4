@@ -25,6 +25,8 @@ const SIZES = [
 }));
 // The shots to look at first (B-113, B-203, D-219): the phone, half the laptop, a third and a half of the ultrawide.
 const FIRST = ['390x844', '735x830', '1706x1240', '2560x1240'];
+// B-297 (D-283): a view out of the switch, shot as he reaches it: today's review in Study's quiz card, from Today.
+const QUIZ = { study: ['review'] };
 function viewsOf(html) {
   const tabs = [...new Set([...String(html).matchAll(/data-tab="([a-z-]+)"/g)].map(m => m[1]))];
   const out = [];
@@ -32,7 +34,7 @@ function viewsOf(html) {
     const seg = String(html).match(new RegExp(`<div class="seg" id="seg-${tab}"[^>]*>([\\s\\S]*?)</div>`));
     const vs = seg ? [...seg[1].matchAll(/data-v="([a-z-]+)"/g)].map(m => m[1]) : [];
     if (!vs.length) out.push({ tab, v: null, id: tab });
-    else for (const v of vs) out.push({ tab, v, id: `${tab}-${v}` });
+    else for (const v of [...vs, ...(QUIZ[tab] || [])]) out.push({ tab, v, id: `${tab}-${v}` });
   }
   return out;
 }

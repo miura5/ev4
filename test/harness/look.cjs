@@ -291,6 +291,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
       await page.click('#tab-' + view.tab);
       if (view.v && (await page.isVisible(`#seg-${view.tab} [data-v="${view.v}"]`)))
         await page.click(`#seg-${view.tab} [data-v="${view.v}"]`); // D-249: every view is a tab at every width
+      else if (view.v && view.tab === 'study') await studyView(page, view.v); // B-297: the review's quiz card
       await page.waitForTimeout(500); // past the panel's fade-in
       await page.screenshot({ path: `${shots}/${shotName(view, size)}`, fullPage: true });
       ok(
@@ -1039,6 +1040,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         await page.click('#tab-' + view.tab);
         if (view.v && (await page.isVisible(`#seg-${view.tab} [data-v="${view.v}"]`)))
           await page.click(`#seg-${view.tab} [data-v="${view.v}"]`);
+        else if (view.v && view.tab === 'study') await studyView(page, view.v); // B-297
         return t0;
       };
       const settledShot = () =>

@@ -556,6 +556,12 @@ async function quizMeChecks(page, scheme) {
       rows: [...document.querySelectorAll('#ov-card .ov-li')].filter(vis).map(e => Math.round(r(e).height)),
     };
   });
+  // the overview in both themes, at this pass's width (390 or 1280), to look at
+  for (const theme of ['light', 'dark']) {
+    await page.emulateMedia({ colorScheme: theme });
+    await page.waitForTimeout(150);
+    await page.screenshot({ path: `${shots}/study-objectives-${scheme}-${theme}.png` });
+  }
   const want = scheme === 'phone' ? 44 : 32;
   ok(
     `[${scheme}] Study's overview: one primary (Start session), no Quiz me in the toolbar and no mini-quiz card, the toolbar one row, objective rows ${want} px (B-297)`,
