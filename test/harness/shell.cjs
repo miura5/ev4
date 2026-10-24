@@ -360,7 +360,7 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
   );
   await r.page.screenshot({ path: `${shots}/boot-failed-phone.png` });
   await r.page.close();
-  // B-223 (D-245, D-228): one right panel on every view, each thing once, in both themes at Matt's widths; her lines
+  // B-223 (D-245, D-292): one right panel on every view, each thing once, in both themes at Matt's widths; her lines
   // left-aligned on Conversation. Each view and state is judged by panel.cjs (planted failures in test/panel.test.mjs).
   for (const scheme of ['light', 'dark'])
     for (const w of [735, 1280, 1470, 1706, 2560]) {
@@ -388,7 +388,7 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
           return { counts: m.length, text: t.slice(0, 120) };
         });
         ok(
-          `[${w} ${scheme}] a review on Conversation shows its count once (D-228)`,
+          `[${w} ${scheme}] a review on Conversation shows its count once (D-245)`,
           !!once && once.counts === 1,
           JSON.stringify(once)
         );
@@ -397,7 +397,7 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
           .click()
           .catch(() => {});
       } else
-        ok(`[${w} ${scheme}] a review on Conversation shows its count once (D-228)`, false, 'no Start review chip');
+        ok(`[${w} ${scheme}] a review on Conversation shows its count once (D-245)`, false, 'no Start review chip');
       for (const t of ['today', 'progress', 'record', 'system']) {
         await page.click('#tab-' + t);
         await look(t, t === 'today');
@@ -411,7 +411,7 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
       await look('study-practice', true);
       const bad = judged.filter(([, j]) => !j.ok);
       ok(
-        `[${w} ${scheme}] one right panel on every view with detail, one shade, nothing twice, Today steps aside, her lines left (D-245, D-228)`,
+        `[${w} ${scheme}] one right panel on every view with detail, one shade, nothing twice, Today steps aside, her lines left (D-245, D-292)`,
         !bad.length && judged.length > 0 && !errors.length,
         bad.length
           ? bad
