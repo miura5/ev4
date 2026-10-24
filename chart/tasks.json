@@ -4890,9 +4890,9 @@
   "title": "LCH tokens (D-268, D-269, D-273): genTheme in the page source generates every colour from base, accent and contrast; the fixed D-211 tokens are removed; Preferences gains Contrast (30, 60, 100) beside the theme switch",
   "dod": "At contrast 60 the generated values equal this doc's token and colour tables to the hex; a harness walks all three contrasts in both themes and asserts D-273's floors on every text, faint, accent and coded pair; no hex colour remains in page CSS outside the generator (lint); npm run check -- --touched green; staging GREEN",
   "milestone": "v4.7 look",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "claimed by this run",
   "commit": null,
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy"
  },
