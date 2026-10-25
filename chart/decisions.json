@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-313",
+  "date": "Oct 25",
+  "title": "Study matches the demo's StudyOverview board, not build correction C-8: no Objectives / Plan / Weak spots tabs; the toolbar carries the course switch, Quiz me, Weak spots · N and Start session; Weak spots opens the StudyWeak view; the exam plan shows in the exam card",
+  "why": "Matt, Oct 25: he wants the demo's Study layout and not the tabs across the top.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-312",
   "date": "Oct 25",
   "title": "Fidelity sprint (staging only): the v4 UI is fixed to match the demo without the usual checks. Builders copy the demo board's own markup and styles; a task is done when its built screen, rendered at 1280 and 390, matches its demo board side by side, the page builds, and the 10-second smoke run passes. No npm test, touched check, harness or look pass, and one review at most, by the UI reviewer on the whole staging page against the demo. A failing test that asserts the old layout is not fixed during the sprint. Matt is not asked to look at staging or to OK anything until the UI reviewer says it matches the demo; then one word from him takes it live.",
