@@ -5523,11 +5523,11 @@
   "title": "The Worker's run API: list a collection, get one document, and an all-or-nothing batch with versions, where if_version means what it means in ArtifactData. The Worker never hard-deletes: a delete is refused.",
   "dod": "A node test suite run against wrangler dev with a local D1: a batch with one stale if_version writes nothing and names the conflict; a batch of 25 writes lands whole; a delete is refused; list and get return what ArtifactData returns for the same documents. The same suite is green against the staging Worker.",
   "milestone": "app (data, pipelines, ops)",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-311"
   ],
-  "notes": "",
+  "notes": "claimed by lane app",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
