@@ -45,7 +45,9 @@
       if (!side) return;
       // B-365 (D-316): as the demo, the side pane sits beside the pane from 1200 px and under it below that (a quiz's
       // questions, Weak spots' triage card); the objective opens under its row and the plan leads its rows there instead
-      const shown = [...studyLists.entries()].find(([b]) => b.isConnected && !b.closest('[hidden]') && ui.tab === 'study');
+      const shown = [...studyLists.entries()].find(
+        ([b]) => b.isConnected && !b.closest('[hidden]') && ui.tab === 'study'
+      );
       // B-337 (D-312): with no set open, Objectives' picked objective (ui.objPanel, 20-study) fills the panel
       const obj =
         !shown && ui.tab === 'study'
@@ -119,7 +121,10 @@
     }
     function oneLine(q, a) {
       const i = (q.correct || [])[0],
-        tidy = t => String(t || '').trim().replace(/[.\s]+$/, ''),
+        tidy = t =>
+          String(t || '')
+            .trim()
+            .replace(/[.\s]+$/, ''),
         why = tidy((q.rationales || [])[i]).replace(/^(right|correct|yes)\b[.!:,;]?\s*/i, ''),
         Why = why ? why.charAt(0).toUpperCase() + why.slice(1) : '';
       return a.correct
@@ -203,10 +208,13 @@
           render();
         };
       }
-      if (o.barEl && o.barEl.parentElement.classList.contains('qz-bar')) o.barEl.parentElement.hidden = view === '__summary';
+      if (o.barEl && o.barEl.parentElement.classList.contains('qz-bar'))
+        o.barEl.parentElement.hidden = view === '__summary';
       if (o.scoreEl)
         o.scoreEl.textContent =
-          view === '__summary' ? '' : items.filter(q => answers[q.id] && answers[q.id].correct).length + ' right so far';
+          view === '__summary'
+            ? ''
+            : items.filter(q => answers[q.id] && answers[q.id].correct).length + ' right so far';
       if (view === '__summary') {
         if (inStudy) studyLists.set(body, { key, list: setLines(key, items, answers, null) });
         return summary(o, items, answers);
@@ -253,15 +261,16 @@
       // B-348 (D-312): as the demo, the verdict line sits under the answers, above Next
       // B-370 (D-316): in Study a one-answer question's feedback is the demo's one sentence: Right, or Not quite with the
       // right answer, and its why; no line per answer, no Why not the others, no weak-spot outcome
-      const verdict = a && instant
-        ? el('p', 'verdict q-expl ' + (a.correct ? 'ok' : 'no'), oneLine(q, a))
-        : a
-        ? el(
-            'p',
-            'verdict ' + (a.correct ? 'ok' : 'no'),
-            verdictWord(a, type) + (outcomeLine(a.outcome) ? ' · ' + outcomeLine(a.outcome) : '')
-          )
-        : null;
+      const verdict =
+        a && instant
+          ? el('p', 'verdict q-expl ' + (a.correct ? 'ok' : 'no'), oneLine(q, a))
+          : a
+            ? el(
+                'p',
+                'verdict ' + (a.correct ? 'ok' : 'no'),
+                verdictWord(a, type) + (outcomeLine(a.outcome) ? ' · ' + outcomeLine(a.outcome) : '')
+              )
+            : null;
       const wk = key + q.id,
         restOpen = !!whyOpen[wk];
       let hasRest = false;
@@ -377,7 +386,7 @@
               sel.clear();
               sel.add(i);
               if (!a && !submit.dataset.busy) {
-                submit.dataset.busy = "1";
+                submit.dataset.busy = '1';
                 submit.disabled = false;
                 submit.click();
               }
@@ -754,11 +763,14 @@
       // the misses made with Review (Weak spots), then New quiz and Back to topics. The misses and right answers stay as
       // lines under it below 1200 px; from 1200 px the panel's "This quiz" lists them.
       const parts = [el('div', 'big set-score', right.length + ' of ' + answered.length)];
-      parts.push(el('span', 'mini', ['Logged to Record.', solid ? solid + ' marked solid.' : ''].filter(Boolean).join(' ')));
+      parts.push(
+        el('span', 'mini', ['Logged to Record.', solid ? solid + ' marked solid.' : ''].filter(Boolean).join(' '))
+      );
       // B-376 (D-316): as the demo's StudyResults: any miss gives her line "N misses are proposed as weak spots." with
       // Accept all and Review. Each miss already wrote its weak spot through the answer's own write (a new spot, or
       // its twin seen again), so Accept all keeps them as filed and the line goes, as the demo's does once accepted.
-      const wsOf = q => (answers[q.id] && (answers[q.id].createdWeakspot || answers[q.id].weakspotId)) || q.weakspotId || null;
+      const wsOf = q =>
+        (answers[q.id] && (answers[q.id].createdWeakspot || answers[q.id].weakspotId)) || q.weakspotId || null;
       const prop = missed.filter(q => !accepted.has(wsOf(q) || key + ':' + q.id));
       if (prop.length) {
         const line = el('div', 'endline');
@@ -766,7 +778,9 @@
           el(
             'span',
             'sp',
-            prop.length === 1 ? '1 miss is proposed as a weak spot.' : prop.length + ' misses are proposed as weak spots.'
+            prop.length === 1
+              ? '1 miss is proposed as a weak spot.'
+              : prop.length + ' misses are proposed as weak spots.'
           ),
           btn(
             'Accept all',
@@ -836,7 +850,8 @@
         f.setAttribute('aria-label', 'New quiz: ' + (n.title || n.id));
         acts.append(f);
       }
-      if (o.summaryExtra && !inStudy) for (const x of o.summaryExtra()) acts.append(...(x.classList.contains('actions') ? x.children : [x]));
+      if (o.summaryExtra && !inStudy)
+        for (const x of o.summaryExtra()) acts.append(...(x.classList.contains('actions') ? x.children : [x]));
       if (key === 'rv' || key.startsWith('pr-'))
         acts.append(
           btn(
