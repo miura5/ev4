@@ -5594,7 +5594,7 @@
   "depends": [
    "B-312"
   ],
-  "notes": "claimed by lane app",
+  "notes": "built: Worker export to R2 on a nightly cron and on demand, restore check tool, tests (8 pass, npm test 596 pass); local wrangler dev export+restore GREEN (74 docs, 17 collections); pwa-staging run with backup on started at fca98db",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
