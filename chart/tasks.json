@@ -5366,12 +5366,12 @@
   "title": "Progress (folds B-281's Progress part; C-6): the period switch, study time, quiz accuracy and weak-spot counts as property rows in one card. The study-time chart, 44 px bars on the phone. The day panel lists only the sessions that make up the picked bar. By course and exam readiness. No topic-share line, no Copy summary.",
   "dod": "Screenshots at 390 and 1280 in light and dark. On a planted week, each day panel's sessions add up to its bar. No workout or note appears in the day panel. Bars measure 44 px or wider at 390.",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-288"
   ],
-  "notes": "Product review card. What changes for you: Progress opens on This week, with a switch for Month and Semester. One card gives your study time (against last week or month), quiz accuracy and weak spots open and due today. A chart shows study time per day, per week in Month, per month in Semester; tap a bar and the panel lists exactly the study sessions that make up that bar, and tapping one opens Record. Below: time by course and each course's next exam as weak spots solid. Workouts and notes never count. Why: C-6, so the time you see is the time you logged. Touches: the Progress view only; nothing is written to your record. What could break: a session whose course can't be told from its folder or topic counts under NUR 112; sessions still running aren't counted until they end; we'd notice as a bar that disagrees with Record. Size: medium (about 300 lines of page code, 165 of checks), undone by reverting its four commits. Checks: npm test, smoke and the touched check GREEN; new harness checks prove each day's panel adds up to its bar at 390 and 1280, no workout or note in it, bars 44 px or wider at 390. Reviewer, second pass: 2 gaps. (1) The panel might not hide on an empty bar: not seen on the real page, whose frame hides it (screenshots show it absent); left open as a one-line belt-and-braces fix. (2) A second copy of the minutes formatter; open, small. Checks retired or loosened: none (the readiness height check was briefly narrowed, then restored exactly). Differences from the demo kept: by course and exam readiness stack instead of sitting side by side (the two-column rule); readiness is weak spots solid, E.V.'s real measure, not objectives; the weak-spots row shows due today, since proposed weak spots wait on B-232; no hover tooltip (each bar names itself to a screen reader); the existing readiness list, trend and folds stay below for the sweep to decide. Question for you: on the phone the day panel sits after readiness (B-288's rule), so a tapped bar's sessions are a scroll away; should it sit right under the chart there? Staging page: E.V. Home Staging v4, Progress tab.",
-  "commit": null,
+  "notes": "Shipped to staging at 6e72733: ship staging GREEN.",
+  "commit": "6e72733",
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
  {
