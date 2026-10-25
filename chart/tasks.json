@@ -5304,12 +5304,12 @@
   "title": "Study overview (folds B-281's Study part; D-249, C-1, C-8, C-13, D-283): the exam header with its readiness bar, and objective rows with Solid, Almost or Not yet and their weak-spot counts. The toolbar holds the view tabs Objectives, Plan and Weak spots, the course switch, and Start session as the only primary. Each row's Quiz me shows on hover or focus, drawing from the objective's practice sets, or the practice-set job when there are none. The Plan tab is unchanged. On the phone the toolbar fits one row, and tapping an objective opens its detail in place.",
   "dod": "Screenshots at 390 and 1280 in light and dark. One primary on the view. No toolbar Quiz me, mini-quiz card or line action for a quiz. The toolbar is one row at 390. A row's Quiz me opens a set of that objective's existing items; with none, it starts the practice-set job. Rows are 32 px at 1280 and 44 px at 390.",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-288"
   ],
-  "notes": "reviewed: second reviewer No gaps; check --touched running before ship staging",
-  "commit": null,
+  "notes": "Recorded by the managing build chat (Matt present): the views run's own done and staging-deploy entries were refused by the builder guard, which counted the build chat's hand-off 3 tenet (D-307), pulled into the run's rebase, as the run's change. B-297 is on staging (0992e78 carried it; ship staging GREEN). Reviewer: second review No gaps. Kept from the demo on purpose: no Coming up or mini-quiz card (the hand-off cuts both); an objective's detail opens under its row at every width; Not yet is neutral grey. Today's review opens only from its row on Today (D-283). Note: the page's frame file is 8 bytes under its 32 KB limit.",
+  "commit": "29b659e",
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
  {
