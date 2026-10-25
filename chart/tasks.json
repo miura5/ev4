@@ -6979,7 +6979,7 @@
   "milestone": "v5 app",
   "status": "in progress",
   "depends": [],
-  "notes": "claimed by the PWA builder",
+  "notes": "a4d5fae pushed (page saves carry if_version; constant-time token compare). pwa-staging run 40229611936 at a4d5fae: the check step is green (fixed: run 40227735688 went red because a staging page save added dayedits/2026-10-25, which the per-collection counts called a difference; the check now holds every seed document by id, the seed rebuilt as of its seeding day since the synthetic record is date-relative, and admits only documents from the suite in whole runs, the app's jobs, or a page save). The run then failed at B-318's new step (the Worker's build hash read back), so the workflow's run API suite step was skipped. The same suite run by hand against the deployed staging Worker passed 8 of 8, B-389's save test included, and the check stayed green after it. Still needed: a pwa-staging run whose suite step passes, once B-318's step is green. Separately: smoke:pwa is red on main since B-390 (it clicks #tab-system, now hidden), and the Today check-off reload check fails with the committed bridge as well.",
   "commit": null,
   "source": "release code review (data, tools), 368b104..fc9133e, Oct 25",
   "words": "The staging Worker's page saves are last-write-wins with no version check, and its token comparison is not constant-time.",
