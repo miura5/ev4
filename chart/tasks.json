@@ -6556,10 +6556,10 @@
  {
   "id": "B-369",
   "kind": "request",
-  "title": "Request (reported Oct 25): Review 2: Today's phone rows, the Notes badge, Plan the rest's proposal and the week's column widths differ from the demo.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "title": "Fidelity fix: Today (wave 3): at 390 the category badge follows the title and the time moves to the next line, as TodayPhone; the badge reads Note (not Notes); Plan the rest shows the TodayProposal board's proposal (her line, Accept all / Reject, proposed rows) whenever there are free minutes or something to take off, never only a toast; the week's seven columns are equal widths",
+  "dod": "TodayList, TodayPhone, TodayProposal and TodayWeek match at 1280 and 390 on both records. Proof (D-312): node tools/build.mjs; crawl.cjs demo and built, on the synthetic record and on a real-shaped record (ten due items, long titles, an exam with no objectives and one course with no exam), side by side at 1280 and 390 for every state named; npm run smoke; ship staging GREEN. The UI reviewer's pairs are in /home/claude/ui-review2/pairs/ when the run shares the machine.",
+  "milestone": "v4.8 redesign",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -6568,6 +6568,10 @@
   "reportedAt": "2026-10-25T14:52:53.278Z",
   "board": {
    "row": "v4 B-369: Review 2: Today's phone rows, the Notes badge, Plan the rest's…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-25T14:52:53.670Z"
   }
  }
 ]
