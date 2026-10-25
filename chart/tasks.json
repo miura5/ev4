@@ -7180,10 +7180,10 @@
  {
   "id": "B-399",
   "kind": "request",
-  "title": "Request (reported Oct 25): Remove every check, flag, hold and block for graded work and patient identifiers from E.V., as D-324 decides.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "title": "D-324 sweep: graded-work and patient-identifier checks removed",
+  "dod": "Following D-324, E.V. no longer checks for, flags, holds or blocks anything as graded work or a patient identifier. spec.boundaries B-01 and B-04 are marked ended (kept, not deleted) and the run prompts no longer render their lines. The page, core, the pipelines (including any identifier hold and its 'is it made up' question) and the Worker carry no such check. Tests that enforced them are retired, and every other hard limit stays tested. npm test and npm run smoke are green. A fresh review finds no gap. The staging ship, including the two staging Mac tasks re-created with Matt present, is GREEN.",
+  "milestone": "PWA",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -7192,6 +7192,10 @@
   "reportedAt": "2026-10-25T23:06:27.919Z",
   "board": {
    "row": "v4 B-399: Remove every check, flag, hold and block for graded work and patient…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-25T23:06:38.930Z"
   }
  }
 ]
