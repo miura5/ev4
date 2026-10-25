@@ -7033,5 +7033,22 @@
    "outcome": "task",
    "at": "2026-10-25T18:08:01.741Z"
   }
+ },
+ {
+  "id": "B-392",
+  "kind": "bug",
+  "title": "Bug (reported Oct 25): On real data, E.V.'s answer to What's due this week? runs to one long sentence naming eight items, cuts a title at the colon in a time (11:59pm reads as 11), counts eight days while the week banner and pane count other numbers, and heads-up rows say due tomorrow twice.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "final rubric click-through at fc9133e (92/100), Oct 25",
+  "words": "On real data, E.V.'s answer to What's due this week? runs to one long sentence naming eight items, cuts a title at the colon in a time (11:59pm reads as 11), counts eight days while the week banner and pane count other numbers, and heads-up rows say due tomorrow twice.",
+  "reportedAt": "2026-10-25T18:33:25.740Z",
+  "board": {
+   "row": "v4 B-392: On real data, E.V.'s answer to What's due this week? runs to one long…"
+  }
  }
 ]

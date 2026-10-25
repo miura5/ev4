@@ -467,3 +467,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-280 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; folded into B-289 and B-290 (Conversation) and B-291 to B-296 (Today and the task panel). |
 | B-281 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; folded into B-297 to B-300 (Study), B-301 (Progress) and B-302 (Record). |
 | B-282 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; replaced by B-303. |
+| B-392 | bug | 2026-10-25T18:33:25.740Z | On real data, E.V.'s answer to What's due this week? runs to one long sentence naming eight items, cuts a title at the colon in a time (11:59pm reads as 11), counts eight days while the week banner and pane count other numbers, and heads-up rows say due tomorrow twice. | final rubric click-through at fc9133e (92/100), Oct 25 | inbox |  |
