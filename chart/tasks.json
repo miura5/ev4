@@ -7058,10 +7058,10 @@
  {
   "id": "B-393",
   "kind": "bug",
-  "title": "Bug (reported Oct 25): The smoke workflow on GitHub has failed on every push since about 17:46 Oct 25, including the live commit 10798d8, while npm run smoke passes locally (28 of 28).",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "title": "The smoke workflow is green on GitHub again: find why npm run smoke -- shots fails on the runner but passes locally (timing bounds, fonts, the [hidden]-free key checks or the shots path), fix the cause, never loosen an assertion",
+  "dod": "Two consecutive smoke workflow runs green on main; the cause named in the task note; npm test green.",
+  "milestone": "v4.9 cleanup",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -7070,6 +7070,10 @@
   "reportedAt": "2026-10-25T20:32:04.920Z",
   "board": {
    "row": "v4 B-393: The smoke workflow on GitHub has failed on every push since about…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-25T20:32:08.181Z"
   }
  }
 ]
