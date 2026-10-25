@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 25 | v4 staging deployed at 0fc151e (12:47 CT), from e5d8124: Review 4: the status line's failure text is cut off at both (B-384). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at e5d8124 (12:08 CT), from 5f6efe6: The tests and the page harnesses still assert the old UI; they are…; The sprint's code review found a note can overwrite another with the… (B-357, B-381). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at 5f6efe6 (12:00 CT), from ed19bb5: The tests and the page harnesses still assert the old UI; they are…; The sprint's code review found a note can overwrite another with the… (B-357, B-381). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at ed19bb5 (11:36 CT), from ca533d7: Review 3: Progress still drops the Exam readiness card for an exam…; The sprint's code review found a note can overwrite another with the… (B-378, B-381). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |

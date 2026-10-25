@@ -4832,5 +4832,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "0fc151e",
+  "time": "2026-10-25T17:47:15.269Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "e5d8124",
+  "tasks": [
+   "B-384"
+  ],
+  "summary": "Review 4: the status line's failure text is cut off at both",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
