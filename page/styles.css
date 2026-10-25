@@ -1362,8 +1362,20 @@ button.btn:disabled{opacity:.45;cursor:default}
    column, the value beside it); the study-time chart, slim 40 px violet bars on no ground with an outlined stub for a
    bar ahead; by course and exam readiness side by side from 1000 px; the day panel (the right panel from 1200 px) is
    its date, the big total and that day's sessions, each with its Session badge. Absent while empty (D-151). */
-#progress-readiness .prog-bar{padding:0 0 8px;border-bottom:0;min-height:0}
-#progress-readiness .prog-bar .seg{align-self:flex-start}
+#progress-readiness .prog-bar{padding:8px 16px;margin:-14px -16px 0;border-bottom:1px solid var(--line);min-height:48px;box-sizing:border-box}
+#progress-readiness .prog-line[hidden]+.prog-bar{margin-top:-18px}
+/* B-342: E.V.'s line above the switch, the demo's strip: her mark and one sentence on a hairline */
+#progress-readiness .prog-line{display:flex;align-items:center;gap:10px;min-height:40px;padding:4px 12px 4px 18px;margin:-18px -16px 0;box-sizing:border-box;border-bottom:1px solid var(--line);font-size:calc(13px * var(--ts));color:var(--text)}
+#progress-readiness .prog-line[hidden]{display:none}
+#progress-readiness .prog-line .ico{width:16px;height:16px;flex:none;fill:none;stroke:var(--quiet);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#progress-readiness .prog-line .et{flex:1;min-width:0}
+/* from 1200 px her line runs under the header across the window, as the demo's, and the day panel starts below it */
+@media (min-width:1200px){
+  #progress-readiness .prog-line{margin-right:calc(-16px - var(--right-w));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #progress-readiness .prog-line .et{overflow:hidden;text-overflow:ellipsis}
+  body:has(#p-progress:not([hidden]) #prog-line:not([hidden])) #progress-readiness>.cols>.col-side{top:calc(var(--panel-top) + 41px)}
+}
+#progress-readiness .prog-bar .seg{align-self:center}
 #progress-readiness .col-main{gap:12px}
 #p-progress .lab{font-size:calc(12px * var(--ts));color:var(--quiet);font-weight:500}
 #p-progress .mini{font-size:calc(12.5px * var(--ts));color:var(--faint)}
@@ -1410,7 +1422,8 @@ button.btn:disabled{opacity:.45;cursor:default}
   .pc-col{min-width:44px}
   .pc-bar>i,.pc-bar>.pc-ahead{width:44px}
   .prog-props .prop{min-height:44px}
-  #progress-readiness .prog-bar .seg{align-self:flex-start;width:auto}
+  #progress-readiness .prog-bar .seg{align-self:center;width:auto}
+  #progress-readiness .prog-line{padding:4px 8px 4px 16px;flex-wrap:wrap}
   #progress-readiness .prog-bar .seg button{flex:none;padding:0 12px}
 }
 /* ============================================================ B-302 (C-1, C-7, C-13): Record's log ================

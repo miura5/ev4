@@ -6,6 +6,24 @@
     const PERIODS = { week: 'This week', month: 'Month', sem: 'Semester' };
     const prog = { period: PERIODS[store.get('prog.period')] ? store.get('prog.period') : 'week', pick: null };
     const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const MONL = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    const WDL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    // B-342: the demo's long headings, Friday 23 Oct, Week of 19 October (so far), October (so far)
+    const longDay = d => WDL[E.weekday(d)] + ' ' + Number(d.slice(8)) + ' ' + MON[Number(d.slice(5, 7)) - 1];
+    const soFar = (a, b) => (inSpan(today, a, b) ? ' (so far)' : '');
     const hm = m => {
       m = Math.round(m || 0);
       return m < 60 ? m + ' min' : Math.floor(m / 60) + ' h' + (m % 60 ? ' ' + (m % 60) + ' min' : '');
@@ -31,7 +49,7 @@
         const m = weekStart(today);
         return [0, 1, 2, 3, 4, 5, 6].map(i => {
           const d = E.addDays(m, i);
-          return { key: d, from: d, to: d, label: short(d).split(' ')[0], full: d === today ? 'Today' : short(d) };
+          return { key: d, from: d, to: d, label: short(d).split(' ')[0], full: longDay(d) };
         });
       }
       if (period === 'month') {
@@ -46,7 +64,7 @@
             from,
             to,
             label: monthName(ym) + ' ' + Number(from.slice(8)),
-            full: rangeName(from, to),
+            full: 'Week of ' + Number(w.slice(8)) + ' ' + MONL[Number(w.slice(5, 7)) - 1] + soFar(from, to),
           });
         }
         return out;
@@ -60,13 +78,12 @@
           from: monthStart(ym),
           to: monthEnd(ym),
           label: monthName(ym),
-          full: monthName(ym) + ' ' + ym.slice(0, 4),
+          full: MONL[Number(ym.slice(5, 7)) - 1] + soFar(monthStart(ym), monthEnd(ym)),
         });
         ym = E.addDays(monthStart(ym), 32).slice(0, 7);
       }
       return out.slice(-6);
     }
-    const rangeName = (a, b) => (a === b ? short(a) : short(a) + ' to ' + short(b));
     // the period before this one, for the deltas: last week, last month; the semester has none
     function before(period) {
       if (period === 'week') {
@@ -143,7 +160,10 @@
       // B-338: at rest the day panel opens on the latest bar with sessions, else on the current one
       let pick = bs.findIndex(b => b.key === prog.pick);
       if (pick < 0) {
-        const last = vals.map((v, i) => (v > 0 && !ahead(bs[i]) ? i : -1)).filter(i => i >= 0).pop();
+        const last = vals
+          .map((v, i) => (v > 0 && !ahead(bs[i]) ? i : -1))
+          .filter(i => i >= 0)
+          .pop();
         pick = last != null ? last : cur >= 0 ? cur : bs.length - 1;
       }
       $('prog-chart-h').textContent =
@@ -153,15 +173,15 @@
       chart.replaceChildren(
         ...bs.map((b, i) => {
           const col = el('div', 'pc-col');
-          const bar = el('button', 'pc-bar' + (ahead(b) ? ' ahead' : ''));
+          const bar = el('button', 'pc-bar' + (ahead(b) ? ' ahead' : vals[i] ? '' : ' empty'));
           bar.type = 'button';
           bar.dataset.key = b.key;
           bar.dataset.min = String(vals[i]);
           bar.setAttribute('aria-pressed', String(i === pick));
           bar.setAttribute('aria-label', b.full + ': ' + (ahead(b) ? 'ahead' : hm(vals[i])));
           bar.title = b.full + ' · ' + (ahead(b) ? 'ahead' : hm(vals[i]));
-          // the demo's slim bar: a 40 px fill on no ground, an outlined stub for a bar ahead
-          if (ahead(b)) bar.append(el('span', 'pc-ahead'));
+          // the demo's slim bar: a 40 px fill on no ground, an outlined stub for a bar ahead or with nothing logged
+          if (ahead(b) || !vals[i]) bar.append(el('span', 'pc-ahead'));
           else if (vals[i]) {
             const fill = el('i');
             fill.style.height = Math.max(3, Math.round((vals[i] / mx) * 100)) + '%';
@@ -194,64 +214,92 @@
         });
       $('prog-course').hidden = !courseRows.length;
       $('prog-course').replaceChildren(el('span', 'lab', 'By course · ' + PERIODS[P].toLowerCase()), ...courseRows);
-      // exam readiness: each active course's next exam, its weak spots solid (green) and right once (yellow)
-      const next = E.nextExams(S.exams, today);
-      const readyRows = E.activeCourses()
-        .map(c => next.find(e => E.courseOf(e) === c))
-        .filter(Boolean)
-        .map(e => {
-          const r = E.readiness({ examId: e.id, weakspots: M.models });
-          const total = r.active + r.solid;
-          if (!total) return null; // an exam with no weak spots yet is absent (D-151)
-          const row = el('div', 'prog-hb');
-          const top = el('div', 'prog-hb-top');
-          top.append(
-            el('span', null, E.courseOf(e) + ' · ' + (e.title || e.id).replace(/:.*$/, '')),
-            el('span', 'meta', r.solid + ' of ' + total + ' solid')
-          );
-          const bar = el('div', 'pbar');
-          const g = el('i', 'x-green'),
-            y = el('i', 'x-yellow');
-          g.style.width = Math.round((100 * r.solid) / total) + '%';
-          y.style.width = Math.round((100 * r.rightOnce) / total) + '%';
-          bar.append(g, y);
-          row.append(top, bar);
-          return row;
-        })
-        .filter(Boolean);
+      // exam readiness (B-342, the demo's): each course's next exam with objectives, its objectives solid (green) and
+      // almost (yellow), as Study's overview counts them
+      const objAcc = E.answerStats(M.attempts.all).byObjective;
+      const readyRows = studyCourses().map(({ exam: e }) => {
+        const objs = S.objectives.filter(o => o.exam === e.id);
+        const st = objs.map(o => objState(o, objAcc[o.id]).state);
+        const so = st.filter(x => x === 'solid').length,
+          al = st.filter(x => x === 'almost').length;
+        const row = el('div', 'prog-hb');
+        const top = el('div', 'prog-hb-top');
+        top.append(
+          el('span', null, E.courseOf(e) + ' · ' + (e.title || e.id).replace(/:.*$/, '')),
+          el('span', 'meta', so + ' of ' + objs.length)
+        );
+        const bar = el('div', 'pbar');
+        bar.setAttribute('role', 'img');
+        bar.setAttribute('aria-label', so + ' solid, ' + al + ' almost, of ' + objs.length + ' objectives');
+        const g = el('i', 'x-green'),
+          y = el('i', 'x-yellow');
+        g.style.width = Math.round((100 * so) / objs.length) + '%';
+        y.style.width = Math.round((100 * al) / objs.length) + '%';
+        bar.append(g, y);
+        row.append(top, bar);
+        return row;
+      });
       $('prog-ready').hidden = !readyRows.length;
-      $('prog-ready').replaceChildren(el('span', 'lab', 'Exam readiness · weak spots solid'), ...readyRows);
-      // the day panel: the picked bar's sessions, and nothing else
+      $('prog-ready').replaceChildren(el('span', 'lab', 'Exam readiness · objectives solid'), ...readyRows);
+      // the day panel (B-342, the demo's): what that day holds in Record, sessions, quizzes and notes, newest first; the
+      // total is its study time
       const b = bs[pick];
-      const list = timed()
-        .filter(s => inSpan(s.date, b.from, b.to))
-        .sort((x, y) => String(y.startedAt || y.date).localeCompare(String(x.startedAt || x.date)));
-      const day = $('prog-day');
+      const list = recEntries()
+        .filter(x => x.kind !== 'workout' && x.result !== 'going now' && inSpan(x.date, b.from, b.to))
+        .slice(0, 5);
       const ul = el('ul', 'prog-sessions');
-      for (const s of list) {
+      for (const x of list) {
         const li = el('li', 'prog-s');
-        li.dataset.min = String(s.minutes);
-        li.dataset.id = s.id;
-        // the session's name opens it in Record's log, where it lives (D-147: a card holds something he does)
-        const nm = el('button', 'nm', s.topic || (s.kind === 'skill' ? 'Skills practice' : 'Study session'));
+        li.dataset.kind = x.kind;
+        li.dataset.id = x.id;
+        // the entry's name opens it in Record's log, where it lives (D-147)
+        const nm = el('button', 'nm', x.name);
         nm.type = 'button';
         nm.title = 'Open in Record';
-        nm.addEventListener('click', () => openInRecord(s.id)); // B-302: on its row in the log
-        const when = P === 'week' ? (s.startedAt ? clock12(s.startedAt) + ' · ' : '') : short(s.date) + ' · ';
-        // the demo's row: the Session badge, then the name over its minutes, course and time
+        nm.addEventListener('click', () => openInRecord(x.id));
         const txt = el('div', 'prog-s-t');
-        txt.append(nm, el('span', 'mini', hm(s.minutes) + ' · ' + sessionCourse(s) + (when ? ' · ' + when.slice(0, -3) : '')));
-        li.append(el('span', 'badge x-violet', 'Session'), txt);
+        txt.append(nm, el('span', 'mini', x.result || ''));
+        const [word, cls] = REC_BADGE[x.kind];
+        li.append(el('span', 'badge' + (cls ? ' ' + cls : ''), word), txt);
         ul.append(li);
       }
-      // absent while the picked bar holds no session (D-151)
-      day.hidden = !list.length;
-      day.replaceChildren(
+      const unit = P === 'week' ? 'day' : P === 'month' ? 'week' : 'month';
+      $('prog-day').replaceChildren(
         el('span', 'lab prog-day-when', b.full),
-        el('p', 'prog-day-total', hm(vals[pick])),
-        el('span', 'lab prog-day-lab', P === 'week' ? 'That day in Record' : 'That ' + (P === 'month' ? 'week' : 'month') + ' in Record'),
+        el('p', 'prog-day-total', ahead(b) ? 'Ahead' : hm(vals[pick])),
+        el('span', 'lab prog-day-lab', list.length ? 'That ' + unit + ' in Record' : 'Nothing logged'),
         ul
       );
+      $('prog-day').hidden = false;
+      // E.V.'s one line above the switch (B-342, the demo's): the topic that got most of the period's time, and the
+      // next graded date in its course this week; absent while the period holds no study time (D-151)
+      const byT = {};
+      for (const s of timed())
+        if (inSpan(s.date, span.from, span.to) && s.topic) byT[s.topic] = (byT[s.topic] || 0) + s.minutes;
+      const top = Object.entries(byT).sort((x, y) => y[1] - x[1])[0];
+      const line = $('prog-line');
+      line.hidden = !top || !grand;
+      if (top && grand) {
+        const ts = timed().find(s => s.topic === top[0]);
+        const c = ts ? sessionCourse(ts) : null;
+        const ex = E.nextExams(S.exams, today).find(e => E.courseOf(e) === c && E.diffDays(today, e.date) <= 6);
+        const when = ex
+          ? ex.date === today
+            ? 'today'
+            : ex.date === E.addDays(today, 1)
+              ? 'tomorrow'
+              : WDL[E.weekday(ex.date)]
+          : '';
+        line.querySelector('.et').textContent =
+          top[0] +
+          ' got ' +
+          Math.round((100 * top[1]) / grand) +
+          '% of ' +
+          { week: 'this week’s', month: 'this month’s', sem: 'this semester’s' }[P] +
+          ' time' +
+          (ex ? '; ' + c + '’s ' + (ex.title || ex.id).replace(/:.*$/, '') + ' is ' + when : '') +
+          '.';
+      }
     }
     // its parts, built here so the shell stays in its budget: the toolbar, then the card, the chart and the pair at
     // the top of the main column, and the day panel first in the side column (the right panel from 1200 px)
@@ -284,7 +332,12 @@
       cc.append(hd, ch);
       const grid = el('div', 'prog-grid');
       grid.append(mk('ui-card', 'prog-course'), mk('ui-card', 'prog-ready'));
-      R.prepend(bar);
+      // E.V.'s line: the demo's strip under the header, her mark and one sentence
+      const line = mk('evline prog-line', 'prog-line');
+      line.innerHTML =
+        '<svg class="ico sicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6z"></path></svg><span class="et"></span>';
+      line.hidden = true;
+      R.prepend(line, bar);
       R.querySelector('.col-main').prepend(mk('ui-card prog-props', 'prog-stats'), cc, grid);
       R.querySelector('.col-side').prepend(mk('card', 'prog-day'));
     }
@@ -302,7 +355,8 @@
       renderProgressTime(); // B-301
       // B-338 (D-312): the readiness card, its objective list and line chart, the findings and the accuracy tables leave
       // Progress; their data stays in the record. Only the score prompt remains, while a past exam waits for its score.
-      for (const id of ['ready-card', 'insights-card', 'audit-card', 'fmt-card', 'cj-card', 'days-card']) $(id).hidden = true;
+      for (const id of ['ready-card', 'insights-card', 'audit-card', 'fmt-card', 'cj-card', 'days-card'])
+        $(id).hidden = true;
       // Score entry for past unit exams (calibration).
       // D-094: a past NUR unit exam with no score yet; the score goes to examedits/<examId>, replaced whole.
       const needScore = S.exams
