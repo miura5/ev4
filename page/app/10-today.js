@@ -472,7 +472,7 @@
     function renderTask(items, isDone, day) {
       let panel = $('today-task');
       if (!panel) {
-        panel = el('div', 'card');
+        panel = el('div', 'tp-panel');
         panel.id = 'today-task';
         panel.setAttribute('role', 'region');
         panel.setAttribute('aria-label', 'Task');
@@ -482,6 +482,9 @@
       const it = G ? G.it : items.find(x => x.id === ui.taskSel);
       if (!it) ui.taskSel = null;
       panel.hidden = !it || ui.todayView === 'week';
+      // B-336 (D-312): an opened task is the panel's only card; the others step aside until it closes
+      for (const c of panel.parentNode.children)
+        if (c !== panel) c.classList.toggle('tk-away', !panel.hidden);
       if (!it) {
         panel.dataset.k = '';
         return panel.replaceChildren();
@@ -529,10 +532,31 @@
         p.append(el('span', 'prop-k', k), el('span', 'prop-v', v));
         return p;
       };
-      const props = el('div', 'wk-props');
+      // B-336 (D-312): the properties in one card, as the demo's 'a task opened' board; Status is a To do / Done switch
+      const props = el('div', 'tp-props');
+      const status = prop('Status', '');
+      const sw = el('div', 'tp-seg');
+      sw.setAttribute('role', 'group');
+      sw.setAttribute('aria-label', 'Status');
+      const done = isDone(it);
+      for (const [name, v] of [
+        ['To do', false],
+        ['Done', true],
+      ]) {
+        const b = el('button', done === v ? 'on' : '', name);
+        b.type = 'button';
+        b.setAttribute('aria-pressed', String(done === v));
+        b.addEventListener('click', () => {
+          if (isDone(it) === v) return;
+          T.ticked.add(it.id);
+          guard(b, () => tickWrite(it, v), v ? 'Checked off' : 'Unchecked');
+        });
+        sw.append(b);
+      }
+      status.lastChild.append(sw);
       const cat = prop('Category', '');
       cat.lastChild.append(el('span', 'badge' + (f.badge ? ' ' + f.badge : ''), f.category));
-      props.append(prop('Status', f.status), cat);
+      props.append(status, cat);
       if (f.estimate) props.append(prop('Estimate', f.estimate));
       if (f.due) props.append(prop('Due', f.due));
       if (f.course) props.append(prop('Course', f.course));
@@ -542,12 +566,12 @@
       const acts = el('div', 'wk-acts');
       const go = openItem(it);
       if (go && startable(it, isDone)) {
-        const st = btn('Start', go, { cls: 'btn primary sm tp-start' });
+        const st = btn('Start', go, { cls: 'btn primary wide tp-start' });
         st.setAttribute('aria-label', 'Start: ' + text);
         acts.append(st);
       } else if (go && it.tag !== 'GRADED') {
         // a set that can't start now (done, or over the budget) still opens where it lives
-        const op = btn('Open', go, { cls: 'btn neutral sm tp-open' });
+        const op = btn('Open', go, { cls: 'btn neutral wide tp-open' });
         op.setAttribute('aria-label', 'Open: ' + text);
         acts.append(op);
       }
@@ -556,11 +580,11 @@
           ui.taskGone = { it, line, ...w };
           render();
         };
-        const sz = btn('Snooze to tomorrow', null, { cls: 'btn neutral sm tp-snooze' });
+        const sz = btn('Snooze to tomorrow', null, { cls: 'btn neutral wide tp-snooze' });
         sz.addEventListener('click', () =>
           guard(sz, async () => gone('Moved to tomorrow’s list.', await snoozeTask(it)), 'Moved to tomorrow')
         );
-        const rm = btn('Remove from today', null, { cls: 'btn ghost sm tp-remove' });
+        const rm = btn('Remove from today', null, { cls: 'btn ghost wide tp-remove' });
         rm.addEventListener('click', () =>
           guard(
             rm,
@@ -579,7 +603,12 @@
         it.tag === 'GRADED'
           ? [el('p', 'meta tp-note', 'Graded work: E.V. helps you prepare, never with the work itself.')]
           : [];
-      panel.replaceChildren(head, props, from, ...(acts.children.length ? [acts] : []), ...graded);
+      const note = graded.length
+        ? graded
+        : acts.querySelector('.tp-snooze')
+          ? [el('p', 'meta tp-note', 'Snooze moves it to tomorrow, with Undo.')]
+          : [];
+      panel.replaceChildren(head, props, ...(acts.children.length ? [acts] : []), ...note, from);
     }
     /**
      * B-293 (C-9): Plan the rest. planDay runs again on the record as it stands, and its difference from today's list

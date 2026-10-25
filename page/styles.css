@@ -1163,9 +1163,29 @@ button.btn:disabled{opacity:.45;cursor:default}
 #today-task .tp-from{display:flex;flex-direction:column;gap:2px;font-size:calc(13px * var(--ts))}
 #today-task .wk-acts{flex-direction:column;align-items:stretch}
 #today-task .tp-from .meta,#today-task .tp-gone,#today-task .tp-note{margin:0;color:var(--faint);font-size:calc(12.5px * var(--ts));line-height:1.4}
+/* B-336 (D-312): as the demo's 'a task opened' board: the panel holds only the task; its properties sit in one card in
+   a 92 px label column, Status is a To do / Done switch, the actions are full-width buttons with the grey note under them. */
+#today-task.tp-panel{display:flex;flex-direction:column;gap:14px;min-width:0}
+#today-task[hidden]{display:none}
+.col-side>.tk-away{display:none!important}
+#today-task .tp-props{border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line);padding:14px;box-sizing:border-box;display:flex;flex-direction:column;gap:2px}
+#today-task .tp-props .prop{display:grid;grid-template-columns:92px minmax(0,1fr);align-items:center;gap:8px;min-height:34px;font-size:calc(13px * var(--ts));border:0}
+#today-task .tp-props .prop-k{color:var(--quiet)}
+#today-task .tp-props .prop-v{text-align:left;min-width:0;color:var(--text);overflow-wrap:anywhere}
+#today-task .tp-seg{display:inline-flex;padding:2px;border-radius:8px;background:var(--hover);gap:2px;vertical-align:middle}
+#today-task .tp-seg button{all:unset;box-sizing:border-box;height:24px;padding:0 9px;border-radius:6px;color:var(--quiet);font:500 calc(12px * var(--ts)) var(--sans);cursor:pointer;display:inline-flex;align-items:center}
+#today-task .tp-seg button:hover{color:var(--text);background:var(--bg)}
+#today-task .tp-seg button.on{background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line)}
+#today-task .tp-seg button:focus-visible{outline:2px solid var(--text);outline-offset:1px}
+#today-task .wk-acts{display:flex;flex-direction:column;align-items:stretch;gap:10px}
+#today-task .wk-acts .btn{width:100%;min-height:32px;height:32px;border-radius:8px;padding:0 12px;font:500 calc(13px * var(--ts)) var(--sans)}
+#today-task .tp-note{line-height:1.5}
+#today-task .tp-from{gap:4px}
+#today-task .tp-from .prop-k{font-size:calc(12px * var(--ts));font-weight:500;color:var(--quiet)}
 @media (max-width:599px){
-  #today-task .wk-props .prop{min-height:44px}
-  #today-task .wk-acts .btn{min-height:44px}
+  #today-task .tp-props .prop{min-height:44px}
+  #today-task .tp-seg button{height:44px;min-width:44px;padding:0 12px;justify-content:center}
+  #today-task .wk-acts .btn{min-height:44px;height:44px}
 }
 /* ============================================================ B-297 (D-283, C-1, C-8, C-13): Study's overview ========
    The toolbar (the view tabs sit beside the title from 600 px), then the exam header with its readiness bar and one
