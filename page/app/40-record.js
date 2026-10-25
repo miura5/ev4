@@ -99,7 +99,7 @@
           at: i.createdAt,
           date: E.chicagoDate(i.createdAt),
           result: IDEA_KIND[i.kind || 'learning'] || 'Learning',
-          courses: [],
+          courses: i.course ? [i.course] : [], // B-373: the course a note from New carries
           idea: i,
         }));
       const wos = S.workouts.map(w => ({
@@ -294,11 +294,18 @@
       }
       const parts = [
         el('span', 'badge' + (cls ? ' ' + cls : ''), word),
-        el('h3', 'rec-title', x.kind === 'note' ? x.idea.text || '' : x.name),
+        el('h3', 'rec-title', x.kind === 'note' ? ideaName(x.idea) : x.name),
         props,
       ];
       if (x.kind === 'note') {
         const i = x.idea;
+        // B-373: a note's words after its title line
+        const rest = String(i.text || '')
+          .split('\n')
+          .slice(1)
+          .join('\n')
+          .trim();
+        if (rest) parts.push(el('p', 'rec-desc', rest));
         const src = [
           i.sourceLabel || i.source,
           (i.links || []).length

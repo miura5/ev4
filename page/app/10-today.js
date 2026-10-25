@@ -484,6 +484,31 @@
         from,
       };
     }
+    // B-373 (as the demo's task view): her line above an opened graded task. With an objective its title names (or its
+    // course's first one not yet solid, for a quiz or exam), she offers to quiz him on it beforehand; else she keeps
+    // the due date and stays out of the work (B-01). Any other opened task has no line.
+    function taskLine() {
+      if (!ui.taskSel || ui.taskGone || ui.todayView === 'week') return null;
+      const it = dayState().items.find(x => x.id === ui.taskSel);
+      if (!it || it.tag !== 'GRADED') return null;
+      const text = String(it.text || '').replace(/\s*\(~?\d+\s*min\)\s*$/i, '');
+      const m = /^dates\/(.+)$/.exec(it.ref || '');
+      const d =
+        (m && S.dates.find(x => x.id === m[1])) ||
+        S.dates.filter(x => x.graded && x.date >= today).find(x => E.similarity(x.title || '', text) >= 0.3) ||
+        null;
+      const o = d && dateObjective(d);
+      if (!o) return { text: 'Graded work: your draft, your words. I keep the due date and stay out of the writing.' };
+      const named = /:\s*(.+)$/.exec((d && d.title) || text);
+      const on = named ? named[1].trim().replace(/[.]+$/, '') : 'it';
+      return {
+        text:
+          'Graded. I can quiz you on ' +
+          (on === 'it' ? 'it' : on.charAt(0).toLowerCase() + on.slice(1)) +
+          ' beforehand; I stay out of the quiz itself.',
+        act: ['Quiz me on it', b => quizObjective(o, b)],
+      };
+    }
     async function snoozeTask(it) {
       // tomorrow's add first, so a refused write leaves today's list as it was
       const tomorrow = E.addDays(today, 1),
@@ -694,9 +719,8 @@
       const cat = prop('Category', '');
       cat.lastChild.append(el('span', 'badge' + (f.badge ? ' ' + f.badge : ''), f.category));
       props.append(status, cat);
-      if (f.estimate) props.append(prop('Estimate', f.estimate));
-      if (f.due) props.append(prop('Due', f.due));
-      if (f.course) props.append(prop('Course', f.course));
+      // B-373: Estimate, Due and Course on every task, as the board's ('—' when the record has none)
+      props.append(prop('Estimate', f.estimate || '—'), prop('Due', f.due || '—'), prop('Course', f.course || '—'));
       if (f.topic) props.append(prop('Topic', f.topic));
       const acts = el('div', 'wk-acts');
       const go = openItem(it);
@@ -712,8 +736,14 @@
         op.setAttribute('aria-label', 'Open: ' + text);
         acts.append(op);
       }
-      if (!fixedItem(it) && !isDone(it)) {
+      // B-373: every opened task offers Snooze, as the board's; graded work, exams, clinicals and validations keep their
+      // day (the list edit refuses to move them), so there it shows, off, with the reason as its title
+      {
         const sz = btn('Snooze to tomorrow', null, { cls: 'btn neutral wide tp-snooze' });
+        if (fixedItem(it)) {
+          sz.disabled = true;
+          sz.title = (it.tag === 'GRADED' ? 'Graded work' : 'This') + ' stays on the day it is due.';
+        }
         sz.addEventListener('click', () =>
           guard(
             sz,
@@ -730,9 +760,9 @@
       const note =
         it.tag === 'GRADED'
           ? [el('p', 'meta tp-note', 'Graded work: E.V. helps you prepare, never with the work itself.')]
-          : acts.querySelector('.tp-snooze')
-            ? [el('p', 'meta tp-note', 'Snooze moves it to tomorrow, with Undo.')]
-            : [];
+          : fixedItem(it)
+            ? [el('p', 'meta tp-note', 'It stays on the day it is due.')]
+            : [el('p', 'meta tp-note', 'Snooze moves it to tomorrow, with Undo.')];
       panel.replaceChildren(props, ...(acts.children.length ? [acts] : []), ...note);
     }
     /**

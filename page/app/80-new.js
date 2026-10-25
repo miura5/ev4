@@ -1,7 +1,7 @@
     // ------------------------------------------------------------ the header's New (B-287, C-7)
     // New is the page's one way to create: a menu of Task for Today and Note, each a modal dialog that keeps focus
     // inside. Esc closes the menu or the dialog and gives focus back to New. A task lands on today's list through the
-    // list edit; a note lands in ideas, with no course. Each paints at once and the write catches up (D-208): a refused
+    // list edit; a note lands in ideas, its title first, its words and its course when picked (B-373). Each paints at once and the write catches up (D-208): a refused
     // write opens the dialog again with his words in it. The way out is Esc, a tap outside or Cancel (B-361, as the
     // demo), and leaving keeps what he typed for the next time he opens that kind. Add stays off while the title is empty.
     const NEW = {
@@ -15,10 +15,10 @@
       },
       note: {
         head: 'New note',
-        ph: 'What did you learn, in your words?',
+        ph: 'Title, e.g. Rounding: tenths for mL',
         hint: 'Goes to Record as yours.',
         cta: 'Save note',
-        max: 400,
+        max: 140,
         ok: 'Saved to Record',
       },
     };
@@ -26,7 +26,8 @@
       newMenu = $('new-menu'),
       dlg = $('new-dlg');
     let newKind = null;
-    const drafts = { task: '', note: '' };
+    const drafts = { task: '', note: '' },
+      noteDraft = { body: '', course: '' };
     // B-308 (C-7): a task's Category, Estimate, When and Course, written through the list edit (kind, minutes, date,
     // course), so it counts against that day's budget. Category is the list's own kinds; a To-do has no badge (B-291).
     // B-361: the demo's two categories: Classes is a plain to-do, Study a review item (it counts under Today's Study).
@@ -64,9 +65,29 @@
         })
       );
     }
+    // B-373 (as the demo's NewItem): a note has a Title, its words, and a Course switch with None; the task rows hide
     function taskFields(on) {
-      $('new-fields').hidden = !on;
-      if (!on) return;
+      $('new-fields').hidden = false;
+      for (const id of ['new-kind-row', 'new-est-row', 'new-when-row']) $(id).hidden = !on;
+      if (!on) {
+        if (noteDraft.course && !taskCourses().includes(noteDraft.course)) noteDraft.course = '';
+        const opts = [...taskCourses().map(c => [c, c]), ['', 'None']];
+        $('new-course').replaceChildren(
+          ...opts.map(([v, n]) => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.textContent = n;
+            b.dataset.v = v;
+            b.setAttribute('aria-pressed', String(noteDraft.course === v));
+            b.addEventListener('click', () => {
+              noteDraft.course = v;
+              for (const x of $('new-course').children) x.setAttribute('aria-pressed', String(x.dataset.v === v));
+            });
+            return b;
+          })
+        );
+        return;
+      }
       if (!taskCourses().includes(taskOpts.course)) taskOpts.course = taskCourses()[0] || '';
       segPaint('new-kind', TASK_KINDS, 'kind');
       segPaint('new-est', TASK_ESTS, 'minutes');
@@ -84,19 +105,21 @@
       newBtn.setAttribute('aria-expanded', String(on));
       if (on) menuItems()[0].focus();
     }
-    const newField = () => (newKind === 'note' ? $('new-text') : $('new-title'));
+    const newField = () => $('new-title');
     function newOpen(kind, text = drafts[kind], opts) {
       newMenuOpen(false);
       newKind = kind;
-      if (opts) taskOpts = { ...opts };
+      if (opts && kind === 'task') taskOpts = { ...opts };
+      if (opts && kind === 'note') Object.assign(noteDraft, opts);
+      if (kind === 'note' && !opts && !drafts.note && !noteDraft.body) noteDraft.course = taskCourses()[0] || '';
       taskFields(kind === 'task');
       const k = NEW[kind];
       $('new-head').textContent = k.head;
       $('new-ico').setAttribute('d', ICON[kind]);
       $('new-hint').textContent = k.hint;
       $('new-save').textContent = k.cta;
-      $('new-title').hidden = kind !== 'task';
       $('new-text').hidden = kind !== 'note';
+      $('new-text').value = kind === 'note' ? noteDraft.body : '';
       const f = newField();
       f.placeholder = k.ph;
       f.maxLength = k.max;
@@ -108,6 +131,7 @@
     }
     function newClose() {
       if (newKind) drafts[newKind] = newField().value;
+      if (newKind === 'note') noteDraft.body = $('new-text').value;
       if (dlg.open) dlg.close();
       newKind = null;
       newBtn.focus();
@@ -117,13 +141,16 @@
         t = newField().value.replace(/\s+/g, ' ').trim();
       if (!kind) return;
       if (!t) return newField().focus();
-      const w = idUnpassed(t); // B-197: values only
+      const body = kind === 'note' ? $('new-text').value.trim() : '';
+      const w = idUnpassed(t + (body ? ' ' + body : '')); // B-197: values only
       if (w.length) {
         $('new-warn').textContent = 'That looks like it ' + w[0].why + '. Take that detail out first.';
         return newField().focus();
       }
       newClose();
       drafts[kind] = '';
+      const nd = { body, course: noteDraft.course };
+      if (kind === 'note') noteDraft.body = '';
       const o = { ...taskOpts },
         tomorrow = kind === 'task' && o.when === 'tomorrow';
       if (kind === 'task') taskOpts = taskDefaults();
@@ -134,10 +161,10 @@
             const edit = { action: 'add', text: t, kind: o.kind, minutes: o.minutes, course: o.course };
             const r = await editList(tomorrow ? E.addDays(today, 1) : today, edit, 'Matt');
             if (r.note) toast('Already on the list');
-          } else await write(E.noteIdea(t, { at: now(), date: today }));
+          } else await write(E.noteIdea(t, { at: now(), date: today, body: nd.body, course: nd.course }));
         },
         tomorrow ? 'Added to tomorrow' : NEW[kind].ok,
-        () => newOpen(kind, t, kind === 'task' ? o : null)
+        () => newOpen(kind, t, kind === 'task' ? o : nd)
       );
     }
     newBtn.addEventListener('click', () => newMenuOpen(newMenu.hidden));

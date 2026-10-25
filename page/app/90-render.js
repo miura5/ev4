@@ -112,6 +112,7 @@
           const g = weekDates(E.addDays(today, WEEK_DAYS - 1), true).filter(d => d.graded && !E.isRemovedDate(d));
           return g.length ? { text: gradedLine(g) } : null;
         }
+        if (ui.taskSel && !ui.taskGone) return taskLine(); // B-373: an opened task's line is its own (10-today)
         if (ui.restPlan) return null; // the proposal speaks for itself
         const { items, isDone, budget } = dayState();
         const bv = budgetView(budget, items, isDone);

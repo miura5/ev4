@@ -752,12 +752,20 @@ export function makeSessions(core) {
     );
     return [...f.writes, { op: 'update', collection: 'sessions', id: s.id, data: { pending: { [key]: null } } }];
   }
-  /** B-287 (C-7): a note he writes from the header's New, as one ideas write: his words, no course, kind general. */
-  function noteIdea(text, { at, date }) {
-    const t = String(text || '')
+  /**
+   * B-287 (C-7): a note he writes from the header's New, as one ideas write, kind general. B-373: its title is the
+   * text's first line and its words follow on the next; a course only when he picked one.
+   */
+  function noteIdea(text, { at, date, body = '', course = '' }) {
+    const title = String(text || '')
       .replace(/\s+/g, ' ')
       .trim();
-    if (!t) throw new Error('a note needs words');
+    if (!title) throw new Error('a note needs words');
+    const words = String(body || '')
+      .replace(/[ \t]+/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+    const t = words ? title + '\n' + words : title;
     const data = {
       ...envelope('page', 'New note', at),
       schema: 2,
@@ -766,8 +774,9 @@ export function makeSessions(core) {
       objective: '',
       status: 'open',
       links: [],
+      ...(course ? { course: String(course) } : {}),
     };
-    return { op: 'set', collection: 'ideas', id: safeId('idea-' + date + '-' + slug(t, 30)), data };
+    return { op: 'set', collection: 'ideas', id: safeId('idea-' + date + '-' + slug(title, 30)), data };
   }
   /** Flashcards as Quizlet import text: term<TAB>definition per line. */
 

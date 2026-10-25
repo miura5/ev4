@@ -188,13 +188,13 @@
   <form id="new-form" autocomplete="off">
     <div class="new-hdr"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="new-ico" d="M5 5h14v14H5zM9 12l2 2 4-4"/></svg><h2 class="new-head" id="new-head">New task</h2></div>
     <div class="new-body">
-      <input type="text" id="new-title" aria-labelledby="new-head">
-      <textarea id="new-text" rows="4" aria-labelledby="new-head" hidden></textarea>
-      <!-- B-308 (C-7): a task's Category, Estimate, When and Course, written through the list edit -->
+      <input type="text" id="new-title" aria-label="Title">
+      <textarea id="new-text" rows="4" aria-label="Note" placeholder="What did you learn, in your words?" hidden></textarea>
+      <!-- B-308 (C-7): a task's Category, Estimate, When and Course, written through the list edit; a note's Course (B-373) -->
       <div class="new-fields" id="new-fields" hidden>
-        <div class="frow"><span class="lbl" id="new-kind-lbl">Category</span><div class="seg" id="new-kind" role="group" aria-labelledby="new-kind-lbl"></div></div>
-        <div class="frow"><span class="lbl" id="new-est-lbl">Estimate</span><div class="seg" id="new-est" role="group" aria-labelledby="new-est-lbl"></div></div>
-        <div class="frow"><span class="lbl" id="new-when-lbl">When</span><div class="seg" id="new-when" role="group" aria-labelledby="new-when-lbl"></div></div>
+        <div class="frow" id="new-kind-row"><span class="lbl" id="new-kind-lbl">Category</span><div class="seg" id="new-kind" role="group" aria-labelledby="new-kind-lbl"></div></div>
+        <div class="frow" id="new-est-row"><span class="lbl" id="new-est-lbl">Estimate</span><div class="seg" id="new-est" role="group" aria-labelledby="new-est-lbl"></div></div>
+        <div class="frow" id="new-when-row"><span class="lbl" id="new-when-lbl">When</span><div class="seg" id="new-when" role="group" aria-labelledby="new-when-lbl"></div></div>
         <div class="frow"><span class="lbl" id="new-course-lbl">Course</span><div class="seg" id="new-course" role="group" aria-labelledby="new-course-lbl"></div></div>
       </div>
       <p class="meta" id="new-warn" role="status"></p>
