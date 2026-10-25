@@ -926,6 +926,83 @@ body.captions .cap-cards-more{align-self:flex-start}
 body.captions .brief{margin-left:0;align-items:flex-start}
 body.captions .brief-row{padding-left:0}
 
+/* ============================================================ B-340 (D-312): E.V.'s view as in the demo =============
+   The Conversation board: her lines in a 600 px column (24 px in), the past ones small and faint, his to the right
+   under a small You, her newest at 17 px; the daily check-in card under her until he answers it today; five outlined
+   chips centred and wrapping; the field on the surface with the send in Ember. In the panel the idle session card's
+   button is the primary, cards on the surface, and Coming up is a plain list under its label. */
+body.captions #p-ev{grid-template-rows:auto auto auto minmax(0,1fr) auto auto}
+body.captions #p-ev>#ev-ckin{grid-row:3}
+body.captions #p-ev>.hero{margin-top:var(--ev-drop,0px)}
+body.captions #p-ev>.thread{grid-row:4}
+body.captions #p-ev>.composer{grid-row:5}
+body.captions #p-ev>#ev-side{grid-row:6}
+@media (max-width:1199px){
+  body.captions #p-ev>#ev-side{grid-row:5}
+  body.captions #p-ev>.composer{grid-row:6}
+}
+.ckin{justify-self:center;width:calc(100% - 48px);max-width:552px;box-sizing:border-box;margin:0 0 14px;display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line)}
+.ckin[hidden]{display:none}
+.ckin .ck-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ckin .ck-head{justify-content:space-between}
+.ckin .lab{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
+.ckin .mini{font-size:calc(12.5px * var(--ts));color:var(--faint)}
+.ckin .ck-q{font-size:calc(13.5px * var(--ts));color:var(--text)}
+.ckin .seg{align-self:center;width:auto}
+.ckin .adv{margin:0;font-size:calc(13.5px * var(--ts));line-height:1.5;color:var(--text)}
+body.captions .cap-in{max-width:600px;padding:0 24px 18px;gap:14px}
+body.captions .msg.ev .bubble,body.captions .msg.earlier .bubble{font-size:calc(14px * var(--ts));line-height:1.45;color:var(--faint);opacity:1}
+body.captions .msg.ev.current .bubble,body.captions.surface-open .msg.ev.current .bubble{font-size:calc(17px * var(--ts));line-height:1.5;letter-spacing:-.005em;color:var(--text);opacity:1}
+body.captions .msg.matt.last{display:block}
+body.captions .msg.matt .bubble{font-size:calc(14px * var(--ts));color:var(--quiet);opacity:1;max-width:80%;text-align:right}
+body.captions .msg.matt .bubble::before{content:"You";display:block;font-size:calc(12px * var(--ts));font-weight:500;color:var(--faint)}
+body.captions .composer{padding-top:8px;gap:10px}
+body.captions .composer>*{max-width:600px}
+.qchips{flex-wrap:wrap;justify-content:center;gap:6px;overflow:visible;padding:0 16px}
+.qchip,.qchip.go{height:30px;min-height:30px;padding:0 12px;border-radius:15px;border:0;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);color:var(--quiet);font:500 calc(12.5px * var(--ts)) var(--sans)}
+.qchip:hover{background:var(--hover);color:var(--text)}
+body.captions .composer>.compose-row{width:calc(100% - 32px);max-width:600px;margin:0 auto 18px}
+.compose-row{align-items:center;min-height:50px;gap:8px;padding:0 9px 0 16px;border:0;border-radius:14px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2)}
+.compose-row:focus-within{box-shadow:inset 0 0 0 2px var(--focus,var(--text))}
+.compose-row textarea{min-height:0;height:auto;padding:14px 0;font-size:calc(14.5px * var(--ts))}
+.compose-row textarea::placeholder{color:var(--faint)}
+.compose-row textarea:placeholder-shown{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.compose-row .attach{width:32px;height:32px;min-height:32px;flex:0 0 32px;margin-left:-8px}
+.compose-row #ev-send,.compose-row #ev-send.on{width:32px;height:32px;min-height:32px;flex:0 0 32px;border-radius:16px;background:var(--her);color:var(--on-her);box-shadow:none}
+.compose-row #ev-send:hover{background:color-mix(in srgb,var(--her) 88%,var(--text))}
+@media (max-width:1199px){body.captions.surface-open #qchips{display:none}}
+@media (max-width:599px){
+  .ckin{width:calc(100% - 32px)}
+  .ckin .seg{flex:1;width:auto}
+  .ckin .seg button{flex:1}
+  body.captions .cap-in{padding:0 16px 12px}
+  .qchip,.qchip.go{height:44px;min-height:44px}
+  body.captions .composer>.compose-row{margin-bottom:12px;min-height:56px;padding:0 6px 0 16px}
+  .compose-row #ev-send,.compose-row #ev-send.on{width:44px;height:44px;min-height:44px;flex:0 0 44px;border-radius:22px}
+  .compose-row .attach{width:44px;height:44px;min-height:44px;flex:0 0 44px}
+}
+@media (min-width:1200px){
+  body.captions #ev-side>#ev-sess{background:var(--surface);padding:14px;gap:10px}
+  #ev-sess .card-head{min-height:0}
+  #ev-sess>h2,#ev-sess .card-head>h2{min-height:0;font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
+  #ev-sess .ss-topic{font-size:calc(14px * var(--ts))}
+  #ev-sess .ss-topic+.meta,#ev-sess .ss-sub{margin-top:-8px;font-size:calc(12.5px * var(--ts));color:var(--faint)}
+  #ev-sess .ss-left{order:1;margin:0;font-size:calc(30px * var(--ts))}
+  #ev-sess .ss-acts{order:2;display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));margin-top:0}
+  #ev-sess .ss-acts .btn{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);color:var(--text)}
+  #ev-sess button.btn.wide{order:3;margin-top:0;height:32px;min-height:32px}
+  body.captions #ev-side>#ev-dates{background:none;box-shadow:none;border:0;padding:0}
+  #ev-dates>h2{min-height:0;margin:0 0 6px;font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
+  #ev-dates .list{margin:0}
+  #ev-dates .week-item{border:0;padding:0}
+  #ev-dates .wk-line{display:flex;align-items:center;gap:12px;width:100%;min-height:44px;padding:0 10px;border:0;border-radius:8px;background:none;text-align:left;font:400 calc(13.5px * var(--ts)) var(--sans);color:var(--text)}
+  #ev-dates .wk-line:hover{background:var(--hover)}
+  #ev-dates .wk-line::before{content:"";width:6px;height:6px;border-radius:3px;background:var(--quiet);flex:none}
+  #ev-dates .wk-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:inherit}
+  #ev-dates .when{order:2;font-size:calc(12.5px * var(--ts));color:var(--quiet);white-space:nowrap}
+  #ev-dates .bi-prep,#ev-dates .wk-k{display:none}
+}
+
 /* ============================================================ B-224 (D-229): System's Preferences ====================
    Text size: every font size is calc(N px * var(--ts)); Larger is one step up. Reduce motion On gives the end states the
    system's reduced-motion setting gives. Both are this device's own, set before first paint by the page's head script. */

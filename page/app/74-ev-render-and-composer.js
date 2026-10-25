@@ -1,6 +1,6 @@
     // ---------------------------------------------------------------- render + composer
     const SEND_ICON =
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>';
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'; // B-340: the demo's arrow
     const STOP_ICON =
       '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2.5" fill="currentColor"/></svg>';
     const PLAY_ICON =
@@ -87,24 +87,33 @@
         ro.replaceChildren(el('span', cls), document.createTextNode(txt));
       }
     }
+    // B-340 (D-312): as in the demo, her and her lines sit down by the chips while they leave room: the room left in
+    // her lines' scroller goes above her stage, so a short conversation reads from the composer up.
+    function dropSync() {
+      const box = $('thread'),
+        inn = box.firstElementChild,
+        p = $('p-ev');
+      if (!inn || p.hidden) return;
+      const kids = [...inn.children].filter(c => !c.classList.contains('cap-pull') && c.getClientRects().length);
+      const cur = parseFloat(p.style.getPropertyValue('--ev-drop')) || 0;
+      const content = kids.length
+        ? kids[kids.length - 1].getBoundingClientRect().bottom - kids[0].getBoundingClientRect().top + 18
+        : 0;
+      const free = Math.max(0, Math.round(box.clientHeight + cur - content));
+      if (Math.abs(free - cur) > 2) p.style.setProperty('--ev-drop', free + 'px');
+    }
     setInterval(() => {
       try {
         renderMood();
+        dropSync();
       } catch {}
     }, 300);
     // B-85: the chips show under the greeting (her stage idle), or while the input is focused and empty; in a conversation,
     // a session or a skills run they stay out of the way. A tap on a chip holds them until its click lands.
     const CH = { hold: false };
+    // B-340 (D-312): as in the demo, the chips stay under her lines at rest, in a conversation and in a session.
     function syncChips() {
-      const inp = $('ev-input');
-      const want =
-        CH.hold ||
-        stageState() === 'idle' ||
-        (T.briefOpen && !allMsgs().some(m => m.role === 'matt' && m.at > T.greet.at)) ||
-        $('qchips').dataset.k === 'Quiz me now' ||
-        /(^|\|)Resume .+ · \d+ of \d+(\||$)/.test($('qchips').dataset.k || '') ||
-        (document.activeElement === inp && !inp.value.trim());
-      document.body.classList.toggle('chips-quiet', !want);
+      document.body.classList.remove('chips-quiet');
     }
     $('qchips').addEventListener('pointerdown', () => {
       CH.hold = true;
@@ -120,8 +129,9 @@
     $('ev-input').addEventListener('focus', () => syncChips());
     $('ev-input').addEventListener('blur', () => setTimeout(syncChips, 200));
     // B-85: a placeholder that fits one line in a narrow pane.
-    const PH_LONG = 'Ask E.V., or tell it something to log',
-      PH_SHORT = 'Ask E.V. or log something';
+    // B-340 (D-312): the demo's placeholder at every width; "note: …" saves a note (B-290).
+    const PH_LONG = 'Ask E.V., or “note: …” to log something',
+      PH_SHORT = PH_LONG;
     const placeholder = () => (innerWidth < 600 ? PH_SHORT : PH_LONG);
     const fitPlaceholder = () => {
       const i = $('ev-input');
@@ -149,12 +159,19 @@
       document.body.classList.toggle('core-big', !opening && !activeSession() && !!T.bigCore);
       renderMood();
       const sa = activeSession();
-      const chips =
+      let chips =
         COMMENT && sa && sa.status === 'active'
           ? ['Quiz me now']
           : ((T.greet && T.greet.chips) || ['What’s due this week?', 'How ready am I?']).filter(
               c => !(c === 'Start a study session' && sa)
             );
+      // B-340 (D-312): at rest, five chips as in the demo: Start a study session first, then her greeting's offers,
+      // filled with the usual asks she answers herself.
+      if (!sa) {
+        chips = ['Start a study session', ...chips.filter(c => c !== 'Start a study session')];
+        for (const c of ['What’s due this week?', 'How ready am I?', 'Show my progress', 'Give me 5 more', 'Start review'])
+          if (chips.length < 5 && !chips.includes(c)) chips.push(c);
+      }
       renderBar();
       renderSkillDock();
       const qc = $('qchips');
@@ -166,15 +183,12 @@
               ? btn(c, () => skillPark(false))
               : btn(c, () => guard(null, () => quick(c)));
             b.className = 'qchip';
-            if (c === 'Start a study session') {
-              b.classList.add('go');
-              b.insertAdjacentHTML('afterbegin', PLAY_ICON);
-            }
             return b;
           })
         );
       }
       syncChips();
+      renderCheckin();
       const sb = $('ev-send');
       const sk = T.busy ? 'stop' : 'send';
       if (sb.dataset.k !== sk) {

@@ -14,3 +14,50 @@
       return 'Logged. Good charge. Today’s list, and 5 more questions if you want them.';
     }
 
+    // B-340 (D-312): the daily check-in card under her, as in the demo, until he answers it today; the line his answer
+    // brings stays in the card for the rest of this visit. Self-report only (B-05): a number, saved to today.
+    const CK = { just: null, pick: 0, adv: '' };
+    function renderCheckin() {
+      if (!M) return;
+      let box = $('ev-ckin');
+      if (!box) {
+        box = el('section', 'ckin');
+        box.id = 'ev-ckin';
+        box.setAttribute('aria-label', 'Daily check-in');
+        $('p-ev').insertBefore(box, $('thread'));
+      }
+      const ci = (M.dayedit && M.dayedit.checkin) || null;
+      const energy = (ci && ci.energy) || (CK.just === today ? CK.pick : 0);
+      const show = !energy || CK.just === today;
+      box.hidden = !show;
+      if (!show) return;
+      const when = ci && ci.at ? clock12(ci.at) : T.greet && T.greet.at ? clock12(T.greet.at) : '';
+      const k = [today, energy, CK.adv, when].join('|');
+      if (box.dataset.k === k) return;
+      box.dataset.k = k;
+      const day = new Date(today + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long' });
+      const head = el('div', 'ck-row ck-head');
+      head.append(el('span', 'lab', 'Daily check-in · ' + day), el('span', 'mini', when));
+      const seg = el('div', 'seg');
+      seg.setAttribute('role', 'group');
+      seg.setAttribute('aria-label', 'Energy, 1 to 5');
+      for (let n = 1; n <= 5; n++) {
+        const b = el('button', null, String(n));
+        b.type = 'button';
+        b.setAttribute('aria-pressed', String(energy === n));
+        b.addEventListener('click', () =>
+          guard(b, async () => {
+            await saveCheckin({ energy: n });
+            CK.just = today;
+            CK.pick = n;
+            CK.adv = energyAdvice(n);
+            renderCheckin();
+          })
+        );
+        seg.append(b);
+      }
+      const row = el('div', 'ck-row');
+      row.append(el('span', 'ck-q', 'Energy today'), seg);
+      box.replaceChildren(head, row);
+      if (CK.adv) box.append(el('p', 'adv', CK.adv));
+    }

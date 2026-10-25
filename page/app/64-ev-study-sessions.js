@@ -866,7 +866,7 @@
         card.dataset.k = 'idle' + offered;
         card.setAttribute('aria-label', 'Start a study session');
         const go = btn('Start study session', () => guard(go, () => quick('Start a study session')), {
-          cls: 'btn neutral sm wide',
+          cls: 'btn primary wide', // B-340 (D-312): the panel's main button, in Ember as in the demo
         });
         go.insertAdjacentHTML('afterbegin', PLAY_ICON);
         card.replaceChildren(
