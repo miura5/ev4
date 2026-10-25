@@ -2483,14 +2483,17 @@ const ok = (name, cond, detail = '') => {
     );
     await page.fill('#new-title', '');
     await page.keyboard.press('Escape');
-    // B-291 (D-282): an added item opens in place to who added it, with no Remove; until the task panel (B-296) he
-    // takes it off by asking E.V., through the same list edit.
+    // B-291, B-296 (D-282, C-10): an added item's row carries no Remove; its name opens the task's panel, which says
+    // who added it and holds Remove from today. Here he takes it off by asking E.V., through the same list edit.
     {
       const fr = page.locator('#today-list .li', { hasText: 'Flashcards for the bones lab' });
       await fr.locator('.nm').click();
+      await page.waitForSelector('#today-task:not([hidden])', { timeout: 1500 }).catch(() => {});
       ok(
-        'an added item opens in place to who added it, with no Remove',
-        /added by you/.test(await fr.textContent()) && (await fr.locator('button', { hasText: 'Remove' }).count()) === 0
+        'an added item opens its panel: who added it, and Remove there, never on the row',
+        /Added by you/.test(await page.textContent('#today-task')) &&
+          (await page.locator('#today-task .tp-remove').count()) === 1 &&
+          (await fr.locator('button', { hasText: 'Remove' }).count()) === 0
       );
       await page.click('#tab-ev');
       await page.evaluate(id => {

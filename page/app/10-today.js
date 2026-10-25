@@ -130,14 +130,21 @@
         .find(x => E.similarity(x.title || '', it.text || '') >= 0.3);
       return named ? named.date : null;
     }
-    const openRows = new Set();
+    // B-296 (C-10): the name opens the task's panel (the right panel from 1200 px, under the pane below it)
+    function openTask(id) {
+      ui.taskSel = id; // Close closes it; a second tap on the name leaves it open
+      ui.taskGone = null;
+      render();
+      const p = $('today-task');
+      if (p && !p.hidden && innerWidth < 1200) p.scrollIntoView({ block: 'nearest' });
+    }
     function todayRow(it, isDone, o = {}) {
       const doneNow = isDone(it);
-      const go = openItem(it);
       const text = String(it.text || '').replace(/\s*\(~?\d+\s*min\)\s*$/i, '');
+      const sel = ui.taskSel === it.id && !ui.taskGone;
       const li = el(
         'li',
-        'li today-item' + (doneNow ? ' done' : '') + (openRows.has(it.id) ? ' open' : '') + (o.off ? ' ti-propose' : '')
+        'li today-item' + (doneNow ? ' done' : '') + (sel ? ' sel' : '') + (o.off ? ' ti-propose' : '')
       );
       li.dataset.id = it.id;
       const tk = el('label', 'tk');
@@ -154,21 +161,9 @@
       const nm = el('button', 'nm ti-nm');
       nm.type = 'button';
       nm.append(el('span', 'ti-t', text));
-      const bits = [
-        it.note && it.note !== 'Graded' ? it.note : '',
-        it.deferred ? 'deferred: over today’s budget' : '',
-        it.added ? 'added by ' + (it.by === 'Matt' ? 'you' : 'E.V.') : '',
-      ]
-        .filter(Boolean)
-        .join(' · ');
-      if (!go) nm.setAttribute('aria-expanded', String(openRows.has(it.id)));
-      nm.addEventListener('click', () => {
-        if (go) return go();
-        const on = !openRows.has(it.id);
-        on ? openRows.add(it.id) : openRows.delete(it.id);
-        li.classList.toggle('open', on);
-        nm.setAttribute('aria-expanded', String(on));
-      });
+      nm.setAttribute('aria-controls', 'today-task');
+      nm.setAttribute('aria-expanded', String(sel));
+      nm.addEventListener('click', () => openTask(it.id));
       li.append(tk, nm);
       const due = it.tag === 'GRADED' ? gradedDue(it) : null;
       const b = BADGE[it.tag];
@@ -182,6 +177,7 @@
         const red = due && !doneNow && due <= E.addDays(today, 1);
         li.append(el('span', 'badge' + (red ? ' x-red' : b[1] ? ' ' + b[1] : ''), b[0]));
       }
+      const go = openItem(it);
       if (o.start && go && !o.off) {
         const st = btn('Start', go, { cls: 'btn neutral sm ti-start' });
         st.setAttribute('aria-label', 'Start: ' + text);
@@ -199,7 +195,6 @@
                 : short(due)
             : '';
       li.append(el('span', 't', when));
-      if (bits) li.append(el('p', 'meta ti-more', bits));
       return li;
     }
     // A row that can start: not done, not graded, not over the budget, and something to open (a review or practice set).
@@ -374,6 +369,226 @@
       card.replaceChildren(el('h2', null, 'E.V.’s changes today'), ul);
     }
     /**
+     * B-296 (C-10, D-282): the task's panel, first in the side column (the right panel from 1200 px, under the pane
+     * below it). Its name, then status, category, estimate, due, course and topic; "Where it came from" says who put it
+     * on the list and when, with the planner's note. Start is its one primary, only when the task can start and never on
+     * graded work. Snooze to tomorrow (tomorrow's add, then today's take-off) and Remove from today (the take-off) are
+     * the list edits D-078 already has; each leaves an Undo here that reverses what it wrote. No full-page view, no
+     * previous and next, no description paragraph.
+     */
+    const LIST_KIND_OF = { READING: 'reading', PRACTICE: 'practice', REVIEW: 'review', NOTES: 'notes' };
+    const fixedItem = it => FIXED.has(it.tag) || /^(date|exam|soon)-/.test(String(it.id || ''));
+    function taskFacts(it, isDone, day) {
+      const ed = dayEditDoc(today) || {};
+      const pt = planTaskById(it.ref);
+      const setId = it.set || (/^sets\//.test(it.ref || '') ? it.ref.slice(5) : null);
+      const set = setId && S.sets.find(s => s.id === setId);
+      const dm = /^dates\/(.+)$/.exec(it.ref || '');
+      const date = dm && S.dates.find(d => d.id === dm[1]);
+      const wm = /^weakspots\/(.+)$/.exec(it.ref || '');
+      const ws = wm && M.models.find(w => w.id === wm[1]);
+      const exam = pt && S.exams.find(e => e.id === (pt.plan.exam || pt.plan.id));
+      const add = it.added ? (ed.added || {})[it.id] || {} : null;
+      const course =
+        (add && add.course) ||
+        (date && date.course) ||
+        (exam && exam.course) ||
+        (set && set.course) ||
+        (ws && ws.course) ||
+        '';
+      const topics = [...new Set((set && set.items ? set.items : []).map(q => q.topic).filter(Boolean))];
+      const topic =
+        (ws && ws.topic) ||
+        (pt && pt.task.chapters && pt.task.chapters.length ? 'Chapter ' + pt.task.chapters.join(', ') : '') ||
+        (topics.length ? topics.slice(0, 2).join(', ') + (topics.length > 2 ? ' and more' : '') : '');
+      const due = it.tag === 'GRADED' ? gradedDue(it) : today;
+      const b = BADGE[it.tag];
+      const by = w => (w === 'Matt' ? 'you' : 'E.V.');
+      const from = add
+        ? 'Added by ' +
+          by(add.by || it.by) +
+          (add.at ? (E.chicagoDate(add.at) === today ? ' at ' : ' ') + clock12(add.at) : '')
+        : day.live
+          ? 'Built live from your record'
+          : 'Planned by the 4:25am run' + (day.at && E.chicagoDate(day.at) === today ? ' at ' + clock12(day.at) : '');
+      const note = [
+        it.note && it.note !== 'Graded' && !add ? it.note : '',
+        exam ? 'From the ' + (exam.title || exam.id) + ' plan' : '',
+        it.deferred ? 'Deferred: over today’s budget' : '',
+      ].filter(Boolean);
+      return {
+        status: isDone(it) ? 'Done' : it.deferred ? 'Deferred' : 'To do',
+        category: b ? b[0] : it.tag === 'EXAM' ? 'Exam' : 'Task',
+        badge: b && b[1] && it.tag !== 'GRADED' ? b[1] : '',
+        estimate: it.minutes ? it.minutes + ' min' : '',
+        due: due
+          ? due === today
+            ? 'Today'
+            : due === E.addDays(today, 1)
+              ? 'Tomorrow'
+              : short(due) + ' · ' + relDay(due)
+          : '',
+        course,
+        topic,
+        from: [from, ...note].join(' · '),
+      };
+    }
+    async function snoozeTask(it) {
+      // tomorrow's add first, so a refused write leaves today's list as it was
+      const tomorrow = E.addDays(today, 1),
+        ed = dayEditDoc(today) || {},
+        add = it.added ? { ...(ed.added || {})[it.id] } : null;
+      const text = String(it.text || '').replace(/\s*\(~?\d+\s*min\)\s*$/i, '');
+      const a = await editList(
+        tomorrow,
+        {
+          action: 'add',
+          text,
+          kind: (add && add.kind) || LIST_KIND_OF[it.tag] || 'todo',
+          minutes: Number(it.minutes) || 0,
+          course: (add && add.course) || taskFacts(it, () => false, dayState().day).course,
+        },
+        'Matt'
+      );
+      try {
+        await editList(today, { action: 'remove', id: it.id }, 'Matt');
+      } catch (e) {
+        // today's take-off refused: tomorrow's add goes again, so the task is never on both lists
+        if (a.doc) await editList(tomorrow, { action: 'remove', id: a.id }, 'Matt').catch(() => {});
+        throw e;
+      }
+      return { tomorrowId: a.doc ? a.id : null, add };
+    }
+    // Undo: the take-off reversed (a planned item restored, an added one added again as it was), then tomorrow's add
+    async function undoTask(it, gone) {
+      if (gone.add)
+        await editList(
+          today,
+          {
+            action: 'add',
+            text: gone.add.text,
+            kind: gone.add.kind,
+            minutes: gone.add.minutes,
+            course: gone.add.course,
+          },
+          gone.add.by || 'Matt'
+        );
+      else await editList(today, { action: 'restore', id: it.id }, 'Matt');
+      if (gone.tomorrowId) await editList(E.addDays(today, 1), { action: 'remove', id: gone.tomorrowId }, 'Matt');
+    }
+    function renderTask(items, isDone, day) {
+      let panel = $('today-task');
+      if (!panel) {
+        panel = el('div', 'card');
+        panel.id = 'today-task';
+        panel.setAttribute('role', 'region');
+        panel.setAttribute('aria-label', 'Task');
+        document.querySelector('#p-today .col-side').prepend(panel);
+      }
+      const G = ui.taskGone;
+      const it = G ? G.it : items.find(x => x.id === ui.taskSel);
+      if (!it) ui.taskSel = null;
+      panel.hidden = !it || ui.todayView === 'week';
+      if (!it) {
+        panel.dataset.k = '';
+        return panel.replaceChildren();
+      }
+      // drawn again only when what it shows changes, so a tap on its buttons is never lost to a redraw
+      const f = G ? null : taskFacts(it, isDone, day);
+      const k = JSON.stringify([it.id, it.text, G && G.line, f, isDone(it), startable(it, isDone), !!openItem(it)]);
+      if (panel.dataset.k === k && panel.firstChild) return;
+      panel.dataset.k = k;
+      const text = String(it.text || '').replace(/\s*\(~?\d+\s*min\)\s*$/i, '');
+      const close = btn(
+        'Close',
+        () => {
+          ui.taskSel = null;
+          ui.taskGone = null;
+          render();
+        },
+        { cls: 'btn ghost sm tp-close' }
+      );
+      close.setAttribute('aria-label', 'Close the task');
+      const head = el('div', 'card-head');
+      head.append(el('h2', null, text), close);
+      if (G) {
+        // what Snooze or Remove just wrote, and its Undo
+        const undo = btn('Undo', null, { cls: 'btn neutral sm tp-undo' });
+        undo.setAttribute('aria-label', 'Undo: ' + G.line);
+        undo.addEventListener('click', () =>
+          guard(
+            undo,
+            async () => {
+              await undoTask(it, G);
+              ui.taskGone = null;
+              ui.taskSel = it.id;
+              render();
+            },
+            'Back on today'
+          )
+        );
+        const acts = el('div', 'wk-acts');
+        acts.append(undo);
+        return panel.replaceChildren(head, el('p', 'meta tp-gone', G.line), acts);
+      }
+      const prop = (k, v) => {
+        const p = el('div', 'prop');
+        p.append(el('span', 'prop-k', k), el('span', 'prop-v', v));
+        return p;
+      };
+      const props = el('div', 'wk-props');
+      const cat = prop('Category', '');
+      cat.lastChild.append(el('span', 'badge' + (f.badge ? ' ' + f.badge : ''), f.category));
+      props.append(prop('Status', f.status), cat);
+      if (f.estimate) props.append(prop('Estimate', f.estimate));
+      if (f.due) props.append(prop('Due', f.due));
+      if (f.course) props.append(prop('Course', f.course));
+      if (f.topic) props.append(prop('Topic', f.topic));
+      const from = el('div', 'tp-from');
+      from.append(el('span', 'prop-k', 'Where it came from'), el('p', 'meta', f.from));
+      const acts = el('div', 'wk-acts');
+      const go = openItem(it);
+      if (go && startable(it, isDone)) {
+        const st = btn('Start', go, { cls: 'btn primary sm tp-start' });
+        st.setAttribute('aria-label', 'Start: ' + text);
+        acts.append(st);
+      } else if (go && it.tag !== 'GRADED') {
+        // a set that can't start now (done, or over the budget) still opens where it lives
+        const op = btn('Open', go, { cls: 'btn neutral sm tp-open' });
+        op.setAttribute('aria-label', 'Open: ' + text);
+        acts.append(op);
+      }
+      if (!fixedItem(it) && !isDone(it)) {
+        const gone = (line, w) => {
+          ui.taskGone = { it, line, ...w };
+          render();
+        };
+        const sz = btn('Snooze to tomorrow', null, { cls: 'btn neutral sm tp-snooze' });
+        sz.addEventListener('click', () =>
+          guard(sz, async () => gone('Moved to tomorrow’s list.', await snoozeTask(it)), 'Moved to tomorrow')
+        );
+        const rm = btn('Remove from today', null, { cls: 'btn ghost sm tp-remove' });
+        rm.addEventListener('click', () =>
+          guard(
+            rm,
+            async () => {
+              const add = it.added ? { ...((dayEditDoc(today) || {}).added || {})[it.id] } : null;
+              await editList(today, { action: 'remove', id: it.id }, 'Matt');
+              gone('Taken off today.', { tomorrowId: null, add });
+            },
+            'Taken off today'
+          )
+        );
+        acts.append(sz, rm);
+      }
+      // graded work: the one line the demo carries, since E.V. helps him prepare and never with the work (B-01)
+      const graded =
+        it.tag === 'GRADED'
+          ? [el('p', 'meta tp-note', 'Graded work: E.V. helps you prepare, never with the work itself.')]
+          : [];
+      panel.replaceChildren(head, props, from, ...(acts.children.length ? [acts] : []), ...graded);
+    }
+    /**
      * B-293 (C-9): Plan the rest. planDay runs again on the record as it stands, and its difference from today's list
      * is proposed: an exam-plan task it would put on today that the list lacks (while it fits the time left) is a
      * proposed addition; a plan task on the list that it no longer puts on today, or now defers over the budget, is a
@@ -506,6 +721,7 @@
       if (bv) head.append(el('span', 'meta tb-short' + (bv.over ? ' tb-over' : ''), bv.line));
       renderBudget(bv);
       renderChanges(); // B-294
+      renderTask(items, isDone, day); // B-296
       // B-293 (C-9): Plan the rest, at the head's end; its proposal waits here until he accepts, keeps or rejects it
       if (ui.restPlan && ui.restPlan.date !== today) ui.restPlan = null;
       const P = ui.restPlan;
@@ -806,7 +1022,8 @@
             () => {
               ui.todayView = 'list';
               store.set('todayView', 'list');
-              openRows.add(it.id);
+              ui.taskSel = it.id;
+              ui.taskGone = null;
               render();
               const li = document.querySelector('#today-list li[data-id="' + CSS.escape(it.id) + '"]');
               if (li) li.scrollIntoView({ block: 'nearest' });

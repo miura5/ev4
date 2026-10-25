@@ -536,6 +536,196 @@ async function tickAll(page) {
       ok(`${tag} no sideways scroll, no page errors`, !r.sideways && !errors.length, errors.join(' | '));
       await ctx.close();
     }
+  // B-296 (C-10, D-282): the task's panel on the planted list day, at 390 and 1280 in light and dark, with a study task
+  // (the practice set) and a graded task open. The name opens it: the right panel at 1280, under the pane at 390, the
+  // list still in view (no full-page view), with no previous and next and no description paragraph. The study task's
+  // one primary is Start; the graded task has no Start, Snooze or Remove. Snooze writes tomorrow's add and today's
+  // take-off, and Undo reverses both; Remove writes the take-off.
+  const panelRecord = () => {
+    const db = listRecord();
+    const base = Object.values(db.sets || {}).find(s => (s.items || []).some(q => q.topic));
+    db.sets['p291-set'] = {
+      ...base,
+      ...env,
+      kind: 'practice',
+      title: 'Practice: fluid balance',
+      course: 'NUR 112',
+      planTaskId: null,
+    };
+    return db;
+  };
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 1280, height: 860 },
+  ])
+    for (const scheme of ['light', 'dark']) {
+      const w = viewport.width,
+        tag = `[task ${w} ${scheme}]`;
+      const ctx = await browser.newContext({ viewport, colorScheme: scheme });
+      const page = await ctx.newPage();
+      const errors = [];
+      page.on('pageerror', e => errors.push(e.message));
+      await openPage(page, ct(today, 10, 0), panelRecord());
+      await page.click('#tab-today');
+      await page.waitForTimeout(300);
+      const openRow = async text => {
+        await page.locator('#today-list .ti-list .ti-nm', { hasText: text }).first().click();
+        await page.waitForSelector('#today-task:not([hidden])', { timeout: 1500 }).catch(() => {});
+        await page.waitForTimeout(100);
+      };
+      const readPanel = () =>
+        page.evaluate(() => {
+          const p = document.getElementById('today-task'),
+            list = document.getElementById('today-list');
+          const box = e => e.getBoundingClientRect();
+          const props = Object.fromEntries(
+            [...p.querySelectorAll('.prop')].map(x => [
+              x.querySelector('.prop-k').textContent,
+              x.querySelector('.prop-v').textContent,
+            ])
+          );
+          const btns = [...p.querySelectorAll('button')].map(b => b.textContent.trim());
+          return {
+            shown: !p.hidden && box(p).height > 0,
+            listShown: !list.hidden && box(list).height > 0,
+            right: Math.round(box(p).left) >= Math.round(box(list).right),
+            under: Math.round(box(p).top) >= Math.round(box(list).bottom),
+            title: (p.querySelector('h2') || {}).textContent,
+            props,
+            from: (p.querySelector('.tp-from .meta') || {}).textContent || '',
+            btns,
+            primaries: [...p.querySelectorAll('button.primary')].map(b => b.textContent.trim()),
+            paras: [...p.querySelectorAll('p')].filter(x => !x.closest('.tp-from') && !x.matches('.tp-note')).length,
+            note: (p.querySelector('.tp-note') || {}).textContent || '',
+            nav: btns.some(b => /^(Previous|Next|‹|›)$/.test(b)),
+            sel: (document.querySelector('#today-list li.sel .ti-t') || {}).textContent || '',
+            sideways: document.documentElement.scrollWidth > innerWidth + 1,
+          };
+        });
+      // the study task
+      await openRow('Practice: fluid balance');
+      const s = await readPanel();
+      ok(
+        `${tag} a study task opens in the ${w >= 1200 ? 'right panel' : 'panel under the pane'}, the list still in view`,
+        s.shown && s.listShown && (w >= 1200 ? s.right : s.under) && /^Practice: fluid balance/.test(s.sel),
+        JSON.stringify(s)
+      );
+      ok(
+        `${tag} it shows status, category, estimate, due, course and topic, and where it came from`,
+        s.props.Status === 'To do' &&
+          s.props.Category === 'Practice' &&
+          s.props.Estimate === '10 min' &&
+          s.props.Due === 'Today' &&
+          s.props.Course === 'NUR 112' &&
+          !!s.props.Topic &&
+          /^Planned by the 4:25am run/.test(s.from),
+        JSON.stringify({ props: s.props, from: s.from })
+      );
+      ok(
+        `${tag} Start is its one primary, beside Snooze to tomorrow and Remove from today; no previous and next, no description`,
+        s.primaries.join() === 'Start' &&
+          s.btns.includes('Snooze to tomorrow') &&
+          s.btns.includes('Remove from today') &&
+          !s.nav &&
+          s.paras === 0,
+        JSON.stringify({ btns: s.btns, primaries: s.primaries, paras: s.paras })
+      );
+      await page.locator('#p-today').screenshot({ path: `${shots}/today-task-study-${w}-${scheme}.png` });
+      if (w >= 1200) await page.screenshot({ path: `${shots}/today-task-study-${w}-${scheme}-page.png` });
+      // the graded task
+      await openRow('BIO 201 lab report draft');
+      const g = await readPanel();
+      ok(
+        `${tag} a graded task shows no Start, Snooze or Remove`,
+        g.shown &&
+          g.props.Category === 'Graded' &&
+          /^Graded work: E\.V\. helps you prepare, never with the work itself\.$/.test(g.note) &&
+          !!g.props.Due &&
+          !g.btns.some(b => /^(Start|Open|Snooze to tomorrow|Remove from today)$/.test(b)),
+        JSON.stringify({ props: g.props, btns: g.btns })
+      );
+      await page.locator('#p-today').screenshot({ path: `${shots}/today-task-graded-${w}-${scheme}.png` });
+      if (w >= 1200) await page.screenshot({ path: `${shots}/today-task-graded-${w}-${scheme}-page.png` });
+      // Snooze, then Undo, on the reading
+      const n0 = await page.evaluate(() => window.__writes.length);
+      await openRow('Read chapter 39');
+      await page.click('#today-task .tp-snooze');
+      await page.waitForTimeout(400);
+      const sz = await page.evaluate(
+        ([n, today, tomorrow]) => {
+          const ws = window.__writes.slice(n).filter(x => x[1] === 'dayedits');
+          return {
+            w: ws.map(x => [
+              x[2],
+              Object.values(x[3].added || {}).some(a => /^Read chapter 39/.test(a.text) && a.minutes === 45),
+              !!(x[3].skipped || {})['p291-long'],
+            ]),
+            onList: [...document.querySelectorAll('#today-list .ti-list .ti-t')].some(t =>
+              /^Read chapter 39/.test(t.textContent)
+            ),
+            line: document.getElementById('today-task').textContent,
+            today,
+            tomorrow,
+          };
+        },
+        [n0, today, tomorrow]
+      );
+      ok(
+        `${tag} Snooze writes tomorrow's add and today's take-off; the row leaves and the panel offers Undo`,
+        sz.w.length === 2 &&
+          sz.w[0][0] === tomorrow &&
+          sz.w[0][1] &&
+          sz.w[1][0] === today &&
+          sz.w[1][2] &&
+          !sz.onList &&
+          /Moved to tomorrow’s list\..*Undo/.test(sz.line),
+        JSON.stringify(sz)
+      );
+      await page.click('#today-task .tp-undo');
+      await page.waitForTimeout(400);
+      const un = await page.evaluate(
+        ([n]) => {
+          const ws = window.__writes.slice(n).filter(x => x[1] === 'dayedits');
+          return {
+            w: ws.map(x => [
+              x[2],
+              Object.values(x[3].added || {}).some(a => /^Read chapter 39/.test(a.text)),
+              !!(x[3].skipped || {})['p291-long'],
+            ]),
+            onList: [...document.querySelectorAll('#today-list .ti-list .ti-t')].some(t =>
+              /^Read chapter 39/.test(t.textContent)
+            ),
+          };
+        },
+        [n0]
+      );
+      ok(
+        `${tag} Undo reverses both: today's take-off, then tomorrow's add`,
+        un.w.length === 4 && un.w[2][0] === today && !un.w[2][2] && un.w[3][0] === tomorrow && !un.w[3][1] && un.onList,
+        JSON.stringify(un)
+      );
+      // Remove on the study task
+      const n1 = await page.evaluate(() => window.__writes.length);
+      await openRow('Practice: fluid balance');
+      await page.click('#today-task .tp-remove');
+      await page.waitForTimeout(400);
+      const rm = await page.evaluate(
+        ([n]) =>
+          window.__writes
+            .slice(n)
+            .filter(x => x[1] === 'dayedits')
+            .map(x => [x[2], ((x[3].skipped || {})['p291-set'] || {}).by]),
+        [n1]
+      );
+      ok(
+        `${tag} Remove from today writes the existing take-off`,
+        rm.length === 1 && rm[0][0] === today && rm[0][1] === 'Matt',
+        JSON.stringify(rm)
+      );
+      const end = await readPanel();
+      ok(`${tag} no sideways scroll, no page errors`, !end.sideways && !errors.length, errors.join(' | '));
+      await ctx.close();
+    }
   // B-292 (C-5): the day's budget on the planted list day, under and over, at 390 and 1280 in light and dark. The card
   // reads "<left> min left · <free> free" with the done minutes on their own line; ticking a 45-minute row moves its
   // minutes from left to done and the bar keeps its length; over budget the bar's left part is the warning yellow (D-270) and the words that

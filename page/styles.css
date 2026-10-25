@@ -1040,9 +1040,6 @@ button.btn:disabled{opacity:.45;cursor:default}
 #today-list .li .nm:focus-visible{outline:2px solid var(--text);outline-offset:2px;border-radius:4px}
 #today-list .li.done .ti-t{color:var(--faint);text-decoration:line-through}
 #today-list .li .t{min-width:3.5em;text-align:right;white-space:nowrap}
-#today-list .li .ti-more{display:none;margin:0;flex-basis:100%;padding:0 0 6px 26px;color:var(--faint);font-size:calc(12px * var(--ts))}
-#today-list .li.open{height:auto;min-height:32px;flex-wrap:wrap;align-content:center;padding-top:7px}
-#today-list .li.open .ti-more{display:block}
 #today-list .ti-fold{display:flex;align-items:center;min-height:32px;margin-top:4px;color:var(--quiet);font-size:calc(12.5px * var(--ts))}
 #today-list .ti-fold:focus-visible{outline:2px solid var(--text);outline-offset:2px;border-radius:4px}
 #today-list .ti-folded .row{min-height:32px;padding:0 4px 0 30px;align-items:center;color:var(--quiet)}
@@ -1052,9 +1049,7 @@ button.btn:disabled{opacity:.45;cursor:default}
   #today-list .li .tk{width:44px;height:44px;margin:0 -13px}
   #today-list .li input.tick{width:18px;height:18px}
   #today-list .li .badge{max-width:40%;overflow:hidden;text-overflow:ellipsis}
-  #today-list .li.open{min-height:44px;padding-top:0}
-  #today-list .li .ti-more{padding-left:31px}
-  #today-list .li .ti-start{display:none} /* the demo's phone: the name opens the same set, and the time keeps its line */
+  #today-list .li .ti-start{display:none} /* the demo's phone: the time keeps its line; Start is in the task's panel */
   #today-list .ti-folded .row{min-height:44px}
   #today-list .ti-fold{min-height:44px}
 }
@@ -1133,11 +1128,11 @@ button.btn:disabled{opacity:.45;cursor:default}
 .wchip.wk-list .wc-t{color:var(--quiet)}
 #today-date{gap:8px}
 #today-date>h2{overflow-wrap:anywhere}
-#today-date .wk-props .prop{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:32px;border-bottom:1px solid var(--line);font-size:calc(13px * var(--ts))}
-#today-date .wk-props .prop:last-child{border-bottom:0}
-#today-date .prop-k{color:var(--quiet)}
-#today-date .prop-v{text-align:right;min-width:0}
-#today-date .wk-acts{display:flex;flex-wrap:wrap;gap:6px}
+#today-task .wk-props .prop,#today-date .wk-props .prop{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:32px;border-bottom:1px solid var(--line);font-size:calc(13px * var(--ts))}
+#today-task .wk-props .prop:last-child,#today-date .wk-props .prop:last-child{border-bottom:0}
+#today-task .prop-k,#today-date .prop-k{color:var(--quiet)}
+#today-task .prop-v,#today-date .prop-v{text-align:right;min-width:0}
+#today-task .wk-acts,#today-date .wk-acts{display:flex;flex-wrap:wrap;gap:6px}
 @media (min-width:1200px){
   .wk-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
   .wk-day{flex-direction:column;align-items:stretch;border-top:0;border-left:1px solid var(--line);min-height:240px;padding:8px 6px}
@@ -1153,6 +1148,21 @@ button.btn:disabled{opacity:.45;cursor:default}
   .wchip{flex:none;width:100%;min-height:44px;justify-content:center}
   #today-date .wk-props .prop{min-height:44px}
   #today-date .wk-acts .btn{flex:1}
+}
+/* ============================================================ B-296 (C-10, D-282): the task's panel ================
+   A row's name opens its task in the side column (the right panel from 1200 px, under the pane below it): the name and
+   Close, then the properties as the date panel lays them out, "Where it came from" in grey, and the actions: Start the
+   one primary when it can start, Snooze to tomorrow and Remove from today. The open row is marked on the list. */
+#today-list .li.sel{background:var(--hover);border-radius:6px}
+#today-task{gap:8px}
+#today-task>.card-head{gap:8px;align-items:flex-start}
+#today-task>.card-head h2{flex:1;min-width:0;margin:0;padding-top:5px;color:var(--text);font:600 calc(14px * var(--ts))/1.35 var(--sans);overflow-wrap:anywhere}
+#today-task .tp-from{display:flex;flex-direction:column;gap:2px;font-size:calc(13px * var(--ts))}
+#today-task .wk-acts{flex-direction:column;align-items:stretch}
+#today-task .tp-from .meta,#today-task .tp-gone,#today-task .tp-note{margin:0;color:var(--faint);font-size:calc(12.5px * var(--ts));line-height:1.4}
+@media (max-width:599px){
+  #today-task .wk-props .prop{min-height:44px}
+  #today-task .wk-acts .btn{min-height:44px}
 }
 /* ============================================================ B-297 (D-283, C-1, C-8, C-13): Study's overview ========
    The toolbar (the view tabs sit beside the title from 600 px), then the exam header with its readiness bar and one

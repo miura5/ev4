@@ -893,6 +893,9 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
         await page.click(`#new-course [data-v="${course}"]`);
         await page.click('#new-save');
         await page.waitForTimeout(150);
+        // B-296 (C-10): its course reads in the task's panel, which the row's name opens
+        await page.locator('#today-list .today-item .nm', { hasText: 'Harness reading chapter 12' }).first().click();
+        await page.waitForSelector('#today-task:not([hidden])', { timeout: 1500 }).catch(() => {});
         const added = await page.evaluate(
           ({ course }) => {
             const today = window.EVCore.chicagoDate(new Date());
@@ -907,7 +910,7 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
               w,
               badge: row && row.querySelector('.badge') && row.querySelector('.badge').textContent,
               time: row && row.querySelector('.t') && row.querySelector('.t').textContent,
-              more: row && row.querySelector('.ti-more') && row.querySelector('.ti-more').textContent,
+              more: (document.getElementById('today-task') || {}).textContent,
               course,
             };
           },

@@ -919,7 +919,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           const L = c => Math.round(c.getBoundingClientRect().left - parseFloat(getComputedStyle(c).marginLeft)),
             lefts = [...new Set(cards.map(L))].sort((a, b) => a - b);
           const prim = [...panel.querySelectorAll('button.primary')] // B-297: a view's primary may sit in its toolbar
-            .filter(vis)
+            .filter(b => vis(b) && !b.closest('#today-task')) // B-296 (C-10): an open task's Start is its panel's own
             .map(b => L(b.closest('.card, .ui-card, .toolbar')));
           return {
             lefts,

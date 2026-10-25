@@ -50,7 +50,7 @@ function painted(r) {
   return !!r && !!r.verdict && !r.saving && !r.recordLanded && (r.open || r.ms < 100);
 }
 // B-297 (D-283): Study's tabs are Objectives, Plan and Weak spots. A set opens in the quiz card the way he opens it:
-// today's review from its row on Today, a practice set from an objective's Quiz me (its fold line then leads back to
+// today's review from its row on Today (its task's panel, B-296), a practice set from an objective's Quiz me (its fold line then leads back to
 // the sets).
 // Resolves true once the view shows.
 async function studyView(page, v) {
@@ -79,7 +79,12 @@ async function studyView(page, v) {
     await page.click('#tab-today');
     await page.waitForTimeout(150);
     const row = page.locator('#today-list .ti-nm', { hasText: /^Review/ });
-    if (await row.count()) await row.first().click();
+    if (await row.count()) {
+      // B-296 (C-10): the row's name opens its task's panel; Start (or Open, once it can't start) opens the set
+      await row.first().click();
+      const go = '#today-task :is(.tp-start, .tp-open)';
+      if (await page.waitForSelector(go, { state: 'visible', timeout: 1500 }).catch(() => null)) await page.click(go);
+    }
     await page.waitForTimeout(100);
     return shown();
   }
