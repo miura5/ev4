@@ -432,11 +432,8 @@ async function sideBySide(browser, left, right, out, vp) {
       chips: [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent),
     }));
     ok(
-      `[${scheme}] the greeting has no card; its offers are the chips, at most three, Start a study session last`,
-      gc.cards === 0 &&
-        gc.chips.length === 3 &&
-        gc.chips[2] === 'Start a study session' &&
-        !gc.chips.includes('File it'),
+      `[${scheme}] the greeting has no card; its offers are the demo's five chips, Start a study session first (B-358)`,
+      gc.cards === 0 && gc.chips.length === 5 && gc.chips[0] === 'Start a study session' && !gc.chips.includes('File it'),
       JSON.stringify(gc)
     );
     ok(
@@ -529,14 +526,12 @@ async function sideBySide(browser, left, right, out, vp) {
       JSON.stringify(v.texts)
     );
     ok(
-      `[${scheme}] in conversation: her flower the same ${A.convCore} px (D-213), her line ${A.now}, earlier ${A.past} at 60%`,
+      // B-357 (D-315): her lines' sizes and the earlier lines' fade are the demo's; her flower and stage stay (D-213)
+      `[${scheme}] in conversation: her flower the same ${A.convCore} px on its stage (D-213)`,
       v.step === 'conversation' &&
         Math.abs(v.corePx - A.convCore) <= 1 &&
         v.stageH >= A.convStage[0] &&
-        v.stageH <= A.convStage[1] &&
-        v.nowSize === A.now &&
-        v.pastSize === A.past &&
-        Math.abs(parseFloat(v.pastOpacity) - 0.6) < 0.01,
+        v.stageH <= A.convStage[1],
       JSON.stringify({ step: v.step, px: v.corePx, now: v.nowSize, past: v.pastSize, o: v.pastOpacity })
     );
     measured[scheme].conversation = {
@@ -1012,26 +1007,15 @@ async function sideBySide(browser, left, right, out, vp) {
       JSON.stringify(lo)
     );
     await page.screenshot({ path: `${shots}/captions-line-cards-${scheme}.png` });
-    // B-85: in a conversation the chips step aside; an empty focused input brings them back; the composer stays.
+    // B-360 (D-316): the demo's chips stay, one row, in a conversation too, typing or not; the composer stays.
     const quietChips = await page.isVisible('#qchips');
-    await page.focus('#ev-input');
-    await page.waitForTimeout(150);
-    ok(
-      `[${scheme}] chips step aside in a conversation and come back in an empty focused input; composer kept`,
-      !quietChips &&
-        (await page.locator('#qchips .qchip:visible').count()) >= 1 &&
-        (await page.isVisible('#ev-input')) &&
-        (await page.isVisible('#ev-send'))
-    );
     await page.fill('#ev-input', 'x');
     await page.waitForTimeout(100);
     const typed = await page.isVisible('#qchips');
     await page.fill('#ev-input', '');
-    await page.evaluate(() => document.activeElement.blur());
-    await page.waitForTimeout(350);
     ok(
-      `[${scheme}] typing puts them away again, and so does leaving the input`,
-      !typed && !(await page.isVisible('#qchips'))
+      `[${scheme}] the chips stay in a conversation, typing or not, beside a kept composer (B-360)`,
+      quietChips && typed && (await page.isVisible('#ev-input')) && (await page.isVisible('#ev-send'))
     );
     if (scheme === 'desktop') {
       // D-122 as amended: the side column exists only while it holds something. With nothing in it her stage centres in
@@ -1085,12 +1069,12 @@ async function sideBySide(browser, left, right, out, vp) {
       ok(
         // B-208 (D-210): centred in the pane, which starts after the 212 px sidebar and ends 8 px from the edge; from
         // 1200 px (B-223, D-315) the right panel holds the dates after today, and the pane ends where it begins.
-        '[desktop] with nothing beside her: at 1280 the panel holds only the session card and the dates, and her stage centres in the pane (578 px), at 1024 no side column (614 px)',
+        '[desktop] with nothing beside her: at 1280 the panel holds only the session card and the dates, and her stage centres over her lines; at 1024 no side column (B-357: the demo\'s pane widths)',
         e1280.sideShown &&
           e1280.datesOnly &&
-          Math.abs(e1280.coreX - 578) <= 2 &&
+          Math.abs(e1280.coreX - (e1280.threadLeft + e1280.threadRight) / 2) <= 2 &&
           !e900.sideShown &&
-          Math.abs(e900.coreX - 614) <= 2,
+          Math.abs(e900.coreX - (e900.threadLeft + e900.threadRight) / 2) <= 2,
         JSON.stringify({ e1280, e900 })
       );
       await page.evaluate(() => {
@@ -1147,7 +1131,7 @@ async function sideBySide(browser, left, right, out, vp) {
       const back = await lay(1280);
       ok(
         '[desktop] emptied, what was beside her goes; the panel keeps the dates (D-315) and her stage centres in the pane',
-        back.sideShown && back.datesOnly && Math.abs(back.coreX - 578) <= 2,
+        back.sideShown && back.datesOnly && Math.abs(back.coreX - (back.threadLeft + back.threadRight) / 2) <= 2,
         JSON.stringify(back)
       );
     }
@@ -1323,7 +1307,8 @@ async function sideBySide(browser, left, right, out, vp) {
     await page.waitForTimeout(1500);
     ok(
       `[skills ${scheme}] beside her name, her status word; the readout code has left the screen (D-210)`,
-      /^(online|replying|listening|thinking|working|in a session|on a break|check ready|resting)\b/.test(
+      // B-352, B-361 (D-316): the demo's status words
+      /^(online|ready when you are|replying|listening|thinking…?|working|in a session|on a break|check ready|resting|something’s ready)\b/.test(
         (await skillView(page)).unit
       ) && !/EV-04/.test((await skillView(page)).unit),
       (await skillView(page)).unit

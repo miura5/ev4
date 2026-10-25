@@ -174,8 +174,11 @@
       // B-362 (D-316): on a break, the demo's one chip back to work
       if (sa && sa.status === 'active' && E.sessionState(sa, now()).onBreak) chips = ['I’m back early'];
       // B-358 (D-314): at rest, the demo's five chips and only those.
+      // B-357: a skills run left going keeps its Resume chip first (the runner waits behind it, B-82)
+      const resume = ((T.greet && T.greet.chips) || []).filter(c => /^Resume .+ · \d+ of \d+$/.test(c));
       if (!sa)
         chips = [
+          ...resume,
           'Start a study session',
           'What’s due this week?',
           quizChip(),
