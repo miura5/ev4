@@ -5590,11 +5590,11 @@
   "title": "Backups (D-302): a nightly Worker export of D1 to Cloudflare R2, D1 Time Travel on, and evening-mac's nightly backup and Sunday mirror exported from D1. No export is overwritten or deleted.",
   "dod": "A restore of the newest staging R2 export into a scratch D1 matches counts and SHA-256 hashes per collection. A test shows an export never replaces an earlier one. Time Travel is confirmed on for the staging D1 (wrangler d1 time-travel info).",
   "milestone": "app (data, pipelines, ops)",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-312"
   ],
-  "notes": "",
+  "notes": "claimed by lane app",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
