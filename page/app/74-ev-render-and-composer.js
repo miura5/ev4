@@ -355,11 +355,21 @@
       }
     }
     // B-389, B-394: a line of his the record refused comes back into the box; when he has started a new one
-    // meanwhile, the refused words go first and his new ones stay after them, so neither is lost.
+    // meanwhile, the refused words go first and his new ones stay after them, so neither is lost. Lines refused back to
+    // back join the block restored before them, in the order he sent them (`restored`: that block, while the box
+    // still begins with it).
+    let restored = '';
     T.restoreInput = text => {
       if (!text) return false;
       const now = input.value;
-      input.value = now.trim() ? text + '\n\n' + now : text;
+      if (restored && now.startsWith(restored)) {
+        const rest = now.slice(restored.length);
+        restored += '\n\n' + text;
+        input.value = restored + rest;
+      } else {
+        restored = text;
+        input.value = now.trim() ? text + '\n\n' + now : text;
+      }
       grow();
       return true;
     };

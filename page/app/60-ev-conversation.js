@@ -39,6 +39,9 @@
       reading: false,
     };
     let talkQ = Promise.resolve();
+    // B-394: lines still waiting in talkQ, and the refusals of the current run, said in one toast once the queue is clear
+    let talkQueued = 0;
+    let refusedRun = null;
     let lastStamp = '';
     // ------------------------------------------------------------ Her: the Dial Arc (B-272; D-265, D-266, D-213, D-216)
     // Ported from the round 15 canvas's Avatar.dc.html (https://claude.ai/artifact/GwFwpuVtVMuyUKF8kJA8Sw), Ember with

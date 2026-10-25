@@ -28,18 +28,46 @@
       // B-200 (D-208): the line painted on his tap; a refused write takes it back out and says why in one line.
       // B-389: his own line is never simply gone: his words go back into the composer (T.restoreInput, set by it) to
       // send again, and the line says so in plain words, never a bare code such as "conflict". B-394: also when he
-      // has started a new line meanwhile (the refused words go before it).
-      talkQ = p.catch(e => {
-        T.local.delete(id);
-        render();
-        const back = m.role === 'matt' && o.restore !== false && T.restoreInput ? T.restoreInput(m.text) : false;
-        const why =
-          e && e.conflict ? 'the conversation changed while you were writing' : (e && (e.message || e.code)) || 'error';
-        toast(
-          'Couldn’t save to the conversation: ' + why + (back ? '. Your words are back in the box to send again.' : '')
-        );
-      });
+      // has started a new line meanwhile (the refused words go before it). Lines refused back to back come back in the
+      // order he sent them (talkQ settles them in that order) and are said in one toast once nothing more waits.
+      talkQueued++;
+      talkQ = p.then(
+        () => {
+          talkQueued--;
+          refusedToast();
+        },
+        e => {
+          talkQueued--;
+          T.local.delete(id);
+          render();
+          const back = m.role === 'matt' && o.restore !== false && T.restoreInput ? T.restoreInput(m.text) : false;
+          const why =
+            e && e.conflict
+              ? 'the conversation changed while you were writing'
+              : (e && (e.message || e.code)) || 'error';
+          refusedRun = refusedRun || { n: 0, why, back: false };
+          refusedRun.n++;
+          refusedRun.back = refusedRun.back || back;
+          refusedToast();
+        }
+      );
       return p;
+    }
+    function refusedToast() {
+      if (talkQueued || !refusedRun) return;
+      const { n, why, back } = refusedRun;
+      refusedRun = null;
+      toast(
+        'Couldn’t save ' +
+          (n > 1 ? n + ' lines ' : '') +
+          'to the conversation: ' +
+          why +
+          (back
+            ? n > 1
+              ? '. Your words are back in the box, in order, to send again.'
+              : '. Your words are back in the box to send again.'
+            : '')
+      );
     }
     const evSay = (text, cards = [], o = {}) =>
       postMsg({

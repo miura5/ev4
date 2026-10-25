@@ -455,8 +455,10 @@ async function main() {
       // 5b. B-394: a send the record refuses (every save of the conversation answered 409, so the shim's one retry is
       // refused too), held until he has started typing a new line: his refused words come back into the box ahead of
       // what he is typing, nothing of it stays in the thread, and nothing goes to /api/claude, so E.V. never answers it.
+      // Two lines sent back to back are both refused: they come back in the order he sent them, in one toast.
       await idle();
       const refusedLine = `Refused line, kept for him (${scheme})`;
+      const refusedNext = `His second refused line (${scheme})`;
       const typingNow = 'and his next thought';
       let release;
       const gate = new Promise(r => (release = r));
@@ -469,13 +471,24 @@ async function main() {
       const callsAt = calls.length;
       const errAt = errors.length;
       const evAt = await page.evaluate(() => document.querySelectorAll('#thread .msg.ev').length);
-      await page.fill('#ev-input', refusedLine);
-      await page.locator('#ev-form').evaluate(f => f.requestSubmit());
-      await until(
-        page,
-        v => [...document.querySelectorAll('#thread .msg')].some(m => m.textContent.includes(v)),
-        refusedLine
-      );
+      // every toast shown from here on is counted (the one #toast element is stamped each time)
+      await page.evaluate(() => {
+        window.__toasts = 0;
+        new MutationObserver(() => window.__toasts++).observe(document.getElementById('toast'), {
+          attributes: true,
+          attributeFilter: ['data-at'],
+        });
+      });
+      // two lines sent back to back while the first is held: both refused, both back in the order he sent them
+      for (const line of [refusedLine, refusedNext]) {
+        await page.fill('#ev-input', line);
+        await page.locator('#ev-form').evaluate(f => f.requestSubmit());
+        await until(
+          page,
+          v => [...document.querySelectorAll('#thread .msg')].some(m => m.textContent.includes(v)),
+          line
+        );
+      }
       await page.fill('#ev-input', typingNow);
       release();
       const kept = await until(
@@ -484,7 +497,7 @@ async function main() {
           const v = document.getElementById('ev-input').value;
           return v.includes(a) && v.includes(b);
         },
-        [refusedLine, typingNow],
+        [refusedNext, typingNow],
         8000
       );
       await page.waitForTimeout(1500); // room for a model call, were one made
@@ -495,16 +508,21 @@ async function main() {
       const after = await page.evaluate(
         v => ({
           box: document.getElementById('ev-input').value,
-          inThread: [...document.querySelectorAll('#thread .msg')].some(m => m.textContent.includes(v)),
+          inThread: [...document.querySelectorAll('#thread .msg')].some(m => v.some(x => m.textContent.includes(x))),
           ev: document.querySelectorAll('#thread .msg.ev').length,
+          toasts: window.__toasts,
+          toast: document.getElementById('toast').textContent,
         }),
-        refusedLine
+        [refusedLine, refusedNext]
       );
+      const inOrder = after.box === `${refusedLine}\n\n${refusedNext}\n\n${typingNow}`;
       ok(
-        `${tag} a refused send keeps his words in the box beside what he is typing, with no E.V. reply and no call to /api/claude`,
-        kept && !after.inThread && after.ev === evAt && calls.length === callsAt,
+        `${tag} two sends refused back to back come back in the box in the order he sent them, before what he is typing, in one toast, with no E.V. reply and no call to /api/claude`,
+        kept && inOrder && after.toasts === 1 && !after.inThread && after.ev === evAt && calls.length === callsAt,
         JSON.stringify({
           box: after.box,
+          toasts: after.toasts,
+          toast: after.toast,
           inThread: after.inThread,
           evLines: after.ev - evAt,
           calls: calls.length - callsAt,
