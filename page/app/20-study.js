@@ -70,6 +70,22 @@
     // B-337 (D-312): the picked objective. From 1200 px one is always picked (the first not solid) and fills the right
     // panel; below that a tap on its words opens it under its row and a second tap folds it.
     let objSel = null;
+    /** B-371 (D-316): a weak spot's course (its own, else its exam's) and the open ones in a course, as the demo's
+     *  "Open · N in NUR 112"; a spot with no course counts in every course, so none is hidden. */
+    function wsCourse(w) {
+      if (w.course) return w.course;
+      const ex = S.exams.find(e => e.id === w.exam);
+      return ex ? E.courseOf(ex) : null;
+    }
+    function openInCourse(course) {
+      return M.models
+        .filter(w => E.isActive(w) && !w.derived.preRead && (!course || !wsCourse(w) || wsCourse(w) === course))
+        .sort(
+          (a, b) =>
+            String(a.derived.nextDue || '9').localeCompare(String(b.derived.nextDue || '9')) ||
+            String(b.addedAt || '').localeCompare(String(a.addedAt || ''))
+        );
+    }
     function syncStudyBar() {
       const v = ui.study,
         quiz = v === 'review' || v === 'practice';
@@ -85,7 +101,7 @@
       $('study-qquiz').hidden = !pr && !ov;
       let nW = 0;
       try {
-        nW = M ? M.models.filter(w => E.isActive(w) && !w.derived.preRead).length : 0;
+        nW = M ? openInCourse(ui.studyCourse).length : 0; // B-371: the same N as Weak spots' "Open · N in <course>"
       } catch {
         nW = 0; // the bar can sync before the model is first built
       }
@@ -135,7 +151,15 @@
         return { text: 'Misses are proposed as weak spots. You review them once, at the end.' };
       if (ui.study === 'weak') return { text: 'Each closes after two right answers on different days.' };
       const cur = studyExams().find(x => x.course === ui.studyCourse);
-      if (!cur || !cur.exam) return null;
+      if (!cur) return null;
+      if (!cur.exam) {
+        // B-371: a course with no exam still has her line, as the demo's strip always does
+        const n = openInCourse(cur.course).length;
+        return {
+          text: `${cur.course} has no exam in the record yet` + (n ? `, and ${plural(n, 'weak spot')} open.` : '.'),
+          act: n ? ['Quiz me', b => weakQuizAll(b)] : null,
+        };
+      }
       const ex = (cur.exam.title || cur.exam.id).replace(/:.*$/, '');
       const objs = S.objectives.filter(o => o.exam === cur.exam.id);
       if (objs.length) {
@@ -252,13 +276,21 @@
       const cur = list.find(x => x.course === ui.studyCourse);
       ui.objPanel = null;
       if (!cur || !cur.exam) {
-        card.replaceChildren(
-          el('p', 'empty', (cur ? cur.course + '’s' : 'Your') + ' next exam shows here once it’s in the record.')
-        );
+        // B-371 (D-316): no placeholder card. Coming up and the mini quiz, and the course's own pane: in the right
+        // panel from 1200 px, in the card's place below that
+        const d = courseDetail(cur ? cur.course : null, PANEL.matches);
+        card.classList.toggle('ov-course', !PANEL.matches);
+        card.hidden = PANEL.matches;
+        if (PANEL.matches) {
+          ui.objPanel = d;
+          card.replaceChildren();
+        } else card.replaceChildren(d);
         renderStudyUp(cur ? cur.course : null);
-        renderMiniQuiz(null);
+        renderMiniQuiz(cur || null);
         return;
       }
+      card.hidden = false;
+      card.classList.remove('ov-course');
       const ex = cur.exam,
         acc = E.answerStats(M.attempts.all).byObjective;
       const objs = S.objectives
@@ -293,6 +325,41 @@
       card.replaceChildren(...(items.rows.length ? [head, bar, box] : [head, el('p', 'empty ov-none', items.none)]));
       renderStudyUp(cur.course);
       renderMiniQuiz(cur);
+    }
+    /** B-371: a course with no upcoming exam: its name, that no exam is in the record, its open weak spots and Quiz me,
+     *  laid out as an objective's pane. */
+    function courseDetail(course, inPanel) {
+      const d = el('div', 'ov-detail');
+      if (inPanel) d.append(el('span', 'lab', 'Course'));
+      d.append(el('div', 'od-name', course || 'Your courses'));
+      const st = el('div', 'od-row');
+      st.append(el('span', 'badge', 'No exam yet'), el('span', 'mini', 'Its next exam shows here once it’s in the record.'));
+      d.append(st);
+      const open = course ? openInCourse(course) : [];
+      if (open.length) {
+        d.append(el('span', 'lab', 'Weak spots in it'));
+        for (const w of open.slice(0, 5)) {
+          const si = el('div', 'od-ws');
+          si.title = w.topic || '';
+          si.append(
+            el('i', 'dot x-yellow'),
+            el('span', 'sn', w.topic || w.id),
+            el('span', 'st', (w.derived.streak || 0) > 0 ? 'right once' : 'open')
+          );
+          d.append(si);
+        }
+      }
+      d.append(
+        btn('Quiz me', ev => weakQuizAll(ev.currentTarget), { cls: 'btn neutral od-q' }),
+        el(
+          'span',
+          'mini od-note',
+          open.length > 5
+            ? 'And ' + plural(open.length - 5, 'more') + ' in Weak spots. Quiz me runs today’s review.'
+            : 'Quiz me runs today’s review.'
+        )
+      );
+      return d;
     }
     /** The exam card's objective rows: state badge, words, weak spots and Quiz me on hover; the picked one's detail
      *  fills the panel from 1200 px, or opens under its row. */
@@ -447,6 +514,11 @@
      *  left (most left first), else today's review. */
     function courseSet(cur) {
       const left = s => E.validItems(s).filter(q => !answersOf(s)[q.id]).length;
+      if (!cur.exam) {
+        // B-371: a course with no exam: today's review
+        const rs0 = S.sets.find(s => s.id === 'review-' + today);
+        return rs0 && E.validItems(rs0).length ? { set: rs0, review: true } : null;
+      }
       const objIds = new Set(S.objectives.filter(o => o.exam === cur.exam.id).map(o => o.id));
       const mine = s =>
         s.exam === cur.exam.id || E.validItems(s).some(q => objIds.has(q.objective));
@@ -460,7 +532,7 @@
     }
     function courseQuiz(b) {
       const cur = studyExams().find(x => x.course === ui.studyCourse);
-      const c = cur && cur.exam && courseSet(cur);
+      const c = cur && courseSet(cur);
       if (!c) return weakQuizAll(b);
       if (c.review) {
         setStudy('review');
@@ -479,16 +551,19 @@
         card.id = 'ov-quiz';
         $('ov-grid').append(card);
       }
-      const c = cur && cur.exam && courseSet(cur);
+      const c = cur && courseSet(cur);
       const q = c && E.validItems(c.set).find(x => !answersOf(c.set)[x.id]);
       const teaser = q ? String(q.stem || q.q || q.text || '').trim() : '';
       card.replaceChildren(
-        el('span', 'lab', c && c.review ? 'Mini quiz · today’s review' : 'Mini quiz · questions from this course'),
+        // B-371 (D-316): the demo's words
+        el('span', 'lab', 'Mini quiz · five questions from this course'),
         el('div', 'mq-q', teaser || 'No questions waiting for this course yet.'),
         el(
           'div',
           'mini',
-          c ? 'Misses come back as weak spots, for you to review.' : 'Today’s review appears after the 4:25 am run.'
+          c
+            ? 'Misses are proposed as weak spots at the end, for you to review.'
+            : 'Today’s review appears after the 4:25 am run.'
         )
       );
       if (c) {
@@ -592,9 +667,8 @@
       card.replaceChildren(hd, list);
     }
     /** B-347 (D-312): Weak spots as the demo's StudyWeak board. A strip (All topics back to Objectives, "Weak spots ·
-     *  course", Quiz me), then sections of full-width rows under a quiet head: due today, due tomorrow, later,
-     *  previews and solid. An open row has its dot, its topic, a grey line (where it came from, how often, when
-     *  it is next due, its objective), Drill and Mark solid; previews and solid are quiet. The side pane is the demo's
+     *  course", Quiz me), then the open spots in that course as full-width rows under one quiet head (B-371). An open row has its dot, its topic, a grey line (where it came from, how often, when
+     *  it is next due, its objective), Drill and Mark solid. The side pane is the demo's
      *  How triage works (B-365). There is no To review section: nothing in the record proposes weak spots yet (B-300). */
     const objText = id => ((S.objectives.find(o => o.id === id) || {}).text || '');
     function weakQuizAll(b) {
@@ -653,54 +727,20 @@
       return row;
     }
     function renderWeak() {
-      const ms = M.models;
-      const byAdded = (a, b) => String(b.addedAt || '').localeCompare(String(a.addedAt || ''));
-      const active = ms
-        .filter(w => E.isActive(w) && !w.derived.preRead)
-        .sort(
-          (a, b) => String(a.derived.nextDue || '9').localeCompare(String(b.derived.nextDue || '9')) || byAdded(a, b)
-        );
-      const previews = ms.filter(w => E.isActive(w) && w.derived.preRead).sort(byAdded);
-      const notes = ms
-        .filter(w => (w.kind === 'note' || w.kind === 'skill') && w.derived.status === 'open')
-        .sort(byAdded);
-      const solid = ms
-        .filter(w => w.derived.status === 'reviewed' && w.kind !== 'note')
-        .sort((a, b) => String(b.derived.solidAt || '').localeCompare(String(a.derived.solidAt || '')));
-      const tomorrow = E.addDays(today, 1);
-      const due = active.filter(w => E.isDue(w, today)),
-        tom = active.filter(w => !E.isDue(w, today) && w.derived.nextDue === tomorrow),
-        later = active.filter(w => !due.includes(w) && !tom.includes(w));
-      // the strip's course: the one course its open spots belong to, else none named
-      const cs = new Set(
-        active.concat(notes).map(w => {
-          const ex = S.exams.find(e => e.id === w.exam);
-          return ex ? E.courseOf(ex) : null;
-        })
-      );
-      const one = cs.size === 1 ? [...cs][0] : null;
-      // B-365: the strip names the course, as the demo's "Weak spots · NUR 112" (the one picked on the overview)
-      const course = ui.studyCourse || one || E.defaultCourse();
+      // B-371 (D-316): the demo's sections only: To review (nothing in the record proposes weak spots yet, B-300), then
+      // Open · N in the course picked on the overview, then Quiz me on all of them. Previews, solid ones, notes and
+      // skills stay in the record and in Progress; this screen doesn't list them.
+      const course = ui.studyCourse || E.defaultCourse();
+      const active = openInCourse(course);
       $('weak-lab').textContent = 'Weak spots' + (course ? ' · ' + course : '');
       const out = [];
-      const sec = (label, rows, quiet) => {
-        if (!rows.length) return;
-        out.push(el('div', 'dayh', label + ' · ' + rows.length));
-        for (const w of rows) out.push(wkRow(w, quiet));
-      };
-      sec('Due today', due);
       if (active.length) {
+        out.push(el('div', 'dayh', 'Open · ' + active.length + (course ? ' in ' + course : '')));
+        for (const w of active) out.push(wkRow(w));
         const all = el('div', 'wl wl-all');
-        const q = btn('Quiz me on all of them', ev => weakQuizAll(ev.currentTarget), { cls: 'btn neutral sm' });
-        all.append(q);
-        sec('Due tomorrow', tom);
-        sec('Later', later);
-        out.push(all); // B-365: as the demo, one Quiz me on all of them after the open rows; no Copy for Quizlet
-      }
-      // B-365 (D-316): the demo has no Notes and skills section and no footer; those stay in the record
-      sec('Previews, before the reading', previews, true);
-      sec('Solid', solid, true);
-      if (!active.length) out.unshift(el('div', 'empty', 'No weak spots open in this course.'));
+        all.append(btn('Quiz me on all of them', ev => weakQuizAll(ev.currentTarget), { cls: 'btn neutral sm' }));
+        out.push(all);
+      } else out.push(el('div', 'empty', 'No weak spots open' + (course ? ' in ' + course : '') + '.'));
       $('weak-list').replaceChildren(...out);
       // B-365 (D-316): the side pane, as the demo's: How triage works (beside the rows from 1200 px, under them below)
       const p = el('div', 'ov-detail wk-side');
