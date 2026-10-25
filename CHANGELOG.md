@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 25 | v4 staging deployed at f7fd74e (10:04 CT), from f9d1411: The tests and the page harnesses still assert the old UI; they are…; Review 2: Study still shows a placeholder card with no pane for an… (B-357, B-371). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at f9d1411 (09:55 CT), from 542407c: The tests and the page harnesses still assert the old UI; they are… (B-357). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at 542407c (09:19 CT), from 130bb87: The UI review found E.V.'s conversation differs from the demo:…; The UI review found Study differs from the demo on both records:… (B-362, B-365). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at 130bb87 (09:18 CT), from cc32bf9: The UI review found frame-wide differences from the demo: status…; The UI review found Today differs from the demo: Add, the due column,… (B-361, B-363). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
