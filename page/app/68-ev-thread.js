@@ -85,6 +85,13 @@
         const pe = prepEl(m);
         if (pe) body.append(pe);
       }
+      // B-362 (D-316): as in the demo, her newest line carries its one action as a button under it (Open the week).
+      const gos = m.role !== 'matt' && !m.pending ? (m.cards || []).filter(c => c && c.type === 'go' && c.label) : [];
+      if (gos.length && isLastEv) {
+        const r = el('div', 'msg-acts');
+        r.append(...gos.map(c => btn(c.label, () => goTo(c), { cls: 'btn neutral sm' })));
+        body.append(r);
+      }
       const cardsBox = el('div', 'msg-cards');
       body.append(cardsBox);
       // B-227 (D-232): a reply that changed something carries its work line, opening in place to what it changed.
@@ -213,6 +220,7 @@
         }
         kids.push(T.capDiv);
       }
+      if (CK.box) kids.push(CK.box); // B-362 (D-316): the check-in card opens the current conversation, as the demo
       const nowIdx = lastEv ? cur.indexOf(lastEv) : -1,
         mattIdx = lastMatt ? cur.indexOf(lastMatt) : -1;
       for (const m of cur) {

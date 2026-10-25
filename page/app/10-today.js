@@ -1315,7 +1315,7 @@
         side.append(card);
       }
       const ul = el('ul', 'list');
-      ul.append(...after.map(weekRow));
+      ul.append(...after.slice(0, 4).map(evDateRow)); // B-362 (D-316): the demo's four rows, each opening its day
       card.replaceChildren(el('h2', null, 'Coming up'), ul);
     }
     // B-117: a date in Next 7 days is one line (its day, its title, its kind in grey); a clinical, lab, validation or class

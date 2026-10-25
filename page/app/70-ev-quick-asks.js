@@ -51,7 +51,7 @@
         return left
           ? [
               `${plural(left, 'review')} left. One at a time; every answer updates your weak spots.`,
-              [{ type: 'review' }],
+              [{ type: 'go', label: 'Open the quiz', to: 'review' }], // B-362: on Study, never a card in the pane
             ]
           : rs
             ? ['Today’s review is done. Logged with quiet satisfaction.', []]
@@ -64,7 +64,7 @@
           w.length
             ? `${plural(w.length, 'date')} in the next 7 days${g ? `, ${g} graded` : ''}.`
             : 'Nothing dated in the next 7 days. Suspiciously calm.',
-          [{ type: 'dates', days: 7 }],
+          [{ type: 'go', label: 'Open the week', to: 'week' }], // B-362 (D-316): one line and one button, as the demo
         ];
       },
       'give me 5 more': () => {
@@ -97,7 +97,8 @@
       'show my progress': () => ['Here’s the week.', [{ type: 'chart' }]],
       // B-353 (D-314): the demo's chips. How did this week go is the week's chart; Plan the rest of today proposes on
       // Today what B-293's Plan the rest would, nothing changed until he accepts.
-      'how did this week go': () => ['Here’s the week.', [{ type: 'chart' }]],
+      // B-362 (D-316): one line with the week's numbers and Open Progress, as the demo; no chart card.
+      'how did this week go': () => [weekLine(), [{ type: 'go', label: 'Open Progress', to: 'progress' }]],
       'plan the rest of today': () => {
         const np = restProposal();
         if (!np.adds.length && !np.offs.length) return ['Nothing to change: today’s list already fits the plan.', []];
@@ -106,7 +107,10 @@
           np.adds.length ? plural(np.adds.length, 'thing') + ' to add' : '',
           np.offs.length ? plural(np.offs.length, 'thing') + ' to take off' : '',
         ].filter(Boolean);
-        return [`I suggested ${bits.join(' and ')} on Today. Nothing changes until you accept.`, []];
+        return [
+          `I suggested ${bits.join(' and ')} on Today. Nothing changes until you accept.`,
+          [{ type: 'go', label: 'Review on Today', to: 'today' }],
+        ];
       },
       'start a workout': () => {
         const cur = activeWorkout();
@@ -132,6 +136,7 @@
       'end study session': () => endSession('ended'),
       'end my session': () => endSession('ended'),
       'quiz me now': async () => (await quizNow()) || [null, []],
+      "i'm back early": async () => [await sessionCmd('resume'), []], // B-362: the demo's chip on a break
       'take a break': async () => [await sessionCmd('break'), []],
       break: async () => [await sessionCmd('break'), []],
       resume: async () => [await sessionCmd('resume'), []],
@@ -230,11 +235,70 @@
     function quizTopicAsk(label) {
       const w = weakestSpot();
       if (!w || key('Quiz me on ' + topicLabel(w)) !== key(label)) return null;
-      return () => {
-        const o = S.objectives.find(x => x.id === w.objective) || { id: w.objective, text: w.topic };
+      // B-362 (D-316): as the demo, she answers in one line and Open the quiz opens it.
+      return () => [
+        `Questions on ${topicLabel(w)}. Misses are proposed as weak spots at the end, for you to review.`,
+        [{ type: 'go', label: 'Open the quiz', to: 'quiz', objective: w.objective, topic: w.topic || '' }],
+      ];
+    }
+    // B-362: the week in one line, as the demo's How did this week go: study time, against last week, quiz accuracy,
+    // and the open weak spots.
+    function weekLine() {
+      const m0 = weekStart(today);
+      const mins = minsIn(m0, today),
+        prev = minsIn(E.addDays(m0, -7), E.addDays(m0, -1));
+      const acc = accIn(m0, today);
+      const d = mins - prev;
+      const open = (M.models || []).filter(w => E.isActive(w)).length;
+      return (
+        `${hm(mins)} this week` +
+        (prev || mins ? (d ? `, ${hm(Math.abs(d))} ${d > 0 ? 'more' : 'less'} than last week` : ', same as last week') : '') +
+        (acc.n ? `, and ${Math.round((100 * acc.right) / acc.n)}% on quizzes` : '') +
+        '.' +
+        (open ? ` ${plural(open, 'weak spot')} open.` : ' No weak spots open.')
+      );
+    }
+    // B-362 (D-316): a Coming up row in her panel, as the demo's: a dot, the title and the day (Mon 26); it opens
+    // Today's week with that date picked.
+    const UP_WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    function evDateRow(d) {
+      const li = el('li', 'row week-item');
+      const b = el('button', 'wk-line');
+      b.type = 'button';
+      b.title = d.title || '';
+      const dt = new Date(d.date + 'T12:00:00Z');
+      b.append(el('span', 'when', UP_WD[dt.getUTCDay()] + ' ' + dt.getUTCDate()), el('span', 'wk-t', d.title || ''));
+      b.addEventListener('click', () => goTo({ to: 'week', date: d.date, id: d.id }));
+      li.append(b);
+      return li;
+    }
+    // B-362 (D-316): where a line's button goes. Open the week opens Today's week with the date picked (a Coming up
+    // row passes its date); Open Progress opens the week's progress; Open the quiz the objective's questions; Review on
+    // Today the list with the suggestion.
+    function goTo(c) {
+      if (c.to === 'week') {
+        ui.todayView = 'week';
+        store.set('todayView', 'week');
+        ui.weekOff = c.date && c.date > today ? Math.floor(E.diffDays(today, c.date) / WEEK_DAYS) : 0;
+        ui.weekSel = c.id || null;
+        showTab('today');
+      } else if (c.to === 'progress') {
+        prog.period = 'week';
+        showTab('progress');
+      } else if (c.to === 'quiz') {
+        const o = S.objectives.find(x => x.id === c.objective) || { id: c.objective, text: c.topic };
+        showTab('study');
         quizObjective(o, null);
-        return [`Questions on ${topicLabel(w)}. Every answer updates your weak spots.`, []];
-      };
+        return;
+      } else if (c.to === 'review') {
+        showTab('study');
+        setStudy('review');
+      } else if (c.to === 'today') {
+        ui.todayView = 'list';
+        store.set('todayView', 'list');
+        showTab('today');
+      }
+      render();
     }
     async function quick(label) {
       const job = T.greet && T.greet.job && /^Open the /.test(label) ? T.greet.job : null;

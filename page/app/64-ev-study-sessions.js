@@ -563,61 +563,12 @@
       await runCheck(s, { quiz: true });
       return null;
     }
-    // What she is reading (B-88): a Reading line above the input, and on desktop the Your notes column beside her.
-    const noteLines = t =>
-      String(t || '')
-        .split('\n')
-        .map(x => x.trim())
-        .filter(Boolean);
+    // B-362 (D-316): the demo shows no Reading line above the field and no Your notes card beside her; she still reads
+    // along (SS.text), and the session's own line and card say what it is on.
     function renderNotes() {
-      const s = activeSession();
-      const on = !!(s && s.status !== 'ended' && SS.text != null && SS.note);
-      const rd = $('sread');
-      const lines = on ? noteLines(SS.text) : [];
-      const last = lines[lines.length - 1] || '';
-      rd.hidden = !on || !last;
-      if (!rd.hidden) {
-        // D-131: the reader's title (NUR 112 › Cardiac output), else Your notes against a reader without it.
-        const t = E.noteTitle(SS.note);
-        const k = t + '|' + last;
-        if (rd.dataset.k !== k) {
-          rd.dataset.k = k;
-          const [where, ...rest] = t.split(' › ');
-          const w = el('span', 'sr-where', 'Reading · ' + where);
-          if (rest.length) w.append(el('span', 'sr-nm', ' › ' + rest.join(' › ')));
-          rd.replaceChildren(w, el('span', 'sr-line', last));
-          rd.title = t + ': ' + last;
-        }
-      }
-      let panel = $('snotes');
-      const wide = innerWidth >= 1200; // B-210 (D-210): the details panel from 1200 px
-      if (!on || !wide) {
-        if (panel) panel.remove();
-        return;
-      }
-      if (!panel) {
-        panel = el('section', 'card snotes');
-        panel.id = 'snotes';
-        panel.setAttribute('aria-label', 'Your notes');
-        capSide.append(panel);
-      }
-      const quoted = new Set(SS.quotes.values());
-      const show = lines.slice(-14);
-      const k = show.join('\n') + '|' + [...quoted].join('|');
-      if (panel.dataset.k === k) return;
-      panel.dataset.k = k;
-      const head = el('div', 'card-head');
-      head.append(el('h2', null, 'Your notes'), el('span', 'meta', SS.note.title || ''));
-      const ul = el('ul', 'sn-lines');
-      show.forEach((l, i) => {
-        const li = el(
-          'li',
-          (i === show.length - 1 ? 'new' : '') + ([...quoted].some(q => l.includes(q)) ? ' said' : ''),
-          l
-        );
-        ul.append(li);
-      });
-      panel.replaceChildren(head, ul, el('p', 'meta sn-foot', 'E.V. reads new lines as you write them.'));
+      $('sread').hidden = true;
+      const panel = $('snotes');
+      if (panel) panel.remove();
     }
     addEventListener('resize', () => {
       try {
@@ -764,7 +715,8 @@
         out.push(
           mk(st.onBreak ? 'Resume' : 'Break', async () => toast(await sessionCmd(st.onBreak ? 'resume' : 'break')))
         );
-        if (!COMMENT) {
+        // B-362 (D-316): the panel's card has +5 min in every mode, as the demo; the header's line keeps Break and End
+        if (!COMMENT || o.long) {
           const ext = mk(o.long ? '+5 min' : '+5', async () => toast(await sessionCmd('extend')));
           ext.setAttribute('aria-label', 'Add 5 minutes before the next check');
           out.push(ext);
@@ -830,10 +782,7 @@
             : st.onBreak
               ? `On a break · ${minsLeft(st)} min left`
               : `${minsLeft(st) ?? st.minutes} min${minsLeft(st) == null ? '' : ' left'}`;
-        bar.querySelector('.s-read').textContent =
-          ending || SS.busy === true || st.onBreak || noteless(s)
-            ? ''
-            : ` · ${SS.thinking ? 'thinking about that line' : 'reading along'}`;
+        bar.querySelector('.s-read').textContent = ''; // B-362 (D-316): the demo's line is the topic and the minutes
         CORE.setRing(ringFill(st, ending));
         return;
       }
@@ -895,11 +844,7 @@
         const head = el('div', 'card-head');
         head.append(
           el('h2', null, 'Study session'),
-          el(
-            'span',
-            'badge ' + (ending ? '' : st.onBreak ? 'x-yellow' : 'x-green'),
-            ending ? 'Ending' : st.onBreak ? 'On a break' : 'Running'
-          )
+          el('span', 'badge', ending ? 'Ending' : st.onBreak ? 'Break' : 'Running') // B-362: the demo's quiet badge
         );
         const acts = el('div', 'ss-acts');
         acts.append(...sessButtons(s, st, ending, { cls: 'btn neutral sm', long: true }));
@@ -917,12 +862,9 @@
         : left == null
           ? durFmt(st.minutes)
           : left + ' min left';
-      card.querySelector('.ss-sub').textContent = ending
-        ? st.minutes + ' min in'
-        : (st.onBreak ? 'on the break' : COMMENT ? 'until she reads along again' : 'to the next check') +
-          ' · ' +
-          st.minutes +
-          ' min in';
+      // B-362 (D-316): as the demo, where the session's words come from and how long it has run
+      card.querySelector('.ss-sub').textContent =
+        (noteless(s) ? 'Study session' : 'Your Study Watch note') + ' · ' + st.minutes + ' min in';
     }
     // B-273 (D-267, Matt's answer): her ring is the stretch to the next check. Her segments fill clockwise toward it and
     // start over after it; the checks he answered show on their cards (D-217). The ring is full while she wraps up.

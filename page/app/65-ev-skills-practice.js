@@ -27,9 +27,10 @@
       render();
     }
     // A reply's cards as Captions shows them: a running skills run's card stays out (the sheet is the runner).
-    // B-183: a copy card is the message's own Copy chip (68-ev-thread), never a surface.
+    // B-183: a copy card is the message's own Copy chip (68-ev-thread), never a surface; B-362: a go card is the line's
+    // own button (Open the week), never a surface.
     const shownCards = m =>
-      (m.cards || []).filter(c => c && c.type !== 'copy' && !(c.type === 'skill' && skillGoing(sessOf(c.session))));
+      (m.cards || []).filter(c => c && c.type !== 'copy' && c.type !== 'go' && !(c.type === 'skill' && skillGoing(sessOf(c.session))));
     async function startSkillRun(skill, page) {
       if (activeSkill()) {
         SK.parked = false;

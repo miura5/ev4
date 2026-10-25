@@ -910,7 +910,6 @@ body.captions .cap-cards-more{align-self:flex-start}
    chips centred and wrapping; the field on the surface with the send in Ember. In the panel the idle session card's
    button is the primary, cards on the surface, and Coming up is a plain list under its label. */
 body.captions #p-ev{grid-template-rows:auto auto auto minmax(0,1fr) auto auto}
-body.captions #p-ev>#ev-ckin{grid-row:3}
 body.captions #p-ev>.hero{margin-top:var(--ev-drop,0px)}
 body.captions #p-ev>.thread{grid-row:4}
 body.captions #p-ev>.composer{grid-row:5}
@@ -919,8 +918,10 @@ body.captions #p-ev>#ev-side{grid-row:6}
   body.captions #p-ev>#ev-side{grid-row:5}
   body.captions #p-ev>.composer{grid-row:6}
 }
-.ckin{justify-self:center;width:calc(100% - 48px);max-width:552px;box-sizing:border-box;margin:0 0 14px;display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line)}
+.ckin{box-sizing:border-box;margin:0 0 14px;display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line)}
 .ckin[hidden]{display:none}
+/* B-362 (D-316): her newest line's one action, as the demo's row of small neutral buttons under the thread */
+.msg-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
 .ckin .ck-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .ckin .ck-head{justify-content:space-between}
 .ckin .lab{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}

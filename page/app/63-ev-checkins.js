@@ -16,19 +16,19 @@
 
     // B-340 (D-312): the daily check-in card under her, as in the demo, until he answers it today; the line his answer
     // brings stays in the card for the rest of this visit. Self-report only (B-05): a number, saved to today.
-    const CK = { just: null, pick: 0, adv: '' };
+    // B-362 (D-316): it is the first thing in the thread and scrolls with it, and it steps aside while a session runs.
+    const CK = { just: null, pick: 0, adv: '', box: null };
     function renderCheckin() {
       if (!M) return;
-      let box = $('ev-ckin');
+      let box = CK.box;
       if (!box) {
-        box = el('section', 'ckin');
+        box = CK.box = el('section', 'ckin');
         box.id = 'ev-ckin';
         box.setAttribute('aria-label', 'Daily check-in');
-        $('p-ev').insertBefore(box, $('thread'));
       }
       const ci = (M.dayedit && M.dayedit.checkin) || null;
       const energy = (ci && ci.energy) || (CK.just === today ? CK.pick : 0);
-      const show = !energy || CK.just === today;
+      const show = (!energy || CK.just === today) && !activeSession();
       box.hidden = !show;
       if (!show) return;
       const when = ci && ci.at ? clock12(ci.at) : T.greet && T.greet.at ? clock12(T.greet.at) : '';

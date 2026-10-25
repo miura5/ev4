@@ -171,6 +171,8 @@
           : ((T.greet && T.greet.chips) || ['What’s due this week?', 'How ready am I?']).filter(
               c => !(c === 'Start a study session' && sa)
             );
+      // B-362 (D-316): on a break, the demo's one chip back to work
+      if (sa && sa.status === 'active' && E.sessionState(sa, now()).onBreak) chips = ['I’m back early'];
       // B-358 (D-314): at rest, the demo's five chips and only those.
       if (!sa)
         chips = [
