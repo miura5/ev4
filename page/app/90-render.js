@@ -14,8 +14,8 @@
       renderEV();
       renderSide();
       renderStudySide(); // B-223 (D-245)
-      // B-120 (D-157): Live, or the one problem System leads with; never counts.
-      setStatus(sysProblem || 'Live', !sysProblem, !!sysProblem);
+      // B-341 (D-312): the header says Live; health problems show in System only (sysProblem), never in the header.
+      setStatus('Live', true, false);
     }
     // B-221 (D-210), B-286: the sidebar's Today, today's first five items not done with their dots, then "n more in
     // Today"; absent while empty (D-151) and while Today is the view (D-292, styles.css). A row opens Today. No Working
