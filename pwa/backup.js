@@ -1,5 +1,5 @@
 // B-316 (D-302): the nightly export of the record in D1 to Cloudflare R2, and the checks a restore is held to.
-//   - exportToR2(env): every document in D1 (env.DB) written as one JSON file to the R2 bucket env.EXPORTS, under a key
+//   - exportToR2(env): every document in D1 (env.DB) but the per-target system ones (D-321), written as one JSON file to the R2 bucket env.EXPORTS, under a key
 //     new to it. An export is never overwritten or deleted: a key already in the bucket is never written again.
 //   - The Worker runs it on its cron (wrangler.toml, staging only for now) and on POST /api/backup/export (the token).
 //   - manifestOf(rows): per collection, the document count and a SHA-256 over its documents in id order, each as
@@ -7,6 +7,10 @@
 // Shared by the Worker and node (tools/pwa-backup.mjs, the tests): Web Crypto and nothing else.
 
 export const EXPORT_PREFIX = 'exports/';
+/** D-321 (B-317): the per-target system documents a backup or export leaves out: each target's own deploy writes them,
+ *  and a Worker's token is never kept in a copy of the database it protects. Other system documents are kept. */
+export const SYSTEM_PER_TARGET = ['worker', 'manifest', 'spec', 'environments', 'yourturn', 'seed', 'config', 'code'];
+export const perTarget = (c, id) => c === 'system' && SYSTEM_PER_TARGET.includes(id);
 export const EXPORT_KIND = 'ev-d1-export';
 
 const hex = buf => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
@@ -54,10 +58,11 @@ export async function putNew(bucket, key, body) {
   throw new Error('no free key for the export near ' + key);
 }
 
-/** The export: every document in D1, its manifest, written to R2 under a new key. Returns { key, at, collections }. */
+/** The export: every document in D1 but the per-target system ones (D-321), its manifest, written to R2 under a new key. Returns { key, at, collections }. */
 export async function exportToR2(env, now = Date.now()) {
   if (!env.EXPORTS) throw new Error('no EXPORTS bucket bound to this Worker');
-  const { results } = await env.DB.prepare('SELECT c, id, data, at, v FROM docs ORDER BY c, id').all();
+  const { results: all } = await env.DB.prepare('SELECT c, id, data, at, v FROM docs ORDER BY c, id').all();
+  const results = all.filter(r => !perTarget(r.c, r.id)); // D-321
   const collections = await manifestOf(results);
   const body = JSON.stringify({
     schema: 1,

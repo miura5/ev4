@@ -540,7 +540,7 @@ const commands = {
       const r = API.readBack(worker, o.prefix, Object.keys(want));
       const res = r.ok
         ? (() => {
-            const got = D1B.manifestSync(r.rows.map(x => ({ ...x, id: D1B.decodeId(x.id) })));
+            const got = D1B.manifestSync(r.rows);
             const diffs = D1B.manifestDiffs(got, want);
             return { ok: !diffs.length, diffs, docs: r.rows.length, collections: Object.keys(got).length };
           })()
@@ -554,6 +554,20 @@ const commands = {
       );
       return res.ok ? 0 : 1;
     }
+    if (what === 'dump') {
+      // B-317: the whole D1 for evening-mac's backup (dumpD1); prints counts, never a document.
+      const r = D1B.dumpD1(worker);
+      if (!r.ok) {
+        console.log(`api dump: REFUSED: ${r.error}`);
+        return 1;
+      }
+      fs.mkdirSync(path.dirname(path.resolve(o.out || '')), { recursive: true });
+      fs.writeFileSync(path.resolve(o.out), JSON.stringify(r.rows));
+      console.log(
+        `api dump: ${r.rows.length} documents in ${new Set(r.rows.map(x => x.c)).size} collections saved to ${o.out}`
+      );
+      return 0;
+    }
     if (what === 'export') {
       // B-317: the newest R2 export (B-316) saved for the drill; prints its key, never a document.
       const r = API.newestExport(worker, path.resolve(o.out || ''));
@@ -564,7 +578,7 @@ const commands = {
       );
       return r.ok ? 0 : 1;
     }
-    throw new Error('api <pull|batch|set|restore-check|export> ... --worker <file>');
+    throw new Error('api <pull|dump|batch|set|restore-check|export> ... --worker <file>');
   },
   'canvas-script'(o) {
     // One read-only Canvas script for the run in --dir, its parameters filled in from the spec and the run's pull

@@ -116,9 +116,10 @@ test("evening-mac's backup is its pull of D1, its hashes D1's, written to the on
     const w = worker(fw.url);
     RUN.start({ spec, pipeline: 'evening-mac', record: 'staging', at: AT, dir, release: 'v4.0.0', worker: w });
     const pulls = RUN.pull({ spec, dir, at: AT });
+    assert.match(pulls[1].args.command, /^node core\/cli\.mjs api dump --out \S+ --worker \S+$/);
     assert.deepEqual(
       pulls.map(c => sh(c, out).code),
-      [0]
+      [0, 0]
     );
     const ctx = {
       target: 'worker',
@@ -138,8 +139,10 @@ test("evening-mac's backup is its pull of D1, its hashes D1's, written to the on
     assert.ok(files[0].devicePath.startsWith(spec.registry.records.staging.runs.backup.folder + '/backup/'));
     const b = JSON.parse(fs.readFileSync(files[0].stagedPath, 'utf8'));
     assert.deepEqual(D1B.backupProblems(b), []);
-    const reads = new Set(spec.pipelines['evening-mac'].reads.map(x => x.collection));
-    const d1 = await manifestOf(rowsOf(fw.get('/_dump'), c => reads.has(c)));
+    // The whole D1, every collection (not only evening-mac's reads), the per-target system documents out (D-321).
+    const all = rowsOf(fw.get('/_dump'), () => true).filter(r => !D1B.perTarget(r.c, r.id));
+    const d1 = await manifestOf(all);
+    assert.ok(Object.keys(d1).some(c => !spec.pipelines['evening-mac'].reads.some(x => x.collection === c)));
     assert.deepEqual(b.collections, d1, 'the backup hashes match D1 (pwa/backup.js manifestOf)');
     assert.ok(!JSON.stringify(b).includes(TOKEN));
   } finally {
@@ -156,7 +159,7 @@ async function drill(opts = {}) {
     throw e;
   }
 }
-async function drillWith(fw, { from = 'mac', tamper = false }) {
+async function drillWith(fw, { from = 'mac', tamper = false, mutate = null }) {
   const s = JSON.parse(JSON.stringify(spec));
   s.registry.records.staging.runs.backup.restoreFrom = from;
   const dir = tmp('ev4-drill-');
@@ -213,6 +216,7 @@ async function drillWith(fw, { from = 'mac', tamper = false }) {
     fs.mkdirSync(path.dirname(saveTo), { recursive: true });
     const b = D1B.backupOf(rows, { at: AT, label: 'evening-mac x', release: 'v4.0.0' });
     if (tamper) b.docs[0].data = b.docs[0].data.replace('}', ',"x":1}');
+    if (mutate) mutate(b);
     fs.writeFileSync(saveTo, JSON.stringify(b));
   }
   fs.mkdirSync(path.join(dir, 'answers'), { recursive: true });
@@ -351,4 +355,105 @@ test('the Worker serves one export read-only, only under exports/, behind the to
   assert.equal((await ask('?key=exports/../x.json')).status, 400);
   assert.equal((await ask('?key=exports/none.json')).status, 404);
   assert.notEqual((await ask('?key=exports/2026-10-25/a.json', TOKEN, 'DELETE')).status, 200);
+});
+
+test('the R2 export leaves out the per-target system documents (D-321) and keeps the rest of system', async () => {
+  const { exportToR2 } = await import('../pwa/backup.js');
+  const rows = [
+    { c: 'system', id: 'worker', data: '{"token":"x"}', at: 1, v: 1 },
+    { c: 'system', id: 'manifest', data: '{}', at: 1, v: 1 },
+    { c: 'system', id: 'notes', data: '{"a":1}', at: 1, v: 1 },
+    { c: 'days', id: 'd1', data: '{}', at: 1, v: 1 },
+  ];
+  const put = {};
+  const env = {
+    DB: { prepare: () => ({ all: async () => ({ results: rows }) }) },
+    EXPORTS: { head: async () => null, put: async (k, b) => (put[k] = b) },
+  };
+  const r = await exportToR2(env, Date.UTC(2026, 9, 25));
+  const body = JSON.parse(Object.values(put)[0]);
+  assert.deepEqual(
+    body.docs.map(d => d.c + '/' + d.id),
+    ['system/notes', 'days/d1']
+  );
+  assert.deepEqual(r.collections, await manifestOf(rows.filter(x => !D1B.perTarget(x.c, x.id))));
+});
+
+test('the D1 dump refuses a collection whose pages come short of its count, and saves nothing', async () => {
+  const fw = await fakeWorker();
+  try {
+    const w = worker(fw.url);
+    const f = path.join(tmp('ev4-cut-'), 'doc.json');
+    fs.writeFileSync(f, '{"schema":1}');
+    const run = c =>
+      execFileSync(process.execPath, c.split(' '), { cwd: ROOT, encoding: 'utf8', env: ENV, stdio: 'pipe' });
+    const ok = run(`core/cli.mjs api dump --out ${f}.rows --worker ${w}`);
+    assert.match(ok, /api dump: \d+ documents in \d+ collections saved/);
+    run(`core/cli.mjs api set --collection cutshort --doc-id a --file ${f} --worker ${w}`);
+    assert.throws(
+      () => run(`core/cli.mjs api dump --out ${f}.rows2 --worker ${w}`),
+      e => /REFUSED: cutshort: 1 documents read, the Worker counts 2/.test(String(e.stdout))
+    );
+    assert.ok(!fs.existsSync(f + '.rows2'));
+  } finally {
+    fw.child.kill();
+  }
+});
+
+test("B-04 on the Worker drill: a backup holding what could be a real patient's details is held, and nothing is restored", async () => {
+  const d = await drill({
+    mutate: b => {
+      const i = b.docs.findIndex(x => x.c === 'ideas');
+      const doc = JSON.parse(b.docs[i].data);
+      doc.text = 'MRN 4829173, DOB 03/14/1958';
+      b.docs[i].data = JSON.stringify(doc);
+      b.collections = D1B.manifestSync(b.docs.map(x => ({ ...x })));
+    },
+  });
+  try {
+    assert.equal(d.plan.status, 'refused');
+    assert.match(d.plan.problems.join('\n'), /could be a real patient's details \(B-04\); the drill restores nothing/);
+    assert.deepEqual(d.fw.get('/_dump?store=scratch'), {});
+  } finally {
+    d.fw.child.kill();
+  }
+});
+
+test('a backup made before D-321 restores everything but its per-target system documents, and still passes', async () => {
+  const d = await drill({
+    mutate: b => {
+      b.docs.push({ c: 'system', id: 'worker', data: JSON.stringify({ url: 'x', token: 'old' }) });
+      b.docs.push({ c: 'system', id: 'notes', data: JSON.stringify({ schema: 1 }) });
+      b.collections = D1B.manifestSync(b.docs.map(x => ({ ...x })));
+    },
+  });
+  try {
+    assert.equal(d.plan.status, 'planned', JSON.stringify(d.plan.problems));
+    assert.match(d.plan.plan.detail, /1 per-target system documents left out \(D-321\)/);
+    assert.deepEqual(
+      RUN.apply({ dir: d.dir })
+        .map(d.made)
+        .map(r => r.code),
+      [0, 0]
+    );
+    const sc = Object.keys(d.fw.get('/_dump?store=scratch'));
+    const id = RUN.runIdFor('restore-drill', AT);
+    assert.ok(sc.includes(`drills/${id}/system/notes`) || sc.some(k => k.endsWith('/system/notes')));
+    assert.ok(!sc.some(k => k.endsWith('/system/worker')));
+  } finally {
+    d.fw.child.kill();
+  }
+});
+
+test("a Worker run's pull keeps each id exactly as its list result gave it, not as a file name does (D-321)", () => {
+  const dir = tmp('ev4-ids-');
+  fs.mkdirSync(path.join(dir, 'api', 'versions'), { recursive: true });
+  fs.mkdirSync(path.join(dir, 'pull', 'libindex'), { recursive: true });
+  fs.writeFileSync(path.join(dir, 'api', 'versions', 'libindex.json'), JSON.stringify({ 'NUR 112': 3 }));
+  fs.writeFileSync(path.join(dir, 'pull', 'libindex', 'NUR 112.json'), JSON.stringify({ schema: 1 }));
+  fs.writeFileSync(path.join(dir, 'pull', 'libindex', 'stray.json'), JSON.stringify({ schema: 1 }));
+  assert.deepEqual(
+    RUN.loadPulled(dir).libindex.map(d => d.id),
+    ['NUR 112']
+  );
 });

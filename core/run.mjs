@@ -248,8 +248,12 @@ export function pull({ spec, dir, at }) {
       args: { action: query.where ? 'query' : 'list', url: run.url, collection: r.collection, query, out_dir: out },
     };
   });
-  // B-315: a Worker run's reads are one command.
-  if (run.target === 'worker') calls.splice(0, calls.length, ...(calls.length ? [apiPull(run, 'pull', calls)] : []));
+  // B-315: a Worker run's reads are one command. B-317: a run that writes the Mac backup also reads the whole D1.
+  if (run.target === 'worker') {
+    calls.splice(0, calls.length, ...(calls.length ? [apiPull(run, 'pull', calls)] : []));
+    if ((def.steps || []).some(s => s.id === 'mac-files'))
+      calls.push(apiCall(`${API} dump --out ${path.join(dir, 'd1', 'rows.json')} --worker ${run.worker}`));
+  }
   // B-61 (D-112): a pipeline that compares the scheduler with the record reads it with its pull, read-only.
   if (def.schedulerRead) calls.push({ tool: SCHEDULER_TOOL, args: { limit: 100, enabled: true } });
   return printed(dir, run, 'pull', calls);
@@ -355,6 +359,22 @@ export function pulled({ spec, dir, transcript }) {
 export function loadPulled(dir) {
   const db = {};
   const p = path.join(dir, 'pull');
+  // B-317 (D-321): a Worker run's pull keeps each id exactly as its list result gave it (the versions it saved), never
+  // as a file name gives it back; the document is the file the client wrote for that id.
+  const vdir = path.join(dir, 'api', 'versions');
+  if (fs.existsSync(vdir)) {
+    for (const f of fs
+      .readdirSync(vdir)
+      .filter(f => f.endsWith('.json'))
+      .sort()) {
+      const collection = f.slice(0, -5);
+      for (const id of Object.keys(readJson(path.join(vdir, f))).sort()) {
+        const file = path.join(p, collection, id + '.json');
+        if (fs.existsSync(file)) (db[collection] = db[collection] || []).push({ ...readJson(file), id });
+      }
+    }
+    return db;
+  }
   if (fs.existsSync(p))
     for (const { collection, id, doc } of readExport(p)) (db[collection] = db[collection] || []).push({ ...doc, id });
   return db;

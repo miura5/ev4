@@ -594,8 +594,12 @@ function restoreToScratch(answer, db, ctx, spec) {
     return { problems: ['the backup does not parse: ' + e.message] };
   }
   const problems = D1B.backupProblems(b);
-  if (b && b.collections && b.collections.system) problems.push('the backup holds system, which no backup may');
   if (problems.length) return { problems: problems.slice(0, 20) };
+  // D-321: the per-target system documents are never restored (an export from before D-321 may hold them); the
+  // read-back is held to the manifest of what is restored, checked above against the backup's own.
+  const left = b.docs.filter(d => D1B.perTarget(d.c, d.id)).length;
+  b = { ...b, docs: b.docs.filter(d => !D1B.perTarget(d.c, d.id)) };
+  b.collections = D1B.manifestSync(b.docs.map(d => ({ ...d })));
   const IDC = EV;
   const kept = IDC.keptVerdicts([
     ...(db.idchecks || []),
@@ -617,7 +621,7 @@ function restoreToScratch(answer, db, ctx, spec) {
   const writes = b.docs.map(d => ({
     op: 'set',
     collection: D1B.drillCollection(ctx.runId, d.c),
-    id: D1B.encodeId(d.id),
+    id: d.id,
     data: JSON.parse(d.data),
   }));
   const docs = b.docs.length;
@@ -626,7 +630,7 @@ function restoreToScratch(answer, db, ctx, spec) {
   return {
     writes: [],
     scratch: { host: scratch.scratch.host, prefix: `drills/${ctx.runId}`, want: b.collections, writes },
-    detail: `drill: ${from} (${b.at}), ${n} collections and ${docs} documents; counts and hashes match its own manifest; restored into the scratch D1 under drills/${ctx.runId}`,
+    detail: `drill: ${from} (${b.at}), ${n} collections and ${docs} documents; counts and hashes match its own manifest${left ? `; ${left} per-target system documents left out (D-321)` : ''}; restored into the scratch D1 under drills/${ctx.runId}`,
     push: `Restore drill passed: ${docs} documents match the backup.`,
     say: [`Restore drill: ${docs} documents in ${n} collections from ${from}, into the scratch D1.`],
   };
@@ -649,7 +653,10 @@ CODE_STEPS['mac-files'] = function macFiles(db, ctx, spec) {
   };
   // B-317: a Worker run's backup is its pull of D1, in the R2 export's shape with pwa/backup.js's hashes (D-322).
   const worker = ctx.target === 'worker';
-  const rows = worker ? D1B.rowsFromPull(path.join(ctx.dir, 'pull')) : null;
+  // The whole D1, as the pull's api dump saved it (every collection and page, the per-target system documents out).
+  const dumped = worker ? path.join(ctx.dir, 'd1', 'rows.json') : null;
+  if (worker && !fs.existsSync(dumped)) return { problems: [`no ${dumped}: make the printed api dump call first`] };
+  const rows = worker ? JSON.parse(fs.readFileSync(dumped, 'utf8')) : null;
   const backup = worker
     ? D1B.backupOf(rows, { at: ctx.now, label: `${ctx.pipeline} ${ctx.runId}`, release: ctx.release })
     : macBackup(db, { now: ctx.now, label: `${ctx.pipeline} ${ctx.runId}`, release: ctx.release });

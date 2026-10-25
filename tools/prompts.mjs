@@ -55,13 +55,15 @@ export function renderPrompt({ key, task, spec, release }) {
   // B-315 (D-320): a run whose record sends this lane to the Worker reads the Worker's address and token from the
   // record's system/worker, saved to a file only the commands read; the prompt names the document, never its value.
   const worker = runTarget(spec, task.record, task.pipeline) === 'worker';
+  // B-317: a Worker run's one other write, named where the spec names it (the drill's scratch tables, D-302).
+  const alsoWrites = worker && p.alsoWrites ? p.alsoWrites : null;
   const wdoc = worker ? rec.runs.worker : null;
   const traceDoc = `{"schema": 1, "writer": "${task.pipeline}", "at": <now>, "source": "${task.pipeline} gate", "release": <the release in /tmp/ev/system/manifest.json, or "unknown" when step 2 did not save it>, "pipeline": "${task.pipeline}", "startedAt": <the start time>, "endedAt": <now>, "status": "failed", "detail": "<step>: <the error or refusal, quoted>", "push": "${failLine({ failed: p.failed, pipeline: task.pipeline, reason: 'gate' })}"}`;
   return [
     // B-149 (D-173): no literal release; the run's own is in the manifest step 2 saves.
     `E.V. ${task.pipeline} run${staging ? ', STAGING' : ''}.`,
     '',
-    `You are running E.V.'s ${task.pipeline} pipeline for Matt, a first-semester nursing student (NUR 112, BIO 201; Central time), on his private study record: ${url} (${rec.name}${staging ? ', a test copy of the live record' : ''}). Read and write only this record. It ${p.purpose}.`,
+    `You are running E.V.'s ${task.pipeline} pipeline for Matt, a first-semester nursing student (NUR 112, BIO 201; Central time), on his private study record: ${url} (${rec.name}${staging ? ', a test copy of the live record' : ''}). ${alsoWrites ? `Read and write only this record, with one other write: ${alsoWrites}.` : 'Read and write only this record.'} It ${p.purpose}.`,
     '',
     // B-49: the run safety review refused the first scheduled live write ("Modify Shared Resources", Oct 18). The
     // prompt states who asked for these writes and whose record they land in, so an unattended run's job is plain.

@@ -6,9 +6,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { EXPORT_KIND, manifestDiffs } from '../pwa/backup.js';
+import { EXPORT_KIND, manifestDiffs, perTarget, SYSTEM_PER_TARGET } from '../pwa/backup.js';
+import { request } from './runapi-client.mjs';
 
-export { EXPORT_KIND, manifestDiffs };
+export { EXPORT_KIND, manifestDiffs, perTarget, SYSTEM_PER_TARGET };
 
 /** pwa/backup.js manifestOf, synchronously: { collection: { count, sha256 } } for rows [{ c, id, data }]. */
 export function manifestSync(rows) {
@@ -23,22 +24,35 @@ export function manifestSync(rows) {
   return out;
 }
 
-/** The rows a run API pull saved (<pullDir>/<collection>/<id>.json), each data as D1 holds it: the JSON string the
- *  Worker stored, which is JSON.stringify of the object (the pull saved it pretty-printed; parsing undoes that). */
-export function rowsFromPull(pullDir, skip = ['system']) {
+/**
+ * B-317: the whole D1 as the R2 export holds it, read through the run API: every collection the Worker names
+ * (GET /api/run/collections), every page of each, each id exactly as the list result gives it, the per-target system
+ * documents left out (D-321). Refused, with the reason, when a read is refused or a collection's rows do not come to
+ * the count the Worker named (a page cut short). {ok, rows} or {ok: false, error}.
+ */
+export function dumpD1(worker, { maxPages = 10000 } = {}) {
+  const cols = request(worker, { route: 'collections' });
+  if (cols.status !== 200)
+    return { ok: false, error: `collections refused (${cols.status}): ${cols.body.error || ''}` };
   const rows = [];
-  if (!fs.existsSync(pullDir)) return rows;
-  for (const c of fs.readdirSync(pullDir).sort()) {
-    const dir = path.join(pullDir, c);
-    if (skip.includes(c) || !fs.statSync(dir).isDirectory()) continue;
-    for (const f of fs.readdirSync(dir).filter(f => f.endsWith('.json')))
-      rows.push({
-        c,
-        id: f.slice(0, -5),
-        data: JSON.stringify(JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'))),
-      });
+  for (const { collection: c, count } of cols.body.collections || []) {
+    let cursor = null,
+      pages = 0,
+      n = 0;
+    do {
+      const r = request(worker, { route: 'list', params: { collection: c, limit: 1000, cursor } });
+      if (r.status !== 200) return { ok: false, error: `${c}: list refused (${r.status}): ${r.body.error || ''}` };
+      for (const d of r.body.documents || []) {
+        n++;
+        if (!perTarget(c, d.id)) rows.push({ c, id: d.id, data: JSON.stringify(d.data) });
+      }
+      cursor = r.body.next_cursor || null;
+      if (++pages > maxPages) return { ok: false, error: `${c}: more than ${maxPages} pages; nothing saved` };
+    } while (cursor);
+    if (n !== count)
+      return { ok: false, error: `${c}: ${n} documents read, the Worker counts ${count}; nothing saved` };
   }
-  return rows.sort((a, b) => (a.c + '\n' + a.id < b.c + '\n' + b.id ? -1 : 1));
+  return { ok: true, rows: rows.sort((a, b) => (a.c < b.c ? -1 : a.c > b.c ? 1 : a.id < b.id ? -1 : 1)) };
 }
 
 /** A backup of those rows, in the export's shape. */
@@ -77,11 +91,3 @@ export function backupProblems(b) {
 
 /** Where a drill restores into the scratch database: its own collections, new to it, so nothing there is replaced. */
 export const drillCollection = (runId, c) => `drills/${runId}/${c}`;
-
-/** A document id as the run API takes it, reversibly (B-317): any character it refuses, and ~ itself, as ~<hex>. The
- *  drill's scratch copy keeps an id like "a b" as "a~20b"; decodeId gives it back for the hash check. */
-export const encodeId = id =>
-  String(id).replace(/[^A-Za-z0-9_\-.:@+]/gu, ch =>
-    [...new TextEncoder().encode(ch)].map(b => '~' + b.toString(16).padStart(2, '0')).join('')
-  );
-export const decodeId = id => decodeURIComponent(String(id).replace(/~([0-9a-f]{2})/g, (_, h) => '%' + h));

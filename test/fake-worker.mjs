@@ -5,7 +5,7 @@
 import http from 'node:http';
 import { readExport } from '../core/schemas.mjs';
 import { checkWrites, planBatch, encodeCursor, decodeCursor } from '../pwa/runapi.js';
-import { manifestOf, EXPORT_KIND } from '../pwa/backup.js';
+import { manifestOf, EXPORT_KIND, perTarget } from '../pwa/backup.js';
 
 const [token, seed] = process.argv.slice(2);
 // Two databases on one port, by the Host header's first label (B-317): ev-staging-scratch.* is the drill's scratch D1,
@@ -40,7 +40,7 @@ const server = http.createServer((req, res) => {
     if (url.pathname === '/api/backup/newest') return send(res, 200, { key: 'exports/2026-10-25/now.json' });
     if (url.pathname === '/api/backup/get') {
       const docs = [...main]
-        .filter(([k]) => !k.startsWith('system\n'))
+        .filter(([k]) => !perTarget(k.split('\n')[0], k.split('\n')[1])) // as exportToR2 (D-321)
         .map(([k, v]) => ({ c: k.split('\n')[0], id: k.split('\n')[1], data: JSON.stringify(v.data), at: 0, v: v.v }));
       return manifestOf(docs).then(collections =>
         send(res, 200, { schema: 1, kind: EXPORT_KIND, at: '2026-10-25T00:00:00.000Z', collections, docs })
@@ -53,7 +53,8 @@ const server = http.createServer((req, res) => {
       return send(res, 200, {
         collections: Object.keys(n)
           .sort()
-          .map(c => ({ collection: c, count: n[c] })),
+          // a collection named cutshort counts one more than it holds: a page the Worker cut (the dump's test)
+          .map(c => ({ collection: c, count: n[c] + (c === 'cutshort' ? 1 : 0) })),
       });
     }
     if (route === 'list') {
