@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 24 | v4 staging deployed at 9e0af7a (22:59 CT), from 6e72733: Plan the rest (B-293). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 24 | v4 staging deployed at 6e72733 (22:30 CT), from a96f55e: Images to Claude through the shim; Plan the rest; Progress (B-322, B-293, B-301). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 24 | v4 staging deployed at a96f55e (22:02 CT), from a5e07cb: Today budget card; Images to Claude through the shim (B-292, B-322). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 24 | v4 staging deployed at a5e07cb (21:53 CT), from f9e1327: Study overview; Bring the demo onto main; A PWA smoke on every push; A staging D1 and a staging Worker with their own token, seeded with the synthetic record only; Progress; The app without Study Watch or builder jobs (B-297, B-309, B-313, B-311, B-301, B-314). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
