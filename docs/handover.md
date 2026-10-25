@@ -8,28 +8,26 @@ Central)
 
 ## Where things stand
 
-- The redesign release (D-312, D-315, D-316): four fix waves are done and shipped to staging. The release bar changed
-  to the rubric (D-317) after the wave-4 review found 13 small differences.
-- Wave 5 (B-382 to B-386) was stopped by Matt before any code landed. Its tasks show in progress under dead claims;
-  they are superseded by the fixes the rubric review names.
-- B-381 (data review fixes: graded items, scores, idea ids) is done at e5d8124, staging GREEN.
+- The redesign release (D-312, D-315, D-316): the rubric review of wave 4 (d299b24) scored 82/100, no factor below 4,
+  no blockers: over the bar (D-317). Its card and pairs are in /home/claude/ui-review5 (outside the repository).
+- One rubric wave (the first of at most two) is building the review's top fixes: B-382 Today, B-383 E.V., B-384
+  Frame, B-385 Study, B-386 Progress, lanes fired 17:39 Central. On the phone, quick-ask chips stay one row (Matt's
+  rule), not the demo's two.
+- B-381 (data review fixes) is done at e5d8124.
 
 ## Running
 
-- UI reviewer: scoring the rubric at d299b24 (wave 4) on three records; output in /home/claude/ui-review5 (outside the
-  repository; holds a staging-data snapshot).
-- Test agent (B-357): bringing npm test and the harnesses in line with the demo; the full check was RED at 17:12 and
-  it is fixing the run harness. Its edits are in /home/claude/ev4.
-- An agent is updating the build workflow map with D-317.
-- No lanes are running.
+- Lanes today, ev, frame, study and pr on B-382 to B-386.
+- Test agent (B-357): the full check was RED at 17:12; it is fixing harnesses in /home/claude/ev4.
 
 ## Next
 
-1. Read the rubric card. Below the bar: file its top fixes as "Fidelity fix: <view>" tasks, retire B-382 to B-386 in
-   their favour, fire the lanes (at most two fix waves). At or above: go to step 2.
-2. Independent review of the test agent's work; code review of the whole sprint diff; full npm run check GREEN; ship
-   staging GREEN, all at one commit.
+1. Watch the lanes every 4 minutes until B-382 to B-386 are done on staging.
+2. Independent review of the test agent's work; code review of the whole sprint diff; a final rubric click-through;
+   full npm run check GREEN; ship staging GREEN, all at one commit.
 3. Release card to Matt; live waits on his word.
+4. The Chart rows B-328 to B-331 still carry the old model (90-minute stale claims, one chat per milestone, Matt
+   present): bring them in line with D-317.
 
 ## For the release card
 
