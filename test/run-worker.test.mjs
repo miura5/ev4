@@ -82,12 +82,13 @@ const filesUnder = d =>
     .readdirSync(d, { withFileTypes: true })
     .flatMap(e => (e.isDirectory() ? filesUnder(path.join(d, e.name)) : [path.join(d, e.name)]));
 
-test('the target is per record and lane: staging cloud runs go to the Worker; live and the Mac lane keep ArtifactData', () => {
+test("the target is per record: staging's five cloud pipelines go to the Worker; live, the Mac lane and the diagnostic keep ArtifactData", () => {
   for (const p of ['morning', 'evening-cloud', 'weekly', 'worker', 'watchdog']) {
     assert.equal(RUN.runTarget(spec, 'staging', p), 'worker', p);
     assert.equal(RUN.runTarget(spec, 'live', p), 'artifact', p);
   }
-  for (const p of ['evening-mac', 'restore-drill']) assert.equal(RUN.runTarget(spec, 'staging', p), 'artifact', p);
+  for (const p of ['evening-mac', 'restore-drill', 'diagnostic'])
+    assert.equal(RUN.runTarget(spec, 'staging', p), 'artifact', p);
   assert.equal(spec.registry.records.live.runs, undefined, 'live keeps ArtifactData until the cutover (B-320)');
 });
 

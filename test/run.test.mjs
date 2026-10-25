@@ -13,6 +13,8 @@ import { CODE_STEPS } from '../core/steps.mjs';
 import { ROOT, copyRepo } from './helpers.mjs';
 
 const baseSpec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
+// B-315: these tests drive the ArtifactData protocol on the staging record; test/run-worker.test.mjs proves the Worker target.
+delete baseSpec.registry.records.staging.runs;
 EV.configure(baseSpec);
 const validate = loadValidator();
 const PUSH = {
@@ -446,7 +448,10 @@ test('end writes the ledger entry, and the audit catches a call no command print
 test('cli: the moves end to end, with the exit codes a run reads', () => {
   const root = copyRepo();
   const s = JSON.parse(fs.readFileSync(path.join(root, 'spec/ev.spec.json'), 'utf8'));
-  fs.writeFileSync(path.join(root, 'spec/ev.spec.json'), JSON.stringify({ ...s, pipelines: spec.pipelines }, null, 1));
+  fs.writeFileSync(
+    path.join(root, 'spec/ev.spec.json'),
+    JSON.stringify({ ...s, registry: baseSpec.registry, pipelines: spec.pipelines }, null, 1)
+  );
   const dir = tmp('ev4-runcli-');
   const t = path.join(dir, '..', path.basename(dir) + '.jsonl');
   const cli = (...a) => {

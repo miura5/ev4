@@ -1283,10 +1283,14 @@
       "collection": "system",
       "doc_id": "worker"
      },
-     "lanes": [
-      "cloud"
+     "pipelines": [
+      "morning",
+      "evening-cloud",
+      "weekly",
+      "worker",
+      "watchdog"
      ],
-     "_why": "B-315 (D-307, D-320): staging cloud runs read and write the staging Worker run API (D1), its url and token from system/worker. The Mac lane follows with B-317; live stays on ArtifactData until B-320."
+     "_why": "B-315 (D-307, D-320): these staging cloud runs read and write the staging Worker run API (D1), its url and token from system/worker. The Mac lane follows with B-317; diagnostic keeps ArtifactData (its probes test that store); live stays on ArtifactData until B-320."
     }
    }
   },

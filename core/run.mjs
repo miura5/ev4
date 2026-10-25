@@ -59,14 +59,13 @@ const recordUrl = (spec, record) => {
 export const WORKER_FILE = '/tmp/ev/system/worker.json';
 /**
  * Where a run of this pipeline on this record reads and writes: 'worker' (the Worker's run API) when the record's
- * spec.registry entry says its runs in that lane go to the Worker, else 'artifact' (ArtifactData). Live stays on
- * ArtifactData until the cutover (B-320); staging's cloud runs go to the staging Worker; the Mac lane waits on B-317.
+ * spec.registry entry names the pipeline among its Worker runs, else 'artifact' (ArtifactData). Live stays on
+ * ArtifactData until the cutover (B-320); staging's five cloud pipelines go to the staging Worker; the Mac lane waits
+ * on B-317, and the diagnostic keeps ArtifactData (its probes test that store).
  */
 export function runTarget(spec, record, pipeline) {
-  const r = (spec.registry.records || {})[record] || {};
-  const p = (spec.pipelines || {})[pipeline] || {};
-  const w = r.runs;
-  return w && w.store === 'worker' && (w.lanes || []).includes(p.lane) ? 'worker' : 'artifact';
+  const w = ((spec.registry.records || {})[record] || {}).runs;
+  return w && w.store === 'worker' && (w.pipelines || []).includes(pipeline) ? 'worker' : 'artifact';
 }
 const API = 'node core/cli.mjs api';
 const apiCall = command => ({ tool: 'Bash', args: { command } });
