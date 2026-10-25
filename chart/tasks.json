@@ -5762,14 +5762,14 @@
  {
   "id": "B-328",
   "kind": "task",
-  "title": "The lane plan file and a lanes command: docs/lanes.md in the format the lane planner writes (each lane's tasks in order, its files, what opens it; the shared files and their owners; waiting on Matt); node tools/chart.mjs lanes prints each lane's state on one screen; the Chart lint refuses a lane task that doesn't exist and a file two lanes own",
-  "dod": "Tests on a planted lanes file: lanes shows busy, ready, stale (a claim with no note for 90 minutes) and waiting on Matt correctly; the lint refuses a missing task and a file two lanes own; npm test green; an independent review finds no gaps",
+  "title": "The lane plan file and a lanes command: docs/lanes.md in the format the lane planner writes (each lane's tasks in order, its files, what opens it; the shared files and their owners; waiting on the build manager or Matt); node tools/chart.mjs lanes prints each lane's state on one screen; the Chart lint refuses a lane task that doesn't exist and a file two lanes own",
+  "dod": "Tests on a planted lanes file: lanes shows busy, ready, stale (a claim with no note for 20 minutes) and waiting on the build manager or Matt correctly; the lint refuses a missing task and a file two lanes own; npm test green; an independent review finds no gaps",
   "milestone": "workflow (ops)",
   "status": "open",
   "depends": [
    "B-327"
   ],
-  "notes": "",
+  "notes": "Brought in line with D-317: the build manager runs the build; Matt is the customer and decides live.",
   "commit": null,
   "source": "plan QL68BeUSw8HB3QFhDTZ4XJ"
  },
@@ -5777,20 +5777,20 @@
   "id": "B-329",
   "kind": "task",
   "title": "The builder's scheduled instructions rendered from docs/workflow/builder.md, its lanes read from docs/lanes.md, the same way the pipeline prompts are rendered; verify-deploy compares the live builder task with the render",
-  "dod": "A render test; verify-deploy reports drift when the live task differs; the live builder task updated from the render by a build chat with Matt present; one lane run fired from it claims and finishes a planted staging-only task",
+  "dod": "A render test; verify-deploy reports drift when the live task differs; the live builder task updated from the render by the build manager; one lane run fired from it claims and finishes a planted staging-only task",
   "milestone": "workflow (ops)",
   "status": "open",
   "depends": [
    "B-328"
   ],
-  "notes": "",
+  "notes": "Brought in line with D-317: the build manager runs the build; Matt is the customer and decides live.",
   "commit": null,
   "source": "plan QL68BeUSw8HB3QFhDTZ4XJ"
  },
  {
   "id": "B-330",
   "kind": "task",
-  "title": "The lane watch: a cloud scheduled task created from docs/workflow/lane-watch.md by a build chat with Matt present, hourly while any lane has an open task",
+  "title": "The lane watch: a cloud scheduled task created from docs/workflow/lane-watch.md by the build manager, hourly while any lane has an open task",
   "dod": "One firing against a planted stale claim reopens it and fires its lane; one against an idle lane with a ready task fires it; both read back from its runs; the review checks its transcript shows it took no task and changed no code",
   "milestone": "workflow (ops)",
   "status": "open",
@@ -5798,21 +5798,21 @@
    "B-328",
    "B-329"
   ],
-  "notes": "",
+  "notes": "Brought in line with D-317: the build manager runs the build; Matt is the customer and decides live.",
   "commit": null,
   "source": "plan QL68BeUSw8HB3QFhDTZ4XJ"
  },
  {
   "id": "B-331",
   "kind": "task",
-  "title": "CLAUDE.md's Roles: a short section naming the build manager (one chat per milestone, starting from the Chart and a handover note and ending with one), the lane planner and the lane watch, with the rule that no guarded change or tenet is filed while a lane has a task in progress; it points to docs/workflow/. A guarded change, made by a build chat with Matt present",
-  "dod": "The section is in CLAUDE.md; a test checks it names docs/workflow/ and the rule; npm test green; an independent review finds no gaps",
+  "title": "CLAUDE.md's Roles: a short section naming the build manager (one long development chat, starting from the Chart and docs/handover.md and rewriting it before a /clear), the lane planner and the lane watch, with the rule that no guarded change or tenet is filed while a lane has a task in progress; it points to docs/workflow/. A guarded change, made by the build manager",
+  "dod": "The section is in CLAUDE.md; a test checks it names docs/workflow/ and the rule; npm test green; an independent review finds no gaps D-317 wrote the Roles section and docs/handover.md; what remains is the test that the section names docs/workflow/, docs/handover.md and the rubric release bar.",
   "milestone": "workflow (ops)",
   "status": "open",
   "depends": [
    "B-327"
   ],
-  "notes": "",
+  "notes": "Brought in line with D-317: the build manager runs the build; Matt is the customer and decides live.",
   "commit": null,
   "source": "plan QL68BeUSw8HB3QFhDTZ4XJ"
  },
