@@ -410,12 +410,17 @@ test('B-381: two notes with the same title on the same day both survive (time in
   assert.equal(Object.keys(store).length, 3);
 });
 
-test('B-381: record_score holds only a number he typed in his latest line', () => {
+test('B-381: record_score holds only a number he typed plainly in this turn’s line', () => {
   assert.equal(EV.scoreSaid(88.5, 'I got 88.5 on Exam 4'), true);
-  assert.equal(EV.scoreSaid(88, 'got an 88 on exam 4!'), true);
-  assert.equal(EV.scoreSaid(90, 'I think I did ok on Exam 4'), false, 'the exam number is not a score he said');
-  assert.equal(EV.scoreSaid(90, ''), false);
-  assert.equal(EV.scoreSaid(4, 'I got 88.5 on Exam 4'), true, 'a number he typed; the exam match then decides');
+  assert.equal(EV.scoreSaid(88.5, '88.5'), true);
+  assert.equal(EV.scoreSaid(92, 'I got 92 on exam 4'), true);
+  assert.equal(EV.scoreSaid(4, 'I got 92 on exam 4'), false, 'the exam’s number is never the score');
+  assert.equal(EV.scoreSaid(85, 'maybe around 85?'), false, 'a hedged line is refused');
+  assert.equal(EV.scoreSaid(85, 'I think 85'), false);
+  assert.equal(EV.scoreSaid(100, '88 out of 100'), false);
+  assert.equal(EV.scoreSaid(88, '88 out of 100'), true);
+  assert.equal(EV.scoreSaid(90, 'I did ok on Exam 4'), false);
+  assert.equal(EV.scoreSaid(90, ''), false, 'a turn without his new line approves nothing');
 });
 
 test('B-381: E.V.’s save_idea and a session’s findings never land on an idea already there', () => {

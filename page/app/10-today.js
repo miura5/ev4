@@ -574,7 +574,8 @@
             minutes: gone.add.minutes,
             course: gone.add.course,
           },
-          gone.add.by || 'Matt'
+          // B-381: graded work comes back as his, so it stays GRADED and fixed
+          gone.add.kind === 'graded' || gone.add.tag === 'GRADED' ? 'Matt' : gone.add.by || 'Matt'
         );
       else await editList(today, { action: 'restore', id: it.id }, 'Matt');
       if (gone.tomorrowId) await editList(E.addDays(today, 1), { action: 'remove', id: gone.tomorrowId }, 'Matt');

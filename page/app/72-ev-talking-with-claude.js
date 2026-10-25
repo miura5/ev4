@@ -347,7 +347,7 @@
             const v = Number(i.score);
             if (!(v >= 0 && v <= 100)) throw new Error('the score must be 0 to 100');
             // B-381: only a number he typed in his latest line; never a guess
-            if (!E.scoreSaid(v, T.lastMatt)) return 'ask him for the exact score';
+            if (!E.scoreSaid(v, T.scoreText)) return 'ask him for the exact score';
             const past = S.exams.filter(e => e.date && e.date <= today && E.examIs(e, 'scoredKinds'));
             const q = String(i.exam || '')
               .toLowerCase()
@@ -918,6 +918,9 @@
     };
     async function chat(text, o = {}) {
       if (T.busy) return;
+      // B-381: the line a score may come from is this turn's own, and only when it is his new line (never a Try again,
+      // Go deeper or Read from here)
+      T.scoreText = o.fromMatt ? String(text || '') : '';
       // B-99: a real ask to do, edit or turn in graded work is refused in one line, here, with no model call.
       const no = E.gradedAsk(
         text,

@@ -1573,11 +1573,14 @@ const EVCore = (() => {
       if (same) {
         // B-381: graded work snoozed onto a day that already holds the same words stays graded: an added item is
         // upgraded to GRADED (fixed); a planned one that isn't fixed can't be, so the snooze is refused
-        if (kind === 'graded' && !isFixedItem(same)) {
-          if (!added[same.id])
+        // B-381: a fixed item that is not graded (an exam, clinical, validation, or a date-, exam- or soon- id) never
+        // absorbs it either: refused, so the snooze keeps today's item
+        if (kind === 'graded' && same.tag !== 'GRADED') {
+          if (!added[same.id] || isFixedItem(same))
             throw new Error(`“${same.text}” is already planned that day; it can't carry the graded tag`);
           const doc = next();
-          doc.added[same.id] = { ...added[same.id], tag: 'GRADED', kind: 'graded' };
+          // his graded work, so his: never listed as E.V.'s add with an Undo that would take it off
+          doc.added[same.id] = { ...added[same.id], tag: 'GRADED', kind: 'graded', by: 'Matt' };
           return { id: same.id, text: same.text, doc, note: 'marked graded' };
         }
         return { id: same.id, text: same.text, doc: null, note: 'already on the list' };

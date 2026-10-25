@@ -372,6 +372,6 @@
       input.placeholder = placeholder();
       const mid = await mattSay(text);
       noteAnswer(mid);
-      await chat(text, { replyTo: mid });
+      await chat(text, { replyTo: mid, fromMatt: true }); // B-381: this turn carries his new line
     }
 

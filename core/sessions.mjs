@@ -817,11 +817,18 @@ export function makeSessions(core) {
       },
     };
   }
-  /** B-381: whether score is a number he wrote in text (his latest line), so E.V. never records a guessed score. */
+  /**
+   * B-381: whether score is a number he wrote in text (this turn's line), so E.V. never records a guessed score. A
+   * hedged line (around, maybe, ~, a question) is refused; a number right after exam, test or quiz, and the 100 of
+   * "out of 100", is never the score.
+   */
   function scoreSaid(score, text) {
     const v = Number(score);
-    if (!Number.isFinite(v)) return false;
-    return (String(text || '').match(/\d+(?:\.\d+)?/g) || []).some(n => Number(n) === v);
+    const t = String(text || '');
+    if (!Number.isFinite(v) || !t) return false;
+    if (/\b(around|about|maybe|probably|think|guess|like|roughly)\b|~|\?/i.test(t)) return false;
+    const kept = t.replace(/\b(exam|test|quiz)\s*#?\s*\d+(?:\.\d+)?/gi, ' ').replace(/\bout of\s+100\b/gi, ' ');
+    return (kept.match(/\d+(?:\.\d+)?/g) || []).some(n => Number(n) === v);
   }
   /** Flashcards as Quizlet import text: term<TAB>definition per line. */
 

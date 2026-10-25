@@ -957,6 +957,11 @@ test('B-381: graded work snoozed onto a day that already holds the same words st
   const g = EV.listEdit(null, e, { action: 'add', text: 'Med math quiz', kind: 'graded' }, { now, by: 'Matt' });
   assert.equal(g.id, ev.id);
   assert.deepEqual([g.doc.added[g.id].tag, g.doc.added[g.id].kind], ['GRADED', 'graded']);
+  const shown = EV.dayView(null, { id: 'x', ...g.doc }).items.find(i => i.id === g.id);
+  assert.equal(shown.by, 'Matt', 'his graded work: never in her changes (by E.V.), so no Undo of hers takes it off');
+  // Undo of his snooze adds it back as his (undoTask passes Matt for graded work): GRADED still
+  const back = EV.listEdit(null, null, { action: 'add', text: 'Med math quiz', kind: 'graded' }, { now, by: 'Matt' });
+  assert.equal(back.doc.added[back.id].tag, 'GRADED');
   assertValid({ op: 'set', collection: 'dayedits', id: '2026-10-19', data: g.doc });
   assert.throws(
     () => EV.listEdit(null, { id: 'x', ...g.doc }, { action: 'remove', id: g.id }, { now, by: 'E.V.' }),
@@ -968,6 +973,27 @@ test('B-381: graded work snoozed onto a day that already holds the same words st
     /already planned that day/
   );
   assert.equal(EV.listEdit(null, e, { action: 'add', text: 'Med math quiz' }, { now, by: 'E.V.' }).doc, null);
+  // a fixed item that is not graded never absorbs it: refused, so today's item stays
+  for (const it of [
+    { id: 'date-x', text: 'Med math quiz', tag: 'CLINICAL' },
+    { id: 'exam-x', text: 'Med math quiz', tag: 'EXAM' },
+    { id: 'soon-x', text: 'Med math quiz', tag: 'READING' },
+  ])
+    assert.throws(
+      () =>
+        EV.listEdit(
+          { id: 'd', list: { items: [it] } },
+          null,
+          { action: 'add', text: it.text, kind: 'graded' },
+          { now, by: 'Matt' }
+        ),
+      /can't carry the graded tag/
+    );
+  const gd = { id: 'd', list: { items: [{ id: 'date-g', text: 'Med math quiz', tag: 'GRADED' }] } };
+  assert.equal(
+    EV.listEdit(gd, null, { action: 'add', text: 'Med math quiz', kind: 'graded' }, { now, by: 'Matt' }).doc,
+    null
+  );
 });
 
 // ---------------------------------------------------------------- liveDates over dateedits
