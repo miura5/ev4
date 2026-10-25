@@ -6472,10 +6472,10 @@
  {
   "id": "B-365",
   "kind": "request",
-  "title": "Request (reported Oct 25): The UI review found Study differs from the demo on both records: course switch, empty states, objective rows, weak spots and the quiz.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "title": "Fidelity fix: Study (wave 2): the NUR 112 / BIO 201 switch always shows; on a record whose next exam has no objectives the page still has the insight banner, the right pane and the exam card's rows (its plan's days) instead of an empty bar; objective names get the demo's column width at 390 and every row its divider; Weak spots has no Copy for Quizlet, Notes and skills section or footer, its side pane is 'How triage works' as the demo, and its breadcrumb names the course; the quiz answers on a click or A to D with no Check answer or Next, its pane lists the question texts, and at 390 the breadcrumb and 'Question N of M' fit with nothing clipped",
+  "dod": "StudyOverview, StudyWeak, StudyQuiz and StudyResults match at 1280 and 390 on both records. Proof (D-312): node tools/build.mjs; crawl.cjs demo and built, on the synthetic record and on a real-shaped record (ten due items, long titles, an exam with no objectives), side by side at 1280 and 390 for every state named; npm run smoke; ship staging GREEN. Review pairs from the UI reviewer are in /home/claude/ui-review/pairs/ when this run shares the machine; otherwise rebuild them with crawl.cjs.",
+  "milestone": "v4.8 redesign",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -6484,6 +6484,10 @@
   "reportedAt": "2026-10-25T13:48:51.364Z",
   "board": {
    "row": "v4 B-365: The UI review found Study differs from the demo on both records:…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-25T13:48:52.197Z"
   }
  }
 ]
