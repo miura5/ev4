@@ -7185,7 +7185,7 @@
   "milestone": "PWA",
   "status": "open",
   "depends": [],
-  "notes": "npm test green locally but for the dirty-tree check (677 tests); page harnesses next, then smoke and review",
+  "notes": "page harnesses brought in line (run 402/402, shell 115/115 green); prep, captions, greet, look and the app smoke running",
   "commit": null,
   "source": "build manager, D-324",
   "words": "Remove every check, flag, hold and block for graded work and patient identifiers from E.V., as D-324 decides.",
