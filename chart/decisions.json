@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-319",
+  "date": "Oct 25",
+  "title": "The redesign release keeps the demo's shape where the page review found lost entry points: no journal writing on the page (old entries stay in the record, runs and backups) and Text size, Reduce motion and follow-device theme stay on System only. Matt chose both on Oct 25. The other intended losses (weak spot from an idea, Make active, the score form now through E.V., attach by typing or dropping, New › Note's identifier block without 'It's made up') are named on the release card.",
+  "why": "The page code review listed entry points the demo removed; under D-317 removing something he uses day to day is his decision, and he chose the demo's shape for both.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-318",
   "date": "Oct 25",
   "title": "No standing design doc: E.V. Foundation v4 is retired (kept as history, never read; nothing is deleted). The living truth is CLAUDE.md, the spec and its schemas, the code and the Chart; a design doc is a one-time hand-off, read until its tasks and decisions are filed. CLAUDE.md, the README and brief no longer point to it.",
