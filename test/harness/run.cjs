@@ -1571,21 +1571,25 @@ const ok = (name, cond, detail = '') => {
     if (scheme === 'desktop') {
       await send(page, 'What’s due this week?'); // typed: with review, a finished job and the session chip it has no chip (D-125) await page.waitForTimeout(900);
       await page.screenshot({ path: `${shots}/ev-desktop-conversation.png`, fullPage: false });
-      // B-53 (D-109) at desktop width: the kind on every idea, the weak-spot action only on a learning idea
+      // B-53 (D-109) at desktop width: the kind on every note, the weak-spot action only on a learning note (B-302:
+      // the kind is the row's result and the action is in the note's detail)
       await page.click('#tab-record');
       await page.waitForTimeout(150);
       {
-        const row = t => page.locator('#ideas .row', { hasText: t });
-        const act = t => row(t).locator('button', { hasText: 'Make it a weak spot' }).count();
+        const row = t => page.locator('#rec-list .rec-li[data-kind="note"]', { hasText: t }).first();
+        const act = async t => {
+          await row(t).locator('.nm').click();
+          await page.waitForTimeout(60);
+          return page.locator('#rec-detail button', { hasText: 'Make it a weak spot' }).count();
+        };
         ok(
-          '[desktop] idea kinds shown; only the learning idea offers Make it a weak spot',
+          '[desktop] note kinds shown; only the learning note offers Make it a weak spot',
           /Feature/.test(await row('Harness feature idea').textContent()) &&
             /General/.test(await row('Harness general idea').textContent()) &&
             (await act('Harness feature idea')) === 0 &&
             (await act('Harness general idea')) === 0 &&
             (await act('Harness learning idea')) === 1
         );
-        await page.locator('#ideas').scrollIntoViewIfNeeded();
         await page.screenshot({ path: `${shots}/ideas-desktop.png`, fullPage: false });
       }
       await page.click('#tab-ev');
@@ -3630,56 +3634,172 @@ const ok = (name, cond, detail = '') => {
     // Record
     await page.click('#tab-record');
     await page.waitForTimeout(100);
+    // B-302: the log's helpers. A note's detail opens from its row (the right panel from 1200 px, under the row below).
+    const recRow = (kind, text) =>
+      page
+        .locator(`#rec-list .rec-li[data-kind="${kind}"]`)
+        .filter({ has: page.locator('.nm', { hasText: text }) })
+        .first();
+    const recById = id => page.locator(`#rec-list .rec-li[data-id="${id}"]`);
+    const recOpen = async (kind, text) => {
+      const r = recRow(kind, text);
+      if ((await r.locator('.nm').getAttribute('aria-expanded')) !== 'true') await r.locator('.nm').click();
+      await page.waitForTimeout(80);
+      return page.locator('#rec-detail');
+    };
     {
       const want = await page.evaluate(
         () => Object.values(window.__db.sessions || {}).filter(x => x.status !== 'active').length
       );
-      const got = await page.locator('#sessions .row').count();
+      const got = await page.locator('#rec-list .rec-li[data-kind="session"]').count();
       ok(
-        'sessions listed (every session the record holds that is not running)',
+        'sessions listed in the log (every session the record holds that is not running)',
         got >= 2 && got === want,
         JSON.stringify({ got, want })
       );
     }
-    ok('ideas show links', /1 link/.test(await page.textContent('#ideas')));
-    // B-53 (D-109): every idea shows its kind; only a learning idea offers "Make it a weak spot"; the kind can change
     {
-      const feat = page.locator('#ideas .row', { hasText: 'Harness feature idea' });
+      const ids = await page.$$eval('#rec-list .rec-li[data-kind="note"]', ls => ls.map(l => l.dataset.id));
+      let linked = false;
+      for (const id of ids) {
+        const nm = recById(id).locator('.nm');
+        if ((await nm.getAttribute('aria-expanded')) !== 'true') await nm.click();
+        await page.waitForTimeout(60);
+        if (/1 link/.test(await page.textContent('#rec-detail'))) linked = true;
+      }
+      ok('a note with a link shows it in its detail', linked, ids.join(' | ').slice(0, 160));
+    }
+    // B-53 (D-109): every note shows its kind; only a learning note offers "Make it a weak spot"; the kind can change
+    {
+      const kindOf = async t => (await recRow('note', t).locator('.r').textContent()).trim();
+      const acts = async t => (await recOpen('note', t)).locator('button', { hasText: 'Make it a weak spot' }).count();
       ok(
-        'a feature idea shows its kind and no weak-spot action',
-        /Feature/.test(await feat.textContent()) &&
-          (await feat.locator('button', { hasText: 'Make it a weak spot' }).count()) === 0
-      );
-      const gen = page.locator('#ideas .row', { hasText: 'Harness general idea' }),
-        learn = page.locator('#ideas .row', { hasText: 'Harness learning idea' });
-      ok(
-        'a general idea shows its kind and no weak-spot action',
-        /General/.test(await gen.textContent()) &&
-          (await gen.locator('button', { hasText: 'Make it a weak spot' }).count()) === 0
+        'a feature note shows its kind and no weak-spot action',
+        (await kindOf('Harness feature idea')) === 'Feature' && (await acts('Harness feature idea')) === 0
       );
       ok(
-        'a learning idea shows its kind and offers Make it a weak spot',
-        /Learning/.test(await learn.textContent()) &&
-          (await learn.locator('button', { hasText: 'Make it a weak spot' }).count()) === 1
+        'a general note shows its kind and no weak-spot action',
+        (await kindOf('Harness general idea')) === 'General' && (await acts('Harness general idea')) === 0
       );
-      // B-111: the kind menu shows once the row is opened in place.
-      ok("an idea's kind menu waits until its row is opened", !(await feat.locator('select.idea-kind').isVisible()));
-      await feat.locator('.idea-head').click();
-      await feat.locator('select.idea-kind').selectOption('learning');
+      ok(
+        'a learning note shows its kind and offers Make it a weak spot',
+        (await kindOf('Harness learning idea')) === 'Learning' && (await acts('Harness learning idea')) === 1
+      );
+      // B-111: the kind menu is the detail's, never the row's.
+      ok(
+        "a note's kind menu waits until its row is opened",
+        (await page.locator('#rec-list .rec-li select').count()) === 0
+      );
+      await (await recOpen('note', 'Harness feature idea')).locator('select.idea-kind').selectOption('learning');
       await page.waitForTimeout(200);
       const k = await page.evaluate(() => window.__db.ideas['idea-harness-feature'].kind);
       ok(
         'changing the kind writes it (a mark) and the action appears',
-        k === 'learning' &&
-          (await page
-            .locator('#ideas .row', { hasText: 'Harness feature idea' })
-            .locator('button', { hasText: 'Make it a weak spot' })
-            .count()) === 1,
+        k === 'learning' && (await acts('Harness feature idea')) === 1,
         k
       );
-      await page.locator('#ideas').scrollIntoViewIfNeeded();
       await page.screenshot({ path: `${shots}/ideas-${scheme}.png`, fullPage: false });
     }
+    // B-302 (C-1, C-7, C-13): the log at 1280 and 390, light and dark, its filter open. Rows are 32 px at 1280 and 44
+    // px at 390 with the time on the row's line; every switch segment on the view is 44 px or more at 390; nothing on
+    // the view creates; the type tabs and the filter narrow the rows, and Show workouts hides the workouts.
+    for (const w of [1280, 390]) {
+      await page.setViewportSize(w === 390 ? { width: 390, height: 844 } : { width: 1280, height: 860 });
+      await page.waitForTimeout(150);
+      const m = await page.evaluate(() => {
+        const box = e => e.getBoundingClientRect();
+        const rows = [...document.querySelectorAll('#rec-list .rec-li')].map(li => {
+          const r = box(li),
+            t = box(li.querySelector('.t')),
+            nm = box(li.querySelector('.nm'));
+          return {
+            h: Math.round(r.height),
+            line: t.height > 0 && t.top >= r.top - 1 && t.bottom <= r.bottom + 1 && Math.abs(t.top - nm.top) < r.height,
+            time: li.querySelector('.t').textContent,
+          };
+        });
+        const view = document.getElementById('record-sessions');
+        const creates = [...document.querySelectorAll('#p-record button')].filter(
+          b =>
+            b.offsetParent &&
+            !b.closest('[hidden]') &&
+            /^\s*(\+\s*)?(Log something|New|Add|Create)\b/i.test(b.textContent)
+        );
+        return {
+          rows,
+          creates: creates.map(b => b.textContent.trim()),
+          sideways: document.documentElement.scrollWidth > innerWidth,
+          kinds: [...new Set([...view.querySelectorAll('.rec-li')].map(li => li.dataset.kind))],
+        };
+      });
+      ok(
+        `[${w}] Record: every row is ${w === 390 ? 44 : 32} px with its time on the row's line`,
+        m.rows.length >= 4 &&
+          m.rows.every(r => r.h === (w === 390 ? 44 : 32) && r.line) &&
+          m.rows.some(r => /\d:\d\d [AP]M/.test(r.time)),
+        JSON.stringify(m.rows.slice(0, 6))
+      );
+      ok(`[${w}] Record: no create button on the view (C-7)`, m.creates.length === 0 && !m.sideways, JSON.stringify(m));
+      ok(
+        `[${w}] Record: the log holds sessions, quizzes, notes and workouts`,
+        ['session', 'quiz', 'note', 'workout'].every(k => m.kinds.includes(k)),
+        m.kinds.join(',')
+      );
+      await page.click('#rec-filter-btn');
+      await page.waitForTimeout(100);
+      const segs = await page.evaluate(() =>
+        [...document.querySelectorAll('#p-record .seg button')]
+          .filter(b => b.offsetParent && b.getBoundingClientRect().height > 0)
+          .map(b => [
+            b.textContent.trim(),
+            Math.round(b.getBoundingClientRect().width),
+            Math.round(b.getBoundingClientRect().height),
+          ])
+      );
+      if (w === 390)
+        ok(
+          '[390] Record: every segment measures 44 px or more, the filter open',
+          segs.length >= 15 && segs.every(([, wd, h]) => wd >= 44 && h >= 44),
+          JSON.stringify(segs)
+        );
+      for (const th of ['light', 'dark']) {
+        await page.evaluate(t => document.documentElement.setAttribute('data-theme', t), th);
+        await page.waitForTimeout(80);
+        await page.screenshot({ path: `${shots}/record-${w}-${th}.png`, fullPage: false });
+      }
+      await page.evaluate(() => document.documentElement.removeAttribute('data-theme'));
+      // the filter narrows: Show workouts off hides them; Today keeps only today's; Reset brings all back
+      const count = k => page.locator(`#rec-list .rec-li${k ? `[data-kind="${k}"]` : ''}`).count();
+      const all = await count();
+      await page.click('#rec-workouts');
+      await page.waitForTimeout(60);
+      const noWo = await count('workout');
+      await page.click('#rec-filter [aria-label="When"] [data-v="today"]');
+      await page.waitForTimeout(60);
+      const days = await page.locator('#rec-list .rec-day').allTextContents();
+      const label = await page.textContent('#rec-filter-btn');
+      await page.click('#rec-filter button:has-text("Reset")');
+      await page.waitForTimeout(60);
+      const back = await count();
+      ok(
+        `[${w}] Record: Show workouts off hides them, Today keeps today's, Reset brings every row back`,
+        noWo === 0 && days.every(d => d === 'Today') && /Filter · 2/.test(label) && back === all,
+        JSON.stringify({ all, noWo, days, label, back })
+      );
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(60);
+      ok(`[${w}] Record: Esc closes the filter`, await page.isHidden('#rec-filter'));
+      // a type tab shows only its type
+      await page.click('#rec-types [data-v="quiz"]');
+      await page.waitForTimeout(60);
+      const qs = await page.evaluate(() =>
+        [...document.querySelectorAll('#rec-list .rec-li')].map(li => li.dataset.kind)
+      );
+      await page.click('#rec-types [data-v="all"]');
+      ok(`[${w}] Record: Quizzes shows only quizzes`, qs.length >= 1 && qs.every(k => k === 'quiz'), qs.join(','));
+    }
+    await page.setViewportSize(scheme === 'phone' ? { width: 390, height: 844 } : { width: 1280, height: 860 });
+    await page.waitForTimeout(100);
     await page.click('#seg-record [data-v="journal"]');
     // B-197: nothing is said while he writes; on save an unsure value waits on his choice, and Leave it out saves.
     await page.fill('#j-text', 'Resident in room 12 was confused.');
@@ -4526,7 +4646,7 @@ const ok = (name, cond, detail = '') => {
         );
         await wp.click('#tab-record');
         await wp.waitForTimeout(200);
-        const wl = await wp.textContent('#workouts');
+        const wl = await wp.textContent('#rec-list'); // B-302: workouts are rows in the log
         ok(
           `[${label}] Record lists both workouts with their results`,
           /CINDY/.test(wl) && /3 rounds \+ 7 reps/.test(wl) && /stopped in round 6/.test(wl),
@@ -5262,7 +5382,7 @@ const ok = (name, cond, detail = '') => {
       await (async () => {
         await ss.click('#tab-record');
         await ss.waitForTimeout(150);
-        const t = await ss.textContent('#sessions');
+        const t = await ss.textContent('#rec-list'); // B-302: the log
         await ss.click('#tab-ev');
         return /Fluids and electrolytes/.test(t);
       })()

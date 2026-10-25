@@ -1107,65 +1107,46 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         else if (v.tab === 'study') await studyView(page, v.v); // out of the review's quiz card (B-297)
       }
     if (['390x844', '1280x800'].includes(width)) {
-      // B-111: the long idea's text is at most 3 lines and at least 80% of its card's width; opening it shows its controls.
+      // B-111, B-302: the long note is one row in the log, its words cut to the row's line; opening it shows all 30
+      // words in its detail, with its kind menu and Make it a weak spot.
       await page.click('#tab-record');
       await page.click('#seg-record [data-v="sessions"]');
       await page.waitForTimeout(400);
-      const idea = await page.evaluate(() => {
-        const li = document.querySelector('#ideas li.idea[data-id="look-long-idea"]');
+      const sel = '#rec-list .rec-li[data-id="look-long-idea"]';
+      const idea = await page.evaluate(s => {
+        const li = document.querySelector(s);
         if (!li) return null;
-        const t = li.querySelector('.title'),
-          card = li.closest('.card'),
-          cs = getComputedStyle(t);
-        const lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.4;
-        const acts = li.querySelector('.idea-acts');
+        const nm = li.querySelector('.nm');
         return {
-          lines: Math.round(t.getBoundingClientRect().height / lh),
-          share:
-            t.getBoundingClientRect().width /
-            (card.clientWidth -
-              parseFloat(getComputedStyle(card).paddingLeft) -
-              parseFloat(getComputedStyle(card).paddingRight)),
-          hidden: getComputedStyle(acts).display === 'none',
+          h: Math.round(li.getBoundingClientRect().height),
+          oneLine: nm.scrollHeight <= nm.clientHeight + 1,
+          rowControls: li.querySelectorAll('select').length,
         };
-      });
-      ok(`[${width}] record: the 30-word idea is at most 3 lines`, idea && idea.lines <= 3, JSON.stringify(idea));
+      }, sel);
       ok(
-        `[${width}] record: the idea's text is at least 80% of its card's width`,
-        idea && idea.share >= 0.8,
+        `[${width}] record: the 30-word note is one ${width === '390x844' ? 44 : 32} px row, no control on it`,
+        idea && idea.h === (width === '390x844' ? 44 : 32) && idea.oneLine && idea.rowControls === 0,
         JSON.stringify(idea)
       );
-      ok(
-        `[${width}] record: an idea's menu and button wait until it is opened`,
-        idea && idea.hidden,
-        JSON.stringify(idea)
-      );
-      await page.click('#ideas li.idea[data-id="look-long-idea"] .idea-head');
+      if ((await page.getAttribute(sel + ' .nm', 'aria-expanded')) !== 'true') await page.click(sel + ' .nm');
+      await page.waitForTimeout(150);
       const opened = await page.evaluate(() => {
-        const li = document.querySelector('#ideas li.idea[data-id="look-long-idea"]');
+        const d = document.getElementById('rec-detail');
         const vis = e => e && e.getBoundingClientRect().height > 0;
+        const t = d.querySelector('.rec-title');
         return {
-          menu: vis(li.querySelector('select.idea-kind')),
-          button: [...li.querySelectorAll('button')].some(b => /Make it a weak spot/.test(b.textContent) && vis(b)),
-          expanded: li.querySelector('.idea-head').getAttribute('aria-expanded'),
+          menu: vis(d.querySelector('select.idea-kind')),
+          button: [...d.querySelectorAll('button')].some(b => /Make it a weak spot/.test(b.textContent) && vis(b)),
+          words: t ? t.textContent.split(/\s+/).filter(Boolean).length : 0,
+          whole: t ? t.scrollHeight <= t.clientHeight + 1 && t.scrollWidth <= t.clientWidth + 1 : false,
         };
       });
       ok(
-        `[${width}] record: opening the idea shows its menu and Make it a weak spot`,
-        opened.menu && opened.button && opened.expanded === 'true',
+        `[${width}] record: opening the note shows all 30 words, its menu and Make it a weak spot`,
+        LONG_IDEA.split(/\s+/).length === 30 && opened.menu && opened.button && opened.words === 30 && opened.whole,
         JSON.stringify(opened)
       );
-      ok(
-        `[${width}] record: the planted idea is 30 words, and opened it shows them all`,
-        LONG_IDEA.split(/\s+/).length === 30 &&
-          (await page.evaluate(() => {
-            const t = document.querySelector('#ideas li.idea[data-id="look-long-idea"] .title');
-            return t.scrollHeight <= t.clientHeight + 1;
-          }))
-      );
-      await page
-        .locator('#ideas li.idea[data-id="look-long-idea"]')
-        .screenshot({ path: `${shots}/look-idea-open-${width}.png` });
+      await page.locator('#rec-detail').screenshot({ path: `${shots}/look-idea-open-${width}.png` });
     }
     ok(`[${width}] no page errors`, errors.length === 0, errors.join(' | '));
     await page.close();

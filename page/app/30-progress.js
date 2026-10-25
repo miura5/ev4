@@ -224,14 +224,11 @@
         const li = el('li', 'li prog-s');
         li.dataset.min = String(s.minutes);
         li.dataset.id = s.id;
-        // the session's name opens Record's sessions, where it lives (D-147: a card holds something he does)
+        // the session's name opens it in Record's log, where it lives (D-147: a card holds something he does)
         const nm = el('button', 'nm', s.topic || (s.kind === 'skill' ? 'Skills practice' : 'Study session'));
         nm.type = 'button';
         nm.title = 'Open in Record';
-        nm.addEventListener('click', () => {
-          showTab('record');
-          $('seg-record').querySelector('[data-v="sessions"]').click();
-        });
+        nm.addEventListener('click', () => openInRecord(s.id)); // B-302: on its row in the log
         const when = P === 'week' ? (s.startedAt ? clock12(s.startedAt) + ' · ' : '') : short(s.date) + ' · ';
         li.append(nm, el('span', 'meta', sessionCourse(s)), el('span', 't', when + hm(s.minutes)));
         ul.append(li);

@@ -193,37 +193,4 @@
         );
       box.append(ul);
     }
-    function renderWorkoutList() {
-      let card = $('workouts-card');
-      if (!card) {
-        card = el('div', 'card');
-        card.id = 'workouts-card';
-        const h = el('h2', null, 'Workouts');
-        const ul = el('ul', 'list');
-        ul.id = 'workouts';
-        card.append(h, ul);
-        const host = document.querySelector('#record-sessions .col-side');
-        if (!host) return;
-        host.append(card);
-      } // B-121: beside the sessions, under the ideas
-      const ws = [...S.workouts].sort((a, b) => String(b.startedAt || '').localeCompare(String(a.startedAt || '')));
-      $('workouts').replaceChildren(
-        ...(ws.length
-          ? ws.map(w => {
-              const q = SEQ[w.sequence];
-              return row({
-                lead: short(w.date),
-                title: w.title || w.sequence,
-                detail: w.status === 'active' ? 'going now' : E.workoutSummary(w, q),
-                chips: [
-                  [
-                    w.status === 'active' ? 'live' : w.status === 'stopped' ? 'stopped' : 'done',
-                    w.status === 'active' ? 'info' : w.status === 'stopped' ? 'warn' : 'ok',
-                  ],
-                ],
-              });
-            })
-          : [el('p', 'empty', 'Say “start a workout” to run CINDY or the 1,500-rep ladder.')])
-      );
-    }
 

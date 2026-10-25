@@ -156,16 +156,14 @@
   <section class="panel" id="p-record" role="tabpanel" aria-labelledby="tab-record" hidden>
     <h2 class="ptitle">Record</h2>
     <div class="seg" id="seg-record" role="group" aria-label="Record views">
-      <button type="button" data-v="sessions" aria-pressed="true">Sessions</button>
+      <button type="button" data-v="sessions" aria-pressed="true">Log</button>
       <button type="button" data-v="dates" aria-pressed="false">Dates</button>
       <button type="button" data-v="journal" aria-pressed="false">Journal</button>
       <button type="button" data-v="news" aria-pressed="false">Canvas</button>
       <button type="button" data-v="library" aria-pressed="false">Library</button>
     </div>
-    <div id="record-sessions" class="panel"><div class="cols"><div class="col-main">
-      <div class="card"><h2>Study sessions</h2><ul class="list" id="sessions"></ul></div>
-      </div><div class="col-side"><div class="card"><h2>Ideas and connections</h2><p class="meta" style="margin:0">Deeper links from your sessions. They aren't reviewed unless you make one a weak spot.</p><ul class="list" id="ideas"></ul></div>
-    </div></div></div>
+    <!-- B-302: the log; its toolbar, list and detail are built by the page (40-record) -->
+    <div id="record-sessions" class="panel"></div>
     <div id="record-dates" class="panel" hidden><div class="cols"><div class="col-main">
       <div class="card"><h2>Upcoming</h2><ul class="list" id="dates"></ul></div>
       </div><div class="col-side">

@@ -853,8 +853,8 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
         });
         await page.click('#tab-record');
         await page.waitForTimeout(150);
-        const listed = await page.evaluate(() =>
-          document.getElementById('ideas').textContent.includes('Rounding to tenths for mL')
+        const listed = await page.evaluate(
+          () => document.getElementById('rec-list').textContent.includes('Rounding to tenths for mL') // B-302: the log
         );
         ok(
           `${tag} a new note lands in ideas, with no course, and shows in Record (B-287)`,

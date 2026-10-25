@@ -1197,3 +1197,56 @@ button.btn:disabled{opacity:.45;cursor:default}
   .prog-props .prop{min-height:44px}
   #prog-day .prog-s{padding:0}
 }
+/* ============================================================ B-302 (C-1, C-7, C-13): Record's log ================
+   The log's toolbar (Filter and its pop-over, then the type tabs), its rows grouped by day, and the picked row's
+   detail: the right panel's card from 1200 px, under the row below that. A row is its one badge, its name, its result
+   and its time on one line: 32 px from 600 px, 44 px on the phone, where the result steps aside before the time does.
+   Session and Quiz are violet, Note blue, Workout neutral (D-270). Nothing on the view creates (C-7). */
+#record-sessions .rec-bar{padding:0 0 8px;border-bottom:0;min-height:0;gap:8px}
+#record-sessions .rec-bar > .seg{align-self:center}
+#rec-types button .n{margin-left:6px;color:var(--quiet);font-variant-numeric:tabular-nums}
+.rec-fwrap{position:relative;flex:none}
+.rec-pop{position:absolute;left:0;top:calc(100% + 6px);z-index:30;width:280px;display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.16)}
+.rec-pop[hidden]{display:none}
+.rec-pop .lbl{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
+.rec-pop .seg{align-self:stretch;width:100%;box-sizing:border-box}
+.rec-pop .seg button{flex:1;white-space:nowrap}
+.rec-ck{display:flex;align-items:center;gap:8px;min-height:32px;font-size:calc(13.5px * var(--ts));cursor:pointer}
+.rec-ck input{width:16px;height:16px;margin:0;accent-color:var(--text)}
+.rec-pop-foot{display:flex;justify-content:space-between;gap:8px}
+.rec-list{display:flex;flex-direction:column}
+.rec-day{padding:14px 12px 4px;color:var(--faint);font:500 calc(12px * var(--ts)) var(--sans)}
+.rec-day:first-child{padding-top:4px}
+.rec-li .badge{min-width:84px;justify-content:flex-start}
+.rec-li .nm{height:100%;padding:0;border:0;background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.rec-li .r{flex:0 1 auto;min-width:0;max-width:40%;color:var(--quiet);font-size:calc(12.5px * var(--ts));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rec-li .t{min-width:62px;text-align:right}
+.rec-li.sel{background:var(--hover)}
+.rec-list .rec-detail{padding:10px 12px 14px 108px;border-bottom:1px solid var(--line)}
+.rec-detail{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.rec-detail[hidden]{display:none}
+.rec-detail .rec-title{margin:0;font:600 calc(15px * var(--ts))/1.35 var(--sans);color:var(--text);overflow-wrap:anywhere}
+.rec-props{align-self:stretch;display:flex;flex-direction:column}
+.rec-props .prop{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:32px;border-bottom:1px solid var(--line);font-size:calc(13px * var(--ts))}
+.rec-props .prop:last-child{border-bottom:0}
+.rec-props .prop-k{color:var(--quiet)}
+.rec-props .prop-v{text-align:right;min-width:0;overflow-wrap:anywhere}
+.rec-detail .rec-desc{margin:0;font-size:calc(13.5px * var(--ts));line-height:1.5;color:var(--text)}
+.rec-detail .meta{margin:0}
+.rec-detail .idea-acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rec-detail select.idea-kind{height:28px;min-height:28px;padding:0 8px;border-radius:8px;font:500 calc(12.5px * var(--ts)) var(--sans)}
+@media (max-width:599px){
+  #record-sessions .rec-bar{flex-wrap:wrap}
+  #record-sessions .rec-bar > .seg{flex:1 1 auto;width:auto}
+  .rec-pop{width:min(320px,calc(100vw - 24px))}
+  .rec-pop .seg button{min-height:44px}
+  .rec-ck{min-height:44px}
+  .rec-li{padding:0 4px}
+  .rec-li .badge{min-width:0}
+  .rec-li .r{display:none}
+  .rec-li .t{min-width:0}
+  .rec-day{padding:14px 4px 4px}
+  .rec-list .rec-detail{padding:10px 4px 14px}
+  .rec-props .prop{min-height:44px}
+  .rec-detail select.idea-kind{height:44px;min-height:44px}
+}
