@@ -6514,10 +6514,10 @@
  {
   "id": "B-367",
   "kind": "request",
-  "title": "Request (reported Oct 25): The UI review found Record lacks the demo's Log something button.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "title": "Fidelity fix: Record (wave 2): '+ Log something' in Record's toolbar at every size, as the Record board; nothing reaches the retired Dates, Journal, Canvas or Library screens from anywhere on the page",
+  "dod": "The Record board matches at 1280 and 390, and no control on any view opens a retired screen. Proof (D-312): node tools/build.mjs; crawl.cjs demo and built, on the synthetic record and on a real-shaped record (ten due items, long titles, an exam with no objectives), side by side at 1280 and 390 for every state named; npm run smoke; ship staging GREEN. Review pairs from the UI reviewer are in /home/claude/ui-review/pairs/ when this run shares the machine; otherwise rebuild them with crawl.cjs.",
+  "milestone": "v4.8 redesign",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -6526,6 +6526,10 @@
   "reportedAt": "2026-10-25T13:48:53.956Z",
   "board": {
    "row": "v4 B-367: The UI review found Record lacks the demo's Log something"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-25T13:48:54.541Z"
   }
  }
 ]
