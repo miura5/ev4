@@ -5741,7 +5741,7 @@
   "milestone": "trim",
   "status": "in progress",
   "depends": [],
-  "notes": "Taken (urgent, from the build manager): make every test remove its own temporary folders, even on a failed assertion, and add a test that counts ev temp entries before and after a slice of the suite.",
+  "notes": "Built in 00eda32, not marked done (waiting for review). npm test preloads test/tmp-root.mjs: each test process gets its own temp folder (TMPDIR), what a top-level test made there is removed when it ends, pass or fail, and the folder goes at exit; check.mjs and the stop hook run the suite the same way. Tool leaks fixed: rollback build folders, synthetic record folders, the run-api local D1. test/tmp-clean.test.mjs counts E.V. entries before and after a slice of the suite (22 left without the preload, 0 with it) and proves cleanup on a failed test. npm test green (636), npm run smoke green, a full npm test left no new E.V. entry in /tmp.",
   "commit": null,
   "source": "build chat (Oct 24)"
  },
