@@ -1238,8 +1238,18 @@ button.btn:disabled{opacity:.45;cursor:default}
 .wchip .wc-s.urgent{color:var(--urg)}
 .wchip.off .wc-t{color:var(--faint);text-decoration:line-through}
 .wchip.wk-list .wc-t{color:var(--quiet)}
-#today-date{gap:8px}
-#today-date>h2{overflow-wrap:anywhere}
+/* B-349 (D-312): the picked date's panel as the demo's TodayWeek board: no card around it, the badge, an 18 px title,
+   When / Course / Readiness in one card in a 92 px label column, the actions stacked at their own width. */
+#today-date.wk-panel{display:flex;flex-direction:column;gap:14px;min-width:0}
+#today-date[hidden]{display:none}
+#today-date .wd-badge{align-self:flex-start}
+#today-date .wd-title{font:600 calc(18px * var(--ts))/1.3 var(--sans);color:var(--text);overflow-wrap:anywhere}
+#today-date .wd-props{border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line);padding:14px;box-sizing:border-box;display:flex;flex-direction:column;gap:2px}
+#today-date .wd-props .prop{display:grid;grid-template-columns:92px minmax(0,1fr);align-items:center;gap:8px;min-height:34px;font-size:calc(13px * var(--ts))}
+#today-date .wd-props .prop-k{color:var(--quiet)}
+#today-date .wd-props .prop-v{text-align:left;min-width:0;color:var(--text);overflow-wrap:anywhere}
+#today-date .wd-acts{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+#today-date .wd-acts .btn{height:32px;border-radius:8px;padding:0 12px;font:500 calc(13px * var(--ts)) var(--sans)}
 #today-task .wk-props .prop,#today-date .wk-props .prop{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:32px;border-bottom:1px solid var(--line);font-size:calc(13px * var(--ts))}
 #today-task .wk-props .prop:last-child,#today-date .wk-props .prop:last-child{border-bottom:0}
 #today-task .prop-k,#today-date .prop-k{color:var(--quiet)}
@@ -1258,8 +1268,8 @@ button.btn:disabled{opacity:.45;cursor:default}
   .wk-h{flex:none;padding-top:0}
   .wk-chips{flex-direction:column;flex-wrap:nowrap}
   .wchip{flex:none;width:100%;min-height:44px;justify-content:center}
-  #today-date .wk-props .prop{min-height:44px}
-  #today-date .wk-acts .btn{flex:1}
+  #today-date .wd-props .prop{min-height:44px}
+  #today-date .wd-acts .btn{min-height:44px;height:44px}
 }
 /* ============================================================ B-296 (C-10, D-282): the task's panel ================
    A row's name opens its task in the side column (the right panel from 1200 px, under the pane below it): the name and

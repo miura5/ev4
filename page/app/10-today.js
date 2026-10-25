@@ -1059,7 +1059,7 @@
         box = el('div', 'card');
         box.id = 'today-week';
         main.append(box);
-        panel = el('div', 'card');
+        panel = el('div', 'wk-panel');
         panel.id = 'today-date';
         side.prepend(panel);
       }
@@ -1114,23 +1114,54 @@
       const d = entries.find(x => x.id === ui.weekSel);
       panel.hidden = !d;
       if (!d) return panel.replaceChildren();
+      // B-349 (D-312): as the demo's TodayWeek board: the badge, the 18 px title, When / Course / Readiness in one card,
+      // then Quiz me on it and Open the task stacked; Take off stays for a date that can leave the calendar (D-080).
       const off = E.isRemovedDate(d);
       const prop = (k, v) => {
         const p = el('div', 'prop');
         p.append(el('span', 'prop-k', k), el('span', 'prop-v', v));
         return p;
       };
-      const props = el('div', 'wk-props');
-      props.append(
-        prop('When', short(d.date) + ' · ' + relDay(d.date)),
-        prop('Course', E.courseOf(d)),
-        prop('Kind', [KIND_NAME[d.kind] || 'Date', d.graded ? 'graded' : ''].filter(Boolean).join(', '))
-      );
-      if (off) props.append(prop('Status', 'Taken off by ' + (d.removed.by === 'Matt' ? 'you' : 'E.V.')));
-      const acts = el('div', 'wk-acts');
+      const graded = d.graded || d.kind === 'exam';
+      const red = graded && !off && d.date >= today && d.date <= E.addDays(today, 1);
+      const badge = el('span', 'badge wd-badge' + (red ? ' x-red' : ''), graded ? 'Graded' : 'Class');
+      const title = el('div', 'wd-title', d.title || '');
+      let clock = '';
+      if (d.dueAt) {
+        const t = new Date(d.dueAt);
+        if (!isNaN(t))
+          clock = t
+            .toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Chicago' })
+            .toLowerCase();
+      }
+      const dw = new Date(d.date + 'T12:00:00Z');
+      const day =
+        dw.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' }) +
+        ' ' +
+        dw.getUTCDate() +
+        ' ' +
+        dw.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
+      const when = day + (clock ? ', ' + clock : '') + ' · ' + relDay(d.date);
       const o = !off && dateObjective(d);
+      let statLab = 'Readiness',
+        stat = 'Upcoming';
+      if (d.date < today) (statLab = 'Result'), (stat = 'Done');
+      else if (d.kind === 'exam') {
+        const ex = S.exams.find(e => 'exam-' + e.id === d.id || (e.date === d.date && E.courseOf(e) === E.courseOf(d)));
+        const objs = ex ? S.objectives.filter(x => x.exam === ex.id) : [];
+        if (objs.length) {
+          const st = objs.map(x => objState(x).state);
+          const so = st.filter(x => x === 'solid').length,
+            al = st.filter(x => x === 'almost').length;
+          stat = so + ' of ' + objs.length + ' objectives solid' + (al ? ', ' + al + ' almost' : '');
+        }
+      } else if (o) stat = { solid: 'Solid', almost: 'Almost', notyet: 'Not yet' }[objState(o).state] || stat;
+      const props = el('div', 'wd-props');
+      props.append(prop('When', when), prop('Course', E.courseOf(d) || '—'), prop(statLab, stat));
+      if (off) props.append(prop('Status', 'Taken off by ' + (d.removed.by === 'Matt' ? 'you' : 'E.V.')));
+      const acts = el('div', 'wd-acts');
       if (o) {
-        const q = btn('Quiz me on it', ev => quizObjective(o, ev.currentTarget), { cls: 'btn neutral sm' });
+        const q = btn('Quiz me on it', ev => quizObjective(o, ev.currentTarget), { cls: 'btn neutral' });
         q.setAttribute('aria-label', 'Quiz me on ' + (o.text || o.id));
         acts.append(q);
       }
@@ -1148,12 +1179,12 @@
               const li = document.querySelector('#today-list li[data-id="' + CSS.escape(it.id) + '"]');
               if (li) li.scrollIntoView({ block: 'nearest' });
             },
-            { cls: 'btn neutral sm' }
+            { cls: 'btn neutral' }
           )
         );
-      const t = !/^exam-/.test(d.id) && dateEditButton(d, 'Take off', 'btn ghost sm wk-off');
+      const t = !/^exam-/.test(d.id) && dateEditButton(d, 'Take off', 'btn ghost wk-off');
       if (t) acts.append(t);
-      panel.replaceChildren(el('h2', null, d.title || ''), props, ...(acts.children.length ? [acts] : []));
+      panel.replaceChildren(badge, title, props, ...(acts.children.length ? [acts] : []));
     }
     // The exam leaves the tick list for Next 7 days (B-117): exams in the window join the calendar's dates, once each.
     // B-295: the week view asks for its seven days, with the dates taken off (their chips can bring them back).
