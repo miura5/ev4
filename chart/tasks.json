@@ -5741,7 +5741,7 @@
   "milestone": "trim",
   "status": "done",
   "depends": [],
-  "notes": "The test suite keeps its scratch folders in one folder per process and removes them per test, pass or fail, and at exit; rollback and the synthetic record clean up after themselves. Reviewer: No gaps. The one guarded file touched (tools/hooks.mjs) only adds the preload to the stop hook's npm test; guard and allowance logic unchanged; the build manager's call under D-317.",
+  "notes": "CI fix (9fef0a1): every failed npm test run since 00eda32 failed in the temp sweep. A copied repository's .git/objects returned ENOTEMPTY because git's detached auto gc/maintenance was still writing into it, and the sweep's error failed the test (B-144 in chart.test.mjs). The preload now turns off git's background housekeeping for tests (GIT_CONFIG gc.auto=0, gc.autoDetach=false, maintenance.auto=false), retries the removal, and defers a folder it can't remove yet instead of throwing; the leak check is unchanged. CI now prints each failed test as an ::error annotation (test/annotate-reporter.mjs via TEST_REPORTERS, 609d3ff). npm test green locally (650) and in CI at 9fef0a1.",
   "commit": "00eda32",
   "source": "build chat (Oct 24)"
  },
