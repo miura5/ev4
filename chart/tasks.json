@@ -5266,7 +5266,7 @@
   "depends": [
    "B-293"
   ],
-  "notes": "built: the changes card under the budget, Undo as one list edit; prep harness checks added (168/168); npm test and smoke green",
+  "notes": "proofs green (check --touched GREEN, prep 174/174); review 1: one gap (no phone check), fixed",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
