@@ -5238,7 +5238,7 @@
    "B-291",
    "B-308"
   ],
-  "notes": "built: the budget card in Today's right panel (under the list below 1200 px), from planDay's budget; harness checks green",
+  "notes": "proofs green (npm test bar the builder-marker check, smoke, touched check, prep, look, run, shell)",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
