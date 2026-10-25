@@ -5951,5 +5951,22 @@
   "notes": "The header no longer shows health warnings in any view; a stale or missed run still shows in System. Fidelity: the header now matches the demo at 1280, 1706, 2560 and 390, which shows no health text there; staging's watchdog is not fired by a ship (a builder run may fire no other scheduled task), which no longer matters since the header never shows it.",
   "commit": "5697c2c",
   "source": "fidelity review, Oct 25 (D-312)"
+ },
+ {
+  "id": "B-342",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Fidelity fix: Progress still differs from its demo board after B-338: E.V.'s one-line note above the This week / Month / Semester switch is missing; empty days have no outlined placeholder bar; Exam readiness counts weak spots where the demo counts objectives solid; day headings read Sat 10/24 rather than the demo's long form; the day panel lists only sessions, not notes and quizzes.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "fidelity review of B-338, Oct 25 (D-312)",
+  "words": "Fidelity fix: Progress still differs from its demo board after B-338: E.V.'s one-line note above the This week / Month / Semester switch is missing; empty days have no outlined placeholder bar; Exam readiness counts weak spots where the demo counts objectives solid; day headings read Sat 10/24 rather than the demo's long form; the day panel lists only sessions, not notes and quizzes.",
+  "reportedAt": "2026-10-25T12:00:32.004Z",
+  "board": {
+   "row": "v4 B-342: Fidelity fix: Progress still differs from its demo board after B-338:…"
+  }
  }
 ]
