@@ -51,14 +51,38 @@
             ? ui.objPanel
             : ui.study === 'weak' // B-347: Weak spots' panel card
               ? ui.weakPanel
-              : null
+              : ui.study === 'plan' // B-348: the plan's summary
+                ? ui.planPanel
+                : null
           : null;
       side.hidden = !shown && !obj;
-      side.setAttribute('aria-label', obj ? (ui.study === 'weak' ? 'How a weak spot closes' : 'The picked objective') : 'The set’s questions');
+      side.setAttribute(
+        'aria-label',
+        obj
+          ? ui.study === 'weak'
+            ? 'How a weak spot closes'
+            : ui.study === 'plan'
+              ? 'The plan'
+              : 'The picked objective'
+          : 'This quiz'
+      );
       if (obj) return side.replaceChildren(obj);
       if (!shown) return side.replaceChildren();
-      const card = el('div', 'card');
-      card.append(head2('Questions'), shown[1].list);
+      // B-348 (D-312): the demo's "This quiz": a dot per question (green right, red missed, violet now), then one note
+      const card = el('div', 'ov-detail qz-side'),
+        n = shown[1].list.children.length;
+      card.append(
+        el('span', 'lab', 'This quiz'),
+        shown[1].list,
+        el(
+          'span',
+          'mini od-note',
+          plural(n, 'question') +
+            '. Keys A to ' +
+            'ABCDEFGHI'[Math.min(8, Math.max(0, (shown[1].opts || 4) - 1))] +
+            ' answer; Enter goes on.'
+        )
+      );
       side.replaceChildren(card);
     }
     function retake(set, key) {
@@ -97,10 +121,17 @@
         const b = el('button', 'set-q');
         b.type = 'button';
         if (q.id === current) b.setAttribute('aria-current', 'true');
+        const dot = el('i', 'dot sq-d' + (a ? (a.correct ? ' ok' : ' no') : q.id === current ? ' now' : ''));
+        dot.setAttribute('aria-hidden', 'true');
+        b.setAttribute('aria-label', 'Question ' + (i + 1) + ': ' + (q.topic || q.stem));
         b.append(
-          el('span', 'sq-n', i + 1 + '.'),
+          dot,
           el('span', 'sq-t', q.topic || q.stem),
-          el('span', 'sq-s' + (a ? (a.correct ? ' ok' : ' no') : ''), a ? (a.correct ? 'right' : 'missed') : '')
+          el(
+            'span',
+            'sq-s' + (a ? (a.correct ? ' ok' : ' no') : ''),
+            a ? (a.correct ? 'right' : 'missed') : q.id === current ? 'now' : ''
+          )
         );
         b.addEventListener('click', () => {
           views[key] = q.id;
@@ -135,8 +166,16 @@
       // B-126 (D-165): the counter is the set's fold line (it replaces All questions); a finished set has nothing under it.
       if (o.countEl) {
         const c = o.countEl,
-          flat = view === '__summary';
-        c.textContent = items.length ? done + ' of ' + items.length : '';
+          flat = view === '__summary' || (inStudy && PANEL.matches);
+        // B-348 (D-312): the demo's card label, "Question 2 of 8 · Today's review", and "3 right so far" beside it
+        const at = items.findIndex(x => x.id === view);
+        c.textContent = !items.length
+          ? ''
+          : o.title
+            ? view === '__summary'
+              ? o.title + ' · done'
+              : 'Question ' + (at + 1) + ' of ' + items.length + ' · ' + o.title
+            : done + ' of ' + items.length;
         c.hidden = !items.length;
         c.classList.toggle('flat', flat);
         c.disabled = flat;
@@ -146,7 +185,14 @@
           render();
         };
       }
-      if (view === '__summary') return summary(o, items, answers);
+      if (o.barEl && o.barEl.parentElement.classList.contains('qz-bar')) o.barEl.parentElement.hidden = view === '__summary';
+      if (o.scoreEl)
+        o.scoreEl.textContent =
+          view === '__summary' ? '' : items.filter(q => answers[q.id] && answers[q.id].correct).length + ' right so far';
+      if (view === '__summary') {
+        if (inStudy && PANEL.matches) studyLists.set(body, { key, list: setLines(key, items, answers, null) });
+        return summary(o, items, answers);
+      }
       const q = items.find(x => x.id === view);
       const a = answers[q.id];
       const type = E.itemType(q);
@@ -183,10 +229,14 @@
         parts.push(el('p', 'meta q-src', cross.source.label.charAt(0).toUpperCase() + cross.source.label.slice(1)));
       // B-126 (D-165): answered, the verdict is one line under the stem (nothing above it moves); his pick and the right
       // answer carry their why; the other whys fold under one line.
-      if (a) {
-        const rest = outcomeLine(a.outcome);
-        parts.push(el('p', 'verdict ' + (a.correct ? 'ok' : 'no'), verdictWord(a, type) + (rest ? ' · ' + rest : '')));
-      }
+      // B-348 (D-312): as the demo, the verdict line sits under the answers, above Next
+      const verdict = a
+        ? el(
+            'p',
+            'verdict ' + (a.correct ? 'ok' : 'no'),
+            verdictWord(a, type) + (outcomeLine(a.outcome) ? ' · ' + outcomeLine(a.outcome) : '')
+          )
+        : null;
       const wk = key + q.id,
         restOpen = !!whyOpen[wk];
       let hasRest = false;
@@ -305,14 +355,17 @@
             else if (picked) lab.classList.add('wrong');
             if (q.rationales && q.rationales[i]) span.append(why(q.rationales[i], right || picked));
           }
-          // B-211 (D-217): answers numbered, and keys 1 to 4 (or as many as there are) pick them
-          const kb = el('kbd', 'opt-n', String(pos + 1));
+          // B-211 (D-217): answers lettered as the demo (B-348), and keys A to D or 1 to 4 pick them
+          const kb = el('kbd', 'opt-n', 'ABCDEFGHI'[pos] || String(pos + 1));
           kb.setAttribute('aria-hidden', 'true');
           lab.append(inp, kb, span);
+          if (a && (lab.classList.contains('right') || lab.classList.contains('wrong')))
+            lab.append(svgIcon(lab.classList.contains('right') ? 'M5 12.5l4.5 4.5L19 7.5' : 'M6 6l12 12M18 6L6 18'));
           opts.append(lab);
         });
         parts.push(opts);
       }
+      if (verdict) parts.push(verdict);
       if (a && hasRest)
         parts.push(
           foldLine(
@@ -343,13 +396,16 @@
       if (a) {
         if (q.verify) parts.push(el('p', 'meta', 'Built from general knowledge: check it against your materials.'));
         const open = items.find(x => !answers[x.id] && x.id !== q.id);
-        actions.append(
-          btn(
-            after ? 'Next question' : open ? 'Next unanswered' : 'See results',
-            () => go(after ? after.id : open ? open.id : '__summary'),
-            { primary: true }
-          )
+        const nx = btn(
+          after ? 'Next question' : open ? 'Next unanswered' : 'See results',
+          () => go(after ? after.id : open ? open.id : '__summary'),
+          { primary: true }
         );
+        nx.classList.add('q-go');
+        const kE = el('span', 'kbd', 'Enter');
+        kE.setAttribute('aria-hidden', 'true');
+        nx.append(kE);
+        actions.append(nx);
       } else {
         submit.disabled = !ready();
         submit.addEventListener('click', async () => {
@@ -414,7 +470,12 @@
         actions.append(submit);
       }
       parts.push(actions);
-      if (inStudy && PANEL.matches) studyLists.set(body, { key, list: setLines(key, items, answers, q.id) });
+      if (inStudy && PANEL.matches)
+        studyLists.set(body, {
+          key,
+          list: setLines(key, items, answers, q.id),
+          opts: q.options && type !== 'matrix' ? q.options.length : 4,
+        });
       // From 1024 px the set sits beside the question; below, it opens in place above it (from 1200 px in Study, the
       // right panel holds it instead).
       if (setOpen[key] && !(inStudy && PANEL.matches)) {
@@ -649,20 +710,46 @@
       const added = items.filter(q => answers[q.id] && answers[q.id].createdWeakspot).length;
       // B-126 (D-165): the score leads with Give me 5 more as the one primary; misses are lines that open to what he
       // picked and why; right answers fold; the next set is one line.
-      const parts = [el('p', 'big set-score', right.length + ' of ' + answered.length + ' right')];
-      const extra = [solid ? solid + ' marked solid' : '', added ? plural(added, 'new weak spot') : '']
-        .filter(Boolean)
-        .join(' · ');
-      if (extra) parts.push(el('p', 'meta', extra));
+      // B-348 (D-312): as the demo's StudyResults card: the big score, "Logged to Record.", one line on the weak spots
+      // the misses made with Review (Weak spots), then New quiz and Back to topics. The misses and right answers stay as
+      // lines under it below 1200 px; from 1200 px the panel's "This quiz" lists them.
+      const parts = [el('div', 'big set-score', right.length + ' of ' + answered.length)];
+      parts.push(el('span', 'mini', ['Logged to Record.', solid ? solid + ' marked solid.' : ''].filter(Boolean).join(' ')));
+      const wsMiss = missed.filter(q => q.weakspotId).length;
+      if (added || wsMiss) {
+        const line = el('div', 'endline');
+        line.append(
+          el(
+            'span',
+            'sp',
+            added
+              ? (added === 1 ? '1 miss is now a weak spot.' : added + ' misses are now weak spots.') +
+                  ' Each comes back until it’s solid.'
+              : wsMiss === 1
+                ? '1 miss comes back with its weak spot.'
+                : wsMiss + ' misses come back with their weak spots.'
+          ),
+          btn('Review', () => {
+            ui.openSet = null;
+            ui.openObj = null;
+            showTab('study');
+            setStudy('weak');
+            render();
+          })
+        );
+        parts.push(line);
+      }
+      const acts = el('div', 'actions sum-acts');
       const more = o.more && o.more();
-      if (more) parts.push(more);
+      if (more) acts.append(more);
+      const lst = []; // the misses and right answers as lines, under the card's buttons
       if (missed.length) {
         const ul = el('ul', 'list sum-list'),
           all = !!sumOpen[key + ':missed'];
         (all ? missed : missed.slice(0, 5)).forEach(q => ul.append(sumLine(key, q, answers[q.id])));
-        parts.push(el('p', 'meta sum-h', missed.length === 1 ? '1 miss' : missed.length + ' misses'), ul);
+        lst.push(el('p', 'meta sum-h', missed.length === 1 ? '1 miss' : missed.length + ' misses'), ul);
         if (missed.length > 5)
-          parts.push(
+          lst.push(
             foldLine(all ? 'Fewer' : missed.length - 5 + ' more', all, () => {
               sumOpen[key + ':missed'] = !all;
               render();
@@ -674,7 +761,7 @@
           ul = el('ul', 'list sum-list');
         ul.hidden = !open;
         if (open) right.forEach(q => ul.append(sumLine(key, q, answers[q.id])));
-        parts.push(
+        lst.push(
           foldLine(right.length + ' right', open, () => {
             sumOpen[key + ':right'] = !open;
             render();
@@ -684,27 +771,38 @@
       }
       if (o.next) {
         const n = o.next,
-          f = el(
-            'button',
-            'next-line',
-            'Next: ' + (n.title || n.id) + ' · ' + plural(E.validItems(n).length, 'question')
-          );
-        f.type = 'button';
-        f.addEventListener('click', () => {
-          ui.openSet = n.id;
-          showTab('study');
-          setStudy('practice');
-          render();
-        });
-        parts.push(f);
+          f = btn('New quiz', () => {
+            ui.openSet = n.id;
+            ui.openObj = null;
+            showTab('study');
+            setStudy('practice');
+            render();
+          });
+        f.title = 'Next: ' + (n.title || n.id) + ' · ' + plural(E.validItems(n).length, 'question');
+        f.setAttribute('aria-label', 'New quiz: ' + (n.title || n.id));
+        acts.append(f);
       }
-      if (o.summaryExtra) parts.push(...o.summaryExtra());
+      if (o.summaryExtra) for (const x of o.summaryExtra()) acts.append(...(x.classList.contains('actions') ? x.children : [x]));
+      if (key === 'rv' || key.startsWith('pr-'))
+        acts.append(
+          btn(
+            'Back to topics',
+            () => {
+              ui.openSet = null;
+              ui.openObj = null;
+              setStudy('objectives');
+              render();
+            },
+            { cls: 'btn ghost' }
+          )
+        );
+      parts.push(acts, ...lst);
       o.body.classList.remove('q-beside');
       o.body.replaceChildren(...parts);
     }
     // B-211 (D-217): a number key picks that answer on the one open question in view (not while he types).
     document.addEventListener('keydown', e => {
-      if (e.ctrlKey || e.metaKey || e.altKey || !/^[1-9]$/.test(e.key)) return;
+      if (e.ctrlKey || e.metaKey || e.altKey || !/^([1-9]|[a-iA-I]|Enter)$/.test(e.key)) return;
       const t = e.target;
       if (
         t &&
@@ -713,11 +811,23 @@
       )
         return;
       const vis = n => !!n && n.getClientRects().length > 0;
+      if (document.querySelector('dialog[open]')) return;
+      // B-348 (D-312): Enter goes on from an answered question, as the demo's card (not while a button has focus)
+      if (e.key === 'Enter') {
+        if (t && t.closest && t.closest('button,a,label')) return;
+        const go = [...document.querySelectorAll('#p-study button.q-go')].filter(vis);
+        if (go.length === 1) {
+          e.preventDefault();
+          go[0].click();
+        }
+        return;
+      }
       const open = [...document.querySelectorAll('fieldset.opts')].filter(
         f => vis(f) && f.querySelector('input:not(:disabled)')
       );
       if (open.length !== 1) return;
-      const inp = open[0].querySelectorAll('label.opt input')[Number(e.key) - 1];
+      const n = /^[1-9]$/.test(e.key) ? Number(e.key) : 'abcdefghi'.indexOf(e.key.toLowerCase()) + 1;
+      const inp = open[0].querySelectorAll('label.opt input')[n - 1];
       if (!inp || inp.disabled) return;
       e.preventDefault();
       inp.click();

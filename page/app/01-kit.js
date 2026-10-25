@@ -82,6 +82,7 @@
       const x = $('toast');
       x.textContent = t;
       x.hidden = false;
+      x.dataset.at = String(Date.now());
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => (x.hidden = true), 2600);
     }

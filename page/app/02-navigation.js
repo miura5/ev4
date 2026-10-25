@@ -34,6 +34,9 @@
       placeSegs(t);
       renderStudySide(); // B-223 (D-245): the Study panel only while Study is the view
       renderLine(); // B-333: her insight strip follows the view
+      // B-348 (D-312): a toast from the view he left (Today's Plan the rest) does not follow him into the next
+      const tx = $('toast');
+      if (was && was !== t && tx && !tx.hidden && Date.now() - Number(tx.dataset.at || 0) > 400) tx.hidden = true;
       if (was !== t) {
         window.scrollTo(0, t === 'ev' && was ? document.documentElement.scrollHeight : 0);
         enter($('p-' + t));

@@ -52,6 +52,8 @@
         countEl: $('rv-count'),
         barEl: $('rv-bar'),
         label: 'E.V. Review · ' + short(today),
+        title: 'Today’s review',
+        scoreEl: $('rv-score'),
         more: sample ? () => moreMount(true) : null,
         next: nextSet(null),
       });
@@ -72,6 +74,21 @@
       const v = ui.study,
         quiz = v === 'review' || v === 'practice';
       $('study-back').hidden = !quiz;
+      // B-348 (D-312): the quiz's strip, as the demo's: All topics, what is open, Quiz me (a practice set's way to today's
+      // review) and Weak spots with its count
+      const pr = v === 'practice' && S.sets.find(s => s.id === ui.openSet);
+      $('study-qlab').hidden = !quiz;
+      $('study-qlab').textContent =
+        v === 'review' ? 'Today’s review · ' + short(today) : pr ? (ui.openObj && ui.openObj.text) || pr.title || 'Practice' : '';
+      $('study-qquiz').hidden = !pr;
+      let nW = 0;
+      try {
+        nW = M ? M.models.filter(w => E.isActive(w) && !w.derived.preRead).length : 0;
+      } catch {
+        nW = 0; // the bar can sync before the model is first built
+      }
+      $('study-qweak').hidden = !quiz;
+      $('study-qweak').textContent = 'Weak spots' + (nW ? ' · ' + nW : '');
       // in the quiz card the way back replaces the view tabs, so no switch shows with nothing picked (C-15)
       $('seg-study').hidden = quizOpen('study') || (innerWidth >= 600 && ui.tab !== 'study');
       $('study-course').hidden = v !== 'objectives' || $('study-course').children.length < 2;
@@ -571,6 +588,8 @@
         countEl: $('pr-qcount'),
         barEl: $('pr-bar'),
         label: 'E.V. · ' + (of ? of.text || of.obj : d.title || d.id),
+        title: of ? 'Quiz · ' + (of.obj || '') : d.title || 'Practice',
+        scoreEl: $('pr-score'),
         more: sample ? giveFive : null,
         next: nextSet(d.id),
         summaryExtra: () => {
@@ -627,11 +646,10 @@
         S.plans
           .slice()
           .sort((a, b) => String((b.days || [])[0]?.date).localeCompare(String((a.days || [])[0]?.date)))[0];
+      ui.planPanel = null;
       if (!plan) {
-        card.replaceChildren(
-          el('h2', null, 'Exam plan'),
-          el('p', 'empty', 'The exam plan appears here once it’s in the record.')
-        );
+        $('plan-lab').textContent = 'Plan';
+        card.replaceChildren(el('p', 'empty', 'The exam plan appears here once it’s in the record.'));
         return;
       }
       const tasks = E.planTasks(plan);
@@ -662,8 +680,8 @@
         const wrap = el('div', 'plan-day' + (d.date === today ? ' today' : ''));
         wrap.append(
           el(
-            'p',
-            'meta plan-dh',
+            'div',
+            'dayh plan-dh',
             [d.label, short(d.date) + (d.date === today ? ' · today' : ''), d.dayLabel].filter(Boolean).join(' · ')
           )
         );
@@ -681,30 +699,44 @@
           );
         return wrap;
       };
-      const head = el('div', 'card-head');
-      head.append(el('h2', null, plan.title || 'Exam plan'));
-      const kids = [head, el('p', 'big plan-lead', `${doneN} of ${tasks.length} done`)];
-      if (exDay) kids.push(el('p', 'meta', exDay));
-      // B-194: every other plan in force, one line each, to switch to (a dosage plan beside the exam's).
-      const others = S.plans.filter(p => p.id !== plan.id);
-      if (others.length) {
-        const sw = el('p', 'meta plan-others');
-        sw.append('Other plans: ');
-        others.forEach((p, i) => {
-          if (i) sw.append(' · ');
-          sw.append(
-            btn(
-              p.title || 'Exam plan ' + (p.exam || p.id),
-              () => {
-                ui.planShown = p.id;
-                render();
-              },
-              { cls: 'tlink' }
-            )
-          );
-        });
-        kids.push(sw);
-      }
+      // B-348 (D-312): the strip names the plan; its summary (title, count, exam day, other plans, the original page) is
+      // the panel's card from 1200 px and leads the rows below that; the days are quiet heads over full-width rows.
+      $('plan-lab').textContent = 'Plan' + (ex ? ' · ' + (ex.title || ex.id).replace(/:.*$/, '') : '');
+      const summaryCard = () => {
+        const sm = el('div', 'ov-detail plan-sum');
+        sm.append(el('span', 'lab', plan.title || 'Exam plan'), el('div', 'big plan-lead', `${doneN} of ${tasks.length} done`));
+        if (exDay) sm.append(el('span', 'mini', exDay));
+        // B-194: every other plan in force, one line each, to switch to (a dosage plan beside the exam's).
+        const others = S.plans.filter(p => p.id !== plan.id);
+        if (others.length) {
+          const sw = el('p', 'mini plan-others');
+          sw.append('Other plans: ');
+          others.forEach((p, i) => {
+            if (i) sw.append(' · ');
+            sw.append(
+              btn(
+                p.title || 'Exam plan ' + (p.exam || p.id),
+                () => {
+                  ui.planShown = p.id;
+                  render();
+                },
+                { cls: 'tlink' }
+              )
+            );
+          });
+          sm.append(sw);
+        }
+        if (plan.sourceUrl) {
+          const a = el('a', 'mini', 'Original plan page');
+          a.href = plan.sourceUrl;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          sm.append(a);
+        }
+        return sm;
+      };
+      const kids = [summaryCard()];
+      ui.planPanel = summaryCard();
       const upcoming = plan.days.filter(d => d.date >= today),
         past = plan.days.filter(d => d.date < today);
       for (const d of upcoming) {
@@ -734,7 +766,7 @@
           .reverse()
           .forEach(d => {
             const w = el('div', 'plan-was');
-            w.append(el('p', 'meta plan-dh', [d.label, short(d.date)].filter(Boolean).join(' · ')));
+            w.append(el('div', 'dayh plan-dh', [d.label, short(d.date)].filter(Boolean).join(' · ')));
             const ul = el('ul', 'list');
             d.tasks.forEach(t => ul.append(tickRow(d, t)));
             w.append(ul);
@@ -747,13 +779,6 @@
           }),
           box
         );
-      }
-      if (plan.sourceUrl) {
-        const a = el('a', 'meta', 'Original plan page');
-        a.href = plan.sourceUrl;
-        a.target = '_blank';
-        a.rel = 'noopener';
-        kids.push(a);
       }
       card.replaceChildren(...kids); // D-249: Plan is its own tab at every width
     }
@@ -988,6 +1013,17 @@
     });
     $('weak-quizlet-btn').addEventListener('click', () => copyQuizlet($('weak-quizlet')));
     $('weak-quiz').addEventListener('click', ev => weakQuizAll(ev.currentTarget));
+    $('study-qweak').addEventListener('click', () => {
+      ui.openSet = null;
+      ui.openObj = null;
+      setStudy('weak');
+      render();
+    });
+    $('study-qquiz').addEventListener('click', ev => weakQuizAll(ev.currentTarget));
+    $('plan-back').addEventListener('click', () => {
+      setStudy('objectives');
+      render();
+    });
     $('weak-back').addEventListener('click', () => {
       setStudy('objectives');
       render();

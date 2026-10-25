@@ -1465,6 +1465,85 @@ button.btn.mh-back{display:none}
 #study-side .wk-side .od-ws{color:var(--text);height:auto;min-height:30px;margin:0;padding:4px 10px}
 #study-side .wk-side .od-ws .sn{white-space:normal}
 #study-side .wk-side .od-ws .dot{background:var(--quiet)}
+/* B-348 (D-312): the quiz, its results and the Plan tab as the demo's StudyQuiz and StudyResults boards. The quiz's strip
+   (All topics, what is open, Quiz me, Weak spots · n); one card up to 640 px wide, centred 26 px under the strip: its
+   label and score, a 6 px violet bar, the 22 px question, 52 px answers lettered A to D that tint green or red with a
+   mark, the verdict, then Next with its Enter key. From 1200 px the panel is "This quiz", a dot a question. The results
+   card is the big score, Logged to Record, the weak-spot line in its own box, then the buttons. Plan sits in the Weak
+   spots tab's frame: the strip, quiet day heads over full-width rows, its summary in the panel from 1200 px. */
+#study-qlab{font-size:calc(12.5px * var(--ts));color:var(--quiet);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+#study-back .ico,#plan-back .ico{width:14px;height:14px}
+#study-review:not([hidden]),#study-practice:not([hidden]){display:block;padding-bottom:18px}
+#study-review > .qz-card,#pr-card.qz-card{width:calc(100% - 36px);max-width:640px;margin:10px auto 0;padding:26px;border:0;border-radius:14px;background:var(--surface);box-shadow:0 0 0 1px var(--line);display:flex;flex-direction:column;gap:16px;box-sizing:border-box;-webkit-backdrop-filter:none;backdrop-filter:none}
+#pr-card > .card-head{display:none}
+#pr-prog:not([hidden]){display:flex;flex-direction:column;gap:16px}
+.qz-card .qz-head{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0}
+.qz-card .qz-head .set-count{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet);min-height:0;padding:0;margin:0;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.qz-card .qz-head .set-count.flat::after{display:none}
+.qz-card .qz-score{font-size:calc(12.5px * var(--ts));color:var(--faint);white-space:nowrap;flex:none}
+.qz-card .qz-bar{height:6px;border-radius:3px;background:var(--hover);overflow:hidden;margin:0}
+.qz-card .qz-bar i{background:var(--sem-violet);border-radius:0}
+.qz-card #rv-body,.qz-card #pr-body{display:flex;flex-direction:column;gap:16px}
+.qz-card #rv-body > *,.qz-card #pr-body > *{margin:0}
+.qz-card .q-stem{font-size:calc(22px * var(--ts));font-weight:500;letter-spacing:-.01em;line-height:1.35;color:var(--text)}
+.qz-card .q-tags{margin-top:-10px !important;font-size:calc(12.5px * var(--ts));color:var(--faint)}
+.qz-card .opts{display:flex;flex-direction:column;gap:8px;border:0;padding:0;margin:0;min-width:0}
+.qz-card .opt{position:relative;align-items:center;gap:10px;min-height:52px;padding:8px 14px;border:0;border-radius:9px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);font-size:calc(14px * var(--ts));color:var(--text);box-sizing:border-box}
+.qz-card .opt:not(.locked):hover{background:var(--hover)}
+.qz-card .opt > .grow{flex:1;min-width:0}
+.qz-card .qz-bar[hidden]{display:none}
+.qz-card .opt input[type=radio]{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
+.qz-card .opt kbd.opt-n{display:inline-block;flex:0 0 20px;width:20px;height:auto;box-shadow:none;background:none;color:var(--quiet);font:500 calc(12.5px * var(--ts)) var(--sans);text-align:left}
+.qz-card .opt input:checked~kbd.opt-n{box-shadow:none;color:var(--text)}
+.qz-card .opt:not(.locked):has(input:checked){box-shadow:inset 0 0 0 1.5px var(--text)}
+.qz-card .opt:has(input:focus-visible){outline:2px solid var(--text);outline-offset:2px}
+.qz-card .opt.right{background:color-mix(in srgb,var(--sem-green) 11%,var(--surface));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--sem-green) 40%,var(--line2))}
+.qz-card .opt.wrong{background:color-mix(in srgb,var(--sem-red) 11%,var(--surface));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--sem-red) 40%,var(--line2))}
+.qz-card .opt > .ico{width:16px;height:16px;flex:none;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.qz-card .opt.right > .ico{stroke:var(--sem-green)}.qz-card .opt.wrong > .ico{stroke:var(--sem-red)}
+.qz-card .opt .why{display:block;margin-top:2px;font-size:calc(12.5px * var(--ts));color:var(--quiet)}
+.qz-card .verdict{font:400 calc(13.5px * var(--ts))/1.5 var(--sans);color:var(--text)}
+.qz-card .verdict.ok,.qz-card .verdict.no{color:var(--text)}
+.qz-card .actions{display:flex;align-items:center;justify-content:flex-start;gap:8px;flex-wrap:wrap}
+.qz-card .actions > .btn.primary{order:-1}
+.qz-card .btn.primary .kbd{margin-left:8px;font:500 calc(11px * var(--ts)) var(--sans);padding:1px 5px;border-radius:4px;box-shadow:inset 0 0 0 1px currentColor}
+@media (hover:none){.qz-card .btn.primary .kbd{display:none}}
+.qz-card .set-score{font-size:calc(30px * var(--ts));font-weight:600;letter-spacing:-.02em;line-height:1.1;margin:0}
+.qz-card .set-score + .mini{margin-top:-6px;font-size:calc(12.5px * var(--ts));color:var(--faint)}
+.qz-card .endline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:9px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2);font-size:calc(13px * var(--ts))}
+.qz-card .endline .sp{flex:1;min-width:180px}
+.qz-card .sum-acts #more-card{display:contents}
+.qz-card .sum-acts #more-status{display:none}
+#study-side .qz-side .set-list{display:flex;flex-direction:column;margin:-6px 0 0;padding:0;list-style:none}
+#study-side .qz-side .set-item{border:0;padding:0;min-height:0}
+#study-side .qz-side .set-q{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:0 10px;border:0;border-radius:8px;background:none;font:400 calc(13px * var(--ts)) var(--sans);color:var(--text);text-align:left;cursor:pointer}
+#study-side .qz-side .set-q:hover{background:var(--hover)}
+.set-q .sq-d{width:8px;height:8px;border-radius:4px;flex:none;background:var(--line2)}
+.set-q .sq-d.ok{background:var(--sem-green)}.set-q .sq-d.no{background:var(--sem-red)}.set-q .sq-d.now{background:var(--sem-violet)}
+#study-side .qz-side .sq-s{font-size:calc(11.5px * var(--ts));color:var(--quiet)}
+#study-side .qz-side .sq-s.ok{color:var(--quiet)}
+#study-side .qz-side .set-item.current .sq-t{color:var(--text);font-weight:500}
+@media (min-width:1200px){
+  .qz-card .sum-h,.qz-card .sum-list,.qz-card .sum-h ~ .fold-line,.qz-card .sum-acts ~ .fold-line{display:none}
+  #plan-card .plan-sum{display:none}
+}
+#study-plan:not([hidden]){display:flex;flex-direction:column;gap:0;margin:-18px -16px 0}
+#study-plan .wk-bar{display:flex;align-items:center;gap:8px;padding:12px 18px;border-bottom:1px solid var(--line);min-height:56px;box-sizing:border-box}
+#study-plan .wk-bar .mini{font-size:calc(12.5px * var(--ts));color:var(--quiet)}
+#study-plan .wk-bar .sp{flex:1}
+#plan-card{display:flex;flex-direction:column;padding:0 0 18px}
+#plan-card > .plan-sum{padding:16px 18px;border-bottom:1px solid var(--line);gap:8px}
+#plan-card .big,.plan-sum .big{font-size:calc(30px * var(--ts));font-weight:600;letter-spacing:-.02em;line-height:1.1;margin:0}
+.plan-sum .lab{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
+.plan-sum .mini{font-size:calc(12.5px * var(--ts));color:var(--faint);margin:0}
+#plan-card .plan-day,#plan-card .plan-day.today{gap:0;background:none;border:0;border-radius:0;padding:0;margin:0}
+#plan-card .dayh{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet);padding:14px 18px 6px;margin:0}
+#plan-card .list{margin:0;padding:0}
+#plan-card .row.plan-item{min-height:44px;padding:6px 18px;margin:0;border-bottom:1px solid var(--line);border-radius:0;box-sizing:border-box;font-size:calc(13.5px * var(--ts))}
+#plan-card .row.plan-item.done .title{color:var(--quiet)}
+#plan-card > .fold-line,#plan-card .plan-day > .fold-line{margin:0;padding:10px 18px;min-height:44px;font-size:calc(13px * var(--ts));color:var(--quiet);justify-content:flex-start;border-bottom:1px solid var(--line);border-radius:0}
+#plan-card .empty{padding:40px 18px;text-align:center}
+#plan-card .plan-was .dayh{padding-top:12px}
 @media (max-width:599px){
   #p-study .sbar-study{gap:8px;margin:-18px -16px 0;padding:10px 12px;flex-wrap:wrap}
   #p-study .sbar-study .seg{width:auto;align-self:center;flex:0 1 auto;min-width:0}
@@ -1472,6 +1551,11 @@ button.btn.mh-back{display:none}
   #study-objectives{padding:2px 0 18px}
   #study-weak:not([hidden]){margin:-18px -16px 0}
   #study-weak .wk-bar{padding:10px 12px}
+  #study-plan:not([hidden]){margin:-18px -16px 0}
+  #study-plan .wk-bar{padding:10px 12px}
+  #plan-card .row.plan-item,#plan-card .dayh,#plan-card > .plan-sum,#plan-card > .fold-line{padding-left:16px;padding-right:16px}
+  #study-review > .qz-card,#pr-card.qz-card{width:100%;margin:16px 0 0;padding:20px 18px}
+  .qz-card .opt{min-height:52px}
   .wk-list .wl{padding:8px 16px}
   .wk-list .dayh{padding:14px 16px 6px}
   .ov .obj{flex-wrap:nowrap;padding:6px 0}
