@@ -16,7 +16,7 @@ import {
   validCollection,
   validDocId,
 } from '../pwa/runapi.js';
-import { countsOf } from '../tools/pwa-staging.mjs';
+import { countsOf, countDiffs, expectedCounts } from '../tools/pwa-staging.mjs';
 import { seedRecord } from '../pwa/seed.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -99,17 +99,15 @@ test('B-312: the Worker routes /api/run behind the token, the page save moves th
   assert.match(fs.readFileSync(path.join(ROOT, 'pwa/schema.sql'), 'utf8'), /v INTEGER NOT NULL DEFAULT 1/);
 });
 
-test("B-312: the suite's collection is not in the seed, and the staging counts leave it out", () => {
+test("B-312: the suite's collection is not in the seed; the staging counts take whole runs of it and nothing else", () => {
   assert.ok(!(SUITE in seedRecord()));
-  assert.deepEqual(
-    countsOf({
-      docs: [
-        { c: 'a', id: '1' },
-        { c: SUITE, id: 'r1-00' },
-      ],
-    }),
-    { a: 1 }
-  );
+  const seed = { a: 1 };
+  assert.deepEqual(countDiffs({ a: 1 }, expectedCounts({ a: 1 }, seed)), []);
+  assert.deepEqual(countDiffs({ a: 1, [SUITE]: 50 }, expectedCounts({ a: 1, [SUITE]: 50 }, seed)), []);
+  assert.deepEqual(countDiffs({ a: 1, [SUITE]: 26 }, expectedCounts({ a: 1, [SUITE]: 26 }, seed)), [
+    `${SUITE}: 26 in the Worker, 0 in the seed`,
+  ]);
+  assert.deepEqual(countDiffs({ a: 0 }, expectedCounts({ a: 0 }, seed)), ['a: 0 in the Worker, 1 in the seed']);
   const wf = fs.readFileSync(path.join(ROOT, '.github/workflows/pwa-staging.yml'), 'utf8');
   assert.match(wf, /node --test pwa\/run-api\.test\.mjs/);
   assert.match(wf, /ALTER TABLE docs ADD COLUMN v INTEGER NOT NULL DEFAULT 1/);

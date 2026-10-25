@@ -15,7 +15,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { seedRecord } from './seed.mjs';
-import { SUITE } from './runapi.js';
+import { SUITE, SUITE_DOCS_PER_RUN } from './runapi.js';
 
 const PWA = path.dirname(fileURLToPath(import.meta.url));
 const REMOTE = process.env.EV_RUN_API_URL || null;
@@ -156,7 +156,7 @@ test('list and get return what ArtifactData returns for the same documents: each
 });
 
 test('a batch of 25 writes lands whole: each document at version 1, then 25 pinned updates at version 2', async () => {
-  const writes = Array.from({ length: 25 }, (_, i) => ({
+  const writes = Array.from({ length: SUITE_DOCS_PER_RUN }, (_, i) => ({
     op: 'set',
     collection: SUITE,
     doc_id: id(i),
@@ -261,6 +261,11 @@ test("the page's own save moves the version, so a run pinned to the old one is r
   ]);
   assert.equal(r.status, 409);
   assert.equal(r.body.current_version, before.body.version + 1);
+});
+
+test('the suite leaves exactly its 25 documents behind (the staging count check expects whole runs)', async () => {
+  const mine = (await listAll(SUITE, 1000)).filter(d => d.id.startsWith(RUN + '-'));
+  assert.equal(mine.length, SUITE_DOCS_PER_RUN);
 });
 
 test("a batch's walls: over 50 writes, a document twice, a bad path, set with __delete__", async () => {

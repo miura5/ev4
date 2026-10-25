@@ -7,14 +7,20 @@
 // counts and statuses only: never the token, never a document.
 import { fileURLToPath } from 'node:url';
 import { seedCounts } from '../pwa/seed.mjs';
-import { SUITE } from '../pwa/runapi.js';
+import { SUITE, SUITE_DOCS_PER_RUN } from '../pwa/runapi.js';
 
-/** Documents per collection in a GET /api/db answer, less the run API suite's own (B-312: it writes there each
- * staging run, and the Worker never deletes). */
+/** Documents per collection in a GET /api/db answer. */
 export function countsOf(body) {
   const out = {};
-  for (const d of (body && body.docs) || []) if (d.c !== SUITE) out[d.c] = (out[d.c] || 0) + 1;
+  for (const d of (body && body.docs) || []) out[d.c] = (out[d.c] || 0) + 1;
   return out;
+}
+
+/** The counts expected: the seed's, plus the run API suite's own collection (B-312), which each staging run of the
+ * suite adds exactly SUITE_DOCS_PER_RUN documents to and the Worker never deletes. Any other count is a difference. */
+export function expectedCounts(got, seed = seedCounts()) {
+  const n = got[SUITE] || 0;
+  return n && n % SUITE_DOCS_PER_RUN === 0 ? { ...seed, [SUITE]: n } : { ...seed };
 }
 
 /** One line per collection whose count differs; empty when they match. */
@@ -29,7 +35,7 @@ const status = async (url, token) =>
   (await fetch(url, token == null ? {} : { headers: { authorization: 'Bearer ' + token } })).status;
 
 /** The checks, as [{ ok, what }]. */
-export async function check(base, token, { want = seedCounts() } = {}) {
+export async function check(base, token, { seed = seedCounts() } = {}) {
   const url = base.replace(/\/+$/, '') + '/api/db';
   const lines = [];
   const add = (ok, what) => lines.push({ ok, what });
@@ -44,7 +50,7 @@ export async function check(base, token, { want = seedCounts() } = {}) {
     return lines;
   }
   const got = countsOf(await r.json());
-  const diffs = countDiffs(got, want);
+  const diffs = countDiffs(got, expectedCounts(got, seed));
   const total = Object.values(got).reduce((a, b) => a + b, 0);
   add(
     diffs.length === 0,

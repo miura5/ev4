@@ -12,6 +12,8 @@
 
 /** The run API suite's own collection (pwa/run-api.test.mjs): the only one it writes, never in the seed. */
 export const SUITE = 'runapi-suite';
+/** What one run of the suite leaves there: the staging count check expects a whole number of runs' worth. */
+export const SUITE_DOCS_PER_RUN = 25;
 
 export const MAX_WRITES = 50;
 export const MAX_BODY = 1024 * 1024;
