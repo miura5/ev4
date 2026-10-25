@@ -45,6 +45,8 @@
     // B-213 (D-225): a view's switch is the pane header's from 600 px, and a full-width row at the top of the view on the
     // phone. Each switch keeps its id, so everything that reads or clicks it works where it sits.
     const SEG_HOME = {};
+    // B-297: while a set is open in Study's quiz card, the way back stands in for the view tabs
+    const quizOpen = id => id === 'study' && (ui.study === 'review' || ui.study === 'practice');
     function placeSegs(t) {
       const mh = $('mh');
       for (const id of ['study', 'progress', 'record']) {
@@ -56,10 +58,10 @@
         }
         if (innerWidth >= 600) {
           if (sg.parentNode !== mh) mh.insertBefore(sg, $('status')); // B-246: beside the title, before any status line, so it never moves
-          sg.hidden = id !== t || sg.children.length < 2; // a switch of one view is no switch (B-297: Progress)
+          sg.hidden = id !== t || sg.children.length < 2 || quizOpen(id); // a switch of one view is no switch (B-297: Progress)
         } else {
           if (sg.previousSibling !== SEG_HOME[id]) SEG_HOME[id].after(sg);
-          sg.hidden = sg.children.length < 2;
+          sg.hidden = sg.children.length < 2 || quizOpen(id);
         }
       }
     }

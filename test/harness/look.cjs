@@ -400,7 +400,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
             parseFloat(getComputedStyle(b).borderRadius) > 0
         ),
       }));
-      await page.click('#tab-study');
+      await studyView(page, 'objectives'); // B-297: out of the review's quiz card the pass left Study on
       await page.waitForTimeout(200);
       const sg = await page.evaluate(() => {
         const s = document.getElementById('seg-study'),
