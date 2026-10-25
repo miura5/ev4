@@ -6024,7 +6024,7 @@
  {
   "id": "B-345",
   "kind": "request",
-  "title": "Fidelity fix: E.V.: the view's header reads Conversation on a computer as the demo board does, and the chips sit in the demo's rows",
+  "title": "Fidelity fix: E.V.: the view's header reads Conversation as the demo board does, the chips sit in the demo's rows, and at 390 the column runs to the demo's 16 px gutters (the check-in card and the field are inset about twice that now)",
   "dod": "Matches the Conversation (Main) board at 1280, 1706 and 2560 and at 390. Proof (D-312, fidelity sprint): node tools/build.mjs, tools/fidelity screenshots side by side, npm run smoke, ship staging GREEN.",
   "milestone": "v4.8 redesign",
   "status": "open",
