@@ -28,8 +28,9 @@
       // B-200 (D-208): the line painted on his tap; a refused write takes it back out and says why in one line.
       // B-389: his own line is never simply gone: his words go back into the composer (T.restoreInput, set by it) to
       // send again, and the line says so in plain words, never a bare code such as "conflict". B-394: also when he
-      // has started a new line meanwhile (the refused words go before it). Lines refused back to back come back in the
-      // order he sent them (talkQ settles them in that order) and are said in one toast once nothing more waits.
+      // has started a new line meanwhile (B-395: the refused words go after what he is typing, which is never changed).
+      // Lines refused back to back come back in the order he sent them (talkQ settles them in that order) and are said
+      // in one toast once nothing more waits.
       talkQueued++;
       talkQ = p.then(
         () => {

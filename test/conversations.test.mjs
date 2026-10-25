@@ -242,3 +242,40 @@ test('D-131: the notes bar names the note by the reader title, else Your notes (
   assert.equal(EV.noteTitle({ title: '  ' }), 'Your notes');
   assert.equal(EV.noteTitle(null), 'Your notes');
 });
+
+// B-395: a refused line comes back by one stateless rule: appended after a blank line, or alone in an empty box.
+test('B-395: two refusals in a row come back A then B', () => {
+  assert.equal(EV.restoredBox('', 'A'), 'A');
+  assert.equal(EV.restoredBox(EV.restoredBox('', 'A'), 'B'), 'A\n\nB');
+  assert.equal(EV.restoredBox('   ', 'A'), 'A', 'a box of spaces only counts as empty');
+});
+
+test('B-395: his edits between refusals keep every word unchanged and in order', () => {
+  // added text between the two refusals
+  let box = EV.restoredBox('', 'A');
+  box += ' and more';
+  box = EV.restoredBox(box, 'B');
+  assert.equal(box, 'A and more\n\nB');
+  // text deleted between them: what is left stays as he left it, B after it
+  box = EV.restoredBox('', 'A first line');
+  box = box.slice(0, 'A first'.length);
+  box = EV.restoredBox(box, 'B');
+  assert.equal(box, 'A first\n\nB');
+  // the box cleared between them: B stands alone
+  box = EV.restoredBox('', 'A');
+  box = '';
+  assert.equal(EV.restoredBox(box, 'B'), 'B');
+  // typing, a refusal, more typing, a second refusal: every piece in the order it came
+  box = EV.restoredBox('typed one', 'A');
+  box += '\ntyped two';
+  box = EV.restoredBox(box, 'B');
+  assert.equal(box, 'typed one\n\nA\ntyped two\n\nB');
+});
+
+test('B-395: a later unrelated refusal never changes what he has typed', () => {
+  for (const typed of ['half a thought', 'ends in spaces   ', 'two\nlines\n', 'A', '\n\nlead']) {
+    const out = EV.restoredBox(typed, 'Refused');
+    assert.ok(out.startsWith(typed), JSON.stringify(typed) + ' kept exactly');
+    assert.equal(out.slice(typed.length), '\n\nRefused');
+  }
+});

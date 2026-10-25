@@ -628,7 +628,16 @@ export function makeConversation(core) {
     );
   }
 
+  /** B-395: the composer after a line of his the record refused comes back: appended at the end after a blank line,
+   * or alone when the box is empty (or holds only spaces). No state: lines refused one after another land in the order
+   * he sent them, because each appends, and what he has typed is kept exactly as it is, as the start of the box. */
+  function restoredBox(box, line) {
+    const now = String(box || '');
+    return now.trim() ? now + '\n\n' + line : String(line);
+  }
+
   return {
+    restoredBox,
     greeting,
     situation,
     headlinePrompt,

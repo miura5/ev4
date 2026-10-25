@@ -452,10 +452,11 @@ async function main() {
       );
       await page.fill('#ev-input', '');
 
-      // 5b. B-394: a send the record refuses (every save of the conversation answered 409, so the shim's one retry is
-      // refused too), held until he has started typing a new line: his refused words come back into the box ahead of
-      // what he is typing, nothing of it stays in the thread, and nothing goes to /api/claude, so E.V. never answers it.
-      // Two lines sent back to back are both refused: they come back in the order he sent them, in one toast.
+      // 5b. B-394, B-395: a send the record refuses (every save of the conversation answered 409, so the shim's one
+      // retry is refused too), held until he has started typing a new line: his refused words come back into the box
+      // after what he is typing, which stays exactly as he typed it; nothing of it stays in the thread, and nothing goes
+      // to /api/claude, so E.V. never answers it. Two lines sent back to back are both refused: they come back in the
+      // order he sent them, in one toast.
       await idle();
       const refusedLine = `Refused line, kept for him (${scheme})`;
       const refusedNext = `His second refused line (${scheme})`;
@@ -515,9 +516,9 @@ async function main() {
         }),
         [refusedLine, refusedNext]
       );
-      const inOrder = after.box === `${refusedLine}\n\n${refusedNext}\n\n${typingNow}`;
+      const inOrder = after.box === `${typingNow}\n\n${refusedLine}\n\n${refusedNext}`; // B-395: appended, his kept
       ok(
-        `${tag} two sends refused back to back come back in the box in the order he sent them, before what he is typing, in one toast, with no E.V. reply and no call to /api/claude`,
+        `${tag} two sends refused back to back come back in the box in the order he sent them, after what he is typing, in one toast, with no E.V. reply and no call to /api/claude`,
         kept && inOrder && after.toasts === 1 && !after.inThread && after.ev === evAt && calls.length === callsAt,
         JSON.stringify({
           box: after.box,
