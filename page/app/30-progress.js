@@ -95,7 +95,7 @@
       }
       if (period === 'month') {
         const prev = E.addDays(monthStart(monthOf(today)), -1);
-        return { from: monthStart(monthOf(prev)), to: prev, name: 'last month' };
+        return { from: monthStart(monthOf(prev)), to: prev, name: MONL[Number(prev.slice(5, 7)) - 1] }; // B-372: '+N points on September'
       }
       return null;
     }
@@ -240,7 +240,9 @@
           (n = objs.length), (so = st.filter(x => x === 'solid').length), (al = st.filter(x => x === 'almost').length);
           unit = 'objectives';
         } else {
-          const plan = S.plans.find(p => (p.exam || p.id) === e.id);
+          // B-372: its plan as Study finds it (the plan named for it, else one ending in its last three weeks), else
+          // the Today items tied to it (a plan task or a set on it); with neither the row is absent, never an empty bar
+          const plan = examPlan(e);
           const isDone = t => !!(plan.done && plan.done[t.id]) || E.taskDone(plan, t, today, S.sets, S.answers);
           (n = 0), (so = 0), (al = 0), (unit = 'plan tasks');
           for (const d of (plan && plan.days) || []) {
@@ -250,12 +252,24 @@
             so += k;
             if (k && k < ts.length) al += ts.length - k;
           }
+          if (!n) {
+            const ds = dayState();
+            const tied = ds.items.filter(it => {
+              const pt = planTaskById(it.ref);
+              if (pt) return (pt.plan.exam || pt.plan.id) === e.id;
+              const sid = it.set || (/^sets\//.test(it.ref || '') ? it.ref.slice(5) : null);
+              const set = sid && S.sets.find(x => x.id === sid);
+              return !!(set && set.exam === e.id);
+            });
+            (n = tied.length), (so = tied.filter(ds.isDone).length), (unit = 'items today');
+          }
+          if (!n) return null;
         }
         const row = el('div', 'prog-hb');
         const top = el('div', 'prog-hb-top');
         top.append(
           el('span', null, E.courseOf(e) + ' · ' + (e.title || e.id).replace(/:.*$/, '')),
-          el('span', 'meta', unit === 'plan tasks' && !n ? 'no plan yet' : so + ' of ' + n + (unit === 'plan tasks' ? ' plan tasks' : ''))
+          el('span', 'meta', so + ' of ' + n + (unit === 'objectives' ? '' : ' ' + unit))
         );
         const bar = el('div', 'pbar');
         bar.setAttribute('role', 'img');
@@ -263,7 +277,7 @@
           'aria-label',
           unit === 'objectives'
             ? so + ' solid, ' + al + ' almost, of ' + n + ' objectives'
-            : so + ' of ' + n + ' plan tasks done'
+            : so + ' of ' + n + ' ' + unit + ' done'
         );
         const g = el('i', 'x-green'),
           y = el('i', 'x-yellow');
@@ -272,15 +286,17 @@
         bar.append(g, y);
         row.append(top, bar);
         return row;
-      });
+      })
+        .filter(Boolean);
       $('prog-ready').hidden = !readyRows.length;
       $('prog-ready').replaceChildren(el('span', 'lab', 'Exam readiness · objectives solid'), ...readyRows);
       // the day panel (B-342, the demo's): what that day holds in Record, sessions, quizzes and notes, newest first; the
       // total is its study time
       const b = bs[pick];
+      // B-372: This week lists the picked day's; Month and Semester list the four most recent, as the demo
       const list = recEntries()
-        .filter(x => x.kind !== 'workout' && x.result !== 'going now' && inSpan(x.date, b.from, b.to))
-        .slice(0, 5);
+        .filter(x => x.kind !== 'workout' && x.result !== 'going now' && (P !== 'week' || inSpan(x.date, b.from, b.to)))
+        .slice(0, P === 'week' ? 5 : 4);
       const ul = el('ul', 'prog-sessions');
       for (const x of list) {
         const li = el('li', 'prog-s');
@@ -297,11 +313,10 @@
         li.append(el('span', 'badge' + (cls ? ' ' + cls : ''), word), txt);
         ul.append(li);
       }
-      const unit = P === 'week' ? 'day' : P === 'month' ? 'week' : 'month';
       $('prog-day').replaceChildren(
         el('span', 'lab prog-day-when', b.full),
         el('p', 'prog-day-total', ahead(b) ? 'Ahead' : hm(vals[pick])),
-        el('span', 'lab prog-day-lab', list.length ? 'That ' + unit + ' in Record' : 'Nothing logged'),
+        el('span', 'lab prog-day-lab', list.length ? (P === 'week' ? 'That day in Record' : 'Recent in Record') : 'Nothing logged'),
         ul
       );
       $('prog-day').hidden = false;
