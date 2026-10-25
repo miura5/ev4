@@ -6414,7 +6414,7 @@
   "milestone": "v4.8 redesign",
   "status": "in progress",
   "depends": [],
-  "notes": "claimed by lane ev",
+  "notes": "built and pushed at 6de65ad; shipping staging",
   "commit": null,
   "source": "UI reviewer click-through at d35692d, Oct 25 (D-316)",
   "words": "The UI review found E.V.'s conversation differs from the demo: sessions, chip replies, Coming up and the check-in card.",
