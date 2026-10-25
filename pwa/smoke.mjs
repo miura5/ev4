@@ -3,8 +3,9 @@
 // seeded with the synthetic record (test/data/synthetic.cjs; nothing here is Matt's), and a stub in place of the
 // Claude API (the browser's /api/claude answered here and every call recorded). At 390 and 1280: boot with no page
 // error, each tab, a check-off that survives a reload (the reload reads it back from D1), a chat reply from the stub,
-// and a chat message with a planted patient identifier stopped by the page's gate with no call to /api/claude. The
-// study session step runs and is reported, but only counts once B-314 makes it pass (SESSION_REQUIRED).
+// and a chat message with a planted patient identifier stopped by the page's gate with no call to /api/claude. B-314:
+// the shim offers no mcp (use('mcp') resolves null), a study session runs with no note (start, Break and Resume,
+// +5 minutes, Quiz me now, End), and no request leaves the app for a host: server or Claude Code Remote.
 //   node pwa/smoke.mjs [screenshots dir] [--plant page-error]      (npm run smoke:pwa; needs `npm ci --prefix pwa`)
 // Exit code 1 when any counted check fails. --plant page-error makes the served app.js throw once the page is up, to
 // prove the smoke turns red (the smoke workflow runs it and expects red).
@@ -30,8 +31,6 @@ if (PLANT && PLANT !== 'page-error') {
 }
 const shots = args[0] || path.join(os.tmpdir(), 'ev4-smoke-pwa');
 fs.mkdirSync(shots, { recursive: true });
-// B-314 turns the study session green (a session with no Study Watch note); until then it is reported, not counted.
-const SESSION_REQUIRED = false;
 const TOKEN = 'smoke-token-not-a-secret';
 const WRANGLER = path.join(PWA, 'node_modules/.bin/wrangler');
 if (!fs.existsSync(WRANGLER)) {
@@ -111,10 +110,21 @@ async function serve(dir) {
 
 // The stub in place of the Claude API: one reply in the Messages API's shape. A machine-parsed ask gets {}.
 const STUB_REPLY = 'Stub reply: an adult resting heart rate runs 60 to 100 beats a minute.';
+const STUB_CHECK = 'Stub check: why does a low serum potassium change the heart rhythm?';
 function stubAnswer(body) {
   const last = (body.messages || []).filter(m => m.role === 'user').pop();
   const said = last && typeof last.content === 'string' ? last.content : '';
-  const text = /machine-parsed/.test(said) ? '{}' : STUB_REPLY;
+  // a session check (B-314: Quiz me now with no note) gets two items; any other machine-parsed ask gets {}
+  const text = !/machine-parsed/.test(said)
+    ? STUB_REPLY
+    : /short items/.test(said)
+      ? JSON.stringify({
+          items: [
+            { text: STUB_CHECK, kind: 'why' },
+            { text: 'Stub check two.', kind: 'gap' },
+          ],
+        })
+      : '{}';
   return {
     id: 'msg_stub',
     type: 'message',
@@ -127,13 +137,39 @@ function stubAnswer(body) {
 }
 
 const results = [];
-const ok = (name, cond, detail = '', counted = true) =>
-  results.push([cond ? 'PASS' : counted ? 'FAIL' : 'PENDING', name, detail]);
+const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', name, detail]);
 const until = (page, fn, arg, ms = 6000) =>
   page
     .waitForFunction(fn, arg, { timeout: ms })
     .then(() => true)
     .catch(() => false);
+
+// B-314: every name the page asks window.claude.use for, what use('mcp') gave, and any tool call through it (a
+// host: server is the Study Watch reader, Claude Code Remote fires the builder); recorded in the page, read by the smoke.
+const WATCH_USE = () => {
+  let real;
+  window.__ev = { uses: [], mcp: [], tools: [] };
+  Object.defineProperty(window, 'claude', {
+    configurable: true,
+    get: () => real,
+    set(v) {
+      const use = v.use;
+      v.use = async n => {
+        window.__ev.uses.push(n);
+        const r = await use(n);
+        if (n === 'mcp') {
+          window.__ev.mcp.push(r === null ? null : typeof r);
+          if (r && r.callTool) {
+            const call = r.callTool.bind(r);
+            r.callTool = (server, ...rest) => (window.__ev.tools.push(String(server)), call(server, ...rest));
+          }
+        }
+        return r;
+      };
+      real = v;
+    },
+  });
+};
 
 async function open(context, origin) {
   const page = await context.newPage();
@@ -165,6 +201,13 @@ async function main() {
       // The service worker is kept out so every request passes the routes below (it never caches /api anyway).
       const context = await browser.newContext({ viewport, colorScheme: 'dark', serviceWorkers: 'block' });
       await context.addInitScript(t => localStorage.setItem('ev.token', t), TOKEN);
+      await context.addInitScript(WATCH_USE);
+      const outside = []; // every request that left the app's own origin (the fonts are answered empty above)
+      context.on('request', r => {
+        const u = r.url();
+        if (!u.startsWith(origin + '/') && !u.startsWith('https://fonts.googleapis.com/') && !u.startsWith('data:'))
+          outside.push(u);
+      });
       await context.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));
       await context.route(origin + '/api/claude', r => {
         const body = JSON.parse(r.request().postData() || '{}');
@@ -308,29 +351,87 @@ async function main() {
       );
       await page.fill('#ev-input', '');
 
-      // 6. A study session started and ended (B-314 makes this pass with no Study Watch note).
-      await page.fill('#ev-input', 'Start a study session');
-      await page.locator('#ev-form').evaluate(f => f.requestSubmit());
-      const started = await until(page, () => !document.getElementById('sbar').hidden, null, 6000);
-      let ended = false;
+      // 6. B-314: a study session with no note: it starts, breaks and resumes, takes +5 minutes, quizzes (questions on
+      // his objectives and weak spots, from the stub) and ends, with no Study Watch reader to ask.
+      await idle();
+      const say = async line => {
+        await idle();
+        await page.fill('#ev-input', line);
+        await page.locator('#ev-form').evaluate(f => f.requestSubmit());
+      };
+      const lastEv = () =>
+        page
+          .locator('#thread .msg.ev')
+          .last()
+          .textContent()
+          .catch(() => '');
+      // his typed asks run the same calls as the session's buttons (the header line or the side card, by width)
+      const matching = src =>
+        page.evaluate(
+          r => [...document.querySelectorAll('#thread .msg.ev')].filter(m => new RegExp(r).test(m.textContent)).length,
+          src
+        );
+      const answered = async (line, re) => {
+        const n = await matching(re.source);
+        await say(line);
+        return until(
+          page,
+          ([src, n0]) =>
+            [...document.querySelectorAll('#thread .msg.ev')].filter(m => new RegExp(src).test(m.textContent)).length >
+            n0,
+          [re.source, n],
+          8000
+        );
+      };
+      const steps = [];
+      await say('Start a study session');
+      const started =
+        (await until(page, () => !document.getElementById('sbar').hidden, null, 6000)) &&
+        (await until(
+          page,
+          () => /Session started\./.test([...document.querySelectorAll('#thread .msg.ev')].pop()?.textContent || ''),
+          null,
+          4000
+        ));
+      if (!started) steps.push('start: ' + (await lastEv()));
+      const active = started
+        ? await fetch(origin + '/api/db?since=0', { headers: { authorization: 'Bearer ' + TOKEN } })
+            .then(r => r.json())
+            .then(b => b.docs.filter(d => d.c === 'sessions' && d.data.status === 'active').map(d => d.data))
+        : [];
+      if (started && !(active.length === 1 && active[0].noteId === '' && active[0].topic === 'Study session'))
+        steps.push('the record holds no one active session with no note: ' + JSON.stringify(active.map(a => a.noteId)));
       if (started) {
-        const end = page.locator('#sbar button', { hasText: /^(End|Finish)$/ });
-        if (await end.count()) {
-          await end.first().click();
-          ended = await until(page, () => document.getElementById('sbar').hidden, null, 6000);
-        }
+        if (!(await answered('take a break', /Break started/))) steps.push('break: ' + (await lastEv()));
+        if (!(await answered('resume', /Welcome back/))) steps.push('resume: ' + (await lastEv()));
+        if (!(await answered('add 5 minutes', /5 minutes later/))) steps.push('+5: ' + (await lastEv()));
+        const asked = calls.length;
+        const quizzed =
+          (await answered('Quiz me now', /questions? on your objectives and weak spots/)) &&
+          (await until(page, said => document.body.textContent.includes(said), STUB_CHECK, 4000));
+        if (!quizzed || calls.length === asked) steps.push('quiz: ' + (await lastEv()));
+        if (!(await answered('end session', /Session saved/))) steps.push('end: ' + (await lastEv()));
+        else if (!(await until(page, () => document.getElementById('sbar').hidden, null, 8000)))
+          steps.push('the bar stayed after End');
       }
       ok(
-        `${tag} a study session starts and ends`,
-        started && ended,
-        started
-          ? ''
-          : await page
-              .locator('#thread .msg.ev')
-              .last()
-              .textContent()
-              .catch(() => ''),
-        SESSION_REQUIRED
+        `${tag} a study session with no note starts, breaks, takes +5, quizzes and ends`,
+        steps.length === 0,
+        steps.join(' | ')
+      );
+
+      // 7. B-314: no Study Watch reader, no builder: the shim's mcp is null and nothing left for a host: server or Claude
+      // Code Remote (no tool call through mcp, and no request outside the app).
+      const seen = await page.evaluate(() => {
+        window.claude.use('mcp');
+        return window.__ev;
+      });
+      await page.waitForTimeout(100);
+      const mcpGot = await page.evaluate(() => window.__ev.mcp);
+      ok(
+        `${tag} use('mcp') resolves null, with no call to a host: server or Claude Code Remote and no request outside the app`,
+        mcpGot.length > 0 && mcpGot.every(m => m === null) && seen.tools.length === 0 && outside.length === 0,
+        JSON.stringify({ mcp: mcpGot, tools: seen.tools, outside: outside.slice(0, 3) })
       );
 
       await page.screenshot({ path: `${shots}/smoke-pwa-${scheme}.png` });
@@ -344,10 +445,8 @@ async function main() {
   }
   for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : '');
   const failed = results.filter(r => r[0] === 'FAIL').length;
-  const pending = results.filter(r => r[0] === 'PENDING').length;
   console.log(
-    `${failed ? failed + ' FAILED' : 'ALL PASSED'} of ${results.length - pending} smoke:pwa checks` +
-      (pending ? ` (${pending} pending B-314)` : '') +
+    `${failed ? failed + ' FAILED' : 'ALL PASSED'} of ${results.length} smoke:pwa checks` +
       ` in ${Math.round((Date.now() - t0) / 1000)} s${PLANT ? ' (planted: ' + PLANT + ')' : ''}`
   );
   process.exit(failed ? 1 : 0);

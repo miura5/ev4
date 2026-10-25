@@ -46,6 +46,11 @@
       capability_disabled:
         'Reading your note isn’t available in this view. Open E.V. Home in the Claude desktop app on your Mac.',
     };
+    // B-314 (D-298): with no Study Watch reader offered (no mcp, as in the app, or a reader that isn't connected) a
+    // session starts with no note: it keeps time, breaks and +5, and its checks and Quiz me now ask about his
+    // objectives and weak spots instead of a note.
+    const NOT_OFFERED = ['server_not_connected', 'mcp_unavailable', 'capability_disabled', 'not_granted'];
+    const noteless = s => !!s && !s.noteId;
     const readerCopy = (code, msg) =>
       READER_COPY[code] ||
       (code === 'tool_error' && msg
@@ -135,14 +140,16 @@
           'Study sessions need permission to ask Claude for the checks. Allow Claude for this page from its Permissions menu.',
           [],
         ];
-      let p;
+      let p = null;
       try {
         p = await readerCall('latest_note');
       } catch (e) {
         SS.readerOk = false;
-        return [readerCopy((e && e.code) || 'upstream_error', e && e.message), []];
+        const code = (e && e.code) || 'upstream_error';
+        if (!NOT_OFFERED.includes(code)) return [readerCopy(code, e && e.message), []];
       }
-      if (!p.found)
+      const bare = !p; // B-314: no reader offered, so the session reads no note
+      if (!bare && !p.found)
         return [
           p.refused
             ? 'Study Watch’s latest note isn’t in ' +
@@ -151,8 +158,8 @@
             : 'Study Watch hasn’t saved a school note yet. Check that it’s running in reader mode, type a line in your NUR 112 or BIO 201 note, then start again.',
           [],
         ];
-      const n = p.note || {};
-      if (p.graded)
+      const n = bare ? { id: '', name: 'Study session', folder: '' } : p.note || {};
+      if (!bare && p.graded)
         return [`**${n.name}** is tagged #graded, so I stay out of it. Open another note and start again.`, []];
       const at = now();
       const stamp = at.replace(/\D/g, '').slice(0, 14);
@@ -175,18 +182,27 @@
           folder: String(n.folder || ''),
           driver: { view: SS.view, at },
           events: {
-            [pageKey(at)]: { type: 'start', noteId: n.id, len: mark.len, h: mark.h, modifiedAt: n.modifiedAt || null },
+            [pageKey(at)]: bare
+              ? { type: 'start' }
+              : { type: 'start', noteId: n.id, len: mark.len, h: mark.h, modifiedAt: n.modifiedAt || null },
           },
         },
       });
-      SS.text = n.text || '';
+      SS.text = bare ? null : n.text || '';
       SS.added = '';
       SS.said.clear();
       SS.seen = SS.text;
-      SS.note = { id: n.id, name: n.name, folder: n.folder || '', title: n.title || '' };
+      SS.note = bare ? null : { id: n.id, name: n.name, folder: n.folder || '', title: n.title || '' };
       SS.nextRead = Date.now() + (SWC.readSeconds || 30) * 1e3;
       SS.changedAt = Date.now();
       renderNotes();
+      if (bare)
+        return [
+          COMMENT
+            ? 'Session started. I’ll keep time; tap Quiz me now whenever you want questions on your objectives and weak spots. Break and End are in the bar at the top.'
+            : `Session started. Every ${SWC.checkMinutes || 7} minutes I’ll post questions on your objectives and weak spots. Break, +5 and End are in the bar at the top.`,
+          [],
+        ];
       if (COMMENT)
         return [
           `Session started on **${n.name}**. I’m reading along as you write and I’ll only chime in when a line makes a connection. Tap Quiz me now whenever you want questions. Break and End are in the bar at the top.`,
@@ -219,16 +235,25 @@
             id: s.id,
             data: { driver: { view: SS.view, at: now() } },
           });
+        const bare = noteless(s);
         let p;
-        try {
-          p = await readerCall('latest_note');
-        } catch (e) {
-          const code = (e && e.code) || 'upstream_error';
-          if (['server_not_connected', 'mcp_unavailable', 'capability_disabled', 'not_granted'].includes(code))
-            SS.readerOk = false;
-          await skip('reader-' + code, readerCopy(code, e && e.message));
-          return;
-        }
+        if (bare) {
+          // B-314: no note; the check asks about his record (objectives and weak spots) in the note's place
+          const ctx = sessCtx();
+          if (!ctx.text) {
+            await skip('no-material', 'I don’t have objectives or weak spots to ask about yet. The session keeps time.');
+            return;
+          }
+          p = { found: true, note: { id: '', name: s.topic || 'Study session', text: ctx.text } };
+        } else
+          try {
+            p = await readerCall('latest_note');
+          } catch (e) {
+            const code = (e && e.code) || 'upstream_error';
+            if (NOT_OFFERED.includes(code)) SS.readerOk = false;
+            await skip('reader-' + code, readerCopy(code, e && e.message));
+            return;
+          }
         if (!p.found) {
           await skip('no-note', 'I can’t see a saved school note right now. Is Study Watch running in reader mode?');
           return;
@@ -244,7 +269,7 @@
         const base = quiz ? st.lastQuizMark : st.lastMark;
         const mark = base && base.noteId === note.id ? base : null;
         const text = String(note.text || '');
-        let d = E.noteDelta(text, mark);
+        let d = bare ? { added: text, same: false, rewritten: false } : E.noteDelta(text, mark);
         if (d.same && quiz) d = { added: text.slice(-(SWC.fallbackChars || 2500)), same: false, rewritten: true }; // Quiz me now on an unchanged note: the note so far
         if (d.same) {
           await sessEvent(s, 'idle');
@@ -258,10 +283,12 @@
         const msg = msgId('e');
         const m2 = E.noteMark(text);
         const switched = st.lastMark && st.lastMark.noteId && st.lastMark.noteId !== note.id;
-        const pargs = { noteName: note.name, text, added: d.added, n, context: sessCtx(), rewritten: d.rewritten };
+        const pargs = bare
+          ? { noteName: note.name, text: '', added: d.added, n, context: null, rewritten: false }
+          : { noteName: note.name, text, added: d.added, n, context: sessCtx(), rewritten: d.rewritten };
         // B-75 (D-133): the formats alternate from multiple choice; an open check whose note gives no two grounded key
         // points, or whose item fails its check function, falls back to multiple choice and is stored as one.
-        if (E.checkFormat(s, now()) === 'open') {
+        if (!bare && E.checkFormat(s, now()) === 'open') {
           const item = E.parseOpenCheck(
             await sample.json(E.openCheckPrompt(pargs), { modelTier: 'quick', cache: false }),
             {
@@ -326,7 +353,9 @@
         await postMsg({
           id: msg,
           role: 'ev',
-          text: `${count} on what you just wrote${switched ? ' in **' + note.name + '**' : ''}.`,
+          text: bare
+            ? `${count} on your objectives and weak spots.`
+            : `${count} on what you just wrote${switched ? ' in **' + note.name + '**' : ''}.`,
           cards: [{ type: 'check', session: s.id, n, items }],
           at: now(),
           tier: 'quick',
@@ -341,11 +370,13 @@
           h: m2.h,
           modifiedAt: note.modifiedAt || null,
         });
-        SS.text = text;
-        SS.added = d.added;
+        if (!bare) {
+          SS.text = text;
+          SS.added = d.added;
+        }
         SS.alertUntil = Date.now() + 4500;
         chime();
-        if (SS.seen != null && text.startsWith(SS.seen)) SS.seen = text;
+        if (!bare && SS.seen != null && text.startsWith(SS.seen)) SS.seen = text;
       } catch (e) {
         const code = (e && e.code) || 'error';
         if (HIDE.has(code)) T.sampleOff = code;
@@ -366,6 +397,7 @@
     // Her line is posted to the conversation; the line of his it answers stays in this page's memory (SS.quotes), never
     // in the record. A comment writes a check event marked comment, so the note's mark and the idle count move with it.
     async function readTick(s) {
+      if (noteless(s)) return;
       if (SS.reading || SS.busy || Date.now() < SS.nextRead) return;
       SS.reading = true;
       SS.nextRead = Date.now() + (SWC.readSeconds || 30) * 1e3;
@@ -464,6 +496,16 @@
     // session left alone, and the mark a quiz starts from).
     async function runCheckpoint(s) {
       if (SS.busy) return;
+      if (noteless(s)) {
+        // B-314: comment mode reads a note at its checkpoints; with none, the checkpoint only moves the clock on
+        SS.busy = 'quiet';
+        try {
+          await sessEvent(s, 'skip', { why: 'no-note' });
+        } finally {
+          SS.busy = false;
+        }
+        return;
+      }
       SS.busy = 'quiet';
       try {
         const st = E.sessionState(s, now());
@@ -816,8 +858,9 @@
       }
       const s = activeSession();
       if (!s) {
-        if (card.dataset.k === 'idle') return;
-        card.dataset.k = 'idle';
+        const offered = !!(mcp && READER.host); // B-314: with no reader the session reads no note
+        if (card.dataset.k === 'idle' + offered) return;
+        card.dataset.k = 'idle' + offered;
         card.setAttribute('aria-label', 'Start a study session');
         const go = btn('Start study session', () => guard(go, () => quick('Start a study session')), {
           cls: 'btn neutral sm wide',
@@ -825,8 +868,12 @@
         go.insertAdjacentHTML('afterbegin', PLAY_ICON);
         card.replaceChildren(
           el('h2', null, 'Start a study session'),
-          el('p', 'ss-topic', 'Your Study Watch note'),
-          el('p', 'meta', 'Its latest line in ' + E.courses().join(' or ') + ', read when you start.'),
+          ...(offered
+            ? [
+                el('p', 'ss-topic', 'Your Study Watch note'),
+                el('p', 'meta', 'Its latest line in ' + E.courses().join(' or ') + ', read when you start.'),
+              ]
+            : [el('p', 'meta', 'A timer and breaks, with questions on your objectives and weak spots.')]),
           go
         );
         return;
@@ -903,13 +950,15 @@
         SS.reprobeAt = Date.now() + 30e3;
         SS.readerOk = null;
       } // B-87: a failed probe is retried
-      if (SS.readerOk == null) probeReader();
+      if (SS.readerOk == null && !noteless(s)) probeReader();
       if (s.status !== 'active') return;
       const st = E.sessionState(s, now());
       // B-87: the view in front of him takes the session over as soon as its reader answers (a reload or a reopened tab
       // used to wait two minutes past a due check, the clock at 0:00).
+      // B-314: a session with no note needs no reader to be driven
+      const free = SS.readerOk === true || noteless(s);
       if (
-        SS.readerOk === true &&
+        free &&
         SS.mayClaim &&
         document.visibilityState !== 'hidden' &&
         (!s.driver || s.driver.view !== SS.view)
@@ -924,7 +973,7 @@
       }
       const mine =
         (s.driver && s.driver.view === SS.view) ||
-        (SS.readerOk === true && (!s.driver || st.overdueMs > (SWC.takeoverMinutes || 2) * 60e3));
+        (free && (!s.driver || st.overdueMs > (SWC.takeoverMinutes || 2) * 60e3));
       if (!mine) return;
       if (st.shouldWrap) {
         endSession('idle')

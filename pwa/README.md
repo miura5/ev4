@@ -22,6 +22,8 @@ phone (installed app) ──/api + token──► Worker ──► D1 (the recor
   The key is a Cloudflare secret: never in this repository, the page or a browser.
 
 Not in the demo: images to Claude (library photo reading), scheduled runs, the Study Watch reader, your real record.
+With no Study Watch reader a study session reads no note: it keeps time, and its questions come from your objectives
+and weak spots (B-314).
 
 ## Deploy (about 30 minutes, once)
 
@@ -61,7 +63,8 @@ npm run dev                             # http://localhost:8787, token demo-toke
 `npm ci --prefix pwa`, then `npm run smoke:pwa` from the repository root: the app's page boots through the shim against
 `wrangler dev` on a fresh local D1 holding the synthetic record, with a stub answering `/api/claude`. It checks boot,
 each tab, a check-off that survives a reload, a chat reply, and that a planted patient identifier is held by the page
-with no call to `/api/claude`. The study session step is reported as pending until B-314. The smoke workflow runs it on
+with no call to `/api/claude`. B-314: a study session runs with no note (start, a break, +5 minutes, Quiz me now, end),
+`use('mcp')` resolves null, and no request leaves the app (no Study Watch reader, no builder). The smoke workflow runs it on
 every push, and once more with `--plant page-error` to prove it turns red.
 
 ## The demo's Worker
