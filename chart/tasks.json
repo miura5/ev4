@@ -6256,11 +6256,13 @@
  {
   "id": "B-355",
   "kind": "request",
-  "title": "Request (reported Oct 25): Fidelity fix: the task panel lacks the demo's tick beside the title and places Where it came from differently.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
-  "depends": [],
+  "title": "Fidelity fix: Task (D-314): the tick beside the task's title as the TaskDetail board, its description when it has one, and Where it came from under the title at every size",
+  "dod": "TaskDetail matches at every size, apart from the panel placement on a computer. Proof (D-312, fidelity sprint): node tools/build.mjs; tools/fidelity screenshots (crawl.cjs demo and built click every control) beside the boards at 1280, 1706, 2560 and 390; npm run smoke; ship staging GREEN.",
+  "milestone": "v4.8 redesign",
+  "status": "open",
+  "depends": [
+   "B-343"
+  ],
   "notes": "",
   "commit": null,
   "source": "fidelity review, Oct 25 (D-314)",
@@ -6268,6 +6270,10 @@
   "reportedAt": "2026-10-25T12:48:30.709Z",
   "board": {
    "row": "v4 B-355: Fidelity fix: the task panel lacks the demo's tick beside the title…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-25T12:48:33.814Z"
   }
  }
 ]
