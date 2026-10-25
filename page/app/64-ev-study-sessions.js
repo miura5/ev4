@@ -46,9 +46,8 @@
       capability_disabled:
         'Reading your note isn’t available in this view. Open E.V. Home in the Claude desktop app on your Mac.',
     };
-    // B-314 (D-298): with no Study Watch reader offered (no mcp, as in the app, or a reader that isn't connected) a
-    // session starts with no note: it keeps time, breaks and +5, and its checks and Quiz me now ask about his
-    // objectives and weak spots instead of a note.
+    // B-314 (D-298): with no Study Watch reader offered (no mcp, as in the app) a session starts with no note: it keeps
+    // time, breaks and +5, and its checks and Quiz me now ask about his objectives and weak spots instead of a note.
     const NOT_OFFERED = ['server_not_connected', 'mcp_unavailable', 'capability_disabled', 'not_granted'];
     const noteless = s => !!s && !s.noteId;
     const readerCopy = (code, msg) =>
@@ -140,15 +139,15 @@
           'Study sessions need permission to ask Claude for the checks. Allow Claude for this page from its Permissions menu.',
           [],
         ];
+      const bare = !mcp || !READER.host; // B-314: no reader offered (the app has no mcp), so the session reads no note
       let p = null;
-      try {
-        p = await readerCall('latest_note');
-      } catch (e) {
-        SS.readerOk = false;
-        const code = (e && e.code) || 'upstream_error';
-        if (!NOT_OFFERED.includes(code)) return [readerCopy(code, e && e.message), []];
-      }
-      const bare = !p; // B-314: no reader offered, so the session reads no note
+      if (!bare)
+        try {
+          p = await readerCall('latest_note');
+        } catch (e) {
+          SS.readerOk = false;
+          return [readerCopy((e && e.code) || 'upstream_error', e && e.message), []];
+        }
       if (!bare && !p.found)
         return [
           p.refused
@@ -241,7 +240,10 @@
           // B-314: no note; the check asks about his record (objectives and weak spots) in the note's place
           const ctx = sessCtx();
           if (!ctx.text) {
-            await skip('no-material', 'I don’t have objectives or weak spots to ask about yet. The session keeps time.');
+            await skip(
+              'no-material',
+              'I don’t have objectives or weak spots to ask about yet. The session keeps time.'
+            );
             return;
           }
           p = { found: true, note: { id: '', name: s.topic || 'Study session', text: ctx.text } };
@@ -284,7 +286,7 @@
         const m2 = E.noteMark(text);
         const switched = st.lastMark && st.lastMark.noteId && st.lastMark.noteId !== note.id;
         const pargs = bare
-          ? { noteName: note.name, text: '', added: d.added, n, context: null, rewritten: false }
+          ? { noteName: note.name, text: '', added: '', n, context: sessCtx(), rewritten: false } // his record goes in as labelled data
           : { noteName: note.name, text, added: d.added, n, context: sessCtx(), rewritten: d.rewritten };
         // B-75 (D-133): the formats alternate from multiple choice; an open check whose note gives no two grounded key
         // points, or whose item fails its check function, falls back to multiple choice and is stored as one.
@@ -825,7 +827,8 @@
             ? 'Writing your quiz…'
             : st.onBreak
               ? `On a break · ${minsLeft(st)} min left`
-              : `${minsLeft(st) ?? st.minutes} min${minsLeft(st) == null ? '' : ' left'} · ${SS.thinking ? 'thinking about that line' : 'reading along'}`;
+              : `${minsLeft(st) ?? st.minutes} min${minsLeft(st) == null ? '' : ' left'}` +
+                (noteless(s) ? '' : ` · ${SS.thinking ? 'thinking about that line' : 'reading along'}`);
         CORE.setRing(ringFill(st, ending));
         return;
       }
@@ -957,12 +960,7 @@
       // used to wait two minutes past a due check, the clock at 0:00).
       // B-314: a session with no note needs no reader to be driven
       const free = SS.readerOk === true || noteless(s);
-      if (
-        free &&
-        SS.mayClaim &&
-        document.visibilityState !== 'hidden' &&
-        (!s.driver || s.driver.view !== SS.view)
-      ) {
+      if (free && SS.mayClaim && document.visibilityState !== 'hidden' && (!s.driver || s.driver.view !== SS.view)) {
         SS.mayClaim = false;
         write({ op: 'update', collection: 'sessions', id: s.id, data: { driver: { view: SS.view, at: now() } } }).catch(
           () => {
