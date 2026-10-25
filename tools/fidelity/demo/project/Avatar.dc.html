@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>E.V., Dial Arc</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.av{position:relative;flex:none}
+.av svg{width:100%;height:100%;display:block;overflow:visible}
+.c1{fill:var(--c1)}.c2{fill:var(--c2)}
+.th-light{--bgu:#F7F2E8}.th-dark{--bgu:#19161C}.under{fill:var(--bgu)}
+.wv{fill:none;stroke:var(--c2);stroke-width:.75;stroke-linecap:round}
+.s2{fill:none;stroke:var(--c2);stroke-linejoin:round;vector-effect:non-scaling-stroke}
+</style>
+</helmet>
+<div class="{{cls}}" style="width:{{S}}px;height:{{S}}px;--c1:{{c1}};--c2:{{c2}};{{bguStyle}}">
+  <svg viewBox="-50 -50 100 100" role="img" aria-label="{{label}}">
+    <defs>
+      <pattern id="{{pid}}" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(30)"><circle cx="1.5" cy="1.5" r="0.95" class="c2"></circle></pattern>
+      <pattern id="{{wid}}" width="2.7" height="2.7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect x="0" y="0" width="0.5" height="2.7" class="c2"></rect></pattern>
+      <pattern id="{{qid}}" width="8" height="3.2" patternUnits="userSpaceOnUse" patternTransform="{{qt}}"><path d="M0 1.6 C2 0.1 2 0.1 4 1.6 S6 3.1 8 1.6" class="wv"></path></pattern>
+    </defs>
+    <g opacity="{{dim}}">
+      <sc-for list="{{fills}}" as="f" hint-placeholder-count="0"><path d="{{f.d}}" class="{{f.c}}" fill="{{f.fill}}" opacity="{{f.o}}"></path></sc-for>
+      <sc-for list="{{lines}}" as="l" hint-placeholder-count="0"><path d="{{l.d}}" class="s2" style="stroke-width:{{l.w}}px" opacity="{{l.o}}"></path></sc-for>
+    </g>
+  </svg>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"int","default":120},"mood":{"editor":"enum","options":["idle","listening","thinking","speaking","alert","happy","sleepy"],"default":"idle"},"g":{"editor":"enum","options":["","send","done","error","glance","settle"],"default":""},"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"pal":{"editor":"enum","options":["ember","blue","dusk","tide","aurora"],"default":"ember"},"tex":{"editor":"enum","options":["halftone","wireframe","currents","solid"],"default":"halftone"},"nseg":{"editor":"int","default":12},"tilt":{"editor":"enum","options":["flat","gentle","deep"],"default":"gentle"},"gapw":{"editor":"enum","options":["narrow","wide"],"default":"narrow"},"smode":{"editor":"enum","options":["fill","pointer","closing","hers"],"default":"fill"},"session":{"editor":"float","default":-1},"c1":{"editor":null,"default":""},"c2":{"editor":null,"default":""},"bgu":{"editor":null,"default":""},"reduce":{"editor":"boolean","default":false},"$preview":{"width":120,"height":120}}'>
+const TAU = Math.PI * 2, PI = Math.PI;
+const word = (t) => { const w = Math.floor(t * 2.6), ph = t * 2.6 - w; const h = 0.45 + 0.55 * Math.abs(Math.sin(w * 12.9898) * 0.7 + Math.sin(w * 4.1) * 0.3); return Math.min(1, h * Math.exp(-ph * 3.4) + 0.12); };
+const wordPos = (t) => { const w = Math.floor(t * 2.6), ph = t * 2.6 - w; return w + 0.5 - 0.5 * Math.cos(PI * Math.min(1, ph * 2.5)); };
+const f1 = (v) => Math.round(v * 100) / 100, f2 = (v) => Math.round(v * 100) / 100;
+const cl = (x) => Math.max(0, Math.min(1, x)), ease = (x) => 0.5 - 0.5 * Math.cos(PI * cl(x));
+const pd = (pts, closed) => pts.length < 2 ? '' : 'M' + pts.map((p) => f1(p[0]) + ' ' + f1(p[1])).join('L') + (closed ? 'Z' : '');
+const lerpObj = (cur, tgt, k) => { let mv = 0; for (const key in tgt) { const d = tgt[key] - cur[key]; cur[key] += d * k; mv += Math.abs(d); } return mv; };
+// palettes: c1 the solid face, c2 the textured back; all at least 3:1 on their own ground
+const PAL = {
+  ember: { light: ['#B5530F', '#A8402F'], dark: ['#F2A35E', '#F08A78'] },
+  blue: { light: ['#2B5BD0', '#5A72B8'], dark: ['#7AA7FF', '#A9C0F0'] },
+  dusk: { light: ['#6B3FC4', '#B23C7E'], dark: ['#B08CFF', '#F08DC0'] },
+  tide: { light: ['#0E7F8C', '#2B5BD0'], dark: ['#4FC9D6', '#7AA7FF'] },
+  aurora: { light: ['#0F8577', '#6A4FC9'], dark: ['#5DD6C2', '#A38CFF'] },
+};
+const TILT = { flat: { rx: 0.14, ry: -0.12 }, gentle: { rx: 0.45, ry: -0.35 }, deep: { rx: 0.78, ry: -0.5 } };
+const cam = (rx, ry) => { const cx = Math.cos(rx), sx = Math.sin(rx), cy = Math.cos(ry), sy = Math.sin(ry); const rot = (p) => { const x1 = p[0] * cy + p[2] * sy, z1 = -p[0] * sy + p[2] * cy; return [x1, p[1] * cx - z1 * sx, p[1] * sx + z1 * cx]; }; return { rot, proj: (p) => { const r = rot(p), s = 150 / (150 - r[2]); return [r[0] * s, r[1] * s, r[2]]; } }; };
+const rodr = (v, u, a) => { const c = Math.cos(a), s = Math.sin(a), d = u[0] * v[0] + u[1] * v[1] + u[2] * v[2], cr = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]; return [v[0] * c + cr[0] * s + u[0] * d * (1 - c), v[1] * c + cr[1] * s + u[1] * d * (1 - c), v[2] * c + cr[2] * s + u[2] * d * (1 - c)]; };
+const near = (tg, cur) => tg + TAU * Math.round((cur - tg) / TAU);
+const cdist = (a, b, n) => { const d = (((a - b) % n) + n) % n; return Math.min(d, n - d); };
+const circ = (from, to, n) => ((((to - from) % n) + n * 1.5) % n) - n / 2;
+const GD = { send: 1.2, done: 1.6, error: 1.8, glance: 2.2, settle: 2.4 };
+const LIVE = { thinking: 1, speaking: 1, alert: 1, happy: 1 };
+const R0 = 16, R1 = 28, GAP = 0.08;
+
+class Component extends DCLogic {
+  componentDidMount() { this.t0 = performance.now(); const loop = () => { this.frame(); this.raf = requestAnimationFrame(loop); }; this.raf = requestAnimationFrame(loop); }
+  componentWillUnmount() { cancelAnimationFrame(this.raf); }
+  opts() {
+    const P = this.props, n = Math.max(6, Math.min(24, +(P.nseg || 12)));
+    return { n, tilt: TILT[P.tilt] || TILT.gentle, gw: P.gapw === 'wide' ? 2.6 : 1.6, tex: P.tex || 'halftone', smode: P.smode || 'fill' };
+  }
+  ctx(snap, keep) {
+    const P = this.props, now = performance.now(), t = (now - (this.t0 || now)) / 1000, mood = P.mood || 'idle', g = P.g || '';
+    if (g !== this.lg) { this.lg = g; this.gT = t; }
+    const ge = t - (this.gT || 0), S0 = +(P.size || 120), z = S0 <= 28 ? 's' : S0 <= 64 ? 'm' : 'l';
+    const gd = g === 'glance' && ge < 2.2 ? (ge < 1.1 ? -ease(ge / 0.35) : ease((ge - 1.1) / 0.35)) * (ge > 1.85 ? 1 - ease((ge - 1.85) / 0.35) : 1) : 0;
+    const sh = g === 'error' && ge < 1.4 ? 3.5 * Math.exp(-3 * ge) * Math.sin(ge * 46) : 0;
+    let sq = 1;
+    if (g === 'send' && ge < 0.6) sq = 1 - 0.12 * Math.sin(PI * ge / 0.6);
+    if (g === 'settle' && ge < 2.4) sq = 1 - 0.07 * Math.exp(-2 * ge) * Math.cos(ge * 7);
+    const dt = Math.min(0.1, t - (this.lt || t)); if (!keep) this.lt = t;
+    const sv = P.session === undefined || P.session === null || P.session === '' ? -1 : +P.session;
+    return { t, dt, mood, g, ge, z, snap, gd: Math.abs(gd) > 0.02 ? gd : 0, sess: isNaN(sv) ? -1 : sv, amp: mood === 'speaking' ? word(t) : 0, k: (b) => (snap ? 1 : 1 - Math.pow(1 - b, dt * 30)), ap: (p) => [p[0] * sq + sh, p[1] * sq] };
+  }
+  ensure(c) {
+    const O = this.opts();
+    if (!this.ids) { const r = () => Math.random().toString(36).slice(2, 9); this.ids = { pid: 'p' + r(), wid: 'w' + r(), qid: 'q' + r() }; }
+    if (!this.K || this.K.n !== O.n) {
+      const n = O.n; this.K = { n, ph: Array(n).fill(0), s: Array(n).fill(1), o: Array(n).fill(1), cam: null, dir: n * (2 / 12), w: O.gw, fall: Array(n).fill(-9), filled: -1, rot: 0 };
+      this.step(this.ctx(true, true), O);
+    }
+    return O;
+  }
+  // where the gap points (in segment units, 0 = twelve o'clock, clockwise) and how wide it is
+  gapT(c, O) {
+    const n = O.n, { mood, g, ge, amp, gd } = c;
+    if (g === 'done' && ge < 1.6) return { dir: null, w: 0 };
+    if (gd) return { dir: gd < 0 ? n * 0.75 : n * 0.25, w: O.gw };
+    if (g === 'send' && ge < 1.0) return { dir: n * (1.5 / 12), w: O.gw + 1.2 * Math.sin(PI * Math.min(1, ge)) };
+    switch (mood) {
+      case 'listening': return { dir: n / 2, w: O.gw };
+      case 'thinking': return { dir: 'spin', speed: n / 13, w: O.gw * 0.85 };
+      case 'speaking': return { dir: n * (4.5 / 12), w: 1 + amp * 2.8 };
+      case 'alert': return { dir: null, w: 0 };
+      case 'happy': return { dir: 'spin', speed: n / 4.5, w: O.gw };
+      case 'sleepy': return { dir: n / 2, w: 0.6 };
+      default: return { dir: n * (2 / 12), w: O.gw };
+    }
+  }
+  camT(c, O) {
+    const { t, mood, ge, gd } = c, B = O.tilt;
+    if (c.sess >= 0) return { rx: B.rx + 0.04, ry: B.ry + 0.05 * Math.sin(t * 0.5), sp: 1 };
+    if (c.g === 'done' && ge < 1.6) return { rx: B.rx * 0.4, ry: 0, sp: 1.03 };
+    if (gd) return { rx: B.rx * 0.7, ry: gd * 0.4, sp: 1 };
+    switch (mood) {
+      case 'thinking': return { rx: B.rx, ry: B.ry + 0.2 * Math.sin(t * 0.4), sp: 1 };
+      case 'speaking': return { rx: B.rx * 0.6, ry: B.ry * 0.5, sp: 1 };
+      case 'listening': return { rx: Math.min(B.rx, 0.1) - 0.12, ry: 0, sp: 1 };
+      case 'alert': return { rx: 0, ry: 0, sp: 1.07 };
+      case 'happy': return { rx: B.rx, ry: B.ry + 0.15 * Math.sin(t * 2), sp: 1 + 0.02 * Math.sin(t * 6) };
+      case 'sleepy': return { rx: Math.max(B.rx, 1.05), ry: B.ry, sp: 0.95 };
+      default: return { rx: B.rx, ry: B.ry, sp: 1 };
+    }
+  }
+  segT(c, O, k, gapMask) {
+    const n = O.n, { t, mood, g, ge, amp } = c, K = this.K;
+    let ph = 0, s = 1, o = 1;
+    const hide = gapMask(k);
+    if (g === 'done' && ge < 1.6) { const on = ge * 2.4 > (k + 1) / n; return { ph: on ? 0 : PI, s: on ? 1.04 : 1, o: 1 }; }
+    switch (mood) {
+      case 'thinking': { const behind = (((K.dir - (k + 0.5)) % n) + n) % n, wk = behind > 0.5 && behind < 3.5 ? 1 - (behind - 0.5) / 3 : 0; ph = PI * ease(wk * 1.2); break; }
+      case 'speaking': { const head = (wordPos(t) * 1.7) % n, d = cdist(k, head, n), pulse = Math.exp(-d * d / 1.6); ph = pulse * (0.5 + amp * 0.55); s = 1 + amp * 0.05 + pulse * 0.05; break; }
+      case 'listening': { const ang = -PI / 2 + ((k + 0.5) * TAU) / n, low = Math.max(0, Math.sin(ang)); s = 1 + 0.06 * low; break; }
+      case 'alert': { const top = k === 0 || k === n - 1; ph = top ? 0 : PI; s = top ? 1.15 * (1 + 0.05 * Math.abs(Math.sin(t * 4))) : 0.95; break; }
+      case 'happy': ph = Math.max(0, Math.sin(t * 2.4 - (k / n) * TAU)) * PI * 0.5; break;
+      case 'sleepy': ph = PI; s = 0.96; break;
+    }
+    if (g === 'settle' && ge < 2.4) s *= 1 + 0.04 * Math.exp(-2 * ge) * Math.sin(ge * 6 + k * 0.4);
+    if (g === 'error' && ge < 1.4 && hide > 0.01) o *= 0.35 + 0.65 * (Math.sin(ge * 40) > 0 ? 1 : 0);
+    if (hide > 0) { s += 0.14 * hide; o *= 1 - hide; }
+    return { ph, s, o };
+  }
+  step(c, O) {
+    const K = this.K, n = O.n; let mv = 0;
+    const CT = this.camT(c, O);
+    if (!K.cam || c.snap) K.cam = Object.assign({}, CT); else mv += lerpObj(K.cam, CT, c.k(0.08));
+    if (c.sess >= 0) return this.stepSession(c, O) + mv;
+    K.filled = -1;
+    const G = this.gapT(c, O);
+    if (G.dir === 'spin') { K.dir = (K.dir + c.dt * G.speed) % n; }
+    else if (G.dir !== null) { const d = circ(K.dir, G.dir, n); K.dir = (K.dir + d * c.k(0.1) + n) % n; mv += Math.abs(d); }
+    const dw = G.w - K.w; K.w += dw * c.k(0.12); mv += Math.abs(dw);
+    const mask = (k) => ease(cl((K.w / 2 + 0.5 - cdist(k + 0.5, K.dir, n)) / 0.3));
+    for (let k = 0; k < n; k++) {
+      const T = this.segT(c, O, k, mask), tp = near(T.ph, K.ph[k]), kk = c.snap ? 1 : c.k(0.13);
+      mv += Math.abs(tp - K.ph[k]) * 2 + Math.abs(T.s - K.s[k]) * 10 + Math.abs(T.o - K.o[k]) * 2;
+      K.ph[k] += (tp - K.ph[k]) * kk; K.s[k] += (T.s - K.s[k]) * kk; K.o[k] += (T.o - K.o[k]) * kk;
+    }
+    return mv + (LIVE[c.mood] || c.g ? 5 : 0);
+  }
+  stepSession(c, O) {
+    const K = this.K, n = O.n, filled = Math.min(n, Math.floor(c.sess * n + 1e-6));
+    if (K.filled < 0 || filled < K.filled) { K.filled = filled; K.fall = Array(n).fill(-9); }
+    while (K.filled < filled) { K.fall[K.filled] = c.t; K.filled++; }
+    const herGap = O.smode === 'hers', kk = c.snap ? 1 : c.k(0.12);
+    for (let k = 0; k < n; k++) {
+      const hide = herGap ? ease(cl((1 - cdist(k + 0.5, n / 2, n)) / 0.3)) : 0;
+      const tp = near(0, K.ph[k]); K.ph[k] += (tp - K.ph[k]) * kk; K.s[k] += (1 + 0.14 * hide - K.s[k]) * kk; K.o[k] += (1 - hide - K.o[k]) * kk;
+    }
+    return 6;
+  }
+  frame() {
+    const P = this.props; if (P.reduce) return;
+    const c = this.ctx(false), O = this.ensure(c), mv = this.step(c, O);
+    const still = (c.mood === 'idle' || c.mood === 'sleepy') && !c.g && c.sess < 0;
+    const drift = O.tex === 'currents' && this.backs;
+    if (mv > 0.04 || !still || drift) { this.q = 0; this.setState({ f: ((this.state && this.state.f) || 0) + 1 }); }
+    else if ((this.q = (this.q || 0) + 1) < 4) this.setState({ f: ((this.state && this.state.f) || 0) + 1 });
+  }
+  back(c, O, d, o, out) {
+    if (c.z === 's' || O.tex === 'solid') { out.fills.push({ d, o: f2(o * (c.z === 's' ? 0.6 : 0.8)), c: 'c2', fill: 'none' }); return; }
+    out.fills.push({ d, o: f2(o), c: 'under', fill: 'none' });
+    const id = O.tex === 'wireframe' ? this.ids.wid : O.tex === 'currents' ? this.ids.qid : this.ids.pid;
+    out.fills.push({ d, o: f2(o), c: 'tex', fill: 'url(#' + id + ')' });
+    if (O.tex === 'wireframe') out.lines.push({ d, w: 0.9, o: f2(o) });
+  }
+  draw(c, O) {
+    const K = this.K, n = O.n, C = cam(K.cam.rx, K.cam.ry), sp = K.cam.sp, span = TAU / n, items = [], cyc = 7, cs = Math.floor(c.t / cyc) * cyc;
+    const P = (v) => c.ap(C.proj([v[0] * sp, v[1] * sp, v[2] * sp]));
+    const sess = c.sess >= 0, mode = O.smode;
+    for (let k = 0; k < n; k++) {
+      const a0 = -PI / 2 + k * span + GAP / 2, a1 = a0 + span - GAP, am = (a0 + a1) / 2, ax = [Math.cos(am), Math.sin(am), 0];
+      let yo = 0, o = K.o[k], show = true, slot = false;
+      if (sess) {
+        const isNow = k === K.filled && K.filled < n;
+        slot = !(mode === 'pointer' && isNow);
+        if (k >= K.filled) show = false;
+        else { const fe = c.t - K.fall[k]; if (fe < 1.1) { const e = ease(fe / 1.1); yo = -40 * (1 - e); o *= e; } else { const re = c.t - (cs + 0.6 + k * 0.16); if (re > 0 && re < 0.8) { const e = ease(re / 0.8); yo = -8 * (1 - e); o *= 0.3 + 0.7 * e; } } }
+        if (mode === 'pointer' && isNow) { slot = false; }
+        if (K.o[k] < 0.05) slot = false;
+      }
+      if (o < 0.02 && !slot) continue;
+      const s = K.s[k], r0 = R0 * s, r1 = R1 * s, ph = K.ph[k], m = 6;
+      const ring = (flip, yy) => { const pts = []; for (let i = 0; i <= m; i++) { const a = a0 + (a1 - a0) * (i / m); pts.push([Math.cos(a) * r1, Math.sin(a) * r1, 0]); } for (let i = m; i >= 0; i--) { const a = a0 + (a1 - a0) * (i / m); pts.push([Math.cos(a) * r0, Math.sin(a) * r0, 0]); } return pts.map((p) => { const v = rodr(p, ax, flip); return [v[0], v[1] + yy, v[2]]; }); };
+      const front = C.rot(rodr([0, 0, 1], ax, ph))[2] > 0, cz = C.rot(rodr([Math.cos(am) * 22, Math.sin(am) * 22, 0], ax, ph))[2];
+      if (slot) items.push({ z: cz - 60, back: mode !== 'closing', faint: mode === 'closing', d: pd(ring(0, 0).map(P), true), o: mode === 'closing' ? 0.13 : K.o[k] });
+      if (show && o > 0.02) items.push({ z: cz, back: !front, d: pd(ring(ph, yo).map(P), true), o });
+    }
+    items.sort((a, b) => a.z - b.z);
+    const out = { fills: [], lines: [] }; let backs = false;
+    items.forEach((it) => { if (it.back) { backs = true; this.back(c, O, it.d, it.o, out); } else out.fills.push({ d: it.d, o: f2(it.o), c: 'c1', fill: 'none' }); });
+    this.backs = backs;
+    return out;
+  }
+  renderVals() {
+    const P = this.props, S0 = +(P.size || 120), z = S0 <= 28 ? 's' : S0 <= 64 ? 'm' : 'l', mood = P.mood || 'idle';
+    const c0 = this.ctx(false, true), O = this.ensure(c0);
+    if (P.reduce && this.rk !== mood + (P.g || '') + c0.sess) { this.rk = mood + (P.g || '') + c0.sess; for (let i = 0; i < 60; i++) this.step(Object.assign(this.ctx(true, true), { dt: 0.05 }), O); }
+    const c = Object.assign(c0, { dt: 0 }), d = this.draw(c, O), th = P.theme === 'dark' ? 'dark' : 'light', pal = P.c1 ? [P.c1, P.c2 || P.c1] : (PAL[P.pal] || PAL.ember)[th];
+    return {
+      S: S0, c1: pal[0], c2: pal[1], bguStyle: P.bgu ? '--bgu:' + P.bgu : '', label: 'E.V., ' + mood, pid: this.ids.pid, wid: this.ids.wid, qid: this.ids.qid,
+      qt: 'rotate(-24) translate(' + f1((c.t * 2.4) % 8) + ' 0)', cls: 'av z-' + z + ' th-' + th, dim: mood === 'sleepy' && c.sess < 0 ? 0.78 : 1, fills: d.fills, lines: d.lines,
+    };
+  }
+}
+</script>
+</body>
+</html>

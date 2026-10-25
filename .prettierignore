@@ -14,3 +14,5 @@ scripts/canvas/
 # page/app/*.js are parts of one closure, not JavaScript on their own: test/format.test.mjs holds their join to the
 # formatter instead.
 page/app/
+
+tools/fidelity/demo/

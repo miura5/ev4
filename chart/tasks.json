@@ -5097,7 +5097,17 @@
   "status": "open",
   "depends": [
    "B-277",
-   "B-303"
+   "B-303",
+   "B-332",
+   "B-333",
+   "B-334",
+   "B-335",
+   "B-336",
+   "B-337",
+   "B-338",
+   "B-339",
+   "B-340",
+   "B-341"
   ],
   "notes": "Matt's look, Oct 25 morning: not approved. Staging (117bbe9, every lane merged) does not match the v4 demo: Study looks untouched and nearly empty; Today, Progress and Record sit in a narrow centred column; pieces of the demo are missing; the polish isn't there. Live is held. A fidelity review of staging against the demo is running; its gap list becomes the fix tasks.",
   "commit": null,
@@ -5803,5 +5813,143 @@
   "notes": "",
   "commit": null,
   "source": "plan QL68BeUSw8HB3QFhDTZ4XJ"
+ },
+ {
+  "id": "B-332",
+  "kind": "task",
+  "title": "Fidelity: the window frame (supersedes D-225's 680 px reading width and D-245's panel cards on the ground, Matt Oct 25: match the demo). The window runs from the sidebar to 8 px from the right edge; the header spans the window and holds only the title, the view switch and New (no health or status text); the right panel is 320 px, inside the window, under the header with a 1 px divider; lists, cards and grids span the pane, only her message column keeps 600 to 680 px.",
+  "dod": "Measured against the Today list board: window from the sidebar to 8 px from the right; header as wide as the window; panel 320 px inside it, top at or below the header; no element in the pane narrower than the pane by a max-width under 1200 px except her message column; with health 82 hours old the header shows no other text. Proof (D-312, fidelity sprint): node tools/build.mjs, then tools/fidelity's demo and built screenshots read side by side at 1280, 1706, 2560 and 390, plus npm run smoke; then ship staging GREEN.",
+  "milestone": "v4.8 redesign",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "fidelity review, Oct 25 (D-312)"
+ },
+ {
+  "id": "B-333",
+  "kind": "task",
+  "title": "Fidelity: her one-line insight under the header, as in the demo: a strip about 49 px tall under the header on Today, Week and Study with one sentence built from the record and its one action; absent when there is nothing to say; never on Progress (her Progress line was cut).",
+  "dod": "The strip shows on Today, Week and Study with a sentence from the synthetic record, matches the boards' strip, and is absent on Progress and when there is nothing to say. Proof (D-312, fidelity sprint): node tools/build.mjs, then tools/fidelity's demo and built screenshots read side by side at 1280, 1706, 2560 and 390, plus npm run smoke; then ship staging GREEN.",
+  "milestone": "v4.8 redesign",
+  "status": "open",
+  "depends": [
+   "B-332"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "fidelity review, Oct 25 (D-312)"
+ },
+ {
+  "id": "B-334",
+  "kind": "task",
+  "title": "Fidelity: the sidebar as in the demo. Each Today item shows its minutes or day and a dot coloured by its type, with N left beside the heading; Preferences in the foot opens a small popover with Theme and Contrast and a System link (replacing open controls), Esc closes it and returns focus.",
+  "dod": "Matches the demo's sidebar and its Preferences popover at 1280 and 390; N left equals the open items; Esc returns focus to Preferences. Proof (D-312, fidelity sprint): node tools/build.mjs, then tools/fidelity's demo and built screenshots read side by side at 1280, 1706, 2560 and 390, plus npm run smoke; then ship staging GREEN.",
+  "milestone": "v4.8 redesign",
+  "status": "open",
+  "depends": [
+   "B-332"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "fidelity review, Oct 25 (D-312)"
+ },
+ {
+  "id": "B-335",
+  "kind": "task",
+  "title": "Fidelity: Today as in the demo. The All / Classes / Study filter with counts; List / Week and Plan the rest in one toolbar row; the budget figure large (28 px or more) with On the list and Done rows; no Next 7 days card on Today; the week grid fills the pane's height, titles wrap up to 3 lines uncut, with back / Today / forward and the date range.",
+  "dod": "Matches the Today list and Week boards; filter counts equal the list; no title cut at 1280 or 1706. Proof (D-312, fidelity sprint): node tools/build.mjs, then tools/fidelity's demo and built screenshots read side by side at 1280, 1706, 2560 and 390, plus npm run smoke; then ship staging GREEN.",
+  "milestone": "v4.8 redesign",
+  "status": "open",
+  "depends": [
+   "B-332"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "fidelity review, Oct 25 (D-312)"
+ },
+ {
+  "id": "B-336",
+  "kind": "task",
+  "title": "Fidelity: the task panel as in the demo. An opened task replaces the panel's other cards; its properties sit in a card; Status is a To do / Done switch; Course and Topic rows show whenever the record has them.",
+  "dod": "Matches the 'a task opened' board; opening a task leaves no other card in the panel; the switch ticks the task. Proof (D-312, fidelity sprint): node tools/build.mjs, then tools/fidelity's demo and built screenshots read side by side at 1280, 1706, 2560 and 390, plus npm run smoke; then ship staging GREEN.",
+  "milestone": "v4.8 redesign",
+  "status": "open",
+  "depends": [
+   "B-335"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "fidelity review, Oct 25 (D-312)"
+ },
+ {
+  "id": "B-337",
+  "kind": "task",
+  "title": "Fidelity: Study overview as in the demo. The exam card spans the pane; from 1200 px picking an objective fills the right panel (its state, its weak spots, Quiz me on this), under the row only below 1200 px; Coming up in this course under the exam card. Weak spots, quiz and results screens stay deferred (B-298 to B-300).",
+  "dod": "Matches the Study overview board at every width; at 1280 a picked objective fills the panel; at 390 it opens under the row. Proof (D-312, fidelity sprint): node tools/build.mjs, then tools/fidelity's demo and built screenshots read side by side at 1280, 1706, 2560 and 390, plus npm run smoke; then ship staging GREEN.",
+  "milestone": "v4.8 redesign",
+  "status": "open",
+  "depends": [
+   "B-332"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "fidelity review, Oct 25 (D-312)"
+ },
+ {
+  "id": "B-338",
+  "kind": "task",
+  "title": "Fidelity: Progress as in the demo. The old readiness line chart, objective list, findings and Last 7 days cards leave Progress (their data stays in the record); the day panel opens on the latest day with sessions; bars are slim with no grey background; By course and Exam readiness sit side by side from 1000 px.",
+  "dod": "Matches the Progress board; no old card in the panel at rest; the day panel shows the latest day with sessions. Proof (D-312, fidelity sprint): node tools/build.mjs, then tools/fidelity's demo and built screenshots read side by side at 1280, 1706, 2560 and 390, plus npm run smoke; then ship staging GREEN.",
+  "milestone": "v4.8 redesign",
+  "status": "open",
+  "depends": [
+   "B-332"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "fidelity review, Oct 25 (D-312)"
+ },
+ {
+  "id": "B-339",
+  "kind": "task",
+  "title": "Fidelity: Record as in the demo. The Filter button with its icon and a count of active filters; the detail panel with an 18 px or larger title, properties in a card, her line, and Quiz me on the topic for a quiz.",
+  "dod": "Matches the Record board with the filter open and a session and a quiz selected. Proof (D-312, fidelity sprint): node tools/build.mjs, then tools/fidelity's demo and built screenshots read side by side at 1280, 1706, 2560 and 390, plus npm run smoke; then ship staging GREEN.",
+  "milestone": "v4.8 redesign",
+  "status": "open",
+  "depends": [
+   "B-332"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "fidelity review, Oct 25 (D-312)"
+ },
+ {
+  "id": "B-340",
+  "kind": "task",
+  "title": "Fidelity: E.V.'s view as in the demo. The daily check-in card shows under her until he answers it today; Start a study session is the panel's main button; five chips; Send in Ember.",
+  "dod": "Matches the Conversation board at rest and in a session at 1280 and 390. Proof (D-312, fidelity sprint): node tools/build.mjs, then tools/fidelity's demo and built screenshots read side by side at 1280, 1706, 2560 and 390, plus npm run smoke; then ship staging GREEN.",
+  "milestone": "v4.8 redesign",
+  "status": "open",
+  "depends": [
+   "B-334"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "fidelity review, Oct 25 (D-312)"
+ },
+ {
+  "id": "B-341",
+  "kind": "task",
+  "title": "Fidelity: staging's health line. Each ship staging fires the staging watchdog once, so staging never shows a stale health line; on live, health problems show in System, not in every view's header.",
+  "dod": "After a GREEN staging ship, no stale health text anywhere in staging's header; System still lists a stale health check when one is planted. Proof (D-312, fidelity sprint): node tools/build.mjs, then tools/fidelity's demo and built screenshots read side by side at 1280, 1706, 2560 and 390, plus npm run smoke; then ship staging GREEN.",
+  "milestone": "v4.8 redesign",
+  "status": "open",
+  "depends": [
+   "B-332"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "fidelity review, Oct 25 (D-312)"
  }
 ]

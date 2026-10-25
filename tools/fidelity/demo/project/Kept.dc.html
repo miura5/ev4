@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kept, restyled by the component set</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&amp;display=swap">
+<style>body{margin:0}
+.nb{width:100%;min-height:100vh;box-sizing:border-box;background:#fbfaf8;color:#1f1d1a;font:400 14px/1.5 Inter,system-ui,sans-serif;padding:36px 40px}
+.nb h1{font-size:22px;font-weight:600;margin:0 0 6px;letter-spacing:-.01em}
+.nb .lede{color:#5c5850;margin:0 0 22px;max-width:760px}
+.nb h2{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#5c5850;margin:22px 0 6px}
+.nb table{border-collapse:collapse;width:100%}
+.nb td{padding:9px 12px 9px 0;border-top:1px solid #e6e2db;vertical-align:top}
+.nb td:first-child{width:34%;font-weight:500}
+.nb td:nth-child(2){color:#3a3732}
+.nb .k{display:inline-block;font-size:11.5px;font-weight:500;padding:1px 7px;border-radius:5px;background:#efece6;color:#4a463f;margin-left:6px}</style>
+</helmet>
+<div class="nb"><h1>Kept, restyled by the component set</h1><p class="lede">These features stay in E.V. as they are. They aren’t redrawn here because their layout doesn’t change: they pick up the same component set (list row, card, property row, segmented control, E.V.’s line, neutral and primary buttons). A feature is drawn only where its layout really changes. None of these is dropped.</p><table><tr><td>System</td><td>Preferences in the sidebar footer (Theme, Contrast) is its entry point. The System page itself is unchanged; it picks up the card, property-row and segmented-control styles. On the phone, Theme and Contrast live in System.</td></tr><tr><td>The library and attach</td><td>Record, as notes and sources, and attach on the message box. Same list rows and detail panel as Record.</td></tr><tr><td>The journal</td><td>Record, as a named read (D-106, D-113). Same list row and detail panel; nothing about it is redrawn.</td></tr><tr><td>Canvas announcements</td><td>Conversation and E.V.’s line. Read-only GETs, as before.</td></tr><tr><td>Study Watch sessions with check cards</td><td>Conversation. “Start a study session” binds to the Study Watch note; check cards render in the thread with neutral buttons.</td></tr><tr><td>Skills and workouts</td><td>Record (the filter’s “Show workouts” checkbox) and the week view, where check-offs show as class dates.</td></tr><tr><td>Background jobs and Your turn</td><td>Conversation. Your turn uses E.V.’s line with one action button.</td></tr><tr><td>The Ship it card</td><td>Conversation, in the thread, as today: one card with its own button for the deploy Matt OKs.</td></tr><tr><td>The night-before prep check</td><td>Conversation, under her greeting, built from that day’s own materials (D-144). Same card and list-row parts as the check-in.</td></tr><tr><td>The daily review set</td><td>Today, as “Review: N weak spots”.</td></tr><tr><td>The Sunday weekly review card</td><td>Today, on Sundays, above the list. Same card part as the day budget.</td></tr><tr><td>“Deferred: over today’s budget” and “Taken off today”</td><td>Today, as the two folded lines under the list, like “Done · n”.</td></tr><tr><td>The other question types and Retake</td><td>The Study quiz card holds every question type; Retake is “New quiz” on the results card.</td></tr><tr><td>The exam plan checklist</td><td>Study’s Plan tab, unchanged (D-249).</td></tr><tr><td>The readiness trend and accuracy tables</td><td>Progress, in the same cards and bar styles as the readiness and by-course cards.</td></tr><tr><td>Taking dates off</td><td>Today’s week view, in the date’s side panel, as a neutral button.</td></tr><tr><td>Ideas</td><td>Record › Notes, and + New › Note.</td></tr><tr><td>Exam scores</td><td>The week view’s past dates (“Result”) and Record.</td></tr></table></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":1100}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>
