@@ -1,6 +1,6 @@
 // The prep check harness (B-104; D-143, D-144): the built staging page's E.V. tab at 390 and 1280 px on the synthetic
 // record (or an export) with planted prep days and their materials. At 7pm Central tomorrow is a head-to-toe
-// validation: the greeting's briefing carries the calm Prep marker (no urgent dot), the night-before pack check sits
+// validation: nothing on her greeting is urgent (B-358: one summary line, no line per item), the night-before pack check sits
 // under her greeting with every item citing its file and page, each tick writes that day's dayedits, and ticked
 // through it folds away to one line. At 7am today is a clinical: the morning-of bag check, an item added by hand,
 // ticked through and folded. Screenshots of each state at both widths.
@@ -153,8 +153,6 @@ const state = page =>
     return {
       urgentDot: !!g.querySelector('.br-dot.urgent'),
       urgentMark: !!g.querySelector('.bi-mark.urgent'),
-      prepMarks: [...g.querySelectorAll('.bi-prep')].map(x => x.textContent),
-      briefPrep: [...g.querySelectorAll('.brief-item[data-level="prep"] .bi-t')].map(x => x.textContent),
       headline: g.querySelector('.bubble').textContent,
       row: p && p.querySelector('.prep-row').textContent,
       open: !!(box && !box.hidden && box.getBoundingClientRect().height > 0),
@@ -210,13 +208,6 @@ async function tickAll(page) {
         s.headline
       );
       ok(
-        `[${scheme}] night: the briefing carries the calm Prep marker for tomorrow's validation`,
-        s.prepMarks.length === 1 &&
-          s.prepMarks[0] === 'Prep' &&
-          s.briefPrep[0] === 'Validation: Head-to-toe assessment',
-        JSON.stringify([s.prepMarks, s.briefPrep])
-      );
-      ok(
         `[${scheme}] night: the pack check is open under her greeting`,
         s.open && /^Prep\s*Pack for tomorrow: Validation: Head-to-toe assessment/.test(s.row),
         s.row
@@ -230,11 +221,7 @@ async function tickAll(page) {
           s.items[4].c === 'your validation kit',
         JSON.stringify(s.items)
       );
-      await page.click('#thread .msg.greet .brief-row');
-      await page.waitForTimeout(1100);
       await page.screenshot({ path: `${shots}/prep-night-open-${scheme}.png` });
-      await page.click('#thread .msg.greet .brief-row');
-      await page.waitForTimeout(900);
       await page.$eval('#thread .msg.greet .prep', e => e.scrollIntoView({ block: 'center' }));
       await page.waitForTimeout(300);
       await page.click('#thread .msg.greet .prep .prep-item input');
@@ -276,9 +263,9 @@ async function tickAll(page) {
       await openPage(page, ct(today, 7, 0), record());
       let s = await state(page);
       ok(
-        `[${scheme}] morning: nothing urgent; the Prep marker is today's clinical`,
-        !s.urgentDot && !s.urgentMark && s.briefPrep[0] === 'Clinical: Mercy Hospital 4 West',
-        JSON.stringify([s.headline, s.briefPrep])
+        `[${scheme}] morning: nothing urgent; the prep check is today's clinical`,
+        !s.urgentDot && !s.urgentMark && /Clinical: Mercy Hospital 4 West/.test(s.row || ''),
+        JSON.stringify([s.headline, s.row])
       );
       ok(
         `[${scheme}] morning: the bag check lists the clinical's items, each citing its file and page`,
@@ -488,15 +475,11 @@ async function tickAll(page) {
           sideways: document.documentElement.scrollWidth > innerWidth + 1,
         };
       });
-      const want = w < 600 ? 44 : 32;
+      // B-357 (D-315): the rows are the demo's height (B-354); what stays is that each row's time keeps its line
+      ok(`${tag} each row's time stays on its line`, r.heights.length >= 4 && r.timeOnLine, JSON.stringify(r.heights));
       ok(
-        `${tag} rows are ${want} px and each row's time stays on its line`,
-        r.heights.length >= 4 && r.heights.every(h => h === want) && r.timeOnLine,
-        JSON.stringify(r.heights)
-      );
-      ok(
-        `${tag} graded due tomorrow is red, graded due in three days neutral`,
-        /\bx-red\b/.test(r.tomorrow || '') && /^badge$/.test(r.in3 || ''),
+        `${tag} graded work is the demo's neutral grey, never red, whenever it is due (B-361)`,
+        [r.tomorrow, r.in3].every(c => /\bx-quiet\b/.test(c || '') && !/\bx-red\b/.test(c || '')),
         JSON.stringify([r.tomorrow, r.in3])
       );
       ok(
@@ -568,7 +551,13 @@ async function tickAll(page) {
       await openPage(page, ct(today, 10, 0), panelRecord());
       await page.click('#tab-today');
       await page.waitForTimeout(300);
+      // B-364 (D-315): an opened task is the TaskDetail board's full view at every size; the header's back arrow
+      // returns to the list
       const openRow = async text => {
+        if (await page.isVisible('.mh-back')) {
+          await page.click('.mh-back');
+          await page.waitForTimeout(150);
+        }
         await page.locator('#today-list .ti-list .ti-nm', { hasText: text }).first().click();
         await page.waitForSelector('#today-task:not([hidden])', { timeout: 1500 }).catch(() => {});
         await page.waitForTimeout(100);
@@ -576,29 +565,31 @@ async function tickAll(page) {
       const readPanel = () =>
         page.evaluate(() => {
           const p = document.getElementById('today-task'),
+            m = document.getElementById('today-taskmain'),
             list = document.getElementById('today-list');
           const box = e => e.getBoundingClientRect();
           const props = Object.fromEntries(
             [...p.querySelectorAll('.prop')].map(x => [
               x.querySelector('.prop-k').textContent,
-              x.querySelector('.prop-v').textContent,
+              x.querySelector('.tp-seg')
+                ? (x.querySelector('.tp-seg [aria-pressed="true"]') || {}).textContent
+                : x.querySelector('.prop-v').textContent,
             ])
           );
-          const btns = [...p.querySelectorAll('button')].map(b => b.textContent.trim());
+          const all = [...p.querySelectorAll('button'), ...((m && m.querySelectorAll('button')) || [])];
+          const btns = all.map(b => b.textContent.trim()).filter(Boolean);
           return {
-            shown: !p.hidden && box(p).height > 0,
-            listShown: !list.hidden && box(list).height > 0,
-            right: Math.round(box(p).left) >= Math.round(box(list).right),
-            under: Math.round(box(p).top) >= Math.round(box(list).bottom),
-            title: (p.querySelector('h2') || {}).textContent,
+            shown: !p.hidden && box(p).height > 0 && !!m && !m.hidden,
+            listAway: !list || !list.getClientRects().length || box(list).height === 0,
+            right: !!m && Math.round(box(p).left) >= Math.round(box(m).right) - 1,
+            under: !!m && Math.round(box(p).top) >= Math.round(box(m).bottom) - 1,
+            title: ((m && m.querySelector('h2')) || {}).textContent || '',
             props,
-            from: (p.querySelector('.tp-from .meta') || {}).textContent || '',
+            from: [...((m && m.querySelectorAll('.tp-from .tp-what')) || [])].map(x => x.textContent).join(' | '),
             btns,
-            primaries: [...p.querySelectorAll('button.primary')].map(b => b.textContent.trim()),
-            paras: [...p.querySelectorAll('p')].filter(x => !x.closest('.tp-from') && !x.matches('.tp-note')).length,
+            primaries: all.filter(b => b.matches('.primary')).map(b => b.textContent.trim()),
             note: (p.querySelector('.tp-note') || {}).textContent || '',
-            nav: btns.some(b => /^(Previous|Next|‹|›)$/.test(b)),
-            sel: (document.querySelector('#today-list li.sel .ti-t') || {}).textContent || '',
+            nav: all.some(b => /^(Previous|Next) task$/.test(b.getAttribute('aria-label') || '')),
             sideways: document.documentElement.scrollWidth > innerWidth + 1,
           };
         });
@@ -606,8 +597,8 @@ async function tickAll(page) {
       await openRow('Practice: fluid balance');
       const s = await readPanel();
       ok(
-        `${tag} a study task opens in the ${w >= 1200 ? 'right panel' : 'panel under the pane'}, the list still in view`,
-        s.shown && s.listShown && (w >= 1200 ? s.right : s.under) && /^Practice: fluid balance/.test(s.sel),
+        `${tag} a study task opens as its full view, its properties ${w >= 1200 ? 'in the right panel' : 'under it'}, the list stepping aside (D-315)`,
+        s.shown && s.listAway && (w >= 1200 ? s.right : s.under) && /^Practice: fluid balance/.test(s.title),
         JSON.stringify(s)
       );
       ok(
@@ -618,17 +609,13 @@ async function tickAll(page) {
           s.props.Due === 'Today' &&
           s.props.Course === 'NUR 112' &&
           !!s.props.Topic &&
-          /^Planned by the 4:25am run/.test(s.from),
+          /^Planned by the 4:25\s?am run/.test(s.from),
         JSON.stringify({ props: s.props, from: s.from })
       );
       ok(
-        `${tag} Start is its one primary, beside Snooze to tomorrow and Remove from today; no previous and next, no description`,
-        s.primaries.join() === 'Start' &&
-          s.btns.includes('Snooze to tomorrow') &&
-          s.btns.includes('Remove from today') &&
-          !s.nav &&
-          s.paras === 0,
-        JSON.stringify({ btns: s.btns, primaries: s.primaries, paras: s.paras })
+        `${tag} Start the quiz is its one primary, with Snooze to tomorrow, and up and down through the list (D-315)`,
+        s.primaries.join() === 'Start the quiz' && s.btns.includes('Snooze to tomorrow') && s.nav,
+        JSON.stringify({ btns: s.btns, primaries: s.primaries, nav: s.nav })
       );
       await page.locator('#p-today').screenshot({ path: `${shots}/today-task-study-${w}-${scheme}.png` });
       if (w >= 1200) await page.screenshot({ path: `${shots}/today-task-study-${w}-${scheme}-page.png` });
@@ -641,7 +628,7 @@ async function tickAll(page) {
           g.props.Category === 'Graded' &&
           /^Graded work: E\.V\. helps you prepare, never with the work itself\.$/.test(g.note) &&
           !!g.props.Due &&
-          !g.btns.some(b => /^(Start|Open|Snooze to tomorrow|Remove from today)$/.test(b)),
+          !g.btns.some(b => /^(Start|Start the quiz|Open|Snooze to tomorrow|Remove from today)$/.test(b)),
         JSON.stringify({ props: g.props, btns: g.btns })
       );
       await page.locator('#p-today').screenshot({ path: `${shots}/today-task-graded-${w}-${scheme}.png` });
@@ -663,7 +650,8 @@ async function tickAll(page) {
             onList: [...document.querySelectorAll('#today-list .ti-list .ti-t')].some(t =>
               /^Read chapter 39/.test(t.textContent)
             ),
-            line: document.getElementById('today-task').textContent,
+            line:
+              document.getElementById('today-taskmain').textContent + document.getElementById('today-task').textContent,
             today,
             tomorrow,
           };
@@ -704,32 +692,15 @@ async function tickAll(page) {
         un.w.length === 4 && un.w[2][0] === today && !un.w[2][2] && un.w[3][0] === tomorrow && !un.w[3][1] && un.onList,
         JSON.stringify(un)
       );
-      // Remove on the study task
-      const n1 = await page.evaluate(() => window.__writes.length);
-      await openRow('Practice: fluid balance');
-      await page.click('#today-task .tp-remove');
-      await page.waitForTimeout(400);
-      const rm = await page.evaluate(
-        ([n]) =>
-          window.__writes
-            .slice(n)
-            .filter(x => x[1] === 'dayedits')
-            .map(x => [x[2], ((x[3].skipped || {})['p291-set'] || {}).by]),
-        [n1]
-      );
-      ok(
-        `${tag} Remove from today writes the existing take-off`,
-        rm.length === 1 && rm[0][0] === today && rm[0][1] === 'Matt',
-        JSON.stringify(rm)
-      );
+      // B-364 (D-315): the task view has no Remove from today, as the TaskDetail board
       const end = await readPanel();
       ok(`${tag} no sideways scroll, no page errors`, !end.sideways && !errors.length, errors.join(' | '));
       await ctx.close();
     }
   // B-292 (C-5): the day's budget on the planted list day, under and over, at 390 and 1280 in light and dark. The card
-  // reads "<left> min left · <free> free" with the done minutes on their own line; ticking a 45-minute row moves its
-  // minutes from left to done and the bar keeps its length; over budget the bar's left part is the warning yellow (D-269) and the words that
-  // say so keep 4.5:1 against what they sit on.
+  // reads "<on the list> of <budget> min" with the done minutes on their own row (B-346, the demo's); ticking a
+  // 45-minute row moves its minutes from the list to done and the bar keeps its length; over budget the fill is red and
+  // the words that say so keep 4.5:1 against what they sit on.
   const budgetRecord = available => {
     const db = listRecord();
     const day = db.days[today];
@@ -765,10 +736,10 @@ async function tickAll(page) {
               const m = e && re.exec(e.textContent);
               return m ? m.slice(1).map(Number) : null;
             };
-            const big = num('.tb-big', /^(\d+) min left · (\d+) free$/);
-            const done = num('.tb-done-line', /^(\d+) min done$/);
+            // B-346 (D-315): the demo's figure, '<on the list> of <budget> min', one fill, and Done as its own row
+            const big = num('.tb-big', /^(\d+) of (\d+) min$/);
+            const done = num('.tb-done-line .prop-v', /^(\d+) min$/);
             const bar = c.querySelector('.tb-bar');
-            const seg = [...bar.children].map(i => i.getBoundingClientRect().width);
             const lum = rgb => {
               // rgb(r, g, b) in 0-255, or color(srgb r g b) in 0-1 (what a color-mix computes to)
               const unit = /^color\(srgb/.test(rgb) ? 1 : 255;
@@ -796,38 +767,31 @@ async function tickAll(page) {
             const overWords = [...document.querySelectorAll('#p-today .tb-over:not(.pbar)')].filter(
               e => e.getClientRects().length
             );
-            const left = bar.querySelector('.tb-left');
+            const fill = bar.querySelector('.tb-fill');
             return {
               shown: !c.hidden && c.getClientRects().length > 0,
               big,
               done: done && done[0],
-              barW: Math.round(seg.reduce((s, x) => s + x, 0)),
-              leftWarn: left.classList.contains('x-yellow'),
-              leftBg: getComputedStyle(left).backgroundColor,
-              yellow: getComputedStyle(left).getPropertyValue('--sem-yellow').trim(),
+              barW: Math.round(bar.getBoundingClientRect().width),
+              fillW: Math.round(fill.getBoundingClientRect().width),
+              leftWarn: fill.classList.contains('x-red'),
               over: bar.classList.contains('tb-over'),
               overRatios: overWords.map(e => Math.round(ratio(e) * 100) / 100),
-              short: (document.querySelector('#today-list .tb-short') || {}).textContent || '',
               sideways: document.documentElement.scrollWidth > innerWidth + 1,
             };
           });
         const a = await read();
         ok(
-          `${tag} the card reads what's left against the time left, with the done minutes on their own line`,
-          a.shown && a.big && a.done != null && a.big[1] === Math.max(0, available - a.done),
+          `${tag} the card reads what's on the list against the day's budget, with the done minutes on their own row`,
+          a.shown && a.big && a.done != null && a.big[1] === available,
           JSON.stringify(a)
         );
         ok(
-          `${tag} ${name === 'over' ? "over budget: the bar's left part is the warning yellow (D-269) and the words say so at 4.5:1" : 'under budget: no warning colour'}`,
+          `${tag} ${name === 'over' ? "over budget: the bar's fill is red, as the demo's, and the words say so at 4.5:1" : 'under budget: no warning colour'}`,
           name === 'over'
             ? a.over && a.leftWarn && a.overRatios.length >= 1 && a.overRatios.every(r => r >= 4.5)
             : !a.over && !a.leftWarn && !a.overRatios.length,
           JSON.stringify({ over: a.over, leftWarn: a.leftWarn, ratios: a.overRatios })
-        );
-        ok(
-          `${tag} the list head carries the short line below 1200 px only`,
-          w < 1200 ? a.short === `${a.big[0]} min left · ${a.big[1]} free` : true,
-          a.short
         );
         // the whole page: from 1200 px the card sits in the fixed right panel, outside the Today pane
         await page.screenshot({ path: `${shots}/today-budget-${name}-${w}-${scheme}.png` });
@@ -839,9 +803,12 @@ async function tickAll(page) {
         await page.waitForTimeout(400);
         const b = await read();
         ok(
-          `${tag} ticking a 45-minute task moves 45 min from left to done; the bar keeps its length`,
-          b.big[0] === a.big[0] - 45 && b.done === a.done + 45 && Math.abs(b.barW - a.barW) <= 1,
-          JSON.stringify({ before: [a.big, a.done, a.barW], after: [b.big, b.done, b.barW] })
+          `${tag} ticking a 45-minute task moves 45 min from the list to done; the bar keeps its length, its fill shrinks`,
+          b.big[0] === a.big[0] - 45 &&
+            b.done === a.done + 45 &&
+            Math.abs(b.barW - a.barW) <= 1 &&
+            (a.big[0] > a.big[1] || b.fillW < a.fillW),
+          JSON.stringify({ before: [a.big, a.done, a.barW, a.fillW], after: [b.big, b.done, b.barW, b.fillW] })
         );
         ok(`${tag} no sideways scroll, no page errors`, !b.sideways && !errors.length, errors.join(' | '));
         await ctx.close();
@@ -924,7 +891,7 @@ async function tickAll(page) {
       await page.waitForTimeout(400);
       const writes = () => page.evaluate(() => window.__writes.filter(x => x[1] === 'dayedits').length);
       const before = await writes();
-      await page.click('#today-list .ti-rest');
+      await page.click('#p-today .ti-rest');
       await page.waitForTimeout(300);
       const read = () =>
         page.evaluate(() => {
@@ -945,7 +912,7 @@ async function tickAll(page) {
             )
               dashed = true;
           }
-          const line = document.querySelector('#today-list .ti-review');
+          const line = document.querySelector('#p-today .ti-review');
           return {
             prop: prop.map(li => ({
               id: li.dataset.id,
@@ -964,14 +931,13 @@ async function tickAll(page) {
               b => /^[×✕✖x]$/i.test(label(b)) || /reject this|dismiss|close/i.test(b.getAttribute('aria-label') || '')
             ),
             dashed,
-            restDisabled: document.querySelector('#today-list .ti-rest').disabled,
+            restDisabled: document.querySelector('#p-today .ti-rest').disabled,
             sideways: document.documentElement.scrollWidth > innerWidth + 1,
           };
         });
       const a = await read();
       const add = a.prop.find(p => p.add),
         off = a.prop.find(p => !p.add);
-      const want = w < 600 ? 44 : 32;
       ok(
         `${tag} the proposal adds the drill and takes the reading due later off`,
         a.prop.length === 2 &&
@@ -983,17 +949,11 @@ async function tickAll(page) {
           /take “Read Ch 40: acid-base balance” off today \(planned for /.test(a.line || ''),
         JSON.stringify(a)
       );
-      // from 600 px a proposed row is the standard 32 px row; on the phone its name and time keep the row's 44 px line
-      // and the badge, Accept and Keep sit on a second 44 px line under the name, so the whole name shows
+      // a proposed row is a standard row of the demo's (B-357, D-315: no fixed heights): its whole name shows
       ok(
-        `${tag} each proposed row has its whole name, one "Proposed" badge and Accept and Keep, ${w < 600 ? 'on two 44 px lines with the time on the first' : 'on one 32 px row'}`,
+        `${tag} each proposed row has its whole name, one "Proposed" badge and Accept and Keep, the time on its first line`,
         a.prop.every(
-          p =>
-            (w < 600 ? Math.abs(p.h - 88) <= 1 : p.h === 32) && // two lines and the row's 1 px rule
-            p.whole &&
-            p.timeTop < (w < 600 ? 44 : 32) &&
-            p.badges.join() === 'Proposed' &&
-            p.buttons.join() === 'Accept,Keep'
+          p => p.whole && p.timeTop < 32 && p.badges.join() === 'Proposed' && p.buttons.join() === 'Accept,Keep'
         ),
         JSON.stringify(a.prop)
       );
@@ -1008,7 +968,7 @@ async function tickAll(page) {
       await page.locator('#today-list li.ti-prop .ti-keep').click();
       await page.waitForTimeout(200);
       const k = await read();
-      await page.locator('#today-list .ti-review button', { hasText: 'Reject' }).click();
+      await page.locator('#p-today .ti-review button', { hasText: 'Reject' }).click();
       await page.waitForTimeout(200);
       const r = await read();
       ok(
@@ -1021,7 +981,7 @@ async function tickAll(page) {
         JSON.stringify({ kept: k.prop.map(p => p.id), after: r.prop.length, writes: (await writes()) - before })
       );
       // Accept all (light), or each row's Accept in turn (dark): the add and the take-off, each by E.V.
-      await page.click('#today-list .ti-rest');
+      await page.click('#p-today .ti-rest');
       await page.waitForTimeout(200);
       const dayeditWrites = () => page.evaluate(n => window.__writes.filter(x => x[1] === 'dayedits').slice(n), before);
       const edits = doc => ({
@@ -1036,7 +996,7 @@ async function tickAll(page) {
         sk &&
         sk.by === 'E.V.';
       if (scheme === 'light') {
-        await page.locator('#today-list .ti-review button', { hasText: 'Accept all' }).click();
+        await page.locator('#p-today .ti-review button', { hasText: 'Accept all' }).click();
         await page.waitForTimeout(400);
         const mine = await dayeditWrites();
         ok(
@@ -1142,9 +1102,9 @@ async function tickAll(page) {
       return !c || c.hidden;
     });
     ok(`${tag} with only his own add, the panel is absent`, empty, String(empty));
-    await page.click('#today-list .ti-rest');
+    await page.click('#p-today .ti-rest');
     await page.waitForTimeout(200);
-    await page.locator('#today-list .ti-review button', { hasText: 'Accept all' }).click();
+    await page.locator('#p-today .ti-review button', { hasText: 'Accept all' }).click();
     await page.waitForTimeout(400);
     const read = () =>
       page.evaluate(() => {
@@ -1172,7 +1132,7 @@ async function tickAll(page) {
         a.rows.length === 2 &&
         a.rows.some(r => /^Added “Drill: potassium imbalances/.test(r.title)) &&
         a.rows.some(r => r.title === 'Took “Read Ch 40: acid-base balance” off today') &&
-        a.rows.every(r => /^\d{1,2}:\d\d [AP]M$/.test(r.detail) && r.buttons.join() === 'Undo'),
+        a.rows.every(r => /^\d{1,2}:\d\d [ap]m$/.test(r.detail) && r.buttons.join() === 'Undo'), // B-352: 10:00 am
       JSON.stringify(a)
     );
     ok(
@@ -1306,10 +1266,9 @@ async function tickAll(page) {
     await openPage(page, ct(today, 7, 20), labRecord());
     let s = await state(page);
     ok(
-      `[ask ${scheme}] the lab-exam day carries the Prep marker and the bag check (the tag that was off on Oct 21)`,
-      s.briefPrep[0] === 'BIO 201 Lab Exam: bones (Group A or B slot)' &&
-        /Bag check: BIO 201 Lab Exam/.test(s.row || ''),
-      JSON.stringify([s.briefPrep, s.row])
+      `[ask ${scheme}] the lab-exam day carries the bag check (the tag that was off on Oct 21)`,
+      /Bag check: BIO 201 Lab Exam/.test(s.row || ''),
+      JSON.stringify([s.row])
     );
     await page.fill('#ev-input', 'I have lab/class today. Make a prep list of items to bring');
     await page.click('#ev-send');
@@ -1358,7 +1317,7 @@ async function tickAll(page) {
   // B-295 (C-6, C-13, C-16): Today's week on a planted week with three graded dates (tomorrow's validation and two due
   // dates) and dates he can take off.
   // Her line says three; the today chip equals the list's count; seven columns from 1200 px and one row per day below
-  // it; no chip title wraps past one line at 700 or 1000; Take off writes the date's edit and Bring back reverses it.
+  // it; chip titles wrap between words only (B-354); Take off writes the date's edit and Bring back reverses it.
   const weekRecord = () => {
     const db = record();
     const last = addDays(today, 6);
@@ -1405,7 +1364,12 @@ async function tickAll(page) {
           days: days.length,
           lefts: new Set(days.map(d => Math.round(box(d).left))).size,
           tops: new Set(days.map(d => Math.round(box(d).top))).size,
-          oneLine: titles.every(t => t.getClientRects().length === 1 && box(t).height < 24),
+          // B-354 (D-315): a title wraps between words only, as the demo's, and never runs out of its chip
+          oneLine: titles.every(
+            t =>
+              !/break-all|anywhere/.test(getComputedStyle(t).wordBreak + getComputedStyle(t).overflowWrap) &&
+              t.scrollWidth <= t.clientWidth + 1
+          ),
           seg: [...document.querySelectorAll('#seg-today button')].map(b => b.getAttribute('aria-pressed')),
           segWhole: [...document.querySelectorAll('#seg-today, #seg-today button')].every(
             b => b.scrollWidth <= b.clientWidth + 1
@@ -1434,7 +1398,7 @@ async function tickAll(page) {
           r.listHidden,
         JSON.stringify(r)
       );
-      ok(`${tag} no chip title wraps past one line`, r.oneLine);
+      ok(`${tag} chip titles wrap between words only and never overflow (B-354)`, r.oneLine);
       ok(`${tag} List and Week show whole, beside the header's status line`, r.segWhole, JSON.stringify(r.status));
       if (w !== 700) {
         await page.click('#today-week .wchip[data-id="p295-lab"]');
