@@ -5642,7 +5642,7 @@
    "B-316",
    "B-318"
   ],
-  "notes": "Oct 25: after Matt allowed ev-staging-scratch.peppercheese1.workers.dev, this session's proxy still refused it (403 on CONNECT, retried for 5 minutes), so the staging import and verify are still not run. When B-320 turns on the D-307 lint, tools/pwa-copy.mjs needs an exemption: it is the one-way, one-time copy and reads ArtifactData and writes D1 by design.",
+  "notes": "Oct 25: the copy tool proved on staging. pwa-copy import created the staging export's 913 documents in the ev-staging-scratch D1 (20 batches of 50 or fewer, creates only); pwa-copy verify, read back through the run API, GREEN: 30 collections, counts and SHA-256 equal. A second import was refused before any write (the D1 already holds all 913 ids). pwa-staging copy_target run 40236577706 read the scratch docs table with wrangler: 913 documents, its 30 counts and full hashes equal the export's manifest. ev-staging untouched. B-319 stays open for the live copy, on Matt's word.",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
