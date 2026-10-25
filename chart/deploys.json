@@ -4949,5 +4949,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "0846bc1",
+  "time": "2026-10-25T18:32:28.258Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "a70721f",
+  "tasks": [
+   "B-390"
+  ],
+  "summary": "Arrow keys moving between a question's options record an answer he…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
