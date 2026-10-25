@@ -84,11 +84,11 @@ async function studyView(page, v) {
     return shown();
   }
   await page.click('#tab-study');
+  if (await page.isVisible('#study-back')) await page.click('#study-back'); // out of the quiz card, to the view tabs
   if (v !== 'practice') {
     await page.click(`#seg-study [data-v="${v}"]`);
     return shown();
   }
-  if (await shown()) return true;
   await page.click('#seg-study [data-v="objectives"]');
   await page.waitForTimeout(100);
   const rows = page.locator('#ov-card .ov');

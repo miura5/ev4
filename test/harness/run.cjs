@@ -528,8 +528,7 @@ for (const [id, task, commit, text, error] of [
 // and the view no mini-quiz card; at 390 the toolbar is one row. Objective rows are 32 px from 600 px and 44 px on the
 // phone. An objective's Quiz me opens a set of its own existing questions; with none, it starts the practice-set job.
 async function quizMeChecks(page, scheme) {
-  await page.click('#tab-study');
-  await page.click('#seg-study [data-v="objectives"]');
+  await studyView(page, 'objectives');
   await page.waitForTimeout(200);
   const o = await page.evaluate(() => {
     const vis = e =>
@@ -3229,6 +3228,7 @@ const ok = (name, cond, detail = '') => {
     }
     await practiceNav(page, scheme); // B-191
     // Plan: tick a task (D-249: Plan is a tab at every width, and the plan is hidden until it is chosen)
+    if (await page.isVisible('#study-back')) await page.click('#study-back'); // B-297: out of the quiz card
     ok(
       `[${scheme}] Plan is a tab, and the plan stays hidden until it is chosen (D-249)`,
       (await page.isVisible('#seg-study [data-v="plan"]')) && !(await page.isVisible('#plan-card'))

@@ -70,6 +70,8 @@
       const v = ui.study,
         quiz = v === 'review' || v === 'practice';
       $('study-back').hidden = !quiz;
+      // in the quiz card the way back replaces the view tabs, so no switch shows with nothing picked (C-15)
+      $('seg-study').hidden = quiz || (innerWidth >= 600 && ui.tab !== 'study');
       $('study-course').hidden = v !== 'objectives' || $('study-course').children.length < 2;
       $('study-start').hidden = v !== 'objectives' || $('study-start').dataset.off === '1';
     }

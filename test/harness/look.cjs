@@ -761,7 +761,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         await page.waitForTimeout(100);
         for (const v of ['practice', 'plan']) {
           if (v === 'plan')
-            await page.click('#seg-study [data-v="plan"]'); // D-249: Plan is a tab at every width
+            await studyView(page, 'plan'); // D-249: Plan is a tab at every width (B-297: out of the quiz card first)
           else await studyView(page, v); // B-297: the sets, back from an objective's Quiz me
           await page.waitForTimeout(300);
           const r = await page.evaluate(
@@ -1033,6 +1033,9 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
               .join(';');
           }, M.exempt);
       const open = async view => {
+        // B-297: the review's quiz card is reached from Today first; the timed open is then Study's tab, which keeps it
+        if (view.v && view.tab === 'study' && !(await page.$(`#seg-study [data-v="${view.v}"]`)))
+          await studyView(page, view.v);
         await page.click(view.tab === 'system' ? '#tab-today' : '#tab-system');
         await page.waitForTimeout(300);
         await page.evaluate(() => window.scrollTo(0, 0));
@@ -1040,7 +1043,6 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         await page.click('#tab-' + view.tab);
         if (view.v && (await page.isVisible(`#seg-${view.tab} [data-v="${view.v}"]`)))
           await page.click(`#seg-${view.tab} [data-v="${view.v}"]`);
-        else if (view.v && view.tab === 'study') await studyView(page, view.v); // B-297
         return t0;
       };
       const settledShot = () =>
@@ -1102,6 +1104,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         await page.click('#tab-' + v.tab);
         if (await page.isVisible(`#seg-${v.tab} [data-v="${v.v}"]`))
           await page.click(`#seg-${v.tab} [data-v="${v.v}"]`); // a one-view switch is hidden (B-297)
+        else if (v.tab === 'study') await studyView(page, v.v); // out of the review's quiz card (B-297)
       }
     if (['390x844', '1280x800'].includes(width)) {
       // B-111: the long idea's text is at most 3 lines and at least 80% of its card's width; opening it shows its controls.
