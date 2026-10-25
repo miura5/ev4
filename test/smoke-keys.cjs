@@ -43,6 +43,7 @@ const skeleton = body =>
 
 const results = [];
 const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', name, detail]);
+const esc = s => String(s).replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
 const until = (page, fn, arg, ms = 4000) =>
   page
     .waitForFunction(fn, arg, { timeout: ms })
@@ -226,6 +227,10 @@ async function keys(page, box, key = 'Space') {
   }
   await browser.close();
   for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : '');
+  // B-393: in CI each FAIL is also an annotation, readable through the check run's API when the log is not.
+  if (process.env.GITHUB_ACTIONS)
+    for (const r of results.filter(r => r[0] === 'FAIL'))
+      console.log(`::error title=smoke-keys::${esc(r[1] + (r[2] ? ' · ' + r[2] : ''))}`);
   const failed = results.filter(r => r[0] === 'FAIL').length;
   console.log(
     `${failed ? failed + ' FAILED' : 'ALL PASSED'} of ${results.length} key checks in ${Math.round((Date.now() - t0) / 1000)} s`
@@ -233,5 +238,6 @@ async function keys(page, box, key = 'Space') {
   process.exit(failed ? 1 : 0);
 })().catch(e => {
   console.error(e);
+  if (process.env.GITHUB_ACTIONS) console.log(`::error title=smoke-keys crashed::${esc(e && e.stack ? e.stack : e)}`);
   process.exit(1);
 });
