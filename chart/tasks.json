@@ -5624,7 +5624,7 @@
    "B-311",
    "B-313"
   ],
-  "notes": "Pushed 3f9b8c6 (ship dispatches pwa-staging at the build commit; verify-deploy reads back the Worker build hash and page files). Waiting for B-389's pwa-staging run before ship staging.",
+  "notes": "ship staging at fa51e6b: record, page and the four staging prompts written; pwa-staging run 40230267526 dispatched and failed at the check step (B-389's), before the B-318 read-back. The fix at fa51e6b walks past secret-change versions (wrangler secret put makes a message-less version), which made the 20:11 run fail at the read-back. Waiting for B-389's check fix, then dispatching again.",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
