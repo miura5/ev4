@@ -6136,5 +6136,22 @@
    "outcome": "task",
    "at": "2026-10-25T12:27:09.021Z"
   }
+ },
+ {
+  "id": "B-350",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Fidelity fix: Record's Dates, Journal, Canvas and Library tabs were never compared with the demo and may still be the old screens.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "fidelity review, Oct 25 (D-312)",
+  "words": "Fidelity fix: Record's Dates, Journal, Canvas and Library tabs were never compared with the demo and may still be the old screens.",
+  "reportedAt": "2026-10-25T12:27:28.166Z",
+  "board": {
+   "row": "v4 B-350: Fidelity fix: Record's Dates, Journal, Canvas and Library tabs were…"
+  }
  }
 ]
