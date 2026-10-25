@@ -5860,11 +5860,11 @@
   "title": "Fidelity: Today as in the demo. The All / Classes / Study filter with counts; List / Week and Plan the rest in one toolbar row; the budget figure large (28 px or more) with On the list and Done rows; no Next 7 days card on Today; the week grid fills the pane's height, titles wrap up to 3 lines uncut, with back / Today / forward and the date range.",
   "dod": "Matches the Today list and Week boards; filter counts equal the list; no title cut at 1280 or 1706. Proof (D-312, fidelity sprint): node tools/build.mjs, then tools/fidelity's demo and built screenshots read side by side at 1280, 1706, 2560 and 390, plus npm run smoke; then ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-332"
   ],
-  "notes": "",
+  "notes": "claimed by lane today",
   "commit": null,
   "source": "fidelity review, Oct 25 (D-312)"
  },
