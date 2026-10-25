@@ -5902,12 +5902,12 @@
   "title": "Fidelity: Progress as in the demo. The old readiness line chart, objective list, findings and Last 7 days cards leave Progress (their data stays in the record); the day panel opens on the latest day with sessions; bars are slim with no grey background; By course and Exam readiness sit side by side from 1000 px.",
   "dod": "Matches the Progress board; no old card in the panel at rest; the day panel shows the latest day with sessions. Proof (D-312, fidelity sprint): node tools/build.mjs, then tools/fidelity's demo and built screenshots read side by side at 1280, 1706, 2560 and 390, plus npm run smoke; then ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-332"
   ],
-  "notes": "claimed by lane pr",
-  "commit": null,
+  "notes": "Progress now looks like the demo board: slim violet bars on a clean chart, the three property rows in a label column, By course and Exam readiness side by side on wider screens, and the right panel opening on the latest day you studied with each session's badge. The old readiness card, objective list, line chart, findings and Last 7 days cards are gone from Progress (their data stays in the record). Still differs from the demo: E.V.'s one-line note above the switch (frame and E.V. lanes), dates read Sat 10/24 rather than Friday 23 Oct, the readiness card counts weak spots rather than objectives, and the day panel lists only study sessions (no notes or quizzes), at every size. Matches at 1280, 1706, 2560 and 390 otherwise.",
+  "commit": "caeb42a",
   "source": "fidelity review, Oct 25 (D-312)"
  },
  {
