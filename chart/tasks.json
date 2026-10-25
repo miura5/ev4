@@ -5876,9 +5876,9 @@
   "milestone": "v4.8 redesign",
   "status": "open",
   "depends": [
-   "B-335"
+   "B-332"
   ],
-  "notes": "",
+  "notes": "Its own lane after the frame (Matt, Oct 25: as fast as possible).",
   "commit": null,
   "source": "fidelity review, Oct 25 (D-312)"
  },
@@ -5932,9 +5932,9 @@
   "milestone": "v4.8 redesign",
   "status": "open",
   "depends": [
-   "B-334"
+   "B-332"
   ],
-  "notes": "",
+  "notes": "Its own lane after the frame (Matt, Oct 25: as fast as possible).",
   "commit": null,
   "source": "fidelity review, Oct 25 (D-312)"
  },
