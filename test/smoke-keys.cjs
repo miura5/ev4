@@ -83,12 +83,26 @@ async function keys(page, box, key = 'Space') {
         writes: (window.__writes || []).filter(w => w[1] === 'answers').length,
         focused: document.activeElement && document.activeElement.matches(box + ' label.opt input'),
         checked: [...(b ? b.querySelectorAll('label.opt input') : [])].findIndex(i => i.checked),
+        active: document.activeElement ? document.activeElement.tagName + '#' + document.activeElement.id + '.' + document.activeElement.className + '[' + (document.activeElement.name || '') + ']' : null,
+        marked: !!(b && b.querySelector('fieldset.opts') && b.querySelector('fieldset.opts').__mark),
+        log: (window.__klog || []).slice(-14),
+        ua: navigator.userAgent.slice(-40),
       };
     }, box);
   const first = page.locator(box + ' fieldset.opts label.opt input:not(:disabled)').first();
   if (!(await first.count())) return null;
   await page.waitForTimeout(800); // the record's copy of the opened set lands and redraws first
   await first.focus();
+  await page.evaluate(box => {
+    window.__klog = [];
+    const f = document.querySelector(box + ' fieldset.opts');
+    if (f) f.__mark = 1;
+    const t = Date.now();
+    const d = e => (e.target && (e.target.tagName + ':' + (e.target.name || e.target.id || e.target.className))) || '';
+    for (const ty of ['keydown', 'keyup', 'click', 'change', 'input', 'focusin', 'focusout'])
+      document.addEventListener(ty, e => window.__klog.push([Date.now() - t, ty, e.key || (e.detail != null ? 'd' + e.detail : ''), d(e)].join(' ')), true);
+    new MutationObserver(m => window.__klog.push((Date.now() - t) + ' mut ' + m.length + ' ' + m.map(x => x.target.id || x.target.className).slice(0, 3).join('|'))).observe(document.querySelector(box), { childList: true, subtree: true });
+  }, box);
   const start = await read();
   await page.keyboard.press('ArrowDown');
   await page.waitForTimeout(400);
