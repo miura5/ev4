@@ -4481,5 +4481,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "a5607b6",
+  "time": "2026-10-25T14:00:44.300Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "14914aa",
+  "tasks": [
+   "B-364"
+  ],
+  "summary": "The UI review found an opened task differs from the demo: the demo…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
