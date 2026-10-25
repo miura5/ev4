@@ -2334,7 +2334,12 @@ async function sideBySide(browser, left, right, out, vp) {
           flips(r, x => x.hero > 30) <= 1 &&
           !(r[r.length - 1].hero > 30 && r.some(x => x.hero <= 30)) &&
           !jumps.length,
-        JSON.stringify({ back: flips(r, x => x.back), hero: flips(r, x => x.hero > 30), jumps })
+        JSON.stringify({
+          back: flips(r, x => x.back),
+          hero: flips(r, x => x.hero > 30),
+          jumps,
+          seq: r.filter((x, i) => !i || JSON.stringify(x) !== JSON.stringify(r[i - 1])).slice(0, 40),
+        })
       );
       await page.screenshot({ path: `${shots}/jank-pull-${tag}.png` });
       ok(`[jank ${tag}] no page errors`, errors.length === 0, errors.join(' | '));
