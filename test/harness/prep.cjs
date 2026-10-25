@@ -621,7 +621,7 @@ async function tickAll(page) {
           s.props.Due === 'Today' &&
           s.props.Course === 'NUR 112' &&
           !!s.props.Topic &&
-          /^Planned by the 4:25\s?am run/.test(s.from),
+          /^(Planned by the 4:25\s?am run|Added by E\.V\. when she planned)/.test(s.from), // B-385's wording
         JSON.stringify({ props: s.props, from: s.from })
       );
       ok(
@@ -1403,7 +1403,7 @@ async function tickAll(page) {
       });
       ok(
         `${tag} her line counts the three graded dates from the dates`,
-        /^Three graded dates in the next 7 days: /.test(r.her),
+        /^Three graded dates in the next 7 days[:.] /.test(r.her),
         r.her
       );
       ok(

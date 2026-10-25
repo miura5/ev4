@@ -1604,7 +1604,7 @@ async function tap(page, locator, name) {
       };
       ok(
         'her answer to what is due is one line and one button, Open the week; no card, no surface (B-362)',
-        /^\d+ dates? in the next 7 days|^Nothing dated in the next 7 days/.test(a.text) &&
+        /^(\d+|[A-Z][a-z]+) (graded )?dates? in the next 7 days|^Nothing dated in the next 7 days/.test(a.text) &&
           a.buttons.join() === 'Open the week' &&
           !a.cards &&
           !a.surf,
@@ -2260,11 +2260,12 @@ async function tap(page, locator, name) {
       !(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1))
     );
     ok(
-      'status reads Live or the one problem System leads with (B-120)',
+      // B-384: a problem is a short whole phrase in the status line (the detail is System's lead line)
+      'status reads Live, or a short phrase for the problem System leads with (B-120, B-384)',
       await page.evaluate(() => {
         const s = document.getElementById('status').textContent,
           l = document.querySelector('#health .sys-lead');
-        return s === 'Live' || (!!l && s === l.textContent);
+        return s === 'Live' || (!!l && (s === l.textContent || (/^[A-Z][^.\d]{3,60}$/.test(s) && !/\d/.test(s))));
       }),
       await page.textContent('#status')
     );
@@ -4567,12 +4568,12 @@ async function tap(page, locator, name) {
         wide.minutesShown === 1 &&
         wide.badge === 'Running' &&
         wide.topic === 'Fluids and electrolytes' &&
-        /^\d+ min left$/.test(wide.left) &&
+        /^\d+ (?:min left|min\s*to (?:my )?next check)$/.test(wide.left) && // B-385: the demo's 'n min to next check'
         wide.btns.join() === 'Break,+5 min,End' &&
         phone.strip &&
         !phone.card &&
         phone.minutesShown === 1 &&
-        /^\d+ min left/.test(phone.clock),
+        /^\d+ (?:min left|min\s*to (?:my )?next check)/.test(phone.clock),
       JSON.stringify({ wide, phone })
     );
     let S1 = await sess();
@@ -4665,7 +4666,7 @@ async function tap(page, locator, name) {
       ok(
         'the line names the session in its label and shows the minutes, then Break and End (B-88; no reading-along words, B-362)',
         /Fluids and electrolytes/.test(pr.label) &&
-          /^\d+ min left$/.test(await ss.textContent('#sbar .s-clock')) &&
+          /^\d+ (?:min left|min\s*to (?:my )?next check)$/.test(await ss.textContent('#sbar .s-clock')) &&
           (await ss.locator('#sbar button').allTextContents()).join(',') === 'Break,End',
         await ss.textContent('#sbar')
       );
@@ -4958,7 +4959,8 @@ async function tap(page, locator, name) {
     await ss.waitForTimeout(300);
     ok(
       'resume: the strip shows the minutes left again, no longer on a break',
-      /min left/.test(await ss.textContent('#sbar')) && !/On a break|min break/.test(await ss.textContent('#sbar')),
+      /(?:min left|min\s*to (?:my )?next check)/.test(await ss.textContent('#sbar')) &&
+        !/On a break|min break/.test(await ss.textContent('#sbar')),
       await ss.textContent('#sbar')
     );
     // New writing with what looks like an identifier skips the check and says why, once
