@@ -173,10 +173,7 @@
       const doneNow = isDone(it);
       const text = String(it.text || '').replace(/\s*\(~?\d+\s*min\)\s*$/i, '');
       const sel = ui.taskSel === it.id && !ui.taskGone;
-      const li = el(
-        'li',
-        'li today-item' + (doneNow ? ' done' : '') + (sel ? ' sel' : '') + (o.off ? ' ti-off' : '')
-      );
+      const li = el('li', 'li today-item' + (doneNow ? ' done' : '') + (sel ? ' sel' : '') + (o.off ? ' ti-off' : ''));
       li.dataset.id = it.id;
       const tk = el('label', 'tk');
       const c = document.createElement('input');
@@ -645,7 +642,10 @@
       const text = String(it.text || '').replace(/\s*\(~?\d+\s*min\)\s*$/i, '');
       // the board's head row: Today › Study (or Classes), N of M, up and down through the list as it is shown
       const tvh = el('div', 'tvh');
-      tvh.append(el('span', 'mini tvh-crumb', 'Today › ' + (catOf(it) === 'study' ? 'Study' : 'Classes')), el('span', 'sp'));
+      tvh.append(
+        el('span', 'mini tvh-crumb', 'Today › ' + (catOf(it) === 'study' ? 'Study' : 'Classes')),
+        el('span', 'sp')
+      );
       if (!G && order.length) {
         const go = d => () => {
           ui.taskSel = order[(i + d + order.length) % order.length].id;
@@ -746,7 +746,9 @@
       const go = openItem(it);
       if (startable(it, isDone)) {
         // a set of questions, as the board's topic tasks: "Start the quiz"; any other task a study session (B-374)
-        const st = btn(go ? 'Start the quiz' : 'Start study session', startGo(it), { cls: 'btn primary wide tp-start' });
+        const st = btn(go ? 'Start the quiz' : 'Start study session', startGo(it), {
+          cls: 'btn primary wide tp-start',
+        });
         st.prepend(svgIcon('M8 5l11 7-11 7z'));
         st.setAttribute('aria-label', 'Start: ' + text);
         acts.append(st);
@@ -930,7 +932,11 @@
         render();
       });
       line.append(
-        el('p', 'ti-review-t', 'E.V. suggests: ' + parts.join(', and ') + '.' + would + ' Nothing changes until you accept.'),
+        el(
+          'p',
+          'ti-review-t',
+          'E.V. suggests: ' + parts.join(', and ') + '.' + would + ' Nothing changes until you accept.'
+        ),
         all,
         no
       );
@@ -1003,7 +1009,10 @@
         ul.append(todayRow(it, isDone, { start: st, off: p ? { P, p } : null }));
       }
       // B-369 (D-312): proposed additions sit after the first row, as the demo's
-      if (P) ul.children[0] ? ul.children[0].after(...P.adds.map(p => proposedAddRow(P, p))) : ul.append(...P.adds.map(p => proposedAddRow(P, p)));
+      if (P)
+        ul.children[0]
+          ? ul.children[0].after(...P.adds.map(p => proposedAddRow(P, p)))
+          : ul.append(...P.adds.map(p => proposedAddRow(P, p)));
       const folds = ui.todayFolds || {};
       const kids = [...(P ? [restLine(P, bv)] : [])];
       const after = [];
@@ -1018,7 +1027,13 @@
             'Nothing planned for today yet. The 4:25 am run builds the list; add your own with New or ask E.V.'
           )
         );
-      if (done.length) after.push(...doneGroup(done.map(it => todayRow(it, isDone)), folds.done !== false));
+      if (done.length)
+        after.push(
+          ...doneGroup(
+            done.map(it => todayRow(it, isDone)),
+            folds.done !== false
+          )
+        );
       // B-363 (D-312): the toolbar's + Add opens New's task form, as the demo's Add does
       box.replaceChildren(...kids, ...after);
       // Weekly review (Sundays)
@@ -1033,7 +1048,7 @@
           ...(wk.review ? [el('p', 'stem', wk.review)] : []),
           ...(wk.reflection ? [el('p', 'meta', 'Reflection: ' + wk.reflection)] : []),
           // B-201: the build recap, the Chart's one sentence for the week
-          ...(wk.health && wk.health.recap ? [el('p', 'meta wk-recap', wk.health.recap)] : []),
+          ...(wk.health && wk.health.recap ? [el('p', 'meta wk-recap', wk.health.recap)] : [])
         );
       }
       renderEvDates(weekDates());
@@ -1099,7 +1114,14 @@
       const end = E.addDays(start, WEEK_DAYS - 1);
       const [, m0, d0] = start.split('-').map(Number),
         [, m1, d1] = end.split('-').map(Number);
-      const label = d0 + (m0 !== m1 ? ' ' + WK_MON[m0 - 1] : '') + ' – ' + d1 + ' ' + WK_MON[m1 - 1] + (wk === 0 ? ' · next 7 days' : '');
+      const label =
+        d0 +
+        (m0 !== m1 ? ' ' + WK_MON[m0 - 1] : '') +
+        ' – ' +
+        d1 +
+        ' ' +
+        WK_MON[m1 - 1] +
+        (wk === 0 ? ' · next 7 days' : '');
       nav.append(prev, now, next, el('span', 'mini wk-range', label));
       return nav;
     }
@@ -1138,7 +1160,9 @@
       const best = objs.map(o => [o, E.similarity(o.text || '', d.title || '')]).sort((a, b) => b[1] - a[1])[0];
       if (best && best[1] >= 0.3) return best[0];
       // B-363 (D-312): an exam or a quiz always offers Quiz me on it, on its course's first objective not yet solid
-      return ex || /\bquiz\b/i.test(d.title || '') ? objs.find(o => objState(o).state !== 'solid') || objs[0] || null : null;
+      return ex || /\bquiz\b/i.test(d.title || '')
+        ? objs.find(o => objState(o).state !== 'solid') || objs[0] || null
+        : null;
     }
     function dateTask(d) {
       // the item on today's list that carries this date
@@ -1149,7 +1173,9 @@
     function dateClock(d) {
       const t = d.dueAt ? new Date(d.dueAt) : null;
       return t && !isNaN(t)
-        ? t.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Chicago' }).toLowerCase()
+        ? t
+            .toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Chicago' })
+            .toLowerCase()
         : '';
     }
     // B-363 (D-312): a week card as the demo's: the title, then a grey dot and its time ('9:00 am', 'Any time'); no kind
@@ -1174,7 +1200,9 @@
     // readiness bar and its words), then Next 7 days (Those 7 days off this week) with the graded and class counts.
     function weekSummary(entries, wk) {
       const out = [];
-      const ex = S.exams.filter(e => e.date && e.date >= today && e.status !== 'done').sort((a, b) => a.date.localeCompare(b.date))[0];
+      const ex = S.exams
+        .filter(e => e.date && e.date >= today && e.status !== 'done')
+        .sort((a, b) => a.date.localeCompare(b.date))[0];
       if (ex) {
         const objs = S.objectives.filter(x => x.exam === ex.id);
         const st = objs.map(x => objState(x).state);
@@ -1249,8 +1277,7 @@
       }
       // the list view's cards step aside in the week, and the week's in the list
       $('today-list').hidden = on;
-      for (const c of [$('today-budget'), $('today-changes'), $('weekly')])
-        if (c) c.classList.toggle('wk-away', on);
+      for (const c of [$('today-budget'), $('today-changes'), $('weekly')]) if (c) c.classList.toggle('wk-away', on);
       box.hidden = !on;
       if (!on) {
         panel.hidden = true;
@@ -1323,7 +1350,7 @@
       const o = !off && dateObjective(d);
       let statLab = 'Readiness',
         stat = 'Upcoming';
-      if (d.date < today) (statLab = 'Result'), (stat = 'Done');
+      if (d.date < today) ((statLab = 'Result'), (stat = 'Done'));
       else if (d.kind === 'exam') {
         const ex = S.exams.find(e => 'exam-' + e.id === d.id || (e.date === d.date && E.courseOf(e) === E.courseOf(d)));
         const objs = ex ? S.objectives.filter(x => x.exam === ex.id) : [];
