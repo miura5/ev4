@@ -6451,10 +6451,10 @@
  {
   "id": "B-364",
   "kind": "request",
-  "title": "Request (reported Oct 25): The UI review found an opened task differs from the demo: the demo opens a full task page.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "title": "Fidelity fix: Task (wave 2): an opened task is the TaskDetail board's full page at every size: '‹ Today' back, the 'Today › Study' breadcrumb with 'N of M' and up and down, the large title with its tick, description and Where it came from in the main pane, properties and the primary Start study session on the right; no Close or Remove from today; at 390 the header reads Today",
+  "dod": "TaskDetail matches at 1280 and 390, and up, down and back work. Proof (D-312): node tools/build.mjs; crawl.cjs demo and built, on the synthetic record and on a real-shaped record (ten due items, long titles, an exam with no objectives), side by side at 1280 and 390 for every state named; npm run smoke; ship staging GREEN. Review pairs from the UI reviewer are in /home/claude/ui-review/pairs/ when this run shares the machine; otherwise rebuild them with crawl.cjs.",
+  "milestone": "v4.8 redesign",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -6463,6 +6463,10 @@
   "reportedAt": "2026-10-25T13:48:50.355Z",
   "board": {
    "row": "v4 B-364: The UI review found an opened task differs from the demo: the demo…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-25T13:48:50.874Z"
   }
  }
 ]
