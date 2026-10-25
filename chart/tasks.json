@@ -5485,7 +5485,7 @@
   "milestone": "app (data, pipelines, ops)",
   "status": "in progress",
   "depends": [],
-  "notes": "claimed by lane app",
+  "notes": "built: pwa/ and build-pwa on main at 0992e78; npm test, prettier and smoke green",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
