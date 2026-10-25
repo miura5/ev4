@@ -4916,5 +4916,22 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "ad67a62",
+  "time": "2026-10-25T18:23:25.058Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "700c333",
+  "tasks": [
+   "B-357",
+   "B-387"
+  ],
+  "summary": "The tests and the page harnesses still assert the old UI; they are…; On a 1150-wide laptop pane, scrolling up through the conversation…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
