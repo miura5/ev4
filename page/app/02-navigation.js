@@ -13,6 +13,8 @@
     // From 1200 px Study's open question has the set's questions as a list in the right panel. Each Study runner leaves
     // its list here by its body; renderStudySide (05) shows the one whose view is open.
     const studyLists = new Map();
+    const headDate = d =>
+      new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
     function showTab(t) {
       const was = ui.tab;
       ui.tab = t;
@@ -27,7 +29,8 @@
       // B-208 (D-210), B-287 (C-4): the pane's header names the view; hers is "E.V." at every width, as its tab says.
       const head = $('mh-title'),
         b = $('tab-' + t);
-      if (head && b) head.textContent = b.title;
+      // B-346 (D-312): Today's header carries the day, as the demo's "Today · Friday 23 October"
+      if (head && b) head.textContent = t === 'today' ? b.title + ' · ' + headDate(today) : b.title;
       placeSegs(t);
       renderStudySide(); // B-223 (D-245): the Study panel only while Study is the view
       renderLine(); // B-333: her insight strip follows the view

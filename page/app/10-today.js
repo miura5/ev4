@@ -265,7 +265,7 @@
         left,
         free,
         over,
-        line: `${left} min left · ${free} free`,
+        line: `${left} of ${available} min`,
         donePct: Math.min(100, (done / available) * 100),
         leftPct: Math.max(
           0,
@@ -301,14 +301,12 @@
         'aria-label',
         `${bv.done} min done, ${bv.left} min left, ${bv.available} min budget` + (bv.over ? `, over by ${bv.over}` : '')
       );
-      const d = el('i', 'x-green tb-done'),
-        l = el('i', (bv.over ? 'x-yellow' : 'tb-neutral') + ' tb-left');
-      d.style.width = bv.donePct.toFixed(1) + '%';
-      l.style.width = bv.leftPct.toFixed(1) + '%';
-      bar.append(d, l);
-      // B-335 (D-312): the demo's large figure, then the bar, then On the list and Done as two rows
-      const big = el('p', 'tb-big' + (bv.over ? ' tb-over' : ''));
-      big.append(el('span', null, `${bv.left} min left`), el('span', 'tb-free', ` · ${bv.free} free`));
+      // B-346 (D-312): one fill, as the demo's: what's on the list against the day's budget, red when over
+      const f = el('i', (bv.over ? 'x-red' : 'tb-neutral') + ' tb-fill');
+      f.style.width = Math.min(100, (bv.left / bv.available) * 100).toFixed(1) + '%';
+      bar.append(f);
+      // B-335, B-346 (D-312): the demo's large figure, '<on the list> of <budget> min', then the bar, then the two rows
+      const big = el('p', 'tb-big' + (bv.over ? ' tb-over' : ''), `${bv.left} of ${bv.available} min`);
       const prop = (k, v, cls) => {
         const p = el('div', 'prop' + (cls ? ' ' + cls : ''));
         p.append(el('span', 'prop-k', k), el('span', 'prop-v', v));
