@@ -1203,56 +1203,61 @@ button.btn:disabled{opacity:.45;cursor:default}
   .ov-li .badge{min-width:0}
   .ov-more{padding:8px 0 12px}
 }
-/* ============================================================ B-301 (C-6, C-1, D-270): Progress =====================
-   The period switch in the view's toolbar; one card of property rows (study time, quiz accuracy, weak spots); the
-   study-time chart, one bar per day, week or month, 44 px wide or more on the phone; by course and exam readiness,
-   one under the other (B-121's columns). The picked bar's day panel is the right panel's first card from 1200 px;
-   below that it follows the pane (B-288), and it is absent while the bar holds no session (D-151). Violet is study time, green solid, yellow right once (D-269); her colour is not used here. */
+/* ============================================================ B-301, B-338 (D-312): Progress =======================
+   Ported from the demo's Progress board: the period switch in the toolbar; one card of property rows (a 92 px label
+   column, the value beside it); the study-time chart, slim 40 px violet bars on no ground with an outlined stub for a
+   bar ahead; by course and exam readiness side by side from 1000 px; the day panel (the right panel from 1200 px) is
+   its date, the big total and that day's sessions, each with its Session badge. Absent while empty (D-151). */
 #progress-readiness .prog-bar{padding:0 0 8px;border-bottom:0;min-height:0}
-#progress-readiness .prog-bar .seg{align-self:center}
-.prog-props{gap:0;padding:4px 14px}
-.prog-props .prop{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:32px;border-bottom:1px solid var(--line);font-size:calc(13.5px * var(--ts))}
-.prog-props .prop:last-child{border-bottom:0}
+#progress-readiness .prog-bar .seg{align-self:flex-start}
+#progress-readiness .col-main{gap:12px}
+#p-progress .lab{font-size:calc(12px * var(--ts));color:var(--quiet);font-weight:500}
+#p-progress .mini{font-size:calc(12.5px * var(--ts));color:var(--faint)}
+.prog-props{display:flex;flex-direction:column;gap:2px;padding:14px}
+.prog-props .prop{display:grid;grid-template-columns:92px 1fr;align-items:center;gap:8px;min-height:34px;font-size:calc(13px * var(--ts));border:0}
 .prog-props .prop-k{color:var(--quiet)}
-.prog-props .prop-v{text-align:right;min-width:0}
+.prog-props .prop-v{min-width:0}
 .prog-props .prop-v b{font-weight:600;color:var(--text)}
 .prog-props .prop-v .meta{color:var(--faint);font-size:calc(12.5px * var(--ts))}
+#prog-chart-card{gap:6px}
 .prog-chart-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .prog-chart-head h3{margin:0;font:600 calc(13.5px * var(--ts)) var(--sans)}
-.prog-chart-head .meta{margin:0;color:var(--faint);font-size:calc(12px * var(--ts))}
-.prog-chart{display:flex;align-items:stretch;gap:6px;height:160px}
-.pc-col{flex:1 1 0;min-width:44px;display:flex;flex-direction:column;align-items:stretch;gap:6px}
-.pc-bar{flex:1;display:flex;align-items:flex-end;justify-content:stretch;min-width:44px;margin:0;padding:0;border:0;border-radius:6px;background:var(--sunken);cursor:pointer;box-shadow:none}
-.pc-bar>i{display:block;width:100%;border-radius:6px;background:color-mix(in srgb,var(--sem-violet) 55%,var(--surface))}
-.pc-bar[aria-pressed="true"]{box-shadow:inset 0 0 0 1px var(--line2)}
-.pc-bar[aria-pressed="true"]>i{background:var(--sem-violet)}
-.pc-bar.ahead{background:repeating-linear-gradient(135deg,var(--sunken) 0 6px,transparent 6px 10px)}
-.pc-bar:hover{background:var(--hover)}
+.prog-chart-head .meta{margin:0;color:var(--faint);font-size:calc(12.5px * var(--ts))}
+.prog-chart{display:flex;align-items:flex-end;gap:10px;height:170px;padding:24px 4px 0;box-sizing:border-box}
+.pc-col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;gap:4px;height:100%}
+.pc-bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;margin:0;padding:0;border:0;border-radius:6px;background:none;cursor:pointer;box-shadow:none;min-height:0}
+.pc-bar>i{display:block;width:40px;max-width:100%;border-radius:3px;background:var(--sem-violet)}
+.pc-bar:hover{background:none}
+.pc-bar:hover>i{filter:brightness(1.08)}
+.pc-bar>.pc-ahead{display:block;width:40px;max-width:100%;height:6px;border-radius:3px;box-shadow:inset 0 0 0 1px var(--line2)}
 .pc-bar:focus-visible{outline:2px solid var(--text);outline-offset:2px}
-.pc-lab{text-align:center;color:var(--faint);font-size:calc(12px * var(--ts));white-space:nowrap;font-variant-numeric:tabular-nums}
+.pc-lab{text-align:center;color:var(--quiet);font-size:calc(11.5px * var(--ts));white-space:nowrap;font-variant-numeric:tabular-nums}
 .pc-bar[aria-pressed="true"]+.pc-lab{color:var(--text);font-weight:600}
 .prog-grid{display:grid;grid-template-columns:1fr;gap:12px}
+@media (min-width:1000px){.prog-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .prog-grid .ui-card[hidden]{display:none}
+.prog-grid .ui-card{gap:10px}
 .prog-hb{display:flex;flex-direction:column;gap:5px}
 .prog-hb-top{display:flex;justify-content:space-between;gap:8px;font-size:calc(13.5px * var(--ts))}
 .prog-hb-top .meta{color:var(--faint);font-size:calc(12.5px * var(--ts));margin:0;white-space:nowrap}
+.prog-hb .pbar{height:10px;border-radius:5px;background:var(--hover);overflow:hidden;display:flex}
+.prog-hb .pbar>i{display:block;height:100%;background:var(--x,var(--sem-violet))}
 .prog-hb .pbar>i.x-green{background:var(--sem-green)}
 .prog-hb .pbar>i.x-yellow{background:var(--sem-yellow)}
-#prog-day h2{margin:0}
-#prog-day .prog-day-total{margin:2px 0 4px}
-#prog-day .prog-day-lab{margin:6px 0 0}
-#prog-day .prog-sessions{margin:0;padding:0;list-style:none}
-#prog-day .prog-s{padding:0 2px;gap:8px}
-#prog-day .prog-s .meta{flex:none;color:var(--faint);font-size:calc(12px * var(--ts))}
-#prog-day .prog-s:last-child{border-bottom:0}
-#prog-day .prog-s .nm{height:100%;padding:0;border:0;background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer}
+#prog-day{display:flex;flex-direction:column;gap:14px;background:none;border:0;border-radius:0;box-shadow:none;padding:0}
+#prog-day .prog-day-total{margin:0;font-size:30px;font-weight:600;letter-spacing:-.02em;line-height:1.1;color:var(--text)}
+#prog-day .prog-sessions{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:14px}
+#prog-day .prog-s{display:flex;flex-wrap:nowrap;align-items:flex-start;gap:8px;padding:0;min-height:0;border:0;font-size:calc(13px * var(--ts))}
+#prog-day .prog-s-t{display:flex;flex-direction:column;gap:1px;min-width:0}
+#prog-day .prog-s .nm{min-height:0;height:auto;line-height:22px;padding:0;border:0;background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer}
 #prog-day .prog-s .nm:hover{text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:3px}
-#progress-readiness .col-main{gap:12px}
 @media (max-width:599px){
-  .prog-chart{gap:4px;height:112px}
-  .prog-props{padding:2px 14px}
+  .prog-chart{gap:2px}
+  .pc-col{min-width:44px}
+  .pc-bar>i,.pc-bar>.pc-ahead{width:44px}
   .prog-props .prop{min-height:44px}
-  #prog-day .prog-s{padding:0}
+  #progress-readiness .prog-bar .seg{align-self:flex-start;width:auto}
+  #progress-readiness .prog-bar .seg button{flex:none;padding:0 12px}
 }
 /* ============================================================ B-302 (C-1, C-7, C-13): Record's log ================
    The log's toolbar (Filter and its pop-over, then the type tabs), its rows grouped by day, and the picked row's

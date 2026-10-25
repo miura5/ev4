@@ -140,8 +140,12 @@
       const vals = bs.map(b => minsIn(b.from, b.to));
       const mx = Math.max(1, ...vals);
       const cur = bs.findIndex(b => inSpan(today, b.from, b.to));
+      // B-338: at rest the day panel opens on the latest bar with sessions, else on the current one
       let pick = bs.findIndex(b => b.key === prog.pick);
-      if (pick < 0) pick = cur >= 0 ? cur : bs.length - 1;
+      if (pick < 0) {
+        const last = vals.map((v, i) => (v > 0 && !ahead(bs[i]) ? i : -1)).filter(i => i >= 0).pop();
+        pick = last != null ? last : cur >= 0 ? cur : bs.length - 1;
+      }
       $('prog-chart-h').textContent =
         P === 'week' ? 'Study time by day' : P === 'month' ? 'Study time by week' : 'Study time by month';
       const chart = $('prog-chart');
@@ -156,9 +160,13 @@
           bar.setAttribute('aria-pressed', String(i === pick));
           bar.setAttribute('aria-label', b.full + ': ' + (ahead(b) ? 'ahead' : hm(vals[i])));
           bar.title = b.full + ' · ' + (ahead(b) ? 'ahead' : hm(vals[i]));
-          const fill = el('i');
-          fill.style.height = vals[i] ? Math.max(3, Math.round((vals[i] / mx) * 100)) + '%' : '0';
-          bar.append(fill);
+          // the demo's slim bar: a 40 px fill on no ground, an outlined stub for a bar ahead
+          if (ahead(b)) bar.append(el('span', 'pc-ahead'));
+          else if (vals[i]) {
+            const fill = el('i');
+            fill.style.height = Math.max(3, Math.round((vals[i] / mx) * 100)) + '%';
+            bar.append(fill);
+          }
           bar.addEventListener('click', () => {
             prog.pick = b.key;
             renderProgressTime();
@@ -185,7 +193,7 @@
           return r;
         });
       $('prog-course').hidden = !courseRows.length;
-      $('prog-course').replaceChildren(el('h3', null, 'By course · ' + PERIODS[P].toLowerCase()), ...courseRows);
+      $('prog-course').replaceChildren(el('span', 'lab', 'By course · ' + PERIODS[P].toLowerCase()), ...courseRows);
       // exam readiness: each active course's next exam, its weak spots solid (green) and right once (yellow)
       const next = E.nextExams(S.exams, today);
       const readyRows = E.activeCourses()
@@ -212,16 +220,16 @@
         })
         .filter(Boolean);
       $('prog-ready').hidden = !readyRows.length;
-      $('prog-ready').replaceChildren(el('h3', null, 'Exam readiness · weak spots solid'), ...readyRows);
+      $('prog-ready').replaceChildren(el('span', 'lab', 'Exam readiness · weak spots solid'), ...readyRows);
       // the day panel: the picked bar's sessions, and nothing else
       const b = bs[pick];
       const list = timed()
         .filter(s => inSpan(s.date, b.from, b.to))
         .sort((x, y) => String(y.startedAt || y.date).localeCompare(String(x.startedAt || x.date)));
       const day = $('prog-day');
-      const ul = el('ul', 'list prog-sessions');
+      const ul = el('ul', 'prog-sessions');
       for (const s of list) {
-        const li = el('li', 'li prog-s');
+        const li = el('li', 'prog-s');
         li.dataset.min = String(s.minutes);
         li.dataset.id = s.id;
         // the session's name opens it in Record's log, where it lives (D-147: a card holds something he does)
@@ -230,15 +238,18 @@
         nm.title = 'Open in Record';
         nm.addEventListener('click', () => openInRecord(s.id)); // B-302: on its row in the log
         const when = P === 'week' ? (s.startedAt ? clock12(s.startedAt) + ' · ' : '') : short(s.date) + ' · ';
-        li.append(nm, el('span', 'meta', sessionCourse(s)), el('span', 't', when + hm(s.minutes)));
+        // the demo's row: the Session badge, then the name over its minutes, course and time
+        const txt = el('div', 'prog-s-t');
+        txt.append(nm, el('span', 'mini', hm(s.minutes) + ' · ' + sessionCourse(s) + (when ? ' · ' + when.slice(0, -3) : '')));
+        li.append(el('span', 'badge x-violet', 'Session'), txt);
         ul.append(li);
       }
       // absent while the picked bar holds no session (D-151)
       day.hidden = !list.length;
       day.replaceChildren(
-        el('h2', null, b.full),
-        el('p', 'big prog-day-total', hm(vals[pick])),
-        el('p', 'meta prog-day-lab', plural(list.length, 'study session')),
+        el('span', 'lab prog-day-when', b.full),
+        el('p', 'prog-day-total', hm(vals[pick])),
+        el('span', 'lab prog-day-lab', P === 'week' ? 'That day in Record' : 'That ' + (P === 'month' ? 'week' : 'month') + ' in Record'),
         ul
       );
     }
@@ -287,232 +298,11 @@
           renderProgressTime();
         })
       );
-    // B-118 (D-155): Readiness is one lead line (percent solid, right answers to go, days left) and one objective list in
-    // readinessAudit's order (most not yet first), merging the audit and accuracy by objective. Each row is one line with
-    // its not-yet count and opens in place to its counts, accuracy and passages to reread; past 5 they fold under a count.
-    const openObjs = new Set();
-    function objRow(o, acc, folded) {
-      const li = el('li', 'row obj-item' + (openObjs.has(o.id) ? ' open' : ''));
-      li.dataset.id = o.id;
-      li.hidden = folded;
-      const b = el('button', 'obj-line');
-      b.type = 'button';
-      b.setAttribute('aria-expanded', String(openObjs.has(o.id)));
-      b.append(el('span', 'obj-t', o.id + ' · ' + (o.text || '')), el('span', 'obj-n', o.notYet + ' not yet'));
-      const more = el('div', 'obj-more');
-      more.append(
-        el(
-          'p',
-          'meta',
-          [
-            `${o.solid} solid · ${o.rightOnce} right once · ${o.notYet} not yet${o.preRead ? ' · ' + o.preRead + ' previews' : ''}`,
-            acc ? `${acc.right} of ${acc.n} right (${pct(acc.right, acc.n)})` : 'no answers yet',
-          ].join(' · ')
-        )
-      );
-      if (o.passages && o.passages.length)
-        more.append(el('p', 'meta obj-reread', 'Reread: ' + o.passages.map(x => x.cite).join('; ')));
-      else if ((o.notYet || o.rightOnce) && !LIB.mats) more.append(el('p', 'meta', 'Finding passages to reread…'));
-      b.addEventListener('click', () => {
-        const on = !openObjs.has(o.id);
-        on ? openObjs.add(o.id) : openObjs.delete(o.id);
-        li.classList.toggle('open', on);
-        b.setAttribute('aria-expanded', String(on));
-      });
-      li.append(b, more);
-      return li;
-    }
-    function foldCard(id, rows, render) {
-      // a table that folds to one line, absent while it holds one row
-      const c = $(id + '-card'),
-        body = c.querySelector('.scroll'),
-        line = c.querySelector('.fold-line');
-      c.hidden = rows < 2;
-      if (!line.dataset.on) {
-        line.dataset.on = '1';
-        line.addEventListener('click', () => {
-          body.hidden = !body.hidden;
-          line.setAttribute('aria-expanded', String(!body.hidden));
-        });
-      }
-      if (!c.hidden) render(body);
-    }
-    // B-48 (D-105): readiness over time for one exam: the mornings' stamps (days/<date>.readiness) inside the 14-day
-    // window, each week's closing stamp (weeks/<date>.rollups.readiness) before it, and the night-before prediction
-    // (predictions/<examId>, its percentSolid) as the last marked point. Nothing drawn here is stored by the page.
-    function readinessTrend(examId) {
-      const from = E.addDays(today, -13);
-      const pts = [];
-      for (const w of S.weeks || []) {
-        const r = w.rollups && w.rollups.readiness && w.rollups.readiness[examId];
-        if (r && r.pctSolid != null && w.date && w.date < from) pts.push({ date: w.date, v: r.pctSolid, week: true });
-      }
-      for (const d of S.days || []) {
-        const r = d.readiness && d.readiness[examId];
-        if (r && r.pctSolid != null && (d.date || d.id) >= from) pts.push({ date: d.date || d.id, v: r.pctSolid });
-      }
-      pts.sort((a, b) => a.date.localeCompare(b.date));
-      const p = (S.predictions || []).find(x => (x.examId || x.id) === examId);
-      const pred =
-        p && p.percentSolid != null && p.date ? { date: p.date, v: p.percentSolid, range: p.predictedRange } : null;
-      return { pts, pred };
-    }
-    function trendChart(examId) {
-      const { pts, pred } = readinessTrend(examId);
-      if (pts.length + (pred ? 1 : 0) < 2) return null;
-      const all = [...pts, ...(pred ? [pred] : [])];
-      const t0 = Date.parse(all[0].date + 'T12:00:00Z'),
-        t1 = Date.parse(all[all.length - 1].date + 'T12:00:00Z');
-      const W = 320,
-        H = 96,
-        L = 30,
-        R = 40,
-        T = 8,
-        B = 18;
-      const x = d => L + (t1 > t0 ? ((Date.parse(d + 'T12:00:00Z') - t0) / (t1 - t0)) * (W - L - R) : (W - L - R) / 2);
-      const y = v => T + (1 - v / 100) * (H - T - B);
-      const NS = 'http://www.w3.org/2000/svg';
-      const mk = (tag, attrs, text) => {
-        const n = document.createElementNS(NS, tag);
-        for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
-        if (text != null) n.textContent = text;
-        return n;
-      };
-      const day = d => E.shortDate(d);
-      const svg = mk('svg', {
-        viewBox: `0 0 ${W} ${H}`,
-        class: 'trend',
-        role: 'img',
-        'aria-label':
-          'Percent solid by morning: ' +
-          pts.map(p => `${day(p.date)} ${p.v}%`).join(', ') +
-          (pred ? `; night before the exam ${pred.v}% (prediction)` : ''),
-      });
-      for (const v of [0, 50, 100]) {
-        svg.append(mk('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), class: 'trend-grid' }));
-        svg.append(mk('text', { x: L - 6, y: y(v) + 3, class: 'trend-axis', 'text-anchor': 'end' }, v + '%'));
-      }
-      if (pts.length > 1)
-        svg.append(mk('polyline', { points: pts.map(p => `${x(p.date)},${y(p.v)}`).join(' '), class: 'trend-line' }));
-      if (pred && pts.length)
-        svg.append(
-          mk('line', {
-            x1: x(pts[pts.length - 1].date),
-            y1: y(pts[pts.length - 1].v),
-            x2: x(pred.date),
-            y2: y(pred.v),
-            class: 'trend-link',
-          })
-        );
-      for (const p of pts) {
-        const c = mk('circle', { cx: x(p.date), cy: y(p.v), r: 4, class: 'trend-pt' + (p.week ? ' week' : '') });
-        c.append(mk('title', {}, `${day(p.date)}${p.week ? ' (week’s close)' : ''}: ${p.v}% solid`));
-        svg.append(c);
-      }
-      const last = pts[pts.length - 1];
-      if (last && !pred)
-        svg.append(mk('text', { x: x(last.date) + 7, y: y(last.v) + 4, class: 'trend-label' }, last.v + '%'));
-      if (pred) {
-        const c = mk('circle', { cx: x(pred.date), cy: y(pred.v), r: 5, class: 'trend-pred' });
-        c.append(
-          mk(
-            'title',
-            {},
-            `Night before (${day(pred.date)}): ${pred.v}% solid${pred.range ? `, predicted score ${pred.range[0]} to ${pred.range[1]}` : ''}`
-          )
-        );
-        svg.append(c, mk('text', { x: x(pred.date) + 8, y: y(pred.v) + 4, class: 'trend-label' }, pred.v + '%'));
-      }
-      svg.append(mk('text', { x: L, y: H - 4, class: 'trend-axis' }, day(all[0].date)));
-      svg.append(
-        mk('text', { x: W - R, y: H - 4, class: 'trend-axis', 'text-anchor': 'end' }, day(all[all.length - 1].date))
-      );
-      const wrap = el('div', 'trend-wrap');
-      const first = pts[0];
-      wrap.append(
-        svg,
-        el(
-          'p',
-          'meta trend-cap',
-          first && last && first !== last
-            ? `Solid over ${plural(pts.length, 'morning')}: ${first.v}% to ${last.v}%${pred ? `; the night before, ${pred.v}%` : ''}.`
-            : pred
-              ? `The night before, ${pred.v}% solid.`
-              : ''
-        )
-      );
-      return wrap;
-    }
-    // B-72 (D-120): the latest week's insights, its top three lines, as the weekly computed them; nothing recomputed here.
-    const latestInsights = () =>
-      [...(S.weeks || [])]
-        .filter(w => w.insights && (w.insights.lines || []).length)
-        .sort((a, b) => String(b.date || b.id).localeCompare(String(a.date || a.id)))[0] || null;
-    // One line that opens in place to the three (D-147, D-148), so no objective shows twice beside the list above.
-    function renderInsights() {
-      const c = $('insights-card');
-      const w = latestInsights();
-      c.hidden = !w;
-      if (!w) return;
-      const n = w.insights.lines.slice(0, 3);
-      const line = $('insights-line'),
-        list = $('insights-list');
-      if (!line.dataset.on) {
-        line.dataset.on = '1';
-        line.addEventListener('click', () => {
-          list.hidden = !list.hidden;
-          line.setAttribute('aria-expanded', String(!list.hidden));
-        });
-      }
-      line.textContent = `From the week of ${E.shortDate(w.date || w.id)} · ${plural(n.length, 'finding')}`;
-      list.replaceChildren(...n.map(t => el('li', 'row ins-line', t)));
-    }
     function renderReadiness() {
       renderProgressTime(); // B-301
-      const card = $('ready-card');
-      const ex = M.target;
-      const st = E.answerStats(M.attempts.all, { date: today });
-      const objName = id => (S.objectives.find(o => o.id === id) || {}).text || id;
-      if (ex && ui.tab === 'progress') {
-        // built while Progress shows: the audit reads the library
-        const r = E.readiness({ examId: ex.id, weakspots: M.models });
-        const daysLeft = E.diffDays(today, ex.date);
-        const lead = el(
-          'p',
-          'big ready-lead',
-          [
-            r.pctSolid != null ? r.pctSolid + '% solid' : 'No weak spots yet',
-            r.need ? plural(r.need, 'right answer') + ' to go' : 'nothing to go',
-            daysLeft <= 0 ? 'exam day' : plural(daysLeft, 'day') + ' left',
-          ].join(' · ')
-        );
-        const audit = auditRows();
-        const seen = new Set(audit.map(a => a.id));
-        const rows = [
-          ...audit,
-          ...Object.keys(st.byObjective)
-            .filter(id => !seen.has(id) && String(id).split('-')[0] === ex.id)
-            .map(id => ({ id, text: objName(id), solid: 0, rightOnce: 0, notYet: 0, preRead: 0, passages: [] })),
-        ];
-        const ul = el('ul', 'list obj-list');
-        rows.forEach((o, i) => ul.append(objRow(o, st.byObjective[o.id], i >= 5 && !ui.objAll)));
-        const trend = trendChart(ex.id);
-        const kids = [el('h2', null, 'Readiness · ' + (ex.title || ex.id)), lead, ...(trend ? [trend] : []), ul];
-        if (rows.length > 5) {
-          const f = el('button', 'fold-line');
-          f.type = 'button';
-          f.textContent = ui.objAll ? 'Fewer objectives' : `${plural(rows.length - 5, 'more objective')}`;
-          f.setAttribute('aria-expanded', String(!!ui.objAll));
-          f.addEventListener('click', () => {
-            ui.objAll = !ui.objAll;
-            render();
-          });
-          kids.push(f);
-        }
-        card.replaceChildren(...kids);
-      }
-      renderInsights();
-      $('audit-card').hidden = true; // merged into the list above (B-118); its line in the conversation still opens here
+      // B-338 (D-312): the readiness card, its objective list and line chart, the findings and the accuracy tables leave
+      // Progress; their data stays in the record. Only the score prompt remains, while a past exam waits for its score.
+      for (const id of ['ready-card', 'insights-card', 'audit-card', 'fmt-card', 'cj-card', 'days-card']) $(id).hidden = true;
       // Score entry for past unit exams (calibration).
       // D-094: a past NUR unit exam with no score yet; the score goes to examedits/<examId>, replaced whole.
       const needScore = S.exams
@@ -586,34 +376,6 @@
         });
         sc.replaceChildren(f);
       }
-      const t = st.byType;
-      const fr = [
-        ['One best answer', 'single'],
-        ['Select all that apply', 'sata'],
-        ['Matrix', 'matrix'],
-      ]
-        .filter(([, k]) => t[k])
-        .map(([lab, k]) => [lab, t[k].right + ' of ' + t[k].n, pct(t[k].right, t[k].n)]);
-      foldCard('fmt', fr.length, b => b.replaceChildren(table(['Format', 'Right', '%'], fr)));
-      const cj = E.CJ_STEPS.filter(s => st.byCjStep[s]).map(s => [
-        cjLabel(s),
-        st.byCjStep[s].right + ' of ' + st.byCjStep[s].n,
-        pct(st.byCjStep[s].right, st.byCjStep[s].n),
-      ]);
-      foldCard('cj', cj.length, b => b.replaceChildren(table(['Step', 'Right', '%'], cj)));
-      const mins = {};
-      S.sessions.forEach(s => {
-        if (s.date) mins[s.date] = (mins[s.date] || 0) + (s.minutes || 0);
-      });
-      const days = st.lastDays.filter(d => d.n || mins[d.date]);
-      foldCard('days', days.length, b =>
-        b.replaceChildren(
-          table(
-            ['Day', 'Answered', 'Right', 'Study min'],
-            days.map(d => [short(d.date), String(d.n), pct(d.right, d.n), String(mins[d.date] || 0)])
-          )
-        )
-      );
     }
     // B-123 (D-162): a weak spot is one line, its topic and objective, opening in place to its source and its action.
     const openWs = new Set();
