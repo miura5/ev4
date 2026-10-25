@@ -41,26 +41,28 @@
     function renderStudySide() {
       const side = $('study-side');
       if (!side) return;
-      const shown = [...studyLists.entries()].find(
-        ([b]) => b.isConnected && !b.closest('[hidden]') && PANEL.matches && ui.tab === 'study'
-      );
+      // B-365 (D-316): as the demo, the side pane sits beside the pane from 1200 px and under it below that (a quiz's
+      // questions, Weak spots' triage card); the objective opens under its row and the plan leads its rows there instead
+      const shown = [...studyLists.entries()].find(([b]) => b.isConnected && !b.closest('[hidden]') && ui.tab === 'study');
       // B-337 (D-312): with no set open, Objectives' picked objective (ui.objPanel, 20-study) fills the panel
       const obj =
-        !shown && PANEL.matches && ui.tab === 'study'
-          ? ui.study === 'objectives'
-            ? ui.objPanel
-            : ui.study === 'weak' // B-347: Weak spots' panel card
-              ? ui.weakPanel
-              : ui.study === 'plan' // B-348: the plan's summary
-                ? ui.planPanel
-                : null
+        !shown && ui.tab === 'study'
+          ? ui.study === 'weak' // B-347: Weak spots' panel card
+            ? ui.weakPanel
+            : !PANEL.matches
+              ? null
+              : ui.study === 'objectives'
+                ? ui.objPanel
+                : ui.study === 'plan' // B-348: the plan's summary
+                  ? ui.planPanel
+                  : null
           : null;
       side.hidden = !shown && !obj;
       side.setAttribute(
         'aria-label',
         obj
           ? ui.study === 'weak'
-            ? 'How a weak spot closes'
+            ? 'How triage works'
             : ui.study === 'plan'
               ? 'The plan'
               : 'The picked objective'
@@ -123,10 +125,13 @@
         if (q.id === current) b.setAttribute('aria-current', 'true');
         const dot = el('i', 'dot sq-d' + (a ? (a.correct ? ' ok' : ' no') : q.id === current ? ' now' : ''));
         dot.setAttribute('aria-hidden', 'true');
-        b.setAttribute('aria-label', 'Question ' + (i + 1) + ': ' + (q.topic || q.stem));
+        // B-365: in Study the pane lists the questions themselves, as the demo's This quiz
+        const words = key === 'rv' || key.startsWith('pr-') ? q.stem || q.topic : q.topic || q.stem;
+        b.setAttribute('aria-label', 'Question ' + (i + 1) + ': ' + words);
+        b.title = words;
         b.append(
           dot,
-          el('span', 'sq-t', q.topic || q.stem),
+          el('span', 'sq-t', words),
           el(
             'span',
             'sq-s' + (a ? (a.correct ? ' ok' : ' no') : ''),
@@ -166,7 +171,7 @@
       // B-126 (D-165): the counter is the set's fold line (it replaces All questions); a finished set has nothing under it.
       if (o.countEl) {
         const c = o.countEl,
-          flat = view === '__summary' || (inStudy && PANEL.matches);
+          flat = view === '__summary' || inStudy; // B-365: in Study the pane holds the list at every width
         // B-348 (D-312): the demo's card label, "Question 2 of 8 · Today's review", and "3 right so far" beside it
         const at = items.findIndex(x => x.id === view);
         c.textContent = !items.length
@@ -190,7 +195,7 @@
         o.scoreEl.textContent =
           view === '__summary' ? '' : items.filter(q => answers[q.id] && answers[q.id].correct).length + ' right so far';
       if (view === '__summary') {
-        if (inStudy && PANEL.matches) studyLists.set(body, { key, list: setLines(key, items, answers, null) });
+        if (inStudy) studyLists.set(body, { key, list: setLines(key, items, answers, null) });
         return summary(o, items, answers);
       }
       const q = items.find(x => x.id === view);
@@ -221,7 +226,10 @@
           .filter(Boolean)
           .join(' · ')
       );
-      const parts = [el('p', 'stem q-stem', q.stem), tags];
+      // B-365 (D-316): in Study a one-answer question grades on the tap (or A to D), as the demo: no Check answer, no
+      // skip, and no kind line under the stem
+      const instant = inStudy && type === 'single';
+      const parts = [el('p', 'stem q-stem', q.stem), ...(instant ? [] : [tags])];
       // B-193 (D-205): a question resting on another course's passage names its source; its writer adds it to the stem, and
       // one written before that shows it under the stem once the library is open (it is never loaded just for this).
       const cross = LIB.mats ? E.crossCourse(q, { materials: LIB.mats, exams: S.exams, set }) : null;
@@ -346,6 +354,17 @@
             }
             submit.disabled = !ready();
           });
+          // B-365: a tap answers at once, a second tap on the same answer included (after a refused save)
+          if (instant)
+            inp.addEventListener('click', () => {
+              sel.clear();
+              sel.add(i);
+              if (!a && !submit.dataset.busy) {
+                submit.dataset.busy = "1";
+                submit.disabled = false;
+                submit.click();
+              }
+            });
           const span = el('span', 'grow');
           span.append(document.createTextNode(txt));
           if (a) {
@@ -388,7 +407,7 @@
           views[key] = id;
           render();
         };
-      if (prev) {
+      if (prev && !instant) {
         const b = btn('Back', () => go(prev.id), { cls: 'quiet q-back' });
         b.setAttribute('aria-label', 'Back to question ' + at);
         actions.append(b);
@@ -443,6 +462,7 @@
             });
           } catch (e) {
             toast('Couldn’t check that answer: ' + (e.message || e.code));
+            delete submit.dataset.busy;
             submit.disabled = false;
             submit.textContent = 'Check answer';
             return;
@@ -461,16 +481,16 @@
             toast('Couldn’t save that answer: ' + (e.message || e.code));
           }
         });
-        const later = after || items.find(x => !answers[x.id] && x.id !== q.id);
+        const later = !instant && (after || items.find(x => !answers[x.id] && x.id !== q.id));
         if (later) {
           const b = btn('Next', () => go(later.id), { cls: 'quiet q-next' });
           b.setAttribute('aria-label', 'Next question, leaving this one open');
           actions.append(b);
         }
-        actions.append(submit);
+        if (!instant) actions.append(submit);
       }
-      parts.push(actions);
-      if (inStudy && PANEL.matches)
+      if (actions.children.length) parts.push(actions);
+      if (inStudy)
         studyLists.set(body, {
           key,
           list: setLines(key, items, answers, q.id),
@@ -478,7 +498,7 @@
         });
       // From 1024 px the set sits beside the question; below, it opens in place above it (from 1200 px in Study, the
       // right panel holds it instead).
-      if (setOpen[key] && !(inStudy && PANEL.matches)) {
+      if (setOpen[key] && !inStudy) {
         const list = setLines(key, items, answers, q.id);
         if (WIDE.matches) {
           const main = el('div', 'q-main'),

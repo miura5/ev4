@@ -1500,11 +1500,12 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h))}
 .ov-detail .dot,.ov-up .dot{width:8px;height:8px;border-radius:4px;background:var(--x,var(--quiet));flex:none}
 .ov > .ov-detail{padding:14px 4px 16px;border-bottom:1px solid var(--line)}
 .ov:last-child > .ov-detail{border-bottom:0}
-.ov.open .obj{border-bottom:0}
+.ov.open:has(> .ov-detail) .obj{border-bottom:0}
 #study-side .ov-detail{gap:14px}
 .ov-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:stretch}
 .ov-grid:empty{display:none}
 .ov-grid > :only-child{grid-column:1 / -1}
+.ov-grid > .ov-up[hidden] ~ .ov-quiz{grid-column:1 / -1}
 .ov-quiz{gap:12px}
 .ov-quiz .lab{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
 .ov-quiz .mq-q{font:500 calc(17px * var(--ts))/1.35 var(--sans);color:var(--text)}
@@ -1638,11 +1639,17 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h))}
   .qz-card .opt{min-height:52px}
   .wk-list .wl{padding:8px 16px}
   .wk-list .dayh{padding:14px 16px 6px}
-  .ov .obj{flex-wrap:nowrap;padding:6px 0}
+  .ov .obj{flex-wrap:nowrap;padding:0}
   .obj .oq{display:none}
-  .obj .nm{min-height:44px}
+  .obj .nm{min-height:44px;padding:6px 0}
   .ov-up .up{min-height:48px}
   .ov-grid{grid-template-columns:1fr}
+}
+/* B-365 (D-316): below 1200 px the side pane follows the pane, as the demo's right column under a hairline (a quiz's
+   questions, Weak spots' triage card) */
+@media (max-width:1199px){
+  #study-side:not([hidden]){display:flex;flex-direction:column;gap:14px;margin:16px -16px -18px;padding:16px 18px;border-top:1px solid var(--line);box-sizing:border-box}
+  #study-side .set-list{margin:0}
 }
 /* ============================================================ B-301, B-338 (D-312): Progress =======================
    Ported from the demo's Progress board: the period switch in the toolbar; one card of property rows (a 92 px label

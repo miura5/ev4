@@ -115,9 +115,52 @@
         const ex = S.exams
           .filter(e => e.date && e.date >= today && E.courseOf(e) === c && e.status !== 'done')
           .sort((a, b) => a.date.localeCompare(b.date))[0];
-        if (ex) out.push({ course: c, exam: ex });
+        out.push({ course: c, exam: ex || null }); // B-365: every course shows in the switch, an exam or not
       }
       return out;
+    }
+    /** B-365 (D-316): her line under Study's header, as the demo's: the quiz's rule in a quiz, how a weak spot closes on
+     *  Weak spots, and on the overview the course's exam: its objectives not yet solid, or (none in the record) its plan. */
+    function examPlan(ex) {
+      return (
+        S.plans.find(p => (p.exam || p.id) === ex.id) ||
+        S.plans
+          .filter(p => !p.exam && (p.days || []).some(d => d.date <= ex.date && d.date >= E.addDays(ex.date, -21)))
+          .sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')))[0] ||
+        null
+      );
+    }
+    function studyLine() {
+      if (ui.study === 'review' || ui.study === 'practice')
+        return { text: 'Misses are proposed as weak spots. You review them once, at the end.' };
+      if (ui.study === 'weak') return { text: 'Each closes after two right answers on different days.' };
+      const cur = studyExams().find(x => x.course === ui.studyCourse);
+      if (!cur || !cur.exam) return null;
+      const ex = (cur.exam.title || cur.exam.id).replace(/:.*$/, '');
+      const objs = S.objectives.filter(o => o.exam === cur.exam.id);
+      if (objs.length) {
+        const acc = E.answerStats(M.attempts.all).byObjective;
+        const weak = objs.filter(o => objState(o, acc[o.id]).state === 'notyet');
+        if (!weak.length) return null;
+        const text =
+          weak.length === 1
+            ? `One ${ex} objective is not yet solid: ${weak[0].text || weak[0].id}.`
+            : `${numWord(weak.length)} ${ex} objectives are not yet solid.`;
+        return { text, act: [weak.length === 1 ? 'Quiz me on it' : 'Quiz me on them', b => quizObjective(weak[0], b)] };
+      }
+      const plan = examPlan(cur.exam);
+      const days = E.diffDays(today, cur.exam.date);
+      const when = days <= 0 ? 'today' : days === 1 ? 'tomorrow' : 'in ' + days + ' days';
+      if (!plan) return { text: `${cur.course} ${ex} is ${when}. Its objectives aren’t in the record yet.` };
+      const isDone = t => !!(plan.done && plan.done[t.id]) || E.taskDone(plan, t, today, S.sets, S.answers);
+      const ts = (plan.days || []).flatMap(d => (d.tasks || []).map(t => ({ ...t, date: d.date })));
+      const left = ts.filter(t => !isDone(t)).length;
+      return {
+        text: left
+          ? `${cur.course} ${ex} is ${when}, with ${plural(left, 'plan task')} left.`
+          : `${cur.course} ${ex} is ${when}, and its plan is done.`,
+        act: ['Quiz me', b => courseQuiz(b)],
+      };
     }
     /** An objective's state from its weak spots and answers: Not yet while one is not yet right (or none answered),
      *  Almost while its open ones are right once, Solid once none is open. */
@@ -183,7 +226,9 @@
       const start = $('study-start');
       start.dataset.off = activeSession() ? '1' : '';
       if (!list.some(x => x.course === ui.studyCourse))
-        ui.studyCourse = ((M.target && list.find(x => x.exam.id === M.target.id)) || list[0] || {}).course || null;
+        ui.studyCourse =
+          ((M.target && list.find(x => x.exam && x.exam.id === M.target.id)) || list.find(x => x.exam) || list[0] || {})
+            .course || null;
       const cs = $('study-course');
       const ck = list.map(x => x.course).join('|') + '#' + ui.studyCourse;
       if (cs.dataset.k !== ck) {
@@ -206,9 +251,11 @@
       syncStudyBar();
       const cur = list.find(x => x.course === ui.studyCourse);
       ui.objPanel = null;
-      if (!cur) {
-        card.replaceChildren(el('p', 'empty', 'Your next exam shows here once it’s in the record.'));
-        renderStudyUp(null);
+      if (!cur || !cur.exam) {
+        card.replaceChildren(
+          el('p', 'empty', (cur ? cur.course + '’s' : 'Your') + ' next exam shows here once it’s in the record.')
+        );
+        renderStudyUp(cur ? cur.course : null);
         renderMiniQuiz(null);
         return;
       }
@@ -243,7 +290,7 @@
       y.style.width = items.almost;
       bar.setAttribute('aria-label', items.aria);
       box.append(...items.rows);
-      card.replaceChildren(...(items.rows.length ? [head, bar, box] : [head, bar, el('p', 'empty ov-none', items.none)]));
+      card.replaceChildren(...(items.rows.length ? [head, bar, box] : [head, el('p', 'empty ov-none', items.none)]));
       renderStudyUp(cur.course);
       renderMiniQuiz(cur);
     }
@@ -299,7 +346,7 @@
      *  plan day (Done, Started or To do; its label; its date and count). The picked day fills the panel from 1200 px,
      *  or opens under its row, with its tasks and Open the plan. */
     function planRows(ex, fullName) {
-      const plan = S.plans.find(p => (p.exam || p.id) === ex.id);
+      const plan = examPlan(ex);
       const empty = {
         rows: [],
         count: '',
@@ -413,7 +460,7 @@
     }
     function courseQuiz(b) {
       const cur = studyExams().find(x => x.course === ui.studyCourse);
-      const c = cur && courseSet(cur);
+      const c = cur && cur.exam && courseSet(cur);
       if (!c) return weakQuizAll(b);
       if (c.review) {
         setStudy('review');
@@ -432,7 +479,7 @@
         card.id = 'ov-quiz';
         $('ov-grid').append(card);
       }
-      const c = cur && courseSet(cur);
+      const c = cur && cur.exam && courseSet(cur);
       const q = c && E.validItems(c.set).find(x => !answersOf(c.set)[x.id]);
       const teaser = q ? String(q.stem || q.q || q.text || '').trim() : '';
       card.replaceChildren(
@@ -545,11 +592,10 @@
       card.replaceChildren(hd, list);
     }
     /** B-347 (D-312): Weak spots as the demo's StudyWeak board. A strip (All topics back to Objectives, "Weak spots ·
-     *  course", Quiz me), then sections of full-width rows under a quiet head: due today, due tomorrow, later, notes and
-     *  skills, previews and solid. An open row has its dot, its topic, a grey line (where it came from, how often, when
-     *  it is next due, its objective), Drill and Mark solid; previews and solid are quiet. From 1200 px the right panel
-     *  says how a weak spot closes. There is no To review section: nothing in the record proposes weak spots yet
-     *  (B-300). */
+     *  course", Quiz me), then sections of full-width rows under a quiet head: due today, due tomorrow, later,
+     *  previews and solid. An open row has its dot, its topic, a grey line (where it came from, how often, when
+     *  it is next due, its objective), Drill and Mark solid; previews and solid are quiet. The side pane is the demo's
+     *  How triage works (B-365). There is no To review section: nothing in the record proposes weak spots yet (B-300). */
     const objText = id => ((S.objectives.find(o => o.id === id) || {}).text || '');
     function weakQuizAll(b) {
       // today's review set aims at the most due spots; with none yet, the same line as the review's own
@@ -579,7 +625,7 @@
         w.source,
         d.recurrence > 1 ? 'seen ' + d.recurrence + '×' : '',
         when,
-        objText(w.objective) || w.objective || '',
+        objText(w.objective), // B-365: an objective not in the record shows no bare id
       ]
         .filter(Boolean)
         .join(' · ');
@@ -590,8 +636,11 @@
       row.append(el('i', 'dot' + (quiet ? '' : ' x-yellow')), tx);
       if (d.status === 'open') {
         const o = (w.kind || 'concept') === 'concept' && !d.preRead && S.objectives.find(x => x.id === w.objective);
-        if (o) {
-          const dr = btn('Drill', ev => quizObjective(o, ev.currentTarget), { cls: 'btn neutral sm' });
+        // B-365: every open row has Drill, as the demo: its objective's quiz, or today's review with no objective
+        if (!d.preRead) {
+          const dr = btn('Drill', ev => (o ? quizObjective(o, ev.currentTarget) : weakQuizAll(ev.currentTarget)), {
+            cls: 'btn neutral sm',
+          });
           dr.setAttribute('aria-label', 'Drill ' + (w.topic || 'this weak spot'));
           row.append(dr);
         }
@@ -618,7 +667,6 @@
       const solid = ms
         .filter(w => w.derived.status === 'reviewed' && w.kind !== 'note')
         .sort((a, b) => String(b.derived.solidAt || '').localeCompare(String(a.derived.solidAt || '')));
-      const formats = ms.filter(w => w.kind === 'format' && w.derived.status === 'open');
       const tomorrow = E.addDays(today, 1);
       const due = active.filter(w => E.isDue(w, today)),
         tom = active.filter(w => !E.isDue(w, today) && w.derived.nextDue === tomorrow),
@@ -631,7 +679,9 @@
         })
       );
       const one = cs.size === 1 ? [...cs][0] : null;
-      $('weak-lab').textContent = 'Weak spots' + (one ? ' · ' + one : '');
+      // B-365: the strip names the course, as the demo's "Weak spots · NUR 112" (the one picked on the overview)
+      const course = ui.studyCourse || one || E.defaultCourse();
+      $('weak-lab').textContent = 'Weak spots' + (course ? ' · ' + course : '');
       const out = [];
       const sec = (label, rows, quiet) => {
         if (!rows.length) return;
@@ -643,35 +693,23 @@
         const all = el('div', 'wl wl-all');
         const q = btn('Quiz me on all of them', ev => weakQuizAll(ev.currentTarget), { cls: 'btn neutral sm' });
         all.append(q);
-        const ql = $('weak-quizlet');
-        ql.hidden = !active.some(w => (w.kind || 'concept') === 'concept');
-        all.append(ql);
-        if (due.length) out.push(all);
         sec('Due tomorrow', tom);
         sec('Later', later);
-        if (!due.length) out.push(all);
-      } else $('weak-quizlet').hidden = true;
-      sec('Notes and skills', notes);
-      if (formats.length)
-        out.push(
-          el(
-            'div',
-            'wl wl-note mini',
-            'Question format pattern: ' + formats.map(f => f.topic).join('; ') + '. Review sets lean on these formats.'
-          )
-        );
+        out.push(all); // B-365: as the demo, one Quiz me on all of them after the open rows; no Copy for Quizlet
+      }
+      // B-365 (D-316): the demo has no Notes and skills section and no footer; those stay in the record
       sec('Previews, before the reading', previews, true);
       sec('Solid', solid, true);
-      if (!active.length && !notes.length) out.unshift(el('div', 'empty', 'No weak spots open.'));
+      if (!active.length) out.unshift(el('div', 'empty', 'No weak spots open in this course.'));
       $('weak-list').replaceChildren(...out);
-      // the right panel from 1200 px: how a weak spot closes (the demo's panel card)
+      // B-365 (D-316): the side pane, as the demo's: How triage works (beside the rows from 1200 px, under them below)
       const p = el('div', 'ov-detail wk-side');
-      p.append(el('span', 'lab', 'How a weak spot closes'));
+      p.append(el('span', 'lab', 'How triage works'));
       for (const t of [
-        'Drill: a quiz on its objective',
-        'Mark solid: you know it now',
-        'Today’s review: the ones due, one question each',
-        'Solid after two right answers on different days',
+        'Accept: it counts under her objective',
+        'Join: a duplicate of an open one',
+        'Not now: back at your next session',
+        'Decline: kept, never counted',
       ]) {
         const r = el('div', 'od-ws');
         r.append(el('i', 'dot'), el('span', 'sn', t));
@@ -681,9 +719,7 @@
         el(
           'span',
           'mini od-note',
-          due.length
-            ? plural(due.length, 'weak spot') + ' due today. Quiz me runs today’s review.'
-            : 'Nothing due today. Quiz me runs today’s review once it’s ready.'
+          'Nothing proposed counts until you decide. Quizlet stays yours: E.V. reads only its home page, on Saturdays.'
         )
       );
       ui.weakPanel = p;
@@ -1185,7 +1221,6 @@
       showTab('ev');
       guard(b, () => quick('Start a study session'));
     });
-    $('weak-quizlet-btn').addEventListener('click', () => copyQuizlet($('weak-quizlet')));
     $('weak-quiz').addEventListener('click', ev => weakQuizAll(ev.currentTarget));
     $('study-qweak').addEventListener('click', () => {
       ui.openSet = null;

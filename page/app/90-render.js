@@ -122,21 +122,7 @@
             : `${bv.left} of your ${bv.available} minutes are on the list. Plan the rest suggests what to add or take off; nothing moves without you.`,
         };
       }
-      if (t === 'study') {
-        if (ui.study === 'review' || ui.study === 'practice')
-          return { text: 'Misses are proposed as weak spots. You review them once, at the end.' };
-        const cur = studyCourses().find(x => x.course === ui.studyCourse);
-        if (!cur) return null;
-        const acc = E.answerStats(M.attempts.all).byObjective;
-        const weak = S.objectives.filter(o => o.exam === cur.exam.id && objState(o, acc[o.id]).state === 'notyet');
-        if (!weak.length) return null;
-        const ex = (cur.exam.title || cur.exam.id).replace(/:.*$/, '');
-        const text =
-          weak.length === 1
-            ? `One ${ex} objective is not yet solid: ${weak[0].text || weak[0].id}.`
-            : `${numWord(weak.length)} ${ex} objectives are not yet solid.`;
-        return { text, act: [weak.length === 1 ? 'Quiz me on it' : 'Quiz me on them', b => quizObjective(weak[0], b)] };
-      }
+      if (t === 'study') return studyLine(); // B-365: Study's line is its own (20-study)
       return null;
     }
     function renderLine() {
