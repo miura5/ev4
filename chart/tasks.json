@@ -7013,5 +7013,22 @@
    "outcome": "task",
    "at": "2026-10-25T18:08:00.967Z"
   }
+ },
+ {
+  "id": "B-391",
+  "kind": "bug",
+  "title": "Bug (reported Oct 25): Dead code and styles for removed screens remain; a stale saved Study view can reopen a closed set; his own snoozes can't be brought back once the panel closes.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "release code review (page), 368b104..fc9133e, Oct 25",
+  "words": "Dead code and styles for removed screens remain; a stale saved Study view can reopen a closed set; his own snoozes can't be brought back once the panel closes.",
+  "reportedAt": "2026-10-25T18:08:01.359Z",
+  "board": {
+   "row": "v4 B-391: Dead code and styles for removed screens remain; a stale saved Study…"
+  }
  }
 ]

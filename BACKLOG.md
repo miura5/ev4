@@ -467,3 +467,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-280 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; folded into B-289 and B-290 (Conversation) and B-291 to B-296 (Today and the task panel). |
 | B-281 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; folded into B-297 to B-300 (Study), B-301 (Progress) and B-302 (Record). |
 | B-282 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; replaced by B-303. |
+| B-391 | bug | 2026-10-25T18:08:01.359Z | Dead code and styles for removed screens remain; a stale saved Study view can reopen a closed set; his own snoozes can't be brought back once the panel closes. | release code review (page), 368b104..fc9133e, Oct 25 | inbox |  |
