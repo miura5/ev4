@@ -5603,12 +5603,12 @@
   "title": "evening-mac and the restore drill pointed at the staging Worker: each re-created as a staging task from a chat with Matt present and the Mac linked (O-5); the old staging tasks listed disabled in spec.tasks.retired. evening-mac still reads Canvas through Matt's signed-in browser (B-12).",
   "dod": "One staging firing of each, read back from staging D1. The drill restores the Mac's newest backup into a scratch D1, with counts and hashes matching per collection. verify-deploy staging asserts the old tasks are disabled.",
   "milestone": "app (data, pipelines, ops)",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-315",
    "B-316"
   ],
-  "notes": "",
+  "notes": "code half claimed by the PWA builder (Worker target for staging evening-mac and restore-drill); the task half (re-creating the Mac tasks) stays with the build manager and Matt",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
