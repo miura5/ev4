@@ -6074,11 +6074,11 @@
   "title": "Fidelity fix: Study: the Weak spots tab as the StudyWeak board: the toolbar strip (back to topics, Weak spots · course, Quiz me), To review rows with Accept / Join / Not now / Decline, Open rows with their dot, the miss line, Drill and Mark solid, Quiz me on all of them, and the panel's own card; due today, previews and solid as quiet sections in the same rows",
   "dod": "The Weak spots tab matches the StudyWeak board apart from the build corrections, with his real counts (a dozen due, notes and skills) laid out in the same rows and no screen-wide heading. Proof (D-312, fidelity sprint): node tools/build.mjs, tools/fidelity demo and built screenshots of each state read side by side at 1280, 1706, 2560 and 390, on the synthetic record and with a long real-shaped list, npm run smoke, ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-337"
   ],
-  "notes": "",
+  "notes": "claimed by lane study",
   "commit": null,
   "source": "Matt's staging look and fidelity review, Oct 25 (D-312)",
   "words": "Fidelity fix: Study's Weak spots tab is still the old screen: a large heading, bare rows and a stray Copy for Quizlet, nothing like the demo's StudyWeak board.",
