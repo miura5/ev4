@@ -6498,7 +6498,7 @@
   "milestone": "v4.8 redesign",
   "status": "in progress",
   "depends": [],
-  "notes": "claimed by lane pr",
+  "notes": "built: heights match the demo at 1280, 1706, 2560 and 390; readiness shows plan progress; score form gone; semester Aug to Dec; smoke next",
   "commit": null,
   "source": "UI reviewer click-through at d35692d, Oct 25 (D-316)",
   "words": "The UI review found Progress differs from the demo: spacing, readiness on an exam without objectives, an extra score form, and the semester chart.",
