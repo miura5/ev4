@@ -50,6 +50,7 @@
     // time, breaks and +5, and its checks and Quiz me now ask about his objectives and weak spots instead of a note.
     const NOT_OFFERED = ['server_not_connected', 'mcp_unavailable', 'capability_disabled', 'not_granted'];
     const noteless = s => !!s && !s.noteId;
+    const noteLabel = t => String(t || '').replace(/\.(md|markdown|txt|rtf)$/i, ''); // B-383: a note's name as its title
     const readerCopy = (code, msg) =>
       READER_COPY[code] ||
       (code === 'tool_error' && msg
@@ -777,7 +778,7 @@
         // B-353 (D-314): the topic and her reading-along words, each its own span: under 600 px (and on her view under
         // 1200 px) the line is the demo's strip under the header, the topic in bold, the minutes, Break and End.
         main.append(
-          el('b', 's-topic', s.topic || 'Study session'),
+          el('b', 's-topic', noteLabel(s.topic) || 'Study session'),
           el('span', 's-clock', ''),
           el('span', 's-read', '')
         );
@@ -795,7 +796,7 @@
             ? 'Writing your quiz…'
             : st.onBreak
               ? breakLeft(s) // B-377: the demo's 5 min break
-              : `${minsLeft(st) ?? st.minutes} min${minsLeft(st) == null ? '' : ' left'}`;
+              : `${minsLeft(st) ?? st.minutes} min${minsLeft(st) == null ? '' : ' to next check'}`; // B-383: what it counts
         bar.querySelector('.s-read').textContent = ''; // B-362 (D-316): the demo's line is the topic and the minutes
         CORE.setRing(ringFill(st, ending));
         return;
@@ -833,6 +834,14 @@
       const m = Math.ceil((BREAK_MIN * 60e3 - (Date.now() - since)) / 60e3);
       return since && m <= 0 ? 'Break’s over' : Math.min(BREAK_MIN, Math.max(1, m)) + ' min break';
     }
+    // B-383: when Study Watch saved the note, as the demo's 'saved 4:10 pm'; an older save names its day
+    function savedWhen(at) {
+      const d = new Date(at);
+      if (isNaN(d)) return '';
+      const ymd = E.chicagoDate(at);
+      const day = !ymd || ymd === today ? '' : new Date(ymd + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short' }) + ' ';
+      return day + clock12(at);
+    }
     function renderSessCard() {
       let card = $('ev-sess');
       if (!card) {
@@ -843,8 +852,22 @@
       const s = activeSession();
       if (!s) {
         const offered = !!(mcp && READER.host); // B-314: with no reader the session reads no note
-        if (card.dataset.k === 'idle' + offered) return;
-        card.dataset.k = 'idle' + offered;
+        // B-383 (D-316): as the demo, the card names the note before Start: the reader's status (its name and when
+        // Study Watch saved it, never its text), read once per page load
+        if (offered && SS.noteHead === undefined) {
+          SS.noteHead = null;
+          readerCall('status')
+            .then(p => {
+              const n = p && p.latestNote;
+              SS.noteHead = n && n.found && n.name ? { name: String(n.name), at: n.modifiedAt || null } : false;
+            })
+            .catch(() => (SS.noteHead = false))
+            .finally(() => renderSessCard());
+        }
+        const nh = offered && SS.noteHead ? SS.noteHead : null;
+        const idleK = 'idle' + offered + (nh ? nh.name + nh.at : '');
+        if (card.dataset.k === idleK) return;
+        card.dataset.k = idleK;
         card.setAttribute('aria-label', 'Start a study session');
         // B-377 (D-316): as the demo, the panel's button starts the session with her line only, never his
         const go = btn(
@@ -864,8 +887,13 @@
           el('h2', null, 'Start a study session'),
           ...(offered
             ? [
-                el('p', 'ss-topic', 'Your Study Watch note'),
-                el('p', 'meta', 'Its latest line in ' + E.courses().join(' or ') + ', read when you start.'),
+                el('p', 'ss-topic', nh ? noteLabel(nh.name) : 'Your Study Watch note'),
+                el(
+                  'p',
+                  'meta',
+                  (nh ? 'Your Study Watch note' + (nh.at ? ' · saved ' + savedWhen(nh.at) : '') : 'Your latest note in ' + E.courses().join(' or ')) +
+                    ' · checks every ' + (SWC.checkMinutes || 7) + ' min'
+                ),
               ]
             : [el('p', 'meta', 'A timer and breaks, with questions on your objectives and weak spots.')]),
           go
@@ -887,20 +915,21 @@
         acts.append(...sessButtons(s, st, ending, { cls: 'btn neutral sm', long: true }));
         card.replaceChildren(
           head,
-          el('p', 'ss-topic', s.topic || 'Your Study Watch note'),
+          el('p', 'ss-topic', noteLabel(s.topic) || 'Your Study Watch note'),
           el('p', 'ss-left'),
           el('p', 'meta ss-sub'),
           acts
         );
       }
       const left = minsLeft(st);
-      card.querySelector('.ss-left').textContent = ending
-        ? 'Wrapping up'
-        : st.onBreak
-          ? breakLeft(s)
-          : left == null
-            ? durFmt(st.minutes)
-            : left + ' min left';
+      // B-383: the big figure says what it counts, '7 min' then 'to my next check' under it
+      const leftEl = card.querySelector('.ss-left');
+      const leftK = ending ? 'Wrapping up' : st.onBreak ? breakLeft(s) : left == null ? durFmt(st.minutes) : left + ' min';
+      if (leftEl.dataset.k !== leftK) {
+        leftEl.dataset.k = leftK;
+        leftEl.replaceChildren(leftK);
+        if (!ending && !st.onBreak && left != null) leftEl.append(el('span', 'ss-what', 'to my next check'));
+      }
       // B-362, B-368 (D-316): as the demo, '<what> · N min': where the session's words come from and its minutes (a
       // session has no planned length, so N is how long it has run)
       card.querySelector('.ss-sub').textContent =

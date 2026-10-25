@@ -940,6 +940,20 @@ body.captions .composer>*{max-width:600px}
 .qchips>:last-child{margin-right:auto}
 .qchip,.qchip.go{height:30px;min-height:30px;padding:0 12px;border-radius:15px;border:0;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);color:var(--quiet);font:500 calc(12.5px * var(--ts)) var(--sans)}
 .qchip:hover{background:var(--hover);color:var(--text)}
+/* B-383 (D-316, Matt's one-row rule): from 600 px the chips wrap onto centred rows as the demo, every word whole; on the
+   phone they stay one row that scrolls sideways and comes to rest on a whole chip. */
+@media (min-width:600px){
+  .qchips{flex-wrap:wrap;justify-content:center;overflow:visible;max-width:600px;margin:0 auto;box-sizing:border-box}
+  .qchips>:first-child{margin-left:0}
+  .qchips>:last-child{margin-right:0}
+}
+@media (max-width:599px){
+  .qchips{scroll-snap-type:x proximity;scroll-padding-inline:0;-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent)}
+  .qchips>*{scroll-snap-align:start}
+  .qchips>:first-child{margin-left:0}
+  .qchips>:last-child{margin-right:0}
+}
+#ev-sess .ss-what{margin-left:8px;font:500 calc(13px * var(--ts)) var(--sans);letter-spacing:0;color:var(--quiet)}
 body.captions .composer>.compose-row{width:calc(100% - 32px);max-width:600px;margin:0 auto 18px}
 .compose-row{align-items:center;min-height:50px;gap:8px;padding:0 9px 0 16px;border:0;border-radius:14px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2)}
 .compose-row:focus-within{box-shadow:inset 0 0 0 2px var(--focus,var(--text))}
@@ -1930,6 +1944,18 @@ body.has-line #today-week .wk-her{display:none}
   .mh>#sbar .s-acts{display:flex;gap:6px;flex:none}
   .mh>#sbar .s-acts button:not(.end):not(:first-child){display:none}
   .mh>#sbar .s-acts button.btn{height:44px;min-height:44px;min-width:44px;padding:0 12px;border-radius:7px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);color:var(--text);font:500 calc(12.5px * var(--ts)) var(--sans)}
+}
+/* B-383: the strip takes its height from her view, so the composer stays above the tab bar during a session. */
+@media (max-width:599px){
+  body.captions:has(.mh>#sbar:not([hidden])) #p-ev{height:calc(100dvh - var(--top-h) - 18px - var(--dock-h) - 22px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 53px)}
+  .mh>#sbar .s-main{display:flex;align-items:baseline;overflow:visible}
+  .mh>#sbar .s-topic{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mh>#sbar .s-topic::after{content:none}
+  .mh>#sbar .s-clock{flex:none;white-space:nowrap}
+  .mh>#sbar .s-clock::before{content:"\00a0·\00a0"}
+}
+@media (min-width:600px) and (max-width:1199px){
+  body.captions.on-ev:has(.mh>#sbar:not([hidden])) #p-ev{height:calc(100dvh - var(--top-h) - 18px - var(--dock-h) - 22px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 41px)}
 }
 @media (min-width:600px) and (max-width:1199px){
   body.on-ev .mh:has(>#sbar:not([hidden])){flex-wrap:wrap;align-content:flex-start;row-gap:0}

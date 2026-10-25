@@ -186,7 +186,13 @@
                 reader: '0.2.0',
                 folderFound: true,
                 context: { found: true },
-                latestNote: { found: !!window.__readerNote },
+                latestNote: window.__readerNote
+                  ? {
+                      found: true,
+                      name: (window.__readerNote.note && window.__readerNote.note.name) || null,
+                      modifiedAt: (window.__readerNote.note && window.__readerNote.note.modifiedAt) || null,
+                    }
+                  : { found: false },
               }
             : tool === 'list_sessions'
               ? window.__readerSessions || { sessions: [] }
