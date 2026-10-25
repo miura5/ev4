@@ -164,7 +164,7 @@ async function open(browser, viewport) {
       opened.length ? 'did not open: ' + opened.join(', ') : ''
     );
 
-    // 4. One Today check-off keeps the scroll and the rows in place.
+    // 4. One Today check-off keeps the scroll; the ticked row goes to the demo's Done · N group (B-363).
     await page.click('#tab-today');
     const tick = page.locator('#today-list input.tick:not(:checked)').first();
     if (await tick.count()) {
@@ -181,16 +181,14 @@ async function open(browser, viewport) {
         y: Math.round(scrollY),
         rows: [...document.querySelectorAll('#today-list .li')].map(r => Math.round(r.getBoundingClientRect().top)),
         n: document.querySelectorAll('#today-list input.tick:checked').length,
+        done: ((document.querySelector('#today-list .ti-fold') || {}).textContent || '').trim(),
       }));
       ok(
-        `${tag} a Today check-off ticks and keeps the scroll and the rows in place`,
-        after.n === before.n + 1 &&
-          Math.abs(after.y - before.y) <= 1 &&
-          after.rows.length === before.rows.length &&
-          after.rows.every((y, i) => Math.abs(y - before.rows[i]) <= 1),
+        `${tag} a Today check-off ticks, keeps the scroll, and the row joins Done · N`,
+        after.n === before.n + 1 && Math.abs(after.y - before.y) <= 1 && /^Done · [1-9]\d*$/.test(after.done),
         JSON.stringify({ before, after })
       );
-    } else ok(`${tag} a Today check-off ticks and keeps the scroll and the rows in place`, false, 'no item to tick');
+    } else ok(`${tag} a Today check-off ticks, keeps the scroll, and the row joins Done · N`, false, 'no item to tick');
 
     // B-200 (D-208): with the record 2 s slow, the next check-off paints ticked (and live) on the tap's next frame; a
     // refused one unticks and says why in one line.
@@ -229,20 +227,24 @@ async function open(browser, viewport) {
     // 5. One review answer scores.
     await studyView(page, 'review'); // B-297: from Today, as he opens it
     const hasQ = await until(page, () => !!document.querySelector('#rv-body label.opt'), null, 2000);
-    // B-222 (D-227): Check answer paints the verdict and its why on the tap's next frame, the record 2 s behind; a
-    // refused write puts the question back unanswered (his pick kept) with one line saying why.
+    // B-222 (D-227): the answer paints the verdict and its why on the tap's next frame, the record 2 s behind; a
+    // refused write puts the question back unanswered with one line saying why. B-365 (D-316): in Study a one-answer
+    // question grades on the tap itself (no Check answer); Check answer where a question still has one.
     const checkAnswer = (root, fail, delay) =>
       page.evaluate(
         async ([root, fail, delay]) => {
           const box = document.querySelector(root);
           const opt = box && box.querySelector('label.opt input');
           const check = box && [...box.querySelectorAll('button')].find(b => b.textContent.trim() === 'Check answer');
-          if (!opt || !check) return { none: (box ? box.textContent : 'no box').slice(0, 300) };
-          opt.click();
+          if (!opt) return { none: (box ? box.textContent : 'no box').slice(0, 300) };
           window.__writeDelayMs = delay;
           window.__writeFail = fail;
-          const t0 = performance.now();
-          check.click();
+          let t0 = performance.now();
+          opt.click();
+          if (check) {
+            t0 = performance.now();
+            check.click();
+          }
           await new Promise(r => requestAnimationFrame(() => r()));
           const ms = Math.round(performance.now() - t0);
           const verdict = () =>
@@ -259,10 +261,13 @@ async function open(browser, viewport) {
           window.__writeDelayMs = 0;
           window.__writeFail = null;
           const t = document.getElementById('toast');
-          const again = [...document.querySelectorAll(root + ' button')].some(
-            b => b.textContent.trim() === 'Check answer'
-          );
-          const kept = !!document.querySelector(root + ' label.opt input:checked');
+          const again =
+            !check ||
+            [...document.querySelectorAll(root + ' button')].some(b => b.textContent.trim() === 'Check answer');
+          // with Check answer his pick stays; graded on the tap, the question comes back open to tap again
+          const kept = check
+            ? !!document.querySelector(root + ' label.opt input:checked')
+            : !!document.querySelector(root + ' label.opt input:not(:disabled)');
           return { ...painted, back: !verdict() && again, kept, line: t && !t.hidden ? t.textContent.trim() : '' };
         },
         [root, fail, delay]
@@ -270,8 +275,8 @@ async function open(browser, viewport) {
     if (hasQ) {
       const slow = await checkAnswer('#rv-body', null, 2000);
       ok(
-        `${tag} Check answer paints the verdict on the tap's frame, the record 2 s behind (D-227)`,
-        !!slow && /^(Right|Missed|Partly)\b/.test(slow.verdict) && !slow.saving && slow.ms < 100,
+        `${tag} an answer paints the verdict on the tap's frame, the record 2 s behind (D-227)`,
+        !!slow && /^(Right|Missed|Partly|Not quite)\b/.test(slow.verdict) && !slow.saving && slow.ms < 100,
         JSON.stringify(slow)
       );
       const scored = await until(
@@ -280,7 +285,7 @@ async function open(browser, viewport) {
           const v = [...document.querySelectorAll('#rv-body .verdict')].find(
             e => !e.closest('[hidden]') && e.getBoundingClientRect().height > 0
           );
-          return !!v && /^(Right|Missed|Partly)\b/.test(v.textContent.trim());
+          return !!v && /^(Right|Missed|Partly|Not quite)\b/.test(v.textContent.trim());
         },
         null,
         2000
@@ -304,7 +309,7 @@ async function open(browser, viewport) {
           if (b) b.click();
           return (
             !!document.querySelector('#rv-body label.opt input:not(:checked)') &&
-            [...document.querySelectorAll('#rv-body button')].some(x => x.textContent.trim() === 'Check answer')
+            !document.querySelector('#rv-body .verdict')
           );
         },
         null,
@@ -312,7 +317,7 @@ async function open(browser, viewport) {
       );
       const refused = await checkAnswer('#rv-body', 'permission_denied', 300);
       ok(
-        `${tag} a refused answer puts the question back unanswered, his pick kept, and says why (D-227)`,
+        `${tag} a refused answer puts the question back unanswered, open to answer, and says why (D-227)`,
         !!refused &&
           !!refused.verdict &&
           refused.back &&
@@ -341,7 +346,7 @@ async function open(browser, viewport) {
     await until(page, () => !!document.querySelector('#pr-body label.opt input'), null, 2000);
     const pr = await paintAnswer(page, '#pr-body');
     ok(
-      `${tag} Practice paints Check answer's verdict on the tap's frame, the record 2 s behind (D-227)`,
+      `${tag} Practice paints the verdict on the tap's frame, the record 2 s behind (D-227)`,
       painted(pr),
       JSON.stringify(pr)
     );
