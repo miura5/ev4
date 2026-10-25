@@ -258,23 +258,29 @@
               if (k && k < ts.length) al += ts.length - k;
             }
             if (!n) {
+              // B-378: also an item that names the exam ("Drill: Exam 4 weak spots"); the exam's own date row is not one
               const ds = dayState();
+              const short = (e.title || e.id).replace(/:.*$/, '').trim();
+              const named = new RegExp('\\b' + short.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
               const tied = ds.items.filter(it => {
+                if (it.ref === 'exams/' + e.id) return false;
                 const pt = planTaskById(it.ref);
                 if (pt) return (pt.plan.exam || pt.plan.id) === e.id;
                 const sid = it.set || (/^sets\//.test(it.ref || '') ? it.ref.slice(5) : null);
                 const set = sid && S.sets.find(x => x.id === sid);
-                return !!(set && set.exam === e.id);
+                if (set) return set.exam === e.id;
+                return named.test(it.text || it.title || '');
               });
-              ((n = tied.length), (so = tied.filter(ds.isDone).length), (unit = 'items today'));
+              ((n = tied.length), (so = tied.filter(ds.isDone).length), (unit = tied.length === 1 ? 'item today' : 'items today'));
             }
-            if (!n) return null;
+            // B-378: with neither the next exam still has its row, an empty bar saying so, so By course is never alone
+            if (!n) unit = 'none';
           }
           const row = el('div', 'prog-hb');
           const top = el('div', 'prog-hb-top');
           top.append(
             el('span', null, E.courseOf(e) + ' · ' + (e.title || e.id).replace(/:.*$/, '')),
-            el('span', 'meta', so + ' of ' + n + (unit === 'objectives' ? '' : ' ' + unit))
+            el('span', 'meta', unit === 'none' ? 'no plan yet' : so + ' of ' + n + (unit === 'objectives' ? '' : ' ' + unit))
           );
           const bar = el('div', 'pbar');
           bar.setAttribute('role', 'img');
@@ -282,7 +288,9 @@
             'aria-label',
             unit === 'objectives'
               ? so + ' solid, ' + al + ' almost, of ' + n + ' objectives'
-              : so + ' of ' + n + ' ' + unit + ' done'
+              : unit === 'none'
+                ? 'no objectives or plan yet'
+                : so + ' of ' + n + ' ' + unit + ' done'
           );
           const g = el('i', 'x-green'),
             y = el('i', 'x-yellow');
