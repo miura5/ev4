@@ -1570,8 +1570,9 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h))}
 #study-review > .qz-card,#pr-card.qz-card{width:calc(100% - 36px);max-width:640px;margin:10px auto 0;padding:26px;border:0;border-radius:14px;background:var(--surface);box-shadow:0 0 0 1px var(--line);display:flex;flex-direction:column;gap:16px;box-sizing:border-box;-webkit-backdrop-filter:none;backdrop-filter:none}
 #pr-card > .card-head{display:none}
 #pr-prog:not([hidden]){display:flex;flex-direction:column;gap:16px}
-.qz-card .qz-head{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0}
-.qz-card .qz-head .set-count{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet);min-height:0;padding:0;margin:0;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.qz-card .qz-head{display:flex;align-items:center;justify-content:space-between;gap:4px 10px;flex-wrap:wrap;min-width:0}
+.qz-card .qz-head .set-count{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet);min-height:0;padding:0;margin:0;text-align:left;min-width:0;overflow-wrap:anywhere}
+.qz-card .qz-head .set-count:disabled{opacity:1;cursor:default} /* B-370: the demo's grey, not a faded button */
 .qz-card .qz-head .set-count.flat::after{display:none}
 .qz-card .qz-score{font-size:calc(12.5px * var(--ts));color:var(--faint);white-space:nowrap;flex:none}
 .qz-card .qz-bar{height:6px;border-radius:3px;background:var(--hover);overflow:hidden;margin:0}
@@ -1616,8 +1617,9 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h))}
 #study-side .qz-side .sq-s{font-size:calc(11.5px * var(--ts));color:var(--quiet)}
 #study-side .qz-side .sq-s.ok{color:var(--quiet)}
 #study-side .qz-side .set-item.current .sq-t{color:var(--text);font-weight:500}
+/* B-370 (D-316): as the demo's results card at every width; This quiz lists each question, right or missed */
+.qz-card .sum-h,.qz-card .sum-list,.qz-card .sum-h ~ .fold-line,.qz-card .sum-acts ~ .fold-line{display:none}
 @media (min-width:1200px){
-  .qz-card .sum-h,.qz-card .sum-list,.qz-card .sum-h ~ .fold-line,.qz-card .sum-acts ~ .fold-line{display:none}
   #plan-card .plan-sum{display:none}
 }
 #study-plan:not([hidden]){display:flex;flex-direction:column;gap:0;margin:-18px -16px 0}
@@ -1647,7 +1649,7 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h))}
   #study-plan:not([hidden]){margin:-18px -16px 0}
   #study-plan .wk-bar{padding:10px 12px}
   #plan-card .row.plan-item,#plan-card .dayh,#plan-card > .plan-sum,#plan-card > .fold-line{padding-left:16px;padding-right:16px}
-  #study-review > .qz-card,#pr-card.qz-card{width:100%;margin:16px 0 0;padding:20px 18px}
+  #study-review > .qz-card,#pr-card.qz-card{width:100%;margin:16px 0 0;padding:26px}
   .qz-card .opt{min-height:52px}
   .wk-list .wl{padding:8px 16px}
   .wk-list .dayh{padding:14px 16px 6px}

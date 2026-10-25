@@ -8,6 +8,8 @@
     // B-222 (D-227): an answer paints on Check answer, before the record answers: painted[setId][itemId] holds it until
     // the record carries an attempt at least as new (then the record's own is shown), or a refusal takes it back.
     const painted = {};
+    // B-370 (D-316): whether Study's open quiz ('rv' or 'pr') shows its results; her line under the header goes then
+    const quizAtEnd = {};
     function withPainted(set, out) {
       const p = set && painted[set.id];
       if (!p) return out;
@@ -114,6 +116,15 @@
         .replace(/[.\s]+$/, '');
       return /^[A-Z][a-z]/.test(t) ? t.charAt(0).toLowerCase() + t.slice(1) : t;
     }
+    function oneLine(q, a) {
+      const i = (q.correct || [])[0],
+        tidy = t => String(t || '').trim().replace(/[.\s]+$/, ''),
+        why = tidy((q.rationales || [])[i]).replace(/^(right|correct|yes)\b[.!:,;]?\s*/i, ''),
+        Why = why ? why.charAt(0).toUpperCase() + why.slice(1) : '';
+      return a.correct
+        ? 'Right.' + (Why ? ' ' + Why + '.' : '')
+        : 'Not quite. ' + tidy((q.options || [])[i]) + (why ? '; ' + why : '') + '.';
+    }
     function setLines(key, items, answers, current) {
       // the set as one line per question, under its counter
       const ul = el('ul', 'list set-list');
@@ -168,6 +179,7 @@
         view = views[key] = (items.find(q => !answers[q.id]) || {}).id || '__summary';
       if (view === '__summary' && items.some(q => !answers[q.id]))
         view = views[key] = items.find(q => !answers[q.id]).id; // the score waits for the last answer
+      if (inStudy) quizAtEnd[key === 'rv' ? 'rv' : 'pr'] = view === '__summary';
       // B-126 (D-165): the counter is the set's fold line (it replaces All questions); a finished set has nothing under it.
       if (o.countEl) {
         const c = o.countEl,
@@ -238,7 +250,11 @@
       // B-126 (D-165): answered, the verdict is one line under the stem (nothing above it moves); his pick and the right
       // answer carry their why; the other whys fold under one line.
       // B-348 (D-312): as the demo, the verdict line sits under the answers, above Next
-      const verdict = a
+      // B-370 (D-316): in Study a one-answer question's feedback is the demo's one sentence: Right, or Not quite with the
+      // right answer, and its why; no line per answer, no Why not the others, no weak-spot outcome
+      const verdict = a && instant
+        ? el('p', 'verdict q-expl ' + (a.correct ? 'ok' : 'no'), oneLine(q, a))
+        : a
         ? el(
             'p',
             'verdict ' + (a.correct ? 'ok' : 'no'),
@@ -372,7 +388,7 @@
               right = q.correct.includes(i);
             if (right) lab.classList.add('right');
             else if (picked) lab.classList.add('wrong');
-            if (q.rationales && q.rationales[i]) span.append(why(q.rationales[i], right || picked));
+            if (!instant && q.rationales && q.rationales[i]) span.append(why(q.rationales[i], right || picked));
           }
           // B-211 (D-217): answers lettered as the demo (B-348), and keys A to D or 1 to 4 pick them
           const kb = el('kbd', 'opt-n', 'ABCDEFGHI'[pos] || String(pos + 1));
@@ -406,6 +422,9 @@
         go = id => {
           views[key] = id;
           render();
+          // B-370: the next question (or the score) starts at the card's top, as the demo's, when it had scrolled away
+          const card = inStudy && body.closest('.qz-card');
+          if (card && card.getBoundingClientRect().top < 0) card.scrollIntoView({ block: 'start' });
         };
       if (prev && !instant) {
         const b = btn('Back', () => go(prev.id), { cls: 'quiet q-back' });
@@ -481,7 +500,7 @@
             toast('Couldn’t save that answer: ' + (e.message || e.code));
           }
         });
-        const later = !instant && (after || items.find(x => !answers[x.id] && x.id !== q.id));
+        const later = !inStudy && (after || items.find(x => !answers[x.id] && x.id !== q.id));
         if (later) {
           const b = btn('Next', () => go(later.id), { cls: 'quiet q-next' });
           b.setAttribute('aria-label', 'Next question, leaving this one open');
@@ -723,6 +742,7 @@
     }
     function summary(o, items, answers) {
       const key = o.key,
+        inStudy = key === 'rv' || key.startsWith('pr-'),
         right = items.filter(q => answers[q.id] && answers[q.id].correct),
         answered = items.filter(q => answers[q.id]);
       const missed = answered.filter(q => !answers[q.id].correct);
@@ -743,24 +763,31 @@
             'span',
             'sp',
             added
-              ? (added === 1 ? '1 miss is now a weak spot.' : added + ' misses are now weak spots.') +
-                  ' Each comes back until it’s solid.'
+              ? added === 1
+                ? '1 miss is now a weak spot.'
+                : added + ' misses are now weak spots.'
               : wsMiss === 1
                 ? '1 miss comes back with its weak spot.'
                 : wsMiss + ' misses come back with their weak spots.'
           ),
-          btn('Review', () => {
-            ui.openSet = null;
-            ui.openObj = null;
-            showTab('study');
-            setStudy('weak');
-            render();
-          })
+          btn(
+            'Review',
+            () => {
+              ui.openSet = null;
+              ui.openObj = null;
+              ui.mini = null;
+              showTab('study');
+              setStudy('weak');
+              render();
+            },
+            { cls: 'btn neutral sm' }
+          )
         );
         parts.push(line);
       }
       const acts = el('div', 'actions sum-acts');
-      const more = o.more && o.more();
+      // B-370 (D-316): in Study the results card is the demo's: New quiz and Back to topics, no Give me 5 more or Retake
+      const more = !inStudy && o.more && o.more();
       if (more) acts.append(more);
       const lst = []; // the misses and right answers as lines, under the card's buttons
       if (missed.length) {
@@ -789,7 +816,8 @@
           ul
         );
       }
-      if (o.next) {
+      if (inStudy && o.newQuiz) acts.append(btn('New quiz', () => o.newQuiz(), { cls: 'btn neutral' }));
+      else if (o.next) {
         const n = o.next,
           f = btn('New quiz', () => {
             ui.openSet = n.id;
@@ -802,7 +830,7 @@
         f.setAttribute('aria-label', 'New quiz: ' + (n.title || n.id));
         acts.append(f);
       }
-      if (o.summaryExtra) for (const x of o.summaryExtra()) acts.append(...(x.classList.contains('actions') ? x.children : [x]));
+      if (o.summaryExtra && !inStudy) for (const x of o.summaryExtra()) acts.append(...(x.classList.contains('actions') ? x.children : [x]));
       if (key === 'rv' || key.startsWith('pr-'))
         acts.append(
           btn(
@@ -810,6 +838,7 @@
             () => {
               ui.openSet = null;
               ui.openObj = null;
+              ui.mini = null;
               setStudy('objectives');
               render();
             },

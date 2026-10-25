@@ -6,6 +6,28 @@
         .filter(s => s.kind !== 'review' && E.validItems(s).length)
         .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
     const nextSet = except => practiceSets().find(s => s.id !== except && unfinished(s)) || null;
+    // B-370 (D-316): the demo's mini quiz: up to five one-answer questions from one set, each answered on a tap; an
+    // objective's own questions lead. Questions he answered before fill in only when too few are new, as a retake
+    // (D-095), so each shows fresh; every answer is written as always.
+    const oneAnswer = s => E.validItems(s).filter(q => E.itemType(q) === 'single');
+    let miniN = 0;
+    function startMini(set, label, lead) {
+      const ans = answersOf(set),
+        all = oneAnswer(set),
+        mine = lead ? all.filter(lead) : [],
+        rest = all.filter(q => !mine.includes(q)),
+        fresh = qs => qs.filter(q => !ans[q.id]),
+        seen = qs => qs.filter(q => ans[q.id]),
+        pick = [...fresh(mine), ...seen(mine), ...fresh(rest), ...seen(rest)].slice(0, 5);
+      if (!pick.length) return false;
+      if (pick.some(q => ans[q.id])) retakes[set.id] = now();
+      ui.mini = { set: set.id, ids: pick.map(q => q.id), label, n: ++miniN };
+      ui.openSet = set.id;
+      ui.openObj = null;
+      setStudy('practice');
+      render();
+      return true;
+    }
     function moreMount(on) {
       // the More practice line: inside a finished review set, else parked hidden after the card
       const mc = $('more-card'),
@@ -56,6 +78,7 @@
         scoreEl: $('rv-score'),
         more: sample ? () => moreMount(true) : null,
         next: nextSet(null),
+        newQuiz: () => courseQuiz(),
       });
     }
     // B-297 (D-283, C-8, C-13): Study's overview. The exam header with its readiness bar, then one row per objective:
@@ -93,12 +116,19 @@
       // B-348 (D-312): the quiz's strip, as the demo's: All topics, what is open, Quiz me (a practice set's way to today's
       // review) and Weak spots with its count
       const pr = v === 'practice' && S.sets.find(s => s.id === ui.openSet);
+      const mini = pr && ui.mini && ui.mini.set === pr.id ? ui.mini : null;
       $('study-qlab').hidden = !quiz;
       $('study-qlab').textContent =
-        v === 'review' ? 'Today’s review · ' + short(today) : pr ? (ui.openObj && ui.openObj.text) || pr.title || 'Practice' : '';
+        v === 'review'
+          ? 'Today’s review · ' + short(today)
+          : mini
+            ? mini.label
+            : pr
+              ? (ui.openObj && ui.openObj.text) || pr.title || 'Practice'
+              : '';
       // B-351 (D-313): on the overview the strip is the demo's: the course switch, Quiz me, Weak spots · N, Start session
       const ov = v === 'objectives';
-      $('study-qquiz').hidden = !pr && !ov;
+      $('study-qquiz').hidden = !quiz && !ov;
       let nW = 0;
       try {
         nW = M ? openInCourse(ui.studyCourse).length : 0; // B-371: the same N as Weak spots' "Open · N in <course>"
@@ -148,7 +178,9 @@
     }
     function studyLine() {
       if (ui.study === 'review' || ui.study === 'practice')
-        return { text: 'Misses are proposed as weak spots. You review them once, at the end.' };
+        return quizAtEnd[ui.study === 'review' ? 'rv' : 'pr'] // B-370: the results card speaks for itself, as the demo's
+          ? null
+          : { text: 'Misses are proposed as weak spots. You review them once, at the end.' };
       if (ui.study === 'weak') return { text: 'Each closes after two right answers on different days.' };
       const cur = studyExams().find(x => x.course === ui.studyCourse);
       if (!cur) return null;
@@ -214,7 +246,9 @@
       const pick = practiceSets()
         .filter(s => mine(s).length)
         .sort((x, y) => left(y) - left(x))[0];
+      if (pick && startMini(pick, o.text || o.id, q => q.objective === o.id)) return; // B-370: as the demo's mini quiz
       if (pick) {
+        ui.mini = null;
         ui.openSet = pick.id;
         ui.openObj = { set: pick.id, obj: o.id, text: o.text };
         setStudy('practice');
@@ -513,35 +547,26 @@
     /** B-351 (D-313): the course's quiz, the demo's Quiz me and mini quiz: a practice set on this exam with questions
      *  left (most left first), else today's review. */
     function courseSet(cur) {
-      const left = s => E.validItems(s).filter(q => !answersOf(s)[q.id]).length;
-      if (!cur.exam) {
-        // B-371: a course with no exam: today's review
-        const rs0 = S.sets.find(s => s.id === 'review-' + today);
-        return rs0 && E.validItems(rs0).length ? { set: rs0, review: true } : null;
-      }
-      const objIds = new Set(S.objectives.filter(o => o.exam === cur.exam.id).map(o => o.id));
+      // B-370: the mini quiz answers on a tap, so only one-answer questions count; B-371: a course with no exam
+      // finds no set of its own and takes today's review
+      const left = s => oneAnswer(s).filter(q => !answersOf(s)[q.id]).length;
+      const objIds = new Set(cur.exam ? S.objectives.filter(o => o.exam === cur.exam.id).map(o => o.id) : []);
       const mine = s =>
-        s.exam === cur.exam.id || E.validItems(s).some(q => objIds.has(q.objective));
-      const pick = practiceSets()
-        .filter(s => mine(s) && left(s))
-        .sort((a, b) => left(b) - left(a))[0];
-      if (pick) return { set: pick, review: false };
+        (cur.exam && s.exam === cur.exam.id) || E.validItems(s).some(q => objIds.has(q.objective));
+      const sets = practiceSets()
+        .filter(s => mine(s) && oneAnswer(s).length)
+        .sort((a, b) => left(b) - left(a));
+      if (sets[0] && left(sets[0])) return { set: sets[0], review: false };
       const rs = S.sets.find(s => s.id === 'review-' + today);
-      if (rs && E.validItems(rs).length) return { set: rs, review: true };
-      return null;
+      if (rs && oneAnswer(rs).length) return { set: rs, review: true };
+      return sets[0] ? { set: sets[0], review: false } : null;
     }
     function courseQuiz(b) {
+      // B-370 (D-316): Quiz me, Take the quiz and New quiz start the demo's mini quiz for the course
       const cur = studyExams().find(x => x.course === ui.studyCourse);
       const c = cur && courseSet(cur);
-      if (!c) return weakQuizAll(b);
-      if (c.review) {
-        setStudy('review');
-        return render();
-      }
-      ui.openSet = c.set.id;
-      ui.openObj = null;
-      setStudy('practice');
-      render();
+      if (c && startMini(c.set, 'Mini quiz · ' + (cur.course || ui.studyCourse))) return;
+      return weakQuizAll(b);
     }
     /** B-351 (D-313): the mini quiz card beside Coming up: a question from the course's next set as its teaser. */
     function renderMiniQuiz(cur) {
@@ -782,7 +807,8 @@
     function renderPractice() {
       const body = $('pr-body');
       const list = practiceSets();
-      const d = ui.openSet && list.find(x => x.id === ui.openSet);
+      const mini = ui.mini && ui.mini.set === ui.openSet ? ui.mini : null; // B-370: a mini quiz may run on today's review
+      const d = ui.openSet && (list.find(x => x.id === ui.openSet) || (mini && S.sets.find(x => x.id === mini.set)));
       // B-297: a set opened by an objective's Quiz me holds that objective's questions only
       const of = d && ui.openObj && ui.openObj.set === d.id ? ui.openObj : null;
       if (!of) ui.openObj = null;
@@ -825,7 +851,7 @@
         bar.id = 'pr-share';
         body.before(bar);
       }
-      const sh = shareButton(d);
+      const sh = mini ? null : shareButton(d);
       bar.hidden = !sh;
       bar.replaceChildren(
         ...(sh
@@ -840,6 +866,19 @@
           : [])
       );
       $('pr-count').textContent = '';
+      if (mini)
+        return runner({
+          key: 'pr-' + d.id + '#mini' + mini.n,
+          set: d,
+          items: mini.ids.map(id => E.validItems(d).find(q => q.id === id)).filter(Boolean),
+          body,
+          countEl: $('pr-qcount'),
+          barEl: $('pr-bar'),
+          label: 'E.V. · ' + mini.label,
+          title: mini.label,
+          scoreEl: $('pr-score'),
+          newQuiz: () => courseQuiz(),
+        });
       runner({
         key: 'pr-' + d.id + (of ? '@' + of.obj : ''),
         set: d,
@@ -852,6 +891,7 @@
         scoreEl: $('pr-score'),
         more: sample ? giveFive : null,
         next: nextSet(d.id),
+        newQuiz: () => courseQuiz(),
         summaryExtra: () => {
           const a = el('div', 'actions');
           const sh = shareButton(d);
@@ -1253,6 +1293,7 @@
     $('study-back').addEventListener('click', () => {
       ui.openSet = null;
       ui.openObj = null;
+      ui.mini = null;
       setStudy('objectives');
       render();
     });
@@ -1268,9 +1309,7 @@
       setStudy('weak');
       render();
     });
-    $('study-qquiz').addEventListener('click', ev =>
-      ui.study === 'objectives' ? courseQuiz(ev.currentTarget) : weakQuizAll(ev.currentTarget)
-    );
+    $('study-qquiz').addEventListener('click', ev => courseQuiz(ev.currentTarget)); // B-370: a new mini quiz
     $('plan-back').addEventListener('click', () => {
       setStudy('objectives');
       render();
