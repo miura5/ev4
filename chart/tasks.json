@@ -5308,7 +5308,7 @@
   "depends": [
    "B-288"
   ],
-  "notes": "proofs green (npm test, smoke, check --touched GREEN before rebase); pushed ef0c4d4; review next",
+  "notes": "reviewed: second reviewer No gaps; check --touched running before ship staging",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
