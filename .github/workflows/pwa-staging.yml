@@ -95,15 +95,23 @@ jobs:
           else
             echo "version column already there"
           fi
-      - name: the ev-staging-exports R2 bucket (B-316), created once
+      - name: the ev-staging-exports R2 bucket (B-316), created once, and the nightly export bound when it is there
+        id: r2
         working-directory: pwa
         run: |
           if npx wrangler r2 bucket info ev-staging-exports >/dev/null 2>&1; then
             echo "ev-staging-exports already there"
-          else
-            npx wrangler r2 bucket create ev-staging-exports > r2.log 2>&1 || { cat r2.log; exit 1; }
+          elif npx wrangler r2 bucket create ev-staging-exports > r2.log 2>&1; then
             echo "ev-staging-exports created"
+          else
+            grep -o 'Please enable R2[^[]*\[code: [0-9]*\]' r2.log || tail -5 r2.log
+            echo "r2=off" >> "$GITHUB_OUTPUT"
+            echo "no R2 bucket: the Worker deploys without the nightly export (R2 is turned on in the Cloudflare dashboard)"
+            exit 0
           fi
+          printf '\n[[env.staging.r2_buckets]]\nbinding = "EXPORTS"\nbucket_name = "ev-staging-exports"\n\n[env.staging.triggers]\ncrons = ["17 8 * * *"]\n' >> wrangler.toml
+          echo "r2=on" >> "$GITHUB_OUTPUT"
+          echo "the nightly export is bound: EXPORTS -> ev-staging-exports, cron 17 8 * * *"
       - name: deploy the ev-staging Worker
         id: deploy
         working-directory: pwa
@@ -153,6 +161,7 @@ jobs:
           EV_TOKEN: ${{ secrets.EV_STAGING_TOKEN }}
           BASE: ${{ steps.deploy.outputs.url }}
         run: |
+          [ "${{ steps.r2.outputs.r2 }}" = "on" ] || { echo "no R2 bucket on the account yet: no export to restore"; exit 1; }
           node -e 'const b=process.env.BASE,h={authorization:"Bearer "+process.env.EV_TOKEN};(async()=>{const r=await fetch(b+"/api/backup/export",{method:"POST",headers:h});const e=await r.json();if(r.status!==200)throw new Error("export: "+r.status+" "+JSON.stringify(e));console.log("export made:",e.key,Object.entries(e.collections).map(([c,m])=>c+" "+m.count).join(", "));const n=await (await fetch(b+"/api/backup/newest",{headers:h})).json();if(!n.key)throw new Error("no newest export");require("fs").writeFileSync("newest.txt",n.key);console.log("newest export:",n.key)})().catch(e=>{console.error(e.message);process.exit(1)})'
           key=$(cat newest.txt)
           npx wrangler r2 object get "ev-staging-exports/$key" --remote --file export.json >/dev/null

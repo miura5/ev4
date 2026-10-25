@@ -146,13 +146,14 @@ test('B-316: manifests are over the documents as stored, in id order', async () 
   assert.match(a.x.sha256, /^[0-9a-f]{64}$/);
 });
 
-test('B-316: the staging Worker alone has the bucket and the cron; the workflow creates the bucket and deletes nothing', () => {
+test('B-316: only the staging Worker gets the bucket and the cron, bound by the workflow once the bucket exists; nothing deletes', () => {
   const toml = fs.readFileSync(path.join(ROOT, 'pwa/wrangler.toml'), 'utf8');
-  assert.match(toml, /\[\[env\.staging\.r2_buckets\]\][^[]*bucket_name = "ev-staging-exports"/);
-  assert.match(toml, /\[env\.staging\.triggers\]\s*crons = \["17 8 \* \* \*"\]/);
-  assert.doesNotMatch(toml.split('[env.staging]')[0], /r2_buckets|triggers/);
+  assert.doesNotMatch(toml.replace(/^#.*$/gm, ''), /r2_buckets|triggers/, 'no binding to a bucket that may not exist');
   const wf = fs.readFileSync(path.join(ROOT, '.github/workflows/pwa-staging.yml'), 'utf8');
   assert.match(wf, /r2 bucket create ev-staging-exports/);
+  assert.match(wf, /\[\[env\.staging\.r2_buckets\]\]\\nbinding = "EXPORTS"\\nbucket_name = "ev-staging-exports"/);
+  assert.match(wf, /\[env\.staging\.triggers\]\\ncrons = \["17 8 \* \* \*"\]/);
+  assert.ok(wf.indexOf('r2 bucket create') < wf.indexOf('wrangler deploy --env staging'), 'bound before the deploy');
   assert.match(wf, /d1 time-travel info ev-staging/);
   assert.doesNotMatch(wf, /r2 object delete|r2 bucket delete|d1 delete|DROP TABLE|DELETE FROM/);
 });
