@@ -23,18 +23,33 @@ export function keepForFile(dir) {
   return dir;
 }
 
-function removeAll() {
-  if (!state.root) return;
+// Retries cover a writer that is just finishing (a git command's last object write); rm never fails a test.
+const RM = { recursive: true, force: true, maxRetries: 10, retryDelay: 50 };
+function remove(target) {
   try {
-    fs.rmSync(state.root, { recursive: true, force: true });
+    fs.rmSync(target, RM);
+    return true;
   } catch {
-    /* a child still writing; the next sweep or exit takes the rest */
+    return false;
   }
+}
+function removeAll() {
+  if (state.root) remove(state.root);
 }
 
 if (process.env.NODE_TEST_CONTEXT && !state.root) {
   state.root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-test-')));
   process.env.TMPDIR = state.root;
+  // No git housekeeping in the background (auto gc, auto maintenance): it wrote into a test's copied repository
+  // after the test ended, while the sweep removed it (CI, ENOTEMPTY on .git/objects). Throwaway repositories need none.
+  if (!process.env.GIT_CONFIG_COUNT) {
+    const config = { 'gc.auto': '0', 'gc.autoDetach': 'false', 'maintenance.auto': 'false' };
+    Object.entries(config).forEach(([k, v], i) => {
+      process.env[`GIT_CONFIG_KEY_${i}`] = k;
+      process.env[`GIT_CONFIG_VALUE_${i}`] = v;
+    });
+    process.env.GIT_CONFIG_COUNT = String(Object.keys(config).length);
+  }
   process.on('exit', removeAll);
   for (const sig of ['SIGTERM', 'SIGINT'])
     process.once(sig, () => {
@@ -43,13 +58,16 @@ if (process.env.NODE_TEST_CONTEXT && !state.root) {
     });
   let depth = 0;
   let before = new Set();
+  const pending = new Set(); // a folder a sweep could not remove yet: tried again at each sweep and at exit
   beforeEach(() => {
     if (depth++ === 0) before = new Set(fs.readdirSync(state.root));
   });
   afterEach(() => {
     if (--depth > 0) return;
     for (const name of fs.readdirSync(state.root))
-      if (!before.has(name) && !state.kept.has(name))
-        fs.rmSync(path.join(state.root, name), { recursive: true, force: true });
+      if ((pending.has(name) || !before.has(name)) && !state.kept.has(name)) {
+        if (remove(path.join(state.root, name))) pending.delete(name);
+        else pending.add(name);
+      }
   });
 }
