@@ -16,6 +16,7 @@ import {
   parseAppMessage,
   readRun,
   activeVersion,
+  codeVersion,
   hashOf,
   workerFiles,
   publicFiles,
@@ -73,6 +74,17 @@ test('B-318: the build hash rides in the Worker version message and reads back',
     'new'
   );
   assert.equal(activeVersion([]), null);
+  // wrangler secret put makes a version over the same code with no message: the hash is on the upload before it.
+  const v = (id, at, ann) => ({ id, metadata: { created_on: at }, annotations: ann });
+  const list = [
+    v('up1', '2026-10-25T01:00:00Z', { 'workers/triggered_by': 'upload', 'workers/message': 'old' }),
+    v('up2', '2026-10-25T02:00:00Z', { 'workers/triggered_by': 'upload', 'workers/message': m }),
+    v('s1', '2026-10-25T02:01:00Z', { 'workers/triggered_by': 'secret' }),
+    v('s2', '2026-10-25T02:02:00Z', { 'workers/triggered_by': 'secret' }),
+  ];
+  assert.equal(codeVersion(list, 's2').id, 'up2');
+  assert.equal(codeVersion(list, 'up1').id, 'up1');
+  assert.equal(codeVersion(list, 'gone'), null);
 });
 
 test('B-318: verify reads the Worker build hash and the app files back against the build', () => {
@@ -98,9 +110,10 @@ test('B-318: verify reads the Worker build hash and the app files back against t
     ...ok(),
     run: { id: 8, status: 'completed', conclusion: 'failure' },
     steps: [{ name: 'x', conclusion: 'failure' }],
+    errors: ['served files differ: sw.js'],
   });
   assert.equal(red[0].ok, false);
-  assert.match(red[0].detail, /failure at: x/);
+  assert.match(red[0].detail, /failure at: x \(served files differ: sw\.js\)/);
   assert.equal(green(lines({ ...ok(), app: null })), false, 'a run with no notice is not a deploy of this build');
   // An older commit carrying the same Worker and files is the same deploy (B-63's content rule).
   const older = lines(ok({ commit: 'b'.repeat(12), worker: EXP.worker.slice(0, 16), files: EXP.files.slice(0, 16) }));
@@ -130,8 +143,9 @@ test('B-318: the readback takes the newest run, its steps and its app notice thr
       return { jobs: [{ id: 22, steps: [{ name: 'deploy', conclusion: 'success', number: 1 }] }] };
     if (/check-runs\/22\/annotations/.test(p))
       return [
-        { title: '', message: 'Node.js 20 is deprecated' },
-        { title: 'app staging', message: appMessage({ commit: C, ...EXP }) },
+        { title: '', annotation_level: 'warning', message: 'Node.js 20 is deprecated' },
+        { title: 'app staging', annotation_level: 'notice', message: appMessage({ commit: C, ...EXP }) },
+        { title: 'app staging', annotation_level: 'failure', message: 'served files differ: sw.js' },
       ];
     throw new Error(p);
   };
@@ -139,6 +153,7 @@ test('B-318: the readback takes the newest run, its steps and its app notice thr
   assert.equal(r.run.id, 2);
   assert.deepEqual(r.steps, [{ name: 'deploy', conclusion: 'success' }]);
   assert.deepEqual(r.app, { commit: C.slice(0, 12), worker: '1'.repeat(16), files: '2'.repeat(16) });
+  assert.deepEqual(r.errors, ['served files differ: sw.js'], "the check step's differences come home as annotations");
   assert.ok(calls.every(p => p.startsWith('repos/miura5/ev4/')));
   const going = readRun('staging', p =>
     /runs\?/.test(p) ? { workflow_runs: [{ id: 3, status: 'queued', created_at: 'x' }] } : assert.fail('read ' + p)

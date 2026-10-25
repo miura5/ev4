@@ -155,7 +155,7 @@ export function appLines({ target, commit, expected, saved }) {
     `app ${target} workflow run`,
     run.conclusion === 'success'
       ? `run ${run.id} green`
-      : `run ${run.id} ${run.conclusion}${failed.length ? ` at: ${failed.join('; ')}` : ''}`
+      : `run ${run.id} ${run.conclusion}${failed.length ? ` at: ${failed.join('; ')}` : ''}${(saved.errors || []).length ? ` (${saved.errors.join('; ')})` : ''}`
   );
   const got = saved.app;
   if (!got) {
@@ -213,8 +213,10 @@ export function readRun(target, api = gh) {
   if (!job) return out;
   out.steps = (job.steps || []).map(s => ({ name: s.name, conclusion: s.conclusion }));
   const notes = api(`repos/${REPO}/check-runs/${job.id}/annotations`);
-  const note = (notes || []).filter(a => a.title === `app ${target}`).at(-1);
+  const mine = (notes || []).filter(a => a.title === `app ${target}`);
+  const note = mine.filter(a => a.annotation_level === 'notice').at(-1);
   out.app = note ? parseAppMessage(note.message) : null;
+  out.errors = mine.filter(a => a.annotation_level === 'failure').map(a => String(a.message).slice(0, 300));
   return out;
 }
 
@@ -223,6 +225,20 @@ export function activeVersion(deployments) {
   const d = [...(deployments || [])].sort((a, b) => String(a.created_on).localeCompare(String(b.created_on))).at(-1);
   const v = d && [...(d.versions || [])].sort((a, b) => b.percentage - a.percentage)[0];
   return v ? v.version_id : null;
+}
+
+/**
+ * The version whose code the active one runs: `wrangler secret put` makes a new version (triggered_by "secret", no
+ * message) over the same code, so walk back from the active version past those to the upload that carries the message.
+ * versions: wrangler versions list --json (oldest first).
+ */
+export function codeVersion(versions, activeId) {
+  const vs = [...(versions || [])].sort((a, b) =>
+    String((a.metadata || {}).created_on).localeCompare(String((b.metadata || {}).created_on))
+  );
+  let i = vs.findIndex(v => v.id === activeId);
+  while (i > 0 && (vs[i].annotations || {})['workers/triggered_by'] === 'secret') i--;
+  return i >= 0 ? vs[i] : null;
 }
 
 async function deployedCheck(target, base) {
@@ -242,11 +258,15 @@ async function deployedCheck(target, base) {
   const lines = [];
   const add = (ok, what) => lines.push({ ok, what });
   const id = activeVersion(wrangler('deployments', 'list'));
-  const msg = id ? ((wrangler('versions', 'view', id).annotations || {})['workers/message'] ?? '') : '';
+  const v = id ? codeVersion(wrangler('versions', 'list'), id) : null;
+  const msg = v ? ((v.annotations || {})['workers/message'] ?? '') : '';
   const got = parseAppMessage(msg);
+  const via = v && v.id !== id ? ` (its code version ${v.id}, under secret changes)` : '';
   add(
     msg === appMessage(want),
-    got ? `the active version carries ${msg}` : `the active version carries no build hash (${id || 'no version'})`
+    got
+      ? `the active version${via} carries ${msg}${msg === appMessage(want) ? '' : `, the build is ${appMessage(want)}`}`
+      : `the active version carries no build hash (${id || 'no version'}${v ? `, code version ${v.id}` : ''})`
   );
   const files = publicFiles(publicDir),
     bad = [];
@@ -277,8 +297,13 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       console.error('usage: node tools/pwa-app.mjs deployed <staging|live> https://<the Worker>');
       process.exit(2);
     }
-    const { lines, message } = await deployedCheck(target, third);
+    const { lines, message } = await deployedCheck(target, third).catch(e => ({
+      lines: [{ ok: false, what: `the read back failed: ${String(e.message).split('\n')[0].slice(0, 200)}` }],
+      message: '',
+    }));
     for (const l of lines) console.log(`${l.ok ? 'ok ' : 'NO '} ${l.what}`);
+    // A build session cannot read run logs: each difference is also an error annotation readback brings home.
+    for (const l of lines) if (!l.ok) console.log(`::error title=app ${target}::${l.what}`);
     const green = lines.every(l => l.ok);
     // The read a build session makes finds this notice through the GitHub API (run logs are out of its reach).
     if (green) console.log(`::notice title=app ${target}::${message}`);
