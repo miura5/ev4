@@ -5380,12 +5380,12 @@
   "title": "Record (folds B-281's Record part; C-1, C-7, C-13): type tabs, the filter (course, when, and the design's own Show workouts checkbox), day-grouped rows with one badge, and the detail panel. No \"Log something\". Notes carry no course.",
   "dod": "Screenshots at 390 and 1280 in light and dark, filter open. Rows are 32 px at 1280 and 44 px at 390, with the time on the row's line. Every segment measures 44 px or more at 390. No create button on the view.",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-288"
   ],
-  "notes": "proofs green at 67e1cef: npm test, smoke, check --touched GREEN; reviewing",
-  "commit": null,
+  "notes": "Shipped to staging at c75248a: ship staging GREEN.",
+  "commit": "c75248a",
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
  {
