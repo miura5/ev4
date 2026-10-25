@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-322",
+  "date": "Oct 25",
+  "title": "With the PWA, E.V.'s Mac folder is Documents/E.V. Backups (staging in its staging/ subfolder): evening-mac writes only the nightly backup and the Sunday mirror there, exported from D1; Study Watch is retired (B-314) and its folder Documents/E.V. Study Watch is kept as it is, unread and unwritten, nothing deleted. The restore drill can test the newest Mac backup or the newest R2 export.",
+  "why": "Matt, Oct 25: Study Watch is retired with the PWA, so the folder's name misleads; he chose a plainly named backups folder over dropping Mac backups, keeping a second copy he owns off Cloudflare.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-321",
   "date": "Oct 25",
   "title": "A record copied into a D1 (B-319) leaves out the per-target system documents (worker, manifest, spec, environments, yourturn, seed, config, code): the target's own deploy writes them; a Worker token is never stored in the database it protects. Ids are copied exactly, spaces and slashes included, through an encoded run API path.",
