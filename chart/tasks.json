@@ -7017,10 +7017,10 @@
  {
   "id": "B-391",
   "kind": "bug",
-  "title": "Bug (reported Oct 25): Dead code and styles for removed screens remain; a stale saved Study view can reopen a closed set; his own snoozes can't be brought back once the panel closes.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "title": "Cleanup after the redesign release: remove the dead functions and the ~50 unused style rules the page review listed; Study's saved view reopens a set only through the current open set; a quiet way to bring back his own snoozed items",
+  "dod": "npm test, smoke and the full check green; the rubric score holds; a fresh review finds no gap.",
+  "milestone": "v4.9 cleanup",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -7029,6 +7029,10 @@
   "reportedAt": "2026-10-25T18:08:01.359Z",
   "board": {
    "row": "v4 B-391: Dead code and styles for removed screens remain; a stale saved Study…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-25T18:08:01.741Z"
   }
  }
 ]
