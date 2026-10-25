@@ -937,7 +937,12 @@ body.captions .msg.matt .bubble{font-size:calc(14px * var(--ts));color:var(--qui
 body.captions .msg.matt .bubble::before{content:"You";display:block;font-size:calc(12px * var(--ts));font-weight:500;color:var(--faint)}
 body.captions .composer{padding-top:8px;gap:10px}
 body.captions .composer>*{max-width:600px}
-.qchips{flex-wrap:wrap;justify-content:center;gap:6px;overflow:visible;padding:0 16px}
+/* B-360 (Matt, Oct 25): the chips are one row at every size, scrolling sideways when they don't fit; centred when
+   they do (auto margins, so an overflowing row still starts at its first chip). */
+.qchips{flex-wrap:nowrap;justify-content:flex-start;gap:6px;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;padding:0 16px;scroll-padding-inline:16px}
+.qchips>*{flex:none;white-space:nowrap}
+.qchips>:first-child{margin-left:auto}
+.qchips>:last-child{margin-right:auto}
 .qchip,.qchip.go{height:30px;min-height:30px;padding:0 12px;border-radius:15px;border:0;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);color:var(--quiet);font:500 calc(12.5px * var(--ts)) var(--sans)}
 .qchip:hover{background:var(--hover);color:var(--text)}
 body.captions .composer>.compose-row{width:calc(100% - 32px);max-width:600px;margin:0 auto 18px}
@@ -950,10 +955,7 @@ body.captions .composer>.compose-row{width:calc(100% - 32px);max-width:600px;mar
 .compose-row #ev-send,.compose-row #ev-send.on{width:32px;height:32px;min-height:32px;flex:0 0 32px;border-radius:16px;background:var(--her);color:var(--on-her);box-shadow:none}
 .compose-row #ev-send:hover{background:color-mix(in srgb,var(--her) 88%,var(--text))}
 @media (max-width:1199px){body.captions.surface-open #qchips{display:none}}
-/* B-345: the chips' line break after the third, from 600 px; on the phone they wrap as they fall (2, 2, 1). */
-.qchips>.qc-br{flex-basis:100%;height:0}
 @media (max-width:599px){
-  .qchips>.qc-br{display:none}
   /* B-345: the frame already gives the view its 16 px gutters, so the card, lines, chips and field run to them. */
   .ckin{width:100%}
   .qchips{padding:0}

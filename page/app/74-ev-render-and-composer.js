@@ -189,8 +189,7 @@
           b.className = 'qchip';
           return b;
         });
-        // B-345 (D-312): five chips sit in the demo's rows, three then two, from 600 px (a quiet line break).
-        if (bs.length >= 5) bs.splice(bs.length - 2, 0, el('span', 'qc-br'));
+        // B-360: one row at every size (styles.css scrolls it sideways when it overflows).
         qc.replaceChildren(...bs);
       }
       syncChips();
