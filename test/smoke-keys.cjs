@@ -3,8 +3,12 @@
 // stylesheet must hide its panels:
 // - a one-answer question in Today's review and in a practice set: focus its first option, ArrowDown moves the pick and
 //   answers nothing (no verdict, nothing written); then Space answers the option in focus;
-// - #system opens System, Today clears the address, and #system opens it again; the status line opens it twice too;
-// - the hidden System panel takes no tap over Today.
+// - #system opens System, Today clears the address, and #system opens it again (the guard for the address fix);
+// - the status line opens System on each tap (it opens System directly, address or not);
+// - the hidden System panel takes no tap over Today;
+// - once the record has loaded, a fault in the status line's lineFor is logged once ("renderLine:") and the strip stays
+//   blank.
+// Today's review answers on Space, the practice set on Enter.
 //   node test/smoke-keys.cjs [record dir | synthetic]
 // Run `node tools/build.mjs` first. Exit code 1 when any check fails.
 const { chromium } = require('playwright');
@@ -67,8 +71,8 @@ async function open(browser, viewport) {
   return { page, errors };
 }
 
-// Focus the first open option, press ArrowDown, then Space; read the verdict and the answer writes after each.
-async function keys(page, box) {
+// Focus the first open option, press ArrowDown, then Space (or Enter); read the verdict and the answer writes after each.
+async function keys(page, box, key = 'Space') {
   const read = () =>
     page.evaluate(box => {
       const b = document.querySelector(box);
@@ -88,7 +92,7 @@ async function keys(page, box) {
   await page.keyboard.press('ArrowDown');
   await page.waitForTimeout(400);
   const arrow = await read();
-  await page.keyboard.press('Space');
+  await page.keyboard.press(key);
   await until(
     page,
     box => [...document.querySelectorAll(box + ' .verdict')].some(e => e.getBoundingClientRect().height > 0),
@@ -158,7 +162,7 @@ async function keys(page, box) {
       await page.click('#tab-today');
     }
     await page.evaluate(() => document.getElementById('status').classList.remove('sys'));
-    ok(`${tag} the status line opens System twice`, line.every(Boolean), line + '');
+    ok(`${tag} the status line opens System on each tap`, line.every(Boolean), line + '');
 
     // Arrow keys never answer; Space does. Today's review, then a practice set.
     await studyView(page, 'review');
@@ -186,8 +190,36 @@ async function keys(page, box) {
     );
     await openSet(page, setId);
     await until(page, () => !!document.querySelector('#pr-body fieldset.opts input:not(:disabled)'), null, 2000);
-    const pr = await keys(page, '#pr-body');
-    ok(`${tag} a practice set: ArrowDown answers nothing, Space answers`, fine(pr), JSON.stringify(pr));
+    const pr = await keys(page, '#pr-body', 'Enter');
+    ok(`${tag} a practice set: ArrowDown answers nothing, Enter answers`, fine(pr), JSON.stringify(pr));
+
+    // A fault in the status line after the record has loaded: lineFor('today') reads the day through EVCore.dayView;
+    // made to throw for one re-show of Today (which redraws only the panel's chrome and the strip), it is logged once
+    // and the strip goes blank.
+    await page.click('#tab-today');
+    await page.waitForTimeout(300);
+    const before = errors.length;
+    const fault = await page.evaluate(() => {
+      const E = window.EVCore,
+        real = E.dayView;
+      E.dayView = () => {
+        throw new TypeError('planted status line fault');
+      };
+      try {
+        document.getElementById('tab-today').click();
+      } finally {
+        E.dayView = real;
+      }
+      const strip = document.getElementById('evline');
+      return { blank: !strip || strip.textContent.trim() === '' };
+    });
+    await page.waitForTimeout(200);
+    const caught = errors.splice(before).filter(m => /^renderLine:.*planted status line fault/.test(m));
+    ok(
+      `${tag} a status line fault after load is logged once and the strip stays blank`,
+      caught.length === 1 && fault.blank,
+      JSON.stringify({ ...fault, logged: caught.length })
+    );
 
     ok(`${tag} no page errors`, errors.length === 0, errors.slice(0, 3).join(' | '));
     await page.close();

@@ -20,9 +20,9 @@ test('B-199: npm run smoke builds, then runs the smoke harness on the synthetic 
   const keys = read('test/smoke-keys.cjs');
   for (const name of [
     "Today's review: ArrowDown answers nothing, Space answers",
-    'a practice set: ArrowDown answers nothing, Space answers',
+    'a practice set: ArrowDown answers nothing, Enter answers',
     '#system opens System, Today clears it, and #system opens it again',
-    'the status line opens System twice',
+    'a status line fault after load is logged once and the strip stays blank',
   ])
     assert.ok(keys.includes(name), `smoke-keys names "${name}"`);
 });
