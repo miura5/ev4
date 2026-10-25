@@ -5551,11 +5551,11 @@
   "title": "The app without Study Watch or builder jobs: the shim offers no mcp; a study session runs (timer, breaks, +5 minutes, the quiz) with no note binding.",
   "dod": "npm run smoke:pwa green, its session step included. The shim's use('mcp') resolves null; the smoke records no request to a host: server or to Claude Code Remote.",
   "milestone": "app (data, pipelines, ops)",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-313"
   ],
-  "notes": "",
+  "notes": "claimed by lane app",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
