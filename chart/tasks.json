@@ -6603,7 +6603,7 @@
   "milestone": "v4.8 redesign",
   "status": "in progress",
   "depends": [],
-  "notes": "claimed by lane study",
+  "notes": "built and pushed f7fd74ef; shipping staging",
   "commit": null,
   "source": "UI reviewer click-through 2 at 112b83f, Oct 25 (D-316)",
   "words": "Review 2: Study still shows a placeholder card with no pane for an exam with no objectives or a course with no exam; mini quiz wording and the weak spots page's sections differ.",
