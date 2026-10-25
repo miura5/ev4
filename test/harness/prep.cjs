@@ -373,7 +373,7 @@ async function tickAll(page) {
       await ctx.close();
     }
   }
-  // B-291 (C-1, C-13, D-270, D-276, D-282, D-286, D-287): Today's list on a planted day, at 390 and 1280 in light and
+  // B-291 (C-1, C-13, D-282, D-286, D-287): Today's list on a planted day, at 390 and 1280 in light and
   // dark. Rows are 32 px from 600 px and 44 px on the phone, each row's time on its line; graded work due tomorrow shows
   // a red badge, graded work due in three days a neutral one; the phone tick's green fill stays in its 18 px box, clear
   // of the name; Start shows on one row at most; no Add, Remove, Now card or Focus heading; Done, Deferred and Taken off
@@ -728,7 +728,7 @@ async function tickAll(page) {
     }
   // B-292 (C-5): the day's budget on the planted list day, under and over, at 390 and 1280 in light and dark. The card
   // reads "<left> min left · <free> free" with the done minutes on their own line; ticking a 45-minute row moves its
-  // minutes from left to done and the bar keeps its length; over budget the bar's left part is the warning yellow (D-270) and the words that
+  // minutes from left to done and the bar keeps its length; over budget the bar's left part is the warning yellow (D-269) and the words that
   // say so keep 4.5:1 against what they sit on.
   const budgetRecord = available => {
     const db = listRecord();
@@ -818,7 +818,7 @@ async function tickAll(page) {
           JSON.stringify(a)
         );
         ok(
-          `${tag} ${name === 'over' ? "over budget: the bar's left part is the warning yellow (D-270) and the words say so at 4.5:1" : 'under budget: no warning colour'}`,
+          `${tag} ${name === 'over' ? "over budget: the bar's left part is the warning yellow (D-269) and the words say so at 4.5:1" : 'under budget: no warning colour'}`,
           name === 'over'
             ? a.over && a.leftWarn && a.overRatios.length >= 1 && a.overRatios.every(r => r >= 4.5)
             : !a.over && !a.leftWarn && !a.overRatios.length,

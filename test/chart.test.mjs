@@ -1050,7 +1050,7 @@ test("B-111: a deploy credits each commit's own task, not every id a subject men
     C.commitTasks(
       [
         'B-111: ideas rows (chart)',
-        'D-146 to D-165, B-111 to B-126: plan fab: 10 decisions (chart)',
+        'D-161 to D-165, B-111 to B-126: plan fab: 10 decisions (chart)',
         'B-60: the rollback',
         'B-109: tenets; see B-106',
       ].join('\n')

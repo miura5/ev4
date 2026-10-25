@@ -4896,7 +4896,7 @@
    ]
   },
   "tenets": {
-   "note": "B-115: the UI tenet checks the look pass ran (test/harness/tenets.cjs). B-357 (D-312, D-314): the look checks of D-146 to D-151, D-160 and D-276 are retired with the UI tenets; the demo is the UI. widths: the sizes the look pass reads closely (motion, switches' names). motion: D-271, still checked.",
+   "note": "B-115: the UI tenet checks the look pass ran (test/harness/tenets.cjs). B-357 (D-315): the old look checks are retired with the old UI tenets; the demo is the UI. widths: the sizes the look pass reads closely (motion, switches' names). motion: D-271, still checked.",
    "widths": [
     390,
     735,

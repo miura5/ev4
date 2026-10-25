@@ -1,4 +1,4 @@
-// The look pass's views and sizes (B-113, D-225). The views come from the page's own markup: every tab, and inside a
+// The look pass's views and sizes (B-113, D-315). The views come from the page's own markup: every tab, and inside a
 // tab every segment of its seg control, so a view added to the page gets its screenshots without a harness change.
 // check.mjs holds the look pass to one screenshot per view per size (missingShots).
 const SIZES = [

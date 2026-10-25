@@ -812,7 +812,7 @@ async function practiceNav(page, scheme) {
   await page.click('#pr-fold');
   await page.waitForTimeout(150);
   ok(
-    `[${scheme}] the open set's head line folds it back to Objectives, with no list of sets (D-160, D-283)`,
+    `[${scheme}] the open set's head line folds it back to Objectives, with no list of sets (D-283)`,
     !(await page.isVisible('#pr-fold')) &&
       (await page.isVisible('#study-objectives')) &&
       !(await page.locator('#pr-body .pr-lead, #pr-body .pr-item').count()) &&
@@ -1735,7 +1735,7 @@ async function tap(page, locator, name) {
         mc[2].text === 'Job ' + (jobs[0] || {}).id,
       JSON.stringify(mc)
     );
-    // B-210 (D-209): the job is one line in the pane (its surface line or its card line, at most 44 px). B-286 (D-291):
+    // B-210: the job is one line in the pane (its surface line or its card line, at most 44 px). B-286 (D-291):
     // the sidebar has no Working section; the job shows only in the conversation.
     await page.waitForTimeout(300);
     const jl = await page.evaluate(() => {
@@ -1749,7 +1749,7 @@ async function tap(page, locator, name) {
       };
     });
     ok(
-      'a running job is one line in the pane, and the sidebar has no Working section (D-209, D-291)',
+      'a running job is one line in the pane, and the sidebar has no Working section (D-291)',
       jl.h != null && jl.h <= 44 && !jl.side,
       JSON.stringify(jl)
     );
@@ -4642,7 +4642,7 @@ async function tap(page, locator, name) {
       }
     }
 
-    // ---- B-290 (D-245): Coming up in E.V.'s right panel lists the dates after today that the sidebar doesn't show.
+    // ---- B-290 (D-315): Coming up in E.V.'s right panel lists the dates after today that the sidebar doesn't show.
     // Graded work due tomorrow is on today's list (a heads-up), so it can be in the sidebar; then it is not Coming up.
     {
       const cp = await browser.newPage({ viewport: { width: 1280, height: 900 } });
@@ -4795,7 +4795,7 @@ async function tap(page, locator, name) {
     await send(ss, 'Start a study session');
     await ss.waitForTimeout(300);
     ok('graded note refused', /#graded/.test((await msgs(ss)).slice(-1)[0].text) && !(await sess()));
-    // Start: B-290 (D-245), from 1200 px from the right panel's card, the chip's call; below it the card is absent
+    // Start: B-290 (D-315), from 1200 px from the right panel's card, the chip's call; below it the card is absent
     await setNote(note1);
     const sessCard = () =>
       ss.evaluate(() => {
@@ -5928,7 +5928,7 @@ async function tap(page, locator, name) {
         facing: sm ? sm.facing : null,
         lit: sm ? sm.solid : -1,
         halftone: sm ? sm.back : -1,
-        // D-216 is about a count on her or the nav; a row's one word badge (D-276, B-291) is not a notice
+        // D-216 is about a count on her or the nav; a row's one word badge (B-291) is not a notice
         badges: [...document.querySelectorAll('.badge, .count, .dot-count, [class*="badge"]')].filter(
           b => b.getBoundingClientRect().height > 0 && !b.closest('.li')
         ).length,

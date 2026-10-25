@@ -177,7 +177,7 @@ const statusShown = page =>
     }
     await page.close();
   }
-  // B-208 (D-210, D-225): three layouts by width. Under 600 px the sections are a tab bar along the bottom; 600 to 1199
+  // B-208 (D-210, D-315): three layouts by width. Under 600 px the sections are a tab bar along the bottom; 600 to 1199
   // px a sidebar on the left beside the pane; from 1200 px the details panel on the right too (Today has a side
   // column). The top bar is gone; the reading column is at most 680 px and centred in the pane; nothing scrolls sideways.
   for (const w of [390, 560, 599, 600, 735, 960, 1199, 1200, 1706, 2560]) {
@@ -226,7 +226,7 @@ const statusShown = page =>
     );
     await page.close();
   }
-  // B-288 (D-225, C-4): at 390, 700, 1000 and 1280 in both themes. The tab bar shows only at 390, its E.V. tab is her
+  // B-288 (D-315, C-4): at 390, 700, 1000 and 1280 in both themes. The tab bar shows only at 390, its E.V. tab is her
   // 24 px avatar (no icon) and every tab target there, System's included, is 44 px or more each way. The right panel
   // shows only from 1200 px; below that, each view's side column follows its main column inside the pane.
   for (const scheme of ['light', 'dark'])
@@ -418,8 +418,7 @@ const statusShown = page =>
       await page.keyboard.press('Escape');
       await page.waitForTimeout(100);
       v.footClosed = await page.evaluate(
-        () =>
-          document.getElementById('side-prefpop').hidden && document.activeElement.id === 'side-prefs-btn'
+        () => document.getElementById('side-prefpop').hidden && document.activeElement.id === 'side-prefs-btn'
       );
       ok(
         `[1280 ${scheme}] sidebar: Conversation, Today, Study, Progress, Record with neutral icons; her dial in her palette; Preferences in the foot with Theme and Contrast, Esc closes it; no Working (B-286, D-314)`,
@@ -482,7 +481,7 @@ const statusShown = page =>
       await page.close();
     }
   }
-  // B-208 (D-151, D-210): the pane's header names the view; the status line shows only a problem, by name.
+  // B-208 (D-210): the pane's header names the view; the status line shows only a problem, by name.
   for (const w of [390, 735, 1280]) {
     const { page } = await open(browser, { viewport: { width: w, height: 844 } });
     await page.waitForTimeout(500);
@@ -577,7 +576,7 @@ const statusShown = page =>
   );
   await r.page.screenshot({ path: `${shots}/boot-failed-phone.png` });
   await r.page.close();
-  // B-223 (D-245, D-292): one right panel on every view, each thing once, in both themes at Matt's widths; her lines
+  // B-223 (D-315, D-292): one right panel on every view, each thing once, in both themes at Matt's widths; her lines
   // left-aligned on Conversation. Each view and state is judged by panel.cjs (planted failures in test/panel.test.mjs).
   for (const scheme of ['light', 'dark'])
     for (const w of [735, 1280, 1470, 1706, 2560]) {
@@ -605,7 +604,7 @@ const statusShown = page =>
           return { counts: m.length, text: t.slice(0, 120) };
         });
         ok(
-          `[${w} ${scheme}] a review on Conversation shows its count once (D-245)`,
+          `[${w} ${scheme}] a review on Conversation shows its count once (D-315)`,
           !!once && once.counts === 1,
           JSON.stringify(once)
         );
@@ -614,7 +613,7 @@ const statusShown = page =>
           .click()
           .catch(() => {});
       } else
-        ok(`[${w} ${scheme}] a review on Conversation shows its count once (D-245)`, false, 'no Start review chip');
+        ok(`[${w} ${scheme}] a review on Conversation shows its count once (D-315)`, false, 'no Start review chip');
       for (const t of ['today', 'progress', 'record', 'system']) {
         await page.$eval('#tab-' + t, b => b.click());
         await look(t, t === 'today');
@@ -627,7 +626,7 @@ const statusShown = page =>
       await look('study-practice', true);
       const bad = judged.filter(([, j]) => !j.ok);
       ok(
-        `[${w} ${scheme}] one right panel on every view with detail, one shade, nothing twice, Today steps aside, her lines left (D-245, D-292)`,
+        `[${w} ${scheme}] one right panel on every view with detail, one shade, nothing twice, Today steps aside, her lines left (D-315, D-292)`,
         !bad.length && judged.length > 0 && !errors.length,
         bad.length
           ? bad
@@ -1076,7 +1075,7 @@ const statusShown = page =>
   console.log(`\n${results.length - failed} of ${results.length} checks pass; screenshots in ${shots}`);
   process.exit(failed ? 1 : 0);
 })().catch(e => {
-  for (const [s, n, d] of results) console.log(`${s}  ${n}${d && s === "FAIL" ? "  -- " + d : ""}`);
+  for (const [s, n, d] of results) console.log(`${s}  ${n}${d && s === 'FAIL' ? '  -- ' + d : ''}`);
   console.error(e);
   process.exit(1);
 });

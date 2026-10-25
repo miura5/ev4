@@ -8,10 +8,13 @@ import { ROOT, flatSource } from './helpers.mjs';
 
 const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec', 'ev.spec.json'), 'utf8'));
 
-test('B-357 (D-312, D-314): the retired look tenets are no longer checked; the motion check stays', () => {
+test('B-357 (D-315): the retired look tenets are no longer checked; the motion check stays', () => {
   const t = spec.ui.tenets;
   assert.equal(t.checks, undefined);
-  assert.deepEqual(Object.keys(createRequire(import.meta.url)('./harness/tenets.cjs')).sort(), ['judgeMotion', 'motion']);
+  assert.deepEqual(Object.keys(createRequire(import.meta.url)('./harness/tenets.cjs')).sort(), [
+    'judgeMotion',
+    'motion',
+  ]);
   assert.deepEqual(t.widths, [390, 735, 1280]);
 });
 

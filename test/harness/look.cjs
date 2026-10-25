@@ -319,8 +319,8 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)
       );
       if (TENETS.widths.includes(size.width) && [844, 830, 800].includes(size.height)) {
-        // B-357 (D-315): the look tenets' checks (D-146 to D-151, D-160, D-276) and D-278's five kinds, one primary,
-        // are retired with the old UI tenets; the demo is the UI.
+        // B-357 (D-315): the old look tenets' checks and the five kinds, one primary, are retired with the old UI
+        // tenets; the demo is the UI.
         // B-285 (C-15): the screen-reader tree names the picked option of every switch on screen.
         for (const id of await page.$$eval('.seg[id]', s =>
           s.filter(x => !x.closest('[hidden]') && x.getBoundingClientRect().width > 1).map(x => x.id)
@@ -337,7 +337,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           );
         }
       }
-      // B-275 (D-270): Ember is hers alone: on this view, the sidebar and the header, no visible element draws in her
+      // B-275: Ember is hers alone: on this view, the sidebar and the header, no visible element draws in her
       // accent or her two faces except her avatar, a primary button and send.
       if (['390x844', '1280x800'].includes(width)) {
         const strays = await page.evaluate(() => {
@@ -390,7 +390,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           })
         );
     }
-    // B-213 (D-225, D-276): Today's rows are 44 px on the phone and 32 px from 600 px wide; the view switch is the pane
+    // B-213 (D-315): Today's rows are 44 px on the phone and 32 px from 600 px wide; the view switch is the pane
     // header's from 600 px and a full-width row on the phone; a Prep word has no pill behind it.
     {
       await page.click('#tab-today');
@@ -466,7 +466,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         );
       }
       ok(
-        `[${width}] Today's rows are ${want} px, the view switch is ${size.width < 600 ? "in Study's toolbar" : "the pane header's"}, Prep is a word, the reading column at most 680 px (D-225, D-276)`,
+        `[${width}] Today's rows are ${want} px, the view switch is ${size.width < 600 ? "in Study's toolbar" : "the pane header's"}, Prep is a word, the reading column at most 680 px (D-315)`,
         r.rows.length > 0 &&
           r.rows.every(h => h === want) &&
           !r.pill &&
@@ -569,7 +569,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         await page.click('#rv-count');
         await page.waitForTimeout(150);
         const sl = await page.evaluate(() => {
-          // B-223 (D-245): from 1200 px the set is the right panel's list, open beside the question from the start
+          // B-223 (D-315): from 1200 px the set is the right panel's list, open beside the question from the start
           const l = document.querySelector(innerWidth >= 1200 ? '#study-side .set-list' : '#rv-body .set-list');
           return {
             tag: document.getElementById('rv-count').tagName,
@@ -717,7 +717,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
       });
       ok(
         `[${width}] study: after the last answer, More practice is one line with Give me 5 more`,
-        // B-303: one line is the button's height plus the card's padding; on the phone a set button is 44 px (D-278)
+        // B-303: one line is the button's height plus the card's padding; on the phone a set button is 44 px (D-315)
         done.shown && done.h <= (size.width < 600 ? 76 : 72) && done.button === 'Give me 5 more' && !done.left,
         JSON.stringify(done)
       );
@@ -806,7 +806,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
       }
     }
     // B-117: Today: no stat tile, no item's minutes twice, the exam in Next 7 days only, a Prep marker on the clinical
-    // day (the coral count is retired with the old colour tenet, superseded by D-270; B-271 on Matt's word); ticking keeps the scroll (v4 rule 6).
+    // day (the coral count is retired with the old colour tenet, since retired; B-271 on Matt's word); ticking keeps the scroll (v4 rule 6).
     if (TENETS.widths.includes(size.width) && [844, 830, 800].includes(size.height)) {
       await page.click('#tab-today');
       await page.waitForTimeout(450); // B-125: settled within 450 ms

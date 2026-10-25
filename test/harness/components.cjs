@@ -1,72 +1,15 @@
-// B-285 (D-274, D-278, D-269, C-1, C-15): the component set, rendered on its own sheet from the built stylesheet and
+// B-285 (D-274, D-269, C-1, C-15): the component set, rendered on its own sheet from the built stylesheet and
 // the theme generator, at 390 and 1280 in light and dark at contrast 60, with a screenshot of each. It checks what the
 // set promises every view: a row is 32 px from 600 px and 44 px on the phone; the screen-reader tree names the picked
 // option of every segmented switch; coded yellow is D-269's L52 C54 (light) and L72 C48 (dark) at hue 82, read back
-// from the page, not from the generator; the words on a badge and a tint button hold 4.5:1 on their own tint; no button
-// sits outside the five kinds and no view of the sheet has more than one primary; no button only closes.
+// from the page, not from the generator; the words on a badge and a tint button hold 4.5:1 on their own tint. B-357
+// (D-315): the five-kinds, one-primary and no-close-button checks are retired with the old UI tenets.
 //   node test/harness/components.cjs [record dir | synthetic] [screenshots dir] [target]
 // The record argument is accepted so check.mjs can call every harness alike; the sheet reads no record.
 // Run `node tools/build.mjs` first. Exit code 1 when any check fails.
 const fs = require('fs');
 const path = require('path');
 const { rgb, ratio } = require('./contrast.cjs');
-
-const KINDS = ['primary', 'neutral', 'tint', 'ghost', 'icon'];
-const FILLS = ['primary', 'neutral', 'tint', 'ghost'];
-const CODED = ['x-green', 'x-yellow', 'x-red', 'x-blue', 'x-violet'];
-
-/** In the page: every visible button in scope (a view), as data for judgeKinds. Self-contained (serialized). */
-function collectButtons(scopeSel) {
-  const PART =
-    /^(brand|tab|si|nm|set-q|sum-line|brief-row|bi-main|prep-row|pc-bar|wchip|qchip|fold-line|[a-z]+-line|[a-z]+-nm|[a-z]+-row)$/;
-  const vis = e => {
-    if (!e || e.closest('[hidden]')) return false;
-    const s = getComputedStyle(e),
-      r = e.getBoundingClientRect();
-    return s.display !== 'none' && s.visibility !== 'hidden' && r.width > 1 && r.height > 1;
-  };
-  const scopes = scopeSel ? [...document.querySelectorAll(scopeSel)] : [document.body];
-  return scopes.flatMap(sc =>
-    [...sc.querySelectorAll('button,[role=button]')].filter(vis).map(b => ({
-      label: (b.textContent.trim() || b.getAttribute('aria-label') || b.id || '').slice(0, 30),
-      cls: typeof b.className === 'string' ? b.className.trim().split(/\s+/).filter(Boolean) : [],
-      submit: b.getAttribute('type') === 'submit',
-      inSeg: !!b.closest('.seg'),
-      // B-303: the set's other parts, which are not buttons: a tab of the sidebar or tab bar, her composer and its
-      // quick asks, and a row's or a card's own line (its name, a fold line, a day of the week, a bar of a chart)
-      part:
-        b.getAttribute('role') === 'tab' ||
-        !!b.closest('#composer') ||
-        (typeof b.className === 'string' &&
-          b.className
-            .trim()
-            .split(/\s+/)
-            .some(c => PART.test(c))),
-    }))
-  );
-}
-
-/** D-278 on one view's buttons (its rows, lines, tabs and composer are the set's other parts): each is a .btn of one kind (icon may join a fill; a tint names its coded colour), or a
- * segment of a switch; at most one primary that is not the composer's send (a submit, as D-146 counts). */
-function judgeKinds(buttons) {
-  const outside = [],
-    primaries = [];
-  for (const b of buttons) {
-    if (b.inSeg || b.part) continue;
-    const c = new Set(b.cls);
-    const fills = FILLS.filter(k => c.has(k));
-    const ok =
-      c.has('btn') && KINDS.some(k => c.has(k)) && fills.length <= 1 && (!c.has('tint') || CODED.some(x => c.has(x)));
-    if (!ok) outside.push(b.label || b.cls.join('.'));
-    if (c.has('primary') && !b.submit) primaries.push(b.label);
-  }
-  return {
-    ok: !outside.length && primaries.length <= 1,
-    outside,
-    primaries,
-    detail: `${outside.length ? 'outside the five kinds: ' + outside.slice(0, 6).join(', ') + (outside.length > 6 ? ` (+${outside.length - 6})` : '') : 'every button one of the five kinds'}; primaries: ${primaries.length}${primaries.length ? ' (' + primaries.join(', ') + ')' : ''}`,
-  };
-}
 
 /** sRGB [r,g,b] to CIE LCh (D50, as the generator's lch2hex runs the other way), so the check does not trust it. */
 function lchOf([r, g, b]) {
@@ -152,7 +95,7 @@ const SHEET_CSS =
   '.cs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;padding:12px}' +
   '.cs-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.cs-view[data-view=composer]{padding:12px}';
 
-module.exports = { collectButtons, judgeKinds, lchOf, judgeYellow, sheet };
+module.exports = { lchOf, judgeYellow, sheet };
 
 if (require.main === module) {
   const { chromium } = require('playwright');
@@ -252,14 +195,6 @@ if (require.main === module) {
             `picked ${picked}; tree: ${tree.replace(/\n/g, ' | ')}`
           );
         }
-        for (const v of await page.$$eval('.cs-view', s => s.map(x => x.dataset.view))) {
-          const k = judgeKinds(await page.evaluate(collectButtons, `.cs-view[data-view="${v}"]`));
-          ok(`${tag} D-278: the ${v} view's buttons`, k.ok, k.detail);
-        }
-        const closers = (await page.evaluate(collectButtons, null)).filter(b =>
-          /^(hide|close|dismiss)\b|^[×✕✖]$/i.test(b.label)
-        );
-        ok(`${tag} D-160: no button only closes`, !closers.length, closers.map(b => b.label).join(', '));
         await page.close();
       }
     await browser.close();

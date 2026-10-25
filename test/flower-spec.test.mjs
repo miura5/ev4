@@ -1,5 +1,5 @@
 // B-205 (D-213): her stage sizes live once in spec.ui.look.flower, with her frame budget (D-272). The forget-me-not's
-// drawing values are history: B-275 (D-270) took out its inks, and B-276 (D-271, D-272) the rest with its clock, since the
+// drawing values are history: B-275 took out its inks, and B-276 (D-271, D-272) the rest with its clock, since the
 // Dial Arc draws her (D-265). The Silk core is retired in place, kept as history.
 import test from 'node:test';
 import assert from 'node:assert/strict';

@@ -789,7 +789,7 @@ async function sideBySide(browser, left, right, out, vp) {
         }),
       })
     );
-    // B-78 (D-123, D-125, D-160): a reply's cards are surfaces. The first opens under its head line (title and state, a
+    // B-78 (D-123, D-125): a reply's cards are surfaces. The first opens under its head line (title and state, a
     // chevron) and the others wait as one-line rows under that line, never pills; a row opens in place and folds the
     // open one to a row; the head line folds the surface to that line and unfolds it. Below 1024 px the surface is the
     // sheet over the composer, from 1024 px the side column. She glances toward a surface as it opens.
@@ -1053,7 +1053,7 @@ async function sideBySide(browser, left, right, out, vp) {
             av = document.querySelector('#hero .ev-av').getBoundingClientRect();
           return {
             sideShown: getComputedStyle(document.getElementById('ev-side')).display !== 'none',
-            // B-223 (D-245), B-290: with nothing beside her, from 1200 px the panel holds its resting content only:
+            // B-223 (D-315), B-290: with nothing beside her, from 1200 px the panel holds its resting content only:
             // the session card and Coming up
             datesOnly: [...document.getElementById('ev-side').children]
               .filter(c => getComputedStyle(c).display !== 'none')
@@ -1084,7 +1084,7 @@ async function sideBySide(browser, left, right, out, vp) {
         e900 = await lay(1024);
       ok(
         // B-208 (D-210): centred in the pane, which starts after the 212 px sidebar and ends 8 px from the edge; from
-        // 1200 px (B-223, D-245) the right panel holds the dates after today, and the pane ends where it begins.
+        // 1200 px (B-223, D-315) the right panel holds the dates after today, and the pane ends where it begins.
         '[desktop] with nothing beside her: at 1280 the panel holds only the session card and the dates, and her stage centres in the pane (578 px), at 1024 no side column (614 px)',
         e1280.sideShown &&
           e1280.datesOnly &&
@@ -1146,7 +1146,7 @@ async function sideBySide(browser, left, right, out, vp) {
       });
       const back = await lay(1280);
       ok(
-        '[desktop] emptied, what was beside her goes; the panel keeps the dates (D-245) and her stage centres in the pane',
+        '[desktop] emptied, what was beside her goes; the panel keeps the dates (D-315) and her stage centres in the pane',
         back.sideShown && back.datesOnly && Math.abs(back.coreX - 578) <= 2,
         JSON.stringify(back)
       );
@@ -1367,7 +1367,7 @@ async function sideBySide(browser, left, right, out, vp) {
     await page.screenshot({ path: `${shots}/skills-run-${scheme}.png` });
     await page.click('#sksheet .sk-acts button:has-text("Did it")');
     await page.waitForTimeout(500);
-    // The way out is the thing folding (D-160): the peek line on the phone, the head line beside her on the desktop.
+    // The way out is the thing folding: the peek line on the phone, the head line beside her on the desktop.
     if (phone) {
       await page.click('#sksheet .sk-tog');
       await page.waitForTimeout(300);
@@ -1485,7 +1485,7 @@ async function sideBySide(browser, left, right, out, vp) {
     );
     await ctx.close();
   }
-  // B-122 (D-160, D-161): a session's check folds to its head line by a tap on it and back, files nothing, and the next
+  // B-122 (D-161): a session's check folds to its head line by a tap on it and back, files nothing, and the next
   // checkpoint's card arrives open; at 390, 735 and 1280.
   {
     const ITEMS = [
@@ -1830,7 +1830,7 @@ async function sideBySide(browser, left, right, out, vp) {
       await ctx.close();
     }
   }
-  // B-112 (D-225): at short heights (390x450 is the phone with its keyboard open) the composer's bottom edge and her
+  // B-112 (D-315): at short heights (390x450 is the phone with its keyboard open) the composer's bottom edge and her
   // current line stay inside the viewport, idle, in a conversation and in a session.
   {
     const sessionSeed = () => {
@@ -2209,7 +2209,7 @@ async function sideBySide(browser, left, right, out, vp) {
           !s0.pills,
         JSON.stringify(s0)
       );
-      // B-357: the look tenets' checks on the open surface (D-146 to D-151, D-160, D-276) are retired (D-312, D-314)
+      // B-357: the old look tenets' checks on the open surface are retired (D-315)
       // B-244: the review card in the surface reads no larger than her line above it
       const sizes = await page.evaluate(() => {
         const px = q => {

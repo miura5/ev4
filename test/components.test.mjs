@@ -1,4 +1,4 @@
-// B-285 (D-278, D-285, C-1, C-15): the component set's checks (test/harness/components.cjs), held to planted buttons
+// B-285 (D-285, C-1, C-15): the component set's checks (test/harness/components.cjs), held to planted buttons
 // and colours without a browser, and the stylesheet holding the parts and measures the harness renders.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -8,34 +8,8 @@ import { createRequire } from 'node:module';
 import { ROOT } from './helpers.mjs';
 
 const require = createRequire(import.meta.url);
-const { judgeKinds, judgeYellow, lchOf } = require('./harness/components.cjs');
+const { judgeYellow, lchOf } = require('./harness/components.cjs');
 const theme = require('./harness/contrast.cjs').load(); // page/theme.js as the shell runs it
-const b = (label, cls, extra = {}) => ({ label, cls: cls.split(' '), submit: false, inSeg: false, ...extra });
-
-test('B-285: D-278 passes the five kinds with one primary and the send, and names what falls outside', () => {
-  const good = [
-    b('Start session', 'btn primary'),
-    b('Course', 'btn neutral'),
-    b('Open', 'btn ghost sm'),
-    b('Done', 'btn icon'),
-    b('Done, outlined', 'btn neutral icon'),
-    b('Accept', 'btn tint x-green'),
-    b('Send', 'btn primary icon send', { submit: true }),
-    b('Week', '', { inSeg: true }),
-  ];
-  assert.equal(judgeKinds(good).ok, true, judgeKinds(good).detail);
-  const two = judgeKinds([...good, b('Accept all', 'btn primary sm')]);
-  assert.equal(two.ok, false);
-  assert.deepEqual(two.primaries, ['Start session', 'Accept all']);
-  for (const [label, cls] of [
-    ['Old primary', 'primary'],
-    ['No kind', 'btn sm'],
-    ['Two fills', 'btn neutral ghost'],
-    ['Tint with no colour', 'btn tint'],
-    ['A fold line', 'fold-line'],
-  ])
-    assert.deepEqual(judgeKinds([b(label, cls)]).outside, [label], cls);
-});
 
 test('B-285: D-285 reads coded yellow back from its colour: the generator gives D-269 in both themes; off by a step fails', () => {
   for (const mode of ['light', 'dark']) {
@@ -50,7 +24,7 @@ test('B-285: D-285 reads coded yellow back from its colour: the generator gives 
 
 test('B-285: the stylesheet holds every part, rows at 32 and 44 px, and switches styled by their picked state', () => {
   const css = fs.readFileSync(path.join(ROOT, 'page', 'styles.css'), 'utf8');
-  const set = css.slice(css.indexOf('B-285 (D-274, D-278, D-269, C-1, C-15): the component set'));
+  const set = css.slice(css.search(/B-285 \(D-274, D-2\d\d, D-269, C-1, C-15\): the component set/));
   for (const part of [
     'button.btn.primary',
     'button.btn.neutral',

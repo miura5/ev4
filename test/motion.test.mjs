@@ -315,7 +315,7 @@ test('spec.ui.look.core (history since D-212): every core v2 parameter, the seve
     { ms: 25, share: 0.05, d: 8 },
     'the retired core v2 budget (history; D-272 holds her to her own)'
   );
-  // The retired core v2's palette (history, not the page's colours: D-270): teal and violet, coral for the error.
+  // The retired core v2's palette (history, not the page's colours): teal and violet, coral for the error.
   assert.deepEqual(P.palette.a, [36, 214, 186]);
   assert.deepEqual(P.palette.b, [150, 96, 255]);
 });
