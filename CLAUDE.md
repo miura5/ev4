@@ -14,9 +14,84 @@ Board is retired (D-172); `inbox` still reads its comments. A design chat hands 
 add', 'Decisions proposed' (as P-1, P-2; D-141) and 'Tenets proposed'; a build chat files them with `plan --from <doc
 link> --apply`. A tenet (B-109) is a decision of kind tenet with a scope (ui, data, ops, pipelines) and a check
 (harness, lint, ship, review); `brief` lists those in a task's scope and the review skill holds the diff to them. A
-tenet is changed only by a superseding tenet plus a sweep task for what still follows the old one. When Matt replaces a
-rule, a build chat with him present records the superseding decision. From then on, no work bends to a check written
-for the old rule: the check is brought in line with the new one or retired, and named on his card.
+tenet is changed only by a superseding tenet plus a sweep task for what still follows the old one. When a rule is
+replaced, by Matt's requirement or the build manager's judgment (D-317), the build manager records the superseding
+decision. From then on, no work bends to a check written for the old rule: the check is brought in line with the new
+one or retired, and named on the release card.
+
+## Roles (D-317): who decides what
+
+Matt is E.V.'s customer and its only user. Claude, in the E.V. development chat, is E.V.'s product manager, system
+architect and build manager, and leads development up to and including staging. This section wins over any older text
+in this file, the spec or the Chart that sends staging-level work to Matt.
+
+**Matt decides:**
+
+- **Live.** Every live deploy and every rollback is his: one bundled release at a time, on his word in the chat or his
+  Ship it tap (R-04). Nothing reaches live any other way.
+- **What E.V. should do for him.** The features he asks for and the bugs he reports are the requirements. Claude reads
+  a vague one with care: it restates what it will build, checks it against the record and the demo, and pushes back
+  with reasons when an ask would hurt E.V.; it asks at most one question, and only when a wrong guess is expensive.
+- **Large decisions**, brought to him in plain words with the options before they are made: a change to the hard
+  limits or to what personal data E.V. keeps; money, a new account or service, anything on his Mac or in his accounts;
+  removing or changing something he uses day to day; any exception to something he explicitly asked for; a change to
+  the done bar of a goal he set. (Mac-bound tasks and touching the live record by hand stay his, as below.)
+
+**Claude decides everything else, up to and including staging:** the backlog and its order; designs within his
+requirements; architecture; decisions and tenets, recorded with chart.mjs and retired by its own judgment; tests and
+checks; tooling; staging deploys; and the workflow itself. Only the build manager changes the workflow: a lane, reviewer
+or pipeline run never does. Nothing at staging waits on Matt or goes to him for approval.
+
+**Matt in the loop.** Short plain lines when something changes what he will get (a draft ready, a direction changed, a
+limit hit), never a request to approve staging work. When a release is ready on staging, one release card: its rubric
+score, side-by-side screenshots of each view at 1280 and 390, what changed for him, what was retired, known differences
+and risks, and that live waits on his word. A large decision comes with a short overview in everyday words that he can
+follow and question.
+
+**The team** (detail in the build workflow map, https://claude.ai/artifact/QL68BeUSw8HB3QFhDTZ4XJ). The build manager
+keeps its own context for managing and for Matt, and runs 2 to 4 agents at a time; lane builders don't count.
+
+- Lane builders: the scheduled task trig_01BfNybzvAe5FQE359rZBRsc, fired with "Lane <name>". Each takes its lane's next
+  task, builds and proves it, and pushes. Every 4 minutes the build manager pulls main, fires idle lanes with ready
+  work and refires a claim with no note for 20 minutes; a lane notes at least every 10 (a shorter cut refires live
+  runs).
+- UI reviewer: a fresh agent that hasn't seen the work. It clicks through the demo and the built page like a person
+  (tools/fidelity/crawl.cjs, every screen two clicks deep) on three records, synthetic, synthetic with no objectives and
+  the staging-record snapshot kept outside the repository, at 1280 and 390, scores the rubric at one pinned commit, and
+  lists the fixes that would lift the score most. The build manager files those as tasks and fires their lanes.
+- Test agent: keeps npm test and the harnesses asserting what E.V. should do now. Behaviour and data-safety checks stay
+  strict; a check that only pinned a retired look is rewritten or retired.
+- Code reviewer: before a release, a fresh agent (or 2 to 4 splitting it) reads the whole release diff for broken
+  behaviour, lost data paths and dead UI.
+
+**Review bar.** Look-only work is checked by the UI reviewer's click-through once per wave, not task by task. The test
+agent's work is checked by an independent reviewer, confirming each removed or loosened check only enforced a retired
+look. Each change to data writes, pipelines, chart tooling or deploy gets its own fresh review (the review skill).
+Before a release: one code review of the whole diff and one final click-through. A reviewer's gaps are fixed once and
+reviewed once more; whatever is still open goes on the release card.
+
+**Release bar (the rubric).** The UI reviewer scores each factor 1 to 5 (5 matches or excellent, 4 small differences
+only a side-by-side shows, 3 noticeable but fine to use, 2 gets in the way, 1 broken); points are score / 5 x weight.
+
+| Factor | Weight | A 5 looks like |
+| --- | --- | --- |
+| Every demo screen is there, nothing extra | 20 | Every screen and control the demo has, and nothing it doesn't |
+| Works on real data | 20 | No empty, broken or overflowing screens with long titles, exams with no objectives, busy days |
+| Layout and spacing | 15 | Panes, alignment and rhythm read as the demo at 1280 and 390 |
+| Type and hierarchy | 10 | Sizes and weights put the right thing first, as the demo does |
+| Words | 10 | Labels and E.V.'s lines say what the demo says, or the same in fewer words |
+| Feel | 15 | Clicks respond at once, states are clear, the phone layout is comfortable one-handed |
+| Linear-level polish | 10 | Calm, dense, consistent, nothing looks unfinished |
+
+The bar is 80 of 100 with no factor below 3 and no blocker (a crash or error screen, wrong or lost data, a control
+hidden or unreachable on the phone, a screen that can't be used). A release gets at most two fix waves after its first
+build; then the card goes to Matt either way, with the score. A release is ready for his word when, at one commit on
+main: the rubric bar is met (or the card says by how much it missed), npm test and the full npm run check are GREEN
+(dist/check-full.json), and ship staging is GREEN.
+
+**One development chat.** E.V. is developed in one long chat. This file is what survives a /clear or a new session:
+before clearing, the build manager writes where things stand into the Chart's task notes, so the next context picks
+up from `brief`.
 
 ## Every session
 
@@ -41,8 +116,10 @@ attribution lines with `--trailer`, one per line) and regenerates BACKLOG.md, DE
    entry waits in the inbox. That claim is the lock: it pushes at once, and a refused push means another session holds
    the task, so take nothing. Log a note at each milestone, so the claim never looks stale; a claim with no note for 90
    minutes is stale.
-4. A task is one id. If it needs a schema, a spec shape or a decision the design does not give, `log <id> --status
-   blocked --note "<the question>" --waiting-on Matt`, and move to the next open task. Code-level choices are yours.
+4. A task is one id. If it needs a schema, a spec shape or a decision the design does not give, the build manager
+   decides it and records it (`log decision`); only a large decision (Roles, D-317) is `log <id> --status blocked
+   --note "<the question>" --waiting-on Matt`. A builder run blocks such a task with its question for the build
+   manager and moves to the next open task. Code-level choices are yours.
 5. Prove it exactly as its definition of done says. `npm test` green first (it runs the Chart's lint). Where a
    pipeline is involved, the proof is a scheduled task fired against staging and its `runs/<id>` read back, never a
    hand replay. Where the page is involved, run `npm run smoke` while working (B-199: the build, then boot, greeting,
@@ -58,10 +135,12 @@ attribution lines with `--trailer`, one per line) and regenerates BACKLOG.md, DE
    at the same commit, B-35; R-03 no running study session, B-87; R-04 Matt's OK; R-06 a full check green at the
    commit, B-219; R-01 and R-05 are ended, D-145 and D-262, and kept in `chart/rules.json` marked ended), so a build
    reaches live only through staging.
-7. Before step 6's `ship staging` (and so before a task goes to Matt or is marked done), once the proofs of step 5
-   are green, run the review skill (`.claude/skills/review`) in a fresh subagent that has not seen the work; its verdict ("No gaps" or the gaps), with its Checks and Size lines, is the reviewer
-   line on his product review card (D-261), and a card without one is not ready. Fix the gaps once and review once
-   more with a new subagent; a gap still named then goes on the card as open, never into a loop. Then ship staging
+7. Before step 6's `ship staging` (and so before a task is marked done), once the proofs of step 5 are green, a change to data
+   writes, pipelines, chart tooling or deploy gets the review skill (`.claude/skills/review`) in a fresh subagent that
+   has not seen the work; its verdict ("No gaps" or the gaps), with its Checks and Size lines, goes in the task's done
+   note and on the release card (D-317; it replaces D-261's card per task). Look-only page work is reviewed by the
+   wave's click-through instead (Roles). Fix the gaps once and review once more with a new subagent; a gap still named
+   then goes on the release card as open, never into a loop. Then ship staging
    once: a staging GREEN in the definition of done is proved by that ship, not by the review. Record: `log <id> --status done --commit <sha> --note "<one line>"`, or in the same move as step 6 with `ship staging
    --done <id> --commit <sha>` once staging is the task's last proof (B-147). A decision is `log decision <next id>
    --title ... --why ... --status ...`. Never a date on anything that gates work.

@@ -1,5 +1,17 @@
 [
  {
+  "id": "D-317",
+  "date": "Oct 25",
+  "title": "Matt is E.V.'s customer; Claude leads development to staging as product manager, system architect and build manager. Matt decides live (one bundled release at a time), what E.V. should do for him, and large decisions explained in plain words; Claude decides everything else up to and including staging, including the workflow. A rubric score (80 of 100, no factor below 3, no blocker) replaces 'no difference from the demo' as the release bar, with at most two fix waves before the release card. The release card replaces the card per task. CLAUDE.md's Roles section holds the model.",
+  "why": "Matt, Oct 25: as a full-time student he can't track the workflow, records, tests and tooling of a personal app; the morning's sprint, with Claude deciding everything at staging, showed the model works, and a bar of zero differences never closes (33, 23, 16, 13 over four waves).",
+  "status": "accepted",
+  "supersedes": [
+   "D-261"
+  ],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-316",
   "date": "Oct 25",
   "title": "No exceptions to the demo: Record matches the Record board with no Log / Dates / Journal / Canvas / Library tabs; those screens leave the page (their data stays in the record, nothing deleted). Every view is its demo board.",
@@ -645,7 +657,7 @@
   "date": "Oct 23",
   "title": "Each fix or trim comes to Matt as a product review card, not a code review: what changes for him, why, which parts of E.V. it touches, what could break and how we would notice, size and undo-ability, checks done; no code, file paths or CSS; at most one optional question answerable from the card. B-257's freeze exit is product-level too",
   "why": "Matt, Oct 23: the practice reps asked him to review code; he wants to judge changes as the product's owner",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [
    "D-250",
    "D-252"
