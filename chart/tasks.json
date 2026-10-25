@@ -6950,5 +6950,22 @@
    "outcome": "task",
    "at": "2026-10-25T18:00:29.684Z"
   }
+ },
+ {
+  "id": "B-388",
+  "kind": "bug",
+  "title": "Bug (reported Oct 25): Snoozing graded work due today removes it from Today and puts it nowhere; a score can be read from an exam number or '/100'; the same topic adds a new idea each session; the PWA's npm deploy script targets the non-staging Worker.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "release code review (data, tools), 368b104..fc9133e, Oct 25",
+  "words": "Snoozing graded work due today removes it from Today and puts it nowhere; a score can be read from an exam number or '/100'; the same topic adds a new idea each session; the PWA's npm deploy script targets the non-staging Worker.",
+  "reportedAt": "2026-10-25T18:06:58.018Z",
+  "board": {
+   "row": "v4 B-388: Snoozing graded work due today removes it from Today and puts it…"
+  }
  }
 ]
