@@ -1312,3 +1312,42 @@ button.btn:disabled{opacity:.45;cursor:default}
   .rec-props .prop{min-height:44px}
   .rec-detail select.idea-kind{height:44px;min-height:44px}
 }
+/* B-339 (D-312): Record as the demo draws it. The toolbar spans the pane under a hairline, the rows run edge to edge
+   (32 px, C-1), the Filter button carries its icon, the pop-over's switches keep their own width, and the detail is
+   the right panel itself: badge, an 18 px title, the properties in a card, her line, and Quiz me for a quiz. */
+#record-sessions{margin:-18px -16px 0;gap:0}
+#record-sessions .rec-bar{padding:12px 18px;border-bottom:1px solid var(--line);gap:8px;flex-wrap:wrap}
+.rec-fbtn{gap:7px}
+.rec-fbtn .ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.rec-pop{width:260px;top:calc(100% + 8px);gap:10px}
+.rec-pop .seg{align-self:flex-start;width:auto}
+.rec-pop .seg button{flex:none}
+#record-sessions .cols > .col-main{gap:0}
+#record-sessions .rec-list{gap:0}
+.rec-day{padding:14px 18px 6px;color:var(--quiet);font:500 calc(12px * var(--ts)) var(--sans)}
+.rec-day:first-child{padding-top:14px}
+.rec-li{padding:0 18px}
+.rec-li .badge{min-width:74px}
+.rec-li.sel{background:var(--chrome)}
+.rec-li:hover{background:var(--chrome)}
+.rec-li .r{color:var(--faint)}
+.rec-detail{gap:14px}
+.rec-detail .rec-title{font:600 calc(18px * var(--ts))/1.3 var(--sans);margin:0}
+.rec-props{border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line);padding:6px 14px;box-sizing:border-box;gap:2px}
+.rec-props .prop{display:grid;grid-template-columns:92px 1fr;justify-content:stretch;gap:8px;min-height:34px;border-bottom:0}
+.rec-props .prop-v{text-align:left}
+.rec-detail .rec-desc{font-size:calc(13.5px * var(--ts));line-height:1.6;color:var(--quiet)}
+.rec-detail .rec-quiz{align-self:flex-start;max-width:100%}
+.rec-list .rec-detail{padding:14px 18px 18px;border-bottom:1px solid var(--line);background:var(--bg)}
+@media (min-width:1200px){
+  section.panel > .cols > .col-side .rec-detail{background:none;border:0;box-shadow:none;padding:0;border-radius:0}
+}
+@media (max-width:599px){
+  #record-sessions .rec-bar{padding:10px 12px}
+  #record-sessions .rec-bar > .seg{flex:none;width:auto}
+  .rec-li{padding:0 16px}
+  .rec-li .badge{min-width:0}
+  .rec-day{padding:14px 16px 6px}
+  .rec-list .rec-detail{padding:14px 16px 18px}
+  .rec-props .prop{min-height:34px}
+}

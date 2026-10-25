@@ -64,6 +64,7 @@
           result: right + ' of ' + last.size,
           courses,
           props: [['Set', SET_KIND[set.kind] || 'Practice']],
+          answers: [...last.values()],
           detail: '',
         });
       }
@@ -128,11 +129,15 @@
       const host = $('record-sessions'),
         bar = el('div', 'toolbar rec-bar'),
         fw = el('div', 'rec-fwrap'),
-        fb = el('button', 'btn neutral sm', 'Filter'),
+        fb = el('button', 'btn neutral sm rec-fbtn'),
         pop = el('div', 'rec-pop'),
         types = el('div', 'seg');
       fb.type = 'button';
       fb.id = 'rec-filter-btn';
+      // B-339: the demo's Filter button, its three-line icon and its label (with the count of filters on)
+      fb.innerHTML =
+        '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>';
+      fb.append(el('span', 'rec-flab', 'Filter'));
       fb.setAttribute('aria-expanded', 'false');
       fb.setAttribute('aria-controls', 'rec-filter');
       pop.id = 'rec-filter';
@@ -148,7 +153,7 @@
         main = el('div', 'col-main'),
         side = el('div', 'col-side'),
         list = el('div', 'card rec-list'),
-        det = el('div', 'card rec-detail');
+        det = el('div', 'rec-detail');
       list.id = 'rec-list';
       det.id = 'rec-detail';
       recDet = det;
@@ -252,6 +257,13 @@
           )
           ?.focus();
     }
+    function quizTopic(x) {
+      const n = new Map();
+      for (const a of x.answers || [])
+        if (a.objective) n.set(a.objective, (n.get(a.objective) || 0) + (a.correct ? 1 : 100));
+      const id = [...n].sort((a, b) => b[1] - a[1])[0]?.[0];
+      return id ? S.objectives.find(o => o.id === id) : null;
+    }
     function recDetail(x) {
       const d = recDet;
       if (!x) {
@@ -312,6 +324,27 @@
         acts.append(sel);
         parts.push(acts);
       } else if (x.detail) parts.push(el('p', 'rec-desc', x.detail));
+      // B-339: a quiz offers Quiz me on its topic: the objective it missed most, else the one it asked most; her line
+      // says what it missed
+      const o = x.kind === 'quiz' && quizTopic(x);
+      if (x.kind === 'quiz') {
+        const miss = (x.answers || []).filter(a => !a.correct).length;
+        parts.push(
+          el(
+            'p',
+            'rec-desc',
+            miss
+              ? 'Missed ' + miss + (o && o.text ? ', most on “' + o.text.replace(/\.$/, '') + '”.' : '.')
+              : 'Every answer right.'
+          )
+        );
+      }
+      if (o) {
+        const q = btn('Quiz me on it', ev => quizObjective(o, ev.currentTarget), { cls: 'btn neutral rec-quiz' });
+        q.setAttribute('aria-label', 'Quiz me on ' + (o.text || o.id));
+        q.title = o.text || o.id;
+        parts.push(q);
+      }
       d.replaceChildren(...parts);
       return d;
     }
@@ -320,7 +353,7 @@
       const all = recEntries(),
         shown = all.filter(recPass);
       const nF = (recF.course !== 'any') + (recF.when !== 'all') + !recF.workouts;
-      $('rec-filter-btn').textContent = nF ? 'Filter · ' + nF : 'Filter';
+      $('rec-filter-btn').querySelector('.rec-flab').textContent = nF ? 'Filter · ' + nF : 'Filter';
       const tf = $('rec-types');
       const tfFocus = tf.contains(document.activeElement) && document.activeElement.dataset.v;
       tf.replaceWith(
