@@ -6361,5 +6361,22 @@
    "outcome": "task",
    "at": "2026-10-25T13:18:05.943Z"
   }
+ },
+ {
+  "id": "B-360",
+  "kind": "request",
+  "title": "Request (reported Oct 25): On the phone E.V.'s suggestion chips wrap into four rows; Matt wants at most one row of chips at a time.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt, staging on his phone, Oct 25",
+  "words": "On the phone E.V.'s suggestion chips wrap into four rows; Matt wants at most one row of chips at a time.",
+  "reportedAt": "2026-10-25T13:38:10.760Z",
+  "board": {
+   "row": "v4 B-360: On the phone E.V.'s suggestion chips wrap into four rows; Matt wants…"
+  }
  }
 ]
