@@ -5930,12 +5930,12 @@
   "title": "Fidelity: E.V.'s view as in the demo. The daily check-in card shows under her until he answers it today; Start a study session is the panel's main button; five chips; Send in Ember.",
   "dod": "Matches the Conversation board at rest and in a session at 1280 and 390. Proof (D-312, fidelity sprint): node tools/build.mjs, then tools/fidelity's demo and built screenshots read side by side at 1280, 1706, 2560 and 390, plus npm run smoke; then ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-332"
   ],
-  "notes": "claimed by lane ev",
-  "commit": null,
+  "notes": "E.V.'s view now looks like the demo's Conversation board: her lines in one column with the newest at 17 px, the daily check-in card under her until you answer it (the advice shows in the card), five outlined chips centred under her, the field with an Ember send and the note: hint, and in the panel an Ember Start study session button, the session card as in the demo, and Coming up as a plain list. Still differs: at every size the paperclip (attach) stays in the field; the chips are the five she answers herself (no Quiz me on a topic or Plan the rest of today); at 390 a running session stays in the header line rather than a strip under it; when a reply opens a list it shows in the panel as before.",
+  "commit": "3a7300b",
   "source": "fidelity review, Oct 25 (D-312)"
  },
  {
