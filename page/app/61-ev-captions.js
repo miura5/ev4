@@ -279,6 +279,9 @@
           capPull.style.marginBottom = CAP.lift ? CAP.lift + 'px' : '';
           want -= r;
         }
+        // B-387: her pinned line moved down with the lines loaded above it, so the place that counts as now moves too;
+        // left where it was, his held place read as now and her stage came back mid-scroll.
+        if (CAP.anchorTop != null) CAP.anchorTop += want - top;
         const max = capBox.scrollHeight - capBox.clientHeight;
         // A thread shorter than the window has no scroll to hold him with: it gets the room under it (past now, with
         // 60 px to spare so the hold is not read as now), until Back to now.

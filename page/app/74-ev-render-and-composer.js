@@ -110,7 +110,9 @@
       const box = $('thread'),
         inn = box.firstElementChild,
         p = $('p-ev');
-      if (!inn || p.hidden) return;
+      // B-387: while he reads back (Back to now up) the room above her holds still: her fold and a pull's lift change
+      // the scroller's height and content, and re-measuring then moved her lines under him mid-scroll.
+      if (!inn || p.hidden || !capNow.hidden) return;
       const kids = [...inn.children].filter(c => !c.classList.contains('cap-pull') && c.getClientRects().length);
       const cur = parseFloat(p.style.getPropertyValue('--ev-drop')) || 0;
       const content = kids.length
