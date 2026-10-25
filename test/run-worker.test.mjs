@@ -44,7 +44,7 @@ async function fakeWorker() {
 /** Runs a printed api command as a run would (from the checkout), with the session's output collected. */
 function runApi(call, out) {
   assert.equal(call.tool, 'Bash');
-  assert.match(call.args.command, /^node core\/cli\.mjs api (list|batch|set) /);
+  assert.match(call.args.command, /^node core\/cli\.mjs api (pull|list|batch|set) /);
   try {
     const s = execFileSync(process.execPath, call.args.command.split(' ').slice(1), {
       cwd: ROOT,
@@ -77,6 +77,7 @@ const bash = (seq, command) => {
     }),
   ];
 };
+const apiCallOf = command => ({ tool: 'Bash', args: { command } });
 const filesUnder = d =>
   fs
     .readdirSync(d, { withFileTypes: true })
@@ -161,23 +162,25 @@ test('a staging run end to end through the run API: pinned writes, a refused bat
     );
     assert.equal(fw.get('/_dump')['runs/' + id].v, 1);
 
+    // Every read is one printed command (runs given one command per read looped them in the shell, Oct 25).
     const pulls = RUN.pull({ spec, dir, at: AT });
-    assert.ok(pulls.every(c => c.tool === 'Bash' && / api list --collection /.test(c.args.command)));
+    assert.equal(pulls.length, 1);
+    assert.match(pulls[0].args.command, /^node core\/cli\.mjs api pull --reads \S+ --worker \S+$/);
     const reads = spec.pipelines['evening-cloud'].reads;
-    assert.equal(pulls.length, reads.length);
-    reads.forEach((r, i) => assert.equal(/ --since \S+/.test(pulls[i].args.command), !!r.windowDays, r.collection));
+    const planned = JSON.parse(fs.readFileSync(pulls[0].args.command.split(' ')[5], 'utf8'));
+    assert.deepEqual(
+      planned.map(r => [r.collection, !!r.since]),
+      reads.map(r => [r.collection, !!r.windowDays])
+    );
     assert.throws(() => RUN.pulled({ spec, dir, transcript: '' }), /no pull result for/);
-    assert.ok(make(pulls).every(r => r.code === 0));
+    assert.deepEqual(
+      make(pulls).map(r => r.code),
+      [0]
+    );
     // A windowed read (ArtifactData's query on at) saves only the documents in the window, and keeps every version.
-    const win = {
-      ...pulls[0],
-      args: {
-        command: pulls[0].args.command.replace(
-          /--collection \S+ --out-dir \S+ --versions \S+/,
-          `--collection exams --out-dir ${dir}/win --versions ${dir}/win.json --since 2999-01-01`
-        ),
-      },
-    };
+    const win = apiCallOf(
+      `node core/cli.mjs api list --collection exams --out-dir ${dir}/win --versions ${dir}/win.json --since 2999-01-01 --worker ${worker}`
+    );
     assert.match(runApi(win, out).out, /api list exams: 0 saved to .*, versions for [1-9]/);
     const pulled = RUN.pulled({ spec, dir, transcript: '' });
     assert.equal(pulled.done, true);
@@ -185,24 +188,36 @@ test('a staging run end to end through the run API: pinned writes, a refused bat
 
     const plan = RUN.compute({ spec, dir, validate, at: AT });
     assert.equal(plan.status, 'planned', JSON.stringify(plan.problems));
-    // Someone (the page) saves a document the plan pinned: its batch is refused whole, then re-pulled and re-pinned.
+    // Someone (the page) saves a document the plan pinned: its batch is refused whole, then re-pulled and re-pinned,
+    // and the one re-planned command carries it and every batch after it.
     const pinned = plan.plan.batches[0].find(w => w.if_version != null);
     assert.ok(pinned, 'evening-cloud updates a document it read');
     fw.get(`/_bump?c=${pinned.collection}&id=${pinned.doc_id}`);
     const applied = RUN.apply({ dir });
-    const first = make(applied.slice(0, 1))[0];
+    const batchCalls = applied.filter(c => c.tool === 'Bash');
+    assert.equal(batchCalls.length, 1, 'all batches in one command');
+    assert.match(batchCalls[0].args.command, / api batch --files \S+ --first 1 /);
+    const first = make(batchCalls)[0];
     assert.equal(first.code, 1);
-    assert.match(first.out, /REFUSED \(409\).*nothing was written/);
+    assert.match(first.out, /api batch 1: REFUSED \(409\).*nothing in batch 1 was written.*apply --failed 1/);
     const repull = RUN.applyFailed({ dir, batch: 1 });
-    assert.ok(repull.every(c => / api list /.test(c.args.command)));
-    make(repull);
+    assert.equal(repull.length, 1);
+    assert.match(repull[0].args.command, / api pull --reads /);
+    assert.deepEqual(
+      make(repull).map(r => r.code),
+      [0]
+    );
     const re = RUN.replan({ spec, dir, batch: 1, transcript: '' });
-    assert.equal(re.done, true);
+    assert.deepEqual([re.done, re.rest, re.calls.length], [true, true, 1]);
+    assert.match(re.calls[0].args.command, / api batch --files \S+ --first 1 /);
+    assert.equal(
+      re.calls[0].args.command.split('--files ')[1].split(' ')[0].split(',').length,
+      plan.plan.batches.length
+    );
     assert.deepEqual(
       make(re.calls).map(r => r.code),
       [0]
     );
-    make(applied.slice(1).filter(c => c.tool === 'Bash'));
 
     const end = RUN.end({ dir, at: AT, transcript: null });
     assert.deepEqual(

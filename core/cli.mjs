@@ -437,7 +437,7 @@ const commands = {
       case 'replan': {
         const r = RUN.replan({ spec, dir, batch: Number(o.batch), transcript: transcript() });
         return r.done
-          ? show(r.calls, `continue with the batches after it, then ${cli} end${d}`)
+          ? show(r.calls, r.rest ? `${cli} end${d}` : `continue with the batches after it, then ${cli} end${d}`)
           : show(r.calls, `${cli} replan --batch ${o.batch}${d}`);
       }
       case 'end': {
@@ -492,6 +492,43 @@ const commands = {
       console.log(`api list ${o.collection}: ${r.saved} saved to ${o['out-dir']}, versions for ${r.versions}`);
       return 0;
     }
+    if (what === 'pull') {
+      // Every read of a pull or repull, in order; stops at the first refusal.
+      const reads = readJson(path.resolve(o.reads || ''));
+      for (const r of reads) {
+        const x = API.list(worker, {
+          collection: r.collection,
+          outDir: r.out_dir,
+          versions: r.versions,
+          since: r.since,
+        });
+        if (!x.ok) {
+          console.log(`api pull ${r.collection}: REFUSED (${x.status}): ${JSON.stringify(x.error)}`);
+          return 1;
+        }
+        console.log(`api pull ${r.collection}: ${x.saved} saved, versions for ${x.versions}`);
+      }
+      return 0;
+    }
+    if (what === 'batch' && o.files) {
+      // Batches in order; the first refused one stops it and is named by its batch number (--first + its place).
+      const files = String(o.files).split(',');
+      const first = Number(o.first || 1);
+      for (let i = 0; i < files.length; i++) {
+        const r = API.batch(worker, readJson(path.resolve(files[i])));
+        if (!r.ok) {
+          const n = first + i;
+          console.log(
+            `api batch ${n}: REFUSED (${r.status}): ${JSON.stringify(r.error)}${r.entry != null ? ` (entry ${r.entry + 1})` : ''} · nothing in batch ${n} was written${i ? `; batches ${first} to ${n - 1} were` : ''}.${r.status === 409 ? ` A document changed: run the apply --failed ${n} command.` : ''}`
+          );
+          return 1;
+        }
+        console.log(
+          `api batch ${first + i}: ${r.results.map(x => `${x.collection}/${x.doc_id} version ${x.version}`).join(', ')}`
+        );
+      }
+      return 0;
+    }
     if (what === 'batch' || what === 'set') {
       const writes =
         what === 'batch'
@@ -511,7 +548,7 @@ const commands = {
       console.log(`api ${what}: ${r.results.map(x => `${x.collection}/${x.doc_id} version ${x.version}`).join(', ')}`);
       return 0;
     }
-    throw new Error('api <list|batch|set> ... --worker <file>');
+    throw new Error('api <pull|list|batch|set> ... --worker <file>');
   },
   'canvas-script'(o) {
     // One read-only Canvas script for the run in --dir, its parameters filled in from the spec and the run's pull

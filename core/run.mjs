@@ -69,16 +69,26 @@ export function runTarget(spec, record, pipeline) {
 }
 const API = 'node core/cli.mjs api';
 const apiCall = command => ({ tool: 'Bash', args: { command } });
-/** A run API batch: its writes saved to <dir>/api/<name>.json (file_path entries, read when sent), and the command. */
-function apiBatch(run, name, writes) {
+/** A run API batch file: its writes saved to <dir>/api/<name>.json (file_path entries, read when sent). */
+function apiBatchFile(run, name, writes) {
   const f = path.join(run.dir, 'api', name + '.json');
   writeJson(f, writes);
-  return apiCall(`${API} batch --file ${f} --worker ${run.worker}`);
+  return f;
 }
-const apiList = (run, collection, out, versions, since) =>
-  apiCall(
-    `${API} list --collection ${collection} --out-dir ${out} --versions ${versions}${since ? ' --since ' + since : ''} --worker ${run.worker}`
-  );
+const apiBatch = (run, name, writes) =>
+  apiCall(`${API} batch --file ${apiBatchFile(run, name, writes)} --worker ${run.worker}`);
+/**
+ * Batches in order, as ONE command (Oct 25: runs given a command per batch or per read looped them in the shell, so the
+ * audit could not match what they ran): it stops at the first refused batch and names its number (first + its place).
+ */
+const apiBatches = (run, files, first) =>
+  apiCall(`${API} batch --files ${files.join(',')} --first ${first} --worker ${run.worker}`);
+/** Every read of a pull as ONE command: the reads saved to <dir>/api/<name>.json ({collection, out_dir, versions, since}). */
+function apiPull(run, name, reads) {
+  const f = path.join(run.dir, 'api', name + '.json');
+  writeJson(f, reads);
+  return apiCall(`${API} pull --reads ${f} --worker ${run.worker}`);
+}
 /** The versions a run API list saved, per collection: {collection: {id: version}}, or the collections not yet read. */
 function apiVersions(dir, collections) {
   const out = {};
@@ -227,18 +237,19 @@ export function pull({ spec, dir, at }) {
     const query = { limit: 1000 };
     if (r.windowDays) query.where = [['at', '>=', new Date(EV.toMs(at) - r.windowDays * 864e5).toISOString()]];
     if (run.target === 'worker')
-      return apiList(
-        run,
-        r.collection,
-        out,
-        path.join(dir, 'api', 'versions', r.collection + '.json'),
-        query.where && query.where[0][2]
-      );
+      return {
+        collection: r.collection,
+        out_dir: out,
+        versions: path.join(dir, 'api', 'versions', r.collection + '.json'),
+        since: query.where ? query.where[0][2] : null,
+      };
     return {
       tool: 'ArtifactData',
       args: { action: query.where ? 'query' : 'list', url: run.url, collection: r.collection, query, out_dir: out },
     };
   });
+  // B-315: a Worker run's reads are one command.
+  if (run.target === 'worker') calls.splice(0, calls.length, ...(calls.length ? [apiPull(run, 'pull', calls)] : []));
   // B-61 (D-112): a pipeline that compares the scheduler with the record reads it with its pull, read-only.
   if (def.schedulerRead) calls.push({ tool: SCHEDULER_TOOL, args: { limit: 100, enabled: true } });
   return printed(dir, run, 'pull', calls);
@@ -691,10 +702,13 @@ export function apply({ dir }) {
   const run = loadRun(dir);
   const plan = checkedPlan(dir);
   // Writes first, so a re-fire's record exists before the task starts; the Mac's files after the record's.
+  const files = run.target === 'worker' ? plan.batches.map((b, i) => apiBatchFile(run, `apply-${i + 1}`, b)) : [];
   return printed(dir, run, 'apply', [
-    ...plan.batches.map((b, i) =>
-      run.target === 'worker' ? apiBatch(run, `apply-${i + 1}`, b) : batchCall(run.url, b)
-    ),
+    ...(run.target === 'worker'
+      ? files.length
+        ? [apiBatches(run, files, 1)]
+        : []
+      : plan.batches.map(b => batchCall(run.url, b))),
     ...(plan.device || []),
     ...(plan.fires || []).map(f => ({ tool: 'mcp__claude-code-remote__fire_trigger', args: f })),
   ]);
@@ -710,12 +724,13 @@ export function applyFailed({ dir, batch }) {
   if (run.target === 'worker') {
     const vdir = path.join(dir, 'api', `repull-${batch}`);
     fs.rmSync(vdir, { recursive: true, force: true });
-    return printed(
-      dir,
-      run,
-      'repull',
-      cols.map(c => apiList(run, c, out, path.join(vdir, c + '.json')))
-    );
+    return printed(dir, run, 'repull', [
+      apiPull(
+        run,
+        `repull-${batch}`,
+        cols.map(c => ({ collection: c, out_dir: out, versions: path.join(vdir, c + '.json'), since: null }))
+      ),
+    ]);
   }
   return printed(
     dir,
@@ -782,14 +797,15 @@ export function replan({ spec, dir, batch, transcript }) {
   plan.hash = planHash(plan);
   plan.replans.push({ batch, dropped, from });
   writeJson(path.join(dir, 'plan.json'), plan);
-  return {
-    done: true,
-    calls: printed(dir, run, 'apply', [
-      run.target === 'worker'
-        ? apiBatch(run, `apply-${batch}-replan-${plan.replans.length}`, next)
-        : batchCall(run.url, next),
-    ]),
-  };
+  // A Worker run's one command carries the re-pinned batch and every batch after it, in order (rest: true).
+  if (run.target === 'worker') {
+    const files = [
+      apiBatchFile(run, `apply-${batch}-replan-${plan.replans.length}`, next),
+      ...plan.batches.slice(batch).map((b, i) => path.join(dir, 'api', `apply-${batch + i + 1}.json`)),
+    ];
+    return { done: true, rest: true, calls: printed(dir, run, 'apply', [apiBatches(run, files, batch)]) };
+  }
+  return { done: true, calls: printed(dir, run, 'apply', [batchCall(run.url, next)]) };
 }
 
 // ------------------------------------------------------------------------------------------------ 6 end
