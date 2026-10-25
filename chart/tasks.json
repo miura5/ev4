@@ -6804,5 +6804,22 @@
    "outcome": "task",
    "at": "2026-10-25T15:48:17.739Z"
   }
+ },
+ {
+  "id": "B-381",
+  "kind": "bug",
+  "title": "Bug (reported Oct 25): The sprint's code review found a note can overwrite another with the same title the same day, the phone can't open the file picker, snoozed graded work loses its Graded tag, nothing writes an exam score, the quiz results claim a triage that does not exist, failures have nowhere to show, and some cards open hidden places.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "code review of the fidelity sprint, Oct 25",
+  "words": "The sprint's code review found a note can overwrite another with the same title the same day, the phone can't open the file picker, snoozed graded work loses its Graded tag, nothing writes an exam score, the quiz results claim a triage that does not exist, failures have nowhere to show, and some cards open hidden places.",
+  "reportedAt": "2026-10-25T16:18:46.083Z",
+  "board": {
+   "row": "v4 B-381: The sprint's code review found a note can overwrite another with the…"
+  }
  }
 ]
