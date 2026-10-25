@@ -6699,5 +6699,22 @@
    "outcome": "task",
    "at": "2026-10-25T15:48:13.646Z"
   }
+ },
+ {
+  "id": "B-376",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Review 3: the quiz results never propose misses as weak spots with Accept all and Review.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UI reviewer click-through 3 at d6bee63, Oct 25 (D-316)",
+  "words": "Review 3: the quiz results never propose misses as weak spots with Accept all and Review.",
+  "reportedAt": "2026-10-25T15:48:14.048Z",
+  "board": {
+   "row": "v4 B-376: Review 3: the quiz results never propose misses as weak spots with…"
+  }
  }
 ]
