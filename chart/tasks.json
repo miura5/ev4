@@ -6213,12 +6213,12 @@
   "title": "Fidelity fix: E.V. (D-314): no paperclip in the field; the chips are the demo's set (Start a study session, What's due this week?, Quiz me on <her weakest topic>, How did this week go?, Plan the rest of today); her greeting's things to know as her own lines as in the Main board, no fold with a red dot; at 390 a running session is a strip under the header with Break and End as the ConversationPhone board",
   "dod": "The Main and ConversationPhone boards match at every size, at rest and in a session. Proof (D-312, fidelity sprint): node tools/build.mjs; tools/fidelity screenshots (crawl.cjs demo and built click every control) beside the boards at 1280, 1706, 2560 and 390; npm run smoke; ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-345"
   ],
-  "notes": "built and pushed ad690ef; shipping staging",
-  "commit": null,
+  "notes": "E.V. now matches the demo's Conversation board more closely. The paperclip is gone from the message field; to add a file, drop it on the conversation or type attach a file. The chips are the demo's five: Start a study session, What's due this week?, Quiz me on your weakest topic (it opens that topic's questions), How did this week go? (the week's chart) and Plan the rest of today (a suggestion on Today; nothing changes until you accept). Her things to know are now her own quiet lines under the greeting, each with its button, with no fold and no red dot. On the phone, a running session is a strip under the header with the topic, the minutes, Break and End, on every view; between 600 and 1199 px it shows the same way on her view. Decided the way the demo shows: Your turn, File it or a skills run to resume, when one waits, comes before the five chips. Still differs from the demo: at every size a line with an action keeps a small button the demo doesn't draw; the chips during a session are unchanged (Quiz me now); at 390 a long topic is cut short in the strip and the strip stops short of the Preferences button (that button leaves with the frame lane's B-352). Same at 1280, 1706 and 2560 otherwise. Reviewer: none (fidelity sprint, D-312).",
+  "commit": "ad690ef",
   "source": "fidelity review, Oct 25 (D-314)",
   "words": "Fidelity fix: E.V.'s view differs from the demo: paperclip, chips, the things-to-know fold and the phone session strip.",
   "reportedAt": "2026-10-25T12:48:17.943Z",
