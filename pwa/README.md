@@ -56,6 +56,14 @@ printf 'EV_TOKEN=demo-token\nANTHROPIC_API_KEY=<your key>\n' > .dev.vars
 npm run dev                             # http://localhost:8787, token demo-token
 ```
 
+## The smoke (B-313)
+
+`npm ci --prefix pwa`, then `npm run smoke:pwa` from the repository root: the app's page boots through the shim against
+`wrangler dev` on a fresh local D1 holding the synthetic record, with a stub answering `/api/claude`. It checks boot,
+each tab, a check-off that survives a reload, a chat reply, and that a planted patient identifier is held by the page
+with no call to `/api/claude`. The study session step is reported as pending until B-314. The smoke workflow runs it on
+every push, and once more with `--plant page-error` to prove it turns red.
+
 ## The demo's Worker
 
 The demo's `ev-demo` Worker and D1 stay as they are, unused once the staging pair (B-311) exists; nothing is deleted.

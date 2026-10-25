@@ -2,6 +2,8 @@
 # synthetic record at 390 and 1280 (boot with no page error, the greeting, each tab, a check-off that keeps the scroll,
 # a review answer that scores, a Your-turn reply that files). Then each plant must turn it red, so a smoke tier that
 # stopped catching anything fails here. The full `npm run check` stays nightly (nightly.yml) and before live.
+# B-313: the app's smoke beside it (smoke-pwa): the app's page through the shim against `wrangler dev` on a local D1
+# seeded with the synthetic record, the Claude API stubbed. Local only: no secret, no Cloudflare account.
 # B-262: not for a push that changes only the record's bookkeeping (tools/build.mjs BOOKKEEPING) or docs/: the build
 # reads neither, so the page it smokes is the same.
 name: smoke
@@ -69,5 +71,37 @@ jobs:
         with:
           name: smoke-shots-${{ github.run_id }}
           path: shots/
+          retention-days: 7
+          if-no-files-found: ignore
+  smoke-pwa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            pwa/package-lock.json
+      - run: npm ci
+      - run: npm ci --prefix pwa
+      - run: npx playwright install --with-deps chromium
+      - run: npm run smoke:pwa -- shots-pwa
+      - name: a planted page error turns it red
+        run: |
+          if out=$(node pwa/smoke.mjs shots-pwa-planted --plant page-error 2>&1); then
+            echo "$out"; echo "smoke:pwa stayed green with a planted page error"; exit 1
+          fi
+          echo "$out" | tail -3
+          echo "$out" | grep -q '^FAIL \[390\] no page errors · planted page error'
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: smoke-pwa-shots-${{ github.run_id }}
+          path: shots-pwa/
           retention-days: 7
           if-no-files-found: ignore
