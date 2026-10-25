@@ -131,10 +131,10 @@ test('B-389: the record is held to the seed by document; what the seed lacks mus
   const ok = recordDiffs({ docs: [...docs, ...extra] }, seed);
   assert.deepEqual(ok.problems, []);
   assert.equal(ok.seedDocs, 3);
-  assert.deepEqual(ok.added, { suite: SUITE_DOCS_PER_RUN, app: 1, page: { dayedits: 1 } });
+  assert.deepEqual(ok.added, { suite: SUITE_DOCS_PER_RUN, app: 1, page: { dayedits: 1 }, runs: {} });
 
   // A seed document gone is red, even when another document makes the count up.
-  const swapped = recordDiffs({ docs: [docs[0], { c: 'a', id: '3', data: { writer: 'page' } }, docs[2]] }, seed);
+  const swapped = recordDiffs({ docs: [docs[0], { c: 'a', id: '3', data: { source: APP_SOURCE } }, docs[2]] }, seed);
   assert.deepEqual(swapped.problems, ["a: 1 of the seed's 2 documents missing (2)"]);
   // A document from no known writer is red, in a seed collection or a new one.
   assert.deepEqual(
@@ -148,6 +148,32 @@ test('B-389: the record is held to the seed by document; what the seed lacks mus
   assert.deepEqual(recordDiffs({ docs: [...docs, { c: SUITE, id: 'p', data: { writer: 'page' } }] }, seed).problems, [
     `${SUITE}: 1 documents not in the seed and from no known writer (p)`,
   ]);
+});
+
+test('B-389: a scheduled run on staging is a known writer only where the spec lets it write and traced to its run', () => {
+  const seed = { a: { 1: {} } };
+  const base = [{ c: 'a', id: '1', data: {} }];
+  const run = (w, id) => ({ c: 'runs', id, data: { writer: w, source: w + ' run' } });
+  const by = (c, id, w, runId) => ({ c, id, data: { writer: w, source: `${w} ${runId}` } });
+  const traced = [
+    run('morning', 'morning-1'),
+    by('days', '2026-10-25', 'morning', 'morning-1'),
+    run('worker', 'worker-2'),
+    by('jobresults', 'job-x', 'worker', 'worker-2'),
+  ];
+  const ok = recordDiffs({ docs: [...base, ...traced] }, seed);
+  assert.deepEqual(ok.problems, []);
+  assert.deepEqual(ok.added.runs, { morning: 2, worker: 2 });
+  const red = docs => recordDiffs({ docs: [...base, ...docs] }, seed).problems;
+  // its source names a run the record does not hold, or a run of another pipeline
+  assert.equal(red([by('days', 'd', 'morning', 'morning-9')]).length, 1);
+  assert.equal(red([run('worker', 'worker-2'), by('days', 'd', 'morning', 'worker-2')]).length, 1);
+  // a writer the spec does not allow in that collection: weekly in days, the page in days
+  assert.equal(red([run('weekly', 'weekly-3'), by('days', 'd', 'weekly', 'weekly-3')]).length, 1);
+  assert.equal(red([{ c: 'days', id: 'd', data: { writer: 'page' } }]).length, 1);
+  // a run document whose id is not its pipeline's, or a pipeline that does not run against staging
+  assert.equal(red([run('morning', 'worker-4')]).length, 1);
+  assert.equal(red([run('evening-mac', 'evening-mac-5')]).length, 1);
 });
 
 test('B-311: the pwa-staging workflow is started by hand, names staging only and never echoes a secret', () => {
