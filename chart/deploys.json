@@ -4070,5 +4070,22 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "117bbe9",
+  "time": "2026-10-25T11:11:42.343Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "baecb10",
+  "tasks": [
+   "B-312",
+   "B-303"
+  ],
+  "summary": "The Worker's run API; Sweep",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
