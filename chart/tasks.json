@@ -5523,12 +5523,12 @@
   "title": "The Worker's run API: list a collection, get one document, and an all-or-nothing batch with versions, where if_version means what it means in ArtifactData. The Worker never hard-deletes: a delete is refused.",
   "dod": "A node test suite run against wrangler dev with a local D1: a batch with one stale if_version writes nothing and names the conflict; a batch of 25 writes lands whole; a delete is refused; list and get return what ArtifactData returns for the same documents. The same suite is green against the staging Worker.",
   "milestone": "app (data, pipelines, ops)",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-311"
   ],
-  "notes": "built; local suite 7/7 against wrangler dev, staging suite green in pwa-staging run 40184790655 (version column added to the staging D1)",
-  "commit": null,
+  "notes": "Card (D-261). What changes when he studies: nothing yet. The app's server now has the door E.V.'s scheduled runs will use to read and save his record (B-315 points them at it): read one item, read a whole list, and save up to 50 changes at once that land together or not at all. Each item carries a version number, so a run that read an old copy can't write over something he changed in the app meanwhile; the save is refused and says which item. Nothing can be deleted through it. Why: the runs move off the claude.ai record onto the app's own database, and they need the same safety the claude.ai record gives them today. Touches: the app's server and its test copy only; the claude.ai page, his real record and the live runs are untouched. What could break and how we'd notice: a save from the app now also counts up that item's version; the app's own smoke (20 checks) and the new suite run on every push, and the test copy runs the suite on each staging deploy. Size: about 700 lines, most of it tests; undo is reverting three commits (the version number added to the test copy's database stays, harmless). Checks: local suite 8/8 against a local copy of the server; the same suite green against the test copy in staging run 40185274347 at this commit; npm test 574 pass, 0 fail; app smoke all 20 pass; the touched page check was RED only in the sweep lane's new look checks (B-303 in progress), with no page file changed here. Reviewer, second pass: two gaps left open. (1) list and get are compared with the seeded documents and their shape, not with a saved ArtifactData reply. (2) the test copy's count check now also accepts the suite's own items, in whole runs of 25 and nothing else, because nothing can be deleted there; a widening for Matt to OK or undo. Checks line: the staging count check accepts the seed plus whole 25-document runs of the suite's collection (loosened, unrecorded: gap 2). Size line: +711 -33 lines, in line with the definition; staging page not applicable (app lane). Staging to look at: nothing on the claude.ai page; the app's test copy, pwa-staging run 40185274347.",
+  "commit": "2319964",
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
  {
