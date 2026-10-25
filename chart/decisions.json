@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-321",
+  "date": "Oct 25",
+  "title": "A record copied into a D1 (B-319) leaves out the per-target system documents (worker, manifest, spec, environments, yourturn, seed, config, code): the target's own deploy writes them; a Worker token is never stored in the database it protects. Ids are copied exactly, spaces and slashes included, through an encoded run API path.",
+  "why": "B-319's review found the staging copy carried the staging Worker's token into the scratch D1 and that course ids with spaces would stop the live copy.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-320",
   "date": "Oct 25",
   "title": "The cloud runs read the staging Worker's token from the staging record's system documents (owner-only, test data only), never from a prompt, the repository or a log; scheduled tasks get no environment variables (checked Oct 25). The live Worker's token follows the same rule at cutover, in the live record.",
