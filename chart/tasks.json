@@ -6028,12 +6028,12 @@
   "title": "Fidelity fix: E.V.: the view's header reads Conversation as the demo board does, the chips sit in the demo's rows, and at 390 the column runs to the demo's 16 px gutters (the check-in card and the field are inset about twice that now)",
   "dod": "Matches the Conversation (Main) board at 1280, 1706 and 2560 and at 390. Proof (D-312, fidelity sprint): node tools/build.mjs, tools/fidelity screenshots side by side, npm run smoke, ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-340"
   ],
-  "notes": "claimed by lane ev",
-  "commit": null,
+  "notes": "E.V.'s quick-ask chips now sit in the demo's two rows (three, then two) on a computer, and on the phone the check-in card, her lines, the chips and the message field run to the same 16 px edges as the demo. Header already reads Conversation. Still differs: at every size the paperclip stays in the field and the chips are the five she answers herself; at 390 the chips wrap 2, 2, 1 as the demo does.",
+  "commit": "43055bc",
   "source": "fidelity review of B-340, Oct 25 (D-312)",
   "words": "Fidelity fix: the conversation view's header reads E.V. where the demo's Conversation board reads Conversation, and its chips wrap to a second row where the demo fits them in two rows of its own widths.",
   "reportedAt": "2026-10-25T12:06:28.411Z",
