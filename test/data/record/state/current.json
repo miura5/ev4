@@ -58,7 +58,7 @@
     }
    },
    "capacity": {
-    "docs": 31,
+    "docs": 30,
     "level": "ok",
     "budgets": [
      {
@@ -129,7 +129,6 @@
     "examedits": 1,
     "exams": 3,
     "health": 1,
-    "idchecks": 1,
     "ideas": 1,
     "jobresults": 1,
     "jobs": 1,

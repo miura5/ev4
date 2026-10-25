@@ -118,7 +118,7 @@ test('reader: status reports context.json and the latest note without its text',
   }
 });
 
-test('reader: latest_note returns text, then unchanged, and refuses graded or private folders', async () => {
+test('reader: latest_note returns text, then unchanged, and refuses private folders; D-324: a #graded note is read like any other', async () => {
   const f = makeFolder();
   const r = startReader(f);
   try {
@@ -132,8 +132,8 @@ test('reader: latest_note returns text, then unchanged, and refuses graded or pr
     assert.equal(same.note.text, undefined);
     writeLatest(f, { ...sample, text: 'Care plan #graded draft' });
     const g = (await r.call('latest_note')).structuredContent;
-    assert.equal(g.graded, true);
-    assert.equal(g.note.text, undefined);
+    assert.equal(g.graded, undefined);
+    assert.equal(g.note.text, 'Care plan #graded draft');
     for (const folder of ['2026/Journal/NUR 112', '2026/2026 Fall/personal', '2026/2026 Fall/E.V.', '2026/Fitness']) {
       writeLatest(f, { ...sample, folder });
       const x = (await r.call('latest_note')).structuredContent;
@@ -296,7 +296,7 @@ test('reader v2: read_session returns the findings E.V. files, never the cards, 
   }
 });
 
-test('reader v2: graded sessions come back empty; bad ids, traversal and symlinked files are refused', async () => {
+test('reader v2: D-324: #graded sessions come back with their findings; bad ids, traversal and symlinked files are refused', async () => {
   const f = makeFolder();
   writeSession(
     f,
@@ -311,9 +311,9 @@ test('reader v2: graded sessions come back empty; bad ids, traversal and symlink
   try {
     for (const id of ['2026-10-17-1000-Care-plan', '2026-10-17-1100-Flagged']) {
       const g = (await r.call('read_session', { id })).structuredContent;
-      assert.equal(g.graded, true, id);
-      assert.equal(g.summary, undefined, id);
-      assert.equal(g.weakSpots, undefined, id);
+      assert.equal(g.found, true, id);
+      assert.equal(g.graded, undefined, id);
+      assert.ok(g.summary, id);
     }
     assert.ok(
       !(await r.call('list_sessions')).structuredContent.sessions.some(s => s.id.includes('Linked')),
@@ -374,14 +374,13 @@ test('reader 0.3 (D-131, B-128): latest_note names the file, the title (course �
     assert.deepEqual([m.title, m.line], ['NUR 112 › Fluids', 2]);
     const u = JSON.parse((await r.call('latest_note', { sinceModifiedAt: '2026-10-18T00:00:00Z' })).content[0].text);
     assert.deepEqual([u.unchanged, u.note.title, u.note.text], [true, 'NUR 112 › Fluids', undefined]);
-    // A graded note: its title from its name only, no line, no text.
+    // D-324: a note tagged #graded is read like any other: its heading, line and text.
     writeLatest(f, { ...sample, name: 'Care plan', text: '# Secret heading #graded\nanswers' });
     const g = JSON.parse((await r.call('latest_note')).content[0].text);
     assert.deepEqual(
-      [g.graded, g.note.title, g.note.line, g.note.text],
-      [true, 'NUR 112 › Care plan', undefined, undefined]
+      [g.graded, g.note.title, g.note.text],
+      [undefined, 'NUR 112 › Secret heading #graded', '# Secret heading #graded\nanswers']
     );
-    assert.doesNotMatch(JSON.stringify(g), /Secret|answers/);
   } finally {
     r.stop();
   }

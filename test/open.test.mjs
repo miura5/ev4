@@ -37,7 +37,7 @@ const open = (o = {}) => ({
   ...o,
 });
 
-test('the check function: a valid open item passes; one key point, a long stem, a long point, no keyword groups, no model answer, no sourceRef, options or an identifier are refused', () => {
+test('the check function: a valid open item passes; one key point, a long stem, a long point, no keyword groups, no model answer, no sourceRef or options are refused; D-324: a room number passes', () => {
   assert.deepEqual(EV.validateItem(open()).errors, []);
   assert.equal(EV.itemType(open()), 'open');
   const one = EV.validateItem(open({ keyPoints: [open().keyPoints[0]] }));
@@ -52,9 +52,10 @@ test('the check function: a valid open item passes; one key point, a long stem, 
     'no model answer': { modelAnswer: '' },
     'no sourceRef': { sourceRef: '' },
     options: { options: ['a', 'b'], correct: [0] },
-    'an identifier': { modelAnswer: 'The client in room 412 has crackles from the extra fluid in the lungs.' },
   };
   for (const [why, o] of Object.entries(bad)) assert.equal(EV.validateItem(open(o)).ok, false, why);
+  const room = open({ modelAnswer: 'The client in room 412 has crackles from the extra fluid in the lungs.' });
+  assert.deepEqual(EV.validateItem(room).errors, []);
 });
 
 test('graded by a stubbed model reply: right (every point), partial (some), wrong (none); partial counts as a miss', () => {

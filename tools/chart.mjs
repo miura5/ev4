@@ -2015,7 +2015,7 @@ export function brief(rec, id, { root = HERE, scope: override, now = Date.now() 
       .filter(r => r.ended)
       .map(r => `  - ${r.id}: ended (${r.ended}); kept in chart/rules.json, not enforced`),
     "- A change to tools/prompts.mjs, spec.pipelines or spec.tasks changes scheduled-task prompts: deploy prints update_trigger for the cloud ones; a Mac-bound one changes only from a chat linked to the Mac with Matt present; a task prompt's hard limits stay absolute.",
-    '- The hard limits in CLAUDE.md: no help on graded work, no patient identifiers, Canvas read-only, nothing posted as Matt, nothing deleted.',
+    '- The hard limits in CLAUDE.md: Canvas read-only, nothing posted as Matt, nothing deleted (B-01 and B-04 ended, D-324).',
     ''
   );
   out.push('## The next 24 hours of live runs', ...runWindows(root), '');

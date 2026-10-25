@@ -725,7 +725,7 @@ test('day type comes from exams and dates', () => {
   );
 });
 
-test('lint finds possible identifiers, duplicates and orphans (answers in their own document)', () => {
+test('lint finds duplicates and orphans (answers in their own document); D-324: no identifier warning', () => {
   const issues = EV.lint({
     weakspots: [ws('a'), ws('b', { topic: 'a' })],
     sets: [
@@ -751,7 +751,7 @@ test('lint finds possible identifiers, duplicates and orphans (answers in their 
     exams: [E4],
   });
   const codes = issues.map(i => i.code);
-  assert.ok(codes.includes('possible-identifier'));
+  assert.ok(!codes.includes('possible-identifier'), 'D-324: nothing is flagged as an identifier');
   assert.ok(codes.includes('duplicate'));
   assert.ok(codes.includes('orphan-item'));
   assert.ok(issues.some(i => i.code === 'orphan-answer' && i.ref === 'answers/s'));
@@ -1260,21 +1260,9 @@ test('calendar edits: a new entry is a dates Fact; every change, removal and res
   );
 });
 
-test('identifier values in whole files: field names alone pass, values do not', () => {
-  assert.deepEqual(
-    EV.scanIdentifierValues(
-      'Label the syringe with the patient’s name, DOB, MRN. Check the medical record for the order. DOB Date Of Birth.'
-    ),
-    []
-  );
-  assert.deepEqual(EV.scanIdentifierValues('Lab is in Room 112 on Tuesdays.'), []);
-  assert.deepEqual(EV.scanIdentifierValues('MRN: 4482913'), ['has a medical record number']);
-  assert.deepEqual(EV.scanIdentifierValues('DOB 3/14/1952'), [
-    'has a date of birth',
-    'has what looks like a birth date',
-  ]);
-  assert.deepEqual(EV.scanIdentifierValues('The resident in room 12 was confused'), ["has a patient's room number"]);
-  assert.ok(EV.scanIdentifiers('Label with DOB and MRN').length > 0); // messages stay strict
+test('D-324: core keeps no identifier scan or graded-work refusal', () => {
+  for (const name of ['scanIdentifiers', 'scanIdentifierValues', 'identifierCandidates', 'keptVerdicts', 'gradedAsk'])
+    assert.equal(EV[name], undefined, name);
 });
 
 // ---------------------------------------------------------------- B-05 review follow-ups
@@ -1424,7 +1412,6 @@ test("B-160: what stays in E.V. core is the record's rules, under 2,500 lines; e
   assert.deepEqual(files.sort(), [
     'canvas-rules',
     'conversation',
-    'idcheck',
     'insights',
     'item-kinds',
     'library',

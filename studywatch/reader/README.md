@@ -10,7 +10,7 @@ E.V. Home, opened in the desktop app, read these in `~/Documents/E.V. Study Watc
 Tools (v2, 0.3.0): `status`, `latest_note` (with the note's `file`, `title` and `line`, D-131), `list_sessions` (ids, sizes, sha256, modified times; no contents) and
 `read_session` (one session's findings exactly as E.V.'s filing reads them: never the note text or the cards), all
 annotated read-only. It never writes or deletes, never returns
-other files or file names, refuses symlinks, skips notes tagged `#graded`, and re-checks B-06 (only NUR 112
+other files or file names, refuses symlinks, and re-checks B-06 (only NUR 112
 or BIO 201 folders; never Journal, personal or E.V.).
 
 The page reaches it as the host server `host:ev-study-watch-reader` (the `mcp` capability; owner only, inside

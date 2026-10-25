@@ -35,80 +35,11 @@
       // B-182 (D-196): what waits on him, grouped by where it happens; each ask with its chips.
       yourturn(box) {
         const groups = ((S.yourturn && S.yourturn.groups) || []).filter(g => (g.tasks || []).length);
-        // One ask per place a run held from (Matt, Oct 22: a case-study handout is one tap, not one per client).
-        const held = E.heldByPlace(S.idchecks);
-        const n = groups.reduce((s, g) => s + g.tasks.length, 0) + held.length;
+        const n = groups.reduce((s, g) => s + g.tasks.length, 0);
         box.append(head2('Your turn', n ? `${n} waiting` : ''));
         if (!n) {
           box.append(el('p', 'empty', 'Nothing waits on you.'));
           return;
-        }
-        // B-163 (Matt, Oct 22: "Ask me on the page"): what a run kept out because it could be a real patient's. A run
-        // never passes one on its own; he does, once. Where and what kind, never the value.
-        if (held.length) {
-          const sec = el('div', 'yt-place');
-          sec.dataset.place = 'held';
-          sec.append(el('h3', 'yt-label', 'Kept out by a run'));
-          const ul = el('ul', 'list');
-          for (const h of held) {
-            const li = el('li', 'row yt-item yt-held');
-            li.dataset.ref = h.ref;
-            li.dataset.keys = h.items.map(i => i.key).join(' ');
-            const body = el('div', 'grow');
-            const one = h.items.length === 1;
-            const what = h.kinds[0];
-            body.append(
-              el(
-                'p',
-                'yt-ask',
-                one
-                  ? `A run left out ${/^(a|an) /.test(what) ? what : 'a detail: ' + what} that could be a real patient’s. Is it from a practice scenario?`
-                  : `A run left out ${h.items.length} details that could be a real patient’s (${h.kinds.join(', ')}). Are they from a practice scenario?`
-              ),
-              el(
-                'p',
-                'meta',
-                `In ${h.ref} · ${String(h.source || '').split(' ')[0] || 'a run'}${h.at ? ' · ' + short(h.at) : ''}`
-              )
-            );
-            // One tap answers every value held from this place, each kept as its own <key>-matt; the record takes 50
-            // writes a batch, so a long handout goes in batches.
-            const answer = (verdict, reason) => ev =>
-              guard(
-                ev.target,
-                async () => {
-                  if (!ACT) throw new Error('no actions here');
-                  const checks = h.items.map(i => ({
-                    key: i.key,
-                    verdict,
-                    reason,
-                    kind: String(i.kind || 'a detail').slice(0, 80),
-                    ref: String(h.ref).slice(0, 120),
-                    by: 'matt',
-                  }));
-                  for (let i = 0; i < checks.length; i += 50)
-                    await run(
-                      ACT.tap('id-check', { checks: checks.slice(i, i + 50) }, { now: now(), release: EV_SPEC.release })
-                        .writes
-                    );
-                },
-                verdict === 'practice'
-                  ? one
-                    ? 'Thanks. The next run keeps it.'
-                    : `Thanks. The next run keeps all ${h.items.length}.`
-                  : 'Kept out. No run asks again.'
-              );
-            const a = el('div', 'actions yt-chips');
-            a.append(
-              btn('It’s made up', answer('practice', 'Matt: it’s from a practice scenario'), { primary: true }),
-              btn('Keep it out', answer('real', 'Matt: keep it out'))
-            );
-            body.append(a);
-            li.append(body);
-            ul.append(li);
-          }
-          sec.append(ul);
-          box.append(sec);
         }
         for (const g of groups) {
           const sec = el('div', 'yt-place');
@@ -1149,14 +1080,7 @@
         const txt = el('span', 'pi-txt');
         txt.append(el('span', 'pi-t', it.text));
         const src = it.cite ? it.cite : it.usual ? 'you usually bring' : it.added ? 'added by you' : '';
-        if (src || it.paperwork)
-          txt.append(
-            el(
-              'span',
-              'pi-c',
-              [src, it.paperwork ? 'bring it; filling it in is yours' : ''].filter(Boolean).join(' · ')
-            )
-          );
+        if (src) txt.append(el('span', 'pi-c', src));
         lab.append(c, txt);
         li.append(lab);
         if (it.added) {

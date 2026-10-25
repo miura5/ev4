@@ -1,6 +1,6 @@
-// B-46 (D-103): the clinical-prep brief. Its read set leaves out the graded clinical paperwork by section and title;
-// the worker gets the next clinical day, the Skills Packet and lab passages with their pages, his skill weak spots and
-// instructor notes; a brief that names what could be a patient is held back; the greeting offers it the day before.
+// B-46 (D-103): the clinical-prep brief. Its read set is the course's clinical and lab materials (D-324: nothing is
+// left out as graded); the worker gets the next clinical day, the Skills Packet and lab passages with their pages, his
+// skill weak spots and instructor notes; nothing in it is held as an identifier; the greeting offers it the day before.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -57,22 +57,18 @@ const MATERIALS = [
   }),
 ];
 
-test('B-46: the read set leaves out the graded clinical paperwork by section and title, and keeps the packet and lab sheets', () => {
-  const { read, left } = EV.clinicalReadSet(MATERIALS, 'NUR 112');
-  assert.deepEqual(read.map(m => m.id).sort(), ['NUR112-880001', 'NUR112-880002']);
-  assert.deepEqual(
-    Object.fromEntries(left.map(x => [x.id, x.why])),
-    {
-      'NUR112-880003': 'data prep sheet (title)',
-      'NUR112-880004': 'judgment map (section)',
-      'NUR112-880005': 'drug cards (title)',
-      'NUR112-880006': 'medication table (title)',
-    },
-    'each by the field that names it'
-  );
+test('B-46, D-324: the read set is the clinical and lab materials, paperwork included, and no lecture slides', () => {
+  const { read } = EV.clinicalReadSet(MATERIALS, 'NUR 112');
+  assert.deepEqual(read.map(m => m.id).sort(), [
+    'NUR112-880001',
+    'NUR112-880002',
+    'NUR112-880003',
+    'NUR112-880004',
+    'NUR112-880005',
+    'NUR112-880006',
+  ]);
   assert.ok(!read.some(m => /slides/.test(m.title)), 'lecture slides are not clinical material');
-  assert.equal(EV.gradedClinicalPaperwork({ title: 'Care plan worksheet' }), 'care plan (title)');
-  assert.equal(EV.gradedClinicalPaperwork({ title: 'Head to toe checklist' }), null);
+  assert.equal(EV.gradedClinicalPaperwork, undefined, 'no graded-paperwork check is left');
 });
 
 function workerDb() {
@@ -154,15 +150,14 @@ const answer = (dir, v) => {
   fs.writeFileSync(path.join(dir, 'answers', 'do-job.json'), JSON.stringify(v));
 };
 
-test('B-46: the worker gets the clinical day, the packet passages with their pages, skill weak spots and instructor notes, never the paperwork', () => {
+test('B-46: the worker gets the clinical day, the packet passages with their pages, skill weak spots and instructor notes', () => {
   const db = workerDb();
   const dir = worker(db, 'job-20261021-193000-clinical-prep');
   const w = RUN.compute({ spec, dir, validate, at: AT });
   assert.equal(w.status, 'waiting', JSON.stringify(w.problems));
   const m = w.question.material;
   assert.equal(m.job.kind, 'clinical-prep');
-  assert.match(m.guide, /Never fill in, draft, outline or summarize graded clinical paperwork/);
-  assert.match(m.guide, /Never ask for, guess at or write anything about a patient/);
+  assert.doesNotMatch(m.guide, /graded|patient/i, 'D-324: the guide holds no graded-work or identifier rule');
   const c = m.context;
   assert.deepEqual(c.day, {
     date: CLIN,
@@ -174,14 +169,11 @@ test('B-46: the worker gets the clinical day, the packet passages with their pag
     c.passages.some(p => p.ref === 'materials/NUR112-880001' && [12, 14].includes(p.page)),
     JSON.stringify(c.passages.map(p => [p.ref, p.page]))
   );
-  const banned = ['NUR112-880003', 'NUR112-880004', 'NUR112-880005', 'NUR112-880006'];
-  assert.ok(!c.passages.some(p => banned.includes(p.ref.replace('materials/', ''))), 'no paperwork passage');
   assert.deepEqual(c.skillWeakSpots, [{ weakspotId: 'ws-skill-vitals', topic: 'Irregular pulse: a full minute' }]);
   assert.deepEqual(
     c.instructorNotes.map(n => n.title),
     ['Clinical Thursday']
   );
-  assert.equal(c.notRead.length, 4);
   // The brief posts as the job's message.
   answer(dir, {
     text: 'Thursday, Med-surg. Review head to toe (SKILLS PACKET, p. 12) and vital signs, a full minute for an irregular pulse (SKILLS PACKET, p. 14). Bring the stethoscope and penlight; 0630 in uniform (instructor note).',
@@ -195,7 +187,7 @@ test('B-46: the worker gets the clinical day, the packet passages with their pag
   assert.match(res.result.text, /SKILLS PACKET, p\. 12/);
 });
 
-test('B-46 (B-04), B-197, B-163: a brief that names what could be a real patient holds it back for Matt', () => {
+test('D-324: a brief that names a room is written as the worker wrote it; nothing is held as an identifier', () => {
   const db = workerDb();
   const dir = worker(db, 'job-20261021-193000-clinical-prep');
   RUN.compute({ spec, dir, validate, at: AT });
@@ -204,11 +196,10 @@ test('B-46 (B-04), B-197, B-163: a brief that names what could be a real patient
   assert.equal(r.status, 'planned', JSON.stringify(r.problems || r.step));
   const files = r.plan.batches.flat();
   const written = files.map(f => fs.readFileSync(f.file_path, 'utf8')).join('\n');
-  assert.ok(!/room 412/.test(written), 'the value is held back from every write');
-  assert.match(written, /\[left out\]/);
-  const held = JSON.parse(fs.readFileSync(files.find(f => f.collection === 'idchecks').file_path, 'utf8'));
-  assert.deepEqual([held.by, held.verdict], ['held', 'unsure']);
-  assert.match(held.kind, /room number/);
+  assert.match(written, /room 412/, 'written as it came');
+  assert.ok(!/\[left out\]/.test(written));
+  assert.ok(!files.some(f => f.collection === 'idchecks'), 'no identifier verdict is written');
+  assert.ok(!r.plan.steps || !r.plan.steps.some(x => x.id === 'identifiers'));
 });
 
 test('B-46: the greeting offers the brief the day before a clinical day, once, and never after one was asked for', () => {
@@ -230,6 +221,6 @@ test('B-46: the greeting offers the brief the day before a clinical day, once, a
   assert.ok(item, JSON.stringify(g.brief));
   assert.equal(item.date, CLIN);
   assert.deepEqual(item.action, { label: 'Brief me', chip: 'Brief me for clinical' });
-  assert.match(item.detail, /Never your graded paperwork/);
+  assert.doesNotMatch(item.detail, /graded/i);
   assert.notEqual(item.level, 'urgent', 'a clinical day is never urgent (D-143)');
 });

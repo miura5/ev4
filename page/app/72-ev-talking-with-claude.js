@@ -10,13 +10,11 @@
 - Plain text, 1 to 4 short sentences unless he asks for more. "- " bullets only for 3 or more parallel items. **bold** sparingly. No headings, no tables.
 - Act with tools instead of describing: attach a card rather than listing what it shows; log what he wants kept (weak spots, ideas, dates, energy); start a background job for anything bigger than one reply. After acting, say what you did in a few words.
 - Grounded explanations: when he asks why, or to explain a weak spot or a missed question, first search the materials for its topic, explain from that passage and cite it, like (Ch 42 Fluids, slide 3). Whatever comes from general knowledge instead, mark "(check your materials)"; never present it as his course's.
-- His course materials are in the materials tool. For course content, a skill or anything his class teaches, search them first and name the file and page you used, like (Skills Packet, p. 12). For a validation run-through, read that skill's checklist pages and follow them step by step. If his materials don't cover it, say so and mark the answer "(check your materials)". Graded work stays his alone even when its instructions are in the library.
+- His course materials are in the materials tool. For course content, a skill or anything his class teaches, search them first and name the file and page you used, like (Skills Packet, p. 12). For a validation run-through, read that skill's checklist pages and follow them step by step. If his materials don't cover it, say so and mark the answer "(check your materials)".
 - His daily list is yours to keep: put study tasks he asks for or agrees to on it with edit_list (today, or a day in the next week), take items off or bring them back the same way when he asks, and tick them off with tick_item. Graded work, exams, clinicals and validations stay.
 - His calendar is yours to keep too: add deadlines and events with edit_dates, fix the ones he or you added, take entries off and bring them back when he asks. Graded work, exams, clinicals and validations from Canvas stay. Study tasks go on the list, not the calendar; to move a calendar entry onto the list, add it with edit_list, then remove it with edit_dates.
 - Teaching: the rule, why it works, one memory hook, and when it shows up on the NCLEX. Mark anything not from his course materials "(check your materials)".
-- Graded or submitted work (anything tagged GRADED, medication tables, care plans, narrative notes, clinical judgment maps for credit, quizzes, exams, discussion posts): no help with its content, not even a check. Offer to block time for it instead.
-- Real patients: never repeat or store identifiers. If he includes a real detail, say so once, briefly.
-- No standing reminders (B-99): never add a note about graded work or that a scenario or client is invented; these limits speak only when a request actually crosses them.
+- No standing reminders (B-99): never add a note about graded work or that a scenario or client is invented.
 - His health: you may log the energy, stress or sleep he reports and shape study suggestions around it. Never diagnose; for real concerns suggest a clinician.
 - Don't invent record data. If it isn't below or in a lookup, say you don't have it.
 - At most one unprompted suggestion per reply, and only when clearly useful.
@@ -233,16 +231,6 @@
           .replace(/\s+/g, ' ')
           .trim()
           .slice(0, n);
-      // B-197: a value no kept verdict has passed is not stored; Matt can say it is from practice, and it goes on.
-      const noIds = t => {
-        const w = idUnpassed(t);
-        if (w.length)
-          throw new Error(
-            'That text looks like it ' +
-              w[0].why +
-              '. It isn’t stored unless it is from a practice scenario: leave it out, or ask Matt.'
-          );
-      };
       const tools = [
         {
           name: 'show_card',
@@ -306,7 +294,7 @@
         {
           name: 'start_job',
           description:
-            'Start a background job for work bigger than one reply. study-guide: a one-page guide saved as a Claude Doc. practice-set: 10 to 30 questions saved as a set (put the number and topic in the brief). exam-plan: a study plan for a named exam. exam-retro: the post-exam retro for a named exam (put its id, like E4, in the brief); record_score starts one on its own after he tells you a score. clinical-prep: a short prep brief for the next clinical day (put its date first in the brief): the skills with their Skills Packet pages, his skill weak spots and instructor notes; it never reads or drafts graded clinical paperwork, and the brief never names a patient. share-set: a page of a calendar practice set for classmates (put the set id first in the brief); only drill or sim sets over a chapter range qualify. general: research or other long work. Runs in the cloud and posts back here in a few minutes; a job card is attached automatically. Never for graded work. Returns the job id.',
+            'Start a background job for work bigger than one reply. study-guide: a one-page guide saved as a Claude Doc. practice-set: 10 to 30 questions saved as a set (put the number and topic in the brief). exam-plan: a study plan for a named exam. exam-retro: the post-exam retro for a named exam (put its id, like E4, in the brief); record_score starts one on its own after he tells you a score. clinical-prep: a short prep brief for the next clinical day (put its date first in the brief): the skills with their Skills Packet pages, his skill weak spots and instructor notes. share-set: a page of a calendar practice set for classmates (put the set id first in the brief); only drill or sim sets over a chapter range qualify. general: research or other long work. Runs in the cloud and posts back here in a few minutes; a job card is attached automatically. Never for graded work. Returns the job id.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -404,7 +392,6 @@
           execute: async i => {
             const topic = str(i.topic, 140);
             if (!topic) throw new Error('topic is required');
-            noIds(topic);
             const same = M.models.find(w => E.isActive(w) && E.norm(w.topic) === E.norm(topic));
             if (same) return 'already active: ' + same.id;
             const objective = S.objectives.some(o => o.id === i.objective) ? String(i.objective) : '';
@@ -431,8 +418,6 @@
           },
           execute: async i => {
             const a = str(i.action, 10);
-            if (i.title != null) noIds(str(i.title, 120));
-            if (i.notes != null) noIds(str(i.notes, 200));
             const r = await editDates(
               {
                 action: a,
@@ -520,7 +505,6 @@
             if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date < today || E.diffDays(today, date) > 7)
               throw new Error('date must be today or one of the next 7 days, as YYYY-MM-DD');
             const a = str(i.action, 10);
-            if (a === 'add') noIds(str(i.text, 140));
             const r = await editList(
               date,
               { action: a, text: i.text, kind: i.kind, minutes: i.minutes, course: i.course, id: str(i.id, 120) },
@@ -762,7 +746,6 @@
           execute: async i => {
             const text = str(i.text, 400);
             if (!text) throw new Error('text is required');
-            noIds(text);
             const id = E.ideaId(text, { at: now(), date: today, existing: S.ideas || [] }); // B-381: never overwrites
             const kind = ['learning', 'feature', 'general'].includes(i.kind) ? i.kind : 'general';
             await write({
@@ -921,15 +904,6 @@
       // B-381: the line a score may come from is this turn's own, and only when it is his new line (never a Try again,
       // Go deeper or Read from here)
       T.scoreText = o.fromMatt ? String(text || '') : '';
-      // B-99: a real ask to do, edit or turn in graded work is refused in one line, here, with no model call.
-      const no = E.gradedAsk(
-        text,
-        S.dates.filter(d => d.graded).map(d => d.title)
-      );
-      if (no) {
-        await evSay(no, [], { tier: 'local' });
-        return;
-      }
       if (!sample || T.sampleOff) {
         await evSay(
           SAMPLE_COPY[T.sampleOff] || 'Asking Claude isn’t available in this view. The quick asks still work.',

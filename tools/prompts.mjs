@@ -17,13 +17,14 @@ export function limitLanes(p) {
   const use = macUse(p);
   return ['mac', ...(use.canvas ? ['canvas'] : []), use.writes ? 'mac-writes' : 'mac-reads'];
 }
-/** The run's hard limits, rendered from spec.boundaries: each rule with a prompt phrasing, lane by lane, in rule order. */
+/** The run's hard limits, rendered from spec.boundaries: each rule with a prompt phrasing, lane by lane, in rule order;
+ *  an ended rule (D-324) renders nothing. */
 export function runLimits(spec, p) {
   const out = [];
   for (const lane of limitLanes(p))
     for (const r of (spec.boundaries || {}).rules || []) {
       const pr = r.prompt;
-      if (!pr || !(pr.lanes || []).includes(lane)) continue;
+      if (r.ended || !pr || !(pr.lanes || []).includes(lane)) continue;
       const text = typeof pr.text === 'string' ? pr.text : pr.text[lane];
       if (text && !out.includes(text)) out.push(text);
     }

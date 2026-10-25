@@ -509,8 +509,8 @@
       };
     }
     // B-373 (as the demo's task view): her line above an opened graded task. With an objective its title names (or its
-    // course's first one not yet solid, for a quiz or exam), she offers to quiz him on it beforehand; else she keeps
-    // the due date and stays out of the work (B-01). Any other opened task has no line.
+    // course's first one not yet solid, for a quiz or exam), she offers to quiz him on it beforehand. Any other opened
+    // task has no line.
     function taskLine() {
       if (!ui.taskSel || ui.taskGone || ui.todayView === 'week') return null;
       const it = dayState().items.find(x => x.id === ui.taskSel);
@@ -522,7 +522,7 @@
         S.dates.filter(x => x.graded && x.date >= today).find(x => E.similarity(x.title || '', text) >= 0.3) ||
         null;
       const o = d && dateObjective(d);
-      if (!o) return { text: 'Graded work: your draft, your words. I keep the due date and stay out of the writing.' };
+      if (!o) return null;
       const named = /:\s*(.+)$/.exec((d && d.title) || text);
       const on = named ? named[1].trim().replace(/[.]+$/, '') : 'it';
       return {
@@ -792,12 +792,13 @@
         );
         acts.append(sz);
       }
-      // graded work: the one line the demo carries, since E.V. helps him prepare and never with the work (B-01)
+      // graded work due today stays on today's list (B-388); otherwise it snoozes like any other task (B-374)
       const note =
         it.tag === 'GRADED'
           ? [
-              el('p', 'meta tp-note', 'Graded work: E.V. helps you prepare, never with the work itself.'),
-              ...(dueToday(it) ? [el('p', 'meta tp-note tp-due', 'It’s due today, so it stays on today’s list.')] : []),
+              dueToday(it)
+                ? el('p', 'meta tp-note tp-due', 'It’s due today, so it stays on today’s list.')
+                : el('p', 'meta tp-note', 'Snooze moves it to tomorrow, with Undo.'),
             ]
           : fixedItem(it)
             ? [el('p', 'meta tp-note', 'It stays on the day it is due.')]

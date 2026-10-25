@@ -63,8 +63,7 @@ export const CODE_STEPS = {
       context.passages = passages(idx, q, 4);
     }
     if (kind === 'clinical-prep') {
-      // D-103 (B-46): the clinical the brief names by date, else the next one; its read set leaves out the graded clinical
-      // paperwork by section and title (core.clinicalReadSet), so the worker is never handed a form to draft.
+      // D-103 (B-46): the clinical the brief names by date, else the next one, and its read set (core.clinicalReadSet).
       const named = (q.match(/\b\d{4}-\d{2}-\d{2}\b/) || [])[0];
       const day = EV.nextClinical(db.dates, db.dateedits, named || ctx.date);
       const set = EV.clinicalReadSet(
@@ -90,7 +89,6 @@ export const CODE_STEPS = {
         .sort((a, b) => String(b.postedAt || '').localeCompare(String(a.postedAt || '')))
         .slice(0, 4)
         .map(a => ({ title: a.title, postedAt: a.postedAt || null, text: String(a.text || '').slice(0, 500) }));
-      context.notRead = set.left.map(x => `${x.title} (${x.why})`);
     }
     if (kind === 'exam-retro') {
       // D-104: the exam the brief names, else the latest one with a score; core computes every number, the agent only

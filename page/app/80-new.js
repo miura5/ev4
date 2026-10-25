@@ -142,11 +142,6 @@
       if (!kind) return;
       if (!t) return newField().focus();
       const body = kind === 'note' ? $('new-text').value.trim() : '';
-      const w = idUnpassed(t + (body ? ' ' + body : '')); // B-197: values only
-      if (w.length) {
-        $('new-warn').textContent = 'That looks like it ' + w[0].why + '. Take that detail out first.';
-        return newField().focus();
-      }
       newClose();
       drafts[kind] = '';
       const nd = { body, course: noteDraft.course };

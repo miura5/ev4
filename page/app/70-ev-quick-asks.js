@@ -41,7 +41,7 @@
         });
         return r.fired && r.fired.ok
           ? [
-              'Writing your clinical prep brief in the background: the skills with their packet pages, your skill weak spots and any instructor note. Never your paperwork.',
+              'Writing your clinical prep brief in the background: the skills with their packet pages, your skill weak spots and any instructor note.',
               [{ type: 'job', id: r.id }],
             ]
           : ['Couldn’t start it: ' + fireCopy(r.fired && r.fired.error), []];

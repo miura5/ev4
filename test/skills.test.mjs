@@ -46,7 +46,10 @@ test('B-52 (D-108): CINDY keeps rounds in the cap, the ladder its time and stop 
     ['done', { rounds: 3, extraReps: 7, reps: 97, totalSeconds: 1200, completed: true }]
   );
   assert.throws(() => EV.workoutCheckin(c, { energy: 6 }), /energy is 1 to 5/);
-  assert.throws(() => EV.workoutCheckin(c, { energy: 3, mood: 'patient in room 12 was loud' }), /room number/);
+  assert.equal(
+    EV.workoutCheckin(c, { energy: 3, mood: 'patient in room 12 was loud' }).data.mood,
+    'patient in room 12 was loud'
+  ); // D-324
   c = apply(c, EV.workoutCheckin(c, { energy: 4, mood: '  strong,   arms gone ' }));
   assert.equal(EV.workoutSummary(c, q.cindy), '3 rounds + 7 reps in 20 min · energy 4/5 · “strong, arms gone”');
   const early = apply(

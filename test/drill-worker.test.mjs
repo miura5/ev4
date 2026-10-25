@@ -407,7 +407,7 @@ test('the D1 dump refuses a collection whose pages come short of its count, and 
   }
 });
 
-test("B-04 on the Worker drill: a backup holding what could be a real patient's details is held, and nothing is restored", async () => {
+test('D-324 on the Worker drill: a backup holding a record number and a birth date is planned like any other', async () => {
   const d = await drill({
     mutate: b => {
       const i = b.docs.findIndex(x => x.c === 'ideas');
@@ -418,9 +418,8 @@ test("B-04 on the Worker drill: a backup holding what could be a real patient's 
     },
   });
   try {
-    assert.equal(d.plan.status, 'refused');
-    assert.match(d.plan.problems.join('\n'), /could be a real patient's details \(B-04\); the drill restores nothing/);
-    assert.deepEqual(d.fw.get('/_dump?store=scratch'), {});
+    assert.equal(d.plan.status, 'planned', JSON.stringify(d.plan.problems));
+    assert.doesNotMatch(JSON.stringify(d.plan), /B-04|real patient/);
   } finally {
     d.fw.child.kill();
   }

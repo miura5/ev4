@@ -1,5 +1,5 @@
-// E.V. core's Canvas rules: the code side of the read-only sync (Central dates, graded flags, change detection, the
-// identifier refusal at the door). core/canvas.mjs is the browser side.
+// E.V. core's Canvas rules: the code side of the read-only sync (Central dates, graded flags, change detection).
+// core/canvas.mjs is the browser side.
 // Split from core/evcore.mjs (B-160, D-166) as one factory with no imports, so the same file runs in node (evcore.mjs
 // imports it) and in the page (the build writes it into core.js ahead of E.V. core). It takes the core names it uses
 // and returns the names core's export map uses.
@@ -32,10 +32,7 @@ export function makeCanvasRules(core) {
     const at = isoOf(now);
     const env = () => envelope('canvas-sync', 'Canvas sync', at);
     const out = { dates: [], announcements: [], materials: [], changes: [], candidates: [], refused: [] };
-    // The Canvas ingress (Data architecture, "Four ingresses, one scanner"), B-197: the door no longer refuses a text
-    // with what looks like an identifier value. A case study or a sim's client in a course file is practice; the run's
-    // identifier stage (core/run.mjs) sees every write this sync plans, judges each candidate with the words around it
-    // and holds back only a value that could be a real patient's. refused stays, empty, for the readers that list it.
+    // refused stays, empty, for the readers that list it (D-324: nothing is held as a patient identifier).
     const courseName = id => {
       for (const [n, cid] of Object.entries(raw.courses || {})) if (Number(cid) === Number(id)) return n;
       return null;

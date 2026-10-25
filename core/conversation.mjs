@@ -350,8 +350,7 @@ export function makeConversation(core) {
     if (c.clinicalOffer)
       put('prep', 'clinical-prep', 'Prep brief for ' + short(c.clinicalOffer.title, 40), {
         when: 'tomorrow',
-        detail:
-          'The skills to review with their packet pages, your skill weak spots and any instructor note. Never your graded paperwork.',
+        detail: 'The skills to review with their packet pages, your skill weak spots and any instructor note.',
         action: { label: 'Brief me', chip: 'Brief me for clinical' },
         date: c.clinicalOffer.date,
       });

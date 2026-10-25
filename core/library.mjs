@@ -274,7 +274,7 @@ export function makeLibrary(core) {
     };
   }
   /** Which Canvas module files belong in the library (libraryRules: each course's rules in spec.courses with the shared skips). Self-contained: the Canvas fetch
-   *  script embeds this exact function. Graded clinical paperwork is skipped by section and title (B-01). */
+   *  script embeds this exact function. */
   function libraryPick(course, modules, rules) {
     const R = rules || {};
     const out = [];

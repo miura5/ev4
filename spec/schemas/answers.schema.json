@@ -92,7 +92,7 @@
       "text": {
        "type": "string",
        "maxLength": 600,
-       "description": "B-75 (D-132): an open answer's text, identifier-scanned"
+       "description": "B-75 (D-132): an open answer's text"
       },
       "hits": {
        "type": "array",

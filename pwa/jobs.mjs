@@ -2,13 +2,12 @@
 // jobs/<id> as it does on claude.ai; the shim (bridge.js) hands it here instead of to the worker pipeline. Here:
 //   1. the job's brief, by the worker pipeline's own code step (core/steps-worker.mjs job-brief): the kind's guide with
 //      the passages, objectives, weak spots and dates core gathers from the record;
-//   2. a brief that asks for help on graded work is refused before any call (B-01, EV.gradedAsk);
-//   3. one ask to Claude (Haiku, through the Worker's /api/claude): the worker's do-job judgment, answered with the
+//   2. one ask to Claude (Haiku, through the Worker's /api/claude): the worker's do-job judgment, answered with the
 //      do-job step's own output shape as a tool;
-//   4. the same checks the worker run applies (core/run.mjs compute): the answer against its shape, the job-result
-//      fold, the identifier stage (B-197), and each write against its collection's schema, writers and the document
+//   3. the same checks the worker run applies (core/run.mjs compute): the answer against its shape, the job-result
+//      fold, and each write against its collection's schema, writers and the document
 //      budget. Any problem refuses the reply whole: nothing it made is written, and the job is marked failed;
-//   5. what passes is written to D1 as the fold plans it: jobresults/<id>, what the job made, one message in talk/<date>.
+//   4. what passes is written to D1 as the fold plans it: jobresults/<id>, what the job made, one message in talk/<date>.
 // The app differs from the worker run in two kinds only: a study guide is saved in E.V. (its text in the job's result
 // and message) instead of as a Claude Doc, and a shareable practice page, which is an Artifact on claude.ai, is not made.
 // Builder kinds stay off the app (D-304): the job-brief step leaves them, as it does in the worker run.
@@ -44,20 +43,6 @@ function merge(doc, patch) {
   for (const [k, v] of Object.entries(patch || {})) out[k] = isObj(v) ? merge(out[k], v) : v;
   return out;
 }
-const strings = (v, out = []) => {
-  if (typeof v === 'string') out.push(v);
-  else if (v && typeof v === 'object') for (const x of Object.values(v)) strings(x, out);
-  return out;
-};
-const mapStrings = (v, f) =>
-  typeof v === 'string'
-    ? f(v)
-    : Array.isArray(v)
-      ? v.map(x => mapStrings(x, f))
-      : v && typeof v === 'object'
-        ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, mapStrings(x, f)]))
-        : v;
-
 /** The answer's shape for one kind: the do-job step's, with a study guide's text as long as a message holds. */
 export function outputFor(spec, kind) {
   const out = clone(doJob(spec).step.output);
@@ -87,20 +72,14 @@ export function contextFor({ jobId, now, release, dir = SCRATCH }) {
 }
 
 /**
- * Step 1 and 2: {skip} when the job-brief step leaves it (no such job, a builder kind, a result already), {graded:
- * line} when the brief asks for help on graded work, else {brief, kind, output, ctx}.
+ * Step 1: {skip} when the job-brief step leaves it (no such job, a builder kind, a result already), else {brief,
+ * kind, output, ctx}.
  */
 export function prepare({ db, spec, jobId, now, release, dir }) {
   const ctx = contextFor({ jobId, now, release, dir });
   CODE_STEPS['job-brief'](db, ctx, spec);
   const material = AGENT_MATERIAL['job-brief'](db, ctx, spec);
   if (material.skip) return { skip: material.skip, ctx };
-  const job = ctx.job;
-  const graded = EV.liveDates(db.dates || [], db.dateedits || [])
-    .filter(d => d.graded)
-    .map(d => d.title);
-  const no = EV.gradedAsk(`${job.title || ''} ${job.brief || ''}`, graded);
-  if (no) return { graded: no, ctx };
   const brief = clone(material);
   const kind = brief.job.kind;
   if (kind === 'study-guide') brief.guide = STUDY_GUIDE_APP;
@@ -120,11 +99,11 @@ const ITEM_SHAPE =
   EV.CJ_STEPS.join(', ') +
   '; sourceRef the ref of the passage it rests on (materials/<id>), or verify: true when the point is not in his materials; weakspotId only when the material lists that weak spot.';
 
-/** Step 3: the Messages API request (the Worker adds the model, the key and the length cap). */
+/** Step 2: the Messages API request (the Worker adds the model, the key and the length cap). */
 export function request(spec, prepared) {
   const { step } = doJob(spec);
   const limits = ((spec.boundaries && spec.boundaries.rules) || [])
-    .filter(r => r.prompt && (r.prompt.lanes || []).includes('cloud'))
+    .filter(r => !r.ended && r.prompt && (r.prompt.lanes || []).includes('cloud'))
     .map(r => r.prompt.text);
   const text = [
     'You are E.V., the study partner of Matt, a first-semester nursing student (NUR 112, BIO 201; Central time). You are doing one job he asked for in his E.V. app.',
@@ -172,47 +151,8 @@ export function answerOf(reply) {
   }
 }
 
-/** B-197, as core/run.mjs identifierStage does it for a run: a value that could be a real patient's is held back. */
-function identifiers(planned, db, ctx) {
-  const own = planned.filter(w => w.collection === 'idchecks').map(w => ({ id: w.id, ...w.data }));
-  const kept = EV.keptVerdicts([...(db.idchecks || []), ...own]);
-  const found = new Map();
-  for (const w of planned)
-    if (w.collection !== 'idchecks')
-      for (const c of EV.identifierCandidates(strings(w.data).join('\n')))
-        if (!found.has(c.key)) found.set(c.key, { ...c, ref: `${w.collection}/${w.id}` });
-  if (!found.size) return planned;
-  const held = [...found.values()].filter(c => (kept[c.key] ? kept[c.key].verdict : 'unsure') !== 'practice');
-  const values = held.map(c => c.value);
-  const out = held.length
-    ? planned.map(w =>
-        w.collection === 'idchecks' ? w : { ...w, data: mapStrings(w.data, t => EV.holdBack(t, values)) }
-      )
-    : planned.slice();
-  for (const c of [...found.values()].filter(c => !kept[c.key]))
-    out.push({
-      op: 'set',
-      collection: 'idchecks',
-      id: c.key,
-      data: {
-        schema: 1,
-        writer: ctx.writer,
-        at: ctx.now,
-        source: ctx.source,
-        release: ctx.release,
-        key: c.key,
-        verdict: 'unsure',
-        reason: EV.ID_HELD_REASON,
-        kind: String(c.why).slice(0, 80),
-        ref: String(c.ref).slice(0, 120),
-        by: 'held',
-      },
-    });
-  return out;
-}
-
 /**
- * Step 4: the worker run's checks on an answer. {ok: true, writes} with the fold's writes (each {op, collection,
+ * Step 3: the worker run's checks on an answer. {ok: true, writes} with the fold's writes (each {op, collection,
  * id, data}), or {ok: false, problems} when anything fails: then nothing the reply made may be written.
  */
 export function finish({ prepared, answer, db, spec, schemas, validate = makeValidator(schemas) }) {
@@ -222,15 +162,11 @@ export function finish({ prepared, answer, db, spec, schemas, validate = makeVal
   if (!v.ok) return { ok: false, problems: [describeErrors('answer', v).split('\n')[0]] };
   const r = AGENT_FOLDS['job-result'](answer, db, ctx, spec);
   for (const x of r.problems || []) problems.push(x);
-  const planned = identifiers(
-    (r.writes || []).filter(w => {
-      if (w.op === 'set' || w.op === 'update') return true;
-      problems.push(`the app never deletes (${w.collection}/${w.id})`);
-      return false;
-    }),
-    db,
-    ctx
-  );
+  const planned = (r.writes || []).filter(w => {
+    if (w.op === 'set' || w.op === 'update') return true;
+    problems.push(`the app never deletes (${w.collection}/${w.id})`);
+    return false;
+  });
   problems.push(...checkWrites({ planned, db, ctx, spec, schemas, validate }));
   return problems.length ? { ok: false, problems } : { ok: true, writes: planned };
 }
@@ -327,13 +263,6 @@ export async function runJob({ db, spec, schemas, jobId, ask, write, reload, now
   };
   const fold = answer => cur => finish({ prepared, answer, db: cur, spec, schemas });
   const status = (state, why) => () => ({ ok: true, writes: [statusWrite(prepared.ctx, state, why)] });
-  if (prepared.graded) {
-    // B-01: refused before any call; the refusal is posted through the same fold as a job the worker declines
-    prepared.output = outputFor(spec, 'general');
-    const r = await save(fold({ text: prepared.graded, failed: prepared.graded }));
-    if (!r.ok) throw new Error('the graded refusal did not pass its own checks: ' + r.problems.join('; '));
-    return { status: 'failed', said: 'refused before any call (B-01): ' + prepared.graded };
-  }
   const running = statusWrite(prepared.ctx, 'running');
   await save(() => ({ ok: true, writes: [running] }));
   // the runner's own status document is in the record from here on

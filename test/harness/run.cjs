@@ -798,7 +798,7 @@ async function workLineChecks(page, scheme) {
   await page.click('#tab-ev');
 }
 /** B-180, at the width it runs: the build card's states, the build ask (no model call, the job, the builder fired by
- * id with the two-line text, both lines in talk) and an identifier that holds a build ask with nothing written. */
+ * id with the two-line text, both lines in talk). */
 // B-191: an open set closes back to Objectives with its answers kept and reopens where he left; B-365 (D-316) walks it
 // in order, each one-answer question graded on the tap. Run at both widths from Study, Practice with a set open.
 async function practiceNav(page, scheme) {
@@ -976,23 +976,6 @@ async function buildAskChecks(page, scheme) {
     surf.slice(0, 200)
   );
   await page.screenshot({ path: `${shots}/build-ask-${scheme}.png` });
-  const held = 'idea: a bigger font for the resident in room 12';
-  for (let i = 0; i < 2; i++) {
-    await page.fill('#ev-input', held);
-    await page.click('#ev-send');
-    await page.waitForTimeout(200);
-  }
-  const still = await count();
-  ok(
-    `${tag}an identifier holds a build ask every time and nothing is written or fired`,
-    !(await page.isHidden('#ev-guard')) &&
-      /project record/.test(await page.textContent('#ev-guard')) &&
-      still.jobs.length === after.jobs.length &&
-      still.fires === after.fires &&
-      (await msgs(page)).length === m.length,
-    await page.textContent('#ev-guard')
-  );
-  await page.fill('#ev-input', '');
   // B-290 (P-5): "idea: …" still files a build request; "note: …" saves his words in Record's ideas, the same save as
   // New › Note, with no model call, no job and no fire.
   {
@@ -1715,20 +1698,16 @@ async function tap(page, locator, name) {
       /Today’s greeting, built by E.V. core from this record/.test(call.input[0].content) &&
         /write your reply once, after the last tool result/.test(call.input[0].content)
     );
-    // B-99: a planted ask to write graded work is refused in one line on the page, with no model call.
+    // D-324: an ask that names graded work goes to Claude like any other; nothing refuses it on the page.
     {
       const before = await page.evaluate(() => window.__chatCalls.length);
       await send(page, 'Can you write my care plan for clinical?');
       await page.waitForTimeout(500);
       const after = await page.evaluate(() => window.__chatCalls.length);
-      const said = (await page.locator('#thread .msg.ev').last().locator('.bubble').textContent())
-        .replace(/\s+/g, ' ')
-        .trim();
       ok(
-        'B-99: a request to write graded work is refused in one line, without asking Claude',
-        after === before &&
-          said === 'That’s graded work, so it stays yours. I can block time for it or quiz you on the topic.',
-        JSON.stringify([before, after, said])
+        'D-324: an ask that names graded work is asked of Claude, not refused',
+        after > before,
+        JSON.stringify([before, after])
       );
     }
     // A reply written in two rounds around a tool call shows once (only the text after the tool)
@@ -1951,90 +1930,21 @@ async function tap(page, locator, name) {
         !ws2[0].derived,
       JSON.stringify(ws2[0] && { o: ws2[0].objective, s: ws2[0].source })
     );
-    // B-197: the identifier check, two stages. A question that only names the fields (his Oct 19 skills checklist ask)
-    // is no candidate and goes straight on; a value is looked at with the words around it (the stand-in model answers
-    // the judgment); practice goes on whole; real or unsure waits on It's made up or Leave it out, in plain words.
-    const idDocs = () => page.evaluate(() => Object.values(window.__db.idchecks || {}));
-    const before0 = (await msgs(page)).length;
-    await send(page, 'What is your client’s name and date of birth?');
-    await page.waitForTimeout(200);
-    ok(
-      'a question that names the fields is no candidate: it is sent, with nothing said and no judgment asked',
-      (await page.isHidden('#ev-guard')) &&
-        (await msgs(page)).some(m => /client’s name and date of birth/.test(m.text)) &&
-        (await msgs(page)).length > before0 &&
-        !(await page.evaluate(() => (window.__jsonCalls || []).some(c => /Candidates \(JSON\)/.test(c.prompt))))
-    );
-    await page.evaluate(() => {
-      window.__sampleFn = p => {
-        if (!/Candidates \(JSON\)/.test(p)) return { items: [] };
-        const rows = JSON.parse(p.split('Candidates (JSON): ')[1].split('\n')[0]);
-        return {
-          verdicts: rows.map(r => ({
-            key: r.key,
-            verdict: /checklist/.test(r.around) ? 'practice' : 'unsure',
-            reason: /checklist/.test(r.around) ? 'A step of a skills validation checklist.' : 'Nothing says.',
-          })),
-        };
-      };
-    });
-    await send(page, 'For the checklist: the client is Ana Reyes, DOB: 04/12/1961');
-    await page.waitForTimeout(300);
-    const kept1 = await idDocs();
-    ok(
-      'a practice value passes whole after one judgment, and its verdict is kept without the value',
-      (await page.isHidden('#ev-guard')) &&
-        (await msgs(page)).some(m => /DOB: 04\/12\/1961/.test(m.text)) &&
-        kept1.some(d => d.verdict === 'practice' && d.by === 'judgment' && d.writer === 'page') &&
-        !JSON.stringify(kept1).includes('04/12/1961'),
-      JSON.stringify(kept1)
-    );
-    const before2 = (await msgs(page)).length;
-    await page.fill('#ev-input', 'The resident in room 12 was confused');
-    await page.click('#ev-send');
-    await page.waitForTimeout(300);
-    const guardText = await page.textContent('#ev-guard');
-    ok(
-      'an unsure value waits on him in plain words, with It’s made up and Leave it out, and nothing is sent',
-      !(await page.isHidden('#ev-guard')) &&
-        (await msgs(page)).length === before2 &&
-        /could be a real patient’s/.test(guardText) &&
-        !/flag|violation/i.test(guardText) &&
-        (await page.locator('#ev-guard button').count()) === 2,
-      guardText
-    );
-    await page.screenshot({ path: `${shots}/id-held-${scheme}.png` });
-    await tap(
-      page,
-      page.locator('#ev-guard button', { hasText: 'Leave it out' }),
-      `[${scheme}] the guard line's Leave it out is tappable, nothing covering it`
-    );
-    await page.waitForTimeout(300);
-    ok(
-      'Leave it out sends his words with only that detail left out',
-      (await page.isHidden('#ev-guard')) && (await msgs(page)).some(m => m.text === 'The [left out] was confused'),
-      JSON.stringify((await msgs(page)).slice(-2).map(m => m.text))
-    );
-    await page.fill('#ev-input', 'Sim lab: the resident in room 7 was confused');
-    await page.click('#ev-send');
-    await page.waitForTimeout(300);
-    await tap(
-      page,
-      page.locator('#ev-guard button', { hasText: 'It’s made up' }),
-      `[${scheme}] the guard line's It’s made up is tappable, nothing covering it`
-    );
-    await page.waitForTimeout(300);
-    const kept2 = await idDocs();
-    ok(
-      'It’s made up sends his words whole and keeps his answer, which every later check reads first',
-      (await msgs(page)).some(m => m.text === 'Sim lab: the resident in room 7 was confused') &&
-        kept2.some(d => d.by === 'matt' && d.verdict === 'practice'),
-      JSON.stringify(kept2.map(d => [d.by, d.verdict]))
-    );
-    await page.evaluate(() => {
-      window.__sampleFn = null;
-    });
-    await page.fill('#ev-input', '');
+    // D-324: nothing is held as a patient identifier: a message with a room number or a birth date is sent as typed,
+    // with no judgment asked and no verdict kept.
+    {
+      const before0 = (await msgs(page)).length;
+      await send(page, 'The resident in room 12 was confused, DOB: 04/12/1961');
+      await page.waitForTimeout(300);
+      ok(
+        'D-324: a message with a room number and a birth date is sent as typed, with no judgment and no verdict',
+        (await msgs(page)).some(m => m.text === 'The resident in room 12 was confused, DOB: 04/12/1961') &&
+          (await msgs(page)).length > before0 &&
+          !(await page.evaluate(() => (window.__jsonCalls || []).some(c => /Candidates \(JSON\)/.test(c.prompt)))) &&
+          !(await page.evaluate(() => Object.keys(window.__db.idchecks || {}).length)) &&
+          !(await page.$('#ev-guard'))
+      );
+    }
     // Check-in: local quick ask, energy picker writes days/<today>.checkin and posts advice
     await page.evaluate(() => {
       window.__chatScript = [];
@@ -2157,8 +2067,8 @@ async function tap(page, locator, name) {
       JSON.stringify(jb.fired)
     );
     {
-      // B-46 (D-103): the clinical-prep brief. Its ask never carries patient details; the day before a clinical day the
-      // briefing offers it, and the chip starts the job for that day.
+      // B-46 (D-103): the clinical-prep brief. D-324: an ask that names a room starts its job like any other; the day
+      // before a clinical day the briefing offers it, and the chip starts the job for that day.
       await page.evaluate(() => {
         window.__chatScript = [
           {
@@ -2170,17 +2080,17 @@ async function tap(page, locator, name) {
             },
           },
         ];
-        window.__chatReply = 'Leaving that out.';
+        window.__chatReply = 'Started.';
       });
       await send(page, 'Prep me for my patient in room 412');
       await page.waitForTimeout(300);
       ok(
-        'a clinical-prep ask with patient details writes no job and starts nothing',
+        'D-324: a clinical-prep ask that names a room starts its job, as written',
         (
           await page.evaluate(() =>
-            Object.values(window.__db.jobs).filter(j => j.kind === 'clinical-prep' || /412/.test(j.title + j.brief))
+            Object.values(window.__db.jobs).filter(j => j.kind === 'clinical-prep' && /412/.test(j.title + j.brief))
           )
-        ).length === 0
+        ).length === 1
       );
       const tomorrow = await page.evaluate(() => window.EVCore.addDays(window.EVCore.chicagoDate(new Date()), 1));
       await page.evaluate(async t => {
@@ -2215,7 +2125,10 @@ async function tap(page, locator, name) {
       const fires = await page.evaluate(() => window.__mcpCalls.length);
       await send(page, 'Brief me for clinical');
       await page.waitForTimeout(400);
-      const cj = await page.evaluate(() => Object.values(window.__db.jobs).find(j => j.kind === 'clinical-prep'));
+      const cj = await page.evaluate(
+        t => Object.values(window.__db.jobs).find(j => j.kind === 'clinical-prep' && j.brief.startsWith(t + ': ')),
+        tomorrow
+      );
       const fired = await page.evaluate(n => window.__mcpCalls.slice(n), fires);
       ok(
         'the chip starts the clinical-prep job for that day and fires the worker',
@@ -2223,7 +2136,7 @@ async function tap(page, locator, name) {
           cj.brief.startsWith(tomorrow + ': ') &&
           /^Clinical prep: /.test(cj.title) &&
           fired.some(c => c[1] === 'fire_trigger') &&
-          /Never your paperwork/.test((await msgs(page)).slice(-1)[0].text),
+          /Writing your clinical prep brief/.test((await msgs(page)).slice(-1)[0].text),
         JSON.stringify({ cj, fired: fired.map(c => c[1]) })
       );
       await page.screenshot({ path: `${shots}/clinical-prep-${scheme}.png`, fullPage: false });
@@ -2776,8 +2689,7 @@ async function tap(page, locator, name) {
         ocrCall.tier === 'default',
       JSON.stringify(ph && { t: ph.text, o: ph.ocr })
     );
-    // B-197: a text file with a real-looking record number the judgment can't call practice is saved with only that
-    // detail left out, and she says so in plain words.
+    // D-324: a text file with a record number is saved as it is; nothing is left out as an identifier.
     const before4 = (await mats()).length;
     await page.setInputFiles('#ev-file', {
       name: 'notes.txt',
@@ -2787,12 +2699,11 @@ async function tap(page, locator, name) {
     await page.waitForTimeout(500);
     const notes = (await mats()).find(u => /notes/.test(u.id));
     ok(
-      'an attachment with a record number is saved with that detail left out',
+      'an attachment with a record number is saved whole (D-324)',
       (await mats()).length === before4 + 1 &&
         notes &&
-        /\[left out\]/.test(notes.text) &&
-        !/4482913/.test(notes.text) &&
-        /I left out one detail that could be a real patient’s/.test((await msgs(page)).slice(-1)[0].text),
+        /MRN: 4482913/.test(notes.text) &&
+        !/\[left out\]|real patient/.test((await msgs(page)).slice(-1)[0].text),
       (await msgs(page)).slice(-1)[0].text
     );
     // A PDF: text pages with pdf.js, the image-only page read by Claude
@@ -3842,7 +3753,7 @@ async function tap(page, locator, name) {
       const fErr = [];
       fp.on('pageerror', e => fErr.push(e.message));
       await fp.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
-      // The reader lists three sessions: one new, one v3 already filed (under its bare id), one tagged #graded.
+      // The reader lists two sessions: one new, one v3 already filed (under its bare id). D-324: nothing is left out as #graded.
       const fresh = {
         found: true,
         id: '2026-10-18-1300-Harness-Fluids',
@@ -3863,8 +3774,8 @@ async function tap(page, locator, name) {
         cardCount: 2,
         source: 'Study Watch',
       };
-      const pre = `window.__readerSessions = { sessions: [{ id: '2026-10-18-1300-Harness-Fluids', bytes: 900, sha256: 'a', modifiedAt: '${today}T18:41:00Z' }, { id: '2026-10-17-0035-Pharmacology-Chapter-50', bytes: 800, sha256: 'b', modifiedAt: '2026-10-17T05:50:00Z' }, { id: '2026-10-18-1200-Harness-Graded', bytes: 300, sha256: 'c', modifiedAt: '${today}T17:00:00Z' }], count: 3, more: false };
-        window.__readerSession = { '2026-10-18-1300-Harness-Fluids': ${JSON.stringify(fresh)}, '2026-10-18-1200-Harness-Graded': { found: true, id: '2026-10-18-1200-Harness-Graded', graded: true } };`;
+      const pre = `window.__readerSessions = { sessions: [{ id: '2026-10-18-1300-Harness-Fluids', bytes: 900, sha256: 'a', modifiedAt: '${today}T18:41:00Z' }, { id: '2026-10-17-0035-Pharmacology-Chapter-50', bytes: 800, sha256: 'b', modifiedAt: '2026-10-17T05:50:00Z' }], count: 2, more: false };
+        window.__readerSession = { '2026-10-18-1300-Harness-Fluids': ${JSON.stringify(fresh)} };`;
       await openPage(fp, 'staging', pre);
       await fp.waitForTimeout(2500);
       const filed = await fp.evaluate(() => window.__db.sessions['sw-2026-10-18-1300-Harness-Fluids']);
@@ -3890,11 +3801,10 @@ async function tap(page, locator, name) {
         )
       );
       ok(
-        'a session v3 already filed and a #graded one are left alone',
+        'a session v3 already filed is left alone',
         await fp.evaluate(
           () =>
             !window.__db.sessions['sw-2026-10-17-0035-Pharmacology-Chapter-50'] &&
-            !window.__db.sessions['sw-2026-10-18-1200-Harness-Graded'] &&
             !window.__mcpCalls.some(
               c => c[1] === 'read_session' && c[2].id === '2026-10-17-0035-Pharmacology-Chapter-50'
             )
@@ -3914,16 +3824,14 @@ async function tap(page, locator, name) {
       const fm = (await msgs(fp)).slice(-1)[0];
       ok(
         'E.V. says what it filed, once, with the session card',
-        /^Filed 1 Study Watch session, 2 new weak spots, 2 ideas\. Sessions tagged #graded stayed out\.$/.test(
-          fm.text
-        ) && fm.cards[0].type === 'session',
+        /^Filed 1 Study Watch session, 2 new weak spots, 2 ideas\.$/.test(fm.text) && fm.cards[0].type === 'session',
         fm.text
       );
       await send(fp, 'File it');
       await fp.waitForTimeout(500);
       ok(
         'file it again: nothing new, nothing written twice',
-        /Nothing new to file|#graded stayed out of the record/.test((await msgs(fp)).slice(-1)[0].text) &&
+        /Nothing new to file/.test((await msgs(fp)).slice(-1)[0].text) &&
           (await fp.evaluate(() => Object.keys(window.__db.sessions).filter(k => k.startsWith('sw-')).length)) === 1,
         (await msgs(fp)).slice(-1)[0].text
       );
@@ -4561,14 +4469,9 @@ async function tap(page, locator, name) {
       /Claude desktop app on your Mac/.test((await msgs(ss)).slice(-1)[0].text) && !(await sess()),
       (await msgs(ss)).slice(-1)[0].text
     );
-    // A #graded note is refused
     await ss.evaluate(() => {
       window.__readerFail = null;
     });
-    await setNote('', { graded: true });
-    await send(ss, 'Start a study session');
-    await ss.waitForTimeout(300);
-    ok('graded note refused', /#graded/.test((await msgs(ss)).slice(-1)[0].text) && !(await sess()));
     // Start: B-290 (D-315), from 1200 px from the right panel's card, the chip's call; below it the card is absent
     await setNote(note1);
     const sessCard = () =>
@@ -5024,22 +4927,19 @@ async function tap(page, locator, name) {
         !/On a break|min break/.test(await ss.textContent('#sbar')),
       await ss.textContent('#sbar')
     );
-    // New writing with what looks like an identifier skips the check and says why, once
+    // D-324: new writing that names a room is never skipped as an identifier
     await setNote(
       note1 +
         '\nHypotonic: 0.45% NaCl shifts water into the cells.\nHypertonic: 3% NaCl pulls water out of the cells.\nThe resident in room 12 had edema.\n'
     );
     const before3 = (await msgs(ss)).length;
-    await jump(
-      80e3,
-      hasEvent(e => e.type === 'skip' && e.why === 'identifiers')
-    );
+    await jump(80e3, async () => false);
     S1 = await sess();
     ok(
-      'identifier skips the check',
-      Object.values(S1.events).some(e => e.type === 'skip' && e.why === 'identifiers') &&
-        /room number/.test((await msgs(ss)).slice(-1)[0].text) &&
-        (await msgs(ss)).length === before3 + 1
+      'D-324: new writing with a room number is not skipped as an identifier, and nothing is said about it',
+      !Object.values(S1.events).some(e => e.type === 'skip' && e.why === 'identifiers') &&
+        !(await msgs(ss)).slice(before3).some(m => /room number|identifier/.test(m.text)),
+      JSON.stringify(Object.values(S1.events).map(e => e.type))
     );
     // End: wrap-up as JSON, filed with the same rules as evening filing; near-repeat waits on a tap
     await ss.locator('#sbar button', { hasText: 'End' }).click();
@@ -5455,18 +5355,17 @@ async function tap(page, locator, name) {
     );
     await page.close();
   }
-  // B-163 (Matt, Oct 22: "Ask me on the page"): what a run kept out waits in Your turn, where and what kind, never the
-  // value; It's made up keeps his answer as <key>-matt and takes it off the list. At 390 and 1280.
-  for (const w of [390, 1280]) {
-    const tag = `[held ${w}]`;
+  // D-324: identifier verdicts a run kept before are left in the record, unread: Your turn asks nothing about them.
+  {
+    const tag = '[held 390]';
     delete seed.system.yourturn;
     const KEY = 'id-0123456789abcdef';
     seed.idchecks = {
       [KEY]: {
         schema: 1,
         writer: 'restore-drill',
-        at: '2026-10-22T04:33:00Z',
-        source: 'restore-drill restore-drill-20261022-043233095',
+        at: '2026-10-22T12:00:00Z',
+        source: 'restore-drill restore-drill-20261022-1200',
         release: 'v4.3.0',
         key: KEY,
         verdict: 'unsure',
@@ -5476,137 +5375,23 @@ async function tap(page, locator, name) {
         by: 'held',
       },
     };
-    const page = await browser.newPage({ viewport: { width: w, height: w === 390 ? 844 : 860 }, colorScheme: 'dark' });
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 }, colorScheme: 'dark' });
     const errs = [];
     page.on('pageerror', e => errs.push(e.message));
     await page.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
     await servePdfjs(page);
     await openPage(page);
     await page.waitForTimeout(1500);
-    const chips = await page.evaluate(() =>
-      [...document.querySelectorAll('#qchips button')].map(b => b.textContent.trim())
-    );
-    // B-358 (D-316): Your turn is asked in words; the card below holds what the run kept out
-    ok(`${tag} no Your turn chip on the greeting (B-358)`, !chips.some(c => /^Your turn/.test(c)), chips.join(' | '));
     await send(page, 'Your turn');
     await page.waitForTimeout(500);
-    const card = await page.evaluate(() => {
-      const li = document.querySelector('#ev-surf .yt-place[data-place="held"] .yt-held');
-      return li
-        ? {
-            key: li.dataset.keys,
-            text: li.textContent,
-            chips: [...li.querySelectorAll('.yt-chips button')].map(b => b.textContent.trim()),
-          }
-        : null;
-    });
+    const surf = await page.evaluate(() => ({
+      held: document.querySelectorAll('#ev-surf .yt-held').length,
+      text: (document.getElementById('ev-surf') || {}).textContent || '',
+    }));
     ok(
-      `${tag} the card names where and what kind, never the value, with It's made up and Keep it out`,
-      card &&
-        card.key === KEY &&
-        /A run left out a date of birth that could be a real patient’s/.test(card.text) &&
-        /legacy\/v4-talk-2026-10-19-s1/.test(card.text) &&
-        !/\d{2}\/\d{2}\/\d{4}/.test(card.text) &&
-        !/flag|violation/i.test(card.text) &&
-        JSON.stringify(card.chips) === JSON.stringify(['It’s made up', 'Keep it out']),
-      JSON.stringify(card)
-    );
-    await page.screenshot({ path: `${shots}/held-${w}.png` });
-    await page.locator('#ev-surf .yt-held .yt-chips button', { hasText: 'It’s made up' }).click();
-    await page.waitForTimeout(600);
-    const after = await page.evaluate(k => {
-      const d = (window.__db.idchecks || {})[k + '-matt'];
-      return { d, left: document.querySelectorAll('#ev-surf .yt-held').length };
-    }, KEY);
-    ok(
-      `${tag} It's made up keeps his answer as <key>-matt (practice, by matt) and the item leaves the list`,
-      after.d && after.d.verdict === 'practice' && after.d.by === 'matt' && after.d.key === KEY && after.left === 0,
-      JSON.stringify(after)
-    );
-    ok(`${tag} no page errors`, errs.length === 0, errs.join(' | '));
-    await page.close();
-  }
-  // B-163 (Matt, Oct 22): a case-study handout holds several values; Your turn asks once per place, and his one tap keeps
-  // an answer per value. Two from one file and one from another: two asks, and It's made up on the file answers both.
-  for (const w of [390, 1280]) {
-    const tag = `[held grouped ${w}]`;
-    delete seed.system.yourturn;
-    const held = (key, kind, ref, at) => ({
-      schema: 1,
-      writer: 'canvas-sync',
-      at,
-      source: 'canvas-sync canvas-sync-20261022-1200',
-      release: 'v4.3.0',
-      key,
-      verdict: 'unsure',
-      reason: 'held for Matt: a run never passes a value on its own',
-      kind,
-      ref,
-      by: 'held',
-    });
-    const A = 'id-aaaaaaaaaaaaaaaa';
-    const B = 'id-bbbbbbbbbbbbbbbb';
-    const C = 'id-cccccccccccccccc';
-    seed.idchecks = {
-      [A]: held(A, 'has a date of birth', 'files/case-study-3', '2026-10-22T12:00:00Z'),
-      [B]: held(B, 'has a medical record number', 'files/case-study-3', '2026-10-22T12:00:01Z'),
-      [C]: held(C, 'has a date of birth', 'files/case-study-4', '2026-10-22T12:00:02Z'),
-    };
-    const page = await browser.newPage({ viewport: { width: w, height: w === 390 ? 844 : 860 }, colorScheme: 'dark' });
-    const errs = [];
-    page.on('pageerror', e => errs.push(e.message));
-    await page.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
-    await servePdfjs(page);
-    await openPage(page);
-    await page.waitForTimeout(1500);
-    const chips = await page.evaluate(() =>
-      [...document.querySelectorAll('#qchips button')].map(b => b.textContent.trim())
-    );
-    ok(`${tag} no Your turn chip on the greeting (B-358)`, !chips.some(c => /^Your turn/.test(c)), chips.join(' | '));
-    await send(page, 'Your turn');
-    await page.waitForTimeout(500);
-    const rows = await page.evaluate(() =>
-      [...document.querySelectorAll('#ev-surf .yt-held')].map(li => ({ ref: li.dataset.ref, text: li.textContent }))
-    );
-    ok(
-      `${tag} one row per file; the handout's row names how many and what kinds, never a value`,
-      rows.length === 2 &&
-        rows[0].ref === 'files/case-study-3' &&
-        /A run left out 2 details that could be a real patient’s \(a date of birth, a medical record number\)/.test(
-          rows[0].text
-        ) &&
-        /A run left out a date of birth/.test(rows[1].text),
-      JSON.stringify(rows)
-    );
-    await page.screenshot({ path: `${shots}/held-grouped-${w}.png` });
-    await page
-      .locator('#ev-surf .yt-held[data-ref="files/case-study-3"] .yt-chips button', { hasText: 'It’s made up' })
-      .click();
-    await page.waitForTimeout(600);
-    const after = await page.evaluate(
-      ([a, b, c]) => {
-        const db = window.__db.idchecks || {};
-        return {
-          a: db[a + '-matt'],
-          b: db[b + '-matt'],
-          c: db[c + '-matt'] || null,
-          left: [...document.querySelectorAll('#ev-surf .yt-held')].map(li => li.dataset.ref),
-        };
-      },
-      [A, B, C]
-    );
-    ok(
-      `${tag} one tap keeps an answer per value in that file, each with its own kind; the other file still asks`,
-      after.a &&
-        after.a.verdict === 'practice' &&
-        after.a.by === 'matt' &&
-        after.a.kind === 'has a date of birth' &&
-        after.b &&
-        after.b.verdict === 'practice' &&
-        after.b.kind === 'has a medical record number' &&
-        after.c === null &&
-        JSON.stringify(after.left) === JSON.stringify(['files/case-study-4']),
-      JSON.stringify(after)
+      `${tag} an old held verdict asks nothing: no held row, no made-up chip (D-324)`,
+      surf.held === 0 && !/real patient|It’s made up/.test(surf.text),
+      JSON.stringify(surf).slice(0, 300)
     );
     ok(`${tag} no page errors`, errs.length === 0, errs.join(' | '));
     await page.close();

@@ -36,7 +36,7 @@
     }
     // ---- Session filing from the page (Features: reader v2 list_sessions/read_session, core.intakeSession). Runs once
     // when E.V. Home opens where the reader answers (the desktop app on his Mac) and on "file it". Only findings ever
-    // leave the reader (never note text); a #graded session is left alone; a near-repeat waits on Same or Different.
+    // leave the reader (never note text); a near-repeat waits on Same or Different.
     const FILE = { running: null, opened: false, quiet: null };
     // Sessions waiting to be filed, for the greeting's File it chip (D-125 as amended): quiet filing on open is the main
     // path; the chip is the fallback when it cannot run (no Mac reader here, the reader unreachable) or left some behind.
@@ -75,8 +75,7 @@
                 cards: [],
               };
         const filed = [];
-        let graded = 0,
-          weak = 0,
+        let weak = 0,
           ideas = 0,
           asks = 0;
         const madeIdeas = []; // B-381: the ideas this pass filed, so a later file's ideas never land on them
@@ -90,10 +89,6 @@
           }
           if (!f || !f.found) {
             unread++;
-            continue;
-          }
-          if (f.graded) {
-            graded++;
             continue;
           }
           const r = E.intakeSession(
@@ -129,15 +124,7 @@
           asks += r.questions.length;
         }
         if (quiet) FILE.quiet = { ok: true, left: unread };
-        if (!filed.length)
-          return quiet && !graded
-            ? null
-            : {
-                text: graded
-                  ? `${plural(graded, 'session')} tagged #graded stayed out of the record. Nothing else new to file.`
-                  : 'Nothing new to file.',
-                cards: [],
-              };
+        if (!filed.length) return quiet ? null : { text: 'Nothing new to file.', cards: [] };
         const bits = [
           plural(filed.length, 'Study Watch session'),
           weak ? plural(weak, 'new weak spot') : '',
@@ -146,7 +133,7 @@
           .filter(Boolean)
           .join(', ');
         return {
-          text: `Filed ${bits}.${asks ? ' ' + (asks === 1 ? 'One near-repeat waits' : asks + ' near-repeats wait') + ' on Same or Different.' : ''}${graded ? ' Sessions tagged #graded stayed out.' : ''}`,
+          text: `Filed ${bits}.${asks ? ' ' + (asks === 1 ? 'One near-repeat waits' : asks + ' near-repeats wait') + ' on Same or Different.' : ''}`,
           cards: filed.slice(0, 3).map(id => ({ type: 'session', id })),
         };
       })().finally(() => {
@@ -169,8 +156,6 @@
       brief = String(brief || '')
         .trim()
         .slice(0, 1500);
-      const ids = idUnpassed(title + ' ' + brief); // B-197: values only; a practice one he passed goes on
-      if (ids.length) throw new Error(`The brief looks like it ${ids[0].why}. Take that detail out first.`);
       const st = new Date().toISOString().replace(/\D/g, '').slice(0, 14);
       const id = E.safeId(`job-${st.slice(0, 8)}-${st.slice(8)}-${E.slug(title, 24)}`);
       await write({
@@ -185,7 +170,7 @@
     }
     // B-180 (D-194): a message starting build:, bug: or idea: is a build ask, with no model call: the build-ask row
     // writes jobs/<id> (kind build, his words) and fires the builder with "Job <id>" and his message as typed; the
-    // job-fired row records the answer. An identifier holds it outright: a build ask's words go into the Chart.
+    // job-fired row records the answer.
     const BUILD_ASK = /^\s*(build|bug|idea)\s*:/i;
     // B-183 (D-197): "design" or "design: <theme>" asks the builder for the next design chat's kickoff; "file: <doc link>"
     // asks it to file a design doc's hand-off. Both are builder jobs like a build ask, each its own row.

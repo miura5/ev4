@@ -4,7 +4,7 @@
   "display_name": "E.V. Study Watch reader",
   "version": "0.3.0",
   "description": "Read-only: lets E.V. Home read your latest school note, E.V.'s context file and your Study Watch session files from Documents/E.V. Study Watch.",
-  "long_description": "E.V. Home, opened in the Claude desktop app, uses this to read context.json (written by E.V.'s evening run), live/latest.json (your latest NUR 112 or BIO 201 note, written by Study Watch in reader mode) and the session files in sessions/, so it can file your sessions the moment you open it. It cannot write or delete, reads nothing else, returns a session as its findings (never the note text or cards), skips notes and sessions tagged #graded, and never returns Journal, personal or E.V. folders.",
+  "long_description": "E.V. Home, opened in the Claude desktop app, uses this to read context.json (written by E.V.'s evening run), live/latest.json (your latest NUR 112 or BIO 201 note, written by Study Watch in reader mode) and the session files in sessions/, so it can file your sessions the moment you open it. It cannot write or delete, reads nothing else, returns a session as its findings (never the note text or cards), and never returns Journal, personal or E.V. folders.",
   "author": {
     "name": "Matt (E.V.)"
   },

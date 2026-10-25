@@ -65,8 +65,7 @@ npm run dev                             # http://localhost:8787, token demo-toke
 
 `npm ci --prefix pwa`, then `npm run smoke:pwa` from the repository root: the app's page boots through the shim against
 `wrangler dev` on a fresh local D1 holding the synthetic record, with a stub answering `/api/claude`. It checks boot,
-each tab, a check-off that survives a reload, a chat reply, and that a planted patient identifier is held by the page
-with no call to `/api/claude`. B-314: a study session runs with no note (start, a break, +5 minutes, Quiz me now, end),
+each tab, a check-off that survives a reload, and a chat reply. B-314: a study session runs with no note (start, a break, +5 minutes, Quiz me now, end),
 `use('mcp')` resolves null, and no request leaves the app (no Study Watch reader, no builder). The smoke workflow runs it on
 every push, and once more with `--plant page-error` to prove it turns red. B-322: a photographed page attached in the conversation reaches `/api/claude` as an image, the
 stub transcribes it and the reading is saved to the library in D1; a BMP is redrawn as a JPEG before it is sent.
@@ -89,10 +88,10 @@ once, in the app, instead of waiting on the scheduled worker. The page saves `jo
 with no mcp that ask finds none, and for a worker kind the shim records the hand-off as made and hands the job to
 `jobs.mjs`. It builds the job's brief with the worker pipeline's own code step (the kind's guide, with the passages,
 objectives, weak spots and dates core gathers), asks Haiku once through `/api/claude` with the do-job answer shape as a
-tool, and checks the reply as the worker run does: its shape, the job-result fold, the identifier check, each write's
+tool, and checks the reply as the worker run does: its shape, the job-result fold, each write's
 schema, writers and size. A reply that fails any of them writes nothing it made; the job is marked failed with the
 reason, to try again. What passes goes to D1 through the run API (`jobresults/<id>`, what the job made, one message in
-`talk/<date>`), pinned to versions. A brief asking for help on graded work is refused before any call (B-01). Two kinds
+`talk/<date>`), pinned to versions. Two kinds
 differ from claude.ai: a study guide is saved in E.V. (its text in the job's result and message), not as a Claude Doc;
 a shareable practice page is published on claude.ai only, so the app says so. Builder kinds stay off the app (D-304).
 In the browser the runner and the core modules it imports are served as ES modules (`build-pwa` copies them, with

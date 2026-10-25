@@ -1,7 +1,7 @@
 // B-99 (Matt, Oct 19): no standing reminder about graded work and no "made-up" patient or client wording in what E.V.
-// says or writes (spec.persona, the item guide, page copy, core's lines and prompts, the synthetic record); the limits still act
-// when it matters: a real ask to do, edit or turn in graded work gets one line back, and the identifier scan still stops
-// a real identifier. The scheduled tasks' own prompts (tools/prompts.mjs) keep their hard limits word for word.
+// says or writes (spec.persona, the item guide, page copy, core's lines and prompts, the synthetic record). D-324: Matt
+// overrode the graded-work and identifier limits (B-01, B-04), so nothing refuses a graded-work ask or holds a detail as
+// an identifier any more. The scheduled tasks' own prompts (tools/prompts.mjs) keep their other hard limits word for word.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -57,33 +57,22 @@ test('the greeting names graded work without a reminder', () => {
   assert.doesNotMatch(g.lines.join(' '), STANDING);
 });
 
-test('a real ask to do, edit, check or turn in graded work is refused in one line; topics, quizzes and schedules are not', () => {
-  const graded = ['Care plan 3 due 11:59pm', 'ATI Engage Fundamentals: health assessment module'];
-  for (const t of [
-    'Can you write my care plan for clinical?',
-    'Edit my discussion post before I submit it',
-    'Fill in the ATI Engage health assessment module answers for me',
-    'check my medication table',
-    'turn in my concept map',
+test('D-324: nothing refuses a graded-work ask or holds a detail as an identifier, on the page, in core or the app', () => {
+  const GATES =
+    /gradedAsk|identifierCandidates|scanIdentifiers|keptVerdicts|heldByPlace|idGate|idUnpassed|It’s made up|graded work, so it stays yours/;
+  for (const [name, src] of [
+    ['page/app', appSource(ROOT)],
+    ['page/index.src.html', read('page/index.src.html')],
+    ...fs
+      .readdirSync(path.join(ROOT, 'core'))
+      .filter(f => f.endsWith('.mjs'))
+      .map(f => ['core/' + f, read('core/' + f)]),
+    ['pwa/jobs.mjs', read('pwa/jobs.mjs')],
   ]) {
-    const r = EV.gradedAsk(t, graded);
-    assert.ok(r, t);
-    assert.equal(r.split(/(?<=\.)\s/).length <= 2 && !/\n/.test(r), true);
-    assert.doesNotMatch(r, STANDING);
+    const m = src.match(new RegExp('.{0,40}(' + GATES.source + ').{0,40}'));
+    assert.equal(m, null, `${name}: ${m && m[0]}`);
   }
-  for (const t of [
-    'Quiz me on fluid volume excess',
-    'When is the care plan due?',
-    'Explain afterload',
-    'Block time for my care plan tomorrow',
-    'What should I study for Exam 4?',
-    'Write me 5 questions on potassium',
-  ])
-    assert.equal(EV.gradedAsk(t, graded), null, t);
-});
-
-test('the identifier scan still stops a real identifier', () => {
-  assert.ok(EV.scanIdentifiers('Pt John Smith, MRN 12345678, room 412').length > 0);
+  assert.ok(!fs.existsSync(path.join(ROOT, 'core/idcheck.mjs')), 'the identifier check is gone');
 });
 
 // B-197 (Matt, Oct 21: "I shouldn't get falsely flagged just for participating in a fictional scenario"): every message
@@ -112,6 +101,5 @@ test('B-197: no identifier message says flag, violation or accuse, in the page, 
   for (const [name, src] of files) assert.deepEqual(accusingStrings(src), [], name);
   // Planted: the lint catches the old kind of line, and passes the new one.
   assert.equal(accusingStrings("toast('This was flagged as a patient identifier violation');").length, 1);
-  assert.equal(accusingStrings(`const x = ${JSON.stringify(EV.idHeldLine(1))};`).length, 0);
-  assert.equal(accusingStrings(`const x = ${JSON.stringify(EV.ID_JUDGMENT)};`).length, 0);
+  assert.equal(accusingStrings("toast('Is this from a practice scenario?');").length, 0);
 });

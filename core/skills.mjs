@@ -17,7 +17,6 @@ export function makeSkills(core) {
     isActive,
     isoOf,
     safeId,
-    scanIdentifiers,
     slug,
     toMs,
   } = core;
@@ -396,7 +395,7 @@ export function makeSkills(core) {
       data: { status: result.completed ? 'done' : 'stopped', endedAt: at, result },
     };
   }
-  /** The energy and mood line at the end (energy 1 to 5; mood in his words, at most 200 characters, no identifiers). */
+  /** The energy and mood line at the end (energy 1 to 5; mood in his words, at most 200 characters). */
   function workoutCheckin(w, { energy, mood } = {}) {
     const e = Number(energy);
     if (!(e >= 1 && e <= 5)) throw new Error('energy is 1 to 5');
@@ -404,7 +403,6 @@ export function makeSkills(core) {
       .replace(/\s+/g, ' ')
       .trim()
       .slice(0, 200);
-    if (scanIdentifiers(m).length) throw new Error('that note ' + scanIdentifiers(m)[0]);
     return { op: 'update', collection: 'workouts', id: w.id, data: { energy: Math.round(e), mood: m || null } };
   }
   /** One line for a finished workout, for the card, the list and the conversation. */

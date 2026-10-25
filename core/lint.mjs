@@ -11,7 +11,7 @@
 //   frozen           (info) D-090: a document carrying migratedAt or migratedTo is a frozen original, so is a v2 or v3
 //                    leftover (B-34), and a collection in spec.legacyCollections is v3's, kept by rule; each is one note
 //                    per collection, never an error
-// plus the content checks E.V. core has always run (items, orphans, duplicates, identifiers). The journal is never
+// plus the content checks E.V. core has always run (items, orphans, duplicates). The journal is never
 // read: it stays the page's (D-059).
 import EV from './evcore.mjs';
 import {

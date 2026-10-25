@@ -274,7 +274,7 @@ async function tickAll(page) {
           s.items.length >= 7 &&
           s.items.every(i => /^Clinical Orientation Mercy, p\. 2|^your clinical kit$/.test(i.c)) &&
           s.items.some(i => i.t === 'Penlight' && i.c === 'your clinical kit') &&
-          s.items.some(i => i.t === 'Clinical folder with your paperwork' && /filling it in is yours/.test(i.c)),
+          s.items.some(i => i.t === 'Clinical folder with your paperwork' && !/filling it in/.test(i.c)), // D-324
         JSON.stringify(s.items)
       );
       await page.screenshot({ path: `${shots}/prep-morning-open-${scheme}.png` });
@@ -643,11 +643,12 @@ async function tickAll(page) {
       await openRow('BIO 201 lab report draft');
       const g = await readPanel();
       ok(
-        // B-01 holds: no Start on graded work; B-374 (D-316): Snooze to tomorrow is offered on it, as the demo's
-        `${tag} a graded task shows no Start, Open or Remove, and its graded line`,
+        // No Start on graded work, as the demo; B-374 (D-316): Snooze to tomorrow is offered on it. D-324: no line
+        // that E.V. stays out of the work.
+        `${tag} a graded task shows no Start, Open or Remove, and its snooze line`,
         g.shown &&
           g.props.Category === 'Graded' &&
-          /^Graded work: E\.V\. helps you prepare, never with the work itself\.$/.test(g.note) &&
+          /^Snooze moves it to tomorrow, with Undo\.$/.test(g.note) &&
           !!g.props.Due &&
           !g.btns.some(b => /^(Start|Start the quiz|Open|Remove from today)$/.test(b)),
         JSON.stringify({ props: g.props, btns: g.btns })

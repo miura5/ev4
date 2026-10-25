@@ -23,7 +23,6 @@ export function makeSessions(core) {
     slug,
     toMs,
     openItemErrors,
-    scanIdentifiers,
   } = core;
 
   // ---------------------------------------------------------------- Study Watch session intake
@@ -346,7 +345,7 @@ export function makeSessions(core) {
       } else if (e.type === 'skip') {
         next = t + step;
         span = step;
-      } // the check couldn't run: no note yet, a #graded note, or what looked like an identifier
+      } // the check couldn't run: no note yet
       else if (e.type === 'break') {
         if (!st.onBreak) {
           st.onBreak = true;
@@ -434,8 +433,6 @@ export function makeSessions(core) {
 
   const SESSION_RULES = [
     "You are E.V., Matt's study partner for nursing school (" + courses().join(', ') + '). Follow these rules:',
-    '- Never help with graded or submitted work. If the note looks like a graded assignment, return no items.',
-    '- No patient identifiers, ever.',
     '- Ground everything in Matt\'s own note. Label anything from general knowledge "(check your materials)".',
     '- Ask before telling. Keep each item short and plain.',
   ].join('\n');
@@ -570,7 +567,6 @@ export function makeSessions(core) {
       ...(objective ? { objective } : {}),
       topic: topic || line.slice(0, 80),
     };
-    if (scanIdentifiers(line).length) return null;
     return openItemErrors(item).length ? null : item;
   }
   /** Normalizes a check reply: 1 to 3 items of plain text. Accepts {items:[...]}, an array, or numbered lines. */

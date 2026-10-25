@@ -548,8 +548,7 @@ export function planRestore(b, db, ctx, spec, name = 'backup', versions = regist
         continue;
       }
       // asWritten (B-163): the record already holds this document as the backup does; planRestore has checked its shape
-      // (a pre-v4 one has none to check), so the run's write check takes its shape and writer from here. The run's
-      // identifier stage still looks at every word of it (B-197).
+      // (a pre-v4 one has none to check), so the run's write check takes its shape and writer from here.
       writes.push({ op: 'set', collection: c, id: d.id, data: EV.docData(d), asWritten: true });
       have[d.id] = d;
     }
@@ -579,10 +578,9 @@ export function planRestore(b, db, ctx, spec, name = 'backup', versions = regist
 
 /**
  * B-317 (D-322): a Worker record's drill. The backup (a Mac backup or an R2 export, one shape) is checked against its
- * own manifest, held for anything that could be a real patient's (B-04: the drill then restores nothing), and planned
- * as writes into the scratch D1 under drills/<run id>/<collection>, new there, so nothing is replaced. It writes nothing
- * to the record but its own runs entry; the apply move restores, then reads the scratch back and checks every
- * collection's count and SHA-256 against the backup's manifest.
+ * own manifest and planned as writes into the scratch D1 under drills/<run id>/<collection>, new there, so nothing is
+ * replaced. It writes nothing to the record but its own runs entry; the apply move restores, then reads the scratch
+ * back and checks every collection's count and SHA-256 against the backup's manifest.
  */
 function restoreToScratch(answer, db, ctx, spec) {
   const file = path.join(ctx.dir, 'in', 'backup.json');
@@ -600,21 +598,6 @@ function restoreToScratch(answer, db, ctx, spec) {
   const left = b.docs.filter(d => D1B.perTarget(d.c, d.id)).length;
   b = { ...b, docs: b.docs.filter(d => !D1B.perTarget(d.c, d.id)) };
   b.collections = D1B.manifestSync(b.docs.map(d => ({ ...d })));
-  const IDC = EV;
-  const kept = IDC.keptVerdicts([
-    ...(db.idchecks || []),
-    ...b.docs.filter(d => d.c === 'idchecks').map(d => ({ id: d.id, ...JSON.parse(d.data) })),
-  ]);
-  const held = new Set();
-  for (const d of b.docs)
-    for (const c of IDC.identifierCandidates(d.data))
-      if (!kept[c.key] || kept[c.key].verdict !== 'practice') held.add(`${d.c}/${d.id}`);
-  if (held.size)
-    return {
-      problems: [
-        `${held.size} document${held.size === 1 ? '' : 's'} hold what could be a real patient's details (B-04); the drill restores nothing: ${[...held].slice(0, 3).join(', ')}`,
-      ],
-    };
   const scratch = (((spec.registry || {}).records || {})[ctx.record] || {}).runs || {};
   if (!scratch.scratch || !scratch.scratch.host)
     return { problems: ['spec names no scratch database for this record'] };

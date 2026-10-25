@@ -231,8 +231,6 @@
       renderThread();
     }
     const input = $('ev-input');
-    const guardEl = $('ev-guard');
-    let guardFor = null;
     const grow = () => {
       input.style.height = 'auto';
       input.style.height = Math.min(input.scrollHeight, 140) + 'px';
@@ -250,11 +248,6 @@
       grow();
       syncChips();
       typing(!!input.value.trim());
-      // B-197: nothing is said while he types; a field name alone is never a candidate, and a value is looked at on send.
-      if (!guardEl.hidden && guardFor !== input.value) {
-        guardEl.hidden = true;
-        guardEl.textContent = '';
-      }
     });
     input.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && matchMedia('(pointer: fine)').matches) {
@@ -276,20 +269,11 @@
         toast('Still loading your record.');
         return;
       }
-      // B-180: a build ask goes into the project record, so a value that could be an identifier holds it every time,
-      // practice or not (B-197: a field name alone passes). B-182: so does a typed reply to a Your turn item.
+      // B-180: a build ask goes into the project record; B-182: so does a typed reply to a Your turn item.
       if (
         BUILDER_HERE &&
         (BUILD_ASK.test(text) || REPLY_ASK.test(text) || DESIGN_ASK.test(text) || FILE_ASK.test(text))
       ) {
-        guardFor = null;
-        const w = E.identifierCandidates(text, { strict: true });
-        if (w.length) {
-          guardEl.hidden = false;
-          guardEl.textContent = `That looks like it ${w[0].why}. A build ask goes into the project record, so take that detail out first.`;
-          return;
-        }
-        guardEl.hidden = true;
         input.value = '';
         grow();
         typing(false);
@@ -302,38 +286,8 @@
         }
         return;
       }
-      // B-197: a value that might be an identifier is looked at with the words around it; practice goes straight on.
-      let g = { ok: true };
-      if (E.identifierCandidates(text, { strict: true }).length) {
-        guardFor = text;
-        guardEl.hidden = false;
-        guardEl.textContent = 'Checking one detail first…';
-        g = await idGate(text, { ref: 'talk/' + today, context: recentLines(8) });
-        if (input.value.trim() !== text) return; // he changed it meanwhile: his new words are checked on their own send
-      }
-      if (!g.ok) {
-        heldChoice(g);
-        return;
-      }
-      guardFor = null;
-      guardEl.hidden = true;
       await sendText(text);
     });
-    /** The last n lines of this conversation, as "Matt:" and "E.V.:", for the identifier judgment's context. */
-    function recentLines(n) {
-      return allMsgs()
-        .filter(m => !m.pending && m.text)
-        .slice(-n)
-        .map(m => (m.role === 'matt' ? 'Matt: ' : 'E.V.: ') + String(m.text).replace(/\s+/g, ' ').slice(0, 300))
-        .join('\n');
-    }
-    function heldChoice(g) {
-      idChoice(guardEl, g, t => {
-        guardFor = null;
-        guardEl.hidden = true;
-        return sendText(t);
-      });
-    }
     // B-290 (P-5): "note: …" saves his words as a note in Record's ideas, the same save as New › Note, with no model
     // call; "idea: …" stays a build ask (BUILD_ASK).
     const NOTE_ASK = /^\s*note\s*:\s*(\S[\s\S]*)$/i;

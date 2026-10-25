@@ -536,47 +536,24 @@ export function makePrep(core) {
 
   // ---------------------------------------------------------------- clinical-prep brief (D-103, B-46)
   // A worker job of kind clinical-prep reads the next clinical's calendar entry, the clinical and lab materials, his
-  // open skill weak spots and any instructor note; never the graded clinical paperwork. The read set is decided here,
-  // by each file's section and title, so the worker is never handed a graded form to read or draft.
-  const GRADED_CLINICAL = [
-    ['data prep sheet', /\bdata\s*(collection|prep(aration)?)\b|\bprep(aration)?\s*sheet/i],
-    ['judgment map', /\bjudg(e)?ment\s*map/i],
-    ['drug cards', /\bdrug\s*cards?\b/i],
-    ['medication table', /\bmed(ication)?s?\s*(table|sheet|list|administration\s*record)\b/i],
-    ['medication table', /\bMAR\b/],
-    ['care plan', /\bcare\s*plan|\bconcept\s*map/i],
-    ['clinical paperwork', /\bpaperwork\b|\bclinical\s*(forms?|packet\s*(to\s*)?submit|submission)/i],
-  ];
-  /** Why a material is graded clinical paperwork (by its section, then its title), or null. */
-  function gradedClinicalPaperwork(m) {
-    for (const where of ['section', 'title']) {
-      const t = String((m && m[where]) || '');
-      for (const [why, re] of GRADED_CLINICAL) if (re.test(t)) return `${why} (${where})`;
-    }
-    return null;
-  }
+  // open skill weak spots and any instructor note. The read set is decided here (D-324: nothing is left out as graded).
   const CLINICAL_TEXT = /\b(clinical|skills?|lab|validation|packet|checklist|procedure)s?\b/i;
   /**
    * The clinical-prep job's read set: the course's clinical and lab materials (by kind, or a section or title that
-   * names clinical, skills, lab, a packet or a checklist), less the graded clinical paperwork. Returns {read, left},
-   * left as [{id, title, why}] so the brief can say what it did not open.
+   * names clinical, skills, lab, a packet or a checklist). Returns {read}.
    */
   function clinicalReadSet(materials, course) {
     const want = course ? normCourse(course) : null;
-    const read = [],
-      left = [];
+    const read = [];
     for (const m of materials || []) {
       if (!m) continue;
       if (want && normCourse(m.course) && normCourse(m.course) !== want) continue;
       const clinical =
         ['clinical', 'lab'].includes(m.kind) ||
         CLINICAL_TEXT.test(`${m.section || ''} ${m.title || ''} ${m.module || ''}`);
-      if (!clinical) continue;
-      const why = gradedClinicalPaperwork(m);
-      if (why) left.push({ id: m.id, title: m.title, why });
-      else read.push(m);
+      if (clinical) read.push(m);
     }
-    return { read, left };
+    return { read };
   }
   /** The next clinical day on or after `date` (a prepDay of kind clinical), or null. */
   function nextClinical(dates, dateedits, date) {
@@ -609,7 +586,6 @@ export function makePrep(core) {
     prepBringItems,
     prepList,
     prepEdit,
-    gradedClinicalPaperwork,
     clinicalReadSet,
     nextClinical,
     clinicalPrepOffer,

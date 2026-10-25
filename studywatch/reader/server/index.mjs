@@ -43,7 +43,7 @@ const TOOLS = [
     name: 'latest_note',
     title: 'Latest school note',
     description:
-      'The school note Study Watch saved last (NUR 112 or BIO 201 only): id, name, folder, file (its path under the notes folder), title (course › first heading), line (the line being written), modified time and plain text. Pass sinceModifiedAt (ISO time from the previous call) to get unchanged:true without the text when nothing new was written. Notes tagged #graded come back as graded:true with no text.',
+      'The school note Study Watch saved last (NUR 112 or BIO 201 only): id, name, folder, file (its path under the notes folder), title (course › first heading), line (the line being written), modified time and plain text. Pass sinceModifiedAt (ISO time from the previous call) to get unchanged:true without the text when nothing new was written.',
     inputSchema: {
       type: 'object',
       properties: { sinceModifiedAt: { type: 'string', description: 'ISO time of the last version you already have' } },
@@ -67,7 +67,7 @@ const TOOLS = [
     name: 'read_session',
     title: 'One Study Watch session',
     description:
-      "One session's findings, as E.V. files them: id, date, times, note name, minutes, checks, questions, how it ended, the summary, weak spots, connections, note to-dos and the card count, plus the file's size and sha256. Never the note's text or the cards. A session tagged #graded comes back as graded:true with nothing else.",
+      "One session's findings, as E.V. files them: id, date, times, note name, minutes, checks, questions, how it ended, the summary, weak spots, connections, note to-dos and the card count, plus the file's size and sha256. Never the note's text or the cards.",
     inputSchema: {
       type: 'object',
       properties: { id: { type: 'string', description: 'A session id from list_sessions' } },
@@ -207,9 +207,7 @@ function latestNote(args = {}) {
       hint: 'The saved note is not in NUR 112 or BIO 201, so E.V. will not read it.',
     };
   const text = String(n.text || '');
-  const graded = d.graded || /#graded\b/i.test(text);
-  // A graded note's title comes from its name only: nothing of its text leaves the reader.
-  const where = noteWhere(n, graded ? '' : text);
+  const where = noteWhere(n, text);
   const head = {
     found: true,
     writtenAt: d.writtenAt || null,
@@ -221,10 +219,9 @@ function latestNote(args = {}) {
       modifiedAt: n.modifiedAt || null,
       file: where.file,
       title: where.title,
-      ...(graded ? {} : { line: where.line }),
+      line: where.line,
     },
   };
-  if (graded) return { ...head, graded: true };
   if (args.sinceModifiedAt && n.modifiedAt && Date.parse(n.modifiedAt) <= Date.parse(args.sinceModifiedAt))
     return { ...head, unchanged: true };
   const truncated = text.length > MAX_TEXT_CHARS;
@@ -324,7 +321,6 @@ function readSession(args = {}) {
     throw new ToolError(`session ${id} is not valid JSON`);
   }
   const head = { found: true, id, bytes: s.bytes, sha256: s.sha256, modifiedAt: s.modifiedAt };
-  if (d.graded || /#graded\b/i.test([d.note, d.summary].join(' '))) return { ...head, graded: true };
   return { ...head, ...sessionFindings(d || {}) };
 }
 

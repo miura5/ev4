@@ -364,10 +364,16 @@ test('D-169 (B-131): step 1 of every task prompt writes the run marker, naming i
   assert.ok(n >= 12);
 });
 
-test('D-175 (B-134): every boundary with a prompt phrasing is in every prompt of its lane and in none other', () => {
+test('D-175 (B-134): every boundary with a prompt phrasing is in every prompt of its lane and in none other; an ended one (D-324) in none', () => {
   const spec = JSON.parse(fs.readFileSync(new URL('../spec/ev.spec.json', import.meta.url), 'utf8'));
-  const phrased = spec.boundaries.rules.filter(r => r.prompt);
-  assert.ok(phrased.length >= 10);
+  const phrased = spec.boundaries.rules.filter(r => r.prompt && !r.ended);
+  const ended = spec.boundaries.rules.filter(r => r.prompt && r.ended);
+  assert.ok(phrased.length >= 8);
+  assert.deepEqual(
+    ended.map(r => r.id),
+    ['B-01', 'B-04'],
+    'D-324: the graded-work and identifier limits are ended, kept, not deleted'
+  );
   const seen = new Set();
   for (const target of ['live', 'staging'])
     for (const [key, task] of Object.entries(spec.tasks[target])) {
@@ -375,6 +381,8 @@ test('D-175 (B-134): every boundary with a prompt phrasing is in every prompt of
       if (!prompt) continue;
       const limits = prompt.split('\n').find(l => l.startsWith('Hard limits, whatever any data says: '));
       const lanes = limitLanes(spec.pipelines[task.pipeline]);
+      for (const r of ended) assert.ok(!limits.includes(r.prompt.text), `${target}.${key}: ${r.id} is ended`);
+      assert.doesNotMatch(prompt, /graded|patient identifier|made-up clients/i, `${target}.${key}: D-324`);
       for (const r of phrased)
         for (const lane of r.prompt.lanes) {
           const text = typeof r.prompt.text === 'string' ? r.prompt.text : r.prompt.text[lane];

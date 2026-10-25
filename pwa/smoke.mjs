@@ -2,15 +2,14 @@
 // The app's smoke (B-313): the page the app serves, booted through the shim against `wrangler dev` with a local D1
 // seeded with the synthetic record (test/data/synthetic.cjs; nothing here is Matt's), and a stub in place of the
 // Claude API (the browser's /api/claude answered here and every call recorded). At 390 and 1280: boot with no page
-// error, each tab, a check-off that survives a reload (the reload reads it back from D1), a chat reply from the stub,
-// and a chat message with a planted patient identifier stopped by the page's gate with no call to /api/claude. B-314:
+// error, each tab, a check-off that survives a reload (the reload reads it back from D1) and a chat reply from the
+// stub. B-314:
 // the shim offers no mcp (use('mcp') resolves null), a study session runs with no note (start, Break and Resume,
 // +5 minutes, Quiz me now, End), and no request leaves the app for a host: server or Claude Code Remote. B-322: a
 // photographed page attached in the conversation reaches /api/claude as an image and its reading lands in D1. B-324:
 // one job of each kind in spec.jobs, started from the conversation (the stub calls start_job), runs at once through
 // the shim and /api/claude (the stub answers with the job's answer tool) and its result is read back from D1; a planted
-// reply that fails the checks writes nothing it made, and a brief asking for help on graded work is refused before any
-// call. B-394: a send the record refuses keeps his words in the box, beside what he has started typing, and E.V. never
+// reply that fails the checks writes nothing it made. B-394: a send the record refuses keeps his words in the box, beside what he has started typing, and E.V. never
 // answers it.
 //   node pwa/smoke.mjs [screenshots dir] [--plant page-error]      (npm run smoke:pwa; needs `npm ci --prefix pwa`)
 // Exit code 1 when any counted check fails. --plant page-error makes the served app.js throw once the page is up, to
@@ -22,7 +21,6 @@ import os from 'node:os';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
-import { makeIdCheck } from '../core/idcheck.mjs';
 import { briefOf, jobReply, PLANTS, STUB_TEXT } from './job-stub.mjs';
 
 const require = createRequire(import.meta.url);
@@ -45,12 +43,6 @@ if (!fs.existsSync(WRANGLER)) {
   process.exit(2);
 }
 
-// A made-up record number, and the verdict the page already keeps for it: a value judged real before is held by the
-// page's gate at once, with no new judgment (B-197), so no call reaches /api/claude.
-const ID = makeIdCheck();
-const PLANTED_ID = 'MRN 4417203';
-const PLANTED_KEY = ID.identifierCandidates('Her ' + PLANTED_ID, { strict: true })[0].key;
-
 const run = (cmd, argv, opts = {}) => execFileSync(cmd, argv, { cwd: ROOT, stdio: 'pipe', ...opts }).toString();
 const freePort = () =>
   new Promise((ok, no) => {
@@ -68,22 +60,7 @@ function prepare() {
   run('node', ['tools/build.mjs']);
   run('node', ['tools/build-pwa.mjs', '--record', 'staging']);
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-smoke-pwa-d1-'));
-  const q = s => "'" + String(s).replace(/'/g, "''") + "'";
-  const verdict = {
-    schema: 1,
-    writer: 'page',
-    at: new Date().toISOString(),
-    source: 'E.V. Home',
-    key: PLANTED_KEY,
-    verdict: 'real',
-    reason: 'reads as a real patient',
-    kind: 'has a medical record number',
-    ref: 'smoke',
-    by: 'judgment',
-  };
-  const seed =
-    run('node', ['seed.mjs'], { cwd: PWA }) +
-    `INSERT INTO docs (c, id, data, at) VALUES ('idchecks', ${q(PLANTED_KEY)}, ${q(JSON.stringify(verdict))}, ${Date.now()});\n`;
+  const seed = run('node', ['seed.mjs'], { cwd: PWA });
   fs.writeFileSync(path.join(dir, 'seed.sql'), seed);
   for (const file of [path.join(PWA, 'schema.sql'), path.join(dir, 'seed.sql')])
     run(WRANGLER, ['d1', 'execute', 'ev-demo', '--local', '--persist-to', dir, '--file', file], { cwd: PWA });
@@ -138,7 +115,6 @@ const SMOKE_JOBS = {
   'clinical-prep': { kind: 'clinical-prep', brief: '2026-10-28: the skills to review.' },
   'share-set': { kind: 'share-set', brief: 'drill-E4-ch39 for my study group.' },
   general: { kind: 'general', brief: 'List the major electrolytes and their normal ranges.' },
-  graded: { kind: 'general', brief: 'Proofread my graded care plan draft before I submit it.' },
   'plant-shape': { kind: 'general', title: PLANTS.shape, brief: 'Anything.' },
   'plant-plan': { kind: 'exam-plan', title: PLANTS.plan, brief: 'A study plan for E4.' },
 };
@@ -422,37 +398,7 @@ async function main() {
                 .catch(() => '')))
       );
 
-      // 5. A planted patient identifier: the page's gate holds the message, and nothing goes to /api/claude.
-      await idle();
-      const sent = calls.length;
-      await page.fill('#ev-input', `My patient today, ${PLANTED_ID}, had a heart rate of 112. Is that high?`);
-      await page.locator('#ev-form').evaluate(f => f.requestSubmit());
-      const held = await until(
-        page,
-        () => {
-          const g = document.getElementById('ev-guard');
-          return !!g && !g.hidden && /\S/.test(g.textContent) && !/Checking one detail/.test(g.textContent);
-        },
-        null,
-        5000
-      );
-      await page.waitForTimeout(800);
-      const leaked = await page.evaluate(
-        v => [...document.querySelectorAll('#thread .msg')].some(m => m.textContent.includes(v)),
-        PLANTED_ID
-      );
-      ok(
-        `${tag} a planted patient identifier is held by the page's gate, with no call to /api/claude`,
-        held && !leaked && calls.length === sent,
-        JSON.stringify({
-          guard: await page.evaluate(() => (document.getElementById('ev-guard') || {}).textContent || ''),
-          calls: calls.length - sent,
-          inThread: leaked,
-        })
-      );
-      await page.fill('#ev-input', '');
-
-      // 5b. B-394, B-395: a send the record refuses (every save of the conversation answered 409, so the shim's one
+      // 5. B-394, B-395: a send the record refuses (every save of the conversation answered 409, so the shim's one
       // retry is refused too), held until he has started typing a new line: his refused words come back into the box
       // after what he is typing, which stays exactly as he typed it; nothing of it stays in the thread, and nothing goes
       // to /api/claude, so E.V. never answers it. Two lines sent back to back are both refused: they come back in the
@@ -697,7 +643,7 @@ async function main() {
 
       // 9. B-324: one job of each kind, started from the conversation, run at once through the shim and /api/claude, its
       // result read back from D1 (once, at the first width: the record is shared). A planted bad reply writes nothing it
-      // made; a brief asking for help on graded work is refused before any call.
+      // made.
       if (scheme === '390') {
         const got = async () =>
           fetch(origin + '/api/db?since=0', { headers: { authorization: 'Bearer ' + TOKEN } })
@@ -729,7 +675,7 @@ async function main() {
             .filter(d => d.c === 'talk')
             .flatMap(d => Object.entries(d.data.messages || {}))
             .filter(([k, m]) => m.jobId === id && /-job$/.test(k)); // the job's own message (the chat's reply names it too)
-        const kinds = Object.keys(SMOKE_JOBS).filter(n => !/^(graded|plant-)/.test(n));
+        const kinds = Object.keys(SMOKE_JOBS).filter(n => !/^plant-/.test(n));
         const bad = [];
         for (const name of kinds) {
           const { job, res, asked } = ran[name];
@@ -780,13 +726,6 @@ async function main() {
         )
           held.push('plant-plan: its plan was written');
         ok(`${tag} a planted reply that fails the checks writes nothing it made`, held.length === 0, held.join(' | '));
-        const g = ran.graded;
-        const gr = g.res && g.res.data;
-        ok(
-          `${tag} a brief asking for help on graded work is refused before any call`,
-          !!gr && gr.status === 'failed' && /graded work/.test(gr.error || '') && g.asked === 0,
-          JSON.stringify({ status: gr && gr.status, error: gr && gr.error, asks: g.asked })
-        );
       }
 
       await page.screenshot({ path: `${shots}/smoke-pwa-${scheme}.png` });

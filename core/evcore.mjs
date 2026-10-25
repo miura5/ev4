@@ -22,7 +22,6 @@ import { makeMirror } from './mirror.mjs';
 import { makeCanvasRules } from './canvas-rules.mjs';
 import { makeShare } from './share.mjs';
 import { makeItemKinds } from './item-kinds.mjs';
-import { makeIdCheck } from './idcheck.mjs';
 const EVCore = (() => {
   'use strict';
   const VERSION = '__EV_RELEASE__'; // B-149: the build writes the release in (tools/build.mjs RELEASE_SLOT)
@@ -389,7 +388,6 @@ const EVCore = (() => {
     get SPEC() {
       return SPEC;
     },
-    scanIdentifiers: t => scanIdentifiers(t),
   });
   // ---------------------------------------------------------------- items
   function itemType(q) {
@@ -1746,38 +1744,6 @@ const EVCore = (() => {
   });
   const { isPrepAdded, prepDay, prepKindOf, prepList } = PREP;
 
-  // ---------------------------------------------------------------- graded work (B-99)
-  // The graded-work limit speaks only when a request crosses it: no standing reminder anywhere, and a real ask to do,
-  // edit, check or turn in graded work gets one line back without a model call.
-  const GRADED_ACT =
-    /\b(write|do|finish|complete|edit|fix|proofread|check|grade|answer|fill (?:in|out)|turn (?:it |this |that )?in|submit|redo|rewrite|draft|word)\b/;
-  const GRADED_WORK =
-    /\b(graded|for (?:a )?grade|for credit|care plans?|discussion posts?|medication tables?|narrative notes?|clinical judgment maps?|concept maps?|my (?:assignment|quiz|paper|essay|homework))\b/;
-  const GRADED_ONE_LINE = 'That’s graded work, so it stays yours. I can block time for it or quiz you on the topic.';
-  /** The one-line refusal when text asks E.V. to do, edit, check or turn in graded work (by its words, or by naming a
-   *  graded calendar entry), else null. Asking about a topic, a quiz or a schedule is not that. */
-  function gradedAsk(text, gradedTitles = []) {
-    const t = norm(text);
-    if (!t || !GRADED_ACT.test(t)) return null;
-    if (
-      /\b(quiz me|schedule|block time|remind me|when is|when s)\b/.test(t) &&
-      !/\b(write|edit|fix|submit|turn in|fill)\b/.test(t)
-    )
-      return null;
-    const words = new Set(t.split(' '));
-    const names = (gradedTitles || []).some(x => {
-      const k = [
-        ...new Set(
-          norm(x)
-            .split(' ')
-            .filter(w => w.length > 3 && !STOP.has(w) && !/^\d+$/.test(w))
-        ),
-      ];
-      return k.length >= 2 && k.filter(w => words.has(w)).length >= Math.min(3, k.length);
-    });
-    return GRADED_WORK.test(t) || names ? GRADED_ONE_LINE : null;
-  }
-
   // ---------------------------------------------------------------- calendar edits (D-080)
   // His calendar is dates/<id> (Facts: canvas-sync writes Canvas's, the page writes the ones Matt or E.V. add) plus the
   // page's dateedits/<id> beside each (an Edit, replaced whole): removed {at, by}, notes, and field overrides. Taking an
@@ -2140,21 +2106,6 @@ const EVCore = (() => {
   const { examViews } = INSIGHTS;
 
   // ---------------------------------------------------------------- lint
-  const ID_PATTERNS = [
-    {
-      re: /\b(?:MRN|medical record (?:no|number)|DOB|date of birth)\b/i,
-      why: 'mentions a record number or date of birth',
-    },
-    { re: /\broom\s*#?\s*\d{1,4}[a-z]?\b/i, why: 'mentions a room number' },
-    { re: /\b(0?[1-9]|1[0-2])\/(0?[1-9]|[12]\d|3[01])\/(19[2-9]\d|200\d)\b/, why: 'looks like a birth date' },
-    { re: /\b\d{7,10}\b/, why: 'long number that could be a record number' },
-  ];
-  function scanIdentifiers(text) {
-    const out = [];
-    for (const p of ID_PATTERNS) if (p.re.test(String(text || ''))) out.push(p.why);
-    return out;
-  }
-  const IDC = makeIdCheck(); // B-197: the value patterns only nominate; core/idcheck.mjs judges
   function lint(db, { date } = {}) {
     const issues = [];
     const add = (severity, code, ref, msg) => issues.push({ severity, code, ref, msg });
@@ -2194,18 +2145,6 @@ const EVCore = (() => {
       else if (!objIds.has(w.objective))
         add('warning', 'unknown-objective', `weakspots/${w.id}`, 'objective not in the record: ' + w.objective);
     }
-    const texts = [
-      ...(db.sessions || []).map(s => ['sessions/' + s.id, (s.summary || '') + ' ' + (s.topic || '')]),
-      ...(db.journal || []).map(j => ['journal/' + j.id, j.text || '']),
-      ...(db.ideas || []).map(i => ['ideas/' + i.id, i.text || '']),
-      ...(db.weakspots || []).map(w => ['weakspots/' + w.id, w.topic || '']),
-    ];
-    // B-197: a value the patterns nominate and no kept verdict has looked at yet; practice ones are kept and say nothing.
-    const kept = IDC.keptVerdicts(db.idchecks);
-    for (const [ref, t] of texts)
-      for (const c of IDC.identifierCandidates(t))
-        if (!kept[c.key] || kept[c.key].verdict !== 'practice')
-          add('warning', 'possible-identifier', ref, c.why + ': not yet looked at with the words around it (B-04)');
     if (date)
       for (const e of examViews(db.exams, db.examedits, db.predictions).sort((a, b) => (a.id < b.id ? -1 : 1)))
         if (e.date && e.date < date && e.status !== 'done' && typeof e.score !== 'number' && examIs(e, 'scoredKinds'))
@@ -2289,7 +2228,6 @@ const EVCore = (() => {
     slug,
     toMs,
     openItemErrors,
-    scanIdentifiers,
   });
 
   // ---------------------------------------------------------------- skills practice (Features: "Skills practice mode"); workouts (D-108) · core/skills.mjs (B-158)
@@ -2311,7 +2249,6 @@ const EVCore = (() => {
     isActive,
     isoOf,
     safeId,
-    scanIdentifiers,
     slug,
     toMs,
   });
@@ -2342,7 +2279,6 @@ const EVCore = (() => {
     // B-155..B-160: each factory's names, spread whole (library keeps stripHtml to itself)
     ...CONV, // B-129: greeting, situation, headlinePrompt, checkHeadline and the conversation names
     ...PREP, // prep checks (D-143, D-144, D-204) and the clinical-prep brief (D-103, B-46)
-    ...IDC, // B-197: candidates, fingerprints, the judgment and its kept verdicts
     ...LIB, // course materials (D-079); B-78: parseCite, citeTarget
     ...INSIGHTS, // readiness, prediction, calibration, retrospectives and the readiness audit
     ...MIRROR, // the Markdown mirror and the backup's restore plan
@@ -2439,7 +2375,6 @@ const EVCore = (() => {
     dayView,
     dayeditBase,
     listEdit,
-    gradedAsk,
     DATE_KINDS,
     dateEdit,
     dateView,
@@ -2458,7 +2393,6 @@ const EVCore = (() => {
     buildContext,
     // trust
     lint,
-    scanIdentifiers,
     autoParkEvents,
   };
 })();

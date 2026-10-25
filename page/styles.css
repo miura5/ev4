@@ -265,9 +265,6 @@ body.opening .msg.greet .msg-cards{display:grid;grid-template-columns:repeat(aut
 .compose-row button svg{width:18px;height:18px}
 .compose-row .attach{background:transparent;border-color:transparent;color:var(--soft)}.compose-row .attach:hover{color:var(--ink);background:rgba(var(--tint),.05)}
 #p-ev.drop .compose-row{border-color:var(--accent)}
-/* B-197: a held detail is a question for him, never an error: soft words, and his two choices under them. */
-.guard{font-size:calc(14px * var(--ts));color:var(--soft);margin:0;display:flex;flex-direction:column;gap:8px}
-.guard-row{display:flex;gap:8px;flex-wrap:wrap}
 .fine{font:500 calc(12px * var(--ts)) var(--sans);color:var(--faint);text-align:center;margin:0}
 /* E.V.: a running study session (B-84, the Captions v2 artboard): one line, a dot, the minutes and the next check,
    Break, +5, End; its progress is the ring round her core */

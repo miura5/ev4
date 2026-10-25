@@ -125,7 +125,6 @@
         });
       } catch {}
     }
-    const idWhy = w => (/^(mentions|looks|has)/.test(w) ? w : 'has a ' + w);
 
     async function startSession() {
       unlockAudio();
@@ -159,8 +158,6 @@
           [],
         ];
       const n = bare ? { id: '', name: 'Study session', folder: '' } : p.note || {};
-      if (!bare && p.graded)
-        return [`**${n.name}** is tagged #graded, so I stay out of it. Open another note and start again.`, []];
       const at = now();
       const stamp = at.replace(/\D/g, '').slice(0, 14);
       const mark = E.noteMark(n.text || '');
@@ -261,13 +258,6 @@
           return;
         }
         const note = p.note || {};
-        if (p.graded) {
-          await skip(
-            'graded',
-            `**${note.name}** is tagged #graded, so I’m staying out of it. Checks pick up when you’re back in a study note.`
-          );
-          return;
-        }
         const base = quiz ? st.lastQuizMark : st.lastMark;
         const mark = base && base.noteId === note.id ? base : null;
         const text = String(note.text || '');
@@ -275,11 +265,6 @@
         if (d.same && quiz) d = { added: text.slice(-(SWC.fallbackChars || 2500)), same: false, rewritten: true }; // Quiz me now on an unchanged note: the note so far
         if (d.same) {
           await sessEvent(s, 'idle');
-          return;
-        }
-        const ids = idUnpassed(d.added).map(c => c.why); // B-197: values only (a note's "verify DOB" is no candidate)
-        if (ids.length) {
-          await skip('identifiers', `Your new writing ${idWhy(ids[0])}. I skipped this check.`);
           return;
         }
         const msg = msgId('e');
@@ -410,7 +395,7 @@
         } catch {
           return;
         }
-        if (!p || !p.found || p.graded) return;
+        if (!p || !p.found) return;
         const note = p.note || {};
         const text = String(note.text || '');
         const prev = SS.text;
@@ -435,16 +420,6 @@
           return;
         const seenNext = grew ? SS.seen + added : text;
         const before = grew ? SS.seen.slice(-800) : '';
-        const ids = idUnpassed(added).map(c => c.why);
-        if (ids.length) {
-          SS.seen = seenNext;
-          if (!SS.said.has('identifiers')) {
-            SS.said.add('identifiers');
-            await sessEvent(s, 'skip', { why: 'identifiers' });
-            await evSay(`Your new writing ${idWhy(ids[0])}, so I skipped reading it.`, [], { tier: 'local' });
-          }
-          return;
-        }
         if (!sample || T.sampleOff) return;
         SS.lastAsk = Date.now();
         SS.thinking = true;
@@ -528,8 +503,8 @@
           }
           return;
         }
-        if (!p.found || p.graded) {
-          await sessEvent(s, 'skip', { why: p.graded ? 'graded' : 'no-note' });
+        if (!p.found) {
+          await sessEvent(s, 'skip', { why: 'no-note' });
           return;
         }
         const note = p.note || {};

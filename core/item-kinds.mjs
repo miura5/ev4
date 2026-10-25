@@ -6,7 +6,6 @@
 
 export function makeItemKinds(core) {
   'use strict';
-  const { scanIdentifiers } = core;
 
   /** spec.items.open: the limits an open item and its answer keep. */
   const OPEN = () =>
@@ -29,7 +28,7 @@ export function makeItemKinds(core) {
   /**
    * B-75 (D-132): an open item's check function. One question of at most 25 words; 2 or 3 key points of at most 12 words,
    * each with keyword groups (a group is the words that can stand for one idea; the local grade needs one word of every
-   * group); a model answer; the sourceRef of the note line or passage it stands on; no identifier anywhere in it.
+   * group); a model answer; the sourceRef of the note line or passage it stands on.
    */
   function openItemErrors(q) {
     const o = OPEN(),
@@ -55,9 +54,6 @@ export function makeItemKinds(core) {
     if (typeof q.modelAnswer !== 'string' || !q.modelAnswer.trim()) errors.push('an open item needs a model answer');
     if (typeof q.sourceRef !== 'string' || !q.sourceRef.trim()) errors.push('an open item needs its sourceRef');
     if (q.options || q.correct || q.matrix || q.answer != null) errors.push('an open item has no options or answer');
-    const all = [q.stem, q.modelAnswer, ...(Array.isArray(kp) ? kp.map(k => k && k.text) : [])].join('\n');
-    const ids = scanIdentifiers(all);
-    if (ids.length) errors.push('an open item ' + ids[0]);
     return errors;
   }
   /** A word as the local grade compares it: lower case, letters and digits only, a plural s dropped. */
@@ -128,7 +124,7 @@ export function makeItemKinds(core) {
 
   /**
    * B-43 (D-100): dosage material, the only ground a numeric item stands on: a library file whose title or module matches
-   * spec.items.dosage.match and not .skip (the syllabus, a calendar, drug cards or a medication table, B-01).
+   * spec.items.dosage.match and not .skip (the syllabus, a calendar, drug cards or a medication table).
    */
   function isDosageMaterial(m) {
     const d = (core.SPEC && core.SPEC.items && core.SPEC.items.dosage) || {};

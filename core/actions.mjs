@@ -196,31 +196,6 @@ export function makeActions(validateAgainst) {
     'plan-ask': jobAsk('plan'),
     'ship-it': jobAsk('ship'),
     // B-180: the fire_trigger's answer on the job the page just fired, so its card says queued or not started.
-    // B-197: identifier verdicts the page keeps, one document per value's fingerprint; his own answer beside it (-matt).
-    'id-check': (args, ctx) => {
-      const at = ctx.now || new Date().toISOString();
-      return {
-        writes: args.checks.map(c => ({
-          op: 'set',
-          collection: 'idchecks',
-          id: c.by === 'matt' ? c.key + '-matt' : c.key,
-          data: {
-            schema: 1,
-            writer: 'page',
-            at,
-            source: 'E.V. Home',
-            ...(ctx.release ? { release: ctx.release } : {}),
-            key: c.key,
-            verdict: c.verdict,
-            reason: c.reason,
-            kind: c.kind,
-            ref: c.ref,
-            by: c.by,
-          },
-        })),
-        effects: [],
-      };
-    },
     'job-fired': args => ({
       writes: [{ op: 'update', collection: 'jobs', id: args.job, data: { fired: args.fired } }],
       effects: [],

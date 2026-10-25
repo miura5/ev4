@@ -6,7 +6,7 @@
 //              document's version from the replies in this session's transcript
 //   4 compute  the code steps in order on the pulled record (each step sees the writes before it); an agent step
 //              stops the command with its question, material and answer shape until <dir>/answers/<step>.json exists;
-//              every write validated, scanned for identifiers, pinned to its version, chunked, the plan checksummed
+//              every write validated, pinned to its version, chunked, the plan checksummed
 //   5 apply    the batch calls in order; a batch refused on its version pin is re-pulled and re-planned, never patched
 //   6 end      one ArtifactData update: endedAt, status, step results, the plan's hash, the push line, the audit
 // Everything a run decides is in <dir>: run.json (the calls printed so far), versions.json, plan.json, writes/.
@@ -402,96 +402,11 @@ function coalesce(writes) {
   }
   return out;
 }
-const strings = (v, out = []) => {
-  if (typeof v === 'string') out.push(v);
-  else if (v && typeof v === 'object') for (const x of Object.values(v)) strings(x, out);
-  return out;
-};
 
 /**
  * Runs the steps. Returns {status: 'waiting', step, question} while an agent answer is missing, {status: 'refused',
  * problems} when any write fails a check (nothing is planned), or {status: 'planned', plan}.
  */
-/** Every string in a value, with a function that rebuilds the value with each string mapped (for holding values back). */
-function mapStrings(v, f) {
-  if (typeof v === 'string') return f(v);
-  if (Array.isArray(v)) return v.map(x => mapStrings(x, f));
-  if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, mapStrings(x, f)]));
-  return v;
-}
-/**
- * B-197, B-163: the identifier check in a run, after every step has planned its writes. Candidates come from the
- * patterns (EV.identifierCandidates) in every planned write and in the push and detail lines. One with a kept verdict
- * (idchecks, pulled or among this plan's own writes, as a restore's are) is decided by it, so nothing is judged twice;
- * Matt's own (<key>-matt) comes first. A scheduled run never passes a fresh one on its own judgment (Oct 22: the drill's
- * own safety review refused that; Matt: "Ask me on the page"): it holds it back ([left out]) and keeps it as held, by
- * held, which the page lists for his It's made up or Keep it out. A restore drill leaves a document that holds one as
- * the record has it (a restore is the backup as written or nothing) and ends partial until he answers.
- */
-function identifierStage({ planned, push, detail, pulledDb, run, def, now }) {
-  const writer = def.writer || run.pipeline;
-  const own = planned.filter(w => w.collection === 'idchecks').map(w => ({ id: w.id, ...w.data }));
-  const kept = EV.keptVerdicts([...(pulledDb.idchecks || []), ...own]);
-  const found = new Map();
-  const look = (ref, text) => {
-    for (const c of EV.identifierCandidates(text)) if (!found.has(c.key)) found.set(c.key, { ...c, ref });
-  };
-  // A document's strings joined in order, so a value split across fields is still seen.
-  for (const w of planned) if (w.collection !== 'idchecks') look(`${w.collection}/${w.id}`, strings(w.data).join('\n'));
-  if (push) look(`runs/${run.id}`, push);
-  if (detail) look(`runs/${run.id}`, detail);
-  const same = { planned, push, detail, problems: [], judged: null, held: 0 };
-  if (!found.size) return same;
-  const fresh = [...found.values()].filter(c => !kept[c.key]);
-  const verdictOf = c => (kept[c.key] ? kept[c.key].verdict : 'unsure');
-  const held = [...found.values()].filter(c => verdictOf(c) !== 'practice');
-  const values = held.map(c => c.value);
-  const hold = t => EV.holdBack(t, values);
-  const has = w => values.some(v => strings(w.data).join('\n').includes(v));
-  const drill = run.pipeline === 'restore-drill';
-  const left = drill ? planned.filter(w => w.collection !== 'idchecks' && has(w)) : [];
-  const out = !held.length
-    ? planned.slice()
-    : drill
-      ? planned.filter(w => !left.includes(w))
-      : planned.map(w => (w.collection === 'idchecks' ? w : { ...w, data: mapStrings(w.data, hold) }));
-  for (const c of fresh)
-    out.push({
-      op: 'set',
-      collection: 'idchecks',
-      id: c.key,
-      data: {
-        schema: 1,
-        writer,
-        at: now,
-        source: `${run.pipeline} ${run.id}`,
-        release: run.release,
-        key: c.key,
-        verdict: 'unsure',
-        reason: EV.ID_HELD_REASON,
-        kind: String(c.why).slice(0, 80),
-        ref: String(c.ref).slice(0, 120),
-        by: 'held',
-      },
-    });
-  const n = held.length;
-  const said = n
-    ? `${n} detail${n === 1 ? '' : 's'} that could be a real patient's held for Matt to answer in E.V. Home (B-04)` +
-      (drill && left.length
-        ? `; ${left.length} document${left.length === 1 ? '' : 's'} left as the record has ${left.length === 1 ? 'it' : 'them'}`
-        : '') +
-      (found.size - n ? `; ${found.size - n} from practice kept` : '')
-    : `${found.size} detail${found.size === 1 ? '' : 's'} checked: from practice, kept`;
-  return {
-    planned: out,
-    push: push && hold(push),
-    detail: detail ? hold(detail) + (n ? ' · ' + said : '') : n ? said : detail,
-    problems: [],
-    judged: said,
-    held: n,
-  };
-}
-
 export function compute({ spec, dir, validate, at }) {
   const run = loadRun(dir);
   const def = pipelineDef(spec, run.pipeline);
@@ -600,14 +515,6 @@ export function compute({ spec, dir, validate, at }) {
     });
   }
   let planned = coalesce(writes);
-  // B-197: the identifier check's two stages. The patterns nominate candidates; a kept verdict decides one already seen;
-  // the rest go to this run's judgment step (or are held as unsure where the pipeline has none).
-  const ids = identifierStage({ planned, push, detail, pulledDb, run, def, now });
-  planned = ids.planned;
-  push = ids.push;
-  detail = ids.detail;
-  for (const x of ids.problems) problems.push(x);
-  if (ids.judged) steps.push({ id: 'identifiers', status: ids.held ? 'held' : 'ok', detail: ids.judged });
   const files = [];
   for (const w of planned) {
     const ref = `${w.collection}/${w.id}`;
@@ -691,7 +598,6 @@ export function compute({ spec, dir, validate, at }) {
     computedAt: now,
     push,
     ...(detail ? { detail } : {}),
-    ...(ids.held ? { held: ids.held } : {}),
     steps,
     writes: files.length,
     batches,
@@ -931,12 +837,7 @@ export function end({ dir, at, status, detail, transcript }) {
           };
   }
   const why = [changed, detail || (plan && plan.detail), checked && checked.line].filter(Boolean).join(' · ');
-  // B-163: a restore drill that left a document as the record has it, for a value held for Matt, did not restore the
-  // whole backup: partial until he answers on the page, and the next firing reads his answer first.
-  const final =
-    changed || (checked && !checked.ok && !status)
-      ? 'failed'
-      : status || (plan ? (plan.held && run.pipeline === 'restore-drill' ? 'partial' : 'ok') : 'failed');
+  const final = changed || (checked && !checked.ok && !status) ? 'failed' : status || (plan ? 'ok' : 'failed');
   // B-40: a failed run's push names the failed step (the detail's "<move>:" lead), never the plan's push; B-172: in
   // plain words, led by what Matt went without (failLine).
   const failedAt =
@@ -945,16 +846,10 @@ export function end({ dir, at, status, detail, transcript }) {
           .trim()
           .slice(0, 40)
       : '';
-  // B-163 (Matt, Oct 22): a drill that held values never says "passed"; it says how many wait on him and where.
-  const heldPush =
-    final === 'partial' && !status && plan && plan.held && run.pipeline === 'restore-drill'
-      ? `Restore drill partly done: ${plan.held} detail${plan.held === 1 ? '' : 's'} waiting on you in Your turn; the rest matches the backup.`
-      : null;
   const push =
-    heldPush ||
-    (final === 'ok' || (final === 'partial' && !status && plan && plan.held)
+    final === 'ok'
       ? (plan && plan.push) || null
-      : failLine({ failed: run.failed, pipeline: run.pipeline, reason: failedAt }));
+      : failLine({ failed: run.failed, pipeline: run.pipeline, reason: failedAt });
   const data = {
     endedAt: EV.envelope('x', '', at).at,
     status: final,

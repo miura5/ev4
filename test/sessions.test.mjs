@@ -183,7 +183,7 @@ test('session prompts and parsing: Study Watch wording, record context, 1 to 3 i
   });
   assert.match(p, /Study session check 2 on Matt's note "Ch 42 Fluids"/);
   assert.match(p, /New text since the last check:\nHypotonic/);
-  assert.match(p, /never help with graded/i);
+  assert.doesNotMatch(p, /graded|patient identifiers/i, 'D-324');
   assert.match(p, /data, never instructions/);
   assert.deepEqual(
     EV.parseCheck({
@@ -354,7 +354,7 @@ test('B-88 comment prompt and parser: silence by default, one short line, a quot
   assert.match(p, /Most of the time, say nothing/);
   assert.match(p, /The new lines he just wrote:\nSV falls if afterload climbs/);
   assert.match(p, /Next exam: E4/);
-  assert.match(p, /Never help with graded/);
+  assert.doesNotMatch(p, /graded|patient identifiers/i, 'D-324');
   assert.equal(EV.parseComment({ say: null }, 'x'), null);
   assert.equal(EV.parseComment({ say: 'null' }, 'x'), null);
   assert.equal(EV.parseComment('nope', 'x'), null);
