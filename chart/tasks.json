@@ -5874,11 +5874,11 @@
   "title": "Fidelity: the task panel as in the demo. An opened task replaces the panel's other cards; its properties sit in a card; Status is a To do / Done switch; Course and Topic rows show whenever the record has them.",
   "dod": "Matches the 'a task opened' board; opening a task leaves no other card in the panel; the switch ticks the task. Proof (D-312, fidelity sprint): node tools/build.mjs, then tools/fidelity's demo and built screenshots read side by side at 1280, 1706, 2560 and 390, plus npm run smoke; then ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-332"
   ],
-  "notes": "Its own lane after the frame (Matt, Oct 25: as fast as possible).",
+  "notes": "claimed by lane task",
   "commit": null,
   "source": "fidelity review, Oct 25 (D-312)"
  },
