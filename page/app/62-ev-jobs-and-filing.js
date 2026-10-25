@@ -124,7 +124,7 @@
           await run(writes);
           filed.push(r.id);
           weak += writes.filter(w => w.collection === 'weakspots' && w.op === 'set').length;
-          for (const w of writes) if (w.collection === 'ideas') madeIdeas.push(w.id);
+          for (const w of writes) if (w.collection === 'ideas') madeIdeas.push({ id: w.id, ...w.data }); // B-388: text and status, so a later file links
           ideas += writes.filter(w => w.collection === 'ideas').length;
           asks += r.questions.length;
         }

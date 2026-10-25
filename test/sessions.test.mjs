@@ -475,6 +475,28 @@ test('B-388: two sessions on one open topic make one idea; the second links to i
   assert.deepEqual(d.linked, []);
 });
 
+test('B-388: two Study Watch files in one evening pass naming one open topic make one idea', async () => {
+  // as the page's filing pass (page/app/62-ev-jobs-and-filing.js): each file's ideas join madeIdeas as documents
+  const files = ['sw-a', 'sw-b'].map((id, i) => ({
+    id,
+    date: '2026-10-18',
+    startedAt: `2026-10-18T1${4 + i}:00:00Z`,
+    note: 'Ch 42',
+    weakSpots: [{ topic: 'Why the kidneys hold sodium' }],
+  }));
+  const madeIdeas = [];
+  let made = 0;
+  for (const f of files) {
+    const r = EV.intakeSession(f, { ideas: [...madeIdeas], now: '2026-10-18T20:00:00Z', writer: 'page' });
+    for (const w of r.writes) if (w.collection === 'ideas') madeIdeas.push({ id: w.id, ...w.data });
+    made += r.writes.filter(w => w.collection === 'ideas').length;
+  }
+  assert.equal(made, 1, 'the second file links to the first file’s idea');
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../page/app/62-ev-jobs-and-filing.js', import.meta.url), 'utf8');
+  assert.match(src, /madeIdeas\.push\(\{ id: w\.id, \.\.\.w\.data \}\)/, 'the pass keeps each idea’s text and status');
+});
+
 test('B-381: E.V.’s save_idea and a session’s findings never land on an idea already there', () => {
   const at = '2026-10-18T15:04:09.000Z';
   const first = EV.ideaId('Potassium links insulin and the ECG', { at, date: '2026-10-18' });
