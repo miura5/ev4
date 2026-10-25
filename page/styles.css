@@ -1456,6 +1456,16 @@ button.btn:disabled{opacity:.45;cursor:default}
 #today-changes .ct{color:var(--text);overflow-wrap:break-word}
 #today-changes .mini{font-size:calc(12.5px * var(--ts));color:var(--faint)}
 #today-changes .chg-none{padding-top:8px}
+/* B-382 (D-317): the rubric wave. The week's seven columns are equal widths whatever the titles; a card's title wraps
+   between words (a word longer than the column is hyphenated) and stops at three lines with an ellipsis (its full title on hover). The whole task row opens it. */
+@media (min-width:1200px){#today-week .wk-days{grid-template-columns:repeat(7,minmax(0,1fr))}}
+#today-week .wchip .wc-t{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden;white-space:normal;text-overflow:ellipsis;overflow-wrap:break-word;word-break:normal;-webkit-hyphens:auto;hyphens:auto}
+#today-week .wchip.wk-list .wc-t{-webkit-line-clamp:2;line-clamp:2}
+#today-week .wchip.wk-list .wc-s{white-space:normal;align-items:baseline}
+#today-week .wchip.wk-list .wc-s .dot{transform:translateY(-1px)}
+#today-list .ti-list>.li.today-item:not(.ti-off),#today-list .ti-folded>.li.today-item{cursor:pointer}
+/* Coming up in her panel: each day ends at the card's right edge, as the demo's (the day's box is wider than it) */
+#ev-dates .wk-line .when{text-align:right}
 /* B-364 (D-312): an opened task is the TaskDetail board's full view at every size: the header's back arrow before
    "Today" (no line under it), the head row (breadcrumb, N of M, up and down) across the pane, the 22 px title with its
    tick, the description and Where it came from in a 720 px column; the right panel (under it below 1200 px) holds the

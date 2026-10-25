@@ -192,10 +192,10 @@
       nm.setAttribute('aria-controls', 'today-task');
       nm.setAttribute('aria-expanded', String(sel));
       nm.addEventListener('click', () => openTask(it.id));
-      // B-343: on the phone a tap anywhere on the row's free space opens the task, as the name does
+      // B-343, B-382: a click anywhere on the row's free space opens the task, as the name does, at every width
       if (!o.off)
         li.addEventListener('click', e => {
-          if (phone() && !e.target.closest('button, label, input, a')) openTask(it.id);
+          if (!e.target.closest('button, label, input, a')) openTask(it.id);
         });
       li.append(tk, nm);
       const due = it.tag === 'GRADED' ? gradedDue(it) : null;
@@ -475,14 +475,13 @@
       const due = it.tag === 'GRADED' ? gradedDue(it) : today;
       const b = BADGE[it.tag];
       const by = w => (w === 'Matt' ? 'you' : 'E.V.');
-      // B-355 (D-314): where it came from as the demo's rows: what put it on the list, with when on the right
-      const at = iso => (iso ? (E.chicagoDate(iso) === today ? clock12(iso) : short(E.chicagoDate(iso))) : '');
+      // B-355 (D-314): where it came from as the demo's rows: what put it on the list, with when on the right.
+      // B-382: in plain words, as the demo's (Added by E.V. ... · Today); never a run's clock time.
+      const at = iso => (iso ? (E.chicagoDate(iso) === today ? 'Today' : short(E.chicagoDate(iso))) : '');
       const from = [
         add
           ? { t: 'Added by ' + by(add.by || it.by), when: at(add.at) }
-          : day.live
-            ? { t: 'Built live from your record', when: '' }
-            : { t: 'Planned by the 4:25 am run', when: at(day.at) },
+          : { t: 'Added by E.V. when she planned your day', when: day.live ? 'Today' : at(day.at) },
         exam ? { t: 'From the ' + (exam.title || exam.id) + ' plan', when: '' } : null,
         it.deferred ? { t: 'Deferred: over today’s budget', when: '' } : null,
       ].filter(Boolean);
@@ -1137,6 +1136,14 @@
       return nav;
     }
     const dayName = d => new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' });
+    // B-382: the week's banner on one line: the count, then the next one or two graded dates, a long title cut at a
+    // word with an ellipsis.
+    const cutTitle = (t, max = 42) => {
+      t = String(t || '');
+      if (t.length <= max) return t;
+      const c = t.slice(0, max + 1).replace(/[\s,:;–-]+\S*$/, '');
+      return (c.length > 12 ? c : t.slice(0, max)).replace(/[\s,:;–-]+$/, '') + '…';
+    };
     function gradedLine(entries) {
       const g = entries.filter(d => d.graded && !E.isRemovedDate(d));
       const n = g.length;
@@ -1146,12 +1153,18 @@
           : (['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'][n] || String(n)) +
             ' graded dates') + ' in the next 7 days';
       if (!n) return head + '.';
-      const each = g.map(
-        d =>
-          d.title +
-          (d.date === today ? ' today' : d.date === E.addDays(today, 1) ? ' tomorrow' : ' on ' + dayName(d.date))
-      );
-      return head + ': ' + (each.length > 1 ? each.slice(0, -1).join(', ') + ' and ' + each.at(-1) : each[0]) + '.';
+      const each = g
+        .slice(0, 2)
+        .map(
+          d =>
+            cutTitle(d.title) +
+            (d.date === today
+              ? ' today'
+              : d.date === E.addDays(today, 1)
+                ? ' tomorrow'
+                : ' on ' + dayName(d.date).slice(0, 3))
+        );
+      return head + '. Next: ' + each.join(', then ') + '.';
     }
     const relDay = d => {
       const n = Math.round((Date.parse(d + 'T12:00:00Z') - Date.parse(today + 'T12:00:00Z')) / 864e5);
@@ -1281,6 +1294,7 @@
       if (!box) {
         box = el('div', 'card');
         box.id = 'today-week';
+        box.lang = 'en'; // B-382: lets a word too long for its column hyphenate
         main.append(box);
         panel = el('div', 'wk-panel');
         panel.id = 'today-date';
@@ -1442,7 +1456,8 @@
     function dateEditButton(d, label, cls) {
       const off = E.isRemovedDate(d);
       if (!off && E.isFixedDate(d)) return null;
-      const b = btn(off ? 'Bring back' : label, null, { cls });
+      // B-382: Bring back is a real button, as the demo's neutral one, wherever the date shows
+      const b = btn(off ? 'Bring back' : label, null, { cls: off ? cls.replace(/\bghost\b/, 'neutral') : cls });
       b.setAttribute('aria-label', (off ? 'Bring back: ' : label + ' from the calendar: ') + (d.title || ''));
       b.addEventListener('click', () =>
         guard(
