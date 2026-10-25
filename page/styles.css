@@ -1474,3 +1474,20 @@ button.btn:disabled{opacity:.45;cursor:default}
   .rec-list .rec-detail{padding:14px 16px 18px}
   .rec-props .prop{min-height:34px}
 }
+
+/* ============================================================ B-333 (D-312): her insight strip, as in the demo ========
+   One sentence and at most one action under the header on Today and Study, sticky with it; it spans the window as the
+   header does, and from 1200 px the right panel starts under it. The week's own line moves up into it. */
+:root{--line-h:0px}
+.evline{position:sticky;top:var(--mh-h);z-index:7;display:flex;align-items:center;gap:10px;min-height:40px;box-sizing:border-box;
+  margin:0 calc(-1 * max(16px,env(safe-area-inset-right,0px))) 0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));
+  padding:4px 8px 4px 16px;background:var(--bg);border-bottom:1px solid var(--line);font:400 calc(13px * var(--ts))/1.45 var(--sans);color:var(--text);flex-wrap:wrap}
+.evline[hidden]{display:none}
+.evline .el-ico{width:14px;height:14px;flex:0 0 14px;fill:none;stroke:var(--quiet);stroke-width:1.8;stroke-linejoin:round}
+.evline .el-t{flex:1 1 0;min-width:0}
+.evline .btn{flex:0 0 auto}
+body.has-line #today-week .wk-her{display:none}
+@media (min-width:600px){
+  .evline{top:calc(8px + var(--mh-h));margin-right:calc(8px - 16px - var(--pane-r));padding:4px 12px 4px 18px;flex-wrap:nowrap;min-height:49px}
+  body.has-line{--panel-top:calc(8px + var(--mh-h) + var(--line-h))}
+}

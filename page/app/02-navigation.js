@@ -30,6 +30,7 @@
       if (head && b) head.textContent = b.title;
       placeSegs(t);
       renderStudySide(); // B-223 (D-245): the Study panel only while Study is the view
+      renderLine(); // B-333: her insight strip follows the view
       if (was !== t) {
         window.scrollTo(0, t === 'ev' && was ? document.documentElement.scrollHeight : 0);
         enter($('p-' + t));
