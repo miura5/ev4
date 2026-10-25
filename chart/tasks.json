@@ -6703,10 +6703,10 @@
  {
   "id": "B-376",
   "kind": "request",
-  "title": "Request (reported Oct 25): Review 3: the quiz results never propose misses as weak spots with Accept all and Review.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "title": "Fidelity fix: Task (wave 4, the quiz runner page/app/05-question-runner.js): results with misses read 'N misses are proposed as weak spots.' with Accept all and Review, as StudyResults, for any miss; Accept all accepts them through the existing weak-spot write",
+  "dod": "StudyResults matches at 1280 and 390 after a quiz with misses; Accept all files them. Proof (D-312): node tools/build.mjs; screenshots side by side with the demo at 1280 and 390 on both records for every state named; npm run smoke; ship staging GREEN. Real-shaped record to prove on (it is how Matt's record is): d=$(node -e \"console.log(require('./test/data/synthetic.cjs').recordDir('synthetic'))\"); cp -r $d /tmp/noobj; rm -f /tmp/noobj/objectives/*.json (an exam with no objectives); then RECORD_DIR=/tmp/noobj node tools/fidelity/crawl.cjs built 1280 (and 390), and the same without RECORD_DIR. The UI reviewer's pairs are in /home/claude/ui-review3/pairs/ when the run shares the machine.",
+  "milestone": "v4.8 redesign",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -6715,6 +6715,10 @@
   "reportedAt": "2026-10-25T15:48:14.048Z",
   "board": {
    "row": "v4 B-376: Review 3: the quiz results never propose misses as weak spots with…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-25T15:48:14.462Z"
   }
  }
 ]
