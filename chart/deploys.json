@@ -4678,5 +4678,22 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "5ec196a",
+  "time": "2026-10-25T15:57:52.306Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "812ca4c",
+  "tasks": [
+   "B-357",
+   "B-375"
+  ],
+  "summary": "The tests and the page harnesses still assert the old UI; they are…; Review 3: Study drops its right panel for an exam with no objectives,…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
