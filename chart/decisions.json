@@ -1,5 +1,17 @@
 [
  {
+  "id": "D-316",
+  "date": "Oct 25",
+  "title": "No exceptions to the demo: Record matches the Record board with no Log / Dates / Journal / Canvas / Library tabs; those screens leave the page (their data stays in the record, nothing deleted). Every view is its demo board.",
+  "why": "Matt, Oct 25: the demo went through four revisions and two independent reviews and was shaped to translate into the hand-off's tasks; he wants the demo UI with no exceptions.",
+  "status": "accepted",
+  "supersedes": [
+   "D-314"
+  ],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-315",
   "date": "Oct 25",
   "title": "The approved demo is the UI: every view, tab, opened row, popover and state looks and lays out as its demo board (tools/fidelity/demo), on real-shaped data, from 390 to 2560 px; Record keeps its Log, Dates, Journal, Canvas and Library tabs (D-314). Every earlier tenet, decision, correction and check about the page's look, layout, copy or sizes that the demo does not keep is retired with it; behaviour, data-safety, contrast and motion rules stay.",
@@ -36,7 +48,7 @@
   "date": "Oct 25",
   "title": "The demo wins over the hand-off's build corrections C-1 to C-16 everywhere (D-313 widened); Record keeps its Log, Dates, Journal, Canvas and Library tabs; the extras the demo lacks go: the Auto theme, the System link in Preferences, the paperclip in the field and the phone's Preferences button",
   "why": "Matt, Oct 25: where the demo and the corrections disagree he wants the demo, and none of the extras kept.",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [
    "D-313"
   ],
