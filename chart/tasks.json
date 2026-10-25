@@ -5290,11 +5290,11 @@
   "title": "Task panel (C-10, D-282): a task opens in the right panel (below 1200 px, under the pane), with status, category, estimate, due, course and topic. \"Where it came from\" shows who added it and when, plus the planner's note. Start is the primary only when the task can start, and never on graded work. Snooze to tomorrow (repurposed) and Remove from today sit here.",
   "dod": "Screenshots at 390 and 1280 in light and dark with a study task and a graded task open. No full-page view, previous and next, or description paragraph. Snooze writes today's take-off plus tomorrow's add, and Undo reverses both. Remove writes the existing take-off. A graded task shows no Start.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-291"
   ],
-  "notes": "",
+  "notes": "claimed by lane today",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
