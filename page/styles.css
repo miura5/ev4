@@ -1095,7 +1095,15 @@ button.btn:disabled{opacity:.45;cursor:default}
 @media (max-width:599px){
   #today-list .ti-review{padding:8px}
   #today-list .ti-review .btn{flex:1}
-  #today-list .li .ti-acc,#today-list .li .ti-keep{padding:0 8px}
+  /* a proposed row keeps its whole name: the name and time on the row's 44 px line, the badge, Accept and Keep on a
+     second 44 px line under the name */
+  #today-list .li.ti-propose{height:auto;flex-wrap:wrap;row-gap:0;align-content:flex-start}
+  #today-list .li.ti-propose>*{order:3}
+  #today-list .li.ti-propose>:is(.tk,.nm,.t){order:1;height:44px;display:flex;align-items:center}
+  #today-list .li.ti-propose>.nm{flex:1 0 calc(100% - 110px);white-space:normal}
+  #today-list .li.ti-propose>.nm .ti-t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #today-list .li.ti-propose>.badge{margin-left:26px}
+  #today-list .li.ti-propose>.ti-keep{margin-right:auto}
 }
 /* ============================================================ B-297 (D-283, C-1, C-8, C-13): Study's overview ========
    The toolbar (the view tabs sit beside the title from 600 px), then the exam header with its readiness bar and one

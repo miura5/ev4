@@ -2153,6 +2153,7 @@ async function sideBySide(browser, left, right, out, vp) {
     await page.screenshot({ path: `${shots}/captions-reduced-${label}.png` });
     await ctx.close();
   }
+  const SETTLED = { 'D-147': ['today-budget'] };
   // B-78 (D-123, D-125, D-126): the surfaces at 390, 735 and 1280 px. A reply with three cards opens one surface with
   // two rows under its head line; the tenet checks hold on the E.V. tab with it open, with no new exception; a library
   // citation in her current line and in an earlier one opens the passage (file, page, Read from here) in place of the
@@ -2215,7 +2216,9 @@ async function sideBySide(browser, left, right, out, vp) {
       const bad = judge(snap, TEN.exceptions).filter(c => !c.ok);
       ok(
         `[surfaces ${tag}] the tenet checks pass on the E.V. tab with the surface open, with no new exception`,
-        !bad.length && Object.values(TEN.exceptions).every(x => !x.length),
+        // B-293: the exceptions the spec records are the ones settled; any other is new. D-147's today-budget is B-292's
+        // card he reads (C-5), excused in spec.ui.tenets, and it is not on the E.V. tab.
+        !bad.length && Object.entries(TEN.exceptions).every(([k, x]) => x.every(id => (SETTLED[k] || []).includes(id))),
         JSON.stringify(bad)
       );
       // B-244: the review card in the surface reads no larger than her line above it

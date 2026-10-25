@@ -135,7 +135,10 @@
       const doneNow = isDone(it);
       const go = openItem(it);
       const text = String(it.text || '').replace(/\s*\(~?\d+\s*min\)\s*$/i, '');
-      const li = el('li', 'li today-item' + (doneNow ? ' done' : '') + (openRows.has(it.id) ? ' open' : ''));
+      const li = el(
+        'li',
+        'li today-item' + (doneNow ? ' done' : '') + (openRows.has(it.id) ? ' open' : '') + (o.off ? ' ti-propose' : '')
+      );
       li.dataset.id = it.id;
       const tk = el('label', 'tk');
       const c = document.createElement('input');
@@ -391,7 +394,7 @@
       return [ok, keep];
     }
     function proposedAddRow(P, p) {
-      const li = el('li', 'li today-item ti-prop');
+      const li = el('li', 'li today-item ti-prop ti-propose');
       li.dataset.id = p.id;
       li.append(el('span', 'tk ti-gap'));
       const nm = el('span', 'nm ti-nm');

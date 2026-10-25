@@ -763,6 +763,10 @@ async function tickAll(page) {
               badges: [...li.querySelectorAll('.badge')].map(label),
               buttons: [...li.querySelectorAll('button.btn')].map(label),
               h: Math.round(li.getBoundingClientRect().height),
+              whole: (t => t && t.scrollWidth <= t.clientWidth + 1)(li.querySelector('.ti-t')),
+              timeTop: (t => t && Math.round(t.getBoundingClientRect().top - li.getBoundingClientRect().top))(
+                li.querySelector('.t')
+              ),
             })),
             line: line ? line.textContent : null,
             lineButtons: line ? [...line.querySelectorAll('button')].map(label) : [],
@@ -789,9 +793,18 @@ async function tickAll(page) {
           /take “Read Ch 40: acid-base balance” off today \(planned for /.test(a.line || ''),
         JSON.stringify(a)
       );
+      // from 600 px a proposed row is the standard 32 px row; on the phone its name and time keep the row's 44 px line
+      // and the badge, Accept and Keep sit on a second 44 px line under the name, so the whole name shows
       ok(
-        `${tag} each proposed row is a standard ${want} px row with one "Proposed" badge and Accept and Keep`,
-        a.prop.every(p => p.h === want && p.badges.join() === 'Proposed' && p.buttons.join() === 'Accept,Keep'),
+        `${tag} each proposed row has its whole name, one "Proposed" badge and Accept and Keep, ${w < 600 ? 'on two 44 px lines with the time on the first' : 'on one 32 px row'}`,
+        a.prop.every(
+          p =>
+            (w < 600 ? Math.abs(p.h - 88) <= 1 : p.h === 32) && // two lines and the row's 1 px rule
+            p.whole &&
+            p.timeTop < (w < 600 ? 44 : 32) &&
+            p.badges.join() === 'Proposed' &&
+            p.buttons.join() === 'Accept,Keep'
+        ),
         JSON.stringify(a.prop)
       );
       ok(
@@ -817,34 +830,62 @@ async function tickAll(page) {
           (await writes()) === before,
         JSON.stringify({ kept: k.prop.map(p => p.id), after: r.prop.length, writes: (await writes()) - before })
       );
-      // Accept all: one write, the add and the take-off, each by E.V.
+      // Accept all (light), or each row's Accept in turn (dark): the add and the take-off, each by E.V.
       await page.click('#today-list .ti-rest');
       await page.waitForTimeout(200);
-      await page.locator('#today-list .ti-review button', { hasText: 'Accept all' }).click();
-      await page.waitForTimeout(400);
-      const wr = await page.evaluate(() => window.__writes.filter(x => x[1] === 'dayedits'));
-      const mine = wr.slice(before);
-      const doc = mine.length === 1 && mine[0][3];
-      const added = doc ? Object.values(doc.added || {}) : [];
-      const sk = doc && doc.skipped && doc.skipped['plan-p293-later'];
-      ok(
-        `${tag} Accept all writes one add and one take-off edit by E.V.`,
-        mine.length === 1 &&
-          mine[0][2] === today &&
-          added.length === 1 &&
-          /^Drill: potassium imbalances/.test(added[0].text) &&
-          added[0].by === 'E.V.' &&
-          added[0].minutes === 25 &&
-          sk &&
-          sk.by === 'E.V.',
-        JSON.stringify(mine)
-      );
+      const dayeditWrites = () => page.evaluate(n => window.__writes.filter(x => x[1] === 'dayedits').slice(n), before);
+      const edits = doc => ({
+        added: doc ? Object.values(doc.added || {}) : [],
+        sk: doc && doc.skipped && doc.skipped['plan-p293-later'],
+      });
+      const good = ({ added, sk }) =>
+        added.length === 1 &&
+        /^Drill: potassium imbalances/.test(added[0].text) &&
+        added[0].by === 'E.V.' &&
+        added[0].minutes === 25 &&
+        sk &&
+        sk.by === 'E.V.';
+      if (scheme === 'light') {
+        await page.locator('#today-list .ti-review button', { hasText: 'Accept all' }).click();
+        await page.waitForTimeout(400);
+        const mine = await dayeditWrites();
+        ok(
+          `${tag} Accept all writes one add and one take-off edit by E.V., in one write`,
+          mine.length === 1 && mine[0][2] === today && good(edits(mine[0][3])),
+          JSON.stringify(mine)
+        );
+      } else {
+        await page.locator('#today-list li.ti-propose:not(.ti-prop) .ti-acc').click();
+        await page.waitForTimeout(400);
+        const one = await dayeditWrites();
+        const mid = await read();
+        const e1 = edits(one[0] && one[0][3]);
+        ok(
+          `${tag} a row's Accept writes its one take-off by E.V.; the addition stays proposed`,
+          one.length === 1 &&
+            e1.sk &&
+            e1.sk.by === 'E.V.' &&
+            !e1.added.length &&
+            mid.prop.length === 1 &&
+            mid.prop[0].id === 'plan-p293-new' &&
+            mid.restDisabled,
+          JSON.stringify({ one, mid: mid.prop })
+        );
+        await page.locator('#today-list li.ti-prop .ti-acc').click();
+        await page.waitForTimeout(400);
+        const two = await dayeditWrites();
+        ok(
+          `${tag} then the addition's Accept writes the add by E.V., keeping the take-off`,
+          two.length === 2 && good(edits(two[1][3])),
+          JSON.stringify(two.slice(1))
+        );
+      }
       const after = await read();
       const rows = await page.evaluate(() =>
         [...document.querySelectorAll('#today-list .ti-list > li .ti-t')].map(t => t.textContent)
       );
       ok(
-        `${tag} after Accept all the drill is on the list, the reading is off and the proposal is gone`,
+        `${tag} after Accept the drill is on the list, the reading is off and the proposal is gone`,
         !after.line &&
           !after.prop.length &&
           rows.some(t => /^Drill: potassium/.test(t)) &&
