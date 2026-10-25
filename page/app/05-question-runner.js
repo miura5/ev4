@@ -46,9 +46,15 @@
       );
       // B-337 (D-312): with no set open, Objectives' picked objective (ui.objPanel, 20-study) fills the panel
       const obj =
-        !shown && ui.objPanel && PANEL.matches && ui.tab === 'study' && ui.study === 'objectives' ? ui.objPanel : null;
+        !shown && PANEL.matches && ui.tab === 'study'
+          ? ui.study === 'objectives'
+            ? ui.objPanel
+            : ui.study === 'weak' // B-347: Weak spots' panel card
+              ? ui.weakPanel
+              : null
+          : null;
       side.hidden = !shown && !obj;
-      side.setAttribute('aria-label', obj ? 'The picked objective' : 'The set’s questions');
+      side.setAttribute('aria-label', obj ? (ui.study === 'weak' ? 'How a weak spot closes' : 'The picked objective') : 'The set’s questions');
       if (obj) return side.replaceChildren(obj);
       if (!shown) return side.replaceChildren();
       const card = el('div', 'card');

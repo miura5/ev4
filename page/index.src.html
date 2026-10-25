@@ -116,21 +116,13 @@
     <div id="study-plan" class="panel" hidden>
       <div class="card" id="plan-card"><h2>Exam plan</h2><p class="empty">The exam plan appears here once it's in the record.</p></div>
     </div>
-    <!-- B-123 (D-162): weak spots, one line each; in Study since B-297 (D-281) -->
-    <div id="study-weak" class="panel" hidden><div class="cols"><div class="col-main">
-      <div class="card" id="weak-card">
-        <p class="big ws-lead" id="weak-lead"></p>
-        <ul class="list" id="weak-due"></ul>
-        <button type="button" class="fold-line" id="weak-due-more" aria-expanded="false" hidden></button>
-        <div id="weak-quizlet" hidden><button type="button" class="btn ghost sm" id="weak-quizlet-btn">Copy for Quizlet</button></div>
-        <button type="button" class="fold-line" id="weak-tom-fold" aria-expanded="false" aria-controls="weak-tom" hidden></button><ul class="list" id="weak-tom" hidden></ul>
-        <button type="button" class="fold-line" id="weak-later-fold" aria-expanded="false" aria-controls="weak-later" hidden></button><ul class="list" id="weak-later" hidden></ul>
-      </div>
-      </div><div class="col-side">
-      <div class="card fold-card" id="weak-preview-card" hidden><button type="button" class="fold-line" id="weak-preview-fold" aria-expanded="false" aria-controls="weak-preview"></button><ul class="list" id="weak-preview" hidden></ul></div>
-      <div class="card" id="weak-notes-card" hidden><h2>Notes and skills</h2><ul class="list" id="weak-notes"></ul><p class="meta" id="weak-formats" style="margin:0"></p></div>
-      <div class="card fold-card" id="weak-solid-card" hidden><button type="button" class="fold-line" id="weak-solid-fold" aria-expanded="false" aria-controls="weak-solid"></button><ul class="list" id="weak-solid" hidden></ul></div>
-    </div></div></div>
+    <!-- B-123 (D-162): weak spots; in Study since B-297 (D-281). B-347 (D-312): as the demo's StudyWeak board, a strip
+         (back to Objectives, Weak spots and its course, Quiz me), then sections of full-width rows -->
+    <div id="study-weak" class="panel" hidden>
+      <div class="wk-bar"><button type="button" class="btn ghost sm" id="weak-back"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>All topics</button><span class="mini" id="weak-lab">Weak spots</span><span class="sp"></span><button type="button" class="btn neutral" id="weak-quiz">Quiz me</button></div>
+      <div class="wk-list" id="weak-list"></div>
+      <div id="weak-quizlet" hidden><button type="button" class="btn ghost sm" id="weak-quizlet-btn">Copy for Quizlet</button></div>
+    </div>
     <!-- B-223 (D-245): from 1200 px the open set's questions, as a list in the right panel -->
     <aside class="study-side" id="study-side" aria-label="The set's questions" hidden></aside>
   </section>

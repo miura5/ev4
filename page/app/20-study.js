@@ -343,6 +343,150 @@
       }
       card.replaceChildren(hd, list);
     }
+    /** B-347 (D-312): Weak spots as the demo's StudyWeak board. A strip (All topics back to Objectives, "Weak spots ·
+     *  course", Quiz me), then sections of full-width rows under a quiet head: due today, due tomorrow, later, notes and
+     *  skills, previews and solid. An open row has its dot, its topic, a grey line (where it came from, how often, when
+     *  it is next due, its objective), Drill and Mark solid; previews and solid are quiet. From 1200 px the right panel
+     *  says how a weak spot closes. There is no To review section: nothing in the record proposes weak spots yet
+     *  (B-300). */
+    const objText = id => ((S.objectives.find(o => o.id === id) || {}).text || '');
+    function weakQuizAll(b) {
+      // today's review set aims at the most due spots; with none yet, the same line as the review's own
+      const rs = S.sets.find(s => s.id === 'review-' + today);
+      if (rs && E.validItems(rs).length) {
+        setStudy('review');
+        return render();
+      }
+      toast('Today’s review appears after the 4:25am run.');
+    }
+    function wkRow(w, quiet) {
+      const d = w.derived;
+      const due = E.isDue(w, today);
+      const when =
+        w.kind === 'note' || w.kind === 'skill'
+          ? w.kind === 'skill'
+            ? 'skill'
+            : 'note'
+          : d.status === 'reviewed'
+            ? 'solid ' + short(d.solidAt)
+            : d.preRead
+              ? 'first check after the reading' + (w.readingDue ? ' (' + short(w.readingDue) + ')' : '')
+              : d.nextDue
+                ? (due ? 'due today' : 'next ' + short(d.nextDue)) + (d.streak ? ' · ' + d.streak + ' of 2 right' : '')
+                : 'not scheduled';
+      const sub = [
+        w.source,
+        d.recurrence > 1 ? 'seen ' + d.recurrence + '×' : '',
+        when,
+        objText(w.objective) || w.objective || '',
+      ]
+        .filter(Boolean)
+        .join(' · ');
+      const row = el('div', 'wl' + (quiet ? ' quiet' : ''));
+      row.dataset.id = w.id;
+      const tx = el('div', 'wt');
+      tx.append(el('span', 'wn', w.topic || 'Untitled'), el('span', 'mini', sub));
+      row.append(el('i', 'dot' + (quiet ? '' : ' x-yellow')), tx);
+      if (d.status === 'open') {
+        const o = (w.kind || 'concept') === 'concept' && !d.preRead && S.objectives.find(x => x.id === w.objective);
+        if (o) {
+          const dr = btn('Drill', ev => quizObjective(o, ev.currentTarget), { cls: 'btn neutral sm' });
+          dr.setAttribute('aria-label', 'Drill ' + (w.topic || 'this weak spot'));
+          row.append(dr);
+        }
+        const ms = btn('Mark solid', ev => guard(ev.target, () => write(weakEvent(w, 'solid')), 'Marked solid'), {
+          cls: 'btn ghost sm',
+        });
+        ms.setAttribute('aria-label', 'Mark ' + (w.topic || 'this weak spot') + ' solid');
+        row.append(ms);
+      }
+      return row;
+    }
+    function renderWeak() {
+      const ms = M.models;
+      const byAdded = (a, b) => String(b.addedAt || '').localeCompare(String(a.addedAt || ''));
+      const active = ms
+        .filter(w => E.isActive(w) && !w.derived.preRead)
+        .sort(
+          (a, b) => String(a.derived.nextDue || '9').localeCompare(String(b.derived.nextDue || '9')) || byAdded(a, b)
+        );
+      const previews = ms.filter(w => E.isActive(w) && w.derived.preRead).sort(byAdded);
+      const notes = ms
+        .filter(w => (w.kind === 'note' || w.kind === 'skill') && w.derived.status === 'open')
+        .sort(byAdded);
+      const solid = ms
+        .filter(w => w.derived.status === 'reviewed' && w.kind !== 'note')
+        .sort((a, b) => String(b.derived.solidAt || '').localeCompare(String(a.derived.solidAt || '')));
+      const formats = ms.filter(w => w.kind === 'format' && w.derived.status === 'open');
+      const tomorrow = E.addDays(today, 1);
+      const due = active.filter(w => E.isDue(w, today)),
+        tom = active.filter(w => !E.isDue(w, today) && w.derived.nextDue === tomorrow),
+        later = active.filter(w => !due.includes(w) && !tom.includes(w));
+      // the strip's course: the one course its open spots belong to, else none named
+      const cs = new Set(
+        active.concat(notes).map(w => {
+          const ex = S.exams.find(e => e.id === w.exam);
+          return ex ? E.courseOf(ex) : null;
+        })
+      );
+      const one = cs.size === 1 ? [...cs][0] : null;
+      $('weak-lab').textContent = 'Weak spots' + (one ? ' · ' + one : '');
+      const out = [];
+      const sec = (label, rows, quiet) => {
+        if (!rows.length) return;
+        out.push(el('div', 'dayh', label + ' · ' + rows.length));
+        for (const w of rows) out.push(wkRow(w, quiet));
+      };
+      sec('Due today', due);
+      if (active.length) {
+        const all = el('div', 'wl wl-all');
+        const q = btn('Quiz me on all of them', ev => weakQuizAll(ev.currentTarget), { cls: 'btn neutral sm' });
+        all.append(q);
+        const ql = $('weak-quizlet');
+        ql.hidden = !active.some(w => (w.kind || 'concept') === 'concept');
+        all.append(ql);
+        if (due.length) out.push(all);
+        sec('Due tomorrow', tom);
+        sec('Later', later);
+        if (!due.length) out.push(all);
+      } else $('weak-quizlet').hidden = true;
+      sec('Notes and skills', notes);
+      if (formats.length)
+        out.push(
+          el(
+            'div',
+            'wl wl-note mini',
+            'Question format pattern: ' + formats.map(f => f.topic).join('; ') + '. Review sets lean on these formats.'
+          )
+        );
+      sec('Previews, before the reading', previews, true);
+      sec('Solid', solid, true);
+      if (!active.length && !notes.length) out.unshift(el('div', 'empty', 'No weak spots open.'));
+      $('weak-list').replaceChildren(...out);
+      // the right panel from 1200 px: how a weak spot closes (the demo's panel card)
+      const p = el('div', 'ov-detail wk-side');
+      p.append(el('span', 'lab', 'How a weak spot closes'));
+      for (const t of [
+        'Drill: a quiz on its objective',
+        'Mark solid: you know it now',
+        'Today’s review: the ones due, one question each',
+        'Solid after two right answers on different days',
+      ]) {
+        const r = el('div', 'od-ws');
+        r.append(el('i', 'dot'), el('span', 'sn', t));
+        p.append(r);
+      }
+      p.append(
+        el(
+          'span',
+          'mini od-note',
+          due.length
+            ? plural(due.length, 'weak spot') + ' due today. Quiz me runs today’s review.'
+            : 'Nothing due today. Quiz me runs today’s review once it’s ready.'
+        )
+      );
+      ui.weakPanel = p;
+    }
     function giveFive() {
       // a finished practice set's Give me 5 more
       const b = btn('Give me 5 more', null, { primary: true });
@@ -843,4 +987,9 @@
       guard(b, () => quick('Start a study session'));
     });
     $('weak-quizlet-btn').addEventListener('click', () => copyQuizlet($('weak-quizlet')));
+    $('weak-quiz').addEventListener('click', ev => weakQuizAll(ev.currentTarget));
+    $('weak-back').addEventListener('click', () => {
+      setStudy('objectives');
+      render();
+    });
 
