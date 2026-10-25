@@ -5394,7 +5394,7 @@
   "title": "Sweep (replaces B-282; D-276, D-277, D-282 to D-293): rows that spelled a type or state in grey take the badge. Retired features leave the page with their checks: the Now card, Focus lines, Practice list, parked weak spots with Make active, note and skill weak-spot actions, idea to weak spot or plan item, the sidebar's Working, Remove on rows. No text, test or task calls the triage action \"Duplicate\". The five-kinds, one-primary check fails on the real views. Inter becomes the page's font.",
   "dod": "No row carries two badges (harness). grep finds no rendered Now card, Focus, Practice list, Make active, Practiced, promote, Working or row Remove. Lint clean of D-150 citations. The look pass fails any real view with a button outside the five kinds or more than one primary, and passes on all five views. Inter loads (Google Fonts, with the system font as fallback) and the look pass reads it as the computed font at 390 and 1280. npm test green. Screenshots of all five views at 390 and 1280 in light and dark.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-290",
    "B-292",
@@ -5406,7 +5406,7 @@
    "B-302",
    "B-308"
   ],
-  "notes": "Also, when the sweep is done: free some room in the page shell (index.html is within bytes of its 32 KB budget since B-301; the views now build their parts in script). Move what the shell no longer needs, with no change Matt can see.",
+  "notes": "claimed by lane sweep",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
