@@ -617,6 +617,227 @@
       } else if (fold) fold.remove();
       ahead.hidden = !open;
       ahead.replaceChildren(...(week.length ? week.map(weekRow) : [empty('No dates in the next week.')]));
+      renderWeek(); // B-295
+    }
+    /**
+     * B-295 (C-6, C-13, C-16): Today's Week view, beside List in the view's switch. Seven days from today, as seven
+     * columns from 1200 px and one row per day below it. Today's column opens with the real count of today's list; each
+     * date is a chip that opens its panel (the right panel from 1200 px, under the days below it): Quiz me on it, Open
+     * the task, and Take off with Bring back, the calendar's existing edit (D-080). Her line counts the graded dates in
+     * the seven days from the dates themselves. A taken-off date keeps its chip, so it can come back from here.
+     */
+    const WEEK_DAYS = 7;
+    const weekSeg = (() => {
+      const sg = el('div', 'seg');
+      sg.id = 'seg-today';
+      sg.setAttribute('role', 'group');
+      sg.setAttribute('aria-label', 'Today views');
+      for (const [v, n] of [
+        ['list', 'List'],
+        ['week', 'Week'],
+      ]) {
+        const b = el('button', null, n);
+        b.type = 'button';
+        b.dataset.v = v;
+        b.addEventListener('click', () => {
+          ui.todayView = v;
+          store.set('todayView', v);
+          render();
+        });
+        sg.append(b);
+      }
+      $('p-today').querySelector('.cols').before(sg);
+      ui.todayView = store.get('todayView') === 'week' ? 'week' : 'list';
+      return sg;
+    })();
+    const dayName = d => new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' });
+    function weekEntries() {
+      // the seven days' calendar entries, taken-off ones included, and the exams not already on the calendar
+      const last = E.addDays(today, WEEK_DAYS - 1),
+        inWeek = d => d.date >= today && d.date <= last;
+      const exams = S.exams
+        .filter(e => e.date && inWeek(e) && !S.dates.some(d => d.kind === 'exam' && d.date === e.date))
+        .map(e => ({ id: 'exam-' + e.id, date: e.date, title: e.title || e.id, kind: 'exam', course: E.courseOf(e) }));
+      return [...(S.datesAll || S.dates).filter(inWeek), ...exams].sort(
+        (a, b) => a.date.localeCompare(b.date) || String(a.title).localeCompare(b.title)
+      );
+    }
+    function gradedLine(entries) {
+      const g = entries.filter(d => d.graded && !E.isRemovedDate(d));
+      const n = g.length;
+      const head =
+        (n === 1
+          ? 'One graded date'
+          : (['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'][n] || String(n)) +
+            ' graded dates') + ' in the next 7 days';
+      if (!n) return head + '.';
+      const each = g.map(
+        d =>
+          d.title +
+          (d.date === today ? ' today' : d.date === E.addDays(today, 1) ? ' tomorrow' : ' on ' + dayName(d.date))
+      );
+      return head + ': ' + (each.length > 1 ? each.slice(0, -1).join(', ') + ' and ' + each.at(-1) : each[0]) + '.';
+    }
+    const relDay = d => {
+      const n = Math.round((Date.parse(d + 'T12:00:00Z') - Date.parse(today + 'T12:00:00Z')) / 864e5);
+      return n === 0 ? 'today' : n === 1 ? 'tomorrow' : 'in ' + n + ' days';
+    };
+    const KIND_NAME = { due: 'Due', exam: 'Exam', validation: 'Validation', clinical: 'Clinical', other: 'Date' };
+    function dateObjective(d) {
+      // what "Quiz me on it" quizzes: the objective of his upcoming exams in its course that its title names; for an
+      // exam, else its first objective not yet solid. None: no Quiz me.
+      const ex =
+        d.kind === 'exam'
+          ? S.exams.find(e => 'exam-' + e.id === d.id || (e.date === d.date && E.courseOf(e) === E.courseOf(d)))
+          : null;
+      const objs = S.objectives.filter(o => {
+        const e = S.exams.find(x => x.id === o.exam);
+        return e && e.date >= today && (ex ? e.id === ex.id : E.courseOf(e) === E.courseOf(d));
+      });
+      const best = objs.map(o => [o, E.similarity(o.text || '', d.title || '')]).sort((a, b) => b[1] - a[1])[0];
+      if (best && best[1] >= 0.3) return best[0];
+      return ex ? objs.find(o => objState(o).state !== 'solid') || objs[0] || null : null;
+    }
+    function dateTask(d) {
+      // the item on today's list that carries this date
+      const ref = /^exam-/.test(d.id) ? 'exams/' + d.id.slice(5) : 'dates/' + d.id;
+      return dayState().items.find(it => it.ref === ref) || null;
+    }
+    function weekChip(d, sel) {
+      const off = E.isRemovedDate(d);
+      const urgent = d.graded && !off && d.date <= E.addDays(today, 1);
+      const c = el('button', 'wchip' + (off ? ' off' : '') + (d.kind === 'exam' ? ' exam' : ''));
+      c.type = 'button';
+      c.dataset.id = d.id;
+      c.title = d.title || '';
+      c.setAttribute('aria-pressed', String(sel));
+      const sub = off
+        ? 'Taken off'
+        : [KIND_NAME[d.kind] || 'Date', d.graded ? 'graded' : ''].filter(Boolean).join(', ');
+      c.append(el('span', 'wc-t', d.title || ''), el('span', 'wc-s' + (urgent ? ' urgent' : ''), sub));
+      c.addEventListener('click', () => {
+        ui.weekSel = d.id;
+        render();
+      });
+      return c;
+    }
+    function renderWeek() {
+      const on = ui.todayView === 'week';
+      weekSeg
+        .querySelectorAll('button')
+        .forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === ui.todayView)));
+      const main = $('p-today').querySelector('.col-main'),
+        side = $('p-today').querySelector('.col-side');
+      let box = $('today-week'),
+        panel = $('today-date');
+      if (!box) {
+        box = el('div', 'card');
+        box.id = 'today-week';
+        main.append(box);
+        panel = el('div', 'card');
+        panel.id = 'today-date';
+        side.prepend(panel);
+      }
+      // the list view's cards step aside in the week, and the week's in the list
+      $('today-list').hidden = on;
+      for (const c of [$('today-budget'), $('today-changes'), $('weekly'), $('ahead').closest('.card')])
+        if (c) c.classList.toggle('wk-away', on);
+      box.hidden = !on;
+      if (!on) {
+        panel.hidden = true;
+        return;
+      }
+      const entries = weekEntries();
+      if (!entries.some(d => d.id === ui.weekSel)) ui.weekSel = (entries[0] || {}).id || null;
+      const days = el('div', 'wk-days');
+      for (let i = 0; i < WEEK_DAYS; i++) {
+        const date = E.addDays(today, i);
+        const col = el('div', 'wk-day' + (i === 0 ? ' today' : ''));
+        col.dataset.date = date;
+        const [, m, dd] = date.split('-');
+        const h = el('div', 'wk-h');
+        h.append(
+          el('span', null, dayName(date).slice(0, 3)),
+          el('b', null, String(Number(dd))),
+          el(
+            'span',
+            null,
+            i === 0 || dd === '01'
+              ? new Date(date + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' })
+              : ''
+          )
+        );
+        const chips = el('div', 'wk-chips');
+        if (i === 0) {
+          const n = sideOpen().length;
+          const t = el('button', 'wchip wk-list');
+          t.type = 'button';
+          t.append(el('span', 'wc-t', n + ' on today’s list'), el('span', 'wc-s', 'Open the list'));
+          t.addEventListener('click', () => {
+            ui.todayView = 'list';
+            store.set('todayView', 'list');
+            render();
+          });
+          chips.append(t);
+        }
+        chips.append(...entries.filter(d => d.date === date).map(d => weekChip(d, d.id === ui.weekSel)));
+        col.append(h, chips);
+        days.append(col);
+      }
+      box.replaceChildren(el('p', 'wk-her', gradedLine(entries)), days);
+      // the picked date's panel
+      const d = entries.find(x => x.id === ui.weekSel);
+      panel.hidden = !d;
+      if (!d) return panel.replaceChildren();
+      const off = E.isRemovedDate(d);
+      const prop = (k, v) => {
+        const p = el('div', 'prop');
+        p.append(el('span', 'prop-k', k), el('span', 'prop-v', v));
+        return p;
+      };
+      const props = el('div', 'wk-props');
+      props.append(
+        prop('When', short(d.date) + ' · ' + relDay(d.date)),
+        prop('Course', E.courseOf(d)),
+        prop('Kind', [KIND_NAME[d.kind] || 'Date', d.graded ? 'graded' : ''].filter(Boolean).join(', '))
+      );
+      if (off) props.append(prop('Status', 'Taken off by ' + (d.removed.by === 'Matt' ? 'you' : 'E.V.')));
+      const acts = el('div', 'wk-acts');
+      const o = !off && dateObjective(d);
+      if (o) {
+        const q = btn('Quiz me on it', ev => quizObjective(o, ev.currentTarget), { cls: 'btn neutral sm' });
+        q.setAttribute('aria-label', 'Quiz me on ' + (o.text || o.id));
+        acts.append(q);
+      }
+      const it = !off && dateTask(d);
+      if (it)
+        acts.append(
+          btn(
+            'Open the task',
+            () => {
+              ui.todayView = 'list';
+              store.set('todayView', 'list');
+              openRows.add(it.id);
+              render();
+              const li = document.querySelector('#today-list li[data-id="' + CSS.escape(it.id) + '"]');
+              if (li) li.scrollIntoView({ block: 'nearest' });
+            },
+            { cls: 'btn neutral sm' }
+          )
+        );
+      if (!/^exam-/.test(d.id) && (off || !E.isFixedDate(d))) {
+        const t = btn(off ? 'Bring back' : 'Take off', null, { cls: 'btn ghost sm wk-off' });
+        t.setAttribute('aria-label', (off ? 'Bring back: ' : 'Take off the calendar: ') + (d.title || ''));
+        t.addEventListener('click', () =>
+          guard(
+            t,
+            () => editDates({ action: off ? 'restore' : 'remove', id: d.id }, 'Matt'),
+            off ? 'Back on the calendar' : 'Taken off the calendar'
+          )
+        );
+        acts.append(t);
+      }
+      panel.replaceChildren(el('h2', null, d.title || ''), props, ...(acts.children.length ? [acts] : []));
     }
     // The exam leaves the tick list for Next 7 days (B-117): exams in the window join the calendar's dates, once each.
     function weekDates() {

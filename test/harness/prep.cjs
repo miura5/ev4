@@ -1165,6 +1165,132 @@ async function tickAll(page) {
     ok(`[ask ${scheme}] no page errors`, errors.length === 0, errors.join(' | '));
     await ctx.close();
   }
+  // B-295 (C-6, C-13, C-16): Today's week on a planted week with three graded dates (tomorrow's validation and two due
+  // dates) and dates he can take off.
+  // Her line says three; the today chip equals the list's count; seven columns from 1200 px and one row per day below
+  // it; no chip title wraps past one line at 700 or 1000; Take off writes the date's edit and Bring back reverses it.
+  const weekRecord = () => {
+    const db = record();
+    const last = addDays(today, 6);
+    db.dates = Object.fromEntries(
+      Object.entries(db.dates).filter(([id, d]) => /^prep-/.test(id) || !(d.date >= today && d.date <= last))
+    );
+    const plant = (id, n, title, kind, graded) =>
+      (db.dates[id] = { ...env, addedAt: env.at, date: addDays(today, n), title, kind, course: 'NUR 112', graded });
+    plant('p295-a', 2, 'ATI Engage: fluid and electrolyte balance, the whole module', 'due', true);
+    plant('p295-b', 3, 'Care plan 2 draft', 'due', true);
+    plant('p295-c', 5, 'Dosage calculation practice', 'other', false);
+    plant('p295-lab', 4, 'Skills lab open practice', 'other', false);
+    return db;
+  };
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 700, height: 860 },
+    { width: 1000, height: 860 },
+    { width: 1280, height: 860 },
+  ])
+    for (const scheme of ['light', 'dark']) {
+      const w = viewport.width,
+        tag = `[week ${w} ${scheme}]`;
+      if (w === 700 && scheme === 'dark') continue; // 700 is the wrap check only
+      const ctx = await browser.newContext({ viewport, colorScheme: scheme });
+      const page = await ctx.newPage();
+      const errors = [];
+      page.on('pageerror', e => errors.push(e.message));
+      await openPage(page, ct(today, 10, 0), weekRecord());
+      await page.click('#tab-today');
+      await page.waitForTimeout(300);
+      const listCount = await page.evaluate(
+        () => document.querySelectorAll('#today-list .ti-list > li.today-item:not(.done)').length
+      );
+      await page.click('#seg-today [data-v="week"]');
+      await page.waitForTimeout(300);
+      const r = await page.evaluate(() => {
+        const box = e => e.getBoundingClientRect();
+        const days = [...document.querySelectorAll('#today-week .wk-day')];
+        const titles = [...document.querySelectorAll('#today-week .wchip .wc-t')];
+        return {
+          her: document.querySelector('#today-week .wk-her').textContent,
+          chip: (document.querySelector('#today-week .wk-day.today .wk-list .wc-t') || {}).textContent || '',
+          days: days.length,
+          lefts: new Set(days.map(d => Math.round(box(d).left))).size,
+          tops: new Set(days.map(d => Math.round(box(d).top))).size,
+          oneLine: titles.every(t => t.getClientRects().length === 1 && box(t).height < 24),
+          seg: [...document.querySelectorAll('#seg-today button')].map(b => b.getAttribute('aria-pressed')),
+          listHidden: document.getElementById('today-list').hidden,
+          panel: !document.getElementById('today-date').hidden,
+          sideways: document.documentElement.scrollWidth > innerWidth + 1,
+        };
+      });
+      ok(
+        `${tag} her line counts the three graded dates from the dates`,
+        /^Three graded dates in the next 7 days: /.test(r.her),
+        r.her
+      );
+      ok(
+        `${tag} the today chip shows the list's count (${listCount})`,
+        listCount > 0 && r.chip === listCount + ' on today’s list',
+        r.chip
+      );
+      ok(
+        `${tag} seven days, ${w >= 1200 ? 'seven columns' : 'one row per day'}; the switch says Week; the list steps aside`,
+        r.days === 7 &&
+          (w >= 1200 ? r.lefts === 7 && r.tops === 1 : r.tops === 7) &&
+          r.seg.join() === 'false,true' &&
+          r.listHidden,
+        JSON.stringify(r)
+      );
+      ok(`${tag} no chip title wraps past one line`, r.oneLine);
+      if (w !== 700) {
+        await page.click('#today-week .wchip[data-id="p295-lab"]');
+        await page.waitForTimeout(200);
+        await page.locator('#p-today').screenshot({ path: `${shots}/today-week-${w}-${scheme}.png` });
+        if (w === 1280) await page.screenshot({ path: `${shots}/today-week-${w}-${scheme}-page.png` });
+        const n0 = await page.evaluate(() => window.__writes.length);
+        await page.click('#today-date .wk-off');
+        await page.waitForTimeout(400);
+        const off = await page.evaluate(n => {
+          const ws = window.__writes.slice(n).filter(x => x[1] === 'dateedits');
+          return {
+            w: ws.map(x => [x[2], x[3].removed && x[3].removed.by]),
+            chip: document.querySelector('#today-week .wchip[data-id="p295-lab"]').className,
+            btn: document.querySelector('#today-date .wk-off').textContent,
+            her: document.querySelector('#today-week .wk-her').textContent,
+          };
+        }, n0);
+        ok(
+          `${tag} Take off writes the date's edit; the chip stays, taken off, with Bring back`,
+          off.w.length === 1 &&
+            off.w[0][0] === 'p295-lab' &&
+            off.w[0][1] === 'Matt' &&
+            /\boff\b/.test(off.chip) &&
+            off.btn === 'Bring back' &&
+            /^Three graded/.test(off.her),
+          JSON.stringify(off)
+        );
+        await page.click('#today-date .wk-off');
+        await page.waitForTimeout(400);
+        const back = await page.evaluate(n => {
+          const ws = window.__writes.slice(n).filter(x => x[1] === 'dateedits');
+          return {
+            w: ws.map(x => [x[2], x[3].removed]),
+            chip: document.querySelector('#today-week .wchip[data-id="p295-lab"]').className,
+            btn: document.querySelector('#today-date .wk-off').textContent,
+          };
+        }, n0);
+        ok(
+          `${tag} Bring back reverses it`,
+          back.w.length === 2 &&
+            back.w[1][0] === 'p295-lab' &&
+            back.w[1][1] === null &&
+            !/\boff\b/.test(back.chip) &&
+            back.btn === 'Take off',
+          JSON.stringify(back)
+        );
+      }
+      ok(`${tag} no sideways scroll, no page errors`, !r.sideways && !errors.length, errors.join(' | '));
+      await ctx.close();
+    }
   await browser.close();
   for (const [st, n, d] of results) console.log(`${st}  ${n}${d && st === 'FAIL' ? '  -- ' + d : ''}`);
   const failed = results.filter(x => x[0] === 'FAIL').length;

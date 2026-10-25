@@ -1103,6 +1103,56 @@ button.btn:disabled{opacity:.45;cursor:default}
   #today-list .li.ti-propose>.badge{margin-left:26px}
   #today-list .li.ti-propose>.ti-keep{margin-right:auto}
 }
+/* ============================================================ B-295 (C-6, C-13, C-16): Today's week ================
+   List and Week switch the view. The week is seven days from today: seven columns from 1200 px, one row per day below
+   it (the day's name, then its chips), and one stacked column on the phone. A chip is a date's title on one line and
+   its kind in grey under it; red only for graded work due today or tomorrow (D-270). The picked date's panel is the
+   right panel from 1200 px and reads under the days below it. */
+#p-today .wk-away{display:none!important}
+#p-today>#seg-today{margin:0 0 10px}
+#today-week{gap:8px}
+#today-week .wk-her{margin:0;color:var(--quiet);font-size:calc(13px * var(--ts));line-height:1.4}
+.wk-days{display:flex;flex-direction:column;border-radius:10px;box-shadow:0 0 0 1px var(--line);overflow:hidden}
+.wk-day{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-top:1px solid var(--line);min-width:0}
+.wk-day:first-child{border-top:0}
+.wk-day.today{background:var(--chrome)}
+.wk-h{flex:0 0 88px;display:flex;align-items:baseline;gap:5px;padding-top:6px;color:var(--quiet);font-size:calc(12px * var(--ts))}
+.wk-h b{color:var(--text);font-size:calc(14px * var(--ts));font-weight:600}
+.wk-day.today .wk-h b{color:var(--bg);background:var(--text);border-radius:6px;padding:0 6px}
+.wk-chips{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:6px}
+.wchip{all:unset;box-sizing:border-box;flex:0 1 220px;min-width:0;display:flex;flex-direction:column;gap:1px;padding:5px 8px;border-radius:7px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);cursor:pointer;font-size:calc(12.5px * var(--ts));line-height:1.3;color:var(--text)}
+.wchip:hover{background:var(--hover);box-shadow:inset 0 0 0 1px var(--line2)}
+.wchip:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+.wchip[aria-pressed="true"]{box-shadow:inset 0 0 0 1.5px var(--text)}
+.wchip.exam .wc-t{font-weight:600}
+.wchip .wc-t,.wchip .wc-s{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wchip .wc-s{color:var(--quiet);font-size:calc(11.5px * var(--ts))}
+.wchip .wc-s.urgent{color:var(--urg)}
+.wchip.off .wc-t{color:var(--faint);text-decoration:line-through}
+.wchip.wk-list .wc-t{color:var(--quiet)}
+#today-date{gap:8px}
+#today-date>h2{overflow-wrap:anywhere}
+#today-date .wk-props .prop{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:32px;border-bottom:1px solid var(--line);font-size:calc(13px * var(--ts))}
+#today-date .wk-props .prop:last-child{border-bottom:0}
+#today-date .prop-k{color:var(--quiet)}
+#today-date .prop-v{text-align:right;min-width:0}
+#today-date .wk-acts{display:flex;flex-wrap:wrap;gap:6px}
+@media (min-width:1200px){
+  .wk-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+  .wk-day{flex-direction:column;align-items:stretch;border-top:0;border-left:1px solid var(--line);min-height:240px;padding:8px 6px}
+  .wk-day:first-child{border-left:0}
+  .wk-h{flex:none;padding:0 2px 4px}
+  .wk-chips{flex-direction:column;flex-wrap:nowrap}
+  .wchip{flex:none;width:100%}
+}
+@media (max-width:599px){
+  .wk-day{flex-direction:column;align-items:stretch;padding:8px 12px}
+  .wk-h{flex:none;padding-top:0}
+  .wk-chips{flex-direction:column;flex-wrap:nowrap}
+  .wchip{flex:none;width:100%;min-height:44px;justify-content:center}
+  #today-date .wk-props .prop{min-height:44px}
+  #today-date .wk-acts .btn{flex:1}
+}
 /* ============================================================ B-297 (D-283, C-1, C-8, C-13): Study's overview ========
    The toolbar (the view tabs sit beside the title from 600 px), then the exam header with its readiness bar and one
    32 px row per objective (44 px on the phone): its state badge, its words, its weak spots and Quiz me on hover or

@@ -49,7 +49,7 @@
     const quizOpen = id => id === 'study' && (ui.study === 'review' || ui.study === 'practice');
     function placeSegs(t) {
       const mh = $('mh');
-      for (const id of ['study', 'progress', 'record']) {
+      for (const id of ['today', 'study', 'progress', 'record']) {
         const sg = $('seg-' + id);
         if (!sg || !mh) continue;
         if (!SEG_HOME[id]) {
