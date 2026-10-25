@@ -8,26 +8,23 @@ Central)
 
 ## Where things stand
 
-- The redesign release (D-312, D-315, D-316): the rubric review of wave 4 (d299b24) scored 82/100, no factor below 4,
-  no blockers: over the bar (D-317). Its card and pairs are in /home/claude/ui-review5 (outside the repository).
-- One rubric wave (the first of at most two) is building the review's top fixes: B-382 Today, B-383 E.V., B-384
-  Frame, B-385 Study, B-386 Progress, lanes fired 12:39 Central. On the phone, quick-ask chips stay one row (Matt's
-  rule), not the demo's two.
-- B-381 (data review fixes) is done at e5d8124.
+- The redesign release (D-312, D-315, D-316): the rubric review of wave 4 (d299b24) scored 82/100. The one rubric
+  wave (B-382 to B-386) is done on staging; the page is frozen at fc9133e. On the phone, quick-ask chips stay one row
+  (Matt's rule), not the demo's two.
+- The Foundation v4 doc is retired (D-318).
 
 ## Running
 
-- Lanes today, ev, frame, study and pr on B-382 to B-386.
-- Test agent (B-357): the full check was RED at 17:12; it is fixing harnesses in /home/claude/ev4.
+- At fc9133e: the final rubric click-through (output /home/claude/ui-review6, outside the repository) and a code review
+  in two parts (page; core, data, tools and the PWA groundwork).
+- Test agent (B-357): bringing the harnesses in line, then npm run format and the full npm run check.
 
 ## Next
 
-1. Watch the lanes every 4 minutes until B-382 to B-386 are done on staging.
-2. Independent review of the test agent's work; code review of the whole sprint diff; a final rubric click-through;
-   full npm run check GREEN; ship staging GREEN, all at one commit.
-3. Release card to Matt; live waits on his word.
-4. The Chart rows B-328 to B-331 still carry the old model (90-minute stale claims, one chat per milestone, Matt
-   present): bring them in line with D-317.
+1. Fix the reviews' gaps once and review once more; independent review of the test agent's removed or loosened checks.
+2. Full npm run check GREEN and ship staging GREEN at one commit; release card to Matt; live waits on his word.
+3. Next release: the PWA. B-316 waits on Matt turning on R2 in Cloudflare; B-315 needs a safe home for the staging
+   Worker token in the cloud runs' settings (work it out before asking him); B-318 (ship flow) after this release.
 
 ## For the release card
 
