@@ -5509,13 +5509,14 @@
   "title": "A staging D1 and a staging Worker with their own token, seeded with the synthetic record only (test/data/synthetic.cjs). The Cloudflare deploy credential lives only in the build chat's environment.",
   "dod": "Without the token, the staging Worker answers 401 on /api/db; with it, the counts per collection equal the synthetic record's. A cloud session reaches the staging Worker. The personal-data test passes over pwa/.",
   "milestone": "app (data, pipelines, ops)",
-  "status": "in progress",
+  "status": "blocked",
   "depends": [
    "B-309"
   ],
-  "notes": "built: staging workflow, check and tests pushed (180dee8); first staging run 40152329583 started",
+  "notes": "Needs one setting from Matt (in Claude's cloud environment network settings): allow ev-staging.peppercheese1.workers.dev (or *.workers.dev) for cloud sessions; this session's proxy refuses it (403), so 'a cloud session reaches the staging Worker' is the one clause unproven; afterwards a run proves it with node tools/pwa-staging.mjs reach https://ev-staging.peppercheese1.workers.dev and marks it done. Also for a build chat with Matt: record that the Cloudflare staging credential lives in the repository's Actions secrets (as this routine's prompt says), since the task's title still says the build chat's environment. Card (D-261). What changes when he studies: nothing yet; the app now has its own test copy online (staging), separate from the claude.ai pages, holding only made-up study data. Why: the app's next steps (saving and runs through the app's server) need a real test server to prove against. What it touches: a new test database and server on his Cloudflare account, started only by hand from GitHub; his record, the live page and the scheduled runs are untouched. Proven (workflow run 40152329583 at 180dee8): without the password the server answers 'not allowed', also with a wrong one; with it, it holds 74 made-up documents in 17 collections, each count equal to the made-up record's (the four collections the app smoke also leaves out, system, legacy, debug and journal, are not seeded); the personal-data check covers the app's folder. The made-up data is put in only while the database is empty, so nothing is ever deleted there. What could break: little; a workflow mistake would show as a red run on GitHub. Size: +340 -10, undoable (the database and server stay unused if dropped; nothing is deleted). Checks: reviewer 1: two gaps, both named above (reach blocked by the network setting; the credential's place not yet a recorded decision); Checks retired or loosened: none; Size +345 -15. npm test has one failure from main before this work (the joined app.js formatting, a page lane's), not touched here. Staging page: not applicable (app lane); the server is https://ev-staging.peppercheese1.workers.dev.",
   "commit": null,
-  "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-312",
