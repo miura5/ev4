@@ -2356,8 +2356,12 @@ const ok = (name, cond, detail = '') => {
       ((/Today’s list \(id \| done \| tag \| item\):\n([\s\S]*?)(\n[A-Z][^\n|]*:|\n---|$)/.exec(c) || [])[1] || '')
         .split('\n')
         .map(l => l.split(' | '));
+    // B-292: the day's minutes are the budget card's left plus done (what was the list head's "N of M min planned")
     const budgetMin = async () =>
-      Number(((await page.textContent('#today-list .card-head')) || '').replace(/^\D*?(\d+) of.*$/s, '$1'));
+      page.evaluate(() => {
+        const n = s => Number((/(\d+) min/.exec((document.querySelector(s) || {}).textContent || '') || [])[1]);
+        return n('#today-budget .tb-big') + n('#today-budget .tb-line .tb-v');
+      });
     const min0 = await budgetMin();
     await page.evaluate(() => {
       window.__toolResults = [];

@@ -1520,6 +1520,27 @@ const EVCore = (() => {
       skipped: base.filter(off).map(it => ({ id: it.id, text: it.text })),
     };
   }
+  /**
+   * B-292 (C-5): the day's budget card from dayView's budget. done is the minutes of the items he has done; left is
+   * what the list still asks (planned minus done) and free the time left (available minus done), so ticking a task
+   * moves its minutes from left to done and the list's whole (done plus left) never shrinks. Over when the list asks
+   * more than the day has. Null when the day has no budget.
+   */
+  function dayBudget(budget, items, isDone) {
+    if (!budget) return null;
+    const mins = it => Number(it.minutes) || 0;
+    const done = (items || []).filter(it => !it.deferred && isDone(it)).reduce((s, it) => s + mins(it), 0);
+    const available = Number(budget.available) || 0,
+      planned = Math.max(Number(budget.planned) || 0, done);
+    return {
+      available,
+      planned,
+      done,
+      left: planned - done,
+      free: Math.max(0, available - done),
+      over: Math.max(0, planned - available),
+    };
+  }
   /** A new dayedits/<date> document from the existing one (or none), with the page's envelope and updatedAt. */
   function dayeditBase(dayedit, date, now) {
     const b = editBase(dayedit, now);
@@ -2348,6 +2369,7 @@ const EVCore = (() => {
     buildDayList,
     nextExams,
     dayView,
+    dayBudget,
     dayeditBase,
     listEdit,
     gradedAsk,

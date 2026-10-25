@@ -927,6 +927,27 @@ test('list edits: added items ride on the planned list, planned ones can be take
   assert.equal(EV.dayView(null, e1).budget, null);
 });
 
+test('the day budget card (B-292, C-5): ticking moves minutes from left to done, the whole never shrinks; over when the list asks more than the day has', () => {
+  const items = [
+    { id: 'a', minutes: 30 },
+    { id: 'b', minutes: 25 },
+    { id: 'c', minutes: 20, deferred: true },
+  ];
+  const done = new Set();
+  const isDone = it => done.has(it.id);
+  const budget = { available: 60, planned: 55, over: 0 };
+  let b = EV.dayBudget(budget, items, isDone);
+  assert.deepEqual(b, { available: 60, planned: 55, done: 0, left: 55, free: 60, over: 0 });
+  done.add('a');
+  b = EV.dayBudget(budget, items, isDone);
+  assert.deepEqual([b.done, b.left, b.free, b.done + b.left], [30, 25, 30, 55]);
+  done.add('c'); // a deferred item ticked is not in the day's minutes
+  assert.equal(EV.dayBudget(budget, items, isDone).done, 30);
+  b = EV.dayBudget({ available: 60, planned: 75 }, items, isDone);
+  assert.deepEqual([b.left, b.free, b.over], [45, 30, 15]);
+  assert.equal(EV.dayBudget(null, items, isDone), null);
+});
+
 // ---------------------------------------------------------------- liveDates over dateedits
 test('calendar edits: a new entry is a dates Fact; every change, removal and restore is its dateedits document; removed dates are gone everywhere (D-080)', () => {
   const now = '2026-10-18T01:10:00Z';

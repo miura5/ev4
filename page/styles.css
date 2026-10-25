@@ -1054,6 +1054,21 @@ button.btn:disabled{opacity:.45;cursor:default}
 #today-list .ti-fold:focus-visible{outline:2px solid var(--text);outline-offset:2px;border-radius:4px}
 #today-list .ti-folded .row{min-height:32px;padding:0 4px 0 30px;align-items:center;color:var(--quiet)}
 #today-list .ti-folded .row.ti-hint{color:var(--faint);font-size:calc(12px * var(--ts))}
+/* B-292 (C-5): the day's budget card. What's left against the time left, the bar (done green, then what's left) on
+   the day's whole, done minutes on their own line; over budget the bar takes the warning colour and
+   a line says by how much. */
+#today-budget :is(.tb-big,.tb-line){all:unset;box-sizing:border-box;display:flex;width:100%}
+#today-budget button:is(.tb-big,.tb-line){cursor:pointer}
+#today-budget button:is(.tb-big,.tb-line):hover :is(.tb-v),#today-budget button.tb-big:hover{text-decoration:underline;text-underline-offset:3px}
+#today-budget button:is(.tb-big,.tb-line):focus-visible{outline:2px solid var(--text);outline-offset:2px;border-radius:4px}
+#today-budget .tb-big{margin:2px 0 8px;font:600 calc(17px * var(--ts))/1.3 var(--sans);color:var(--text);font-variant-numeric:tabular-nums}
+#today-budget .tb-bar .tb-left{background:var(--quiet)}
+#today-budget .tb-bar.over>i{background:var(--sem-yellow)}
+/* the over line's words are text (4.5:1 in both modes); the warning colour is its mark, as coded colours are marks */
+#today-budget .tb-over{display:flex;align-items:center;gap:6px;margin:6px 0 0;color:var(--text);font-size:calc(12.5px * var(--ts))}
+#today-budget .tb-over::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:var(--sem-yellow)}
+#today-budget .tb-line{display:flex;justify-content:space-between;align-items:center;min-height:32px;font-size:calc(13px * var(--ts));font-variant-numeric:tabular-nums}
+#today-budget .tb-k{color:var(--quiet)}
 @media (max-width:599px){
   #today-list .li{padding:0 2px;gap:8px}
   #today-list .li .tk{width:44px;height:44px;margin:0 -13px}

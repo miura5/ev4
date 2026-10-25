@@ -873,8 +873,11 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
         await page.waitForTimeout(120);
         const planned = () =>
           page.evaluate(() => {
-            const m = /(\d+) of \d+ min planned/.exec(document.getElementById('today-list').textContent);
-            return m ? Number(m[1]) : null;
+            // B-292: the day's minutes are the budget card's left plus done
+            const n = s => (/(\d+) min/.exec((document.querySelector(s) || {}).textContent || '') || [])[1];
+            const l = n('#today-budget .tb-big'),
+              d = n('#today-budget .tb-line .tb-v');
+            return l == null ? null : Number(l) + Number(d || 0);
           });
         const before = await planned();
         await page.click('#new-btn');

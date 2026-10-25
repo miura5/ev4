@@ -536,6 +536,139 @@ async function tickAll(page) {
       ok(`${tag} no sideways scroll, no page errors`, !r.sideways && !errors.length, errors.join(' | '));
       await ctx.close();
     }
+  // B-292 (C-5): the day's budget card on a planted day, at 390 and 1280 in light and dark: one day under budget, one
+  // over. What's left against the time left ("55 min left · 60 free"), done minutes on their own line; ticking a task
+  // moves its minutes from left to done and the bar never empties; over budget the bar takes the warning colour and
+  // its line's words are 4.5:1 on the ground they sit on.
+  const { rgb: toRgb, ratio: contrast } = require('./contrast.cjs');
+  const budgetRecord = over => {
+    const db = record();
+    const items = [
+      { id: 'p292-read', text: 'Read chapter 39, fluid balance', tag: 'READING', minutes: 30, ref: null },
+      { id: 'p292-cards', text: 'Flashcards: cranial nerves', tag: 'PRACTICE', minutes: 25, ref: null },
+      ...(over ? [{ id: 'p292-plan', text: 'Care plan outline', tag: 'NOTES', minutes: 20, ref: null }] : []),
+    ];
+    db.days = db.days || {};
+    db.days[today] = {
+      ...(db.days[today] || {}),
+      ...env,
+      writer: 'morning',
+      id: today,
+      date: today,
+      list: { items },
+      plan: { budget: { available: 60, planned: over ? 75 : 55, over: over ? 15 : 0 }, blocks: [], deferred: [] },
+    };
+    db.dayedits = db.dayedits || {};
+    delete db.dayedits[today];
+    return db;
+  };
+  const budgetState = page =>
+    page.evaluate(() => {
+      const c = document.getElementById('today-budget');
+      const seg = s => {
+        const i = c && c.querySelector('.tb-bar .' + s);
+        return i ? i.getBoundingClientRect().width : 0;
+      };
+      const over = c && c.querySelector('.tb-over');
+      let g = over,
+        ground = 'rgba(0, 0, 0, 0)';
+      while (g && /rgba\(0, 0, 0, 0\)|transparent/.test(ground)) {
+        ground = getComputedStyle(g).backgroundColor;
+        g = g.parentElement;
+      }
+      if (/rgba\(0, 0, 0, 0\)|transparent/.test(ground)) ground = getComputedStyle(document.body).backgroundColor;
+      return {
+        shown: !!c && !c.hidden && c.getBoundingClientRect().height > 0,
+        big: c ? (c.querySelector('.tb-big') || {}).textContent : '',
+        done: c ? [...c.querySelectorAll('.tb-line')].map(l => l.textContent) : [],
+        fill: Math.round(seg('tb-done') + seg('tb-left')),
+        doneW: Math.round(seg('tb-done')),
+        barCol: c ? getComputedStyle(c.querySelector('.tb-bar .tb-left')).backgroundColor : '',
+        overText: over ? over.textContent : null,
+        overCol: over ? getComputedStyle(over).color : null,
+        ground,
+        sideways: document.documentElement.scrollWidth > innerWidth + 1,
+      };
+    });
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 1280, height: 860 },
+  ])
+    for (const scheme of ['light', 'dark'])
+      for (const over of [false, true]) {
+        const w = viewport.width,
+          tag = `[budget ${w} ${scheme} ${over ? 'over' : 'under'}]`;
+        const ctx = await browser.newContext({ viewport, colorScheme: scheme });
+        const page = await ctx.newPage();
+        const errors = [];
+        page.on('pageerror', e => errors.push(e.message));
+        await openPage(page, ct(today, 10, 0), budgetRecord(over));
+        await page.click('#tab-today');
+        await page.waitForTimeout(400);
+        const a = await budgetState(page);
+        const sem = await page.evaluate(() =>
+          getComputedStyle(document.documentElement).getPropertyValue('--sem-yellow')
+        );
+        ok(
+          `${tag} the card says what's left against the time left, done on its own line`,
+          a.shown &&
+            a.big === (over ? '75 min left · 60 free' : '55 min left · 60 free') &&
+            a.done.length === 1 &&
+            /^Done\s*0 min$/.test(a.done[0]),
+          JSON.stringify(a)
+        );
+        await page.locator('#today-budget').scrollIntoViewIfNeeded();
+        // the window: from 1200 px the card is in the right panel, outside the view's own box
+        await page.screenshot({ path: `${shots}/today-budget-${w}-${scheme}-${over ? 'over' : 'under'}.png` });
+        if (over) {
+          const r = a.overCol && contrast(toRgb(a.overCol), toRgb(a.ground));
+          ok(
+            `${tag} over budget: the bar in the warning colour, its line ${r ? r.toFixed(2) : '?'}:1 (4.5:1 at least)`,
+            a.overText === '15 min over today’s 60' &&
+              toRgb(a.barCol) &&
+              a.barCol ===
+                (await page.evaluate(c => {
+                  const d = document.createElement('i');
+                  d.style.background = c;
+                  document.body.append(d);
+                  const v = getComputedStyle(d).backgroundColor;
+                  d.remove();
+                  return v;
+                }, sem.trim())) &&
+              r >= 4.5,
+            JSON.stringify({ col: a.overCol, ground: a.ground, bar: a.barCol, sem })
+          );
+        } else ok(`${tag} under budget: no over line`, a.overText === null, String(a.overText));
+        // ticking the 30-minute reading moves its minutes from left to done; the bar's fill never shrinks
+        await page
+          .locator('#today-list .ti-list li.today-item', { hasText: 'chapter 39' })
+          .locator('input.tick')
+          .click();
+        await page.waitForTimeout(400);
+        const b = await budgetState(page);
+        ok(
+          `${tag} a tick moves 30 min from left to done and never empties the day`,
+          b.big === (over ? '45 min left · 30 free' : '25 min left · 30 free') &&
+            /^Done\s*30 min$/.test(b.done[0]) &&
+            Math.abs(b.fill - a.fill) <= 1 &&
+            b.doneW > a.doneW,
+          JSON.stringify({ before: a, after: b })
+        );
+        // D-147: the card's lines open where they live: what's left the first open row, done the row just ticked
+        await page.click('#today-budget button.tb-big');
+        const toLeft = await page.evaluate(() => (document.activeElement.closest('li') || {}).textContent || '');
+        await page.click('#today-budget button.tb-line');
+        const toDone = await page.evaluate(
+          () => (document.activeElement.closest('li') || {}).textContent || document.activeElement.textContent
+        );
+        ok(
+          `${tag} what's left opens the first open row; done opens what's done`,
+          /cranial nerves/.test(toLeft) && /chapter 39|^Done/.test(toDone),
+          JSON.stringify({ toLeft, toDone })
+        );
+        ok(`${tag} no sideways scroll, no page errors`, !b.sideways && !errors.length, errors.join(' | '));
+        await ctx.close();
+      }
   // B-189: asked in words on a planted lab day (a lab exam and a class exam today, as on Oct 21), E.V. answers from the
   // record without a model call: the greeting already carries the Prep marker for the day, and the reply's card is the
   // day's check with each item naming its source (the calendar entry, the announcement, the course calendar's row, the

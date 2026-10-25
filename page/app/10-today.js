@@ -243,6 +243,62 @@
         action: go ? btn('Open', go) : rm,
       });
     }
+    // B-292 (C-5): the day's budget card, the right panel's first card (under the list below 1200 px). What the list
+    // still asks against the time left; done minutes on their own line; the bar is done plus left on the day's
+    // whole, so a tick moves minutes from left to done and the bar never empties; warning colour when over.
+    function renderBudget(b) {
+      const card = $('today-budget');
+      card.hidden = !b;
+      if (!b) return;
+      const whole = Math.max(b.available, b.planned) || 1;
+      const pct = n => Math.round((n / whole) * 1000) / 10 + '%';
+      const bar = el('div', 'pbar tb-bar' + (b.over ? ' over' : ''));
+      bar.setAttribute('role', 'img');
+      bar.setAttribute('aria-label', `${b.done + b.left} of ${b.available} minutes on today’s list`);
+      const seg = (cls, n) => {
+        const i = el('i', cls);
+        i.style.width = pct(n);
+        return i;
+      };
+      bar.append(seg('tb-done', b.done), seg('tb-left', b.left));
+      // D-147: each line he reads opens where it lives: what's left goes to the list's first open row, done to the
+      // Done fold (opened); a line with nowhere to go stays a line.
+      const go = (cls, text, to) => {
+        const r = el(to ? 'button' : 'p', cls);
+        if (to) {
+          r.type = 'button';
+          r.addEventListener('click', to);
+        }
+        if (Array.isArray(text)) r.append(...text);
+        else r.textContent = text;
+        return r;
+      };
+      const toRow = () => {
+        const nm = $('today-list').querySelector('.ti-list li:not(.done) .nm');
+        if (!nm) return;
+        nm.scrollIntoView({ block: 'nearest' });
+        nm.focus({ preventScroll: true });
+      };
+      const toDone = () => {
+        ui.todayFolds = { ...(ui.todayFolds || {}), done: true };
+        render();
+        // a row ticked on this visit stays in place (rule 6): it is the one to go to until the Done fold holds it
+        const box = $('today-list');
+        const tick = box.querySelector('.ti-list li input.tick:checked');
+        const fold = [...box.querySelectorAll('.ti-fold')].find(x => /^Done/.test(x.textContent));
+        const f = fold || (tick && tick.closest('li').querySelector('.nm'));
+        if (!f) return;
+        f.scrollIntoView({ block: 'nearest' });
+        f.focus({ preventScroll: true });
+      };
+      card.replaceChildren(
+        el('h2', null, 'Today’s budget'),
+        go('tb-big', `${b.left} min left · ${b.free} free`, b.left ? toRow : null),
+        bar,
+        ...(b.over ? [el('p', 'tb-over', `${b.over} min over today’s ${b.available}`)] : []),
+        go('tb-line', [el('span', 'tb-k', 'Done'), el('span', 'tb-v', b.done + ' min')], b.done ? toDone : null)
+      );
+    }
     function renderToday() {
       const { day, items, isDone, budget, skipped } = dayState();
       // B-291 (D-286): no Now card; the prep check is under her greeting and the exam countdown on Study.
@@ -250,8 +306,7 @@
       const box = $('today-list');
       const head = el('div', 'card-head');
       head.append(el('h2', null, 'Today’s list'));
-      const b = budget;
-      if (b) head.append(el('span', 'meta', `${b.planned} of ${b.available} min planned`));
+      renderBudget(E.dayBudget(budget, items, isDone));
       // B-291: the open rows, then Done, then "Deferred: over today's budget" and "Taken off today" folded under the list.
       // A row he ticks on this visit stays where it is (rule 6); only rows done before it sit in Done.
       const shown = items.filter(i => i.tag !== 'EXAM'); // the exam is in Next 7 days (B-117)
