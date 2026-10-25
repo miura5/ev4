@@ -6282,12 +6282,12 @@
   "title": "Fidelity fix: Record (D-314): at 390 each row keeps its result (3 of 6, 9 of 10) as the Record phone board; rows at the demo's height",
   "dod": "The Record board matches at 1280 and 390 on long real lists. Proof (D-312, fidelity sprint): node tools/build.mjs; tools/fidelity screenshots (crawl.cjs demo and built click every control) beside the boards at 1280, 1706, 2560 and 390; npm run smoke; ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-350"
   ],
-  "notes": "claimed by lane record",
-  "commit": null,
+  "notes": "Card for Matt: Record's rows now stand at the demo's height (44 px) on every size, and on the phone each row keeps its result (3 of 6, 35 min) beside the time, wrapping the way the demo's rows do: badge and name first, then the result and time on the same line or the next. A long name, like a note, now reads in full on the phone instead of being cut off. On staging GREEN at 2540d19. Still different from the demo: times read 7:16 PM rather than 7:16 pm (the shared time format is the frame lane's); otherwise the same at 1280, 1706, 2560 and 390.",
+  "commit": "2540d19",
   "source": "fidelity review, Oct 25 (D-314)",
   "words": "Fidelity fix: Record at 390 drops the row's result column; Progress's day panel shows notes and quizzes the corrections cut.",
   "reportedAt": "2026-10-25T12:48:37.204Z",
