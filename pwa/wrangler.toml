@@ -24,3 +24,12 @@ workers_dev = true
 binding = "DB"
 database_name = "ev-staging"
 database_id = "filled-in-by-the-pwa-staging-workflow"
+
+# B-316 (D-302): the nightly export of the staging D1 to its own R2 bucket (pwa/backup.js), at 3:17 Central (8:17 UTC
+# in winter). The pwa-staging workflow creates the bucket once; exports are never overwritten or deleted.
+[[env.staging.r2_buckets]]
+binding = "EXPORTS"
+bucket_name = "ev-staging-exports"
+
+[env.staging.triggers]
+crons = ["17 8 * * *"]

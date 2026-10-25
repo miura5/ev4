@@ -5,13 +5,21 @@
 //   - /api/claude asks Claude (Haiku) with the key the Worker holds as a secret (env.ANTHROPIC_API_KEY, D-299).
 //   - /api/run/* is the run API (B-312, runapi.js): list, get and an all-or-nothing batch pinned to versions (v, one
 //     more on every write, the page's saves here included). Nothing is ever deleted.
+//   - B-316: a nightly export of D1 to R2 (backup.js) on the cron in wrangler.toml, and POST /api/backup/export to make
+//     one now; GET /api/backup/newest names the newest export. Exports are never overwritten or deleted.
 import { handleRun } from './runapi.js';
+import { exportToR2, newestExport } from './backup.js';
 
 const OVERLAP_MS = 5000;
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 
 export default {
+  // B-316: the nightly export, where the Worker has a cron and an EXPORTS bucket (staging, wrangler.toml).
+  async scheduled(event, env, ctx) {
+    if (env.EXPORTS) ctx.waitUntil(exportToR2(env));
+  },
+
   async fetch(request, env) {
     const url = new URL(request.url);
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
@@ -21,6 +29,16 @@ export default {
       return json({ error: 'wrong token' }, 401);
 
     if (url.pathname.startsWith('/api/run/')) return handleRun(request, env, url);
+
+    // B-316: an export now (the staging proof), and the newest export's key. Counts and hashes only, never a document.
+    if (url.pathname === '/api/backup/export' && request.method === 'POST') {
+      if (!env.EXPORTS) return json({ error: 'no EXPORTS bucket on this Worker' }, 503);
+      return json(await exportToR2(env));
+    }
+    if (url.pathname === '/api/backup/newest' && request.method === 'GET') {
+      if (!env.EXPORTS) return json({ error: 'no EXPORTS bucket on this Worker' }, 503);
+      return json({ key: await newestExport(env.EXPORTS) });
+    }
 
     // GET /api/db?since=<ms>: every document changed after `since` (0 = the whole record).
     // B-324: `now`, the next since, is taken before the read and a few seconds back, so a save stamped just before the

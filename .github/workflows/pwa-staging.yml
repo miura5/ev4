@@ -5,7 +5,11 @@
 # version column is added once to a D1 made before it, and the run API suite (pwa/run-api.test.mjs) runs against the
 # Worker; it writes only into its own collection, and nothing is deleted. B-324: with the input jobs set to true, one
 # real Haiku job of each kind is started from the app's page in Chromium, run through the shim and the Worker, and read
-# back from the staging D1 (tools/pwa-jobs.mjs); what it writes carries the app's source and is additive.
+# back from the staging D1 (tools/pwa-jobs.mjs); what it writes carries the app's source and is additive. B-316: the
+# ev-staging-exports R2 bucket is created once (the Worker's nightly export writes there); with the input backup set
+# to true, Time Travel is read for the staging D1, an export is made now, and the newest export is restored into a new
+# table of the ev-staging-scratch D1 and checked for counts and SHA-256 hashes per collection (tools/pwa-backup.mjs).
+# Exports are never overwritten or deleted, and each restore goes into a table of its own.
 # Started by hand only (gh workflow run pwa-staging.yml): never on a push or a pull request, and staging only; the live
 # Worker and a live D1 are never named here. Secrets reach wrangler and the check through the environment or stdin,
 # never on a command line or in the log.
@@ -15,6 +19,10 @@ on:
     inputs:
       jobs:
         description: 'B-324: also run one real Haiku job of each kind and read it back from the staging D1'
+        type: boolean
+        default: false
+      backup:
+        description: 'B-316: also check Time Travel, make an export now and restore the newest into a scratch D1'
         type: boolean
         default: false
 permissions:
@@ -87,6 +95,15 @@ jobs:
           else
             echo "version column already there"
           fi
+      - name: the ev-staging-exports R2 bucket (B-316), created once
+        working-directory: pwa
+        run: |
+          if npx wrangler r2 bucket info ev-staging-exports >/dev/null 2>&1; then
+            echo "ev-staging-exports already there"
+          else
+            npx wrangler r2 bucket create ev-staging-exports > r2.log 2>&1 || { cat r2.log; exit 1; }
+            echo "ev-staging-exports created"
+          fi
       - name: deploy the ev-staging Worker
         id: deploy
         working-directory: pwa
@@ -123,6 +140,33 @@ jobs:
         run: |
           npx playwright install --with-deps chromium >/dev/null
           node tools/pwa-jobs.mjs "${{ steps.deploy.outputs.url }}" shots-jobs
+      - name: Time Travel is on for the staging D1 (B-316)
+        if: ${{ inputs.backup }}
+        working-directory: pwa
+        run: |
+          npx wrangler d1 time-travel info ev-staging --env staging > tt.log 2>&1 || { cat tt.log; exit 1; }
+          grep -i "bookmark" tt.log || { cat tt.log; echo "no Time Travel bookmark for ev-staging"; exit 1; }
+      - name: an export now, then the newest export restored into a scratch D1 and checked (B-316)
+        if: ${{ inputs.backup }}
+        working-directory: pwa
+        env:
+          EV_TOKEN: ${{ secrets.EV_STAGING_TOKEN }}
+          BASE: ${{ steps.deploy.outputs.url }}
+        run: |
+          node -e 'const b=process.env.BASE,h={authorization:"Bearer "+process.env.EV_TOKEN};(async()=>{const r=await fetch(b+"/api/backup/export",{method:"POST",headers:h});const e=await r.json();if(r.status!==200)throw new Error("export: "+r.status+" "+JSON.stringify(e));console.log("export made:",e.key,Object.entries(e.collections).map(([c,m])=>c+" "+m.count).join(", "));const n=await (await fetch(b+"/api/backup/newest",{headers:h})).json();if(!n.key)throw new Error("no newest export");require("fs").writeFileSync("newest.txt",n.key);console.log("newest export:",n.key)})().catch(e=>{console.error(e.message);process.exit(1)})'
+          key=$(cat newest.txt)
+          npx wrangler r2 object get "ev-staging-exports/$key" --remote --file export.json >/dev/null
+          id_of() { npx wrangler d1 list --json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const d=JSON.parse(s).find(x=>x.name==="ev-staging-scratch");process.stdout.write(d?d.uuid:"")})'; }
+          id=$(id_of)
+          if [ -z "$id" ]; then npx wrangler d1 create ev-staging-scratch >/dev/null; id=$(id_of); fi
+          [ -n "$id" ] || { echo "ev-staging-scratch D1 not found after create"; exit 1; }
+          printf 'name = "ev-staging-scratch"\ncompatibility_date = "2026-10-01"\n\n[[d1_databases]]\nbinding = "DB"\ndatabase_name = "ev-staging-scratch"\ndatabase_id = "%s"\n' "$id" > scratch.toml
+          table="restore_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
+          node ../tools/pwa-backup.mjs restore-sql export.json "$table" > restore.sql
+          npx wrangler d1 execute ev-staging-scratch --config scratch.toml --remote --file restore.sql >/dev/null
+          npx wrangler d1 execute ev-staging-scratch --config scratch.toml --remote --json --command "SELECT c, id, data FROM $table" > rows.json
+          echo "restored into ev-staging-scratch, table $table"
+          node ../tools/pwa-backup.mjs verify export.json rows.json
       - uses: actions/upload-artifact@v4
         if: failure() && inputs.jobs
         with:
