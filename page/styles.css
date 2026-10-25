@@ -639,12 +639,13 @@ button.tlink{all:unset;cursor:pointer;color:var(--accent-text);font-size:calc(14
    From 1200 px: a details panel on the right too, holding the view's side column, present only while it has one (D-151).
    The document still scrolls (the pane is drawn behind it), so every scroll, sticky and anchor keeps working. Reading
    width is at most 680 px; extra width is margin. Rows and the view switch come with B-213, the motion with B-216. */
-:root{--side-w:0px;--right-w:0px;--pane-l:0px;--pane-r:0px;--mh-h:48px;--top-h:44px}
+:root{--side-w:0px;--right-w:0px;--pane-l:0px;--pane-r:0px;--mh-h:48px;--top-h:44px;--panel-top:calc(8px + var(--mh-h))}
 html{background:var(--bg)}
 body{background:transparent}
-.wrap{max-width:680px}
-@media (max-width:1023px){.wrap{max-width:680px}}
-body:not(.on-ev) .wrap{max-width:680px}
+/* B-332 (D-312, superseding D-225's 680 px): lists, cards and grids span the pane; only her message column keeps 680 px */
+.wrap{max-width:none}
+@media (max-width:1023px){.wrap{max-width:none}}
+body:not(.on-ev) .wrap{max-width:none}
 .top-in,.top-right{display:contents}
 /* the pane's header: the view's name, and the page's one status line */
 .mh{position:sticky;top:0;z-index:8;display:flex;align-items:center;gap:10px;min-height:var(--mh-h);
@@ -655,6 +656,8 @@ body:not(.on-ev) .wrap{max-width:680px}
 .mh .status:not(.ok){color:var(--att);white-space:normal}
 /* D-151: the status line speaks only of a problem or a note; Live stays off the header. */
 .mh .status.ok{display:none}
+/* B-332: the header holds only the title, the view's switch and New; health and status live in System (B-341) */
+.mh .status{display:none}
 .ptitle{display:none}
 /* the sidebar's rows */
 .side{z-index:9}
@@ -690,13 +693,14 @@ body.on-ev.opening .side .top-av,body.on-ev.in-session .side .top-av,body.on-ev.
 }
 /* From 600 px: the dim sidebar and the raised pane, drawn behind the document's flow. */
 @media (min-width:600px){
-  :root{--side-w:212px;--pane-l:calc(var(--side-w));--pane-r:8px}
+  :root{--side-w:236px;--pane-l:calc(var(--side-w));--pane-r:8px}
   html{background:var(--sunken)}
   body{padding-left:calc(var(--pane-l) + 16px);padding-right:calc(var(--pane-r) + 16px)}
-  body::before{content:"";position:fixed;z-index:-1;top:8px;bottom:8px;left:var(--pane-l);right:var(--pane-r);background:var(--bg);border-radius:12px;box-shadow:0 0 0 1px var(--line)}
+  body::before{content:"";position:fixed;z-index:-1;top:8px;bottom:8px;left:var(--pane-l);right:8px;background:var(--bg);border-radius:12px;box-shadow:0 0 0 1px var(--line)}
   .side{position:fixed;left:0;top:0;bottom:0;width:var(--side-w);display:flex;flex-direction:column;padding:8px 8px 10px;overflow-y:auto;scrollbar-width:none}
   .side .tab-sys{margin-top:auto}
-  .mh{top:8px;margin-top:8px;border-radius:12px 12px 0 0;padding-top:0}
+  /* B-332: the header spans the window, over the right panel too */
+  .mh{top:8px;margin-top:8px;margin-right:calc(8px - 16px - var(--pane-r));border-radius:12px 12px 0 0;padding:0 12px 0 18px;box-sizing:border-box;height:var(--mh-h)}
 }
 @media (min-width:600px) and (max-width:699px){:root{--side-w:184px}}
 @media (min-width:1600px){:root{--side-w:236px}}
@@ -706,11 +710,10 @@ body.on-ev.opening .side .top-av,body.on-ev.in-session .side .top-av,body.on-ev.
 /* From 1200 px: the details panel on the right holds the view's side column, while the view has one. */
 @media (min-width:1200px){
   :root{--right-w:320px}
-  body:has(section.panel:not([hidden]) > .cols > .col-side, section.panel:not([hidden]) > .panel:not([hidden]) > .cols > .col-side){--pane-r:calc(var(--right-w) + 16px)}
-  section.panel > .cols > .col-side,section.panel > .panel > .cols > .col-side{position:fixed;top:8px;bottom:8px;right:8px;width:var(--right-w);display:flex;flex-direction:column;gap:8px;overflow-y:auto;scrollbar-width:thin;z-index:5}
+  body:has(section.panel:not([hidden]) > .cols > .col-side, section.panel:not([hidden]) > .panel:not([hidden]) > .cols > .col-side){--pane-r:calc(var(--right-w) + 8px)}
+  section.panel > .cols > .col-side,section.panel > .panel > .cols > .col-side{position:fixed;top:var(--panel-top);bottom:8px;right:8px;width:var(--right-w);box-sizing:border-box;padding:16px;border-left:1px solid var(--line);border-radius:0 0 12px 0;background:var(--bg);display:flex;flex-direction:column;gap:14px;overflow-y:auto;scrollbar-width:thin;z-index:5}
   .col-main{display:flex;flex-direction:column;gap:14px;min-width:0}
 }
-@media (min-width:2000px){:root{--right-w:380px}}
 
 /* ============================================================ B-209 (D-213): the E.V. tab in C =================
    Her stage is one size per layout (104, 112 or 128, 140 or 168 px; 70% in a session), set in px by the page. While he
@@ -770,8 +773,8 @@ body.captions .cap-echo{display:none}
    fixed column as a view's side column), and the pane gives it room. Her captions stay one column at most 680 px. */
 body.captions.on-ev .wrap{max-width:680px}
 @media (min-width:1200px){
-  body.captions.on-ev.side-on{--pane-r:calc(var(--right-w) + 16px)}
-  body.captions.side-on #p-ev>#ev-side{position:fixed;top:8px;bottom:8px;right:8px;width:var(--right-w);z-index:5;grid-column:auto;grid-row:auto;align-self:auto;margin:0}
+  body.captions.on-ev.side-on{--pane-r:calc(var(--right-w) + 8px)}
+  body.captions.side-on #p-ev>#ev-side{position:fixed;top:var(--panel-top);bottom:8px;right:8px;width:var(--right-w);box-sizing:border-box;padding:16px;border-left:1px solid var(--line);border-radius:0 0 12px 0;background:var(--bg);z-index:5;grid-column:auto;grid-row:auto;align-self:auto;margin:0}
   body.captions:not(.on-ev) #ev-side{display:none}
 }
 
@@ -862,10 +865,10 @@ body[data-view="today"] #side-today{display:none}
 #ev-dates,#ev-sess{display:none}
 @media (max-width:1199px){body.captions:not(.side-on) #p-ev>#ev-side{display:none}}
 @media (min-width:1200px){
-  body:has(#p-study:not([hidden]) > #study-side:not([hidden])){--pane-r:calc(var(--right-w) + 16px)}
-  #study-side:not([hidden]){position:fixed;top:8px;bottom:8px;right:8px;width:var(--right-w);display:flex;flex-direction:column;gap:8px;overflow-y:auto;scrollbar-width:thin;z-index:5}
-  body.captions.on-ev.ev-rest-on{--pane-r:calc(var(--right-w) + 16px)}
-  body.captions.ev-rest-on #p-ev>#ev-side{position:fixed;top:8px;bottom:8px;right:8px;width:var(--right-w);z-index:5;grid-column:auto;grid-row:auto;align-self:auto;margin:0;display:flex;flex-direction:column;gap:8px;overflow-y:auto;scrollbar-width:thin}
+  body:has(#p-study:not([hidden]) > #study-side:not([hidden])){--pane-r:calc(var(--right-w) + 8px)}
+  #study-side:not([hidden]){position:fixed;top:var(--panel-top);bottom:8px;right:8px;width:var(--right-w);box-sizing:border-box;padding:16px;border-left:1px solid var(--line);border-radius:0 0 12px 0;background:var(--bg);display:flex;flex-direction:column;gap:14px;overflow-y:auto;scrollbar-width:thin;z-index:5}
+  body.captions.on-ev.ev-rest-on{--pane-r:calc(var(--right-w) + 8px)}
+  body.captions.ev-rest-on #p-ev>#ev-side{position:fixed;top:var(--panel-top);bottom:8px;right:8px;width:var(--right-w);box-sizing:border-box;padding:16px;border-left:1px solid var(--line);border-radius:0 0 12px 0;background:var(--bg);z-index:5;grid-column:auto;grid-row:auto;align-self:auto;margin:0;display:flex;flex-direction:column;gap:14px;overflow-y:auto;scrollbar-width:thin}
   body.captions:not(.side-on) #ev-dates{display:flex}
   /* the panel's cards, wherever the panel is: the ground, a hairline, 12 px corners */
   #study-side .card,#ev-dates,body.captions #ev-side>.surf,body.captions #ev-side>.sk-panel,body.captions #ev-side>.card{background:var(--bg);border:0;border-radius:12px;box-shadow:0 0 0 1px var(--line);-webkit-backdrop-filter:none;backdrop-filter:none}
