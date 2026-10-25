@@ -6213,11 +6213,11 @@
   "title": "Fidelity fix: E.V. (D-314): no paperclip in the field; the chips are the demo's set (Start a study session, What's due this week?, Quiz me on <her weakest topic>, How did this week go?, Plan the rest of today); her greeting's things to know as her own lines as in the Main board, no fold with a red dot; at 390 a running session is a strip under the header with Break and End as the ConversationPhone board",
   "dod": "The Main and ConversationPhone boards match at every size, at rest and in a session. Proof (D-312, fidelity sprint): node tools/build.mjs; tools/fidelity screenshots (crawl.cjs demo and built click every control) beside the boards at 1280, 1706, 2560 and 390; npm run smoke; ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-345"
   ],
-  "notes": "",
+  "notes": "claimed by lane ev",
   "commit": null,
   "source": "fidelity review, Oct 25 (D-314)",
   "words": "Fidelity fix: E.V.'s view differs from the demo: paperclip, chips, the things-to-know fold and the phone session strip.",
