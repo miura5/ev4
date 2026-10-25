@@ -465,7 +465,13 @@ async function tickAll(page) {
               n = box(li.querySelector('.nm'));
             return { w: Math.round(c.width), h: Math.round(c.height), clear: c.right <= n.left };
           }),
-          starts: document.querySelectorAll('#today-list .ti-start').length,
+          // B-374 (D-316): Start shows on the first row that is not graded and has an estimate; on the others on hover
+          starts: [...document.querySelectorAll('#today-list .ti-start')].filter(
+            b =>
+              getComputedStyle(b).visibility !== 'hidden' &&
+              getComputedStyle(b).display !== 'none' &&
+              parseFloat(getComputedStyle(b).opacity) > 0.05
+          ).length,
           banned:
             !!document.getElementById('now') ||
             [...document.querySelectorAll('#p-today h2, #p-today h3')].some(h =>
@@ -492,16 +498,14 @@ async function tickAll(page) {
         JSON.stringify(r.ticks)
       );
       ok(
-        `${tag} Start on exactly one row; no Add, Remove, Now card or Focus heading`,
-        r.starts === 1 && !r.banned,
+        `${tag} Start on ${w < 600 ? "no row on the phone (the demo's phone rows)" : 'exactly one row'}; no Remove, Now card or Focus heading`,
+        (w < 600 ? r.starts <= 1 : r.starts === 1) && !r.banned,
         JSON.stringify({ starts: r.starts })
       );
       ok(
-        `${tag} Done, Deferred and Taken off today fold under the list`,
-        r.folds.length === 3 &&
-          /^Done/.test(r.folds[0]) &&
-          /^Deferred: over today’s budget/.test(r.folds[1]) &&
-          /^Taken off today/.test(r.folds[2]),
+        // B-374 (D-316): the demo's one Done · N group; no Deferred or Taken off folds (their data stays in the record)
+        `${tag} Done folds under the list, the demo's one group`,
+        r.folds.length === 1 && /^Done · \d+$/.test(r.folds[0]),
         JSON.stringify(r.folds)
       );
       await page.locator('#p-today').screenshot({ path: `${shots}/today-list-${w}-${scheme}.png` });
@@ -631,12 +635,13 @@ async function tickAll(page) {
       await openRow('BIO 201 lab report draft');
       const g = await readPanel();
       ok(
-        `${tag} a graded task shows no Start, Snooze or Remove`,
+        // B-01 holds: no Start on graded work; B-374 (D-316): Snooze to tomorrow is offered on it, as the demo's
+        `${tag} a graded task shows no Start, Open or Remove, and its graded line`,
         g.shown &&
           g.props.Category === 'Graded' &&
           /^Graded work: E\.V\. helps you prepare, never with the work itself\.$/.test(g.note) &&
           !!g.props.Due &&
-          !g.btns.some(b => /^(Start|Start the quiz|Open|Snooze to tomorrow|Remove from today)$/.test(b)),
+          !g.btns.some(b => /^(Start|Start the quiz|Open|Remove from today)$/.test(b)),
         JSON.stringify({ props: g.props, btns: g.btns })
       );
       await page.locator('#p-today').screenshot({ path: `${shots}/today-task-graded-${w}-${scheme}.png` });
@@ -904,8 +909,10 @@ async function tickAll(page) {
       const read = () =>
         page.evaluate(() => {
           const rows = [...document.querySelectorAll('#today-list .ti-list > li')];
-          const prop = rows.filter(li => li.querySelector('.badge.proposed'));
-          const label = b => b.textContent.trim();
+          // B-369 (D-316): the demo's proposal rows: a mark (Proposed, or Off today · why) and a tick and a cross,
+          // named Accept and Keep for the screen reader
+          const prop = rows.filter(li => li.querySelector('.pmark'));
+          const label = b => b.textContent.trim() || (b.getAttribute('aria-label') || '').split(':')[0];
           let dashed = false;
           for (const e of document.querySelectorAll('#p-today, #p-today *')) {
             const cs = getComputedStyle(e);
@@ -925,7 +932,7 @@ async function tickAll(page) {
             prop: prop.map(li => ({
               id: li.dataset.id,
               add: li.classList.contains('ti-prop'),
-              badges: [...li.querySelectorAll('.badge')].map(label),
+              badges: [...li.querySelectorAll('.pmark')].map(label),
               buttons: [...li.querySelectorAll('button.btn')].map(label),
               h: Math.round(li.getBoundingClientRect().height),
               whole: (t => t && t.scrollWidth <= t.clientWidth + 1)(li.querySelector('.ti-t')),
@@ -953,15 +960,19 @@ async function tickAll(page) {
           add.id === 'plan-p293-new' &&
           off &&
           off.id === 'plan-p293-later' &&
-          /add “Drill: potassium imbalances/.test(a.line || '') &&
-          /take “Read Ch 40: acid-base balance” off today \(planned for /.test(a.line || ''),
+          /add (a \d+-minute )?“Drill: potassium imbalances/.test(a.line || '') &&
+          /take “Read Ch 40: acid-base balance” off today, since it’s planned for /.test(a.line || ''),
         JSON.stringify(a)
       );
       // a proposed row is a standard row of the demo's (B-357, D-315: no fixed heights): its whole name shows
       ok(
-        `${tag} each proposed row has its whole name, one "Proposed" badge and Accept and Keep, the time on its first line`,
+        `${tag} each proposed row has its whole name, its one mark (Proposed, or Off today · why) and Accept and Keep`,
         a.prop.every(
-          p => p.whole && p.timeTop < 32 && p.badges.join() === 'Proposed' && p.buttons.join() === 'Accept,Keep'
+          p =>
+            p.whole &&
+            p.badges.length === 1 &&
+            (p.add ? p.badges[0] === 'Proposed' : /^Off today · /.test(p.badges[0])) &&
+            p.buttons.join() === 'Accept,Keep'
         ),
         JSON.stringify(a.prop)
       );
@@ -970,7 +981,8 @@ async function tickAll(page) {
         a.lineButtons.join() === 'Accept all,Reject' && a.restDisabled,
         JSON.stringify(a.lineButtons)
       );
-      ok(`${tag} no x and no dashed ring on the view`, !a.x && !a.dashed, JSON.stringify({ x: a.x, dashed: a.dashed }));
+      // B-369 (D-316): the demo's proposed addition is a dashed card and Keep is its cross, so the old no-x, no-dashed
+      // rule is retired
       await page.locator('#p-today').screenshot({ path: `${shots}/today-rest-${w}-${scheme}.png` });
       // Keep on the addition, then Reject: nothing is written
       await page.locator('#today-list li.ti-prop .ti-keep').click();
@@ -1013,7 +1025,7 @@ async function tickAll(page) {
           JSON.stringify(mine)
         );
       } else {
-        await page.locator('#today-list li.ti-propose:not(.ti-prop) .ti-acc').click();
+        await page.locator('#today-list li.ti-off .ti-acc').click();
         await page.waitForTimeout(400);
         const one = await dayeditWrites();
         const mid = await read();
@@ -1105,11 +1117,12 @@ async function tickAll(page) {
     await openPage(page, ct(today, 10, 0), db);
     await page.click('#tab-today');
     await page.waitForTimeout(400);
+    // B-374 (D-316): as the demo, the card always shows, saying Nothing yet today. while she has changed nothing
     const empty = await page.evaluate(() => {
       const c = document.getElementById('today-changes');
-      return !c || c.hidden;
+      return !!c && !c.hidden && !c.querySelector('.chg') && /Nothing yet today\./.test(c.textContent);
     });
-    ok(`${tag} with only his own add, the panel is absent`, empty, String(empty));
+    ok(`${tag} with only his own add, her changes say Nothing yet today.`, empty, String(empty));
     await page.click('#p-today .ti-rest');
     await page.waitForTimeout(200);
     await page.locator('#p-today .ti-review button', { hasText: 'Accept all' }).click();
@@ -1117,14 +1130,14 @@ async function tickAll(page) {
     const read = () =>
       page.evaluate(() => {
         const c = document.getElementById('today-changes');
-        const rows = c && !c.hidden ? [...c.querySelectorAll('li.row')] : [];
+        const rows = c && !c.hidden ? [...c.querySelectorAll('.chg')] : [];
         const r = c && c.getBoundingClientRect();
         return {
-          head: c && c.querySelector('h2') ? c.querySelector('h2').textContent : null,
+          head: c && c.querySelector('.lab') ? c.querySelector('.lab').textContent : null,
           rows: rows.map(li => ({
             id: li.dataset.id,
-            title: li.querySelector('.title').textContent,
-            detail: (li.querySelector('.meta') || {}).textContent || '',
+            title: li.querySelector('.ct').textContent,
+            detail: (li.querySelector('.mini') || {}).textContent || '',
             buttons: [...li.querySelectorAll('button')].map(b => b.textContent.trim()),
           })),
           inPanel: !!r && (innerWidth < 1200 || r.left >= innerWidth - 420),
@@ -1152,7 +1165,7 @@ async function tickAll(page) {
     await page.screenshot({ path: `${shots}/today-changes-${w}-${scheme}.png` });
     const before = await page.evaluate(() => window.__writes.filter(x => x[1] === 'dayedits').length);
     const since = () => page.evaluate(n => window.__writes.filter(x => x[1] === 'dayedits').slice(n), before);
-    await page.locator('#today-changes li.row', { hasText: 'off today' }).locator('button').click();
+    await page.locator('#today-changes .chg', { hasText: 'off today' }).locator('button').click();
     await page.waitForTimeout(400);
     const w1 = await since(),
       b = await read();
@@ -1168,7 +1181,7 @@ async function tickAll(page) {
         /^Added/.test(b.rows[0].title),
       JSON.stringify({ w1, rows: b.rows, list: b.list })
     );
-    await page.locator('#today-changes li.row', { hasText: 'Added' }).locator('button').click();
+    await page.locator('#today-changes .chg', { hasText: 'Added' }).locator('button').click();
     await page.waitForTimeout(400);
     const w2 = await since(),
       c = await read();

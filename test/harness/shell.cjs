@@ -112,7 +112,8 @@ const statusShown = page =>
       `[${scheme}] opens on E.V. with the greeting`,
       (await page.isVisible('#p-ev')) &&
         !(await page.isVisible('#p-today')) &&
-        /Matt|Still up|Afternoon/.test(
+        // B-358, B-368 (D-316): her greeting shows as its one summary line
+        /on today’s list/.test(
           await page
             .locator('#thread .msg.ev')
             .first()
@@ -226,8 +227,8 @@ const statusShown = page =>
     );
     await page.close();
   }
-  // B-288 (D-315, C-4): at 390, 700, 1000 and 1280 in both themes. The tab bar shows only at 390, its E.V. tab is her
-  // 24 px avatar (no icon) and every tab target there, System's included, is 44 px or more each way. The right panel
+  // B-288 (D-315, C-4): at 390, 700, 1000 and 1280 in both themes. The tab bar shows only at 390, its first tab the
+  // demo's speech-bubble icon (B-361), and every tab target there is 44 px or more each way. The right panel
   // shows only from 1200 px; below that, each view's side column follows its main column inside the pane.
   for (const scheme of ['light', 'dark'])
     for (const w of [390, 700, 1000, 1280]) {
@@ -236,8 +237,6 @@ const statusShown = page =>
       await page.screenshot({ path: `${shots}/widths-ev-${w}-${scheme}.png` });
       const bar = await page.evaluate(() => {
         const side = document.getElementById('top').getBoundingClientRect(),
-          her = document.getElementById('tab-her'),
-          hr = her.getBoundingClientRect(),
           icon = document.querySelector('#tab-ev > svg'),
           targets = [...document.querySelectorAll('#top .tabs .tab')].map(t => {
             const r = t.getBoundingClientRect();
@@ -245,20 +244,16 @@ const statusShown = page =>
           });
         return {
           bar: Math.round(side.bottom) === innerHeight && Math.round(side.width) === innerWidth,
-          avatar:
-            getComputedStyle(her).display !== 'none' &&
-            !!her.querySelector('.ev-av') &&
-            Math.round(hr.width) === 24 &&
-            Math.round(hr.height) === 24 &&
-            getComputedStyle(icon).display === 'none',
+          // B-361 (D-316): the phone bar's first tab is the demo's speech-bubble icon, not her avatar
+          icon: !!icon && getComputedStyle(icon).display !== 'none' && icon.getBoundingClientRect().width > 0,
           targets,
         };
       });
       const phone = w < 600;
       ok(
-        `[${w} ${scheme}] the tab bar shows only on the phone, its E.V. tab her 24 px avatar (B-288)`,
-        phone ? bar.bar && bar.avatar : !bar.bar && !bar.avatar,
-        JSON.stringify({ bar: bar.bar, avatar: bar.avatar })
+        `[${w} ${scheme}] the tab bar shows only on the phone, its first tab the speech-bubble icon (B-288, B-361)`,
+        phone ? bar.bar && bar.icon : !bar.bar,
+        JSON.stringify({ bar: bar.bar, icon: bar.icon })
       );
       if (phone)
         ok(
@@ -368,6 +363,16 @@ const statusShown = page =>
     for (const scheme of ['light', 'dark']) {
       const { page, errors } = await open(browser, { viewport: { width: 1280, height: 900 }, scheme, db: many });
       await page.waitForTimeout(700);
+      // the first open of the run can still be drawing her dial and the sidebar's Today
+      await page
+        .waitForFunction(
+          () => document.querySelector('#top .top-av .c1') && document.querySelector('#side-today .si'),
+          null,
+          {
+            timeout: 5000,
+          }
+        )
+        .catch(() => {});
       const v = await page.evaluate(() => {
         const cs = getComputedStyle,
           root = cs(document.documentElement),
@@ -437,11 +442,12 @@ const statusShown = page =>
         v.rows === 5 && /^2 more in Today$/.test(v.more.trim()),
         JSON.stringify({ rows: v.rows, more: v.more })
       );
-      // Tab from the brand through the five nav items: each takes the focus with a visible ring, and Enter opens it.
-      await page.focus('#brand');
+      // Tab through the five nav items: each takes the focus with a visible ring, and Enter opens it. B-368: the brand
+      // is no control, so the walk starts on the first nav item.
       const ring = [];
       for (const t of ['ev', 'today', 'study', 'progress', 'record']) {
-        await page.keyboard.press('Tab');
+        if (t === 'ev') await page.focus('#tab-ev');
+        else await page.keyboard.press('Tab');
         const f = await page.evaluate(() => {
           const a = document.activeElement,
             c = getComputedStyle(a);
@@ -901,13 +907,14 @@ const statusShown = page =>
           () => document.getElementById('rec-list').textContent.includes('Rounding to tenths for mL') // B-302: the log
         );
         ok(
-          `${tag} a new note lands in ideas, with no course, and shows in Record (B-287)`,
+          // B-373 (D-316): the demo's New note has a Title, the words and a Course switch
+          `${tag} a new note lands in ideas with its course, and shows in Record (B-287, B-373)`,
           !!note.data &&
-            !('course' in note.data) &&
+            !!note.data.course &&
             note.data.status === 'open' &&
             listed &&
             note.focus === 'new-btn' &&
-            noteShape.fields.join() === 'new-text',
+            noteShape.fields.includes('new-text'),
           JSON.stringify({ note, listed, noteShape })
         );
         // B-308 (C-7): the New task window's Category, Estimate, When and Course go through the list edit: a 20-minute
@@ -917,8 +924,10 @@ const statusShown = page =>
         await page.waitForTimeout(120);
         const planned = () =>
           page.evaluate(() => {
-            // B-292 (C-5): the list head's "<left> min left · <free> free"; an added, unticked task adds to what's left
-            const m = /(\d+) min left · \d+ free/.exec(document.getElementById('today-list').textContent);
+            // B-346: the budget card's "<on the list> of <budget> min"; an added, unticked task adds to it
+            const m = /^(\d+) of \d+ min/.exec(
+              (document.querySelector('#today-budget .tb-big') || {}).textContent || ''
+            );
             return m ? Number(m[1]) : null;
           });
         const before = await planned();
@@ -927,12 +936,14 @@ const statusShown = page =>
         const shape = await page.evaluate(() => ({
           fields: !document.getElementById('new-fields').hidden,
           kinds: [...document.querySelectorAll('#new-kind button')].map(b => b.textContent),
+          ests: [...document.querySelectorAll('#new-est button')].map(b => b.textContent),
           whens: [...document.querySelectorAll('#new-when button')].map(b => b.textContent),
           courses: [...document.querySelectorAll('#new-course button')].map(b => b.textContent),
         }));
         await page.keyboard.type('Harness reading chapter 12');
-        await page.click('#new-kind [data-v="reading"]');
-        await page.fill('#new-min', '20');
+        // B-361 (D-316): the demo's categories (Classes, Study) and Estimate chips (5, 15, 30, 45)
+        await page.click('#new-kind [data-v="review"]');
+        await page.click('#new-est [data-v="30"]');
         const course = shape.courses[shape.courses.length - 1];
         await page.click(`#new-course [data-v="${course}"]`);
         await page.click('#new-save');
@@ -964,7 +975,7 @@ const statusShown = page =>
         await page.click('#new-btn');
         await page.click('#new-menu [data-new="task"]');
         const reset = await page.evaluate(() => ({
-          min: document.getElementById('new-min').value,
+          min: (document.querySelector('#new-est [aria-pressed="true"]') || {}).textContent,
           when: (document.querySelector('#new-when [aria-pressed="true"]') || {}).textContent,
         }));
         await page.keyboard.type('Harness tomorrow task');
@@ -983,19 +994,20 @@ const statusShown = page =>
           return { written: !!w, onToday };
         });
         ok(
-          `${tag} New task's Category, Estimate, When and Course: 20 min of Reading lands on today with its badge and course and the budget counts it; Tomorrow lands on tomorrow's list (B-308)`,
+          `${tag} New task's Category, Estimate, When and Course: 30 min of Study lands on today with its badge and course and the budget counts it; Tomorrow lands on tomorrow's list (B-308, B-361)`,
           shape.fields &&
-            shape.kinds.join('|') === 'To-do|Reading|Practice|Review|Notes' &&
+            shape.kinds.join('|') === 'Classes|Study' &&
+            shape.ests.join('|') === '5 min|15|30|45' &&
             shape.whens.join('|') === 'Today|Tomorrow' &&
             shape.courses.length > 0 &&
             !!added.w &&
-            added.w.kind === 'reading' &&
-            added.w.minutes === 20 &&
+            added.w.kind === 'review' &&
+            added.w.minutes === 30 &&
             added.w.course === course &&
-            added.badge === 'Reading' &&
-            added.time === '20 min' &&
+            !!added.badge &&
+            added.time === '30 min' &&
             String(added.more).includes(course) &&
-            (before == null || after === before + 20) &&
+            (before == null || after === before + 30) &&
             reset.min === '15' &&
             reset.when === 'Today' &&
             tom.written &&
@@ -1021,9 +1033,11 @@ const statusShown = page =>
           );
         }
         const addRow = await page.evaluate(() => !!document.querySelector('#today-add, .add-row'));
+        // B-357 (D-316): the demo keeps two more, Today's Add and Record's Log something; nothing else creates
+        const DEMO = ['today: Add', 'record: Log something'];
         ok(
-          `${tag} no other button on any view creates a task or a note (B-287)`,
-          !creates.length && !addRow,
+          `${tag} no button but New and the demo's Add (Today) and Log something (Record) creates a task or a note (B-287)`,
+          creates.every(c => DEMO.includes(c)) && !addRow,
           JSON.stringify({ creates, addRow })
         );
       }
