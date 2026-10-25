@@ -5537,12 +5537,12 @@
   "title": "A PWA smoke on every push: build-pwa, then the shim boots against wrangler dev seeded with the synthetic record and a stub in place of the Claude API. It checks boot, each tab, a check-off, a study session started and ended, and a chat reply. Lives in pwa/, not test/harness/.",
   "dod": "npm run smoke:pwa green on boot, each tab, a check-off that survives a reload and a chat reply. The session step is in place and turns green in B-314. A planted page error turns it red. The smoke workflow runs it on every push. A chat message carrying a planted patient identifier is stopped by the page's gate, and the stub records no call to /api/claude.",
   "milestone": "app (data, pipelines, ops)",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-309"
   ],
-  "notes": "proofs: npm run smoke:pwa green (12 of 12 counted, session step pending B-314); smoke workflow run 40151081004 at 416edb3 green with its planted-error step. Inherited red: npm test fails one check (B-64, the joined app.js is not as the formatter writes it) since B-301's 9ec2548 in page/app; the app lane may not touch page/, so it is left to B-301 (in progress), which clears it with npm run format. Everything else in npm test is green (559 pass).",
-  "commit": null,
+  "notes": "Card (D-261). What changes when he studies: nothing yet; the app version of E.V. now gets an automatic check on every push, so a change that breaks the app is caught before he sees it. Why: the app (hand-off 3) needs its own safety net, like the page's smoke. What it touches: only the app's test tooling and the push checks; the page, his record and the claude.ai pages are untouched. What it checks: the app opens with a test copy of the record (made-up data), every tab opens, a check-off is still ticked after a reload, E.V. answers a chat message (from a stand-in for Claude), and a message with a planted patient detail is held back before anything is sent. The study session check runs but only counts from the next task (B-314), since sessions still look for Study Watch. What could break: the check could turn red for reasons outside the app; we'd see the smoke-pwa check fail on GitHub. Size: about 400 lines, one new test file; fully undoable, no deploy. Checks: reviewer 1 named one gap, npm test red on one formatting check inherited from B-301's page change (named above; B-301 clears it); reviewer 2: one gap left open - the patient-detail check covers a value E.V. has already judged real; a brand-new detail still goes to Claude for a quick judgment (the words around it included), as it does on claude.ai. Question for Matt: should the app skip that judgment and always ask you instead? Checks retired or loosened: none. Size line: +403 -1. Staging: not applicable (app lane).",
+  "commit": "416edb3",
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
  {
