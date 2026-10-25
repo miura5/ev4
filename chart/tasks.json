@@ -6938,7 +6938,7 @@
   "milestone": "v4.8 redesign",
   "status": "in progress",
   "depends": [],
-  "notes": "claimed by lane ev",
+  "notes": "reproduced: both jank pull checks red (hero flips, top jumps 164/199); reading the fold logic",
   "commit": null,
   "source": "test agent, captions harness B-249 jank check, Oct 25",
   "words": "On a 1150-wide laptop pane, scrolling up through the conversation folds E.V.'s stage and brings it back, and her latest line jumps 95 to 240 px.",
