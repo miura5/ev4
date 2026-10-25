@@ -3933,5 +3933,26 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "a5e07cb",
+  "time": "2026-10-25T02:53:11.764Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "f9e1327",
+  "tasks": [
+   "B-297",
+   "B-309",
+   "B-313",
+   "B-311",
+   "B-301",
+   "B-314"
+  ],
+  "summary": "Study overview; Bring the demo onto main; A PWA smoke on every push; A staging D1 and a staging Worker with their own token, seeded with the synthetic record only; Progress; The app without Study Watch or builder jobs",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
