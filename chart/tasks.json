@@ -5575,12 +5575,12 @@
   "title": "The run protocol targets the Worker. Where a run applies ArtifactData batches today, it applies them to the Worker's run API with the shared token, read from the task's settings and never from its prompt. The target is chosen per record, so live runs keep writing the artifact until B-320.",
   "dod": "For each cloud pipeline (morning, evening-cloud, weekly, worker, watchdog), a scheduled run fired against the staging Worker, and its runs/<id> read back from staging D1. A test asserts the live record still targets ArtifactData. A grep of the rendered prompts finds no token value.",
   "milestone": "app (data, pipelines, ops)",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-312"
   ],
-  "notes": "Review fixes at 10dcedc: the audit keys every record call in a Bash line (core/cli.mjs api, /api/run/, the Worker file), so a printed command chained to an unprinted one, a raw curl to /api/run/batch, a read of the token file and a shell loop are all extra (tests in run-worker.test.mjs); api list removed, windowed read proved through api pull. Rendered staging prompts unchanged (hashes match the deployed manifest), so no re-fire. npm test green. Not done: awaiting the second review.",
-  "commit": null,
+  "notes": "Staging's five cloud runs read and write the staging Worker (token from the staging record, D-320; never printed); each fired once and its runs/<id> read back from staging D1, audit ok. Live untouched (prompts byte-identical). Reviewer: second review No gaps; the run audit now catches chained, raw-curl and token-file calls, deliberate obfuscation left to the prompts' hard limits. Open: the staging watchdog flags evening-mac and restore-drill until B-317.",
+  "commit": "10dcedc",
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
  {
