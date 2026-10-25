@@ -1490,13 +1490,15 @@ const EVCore = (() => {
   const FIXED_TAGS = new Set(['GRADED', 'EXAM', 'CLINICAL', 'VALIDATION']);
   /** Graded work, exams, clinicals and validations stay on the list; everything else can be taken off for the day. */
   const isFixedItem = it => !!it && (FIXED_TAGS.has(it.tag) || /^(date|exam|soon)-/.test(String(it.id || '')));
+  /** B-374 (D-312): Matt's own Snooze may move graded work to tomorrow, as the demo; E.V. never takes it off. */
+  const mattMovesGraded = (it, by) => !!it && it.tag === 'GRADED' && by === 'Matt';
   /** The day's list as he sees it: planned items (minus the ones taken off), then the added ones in the order they came. */
   function dayView(day, dayedit) {
     const ed = dayedit || {};
     const base = (day && day.list && day.list.items) || [];
     const skip = ed.skipped || {};
     const checks = ed.checks || {};
-    const off = it => !!skip[it.id] && !isFixedItem(it);
+    const off = it => !!skip[it.id] && (!isFixedItem(it) || mattMovesGraded(it, skip[it.id].by));
     const added = Object.entries(ed.added || {})
       .filter(([, a]) => a && a.text && !isPrepAdded(a)) // prep items live on the prep check
       .sort(([, a], [, b]) => String(a.at || '').localeCompare(String(b.at || '')))
@@ -1572,7 +1574,7 @@ const EVCore = (() => {
       }
       const it = planned.find(x => x.id === id);
       if (!it) throw new Error('no item ' + id + ' on that day’s list');
-      if (isFixedItem(it))
+      if (isFixedItem(it) && !mattMovesGraded(it, by))
         throw new Error(`“${it.text}” is ${String(it.tag || 'fixed').toLowerCase()}; it stays on the list`);
       if (skip[id]) return { id, text: it.text, doc: null, note: 'already off the list' };
       const doc = next();
@@ -1590,7 +1592,7 @@ const EVCore = (() => {
     if (action === 'check') {
       const it = planned.find(x => x.id === id) || (added[id] && { id, text: added[id].text });
       if (!it) throw new Error('no item ' + id + ' on that day’s list');
-      if (skip[id] && !added[id] && !isFixedItem(it))
+      if (skip[id] && !added[id] && (!isFixedItem(it) || mattMovesGraded(it, skip[id].by)))
         throw new Error(`“${it.text}” is off the list for the day; bring it back first`);
       const done = edit.done !== false;
       const checks = ed.checks || {};

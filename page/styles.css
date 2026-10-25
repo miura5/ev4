@@ -1426,6 +1426,23 @@ button.btn:disabled{opacity:.45;cursor:default}
   #today-list .li>.badge{margin-right:auto}
   #today-list .ti-list>.li.ti-padd{padding:6px 6px 6px 16px}
 }
+/* B-374 (D-312): wave 4. A week title wraps between words only: the columns stay equal and a column widens to its
+   longest word; "N on today's list" and "Open the list" fit whole. E.V.'s changes today is the demo's label and rows
+   under the budget, always shown, with "Nothing yet today." when she changed nothing. */
+@media (min-width:1200px){#today-week .wk-days{grid-template-columns:repeat(7,minmax(min-content,1fr))}}
+#today-week .wchip .wc-t{overflow-wrap:normal;word-break:normal;hyphens:manual}
+#today-week .wchip.wk-list .wc-s{overflow:visible}
+#today-list .li .ti-start{gap:6px;padding:0 12px}
+#today-list .li .ti-start svg.ico{width:14px;height:14px;color:inherit}
+#today-changes{display:flex;flex-direction:column;gap:0}
+#today-changes[hidden]{display:none}
+#today-changes .lab{font:500 calc(12px * var(--ts))/1.3 var(--sans);color:var(--quiet)}
+#today-changes .chg{display:flex;align-items:flex-start;gap:10px;font-size:calc(13px * var(--ts));padding:10px 0;border-bottom:1px solid var(--line)}
+#today-changes .chg .dot{flex:none;width:8px;height:8px;border-radius:4px;margin-top:6px;background:var(--sem-blue)}
+#today-changes .chg-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+#today-changes .ct{color:var(--text);overflow-wrap:break-word}
+#today-changes .mini{font-size:calc(12.5px * var(--ts));color:var(--faint)}
+#today-changes .chg-none{padding-top:8px}
 /* B-364 (D-312): an opened task is the TaskDetail board's full view at every size: the header's back arrow before
    "Today" (no line under it), the head row (breadcrumb, N of M, up and down) across the pane, the 22 px title with its
    tick, the description and Where it came from in a 720 px column; the right panel (under it below 1200 px) holds the

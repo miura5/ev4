@@ -186,7 +186,7 @@
       c.setAttribute('aria-label', 'Done: ' + text);
       c.addEventListener('change', () => {
         T.ticked.add(it.id);
-        guard(c, () => tickWrite(it, c.checked), c.checked ? 'Checked off' : 'Unchecked');
+        guard(c, () => tickWrite(it, c.checked), null);
       });
       tk.append(c);
       const nm = el('button', 'nm ti-nm');
@@ -214,9 +214,11 @@
           el('span', 'pmark', 'Off today · ' + o.off.p.why),
           ...restButtons(o.off.P, o.off.p, offEdit(o.off.p), 'take “' + text + '” off today')
         );
-      const go = openItem(it);
-      if (o.start && go && !o.off) {
-        const st = btn('Start', go, { cls: 'btn neutral sm ti-start' });
+      // B-374 (D-312): Start on every row that can start, shown on the first and on hover or focus on the others
+      const go = o.start && startGo(it);
+      if (go && !o.off) {
+        const st = btn('Start', go, { cls: 'btn neutral sm ti-start' + (o.start === 'hov' ? ' hov' : '') });
+        st.prepend(svgIcon('M8 5l11 7-11 7z'));
         st.setAttribute('aria-label', 'Start: ' + text);
         li.append(st);
       }
@@ -233,8 +235,20 @@
       li.append(el('span', 't', when));
       return li;
     }
-    // A row that can start: not done, not graded, not over the budget, and something to open (a review or practice set).
-    const startable = (it, isDone) => !isDone(it) && !it.deferred && it.tag !== 'GRADED' && !!openItem(it);
+    // B-374 (D-312): what Start does, as the demo's: a set opens where it lives; any other item with an estimate starts a
+    // study session with E.V.
+    function startGo(it) {
+      const go = openItem(it);
+      if (go) return go;
+      if (!(Number(it.minutes) > 0)) return null;
+      return () => {
+        showTab('ev');
+        guard(null, () => quick('Start a study session'));
+      };
+    }
+    // A row that can start, as the demo's: not done, not graded, not over the budget, and an estimate.
+    const startable = (it, isDone) =>
+      !isDone(it) && !it.deferred && it.tag !== 'GRADED' && Number(it.minutes) > 0 && !!startGo(it);
     // B-363 (D-312): the demo's Done group under the list: a chevron and "Done · N", opening in place to its rows.
     function doneGroup(rows, open) {
       const f = el('button', 'grp ti-fold');
@@ -274,7 +288,7 @@
           onChange: (on, c) => {
             T.ticked.add(it.id);
             if (on) sfNod(c); // B-78: a check-off in a surface: her nod, and nothing he is ticking moves
-            guard(c, () => tickWrite(it, on), on ? 'Checked off' : 'Unchecked');
+            guard(c, () => tickWrite(it, on), null);
           },
         },
         action: go ? btn('Open', go, { cls: 'btn ghost sm' }) : null,
@@ -393,16 +407,16 @@
       // built here, like the budget card, and placed after it in the side column (the right panel from 1200 px)
       let card = $('today-changes');
       if (!card) {
-        card = el('div', 'card');
+        card = el('div', 'tc-chg');
         card.id = 'today-changes';
         const budget = $('today-budget');
         budget ? budget.after(card) : document.querySelector('#p-today .col-side').prepend(card);
       }
+      // B-374 (D-312): as the demo, the label and her rows under the budget, always shown; "Nothing yet today." when
+      // she has changed nothing
       const ch = evChanges();
-      card.hidden = !ch.length; // D-151: absent while she has changed nothing today
-      if (!ch.length) return card.replaceChildren();
-      const ul = el('ul', 'list');
-      for (const c of ch) {
+      card.hidden = false;
+      const rows = ch.map(c => {
         const text = String(c.text).replace(/\s*\(~?\d+\s*min\)\s*$/i, '');
         const title = c.kind === 'add' ? `Added “${text}” to today` : `Took “${text}” off today`;
         const undo = btn('Undo', null, { cls: 'btn ghost sm' });
@@ -410,11 +424,17 @@
         undo.addEventListener('click', () =>
           guard(undo, () => editList(today, c.undo, 'Matt'), c.kind === 'add' ? 'Taken off today' : 'Back on today')
         );
-        const li = row({ title, detail: clock12(c.at), action: undo, cls: 'chg' });
-        li.dataset.id = c.id;
-        ul.append(li);
-      }
-      card.replaceChildren(el('h2', null, 'E.V.’s changes today'), ul);
+        const r = el('div', 'chg');
+        r.dataset.id = c.id;
+        const txt = el('div', 'chg-t');
+        txt.append(el('span', 'ct', title), el('span', 'mini', clock12(c.at)));
+        r.append(el('i', 'dot'), txt, undo);
+        return r;
+      });
+      card.replaceChildren(
+        el('span', 'lab', 'E.V.’s changes today'),
+        ...(rows.length ? rows : [el('span', 'mini chg-none', 'Nothing yet today.')])
+      );
     }
     /**
      * B-296 (C-10, D-282): the task's panel, first in the side column (the right panel from 1200 px, under the pane
@@ -651,7 +671,7 @@
         chk.addEventListener('click', () => {
           const v = !isDone(it);
           T.ticked.add(it.id);
-          guard(chk, () => tickWrite(it, v), v ? 'Checked off' : 'Unchecked');
+          guard(chk, () => tickWrite(it, v), null);
         });
         title.append(chk);
       }
@@ -711,7 +731,7 @@
         b.addEventListener('click', () => {
           if (isDone(it) === v) return;
           T.ticked.add(it.id);
-          guard(b, () => tickWrite(it, v), v ? 'Checked off' : 'Unchecked');
+          guard(b, () => tickWrite(it, v), null);
         });
         sw.append(b);
       }
@@ -724,9 +744,9 @@
       if (f.topic) props.append(prop('Topic', f.topic));
       const acts = el('div', 'wk-acts');
       const go = openItem(it);
-      if (go && startable(it, isDone)) {
-        // a set of questions, as the board's topic tasks: "Start the quiz"
-        const st = btn('Start the quiz', go, { cls: 'btn primary wide tp-start' });
+      if (startable(it, isDone)) {
+        // a set of questions, as the board's topic tasks: "Start the quiz"; any other task a study session (B-374)
+        const st = btn(go ? 'Start the quiz' : 'Start study session', startGo(it), { cls: 'btn primary wide tp-start' });
         st.prepend(svgIcon('M8 5l11 7-11 7z'));
         st.setAttribute('aria-label', 'Start: ' + text);
         acts.append(st);
@@ -736,13 +756,14 @@
         op.setAttribute('aria-label', 'Open: ' + text);
         acts.append(op);
       }
-      // B-373: every opened task offers Snooze, as the board's; graded work, exams, clinicals and validations keep their
-      // day (the list edit refuses to move them), so there it shows, off, with the reason as its title
+      // B-373: every opened task offers Snooze, as the board's; exams, clinicals and validations keep their day (the list
+      // edit refuses to move them), so there it shows, off, with the reason as its title. B-374: graded work snoozes, as
+      // the demo (his own move; its due date is unchanged)
       {
         const sz = btn('Snooze to tomorrow', null, { cls: 'btn neutral wide tp-snooze' });
-        if (fixedItem(it)) {
+        if (fixedItem(it) && it.tag !== 'GRADED') {
           sz.disabled = true;
-          sz.title = (it.tag === 'GRADED' ? 'Graded work' : 'This') + ' stays on the day it is due.';
+          sz.title = 'This stays on the day it is due.';
         }
         sz.addEventListener('click', () =>
           guard(
@@ -978,7 +999,8 @@
       const ul = el('ul', 'list ti-list');
       for (const it of todo) {
         const p = offOf(it);
-        ul.append(todayRow(it, isDone, { start: it === first, off: p ? { P, p } : null }));
+        const st = !p && startable(it, isDone) ? (it === first ? 'first' : 'hov') : null;
+        ul.append(todayRow(it, isDone, { start: st, off: p ? { P, p } : null }));
       }
       // B-369 (D-312): proposed additions sit after the first row, as the demo's
       if (P) ul.children[0] ? ul.children[0].after(...P.adds.map(p => proposedAddRow(P, p))) : ul.append(...P.adds.map(p => proposedAddRow(P, p)));
