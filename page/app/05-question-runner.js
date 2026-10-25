@@ -558,13 +558,24 @@
           main.append(...parts);
           side.append(list);
           body.classList.add('q-beside');
-          body.replaceChildren(main, side);
+          keepOptionFocus(body, q.id, () => body.replaceChildren(main, side));
           return;
         }
         parts.unshift(list);
       }
       body.classList.remove('q-beside');
-      body.replaceChildren(...parts);
+      keepOptionFocus(body, q.id, () => body.replaceChildren(...parts));
+    }
+    // B-393: a redraw of the open question (the record's copy of the set landing, a refresh) keeps the keyboard on
+    // the option it was on, so an arrow, Space or Enter after it still acts on the question, not on the page.
+    function keepOptionFocus(body, qid, redraw) {
+      const a = document.activeElement,
+        opts = () => [...body.querySelectorAll('fieldset.opts label.opt input')];
+      const at = a && body.contains(a) && body.dataset.q === qid ? opts().indexOf(a) : -1;
+      redraw();
+      body.dataset.q = qid;
+      const n = at >= 0 && opts()[at];
+      if (n && !n.disabled) n.focus({ preventScroll: true });
     }
     // B-75 (D-132): an open answer. Graded by one model call (a hit per key point, shape-checked, gradeTimeoutMs),
     // else by core.gradeOpenLocal from the keyword groups, and the answer says Checked offline. His text is scanned for
