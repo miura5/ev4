@@ -1097,7 +1097,7 @@ button.btn:disabled{opacity:.45;cursor:default}
    header an icon and the kind, the page dimmed behind it, Cancel beside Add */
 .new-wrap .menu .mhd{font:500 calc(11.5px * var(--ts)) var(--sans);color:var(--quiet);padding:6px 9px 4px}
 .new-dlg{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 122px);margin:110px auto auto;padding:0;border:0;border-radius:12px;background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line2),0 24px 60px rgba(0,0,0,.22)}
-.new-dlg::backdrop{background:rgba(40,32,24,.22)}
+.new-dlg::backdrop{background:color-mix(in srgb,var(--text) 22%,transparent)}
 :root[data-theme="dark"] .new-dlg::backdrop{background:rgba(0,0,0,.5)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .new-dlg::backdrop{background:rgba(0,0,0,.5)}}
 @media (max-width:599px){.new-dlg{margin:max(48px,env(safe-area-inset-top,0px)) auto auto;max-height:calc(100dvh - 60px)}}
