@@ -21,4 +21,9 @@ jobs:
       # Some tests make commits in throwaway repositories (the chart, rollback); a runner has no git identity.
       - run: git config --global user.name 'E.V. CI' && git config --global user.email 'ci@example.invalid'
       - run: npx prettier --check .
+      # B-326: beside the usual report, each failed test as an ::error annotation, readable without the log.
       - run: npm test
+        env:
+          TEST_REPORTERS: >-
+            --test-reporter=spec --test-reporter-destination=stdout
+            --test-reporter=./test/annotate-reporter.mjs --test-reporter-destination=stdout
