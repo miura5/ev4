@@ -1416,7 +1416,9 @@ button.btn.mh-back{display:none}
    card spans the pane with its 10 px bar and 44 px objective rows; Coming up in the course sits under it. From 1200 px
    the picked objective fills the right panel; below that it opens under its row. */
 #p-study .sbar-study{flex-wrap:nowrap;min-height:0;margin:-18px -16px 0;padding:12px 18px;border-bottom:1px solid var(--line);gap:8px}
-#p-study .sbar-study:not(:has(> :not([hidden],.sp))){display:none}
+#p-study .sbar-study:not(:has(> :not([hidden],.sp,#seg-study))){display:none}
+/* B-351 (D-313): no view tabs, as the StudyOverview board; Plan and Weak spots open from the card and the strip */
+#seg-study{display:none!important}
 #p-study .sbar-study .seg{align-self:center}
 #study-course .code{display:none}
 #study-objectives{display:flex;flex-direction:column;gap:12px;padding:2px 2px 18px}
@@ -1447,11 +1449,22 @@ button.btn.mh-back{display:none}
 .ov-detail .od-ws .sn{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ov-detail .od-ws .st{font-size:calc(11.5px * var(--ts));color:var(--quiet)}
 .ov-detail .od-q{align-self:flex-start}
+.ov-detail .od-task{height:auto;min-height:30px;padding:5px 10px;margin:-4px 0}
+.ov-detail .od-task .sn{white-space:normal;line-height:1.4}
 .ov-detail .dot,.ov-up .dot{width:8px;height:8px;border-radius:4px;background:var(--x,var(--quiet));flex:none}
 .ov > .ov-detail{padding:14px 4px 16px;border-bottom:1px solid var(--line)}
 .ov:last-child > .ov-detail{border-bottom:0}
 .ov.open .obj{border-bottom:0}
 #study-side .ov-detail{gap:14px}
+.ov-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:stretch}
+.ov-grid:empty{display:none}
+.ov-grid > :only-child{grid-column:1 / -1}
+.ov-quiz{gap:12px}
+.ov-quiz .lab{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
+.ov-quiz .mq-q{font:500 calc(17px * var(--ts))/1.35 var(--sans);color:var(--text)}
+.ov-quiz .mini{font-size:calc(12.5px * var(--ts));color:var(--faint);line-height:1.45}
+.ov-quiz .mq-row{display:flex;gap:8px}
+.ov-card .ov-none{margin:4px 0 0;padding:8px 0;text-align:left}
 .ov-up{gap:4px}
 .ov-up[hidden]{display:none}
 .ov-up .up-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:4px}
@@ -1583,6 +1596,7 @@ button.btn.mh-back{display:none}
   .obj .oq{display:none}
   .obj .nm{min-height:44px}
   .ov-up .up{min-height:48px}
+  .ov-grid{grid-template-columns:1fr}
 }
 /* ============================================================ B-301, B-338 (D-312): Progress =======================
    Ported from the demo's Progress board: the period switch in the toolbar; one card of property rows (a 92 px label

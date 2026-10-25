@@ -20,6 +20,8 @@ function load(dir) {
 }
 const seed = load(dbDir);
 for (const c of ['legacy', 'debug', 'journal']) delete seed[c];
+// NO_OBJECTIVES=1: the record with every objective removed, as Matt's is (B-351)
+if (process.env.NO_OBJECTIVES) delete seed.objectives;
 if (process.env.STALE && seed.health)
   for (const k in seed.health) seed.health[k].at = new Date(Date.now() - 82 * 3600e3).toISOString();
 const stub = fs.readFileSync(path.join(root, 'test/harness/stub.js'), 'utf8');

@@ -80,14 +80,16 @@
       $('study-qlab').hidden = !quiz;
       $('study-qlab').textContent =
         v === 'review' ? 'Today’s review · ' + short(today) : pr ? (ui.openObj && ui.openObj.text) || pr.title || 'Practice' : '';
-      $('study-qquiz').hidden = !pr;
+      // B-351 (D-313): on the overview the strip is the demo's: the course switch, Quiz me, Weak spots · N, Start session
+      const ov = v === 'objectives';
+      $('study-qquiz').hidden = !pr && !ov;
       let nW = 0;
       try {
         nW = M ? M.models.filter(w => E.isActive(w) && !w.derived.preRead).length : 0;
       } catch {
         nW = 0; // the bar can sync before the model is first built
       }
-      $('study-qweak').hidden = !quiz;
+      $('study-qweak').hidden = !quiz && !ov;
       $('study-qweak').textContent = 'Weak spots' + (nW ? ' · ' + nW : '');
       // in the quiz card the way back replaces the view tabs, so no switch shows with nothing picked (C-15)
       $('seg-study').hidden = quizOpen('study') || (innerWidth >= 600 && ui.tab !== 'study');
@@ -100,6 +102,18 @@
       for (const c of E.activeCourses()) {
         const ex = S.exams
           .filter(e => e.date && e.date >= today && E.courseOf(e) === c && S.objectives.some(o => o.exam === e.id))
+          .sort((a, b) => a.date.localeCompare(b.date))[0];
+        if (ex) out.push({ course: c, exam: ex });
+      }
+      return out;
+    }
+    /** B-351 (D-313): the courses with an upcoming exam, objectives or not (Matt's record has none), each with its
+     *  soonest; the overview's course switch and exam card read this. */
+    function studyExams() {
+      const out = [];
+      for (const c of E.activeCourses()) {
+        const ex = S.exams
+          .filter(e => e.date && e.date >= today && E.courseOf(e) === c && e.status !== 'done')
           .sort((a, b) => a.date.localeCompare(b.date))[0];
         if (ex) out.push({ course: c, exam: ex });
       }
@@ -161,9 +175,11 @@
         );
       });
     }
+    // B-351 (D-313): the plan day picked in the exam card when the exam has no objectives (as on Matt's record)
+    let daySel = null;
     function renderObjectives() {
       const card = $('ov-card'),
-        list = studyCourses();
+        list = studyExams();
       const start = $('study-start');
       start.dataset.off = activeSession() ? '1' : '';
       if (!list.some(x => x.course === ui.studyCourse))
@@ -189,10 +205,11 @@
       }
       syncStudyBar();
       const cur = list.find(x => x.course === ui.studyCourse);
+      ui.objPanel = null;
       if (!cur) {
-        card.replaceChildren(el('p', 'empty', 'Objectives appear once an upcoming exam has them.'));
-        ui.objPanel = null;
-        if ($('ov-up')) $('ov-up').hidden = true;
+        card.replaceChildren(el('p', 'empty', 'Your next exam shows here once it’s in the record.'));
+        renderStudyUp(null);
+        renderMiniQuiz(null);
         return;
       }
       const ex = cur.exam,
@@ -200,14 +217,9 @@
       const objs = S.objectives
         .filter(o => o.exam === ex.id)
         .sort((a, b) => String(a.id).localeCompare(String(b.id), undefined, { numeric: true }));
-      const rows = objs.map(o => ({ o, ...objState(o, acc[o.id]) }));
-      const n = k => rows.filter(r => r.state === k).length;
-      const pctOf = k => (rows.length ? (100 * n(k)) / rows.length : 0) + '%';
       const days = E.diffDays(today, ex.date);
       const exName = (ex.title || ex.id).replace(/:.*$/, '');
       const fullName = exName.includes(cur.course) ? exName : cur.course + ' ' + exName;
-      if (!rows.some(r => r.o.id === objSel)) objSel = null;
-      if (PANEL.matches && !objSel) objSel = ((rows.find(r => r.state !== 'solid') || rows[0] || {}).o || {}).id || null;
       const head = el('div', 'ov-head');
       const nm0 = el('span', 'ov-name');
       nm0.append(
@@ -218,24 +230,32 @@
           ' · ' + dayMonth(ex.date) + ' · ' + (days <= 0 ? 'today' : days === 1 ? 'tomorrow' : 'in ' + days + ' days')
         )
       );
-      head.append(
-        nm0,
-        el(
-          'span',
-          'meta ov-count',
-          n('solid') + ' of ' + rows.length + ' objectives solid' + (n('almost') ? ', ' + n('almost') + ' almost' : '')
-        )
-      );
       const bar = el('div', 'pbar ov-bar');
       bar.setAttribute('role', 'img');
-      bar.setAttribute('aria-label', `${n('solid')} solid, ${n('almost')} almost, ${n('notyet')} not yet`);
       const g = el('i', 'x-green'),
         y = el('i', 'x-yellow');
-      g.style.width = pctOf('solid');
-      y.style.width = pctOf('almost');
       bar.append(g, y);
       const box = el('div', 'ov-rows');
-      ui.objPanel = null;
+      // one row per objective; with none, one per day of the exam's plan
+      const items = objs.length ? objRows(objs, acc, fullName) : planRows(ex, fullName);
+      head.append(nm0, el('span', 'meta ov-count', items.count));
+      g.style.width = items.solid;
+      y.style.width = items.almost;
+      bar.setAttribute('aria-label', items.aria);
+      box.append(...items.rows);
+      card.replaceChildren(...(items.rows.length ? [head, bar, box] : [head, bar, el('p', 'empty ov-none', items.none)]));
+      renderStudyUp(cur.course);
+      renderMiniQuiz(cur);
+    }
+    /** The exam card's objective rows: state badge, words, weak spots and Quiz me on hover; the picked one's detail
+     *  fills the panel from 1200 px, or opens under its row. */
+    function objRows(objs, acc, fullName) {
+      const rows = objs.map(o => ({ o, ...objState(o, acc[o.id]) }));
+      const n = k => rows.filter(r => r.state === k).length;
+      const pctOf = k => (rows.length ? (100 * n(k)) / rows.length : 0) + '%';
+      if (!rows.some(r => r.o.id === objSel)) objSel = null;
+      if (PANEL.matches && !objSel) objSel = ((rows.find(r => r.state !== 'solid') || rows[0] || {}).o || {}).id || null;
+      const out = [];
       for (const r of rows) {
         const [word, cls] = OBJ_STATE[r.state];
         const on = objSel === r.o.id;
@@ -264,10 +284,171 @@
           if (PANEL.matches) ui.objPanel = d;
           else wrap.append(d);
         }
-        box.append(wrap);
+        out.push(wrap);
       }
-      card.replaceChildren(head, bar, box);
-      renderStudyUp(cur.course);
+      return {
+        rows: out,
+        count: n('solid') + ' of ' + rows.length + ' objectives solid' + (n('almost') ? ', ' + n('almost') + ' almost' : ''),
+        solid: pctOf('solid'),
+        almost: pctOf('almost'),
+        aria: `${n('solid')} solid, ${n('almost')} almost, ${n('notyet')} not yet`,
+        none: '',
+      };
+    }
+    /** B-351 (D-313): an exam with no objectives shows its plan in the card: its progress on the bar and one row per
+     *  plan day (Done, Started or To do; its label; its date and count). The picked day fills the panel from 1200 px,
+     *  or opens under its row, with its tasks and Open the plan. */
+    function planRows(ex, fullName) {
+      const plan = S.plans.find(p => (p.exam || p.id) === ex.id);
+      const empty = {
+        rows: [],
+        count: '',
+        solid: '0%',
+        almost: '0%',
+        aria: 'No objectives or plan yet',
+        none: 'Its objectives or its plan show here once they’re in the record.',
+      };
+      if (!plan || !(plan.days || []).length) return empty;
+      const isDone = t => !!(plan.done && plan.done[t.id]) || E.taskDone(plan, t, today, S.sets, S.answers);
+      const dayRows = plan.days
+        .slice()
+        .sort((a, b) => String(a.date).localeCompare(String(b.date)))
+        .map(d => {
+          const ts = (d.tasks || []).map(t => ({ ...t, date: d.date }));
+          const nDone = ts.filter(isDone).length;
+          const state = ts.length && nDone === ts.length ? 'done' : nDone ? 'started' : 'todo';
+          return { d, ts, nDone, state };
+        });
+      const all = dayRows.reduce((a, r) => a + r.ts.length, 0),
+        done = dayRows.reduce((a, r) => a + r.nDone, 0),
+        startedN = dayRows.filter(r => r.state === 'started').reduce((a, r) => a + r.ts.length - r.nDone, 0);
+      const key = r => plan.id + '|' + r.d.date;
+      if (!dayRows.some(r => key(r) === daySel)) daySel = null;
+      if (PANEL.matches && !daySel) {
+        const pick = dayRows.find(r => r.d.date >= today && r.state !== 'done') || dayRows[dayRows.length - 1];
+        daySel = key(pick);
+      }
+      const DAY_STATE = { done: ['Done', 'x-green'], started: ['Started', 'x-yellow'], todo: ['To do', ''] };
+      const openPlan = () => {
+        ui.planShown = plan.id;
+        setStudy('plan');
+        render();
+      };
+      const out = [];
+      for (const r of dayRows) {
+        const [word, cls] = DAY_STATE[r.state];
+        const on = daySel === key(r);
+        const wrap = el('div', 'ov' + (on ? ' open' : ''));
+        const li = el('div', 'obj' + (on ? ' on' : ''));
+        const name = r.d.label || (r.ts[0] && r.ts[0].text) || dayMonth(r.d.date);
+        const nm = el('button', 'nm ov-nm', name);
+        nm.type = 'button';
+        nm.title = name;
+        nm.setAttribute('aria-expanded', String(on));
+        nm.addEventListener('click', () => {
+          daySel = on && !PANEL.matches ? null : key(r);
+          render();
+        });
+        li.append(
+          el('span', 'badge ov-st' + (cls ? ' ' + cls : ''), word),
+          nm,
+          el(
+            'span',
+            'ow',
+            (r.d.date === today ? 'today' : dayMonth(r.d.date)) + ' · ' + r.nDone + ' of ' + r.ts.length
+          )
+        );
+        wrap.append(li);
+        if (on) {
+          const dt = el('div', 'ov-detail');
+          if (PANEL.matches) dt.append(el('span', 'lab', 'Plan day'), el('div', 'od-name', name));
+          const st = el('div', 'od-row');
+          st.append(
+            el('span', 'badge' + (cls ? ' ' + cls : ''), word),
+            el('span', 'mini', dayMonth(r.d.date) + ' · ' + fullName)
+          );
+          dt.append(st, el('span', 'lab', 'On this day'));
+          for (const t of r.ts) {
+            const si = el('div', 'od-ws od-task');
+            si.append(
+              el('i', 'dot' + (isDone(t) ? ' x-green' : '')),
+              el('span', 'sn', t.text || t.id),
+              el('span', 'st', isDone(t) ? 'done' : 'open')
+            );
+            si.title = t.text || '';
+            dt.append(si);
+          }
+          dt.append(
+            btn('Open the plan', openPlan, { cls: 'btn neutral od-q' }),
+            el('span', 'mini od-note', 'Tick what you’ve done in the plan. This exam has no objectives in the record yet.')
+          );
+          if (PANEL.matches) ui.objPanel = dt;
+          else wrap.append(dt);
+        }
+        out.push(wrap);
+      }
+      return {
+        rows: out,
+        count: done + ' of ' + plural(all, 'plan task') + ' done',
+        solid: (all ? (100 * done) / all : 0) + '%',
+        almost: (all ? (100 * startedN) / all : 0) + '%',
+        aria: `${done} of ${all} plan tasks done`,
+        none: '',
+      };
+    }
+    /** B-351 (D-313): the course's quiz, the demo's Quiz me and mini quiz: a practice set on this exam with questions
+     *  left (most left first), else today's review. */
+    function courseSet(cur) {
+      const left = s => E.validItems(s).filter(q => !answersOf(s)[q.id]).length;
+      const objIds = new Set(S.objectives.filter(o => o.exam === cur.exam.id).map(o => o.id));
+      const mine = s =>
+        s.exam === cur.exam.id || E.validItems(s).some(q => objIds.has(q.objective));
+      const pick = practiceSets()
+        .filter(s => mine(s) && left(s))
+        .sort((a, b) => left(b) - left(a))[0];
+      if (pick) return { set: pick, review: false };
+      const rs = S.sets.find(s => s.id === 'review-' + today);
+      if (rs && E.validItems(rs).length) return { set: rs, review: true };
+      return null;
+    }
+    function courseQuiz(b) {
+      const cur = studyExams().find(x => x.course === ui.studyCourse);
+      const c = cur && courseSet(cur);
+      if (!c) return weakQuizAll(b);
+      if (c.review) {
+        setStudy('review');
+        return render();
+      }
+      ui.openSet = c.set.id;
+      ui.openObj = null;
+      setStudy('practice');
+      render();
+    }
+    /** B-351 (D-313): the mini quiz card beside Coming up: a question from the course's next set as its teaser. */
+    function renderMiniQuiz(cur) {
+      let card = $('ov-quiz');
+      if (!card) {
+        card = el('div', 'ui-card ov-quiz');
+        card.id = 'ov-quiz';
+        $('ov-grid').append(card);
+      }
+      const c = cur && courseSet(cur);
+      const q = c && E.validItems(c.set).find(x => !answersOf(c.set)[x.id]);
+      const teaser = q ? String(q.stem || q.q || q.text || '').trim() : '';
+      card.replaceChildren(
+        el('span', 'lab', c && c.review ? 'Mini quiz · today’s review' : 'Mini quiz · questions from this course'),
+        el('div', 'mq-q', teaser || 'No questions waiting for this course yet.'),
+        el(
+          'div',
+          'mini',
+          c ? 'Misses come back as weak spots, for you to review.' : 'Today’s review appears after the 4:25 am run.'
+        )
+      );
+      if (c) {
+        const r = el('div', 'mq-row');
+        r.append(btn('Take the quiz', ev => courseQuiz(ev.currentTarget), { cls: 'btn neutral' }));
+        card.append(r);
+      }
     }
     const OV_MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const OV_WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -316,7 +497,11 @@
       if (!card) {
         card = el('div', 'ui-card ov-up');
         card.id = 'ov-up';
-        $('ov-card').after(card);
+        $('ov-grid').prepend(card);
+      }
+      if (!course) {
+        card.hidden = true;
+        return card.replaceChildren();
       }
       const seen = new Set();
       const all = [
@@ -1019,7 +1204,9 @@
       setStudy('weak');
       render();
     });
-    $('study-qquiz').addEventListener('click', ev => weakQuizAll(ev.currentTarget));
+    $('study-qquiz').addEventListener('click', ev =>
+      ui.study === 'objectives' ? courseQuiz(ev.currentTarget) : weakQuizAll(ev.currentTarget)
+    );
     $('plan-back').addEventListener('click', () => {
       setStudy('objectives');
       render();
