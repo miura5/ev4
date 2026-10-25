@@ -1,10 +1,22 @@
 [
  {
+  "id": "D-314",
+  "date": "Oct 25",
+  "title": "The demo wins over the hand-off's build corrections C-1 to C-16 everywhere (D-313 widened); Record keeps its Log, Dates, Journal, Canvas and Library tabs; the extras the demo lacks go: the Auto theme, the System link in Preferences, the paperclip in the field and the phone's Preferences button",
+  "why": "Matt, Oct 25: where the demo and the corrections disagree he wants the demo, and none of the extras kept.",
+  "status": "accepted",
+  "supersedes": [
+   "D-313"
+  ],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-313",
   "date": "Oct 25",
   "title": "Study matches the demo's StudyOverview board, not build correction C-8: no Objectives / Plan / Weak spots tabs; the toolbar carries the course switch, Quiz me, Weak spots · N and Start session; Weak spots opens the StudyWeak view; the exam plan shows in the exam card",
   "why": "Matt, Oct 25: he wants the demo's Study layout and not the tabs across the top.",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [],
   "amends": [],
   "source": "log"
