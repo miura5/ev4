@@ -5981,11 +5981,11 @@
   "title": "Fidelity fix: Task, on the phone: an opened task takes the screen as the TaskDetail board shows at 390 (back arrow to Today, properties card, Start and Snooze full width), and Back returns to the list where it was",
   "dod": "At 390 opening a task shows it at once in place of the list, matching the TaskDetail board apart from C-10; desktop unchanged. Proof (D-312, fidelity sprint): node tools/build.mjs, tools/fidelity's TaskDetail board and built-states today-task read side by side at 390 and 1280, npm run smoke, ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-336"
   ],
-  "notes": "",
+  "notes": "claimed by lane task",
   "commit": null,
   "source": "fidelity review of B-336, Oct 25 (D-312)",
   "words": "Fidelity fix: on the phone an opened task does not come into view; the TaskDetail board at 390 shows it taking the screen with a back arrow to Today, its properties card and full-width Start and Snooze.",
