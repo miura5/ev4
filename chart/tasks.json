@@ -7063,7 +7063,7 @@
   "milestone": "v4.9 cleanup",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Cause found and fixed in 2fa82bb, not marked done. The smoke harnesses now print each FAIL as an ::error annotation in CI (f3b6aa4). In CI, smoke-keys' 'Today's review: ArrowDown answers nothing, Space answers' failed at 390 and 1280. CI's Chromium (Playwright's headless 156) redraws Today's review after the harness's 800 ms wait (renderAll, renderReview, then the runner replaces #rv-body). The focused option was replaced, focus fell to the body, and the keys then acted on the page. A diagnostic branch's event and stack log in CI showed this. The same defect hits Matt: a redraw under his keyboard dropped his place. The runner now puts focus back on the same option of the same question after a redraw. No assertion or timing bound changed. Smoke green on main twice at 2fa82bb (push run 40236792264, dispatched run 40236908340). npm test green (653), npm run smoke green locally. The scratch branches diag-b393 and fix-b393 are still on origin: deleting them was refused here.",
   "commit": null,
   "source": "build manager, smoke workflow runs Oct 25",
   "words": "The smoke workflow on GitHub has failed on every push since about 17:46 Oct 25, including the live commit 10798d8, while npm run smoke passes locally (28 of 28).",
