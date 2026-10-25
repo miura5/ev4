@@ -6160,5 +6160,22 @@
    "outcome": "task",
    "at": "2026-10-25T12:27:30.604Z"
   }
+ },
+ {
+  "id": "B-351",
+  "kind": "bug",
+  "title": "Bug (reported Oct 25): Fidelity fix: on Matt's record the Study page is empty: his next exams (an ATI dosage assessment and a dosage exam) have no objectives, so Study shows one line of text and a Start session button, and none of the demo's exam card, Coming up or panel.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt, staging, Oct 25 (D-312)",
+  "words": "Fidelity fix: on Matt's record the Study page is empty: his next exams (an ATI dosage assessment and a dosage exam) have no objectives, so Study shows one line of text and a Start session button, and none of the demo's exam card, Coming up or panel.",
+  "reportedAt": "2026-10-25T12:41:35.136Z",
+  "board": {
+   "row": "v4 B-351: Fidelity fix: on Matt's record the Study page is empty: his next…"
+  }
  }
 ]

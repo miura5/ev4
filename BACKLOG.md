@@ -428,3 +428,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-280 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; folded into B-289 and B-290 (Conversation) and B-291 to B-296 (Today and the task panel). |
 | B-281 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; folded into B-297 to B-300 (Study), B-301 (Progress) and B-302 (Record). |
 | B-282 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; replaced by B-303. |
+| B-351 | bug | 2026-10-25T12:41:35.136Z | Fidelity fix: on Matt's record the Study page is empty: his next exams (an ATI dosage assessment and a dosage exam) have no objectives, so Study shows one line of text and a Start session button, and none of the demo's exam card, Coming up or panel. | Matt, staging, Oct 25 (D-312) | inbox |  |
