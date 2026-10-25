@@ -247,7 +247,13 @@
     // still asks against the time left; done minutes on their own line; the bar is done plus left on the day's
     // whole, so a tick moves minutes from left to done and the bar never empties; warning colour when over.
     function renderBudget(b) {
-      const card = $('today-budget');
+      // the card is made here, the side column's first, so the shell stays inside its byte budget
+      let card = $('today-budget');
+      if (!card) {
+        card = el('div', 'card');
+        card.id = 'today-budget';
+        $('weekly').before(card);
+      }
       card.hidden = !b;
       if (!b) return;
       const whole = Math.max(b.available, b.planned) || 1;
