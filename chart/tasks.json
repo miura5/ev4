@@ -5575,13 +5575,14 @@
   "title": "The run protocol targets the Worker. Where a run applies ArtifactData batches today, it applies them to the Worker's run API with the shared token, read from the task's settings and never from its prompt. The target is chosen per record, so live runs keep writing the artifact until B-320.",
   "dod": "For each cloud pipeline (morning, evening-cloud, weekly, worker, watchdog), a scheduled run fired against the staging Worker, and its runs/<id> read back from staging D1. A test asserts the live record still targets ArtifactData. A grep of the rendered prompts finds no token value.",
   "milestone": "app (data, pipelines, ops)",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-312"
   ],
-  "notes": "Matt, Oct 25: first, the staging seed adds the four groups B-311 left out (system, legacy, debug, journal; additive, nothing deleted), so the staging D1's counts equal the whole synthetic record's and the runs find system/manifest and the journal as on the real record.",
+  "notes": "Builder (lane app), Oct 25: not started, blocked before claiming. Its proof fires each cloud pipeline's scheduled task against the staging Worker, and the token must be read from each task's settings; this lane's runs may fire only the builder and may not create or change a scheduled task, and may change only pwa/, new tool files, tests and workflows, not the run protocol in core/. Needs a build chat with Matt present (his scheduled tasks, Claude account): change the five staging pipeline tasks' settings to carry the staging token, then fire them for the proof. Code side (per-record target, live stays ArtifactData until B-320) can be built there too.",
   "commit": null,
-  "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-316",
