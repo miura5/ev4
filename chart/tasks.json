@@ -5608,7 +5608,7 @@
    "B-315",
    "B-316"
   ],
-  "notes": "Code half at 866293a (with 8629791): staging evening-mac and restore-drill target the staging Worker (D-322 backup folder in spec.registry.records.staging.runs.backup, restoreFrom mac|r2); backup = run API pull of D1 in the R2 export shape with manifestOf hashes; drill restores into ev-staging-scratch under drills/<run id>/ and checks counts and SHA-256; Worker gains read-only GET /api/backup/get (needs a staging Worker deploy for the r2 source). Staging Mac prompts rendered in dist/prompts (live and the five cloud prompts byte-identical). Old staging tasks in spec.tasks.retired, triggers null until the new ones are created with Matt present. npm test green. Open: review skill not run; one staging firing of each is the task half.",
+  "notes": "Review gaps fixed at 865b386: whole-D1 backup via api dump (every collection and page, refused when short), D-321 per-target system out of backup, exportToR2 and drill, B-04 hold tested on the Worker drill, drill prompt names its scratch drills/ write (D-302), ids exact (encodeId dropped, pull ids from list results) on B-319's run API. Live prompts byte-identical. npm test green. Not fired; the scratch Worker's D1 binding (after run 40239115928) should be checked before the first staging drill.",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
