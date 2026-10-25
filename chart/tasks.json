@@ -5248,12 +5248,12 @@
   "title": "Plan the rest (repurposed; C-9): reruns planDay on today's list as it stands. What it would add shows as a proposed row; what it defers shows as a proposed take-off. Standard rows with one \"Proposed\" badge, labelled Accept and Keep, and a line with Accept all and Reject. Nothing is written until Accept, and then only through the existing list edits.",
   "dod": "Screenshots at 390 and 1280 in light and dark with a proposal open. On a planted day with one free slot and one item due later, the proposal adds one and takes one off. Accept writes one add and one take-off edit by E.V.; Keep and Reject write nothing. No × and no dashed ring on the view.",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-291"
   ],
-  "notes": "proofs green: check --touched GREEN at 9e0af7a (prep 156/156, captions, look 307/307); reviewed twice, second review: No gaps",
-  "commit": null,
+  "notes": "Shipped to staging at 9e0af7a: ship staging GREEN.",
+  "commit": "9e0af7a",
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
  {
