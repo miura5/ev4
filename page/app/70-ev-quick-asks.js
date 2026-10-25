@@ -58,37 +58,31 @@
             : ['Today’s review lands with the 4:25am run. Want 5 fresh questions instead?', []];
       },
       "what's due this week": () => {
-        // B-383 (D-316): as the demo's answer, the graded items by name and day, then the next thing due that isn't
-        const end = E.addDays(today, 7);
-        const w = S.dates.filter(d => d.date >= today && d.date <= end).sort((a, b) => a.date.localeCompare(b.date));
-        const exams = (S.exams || [])
-          .filter(e => e.date && e.date >= today && e.date <= end)
-          .filter(e => !w.some(d => d.kind === 'exam' && d.date === e.date))
-          .map(e => ({ date: e.date, title: e.title || e.id, kind: 'exam' }));
-        const graded = [...w.filter(d => d.graded || d.kind === 'exam'), ...exams].sort((a, b) =>
-          a.date.localeCompare(b.date)
-        );
+        // B-383 (D-316): as the demo's answer, the graded items by name and day, then the next thing due that isn't.
+        // B-392: the next three by name and "N more" past them, over the seven days the week banner and pane count.
+        const last = E.addDays(today, WEEK_DAYS - 1);
+        const w = S.dates.filter(d => d.date >= today && d.date <= last).sort((a, b) => a.date.localeCompare(b.date));
+        const graded = E.gradedWeek(S.dates, S.exams, today, WEEK_DAYS);
         const other = w.find(d => d.kind === 'due' && !d.graded);
-        const short = t => {
-          t = String(t || '').trim();
-          return t.length > 40 && t.includes(':') ? t.slice(0, t.indexOf(':')) : t;
-        };
+        const short = t => E.shortTitle(t, 32);
         const dayOf = d => {
           const n = E.diffDays(today, d);
           const wd = new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long' });
-          return n === 0 ? 'today' : n === 1 ? 'tomorrow' : n === 7 ? 'next ' + wd : 'on ' + wd;
+          return n === 0 ? 'today' : n === 1 ? 'tomorrow' : 'on ' + wd;
         };
         const join = a => (a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]);
         const NUM = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'];
-        const n = graded.length;
+        const n = graded.length,
+          shown = n > 3 ? 2 : n;
+        const named = graded.slice(0, shown).map(d => (n > 1 ? short(d.title) : d.title) + ' ' + dayOf(d.date));
         const head = n
           ? `${NUM[n] || n} graded date${n === 1 ? '' : 's'} in the next 7 days: ${join(
-              graded.map(d => (n > 1 ? short(d.title) : d.title) + ' ' + dayOf(d.date))
+              n > shown ? [...named, n - shown + ' more'] : named
             )}.`
           : 'No graded dates in the next 7 days.';
         const tail = other ? ` ${short(other.title)} is due ${dayOf(other.date)}.` : '';
         return [
-          w.length || exams.length ? head + tail : 'Nothing dated in the next 7 days. Suspiciously calm.',
+          w.length || n ? head + tail : 'Nothing dated in the next 7 days. Suspiciously calm.',
           [{ type: 'go', label: 'Open the week', to: 'week' }], // B-362 (D-316): one line and one button, as the demo
         ];
       },

@@ -61,7 +61,7 @@
         const sel = ui.tab === 'today' && ui.taskSel === it.id && !ui.taskGone;
         return row(
           dot,
-          it.text,
+          E.rowText(it), // B-392: the row shows its day
           sideWhen(it, due),
           () => {
             showTab('today');
@@ -124,8 +124,8 @@
     function lineFor(t) {
       if (t === 'today') {
         if (ui.todayView === 'week') {
-          const g = weekDates(E.addDays(today, WEEK_DAYS - 1), true).filter(d => d.graded && !E.isRemovedDate(d));
-          return g.length ? { text: gradedLine(g) } : null;
+          // B-392: the same seven days and items as the banner, the pane and her answer
+          return E.gradedWeek(S.dates, S.exams, today, WEEK_DAYS).length ? { text: gradedLine() } : null;
         }
         if (ui.taskSel && !ui.taskGone) return taskLine(); // B-373: an opened task's line is its own (10-today)
         if (ui.restPlan) return null; // the proposal speaks for itself

@@ -1560,3 +1560,85 @@ test('B-263: planFor finds the plan he names, else the target exam, else the soo
   assert.equal(EV.planFor({ plans, exams, target: E5, date }).id, 'ATI-DOSE');
   assert.equal(EV.planFor({ plans: [plans[0]], exams, target: E5, date }), null);
 });
+
+test('B-392: a long title shortens at a word with an ellipsis, never inside a time', () => {
+  const t = 'Informatics activity: practicing charting in a made-up EHR (due 11:59pm)';
+  assert.equal(EV.shortTitle(t, 200), t);
+  for (const max of [20, 32, 40, 55, 62, 66, 70]) {
+    const s = EV.shortTitle(t, max);
+    assert.ok(s.length <= max + 1, s);
+    assert.ok(s.endsWith('…'), s);
+    assert.ok(!/\b11…|\b11:5|\(…|[,:;(]…$/.test(s), 'cut inside the time or after a colon: ' + s);
+    assert.ok(t.startsWith(s.slice(0, -1)), 'a prefix of whole words: ' + s);
+  }
+  // the time stays whole when the cut falls after it, and an unclosed "(" goes with what follows it
+  const u = 'Quiz (due 11:59pm tomorrow) on fluids and electrolytes';
+  assert.equal(EV.shortTitle(u, 30), 'Quiz (due 11:59pm tomorrow) on…');
+  assert.equal(EV.shortTitle(u, 22), 'Quiz…');
+  assert.equal(
+    EV.shortTitle('Made-up unit quiz: fluids and electrolytes, part two', 40),
+    'Made-up unit quiz: fluids and…'
+  );
+  assert.equal(EV.shortTitle('Short title', 40), 'Short title');
+});
+
+test('B-392: one seven-day graded count, today and the six days after, for her answer, the banner and the pane', () => {
+  const today = '2026-10-25';
+  const dates = [
+    { id: 'a', date: '2026-10-25', title: 'Care plan', kind: 'due', graded: true },
+    { id: 'b', date: '2026-10-26', title: 'Unit quiz', kind: 'due', graded: true },
+    { id: 'c', date: '2026-10-27', title: 'Clinical day', kind: 'clinical' },
+    { id: 'd', date: '2026-10-28', title: 'Reading', kind: 'due', graded: false },
+    {
+      id: 'e',
+      date: '2026-10-29',
+      title: 'Taken off',
+      kind: 'due',
+      graded: true,
+      removed: { at: '2026-10-24T12:00:00Z' },
+    },
+    { id: 'f', date: '2026-10-31', title: 'Last day in the window', kind: 'due', graded: true },
+    { id: 'g', date: '2026-11-01', title: 'Day eight', kind: 'due', graded: true },
+    { id: 'h', date: '2026-10-24', title: 'Yesterday', kind: 'due', graded: true },
+    { id: 'x', date: '2026-10-30', title: 'Calendar exam', kind: 'exam' },
+  ];
+  const exams = [
+    { id: 'e1', date: '2026-10-25', title: 'Made-up exam' },
+    { id: 'e2', date: '2026-10-30', title: 'Same day as the calendar exam' },
+    { id: 'e3', date: '2026-11-02', title: 'Past the window' },
+  ];
+  const g = EV.gradedWeek(dates, exams, today);
+  assert.deepEqual(
+    g.map(d => d.id),
+    ['a', 'exam-e1', 'b', 'x', 'f']
+  );
+  assert.equal(EV.gradedWeek(dates, exams, today, 7).length, 5);
+  // a later week counts its own seven days the same way
+  assert.deepEqual(
+    EV.gradedWeek(dates, exams, '2026-11-01').map(d => d.id),
+    ['g', 'exam-e3']
+  );
+  assert.equal(EV.gradedWeek([], [], today).length, 0);
+  // the page has one counter: her answer, the banner and the pane all call it over WEEK_DAYS
+  const src = ['10-today.js', '70-ev-quick-asks.js', '90-render.js']
+    .map(f => fs.readFileSync(new URL('../page/app/' + f, import.meta.url), 'utf8'))
+    .join('\n');
+  assert.equal((src.match(/E\.gradedWeek\(S\.dates, S\.exams, [^)]*WEEK_DAYS\)/g) || []).length, 4);
+  assert.ok(!/E\.addDays\(today, 7\)/.test(src.split("what's due this week")[1].split("'give me 5 more'")[0]));
+});
+
+test('B-392: a heads-up row says its day once', () => {
+  const dates = [
+    { id: 'q', date: '2026-10-26', title: 'Unit quiz on fluids', kind: 'due', graded: true },
+    { id: 'h', date: '2026-10-26', title: 'Charting activity (due 11:59pm)', kind: 'due', graded: true },
+  ];
+  const d = EV.planDay({ date: '2026-10-25', dates, exams: [], plans: [], weakspots: [], objectives: [] });
+  const soon = Object.fromEntries(d.blocks.filter(b => /^soon-/.test(b.id)).map(b => [b.id, b.title]));
+  assert.equal(soon['soon-q'], 'Unit quiz on fluids (due tomorrow)', 'text without its row keeps the day');
+  assert.equal(soon['soon-h'], 'Charting activity (due 11:59pm)', 'never "(due 11:59pm) (due tomorrow)"');
+  // on the page's rows, which show the day beside the words, the words drop it
+  assert.equal(EV.rowText({ id: 'soon-q', text: soon['soon-q'] }), 'Unit quiz on fluids');
+  assert.equal(EV.rowText({ id: 'soon-h', text: soon['soon-h'] }), 'Charting activity (due 11:59pm)');
+  assert.equal(EV.rowText({ id: 'date-q', text: 'Reading (~20 min)' }), 'Reading');
+  assert.equal(EV.headsUpTitle('Quiz'), 'Quiz (due tomorrow)');
+});

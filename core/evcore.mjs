@@ -1238,6 +1238,50 @@ const EVCore = (() => {
   // ---------------------------------------------------------------- day plan (budget in minutes across both courses)
   // Fixed items (D-086): his own time, never E.V.'s study budget.
   const FIXED_KINDS = ['graded', 'clinical', 'exam'];
+  // B-392: a heads-up row's title. The page's row shows its day beside it (rowText drops the words there); a title that
+  // already carries its own due clause, as "(due 11:59pm)", gets no second one.
+  function headsUpTitle(title) {
+    const t = String(title || '');
+    return /\(due\b[^)]*\)/i.test(t) ? t : t + ' (due tomorrow)';
+  }
+  // B-392: a list item's words on a row that shows its minutes or its day beside them: no "(~20 min)", and a heads-up
+  // row (soon-) without its "(due tomorrow)", since the row's day says it.
+  function rowText(it) {
+    const t = String((it && it.text) || '').replace(/\s*\(~?\d+\s*min\)\s*$/i, '');
+    return /^soon-/.test(String((it && it.id) || '')) ? t.replace(/\s*\(due tomorrow\)\s*$/i, '') : t;
+  }
+  // B-392: a long title shortened at a word boundary with an ellipsis, never inside a word or a time ("11:59pm" stays
+  // whole), and never leaving an unclosed "(" or a trailing comma or colon.
+  function shortTitle(title, max = 40) {
+    const t = String(title || '')
+      .trim()
+      .replace(/\s+/g, ' ');
+    if (t.length <= max) return t;
+    let out = '';
+    for (const w of t.split(' ')) {
+      const next = out ? out + ' ' + w : w;
+      if (next.length > max) break;
+      out = next;
+    }
+    if (!out) return t.slice(0, max).trimEnd() + '…'; // one word longer than max
+    const open = out.lastIndexOf('(');
+    if (open > 0 && out.indexOf(')', open) < 0) out = out.slice(0, open);
+    return out.replace(/[\s,:;–—+\-/(&]+$/, '') + '…';
+  }
+  // B-392: the graded work of the seven days from `first` (it and the six after), the one count E.V.'s answer to
+  // "What's due this week?", the week banner and the week pane share: graded dates and exams on the calendar, none taken
+  // off, and each exam of exams/ in the window that no calendar exam on its day already shows, by date.
+  function gradedWeek(dates, exams, first, days = 7) {
+    const last = addDays(first, days - 1);
+    const inWeek = d => !!(d && d.date && d.date >= first && d.date <= last);
+    const live = (dates || []).filter(d => inWeek(d) && !isRemovedDate(d));
+    const ex = (exams || [])
+      .filter(e => inWeek(e) && !live.some(d => d.kind === 'exam' && d.date === e.date))
+      .map(e => ({ id: 'exam-' + e.id, date: e.date, title: e.title || e.id, kind: 'exam', course: courseOf(e) }));
+    return [...live.filter(d => d.graded || d.kind === 'exam'), ...ex].sort(
+      (a, b) => a.date.localeCompare(b.date) || String(a.title).localeCompare(String(b.title))
+    );
+  }
   function planDay(ctx) {
     const { date, exams = [], weakspots = [], objectives = [], sets = [], answers = [] } = ctx;
     const dates = liveDates(ctx.dates, ctx.dateedits);
@@ -1314,7 +1358,7 @@ const EVCore = (() => {
       add({
         id: 'soon-' + d.id,
         kind: 'graded-soon',
-        title: d.title + ' (due tomorrow)',
+        title: headsUpTitle(d.title),
         tag: 'GRADED',
         minutes: 0,
         required: true,
@@ -2402,6 +2446,10 @@ const EVCore = (() => {
     liveDates,
     isRemovedDate,
     isFixedDate,
+    headsUpTitle,
+    rowText,
+    shortTitle,
+    gradedWeek,
     fromCanvas,
     // snapshot and context
     buildSnapshot,

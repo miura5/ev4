@@ -171,7 +171,7 @@
     })();
     function todayRow(it, isDone, o = {}) {
       const doneNow = isDone(it);
-      const text = String(it.text || '').replace(/\s*\(~?\d+\s*min\)\s*$/i, '');
+      const text = E.rowText(it); // B-392: the row shows its day, so a heads-up drops its "(due tomorrow)"
       const sel = ui.taskSel === it.id && !ui.taskGone;
       const li = el('li', 'li today-item' + (doneNow ? ' done' : '') + (sel ? ' sel' : '') + (o.off ? ' ti-off' : ''));
       li.dataset.id = it.id;
@@ -651,7 +651,7 @@
       ]);
       if (panel.dataset.k === k && main.firstChild) return;
       panel.dataset.k = k;
-      const text = String(it.text || '').replace(/\s*\(~?\d+\s*min\)\s*$/i, '');
+      const text = E.rowText(it); // B-392: its Due property says the day
       // the board's head row: Today › Study (or Classes), N of M, up and down through the list as it is shown
       const tvh = el('div', 'tvh');
       tvh.append(
@@ -1143,15 +1143,9 @@
     }
     const dayName = d => new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' });
     // B-382: the week's banner on one line: the count, then the next one or two graded dates, a long title cut at a
-    // word with an ellipsis.
-    const cutTitle = (t, max = 42) => {
-      t = String(t || '');
-      if (t.length <= max) return t;
-      const c = t.slice(0, max + 1).replace(/[\s,:;–-]+\S*$/, '');
-      return (c.length > 12 ? c : t.slice(0, max)).replace(/[\s,:;–-]+$/, '') + '…';
-    };
-    function gradedLine(entries) {
-      const g = entries.filter(d => d.graded && !E.isRemovedDate(d));
+    // word with an ellipsis. B-392: the count is gradedWeek's, the same seven days and items as her answer and the pane.
+    function gradedLine() {
+      const g = E.gradedWeek(S.dates, S.exams, today, WEEK_DAYS);
       const n = g.length;
       const head =
         (n === 1
@@ -1163,7 +1157,7 @@
         .slice(0, 2)
         .map(
           d =>
-            cutTitle(d.title) +
+            E.shortTitle(d.title, 42) +
             (d.date === today
               ? ' today'
               : d.date === E.addDays(today, 1)
@@ -1263,7 +1257,8 @@
         out.push(card);
       }
       const live = entries.filter(d => !E.isRemovedDate(d));
-      const graded = live.filter(d => d.graded || d.kind === 'exam').length,
+      const first = E.addDays(today, WEEK_DAYS * wk);
+      const graded = E.gradedWeek(S.dates, S.exams, first, WEEK_DAYS).length, // B-392: as the banner and her answer
         cls = live.filter(d => !(d.graded || d.kind === 'exam') && d.kind !== 'due').length;
       out.push(el('span', 'lab', wk === 0 ? 'Next 7 days' : 'Those 7 days'));
       for (const [n, v] of [
@@ -1353,7 +1348,7 @@
         col.append(h, chips);
         days.append(col);
       }
-      box.replaceChildren(...(wk === 0 ? [el('p', 'wk-her', gradedLine(entries))] : []), days);
+      box.replaceChildren(...(wk === 0 ? [el('p', 'wk-her', gradedLine())] : []), days);
       // the picked date's panel
       const d = entries.find(x => x.id === ui.weekSel);
       panel.hidden = false;
