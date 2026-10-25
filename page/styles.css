@@ -1357,6 +1357,24 @@ button.btn:disabled{opacity:.45;cursor:default}
   #today-list .ti-fold{padding:14px 16px 6px}
   #today-week .wchip .wc-t{white-space:normal}
 }
+/* B-343 (D-312): on the phone an opened task takes the view in place of the list, as the TaskDetail board at 390: the
+   header's back arrow before "Today", the name large, where it came from, the properties card, then Start and Snooze
+   full width with the grey note. The panel's Close steps aside for the arrow. */
+button.btn.mh-back{display:none}
+@media (max-width:599px){
+  body[data-view="today"].task-open .mh button.btn.mh-back{display:inline-grid;place-items:center;width:44px;height:44px;min-height:44px;padding:0;margin-left:-12px;border:0;background:none;color:var(--text);flex:0 0 44px}
+  .mh .mh-back svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  body[data-view="today"].task-open #evline{display:none} /* the board's task view carries no line */
+  #p-today.tk-open>#today-bar,#p-today.tk-open>.cols>.col-main{display:none!important}
+  #p-today.tk-open #today-task{gap:16px;padding-top:4px}
+  #p-today.tk-open #today-task .tp-close{display:none}
+  #p-today.tk-open #today-task>.card-head{order:0}
+  #p-today.tk-open #today-task>.card-head h2{font:600 calc(22px * var(--ts))/1.3 var(--sans);padding-top:0}
+  #p-today.tk-open #today-task .tp-from{order:1;padding-bottom:16px;border-bottom:1px solid var(--line)}
+  #p-today.tk-open #today-task .tp-props{order:2}
+  #p-today.tk-open #today-task .wk-acts{order:3}
+  #p-today.tk-open #today-task .tp-note,#p-today.tk-open #today-task .tp-gone{order:4}
+}
 /* ============================================================ B-297 (D-283, C-1, C-8, C-13): Study's overview ========
    The toolbar (the view tabs sit beside the title from 600 px), then the exam header with its readiness bar and one
    32 px row per objective (44 px on the phone): its state badge, its words, its weak spots and Quiz me on hover or

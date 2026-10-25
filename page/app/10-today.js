@@ -131,13 +131,45 @@
       return named ? named.date : null;
     }
     // B-296 (C-10): the name opens the task's panel (the right panel from 1200 px, under the pane below it)
+    // B-343 (D-312): on the phone (under 600 px) the opened task takes the view in place of the list, as the demo's
+    // TaskDetail board at 390: a back arrow before the header's "Today" closes it and returns to the list where it was.
+    const phone = () => innerWidth < 600;
     function openTask(id) {
+      if (phone() && !(ui.taskSel && !ui.taskGone)) ui.taskScroll = window.scrollY;
       ui.taskSel = id; // Close closes it; a second tap on the name leaves it open
       ui.taskGone = null;
       render();
       const p = $('today-task');
-      if (p && !p.hidden && innerWidth < 1200) p.scrollIntoView({ block: 'nearest' });
+      if (p && !p.hidden && phone()) window.scrollTo(0, 0);
+      else if (p && !p.hidden && innerWidth < 1200) p.scrollIntoView({ block: 'nearest' });
     }
+    function closeTask() {
+      ui.taskSel = null;
+      ui.taskGone = null;
+      render();
+      if (phone()) window.scrollTo(0, ui.taskScroll || 0);
+      ui.taskScroll = 0;
+    }
+    const taskBack = (() => {
+      const b = el('button', 'btn ghost icon sm mh-back');
+      b.type = 'button';
+      b.setAttribute('aria-label', 'Back to Today');
+      b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>';
+      b.addEventListener('click', closeTask);
+      const t = $('mh-title');
+      if (t) t.before(b);
+      // a tab tapped on the phone leaves the task: Today comes back as its list
+      for (const tab of document.querySelectorAll('[data-tab]'))
+        tab.addEventListener('click', () => {
+          if (phone() && ui.taskSel) {
+            ui.taskSel = null;
+            ui.taskGone = null;
+            ui.taskScroll = 0;
+            render();
+          }
+        });
+      return b;
+    })();
     function todayRow(it, isDone, o = {}) {
       const doneNow = isDone(it);
       const text = String(it.text || '').replace(/\s*\(~?\d+\s*min\)\s*$/i, '');
@@ -164,6 +196,11 @@
       nm.setAttribute('aria-controls', 'today-task');
       nm.setAttribute('aria-expanded', String(sel));
       nm.addEventListener('click', () => openTask(it.id));
+      // B-343: on the phone a tap anywhere on the row's free space opens the task, as the name does
+      if (!o.off)
+        li.addEventListener('click', e => {
+          if (phone() && !e.target.closest('button, label, input, a')) openTask(it.id);
+        });
       li.append(tk, nm);
       const due = it.tag === 'GRADED' ? gradedDue(it) : null;
       const b = BADGE[it.tag];
@@ -504,6 +541,9 @@
       // B-336 (D-312): an opened task is the panel's only card; the others step aside until it closes
       for (const c of panel.parentNode.children)
         if (c !== panel) c.classList.toggle('tk-away', !panel.hidden);
+      // B-343: the phone shows the task alone, with the header's back arrow
+      $('p-today').classList.toggle('tk-open', !panel.hidden);
+      document.body.classList.toggle('task-open', !panel.hidden);
       if (!it) {
         panel.dataset.k = '';
         return panel.replaceChildren();
@@ -514,15 +554,7 @@
       if (panel.dataset.k === k && panel.firstChild) return;
       panel.dataset.k = k;
       const text = String(it.text || '').replace(/\s*\(~?\d+\s*min\)\s*$/i, '');
-      const close = btn(
-        'Close',
-        () => {
-          ui.taskSel = null;
-          ui.taskGone = null;
-          render();
-        },
-        { cls: 'btn ghost sm tp-close' }
-      );
+      const close = btn('Close', closeTask, { cls: 'btn ghost sm tp-close' });
       close.setAttribute('aria-label', 'Close the task');
       const head = el('div', 'card-head');
       head.append(el('h2', null, text), close);
