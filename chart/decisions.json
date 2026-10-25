@@ -1,5 +1,17 @@
 [
  {
+  "id": "D-323",
+  "date": "Oct 25",
+  "title": "Amends D-321: ids are copied exactly, spaces and any letter included; a slash, a control character, '.' and '..' are refused, since a claude.ai record's document id is one path segment and can never hold a slash.",
+  "why": "B-319's second review: D-321 said slashes were copied, the code refuses them, and no record id can hold one.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [
+   "D-321"
+  ],
+  "source": "log"
+ },
+ {
   "id": "D-322",
   "date": "Oct 25",
   "title": "With the PWA, E.V.'s Mac folder is Documents/E.V. Backups (staging in its staging/ subfolder): evening-mac writes only the nightly backup and the Sunday mirror there, exported from D1; Study Watch is retired (B-314) and its folder Documents/E.V. Study Watch is kept as it is, unread and unwritten, nothing deleted. The restore drill can test the newest Mac backup or the newest R2 export.",
