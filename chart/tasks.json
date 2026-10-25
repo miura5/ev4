@@ -5406,7 +5406,7 @@
    "B-302",
    "B-308"
   ],
-  "notes": "lane sweep: retirements built locally (Practice list, parked and Make active, note and skill actions, idea to weak spot, dead row Remove), kit rows carry one badge, kit buttons are the five kinds, D-150's look check brought in line as D-276, Inter added; proofs running",
+  "notes": "Also, when the sweep is done: free some room in the page shell (index.html is within bytes of its 32 KB budget since B-301; the views now build their parts in script). Move what the shell no longer needs, with no change Matt can see. | Lane sweep, 10:15 UTC: retirements built locally (Practice list, parked and Make active, note and skill actions, idea to weak spot, dead row Remove); kit rows carry one badge; kit buttons are the five kinds; the old words-not-chrome look check brought in line as D-276; Inter added; the System card's switches built in script (shell 30.9 KB). Proofs running.",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
