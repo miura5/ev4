@@ -5959,12 +5959,12 @@
   "title": "Fidelity fix: Progress, the rest of the demo board: E.V.'s one-line note above the switch, outlined bars for empty days, readiness by objectives solid, long day headings, the day panel with notes and quizzes",
   "dod": "Matches the Progress board with no difference left but the build corrections. Proof (D-312, fidelity sprint): node tools/build.mjs, then tools/fidelity's demo and built screenshots read side by side at 1280, 1706, 2560 and 390, npm run smoke, ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-338"
   ],
-  "notes": "claimed by lane pr",
-  "commit": null,
+  "notes": "Progress now matches the demo board: E.V.'s one line sits under the header across the window (the topic that got most of the period's time and the next graded date in its course this week), days with nothing logged show the outlined stub, Exam readiness counts objectives solid as Study does, day headings read Friday 23 Oct (Week of 19 October, October (so far)), and the right panel lists that day's sessions, quizzes and notes, each opening in Record, or Nothing logged. Still differs from the demo: her line's wording is built from your record, so it reads differently from the demo's sample; long note titles wrap to more lines than the demo's short ones. Matches at 1280, 1706, 2560 and 390 otherwise.",
+  "commit": "46df5e4",
   "source": "fidelity review of B-338, Oct 25 (D-312)",
   "words": "Fidelity fix: Progress still differs from its demo board after B-338: E.V.'s one-line note above the This week / Month / Semester switch is missing; empty days have no outlined placeholder bar; Exam readiness counts weak spots where the demo counts objectives solid; day headings read Sat 10/24 rather than the demo's long form; the day panel lists only sessions, not notes and quizzes.",
   "reportedAt": "2026-10-25T12:00:32.004Z",
