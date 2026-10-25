@@ -1387,6 +1387,28 @@ button.btn:disabled{opacity:.45;cursor:default}
   #today-list .li>.nm:not(:has(+ .badge)){margin-right:0}
   #today-list .li .t{flex:none;min-width:0;text-align:right}
 }
+/* B-363 (D-312): wave 2, as the TodayList and TodayWeek boards. + Add ends the toolbar; Done is the demo's group with
+   its chevron; a week card is its title and a dot with its time, a picked card filled grey with the dark ring; with
+   nothing picked the panel holds Next exam and the Next 7 days counts. */
+#p-today>.today-bar .ti-add{gap:6px}
+#today-list .grp{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:8px;cursor:pointer;margin:0 -16px;padding:14px 18px 6px;min-height:32px;color:var(--quiet);font:500 calc(12px * var(--ts)) var(--sans)}
+#today-list .grp svg.ico{width:14px;height:14px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#today-list .grp:focus-visible{outline:2px solid var(--text);outline-offset:-2px;border-radius:4px}
+#today-week .wchip .wc-s{display:flex;align-items:center;gap:6px;color:var(--quiet);font-size:calc(11.5px * var(--ts));font-weight:400;white-space:nowrap;overflow:hidden}
+#today-week .wchip .dot{flex:none;width:6px;height:6px;border-radius:3px;background:var(--quiet)}
+#today-week .wchip.past .wc-t{color:var(--quiet)}
+#today-week .wchip.wk-list .wc-t{color:var(--text)}
+#today-week .wchip[aria-pressed="true"]{background:var(--hover);box-shadow:inset 0 0 0 1.5px var(--text)}
+#today-date .wd-next{display:flex;flex-direction:column;gap:10px}
+#today-date .lab{font:500 calc(12px * var(--ts))/1.3 var(--sans);color:var(--quiet)}
+#today-date .mini{font-size:calc(12.5px * var(--ts));color:var(--faint)}
+#today-date .wd-nx{font-weight:600;font-size:calc(13.5px * var(--ts));color:var(--text);overflow-wrap:anywhere}
+#today-date .hb{height:10px;border-radius:5px;background:var(--hover);overflow:hidden;display:flex}
+#today-date .hb>i{display:block;height:100%}
+#today-date .wd-sum{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:calc(13px * var(--ts));color:var(--text)}
+#today-date .wd-sum-l{display:flex;align-items:center;gap:8px;min-width:0}
+#today-date .wd-sum .dot{flex:none;width:8px;height:8px;border-radius:4px;background:var(--quiet)}
+@media (max-width:599px){#today-list .grp{min-height:44px;padding:14px 16px 6px}}
 /* B-364 (D-312): an opened task is the TaskDetail board's full view at every size: the header's back arrow before
    "Today" (no line under it), the head row (breadcrumb, N of M, up and down) across the pane, the 22 px title with its
    tick, the description and Where it came from in a 720 px column; the right panel (under it below 1200 px) holds the

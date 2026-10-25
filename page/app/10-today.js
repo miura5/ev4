@@ -109,6 +109,8 @@
       REVIEW: ['Review', 'x-violet'],
       'ATI REVIEW': ['ATI review', 'x-violet'],
       PRACTICE: ['Practice', 'x-violet'],
+      DRILL: ['Study', 'x-violet'],
+      SKILLS: ['Practice', 'x-violet'],
       READING: ['Reading', ''],
       NOTES: ['Notes', 'x-blue'],
       CANVAS: ['Canvas', 'x-blue'],
@@ -207,40 +209,43 @@
           el('span', 'badge proposed', 'Proposed'),
           ...restButtons(o.off.P, o.off.p, offEdit(o.off.p), 'take “' + text + '” off today')
         );
-      else if (b) li.append(el('span', 'badge' + (b[1] ? ' ' + b[1] : ''), b[0])); // B-361: Graded is neutral grey, never red
+      else {
+        // B-363 (D-312): every row carries its category chip, as the demo's list does; B-361: Graded is neutral grey
+        const bb = b || (catOf(it) === 'study' ? ['Study', 'x-violet'] : ['Class', '']);
+        li.append(el('span', 'badge' + (bb[1] ? ' ' + bb[1] : ''), bb[0]));
+      }
       const go = openItem(it);
       if (o.start && go && !o.off) {
         const st = btn('Start', go, { cls: 'btn neutral sm ti-start' });
         st.setAttribute('aria-label', 'Start: ' + text);
         li.append(st);
       }
+      // B-363 (D-312): as the demo, minutes for today's items and the short weekday (Mon) for one due later
       const when = doneNow
         ? 'Done'
-        : it.minutes
-          ? durFmt(it.minutes)
-          : due
-            ? due === today
+        : due && due > today
+          ? short(due).slice(0, 3)
+          : it.minutes
+            ? durFmt(it.minutes)
+            : due
               ? 'Today'
-              : due === E.addDays(today, 1)
-                ? 'Tomorrow'
-                : short(due)
-            : '';
+              : '';
       li.append(el('span', 't', when));
       return li;
     }
     // A row that can start: not done, not graded, not over the budget, and something to open (a review or practice set).
     const startable = (it, isDone) => !isDone(it) && !it.deferred && it.tag !== 'GRADED' && !!openItem(it);
-    // A fold under the list: one line that opens in place to its rows (D-276).
-    function todayFold(key, label, rows, open) {
-      const f = el('button', 'fold-line ti-fold');
+    // B-363 (D-312): the demo's Done group under the list: a chevron and "Done · N", opening in place to its rows.
+    function doneGroup(rows, open) {
+      const f = el('button', 'grp ti-fold');
       f.type = 'button';
-      f.textContent = label;
+      f.append(svgIcon(open ? 'M6 9l6 6 6-6' : 'M9 6l6 6-6 6'), document.createTextNode('Done · ' + rows.length));
       f.setAttribute('aria-expanded', String(!!open));
       const ul = el('ul', 'list ti-folded');
       ul.hidden = !open;
       ul.append(...rows);
       f.addEventListener('click', () => {
-        ui.todayFolds = { ...(ui.todayFolds || {}), [key]: !open };
+        ui.todayFolds = { ...(ui.todayFolds || {}), done: !open };
         render();
       });
       return [f, ul];
@@ -347,7 +352,7 @@
         el('h2', null, 'Today’s budget'),
         big,
         bar,
-        prop('On the list', `${bv.planned} min · ${plural(nOpen, 'item')}`),
+        prop('On the list', `${bv.left} min · ${plural(nOpen, 'item')}`), // B-363: what's still open, as the demo
         prop('Done', `${bv.done} min`, 'tb-done-line'),
         ...(bv.over
           ? [el('p', 'meta tb-over tb-over-line', `Over by ${bv.over} min · ${bv.available} min budget`)]
@@ -853,7 +858,7 @@
     }
     // B-335 (D-312): the demo's filter, All / Classes / Study with the count of open rows in each. Study is the work on
     // weak spots and practice (review, practice, notes); everything else on the list is the classes' own.
-    const STUDY_TAGS = new Set(['REVIEW', 'ATI REVIEW', 'PRACTICE', 'NOTES']);
+    const STUDY_TAGS = new Set(['REVIEW', 'ATI REVIEW', 'PRACTICE', 'NOTES', 'DRILL', 'SKILLS']);
     const catOf = it => (STUDY_TAGS.has(it.tag) ? 'study' : 'class');
     const FILTERS = [
       ['all', 'All'],
@@ -861,7 +866,7 @@
       ['study', 'Study'],
     ];
     function renderToday() {
-      const { day, items, isDone, budget, skipped } = dayState();
+      const { day, items, isDone, budget } = dayState();
       // B-291 (D-286): no Now card; the prep check is under her greeting and the exam countdown on Study.
       // List
       const box = $('today-list');
@@ -880,16 +885,15 @@
         ui.restPlan = np;
         render();
       });
-      // B-291: the open rows, then Done, then "Deferred: over today's budget" and "Taken off today" folded under the list.
-      // A row he ticks on this visit stays where it is (rule 6); only rows done before it sit in Done.
+      // B-363 (D-312): the open rows, then the collapsible Done group, as the demo: a row he checks off moves into Done
+      // at once. No Deferred or Taken off folds and no footer line (the demo has none; their data stays in the record).
       const shown = items.filter(i => i.tag !== 'EXAM'); // the exam is on the week (B-117)
-      const inDone = it => isDone(it) && !T.ticked.has(it.id);
+      const inDone = it => isDone(it);
       const f = FILTERS.some(x => x[0] === ui.todayFilter) ? ui.todayFilter : 'all';
       const inF = it => f === 'all' || catOf(it) === f;
       const open = shown.filter(it => !inDone(it) && !it.deferred);
       const todo = open.filter(inF),
-        done = shown.filter(it => inDone(it) && inF(it)),
-        later = shown.filter(it => !inDone(it) && it.deferred);
+        done = shown.filter(it => inDone(it) && inF(it));
       renderBudget(bv, open.length);
       const fseg = el('div', 'seg ti-filter');
       fseg.id = 'today-filter';
@@ -909,6 +913,7 @@
       }
       todayBar.list = [fseg];
       todayBar.listEnd = [rest];
+      todayBar.add.className = 'btn sm ti-add ' + (P ? 'neutral' : 'primary');
       const offOf = it => P && P.offs.find(p => p.id === it.id);
       const first = todo.find(it => startable(it, isDone) && !offOf(it));
       const ul = el('ul', 'list ti-list');
@@ -931,35 +936,8 @@
             'Nothing planned for today yet. The 4:25 am run builds the list; add your own with New or ask E.V.'
           )
         );
-      if (done.length)
-        after.push(
-          ...todayFold(
-            'done',
-            'Done · ' + done.length,
-            done.map(it => todayRow(it, isDone)),
-            folds.done !== false
-          )
-        );
-      const deferred = ((day.plan && day.plan.deferred) || []).filter(d => d.kind !== 'weakspot');
-      const deferredWs = ((day.plan && day.plan.deferred) || []).filter(d => d.kind === 'weakspot');
-      const dRows = [
-        ...later.map(it => todayRow(it, isDone)),
-        ...deferred.filter(d => !later.some(it => it.text === d.title)).map(d => row({ title: d.title })),
-        ...(deferredWs.length
-          ? [row({ title: plural(deferredWs.length, 'weak spot') + ' over today’s review load' })]
-          : []),
-      ];
-      if (dRows.length)
-        after.push(
-          ...todayFold('deferred', 'Deferred: over today’s budget · ' + dRows.length, dRows, !!folds.deferred)
-        );
-      if (skipped.length) {
-        const sRows = skipped.map(x => row({ title: x.text }));
-        sRows.push(row({ title: 'Ask E.V. to put one back.', cls: 'ti-hint' }));
-        after.push(...todayFold('off', 'Taken off today · ' + skipped.length, sRows, !!folds.off));
-      }
-      if (day.live) after.push(el('p', 'meta ti-live', 'Built live from your record. The 4:25 am run saves the day’s plan.'));
-      // B-287 (C-7): no Add row; the header's New is the one way to put a task on today's list
+      if (done.length) after.push(...doneGroup(done.map(it => todayRow(it, isDone)), folds.done !== false));
+      // B-363 (D-312): the toolbar's + Add opens New's task form, as the demo's Add does
       box.replaceChildren(...kids, ...after);
       // Weekly review (Sundays)
       const wk = S.weeks
@@ -993,7 +971,10 @@
       const bar = el('div', 'toolbar today-bar');
       bar.id = 'today-bar';
       $('p-today').querySelector('.cols').before(bar);
-      return { bar, list: [], listEnd: [] };
+      // B-363 (D-312): + Add at the toolbar's end in both views, primary until a Plan the rest proposal waits
+      const add = btn('Add', () => newOpen('task'), { cls: 'btn primary sm ti-add' });
+      add.prepend(svgIcon('M12 5v14M5 12h14'));
+      return { bar, list: [], listEnd: [], add };
     })();
     const weekSeg = (() => {
       const sg = el('div', 'seg');
@@ -1061,7 +1042,6 @@
       const n = Math.round((Date.parse(d + 'T12:00:00Z') - Date.parse(today + 'T12:00:00Z')) / 864e5);
       return n === 0 ? 'today' : n === 1 ? 'tomorrow' : 'in ' + n + ' days';
     };
-    const KIND_NAME = { due: 'Due', exam: 'Exam', validation: 'Validation', clinical: 'Clinical', other: 'Date' };
     function dateObjective(d) {
       // what "Quiz me on it" quizzes: the objective of his upcoming exams in its course that its title names; for an
       // exam, else its first objective not yet solid. None: no Quiz me.
@@ -1075,29 +1055,88 @@
       });
       const best = objs.map(o => [o, E.similarity(o.text || '', d.title || '')]).sort((a, b) => b[1] - a[1])[0];
       if (best && best[1] >= 0.3) return best[0];
-      return ex ? objs.find(o => objState(o).state !== 'solid') || objs[0] || null : null;
+      // B-363 (D-312): an exam or a quiz always offers Quiz me on it, on its course's first objective not yet solid
+      return ex || /\bquiz\b/i.test(d.title || '') ? objs.find(o => objState(o).state !== 'solid') || objs[0] || null : null;
     }
     function dateTask(d) {
       // the item on today's list that carries this date
       const ref = /^exam-/.test(d.id) ? 'exams/' + d.id.slice(5) : 'dates/' + d.id;
       return dayState().items.find(it => it.ref === ref) || null;
     }
+    // the clock a date carries (its dueAt, Central time), or ''
+    function dateClock(d) {
+      const t = d.dueAt ? new Date(d.dueAt) : null;
+      return t && !isNaN(t)
+        ? t.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Chicago' }).toLowerCase()
+        : '';
+    }
+    // B-363 (D-312): a week card as the demo's: the title, then a grey dot and its time ('9:00 am', 'Any time'); no kind
+    // words, no red (B-361: Graded is neutral grey) and no bold exams.
     function weekChip(d, sel) {
       const off = E.isRemovedDate(d);
-      const c = el('button', 'wchip' + (off ? ' off' : '') + (d.kind === 'exam' ? ' exam' : ''));
+      const c = el('button', 'wchip' + (off ? ' off' : '') + (d.date < today ? ' past' : ''));
       c.type = 'button';
       c.dataset.id = d.id;
       c.title = d.title || '';
       c.setAttribute('aria-pressed', String(sel));
-      const sub = off
-        ? 'Taken off'
-        : [KIND_NAME[d.kind] || 'Date', d.graded ? 'graded' : ''].filter(Boolean).join(', ');
-      c.append(el('span', 'wc-t', d.title || ''), el('span', 'wc-s', sub));
+      const sub = el('span', 'wc-s');
+      sub.append(el('i', 'dot'), document.createTextNode(off ? 'Taken off' : dateClock(d) || 'Any time'));
+      c.append(el('span', 'wc-t', d.title || ''), sub);
       c.addEventListener('click', () => {
         ui.weekSel = d.id;
         render();
       });
       return c;
+    }
+    // B-363 (D-312): with no card picked the week's panel is the demo's: the Next exam card (its name, when, the
+    // readiness bar and its words), then Next 7 days (Those 7 days off this week) with the graded and class counts.
+    function weekSummary(entries, wk) {
+      const out = [];
+      const ex = S.exams.filter(e => e.date && e.date >= today && e.status !== 'done').sort((a, b) => a.date.localeCompare(b.date))[0];
+      if (ex) {
+        const objs = S.objectives.filter(x => x.exam === ex.id);
+        const st = objs.map(x => objState(x).state);
+        const so = st.filter(x => x === 'solid').length,
+          al = st.filter(x => x === 'almost').length;
+        const card = el('div', 'card wd-next');
+        const bar = el('div', 'hb');
+        if (objs.length) {
+          const g = el('i'),
+            y = el('i');
+          g.style.cssText = 'background:var(--sem-green);width:' + Math.round((so / objs.length) * 100) + '%';
+          y.style.cssText = 'background:var(--sem-yellow);width:' + Math.round((al / objs.length) * 100) + '%';
+          bar.append(g, y);
+        }
+        card.append(
+          el('span', 'lab', 'Next exam'),
+          el('div', 'wd-nx', ex.title || ex.id),
+          el('div', 'mini', short(ex.date) + ' · ' + relDay(ex.date)),
+          bar,
+          el(
+            'span',
+            'mini',
+            objs.length
+              ? so + ' of ' + objs.length + ' objectives solid' + (al ? ', ' + al + ' almost' : '')
+              : 'No objectives yet'
+          )
+        );
+        out.push(card);
+      }
+      const live = entries.filter(d => !E.isRemovedDate(d));
+      const graded = live.filter(d => d.graded || d.kind === 'exam').length,
+        cls = live.filter(d => !(d.graded || d.kind === 'exam') && d.kind !== 'due').length;
+      out.push(el('span', 'lab', wk === 0 ? 'Next 7 days' : 'Those 7 days'));
+      for (const [n, v] of [
+        ['Graded work and exams', graded],
+        ['Classes, labs, clinicals', cls],
+      ]) {
+        const r = el('div', 'wd-sum');
+        const l = el('span', 'wd-sum-l');
+        l.append(el('i', 'dot'), document.createTextNode(n));
+        r.append(l, el('span', 'mini', String(v)));
+        out.push(r);
+      }
+      return out;
     }
     function renderWeek() {
       const on = ui.todayView === 'week';
@@ -1108,7 +1147,8 @@
         weekSeg,
         ...(on ? [weekNav(start, wk)] : []),
         el('span', 'sp'),
-        ...(on ? [] : todayBar.listEnd)
+        ...(on ? [] : todayBar.listEnd),
+        todayBar.add
       );
       weekSeg
         .querySelectorAll('button')
@@ -1135,7 +1175,7 @@
         return;
       }
       const entries = weekDates(E.addDays(start, WEEK_DAYS - 1), true, start);
-      if (!entries.some(d => d.id === ui.weekSel)) ui.weekSel = (entries[0] || {}).id || null;
+      if (!entries.some(d => d.id === ui.weekSel)) ui.weekSel = null; // B-363: opens on Next exam, as the demo
       const days = el('div', 'wk-days');
       for (let i = 0; i < WEEK_DAYS; i++) {
         const date = E.addDays(start, i);
@@ -1159,7 +1199,9 @@
           const n = sideOpen().length;
           const t = el('button', 'wchip wk-list');
           t.type = 'button';
-          t.append(el('span', 'wc-t', n + ' on today’s list'), el('span', 'wc-s', 'Open the list'));
+          const ts = el('span', 'wc-s');
+          ts.append(el('i', 'dot'), document.createTextNode('Open the list'));
+          t.append(el('span', 'wc-t', n + ' on today’s list'), ts);
           t.addEventListener('click', () => {
             ui.todayView = 'list';
             store.set('todayView', 'list');
@@ -1174,8 +1216,8 @@
       box.replaceChildren(...(wk === 0 ? [el('p', 'wk-her', gradedLine(entries))] : []), days);
       // the picked date's panel
       const d = entries.find(x => x.id === ui.weekSel);
-      panel.hidden = !d;
-      if (!d) return panel.replaceChildren();
+      panel.hidden = false;
+      if (!d) return panel.replaceChildren(...weekSummary(entries, wk));
       // B-349 (D-312): as the demo's TodayWeek board: the badge, the 18 px title, When / Course / Readiness in one card,
       // then Quiz me on it and Open the task stacked; Take off stays for a date that can leave the calendar (D-080).
       const off = E.isRemovedDate(d);
@@ -1187,14 +1229,7 @@
       const graded = d.graded || d.kind === 'exam';
       const badge = el('span', 'badge wd-badge x-quiet', graded ? 'Graded' : 'Class');
       const title = el('div', 'wd-title', d.title || '');
-      let clock = '';
-      if (d.dueAt) {
-        const t = new Date(d.dueAt);
-        if (!isNaN(t))
-          clock = t
-            .toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Chicago' })
-            .toLowerCase();
-      }
+      const clock = dateClock(d);
       const dw = new Date(d.date + 'T12:00:00Z');
       const day =
         dw.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' }) +
