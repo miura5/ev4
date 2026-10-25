@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 25 | v4 staging deployed at ca533d7 (11:27 CT), from a7fe52b: Review 3: Today's week breaks words mid-word, Start is missing on…; The tests and the page harnesses still assert the old UI; they are…; Review 3: Progress still drops the Exam readiness card for an exam… (B-374, B-357, B-378). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at a7fe52b (11:07 CT), from 8b9da5b: Review 3: the quiz results never propose misses as weak spots with…; Review 3: dialogs' spacing and segmented controls differ, and… (B-376, B-380). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at 8b9da5b (11:05 CT), from f5a2b3a: Review 3: Today's week breaks words mid-word, Start is missing on… (B-374). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at f5a2b3a (10:59 CT), from 5ec196a: Review 3: starting, pausing and ending a study session from the panel…; Review 3: Record's phone rows put everything on one; Review 3: the quiz results never propose misses as weak spots with… (B-377, B-379, B-376). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |

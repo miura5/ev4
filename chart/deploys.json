@@ -4763,5 +4763,23 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "ca533d7",
+  "time": "2026-10-25T16:27:47.381Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "a7fe52b",
+  "tasks": [
+   "B-374",
+   "B-357",
+   "B-378"
+  ],
+  "summary": "Review 3: Today's week breaks words mid-word, Start is missing on…; The tests and the page harnesses still assert the old UI; they are…; Review 3: Progress still drops the Exam readiness card for an exam…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
