@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 25 | v4 staging deployed at 9d7b851 (08:49 CT), from c3e617f: The tests and the page harnesses still assert the old UI; they are… (B-357). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at c3e617f (08:44 CT), from 93615fb: On staging E.V.'s conversation lists every due item as its own line…; Record keeps tabs the demo does not have; the demo's Record has (B-358, B-359). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at 93615fb (08:08 CT), from ad690ef: Fidelity fix: on Matt's record the Study page is empty: his next… (B-351). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at ad690ef (08:06 CT), from 16aa0e6: Fidelity fix: E.V.'s view differs from the demo: paperclip, chips,… (B-353). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
