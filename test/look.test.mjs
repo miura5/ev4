@@ -38,16 +38,12 @@ test('B-113, B-203: the look pass shoots every view of every tab at the twelve s
       'study-weak',
       'study-review',
       'progress-readiness',
-      'record-sessions',
-      'record-dates',
-      'record-journal',
-      'record-news',
-      'record-library',
+      'record', // B-359 (D-316): Record is the log alone, no view tabs
       'system',
     ]
   );
   const all = V.viewsOf(html).flatMap(v => V.SIZES.map(s => V.shotName(v, s)));
-  assert.equal(all.length, 156); // B-297: 13 views (Study: Objectives, Plan, Weak spots and the review's quiz card; Progress: Readiness)
+  assert.equal(all.length, 108); // B-297, B-359: 9 views (Study: Objectives, Plan, Weak spots and the review's quiz card; Progress: Readiness; Record: its log)
   assert.deepEqual(V.missingShots(all, html), []);
   assert.match(
     flatSource('test/harness/look.cjs'),

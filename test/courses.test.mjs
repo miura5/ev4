@@ -351,7 +351,8 @@ test('B-42: the Canvas sync takes its course ids and module rules from spec.cour
 test('B-42: the page reads the table: the course select and the course words come from spec.courses', () => {
   const shell = fs.readFileSync(path.join(ROOT, 'page/index.src.html'), 'utf8'),
     app = flatText(appSource(ROOT));
-  assert.match(shell, /<select id="d-course" aria-label="Course"><\/select>/, 'no course in the shell');
-  assert.match(app, /\$\('d-course'\)\.replaceChildren\(\.\.\.E\.activeCourses\(\)/);
+  // B-359 (D-316): the date form and its course select left with Record's Dates; the courses still come from the table
+  assert.doesNotMatch(shell, /NUR 112|BIO 201/, 'no course written into the shell');
+  assert.match(app, /E\.activeCourses\(\)/);
   assert.doesNotMatch(app, /nextNurExams|nurUnitExamKinds|enum: \['NUR 112', 'BIO 201'\]/);
 });

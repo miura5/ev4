@@ -33,7 +33,7 @@ test('B-199: the harness names its six checks and both plants', () => {
     'the page boots and connects to the record',
     'the greeting renders',
     'each tab opens its panel',
-    'a Today check-off ticks and keeps the scroll and the rows in place',
+    'a Today check-off ticks, keeps the scroll, and the row joins Done · N',
     'a review answer scores',
     'a Your-turn reply files its job and fires the builder',
     'no page errors',
