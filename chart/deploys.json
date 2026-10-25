@@ -4529,5 +4529,22 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "cc32bf9",
+  "time": "2026-10-25T14:08:34.918Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "17db659",
+  "tasks": [
+   "B-357",
+   "B-367"
+  ],
+  "summary": "The tests and the page harnesses still assert the old UI; they are…; The UI review found Record lacks the demo's Log something",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
