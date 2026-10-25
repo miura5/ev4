@@ -5820,9 +5820,9 @@
   "title": "Fidelity: the window frame (supersedes D-225's 680 px reading width and D-245's panel cards on the ground, Matt Oct 25: match the demo). The window runs from the sidebar to 8 px from the right edge; the header spans the window and holds only the title, the view switch and New (no health or status text); the right panel is 320 px, inside the window, under the header with a 1 px divider; lists, cards and grids span the pane, only her message column keeps 600 to 680 px.",
   "dod": "Measured against the Today list board: window from the sidebar to 8 px from the right; header as wide as the window; panel 320 px inside it, top at or below the header; no element in the pane narrower than the pane by a max-width under 1200 px except her message column; with health 82 hours old the header shows no other text. Proof (D-312, fidelity sprint): node tools/build.mjs, then tools/fidelity's demo and built screenshots read side by side at 1280, 1706, 2560 and 390, plus npm run smoke; then ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "claimed by lane frame",
   "commit": null,
   "source": "fidelity review, Oct 25 (D-312)"
  },
