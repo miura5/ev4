@@ -5513,7 +5513,7 @@
   "depends": [
    "B-309"
   ],
-  "notes": "claimed by lane app",
+  "notes": "proofs green: pwa-staging run 40183513354 at 103eeef GREEN (401 without and with a wrong token; 74 documents in 17 collections equal to the seed); reach from this cloud session GREEN; npm test green with the pwa/ personal-data test",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
