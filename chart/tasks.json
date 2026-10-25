@@ -6190,12 +6190,12 @@
   "title": "Fidelity fix: Frame (D-314): times as 8:10 pm, day labels as Tue 20 Oct / Sun 25, durations as 10 h 20 m, 'points' not 'pts', across every view; the status under E.V. reads as the demo ('ready when you are', her working words), with ' · staging' only on staging; Start session's play icon an outline as the demo; Preferences holds Light and Dark only (no Auto: the page follows the device until he picks) and no System link; no Preferences button on the phone header",
   "dod": "Every view's text formats, the sidebar head, the play icon, the popover and the phone header match the boards. Proof (D-312, fidelity sprint): node tools/build.mjs; tools/fidelity screenshots (crawl.cjs demo and built click every control) beside the boards at 1280, 1706, 2560 and 390; npm run smoke; ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-333"
   ],
-  "notes": "claimed by lane frame",
-  "commit": null,
+  "notes": "Every view now uses the demo's text: days read Tue 20 Oct, times 8:10 pm, longer durations 1 h 10 m, and Progress says points instead of pts. Under E.V.'s name the status reads ready when you are (thinking… while she works, waiting on your review while a Plan the rest proposal waits), with · staging only on staging. Start session's play icon is an outline, as in the demo. Preferences now holds only Light and Dark (until you pick one, the page follows your device) and Contrast; the phone has no Preferences button. Decided as the demo shows: the System link is gone from Preferences, so System opens only at the page's #system address; its health warnings are no longer one tap away. Still differs from the demo: with no theme picked yet, neither Light nor Dark is highlighted (the demo always shows one picked); otherwise 1280, 1706, 2560 and 390 match for these parts.",
+  "commit": "1c0d1ed",
   "source": "fidelity review, Oct 25 (D-314)",
   "words": "Fidelity fix: the frame differs from the demo in text formats, the sidebar status line, the play icon, the Preferences popover and the phone header.",
   "reportedAt": "2026-10-25T12:48:11.493Z",
