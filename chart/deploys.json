@@ -4432,5 +4432,22 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "c3e617f",
+  "time": "2026-10-25T13:44:26.599Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "93615fb",
+  "tasks": [
+   "B-358",
+   "B-359"
+  ],
+  "summary": "On staging E.V.'s conversation lists every due item as its own line…; Record keeps tabs the demo does not have; the demo's Record has",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
