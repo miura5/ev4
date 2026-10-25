@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 25 | v4 staging deployed at 16aa0e6 (08:03 CT), from 6968d46: Fidelity fix: the task panel lacks the demo's tick beside the title… (B-355). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at 6968d46 (07:59 CT), from 1c0d1ed: Fidelity fix: Today differs from the demo in row height, the budget,… (B-354). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at 1c0d1ed (07:56 CT), from 2540d19: Fidelity fix: Study's Plan tab, a running quiz and its results are…; Fidelity fix: the frame differs from the demo in text formats, the… (B-348, B-352). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at 2540d19 (07:55 CT), from 17cbed0: Fidelity fix: on Matt's record the Study page is empty: his next…; Fidelity fix: Record at 390 drops the row's result column; Progress's… (B-351, B-356). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
