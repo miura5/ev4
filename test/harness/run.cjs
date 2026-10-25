@@ -555,7 +555,8 @@ async function quizMeChecks(page, scheme) {
         kids.length > 0 &&
         kids.every(e => Math.abs(mid(e) - mid(kids[0])) <= 4) &&
         bar.scrollWidth <= bar.clientWidth + 1,
-      rows: [...document.querySelectorAll('#ov-card .ov-li')].filter(vis).map(e => Math.round(r(e).height)),
+      rows: [...document.querySelectorAll('#ov-card .ov .obj')].filter(vis).map(e => Math.round(r(e).height)),
+      start: vis(document.getElementById('study-start')),
     };
   });
   // the overview in both themes, at this pass's width (390 or 1280), to look at
@@ -564,16 +565,11 @@ async function quizMeChecks(page, scheme) {
     await page.waitForTimeout(150);
     await page.screenshot({ path: `${shots}/study-objectives-${scheme}-${theme}.png` });
   }
-  const want = scheme === 'phone' ? 44 : 32;
+  // B-351 (D-315): the demo's StudyOverview: the strip carries the course switch, Quiz me, Weak spots and Start
+  // session in one row; the exam card's objective rows; the mini quiz beside Coming up
   ok(
-    `[${scheme}] Study's overview: one primary (Start session), no Quiz me in the toolbar and no mini-quiz card, the toolbar one row, objective rows ${want} px (B-297)`,
-    o.primaries.length === 1 &&
-      o.primaries[0] === 'study-start' &&
-      !o.barQuiz &&
-      !o.mini &&
-      o.oneRow &&
-      o.rows.length > 0 &&
-      o.rows.every(h => h === want),
+    `[${scheme}] Study's overview: Start session and Quiz me in the toolbar (one row from 600 px), the exam's objective rows (B-351)`,
+    o.start && o.barQuiz >= 1 && (scheme === 'phone' || o.oneRow) && o.rows.length > 0,
     JSON.stringify(o)
   );
   // which objectives have questions in his practice sets, and which have none
@@ -593,14 +589,14 @@ async function quizMeChecks(page, scheme) {
     };
   });
   const quiz = async id => {
+    // B-351: Quiz me sits on the row (shown on hover); the picked objective's detail carries Quiz me on this
     const row = page.locator(`#ov-card .ov[data-id="${id}"]`);
-    if (scheme === 'phone') {
-      await row.locator('.ov-nm').click(); // the phone: the detail opens in place, Quiz me in it
+    await row.locator('.obj').hover();
+    if (await row.locator('.oq').isVisible()) await row.locator('.oq').click();
+    else {
+      await row.locator('.ov-nm').click();
       await page.waitForTimeout(100);
-      await row.locator('.ov-more button', { hasText: 'Quiz me' }).click();
-    } else {
-      await row.locator('.ov-li').hover();
-      await row.locator('.ov-q').click();
+      await page.locator('#p-study .od-q', { hasText: 'Quiz me on this' }).first().click();
     }
     await page.waitForTimeout(250);
   };
@@ -620,7 +616,7 @@ async function quizMeChecks(page, scheme) {
       const all = set ? window.EVCore.validItems(set) : [];
       return { all: all.length, mine: all.filter(q => q.objective === id).length };
     }, has.yes);
-    const n = Number(String(got.count || '').split(' of ')[1]);
+    const n = Number((/\d+ of (\d+)/.exec(String(got.count || '')) || [])[1]);
     ok(
       `[${scheme}] an objective's Quiz me opens a set of its own existing questions, with the way back in the toolbar (B-297)`,
       got.shown && got.back && n === items.mine && items.mine > 0,
@@ -803,17 +799,16 @@ async function workLineChecks(page, scheme) {
 }
 /** B-180, at the width it runs: the build card's states, the build ask (no model call, the job, the builder fired by
  * id with the two-line text, both lines in talk) and an identifier that holds a build ask with nothing written. */
-// B-191: an open set closes back to the list with its answers kept; Back and Next walk it in its order, an answered
-// question showing its answer and why, an unanswered one open; answered out of order, then reopened where he left. Run
-// at both widths from Study, Practice with a set open.
+// B-191: an open set closes back to Objectives with its answers kept and reopens where he left; B-365 (D-316) walks it
+// in order, each one-answer question graded on the tap. Run at both widths from Study, Practice with a set open.
 async function practiceNav(page, scheme) {
   // B-303 (D-283): no list of sets; a set opens from a row of today's list, and folds back to Objectives
   const openSet = async title => openSetById(page, await byTitle(page, title));
-  await page.click('#pr-fold');
+  await closeSet(page);
   await page.waitForTimeout(150);
   ok(
-    `[${scheme}] the open set's head line folds it back to Objectives, with no list of sets (D-283)`,
-    !(await page.isVisible('#pr-fold')) &&
+    `[${scheme}] the open set closes back to Objectives (All topics, B-348), with no list of sets (D-283)`,
+    !(await page.isVisible('#study-back')) &&
       (await page.isVisible('#study-objectives')) &&
       !(await page.locator('#pr-body .pr-lead, #pr-body .pr-item').count()) &&
       !(await page.isVisible('#pr-body .q-stem')),
@@ -826,81 +821,54 @@ async function practiceNav(page, scheme) {
       verdict: (document.querySelector('#pr-body .verdict') || {}).textContent || '',
       whys: [...document.querySelectorAll('#pr-body .why:not([hidden])')].map(x => x.textContent),
       check:
-        !!document.querySelector('#pr-body button.primary') &&
-        /Check answer/.test(document.querySelector('#pr-body button.primary').textContent),
+        // open to answer: its options and no verdict (B-365: a one-answer question has no Check answer)
+        !!document.querySelector('#pr-body label.opt') && !document.querySelector('#pr-body .verdict'),
       back: !!document.querySelector('#pr-body .q-back'),
       next: !!document.querySelector('#pr-body .q-next'),
       count: (document.getElementById('pr-qcount') || {}).textContent || '',
       sideways: document.documentElement.scrollWidth > innerWidth + 1,
     }));
+  // B-365 (D-316): in Study a one-answer question grades on the tap, with no Back, no skip and no Check answer, as
+  // the demo's StudyQuiz: the set walks in order, Next question (or Enter) after each verdict.
   await openSet('Harness nav');
   await page.waitForTimeout(150);
   let v = await q();
   ok(
-    `[${scheme}] a fresh set opens on question 1, open to answer, with Next and no Back`,
-    /question 1/.test(v.stem) && v.check && v.next && !v.back,
+    `[${scheme}] a fresh set opens on question 1, open to answer, with no Back and no skip (B-365)`,
+    /question 1/.test(v.stem) && v.check && !v.next && !v.back,
     JSON.stringify(v)
   );
-  await page.click('#pr-body .q-next');
-  await page.waitForTimeout(120);
-  await page.locator('#pr-body label.opt', { hasText: 'Piaget' }).click();
-  await page.click('#pr-body button:has-text("Check answer")');
+  await page.locator('#pr-body label.opt', { hasText: 'Erikson' }).click();
   await page.waitForTimeout(150);
   v = await q();
   ok(
-    `[${scheme}] answered out of order: question 2 first, Right with its why, 1 of 3`,
-    /question 2/.test(v.stem) &&
-      /^Right\b/.test(v.verdict) &&
-      v.whys.includes('Piaget is right.') &&
-      v.count === '1 of 3',
+    `[${scheme}] the tap answers it: Right with its why, question 1 of 3`,
+    /question 1/.test(v.stem) && /^Right\b/.test(v.verdict) && /^Question 1 of 3\b/.test(v.count),
     JSON.stringify(v)
   );
   await page.screenshot({ path: `${shots}/practice-nav-answered-${scheme}.png` });
-  await page.click('#pr-body .q-back');
+  await page.click('#pr-body button:has-text("Next question")');
   await page.waitForTimeout(120);
   v = await q();
-  ok(
-    `[${scheme}] Back to question 1: still open to answer, nothing marked`,
-    /question 1/.test(v.stem) && v.check && !v.verdict && !v.back,
-    JSON.stringify(v)
-  );
-  await page.screenshot({ path: `${shots}/practice-nav-back-${scheme}.png` });
-  await page.click('#pr-body .q-next');
-  await page.waitForTimeout(120);
-  v = await q();
-  ok(
-    `[${scheme}] Next to question 2: its answer and why are still there`,
-    /question 2/.test(v.stem) && /^Right\b/.test(v.verdict) && v.whys.includes('Piaget is right.') && v.back,
-    JSON.stringify(v)
-  );
-  await page.click('#pr-fold');
+  ok(`[${scheme}] Next question: question 2, open to answer`, /question 2/.test(v.stem) && v.check, JSON.stringify(v));
+  await closeSet(page);
   await page.waitForTimeout(150);
   const saved = await page.evaluate(id => Object.keys(((window.__db.answers || {})[id] || {}).answers || {}), navId);
-  ok(`[${scheme}] closed mid-set, the answer is kept`, JSON.stringify(saved) === '["v2"]', JSON.stringify(saved));
+  ok(`[${scheme}] closed mid-set, the answer is kept`, JSON.stringify(saved) === '["v1"]', JSON.stringify(saved));
   await openSet('Harness nav');
   await page.waitForTimeout(150);
   v = await q();
-  ok(
-    `[${scheme}] reopened, it is where he left it`,
-    /question 2/.test(v.stem) && /^Right\b/.test(v.verdict),
-    JSON.stringify(v)
-  );
-  await page.click('#pr-body .q-back');
-  await page.waitForTimeout(100);
-  await page.locator('#pr-body label.opt', { hasText: 'Erikson' }).click();
-  await page.click('#pr-body button:has-text("Check answer")');
+  ok(`[${scheme}] reopened, it is where he left it`, /question 2/.test(v.stem) && v.check, JSON.stringify(v));
+  await page.locator('#pr-body label.opt', { hasText: 'Piaget' }).click();
   await page.waitForTimeout(150);
   await page.click('#pr-body button:has-text("Next question")');
   await page.waitForTimeout(100);
-  await page.click('#pr-body button:has-text("Next question")');
-  await page.waitForTimeout(100);
   await page.locator('#pr-body label.opt', { hasText: 'Kohlberg' }).click();
-  await page.click('#pr-body button:has-text("Check answer")');
   await page.waitForTimeout(150);
   await page.locator('#pr-body button', { hasText: 'See results' }).first().click();
   await page.waitForTimeout(150);
   ok(
-    `[${scheme}] the last answer, whichever order, brings the results`,
+    `[${scheme}] the last answer brings the results`,
     /3 of 3/.test(await page.textContent('#pr-body')) && !v.sideways,
     (await page.textContent('#pr-body')).slice(0, 160)
   );
@@ -908,23 +876,18 @@ async function practiceNav(page, scheme) {
   await page.click('#study-back'); // B-303: the toolbar's way back, now the summary has no All sets
   await page.waitForTimeout(150);
   // B-193 (D-205): a question on another course's passage names its source under the stem, from the data, once the
-  // library is open (the page never loads it just for this): open Record, Library first, then the set.
-  await page.click('#tab-record');
-  await page.click('#seg-record [data-v="library"]');
-  await page
-    .waitForFunction(() => document.querySelectorAll('#library li').length > 0, null, { timeout: 8000 })
-    .catch(() => {});
-  await page.click('#seg-record [data-v="sessions"]'); // Record back on its first view for the checks after
+  // library is open (the page never loads it just for this). B-359 (D-316): Record's Library screen left the page, so
+  // the library may not be open here: the stem then names no source, and never a wrong one.
   await openSet('Harness cross');
   await page.waitForFunction(() => document.querySelector('#pr-body .q-src'), null, { timeout: 8000 }).catch(() => {});
   const src = await page.textContent('#pr-body .q-src').catch(() => '');
   ok(
-    `[${scheme}] a NUR question on a BIO passage names its source: From BIO 201: Bones slides`,
-    src === 'From BIO 201: Bones slides',
+    `[${scheme}] a NUR question on a BIO passage names its source, From BIO 201: Bones slides, or none before the library opens`,
+    src === 'From BIO 201: Bones slides' || src === '',
     src
   );
   await page.screenshot({ path: `${shots}/practice-cross-${scheme}.png` });
-  await page.click('#pr-fold');
+  await closeSet(page);
   await page.waitForTimeout(150);
 }
 async function buildAskChecks(page, scheme) {
@@ -1327,6 +1290,16 @@ const results = [];
 const ok = (name, cond, detail = '') => {
   results.push([cond ? 'PASS' : 'FAIL', name, detail]);
 };
+// B-348 (D-315): an open set closes by the strip's All topics (its old fold line where one still shows)
+async function closeSet(page) {
+  if (await page.isVisible('#pr-fold')) await page.click('#pr-fold');
+  else if (await page.isVisible('#study-back')) await page.click('#study-back');
+}
+// B-365 (D-316): in Study a one-answer question grades on the tap; Check answer, where a question still has it
+async function checkAnswer(page, root) {
+  const b = page.locator(`${root} button:has-text("Check answer")`);
+  if (await b.isVisible().catch(() => false)) await b.click();
+}
 // B-357: a control he must reach is checked for being tappable where it sits (nothing over it) as its own check,
 // then taken by a script click, so one covered control is one FAIL and the run goes on.
 async function tap(page, locator, name) {
@@ -1362,13 +1335,18 @@ async function tap(page, locator, name) {
     ok(`[${scheme}] opens on E.V.`, (await page.isVisible('#p-ev')) && !(await page.isVisible('#p-today')));
     ok(
       `[${scheme}] opening: her stage above the greeting, her 24 px flower kept in the sidebar (D-213)`,
-      await page.evaluate(
-        () =>
-          document.body.classList.contains('opening') &&
-          !!document.querySelector('#hero svg.fl') &&
-          document.querySelector('#hero').getBoundingClientRect().height >= 100 &&
-          (innerWidth < 600 || document.querySelector('#top-av svg.fl').getBoundingClientRect().width >= 20)
-      )
+      ...(await page.evaluate(() => {
+        const v = {
+          opening: document.body.classList.contains('opening'),
+          flower: !!document.querySelector('#hero svg.fl'),
+          stage: Math.round(document.querySelector('#hero').getBoundingClientRect().height),
+          av: Math.round(
+            (document.querySelector('#top-av svg.fl') || { getBoundingClientRect: () => ({}) }).getBoundingClientRect()
+              .width || 0
+          ),
+        };
+        return [v.opening && v.flower && v.stage >= 100 && (innerWidth < 600 || v.av >= 20), JSON.stringify(v)];
+      }))
     );
     ok(
       `[${scheme}] core is drawing`,
@@ -1423,26 +1401,15 @@ async function tap(page, locator, name) {
     ok(`[${scheme}] no page errors`, errors.length === 0, errors.join(' | '));
     // ---- E.V.: greeting, quick asks, chat with tools, jobs, guard, check-in (light pass does the interactions)
     const greet = (await page.locator('#thread .msg.ev').last().textContent()) || '';
-    // B-90: one strict line (what can't wait, else a greeting and how she can help), and a briefing folded under it.
+    // B-90: one strict line (what can't wait, else a greeting and how she can help). B-358 (D-316): under it one summary
+    // line, as the demo's Main board, from code: no briefing to fold, no line per item, no button.
     const gb = await page.evaluate(() => {
-      const g = document.querySelector('#thread .msg.greet'),
-        row = g.querySelector('.brief-row'),
-        ul = g.querySelector('.brief-list');
-      const cs = getComputedStyle(row);
+      const g = document.querySelector('#thread .msg.greet');
       return {
         head: g.querySelector('.bubble').textContent,
-        row: row && row.textContent,
-        folded: !!ul && ul.hidden && row.getAttribute('aria-expanded') === 'false',
-        dots: [...row.querySelectorAll('.br-dot')].map(d => d.className),
-        plain:
-          cs.borderTopWidth === '0px' &&
-          /rgba\(0, 0, 0, 0\)|transparent/.test(cs.backgroundColor) &&
-          !g.querySelector('.badge, .bi-act'),
-        items: [...g.querySelectorAll('.brief-item')].map(li => [
-          li.dataset.level,
-          li.querySelector('.bi-t').textContent,
-          (li.querySelector('.bi-mark') || {}).className || '',
-        ]),
+        lines: [...g.querySelectorAll('.brief .brief-line')].map(x => x.textContent),
+        buttons: g.querySelectorAll('.brief button').length,
+        cards: g.querySelectorAll('.ev-card').length,
       };
     });
     ok(
@@ -1453,76 +1420,21 @@ async function tap(page, locator, name) {
       gb.head
     );
     ok(
-      `[${scheme}] the briefing starts folded: plain text, a count and one red dot for the urgent item (urgent outranks new), no pills`,
-      gb.folded && /^\d+ things to know$/.test(gb.row) && gb.dots.join() === 'br-dot urgent' && gb.plain,
-      JSON.stringify(gb).slice(0, 300)
+      `[${scheme}] under it one summary line of today's list, no line per item, no button, no card (D-316)`,
+      gb.lines.length === 1 && /on today’s list/.test(gb.lines[0]) && !gb.buttons && !gb.cards,
+      JSON.stringify(gb)
     );
+    // B-358 (D-316): at rest the chips are the demo's five, Start a study session first
+    const gm = await page.evaluate(() => [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent));
     ok(
-      `[${scheme}] the briefing ranks urgent, then new (the finished job), then the rest; urgent and new carry an accent mark`,
-      gb.items[0][0] === 'urgent' &&
-        /^ATI Engage Fundamentals/.test(gb.items[0][1]) &&
-        gb.items[0][2] === 'bi-mark urgent' &&
-        gb.items[1][0] === 'new' &&
-        /Study guide: cardiac output/.test(gb.items[1][1]) &&
-        gb.items[1][2] === 'bi-mark new' &&
-        gb.items.slice(2).every(i => i[0] === 'normal' && !i[2]),
-      JSON.stringify(gb.items)
-    );
-    if (scheme === 'phone') {
-      await page.click('#thread .msg.greet .brief-row');
-      await page.waitForTimeout(1100);
-      const op = await page.evaluate(() => {
-        const ul = document.querySelector('#thread .msg.greet .brief-list'),
-          li = ul.querySelector('.brief-item'),
-          t = li.querySelector('.bi-t');
-        return {
-          open: !ul.hidden,
-          cut: t.scrollWidth > t.clientWidth + 1,
-          rowsLeft: [...ul.querySelectorAll('.bi-t')].every(x => getComputedStyle(x).textAlign !== 'center'),
-          step: document.getElementById('hero').dataset.step,
-        };
-      });
-      await page.click('#thread .msg.greet .brief-item .bi-main');
-      await page.waitForTimeout(300);
-      const ex = await page.evaluate(() => {
-        const li = document.querySelector('#thread .msg.greet .brief-item'),
-          t = li.querySelector('.bi-t');
-        return {
-          open: li.classList.contains('open'),
-          whole: t.scrollWidth <= t.clientWidth + 1,
-          detail: li.querySelector('.bi-more').offsetParent && li.querySelector('.bi-d').textContent,
-          go: (li.querySelector('.bi-go') || {}).textContent,
-        };
-      });
-      ok(
-        '[phone] opened, the briefing is a left-aligned list, rows cut to one line, her core stepped down',
-        op.open && op.cut && op.rowsLeft && op.step === 'list',
-        JSON.stringify(op)
-      );
-      ok(
-        '[phone] a line opens in place by its chevron to the full text, the detail and its action as a text link',
-        ex.open && ex.whole && ex.detail === 'Due tonight. Graded.' && ex.go === 'Open Today →',
-        JSON.stringify(ex)
-      );
-      await page.screenshot({ path: `${shots}/briefing-open-phone.png` });
-      await page.click('#thread .msg.greet .brief-row');
-      await page.waitForTimeout(900);
-    }
-    // D-125 as amended: the greeting has no card; its offers are the chips, at most five as the demo's (D-312), the
-    // finished job among them.
-    const gm = await page.evaluate(() => ({
-      cards: document.querySelectorAll('#thread .msg.greet .ev-card').length,
-      chips: [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent),
-    }));
-    ok(
-      `[${scheme}] the greeting has no card; at most five chips, one opening the finished study guide`,
-      gm.cards === 0 && gm.chips.length <= 5 && gm.chips.includes('Open the study guide'),
+      `[${scheme}] at rest the demo's five chips, Start a study session first`,
+      gm.length === 5 &&
+        gm[0] === 'Start a study session' &&
+        gm.includes('What’s due this week?') &&
+        gm.includes('How did this week go?') &&
+        gm.includes('Plan the rest of today') &&
+        gm.some(c => /^(Quiz me on |Start review$)/.test(c)),
       JSON.stringify(gm)
-    );
-    ok(
-      `[${scheme}] quick chips`,
-      (await page.locator('#qchips .qchip').count()) >= 3,
-      String(await page.locator('#qchips .qchip').count())
     );
     await page.click('#tab-today');
     await page.waitForTimeout(100);
@@ -1629,7 +1541,7 @@ async function tap(page, locator, name) {
         await openSetById(page, await byTitle(page, 'Harness dosage')); // B-303 (D-283): from today's list
         await page.waitForTimeout(150);
         await page.locator('#pr-body input.num-in').fill('10 mL');
-        await page.click('#pr-body button:has-text("Check answer")');
+        await checkAnswer(page, '#pr-body');
         await page.waitForTimeout(150);
         const d = await page.evaluate(() => ({
           verdict: document.querySelector('#pr-body .verdict').textContent,
@@ -1661,27 +1573,45 @@ async function tap(page, locator, name) {
     let m = await msgs(page);
     ok(
       'quick ask posts Matt + E.V. to talk/<today>',
-      m.length === 2 && m[0].role === 'matt' && m[1].role === 'ev' && m[1].cards[0].type === 'dates',
+      m.length === 2 && m[0].role === 'matt' && m[1].role === 'ev' && m[1].cards[0].type === 'go', // B-362
       JSON.stringify(m.map(x => [x.role, x.text.slice(0, 30)]))
     );
-    ok(
-      'the dates card opens as a surface, its head line naming its count, nothing under her line (B-78)',
-      /^\d+ dates? in the next week$|^Nothing dated in the next week$/.test(
-        await page
-          .locator('#ev-surf .sf-head .sf-t')
-          .textContent()
-          .catch(() => '')
-      ) && (await page.locator('#thread .msg.ev').last().locator('.ev-card').count()) === 0
-    );
+    // B-362 (D-316): a chip's answer is her one line and one button under it, as the demo: no data card, no surface
+    {
+      const last = page.locator('#thread .msg.ev').last();
+      const a = {
+        text: (
+          (await last
+            .locator('.bubble')
+            .first()
+            .textContent()
+            .catch(() => '')) || ''
+        ).trim(),
+        buttons: await last.locator('.msg-acts button').allTextContents(),
+        cards: await last.locator('.ev-card').count(),
+        surf: await page.isVisible('#ev-surf'),
+      };
+      ok(
+        'her answer to what is due is one line and one button, Open the week; no card, no surface (B-362)',
+        /^\d+ dates? in the next 7 days|^Nothing dated in the next 7 days/.test(a.text) &&
+          a.buttons.join() === 'Open the week' &&
+          !a.cards &&
+          !a.surf,
+        JSON.stringify(a)
+      );
+    }
     // Captions (B-77): after his first message she stays on her stage at 80%; no core moves to the top bar or a message.
-    ok(
-      'after his first message her core stays on her stage, a step down (an open surface takes the list step, B-78)',
-      await page.evaluate(
-        () =>
-          document.getElementById('hero').dataset.step === (innerWidth >= 1024 ? 'surface' : 'list') &&
-          document.querySelector('#top-av').getBoundingClientRect().width < 1
-      )
-    );
+    {
+      const st = await page.evaluate(() => ({
+        step: document.getElementById('hero').dataset.step,
+        av: document.querySelector('#top-av').getBoundingClientRect().width,
+      }));
+      ok(
+        'after his first message her core stays on her stage, a step down from her opening, none in the header',
+        !!st.step && !['opening', 'idle'].includes(st.step) && st.av < 1,
+        JSON.stringify(st)
+      );
+    }
     ok(
       'one live core, her stage: none on the messages',
       (await page.locator('#thread .ev-av svg').count()) === 0 && (await page.locator('#hero svg.fl').count()) === 1
@@ -2328,15 +2258,24 @@ async function tap(page, locator, name) {
       await page.textContent('#status')
     );
     // B-291 (D-286, D-287, C-7, D-282): no Now card, no Focus heading, no Add and no Remove on Today.
-    ok(
-      'Today has no Now card, Focus heading, Add or Remove',
-      await page.evaluate(
-        () =>
-          !document.getElementById('now') &&
-          ![...document.querySelectorAll('#p-today h2, #p-today h3')].some(h => /^Focus$/.test(h.textContent.trim())) &&
-          ![...document.querySelectorAll('#p-today button')].some(b => /^(Add|Remove)$/.test(b.textContent.trim()))
-      )
-    );
+    {
+      const t = await page.evaluate(() => ({
+        now: !!document.getElementById('now'),
+        focus: [...document.querySelectorAll('#p-today h2, #p-today h3')].some(h =>
+          /^Focus$/.test(h.textContent.trim())
+        ),
+        addRemove: [...document.querySelectorAll('#p-today button')]
+          .filter(b => /^(Add|Remove)$/.test(b.textContent.trim()))
+          .map(b => b.outerHTML.slice(0, 120)),
+      }));
+      // B-357 (D-315): the demo's toolbar has Add; Remove stays off Today (B-364)
+      t.addRemove = t.addRemove.filter(h => !/ti-add/.test(h));
+      ok(
+        'Today has no Now card, Focus heading or Remove',
+        !t.now && !t.focus && !t.addRemove.length,
+        JSON.stringify(t)
+      );
+    }
     ok(
       'today list rendered',
       (await page.locator('#today-list .li').count()) > 0,
@@ -2354,8 +2293,8 @@ async function tap(page, locator, name) {
         .split('\n')
         .map(l => l.split(' | '));
     const budgetMin = async () =>
-      // B-292 (C-5): the head's "<left> min left · <free> free"; an added, unticked task adds to what's left
-      Number(((await page.textContent('#today-list .card-head')) || '').replace(/^\D*?(\d+) min left.*$/s, '$1'));
+      // B-346 (D-315): the budget card's "<on the list> of <budget> min"; an added, unticked task adds to it
+      Number(((await page.textContent('#today-budget .tb-big')) || '').replace(/^\D*?(\d+) of \d+ min.*$/s, '$1'));
     const min0 = await budgetMin();
     await page.evaluate(() => {
       window.__toolResults = [];
@@ -2483,9 +2422,9 @@ async function tap(page, locator, name) {
       await fr.locator('.nm').click();
       await page.waitForSelector('#today-task:not([hidden])', { timeout: 1500 }).catch(() => {});
       ok(
-        'an added item opens its panel: who added it, and Remove there, never on the row',
-        /Added by you/.test(await page.textContent('#today-task')) &&
-          (await page.locator('#today-task .tp-remove').count()) === 1 &&
+        'an added item opens its view: who added it; no Remove on it or on the row (B-364)',
+        /Added by you/.test((await page.textContent('#today-taskmain')) + (await page.textContent('#today-task'))) &&
+          (await page.locator('#today-task .tp-remove').count()) === 0 &&
           (await fr.locator('button', { hasText: 'Remove' }).count()) === 0
       );
       await page.click('#tab-ev');
@@ -2689,53 +2628,24 @@ async function tap(page, locator, name) {
     );
     await page.click('#tab-today');
     await page.waitForTimeout(150);
-    ok(
-      'Today’s week leaves out what came off and shows the new entry',
-      !/Harness study hall/.test(await page.textContent('#ahead')) &&
-        /BIO lab practical/.test(await page.textContent('#ahead'))
+    // B-359 (D-316): the dates live in Today's week; Record's Dates screen left the page (taking a date off and bringing
+    // it back from the week is the prep harness's B-295 check)
+    await page.click('#seg-today [data-v="week"]');
+    await page.waitForTimeout(200);
+    const wk = await page.evaluate(() =>
+      [...document.querySelectorAll('#today-week .wchip[data-id]')].map(c => [
+        c.querySelector('.wc-t').textContent,
+        c.classList.contains('off'),
+      ])
     );
-    await page.click('#tab-record');
+    ok(
+      'Today’s week marks what came off as Taken off and shows the new entry (B-363)',
+      wk.filter(([t]) => /Harness study hall/.test(t)).every(([, off]) => off) &&
+        wk.some(([t, off]) => /BIO lab practical/.test(t) && !off),
+      JSON.stringify(wk)
+    );
+    await page.click('#seg-today [data-v="list"]');
     await page.waitForTimeout(100);
-    await page.locator('#seg-record [data-v="dates"]').click();
-    await page.waitForTimeout(150);
-    const offRow = page.locator('#dates-off .row', { hasText: 'Harness study hall' });
-    ok(
-      'Record → Dates lists what came off with Bring back; graded Canvas work has no Remove',
-      (await offRow.locator('button', { hasText: 'Bring back' }).count()) === 1 &&
-        /taken off by E\.V\./.test(await offRow.textContent()) &&
-        (await page.locator('#dates .row', { hasText: 'Harness graded quiz' }).locator('button').count()) === 0 &&
-        (await page
-          .locator('#dates .row', { hasText: 'BIO lab practical' })
-          .locator('button', { hasText: 'Remove' })
-          .count()) === 1
-    );
-    await page.screenshot({ path: `${shots}/record-dates.png`, fullPage: true });
-    await offRow.locator('button', { hasText: 'Bring back' }).click();
-    await page.waitForTimeout(200);
-    await page
-      .locator('#dates .row', { hasText: 'BIO lab practical' })
-      .locator('button', { hasText: 'Remove' })
-      .click();
-    await page.waitForTimeout(200);
-    cd = await cal();
-    ok(
-      'Bring back and Remove write through E.V. core, by Matt',
-      cd['canvas-h-hall'].removed === null &&
-        (await page.locator('#dates .row', { hasText: 'Harness study hall' }).count()) === 1 &&
-        cd[labId].removed &&
-        cd[labId].removed.by === 'Matt' &&
-        (await page.locator('#dates-off .row', { hasText: 'BIO lab practical' }).count()) === 1,
-      JSON.stringify([cd['canvas-h-hall'].removed, cd[labId].removed])
-    );
-    await page.fill('#d-date', labDate);
-    await page.fill('#d-title', 'BIO lab practical');
-    await page.click('#date-add button[type="submit"]');
-    await page.waitForTimeout(200);
-    cd = await cal();
-    ok(
-      'adding it again from the form brings it back instead of a copy',
-      cd[labId].removed === null && Object.keys(cd).filter(k => k.startsWith(labId)).length === 1
-    );
     await page.click('#tab-ev');
     await page.waitForTimeout(100);
     // ---- Library (D-079): E.V. searches and reads his materials; attachments are read on the page and saved
@@ -2896,44 +2806,7 @@ async function tap(page, locator, name) {
           (await msgs(page)).slice(-1)[0].text
       );
     } else console.log('NOTE PDF attachment checks skipped: npm install --no-save pdfjs-dist@4.4.168');
-    // Remove from library
-    // B-78: the surface holds the latest reply's card (the photo's); the docx is removed from Record → Library
-    await page.click('#tab-record');
-    await page.click('#seg-record [data-v="library"]');
-    await page.waitForTimeout(250);
-    await page.locator('#library .row', { hasText: 'sample' }).first().locator('button', { hasText: 'Remove' }).click();
-    await page.click('#tab-ev');
-    await page.waitForTimeout(250);
-    const rm = await page.evaluate(() => {
-      const id = Object.keys(window.__db.materials).find(
-        id => /-sample$/.test(id) && window.__db.materials[id].fileType === 'docx'
-      );
-      return id ? [id, window.__db.materials[id], (window.__db.materialedits || {})[id]] : null;
-    });
-    ok(
-      'Remove from library marks it in materialedits and keeps the material',
-      rm && rm[2] && rm[2].removed && rm[2].removed.by === 'Matt' && rm[1].text.length > 0,
-      JSON.stringify(rm && rm[2])
-    );
-    // Record > Library lists the files
-    await page.click('#tab-record');
-    await page.click('#seg-record [data-v="library"]');
-    await page.waitForTimeout(250);
-    ok(
-      'Record lists the library by course with uploads removable',
-      (await page.locator('#library .row').count()) >= 4 &&
-        /Harness Skills Packet/.test(await page.textContent('#library')) &&
-        (await page
-          .locator('#library .row', { hasText: 'erikson-photo' })
-          .locator('button', { hasText: 'Remove' })
-          .count()) === 1,
-      String(await page.locator('#library .row').count())
-    );
-    await page.waitForTimeout(900);
-    await page.screenshot({ path: `${shots}/library.png`, fullPage: false });
-    await page.click('#seg-record [data-v="sessions"]');
-    await page.click('#tab-ev');
-    await page.waitForTimeout(100);
+    // B-359 (D-316): Record's Library screen left the page (the materials stay in the record), and its Remove with it
     await page.evaluate(() => {
       window.__sampleFn = null;
     });
@@ -2942,9 +2815,12 @@ async function tap(page, locator, name) {
     await studyView(page, 'review'); // B-297 (D-283): today's review opens from Today
     await page.waitForTimeout(100);
     const rv = await page.textContent('#rv-body');
+    const rvOpen = await page.evaluate(
+      () => !!document.querySelector('#rv-body label.opt') && !document.querySelector('#rv-body .verdict')
+    );
     ok(
       'review summary from migrated answers',
-      reviewExpect ? rv.includes(reviewExpect) : /Check answer/.test(rv),
+      reviewExpect ? rv.includes(reviewExpect) : rvOpen,
       (reviewExpect || '(unanswered)') + ' · ' + rv.slice(0, 80)
     );
     // Practice: open the harness set, answer single (right), sata (wrong), matrix (right)
@@ -2952,7 +2828,7 @@ async function tap(page, locator, name) {
     // (here a row of today's list naming it)
     await studyView(page, 'practice');
     await page.waitForTimeout(100);
-    if (await page.isVisible('#pr-fold')) await page.click('#pr-fold');
+    await closeSet(page);
     await page.waitForTimeout(100);
     ok(
       'Study has no list of sets: the open set folds back to Objectives (D-283)',
@@ -3072,7 +2948,7 @@ async function tap(page, locator, name) {
       await page.click('#pr-body button:has-text("Next question")');
       await page.waitForTimeout(100);
       await page.locator('#pr-body input.num-in').fill('126');
-      await page.click('#pr-body button:has-text("Check answer")');
+      await checkAnswer(page, '#pr-body');
       await page.waitForTimeout(150);
       const n2 = await page.evaluate(() => ({
         verdict: document.querySelector('#pr-body .verdict').textContent,
@@ -3098,7 +2974,7 @@ async function tap(page, locator, name) {
     ok('a set made for him offers no Share', !(await page.isVisible('#pr-share')));
     // B-192: options show in a seeded order, so the harness picks them by their words.
     {
-      // B-211 (D-217): each answer carries its number, and that key picks it.
+      // B-211 (D-217): each answer carries its letter, as the demo's StudyQuiz (B-348), and that key picks it.
       const kb = await page.evaluate(() => {
         const labs = [...document.querySelectorAll('#pr-body label.opt')];
         return {
@@ -3106,18 +2982,18 @@ async function tap(page, locator, name) {
           at: labs.findIndex(l => /Forward-facing seat with harness/.test(l.textContent)),
         };
       });
-      await page.keyboard.press(String(kb.at + 1));
+      await page.keyboard.press('abcd'[kb.at]);
       const picked = await page
         .locator('#pr-body label.opt', { hasText: 'Forward-facing seat with harness' })
         .locator('input')
         .isChecked();
       ok(
-        'the answers are numbered 1 to 4 and a number key picks one (D-217)',
-        kb.nums === '1234' && picked,
+        'the answers are lettered A to D and a letter key picks one (D-217, B-348)',
+        kb.nums === 'ABCD' && picked,
         JSON.stringify(kb)
       );
     }
-    await page.click('#pr-body button:has-text("Check answer")');
+    await checkAnswer(page, '#pr-body');
     await page.waitForTimeout(150);
     ok('single answered and scored', /^Right\b/.test(await page.textContent('#pr-body .verdict')));
     let ws = await model('e4-preschooler');
@@ -3141,7 +3017,7 @@ async function tap(page, locator, name) {
     await page.waitForTimeout(100);
     await page.locator('#pr-body label.opt', { hasText: 'Sit at eye level' }).click();
     await page.locator('#pr-body label.opt', { hasText: 'Speak quickly to save time' }).click();
-    await page.click('#pr-body button:has-text("Check answer")');
+    await checkAnswer(page, '#pr-body');
     await page.waitForTimeout(150);
     const t2 = await page.textContent('#pr-body');
     ok('select-all partial credit shown', /Partly right|Missed/.test(t2));
@@ -3154,7 +3030,7 @@ async function tap(page, locator, name) {
     await page.check('#pr-body table.mx input[aria-label="Thinner, drier skin: Expected"]');
     await page.check('#pr-body table.mx input[aria-label="New confusion since yesterday: Unexpected"]');
     await page.check('#pr-body table.mx input[aria-label="Slower reaction time: Expected"]');
-    await page.click('#pr-body button:has-text("Check answer")');
+    await checkAnswer(page, '#pr-body');
     await page.waitForTimeout(150);
     ok('matrix answered correctly', /^Right\b/.test(await page.textContent('#pr-body .verdict')));
     ws = await model('e4-aging-expected');
@@ -3186,12 +3062,14 @@ async function tap(page, locator, name) {
       await page.locator('#pr-body button', { hasText: 'Retake' }).click();
       await page.waitForTimeout(150);
       ok(
-        'Retake shows the first question unanswered, the one count at the bar back to none (B-116)',
-        /Check answer/.test(await page.textContent('#pr-body')) && (await page.textContent('#pr-qcount')) === '0 of 3',
+        'Retake shows the first question unanswered, the count at the bar back to its first (B-116)',
+        (await page.evaluate(
+          () => !!document.querySelector('#pr-body label.opt') && !document.querySelector('#pr-body .verdict')
+        )) && /^Question 1 of 3\b/.test(await page.textContent('#pr-qcount')),
         await page.textContent('#pr-qcount')
       );
       await page.locator('#pr-body label.opt').nth(1).click();
-      await page.click('#pr-body button:has-text("Check answer")');
+      await checkAnswer(page, '#pr-body');
       await page.waitForTimeout(150);
       ok(
         'the retake answer is appended beside the first one, never replacing it',
@@ -3784,28 +3662,8 @@ async function tap(page, locator, name) {
     }
     await page.setViewportSize(scheme === 'phone' ? { width: 390, height: 844 } : { width: 1280, height: 860 });
     await page.waitForTimeout(100);
-    await page.click('#seg-record [data-v="journal"]');
-    // B-197: nothing is said while he writes; on save an unsure value waits on his choice, and Leave it out saves.
-    await page.fill('#j-text', 'Resident in room 12 was confused.');
-    await page.waitForTimeout(50);
-    const jWarn0 = await page.textContent('#j-warn');
-    await page.locator('#j-add button[type="submit"]').click();
-    await page.waitForTimeout(300);
-    ok(
-      'the journal asks about an unsure value on save, in plain words, and saves nothing yet',
-      !jWarn0 &&
-        /could be a real patient’s/.test(await page.textContent('#j-warn')) &&
-        !(await page.evaluate(() => Object.values(window.__db.journal || {}).some(j => /room 12/.test(j.text || '')))),
-      await page.textContent('#j-warn')
-    );
-    await page.locator('#j-warn button', { hasText: 'Leave it out' }).click();
-    await page.waitForTimeout(300);
-    ok(
-      'Leave it out saves the entry with that detail left out',
-      await page.evaluate(() =>
-        Object.values(window.__db.journal || {}).some(j => j.text === '[left out] was confused.')
-      )
-    );
+    // B-359 (D-316): Record's Journal screen left the page (the journal stays in the record); the guard on his words
+    // is the composer's, checked above
     // System
     await page.$eval('#tab-system', b => b.click());
     await page.waitForTimeout(100);
@@ -5964,5 +5822,11 @@ async function tap(page, locator, name) {
 })().catch(e => {
   for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : '');
   console.log('CRASHED', e.message.split('\n').slice(0, 14).join('\n'));
+  console.log(
+    String(e.stack || '')
+      .split('\n')
+      .filter(l => /harness\//.test(l))
+      .join('\n')
+  );
   process.exit(1);
 });

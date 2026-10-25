@@ -1,4 +1,4 @@
-// B-222 (D-227): Check answer to verdict paint, with the record stub slow. One measurement for every place the question
+// B-222 (D-227): Check answer (or, in Study, the tap on a one-answer question, B-365) to verdict paint, with the record stub slow. One measurement for every place the question
 // runner draws a question: Study's Review and Practice, a surface's set and a session's check (open answers included).
 // root: the element the question sits in. With an open answer the verdict waits for grading, never for the record:
 // the result says whether the record's answers write had landed when the verdict painted (it must not have).
@@ -9,18 +9,24 @@ async function paintAnswer(page, root, { delay = 2000, text = 'Fluid shifts into
       if (!box) return { none: 'no ' + root };
       const opt = box.querySelector('label.opt input');
       const ta = box.querySelector('textarea.open-in');
+      const answersWrites = () => (window.__writes || []).filter(w => w[1] === 'answers').length;
+      const before = answersWrites();
+      window.__writeDelayMs = delay;
+      let t0 = performance.now();
       if (opt) opt.click();
       else if (ta && !ta.value.trim()) {
         ta.value = text;
         ta.dispatchEvent(new Event('input', { bubbles: true }));
       }
+      // B-365 (D-316): in Study a one-answer question grades on the tap itself, with no Check answer
       const check = [...box.querySelectorAll('button')].find(b => b.textContent.trim() === 'Check answer');
-      if (!check || check.disabled) return { none: 'no Check answer in ' + root };
-      const answersWrites = () => (window.__writes || []).filter(w => w[1] === 'answers').length;
-      const before = answersWrites();
-      window.__writeDelayMs = delay;
-      const t0 = performance.now();
-      check.click();
+      if (check && !check.disabled) {
+        t0 = performance.now();
+        check.click();
+      } else if (!opt) {
+        window.__writeDelayMs = 0;
+        return { none: 'no Check answer in ' + root };
+      }
       const verdict = () =>
         [...document.querySelectorAll(root + ' .verdict')].find(
           e => !e.closest('[hidden]') && e.getBoundingClientRect().height > 0
@@ -116,12 +122,13 @@ async function studyView(page, v) {
   await page.waitForTimeout(100);
   const rows = page.locator('#ov-card .ov');
   for (let i = 0; i < (await rows.count()) && !(await shown()); i++) {
-    const q = rows.nth(i).locator('.ov-q');
+    const q = rows.nth(i).locator('.oq');
+    await rows.nth(i).locator('.obj').hover();
     if (await q.isVisible().catch(() => false)) await q.click();
     else {
-      await rows.nth(i).locator('.ov-nm').click(); // the phone: the detail opens in place, Quiz me in it
+      await rows.nth(i).locator('.ov-nm').click(); // the detail opens (under the row, or in the panel), Quiz me on this
       await page.waitForTimeout(80);
-      const q2 = rows.nth(i).locator('.ov-more button');
+      const q2 = page.locator('#p-study .od-q', { hasText: 'Quiz me on this' });
       if (await q2.count()) await q2.first().click();
     }
     await page.waitForTimeout(150);

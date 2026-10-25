@@ -2374,6 +2374,15 @@ async function sideBySide(browser, left, right, out, vp) {
   console.log(failed ? `${failed} FAILED of ${results.length} checks` : `ALL PASSED: ${results.length} checks`);
   process.exit(failed ? 1 : 0);
 })().catch(e => {
-  console.error('CRASHED', e.message);
+  for (const [s, n, d] of results) console.log(s, n, d);
+  console.error(
+    'CRASHED',
+    e.message,
+    '\n',
+    String(e.stack || '')
+      .split('\n')
+      .filter(l => /harness\//.test(l))
+      .join('\n')
+  );
   process.exit(1);
 });
