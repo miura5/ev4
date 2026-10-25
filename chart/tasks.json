@@ -5262,11 +5262,11 @@
   "title": "E.V.'s changes today (repurposed): the right panel lists her list edits of today (adds and take-offs she made or he accepted) and her weak-spot events. Undo uses the existing bring-back or take-off for a list edit, and the decline for a weak spot. A logged study session is never listed.",
   "dod": "Screenshots at 1280 in light and dark after accepting a proposal. Undo on a take-off brings the item back, and Undo on an add takes it off, each as one list edit. No session row appears. Weak-spot rows appear once B-233 has landed; until then the panel lists list edits only.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-293"
   ],
-  "notes": "",
+  "notes": "claimed by lane today",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
