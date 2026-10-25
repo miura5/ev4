@@ -5594,10 +5594,9 @@
   "depends": [
    "B-312"
   ],
-  "notes": "Builder (lane app), Oct 25: built and pushed (fca98db, db07f7c): the staging Worker exports the whole D1 to R2 nightly (3:17 Central) and on demand, never over an earlier export; a restore check (counts and SHA-256 per collection) and 8 tests pass; npm test green; a local run of the Worker exported and restored the made-up record GREEN (74 documents, 17 collections). On staging (pwa-staging run 40193180450): deploy, token check and run API suite green, and Time Travel is on for the staging D1 (bookmark read back). Blocked on one thing in Matt's Cloudflare account: R2 is not turned on (Cloudflare: 'Please enable R2 through the Cloudflare Dashboard', code 10042). Where: Cloudflare dashboard > R2 > enable (free plan; Cloudflare may ask for a payment method). After that, any run of the pwa-staging workflow with backup on creates the bucket, binds the nightly export and proves the restore; until then the staging deploy carries on without it. Not in this lane: evening-mac's Mac backup and Sunday mirror read from D1 go with B-317 (Mac, Matt present). Open from the touched check: RED at the shell harness and the app smoke's tab step, both on the System tab the sidebar lane moved (pre-existing, not touched here). No review run yet: it runs once the R2 proof can.",
+  "notes": "R2 turned on by Matt. pwa-staging run 40219122263 (backup on) GREEN: the ev-staging-exports bucket created and the nightly export bound, Time Travel on, an export made and the newest restored into a scratch D1 with counts and SHA-256 per collection matching. Done once the release's data and tools code review (which covers pwa/) finds no gap in it.",
   "commit": null,
-  "source": "plan 1eW5FgG9VNzhCySbL1uWuo",
-  "waitingOn": "Matt"
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
  {
   "id": "B-317",
