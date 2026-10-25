@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-311",
+  "date": "Oct 25",
+  "title": "E.V.'s build work is split into roles, each with one job and its own fresh context: a build manager (one chat per milestone, with Matt), a lane planner per hand-off, builders and trimmers in lanes, and a lane watch. Each role's prompt lives in docs/workflow/, the lanes in docs/lanes.md, and no guarded change or tenet is filed while a lane has a task in progress.",
+  "why": "Matt, Oct 25: the first lane night's slips came from one overloaded managing chat; one job per role keeps each context small, and the repository keeps the workflow so it isn't lost.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan QL68BeUSw8HB3QFhDTZ4XJ P-1"
+ },
+ {
   "id": "D-310",
   "date": "Oct 24",
   "title": "Staging uses its own Claude API key with a small spend limit, held as the GitHub Actions secret ANTHROPIC_API_KEY_STAGING; the staging deploy workflow sets it on the staging Worker. The live key stays only a Cloudflare secret on the live Worker, as D-299 says. Amends D-299 for staging only.",
