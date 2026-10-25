@@ -4300,5 +4300,23 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "073288a",
+  "time": "2026-10-25T12:36:40.253Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "662a8b3",
+  "tasks": [
+   "B-316",
+   "B-347",
+   "B-350"
+  ],
+  "summary": "Backups; Fidelity fix: Study's Weak spots tab is still the old screen: a large…; Fidelity fix: Record's Dates, Journal, Canvas and Library tabs were…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
