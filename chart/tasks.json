@@ -6117,11 +6117,13 @@
  {
   "id": "B-349",
   "kind": "request",
-  "title": "Request (reported Oct 25): Fidelity fix: Today's week panel shows an item without the demo's badge, title and property card, and lacks Quiz me on it and Open the task.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
-  "depends": [],
+  "title": "Fidelity fix: Today: the week view's picked item in the panel as the TodayWeek board: its badge, an 18 px title, When / Course / Readiness in one card, Quiz me on it and Open the task (Take off stays for a planned item)",
+  "dod": "The week view and its panel match the TodayWeek board apart from the build corrections. Proof (D-312, fidelity sprint): node tools/build.mjs, tools/fidelity demo and built screenshots of each state read side by side at 1280, 1706, 2560 and 390, on the synthetic record and with a long real-shaped list, npm run smoke, ship staging GREEN.",
+  "milestone": "v4.8 redesign",
+  "status": "open",
+  "depends": [
+   "B-346"
+  ],
   "notes": "",
   "commit": null,
   "source": "Matt's staging look and fidelity review, Oct 25 (D-312)",
@@ -6129,6 +6131,10 @@
   "reportedAt": "2026-10-25T12:27:06.336Z",
   "board": {
    "row": "v4 B-349: Fidelity fix: Today's week panel shows an item without the demo's…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-25T12:27:09.021Z"
   }
  }
 ]
