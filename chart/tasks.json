@@ -6762,5 +6762,22 @@
    "outcome": "task",
    "at": "2026-10-25T15:48:16.056Z"
   }
+ },
+ {
+  "id": "B-379",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Review 3: Record's phone rows put everything on one line.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UI reviewer click-through 3 at d6bee63, Oct 25 (D-316)",
+  "words": "Review 3: Record's phone rows put everything on one line.",
+  "reportedAt": "2026-10-25T15:48:16.456Z",
+  "board": {
+   "row": "v4 B-379: Review 3: Record's phone rows put everything on one"
+  }
  }
 ]
