@@ -7159,10 +7159,10 @@
  {
   "id": "B-398",
   "kind": "bug",
-  "title": "Bug (reported Oct 25): A Mac backup's per-collection hashes can differ from the R2 export's when a page save stored JSON text in a non-canonical form, because the backup re-serialises documents while the export hashes the stored text.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "title": "The Worker stores every document in one canonical JSON form (page saves included), so a Mac backup and the R2 export hash the same",
+  "dod": "The Worker canonicalises on every write; a test stores non-canonical text through the page path and finds the Mac backup's manifest equal to exportToR2's; npm test and the run API suite green; a fresh review finds no gap.",
+  "milestone": "v5 app",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -7171,6 +7171,10 @@
   "reportedAt": "2026-10-25T22:28:43.690Z",
   "board": {
    "row": "v4 B-398: A Mac backup's per-collection hashes can differ from the R2 export's…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-25T22:28:46.843Z"
   }
  }
 ]
