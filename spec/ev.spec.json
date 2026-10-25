@@ -1276,7 +1276,18 @@
    },
    "staging": {
     "artifact": "Pb6jQ6CvEbtxi6Rcshu9uC",
-    "name": "E.V. Home Staging v4"
+    "name": "E.V. Home Staging v4",
+    "runs": {
+     "store": "worker",
+     "worker": {
+      "collection": "system",
+      "doc_id": "worker"
+     },
+     "lanes": [
+      "cloud"
+     ],
+     "_why": "B-315 (D-307, D-320): staging cloud runs read and write the staging Worker run API (D1), its url and token from system/worker. The Mac lane follows with B-317; live stays on ArtifactData until B-320."
+    }
    }
   },
   "docs": {

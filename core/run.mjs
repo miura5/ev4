@@ -19,6 +19,7 @@ import { describeErrors, validateAgainst } from './validate.mjs';
 import { writersOf, classOf, appendEntries, appendDepth, keyWriter } from './derive.mjs';
 import { toolResults, resultBody } from './transcript.mjs';
 import { CODE_STEPS, AGENT_MATERIAL, AGENT_FOLDS } from './steps.mjs';
+import { readWorker } from './runapi-client.mjs';
 
 const readJson = p => JSON.parse(fs.readFileSync(p, 'utf8'));
 const writeJson = (p, v) => {
@@ -52,6 +53,44 @@ const recordUrl = (spec, record) => {
   if (!r) throw new Error('no record ' + record);
   return `https://claude.ai/artifact/${r.artifact}`;
 };
+
+// ------------------------------------------------------------------------------------------------ the target (B-315)
+/** Where a run's saved system/worker lands: step 2 of the prompt gets it with out_dir /tmp/ev (D-320). */
+export const WORKER_FILE = '/tmp/ev/system/worker.json';
+/**
+ * Where a run of this pipeline on this record reads and writes: 'worker' (the Worker's run API) when the record's
+ * spec.registry entry says its runs in that lane go to the Worker, else 'artifact' (ArtifactData). Live stays on
+ * ArtifactData until the cutover (B-320); staging's cloud runs go to the staging Worker; the Mac lane waits on B-317.
+ */
+export function runTarget(spec, record, pipeline) {
+  const r = (spec.registry.records || {})[record] || {};
+  const p = (spec.pipelines || {})[pipeline] || {};
+  const w = r.runs;
+  return w && w.store === 'worker' && (w.lanes || []).includes(p.lane) ? 'worker' : 'artifact';
+}
+const API = 'node core/cli.mjs api';
+const apiCall = command => ({ tool: 'Bash', args: { command } });
+/** A run API batch: its writes saved to <dir>/api/<name>.json (file_path entries, read when sent), and the command. */
+function apiBatch(run, name, writes) {
+  const f = path.join(run.dir, 'api', name + '.json');
+  writeJson(f, writes);
+  return apiCall(`${API} batch --file ${f} --worker ${run.worker}`);
+}
+const apiList = (run, collection, out, versions, since) =>
+  apiCall(
+    `${API} list --collection ${collection} --out-dir ${out} --versions ${versions}${since ? ' --since ' + since : ''} --worker ${run.worker}`
+  );
+/** The versions a run API list saved, per collection: {collection: {id: version}}, or the collections not yet read. */
+function apiVersions(dir, collections) {
+  const out = {};
+  const missing = [];
+  for (const c of collections) {
+    const f = path.join(dir, c + '.json');
+    if (fs.existsSync(f)) out[c] = readJson(f);
+    else missing.push(c);
+  }
+  return { versions: out, missing };
+}
 
 function loadRun(dir) {
   const f = path.join(dir, 'run.json');
@@ -115,8 +154,11 @@ export function start({
   commit = null,
   input = {},
   outputs = '/mnt/user-data/outputs/ev',
+  worker = WORKER_FILE,
 }) {
   const def = pipelineDef(spec, pipeline);
+  const target = runTarget(spec, record, pipeline);
+
   const id = runIdFor(pipeline, at);
   const url = recordUrl(spec, record);
   // The run directory is scratch: a previous run's is replaced, anything else is refused.
@@ -125,6 +167,9 @@ export function start({
   fs.rmSync(dir, { recursive: true, force: true });
   fs.mkdirSync(dir, { recursive: true });
   for (const k of Object.keys(input)) if (!(def.input || {})[k]) throw new Error(`${pipeline} takes no --${k}`);
+  // B-315: a Worker run checks its saved Worker file before writing anything (readWorker names what is wrong, never
+  // the token).
+  if (target === 'worker') readWorker(worker);
   const data = {
     ...EV.envelope(pipeline, `${pipeline} run`, at),
     release,
@@ -157,11 +202,15 @@ export function start({
     allowed: def.agentCalls || [],
     dir,
     outputs,
+    target,
+    ...(target === 'worker' ? { worker } : {}),
     calls: [],
   };
   saveRun(dir, run);
   return printed(dir, run, 'start', [
-    { tool: 'ArtifactData', args: { action: 'set', url, collection: 'runs', doc_id: id, file_path: file } },
+    target === 'worker'
+      ? apiBatch(run, 'start', [{ op: 'set', collection: 'runs', doc_id: id, file_path: file }])
+      : { tool: 'ArtifactData', args: { action: 'set', url, collection: 'runs', doc_id: id, file_path: file } },
   ]);
 }
 
@@ -178,6 +227,14 @@ export function pull({ spec, dir, at }) {
       );
     const query = { limit: 1000 };
     if (r.windowDays) query.where = [['at', '>=', new Date(EV.toMs(at) - r.windowDays * 864e5).toISOString()]];
+    if (run.target === 'worker')
+      return apiList(
+        run,
+        r.collection,
+        out,
+        path.join(dir, 'api', 'versions', r.collection + '.json'),
+        query.where && query.where[0][2]
+      );
     return {
       tool: 'ArtifactData',
       args: { action: query.where ? 'query' : 'list', url: run.url, collection: r.collection, query, out_dir: out },
@@ -235,6 +292,20 @@ export function pulled({ spec, dir, transcript }) {
   const run = loadRun(dir);
   const def = pipelineDef(spec, run.pipeline);
   const pullDir = path.join(dir, 'pull');
+  if (run.target === 'worker') {
+    // B-315: the run API list saved each read's versions itself, every page followed; only the scheduler is read here.
+    const { versions, missing } = apiVersions(
+      path.join(dir, 'api', 'versions'),
+      (def.reads || []).map(r => r.collection)
+    );
+    if (missing.length) throw new Error(`no pull result for ${missing.join(', ')}: make the printed pull calls first`);
+    if (def.schedulerRead) {
+      const sc = schedulerPull(dir, transcript);
+      if (sc.more) return { done: false, calls: printed(dir, run, 'pull', [sc.more]) };
+    }
+    writeJson(path.join(dir, 'versions.json'), versions);
+    return { done: true, versions };
+  }
   const results = toolResults(transcript, 'ArtifactData').filter(
     r => r.input && r.input.out_dir === pullDir && ['list', 'query'].includes(r.input.action) && r.input.url === run.url
   );
@@ -622,7 +693,9 @@ export function apply({ dir }) {
   const plan = checkedPlan(dir);
   // Writes first, so a re-fire's record exists before the task starts; the Mac's files after the record's.
   return printed(dir, run, 'apply', [
-    ...plan.batches.map(b => batchCall(run.url, b)),
+    ...plan.batches.map((b, i) =>
+      run.target === 'worker' ? apiBatch(run, `apply-${i + 1}`, b) : batchCall(run.url, b)
+    ),
     ...(plan.device || []),
     ...(plan.fires || []).map(f => ({ tool: 'mcp__claude-code-remote__fire_trigger', args: f })),
   ]);
@@ -635,6 +708,16 @@ export function applyFailed({ dir, batch }) {
   if (!b) throw new Error(`no batch ${batch}`);
   const out = path.join(dir, `repull-${batch}`);
   const cols = [...new Set(b.map(w => w.collection))];
+  if (run.target === 'worker') {
+    const vdir = path.join(dir, 'api', `repull-${batch}`);
+    fs.rmSync(vdir, { recursive: true, force: true });
+    return printed(
+      dir,
+      run,
+      'repull',
+      cols.map(c => apiList(run, c, out, path.join(vdir, c + '.json')))
+    );
+  }
   return printed(
     dir,
     run,
@@ -657,16 +740,22 @@ export function replan({ spec, dir, batch, transcript }) {
   const b = plan.batches[batch - 1];
   if (!b) throw new Error(`no batch ${batch}`);
   const out = path.join(dir, `repull-${batch}`);
+  const cols = [...new Set(b.map(w => w.collection))];
   const fresh = {};
   const last = {};
-  for (const r of toolResults(transcript, 'ArtifactData').filter(
+  if (run.target === 'worker') {
+    const { versions, missing } = apiVersions(path.join(dir, 'api', `repull-${batch}`), cols);
+    if (missing.length) throw new Error(`no fresh pull for ${missing.join(', ')}: make the printed calls first`);
+    Object.assign(fresh, versions);
+    for (const c of cols) last[c] = { more: null };
+  }
+  for (const r of toolResults(run.target === 'worker' ? '' : transcript, 'ArtifactData').filter(
     r => r.input && r.input.out_dir === out && !r.isError
   )) {
     const p = parseListReply(r.texts.join('\n'));
     Object.assign((fresh[r.input.collection] = fresh[r.input.collection] || {}), p.versions);
     last[r.input.collection] = { input: r.input, more: p.more };
   }
-  const cols = [...new Set(b.map(w => w.collection))];
   const missing = cols.filter(c => !fresh[c]);
   if (missing.length) throw new Error(`no fresh pull for ${missing.join(', ')}: make the printed calls first`);
   const followUps = cols
@@ -694,7 +783,14 @@ export function replan({ spec, dir, batch, transcript }) {
   plan.hash = planHash(plan);
   plan.replans.push({ batch, dropped, from });
   writeJson(path.join(dir, 'plan.json'), plan);
-  return { done: true, calls: printed(dir, run, 'apply', [batchCall(run.url, next)]) };
+  return {
+    done: true,
+    calls: printed(dir, run, 'apply', [
+      run.target === 'worker'
+        ? apiBatch(run, `apply-${batch}-replan-${plan.replans.length}`, next)
+        : batchCall(run.url, next),
+    ]),
+  };
 }
 
 // ------------------------------------------------------------------------------------------------ 6 end
@@ -763,10 +859,12 @@ export function end({ dir, at, status, detail, transcript }) {
   const file = path.join(dir, 'out', 'runs', run.id + '.end.json');
   writeJson(file, data);
   return printed(dir, run, 'end', [
-    {
-      tool: 'ArtifactData',
-      args: { action: 'update', url: run.url, collection: 'runs', doc_id: run.id, file_path: file, if_version: 1 },
-    },
+    run.target === 'worker'
+      ? apiBatch(run, 'end', [{ op: 'update', collection: 'runs', doc_id: run.id, file_path: file, if_version: 1 }])
+      : {
+          tool: 'ArtifactData',
+          args: { action: 'update', url: run.url, collection: 'runs', doc_id: run.id, file_path: file, if_version: 1 },
+        },
   ]);
 }
 
@@ -774,8 +872,19 @@ export function end({ dir, at, status, detail, transcript }) {
 const IO_TOOL =
   /(^|__)(ArtifactData|Artifact|fire_trigger|update_trigger|create_trigger|delete_trigger|list_triggers|device_commit_files|device_bash|batch|update|create|delete)$/;
 const toolName = n => String(n).replace(/^mcp__[^_]+(?:_[^_]+)*?__/, '');
-/** A call reduced to what identifies it: the tool and its arguments, key order ignored. */
-const callKey = (tool, args) => toolName(tool) + ' ' + EV.stableStringify(args || {});
+/** B-315: a run API command, the record-touching Bash call of a Worker run. */
+const API_CMD = /(^|\s)node\s+\S*core\/cli\.mjs\s+api\s/;
+/** The run API command in a Bash line, wherever the checkout is (a cd first, or the cli by its full path). */
+const apiCommand = c => {
+  const m = /node\s+\S*core\/cli\.mjs\s+(api\s[^;&|\n]*)/.exec(String(c || ''));
+  return m ? 'node core/cli.mjs ' + m[1].trim() : String(c || '').trim();
+};
+const isApiBash = (name, args) => toolName(name) === 'Bash' && API_CMD.test(String((args || {}).command || ''));
+/** A call reduced to what identifies it: the tool and its arguments, key order ignored (a Bash call: its command). */
+const callKey = (tool, args) =>
+  toolName(tool) === 'Bash'
+    ? 'Bash ' + apiCommand((args || {}).command)
+    : toolName(tool) + ' ' + EV.stableStringify(args || {});
 const summary = args => [args.action, args.collection, args.doc_id].filter(Boolean).join(' ');
 /**
  * Holds the transcript's record-touching calls, from the run's start call on, against the calls its commands printed
@@ -784,7 +893,9 @@ const summary = args => [args.action, args.collection, args.doc_id].filter(Boole
 export function audit({ dir, transcript }) {
   const run = loadRun(dir);
   const expected = run.calls.map(c => ({ key: callKey(c.tool, c.args), c }));
-  const used = toolResults(transcript, '*').filter(r => IO_TOOL.test(String(r.name)) || IO_TOOL.test(toolName(r.name)));
+  const used = toolResults(transcript, '*').filter(
+    r => IO_TOOL.test(String(r.name)) || IO_TOOL.test(toolName(r.name)) || isApiBash(r.name, r.input)
+  );
   const startKey = expected.length ? expected[0].key : null;
   const from = used.findIndex(u => callKey(u.name, u.input) === startKey);
   const calls = from >= 0 ? used.slice(from) : used;

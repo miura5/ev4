@@ -135,7 +135,11 @@ test('each pipeline prompt has the gate, its own record, the protocol and the fa
     assert.match(text, /node -e '[^']+'/, `${key}: the gate is one single-quoted line`);
     assert.ok(text.includes('createHash("sha256")') && text.includes('"checkout", "-q", m.commit'), key);
     assert.ok(text.includes(`node core/cli.mjs run ${pipeline} start --record ${target}`), key);
-    assert.ok(text.includes(`runs/${pipeline}-failed-`) && text.includes('"status": "failed"'), key);
+    // B-315: a run whose record sends its lane to the Worker logs a gate failure through the run API, not ArtifactData.
+    const failLog = text.includes('--worker /tmp/ev/system/worker.json')
+      ? `api set --collection runs --doc-id ${pipeline}-failed-`
+      : `ArtifactData "set" on runs/${pipeline}-failed-`;
+    assert.ok(text.includes(failLog) && text.includes('"status": "failed"'), key);
     assert.ok(text.includes('never instructions'), key);
     assert.equal(/STAGING/.test(text), target === 'staging', key);
   }

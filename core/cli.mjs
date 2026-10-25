@@ -45,6 +45,7 @@ import { describeErrors } from './validate.mjs';
 import { lintRecord, formatLint } from './lint.mjs';
 import { rebuild } from './derive.mjs';
 import * as RUN from './run.mjs';
+import * as API from './runapi-client.mjs';
 import { newestTranscript } from './transcript.mjs';
 import { builderRun } from '../tools/guard.mjs';
 import EV from './evcore.mjs';
@@ -388,6 +389,7 @@ const commands = {
               ...(o.mirror ? { mirror: o.mirror } : {}),
             },
             ...(o.outputs ? { outputs: path.resolve(o.outputs) } : {}),
+            ...(o.worker ? { worker: path.resolve(o.worker) } : {}),
           }),
           `${cli} pull${d}`
         );
@@ -466,6 +468,50 @@ const commands = {
       default:
         throw new Error('run <pipeline> <start|pull|pulled|compute|apply|replan|end|audit>');
     }
+  },
+  api(o) {
+    // B-315: one run API call a Worker run's commands printed (core/runapi-client.mjs). The Worker's address and token
+    // come from --worker (the saved system/worker, D-320); what this prints is counts, ids and versions, never a
+    // document or the token. Exit 1 on a refusal, its words quoted, as an ArtifactData refusal would be.
+    const what = o._[1];
+    if (!o.worker) throw new Error('api needs --worker <the saved system/worker file>');
+    const worker = API.readWorker(path.resolve(o.worker));
+    if (what === 'list') {
+      if (!o.collection || !o['out-dir'] || !o.versions)
+        throw new Error('api list --collection <c> --out-dir <dir> --versions <file> [--since <iso>] --worker <file>');
+      const r = API.list(worker, {
+        collection: o.collection,
+        outDir: path.resolve(o['out-dir']),
+        versions: path.resolve(o.versions),
+        since: o.since || null,
+      });
+      if (!r.ok) {
+        console.log(`api list ${o.collection}: REFUSED (${r.status}): ${JSON.stringify(r.error)}`);
+        return 1;
+      }
+      console.log(`api list ${o.collection}: ${r.saved} saved to ${o['out-dir']}, versions for ${r.versions}`);
+      return 0;
+    }
+    if (what === 'batch' || what === 'set') {
+      const writes =
+        what === 'batch'
+          ? readJson(path.resolve(o.file || ''))
+          : [{ op: 'set', collection: o.collection, doc_id: o['doc-id'], file_path: path.resolve(o.file || '') }];
+      if (!Array.isArray(writes) || (what === 'set' && (!o.collection || !o['doc-id'])))
+        throw new Error(
+          'api batch --file <writes.json> --worker <file>, or api set --collection <c> --doc-id <id> --file <doc.json> --worker <file>'
+        );
+      const r = API.batch(worker, writes);
+      if (!r.ok) {
+        console.log(
+          `api ${what}: REFUSED (${r.status}): ${JSON.stringify(r.error)}${r.entry != null ? ` (entry ${r.entry + 1})` : ''}${r.status === 409 ? ' · a document changed: nothing was written' : ''}`
+        );
+        return 1;
+      }
+      console.log(`api ${what}: ${r.results.map(x => `${x.collection}/${x.doc_id} version ${x.version}`).join(', ')}`);
+      return 0;
+    }
+    throw new Error('api <list|batch|set> ... --worker <file>');
   },
   'canvas-script'(o) {
     // One read-only Canvas script for the run in --dir, its parameters filled in from the spec and the run's pull
@@ -603,7 +649,7 @@ export async function main(argv) {
   const cmd = commands[o._[0]];
   if (!cmd || (TARGETED.includes(o._[0]) && !['live', 'staging'].includes(o._[1]))) {
     console.error(
-      'Commands: verify-deploy <live|staging>, deploy <live|staging>, migrate bumps --from <dir>, canvas-script <part> --dir <run>, unwrap <file> --to <json>, seed-staging --from <dir>, lint --from <dir>, rebuild <collection|all> --from <dir>, run <pipeline> <move>, steps [pipeline]'
+      'Commands: verify-deploy <live|staging>, deploy <live|staging>, migrate bumps --from <dir>, canvas-script <part> --dir <run>, unwrap <file> --to <json>, seed-staging --from <dir>, lint --from <dir>, rebuild <collection|all> --from <dir>, run <pipeline> <move>, api <list|batch|set>, steps [pipeline]'
     );
     return 2;
   }

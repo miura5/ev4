@@ -12,6 +12,8 @@ import { readExport, loadValidator } from '../core/schemas.mjs';
 import { ROOT } from './helpers.mjs';
 
 const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
+// B-315: these tests drive the ArtifactData protocol on the staging record; test/run-worker.test.mjs proves the Worker target.
+delete spec.registry.records.staging.runs;
 EV.configure(spec);
 const validate = loadValidator();
 const AT = '2026-10-21T19:34:00Z'; // Wed afternoon; the clinical is Thursday

@@ -13,6 +13,8 @@ import { rebuildOne } from '../core/derive.mjs';
 import { ROOT } from './helpers.mjs';
 
 const base = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
+// B-315: these tests drive the ArtifactData protocol on the staging record; test/run-worker.test.mjs proves the Worker target.
+delete base.registry.records.staging.runs;
 EV.configure(base);
 const validate = loadValidator();
 const withTriggers = target => {
