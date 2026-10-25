@@ -5674,11 +5674,11 @@
   "title": "Images to Claude through the shim (the library's page reading).",
   "dod": "The library reads a photographed page through the Worker, proven by the PWA smoke with a stub.",
   "milestone": "app (data, pipelines, ops)",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-314"
   ],
-  "notes": "",
+  "notes": "claimed by lane app",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
