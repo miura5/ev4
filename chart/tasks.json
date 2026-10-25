@@ -5370,7 +5370,7 @@
   "depends": [
    "B-288"
   ],
-  "notes": "claimed by lane views",
+  "notes": "built and committed locally: run harness green with the new Progress checks; touched check running",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
