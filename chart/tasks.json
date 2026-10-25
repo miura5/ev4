@@ -6666,7 +6666,7 @@
   "milestone": "v4.8 redesign",
   "status": "in progress",
   "depends": [],
-  "notes": "claimed by lane today",
+  "notes": "built: Start rule, no check-off toast, graded Snooze, changes always shown, week words whole; smoke green",
   "commit": null,
   "source": "UI reviewer click-through 3 at d6bee63, Oct 25 (D-316)",
   "words": "Review 3: Today's week breaks words mid-word, Start is missing on most rows, a Checked off toast appears, graded tasks can't be snoozed, and E.V.'s changes section disappears when empty.",
