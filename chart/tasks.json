@@ -6435,7 +6435,7 @@
   "milestone": "v4.8 redesign",
   "status": "in progress",
   "depends": [],
-  "notes": "claimed by lane today",
+  "notes": "built and pushed at 130bb87; shipping staging",
   "commit": null,
   "source": "UI reviewer click-through at d35692d, Oct 25 (D-316)",
   "words": "The UI review found Today differs from the demo: Add, the due column, extra blocks, chips, check-off and the week view.",
