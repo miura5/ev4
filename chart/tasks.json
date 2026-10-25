@@ -6971,5 +6971,22 @@
    "outcome": "task",
    "at": "2026-10-25T18:06:58.483Z"
   }
+ },
+ {
+  "id": "B-389",
+  "kind": "bug",
+  "title": "Bug (reported Oct 25): The staging Worker's page saves are last-write-wins with no version check, and its token comparison is not constant-time.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "release code review (data, tools), 368b104..fc9133e, Oct 25",
+  "words": "The staging Worker's page saves are last-write-wins with no version check, and its token comparison is not constant-time.",
+  "reportedAt": "2026-10-25T18:06:58.830Z",
+  "board": {
+   "row": "v4 B-389: The staging Worker's page saves are last-write-wins with no version…"
+  }
  }
 ]
