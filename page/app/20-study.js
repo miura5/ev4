@@ -169,7 +169,7 @@
       if (ui.study === 'review' || ui.study === 'practice')
         return quizAtEnd[ui.study === 'review' ? 'rv' : 'pr'] // B-370: the results card speaks for itself, as the demo's
           ? null
-          : { text: 'Misses are proposed as weak spots. You review them once, at the end.' };
+          : { text: 'Each miss is saved as a weak spot as you go.' }; // B-385: as the answer's own write does
       if (ui.study === 'weak') return { text: 'Each closes after two right answers on different days.' };
       const cur = studyExams().find(x => x.course === ui.studyCourse);
       if (!cur) return null;
@@ -388,7 +388,7 @@
         el(
           'span',
           'mini od-note',
-          'Quiz me opens five questions from this course. Objectives show here once they’re in the record.'
+          'Quiz me opens ' + miniWords(studyExams().find(x => x.course === ui.studyCourse)) + ' from this course. Objectives show here once they’re in the record.'
         )
       );
       return d;
@@ -427,8 +427,10 @@
           open.length > 5
             ? 'And ' +
                 plural(open.length - 5, 'more') +
-                ' in Weak spots. Quiz me opens five questions from this course.'
-            : 'Quiz me opens five questions from this course.'
+                ' in Weak spots. Quiz me opens ' +
+                miniWords(studyExams().find(x => x.course === course)) +
+                ' from this course.'
+            : 'Quiz me opens ' + miniWords(studyExams().find(x => x.course === course)) + ' from this course.'
         )
       );
       return d;
@@ -603,6 +605,16 @@
       if (rs && oneAnswer(rs).length) return { set: rs, review: true };
       return sets[0] ? { set: sets[0], review: false } : null;
     }
+    /** B-385: how many questions a course's mini quiz holds: up to five one-answer questions from its set, else the
+     *  five E.V. writes when there is none. */
+    function miniCount(cur) {
+      const c = cur && courseSet(cur);
+      return c ? Math.min(5, oneAnswer(c.set).length) : 5;
+    }
+    function miniWords(cur) {
+      const n = miniCount(cur);
+      return n === 1 ? 'one question' : numWord(n).toLowerCase() + ' questions';
+    }
     function courseQuiz(b) {
       // B-370 (D-316): Quiz me, Take the quiz and New quiz start the demo's mini quiz for the course
       const cur = studyExams().find(x => x.course === ui.studyCourse);
@@ -633,10 +645,10 @@
       const teaser = q ? String(q.stem || q.q || q.text || '').trim() : '';
       card.replaceChildren(
         // B-371 (D-316): the demo's words
-        el('span', 'lab', 'Mini quiz · five questions from this course'),
+        el('span', 'lab', 'Mini quiz · ' + miniWords(cur) + ' from this course'), // B-385: the number it holds
         // B-375: with nothing waiting, Take the quiz writes five for the course
         el('div', 'mq-q', teaser || 'Five new questions from this course, written when you start.'),
-        el('div', 'mini', 'Misses are proposed as weak spots at the end, for you to review.')
+        el('div', 'mini', 'Each miss is saved as a weak spot as you go.') // B-385: as the answer's own write does
       );
       const r = el('div', 'mq-row');
       r.append(btn('Take the quiz', ev => courseQuiz(ev.currentTarget), { cls: 'btn neutral' }));

@@ -1662,7 +1662,7 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--lin
 .set-q .sq-d.ok{background:var(--sem-green)}.set-q .sq-d.no{background:var(--sem-red)}.set-q .sq-d.now{background:var(--sem-violet)}
 #study-side .qz-side .sq-s{font-size:calc(11.5px * var(--ts));color:var(--quiet)}
 #study-side .qz-side .sq-s.ok{color:var(--quiet)}
-#study-side .qz-side .set-item.current .sq-t{color:var(--text);font-weight:500}
+#study-side .qz-side .set-item.current .sq-t{color:var(--text);font-weight:400}
 /* B-370 (D-316): as the demo's results card at every width; This quiz lists each question, right or missed */
 .qz-card .sum-h,.qz-card .sum-list,.qz-card .sum-h ~ .fold-line,.qz-card .sum-acts ~ .fold-line{display:none}
 @media (min-width:1200px){
