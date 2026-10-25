@@ -5930,11 +5930,11 @@
   "title": "Fidelity: E.V.'s view as in the demo. The daily check-in card shows under her until he answers it today; Start a study session is the panel's main button; five chips; Send in Ember.",
   "dod": "Matches the Conversation board at rest and in a session at 1280 and 390. Proof (D-312, fidelity sprint): node tools/build.mjs, then tools/fidelity's demo and built screenshots read side by side at 1280, 1706, 2560 and 390, plus npm run smoke; then ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-332"
   ],
-  "notes": "Its own lane after the frame (Matt, Oct 25: as fast as possible).",
+  "notes": "claimed by lane ev",
   "commit": null,
   "source": "fidelity review, Oct 25 (D-312)"
  },
