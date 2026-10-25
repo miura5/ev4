@@ -4497,5 +4497,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "f75638e",
+  "time": "2026-10-25T14:02:11.369Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "a5607b6",
+  "tasks": [
+   "B-361"
+  ],
+  "summary": "The UI review found frame-wide differences from the demo: status…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
