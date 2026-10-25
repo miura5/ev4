@@ -6954,10 +6954,10 @@
  {
   "id": "B-388",
   "kind": "bug",
-  "title": "Bug (reported Oct 25): Snoozing graded work due today removes it from Today and puts it nowhere; a score can be read from an exam number or '/100'; the same topic adds a new idea each session; the PWA's npm deploy script targets the non-staging Worker.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "title": "Release review fixes (data): graded work due today can't vanish by Snooze (core refuses moving a planned date- item; the page says it's due today instead of offering a snooze that loses it); scoreSaid ignores '/100' and exam ids like 'E4' and accepts a score only when one number is left; a session naming a topic that matches an open idea's text links to it instead of adding a new idea; pwa's deploy script deploys only with --env staging",
+  "dod": "Tests in test/core.test.mjs and test/sessions.test.mjs for each case (a planned graded item due today refused by snooze, tomorrow's soon- item still moves; scoreSaid(100,'I got 88/100 on exam 4') and scoreSaid(4,'E4 was 88') false, scoreSaid(88, same) true; two sessions on one open topic make one idea); npm test green; a fresh review of the diff finds no gap; ship staging GREEN.",
+  "milestone": "v4.8 redesign",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -6966,6 +6966,10 @@
   "reportedAt": "2026-10-25T18:06:58.018Z",
   "board": {
    "row": "v4 B-388: Snoozing graded work due today removes it from Today and puts it…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-25T18:06:58.483Z"
   }
  }
 ]
