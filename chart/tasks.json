@@ -6252,5 +6252,22 @@
    "outcome": "task",
    "at": "2026-10-25T12:48:27.745Z"
   }
+ },
+ {
+  "id": "B-355",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Fidelity fix: the task panel lacks the demo's tick beside the title and places Where it came from differently.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "fidelity review, Oct 25 (D-314)",
+  "words": "Fidelity fix: the task panel lacks the demo's tick beside the title and places Where it came from differently.",
+  "reportedAt": "2026-10-25T12:48:30.709Z",
+  "board": {
+   "row": "v4 B-355: Fidelity fix: the task panel lacks the demo's tick beside the title…"
+  }
  }
 ]
