@@ -46,7 +46,9 @@ export function request(worker, { method = 'GET', route, params = {}, body = nul
     .filter(([, v]) => v != null)
     .map(([k, v]) => encodeURIComponent(k) + '=' + encodeURIComponent(String(v)))
     .join('&');
-  const u = new URL(worker.url + (route.startsWith('/api/') ? route : '/api/run/' + route) + (query ? '?' + query : ''));
+  const u = new URL(
+    worker.url + (route.startsWith('/api/') ? route : '/api/run/' + route) + (query ? '?' + query : '')
+  );
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ev-runapi-'));
   try {
     const conf = [
