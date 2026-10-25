@@ -543,12 +543,15 @@ async function tickAll(page) {
   const budgetRecord = available => {
     const db = listRecord();
     const day = db.days[today];
-    day.plan = { ...(day.plan || {}), budget: { available, planned: 130, over: Math.max(0, 130 - available) } };
+    // planned is the list's own minutes, as planDay sums them (a deferred item carries none); the page takes off what
+    // he skipped
+    const planned = day.list.items.filter(i => !i.deferred).reduce((s, i) => s + (Number(i.minutes) || 0), 0);
+    day.plan = { ...(day.plan || {}), budget: { available, planned, over: Math.max(0, planned - available) } };
     return db;
   };
   for (const [name, available] of [
-    ['under', 200],
-    ['over', 60],
+    ['under', 240],
+    ['over', 120],
   ])
     for (const viewport of [
       { width: 390, height: 844 },
