@@ -123,3 +123,10 @@ jobs:
         run: |
           npx playwright install --with-deps chromium >/dev/null
           node tools/pwa-jobs.mjs "${{ steps.deploy.outputs.url }}" shots-jobs
+      - uses: actions/upload-artifact@v4
+        if: failure() && inputs.jobs
+        with:
+          name: pwa-jobs-shots-${{ github.run_id }}
+          path: shots-jobs/
+          retention-days: 7
+          if-no-files-found: ignore

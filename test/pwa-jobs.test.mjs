@@ -215,5 +215,11 @@ test('B-324: the staging count check leaves out what the app’s job runner wrot
   assert.ok(!judge('practice-set', job, done, null).every(l => l.ok), 'a set must be saved');
   assert.ok(!judge('general', job, { data: { status: 'failed', error: 'x' } }).every(l => l.ok));
   assert.equal(EXPECTED('share-set'), 'failed');
+  const refused = e => judge('share-set', job, { data: { status: 'failed', error: e } })[0].ok;
+  assert.ok(refused('This set can’t be shared from the app.'));
+  assert.ok(
+    !refused('Claude couldn’t be reached (the Worker answered 401). Try again.'),
+    'a failed call is no refusal'
+  );
   assert.ok(!judge('general', { data: { fired: { ok: false } } }, done).every(l => l.ok), 'handed over at once');
 });

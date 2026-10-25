@@ -36,8 +36,11 @@ export function judge(kind, job, res, made) {
   const r = res && res.data;
   const want = EXPECTED(kind);
   const lines = [];
+  // a refusal the job itself gave, not a call that failed or a reply the checks refused
+  const ownRefusal =
+    !!r && r.status === 'failed' && !/couldn’t be reached|didn’t pass E\.V\.’s checks/.test(r.error || '');
   lines.push({
-    ok: !!r && r.status === want,
+    ok: !!r && r.status === want && (want !== 'failed' || ownRefusal),
     what: `${kind}: jobresults ${r ? r.status : 'not written'}${r && r.status !== want ? ' (' + (r.error || '') + ')' : ''}, expected ${want}`,
   });
   if (r && r.status === 'done') {
@@ -63,7 +66,7 @@ export function judge(kind, job, res, made) {
 async function main() {
   const [base, shotsArg] = process.argv.slice(2);
   const token = process.env.EV_TOKEN;
-  if (!/^https:\/\//.test(base || '') || !token) {
+  if (!/^https?:\/\//.test(base || '') || !token) {
     console.error('usage: EV_TOKEN=<token> node tools/pwa-jobs.mjs https://<the staging Worker> [screenshots dir]');
     process.exit(2);
   }
@@ -91,9 +94,23 @@ async function main() {
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
     await page.goto(origin + '/');
-    await page.waitForFunction(() => /^Live$/.test((document.getElementById('status') || {}).textContent || ''), null, {
-      timeout: 30000,
-    });
+    const live = await page
+      .waitForFunction(() => /^Live$/.test((document.getElementById('status') || {}).textContent || ''), null, {
+        timeout: 60000,
+      })
+      .then(
+        () => true,
+        () => false
+      );
+    if (!live) {
+      await page.screenshot({ path: path.join(shots, 'pwa-jobs-boot.png') }).catch(() => {});
+      const said = await page
+        .evaluate(() => (document.getElementById('status') || {}).textContent || '')
+        .catch(() => '');
+      throw new Error(
+        `the app did not connect in 60 s: status "${said}"; page errors: ${errors.slice(0, 3).join(' | ') || 'none'}`
+      );
+    }
     const stamp = new Date().toISOString().replace(/\D/g, '').slice(0, 14);
     const ids = {};
     for (const [kind, brief] of Object.entries(PROOF_JOBS)) {
