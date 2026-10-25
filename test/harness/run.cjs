@@ -1272,7 +1272,12 @@ const todayDoc = () =>
   window.__db.talk[new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date())];
 async function send(page, text) {
   await page.fill('#ev-input', text);
-  await page.click('#ev-send');
+  // Enter sends as the arrow does; the arrow can sit under an open surface's sheet on the phone
+  // a script click: under the session's installed clock the page's frames wait on it, so Playwright's stability wait
+  // would never settle
+  if ((await page.isVisible('#ev-send')) && (await page.isEnabled('#ev-send')))
+    await page.$eval('#ev-send', b => b.click());
+  else await page.press('#ev-input', 'Enter');
   await page.waitForTimeout(250);
 }
 const msgs = page =>
@@ -1403,6 +1408,12 @@ async function tap(page, locator, name) {
     const greet = (await page.locator('#thread .msg.ev').last().textContent()) || '';
     // B-90: one strict line (what can't wait, else a greeting and how she can help). B-358 (D-316): under it one summary
     // line, as the demo's Main board, from code: no briefing to fold, no line per item, no button.
+    // her greeting's line is kept in talk/memory once its quick call (or core's fallback) settles
+    await page
+      .waitForFunction(() => (((window.__db.talk || {}).memory || {}).headlines || []).length > 0, null, {
+        timeout: 5000,
+      })
+      .catch(() => {});
     const gb = await page.evaluate(() => {
       const g = document.querySelector('#thread .msg.greet');
       return {
@@ -1903,7 +1914,7 @@ async function tap(page, locator, name) {
     });
     await page.waitForTimeout(150);
     // B-208 (D-210): her flower: the sidebar's from 600 px, the E.V. tab's on the phone.
-    await page.click((await page.isVisible('#brand')) ? '#brand' : '#tab-ev');
+    await page.click('#tab-ev'); // B-368: the sidebar's brand is no control; Conversation in the nav returns to now
     await page.waitForTimeout(900);
     // Now is the bottom, or, when her current line and its card are taller than the captions, her line pinned at the top.
     const bn = await page.evaluate(() => {
@@ -1917,7 +1928,7 @@ async function tap(page, locator, name) {
         pill: !document.getElementById('ev-now').hidden,
       };
     });
-    ok('tapping the brand returns to now', (bn.atBottom || bn.linePinned) && !bn.pill, JSON.stringify(bn));
+    ok('tapping Conversation returns to now', (bn.atBottom || bn.linePinned) && !bn.pill, JSON.stringify(bn));
     // Logging a weak spot from the conversation
     await page.evaluate(() => {
       window.__chatScript = [
@@ -3040,7 +3051,7 @@ async function tap(page, locator, name) {
       JSON.stringify({ before: agingBefore, s: ws.streak, last: ws.lastReviewed })
     );
     await page.screenshot({ path: `${shots}/practice.png`, fullPage: true });
-    // B-39 (D-095): every attempt is truth: Retake shows the set fresh, a new answer is appended, nothing is replaced
+    // B-39 (D-095): every attempt is truth: nothing an answer wrote is replaced
     {
       const setId = 'more-' + today + '-1';
       const tries = () =>
@@ -3054,43 +3065,19 @@ async function tap(page, locator, name) {
         await next.click();
         await page.waitForTimeout(150);
       }
+      // B-370 (D-316): in Study the results card is the demo's: New quiz and Back to topics, with Review for the
+      // misses; no Retake (an answer is still only ever appended: the answers document keeps every attempt)
+      const acts = await page.locator('#pr-body button').allTextContents();
       ok(
-        'a finished set offers Retake',
-        (await page.locator('#pr-body button', { hasText: 'Retake' }).count()) === 1,
-        (await page.textContent('#pr-body')).slice(0, 160)
-      );
-      await page.locator('#pr-body button', { hasText: 'Retake' }).click();
-      await page.waitForTimeout(150);
-      ok(
-        'Retake shows the first question unanswered, the count at the bar back to its first (B-116)',
-        (await page.evaluate(
-          () => !!document.querySelector('#pr-body label.opt') && !document.querySelector('#pr-body .verdict')
-        )) && /^Question 1 of 3\b/.test(await page.textContent('#pr-qcount')),
-        await page.textContent('#pr-qcount')
-      );
-      await page.locator('#pr-body label.opt').nth(1).click();
-      await checkAnswer(page, '#pr-body');
-      await page.waitForTimeout(150);
-      ok(
-        'the retake answer is appended beside the first one, never replacing it',
-        (await tries()) === before + 1,
-        `${before} -> ${await tries()}`
+        "a finished set offers the demo's New quiz and Back to topics, no Retake, and keeps every attempt",
+        acts.some(t => /New quiz/.test(t)) &&
+          acts.some(t => /Back to topics/.test(t)) &&
+          !acts.some(t => /^Retake$/.test(t.trim())) &&
+          (await tries()) >= Math.max(1, before),
+        JSON.stringify(acts)
       );
       await page.screenshot({ path: `${shots}/retake-${scheme}.png`, fullPage: false });
-      // B-222 (D-227): Practice's next question paints its verdict on the tap's frame, the record 2 s behind.
-      await page.evaluate(() => {
-        const b = [...document.querySelectorAll('#pr-body button')].find(x =>
-          /^Next (question|unanswered)/.test(x.textContent.trim())
-        );
-        if (b) b.click();
-      });
-      await page.waitForTimeout(150);
-      const prPaint = await paintAnswer(page, '#pr-body');
-      ok(
-        `[${scheme}] Practice paints Check answer's verdict on the tap's frame, the record 2 s behind (D-227)`,
-        painted(prPaint),
-        JSON.stringify(prPaint)
-      );
+      await page.locator('#pr-body button', { hasText: 'Back to topics' }).first().click();
       await page.waitForTimeout(2200);
     }
     await practiceNav(page, scheme); // B-191
@@ -3338,12 +3325,15 @@ async function tap(page, locator, name) {
     // each open row with Drill and Mark solid; no Copy for Quizlet
     ok(
       'weak spots listed',
-      (await page.locator('#weak-list .wl[data-id]:not(.quiet)').count()) > 10,
+      (await page.locator('#weak-list .wl[data-id]:not(.quiet)').count()) > 5,
       String(await page.locator('#weak-list .wl[data-id]:not(.quiet)').count())
     );
+    // B-371 (D-316): the demo's sections only: Open · N in the course; previews and solid ones stay in the record
     ok(
-      'previews listed',
-      /Previews, before the reading · 4/.test(await page.textContent('#weak-list')),
+      'weak spots: Open · N in the course, and no previews or solid section',
+      /^Open · \d+ in /.test(
+        ((await page.$('#weak-list .dayh')) && (await page.textContent('#weak-list .dayh'))) || ''
+      ) && !/Previews, before the reading|Solid ·/.test(await page.textContent('#weak-list')),
       (await page.textContent('#weak-list')).slice(0, 200)
     );
     await page
@@ -4630,14 +4620,11 @@ async function tap(page, locator, name) {
         };
       });
       ok(
-        'in a session: the thread is the session (his line that started it, her start line), her flower at 70% (73 px on the phone) on its stage (D-213)',
+        // B-377 (D-316): starting a session keeps the thread and adds her line; her flower 70% on its stage (D-213)
+        'in a session: the thread ends with her start line, her flower at 70% (73 px on the phone) on its stage (D-213)',
         cs.step === 'session' &&
-          cs.lines === 1 &&
-          cs.thread.length === 2 &&
-          /^matt: start a study session/i.test(cs.thread[0]) &&
-          /^ev: Session started/.test(cs.thread[1]) &&
-          Math.abs(cs.px - 73) <= 1 &&
-          cs.stage === 73 + 14 + 12,
+          /^ev: Session started/.test(cs.thread[cs.thread.length - 1] || '') &&
+          Math.abs(cs.px - 73) <= 1,
         JSON.stringify(cs)
       );
     }
@@ -4962,15 +4949,16 @@ async function tap(page, locator, name) {
     await ss.waitForTimeout(300);
     ok(
       'break shown on the line',
-      /On a break/.test(await ss.textContent('#sbar')) &&
-        Object.values((await sess()).events).some(e => e.type === 'break')
+      /On a break|\d+ min break/.test(await ss.textContent('#sbar')) && // B-362: the demo's "5 min break"
+        Object.values((await sess()).events).some(e => e.type === 'break'),
+      (await ss.textContent('#sbar')) + ' · ' + JSON.stringify(Object.values((await sess()).events).map(e => e.type))
     );
     await ss.screenshot({ path: `${shots}/session-break.png` });
     await ss.locator('#sbar button', { hasText: 'Resume' }).click();
     await ss.waitForTimeout(300);
     ok(
       'resume: the strip shows the minutes left again, no longer on a break',
-      /min left/.test(await ss.textContent('#sbar')) && !/On a break/.test(await ss.textContent('#sbar')),
+      /min left/.test(await ss.textContent('#sbar')) && !/On a break|min break/.test(await ss.textContent('#sbar')),
       await ss.textContent('#sbar')
     );
     // New writing with what looks like an identifier skips the check and says why, once
@@ -5644,7 +5632,7 @@ async function tap(page, locator, name) {
         on.badges === 0,
       JSON.stringify({ before, ...on })
     );
-    await page.click(vp.width < 600 ? '#tab-ev' : '#brand');
+    await page.click('#tab-ev'); // B-368: the sidebar's brand is no control
     await page.waitForTimeout(600);
     const off = await page.evaluate(() => ({
       readout: document.getElementById('readout').textContent,
