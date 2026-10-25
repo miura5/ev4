@@ -5366,11 +5366,11 @@
   "title": "Progress (folds B-281's Progress part; C-6): the period switch, study time, quiz accuracy and weak-spot counts as property rows in one card. The study-time chart, 44 px bars on the phone. The day panel lists only the sessions that make up the picked bar. By course and exam readiness. No topic-share line, no Copy summary.",
   "dod": "Screenshots at 390 and 1280 in light and dark. On a planted week, each day panel's sessions add up to its bar. No workout or note appears in the day panel. Bars measure 44 px or wider at 390.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-288"
   ],
-  "notes": "",
+  "notes": "claimed by lane views",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
