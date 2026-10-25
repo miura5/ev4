@@ -2,43 +2,73 @@
 // deploy, and by a cloud session with no token to show it reaches the Worker:
 //   node tools/pwa-staging.mjs check <worker url>      EV_TOKEN in the environment: the full check
 //   node tools/pwa-staging.mjs reach <worker url>      no token: only that /api/db answers 401 without one
-// The full check: /api/db answers 401 with no token and with a wrong one; with the token, the documents per
-// collection equal the made-up record the app is seeded with (pwa/seed.mjs, from test/data/synthetic.cjs). It prints
-// counts and statuses only: never the token, never a document. B-324: a document the app's job runner wrote (its
-// source is the app's: the staging proof's jobs and what they made) is the app's own, not the seed's, and is left out.
+// The full check: /api/db answers 401 with no token and with a wrong one; with the token, every document of the
+// made-up record the app is seeded with (pwa/seed.mjs, from test/data/synthetic.cjs) is there, and every document the
+// seed does not have came from a writer staging expects (B-389): the run API suite in its own collection, in whole
+// runs (B-312); the app's job runner, by its source (B-324); a save from the staging page, by its writer. Anything
+// else, or a seed document gone, is red. It prints counts, ids and statuses only: never the token, never a document.
 import { fileURLToPath } from 'node:url';
 import { APP_SOURCE } from '../pwa/jobs.mjs';
-import { seedCounts } from '../pwa/seed.mjs';
+import { seedRecord } from '../pwa/seed.mjs';
 import { SUITE, SUITE_DOCS_PER_RUN } from '../pwa/runapi.js';
 
-/** Documents per collection in a GET /api/db answer, leaving out those the app's job runner wrote (B-324). */
-export function countsOf(body) {
-  const out = {};
-  for (const d of (body && body.docs) || [])
-    if (!(d.data && d.data.source === APP_SOURCE)) out[d.c] = (out[d.c] || 0) + 1;
-  return out;
+/** When the record was seeded: the oldest write in it, since the seed went into an empty database in one go (D1's
+ * `at`, ms). The synthetic record is date-relative, so the seed is rebuilt as of that moment. Now when none is given. */
+export function seededAt(body) {
+  const at = ((body && body.docs) || []).map(d => d.at).filter(Number.isFinite);
+  return at.length ? new Date(Math.min(...at)) : new Date();
 }
 
-/** The counts expected: the seed's, plus the run API suite's own collection (B-312), which each staging run of the
- * suite adds exactly SUITE_DOCS_PER_RUN documents to and the Worker never deletes. Any other count is a difference. */
-export function expectedCounts(got, seed = seedCounts()) {
-  const n = got[SUITE] || 0;
-  return n && n % SUITE_DOCS_PER_RUN === 0 ? { ...seed, [SUITE]: n } : { ...seed };
+/** Who wrote a document not in the seed, when it is one of the writers staging expects (B-389): the run API suite in
+ * its own collection, the app's job runner (B-324), or a save from the staging page. Anything else is null. */
+export function knownWriter(d) {
+  const data = (d && d.data) || {};
+  if (d.c === SUITE) return data.writer === 'run-api-suite' ? 'suite' : null;
+  if (data.source === APP_SOURCE) return 'app';
+  if (data.writer === 'page') return 'page';
+  return null;
 }
 
-/** One line per collection whose count differs; empty when they match. */
-export function countDiffs(got, want) {
-  return [...new Set([...Object.keys(want), ...Object.keys(got)])]
-    .sort()
-    .filter(c => (got[c] || 0) !== (want[c] || 0))
-    .map(c => `${c}: ${got[c] || 0} in the Worker, ${want[c] || 0} in the seed`);
+/** The record held against the seed, document by document: every seed document is there (the Worker never deletes),
+ * and every document the seed does not have was written by a known writer, the suite's in whole runs. Returns
+ * { problems: [line], seedDocs, added: { suite, app, page: { collection: n } } }. */
+export function recordDiffs(body, seed = seedRecord()) {
+  const have = new Set(((body && body.docs) || []).map(d => d.c + '\u0000' + d.id));
+  const problems = [];
+  let seedDocs = 0;
+  for (const c of Object.keys(seed).sort()) {
+    const ids = Object.keys(seed[c]);
+    seedDocs += ids.length;
+    const gone = ids.filter(id => !have.has(c + '\u0000' + id));
+    if (gone.length)
+      problems.push(
+        `${c}: ${gone.length} of the seed's ${ids.length} documents missing (${gone.slice(0, 3).join(', ')})`
+      );
+  }
+  const added = { suite: 0, app: 0, page: {} };
+  const unknown = {};
+  for (const d of (body && body.docs) || []) {
+    if (seed[d.c] && Object.hasOwn(seed[d.c], d.id)) continue;
+    const w = knownWriter(d);
+    if (w === 'suite') added.suite++;
+    else if (w === 'app') added.app++;
+    else if (w === 'page') added.page[d.c] = (added.page[d.c] || 0) + 1;
+    else (unknown[d.c] = unknown[d.c] || []).push(d.id);
+  }
+  for (const c of Object.keys(unknown).sort())
+    problems.push(
+      `${c}: ${unknown[c].length} documents not in the seed and from no known writer (${unknown[c].slice(0, 3).join(', ')})`
+    );
+  if (added.suite % SUITE_DOCS_PER_RUN)
+    problems.push(`${SUITE}: ${added.suite} documents, not a whole number of runs of ${SUITE_DOCS_PER_RUN}`);
+  return { problems, seedDocs, added };
 }
 
 const status = async (url, token) =>
   (await fetch(url, token == null ? {} : { headers: { authorization: 'Bearer ' + token } })).status;
 
 /** The checks, as [{ ok, what }]. */
-export async function check(base, token, { seed = seedCounts() } = {}) {
+export async function check(base, token, { seed = null } = {}) {
   const url = base.replace(/\/+$/, '') + '/api/db';
   const lines = [];
   const add = (ok, what) => lines.push({ ok, what });
@@ -52,14 +82,18 @@ export async function check(base, token, { seed = seedCounts() } = {}) {
     add(false, `the token: /api/db answers ${r.status}, expected 200`);
     return lines;
   }
-  const got = countsOf(await r.json());
-  const diffs = countDiffs(got, expectedCounts(got, seed));
-  const total = Object.values(got).reduce((a, b) => a + b, 0);
+  const body = await r.json();
+  const { problems, seedDocs, added } = recordDiffs(body, seed || seedRecord(seededAt(body)));
+  const page =
+    Object.entries(added.page)
+      .map(([c, n]) => `${c} ${n}`)
+      .join(', ') || 'none';
   add(
-    diffs.length === 0,
-    diffs.length
-      ? `counts per collection differ: ${diffs.join('; ')}`
-      : `the token: ${total} documents in ${Object.keys(got).length} collections, each count equal to the seed's`
+    problems.length === 0,
+    problems.length
+      ? `the record differs from the seed: ${problems.join('; ')}`
+      : `the token: all ${seedDocs} seed documents there; added since: ${added.suite / SUITE_DOCS_PER_RUN} suite runs, ` +
+          `${added.app} by the app's jobs, page saves ${page}`
   );
   return lines;
 }

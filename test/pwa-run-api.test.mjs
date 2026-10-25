@@ -7,6 +7,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   SUITE,
+  SUITE_DOCS_PER_RUN,
   MAX_WRITES,
   checkWrites,
   planBatch,
@@ -16,7 +17,7 @@ import {
   validCollection,
   validDocId,
 } from '../pwa/runapi.js';
-import { countsOf, countDiffs, expectedCounts } from '../tools/pwa-staging.mjs';
+import { recordDiffs } from '../tools/pwa-staging.mjs';
 import { seedRecord } from '../pwa/seed.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -93,7 +94,8 @@ test('B-312: the Worker routes /api/run behind the token, the page save moves th
   const lock = worker.indexOf("'wrong token'");
   const run = worker.indexOf("startsWith('/api/run/')");
   assert.ok(lock > 0 && run > lock, 'the run routes come after the token check');
-  assert.match(worker, /v = docs\.v \+ 1/);
+  assert.match(worker, /UPDATE docs SET data = \?, at = \?, v = v \+ 1 WHERE c = \? AND id = \? AND v = \?/);
+  assert.match(worker, /VALUES \(\?, \?, \?, \?, 1\) ON CONFLICT \(c, id\) DO NOTHING/);
   const code = [worker, fs.readFileSync(path.join(ROOT, 'pwa/runapi.js'), 'utf8')].join('\n');
   assert.doesNotMatch(code.replace(/^\s*\/\/.*$/gm, ''), /DELETE FROM|DROP TABLE|INSERT OR REPLACE/i);
   assert.match(fs.readFileSync(path.join(ROOT, 'pwa/schema.sql'), 'utf8'), /v INTEGER NOT NULL DEFAULT 1/);
@@ -101,13 +103,13 @@ test('B-312: the Worker routes /api/run behind the token, the page save moves th
 
 test("B-312: the suite's collection is not in the seed; the staging counts take whole runs of it and nothing else", () => {
   assert.ok(!(SUITE in seedRecord()));
-  const seed = { a: 1 };
-  assert.deepEqual(countDiffs({ a: 1 }, expectedCounts({ a: 1 }, seed)), []);
-  assert.deepEqual(countDiffs({ a: 1, [SUITE]: 50 }, expectedCounts({ a: 1, [SUITE]: 50 }, seed)), []);
-  assert.deepEqual(countDiffs({ a: 1, [SUITE]: 26 }, expectedCounts({ a: 1, [SUITE]: 26 }, seed)), [
-    `${SUITE}: 26 in the Worker, 0 in the seed`,
-  ]);
-  assert.deepEqual(countDiffs({ a: 0 }, expectedCounts({ a: 0 }, seed)), ['a: 0 in the Worker, 1 in the seed']);
+  const seed = { a: { 1: {} } };
+  const run = n => Array.from({ length: n }, (_, i) => ({ c: SUITE, id: 'r-' + i, data: { writer: 'run-api-suite' } }));
+  const a1 = { c: 'a', id: '1', data: {} };
+  assert.deepEqual(recordDiffs({ docs: [a1] }, seed).problems, []);
+  assert.deepEqual(recordDiffs({ docs: [a1, ...run(2 * SUITE_DOCS_PER_RUN)] }, seed).problems, []);
+  assert.equal(recordDiffs({ docs: [a1, ...run(SUITE_DOCS_PER_RUN + 1)] }, seed).problems.length, 1);
+  assert.deepEqual(recordDiffs({ docs: [] }, seed).problems, ["a: 1 of the seed's 1 documents missing (1)"]);
   const wf = fs.readFileSync(path.join(ROOT, '.github/workflows/pwa-staging.yml'), 'utf8');
   assert.match(wf, /node --test pwa\/run-api\.test\.mjs/);
   assert.match(wf, /ALTER TABLE docs ADD COLUMN v INTEGER NOT NULL DEFAULT 1/);

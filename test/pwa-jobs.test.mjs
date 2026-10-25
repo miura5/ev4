@@ -204,15 +204,15 @@ test('B-324: the app serves the runner and every module it imports, at paths its
   assert.ok(js.schemas.jobresults && js.schemas.talk);
 });
 
-test('B-324: the staging count check leaves out what the app’s job runner wrote; the proof judges each kind', async () => {
-  const { countsOf } = await import('../tools/pwa-staging.mjs');
+test('B-324: the staging check counts what the app’s job runner wrote as the app’s; the proof judges each kind', async () => {
+  const { knownWriter } = await import('../tools/pwa-staging.mjs');
   const { judge, PROOF_JOBS, EXPECTED } = await import('../tools/pwa-jobs.mjs');
   const docs = [
     { c: 'talk', id: 'a', data: { source: 'E.V. Home' } },
     { c: 'talk', id: 'b', data: { source: J.APP_SOURCE } },
     { c: 'jobs', id: 'job-proof-x', data: { source: J.APP_SOURCE } },
   ];
-  assert.deepEqual(countsOf({ docs }), { talk: 1 });
+  assert.deepEqual(docs.map(knownWriter), [null, 'app', 'app']);
   assert.deepEqual(Object.keys(PROOF_JOBS), Object.keys(spec.jobs.kinds), 'the proof starts one job of each kind');
   const job = { data: { fired: { ok: true } } };
   const done = { data: { status: 'done', result: { text: 'x', setId: 's' } } };
@@ -322,11 +322,12 @@ test('B-324: the record’s next since is taken before the read, a few seconds b
   );
   const body = await r.json();
   assert.ok(body.now <= readAt - 4000, 'a save stamped just before the read is read again next time');
+  const ahead = Date.now() + 1e6;
   const later = await worker.fetch(
-    new Request('https://app.invalid/api/db?since=' + (Date.now() + 1e6), { headers: { authorization: 'Bearer t' } }),
+    new Request('https://app.invalid/api/db?since=' + ahead, { headers: { authorization: 'Bearer t' } }),
     env
   );
-  assert.ok((await later.json()).now >= Date.now() + 1e6 - 1, 'never earlier than the since it was given');
+  assert.equal((await later.json()).now, ahead, 'never earlier than the since it was given');
 });
 
 test('B-324: a tool answer’s placeholder failed ("none", "null") is no failure', () => {

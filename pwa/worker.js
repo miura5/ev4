@@ -3,12 +3,15 @@
 //   - /api/db reads and writes the record in D1 (env.DB). Every /api call needs the token (env.EV_TOKEN).
 // The record is one table: docs(c = collection, id, data = the document as JSON, at = when it last changed).
 //   - /api/claude asks Claude (Haiku) with the key the Worker holds as a secret (env.ANTHROPIC_API_KEY, D-299).
+//   - B-389: a page save (PUT /api/db/<c>/<id>) carries the version it read, as the run API's if_version: a save to a
+//     document that changed since is refused with 409 and the current version. The token is compared in constant time.
 //   - /api/run/* is the run API (B-312, runapi.js): list, get and an all-or-nothing batch pinned to versions (v, one
 //     more on every write, the page's saves here included). Nothing is ever deleted.
 //   - B-316: a nightly export of D1 to R2 (backup.js) on the cron in wrangler.toml, and POST /api/backup/export to make
 //     one now; GET /api/backup/newest names the newest export. Exports are never overwritten or deleted.
 import { handleRun } from './runapi.js';
 import { exportToR2, newestExport } from './backup.js';
+import { tokenOk, ifVersionOf } from './guard.js';
 
 const OVERLAP_MS = 5000;
 const json = (body, status = 200) =>
@@ -25,7 +28,8 @@ export default {
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
 
     // The one lock: the token you set with `wrangler secret put EV_TOKEN`.
-    if (!env.EV_TOKEN || request.headers.get('authorization') !== 'Bearer ' + env.EV_TOKEN)
+    // B-389: compared in constant time (tokenOk), never with !==.
+    if (!(await tokenOk(request.headers.get('authorization'), env.EV_TOKEN)))
       return json({ error: 'wrong token' }, 401);
 
     if (url.pathname.startsWith('/api/run/')) return handleRun(request, env, url);
@@ -46,26 +50,62 @@ export default {
     if (url.pathname === '/api/db' && request.method === 'GET') {
       const since = Number(url.searchParams.get('since') || 0);
       const before = Date.now();
-      const { results } = await env.DB.prepare('SELECT c, id, data, at FROM docs WHERE at > ?').bind(since).all();
+      const { results } = await env.DB.prepare('SELECT c, id, data, at, v FROM docs WHERE at > ?').bind(since).all();
       return json({
         now: Math.max(since, before - OVERLAP_MS),
-        docs: results.map(r => ({ c: r.c, id: r.id, data: JSON.parse(r.data), at: r.at })),
+        // B-389: each document's version, which the page's next save of it carries
+        docs: results.map(r => ({ c: r.c, id: r.id, data: JSON.parse(r.data), at: r.at, v: r.v })),
       });
     }
 
-    // PUT /api/db/<collection>/<id> with the whole document: saves it (the page merges updates before sending), one
-    // version more, so a run pinned to the version it read sees the page's save (B-312).
+    // PUT /api/db/<collection>/<id>?if_version=<n> with the whole document: saves it (the page merges updates before
+    // sending), one version more, so a run pinned to the version it read sees the page's save (B-312). B-389: the save
+    // carries the version the page read, as the run API's if_version: a document that exists is written only at that
+    // version, a create carries none, and anything else writes nothing and answers 409 with the current version. Each
+    // case is one statement, so the check and the write cannot be split by another save.
     const m = url.pathname.match(/^\/api\/db\/([^/]+)\/([^/]+)$/);
     if (m && request.method === 'PUT') {
+      const want = ifVersionOf(url);
+      if (want === undefined) return json({ error: 'if_version: a whole number from 1' }, 400);
       const data = await request.text();
-      JSON.parse(data); // refuses anything that is not JSON
+      try {
+        JSON.parse(data);
+      } catch {
+        return json({ error: 'the body is not JSON' }, 400); // refuses anything that is not JSON
+      }
+      const c = decodeURIComponent(m[1]);
+      const id = decodeURIComponent(m[2]);
       const at = Date.now();
-      await env.DB.prepare(
-        'INSERT INTO docs (c, id, data, at, v) VALUES (?, ?, ?, ?, 1) ON CONFLICT (c, id) DO UPDATE SET data = excluded.data, at = excluded.at, v = docs.v + 1'
-      )
-        .bind(decodeURIComponent(m[1]), decodeURIComponent(m[2]), data, at)
-        .run();
-      return json({ ok: true, at });
+      const row =
+        want == null
+          ? await env.DB.prepare(
+              'INSERT INTO docs (c, id, data, at, v) VALUES (?, ?, ?, ?, 1) ON CONFLICT (c, id) DO NOTHING RETURNING v'
+            )
+              .bind(c, id, data, at)
+              .first()
+          : await env.DB.prepare(
+              'UPDATE docs SET data = ?, at = ?, v = v + 1 WHERE c = ? AND id = ? AND v = ? RETURNING v'
+            )
+              .bind(data, at, c, id, want)
+              .first();
+      if (row) return json({ ok: true, at, version: row.v });
+      const now = await env.DB.prepare('SELECT v FROM docs WHERE c = ? AND id = ?').bind(c, id).first();
+      const have = now ? now.v : null;
+      return json(
+        {
+          error:
+            have == null
+              ? `${c}/${id} is pinned to version ${want}, but the document does not exist; nothing was written`
+              : want == null
+                ? `${c}/${id} exists at version ${have} and the save carries no version: read it first; nothing was written`
+                : `${c}/${id} was read at version ${want}, but it is now at version ${have}; nothing was written`,
+          collection: c,
+          doc_id: id,
+          if_version: want,
+          current_version: have,
+        },
+        409
+      );
     }
 
     // POST /api/claude with {messages, tools?, tool_choice?}: one Claude API request on Haiku. The key is added here

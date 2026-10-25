@@ -7,7 +7,9 @@ import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { check, countsOf, countDiffs } from '../tools/pwa-staging.mjs';
+import { check, recordDiffs, seededAt } from '../tools/pwa-staging.mjs';
+import { APP_SOURCE } from '../pwa/jobs.mjs';
+import { SUITE, SUITE_DOCS_PER_RUN } from '../pwa/runapi.js';
 import { seedCounts, seedRecord, seedSql, LEFT_OUT } from '../pwa/seed.mjs';
 import { scanFiles, listRepoFiles } from '../tools/personal-data.mjs';
 import { syntheticRecord } from './data/synthetic.cjs';
@@ -16,8 +18,11 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const TOKEN = 'test-token-not-a-secret';
 
 // A stand-in for the Worker's /api/db: 401 without the token, else the documents it holds.
-async function worker(record) {
-  const docs = Object.entries(record).flatMap(([c, d]) => Object.entries(d).map(([id, data]) => ({ c, id, data })));
+async function worker(record, at) {
+  const docs = Object.entries(record).flatMap(([c, d]) =>
+    Object.entries(d).map(([id, data]) => ({ c, id, data, ...(at ? { at: at + 1 } : {}) }))
+  );
+  if (at && docs[0]) docs[0].at = at; // one document still holds the seeding moment
   const server = http.createServer((req, res) => {
     const ok = req.headers.authorization === 'Bearer ' + TOKEN;
     res.writeHead(ok ? 200 : 401, { 'content-type': 'application/json' });
@@ -64,13 +69,33 @@ test('B-311: the check is green on a Worker holding the seed, and red on 200 wit
     good.close();
   }
 
+  // B-389: the synthetic record is date-relative; a Worker seeded days ago is held to the seed as of that day.
+  const then = Date.now() - 3 * 86400000;
+  const old = await worker(seedRecord(new Date(then)), then);
+  try {
+    assert.ok((await check(old.url, TOKEN)).every(l => l.ok));
+    assert.equal(seededAt({ docs: [{ at: then + 5 }, { at: then }] }).getTime(), then);
+  } finally {
+    old.close();
+  }
+  const stale = await worker(seedRecord(new Date(then)));
+  try {
+    assert.equal(
+      (await check(stale.url, TOKEN)).at(-1).ok,
+      false,
+      "held to today's seed, it differs: the ids are dated"
+    );
+  } finally {
+    stale.close();
+  }
+
   const short = seedRecord();
   delete short.weakspots[Object.keys(short.weakspots)[0]];
   const bad = await worker(short);
   try {
     const lines = await check(bad.url, TOKEN);
     assert.equal(lines.at(-1).ok, false);
-    assert.match(lines.at(-1).what, /weakspots: \d+ in the Worker, \d+ in the seed/);
+    assert.match(lines.at(-1).what, /weakspots: 1 of the seed's \d+ documents missing/);
   } finally {
     bad.close();
   }
@@ -86,21 +111,42 @@ test('B-311: the check is green on a Worker holding the seed, and red on 200 wit
   }
 });
 
-test('B-311: counts and their differences', () => {
+test('B-389: the record is held to the seed by document; what the seed lacks must come from a known writer', () => {
+  const seed = { a: { 1: {}, 2: {} }, b: { 1: {} } };
+  const docs = [
+    { c: 'a', id: '1', data: {} },
+    { c: 'a', id: '2', data: { writer: 'page' } },
+    { c: 'b', id: '1', data: {} },
+  ];
+  const suiteRun = Array.from({ length: SUITE_DOCS_PER_RUN }, (_, i) => ({
+    c: SUITE,
+    id: 'r1-' + i,
+    data: { writer: 'run-api-suite' },
+  }));
+  const extra = [
+    ...suiteRun,
+    { c: 'talk', id: 'j', data: { source: APP_SOURCE, writer: 'worker' } },
+    { c: 'dayedits', id: '2026-10-25', data: { writer: 'page', source: 'E.V. Home' } },
+  ];
+  const ok = recordDiffs({ docs: [...docs, ...extra] }, seed);
+  assert.deepEqual(ok.problems, []);
+  assert.equal(ok.seedDocs, 3);
+  assert.deepEqual(ok.added, { suite: SUITE_DOCS_PER_RUN, app: 1, page: { dayedits: 1 } });
+
+  // A seed document gone is red, even when another document makes the count up.
+  const swapped = recordDiffs({ docs: [docs[0], { c: 'a', id: '3', data: { writer: 'page' } }, docs[2]] }, seed);
+  assert.deepEqual(swapped.problems, ["a: 1 of the seed's 2 documents missing (2)"]);
+  // A document from no known writer is red, in a seed collection or a new one.
   assert.deepEqual(
-    countsOf({
-      docs: [
-        { c: 'a', id: '1' },
-        { c: 'a', id: '2' },
-        { c: 'b', id: '1' },
-      ],
-    }),
-    { a: 2, b: 1 }
+    recordDiffs({ docs: [...docs, { c: 'runs', id: 'x', data: { writer: 'morning' } }] }, seed).problems,
+    ['runs: 1 documents not in the seed and from no known writer (x)']
   );
-  assert.deepEqual(countDiffs({ a: 2, b: 1 }, { a: 2, b: 1 }), []);
-  assert.deepEqual(countDiffs({ a: 2, x: 1 }, { a: 3 }), [
-    'a: 2 in the Worker, 3 in the seed',
-    'x: 1 in the Worker, 0 in the seed',
+  // The suite's collection holds only the suite's documents, in whole runs.
+  assert.deepEqual(recordDiffs({ docs: [...docs, ...suiteRun.slice(1)] }, seed).problems, [
+    `${SUITE}: ${SUITE_DOCS_PER_RUN - 1} documents, not a whole number of runs of ${SUITE_DOCS_PER_RUN}`,
+  ]);
+  assert.deepEqual(recordDiffs({ docs: [...docs, { c: SUITE, id: 'p', data: { writer: 'page' } }] }, seed).problems, [
+    `${SUITE}: 1 documents not in the seed and from no known writer (p)`,
   ]);
 });
 

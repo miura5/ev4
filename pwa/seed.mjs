@@ -10,9 +10,10 @@ const { syntheticRecord } = require('../test/data/synthetic.cjs');
 /** Collections left out, as the smoke tier boots the record. */
 export const LEFT_OUT = ['system', 'legacy', 'debug', 'journal'];
 
-/** The record the app is seeded with: { collection: { id: doc } }. */
-export function seedRecord() {
-  const db = syntheticRecord();
+/** The record the app is seeded with: { collection: { id: doc } }. Its dates run from `now` (the synthetic record is
+ * date-relative), so the record seeded on a day is seedRecord(that day). */
+export function seedRecord(now = new Date()) {
+  const db = syntheticRecord(now);
   for (const c of LEFT_OUT) delete db[c];
   return db;
 }

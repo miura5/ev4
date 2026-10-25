@@ -1,7 +1,8 @@
 # B-311: the app's staging pair on Matt's Cloudflare account: the ev-staging D1 (found, or created once) holding the
 # made-up record only (test/data/synthetic.cjs through pwa/seed.mjs, seeded only while the database is empty, so
 # nothing is ever deleted there), and the ev-staging Worker serving the staging page with its own token. Then the
-# check: /api/db answers 401 without the token, and with it the counts per collection equal the seed's. B-312: the
+# check: /api/db answers 401 without the token, and with it every seed document is there and the rest came from known
+# writers (the suite, the app's jobs, the staging page; B-389). B-312: the
 # version column is added once to a D1 made before it, and the run API suite (pwa/run-api.test.mjs) runs against the
 # Worker; it writes only into its own collection, and nothing is deleted. B-324: with the input jobs set to true, one
 # real Haiku job of each kind is started from the app's page in Chromium, run through the shim and the Worker, and read
@@ -141,7 +142,7 @@ jobs:
           printf '%s' "$EV_STAGING_TOKEN" | npx wrangler secret put EV_TOKEN --env staging >/dev/null
           printf '%s' "$ANTHROPIC_API_KEY_STAGING" | npx wrangler secret put ANTHROPIC_API_KEY --env staging >/dev/null
           echo "EV_TOKEN and ANTHROPIC_API_KEY set on ev-staging"
-      - name: check (401 without the token; counts per collection equal the seed's with it)
+      - name: check (401 without the token; with it every seed document there, the rest from known writers)
         env:
           EV_TOKEN: ${{ secrets.EV_STAGING_TOKEN }}
         run: |

@@ -4,7 +4,7 @@
 //   EV_RUN_API_URL=<staging Worker> EV_TOKEN=... node --test pwa/run-api.test.mjs
 //                                                 the same suite against the staging Worker (the pwa-staging workflow)
 // It reads the seed's collections and writes only into its own collection, SUITE, under ids new to each run: the
-// Worker never deletes, so on staging those documents stay (the staging check leaves SUITE out of its counts). It
+// Worker never deletes, so on staging those documents stay (the staging check takes them as the suite's, in whole runs). It
 // prints statuses and counts, never the token.
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -155,17 +155,29 @@ test('list and get return what ArtifactData returns for the same documents: each
   assert.equal((await list(SUITE + '-empty-' + RUN)).body.documents.length, 0);
 });
 
-test('a batch of 25 writes lands whole: each document at version 1, then 25 pinned updates at version 2', async () => {
+// B-389: the page's save carries the version it read (PUT /api/db/<c>/<id>?if_version=<n>); a create carries none.
+const pagePut = (docId, doc, v) =>
+  fetch(`${base}/api/db/${SUITE}/${docId}` + (v != null ? '?if_version=' + v : ''), {
+    method: 'PUT',
+    headers: { authorization: 'Bearer ' + TOKEN, 'content-type': 'application/json' },
+    body: JSON.stringify(doc),
+  }).then(async r => ({ status: r.status, body: await r.json() }));
+
+test('25 documents at version 1 (24 by one batch, the last by a page create with no version), then 25 pinned updates at version 2', async () => {
   const writes = Array.from({ length: SUITE_DOCS_PER_RUN }, (_, i) => ({
     op: 'set',
     collection: SUITE,
     doc_id: id(i),
     data: { schema: 1, writer: 'run-api-suite', n: i, keep: { a: 1, b: 2 }, gone: 'x' },
   }));
-  const r = await batch(writes);
+  const r = await batch(writes.slice(0, -1));
   assert.equal(r.status, 200, JSON.stringify(r.body));
-  assert.equal(r.body.results.length, 25);
+  assert.equal(r.body.results.length, 24);
   assert.ok(r.body.results.every(x => x.version === 1));
+  const last = writes[writes.length - 1];
+  const created = await pagePut(last.doc_id, last.data);
+  assert.equal(created.status, 200, 'B-389: a create with no version still works: ' + JSON.stringify(created.body));
+  assert.equal(created.body.version, 1);
   const mine = (await listAll(SUITE, 1000)).filter(d => d.id.startsWith(RUN + '-'));
   assert.equal(mine.length, 25);
   assert.deepEqual(
@@ -245,22 +257,30 @@ test('a delete is refused: the batch writes nothing, and a DELETE request is ref
   assert.deepEqual((await get(SUITE, id(2))).body, before.body);
 });
 
-test("the page's own save moves the version, so a run pinned to the old one is refused", async () => {
+test("B-389: the page's save carries the version it read: fresh accepted, stale refused with the current version", async () => {
   const before = await get(SUITE, id(4));
-  const put = await fetch(`${base}/api/db/${SUITE}/${id(4)}`, {
-    method: 'PUT',
-    headers: { authorization: 'Bearer ' + TOKEN, 'content-type': 'application/json' },
-    body: JSON.stringify({ ...before.body.data, page: true }),
-  });
-  assert.equal(put.status, 200);
+  const put = await pagePut(id(4), { ...before.body.data, page: true }, before.body.version);
+  assert.equal(put.status, 200, JSON.stringify(put.body));
+  assert.equal(put.body.version, before.body.version + 1);
   const now = await get(SUITE, id(4));
   assert.equal(now.body.version, before.body.version + 1);
   assert.equal(now.body.data.page, true);
+  // a run pinned to the old version is refused (B-312)
   const r = await batch([
     { op: 'update', collection: SUITE, doc_id: id(4), if_version: before.body.version, data: { run: true } },
   ]);
   assert.equal(r.status, 409);
   assert.equal(r.body.current_version, before.body.version + 1);
+  // and so is a page save made from the old read, or one with no version: 409, the current version, nothing written
+  for (const v of [before.body.version, null]) {
+    const stale = await pagePut(id(4), { ...before.body.data, stale: true }, v);
+    assert.equal(stale.status, 409, `if_version ${v}`);
+    assert.equal(stale.body.current_version, before.body.version + 1);
+    assert.match(stale.body.error, /nothing was written/);
+  }
+  assert.deepEqual((await get(SUITE, id(4))).body, now.body, 'unchanged by the refused saves');
+  assert.equal((await pagePut(id(4), now.body.data, 0)).status, 400, 'a bad version');
+  assert.equal((await get(SUITE, id(4))).body.version, now.body.version);
 });
 
 test('the suite leaves exactly its 25 documents behind (the staging count check expects whole runs)', async () => {

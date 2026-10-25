@@ -1,7 +1,9 @@
 // The shim (ev-bridge): gives the page the same window.claude.use('db' | 'user' | 'sample' | 'mcp') it has on
 // claude.ai, backed by this Worker's /api/db instead. Adapted from test/harness/stub.js.
 //   db:     the whole record is loaded once, kept in memory, and checked for changes every 10 s and on focus.
-//           A write goes to the Worker first; only when it is saved does the page's copy change.
+//           A write goes to the Worker first; only when it is saved does the page's copy change. B-389: each save
+//           carries the version the shim last saw of that document (if_version, as the run API's); a document that
+//           changed since is refused (409), the shim reads the record again, and the page is told the save was refused.
 //   user:   whoever holds the token is the owner (one person).
 //   sample: Claude on Haiku through the Worker's /api/claude (D-299); the key stays on the Worker.
 //   mcp:    none (the scheduled runs and the Study Watch reader live on claude.ai and the Mac).
@@ -52,13 +54,21 @@
     });
 
   const db = {};
+  const vers = {}; // B-389: c -> id -> the version last seen, sent with the next save of that document
+  const verOf = (c, id) => (vers[c] && vers[c][id]) || null;
+  const setVer = (c, id, v) => {
+    if (Number.isInteger(v)) (vers[c] = vers[c] || {})[id] = v;
+  };
   let since = 0;
   const subs = [];
   const emit = c => subs.filter(s => s.c === c).forEach(s => s.fire());
   const take = docs => {
     const changed = new Set();
     for (const d of docs) {
+      // a read that left before a save landed never puts the older copy back over it
+      if (Number.isInteger(d.v) && d.v < (verOf(d.c, d.id) || 0)) continue;
       (db[d.c] = db[d.c] || {})[d.id] = d.data;
+      setVer(d.c, d.id, d.v);
       changed.add(d.c);
     }
     return changed;
@@ -96,20 +106,49 @@
     }
     return t;
   }
-  async function save(c, id, doc) {
+  // B-389: one document's saves go one at a time, each built and pinned when its turn comes, so the page's own quick
+  // saves of one document never refuse each other; only a change from elsewhere is a conflict.
+  const queues = new Map();
+  function save(c, id, make) {
+    const key = c + '\n' + id;
+    const turn = (queues.get(key) || Promise.resolve()).catch(() => {}).then(() => saveNow(c, id, make()));
+    queues.set(key, turn);
+    turn.catch(() => {}).then(() => queues.get(key) === turn && queues.delete(key));
+    return turn;
+  }
+  async function saveNow(c, id, doc) {
     const job = await jobHandOff(c, doc);
     if (job) doc = job;
-    const r = await api('db/' + encodeURIComponent(c) + '/' + encodeURIComponent(id), {
-      method: 'PUT',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(doc),
-    });
+    const seen = verOf(c, id);
+    const r = await api(
+      'db/' + encodeURIComponent(c) + '/' + encodeURIComponent(id) + (seen ? '?if_version=' + seen : ''),
+      {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(doc),
+      }
+    );
+    if (r.status === 409) {
+      // B-389: it changed since it was read (another device, or a job): nothing was written. Read the record again so
+      // the page shows the document as it is now, and refuse the write the way the page already handles one.
+      const b = await r.json().catch(() => ({}));
+      await pull()
+        .then(ch => ch instanceof Set && ch.forEach(emit))
+        .catch(() => {});
+      const e = new Error('it changed elsewhere since it was opened; the newest is shown now, try again');
+      e.code = 'conflict';
+      e.conflict = true;
+      e.currentVersion = b.current_version == null ? null : b.current_version;
+      throw e;
+    }
     if (!r.ok) {
       const e = new Error('not saved (' + r.status + ')');
       e.code = r.status === 401 ? 'permission_denied' : 'unavailable';
       throw e;
     }
+    const saved = await r.json().catch(() => ({}));
     (db[c] = db[c] || {})[id] = doc;
+    setVer(c, id, saved.version);
     emit(c);
     if (job) runAppJob(id);
   }
@@ -238,15 +277,22 @@
           return { id, exists: !!d, data: () => d && clone(d) };
         };
         return {
-          set: data => save(c, id, clone(data)),
-          async update(data) {
-            const cur = (db[c] || {})[id];
-            if (!cur) {
-              const e = new Error('not found');
-              e.code = 'invalid_argument';
-              throw e;
-            }
-            return save(c, id, merge(clone(cur), data));
+          set: data => {
+            const doc = clone(data);
+            return save(c, id, () => doc);
+          },
+          update(data) {
+            const patch = clone(data);
+            // merged into the document as it stands when this save's turn comes
+            return save(c, id, () => {
+              const cur = (db[c] || {})[id];
+              if (!cur) {
+                const e = new Error('not found');
+                e.code = 'invalid_argument';
+                throw e;
+              }
+              return merge(clone(cur), patch);
+            });
           },
           async get() {
             await ready;
@@ -262,7 +308,8 @@
       },
       async add(data) {
         const id = 'x' + Math.random().toString(36).slice(2, 10);
-        await save(c, id, clone(data));
+        const doc = clone(data);
+        await save(c, id, () => doc);
         return { id };
       },
     };
