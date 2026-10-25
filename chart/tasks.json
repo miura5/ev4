@@ -5556,7 +5556,7 @@
   "depends": [
    "B-313"
   ],
-  "notes": "claimed by lane app",
+  "notes": "built: noteless session in 64-ev-study-sessions; smoke:pwa session step counted, mcp null and no outside request checked; smoke:pwa 16/16, smoke 28/28",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
