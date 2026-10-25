@@ -6098,12 +6098,12 @@
   "title": "Fidelity fix: Study: the Plan tab, a quiz and its results as the StudyQuiz and StudyResults boards (toolbar strip, the question card with its bar and lettered answers, This quiz in the panel, the results card); the Plan tab's rows in the same row and card style; no toast from Today's Plan the rest on Study",
   "dod": "The quiz and results match their boards; the Plan tab uses the demo's toolbar strip, rows and panel card; opening Study shows no toast. Proof (D-312, fidelity sprint): node tools/build.mjs, tools/fidelity demo and built screenshots of each state read side by side at 1280, 1706, 2560 and 390, on the synthetic record and with a long real-shaped list, npm run smoke, ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-337"
   ],
-  "notes": "Matt, Oct 25 (D-313): Study loses its tabs; Plan is no longer a tab but shows in the exam card (B-351). Keep this task to the quiz and results screens and the stray toast; leave the Plan tab as it is, B-351 removes it.",
-  "commit": null,
+  "notes": "Staging GREEN at 1c0d1ed, which carries this commit. A quiz now looks like the demo's: a strip with All topics, what's open and Weak spots with its count; one centred card with 'Question 2 of 8 · Today's review', how many right so far, a thin violet bar, the question large, roomy answers lettered A to D that turn green or red with a tick or cross, the verdict under them, and Next question with an Enter hint (keys A to D, or 1 to 4, pick an answer; Enter goes on). From 1200 px the right panel is 'This quiz', a coloured dot per question. The results card shows the big score, Logged to Record, a box saying how many misses come back as weak spots with Review, then Give me 5 more, New quiz and Back to topics. Plan has the same strip, quiet day heads over full-width tick rows, and its summary in the right panel from 1200 px. A toast from Today no longer follows you into Study. Still differs from the demo: you still press Check answer before the verdict (the demo grades on the tap); a review set has no Quiz me in the strip (it would reopen the same review); weak spots are made by misses automatically, so the results box offers Review instead of Accept all; the question keeps its small 'Weak spot · objective' line; on the phone the results' miss lines stay under the buttons. 390: the Objectives / Plan / Weak spots switch sits above Plan's strip, as on Weak spots.",
+  "commit": "09a51db",
   "source": "Matt's staging look and fidelity review, Oct 25 (D-312)",
   "words": "Fidelity fix: Study's Plan tab, a running quiz and its results are still the old screens, and a Plan the rest message pops up on Study.",
   "reportedAt": "2026-10-25T12:27:01.206Z",
