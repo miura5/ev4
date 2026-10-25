@@ -89,14 +89,7 @@
         showTab(b.dataset.tab);
       })
     );
-    $('brand').addEventListener('click', () => {
-      // on E.V., the small core brings the large one back (and tucks it away again)
-      if (ui.tab !== 'ev') {
-        showTab('ev');
-        return;
-      }
-      backToNow();
-    });
+    // B-368 (D-316): the sidebar's brand is not a control, as the demo (the Conversation tab opens her view).
     const WIDE = window.matchMedia ? matchMedia('(min-width:1024px)') : { matches: false, addEventListener() {} }; // B-121 (D-158)
     function wireSeg(id, key, prefix) {
       // D-249: every view is a tab at every width (Study's plan no longer sits beside from 1024 px).

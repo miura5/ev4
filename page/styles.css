@@ -34,7 +34,7 @@ a{color:var(--accent-text)}
 .top{position:sticky;top:0;z-index:8;margin:0 calc(-1 * max(16px,env(safe-area-inset-right,0px))) 0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:calc(4px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 4px max(16px,env(safe-area-inset-left,0px));
   background:rgba(var(--ground),.95);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid rgba(var(--tint),.06)}
 .top-in{max-width:1120px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px}
-.brand{flex:1 1 0;display:flex;align-items:center;gap:10px;min-width:0;background:none;border:0;padding:0 6px 0 0;color:inherit;text-align:left;min-height:44px;border-radius:14px;cursor:pointer;font:inherit}
+.brand{flex:1 1 0;display:flex;align-items:center;gap:10px;min-width:0;background:none;border:0;padding:0 6px 0 0;color:inherit;text-align:left;min-height:44px;border-radius:14px;cursor:default;font:inherit}
 .brand:hover{background:none}
 .top-av{width:36px;height:36px;flex:0 0 36px;display:grid;place-items:center;transition:opacity .28s ease,transform .28s var(--ease),width .28s var(--ease),flex-basis .28s var(--ease),margin .28s var(--ease)}
 body.on-ev.opening .top-av,body.on-ev.in-session .top-av,body.on-ev.core-big .top-av{overflow:hidden;opacity:0;transform:scale(.5);width:0;flex-basis:0;margin-right:-10px}
@@ -410,6 +410,7 @@ body.captions .cap-cards-more:hover{color:var(--ink)}
 /* B-353 (D-314): the greeting's things to know as her own lines, as the demo's Main board: quiet 14 px lines, no fold
    and no dot; an action sits at a line's end as a small button. */
 .brief{align-self:stretch;width:100%;margin:8px 0 0;text-align:left;display:flex;flex-direction:column;gap:4px}
+.msg.greet .brief{margin-top:0} /* B-368: the card, then her grey summary line, the thread's gap apart */
 .brief-line{margin:0;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;font-size:calc(14px * var(--ts));line-height:1.45;color:var(--faint)}
 .brief-line .bl-t{min-width:0;flex:0 1 auto}
 .brief-line .bl-go{flex:none}
@@ -643,7 +644,6 @@ body.boot-stopped .mh .status{display:block}
 /* the sidebar's rows */
 .side{z-index:9}
 .side .brand{flex:0 0 auto;display:flex;align-items:center;gap:8px;min-height:40px;padding:0 8px 0 6px;margin:0 0 6px;border-radius:8px;max-width:none}
-.side .brand:hover{background:var(--surface)}
 .side .top-av{width:24px;height:24px;flex:0 0 24px}
 body.on-ev.opening .side .top-av,body.on-ev.in-session .side .top-av,body.on-ev.core-big .side .top-av,body.captions.on-ev .side .top-av{opacity:1;transform:none;width:24px;flex-basis:24px;margin-right:0;overflow:visible}
 .side .wordmark{font-size:calc(14px * var(--ts))}
@@ -918,7 +918,7 @@ body.captions #p-ev>#ev-side{grid-row:6}
   body.captions #p-ev>#ev-side{grid-row:5}
   body.captions #p-ev>.composer{grid-row:6}
 }
-.ckin{box-sizing:border-box;margin:0 0 14px;display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line)}
+.ckin{box-sizing:border-box;margin:0;display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line)}
 .ckin[hidden]{display:none}
 /* B-362 (D-316): her newest line's one action, as the demo's row of small neutral buttons under the thread */
 .msg-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}

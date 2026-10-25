@@ -862,9 +862,10 @@
         : left == null
           ? durFmt(st.minutes)
           : left + ' min left';
-      // B-362 (D-316): as the demo, where the session's words come from and how long it has run
+      // B-362, B-368 (D-316): as the demo, '<what> · N min': where the session's words come from and its minutes (a
+      // session has no planned length, so N is how long it has run)
       card.querySelector('.ss-sub').textContent =
-        (noteless(s) ? 'Study session' : 'Your Study Watch note') + ' · ' + st.minutes + ' min in';
+        (noteless(s) ? 'Study session' : 'Your Study Watch note') + ' · ' + Math.max(1, st.minutes) + ' min';
     }
     // B-273 (D-267, Matt's answer): her ring is the stretch to the next check. Her segments fill clockwise toward it and
     // start over after it; the checks he answered show on their cards (D-217). The ring is full while she wraps up.
