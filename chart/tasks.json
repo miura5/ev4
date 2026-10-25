@@ -7176,5 +7176,22 @@
    "outcome": "task",
    "at": "2026-10-25T22:28:46.843Z"
   }
+ },
+ {
+  "id": "B-399",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Remove every check, flag, hold and block for graded work and patient identifiers from E.V., as D-324 decides.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build manager, D-324",
+  "words": "Remove every check, flag, hold and block for graded work and patient identifiers from E.V., as D-324 decides.",
+  "reportedAt": "2026-10-25T23:06:27.919Z",
+  "board": {
+   "row": "v4 B-399: Remove every check, flag, hold and block for graded work and patient…"
+  }
  }
 ]
