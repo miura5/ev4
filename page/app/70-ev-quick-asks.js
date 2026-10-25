@@ -60,9 +60,7 @@
       "what's due this week": () => {
         // B-383 (D-316): as the demo's answer, the graded items by name and day, then the next thing due that isn't
         const end = E.addDays(today, 7);
-        const w = S.dates
-          .filter(d => d.date >= today && d.date <= end)
-          .sort((a, b) => a.date.localeCompare(b.date));
+        const w = S.dates.filter(d => d.date >= today && d.date <= end).sort((a, b) => a.date.localeCompare(b.date));
         const exams = (S.exams || [])
           .filter(e => e.date && e.date >= today && e.date <= end)
           .filter(e => !w.some(d => d.kind === 'exam' && d.date === e.date))

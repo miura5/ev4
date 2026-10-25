@@ -388,7 +388,9 @@
         el(
           'span',
           'mini od-note',
-          'Quiz me opens ' + miniWords(studyExams().find(x => x.course === ui.studyCourse)) + ' from this course. Objectives show here once they’re in the record.'
+          'Quiz me opens ' +
+            miniWords(studyExams().find(x => x.course === ui.studyCourse)) +
+            ' from this course. Objectives show here once they’re in the record.'
         )
       );
       return d;

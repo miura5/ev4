@@ -839,7 +839,10 @@
       const d = new Date(at);
       if (isNaN(d)) return '';
       const ymd = E.chicagoDate(at);
-      const day = !ymd || ymd === today ? '' : new Date(ymd + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short' }) + ' ';
+      const day =
+        !ymd || ymd === today
+          ? ''
+          : new Date(ymd + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short' }) + ' ';
       return day + clock12(at);
     }
     function renderSessCard() {
@@ -891,8 +894,12 @@
                 el(
                   'p',
                   'meta',
-                  (nh ? 'Your Study Watch note' + (nh.at ? ' · saved ' + savedWhen(nh.at) : '') : 'Your latest note in ' + E.courses().join(' or ')) +
-                    ' · checks every ' + (SWC.checkMinutes || 7) + ' min'
+                  (nh
+                    ? 'Your Study Watch note' + (nh.at ? ' · saved ' + savedWhen(nh.at) : '')
+                    : 'Your latest note in ' + E.courses().join(' or ')) +
+                    ' · checks every ' +
+                    (SWC.checkMinutes || 7) +
+                    ' min'
                 ),
               ]
             : [el('p', 'meta', 'A timer and breaks, with questions on your objectives and weak spots.')]),
@@ -924,7 +931,13 @@
       const left = minsLeft(st);
       // B-383: the big figure says what it counts, '7 min' then 'to my next check' under it
       const leftEl = card.querySelector('.ss-left');
-      const leftK = ending ? 'Wrapping up' : st.onBreak ? breakLeft(s) : left == null ? durFmt(st.minutes) : left + ' min';
+      const leftK = ending
+        ? 'Wrapping up'
+        : st.onBreak
+          ? breakLeft(s)
+          : left == null
+            ? durFmt(st.minutes)
+            : left + ' min';
       if (leftEl.dataset.k !== leftK) {
         leftEl.dataset.k = leftK;
         leftEl.replaceChildren(leftK);
