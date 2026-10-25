@@ -5916,12 +5916,12 @@
   "title": "Fidelity: Record as in the demo. The Filter button with its icon and a count of active filters; the detail panel with an 18 px or larger title, properties in a card, her line, and Quiz me on the topic for a quiz.",
   "dod": "Matches the Record board with the filter open and a session and a quiz selected. Proof (D-312, fidelity sprint): node tools/build.mjs, then tools/fidelity's demo and built screenshots read side by side at 1280, 1706, 2560 and 390, plus npm run smoke; then ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-332"
   ],
-  "notes": "claimed by lane record",
-  "commit": null,
+  "notes": "Card for Matt: Record now looks like the demo board. The Filter button has its icon and shows how many filters are on; the toolbar runs across the pane under a thin line and the log rows run edge to edge, grouped by day. Picking an entry fills the right panel the demo's way: its badge, a larger title, When, Result and Course in a card, E.V.'s line, and for a quiz a Quiz me on it button that starts practice on the topic that quiz missed most. On staging GREEN at 4bd6c5c (shipped with the Progress lane's deploy). Still different from the demo, on purpose: no Log something button (New in the header makes notes, C-7); rows stay 32 px on a computer (C-1); on the phone a picked entry opens under its row rather than at the bottom; Log, Dates, Journal, Canvas and Library stay beside the title; a quiz's button reads Quiz me on it (objective names are full sentences) and sessions have none, since a session carries no topic to quiz. Same at 1280, 1706, 2560 and 390 otherwise.",
+  "commit": "4bd6c5c",
   "source": "fidelity review, Oct 25 (D-312)"
  },
  {
