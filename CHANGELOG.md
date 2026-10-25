@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 25 | v4 staging deployed at a5d27dd (13:43 CT), from 0846bc1: The tests and the page harnesses still assert the old UI; they are…; Arrow keys moving between a question's options record an answer he… (B-357, B-390). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at 0846bc1 (13:32 CT), from a70721f: Arrow keys moving between a question's options record an answer he… (B-390). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at a70721f (13:26 CT), from ad67a62: Snoozing graded work due today removes it from Today and puts it… (B-388). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at ad67a62 (13:23 CT), from 700c333: The tests and the page harnesses still assert the old UI; they are…; On a 1150-wide laptop pane, scrolling up through the conversation… (B-357, B-387). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
