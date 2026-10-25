@@ -6897,7 +6897,7 @@
   "milestone": "v4.8 redesign",
   "status": "in progress",
   "depends": [],
-  "notes": "reading the quiz, results and weak-spot code against the demo; rendering next",
+  "notes": "wording and count changes made; crawling demo and built at 1280 to compare",
   "commit": null,
   "source": "UI reviewer click-through 4 at 45d2d51, Oct 25 (D-316)",
   "words": "Review 4: the quiz side pane bolds the current question, and the quiz banner still says misses are proposed while results say saved.",
