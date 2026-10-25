@@ -5541,7 +5541,7 @@
   "depends": [
    "B-309"
   ],
-  "notes": "claimed by lane app",
+  "notes": "built: npm run smoke:pwa green 4 runs in a row (12 checks, session step pending B-314); planted page error turns it red; pushed 416edb3",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
