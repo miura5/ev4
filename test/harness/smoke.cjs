@@ -6,7 +6,7 @@
 // Run `node tools/build.mjs` first (`npm run smoke` does both). Exit code 1 when any check fails. --plant breaks the
 // served page on purpose, to prove the tier turns red (the workflow runs both plants and expects red).
 const { chromium } = require('playwright');
-const { paintAnswer, painted, studyView } = require('./paint.cjs');
+const { paintAnswer, painted, studyView, openSet } = require('./paint.cjs');
 const fs = require('fs');
 const path = require('path');
 const root = path.resolve(__dirname, '../..');
@@ -319,10 +319,22 @@ async function open(browser, viewport) {
       );
     } else ok(`${tag} a review answer scores`, false, 'no open review question');
 
-    // B-222 (D-227): Practice's question runner paints the same way (the lead drill, its first question).
-    await studyView(page, 'practice');
-    const lead = page.locator('#pr-body .pr-lead button.primary');
-    if (await lead.count()) await lead.first().click();
+    // B-222 (D-227): Practice's question runner paints the same way (a drill opened from today's list, B-303, its
+    // first question).
+    await openSet(
+      page,
+      await page.evaluate(
+        () =>
+          (Object.entries(window.__db.sets || {}).find(
+            ([id, x]) =>
+              !/^review-/.test(id) &&
+              x.kind !== 'review' &&
+              window.EVCore.validItems(x).some(
+                q => (q.type || 'single') === 'single' && !(((window.__db.answers || {})[id] || {}).answers || {})[q.id]
+              )
+          ) || [''])[0]
+      )
+    );
     await until(page, () => !!document.querySelector('#pr-body label.opt input'), null, 2000);
     const pr = await paintAnswer(page, '#pr-body');
     ok(

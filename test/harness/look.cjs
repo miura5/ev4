@@ -86,6 +86,7 @@ const { collect, judge, motion, judgeMotion } = require('./tenets.cjs');
 const { collectButtons, judgeKinds } = require('./components.cjs'); // B-285
 const png = require('./png.cjs');
 const { studyView } = require('./paint.cjs'); // B-297
+const FIVE_VIEWS = ['ev', 'today', 'study', 'progress', 'record']; // B-303 (D-278)
 const reports = [];
 const results = [];
 const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', name, detail]);
@@ -269,7 +270,11 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
     page.on('console', m => {
       if (m.type() === 'error') errors.push(m.text());
     });
-    await page.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));
+    const fontAsks = []; // B-303: the page asks Google Fonts for Inter (answered empty here: the pass has no network)
+    await page.route('https://fonts.googleapis.com/**', r => {
+      fontAsks.push(r.request().url());
+      return r.fulfill({ body: '', contentType: 'text/css' });
+    });
     await page.route(ORIGIN + '/**', r => {
       const name = new URL(r.request().url()).pathname.replace(/^\//, '') || 'index.html';
       if (name === 'index.html')
@@ -287,6 +292,23 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
     await page
       .waitForFunction(() => document.querySelector('#thread .msg.ev'), null, { timeout: 5000 })
       .catch(() => {});
+    if ([390, 1280].includes(size.width) && [844, 800].includes(size.height)) {
+      // B-303: Inter is the page's font: asked for from Google Fonts, the system font after it in the stack, and read
+      // back as the computed font of the body, a row's name and a button
+      const f = await page.evaluate(() =>
+        ['body', '.side .tab', '#ev-input'].map(sel => {
+          const e = document.querySelector(sel);
+          return e ? getComputedStyle(e).fontFamily : '';
+        })
+      );
+      ok(
+        `[${width}] Inter is the computed font, asked for from Google Fonts, the system font its fallback (B-303)`,
+        fontAsks.some(u => /family=Inter\b/.test(u)) &&
+          f.every(x => /^"?Inter"?,/.test(x)) &&
+          f.every(x => /system-ui/.test(x)),
+        JSON.stringify({ fontAsks, f })
+      );
+    }
     for (const view of VIEWS) {
       await page.click('#tab-' + view.tab);
       if (view.v && (await page.isVisible(`#seg-${view.tab} [data-v="${view.v}"]`)))
@@ -309,10 +331,12 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
             ok(`[${width}] ${view.id}: ${c.tenet}`, c.ok, c.detail);
           else reports.push([c.ok ? 'ok  ' : 'NOT ', `[${width}] ${view.id}: ${c.tenet}`, c.detail]);
         }
-        // B-285 (D-278): the view's buttons against the component set's five kinds, reported while the views move onto
-        // the set in their own tasks; no task yet turns it into a failure (a question for Matt on B-285's card).
+        // B-285 (D-278): the view's buttons against the component set's five kinds; B-303 (the sweep) makes it a failure
+        // on the five views (E.V., Today, Study, Progress, Record), System still reporting.
         const kinds = judgeKinds(await page.evaluate(collectButtons, `#top, #mh, #p-${view.tab}`));
-        reports.push([kinds.ok ? 'ok  ' : 'NOT ', `[${width}] ${view.id}: D-278`, kinds.detail]);
+        if (FIVE_VIEWS.includes(view.tab))
+          ok(`[${width}] ${view.id}: D-278: five kinds, one primary`, kinds.ok, kinds.detail);
+        else reports.push([kinds.ok ? 'ok  ' : 'NOT ', `[${width}] ${view.id}: D-278`, kinds.detail]);
         // B-285 (C-15): the screen-reader tree names the picked option of every switch on screen.
         for (const id of await page.$$eval('.seg[id]', s =>
           s.filter(x => !x.closest('[hidden]') && x.getBoundingClientRect().width > 1).map(x => x.id)
@@ -382,7 +406,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           })
         );
     }
-    // B-213 (D-225, D-150): Today's rows are 44 px on the phone and 32 px from 600 px wide; the view switch is the pane
+    // B-213 (D-225, D-276): Today's rows are 44 px on the phone and 32 px from 600 px wide; the view switch is the pane
     // header's from 600 px and a full-width row on the phone; a Prep word has no pill behind it.
     {
       await page.click('#tab-today');
@@ -458,7 +482,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         );
       }
       ok(
-        `[${width}] Today's rows are ${want} px, the view switch is ${size.width < 600 ? "in Study's toolbar" : "the pane header's"}, Prep is a word, the reading column at most 680 px (D-225, D-150)`,
+        `[${width}] Today's rows are ${want} px, the view switch is ${size.width < 600 ? "in Study's toolbar" : "the pane header's"}, Prep is a word, the reading column at most 680 px (D-225, D-276)`,
         r.rows.length > 0 &&
           r.rows.every(h => h === want) &&
           !r.pill &&
@@ -709,7 +733,8 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
       });
       ok(
         `[${width}] study: after the last answer, More practice is one line with Give me 5 more`,
-        done.shown && done.h <= 72 && done.button === 'Give me 5 more' && !done.left,
+        // B-303: one line is the button's height plus the card's padding; on the phone a set button is 44 px (D-278)
+        done.shown && done.h <= (size.width < 600 ? 76 : 72) && done.button === 'Give me 5 more' && !done.left,
         JSON.stringify(done)
       );
       await page.screenshot({ path: `${shots}/look-study-done-${width}.png`, fullPage: true });
@@ -759,10 +784,9 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         );
         await page.locator('#rv-body .sum-line').first().click();
         await page.waitForTimeout(100);
-        for (const v of ['practice', 'plan']) {
-          if (v === 'plan')
-            await studyView(page, 'plan'); // D-249: Plan is a tab at every width (B-297: out of the quiz card first)
-          else await studyView(page, v); // B-297: the sets, back from an objective's Quiz me
+        // B-303 (D-283): the Practice list of sets is retired, so Plan alone is checked here
+        for (const v of ['plan']) {
+          await studyView(page, 'plan'); // D-249: Plan is a tab at every width (B-297: out of the quiz card first)
           await page.waitForTimeout(300);
           const r = await page.evaluate(
             box => {
@@ -969,7 +993,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           pills: [...p.querySelectorAll('.chip')].filter(vis).map(c => c.textContent),
           markSolid: [...p.querySelectorAll('button')].filter(b => vis(b) && /Mark solid/.test(b.textContent)).length,
           dueOpen: vis(document.getElementById('weak-due')),
-          closed: ['weak-tom', 'weak-later', 'weak-preview', 'weak-parked', 'weak-solid'].filter(id =>
+          closed: ['weak-tom', 'weak-later', 'weak-preview', 'weak-solid'].filter(id =>
             vis(document.getElementById(id))
           ),
           form: !!document.getElementById('weak-add'),
@@ -1108,7 +1132,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
       }
     if (['390x844', '1280x800'].includes(width)) {
       // B-111, B-302: the long note is one row in the log, its words cut to the row's line; opening it shows all 30
-      // words in its detail, with its kind menu and Make it a weak spot.
+      // words in its detail, with its kind menu (B-303, D-290: and no Make it a weak spot).
       await page.click('#tab-record');
       await page.click('#seg-record [data-v="sessions"]');
       await page.waitForTimeout(400);
@@ -1142,8 +1166,8 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         };
       });
       ok(
-        `[${width}] record: opening the note shows all 30 words, its menu and Make it a weak spot`,
-        LONG_IDEA.split(/\s+/).length === 30 && opened.menu && opened.button && opened.words === 30 && opened.whole,
+        `[${width}] record: opening the note shows all 30 words and its menu, no Make it a weak spot (D-290)`,
+        LONG_IDEA.split(/\s+/).length === 30 && opened.menu && !opened.button && opened.words === 30 && opened.whole,
         JSON.stringify(opened)
       );
       await page.locator('#rec-detail').screenshot({ path: `${shots}/look-idea-open-${width}.png` });

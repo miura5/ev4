@@ -533,7 +533,7 @@
         inp.placeholder = 'Score, e.g. 88.5';
         inp.setAttribute('aria-label', 'Score for ' + e.title);
         const a = el('div', 'actions');
-        const sb = el('button', 'primary', 'Save score');
+        const sb = el('button', 'btn primary', 'Save score');
         sb.type = 'submit';
         a.append(sb);
         f.append(
@@ -621,28 +621,23 @@
       const d = w.derived;
       const due = E.isDue(w, today);
       const when =
-        d.status === 'parked'
-          ? d.parkedReason || w.parkedReason || 'parked'
-          : w.kind === 'note' || w.kind === 'skill'
-            ? ''
-            : d.status === 'reviewed'
-              ? (w.kind === 'note' ? 'done ' : 'solid ') + short(d.solidAt)
-              : d.preRead
-                ? 'first check after the reading' + (w.readingDue ? ' (' + short(w.readingDue) + ')' : '')
-                : d.nextDue
-                  ? (due ? 'due today' : 'next ' + short(d.nextDue)) +
-                    (d.streak ? ' · ' + d.streak + ' of 2 right' : '')
-                  : 'not scheduled';
+        w.kind === 'note' || w.kind === 'skill'
+          ? ''
+          : d.status === 'reviewed'
+            ? (w.kind === 'note' ? 'done ' : 'solid ') + short(d.solidAt)
+            : d.preRead
+              ? 'first check after the reading' + (w.readingDue ? ' (' + short(w.readingDue) + ')' : '')
+              : d.nextDue
+                ? (due ? 'due today' : 'next ' + short(d.nextDue)) + (d.streak ? ' · ' + d.streak + ' of 2 right' : '')
+                : 'not scheduled';
       const detail = [w.source, d.recurrence > 1 ? 'seen ' + d.recurrence + '×' : '', when].filter(Boolean).join(' · ');
-      let action = null;
-      if (d.status === 'parked')
-        action = btn('Make active', ev => guard(ev.target, () => write(weakEvent(w, 'activate')), 'Active again'));
-      else if (d.status === 'open') {
-        const toDo = w.kind === 'note' || w.kind === 'skill';
-        action = btn(w.kind === 'skill' ? 'Practiced' : toDo ? 'Done' : 'Mark solid', ev =>
-          guard(ev.target, () => write(weakEvent(w, toDo ? 'done' : 'solid')), toDo ? 'Marked done' : 'Marked solid')
-        );
-      }
+      // B-303 (D-288, D-289): no parked spots and no Make active; one action whatever its kind, Mark solid
+      const action =
+        d.status === 'open'
+          ? btn('Mark solid', ev => guard(ev.target, () => write(weakEvent(w, 'solid')), 'Marked solid'), {
+              cls: 'btn neutral sm',
+            })
+          : null;
       const on = openWs.has(w.id),
         li = el('li', 'row ws-item' + (on ? ' open' : ''));
       li.dataset.id = w.id;
@@ -697,7 +692,6 @@
       const notes = ms
         .filter(w => (w.kind === 'note' || w.kind === 'skill') && w.derived.status === 'open')
         .sort(byAdded);
-      const parked = ms.filter(w => w.derived.status === 'parked' && w.kind !== 'connection').sort(byAdded);
       const solid = ms
         .filter(w => w.derived.status === 'reviewed' && w.kind !== 'note')
         .sort((a, b) => String(b.derived.solidAt || '').localeCompare(String(a.derived.solidAt || '')));
@@ -730,7 +724,6 @@
       wsFold('weak-tom-fold', 'weak-tom', 'Due tomorrow', tom);
       wsFold('weak-later-fold', 'weak-later', 'Later', later);
       wsFold('weak-preview-fold', 'weak-preview', 'Previews, before the reading', previews, 'weak-preview-card');
-      wsFold('weak-parked-fold', 'weak-parked', 'Parked', parked, 'weak-parked-card');
       wsFold('weak-solid-fold', 'weak-solid', 'Solid', solid, 'weak-solid-card');
       // The notes-and-skills card only while it holds something (D-151).
       $('weak-notes-card').hidden = !notes.length && !formats.length;

@@ -335,6 +335,60 @@
         `Release ${EV_BUILD} · core ${E.VERSION} · spec ${EV_SPEC.specVersion} · ${EV_SPEC.target === 'staging' ? 'staging record' : 'your record'}${st ? ' · snapshot ' + short(st.generatedAt) + ' ' + E.chicagoClock(st.generatedAt) : ''}`;
     }
 
+    // B-303: the Preferences card's four switches are built here, not in the shell (its byte budget), as they were drawn:
+    // a labelled row each, its options with their data value and the default pressed until the wiring below paints them.
+    {
+      const card = $('theme-card'),
+        note = $('theme-note');
+      for (const [id, label, attr, opts] of [
+        [
+          'theme',
+          'Theme',
+          't',
+          [
+            ['system', 'System'],
+            ['light', 'Light'],
+            ['dark', 'Dark'],
+          ],
+        ],
+        ['contrast', 'Contrast', 'c', [['30'], ['60'], ['100']]],
+        [
+          'text',
+          'Text size',
+          'p',
+          [
+            ['default', 'Default'],
+            ['larger', 'Larger'],
+          ],
+        ],
+        [
+          'motion',
+          'Reduce motion',
+          'p',
+          [
+            ['system', 'Follow the system'],
+            ['reduce', 'On'],
+          ],
+        ],
+      ]) {
+        const pref = el('div', 'pref'),
+          lbl = el('span', 'lbl', label),
+          seg = el('div', 'seg theme-seg');
+        lbl.id = id + '-lbl';
+        seg.id = id + '-seg';
+        seg.setAttribute('role', 'group');
+        seg.setAttribute('aria-labelledby', lbl.id);
+        opts.forEach(([v, t], i) => {
+          const b = el('button', null, t || v); // a segment of the switch, not a kit button
+          b.type = 'button';
+          b.dataset[attr] = v;
+          b.setAttribute('aria-pressed', String(id === 'contrast' ? v === '60' : i === 0));
+          seg.append(b);
+        });
+        pref.append(lbl, seg);
+        if (card && note) card.insertBefore(pref, note);
+      }
+    }
     // B-214 (D-211): the theme switch. System follows the device; Light or Dark is stored on this device (ev.theme), read
     // again before first paint by the page's head script. A storage that throws still switches this visit.
     // B-286: the sidebar's foot carries the same switch (its "Auto" is System); a press paints both.

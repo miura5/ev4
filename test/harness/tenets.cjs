@@ -1,4 +1,4 @@
-// The UI tenets' checks (B-115; D-146 to D-151, "E.V. UI tenets and catch-up"). collect runs in the page and returns a
+// The UI tenets' checks (B-115; D-146 to D-151, "E.V. UI tenets and catch-up"; D-276 since B-303). collect runs in the page and returns a
 // plain snapshot of the view on screen; judge holds the snapshot to each tenet, so a test can plant a snapshot without a
 // browser. The look pass runs both on every view at 390, 735 and 1280 (spec.ui.tenets.widths) and prints each check;
 // only the tabs in spec.ui.tenets.on fail the pass, the rest report until their catch-up task turns them on.
@@ -62,6 +62,16 @@ function collect() {
   const rows = [...(panel ? panel.querySelectorAll('li.row, li.brief-item') : [])]
     .filter(vis)
     .map(r => ({ text: r.textContent.trim().slice(0, 40), h: Math.round(r.getBoundingClientRect().height) }));
+  // D-276 (B-303): never two badges on a row; a mark counts for the nearest row that holds it, nested lists apart
+  const ROW = 'li, .li, .row, tr, .ov, .rec-row';
+  const per = new Map();
+  for (const m of all('.badge, .chip')) {
+    const r = m.closest(ROW);
+    if (r) per.set(r, (per.get(r) || 0) + 1);
+  }
+  const twoBadges = [...per]
+    .filter(([, n]) => n > 1)
+    .map(([r, n]) => `${(r.id || r.textContent.trim()).slice(0, 30)} (${n})`);
   const chips = all('.chip, .qchip')
     .filter(first)
     .map(c => c.textContent.trim().slice(0, 30));
@@ -90,6 +100,7 @@ function collect() {
       e => !e.closest('.msg.greet:not(.current)')
     ).length,
     chips,
+    twoBadges,
     monoOrSpacedCaps: fonts,
     closers,
     qchipsShown: vis(document.getElementById('qchips')),
@@ -129,10 +140,12 @@ function judge(s, exceptions = {}) {
           : 'every row one line'
       }`
     ),
+    // B-303: D-276 (words first, then the system's marks), the old words-not-chrome check brought in line: one font, no monospace or
+    // spaced capitals, no more than three chips in the first screen, and never two badges on a row.
     r(
-      'D-150',
-      !s.monoOrSpacedCaps && s.chips.length <= 3,
-      `chips in the first screen: ${s.chips.length}; monospace or spaced capitals: ${s.monoOrSpacedCaps}`
+      'D-276',
+      !s.monoOrSpacedCaps && s.chips.length <= 3 && !(s.twoBadges || []).length,
+      `chips in the first screen: ${s.chips.length}; monospace or spaced capitals: ${s.monoOrSpacedCaps}; rows with two badges: ${(s.twoBadges || []).length ? s.twoBadges.join(', ') : 'none'}`
     ),
     r(
       'D-160',

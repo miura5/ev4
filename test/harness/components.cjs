@@ -17,6 +17,8 @@ const CODED = ['x-green', 'x-yellow', 'x-red', 'x-blue', 'x-violet'];
 
 /** In the page: every visible button in scope (a view), as data for judgeKinds. Self-contained (serialized). */
 function collectButtons(scopeSel) {
+  const PART =
+    /^(brand|tab|si|nm|set-q|sum-line|brief-row|bi-main|prep-row|pc-bar|wchip|qchip|fold-line|[a-z]+-line|[a-z]+-nm|[a-z]+-row)$/;
   const vis = e => {
     if (!e || e.closest('[hidden]')) return false;
     const s = getComputedStyle(e),
@@ -30,17 +32,27 @@ function collectButtons(scopeSel) {
       cls: typeof b.className === 'string' ? b.className.trim().split(/\s+/).filter(Boolean) : [],
       submit: b.getAttribute('type') === 'submit',
       inSeg: !!b.closest('.seg'),
+      // B-303: the set's other parts, which are not buttons: a tab of the sidebar or tab bar, her composer and its
+      // quick asks, and a row's or a card's own line (its name, a fold line, a day of the week, a bar of a chart)
+      part:
+        b.getAttribute('role') === 'tab' ||
+        !!b.closest('#composer') ||
+        (typeof b.className === 'string' &&
+          b.className
+            .trim()
+            .split(/\s+/)
+            .some(c => PART.test(c))),
     }))
   );
 }
 
-/** D-278 on one view's buttons: each is a .btn of one kind (icon may join a fill; a tint names its coded colour), or a
+/** D-278 on one view's buttons (its rows, lines, tabs and composer are the set's other parts): each is a .btn of one kind (icon may join a fill; a tint names its coded colour), or a
  * segment of a switch; at most one primary that is not the composer's send (a submit, as D-146 counts). */
 function judgeKinds(buttons) {
   const outside = [],
     primaries = [];
   for (const b of buttons) {
-    if (b.inSeg) continue;
+    if (b.inSeg || b.part) continue;
     const c = new Set(b.cls);
     const fills = FILLS.filter(k => c.has(k));
     const ok =

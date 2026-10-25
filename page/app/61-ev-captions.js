@@ -38,7 +38,7 @@
     capEchoEl.id = 'ev-echo';
     capEchoEl.setAttribute('aria-hidden', 'true');
     $('composer').prepend(capEchoEl);
-    const capNow = btn('Back to now', () => backToNow(), { cls: 'cap-now' });
+    const capNow = btn('Back to now', () => backToNow(), { cls: 'btn ghost sm cap-now' });
     capNow.id = 'ev-now';
     capNow.hidden = true;
     capNow.insertAdjacentHTML(

@@ -95,7 +95,7 @@
         bar = el('div', 'update');
         bar.id = 'ev-update';
         bar.setAttribute('role', 'status');
-        const b = el('button', 'primary', 'Reload');
+        const b = el('button', 'btn primary', 'Reload');
         b.type = 'button';
         b.addEventListener('click', () => location.reload());
         bar.append(el('span', null, 'E.V. updated: reload'), b);

@@ -7,13 +7,26 @@
       return e;
     };
     const chip = (text, v = '') => el('span', 'chip ' + v, text);
+    // the component set's badge (B-285); the old chip colours map onto its coded ones (D-269), her accent onto none
+    const BADGE_X = { ok: 'x-green', warn: 'x-yellow', bad: 'x-red', info: 'x-blue', plum: 'x-violet' };
+    const badge = (text, v = '') => el('span', 'badge row-badge' + (BADGE_X[v] ? ' ' + BADGE_X[v] : ''), text);
     const empty = t => {
       const li = el('li', 'row');
       li.append(el('p', 'empty', t));
       return li;
     };
+    // B-303 (D-278): every button the kit makes is one of the component set's five kinds: primary, a kind the caller
+    // names (btn ...), the old quiet as ghost, the violet act as its coded tint, and neutral when none is named.
+    const KIND_OF = { quiet: 'btn ghost sm', tlink: 'btn ghost sm', violet: 'btn tint x-violet' };
+    const btnClass = o => {
+      if (o.primary) return 'btn primary';
+      const c = String(o.cls || '').trim();
+      if (/(^|\s)btn(\s|$)/.test(c)) return c;
+      const [first, ...rest] = c.split(/\s+/).filter(Boolean);
+      return [KIND_OF[first] || 'btn neutral', ...(KIND_OF[first] ? rest : first ? [first, ...rest] : [])].join(' ');
+    };
     function btn(label, onClick, o = {}) {
-      const b = el('button', o.primary ? 'primary' : o.cls || null, label);
+      const b = el('button', btnClass(o), label);
       b.type = 'button';
       if (o.disabled) b.disabled = true;
       if (onClick) b.addEventListener('click', onClick);
@@ -34,12 +47,9 @@
       const g = el('div', 'grow');
       const t = el('div', 'title');
       t.append(document.createTextNode(title || ''));
-      if (chips && chips.length) {
-        const cs = el('span', 'chips');
-        cs.style.marginLeft = '6px';
-        chips.filter(Boolean).forEach(c => cs.append(chip(c[0], c[1])));
-        t.append(cs);
-      }
+      // B-303 (D-276): a row that names its type or state carries one badge, never two; the first given leads
+      const b = (chips || []).filter(Boolean)[0];
+      if (b) t.append(badge(b[0], b[1]));
       g.append(t);
       if (detail) g.append(el('div', 'meta', detail));
       li.append(g);

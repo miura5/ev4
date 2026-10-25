@@ -609,9 +609,7 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
       await look('study-objectives', false); // B-297: the overview has no right panel
       await studyView(page, 'review'); // B-297 (D-283): today's review opens from Today
       await look('study-review', true);
-      await studyView(page, 'practice');
-      const lead = page.locator('#pr-body .pr-lead button.primary');
-      if (await lead.count()) await lead.first().click();
+      await studyView(page, 'practice'); // B-297: an objective's set, open in the quiz card
       await look('study-practice', true);
       const bad = judged.filter(([, j]) => !j.ok);
       ok(

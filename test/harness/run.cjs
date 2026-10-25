@@ -6,7 +6,10 @@
 //   node test/harness/run.cjs [record dir | synthetic] [screenshots dir]   (default: the synthetic record, B-100)
 // Run `node tools/build.mjs` first. Exit code 1 when any check fails. The shell's own checks are test/harness/shell.cjs.
 const { chromium } = require('playwright');
-const { paintAnswer, painted, studyView } = require('./paint.cjs');
+const { paintAnswer, painted, studyView, openSet: openSetById } = require('./paint.cjs');
+// B-303: a set's id from its title, for openSet (paint.cjs)
+const byTitle = (page, title) =>
+  page.evaluate(t => (Object.entries(window.__db.sets || {}).find(([, x]) => x.title === t) || [t])[0], title);
 const fs = require('fs');
 const path = require('path');
 const root = path.resolve(__dirname, '../..');
@@ -804,25 +807,15 @@ async function workLineChecks(page, scheme) {
 // question showing its answer and why, an unanswered one open; answered out of order, then reopened where he left. Run
 // at both widths from Study, Practice with a set open.
 async function practiceNav(page, scheme) {
-  const openSet = async title => {
-    const lead = page.locator('#pr-body .pr-lead', { hasText: title });
-    if (await lead.count()) return lead.locator('button.primary').click();
-    if (
-      (await page.locator('#pr-done-fold[aria-expanded="false"]').count()) &&
-      !(await page.locator('#pr-body .row', { hasText: title }).first().isVisible())
-    )
-      await page.click('#pr-done-fold');
-    const r = page.locator('#pr-body .row', { hasText: title }).first();
-    if (!(await r.locator('.pr-acts').isVisible())) await r.locator('.pr-line').click(); // a line keeps its fold
-    await page.waitForTimeout(80);
-    return page.locator('#pr-body .row', { hasText: title }).first().locator('.pr-acts button').first().click();
-  };
+  // B-303 (D-283): no list of sets; a set opens from a row of today's list, and folds back to Objectives
+  const openSet = async title => openSetById(page, await byTitle(page, title));
   await page.click('#pr-fold');
   await page.waitForTimeout(150);
   ok(
-    `[${scheme}] the open set's head line folds it back into the list it was opened from (D-160)`,
+    `[${scheme}] the open set's head line folds it back to Objectives, with no list of sets (D-160, D-283)`,
     !(await page.isVisible('#pr-fold')) &&
-      (await page.locator('#pr-body .pr-lead, #pr-body .row').count()) > 0 &&
+      (await page.isVisible('#study-objectives')) &&
+      !(await page.locator('#pr-body .pr-lead, #pr-body .pr-item').count()) &&
       !(await page.isVisible('#pr-body .q-stem')),
     (await page.textContent('#pr-body')).slice(0, 120)
   );
@@ -883,16 +876,7 @@ async function practiceNav(page, scheme) {
   await page.click('#pr-fold');
   await page.waitForTimeout(150);
   const saved = await page.evaluate(id => Object.keys(((window.__db.answers || {})[id] || {}).answers || {}), navId);
-  const line = await page
-    .locator('#pr-body .pr-lead, #pr-body .row', { hasText: 'Harness nav' })
-    .first()
-    .textContent()
-    .catch(() => '');
-  ok(
-    `[${scheme}] closed mid-set, the answer is kept and the list says one is answered`,
-    JSON.stringify(saved) === '["v2"]' && /1 of 3|1 answered/.test(line),
-    JSON.stringify([saved, line])
-  );
+  ok(`[${scheme}] closed mid-set, the answer is kept`, JSON.stringify(saved) === '["v2"]', JSON.stringify(saved));
   await openSet('Harness nav');
   await page.waitForTimeout(150);
   v = await q();
@@ -917,11 +901,11 @@ async function practiceNav(page, scheme) {
   await page.waitForTimeout(150);
   ok(
     `[${scheme}] the last answer, whichever order, brings the results`,
-    /3 of 3|All sets/.test(await page.textContent('#pr-body')) && !v.sideways,
+    /3 of 3/.test(await page.textContent('#pr-body')) && !v.sideways,
     (await page.textContent('#pr-body')).slice(0, 160)
   );
   await page.screenshot({ path: `${shots}/practice-nav-done-${scheme}.png` });
-  await page.locator('#pr-body button', { hasText: 'All sets' }).first().click();
+  await page.click('#study-back'); // B-303: the toolbar's way back, now the summary has no All sets
   await page.waitForTimeout(150);
   // B-193 (D-205): a question on another course's passage names its source under the stem, from the data, once the
   // library is open (the page never loads it just for this): open Record, Library first, then the set.
@@ -931,8 +915,6 @@ async function practiceNav(page, scheme) {
     .waitForFunction(() => document.querySelectorAll('#library li').length > 0, null, { timeout: 8000 })
     .catch(() => {});
   await page.click('#seg-record [data-v="sessions"]'); // Record back on its first view for the checks after
-  await studyView(page, 'practice'); // B-297: through an objective's Quiz me, then back to the sets
-  await page.waitForTimeout(150);
   await openSet('Harness cross');
   await page.waitForFunction(() => document.querySelector('#pr-body .q-src'), null, { timeout: 8000 }).catch(() => {});
   const src = await page.textContent('#pr-body .q-src').catch(() => '');
@@ -1571,8 +1553,8 @@ const ok = (name, cond, detail = '') => {
     if (scheme === 'desktop') {
       await send(page, 'What’s due this week?'); // typed: with review, a finished job and the session chip it has no chip (D-125) await page.waitForTimeout(900);
       await page.screenshot({ path: `${shots}/ev-desktop-conversation.png`, fullPage: false });
-      // B-53 (D-109) at desktop width: the kind on every note, the weak-spot action only on a learning note (B-302:
-      // the kind is the row's result and the action is in the note's detail)
+      // B-53 (D-109) at desktop width: the kind on every note (B-302: the row's result); B-303 (D-290): no note offers
+      // the weak-spot action
       await page.click('#tab-record');
       await page.waitForTimeout(150);
       {
@@ -1583,12 +1565,12 @@ const ok = (name, cond, detail = '') => {
           return page.locator('#rec-detail button', { hasText: 'Make it a weak spot' }).count();
         };
         ok(
-          '[desktop] note kinds shown; only the learning note offers Make it a weak spot',
+          '[desktop] note kinds shown; no note offers Make it a weak spot (D-290)',
           /Feature/.test(await row('Harness feature idea').textContent()) &&
             /General/.test(await row('Harness general idea').textContent()) &&
             (await act('Harness feature idea')) === 0 &&
             (await act('Harness general idea')) === 0 &&
-            (await act('Harness learning idea')) === 1
+            (await act('Harness learning idea')) === 0
         );
         await page.screenshot({ path: `${shots}/ideas-desktop.png`, fullPage: false });
       }
@@ -1631,17 +1613,7 @@ const ok = (name, cond, detail = '') => {
         .screenshot({ path: `${shots}/retro-card-desktop.png` });
       // B-43 (D-100) at desktop width: Study → Practice, the dosage set, one numeric item answered.
       {
-        await studyView(page, 'practice'); // B-297
-        await page.waitForTimeout(150);
-        const lead = page.locator('#pr-body .pr-lead', { hasText: 'Harness dosage' });
-        if (await lead.count()) await lead.locator('button.primary').click();
-        else {
-          if (await page.locator('#pr-done-fold[aria-expanded="false"]').count()) await page.click('#pr-done-fold');
-          const r = page.locator('#pr-body .row', { hasText: 'Harness dosage' }).first();
-          await r.locator('.pr-line').click();
-          await page.waitForTimeout(80);
-          await r.locator('.pr-acts button').first().click();
-        }
+        await openSetById(page, await byTitle(page, 'Harness dosage')); // B-303 (D-283): from today's list
         await page.waitForTimeout(150);
         await page.locator('#pr-body input.num-in').fill('10 mL');
         await page.click('#pr-body button:has-text("Check answer")');
@@ -2955,27 +2927,18 @@ const ok = (name, cond, detail = '') => {
       (reviewExpect || '(unanswered)') + ' · ' + rv.slice(0, 80)
     );
     // Practice: open the harness set, answer single (right), sata (wrong), matrix (right)
+    // B-303 (D-283): the Practice list is retired: Study offers no list of sets, and a set opens where he meets it
+    // (here a row of today's list naming it)
     await studyView(page, 'practice');
     await page.waitForTimeout(100);
+    if (await page.isVisible('#pr-fold')) await page.click('#pr-fold');
+    await page.waitForTimeout(100);
     ok(
-      'practice lists sets',
-      (await page.locator('#pr-body .row').count()) + (await page.locator('#pr-body .pr-lead').count()) >= 2
+      'Study has no list of sets: the open set folds back to Objectives (D-283)',
+      (await page.isVisible('#study-objectives')) &&
+        !(await page.locator('#pr-body .pr-lead, #pr-body .pr-item, #pr-done-fold').count())
     );
-    // B-126 (D-165): Practice leads with the set to do next; the others are lines opening in place to Start, Continue or
-    // Review, the finished ones folded under one line.
-    const openSet = async title => {
-      const lead = page.locator('#pr-body .pr-lead', { hasText: title });
-      if (await lead.count()) return lead.locator('button.primary').click();
-      if (
-        (await page.locator('#pr-done-fold[aria-expanded="false"]').count()) &&
-        !(await page.locator('#pr-body .row', { hasText: title }).first().isVisible())
-      )
-        await page.click('#pr-done-fold');
-      const r = page.locator('#pr-body .row', { hasText: title }).first();
-      await r.locator('.pr-line').click();
-      await page.waitForTimeout(80);
-      return page.locator('#pr-body .row', { hasText: title }).first().locator('.pr-acts button').first().click();
-    };
+    const openSet = async title => openSetById(page, await byTitle(page, title));
     // B-54 (D-110): an open calendar drill over a chapter range offers Share as a page above its questions; other sets do not
     {
       const ids = await page.evaluate(() => {
@@ -3030,12 +2993,9 @@ const ok = (name, cond, detail = '') => {
           (await page.locator('#pr-share button', { hasText: 'Making its page…' }).count()) === 1
         );
         await page.screenshot({ path: `${shots}/share-bar-phone.png` });
-        const allSets = page.locator('#pr-body button', { hasText: 'All sets' });
-        if (await allSets.count()) {
-          await allSets.first().click();
-          await page.waitForTimeout(150);
-        }
-        ok('back on the list, the share bar goes', !(await page.isVisible('#pr-share')));
+        await page.click('#study-back');
+        await page.waitForTimeout(150);
+        ok('back on Objectives, the share bar goes', !(await page.isVisible('#pr-share')));
       }
     }
     const model = id =>
@@ -3109,7 +3069,7 @@ const ok = (name, cond, detail = '') => {
         .first()
         .click();
       await page.waitForTimeout(150);
-      await page.locator('#pr-body button', { hasText: 'All sets' }).first().click();
+      await page.click('#study-back');
       await page.waitForTimeout(150);
     }
     await openSet('Harness set');
@@ -3672,7 +3632,7 @@ const ok = (name, cond, detail = '') => {
       }
       ok('a note with a link shows it in its detail', linked, ids.join(' | ').slice(0, 160));
     }
-    // B-53 (D-109): every note shows its kind; only a learning note offers "Make it a weak spot"; the kind can change
+    // B-53 (D-109): every note shows its kind and the kind can change; B-303 (D-290): no note offers "Make it a weak spot"
     {
       const kindOf = async t => (await recRow('note', t).locator('.r').textContent()).trim();
       const acts = async t => (await recOpen('note', t)).locator('button', { hasText: 'Make it a weak spot' }).count();
@@ -3685,8 +3645,8 @@ const ok = (name, cond, detail = '') => {
         (await kindOf('Harness general idea')) === 'General' && (await acts('Harness general idea')) === 0
       );
       ok(
-        'a learning note shows its kind and offers Make it a weak spot',
-        (await kindOf('Harness learning idea')) === 'Learning' && (await acts('Harness learning idea')) === 1
+        'a learning note shows its kind and no weak-spot action either (D-290)',
+        (await kindOf('Harness learning idea')) === 'Learning' && (await acts('Harness learning idea')) === 0
       );
       // B-111: the kind menu is the detail's, never the row's.
       ok(
@@ -3697,8 +3657,8 @@ const ok = (name, cond, detail = '') => {
       await page.waitForTimeout(200);
       const k = await page.evaluate(() => window.__db.ideas['idea-harness-feature'].kind);
       ok(
-        'changing the kind writes it (a mark) and the action appears',
-        k === 'learning' && (await acts('Harness feature idea')) === 1,
+        'changing the kind writes it (a mark), and still no weak-spot action (D-290)',
+        k === 'learning' && (await acts('Harness feature idea')) === 0,
         k
       );
       await page.screenshot({ path: `${shots}/ideas-${scheme}.png`, fullPage: false });
@@ -4277,11 +4237,12 @@ const ok = (name, cond, detail = '') => {
       await studyView(fp, 'weak'); // B-297 (D-281)
       await fp.waitForTimeout(200);
       ok(
-        'Progress lists it as a skill to practice',
+        'Weak spots lists it as a skill to practice, its one action Mark solid (D-289)',
         (await fp
           .locator('#weak-notes .row', { hasText: ': step 2, ' })
-          .locator('button', { hasText: 'Practiced' })
-          .count()) === 1
+          .locator('button', { hasText: 'Mark solid' })
+          .count()) === 1 &&
+          !(await fp.locator('#study-weak button', { hasText: /^(Practiced|Done|Make active)$/ }).count())
       );
       await fp.click('#tab-ev');
       await fp.waitForTimeout(150);

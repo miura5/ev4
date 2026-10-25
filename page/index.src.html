@@ -3,6 +3,7 @@
 <meta name="color-scheme" content="light dark">
 <meta name="ev-release" content="{{RELEASE}}">
 <meta name="ev-target" content="{{TARGET}}">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="styles.css">
 <script>/* B-204 (D-211), B-224 (D-229): this device's theme, text size and motion, before first paint; without them the page follows the system. */try{var d=document.documentElement,t=localStorage.getItem('ev.theme');if(t==='light'||t==='dark')d.setAttribute('data-theme',t);if(localStorage.getItem('ev.text')==='larger')d.setAttribute('data-text','larger');if(localStorage.getItem('ev.motion')==='reduce')d.setAttribute('data-motion','reduce')}catch(e){}</script>
 <script>{{THEME}}</script>
@@ -101,7 +102,7 @@
       </div>
       <!-- B-116 (D-151): one line, shown once today's set is done; B-126 (D-165): then inside the finished set, its one primary. -->
       <div class="card more-line" id="more-card" hidden title="E.V. writes 5 new questions aimed at the weak spots due soonest and your weakest objective. It uses your Claude plan, like a chat.">
-        <span class="meta grow" id="more-status" role="status">Five new questions on what’s due soonest.</span><button type="button" id="more-btn" class="primary">Give me 5 more</button>
+        <span class="meta grow" id="more-status" role="status">Five new questions on what’s due soonest.</span><button type="button" id="more-btn" class="btn primary">Give me 5 more</button>
       </div>
     </div>
     <div id="study-practice" class="panel" hidden>
@@ -120,14 +121,13 @@
         <p class="big ws-lead" id="weak-lead"></p>
         <ul class="list" id="weak-due"></ul>
         <button type="button" class="fold-line" id="weak-due-more" aria-expanded="false" hidden></button>
-        <div id="weak-quizlet" hidden><button type="button" class="tlink" id="weak-quizlet-btn">Copy for Quizlet</button></div>
+        <div id="weak-quizlet" hidden><button type="button" class="btn ghost sm" id="weak-quizlet-btn">Copy for Quizlet</button></div>
         <button type="button" class="fold-line" id="weak-tom-fold" aria-expanded="false" aria-controls="weak-tom" hidden></button><ul class="list" id="weak-tom" hidden></ul>
         <button type="button" class="fold-line" id="weak-later-fold" aria-expanded="false" aria-controls="weak-later" hidden></button><ul class="list" id="weak-later" hidden></ul>
       </div>
       </div><div class="col-side">
       <div class="card fold-card" id="weak-preview-card" hidden><button type="button" class="fold-line" id="weak-preview-fold" aria-expanded="false" aria-controls="weak-preview"></button><ul class="list" id="weak-preview" hidden></ul></div>
-      <div class="card" id="weak-notes-card" hidden><h2>To do: notes and skills</h2><ul class="list" id="weak-notes"></ul><p class="meta" id="weak-formats" style="margin:0"></p></div>
-      <div class="card fold-card" id="weak-parked-card" hidden><button type="button" class="fold-line" id="weak-parked-fold" aria-expanded="false" aria-controls="weak-parked"></button><ul class="list" id="weak-parked" hidden></ul></div>
+      <div class="card" id="weak-notes-card" hidden><h2>Notes and skills</h2><ul class="list" id="weak-notes"></ul><p class="meta" id="weak-formats" style="margin:0"></p></div>
       <div class="card fold-card" id="weak-solid-card" hidden><button type="button" class="fold-line" id="weak-solid-fold" aria-expanded="false" aria-controls="weak-solid"></button><ul class="list" id="weak-solid" hidden></ul></div>
     </div></div></div>
     <!-- B-223 (D-245): from 1200 px the open set's questions, as a list in the right panel -->
@@ -176,7 +176,7 @@
           <select id="d-course" aria-label="Course"></select>
           <label style="display:flex;align-items:center;gap:8px;flex:0 0 auto"><input type="checkbox" id="d-graded" class="tick"> Graded</label>
         </div>
-        <div class="actions"><button class="primary" type="submit">Add date</button></div>
+        <div class="actions"><button class="btn primary" type="submit">Add date</button></div>
       </form>
     </div></div></div>
     <div id="record-journal" class="panel" hidden><div class="cols"><div class="col-main">
@@ -184,7 +184,7 @@
         <h2>New entry</h2>
         <select id="j-kind" aria-label="Kind"><option value="free">Free write</option><option value="clinical">After clinical</option><option value="weekly">Weekly reflection</option></select>
         <textarea id="j-text" placeholder="How did today go? School, health, anything on your mind. No patient details." required></textarea>
-        <div class="actions"><span class="meta grow" id="j-warn" role="status"></span><button class="primary" type="submit">Save entry</button></div>
+        <div class="actions"><span class="meta grow" id="j-warn" role="status"></span><button class="btn primary" type="submit">Save entry</button></div>
       </form>
       </div><div class="col-side"><div class="card"><h2>Entries</h2><ul class="list" id="journal"></ul></div>
     </div></div></div>
@@ -199,7 +199,7 @@
   <!-- SYSTEM -->
   <section class="panel" id="p-system" role="tabpanel" aria-labelledby="tab-system" hidden>
     <h2 class="ptitle">System</h2>
-    <!-- B-119 (D-148, D-150, D-151): one lead line, the pipeline and run lists folded under it with only exceptions
+    <!-- B-119 (D-148, D-276, D-151): one lead line, the pipeline and run lists folded under it with only exceptions
          marked; Background jobs, Capacity and Checks absent while empty; versions and privacy two quiet lines. -->
     <div class="cols"><div class="col-main">
     <div class="card" id="health"><div id="health-top"></div>
@@ -212,12 +212,7 @@
     <div class="card fold-card" id="lint-card" hidden><button type="button" class="fold-line" id="lint-card-line" aria-expanded="false" aria-controls="lint-body">Checks</button><div id="lint-body" hidden><ul class="list" id="lint"></ul></div></div>
     <!-- B-214 (D-211): the theme, this device's own: the system's, or light or dark -->
     <div class="card" id="theme-card"><h2>Preferences</h2>
-      <div class="pref"><span class="lbl" id="theme-lbl">Theme</span><div class="seg theme-seg" id="theme-seg" role="group" aria-labelledby="theme-lbl"><button type="button" data-t="system" aria-pressed="true">System</button><button type="button" data-t="light" aria-pressed="false">Light</button><button type="button" data-t="dark" aria-pressed="false">Dark</button></div></div>
-      <!-- B-271 (D-268): contrast, this device's own; the generator runs again with it -->
-      <div class="pref"><span class="lbl" id="contrast-lbl">Contrast</span><div class="seg theme-seg" id="contrast-seg" role="group" aria-labelledby="contrast-lbl"><button type="button" data-c="30" aria-pressed="false">30</button><button type="button" data-c="60" aria-pressed="true">60</button><button type="button" data-c="100" aria-pressed="false">100</button></div></div>
-      <!-- B-224 (D-229): text size and motion, this device's own -->
-      <div class="pref"><span class="lbl" id="text-lbl">Text size</span><div class="seg theme-seg" id="text-seg" role="group" aria-labelledby="text-lbl"><button type="button" data-p="default" aria-pressed="true">Default</button><button type="button" data-p="larger" aria-pressed="false">Larger</button></div></div>
-      <div class="pref"><span class="lbl" id="motion-lbl">Reduce motion</span><div class="seg theme-seg" id="motion-seg" role="group" aria-labelledby="motion-lbl"><button type="button" data-p="system" aria-pressed="true">Follow the system</button><button type="button" data-p="reduce" aria-pressed="false">On</button></div></div>
+      <!-- B-214, B-271, B-224: Theme, Contrast, Text size and Reduce motion, this device's own; B-303: built by the System part (50) -->
       <p class="meta" id="theme-note">On this device only.</p></div>
     <p class="meta sys-foot" id="versions"></p>
     <p class="meta sys-foot" id="sys-privacy"><span id="sys-note">E.V. logs your conversations to your record. Only you can read it.</span> <span id="sys-staging" hidden>Staging copy. Jobs here run the staging worker on the staging record.</span></p>

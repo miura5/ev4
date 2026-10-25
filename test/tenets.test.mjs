@@ -29,7 +29,7 @@ const failing = s =>
     .map(c => c.tenet);
 
 test('B-115: the look pass checks D-146 to D-151 at 390, 735 and 1280, with E.V. on and the other tabs reporting', () => {
-  assert.deepEqual(spec.ui.tenets.checks, ['D-146', 'D-147', 'D-148', 'D-150', 'D-151', 'D-160']);
+  assert.deepEqual(spec.ui.tenets.checks, ['D-146', 'D-147', 'D-148', 'D-151', 'D-160', 'D-276']);
   assert.deepEqual(spec.ui.tenets.onFor, { 'D-160': ['ev', 'study'] });
   assert.deepEqual(spec.ui.tenets.widths, [390, 735, 1280]);
   assert.deepEqual(
@@ -94,10 +94,14 @@ test('B-115: the other checks each fail on what their tenet forbids', () => {
   assert.deepEqual(failing(tall), ['D-148']);
   const chips = ev();
   chips.chips.push('due', 'graded');
-  assert.deepEqual(failing(chips), ['D-150']);
+  assert.deepEqual(failing(chips), ['D-276']);
   const mono = ev();
   mono.monoOrSpacedCaps = 2;
-  assert.deepEqual(failing(mono), ['D-150']);
+  assert.deepEqual(failing(mono), ['D-276']);
+  // B-303 (D-276): never two badges on a row
+  const badges = ev();
+  badges.twoBadges = ['Exam 4 (2)'];
+  assert.deepEqual(failing(badges), ['D-276']);
   const talk = ev();
   talk.step = 'conversation';
   assert.deepEqual(failing(talk), ['D-151'], 'chips shown in a conversation');

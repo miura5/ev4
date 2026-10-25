@@ -118,7 +118,7 @@
           inp.inputMode = 'numeric';
           inp.placeholder = 'Reps into the next round, e.g. 12';
           inp.setAttribute('aria-label', 'Extra reps');
-          const sb = el('button', 'primary', 'Save');
+          const sb = el('button', 'btn primary', 'Save');
           sb.type = 'submit';
           const a = el('div', 'actions');
           a.append(sb);

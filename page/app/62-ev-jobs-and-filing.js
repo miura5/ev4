@@ -423,7 +423,7 @@
               detail: `Running for ${mins(j.startedAt)} min. It may have stalled.`,
               retry: !forBuilder,
             }
-          : { label: 'running', v: 'info', detail: 'Working on it since ' + clock12(j.startedAt) + '.' };
+          : { label: 'running', v: 'info', detail: 'Running since ' + clock12(j.startedAt) + '.' };
       if (!j.fired) return { label: 'queued', v: '', detail: `Handing it to ${who}…` };
       return mins(j.fired.at) > stall
         ? { label: 'queued', v: 'warn', detail: `No word from ${who} in ${stall} minutes.`, retry: !forBuilder }

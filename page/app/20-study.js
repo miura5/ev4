@@ -262,61 +262,6 @@
       });
       return b;
     }
-    function practiceLine(x, o = {}) {
-      // a set as one line, opening in place to its actions
-      const items = E.validItems(x),
-        ans = answersOf(x),
-        n = items.filter(q => ans[q.id]).length,
-        r = items.filter(q => ans[q.id] && ans[q.id].correct).length;
-      const k = 'pr:' + x.id,
-        open = !!sumOpen[k];
-      const li = el('li', 'row pr-item' + (open ? ' open' : ''));
-      li.dataset.id = x.id;
-      const line = el('button', 'pr-line');
-      line.type = 'button';
-      line.setAttribute('aria-expanded', String(open));
-      line.append(
-        el('span', 'pr-t', x.title || x.id),
-        el(
-          'span',
-          'pr-s',
-          n === items.length
-            ? r + ' of ' + n + ' right'
-            : n
-              ? n + ' of ' + items.length
-              : plural(items.length, 'question')
-        )
-      );
-      line.addEventListener('click', () => {
-        sumOpen[k] = !open;
-        render();
-      });
-      const acts = el('div', 'pr-acts');
-      acts.hidden = !open;
-      if (n === items.length)
-        acts.append(
-          btn('Review', () => {
-            ui.openSet = x.id;
-            views['pr-' + x.id] = '__summary';
-            render();
-          }),
-          btn('Retake', () => {
-            ui.openSet = x.id;
-            retake(x, 'pr-' + x.id);
-          })
-        );
-      else
-        acts.append(
-          btn(n ? 'Continue' : 'Start', () => {
-            ui.openSet = x.id;
-            render();
-          })
-        );
-      const g = el('div', 'grow');
-      g.append(line, acts);
-      li.append(g);
-      return li;
-    }
     function renderPractice() {
       const body = $('pr-body');
       const list = practiceSets();
@@ -325,16 +270,16 @@
       const of = d && ui.openObj && ui.openObj.set === d.id ? ui.openObj : null;
       if (!of) ui.openObj = null;
       $('pr-prog').hidden = !d;
-      // B-191 (D-160): an open set folds back into the list from its own head line (its title with a chevron), never a
-      // Close button; every answer stays saved (each is written as he checks it) and it reopens on the question he left.
+      // B-191 (D-160): an open set folds back from its own head line (its title with a chevron), never a Close button;
+      // every answer stays saved (each is written as he checks it) and it reopens on the question he left. B-303 (D-283):
+      // there is no list of sets to fold back into, so the head line goes back to Objectives, as the toolbar's way back.
       let fold = $('pr-fold');
       if (!fold) {
         fold = foldLine('', true, () => {
-          const id = fold.dataset.set || '';
           ui.openSet = null;
+          ui.openObj = null;
+          setStudy('objectives');
           render();
-          const li = document.querySelector('#pr-body [data-id="' + CSS.escape(id) + '"]');
-          if (li) li.scrollIntoView({ block: 'nearest' });
         });
         fold.id = 'pr-fold';
         fold.classList.add('pr-fold');
@@ -345,72 +290,14 @@
       if (d) {
         fold.dataset.set = d.id;
         fold.textContent = d.title || 'Practice';
-        fold.setAttribute(
-          'aria-label',
-          (d.title || 'This set') + ': fold it back into the list; your answers are kept'
-        );
+        fold.setAttribute('aria-label', (d.title || 'This set') + ': back to Objectives; your answers are kept');
       }
       if (!d) {
+        // B-303 (D-283): the Practice list of sets is retired; a set opens from an objective's Quiz me, Today's row or
+        // her card, so with none open the view goes back to Objectives.
         if ($('pr-share')) $('pr-share').hidden = true;
-        $('pr-title').textContent = 'Drills and practice';
-        $('pr-count').textContent = list.length ? plural(list.length, 'set') : '';
-        if (!list.length) {
-          body.replaceChildren(
-            el('p', 'empty', 'E.V. builds drills from your exam plan, and More practice adds sets here.')
-          );
-          return;
-        }
-        // B-126 (D-165): led by the set to do next and its Start; the other open sets one line each; finished sets fold,
-        // each opening to Review and Retake. No pills: the titles already say Drill or More practice.
-        const todo = list.filter(unfinished),
-          done = list.filter(x => !unfinished(x)),
-          kids = [];
-        const lead = todo[0],
-          box = el('div', 'pr-lead');
-        if (lead) {
-          const items = E.validItems(lead),
-            ans = answersOf(lead),
-            n = items.filter(q => ans[q.id]).length;
-          box.append(
-            el('p', 'big', lead.title || lead.id),
-            el(
-              'p',
-              'meta',
-              [plural(items.length, 'question'), n ? n + ' answered' : '', lead.exam, short(lead.createdAt)]
-                .filter(Boolean)
-                .join(' · ')
-            ),
-            btn(
-              n ? 'Continue' : 'Start',
-              () => {
-                ui.openSet = lead.id;
-                render();
-              },
-              { primary: true }
-            )
-          );
-        } else box.append(el('p', 'big', 'Every set is done'), ...(sample ? [giveFive()] : []));
-        kids.push(box);
-        if (todo.length > 1) {
-          const ul = el('ul', 'list');
-          todo.slice(1, 6).forEach(x => ul.append(practiceLine(x)));
-          kids.push(ul);
-        }
-        if (done.length) {
-          const open = !!ui.prDoneOpen,
-            ul = el('ul', 'list');
-          ul.id = 'pr-done';
-          ul.hidden = !open;
-          done.forEach(x => ul.append(practiceLine(x)));
-          const f = foldLine(plural(done.length, 'finished set'), open, () => {
-            ui.prDoneOpen = !open;
-            render();
-          });
-          f.id = 'pr-done-fold';
-          f.setAttribute('aria-controls', 'pr-done');
-          kids.push(f, ul);
-        }
-        body.replaceChildren(...kids);
+        body.replaceChildren();
+        if (ui.study === 'practice') setStudy('objectives'); // Objectives was drawn earlier in this pass
         return;
       }
       $('pr-title').textContent = d.title || 'Practice';
@@ -450,11 +337,6 @@
           const a = el('div', 'actions');
           const sh = shareButton(d);
           a.append(
-            btn('All sets', () => {
-              delete retakes[d.id];
-              ui.openSet = null;
-              render();
-            }),
             ...(sh ? [sh] : []),
             btn('Retake', () => retake(d, 'pr-' + d.id))
           );

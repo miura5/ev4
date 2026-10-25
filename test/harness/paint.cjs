@@ -109,8 +109,53 @@ async function studyView(page, v) {
     await page.waitForTimeout(150);
     if (!(await shown())) await page.click('#seg-study [data-v="objectives"]').catch(() => {});
   }
-  if (await page.isVisible('#pr-fold')) await page.click('#pr-fold'); // back to the list of sets
   await page.waitForTimeout(100);
   return shown();
 }
-module.exports = { paintAnswer, painted, studyView };
+/**
+ * B-303 (D-283): with the Practice list retired, a set opens where he meets it: here through a row of today's list
+ * naming it (sets/<id>, as the morning or E.V. writes one), planted for the open and taken out again so no later check
+ * sees it, both kept out of the page's own writes. Then the row's Start (or Open) in its task panel. Ends with the set
+ * in Study's quiz card; returns whether it shows.
+ */
+async function openSet(page, id) {
+  const plant = add =>
+    page.evaluate(
+      async ({ id, add }) => {
+        const today = window.EVCore.chicagoDate(new Date()),
+          set = (window.__db.sets || {})[id];
+        const db = await window.claude.use('db'),
+          ref = db.collection('days').doc(today),
+          d = (await ref.get()).data() || { list: { items: [] } };
+        d.list = d.list || { items: [] };
+        d.list.items = (d.list.items || []).filter(i => i.id !== 'harness-open-' + id);
+        if (add)
+          d.list.items.unshift({
+            id: 'harness-open-' + id,
+            text: (set && set.title) || id,
+            tag: 'PRACTICE',
+            minutes: 5,
+            ref: 'sets/' + id,
+          });
+        await ref.set(d);
+        window.__writes.pop();
+      },
+      { id, add }
+    );
+  await plant(true);
+  if (await page.isVisible('#study-back')) await page.click('#study-back');
+  await page.click('#tab-today');
+  await page.waitForTimeout(150);
+  const fold = page.locator('#today-list .ti-fold[aria-expanded="false"]');
+  const title = await page.evaluate(id => ((window.__db.sets || {})[id] || {}).title || id, id);
+  const nm = page.locator('#today-list .ti-nm').filter({ hasText: title });
+  if (!(await nm.count()) && (await fold.count())) await fold.first().click();
+  await nm.first().click();
+  const go = '#today-task :is(.tp-start, .tp-open)';
+  if (await page.waitForSelector(go, { state: 'visible', timeout: 1500 }).catch(() => null)) await page.click(go);
+  await page.waitForTimeout(150);
+  await plant(false);
+  await page.waitForTimeout(100);
+  return page.evaluate(() => !document.getElementById('study-practice').hidden);
+}
+module.exports = { paintAnswer, painted, studyView, openSet };

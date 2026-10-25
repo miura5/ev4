@@ -199,7 +199,7 @@
     }
     // A row that can start: not done, not graded, not over the budget, and something to open (a review or practice set).
     const startable = (it, isDone) => !isDone(it) && !it.deferred && it.tag !== 'GRADED' && !!openItem(it);
-    // A fold under the list: one line that opens in place to its rows (D-150).
+    // A fold under the list: one line that opens in place to its rows (D-276).
     function todayFold(key, label, rows, open) {
       const f = el('button', 'fold-line ti-fold');
       f.type = 'button';
@@ -214,7 +214,7 @@
       });
       return [f, ul];
     }
-    function itemRow(it, isDone, o = {}) {
+    function itemRow(it, isDone) {
       const doneNow = isDone(it);
       const go = openItem(it);
       const detail = [
@@ -225,13 +225,6 @@
       ]
         .filter(Boolean)
         .join(' · ');
-      const rm = o.remove && it.added ? btn('Remove', null, { cls: 'quiet' }) : null;
-      if (rm) {
-        rm.setAttribute('aria-label', 'Remove from today: ' + it.text);
-        rm.addEventListener('click', () =>
-          guard(rm, () => editList(today, { action: 'remove', id: it.id }, 'Matt'), 'Removed')
-        );
-      }
       return row({
         title: it.text,
         detail,
@@ -248,7 +241,7 @@
             guard(c, () => tickWrite(it, on), on ? 'Checked off' : 'Unchecked');
           },
         },
-        action: go ? btn('Open', go) : rm,
+        action: go ? btn('Open', go, { cls: 'btn ghost sm' }) : null,
       });
     }
     /**
@@ -1113,11 +1106,12 @@
     }
     function dateRow(d, o = {}) {
       // o.edit: Remove (or Bring back) for entries that can leave the calendar (D-080)
-      const kindV = { exam: 'accent', validation: 'warn', clinical: 'ok', due: 'info' }[d.kind] || '';
+      const kindV = { exam: 'bad', validation: 'warn', clinical: 'ok', due: 'info' }[d.kind] || '';
       const off = E.isRemovedDate(d);
       const by = w => (w === 'Matt' ? 'you' : 'E.V.');
-      const action = o.edit ? dateEditButton(d, 'Remove', 'quiet') : null;
+      const action = o.edit ? dateEditButton(d, 'Remove', 'btn ghost sm') : null;
       const detail = [
+        d.graded ? 'graded' : '', // B-303 (D-276): the kind is the row's one badge
         d.course && d.course !== E.defaultCourse() ? d.course : '',
         d.notes,
         off ? 'taken off by ' + by(d.removed.by) : '',
@@ -1129,7 +1123,7 @@
         lead: short(d.date),
         title: d.title || '',
         detail,
-        chips: [d.kind ? [d.kind, kindV] : null, d.graded ? ['graded', 'bad'] : null],
+        chips: d.kind ? [[d.kind.charAt(0).toUpperCase() + d.kind.slice(1), kindV]] : [],
         action,
       });
     }

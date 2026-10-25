@@ -816,7 +816,7 @@
         bar.setAttribute('aria-label', 'Study session: ' + (s.topic || 'untitled'));
         bar.title = s.topic || '';
         const acts = el('div', 's-acts');
-        acts.append(...sessButtons(s, st, ending));
+        acts.append(...sessButtons(s, st, ending, { cls: 'btn ghost sm' })); // B-303 (D-278): ghost, the header's quiet measure
         bar.replaceChildren(led, main, acts);
       }
       if (COMMENT) {

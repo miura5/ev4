@@ -145,7 +145,7 @@
       const sel =
         sels[key + q.id] ||
         (sels[key + q.id] = type === 'matrix' ? [] : type === 'numeric' || type === 'open' ? { v: '' } : new Set());
-      // B-116 (D-146, D-150): the stem leads; what kind of question it is follows as one quiet line, no chips, no second count.
+      // B-116 (D-146, D-276): the stem leads; what kind of question it is follows as one quiet line, no chips, no second count.
       const tags = el(
         'p',
         'meta q-tags',

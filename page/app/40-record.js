@@ -1,30 +1,5 @@
     // ------------------------------------------------------------ Record
     const IDEA_KIND = { learning: 'Learning', feature: 'Feature', general: 'General' };
-    const promote = i =>
-      btn('Make it a weak spot', ev =>
-        guard(
-          ev.target,
-          async () => {
-            const at = now();
-            const id = E.safeId('ws-idea-' + i.id);
-            const facts = {
-              ...envelope('Promoted idea', at),
-              topic: String(i.text || '').slice(0, 140),
-              objective: i.objective || '',
-              exam: String(i.objective || '').split('-')[0] || '',
-              course: E.defaultCourse(),
-              kind: 'concept',
-              addedBy: 'page',
-              origin: { idea: i.id },
-              initial: { streak: 0, nextDue: E.addDays(today, 1), recurrence: 1, misses: 0 },
-              events: {},
-            };
-            await write({ op: 'set', collection: 'weakspots', id, data: facts });
-            await write({ op: 'update', collection: 'ideas', id: i.id, data: { status: 'promoted', weakspotId: id } });
-          },
-          'Now a weak spot'
-        )
-      );
     // B-302 (C-1, C-7, C-13): Record's log, the first of its views. Everything he logged, newest first and grouped by
     // day, one row each (32 px from 600 px, 44 px on the phone): its one badge (Session, Quiz, Note or Workout), its
     // name, its result and its time, all on the row's line. The type tabs (All, Sessions, Quizzes, Notes) and the
@@ -315,7 +290,7 @@
           .filter(Boolean)
           .join(' · ');
         if (src) parts.push(el('p', 'meta', src));
-        // D-109: a kind control on every idea; only a learning idea can become a weak spot
+        // D-109: a kind control on every idea; B-303 (D-290): no idea becomes a weak spot or a plan item
         const acts = el('div', 'idea-acts');
         const sel = document.createElement('select');
         sel.setAttribute('aria-label', 'Kind of note');
@@ -335,11 +310,6 @@
           )
         );
         acts.append(sel);
-        if (i.status !== 'promoted' && (i.kind || 'learning') === 'learning') {
-          const p = promote(i);
-          p.className = 'btn neutral sm';
-          acts.append(p);
-        }
         parts.push(acts);
       } else if (x.detail) parts.push(el('p', 'rec-desc', x.detail));
       d.replaceChildren(...parts);

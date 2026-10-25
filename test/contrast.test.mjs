@@ -99,10 +99,16 @@ test('B-271: both modes set the same tokens; the system scheme rules unless the 
   assert.match(shell, /localStorage\.getItem\('ev\.theme'\)/, 'the shell reads the stored toggle before first paint');
   assert.match(shell, /<script>\{\{THEME\}\}<\/script>/, 'the shell runs the generator in its head');
   assert.match(shell, /<meta name="color-scheme" content="light dark">/);
+  // B-303: System's Preferences card builds its switches in script (the shell's budget); the sidebar's are in the shell
+  assert.match(
+    flatSource('page/app/50-system.js'),
+    /\['contrast', 'Contrast', 'c', \[\['30'\], \['60'\], \['100'\]\]\]/,
+    'Preferences has Contrast'
+  );
   assert.match(
     shell,
-    /id="contrast-seg"[\s\S]*data-c="30"[\s\S]*data-c="60"[\s\S]*data-c="100"/,
-    'Preferences has Contrast'
+    /id="side-contrast-seg"[\s\S]*data-c="30"[\s\S]*data-c="60"[\s\S]*data-c="100"/,
+    'the sidebar has Contrast'
   );
   assert.match(fs.readFileSync(path.join(ROOT, 'page', 'theme.js'), 'utf8'), /localStorage\.getItem\('ev\.contrast'\)/);
 });

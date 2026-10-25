@@ -17,7 +17,7 @@
   --warn:var(--att); --warn-solid:var(--att); --warn-bg:rgba(var(--att-rgb),.13);
   --bad:var(--urg); --bad-solid:var(--urg); --bad-bg:rgba(var(--urg-rgb),.13);
   --info:var(--quiet); --info-bg:rgba(var(--tint),.07); --card:var(--glass);
-  --sans:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace; /* B-89: one font, the system UI font; --mono is for code only */ --serif:var(--sans);
+  --sans:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace; /* B-89: one font; B-303: Inter (Google Fonts), the system UI font while it loads or if it can't; --mono is for code only */ --serif:var(--sans);
   --r:22px; --tap:44px; --top-h:53px; --dock-h:0px; --ease:cubic-bezier(.2,.7,.2,1);
 }
 @media (prefers-color-scheme:light){:root:not([data-theme="dark"]){color-scheme:light}}
@@ -780,6 +780,7 @@ body.captions.on-ev .wrap{max-width:680px}
 /* B-211 (D-217): the session bar sits in the pane header; answers carry their key number */
 .mh .sbar{flex:0 1 auto;margin:0 0 0 auto;min-height:28px;justify-content:flex-end;gap:6px;font:500 calc(13px * var(--ts)) var(--sans);color:var(--quiet)}
 .mh .sbar[hidden]{display:none}
+.mh .sbar button.btn{height:28px;min-height:28px} /* B-303: the session line's Break, +5 and End stay one quiet 28 px line, at every width */
 .mh .sbar .s-main{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mh .sbar button{min-height:28px;padding:0 8px;border-radius:8px;color:var(--quiet);font:500 calc(13px * var(--ts)) var(--sans)}
 .mh .sbar button:hover{background:var(--surface);color:var(--text)}
@@ -807,7 +808,7 @@ body.captions.on-ev .wrap{max-width:680px}
 .sk-panel .sk-head{min-width:0}
 .sk-panel .sk-pfold{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
 
-/* ============================================================ B-213 (D-225, D-150, D-270): Today, Study, Progress and
+/* ============================================================ B-213 (D-225, D-276, D-270): Today, Study, Progress and
    Record in C. A view is sections of rows under a quiet heading, not stacked boxes: rows 44 px on the phone and 32 px
    from 600 px wide; the one thing to do now keeps its box (surface, hairline); the switch is the pane header's from
    600 px (a full-width row on the phone); the right panel's cards sit on the ground with a hairline; status is a
@@ -952,6 +953,7 @@ button.btn:disabled{opacity:.45;cursor:default}
 .badge::before{content:"";width:6px;height:6px;border-radius:3px;background:var(--x,var(--faint));flex:none}
 .badge.proposed{--x:var(--sem-blue)}
 .badge:is(.x-green,.x-yellow,.x-red,.x-blue,.x-violet,.proposed){background:color-mix(in srgb,var(--x) 13%,var(--surface));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--x) 45%,var(--line2))}
+.title .row-badge{margin-left:6px;vertical-align:1px;height:20px} /* B-303: a kit row's one badge, after its name */
 /* segmented switch: grey, the picked option on the ground; it says which is picked (aria-pressed or aria-checked, C-15) */
 .seg{display:inline-flex;gap:2px;padding:2px;border:0;border-radius:8px;background:var(--sunken);box-shadow:inset 0 0 0 1px var(--line);align-self:flex-start;max-width:100%;overflow-x:auto;scrollbar-width:none}
 .seg button{flex:0 0 auto;min-height:26px;padding:0 10px;border:0;border-radius:6px;background:none;color:var(--faint);font:500 calc(13px * var(--ts)) var(--sans);cursor:pointer}
