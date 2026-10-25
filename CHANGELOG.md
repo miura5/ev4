@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 25 | v4 staging deployed at 4bd6c5c (06:58 CT), from 5697c2c: Fidelity; Fidelity (B-338, B-339). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at 5697c2c (06:57 CT), from 4f8e14b: Every job through the API; Fidelity (B-324, B-341). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at 4f8e14b (06:49 CT), from 117bbe9: Every job through the API; Fidelity (B-324, B-332). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at 117bbe9 (06:11 CT), from baecb10: The Worker's run API; Sweep (B-312, B-303). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
