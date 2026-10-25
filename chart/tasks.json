@@ -7084,7 +7084,7 @@
   "milestone": "v5 app",
   "status": "in progress",
   "depends": [],
-  "notes": "Taken in pwa1: keep a refused line while he types, no E.V. reply to a refused line, refuse a scalar create collision, and the tests for each.",
+  "notes": "33270a0: a refused line goes back into the box even while he types (refused words first, then his new ones); mattSay rejects on a refused save, so sendText, quick asks, build asks and attach stop before any model call or builder job; a create race colliding on a field is refused with e.unsaved (the top-level envelope stays the first maker's); every failed save carries e.unsaved. Shim tests: retry that conflicts again, network failure, scalar collision. smoke:pwa step forces a refused send while he types: words kept, no E.V. reply, no /api/claude call (red without the page fix). npm test (639), smoke:pwa (25) and npm run smoke green locally; pwa-staging run 40233423210 green at 33270a0. CI npm test red at 33270a0 (twice), log unreadable through the proxy; not reproduced in a clean clone with CI=true; 5f5925b, the same code plus chart notes, is green; the red runs began at B-326's 00eda32. Not marked done: a fresh review is next.",
   "commit": null,
   "source": "B-389 second review, Oct 25",
   "words": "In the PWA a refused conversation line is still lost if he has started typing, E.V. still answers a line the record refused, and a create race silently drops the page's value for a field both sides set.",
