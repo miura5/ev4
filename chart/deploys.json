@@ -4563,5 +4563,22 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "542407c",
+  "time": "2026-10-25T14:19:28.162Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "130bb87",
+  "tasks": [
+   "B-362",
+   "B-365"
+  ],
+  "summary": "The UI review found E.V.'s conversation differs from the demo:…; The UI review found Study differs from the demo on both records:…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
