@@ -1,0 +1,94 @@
+# B-311: the app's staging pair on Matt's Cloudflare account: the ev-staging D1 (found, or created once) holding the
+# made-up record only (test/data/synthetic.cjs through pwa/seed.mjs, seeded only while the database is empty, so
+# nothing is ever deleted there), and the ev-staging Worker serving the staging page with its own token. Then the
+# check: /api/db answers 401 without the token, and with it the counts per collection equal the seed's.
+# Started by hand only (gh workflow run pwa-staging.yml): never on a push or a pull request, and staging only; the live
+# Worker and a live D1 are never named here. Secrets reach wrangler and the check through the environment or stdin,
+# never on a command line or in the log.
+name: pwa-staging
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pwa-staging
+  cancel-in-progress: false
+jobs:
+  staging:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      EV_STAGING_TOKEN: ${{ secrets.EV_STAGING_TOKEN }}
+      ANTHROPIC_API_KEY_STAGING: ${{ secrets.ANTHROPIC_API_KEY_STAGING }}
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - name: the four secrets are set
+        run: |
+          missing=""
+          for v in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID EV_STAGING_TOKEN ANTHROPIC_API_KEY_STAGING; do
+            [ -n "${!v}" ] || missing="$missing $v"
+          done
+          if [ -n "$missing" ]; then echo "missing Actions secrets:$missing"; exit 1; fi
+          echo "all four set"
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            pwa/package-lock.json
+      - run: npm ci
+      - run: npm ci --prefix pwa
+      - name: build the staging page and wrap it
+        working-directory: pwa
+        run: npm run build
+      - name: find or create the ev-staging D1
+        working-directory: pwa
+        run: |
+          id_of() { npx wrangler d1 list --json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const d=JSON.parse(s).find(x=>x.name==="ev-staging");process.stdout.write(d?d.uuid:"")})'; }
+          id=$(id_of)
+          if [ -z "$id" ]; then npx wrangler d1 create ev-staging >/dev/null; id=$(id_of); fi
+          [ -n "$id" ] || { echo "ev-staging D1 not found after create"; exit 1; }
+          echo "ev-staging D1: $id"
+          sed -i "s/filled-in-by-the-pwa-staging-workflow/$id/" wrangler.toml
+          grep -q "database_id = \"$id\"" wrangler.toml
+      - name: the schema, and the made-up record while the database is empty
+        working-directory: pwa
+        run: |
+          npx wrangler d1 execute ev-staging --env staging --remote --file schema.sql >/dev/null
+          n=$(npx wrangler d1 execute ev-staging --env staging --remote --json --command "SELECT COUNT(*) AS n FROM docs" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>process.stdout.write(String(JSON.parse(s)[0].results[0].n)))')
+          echo "documents before: $n"
+          if [ "$n" = "0" ]; then
+            node seed.mjs --append > seed.sql
+            npx wrangler d1 execute ev-staging --env staging --remote --file seed.sql >/dev/null
+            echo "seeded with the made-up record"
+          else
+            echo "not empty: left as it is"
+          fi
+      - name: deploy the ev-staging Worker
+        id: deploy
+        working-directory: pwa
+        run: |
+          npx wrangler deploy --env staging > deploy.log 2>&1 || { cat deploy.log; exit 1; }
+          url=$(grep -o 'https://ev-staging\.[a-z0-9.-]*\.workers\.dev' deploy.log | head -1)
+          [ -n "$url" ] || { cat deploy.log; echo "no workers.dev address in the deploy output"; exit 1; }
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "ev-staging Worker: $url"
+      - name: the Worker's secrets, from the Actions secrets
+        working-directory: pwa
+        run: |
+          printf '%s' "$EV_STAGING_TOKEN" | npx wrangler secret put EV_TOKEN --env staging >/dev/null
+          printf '%s' "$ANTHROPIC_API_KEY_STAGING" | npx wrangler secret put ANTHROPIC_API_KEY --env staging >/dev/null
+          echo "EV_TOKEN and ANTHROPIC_API_KEY set on ev-staging"
+      - name: check (401 without the token; counts per collection equal the seed's with it)
+        env:
+          EV_TOKEN: ${{ secrets.EV_STAGING_TOKEN }}
+        run: |
+          for i in 1 2 3 4 5 6; do
+            if node tools/pwa-staging.mjs check "${{ steps.deploy.outputs.url }}"; then exit 0; fi
+            echo "retrying in 10 s (a new secret can take a moment to reach the Worker)"; sleep 10
+          done
+          exit 1

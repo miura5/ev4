@@ -12,3 +12,15 @@ binding = "ASSETS"
 binding = "DB"
 database_name = "ev-demo"
 database_id = "paste-the-id-from-d1-create"
+
+# B-311: staging, its own Worker over its own D1, seeded with the made-up record only. Deployed only by the
+# pwa-staging workflow (.github/workflows/pwa-staging.yml), which fills in the database id it finds or creates; the
+# Worker's EV_TOKEN and ANTHROPIC_API_KEY secrets come from the repository's Actions secrets. Never live.
+[env.staging]
+name = "ev-staging"
+workers_dev = true
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "ev-staging"
+database_id = "filled-in-by-the-pwa-staging-workflow"
