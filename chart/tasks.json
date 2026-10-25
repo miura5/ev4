@@ -5702,12 +5702,12 @@
   "title": "Every job through the API (D-308): \"Give me 5 more\", practice sets, exam plans, study guides and the other worker job kinds in spec.jobs run from the app through the Worker on Haiku. The page sends the kind's guide with the passages, objectives and weak spots it already gathers; the reply passes the same core checks the worker run applies, then is written to D1 as jobresults/<id>, what the job made, and one message in talk/<date>. A study guide is saved in E.V. instead of as a Claude Doc. Builder kinds stay off the app (D-304).",
   "dod": "npm run smoke:pwa runs one job of each kind against a stub and reads its result back from D1; a planted reply that fails the core checks writes nothing; a brief asking for help on graded work is refused before any call (B-01). On staging, one real Haiku job of each kind is read back from staging D1. No job waits on a scheduled run. npm test green.",
   "milestone": "app (data, pipelines, ops)",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-311",
    "B-314"
   ],
-  "notes": "",
+  "notes": "claimed by lane app",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
