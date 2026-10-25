@@ -1,5 +1,17 @@
 [
  {
+  "id": "D-324",
+  "date": "Oct 25",
+  "title": "Matt overrides the graded-work and patient-identifier rules (boundaries B-01 and B-04): E.V. no longer checks for, flags, holds or blocks anything as graded work or as a patient identifier, on the page, in the runs, their prompts or the tests. Matt is accountable for both himself. The other hard limits stand (nothing deleted, Canvas and Quizlet read-only, nothing posted as Matt, no passwords, owner-only record).",
+  "why": "Matt, Oct 25: the checks falsely flagged his own study material and broke his study immersion; he never records patient details and does not use AI on graded work; he asked for the override as the sole user.",
+  "status": "accepted",
+  "supersedes": [
+   "D-206"
+  ],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-323",
   "date": "Oct 25",
   "title": "Amends D-321: ids are copied exactly, spaces and any letter included; a slash, a control character, '.' and '..' are refused, since a claude.ai record's document id is one path segment and can never hold a slash.",
@@ -1401,7 +1413,7 @@
   "date": "Oct 22",
   "title": "A scheduled run never passes a possible identifier on its own judgment; it holds it and Matt answers on the page",
   "why": "Oct 22: the staging restore drill's own safety review refused writing its practice verdict on the Oct 19 checklist DOB ('Auto-Mode Bypass'). Matt chose 'Ask me on the page' (job job-20261022-132435-b-163): a run holds a fresh candidate ([left out]) and keeps it in idchecks as by held; Your turn lists it (where and what kind, never the value) with It's made up / Keep it out, kept as <key>-matt, which every later run reads first. A restore drill leaves a document holding one as the record has it and ends partial until he answers. B-04 unchanged; amends B-197's run-side judgment.",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [],
   "amends": [],
   "source": "log"
