@@ -7075,5 +7075,22 @@
    "outcome": "task",
    "at": "2026-10-25T20:32:08.181Z"
   }
+ },
+ {
+  "id": "B-394",
+  "kind": "bug",
+  "title": "Bug (reported Oct 25): In the PWA a refused conversation line is still lost if he has started typing, E.V. still answers a line the record refused, and a create race silently drops the page's value for a field both sides set.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "B-389 second review, Oct 25",
+  "words": "In the PWA a refused conversation line is still lost if he has started typing, E.V. still answers a line the record refused, and a create race silently drops the page's value for a field both sides set.",
+  "reportedAt": "2026-10-25T20:53:36.837Z",
+  "board": {
+   "row": "v4 B-394: In the PWA a refused conversation line is still lost if he has…"
+  }
  }
 ]
