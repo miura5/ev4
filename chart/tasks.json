@@ -5608,7 +5608,7 @@
    "B-315",
    "B-316"
   ],
-  "notes": "Code half at 865b386: second review confirmed the full backup, system-doc handling, mid-dump safety, exact ids and byte-identical live prompts; its one open item (hash form of non-canonical page saves) moved to B-398; fails safe (a drill would flag, never lose). Next: ship staging, then the task half with Matt at his Mac.",
+  "notes": "Proved on staging with Matt present: evening-mac (trig_01Gxz5Yv4Q21UrdY8kK6iYza) ran ok as runs/evening-mac-20261025-223227266 and wrote the backup to E.V. Backups/staging; restore-drill (trig_01P9SCjuNLjRxbzWgZBnHBEk) ran ok as runs/restore-drill-20261025-230809312: 770 documents in 22 collections, counts and SHA-256 match after restore into the scratch D1. Old staging Mac tasks disabled. Done after the staging ship that carries B-397 and B-399 goes GREEN.",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
