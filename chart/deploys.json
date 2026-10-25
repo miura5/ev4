@@ -4318,5 +4318,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "17cbed0",
+  "time": "2026-10-25T12:37:27.109Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "073288a",
+  "tasks": [
+   "B-349"
+  ],
+  "summary": "Fidelity fix: Today's week panel shows an item without the demo's…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]

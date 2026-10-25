@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 25 | v4 staging deployed at 17cbed0 (07:37 CT), from 073288a: Fidelity fix: Today's week panel shows an item without the demo's… (B-349). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at 073288a (07:36 CT), from 662a8b3: Backups; Fidelity fix: Study's Weak spots tab is still the old screen: a large…; Fidelity fix: Record's Dates, Journal, Canvas and Library tabs were… (B-316, B-347, B-350). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at 662a8b3 (07:21 CT), from ac5415a: Fidelity fix: on the phone an opened task does not come into view;… (B-343). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at ac5415a (07:19 CT), from 43055bc: Fidelity fix: Today's header reads only Today where the demo reads… (B-346). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
