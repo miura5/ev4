@@ -6813,7 +6813,7 @@
   "milestone": "v4.8 redesign",
   "status": "in progress",
   "depends": [],
-  "notes": "Fixer done: ten items at 8e8136f and ed19bb5, staging GREEN at ed19bb5, npm test 598/598. A fresh reviewer now checks the core and data changes before this is done.",
+  "notes": "Review gaps fixed at 5f6efe6: record_score holds only a typed score and survives a retro that won't start; a graded snooze onto the same words stays graded; all idea writers get a Central-time id that never overwrites; spec journal lines corrected. npm test 601/601, smoke green (an intermittent refused-answer flake also occurs on origin/main), staging GREEN. Awaiting the second reviewer.",
   "commit": null,
   "source": "code review of the fidelity sprint, Oct 25",
   "words": "The sprint's code review found a note can overwrite another with the same title the same day, the phone can't open the file picker, snoozed graded work loses its Graded tag, nothing writes an exam score, the quiz results claim a triage that does not exist, failures have nowhere to show, and some cards open hidden places.",
