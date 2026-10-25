@@ -974,7 +974,7 @@
         const d = E.diffDays(today, ex.date);
         return {
           text: `${exShort(ex)} readiness · ${r.pctSolid != null ? r.pctSolid + '% solid' : 'no weak spots yet'} · ${d === 0 ? 'today' : plural(d, 'day') + ' out'}`,
-          go: openIn('progress', 'progress', 'readiness', 'ready-card'),
+          go: openIn('progress', 'progress', 'readiness'), // B-381: the Progress view itself
         };
       },
       audit() {
@@ -985,7 +985,7 @@
           text: ex
             ? `${exShort(ex)} audit · ${plural(rows.length, 'objective')}${reread ? ` · ${reread} to reread` : ''}`
             : 'Readiness audit: no upcoming exam yet',
-          go: openIn('progress', 'progress', 'readiness', 'audit-card'),
+          go: openIn('study', 'study', 'objectives'), // B-381: Study's objectives, where the rereads are
         };
       },
       chart() {
@@ -994,17 +994,29 @@
           r = days.reduce((s, d) => s + d.right, 0);
         return {
           text: n ? `Last 7 days · ${r} of ${n} right (${pct(r, n)})` : 'No answers in the last week yet',
-          go: openIn('progress', 'progress', 'readiness', 'acc-days'),
+          go: openIn('progress', 'progress', 'readiness'), // B-381: the Progress view itself
         };
       },
     };
-    T.briefOpen = false;
-    T.briefItem = new Set();
     const CHEV =
       '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
     // B-358 (D-314): under her greeting line, one summary line as the demo's Main board: what's on today's list, its
     // minutes, and the next graded date the greeting hasn't named; never a line per item and no buttons.
-    const SUM_NUM = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve'];
+    const SUM_NUM = [
+      'No',
+      'One',
+      'Two',
+      'Three',
+      'Four',
+      'Five',
+      'Six',
+      'Seven',
+      'Eight',
+      'Nine',
+      'Ten',
+      'Eleven',
+      'Twelve',
+    ];
     const SUM_DOWS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const SUM = { at: 0, key: '', line: '' };
     function summaryLine(m) {
@@ -1046,7 +1058,13 @@
               ? ' tomorrow'
               : days < 7
                 ? ' on ' + SUM_DOWS[new Date(g.date + 'T12:00:00Z').getUTCDay()]
-                : ' on ' + new Date(g.date + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
+                : ' on ' +
+                  new Date(g.date + 'T12:00:00Z').toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                    timeZone: 'UTC',
+                  });
       }
       const graded = g ? shortTitle(g.title) + when : '';
       const parts = [things, mins, graded].filter(Boolean);

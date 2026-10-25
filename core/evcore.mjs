@@ -1486,7 +1486,15 @@ const EVCore = (() => {
   // adds, or takes off for the day, lives in the page's own dayedits/<date> (an Edit, replaced whole), so the 4:25am
   // rebuild never touches it:
   //   added: {itemId: {text, tag, kind, minutes, course, at, by}}   skipped: {itemId: {at, by}}   checks: {itemId: {at}}
-  const LIST_KINDS = { reading: 'READING', practice: 'PRACTICE', review: 'REVIEW', notes: 'NOTES', todo: null };
+  // B-381: graded is Matt's Snooze carrying graded work to tomorrow; it stays GRADED there, fixed, and E.V. can't take it off.
+  const LIST_KINDS = {
+    reading: 'READING',
+    practice: 'PRACTICE',
+    review: 'REVIEW',
+    notes: 'NOTES',
+    todo: null,
+    graded: 'GRADED',
+  };
   const FIXED_TAGS = new Set(['GRADED', 'EXAM', 'CLINICAL', 'VALIDATION']);
   /** Graded work, exams, clinicals and validations stay on the list; everything else can be taken off for the day. */
   const isFixedItem = it => !!it && (FIXED_TAGS.has(it.tag) || /^(date|exam|soon)-/.test(String(it.id || '')));
@@ -1554,7 +1562,8 @@ const EVCore = (() => {
       if (!text) throw new Error('text is required');
       const same = dayView(day, dayedit).items.find(it => norm(it.text) === norm(text));
       if (same) return { id: same.id, text: same.text, doc: null, note: 'already on the list' };
-      const kind = Object.prototype.hasOwnProperty.call(LIST_KINDS, edit.kind) ? edit.kind : 'todo';
+      let kind = Object.prototype.hasOwnProperty.call(LIST_KINDS, edit.kind) ? edit.kind : 'todo';
+      if (kind === 'graded' && by !== 'Matt') kind = 'todo'; // only his own Snooze carries graded work
       const minutes = Math.max(0, Math.min(240, Math.round(Number(edit.minutes) || 0)));
       const course = isCourse(edit.course) ? edit.course : '';
       const base = 'add-' + (slug(text, 32) || 'item');
@@ -1567,6 +1576,9 @@ const EVCore = (() => {
     const id = String((edit && edit.id) || '');
     if (action === 'remove') {
       if (added[id] && added[id].text) {
+        const a = added[id];
+        if (isFixedItem({ id, tag: a.tag }) && !mattMovesGraded({ tag: a.tag }, by))
+          throw new Error(`“${a.text}” is ${String(a.tag).toLowerCase()}; it stays on the list`);
         const doc = next();
         delete doc.added[id];
         delete doc.checks[id];

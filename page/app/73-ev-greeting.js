@@ -142,8 +142,6 @@
           job: g.job,
           prep: g.prep,
         };
-        T.briefOpen = false;
-        T.briefItem = new Set();
         const msgs = allMsgs();
         T.scrollTo = (msgs[msgs.length - 1] || T.greet).id;
         T.firstScroll = true;
@@ -164,8 +162,6 @@
         job: g.job,
         prep: g.prep,
       };
-      T.briefOpen = false;
-      T.briefItem = new Set(); // B-90: the briefing starts folded on every open
       T.scrollTo = T.greet.id;
       T.firstScroll = true;
       // B-129 (D-167): one quick call words the headline from the situation and his last 7; code holds it to the facts,

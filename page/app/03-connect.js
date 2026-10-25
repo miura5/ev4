@@ -47,7 +47,6 @@
       ideas: [],
       workouts: [],
       sessions: [],
-      journal: [],
       announcements: [],
       talk: [],
       jobs: [],

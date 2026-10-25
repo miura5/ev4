@@ -4345,6 +4345,7 @@
    "tools": [
     "show_card",
     "start_job",
+    "record_score",
     "add_weakspot",
     "edit_dates",
     "log_checkin",
@@ -4824,9 +4825,6 @@
     },
     {
      "collection": "workouts"
-    },
-    {
-     "collection": "journal"
     },
     {
      "collection": "materialedits"

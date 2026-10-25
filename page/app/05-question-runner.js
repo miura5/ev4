@@ -101,8 +101,7 @@
     // under an answer, a finished set's lines and its right answers.
     const setOpen = {},
       whyOpen = {},
-      sumOpen = {},
-      accepted = new Set(); // B-376: the weak spots whose misses he has accepted from a results card
+      sumOpen = {};
     const verdictWord = (a, type) =>
       a.grade // B-75 (D-132, D-165): an open answer's grade, in a word
         ? { right: 'Right', partial: 'Partly right', wrong: 'Missed' }[a.grade] || 'Missed'
@@ -766,29 +765,16 @@
       parts.push(
         el('span', 'mini', ['Logged to Record.', solid ? solid + ' marked solid.' : ''].filter(Boolean).join(' '))
       );
-      // B-376 (D-316): as the demo's StudyResults: any miss gives her line "N misses are proposed as weak spots." with
-      // Accept all and Review. Each miss already wrote its weak spot through the answer's own write (a new spot, or
-      // its twin seen again), so Accept all keeps them as filed and the line goes, as the demo's does once accepted.
-      const wsOf = q =>
-        (answers[q.id] && (answers[q.id].createdWeakspot || answers[q.id].weakspotId)) || q.weakspotId || null;
-      const prop = missed.filter(q => !accepted.has(wsOf(q) || key + ':' + q.id));
-      if (prop.length) {
+      // B-376 (D-316): the demo's StudyResults line under the score. B-381: in true words: each miss already wrote its
+      // weak spot through the answer's own write (a new spot, or its twin seen again), so the line says they are saved,
+      // with Review; there is nothing to accept.
+      if (missed.length) {
         const line = el('div', 'endline');
         line.append(
           el(
             'span',
             'sp',
-            prop.length === 1
-              ? '1 miss is proposed as a weak spot.'
-              : prop.length + ' misses are proposed as weak spots.'
-          ),
-          btn(
-            'Accept all',
-            () => {
-              for (const q of prop) accepted.add(wsOf(q) || key + ':' + q.id);
-              render();
-            },
-            { cls: 'btn primary sm' }
+            missed.length === 1 ? '1 miss is saved as a weak spot.' : missed.length + ' misses are saved as weak spots.'
           ),
           btn(
             'Review',

@@ -422,14 +422,6 @@ body.captions .cap-cards-more:hover{color:var(--ink)}
 .sread .sr-line{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;color:var(--ink);font-weight:500}
 .cap-quote{margin:2px 0 0;font-size:calc(12.5px * var(--ts));color:var(--soft);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 body.captions .msg.ev:not(.current) .cap-quote{opacity:.6}
-.snotes{display:flex;flex-direction:column;gap:10px}
-.snotes .card-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
-.snotes .card-head .meta{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sn-lines{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:calc(13.5px * var(--ts));line-height:1.4;color:var(--ink2)}
-.sn-lines li{padding:2px 0 2px 10px;border-left:2px solid transparent}
-.sn-lines li.said{border-left-color:var(--accent-edge)}
-.sn-lines li.new{color:var(--ink);font-weight:600;border-left-color:var(--accent)}
-.sn-foot{margin:0;font-size:calc(12px * var(--ts))}
 /* B-85: a card that only informs is one tappable line that opens its tab; a card he acts in stays whole. */
 .card-line{appearance:none;align-self:center;display:inline-flex;align-items:center;gap:6px;max-width:100%;min-height:36px;padding:0 4px;border:0;border-radius:8px;background:none;color:var(--ink2);font:500 calc(14.5px * var(--ts)) var(--sans);text-align:left;cursor:pointer}
 .card-line:hover,.card-line:active,.card-line:focus{background:none;color:var(--ink);transform:none}
@@ -640,6 +632,9 @@ body:not(.on-ev) .wrap{max-width:none}
 .mh .status{display:none}
 /* B-357: a boot that stops says why: the refusal is the one line he can read */
 body.boot-stopped .mh .status{display:block}
+/* B-381: a System problem is one quiet line in the header and the sidebar; a tap opens #system */
+.mh .status.sys{display:block;white-space:nowrap;color:var(--soft);cursor:pointer}
+.readout.sys{cursor:pointer;white-space:nowrap}
 .ptitle{display:none}
 /* the sidebar's rows */
 .side{z-index:9}

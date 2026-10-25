@@ -161,7 +161,10 @@
             const edit = { action: 'add', text: t, kind: o.kind, minutes: o.minutes, course: o.course };
             const r = await editList(tomorrow ? E.addDays(today, 1) : today, edit, 'Matt');
             if (r.note) toast('Already on the list');
-          } else await write(E.noteIdea(t, { at: now(), date: today, body: nd.body, course: nd.course }));
+          } else
+            await write(
+              E.noteIdea(t, { at: now(), date: today, body: nd.body, course: nd.course, existing: S.ideas || [] })
+            );
         },
         tomorrow ? 'Added to tomorrow' : NEW[kind].ok,
         () => newOpen(kind, t, kind === 'task' ? o : nd)

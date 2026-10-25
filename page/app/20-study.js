@@ -142,17 +142,6 @@
       $('study-course').hidden = v !== 'objectives' || $('study-course').children.length < 2;
       $('study-start').hidden = v !== 'objectives' || $('study-start').dataset.off === '1';
     }
-    /** The courses with an upcoming exam that has objectives, each with that exam (the soonest). */
-    function studyCourses() {
-      const out = [];
-      for (const c of E.activeCourses()) {
-        const ex = S.exams
-          .filter(e => e.date && e.date >= today && E.courseOf(e) === c && S.objectives.some(o => o.exam === e.id))
-          .sort((a, b) => a.date.localeCompare(b.date))[0];
-        if (ex) out.push({ course: c, exam: ex });
-      }
-      return out;
-    }
     /** B-351 (D-313): the courses with an upcoming exam, objectives or not (Matt's record has none), each with its
      *  soonest; the overview's course switch and exam card read this. */
     function studyExams() {
@@ -372,7 +361,9 @@
       y.style.width = items.almost;
       bar.setAttribute('aria-label', items.aria);
       box.append(...items.rows);
-      card.replaceChildren(...(items.rows.length ? [head, bar, box] : [head, bar, el('p', 'empty ov-none', items.none)]));
+      card.replaceChildren(
+        ...(items.rows.length ? [head, bar, box] : [head, bar, el('p', 'empty ov-none', items.none)])
+      );
       // B-375: an exam with neither objectives nor a plan still fills the panel: the exam, its date and Quiz me
       if (PANEL.matches && !ui.objPanel) ui.objPanel = examDetail(ex, fullName, days);
       renderStudyUp(cur.course);
@@ -385,12 +376,20 @@
       const st = el('div', 'od-row');
       st.append(
         el('span', 'badge', 'No objectives yet'),
-        el('span', 'mini', dayMonth(ex.date) + ' · ' + (days <= 0 ? 'today' : days === 1 ? 'tomorrow' : 'in ' + days + ' days'))
+        el(
+          'span',
+          'mini',
+          dayMonth(ex.date) + ' · ' + (days <= 0 ? 'today' : days === 1 ? 'tomorrow' : 'in ' + days + ' days')
+        )
       );
       d.append(
         st,
         btn('Quiz me', ev => courseQuiz(ev.currentTarget), { cls: 'btn neutral od-q' }),
-        el('span', 'mini od-note', 'Quiz me opens five questions from this course. Objectives show here once they’re in the record.')
+        el(
+          'span',
+          'mini od-note',
+          'Quiz me opens five questions from this course. Objectives show here once they’re in the record.'
+        )
       );
       return d;
     }
@@ -426,7 +425,9 @@
           'span',
           'mini od-note',
           open.length > 5
-            ? 'And ' + plural(open.length - 5, 'more') + ' in Weak spots. Quiz me opens five questions from this course.'
+            ? 'And ' +
+                plural(open.length - 5, 'more') +
+                ' in Weak spots. Quiz me opens five questions from this course.'
             : 'Quiz me opens five questions from this course.'
         )
       );
@@ -613,10 +614,10 @@
      *  its objectives, else its plan and materials) and opens them; never only a toast. */
     async function quizFive(b, course) {
       const was = b && b.textContent;
-      if (b) (b.disabled = true), (b.textContent = 'Writing 5 questions…');
+      if (b) ((b.disabled = true), (b.textContent = 'Writing 5 questions…'));
       $('more-status').textContent = '';
       const ok = await morePractice({ course: course || ui.studyCourse || E.defaultCourse() });
-      if (b && b.isConnected) (b.disabled = false), (b.textContent = was);
+      if (b && b.isConnected) ((b.disabled = false), (b.textContent = was));
       if (!ok) toast($('more-status').textContent || 'Couldn’t write questions right now. Try again in a moment.');
     }
     /** B-351 (D-313): the mini quiz card beside Coming up: a question from the course's next set as its teaser. */
@@ -817,26 +818,21 @@
         out.push(all);
       } else out.push(el('div', 'empty', 'No weak spots open' + (course ? ' in ' + course : '') + '.'));
       $('weak-list').replaceChildren(...out);
-      // B-365 (D-316): the side pane, as the demo's: How triage works (beside the rows from 1200 px, under them below)
+      // B-365 (D-316): the side pane, in the demo's place. B-381: it says what happens: a miss is saved as a counted weak
+      // spot at once, with nothing to accept, and the spot closes when he answers it right over time or marks it solid.
       const p = el('div', 'ov-detail wk-side');
-      p.append(el('span', 'lab', 'How triage works'));
+      p.append(el('span', 'lab', 'How weak spots work'));
       for (const t of [
-        'Accept: it counts under her objective',
-        'Join: a duplicate of an open one',
-        'Not now: back at your next session',
-        'Decline: kept, never counted',
+        'A miss is saved as a weak spot right away',
+        'It counts under its objective until it closes',
+        'Answered right over time, it closes on its own',
+        'Mark solid closes it now',
       ]) {
         const r = el('div', 'od-ws');
         r.append(el('i', 'dot'), el('span', 'sn', t));
         p.append(r);
       }
-      p.append(
-        el(
-          'span',
-          'mini od-note',
-          'Nothing proposed counts until you decide. Quizlet stays yours: E.V. reads only its home page, on Saturdays.'
-        )
-      );
+      p.append(el('span', 'mini od-note', 'Quizlet stays yours: E.V. reads only its home page, on Saturdays.'));
       ui.weakPanel = p;
     }
     function giveFive() {
@@ -1240,7 +1236,9 @@
           .filter(o => (exId ? o.exam === exId : !opt.course || inCourse(o)))
           .map(o => ({ id: o.id, text: o.text, chapters: o.chapters }));
         const plan = opt.course && !objs.length && ex ? examPlan(ex) : null;
-        const planTasks = plan ? (plan.days || []).flatMap(d => (d.tasks || []).map(t => t.text || '')).filter(Boolean) : [];
+        const planTasks = plan
+          ? (plan.days || []).flatMap(d => (d.tasks || []).map(t => t.text || '')).filter(Boolean)
+          : [];
         const mats =
           opt.course && !objs.length
             ? (LIB.mats || [])

@@ -15,9 +15,18 @@
       renderSide();
       renderStudySide(); // B-223 (D-245)
       renderLine(); // B-333
-      // B-341 (D-312): the header says Live; health problems show in System only (sysProblem), never in the header.
-      setStatus('Live', true, false);
+      // B-341 (D-312): at rest the header says nothing (Live stays hidden). B-381: a System problem (sysProblem) shows in
+      // plain words as one quiet line that opens #system on a tap; the sidebar's status line says it too (renderMood).
+      if (sysProblem) setStatus(sysProblem, false, true);
+      else setStatus('Live', true, false);
+      status.classList.toggle('sys', !!sysProblem);
+      status.title = sysProblem ? 'Open System' : '';
     }
+    // B-381: the status lines open System while they name a problem
+    for (const s of [status, $('readout')])
+      s.addEventListener('click', () => {
+        if (s.classList.contains('sys')) showTab('system');
+      });
     // B-221 (D-210), B-286, B-334 (D-312): the sidebar's Today as in the demo, on every view: "Today" and "n left", then
     // today's first five items not done, each with a dot coloured by its type and its minutes or day, then "n more in
     // Today"; absent while empty (D-151). A row opens its task in Today. No Working section (D-291).
@@ -50,10 +59,16 @@
         const due = it.tag === 'GRADED' ? gradedDue(it) : null;
         const dot = (it.tag !== 'GRADED' && BADGE[it.tag] && BADGE[it.tag][1]) || 'd-q'; // B-361: Graded's dot is grey
         const sel = ui.tab === 'today' && ui.taskSel === it.id && !ui.taskGone;
-        return row(dot, it.text, sideWhen(it, due), () => {
-          showTab('today');
-          openTask(it.id);
-        }, sel ? 'si on' : 'si');
+        return row(
+          dot,
+          it.text,
+          sideWhen(it, due),
+          () => {
+            showTab('today');
+            openTask(it.id);
+          },
+          sel ? 'si on' : 'si'
+        );
       };
       const more = open.length - SIDE_MAX;
       const head = el('p', 'sec');

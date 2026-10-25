@@ -927,6 +927,29 @@ test('list edits: added items ride on the planned list, planned ones can be take
   assert.equal(EV.dayView(null, e1).budget, null);
 });
 
+test('B-381: graded work Matt snoozes lands tomorrow still GRADED and fixed; E.V. can neither take it off nor add a graded item', () => {
+  const now = '2026-10-18T14:00:00Z';
+  const g = EV.listEdit(
+    null,
+    null,
+    { action: 'add', text: 'Med math quiz', kind: 'graded', minutes: 20, course: 'NUR 112' },
+    { now, by: 'Matt', date: '2026-10-19' }
+  );
+  assert.equal(g.doc.added[g.id].tag, 'GRADED');
+  assert.equal(g.doc.added[g.id].kind, 'graded');
+  assertValid({ op: 'set', collection: 'dayedits', id: '2026-10-19', data: g.doc });
+  const e = { id: '2026-10-19', ...g.doc };
+  const item = EV.dayView(null, e).items.find(i => i.id === g.id);
+  assert.equal(item.tag, 'GRADED');
+  assert.throws(
+    () => EV.listEdit(null, e, { action: 'remove', id: g.id }, { now, by: 'E.V.' }),
+    /graded; it stays on the list/
+  );
+  assert.ok(!(g.id in EV.listEdit(null, e, { action: 'remove', id: g.id }, { now, by: 'Matt' }).doc.added));
+  const ev = EV.listEdit(null, null, { action: 'add', text: 'Fake graded', kind: 'graded' }, { now, by: 'E.V.' });
+  assert.equal(ev.doc.added[ev.id].tag, null, 'only Matt’s Snooze writes a graded item');
+});
+
 // ---------------------------------------------------------------- liveDates over dateedits
 test('calendar edits: a new entry is a dates Fact; every change, removal and restore is its dateedits document; removed dates are gone everywhere (D-080)', () => {
   const now = '2026-10-18T01:10:00Z';

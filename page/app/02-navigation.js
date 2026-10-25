@@ -14,7 +14,12 @@
     // its list here by its body; renderStudySide (05) shows the one whose view is open.
     const studyLists = new Map();
     const headDate = d =>
-      new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+      new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        timeZone: 'UTC',
+      });
     function showTab(t) {
       const was = ui.tab;
       ui.tab = t;
@@ -56,7 +61,8 @@
     const quizOpen = id => id === 'study' && (ui.study === 'review' || ui.study === 'practice');
     function placeSegs(t) {
       const mh = $('mh');
-      for (const id of ['study', 'progress', 'record']) { // B-335: Today's switch sits in its own toolbar, as in the demo
+      for (const id of ['study', 'progress', 'record']) {
+        // B-335: Today's switch sits in its own toolbar, as in the demo
         const sg = $('seg-' + id);
         if (!sg || !mh) continue;
         if (!SEG_HOME[id]) {

@@ -373,7 +373,7 @@ test('B-287 (C-7): a note from the header’s New is one ideas write: his words,
   const w = EV.noteIdea('  Rounding to   tenths for mL ', { at: T0, date: '2026-10-18' });
   assert.equal(w.op, 'set');
   assert.equal(w.collection, 'ideas');
-  assert.match(w.id, /^idea-2026-10-18-rounding/);
+  assert.match(w.id, /^idea-2026-10-18-150000-rounding/);
   assert.equal(w.data.text, 'Rounding to tenths for mL');
   assert.equal(w.data.kind, 'general');
   assert.equal(w.data.status, 'open');
@@ -381,4 +381,31 @@ test('B-287 (C-7): a note from the header’s New is one ideas write: his words,
   assert.ok(!('course' in w.data));
   assertValid(w);
   assert.throws(() => EV.noteIdea('   ', { at: T0, date: '2026-10-18' }), /needs words/);
+});
+
+test('B-381: the score he tells E.V. is the old form’s examedits write: score, scoreAt, status done, kept whole', () => {
+  const w = EV.examScore('E4', 88.5, { at: T0 });
+  assert.deepEqual([w.op, w.collection, w.id], ['set', 'examedits', 'E4']);
+  assert.deepEqual([w.data.score, w.data.scoreAt, w.data.status, w.data.writer], [88.5, T0, 'done', 'page']);
+  assertValid(w);
+  const again = EV.examScore('E4', 90, { at: '2026-10-19T15:00:00.000Z', current: { id: 'E4', ...w.data } });
+  assert.equal(again.data.at, T0, 'the envelope of the first write stays');
+  assert.equal(again.data.score, 90);
+  assert.ok(!('id' in again.data));
+  assert.throws(() => EV.examScore('E4', 101, { at: T0 }), /0 to 100/);
+});
+
+test('B-381: two notes with the same title on the same day both survive (time in the id, -2 when taken)', () => {
+  const a = EV.noteIdea('Rounding', { at: T0, date: '2026-10-18' });
+  const b = EV.noteIdea('Rounding', { at: '2026-10-18T15:04:09.000Z', date: '2026-10-18', existing: [a] });
+  const c = EV.noteIdea('Rounding', { at: T0, date: '2026-10-18', existing: [{ id: a.id }, b.id] });
+  assert.match(a.id, /^idea-2026-10-18-150000-rounding$/);
+  assert.notEqual(a.id, b.id);
+  assert.equal(c.id, a.id + '-2');
+  const store = {};
+  for (const w of [a, b, c]) {
+    assert.ok(!(w.id in store), 'never overwrites an existing idea');
+    store[w.id] = w.data;
+  }
+  assert.equal(Object.keys(store).length, 3);
 });

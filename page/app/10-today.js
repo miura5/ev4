@@ -441,7 +441,13 @@
      * the list edits D-078 already has; each leaves an Undo here that reverses what it wrote. No full-page view, no
      * previous and next, no description paragraph.
      */
-    const LIST_KIND_OF = { READING: 'reading', PRACTICE: 'practice', REVIEW: 'review', NOTES: 'notes' };
+    const LIST_KIND_OF = {
+      READING: 'reading',
+      PRACTICE: 'practice',
+      REVIEW: 'review',
+      NOTES: 'notes',
+      GRADED: 'graded',
+    };
     const fixedItem = it => FIXED.has(it.tag) || /^(date|exam|soon)-/.test(String(it.id || ''));
     function taskFacts(it, isDone, day) {
       const ed = dayEditDoc(today) || {};
@@ -532,17 +538,20 @@
         ed = dayEditDoc(today) || {},
         add = it.added ? { ...(ed.added || {})[it.id] } : null;
       const text = String(it.text || '').replace(/\s*\(~?\d+\s*min\)\s*$/i, '');
-      const a = await editList(
-        tomorrow,
-        {
-          action: 'add',
-          text,
-          kind: (add && add.kind) || LIST_KIND_OF[it.tag] || 'todo',
-          minutes: Number(it.minutes) || 0,
-          course: (add && add.course) || taskFacts(it, () => false, dayState().day).course,
-        },
-        'Matt'
-      );
+      // B-381: a soon- or date- item is the planner's, already on its due day; no tomorrow copy. Graded stays graded.
+      const a = /^(soon|date)-/.test(String(it.id || ''))
+        ? { doc: null }
+        : await editList(
+            tomorrow,
+            {
+              action: 'add',
+              text,
+              kind: it.tag === 'GRADED' ? 'graded' : (add && add.kind) || LIST_KIND_OF[it.tag] || 'todo',
+              minutes: Number(it.minutes) || 0,
+              course: (add && add.course) || taskFacts(it, () => false, dayState().day).course,
+            },
+            'Matt'
+          );
       try {
         await editList(today, { action: 'remove', id: it.id }, 'Matt');
       } catch (e) {
@@ -1426,31 +1435,6 @@
       const ul = el('ul', 'list');
       ul.append(...after.slice(0, 4).map(evDateRow)); // B-362 (D-316): the demo's four rows, each opening its day
       card.replaceChildren(el('h2', null, 'Coming up'), ul);
-    }
-    // B-117: a date in Next 7 days is one line (its day, its title, its kind in grey); a clinical, lab, validation or class
-    // day carries the calm Prep marker (D-143); red only for graded work due today (D-270). It opens Today's Week (B-359).
-    function weekRow(d) {
-      const li = el('li', 'row week-item');
-      const b = el('button', 'wk-line');
-      b.type = 'button';
-      b.append(el('span', 'when', short(d.date)), el('span', 'wk-t', d.title || ''));
-      if (E.prepKindOf(d)) b.append(el('span', 'bi-prep', 'Prep'));
-      const urgent = d.graded && d.date === today && d.kind !== 'exam';
-      b.append(
-        el(
-          'span',
-          'wk-k',
-          urgent
-            ? 'graded, due today'
-            : [d.kind === 'other' ? '' : d.kind, d.graded ? 'graded' : ''].filter(Boolean).join(' · ')
-        )
-      );
-      b.addEventListener('click', () => {
-        showTab('today');
-        $('seg-today').querySelector('[data-v="week"]').click();
-      });
-      li.append(b);
-      return li;
     }
     /** Remove (or Take off) and Bring back for a date that can leave the calendar (D-080); null for one that can't. */
     function dateEditButton(d, label, cls) {

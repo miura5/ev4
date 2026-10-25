@@ -75,9 +75,9 @@
         return ['Writing 5 now, aimed at your weakest spots. They’ll post here in about a minute.', []];
       },
       'file it': () => fileItReply(),
-      // B-353: the paperclip's job, asked in words (or a file dropped on the pane); the picker opens inside his send.
+      // B-353: the paperclip's job, asked in words (or a file dropped on the pane). B-381: the picker opens in the chip's
+      // click or the composer's submit, before any await, since a phone opens it only inside his tap.
       'attach a file': () => {
-        $('ev-file').click();
         return ['Pick a PDF, Word, PowerPoint, text file or photo and I’ll save it to your library.', []];
       },
       'how ready am i': () => {
@@ -221,7 +221,9 @@
         )[0];
     }
     function topicLabel(w) {
-      let t = String(w.topic || w.objective).replace(/\s+/g, ' ').trim();
+      let t = String(w.topic || w.objective)
+        .replace(/\s+/g, ' ')
+        .trim();
       const head = t.split(/\s*[:(–—]\s*/)[0];
       if (head.length >= 4) t = head;
       if (t.length > 28) t = t.slice(0, 28).replace(/\s+\S*$/, '');
@@ -251,7 +253,11 @@
       const open = (M.models || []).filter(w => E.isActive(w)).length;
       return (
         `${hm(mins)} this week` +
-        (prev || mins ? (d ? `, ${hm(Math.abs(d))} ${d > 0 ? 'more' : 'less'} than last week` : ', same as last week') : '') +
+        (prev || mins
+          ? d
+            ? `, ${hm(Math.abs(d))} ${d > 0 ? 'more' : 'less'} than last week`
+            : ', same as last week'
+          : '') +
         (acc.n ? `, and ${Math.round((100 * acc.right) / acc.n)}% on quizzes` : '') +
         '.' +
         (open ? ` ${plural(open, 'weak spot')} open.` : ' No weak spots open.')

@@ -306,7 +306,7 @@
         {
           name: 'start_job',
           description:
-            'Start a background job for work bigger than one reply. study-guide: a one-page guide saved as a Claude Doc. practice-set: 10 to 30 questions saved as a set (put the number and topic in the brief). exam-plan: a study plan for a named exam. exam-retro: the post-exam retro for a named exam (put its id, like E4, in the brief); a saved score starts one on its own. clinical-prep: a short prep brief for the next clinical day (put its date first in the brief): the skills with their Skills Packet pages, his skill weak spots and instructor notes; it never reads or drafts graded clinical paperwork, and the brief never names a patient. share-set: a page of a calendar practice set for classmates (put the set id first in the brief); only drill or sim sets over a chapter range qualify. general: research or other long work. Runs in the cloud and posts back here in a few minutes; a job card is attached automatically. Never for graded work. Returns the job id.',
+            'Start a background job for work bigger than one reply. study-guide: a one-page guide saved as a Claude Doc. practice-set: 10 to 30 questions saved as a set (put the number and topic in the brief). exam-plan: a study plan for a named exam. exam-retro: the post-exam retro for a named exam (put its id, like E4, in the brief); record_score starts one on its own after he tells you a score. clinical-prep: a short prep brief for the next clinical day (put its date first in the brief): the skills with their Skills Packet pages, his skill weak spots and instructor notes; it never reads or drafts graded clinical paperwork, and the brief never names a patient. share-set: a page of a calendar practice set for classmates (put the set id first in the brief); only drill or sim sets over a chapter range qualify. general: research or other long work. Runs in the cloud and posts back here in a few minutes; a job card is attached automatically. Never for graded work. Returns the job id.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -327,6 +327,59 @@
             addCard({ type: 'job', id: r.id });
             pend.jobId = r.id;
             return r.fired.ok ? 'started ' + r.id : 'created ' + r.id + ' but not started: ' + fireCopy(r.fired.error);
+          },
+        },
+        {
+          // B-381: the Progress score form is gone (B-366, D-316), so his score reaches the record through her: the
+          // same examedits write that form made (D-094), then the exam-retro job (D-104).
+          name: 'record_score',
+          description:
+            'Save the score he tells you he got on an exam he has already taken ("I got 88.5 on Exam 4"), then start its post-exam retro. exam: its id (like E4) or its title as he said it. score: 0 to 100, as he said it. Only his own number; never a guess.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              exam: { type: 'string' },
+              score: { type: 'number', minimum: 0, maximum: 100 },
+            },
+            required: ['exam', 'score'],
+          },
+          execute: async i => {
+            const v = Number(i.score);
+            if (!(v >= 0 && v <= 100)) throw new Error('the score must be 0 to 100');
+            const past = S.exams.filter(e => e.date && e.date <= today && E.examIs(e, 'scoredKinds'));
+            const q = String(i.exam || '')
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, ' ')
+              .trim();
+            const num = (q.match(/\d+/) || [])[0];
+            const hits = past.filter(e => String(e.id).toLowerCase() === q.replace(/ /g, ''));
+            const byTitle = past.filter(e => {
+              const t = String(e.title || '')
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, ' ');
+              return q && (t.includes(q) || (num && new RegExp('\\bexam ' + num + '\\b').test(t)));
+            });
+            const m = hits.length ? hits : byTitle;
+            if (m.length !== 1)
+              return m.length
+                ? 'more than one exam matches; ask him which: ' + m.map(e => `${e.id} "${e.title}"`).join('; ')
+                : 'no exam he has taken matches "' + str(i.exam, 60) + '"; ask him which exam it was';
+            const e = m[0];
+            const cur = (S.examedits || []).find(x => x.id === e.id) || null;
+            await write(E.examScore(e.id, v, { at: now(), current: cur }));
+            const r = await startJob({
+              kind: 'exam-retro',
+              title: 'Retro: ' + (e.title || e.id),
+              brief: e.id + ': the retro after the score he entered',
+            });
+            addCard({ type: 'job', id: r.id });
+            pend.jobId = r.id;
+            return (
+              `saved ${v} for ${e.id}; ` +
+              (r.fired.ok
+                ? 'retro started ' + r.id
+                : 'retro created ' + r.id + ' but not started: ' + fireCopy(r.fired.error))
+            );
           },
         },
         {

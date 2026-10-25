@@ -86,15 +86,20 @@
                 ? 'thinking…'
                 : ui.restPlan && MOOD_NOW === 'idle'
                   ? 'waiting on your review'
-                  : word,
+                  : sysProblem && word === 'ready when you are' // B-381: a System problem, in plain words, at rest
+                    ? sysProblem
+                    : word,
         STAGING ? 'staging' : '',
       ]
         .filter(Boolean)
         .join(' · ');
       const cls = 'led' + (T.busy || SS.busy ? ' busy' : MOOD_NOW === 'sleepy' ? ' brk' : off ? ' off' : '');
       const ro = $('readout');
+      const sys = !!sysProblem && txt.startsWith(sysProblem);
       if (ro.dataset.k !== cls + txt) {
         ro.dataset.k = cls + txt;
+        ro.classList.toggle('sys', sys);
+        ro.title = sys ? 'Open System' : '';
         ro.replaceChildren(el('span', cls), document.createTextNode(txt));
       }
     }
@@ -200,7 +205,10 @@
             ? btn(c, () => skillPark(false))
             : c === 'I’m back early' // B-377 (D-316): as the demo, her line only
               ? btn(c, () => guard(null, () => breakOrResume('resume')))
-              : btn(c, () => guard(null, () => quick(c)));
+              : btn(c, () => {
+                  if (/^attach a file$/i.test(c)) $('ev-file').click(); // B-381: inside his tap, before any await
+                  guard(null, () => quick(c));
+                });
           b.className = 'qchip';
           return b;
         });
@@ -259,6 +267,8 @@
       }
       const text = input.value.trim();
       if (!text) return;
+      // B-381: a phone opens the picker only inside his send, so the click comes before any await.
+      if (/^attach a file$/i.test(text)) $('ev-file').click();
       if (!M) {
         toast('Still loading your record.');
         return;
@@ -323,7 +333,13 @@
     async function noteSave(text, words) {
       await mattSay(text);
       try {
-        await write(E.noteIdea(words.replace(/\s+/g, ' ').trim().slice(0, 400), { at: now(), date: today }));
+        await write(
+          E.noteIdea(words.replace(/\s+/g, ' ').trim().slice(0, 400), {
+            at: now(),
+            date: today,
+            existing: S.ideas || [],
+          })
+        );
         await evSay('Saved to Record as a note.', [], { tier: 'local' });
       } catch (e) {
         await evSay('I couldn’t save that note (' + ((e && (e.message || e.code)) || 'error') + ').', [], {

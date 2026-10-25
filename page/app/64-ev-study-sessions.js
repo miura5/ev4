@@ -194,7 +194,6 @@
       SS.note = bare ? null : { id: n.id, name: n.name, folder: n.folder || '', title: n.title || '' };
       SS.nextRead = Date.now() + (SWC.readSeconds || 30) * 1e3;
       SS.changedAt = Date.now();
-      renderNotes();
       if (bare)
         return [
           COMMENT
@@ -413,14 +412,10 @@
         if (!p || !p.found || p.graded) return;
         const note = p.note || {};
         const text = String(note.text || '');
-        const prev = SS.text,
-          was = SS.note && SS.note.title;
+        const prev = SS.text;
         SS.text = text;
         SS.note = { id: note.id, name: note.name, folder: note.folder || '', title: note.title || '' };
-        if (prev !== text) {
-          SS.changedAt = Date.now();
-          renderNotes();
-        } else if ((was || '') !== SS.note.title) renderNotes(); // a reader updated mid-session names the note
+        if (prev !== text) SS.changedAt = Date.now();
 
         if (SS.seen == null) {
           SS.seen = text;
@@ -563,18 +558,8 @@
       await runCheck(s, { quiz: true });
       return null;
     }
-    // B-362 (D-316): the demo shows no Reading line above the field and no Your notes card beside her; she still reads
-    // along (SS.text), and the session's own line and card say what it is on.
-    function renderNotes() {
-      $('sread').hidden = true;
-      const panel = $('snotes');
-      if (panel) panel.remove();
-    }
-    addEventListener('resize', () => {
-      try {
-        renderNotes();
-      } catch {}
-    });
+    // B-362 (D-316): the demo shows no Reading line above the field and no Your notes card beside her (#sread stays
+    // hidden from the shell); she still reads along (SS.text), and the session's own line and card say what it is on.
 
     function sessionTranscript(s) {
       return allMsgs()
@@ -638,7 +623,6 @@
         SS.added = '';
         SS.seen = null;
         SS.note = null;
-        renderNotes();
         const bits = [
           `${up.minutes} min`,
           ...(COMMENT
@@ -786,7 +770,11 @@
         const main = el('span', 's-main');
         // B-353 (D-314): the topic and her reading-along words, each its own span: under 600 px (and on her view under
         // 1200 px) the line is the demo's strip under the header, the topic in bold, the minutes, Break and End.
-        main.append(el('b', 's-topic', s.topic || 'Study session'), el('span', 's-clock', ''), el('span', 's-read', ''));
+        main.append(
+          el('b', 's-topic', s.topic || 'Study session'),
+          el('span', 's-clock', ''),
+          el('span', 's-read', '')
+        );
         bar.setAttribute('aria-label', 'Study session: ' + (s.topic || 'untitled'));
         bar.title = s.topic || '';
         const acts = el('div', 's-acts');
@@ -905,8 +893,8 @@
         : st.onBreak
           ? breakLeft(s)
           : left == null
-          ? durFmt(st.minutes)
-          : left + ' min left';
+            ? durFmt(st.minutes)
+            : left + ' min left';
       // B-362, B-368 (D-316): as the demo, '<what> · N min': where the session's words come from and its minutes (a
       // session has no planned length, so N is how long it has run)
       card.querySelector('.ss-sub').textContent =
@@ -940,7 +928,6 @@
       }
       const s = activeSession();
       renderBar();
-      renderNotes();
       if (!s || !M || SS.busy) return;
       if (SS.readerOk === false && Date.now() > SS.reprobeAt) {
         SS.reprobeAt = Date.now() + 30e3;

@@ -756,7 +756,7 @@ export function makeSessions(core) {
    * B-287 (C-7): a note he writes from the header's New, as one ideas write, kind general. B-373: its title is the
    * text's first line and its words follow on the next; a course only when he picked one.
    */
-  function noteIdea(text, { at, date, body = '', course = '' }) {
+  function noteIdea(text, { at, date, body = '', course = '', existing = [] }) {
     const title = String(text || '')
       .replace(/\s+/g, ' ')
       .trim();
@@ -776,7 +776,36 @@ export function makeSessions(core) {
       links: [],
       ...(course ? { course: String(course) } : {}),
     };
-    return { op: 'set', collection: 'ideas', id: safeId('idea-' + date + '-' + slug(title, 30)), data };
+    // B-381: the time of day joins the id and a taken id gets -2, -3, so two notes with one title never overwrite.
+    const hms = (String(at || '').match(/T(\d\d):?(\d\d):?(\d\d)/) || []).slice(1).join('');
+    const base = safeId('idea-' + date + '-' + (hms ? hms + '-' : '') + slug(title, 30));
+    const taken = new Set([...(existing || [])].map(x => (x && typeof x === 'object' ? x.id : x)));
+    let id = base;
+    for (let n = 2; taken.has(id); n++) id = base + '-' + n;
+    return { op: 'set', collection: 'ideas', id, data };
+  }
+  /**
+   * B-381: the score he tells E.V. for an exam he took, as the old Progress form wrote it (D-094): examedits/<examId>
+   * replaced whole, keeping what was there, with score, scoreAt and status done. current is examedits/<examId> or null.
+   */
+  function examScore(examId, score, { at, current = null } = {}) {
+    const v = Number(score);
+    if (!examId) throw new Error('which exam?');
+    if (!(v >= 0 && v <= 100)) throw new Error('the score must be 0 to 100');
+    const { id, ...base } = current || {};
+    void id;
+    return {
+      op: 'set',
+      collection: 'examedits',
+      id: String(examId),
+      data: {
+        ...(current ? base : envelope('page', 'E.V. Home', at)),
+        updatedAt: at,
+        score: v,
+        scoreAt: at,
+        status: 'done',
+      },
+    };
   }
   /** Flashcards as Quizlet import text: term<TAB>definition per line. */
 
@@ -800,5 +829,6 @@ export function makeSessions(core) {
     closeSession,
     decideSessionQuestion,
     noteIdea,
+    examScore,
   };
 }

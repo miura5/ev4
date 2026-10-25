@@ -169,12 +169,7 @@
       T.dayDivs = T.dayDivs || new Map();
       let d = T.dayDivs.get(day);
       if (!d) {
-        const label =
-          day === today
-            ? 'Today'
-            : day === E.addDays(today, -1)
-              ? 'Yesterday'
-              : short(day);
+        const label = day === today ? 'Today' : day === E.addDays(today, -1) ? 'Yesterday' : short(day);
         d = el('div', 'cap-div cap-day', label);
         d.dataset.day = day;
         T.dayDivs.set(day, d);

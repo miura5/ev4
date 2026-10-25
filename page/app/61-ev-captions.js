@@ -119,7 +119,7 @@
       const last = cur[cur.length - 1];
       if (SF.open >= 0 && SF.list.length) return 'list'; // B-78: an open surface steps her down (the desktop's surface step)
       if (cur.some(m => m.role === 'matt')) return 'conversation';
-      return T.briefOpen ? 'list' : 'idle'; // B-90: her greeting's briefing open steps her down like a card
+      return 'idle';
     }
     // The stage's height at each step, as the Captions v2 artboards draw it (V2.dc.html, V2Desktop.dc.html: stageH).
     const STAGE_PX = {
