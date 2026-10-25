@@ -5832,11 +5832,11 @@
   "title": "Fidelity: her one-line insight under the header, as in the demo: a strip about 49 px tall under the header on Today, Week and Study with one sentence built from the record and its one action; absent when there is nothing to say; never on Progress (her Progress line was cut).",
   "dod": "The strip shows on Today, Week and Study with a sentence from the synthetic record, matches the boards' strip, and is absent on Progress and when there is nothing to say. Proof (D-312, fidelity sprint): node tools/build.mjs, then tools/fidelity's demo and built screenshots read side by side at 1280, 1706, 2560 and 390, plus npm run smoke; then ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-332"
   ],
-  "notes": "",
+  "notes": "claimed by lane frame",
   "commit": null,
   "source": "fidelity review, Oct 25 (D-312)"
  },
