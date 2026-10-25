@@ -155,6 +155,16 @@
         line = M ? lineFor(ui.tab) : null;
       } catch (e) {
         if (!(e instanceof ReferenceError || e instanceof TypeError)) throw e; // a record still loading says nothing
+        // B-390: once the record has loaded (M is set), a slip here is a fault: logged, and the strip stays blank. Before
+        // that, M itself may not be declared yet (the first showTab), so reading it is guarded too.
+        let up = false;
+        try {
+          up = !!M;
+        } catch (_) {
+          up = false;
+        }
+        if (up) console.error('renderLine:', e);
+        line = null;
       }
       const key = line ? line.text + '|' + (line.act ? line.act[0] : '') : '';
       if (strip.dataset.k !== key) {

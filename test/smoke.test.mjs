@@ -11,7 +11,20 @@ const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 
 test('B-199: npm run smoke builds, then runs the smoke harness on the synthetic record', () => {
   const pkg = JSON.parse(read('package.json'));
-  assert.equal(pkg.scripts.smoke, 'node tools/build.mjs && node test/harness/smoke.cjs synthetic');
+  // B-390: the key and address checks (test/smoke-keys.cjs) run first, so the harness stays last and takes the
+  // workflow's shots dir
+  assert.equal(
+    pkg.scripts.smoke,
+    'node tools/build.mjs && node test/smoke-keys.cjs synthetic && node test/harness/smoke.cjs synthetic'
+  );
+  const keys = read('test/smoke-keys.cjs');
+  for (const name of [
+    "Today's review: ArrowDown answers nothing, Space answers",
+    'a practice set: ArrowDown answers nothing, Space answers',
+    '#system opens System, Today clears it, and #system opens it again',
+    'the status line opens System twice',
+  ])
+    assert.ok(keys.includes(name), `smoke-keys names "${name}"`);
 });
 
 test('B-199: the smoke workflow runs on every push but bookkeeping and docs, runs the tier, and expects each plant to turn it red', () => {

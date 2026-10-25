@@ -363,6 +363,29 @@
         parts.push(wrap);
       } else {
         const opts = el('fieldset', 'opts');
+        // B-390: an arrow key moves focus and the pick between radios, and the browser fires click as it does; that click
+        // never answers. A pointer tap, Space or Enter on the focused option, or a letter key answers (Space is taken
+        // here, as the browser clicks nothing for Space on a radio already picked).
+        let arrowing = false;
+        if (instant)
+          opts.addEventListener(
+            'keydown',
+            e => {
+              if (/^Arrow/.test(e.key)) {
+                arrowing = true;
+                setTimeout(() => (arrowing = false), 0);
+              } else if (
+                (e.key === 'Enter' || e.key === ' ') &&
+                e.target &&
+                e.target.type === 'radio' &&
+                !e.target.disabled
+              ) {
+                e.preventDefault();
+                e.target.click();
+              }
+            },
+            true
+          );
         (shown.options || q.options.map((_, i) => i)).forEach((i, pos) => {
           const txt = q.options[i];
           const lab = el('label', 'opt' + (a ? ' locked' : ''));
@@ -381,7 +404,8 @@
           });
           // B-365: a tap answers at once, a second tap on the same answer included (after a refused save)
           if (instant)
-            inp.addEventListener('click', () => {
+            inp.addEventListener('click', e => {
+              if (arrowing && !(e.detail > 0)) return;
               sel.clear();
               sel.add(i);
               if (!a && !submit.dataset.busy) {

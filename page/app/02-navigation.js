@@ -29,6 +29,14 @@
           : b.setAttribute('aria-current', b.dataset.tab === t ? 'page' : 'false')
       );
       document.querySelectorAll('section.panel').forEach(s => (s.hidden = s.id !== 'p-' + t));
+      // B-390: leaving the view an address opened (#system) clears it, so the same address opens it again (window's
+      // history: the page has a history() of its own)
+      if (location.hash && location.hash.slice(1) !== t)
+        try {
+          window.history.replaceState(window.history.state, '', location.pathname + location.search);
+        } catch (e) {
+          /* a sandboxed frame may refuse; the address then stays */
+        }
       document.body.classList.toggle('on-ev', t === 'ev');
       document.body.dataset.view = t; // B-223 (D-294): the sidebar's Today steps aside while Today is the view
       // B-208 (D-210), B-287 (C-4): the pane's header names the view; hers is "E.V." at every width, as its tab says.
