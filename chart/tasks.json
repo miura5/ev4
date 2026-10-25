@@ -6259,12 +6259,12 @@
   "title": "Fidelity fix: Task (D-314): the tick beside the task's title as the TaskDetail board, its description when it has one, and Where it came from under the title at every size",
   "dod": "TaskDetail matches at every size, apart from the panel placement on a computer. Proof (D-312, fidelity sprint): node tools/build.mjs; tools/fidelity screenshots (crawl.cjs demo and built click every control) beside the boards at 1280, 1706, 2560 and 390; npm run smoke; ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-343"
   ],
-  "notes": "claimed by lane task",
-  "commit": null,
+  "notes": "Shipped to staging at 16aa0e6: ship staging GREEN.",
+  "commit": "16aa0e6",
   "source": "fidelity review, Oct 25 (D-314)",
   "words": "Fidelity fix: the task panel lacks the demo's tick beside the title and places Where it came from differently.",
   "reportedAt": "2026-10-25T12:48:30.709Z",
