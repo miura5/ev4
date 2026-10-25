@@ -73,7 +73,7 @@
                 ? 'ready when you are'
                 : MOOD_WORD[MOOD_NOW] || 'online';
       // B-221 (D-210): her status word beside her name; the readout code has left the screen.
-      const txt = [
+      const parts = [
         off && !T.busy
           ? word
           : activeSession()
@@ -90,9 +90,10 @@
                     ? sysProblem
                     : word,
         STAGING ? 'staging' : '',
-      ]
-        .filter(Boolean)
-        .join(' · ');
+      ];
+      // B-384: a System problem's short phrase stands alone, so it is never cut by the staging word
+      if (sysProblem && parts[0] === sysProblem) parts.pop();
+      const txt = parts.filter(Boolean).join(' · ');
       const cls = 'led' + (T.busy || SS.busy ? ' busy' : MOOD_NOW === 'sleepy' ? ' brk' : off ? ' off' : '');
       const ro = $('readout');
       const sys = !!sysProblem && txt.startsWith(sysProblem);

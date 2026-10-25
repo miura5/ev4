@@ -60,6 +60,7 @@
           text: `This health check is ${Math.floor(ageH)} hours old. The watchdog checks every three hours, so it may have stopped. A build chat should look.`,
           v: 'bad',
           chip: 'stale',
+          short: 'Health check is late',
         });
       // B-61 (D-112): what the scheduler's record says about each miss, when the watchdog read it.
       const missWhy = m =>
@@ -70,16 +71,19 @@
             : '';
       for (const m of hl.missing || [])
         out.push({
+          short: m.lane === 'mac' ? 'A Mac run was missed' : 'A run was missed',
           text: `${PIPE_NAME[m.pipeline] || m.pipeline} missed its ${m.slot ? clock12(m.slot) + ' ' : ''}run${missWhy(m)}${m.refired ? '; E.V. started it again' : m.lane === 'mac' ? '. It runs on your Mac, which may have been asleep or offline; it runs again at its next time' : ''}.`,
           v: 'warn',
         });
       for (const r of hl.stalledRuns || [])
         out.push({
+          short: 'A run never finished',
           text: `${PIPE_NAME[r.pipeline] || r.pipeline} started ${ago(r.startedAt)} and never finished${r.refired ? '; E.V. started it again' : ''}.`,
           v: 'warn',
         });
       for (const j of hl.stalledJobs || [])
         out.push({
+          short: 'A job is stuck',
           text: `A background job waited ${j.minutes || '?'} min without starting${j.refired ? '; E.V. sent it again' : ''}.`,
           v: 'warn',
         });
@@ -90,6 +94,7 @@
       };
       for (const r of hl.reported || [])
         out.push({
+          short: 'A run needs a look',
           text: `${String(r.target || r.id).replace(/^(run|job) /, '')}: ${r.reason}, ${why[r.why] || r.why}. A build chat should look.`,
           v: 'bad',
         });
@@ -100,6 +105,7 @@
           text: `Your latest backup (${short(bk.at)}) is ${bk.behind} schema update${bk.behind === 1 ? '' : 's'} behind this build. It still restores: the drill moves it forward. Tonight’s backup catches up.`,
           v: 'warn',
           chip: 'backup',
+          short: 'Backup is behind',
         });
       return out;
     }
@@ -137,6 +143,16 @@
       }
     }
     let sysProblem = null; // B-120 (D-157): System's first problem, which the header's status line reads
+    // B-384: a failed run, as a short whole phrase that fits the status lines ('Last night’s Mac run failed', 'A run failed')
+    function failShort(p, r) {
+      const mac = ((EV_SPEC.pipelines || {})[p] || {}).lane === 'mac';
+      const verb = r.status === 'partial' ? 'finished partly' : 'failed';
+      const t = r.startedAt ? new Date(E.toMs(r.startedAt)) : null;
+      const h = t ? t.getHours() : 12;
+      const night = !!t && Date.now() - t.getTime() < 24 * 3600e3 && (h >= 18 || h < 6);
+      if (mac) return night ? `Last night’s Mac run ${verb}` : `A Mac run ${verb}`;
+      return night ? `Last night’s run ${verb}` : `A run ${verb}`;
+    }
     function renderSystem() {
       const st = S.state;
       const hl = S.health;
@@ -159,15 +175,17 @@
         .map(([p]) => ({
           text: `${PIPE_NAME[p] || p}’s last run ${last[p].status === 'partial' ? 'finished partly' : 'failed'} (${short(last[p].startedAt)} ${clock12(last[p].startedAt)}).`,
           detail: last[p].detail || '',
+          short: failShort(p, last[p]),
         }));
       const problems = [
         ...failed,
         ...healthLines()
           .filter(l => l.v !== 'info')
-          .map(l => ({ text: l.text, mark: l.chip })),
+          .map(l => ({ text: l.text, mark: l.chip, short: l.short })),
       ];
       const built = names.filter(([, d]) => d.steps).length;
-      sysProblem = problems.length ? problems[0].text : null;
+      // B-384: the status lines carry a short whole phrase; System keeps the full sentence
+      sysProblem = problems.length ? problems[0].short || 'Something needs a look' : null;
       const lead = problems.length
         ? problems[0].text
         : hl
