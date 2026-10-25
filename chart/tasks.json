@@ -7022,7 +7022,7 @@
   "milestone": "v4.9 cleanup",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Also from B-388's review: a session's link to an existing open idea is returned but not shown or stored; showing or storing it needs a schema decision first.",
   "commit": null,
   "source": "release code review (page), 368b104..fc9133e, Oct 25",
   "words": "Dead code and styles for removed screens remain; a stale saved Study view can reopen a closed set; his own snoozes can't be brought back once the panel closes.",
