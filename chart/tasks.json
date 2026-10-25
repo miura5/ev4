@@ -6298,5 +6298,22 @@
    "outcome": "task",
    "at": "2026-10-25T12:48:40.296Z"
   }
+ },
+ {
+  "id": "B-357",
+  "kind": "request",
+  "title": "Request (reported Oct 25): The tests and the page harnesses still assert the old UI; they are brought in line with the demo so the full check is green before live.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt, Oct 25 (D-314)",
+  "words": "The tests and the page harnesses still assert the old UI; they are brought in line with the demo so the full check is green before live.",
+  "reportedAt": "2026-10-25T13:00:31.212Z",
+  "board": {
+   "row": "v4 B-357: The tests and the page harnesses still assert the old UI; they are…"
+  }
  }
 ]
