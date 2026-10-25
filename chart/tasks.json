@@ -6531,5 +6531,22 @@
    "outcome": "task",
    "at": "2026-10-25T13:48:54.541Z"
   }
+ },
+ {
+  "id": "B-368",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Review 2: E.V.'s view shows a large greeting line the demo lacks, the sidebar brand acts as a button, and the running session card's time format differs.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UI reviewer click-through 2 at 112b83f, Oct 25 (D-316)",
+  "words": "Review 2: E.V.'s view shows a large greeting line the demo lacks, the sidebar brand acts as a button, and the running session card's time format differs.",
+  "reportedAt": "2026-10-25T14:52:52.191Z",
+  "board": {
+   "row": "v4 B-368: Review 2: E.V.'s view shows a large greeting line the demo lacks, the…"
+  }
  }
 ]
