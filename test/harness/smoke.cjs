@@ -266,7 +266,7 @@ async function open(browser, viewport) {
             await new Promise(r => setTimeout(r, delay + 300));
             for (let i = 0; i < 30; i++) {
               const tt = document.getElementById('toast');
-              if (tt && !tt.hidden && /Couldn’t/.test(tt.textContent)) break;
+              if (tt && !tt.hidden && /Couldn’t save that answer/.test(tt.textContent)) break;
               await new Promise(r => setTimeout(r, 100));
             }
           }
