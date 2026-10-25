@@ -988,11 +988,8 @@
         };
       },
     };
-    // B-90 (Matt, Oct 19): the greeting is one line; what is behind it is a briefing folded under it on every open. As
-    // Matt drew it: plain text, no pills or surfaces. The fold line counts the items, with one dot for the highest
-    // priority in it (red urgent, else blue new); open, each item is one gray-bulleted line, cut with an ellipsis, a
-    // small accent mark at its end for urgent or new, and a chevron that opens it in place to the full text and its
-    // action as a text link.
+    // B-353 (D-314): the greeting's things to know are her own lines under it, as in the demo's Main board: one quiet
+    // line each, no fold and no dot; a line with an action carries it as a small button at its end.
     T.briefOpen = false;
     T.briefItem = new Set();
     const CHEV =
@@ -1004,50 +1001,18 @@
           ? openIn('progress', 'progress', 'readiness')()
           : showTab(t);
     const TAB_NAME = { today: 'Today', record: 'Record', progress: 'Progress', system: 'System', study: 'Study' };
+    function briefLine(it) {
+      const t = it.level === 'prep' ? it.title.replace(/^Prep: /, 'Prep for ') : it.title;
+      const due = it.kind === 'due' && it.when && !/\b(today|tonight|tomorrow)\b/i.test(t) ? ', due ' + it.when : '';
+      return t.replace(/[.\s]+$/, '') + due + '.';
+    }
     function briefEl(m) {
-      const b = m.brief,
-        top = b.some(x => x.level === 'urgent') ? 'urgent' : b.some(x => x.level === 'new') ? 'new' : '';
       const wrap = el('div', 'brief');
-      const listId = 'brief-' + m.id;
-      const row = el('button', 'brief-row');
-      row.type = 'button';
-      row.setAttribute('aria-controls', listId);
-      row.append(el('span', 'br-t', b.length === 1 ? '1 thing to know' : `${b.length} things to know`));
-      if (top) {
-        const d = el('span', 'br-dot ' + top);
-        d.setAttribute('role', 'img');
-        d.setAttribute('aria-label', top === 'urgent' ? 'something urgent' : 'something new');
-        row.append(d);
-      }
-      row.insertAdjacentHTML('beforeend', CHEV);
-      const ul = el('ul', 'brief-list');
-      ul.id = listId;
-      for (const it of b) {
-        const li = el('li', 'brief-item');
+      for (const it of m.brief) {
+        const li = el('p', 'brief-line');
         li.dataset.level = it.level;
         li.dataset.kind = it.kind;
-        const tog = el('button', 'bi-main');
-        tog.type = 'button';
-        const line = el('span', 'bi-line');
-        line.append(el('span', 'bi-t', it.level === 'prep' ? it.title.replace(/^Prep: /, '') : it.title));
-        if (it.level === 'prep')
-          line.append(el('span', 'bi-prep', 'Prep')); // D-143: its own calm marker, never the urgent one
-        else if (it.level !== 'normal') {
-          const a = el('span', 'bi-mark ' + it.level, '*');
-          a.setAttribute('aria-label', it.level === 'urgent' ? 'urgent' : 'new');
-          line.append(a);
-        }
-        tog.append(line);
-        tog.insertAdjacentHTML('beforeend', CHEV);
-        const more = el('div', 'bi-more');
-        const when = it.when ? it.when.charAt(0).toUpperCase() + it.when.slice(1) + '.' : '';
-        const d = [
-          it.level === 'urgent' && when ? (it.kind === 'due' ? 'Due ' + it.when + '.' : when) : '',
-          it.detail || '',
-        ]
-          .filter(Boolean)
-          .join(' ');
-        if (d) more.append(el('p', 'bi-d', d));
+        li.append(el('span', 'bl-t', briefLine(it)));
         const go = it.action
           ? btn(it.action.label === 'Start' ? 'Start review' : it.action.chip, () =>
               guard(null, () => quick(it.action.chip))
@@ -1056,51 +1021,11 @@
             ? btn('Open ' + (TAB_NAME[it.tab] || it.tab), () => goTab(it.tab))
             : null;
         if (go) {
-          go.className = 'bi-go';
-          go.insertAdjacentHTML('beforeend', ' <span aria-hidden="true">→</span>');
-          more.append(go);
+          go.className = 'btn neutral sm bl-go';
+          li.append(go);
         }
-        const set = o => {
-          li.classList.toggle('open', o);
-          tog.setAttribute('aria-expanded', String(o));
-          if (o) T.briefItem.add(it.id);
-          else T.briefItem.delete(it.id);
-        };
-        set(T.briefItem.has(it.id));
-        tog.addEventListener('click', () => set(!li.classList.contains('open')));
-        li.append(tog, more);
-        ul.append(li);
+        wrap.append(li);
       }
-      const show = o => {
-        T.briefOpen = o;
-        ul.hidden = !o;
-        row.setAttribute('aria-expanded', String(o));
-        wrap.classList.toggle('open', o);
-        try {
-          renderStage();
-          syncChips();
-        } catch {}
-      };
-      show(T.briefOpen);
-      row.addEventListener('click', () => {
-        show(!T.briefOpen);
-        CAP.stick = true; // her stage steps down over 0.8 s; then her line pins and the list comes into view
-        clearTimeout(T.briefT);
-        T.briefT = setTimeout(
-          () => {
-            pinNow();
-            if (T.briefOpen) {
-              const t = $('thread'),
-                r = ul.getBoundingClientRect(),
-                tr = t.getBoundingClientRect();
-              if (r.bottom > tr.bottom)
-                t.scrollTop += Math.min(r.bottom - tr.bottom + 12, Math.max(0, r.top - tr.top - 8));
-            }
-          },
-          reduced() ? 50 : 850
-        );
-      });
-      wrap.append(row, ul);
       return wrap;
     }
     // The prep check under her greeting (B-104; D-143, D-144): the night-before pack check from the evening on, the

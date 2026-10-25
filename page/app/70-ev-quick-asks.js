@@ -75,6 +75,11 @@
         return ['Writing 5 now, aimed at your weakest spots. They’ll post here in about a minute.', []];
       },
       'file it': () => fileItReply(),
+      // B-353: the paperclip's job, asked in words (or a file dropped on the pane); the picker opens inside his send.
+      'attach a file': () => {
+        $('ev-file').click();
+        return ['Pick a PDF, Word, PowerPoint, text file or photo and I’ll save it to your library.', []];
+      },
       'how ready am i': () => {
         const ex = M.target;
         if (!ex) return ['No upcoming exam with weak spots yet, so nothing to measure.', []];
@@ -90,6 +95,19 @@
         [{ type: 'checkin' }],
       ],
       'show my progress': () => ['Here’s the week.', [{ type: 'chart' }]],
+      // B-353 (D-314): the demo's chips. How did this week go is the week's chart; Plan the rest of today proposes on
+      // Today what B-293's Plan the rest would, nothing changed until he accepts.
+      'how did this week go': () => ['Here’s the week.', [{ type: 'chart' }]],
+      'plan the rest of today': () => {
+        const np = restProposal();
+        if (!np.adds.length && !np.offs.length) return ['Nothing to change: today’s list already fits the plan.', []];
+        ui.restPlan = np;
+        const bits = [
+          np.adds.length ? plural(np.adds.length, 'thing') + ' to add' : '',
+          np.offs.length ? plural(np.offs.length, 'thing') + ' to take off' : '',
+        ].filter(Boolean);
+        return [`I suggested ${bits.join(' and ')} on Today. Nothing changes until you accept.`, []];
+      },
       'start a workout': () => {
         const cur = activeWorkout();
         return cur
@@ -187,10 +205,43 @@
       await evSay(E.prepReply(list, pa.date, today), card, { tier: 'local', replyTo: mid });
       return true;
     }
+    // B-353 (D-314): the demo's "Quiz me on <topic>" chip names his weakest open weak spot: the open concept spot with
+    // an objective that has the shortest streak, the soonest due first among equals.
+    function weakestSpot() {
+      return (M.models || [])
+        .filter(w => (w.kind || 'concept') === 'concept' && w.objective && w.derived && E.isActive(w))
+        .sort(
+          (a, b) =>
+            (a.derived.streak || 0) - (b.derived.streak || 0) ||
+            String(a.derived.nextDue || '').localeCompare(String(b.derived.nextDue || ''))
+        )[0];
+    }
+    function topicLabel(w) {
+      let t = String(w.topic || w.objective).replace(/\s+/g, ' ').trim();
+      const head = t.split(/\s*[:(–—]\s*/)[0];
+      if (head.length >= 4) t = head;
+      if (t.length > 28) t = t.slice(0, 28).replace(/\s+\S*$/, '');
+      return /^[A-Z][a-z]/.test(t) ? t.charAt(0).toLowerCase() + t.slice(1) : t;
+    }
+    function quizChip() {
+      const w = weakestSpot();
+      return w ? 'Quiz me on ' + topicLabel(w) : 'Start review';
+    }
+    function quizTopicAsk(label) {
+      const w = weakestSpot();
+      if (!w || key('Quiz me on ' + topicLabel(w)) !== key(label)) return null;
+      return () => {
+        const o = S.objectives.find(x => x.id === w.objective) || { id: w.objective, text: w.topic };
+        quizObjective(o, null);
+        return [`Questions on ${topicLabel(w)}. Every answer updates your weak spots.`, []];
+      };
+    }
     async function quick(label) {
       const job = T.greet && T.greet.job && /^Open the /.test(label) ? T.greet.job : null;
       const opened = job ? openJob(job) : null; // before any await: the tab opens inside his tap
-      const fn = opened ? () => opened : LOCAL[key(label)] || (YOUR_TURN.test(label) ? LOCAL['your turn'] : null);
+      const fn = opened
+        ? () => opened
+        : LOCAL[key(label)] || (YOUR_TURN.test(label) ? LOCAL['your turn'] : null) || quizTopicAsk(label);
       if (!fn) return false;
       T.bigCore = false;
       await mattSay(label);

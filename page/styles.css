@@ -407,34 +407,13 @@ body.captions .msg-cards:empty{display:none}
 body.captions .cap-cards-more{align-self:center;min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:none;font-size:calc(13px * var(--ts));color:var(--soft)}
 body.captions .cap-cards-more:hover{color:var(--ink)}
 .card-more{align-self:flex-start;min-height:36px;padding:0 12px;font-size:calc(13px * var(--ts))}
-/* B-90: the briefing under her one-line greeting, as Matt drew it: plain text, no pills or surfaces. One dot by the
-   fold line for its highest priority; gray bullets; a small accent mark for urgent or new; a chevron to open a line. */
-.brief{align-self:stretch;width:100%;max-width:560px;margin:10px auto 0;text-align:left;display:flex;flex-direction:column;align-items:center}
-body.captions .msg.greet:not(.current) .brief{display:none}
-.brief-row{appearance:none;display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 6px;border:0;border-radius:10px;background:none;color:var(--soft);font:500 calc(14px * var(--ts)) var(--sans);cursor:pointer}
-.brief-row:hover,.brief-row:active,.brief-row:focus{background:none;color:var(--ink2);transform:none}
-.br-dot{width:7px;height:7px;border-radius:50%;flex:none}
-.br-dot.urgent{background:var(--bad-solid);box-shadow:0 0 0 3px var(--bad-bg)}
-.br-dot.new{background:var(--sem-blue)}
+/* B-353 (D-314): the greeting's things to know as her own lines, as the demo's Main board: quiet 14 px lines, no fold
+   and no dot; an action sits at a line's end as a small button. */
+.brief{align-self:stretch;width:100%;margin:8px 0 0;text-align:left;display:flex;flex-direction:column;gap:4px}
+.brief-line{margin:0;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;font-size:calc(14px * var(--ts));line-height:1.45;color:var(--faint)}
+.brief-line .bl-t{min-width:0;flex:0 1 auto}
+.brief-line .bl-go{flex:none}
 .chev{width:15px;height:15px;flex:none;color:var(--soft);transition:transform .25s var(--ease)}
-.brief.open>.brief-row .chev,.brief-item.open .bi-main .chev{transform:rotate(180deg)}
-.brief-list{list-style:none;margin:2px 0 0;padding:0;align-self:stretch;display:flex;flex-direction:column}
-.brief-list[hidden]{display:none}
-.brief-item{position:relative;padding-left:18px}
-.brief-item::before{content:"";position:absolute;left:4px;top:15px;width:5px;height:5px;border-radius:50%;background:rgba(var(--tint),.32)}
-.bi-main{appearance:none;display:flex;align-items:center;gap:8px;width:100%;min-height:36px;padding:6px 0;border:0;border-radius:8px;background:none;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
-.bi-main:hover,.bi-main:active,.bi-main:focus{background:none;transform:none}
-.bi-main:focus-visible{outline:2px solid var(--accent-edge);outline-offset:2px}
-.bi-line{flex:1 1 auto;min-width:0;display:flex;align-items:flex-start}
-.bi-t{min-width:0;font-size:calc(15px * var(--ts));line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bi-mark{flex:none;margin-left:2px;font-size:calc(13px * var(--ts));font-weight:700;line-height:1;transform:translateY(-1px)}
-.bi-mark.urgent{color:var(--bad-solid)} .bi-mark.new{color:var(--sem-blue)}
-.bi-main .chev{width:14px;height:14px;opacity:.7}
-.bi-more{display:none;padding:0 22px 8px 0}
-.brief-item.open .bi-t{white-space:normal} .brief-item.open .bi-more{display:block}
-.bi-d{margin:0 0 4px;font-size:calc(13.5px * var(--ts));line-height:1.45;color:var(--soft)}
-.bi-go{appearance:none;min-height:32px;padding:0;border:0;background:none;color:var(--accent-text);font:500 calc(13.5px * var(--ts)) var(--sans);cursor:pointer}
-.bi-go:hover,.bi-go:active,.bi-go:focus{background:none;transform:none;text-decoration:underline}
 /* B-88: what she is reading: one line above the input, her quote under her comment, and on desktop his notes beside her. */
 .sread{display:flex;align-items:baseline;gap:8px;min-width:0;margin:0;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--glass);font-size:calc(12.5px * var(--ts));color:var(--soft);white-space:nowrap;overflow:hidden}
 .sread .sr-where{flex:0 0 auto}
@@ -925,8 +904,6 @@ body.captions .msg-body,body.captions.opening .msg.greet{align-items:flex-start;
 body.captions .msg.matt .msg-body{align-items:flex-end;text-align:right}
 body.captions .msg-meta{justify-content:flex-start}
 body.captions .cap-cards-more{align-self:flex-start}
-body.captions .brief{margin-left:0;align-items:flex-start}
-body.captions .brief-row{padding-left:0}
 
 /* ============================================================ B-340 (D-312): E.V.'s view as in the demo =============
    The Conversation board: her lines in a 600 px column (24 px in), the past ones small and faint, his to the right
@@ -1836,4 +1813,34 @@ body.has-line #today-week .wk-her{display:none}
   #p-record .rec-list > .empty{padding:14px 16px}
   #record-dates .rec-li .badge,#record-library .rec-li .badge,#record-news .rec-li .badge{min-width:0}
   .rec-form .fields > *{flex-basis:100%}
+}
+
+/* B-353 (D-314): a running session as the demo's strip under the header (ConversationPhone): under 600 px on every
+   view, and on her view under 1200 px where her panel is hidden. The topic in bold, the minutes, Break and End. */
+.mh>#sbar .s-topic{display:none}
+@media (max-width:599px){
+  .mh:has(>#sbar:not([hidden])){flex-wrap:wrap;align-content:flex-start;row-gap:0}
+  .mh:has(>#sbar:not([hidden]))::before{content:"";order:-1;flex:0 0 0;width:0;margin-right:-10px;height:calc(var(--mh-h) - 1px)}
+  .mh>#sbar{order:20;flex:1 0 100%;justify-content:flex-start;gap:6px;margin:0 -16px;padding:4px 8px 4px 16px;min-height:44px;border-top:1px solid var(--line);font:400 calc(13px * var(--ts)) var(--sans);color:var(--text)}
+  .mh>#sbar .s-led,.mh>#sbar .s-read{display:none}
+  .mh>#sbar .s-main{flex:1 1 auto;min-width:0}
+  .mh>#sbar .s-topic{display:inline;font-weight:600;color:var(--text)}
+  .mh>#sbar .s-topic::after{content:" · ";font-weight:400}
+  .mh>#sbar .s-clock{color:var(--text)}
+  .mh>#sbar .s-acts{display:flex;gap:6px;flex:none}
+  .mh>#sbar .s-acts button:not(.end):not(:first-child){display:none}
+  .mh>#sbar .s-acts button.btn{height:44px;min-height:44px;min-width:44px;padding:0 12px;border-radius:7px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);color:var(--text);font:500 calc(12.5px * var(--ts)) var(--sans)}
+}
+@media (min-width:600px) and (max-width:1199px){
+  body.on-ev .mh:has(>#sbar:not([hidden])){flex-wrap:wrap;align-content:flex-start;row-gap:0}
+  body.on-ev .mh:has(>#sbar:not([hidden]))::before{content:"";order:-1;flex:0 0 0;width:0;margin-right:-10px;height:calc(var(--mh-h) - 1px)}
+  body.on-ev .mh>#sbar .s-acts{display:flex;gap:6px;flex:none}
+  body.on-ev .mh>#sbar{order:20;flex:1 0 100%;justify-content:flex-start;gap:6px;margin:0 -16px;padding:4px 8px 4px 18px;min-height:40px;border-top:1px solid var(--line);font:400 calc(13px * var(--ts)) var(--sans);color:var(--text)}
+  body.on-ev .mh>#sbar .s-led,body.on-ev .mh>#sbar .s-read{display:none}
+  body.on-ev .mh>#sbar .s-main{flex:1 1 auto;min-width:0}
+  body.on-ev .mh>#sbar .s-topic{display:inline;font-weight:600;color:var(--text)}
+  body.on-ev .mh>#sbar .s-topic::after{content:" · ";font-weight:400}
+  body.on-ev .mh>#sbar .s-clock{color:var(--text)}
+  body.on-ev .mh>#sbar .s-acts button:not(.end):not(:first-child){display:none}
+  body.on-ev .mh>#sbar .s-acts button.btn{height:28px;min-height:28px;padding:0 10px;border-radius:7px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);color:var(--text)}
 }

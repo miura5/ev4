@@ -168,13 +168,17 @@
           : ((T.greet && T.greet.chips) || ['What’s due this week?', 'How ready am I?']).filter(
               c => !(c === 'Start a study session' && sa)
             );
-      // B-340 (D-312): at rest, five chips as in the demo: Start a study session first, then her greeting's offers,
-      // filled with the usual asks she answers herself.
-      if (!sa) {
-        chips = ['Start a study session', ...chips.filter(c => c !== 'Start a study session')];
-        for (const c of ['What’s due this week?', 'How ready am I?', 'Show my progress', 'Give me 5 more', 'Start review'])
-          if (chips.length < 5 && !chips.includes(c)) chips.push(c);
-      }
+      // B-353 (D-314): at rest, the demo's five chips; what waits on him (a skills run to resume, Your turn, sessions to
+      // file) leads them while it waits, since nothing else offers it.
+      if (!sa)
+        chips = [
+          ...chips.filter(c => /^Resume |^Your turn|^File it$/.test(c)),
+          'Start a study session',
+          'What’s due this week?',
+          quizChip(),
+          'How did this week go?',
+          'Plan the rest of today',
+        ];
       renderBar();
       renderSkillDock();
       const qc = $('qchips');
@@ -188,7 +192,7 @@
           return b;
         });
         // B-345 (D-312): five chips sit in the demo's rows, three then two, from 600 px (a quiet line break).
-        if (bs.length === 5) bs.splice(3, 0, el('span', 'qc-br'));
+        if (bs.length >= 5) bs.splice(bs.length - 2, 0, el('span', 'qc-br'));
         qc.replaceChildren(...bs);
       }
       syncChips();
@@ -325,7 +329,7 @@
         await noteSave(text, nt[1]);
         return;
       }
-      if (LOCAL[key(text)] || YOUR_TURN.test(text)) {
+      if (LOCAL[key(text)] || YOUR_TURN.test(text) || quizTopicAsk(text)) {
         await quick(text);
         return;
       }

@@ -246,7 +246,7 @@
         return finish(`I couldn't read **${name}**: ${(e && (e.message || e.code)) || 'error'}. Nothing was saved.`);
       }
     }
-    $('ev-attach').addEventListener('click', () => $('ev-file').click());
+    // B-353 (D-314): no paperclip in the field, as the demo; a file is dropped on the pane, or "attach a file" opens the picker.
     $('ev-file').addEventListener('change', e => {
       const f = e.target.files && e.target.files[0];
       e.target.value = '';

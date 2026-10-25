@@ -812,7 +812,9 @@
         const led = el('span', 's-led');
         led.setAttribute('aria-hidden', 'true');
         const main = el('span', 's-main');
-        main.append(el('span', 's-clock', ''));
+        // B-353 (D-314): the topic and her reading-along words, each its own span: under 600 px (and on her view under
+        // 1200 px) the line is the demo's strip under the header, the topic in bold, the minutes, Break and End.
+        main.append(el('b', 's-topic', s.topic || 'Study session'), el('span', 's-clock', ''), el('span', 's-read', ''));
         bar.setAttribute('aria-label', 'Study session: ' + (s.topic || 'untitled'));
         bar.title = s.topic || '';
         const acts = el('div', 's-acts');
@@ -827,8 +829,11 @@
             ? 'Writing your quiz…'
             : st.onBreak
               ? `On a break · ${minsLeft(st)} min left`
-              : `${minsLeft(st) ?? st.minutes} min${minsLeft(st) == null ? '' : ' left'}` +
-                (noteless(s) ? '' : ` · ${SS.thinking ? 'thinking about that line' : 'reading along'}`);
+              : `${minsLeft(st) ?? st.minutes} min${minsLeft(st) == null ? '' : ' left'}`;
+        bar.querySelector('.s-read').textContent =
+          ending || SS.busy === true || st.onBreak || noteless(s)
+            ? ''
+            : ` · ${SS.thinking ? 'thinking about that line' : 'reading along'}`;
         CORE.setRing(ringFill(st, ending));
         return;
       }

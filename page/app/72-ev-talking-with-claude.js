@@ -664,7 +664,7 @@
                 L.mats.find(x => x.status !== 'removed' && E.norm(x.title).includes(E.norm(want)));
               if (!m) throw new Error('no material ' + want + '; search or list first');
               if (m.needsOcr && !m.ocr)
-                return `"${m.title}" is image-only and hasn't been read yet. Ask him to attach it here with the paperclip so you can read it.`;
+                return `"${m.title}" is image-only and hasn't been read yet. Ask him to attach it here (he says \"attach a file\" or drops it on the conversation) so you can read it.`;
               return JSON.stringify(E.readMaterial(m, { page: Number(i.page) || undefined }));
             }
             if (a === 'list') {
