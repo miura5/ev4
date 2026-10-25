@@ -7079,10 +7079,10 @@
  {
   "id": "B-394",
   "kind": "bug",
-  "title": "Bug (reported Oct 25): In the PWA a refused conversation line is still lost if he has started typing, E.V. still answers a line the record refused, and a create race silently drops the page's value for a field both sides set.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "title": "PWA saves never lose his words: a refused line is kept even when he has started typing (appended to the box, or a 'not sent' line he taps to restore); E.V. never answers a line the record refused; a create race that collides on a field both sides set is refused with his data, never silently dropped",
+  "dod": "Shim tests: a retry that conflicts again ends refused with e.unsaved and nothing written; a network failure keeps his text; a create race colliding on a scalar refuses; a harness or smoke step forces a refused send and finds his words kept and no E.V. reply; npm test and smoke:pwa green; pwa-staging green; a fresh review finds no gap.",
+  "milestone": "v5 app",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -7091,6 +7091,10 @@
   "reportedAt": "2026-10-25T20:53:36.837Z",
   "board": {
    "row": "v4 B-394: In the PWA a refused conversation line is still lost if he has…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-25T20:53:39.740Z"
   }
  }
 ]
