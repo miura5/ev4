@@ -5252,7 +5252,7 @@
   "depends": [
    "B-291"
   ],
-  "notes": "built; npm test, smoke and the prep harness (154 of 154, the new Plan the rest checks included) green at affd5ab",
+  "notes": "proofs green: check --touched GREEN at 9e0af7a (prep 156/156, captions, look 307/307); reviewed twice, second review: No gaps",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
