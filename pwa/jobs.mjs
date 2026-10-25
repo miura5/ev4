@@ -25,7 +25,7 @@ export const SPEC_KEYS = ['jobs', 'pipelines', 'collections', 'capacity', 'bound
 
 const STUDY_GUIDE_APP =
   'Write a one-page study guide on the brief, grounded in the passages given from his course materials: the key rules, a comparison laid out as short lines where it helps, 3 memory hooks, the NCLEX traps, and 3 self-check questions with answers at the end. Put the whole guide in text, as plain lines (no links): the app saves it in E.V., in this job’s result and its message, not as a Claude Doc. Mark anything from general knowledge ‘check your materials’.';
-const CONFLICT_TRIES = 4;
+const CONFLICT_TRIES = 8;
 const STUDY_GUIDE_CHARS = 4000; // a talk message holds 4,000 (the job-result fold cuts there)
 const SHARE_REFUSED =
   'a shareable practice page is published on claude.ai, and the app can’t publish pages: share this set from E.V. Home on claude.ai';
@@ -263,59 +263,67 @@ export function statusWrite(ctx, status, error = null) {
 export async function runJob({ db, spec, schemas, jobId, ask, write, reload, now = new Date(), release, dir }) {
   const prepared = prepare({ db, spec, jobId, now, release, dir });
   if (prepared.skip) return { status: 'skipped', said: prepared.skip };
-  // A conflict (a document changed while the job ran) folds the reply again over the record as it is now, with no
-  // new ask, a few times; then it is a failure like any other.
-  const commit = async answer => {
-    let r = finish({ prepared, answer, db, spec, schemas });
-    for (let tries = 0; r.ok; tries++) {
+  // `plan(db)` gives the writes over a record. A conflict (a document changed while the job ran: another job's
+  // message, the page's own save) plans them again over the record as it is now, with no new ask, a few times, a
+  // little later each time; then it is an error like any other.
+  const save = async plan => {
+    for (let tries = 0; ; tries++) {
+      const r = plan(db);
+      if (!r.ok) return r;
       try {
         await write(r.writes, db);
         return r;
       } catch (e) {
         if (!(e && e.conflict) || !reload || tries >= CONFLICT_TRIES) throw e;
+        await new Promise(ok => setTimeout(ok, 250 * (tries + 1)));
         db = await reload();
-        r = finish({ prepared, answer, db, spec, schemas });
       }
     }
-    return r;
   };
+  const fold = answer => cur => finish({ prepared, answer, db: cur, spec, schemas });
+  const status = (state, why) => () => ({ ok: true, writes: [statusWrite(prepared.ctx, state, why)] });
   if (prepared.graded) {
     // B-01: refused before any call; the refusal is posted through the same fold as a job the worker declines
     prepared.output = outputFor(spec, 'general');
-    const r = await commit({ text: prepared.graded, failed: prepared.graded });
+    const r = await save(fold({ text: prepared.graded, failed: prepared.graded }));
     if (!r.ok) throw new Error('the graded refusal did not pass its own checks: ' + r.problems.join('; '));
     return { status: 'failed', said: 'refused before any call (B-01): ' + prepared.graded };
   }
   const running = statusWrite(prepared.ctx, 'running');
-  await write([running], db);
+  await save(() => ({ ok: true, writes: [running] }));
   // the runner's own status document is in the record from here on
-  db = { ...db, jobresults: [...(db.jobresults || []).filter(d => d.id !== jobId), { ...running.data, id: jobId }] };
+  const withRunning = () => {
+    if (!(db.jobresults || []).some(d => d.id === jobId))
+      db = { ...db, jobresults: [...(db.jobresults || []), { ...running.data, id: jobId }] };
+  };
+  withRunning();
+  const reloadFirst = reload;
+  reload = reloadFirst && (async () => ((db = await reloadFirst()), withRunning(), db));
   let reply;
   try {
     reply = await ask(request(spec, prepared));
   } catch (e) {
     const why = 'Claude couldn’t be reached (' + String((e && e.message) || e).slice(0, 120) + '). Try again.';
-    await write([statusWrite(prepared.ctx, 'failed', why)], db);
+    await save(status('failed', why));
     return { status: 'failed', said: why };
   }
   const answer = reply && reply.stop_reason === 'max_tokens' ? null : answerOf(reply);
   let r;
   try {
     r = answer
-      ? await commit(answer)
+      ? await save(fold(answer))
       : {
           ok: false,
           problems: [reply && reply.stop_reason === 'max_tokens' ? 'the reply was cut short' : 'no answer'],
         };
   } catch (e) {
     const why = 'what it made couldn’t be saved (' + String((e && e.message) || e).slice(0, 120) + '). Try again.';
-    if (reload) db = await reload().catch(() => db);
-    await write([statusWrite(prepared.ctx, 'failed', why)], db);
+    await save(status('failed', why));
     return { status: 'failed', said: why };
   }
   if (!r.ok) {
     const why = 'the reply didn’t pass E.V.’s checks, so nothing it made was saved (' + r.problems[0] + '). Try again.';
-    await write([statusWrite(prepared.ctx, 'failed', why.slice(0, 300))], db);
+    await save(status('failed', why.slice(0, 300)));
     return { status: 'refused', problems: r.problems, said: why };
   }
   const done = r.writes.find(w => w.collection === 'jobresults');
