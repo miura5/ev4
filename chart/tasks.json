@@ -6164,11 +6164,13 @@
  {
   "id": "B-351",
   "kind": "bug",
-  "title": "Bug (reported Oct 25): Fidelity fix: on Matt's record the Study page is empty: his next exams (an ATI dosage assessment and a dosage exam) have no objectives, so Study shows one line of text and a Start session button, and none of the demo's exam card, Coming up or panel.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
-  "depends": [],
+  "title": "Fidelity fix: Study, with no objectives: when the next exam has none (as on Matt's record), Study still shows the StudyOverview board's whole page: the exam card for the next exam with its date, countdown and its plan's progress bar and days as rows, Coming up in the course under it, and the panel on the picked row; objectives fill the same card when they exist",
+  "dod": "On the synthetic record with every objective removed (and its exams moved so the next has none), and on the synthetic record as it is, Study matches the StudyOverview board's layout at 1280, 1706, 2560 and 390: no page that is one line of text. Proof (D-312, fidelity sprint): node tools/build.mjs; render both records beside the board; npm run smoke; ship staging GREEN.",
+  "milestone": "v4.8 redesign",
+  "status": "open",
+  "depends": [
+   "B-337"
+  ],
   "notes": "",
   "commit": null,
   "source": "Matt, staging, Oct 25 (D-312)",
@@ -6176,6 +6178,10 @@
   "reportedAt": "2026-10-25T12:41:35.136Z",
   "board": {
    "row": "v4 B-351: Fidelity fix: on Matt's record the Study page is empty: his next…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-25T12:41:38.432Z"
   }
  }
 ]
