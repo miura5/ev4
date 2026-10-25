@@ -6167,11 +6167,11 @@
   "title": "Fidelity fix: Study as the StudyOverview board, no tabs (D-313): the toolbar strip with the course switch, Quiz me, Weak spots · N and Start session; the exam card for the next exam with its date and countdown, its objectives as rows, or when it has none (as on Matt's record) its plan's progress and days as rows; Coming up in the course and the mini quiz card under it; the panel on the picked row; Weak spots · N opens the StudyWeak view with its back to All topics; the Objectives / Plan / Weak spots tabs are gone",
   "dod": "With no tabs at any size, Study matches the StudyOverview board at 1280, 1706, 2560 and 390 on the synthetic record as it is and on it with every objective removed (the next exam then shows its plan in the card); Weak spots · N opens the StudyWeak layout and back returns; no page is one line of text. Proof (D-312, fidelity sprint): node tools/build.mjs; render both records beside the boards; npm run smoke; ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-337"
   ],
-  "notes": "",
+  "notes": "claimed by lane study",
   "commit": null,
   "source": "Matt, staging, Oct 25 (D-312)",
   "words": "Fidelity fix: on Matt's record the Study page is empty: his next exams (an ATI dosage assessment and a dosage exam) have no objectives, so Study shows one line of text and a Start session button, and none of the demo's exam card, Coming up or panel.",
