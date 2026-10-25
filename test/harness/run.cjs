@@ -3300,6 +3300,182 @@ const ok = (name, cond, detail = '') => {
       );
       await page.screenshot({ path: `${shots}/score-${scheme}.png`, fullPage: false });
     }
+    // B-301 (C-6): a planted week. Each bar's day panel lists the sessions that make up that bar and adds up to it; a
+    // workout and a note on the same day never appear there; the bars are 44 px or wider at 390.
+    {
+      const plant = await page.evaluate(async () => {
+        const E = window.EVCore,
+          t = E.chicagoDate(new Date()),
+          mon = E.addDays(t, -((E.weekday(t) + 6) % 7));
+        const d0 = mon === t ? t : E.addDays(t, -1),
+          d1 = mon;
+        const db = await window.claude.use('db'),
+          at = new Date().toISOString();
+        const ss = [
+          ['pw-a', d0, 35, 'Planted: acid-base', 'NUR 112'],
+          ['pw-b', d0, 20, 'Planted: skull bones', 'BIO 201'],
+          ['pw-c', d1, 15, 'Planted: fluid shifts', 'NUR 112'],
+        ];
+        for (const [id, date, minutes, topic, folder] of ss)
+          await db
+            .collection('sessions')
+            .doc(id)
+            .set({
+              schema: 2,
+              writer: 'page',
+              at,
+              source: 'E.V. Home',
+              status: 'ended',
+              date,
+              startedAt: date + 'T15:00:00.000Z',
+              endedAt: date + 'T15:30:00.000Z',
+              topic,
+              folder,
+              minutes,
+            });
+        await db
+          .collection('workouts')
+          .doc('pw-wk')
+          .set({
+            schema: 1,
+            writer: 'page',
+            at,
+            source: 'E.V. Home',
+            sequence: 'cindy',
+            title: 'Planted workout',
+            date: d0,
+            status: 'done',
+            startedAt: d0 + 'T16:00:00.000Z',
+            endedAt: d0 + 'T16:20:00.000Z',
+          });
+        await db
+          .collection('ideas')
+          .doc('pw-note')
+          .set({
+            schema: 1,
+            writer: 'page',
+            at,
+            source: 'E.V. Home',
+            title: 'Planted note',
+            postedAt: d0 + 'T17:00:00.000Z',
+            date: d0,
+          });
+        return { d0, d1 };
+      });
+      await page.waitForTimeout(300);
+      await page.click('#tab-study');
+      await page.click('#tab-progress');
+      await page.click('#prog-period [data-p="week"]');
+      await page.waitForTimeout(150);
+      for (const [w, h] of [
+        [390, 844],
+        [1280, 900],
+      ]) {
+        await page.setViewportSize({ width: w, height: h });
+        await page.waitForTimeout(200);
+        const bars = await page.evaluate(() =>
+          [...document.querySelectorAll('#prog-chart .pc-bar')].map(b => b.dataset.key)
+        );
+        const rows = [];
+        for (const key of bars) {
+          await page.click(`#prog-chart .pc-bar[data-key="${key}"]`);
+          await page.waitForTimeout(40);
+          rows.push(
+            await page.evaluate(k => {
+              const bar = document.querySelector(`#prog-chart .pc-bar[data-key="${k}"]`);
+              const items = [...document.querySelectorAll('#prog-day .prog-s')];
+              const want = Object.entries(window.__db.sessions || {})
+                .filter(([, s]) => s.date === k && s.status !== 'active' && (s.minutes || 0) > 0)
+                .map(([id, s]) => [id, s.minutes]);
+              return {
+                k,
+                bar: Number(bar.dataset.min),
+                sum: items.reduce((a, li) => a + Number(li.dataset.min), 0),
+                ids: items.map(li => li.dataset.id).sort(),
+                want: want.map(x => x[0]).sort(),
+                wantMin: want.reduce((a, x) => a + x[1], 0),
+                text: document.getElementById('prog-day').textContent,
+                width: Math.round(bar.getBoundingClientRect().width),
+              };
+            }, key)
+          );
+        }
+        ok(
+          `[${w}] Progress: on a planted week each day panel's sessions add up to its bar, and are that day's sessions`,
+          rows.length === 7 &&
+            rows.every(
+              r => r.sum === r.bar && r.bar === r.wantMin && JSON.stringify(r.ids) === JSON.stringify(r.want)
+            ) &&
+            rows.find(r => r.k === plant.d0).ids.includes('pw-a') &&
+            rows.find(r => r.k === plant.d1).ids.includes('pw-c'),
+          JSON.stringify(rows.map(r => [r.k, r.bar, r.sum, r.ids.length]))
+        );
+        ok(
+          `[${w}] Progress: no workout or note appears in the day panel`,
+          rows.every(
+            r => !/Planted workout|Planted note/.test(r.text) && !r.ids.some(i => i === 'pw-wk' || i === 'pw-note')
+          ),
+          rows.find(r => r.k === plant.d0).text.slice(0, 160)
+        );
+        if (w === 390)
+          ok(
+            '[390] Progress: every bar measures 44 px or wider',
+            rows.every(r => r.width >= 44),
+            rows.map(r => r.width).join(',')
+          );
+        await page.click(`#prog-chart .pc-bar[data-key="${plant.d0}"]`);
+        await page.waitForTimeout(80);
+        // the picked bar's panel is the right panel from 1200 px, and follows the chart below that
+        const place = await page.evaluate(() => {
+          const d = document.getElementById('prog-day').getBoundingClientRect(),
+            c = document.getElementById('prog-chart-card').getBoundingClientRect();
+          return { right: d.left >= c.right, below: d.top >= c.bottom - 1 };
+        });
+        ok(
+          `[${w}] Progress: the day panel sits ${w >= 1200 ? 'in the right panel' : 'under the chart'}`,
+          w >= 1200 ? place.right : place.below,
+          JSON.stringify(place)
+        );
+        for (const th of ['light', 'dark']) {
+          await page.evaluate(m => document.documentElement.setAttribute('data-theme', m), th);
+          await page.waitForTimeout(80);
+          await page.screenshot({ path: `${shots}/progress-${w}-${th}.png`, fullPage: w < 600 });
+        }
+        await page.evaluate(() => document.documentElement.removeAttribute('data-theme'));
+      }
+      // the month and the semester: their bars add up to the period's study time, and a picked bar's panel to the bar
+      for (const p of ['month', 'sem']) {
+        await page.click(`#prog-period [data-p="${p}"]`);
+        await page.waitForTimeout(100);
+        const r = await page.evaluate(() => {
+          const bars = [...document.querySelectorAll('#prog-chart .pc-bar')];
+          const pick = bars.find(b => b.getAttribute('aria-pressed') === 'true');
+          return {
+            n: bars.length,
+            pressed: document.querySelector('#prog-period [aria-pressed="true"]').dataset.p,
+            bar: Number(pick.dataset.min),
+            sum: [...document.querySelectorAll('#prog-day .prog-s')].reduce((a, li) => a + Number(li.dataset.min), 0),
+            stats: document.getElementById('prog-stats').textContent,
+          };
+        });
+        ok(
+          `Progress (${p}): the switch shows it picked, and the picked bar's panel adds up to the bar`,
+          r.pressed === p &&
+            r.n >= 1 &&
+            r.sum === r.bar &&
+            /Study time/.test(r.stats) &&
+            /Quiz accuracy/.test(r.stats) &&
+            /Weak spots/.test(r.stats),
+          JSON.stringify(r)
+        );
+      }
+      await page.click('#prog-period [data-p="week"]');
+      await page.setViewportSize({ width: 390, height: 844 });
+      ok(
+        'Progress: no topic-share line and no Copy summary',
+        !/share of|Copy summary/i.test(await page.textContent('#p-progress'))
+      );
+    }
     const rd = await page.textContent('#ready-card');
     ok('readiness shows E4', /Exam 4/.test(rd) && /% solid/.test(rd), rd.slice(0, 100));
     {

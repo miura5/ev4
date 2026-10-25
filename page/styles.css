@@ -1101,3 +1101,59 @@ button.btn:disabled{opacity:.45;cursor:default}
   .ov-li .badge{min-width:0}
   .ov-more{padding:8px 0 12px}
 }
+/* ============================================================ B-301 (C-6, C-1, D-270): Progress =====================
+   The period switch in the view's toolbar; one card of property rows (study time, quiz accuracy, weak spots); the
+   study-time chart, one bar per day, week or month, 44 px wide or more on the phone; by course and exam readiness side
+   by side from 600 px. The picked bar's day panel is the right panel's first card from 1200 px; below that it follows
+   the chart. Violet is study time, green solid, yellow right once (D-269); her colour is not used here. */
+#progress-readiness .prog-bar{padding:0 0 8px;border-bottom:0;min-height:0}
+#progress-readiness .prog-bar .seg{align-self:center}
+.prog-props{gap:0;padding:4px 14px}
+.prog-props .prop{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:32px;border-bottom:1px solid var(--line);font-size:calc(13.5px * var(--ts))}
+.prog-props .prop:last-child{border-bottom:0}
+.prog-props .prop-k{color:var(--quiet)}
+.prog-props .prop-v{text-align:right;min-width:0}
+.prog-props .prop-v b{font-weight:600;color:var(--text)}
+.prog-props .prop-v .meta{color:var(--faint);font-size:calc(12.5px * var(--ts))}
+.prog-chart-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.prog-chart-head h3{margin:0;font:600 calc(13.5px * var(--ts)) var(--sans)}
+.prog-chart-head .meta{margin:0;color:var(--faint);font-size:calc(12px * var(--ts))}
+.prog-chart{display:flex;align-items:stretch;gap:6px;height:160px}
+.pc-col{flex:1 1 0;min-width:44px;display:flex;flex-direction:column;align-items:stretch;gap:6px}
+.pc-bar{flex:1;display:flex;align-items:flex-end;justify-content:stretch;min-width:44px;margin:0;padding:0;border:0;border-radius:6px;background:var(--sunken);cursor:pointer;box-shadow:none}
+.pc-bar>i{display:block;width:100%;border-radius:6px;background:color-mix(in srgb,var(--sem-violet) 55%,var(--surface))}
+.pc-bar[aria-pressed="true"]{box-shadow:inset 0 0 0 1px var(--line2)}
+.pc-bar[aria-pressed="true"]>i{background:var(--sem-violet)}
+.pc-bar.ahead{background:repeating-linear-gradient(135deg,var(--sunken) 0 6px,transparent 6px 10px)}
+.pc-bar:hover{background:var(--hover)}
+.pc-bar:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+.pc-lab{text-align:center;color:var(--faint);font-size:calc(12px * var(--ts));white-space:nowrap;font-variant-numeric:tabular-nums}
+.pc-bar[aria-pressed="true"]+.pc-lab{color:var(--text);font-weight:600}
+.prog-grid{display:grid;grid-template-columns:1fr;gap:12px}
+.prog-grid .ui-card[hidden]{display:none}
+.prog-hb{display:flex;flex-direction:column;gap:5px}
+.prog-hb-top{display:flex;justify-content:space-between;gap:8px;font-size:calc(13.5px * var(--ts))}
+.prog-hb-top .meta{color:var(--faint);font-size:calc(12.5px * var(--ts));margin:0;white-space:nowrap}
+.prog-hb .pbar>i.x-green{background:var(--sem-green)}
+.prog-hb .pbar>i.x-yellow{background:var(--sem-yellow)}
+#prog-day h2{margin:0}
+#prog-day .prog-day-total{margin:2px 0 4px}
+#prog-day .prog-day-lab{margin:6px 0 0}
+#prog-day .prog-sessions{margin:0;padding:0;list-style:none}
+#prog-day .prog-s{padding:0 2px;gap:8px}
+#prog-day .prog-s .meta{flex:none;color:var(--faint);font-size:calc(12px * var(--ts))}
+#prog-day .prog-s:last-child{border-bottom:0}
+#progress-readiness .col-main{gap:12px}
+@media (min-width:600px){.prog-grid{grid-template-columns:1fr 1fr}}
+@media (max-width:1199px){
+  /* the cols are contents here: order the parts so the picked bar's sessions follow the chart */
+  #progress-readiness:not([hidden]){display:flex;flex-direction:column;gap:12px}
+  #prog-bar,#prog-stats,#prog-chart-card{order:-2}
+  #prog-day{order:-1}
+}
+@media (max-width:599px){
+  .prog-chart{gap:4px;height:140px}
+  .prog-props{padding:2px 14px}
+  .prog-props .prop{min-height:44px}
+  #prog-day .prog-s{padding:0}
+}
