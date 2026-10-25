@@ -5579,7 +5579,7 @@
   "depends": [
    "B-312"
   ],
-  "notes": "Proof at 5c25614 (code de39b55, 6ee2be2, 5c25614): manifest shipped to staging, five staging cloud prompts updated (hashes match). Fired each once; runs/<id> read back from staging D1 via the run API, all status ok, audit ok: morning-20261025-202541301, evening-cloud-20261025-202544508, weekly-20261025-202546549, worker-20261025-202545270, watchdog-20261025-202552338. A first round at fa51e6b also ended ok but 3 audits flagged shell-looped api calls; fixed by one command per pull/apply (5c25614). Token grep: 0 hits in rendered prompts, dist, repo, D1 runs. Open: ship staging not GREEN (pwa-staging deploy readback, B-318); review skill not yet run; staging watchdog now reads runs from D1, so evening-mac/restore-drill (still ArtifactData until B-317) show as fired-without-run.",
+  "notes": "Review fixes at 10dcedc: the audit keys every record call in a Bash line (core/cli.mjs api, /api/run/, the Worker file), so a printed command chained to an unprinted one, a raw curl to /api/run/batch, a read of the token file and a shell loop are all extra (tests in run-worker.test.mjs); api list removed, windowed read proved through api pull. Rendered staging prompts unchanged (hashes match the deployed manifest), so no re-fire. npm test green. Not done: awaiting the second review.",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
