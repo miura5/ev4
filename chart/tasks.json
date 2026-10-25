@@ -6657,5 +6657,22 @@
    "outcome": "task",
    "at": "2026-10-25T14:52:56.906Z"
   }
+ },
+ {
+  "id": "B-374",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Review 3: Today's week breaks words mid-word, Start is missing on most rows, a Checked off toast appears, graded tasks can't be snoozed, and E.V.'s changes section disappears when empty.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UI reviewer click-through 3 at d6bee63, Oct 25 (D-316)",
+  "words": "Review 3: Today's week breaks words mid-word, Start is missing on most rows, a Checked off toast appears, graded tasks can't be snoozed, and E.V.'s changes section disappears when empty.",
+  "reportedAt": "2026-10-25T15:48:12.510Z",
+  "board": {
+   "row": "v4 B-374: Review 3: Today's week breaks words mid-word, Start is missing on…"
+  }
  }
 ]
