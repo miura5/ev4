@@ -453,18 +453,20 @@
       const due = it.tag === 'GRADED' ? gradedDue(it) : today;
       const b = BADGE[it.tag];
       const by = w => (w === 'Matt' ? 'you' : 'E.V.');
-      const from = add
-        ? 'Added by ' +
-          by(add.by || it.by) +
-          (add.at ? (E.chicagoDate(add.at) === today ? ' at ' : ' ') + clock12(add.at) : '')
-        : day.live
-          ? 'Built live from your record'
-          : 'Planned by the 4:25 am run' + (day.at && E.chicagoDate(day.at) === today ? ' at ' + clock12(day.at) : '');
-      const note = [
-        it.note && it.note !== 'Graded' && !add ? it.note : '',
-        exam ? 'From the ' + (exam.title || exam.id) + ' plan' : '',
-        it.deferred ? 'Deferred: over today’s budget' : '',
+      // B-355 (D-314): where it came from as the demo's rows: what put it on the list, with when on the right
+      const at = iso => (iso ? (E.chicagoDate(iso) === today ? clock12(iso) : short(E.chicagoDate(iso))) : '');
+      const from = [
+        add
+          ? { t: 'Added by ' + by(add.by || it.by), when: at(add.at) }
+          : day.live
+            ? { t: 'Built live from your record', when: '' }
+            : { t: 'Planned by the 4:25 am run', when: at(day.at) },
+        exam ? { t: 'From the ' + (exam.title || exam.id) + ' plan', when: '' } : null,
+        it.deferred ? { t: 'Deferred: over today’s budget', when: '' } : null,
       ].filter(Boolean);
+      // its description when it has one: the date's own notes from Canvas, else the planner's note on the item
+      const dn = date && typeof date.notes === 'string' ? date.notes.trim() : '';
+      const desc = dn || (it.note && it.note !== 'Graded' && !add ? String(it.note) : '');
       return {
         status: isDone(it) ? 'Done' : it.deferred ? 'Deferred' : 'To do',
         category: b ? b[0] : it.tag === 'EXAM' ? 'Exam' : 'Task',
@@ -479,7 +481,8 @@
           : '',
         course,
         topic,
-        from: [from, ...note].join(' · '),
+        desc,
+        from,
       };
     }
     async function snoozeTask(it) {
@@ -557,6 +560,20 @@
       const close = btn('Close', closeTask, { cls: 'btn ghost sm tp-close' });
       close.setAttribute('aria-label', 'Close the task');
       const head = el('div', 'card-head');
+      if (!G) {
+        // B-355 (D-314): the tick beside the title, as the TaskDetail board; it ticks the task as the Status switch does
+        const chk = el('button', 'tp-chk' + (isDone(it) ? ' done' : ''));
+        chk.type = 'button';
+        chk.setAttribute('aria-label', 'Done: ' + text);
+        chk.setAttribute('aria-pressed', String(isDone(it)));
+        chk.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>';
+        chk.addEventListener('click', () => {
+          const v = !isDone(it);
+          T.ticked.add(it.id);
+          guard(chk, () => tickWrite(it, v), v ? 'Checked off' : 'Unchecked');
+        });
+        head.append(chk);
+      }
       head.append(el('h2', null, text), close);
       if (G) {
         // what Snooze or Remove just wrote, and its Undo
@@ -612,8 +629,15 @@
       if (f.due) props.append(prop('Due', f.due));
       if (f.course) props.append(prop('Course', f.course));
       if (f.topic) props.append(prop('Topic', f.topic));
+      // B-355 (D-314): its description, then Where it came from as rows (a dot, what, when), under the title
+      const desc = f.desc ? [el('p', 'tp-desc', f.desc)] : [];
       const from = el('div', 'tp-from');
-      from.append(el('span', 'prop-k', 'Where it came from'), el('p', 'meta', f.from));
+      from.append(el('span', 'prop-k', 'Where it came from'));
+      for (const a of f.from) {
+        const r = el('div', 'tp-act');
+        r.append(el('i', 'tp-dot'), el('span', 'tp-what', a.t), el('span', 'tp-when', a.when));
+        from.append(r);
+      }
       const acts = el('div', 'wk-acts');
       const go = openItem(it);
       if (go && startable(it, isDone)) {
@@ -659,7 +683,7 @@
         : acts.querySelector('.tp-snooze')
           ? [el('p', 'meta tp-note', 'Snooze moves it to tomorrow, with Undo.')]
           : [];
-      panel.replaceChildren(head, props, ...(acts.children.length ? [acts] : []), ...note, from);
+      panel.replaceChildren(head, ...desc, from, props, ...(acts.children.length ? [acts] : []), ...note);
     }
     /**
      * B-293 (C-9): Plan the rest. planDay runs again on the record as it stands, and its difference from today's list
