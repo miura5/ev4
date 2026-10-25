@@ -5541,7 +5541,7 @@
   "depends": [
    "B-309"
   ],
-  "notes": "built: npm run smoke:pwa green 4 runs in a row (12 checks, session step pending B-314); planted page error turns it red; pushed 416edb3",
+  "notes": "proofs: npm run smoke:pwa green (12 of 12 counted, session step pending B-314); smoke workflow run 40151081004 at 416edb3 green with its planted-error step. Inherited red: npm test fails one check (B-64, the joined app.js is not as the formatter writes it) since B-301's 9ec2548 in page/app; the app lane may not touch page/, so it is left to B-301 (in progress), which clears it with npm run format. Everything else in npm test is green (559 pass).",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
