@@ -6319,5 +6319,22 @@
    "outcome": "task",
    "at": "2026-10-25T13:00:34.647Z"
   }
+ },
+ {
+  "id": "B-358",
+  "kind": "bug",
+  "title": "Bug (reported Oct 25): On staging E.V.'s conversation lists every due item as its own line with an Open Today or Open Record button, repeats items, and adds a Your turn chip; the demo shows one greeting line and one summary line.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt, staging, Oct 25 (D-316)",
+  "words": "On staging E.V.'s conversation lists every due item as its own line with an Open Today or Open Record button, repeats items, and adds a Your turn chip; the demo shows one greeting line and one summary line.",
+  "reportedAt": "2026-10-25T13:17:55.955Z",
+  "board": {
+   "row": "v4 B-358: On staging E.V.'s conversation lists every due item as its own line…"
+  }
  }
 ]
