@@ -5888,12 +5888,12 @@
   "title": "Fidelity: Study overview as in the demo. The exam card spans the pane; from 1200 px picking an objective fills the right panel (its state, its weak spots, Quiz me on this), under the row only below 1200 px; Coming up in this course under the exam card. Weak spots, quiz and results screens stay deferred (B-298 to B-300).",
   "dod": "Matches the Study overview board at every width; at 1280 a picked objective fills the panel; at 390 it opens under the row. Proof (D-312, fidelity sprint): node tools/build.mjs, then tools/fidelity's demo and built screenshots read side by side at 1280, 1706, 2560 and 390, plus npm run smoke; then ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-332"
   ],
-  "notes": "claimed by lane study",
-  "commit": null,
+  "notes": "Study now looks like the demo's overview: the toolbar strip across the pane, the exam card spanning it with its readiness bar and roomy objective rows, and Coming up in the course under it. From 1200 px wide the picked objective (the first not yet solid, until you pick another) fills the right panel with its state, its weak spots and Quiz me on this; on the phone a tap opens it under its row. Still differs from the demo: no Quiz me or Weak spots buttons in the toolbar and no mini-quiz card (the hand-off's corrections keep the Objectives, Plan and Weak spots tabs instead and cut the mini quiz), so Coming up spans the pane at every size; the line under the header is the insight strip's task; long objective names wrap to two lines where the demo's short ones fit one.",
+  "commit": "a1ad965",
   "source": "fidelity review, Oct 25 (D-312)"
  },
  {
