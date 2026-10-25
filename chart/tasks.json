@@ -5632,7 +5632,7 @@
    "B-316",
    "B-318"
   ],
-  "notes": "",
+  "notes": "Matt, Oct 24: the copy and the cutover (B-320) happen in one sitting with Matt present, in this order: 1) the live page is marked read-only first, so nothing new is written to the old record; 2) the copy; 3) counts and hashes match per collection; 4) B-320 points the runs at D1; 5) the app opens on his devices. Pick a window with no scheduled run due and no study session running (R-03). Writes pause for that sitting only; reading never stops. If any step fails, the live page is unmarked and he keeps studying there: nothing is deleted, so going back is clean.",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
@@ -5648,7 +5648,7 @@
    "B-315",
    "B-317"
   ],
-  "notes": "",
+  "notes": "Matt, Oct 24: done in the same sitting as B-319, right after its copy is verified (see B-319's note for the order).",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
