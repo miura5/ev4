@@ -230,7 +230,9 @@
       // as Study's overview counts them; B-366: an exam with no objectives shows its plan's progress instead, tasks done
       // (green) and the rest of its started days (yellow), as Study's exam card does
       const objAcc = E.answerStats(M.attempts.all).byObjective;
-      const readyRows = studyExams().map(({ exam: e }) => {
+      const readyRows = studyExams()
+        .filter(x => x.exam) // B-357: a course with no upcoming exam (B-365) has no readiness row
+        .map(({ exam: e }) => {
         const objs = S.objectives.filter(o => o.exam === e.id);
         let n, so, al, unit;
         if (objs.length) {
