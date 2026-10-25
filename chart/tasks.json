@@ -5986,7 +5986,7 @@
   "depends": [
    "B-336"
   ],
-  "notes": "claimed by lane task",
+  "notes": "built and pushed at 662a8b3; smoke green at 390 and 1280; shipping staging",
   "commit": null,
   "source": "fidelity review of B-336, Oct 25 (D-312)",
   "words": "Fidelity fix: on the phone an opened task does not come into view; the TaskDetail board at 390 shows it taking the screen with a back arrow to Today, its properties card and full-width Start and Snooze.",
