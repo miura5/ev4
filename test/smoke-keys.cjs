@@ -96,6 +96,8 @@ async function keys(page, box, key = 'Space') {
   await page.evaluate(box => {
     window.__klog = [];
     const f = document.querySelector(box + ' fieldset.opts');
+    const bx = document.querySelector(box), orig = bx.replaceChildren.bind(bx);
+    bx.replaceChildren = (...a) => { window.__klog.push('REPLACE ' + new Error().stack.split('\n').slice(1, 12).map(l => l.trim().replace(/\(.*\//, '(')).join(' < ')); return orig(...a); };
     if (f) f.__mark = 1;
     const t = Date.now();
     const d = e => (e.target && (e.target.tagName + ':' + (e.target.name || e.target.id || e.target.className))) || '';
