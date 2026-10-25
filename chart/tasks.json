@@ -7138,10 +7138,10 @@
  {
   "id": "B-397",
   "kind": "bug",
-  "title": "Bug (reported Oct 25): The run API rejects cursors issued before the base64url change, and the client's curl retries timeouts and server errors, so a write that landed can be reported as refused.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "title": "Run API cursor and retry: an old btoa cursor (padding, + or /) still decodes; the client retries only a refused connection (curl exit 7), never a timeout or 5xx after a write may have landed",
+  "dod": "Tests: an old btoa cursor decodes; a timed-out or 5xx batch is not retried and reports as unknown, not refused; a refused connection is retried; npm test green; the run API suite green on staging; a fresh review finds no gap.",
+  "milestone": "v5 app",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -7150,6 +7150,10 @@
   "reportedAt": "2026-10-25T22:18:33.821Z",
   "board": {
    "row": "v4 B-397: The run API rejects cursors issued before the base64url change, and…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-25T22:18:36.521Z"
   }
  }
 ]
