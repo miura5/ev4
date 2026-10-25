@@ -1852,6 +1852,16 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--lin
   .rec-li .r{display:inline;max-width:none;white-space:nowrap}
   .rec-li .t{min-width:0;white-space:nowrap}
 }
+/* B-379 (D-312): under 600 px a row is two lines, as the Record phone board: the badge and name on the first, the
+   result and the time on the second, both from the row's left edge. The name's tap area covers the whole row. */
+@media (max-width:599px){
+  .rec-li{position:relative;row-gap:2px;padding:8px 16px}
+  .rec-li .nm{min-height:24px;position:static}
+  .rec-li .nm::after{content:"";position:absolute;inset:0}
+  .rec-li .sp{flex:0 0 100%;height:0}
+  .rec-li .r,.rec-li .t{text-align:left;font-size:calc(12.5px * var(--ts));line-height:1.35}
+  .rec-li .r:empty{display:none}
+}
 
 /* ============================================================ B-333 (D-312): her insight strip, as in the demo ========
    One sentence and at most one action under the header on Today and Study, sticky with it; it spans the window as the
