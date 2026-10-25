@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 25 | v4 staging deployed at d8b19db (10:58 CT), from 5ec196a: Review 3: starting, pausing and ending a study session from the panel…; Review 3: Record's phone rows put everything on one (B-377, B-379). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at 5ec196a (10:57 CT), from 812ca4c: The tests and the page harnesses still assert the old UI; they are…; Review 3: Study drops its right panel for an exam with no objectives,… (B-357, B-375). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at 812ca4c (10:24 CT), from f6f1921: Review 2: the task panel lacks Snooze on most tasks and a graded task… (B-373). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at f6f1921 (10:20 CT), from cc8ceed: Review 2: the quiz runner differs from the demo: drill sets instead… (B-370). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |

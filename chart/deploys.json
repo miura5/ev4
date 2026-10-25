@@ -4695,5 +4695,22 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "d8b19db",
+  "time": "2026-10-25T15:58:39.356Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "5ec196a",
+  "tasks": [
+   "B-377",
+   "B-379"
+  ],
+  "summary": "Review 3: starting, pausing and ending a study session from the panel…; Review 3: Record's phone rows put everything on one",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
