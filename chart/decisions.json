@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-320",
+  "date": "Oct 25",
+  "title": "The cloud runs read the staging Worker's token from the staging record's system documents (owner-only, test data only), never from a prompt, the repository or a log; scheduled tasks get no environment variables (checked Oct 25). The live Worker's token follows the same rule at cutover, in the live record.",
+  "why": "B-315 needs the token in the runs; the Oct 25 access check showed scheduled runs reach the staging Worker but receive no environment variables, and no tool sets a task's own.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-319",
   "date": "Oct 25",
   "title": "The redesign release keeps the demo's shape where the page review found lost entry points: no journal writing on the page (old entries stay in the record, runs and backups) and Text size, Reduce motion and follow-device theme stay on System only. Matt chose both on Oct 25. The other intended losses (weak spot from an idea, Make active, the score form now through E.V., attach by typing or dropping, New › Note's identifier block without 'It's made up') are named on the release card.",
