@@ -1926,7 +1926,7 @@ body.has-line #today-week .wk-her{display:none}
 @media (max-width:599px){
   .mh:has(>#sbar:not([hidden])){flex-wrap:wrap;align-content:flex-start;row-gap:0}
   .mh:has(>#sbar:not([hidden]))::before{content:"";order:-1;flex:0 0 0;width:0;margin-right:-10px;height:calc(var(--mh-h) - 1px)}
-  .mh>#sbar{order:20;flex:1 0 100%;justify-content:flex-start;gap:6px;margin:0 -16px;padding:4px 8px 4px 16px;min-height:44px;border-top:1px solid var(--line);font:400 calc(13px * var(--ts)) var(--sans);color:var(--text)}
+  .mh>#sbar{order:20;flex:1 0 calc(100% + 24px);box-sizing:border-box;max-width:calc(100% + 24px);justify-content:flex-start;gap:6px;margin:0 -8px 0 -16px;padding:4px 8px 4px 16px;min-height:44px;border-top:1px solid var(--line);font:400 calc(13px * var(--ts)) var(--sans);color:var(--text)}
   .mh>#sbar .s-led,.mh>#sbar .s-read{display:none}
   .mh>#sbar .s-main{flex:1 1 auto;min-width:0}
   .mh>#sbar .s-topic{display:inline;font-weight:600;color:var(--text)}

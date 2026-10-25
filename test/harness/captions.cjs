@@ -1010,10 +1010,12 @@ async function sideBySide(browser, left, right, out, vp) {
     );
     await page.screenshot({ path: `${shots}/captions-line-cards-${scheme}.png` });
     // B-360 (D-316): the demo's chips stay, one row, in a conversation too, typing or not; the composer stays.
-    const quietChips = await page.isVisible('#qchips');
+    // below 1200 px an open surface is a sheet over the composer, and the chips wait under it (B-78)
+    const sheet = await page.evaluate(() => document.body.classList.contains('surface-open') && innerWidth < 1200);
+    const quietChips = sheet || (await page.isVisible('#qchips'));
     await page.fill('#ev-input', 'x');
     await page.waitForTimeout(100);
-    const typed = await page.isVisible('#qchips');
+    const typed = sheet || (await page.isVisible('#qchips'));
     await page.fill('#ev-input', '');
     ok(
       `[${scheme}] the chips stay in a conversation, typing or not, beside a kept composer (B-360)`,
@@ -1960,17 +1962,14 @@ async function sideBySide(browser, left, right, out, vp) {
       await page
         .waitForFunction(() => document.getElementById('hero').dataset.step === 'session', null, { timeout: 8000 })
         .catch(() => {});
-      // The session reads his note on its first poll; the stage steps.
-      await page
-        .waitForFunction(() => !document.getElementById('sread').hidden, null, { timeout: 12000 })
-        .catch(() => {});
       await page.waitForTimeout(1200);
       const v = await layout(page),
         desk = w >= 1200; // B-210: the details panel from 1200 px
       ok(
         // B-208: the sections' layout is the shell's (shell.cjs); the side column keeps 1024 px until B-210 moves it.
-        `[breakpoints ${w}] ${desk ? 'the notes in the side column' : 'no side column, the notes under the stage'}`,
-        !v.sideways && (desk ? v.notesPanel && v.sideColumn : !v.notesPanel && !v.sideColumn && v.notesUnder),
+        // B-362 (D-316): no notes card and no Reading line in a session; the session card is the side column's from 1200
+        `[breakpoints ${w}] in a session, ${desk ? 'the side column beside her' : 'no side column'}; no sideways scroll`,
+        !v.sideways && (desk ? v.sideColumn : !v.sideColumn),
         JSON.stringify(v)
       );
       if ([735, 960].includes(w)) await page.screenshot({ path: `${shots}/breakpoints-${w}.png` });
@@ -2055,12 +2054,7 @@ async function sideBySide(browser, left, right, out, vp) {
             v.px === want,
             JSON.stringify(v)
           );
-          if (state === 'idle')
-            ok(
-              `[stage ${tag} ${scheme}] her current line 20 px, earlier lines ${past} (C-2)`,
-              v.now === '20px' && v.past === past,
-              JSON.stringify(v)
-            );
+          // B-357 (D-315): her lines' sizes are the demo's (C-2's 20 px and 14/15 px retired)
           const hex = c =>
             /^#/.test(String(c))
               ? String(c).toLowerCase()
@@ -2307,7 +2301,7 @@ async function sideBySide(browser, left, right, out, vp) {
         window.__chatPre = '';
         window.__chatReply = '10 reviews left. One at a time; every answer updates your weak spots.';
       });
-      await page.fill('#ev-input', 'start review');
+      await page.fill('#ev-input', 'show me the review here'); // B-362: typed Start review is the local one-line answer
       await page.click('#ev-send');
       await page.waitForTimeout(4500);
       await page.click('#ev-surf .sf-head');
