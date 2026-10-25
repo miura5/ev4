@@ -614,6 +614,7 @@
         const r = E.closeSession(s2, wrap, {
           weakspots: M.models,
           objectives: S.objectives,
+          ideas: S.ideas || [],
           now: now(),
           endedBy: reason,
         });
@@ -677,7 +678,12 @@
     async function decideSession(s, key, decision) {
       await run(
         withDerived(
-          E.decideSessionQuestion(s, key, decision, { weakspots: M.models, objectives: S.objectives, now: now() })
+          E.decideSessionQuestion(s, key, decision, {
+            weakspots: M.models,
+            objectives: S.objectives,
+            ideas: S.ideas || [],
+            now: now(),
+          })
         )
       );
     }

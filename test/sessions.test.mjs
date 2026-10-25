@@ -373,7 +373,7 @@ test('B-287 (C-7): a note from the header’s New is one ideas write: his words,
   const w = EV.noteIdea('  Rounding to   tenths for mL ', { at: T0, date: '2026-10-18' });
   assert.equal(w.op, 'set');
   assert.equal(w.collection, 'ideas');
-  assert.match(w.id, /^idea-2026-10-18-150000-rounding/);
+  assert.match(w.id, /^idea-2026-10-18-100000-rounding/);
   assert.equal(w.data.text, 'Rounding to tenths for mL');
   assert.equal(w.data.kind, 'general');
   assert.equal(w.data.status, 'open');
@@ -399,7 +399,7 @@ test('B-381: two notes with the same title on the same day both survive (time in
   const a = EV.noteIdea('Rounding', { at: T0, date: '2026-10-18' });
   const b = EV.noteIdea('Rounding', { at: '2026-10-18T15:04:09.000Z', date: '2026-10-18', existing: [a] });
   const c = EV.noteIdea('Rounding', { at: T0, date: '2026-10-18', existing: [{ id: a.id }, b.id] });
-  assert.match(a.id, /^idea-2026-10-18-150000-rounding$/);
+  assert.match(a.id, /^idea-2026-10-18-100000-rounding$/, 'the time is Central, as the date is');
   assert.notEqual(a.id, b.id);
   assert.equal(c.id, a.id + '-2');
   const store = {};
@@ -408,4 +408,29 @@ test('B-381: two notes with the same title on the same day both survive (time in
     store[w.id] = w.data;
   }
   assert.equal(Object.keys(store).length, 3);
+});
+
+test('B-381: record_score holds only a number he typed in his latest line', () => {
+  assert.equal(EV.scoreSaid(88.5, 'I got 88.5 on Exam 4'), true);
+  assert.equal(EV.scoreSaid(88, 'got an 88 on exam 4!'), true);
+  assert.equal(EV.scoreSaid(90, 'I think I did ok on Exam 4'), false, 'the exam number is not a score he said');
+  assert.equal(EV.scoreSaid(90, ''), false);
+  assert.equal(EV.scoreSaid(4, 'I got 88.5 on Exam 4'), true, 'a number he typed; the exam match then decides');
+});
+
+test('B-381: E.V.’s save_idea and a session’s findings never land on an idea already there', () => {
+  const at = '2026-10-18T15:04:09.000Z';
+  const first = EV.ideaId('Potassium links insulin and the ECG', { at, date: '2026-10-18' });
+  assert.equal(first, 'idea-2026-10-18-100409-potassium-links-insulin-and-th');
+  assert.equal(EV.ideaId('Potassium links insulin and the ECG', { at, existing: [{ id: first }] }), first + '-2');
+  const s = { id: 'ss-1', topic: 'K', status: 'active', startedAt: T0 };
+  const wrap = { summary: 'x', weakSpots: [], connections: ['Same words', 'Same words'], noteTodos: [], cards: [] };
+  const old = { id: 'idea-2026-10-18-100409-same-words', status: 'done' };
+  const r = EV.closeSession(s, wrap, { now: at, ideas: [old] });
+  const ids = r.writes.filter(w => w.collection === 'ideas').map(w => w.id);
+  assert.deepEqual(
+    ids,
+    [old.id + '-2', old.id + '-3'],
+    'his done idea stays as he left it; two same lines are two ideas'
+  );
 });

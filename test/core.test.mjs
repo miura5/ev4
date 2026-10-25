@@ -950,6 +950,26 @@ test('B-381: graded work Matt snoozes lands tomorrow still GRADED and fixed; E.V
   assert.equal(ev.doc.added[ev.id].tag, null, 'only Matt’s Snooze writes a graded item');
 });
 
+test('B-381: graded work snoozed onto a day that already holds the same words stays graded and fixed', () => {
+  const now = '2026-10-18T14:00:00Z';
+  const ev = EV.listEdit(null, null, { action: 'add', text: 'Med math quiz' }, { now, by: 'E.V.', date: '2026-10-19' });
+  const e = { id: '2026-10-19', ...ev.doc };
+  const g = EV.listEdit(null, e, { action: 'add', text: 'Med math quiz', kind: 'graded' }, { now, by: 'Matt' });
+  assert.equal(g.id, ev.id);
+  assert.deepEqual([g.doc.added[g.id].tag, g.doc.added[g.id].kind], ['GRADED', 'graded']);
+  assertValid({ op: 'set', collection: 'dayedits', id: '2026-10-19', data: g.doc });
+  assert.throws(
+    () => EV.listEdit(null, { id: 'x', ...g.doc }, { action: 'remove', id: g.id }, { now, by: 'E.V.' }),
+    /graded; it stays on the list/
+  );
+  const day = { id: '2026-10-19', list: { items: [{ id: 'plan-q', text: 'Med math quiz', tag: 'PRACTICE' }] } };
+  assert.throws(
+    () => EV.listEdit(day, null, { action: 'add', text: 'Med math quiz', kind: 'graded' }, { now, by: 'Matt' }),
+    /already planned that day/
+  );
+  assert.equal(EV.listEdit(null, e, { action: 'add', text: 'Med math quiz' }, { now, by: 'E.V.' }).doc, null);
+});
+
 // ---------------------------------------------------------------- liveDates over dateedits
 test('calendar edits: a new entry is a dates Fact; every change, removal and restore is its dateedits document; removed dates are gone everywhere (D-080)', () => {
   const now = '2026-10-18T01:10:00Z';

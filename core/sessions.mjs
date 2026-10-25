@@ -8,6 +8,7 @@ export function makeSessions(core) {
     addDays,
     buildContext,
     chicagoDate,
+    chicagoStamp,
     courses,
     defaultCourse,
     entryTime,
@@ -27,12 +28,24 @@ export function makeSessions(core) {
 
   // ---------------------------------------------------------------- Study Watch session intake
   /**
+   * B-381: an ideas id that never lands on one already there: idea-<Central date>-<Central HHMMSS>-<slug>, then -2, -3
+   * while taken. taken is a Set of ids (the record's ideas plus any this call already made); the new id joins it.
+   */
+  function ideaId(words, at, taken, n = 30, date = chicagoDate(at)) {
+    const base = safeId('idea-' + date + '-' + chicagoStamp(at) + '-' + slug(words, n));
+    let id = base;
+    for (let k = 2; taken.has(id); k++) id = base + '-' + k;
+    taken.add(id);
+    return id;
+  }
+  const idSet = list => new Set([...(list || [])].map(x => (x && typeof x === 'object' ? x.id : x)));
+  /**
    * Proposes the record writes for one Study Watch session file. Exact repeats bump the existing weak spot;
    * near-repeats (similarity >= 0.5) are listed for the agent to decide.
    */
   function intakeSession(
     file,
-    { weakspots = [], sessions = [], objectives = [], now, decisions = {}, writer = 'filing' } = {}
+    { weakspots = [], sessions = [], objectives = [], ideas = [], now, decisions = {}, writer = 'filing' } = {}
   ) {
     const at = isoOf(now);
     const id = safeId(
@@ -84,7 +97,7 @@ export function makeSessions(core) {
         noteTodos: file.noteTodos,
         writer,
       },
-      { weakspots, objectives, decisions }
+      { weakspots, objectives, decisions, ideas }
     );
     return { id, skip: false, writes: [...writes, ...f.writes], questions: f.questions };
   }
@@ -96,10 +109,11 @@ export function makeSessions(core) {
    */
   function sessionFindings(
     { id, label, by, at, weakSpots, connections, noteTodos, writer = 'filing' },
-    { weakspots = [], objectives = [], decisions = {} } = {}
+    { weakspots = [], objectives = [], decisions = {}, ideas = [] } = {}
   ) {
     const writes = [],
       questions = [];
+    const taken = idSet(ideas); // B-381: a new idea never replaces one already there (or the status he set on it)
     const env = () => envelope(writer, label, at);
     const objIds = new Set(objectives.map(o => o.id));
     const date = chicagoDate(at);
@@ -113,7 +127,7 @@ export function makeSessions(core) {
         writes.push({
           op: 'set',
           collection: 'ideas',
-          id: safeId('idea-' + slug(topic, 40)),
+          id: ideaId(topic, at, taken, 40),
           data: {
             ...env(),
             schema: 2,
@@ -179,7 +193,7 @@ export function makeSessions(core) {
       writes.push({
         op: 'set',
         collection: 'ideas',
-        id: safeId('idea-' + slug(text, 40)),
+        id: ideaId(text, at, taken, 40),
         data: {
           ...env(),
           schema: 2,
@@ -696,7 +710,7 @@ export function makeSessions(core) {
   }
 
   /** Ends a session run in E.V. Home: the session update plus the findings writes; near-repeats wait in session.pending. */
-  function closeSession(s, wrap, { weakspots = [], objectives = [], now, endedBy = 'ended' } = {}) {
+  function closeSession(s, wrap, { weakspots = [], objectives = [], ideas: known = [], now, endedBy = 'ended' } = {}) {
     const at = isoOf(now);
     const st = sessionState(s, at);
     const w = parseWrap(wrap);
@@ -712,7 +726,7 @@ export function makeSessions(core) {
         noteTodos: w.noteTodos,
         writer: 'page',
       },
-      { weakspots, objectives }
+      { weakspots, objectives, ideas: known }
     );
     const pending = {};
     for (const q of f.questions) pending[q.key] = { topic: q.topic, objective: q.objective, candidate: q.candidate };
@@ -738,7 +752,7 @@ export function makeSessions(core) {
     return { writes: [{ op: 'update', collection: 'sessions', id: s.id, data }, ...f.writes], questions: f.questions };
   }
   /** Matt's same-or-different answer for one pending near-repeat. */
-  function decideSessionQuestion(s, key, decision, { weakspots = [], objectives = [], now } = {}) {
+  function decideSessionQuestion(s, key, decision, { weakspots = [], objectives = [], ideas = [], now } = {}) {
     const q = s && s.pending && s.pending[key];
     if (!q) return [];
     const at = isoOf(now);
@@ -748,7 +762,7 @@ export function makeSessions(core) {
     list[i] = { objective: q.objective, topic: q.topic };
     const f = sessionFindings(
       { id: s.id, label, by: SESSION_SOURCE, at, weakSpots: list, writer: 'page' },
-      { weakspots, objectives, decisions: { [key]: decision === 'same' ? 'same' : 'different' } }
+      { weakspots, objectives, ideas, decisions: { [key]: decision === 'same' ? 'same' : 'different' } }
     );
     return [...f.writes, { op: 'update', collection: 'sessions', id: s.id, data: { pending: { [key]: null } } }];
   }
@@ -776,12 +790,8 @@ export function makeSessions(core) {
       links: [],
       ...(course ? { course: String(course) } : {}),
     };
-    // B-381: the time of day joins the id and a taken id gets -2, -3, so two notes with one title never overwrite.
-    const hms = (String(at || '').match(/T(\d\d):?(\d\d):?(\d\d)/) || []).slice(1).join('');
-    const base = safeId('idea-' + date + '-' + (hms ? hms + '-' : '') + slug(title, 30));
-    const taken = new Set([...(existing || [])].map(x => (x && typeof x === 'object' ? x.id : x)));
-    let id = base;
-    for (let n = 2; taken.has(id); n++) id = base + '-' + n;
+    // B-381: the Central time of day joins the id and a taken id gets -2, -3, so two notes with one title never overwrite
+    const id = ideaId(title, at, idSet(existing), 30, date || chicagoDate(at));
     return { op: 'set', collection: 'ideas', id, data };
   }
   /**
@@ -807,6 +817,12 @@ export function makeSessions(core) {
       },
     };
   }
+  /** B-381: whether score is a number he wrote in text (his latest line), so E.V. never records a guessed score. */
+  function scoreSaid(score, text) {
+    const v = Number(score);
+    if (!Number.isFinite(v)) return false;
+    return (String(text || '').match(/\d+(?:\.\d+)?/g) || []).some(n => Number(n) === v);
+  }
   /** Flashcards as Quizlet import text: term<TAB>definition per line. */
 
   return {
@@ -829,6 +845,9 @@ export function makeSessions(core) {
     closeSession,
     decideSessionQuestion,
     noteIdea,
+    ideaId: (words, { at, date, existing = [] } = {}) =>
+      ideaId(words, at, idSet(existing), 30, date || chicagoDate(at)),
     examScore,
+    scoreSaid,
   };
 }

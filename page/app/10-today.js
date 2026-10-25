@@ -556,10 +556,11 @@
         await editList(today, { action: 'remove', id: it.id }, 'Matt');
       } catch (e) {
         // today's take-off refused: tomorrow's add goes again, so the task is never on both lists
-        if (a.doc) await editList(tomorrow, { action: 'remove', id: a.id }, 'Matt').catch(() => {});
+        if (a.doc && !a.note) await editList(tomorrow, { action: 'remove', id: a.id }, 'Matt').catch(() => {});
         throw e;
       }
-      return { tomorrowId: a.doc ? a.id : null, add };
+      // B-381: an item already there that the snooze marked graded stays on tomorrow's list through an undo
+      return { tomorrowId: a.doc && !a.note ? a.id : null, add };
     }
     // Undo: the take-off reversed (a planned item restored, an added one added again as it was), then tomorrow's add
     async function undoTask(it, gone) {

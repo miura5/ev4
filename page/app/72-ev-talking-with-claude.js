@@ -346,6 +346,8 @@
           execute: async i => {
             const v = Number(i.score);
             if (!(v >= 0 && v <= 100)) throw new Error('the score must be 0 to 100');
+            // B-381: only a number he typed in his latest line; never a guess
+            if (!E.scoreSaid(v, T.lastMatt)) return 'ask him for the exact score';
             const past = S.exams.filter(e => e.date && e.date <= today && E.examIs(e, 'scoredKinds'));
             const q = String(i.exam || '')
               .toLowerCase()
@@ -367,11 +369,16 @@
             const e = m[0];
             const cur = (S.examedits || []).find(x => x.id === e.id) || null;
             await write(E.examScore(e.id, v, { at: now(), current: cur }));
-            const r = await startJob({
-              kind: 'exam-retro',
-              title: 'Retro: ' + (e.title || e.id),
-              brief: e.id + ': the retro after the score he entered',
-            });
+            let r;
+            try {
+              r = await startJob({
+                kind: 'exam-retro',
+                title: 'Retro: ' + (e.title || e.id),
+                brief: e.id + ': the retro after the score he entered',
+              });
+            } catch (err) {
+              return `saved ${v} for ${e.id}; the retro didn't start: ${(err && err.message) || 'error'}`;
+            }
             addCard({ type: 'job', id: r.id });
             pend.jobId = r.id;
             return (
@@ -756,7 +763,7 @@
             const text = str(i.text, 400);
             if (!text) throw new Error('text is required');
             noIds(text);
-            const id = E.safeId('idea-' + today + '-' + E.slug(text, 30));
+            const id = E.ideaId(text, { at: now(), date: today, existing: S.ideas || [] }); // B-381: never overwrites
             const kind = ['learning', 'feature', 'general'].includes(i.kind) ? i.kind : 'general';
             await write({
               op: 'set',

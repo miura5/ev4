@@ -336,6 +336,13 @@ const EVCore = (() => {
     if (!p) return null;
     return `${p.year}-${p.month}-${p.day}`;
   }
+  /** B-381: HHMMSS in Central time, for ids that carry the time of day beside a Central date. */
+  function chicagoStamp(x) {
+    const d = x instanceof Date ? x : new Date(x == null ? Date.now() : x);
+    if (isNaN(d)) return null;
+    const p = chicagoParts(d);
+    return (p.hour === '24' ? '00' : p.hour) + p.minute + String(d.getUTCSeconds()).padStart(2, '0');
+  }
   function chicagoClock(x) {
     const p = chicagoParts(x == null ? new Date() : x);
     return p ? `${p.hour === '24' ? '00' : p.hour}:${p.minute}` : null;
@@ -1560,10 +1567,21 @@ const EVCore = (() => {
         .trim()
         .slice(0, 140);
       if (!text) throw new Error('text is required');
-      const same = dayView(day, dayedit).items.find(it => norm(it.text) === norm(text));
-      if (same) return { id: same.id, text: same.text, doc: null, note: 'already on the list' };
       let kind = Object.prototype.hasOwnProperty.call(LIST_KINDS, edit.kind) ? edit.kind : 'todo';
       if (kind === 'graded' && by !== 'Matt') kind = 'todo'; // only his own Snooze carries graded work
+      const same = dayView(day, dayedit).items.find(it => norm(it.text) === norm(text));
+      if (same) {
+        // B-381: graded work snoozed onto a day that already holds the same words stays graded: an added item is
+        // upgraded to GRADED (fixed); a planned one that isn't fixed can't be, so the snooze is refused
+        if (kind === 'graded' && !isFixedItem(same)) {
+          if (!added[same.id])
+            throw new Error(`“${same.text}” is already planned that day; it can't carry the graded tag`);
+          const doc = next();
+          doc.added[same.id] = { ...added[same.id], tag: 'GRADED', kind: 'graded' };
+          return { id: same.id, text: same.text, doc, note: 'marked graded' };
+        }
+        return { id: same.id, text: same.text, doc: null, note: 'already on the list' };
+      }
       const minutes = Math.max(0, Math.min(240, Math.round(Number(edit.minutes) || 0)));
       const course = isCourse(edit.course) ? edit.course : '';
       const base = 'add-' + (slug(text, 32) || 'item');
@@ -2200,6 +2218,7 @@ const EVCore = (() => {
     addDays,
     buildContext,
     chicagoDate,
+    chicagoStamp,
     courses,
     defaultCourse,
     entryTime,

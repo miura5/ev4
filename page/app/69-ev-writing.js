@@ -45,6 +45,7 @@
       });
     const mattSay = text => {
       const id = msgId('m');
+      T.lastMatt = String(text || ''); // B-381: his latest line, which record_score holds a score to
       capEcho(id, text);
       return postMsg({ id, role: 'matt', text, at: now() }).then(
         () => id,

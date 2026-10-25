@@ -516,7 +516,7 @@
     {
      "id": "mac-files",
      "kind": "code",
-     "does": "writes the nightly backup (every collection but the journal, with counts and per-collection hashes) and, on Sundays, the Markdown mirror, as device_commit_files calls into E.V.'s own files in the Mac folder"
+     "does": "writes the nightly backup (every collection, the journal included (D-113), with counts and per-collection hashes) and, on Sundays, the Markdown mirror, as device_commit_files calls into E.V.'s own files in the Mac folder"
     }
    ],
    "roles": [
@@ -4302,7 +4302,6 @@
     "holds": [
      "sessions and ideas",
      "dates, with Remove and Bring back (D-080)",
-     "journal",
      "announcements",
      "library"
     ]

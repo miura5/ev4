@@ -79,6 +79,7 @@
           weak = 0,
           ideas = 0,
           asks = 0;
+        const madeIdeas = []; // B-381: the ideas this pass filed, so a later file's ideas never land on them
         for (const x of todo) {
           let f;
           try {
@@ -101,6 +102,7 @@
               weakspots: M.models,
               sessions: S.sessions.map(s => ({ ...s, id: /^(sw|ss)-/.test(s.id) ? s.id : 'sw-' + s.id })),
               objectives: S.objectives,
+              ideas: [...(S.ideas || []), ...madeIdeas],
               now: now(),
               writer: 'page',
             }
@@ -122,6 +124,7 @@
           await run(writes);
           filed.push(r.id);
           weak += writes.filter(w => w.collection === 'weakspots' && w.op === 'set').length;
+          for (const w of writes) if (w.collection === 'ideas') madeIdeas.push(w.id);
           ideas += writes.filter(w => w.collection === 'ideas').length;
           asks += r.questions.length;
         }
