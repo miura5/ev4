@@ -5280,7 +5280,7 @@
   "depends": [
    "B-291"
   ],
-  "notes": "proofs: npm test 567 pass, smoke 28/28; first review: two duplicate-code gaps, both fixed (f149671); check --touched running",
+  "notes": "reviewed: second review named one gap (the switch squeezed beside the header's status line at 1280), fixed in beddfd2 with a check that fails without it; check --touched rerunning",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
