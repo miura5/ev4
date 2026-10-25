@@ -7054,5 +7054,22 @@
    "outcome": "task",
    "at": "2026-10-25T18:33:34.565Z"
   }
+ },
+ {
+  "id": "B-393",
+  "kind": "bug",
+  "title": "Bug (reported Oct 25): The smoke workflow on GitHub has failed on every push since about 17:46 Oct 25, including the live commit 10798d8, while npm run smoke passes locally (28 of 28).",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build manager, smoke workflow runs Oct 25",
+  "words": "The smoke workflow on GitHub has failed on every push since about 17:46 Oct 25, including the live commit 10798d8, while npm run smoke passes locally (28 of 28).",
+  "reportedAt": "2026-10-25T20:32:04.920Z",
+  "board": {
+   "row": "v4 B-393: The smoke workflow on GitHub has failed on every push since about…"
+  }
  }
 ]

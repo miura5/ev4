@@ -468,3 +468,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-280 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; folded into B-289 and B-290 (Conversation) and B-291 to B-296 (Today and the task panel). |
 | B-281 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; folded into B-297 to B-300 (Study), B-301 (Progress) and B-302 (Record). |
 | B-282 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; replaced by B-303. |
+| B-393 | bug | 2026-10-25T20:32:04.920Z | The smoke workflow on GitHub has failed on every push since about 17:46 Oct 25, including the live commit 10798d8, while npm run smoke passes locally (28 of 28). | build manager, smoke workflow runs Oct 25 | inbox |  |
