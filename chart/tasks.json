@@ -5099,7 +5099,7 @@
    "B-277",
    "B-303"
   ],
-  "notes": "Re-pointed at the hand-off 2 sweep (B-303).",
+  "notes": "Matt's look, Oct 25 morning: not approved. Staging (117bbe9, every lane merged) does not match the v4 demo: Study looks untouched and nearly empty; Today, Progress and Record sit in a narrow centred column; pieces of the demo are missing; the polish isn't there. Live is held. A fidelity review of staging against the demo is running; its gap list becomes the fix tasks.",
   "commit": null,
   "source": "plan 5reEBoToU1W5pmnq5q48ij"
  },
