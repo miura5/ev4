@@ -1369,6 +1369,24 @@ button.btn:disabled{opacity:.45;cursor:default}
   #today-list .ti-fold{padding:14px 16px 6px}
   #today-week .wchip .wc-t{white-space:normal}
 }
+/* B-354 (D-314): the demo's row is 44 px with its hairline under it (45 in all); a week title wraps between words only,
+   a column widening to its longest word; the grid ends at the pane's foot under E.V.'s line; on the phone a long title
+   wraps in its own column and keeps its badge and time on the row's line. */
+#today-list .ti-list>.li,#today-list .ti-folded>.li{min-height:45px}
+#today-week .wchip .wc-t{overflow-wrap:normal;word-break:normal;hyphens:manual}
+@media (max-width:1199px){#p-today #today-budget{margin-top:16px}}
+@media (min-width:1200px){
+  #today-week .wk-days{grid-template-columns:repeat(7,minmax(min-content,1fr))}
+  body.has-line #today-week .wk-days{min-height:calc(100dvh - var(--mh-h) - var(--line-h, 0px) - 8px - 8px - 53px)}
+}
+@media (max-width:599px){
+  #today-list .ti-list>.li,#today-list .ti-folded>.li{flex-wrap:nowrap;align-items:center;padding:6px 16px;gap:12px}
+  #today-list .ti-list>.li .nm,#today-list .ti-folded>.li .nm{flex:1 1 auto;min-width:0;max-width:none;white-space:normal;display:flex;align-items:center}
+  #today-list .li .nm .ti-t{white-space:normal;overflow:visible;overflow-wrap:break-word}
+  #today-list .li>.badge{flex:none;max-width:none;margin-right:0}
+  #today-list .li>.nm:not(:has(+ .badge)){margin-right:0}
+  #today-list .li .t{flex:none;min-width:0;text-align:right}
+}
 /* B-343 (D-312): on the phone an opened task takes the view in place of the list, as the TaskDetail board at 390: the
    header's back arrow before "Today", the name large, where it came from, the properties card, then Start and Snooze
    full width with the grey note. The panel's Close steps aside for the arrow. */
