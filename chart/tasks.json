@@ -5958,11 +5958,11 @@
   "title": "Fidelity fix: Progress, the rest of the demo board: E.V.'s one-line note above the switch, outlined bars for empty days, readiness by objectives solid, long day headings, the day panel with notes and quizzes",
   "dod": "Matches the Progress board with no difference left but the build corrections. Proof (D-312, fidelity sprint): node tools/build.mjs, then tools/fidelity's demo and built screenshots read side by side at 1280, 1706, 2560 and 390, npm run smoke, ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-338"
   ],
-  "notes": "",
+  "notes": "claimed by lane pr",
   "commit": null,
   "source": "fidelity review of B-338, Oct 25 (D-312)",
   "words": "Fidelity fix: Progress still differs from its demo board after B-338: E.V.'s one-line note above the This week / Month / Semester switch is missing; empty days have no outlined placeholder bar; Exam readiness counts weak spots where the demo counts objectives solid; day headings read Sat 10/24 rather than the demo's long form; the day panel lists only sessions, not notes and quizzes.",
