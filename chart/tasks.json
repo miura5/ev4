@@ -7143,7 +7143,7 @@
   "milestone": "v5 app",
   "status": "open",
   "depends": [],
-  "notes": "Oct 25: the review's gap fixed (9cddd71): an unlabelled api batch that ends OUTCOME UNKNOWN names the apply --failed <n> command, and the Worker-run block of tools/prompts.mjs routes OUTCOME UNKNOWN to that same command. It re-renders the seven staging Worker-run prompts (staging morning, evening-cloud, evening-mac, weekly, worker, watchdog, restore-drill); the six live prompts and ev4-builder are byte-identical (checked by rendering all before and after). test/run-worker.test.mjs end to end: a batch that lands and then loses its reply (stand-in /_failnext) ends OUTCOME UNKNOWN naming apply --failed 1; apply --failed re-pulls, replan re-pins, the run ends ok, the derived document written again is identical and no fact is doubled; the prompts carry the sentence exactly where the run targets the Worker. npm test in a fresh clone: 680 pass, 1 fail, test/drill-worker.test.mjs, which fails the same at fde93e2 (B-317's task-id commit) without this change. Left open.",
+  "notes": "Correction: the fix landed on main as 4a2f8ac (9cddd71 before the rebase). B-317 fixed its drill-worker test in 840cb36, and npm test in a fresh clone at f725953 is green: 681 pass, 0 fail.",
   "commit": null,
   "source": "B-319 second review, Oct 25",
   "words": "The run API rejects cursors issued before the base64url change, and the client's curl retries timeouts and server errors, so a write that landed can be reported as refused.",
