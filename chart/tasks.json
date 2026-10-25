@@ -6229,5 +6229,22 @@
    "outcome": "task",
    "at": "2026-10-25T12:48:21.430Z"
   }
+ },
+ {
+  "id": "B-354",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Fidelity fix: Today differs from the demo in row height, the budget, the week's titles, the phone rows and the sidebar.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "fidelity review, Oct 25 (D-314)",
+  "words": "Fidelity fix: Today differs from the demo in row height, the budget, the week's titles, the phone rows and the sidebar.",
+  "reportedAt": "2026-10-25T12:48:24.511Z",
+  "board": {
+   "row": "v4 B-354: Fidelity fix: Today differs from the demo in row height, the budget,…"
+  }
  }
 ]
