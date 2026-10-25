@@ -75,7 +75,14 @@ test('the backup folder is one spec value, every Worker pipeline of staging is t
   for (const p of ['evening-mac', 'restore-drill']) {
     assert.equal(RUN.runTarget(spec, 'staging', p), 'worker', p);
     assert.deepEqual(spec.tasks.staging[p].folders, [runs.backup.folder], `${p} lists the one backup folder`);
-    assert.equal(spec.tasks.staging[p].trigger, null, `${p}: its replacement is created with Matt present`);
+    // B-317: created Oct 25 from the chat linked to the Mac with Matt present; the old tasks are retired and disabled
+    assert.match(spec.tasks.staging[p].trigger || '', /^trig_/, `${p}: its replacement was created with Matt present`);
+    assert.ok(
+      !Object.values(spec.tasks.staging).some(
+        t => t && t.trigger === spec.tasks.staging[p].trigger && t !== spec.tasks.staging[p]
+      ),
+      `${p}: its trigger id is its own`
+    );
   }
   assert.equal(RUN.runTarget(spec, 'live', 'evening-mac'), 'artifact');
   assert.equal(RUN.runTarget(spec, 'staging', 'diagnostic'), 'artifact');
