@@ -5209,7 +5209,7 @@
   "depends": [
    "B-289"
   ],
-  "notes": "proofs green: npm test 557, smoke 28 of 28, run 420 of 420, check --touched GREEN; screenshots looked at; review next",
+  "notes": "reviewed: first review two gaps fixed (the header line shows minutes left; the Coming up check now puts tomorrow's graded work in the sidebar); second review No gaps; shipping to staging",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
