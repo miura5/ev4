@@ -401,6 +401,7 @@
         li.append(
           el('span', 'badge' + (cls ? ' ' + cls : ''), word),
           nm,
+          el('span', 'sp'),
           el('span', 'r', x.result || ''),
           el('span', 't', recTime(x))
         );
@@ -573,6 +574,7 @@
         li.append(
           el('span', 'badge' + (x.badge[1] ? ' ' + x.badge[1] : ''), x.badge[0]),
           nm,
+          el('span', 'sp'),
           el('span', 'r', x.r || ''),
           el('span', 't', x.t || '')
         );

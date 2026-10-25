@@ -1640,6 +1640,20 @@ button.btn.mh-back{display:none}
   .rec-list .rec-detail{padding:14px 16px 18px}
   .rec-props .prop{min-height:34px}
 }
+/* B-356 (D-314): the demo's rows. 44 px at every size; the result sits before the time; on the phone a row wraps as
+   the demo's does (badge and name on the first line, the result and time after them or on a second line), and a
+   long name wraps in full rather than losing its result. */
+.rec-li{height:auto;min-height:44px;box-sizing:content-box}
+.rec-li .nm{flex:0 1 auto}
+.rec-li .sp{flex:1 1 0;min-width:0}
+.rec-li .r{flex:none;max-width:none}
+@media (max-width:599px){
+  .rec-li{flex-wrap:wrap;padding:6px 16px;gap:4px 12px;min-height:44px;box-sizing:border-box}
+  .rec-li .badge{min-width:74px}
+  .rec-li .nm{flex:0 1 auto;min-height:44px;white-space:normal;overflow:visible;display:flex;align-items:center;line-height:1.35;overflow-wrap:anywhere}
+  .rec-li .r{display:inline;max-width:none;white-space:nowrap}
+  .rec-li .t{min-width:0;white-space:nowrap}
+}
 
 /* ============================================================ B-333 (D-312): her insight strip, as in the demo ========
    One sentence and at most one action under the header on Today and Study, sticky with it; it spans the window as the
