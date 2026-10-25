@@ -6,7 +6,7 @@
   "build": "node ../tools/build.mjs && node ../tools/build-pwa.mjs --record staging",
   "seed": "node seed.mjs > seed.sql",
   "dev": "wrangler dev",
-  "deploy": "npm run build && wrangler deploy"
+  "deploy": "npm run build && wrangler deploy --env staging"
  },
  "devDependencies": {
   "wrangler": "4.150.0"

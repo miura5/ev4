@@ -1505,8 +1505,13 @@ const EVCore = (() => {
   const FIXED_TAGS = new Set(['GRADED', 'EXAM', 'CLINICAL', 'VALIDATION']);
   /** Graded work, exams, clinicals and validations stay on the list; everything else can be taken off for the day. */
   const isFixedItem = it => !!it && (FIXED_TAGS.has(it.tag) || /^(date|exam|soon)-/.test(String(it.id || '')));
-  /** B-374 (D-312): Matt's own Snooze may move graded work to tomorrow, as the demo; E.V. never takes it off. */
-  const mattMovesGraded = (it, by) => !!it && it.tag === 'GRADED' && by === 'Matt';
+  /**
+   * B-374 (D-312): Matt's own Snooze may move graded work to tomorrow, as the demo; E.V. never takes it off. B-388: not
+   * planned graded work due today (a date- id): the snooze makes no tomorrow copy of it, so taking it off would lose it.
+   * A soon- item (due tomorrow, already on tomorrow's list) still moves.
+   */
+  const mattMovesGraded = (it, by) =>
+    !!it && it.tag === 'GRADED' && by === 'Matt' && !/^date-/.test(String(it.id || ''));
   /** The day's list as he sees it: planned items (minus the ones taken off), then the added ones in the order they came. */
   function dayView(day, dayedit) {
     const ed = dayedit || {};
@@ -1608,7 +1613,11 @@ const EVCore = (() => {
       const it = planned.find(x => x.id === id);
       if (!it) throw new Error('no item ' + id + ' on that day’s list');
       if (isFixedItem(it) && !mattMovesGraded(it, by))
-        throw new Error(`“${it.text}” is ${String(it.tag || 'fixed').toLowerCase()}; it stays on the list`);
+        throw new Error(
+          it.tag === 'GRADED' && /^date-/.test(id)
+            ? `“${it.text}” is graded work due that day; it stays on the list`
+            : `“${it.text}” is ${String(it.tag || 'fixed').toLowerCase()}; it stays on the list`
+        );
       if (skip[id]) return { id, text: it.text, doc: null, note: 'already off the list' };
       const doc = next();
       doc.skipped[id] = { at: isoOf(now), by };

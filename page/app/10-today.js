@@ -449,6 +449,8 @@
       GRADED: 'graded',
     };
     const fixedItem = it => FIXED.has(it.tag) || /^(date|exam|soon)-/.test(String(it.id || ''));
+    /** B-388: planned graded work due today (a date- id); Snooze makes no tomorrow copy of it, so it isn't offered. */
+    const dueToday = it => it.tag === 'GRADED' && /^date-/.test(String(it.id || ''));
     function taskFacts(it, isDone, day) {
       const ed = dayEditDoc(today) || {};
       const pt = planTaskById(it.ref);
@@ -773,9 +775,10 @@
       // the demo (his own move; its due date is unchanged)
       {
         const sz = btn('Snooze to tomorrow', null, { cls: 'btn neutral wide tp-snooze' });
-        if (fixedItem(it) && it.tag !== 'GRADED') {
+        // B-388: graded work planned for its due day (a date- id) stays there; the list edit refuses to move it
+        if ((fixedItem(it) && it.tag !== 'GRADED') || dueToday(it)) {
           sz.disabled = true;
-          sz.title = 'This stays on the day it is due.';
+          sz.title = dueToday(it) ? 'Due today: it stays on today’s list.' : 'This stays on the day it is due.';
         }
         sz.addEventListener('click', () =>
           guard(
@@ -792,7 +795,10 @@
       // graded work: the one line the demo carries, since E.V. helps him prepare and never with the work (B-01)
       const note =
         it.tag === 'GRADED'
-          ? [el('p', 'meta tp-note', 'Graded work: E.V. helps you prepare, never with the work itself.')]
+          ? [
+              el('p', 'meta tp-note', 'Graded work: E.V. helps you prepare, never with the work itself.'),
+              ...(dueToday(it) ? [el('p', 'meta tp-note tp-due', 'It’s due today, so it stays on today’s list.')] : []),
+            ]
           : fixedItem(it)
             ? [el('p', 'meta tp-note', 'It stays on the day it is due.')]
             : [el('p', 'meta tp-note', 'Snooze moves it to tomorrow, with Undo.')];

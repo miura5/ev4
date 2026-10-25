@@ -421,6 +421,58 @@ test('B-381: record_score holds only a number he typed plainly in this turn’s 
   assert.equal(EV.scoreSaid(88, '88 out of 100'), true);
   assert.equal(EV.scoreSaid(90, 'I did ok on Exam 4'), false);
   assert.equal(EV.scoreSaid(90, ''), false, 'a turn without his new line approves nothing');
+  // B-388: /100 and exam ids like E4 are never the score; only a line with exactly one number left is accepted
+  assert.equal(EV.scoreSaid(100, 'I got 88/100 on exam 4'), false);
+  assert.equal(EV.scoreSaid(88, 'I got 88/100 on exam 4'), true);
+  assert.equal(EV.scoreSaid(88, 'I got 88 / 100 on exam 4'), true);
+  assert.equal(EV.scoreSaid(4, 'E4 was 88'), false);
+  assert.equal(EV.scoreSaid(88, 'E4 was 88'), true);
+  assert.equal(EV.scoreSaid(88, 'I got 88 and Sam got 92'), false, 'two numbers left: which is his is unclear');
+});
+
+test('B-388: two sessions on one open topic make one idea; the second links to it and writes no idea', () => {
+  const file = (id, at) => ({
+    id,
+    date: '2026-10-18',
+    startedAt: at,
+    note: 'Ch 42',
+    weakSpots: [{ topic: 'Why the kidneys hold sodium' }],
+    connections: ['Potassium links insulin and the ECG'],
+  });
+  const a = EV.intakeSession(file('sw-a', '2026-10-18T14:00:00Z'), { now: '2026-10-18T15:00:00Z' });
+  const made = a.writes.filter(w => w.collection === 'ideas');
+  assert.equal(made.length, 2);
+  const ideas = made.map(w => ({ id: w.id, ...w.data }));
+  const b = EV.intakeSession(file('sw-b', '2026-10-19T14:00:00Z'), {
+    ideas,
+    sessions: [{ id: 'sw-a' }],
+    now: '2026-10-19T15:00:00Z',
+  });
+  assert.equal(b.writes.filter(w => w.collection === 'ideas').length, 0, 'no second idea for the same topic');
+  assert.deepEqual(b.linked.map(l => l.idea).sort(), ideas.map(i => i.id).sort());
+  assert.ok(
+    b.writes.every(w => w.collection !== 'ideas'),
+    'his status on the idea is never written'
+  );
+  // the text matches after normalising (case, punctuation, spacing)
+  const s = { id: 'ss-1', topic: 'K', status: 'active', startedAt: T0 };
+  const wrap = {
+    summary: 'x',
+    weakSpots: [],
+    connections: ['  potassium links INSULIN and the ECG. '],
+    noteTodos: [],
+    cards: [],
+  };
+  const c = EV.closeSession(s, wrap, { now: '2026-10-20T15:00:00Z', ideas });
+  assert.equal(c.writes.filter(w => w.collection === 'ideas').length, 0);
+  assert.equal(c.linked[0].idea, ideas.find(i => /potassium/.test(i.id)).id);
+  // an idea he promoted or archived is not open: a new idea is filed beside it, and his stays as it was
+  const shut = ideas.map(i => ({ ...i, status: 'archived' }));
+  const d = EV.closeSession(s, wrap, { now: '2026-10-20T15:00:00Z', ideas: shut });
+  const w = d.writes.filter(x => x.collection === 'ideas');
+  assert.equal(w.length, 1);
+  assert.ok(!shut.some(i => i.id === w[0].id), 'a new id never overwrites one there');
+  assert.deepEqual(d.linked, []);
 });
 
 test('B-381: E.V.’s save_idea and a session’s findings never land on an idea already there', () => {

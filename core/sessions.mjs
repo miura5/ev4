@@ -99,13 +99,14 @@ export function makeSessions(core) {
       },
       { weakspots, objectives, decisions, ideas }
     );
-    return { id, skip: false, writes: [...writes, ...f.writes], questions: f.questions };
+    return { id, skip: false, writes: [...writes, ...f.writes], questions: f.questions, linked: f.linked };
   }
 
   /**
    * The record writes a finished session leads to, shared by evening filing (Study Watch files) and sessions run
    * in E.V. Home. Weak spots need a known objective, or they become ideas (Matt's rule); exact repeats bump the
    * active weak spot; near-repeats (similarity >= 0.5) come back as questions until decided ('same'|'different').
+   * B-388: an idea-bound topic whose text matches an open idea comes back in linked ({text, idea}) with no write.
    */
   function sessionFindings(
     { id, label, by, at, weakSpots, connections, noteTodos, writer = 'filing' },
@@ -114,6 +115,22 @@ export function makeSessions(core) {
     const writes = [],
       questions = [];
     const taken = idSet(ideas); // B-381: a new idea never replaces one already there (or the status he set on it)
+    // B-388: a topic whose normalised text matches an open idea's links to that idea instead of adding another; the idea
+    // is not written (its status stays his). Only ideas already in the record count (B-381: two same lines in one
+    // session stay two ideas).
+    const openIdeas = new Map();
+    for (const x of ideas || [])
+      if (x && typeof x === 'object' && x.id && x.status === 'open' && norm(x.text) && !openIdeas.has(norm(x.text)))
+        openIdeas.set(norm(x.text), x.id);
+    const linked = [];
+    const linkIdea = text => {
+      const hit = openIdeas.get(norm(text));
+      if (hit) linked.push({ text, idea: hit });
+      return !!hit;
+    };
+    const newIdea = (text, data) => {
+      writes.push({ op: 'set', collection: 'ideas', id: ideaId(text, at, taken, 40), data });
+    };
     const env = () => envelope(writer, label, at);
     const objIds = new Set(objectives.map(o => o.id));
     const date = chicagoDate(at);
@@ -124,21 +141,17 @@ export function makeSessions(core) {
       if (!topic) return;
       if (!w.objective || !objIds.has(w.objective)) {
         // not a confirmed testable objective -> an idea (Matt's rule)
-        writes.push({
-          op: 'set',
-          collection: 'ideas',
-          id: ideaId(topic, at, taken, 40),
-          data: {
-            ...env(),
-            schema: 2,
-            kind: 'learning',
-            text: topic,
-            objective: w.objective || '',
-            status: 'open',
-            by,
-            sessionId: id,
-            links: seenIn,
-          },
+        if (linkIdea(topic)) return;
+        newIdea(topic, {
+          ...env(),
+          schema: 2,
+          kind: 'learning',
+          text: topic,
+          objective: w.objective || '',
+          status: 'open',
+          by,
+          sessionId: id,
+          links: seenIn,
         });
         return;
       }
@@ -190,21 +203,17 @@ export function makeSessions(core) {
     (connections || []).forEach(c => {
       const text = typeof c === 'string' ? c : c && (c.text || c.topic);
       if (!text) return;
-      writes.push({
-        op: 'set',
-        collection: 'ideas',
-        id: ideaId(text, at, taken, 40),
-        data: {
-          ...env(),
-          schema: 2,
-          kind: 'learning',
-          text,
-          objective: (c && c.objective) || '',
-          status: 'open',
-          by,
-          sessionId: id,
-          links: seenIn,
-        },
+      if (linkIdea(text)) return;
+      newIdea(text, {
+        ...env(),
+        schema: 2,
+        kind: 'learning',
+        text,
+        objective: (c && c.objective) || '',
+        status: 'open',
+        by,
+        sessionId: id,
+        links: seenIn,
       });
     });
     (noteTodos || []).forEach(n => {
@@ -228,7 +237,7 @@ export function makeSessions(core) {
         },
       });
     });
-    return { writes, questions };
+    return { writes, questions, linked };
   }
 
   // ---------------------------------------------------------------- study sessions in E.V. Home (D-073)
@@ -749,7 +758,11 @@ export function makeSessions(core) {
       filedAt: at,
       pending,
     };
-    return { writes: [{ op: 'update', collection: 'sessions', id: s.id, data }, ...f.writes], questions: f.questions };
+    return {
+      writes: [{ op: 'update', collection: 'sessions', id: s.id, data }, ...f.writes],
+      questions: f.questions,
+      linked: f.linked,
+    };
   }
   /** Matt's same-or-different answer for one pending near-repeat. */
   function decideSessionQuestion(s, key, decision, { weakspots = [], objectives = [], ideas = [], now } = {}) {
@@ -819,16 +832,22 @@ export function makeSessions(core) {
   }
   /**
    * B-381: whether score is a number he wrote in text (this turn's line), so E.V. never records a guessed score. A
-   * hedged line (around, maybe, ~, a question) is refused; a number right after exam, test or quiz, and the 100 of
-   * "out of 100", is never the score.
+   * hedged line (around, maybe, ~, a question) is refused; a number right after exam, test or quiz, an exam id like
+   * E4, and the 100 of "out of 100" or "/100", is never the score. B-388: only a line with exactly one number left,
+   * equal to the score, is accepted.
    */
   function scoreSaid(score, text) {
     const v = Number(score);
     const t = String(text || '');
     if (!Number.isFinite(v) || !t) return false;
     if (/\b(around|about|maybe|probably|think|guess|like|roughly)\b|~|\?/i.test(t)) return false;
-    const kept = t.replace(/\b(exam|test|quiz)\s*#?\s*\d+(?:\.\d+)?/gi, ' ').replace(/\bout of\s+100\b/gi, ' ');
-    return (kept.match(/\d+(?:\.\d+)?/g) || []).some(n => Number(n) === v);
+    const kept = t
+      .replace(/\b(exam|test|quiz)\s*#?\s*\d+(?:\.\d+)?/gi, ' ')
+      .replace(/\bE\d+\b/gi, ' ')
+      .replace(/\bout of\s+100\b/gi, ' ')
+      .replace(/\s*\/\s*100\b/g, ' ');
+    const left = kept.match(/\d+(?:\.\d+)?/g) || [];
+    return left.length === 1 && Number(left[0]) === v;
   }
   /** Flashcards as Quizlet import text: term<TAB>definition per line. */
 

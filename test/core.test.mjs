@@ -996,6 +996,34 @@ test('B-381: graded work snoozed onto a day that already holds the same words st
   );
 });
 
+test('B-388: planned graded work due today can’t be snoozed off; tomorrow’s soon- item still moves', () => {
+  const now = '2026-10-18T14:00:00Z';
+  const day = {
+    id: '2026-10-18',
+    list: {
+      items: [
+        { id: 'date-careplan', text: 'Care plan 2', tag: 'GRADED', minutes: 0 },
+        { id: 'soon-medmath', text: 'Med math quiz (due tomorrow)', tag: 'GRADED', minutes: 0 },
+      ],
+    },
+  };
+  assert.throws(
+    () => EV.listEdit(day, null, { action: 'remove', id: 'date-careplan' }, { now, by: 'Matt' }),
+    /graded work due that day; it stays on the list/
+  );
+  assert.throws(
+    () => EV.listEdit(day, null, { action: 'remove', id: 'date-careplan' }, { now, by: 'E.V.' }),
+    /stays on the list/
+  );
+  const s = EV.listEdit(day, null, { action: 'remove', id: 'soon-medmath' }, { now, by: 'Matt' });
+  assert.ok(s.doc.skipped['soon-medmath'], 'his snooze of tomorrow’s heads-up still takes it off today');
+  const v = EV.dayView(day, { id: '2026-10-18', ...s.doc });
+  assert.ok(!v.items.some(i => i.id === 'soon-medmath'));
+  // a skip of today's graded work written before the fix never hides it: it is still on today's list
+  const old = EV.dayView(day, { id: '2026-10-18', skipped: { 'date-careplan': { at: now, by: 'Matt' } } });
+  assert.ok(old.items.some(i => i.id === 'date-careplan' && i.tag === 'GRADED'));
+});
+
 // ---------------------------------------------------------------- liveDates over dateedits
 test('calendar edits: a new entry is a dates Fact; every change, removal and restore is its dateedits document; removed dates are gone everywhere (D-080)', () => {
   const now = '2026-10-18T01:10:00Z';
