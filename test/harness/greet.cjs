@@ -185,7 +185,8 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           const mem = (window.__db.talk || {}).memory || {};
           return {
             head: g.querySelector('.bubble').textContent.trim(),
-            brief: !!g.querySelector('.brief-row'),
+            // B-358 (D-316): one summary line under her greeting, from code; no line per item, no buttons
+            brief: g.querySelectorAll('.brief .brief-line').length === 1 && !g.querySelector('.brief button'),
             asked: window.__headlineAsked || 0,
             kept: (mem.headlines || []).slice(-1)[0] || null,
             n: (mem.headlines || []).length,
@@ -254,7 +255,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
             JSON.stringify({ before, greeted: [...greeted], seen: [...seen], after })
           );
         }
-        ok(`${tag} the briefing stays code, folded under the line`, r.brief, '');
+        ok(`${tag} one summary line under the greeting, no line per item and no button (D-316)`, r.brief, '');
         ok(`${tag} no page errors`, errors.length === 0, errors.join(' | '));
         await page.screenshot({ path: `${shots}/greet-${st.name}-${mode}-${w}.png` });
         await ctx.close();
@@ -378,22 +379,20 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         error: null,
       };
       await openPage(page, now, db, FAIL);
-      await page.click('#thread .msg.greet .brief-row');
       await page.waitForTimeout(1200);
-      const r = await page.evaluate(() =>
-        [...document.querySelectorAll('#thread .msg.greet .brief-item')].map(li => ({
-          kind: li.dataset.kind,
-          t: li.querySelector('.bi-t').textContent,
-        }))
-      );
-      const iRun = r.findIndex(x => x.kind === 'system'),
-        iBuild = r.findIndex(x => x.kind === 'build');
+      // B-358 (D-316): the greeting is the demo's two lines; the run and the build are no line of their own under it.
+      // The build's facts go to the model with the greeting's details, and its Ship it stays on the job (B-185).
+      const r = await page.evaluate(() => {
+        const g = document.querySelector('#thread .msg.greet');
+        return {
+          lines: g.querySelectorAll('.brief .brief-line').length,
+          buttons: g.querySelectorAll('.brief button').length,
+          summary: (g.querySelector('.brief .brief-line') || {}).textContent || '',
+        };
+      });
       ok(
-        `[morning-after-build ${w}] the build line sits under her greeting, after the failed run`,
-        iRun >= 0 &&
-          iBuild > iRun &&
-          r[iBuild].t ===
-            'B-201 (your “the timer resets when I switch tabs”) is green on staging at abc1234. Say ship it when you want it live',
+        `[morning-after-build ${w}] her greeting and one summary line, no line for the run or the build (D-316)`,
+        r.lines === 1 && !r.buttons && /on today’s list/.test(r.summary) && !/B-201|run failed/.test(r.summary),
         JSON.stringify(r)
       );
       ok(`[morning-after-build ${w}] no page errors`, errors.length === 0, errors.join(' | '));
