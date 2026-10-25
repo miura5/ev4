@@ -4998,5 +4998,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "10798d8",
+  "time": "2026-10-25T19:28:21.257Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "2f58077",
+  "tasks": [
+   "B-357"
+  ],
+  "summary": "The tests and the page harnesses still assert the old UI; they are…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
