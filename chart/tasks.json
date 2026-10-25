@@ -5846,12 +5846,12 @@
   "title": "Fidelity: the sidebar as in the demo. Each Today item shows its minutes or day and a dot coloured by its type, with N left beside the heading; Preferences in the foot opens a small popover with Theme and Contrast and a System link (replacing open controls), Esc closes it and returns focus.",
   "dod": "Matches the demo's sidebar and its Preferences popover at 1280 and 390; N left equals the open items; Esc returns focus to Preferences. Proof (D-312, fidelity sprint): node tools/build.mjs, then tools/fidelity's demo and built screenshots read side by side at 1280, 1706, 2560 and 390, plus npm run smoke; then ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-332"
   ],
-  "notes": "claimed by lane side",
-  "commit": null,
+  "notes": "The sidebar now matches the demo: Today shows on every view with its count left beside the heading, each item with a dot coloured by its type and its minutes or day; a row opens that task in Today. The foot is one Preferences button that opens a small popover (Theme, Contrast and a System link); Esc closes it and puts focus back on Preferences. On the phone the same button sits top right. Still differs from the demo: Theme keeps Auto beside Light and Dark (the demo shows only Light and Dark); the nav labels and icons (E.V. vs Conversation, Today and Progress icons) and the 'online · staging' status under the name are unchanged; at 390 the demo has no Preferences control, so the top-right button stays. Same at 1706 and 2560.",
+  "commit": "c8e0a20",
   "source": "fidelity review, Oct 25 (D-312)"
  },
  {
