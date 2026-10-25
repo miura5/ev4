@@ -5642,7 +5642,7 @@
    "B-316",
    "B-318"
   ],
-  "notes": "Matt, Oct 24: the copy and the cutover (B-320) happen in one sitting with Matt present, in this order: 1) the live page is marked read-only first, so nothing new is written to the old record; 2) the copy; 3) counts and hashes match per collection; 4) B-320 points the runs at D1; 5) the app opens on his devices. Pick a window with no scheduled run due and no study session running (R-03). Writes pause for that sitting only; reading never stops. If any step fails, the live page is unmarked and he keeps studying there: nothing is deleted, so going back is clean.",
+  "notes": "Copy tool built (3fb9ab6): tools/pwa-copy.mjs export-calls/export-done/import/verify; tests in test/pwa-copy.test.mjs against the stand-in Worker. pwa-staging copy_target deploys the ev-staging-scratch Worker over the ev-staging-scratch D1 (run 40233527103 green, 401 without the token). Staging export done outside the repository: 913 documents in 30 collections, the artifact's own total. Not yet proved: import and verify into the scratch D1, because this session's egress proxy refuses ev-staging-scratch.peppercheese1.workers.dev (ev-staging's host is allowed). Next: allow that host, then pwa-copy import and verify against it.",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
