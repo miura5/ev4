@@ -5717,7 +5717,7 @@
    "B-311",
    "B-314"
   ],
-  "notes": "proofs green: npm test, smoke:pwa 23/23, staging proof GREEN in pwa-staging run 40190826199 (7 real Haiku jobs read back from staging D1); reviewing",
+  "notes": "review 1 gaps fixed at 9130d6a; staging proof GREEN again in pwa-staging run 40191385683 (study guide done); second review next",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
