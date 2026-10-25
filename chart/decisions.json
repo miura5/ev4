@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-318",
+  "date": "Oct 25",
+  "title": "No standing design doc: E.V. Foundation v4 is retired (kept as history, never read; nothing is deleted). The living truth is CLAUDE.md, the spec and its schemas, the code and the Chart; a design doc is a one-time hand-off, read until its tasks and decisions are filed. CLAUDE.md, the README and brief no longer point to it.",
+  "why": "Matt, Oct 25: the doc was last updated Oct 21 and every session spent context reading a source that had drifted from the build; since D-184 no current fact was cited from it, and D-317 puts design decisions with the build manager.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-317",
   "date": "Oct 25",
   "title": "Matt is E.V.'s customer; Claude leads development to staging as product manager, system architect and build manager. Matt decides live (one bundled release at a time), what E.V. should do for him, and large decisions explained in plain words; Claude decides everything else up to and including staging, including the workflow. A rubric score (80 of 100, no factor below 3, no blocker) replaces 'no difference from the demo' as the release bar, with at most two fix waves before the release card. The release card replaces the card per task. CLAUDE.md's Roles section holds the model.",

@@ -1,6 +1,6 @@
 # E.V. v4
 
-The engine of E.V., Matt's study partner, rebuilt from its v3 lessons. Start with CLAUDE.md and BACKLOG.md; the design is the E.V. Foundation v4 doc linked there. No personal data lives here.
+The engine of E.V., Matt's study partner, rebuilt from its v3 lessons. Start with CLAUDE.md, docs/handover.md and BACKLOG.md; there is no standing design doc (D-318). No personal data lives here.
 
 ## Layout
 

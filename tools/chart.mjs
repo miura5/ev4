@@ -1900,7 +1900,7 @@ export function brief(rec, id, { root = HERE, scope: override, now = Date.now() 
   const out = [
     `# Brief: ${t.id}`,
     '',
-    `Read first: CLAUDE.md (the hard limits and the every-session steps). Design: E.V. Foundation v4 (https://claude.ai/artifact/Fgb2KjoLKcRgCRrBmM6kEf, Build plan tab); the Chart's own: ${rec.views.design}.`,
+    `Read first: CLAUDE.md (the hard limits and the every-session steps). Then docs/handover.md; no standing design doc (D-318).`,
     '',
   ];
   // B-138 (D-180): a missing run outranks every open task, so the record's health leads the page.

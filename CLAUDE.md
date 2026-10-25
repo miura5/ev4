@@ -2,13 +2,11 @@
 
 You are building **E.V. v4**, Matt's homemade study partner (a first-semester ADN nursing student; NUR 112 and
 BIO 201; Central time). v3 (`miura5/ev-core`) is retired (D-145): read-only to you, its tasks disabled and kept; attach
-it with `add_repo` when a task ports from it. The design is finished before you start; your job is to build it.
+it with `add_repo` when a task ports from it.
 
-**The design lives in one doc:** E.V. Foundation v4, https://claude.ai/artifact/Fgb2KjoLKcRgCRrBmM6kEf
-(seven tabs: main · v3 audit · Data architecture · Operational architecture · Features · Build plan · UI and
-UX), design history since D-184: a design doc is a hand-off, and no current fact is cited from it. The living truth is
-this file, the spec and its schemas, and the Chart. The project record is **the Chart** (`chart/`, design https://claude.ai/artifact/8DVSMh5WdybjeHVV5m2uQT,
-D-140): tasks, reports, decisions, deploys and the rules commands enforce, written only through `tools/chart.mjs`.
+**No standing design doc (D-318).** The living truth is this file, the spec and its schemas, the code, and the Chart.
+A design doc is a one-time hand-off: once its tasks and decisions are filed, nothing is read from it again. E.V.
+Foundation v4 is retired, kept as history and never read. The project record is **the Chart** (`chart/`, D-140): tasks, reports, decisions, deploys and the rules commands enforce, written only through `tools/chart.mjs`.
 BACKLOG.md, DECISIONS.md and CHANGELOG.md are generated from it and drift-tested; none is edited by hand. The v3 doc's
 Board is retired (D-172); `inbox` still reads its comments. A design chat hands off through its doc's tables, 'Tasks to
 add', 'Decisions proposed' (as P-1, P-2; D-141) and 'Tenets proposed'; a build chat files them with `plan --from <doc
@@ -253,7 +251,6 @@ restored at main's head and shipped through staging like any change.
 
 | What | Where |
 | --- | --- |
-| v4 design | E.V. Foundation v4 (link above) |
 | Project record (the Chart) | `chart/` via `tools/chart.mjs`; BACKLOG.md is generated from it (D-140) |
 | Live record and page (v4) | https://claude.ai/artifact/Bu8RevP4r1twPdSGc77nfg |
 | v4 staging record + page | https://claude.ai/artifact/Pb6jQ6CvEbtxi6Rcshu9uC (`spec/ev.spec.json` `registry`) |

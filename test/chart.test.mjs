@@ -1250,28 +1250,13 @@ test('B-141: a rule is marked ended with the decision that ended it, kept, left 
   assert.match(real.find(x => x.id === 'R-01').ended, /^D-145/, 'the record marks R-01 ended');
 });
 
-test('B-141: CLAUDE.md and the skills say what is true: the staging record id, the Foundation doc tab count, ship staging, no exam-week freeze', () => {
+test('B-141: CLAUDE.md and the skills say what is true: the staging record id, no standing design doc (D-318), ship staging, no exam-week freeze', () => {
   const md = fs.readFileSync(path.join(ROOT, 'CLAUDE.md'), 'utf8');
   const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec', 'ev.spec.json'), 'utf8'));
   assert.ok(md.includes(spec.registry.records.staging.artifact), 'the staging record by its id');
   assert.ok(md.includes(spec.registry.records.live.artifact), 'the live record by its id');
-  // The Foundation v4 doc's tabs as read on Oct 21: a tab added there is added here and in CLAUDE.md together.
-  const TABS = [
-    'main',
-    'v3 audit',
-    'Data architecture',
-    'Operational architecture',
-    'Features',
-    'Build plan',
-    'UI and UX',
-  ];
-  const line = md.replace(/\n/g, ' ').match(/\((\w+) tabs: ([^)]+)\)/);
-  assert.ok(line, 'CLAUDE.md lists the tabs');
-  assert.equal(line[1], ['', '', '', '', '', '', 'seven'][TABS.length - 1] || String(TABS.length));
-  assert.deepEqual(
-    line[2].split(' · ').map(t => t.trim().replace(/\s+/g, ' ')),
-    TABS
-  );
+  // D-318: the Foundation doc is retired; nothing tells a session to read it.
+  assert.doesNotMatch(md, /design lives in one doc/, 'no standing design doc');
   for (const f of ['CLAUDE.md', '.claude/skills/review/SKILL.md', '.claude/skills/rollback/SKILL.md']) {
     const t = fs.readFileSync(path.join(ROOT, f), 'utf8');
     assert.doesNotMatch(t, /`deploy staging`|`deploy live`(?! --matt-ok)/, `${f}: the step is ship, not deploy`);
