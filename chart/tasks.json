@@ -6305,7 +6305,7 @@
   "milestone": "v4.8 redesign",
   "status": "done",
   "depends": [],
-  "notes": "npm test and the full check GREEN at 10798d8 (dist/check-full.json), staging GREEN at the same commit. Tests now assert the demo's screens; look-only checks retired (D-315, D-316); two independent reviews confirmed the removals, and the four behaviours they found uncovered have checks again. Open on the card, moved to B-391: prep's week-line count accepts Three or Four.",
+  "notes": "Live GREEN at 10798d8 (v4.5.6) on Matt's word, Oct 25.",
   "commit": "10798d8",
   "source": "Matt, Oct 25 (D-314)",
   "words": "The tests and the page harnesses still assert the old UI; they are brought in line with the demo so the full check is green before live.",
