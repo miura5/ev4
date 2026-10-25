@@ -178,6 +178,17 @@
       });
     } catch (e) {
       console.warn('E.V. app: job ' + id + ' stopped: ' + (e && e.message));
+      // a job left running would wait forever: mark it failed, to try again
+      const left = (db.jobresults || {})[id];
+      if (left && left.status === 'running')
+        try {
+          const J = await import('./jobs.mjs');
+          const ctx = {
+            ...J.contextFor({ jobId: id, now: new Date(), release: left.release }),
+            startedAt: left.startedAt,
+          };
+          await batch([J.statusWrite(ctx, 'failed', 'it stopped before it finished. Try again.')], J.asRunDb(db));
+        } catch (e2) {}
     } finally {
       running.delete(id);
     }

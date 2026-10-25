@@ -28,20 +28,26 @@ export const PROOF_JOBS = {
   'share-set': 'drill-E4-ch39 for my study group.',
   general: 'List the major electrolytes and one sign of each being low.',
 };
-/** What each kind ends as in the app: a share-set is refused there (its page is published on claude.ai only). */
+/** What each kind ends as in the app: a share-set is refused there (its page is published on claude.ai only). The
+ * others end done, or failed in the job's own words when Haiku judged the made-up record too thin for it: a real
+ * model's judgment, which the proof reports. A call that failed, a reply the checks refused or a job left running
+ * is red. */
 export const EXPECTED = kind => (kind === 'share-set' ? 'failed' : 'done');
+const SYSTEM_FAILURE = /couldn’t be reached|didn’t pass E\.V\.’s checks|couldn’t be saved/;
 
 /** The lines for one job's read-back, as [{ok, what}]. */
 export function judge(kind, job, res, made) {
   const r = res && res.data;
   const want = EXPECTED(kind);
   const lines = [];
-  // a refusal the job itself gave, not a call that failed or a reply the checks refused
-  const ownRefusal =
-    !!r && r.status === 'failed' && !/couldn’t be reached|didn’t pass E\.V\.’s checks/.test(r.error || '');
+  const final = !!r && (r.status === 'done' || r.status === 'failed');
+  const own = final && !(r.status === 'failed' && SYSTEM_FAILURE.test(r.error || ''));
   lines.push({
-    ok: !!r && r.status === want && (want !== 'failed' || ownRefusal),
-    what: `${kind}: jobresults ${r ? r.status : 'not written'}${r && r.status !== want ? ' (' + (r.error || '') + ')' : ''}, expected ${want}`,
+    ok: own && (want === 'done' || r.status === 'failed'),
+    what:
+      `${kind}: jobresults ${r ? r.status : 'not written'}` +
+      (r && r.status === 'failed' ? ' (' + String(r.error || '').slice(0, 160) + ')' : '') +
+      (r && r.status !== want ? `; ${want} is usual` : ''),
   });
   if (r && r.status === 'done') {
     const result = r.result || {};
@@ -93,6 +99,8 @@ async function main() {
     const page = await context.newPage();
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
+    const stopped = []; // the shim's own line when a job stops on an error (no token, no document in it)
+    page.on('console', m => /^E\.V\. app: job /.test(m.text()) && stopped.push(m.text().slice(0, 300)));
     await page.goto(origin + '/');
     const live = await page
       // connected: the status has moved on from connecting (on staging it may name the made-up record's old health)
@@ -172,6 +180,7 @@ async function main() {
       lines.push(...judge(kind, job, res, made));
     }
     await page.screenshot({ path: path.join(shots, 'pwa-jobs-390.png') });
+    for (const line of stopped) lines.push({ ok: false, what: line });
     lines.push({
       ok: errors.length === 0,
       what: `no page errors${errors.length ? ': ' + errors.slice(0, 2).join(' | ') : ''}`,

@@ -213,7 +213,16 @@ test('B-324: the staging count check leaves out what the app’s job runner wrot
   const done = { data: { status: 'done', result: { text: 'x', setId: 's' } } };
   assert.ok(judge('practice-set', job, done, { id: 's', data: { items: [{}] } }).every(l => l.ok));
   assert.ok(!judge('practice-set', job, done, null).every(l => l.ok), 'a set must be saved');
-  assert.ok(!judge('general', job, { data: { status: 'failed', error: 'x' } }).every(l => l.ok));
+  assert.ok(
+    judge('general', job, { data: { status: 'failed', error: 'his record has no such exam' } }).every(l => l.ok)
+  );
+  assert.ok(!judge('general', job, { data: { status: 'running' } }).every(l => l.ok), 'left running is red');
+  assert.ok(
+    !judge('general', job, { data: { status: 'failed', error: 'the reply didn’t pass E.V.’s checks, so x' } }).every(
+      l => l.ok
+    )
+  );
+  assert.ok(!judge('share-set', job, done).every(l => l.ok), 'a share-set is never done in the app');
   assert.equal(EXPECTED('share-set'), 'failed');
   const refused = e => judge('share-set', job, { data: { status: 'failed', error: e } })[0].ok;
   assert.ok(refused('This set can’t be shared from the app.'));
