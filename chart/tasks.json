@@ -5710,5 +5710,17 @@
   "notes": "",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
+ },
+ {
+  "id": "B-325",
+  "kind": "task",
+  "title": "The builder guard holds every commit of the run and only the run's: per-commit checks over run.head..HEAD (no merges, each commit against its parent), skipping commits whose Claude-Session trailer names another session; the marker records the run's session (guard --mark --session <url>), and with no session recorded every commit counts",
+  "dod": "Tests: a guarded change another chat pushed to main mid-run is not counted (the Oct 24 views-lane false alarm); a guarded change the run pushed with plain git push, then fetched and pulled, is still refused by pushRefusal and fails the D-200 lint; a plain git fetch without a rebase never shows another chat's change in reverse; a run whose commit lacks the trailer is held. npm test green; an independent review finds no gaps. The builder prompt's mark step passes its session (a build chat with Matt present changes the prompt).",
+  "milestone": "v4.8 redesign",
+  "status": "open",
+  "depends": [],
+  "notes": "First fix (branch fix/guard-own-commits-rebased, origin/main as the base) passed npm test 561/561 but the review found it lets a run's own directly pushed guarded change pass every check, and diffs a fetched-not-rebased main in reverse; not merged. Main keeps the strict guard, whose only fault is a false alarm when a build chat files a guarded change while a builder runs: build chats avoid that until this lands.",
+  "commit": null,
+  "source": "build chat (independent review of the first fix, Oct 24)"
  }
 ]
