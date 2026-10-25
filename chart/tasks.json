@@ -5618,13 +5618,13 @@
   "title": "Ship flow: ship staging and ship live build and deploy the Worker and the app; verify-deploy reads them back. The Cloudflare deploy credential lives only in the build chat's environment.",
   "dod": "A ship staging GREEN that deployed the staging Worker and app, with verify-deploy staging reading back the Worker's build hash and the app's files. ship live refuses without Matt's OK (R-04), as today.",
   "milestone": "app (data, pipelines, ops)",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-283",
    "B-311",
    "B-313"
   ],
-  "notes": "",
+  "notes": "claimed by the PWA builder",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
