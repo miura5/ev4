@@ -5608,7 +5608,7 @@
    "B-315",
    "B-316"
   ],
-  "notes": "code half claimed by the PWA builder (Worker target for staging evening-mac and restore-drill); the task half (re-creating the Mac tasks) stays with the build manager and Matt",
+  "notes": "Code half at 866293a (with 8629791): staging evening-mac and restore-drill target the staging Worker (D-322 backup folder in spec.registry.records.staging.runs.backup, restoreFrom mac|r2); backup = run API pull of D1 in the R2 export shape with manifestOf hashes; drill restores into ev-staging-scratch under drills/<run id>/ and checks counts and SHA-256; Worker gains read-only GET /api/backup/get (needs a staging Worker deploy for the r2 source). Staging Mac prompts rendered in dist/prompts (live and the five cloud prompts byte-identical). Old staging tasks in spec.tasks.retired, triggers null until the new ones are created with Matt present. npm test green. Open: review skill not run; one staging firing of each is the task half.",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
