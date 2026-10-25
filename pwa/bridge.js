@@ -198,7 +198,11 @@
     const J = await import('./jobs.mjs');
     const body = JSON.stringify({ writes: await J.pinned(writes, versionOf, seen) });
     const r = await api('run/batch', { method: 'POST', headers: { 'content-type': 'application/json' }, body });
-    if (r.status === 409) throw Object.assign(new Error('a document changed'), { conflict: true });
+    if (r.status === 409) {
+      const b = await r.json().catch(() => ({}));
+      const which = b.collection ? ` (${b.collection}/${b.doc_id}, now at version ${b.current_version})` : '';
+      throw Object.assign(new Error('a document changed' + which), { conflict: true });
+    }
     if (!r.ok) throw new Error('not saved (' + r.status + ')');
     const ch = await pull();
     if (ch instanceof Set) ch.forEach(emit);
