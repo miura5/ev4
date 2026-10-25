@@ -301,6 +301,8 @@ test('the rendered prompts: staging cloud tasks read system/worker into a file; 
       assert.equal(p.includes('doc_id "worker"'), worker, `${rec}.${key}`);
       assert.equal(p.includes('--worker /tmp/ev/system/worker.json'), worker, `${rec}.${key}`);
       assert.equal(/ArtifactData "set" on runs\//.test(p), !worker, `${rec}.${key}`);
+      // B-397: OUTCOME UNKNOWN is routed to apply --failed in a Worker run's prompt, and only there
+      assert.equal(/ends OUTCOME UNKNOWN .* run the apply --failed command it names/.test(p), worker, `${rec}.${key}`);
       // The gate line carries code; the rest of the prompt carries no token-shaped value.
       const text = p
         .split('\n')
@@ -308,4 +310,59 @@ test('the rendered prompts: staging cloud tasks read system/worker into a file; 
         .join('\n');
       assert.ok(!tokenish.test(text), `${rec}.${key}: ${(tokenish.exec(text) || [])[0]}`);
     }
+});
+
+test('B-397: a batch whose reply is lost after it landed ends OUTCOME UNKNOWN, and apply --failed re-pulls and finishes', async () => {
+  const fw = await fakeWorker();
+  try {
+    const wdir = tmp('ev4-w-');
+    const worker = path.join(wdir, 'worker.json');
+    fs.writeFileSync(worker, JSON.stringify({ schema: 1, url: fw.url, token: TOKEN }));
+    const dir = tmp('ev4-stg-');
+    const out = [];
+    const make = calls => calls.map(c => runApi(c, out));
+    const id = RUN.runIdFor('evening-cloud', AT);
+    make(RUN.start({ spec, pipeline: 'evening-cloud', record: 'staging', at: AT, dir, release: 'v4.0.0', worker }));
+    make(RUN.pull({ spec, dir, at: AT }));
+    assert.equal(RUN.pulled({ spec, dir, transcript: '' }).done, true);
+    const plan = RUN.compute({ spec, dir, validate, at: AT });
+    assert.equal(plan.status, 'planned', JSON.stringify(plan.problems));
+    // the batch is written, then its answer is lost (a 503 after the write)
+    fw.get('/_failnext?status=503&land=1');
+    const first = make(RUN.apply({ dir }).filter(c => c.tool === 'Bash'))[0];
+    assert.equal(first.code, 1);
+    assert.match(
+      first.out,
+      /api batch 1: OUTCOME UNKNOWN \(503\): "the outcome is unknown: the batch may have been written/
+    );
+    assert.match(first.out, /Run the apply --failed 1 command: it re-pulls/);
+    assert.doesNotMatch(first.out, /REFUSED|nothing in batch 1 was written/);
+    const landed = fw.get('/_dump');
+    // the printed path: apply --failed re-pulls, replan drops what landed, and the run ends with nothing doubled
+    const repull = RUN.applyFailed({ dir, batch: 1 });
+    assert.match(repull[0].args.command, / api pull --reads /);
+    assert.deepEqual(
+      make(repull).map(r => r.code),
+      [0]
+    );
+    const re = RUN.replan({ spec, dir, batch: 1, transcript: '' });
+    assert.equal(re.done, true, JSON.stringify(re));
+    assert.deepEqual(
+      make(re.calls.filter(c => c.tool === 'Bash')).map(r => r.code),
+      re.calls.filter(c => c.tool === 'Bash').map(() => 0)
+    );
+    const after = fw.get('/_dump');
+    for (const w of plan.plan.batches[0]) {
+      const k = `${w.collection}/${w.doc_id}`;
+      // a fact the batch created is dropped by replan (never doubled); a derived document is written again, the same
+      assert.deepEqual(after[k].data, landed[k].data, `${k}: the same document as the one that landed`);
+      if (w.op === 'set' && w.if_version == null && spec.collections[w.collection].class === 'Fact')
+        assert.equal(after[k].v, landed[k].v, `${k}: a fact that landed is not written again`);
+    }
+    make(RUN.end({ dir, at: AT, transcript: null }));
+    assert.equal(fw.get('/_dump')['runs/' + id].data.status, 'ok');
+    assert.ok(!out.join('\n').includes(TOKEN));
+  } finally {
+    fw.child.kill();
+  }
 });

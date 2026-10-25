@@ -505,7 +505,7 @@ const commands = {
           // B-397: no answer says whether it landed: never "refused", and the run reads again before writing
           const n = first + i;
           console.log(
-            `api ${o.label ? o.label + ' ' : ''}batch ${n}: OUTCOME UNKNOWN (${r.status || 'no reply'}): ${JSON.stringify(r.error)}${i ? `; batches ${first} to ${n - 1} were written` : ''}. Re-pull before writing again.`
+            `api ${o.label ? o.label + ' ' : ''}batch ${n}: OUTCOME UNKNOWN (${r.status || 'no reply'}): ${JSON.stringify(r.error)}${i ? `; batches ${first} to ${n - 1} were written` : ''}. ${o.label ? 'Re-pull before writing again.' : `Run the apply --failed ${n} command: it re-pulls, and re-plans what did not land.`}`
           );
           return 1;
         }

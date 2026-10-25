@@ -1,7 +1,8 @@
 // A stand-in for the Worker's run API (pwa/runapi.js) for test/run-worker.test.mjs: the same routes, token and
 // version rules (checkWrites, planBatch), over an in-memory record. Not a test file. Run as a child process, since a
 // run's api command calls curl synchronously: node test/fake-worker.mjs <token> <seed dir|-> prints "port <n>".
-// GET /_dump returns the whole store and /_bump?c=&id= edits a document's version (no token), for the test.
+// GET /_dump returns the whole store and /_bump?c=&id= edits a document's version (no token), for the test;
+// /_failnext?status=<n>[&land=1] answers the next batch with that status, after writing it with land=1 (B-397).
 import http from 'node:http';
 import { readExport } from '../core/schemas.mjs';
 import { checkWrites, planBatch, encodeCursor, decodeCursor } from '../pwa/runapi.js';
@@ -12,6 +13,7 @@ const [token, seed] = process.argv.slice(2);
 // anything else the record. "c\nid" -> {v, data}
 const main = new Map();
 const scratch = new Map();
+let failNext = null; // B-397: /_failnext?status=&land=1
 if (seed && seed !== '-')
   for (const { collection, id, doc } of readExport(seed)) main.set(collection + '\n' + id, { v: 1, data: doc });
 
@@ -34,6 +36,11 @@ const server = http.createServer((req, res) => {
       const k = url.searchParams.get('c') + '\n' + url.searchParams.get('id');
       store.get(k).v++;
       return send(res, 200, { v: store.get(k).v });
+    }
+    // B-397: the next batch is written (land=1) or not, then answered with this status, as a reply lost after a write
+    if (url.pathname === '/_failnext') {
+      failNext = { status: Number(url.searchParams.get('status')), land: url.searchParams.get('land') === '1' };
+      return send(res, 200, failNext);
     }
     if (req.headers.authorization !== 'Bearer ' + token) return send(res, 401, { error: 'wrong token' });
     // The R2 export routes (B-316, B-317), over the record as it is now.
@@ -82,7 +89,10 @@ const server = http.createServer((req, res) => {
         const { ok, status, ...rest } = plan;
         return send(res, status, rest);
       }
-      for (const r of plan.rows) store.set(r.c + '\n' + r.id, { v: r.v, data: r.data });
+      const fail = failNext;
+      failNext = null;
+      if (!fail || fail.land) for (const r of plan.rows) store.set(r.c + '\n' + r.id, { v: r.v, data: r.data });
+      if (fail) return send(res, fail.status, { error: 'stand-in ' + fail.status });
       return send(res, 200, {
         ok: true,
         results: plan.rows.map(r => ({ collection: r.c, doc_id: r.id, version: r.v })),

@@ -103,6 +103,8 @@ export function renderPrompt({ key, task, spec, release }) {
     ...(worker
       ? [
           "   This run's calls to the record are run API commands (node core/cli.mjs api ...), printed as Bash calls: run each from the checkout's directory exactly as printed. A command that ends REFUSED is a refused call.",
+          // B-397: no reply to a batch means it may have landed: the same re-pull and re-plan as a version refusal
+          '   A batch that ends OUTCOME UNKNOWN may have been written: take the same path as a batch refused because a document changed, and run the apply --failed command it names.',
         ]
       : []),
     '   Each command prints the calls to make and the next command after "Then:". Follow it through pull, pulled, compute, apply and end.' +
