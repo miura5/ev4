@@ -5722,5 +5722,17 @@
   "notes": "First fix (branch fix/guard-own-commits-rebased, origin/main as the base) passed npm test 561/561 but the review found it lets a run's own directly pushed guarded change pass every check, and diffs a fetched-not-rebased main in reverse; not merged. Main keeps the strict guard, whose only fault is a false alarm when a build chat files a guarded change while a builder runs: build chats avoid that until this lands.",
   "commit": null,
   "source": "build chat (independent review of the first fix, Oct 24)"
+ },
+ {
+  "id": "B-326",
+  "kind": "task",
+  "title": "The test suite cleans up after itself: every temporary copy a test makes (ev4-run, ev4-copy, ev4-mark, ev4-restore, ev4-origin, ev4-build, ev4-guard, ev4-src and the rest) is removed when its test ends, so a long session's disk never fills (Oct 24: about 15,000 left over filled a build chat's disk)",
+  "dod": "After npm test, no ev4-* entry the run made is left in the temporary folder (a test counts them before and after); npm test green; an independent review finds no gaps.",
+  "milestone": "trim",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat (Oct 24)"
  }
 ]
