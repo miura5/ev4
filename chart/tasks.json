@@ -6102,7 +6102,7 @@
   "depends": [
    "B-337"
   ],
-  "notes": "claimed by lane study",
+  "notes": "Matt, Oct 25 (D-313): Study loses its tabs; Plan is no longer a tab but shows in the exam card (B-351). Keep this task to the quiz and results screens and the stray toast; leave the Plan tab as it is, B-351 removes it.",
   "commit": null,
   "source": "Matt's staging look and fidelity review, Oct 25 (D-312)",
   "words": "Fidelity fix: Study's Plan tab, a running quiz and its results are still the old screens, and a Plan the rest message pops up on Study.",
