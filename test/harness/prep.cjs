@@ -895,6 +895,131 @@ async function tickAll(page) {
       ok(`${tag} no sideways scroll, no page errors`, !a.sideways && !errors.length, errors.join(' | '));
       await ctx.close();
     }
+  // B-294: E.V.'s changes today. On Plan the rest's day, with a study session logged today and one task he added himself,
+  // Accept all puts her add and her take-off in the right panel, newest first, each with Undo; his add and the session
+  // never show. Undo on the take-off brings the reading back, and Undo on the add takes the drill off, each as one list
+  // edit. At 1280 in light and dark, after accepting.
+  for (const scheme of ['light', 'dark']) {
+    const tag = `[E.V.'s changes 1280 ${scheme}]`;
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 }, colorScheme: scheme });
+    const page = await ctx.newPage();
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    const db = restRecord();
+    db.sessions = {
+      ...(db.sessions || {}),
+      's294-fluids': {
+        ...env,
+        writer: 'page',
+        source: 'E.V. Home',
+        status: 'done',
+        topic: 'Fluid balance session',
+        startedAt: ct(today, 8, 0),
+        endedAt: ct(today, 8, 40),
+      },
+    };
+    db.dayedits = db.dayedits || {};
+    db.dayedits[today] = {
+      ...env,
+      writer: 'page',
+      date: today,
+      checks: {},
+      skipped: {},
+      checkin: null,
+      added: {
+        'add-mine': {
+          text: 'Call clinical instructor',
+          tag: null,
+          kind: 'todo',
+          minutes: 5,
+          at: ct(today, 7, 0),
+          by: 'Matt',
+        },
+      },
+    };
+    await openPage(page, ct(today, 10, 0), db);
+    await page.click('#tab-today');
+    await page.waitForTimeout(400);
+    const empty = await page.evaluate(() => {
+      const c = document.getElementById('today-changes');
+      return !c || c.hidden;
+    });
+    ok(`${tag} with only his own add, the panel is absent`, empty, String(empty));
+    await page.click('#today-list .ti-rest');
+    await page.waitForTimeout(200);
+    await page.locator('#today-list .ti-review button', { hasText: 'Accept all' }).click();
+    await page.waitForTimeout(400);
+    const read = () =>
+      page.evaluate(() => {
+        const c = document.getElementById('today-changes');
+        const rows = c && !c.hidden ? [...c.querySelectorAll('li.row')] : [];
+        const r = c && c.getBoundingClientRect();
+        return {
+          head: c && c.querySelector('h2') ? c.querySelector('h2').textContent : null,
+          rows: rows.map(li => ({
+            id: li.dataset.id,
+            title: li.querySelector('.title').textContent,
+            detail: (li.querySelector('.meta') || {}).textContent || '',
+            buttons: [...li.querySelectorAll('button')].map(b => b.textContent.trim()),
+          })),
+          inPanel: !!r && r.left >= innerWidth - 420,
+          list: [...document.querySelectorAll('#today-list .ti-list > li .ti-t')].map(t => t.textContent),
+          sideways: document.documentElement.scrollWidth > innerWidth + 1,
+        };
+      });
+    const a = await read();
+    ok(
+      `${tag} after Accept all the right panel lists her add and her take-off, each with its time and Undo`,
+      a.head === 'E.V.’s changes today' &&
+        a.inPanel &&
+        a.rows.length === 2 &&
+        a.rows.some(r => /^Added “Drill: potassium imbalances/.test(r.title)) &&
+        a.rows.some(r => r.title === 'Took “Read Ch 40: acid-base balance” off today') &&
+        a.rows.every(r => /^\d{1,2}:\d\d [AP]M$/.test(r.detail) && r.buttons.join() === 'Undo'),
+      JSON.stringify(a)
+    );
+    ok(
+      `${tag} no session row and none of his own edits`,
+      !a.rows.some(r => /session|Call clinical/i.test(r.title + r.detail)),
+      JSON.stringify(a.rows)
+    );
+    await page.screenshot({ path: `${shots}/today-changes-1280-${scheme}.png` });
+    const before = await page.evaluate(() => window.__writes.filter(x => x[1] === 'dayedits').length);
+    const since = () => page.evaluate(n => window.__writes.filter(x => x[1] === 'dayedits').slice(n), before);
+    await page.locator('#today-changes li.row', { hasText: 'off today' }).locator('button').click();
+    await page.waitForTimeout(400);
+    const w1 = await since(),
+      b = await read();
+    const d1 = w1[0] && w1[0][3];
+    ok(
+      `${tag} Undo on the take-off brings the reading back as one list edit; the add stays`,
+      w1.length === 1 &&
+        d1 &&
+        !(d1.skipped || {})['plan-p293-later'] &&
+        Object.values(d1.added || {}).some(x => /^Drill: potassium/.test(x.text)) &&
+        b.list.includes('Read Ch 40: acid-base balance') &&
+        b.rows.length === 1 &&
+        /^Added/.test(b.rows[0].title),
+      JSON.stringify({ w1, rows: b.rows, list: b.list })
+    );
+    await page.locator('#today-changes li.row', { hasText: 'Added' }).locator('button').click();
+    await page.waitForTimeout(400);
+    const w2 = await since(),
+      c = await read();
+    const d2 = w2[1] && w2[1][3];
+    ok(
+      `${tag} Undo on the add takes the drill off as one list edit; his own add stays; the panel leaves`,
+      w2.length === 2 &&
+        d2 &&
+        !Object.values(d2.added || {}).some(x => /^Drill: potassium/.test(x.text)) &&
+        (d2.added || {})['add-mine'] &&
+        !c.list.some(t => /^Drill: potassium/.test(t)) &&
+        !c.rows.length,
+      JSON.stringify({ w2: w2.slice(1), rows: c.rows, list: c.list })
+    );
+    ok(`${tag} no sideways scroll, no page errors`, !a.sideways && !errors.length, errors.join(' | '));
+    await ctx.close();
+  }
   // B-189: asked in words on a planted lab day (a lab exam and a class exam today, as on Oct 21), E.V. answers from the
   // record without a model call: the greeting already carries the Prep marker for the day, and the reply's card is the
   // day's check with each item naming its source (the calendar entry, the announcement, the course calendar's row, the

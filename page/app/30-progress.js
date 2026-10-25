@@ -41,7 +41,13 @@
         for (let w = weekStart(monthStart(ym)); w <= end; w = E.addDays(w, 7)) {
           const from = w < monthStart(ym) ? monthStart(ym) : w,
             to = E.addDays(w, 6) > end ? end : E.addDays(w, 6);
-          out.push({ key: from, from, to, label: monthName(ym) + ' ' + Number(from.slice(8)), full: rangeName(from, to) });
+          out.push({
+            key: from,
+            from,
+            to,
+            label: monthName(ym) + ' ' + Number(from.slice(8)),
+            full: rangeName(from, to),
+          });
         }
         return out;
       }
@@ -49,7 +55,13 @@
       let ym = monthOf(dates[0] && dates[0] < today ? dates[0] : today);
       const out = [];
       for (let i = 0; ym <= monthOf(today) && i < 12; i++) {
-        out.push({ key: ym, from: monthStart(ym), to: monthEnd(ym), label: monthName(ym), full: monthName(ym) + ' ' + ym.slice(0, 4) });
+        out.push({
+          key: ym,
+          from: monthStart(ym),
+          to: monthEnd(ym),
+          label: monthName(ym),
+          full: monthName(ym) + ' ' + ym.slice(0, 4),
+        });
         ym = E.addDays(monthStart(ym), 32).slice(0, 7);
       }
       return out.slice(-6);
@@ -106,8 +118,9 @@
           accPct + '%',
           prevPct == null
             ? acc.right + ' of ' + acc.n + ' right'
-            : (accPct === prevPct ? 'same as ' : (accPct > prevPct ? '+' : '−') + Math.abs(accPct - prevPct) + ' pts on ') +
-              prev.name,
+            : (accPct === prevPct
+                ? 'same as '
+                : (accPct > prevPct ? '+' : '−') + Math.abs(accPct - prevPct) + ' pts on ') + prev.name,
         ],
         ['Weak spots', open.length + ' open', due ? due + ' due today' : 'none due today'],
       ].filter(Boolean);
@@ -129,7 +142,8 @@
       const cur = bs.findIndex(b => inSpan(today, b.from, b.to));
       let pick = bs.findIndex(b => b.key === prog.pick);
       if (pick < 0) pick = cur >= 0 ? cur : bs.length - 1;
-      $('prog-chart-h').textContent = P === 'week' ? 'Study time by day' : P === 'month' ? 'Study time by week' : 'Study time by month';
+      $('prog-chart-h').textContent =
+        P === 'week' ? 'Study time by day' : P === 'month' ? 'Study time by week' : 'Study time by month';
       const chart = $('prog-chart');
       chart.dataset.n = String(bs.length);
       chart.replaceChildren(
@@ -155,20 +169,21 @@
       );
       // by course: each active course's share of the period's study time
       const byC = {};
-      for (const s of timed()) if (inSpan(s.date, span.from, span.to)) byC[sessionCourse(s)] = (byC[sessionCourse(s)] || 0) + s.minutes;
+      for (const s of timed())
+        if (inSpan(s.date, span.from, span.to)) byC[sessionCourse(s)] = (byC[sessionCourse(s)] || 0) + s.minutes;
       const courseRows = E.activeCourses()
         .filter(c => byC[c]) // a course with no time this period is absent (D-151)
         .map(c => {
-        const r = el('div', 'prog-hb');
-        const top = el('div', 'prog-hb-top');
-        top.append(el('span', null, c), el('span', 'meta', hm(byC[c] || 0)));
-        const bar = el('div', 'pbar x-violet');
-        const f = el('i');
-        f.style.width = grand ? Math.round((100 * (byC[c] || 0)) / grand) + '%' : '0';
-        bar.append(f);
-        r.append(top, bar);
-        return r;
-      });
+          const r = el('div', 'prog-hb');
+          const top = el('div', 'prog-hb-top');
+          top.append(el('span', null, c), el('span', 'meta', hm(byC[c] || 0)));
+          const bar = el('div', 'pbar x-violet');
+          const f = el('i');
+          f.style.width = grand ? Math.round((100 * (byC[c] || 0)) / grand) + '%' : '0';
+          bar.append(f);
+          r.append(top, bar);
+          return r;
+        });
       $('prog-course').hidden = !courseRows.length;
       $('prog-course').replaceChildren(el('h3', null, 'By course · ' + PERIODS[P].toLowerCase()), ...courseRows);
       // exam readiness: each active course's next exam, its weak spots solid (green) and right once (yellow)

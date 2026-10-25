@@ -173,7 +173,11 @@
       const due = it.tag === 'GRADED' ? gradedDue(it) : null;
       const b = BADGE[it.tag];
       // B-293 (C-9): a proposed take-off keeps its row, with one "Proposed" badge and Accept and Keep in place of Start
-      if (o.off) li.append(el('span', 'badge proposed', 'Proposed'), ...restButtons(o.off.P, o.off.p, offEdit(o.off.p), 'take “' + text + '” off today'));
+      if (o.off)
+        li.append(
+          el('span', 'badge proposed', 'Proposed'),
+          ...restButtons(o.off.P, o.off.p, offEdit(o.off.p), 'take “' + text + '” off today')
+        );
       else if (b) {
         const red = due && !doneNow && due <= E.addDays(today, 1);
         li.append(el('span', 'badge' + (red ? ' x-red' : b[1] ? ' ' + b[1] : ''), b[0]));
@@ -313,6 +317,63 @@
       );
     }
     /**
+     * B-294: E.V.'s changes today, newest first: her list edits of today's list, what she added (asked in the
+     * conversation, or accepted from Plan the rest) and what she took off. Each Undo is one list edit: an add is taken
+     * off, a take-off brought back, and the row then leaves. Only the day's edits by E.V. are read, so his own adds, his
+     * ticks and a logged study session never show. Weak-spot events join once B-233 lands; until then, list edits only.
+     */
+    function evChanges() {
+      // the day's view already leaves out prep items and fixed items taken off; the edit document says who and when
+      const ed = dayEditDoc(today) || {};
+      const { items, skipped } = dayState();
+      const adds = items
+        .filter(it => it.added && it.by === 'E.V.')
+        .map(it => ({
+          id: it.id,
+          kind: 'add',
+          text: it.text,
+          at: (ed.added[it.id] || {}).at,
+          undo: { action: 'remove', id: it.id },
+        }));
+      const offs = skipped
+        .filter(x => (ed.skipped[x.id] || {}).by === 'E.V.')
+        .map(x => ({
+          id: x.id,
+          kind: 'off',
+          text: x.text,
+          at: ed.skipped[x.id].at,
+          undo: { action: 'restore', id: x.id },
+        }));
+      return [...adds, ...offs].sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
+    }
+    function renderChanges() {
+      // built here, like the budget card, and placed after it in the side column (the right panel from 1200 px)
+      let card = $('today-changes');
+      if (!card) {
+        card = el('div', 'card');
+        card.id = 'today-changes';
+        const budget = $('today-budget');
+        budget ? budget.after(card) : document.querySelector('#p-today .col-side').prepend(card);
+      }
+      const ch = evChanges();
+      card.hidden = !ch.length; // D-151: absent while she has changed nothing today
+      if (!ch.length) return card.replaceChildren();
+      const ul = el('ul', 'list');
+      for (const c of ch) {
+        const text = String(c.text).replace(/\s*\(~?\d+\s*min\)\s*$/i, '');
+        const title = c.kind === 'add' ? `Added “${text}” to today` : `Took “${text}” off today`;
+        const undo = btn('Undo', null, { cls: 'btn ghost sm' });
+        undo.setAttribute('aria-label', 'Undo: ' + title);
+        undo.addEventListener('click', () =>
+          guard(undo, () => editList(today, c.undo, 'Matt'), c.kind === 'add' ? 'Taken off today' : 'Back on today')
+        );
+        const li = row({ title, detail: clock12(c.at), action: undo, cls: 'chg' });
+        li.dataset.id = c.id;
+        ul.append(li);
+      }
+      card.replaceChildren(el('h2', null, 'E.V.’s changes today'), ul);
+    }
+    /**
      * B-293 (C-9): Plan the rest. planDay runs again on the record as it stands, and its difference from today's list
      * is proposed: an exam-plan task it would put on today that the list lacks (while it fits the time left) is a
      * proposed addition; a plan task on the list that it no longer puts on today, or now defers over the budget, is a
@@ -385,9 +446,14 @@
     function restButtons(P, p, edit, noun) {
       const ok = btn('Accept', null, { cls: 'btn neutral sm ti-acc' });
       ok.setAttribute('aria-label', 'Accept: ' + noun);
-      ok.addEventListener('click', () => guard(ok, () => restAccept(P, { p, edit }), 'Done. E.V. changed today’s list'));
+      ok.addEventListener('click', () =>
+        guard(ok, () => restAccept(P, { p, edit }), 'Done. E.V. changed today’s list')
+      );
       const keep = btn('Keep', null, { cls: 'btn ghost sm ti-keep' });
-      keep.setAttribute('aria-label', 'Keep: ' + (edit.action === 'add' ? 'leave “' + p.text + '” off today' : 'keep “' + p.text + '” on today'));
+      keep.setAttribute(
+        'aria-label',
+        'Keep: ' + (edit.action === 'add' ? 'leave “' + p.text + '” off today' : 'keep “' + p.text + '” on today')
+      );
       keep.addEventListener('click', () =>
         restLeft({ ...P, adds: P.adds.filter(x => x !== p), offs: P.offs.filter(x => x !== p) })
       );
@@ -399,7 +465,11 @@
       li.append(el('span', 'tk ti-gap'));
       const nm = el('span', 'nm ti-nm');
       nm.append(el('span', 'ti-t', p.text));
-      li.append(nm, el('span', 'badge proposed', 'Proposed'), ...restButtons(P, p, restEdit(p), 'add “' + p.text + '” to today'));
+      li.append(
+        nm,
+        el('span', 'badge proposed', 'Proposed'),
+        ...restButtons(P, p, restEdit(p), 'add “' + p.text + '” to today')
+      );
       li.append(el('span', 't', p.minutes ? p.minutes + ' min' : ''));
       return li;
     }
@@ -417,7 +487,11 @@
         ui.restPlan = null;
         render();
       });
-      line.append(el('p', 'ti-review-t', 'E.V. suggests: ' + parts.join(', and ') + '. Nothing changes until you accept.'), all, no);
+      line.append(
+        el('p', 'ti-review-t', 'E.V. suggests: ' + parts.join(', and ') + '. Nothing changes until you accept.'),
+        all,
+        no
+      );
       return line;
     }
     function renderToday() {
@@ -431,6 +505,7 @@
       const bv = budgetView(budget, items, isDone);
       if (bv) head.append(el('span', 'meta tb-short' + (bv.over ? ' tb-over' : ''), bv.line));
       renderBudget(bv);
+      renderChanges(); // B-294
       // B-293 (C-9): Plan the rest, at the head's end; its proposal waits here until he accepts, keeps or rejects it
       if (ui.restPlan && ui.restPlan.date !== today) ui.restPlan = null;
       const P = ui.restPlan;

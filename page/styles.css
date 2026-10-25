@@ -1080,6 +1080,11 @@ button.btn:disabled{opacity:.45;cursor:default}
 #today-budget .tb-over-line{margin:0}
 #today-list .card-head .tb-short{margin-left:auto;font-variant-numeric:tabular-nums}
 @media (min-width:1200px){#today-list .card-head .tb-short{display:none}}
+/* ============================================================ B-294: E.V.'s changes today ============================
+   Under the budget card in the side column (the right panel from 1200 px): one row per list edit she made today, its
+   time in grey under it and a ghost Undo at its end. Absent while she has changed nothing (D-151). */
+#today-changes .row{align-items:center}
+#today-changes .row .title{overflow-wrap:anywhere}
 /* ============================================================ B-293 (C-9, D-243): Plan the rest ====================
    The list head ends with Plan the rest. Its proposal is one line under the head (what E.V. suggests, Accept all and
    Reject) and standard rows: an addition is a row with no tick yet, a take-off keeps its row; each carries the one
