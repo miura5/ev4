@@ -1287,7 +1287,7 @@ button.btn:disabled{opacity:.45;cursor:default}
 #today-taskmain .tp-from .prop-k{font-size:calc(12px * var(--ts));font-weight:500;color:var(--quiet)}
 /* B-355 (D-314): as the TaskDetail board: the tick beside the title (a 16 px rounded square, green when done), the
    description in quiet 14 px, then Where it came from as rows with a grey dot and the time on the right, above the card. */
-#today-taskmain .tp-chk{flex:none;width:16px;height:16px;min-height:0;margin-top:4px;padding:0;border:0;border-radius:5px;background:none;box-shadow:inset 0 0 0 1.5px var(--line2);color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+#today-taskmain .tp-chk{flex:none;width:16px;height:16px;min-height:0;margin-top:4px;padding:0;border:0;border-radius:5px;background:none;box-shadow:inset 0 0 0 1.5px var(--line2);color:var(--bg);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
 #today-taskmain .tp-chk svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;opacity:0}
 #today-taskmain .tp-chk:hover{background:none}
 #today-taskmain .tp-chk:not(.done):hover svg{opacity:.5;color:var(--quiet)}

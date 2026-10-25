@@ -367,7 +367,10 @@
       if (inPanel) d.append(el('span', 'lab', 'Course'));
       d.append(el('div', 'od-name', course || 'Your courses'));
       const st = el('div', 'od-row');
-      st.append(el('span', 'badge', 'No exam yet'), el('span', 'mini', 'Its next exam shows here once it’s in the record.'));
+      st.append(
+        el('span', 'badge', 'No exam yet'),
+        el('span', 'mini', 'Its next exam shows here once it’s in the record.')
+      );
       d.append(st);
       const open = course ? openInCourse(course) : [];
       if (open.length) {
@@ -402,7 +405,8 @@
       const n = k => rows.filter(r => r.state === k).length;
       const pctOf = k => (rows.length ? (100 * n(k)) / rows.length : 0) + '%';
       if (!rows.some(r => r.o.id === objSel)) objSel = null;
-      if (PANEL.matches && !objSel) objSel = ((rows.find(r => r.state !== 'solid') || rows[0] || {}).o || {}).id || null;
+      if (PANEL.matches && !objSel)
+        objSel = ((rows.find(r => r.state !== 'solid') || rows[0] || {}).o || {}).id || null;
       const out = [];
       for (const r of rows) {
         const [word, cls] = OBJ_STATE[r.state];
@@ -436,7 +440,8 @@
       }
       return {
         rows: out,
-        count: n('solid') + ' of ' + rows.length + ' objectives solid' + (n('almost') ? ', ' + n('almost') + ' almost' : ''),
+        count:
+          n('solid') + ' of ' + rows.length + ' objectives solid' + (n('almost') ? ', ' + n('almost') + ' almost' : ''),
         solid: pctOf('solid'),
         almost: pctOf('almost'),
         aria: `${n('solid')} solid, ${n('almost')} almost, ${n('notyet')} not yet`,
@@ -500,11 +505,7 @@
         li.append(
           el('span', 'badge ov-st' + (cls ? ' ' + cls : ''), word),
           nm,
-          el(
-            'span',
-            'ow',
-            (r.d.date === today ? 'today' : dayMonth(r.d.date)) + ' · ' + r.nDone + ' of ' + r.ts.length
-          )
+          el('span', 'ow', (r.d.date === today ? 'today' : dayMonth(r.d.date)) + ' · ' + r.nDone + ' of ' + r.ts.length)
         );
         wrap.append(li);
         if (on) {
@@ -528,7 +529,11 @@
           }
           dt.append(
             btn('Open the plan', openPlan, { cls: 'btn neutral od-q' }),
-            el('span', 'mini od-note', 'Tick what you’ve done in the plan. This exam has no objectives in the record yet.')
+            el(
+              'span',
+              'mini od-note',
+              'Tick what you’ve done in the plan. This exam has no objectives in the record yet.'
+            )
           );
           if (PANEL.matches) ui.objPanel = dt;
           else wrap.append(dt);
@@ -551,8 +556,7 @@
       // finds no set of its own and takes today's review
       const left = s => oneAnswer(s).filter(q => !answersOf(s)[q.id]).length;
       const objIds = new Set(cur.exam ? S.objectives.filter(o => o.exam === cur.exam.id).map(o => o.id) : []);
-      const mine = s =>
-        (cur.exam && s.exam === cur.exam.id) || E.validItems(s).some(q => objIds.has(q.objective));
+      const mine = s => (cur.exam && s.exam === cur.exam.id) || E.validItems(s).some(q => objIds.has(q.objective));
       const sets = practiceSets()
         .filter(s => mine(s) && oneAnswer(s).length)
         .sort((a, b) => left(b) - left(a));
@@ -653,7 +657,13 @@
       const seen = new Set();
       const all = [
         ...S.dates.filter(d => !E.isRemovedDate(d)),
-        ...S.exams.map(e => ({ id: 'exam-' + e.id, date: e.date, title: e.title || e.id, kind: 'exam', course: e.course })),
+        ...S.exams.map(e => ({
+          id: 'exam-' + e.id,
+          date: e.date,
+          title: e.title || e.id,
+          kind: 'exam',
+          course: e.course,
+        })),
       ]
         .filter(d => d.date && d.date >= today && E.courseOf(d) === course)
         .filter(d => {
@@ -695,7 +705,7 @@
      *  course", Quiz me), then the open spots in that course as full-width rows under one quiet head (B-371). An open row has its dot, its topic, a grey line (where it came from, how often, when
      *  it is next due, its objective), Drill and Mark solid. The side pane is the demo's
      *  How triage works (B-365). There is no To review section: nothing in the record proposes weak spots yet (B-300). */
-    const objText = id => ((S.objectives.find(o => o.id === id) || {}).text || '');
+    const objText = id => (S.objectives.find(o => o.id === id) || {}).text || '';
     function weakQuizAll(b) {
       // today's review set aims at the most due spots; with none yet, the same line as the review's own
       const rs = S.sets.find(s => s.id === 'review-' + today);
@@ -743,7 +753,7 @@
           dr.setAttribute('aria-label', 'Drill ' + (w.topic || 'this weak spot'));
           row.append(dr);
         }
-        const ms = btn('Mark solid', ev => guard(ev.target, () => write(weakEvent(w, 'solid')), 'Marked solid'), {
+        const ms = btn('Mark solid', ev => guard(ev.target, () => markSolid(w), 'Marked solid'), {
           cls: 'btn ghost sm',
         });
         ms.setAttribute('aria-label', 'Mark ' + (w.topic || 'this weak spot') + ' solid');
@@ -1004,7 +1014,10 @@
       $('plan-lab').textContent = 'Plan' + (ex ? ' · ' + (ex.title || ex.id).replace(/:.*$/, '') : '');
       const summaryCard = () => {
         const sm = el('div', 'ov-detail plan-sum');
-        sm.append(el('span', 'lab', plan.title || 'Exam plan'), el('div', 'big plan-lead', `${doneN} of ${tasks.length} done`));
+        sm.append(
+          el('span', 'lab', plan.title || 'Exam plan'),
+          el('div', 'big plan-lead', `${doneN} of ${tasks.length} done`)
+        );
         if (exDay) sm.append(el('span', 'mini', exDay));
         // B-194: every other plan in force, one line each, to switch to (a dosage plan beside the exam's).
         const others = S.plans.filter(p => p.id !== plan.id);

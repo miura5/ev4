@@ -146,10 +146,10 @@
           !prev
             ? 'since ' + firstDay(span)
             : prevPct == null
-            ? acc.right + ' of ' + acc.n + ' right'
-            : (accPct === prevPct
-                ? 'same as '
-                : (accPct > prevPct ? '+' : '−') + Math.abs(accPct - prevPct) + ' points on ') + prev.name,
+              ? acc.right + ' of ' + acc.n + ' right'
+              : (accPct === prevPct
+                  ? 'same as '
+                  : (accPct > prevPct ? '+' : '−') + Math.abs(accPct - prevPct) + ' points on ') + prev.name,
         ],
         ['Weak spots', open.length + ' open', due ? due + ' due today' : 'none due today'],
       ].filter(Boolean);
@@ -225,7 +225,10 @@
           return r;
         });
       $('prog-course').hidden = !courseRows.length;
-      $('prog-course').replaceChildren(el('span', 'lab', 'By course · ' + { week: 'this week', month: 'this month', sem: 'this semester' }[P]), ...courseRows);
+      $('prog-course').replaceChildren(
+        el('span', 'lab', 'By course · ' + { week: 'this week', month: 'this month', sem: 'this semester' }[P]),
+        ...courseRows
+      );
       // exam readiness (B-342, the demo's): each course's next exam, its objectives solid (green) and almost (yellow),
       // as Study's overview counts them; B-366: an exam with no objectives shows its plan's progress instead, tasks done
       // (green) and the rest of its started days (yellow), as Study's exam card does
@@ -233,60 +236,62 @@
       const readyRows = studyExams()
         .filter(x => x.exam) // B-357: a course with no upcoming exam (B-365) has no readiness row
         .map(({ exam: e }) => {
-        const objs = S.objectives.filter(o => o.exam === e.id);
-        let n, so, al, unit;
-        if (objs.length) {
-          const st = objs.map(o => objState(o, objAcc[o.id]).state);
-          (n = objs.length), (so = st.filter(x => x === 'solid').length), (al = st.filter(x => x === 'almost').length);
-          unit = 'objectives';
-        } else {
-          // B-372: its plan as Study finds it (the plan named for it, else one ending in its last three weeks), else
-          // the Today items tied to it (a plan task or a set on it); with neither the row is absent, never an empty bar
-          const plan = examPlan(e);
-          const isDone = t => !!(plan.done && plan.done[t.id]) || E.taskDone(plan, t, today, S.sets, S.answers);
-          (n = 0), (so = 0), (al = 0), (unit = 'plan tasks');
-          for (const d of (plan && plan.days) || []) {
-            const ts = (d.tasks || []).map(t => ({ ...t, date: d.date })),
-              k = ts.filter(isDone).length;
-            n += ts.length;
-            so += k;
-            if (k && k < ts.length) al += ts.length - k;
+          const objs = S.objectives.filter(o => o.exam === e.id);
+          let n, so, al, unit;
+          if (objs.length) {
+            const st = objs.map(o => objState(o, objAcc[o.id]).state);
+            ((n = objs.length),
+              (so = st.filter(x => x === 'solid').length),
+              (al = st.filter(x => x === 'almost').length));
+            unit = 'objectives';
+          } else {
+            // B-372: its plan as Study finds it (the plan named for it, else one ending in its last three weeks), else
+            // the Today items tied to it (a plan task or a set on it); with neither the row is absent, never an empty bar
+            const plan = examPlan(e);
+            const isDone = t => !!(plan.done && plan.done[t.id]) || E.taskDone(plan, t, today, S.sets, S.answers);
+            ((n = 0), (so = 0), (al = 0), (unit = 'plan tasks'));
+            for (const d of (plan && plan.days) || []) {
+              const ts = (d.tasks || []).map(t => ({ ...t, date: d.date })),
+                k = ts.filter(isDone).length;
+              n += ts.length;
+              so += k;
+              if (k && k < ts.length) al += ts.length - k;
+            }
+            if (!n) {
+              const ds = dayState();
+              const tied = ds.items.filter(it => {
+                const pt = planTaskById(it.ref);
+                if (pt) return (pt.plan.exam || pt.plan.id) === e.id;
+                const sid = it.set || (/^sets\//.test(it.ref || '') ? it.ref.slice(5) : null);
+                const set = sid && S.sets.find(x => x.id === sid);
+                return !!(set && set.exam === e.id);
+              });
+              ((n = tied.length), (so = tied.filter(ds.isDone).length), (unit = 'items today'));
+            }
+            if (!n) return null;
           }
-          if (!n) {
-            const ds = dayState();
-            const tied = ds.items.filter(it => {
-              const pt = planTaskById(it.ref);
-              if (pt) return (pt.plan.exam || pt.plan.id) === e.id;
-              const sid = it.set || (/^sets\//.test(it.ref || '') ? it.ref.slice(5) : null);
-              const set = sid && S.sets.find(x => x.id === sid);
-              return !!(set && set.exam === e.id);
-            });
-            (n = tied.length), (so = tied.filter(ds.isDone).length), (unit = 'items today');
-          }
-          if (!n) return null;
-        }
-        const row = el('div', 'prog-hb');
-        const top = el('div', 'prog-hb-top');
-        top.append(
-          el('span', null, E.courseOf(e) + ' · ' + (e.title || e.id).replace(/:.*$/, '')),
-          el('span', 'meta', so + ' of ' + n + (unit === 'objectives' ? '' : ' ' + unit))
-        );
-        const bar = el('div', 'pbar');
-        bar.setAttribute('role', 'img');
-        bar.setAttribute(
-          'aria-label',
-          unit === 'objectives'
-            ? so + ' solid, ' + al + ' almost, of ' + n + ' objectives'
-            : so + ' of ' + n + ' ' + unit + ' done'
-        );
-        const g = el('i', 'x-green'),
-          y = el('i', 'x-yellow');
-        g.style.width = (n ? Math.round((100 * so) / n) : 0) + '%';
-        y.style.width = (n ? Math.round((100 * al) / n) : 0) + '%';
-        bar.append(g, y);
-        row.append(top, bar);
-        return row;
-      })
+          const row = el('div', 'prog-hb');
+          const top = el('div', 'prog-hb-top');
+          top.append(
+            el('span', null, E.courseOf(e) + ' · ' + (e.title || e.id).replace(/:.*$/, '')),
+            el('span', 'meta', so + ' of ' + n + (unit === 'objectives' ? '' : ' ' + unit))
+          );
+          const bar = el('div', 'pbar');
+          bar.setAttribute('role', 'img');
+          bar.setAttribute(
+            'aria-label',
+            unit === 'objectives'
+              ? so + ' solid, ' + al + ' almost, of ' + n + ' objectives'
+              : so + ' of ' + n + ' ' + unit + ' done'
+          );
+          const g = el('i', 'x-green'),
+            y = el('i', 'x-yellow');
+          g.style.width = (n ? Math.round((100 * so) / n) : 0) + '%';
+          y.style.width = (n ? Math.round((100 * al) / n) : 0) + '%';
+          bar.append(g, y);
+          row.append(top, bar);
+          return row;
+        })
         .filter(Boolean);
       $('prog-ready').hidden = !readyRows.length;
       $('prog-ready').replaceChildren(el('span', 'lab', 'Exam readiness · objectives solid'), ...readyRows);
@@ -316,7 +321,11 @@
       $('prog-day').replaceChildren(
         el('span', 'lab prog-day-when', b.full),
         el('p', 'prog-day-total', ahead(b) ? 'Ahead' : hm(vals[pick])),
-        el('span', 'lab prog-day-lab', list.length ? (P === 'week' ? 'That day in Record' : 'Recent in Record') : 'Nothing logged'),
+        el(
+          'span',
+          'lab prog-day-lab',
+          list.length ? (P === 'week' ? 'That day in Record' : 'Recent in Record') : 'Nothing logged'
+        ),
         ul
       );
       $('prog-day').hidden = false;
@@ -412,6 +421,10 @@
     }
     // B-123 (D-162): a weak spot is one line, its topic and objective, opening in place to its source and its action.
     const openWs = new Set();
+    // B-357: his Mark solid, one write site for Progress's row and Study's (D-203: the legacy list only shrinks)
+    function markSolid(w) {
+      return write(weakEvent(w, 'solid'));
+    }
     function wsRow(w) {
       const d = w.derived;
       const due = E.isDue(w, today);
@@ -429,7 +442,7 @@
       // B-303 (D-288, D-289): no parked spots and no Make active; one action whatever its kind, Mark solid
       const action =
         d.status === 'open'
-          ? btn('Mark solid', ev => guard(ev.target, () => write(weakEvent(w, 'solid')), 'Marked solid'), {
+          ? btn('Mark solid', ev => guard(ev.target, () => markSolid(w), 'Marked solid'), {
               cls: 'btn neutral sm',
             })
           : null;
