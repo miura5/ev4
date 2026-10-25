@@ -7105,7 +7105,7 @@
   "milestone": "v5 app",
   "status": "in progress",
   "depends": [],
-  "notes": "Taken in pwa1: restoreInput becomes one stateless rule (append after a blank line, or alone), with tests for order, edits between refusals and an unrelated later refusal.",
+  "notes": "919cb8b: E.restoredBox (core/conversation.mjs) appends a refused line after a blank line, or alone in an empty box; T.restoreInput keeps no state, so refusals land in send order and his typing is never changed; one toast per run kept. Unit tests in test/conversations.test.mjs: A then B; edits between refusals (added, deleted, cleared); a later refusal leaves his text exact. smoke:pwa 5b expects his typing, then A, then B. npm test (653), npm run smoke and smoke:pwa (25) green; CI npm test green at 919cb8b; pwa-staging run 40236164390 green at 919cb8b. Not marked done: a fresh review is next.",
   "commit": null,
   "source": "B-394 second review, Oct 25",
   "words": "When a refused conversation line is restored to the box, a remembered earlier block can splice the new line into what he has typed, or reorder lines he edited between refusals.",
