@@ -4268,5 +4268,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "ac5415a",
+  "time": "2026-10-25T12:19:31.860Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "43055bc",
+  "tasks": [
+   "B-346"
+  ],
+  "summary": "Fidelity fix: Today's header reads only Today where the demo reads…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
