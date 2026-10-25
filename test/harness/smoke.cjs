@@ -218,7 +218,7 @@ async function open(browser, viewport) {
     const slowTick = await tapTick(null, 2000);
     ok(
       `${tag} a check-off paints ticked on the tap's frame, the record 2 s behind (D-208)`,
-      !!slowTick && slowTick.ticked && slowTick.live && slowTick.ms < 2000,
+      !!slowTick && slowTick.ticked && slowTick.live && slowTick.ms < 500,
       JSON.stringify(slowTick)
     );
     const refused = await tapTick('permission_denied', 300);
@@ -288,7 +288,7 @@ async function open(browser, viewport) {
       const slow = await checkAnswer('#rv-body', null, 2000);
       ok(
         `${tag} an answer paints the verdict on the tap's frame, the record 2 s behind (D-227)`,
-        !!slow && /^(Right|Missed|Partly|Not quite)\b/.test(slow.verdict) && !slow.saving && slow.ms < 2000,
+        !!slow && /^(Right|Missed|Partly|Not quite)\b/.test(slow.verdict) && !slow.saving && slow.ms < 500,
         JSON.stringify(slow)
       );
       const scored = await until(
@@ -388,7 +388,7 @@ async function open(browser, viewport) {
       });
       ok(
         `${tag} a Your-turn Send paints its sent state on the tap's frame, the record 2 s behind (D-208)`,
-        painted.sent && painted.ms < 2000,
+        painted.sent && painted.ms < 500,
         JSON.stringify(painted)
       );
       const filed = await until(
@@ -404,8 +404,8 @@ async function open(browser, viewport) {
     }
 
     // B-200 (D-208): a quick-ask chip puts his line in the thread on the tap's next frame, the record 2 s behind. Each
-    // paint check here reads the page on the first frame after the tap; the record answers 2 s later, so the bound is
-    // that delay, not a wall-clock budget a loaded machine stretches (B-357).
+    // paint check here reads the page on the first frame after the tap, with a loose 500 ms bound (the record answers
+    // 2 s later; a loaded machine stretches a frame's time, so the old 100 ms budget flaked) (B-357).
     const chipPaint = await page.evaluate(async () => {
       const b = [...document.querySelectorAll('#qchips button')].find(x => !/^Your turn|^Resume /.test(x.textContent));
       if (!b) return null;
@@ -423,7 +423,7 @@ async function open(browser, viewport) {
     });
     ok(
       `${tag} a chip shows his line on the tap's frame, the record 2 s behind (D-208)`,
-      !!chipPaint && chipPaint.shown && chipPaint.ms < 2000,
+      !!chipPaint && chipPaint.shown && chipPaint.ms < 500,
       JSON.stringify(chipPaint)
     );
 

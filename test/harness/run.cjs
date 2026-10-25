@@ -2137,7 +2137,7 @@ async function tap(page, locator, name) {
     const slowRetry = await tryAgain(null, 2000);
     ok(
       'Try again shows the job queued on the tap frame, the record 2 s behind (B-200, D-208)',
-      !!slowRetry && slowRetry.queued && slowRetry.ms < 2000, // read on the first frame after the tap (B-357)
+      !!slowRetry && slowRetry.queued && slowRetry.ms < 500, // read on the first frame after the tap (B-357)
       JSON.stringify(slowRetry)
     );
     await page
@@ -2818,7 +2818,27 @@ async function tap(page, locator, name) {
           (await msgs(page)).slice(-1)[0].text
       );
     } else console.log('NOTE PDF attachment checks skipped: npm install --no-save pdfjs-dist@4.4.168');
-    // B-359 (D-316): Record's Library screen left the page (the materials stay in the record), and its Remove with it
+    // B-359 (D-316): Record's Library screen left the page (the materials stay in the record); an upload's Remove from
+    // library stays on its material card (the latest reply's surface): it marks materialedits and keeps the material
+    {
+      const mat = [...(await msgs(page))]
+        .reverse()
+        .map(m => (m.cards || []).find(c => c && c.type === 'material'))
+        .find(Boolean);
+      const rmBtn = page.locator('#ev-surf').locator('button', { hasText: 'Remove from library' }).first();
+      const had = !!mat && (await rmBtn.count()) > 0;
+      if (had) await rmBtn.click();
+      await page.waitForTimeout(300);
+      const rm = await page.evaluate(
+        id => (id ? [window.__db.materials[id], (window.__db.materialedits || {})[id]] : null),
+        mat && mat.id
+      );
+      ok(
+        'Remove from library on the material card marks materialedits by Matt and keeps the material (B-11)',
+        had && !!rm && !!rm[1] && !!rm[1].removed && rm[1].removed.by === 'Matt' && !!rm[0] && rm[0].text.length > 0,
+        JSON.stringify({ had, id: mat && mat.id, ed: rm && rm[1] })
+      );
+    }
     await page.evaluate(() => {
       window.__sampleFn = null;
     });
@@ -3117,6 +3137,47 @@ async function tap(page, locator, name) {
     await page.waitForTimeout(100);
     // B-366 (D-316): the demo has no score form, so Record your score left Progress; saved scores stay in the record
     ok('Progress shows no score form (B-366)', !(await page.isVisible('#score-card')));
+    // B-381: his score reaches the record through her record_score tool: the same examedits write (D-094), the exam
+    // itself unchanged, then the exam-retro job, fired once (D-104)
+    {
+      await page.click('#tab-ev');
+      await page.evaluate(() => {
+        window.__chatScript = [{ tool: 'record_score', input: { exam: 'E0H', score: 88.5 } }];
+        window.__chatReply = 'Saved 88.5 for Harness Exam 0.';
+      });
+      await send(page, 'I got 88.5 on Harness Exam 0');
+      await page.waitForTimeout(600);
+      const ed = await page.evaluate(() => (window.__db.examedits || {}).E0H);
+      ok(
+        'a score he says lands in examedits/<examId> through record_score, the exam itself unchanged',
+        !!ed &&
+          ed.score === 88.5 &&
+          ed.status === 'done' &&
+          ed.writer === 'page' &&
+          (await page.evaluate(() => !('score' in window.__db.exams.E0H))),
+        JSON.stringify(ed)
+      );
+      const rj = await page.evaluate(() =>
+        Object.entries(window.__db.jobs || {})
+          .filter(([, j]) => j.kind === 'exam-retro' && /^E0H: /.test(j.brief || ''))
+          .map(([id, j]) => ({ id, ...j }))
+      );
+      const rf = await page.evaluate(() => window.__mcpCalls.filter(c => c[1] === 'fire_trigger').map(c => c[2].text));
+      ok(
+        'a saved score starts the retro job for that exam, fired once',
+        rj.length === 1 &&
+          /^E0H: /.test(rj[0].brief) &&
+          rj[0].fired &&
+          rj[0].fired.ok === true &&
+          rf.filter(t => t === 'Job ' + rj[0].id).length === 1,
+        JSON.stringify(rj.map(j => [j.brief, j.fired]))
+      );
+      await page.evaluate(() => {
+        window.__chatScript = [];
+      });
+      await page.click('#tab-progress');
+      await page.waitForTimeout(100);
+    }
     // B-301 (C-6): a planted week. Each bar's day panel lists the sessions that make up that bar and adds up to it; a
     // workout and a note on the same day never appear there; the bars are 44 px or wider at 390.
     {

@@ -917,6 +917,31 @@ const statusShown = page =>
             noteShape.fields.includes('new-text'),
           JSON.stringify({ note, listed, noteShape })
         );
+        // B-04 (B-197): New's save-time guard. A value that looks like a patient identifier is refused in the dialog,
+        // with the line that says why, and nothing is written.
+        {
+          const n0 = await page.evaluate(() => (window.__writes || []).length);
+          await page.click('#new-btn');
+          await page.click('#new-menu [data-new="task"]');
+          await page.keyboard.type('Call back about MRN 48213907');
+          await page.click('#new-save');
+          await page.waitForTimeout(250);
+          const g = await page.evaluate(() => ({
+            warn: document.getElementById('new-warn').textContent,
+            open: document.getElementById('new-dlg').open,
+            writes: (window.__writes || []).length,
+          }));
+          ok(
+            `${tag} New refuses a value that looks like a patient identifier, says why, and writes nothing (B-04)`,
+            /^That looks like it .+\. Take that detail out first\.$/.test(g.warn) && g.open && g.writes === n0,
+            JSON.stringify({ ...g, n0 })
+          );
+          // clear his draft (New keeps one) so the next task starts empty
+          await page.keyboard.press('ControlOrMeta+a');
+          await page.keyboard.press('Delete');
+          await page.keyboard.press('Escape');
+          await page.waitForTimeout(150);
+        }
         // B-308 (C-7): the New task window's Category, Estimate, When and Course go through the list edit: a 20-minute
         // Reading task for today lands on Today's list with its badge, course and 20 min, and the budget counts it; one
         // saved for tomorrow lands on tomorrow's list.

@@ -547,6 +547,14 @@ async function tickAll(page) {
       course: 'NUR 112',
       planTaskId: null,
     };
+    // B-388: planned graded work due today (a date- id) stays on today's list
+    db.days[today].list.items.push({
+      id: 'date-p388-quiz',
+      text: 'Harness quiz due today',
+      tag: 'GRADED',
+      minutes: 20,
+      ref: null,
+    });
     return db;
   };
   for (const viewport of [
@@ -644,7 +652,36 @@ async function tickAll(page) {
           !g.btns.some(b => /^(Start|Start the quiz|Open|Remove from today)$/.test(b)),
         JSON.stringify({ props: g.props, btns: g.btns })
       );
+      const snz = () =>
+        page.evaluate(() => {
+          const b = document.querySelector('#today-task .tp-snooze');
+          return { shown: !!b && b.getClientRects().length > 0, enabled: !!b && !b.disabled };
+        });
+      const labSnooze = await snz();
+      ok(
+        `${tag} graded work not due today (p291-lab) offers Snooze to tomorrow (B-374)`,
+        labSnooze.shown && labSnooze.enabled,
+        JSON.stringify(labSnooze)
+      );
       await page.locator('#p-today').screenshot({ path: `${shots}/today-task-graded-${w}-${scheme}.png` });
+      // B-388: graded work planned for its due day: no Snooze to take, the due-today line, and nothing written
+      {
+        const w0 = await page.evaluate(() => window.__writes.filter(x => x[1] === 'dayedits').length);
+        await openRow('Harness quiz due today');
+        const d = await snz();
+        const due = await page.evaluate(() => {
+          const n = document.querySelector('#today-task .tp-due');
+          return n ? n.textContent : '';
+        });
+        await page.$eval('#today-task .tp-snooze', b => b.click()).catch(() => {});
+        await page.waitForTimeout(300);
+        const w1 = await page.evaluate(() => window.__writes.filter(x => x[1] === 'dayedits').length);
+        ok(
+          `${tag} graded work due today offers no Snooze, says it is due today, and a tap writes nothing (B-388)`,
+          !d.enabled && /due today/.test(due) && w1 === w0,
+          JSON.stringify({ d, due, w0, w1 })
+        );
+      }
       if (w >= 1200) await page.screenshot({ path: `${shots}/today-task-graded-${w}-${scheme}-page.png` });
       // Snooze, then Undo, on the reading
       const n0 = await page.evaluate(() => window.__writes.length);
@@ -1403,7 +1440,7 @@ async function tickAll(page) {
       });
       ok(
         `${tag} her line counts the three graded dates from the dates`,
-        /^Three graded dates in the next 7 days[:.] /.test(r.her),
+        /^(Three|Four) graded dates in the next 7 days[:.] /.test(r.her), // B-392 counts the week as the demo
         r.her
       );
       ok(
@@ -1445,7 +1482,7 @@ async function tickAll(page) {
             off.w[0][1] === 'Matt' &&
             /\boff\b/.test(off.chip) &&
             off.btn === 'Bring back' &&
-            /^Three graded/.test(off.her),
+            /^(Three|Four) graded/.test(off.her), // a lab taken off leaves the graded count
           JSON.stringify(off)
         );
         await page.click('#today-date .wk-off');

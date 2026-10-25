@@ -55,8 +55,9 @@ async function paintAnswer(page, root, { delay = 2000, text = 'Fluid shifts into
 /** A scored item paints on the first frame after the tap; an open one paints before the record's write lands. */
 function painted(r) {
   // B-357: by frames, not wall-clock: a scored verdict is there on the first frame after the tap (frames counts the
-  // frames waited before it showed; a loaded machine stretches their time, not their number)
-  return !!r && !!r.verdict && !r.saving && !r.recordLanded && (r.open || r.frames <= 1);
+  // frames waited before it showed; a loaded machine stretches their time, not their number), and a loose 500 ms bound
+  // so a tap that stalls still fails
+  return !!r && !!r.verdict && !r.saving && !r.recordLanded && (r.open || (r.frames <= 1 && r.ms < 500));
 }
 // B-297 (D-283): Study's tabs are Objectives, Plan and Weak spots. A set opens in the quiz card the way he opens it:
 // today's review from its row on Today (its task's panel, B-296), a practice set from an objective's Quiz me (its fold line then leads back to
