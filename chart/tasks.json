@@ -5624,7 +5624,7 @@
    "B-311",
    "B-313"
   ],
-  "notes": "claimed by the PWA builder",
+  "notes": "Pushed 3f9b8c6 (ship dispatches pwa-staging at the build commit; verify-deploy reads back the Worker build hash and page files). Waiting for B-389's pwa-staging run before ship staging.",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
