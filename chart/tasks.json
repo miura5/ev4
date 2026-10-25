@@ -6720,5 +6720,22 @@
    "outcome": "task",
    "at": "2026-10-25T15:48:14.462Z"
   }
+ },
+ {
+  "id": "B-377",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Review 3: starting, pausing and ending a study session from the panel differ from the demo.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UI reviewer click-through 3 at d6bee63, Oct 25 (D-316)",
+  "words": "Review 3: starting, pausing and ending a study session from the panel differ from the demo.",
+  "reportedAt": "2026-10-25T15:48:14.830Z",
+  "board": {
+   "row": "v4 B-377: Review 3: starting, pausing and ending a study session from the panel…"
+  }
  }
 ]
