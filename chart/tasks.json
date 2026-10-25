@@ -5476,5 +5476,237 @@
   "notes": "Shipped to staging at 3a51928: ship staging GREEN.",
   "commit": "cf31948",
   "source": "build chat (Matt's OK, Oct 24)"
+ },
+ {
+  "id": "B-309",
+  "kind": "task",
+  "title": "Bring the demo onto main: pwa/ and tools/build-pwa.mjs from pwa-demo at 2f24443, without its chart/, DECISIONS.md or spec edits. The app is named \"E.V.\" (manifest, window title, icon label), and build-pwa wraps the page node tools/build.mjs writes for the record it is given (staging or live).",
+  "dod": "git diff main shows no change under chart/, spec/, page/ or test/harness/. The built pwa/public/index.html carries the title \"E.V.\" and the manifest's name is \"E.V.\". build-pwa --record staging and --record live each wrap that record's built page byte for byte. npm test and prettier --check . green.",
+  "milestone": "app (data, pipelines, ops)",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
+ },
+ {
+  "id": "B-310",
+  "kind": "task",
+  "title": "The hard-limit restatements, filed by a build chat with Matt present (guarded changes): B-10 as D-299, B-06 as D-300, B-11 as D-302's amendment. The run prompts re-render from them (D-175).",
+  "dod": "spec.boundaries B-06, B-10 and B-11 read word for word as D-300, D-299 and D-302 say. The rendered prompts change only where those limits appear (diff of dist/prompts/). Matt confirms in the chat that the Anthropic Console spend limit is set to $5 a month. npm test green.",
+  "milestone": "app (data, pipelines, ops)",
+  "status": "open",
+  "depends": [
+   "B-283"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
+ },
+ {
+  "id": "B-311",
+  "kind": "task",
+  "title": "A staging D1 and a staging Worker with their own token, seeded with the synthetic record only (test/data/synthetic.cjs). The Cloudflare deploy credential lives only in the build chat's environment.",
+  "dod": "Without the token, the staging Worker answers 401 on /api/db; with it, the counts per collection equal the synthetic record's. A cloud session reaches the staging Worker. The personal-data test passes over pwa/.",
+  "milestone": "app (data, pipelines, ops)",
+  "status": "open",
+  "depends": [
+   "B-309"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
+ },
+ {
+  "id": "B-312",
+  "kind": "task",
+  "title": "The Worker's run API: list a collection, get one document, and an all-or-nothing batch with versions, where if_version means what it means in ArtifactData. The Worker never hard-deletes: a delete is refused.",
+  "dod": "A node test suite run against wrangler dev with a local D1: a batch with one stale if_version writes nothing and names the conflict; a batch of 25 writes lands whole; a delete is refused; list and get return what ArtifactData returns for the same documents. The same suite is green against the staging Worker.",
+  "milestone": "app (data, pipelines, ops)",
+  "status": "open",
+  "depends": [
+   "B-311"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
+ },
+ {
+  "id": "B-313",
+  "kind": "task",
+  "title": "A PWA smoke on every push: build-pwa, then the shim boots against wrangler dev seeded with the synthetic record and a stub in place of the Claude API. It checks boot, each tab, a check-off, a study session started and ended, and a chat reply. Lives in pwa/, not test/harness/.",
+  "dod": "npm run smoke:pwa green on boot, each tab, a check-off that survives a reload and a chat reply. The session step is in place and turns green in B-314. A planted page error turns it red. The smoke workflow runs it on every push. A chat message carrying a planted patient identifier is stopped by the page's gate, and the stub records no call to /api/claude.",
+  "milestone": "app (data, pipelines, ops)",
+  "status": "open",
+  "depends": [
+   "B-309"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
+ },
+ {
+  "id": "B-314",
+  "kind": "task",
+  "title": "The app without Study Watch or builder jobs: the shim offers no mcp; a study session runs (timer, breaks, +5 minutes, the quiz) with no note binding.",
+  "dod": "npm run smoke:pwa green, its session step included. The shim's use('mcp') resolves null; the smoke records no request to a host: server or to Claude Code Remote.",
+  "milestone": "app (data, pipelines, ops)",
+  "status": "open",
+  "depends": [
+   "B-313"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
+ },
+ {
+  "id": "B-315",
+  "kind": "task",
+  "title": "The run protocol targets the Worker. Where a run applies ArtifactData batches today, it applies them to the Worker's run API with the shared token, read from the task's settings and never from its prompt. The target is chosen per record, so live runs keep writing the artifact until B-320.",
+  "dod": "For each cloud pipeline (morning, evening-cloud, weekly, worker, watchdog), a scheduled run fired against the staging Worker, and its runs/<id> read back from staging D1. A test asserts the live record still targets ArtifactData. A grep of the rendered prompts finds no token value.",
+  "milestone": "app (data, pipelines, ops)",
+  "status": "open",
+  "depends": [
+   "B-312"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
+ },
+ {
+  "id": "B-316",
+  "kind": "task",
+  "title": "Backups (D-302): a nightly Worker export of D1 to Cloudflare R2, D1 Time Travel on, and evening-mac's nightly backup and Sunday mirror exported from D1. No export is overwritten or deleted.",
+  "dod": "A restore of the newest staging R2 export into a scratch D1 matches counts and SHA-256 hashes per collection. A test shows an export never replaces an earlier one. Time Travel is confirmed on for the staging D1 (wrangler d1 time-travel info).",
+  "milestone": "app (data, pipelines, ops)",
+  "status": "open",
+  "depends": [
+   "B-312"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
+ },
+ {
+  "id": "B-317",
+  "kind": "task",
+  "title": "evening-mac and the restore drill pointed at the staging Worker: each re-created as a staging task from a chat with Matt present and the Mac linked (O-5); the old staging tasks listed disabled in spec.tasks.retired. evening-mac still reads Canvas through Matt's signed-in browser (B-12).",
+  "dod": "One staging firing of each, read back from staging D1. The drill restores the Mac's newest backup into a scratch D1, with counts and hashes matching per collection. verify-deploy staging asserts the old tasks are disabled.",
+  "milestone": "app (data, pipelines, ops)",
+  "status": "open",
+  "depends": [
+   "B-315",
+   "B-316"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
+ },
+ {
+  "id": "B-318",
+  "kind": "task",
+  "title": "Ship flow: ship staging and ship live build and deploy the Worker and the app; verify-deploy reads them back. The Cloudflare deploy credential lives only in the build chat's environment.",
+  "dod": "A ship staging GREEN that deployed the staging Worker and app, with verify-deploy staging reading back the Worker's build hash and the app's files. ship live refuses without Matt's OK (R-04), as today.",
+  "milestone": "app (data, pipelines, ops)",
+  "status": "open",
+  "depends": [
+   "B-283",
+   "B-311",
+   "B-313"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
+ },
+ {
+  "id": "B-319",
+  "kind": "task",
+  "title": "The one-time copy of the live record into a new live D1. The export stays off the repository. Matt's OK in the chat.",
+  "dod": "Counts and SHA-256 hashes match per collection between the live artifact's record and live D1. The personal-data test passes, and git status shows no export.",
+  "milestone": "app (data, pipelines, ops)",
+  "status": "open",
+  "depends": [
+   "B-283",
+   "B-310",
+   "B-312",
+   "B-316",
+   "B-318"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
+ },
+ {
+  "id": "B-320",
+  "kind": "task",
+  "title": "Cutover: the cloud runs pointed at live D1; the live evening-mac and restore-drill tasks re-created pointed at live D1 from a chat with Matt present and the Mac linked, the old ones listed disabled in spec.tasks.retired; the claude.ai live page marked read-only (D-306). Matt's OK in the chat.",
+  "dod": "Each live run's runs/<id> read back from live D1: morning, evening-cloud, evening-mac, weekly, worker, watchdog and the restore drill. verify-deploy live asserts the old tasks are disabled and the live page is read-only. The app on Matt's Mac and iPhone shows his record. The per-record ArtifactData target from B-315 is removed, and D-307's lint rule runs in `npm test`.",
+  "milestone": "app (data, pipelines, ops)",
+  "status": "open",
+  "depends": [
+   "B-319",
+   "B-315",
+   "B-317"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
+ },
+ {
+  "id": "B-321",
+  "kind": "task",
+  "title": "A new way to bring his notes into a study session, free to use D1 (for example, notes written in E.V. itself). B-06's note-text rule is revisited here, with Matt.",
+  "dod": "Defined with Matt when the task is taken.",
+  "milestone": "app (data, pipelines, ops)",
+  "status": "open",
+  "depends": [
+   "B-320"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
+ },
+ {
+  "id": "B-322",
+  "kind": "task",
+  "title": "Images to Claude through the shim (the library's page reading).",
+  "dod": "The library reads a photographed page through the Worker, proven by the PWA smoke with a stub.",
+  "milestone": "app (data, pipelines, ops)",
+  "status": "open",
+  "depends": [
+   "B-314"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
+ },
+ {
+  "id": "B-323",
+  "kind": "task",
+  "title": "A larger model for deeper asks (Go deeper, longer chats), at a cost Matt sets.",
+  "dod": "Defined with Matt when the task is taken.",
+  "milestone": "app (data, pipelines, ops)",
+  "status": "open",
+  "depends": [
+   "B-320"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
+ },
+ {
+  "id": "B-324",
+  "kind": "task",
+  "title": "Every job through the API (D-308): \"Give me 5 more\", practice sets, exam plans, study guides and the other worker job kinds in spec.jobs run from the app through the Worker on Haiku. The page sends the kind's guide with the passages, objectives and weak spots it already gathers; the reply passes the same core checks the worker run applies, then is written to D1 as jobresults/<id>, what the job made, and one message in talk/<date>. A study guide is saved in E.V. instead of as a Claude Doc. Builder kinds stay off the app (D-304).",
+  "dod": "npm run smoke:pwa runs one job of each kind against a stub and reads its result back from D1; a planted reply that fails the core checks writes nothing; a brief asking for help on graded work is refused before any call (B-01). On staging, one real Haiku job of each kind is read back from staging D1. No job waits on a scheduled run. npm test green.",
+  "milestone": "app (data, pipelines, ops)",
+  "status": "open",
+  "depends": [
+   "B-311",
+   "B-314"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  }
 ]

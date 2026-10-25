@@ -1,5 +1,141 @@
 [
  {
+  "id": "D-308",
+  "date": "Oct 24",
+  "title": "Every job the app starts runs through the API: the page sends it to the Worker, which asks Haiku and returns the result; no job waits on a scheduled run. The worker pipeline no longer serves the app; it stays for the claude.ai staging preview, and nothing is deleted. Study guides are saved in E.V. instead of as Claude Docs. Amends D-067.",
+  "why": "Matt's decision: one path for quick and heavy jobs alike keeps the app simple, and Haiku keeps the cost to a few dollars a month under D-299's cap.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo P-13"
+ },
+ {
+  "id": "D-307",
+  "date": "Oct 24",
+  "title": "D1 is E.V.'s only live record: no code reads or writes both D1 and a claude.ai artifact database, and nothing syncs them in either direction. Follows D-297. B-315's per-record target is the one bridge while live still writes the artifact; B-320 removes it, and the lint rule is on from then.",
+  "why": "Matt's decision. Two-way sync is where the complexity was; the tenet keeps it from coming back piece by piece.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo P-12",
+  "kind": "tenet",
+  "scope": [
+   "data"
+  ],
+  "check": "lint",
+  "how": "lint, and review: a lint rule flags any module that names both the Worker's API and ArtifactData for one record; the review skill holds each diff to it."
+ },
+ {
+  "id": "D-306",
+  "date": "Oct 24",
+  "title": "The claude.ai live page is retired as E.V.'s home by marking it read-only, never deleted. The claude.ai staging page stays as the development preview. Amends CLAUDE.md's live page row and D-069.",
+  "why": "Matt's decision. The app is E.V.'s home; nothing is deleted (B-11).",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo P-11"
+ },
+ {
+  "id": "D-305",
+  "date": "Oct 24",
+  "title": "Every in-app tier runs on Haiku. A larger model for deeper asks is B-323, scoped with Matt. Amends D-066: its tiers stay as the page asks; Haiku answers each.",
+  "why": "Matt's decision. The cheapest model first, under D-299's cap.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo P-10"
+ },
+ {
+  "id": "D-304",
+  "date": "Oct 24",
+  "title": "Builder-job buttons (mcp, fire_trigger) are dropped from the app; they remain only on the claude.ai staging preview. Amends D-194 and D-198 for the app.",
+  "why": "Matt's decision. The connector exists only on claude.ai.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo P-9"
+ },
+ {
+  "id": "D-303",
+  "date": "Oct 24",
+  "title": "The Mac-bound tasks stay with the same duties. evening-mac still reads Canvas through Matt's signed-in browser on the Mac (B-12 unchanged) and writes its findings to D1 through the Worker. Because Mac tasks are re-created, never edited (O-5), evening-mac and the restore drill are each re-created pointed at D1 from a chat with Matt present and the Mac linked, and the old ones are listed disabled in spec.tasks.retired. Amends D-087's targets only.",
+  "why": "Matt's decision. Canvas needs his signed-in browser, which only the Mac has.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo P-8"
+ },
+ {
+  "id": "D-302",
+  "date": "Oct 24",
+  "title": "Backups: evening-mac keeps saving the nightly backup and the Sunday mirror to Matt's Mac, now exported from D1. D1 Time Travel and a nightly export to Cloudflare R2 (free plan) are added, so a night the Mac is asleep still has a backup. The restore drill stays a Mac task, restoring the Mac's newest backup into a scratch D1. B-11 is restated: nothing is deleted; on the Mac retired files move to _to_delete/; docs are never deleted; the Worker never hard-deletes in D1, and R2 exports are never overwritten or deleted. Amends D-057, D-091 and B-11.",
+  "why": "Matt's decision. The Mac copy stays his own; R2 and Time Travel cover a night the Mac is off.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo P-7"
+ },
+ {
+  "id": "D-301",
+  "date": "Oct 24",
+  "title": "One shared token for the app and the runs: a Worker secret, typed once on each device and held in the scheduled tasks' settings, never in a prompt, the page or the repository. To revoke, rotate the secret and type the new one on each device. The Worker enforces owner-only. Amends B-07's means, not its rule; B-08 is unchanged (no passwords entered for Matt).",
+  "why": "Matt's decision, overriding per-device tokens: one person, one secret to rotate.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo P-6"
+ },
+ {
+  "id": "D-300",
+  "date": "Oct 24",
+  "title": "B-06 is restated: E.V. reads no Apple Notes. A new way to bring his notes into a session is decided in B-321, with Matt, and only there. Supersedes B-06's folder list.",
+  "why": "Matt's decision, following D-298: nothing in E.V. reads Apple Notes once Study Watch is retired.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo P-5"
+ },
+ {
+  "id": "D-299",
+  "date": "Oct 24",
+  "title": "B-10 is restated to one rule: the app reaches Claude only through the Worker. Matt's Claude API key is held only as a Cloudflare secret, never in the repository, the page, a browser or a run's prompt, under a $5 monthly spend limit set in the Anthropic Console. Supersedes B-10, its Study Watch classic-mode half dropped with Study Watch (D-298), and D-296's restatement.",
+  "why": "Matt's decision. One place holds the key; the cap bounds what a bug can spend.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo P-4"
+ },
+ {
+  "id": "D-298",
+  "date": "Oct 24",
+  "title": "Study Watch is retired: the Mac program, its Apple Notes reader and the sessions' note binding. Study sessions stay in the app (timer, breaks, +5 minutes, the quiz); only the reading of Apple Notes goes. Supersedes D-075 and D-076; amends D-073 (sessions stay in the conversation, the reader goes), D-055 and D-082's reader v2.",
+  "why": "Matt's decision. The reader is a local connector only the claude.ai desktop app can reach; a new way to bring notes in is B-321.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo P-3"
+ },
+ {
+  "id": "D-297",
+  "date": "Oct 24",
+  "title": "D1 is E.V.'s main and only live record. Nothing syncs D1 and a claude.ai artifact database, in either direction. The staging artifact keeps its own database as the development preview's record. Amends D-082 and D-069, which took the live artifact's database as the live record.",
+  "why": "Matt's decision. One record removes the sync work that made the app look out of reach.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo P-2"
+ },
+ {
+  "id": "D-296",
+  "date": "Oct 24",
+  "title": "The PWA calls Claude through the API: Haiku on Matt's own key, held only as a Cloudflare Worker secret (replaces B-10's no-API-key rule for the PWA). Carries D-296 from pwa-demo; its restatement of B-10 is replaced by D-299.",
+  "why": "Accepted with Matt present on the pwa-demo branch, where it was logged as D-296. Carried here because that branch's chart/ is never merged. B-10 was written before Matt wanted the API; he now has a key and credits.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo P-1"
+ },
+ {
   "id": "D-295",
   "date": "Oct 24",
   "title": "When Matt saves a note or idea he typed, E.V. stores a concise rewrite of it automatically, keeping every point, with his original kept beside it (nothing is deleted, B-11); there is no Use mine / Use hers choice. His ticks, his date titles and his journal are never rewritten, and no run, worker or builder writes his fields after the save. Amends D-233.",
