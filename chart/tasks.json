@@ -5658,7 +5658,7 @@
    "B-315",
    "B-317"
   ],
-  "notes": "Added to the definition of done (from B-318's review): before any live app deploy, all of these hold. (1) The GitHub environment 'live' requires Matt as reviewer and allows deployments from main only. (2) The live secrets exist only as environment secrets of 'live', never as repository secrets. (3) tools/hooks.mjs liveGuard refuses a pwa-live dispatch (gh workflow run, or the API) without dist/live-ok, with a test in test/hooks.test.mjs. (4) A decision and an environments row cover that guard (D-185, D-201). (5) The live workflow itself checks R-06 (a full check green at the commit) and verify-deploy staging green at that commit, not merely some green run. B-318 removed the earlier pwa-live.yml and [env.live]; APPS.live stays ready: false until this is built.",
+  "notes": "From B-319 (Oct 25): before the live copy, B-320 adds spec.registry.records.live.copy.worker (the live Worker's workers.dev name; tools/pwa-copy.mjs refuses a live import until it is there) and the live Worker's url and token in the live record's system/worker (D-320); when B-320 turns on the D-307 lint, tools/pwa-copy.mjs needs an exemption, since the one-way one-time copy reads ArtifactData and writes D1 by design. A live export or import also needs dist/live-ok from Matt's OK bound to the commit.",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
