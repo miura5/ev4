@@ -782,8 +782,8 @@
           : SS.busy === true
             ? 'Writing your quiz…'
             : st.onBreak
-              ? `On a break · ${st.minutes} min`
-              : `${st.minutes} min · ${SS.thinking ? 'thinking about that line' : 'reading along'}`;
+              ? `On a break · ${minsLeft(st)} min left`
+              : `${minsLeft(st) ?? st.minutes} min${minsLeft(st) == null ? '' : ' left'} · ${SS.thinking ? 'thinking about that line' : 'reading along'}`;
         CORE.setRing(ringFill(st, ending));
         return;
       }
@@ -793,12 +793,20 @@
           ? 'Reading your note…'
           : st.onBreak
             ? `On a break · ${tickClock(st.breakRemainingMs)} to the check`
-            : `${st.minutes} min · check ${tickClock(Date.parse(st.nextCheckAt) - Date.now())}`;
+            : `${tickClock(Date.parse(st.nextCheckAt) - Date.now())} left to the check`;
       CORE.setRing(ringFill(st, ending));
     }
     // B-290 (D-245): the session in E.V.'s right panel, shown from 1200 px (CSS), where the header's line gives way to
     // it on her view so the minutes show once. Idle, it starts a session on his Study Watch note (the chip's call);
     // running, it shows the session's state, the minutes left to her next check, and Break, +5 min and End.
+    // B-290: the minutes left, the one figure the header's line and the card both show: to her next check, or of the
+    // break; null when the session has no next check.
+    function minsLeft(st) {
+      const m = ms => Math.max(0, Math.ceil(ms / 60e3));
+      if (st.onBreak) return m(st.breakRemainingMs);
+      const next = Date.parse(st.nextCheckAt);
+      return Number.isFinite(next) ? m(next - Date.now()) : null;
+    }
     function renderSessCard() {
       let card = $('ev-sess');
       if (!card) {
@@ -848,15 +856,12 @@
           acts
         );
       }
-      const mins = ms => Math.max(0, Math.ceil(ms / 60e3));
-      const next = Date.parse(st.nextCheckAt);
+      const left = minsLeft(st);
       card.querySelector('.ss-left').textContent = ending
         ? 'Wrapping up'
-        : st.onBreak
-          ? mins(st.breakRemainingMs) + ' min left'
-          : Number.isFinite(next)
-            ? mins(next - Date.now()) + ' min left'
-            : st.minutes + ' min';
+        : left == null
+          ? st.minutes + ' min'
+          : left + ' min left';
       card.querySelector('.ss-sub').textContent = ending
         ? st.minutes + ' min in'
         : (st.onBreak ? 'on the break' : COMMENT ? 'until she reads along again' : 'to the next check') +

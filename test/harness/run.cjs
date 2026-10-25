@@ -4389,6 +4389,34 @@ const ok = (name, cond, detail = '') => {
             graded: true,
             course: 'NUR 112',
           });
+        // the morning's saved list carries it as the heads-up the planner writes (E.dayPlan's soon- item), first, so
+        // the sidebar's five show it; with no saved list the page builds the day live and adds it itself
+        const today = E.chicagoDate(new Date()),
+          snap = await db.collection('days').doc(today).get(),
+          day = snap.exists ? snap.data() : null;
+        if (day && day.list && day.list.items)
+          await db
+            .collection('days')
+            .doc(today)
+            .set({
+              ...day,
+              list: {
+                ...day.list,
+                items: [
+                  {
+                    id: 'soon-h-b290-tomorrow',
+                    kind: 'graded-soon',
+                    text: 'Harness care plan (due tomorrow)',
+                    title: 'Harness care plan (due tomorrow)',
+                    tag: 'GRADED',
+                    minutes: 0,
+                    required: true,
+                    ref: 'dates/h-b290-tomorrow',
+                  },
+                  ...day.list.items,
+                ],
+              },
+            });
       });
       await cp.waitForTimeout(500);
       const cu = await cp.evaluate(() => {
@@ -4404,11 +4432,12 @@ const ok = (name, cond, detail = '') => {
       const inSide = cu.side.some(t => /^Harness care plan/.test(t)),
         inUp = cu.up.includes('Harness care plan');
       ok(
-        "B-290: Coming up (the dates after today) shares no item with the sidebar; tomorrow's graded work shows once, in one of them",
+        "B-290: Coming up (the dates after today) shares no item with the sidebar; tomorrow's graded work is in the sidebar and not in Coming up",
         cu.shown &&
           cu.head === 'Coming up' &&
           cu.up.length > 0 &&
-          inSide !== inUp &&
+          inSide &&
+          !inUp &&
           !cu.up.some(t => cu.side.some(x => x.startsWith(t))),
         JSON.stringify(cu)
       );
@@ -4501,6 +4530,7 @@ const ok = (name, cond, detail = '') => {
           card: v(c),
           head: q('h2'),
           left: q('.ss-left'),
+          clock: (document.querySelector('#sbar .s-clock') || {}).textContent || '',
           badge: q('.badge'),
           topic: q('.ss-topic'),
           btns: c ? [...c.querySelectorAll('button')].filter(v).map(b => b.textContent) : [],
@@ -4542,7 +4572,7 @@ const ok = (name, cond, detail = '') => {
     const phone = await sessCard();
     await sessShots('session-390');
     ok(
-      'B-290: in a session the minutes show once per width: at 1280 the card (Running, the topic, n min left, Break and End) and no header line; at 390 the strip and no card',
+      'B-290: in a session the minutes left show once per width: at 1280 the card (Running, the topic, n min left, Break and End) and no header line; at 390 the strip (n min left) and no card',
       wide.card &&
         !wide.strip &&
         wide.minutesShown === 1 &&
@@ -4552,7 +4582,8 @@ const ok = (name, cond, detail = '') => {
         wide.btns.join() === 'Break,End' &&
         phone.strip &&
         !phone.card &&
-        phone.minutesShown === 1,
+        phone.minutesShown === 1 &&
+        /^\d+ min left · /.test(phone.clock),
       JSON.stringify({ wide, phone })
     );
     let S1 = await sess();
@@ -4656,7 +4687,7 @@ const ok = (name, cond, detail = '') => {
       ok(
         'the line names the session in its label and shows the minutes and that she is reading along, then Break and End (B-88)',
         /Fluids and electrolytes/.test(pr.label) &&
-          /^\d+ min · reading along$/.test(await ss.textContent('#sbar .s-clock')) &&
+          /^\d+ min left · reading along$/.test(await ss.textContent('#sbar .s-clock')) &&
           (await ss.locator('#sbar button').allTextContents()).join(',') === 'Break,End',
         await ss.textContent('#sbar')
       );
@@ -4950,7 +4981,7 @@ const ok = (name, cond, detail = '') => {
     await ss.waitForTimeout(300);
     ok(
       'resume: she reads along again',
-      /min · reading along/.test(await ss.textContent('#sbar')),
+      /min left · reading along/.test(await ss.textContent('#sbar')),
       await ss.textContent('#sbar')
     );
     // New writing with what looks like an identifier skips the check and says why, once
