@@ -5642,7 +5642,7 @@
    "B-316",
    "B-318"
   ],
-  "notes": "Copy tool built (3fb9ab6): tools/pwa-copy.mjs export-calls/export-done/import/verify; tests in test/pwa-copy.test.mjs against the stand-in Worker. pwa-staging copy_target deploys the ev-staging-scratch Worker over the ev-staging-scratch D1 (run 40233527103 green, 401 without the token). Staging export done outside the repository: 913 documents in 30 collections, the artifact's own total. Not yet proved: import and verify into the scratch D1, because this session's egress proxy refuses ev-staging-scratch.peppercheese1.workers.dev (ev-staging's host is allowed). Next: allow that host, then pwa-copy import and verify against it.",
+  "notes": "Oct 25: after Matt allowed ev-staging-scratch.peppercheese1.workers.dev, this session's proxy still refused it (403 on CONNECT, retried for 5 minutes), so the staging import and verify are still not run. When B-320 turns on the D-307 lint, tools/pwa-copy.mjs needs an exemption: it is the one-way, one-time copy and reads ArtifactData and writes D1 by design.",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
