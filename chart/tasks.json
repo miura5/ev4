@@ -6750,7 +6750,7 @@
   "milestone": "v4.8 redesign",
   "status": "done",
   "depends": [],
-  "notes": "Progress keeps its Exam readiness card for the next exam on every record: an exam with no objectives counts its plan's tasks, else Today's items tied to it or naming it (Drill: Exam 4 weak spots), else shows its row with no plan yet and an empty bar, so By course never stands alone. Matches the Progress board at 1280 and 390 for This week, Month and Semester on the synthetic record and on one with no objectives (with and without a plan). Still differs from the demo: her line and the counts come from your record, and an exam with nothing to count reads no plan yet where the demo always has objectives.",
+  "notes": "Format: the Progress part now formats clean in the joined app.js. npm test's B-64 format check is still red from formatting misses in nine other lanes' page parts (kit, navigation, study, the conversation parts, render); left for those lanes or the test agent, as the sprint keeps each lane to its own file.",
   "commit": "ca533d7",
   "source": "UI reviewer click-through 3 at d6bee63, Oct 25 (D-316)",
   "words": "Review 3: Progress still drops the Exam readiness card for an exam with no objectives.",
