@@ -6236,12 +6236,12 @@
   "title": "Fidelity fix: Today (D-314): rows at the demo's height (not 32 px), the budget card as the demo, week titles wrapping between words only (never mid-word), at 390 a long title keeps its badge and time on the line as the TodayList phone board; the sidebar's Today list stays shown while Today is open, as the demo",
   "dod": "TodayList, TodayWeek and TodayPhone boards match at every size, with long real titles. Proof (D-312, fidelity sprint): node tools/build.mjs; tools/fidelity screenshots (crawl.cjs demo and built click every control) beside the boards at 1280, 1706, 2560 and 390; npm run smoke; ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-349"
   ],
-  "notes": "claimed by lane today",
-  "commit": null,
+  "notes": "Card for Matt: Today's rows are now the demo's height (44 px with the line under them) at every size. In the week a title wraps only between words, never splitting one, and a day with a long word gets a little more width; the week ends at the bottom of the pane instead of running past it. On your phone a long title wraps in its own space and keeps its badge and time on the same row, as you asked. The sidebar's Today list stays shown while Today is open, as before. Between 600 and 1199 px the budget card now has a gap above it. Still differs from the demo: the budget card already matched and is unchanged; at 1280 with a picked date open, days with long words are a little wider than the others; DRILL and NOTE items carry no badge in your record, so their rows differ from the demo's sample. 1706, 2560 and 390 otherwise match. Reviewer: none (fidelity sprint, D-312).",
+  "commit": "6968d46",
   "source": "fidelity review, Oct 25 (D-314)",
   "words": "Fidelity fix: Today differs from the demo in row height, the budget, the week's titles, the phone rows and the sidebar.",
   "reportedAt": "2026-10-25T12:48:24.511Z",
