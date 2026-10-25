@@ -5624,7 +5624,7 @@
    "B-311",
    "B-313"
   ],
-  "notes": "ship staging at fa51e6b: record, page and the four staging prompts written; pwa-staging run 40230267526 dispatched and failed at the check step (B-389's), before the B-318 read-back. The fix at fa51e6b walks past secret-change versions (wrangler secret put makes a message-less version), which made the 20:11 run fail at the read-back. Waiting for B-389's check fix, then dispatching again.",
+  "notes": "ship staging GREEN at 9ae2e85 (v4.5.6+24), and verify-deploy staging GREEN: pwa-staging run 40230957571 green; Worker build fa2f30d1c2cdcca1 at 9ae2e85 and 35 app files (f52c34298bba7493) read back through the run's notice. ship counted the deploy against B-389, whose commit it was. B-318 code: 3f9b8c6 and fa51e6b (the read-back walks past secret-change Worker versions, and failures come home as error annotations because build sessions cannot read run logs). Not marked done: the coordinator runs the review.",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
