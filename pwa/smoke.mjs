@@ -170,12 +170,9 @@ const BMP = (() => {
   h.writeUInt32LE(px.length, 34);
   return Buffer.concat([h, px]);
 })();
-async function photo() {
-  const b = await chromium
-    .launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' })
-    .catch(() => chromium.launch());
+async function photo(browser) {
+  const p = await browser.newPage({ viewport: { width: 600, height: 400 } });
   try {
-    const p = await b.newPage({ viewport: { width: 600, height: 400 } });
     await p.setContent(
       '<body style="margin:0;padding:32px;background:#f4efe6;font:22px Georgia,serif;color:#222">' +
         '<h1 style="font-size:30px">Skills lab: hand hygiene</h1><p>Before and after every client contact.</p>' +
@@ -183,7 +180,7 @@ async function photo() {
     );
     return await p.screenshot({ type: 'jpeg', quality: 80 });
   } finally {
-    await b.close();
+    await p.close();
   }
 }
 
@@ -240,11 +237,11 @@ async function main() {
   const dir = prepare();
   const { origin, proc } = await serve(dir);
   const calls = []; // every request that reached the stub: [viewport, body]
-  PHOTO = await photo();
   const browser = await chromium
     .launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' })
     .catch(() => chromium.launch());
   try {
+    PHOTO = await photo(browser);
     for (const [scheme, viewport] of [
       ['390', { width: 390, height: 844 }],
       ['1280', { width: 1280, height: 860 }],
@@ -482,7 +479,7 @@ async function main() {
         steps.join(' | ')
       );
 
-      // 8. B-322: a photographed page attached in the conversation goes to Claude as an image through /api/claude,
+      // 7. B-322: a photographed page attached in the conversation goes to Claude as an image through /api/claude,
       // and its reading is saved to the library in D1 (the stub transcribes it).
       await idle();
       const photoName = `handout-photo-${scheme}.jpg`;
@@ -553,7 +550,7 @@ async function main() {
         JSON.stringify({ redraw, sent: redrawn.map(i => i.source.media_type) })
       );
 
-      // 7. B-314: no Study Watch reader, no builder: the shim's mcp is null and nothing left for a host: server or Claude
+      // 8. B-314: no Study Watch reader, no builder: the shim's mcp is null and nothing left for a host: server or Claude
       // Code Remote (no tool call through mcp, and no request outside the app).
       const seen = await page.evaluate(() => {
         window.claude.use('mcp');
