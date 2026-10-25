@@ -6233,11 +6233,13 @@
  {
   "id": "B-354",
   "kind": "request",
-  "title": "Request (reported Oct 25): Fidelity fix: Today differs from the demo in row height, the budget, the week's titles, the phone rows and the sidebar.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
-  "depends": [],
+  "title": "Fidelity fix: Today (D-314): rows at the demo's height (not 32 px), the budget card as the demo, week titles wrapping between words only (never mid-word), at 390 a long title keeps its badge and time on the line as the TodayList phone board; the sidebar's Today list stays shown while Today is open, as the demo",
+  "dod": "TodayList, TodayWeek and TodayPhone boards match at every size, with long real titles. Proof (D-312, fidelity sprint): node tools/build.mjs; tools/fidelity screenshots (crawl.cjs demo and built click every control) beside the boards at 1280, 1706, 2560 and 390; npm run smoke; ship staging GREEN.",
+  "milestone": "v4.8 redesign",
+  "status": "open",
+  "depends": [
+   "B-349"
+  ],
   "notes": "",
   "commit": null,
   "source": "fidelity review, Oct 25 (D-314)",
@@ -6245,6 +6247,10 @@
   "reportedAt": "2026-10-25T12:48:24.511Z",
   "board": {
    "row": "v4 B-354: Fidelity fix: Today differs from the demo in row height, the budget,…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-25T12:48:27.745Z"
   }
  }
 ]
