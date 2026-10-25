@@ -6645,7 +6645,7 @@
   "milestone": "v4.8 redesign",
   "status": "in progress",
   "depends": [],
-  "notes": "claimed by lane frame",
+  "notes": "built and pushed at 812ca4c; shipping staging",
   "commit": null,
   "source": "UI reviewer click-through 2 at 112b83f, Oct 25 (D-316)",
   "words": "Review 2: the task panel lacks Snooze on most tasks and a graded task lacks the demo's line and Estimate.",
