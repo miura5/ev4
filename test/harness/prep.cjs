@@ -898,10 +898,17 @@ async function tickAll(page) {
   // B-294: E.V.'s changes today. On Plan the rest's day, with a study session logged today and one task he added himself,
   // Accept all puts her add and her take-off in the right panel, newest first, each with Undo; his add and the session
   // never show. Undo on the take-off brings the reading back, and Undo on the add takes the drill off, each as one list
-  // edit. At 1280 in light and dark, after accepting.
-  for (const scheme of ['light', 'dark']) {
-    const tag = `[E.V.'s changes 1280 ${scheme}]`;
-    const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 }, colorScheme: scheme });
+  // edit. At 1280 in light and dark, and at 390 in light (the card under the list), after accepting.
+  for (const [w, scheme] of [
+    [1280, 'light'],
+    [1280, 'dark'],
+    [390, 'light'],
+  ]) {
+    const tag = `[E.V.'s changes ${w} ${scheme}]`;
+    const ctx = await browser.newContext({
+      viewport: w < 600 ? { width: 390, height: 844 } : { width: 1280, height: 860 },
+      colorScheme: scheme,
+    });
     const page = await ctx.newPage();
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
@@ -962,7 +969,7 @@ async function tickAll(page) {
             detail: (li.querySelector('.meta') || {}).textContent || '',
             buttons: [...li.querySelectorAll('button')].map(b => b.textContent.trim()),
           })),
-          inPanel: !!r && r.left >= innerWidth - 420,
+          inPanel: !!r && (innerWidth < 1200 || r.left >= innerWidth - 420),
           list: [...document.querySelectorAll('#today-list .ti-list > li .ti-t')].map(t => t.textContent),
           sideways: document.documentElement.scrollWidth > innerWidth + 1,
         };
@@ -983,7 +990,8 @@ async function tickAll(page) {
       !a.rows.some(r => /session|Call clinical/i.test(r.title + r.detail)),
       JSON.stringify(a.rows)
     );
-    await page.screenshot({ path: `${shots}/today-changes-1280-${scheme}.png` });
+    await page.locator('#today-changes').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `${shots}/today-changes-${w}-${scheme}.png` });
     const before = await page.evaluate(() => window.__writes.filter(x => x[1] === 'dayedits').length);
     const since = () => page.evaluate(n => window.__writes.filter(x => x[1] === 'dayedits').slice(n), before);
     await page.locator('#today-changes li.row', { hasText: 'off today' }).locator('button').click();
@@ -1017,7 +1025,7 @@ async function tickAll(page) {
         !c.rows.length,
       JSON.stringify({ w2: w2.slice(1), rows: c.rows, list: c.list })
     );
-    ok(`${tag} no sideways scroll, no page errors`, !a.sideways && !errors.length, errors.join(' | '));
+    ok(`${tag} no sideways scroll, no page errors`, !a.sideways && !c.sideways && !errors.length, errors.join(' | '));
     await ctx.close();
   }
   // B-189: asked in words on a planted lab day (a lab exam and a class exam today, as on Oct 21), E.V. answers from the
