@@ -7155,5 +7155,22 @@
    "outcome": "task",
    "at": "2026-10-25T22:18:36.521Z"
   }
+ },
+ {
+  "id": "B-398",
+  "kind": "bug",
+  "title": "Bug (reported Oct 25): A Mac backup's per-collection hashes can differ from the R2 export's when a page save stored JSON text in a non-canonical form, because the backup re-serialises documents while the export hashes the stored text.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "B-317 second review, Oct 25",
+  "words": "A Mac backup's per-collection hashes can differ from the R2 export's when a page save stored JSON text in a non-canonical form, because the backup re-serialises documents while the export hashes the stored text.",
+  "reportedAt": "2026-10-25T22:28:43.690Z",
+  "board": {
+   "row": "v4 B-398: A Mac backup's per-collection hashes can differ from the R2 export's…"
+  }
  }
 ]
