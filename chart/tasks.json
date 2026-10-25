@@ -5513,7 +5513,7 @@
   "depends": [
    "B-309"
   ],
-  "notes": "Card (D-261). What changes when he studies: nothing yet; the app now has its own test copy online, separate from his real one, holding only made-up data and locked behind its own key, so later app work can be tried there safely before anything touches his record. Why: hand-off 3 builds the app on its own database, and every later app step (reading and writing, the runs, backups) needs a safe place to prove itself first. What it touches: only the app's test copy on his Cloudflare account and the check that sets it up; the claude.ai page, his live record and anything live are untouched. What could break: the setup could fail on Cloudflare's side or the test copy could drift from the made-up data; the setup check, started by hand on GitHub, turns red and says which. Size: about 350 lines (the setup, its check and their tests); undoable, nothing deleted, no deploy of the page. Checks: the setup check on GitHub (run 40183513354) is green: the test copy refuses anyone without the key or with a wrong one, and with the key holds 74 made-up documents in 17 groups, each count equal to the made-up record the app starts from; a cloud session reaches it; the personal-data test over the app passes; all tests green. Kept on record, Matt's word of Oct 24: the Cloudflare credential lives in the repository's GitHub secrets, not the build chat's environment. Reviewer 1: two gaps (that word of yours had dropped out of the notes, now restored; the question below). Reviewer 2, gap left open: the question below is not yet answered. Checks retired or loosened: none. Size line: about +350 -0. Staging: not applicable (app lane; its own staging proof is the GitHub run). Question for Matt (a decision): the test copy, and so the count check, leaves out four groups of the made-up record the app starts without (system, legacy, debug, journal), as the app's smoke does. Is that what 'the counts equal the synthetic record's' should mean, or should the test copy hold those four too? Adding them later is additive; nothing would be deleted.",
+  "notes": "Matt, Oct 25, answering the open question: the test copy holds all four left-out groups too (system, legacy, debug, journal), so it matches the real record's shape. Built in B-315, first step.",
   "commit": "103eeef",
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
@@ -5569,7 +5569,7 @@
   "depends": [
    "B-312"
   ],
-  "notes": "",
+  "notes": "Matt, Oct 25: first, the staging seed adds the four groups B-311 left out (system, legacy, debug, journal; additive, nothing deleted), so the staging D1's counts equal the whole synthetic record's and the runs find system/manifest and the journal as on the real record.",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
