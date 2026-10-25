@@ -294,8 +294,12 @@
         grow();
         typing(false);
         T.bigCore = false;
-        if (REPLY_ASK.test(text)) await replyTyped(text);
-        else await buildAsk(text);
+        try {
+          if (REPLY_ASK.test(text)) await replyTyped(text);
+          else await buildAsk(text);
+        } catch (e) {
+          if (!(e && e.refused)) throw e; // B-394: his ask was not saved, so nothing is sent to the builder
+        }
         return;
       }
       // B-197: a value that might be an identifier is looked at with the words around it; practice goes straight on.
@@ -350,14 +354,25 @@
         });
       }
     }
-    // B-389: a line of his the record refused comes back into the box, unless he has started a new one meanwhile.
+    // B-389, B-394: a line of his the record refused comes back into the box; when he has started a new one
+    // meanwhile, the refused words go first and his new ones stay after them, so neither is lost.
     T.restoreInput = text => {
-      if (!text || input.value.trim()) return false;
-      input.value = text;
+      if (!text) return false;
+      const now = input.value;
+      input.value = now.trim() ? text + '\n\n' + now : text;
       grow();
       return true;
     };
+    // B-394: a send whose line the record refused stops there (mattSay rejected with e.refused; postMsg already put
+    // his words back and said why): no model call, no answer to a line that was never saved.
     async function sendText(text) {
+      try {
+        await sendTextNow(text);
+      } catch (e) {
+        if (!(e && e.refused)) throw e;
+      }
+    }
+    async function sendTextNow(text) {
       input.value = '';
       grow();
       typing(false);

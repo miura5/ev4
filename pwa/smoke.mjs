@@ -10,7 +10,8 @@
 // one job of each kind in spec.jobs, started from the conversation (the stub calls start_job), runs at once through
 // the shim and /api/claude (the stub answers with the job's answer tool) and its result is read back from D1; a planted
 // reply that fails the checks writes nothing it made, and a brief asking for help on graded work is refused before any
-// call.
+// call. B-394: a send the record refuses keeps his words in the box, beside what he has started typing, and E.V. never
+// answers it.
 //   node pwa/smoke.mjs [screenshots dir] [--plant page-error]      (npm run smoke:pwa; needs `npm ci --prefix pwa`)
 // Exit code 1 when any counted check fails. --plant page-error makes the served app.js throw once the page is up, to
 // prove the smoke turns red (the smoke workflow runs it and expects red).
@@ -447,6 +448,66 @@ async function main() {
           guard: await page.evaluate(() => (document.getElementById('ev-guard') || {}).textContent || ''),
           calls: calls.length - sent,
           inThread: leaked,
+        })
+      );
+      await page.fill('#ev-input', '');
+
+      // 5b. B-394: a send the record refuses (every save of the conversation answered 409, so the shim's one retry is
+      // refused too), held until he has started typing a new line: his refused words come back into the box ahead of
+      // what he is typing, nothing of it stays in the thread, and nothing goes to /api/claude, so E.V. never answers it.
+      await idle();
+      const refusedLine = `Refused line, kept for him (${scheme})`;
+      const typingNow = 'and his next thought';
+      let release;
+      const gate = new Promise(r => (release = r));
+      const refuse = async r => {
+        if (r.request().method() !== 'PUT') return r.fallback();
+        await gate;
+        return r.fulfill({ status: 409, body: JSON.stringify({ error: 'conflict', current_version: 999 }) });
+      };
+      await context.route(origin + '/api/db/talk/**', refuse);
+      const callsAt = calls.length;
+      const errAt = errors.length;
+      const evAt = await page.evaluate(() => document.querySelectorAll('#thread .msg.ev').length);
+      await page.fill('#ev-input', refusedLine);
+      await page.locator('#ev-form').evaluate(f => f.requestSubmit());
+      await until(
+        page,
+        v => [...document.querySelectorAll('#thread .msg')].some(m => m.textContent.includes(v)),
+        refusedLine
+      );
+      await page.fill('#ev-input', typingNow);
+      release();
+      const kept = await until(
+        page,
+        ([a, b]) => {
+          const v = document.getElementById('ev-input').value;
+          return v.includes(a) && v.includes(b);
+        },
+        [refusedLine, typingNow],
+        8000
+      );
+      await page.waitForTimeout(1500); // room for a model call, were one made
+      await context.unroute(origin + '/api/db/talk/**', refuse);
+      // the 409s planted here are the browser's own resource lines, not page errors; anything else still counts
+      const planted = errors.splice(errAt).filter(m => !/status of 409 \(Conflict\)/.test(m));
+      errors.push(...planted);
+      const after = await page.evaluate(
+        v => ({
+          box: document.getElementById('ev-input').value,
+          inThread: [...document.querySelectorAll('#thread .msg')].some(m => m.textContent.includes(v)),
+          ev: document.querySelectorAll('#thread .msg.ev').length,
+        }),
+        refusedLine
+      );
+      ok(
+        `${tag} a refused send keeps his words in the box beside what he is typing, with no E.V. reply and no call to /api/claude`,
+        kept && !after.inThread && after.ev === evAt && calls.length === callsAt,
+        JSON.stringify({
+          box: after.box,
+          inThread: after.inThread,
+          evLines: after.ev - evAt,
+          calls: calls.length - callsAt,
         })
       );
       await page.fill('#ev-input', '');

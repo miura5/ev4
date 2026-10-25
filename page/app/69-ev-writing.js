@@ -1,5 +1,5 @@
     // ---------------------------------------------------------------- writing to the thread
-    function postMsg(m) {
+    function postMsg(m, o = {}) {
       const { id, pending, error, greeting, day, ...body } = m;
       const date = E.chicagoDate(m.at);
       body.text = String(body.text || '').slice(0, 4000);
@@ -27,11 +27,12 @@
       });
       // B-200 (D-208): the line painted on his tap; a refused write takes it back out and says why in one line.
       // B-389: his own line is never simply gone: his words go back into the composer (T.restoreInput, set by it) to
-      // send again, and the line says so in plain words, never a bare code such as "conflict".
+      // send again, and the line says so in plain words, never a bare code such as "conflict". B-394: also when he
+      // has started a new line meanwhile (the refused words go before it).
       talkQ = p.catch(e => {
         T.local.delete(id);
         render();
-        const back = m.role === 'matt' && T.restoreInput ? T.restoreInput(body.text) : false;
+        const back = m.role === 'matt' && o.restore !== false && T.restoreInput ? T.restoreInput(m.text) : false;
         const why =
           e && e.conflict ? 'the conversation changed while you were writing' : (e && (e.message || e.code)) || 'error';
         toast(
@@ -50,12 +51,16 @@
         tier: o.tier || 'local',
         ...(o.replyTo ? { replyTo: o.replyTo } : {}),
       });
-    const mattSay = text => {
+    // B-394: a line of his the record refused rejects (e.refused), after postMsg has put his words back, so no caller
+    // goes on to answer a line that was never saved; a resend is then his one line, not a second copy.
+    const mattSay = (text, o = {}) => {
       const id = msgId('m');
       capEcho(id, text);
-      return postMsg({ id, role: 'matt', text, at: now() }).then(
+      return postMsg({ id, role: 'matt', text, at: now() }, o).then(
         () => id,
-        () => id
+        e => {
+          throw Object.assign(e instanceof Error ? e : new Error(String(e)), { refused: true, lineId: id });
+        }
       );
     };
 

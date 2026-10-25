@@ -176,7 +176,8 @@ test('B-389: the token check is timing-safe: hashed to equal lengths, then a con
 
 /** The shim (pwa/bridge.js) loaded as the page loads it, over a fake browser whose fetch is the Worker above (over
  * its in-memory D1). `puts` logs each PUT the shim sends (route, status, how many of that document's saves were in
- * flight); `stale` hands the next read an answer given before; `focus()` makes the shim read the record again. */
+ * flight); `stale` hands the next read an answer given before; `focus()` makes the shim read the record again;
+ * `beforePut(fn)` runs fn(route, n) before the n-th PUT (from 0) leaves, to land another writer or fail the network. */
 async function shim(env) {
   const src = fs.readFileSync(path.join(ROOT, 'pwa/bridge.js'), 'utf8');
   const window = {};
@@ -184,6 +185,7 @@ async function shim(env) {
   const puts = [];
   const inFlight = {};
   let stale = null;
+  let beforePut = null;
   const fetch = async (url, init = {}) => {
     if (stale && /^\/api\/db\?since=/.test(url)) {
       const body = stale;
@@ -192,6 +194,7 @@ async function shim(env) {
     }
     const put = init.method === 'PUT';
     const key = put && url.split('?')[0];
+    if (put && beforePut) await beforePut(url, puts.length);
     if (put) inFlight[key] = (inFlight[key] || 0) + 1;
     const r = await worker.fetch(new Request('https://ev.example' + url, init), env);
     if (put) puts.push({ route: url, status: r.status, together: inFlight[key]-- });
@@ -228,6 +231,7 @@ async function shim(env) {
     db,
     puts,
     stale: body => (stale = body),
+    beforePut: fn => (beforePut = fn),
     focus: async () => {
       listeners.focus();
       await new Promise(r => setTimeout(r, 20));
@@ -348,6 +352,91 @@ test('B-389 (shim): a line he sends while a worker message lands: the create is 
       messages: { w1: { role: 'ev', text: 'the job is done' }, m1: { role: 'matt', text: 'his line' } },
     },
   });
+});
+
+const refusal = p =>
+  p.then(
+    () => null,
+    x => x
+  );
+
+test('B-394 (shim): a retry that conflicts again (a third writer between the re-read and the retry) ends refused, nothing written', async () => {
+  const env = envOf();
+  const day = '2026-10-25';
+  await put(env, 'talk', day, { schema: 4, writer: 'page', messages: { m1: { text: 'first' } } });
+  const s = await shim(env);
+  await put(
+    env,
+    'talk',
+    day,
+    { schema: 4, writer: 'page', messages: { m1: { text: 'first' }, w1: { text: 'hers' } } },
+    1
+  );
+  s.beforePut(async (route, n) => {
+    // after the shim read version 2 and before its retry leaves, another writer makes version 3
+    if (n === 1) {
+      const r = await put(env, 'talk', day, { schema: 4, writer: 'worker', messages: { w2: { text: 'third' } } }, 2);
+      assert.equal(r.status, 200);
+    }
+  });
+  const e = await refusal(
+    s.db
+      .collection('talk')
+      .doc(day)
+      .update({ messages: { m2: { text: 'his second' } } })
+  );
+  assert.ok(e && e.conflict, 'refused as a conflict');
+  assert.equal(e.unsaved.messages.m2.text, 'his second', 'the refusal carries his line');
+  assert.deepEqual(
+    s.puts.map(p => [p.route, p.status]),
+    [
+      ['/api/db/talk/2026-10-25?if_version=1', 409],
+      ['/api/db/talk/2026-10-25?if_version=2', 409],
+    ],
+    'tried once more, never a third time'
+  );
+  assert.deepEqual(
+    stored(env, 'talk', day),
+    { v: 3, data: { schema: 4, writer: 'worker', messages: { w2: { text: 'third' } } } },
+    'nothing of his written over the third writer'
+  );
+});
+
+test('B-394 (shim): a save the network drops is refused with his words, and nothing is written', async () => {
+  const env = envOf();
+  const s = await shim(env);
+  s.beforePut(() => {
+    throw new TypeError('Failed to fetch');
+  });
+  const doc = { schema: 4, writer: 'page', messages: { m1: { role: 'matt', text: 'his line' } } };
+  const e = await refusal(s.db.collection('talk').doc('2026-10-25').set(doc));
+  assert.ok(e, 'refused');
+  assert.deepEqual(e.unsaved, doc, 'his text is kept on the refusal');
+  assert.equal(row(env, 'talk', '2026-10-25'), undefined, 'nothing written');
+  assert.equal((await s.db.collection('talk').doc('2026-10-25').get()).exists, false, 'the page shows nothing saved');
+});
+
+test('B-394 (shim): a create race where both sides set one field differently is refused with his document, never dropped', async () => {
+  const env = envOf();
+  const s = await shim(env);
+  const theirs = {
+    schema: 4,
+    writer: 'worker',
+    source: 'worker worker-1',
+    messages: { m1: { role: 'ev', text: 'theirs' } },
+  };
+  assert.equal((await put(env, 'talk', '2026-10-25', theirs)).status, 200);
+  const his = { schema: 4, writer: 'page', source: 'E.V. Home', messages: { m1: { role: 'matt', text: 'his line' } } };
+  const e = await refusal(s.db.collection('talk').doc('2026-10-25').set(his));
+  assert.ok(e && e.conflict, 'refused as a conflict');
+  assert.equal(e.field, 'role', 'the first field both set differently');
+  assert.deepEqual(e.unsaved, his, 'the refusal carries what he wrote');
+  assert.deepEqual(
+    s.puts.map(p => p.status),
+    [409],
+    'no retry over a collision'
+  );
+  assert.deepEqual(stored(env, 'talk', '2026-10-25'), { v: 1, data: theirs }, 'theirs untouched');
 });
 
 test('B-389 (shim): a read that left before a save landed never puts the older copy back', async () => {

@@ -335,7 +335,12 @@
         : LOCAL[key(label)] || (YOUR_TURN.test(label) ? LOCAL['your turn'] : null) || quizTopicAsk(label);
       if (!fn) return false;
       T.bigCore = false;
-      await mattSay(label);
+      try {
+        await mattSay(label);
+      } catch (e) {
+        if (e && e.refused) return true; // B-394: refused, his words back and why said; no answer to it
+        throw e;
+      }
       const [text, cards] = await fn();
       if (text != null) await evSay(text, cards, { tier: 'local' });
       return true;

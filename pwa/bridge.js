@@ -4,7 +4,7 @@
 //           A write goes to the Worker first; only when it is saved does the page's copy change. B-389: each save
 //           carries the version the shim last saw of that document (if_version, as the run API's); a document that
 //           changed since is refused (409), the shim reads the record again and tries once more without overwriting
-//           what is newer (an update re-merged, a create laid under); a set that still conflicts is refused to the page
+//           what is newer (an update re-merged, a create laid under); any save that still fails is refused to the page
 //           with the document it tried to save.
 //   user:   whoever holds the token is the owner (one person).
 //   sample: Claude on Haiku through the Worker's /api/claude (D-299); the key stays on the Worker.
@@ -112,8 +112,9 @@
   // saves of one document never refuse each other; only a change from elsewhere is a conflict. On a conflict (409:
   // a run or another device wrote it since) the record is read again and the save tried once more, never over what is
   // newer: an update is merged again into the document as it is now; a create that found the document made meanwhile
-  // adds only what that document lacks (mergeUnder). A set over a document that changed is not retried: the page gets
-  // the error, with the document it tried to save (e.unsaved), so his words are never simply gone.
+  // adds only what that document lacks (mergeUnder), and is refused when both set one field differently (B-394). A set
+  // over a document that changed is not retried. Any save that fails (a conflict, a network failure, a refusal) reaches
+  // the page with the document it tried to save (e.unsaved), so his words are never simply gone.
   const queues = new Map();
   function save(c, id, make, kind = 'set') {
     const key = c + '\n' + id;
@@ -122,16 +123,21 @@
       try {
         return await saveNow(c, id, doc);
       } catch (e) {
-        if (!e.conflict) throw e;
+        if (!e.conflict) throw Object.assign(e, { unsaved: doc });
         let again = null;
         if (kind === 'update') again = make;
         else if (e.wasCreate && (db[c] || {})[id]) again = () => mergeUnder(clone(db[c][id]), doc);
         if (!again) throw Object.assign(e, { unsaved: doc });
-        const next = again();
+        let next;
+        try {
+          next = again();
+        } catch (e1) {
+          throw Object.assign(e1, { unsaved: doc });
+        }
         try {
           return await saveNow(c, id, next);
         } catch (e2) {
-          throw e2.conflict ? Object.assign(e2, { unsaved: next }) : e2;
+          throw Object.assign(e2, { unsaved: next });
         }
       }
     };
@@ -140,13 +146,23 @@
     turn.catch(() => {}).then(() => queues.get(key) === turn && queues.delete(key));
     return turn;
   }
-  /** `add` laid under `t`: objects merged deeply, and a value `t` already holds is kept, so nothing newer goes. */
-  function mergeUnder(t, add) {
+  /** `add` laid under `t`: objects merged deeply, and a value `t` already holds is kept, so nothing newer goes. B-394:
+   * a field both set to different values is a collision, refused as a conflict (the caller adds e.unsaved), never
+   * silently dropped; only the top-level envelope (who made the document, and when) stays the first maker's. */
+  const ENVELOPE = new Set(['schema', 'writer', 'at', 'source', 'updatedAt']);
+  function mergeUnder(t, add, top = true) {
     for (const k of Object.keys(add)) {
       const v = add[k];
-      if (v && typeof v === 'object' && !Array.isArray(v) && t[k] && typeof t[k] === 'object' && !Array.isArray(t[k]))
-        mergeUnder(t[k], v);
+      const obj = x => x && typeof x === 'object' && !Array.isArray(x);
+      if (obj(v) && obj(t[k])) mergeUnder(t[k], v, false);
       else if (!(k in t)) t[k] = clone(v);
+      else if (!(top && ENVELOPE.has(k)) && JSON.stringify(t[k]) !== JSON.stringify(v)) {
+        const e = new Error('it was written elsewhere at the same moment, so it wasn’t saved');
+        e.code = 'conflict';
+        e.conflict = true;
+        e.field = k;
+        throw e;
+      }
     }
     return t;
   }

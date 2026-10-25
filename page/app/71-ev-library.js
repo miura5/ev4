@@ -160,7 +160,13 @@
         return;
       }
       T.bigCore = false;
-      await mattSay(`Attached **${name}**`);
+      // B-394: a refused line stops the reading (the toast says why; he attaches it again); the box is left alone
+      try {
+        await mattSay(`Attached **${name}**`, { restore: false });
+      } catch (e) {
+        if (e && e.refused) return;
+        throw e;
+      }
       const id = msgId('e');
       T.local.set(id, {
         id,
