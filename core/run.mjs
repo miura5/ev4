@@ -888,17 +888,34 @@ const IO_TOOL =
   /(^|__)(ArtifactData|Artifact|fire_trigger|update_trigger|create_trigger|delete_trigger|list_triggers|device_commit_files|device_bash|batch|update|create|delete)$/;
 const toolName = n => String(n).replace(/^mcp__[^_]+(?:_[^_]+)*?__/, '');
 /** B-315: a run API command, the record-touching Bash call of a Worker run. */
-const API_CMD = /(^|\s)node\s+\S*core\/cli\.mjs\s+api\s/;
-/** The run API command in a Bash line, wherever the checkout is (a cd first, or the cli by its full path). */
-const apiCommand = c => {
-  const m = /node\s+\S*core\/cli\.mjs\s+(api\s[^;&|\n]*)/.exec(String(c || ''));
-  return m ? 'node core/cli.mjs ' + m[1].trim() : String(c || '').trim();
-};
-const isApiBash = (name, args) => toolName(name) === 'Bash' && API_CMD.test(String((args || {}).command || ''));
+// A Bash line touches the record when it names the run API command, the Worker's run routes or the saved Worker file
+// (B-315: a curl to /api/run/ or a read of the token file is a record call too, printed or not).
+const RECORD_BASH = /core\/cli\.mjs\s+api(\s|$)|\/api\/run\/|worker\.json/;
+const API_SEG = /node\s+\S*core\/cli\.mjs\s+(api(?:\s.*)?)$/;
+const isApiBash = (name, args) => toolName(name) === 'Bash' && RECORD_BASH.test(String((args || {}).command || ''));
+/**
+ * Every record call in a Bash line, as audit keys: the line is cut at ; && || | and newlines, each run API command is
+ * keyed as `node core/cli.mjs api ...` (wherever the checkout is), and any other piece that names a record marker is
+ * keyed raw, so it can never match a printed call. Pieces that touch nothing (a cd) are dropped.
+ */
+function bashKeys(command) {
+  const keys = [];
+  for (const raw of String(command || '').split(/;|&&|\|\||\||\n/)) {
+    const seg = raw.trim();
+    if (!seg || !RECORD_BASH.test(seg)) continue;
+    const m = API_SEG.exec(seg);
+    keys.push(
+      m && !/^(do|then|else)\s/.test(seg) && /^(\S+=\S*\s+)*node\s/.test(seg)
+        ? 'Bash node core/cli.mjs ' + m[1].trim()
+        : 'Bash (unprinted) ' + seg
+    );
+  }
+  return keys;
+}
 /** A call reduced to what identifies it: the tool and its arguments, key order ignored (a Bash call: its command). */
 const callKey = (tool, args) =>
   toolName(tool) === 'Bash'
-    ? 'Bash ' + apiCommand((args || {}).command)
+    ? bashKeys((args || {}).command).join('\n') || 'Bash ' + String((args || {}).command || '').trim()
     : toolName(tool) + ' ' + EV.stableStringify(args || {});
 const summary = args => [args.action, args.collection, args.doc_id].filter(Boolean).join(' ');
 /**
@@ -908,18 +925,20 @@ const summary = args => [args.action, args.collection, args.doc_id].filter(Boole
 export function audit({ dir, transcript }) {
   const run = loadRun(dir);
   const expected = run.calls.map(c => ({ key: callKey(c.tool, c.args), c }));
-  const used = toolResults(transcript, '*').filter(
-    r => IO_TOOL.test(String(r.name)) || IO_TOOL.test(toolName(r.name)) || isApiBash(r.name, r.input)
-  );
+  // A Bash line counts once per record call in it (B-315), so a printed command chained to one that wasn't is caught.
+  const used = toolResults(transcript, '*')
+    .filter(r => IO_TOOL.test(String(r.name)) || IO_TOOL.test(toolName(r.name)) || isApiBash(r.name, r.input))
+    .flatMap(r => (toolName(r.name) === 'Bash' ? bashKeys((r.input || {}).command).map(key => ({ ...r, key })) : [r]));
   const startKey = expected.length ? expected[0].key : null;
-  const from = used.findIndex(u => callKey(u.name, u.input) === startKey);
+  const keyOf = u => u.key || callKey(u.name, u.input);
+  const from = used.findIndex(u => keyOf(u) === startKey);
   const calls = from >= 0 ? used.slice(from) : used;
   const pool = expected.map(e => e.key);
   const extra = [];
   let matched = 0,
     allowed = 0;
   for (const u of calls) {
-    const k = callKey(u.name, u.input);
+    const k = keyOf(u);
     const i = pool.indexOf(k);
     if (i >= 0) {
       pool.splice(i, 1);
@@ -927,6 +946,10 @@ export function audit({ dir, transcript }) {
       continue;
     }
     const a = u.input || {};
+    if (u.key) {
+      extra.push({ tool: 'Bash', summary: k.replace(/^Bash /, '').slice(0, 120) });
+      continue;
+    } // a record call in a Bash line that no command printed
     if (toolName(u.name) === 'ArtifactData' && a.action === 'get' && a.collection === 'system') {
       matched++;
       continue;

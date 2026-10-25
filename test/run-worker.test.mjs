@@ -44,7 +44,7 @@ async function fakeWorker() {
 /** Runs a printed api command as a run would (from the checkout), with the session's output collected. */
 function runApi(call, out) {
   assert.equal(call.tool, 'Bash');
-  assert.match(call.args.command, /^node core\/cli\.mjs api (pull|list|batch|set) /);
+  assert.match(call.args.command, /^node core\/cli\.mjs api (pull|batch|set) /);
   try {
     const s = execFileSync(process.execPath, call.args.command.split(' ').slice(1), {
       cwd: ROOT,
@@ -178,10 +178,23 @@ test('a staging run end to end through the run API: pinned writes, a refused bat
       [0]
     );
     // A windowed read (ArtifactData's query on at) saves only the documents in the window, and keeps every version.
-    const win = apiCallOf(
-      `node core/cli.mjs api list --collection exams --out-dir ${dir}/win --versions ${dir}/win.json --since 2999-01-01 --worker ${worker}`
+    const winReads = path.join(dir, 'win-reads.json');
+    fs.writeFileSync(
+      winReads,
+      JSON.stringify([{ collection: 'exams', out_dir: `${dir}/win`, versions: `${dir}/win.json`, since: '2999-01-01' }])
     );
-    assert.match(runApi(win, out).out, /api list exams: 0 saved to .*, versions for [1-9]/);
+    const win = apiCallOf(`node core/cli.mjs api pull --reads ${winReads} --worker ${worker}`);
+    assert.match(runApi(win, out).out, /api pull exams: 0 saved, versions for [1-9]/);
+    assert.ok(Object.keys(JSON.parse(fs.readFileSync(`${dir}/win.json`, 'utf8'))).length > 0);
+    // api list is gone: no move prints it (5c25614).
+    assert.throws(
+      () =>
+        execFileSync(process.execPath, ['core/cli.mjs', 'api', 'list', '--collection', 'exams', '--worker', worker], {
+          cwd: ROOT,
+          stdio: 'pipe',
+        }),
+      e => /api <pull\|batch\|set>/.test(String(e.stderr))
+    );
     const pulled = RUN.pulled({ spec, dir, transcript: '' });
     assert.equal(pulled.done, true);
     assert.ok(Object.keys(pulled.versions.state || {}).length || Object.keys(pulled.versions.days || {}).length);
@@ -232,11 +245,38 @@ test('a staging run end to end through the run API: pinned writes, a refused bat
 
     // The audit holds the Bash api calls to the printed ones, a cd first or not; one not printed is caught.
     const a = RUN.audit({ dir, transcript: transcript.join('\n') });
+    const okLines = transcript.slice();
     assert.deepEqual([a.ok, a.extra.length], [true, 0]);
     transcript.push(
       ...bash(++seq, `node core/cli.mjs api set --collection days --doc-id x --file /tmp/x.json --worker ${worker}`)
     );
     assert.equal(RUN.audit({ dir, transcript: transcript.join('\n') }).ok, false);
+    // B-315 review: a printed command chained to one that wasn't, and a raw curl to the run routes, are extra calls.
+    const auditWith = cmd => RUN.audit({ dir, transcript: [...okLines, ...bash(++seq, cmd)].join('\n') });
+    const printedCmd = JSON.parse(fs.readFileSync(path.join(dir, 'run.json'), 'utf8')).calls.find(
+      c => c.tool === 'Bash'
+    ).args.command;
+    // (Every call above was made as `cd <checkout> && <printed>`, and the audit held them all printed.)
+    const chained = auditWith(
+      `${printedCmd} && node core/cli.mjs api set --collection days --doc-id x --file /tmp/x.json --worker ${worker}`
+    );
+    assert.equal(chained.ok, false);
+    assert.ok(
+      chained.extra.some(e => / api set --collection days/.test(e.summary)),
+      JSON.stringify(chained.extra)
+    );
+    const curl = auditWith(`curl -sS -X POST ${fw.url}/api/run/batch -d @/tmp/w.json`);
+    assert.equal(curl.ok, false);
+    assert.ok(
+      curl.extra.some(e => /\/api\/run\/batch/.test(e.summary)),
+      JSON.stringify(curl.extra)
+    );
+    const tokenRead = auditWith(`cat ${worker}`);
+    assert.equal(tokenRead.ok, false);
+    const looped = auditWith(
+      `for c in a b; do node core/cli.mjs api pull --reads /tmp/$c.json --worker ${worker}; done`
+    );
+    assert.equal(looped.ok, false);
 
     // The token is in no printed call, no command's output, and no file the run wrote.
     const run = JSON.parse(fs.readFileSync(path.join(dir, 'run.json'), 'utf8'));

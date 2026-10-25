@@ -476,22 +476,6 @@ const commands = {
     const what = o._[1];
     if (!o.worker) throw new Error('api needs --worker <the saved system/worker file>');
     const worker = API.readWorker(path.resolve(o.worker));
-    if (what === 'list') {
-      if (!o.collection || !o['out-dir'] || !o.versions)
-        throw new Error('api list --collection <c> --out-dir <dir> --versions <file> [--since <iso>] --worker <file>');
-      const r = API.list(worker, {
-        collection: o.collection,
-        outDir: path.resolve(o['out-dir']),
-        versions: path.resolve(o.versions),
-        since: o.since || null,
-      });
-      if (!r.ok) {
-        console.log(`api list ${o.collection}: REFUSED (${r.status}): ${JSON.stringify(r.error)}`);
-        return 1;
-      }
-      console.log(`api list ${o.collection}: ${r.saved} saved to ${o['out-dir']}, versions for ${r.versions}`);
-      return 0;
-    }
     if (what === 'pull') {
       // Every read of a pull or repull, in order; stops at the first refusal.
       const reads = readJson(path.resolve(o.reads || ''));
@@ -548,7 +532,7 @@ const commands = {
       console.log(`api ${what}: ${r.results.map(x => `${x.collection}/${x.doc_id} version ${x.version}`).join(', ')}`);
       return 0;
     }
-    throw new Error('api <pull|list|batch|set> ... --worker <file>');
+    throw new Error('api <pull|batch|set> ... --worker <file>');
   },
   'canvas-script'(o) {
     // One read-only Canvas script for the run in --dir, its parameters filled in from the spec and the run's pull
