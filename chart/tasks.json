@@ -5678,7 +5678,7 @@
   "depends": [
    "B-314"
   ],
-  "notes": "claimed by lane app",
+  "notes": "built a96f55e: the shim sends images; smoke:pwa green 20 of 20 (a photographed page read through /api/claude into D1's library), npm test green",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
