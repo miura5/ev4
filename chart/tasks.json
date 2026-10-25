@@ -5266,7 +5266,7 @@
   "depends": [
    "B-293"
   ],
-  "notes": "claimed by lane today",
+  "notes": "built: the changes card under the budget, Undo as one list edit; prep harness checks added (168/168); npm test and smoke green",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
