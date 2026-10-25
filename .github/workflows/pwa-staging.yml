@@ -34,6 +34,10 @@ on:
         description: 'B-316: also check Time Travel, make an export now and restore the newest into a scratch D1'
         type: boolean
         default: false
+      copy_target:
+        description: 'B-319: only deploy the ev-staging-scratch Worker over the ev-staging-scratch D1 (the copy tool imports there) and print its counts and hashes; ev-staging is not deployed or touched'
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -41,6 +45,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   staging:
+    if: ${{ !inputs.copy_target }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
@@ -200,3 +205,77 @@ jobs:
           path: shots-jobs/
           retention-days: 7
           if-no-files-found: ignore
+
+  # B-319: the target of the copy tool's staging proof (tools/pwa-copy.mjs). Its own Worker, ev-staging-scratch, runs
+  # the same worker.js over the ev-staging-scratch D1 (found, or created once; the restores' tables there are left as
+  # they are), with the staging token, so the copy goes through the run API into a D1 that is not ev-staging. The docs
+  # table is created only when missing, and nothing here writes a document: the import runs from the build session.
+  # Each run ends with the docs table's counts and SHA-256 per collection (pwa/backup.js), read with wrangler, never a
+  # document.
+  copy-target:
+    if: ${{ inputs.copy_target }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      EV_STAGING_TOKEN: ${{ secrets.EV_STAGING_TOKEN }}
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - name: the three secrets are set
+        run: |
+          missing=""
+          for v in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID EV_STAGING_TOKEN; do
+            [ -n "${!v}" ] || missing="$missing $v"
+          done
+          if [ -n "$missing" ]; then echo "missing Actions secrets:$missing"; exit 1; fi
+          echo "all three set"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: pwa/package-lock.json
+      - run: npm ci --prefix pwa
+      - name: find or create the ev-staging-scratch D1, and its docs table when missing
+        working-directory: pwa
+        run: |
+          id_of() { npx wrangler d1 list --json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const d=JSON.parse(s).find(x=>x.name==="ev-staging-scratch");process.stdout.write(d?d.uuid:"")})'; }
+          id=$(id_of)
+          if [ -z "$id" ]; then npx wrangler d1 create ev-staging-scratch >/dev/null; id=$(id_of); fi
+          [ -n "$id" ] || { echo "ev-staging-scratch D1 not found after create"; exit 1; }
+          printf 'name = "ev-staging-scratch"\nmain = "worker.js"\ncompatibility_date = "2026-10-01"\nworkers_dev = true\n\n[[d1_databases]]\nbinding = "DB"\ndatabase_name = "ev-staging-scratch"\ndatabase_id = "%s"\n' "$id" > copy.toml
+          npx wrangler d1 execute ev-staging-scratch --config copy.toml --remote --file schema.sql >/dev/null
+          n=$(npx wrangler d1 execute ev-staging-scratch --config copy.toml --remote --json --command "SELECT COUNT(*) AS n FROM pragma_table_info('docs') WHERE name = 'v'" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>process.stdout.write(String(JSON.parse(s)[0].results[0].n)))')
+          [ "$n" = "1" ] || { echo "the scratch docs table has no version column"; exit 1; }
+          echo "ev-staging-scratch D1: $id, docs table ready"
+      - name: deploy the ev-staging-scratch Worker
+        id: deploy
+        working-directory: pwa
+        run: |
+          npx wrangler deploy --config copy.toml > deploy.log 2>&1 || { cat deploy.log; exit 1; }
+          url=$(grep -o 'https://ev-staging-scratch\.[a-z0-9.-]*\.workers\.dev' deploy.log | head -1)
+          [ -n "$url" ] || { cat deploy.log; echo "no workers.dev address in the deploy output"; exit 1; }
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "ev-staging-scratch Worker: $url"
+          echo "::notice title=copy target::$url"
+      - name: the Worker's token, the staging one
+        working-directory: pwa
+        run: |
+          printf '%s' "$EV_STAGING_TOKEN" | npx wrangler secret put EV_TOKEN --config copy.toml >/dev/null
+          echo "EV_TOKEN set on ev-staging-scratch"
+      - name: the run API answers 401 without the token
+        run: |
+          for i in 1 2 3 4 5 6; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "${{ steps.deploy.outputs.url }}/api/run/list?collection=health")
+            [ "$code" = "401" ] && { echo "401 without the token"; exit 0; }
+            echo "got $code, retrying in 10 s"; sleep 10
+          done
+          exit 1
+      - name: the scratch docs table's counts and SHA-256 per collection
+        working-directory: pwa
+        run: |
+          npx wrangler d1 execute ev-staging-scratch --config copy.toml --remote --json --command "SELECT c, id, data FROM docs" > rows.json
+          node --input-type=module -e 'import fs from "node:fs";import {manifestOf} from "./backup.js";const a=JSON.parse(fs.readFileSync("rows.json","utf8"));const rows=(Array.isArray(a)?a:[a]).flatMap(x=>x.results||[]);const m=await manifestOf(rows);console.log("ev-staging-scratch docs: "+rows.length+" documents in "+Object.keys(m).length+" collections");for(const[c,x] of Object.entries(m))console.log(c+" "+x.count+" "+x.sha256)'
