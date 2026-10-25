@@ -6090,5 +6090,22 @@
    "outcome": "task",
    "at": "2026-10-25T12:26:58.720Z"
   }
+ },
+ {
+  "id": "B-348",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Fidelity fix: Study's Plan tab, a running quiz and its results are still the old screens, and a Plan the rest message pops up on Study.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt's staging look and fidelity review, Oct 25 (D-312)",
+  "words": "Fidelity fix: Study's Plan tab, a running quiz and its results are still the old screens, and a Plan the rest message pops up on Study.",
+  "reportedAt": "2026-10-25T12:27:01.206Z",
+  "board": {
+   "row": "v4 B-348: Fidelity fix: Study's Plan tab, a running quiz and its results are…"
+  }
  }
 ]
