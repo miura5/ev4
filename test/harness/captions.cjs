@@ -97,13 +97,12 @@ seed.talk[yesterday] = talkDoc(yesterday, NIGHT);
 seed.talk[today] = talkDoc(today, [...MORNING, ...NOON]);
 seed.talk[twoAgo] = talkDoc(twoAgo, TWO);
 seed.talk[nineAgo] = talkDoc(nineAgo, NINE);
-const dayLabel = d =>
-  new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    timeZone: 'UTC',
-  });
+// B-352 (D-316): the demo's day format, Fri 23 Oct
+const dayLabel = d => {
+  const x = new Date(d + 'T12:00:00Z'),
+    f = o => x.toLocaleDateString('en-GB', { ...o, timeZone: 'UTC' });
+  return `${f({ weekday: 'short' })} ${f({ day: 'numeric' })} ${f({ month: 'short' })}`;
+};
 // Enough dates in the next two weeks that the dates card is long (five rows and its more line).
 seed.dates = seed.dates || {};
 for (let i = 1; i <= 9; i++) {
@@ -433,7 +432,10 @@ async function sideBySide(browser, left, right, out, vp) {
     }));
     ok(
       `[${scheme}] the greeting has no card; its offers are the demo's five chips, Start a study session first (B-358)`,
-      gc.cards === 0 && gc.chips.length === 5 && gc.chips[0] === 'Start a study session' && !gc.chips.includes('File it'),
+      gc.cards === 0 &&
+        gc.chips.length === 5 &&
+        gc.chips[0] === 'Start a study session' &&
+        !gc.chips.includes('File it'),
       JSON.stringify(gc)
     );
     ok(
@@ -1069,7 +1071,7 @@ async function sideBySide(browser, left, right, out, vp) {
       ok(
         // B-208 (D-210): centred in the pane, which starts after the 212 px sidebar and ends 8 px from the edge; from
         // 1200 px (B-223, D-315) the right panel holds the dates after today, and the pane ends where it begins.
-        '[desktop] with nothing beside her: at 1280 the panel holds only the session card and the dates, and her stage centres over her lines; at 1024 no side column (B-357: the demo\'s pane widths)',
+        "[desktop] with nothing beside her: at 1280 the panel holds only the session card and the dates, and her stage centres over her lines; at 1024 no side column (B-357: the demo's pane widths)",
         e1280.sideShown &&
           e1280.datesOnly &&
           Math.abs(e1280.coreX - (e1280.threadLeft + e1280.threadRight) / 2) <= 2 &&
@@ -1463,9 +1465,16 @@ async function sideBySide(browser, left, right, out, vp) {
     await openPage(page, quiet);
     await page.waitForTimeout(2500);
     const chips = await page.evaluate(() => [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent));
+    // B-358 (D-316): the chips are the demo's five; File it is asked in words, and she answers it
+    const before = await page.locator('#thread .msg.ev').count();
+    await page.fill('#ev-input', 'File it');
+    await page.click('#ev-send');
+    await page.waitForTimeout(1200);
     ok(
-      '[phone] with the reader unreachable, File it is offered, Start a study session still last',
-      chips.includes('File it') && chips.length === 3 && chips[2] === 'Start a study session',
+      "[phone] with the reader unreachable, the demo's five chips, and File it asked in words gets her answer",
+      chips.length === 5 &&
+        chips[0] === 'Start a study session' &&
+        (await page.locator('#thread .msg.ev').count()) > before,
       JSON.stringify(chips)
     );
     await ctx.close();
@@ -1843,7 +1852,8 @@ async function sideBySide(browser, left, right, out, vp) {
     const inView = page =>
       page.evaluate(() => {
         const c = document.querySelector('.compose-row').getBoundingClientRect(),
-          cur = document.querySelector('#thread .msg.ev.current .bubble'),
+          // B-368: her greeting's visible line is its summary line
+          cur = document.querySelector('#thread .msg.ev.current .bubble, #thread .msg.ev.current .brief-line'),
           r = cur && cur.getBoundingClientRect(),
           H = innerHeight;
         return {

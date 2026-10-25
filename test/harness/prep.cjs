@@ -153,7 +153,8 @@ const state = page =>
     return {
       urgentDot: !!g.querySelector('.br-dot.urgent'),
       urgentMark: !!g.querySelector('.bi-mark.urgent'),
-      headline: g.querySelector('.bubble').textContent,
+      // B-368 (D-316): her greeting's line is kept in the record, not shown
+      headline: ((((window.__db.talk || {}).memory || {}).headlines || []).slice(-1)[0] || {}).text || '',
       row: p && p.querySelector('.prep-row').textContent,
       open: !!(box && !box.hidden && box.getBoundingClientRect().height > 0),
       done: !!(p && p.classList.contains('done')),
@@ -470,7 +471,10 @@ async function tickAll(page) {
             [...document.querySelectorAll('#p-today h2, #p-today h3')].some(h =>
               /^Focus$/.test(h.textContent.trim())
             ) ||
-            [...document.querySelectorAll('#p-today button')].some(b => /^(Add|Remove)$/.test(b.textContent.trim())),
+            // the demo's toolbar has Add (ti-add); Remove stays off Today
+            [...document.querySelectorAll('#p-today button:not(.ti-add)')].some(b =>
+              /^(Add|Remove)$/.test(b.textContent.trim())
+            ),
           folds: [...document.querySelectorAll('#today-list .ti-fold')].map(f => f.textContent),
           sideways: document.documentElement.scrollWidth > innerWidth + 1,
         };
@@ -503,14 +507,18 @@ async function tickAll(page) {
       await page.locator('#p-today').screenshot({ path: `${shots}/today-list-${w}-${scheme}.png` });
       // the phone tick: ticked, its green fill stays in the 18 px box
       const first = page.locator('#today-list .ti-list input.tick:not(:checked)').first();
+      const firstId = await first.evaluate(c => c.closest('li').dataset.id || '');
       await first.click();
       await page.waitForTimeout(300);
-      const f = await page.evaluate(() => {
-        const c = document.querySelector('#today-list .ti-list input.tick:checked');
+      // B-363: a row ticked on this visit may join Done · N; it is read wherever it now sits
+      const f = await page.evaluate(id => {
+        const c =
+          (id && document.querySelector(`#today-list li[data-id="${id}"] input.tick`)) ||
+          document.querySelector('#today-list .ti-list input.tick:checked');
         const b = c.getBoundingClientRect(),
           n = c.closest('li').querySelector('.nm').getBoundingClientRect();
         return { w: Math.round(b.width), green: getComputedStyle(c).backgroundColor, clear: b.right <= n.left };
-      });
+      }, firstId);
       ok(
         `${tag} a ticked box fills green inside its box only`,
         f.w === (w < 600 ? 18 : 16) && f.clear && f.green !== 'rgba(0, 0, 0, 0)',

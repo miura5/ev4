@@ -1406,7 +1406,9 @@ async function tap(page, locator, name) {
     const gb = await page.evaluate(() => {
       const g = document.querySelector('#thread .msg.greet');
       return {
-        head: g.querySelector('.bubble').textContent,
+        // B-368 (D-316): the greeting's line is kept in the record, not shown
+        head: ((((window.__db.talk || {}).memory || {}).headlines || []).slice(-1)[0] || {}).text || '',
+        shown: !!g.querySelector('.bubble'),
         lines: [...g.querySelectorAll('.brief .brief-line')].map(x => x.textContent),
         buttons: g.querySelectorAll('.brief button').length,
         cards: g.querySelectorAll('.ev-card').length,
@@ -1420,8 +1422,8 @@ async function tap(page, locator, name) {
       gb.head
     );
     ok(
-      `[${scheme}] under it one summary line of today's list, no line per item, no button, no card (D-316)`,
-      gb.lines.length === 1 && /on today’s list/.test(gb.lines[0]) && !gb.buttons && !gb.cards,
+      `[${scheme}] on screen only its summary line of today's list: no large line, no line per item, no button, no card (B-358, B-368)`,
+      gb.lines.length === 1 && /on today’s list/.test(gb.lines[0]) && !gb.buttons && !gb.cards && !gb.shown,
       JSON.stringify(gb)
     );
     // B-358 (D-316): at rest the chips are the demo's five, Start a study session first

@@ -158,7 +158,7 @@ async function openPage(page, now, db, pre) {
   });
   await page.addInitScript('window.__db=' + JSON.stringify(db) + ';' + stub + ';' + pre);
   await page.goto(ORIGIN + '/');
-  await page.waitForFunction(() => document.querySelector('#thread .msg.greet .bubble'), null, { timeout: 15000 });
+  await page.waitForFunction(() => document.querySelector('#thread .msg.greet .brief-line'), null, { timeout: 15000 });
   await page.waitForTimeout(4500); // past the 2 s wording window and the seen write
 }
 const results = [];
@@ -184,7 +184,9 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           const g = document.querySelector('#thread .msg.greet');
           const mem = (window.__db.talk || {}).memory || {};
           return {
-            head: g.querySelector('.bubble').textContent.trim(),
+            // B-368 (D-316): the greeting's line is not shown (the summary line is); it stays in the record and her context
+            head: ((mem.headlines || []).slice(-1)[0] || {}).text || '',
+            shown: !!g.querySelector('.bubble'),
             // B-358 (D-316): one summary line under her greeting, from code; no line per item, no buttons
             brief: g.querySelectorAll('.brief .brief-line').length === 1 && !g.querySelector('.brief button'),
             asked: window.__headlineAsked || 0,
@@ -255,7 +257,11 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
             JSON.stringify({ before, greeted: [...greeted], seen: [...seen], after })
           );
         }
-        ok(`${tag} one summary line under the greeting, no line per item and no button (D-316)`, r.brief, '');
+        ok(
+          `${tag} the greeting shows only its one summary line, no large line, no line per item, no button (D-316)`,
+          r.brief && !r.shown,
+          ''
+        );
         ok(`${tag} no page errors`, errors.length === 0, errors.join(' | '));
         await page.screenshot({ path: `${shots}/greet-${st.name}-${mode}-${w}.png` });
         await ctx.close();
@@ -301,12 +307,13 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         const cur = document.querySelector('#thread .msg.ev.current');
         const box = cur && cur.getBoundingClientRect();
         return {
-          head: g ? g.querySelector('.bubble').textContent.trim() : null,
+          // B-368: the greeting's line is kept, not shown: its record is the last headline
+          head: g ? ((mem.headlines || []).slice(-1)[0] || {}).text || null : null,
           asked: window.__headlineAsked || 0,
           n: (mem.headlines || []).length,
           seen: mem.lastSeenAt,
           mine: mine.some(t => /potassium before I go/.test(t)),
-          current: cur ? cur.querySelector('.bubble').textContent.trim() : null,
+          current: cur && cur.querySelector('.bubble') ? cur.querySelector('.bubble').textContent.trim() : null,
           visible: !!box && box.height > 0 && box.top >= 0 && box.bottom <= innerHeight,
         };
       });

@@ -57,7 +57,7 @@ function collect() {
       .map(t => t.textContent.replace(/\s+/g, ' ').trim())
       .filter(t => t.length > 2);
   const pane = document.querySelector('section.panel:not([hidden])');
-  const greet = document.querySelector('#thread .msg.greet .bubble, #thread .msg.ev.current .bubble');
+  const greet = document.querySelector('#thread .msg.greet .brief-line, #thread .msg.ev.current .bubble');
   const capIn = document.querySelector('#thread .cap-in');
   const has = {
     ev: !!document.querySelector('#ev-dates, #ev-sess') || document.body.classList.contains('side-on'),
