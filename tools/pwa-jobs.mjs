@@ -95,9 +95,17 @@ async function main() {
     page.on('pageerror', e => errors.push(e.message));
     await page.goto(origin + '/');
     const live = await page
-      .waitForFunction(() => /^Live$/.test((document.getElementById('status') || {}).textContent || ''), null, {
-        timeout: 60000,
-      })
+      // connected: the status has moved on from connecting (on staging it may name the made-up record's old health)
+      .waitForFunction(
+        () =>
+          !document.body.classList.contains('boot-stopped') &&
+          !!window.EVApp &&
+          !/^(Connecting|$)/.test(((document.getElementById('status') || {}).textContent || '').trim()),
+        null,
+        {
+          timeout: 60000,
+        }
+      )
       .then(
         () => true,
         () => false
