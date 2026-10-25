@@ -6708,7 +6708,7 @@
   "milestone": "v4.8 redesign",
   "status": "done",
   "depends": [],
-  "notes": "Card for Matt: after a quiz with any miss, the results card now reads '1 miss is proposed as a weak spot.' (or 'N misses are proposed as weak spots.') with Accept all and Review, as the demo's StudyResults. Each miss already files its weak spot when you answer it (a new one, or its twin seen again), so Accept all keeps them as filed and the line goes away, as the demo's does; Review opens Weak spots. On the phone her line sits over its two buttons, as the demo. Proved side by side with the demo at 1280 and 390 on the synthetic record and on one whose exam has no objectives, before and after Accept all; smoke 28 of 28; staging GREEN at f5a2b3a. Still differs from the demo: misses are filed straight away rather than held as proposals until you accept (a real proposed state is the weak-spot work you put after exams, B-300), so Accept all writes nothing new and Decline lives nowhere yet; the quizzes on the synthetic record are shorter than the demo's five questions (one set's length). Reviewer: none (fidelity sprint, D-312).",
+  "notes": "npm test is red on main on one check: the joined page script isn't in the formatter's layout. This lane's part (the quiz runner) is now formatter-clean at 1974d45. The rest of the misses are in other lanes' parts (kit, navigation, Today, Study, Progress, Record, E.V.), which the sprint keeps out of this lane: running the formatter over the joined script turns it green. Nothing about the page's behaviour changes.",
   "commit": "f5a2b3a",
   "source": "UI reviewer click-through 3 at d6bee63, Oct 25 (D-316)",
   "words": "Review 3: the quiz results never propose misses as weak spots with Accept all and Review.",
