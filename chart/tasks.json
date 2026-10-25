@@ -6307,7 +6307,7 @@
   "milestone": "v4.8 redesign",
   "status": "in progress",
   "depends": [],
-  "notes": "lint green: tests and harnesses cite D-315; old look checks (tenets judge, five kinds, panel shade) retired; pushed 9d7b851",
+  "notes": "Test agent on the run and captions harnesses (shell, greet, prep done).",
   "commit": null,
   "source": "Matt, Oct 25 (D-314)",
   "words": "The tests and the page harnesses still assert the old UI; they are brought in line with the demo so the full check is green before live.",
