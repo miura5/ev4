@@ -1188,17 +1188,8 @@ button.btn:disabled{opacity:.45;cursor:default}
 #today-list .li.ti-prop .nm{cursor:default}
 #today-list .li.ti-prop .nm:hover .ti-t{text-decoration:none}
 @media (max-width:599px){
-  #today-list .ti-review{padding:8px}
-  #today-list .ti-review .btn{flex:1}
-  /* a proposed row keeps its whole name: the name and time on the row's 44 px line, the badge, Accept and Keep on a
-     second 44 px line under the name */
-  #today-list .li.ti-propose{height:auto;flex-wrap:wrap;row-gap:0;align-content:flex-start}
-  #today-list .li.ti-propose>*{order:3}
-  #today-list .li.ti-propose>:is(.tk,.nm,.t){order:1;height:44px;display:flex;align-items:center}
-  #today-list .li.ti-propose>.nm{flex:1 0 calc(100% - 110px);white-space:normal}
-  #today-list .li.ti-propose>.nm .ti-t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  #today-list .li.ti-propose>.badge{margin-left:26px}
-  #today-list .li.ti-propose>.ti-keep{margin-right:auto}
+  #today-list .ti-review{padding:8px 12px}
+  #today-list .ti-review-t{flex-basis:100%} /* B-369: as the demo, the line, then Accept all and Reject at their width */
 }
 /* ============================================================ B-295 (C-6, C-13, C-16): Today's week ================
    List and Week switch the view. The week is seven days from today: seven columns from 1200 px, one row per day below
@@ -1410,6 +1401,26 @@ button.btn:disabled{opacity:.45;cursor:default}
 #today-date .wd-sum-l{display:flex;align-items:center;gap:8px;min-width:0}
 #today-date .wd-sum .dot{flex:none;width:8px;height:8px;border-radius:4px;background:var(--quiet)}
 @media (max-width:599px){#today-list .grp{min-height:44px;padding:14px 16px 6px}}
+/* B-369 (D-312): wave 3, as TodayPhone, TodayProposal and TodayWeek. On the phone a row wraps as the demo's: the badge
+   follows the name and the time drops to the next line when the line is full. Plan the rest's proposed addition is the
+   demo's dashed card, a take-off keeps its row struck through, each with "Proposed" or why, a tick and a cross. The
+   week's seven columns are equal. */
+#today-list .li svg.ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#today-list .li>svg.ico{color:var(--quiet)}
+#today-list .li .sp{flex:1}
+#today-list .li:has(>.sp)>.badge{margin-right:0}
+#today-list .li .pmark{font-size:calc(12.5px * var(--ts));color:var(--quiet);white-space:nowrap}
+#today-list .ti-list>.li.ti-padd{background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2);border-bottom:0;margin:4px 12px;border-radius:8px;outline:1px dashed var(--line2);outline-offset:-4px;padding:0 6px 0 18px}
+#today-list .ti-list>.li.ti-padd:hover{background:var(--bg)}
+#today-list .li.ti-off .ti-t{text-decoration:line-through;color:var(--quiet)}
+@media (min-width:1200px){#today-week .wk-days{grid-template-columns:repeat(7,minmax(0,1fr))}}
+#today-week .wchip .wc-t{overflow-wrap:break-word}
+@media (max-width:599px){
+  #today-list .ti-list>.li,#today-list .ti-folded>.li{flex-wrap:wrap;padding:6px 16px;gap:4px 12px}
+  #today-list .ti-list>.li .nm,#today-list .ti-folded>.li .nm{flex:0 1 auto;max-width:calc(100% - 30px);display:block}
+  #today-list .li>.badge{margin-right:auto}
+  #today-list .ti-list>.li.ti-padd{padding:6px 6px 6px 16px}
+}
 /* B-364 (D-312): an opened task is the TaskDetail board's full view at every size: the header's back arrow before
    "Today" (no line under it), the head row (breadcrumb, N of M, up and down) across the pane, the 22 px title with its
    tick, the description and Where it came from in a 720 px column; the right panel (under it below 1200 px) holds the

@@ -112,7 +112,7 @@
       DRILL: ['Study', 'x-violet'],
       SKILLS: ['Practice', 'x-violet'],
       READING: ['Reading', ''],
-      NOTES: ['Notes', 'x-blue'],
+      NOTES: ['Note', 'x-blue'], // B-369: the demo's badge reads Note
       CANVAS: ['Canvas', 'x-blue'],
       CLINICAL: ['Clinical', ''],
       'CLINICAL PREP': ['Clinical prep', ''],
@@ -175,7 +175,7 @@
       const sel = ui.taskSel === it.id && !ui.taskGone;
       const li = el(
         'li',
-        'li today-item' + (doneNow ? ' done' : '') + (sel ? ' sel' : '') + (o.off ? ' ti-propose' : '')
+        'li today-item' + (doneNow ? ' done' : '') + (sel ? ' sel' : '') + (o.off ? ' ti-off' : '')
       );
       li.dataset.id = it.id;
       const tk = el('label', 'tk');
@@ -204,16 +204,16 @@
       const due = it.tag === 'GRADED' ? gradedDue(it) : null;
       const b = BADGE[it.tag];
       // B-293 (C-9): a proposed take-off keeps its row, with one "Proposed" badge and Accept and Keep in place of Start
+      // B-363 (D-312): every row carries its category chip, as the demo's list does; B-361: Graded is neutral grey
+      const bb = b || (catOf(it) === 'study' ? ['Study', 'x-violet'] : ['Class', '']);
+      li.append(el('span', 'badge' + (bb[1] ? ' ' + bb[1] : ''), bb[0]));
+      // B-369 (D-312): a proposed take-off keeps its row struck through, with why, the tick and the cross, as the demo
       if (o.off)
         li.append(
-          el('span', 'badge proposed', 'Proposed'),
+          el('span', 'sp'),
+          el('span', 'pmark', 'Off today · ' + o.off.p.why),
           ...restButtons(o.off.P, o.off.p, offEdit(o.off.p), 'take “' + text + '” off today')
         );
-      else {
-        // B-363 (D-312): every row carries its category chip, as the demo's list does; B-361: Graded is neutral grey
-        const bb = b || (catOf(it) === 'study' ? ['Study', 'x-violet'] : ['Class', '']);
-        li.append(el('span', 'badge' + (bb[1] ? ' ' + bb[1] : ''), bb[0]));
-      }
       const go = openItem(it);
       if (o.start && go && !o.off) {
         const st = btn('Start', go, { cls: 'btn neutral sm ti-start' });
@@ -784,6 +784,22 @@
           course: (exam && exam.course) || '',
         });
       }
+      // B-369 (D-312): with free minutes and nothing from the plan to add, she proposes a short quiz on the open weak
+      // spot due soonest, as the demo's TodayProposal does; a toast alone is only for a day with no room and no take-off
+      if (!adds.length && room >= 5) {
+        const w = M.models
+          .filter(x => E.isActive(x) && x.topic && !texts.has(E.norm('Quiz: ' + x.topic)))
+          .sort((a, b) => String(a.derived.nextDue || '9').localeCompare(String(b.derived.nextDue || '9')))[0];
+        if (w)
+          adds.push({
+            id: 'rest-quiz-' + (w.id || E.norm(w.topic)),
+            text: 'Quiz: ' + w.topic,
+            minutes: Math.min(10, Math.floor(room)),
+            kind: 'practice',
+            course: w.course || '',
+            why: 'a weak spot',
+          });
+      }
       return { date: today, adds, offs };
     }
     const restEdit = p => ({ action: 'add', text: p.text, kind: p.kind, minutes: p.minutes, course: p.course });
@@ -806,12 +822,15 @@
       else restLeft({ ...P, adds: P.adds.filter(x => x !== which.p), offs: P.offs.filter(x => x !== which.p) });
     }
     function restButtons(P, p, edit, noun) {
-      const ok = btn('Accept', null, { cls: 'btn neutral sm ti-acc' });
+      // B-369 (D-312): the demo's ghost icon buttons, a tick and a cross, labelled
+      const ok = btn('', null, { cls: 'btn ghost icon sm ti-acc' });
+      ok.append(svgIcon('M5 12l5 5 9-10'));
       ok.setAttribute('aria-label', 'Accept: ' + noun);
       ok.addEventListener('click', () =>
         guard(ok, () => restAccept(P, { p, edit }), 'Done. E.V. changed today’s list')
       );
-      const keep = btn('Keep', null, { cls: 'btn ghost sm ti-keep' });
+      const keep = btn('', null, { cls: 'btn ghost icon sm ti-keep' });
+      keep.append(svgIcon('M6 6l12 12M18 6L6 18'));
       keep.setAttribute(
         'aria-label',
         'Keep: ' + (edit.action === 'add' ? 'leave “' + p.text + '” off today' : 'keep “' + p.text + '” on today')
@@ -822,24 +841,34 @@
       return [ok, keep];
     }
     function proposedAddRow(P, p) {
-      const li = el('li', 'li today-item ti-prop ti-propose');
+      // B-369 (D-312): the demo's proposed addition: a dashed card with a +, the name, its kind's badge, "Proposed",
+      // the tick and the cross, and its minutes
+      const li = el('li', 'li today-item ti-prop ti-padd');
       li.dataset.id = p.id;
-      li.append(el('span', 'tk ti-gap'));
+      li.append(svgIcon('M12 5v14M5 12h14'));
       const nm = el('span', 'nm ti-nm');
       nm.append(el('span', 'ti-t', p.text));
+      const tag = { practice: 'PRACTICE', review: 'REVIEW', reading: 'READING', notes: 'NOTES' }[p.kind];
+      const b = (tag && BADGE[tag]) || ['Study', 'x-violet'];
       li.append(
         nm,
-        el('span', 'badge proposed', 'Proposed'),
+        el('span', 'badge' + (b[1] ? ' ' + b[1] : ''), b[0]),
+        el('span', 'sp'),
+        el('span', 'pmark', 'Proposed'),
         ...restButtons(P, p, restEdit(p), 'add “' + p.text + '” to today')
       );
       li.append(el('span', 't', p.minutes ? durFmt(p.minutes) : ''));
       return li;
     }
-    function restLine(P) {
+    function restLine(P, bv) {
       const parts = [
-        ...P.adds.map(p => `add “${p.text}”` + (p.minutes ? ` (${p.minutes} min)` : '')),
-        ...P.offs.map(p => `take “${p.text}” off today (${p.why})`),
+        ...P.adds.map(p => (p.minutes ? `add a ${p.minutes}-minute “${p.text}”` : `add “${p.text}”`)),
+        ...P.offs.map(p => `take “${p.text}” off today, since it’s ${p.why}`),
       ];
+      // B-369 (D-312): as the demo, what today would come to if he accepts
+      const would = bv
+        ? ` Today would be ${Math.max(0, bv.left + P.adds.reduce((n, p) => n + p.minutes, 0) - P.offs.reduce((n, p) => n + p.minutes, 0))} of ${bv.available} min.`
+        : '';
       const line = el('div', 'ti-review');
       line.setAttribute('role', 'status');
       const all = btn('Accept all', null, { cls: 'btn primary sm' });
@@ -850,7 +879,7 @@
         render();
       });
       line.append(
-        el('p', 'ti-review-t', 'E.V. suggests: ' + parts.join(', and ') + '. Nothing changes until you accept.'),
+        el('p', 'ti-review-t', 'E.V. suggests: ' + parts.join(', and ') + '.' + would + ' Nothing changes until you accept.'),
         all,
         no
       );
@@ -921,9 +950,10 @@
         const p = offOf(it);
         ul.append(todayRow(it, isDone, { start: it === first, off: p ? { P, p } : null }));
       }
-      if (P) for (const p of P.adds) ul.append(proposedAddRow(P, p));
+      // B-369 (D-312): proposed additions sit after the first row, as the demo's
+      if (P) ul.children[0] ? ul.children[0].after(...P.adds.map(p => proposedAddRow(P, p))) : ul.append(...P.adds.map(p => proposedAddRow(P, p)));
       const folds = ui.todayFolds || {};
-      const kids = [...(P ? [restLine(P)] : [])];
+      const kids = [...(P ? [restLine(P, bv)] : [])];
       const after = [];
       if (todo.length || (P && P.adds.length)) kids.push(ul);
       else if (shown.length && f !== 'all')
