@@ -6279,11 +6279,13 @@
  {
   "id": "B-356",
   "kind": "request",
-  "title": "Request (reported Oct 25): Fidelity fix: Record at 390 drops the row's result column; Progress's day panel shows notes and quizzes the corrections cut.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
-  "depends": [],
+  "title": "Fidelity fix: Record (D-314): at 390 each row keeps its result (3 of 6, 9 of 10) as the Record phone board; rows at the demo's height",
+  "dod": "The Record board matches at 1280 and 390 on long real lists. Proof (D-312, fidelity sprint): node tools/build.mjs; tools/fidelity screenshots (crawl.cjs demo and built click every control) beside the boards at 1280, 1706, 2560 and 390; npm run smoke; ship staging GREEN.",
+  "milestone": "v4.8 redesign",
+  "status": "open",
+  "depends": [
+   "B-350"
+  ],
   "notes": "",
   "commit": null,
   "source": "fidelity review, Oct 25 (D-314)",
@@ -6291,6 +6293,10 @@
   "reportedAt": "2026-10-25T12:48:37.204Z",
   "board": {
    "row": "v4 B-356: Fidelity fix: Record at 390 drops the row's result column; Progress's…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-25T12:48:40.296Z"
   }
  }
 ]
