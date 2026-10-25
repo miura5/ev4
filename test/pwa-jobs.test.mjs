@@ -83,7 +83,9 @@ test('B-324: the ask carries the kind’s guide, its material and the do-job sha
   assert.deepEqual(body.tool_choice, { type: 'tool', name: 'answer' });
   assert.deepEqual(body.tools[0].input_schema, spec.pipelines.worker.steps.find(s => s.id === 'do-job').output);
   const text = body.messages[0].content;
-  assert.ok(text.includes(spec.jobs.kinds['practice-set'].guide));
+  assert.ok(text.includes(J.plainGuide(spec.jobs.kinds['practice-set'].guide)));
+  assert.ok(!/\((?:[BD]-\d+)/.test(text.split('The kind’s guide: ')[1].split('\n')[0]), 'no project ids in the guide');
+  assert.match(text, /cjStep exactly one of recognize-cues, analyze-cues/);
   assert.match(text, /"passages":\[\{"ref":"materials\//);
   assert.match(text, /no help with graded or submitted work/);
 });
@@ -322,4 +324,14 @@ test('B-324: the record’s next since is taken before the read, a few seconds b
     env
   );
   assert.ok((await later.json()).now >= Date.now() + 1e6 - 1, 'never earlier than the since it was given');
+});
+
+test('B-324: a tool answer’s placeholder failed ("none", "null") is no failure', () => {
+  const reply = f => ({ content: [{ type: 'tool_use', name: 'answer', input: { text: 'x', failed: f } }] });
+  assert.deepEqual(J.answerOf(reply('none')), { text: 'x' });
+  assert.deepEqual(J.answerOf(reply('null')), { text: 'x' });
+  assert.deepEqual(J.answerOf(reply('the exam isn’t in his record')), {
+    text: 'x',
+    failed: 'the exam isn’t in his record',
+  });
 });
