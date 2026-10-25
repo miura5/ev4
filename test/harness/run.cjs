@@ -1509,15 +1509,13 @@ async function tap(page, locator, name) {
           return null;
         };
       });
-      await page.focus('#ev-input');
-      await page.waitForTimeout(150); // B-85: in a conversation the chips come back in an empty focused input
-      await page.locator('#qchips .qchip', { hasText: 'Open the study guide' }).click();
+      // B-358 (D-316): the chips are the demo's five, so the finished guide is asked for in words
+      await send(page, 'Open the study guide');
       await page.waitForTimeout(900);
       const op = await page.evaluate(() => window.__opened);
       ok(
-        '[desktop] Open the study guide opens it in a new tab, and her reply carries the job card with its link',
-        JSON.stringify(op) === JSON.stringify([['https://claude.ai/artifact/harness', '_blank']]) &&
-          (await page.locator('#ev-surf .ev-card a[href="https://claude.ai/artifact/harness"]').count()) === 1,
+        '[desktop] Open the study guide, asked in words, opens it in a new tab',
+        JSON.stringify(op) === JSON.stringify([['https://claude.ai/artifact/harness', '_blank']]),
         JSON.stringify(op)
       );
       // B-47: the retro card at desktop width
@@ -3094,13 +3092,15 @@ async function tap(page, locator, name) {
       await page.waitForTimeout(2200);
     }
     await practiceNav(page, scheme); // B-191
-    // Plan: tick a task (D-249: Plan is a tab at every width, and the plan is hidden until it is chosen)
+    // Plan: tick a task. B-351 (D-313): no Plan tab; an exam with no objectives shows its plan's days in the exam card,
+    // each opening the plan (Open the plan). This exam has objectives, so the plan is opened the way the page's own
+    // switch does (its tabs are hidden, not gone) to check the tick's write.
     if (await page.isVisible('#study-back')) await page.click('#study-back'); // B-297: out of the quiz card
     ok(
-      `[${scheme}] Plan is a tab, and the plan stays hidden until it is chosen (D-249)`,
-      (await page.isVisible('#seg-study [data-v="plan"]')) && !(await page.isVisible('#plan-card'))
+      `[${scheme}] no Plan tab on Study's overview, and no plan until it is opened (D-313)`,
+      !(await page.isVisible('#seg-study')) && !(await page.isVisible('#plan-card'))
     );
-    await page.click('#seg-study [data-v="plan"]');
+    if (!(await studyView(page, 'plan'))) await page.$eval('#seg-study [data-v="plan"]', b => b.click());
     await page.waitForTimeout(100);
     const planRows = page.locator('#plan-card .plan-day').first().locator('input.tick');
     ok('plan shows tasks', (await planRows.count()) > 0);
@@ -3125,48 +3125,8 @@ async function tap(page, locator, name) {
     // Progress
     await page.click('#tab-progress');
     await page.waitForTimeout(100);
-    // B-39 (D-094): the score card asks for a past unit exam's score and saves it to examedits/<examId>, replaced whole
-    {
-      ok(
-        'score card asks for the past exam with no score',
-        (await page.isVisible('#score-card')) && /Harness Exam 0/.test(await page.textContent('#score-card')),
-        await page.textContent('#score-card')
-      );
-      await page.fill('#score-in', '88.5');
-      await page.click('#score-form button[type=submit]');
-      await page.waitForTimeout(200);
-      const ed = await page.evaluate(() => (window.__db.examedits || {}).E0H);
-      ok(
-        'the score lands in examedits/<examId>, the exam itself unchanged',
-        !!ed &&
-          ed.score === 88.5 &&
-          ed.status === 'done' &&
-          ed.writer === 'page' &&
-          (await page.evaluate(() => !('score' in window.__db.exams.E0H))),
-        JSON.stringify(ed)
-      );
-      // B-47 (D-104): the saved score starts the post-exam retro: an exam-retro job naming the exam, fired on the worker
-      const rj = await page.evaluate(() =>
-        Object.entries(window.__db.jobs || {})
-          .filter(([, j]) => j.kind === 'exam-retro' && /^E0H: /.test(j.brief || ''))
-          .map(([id, j]) => ({ id, ...j }))
-      );
-      const rf = await page.evaluate(() => window.__mcpCalls.filter(c => c[1] === 'fire_trigger').map(c => c[2].text));
-      ok(
-        'a saved score starts the retro job for that exam, fired once',
-        rj.length === 1 &&
-          /^E0H: /.test(rj[0].brief) &&
-          rj[0].fired &&
-          rj[0].fired.ok === true &&
-          rf.filter(t => t === 'Job ' + rj[0].id).length === 1,
-        JSON.stringify(rj.map(j => [j.brief, j.fired]))
-      );
-      ok(
-        'once scored, the card asks for the next one or hides',
-        !/Harness Exam 0/.test((await page.textContent('#score-card')) || '') || !(await page.isVisible('#score-card'))
-      );
-      await page.screenshot({ path: `${shots}/score-${scheme}.png`, fullPage: false });
-    }
+    // B-366 (D-316): the demo has no score form, so Record your score left Progress; saved scores stay in the record
+    ok('Progress shows no score form (B-366)', !(await page.isVisible('#score-card')));
     // B-301 (C-6): a planted week. Each bar's day panel lists the sessions that make up that bar and adds up to it; a
     // workout and a note on the same day never appear there; the bars are 44 px or wider at 390.
     {
@@ -3250,15 +3210,23 @@ async function tap(page, locator, name) {
           rows.push(
             await page.evaluate(k => {
               const bar = document.querySelector(`#prog-chart .pc-bar[data-key="${k}"]`);
+              // B-342 (D-315): the demo's day panel: the day's total over what it holds in Record (sessions, quizzes, notes)
               const items = [...document.querySelectorAll('#prog-day .prog-s')];
+              const tt = (document.querySelector('#prog-day .prog-day-total') || {}).textContent || '';
+              const mm = /^(\d+) h(?: (\d+) m)?$/.exec(tt) || [];
+              const m2 = /^(\d+) min$/.exec(tt) || [];
               const want = Object.entries(window.__db.sessions || {})
                 .filter(([, s]) => s.date === k && s.status !== 'active' && (s.minutes || 0) > 0)
                 .map(([id, s]) => [id, s.minutes]);
               return {
                 k,
                 bar: Number(bar.dataset.min),
-                sum: items.reduce((a, li) => a + Number(li.dataset.min), 0),
-                ids: items.map(li => li.dataset.id).sort(),
+                sum: mm[1] ? 60 * Number(mm[1]) + Number(mm[2] || 0) : m2[1] ? Number(m2[1]) : NaN,
+                ids: items
+                  .filter(li => li.dataset.kind === 'session')
+                  .map(li => li.dataset.id)
+                  .sort(),
+                kinds: items.map(li => li.dataset.kind),
                 want: want.map(x => x[0]).sort(),
                 wantMin: want.reduce((a, x) => a + x[1], 0),
                 text: document.getElementById('prog-day').textContent,
@@ -3268,20 +3236,16 @@ async function tap(page, locator, name) {
           );
         }
         ok(
-          `[${w}] Progress: on a planted week each day panel's sessions add up to its bar, and are that day's sessions`,
+          `[${w}] Progress: on a planted week each day panel's total is its bar, the day's sessions' minutes, and lists them`,
           rows.length === 7 &&
-            rows.every(
-              r => r.sum === r.bar && r.bar === r.wantMin && JSON.stringify(r.ids) === JSON.stringify(r.want)
-            ) &&
+            rows.every(r => r.sum === r.bar && r.bar === r.wantMin && r.ids.every(i => r.want.includes(i))) &&
             rows.find(r => r.k === plant.d0).ids.includes('pw-a') &&
             rows.find(r => r.k === plant.d1).ids.includes('pw-c'),
           JSON.stringify(rows.map(r => [r.k, r.bar, r.sum, r.ids.length]))
         );
         ok(
-          `[${w}] Progress: no workout or note appears in the day panel`,
-          rows.every(
-            r => !/Planted workout|Planted note/.test(r.text) && !r.ids.some(i => i === 'pw-wk' || i === 'pw-note')
-          ),
+          `[${w}] Progress: no workout appears in the day panel (its notes do, as the demo's)`,
+          rows.every(r => !/Planted workout/.test(r.text) && !r.kinds.includes('workout')),
           rows.find(r => r.k === plant.d0).text.slice(0, 160)
         );
         if (w === 390)
@@ -3310,12 +3274,16 @@ async function tap(page, locator, name) {
             n: bars.length,
             pressed: document.querySelector('#prog-period [aria-pressed="true"]').dataset.p,
             bar: Number(pick.dataset.min),
-            sum: [...document.querySelectorAll('#prog-day .prog-s')].reduce((a, li) => a + Number(li.dataset.min), 0),
+            sum: (t => {
+              const a = /^(\d+) h(?: (\d+) m)?$/.exec(t) || [],
+                b = /^(\d+) min$/.exec(t) || [];
+              return a[1] ? 60 * Number(a[1]) + Number(a[2] || 0) : b[1] ? Number(b[1]) : NaN;
+            })((document.querySelector('#prog-day .prog-day-total') || {}).textContent || ''),
             stats: document.getElementById('prog-stats').textContent,
           };
         });
         ok(
-          `Progress (${p}): the switch shows it picked, and the picked bar's panel adds up to the bar`,
+          `Progress (${p}): the switch shows it picked, and the picked bar's panel totals the bar`,
           r.pressed === p &&
             r.n >= 1 &&
             r.sum === r.bar &&
@@ -3332,87 +3300,15 @@ async function tap(page, locator, name) {
         !/share of|Copy summary/i.test(await page.textContent('#p-progress'))
       );
     }
-    const rd = await page.textContent('#ready-card');
-    ok('readiness shows E4', /Exam 4/.test(rd) && /% solid/.test(rd), rd.slice(0, 100));
+    // B-338, B-342 (D-315): the readiness card, its line chart and the week's insights left Progress (their data stays
+    // in the record); its Exam readiness rows count each course's next exam's objectives
     {
-      // B-48 (D-105): the mornings' stamps draw E4's line; the night-before prediction is its last, marked point.
-      const pts = await page.locator('#ready-card svg.trend circle.trend-pt').count();
-      const cap = (await page.textContent('#ready-card .trend-cap')) || '';
+      const rd = await page.textContent('#prog-ready');
       ok(
-        'readiness draws its line from the mornings, nothing stored by the page',
-        pts === 7 && /Solid over 7 mornings: 0% to 20%\./.test(cap),
-        JSON.stringify({ pts, cap })
+        'Progress: exam readiness names Exam 4; no readiness card or insights card',
+        /Exam 4/.test(rd) && !(await page.isVisible('#ready-card')) && !(await page.isVisible('#insights-card')),
+        rd.slice(0, 120)
       );
-      const tomorrow = await page.evaluate(() => window.EVCore.addDays(window.EVCore.chicagoDate(new Date()), 1));
-      await page.evaluate(async t => {
-        const db = await window.claude.use('db');
-        await db
-          .collection('predictions')
-          .doc('E4')
-          .set({
-            schema: 1,
-            writer: 'morning',
-            at: new Date().toISOString(),
-            source: 'morning 4:25',
-            examId: 'E4',
-            date: t,
-            percentSolid: 25,
-            activeWeakSpots: 8,
-            accuracyLast7: 60,
-            answersLast7: 10,
-            predictedRange: [78, 86],
-            basis: 'harness',
-          });
-      }, tomorrow);
-      await page.waitForTimeout(300);
-      await page.click('#tab-study'); // B-297: Progress has one view now; leaving and coming back repaints it
-      await page.click('#tab-progress');
-      await page.waitForTimeout(200);
-      const pred = await page.locator('#ready-card svg.trend circle.trend-pred').count();
-      const cap2 = (await page.textContent('#ready-card .trend-cap')) || '';
-      const tip = await page.evaluate(() => {
-        const t = document.querySelector('#ready-card svg.trend circle.trend-pred title');
-        return t ? t.textContent : '';
-      });
-      ok(
-        'the night-before prediction is the last marked point',
-        pred === 1 && /the night before, 25%/.test(cap2) && /predicted score 78 to 86/.test(tip),
-        JSON.stringify({ pred, cap2, tip })
-      );
-      for (const [w, h] of [
-        [390, 844],
-        [1280, 860],
-      ]) {
-        await page.setViewportSize({ width: w, height: h });
-        await page.locator('#ready-card').scrollIntoViewIfNeeded();
-        await page.waitForTimeout(200);
-        await page.locator('#ready-card').screenshot({ path: `${shots}/readiness-trend-${w}.png` });
-      }
-      await page.setViewportSize(scheme === 'phone' ? { width: 390, height: 844 } : { width: 1280, height: 860 });
-      // B-72 (D-120): the latest weekly's insights, its three lines, beside readiness; nothing recomputed by the page.
-      const closed = await page.evaluate(() => document.getElementById('insights-list').hidden);
-      await page.click('#insights-line');
-      const ins = await page.evaluate(() => {
-        const c = document.getElementById('insights-card');
-        return c && !c.hidden
-          ? {
-              h: document.getElementById('insights-line').textContent,
-              closed: null,
-              lines: [...c.querySelectorAll('.ins-line')].map(l => l.textContent),
-            }
-          : null;
-      });
-      if (ins) ins.closed = closed;
-      ok(
-        'the week’s insights fold to one line that opens to their top three',
-        ins &&
-          ins.closed &&
-          /^From the week of .+ · 3 findings$/.test(ins.h) &&
-          ins.lines.length === 3 &&
-          ins.lines[0] === 'Weakest objective: E4-3, 2 of 7 right (29%).',
-        JSON.stringify(ins)
-      );
-      await page.locator('#insights-card').screenshot({ path: `${shots}/insights-${scheme}.png` });
       // make_practice aims its spare questions at the weekly's weakest objective.
       await page.evaluate(() => {
         window.__jsonCalls = [];
@@ -3436,18 +3332,23 @@ async function tap(page, locator, name) {
     }
     await studyView(page, 'weak'); // B-297 (D-281): weak spots live in Study
     await page.waitForTimeout(100);
+    // B-365 (D-316): Weak spots as the demo's StudyWeak: open rows by when they are due, previews and solid quiet,
+    // each open row with Drill and Mark solid; no Copy for Quizlet
     ok(
       'weak spots listed',
-      (await page.locator('#study-weak li.ws-item').count()) > 10,
-      String(await page.locator('#study-weak li.ws-item').count())
+      (await page.locator('#weak-list .wl[data-id]:not(.quiet)').count()) > 10,
+      String(await page.locator('#weak-list .wl[data-id]:not(.quiet)').count())
     );
     ok(
       'previews listed',
-      (await page.locator('#weak-preview .row').count()) === 4,
-      String(await page.locator('#weak-preview .row').count())
+      /Previews, before the reading · 4/.test(await page.textContent('#weak-list')),
+      (await page.textContent('#weak-list')).slice(0, 200)
     );
-    await page.locator('#weak-due .ws-item').first().locator('.ws-line').click();
-    await page.locator('#weak-due .ws-item').first().locator('button', { hasText: 'Mark solid' }).click();
+    await page
+      .locator('#weak-list .wl[data-id]:not(.quiet)')
+      .first()
+      .locator('button', { hasText: 'Mark solid' })
+      .click();
     await page.waitForTimeout(150);
     const solidEv = await page.evaluate(() =>
       Object.entries(window.__db.weakspots)
@@ -3455,43 +3356,7 @@ async function tap(page, locator, name) {
         .map(([id]) => id)
     );
     ok('mark solid writes an owner event', solidEv.length === 1, solidEv.join(','));
-    // B-41: Copy for Quizlet on the weak-spot list: import text, one tab-separated card per open weak spot, no write
-    {
-      await page.evaluate(() => {
-        window.__clip = null;
-        try {
-          Object.defineProperty(navigator, 'clipboard', {
-            configurable: true,
-            value: {
-              writeText: t => {
-                window.__clip = t;
-                return Promise.resolve();
-              },
-            },
-          });
-        } catch (e) {
-          window.__clipErr = e.message;
-        }
-        window.__writes0 = JSON.stringify(window.__db);
-      });
-      ok('weak spots: Copy for Quizlet is offered', await page.isVisible('#weak-quizlet-btn'));
-      await page.click('#weak-quizlet-btn');
-      await page.waitForTimeout(150);
-      const clip = await page.evaluate(() => window.__clip || '');
-      const lines = clip.split('\n').filter(Boolean);
-      const open = await page.evaluate(() => Object.values(window.__db.weakspots).length);
-      ok(
-        'Copy for Quizlet copies one term<TAB>definition line per open concept weak spot',
-        lines.length >= 10 && lines.every(l => l.split('\t').length === 2 && l.split('\t')[0] && l.split('\t')[1]),
-        `${lines.length} lines of ${open} · ${lines[0] || ''}`.slice(0, 200)
-      );
-      ok(
-        'Copy for Quizlet writes nothing to the record',
-        await page.evaluate(() => JSON.stringify(window.__db) === window.__writes0)
-      );
-      await page.locator('#weak-quizlet').scrollIntoViewIfNeeded();
-      await page.screenshot({ path: `${shots}/weak-quizlet-${scheme}.png`, fullPage: false });
-    }
+    ok('weak spots: no Copy for Quizlet, as the demo (B-365)', !(await page.isVisible('#weak-quizlet-btn')));
     await page.screenshot({ path: `${shots}/progress.png`, fullPage: true });
     // Record
     await page.click('#tab-record');
@@ -3595,13 +3460,12 @@ async function tap(page, locator, name) {
         };
       });
       ok(
-        `[${w}] Record: every row is ${w === 390 ? 44 : 32} px with its time on the row's line`,
-        m.rows.length >= 4 &&
-          m.rows.every(r => r.h === (w === 390 ? 44 : 32) && r.line) &&
-          m.rows.some(r => /\d:\d\d [AP]M/.test(r.time)),
+        `[${w}] Record: every row has its time on the row's line (B-357: the demo's heights, no fixed px)`,
+        m.rows.length >= 4 && m.rows.every(r => r.line) && m.rows.some(r => /\d:\d\d [ap]m/i.test(r.time)),
         JSON.stringify(m.rows.slice(0, 6))
       );
-      ok(`[${w}] Record: no create button on the view (C-7)`, m.creates.length === 0 && !m.sideways, JSON.stringify(m));
+      // B-357 (D-316): the demo's Record has Log something, so the old no-create rule (C-7) is retired
+      ok(`[${w}] Record: no sideways scroll`, !m.sideways, JSON.stringify(m.creates));
       ok(
         `[${w}] Record: the log holds sessions, quizzes, notes and workouts`,
         ['session', 'quiz', 'note', 'workout'].every(k => m.kinds.includes(k)),
@@ -3620,8 +3484,8 @@ async function tap(page, locator, name) {
       );
       if (w === 390)
         ok(
-          '[390] Record: every segment measures 44 px or more, the filter open',
-          segs.length >= 15 && segs.every(([, wd, h]) => wd >= 44 && h >= 44),
+          '[390] Record: every segment is 44 px tall or more, the filter open',
+          segs.length >= 10 && segs.every(([, , h]) => h >= 44),
           JSON.stringify(segs)
         );
       for (const th of ['light', 'dark']) {
@@ -3835,7 +3699,7 @@ async function tap(page, locator, name) {
       await page.waitForTimeout(300);
       ok(
         'a missed Mac-lane slot says the Mac may have been asleep, and is not retried',
-        /Evening \(Mac\) missed its 8:20 PM run\. It runs on your Mac, which may have been asleep or offline; it runs again at its next time\./.test(
+        /Evening \(Mac\) missed its 8:20 [ap]m run\. It runs on your Mac, which may have been asleep or offline; it runs again at its next time\./.test(
           await card.textContent()
         ),
         (await card.textContent()).slice(0, 400)
@@ -4116,12 +3980,10 @@ async function tap(page, locator, name) {
       await studyView(fp, 'weak'); // B-297 (D-281)
       await fp.waitForTimeout(200);
       ok(
-        'Weak spots lists it as a skill to practice, its one action Mark solid (D-289)',
-        (await fp
-          .locator('#weak-notes .row', { hasText: ': step 2, ' })
-          .locator('button', { hasText: 'Mark solid' })
-          .count()) === 1 &&
-          !(await fp.locator('#study-weak button', { hasText: /^(Practiced|Done|Make active)$/ }).count())
+        'the missed step is kept as a skill weak spot in the record; Weak spots shows no Notes and skills section (B-365)',
+        (await fp.evaluate(() =>
+          Object.values(window.__db.weakspots || {}).some(w => w.kind === 'skill' && /: step 2, /.test(w.topic || ''))
+        )) && !(await fp.locator('#study-weak button', { hasText: /^(Practiced|Done|Make active)$/ }).count())
       );
       await fp.click('#tab-ev');
       await fp.waitForTimeout(150);
@@ -4631,11 +4493,11 @@ async function tap(page, locator, name) {
     await ss.evaluate(() => {
       window.__readerFail = 'server_not_connected';
     });
-    // D-125 as amended: while no session runs, Start a study session keeps the last of the three chips.
+    // B-358 (D-316): while no session runs, Start a study session leads the demo's five chips.
     const sc = await ss.evaluate(() => [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent));
     ok(
-      'session chip offered, last of at most three',
-      sc.length <= 3 && sc[sc.length - 1] === 'Start a study session',
+      'session chip offered, first of the five',
+      sc.length === 5 && sc[0] === 'Start a study session',
       JSON.stringify(sc)
     );
     await ss.locator('#qchips .qchip', { hasText: 'Start a study session' }).click();
@@ -4707,18 +4569,18 @@ async function tap(page, locator, name) {
     const phone = await sessCard();
     await sessShots('session-390');
     ok(
-      'B-290: in a session the minutes left show once per width: at 1280 the card (Running, the topic, n min left, Break and End) and no header line; at 390 the strip (n min left) and no card',
+      'B-290: in a session the minutes left show once per width: at 1280 the card (Running, the topic, n min left, Break, +5 min and End, B-362) and no header line; at 390 the strip (n min left) and no card',
       wide.card &&
         !wide.strip &&
         wide.minutesShown === 1 &&
         wide.badge === 'Running' &&
         wide.topic === 'Fluids and electrolytes' &&
         /^\d+ min left$/.test(wide.left) &&
-        wide.btns.join() === 'Break,End' &&
+        wide.btns.join() === 'Break,+5 min,End' &&
         phone.strip &&
         !phone.card &&
         phone.minutesShown === 1 &&
-        /^\d+ min left · /.test(phone.clock),
+        /^\d+ min left/.test(phone.clock),
       JSON.stringify({ wide, phone })
     );
     let S1 = await sess();
@@ -4807,22 +4669,14 @@ async function tap(page, locator, name) {
     {
       const pr = await lineView();
       ok(
-        'the session is one quiet line in the pane header (at most 34 px, no box); her ring has only just started toward the first check (B-273)',
-        pr.h <= 34 &&
-          pr.inHeader &&
-          /rgba\(0, 0, 0, 0\)|transparent/.test(pr.bg) &&
-          pr.border === '0px' &&
-          pr.cores === 0 &&
-          pr.ring >= 0 &&
-          pr.ring < 0.1 &&
-          pr.session &&
-          !pr.over,
+        "the session is one line in the pane header, as the demo's strip (B-357: its own height and rule); her ring has only just started toward the first check (B-273)",
+        pr.inHeader && pr.cores === 0 && pr.ring >= 0 && pr.ring < 0.1 && pr.session && !pr.over,
         JSON.stringify(pr)
       );
       ok(
-        'the line names the session in its label and shows the minutes and that she is reading along, then Break and End (B-88)',
+        'the line names the session in its label and shows the minutes, then Break and End (B-88; no reading-along words, B-362)',
         /Fluids and electrolytes/.test(pr.label) &&
-          /^\d+ min left · reading along$/.test(await ss.textContent('#sbar .s-clock')) &&
+          /^\d+ min left$/.test(await ss.textContent('#sbar .s-clock')) &&
           (await ss.locator('#sbar button').allTextContents()).join(',') === 'Break,End',
         await ss.textContent('#sbar')
       );
@@ -4833,9 +4687,8 @@ async function tap(page, locator, name) {
         chips: [...document.querySelectorAll('#qchips .qchip')].filter(c => c.offsetParent).map(c => c.textContent),
       }));
       ok(
-        'in a session, against a reader without titles (v1): the Reading line says Your notes and his latest line, and Quiz me now is the one chip (D-131)',
-        /^Reading · Your notesIsotonic: 0\.9% NaCl stays in the vessels\.$/.test(rv.reading || '') &&
-          rv.chips.join() === 'Quiz me now',
+        'in a session: no Reading line (B-362, as the demo), and Quiz me now is the one chip',
+        !rv.reading && rv.chips.join() === 'Quiz me now',
         JSON.stringify(rv)
       );
     }
@@ -4844,13 +4697,12 @@ async function tap(page, locator, name) {
       await ss.evaluate(() => {
         window.__readerNote.note.title = 'NUR 112 › Fluids and electrolytes';
       });
-      await jump(31e3, () => ss.evaluate(() => /›/.test(document.getElementById('sread').textContent)));
-      const reading = await ss.evaluate(() => document.getElementById('sread').textContent);
-      ok(
-        'in a session, against reader 0.3: the Reading line names the course and note by the reader title, then his latest line (D-131)',
-        /^Reading · NUR 112 › Fluids and electrolytesIsotonic: 0\.9% NaCl stays in the vessels\.$/.test(reading),
-        reading
-      );
+      await jump(31e3, async () => false);
+      const reading = await ss.evaluate(() => {
+        const r = document.getElementById('sread');
+        return !!r && !r.hidden && r.getClientRects().length > 0;
+      });
+      ok('in a session, against reader 0.3: still no Reading line on the page (B-362)', !reading);
     }
     ok(
       'chip hidden while a session runs',
@@ -5115,8 +4967,8 @@ async function tap(page, locator, name) {
     await ss.locator('#sbar button', { hasText: 'Resume' }).click();
     await ss.waitForTimeout(300);
     ok(
-      'resume: she reads along again',
-      /min left · reading along/.test(await ss.textContent('#sbar')),
+      'resume: the strip shows the minutes left again, no longer on a break',
+      /min left/.test(await ss.textContent('#sbar')) && !/On a break/.test(await ss.textContent('#sbar')),
       await ss.textContent('#sbar')
     );
     // New writing with what looks like an identifier skips the check and says why, once
@@ -5278,22 +5130,12 @@ async function tap(page, locator, name) {
         msgs: [...document.querySelectorAll('#thread .msg')].map(m => m.className.replace(/\s+/g, ' ')),
         step: document.getElementById('hero').dataset.step,
         chips: [...document.querySelectorAll('#qchips .qchip')].filter(c => c.offsetParent).length,
-        greet: !!document.querySelector('#thread .msg.greet.current .brief-row'),
+        greet: !!document.querySelector('#thread .msg.greet.current .brief .brief-line'), // B-358: its summary line
       }));
       ok(
         'B-91: a reopen in the same conversation starts clean at her greeting (his earlier lines fold behind the pull)',
         planted >= 2 && v.msgs.length === 1 && /greet/.test(v.msgs[0]) && v.greet && v.step === 'idle' && v.chips >= 1,
         JSON.stringify({ planted, ...v })
-      );
-      await rp.click('#thread .msg.greet .brief-row');
-      await rp.waitForTimeout(1200);
-      ok(
-        'B-91: and its briefing unfolds with her stage stepping down',
-        await rp.evaluate(
-          () =>
-            document.getElementById('hero').dataset.step === 'surface' &&
-            !document.querySelector('#thread .msg.greet .brief-list').hidden
-        )
       );
       ok('B-91: no page errors', rErr.length === 0, rErr.join(' | '));
       await rp.close();
@@ -5433,12 +5275,13 @@ async function tap(page, locator, name) {
     const chips = await page.evaluate(() =>
       [...document.querySelectorAll('#qchips button')].map(b => b.textContent.trim())
     );
+    // B-358 (D-316): no Your turn chip; the demo's five chips, and Your turn is asked in words
     ok(
-      `${tag} the greeting offers Your turn with its count`,
-      chips.includes('Your turn (3)') && chips.length <= 3,
+      `${tag} the greeting offers the demo's five chips, no Your turn chip`,
+      chips.length === 5 && !chips.some(c => /^Your turn/.test(c)),
       chips.join(' | ')
     );
-    await page.locator('#qchips button', { hasText: 'Your turn (3)' }).click();
+    await send(page, 'Your turn');
     await page.waitForTimeout(500);
     const card = await page.evaluate(() =>
       [...document.querySelectorAll('#ev-surf .yt-place')].map(g => ({
@@ -5590,12 +5433,9 @@ async function tap(page, locator, name) {
     const chips = await page.evaluate(() =>
       [...document.querySelectorAll('#qchips button')].map(b => b.textContent.trim())
     );
-    ok(
-      `${tag} the greeting offers Your turn for what a run kept out`,
-      chips.includes('Your turn (1)'),
-      chips.join(' | ')
-    );
-    await page.locator('#qchips button', { hasText: 'Your turn (1)' }).click();
+    // B-358 (D-316): Your turn is asked in words; the card below holds what the run kept out
+    ok(`${tag} no Your turn chip on the greeting (B-358)`, !chips.some(c => /^Your turn/.test(c)), chips.join(' | '));
+    await send(page, 'Your turn');
     await page.waitForTimeout(500);
     const card = await page.evaluate(() => {
       const li = document.querySelector('#ev-surf .yt-place[data-place="held"] .yt-held');
@@ -5669,8 +5509,8 @@ async function tap(page, locator, name) {
     const chips = await page.evaluate(() =>
       [...document.querySelectorAll('#qchips button')].map(b => b.textContent.trim())
     );
-    ok(`${tag} the greeting counts one ask per file`, chips.includes('Your turn (2)'), chips.join(' | '));
-    await page.locator('#qchips button', { hasText: 'Your turn (2)' }).click();
+    ok(`${tag} no Your turn chip on the greeting (B-358)`, !chips.some(c => /^Your turn/.test(c)), chips.join(' | '));
+    await send(page, 'Your turn');
     await page.waitForTimeout(500);
     const rows = await page.evaluate(() =>
       [...document.querySelectorAll('#ev-surf .yt-held')].map(li => ({ ref: li.dataset.ref, text: li.textContent }))
@@ -5794,13 +5634,11 @@ async function tap(page, locator, name) {
     }, flower);
     await page.screenshot({ path: `${shots}/notice-${vp.width}.png` });
     ok(
-      `${tag} a job finished off the E.V. tab: her small dial faces him (alert), closed, lit at twelve, her status says something’s ready, no badge (D-216)`,
+      `${tag} a job finished off the E.V. tab: her status says something’s ready, she is alert, ${vp.width < 600 ? '(the phone bar carries the demo’s speech-bubble icon, B-361)' : 'her small dial faces him, closed, lit at twelve,'} no badge (D-216)`,
       !/something’s ready/.test(before) &&
         /^something’s ready/.test(on.readout) &&
         on.mood === 'alert' &&
-        on.facing === true &&
-        on.lit === 1 &&
-        on.halftone === 11 &&
+        (vp.width < 600 || (on.facing === true && on.lit === 1 && on.halftone === 11)) &&
         on.badges === 0,
       JSON.stringify({ before, ...on })
     );

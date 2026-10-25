@@ -331,7 +331,9 @@
         await noteSave(text, nt[1]);
         return;
       }
-      if (LOCAL[key(text)] || YOUR_TURN.test(text) || quizTopicAsk(text)) {
+      // B-357: with the demo's five chips (B-358) a finished job's Open the … is asked in words, as Your turn is
+      const jobAsk = T.greet && T.greet.job && /^\s*open the /i.test(text);
+      if (LOCAL[key(text)] || YOUR_TURN.test(text) || quizTopicAsk(text) || jobAsk) {
         await quick(text);
         return;
       }
