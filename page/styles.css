@@ -1065,6 +1065,21 @@ button.btn:disabled{opacity:.45;cursor:default}
   #today-list .ti-folded .row{min-height:44px}
   #today-list .ti-fold{min-height:44px}
 }
+/* ============================================================ B-292 (C-5): Today's budget ==========================
+   What's left against the time left ("55 min left · 60 free"), the bar (done, then left) and the done minutes on their
+   own line, from planDay's budget. Over budget the left part and its words take the attention yellow (D-270: red is
+   for exams, graded work due and errors), the words' ink mixed toward the text so they keep 4.5:1. The list head
+   carries the short line below 1200 px, where the card reads under the list. It holds no control: the hand-off's C-5
+   asks for a card he reads, excused from D-147 in spec.ui.tenets. */
+#today-budget{gap:6px}
+#today-budget .tb-big{margin:0;font:600 calc(15px * var(--ts))/1.3 var(--sans);color:var(--text);font-variant-numeric:tabular-nums}
+#today-budget .tb-bar{margin:2px 0}
+#today-budget .tb-bar>i.tb-neutral{background:var(--line2)}
+#today-budget .tb-done-line{margin:0;font-variant-numeric:tabular-nums}
+#p-today .tb-over:not(.pbar){color:color-mix(in srgb,var(--sem-yellow) 70%,var(--text))}
+#today-budget .tb-over-line{margin:0}
+#today-list .card-head .tb-short{margin-left:auto;font-variant-numeric:tabular-nums}
+@media (min-width:1200px){#today-list .card-head .tb-short{display:none}}
 /* ============================================================ B-297 (D-283, C-1, C-8, C-13): Study's overview ========
    The toolbar (the view tabs sit beside the title from 600 px), then the exam header with its readiness bar and one
    32 px row per objective (44 px on the phone): its state badge, its words, its weak spots and Quiz me on hover or

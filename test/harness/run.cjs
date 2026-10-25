@@ -2357,7 +2357,8 @@ const ok = (name, cond, detail = '') => {
         .split('\n')
         .map(l => l.split(' | '));
     const budgetMin = async () =>
-      Number(((await page.textContent('#today-list .card-head')) || '').replace(/^\D*?(\d+) of.*$/s, '$1'));
+      // B-292 (C-5): the head's "<left> min left · <free> free"; an added, unticked task adds to what's left
+      Number(((await page.textContent('#today-list .card-head')) || '').replace(/^\D*?(\d+) min left.*$/s, '$1'));
     const min0 = await budgetMin();
     await page.evaluate(() => {
       window.__toolResults = [];

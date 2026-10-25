@@ -536,6 +536,123 @@ async function tickAll(page) {
       ok(`${tag} no sideways scroll, no page errors`, !r.sideways && !errors.length, errors.join(' | '));
       await ctx.close();
     }
+  // B-292 (C-5): the day's budget on the planted list day, under and over, at 390 and 1280 in light and dark. The card
+  // reads "<left> min left · <free> free" with the done minutes on their own line; ticking a 45-minute row moves its
+  // minutes from left to done and the bar keeps its length; over budget the bar's left part is the warning yellow (D-270) and the words that
+  // say so keep 4.5:1 against what they sit on.
+  const budgetRecord = available => {
+    const db = listRecord();
+    const day = db.days[today];
+    day.plan = { ...(day.plan || {}), budget: { available, planned: 130, over: Math.max(0, 130 - available) } };
+    return db;
+  };
+  for (const [name, available] of [
+    ['under', 200],
+    ['over', 60],
+  ])
+    for (const viewport of [
+      { width: 390, height: 844 },
+      { width: 1280, height: 860 },
+    ])
+      for (const scheme of ['light', 'dark']) {
+        const w = viewport.width,
+          tag = `[budget ${name} ${w} ${scheme}]`;
+        const ctx = await browser.newContext({ viewport, colorScheme: scheme });
+        const page = await ctx.newPage();
+        const errors = [];
+        page.on('pageerror', e => errors.push(e.message));
+        await openPage(page, ct(today, 10, 0), budgetRecord(available));
+        await page.click('#tab-today');
+        await page.waitForTimeout(400);
+        const read = () =>
+          page.evaluate(() => {
+            const c = document.getElementById('today-budget');
+            const num = (sel, re) => {
+              const e = c.querySelector(sel);
+              const m = e && re.exec(e.textContent);
+              return m ? m.slice(1).map(Number) : null;
+            };
+            const big = num('.tb-big', /^(\d+) min left · (\d+) free$/);
+            const done = num('.tb-done-line', /^(\d+) min done$/);
+            const bar = c.querySelector('.tb-bar');
+            const seg = [...bar.children].map(i => i.getBoundingClientRect().width);
+            const lum = rgb => {
+              // rgb(r, g, b) in 0-255, or color(srgb r g b) in 0-1 (what a color-mix computes to)
+              const unit = /^color\(srgb/.test(rgb) ? 1 : 255;
+              const v = (rgb.replace(/^color\(srgb/, '').match(/[\d.]+/g) || [])
+                .slice(0, 3)
+                .map(Number)
+                .map(x => {
+                  x /= unit;
+                  return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+                });
+              return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
+            };
+            const ground = e => {
+              for (let n = e; n; n = n.parentElement) {
+                const b = getComputedStyle(n).backgroundColor;
+                if (b && b !== 'rgba(0, 0, 0, 0)' && b !== 'transparent') return b;
+              }
+              return getComputedStyle(document.body).backgroundColor;
+            };
+            const ratio = e => {
+              const a = lum(getComputedStyle(e).color),
+                b = lum(ground(e));
+              return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+            };
+            const overWords = [...document.querySelectorAll('#p-today .tb-over:not(.pbar)')].filter(
+              e => e.getClientRects().length
+            );
+            const left = bar.querySelector('.tb-left');
+            return {
+              shown: !c.hidden && c.getClientRects().length > 0,
+              big,
+              done: done && done[0],
+              barW: Math.round(seg.reduce((s, x) => s + x, 0)),
+              leftWarn: left.classList.contains('x-yellow'),
+              leftBg: getComputedStyle(left).backgroundColor,
+              yellow: getComputedStyle(left).getPropertyValue('--sem-yellow').trim(),
+              over: bar.classList.contains('tb-over'),
+              overRatios: overWords.map(e => Math.round(ratio(e) * 100) / 100),
+              short: (document.querySelector('#today-list .tb-short') || {}).textContent || '',
+              sideways: document.documentElement.scrollWidth > innerWidth + 1,
+            };
+          });
+        const a = await read();
+        ok(
+          `${tag} the card reads what's left against the time left, with the done minutes on their own line`,
+          a.shown && a.big && a.done != null && a.big[1] === Math.max(0, available - a.done),
+          JSON.stringify(a)
+        );
+        ok(
+          `${tag} ${name === 'over' ? "over budget: the bar's left part is the warning yellow (D-270) and the words say so at 4.5:1" : 'under budget: no warning colour'}`,
+          name === 'over'
+            ? a.over && a.leftWarn && a.overRatios.length >= 1 && a.overRatios.every(r => r >= 4.5)
+            : !a.over && !a.leftWarn && !a.overRatios.length,
+          JSON.stringify({ over: a.over, leftWarn: a.leftWarn, ratios: a.overRatios })
+        );
+        ok(
+          `${tag} the list head carries the short line below 1200 px only`,
+          w < 1200 ? a.short === `${a.big[0]} min left · ${a.big[1]} free` : true,
+          a.short
+        );
+        // the whole page: from 1200 px the card sits in the fixed right panel, outside the Today pane
+        await page.screenshot({ path: `${shots}/today-budget-${name}-${w}-${scheme}.png` });
+        // tick the 45-minute reading: its minutes move from left to done and the bar keeps its length
+        await page
+          .locator('#today-list .ti-list li.today-item', { hasText: 'Read chapter 39' })
+          .locator('input.tick')
+          .click();
+        await page.waitForTimeout(400);
+        const b = await read();
+        ok(
+          `${tag} ticking a 45-minute task moves 45 min from left to done; the bar keeps its length`,
+          b.big[0] === a.big[0] - 45 && b.done === a.done + 45 && Math.abs(b.barW - a.barW) <= 1,
+          JSON.stringify({ before: [a.big, a.done, a.barW], after: [b.big, b.done, b.barW] })
+        );
+        ok(`${tag} no sideways scroll, no page errors`, !b.sideways && !errors.length, errors.join(' | '));
+        await ctx.close();
+      }
   // B-189: asked in words on a planted lab day (a lab exam and a class exam today, as on Oct 21), E.V. answers from the
   // record without a model call: the greeting already carries the Prep marker for the day, and the reply's card is the
   // day's check with each item naming its source (the calendar entry, the announcement, the course calendar's row, the

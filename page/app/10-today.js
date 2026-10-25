@@ -243,6 +243,66 @@
         action: go ? btn('Open', go) : rm,
       });
     }
+    /**
+     * B-292 (C-5): planDay's budget as he sees it. The planned minutes split into done (ticked) and left (the rest);
+     * free is the budget minus what's done. Ticking moves minutes from left to done, so the bar never shrinks; the day is
+     * over budget when what's left exceeds the time left. Null when the day has no budget.
+     */
+    function budgetView(budget, items, isDone) {
+      if (!budget || !(budget.available > 0)) return null;
+      const available = Math.round(budget.available),
+        planned = Math.max(0, Math.round(budget.planned || 0));
+      const doneRaw = items.filter(it => isDone(it)).reduce((s, it) => s + (Number(it.minutes) || 0), 0);
+      const done = Math.min(planned, Math.round(doneRaw)),
+        left = planned - done,
+        free = Math.max(0, available - done),
+        over = Math.max(0, left - free);
+      return {
+        available,
+        planned,
+        done,
+        left,
+        free,
+        over,
+        line: `${left} min left · ${free} free`,
+        donePct: Math.min(100, (done / available) * 100),
+        leftPct: Math.max(
+          0,
+          Math.min(100, ((done + left) / available) * 100) - Math.min(100, (done / available) * 100)
+        ),
+      };
+    }
+    function renderBudget(bv) {
+      // built here, not in the shell, which is at its byte budget; first in the side column (the right panel from 1200 px)
+      let card = $('today-budget');
+      if (!card) {
+        card = el('div', 'card');
+        card.id = 'today-budget';
+        document.querySelector('#p-today .col-side').prepend(card);
+      }
+      card.hidden = !bv;
+      if (!bv) return card.replaceChildren();
+      const bar = el('div', 'pbar tb-bar' + (bv.over ? ' tb-over' : ''));
+      bar.setAttribute('role', 'img');
+      bar.setAttribute(
+        'aria-label',
+        `${bv.done} min done, ${bv.left} min left, ${bv.available} min budget` + (bv.over ? `, over by ${bv.over}` : '')
+      );
+      const d = el('i', 'x-green tb-done'),
+        l = el('i', (bv.over ? 'x-yellow' : 'tb-neutral') + ' tb-left');
+      d.style.width = bv.donePct.toFixed(1) + '%';
+      l.style.width = bv.leftPct.toFixed(1) + '%';
+      bar.append(d, l);
+      card.replaceChildren(
+        el('h2', null, 'Today’s budget'),
+        el('p', 'tb-big' + (bv.over ? ' tb-over' : ''), bv.line),
+        bar,
+        el('p', 'meta tb-done-line', `${bv.done} min done`),
+        ...(bv.over
+          ? [el('p', 'meta tb-over tb-over-line', `Over by ${bv.over} min · ${bv.available} min budget`)]
+          : [])
+      );
+    }
     function renderToday() {
       const { day, items, isDone, budget, skipped } = dayState();
       // B-291 (D-286): no Now card; the prep check is under her greeting and the exam countdown on Study.
@@ -250,8 +310,10 @@
       const box = $('today-list');
       const head = el('div', 'card-head');
       head.append(el('h2', null, 'Today’s list'));
-      const b = budget;
-      if (b) head.append(el('span', 'meta', `${b.planned} of ${b.available} min planned`));
+      // B-292 (C-5): the day's budget as what's left against the time left; the side card holds the bar and the done line
+      const bv = budgetView(budget, items, isDone);
+      if (bv) head.append(el('span', 'meta tb-short' + (bv.over ? ' tb-over' : ''), bv.line));
+      renderBudget(bv);
       // B-291: the open rows, then Done, then "Deferred: over today's budget" and "Taken off today" folded under the list.
       // A row he ticks on this visit stays where it is (rule 6); only rows done before it sit in Done.
       const shown = items.filter(i => i.tag !== 'EXAM'); // the exam is in Next 7 days (B-117)

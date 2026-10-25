@@ -873,7 +873,8 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
         await page.waitForTimeout(120);
         const planned = () =>
           page.evaluate(() => {
-            const m = /(\d+) of \d+ min planned/.exec(document.getElementById('today-list').textContent);
+            // B-292 (C-5): the list head's "<left> min left · <free> free"; an added, unticked task adds to what's left
+            const m = /(\d+) min left · \d+ free/.exec(document.getElementById('today-list').textContent);
             return m ? Number(m[1]) : null;
           });
         const before = await planned();

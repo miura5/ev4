@@ -4918,7 +4918,9 @@
     "system"
    ],
    "exceptions": {
-    "D-147": [],
+    "D-147": [
+     "today-budget"
+    ],
     "D-151": []
    },
    "onFor": {
