@@ -6552,5 +6552,22 @@
    "outcome": "task",
    "at": "2026-10-25T14:52:52.698Z"
   }
+ },
+ {
+  "id": "B-369",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Review 2: Today's phone rows, the Notes badge, Plan the rest's proposal and the week's column widths differ from the demo.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UI reviewer click-through 2 at 112b83f, Oct 25 (D-316)",
+  "words": "Review 2: Today's phone rows, the Notes badge, Plan the rest's proposal and the week's column widths differ from the demo.",
+  "reportedAt": "2026-10-25T14:52:53.278Z",
+  "board": {
+   "row": "v4 B-369: Review 2: Today's phone rows, the Notes badge, Plan the rest's…"
+  }
  }
 ]
