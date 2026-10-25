@@ -6187,11 +6187,13 @@
  {
   "id": "B-352",
   "kind": "request",
-  "title": "Request (reported Oct 25): Fidelity fix: the frame differs from the demo in text formats, the sidebar status line, the play icon, the Preferences popover and the phone header.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
-  "depends": [],
+  "title": "Fidelity fix: Frame (D-314): times as 8:10 pm, day labels as Tue 20 Oct / Sun 25, durations as 10 h 20 m, 'points' not 'pts', across every view; the status under E.V. reads as the demo ('ready when you are', her working words), with ' · staging' only on staging; Start session's play icon an outline as the demo; Preferences holds Light and Dark only (no Auto: the page follows the device until he picks) and no System link; no Preferences button on the phone header",
+  "dod": "Every view's text formats, the sidebar head, the play icon, the popover and the phone header match the boards. Proof (D-312, fidelity sprint): node tools/build.mjs; tools/fidelity screenshots (crawl.cjs demo and built click every control) beside the boards at 1280, 1706, 2560 and 390; npm run smoke; ship staging GREEN.",
+  "milestone": "v4.8 redesign",
+  "status": "open",
+  "depends": [
+   "B-333"
+  ],
   "notes": "",
   "commit": null,
   "source": "fidelity review, Oct 25 (D-314)",
@@ -6199,6 +6201,10 @@
   "reportedAt": "2026-10-25T12:48:11.493Z",
   "board": {
    "row": "v4 B-352: Fidelity fix: the frame differs from the demo in text formats, the…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-25T12:48:14.673Z"
   }
  }
 ]
