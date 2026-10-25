@@ -6217,7 +6217,7 @@
   "depends": [
    "B-345"
   ],
-  "notes": "claimed by lane ev",
+  "notes": "built and pushed ad690ef; shipping staging",
   "commit": null,
   "source": "fidelity review, Oct 25 (D-314)",
   "words": "Fidelity fix: E.V.'s view differs from the demo: paperclip, chips, the things-to-know fold and the phone session strip.",
