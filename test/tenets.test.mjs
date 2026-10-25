@@ -30,7 +30,8 @@ const failing = s =>
 
 test('B-115: the look pass checks D-146 to D-151 at 390, 735 and 1280, with E.V. on and the other tabs reporting', () => {
   assert.deepEqual(spec.ui.tenets.checks, ['D-146', 'D-147', 'D-148', 'D-151', 'D-160', 'D-276']);
-  assert.deepEqual(spec.ui.tenets.onFor, { 'D-160': ['ev', 'study'] });
+  // B-303: never two badges on a row fails on every view, Record's and Progress's too
+  assert.deepEqual(spec.ui.tenets.onFor, { 'D-160': ['ev', 'study'], 'D-276': ['progress', 'record'] });
   assert.deepEqual(spec.ui.tenets.widths, [390, 735, 1280]);
   assert.deepEqual(
     spec.ui.tenets.on,

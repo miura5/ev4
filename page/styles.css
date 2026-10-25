@@ -584,12 +584,12 @@ button.tlink{all:unset;cursor:pointer;color:var(--accent-text);font-size:calc(14
 .set-count{flex:none;font-variant-numeric:tabular-nums;color:var(--ink2);font-size:calc(13.5px * var(--ts))}
 .fold-line.flat{cursor:default;pointer-events:none}.fold-line.flat::after{content:''}
 .set-list{margin:2px 0 8px}
-.set-q,.sum-line,.pr-line{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:8px;width:100%;min-height:36px;cursor:pointer;color:var(--ink);font-size:calc(14.5px * var(--ts))}
-.set-q:focus-visible,.sum-line:focus-visible,.pr-line:focus-visible,.next-line:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.set-q,.sum-line{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:8px;width:100%;min-height:36px;cursor:pointer;color:var(--ink);font-size:calc(14.5px * var(--ts))}
+.set-q:focus-visible,.sum-line:focus-visible,.next-line:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
 .set-list .row,.sum-list .row,#pr-body .row{padding:4px 0}
 .sq-n{flex:none;color:var(--soft);font-variant-numeric:tabular-nums;min-width:1.6em}
-.sq-t,.sum-t,.pr-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sq-s,.sum-k,.pr-s{flex:none;color:var(--soft);font-size:calc(13px * var(--ts))}.sq-s.ok{color:var(--do)}
+.sq-t,.sum-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sq-s,.sum-k{flex:none;color:var(--soft);font-size:calc(13px * var(--ts))}.sq-s.ok{color:var(--do)}
 .set-item.current .sq-t{color:var(--accent-text)}
 .q-beside{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,15rem);gap:20px;align-items:start}
 .q-main{display:flex;flex-direction:column;gap:12px;min-width:0}.q-set{border-left:1px solid var(--line);padding-left:16px;min-width:0}
@@ -599,8 +599,6 @@ button.tlink{all:unset;cursor:pointer;color:var(--accent-text);font-size:calc(14
 .sum-h{margin:6px 0 0}
 .sum-more{display:flex;flex-direction:column;gap:6px;padding:2px 0 8px}.sum-more p{margin:0}
 .next-line{all:unset;cursor:pointer;color:var(--ink2);font-size:calc(14.5px * var(--ts));padding:8px 0 2px;display:block}.next-line::after{content:' ›'}
-.pr-lead{display:flex;flex-direction:column;gap:8px;align-items:flex-start;padding-bottom:6px}
-.pr-acts{display:flex;gap:8px;flex-wrap:wrap;padding:4px 0 8px}.pr-acts[hidden]{display:none}
 #more-card:not(.card){padding:4px 0}
 .plan-lead{margin:2px 0 0}
 .plan-dh{margin:10px 0 0}
