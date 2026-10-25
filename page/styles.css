@@ -1105,7 +1105,7 @@ button.btn:disabled{opacity:.45;cursor:default}
    The period switch in the view's toolbar; one card of property rows (study time, quiz accuracy, weak spots); the
    study-time chart, one bar per day, week or month, 44 px wide or more on the phone; by course and exam readiness side
    by side from 600 px. The picked bar's day panel is the right panel's first card from 1200 px; below that it follows
-   the chart. Violet is study time, green solid, yellow right once (D-269); her colour is not used here. */
+   the pane (B-288). Violet is study time, green solid, yellow right once (D-269); her colour is not used here. */
 #progress-readiness .prog-bar{padding:0 0 8px;border-bottom:0;min-height:0}
 #progress-readiness .prog-bar .seg{align-self:center}
 .prog-props{gap:0;padding:4px 14px}
@@ -1145,12 +1145,6 @@ button.btn:disabled{opacity:.45;cursor:default}
 #prog-day .prog-s:last-child{border-bottom:0}
 #progress-readiness .col-main{gap:12px}
 @media (min-width:600px){.prog-grid{grid-template-columns:1fr 1fr}}
-@media (max-width:1199px){
-  /* the cols are contents here: order the parts so the picked bar's sessions follow the chart */
-  #progress-readiness:not([hidden]){display:flex;flex-direction:column;gap:12px}
-  #prog-bar,#prog-stats,#prog-chart-card{order:-2}
-  #prog-day{order:-1}
-}
 @media (max-width:599px){
   .prog-chart{gap:4px;height:140px}
   .prog-props{padding:2px 14px}

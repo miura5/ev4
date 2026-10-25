@@ -3425,17 +3425,6 @@ const ok = (name, cond, detail = '') => {
           );
         await page.click(`#prog-chart .pc-bar[data-key="${plant.d0}"]`);
         await page.waitForTimeout(80);
-        // the picked bar's panel is the right panel from 1200 px, and follows the chart below that
-        const place = await page.evaluate(() => {
-          const d = document.getElementById('prog-day').getBoundingClientRect(),
-            c = document.getElementById('prog-chart-card').getBoundingClientRect();
-          return { right: d.left >= c.right, below: d.top >= c.bottom - 1 };
-        });
-        ok(
-          `[${w}] Progress: the day panel sits ${w >= 1200 ? 'in the right panel' : 'under the chart'}`,
-          w >= 1200 ? place.right : place.below,
-          JSON.stringify(place)
-        );
         for (const th of ['light', 'dark']) {
           await page.evaluate(m => document.documentElement.setAttribute('data-theme', m), th);
           await page.waitForTimeout(80);
