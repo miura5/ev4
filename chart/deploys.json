@@ -4400,5 +4400,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "ad690ef",
+  "time": "2026-10-25T13:06:43.792Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "16aa0e6",
+  "tasks": [
+   "B-353"
+  ],
+  "summary": "Fidelity fix: E.V.'s view differs from the demo: paperclip, chips,…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
