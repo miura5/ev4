@@ -332,7 +332,9 @@ async function main() {
       // 2. Each tab opens its own panel.
       const missing = [];
       for (const t of ['today', 'study', 'progress', 'record', 'system', 'ev']) {
-        await page.click('#tab-' + t);
+        // B-389: System has no tab since B-390; the page opens it from its address, #system, as the status line does
+        if (t === 'system') await page.evaluate(() => (location.hash = 'system'));
+        else await page.click('#tab-' + t);
         const shown = await until(
           page,
           id => {
@@ -359,14 +361,15 @@ async function main() {
       });
       if (row) {
         await page.locator('#today-list .li').nth(row.i).locator('input.tick').click();
+        // The row is found again by its id: a ticked item moves within the list, so its old place holds another row.
         const saved = await until(
           page,
-          i => {
-            const c = document.querySelectorAll('#today-list .li')[i];
+          id => {
+            const c = [...document.querySelectorAll('#today-list .li')].find(r => r.dataset.id === id);
             const t = c && c.querySelector('input.tick');
             return !!t && t.checked && !t.disabled;
           },
-          row.i
+          row.id
         );
         await page.waitForTimeout(500);
         await page.reload();
