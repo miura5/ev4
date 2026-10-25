@@ -5608,7 +5608,7 @@
    "B-315",
    "B-316"
   ],
-  "notes": "Review gaps fixed at 865b386: whole-D1 backup via api dump (every collection and page, refused when short), D-321 per-target system out of backup, exportToR2 and drill, B-04 hold tested on the Worker drill, drill prompt names its scratch drills/ write (D-302), ids exact (encodeId dropped, pull ids from list results) on B-319's run API. Live prompts byte-identical. npm test green. Not fired; the scratch Worker's D1 binding (after run 40239115928) should be checked before the first staging drill.",
+  "notes": "Code half at 865b386: second review confirmed the full backup, system-doc handling, mid-dump safety, exact ids and byte-identical live prompts; its one open item (hash form of non-canonical page saves) moved to B-398; fails safe (a drill would flag, never lose). Next: ship staging, then the task half with Matt at his Mac.",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
