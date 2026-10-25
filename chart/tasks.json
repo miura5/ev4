@@ -7021,7 +7021,7 @@
   "milestone": "v4.9 cleanup",
   "status": "open",
   "depends": [],
-  "notes": "Also from B-392's review: shortTitle keeps a time with a spaced a.m./p.m. whole, and drops a '(' at the very start.",
+  "notes": "Also from B-357's second review: prep.cjs's week-line checks accept 'Three or Four graded'; tighten to the count the page now always shows (Four on the synthetic record) and rename the check.",
   "commit": null,
   "source": "release code review (page), 368b104..fc9133e, Oct 25",
   "words": "Dead code and styles for removed screens remain; a stale saved Study view can reopen a closed set; his own snoozes can't be brought back once the panel closes.",
