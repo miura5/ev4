@@ -429,3 +429,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-280 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; folded into B-289 and B-290 (Conversation) and B-291 to B-296 (Today and the task panel). |
 | B-281 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; folded into B-297 to B-300 (Study), B-301 (Progress) and B-302 (Record). |
 | B-282 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; replaced by B-303. |
+| B-352 | request | 2026-10-25T12:48:11.493Z | Fidelity fix: the frame differs from the demo in text formats, the sidebar status line, the play icon, the Preferences popover and the phone header. | fidelity review, Oct 25 (D-314) | inbox |  |

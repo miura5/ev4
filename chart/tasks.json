@@ -6183,5 +6183,22 @@
    "outcome": "task",
    "at": "2026-10-25T12:41:38.432Z"
   }
+ },
+ {
+  "id": "B-352",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Fidelity fix: the frame differs from the demo in text formats, the sidebar status line, the play icon, the Preferences popover and the phone header.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "fidelity review, Oct 25 (D-314)",
+  "words": "Fidelity fix: the frame differs from the demo in text formats, the sidebar status line, the play icon, the Preferences popover and the phone header.",
+  "reportedAt": "2026-10-25T12:48:11.493Z",
+  "board": {
+   "row": "v4 B-352: Fidelity fix: the frame differs from the demo in text formats, the…"
+  }
  }
 ]
