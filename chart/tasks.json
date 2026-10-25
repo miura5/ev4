@@ -6206,5 +6206,22 @@
    "outcome": "task",
    "at": "2026-10-25T12:48:14.673Z"
   }
+ },
+ {
+  "id": "B-353",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Fidelity fix: E.V.'s view differs from the demo: paperclip, chips, the things-to-know fold and the phone session strip.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "fidelity review, Oct 25 (D-314)",
+  "words": "Fidelity fix: E.V.'s view differs from the demo: paperclip, chips, the things-to-know fold and the phone session strip.",
+  "reportedAt": "2026-10-25T12:48:17.943Z",
+  "board": {
+   "row": "v4 B-353: Fidelity fix: E.V.'s view differs from the demo: paperclip, chips,…"
+  }
  }
 ]
