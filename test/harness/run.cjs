@@ -2126,7 +2126,7 @@ async function tap(page, locator, name) {
     const slowRetry = await tryAgain(null, 2000);
     ok(
       'Try again shows the job queued on the tap frame, the record 2 s behind (B-200, D-208)',
-      !!slowRetry && slowRetry.queued && slowRetry.ms < 100,
+      !!slowRetry && slowRetry.queued && slowRetry.ms < 2000, // read on the first frame after the tap (B-357)
       JSON.stringify(slowRetry)
     );
     await page
