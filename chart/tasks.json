@@ -6263,7 +6263,7 @@
   "depends": [
    "B-343"
   ],
-  "notes": "Shipped to staging at 16aa0e6: ship staging GREEN.",
+  "notes": "Card for Matt: an opened task now reads as the demo's task board. The tick sits beside its name and checks it off (the Status switch still does too); its description shows under the name when it has one (a date's Canvas notes, or the planner's note on the item); and Where it came from sits under that as rows, each with a dot and its time on the right (Planned by the 4:25 am run · 4:32 am, From the Exam 4 plan), above the properties card. Same order at every size. Still differs from the demo: on a computer the task stays in the right panel with Close, not the full middle view with previous and next; the demo's description is written for each task, yours shows only where the record carries one, so most tasks have none; long names wrap to several lines in the panel at 1280, 1706 and 2560. 390 matches. Reviewer: none (fidelity sprint, D-312).",
   "commit": "16aa0e6",
   "source": "fidelity review, Oct 25 (D-314)",
   "words": "Fidelity fix: the task panel lacks the demo's tick beside the title and places Where it came from differently.",
