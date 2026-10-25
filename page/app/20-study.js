@@ -38,7 +38,7 @@
             'empty',
             rs
               ? 'Today’s set came through empty. Tell E.V. in a chat and it will rebuild it.'
-              : 'Today’s review appears after the 4:25am run.' + (due ? ' ' + plural(due, 'weak spot') + ' due.' : '')
+              : 'Today’s review appears after the 4:25 am run.' + (due ? ' ' + plural(due, 'weak spot') + ' due.' : '')
           )
         );
         return;
@@ -374,7 +374,7 @@
         setStudy('review');
         return render();
       }
-      toast('Today’s review appears after the 4:25am run.');
+      toast('Today’s review appears after the 4:25 am run.');
     }
     function wkRow(w, quiet) {
       const d = w.derived;

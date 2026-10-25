@@ -910,7 +910,7 @@
       card.querySelector('.ss-left').textContent = ending
         ? 'Wrapping up'
         : left == null
-          ? st.minutes + ' min'
+          ? durFmt(st.minutes)
           : left + ' min left';
       card.querySelector('.ss-sub').textContent = ending
         ? st.minutes + ' min in'

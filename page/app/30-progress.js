@@ -26,7 +26,7 @@
     const soFar = (a, b) => (inSpan(today, a, b) ? ' (so far)' : '');
     const hm = m => {
       m = Math.round(m || 0);
-      return m < 60 ? m + ' min' : Math.floor(m / 60) + ' h' + (m % 60 ? ' ' + (m % 60) + ' min' : '');
+      return durFmt(m);
     };
     const monthOf = d => d.slice(0, 7);
     const monthName = ym => MON[Number(ym.slice(5, 7)) - 1];
@@ -137,7 +137,7 @@
             ? acc.right + ' of ' + acc.n + ' right'
             : (accPct === prevPct
                 ? 'same as '
-                : (accPct > prevPct ? '+' : '−') + Math.abs(accPct - prevPct) + ' pts on ') + prev.name,
+                : (accPct > prevPct ? '+' : '−') + Math.abs(accPct - prevPct) + ' points on ') + prev.name,
         ],
         ['Weak spots', open.length + ' open', due ? due + ' due today' : 'none due today'],
       ].filter(Boolean);

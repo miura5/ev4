@@ -135,4 +135,9 @@
       const t = (location.hash || '').slice(1);
       showTab(t && $('p-' + t) ? t : 'ev');
     }
+    // B-352 (D-314): System has no link, as the demo; #system opens it
+    window.addEventListener('hashchange', () => {
+      const t = (location.hash || '').slice(1);
+      if (t && $('p-' + t)) showTab(t);
+    });
 

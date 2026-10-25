@@ -23,7 +23,7 @@
             ? 'Bag check: '
             : c.date === E.addDays(t0, 1)
               ? 'Pack for tomorrow: '
-              : 'Pack for ' + E.shortDate(c.date) + ': ';
+              : 'Pack for ' + short(c.date) + ': ';
         const pe = prepEl(
           { id: key, prep: { date: c.date, phase: c.phase, title: c.title, said: c.said, lead } },
           { open: true }
@@ -68,7 +68,7 @@
               el(
                 'p',
                 'meta',
-                `In ${h.ref} · ${String(h.source || '').split(' ')[0] || 'a run'}${h.at ? ' · ' + E.shortDate(h.at) : ''}`
+                `In ${h.ref} · ${String(h.source || '').split(' ')[0] || 'a run'}${h.at ? ' · ' + short(h.at) : ''}`
               )
             );
             // One tap answers every value held from this place, each kept as its own <key>-matt; the record takes 50
@@ -183,7 +183,7 @@
         const focus = new Set(c.focus || []);
         const list = [...open.filter(it => focus.has(it.id)), ...open.filter(it => !focus.has(it.id))];
         box.append(head2('Today’s list', all.length ? `${doneN} of ${all.length} done` : ''));
-        if (!all.length) box.append(el('p', 'empty', 'Nothing planned yet. The 4:25am run builds the list.'));
+        if (!all.length) box.append(el('p', 'empty', 'Nothing planned yet. The 4:25 am run builds the list.'));
         else if (!list.length) box.append(el('p', 'empty', 'Everything on today’s list is done.'));
         else {
           const ul = el('ul', 'list'),
@@ -204,7 +204,7 @@
         box.append(h);
         if (!total) {
           box.append(
-            el('p', 'empty', rs ? 'Today’s set came through empty.' : 'Today’s review arrives with the 4:25am run.')
+            el('p', 'empty', rs ? 'Today’s set came through empty.' : 'Today’s review arrives with the 4:25 am run.')
           );
           return;
         }
@@ -767,7 +767,7 @@
           head2(
             'Study session · ' + (s.topic || ''),
             [
-              s.minutes != null ? s.minutes + ' min' : '',
+              s.minutes != null ? durFmt(s.minutes) : '',
               s.checks ? plural(s.checks, 'check') : '',
               s.questions ? plural(s.questions, 'question') : '',
             ]

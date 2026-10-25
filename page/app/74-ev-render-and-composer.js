@@ -3,8 +3,8 @@
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'; // B-340: the demo's arrow
     const STOP_ICON =
       '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2.5" fill="currentColor"/></svg>';
-    const PLAY_ICON =
-      '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>';
+    // B-352 (D-314): the demo's outline play
+    const PLAY_ICON = '<svg class="play-o" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>';
     // E.V.'s state, shown by every core that follows it and by the readout: streaming → speaking, Claude working → thinking,
     // a check just posted → check ready, a session break → resting, a right answer → pleased, typing → listening.
     // B-215 (D-216): turning to face him is the notification. A job that finishes, or a new ask in Your turn, while he is on
@@ -40,13 +40,14 @@
       // B-284: the greeting sets no mood; she rests at Idle.
       return 'idle';
     }
+    // B-352 (D-314): the demo's words under her name: ready when you are at rest, thinking… while she works
     const MOOD_WORD = {
-      idle: 'online',
+      idle: 'ready when you are',
       listening: 'listening',
-      thinking: 'thinking',
+      thinking: 'thinking…',
       speaking: 'replying',
       alert: 'check ready',
-      happy: 'online',
+      happy: 'ready when you are',
       sleepy: 'resting',
     };
     function renderMood() {
@@ -74,8 +75,10 @@
             : NT.on && ui.tab !== 'ev'
               ? word
               : running
-                ? 'working'
-                : word,
+                ? 'thinking…'
+                : ui.restPlan && MOOD_NOW === 'idle'
+                  ? 'waiting on your review'
+                  : word,
         STAGING ? 'staging' : '',
       ]
         .filter(Boolean)

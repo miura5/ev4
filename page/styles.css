@@ -774,8 +774,9 @@ body:not(.on-ev) .mh .cap-now{display:none}
 .side .prefpop .tab-sys.sys-link{position:static;width:auto;height:auto;min-height:24px;padding:0;margin:0;border:0;border-radius:0;background:none;box-shadow:none;color:var(--text);font:400 calc(13px * var(--ts)) var(--sans);text-decoration:underline;text-underline-offset:3px;justify-content:flex-start;align-self:flex-start}
 .side .prefpop .tab-sys.sys-link span{display:inline}
 .side .prefpop .tab-sys.sys-link:hover{background:none}
+.side .prefpop .tab-sys.sys-link[hidden]{display:none}
 @media (max-width:599px){
-  .side-foot{position:fixed;top:calc(2px + env(safe-area-inset-top,0px));right:max(4px,env(safe-area-inset-right,0px));z-index:10;margin:0;padding:0}
+  .side-foot{display:none} /* B-352: no Preferences on the phone header, as the demo */
   .side .prefs-btn{width:44px;height:44px;padding:0;justify-content:center;border-radius:10px}
   .side .prefs-btn span{display:none}
   .side .prefpop{top:48px;bottom:auto;left:auto;right:0}
@@ -912,6 +913,7 @@ button.tlink:hover{text-decoration-color:currentColor}
   #ev-sess .ss-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
   #ev-sess button.btn.wide{width:100%;margin-top:8px}
   #ev-sess button.btn svg{width:12px;height:12px;fill:currentColor;stroke:none}
+  #ev-sess button.btn svg.play-o{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7}
   body.captions.on-ev .mh #sbar{display:none}
 }
 /* A surface's own head line carries its title, count and state; the card under it never says them again (D-228). */
@@ -1397,7 +1399,6 @@ button.btn.mh-back{display:none}
 #p-study .sbar-study:not(:has(> :not([hidden],.sp))){display:none}
 #p-study .sbar-study .seg{align-self:center}
 #study-course .code{display:none}
-#study-start svg{fill:currentColor;stroke:none}
 #study-objectives{display:flex;flex-direction:column;gap:12px;padding:2px 2px 18px}
 #study-objectives[hidden]{display:none}
 .ov-card{gap:10px}

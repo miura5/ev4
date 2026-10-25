@@ -23,13 +23,14 @@
         <button class="tab" role="tab" title="Record" id="tab-record" data-tab="record" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v4H4zM6 9v10h12V9M10 13h4"/></svg><span>Record</span></button>
       </nav>
   <div class="side-sec" id="side-today" hidden></div>
-  <!-- B-334 (D-312): the foot is one Preferences button; it opens a small popover with Theme, Contrast and System, this
-       device's own. Esc closes it and returns focus to the button. Under 600 px the button sits top right. -->
+  <!-- B-334 (D-312), B-352 (D-314): the foot is one Preferences button; it opens a small popover with Theme (Light,
+       Dark; the device's until he picks) and Contrast, this device's own. Esc closes it and returns focus to the button.
+       No System link, as the demo: System opens at #system. Not on the phone. -->
   <div class="side-foot" id="side-prefs">
     <div class="prefpop" id="side-prefpop" role="dialog" aria-label="Preferences" hidden>
-      <div class="pref"><span class="lbl" id="side-theme-lbl">Theme</span><div class="seg theme-seg" id="side-theme-seg" role="group" aria-labelledby="side-theme-lbl"><button type="button" data-t="system" aria-pressed="true">Auto</button><button type="button" data-t="light" aria-pressed="false">Light</button><button type="button" data-t="dark" aria-pressed="false">Dark</button></div></div>
+      <div class="pref"><span class="lbl" id="side-theme-lbl">Theme</span><div class="seg theme-seg" id="side-theme-seg" role="group" aria-labelledby="side-theme-lbl"><button type="button" data-t="light" aria-pressed="false">Light</button><button type="button" data-t="dark" aria-pressed="false">Dark</button></div></div>
       <div class="pref"><span class="lbl" id="side-contrast-lbl">Contrast</span><div class="seg theme-seg" id="side-contrast-seg" role="group" aria-labelledby="side-contrast-lbl"><button type="button" data-c="30" aria-pressed="false">30</button><button type="button" data-c="60" aria-pressed="true">60</button><button type="button" data-c="100" aria-pressed="false">100</button></div></div>
-      <button class="tab tab-sys sys-link" id="tab-system" data-tab="system" type="button" title="System" aria-current="false"><span>System</span></button>
+      <button class="tab tab-sys sys-link" id="tab-system" data-tab="system" type="button" title="System" aria-current="false" hidden><span>System</span></button>
     </div>
     <button class="prefs-btn" id="side-prefs-btn" type="button" aria-expanded="false" aria-controls="side-prefpop" aria-label="Preferences" title="Preferences"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8M14 5v4M8 15v4"/></svg><span>Preferences</span></button>
   </div>

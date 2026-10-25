@@ -468,7 +468,7 @@
       const c = E.chicagoClock(iso);
       if (!c) return '';
       const [h, m] = c.split(':').map(Number);
-      return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
+      return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'am' : 'pm'}`;
     };
     const dayLabel = d => (d === today ? 'Today' : d === E.addDays(today, -1) ? 'Yesterday' : short(d));
     let lastMs = 0; // message keys: m-<YYYYMMDD-HHMMSSmmm>-<who> (v4); ids sort by time, never the same twice on this page

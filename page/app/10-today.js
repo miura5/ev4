@@ -1,5 +1,5 @@
     // ------------------------------------------------------------ Today
-    // the same plan the 4:25am run builds, from the record as it stands now (liveDay, and B-293's Plan the rest)
+    // the same plan the 4:25 am run builds, from the record as it stands now (liveDay, and B-293's Plan the rest)
     function planNow() {
       return E.planDay({
         // B-68: the scheduler the morning uses (spec.study.scheduler), so a live day agrees with it
@@ -223,7 +223,7 @@
       const when = doneNow
         ? 'Done'
         : it.minutes
-          ? it.minutes + ' min'
+          ? durFmt(it.minutes)
           : due
             ? due === today
               ? 'Today'
@@ -256,7 +256,7 @@
       const go = openItem(it);
       const detail = [
         it.note,
-        it.minutes ? '~' + it.minutes + ' min' : '',
+        it.minutes ? '~' + durFmt(it.minutes) : '',
         it.deferred ? 'deferred: over today’s budget' : '',
         it.added ? 'added by ' + (it.by === 'Matt' ? 'you' : 'E.V.') : '',
       ]
@@ -459,7 +459,7 @@
           (add.at ? (E.chicagoDate(add.at) === today ? ' at ' : ' ') + clock12(add.at) : '')
         : day.live
           ? 'Built live from your record'
-          : 'Planned by the 4:25am run' + (day.at && E.chicagoDate(day.at) === today ? ' at ' + clock12(day.at) : '');
+          : 'Planned by the 4:25 am run' + (day.at && E.chicagoDate(day.at) === today ? ' at ' + clock12(day.at) : '');
       const note = [
         it.note && it.note !== 'Graded' && !add ? it.note : '',
         exam ? 'From the ' + (exam.title || exam.id) + ' plan' : '',
@@ -469,7 +469,7 @@
         status: isDone(it) ? 'Done' : it.deferred ? 'Deferred' : 'To do',
         category: b ? b[0] : it.tag === 'EXAM' ? 'Exam' : 'Task',
         badge: b && b[1] && it.tag !== 'GRADED' ? b[1] : '',
-        estimate: it.minutes ? it.minutes + ' min' : '',
+        estimate: it.minutes ? durFmt(it.minutes) : '',
         due: due
           ? due === today
             ? 'Today'
@@ -690,7 +690,7 @@
           id: it.id,
           text: it.text,
           minutes: Number(it.minutes) || 0,
-          why: b ? 'over today’s budget' : moved ? 'planned for ' + E.shortDate(moved) : 'no longer in the plan',
+          why: b ? 'over today’s budget' : moved ? 'planned for ' + short(moved) : 'no longer in the plan',
         });
       }
       // the time left once the take-offs go: the budget less what stays planned (done or not, as budgetView counts it)
@@ -758,7 +758,7 @@
         el('span', 'badge proposed', 'Proposed'),
         ...restButtons(P, p, restEdit(p), 'add “' + p.text + '” to today')
       );
-      li.append(el('span', 't', p.minutes ? p.minutes + ' min' : ''));
+      li.append(el('span', 't', p.minutes ? durFmt(p.minutes) : ''));
       return li;
     }
     function restLine(P) {
@@ -859,7 +859,7 @@
           el(
             'p',
             'empty',
-            'Nothing planned for today yet. The 4:25am run builds the list; add your own with New or ask E.V.'
+            'Nothing planned for today yet. The 4:25 am run builds the list; add your own with New or ask E.V.'
           )
         );
       if (done.length)
@@ -889,7 +889,7 @@
         sRows.push(row({ title: 'Ask E.V. to put one back.', cls: 'ti-hint' }));
         after.push(...todayFold('off', 'Taken off today · ' + skipped.length, sRows, !!folds.off));
       }
-      if (day.live) after.push(el('p', 'meta ti-live', 'Built live from your record. The 4:25am run saves the day’s plan.'));
+      if (day.live) after.push(el('p', 'meta ti-live', 'Built live from your record. The 4:25 am run saves the day’s plan.'));
       // B-287 (C-7): no Add row; the header's New is the one way to put a task on today's list
       box.replaceChildren(...kids, ...after);
       // Weekly review (Sundays)

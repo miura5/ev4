@@ -144,8 +144,9 @@ async function open(browser, viewport) {
     const opened = [];
     for (const t of ['today', 'study', 'progress', 'record', 'system', 'ev']) {
       // B-334: System sits in the Preferences popover
-      if (t === 'system' && !(await page.isVisible('#tab-system'))) await page.click('#side-prefs-btn');
-      await page.click('#tab-' + t);
+      // B-352: System has no link, as the demo; its hash opens it
+      if (t === 'system') await page.evaluate(() => (location.hash = 'system'));
+      else await page.click('#tab-' + t);
       const shown = await until(
         page,
         id => {

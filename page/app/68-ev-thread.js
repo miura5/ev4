@@ -164,12 +164,7 @@
             ? 'Today'
             : day === E.addDays(today, -1)
               ? 'Yesterday'
-              : new Date(day + 'T12:00:00Z').toLocaleDateString('en-US', {
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric',
-                  timeZone: 'UTC',
-                });
+              : short(day);
         d = el('div', 'cap-div cap-day', label);
         d.dataset.day = day;
         T.dayDivs.set(day, d);

@@ -157,7 +157,7 @@
       const failed = names
         .filter(([p]) => last[p] && !['ok', 'running'].includes(last[p].status))
         .map(([p]) => ({
-          text: `${PIPE_NAME[p] || p}’s last run ${last[p].status === 'partial' ? 'finished partly' : 'failed'} (${short(last[p].startedAt)} ${E.chicagoClock(last[p].startedAt)}).`,
+          text: `${PIPE_NAME[p] || p}’s last run ${last[p].status === 'partial' ? 'finished partly' : 'failed'} (${short(last[p].startedAt)} ${clock12(last[p].startedAt)}).`,
           detail: last[p].detail || '',
         }));
       const problems = [
@@ -184,7 +184,7 @@
           el(
             'p',
             'meta',
-            `Your weak spots changed since the evening snapshot (${short(hl.derivedHash.at)} ${E.chicagoClock(hl.derivedHash.at)}), as answers do.`
+            `Your weak spots changed since the evening snapshot (${short(hl.derivedHash.at)} ${clock12(hl.derivedHash.at)}), as answers do.`
           )
         );
       const drill = hl && hl.restoreDrill;
@@ -219,7 +219,7 @@
             'pipe-' + p,
             (PIPE_NAME[p] || p) + ' · ' + (def.steps ? when(sched[p]) : 'not built yet'),
             exception(r) || (!r && def.steps ? 'no run yet' : null),
-            r ? `Last run ${short(r.startedAt)} ${E.chicagoClock(r.startedAt)}${r.detail ? ' · ' + r.detail : ''}` : ''
+            r ? `Last run ${short(r.startedAt)} ${clock12(r.startedAt)}${r.detail ? ' · ' + r.detail : ''}` : ''
           );
         })
       );
@@ -230,7 +230,7 @@
         ...shown.map(r =>
           sysLine(
             'run-' + r.id,
-            `${short(r.startedAt)} ${E.chicagoClock(r.startedAt)} · ${PIPE_NAME[r.pipeline] || r.pipeline || r.id}`,
+            `${short(r.startedAt)} ${clock12(r.startedAt)} · ${PIPE_NAME[r.pipeline] || r.pipeline || r.id}`,
             exception(r),
             r.detail ? String(r.detail).slice(0, 220) : ''
           )
@@ -295,7 +295,7 @@
         sysFold(
           'lint-card-line',
           'lint-body',
-          `Checks · ${plural(lt.errors, 'error')}, ${plural(lt.warnings, 'warning')} · ${short(lt.at)} ${E.chicagoClock(lt.at)}`
+          `Checks · ${plural(lt.errors, 'error')}, ${plural(lt.warnings, 'warning')} · ${short(lt.at)} ${clock12(lt.at)}`
         );
         $('lint').replaceChildren(...issues.map((i, n) => sysLine('lint-' + n + i.msg, i.msg, i.severity, i.ref)));
         const extra = [
@@ -332,7 +332,7 @@
         );
       }
       $('versions').textContent =
-        `Release ${EV_BUILD} · core ${E.VERSION} · spec ${EV_SPEC.specVersion} · ${EV_SPEC.target === 'staging' ? 'staging record' : 'your record'}${st ? ' · snapshot ' + short(st.generatedAt) + ' ' + E.chicagoClock(st.generatedAt) : ''}`;
+        `Release ${EV_BUILD} · core ${E.VERSION} · spec ${EV_SPEC.specVersion} · ${EV_SPEC.target === 'staging' ? 'staging record' : 'your record'}${st ? ' · snapshot ' + short(st.generatedAt) + ' ' + clock12(st.generatedAt) : ''}`;
     }
 
     // B-303: the Preferences card's four switches are built here, not in the shell (its byte budget), as they were drawn:

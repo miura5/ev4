@@ -109,7 +109,20 @@
     };
     const now = () => new Date().toISOString();
     const today = E.chicagoDate(new Date());
-    const short = d => E.shortDate(d);
+    // B-352 (D-314): the demo's text formats on every view: days as Tue 20 Oct, times as 8:10 pm, durations as 25 min
+    // or 10 h 20 m.
+    const MON3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const WD3 = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const short = d => {
+      if (!d) return '';
+      const day = String(d).length === 10 ? String(d) : E.chicagoDate(d);
+      if (!day) return '';
+      return WD3[E.weekday(day)] + ' ' + Number(day.slice(8, 10)) + ' ' + MON3[Number(day.slice(5, 7)) - 1];
+    };
+    const durFmt = m => {
+      m = Math.round(m || 0);
+      return m < 60 ? m + ' min' : Math.floor(m / 60) + ' h' + (m % 60 ? ' ' + (m % 60) + ' m' : '');
+    };
     const cjLabel = s => E.CJ_LABELS[s] || s;
     const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
 

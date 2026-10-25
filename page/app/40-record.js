@@ -80,7 +80,7 @@
         result:
           s.status === 'active' || s.status === 'ending'
             ? 'going now'
-            : [s.minutes ? s.minutes + ' min' : '', s.questions ? plural(s.questions, 'question') : '']
+            : [s.minutes ? durFmt(s.minutes) : '', s.questions ? plural(s.questions, 'question') : '']
                 .filter(Boolean)
                 .join(' · '),
         courses: [sessionCourse(s)].filter(Boolean),
