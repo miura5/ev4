@@ -2,8 +2,8 @@
     // New is the page's one way to create: a menu of Task for Today and Note, each a modal dialog that keeps focus
     // inside. Esc closes the menu or the dialog and gives focus back to New. A task lands on today's list through the
     // list edit; a note lands in ideas, with no course. Each paints at once and the write catches up (D-208): a refused
-    // write opens the dialog again with his words in it. The way out is Esc or a tap outside, never a Cancel button
-    // (D-160), and leaving keeps what he typed for the next time he opens that kind.
+    // write opens the dialog again with his words in it. The way out is Esc, a tap outside or Cancel (B-361, as the
+    // demo), and leaving keeps what he typed for the next time he opens that kind. Add stays off while the title is empty.
     const NEW = {
       task: {
         head: 'New task',
@@ -29,13 +29,18 @@
     const drafts = { task: '', note: '' };
     // B-308 (C-7): a task's Category, Estimate, When and Course, written through the list edit (kind, minutes, date,
     // course), so it counts against that day's budget. Category is the list's own kinds; a To-do has no badge (B-291).
+    // B-361: the demo's two categories: Classes is a plain to-do, Study a review item (it counts under Today's Study).
     const TASK_KINDS = [
-      ['todo', 'To-do'],
-      ['reading', 'Reading'],
-      ['practice', 'Practice'],
-      ['review', 'Review'],
-      ['notes', 'Notes'],
+      ['todo', 'Classes'],
+      ['review', 'Study'],
     ];
+    const TASK_ESTS = [
+      [5, '5 min'],
+      [15, '15'],
+      [30, '30'],
+      [45, '45'],
+    ];
+    const ICON = { task: 'M5 5h14v14H5zM9 12l2 2 4-4', note: 'M6 4h9l3 3v13H6zM9 10h6M9 14h6' };
     const TASK_WHENS = [
       ['today', 'Today'],
       ['tomorrow', 'Tomorrow'],
@@ -49,11 +54,11 @@
           const b = document.createElement('button');
           b.type = 'button';
           b.textContent = n;
-          b.dataset.v = v;
+          b.dataset.v = String(v);
           b.setAttribute('aria-pressed', String(taskOpts[key] === v));
           b.addEventListener('click', () => {
             taskOpts[key] = v;
-            for (const x of $(id).children) x.setAttribute('aria-pressed', String(x.dataset.v === v));
+            for (const x of $(id).children) x.setAttribute('aria-pressed', String(x.dataset.v === String(v)));
           });
           return b;
         })
@@ -61,19 +66,18 @@
     }
     function taskFields(on) {
       $('new-fields').hidden = !on;
-      $('new-min').hidden = !on;
       if (!on) return;
       if (!taskCourses().includes(taskOpts.course)) taskOpts.course = taskCourses()[0] || '';
       segPaint('new-kind', TASK_KINDS, 'kind');
+      segPaint('new-est', TASK_ESTS, 'minutes');
       segPaint('new-when', TASK_WHENS, 'when');
       segPaint(
         'new-course',
         taskCourses().map(c => [c, c]),
         'course'
       );
-      $('new-min').value = String(taskOpts.minutes);
     }
-    const readMinutes = () => Math.max(0, Math.min(240, Math.round(Number($('new-min').value) || 0)));
+    const saveSync = () => ($('new-save').disabled = !newField().value.trim());
     const menuItems = () => [...newMenu.querySelectorAll('[role="menuitem"]')];
     function newMenuOpen(on) {
       newMenu.hidden = !on;
@@ -88,6 +92,7 @@
       taskFields(kind === 'task');
       const k = NEW[kind];
       $('new-head').textContent = k.head;
+      $('new-ico').setAttribute('d', ICON[kind]);
       $('new-hint').textContent = k.hint;
       $('new-save').textContent = k.cta;
       $('new-title').hidden = kind !== 'task';
@@ -97,12 +102,12 @@
       f.maxLength = k.max;
       f.value = text;
       $('new-warn').textContent = '';
+      saveSync();
       if (!dlg.open) dlg.showModal();
       f.focus();
     }
     function newClose() {
       if (newKind) drafts[newKind] = newField().value;
-      if (newKind === 'task') taskOpts.minutes = readMinutes();
       if (dlg.open) dlg.close();
       newKind = null;
       newBtn.focus();
@@ -111,7 +116,6 @@
       const kind = newKind,
         t = newField().value.replace(/\s+/g, ' ').trim();
       if (!kind) return;
-      if (kind === 'task') taskOpts.minutes = readMinutes();
       if (!t) return newField().focus();
       const w = idUnpassed(t); // B-197: values only
       if (w.length) {
@@ -177,6 +181,8 @@
     dlg.addEventListener('click', e => {
       if (e.target === dlg) newClose(); // a tap on the backdrop
     });
+    $('new-cancel').addEventListener('click', newClose);
+    for (const id of ['new-title', 'new-text']) $(id).addEventListener('input', saveSync);
     $('new-form').addEventListener('submit', e => {
       e.preventDefault();
       newSave();

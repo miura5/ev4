@@ -48,8 +48,7 @@
       };
       const item = it => {
         const due = it.tag === 'GRADED' ? gradedDue(it) : null;
-        const red = due && due <= E.addDays(today, 1);
-        const dot = red ? 'x-red' : (BADGE[it.tag] && BADGE[it.tag][1]) || 'd-q';
+        const dot = (it.tag !== 'GRADED' && BADGE[it.tag] && BADGE[it.tag][1]) || 'd-q'; // B-361: Graded's dot is grey
         const sel = ui.tab === 'today' && ui.taskSel === it.id && !ui.taskGone;
         return row(dot, it.text, sideWhen(it, due), () => {
           showTab('today');

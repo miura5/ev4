@@ -402,10 +402,13 @@
           return document.documentElement.getAttribute('data-theme') || 'system';
         }
       };
+      // B-361: a switch with no System choice (the sidebar's Preferences) marks the theme in use while he follows the device
+      const shown = () => (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
       const paint = t =>
-        segs.forEach(seg =>
-          seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.t === t)))
-        );
+        segs.forEach(seg => {
+          const u = t === 'system' && !seg.querySelector('[data-t="system"]') ? shown() : t;
+          seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.t === u)));
+        });
       segs.forEach(seg =>
         seg.querySelectorAll('button').forEach(b =>
           b.addEventListener('click', () => {
@@ -421,6 +424,7 @@
         )
       );
       paint(cur());
+      matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => paint(cur()));
     }
     // B-271 (D-268): Contrast (30, 60, 100), stored on this device (ev.contrast) and read again before first paint by the
     // head script; a press runs the generator now. 60 is the default and is not stored. B-286: the sidebar's foot too.

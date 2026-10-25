@@ -643,7 +643,7 @@ body:not(.on-ev) .wrap{max-width:none}
 .side .brand{flex:0 0 auto;display:flex;align-items:center;gap:8px;min-height:40px;padding:0 8px 0 6px;margin:0 0 6px;border-radius:8px;max-width:none}
 .side .brand:hover{background:var(--surface)}
 .side .top-av{width:24px;height:24px;flex:0 0 24px}
-body.on-ev.opening .side .top-av,body.on-ev.in-session .side .top-av,body.on-ev.core-big .side .top-av{opacity:1;transform:none;width:24px;flex-basis:24px;margin-right:0;overflow:visible}
+body.on-ev.opening .side .top-av,body.on-ev.in-session .side .top-av,body.on-ev.core-big .side .top-av,body.captions.on-ev .side .top-av{opacity:1;transform:none;width:24px;flex-basis:24px;margin-right:0;overflow:visible}
 .side .wordmark{font-size:calc(14px * var(--ts))}
 .side .tabs{display:flex;flex-direction:column;align-items:stretch;gap:1px}
 .side .tabs .tab,.side .tab-sys{appearance:none;position:static;display:flex;align-items:center;justify-content:flex-start;gap:10px;width:100%;height:32px;min-width:0;padding:0 10px;border:0;border-radius:7px;background:transparent;color:var(--faint);font:500 calc(13px * var(--ts)) var(--sans);cursor:pointer;flex:0 0 auto}
@@ -651,22 +651,19 @@ body.on-ev.opening .side .top-av,body.on-ev.in-session .side .top-av,body.on-ev.
 .side .tabs .tab span,.side .tab-sys span{position:static;width:auto;height:auto;overflow:visible;clip:auto;white-space:nowrap}
 .side .tabs .tab:hover,.side .tab-sys:hover{color:var(--text);background:var(--surface)}
 .side .tabs .tab[aria-selected="true"],.side .tab-sys[aria-current="page"]{color:var(--text);background:var(--bg);box-shadow:inset 0 0 0 1px var(--line);font-weight:500;border-color:transparent}
-.tab-her{display:none;width:24px;height:24px;flex:0 0 24px}
 /* Under 600 px: the tab bar at the bottom; her 24 px avatar is the E.V. tab; System sits at the header's end, 44 px
    like every tab (B-288). */
 @media (max-width:599px){
   :root{--dock-h:60px}
   .side{position:fixed;left:0;right:0;bottom:0;height:calc(60px + env(safe-area-inset-bottom,0px));padding:0 0 env(safe-area-inset-bottom,0px);background:var(--sunken);border-top:1px solid var(--line)}
   .side .brand{display:none}
-  .side .tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));height:60px;gap:0}
-  .side .tabs .tab{flex-direction:column;justify-content:center;gap:3px;height:60px;padding:0;border-radius:0;font-size:calc(11px * var(--ts));color:var(--faint)}
-  .side .tabs .tab[aria-selected="true"]{background:transparent;box-shadow:none;color:var(--text)}
-  .side .tabs #tab-ev > svg{display:none}
-  .side .tabs #tab-ev .tab-her{display:grid;place-items:center}
-  .side .tabs #tab-ev .tab-her,.side .tabs #tab-ev .ev-av{width:24px;height:24px;flex:0 0 24px}
+  /* B-361: the demo's tab bar: five icon tabs (E.V.'s is the speech bubble), the active one on a grey ground */
+  .side .tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));height:60px;gap:0;padding:2px 4px 6px;box-sizing:border-box}
+  .side .tabs .tab{flex-direction:column;justify-content:center;gap:2px;height:auto;min-height:52px;padding:0;border-radius:8px;font:500 calc(11px * var(--ts)) var(--sans);color:var(--quiet)}
+  .side .tabs .tab[aria-selected="true"]{background:var(--hover);box-shadow:none;color:var(--text)}
   .side .tab-sys{position:fixed;top:calc(2px + env(safe-area-inset-top,0px));right:max(4px,env(safe-area-inset-right,0px));width:44px;height:44px;padding:0;justify-content:center;z-index:10;border-radius:10px}
   .side .tab-sys span{display:none}
-  .mh{padding-right:56px}
+  .mh{padding:0 8px 0 16px} /* B-361: New sits flush right, as in the demo */
   /* the surface sheet gives the tab bar its height back, so her line keeps its room */
   body.captions #ev-surf{max-height:clamp(300px,calc(46dvh - var(--dock-h)),410px)}
 }
@@ -1021,7 +1018,7 @@ body.captions .hero.snap{transition:none} /* B-249: a fold he scrolled into is a
    x-blue or x-violet, which sets --x for the part it is on; D-269 gives all five one lightness. A view uses at most one
    primary. No part only closes or hides (D-160). Rows are 32 px from 600 px and 44 px on the phone (C-1);
    on the phone every button and switch segment is a 44 px target. The views move onto these parts in their own tasks. */
-.x-green{--x:var(--sem-green)}.x-yellow{--x:var(--sem-yellow)}.x-red{--x:var(--sem-red)}.x-blue{--x:var(--sem-blue)}.x-violet{--x:var(--sem-violet)}
+.x-green{--x:var(--sem-green)}.x-yellow{--x:var(--sem-yellow)}.x-red{--x:var(--sem-red)}.x-blue{--x:var(--sem-blue)}.x-violet{--x:var(--sem-violet)}.x-quiet{--x:var(--quiet)}
 /* buttons */
 button.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:32px;min-height:32px;padding:0 12px;border:0;border-radius:8px;background:none;color:var(--text);font:500 calc(13px * var(--ts)) var(--sans);white-space:nowrap;cursor:pointer;box-shadow:none;transition:background .12s ease,color .12s ease}
 button.btn svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
@@ -1043,7 +1040,7 @@ button.btn:disabled{opacity:.45;cursor:default}
 .badge{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:11px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);color:var(--text);font:500 calc(12px * var(--ts)) var(--sans);white-space:nowrap;flex:none}
 .badge::before{content:"";width:6px;height:6px;border-radius:3px;background:var(--x,var(--faint));flex:none}
 .badge.proposed{--x:var(--sem-blue)}
-.badge:is(.x-green,.x-yellow,.x-red,.x-blue,.x-violet,.proposed){background:color-mix(in srgb,var(--x) 13%,var(--surface));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--x) 45%,var(--line2))}
+.badge:is(.x-green,.x-yellow,.x-red,.x-blue,.x-violet,.x-quiet,.proposed){background:color-mix(in srgb,var(--x) 13%,var(--surface));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--x) 45%,var(--line2))}
 .title .row-badge{margin-left:6px;vertical-align:1px;height:20px} /* B-303: a kit row's one badge, after its name */
 /* segmented switch: grey, the picked option on the ground; it says which is picked (aria-pressed or aria-checked, C-15) */
 .seg{display:inline-flex;gap:2px;padding:2px;border:0;border-radius:8px;background:var(--sunken);box-shadow:inset 0 0 0 1px var(--line);align-self:flex-start;max-width:100%;overflow-x:auto;scrollbar-width:none}
@@ -1090,32 +1087,41 @@ button.btn:disabled{opacity:.45;cursor:default}
 /* a spacer before the header's right end, so Back to now, the session line and New end it whatever else shows */
 .mh::after{content:"";order:8;flex:1 1 0;min-width:0}
 .mh > :is(.cap-now,.sbar){order:9;margin-left:0}
-.new-wrap .menu{position:absolute;right:0;top:calc(100% + 6px);z-index:30;width:220px;padding:5px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.16);display:flex;flex-direction:column;gap:1px}
+.new-wrap .menu{position:absolute;right:0;top:calc(100% + 6px);z-index:30;width:240px;padding:5px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.16);display:flex;flex-direction:column;gap:1px}
 .new-wrap .menu[hidden]{display:none}
 .new-wrap .menu button.btn.mi{justify-content:flex-start;width:100%;color:var(--text);font-weight:400}
 .new-wrap .menu button.btn.mi svg{color:var(--quiet)}
-.new-dlg{width:min(520px,calc(100vw - 32px));max-height:calc(100dvh - 32px);margin:12vh auto auto;padding:0;border:0;border-radius:12px;background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line2),0 24px 60px rgba(0,0,0,.24)}
-.new-dlg::backdrop{background:rgba(var(--ground),.6)}
+/* B-361: as the demo: the menu's Create heading; the dialog 560 px wide, 110 px from the top (48 px on the phone), its
+   header an icon and the kind, the page dimmed behind it, Cancel beside Add */
+.new-wrap .menu .mhd{font:500 calc(11.5px * var(--ts)) var(--sans);color:var(--quiet);padding:6px 9px 4px}
+.new-dlg{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 122px);margin:110px auto auto;padding:0;border:0;border-radius:12px;background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line2),0 24px 60px rgba(0,0,0,.22)}
+.new-dlg::backdrop{background:rgba(40,32,24,.22)}
+:root[data-theme="dark"] .new-dlg::backdrop{background:rgba(0,0,0,.5)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .new-dlg::backdrop{background:rgba(0,0,0,.5)}}
+@media (max-width:599px){.new-dlg{margin:max(48px,env(safe-area-inset-top,0px)) auto auto;max-height:calc(100dvh - 60px)}}
 .new-dlg form{display:flex;flex-direction:column;margin:0}
-.new-head{margin:0;padding:14px 16px;border-bottom:1px solid var(--line);font:600 calc(14px * var(--ts)) var(--sans)}
-.new-body{display:flex;flex-direction:column;gap:8px;padding:16px}
+.new-hdr{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.new-hdr svg{width:16px;height:16px;flex:none;fill:none;stroke:var(--quiet);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.new-head{margin:0;font:600 calc(14px * var(--ts)) var(--sans)}
+.new-body{display:flex;flex-direction:column;gap:14px;padding:16px}
+.new-body #new-title{height:44px;border-radius:8px;border:0;box-shadow:inset 0 0 0 1px var(--line2);background:var(--bg);padding:0 12px;font:500 calc(17px * var(--ts)) var(--sans);color:var(--text)}
+.new-body #new-title:focus,.new-body #new-title:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--focus,var(--text))}
 .new-body :is(input,textarea){width:100%;box-sizing:border-box}
 .new-body #new-warn{margin:0;color:var(--att)}
 /* B-308 (C-7): a task's fields, one row each: its label, then its choices; under 600 px the label sits above them. */
-.new-fields{display:flex;flex-direction:column;gap:10px;padding-top:4px}
+.new-fields{display:flex;flex-direction:column;gap:14px}
 .new-fields[hidden]{display:none}
-.new-fields .frow{display:flex;align-items:center;gap:12px;min-width:0}
-.new-fields .lbl{flex:0 0 76px;color:var(--quiet);font:500 calc(13px * var(--ts)) var(--sans)}
+.new-fields .frow{display:grid;grid-template-columns:96px 1fr;align-items:center;gap:10px;min-width:0}
+.new-fields .lbl{color:var(--quiet);font:400 calc(13px * var(--ts)) var(--sans)}
+.new-fields .seg{justify-self:start;align-self:center;width:max-content;max-width:100%}
+.new-fields .seg button{min-height:24px;height:24px;padding:0 9px;font-size:calc(12px * var(--ts))}
 .new-fields .seg{min-width:0}
 .new-fields .seg button{white-space:nowrap}
-.new-min{display:inline-flex;align-items:center;gap:6px;color:var(--quiet);font:calc(13px * var(--ts)) var(--sans)}
-.new-body .new-min input{width:5.5em}
-@media (max-width:599px){.new-fields .frow{flex-direction:column;align-items:flex-start;gap:6px}.new-fields .lbl{flex:none}.new-fields .seg{align-self:stretch}.new-fields .seg button{padding:0 6px}}
+@media (max-width:599px){.new-fields .seg button{flex:none;height:44px;min-height:44px;min-width:44px;padding:0 12px;font-size:calc(13px * var(--ts))}}
 .new-body #new-warn:empty{display:none}
 .new-foot{display:flex;align-items:center;gap:8px;padding:12px 16px;border-top:1px solid var(--line)}
 .new-foot #new-hint{flex:1;min-width:0}
 @media (max-width:599px){
-  .new-dlg{margin:max(16px,env(safe-area-inset-top,0px)) auto auto}
   .new-wrap .menu{width:min(240px,calc(100vw - 32px))}
 }
 /* ============================================================ B-291 (C-1, C-13, D-270, D-276): Today's list ===========

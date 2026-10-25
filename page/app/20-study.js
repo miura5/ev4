@@ -532,9 +532,8 @@
         const b = el('button', 'up');
         b.type = 'button';
         const days = E.diffDays(today, d.date);
-        const urgent = d.graded && days <= 1;
         const un = el('span', 'un');
-        un.append(el('i', 'dot' + (urgent ? ' x-red' : '')), el('span', 'ut', d.title || ''));
+        un.append(el('i', 'dot'), el('span', 'ut', d.title || ''));
         b.append(
           el('span', 'ud', OV_WD[new Date(d.date + 'T12:00:00Z').getUTCDay()] + ' ' + Number(d.date.slice(8))),
           un,

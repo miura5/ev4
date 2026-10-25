@@ -40,12 +40,13 @@
       // B-284: the greeting sets no mood; she rests at Idle.
       return 'idle';
     }
-    // B-352 (D-314): the demo's words under her name: ready when you are at rest, thinking… while she works
+    // B-352 (D-314), B-361: the demo's words under her name: ready when you are at rest, thinking… while she works on a
+    // reply (never 'replying', which stayed up while her greeting typed out)
     const MOOD_WORD = {
       idle: 'ready when you are',
-      listening: 'listening',
+      listening: 'ready when you are',
       thinking: 'thinking…',
-      speaking: 'replying',
+      speaking: 'thinking…',
       alert: 'check ready',
       happy: 'ready when you are',
       sleepy: 'resting',
@@ -63,7 +64,9 @@
             ? 'on a break'
             : NT.on && ui.tab !== 'ev'
               ? 'something’s ready'
-              : MOOD_WORD[MOOD_NOW] || 'online';
+              : MOOD_NOW === 'speaking' && !T.busy
+                ? 'ready when you are'
+                : MOOD_WORD[MOOD_NOW] || 'online';
       // B-221 (D-210): her status word beside her name; the readout code has left the screen.
       const txt = [
         off && !T.busy

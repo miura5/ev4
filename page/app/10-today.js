@@ -88,7 +88,7 @@
       };
     }
     const TAG_V = {
-      GRADED: 'bad',
+      GRADED: 'quiet',
       EXAM: 'accent',
       REVIEW: 'plum',
       'ATI REVIEW': 'plum',
@@ -116,7 +116,7 @@
       'CLINICAL PREP': ['Clinical prep', ''],
       VALIDATION: ['Validation', ''],
       'VALIDATION PREP': ['Validation prep', ''],
-      GRADED: ['Graded', ''],
+      GRADED: ['Graded', 'x-quiet'],
     };
     // When graded work on the list is due: its calendar entry (date-, soon-), else the graded date it names.
     function gradedDue(it) {
@@ -207,10 +207,7 @@
           el('span', 'badge proposed', 'Proposed'),
           ...restButtons(o.off.P, o.off.p, offEdit(o.off.p), 'take “' + text + '” off today')
         );
-      else if (b) {
-        const red = due && !doneNow && due <= E.addDays(today, 1);
-        li.append(el('span', 'badge' + (red ? ' x-red' : b[1] ? ' ' + b[1] : ''), b[0]));
-      }
+      else if (b) li.append(el('span', 'badge' + (b[1] ? ' ' + b[1] : ''), b[0])); // B-361: Graded is neutral grey, never red
       const go = openItem(it);
       if (o.start && go && !o.off) {
         const st = btn('Start', go, { cls: 'btn neutral sm ti-start' });
@@ -1087,7 +1084,6 @@
     }
     function weekChip(d, sel) {
       const off = E.isRemovedDate(d);
-      const urgent = d.graded && !off && d.date <= E.addDays(today, 1);
       const c = el('button', 'wchip' + (off ? ' off' : '') + (d.kind === 'exam' ? ' exam' : ''));
       c.type = 'button';
       c.dataset.id = d.id;
@@ -1096,7 +1092,7 @@
       const sub = off
         ? 'Taken off'
         : [KIND_NAME[d.kind] || 'Date', d.graded ? 'graded' : ''].filter(Boolean).join(', ');
-      c.append(el('span', 'wc-t', d.title || ''), el('span', 'wc-s' + (urgent ? ' urgent' : ''), sub));
+      c.append(el('span', 'wc-t', d.title || ''), el('span', 'wc-s', sub));
       c.addEventListener('click', () => {
         ui.weekSel = d.id;
         render();
@@ -1189,8 +1185,7 @@
         return p;
       };
       const graded = d.graded || d.kind === 'exam';
-      const red = graded && !off && d.date >= today && d.date <= E.addDays(today, 1);
-      const badge = el('span', 'badge wd-badge' + (red ? ' x-red' : ''), graded ? 'Graded' : 'Class');
+      const badge = el('span', 'badge wd-badge x-quiet', graded ? 'Graded' : 'Class');
       const title = el('div', 'wd-title', d.title || '');
       let clock = '';
       if (d.dueAt) {
@@ -1300,7 +1295,7 @@
       b.append(
         el(
           'span',
-          'wk-k' + (urgent ? ' urgent' : ''),
+          'wk-k',
           urgent
             ? 'graded, due today'
             : [d.kind === 'other' ? '' : d.kind, d.graded ? 'graded' : ''].filter(Boolean).join(' · ')

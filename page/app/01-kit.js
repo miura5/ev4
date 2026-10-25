@@ -8,7 +8,7 @@
     };
     const chip = (text, v = '') => el('span', 'chip ' + v, text);
     // the component set's badge (B-285); the old chip colours map onto its coded ones (D-269), her accent onto none
-    const BADGE_X = { ok: 'x-green', warn: 'x-yellow', bad: 'x-red', info: 'x-blue', plum: 'x-violet' };
+    const BADGE_X = { ok: 'x-green', warn: 'x-yellow', bad: 'x-red', info: 'x-blue', plum: 'x-violet', quiet: 'x-quiet' };
     const badge = (text, v = '') => el('span', 'badge row-badge' + (BADGE_X[v] ? ' ' + BADGE_X[v] : ''), text);
     const empty = t => {
       const li = el('li', 'row');
