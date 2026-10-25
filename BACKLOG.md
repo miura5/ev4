@@ -422,3 +422,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-280 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; folded into B-289 and B-290 (Conversation) and B-291 to B-296 (Today and the task panel). |
 | B-281 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; folded into B-297 to B-300 (Study), B-301 (Progress) and B-302 (Record). |
 | B-282 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; replaced by B-303. |
+| B-346 | request | 2026-10-25T12:12:19.498Z | Fidelity fix: Today's header reads only Today where the demo reads Today with the weekday and date, and the budget's large figure reads minutes left and free where the demo reads minutes on the list of the day's budget. | fidelity review of B-335, Oct 25 (D-312) | inbox |  |
