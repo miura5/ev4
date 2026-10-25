@@ -1312,7 +1312,8 @@ async function sideBySide(browser, left, right, out, vp) {
     ok(
       `[skills ${scheme}] beside her name, her status word; the readout code has left the screen (D-210)`,
       // B-352, B-361 (D-316): the demo's status words
-      /^(online|ready when you are|replying|listening|thinking…?|working|in a session|on a break|check ready|resting|something’s ready)\b/.test(
+      // B-381, B-384: a problem (a late health check, a failed run) is her status line, as a short whole phrase
+      /^(online|ready when you are|replying|listening|thinking…?|working|in a session|on a break|check ready|resting|something’s ready|health check is late|.*run failed)\b/i.test(
         (await skillView(page)).unit
       ) && !/EV-04/.test((await skillView(page)).unit),
       (await skillView(page)).unit
