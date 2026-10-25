@@ -6992,5 +6992,22 @@
    "outcome": "task",
    "at": "2026-10-25T18:06:59.302Z"
   }
+ },
+ {
+  "id": "B-390",
+  "kind": "bug",
+  "title": "Bug (reported Oct 25): Arrow keys moving between a question's options record an answer he didn't pick; System can't be reopened once its address is set; the page depends on the host hiding hidden panels; a broken status line fails silently.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "release code review (page), 368b104..fc9133e, Oct 25",
+  "words": "Arrow keys moving between a question's options record an answer he didn't pick; System can't be reopened once its address is set; the page depends on the host hiding hidden panels; a broken status line fails silently.",
+  "reportedAt": "2026-10-25T18:08:00.453Z",
+  "board": {
+   "row": "v4 B-390: Arrow keys moving between a question's options record an answer he…"
+  }
  }
 ]
