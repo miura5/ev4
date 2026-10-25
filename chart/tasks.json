@@ -5739,10 +5739,10 @@
   "title": "The test suite cleans up after itself: every temporary copy a test makes (ev4-run, ev4-copy, ev4-mark, ev4-restore, ev4-origin, ev4-build, ev4-guard, ev4-src and the rest) is removed when its test ends, so a long session's disk never fills (Oct 24: about 15,000 left over filled a build chat's disk)",
   "dod": "After npm test, no ev4-* entry the run made is left in the temporary folder (a test counts them before and after); npm test green; an independent review finds no gaps.",
   "milestone": "trim",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Built in 00eda32, not marked done (waiting for review). npm test preloads test/tmp-root.mjs: each test process gets its own temp folder (TMPDIR), what a top-level test made there is removed when it ends, pass or fail, and the folder goes at exit; check.mjs and the stop hook run the suite the same way. Tool leaks fixed: rollback build folders, synthetic record folders, the run-api local D1. test/tmp-clean.test.mjs counts E.V. entries before and after a slice of the suite (22 left without the preload, 0 with it) and proves cleanup on a failed test. npm test green (636), npm run smoke green, a full npm test left no new E.V. entry in /tmp.",
-  "commit": null,
+  "notes": "The test suite keeps its scratch folders in one folder per process and removes them per test, pass or fail, and at exit; rollback and the synthetic record clean up after themselves. Reviewer: No gaps. The one guarded file touched (tools/hooks.mjs) only adds the preload to the stop hook's npm test; guard and allowance logic unchanged; the build manager's call under D-317.",
+  "commit": "00eda32",
   "source": "build chat (Oct 24)"
  },
  {
