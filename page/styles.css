@@ -637,6 +637,8 @@ body:not(.on-ev) .wrap{max-width:none}
 .mh .status.ok{display:none}
 /* B-332: the header holds only the title, the view's switch and New; health and status live in System (B-341) */
 .mh .status{display:none}
+/* B-357: a boot that stops says why: the refusal is the one line he can read */
+body.boot-stopped .mh .status{display:block}
 .ptitle{display:none}
 /* the sidebar's rows */
 .side{z-index:9}

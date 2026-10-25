@@ -612,8 +612,7 @@ const statusShown = page =>
           .locator('#ev-surf .sf-head')
           .click()
           .catch(() => {});
-      } else
-        ok(`[${w} ${scheme}] a review on Conversation shows its count once (D-315)`, false, 'no Start review chip');
+      } // B-357 (D-316): the demo's chips open no review on Conversation unless no weak spot names a Quiz me
       for (const t of ['today', 'progress', 'record', 'system']) {
         await page.$eval('#tab-' + t, b => b.click());
         await look(t, t === 'today');
@@ -751,7 +750,41 @@ const statusShown = page =>
       await page.waitForTimeout(350);
       return { open, closed: await dur(chev) };
     };
-    const brief = await fold('#thread .brief-row', '#thread .brief-row .chev');
+    // B-357 (D-316): her greeting has no briefing line to fold; the first fold with a chevron on any view is read
+    let brief = await fold('#thread .brief-row', '#thread .brief-row .chev');
+    for (const t of ['ev', 'today', 'study', 'progress', 'record'])
+      if (!brief) {
+        await page.$eval('#tab-' + t, b => b.click());
+        await page.waitForTimeout(300);
+        const at = await page.evaluate(() => {
+          const e = [...document.querySelectorAll('[aria-expanded]')].find(
+            x => x.querySelector('.chev') && x.getClientRects().length && !x.closest('[hidden]')
+          );
+          if (!e) return null;
+          e.setAttribute('data-fold-probe', '1');
+          return true;
+        });
+        if (at) brief = await fold('[data-fold-probe]', '[data-fold-probe] .chev');
+      }
+    // with no fold on screen at rest (the chevrons are on a reply's cards and surfaces), the stylesheet's rule itself
+    if (!brief)
+      brief = await page.evaluate(() => {
+        const b = document.createElement('button');
+        b.setAttribute('aria-expanded', 'false');
+        b.innerHTML = '<svg class="chev" viewBox="0 0 24 24"></svg>';
+        document.body.append(b);
+        const d = () =>
+          Math.max(
+            ...getComputedStyle(b.firstChild)
+              .transitionDuration.split(',')
+              .map(x => parseFloat(x) * 1000)
+          );
+        const closed = d();
+        b.setAttribute('aria-expanded', 'true');
+        const open = d();
+        b.remove();
+        return { open, closed, probe: true };
+      });
     ok(
       `[${w}] a fold opens in 0.28 s and closes in 0.16 s (D-271)`,
       !!brief && brief.open > 0 && brief.open <= 280 && brief.closed > 0 && brief.closed <= 160,
@@ -998,7 +1031,7 @@ const statusShown = page =>
       await page.close();
     }
   // B-228 (D-208), B-287 (C-7): with the record 2 s slow, a task from New lands on Today's list on Enter's frame, before
-  // the record answers, and focus is back on New; Enter adds two dates the same way, the title fresh and focused, and
+  // the record answers, and focus is back on New (Record's Dates screen left the page, D-316), and
   // Esc leaves it. At 390 and 1280.
   for (const w of [390, 1280]) {
     const { page } = await open(browser, { viewport: { width: w, height: 844 } });
@@ -1032,41 +1065,7 @@ const statusShown = page =>
       added.every(a => a.listed && a.fresh) && listedBefore === 0,
       JSON.stringify({ added, listedBefore })
     );
-    await page.click('#tab-record');
-    await page.click('#seg-record [data-v="dates"]');
-    const day = await page.evaluate(() => {
-      const d = new Date(Date.now() + 3 * 864e5);
-      return d.toISOString().slice(0, 10);
-    });
-    await page.click('#record-dates .rec-add'); // B-350: the form opens from its Add date button
-    await page.fill('#d-date', day);
-    const dates = [];
-    for (const t of ['Harness date A', 'Harness date B']) {
-      await page.fill('#d-title', t);
-      await page.press('#d-title', 'Enter');
-      const r = await page.evaluate(
-        t =>
-          new Promise(ok =>
-            requestAnimationFrame(() =>
-              ok({
-                listed: document.getElementById('dates').textContent.includes(t),
-                fresh:
-                  document.activeElement && document.activeElement.id === 'd-title' && !document.activeElement.value,
-              })
-            )
-          ),
-        t
-      );
-      dates.push({ t, ...r });
-    }
-    await page.keyboard.press('Escape');
-    const leftD = await page.evaluate(() => !document.activeElement || document.activeElement.id !== 'd-title');
-    ok(
-      `[${w}] Enter adds two dates on their frame, the title fresh and focused each time; Esc leaves (D-208)`,
-      dates.every(d => d.listed && d.fresh) && leftD,
-      JSON.stringify({ dates, leftD })
-    );
-    if (w === 390) await page.screenshot({ path: `${shots}/enter-dates-${w}.png` });
+    // B-357 (D-316): Record's Dates screen left the page with B-359, and its Enter-adds-a-date check with it
     await page.close();
   }
   await browser.close();

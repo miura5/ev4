@@ -89,12 +89,30 @@ async function studyView(page, v) {
     return shown();
   }
   await page.click('#tab-study');
-  if (await page.isVisible('#study-back')) await page.click('#study-back'); // out of the quiz card, to the view tabs
-  if (v !== 'practice') {
-    await page.click(`#seg-study [data-v="${v}"]`);
+  // B-357 (D-315): Study is the demo's overview with no view tabs. Each way back (All topics, the plan's and Weak
+  // spots' own) returns to it; Weak spots · N opens Weak spots; a plan day's Open the plan opens the plan.
+  for (const back of ['#study-back', '#plan-back', '#weak-back'])
+    if (await page.isVisible(back)) {
+      await page.click(back);
+      await page.waitForTimeout(80);
+    }
+  if (v === 'objectives') return shown();
+  if (v === 'weak') {
+    if (await page.isVisible('#study-qweak')) await page.click('#study-qweak');
+    await page.waitForTimeout(100);
     return shown();
   }
-  await page.click('#seg-study [data-v="objectives"]');
+  if (v === 'plan') {
+    const open = page.locator('#p-study .od-q', { hasText: 'Open the plan' });
+    if (!(await open.count())) {
+      const day = page.locator('#p-study .ov-nm').first();
+      if (await day.count()) await day.click();
+      await page.waitForTimeout(100);
+    }
+    if (await open.count()) await open.first().click();
+    await page.waitForTimeout(100);
+    return shown();
+  }
   await page.waitForTimeout(100);
   const rows = page.locator('#ov-card .ov');
   for (let i = 0; i < (await rows.count()) && !(await shown()); i++) {
@@ -107,7 +125,7 @@ async function studyView(page, v) {
       if (await q2.count()) await q2.first().click();
     }
     await page.waitForTimeout(150);
-    if (!(await shown())) await page.click('#seg-study [data-v="objectives"]').catch(() => {});
+    if (!(await shown()) && (await page.isVisible('#study-back'))) await page.click('#study-back').catch(() => {});
   }
   await page.waitForTimeout(100);
   return shown();

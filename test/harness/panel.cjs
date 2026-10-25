@@ -43,9 +43,9 @@ function collect() {
   const panel = candidates[0] || null;
   const cardsOf = p =>
     [...p.children]
-      .filter(c => vis(c) && c.matches('.card, .surf, .sk-panel'))
+      // B-357 (D-315): the demo's panels hold lists and lines as often as cards; anything visible with words counts
+      .filter(c => vis(c) && c.textContent.trim())
       .map(c => ({
-        // text lines are not cards
         id: c.id || c.className,
         bg: cs(c).backgroundColor,
         shadow: cs(c).boxShadow,
@@ -61,7 +61,8 @@ function collect() {
   const capIn = document.querySelector('#thread .cap-in');
   const has = {
     ev: !!document.querySelector('#ev-dates, #ev-sess') || document.body.classList.contains('side-on'),
-    study: [...document.querySelectorAll('#rv-body .q-stem, #pr-body .q-stem')].some(vis),
+    // a question beside its set, or (B-337) the overview's picked objective
+    study: [...document.querySelectorAll('#rv-body .q-stem, #pr-body .q-stem, #ov-card .ov')].some(vis),
   };
   const v = document.body.dataset.view || 'ev';
   const detail =
