@@ -143,6 +143,8 @@ async function open(browser, viewport) {
     // 3. Each tab opens its own panel.
     const opened = [];
     for (const t of ['today', 'study', 'progress', 'record', 'system', 'ev']) {
+      // B-334: System sits in the Preferences popover
+      if (t === 'system' && !(await page.isVisible('#tab-system'))) await page.click('#side-prefs-btn');
       await page.click('#tab-' + t);
       const shown = await until(
         page,

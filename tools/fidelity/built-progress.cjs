@@ -158,7 +158,7 @@ const info = {};
     if (0)
       await step('prefs', async () => {
         await page.keyboard.press('Escape');
-        await page.click('#tab-system');
+        await page.click('#side-prefs-btn');
       });
     await page.close();
   }

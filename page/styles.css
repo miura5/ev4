@@ -739,26 +739,53 @@ body:not(.on-ev) .mh .cap-now{display:none}
   html{background:var(--sunken)}
   body{background:transparent}
 }
+/* B-334 (D-312): the sidebar's Today as in the demo: "Today" and "n left", then up to five open items, each with an 8 px
+   dot coloured by its type, its name and its minutes or day; it shows on every view. */
 .side-sec{display:flex;flex-direction:column}
-.side-sec .sec{font:500 calc(12px * var(--ts)) var(--sans);color:var(--faint);margin:0;padding:18px 10px 6px}
-.side-sec .si{appearance:none;border:0;background:transparent;height:32px;display:flex;align-items:center;gap:9px;padding:0 10px;border-radius:7px;font:400 calc(13px * var(--ts)) var(--sans);color:var(--quiet);white-space:nowrap;overflow:hidden;text-align:left;width:100%;cursor:pointer}
-.side-sec .si .t{overflow:hidden;text-overflow:ellipsis}
+.side-sec .sec{display:flex;font:500 calc(12px * var(--ts)) var(--sans);color:var(--faint);margin:0;padding:20px 10px 6px}
+.side-sec .sec .sp{flex:1}
+.side-sec .si{appearance:none;box-sizing:border-box;border:0;background:transparent;height:30px;display:flex;align-items:center;gap:10px;padding:0 10px;border-radius:7px;font:400 calc(13px * var(--ts)) var(--sans);color:var(--quiet);white-space:nowrap;text-align:left;width:100%;cursor:pointer}
+.side-sec .si,.side .prefs-btn,.side .prefpop .tab-sys.sys-link{min-height:0}
+.side-sec .si .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.side-sec .si .st{font-size:calc(11.5px * var(--ts));color:var(--quiet);flex:none}
 .side-sec .si:hover{background:var(--surface);color:var(--text)}
-.sdot{width:6px;height:6px;border-radius:3px;flex:0 0 6px}
-.sdot.d-urg{background:var(--urg)} .sdot.d-att{background:var(--att)} .sdot.d-q{background:var(--faint)}
+.side-sec .si.on{background:var(--bg);color:var(--text);box-shadow:0 0 0 1px var(--line)}
+.sdot{width:8px;height:8px;border-radius:4px;flex:0 0 8px;background:var(--x,var(--quiet))}
+.sdot.d-q{--x:var(--quiet)}
 .side .lab-side{display:none}
 @media (min-width:600px){.side .tabs .tab .lab-bar{display:none}.side .tabs .tab .lab-side{display:inline}}
 @media (max-width:599px){.side-sec{display:none}}
 /* B-286 (C-4, C-14, C-15, D-291): the sidebar's foot holds Theme and Contrast above System; "n more in Today" is quiet;
    her dial sits on the sidebar's own ground. The phone's tab bar has no foot. */
 .side .ev-av .under{fill:var(--sunken)}
-.side-sec .si.more{color:var(--faint);font-size:calc(12.5px * var(--ts))}
-.side-foot{display:flex;flex-direction:column;gap:8px;margin-top:auto;padding:12px 10px 8px}
-.side-foot .pref{display:flex;flex-direction:column;gap:4px;margin:0}
-.side-foot .pref>.lbl{font:500 calc(12px * var(--ts)) var(--sans);color:var(--faint)}
-.side-foot .seg{align-self:flex-start}
-.side .side-foot~.tab-sys{margin-top:0}
-@media (max-width:599px){.side-foot{display:none}}
+.side-sec .si.more{color:var(--quiet);font-size:calc(12.5px * var(--ts))}
+/* B-334 (D-312): the foot is one Preferences row; it opens a popover above it with Theme, Contrast and System. Under
+   600 px the button is the header's last icon and the popover drops from it. */
+.side-foot{display:flex;flex-direction:column;gap:8px;margin-top:auto;padding:8px 0 0;position:relative}
+.side .prefs-btn{appearance:none;display:flex;align-items:center;gap:10px;width:100%;height:32px;padding:0 10px;border:0;border-radius:7px;background:transparent;color:var(--quiet);font:400 calc(13.5px * var(--ts)) var(--sans);cursor:pointer;text-align:left;box-sizing:border-box}
+.side .prefs-btn>svg{width:16px;height:16px;flex:0 0 16px}
+.side .prefs-btn:hover{background:var(--surface);color:var(--text)}
+.side .prefs-btn[aria-expanded="true"]{background:var(--bg);color:var(--text);box-shadow:0 0 0 1px var(--line)}
+.side .prefpop{position:absolute;left:0;bottom:44px;z-index:30;width:260px;padding:12px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.14);display:flex;flex-direction:column;gap:10px;box-sizing:border-box}
+.side .prefpop[hidden]{display:none}
+.side .prefpop .pref{display:flex;flex-direction:column;gap:10px;margin:0}
+.side .prefpop .pref>.lbl{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
+.side .prefpop .seg{align-self:flex-start}
+.side .prefpop .tab-sys.sys-link{position:static;width:auto;height:auto;min-height:24px;padding:0;margin:0;border:0;border-radius:0;background:none;box-shadow:none;color:var(--text);font:400 calc(13px * var(--ts)) var(--sans);text-decoration:underline;text-underline-offset:3px;justify-content:flex-start;align-self:flex-start}
+.side .prefpop .tab-sys.sys-link span{display:inline}
+.side .prefpop .tab-sys.sys-link:hover{background:none}
+@media (max-width:599px){
+  .side-foot{position:fixed;top:calc(2px + env(safe-area-inset-top,0px));right:max(4px,env(safe-area-inset-right,0px));z-index:10;margin:0;padding:0}
+  .side .prefs-btn{width:44px;height:44px;padding:0;justify-content:center;border-radius:10px}
+  .side .prefs-btn span{display:none}
+  .side .prefpop{top:48px;bottom:auto;left:auto;right:0}
+}
+/* from 600 px the popover rises from the button over the pane's edge, as in the demo; the sidebar's rows are 32 px */
+@media (min-width:600px){
+  .side .prefpop{position:fixed;left:8px;bottom:52px}
+  .side .brand{min-height:48px;margin:0 0 4px}
+  .side .tabs .tab{min-height:0;font-weight:400;font-size:calc(13.5px * var(--ts));color:var(--quiet)}
+}
 .readout .led{display:none}
 
 /* B-209 (D-210, amending D-122): his sent lines stay, quiet and right-aligned under a small "You"; no echo. */
@@ -860,7 +887,6 @@ button.tlink:hover{text-decoration-color:currentColor}
    From 1200 px every view has the right panel while it has something to show: Today, Progress, Record and System their
    side column; Study the open set's questions; the Conversation the dates after today, or what is beside her (an open
    surface, a session's set). Its cards sit on the ground with a hairline, one shade on every tab and in both themes. */
-body[data-view="today"] #side-today{display:none}
 #study-side{display:none}
 #ev-dates,#ev-sess{display:none}
 @media (max-width:1199px){body.captions:not(.side-on) #p-ev>#ev-side{display:none}}
