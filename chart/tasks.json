@@ -5861,12 +5861,12 @@
   "title": "Fidelity: Today as in the demo. The All / Classes / Study filter with counts; List / Week and Plan the rest in one toolbar row; the budget figure large (28 px or more) with On the list and Done rows; no Next 7 days card on Today; the week grid fills the pane's height, titles wrap up to 3 lines uncut, with back / Today / forward and the date range.",
   "dod": "Matches the Today list and Week boards; filter counts equal the list; no title cut at 1280 or 1706. Proof (D-312, fidelity sprint): node tools/build.mjs, then tools/fidelity's demo and built screenshots read side by side at 1280, 1706, 2560 and 390, plus npm run smoke; then ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-332"
   ],
-  "notes": "claimed by lane today",
-  "commit": null,
+  "notes": "Card for Matt: Today now opens like the demo. One toolbar row under the header: All / Classes / Study with the count of open items in each, List / Week, and Plan the rest at the right. Rows run the full width of the pane, 44 px, with the badge right after the name and the time at the right edge. The budget card shows the figure large (what's left, with the free time beside it), the bar, then On the list and Done rows. Next 7 days is gone from Today; the week covers it. The week has back / Today / forward and the date range in the toolbar, fills the pane's height, and every title wraps in full. Decisions made the way the demo shows: Study counts review, practice and notes items, everything else is Classes; the budget keeps the hand-off's 'min left · free' wording (C-5) rather than the demo's 'of 90 min'; there is no Add button in the toolbar because New in the header stays the one way to add (C-7). Still differs from the demo: at every size the header reads 'Today' without the date and E.V.'s line under the header is missing (both belong to the frame lane, B-333); the week date's panel keeps its own card rather than the demo's badge, title and property card (task-panel lane); at 390 the week chips stack as before. 1706 and 2560 match the 1280 layout, stretched as in the demo. Reviewer: none (fidelity sprint, D-312).",
+  "commit": "88c24c5",
   "source": "fidelity review, Oct 25 (D-312)"
  },
  {
