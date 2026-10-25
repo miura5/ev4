@@ -6020,5 +6020,22 @@
    "outcome": "task",
    "at": "2026-10-25T12:03:16.163Z"
   }
+ },
+ {
+  "id": "B-345",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Fidelity fix: the conversation view's header reads E.V. where the demo's Conversation board reads Conversation, and its chips wrap to a second row where the demo fits them in two rows of its own widths.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "fidelity review of B-340, Oct 25 (D-312)",
+  "words": "Fidelity fix: the conversation view's header reads E.V. where the demo's Conversation board reads Conversation, and its chips wrap to a second row where the demo fits them in two rows of its own widths.",
+  "reportedAt": "2026-10-25T12:06:28.411Z",
+  "board": {
+   "row": "v4 B-345: Fidelity fix: the conversation view's header reads E.V. where the…"
+  }
  }
 ]
