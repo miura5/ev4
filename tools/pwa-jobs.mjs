@@ -33,6 +33,8 @@ export const PROOF_JOBS = {
  * model's judgment, which the proof reports. A call that failed, a reply the checks refused or a job left running
  * is red. */
 export const EXPECTED = kind => (kind === 'share-set' ? 'failed' : 'done');
+/** Kinds that must end done: the definition names a study guide saved in E.V. */
+export const MUST_BE_DONE = ['study-guide'];
 const SYSTEM_FAILURE = /couldn’t be reached|didn’t pass E\.V\.’s checks|couldn’t be saved/;
 
 /** The lines for one job's read-back, as [{ok, what}]. */
@@ -43,7 +45,7 @@ export function judge(kind, job, res, made) {
   const final = !!r && (r.status === 'done' || r.status === 'failed');
   const own = final && !(r.status === 'failed' && SYSTEM_FAILURE.test(r.error || ''));
   lines.push({
-    ok: own && (want === 'done' || r.status === 'failed'),
+    ok: own && (want === 'done' || r.status === 'failed') && (!MUST_BE_DONE.includes(kind) || r.status === 'done'),
     what:
       `${kind}: jobresults ${r ? r.status : 'not written'}` +
       (r && r.status === 'failed' ? ' (' + String(r.error || '').slice(0, 160) + ')' : '') +

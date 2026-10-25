@@ -6,7 +6,7 @@
 // title and icon label come from the wrapper's head, ahead of the page's own title. Run `node tools/build.mjs` first.
 // B-324: beside the shim, the app's job runner (pwa/jobs.mjs) and the core modules it imports, served as ES modules at
 // the paths they have in the repository (jobs.mjs at the root, core/ beside it), with an import map that gives node:fs
-// and node:path their browser stand-ins; and jobs-spec.json, the spec sections and schemas the runner reads.
+// node:path and node:url their browser stand-ins; and jobs-spec.json, the spec sections and schemas the runner reads.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -27,7 +27,7 @@ export const HEAD =
   '<meta name=apple-mobile-web-app-capable content=yes><meta name=mobile-web-app-capable content=yes>' +
   '<meta name=apple-mobile-web-app-status-bar-style content=black-translucent><meta name=theme-color content="#1c1a17">' +
   '<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>' +
-  '<script type=importmap>{"imports":{"node:fs":"./node-fs.mjs","node:path":"./node-path.mjs"}}</script>' +
+  '<script type=importmap>{"imports":{"node:fs":"./node-fs.mjs","node:path":"./node-path.mjs","node:url":"./node-url.mjs"}}</script>' +
   '<script src="bridge.js"></script></head><body>';
 export const FOOT = '</body></html>';
 
@@ -49,7 +49,7 @@ export function jobModules(root = ROOT, entry = 'pwa/jobs.mjs') {
 }
 /** Where a module is served: pwa/<f> at the root, core/<f> under core/ (so '../core/x' from the root resolves). */
 export const servedAt = rel => (rel.startsWith('pwa/') ? rel.slice(4) : rel);
-export const JOB_SHIMS = ['node-fs.mjs', 'node-path.mjs'];
+export const JOB_SHIMS = ['node-fs.mjs', 'node-path.mjs', 'node-url.mjs'];
 
 export function jobsSpec(root = ROOT) {
   const spec = JSON.parse(fs.readFileSync(path.join(root, 'spec/ev.spec.json'), 'utf8'));

@@ -17,6 +17,7 @@
 import EV from '../core/evcore.mjs';
 import { validateAgainst, describeErrors, makeValidator } from '../core/validate.mjs';
 import { CODE_STEPS, AGENT_MATERIAL, AGENT_FOLDS } from '../core/steps-worker.mjs';
+import { writersOf, classOf, appendEntries, appendDepth, keyWriter } from '../core/derive.mjs';
 
 /** The source every document the app's job runner writes carries; the staging count check knows it by this. */
 export const APP_SOURCE = 'E.V. app';
@@ -24,7 +25,7 @@ export const APP_SOURCE = 'E.V. app';
 export const SPEC_KEYS = ['jobs', 'pipelines', 'collections', 'capacity', 'boundaries'];
 
 const STUDY_GUIDE_APP =
-  'Write a one-page study guide on the brief, grounded in the passages given from his course materials: the key rules, a comparison laid out as short lines where it helps, 3 memory hooks, the NCLEX traps, and 3 self-check questions with answers at the end. Put the whole guide in text, as plain lines (no links): the app saves it in E.V., in this job’s result and its message, not as a Claude Doc. Mark anything from general knowledge ‘check your materials’.';
+  'Write a one-page study guide on the brief, grounded in the passages given from his course materials: the key rules, a comparison laid out as short lines where it helps, 3 memory hooks, the NCLEX traps, and 3 self-check questions with answers at the end. Put the whole guide in text, as plain lines (no links): the app saves it in E.V., in this job’s result and its message, not as a Claude Doc. Mark anything from general knowledge ‘check your materials’: a guide that rests partly on general knowledge is still a guide, so its caveat goes in text, never in failed.';
 const CONFLICT_TRIES = 8;
 const STUDY_GUIDE_CHARS = 4000; // a talk message holds 4,000 (the job-result fold cuts there)
 const SHARE_REFUSED =
@@ -230,26 +231,52 @@ export function finish({ prepared, answer, db, spec, schemas, validate = makeVal
     db,
     ctx
   );
+  problems.push(...checkWrites({ planned, db, ctx, spec, schemas, validate }));
+  return problems.length ? { ok: false, problems } : { ok: true, writes: planned };
+}
+
+/** Each planned write against the record, as core/run.mjs compute checks a run's: the problems, none when sound. */
+export function checkWrites({ planned, db, ctx, spec, schemas, validate = makeValidator(schemas) }) {
+  const problems = [];
   for (const w of planned) {
     const ref = `${w.collection}/${w.id}`;
-    const schema = schemas[w.collection];
-    if (!spec.collections[w.collection] || !schema) {
+    if (!spec.collections[w.collection] || !schemas[w.collection]) {
       problems.push(`${ref}: no such collection`);
       continue;
     }
     const existing = (db[w.collection] || []).find(d => d.id === w.id) || null;
     const doc = w.op === 'update' ? merge(existing ? EV.docData(existing) : null, w.data) : w.data;
     if (w.op === 'update' && !existing) problems.push(`${ref}: an update needs the document in the record`);
+    const c = spec.collections[w.collection];
+    // B-32 (D-089), as the run checks it: an update to a Fact changes only its append maps, its marks (by a role the
+    // mark names) and fields it does not have yet
+    if (w.op === 'update' && existing && classOf(spec, w.collection, w.id) === 'Fact')
+      for (const [k, v] of Object.entries(w.data)) {
+        if ((c.appends || {})[k]) continue;
+        const mark = (c.marks || {})[k];
+        if (mark) {
+          if (!mark.includes(ctx.writer))
+            problems.push(`${ref}: ${k} is a mark ${mark.join(', ')} changes, not ${ctx.writer}`);
+          continue;
+        }
+        if (existing[k] !== undefined && EV.stableStringify(existing[k]) !== EV.stableStringify(v))
+          problems.push(`${ref}: ${k} is write-once on a Fact (not a mark)`);
+      }
     const vr = validate(w.collection, doc, { id: w.id });
     if (!vr.ok) problems.push(describeErrors(ref, vr).split('\n').slice(0, 2).join(' · '));
-    const writers = (schema['x-ev'] && schema['x-ev'].writers) || [];
-    if (w.op === 'set' && doc.writer && !writers.includes(doc.writer))
+    if (w.op === 'set' && doc.writer && !writersOf(spec, w.collection, w.id).includes(doc.writer))
       problems.push(`${ref}: written as ${doc.writer}, not a writer of ${w.collection}`);
+    for (const [field, allowed] of Object.entries(c.appends || {}))
+      for (const [at, k] of appendEntries(w.data[field], appendDepth(w.collection, field))) {
+        const by = keyWriter(w.collection, field, k);
+        if (by && !allowed.includes(by))
+          problems.push(`${ref}: ${field}.${at} appended by ${by}; ${field} is appended by ${allowed.join(', ')}`);
+      }
     const size = new TextEncoder().encode(JSON.stringify(doc)).length;
     if (spec.capacity && spec.capacity.documentBytes && size > spec.capacity.documentBytes)
       problems.push(`${ref}: ${size} bytes, over the ${spec.capacity.documentBytes}-byte budget`);
   }
-  return problems.length ? { ok: false, problems } : { ok: true, writes: planned };
+  return problems;
 }
 
 /** jobresults/<id> while the job runs, and when it stops before the fold (a call that failed, a reply refused). */

@@ -190,11 +190,14 @@ test('B-324: the app serves the runner and every module it imports, at paths its
       assert.ok(served.has(url), `${m} imports ${rel}: ${url} is served`);
     }
     for (const [, bare] of src.matchAll(/^\s*(?:import|export)\s[^'"]*?from\s+['"]([^.'"][^'"]*)['"]/gm))
-      assert.ok(['node:fs', 'node:path'].includes(bare), `${m} imports ${bare}, which the import map does not give`);
+      assert.ok(
+        ['node:fs', 'node:path', 'node:url'].includes(bare),
+        `${m} imports ${bare}, which the import map does not give`
+      );
   }
   assert.match(
     HEAD,
-    /<script type=importmap>\{"imports":\{"node:fs":"\.\/node-fs\.mjs","node:path":"\.\/node-path\.mjs"\}\}<\/script><script src="bridge\.js">/
+    /<script type=importmap>\{"imports":\{"node:fs":"\.\/node-fs\.mjs","node:path":"\.\/node-path\.mjs","node:url":"\.\/node-url\.mjs"\}\}<\/script><script src="bridge\.js">/
   );
   const js = jobsSpec(ROOT);
   assert.deepEqual(Object.keys(js.spec), J.SPEC_KEYS);
@@ -334,4 +337,44 @@ test('B-324: a tool answer’s placeholder failed ("none", "null") is no failure
     text: 'x',
     failed: 'the exam isn’t in his record',
   });
+});
+
+test('B-324: the run’s Fact and append checks: an append by a writer its map does not name, or a rewritten write-once field, is refused', async () => {
+  const { db, id } = withJob('general');
+  const prepared = J.prepare({ db, spec, jobId: id, now: NOW, release: 'v4' });
+  const day = {
+    id: '2026-10-25',
+    schema: 4,
+    writer: 'page',
+    at: NOW.toISOString(),
+    source: 'x',
+    date: '2026-10-25',
+    messages: {},
+  };
+  const db2 = { ...db, talk: [day] };
+  const plant = planned => J.checkWrites({ planned, db: db2, ctx: prepared.ctx, spec, schemas });
+  // an append in a key the fold's writer may not use (weak spots take events from the page, the evening run, filing)
+  const ws = db2.weakspots[0];
+  const page = plant([
+    {
+      op: 'update',
+      collection: 'weakspots',
+      id: ws.id,
+      data: { events: { 'worker-20261025-150000000': { kind: 'x' } } },
+    },
+  ]);
+  assert.match(page.join(' '), /events\.worker-20261025-150000000 appended by worker; events is appended by page/);
+  const once = plant([{ op: 'update', collection: 'talk', id: '2026-10-25', data: { date: '2026-10-26' } }]);
+  assert.match(once.join(' '), /date is write-once on a Fact/);
+});
+
+test('B-324: the staging proof holds a study guide to done', async () => {
+  const { judge } = await import('../tools/pwa-jobs.mjs');
+  const job = { data: { fired: { ok: true } } };
+  assert.ok(
+    !judge('study-guide', job, { data: { status: 'failed', error: 'much of this is general knowledge' } }).every(
+      l => l.ok
+    )
+  );
+  assert.ok(judge('study-guide', job, { data: { status: 'done', result: { text: 'guide' } } }).every(l => l.ok));
 });
