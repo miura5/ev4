@@ -198,17 +198,17 @@
       if (bare)
         return [
           COMMENT
-            ? 'Session started. I’ll keep time; tap Quiz me now whenever you want questions on your objectives and weak spots. Break and End are in the bar at the top.'
-            : `Session started. Every ${SWC.checkMinutes || 7} minutes I’ll post questions on your objectives and weak spots. Break, +5 and End are in the bar at the top.`,
+            ? 'Session started. I’ll keep time; tap Quiz me now whenever you want questions on your objectives and weak spots.'
+            : `Session started. Every ${SWC.checkMinutes || 7} minutes I’ll post questions on your objectives and weak spots.`,
           [],
         ];
       if (COMMENT)
         return [
-          `Session started on **${n.name}**. I’m reading along as you write and I’ll only chime in when a line makes a connection. Tap Quiz me now whenever you want questions. Break and End are in the bar at the top.`,
+          `Session started on **${n.name}**. I’m reading along as you write and I’ll only chime in when a line makes a connection. Tap Quiz me now whenever you want questions.`,
           [],
         ];
       return [
-        `Session started on **${n.name}**. I’ll check your new writing every ${SWC.checkMinutes || 7} minutes and post the questions here. Break, +5 and End are in the bar at the top.`,
+        `Session started on **${n.name}**. I’ll check your new writing every ${SWC.checkMinutes || 7} minutes and post the questions here.`,
         [],
       ];
     }
@@ -651,7 +651,10 @@
           .join(', ');
         return [
           `${reason === 'idle' ? 'No new writing for a while, so I wrapped up. ' : ''}Session saved: ${bits}.${r.questions.length ? ' One thing to settle on the card.' : ''}${note}`,
-          [{ type: 'session', id: s.id }],
+          // B-377 (D-316): as the demo, her one line and Open in Record; the summary card only when a question waits on him
+          r.questions.length
+            ? [{ type: 'session', id: s.id }]
+            : [{ type: 'go', label: 'Open in Record', to: 'record', id: s.id }],
         ];
       } finally {
         SS.busy = false;
@@ -671,6 +674,21 @@
         : type === 'resume'
           ? 'Welcome back. Checks resume.'
           : 'Next check moved 5 minutes later.';
+    }
+    // B-377 (D-316): Break and Resume, from the session's buttons or the break's chip, answer with her line in the thread
+    async function breakOrResume(type) {
+      const st = activeSession() && E.sessionState(activeSession(), now());
+      const ok = st && (type === 'break' ? !st.onBreak : st.onBreak);
+      const r = await sessionCmd(type);
+      await evSay(
+        !ok
+          ? r
+          : type === 'break'
+            ? 'Five-minute break. No checks until you’re back, and breaks don’t count as study time.'
+            : 'Back to it. Checks resume.',
+        [],
+        { tier: 'local' }
+      );
     }
     async function decideSession(s, key, decision) {
       await run(
@@ -712,12 +730,14 @@
       };
       const out = [];
       if (!ending) {
-        out.push(
-          mk(st.onBreak ? 'Resume' : 'Break', async () => toast(await sessionCmd(st.onBreak ? 'resume' : 'break')))
-        );
+        // B-377 (D-316): as the demo, Break and Resume are her line in the thread, not a toast; +5 min only moves the time
+        out.push(mk(st.onBreak ? 'Resume' : 'Break', () => breakOrResume(st.onBreak ? 'resume' : 'break')));
         // B-362 (D-316): the panel's card has +5 min in every mode, as the demo; the header's line keeps Break and End
         if (!COMMENT || o.long) {
-          const ext = mk(o.long ? '+5 min' : '+5', async () => toast(await sessionCmd('extend')));
+          const ext = mk(o.long ? '+5 min' : '+5', async () => {
+            const r = await sessionCmd('extend');
+            if (!/^Next check moved/.test(r)) toast(r);
+          });
           ext.setAttribute('aria-label', 'Add 5 minutes before the next check');
           out.push(ext);
         }
@@ -780,7 +800,7 @@
           : SS.busy === true
             ? 'Writing your quiz…'
             : st.onBreak
-              ? `On a break · ${minsLeft(st)} min left`
+              ? breakLeft(s) // B-377: the demo's 5 min break
               : `${minsLeft(st) ?? st.minutes} min${minsLeft(st) == null ? '' : ' left'}`;
         bar.querySelector('.s-read').textContent = ''; // B-362 (D-316): the demo's line is the topic and the minutes
         CORE.setRing(ringFill(st, ending));
@@ -806,6 +826,19 @@
       const next = Date.parse(st.nextCheckAt);
       return Number.isFinite(next) ? m(next - Date.now()) : null;
     }
+    // B-377 (D-316): a break reads as the demo's 5 min break, counting down from when it started; a break has no end of
+    // its own (he resumes), so past five minutes it reads Break’s over.
+    const BREAK_MIN = 5;
+    function breakLeft(s) {
+      const since = Math.max(
+        0,
+        ...Object.values(s.events || {})
+          .filter(e => e && e.type === 'break' && e.at)
+          .map(e => Date.parse(e.at) || 0)
+      );
+      const m = Math.ceil((BREAK_MIN * 60e3 - (Date.now() - since)) / 60e3);
+      return since && m <= 0 ? 'Break’s over' : Math.min(BREAK_MIN, Math.max(1, m)) + ' min break';
+    }
     function renderSessCard() {
       let card = $('ev-sess');
       if (!card) {
@@ -819,9 +852,19 @@
         if (card.dataset.k === 'idle' + offered) return;
         card.dataset.k = 'idle' + offered;
         card.setAttribute('aria-label', 'Start a study session');
-        const go = btn('Start study session', () => guard(go, () => quick('Start a study session')), {
-          cls: 'btn primary wide', // B-340 (D-312): the panel's main button, in Ember as in the demo
-        });
+        // B-377 (D-316): as the demo, the panel's button starts the session with her line only, never his
+        const go = btn(
+          'Start study session',
+          () =>
+            guard(go, async () => {
+              T.bigCore = false;
+              const [t, c] = await startSession();
+              await evSay(t, c, { tier: 'local' });
+            }),
+          {
+            cls: 'btn primary wide', // B-340 (D-312): the panel's main button, in Ember as in the demo
+          }
+        );
         go.insertAdjacentHTML('afterbegin', PLAY_ICON);
         card.replaceChildren(
           el('h2', null, 'Start a study session'),
@@ -844,7 +887,7 @@
         const head = el('div', 'card-head');
         head.append(
           el('h2', null, 'Study session'),
-          el('span', 'badge', ending ? 'Ending' : st.onBreak ? 'Break' : 'Running') // B-362: the demo's quiet badge
+          el('span', 'badge x-quiet', ending ? 'Ending' : st.onBreak ? 'Break' : 'Running') // B-362, B-377: the demo's grey-filled quiet badge
         );
         const acts = el('div', 'ss-acts');
         acts.append(...sessButtons(s, st, ending, { cls: 'btn neutral sm', long: true }));
@@ -859,7 +902,9 @@
       const left = minsLeft(st);
       card.querySelector('.ss-left').textContent = ending
         ? 'Wrapping up'
-        : left == null
+        : st.onBreak
+          ? breakLeft(s)
+          : left == null
           ? durFmt(st.minutes)
           : left + ' min left';
       // B-362, B-368 (D-316): as the demo, '<what> · N min': where the session's words come from and its minutes (a

@@ -187,16 +187,8 @@
       const convs = viewConvs(),
         shown = Math.min(convs.length, 1 + CAP.loaded);
       const earlierConvs = convs.slice(convs.length - shown, convs.length - 1);
-      let cur = convs.length ? convs[convs.length - 1].messages : [];
-      // In a session only her latest two lines show, until he pulls for more (D-122).
-      if (activeSession() && !CAP.loaded) {
-        let c = 0;
-        for (let i = cur.length - 1; i >= 0; i--)
-          if (cur[i].role !== 'matt' && ++c === 2) {
-            cur = cur.slice(i);
-            break;
-          }
-      }
+      // B-377 (D-316): in a session the whole conversation stays, as the demo (D-122's two-line trim is retired)
+      const cur = convs.length ? convs[convs.length - 1].messages : [];
       const lastEv = [...cur].reverse().find(m => m.role !== 'matt'),
         lastMatt = [...cur].reverse().find(m => m.role === 'matt');
       const kids = [capPull];

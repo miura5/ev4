@@ -51,6 +51,11 @@
       happy: 'ready when you are',
       sleepy: 'resting',
     };
+    // B-377 (D-316): her status reads on a break whenever the session is on one, as the demo
+    function onBreakNow() {
+      const s = activeSession();
+      return !!s && E.sessionState(s, now()).onBreak;
+    }
     function renderMood() {
       noticeSync();
       MOOD_NOW = computeMood();
@@ -60,7 +65,7 @@
       const word =
         off && !T.busy
           ? 'quick asks only'
-          : MOOD_NOW === 'sleepy' && activeSession()
+          : onBreakNow()
             ? 'on a break'
             : NT.on && ui.tab !== 'ev'
               ? 'something’s ready'
@@ -72,7 +77,7 @@
         off && !T.busy
           ? word
           : activeSession()
-            ? MOOD_NOW === 'sleepy'
+            ? onBreakNow()
               ? 'on a break'
               : 'in a session'
             : NT.on && ui.tab !== 'ev'
@@ -193,7 +198,9 @@
         const bs = chips.map(c => {
           const b = /^Resume .+ · \d+ of \d+$/.test(c)
             ? btn(c, () => skillPark(false))
-            : btn(c, () => guard(null, () => quick(c)));
+            : c === 'I’m back early' // B-377 (D-316): as the demo, her line only
+              ? btn(c, () => guard(null, () => breakOrResume('resume')))
+              : btn(c, () => guard(null, () => quick(c)));
           b.className = 'qchip';
           return b;
         });

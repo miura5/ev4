@@ -92,7 +92,14 @@
     // first open: her stage at full size, the chips, the briefing with room to unfold. Only the view splits: the
     // conversation itself, and what Claude is given as context, stay as D-128 defines them.
     function viewConvs() {
-      const convs = E.conversations(allMsgs());
+      // B-377 (D-316): as the demo, a study session continues the thread, so on screen only the idle gap splits it (the
+      // session's own conversation, B-74, stays core's for what reads it); the messages shown are the originals.
+      const msgs = allMsgs(),
+        byId = new Map(msgs.map(m => [m.id, m]));
+      const convs = E.conversations(msgs.map(m => (m.session ? { ...m, session: undefined } : m))).map(c => ({
+        ...c,
+        messages: c.messages.map(m => byId.get(m.id) || m),
+      }));
       const g = T.greet;
       if (!g || !convs.length) return convs;
       const last = convs[convs.length - 1],

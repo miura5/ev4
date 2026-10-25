@@ -293,6 +293,9 @@
       } else if (c.to === 'review') {
         showTab('study');
         setStudy('review');
+      } else if (c.to === 'record') {
+        openInRecord(c.id); // B-377: a saved session opens on its row in Record's log
+        return;
       } else if (c.to === 'today') {
         ui.todayView = 'list';
         store.set('todayView', 'list');
