@@ -6876,7 +6876,7 @@
   "milestone": "v4.8 redesign",
   "status": "done",
   "depends": [],
-  "notes": "x",
+  "notes": "Card for Matt: when a run fails, the status under E.V.'s name and the line beside the view's title now read a short whole phrase that fits at every size: Last night's Mac run failed, A run failed (or finished partly), A run was missed, A run never finished, A job is stuck, Health check is late, Backup is behind. Tapping it opens System, which keeps the full sentence and its detail. While a problem shows, the staging word is left off so the phrase is never cut. Staging GREEN at 0fc151e. Still differs from the demo: the demo has no failure state, so the phrase sits where the demo's status words sit, same at 1280, 1706, 2560 and 390. Note for the build manager: origin's history was rewritten, so builds now read v4.5.0+untagged (the old tags don't reach main). Reviewer: none (fidelity sprint, D-312).",
   "commit": "0fc151e",
   "source": "UI reviewer click-through 4 at 45d2d51, Oct 25 (D-316)",
   "words": "Review 4: the status line's failure text is cut off at both widths.",
