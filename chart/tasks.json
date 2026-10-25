@@ -5537,11 +5537,11 @@
   "title": "A PWA smoke on every push: build-pwa, then the shim boots against wrangler dev seeded with the synthetic record and a stub in place of the Claude API. It checks boot, each tab, a check-off, a study session started and ended, and a chat reply. Lives in pwa/, not test/harness/.",
   "dod": "npm run smoke:pwa green on boot, each tab, a check-off that survives a reload and a chat reply. The session step is in place and turns green in B-314. A planted page error turns it red. The smoke workflow runs it on every push. A chat message carrying a planted patient identifier is stopped by the page's gate, and the stub records no call to /api/claude.",
   "milestone": "app (data, pipelines, ops)",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-309"
   ],
-  "notes": "",
+  "notes": "claimed by lane app",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
