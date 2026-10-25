@@ -5836,7 +5836,7 @@
   "depends": [
    "B-332"
   ],
-  "notes": "Shipped to staging at 664f4bc: ship staging GREEN.",
+  "notes": "Her one-line insight now sits in a strip under the header, as in the demo: on Today it says how many of your budget minutes are on the list; on Week it names the graded dates in the next 7 days; on Study it says how many of the exam's objectives are not yet solid, with Quiz me on them. It is absent on Progress, Record, System and her own view, and whenever there is nothing to say; from 1200 px the right panel starts under it. Still differs from the demo: at every size the sentences come from your record, so they read differently from the demo's sample lines; on Week a long assignment title can wrap the strip to two lines at 1280 (the demo's titles are short). The week's own line moved up into the strip. 390, 1706 and 2560 match the boards' strip.",
   "commit": "664f4bc",
   "source": "fidelity review, Oct 25 (D-312)"
  },
