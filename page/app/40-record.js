@@ -172,7 +172,7 @@
       const cols = el('div', 'cols'),
         main = el('div', 'col-main'),
         side = el('div', 'col-side'),
-        list = el('div', 'rec-list'),
+        list = el('div', 'card rec-list'),
         det = el('div', 'card rec-detail');
       list.id = 'rec-list';
       det.id = 'rec-detail';
