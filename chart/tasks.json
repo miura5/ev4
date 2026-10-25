@@ -5590,13 +5590,14 @@
   "title": "Backups (D-302): a nightly Worker export of D1 to Cloudflare R2, D1 Time Travel on, and evening-mac's nightly backup and Sunday mirror exported from D1. No export is overwritten or deleted.",
   "dod": "A restore of the newest staging R2 export into a scratch D1 matches counts and SHA-256 hashes per collection. A test shows an export never replaces an earlier one. Time Travel is confirmed on for the staging D1 (wrangler d1 time-travel info).",
   "milestone": "app (data, pipelines, ops)",
-  "status": "in progress",
+  "status": "blocked",
   "depends": [
    "B-312"
   ],
-  "notes": "built: Worker export to R2 on a nightly cron and on demand, restore check tool, tests (8 pass, npm test 596 pass); local wrangler dev export+restore GREEN (74 docs, 17 collections); pwa-staging run with backup on started at fca98db",
+  "notes": "Builder (lane app), Oct 25: built and pushed (fca98db, db07f7c): the staging Worker exports the whole D1 to R2 nightly (3:17 Central) and on demand, never over an earlier export; a restore check (counts and SHA-256 per collection) and 8 tests pass; npm test green; a local run of the Worker exported and restored the made-up record GREEN (74 documents, 17 collections). On staging (pwa-staging run 40193180450): deploy, token check and run API suite green, and Time Travel is on for the staging D1 (bookmark read back). Blocked on one thing in Matt's Cloudflare account: R2 is not turned on (Cloudflare: 'Please enable R2 through the Cloudflare Dashboard', code 10042). Where: Cloudflare dashboard > R2 > enable (free plan; Cloudflare may ask for a payment method). After that, any run of the pwa-staging workflow with backup on creates the bucket, binds the nightly export and proves the restore; until then the staging deploy carries on without it. Not in this lane: evening-mac's Mac backup and Sunday mirror read from D1 go with B-317 (Mac, Matt present). Open from the touched check: RED at the shell harness and the app smoke's tab step, both on the System tab the sidebar lane moved (pre-existing, not touched here). No review run yet: it runs once the R2 proof can.",
   "commit": null,
-  "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-317",
