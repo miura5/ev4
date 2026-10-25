@@ -6468,5 +6468,22 @@
    "outcome": "task",
    "at": "2026-10-25T13:48:50.874Z"
   }
+ },
+ {
+  "id": "B-365",
+  "kind": "request",
+  "title": "Request (reported Oct 25): The UI review found Study differs from the demo on both records: course switch, empty states, objective rows, weak spots and the quiz.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UI reviewer click-through at d35692d, Oct 25 (D-316)",
+  "words": "The UI review found Study differs from the demo on both records: course switch, empty states, objective rows, weak spots and the quiz.",
+  "reportedAt": "2026-10-25T13:48:51.364Z",
+  "board": {
+   "row": "v4 B-365: The UI review found Study differs from the demo on both records:…"
+  }
  }
 ]
