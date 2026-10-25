@@ -48,17 +48,7 @@ test("B-318: the live app is refused without Matt's OK (R-04), and stays off unt
   assert.equal(no.ok, false);
   assert.match(no.refusals[0], /R-04/);
   assert.deepEqual(appCalls({ target: 'live', commit: C, mattOk: true }), { ok: true, calls: [] }, 'live is off');
-  APPS.live.ready = true;
-  try {
-    const yes = appCalls({ target: 'live', commit: C, mattOk: true });
-    assert.equal(
-      yes.calls[0].args.command,
-      `gh workflow run pwa-live.yml --repo miura5/ev4 --ref main -f commit=${C} -f matt_ok=${C}`
-    );
-    assert.equal(appCalls({ target: 'live', commit: C }).ok, false, 'still refused without the OK');
-  } finally {
-    APPS.live.ready = false;
-  }
+  assert.equal(APPS.live.ready, false, 'B-320 builds the live app path');
 });
 
 test('B-318: the build hash rides in the Worker version message and reads back', () => {
@@ -175,32 +165,18 @@ test('B-318: the build hash covers the Worker source and every served file', () 
   assert.notEqual(hashOf(publicFiles(dir)), h);
 });
 
-test('B-318: the workflows deploy at the build commit with its hash; pwa-live is gated and never makes a database', () => {
+test('B-318: the staging workflow deploys at the build commit with its hash; there is no live app workflow', () => {
   const st = fs.readFileSync(path.join(ROOT, '.github/workflows/pwa-staging.yml'), 'utf8');
   assert.match(st, /run-name: pwa-staging \$\{\{ inputs\.commit \|\| github\.sha \}\}/);
   assert.match(st, /ref: \$\{\{ inputs\.commit \|\| github\.sha \}\}\n\s+fetch-depth: 0/);
   assert.match(st, /wrangler deploy --env staging --message "\$msg"/);
   assert.match(st, /node tools\/pwa-app\.mjs deployed staging/);
-  const lv = fs.readFileSync(path.join(ROOT, '.github/workflows/pwa-live.yml'), 'utf8');
-  const on = lv.slice(lv.indexOf('\non:'), lv.indexOf('\npermissions:'));
-  assert.match(on, /workflow_dispatch/);
-  assert.doesNotMatch(on, /push|pull_request|schedule/);
-  assert.match(lv, /\[ "\$MATT_OK" = "\$COMMIT" \] \|\| \{ echo "R-04/);
-  assert.ok(lv.indexOf('R-04') < lv.indexOf('wrangler'), 'the OK is checked before any Cloudflare call');
-  assert.match(lv, /display_title == \\"pwa-staging \$COMMIT\\"/, 'R-02: staging first');
-  assert.match(lv, /environment: live/);
-  assert.doesNotMatch(lv.replace(/^#.*$/gm, ''), /d1 create|seed|d1 execute|_STAGING|ev-staging|delete|DROP/);
-  for (const line of lv.split('\n').filter(l => /\b(echo|printf|cat)\b/.test(l))) {
-    if (/\|\s*npx wrangler secret put/.test(line)) continue;
-    assert.doesNotMatch(
-      line,
-      /\$\{?(CLOUDFLARE_API_TOKEN|EV_LIVE_TOKEN|ANTHROPIC_API_KEY_LIVE)\b|secrets\./,
-      line.trim()
-    );
-  }
-  const toml = fs.readFileSync(path.join(ROOT, 'pwa/wrangler.toml'), 'utf8');
-  assert.match(toml, /\[env\.live\]\s+name = "ev-live"/);
-  assert.equal(APPS.live.ready, false, 'live stays off until its Worker and D1 exist');
+  assert.equal(
+    fs.existsSync(path.join(ROOT, '.github/workflows/pwa-live.yml')),
+    false,
+    'B-320 builds it with its gates'
+  );
+  assert.doesNotMatch(fs.readFileSync(path.join(ROOT, 'pwa/wrangler.toml'), 'utf8'), /\[env\.live\]/);
 });
 
 test('B-318: ship carries the app read and dispatch as its own part, and reads it again after a dispatch', async () => {

@@ -2,12 +2,12 @@
 // credential, so a build session never deploys the Worker itself: ship prints the workflow dispatch for the session
 // to make (the way it prints ArtifactData calls), and a read through the GitHub API brings back what was deployed.
 //
-//   node tools/pwa-app.mjs message <staging|live>                 in the workflow, before the deploy: the line the
+//   node tools/pwa-app.mjs message staging                        in the workflow, before the deploy: the line the
 //                                                                  Worker version carries (wrangler deploy --message)
-//   node tools/pwa-app.mjs deployed <staging|live> <worker url>   in the workflow, after it: the active version's
+//   node tools/pwa-app.mjs deployed staging <worker url>          in the workflow, after it: the active version's
 //                                                                  message and every served page file equal this
 //                                                                  checkout's build; then the ::notice the read finds
-//   node tools/pwa-app.mjs readback <staging|live> --out <file> [--wait <minutes>]
+//   node tools/pwa-app.mjs readback staging --out <file> [--wait <minutes>]
 //                                                                  in a build session: the newest run of the target's
 //                                                                  workflow, its steps and that notice, saved for verify
 //
@@ -24,12 +24,12 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const REPO = 'miura5/ev4';
 
 /**
- * The app per target. live stays off (ready: false) until its Worker, D1 and secrets exist (B-283 and the move to D1):
- * until then ship live and verify-deploy live leave the app out, and nothing ever dispatches pwa-live.
+ * The app per target. live has no app path yet (ready: false): ship live and verify-deploy live leave the app out.
+ * The cutover task (B-320) builds the live Worker, its workflow and their gates.
  */
 export const APPS = {
   staging: { worker: 'ev-staging', workflow: 'pwa-staging.yml', ready: true },
-  live: { worker: 'ev-live', workflow: 'pwa-live.yml', ready: false },
+  live: { ready: false },
 };
 
 const sha256 = buf => crypto.createHash('sha256').update(buf).digest('hex');
@@ -105,22 +105,20 @@ export function appRead({ target, stateDir }) {
 
 /**
  * The call that deploys the app: a dispatch of the target's workflow at the build's commit. live only on Matt's OK
- * (R-04): without it, refused here as ship live refuses before any call; and pwa-live itself refuses a run whose
- * matt_ok is not the commit it deploys.
+ * (R-04): without it, refused here as ship live refuses before any call; with it, nothing until live is ready.
  */
 export function appCalls({ target, commit, mattOk = false }) {
   const app = APPS[target];
   if (target === 'live' && !mattOk)
     return { ok: false, refusals: ["R-04 (D-083): the live app deploys only on Matt's explicit OK (--matt-ok)"] };
   if (!app || !app.ready) return { ok: true, calls: [] };
-  const fields = target === 'live' ? `-f commit=${commit} -f matt_ok=${commit}` : `-f commit=${commit}`;
   return {
     ok: true,
     calls: [
       {
         step: `app ${target}: deploy the ${app.worker} Worker and its page files at ${commit.slice(0, 7)}`,
         tool: 'Bash',
-        args: { command: `gh workflow run ${app.workflow} --repo ${REPO} --ref main ${fields}` },
+        args: { command: `gh workflow run ${app.workflow} --repo ${REPO} --ref main -f commit=${commit}` },
         then: `the read below waits for the run (or gh run list --repo ${REPO} --workflow ${app.workflow} --limit 1)`,
       },
     ],
@@ -285,8 +283,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const i = process.argv.indexOf(k);
     return i >= 0 ? process.argv[i + 1] : null;
   };
-  if (!['message', 'deployed', 'readback'].includes(cmd) || !APPS[target]) {
-    console.error('usage: node tools/pwa-app.mjs message|deployed|readback <staging|live> [...]');
+  if (!['message', 'deployed', 'readback'].includes(cmd) || !(APPS[target] && APPS[target].ready)) {
+    console.error(
+      'usage: node tools/pwa-app.mjs message|deployed|readback staging [...] (live has no app path yet: B-320)'
+    );
     process.exit(2);
   }
   if (cmd === 'message') {
@@ -294,7 +294,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.log(appMessage({ commit, ...buildHash(ROOT, path.join(ROOT, 'pwa', 'public')) }));
   } else if (cmd === 'deployed') {
     if (!/^https:\/\//.test(third || '')) {
-      console.error('usage: node tools/pwa-app.mjs deployed <staging|live> https://<the Worker>');
+      console.error('usage: node tools/pwa-app.mjs deployed staging https://<the Worker>');
       process.exit(2);
     }
     const { lines, message } = await deployedCheck(target, third).catch(e => ({
