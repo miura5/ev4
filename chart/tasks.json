@@ -6349,7 +6349,7 @@
   "milestone": "v4.8 redesign",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Build manager: D-316 supersedes D-314's Record-tabs exception. If your prompt says Record keeps its tabs, that line is out of date: this task removes them.",
   "commit": null,
   "source": "Matt, staging, Oct 25 (D-316)",
   "words": "Record keeps tabs the demo does not have; the demo's Record has none.",
