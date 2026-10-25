@@ -651,17 +651,6 @@
       return sg;
     })();
     const dayName = d => new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' });
-    function weekEntries() {
-      // the seven days' calendar entries, taken-off ones included, and the exams not already on the calendar
-      const last = E.addDays(today, WEEK_DAYS - 1),
-        inWeek = d => d.date >= today && d.date <= last;
-      const exams = S.exams
-        .filter(e => e.date && inWeek(e) && !S.dates.some(d => d.kind === 'exam' && d.date === e.date))
-        .map(e => ({ id: 'exam-' + e.id, date: e.date, title: e.title || e.id, kind: 'exam', course: E.courseOf(e) }));
-      return [...(S.datesAll || S.dates).filter(inWeek), ...exams].sort(
-        (a, b) => a.date.localeCompare(b.date) || String(a.title).localeCompare(b.title)
-      );
-    }
     function gradedLine(entries) {
       const g = entries.filter(d => d.graded && !E.isRemovedDate(d));
       const n = g.length;
@@ -747,7 +736,7 @@
         panel.hidden = true;
         return;
       }
-      const entries = weekEntries();
+      const entries = weekDates(E.addDays(today, WEEK_DAYS - 1), true);
       if (!entries.some(d => d.id === ui.weekSel)) ui.weekSel = (entries[0] || {}).id || null;
       const days = el('div', 'wk-days');
       for (let i = 0; i < WEEK_DAYS; i++) {
@@ -825,27 +814,18 @@
             { cls: 'btn neutral sm' }
           )
         );
-      if (!/^exam-/.test(d.id) && (off || !E.isFixedDate(d))) {
-        const t = btn(off ? 'Bring back' : 'Take off', null, { cls: 'btn ghost sm wk-off' });
-        t.setAttribute('aria-label', (off ? 'Bring back: ' : 'Take off the calendar: ') + (d.title || ''));
-        t.addEventListener('click', () =>
-          guard(
-            t,
-            () => editDates({ action: off ? 'restore' : 'remove', id: d.id }, 'Matt'),
-            off ? 'Back on the calendar' : 'Taken off the calendar'
-          )
-        );
-        acts.append(t);
-      }
+      const t = !/^exam-/.test(d.id) && dateEditButton(d, 'Take off', 'btn ghost sm wk-off');
+      if (t) acts.append(t);
       panel.replaceChildren(el('h2', null, d.title || ''), props, ...(acts.children.length ? [acts] : []));
     }
     // The exam leaves the tick list for Next 7 days (B-117): exams in the window join the calendar's dates, once each.
-    function weekDates() {
-      const inWeek = d => d.date >= today && d.date <= E.addDays(today, 7);
+    // B-295: the week view asks for its seven days, with the dates taken off (their chips can bring them back).
+    function weekDates(last = E.addDays(today, 7), withRemoved = false) {
+      const inWeek = d => d.date >= today && d.date <= last;
       const examDates = S.exams
         .filter(e => e.date && inWeek(e) && !S.dates.some(d => d.kind === 'exam' && d.date === e.date))
-        .map(e => ({ id: 'exam-' + e.id, date: e.date, title: e.title || e.id, kind: 'exam' }));
-      return [...S.dates.filter(inWeek), ...examDates].sort(
+        .map(e => ({ id: 'exam-' + e.id, date: e.date, title: e.title || e.id, kind: 'exam', course: E.courseOf(e) }));
+      return [...(withRemoved ? S.datesAll || S.dates : S.dates).filter(inWeek), ...examDates].sort(
         (a, b) => a.date.localeCompare(b.date) || String(a.title).localeCompare(b.title)
       );
     }
@@ -899,23 +879,27 @@
       li.append(b);
       return li;
     }
+    /** Remove (or Take off) and Bring back for a date that can leave the calendar (D-080); null for one that can't. */
+    function dateEditButton(d, label, cls) {
+      const off = E.isRemovedDate(d);
+      if (!off && E.isFixedDate(d)) return null;
+      const b = btn(off ? 'Bring back' : label, null, { cls });
+      b.setAttribute('aria-label', (off ? 'Bring back: ' : label + ' from the calendar: ') + (d.title || ''));
+      b.addEventListener('click', () =>
+        guard(
+          b,
+          () => editDates({ action: off ? 'restore' : 'remove', id: d.id }, 'Matt'),
+          off ? 'Back on the calendar' : 'Taken off the calendar'
+        )
+      );
+      return b;
+    }
     function dateRow(d, o = {}) {
       // o.edit: Remove (or Bring back) for entries that can leave the calendar (D-080)
       const kindV = { exam: 'accent', validation: 'warn', clinical: 'ok', due: 'info' }[d.kind] || '';
       const off = E.isRemovedDate(d);
       const by = w => (w === 'Matt' ? 'you' : 'E.V.');
-      let action = null;
-      if (o.edit && (off || !E.isFixedDate(d))) {
-        action = btn(off ? 'Bring back' : 'Remove', null, { cls: 'quiet' });
-        action.setAttribute('aria-label', (off ? 'Bring back: ' : 'Remove from the calendar: ') + (d.title || ''));
-        action.addEventListener('click', () =>
-          guard(
-            action,
-            () => editDates({ action: off ? 'restore' : 'remove', id: d.id }, 'Matt'),
-            off ? 'Back on the calendar' : 'Taken off the calendar'
-          )
-        );
-      }
+      const action = o.edit ? dateEditButton(d, 'Remove', 'quiet') : null;
       const detail = [
         d.course && d.course !== E.defaultCourse() ? d.course : '',
         d.notes,
