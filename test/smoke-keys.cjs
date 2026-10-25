@@ -96,6 +96,9 @@ async function keys(page, box, key = 'Space') {
   await page.evaluate(box => {
     window.__klog = [];
     const f = document.querySelector(box + ' fieldset.opts');
+    const raf = window.requestAnimationFrame.bind(window);
+    window.requestAnimationFrame = cb => { window.__klog.push('RAF ' + new Error().stack.split('\n').slice(2, 9).map(l => l.trim().replace(/\(.*\//, '(')).join(' < ')); return raf(cb); };
+    const st = window.setTimeout.bind(window);
     const bx = document.querySelector(box), orig = bx.replaceChildren.bind(bx);
     bx.replaceChildren = (...a) => { window.__klog.push('REPLACE ' + new Error().stack.split('\n').slice(1, 12).map(l => l.trim().replace(/\(.*\//, '(')).join(' < ')); return orig(...a); };
     if (f) f.__mark = 1;
