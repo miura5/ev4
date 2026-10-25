@@ -101,9 +101,14 @@ export function guardedChanges(root = ROOT, from, to = 'HEAD') {
   }
   return out;
 }
-/** The start of a builder run's own commits: the head its marker names, else origin/main, else nothing. */
+/**
+ * The start of the commits a builder run is about to push: origin/main (the record takes it first, so it is fresh),
+ * else the head its marker names, else nothing. Every push is checked, so each of the run's commits is held when it
+ * leaves; what other chats put on main while the run worked is theirs, not the run's (Oct 24: a build chat's tenet,
+ * pulled into a lane's rebase, refused the lane's own push).
+ */
 export function runBase(root, run) {
-  for (const rev of [run && run.head, 'origin/main'].filter(Boolean))
+  for (const rev of ['origin/main', run && run.head].filter(Boolean))
     try {
       return git(root, ['rev-parse', '--verify', '-q', rev + '^{commit}']).trim();
     } catch {
