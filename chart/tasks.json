@@ -7100,10 +7100,10 @@
  {
   "id": "B-395",
   "kind": "bug",
-  "title": "Bug (reported Oct 25): When a refused conversation line is restored to the box, a remembered earlier block can splice the new line into what he has typed, or reorder lines he edited between refusals.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "title": "A refused line is restored by one simple rule: appended to the end of the box after a blank line (or alone when the box is empty), with no remembered block; refused lines come back in send order, never spliced into his words",
+  "dod": "restoreInput keeps no state; tests: two refusals in a row give A then B; refusals with his edits between (added text, deleted text, cleared box) keep every word unchanged and in order; a later unrelated refusal never touches his typed text; npm test, npm run smoke and smoke:pwa green; a fresh review finds no gap.",
+  "milestone": "v5 app",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -7112,6 +7112,10 @@
   "reportedAt": "2026-10-25T21:30:06.527Z",
   "board": {
    "row": "v4 B-395: When a refused conversation line is restored to the box, a remembered…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-25T21:30:09.108Z"
   }
  }
 ]
