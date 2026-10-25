@@ -6792,7 +6792,7 @@
   "milestone": "v4.8 redesign",
   "status": "done",
   "depends": [],
-  "notes": "Shipped to staging at a7fe52b: ship staging GREEN.",
+  "notes": "Card for Matt: the New menu and its Task and Note dialogs now sit at the demo's spacing and type (no extra gap under the header or above the footer, the footer hint at 13 px, the menu tucked under New on the phone with 44 px rows), and every switch in the page is the demo's flat grey strip with the picked option raised on a hairline. Saving a task, a note or a workout, copying cards for Quizlet or a kickoff, and Break, Resume or +5 in a session no longer pop a confirmation toast; the change shows in place (a copy button says Copied). A click-through of every control two deep at 1280 and at 390 on a record with no objectives showed no toast. Toasts that explain a refusal or an error stay. Still differs from the demo: there is no Log something dialog because the page has no Log something button (New makes notes); the Create heading sits 1 px higher; same at 1706 and 2560 (the dialog is fixed at 560 px).",
   "commit": "a7fe52b",
   "source": "UI reviewer click-through 3 at d6bee63, Oct 25 (D-316)",
   "words": "Review 3: dialogs' spacing and segmented controls differ, and confirmation toasts appear where the demo has none.",
