@@ -5370,7 +5370,7 @@
   "depends": [
    "B-288"
   ],
-  "notes": "built and committed locally: run harness green with the new Progress checks; touched check running",
+  "notes": "proofs: run and look harnesses green alone after fixes for D-147, D-151 and B-121; full touched check re-running",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
