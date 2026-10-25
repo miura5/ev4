@@ -5276,12 +5276,12 @@
   "title": "Today week view (C-6, C-13, C-16): seven days from today, one row per day below 1200 px. The today chip shows the real count of today's list. The date panel shows Quiz me on it, Open the task, and Take off with Bring back (the existing date edit). Her line counts graded dates from the dates themselves.",
   "dod": "Screenshots at 390, 1000 and 1280 in light and dark. On a planted week with three graded dates, her line says three and the today chip equals the list's count. Take off writes the existing date edit, and Bring back reverses it. No chip title wraps past one line at 700 or 1000.",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-291"
   ],
-  "notes": "reviewed: second review named one gap (the switch squeezed beside the header's status line at 1280), fixed in beddfd2 with a check that fails without it; check --touched rerunning",
-  "commit": null,
+  "notes": "Shipped to staging at beddfd2: ship staging GREEN.",
+  "commit": "beddfd2",
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
  {
