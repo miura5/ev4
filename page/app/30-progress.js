@@ -69,20 +69,23 @@
         }
         return out;
       }
-      const dates = [...timed().map(s => s.date), ...M.attempts.all.map(a => a.date)].filter(Boolean).sort();
-      let ym = monthOf(dates[0] && dates[0] < today ? dates[0] : today);
+      // B-366: the semester is every month of the term, the future ones empty (ahead): fall is August to December,
+      // spring January to May, summer June and July
+      const mo = Number(today.slice(5, 7)),
+        yr = today.slice(0, 4);
+      const [m0, m1] = mo >= 8 ? [8, 12] : mo <= 5 ? [1, 5] : [6, 7];
       const out = [];
-      for (let i = 0; ym <= monthOf(today) && i < 12; i++) {
+      for (let m = m0; m <= m1; m++) {
+        const ym = yr + '-' + String(m).padStart(2, '0');
         out.push({
           key: ym,
           from: monthStart(ym),
           to: monthEnd(ym),
           label: monthName(ym),
-          full: MONL[Number(ym.slice(5, 7)) - 1] + soFar(monthStart(ym), monthEnd(ym)),
+          full: MONL[m - 1] + soFar(monthStart(ym), monthEnd(ym)),
         });
-        ym = E.addDays(monthStart(ym), 32).slice(0, 7);
       }
-      return out.slice(-6);
+      return out;
     }
     // the period before this one, for the deltas: last week, last month; the semester has none
     function before(period) {
@@ -106,6 +109,13 @@
       if (!d) return 'same as ' + name;
       return (d > 0 ? '+' : '−') + hm(Math.abs(d)) + ' on ' + name;
     }
+    // the semester's 'since 24 August': its first day with a session or an answer, else its first month
+    function firstDay(span) {
+      const d = [...timed().map(s => s.date), ...M.attempts.all.map(a => a.date)]
+        .filter(x => x && inSpan(x, span.from, span.to))
+        .sort()[0];
+      return d ? Number(d.slice(8)) + ' ' + MONL[Number(d.slice(5, 7)) - 1] : MONL[Number(span.from.slice(5, 7)) - 1];
+    }
     function renderProgressTime() {
       const P = prog.period,
         bs = buckets(P);
@@ -128,12 +138,14 @@
         [
           'Study time',
           hm(grand),
-          prev ? deltaMin(grand - minsIn(prev.from, prev.to), prev.name) : 'since ' + bs[0].full,
+          prev ? deltaMin(grand - minsIn(prev.from, prev.to), prev.name) : 'since ' + firstDay(span),
         ],
         accPct != null && [
           'Quiz accuracy',
           accPct + '%',
-          prevPct == null
+          !prev
+            ? 'since ' + firstDay(span)
+            : prevPct == null
             ? acc.right + ' of ' + acc.n + ' right'
             : (accPct === prevPct
                 ? 'same as '
@@ -213,28 +225,48 @@
           return r;
         });
       $('prog-course').hidden = !courseRows.length;
-      $('prog-course').replaceChildren(el('span', 'lab', 'By course · ' + PERIODS[P].toLowerCase()), ...courseRows);
-      // exam readiness (B-342, the demo's): each course's next exam with objectives, its objectives solid (green) and
-      // almost (yellow), as Study's overview counts them
+      $('prog-course').replaceChildren(el('span', 'lab', 'By course · ' + { week: 'this week', month: 'this month', sem: 'this semester' }[P]), ...courseRows);
+      // exam readiness (B-342, the demo's): each course's next exam, its objectives solid (green) and almost (yellow),
+      // as Study's overview counts them; B-366: an exam with no objectives shows its plan's progress instead, tasks done
+      // (green) and the rest of its started days (yellow), as Study's exam card does
       const objAcc = E.answerStats(M.attempts.all).byObjective;
-      const readyRows = studyCourses().map(({ exam: e }) => {
+      const readyRows = studyExams().map(({ exam: e }) => {
         const objs = S.objectives.filter(o => o.exam === e.id);
-        const st = objs.map(o => objState(o, objAcc[o.id]).state);
-        const so = st.filter(x => x === 'solid').length,
-          al = st.filter(x => x === 'almost').length;
+        let n, so, al, unit;
+        if (objs.length) {
+          const st = objs.map(o => objState(o, objAcc[o.id]).state);
+          (n = objs.length), (so = st.filter(x => x === 'solid').length), (al = st.filter(x => x === 'almost').length);
+          unit = 'objectives';
+        } else {
+          const plan = S.plans.find(p => (p.exam || p.id) === e.id);
+          const isDone = t => !!(plan.done && plan.done[t.id]) || E.taskDone(plan, t, today, S.sets, S.answers);
+          (n = 0), (so = 0), (al = 0), (unit = 'plan tasks');
+          for (const d of (plan && plan.days) || []) {
+            const ts = (d.tasks || []).map(t => ({ ...t, date: d.date })),
+              k = ts.filter(isDone).length;
+            n += ts.length;
+            so += k;
+            if (k && k < ts.length) al += ts.length - k;
+          }
+        }
         const row = el('div', 'prog-hb');
         const top = el('div', 'prog-hb-top');
         top.append(
           el('span', null, E.courseOf(e) + ' · ' + (e.title || e.id).replace(/:.*$/, '')),
-          el('span', 'meta', so + ' of ' + objs.length)
+          el('span', 'meta', unit === 'plan tasks' && !n ? 'no plan yet' : so + ' of ' + n + (unit === 'plan tasks' ? ' plan tasks' : ''))
         );
         const bar = el('div', 'pbar');
         bar.setAttribute('role', 'img');
-        bar.setAttribute('aria-label', so + ' solid, ' + al + ' almost, of ' + objs.length + ' objectives');
+        bar.setAttribute(
+          'aria-label',
+          unit === 'objectives'
+            ? so + ' solid, ' + al + ' almost, of ' + n + ' objectives'
+            : so + ' of ' + n + ' plan tasks done'
+        );
         const g = el('i', 'x-green'),
           y = el('i', 'x-yellow');
-        g.style.width = Math.round((100 * so) / objs.length) + '%';
-        y.style.width = Math.round((100 * al) / objs.length) + '%';
+        g.style.width = (n ? Math.round((100 * so) / n) : 0) + '%';
+        y.style.width = (n ? Math.round((100 * al) / n) : 0) + '%';
         bar.append(g, y);
         row.append(top, bar);
         return row;
@@ -354,82 +386,12 @@
     function renderReadiness() {
       renderProgressTime(); // B-301
       // B-338 (D-312): the readiness card, its objective list and line chart, the findings and the accuracy tables leave
-      // Progress; their data stays in the record. Only the score prompt remains, while a past exam waits for its score.
+      // Progress; their data stays in the record.
       for (const id of ['ready-card', 'insights-card', 'audit-card', 'fmt-card', 'cj-card', 'days-card'])
         $(id).hidden = true;
-      // Score entry for past unit exams (calibration).
-      // D-094: a past NUR unit exam with no score yet; the score goes to examedits/<examId>, replaced whole.
-      const needScore = S.exams
-        .filter(e => e.date && e.date < today && E.examIs(e, 'scoredKinds') && typeof e.score !== 'number')
-        .sort((a, b) => b.date.localeCompare(a.date));
-      const sc = $('score-card');
-      sc.hidden = !needScore.length;
-      if (needScore.length) {
-        const e = needScore[0];
-        const f = el('form');
-        f.id = 'score-form';
-        const inp = document.createElement('input');
-        inp.type = 'number';
-        inp.min = '0';
-        inp.max = '100';
-        inp.step = '0.1';
-        inp.id = 'score-in';
-        inp.placeholder = 'Score, e.g. 88.5';
-        inp.setAttribute('aria-label', 'Score for ' + e.title);
-        const a = el('div', 'actions');
-        const sb = el('button', 'btn primary', 'Save score');
-        sb.type = 'submit';
-        a.append(sb);
-        f.append(
-          el('h2', null, 'Record your ' + (e.title || e.id).replace(/:.*$/, '') + ' score'),
-          el('p', 'meta', 'E.V. compares it with its prediction to get better at reading your readiness.'),
-          inp,
-          a
-        );
-        f.addEventListener('submit', ev => {
-          ev.preventDefault();
-          const v = Number(inp.value);
-          if (!(v >= 0 && v <= 100)) {
-            toast('Enter a score from 0 to 100.');
-            return;
-          }
-          guard(sb, async () => {
-            const at = now();
-            const cur = (S.examedits || []).find(x => x.id === e.id);
-            const { id, ...base } = cur || {};
-            await write({
-              op: 'set',
-              collection: 'examedits',
-              id: e.id,
-              data: {
-                ...(cur ? base : envelope('E.V. Home', at)),
-                updatedAt: at,
-                score: v,
-                scoreAt: at,
-                status: 'done',
-              },
-            });
-            // D-104: a saved score starts the post-exam retro; the worker posts it to the conversation.
-            let r = null;
-            try {
-              r = await startJob({
-                kind: 'exam-retro',
-                title: 'Retro: ' + (e.title || e.id),
-                brief: e.id + ': the retro after the score he entered',
-              });
-            } catch (err) {
-              toast('Score saved. The retro didn’t start: ' + ((err && err.message) || 'error'));
-              return;
-            }
-            toast(
-              r.fired.ok
-                ? 'Score saved. E.V. is writing your retro.'
-                : 'Score saved. The retro didn’t start: ' + fireCopy(r.fired.error)
-            );
-          });
-        });
-        sc.replaceChildren(f);
-      }
+      // B-366 (D-316): the demo has no score form, so Record your score leaves Progress; scores already saved stay in
+      // the record
+      $('score-card').hidden = true;
     }
     // B-123 (D-162): a weak spot is one line, its topic and objective, opening in place to its source and its action.
     const openWs = new Set();
