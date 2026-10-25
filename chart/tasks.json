@@ -5575,11 +5575,11 @@
   "title": "The run protocol targets the Worker. Where a run applies ArtifactData batches today, it applies them to the Worker's run API with the shared token, read from the task's settings and never from its prompt. The target is chosen per record, so live runs keep writing the artifact until B-320.",
   "dod": "For each cloud pipeline (morning, evening-cloud, weekly, worker, watchdog), a scheduled run fired against the staging Worker, and its runs/<id> read back from staging D1. A test asserts the live record still targets ArtifactData. A grep of the rendered prompts finds no token value.",
   "milestone": "app (data, pipelines, ops)",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-312"
   ],
-  "notes": "Unblocked by D-320; the PWA release starts Oct 25 (B-389, B-318 first).",
+  "notes": "claimed by the PWA builder",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
