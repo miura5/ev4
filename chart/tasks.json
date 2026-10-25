@@ -6813,7 +6813,7 @@
   "milestone": "v4.8 redesign",
   "status": "in progress",
   "depends": [],
-  "notes": "Review gaps fixed at 5f6efe6: record_score holds only a typed score and survives a retro that won't start; a graded snooze onto the same words stays graded; all idea writers get a Central-time id that never overwrites; spec journal lines corrected. npm test 601/601, smoke green (an intermittent refused-answer flake also occurs on origin/main), staging GREEN. Awaiting the second reviewer.",
+  "notes": "Second review fixed at e5d8124: an upgraded graded item is written by Matt and its undo re-adds it as his (stays GRADED); record_score approves only this turn's own unhedged line (exam/test/quiz numbers and out-of-100 ignored); a fixed non-graded item refuses the graded snooze. npm test 601/601, smoke green, staging GREEN. Not done: awaiting review.",
   "commit": null,
   "source": "code review of the fidelity sprint, Oct 25",
   "words": "The sprint's code review found a note can overwrite another with the same title the same day, the phone can't open the file picker, snoozed graded work loses its Graded tag, nothing writes an exam score, the quiz results claim a triage that does not exist, failures have nowhere to show, and some cards open hidden places.",
