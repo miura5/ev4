@@ -424,14 +424,7 @@
         })
       );
     function renderReadiness() {
-      renderProgressTime(); // B-301
-      // B-338 (D-312): the readiness card, its objective list and line chart, the findings and the accuracy tables leave
-      // Progress; their data stays in the record.
-      for (const id of ['ready-card', 'insights-card', 'audit-card', 'fmt-card', 'cj-card', 'days-card'])
-        $(id).hidden = true;
-      // B-366 (D-316): the demo has no score form, so Record your score leaves Progress; scores already saved stay in
-      // the record
-      $('score-card').hidden = true;
+      renderProgressTime(); // B-301 (B-381: the hidden readiness, audit, score and accuracy shells are gone)
     }
     // B-123 (D-162): a weak spot is one line, its topic and objective, opening in place to its source and its action.
     const openWs = new Set();
