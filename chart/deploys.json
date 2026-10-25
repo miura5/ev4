@@ -4252,5 +4252,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "43055bc",
+  "time": "2026-10-25T12:14:36.282Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "88c24c5",
+  "tasks": [
+   "B-345"
+  ],
+  "summary": "Fidelity fix: the conversation view's header reads E.V. where the…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]

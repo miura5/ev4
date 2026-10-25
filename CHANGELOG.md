@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 25 | v4 staging deployed at 43055bc (07:14 CT), from 88c24c5: Fidelity fix: the conversation view's header reads E.V. where the… (B-345). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at 88c24c5 (07:11 CT), from a1ad965: Fidelity fix: Progress still differs from its demo board after B-338:…; Fidelity (B-342, B-335). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at a1ad965 (07:10 CT), from 3dfe1fd: Fidelity (B-337). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at 3dfe1fd (07:09 CT), from 664f4bc: Fidelity fix: the sidebar's first section reads E.V. where the demo… (B-344). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
