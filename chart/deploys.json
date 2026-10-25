@@ -4368,5 +4368,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "6968d46",
+  "time": "2026-10-25T12:59:45.666Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "1c0d1ed",
+  "tasks": [
+   "B-354"
+  ],
+  "summary": "Fidelity fix: Today differs from the demo in row height, the budget,…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
