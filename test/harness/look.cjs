@@ -492,7 +492,14 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           e => !e.closest('#ready-card') && vis(e) && /\bE\d+-\d+\b/.test(e.textContent)
         ).length;
         return {
-          h: Math.round(document.getElementById('progress-readiness').getBoundingClientRect().height),
+          // B-301: the readiness part only (from its card to the view's end, less the day panel); the period's rows,
+          // chart and pair above it are new by the hand-off (C-6)
+          h: (() => {
+            const v = document.getElementById('progress-readiness').getBoundingClientRect(),
+              c = document.getElementById('ready-card').getBoundingClientRect(),
+              d = document.getElementById('prog-day');
+            return Math.round(v.bottom - c.top - (vis(d) ? d.getBoundingClientRect().height + 12 : 0));
+          })(),
           H: innerHeight,
           ids,
           once: new Set(ids).size === ids.length && !elsewhere,

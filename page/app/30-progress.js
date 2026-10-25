@@ -205,17 +205,25 @@
         const li = el('li', 'li prog-s');
         li.dataset.min = String(s.minutes);
         li.dataset.id = s.id;
-        li.append(
-          el('span', 'nm', s.topic || (s.kind === 'skill' ? 'Skills practice' : 'Study session')),
-          el('span', 'meta', sessionCourse(s)),
-          el('span', 't', (P === 'week' ? (s.startedAt ? clock12(s.startedAt) + ' · ' : '') : short(s.date) + ' · ') + hm(s.minutes))
-        );
+        // the session's name opens Record's sessions, where it lives (D-147: a card holds something he does)
+        const nm = el('button', 'nm', s.topic || (s.kind === 'skill' ? 'Skills practice' : 'Study session'));
+        nm.type = 'button';
+        nm.title = 'Open in Record';
+        nm.addEventListener('click', () => {
+          showTab('record');
+          $('seg-record').querySelector('[data-v="sessions"]').click();
+        });
+        const when = P === 'week' ? (s.startedAt ? clock12(s.startedAt) + ' · ' : '') : short(s.date) + ' · ';
+        li.append(nm, el('span', 'meta', sessionCourse(s)), el('span', 't', when + hm(s.minutes)));
         ul.append(li);
       }
+      // absent while the picked bar holds no session (D-151)
+      day.hidden = !list.length;
       day.replaceChildren(
         el('h2', null, b.full),
-        el('p', 'big prog-day-total', ahead(b) ? 'Ahead' : hm(vals[pick])),
-        ...(list.length ? [el('p', 'meta prog-day-lab', plural(list.length, 'study session')), ul] : [el('p', 'meta', ahead(b) ? 'Not here yet.' : 'No study sessions logged.')])
+        el('p', 'big prog-day-total', hm(vals[pick])),
+        el('p', 'meta prog-day-lab', plural(list.length, 'study session')),
+        ul
       );
     }
     // its parts, built here so the shell stays in its budget: the toolbar, then the card, the chart and the pair at

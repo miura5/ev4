@@ -1103,9 +1103,9 @@ button.btn:disabled{opacity:.45;cursor:default}
 }
 /* ============================================================ B-301 (C-6, C-1, D-270): Progress =====================
    The period switch in the view's toolbar; one card of property rows (study time, quiz accuracy, weak spots); the
-   study-time chart, one bar per day, week or month, 44 px wide or more on the phone; by course and exam readiness side
-   by side from 600 px. The picked bar's day panel is the right panel's first card from 1200 px; below that it follows
-   the pane (B-288). Violet is study time, green solid, yellow right once (D-269); her colour is not used here. */
+   study-time chart, one bar per day, week or month, 44 px wide or more on the phone; by course and exam readiness,
+   one under the other (B-121's columns). The picked bar's day panel is the right panel's first card from 1200 px;
+   below that it follows the pane (B-288), and it is absent while the bar holds no session (D-151). Violet is study time, green solid, yellow right once (D-269); her colour is not used here. */
 #progress-readiness .prog-bar{padding:0 0 8px;border-bottom:0;min-height:0}
 #progress-readiness .prog-bar .seg{align-self:center}
 .prog-props{gap:0;padding:4px 14px}
@@ -1143,8 +1143,9 @@ button.btn:disabled{opacity:.45;cursor:default}
 #prog-day .prog-s{padding:0 2px;gap:8px}
 #prog-day .prog-s .meta{flex:none;color:var(--faint);font-size:calc(12px * var(--ts))}
 #prog-day .prog-s:last-child{border-bottom:0}
+#prog-day .prog-s .nm{height:100%;padding:0;border:0;background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer}
+#prog-day .prog-s .nm:hover{text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:3px}
 #progress-readiness .col-main{gap:12px}
-@media (min-width:600px){.prog-grid{grid-template-columns:1fr 1fr}}
 @media (max-width:599px){
   .prog-chart{gap:4px;height:140px}
   .prog-props{padding:2px 14px}
