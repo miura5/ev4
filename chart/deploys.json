@@ -4416,5 +4416,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "93615fb",
+  "time": "2026-10-25T13:08:32.972Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "ad690ef",
+  "tasks": [
+   "B-351"
+  ],
+  "summary": "Fidelity fix: on Matt's record the Study page is empty: his next…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
