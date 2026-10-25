@@ -44,7 +44,12 @@
       const shown = [...studyLists.entries()].find(
         ([b]) => b.isConnected && !b.closest('[hidden]') && PANEL.matches && ui.tab === 'study'
       );
-      side.hidden = !shown;
+      // B-337 (D-312): with no set open, Objectives' picked objective (ui.objPanel, 20-study) fills the panel
+      const obj =
+        !shown && ui.objPanel && PANEL.matches && ui.tab === 'study' && ui.study === 'objectives' ? ui.objPanel : null;
+      side.hidden = !shown && !obj;
+      side.setAttribute('aria-label', obj ? 'The picked objective' : 'The set’s questions');
+      if (obj) return side.replaceChildren(obj);
       if (!shown) return side.replaceChildren();
       const card = el('div', 'card');
       card.append(head2('Questions'), shown[1].list);

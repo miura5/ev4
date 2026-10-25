@@ -65,7 +65,9 @@
       almost: ['Almost', 'x-yellow'],
       notyet: ['Not yet', ''],
     };
-    const openObjRows = new Set();
+    // B-337 (D-312): the picked objective. From 1200 px one is always picked (the first not solid) and fills the right
+    // panel; below that a tap on its words opens it under its row and a second tap folds it.
+    let objSel = null;
     function syncStudyBar() {
       const v = ui.study,
         quiz = v === 'review' || v === 'practice';
@@ -172,6 +174,8 @@
       const cur = list.find(x => x.course === ui.studyCourse);
       if (!cur) {
         card.replaceChildren(el('p', 'empty', 'Objectives appear once an upcoming exam has them.'));
+        ui.objPanel = null;
+        if ($('ov-up')) $('ov-up').hidden = true;
         return;
       }
       const ex = cur.exam,
@@ -183,15 +187,27 @@
       const n = k => rows.filter(r => r.state === k).length;
       const pctOf = k => (rows.length ? (100 * n(k)) / rows.length : 0) + '%';
       const days = E.diffDays(today, ex.date);
+      const exName = (ex.title || ex.id).replace(/:.*$/, '');
+      const fullName = exName.includes(cur.course) ? exName : cur.course + ' ' + exName;
+      if (!rows.some(r => r.o.id === objSel)) objSel = null;
+      if (PANEL.matches && !objSel) objSel = ((rows.find(r => r.state !== 'solid') || rows[0] || {}).o || {}).id || null;
       const head = el('div', 'ov-head');
-      head.append(
-        el('b', 'ov-ex', (ex.title || ex.id).replace(/:.*$/, '')),
+      const nm0 = el('span', 'ov-name');
+      nm0.append(
+        el('b', 'ov-ex', fullName),
         el(
           'span',
           'meta',
-          short(ex.date) + ' · ' + (days <= 0 ? 'today' : days === 1 ? 'tomorrow' : 'in ' + days + ' days')
-        ),
-        el('span', 'meta ov-count', n('solid') + ' of ' + rows.length + ' solid')
+          ' · ' + dayMonth(ex.date) + ' · ' + (days <= 0 ? 'today' : days === 1 ? 'tomorrow' : 'in ' + days + ' days')
+        )
+      );
+      head.append(
+        nm0,
+        el(
+          'span',
+          'meta ov-count',
+          n('solid') + ' of ' + rows.length + ' objectives solid' + (n('almost') ? ', ' + n('almost') + ' almost' : '')
+        )
       );
       const bar = el('div', 'pbar ov-bar');
       bar.setAttribute('role', 'img');
@@ -202,50 +218,130 @@
       y.style.width = pctOf('almost');
       bar.append(g, y);
       const box = el('div', 'ov-rows');
+      ui.objPanel = null;
       for (const r of rows) {
         const [word, cls] = OBJ_STATE[r.state];
-        const on = openObjRows.has(r.o.id);
+        const on = objSel === r.o.id;
         const wrap = el('div', 'ov' + (on ? ' open' : ''));
         wrap.dataset.id = r.o.id;
-        const li = el('div', 'li ov-li');
+        const li = el('div', 'obj' + (on ? ' on' : ''));
         const nm = el('button', 'nm ov-nm', r.o.text || r.o.id);
         nm.type = 'button';
         nm.title = r.o.text || r.o.id;
         nm.setAttribute('aria-expanded', String(on));
         nm.addEventListener('click', () => {
-          on ? openObjRows.delete(r.o.id) : openObjRows.add(r.o.id);
+          objSel = on && !PANEL.matches ? null : r.o.id;
           render();
         });
-        const q = btn('Quiz me', ev => quizObjective(r.o, ev.currentTarget), { cls: 'btn ghost sm hov ov-q' });
+        const q = btn('Quiz me', ev => quizObjective(r.o, ev.currentTarget), { cls: 'btn ghost sm oq' });
         q.setAttribute('aria-label', 'Quiz me on ' + (r.o.text || r.o.id));
         li.append(
           el('span', 'badge ov-st' + (cls ? ' ' + cls : ''), word),
           nm,
-          el('span', 't', r.open.length ? plural(r.open.length, 'weak spot') : ''),
+          el('span', 'ow', r.open.length ? plural(r.open.length, 'weak spot') : ''),
           q
         );
         wrap.append(li);
         if (on) {
-          const more = el('div', 'ov-more');
-          const a = acc[r.o.id];
-          more.append(el('p', 'meta', [r.o.id, a ? `${a.right} of ${a.n} right` : 'no answers yet'].join(' · ')));
-          if (r.open.length) {
-            const ul = el('ul', 'ov-ws');
-            r.open.forEach(w =>
-              ul.append(
-                el('li', null, w.topic + ' · ' + ((w.derived.streak || 0) > 0 ? 'right once' : 'not yet right'))
-              )
-            );
-            more.append(ul);
-          }
-          const q2 = btn('Quiz me', ev => quizObjective(r.o, ev.currentTarget), { cls: 'btn neutral sm' });
-          q2.setAttribute('aria-label', 'Quiz me on ' + (r.o.text || r.o.id));
-          more.append(q2);
-          wrap.append(more);
+          const d = objDetail(r, word, cls, fullName, PANEL.matches);
+          if (PANEL.matches) ui.objPanel = d;
+          else wrap.append(d);
         }
         box.append(wrap);
       }
       card.replaceChildren(head, bar, box);
+      renderStudyUp(cur.course);
+    }
+    const OV_MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const OV_WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    function dayMonth(ds) {
+      const d = new Date(ds + 'T12:00:00Z');
+      return OV_WD[d.getUTCDay()] + ' ' + d.getUTCDate() + ' ' + OV_MON[d.getUTCMonth()];
+    }
+    /** B-337: an objective's panel, as the demo's: its state, its weak spots and Quiz me on this. */
+    function objDetail(r, word, cls, exName, inPanel) {
+      const d = el('div', 'ov-detail');
+      // under its row the words are just above, so only the panel repeats them
+      if (inPanel) d.append(el('span', 'lab', 'Objective'), el('div', 'od-name', r.o.text || r.o.id));
+      const st = el('div', 'od-row');
+      st.append(el('span', 'badge' + (cls ? ' ' + cls : ''), word), el('span', 'mini', exName));
+      d.append(st);
+      if (r.open.length) {
+        d.append(el('span', 'lab', 'Weak spots under it'));
+        for (const w of r.open) {
+          const si = el('div', 'od-ws');
+          si.append(
+            el('i', 'dot x-yellow'),
+            el('span', 'sn', w.topic || w.id),
+            el('span', 'st', (w.derived.streak || 0) > 0 ? 'right once' : 'open')
+          );
+          d.append(si);
+        }
+      }
+      const q = btn('Quiz me on this', ev => quizObjective(r.o, ev.currentTarget), { cls: 'btn neutral od-q' });
+      q.setAttribute('aria-label', 'Quiz me on ' + (r.o.text || r.o.id));
+      d.append(
+        q,
+        el(
+          'span',
+          'mini od-note',
+          r.open.length
+            ? 'Drill a weak spot from Weak spots, or quiz the whole objective.'
+            : 'No weak spots under it. Quiz it to check it stays solid.'
+        )
+      );
+      return d;
+    }
+    /** B-337 (D-312): Coming up in this course, under the exam card: its next five dates from today, each opening
+     *  Today's week; Week view opens the week. */
+    function renderStudyUp(course) {
+      let card = $('ov-up');
+      if (!card) {
+        card = el('div', 'ui-card ov-up');
+        card.id = 'ov-up';
+        $('ov-card').after(card);
+      }
+      const seen = new Set();
+      const all = [
+        ...S.dates.filter(d => !E.isRemovedDate(d)),
+        ...S.exams.map(e => ({ id: 'exam-' + e.id, date: e.date, title: e.title || e.id, kind: 'exam', course: e.course })),
+      ]
+        .filter(d => d.date && d.date >= today && E.courseOf(d) === course)
+        .filter(d => {
+          const k = d.date + '|' + (d.kind === 'exam' ? 'exam' : d.id);
+          if (seen.has(k)) return false;
+          seen.add(k);
+          return true;
+        })
+        .sort((a, b) => a.date.localeCompare(b.date) || String(a.title).localeCompare(String(b.title)))
+        .slice(0, 5);
+      card.hidden = !all.length;
+      if (!all.length) return card.replaceChildren();
+      const openWeek = () => {
+        ui.todayView = 'week';
+        store.set('todayView', 'week');
+        showTab('today');
+        render();
+      };
+      const hd = el('div', 'up-head');
+      hd.append(el('span', 'lab', 'Coming up in ' + course), btn('Week view', openWeek, { cls: 'btn ghost sm' }));
+      const list = el('div', 'up-list');
+      for (const d of all) {
+        const b = el('button', 'up');
+        b.type = 'button';
+        const days = E.diffDays(today, d.date);
+        const urgent = d.graded && days <= 1;
+        const un = el('span', 'un');
+        un.append(el('i', 'dot' + (urgent ? ' x-red' : '')), el('span', 'ut', d.title || ''));
+        b.append(
+          el('span', 'ud', OV_WD[new Date(d.date + 'T12:00:00Z').getUTCDay()] + ' ' + Number(d.date.slice(8))),
+          un,
+          el('span', 'ud', days <= 0 ? 'today' : days === 1 ? 'tomorrow' : 'in ' + days + ' days')
+        );
+        b.addEventListener('click', openWeek);
+        list.append(b);
+      }
+      card.replaceChildren(hd, list);
     }
     function giveFive() {
       // a finished practice set's Give me 5 more

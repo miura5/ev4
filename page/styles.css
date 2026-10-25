@@ -1295,36 +1295,67 @@ button.btn:disabled{opacity:.45;cursor:default}
    32 px row per objective (44 px on the phone): its state badge, its words, its weak spots and Quiz me on hover or
    focus. On the phone the toolbar is one row: the course codes and Start session's icon, and Quiz me sits in the
    objective's detail, which a tap on its words opens in place. */
-#p-study .sbar-study{flex-wrap:nowrap;min-height:0;padding:0 0 8px;border-bottom:0}
+/* B-337 (D-312): as the demo's Study overview. The toolbar is a strip across the pane with a hairline under it; the exam
+   card spans the pane with its 10 px bar and 44 px objective rows; Coming up in the course sits under it. From 1200 px
+   the picked objective fills the right panel; below that it opens under its row. */
+#p-study .sbar-study{flex-wrap:nowrap;min-height:0;margin:-18px -16px 0;padding:12px 18px;border-bottom:1px solid var(--line);gap:8px}
 #p-study .sbar-study:not(:has(> :not([hidden],.sp))){display:none}
 #p-study .sbar-study .seg{align-self:center}
 #study-course .code{display:none}
 #study-start svg{fill:currentColor;stroke:none}
-.ov-card{gap:8px}
-.ov-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
-.ov-head .ov-ex{font:600 calc(14px * var(--ts)) var(--sans)}
-.ov-head .ov-count{margin-left:auto}
-.ov-bar{margin:2px 0 6px}
-.ov-rows{display:flex;flex-direction:column}
-.ov-li{padding:0 4px}
-.ov-li .badge{min-width:64px;justify-content:flex-start}
-.ov-li .nm{height:100%;padding:0;border:0;background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer}
-.ov-more{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:8px 4px 12px 80px;border-bottom:1px solid var(--line)}
-.ov-more .meta{margin:0}
-.ov-ws{margin:0;padding-left:16px;color:var(--quiet);font-size:calc(13px * var(--ts))}
-.ov.open .ov-li{border-bottom:0}
+#study-objectives{display:flex;flex-direction:column;gap:12px;padding:2px 2px 18px}
+#study-objectives[hidden]{display:none}
+.ov-card{gap:10px}
+.ov-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.ov-head .ov-ex{font:600 calc(14px * var(--ts)) var(--sans);color:var(--text)}
+.ov-head .meta{font-size:calc(12.5px * var(--ts));color:var(--faint);margin:0}
+.ov-bar.pbar{height:10px;border-radius:5px}
+.ov-rows{display:flex;flex-direction:column;margin-top:4px}
+.ov .obj{display:flex;align-items:center;gap:12px;min-height:44px;padding:4px 4px 4px 0;box-sizing:border-box;border-bottom:1px solid var(--line);font-size:calc(13.5px * var(--ts));color:var(--text)}
+.ov:last-child .obj{border-bottom:0}
+.obj .badge{min-width:64px;justify-content:center;box-sizing:border-box}
+.obj .nm{flex:1;min-width:0;min-height:0;border:0;background:none;padding:0;font:inherit;line-height:1.45;color:inherit;cursor:pointer;text-align:left}
+.obj .badge:not([class*=" x-"]){background:var(--hover);box-shadow:inset 0 0 0 1px var(--line2)}
+.obj .nm:hover{text-decoration:underline;text-underline-offset:3px}
+.obj.on .nm{font-weight:600}
+.obj .ow{font-size:calc(12.5px * var(--ts));color:var(--quiet);white-space:nowrap}
+.obj .oq{visibility:hidden}
+.obj:hover .oq,.obj:focus-within .oq{visibility:visible}
+.ov-detail{display:flex;flex-direction:column;gap:14px;min-width:0}
+.ov-detail .lab{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
+.ov-detail .od-name{font:600 calc(16px * var(--ts))/1.3 var(--sans);color:var(--text)}
+.ov-detail .od-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ov-detail .mini{font-size:calc(12.5px * var(--ts));color:var(--faint)}
+.ov-detail .od-note{line-height:1.5}
+.ov-detail .od-ws{box-sizing:border-box;height:30px;display:flex;align-items:center;gap:10px;padding:0 10px;margin:-8px 0;font-size:calc(13px * var(--ts));color:var(--quiet)}
+.ov-detail .od-ws .sn{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ov-detail .od-ws .st{font-size:calc(11.5px * var(--ts));color:var(--quiet)}
+.ov-detail .od-q{align-self:flex-start}
+.ov-detail .dot,.ov-up .dot{width:8px;height:8px;border-radius:4px;background:var(--x,var(--quiet));flex:none}
+.ov > .ov-detail{padding:14px 4px 16px;border-bottom:1px solid var(--line)}
+.ov:last-child > .ov-detail{border-bottom:0}
+.ov.open .obj{border-bottom:0}
+#study-side .ov-detail{gap:14px}
+.ov-up{gap:4px}
+.ov-up[hidden]{display:none}
+.ov-up .up-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:4px}
+.ov-up .lab{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
+.ov-up .up-list{display:flex;flex-direction:column}
+.ov-up .up{display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:10px;padding:8px 6px;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;cursor:pointer;font:400 calc(13px * var(--ts)) var(--sans);color:var(--text);width:100%;border-radius:6px;box-sizing:border-box;min-height:0}
+.ov-up .up:hover{background:var(--hover)}
+.ov-up .up:last-child{border-bottom:0}
+.ov-up .ud{color:var(--quiet);font-size:calc(12px * var(--ts))}
+.ov-up .un{display:flex;align-items:center;gap:8px;min-width:0}
+.ov-up .ut{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media (max-width:599px){
-  #p-study .sbar-study{gap:6px;padding:0 0 8px}
+  #p-study .sbar-study{gap:8px;margin:-18px -16px 0;padding:10px 12px;flex-wrap:wrap}
   #p-study .sbar-study .seg{width:auto;align-self:center;flex:0 1 auto;min-width:0}
-  #p-study .sbar-study .seg button{flex:0 0 auto;padding:0 9px}
-  #study-course .full{display:none}
-  #study-course .code{display:inline}
-  #study-start{width:44px;padding:0}
-  #study-start .lbl{display:none}
-  .ov-li{padding:0}
-  .ov-li .ov-q{display:none}
-  .ov-li .badge{min-width:0}
-  .ov-more{padding:8px 0 12px}
+  #p-study .sbar-study .seg button{flex:0 0 auto;padding:0 12px}
+  #study-objectives{padding:2px 0 18px}
+  .ov .obj{flex-wrap:nowrap;padding:6px 0}
+  .obj .oq{display:none}
+  .obj .nm{min-height:44px}
+  .ov-up .up{min-height:48px}
 }
 /* ============================================================ B-301, B-338 (D-312): Progress =======================
    Ported from the demo's Progress board: the period switch in the toolbar; one card of property rows (a 92 px label
