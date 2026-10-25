@@ -80,3 +80,41 @@ test('B-309: build-pwa refuses a record it does not know, or a page not built', 
     /run node tools\/build/
   );
 });
+
+test('B-322: the Worker passes an image block to the Claude API as the page sent it, with its own key and model', async () => {
+  const { default: worker } = await import('../pwa/worker.js');
+  const image = { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: '/9j/AAAA' } };
+  const messages = [{ role: 'user', content: [image, { type: 'text', text: 'Transcribe all the text.' }] }];
+  const sent = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    sent.push({ url, init });
+    return new Response(JSON.stringify({ content: [{ type: 'text', text: '{}' }], stop_reason: 'end_turn' }), {
+      status: 200,
+    });
+  };
+  try {
+    const env = { EV_TOKEN: 't', ANTHROPIC_API_KEY: 'k-test', ASSETS: { fetch: () => new Response('') } };
+    const ask = token =>
+      worker.fetch(
+        new Request('https://ev.example/api/claude', {
+          method: 'POST',
+          headers: { authorization: 'Bearer ' + token, 'content-type': 'application/json' },
+          body: JSON.stringify({ messages, model: 'claude-opus-anything', max_tokens: 99999 }),
+        }),
+        env
+      );
+    assert.equal((await ask('wrong')).status, 401, 'no token, no call');
+    assert.equal(sent.length, 0);
+    assert.equal((await ask('t')).status, 200);
+    assert.equal(sent.length, 1);
+    assert.equal(sent[0].url, 'https://api.anthropic.com/v1/messages');
+    assert.equal(sent[0].init.headers['x-api-key'], 'k-test');
+    const body = JSON.parse(sent[0].init.body);
+    assert.deepEqual(body.messages, messages, 'the image block reaches the API unchanged');
+    assert.equal(body.model, 'claude-haiku-5-5', 'the page cannot pick the model');
+    assert.equal(body.max_tokens, 4096, 'nor the length cap');
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});

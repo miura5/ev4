@@ -5,7 +5,8 @@
 // error, each tab, a check-off that survives a reload (the reload reads it back from D1), a chat reply from the stub,
 // and a chat message with a planted patient identifier stopped by the page's gate with no call to /api/claude. B-314:
 // the shim offers no mcp (use('mcp') resolves null), a study session runs with no note (start, Break and Resume,
-// +5 minutes, Quiz me now, End), and no request leaves the app for a host: server or Claude Code Remote.
+// +5 minutes, Quiz me now, End), and no request leaves the app for a host: server or Claude Code Remote. B-322: a
+// photographed page attached in the conversation reaches /api/claude as an image and its reading lands in D1.
 //   node pwa/smoke.mjs [screenshots dir] [--plant page-error]      (npm run smoke:pwa; needs `npm ci --prefix pwa`)
 // Exit code 1 when any counted check fails. --plant page-error makes the served app.js throw once the page is up, to
 // prove the smoke turns red (the smoke workflow runs it and expects red).
@@ -111,20 +112,35 @@ async function serve(dir) {
 // The stub in place of the Claude API: one reply in the Messages API's shape. A machine-parsed ask gets {}.
 const STUB_REPLY = 'Stub reply: an adult resting heart rate runs 60 to 100 beats a minute.';
 const STUB_CHECK = 'Stub check: why does a low serum potassium change the heart rhythm?';
+const STUB_PAGE = 'Stub page: Hand hygiene before and after every client contact, for at least 20 seconds.';
+const textOf = content =>
+  typeof content === 'string'
+    ? content
+    : Array.isArray(content)
+      ? content
+          .filter(b => b && b.type === 'text')
+          .map(b => b.text)
+          .join('\n')
+      : '';
+const imagesOf = content => (Array.isArray(content) ? content.filter(b => b && b.type === 'image') : []);
 function stubAnswer(body) {
   const last = (body.messages || []).filter(m => m.role === 'user').pop();
-  const said = last && typeof last.content === 'string' ? last.content : '';
-  // a session check (B-314: Quiz me now with no note) gets two items; any other machine-parsed ask gets {}
-  const text = !/machine-parsed/.test(said)
-    ? STUB_REPLY
-    : /short items/.test(said)
-      ? JSON.stringify({
-          items: [
-            { text: STUB_CHECK, kind: 'why' },
-            { text: 'Stub check two.', kind: 'gap' },
-          ],
-        })
-      : '{}';
+  const said = last ? textOf(last.content) : '';
+  // B-322: a page reading (an image with the library's transcribe ask) gets that page's text back
+  const text =
+    imagesOf(last && last.content).length && /Transcribe all the text/.test(said)
+      ? JSON.stringify({ pages: [{ page: 1, text: STUB_PAGE }] })
+      : // a session check (B-314: Quiz me now with no note) gets two items; any other machine-parsed ask gets {}
+        !/machine-parsed/.test(said)
+        ? STUB_REPLY
+        : /short items/.test(said)
+          ? JSON.stringify({
+              items: [
+                { text: STUB_CHECK, kind: 'why' },
+                { text: 'Stub check two.', kind: 'gap' },
+              ],
+            })
+          : '{}';
   return {
     id: 'msg_stub',
     type: 'message',
@@ -134,6 +150,41 @@ function stubAnswer(body) {
     stop_reason: 'end_turn',
     usage: { input_tokens: 0, output_tokens: 0 },
   };
+}
+
+// B-322: the "photographed page", a made-up handout drawn in the browser and taken as a JPEG (nothing here is Matt's).
+let PHOTO = null;
+// a 2x2 24-bit BMP, built here
+const BMP = (() => {
+  const row = Buffer.from([0, 0, 255, 255, 255, 255, 0, 0]); // two pixels (BGR) and two bytes of padding
+  const px = Buffer.concat([row, row]);
+  const h = Buffer.alloc(54);
+  h.write('BM', 0);
+  h.writeUInt32LE(54 + px.length, 2);
+  h.writeUInt32LE(54, 10);
+  h.writeUInt32LE(40, 14);
+  h.writeInt32LE(2, 18);
+  h.writeInt32LE(2, 22);
+  h.writeUInt16LE(1, 26);
+  h.writeUInt16LE(24, 28);
+  h.writeUInt32LE(px.length, 34);
+  return Buffer.concat([h, px]);
+})();
+async function photo() {
+  const b = await chromium
+    .launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' })
+    .catch(() => chromium.launch());
+  try {
+    const p = await b.newPage({ viewport: { width: 600, height: 400 } });
+    await p.setContent(
+      '<body style="margin:0;padding:32px;background:#f4efe6;font:22px Georgia,serif;color:#222">' +
+        '<h1 style="font-size:30px">Skills lab: hand hygiene</h1><p>Before and after every client contact.</p>' +
+        '<p>At least 20 seconds.</p></body>'
+    );
+    return await p.screenshot({ type: 'jpeg', quality: 80 });
+  } finally {
+    await b.close();
+  }
 }
 
 const results = [];
@@ -189,6 +240,7 @@ async function main() {
   const dir = prepare();
   const { origin, proc } = await serve(dir);
   const calls = []; // every request that reached the stub: [viewport, body]
+  PHOTO = await photo();
   const browser = await chromium
     .launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' })
     .catch(() => chromium.launch());
@@ -428,6 +480,77 @@ async function main() {
         `${tag} a study session with no note starts, breaks, takes +5, quizzes and ends`,
         steps.length === 0,
         steps.join(' | ')
+      );
+
+      // 8. B-322: a photographed page attached in the conversation goes to Claude as an image through /api/claude,
+      // and its reading is saved to the library in D1 (the stub transcribes it).
+      await idle();
+      const photoName = `handout-photo-${scheme}.jpg`;
+      const sentBefore = calls.length;
+      await page.locator('#ev-file').setInputFiles({ name: photoName, mimeType: 'image/jpeg', buffer: PHOTO });
+      const read = await until(
+        page,
+        name =>
+          [...document.querySelectorAll('#thread .msg.ev')].some(
+            m => m.textContent.includes('Saved ' + name) && /1 page read from images/.test(m.textContent)
+          ),
+        photoName,
+        10000
+      );
+      const ocrCalls = calls.slice(sentBefore).filter(([, b]) => {
+        const last = (b.messages || []).filter(m => m.role === 'user').pop();
+        return last && /Transcribe all the text/.test(textOf(last.content));
+      });
+      const img = ocrCalls.length ? imagesOf(ocrCalls[0][1].messages.filter(m => m.role === 'user').pop().content) : [];
+      const sentPhoto =
+        img.length === 1 &&
+        img[0].source &&
+        img[0].source.type === 'base64' &&
+        img[0].source.media_type === 'image/jpeg' &&
+        img[0].source.data === PHOTO.toString('base64');
+      const saved = read
+        ? await fetch(origin + '/api/db?since=0', { headers: { authorization: 'Bearer ' + TOKEN } })
+            .then(r => r.json())
+            .then(b =>
+              b.docs.filter(
+                d =>
+                  d.c === 'materials' &&
+                  d.data.title === photoName &&
+                  String(d.data.text || '').includes(STUB_PAGE) &&
+                  ((d.data.ocr && d.data.ocr.pages) || []).includes(1)
+              )
+            )
+        : [];
+      ok(
+        `${tag} a photographed page goes to Claude as an image and its reading is saved to the library in D1`,
+        read && ocrCalls.length === 1 && sentPhoto && saved.length === 1,
+        JSON.stringify({
+          replied: read,
+          calls: ocrCalls.length,
+          image: img.map(i => (i.source || {}).media_type),
+          sameBytes: sentPhoto,
+          inD1: saved.length,
+        }) + (read ? '' : ' · ' + (await lastEv()))
+      );
+
+      // B-322: a picture in a type the API does not take (a BMP here, as an iPhone's HEIC would be) is redrawn as a
+      // JPEG by the shim before it is sent.
+      const redrawFrom = calls.length;
+      const redraw = await page.evaluate(async bmp => {
+        const s = await window.claude.use('sample');
+        const blob = new Blob([Uint8Array.from(atob(bmp), c => c.charCodeAt(0))], { type: 'image/bmp' });
+        return s.json('Transcribe all the text on this test picture.', { images: [blob] }).then(
+          () => 'answered',
+          e => 'refused: ' + (e.code || e.message)
+        );
+      }, BMP.toString('base64'));
+      const redrawn = calls
+        .slice(redrawFrom)
+        .flatMap(([, b]) => imagesOf((b.messages || []).filter(m => m.role === 'user').pop().content));
+      ok(
+        `${tag} a picture the API does not take is redrawn as a JPEG before it is sent`,
+        redraw === 'answered' && redrawn.length === 1 && redrawn[0].source.media_type === 'image/jpeg',
+        JSON.stringify({ redraw, sent: redrawn.map(i => i.source.media_type) })
       );
 
       // 7. B-314: no Study Watch reader, no builder: the shim's mcp is null and nothing left for a host: server or Claude

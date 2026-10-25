@@ -175,14 +175,61 @@
   };
 
   // sample: the claude.ai call shape (sample(input, opts), sample.json, sample.limits), answered by Haiku through
-  // /api/claude. Every tier is Haiku. Page tools run here, in rounds, as on claude.ai. No images (limits() says so).
+  // /api/claude. Every tier is Haiku. Page tools run here, in rounds, as on claude.ai. Images (B-322: the library's
+  // page reading) go with the last user turn as base64 image blocks, as limits() says.
   const fail = (code, message, text) => Object.assign({ code, message }, text ? { text } : {});
   const ROUNDS = 6;
+  // The Messages API's image limits: these four types, and well under 5 MB each once base64 (a long edge over 1568
+  // px is scaled down by the API anyway). Anything else (a phone's HEIC photo, a large scan) is redrawn as a JPEG.
+  const IMAGES = {
+    maxCount: 4,
+    maxInputBytes: 5e6,
+    mediaTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+  };
+  const EDGE = 1568;
+  const RAW_MAX = 3.5e6; // bytes before base64 (which adds a third)
+  const base64 = async blob => {
+    const b = new Uint8Array(await blob.arrayBuffer());
+    let s = '';
+    for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+    return btoa(s);
+  };
+  async function asJpeg(blob) {
+    const bmp = await createImageBitmap(blob);
+    const k = Math.min(1, EDGE / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(bmp.width * k));
+    c.height = Math.max(1, Math.round(bmp.height * k));
+    const x = c.getContext('2d');
+    x.fillStyle = '#fff';
+    x.fillRect(0, 0, c.width, c.height);
+    x.drawImage(bmp, 0, 0, c.width, c.height);
+    if (bmp.close) bmp.close();
+    return await new Promise((ok, no) =>
+      c.toBlob(b => (b ? ok(b) : no(new Error('the picture could not be redrawn'))), 'image/jpeg', 0.85)
+    );
+  }
+  async function imageBlock(img) {
+    if (!(img instanceof Blob)) throw fail('invalid_request', 'an image must be a Blob or File');
+    let b = img;
+    if (!IMAGES.mediaTypes.includes(b.type) || b.size > RAW_MAX) {
+      try {
+        b = await asJpeg(b);
+      } catch (e) {
+        throw fail('invalid_request', 'that picture could not be read (' + (b.type || 'unknown type') + ')');
+      }
+      if (b.size > RAW_MAX) throw fail('invalid_request', 'that picture is too large to send');
+    }
+    return { type: 'image', source: { type: 'base64', media_type: b.type, data: await base64(b) } };
+  }
   async function ask(input, opts = {}, wantJson = false) {
     let turns = typeof input === 'string' ? [{ role: 'user', content: input }] : (input || []).map(t => ({ ...t }));
     if (!turns.length || turns[turns.length - 1].role !== 'user')
       throw fail('invalid_request', 'input must end on a user turn');
-    if (opts.images) throw fail('images_unavailable', 'the PWA sends no images');
+    const images = opts.images ? [].concat(opts.images) : [];
+    if (images.length > IMAGES.maxCount)
+      throw fail('invalid_request', 'at most ' + IMAGES.maxCount + ' images in one ask');
+    const blocks = await Promise.all(images.map(imageBlock));
     // consecutive turns of one role read as one, as on claude.ai
     turns = turns.reduce((a, t) => {
       const last = a[a.length - 1];
@@ -193,6 +240,11 @@
     if (wantJson)
       turns[turns.length - 1].content +=
         '\n\nYour reply is machine-parsed: reply with only the JSON value, no other text and no code fence.';
+    // the images go before the words that ask about them, in the last user turn
+    if (blocks.length) {
+      const last = turns[turns.length - 1];
+      last.content = [...blocks, { type: 'text', text: last.content }];
+    }
     const tools = (opts.tools || []).map(t => ({
       name: t.name,
       description: t.description,
@@ -283,7 +335,12 @@
       if (res.truncated) throw fail('invalid_json', 'cut short', res.text);
       return parseJson((opts.tools ? last : res.text).trim());
     },
-    limits: async () => ({ maxPromptBytes: 262144, maxInputBytes: 262144, tools: { maxCount: 16 } }),
+    limits: async () => ({
+      maxPromptBytes: 262144,
+      maxInputBytes: 262144,
+      tools: { maxCount: 16 },
+      images: { ...IMAGES, mediaTypes: [...IMAGES.mediaTypes] },
+    }),
   });
 
   window.claude = {
