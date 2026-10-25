@@ -174,11 +174,191 @@ test('B-389: the token check is timing-safe: hashed to equal lengths, then a con
   assert.equal((await call({ ...env, EV_TOKEN: '' }, 'GET', '/api/db', undefined, '')).status, 401);
 });
 
-test('B-389: the shim sends the version it last saw, one save of a document at a time, and refuses on 409', () => {
+/** The shim (pwa/bridge.js) loaded as the page loads it, over a fake browser whose fetch is the Worker above (over
+ * its in-memory D1). `puts` logs each PUT the shim sends (route, status, how many of that document's saves were in
+ * flight); `stale` hands the next read an answer given before; `focus()` makes the shim read the record again. */
+async function shim(env) {
   const src = fs.readFileSync(path.join(ROOT, 'pwa/bridge.js'), 'utf8');
-  assert.match(src, /'\?if_version=' \+ seen/, 'the save carries if_version');
-  assert.match(src, /setVer\(d\.c, d\.id, d\.v\)/, 'the read keeps each version');
-  assert.match(src, /setVer\(c, id, saved\.version\)/, 'a save keeps the version it made');
-  assert.match(src, /r\.status === 409/);
-  assert.match(src, /e\.code = 'conflict'/);
+  const window = {};
+  const listeners = {};
+  const puts = [];
+  const inFlight = {};
+  let stale = null;
+  const fetch = async (url, init = {}) => {
+    if (stale && /^\/api\/db\?since=/.test(url)) {
+      const body = stale;
+      stale = null;
+      return new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } });
+    }
+    const put = init.method === 'PUT';
+    const key = put && url.split('?')[0];
+    if (put) inFlight[key] = (inFlight[key] || 0) + 1;
+    const r = await worker.fetch(new Request('https://ev.example' + url, init), env);
+    if (put) puts.push({ route: url, status: r.status, together: inFlight[key]-- });
+    return r;
+  };
+  const document = {
+    body: null,
+    visibilityState: 'visible',
+    addEventListener: () => {},
+    querySelector: () => null,
+    createElement: () => ({}),
+  };
+  const run = new Function(
+    'window',
+    'document',
+    'localStorage',
+    'navigator',
+    'fetch',
+    'setInterval',
+    'addEventListener',
+    src
+  );
+  run(
+    window,
+    document,
+    { getItem: () => TOKEN, setItem: () => {} },
+    {},
+    fetch,
+    () => 0,
+    (name, fn) => (listeners[name] = fn)
+  );
+  const db = await window.claude.use('db');
+  return {
+    db,
+    puts,
+    stale: body => (stale = body),
+    focus: async () => {
+      listeners.focus();
+      await new Promise(r => setTimeout(r, 20));
+    },
+    data: async (c, id) => (await db.collection(c).doc(id).get()).data(),
+  };
+}
+const stored = (env, c, id) => {
+  const r = row(env, c, id);
+  return r && { v: r.v, data: JSON.parse(r.data) };
+};
+
+test('B-389 (shim): two quick saves of one document go one at a time, each merged at its turn', async () => {
+  const env = envOf();
+  await put(env, 'notes', 'n1', { a: 1 });
+  const s = await shim(env);
+  const ref = s.db.collection('notes').doc('n1');
+  await Promise.all([ref.update({ b: 1 }), ref.update({ c: 1 }), ref.update({ b: 2 })]);
+  assert.deepEqual(stored(env, 'notes', 'n1'), { v: 4, data: { a: 1, b: 2, c: 1 } });
+  assert.deepEqual(
+    s.puts.map(p => [p.route, p.status, p.together]),
+    [
+      ['/api/db/notes/n1?if_version=1', 200, 1],
+      ['/api/db/notes/n1?if_version=2', 200, 1],
+      ['/api/db/notes/n1?if_version=3', 200, 1],
+    ],
+    'each save waits for the one before, and carries the version it made'
+  );
+  assert.deepEqual(await s.data('notes', 'n1'), { a: 1, b: 2, c: 1 });
+});
+
+test('B-389 (shim): an update refused because a run wrote since is read again and merged once more', async () => {
+  const env = envOf();
+  await put(env, 'talk', '2026-10-25', { schema: 4, writer: 'page', messages: { m1: { text: 'first' } } });
+  const s = await shim(env);
+  // the worker answers in the meantime: version 2, which the shim has not read
+  await put(
+    env,
+    'talk',
+    '2026-10-25',
+    { schema: 4, writer: 'page', messages: { m1: { text: 'first' }, w1: { text: 'hers' } } },
+    1
+  );
+  await s.db
+    .collection('talk')
+    .doc('2026-10-25')
+    .update({ messages: { m2: { text: 'his second' } } });
+  assert.deepEqual(
+    s.puts.map(p => [p.route, p.status]),
+    [
+      ['/api/db/talk/2026-10-25?if_version=1', 409],
+      ['/api/db/talk/2026-10-25?if_version=2', 200],
+    ]
+  );
+  assert.deepEqual(stored(env, 'talk', '2026-10-25').data.messages, {
+    m1: { text: 'first' },
+    w1: { text: 'hers' },
+    m2: { text: 'his second' },
+  });
+});
+
+test('B-389 (shim): a set over a document that changed is not retried; the page gets the error with his words', async () => {
+  const env = envOf();
+  await put(env, 'ideas', 'i1', { text: 'old' });
+  const s = await shim(env);
+  await put(env, 'ideas', 'i1', { text: 'from the other device' }, 1);
+  const e = await s.db
+    .collection('ideas')
+    .doc('i1')
+    .set({ text: 'his new words' })
+    .then(
+      () => null,
+      x => x
+    );
+  assert.ok(e && e.conflict && e.code === 'conflict');
+  assert.deepEqual(e.unsaved, { text: 'his new words' }, 'the refusal carries what he wrote');
+  assert.doesNotMatch(e.message, /^conflict$/);
+  assert.deepEqual(
+    s.puts.map(p => p.status),
+    [409],
+    'tried once'
+  );
+  assert.deepEqual(
+    stored(env, 'ideas', 'i1'),
+    { v: 2, data: { text: 'from the other device' } },
+    'nothing overwritten'
+  );
+  assert.deepEqual(await s.data('ideas', 'i1'), { text: 'from the other device' }, 'the page shows the newest');
+});
+
+test('B-389 (shim): a line he sends while a worker message lands: the create is laid under the new document', async () => {
+  const env = envOf();
+  const s = await shim(env); // today's talk document does not exist yet
+  const w = await put(env, 'talk', '2026-10-25', {
+    schema: 4,
+    writer: 'worker',
+    source: 'worker worker-1',
+    messages: { w1: { role: 'ev', text: 'the job is done' } },
+  });
+  assert.equal(w.status, 200);
+  await s.db
+    .collection('talk')
+    .doc('2026-10-25')
+    .set({ schema: 4, writer: 'page', source: 'E.V. Home', messages: { m1: { role: 'matt', text: 'his line' } } });
+  assert.deepEqual(
+    s.puts.map(p => [p.route, p.status]),
+    [
+      ['/api/db/talk/2026-10-25', 409],
+      ['/api/db/talk/2026-10-25?if_version=1', 200],
+    ]
+  );
+  assert.deepEqual(stored(env, 'talk', '2026-10-25'), {
+    v: 2,
+    data: {
+      schema: 4,
+      writer: 'worker',
+      source: 'worker worker-1',
+      messages: { w1: { role: 'ev', text: 'the job is done' }, m1: { role: 'matt', text: 'his line' } },
+    },
+  });
+});
+
+test('B-389 (shim): a read that left before a save landed never puts the older copy back', async () => {
+  const env = envOf();
+  await put(env, 'notes', 'n1', { a: 1 });
+  const s = await shim(env);
+  await s.db.collection('notes').doc('n1').set({ a: 2 }); // version 2
+  s.stale({ now: 1, docs: [{ c: 'notes', id: 'n1', data: { a: 1 }, at: 1, v: 1 }] });
+  await s.focus();
+  assert.deepEqual(await s.data('notes', 'n1'), { a: 2 });
+  await put(env, 'notes', 'n1', { a: 3 }, 2); // a newer version from elsewhere is taken
+  await s.focus();
+  assert.deepEqual(await s.data('notes', 'n1'), { a: 3 });
 });

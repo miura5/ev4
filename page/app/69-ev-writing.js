@@ -26,10 +26,17 @@
         T.created.add(date);
       });
       // B-200 (D-208): the line painted on his tap; a refused write takes it back out and says why in one line.
+      // B-389: his own line is never simply gone: his words go back into the composer (T.restoreInput, set by it) to
+      // send again, and the line says so in plain words, never a bare code such as "conflict".
       talkQ = p.catch(e => {
         T.local.delete(id);
         render();
-        toast('Couldn’t save to the conversation: ' + ((e && (e.code || e.message)) || 'error'));
+        const back = m.role === 'matt' && T.restoreInput ? T.restoreInput(body.text) : false;
+        const why =
+          e && e.conflict ? 'the conversation changed while you were writing' : (e && (e.message || e.code)) || 'error';
+        toast(
+          'Couldn’t save to the conversation: ' + why + (back ? '. Your words are back in the box to send again.' : '')
+        );
       });
       return p;
     }

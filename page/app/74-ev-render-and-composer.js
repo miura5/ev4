@@ -350,6 +350,13 @@
         });
       }
     }
+    // B-389: a line of his the record refused comes back into the box, unless he has started a new one meanwhile.
+    T.restoreInput = text => {
+      if (!text || input.value.trim()) return false;
+      input.value = text;
+      grow();
+      return true;
+    };
     async function sendText(text) {
       input.value = '';
       grow();

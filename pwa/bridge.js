@@ -3,7 +3,9 @@
 //   db:     the whole record is loaded once, kept in memory, and checked for changes every 10 s and on focus.
 //           A write goes to the Worker first; only when it is saved does the page's copy change. B-389: each save
 //           carries the version the shim last saw of that document (if_version, as the run API's); a document that
-//           changed since is refused (409), the shim reads the record again, and the page is told the save was refused.
+//           changed since is refused (409), the shim reads the record again and tries once more without overwriting
+//           what is newer (an update re-merged, a create laid under); a set that still conflicts is refused to the page
+//           with the document it tried to save.
 //   user:   whoever holds the token is the owner (one person).
 //   sample: Claude on Haiku through the Worker's /api/claude (D-299); the key stays on the Worker.
 //   mcp:    none (the scheduled runs and the Study Watch reader live on claude.ai and the Mac).
@@ -107,14 +109,46 @@
     return t;
   }
   // B-389: one document's saves go one at a time, each built and pinned when its turn comes, so the page's own quick
-  // saves of one document never refuse each other; only a change from elsewhere is a conflict.
+  // saves of one document never refuse each other; only a change from elsewhere is a conflict. On a conflict (409:
+  // a run or another device wrote it since) the record is read again and the save tried once more, never over what is
+  // newer: an update is merged again into the document as it is now; a create that found the document made meanwhile
+  // adds only what that document lacks (mergeUnder). A set over a document that changed is not retried: the page gets
+  // the error, with the document it tried to save (e.unsaved), so his words are never simply gone.
   const queues = new Map();
-  function save(c, id, make) {
+  function save(c, id, make, kind = 'set') {
     const key = c + '\n' + id;
-    const turn = (queues.get(key) || Promise.resolve()).catch(() => {}).then(() => saveNow(c, id, make()));
+    const attempt = async () => {
+      const doc = make();
+      try {
+        return await saveNow(c, id, doc);
+      } catch (e) {
+        if (!e.conflict) throw e;
+        let again = null;
+        if (kind === 'update') again = make;
+        else if (e.wasCreate && (db[c] || {})[id]) again = () => mergeUnder(clone(db[c][id]), doc);
+        if (!again) throw Object.assign(e, { unsaved: doc });
+        const next = again();
+        try {
+          return await saveNow(c, id, next);
+        } catch (e2) {
+          throw e2.conflict ? Object.assign(e2, { unsaved: next }) : e2;
+        }
+      }
+    };
+    const turn = (queues.get(key) || Promise.resolve()).catch(() => {}).then(attempt);
     queues.set(key, turn);
     turn.catch(() => {}).then(() => queues.get(key) === turn && queues.delete(key));
     return turn;
+  }
+  /** `add` laid under `t`: objects merged deeply, and a value `t` already holds is kept, so nothing newer goes. */
+  function mergeUnder(t, add) {
+    for (const k of Object.keys(add)) {
+      const v = add[k];
+      if (v && typeof v === 'object' && !Array.isArray(v) && t[k] && typeof t[k] === 'object' && !Array.isArray(t[k]))
+        mergeUnder(t[k], v);
+      else if (!(k in t)) t[k] = clone(v);
+    }
+    return t;
   }
   async function saveNow(c, id, doc) {
     const job = await jobHandOff(c, doc);
@@ -129,15 +163,16 @@
       }
     );
     if (r.status === 409) {
-      // B-389: it changed since it was read (another device, or a job): nothing was written. Read the record again so
-      // the page shows the document as it is now, and refuse the write the way the page already handles one.
+      // B-389: it changed since it was read (another device, a run, or a job): nothing was written. Read the record
+      // again, so the page shows the document as it is now and a retry builds on it.
       const b = await r.json().catch(() => ({}));
       await pull()
         .then(ch => ch instanceof Set && ch.forEach(emit))
         .catch(() => {});
-      const e = new Error('it changed elsewhere since it was opened; the newest is shown now, try again');
+      const e = new Error('it changed elsewhere while you were writing, so it wasn’t saved');
       e.code = 'conflict';
       e.conflict = true;
+      e.wasCreate = !seen;
       e.currentVersion = b.current_version == null ? null : b.current_version;
       throw e;
     }
@@ -284,15 +319,20 @@
           update(data) {
             const patch = clone(data);
             // merged into the document as it stands when this save's turn comes
-            return save(c, id, () => {
-              const cur = (db[c] || {})[id];
-              if (!cur) {
-                const e = new Error('not found');
-                e.code = 'invalid_argument';
-                throw e;
-              }
-              return merge(clone(cur), patch);
-            });
+            return save(
+              c,
+              id,
+              () => {
+                const cur = (db[c] || {})[id];
+                if (!cur) {
+                  const e = new Error('not found');
+                  e.code = 'invalid_argument';
+                  throw e;
+                }
+                return merge(clone(cur), patch);
+              },
+              'update'
+            );
           },
           async get() {
             await ready;

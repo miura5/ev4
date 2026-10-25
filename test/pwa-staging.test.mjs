@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { check, recordDiffs, seededAt } from '../tools/pwa-staging.mjs';
+import { check, recordDiffs, seededAt, keyOk, keyPattern } from '../tools/pwa-staging.mjs';
 import { APP_SOURCE } from '../pwa/jobs.mjs';
 import { SUITE, SUITE_DOCS_PER_RUN } from '../pwa/runapi.js';
 import { seedCounts, seedRecord, seedSql, LEFT_OUT } from '../pwa/seed.mjs';
@@ -111,6 +111,48 @@ test('B-311: the check is green on a Worker holding the seed, and red on 200 wit
   }
 });
 
+// A day's edits as the page saves them (spec/schemas/dayedits.schema.json).
+const DAYEDIT = {
+  schema: 1,
+  writer: 'page',
+  at: '2026-10-25T18:31:19.275Z',
+  source: 'E.V. Home',
+  updatedAt: '2026-10-25T18:31:19.275Z',
+  date: '2026-10-25',
+  checks: {},
+  added: {},
+  skipped: {},
+};
+
+test('B-389: a page save is held to the spec, not only its writer field: a page collection, its id shape, its schema', () => {
+  const seed = { a: { 1: {} } };
+  const base = [{ c: 'a', id: '1', data: {} }];
+  const red = docs => recordDiffs({ docs: [...base, ...docs] }, seed).problems;
+  assert.deepEqual(red([{ c: 'dayedits', id: '2026-10-25', data: DAYEDIT }]), []);
+  assert.equal(red([{ c: 'dayedits', id: 'not-a-date', data: DAYEDIT }]).length, 1, 'an id off the YYYY-MM-DD shape');
+  assert.equal(red([{ c: 'dayedits', id: '2026-10-25', data: { writer: 'page' } }]).length, 1, 'fails its schema');
+  assert.equal(red([{ c: 'weeks', id: '2026-10-25', data: { ...DAYEDIT } }]).length, 1, 'not a page collection');
+  assert.equal(red([{ c: 'nowhere', id: 'x', data: { writer: 'page' } }]).length, 1, 'not in the spec');
+  // the shapes, from spec.collections.<c>.key; and a document the schema names on its own (talk/memory)
+  for (const [c, id, ok] of [
+    ['weakspots', 'ws-2026-10-25-E4-7-fluids', true],
+    ['weakspots', 'ws-fluids', false],
+    ['sets', 'review-2026-10-25', true],
+    ['sets', 'review-today', false],
+    ['exams', 'E4', true],
+    ['exams', 'EX', false],
+    ['exams', 'ATI-fundamentals', true],
+    ['workouts', 'wo-20261025-101010-1', true],
+    ['workouts', 'wo-2026-1', false],
+    ['jobs', 'job-20261025-101010-study-guide', true],
+    ['idchecks', 'abc-matt', true],
+    ['talk', 'memory', true],
+    ['talk', 'notes', false],
+  ])
+    assert.equal(keyOk(c, id), ok, `${c}/${id}`);
+  assert.equal(keyPattern('job sets'), null);
+});
+
 test('B-389: the record is held to the seed by document; what the seed lacks must come from a known writer', () => {
   const seed = { a: { 1: {}, 2: {} }, b: { 1: {} } };
   const docs = [
@@ -126,7 +168,7 @@ test('B-389: the record is held to the seed by document; what the seed lacks mus
   const extra = [
     ...suiteRun,
     { c: 'talk', id: 'j', data: { source: APP_SOURCE, writer: 'worker' } },
-    { c: 'dayedits', id: '2026-10-25', data: { writer: 'page', source: 'E.V. Home' } },
+    { c: 'dayedits', id: '2026-10-25', data: DAYEDIT },
   ];
   const ok = recordDiffs({ docs: [...docs, ...extra] }, seed);
   assert.deepEqual(ok.problems, []);

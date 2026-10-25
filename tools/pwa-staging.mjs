@@ -13,6 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { APP_SOURCE } from '../pwa/jobs.mjs';
 import { seedRecord } from '../pwa/seed.mjs';
 import { SUITE, SUITE_DOCS_PER_RUN } from '../pwa/runapi.js';
+import { makeValidator } from '../core/validate.mjs';
 
 /** When the record was seeded: the oldest write in it, since the seed went into an empty database in one go (D1's
  * `at`, ms). The synthetic record is date-relative, so the seed is rebuilt as of that moment. Now when none is given. */
@@ -25,6 +26,44 @@ const SPEC = JSON.parse(fs.readFileSync(new URL('../spec/ev.spec.json', import.m
 /** The pipelines whose scheduled runs write the staging record (B-315). */
 export const STAGING_PIPELINES = SPEC.registry.records.staging.runs.pipelines;
 const allows = (c, writer) => ((SPEC.collections[c] || {}).writers || []).includes(writer);
+const SCHEMAS = Object.fromEntries(
+  Object.entries(SPEC.collections)
+    .filter(([, v]) => v.schema)
+    .map(([c, v]) => [c, JSON.parse(fs.readFileSync(new URL('../' + v.schema, import.meta.url), 'utf8'))])
+);
+const validate = makeValidator(SCHEMAS);
+
+/** One of the spec's id shapes (spec.collections.<c>.key, e.g. "YYYY-MM-DD", "ws-<date>-<objective>-<slug>",
+ * "E1…E6", "<id-key>[-matt]") as a whole-id pattern; null for a shape no id is held to ("job sets"). */
+export function keyPattern(shape) {
+  if (shape === 'auto') return /^[A-Za-z0-9_.:~+@-]+$/;
+  if (/\s/.test(shape.replace(/<[^>]*>/g, ''))) return null;
+  const PART = '[A-Za-z0-9_.:~+@-]+';
+  const DATE = '\\d{4}-\\d{2}-\\d{2}';
+  let out = '';
+  for (const tok of shape.match(/<[^>]*>|\[[^\]]*\]|YYYY-MM-DD|YYYYMMDD-HHMMSS|\*|…|[^<[*…Y]+|Y/g)) {
+    if (tok === 'YYYY-MM-DD') out += DATE;
+    else if (tok === 'YYYYMMDD-HHMMSS') out += '\\d{8}-\\d{6}';
+    else if (tok === '<YYYYMMDD-HHMMSS>') out += '\\d{8}-\\d{6}';
+    else if (tok.startsWith('<')) out += /^<[^>]*date>$/i.test(tok) ? DATE : PART;
+    else if (tok.startsWith('[')) out += '(?:' + keyPattern(tok.slice(1, -1)).source.slice(1, -1) + ')?';
+    else if (tok === '*') out += PART;
+    else if (tok === '…') out = out.replace(/\d+$/, '') + '\\d+';
+    else out += tok.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+  if (shape.includes('…')) out = out.replace(/\\d\+[A-Za-z]*\d+$/, '\\d+');
+  return new RegExp('^' + out + '$');
+}
+/** Whether an id has one of its collection's shapes in the spec, or is a document its schema names on its own
+ * (x-ev.documents, as talk/memory). */
+export function keyOk(c, id) {
+  const key = (SPEC.collections[c] || {}).key;
+  if (Object.hasOwn(SCHEMAS[c]?.['x-ev']?.documents || {}, id)) return true;
+  return [].concat(key || []).some(k => {
+    const re = keyPattern(k);
+    return !!re && re.test(id);
+  });
+}
 
 /** Each run document in a GET /api/db answer, as run id -> the pipeline that wrote it (its id begins with it). */
 export function runsOf(docs) {
@@ -36,14 +75,18 @@ export function runsOf(docs) {
 }
 
 /** Who wrote a document not in the seed, when it is one of the writers staging expects (B-389): the run API suite in
- * its own collection; the app's job runner (B-324); a save from the staging page; or a scheduled run of a staging
+ * its own collection; the app's job runner (B-324); a save from the staging page (of the spec's id shape and schema
+ * for that collection); or a scheduled run of a staging
  * pipeline (B-315) whose source names a run of that pipeline in the record (`runs`, from runsOf). The page and the
  * runs only where the spec lets that writer write. Anything else is null. */
 export function knownWriter(d, runs = new Map()) {
   const data = (d && d.data) || {};
   if (d.c === SUITE) return data.writer === 'run-api-suite' ? 'suite' : null;
   if (data.source === APP_SOURCE) return 'app';
-  if (data.writer === 'page') return allows(d.c, 'page') ? 'page' : null;
+  // B-389: a page save is held to the spec, not only to its own writer field: a collection the page writes, an id of
+  // that collection's shape (spec.collections.<c>.key), and a document its schema passes
+  if (data.writer === 'page')
+    return allows(d.c, 'page') && keyOk(d.c, d.id) && validate(d.c, data, { id: d.id }).ok ? 'page' : null;
   const w = data.writer;
   if (!STAGING_PIPELINES.includes(w) || !allows(d.c, w)) return null;
   if (d.c === 'runs') return runs.get(d.id) === w ? 'run' : null;
