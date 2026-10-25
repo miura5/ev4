@@ -8,10 +8,9 @@ Central)
 
 ## Where things stand
 
-- The redesign release is ready on staging at 10798d8: rubric 92/100 at fc9133e (no blockers), every fix since then
-  reviewed, npm test and the full npm run check GREEN at 10798d8 (dist/check-full.json in /home/claude/ev4), ship
-  staging GREEN at 10798d8. The release card went to Matt: https://claude.ai/artifact/GTNQqa8fSzZ4V7m96uQG8A.
-- Live waits on Matt's word. On it: ship live --matt-ok at 10798d8 exactly (R-02, R-04, R-06 hold there).
+- The redesign release is live: v4.5.6 at 10798d8, shipped on Matt's word Oct 25 (ship live GREEN; staging GREEN at
+  the same commit). Release card: https://claude.ai/artifact/GTNQqa8fSzZ4V7m96uQG8A.
+- The v4.5.6 tag push from this container was refused; tags.yml makes the tag on origin from the deploy.
 
 ## Running
 
@@ -19,7 +18,7 @@ Central)
 
 ## Next
 
-1. On Matt's word, ship live at 10798d8.
+1. Watch the first live runs on v4.5.6 (morning, evening) and anything Matt reports.
 2. B-391 (cleanup): its notes list every open item from the release reviews.
 3. The PWA release: B-389 (Worker hardening), B-315 (runs read the staging token from the staging record; ask Matt
    for the token then), B-317 to B-320. Scheduled runs reach the staging Worker (Matt allowed its domain); they don't
