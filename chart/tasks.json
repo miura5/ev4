@@ -5513,7 +5513,7 @@
   "depends": [
    "B-309"
   ],
-  "notes": "claimed by lane app",
+  "notes": "built: staging workflow, check and tests pushed (180dee8); first staging run 40152329583 started",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
