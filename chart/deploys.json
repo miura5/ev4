@@ -4203,5 +4203,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "3dfe1fd",
+  "time": "2026-10-25T12:09:23.931Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "664f4bc",
+  "tasks": [
+   "B-344"
+  ],
+  "summary": "Fidelity fix: the sidebar's first section reads E.V. where the demo…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
