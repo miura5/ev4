@@ -656,6 +656,204 @@ async function tickAll(page) {
         ok(`${tag} no sideways scroll, no page errors`, !b.sideways && !errors.length, errors.join(' | '));
         await ctx.close();
       }
+  // B-293 (C-9, D-243): Plan the rest on a planted day with one free slot and one item due later. The exam plan now puts
+  // a 25-minute drill on today and has moved the reading on today's list to tomorrow; the day's 60 minutes are full.
+  // Plan the rest proposes adding the drill and taking the reading off: standard rows with one "Proposed" badge and
+  // labelled Accept and Keep, and one line with Accept all and Reject. Keep and Reject write nothing; Accept all writes
+  // one dayedits document with the add and the take-off, each by E.V. No x and no dashed ring on the view. At 390 and
+  // 1280 in light and dark, with the proposal open.
+  const restRecord = () => {
+    const db = record();
+    db.weakspots = {}; // no reviews: the day is the plan's alone
+    db.planedits = {};
+    db.plans = {
+      E4: {
+        ...env,
+        writer: 'worker',
+        source: 'Exam plan job',
+        exam: 'E4',
+        title: 'Exam 4 plan',
+        days: [
+          {
+            date: today,
+            label: 'Fluids',
+            tasks: [
+              { id: 'p293-keep', text: 'Terms: fluid and electrolyte words', kind: 'terminology' },
+              { id: 'p293-new', text: 'Drill: potassium imbalances, 10 questions', tag: 'DRILL', kind: 'drill' },
+            ],
+          },
+          {
+            date: tomorrow,
+            label: 'Acid-base',
+            tasks: [{ id: 'p293-later', text: 'Read Ch 40: acid-base balance', tag: 'READING', kind: 'reading' }],
+          },
+        ],
+      },
+    };
+    const day = db.days[today];
+    day.list.items = [
+      {
+        id: 'date-prep-clin',
+        text: 'Clinical: Mercy Hospital 4 West',
+        tag: 'CLINICAL',
+        minutes: 0,
+        ref: 'dates/prep-clin',
+      },
+      {
+        id: 'plan-p293-keep',
+        text: 'Terms: fluid and electrolyte words',
+        tag: null,
+        minutes: 15,
+        ref: 'plans/E4#p293-keep',
+      },
+      {
+        id: 'plan-p293-later',
+        text: 'Read Ch 40: acid-base balance',
+        tag: 'READING',
+        minutes: 45,
+        ref: 'plans/E4#p293-later',
+      },
+    ];
+    delete day.list.focus;
+    day.plan = { ...(day.plan || {}), budget: { available: 60, planned: 60, over: 0 }, deferred: [] };
+    return db;
+  };
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 1280, height: 860 },
+  ])
+    for (const scheme of ['light', 'dark']) {
+      const w = viewport.width,
+        tag = `[plan the rest ${w} ${scheme}]`;
+      const ctx = await browser.newContext({ viewport, colorScheme: scheme });
+      const page = await ctx.newPage();
+      const errors = [];
+      page.on('pageerror', e => errors.push(e.message));
+      await openPage(page, ct(today, 10, 0), restRecord());
+      await page.click('#tab-today');
+      await page.waitForTimeout(400);
+      const writes = () => page.evaluate(() => window.__writes.filter(x => x[1] === 'dayedits').length);
+      const before = await writes();
+      await page.click('#today-list .ti-rest');
+      await page.waitForTimeout(300);
+      const read = () =>
+        page.evaluate(() => {
+          const rows = [...document.querySelectorAll('#today-list .ti-list > li')];
+          const prop = rows.filter(li => li.querySelector('.badge.proposed'));
+          const label = b => b.textContent.trim();
+          let dashed = false;
+          for (const e of document.querySelectorAll('#p-today, #p-today *')) {
+            const cs = getComputedStyle(e);
+            if (
+              [
+                cs.borderTopStyle,
+                cs.borderBottomStyle,
+                cs.borderLeftStyle,
+                cs.borderRightStyle,
+                cs.outlineStyle,
+              ].includes('dashed')
+            )
+              dashed = true;
+          }
+          const line = document.querySelector('#today-list .ti-review');
+          return {
+            prop: prop.map(li => ({
+              id: li.dataset.id,
+              add: li.classList.contains('ti-prop'),
+              badges: [...li.querySelectorAll('.badge')].map(label),
+              buttons: [...li.querySelectorAll('button.btn')].map(label),
+              h: Math.round(li.getBoundingClientRect().height),
+            })),
+            line: line ? line.textContent : null,
+            lineButtons: line ? [...line.querySelectorAll('button')].map(label) : [],
+            x: [...document.querySelectorAll('#p-today button')].some(
+              b => /^[×✕✖x]$/i.test(label(b)) || /reject this|dismiss|close/i.test(b.getAttribute('aria-label') || '')
+            ),
+            dashed,
+            restDisabled: document.querySelector('#today-list .ti-rest').disabled,
+            sideways: document.documentElement.scrollWidth > innerWidth + 1,
+          };
+        });
+      const a = await read();
+      const add = a.prop.find(p => p.add),
+        off = a.prop.find(p => !p.add);
+      const want = w < 600 ? 44 : 32;
+      ok(
+        `${tag} the proposal adds the drill and takes the reading due later off`,
+        a.prop.length === 2 &&
+          add &&
+          add.id === 'plan-p293-new' &&
+          off &&
+          off.id === 'plan-p293-later' &&
+          /add “Drill: potassium imbalances/.test(a.line || '') &&
+          /take “Read Ch 40: acid-base balance” off today \(planned for /.test(a.line || ''),
+        JSON.stringify(a)
+      );
+      ok(
+        `${tag} each proposed row is a standard ${want} px row with one "Proposed" badge and Accept and Keep`,
+        a.prop.every(p => p.h === want && p.badges.join() === 'Proposed' && p.buttons.join() === 'Accept,Keep'),
+        JSON.stringify(a.prop)
+      );
+      ok(
+        `${tag} one line with Accept all and Reject; Plan the rest waits while it is open`,
+        a.lineButtons.join() === 'Accept all,Reject' && a.restDisabled,
+        JSON.stringify(a.lineButtons)
+      );
+      ok(`${tag} no x and no dashed ring on the view`, !a.x && !a.dashed, JSON.stringify({ x: a.x, dashed: a.dashed }));
+      await page.locator('#p-today').screenshot({ path: `${shots}/today-rest-${w}-${scheme}.png` });
+      // Keep on the addition, then Reject: nothing is written
+      await page.locator('#today-list li.ti-prop .ti-keep').click();
+      await page.waitForTimeout(200);
+      const k = await read();
+      await page.locator('#today-list .ti-review button', { hasText: 'Reject' }).click();
+      await page.waitForTimeout(200);
+      const r = await read();
+      ok(
+        `${tag} Keep and Reject write nothing`,
+        k.prop.length === 1 &&
+          k.prop[0].id === 'plan-p293-later' &&
+          !r.prop.length &&
+          !r.line &&
+          (await writes()) === before,
+        JSON.stringify({ kept: k.prop.map(p => p.id), after: r.prop.length, writes: (await writes()) - before })
+      );
+      // Accept all: one write, the add and the take-off, each by E.V.
+      await page.click('#today-list .ti-rest');
+      await page.waitForTimeout(200);
+      await page.locator('#today-list .ti-review button', { hasText: 'Accept all' }).click();
+      await page.waitForTimeout(400);
+      const wr = await page.evaluate(() => window.__writes.filter(x => x[1] === 'dayedits'));
+      const mine = wr.slice(before);
+      const doc = mine.length === 1 && mine[0][3];
+      const added = doc ? Object.values(doc.added || {}) : [];
+      const sk = doc && doc.skipped && doc.skipped['plan-p293-later'];
+      ok(
+        `${tag} Accept all writes one add and one take-off edit by E.V.`,
+        mine.length === 1 &&
+          mine[0][2] === today &&
+          added.length === 1 &&
+          /^Drill: potassium imbalances/.test(added[0].text) &&
+          added[0].by === 'E.V.' &&
+          added[0].minutes === 25 &&
+          sk &&
+          sk.by === 'E.V.',
+        JSON.stringify(mine)
+      );
+      const after = await read();
+      const rows = await page.evaluate(() =>
+        [...document.querySelectorAll('#today-list .ti-list > li .ti-t')].map(t => t.textContent)
+      );
+      ok(
+        `${tag} after Accept all the drill is on the list, the reading is off and the proposal is gone`,
+        !after.line &&
+          !after.prop.length &&
+          rows.some(t => /^Drill: potassium/.test(t)) &&
+          !rows.some(t => /^Read Ch 40/.test(t)),
+        JSON.stringify(rows)
+      );
+      ok(`${tag} no sideways scroll, no page errors`, !a.sideways && !errors.length, errors.join(' | '));
+      await ctx.close();
+    }
   // B-189: asked in words on a planted lab day (a lab exam and a class exam today, as on Oct 21), E.V. answers from the
   // record without a model call: the greeting already carries the Prep marker for the day, and the reply's card is the
   // day's check with each item naming its source (the calendar entry, the announcement, the course calendar's row, the

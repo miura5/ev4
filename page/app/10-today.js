@@ -1,7 +1,7 @@
     // ------------------------------------------------------------ Today
-    function liveDay() {
-      // the same plan the 4:25am run builds, computed here when the run hasn't saved one
-      const plan = E.planDay({
+    // the same plan the 4:25am run builds, from the record as it stands now (liveDay, and B-293's Plan the rest)
+    function planNow() {
+      return E.planDay({
         // B-68: the scheduler the morning uses (spec.study.scheduler), so a live day agrees with it
         pickReviews: window.EVStudy.picker(E, window.EVStudy.schedulerOf(EV_SPEC), EV_SPEC),
         date: today,
@@ -12,6 +12,10 @@
         objectives: S.objectives,
         sets: S.sets,
       });
+    }
+    function liveDay() {
+      // computed here when the run hasn't saved one
+      const plan = planNow();
       const list = E.buildDayList(plan, {
         reviewSetId: S.sets.some(s => s.id === 'review-' + today) ? 'review-' + today : null,
         notes: M.models.filter(w => w.kind === 'note' && w.derived.status === 'open'),
@@ -165,11 +169,13 @@
       li.append(tk, nm);
       const due = it.tag === 'GRADED' ? gradedDue(it) : null;
       const b = BADGE[it.tag];
-      if (b) {
+      // B-293 (C-9): a proposed take-off keeps its row, with one "Proposed" badge and Accept and Keep in place of Start
+      if (o.off) li.append(el('span', 'badge proposed', 'Proposed'), ...restButtons(o.off.P, o.off.p, offEdit(o.off.p), 'take “' + text + '” off today'));
+      else if (b) {
         const red = due && !doneNow && due <= E.addDays(today, 1);
         li.append(el('span', 'badge' + (red ? ' x-red' : b[1] ? ' ' + b[1] : ''), b[0]));
       }
-      if (o.start && go) {
+      if (o.start && go && !o.off) {
         const st = btn('Start', go, { cls: 'btn neutral sm ti-start' });
         st.setAttribute('aria-label', 'Start: ' + text);
         li.append(st);
@@ -303,6 +309,114 @@
           : [])
       );
     }
+    /**
+     * B-293 (C-9): Plan the rest. planDay runs again on the record as it stands, and its difference from today's list
+     * is proposed: an exam-plan task it would put on today that the list lacks (while it fits the time left) is a
+     * proposed addition; a plan task on the list that it no longer puts on today, or now defers over the budget, is a
+     * proposed take-off. Reviews, graded work, exams, clinicals and validations are the morning's and stay as they are.
+     * Nothing is written until he accepts, and then only through the list edits, by E.V.
+     */
+    const FIXED = new Set(['GRADED', 'EXAM', 'CLINICAL', 'VALIDATION']);
+    const PLAN_KIND = { reading: 'reading', drill: 'practice', sim: 'practice', review: 'review' };
+    function restProposal() {
+      const fresh = planNow();
+      const { day, items, isDone, budget } = dayState();
+      const ed = dayEditDoc(today) || {};
+      const skipped = ed.skipped || {};
+      const onList = new Set([...items.map(it => it.id), ...Object.keys(skipped)]);
+      const texts = new Set(items.map(it => E.norm(it.text || '')));
+      const planned = new Map(((day.list && day.list.items) || []).map(it => [it.id, it]));
+      const freshBy = new Map(fresh.blocks.map(b => [b.id, b]));
+      const offs = [];
+      for (const it of items) {
+        if (it.added || !/^plan-/.test(it.id) || it.deferred || isDone(it) || FIXED.has(it.tag)) continue;
+        const b = freshBy.get(it.id);
+        if (b && !b.deferred) continue;
+        const pt = planTaskById(it.ref);
+        const moved = pt && pt.task.date && pt.task.date !== today ? pt.task.date : null;
+        offs.push({
+          id: it.id,
+          text: it.text,
+          minutes: Number(it.minutes) || 0,
+          why: b ? 'over today’s budget' : moved ? 'planned for ' + E.shortDate(moved) : 'no longer in the plan',
+        });
+      }
+      // the time left once the take-offs go: the budget less what stays planned (done or not, as budgetView counts it)
+      let room = budget ? budget.available - (budget.planned - offs.reduce((n, o) => n + o.minutes, 0)) : Infinity;
+      const adds = [];
+      for (const b of fresh.blocks) {
+        if (!b.taskId || b.required || b.deferred || b.done || onList.has(b.id) || planned.has(b.id)) continue;
+        if (texts.has(E.norm(b.title || ''))) continue;
+        if (b.minutes > room) continue;
+        room -= b.minutes;
+        const exam = S.exams.find(e => e.id === b.plan);
+        adds.push({
+          id: b.id,
+          text: b.title,
+          minutes: b.minutes || 0,
+          kind: PLAN_KIND[b.kind] || 'todo',
+          course: (exam && exam.course) || '',
+        });
+      }
+      return { date: today, adds, offs };
+    }
+    const restEdit = p => ({ action: 'add', text: p.text, kind: p.kind, minutes: p.minutes, course: p.course });
+    const offEdit = p => ({ action: 'remove', id: p.id });
+    function restLeft(P) {
+      ui.restPlan = P.adds.length || P.offs.length ? P : null;
+      render();
+    }
+    async function restAccept(P, which) {
+      // one write: each accepted edit applied in turn to the day's edits, all by E.V.
+      const take = which === 'all' ? [...P.adds.map(restEdit), ...P.offs.map(offEdit)] : [which.edit];
+      const base = dayState().day;
+      let doc = dayEditDoc(today);
+      for (const e of take) {
+        const r = E.listEdit(base, doc, e, { now: now(), by: 'E.V.', date: today });
+        if (r.doc) doc = r.doc;
+      }
+      if (doc && doc !== dayEditDoc(today)) await writeDayEdit(today, doc);
+      if (which === 'all') restLeft({ ...P, adds: [], offs: [] });
+      else restLeft({ ...P, adds: P.adds.filter(x => x !== which.p), offs: P.offs.filter(x => x !== which.p) });
+    }
+    function restButtons(P, p, edit, noun) {
+      const ok = btn('Accept', null, { cls: 'btn neutral sm ti-acc' });
+      ok.setAttribute('aria-label', 'Accept: ' + noun);
+      ok.addEventListener('click', () => guard(ok, () => restAccept(P, { p, edit }), 'Done. E.V. changed today’s list'));
+      const keep = btn('Keep', null, { cls: 'btn ghost sm ti-keep' });
+      keep.setAttribute('aria-label', 'Keep: ' + (edit.action === 'add' ? 'leave “' + p.text + '” off today' : 'keep “' + p.text + '” on today'));
+      keep.addEventListener('click', () =>
+        restLeft({ ...P, adds: P.adds.filter(x => x !== p), offs: P.offs.filter(x => x !== p) })
+      );
+      return [ok, keep];
+    }
+    function proposedAddRow(P, p) {
+      const li = el('li', 'li today-item ti-prop');
+      li.dataset.id = p.id;
+      li.append(el('span', 'tk ti-gap'));
+      const nm = el('span', 'nm ti-nm');
+      nm.append(el('span', 'ti-t', p.text));
+      li.append(nm, el('span', 'badge proposed', 'Proposed'), ...restButtons(P, p, restEdit(p), 'add “' + p.text + '” to today'));
+      li.append(el('span', 't', p.minutes ? p.minutes + ' min' : ''));
+      return li;
+    }
+    function restLine(P) {
+      const parts = [
+        ...P.adds.map(p => `add “${p.text}”` + (p.minutes ? ` (${p.minutes} min)` : '')),
+        ...P.offs.map(p => `take “${p.text}” off today (${p.why})`),
+      ];
+      const line = el('div', 'ti-review');
+      line.setAttribute('role', 'status');
+      const all = btn('Accept all', null, { cls: 'btn primary sm' });
+      all.addEventListener('click', () => guard(all, () => restAccept(P, 'all'), 'Done. E.V. changed today’s list'));
+      const no = btn('Reject', null, { cls: 'btn neutral sm' });
+      no.addEventListener('click', () => {
+        ui.restPlan = null;
+        render();
+      });
+      line.append(el('p', 'ti-review-t', 'E.V. suggests: ' + parts.join(', and ') + '. Nothing changes until you accept.'), all, no);
+      return line;
+    }
     function renderToday() {
       const { day, items, isDone, budget, skipped } = dayState();
       // B-291 (D-286): no Now card; the prep check is under her greeting and the exam countdown on Study.
@@ -314,20 +428,36 @@
       const bv = budgetView(budget, items, isDone);
       if (bv) head.append(el('span', 'meta tb-short' + (bv.over ? ' tb-over' : ''), bv.line));
       renderBudget(bv);
+      // B-293 (C-9): Plan the rest, at the head's end; its proposal waits here until he accepts, keeps or rejects it
+      if (ui.restPlan && ui.restPlan.date !== today) ui.restPlan = null;
+      const P = ui.restPlan;
+      const rest = btn('Plan the rest', null, { cls: 'btn neutral sm ti-rest', disabled: !!P });
+      rest.addEventListener('click', () => {
+        const np = restProposal();
+        if (!np.adds.length && !np.offs.length) return toast('Nothing to change: today’s list already fits the plan.');
+        ui.restPlan = np;
+        render();
+      });
+      head.append(rest);
       // B-291: the open rows, then Done, then "Deferred: over today's budget" and "Taken off today" folded under the list.
       // A row he ticks on this visit stays where it is (rule 6); only rows done before it sit in Done.
       const shown = items.filter(i => i.tag !== 'EXAM'); // the exam is in Next 7 days (B-117)
       const inDone = it => isDone(it) && !T.ticked.has(it.id);
-      const rest = shown.filter(it => !inDone(it) && !it.deferred),
+      const todo = shown.filter(it => !inDone(it) && !it.deferred),
         done = shown.filter(inDone),
         later = shown.filter(it => !inDone(it) && it.deferred);
-      const first = rest.find(it => startable(it, isDone));
+      const offOf = it => P && P.offs.find(p => p.id === it.id);
+      const first = todo.find(it => startable(it, isDone) && !offOf(it));
       const ul = el('ul', 'list ti-list');
-      for (const it of rest) ul.append(todayRow(it, isDone, { start: it === first }));
+      for (const it of todo) {
+        const p = offOf(it);
+        ul.append(todayRow(it, isDone, { start: it === first, off: p ? { P, p } : null }));
+      }
+      if (P) for (const p of P.adds) ul.append(proposedAddRow(P, p));
       const folds = ui.todayFolds || {};
-      const kids = [head];
+      const kids = [head, ...(P ? [restLine(P)] : [])];
       const after = [];
-      if (shown.length) kids.push(ul);
+      if (shown.length || (P && P.adds.length)) kids.push(ul);
       else
         kids.push(
           el(

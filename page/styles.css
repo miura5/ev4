@@ -1080,6 +1080,23 @@ button.btn:disabled{opacity:.45;cursor:default}
 #today-budget .tb-over-line{margin:0}
 #today-list .card-head .tb-short{margin-left:auto;font-variant-numeric:tabular-nums}
 @media (min-width:1200px){#today-list .card-head .tb-short{display:none}}
+/* ============================================================ B-293 (C-9, D-243): Plan the rest ====================
+   The list head ends with Plan the rest. Its proposal is one line under the head (what E.V. suggests, Accept all and
+   Reject) and standard rows: an addition is a row with no tick yet, a take-off keeps its row; each carries the one
+   "Proposed" badge and labelled Accept and Keep. No dashed ring and no x. */
+#today-list .card-head{gap:8px}
+#today-list .card-head .ti-rest{margin-left:auto}
+#today-list .card-head .tb-short+.ti-rest{margin-left:0}
+#today-list .ti-review{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:4px 0 6px;padding:8px 10px;border-radius:10px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
+#today-list .ti-review-t{flex:1 1 16rem;margin:0;color:var(--text);font-size:calc(13px * var(--ts));line-height:1.4}
+#today-list .li .ti-gap{cursor:default}
+#today-list .li.ti-prop .nm{cursor:default}
+#today-list .li.ti-prop .nm:hover .ti-t{text-decoration:none}
+@media (max-width:599px){
+  #today-list .ti-review{padding:8px}
+  #today-list .ti-review .btn{flex:1}
+  #today-list .li .ti-acc,#today-list .li .ti-keep{padding:0 8px}
+}
 /* ============================================================ B-297 (D-283, C-1, C-8, C-13): Study's overview ========
    The toolbar (the view tabs sit beside the title from 600 px), then the exam header with its readiness bar and one
    32 px row per objective (44 px on the phone): its state badge, its words, its weak spots and Quiz me on hover or
