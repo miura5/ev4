@@ -5916,11 +5916,11 @@
   "title": "Fidelity: Record as in the demo. The Filter button with its icon and a count of active filters; the detail panel with an 18 px or larger title, properties in a card, her line, and Quiz me on the topic for a quiz.",
   "dod": "Matches the Record board with the filter open and a session and a quiz selected. Proof (D-312, fidelity sprint): node tools/build.mjs, then tools/fidelity's demo and built screenshots read side by side at 1280, 1706, 2560 and 390, plus npm run smoke; then ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-332"
   ],
-  "notes": "",
+  "notes": "claimed by lane record",
   "commit": null,
   "source": "fidelity review, Oct 25 (D-312)"
  },
