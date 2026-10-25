@@ -4646,5 +4646,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "f6f1921",
+  "time": "2026-10-25T15:20:12.643Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "cc8ceed",
+  "tasks": [
+   "B-370"
+  ],
+  "summary": "Review 2: the quiz runner differs from the demo: drill sets instead…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
