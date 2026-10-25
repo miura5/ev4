@@ -327,7 +327,10 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         )) {
           const tree = await page.locator('#' + id).ariaSnapshot();
           const picked = await page.$eval('#' + id, s =>
-            ((s.querySelector('[aria-pressed="true"],[aria-checked="true"]') || {}).textContent || '').trim()
+            // what shows (innerText): a segment's count reads "All 3", and a label hidden at this width is not read
+            ((s.querySelector('[aria-pressed="true"],[aria-checked="true"]') || {}).innerText || '')
+              .replace(/\s+/g, ' ')
+              .trim()
           );
           const named = [...tree.matchAll(/button "([^"]+)" \[(?:pressed|checked)\]/g)].map(m => m[1]);
           ok(
@@ -560,8 +563,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
     if (['390x844', '1280x800'].includes(width)) {
       // B-111, B-302: the long note is one row in the log, its words cut to the row's line; opening it shows all 30
       // words in its detail, with its kind menu (B-303, D-290: and no Make it a weak spot).
-      await page.click('#tab-record');
-      await page.click('#seg-record [data-v="sessions"]');
+      await page.click('#tab-record'); // B-359: Record is its log alone
       await page.waitForTimeout(400);
       const sel = '#rec-list .rec-li[data-id="look-long-idea"]';
       const idea = await page.evaluate(s => {
@@ -575,8 +577,8 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         };
       }, sel);
       ok(
-        `[${width}] record: the 30-word note is one ${width === '390x844' ? 44 : 32} px row, no control on it`,
-        idea && idea.h === (width === '390x844' ? 44 : 32) && idea.oneLine && idea.rowControls === 0,
+        `[${width}] record: the 30-word note is one row, its words cut to its line, no control on it (B-357: the demo's height)`,
+        idea && idea.oneLine && idea.rowControls === 0,
         JSON.stringify(idea)
       );
       if ((await page.getAttribute(sel + ' .nm', 'aria-expanded')) !== 'true') await page.click(sel + ' .nm');
@@ -617,6 +619,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
   );
   process.exit(failed ? 1 : 0);
 })().catch(e => {
+  for (const [st, n, d] of results) if (st === 'FAIL') console.log(`${st}  ${n}  -- ${d}`);
   console.error(e);
   process.exit(1);
 });
