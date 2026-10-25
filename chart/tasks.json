@@ -5509,11 +5509,11 @@
   "title": "A staging D1 and a staging Worker with their own token, seeded with the synthetic record only (test/data/synthetic.cjs). The Cloudflare deploy credential lives only in the build chat's environment.",
   "dod": "Without the token, the staging Worker answers 401 on /api/db; with it, the counts per collection equal the synthetic record's. A cloud session reaches the staging Worker. The personal-data test passes over pwa/.",
   "milestone": "app (data, pipelines, ops)",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-309"
   ],
-  "notes": "Matt added ev-staging.peppercheese1.workers.dev to the cloud network allowlist (Oct 25). Checked from the managing build chat: the page answers 200 and /api/db answers 401 without the token. Its last clause (a cloud session reaches the staging Worker) can now be proven with node tools/pwa-staging.mjs reach. Also recorded: the Cloudflare staging credential lives in the repository's Actions secrets, not the build chat's environment (Matt, Oct 24).",
+  "notes": "claimed by lane app",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
