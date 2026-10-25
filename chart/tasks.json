@@ -7185,7 +7185,7 @@
   "milestone": "PWA",
   "status": "open",
   "depends": [],
-  "notes": "build-manager agent working on it; claim refused while B-396 waits in the inbox (triage is the build manager's), will claim once it is triaged",
+  "notes": "core, run, Worker restore drill, app job runner, spec boundaries (B-01/B-04 ended) and prompts done locally; page and tests next",
   "commit": null,
   "source": "build manager, D-324",
   "words": "Remove every check, flag, hold and block for graded work and patient identifiers from E.V., as D-324 decides.",
