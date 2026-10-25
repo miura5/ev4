@@ -6582,7 +6582,7 @@
   "milestone": "v4.8 redesign",
   "status": "done",
   "depends": [],
-  "notes": "Shipped to staging at f6f1921: ship staging GREEN.",
+  "notes": "Card for Matt: Quiz me in Study (and Take the quiz, New quiz, and an objective's Quiz me) now starts a mini quiz of up to five questions, titled 'Mini quiz · NUR 112' (or the objective's name). Each question answers on a tap or with A to D, then one feedback sentence ('Right.' or 'Not quite.' with the right answer and its why) and Next question. No typed answers, Check answer, Next link, lines under each answer or 'Why not the others'. The results card shows the score, Logged to Record, one line on the misses with Review, then New quiz and Back to topics, with no line under the header and no extra lists or buttons. The quiz's meta line is the demo's grey and wraps on the phone. Still differs from the demo at every size: misses become weak spots straight away, as they do today, so the line reads 'N misses are now weak spots' with Review and no Accept all (proposing them waits on the weak-spot work you put after exams, B-300). A mini quiz draws from one question set, so it has fewer than five when that set is short. Sets opened from Today or E.V.'s cards keep their other question kinds. 1280, 1706, 2560 and 390 otherwise match. Reviewer: none (fidelity sprint, D-312).",
   "commit": "f6f1921",
   "source": "UI reviewer click-through 2 at 112b83f, Oct 25 (D-316)",
   "words": "Review 2: the quiz runner differs from the demo: drill sets instead of the mini quiz, typed answers, per-option lines, results buttons and wording, a banner on results, and a clipped meta line at 390.",
