@@ -6930,5 +6930,22 @@
    "outcome": "task",
    "at": "2026-10-25T17:09:19.629Z"
   }
+ },
+ {
+  "id": "B-387",
+  "kind": "bug",
+  "title": "Bug (reported Oct 25): On a 1150-wide laptop pane, scrolling up through the conversation folds E.V.'s stage and brings it back, and her latest line jumps 95 to 240 px.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "test agent, captions harness B-249 jank check, Oct 25",
+  "words": "On a 1150-wide laptop pane, scrolling up through the conversation folds E.V.'s stage and brings it back, and her latest line jumps 95 to 240 px.",
+  "reportedAt": "2026-10-25T18:00:28.933Z",
+  "board": {
+   "row": "v4 B-387: On a 1150-wide laptop pane, scrolling up through the conversation…"
+  }
  }
 ]
