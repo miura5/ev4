@@ -7000,7 +7000,7 @@
   "milestone": "v4.8 redesign",
   "status": "in progress",
   "depends": [],
-  "notes": "Built at 0846bc1: arrow keys never answer (Space, Enter, letter key or pointer tap do), leaving System clears #system, styles.css hides [hidden], renderLine logs faults after load. test/smoke-keys.cjs runs first in npm run smoke (12 checks green, red with the fix removed); npm test 601 pass; smoke 28/28; ship staging GREEN at 0846bc1. Waiting on the independent review; not marked done.",
+  "notes": "Review gap fixed at a5d27dd: smoke-keys now plants a TypeError in lineFor's path after load and expects one renderLine: console error and a blank strip (red with the fix removed); the status-line check is renamed to what it proves (opens System on each tap), #system-again stays the guard for the address fix; the practice set answers on Enter. npm test 604 pass; smoke 14/14 keys, 28/28 harness; ship staging GREEN at a5d27dd. Not marked done.",
   "commit": null,
   "source": "release code review (page), 368b104..fc9133e, Oct 25",
   "words": "Arrow keys moving between a question's options record an answer he didn't pick; System can't be reopened once its address is set; the page depends on the host hiding hidden panels; a broken status line fails silently.",
