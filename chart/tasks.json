@@ -6388,10 +6388,10 @@
  {
   "id": "B-361",
   "kind": "request",
-  "title": "Request (reported Oct 25): The UI review found frame-wide differences from the demo: status line, logo, graded colour, phone header and tab bar, the New menu and dialog, and Preferences.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "title": "Fidelity fix: Frame (wave 2): the sidebar status reads 'ready when you are' at rest and 'thinking…' while she replies (never stuck on 'replying'); the logo mark stays during a reply; Graded is the demo's neutral dark grey everywhere (chips, dots, text), never red; at 390 New sits flush right in the header and the bottom bar's first tab is the demo's speech-bubble icon with the active tab on a grey ground; the New menu has its Create heading; the New task dialog is the demo's (icon in its header, Cancel, Estimate as 5/15/30/45 chips, the demo's categories, Add task disabled while empty, the page dimmed behind it); Preferences marks the theme in use",
+  "dod": "Every one of these matches the Main, NewItem and Preferences boards at 1280 and 390. Proof (D-312): node tools/build.mjs; crawl.cjs demo and built, on the synthetic record and on a real-shaped record (ten due items, long titles, an exam with no objectives), side by side at 1280 and 390 for every state named; npm run smoke; ship staging GREEN. Review pairs from the UI reviewer are in /home/claude/ui-review/pairs/ when this run shares the machine; otherwise rebuild them with crawl.cjs.",
+  "milestone": "v4.8 redesign",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -6400,6 +6400,10 @@
   "reportedAt": "2026-10-25T13:48:46.767Z",
   "board": {
    "row": "v4 B-361: The UI review found frame-wide differences from the demo: status…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-25T13:48:47.244Z"
   }
  }
 ]
