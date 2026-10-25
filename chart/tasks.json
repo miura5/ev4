@@ -5674,12 +5674,12 @@
   "title": "Images to Claude through the shim (the library's page reading).",
   "dod": "The library reads a photographed page through the Worker, proven by the PWA smoke with a stub.",
   "milestone": "app (data, pipelines, ops)",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-314"
   ],
-  "notes": "built a96f55e: the shim sends images; smoke:pwa green 20 of 20 (a photographed page read through /api/claude into D1's library), npm test green",
-  "commit": null,
+  "notes": "Card (D-261). What changes when he studies: nothing on the claude.ai page; in the app, a photo of a handout or a scanned PDF page he attaches in the conversation is now read by Claude and saved to his library, where before the app said it couldn't read photos. Why: the library's page reading was the one Claude feature the app still lacked (hand-off 3). Touches: the app's connection to Claude only; the page, the record's rules and the claude.ai preview are unchanged. What could break and how we'd notice: a photo type Claude doesn't take (an iPhone HEIC) is redrawn as a JPEG first; if a picture can't be read, E.V. says so and saves nothing; the app smoke on every push checks a photographed page end to end. Size: about 240 lines, mostly the smoke's new checks; undone by reverting two commits. Checks: second review 'No gaps' (first review named a duplicated browser start in the smoke, fixed in 9ec8570); Checks: none retired or loosened; Size: +238 -19, in line with the definition. Proofs: smoke:pwa 20 of 20 at 390 and 1280 (a photographed page goes to Claude as the same JPEG and its reading lands in D1's library; a BMP is redrawn as a JPEG), npm test green, the GitHub smoke workflow green at 9ec8570. Open, not this task's: check --touched went RED at the captions harness ('the tenet checks pass on the E.V. tab with the surface open', 3 widths, empty detail); it reproduces at e527d17, before this task, so it comes from the redesign lanes' page work or this machine's browser and is for them or the nightly to settle. No staging ship (app lane); staging page unchanged by this task.",
+  "commit": "9ec8570",
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
  {
