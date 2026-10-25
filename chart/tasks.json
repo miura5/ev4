@@ -6678,5 +6678,22 @@
    "outcome": "task",
    "at": "2026-10-25T15:48:12.889Z"
   }
+ },
+ {
+  "id": "B-375",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Review 3: Study drops its right panel for an exam with no objectives, shows no card for a course with no exam, and Quiz me does nothing when no question bank exists.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UI reviewer click-through 3 at d6bee63, Oct 25 (D-316)",
+  "words": "Review 3: Study drops its right panel for an exam with no objectives, shows no card for a course with no exam, and Quiz me does nothing when no question bank exists.",
+  "reportedAt": "2026-10-25T15:48:13.282Z",
+  "board": {
+   "row": "v4 B-375: Review 3: Study drops its right panel for an exam with no objectives,…"
+  }
  }
 ]
