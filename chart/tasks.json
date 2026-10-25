@@ -6372,7 +6372,7 @@
   "depends": [
    "B-358"
   ],
-  "notes": "Shipped to staging at 14914aa: ship staging GREEN.",
+  "notes": "E.V.'s quick-ask chips now sit in one row at every size; when they don't fit (the phone, and the 600 px column on a computer) the row scrolls sideways from the first chip, and when they fit they sit centred. At rest the row is the demo's five only, so no Open Record, Your turn or File it chip is left over. On staging GREEN at 14914aa. Still differs from the demo: the demo wraps its chips (two rows on a computer, three on the phone), so at 1280, 1706 and 2560 the fifth chip and part of the fourth sit past the field's edge until scrolled, and at 390 from the third on; the last visible chip is cut at the edge with no fade. Chips during a session are B-362's. Reviewer: none (fidelity sprint, D-312).",
   "commit": "14914aa",
   "source": "Matt, staging on his phone, Oct 25",
   "words": "On the phone E.V.'s suggestion chips wrap into four rows; Matt wants at most one row of chips at a time.",
