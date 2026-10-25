@@ -6004,11 +6004,11 @@
   "title": "Fidelity fix: Sidebar: the first section reads Conversation on a computer (E.V. stays on the phone's bottom bar, as the demo has it), and the nav icons are the demo's own",
   "dod": "The sidebar's labels and icons match the demo's Main and TodayList boards at 1280, 1706 and 2560; the phone bar matches at 390. Proof (D-312, fidelity sprint): node tools/build.mjs, tools/fidelity screenshots side by side, npm run smoke, ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-334"
   ],
-  "notes": "",
+  "notes": "claimed by lane side",
   "commit": null,
   "source": "fidelity review of B-334, Oct 25 (D-312)",
   "words": "Fidelity fix: the sidebar's first section reads E.V. where the demo and an earlier task say Conversation, and its icons differ from the demo's (speech bubble, sun, book, bars, archive).",
