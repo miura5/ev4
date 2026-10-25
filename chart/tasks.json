@@ -6958,7 +6958,7 @@
   "milestone": "v4.8 redesign",
   "status": "in progress",
   "depends": [],
-  "notes": "Fixes at 700c333 (core refuses snooze of planned date- graded due today, page shows Snooze off with a due-today line; scoreSaid strips /100 and E4, one number left; a topic matching an open idea links to it, returned as linked, no new idea; pwa deploy --env staging). npm test 603/603, smoke 28/28 (one flaky refused-answer check at 1280 seen once, also on base). ship staging GREEN at 700c333. Awaiting independent review; not done.",
+  "notes": "Review gap fixed at a70721f: the evening filing pass keeps each new idea as a document (id, text, status) in madeIdeas, so a second Study Watch file on one open topic links to it; test added. npm test 604/604; smoke 28/28 on a rerun (the flaky refused-answer check fails intermittently, as on base). ship staging GREEN at a70721f. Not marked done.",
   "commit": null,
   "source": "release code review (data, tools), 368b104..fc9133e, Oct 25",
   "words": "Snoozing graded work due today removes it from Today and puts it nowhere; a score can be read from an exam number or '/100'; the same topic adds a new idea each session; the PWA's npm deploy script targets the non-staging Worker.",
