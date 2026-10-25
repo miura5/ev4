@@ -1179,7 +1179,7 @@ button.btn:disabled{opacity:.45;cursor:default}
 #prog-day .prog-s .nm:hover{text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:3px}
 #progress-readiness .col-main{gap:12px}
 @media (max-width:599px){
-  .prog-chart{gap:4px;height:140px}
+  .prog-chart{gap:4px;height:112px}
   .prog-props{padding:2px 14px}
   .prog-props .prop{min-height:44px}
   #prog-day .prog-s{padding:0}

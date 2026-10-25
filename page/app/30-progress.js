@@ -41,13 +41,7 @@
         for (let w = weekStart(monthStart(ym)); w <= end; w = E.addDays(w, 7)) {
           const from = w < monthStart(ym) ? monthStart(ym) : w,
             to = E.addDays(w, 6) > end ? end : E.addDays(w, 6);
-          out.push({
-            key: from,
-            from,
-            to,
-            label: monthName(ym) + ' ' + Number(from.slice(8)),
-            full: rangeName(from, to),
-          });
+          out.push({ key: from, from, to, label: monthName(ym) + ' ' + Number(from.slice(8)), full: rangeName(from, to) });
         }
         return out;
       }
@@ -55,13 +49,7 @@
       let ym = monthOf(dates[0] && dates[0] < today ? dates[0] : today);
       const out = [];
       for (let i = 0; ym <= monthOf(today) && i < 12; i++) {
-        out.push({
-          key: ym,
-          from: monthStart(ym),
-          to: monthEnd(ym),
-          label: monthName(ym),
-          full: monthName(ym) + ' ' + ym.slice(0, 4),
-        });
+        out.push({ key: ym, from: monthStart(ym), to: monthEnd(ym), label: monthName(ym), full: monthName(ym) + ' ' + ym.slice(0, 4) });
         ym = E.addDays(monthStart(ym), 32).slice(0, 7);
       }
       return out.slice(-6);
@@ -106,25 +94,23 @@
       const prevPct = pa && pa.n ? Math.round((100 * pa.right) / pa.n) : null;
       const open = M.models.filter(w => E.isActive(w));
       const due = open.filter(w => E.isDue(w, today)).length;
+      // absent while empty (D-151): the accuracy row waits for an answer in the period
       const props = [
         [
           'Study time',
           hm(grand),
           prev ? deltaMin(grand - minsIn(prev.from, prev.to), prev.name) : 'since ' + bs[0].full,
         ],
-        [
+        accPct != null && [
           'Quiz accuracy',
-          accPct == null ? 'No answers yet' : accPct + '%',
-          accPct == null
-            ? ''
-            : prevPct == null
-              ? acc.right + ' of ' + acc.n + ' right'
-              : (accPct === prevPct
-                  ? 'same as '
-                  : (accPct > prevPct ? '+' : '−') + Math.abs(accPct - prevPct) + ' pts on ') + prev.name,
+          accPct + '%',
+          prevPct == null
+            ? acc.right + ' of ' + acc.n + ' right'
+            : (accPct === prevPct ? 'same as ' : (accPct > prevPct ? '+' : '−') + Math.abs(accPct - prevPct) + ' pts on ') +
+              prev.name,
         ],
         ['Weak spots', open.length + ' open', due ? due + ' due today' : 'none due today'],
-      ];
+      ].filter(Boolean);
       $('prog-stats').replaceChildren(
         ...props.map(([k, v, d]) => {
           const r = el('div', 'prop');
@@ -143,8 +129,7 @@
       const cur = bs.findIndex(b => inSpan(today, b.from, b.to));
       let pick = bs.findIndex(b => b.key === prog.pick);
       if (pick < 0) pick = cur >= 0 ? cur : bs.length - 1;
-      $('prog-chart-h').textContent =
-        P === 'week' ? 'Study time by day' : P === 'month' ? 'Study time by week' : 'Study time by month';
+      $('prog-chart-h').textContent = P === 'week' ? 'Study time by day' : P === 'month' ? 'Study time by week' : 'Study time by month';
       const chart = $('prog-chart');
       chart.dataset.n = String(bs.length);
       chart.replaceChildren(
@@ -170,9 +155,10 @@
       );
       // by course: each active course's share of the period's study time
       const byC = {};
-      for (const s of timed())
-        if (inSpan(s.date, span.from, span.to)) byC[sessionCourse(s)] = (byC[sessionCourse(s)] || 0) + s.minutes;
-      const courseRows = E.activeCourses().map(c => {
+      for (const s of timed()) if (inSpan(s.date, span.from, span.to)) byC[sessionCourse(s)] = (byC[sessionCourse(s)] || 0) + s.minutes;
+      const courseRows = E.activeCourses()
+        .filter(c => byC[c]) // a course with no time this period is absent (D-151)
+        .map(c => {
         const r = el('div', 'prog-hb');
         const top = el('div', 'prog-hb-top');
         top.append(el('span', null, c), el('span', 'meta', hm(byC[c] || 0)));
@@ -183,6 +169,7 @@
         r.append(top, bar);
         return r;
       });
+      $('prog-course').hidden = !courseRows.length;
       $('prog-course').replaceChildren(el('h3', null, 'By course · ' + PERIODS[P].toLowerCase()), ...courseRows);
       // exam readiness: each active course's next exam, its weak spots solid (green) and right once (yellow)
       const next = E.nextExams(S.exams, today);
@@ -192,21 +179,23 @@
         .map(e => {
           const r = E.readiness({ examId: e.id, weakspots: M.models });
           const total = r.active + r.solid;
+          if (!total) return null; // an exam with no weak spots yet is absent (D-151)
           const row = el('div', 'prog-hb');
           const top = el('div', 'prog-hb-top');
           top.append(
             el('span', null, E.courseOf(e) + ' · ' + (e.title || e.id).replace(/:.*$/, '')),
-            el('span', 'meta', total ? r.solid + ' of ' + total + ' solid' : 'no weak spots yet')
+            el('span', 'meta', r.solid + ' of ' + total + ' solid')
           );
           const bar = el('div', 'pbar');
           const g = el('i', 'x-green'),
             y = el('i', 'x-yellow');
-          g.style.width = total ? Math.round((100 * r.solid) / total) + '%' : '0';
-          y.style.width = total ? Math.round((100 * r.rightOnce) / total) + '%' : '0';
+          g.style.width = Math.round((100 * r.solid) / total) + '%';
+          y.style.width = Math.round((100 * r.rightOnce) / total) + '%';
           bar.append(g, y);
           row.append(top, bar);
           return row;
-        });
+        })
+        .filter(Boolean);
       $('prog-ready').hidden = !readyRows.length;
       $('prog-ready').replaceChildren(el('h3', null, 'Exam readiness · weak spots solid'), ...readyRows);
       // the day panel: the picked bar's sessions, and nothing else
