@@ -7117,5 +7117,22 @@
    "outcome": "task",
    "at": "2026-10-25T21:30:09.108Z"
   }
+ },
+ {
+  "id": "B-396",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Replace the retired Study Watch with note-taking inside E.V.: a lightweight notes view modelled on Quip's basics (one continuous page per note, simple formatting, keyboard shortcuts for headings and lists), usable offline in the PWA and synced to E.V.'s database when back online, so E.V. can use the notes as Study Watch did.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt in the development chat, Oct 25",
+  "words": "Replace the retired Study Watch with note-taking inside E.V.: a lightweight notes view modelled on Quip's basics (one continuous page per note, simple formatting, keyboard shortcuts for headings and lists), usable offline in the PWA and synced to E.V.'s database when back online, so E.V. can use the notes as Study Watch did.",
+  "reportedAt": "2026-10-25T22:18:31.271Z",
+  "board": {
+   "row": "v4 B-396: Replace the retired Study Watch with note-taking inside E.V.: a…"
+  }
  }
 ]
