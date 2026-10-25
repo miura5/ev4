@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-312",
+  "date": "Oct 25",
+  "title": "Fidelity sprint (staging only): the v4 UI is fixed to match the demo without the usual checks. Builders copy the demo board's own markup and styles; a task is done when its built screen, rendered at 1280 and 390, matches its demo board side by side, the page builds, and the 10-second smoke run passes. No npm test, touched check, harness or look pass, and one review at most, by the UI reviewer on the whole staging page against the demo. A failing test that asserts the old layout is not fixed during the sprint. Matt is not asked to look at staging or to OK anything until the UI reviewer says it matches the demo; then one word from him takes it live.",
+  "why": "Matt, Oct 25: staging failed his look after every check passed; the checks guarded old rules, not the demo, and cost hours and his attention. This is styling on staging, never production.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-311",
   "date": "Oct 25",
   "title": "E.V.'s build work is split into roles, each with one job and its own fresh context: a build manager (one chat per milestone, with Matt), a lane planner per hand-off, builders and trimmers in lanes, and a lane watch. Each role's prompt lives in docs/workflow/, the lanes in docs/lanes.md, and no guarded change or tenet is filed while a lane has a task in progress.",
