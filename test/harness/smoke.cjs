@@ -346,15 +346,12 @@ async function open(browser, viewport) {
       JSON.stringify(pr)
     );
 
-    // 6. One Your-turn reply files: the chip asks, Send writes the reply job and fires the builder.
+    // 6. One Your-turn reply files: asked for in words (B-358: the demo's five chips carry no Your turn chip), Send
+    // writes the reply job and fires the builder.
     await page.click('#tab-ev');
-    const chip = page.locator('#qchips button', { hasText: /^Your turn/ });
-    if (
-      await until(page, () =>
-        [...document.querySelectorAll('#qchips button')].some(b => /^Your turn/.test(b.textContent))
-      )
-    ) {
-      await chip.click();
+    {
+      await page.fill('#ev-input', 'Your turn');
+      await page.press('#ev-input', 'Enter');
       const item = page.locator('#ev-surf .yt-item[data-task="B-910"]');
       await until(page, () => !!document.querySelector('#ev-surf .yt-item[data-task="B-910"]'));
       await item.locator('.yt-chips button', { hasText: 'Blue' }).click();
@@ -387,7 +384,7 @@ async function open(browser, viewport) {
         6000
       );
       ok(`${tag} a Your-turn reply files its job and fires the builder`, filed);
-    } else ok(`${tag} a Your-turn reply files its job and fires the builder`, false, 'no Your turn chip');
+    }
 
     // B-200 (D-208): a quick-ask chip puts his line in the thread on the tap's next frame, the record 2 s behind.
     const chipPaint = await page.evaluate(async () => {

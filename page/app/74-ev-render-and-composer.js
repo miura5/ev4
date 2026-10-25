@@ -168,11 +168,9 @@
           : ((T.greet && T.greet.chips) || ['What’s due this week?', 'How ready am I?']).filter(
               c => !(c === 'Start a study session' && sa)
             );
-      // B-353 (D-314): at rest, the demo's five chips; what waits on him (a skills run to resume, Your turn, sessions to
-      // file) leads them while it waits, since nothing else offers it.
+      // B-358 (D-314): at rest, the demo's five chips and only those.
       if (!sa)
         chips = [
-          ...chips.filter(c => /^Resume |^Your turn|^File it$/.test(c)),
           'Start a study session',
           'What’s due this week?',
           quizChip(),

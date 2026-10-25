@@ -988,44 +988,63 @@
         };
       },
     };
-    // B-353 (D-314): the greeting's things to know are her own lines under it, as in the demo's Main board: one quiet
-    // line each, no fold and no dot; a line with an action carries it as a small button at its end.
     T.briefOpen = false;
     T.briefItem = new Set();
     const CHEV =
       '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
-    const goTab = t =>
-      t === 'record'
-        ? openIn('record', 'record', 'dates')()
-        : t === 'progress'
-          ? openIn('progress', 'progress', 'readiness')()
-          : showTab(t);
-    const TAB_NAME = { today: 'Today', record: 'Record', progress: 'Progress', system: 'System', study: 'Study' };
-    function briefLine(it) {
-      const t = it.level === 'prep' ? it.title.replace(/^Prep: /, 'Prep for ') : it.title;
-      const due = it.kind === 'due' && it.when && !/\b(today|tonight|tomorrow)\b/i.test(t) ? ', due ' + it.when : '';
-      return t.replace(/[.\s]+$/, '') + due + '.';
+    // B-358 (D-314): under her greeting line, one summary line as the demo's Main board: what's on today's list, its
+    // minutes, and the next graded date the greeting hasn't named; never a line per item and no buttons.
+    const SUM_NUM = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve'];
+    const SUM_DOWS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const SUM = { at: 0, key: '', line: '' };
+    function summaryLine(m) {
+      // computed at most once a second: the thread's redraw check asks for it on every frame
+      const t = Date.now();
+      if (t - SUM.at < 1000 && SUM.key === m.text) return SUM.line;
+      SUM.at = t;
+      SUM.key = m.text;
+      return (SUM.line = summaryNow(m));
+    }
+    // a long name to its lead (before a colon), else to its first words: the line stays one sentence
+    function shortTitle(t) {
+      let s = String(t || '')
+        .replace(/[.\s]+$/, '')
+        .trim();
+      if (s.length <= 40) return s;
+      const c = s.indexOf(':');
+      if (c >= 10 && c <= 40) return s.slice(0, c);
+      return s.slice(0, 40).replace(/\s+\S*$/, '') + '…';
+    }
+    function summaryNow(m) {
+      const { items, isDone, budget } = dayState();
+      const n = sideOpen().length; // as Today's list and the sidebar count them
+      const things = (SUM_NUM[n] || String(n)) + (n === 1 ? ' thing' : ' things') + ' on today’s list';
+      const bv = budgetView(budget, items, isDone);
+      const mins = bv && bv.available ? `${bv.left} of your ${bv.available} minutes` : '';
+      const said = String(m.text || '').toLowerCase();
+      const g = S.dates
+        .filter(d => d.graded && d.date >= today && !E.isRemovedDate(d) && d.title)
+        .sort((x, y) => (x.date + (x.time || '')).localeCompare(y.date + (y.time || '')))
+        .find(d => !said.includes(shortTitle(d.title).toLowerCase().split(' ').slice(0, 2).join(' ')));
+      let when = '';
+      if (g) {
+        const days = Math.round((Date.parse(g.date) - Date.parse(today)) / 864e5);
+        when =
+          days === 0
+            ? ' today'
+            : days === 1
+              ? ' tomorrow'
+              : days < 7
+                ? ' on ' + SUM_DOWS[new Date(g.date + 'T12:00:00Z').getUTCDay()]
+                : ' on ' + new Date(g.date + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
+      }
+      const graded = g ? shortTitle(g.title) + when : '';
+      const parts = [things, mins, graded].filter(Boolean);
+      return (parts.length > 1 ? parts.slice(0, -1).join(', ') + ', and ' + parts[parts.length - 1] : parts[0]) + '.';
     }
     function briefEl(m) {
       const wrap = el('div', 'brief');
-      for (const it of m.brief) {
-        const li = el('p', 'brief-line');
-        li.dataset.level = it.level;
-        li.dataset.kind = it.kind;
-        li.append(el('span', 'bl-t', briefLine(it)));
-        const go = it.action
-          ? btn(it.action.label === 'Start' ? 'Start review' : it.action.chip, () =>
-              guard(null, () => quick(it.action.chip))
-            )
-          : it.tab
-            ? btn('Open ' + (TAB_NAME[it.tab] || it.tab), () => goTab(it.tab))
-            : null;
-        if (go) {
-          go.className = 'btn neutral sm bl-go';
-          li.append(go);
-        }
-        wrap.append(li);
-      }
+      wrap.append(el('p', 'brief-line', summaryLine(m)));
       return wrap;
     }
     // The prep check under her greeting (B-104; D-143, D-144): the night-before pack check from the evening on, the

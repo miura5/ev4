@@ -27,6 +27,7 @@
         T.busy,
         T.retry.has(m.id),
         m.greeting && m.prep ? prepNow(m.prep) : null,
+        m.greeting ? summaryLine(m) : null,
         m.work || null,
         m.work ? T.workOpen.has(m.id) : null,
       ]);
@@ -79,7 +80,7 @@
       }
       const q = SS.quotes.get(m.id);
       if (q && m.text) body.append(el('p', 'cap-quote', `on “${q}”`)); // B-88: the line of his she answered (memory only)
-      if (m.greeting && m.brief && m.brief.length) body.append(briefEl(m));
+      if (m.greeting) body.append(briefEl(m));
       if (m.greeting && m.prep) {
         const pe = prepEl(m);
         if (pe) body.append(pe);
