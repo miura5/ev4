@@ -271,7 +271,9 @@
                 if (set) return set.exam === e.id;
                 return named.test(it.text || it.title || '');
               });
-              ((n = tied.length), (so = tied.filter(ds.isDone).length), (unit = tied.length === 1 ? 'item today' : 'items today'));
+              ((n = tied.length),
+                (so = tied.filter(ds.isDone).length),
+                (unit = tied.length === 1 ? 'item today' : 'items today'));
             }
             // B-378: with neither the next exam still has its row, an empty bar saying so, so By course is never alone
             if (!n) unit = 'none';
@@ -280,7 +282,11 @@
           const top = el('div', 'prog-hb-top');
           top.append(
             el('span', null, E.courseOf(e) + ' · ' + (e.title || e.id).replace(/:.*$/, '')),
-            el('span', 'meta', unit === 'none' ? 'no plan yet' : so + ' of ' + n + (unit === 'objectives' ? '' : ' ' + unit))
+            el(
+              'span',
+              'meta',
+              unit === 'none' ? 'no plan yet' : so + ' of ' + n + (unit === 'objectives' ? '' : ' ' + unit)
+            )
           );
           const bar = el('div', 'pbar');
           bar.setAttribute('role', 'img');
