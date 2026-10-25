@@ -4662,5 +4662,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "812ca4c",
+  "time": "2026-10-25T15:24:45.712Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "f6f1921",
+  "tasks": [
+   "B-373"
+  ],
+  "summary": "Review 2: the task panel lacks Snooze on most tasks and a graded task…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]

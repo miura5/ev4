@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 25 | v4 staging deployed at 812ca4c (10:24 CT), from f6f1921: Review 2: the task panel lacks Snooze on most tasks and a graded task… (B-373). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at f6f1921 (10:20 CT), from cc8ceed: Review 2: the quiz runner differs from the demo: drill sets instead… (B-370). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at cc8ceed (10:10 CT), from cfb565a: Review 2: E.V.'s view shows a large greeting line the demo lacks, the…; Review 2: Today's phone rows, the Notes badge, Plan the rest's… (B-368, B-369). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at cfb565a (10:05 CT), from f7fd74e: Review 2: Progress shows an empty readiness bar for an exam with no… (B-372). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
