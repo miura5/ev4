@@ -303,7 +303,7 @@
       const cut = t => String(t || id).slice(0, 70);
       if (col === 'ideas') {
         const x = (S.ideas || []).find(d => d.id === id);
-        return { label: 'Idea: ' + cut(x && x.text), go: openSeg('record', 'sessions') };
+        return { label: 'Idea: ' + cut(x && x.text), go: openSeg('record') };
       }
       if (col === 'weakspots') {
         const x = M.models.find(w => w.id === id);
@@ -311,7 +311,7 @@
       }
       if (col === 'dates' || col === 'dateedits') {
         const x = S.dates.find(d => d.id === id);
-        return { label: 'Date: ' + cut(x && x.title), go: openSeg('record', 'dates') };
+        return { label: 'Date: ' + cut(x && x.title), go: openSeg('today', 'week') };
       }
       if (col === 'dayedits')
         return { label: id === today ? 'Today’s list' : short(id) + '’s list', go: () => showTab('today') };

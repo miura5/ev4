@@ -157,38 +157,8 @@
   <!-- RECORD -->
   <section class="panel" id="p-record" role="tabpanel" aria-labelledby="tab-record" hidden>
     <h2 class="ptitle">Record</h2>
-    <div class="seg" id="seg-record" role="group" aria-label="Record views">
-      <button type="button" data-v="sessions" aria-pressed="true">Log</button>
-      <button type="button" data-v="dates" aria-pressed="false">Dates</button>
-      <button type="button" data-v="journal" aria-pressed="false">Journal</button>
-      <button type="button" data-v="news" aria-pressed="false">Canvas</button>
-      <button type="button" data-v="library" aria-pressed="false">Library</button>
-    </div>
     <!-- B-302: the log; its toolbar, list and detail are built by the page (40-record) -->
     <div id="record-sessions" class="panel"></div>
-    <!-- B-350: Dates, Journal, Canvas and Library are drawn as the log is (40-record); the two forms move into its panel -->
-    <div id="record-dates" class="panel" hidden>
-      <form class="rec-form" id="date-add" autocomplete="off" hidden>
-        <h2>Add a date</h2>
-        <div class="fields"><input type="date" id="d-date" required style="max-width:11rem" aria-label="Date"><input type="text" id="d-title" placeholder="What, e.g. ATI Engage: Nutrition due" required></div>
-        <div class="fields">
-          <select id="d-kind" aria-label="Kind"><option value="due">Due</option><option value="exam">Exam</option><option value="validation">Validation</option><option value="clinical">Clinical</option><option value="other">Other</option></select>
-          <select id="d-course" aria-label="Course"></select>
-          <label style="display:flex;align-items:center;gap:8px;flex:0 0 auto"><input type="checkbox" id="d-graded" class="tick"> Graded</label>
-        </div>
-        <div class="actions"><button class="btn primary" type="submit">Add date</button></div>
-      </form>
-    </div>
-    <div id="record-journal" class="panel" hidden>
-      <form class="rec-form" id="j-add" autocomplete="off" hidden>
-        <h2>New entry</h2>
-        <select id="j-kind" aria-label="Kind"><option value="free">Free write</option><option value="clinical">After clinical</option><option value="weekly">Weekly reflection</option></select>
-        <textarea id="j-text" placeholder="How did today go? School, health, anything on your mind. No patient details." required></textarea>
-        <div class="actions"><span class="meta grow" id="j-warn" role="status"></span><button class="btn primary" type="submit">Save entry</button></div>
-      </form>
-    </div>
-    <div id="record-news" class="panel" hidden></div>
-    <div id="record-library" class="panel" hidden></div>
   </section>
 
   <!-- SYSTEM -->

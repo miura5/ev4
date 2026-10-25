@@ -942,7 +942,7 @@
         const n = S.dates.filter(d => d.date >= from && d.date <= to).length;
         return {
           text: n ? `${plural(n, 'date')} ${span(days)}` : `Nothing dated ${span(days)}`,
-          go: openIn('record', 'record', 'dates'),
+          go: openIn('today', 'today', 'week'),
         };
       },
       weakspots() {

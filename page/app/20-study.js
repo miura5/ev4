@@ -1174,16 +1174,6 @@
         b.disabled = false;
       }
     }
-    // B-42 (D-099): the course select reads spec.courses: its active courses, the default first.
-    $('d-course').replaceChildren(
-      ...E.activeCourses()
-        .sort((a, b) => (b === E.defaultCourse()) - (a === E.defaultCourse()))
-        .map(c => {
-          const o = document.createElement('option');
-          o.textContent = c;
-          return o;
-        })
-    );
     $('more-btn').addEventListener('click', () => morePractice());
     $('study-back').addEventListener('click', () => {
       ui.openSet = null;

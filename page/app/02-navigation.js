@@ -128,8 +128,6 @@
     PANEL.addEventListener('change', () => render());
     const setStudy = wireSeg('seg-study', 'study', 'study');
     wireSeg('seg-progress', 'progress', 'progress');
-    wireSeg('seg-record', 'record', 'record');
-    $('seg-record').addEventListener('click', () => render());
     // The page always opens on E.V. (the conversation); a #tab link can open another tab.
     {
       const t = (location.hash || '').slice(1);

@@ -929,12 +929,6 @@
           ...(wk.reflection ? [el('p', 'meta', 'Reflection: ' + wk.reflection)] : []),
           // B-201: the build recap, the Chart's one sentence for the week
           ...(wk.health && wk.health.recap ? [el('p', 'meta wk-recap', wk.health.recap)] : []),
-          btn('Write a reflection', () => {
-            showTab('record');
-            $('seg-record').querySelector('[data-v="journal"]').click();
-            $('j-kind').value = 'weekly';
-            $('j-text').focus();
-          })
         );
       }
       renderEvDates(weekDates());
@@ -1247,7 +1241,7 @@
       card.replaceChildren(el('h2', null, 'Coming up'), ul);
     }
     // B-117: a date in Next 7 days is one line (its day, its title, its kind in grey); a clinical, lab, validation or class
-    // day carries the calm Prep marker (D-143); red only for graded work due today (D-270). It opens Record's Dates.
+    // day carries the calm Prep marker (D-143); red only for graded work due today (D-270). It opens Today's Week (B-359).
     function weekRow(d) {
       const li = el('li', 'row week-item');
       const b = el('button', 'wk-line');
@@ -1265,8 +1259,8 @@
         )
       );
       b.addEventListener('click', () => {
-        showTab('record');
-        $('seg-record').querySelector('[data-v="dates"]').click();
+        showTab('today');
+        $('seg-today').querySelector('[data-v="week"]').click();
       });
       li.append(b);
       return li;
