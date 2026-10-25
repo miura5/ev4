@@ -5513,7 +5513,7 @@
   "depends": [
    "B-309"
   ],
-  "notes": "proofs green: pwa-staging run 40183513354 at 103eeef GREEN (401 without and with a wrong token; 74 documents in 17 collections equal to the seed); reach from this cloud session GREEN; npm test green with the pwa/ personal-data test",
+  "notes": "reviewed once (2 gaps). Restored from the Oct 25 note (3eca7c3), Matt's word of Oct 24: the Cloudflare staging credential lives in the repository's Actions secrets, not the build chat's environment; this routine's prompt (Matt's) says the same: four Actions secrets Matt set. Proofs: pwa-staging run 40183513354 at 103eeef GREEN (401 without and with a wrong token; 74 documents in 17 collections equal to the seed); reach from a cloud session GREEN; npm test green with the pwa/ personal-data test. Open for Matt: the seed (and so the count check) leaves out the record's system, legacy, debug and journal collections, which the app boots without (as the smoke does); is that what 'equal the synthetic record's' means, or should staging hold those four too?",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
