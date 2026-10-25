@@ -116,9 +116,19 @@ test('no token, or a wrong one: 401 on every run route', async () => {
   }
 });
 
+// The documents as the record holds them: locally the seed, written moments ago; on staging, what the D1 holds (the
+// page's own read, /api/db), since the made-up record's dates are relative to the day it was seeded.
+const held = async c => {
+  if (!REMOTE) return SEED[c];
+  const r = await call('GET', '/api/db');
+  assert.equal(r.status, 200);
+  return Object.fromEntries(r.body.docs.filter(d => d.c === c).map(d => [d.id, d.data]));
+};
+
 test('list and get return what ArtifactData returns for the same documents: each id, its data and a version', async () => {
   for (const c of READ) {
-    const want = SEED[c];
+    const want = await held(c);
+    assert.deepEqual(Object.keys(want).sort(), Object.keys(SEED[c]).sort(), `${c}: the seed's documents`);
     const ids = Object.keys(want).sort();
     assert.ok(ids.length > 2, `${c} has documents to page through`);
     const docs = await listAll(c, 2); // pages of two: the cursor is followed to the end
@@ -129,7 +139,7 @@ test('list and get return what ArtifactData returns for the same documents: each
     );
     for (const d of docs) {
       assert.deepEqual(Object.keys(d).sort(), ['data', 'id', 'version']);
-      assert.deepEqual(d.data, want[d.id], `${c}/${d.id}: the data as seeded`);
+      assert.deepEqual(d.data, want[d.id], `${c}/${d.id}: the data as the record holds it`);
       assert.ok(Number.isInteger(d.version) && d.version >= 1);
       if (!REMOTE) assert.equal(d.version, 1, `${c}/${d.id}: a seeded document is at version 1`);
     }
