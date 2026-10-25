@@ -7,11 +7,13 @@
 // counts and statuses only: never the token, never a document.
 import { fileURLToPath } from 'node:url';
 import { seedCounts } from '../pwa/seed.mjs';
+import { SUITE } from '../pwa/runapi.js';
 
-/** Documents per collection in a GET /api/db answer. */
+/** Documents per collection in a GET /api/db answer, less the run API suite's own (B-312: it writes there each
+ * staging run, and the Worker never deletes). */
 export function countsOf(body) {
   const out = {};
-  for (const d of (body && body.docs) || []) out[d.c] = (out[d.c] || 0) + 1;
+  for (const d of (body && body.docs) || []) if (d.c !== SUITE) out[d.c] = (out[d.c] || 0) + 1;
   return out;
 }
 

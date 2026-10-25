@@ -13,7 +13,8 @@
   "check": "node tools/check.mjs",
   "smoke": "node tools/build.mjs && node test/harness/smoke.cjs synthetic",
   "format": "prettier --write . && node tools/format-app.mjs",
-  "smoke:pwa": "node pwa/smoke.mjs"
+  "smoke:pwa": "node pwa/smoke.mjs",
+  "test:run-api": "node --test pwa/run-api.test.mjs"
  },
  "devDependencies": {
   "playwright": "1.64.1",

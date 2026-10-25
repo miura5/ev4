@@ -71,6 +71,17 @@ with no call to `/api/claude`. B-314: a study session runs with no note (start, 
 every push, and once more with `--plant page-error` to prove it turns red. B-322: a photographed page attached in the conversation reaches `/api/claude` as an image, the
 stub transcribes it and the reading is saved to the library in D1; a BMP is redrawn as a JPEG before it is sent.
 
+## The run API (B-312)
+
+`runapi.js`, behind the same token: `GET /api/run/list?collection=<c>&limit=&cursor=`, `GET /api/run/get?collection=<c>&doc_id=<id>`
+and `POST /api/run/batch {writes}`, the calls a run makes in place of ArtifactData's. Every document has a version (1
+when created, one more on each write, the page's saves included), and `if_version` means what it means in
+ArtifactData: a write to a document that exists names the version it read, and a stale one writes nothing and names
+the conflict. A batch of up to 50 writes lands whole or not at all. A delete is refused. `npm run test:run-api` runs
+its suite against `wrangler dev` on a fresh local D1; the pwa-staging workflow adds the version column to the staging
+D1 once and runs the same suite against the staging Worker, writing only into the suite's own `runapi-suite`
+collection.
+
 ## The demo's Worker
 
 The demo's `ev-demo` Worker and D1 stay as they are, unused once the staging pair (B-311) exists; nothing is deleted.

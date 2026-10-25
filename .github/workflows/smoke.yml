@@ -3,7 +3,8 @@
 # a review answer that scores, a Your-turn reply that files). Then each plant must turn it red, so a smoke tier that
 # stopped catching anything fails here. The full `npm run check` stays nightly (nightly.yml) and before live.
 # B-313: the app's smoke beside it (smoke-pwa): the app's page through the shim against `wrangler dev` on a local D1
-# seeded with the synthetic record, the Claude API stubbed. Local only: no secret, no Cloudflare account.
+# seeded with the synthetic record, the Claude API stubbed, then the run API suite (B-312) the same way. Local only: no
+# secret, no Cloudflare account.
 # B-262: not for a push that changes only the record's bookkeeping (tools/build.mjs BOOKKEEPING) or docs/: the build
 # reads neither, so the page it smokes is the same.
 name: smoke
@@ -91,6 +92,8 @@ jobs:
       - run: npm ci --prefix pwa
       - run: npx playwright install --with-deps chromium
       - run: npm run smoke:pwa -- shots-pwa
+      # B-312: the run API suite against wrangler dev on a fresh local D1
+      - run: npm run test:run-api
       - name: a planted page error turns it red
         run: |
           if out=$(node pwa/smoke.mjs shots-pwa-planted --plant page-error 2>&1); then
