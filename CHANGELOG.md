@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 25 | v4 staging deployed at a289525 (12:53 CT), from 8d45786: Review 4: the quiz side pane bolds the current question, and the quiz… (B-385). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at 8d45786 (12:52 CT), from f6e1376: Review 4: Progress's readiness heading says objectives while it… (B-386). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at f6e1376 (12:48 CT), from 0fc151e: The tests and the page harnesses still assert the old UI; they are…; Review 4: E.V.'s chip reply wording and session start, running and…; Review 4: Today's badges, the opened task's category, topic and due… (B-357, B-383, B-382). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 25 | v4 staging deployed at 0fc151e (12:47 CT), from e5d8124: Review 4: the status line's failure text is cut off at both (B-384). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
