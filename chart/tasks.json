@@ -5579,10 +5579,9 @@
   "depends": [
    "B-312"
   ],
-  "notes": "Builder (lane app), Oct 25: not started, blocked before claiming. Its proof fires each cloud pipeline's scheduled task against the staging Worker, and the token must be read from each task's settings; this lane's runs may fire only the builder and may not create or change a scheduled task, and may change only pwa/, new tool files, tests and workflows, not the run protocol in core/. Needs a build chat with Matt present (his scheduled tasks, Claude account): change the five staging pipeline tasks' settings to carry the staging token, then fire them for the proof. Code side (per-record target, live stays ArtifactData until B-320) can be built there too.",
+  "notes": "Access check Oct 25 (one-time scheduled task in the default environment): the staging Worker is reachable from scheduled runs (401 without a token, so Matt's allowed domain reaches them), but the environment's EV_STAGING_TOKEN variable does not (length 0); scheduled tasks carry their own environment variables, empty, and no tool here sets them. Plan: the cloud runs read the staging Worker token from the staging record's system documents (owner-only, test data only), never from the prompt or the repository; decide and build in the PWA release.",
   "commit": null,
-  "source": "plan 1eW5FgG9VNzhCySbL1uWuo",
-  "waitingOn": "Matt"
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
  {
   "id": "B-316",
