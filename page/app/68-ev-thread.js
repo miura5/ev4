@@ -106,8 +106,7 @@
         cp.addEventListener('click', async () => {
           try {
             await navigator.clipboard.writeText(m.text);
-            cp.textContent = 'Copied';
-            toast('Copied. Paste it into a new design chat.');
+            cp.textContent = 'Copied'; // B-380: said on the chip itself, no toast
           } catch {
             toast('Couldn’t copy here. Select the text and copy it.');
           }

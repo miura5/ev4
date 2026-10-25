@@ -155,8 +155,7 @@
       }
       const t = E.cardsText(cards);
       try {
-        await navigator.clipboard.writeText(t);
-        toast(`Copied ${plural(cards.length, 'card')}. In Quizlet: Create, Import, then paste.`);
+        await navigator.clipboard.writeText(t); // B-380: no confirmation toast; the caller says what it copied
       } catch {
         if (box) {
           const ta = el('textarea');

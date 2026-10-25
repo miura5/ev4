@@ -6792,7 +6792,7 @@
   "milestone": "v4.8 redesign",
   "status": "in progress",
   "depends": [],
-  "notes": "claimed by lane frame",
+  "notes": "dialogs, New menu and segmented controls match the demo at 1280 and 390; confirmation toasts removed; click-through running",
   "commit": null,
   "source": "UI reviewer click-through 3 at d6bee63, Oct 25 (D-316)",
   "words": "Review 3: dialogs' spacing and segmented controls differ, and confirmation toasts appear where the demo has none.",

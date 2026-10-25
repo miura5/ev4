@@ -1046,10 +1046,11 @@ button.btn:disabled{opacity:.45;cursor:default}
 .badge:is(.x-green,.x-yellow,.x-red,.x-blue,.x-violet,.x-quiet,.proposed){background:color-mix(in srgb,var(--x) 13%,var(--surface));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--x) 45%,var(--line2))}
 .title .row-badge{margin-left:6px;vertical-align:1px;height:20px} /* B-303: a kit row's one badge, after its name */
 /* segmented switch: grey, the picked option on the ground; it says which is picked (aria-pressed or aria-checked, C-15) */
-.seg{display:inline-flex;gap:2px;padding:2px;border:0;border-radius:8px;background:var(--sunken);box-shadow:inset 0 0 0 1px var(--line);align-self:flex-start;max-width:100%;overflow-x:auto;scrollbar-width:none}
-.seg button{flex:0 0 auto;min-height:26px;padding:0 10px;border:0;border-radius:6px;background:none;color:var(--faint);font:500 calc(13px * var(--ts)) var(--sans);cursor:pointer}
-.seg button:hover{background:none;color:var(--text)}
-.seg button:is([aria-pressed="true"],[aria-checked="true"]){background:var(--bg);color:var(--text);box-shadow:0 0 0 1px var(--line2)}
+/* B-380: as the demo's .seg: a flat grey fill with no outline; the picked option on the surface with a hairline */
+.seg{display:inline-flex;gap:2px;padding:2px;border:0;border-radius:8px;background:var(--hover);box-shadow:none;align-self:flex-start;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.seg button{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;min-height:24px;height:24px;padding:0 9px;border:0;border-radius:6px;background:none;color:var(--quiet);font:500 calc(12px * var(--ts)) var(--sans);cursor:pointer;box-sizing:border-box}
+.seg button:hover{background:var(--bg);color:var(--text)}
+.seg button:is([aria-pressed="true"],[aria-checked="true"]){background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line)}
 /* card */
 .ui-card{display:flex;flex-direction:column;gap:10px;min-width:0;padding:14px;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line)}
 .ui-card>h3{margin:0;font:600 calc(13.5px * var(--ts)) var(--sans);color:var(--text)}
@@ -1075,7 +1076,7 @@ button.btn:disabled{opacity:.45;cursor:default}
   button.btn,button.btn.sm{height:44px;min-height:44px}
   button.btn.icon,button.btn.icon.sm{width:44px}
   .seg{align-self:stretch;width:100%}
-  .seg button{min-height:44px;flex:1}
+  .seg button{min-height:44px;height:44px;padding:0 12px;min-width:44px;justify-content:center;flex:1}
   .li{height:44px;padding:0 16px}
   .li .hov{visibility:visible}
   .toolbar{padding:8px 12px}
@@ -1090,22 +1091,24 @@ button.btn:disabled{opacity:.45;cursor:default}
 /* a spacer before the header's right end, so Back to now, the session line and New end it whatever else shows */
 .mh::after{content:"";order:8;flex:1 1 0;min-width:0}
 .mh > :is(.cap-now,.sbar){order:9;margin-left:0}
-.new-wrap .menu{position:absolute;right:0;top:calc(100% + 6px);z-index:30;width:240px;padding:5px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.16);display:flex;flex-direction:column;gap:1px}
+.new-wrap .menu{position:absolute;right:0;top:calc(100% + 6px);z-index:30;width:240px;padding:5px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.14);display:flex;flex-direction:column;gap:0;box-sizing:border-box}
 .new-wrap .menu[hidden]{display:none}
 .new-wrap .menu button.btn.mi{justify-content:flex-start;width:100%;color:var(--text);font-weight:400}
 .new-wrap .menu button.btn.mi svg{color:var(--quiet)}
 /* B-361: as the demo: the menu's Create heading; the dialog 560 px wide, 110 px from the top (48 px on the phone), its
    header an icon and the kind, the page dimmed behind it, Cancel beside Add */
-.new-wrap .menu .mhd{font:500 calc(11.5px * var(--ts)) var(--sans);color:var(--quiet);padding:6px 9px 4px}
-.new-dlg{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 122px);margin:110px auto auto;padding:0;border:0;border-radius:12px;background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line2),0 24px 60px rgba(0,0,0,.22)}
+.new-wrap .menu .mhd{font:500 calc(11.5px * var(--ts))/1.45 var(--sans);color:var(--quiet);padding:6px 9px 4px}
+.new-dlg{width:min(560px,calc(100vw - 24px));max-width:none;max-height:calc(100dvh - 122px);margin:110px auto auto;padding:0;border:0;border-radius:12px;background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line2),0 24px 60px rgba(0,0,0,.22)}
 .new-dlg::backdrop{background:color-mix(in srgb,var(--text) 22%,transparent)}
 :root[data-theme="dark"] .new-dlg::backdrop{background:rgba(0,0,0,.5)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .new-dlg::backdrop{background:rgba(0,0,0,.5)}}
 @media (max-width:599px){.new-dlg{margin:max(48px,env(safe-area-inset-top,0px)) auto auto;max-height:calc(100dvh - 60px)}}
-.new-dlg form{display:flex;flex-direction:column;margin:0}
+.new-dlg form{display:flex;flex-direction:column;gap:0;margin:0}
+/* B-380: the demo's modal type: 14 px text, its header line at 1.45, the footer hint at 13 px */
+.new-dlg{font:400 calc(14px * var(--ts))/1.45 var(--sans)}
 .new-hdr{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
 .new-hdr svg{width:16px;height:16px;flex:none;fill:none;stroke:var(--quiet);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.new-head{margin:0;font:600 calc(14px * var(--ts)) var(--sans)}
+.new-head{margin:0;font:600 calc(14px * var(--ts))/1.45 var(--sans)}
 .new-body{display:flex;flex-direction:column;gap:14px;padding:16px}
 .new-body #new-title{height:44px;border-radius:8px;border:0;box-shadow:inset 0 0 0 1px var(--line2);background:var(--bg);padding:0 12px;font:500 calc(17px * var(--ts)) var(--sans);color:var(--text)}
 .new-body #new-title:focus,.new-body #new-title:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--focus,var(--text))}
@@ -1125,12 +1128,13 @@ button.btn:disabled{opacity:.45;cursor:default}
 .new-fields .seg button{min-height:24px;height:24px;padding:0 9px;font-size:calc(12px * var(--ts))}
 .new-fields .seg{min-width:0}
 .new-fields .seg button{white-space:nowrap}
-@media (max-width:599px){.new-fields .seg button{flex:none;height:44px;min-height:44px;min-width:44px;padding:0 12px;font-size:calc(13px * var(--ts))}}
+@media (max-width:599px){.new-fields .seg button{flex:none;height:44px;min-height:44px;min-width:44px;padding:0 12px;font-size:calc(12px * var(--ts))}}
 .new-body #new-warn:empty{display:none}
-.new-foot{display:flex;align-items:center;gap:8px;padding:12px 16px;border-top:1px solid var(--line)}
-.new-foot #new-hint{flex:1;min-width:0}
+.new-foot{display:flex;align-items:center;gap:8px;padding:12px 16px;border-top:1px solid var(--line);flex-wrap:wrap}
+.new-foot #new-hint{flex:1;min-width:0;font-size:calc(13px * var(--ts));color:var(--faint)}
 @media (max-width:599px){
-  .new-wrap .menu{width:min(240px,calc(100vw - 32px))}
+  .new-wrap .menu{width:min(240px,calc(100vw - 32px));top:calc(100% - 2px);right:4px}
+  .new-wrap .menu button.btn.mi{height:44px;min-height:44px}
 }
 /* ============================================================ B-291 (C-1, C-13, D-270, D-276): Today's list ===========
    One row per item on the component set's row: the tick, the name, at most one badge, Start on the first startable row,

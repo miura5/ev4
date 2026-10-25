@@ -653,7 +653,18 @@
         if (cards.length > 4)
           ul.append(row({ title: `+ ${cards.length - 4} more`, detail: 'All of them go in the copy.' }));
         const a = el('div', 'actions');
-        a.append(btn(`Copy ${plural(cards.length, 'card')} for Quizlet`, () => copyQuizlet(box), { primary: true }));
+        {
+          // B-380: the button says it copied (no toast); the fallback opens the text to copy by hand
+          const qb = btn(
+            `Copy ${plural(cards.length, 'card')} for Quizlet`,
+            async () => {
+              const n = await copyQuizlet(box);
+              if (n && !box.querySelector('textarea')) qb.textContent = 'Copied. In Quizlet: Import, then paste';
+            },
+            { primary: true }
+          );
+          a.append(qb);
+        }
         box.append(
           ul,
           a,
@@ -812,7 +823,7 @@
               const t = E.cardsText(s.cards);
               try {
                 await navigator.clipboard.writeText(t);
-                toast('Copied. In Quizlet: Create, Import, then paste.');
+                cp.textContent = 'Copied. In Quizlet: Import, then paste'; // B-380: inline, no toast
               } catch {
                 const ta = el('textarea');
                 ta.readOnly = true;
@@ -835,8 +846,7 @@
                 toast('Already writing a batch.');
                 return;
               }
-              morePractice({ announce: true, topic: s.topic });
-              toast('Writing 5 on ' + s.topic + '…');
+              morePractice({ announce: true, topic: s.topic }); // B-380: it announces itself; no toast
             })
           );
         if (a.childElementCount) box.append(a);

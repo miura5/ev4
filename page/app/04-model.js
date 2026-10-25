@@ -61,7 +61,7 @@
         ...writes.filter(w => w.op === 'update' && w.collection === 'weakspots'),
       ];
       for (const w of order) await write(w);
-      if (okText) toast(okText);
+      void okText; // B-380 (D-316): the demo has no confirmation toasts; the saved change shows in place
     }
     // B-200 (D-208): the tap has already painted its new state; the write catches up. A tick stays live while it saves
     // (a disabled box reads as not done); a button is held so it cannot fire twice. A refused write puts the old state
@@ -72,7 +72,7 @@
       if (b && !tick) b.disabled = true;
       try {
         await fn();
-        if (okText) toast(okText);
+        void okText; // B-380: no confirmation-only toast; a refused write still says why below
       } catch (e) {
         if (tick) b.checked = was;
         if (undo) undo();
