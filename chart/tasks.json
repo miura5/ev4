@@ -6368,12 +6368,12 @@
   "title": "Fidelity fix: E.V.: the suggestion chips are one row at every size, scrolling sideways when they don't fit (Matt, Oct 25: never more than one row of chips)",
   "dod": "At 390, 1280, 1706 and 2560 the chips sit in one row that scrolls sideways when it overflows, with no wrap; Matt's kind of day shows no leftover Open Record / Your turn / File it chips. Proof: build, screenshots at 390 and 1280 on a real-shaped record, npm run smoke, ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-358"
   ],
-  "notes": "claimed by lane ev",
-  "commit": null,
+  "notes": "Shipped to staging at 14914aa: ship staging GREEN.",
+  "commit": "14914aa",
   "source": "Matt, staging on his phone, Oct 25",
   "words": "On the phone E.V.'s suggestion chips wrap into four rows; Matt wants at most one row of chips at a time.",
   "reportedAt": "2026-10-25T13:38:10.760Z",
