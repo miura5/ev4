@@ -6121,12 +6121,12 @@
   "title": "Fidelity fix: Today: the week view's picked item in the panel as the TodayWeek board: its badge, an 18 px title, When / Course / Readiness in one card, Quiz me on it and Open the task (Take off stays for a planned item)",
   "dod": "The week view and its panel match the TodayWeek board apart from the build corrections. Proof (D-312, fidelity sprint): node tools/build.mjs, tools/fidelity demo and built screenshots of each state read side by side at 1280, 1706, 2560 and 390, on the synthetic record and with a long real-shaped list, npm run smoke, ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-346"
   ],
-  "notes": "claimed by lane today",
-  "commit": null,
+  "notes": "Card for Matt: picking a date in Today's week now opens it in the right panel the way the demo shows: its Graded or Class badge (red when graded work is due today or tomorrow), the title large, and one card with When (day, time when Canvas gives one, and how far off), Course and Readiness (for an exam, how many of its objectives are solid; for a quiz E.V. can match, that objective's state; otherwise Upcoming). Quiz me on it and Open the task sit stacked under it at their own width; Take off stays for a date that can leave the calendar. Decided the way the demo shows: a non-graded date reads Class; a past date reads Result: Done, since the record keeps no score on a date. Still differs from the demo: at 1280, 1706 and 2560 the title is 18 px as the task asks (the demo's is 17); on the test record no date carries a time, so When shows the day only; at 390 the panel sits under the week as before. The week grid itself is unchanged. Reviewer: none (fidelity sprint, D-312).",
+  "commit": "17cbed0",
   "source": "Matt's staging look and fidelity review, Oct 25 (D-312)",
   "words": "Fidelity fix: Today's week panel shows an item without the demo's badge, title and property card, and lacks Quiz me on it and Open the task.",
   "reportedAt": "2026-10-25T12:27:06.336Z",
