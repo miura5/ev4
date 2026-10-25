@@ -7,6 +7,7 @@
 //     more on every write, the page's saves here included). Nothing is ever deleted.
 import { handleRun } from './runapi.js';
 
+const OVERLAP_MS = 5000;
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 
@@ -22,11 +23,14 @@ export default {
     if (url.pathname.startsWith('/api/run/')) return handleRun(request, env, url);
 
     // GET /api/db?since=<ms>: every document changed after `since` (0 = the whole record).
+    // B-324: `now`, the next since, is taken before the read and a few seconds back, so a save stamped just before the
+    // read but landing after it is read again next time, never skipped (reading a document twice changes nothing).
     if (url.pathname === '/api/db' && request.method === 'GET') {
       const since = Number(url.searchParams.get('since') || 0);
+      const before = Date.now();
       const { results } = await env.DB.prepare('SELECT c, id, data, at FROM docs WHERE at > ?').bind(since).all();
       return json({
-        now: Date.now(),
+        now: Math.max(since, before - OVERLAP_MS),
         docs: results.map(r => ({ c: r.c, id: r.id, data: JSON.parse(r.data), at: r.at })),
       });
     }

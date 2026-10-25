@@ -337,15 +337,16 @@ export const asRunDb = record =>
   );
 
 /**
- * Writes for the run API's batch, each pinned to the version the record holds now (`versionOf(c, id)` -> v|null).
+ * Writes for the run API's batch, each pinned to the version the record holds now (`versionOf(c, id, seen)` -> v|null,
+ * where `seen` says the fold's record holds it).
  * A set of a document the fold did not see in `db` (it planned to create it) that exists now is a conflict: thrown
  * with `conflict`, so the caller folds again over the record as it is, and nothing is written over.
  */
 export async function pinned(writes, versionOf, db) {
   const out = [];
   for (const w of writes) {
-    const v = await versionOf(w.collection, w.id);
     const seen = (db[w.collection] || []).some(d => d.id === w.id);
+    const v = await versionOf(w.collection, w.id, seen);
     if (w.op === 'set' && v != null && !seen)
       throw Object.assign(new Error(`${w.collection}/${w.id} appeared meanwhile`), { conflict: true });
     out.push({

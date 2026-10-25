@@ -297,3 +297,29 @@ test('B-324: a save that keeps failing marks the job failed instead of leaving i
   assert.equal(r.status, 'failed');
   assert.deepEqual(statuses, ['running', 'failed']);
 });
+
+test('B-324: the record’s next since is taken before the read, a few seconds back, so no save is skipped', async () => {
+  const { default: worker } = await import('../pwa/worker.js');
+  let readAt = null;
+  const env = {
+    EV_TOKEN: 't',
+    DB: {
+      prepare: () => ({
+        bind: () => ({
+          all: async () => ((readAt = Date.now()), { results: [] }),
+        }),
+      }),
+    },
+  };
+  const r = await worker.fetch(
+    new Request('https://app.invalid/api/db?since=0', { headers: { authorization: 'Bearer t' } }),
+    env
+  );
+  const body = await r.json();
+  assert.ok(body.now <= readAt - 4000, 'a save stamped just before the read is read again next time');
+  const later = await worker.fetch(
+    new Request('https://app.invalid/api/db?since=' + (Date.now() + 1e6), { headers: { authorization: 'Bearer t' } }),
+    env
+  );
+  assert.ok((await later.json()).now >= Date.now() + 1e6 - 1, 'never earlier than the since it was given');
+});

@@ -138,10 +138,10 @@
     if (!r.ok) throw new Error(path.split('?')[0] + ' answered ' + r.status);
     return r.json();
   };
-  // A document the shim's copy does not hold is written unpinned: if it appeared meanwhile, the batch is refused (409)
+  // A document neither the job's record nor the shim's copy holds is written unpinned: if it appeared meanwhile, the batch is refused (409)
   // and the job folds again over the record as it is now.
-  const versionOf = async (c, id) => {
-    if (!(db[c] && db[c][id])) return null;
+  const versionOf = async (c, id, seen) => {
+    if (!seen && !(db[c] && db[c][id])) return null;
     const d = await getJson('run/get?collection=' + encodeURIComponent(c) + '&doc_id=' + encodeURIComponent(id));
     return d ? d.version : null;
   };
