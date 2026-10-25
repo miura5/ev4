@@ -110,7 +110,9 @@ const listAll = async (c, limit) => {
   }
   throw new Error('list never ended');
 };
-const id = n => `${RUN}-${String(n).padStart(2, '0')}`;
+// B-319: two ids hold a space and a non-ASCII letter, as a claude.ai id may (libindex/NUR 112): one by a batch and one
+// by the page's path-encoded create, both read back by list (its cursor), get and the page's read.
+const id = n => `${RUN}-${String(n).padStart(2, '0')}` + (n === 11 || n === 24 ? ' sp é' : '');
 
 test('no token, or a wrong one: 401 on every run route', async () => {
   for (const t of [null, TOKEN + '-wrong']) {
@@ -160,11 +162,14 @@ test('list and get return what ArtifactData returns for the same documents: each
 
 // B-389: the page's save carries the version it read (PUT /api/db/<c>/<id>?if_version=<n>); a create carries none.
 const pagePut = (docId, doc, v) =>
-  fetch(`${base}/api/db/${SUITE}/${docId}` + (v != null ? '?if_version=' + v : ''), {
-    method: 'PUT',
-    headers: { authorization: 'Bearer ' + TOKEN, 'content-type': 'application/json' },
-    body: JSON.stringify(doc),
-  }).then(async r => ({ status: r.status, body: await r.json() }));
+  fetch(
+    `${base}/api/db/${encodeURIComponent(SUITE)}/${encodeURIComponent(docId)}` + (v != null ? '?if_version=' + v : ''),
+    {
+      method: 'PUT',
+      headers: { authorization: 'Bearer ' + TOKEN, 'content-type': 'application/json' },
+      body: JSON.stringify(doc),
+    }
+  ).then(async r => ({ status: r.status, body: await r.json() }));
 
 test('25 documents at version 1 (24 by one batch, the last by a page create with no version), then 25 pinned updates at version 2', async () => {
   const writes = Array.from({ length: SUITE_DOCS_PER_RUN }, (_, i) => ({
@@ -199,6 +204,14 @@ test('25 documents at version 1 (24 by one batch, the last by a page create with
   );
   assert.equal(up.status, 200, JSON.stringify(up.body));
   assert.ok(up.body.results.every(x => x.version === 2));
+  for (const n of [11, 24]) {
+    const sp = await get(SUITE, id(n));
+    assert.equal(sp.status, 200, `B-319: ${JSON.stringify(id(n))} read back by get`);
+    assert.equal(sp.body.id, id(n));
+    assert.equal(sp.body.data.n, n);
+  }
+  const paged = (await listAll(SUITE, 7)).filter(d => d.id.startsWith(RUN + '-'));
+  assert.deepEqual(paged.map(d => d.id).sort(), writes.map(w => w.doc_id).sort(), 'B-319: every id through the cursor');
   const one = await get(SUITE, id(7));
   assert.deepEqual(one.body.data, { schema: 1, writer: 'run-api-suite', n: 7, keep: { a: 1, b: 3 }, added: true });
   assert.equal(one.body.version, 2);
@@ -286,6 +299,14 @@ test("B-389: the page's save carries the version it read: fresh accepted, stale 
   assert.equal((await get(SUITE, id(4))).body.version, now.body.version);
 });
 
+test('B-319: collections names every collection the D1 holds, with its count', async () => {
+  const r = await call('GET', '/api/run/collections');
+  assert.equal(r.status, 200);
+  const by = Object.fromEntries(r.body.collections.map(x => [x.collection, x.count]));
+  for (const c of READ) assert.equal(by[c], Object.keys(await held(c)).length, c);
+  assert.ok(by[SUITE] >= SUITE_DOCS_PER_RUN);
+});
+
 test('the suite leaves exactly its 25 documents behind (the staging count check expects whole runs)', async () => {
   const mine = (await listAll(SUITE, 1000)).filter(d => d.id.startsWith(RUN + '-'));
   assert.equal(mine.length, SUITE_DOCS_PER_RUN);
@@ -305,6 +326,10 @@ test("a batch's walls: over 50 writes, a document twice, a bad path, set with __
   ];
   assert.equal((await batch(twice)).status, 400);
   assert.equal((await batch([{ op: 'set', collection: 'a/b', doc_id: 'x', data: {} }])).status, 400);
+  // B-319: an id with a slash is a path, not an id, however it is sent: refused, nothing written
+  assert.equal((await batch([{ op: 'set', collection: SUITE, doc_id: `${RUN}-a/b`, data: {} }])).status, 400);
+  assert.equal((await get(SUITE, `${RUN}-a/b`)).status, 400);
+  assert.equal((await pagePut(`${RUN}-a/b`, { schema: 1 })).status, 400);
   assert.equal(
     (await batch([{ op: 'set', collection: SUITE, doc_id: `${RUN}-z`, data: { a: { __delete__: true } } }])).status,
     400

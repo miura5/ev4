@@ -2,6 +2,7 @@
 //   GET  /api/run/list?collection=<c>[&limit=<1-1000>][&cursor=<next_cursor>]   a page of a collection, by id
 //   GET  /api/run/get?collection=<c>&doc_id=<id>                                   one document, or 404
 //   POST /api/run/batch {writes: [{op, collection, doc_id, data, if_version}]}     1 to 50 writes, all or nothing
+//   GET  /api/run/collections                                                      B-319: every collection and its count
 // Every document carries a version: 1 when it is created, one more on each write (the page's own saves included).
 // if_version means what it means in ArtifactData: a write to a document that exists names the version last read, or
 // it is refused; a stale one writes nothing and the answer names the entry and the current version; a create carries
@@ -19,7 +20,10 @@ export const MAX_WRITES = 50;
 export const MAX_BODY = 1024 * 1024;
 export const LIST_LIMIT = { default: 100, max: 1000 };
 
-const SEG = '(?!\\.\\.?(?:/|$))[A-Za-z0-9_\\-.~:@+]{1,200}';
+// B-319: an id is any text a claude.ai record can hold as one path segment: 1 to 200 characters, no "/" (the path
+// separator there), no control character, and not "." or "..". A course key with a space (libindex/NUR 112) is one.
+// Ids travel encoded (encodeURIComponent in a query or path, JSON in a batch) and are stored exactly as given.
+const SEG = '(?!\\.\\.?(?:/|$))[^/\\u0000-\\u001f\\u007f]{1,200}';
 const COLLECTION = new RegExp(`^${SEG}(?:/${SEG}){0,14}$`);
 const DOC_ID = new RegExp(`^${SEG}$`);
 
@@ -102,11 +106,17 @@ export function planBatch(writes, current) {
   return { ok: true, rows };
 }
 
-/** A list cursor: the last id of the page (ids are ASCII), opaque to the caller. */
-export const encodeCursor = id => btoa(id);
+/** A list cursor: the last id of the page as base64url of its UTF-8 (B-319: any id, not only ASCII), opaque to the caller. */
+export const encodeCursor = id => {
+  let bin = '';
+  for (const b of new TextEncoder().encode(id)) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+};
 export const decodeCursor = s => {
   try {
-    const id = atob(s);
+    if (typeof s !== 'string' || !/^[A-Za-z0-9_-]+$/.test(s)) return null;
+    const bin = atob(s.replace(/-/g, '+').replace(/_/g, '/'));
+    const id = new TextDecoder('utf-8', { fatal: true }).decode(Uint8Array.from(bin, ch => ch.charCodeAt(0)));
     return validDocId(id) ? id : null;
   } catch {
     return null;
@@ -142,6 +152,12 @@ export async function handleRun(request, env, url) {
       documents: page.map(doc),
       next_cursor: results.length > limit ? encodeCursor(page[page.length - 1].id) : null,
     });
+  }
+
+  // B-319: what the D1 holds, by collection (the copy refuses a target that is not empty and checks it whole)
+  if (route === 'collections' && request.method === 'GET') {
+    const { results } = await env.DB.prepare('SELECT c, COUNT(*) AS n FROM docs GROUP BY c ORDER BY c').all();
+    return json({ collections: results.map(r => ({ collection: r.c, count: r.n })) });
   }
 
   if (route === 'get' && request.method === 'GET') {

@@ -35,9 +35,17 @@ on:
         type: boolean
         default: false
       copy_target:
-        description: 'B-319: only deploy the ev-staging-scratch Worker over the ev-staging-scratch D1 (the copy tool imports there) and print its counts and hashes; ev-staging is not deployed or touched'
+        description: 'B-319: only deploy the ev-staging-scratch Worker over a scratch D1 (copy_d1; the copy tool imports there) and check its counts and hashes; ev-staging is not deployed or touched'
         type: boolean
         default: false
+      copy_d1:
+        description: 'B-319: the scratch D1 the copy target Worker is bound to, found or created: ev-staging-scratch or ev-staging-copy-<n>, never ev-staging'
+        type: string
+        default: 'ev-staging-scratch'
+      copy_manifest:
+        description: 'B-319: the export manifest (node tools/pwa-copy.mjs manifest <dir>: counts and SHA-256 per collection, no document); the run fails unless the D1 holds exactly that'
+        type: string
+        default: ''
 permissions:
   contents: read
 concurrency:
@@ -207,11 +215,12 @@ jobs:
           if-no-files-found: ignore
 
   # B-319: the target of the copy tool's staging proof (tools/pwa-copy.mjs). Its own Worker, ev-staging-scratch, runs
-  # the same worker.js over the ev-staging-scratch D1 (found, or created once; the restores' tables there are left as
-  # they are), with the staging token, so the copy goes through the run API into a D1 that is not ev-staging. The docs
+  # the same worker.js over a scratch D1 named by copy_d1 (found, or created once; a new name gives a fresh one, and an
+  # earlier one is left as it is, with the restores' tables), with the staging token, so the copy goes through the run API into a D1 that is not ev-staging. The docs
   # table is created only when missing, and nothing here writes a document: the import runs from the build session.
   # Each run ends with the docs table's counts and SHA-256 per collection (pwa/backup.js), read with wrangler, never a
-  # document, also as a notice (the run's annotations are readable where its log is not).
+  # document, also as a notice (the run's annotations are readable where its log is not); given copy_manifest, the step
+  # fails unless they equal it, with no collection besides.
   copy-target:
     if: ${{ inputs.copy_target }}
     runs-on: ubuntu-latest
@@ -221,7 +230,13 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       EV_STAGING_TOKEN: ${{ secrets.EV_STAGING_TOKEN }}
       WRANGLER_SEND_METRICS: 'false'
+      COPY_D1: ${{ inputs.copy_d1 }}
+      COPY_MANIFEST: ${{ inputs.copy_manifest }}
     steps:
+      - name: the scratch D1 is a scratch one by name
+        run: |
+          [[ "$COPY_D1" =~ ^ev-staging-(scratch|copy-[0-9]+)$ ]] || { echo "copy_d1 must be ev-staging-scratch or ev-staging-copy-<n>"; exit 1; }
+          echo "copy target D1: $COPY_D1"
       - name: the three secrets are set
         run: |
           missing=""
@@ -239,18 +254,18 @@ jobs:
           cache: npm
           cache-dependency-path: pwa/package-lock.json
       - run: npm ci --prefix pwa
-      - name: find or create the ev-staging-scratch D1, and its docs table when missing
+      - name: find or create the scratch D1, and its docs table when missing
         working-directory: pwa
         run: |
-          id_of() { npx wrangler d1 list --json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const d=JSON.parse(s).find(x=>x.name==="ev-staging-scratch");process.stdout.write(d?d.uuid:"")})'; }
+          id_of() { npx wrangler d1 list --json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const d=JSON.parse(s).find(x=>x.name===process.env.COPY_D1);process.stdout.write(d?d.uuid:"")})'; }
           id=$(id_of)
-          if [ -z "$id" ]; then npx wrangler d1 create ev-staging-scratch >/dev/null; id=$(id_of); fi
-          [ -n "$id" ] || { echo "ev-staging-scratch D1 not found after create"; exit 1; }
-          printf 'name = "ev-staging-scratch"\nmain = "worker.js"\ncompatibility_date = "2026-10-01"\nworkers_dev = true\n\n[[d1_databases]]\nbinding = "DB"\ndatabase_name = "ev-staging-scratch"\ndatabase_id = "%s"\n' "$id" > copy.toml
-          npx wrangler d1 execute ev-staging-scratch --config copy.toml --remote --file schema.sql >/dev/null
-          n=$(npx wrangler d1 execute ev-staging-scratch --config copy.toml --remote --json --command "SELECT COUNT(*) AS n FROM pragma_table_info('docs') WHERE name = 'v'" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>process.stdout.write(String(JSON.parse(s)[0].results[0].n)))')
+          if [ -z "$id" ]; then npx wrangler d1 create "$COPY_D1" >/dev/null; id=$(id_of); fi
+          [ -n "$id" ] || { echo "$COPY_D1 D1 not found after create"; exit 1; }
+          printf 'name = "ev-staging-scratch"\nmain = "worker.js"\ncompatibility_date = "2026-10-01"\nworkers_dev = true\n\n[[d1_databases]]\nbinding = "DB"\ndatabase_name = "%s"\ndatabase_id = "%s"\n' "$COPY_D1" "$id" > copy.toml
+          npx wrangler d1 execute "$COPY_D1" --config copy.toml --remote --file schema.sql >/dev/null
+          n=$(npx wrangler d1 execute "$COPY_D1" --config copy.toml --remote --json --command "SELECT COUNT(*) AS n FROM pragma_table_info('docs') WHERE name = 'v'" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>process.stdout.write(String(JSON.parse(s)[0].results[0].n)))')
           [ "$n" = "1" ] || { echo "the scratch docs table has no version column"; exit 1; }
-          echo "ev-staging-scratch D1: $id, docs table ready"
+          echo "$COPY_D1 D1: $id, docs table ready"
       - name: deploy the ev-staging-scratch Worker
         id: deploy
         working-directory: pwa
@@ -274,8 +289,21 @@ jobs:
             echo "got $code, retrying in 10 s"; sleep 10
           done
           exit 1
-      - name: the scratch docs table's counts and SHA-256 per collection
+      - name: the scratch docs table's counts and SHA-256 per collection, checked against the export's manifest
         working-directory: pwa
         run: |
-          npx wrangler d1 execute ev-staging-scratch --config copy.toml --remote --json --command "SELECT c, id, data FROM docs" > rows.json
-          node --input-type=module -e 'import fs from "node:fs";import {manifestOf} from "./backup.js";const a=JSON.parse(fs.readFileSync("rows.json","utf8"));const rows=(Array.isArray(a)?a:[a]).flatMap(x=>x.results||[]);const m=await manifestOf(rows);console.log("ev-staging-scratch docs: "+rows.length+" documents in "+Object.keys(m).length+" collections");const lines=Object.entries(m).map(([c,x])=>c+" "+x.count+" "+x.sha256);for(const l of lines)console.log(l);console.log("::notice title=ev-staging-scratch docs::"+rows.length+" documents%0A"+lines.join("%0A"))'
+          npx wrangler d1 execute "$COPY_D1" --config copy.toml --remote --json --command "SELECT c, id, data FROM docs" > rows.json
+          node --input-type=module -e '
+          import fs from "node:fs";
+          import { manifestOf, manifestDiffs } from "./backup.js";
+          const a = JSON.parse(fs.readFileSync("rows.json", "utf8"));
+          const rows = (Array.isArray(a) ? a : [a]).flatMap(x => x.results || []);
+          const m = await manifestOf(rows);
+          const lines = Object.entries(m).map(([c, x]) => c + " " + x.count + " " + x.sha256);
+          for (const l of lines) console.log(l);
+          console.log("::notice title=" + process.env.COPY_D1 + " docs::" + rows.length + " documents%0A" + lines.join("%0A"));
+          if (!process.env.COPY_MANIFEST) { console.log("no copy_manifest given: nothing compared"); process.exit(0); }
+          const want = Object.fromEntries(Object.entries(JSON.parse(process.env.COPY_MANIFEST)).map(([c, [count, sha256]]) => [c, { count, sha256 }]));
+          const diffs = manifestDiffs(m, want);
+          if (diffs.length) { console.log("::error title=copy differs::" + diffs.join("%0A")); process.exit(1); }
+          console.log("::notice title=copy matches::" + rows.length + " documents in " + Object.keys(want).length + " collections: counts and SHA-256 equal the export manifest, and nothing else is there");'

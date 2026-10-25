@@ -47,6 +47,15 @@ const server = http.createServer((req, res) => {
       );
     }
     const route = url.pathname.replace('/api/run/', '');
+    if (route === 'collections') {
+      const n = {};
+      for (const k of store.keys()) n[k.split('\n')[0]] = (n[k.split('\n')[0]] || 0) + 1;
+      return send(res, 200, {
+        collections: Object.keys(n)
+          .sort()
+          .map(c => ({ collection: c, count: n[c] })),
+      });
+    }
     if (route === 'list') {
       const c = url.searchParams.get('collection');
       const limit = Number(url.searchParams.get('limit') || 100);

@@ -1302,6 +1302,10 @@
       "_why": "B-317: the restore drill restores into the ev-staging-scratch D1 through its Worker (B-319), same token, under drills/<run id>/<collection>; it writes nothing else there."
      },
      "_why": "B-315, B-317 (D-307, D-320, D-322): these staging runs read and write the staging Worker run API (D1), its url and token from system/worker. The diagnostic keeps ArtifactData (its probes test that store); live stays on ArtifactData until B-320."
+    },
+    "copy": {
+     "worker": "ev-staging-scratch",
+     "_why": "B-319: the one-time copy (tools/pwa-copy.mjs) writes only into this Worker for this record: its workers.dev name, on the account of the record's own Worker (system/worker). The staging proof target, over a scratch D1 (pwa-staging copy_target). Live has none until B-320 names the live Worker; until then a live copy is refused."
     }
    }
   },

@@ -300,3 +300,39 @@ test('B-178 (D-195, D-201): the trace allowance: a live write dist/trace-ok name
   assert.equal(r.status, 0, 'a pipeline run is never guarded');
   assert.equal(hook(dir, 'live-guard', call('set', 'runs', 'w')).code, 2, 'and without it, refused');
 });
+
+test('B-319: the copy (tools/pwa-copy.mjs) reads or writes for the live record only on dist/live-ok bound to the commit', () => {
+  const dir = copyRepo();
+  const head = spawnSync('git', ['-C', dir, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).stdout.trim();
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-copy-live-'));
+  const run = (record, n) =>
+    spawnSync(
+      process.execPath,
+      [path.join(dir, 'tools', 'pwa-copy.mjs'), 'export-calls', path.join(out, n), '--record', record],
+      {
+        encoding: 'utf8',
+      }
+    );
+  const okFile = path.join(dir, 'dist', 'live-ok');
+  let r = run('live', 'a');
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /refused: a copy of the live record \(no dist\/live-ok/);
+  assert.equal(fs.existsSync(path.join(out, 'a')), false, 'nothing written');
+  fs.mkdirSync(path.dirname(okFile), { recursive: true });
+  for (const [ok, why] of [
+    [{ at: Date.now() - (H.LIVE_OK_HOURS + 1) * 36e5, commit: head }, /older than/],
+    [{ at: Date.now(), commit: 'f'.repeat(40) }, /names commit f{40}, not this checkout's/],
+    [{ at: Date.now() }, /names commit none/],
+  ]) {
+    fs.writeFileSync(okFile, JSON.stringify(ok));
+    r = run('live', 'b');
+    assert.equal(r.status, 1, JSON.stringify(ok));
+    assert.match(r.stderr, why);
+  }
+  fs.writeFileSync(okFile, JSON.stringify({ at: Date.now(), commit: head, by: 'ship live --matt-ok' }));
+  r = run('live', 'c');
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, new RegExp(`"url":"https://claude.ai/artifact/${LIVE}"`));
+  fs.rmSync(okFile);
+  assert.equal(run('staging', 'd').status, 0, 'staging needs no allowance');
+});

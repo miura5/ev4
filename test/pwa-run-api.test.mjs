@@ -43,8 +43,10 @@ test('B-312: a batch is refused whole for a delete, a bad op, a document twice o
 test('B-312: collection paths and ids as ArtifactData takes them', () => {
   assert.ok(validCollection('notes') && validCollection('data/users/me/decks/cards'.split('/').slice(0, 3).join('/')));
   assert.ok(!validCollection('data/users'), 'an even number of segments is a document');
-  assert.ok(!validCollection('../x') && !validCollection('') && !validCollection('a b'));
+  assert.ok(!validCollection('../x') && !validCollection('') && !validCollection('a\u0000b'));
+  assert.ok(validCollection('a b'), 'B-319: a space is a character a claude.ai id may hold');
   assert.ok(validDocId('2026-10-25') && !validDocId('a/b') && !validDocId('..'));
+  assert.ok(validDocId('NUR 112') && validDocId('é ü') && !validDocId('.') && !validDocId('x'.repeat(201)));
 });
 
 test('B-312: if_version means what it means in ArtifactData', () => {
@@ -86,6 +88,7 @@ test('B-312: update merges objects deeply, replaces arrays, removes __delete__ f
 test('B-312: a list cursor round-trips an id and refuses anything else', () => {
   assert.equal(decodeCursor(encodeCursor('2026-10-25.a_b')), '2026-10-25.a_b');
   assert.equal(decodeCursor('%%%'), null);
+  for (const id of ['NUR 112', 'é ü', 'a+b=c']) assert.equal(decodeCursor(encodeCursor(id)), id, 'B-319: any id');
   assert.equal(decodeCursor(btoa('a/b')), null);
 });
 

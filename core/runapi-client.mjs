@@ -41,8 +41,12 @@ export function onHost(worker, host) {
 /** One request to the Worker. {status, body}: the reply parsed as JSON (or {error: text} when it is not). route is
  *  under /api/run/, or a full /api/... path. */
 export function request(worker, { method = 'GET', route, params = {}, body = null, timeout = 90 }) {
-  const u = new URL(worker.url + (route.startsWith('/api/') ? route : '/api/run/' + route));
-  for (const [k, v] of Object.entries(params)) if (v != null) u.searchParams.set(k, String(v));
+  // B-319: each value encoded with encodeURIComponent (an id may hold a space or any letter); the Worker decodes it.
+  const query = Object.entries(params)
+    .filter(([, v]) => v != null)
+    .map(([k, v]) => encodeURIComponent(k) + '=' + encodeURIComponent(String(v)))
+    .join('&');
+  const u = new URL(worker.url + (route.startsWith('/api/') ? route : '/api/run/' + route) + (query ? '?' + query : ''));
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ev-runapi-'));
   try {
     const conf = [
@@ -57,7 +61,24 @@ export function request(worker, { method = 'GET', route, params = {}, body = nul
     }
     const out = execFileSync(
       'curl',
-      ['-sS', '--max-time', String(timeout), '-K', '-', '-o', path.join(tmp, 'reply'), '-w', '%{http_code}'],
+      // A refused connection sent nothing, so it is tried again (twice); a write that did land is never doubled by a
+      // retry either, since every write is pinned to a version or is a create the Worker refuses once it exists.
+      [
+        '-sS',
+        '--max-time',
+        String(timeout),
+        '--retry',
+        '2',
+        '--retry-connrefused',
+        '--retry-delay',
+        '1',
+        '-K',
+        '-',
+        '-o',
+        path.join(tmp, 'reply'),
+        '-w',
+        '%{http_code}',
+      ],
       { input: conf.join('\n') + '\n', stdio: ['pipe', 'pipe', 'pipe'] }
     );
     const status = Number(String(out).trim());

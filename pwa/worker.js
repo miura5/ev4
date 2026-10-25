@@ -9,7 +9,7 @@
 //     more on every write, the page's saves here included). Nothing is ever deleted.
 //   - B-316: a nightly export of D1 to R2 (backup.js) on the cron in wrangler.toml, and POST /api/backup/export to make
 //     one now; GET /api/backup/newest names the newest export. Exports are never overwritten or deleted.
-import { handleRun } from './runapi.js';
+import { handleRun, validCollection, validDocId } from './runapi.js';
 import { exportToR2, newestExport, EXPORT_PREFIX } from './backup.js';
 import { tokenOk, ifVersionOf } from './guard.js';
 
@@ -82,8 +82,15 @@ export default {
       } catch {
         return json({ error: 'the body is not JSON' }, 400); // refuses anything that is not JSON
       }
-      const c = decodeURIComponent(m[1]);
-      const id = decodeURIComponent(m[2]);
+      // B-319: the path carries both encoded (encodeURIComponent); decoded here, an id may hold a space but no "/".
+      let c, id;
+      try {
+        c = decodeURIComponent(m[1]);
+        id = decodeURIComponent(m[2]);
+      } catch {
+        return json({ error: 'the path is not encoded' }, 400);
+      }
+      if (!validCollection(c) || !validDocId(id)) return json({ error: 'not a collection and document id' }, 400);
       const at = Date.now();
       const row =
         want == null
