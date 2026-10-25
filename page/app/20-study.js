@@ -189,7 +189,7 @@
         const n = openInCourse(cur.course).length;
         return {
           text: `${cur.course} has no exam in the record yet` + (n ? `, and ${plural(n, 'weak spot')} open.` : '.'),
-          act: n ? ['Quiz me', b => weakQuizAll(b)] : null,
+          act: ['Quiz me', b => courseQuiz(b)], // B-375: Quiz me always opens a quiz
         };
       }
       const ex = (cur.exam.title || cur.exam.id).replace(/:.*$/, '');
@@ -207,7 +207,11 @@
       const plan = examPlan(cur.exam);
       const days = E.diffDays(today, cur.exam.date);
       const when = days <= 0 ? 'today' : days === 1 ? 'tomorrow' : 'in ' + days + ' days';
-      if (!plan) return { text: `${cur.course} ${ex} is ${when}. Its objectives aren’t in the record yet.` };
+      if (!plan)
+        return {
+          text: `${cur.course} ${ex} is ${when}. Its objectives aren’t in the record yet.`,
+          act: ['Quiz me', b => courseQuiz(b)], // B-375
+        };
       const isDone = t => !!(plan.done && plan.done[t.id]) || E.taskDone(plan, t, today, S.sets, S.answers);
       const ts = (plan.days || []).flatMap(d => (d.tasks || []).map(t => ({ ...t, date: d.date })));
       const left = ts.filter(t => !isDone(t)).length;
@@ -314,10 +318,22 @@
         // panel from 1200 px, in the card's place below that
         const d = courseDetail(cur ? cur.course : null, PANEL.matches);
         card.classList.toggle('ov-course', !PANEL.matches);
-        card.hidden = PANEL.matches;
+        card.hidden = false;
         if (PANEL.matches) {
+          // B-375: the main column keeps an exam card saying no exam yet, the course's pane beside it
           ui.objPanel = d;
-          card.replaceChildren();
+          const head = el('div', 'ov-head'),
+            nm0 = el('span', 'ov-name');
+          nm0.append(el('b', 'ov-ex', cur ? cur.course : 'Your courses'), el('span', 'meta', ' · No exam yet'));
+          head.append(nm0, el('span', 'meta ov-count', ''));
+          const bar = el('div', 'pbar ov-bar');
+          bar.setAttribute('role', 'img');
+          bar.setAttribute('aria-label', 'No exam yet');
+          card.replaceChildren(
+            head,
+            bar,
+            el('p', 'empty ov-none', 'Its next exam, its objectives and its plan show here once they’re in the record.')
+          );
         } else card.replaceChildren(d);
         renderStudyUp(cur ? cur.course : null);
         renderMiniQuiz(cur || null);
@@ -356,9 +372,27 @@
       y.style.width = items.almost;
       bar.setAttribute('aria-label', items.aria);
       box.append(...items.rows);
-      card.replaceChildren(...(items.rows.length ? [head, bar, box] : [head, el('p', 'empty ov-none', items.none)]));
+      card.replaceChildren(...(items.rows.length ? [head, bar, box] : [head, bar, el('p', 'empty ov-none', items.none)]));
+      // B-375: an exam with neither objectives nor a plan still fills the panel: the exam, its date and Quiz me
+      if (PANEL.matches && !ui.objPanel) ui.objPanel = examDetail(ex, fullName, days);
       renderStudyUp(cur.course);
       renderMiniQuiz(cur);
+    }
+    /** B-375: the panel for an exam with no objectives and no plan, laid out as an objective's pane. */
+    function examDetail(ex, fullName, days) {
+      const d = el('div', 'ov-detail');
+      d.append(el('span', 'lab', 'Exam'), el('div', 'od-name', fullName));
+      const st = el('div', 'od-row');
+      st.append(
+        el('span', 'badge', 'No objectives yet'),
+        el('span', 'mini', dayMonth(ex.date) + ' · ' + (days <= 0 ? 'today' : days === 1 ? 'tomorrow' : 'in ' + days + ' days'))
+      );
+      d.append(
+        st,
+        btn('Quiz me', ev => courseQuiz(ev.currentTarget), { cls: 'btn neutral od-q' }),
+        el('span', 'mini od-note', 'Quiz me opens five questions from this course. Objectives show here once they’re in the record.')
+      );
+      return d;
     }
     /** B-371: a course with no upcoming exam: its name, that no exam is in the record, its open weak spots and Quiz me,
      *  laid out as an objective's pane. */
@@ -387,13 +421,13 @@
         }
       }
       d.append(
-        btn('Quiz me', ev => weakQuizAll(ev.currentTarget), { cls: 'btn neutral od-q' }),
+        btn('Quiz me', ev => courseQuiz(ev.currentTarget), { cls: 'btn neutral od-q' }),
         el(
           'span',
           'mini od-note',
           open.length > 5
-            ? 'And ' + plural(open.length - 5, 'more') + ' in Weak spots. Quiz me runs today’s review.'
-            : 'Quiz me runs today’s review.'
+            ? 'And ' + plural(open.length - 5, 'more') + ' in Weak spots. Quiz me opens five questions from this course.'
+            : 'Quiz me opens five questions from this course.'
         )
       );
       return d;
@@ -556,7 +590,10 @@
       // finds no set of its own and takes today's review
       const left = s => oneAnswer(s).filter(q => !answersOf(s)[q.id]).length;
       const objIds = new Set(cur.exam ? S.objectives.filter(o => o.exam === cur.exam.id).map(o => o.id) : []);
-      const mine = s => (cur.exam && s.exam === cur.exam.id) || E.validItems(s).some(q => objIds.has(q.objective));
+      const mine = s =>
+        (cur.exam && s.exam === cur.exam.id) ||
+        s.focus === cur.course || // B-375: five Quiz me wrote for the course
+        E.validItems(s).some(q => objIds.has(q.objective));
       const sets = practiceSets()
         .filter(s => mine(s) && oneAnswer(s).length)
         .sort((a, b) => left(b) - left(a));
@@ -570,7 +607,17 @@
       const cur = studyExams().find(x => x.course === ui.studyCourse);
       const c = cur && courseSet(cur);
       if (c && startMini(c.set, 'Mini quiz · ' + (cur.course || ui.studyCourse))) return;
-      return weakQuizAll(b);
+      return weakQuizAll(b, cur ? cur.course : ui.studyCourse);
+    }
+    /** B-375: Quiz me with nothing to quiz on: E.V. writes five questions for the course (Give me 5 more's path, from
+     *  its objectives, else its plan and materials) and opens them; never only a toast. */
+    async function quizFive(b, course) {
+      const was = b && b.textContent;
+      if (b) (b.disabled = true), (b.textContent = 'Writing 5 questions…');
+      $('more-status').textContent = '';
+      const ok = await morePractice({ course: course || ui.studyCourse || E.defaultCourse() });
+      if (b && b.isConnected) (b.disabled = false), (b.textContent = was);
+      if (!ok) toast($('more-status').textContent || 'Couldn’t write questions right now. Try again in a moment.');
     }
     /** B-351 (D-313): the mini quiz card beside Coming up: a question from the course's next set as its teaser. */
     function renderMiniQuiz(cur) {
@@ -586,20 +633,13 @@
       card.replaceChildren(
         // B-371 (D-316): the demo's words
         el('span', 'lab', 'Mini quiz · five questions from this course'),
-        el('div', 'mq-q', teaser || 'No questions waiting for this course yet.'),
-        el(
-          'div',
-          'mini',
-          c
-            ? 'Misses are proposed as weak spots at the end, for you to review.'
-            : 'Today’s review appears after the 4:25 am run.'
-        )
+        // B-375: with nothing waiting, Take the quiz writes five for the course
+        el('div', 'mq-q', teaser || 'Five new questions from this course, written when you start.'),
+        el('div', 'mini', 'Misses are proposed as weak spots at the end, for you to review.')
       );
-      if (c) {
-        const r = el('div', 'mq-row');
-        r.append(btn('Take the quiz', ev => courseQuiz(ev.currentTarget), { cls: 'btn neutral' }));
-        card.append(r);
-      }
+      const r = el('div', 'mq-row');
+      r.append(btn('Take the quiz', ev => courseQuiz(ev.currentTarget), { cls: 'btn neutral' }));
+      card.append(r);
     }
     const OV_MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const OV_WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -706,14 +746,14 @@
      *  it is next due, its objective), Drill and Mark solid. The side pane is the demo's
      *  How triage works (B-365). There is no To review section: nothing in the record proposes weak spots yet (B-300). */
     const objText = id => (S.objectives.find(o => o.id === id) || {}).text || '';
-    function weakQuizAll(b) {
-      // today's review set aims at the most due spots; with none yet, the same line as the review's own
+    function weakQuizAll(b, course) {
+      // today's review set aims at the most due spots; with none yet, five new questions for the course (B-375)
       const rs = S.sets.find(s => s.id === 'review-' + today);
       if (rs && E.validItems(rs).length) {
         setStudy('review');
         return render();
       }
-      toast('Today’s review appears after the 4:25 am run.');
+      return quizFive(b, course);
     }
     function wkRow(w, quiet) {
       const d = w.derived;
@@ -1187,11 +1227,28 @@
       const say = (text, cards) => (opt.announce ? evSay(text, cards || [], { tier: 'default' }) : null);
       try {
         if (E.isDosageTopic(opt.topic)) return await moreDosage(opt, { say, out });
-        const ex = M.target;
+        // B-375: opt.course (Study's Quiz me with nothing to quiz on) writes for that course: its exam's objectives,
+        // else its plan and its materials
+        const cx = opt.course ? studyExams().find(x => x.course === opt.course) : null;
+        const ex = opt.course ? (cx && cx.exam) || null : M.target;
         const exId = ex ? ex.id : null;
+        const inCourse = o => {
+          const oe = S.exams.find(e => e.id === o.exam);
+          return !!oe && E.courseOf(oe) === opt.course;
+        };
         const objs = S.objectives
-          .filter(o => !exId || o.exam === exId)
+          .filter(o => (exId ? o.exam === exId : !opt.course || inCourse(o)))
           .map(o => ({ id: o.id, text: o.text, chapters: o.chapters }));
+        const plan = opt.course && !objs.length && ex ? examPlan(ex) : null;
+        const planTasks = plan ? (plan.days || []).flatMap(d => (d.tasks || []).map(t => t.text || '')).filter(Boolean) : [];
+        const mats =
+          opt.course && !objs.length
+            ? (LIB.mats || [])
+                .filter(m => m.course === opt.course && m.text)
+                .slice(0, 4)
+                .map(m => `[${m.title || m.id}] ` + String(m.text).slice(0, 1500))
+            : [];
+        const courseIds = opt.course && !exId ? new Set(openInCourse(opt.course).map(w => w.id)) : null;
         const answeredToday = new Set(
           M.attempts.all
             .filter(a => a.date === today)
@@ -1199,7 +1256,12 @@
             .filter(Boolean)
         );
         const targets = M.models
-          .filter(w => E.isActive(w) && (!exId || E.examOf(w) === exId) && !answeredToday.has(w.id))
+          .filter(
+            w =>
+              E.isActive(w) &&
+              (exId ? E.examOf(w) === exId : !courseIds || courseIds.has(w.id)) &&
+              !answeredToday.has(w.id)
+          )
           .sort(
             (x, y) =>
               String(x.derived.nextDue || '9').localeCompare(String(y.derived.nextDue || '9')) ||
@@ -1221,10 +1283,15 @@
         const formats = M.models.filter(w => w.kind === 'format' && w.derived.status === 'open').map(w => w.topic);
         const prompt = [
           'You write NCLEX-style practice questions for Matt, a first-semester ADN nursing student (' +
-            E.defaultCourse() +
+            (opt.course || E.defaultCourse()) +
             '). Return JSON only.',
           ex ? `Exam: ${ex.title} on ${ex.date}.` : '',
           'Objectives: ' + JSON.stringify(objs),
+          opt.course && !objs.length
+            ? 'No objectives are in his record for this course yet, so leave "objective" out and write from what follows.'
+            : '',
+          planTasks.length ? 'His study plan for the exam: ' + JSON.stringify(planTasks.slice(0, 20)) : '',
+          mats.length ? 'His course materials (ground every question in these):\n' + mats.join('\n') : '',
           'Weak spots to target first, one question each (copy weakspotId, topic and objective exactly): ' +
             JSON.stringify(targets),
           weakest
@@ -1271,6 +1338,7 @@
             kind: 'more',
             date: today,
             ...(exId ? { exam: exId } : {}),
+            ...(opt.course ? { focus: opt.course } : {}), // B-375: the course it was written for
             title: 'More practice · ' + short(today) + (n > 1 ? ' · ' + n : ''),
             createdAt: now(),
             items: fresh,
