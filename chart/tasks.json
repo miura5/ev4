@@ -5944,12 +5944,12 @@
   "title": "Fidelity: staging's health line. Each ship staging fires the staging watchdog once, so staging never shows a stale health line; on live, health problems show in System, not in every view's header.",
   "dod": "After a GREEN staging ship, no stale health text anywhere in staging's header; System still lists a stale health check when one is planted. Proof (D-312, fidelity sprint): node tools/build.mjs, then tools/fidelity's demo and built screenshots read side by side at 1280, 1706, 2560 and 390, plus npm run smoke; then ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-332"
   ],
-  "notes": "claimed by lane health",
-  "commit": null,
+  "notes": "The header no longer shows health warnings in any view; a stale or missed run still shows in System. Fidelity: the header now matches the demo at 1280, 1706, 2560 and 390, which shows no health text there; staging's watchdog is not fired by a ship (a builder run may fire no other scheduled task), which no longer matters since the header never shows it.",
+  "commit": "5697c2c",
   "source": "fidelity review, Oct 25 (D-312)"
  }
 ]
