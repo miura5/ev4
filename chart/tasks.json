@@ -5658,13 +5658,14 @@
   "title": "A new way to bring his notes into a study session, free to use D1 (for example, notes written in E.V. itself). B-06's note-text rule is revisited here, with Matt.",
   "dod": "Defined with Matt when the task is taken.",
   "milestone": "app (data, pipelines, ops)",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-320"
   ],
-  "notes": "",
+  "notes": "Waiting on Matt to scope it: its definition of done is written with him when he does (hand-off 3).",
   "commit": null,
-  "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-322",
@@ -5686,13 +5687,14 @@
   "title": "A larger model for deeper asks (Go deeper, longer chats), at a cost Matt sets.",
   "dod": "Defined with Matt when the task is taken.",
   "milestone": "app (data, pipelines, ops)",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-320"
   ],
-  "notes": "",
+  "notes": "Waiting on Matt to scope it: its definition of done is written with him when he does (hand-off 3).",
   "commit": null,
-  "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
+  "source": "plan 1eW5FgG9VNzhCySbL1uWuo",
+  "waitingOn": "Matt"
  },
  {
   "id": "B-324",
