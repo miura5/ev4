@@ -4164,7 +4164,7 @@
   "depends": [
    "B-234"
   ],
-  "notes": "parked for the freeze week",
+  "notes": "D-315 (Oct 25): the demo is the UI; this task's look rules are retired with the tenets D-315 supersedes, and it is built to the demo when taken.",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z",
   "waitingOn": "Matt"
