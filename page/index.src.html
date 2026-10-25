@@ -157,11 +157,9 @@
     </div>
     <!-- B-302: the log; its toolbar, list and detail are built by the page (40-record) -->
     <div id="record-sessions" class="panel"></div>
-    <div id="record-dates" class="panel" hidden><div class="cols"><div class="col-main">
-      <div class="card"><h2>Upcoming</h2><ul class="list" id="dates"></ul></div>
-      </div><div class="col-side">
-      <div class="card" id="dates-off-card" hidden><h2>Taken off</h2><p class="meta" style="margin:0">Off your calendar and out of E.V.’s plans. Bring one back any time.</p><ul class="list" id="dates-off"></ul></div>
-      <form class="card" id="date-add" autocomplete="off">
+    <!-- B-350: Dates, Journal, Canvas and Library are drawn as the log is (40-record); the two forms move into its panel -->
+    <div id="record-dates" class="panel" hidden>
+      <form class="rec-form" id="date-add" autocomplete="off" hidden>
         <h2>Add a date</h2>
         <div class="fields"><input type="date" id="d-date" required style="max-width:11rem" aria-label="Date"><input type="text" id="d-title" placeholder="What, e.g. ATI Engage: Nutrition due" required></div>
         <div class="fields">
@@ -171,22 +169,17 @@
         </div>
         <div class="actions"><button class="btn primary" type="submit">Add date</button></div>
       </form>
-    </div></div></div>
-    <div id="record-journal" class="panel" hidden><div class="cols"><div class="col-main">
-      <form class="card" id="j-add" autocomplete="off">
+    </div>
+    <div id="record-journal" class="panel" hidden>
+      <form class="rec-form" id="j-add" autocomplete="off" hidden>
         <h2>New entry</h2>
         <select id="j-kind" aria-label="Kind"><option value="free">Free write</option><option value="clinical">After clinical</option><option value="weekly">Weekly reflection</option></select>
         <textarea id="j-text" placeholder="How did today go? School, health, anything on your mind. No patient details." required></textarea>
         <div class="actions"><span class="meta grow" id="j-warn" role="status"></span><button class="btn primary" type="submit">Save entry</button></div>
       </form>
-      </div><div class="col-side"><div class="card"><h2>Entries</h2><ul class="list" id="journal"></ul></div>
-    </div></div></div>
-    <div id="record-news" class="panel" hidden>
-      <div class="card"><h2>Canvas announcements</h2><ul class="list" id="news"></ul></div>
     </div>
-    <div id="record-library" class="panel" hidden>
-      <div class="card"><div class="card-head"><h2>Library</h2><span class="meta" id="lib-count"></span></div><p class="meta" style="margin:0">Your Canvas files and what you attach in the conversation. E.V. searches these and names the file and page it used.</p><ul class="list" id="library"></ul></div>
-    </div>
+    <div id="record-news" class="panel" hidden></div>
+    <div id="record-library" class="panel" hidden></div>
   </section>
 
   <!-- SYSTEM -->

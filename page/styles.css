@@ -1647,3 +1647,41 @@ body.has-line #today-week .wk-her{display:none}
   .evline{top:calc(8px + var(--mh-h));margin-right:calc(8px - 16px - var(--pane-r));padding:4px 12px 4px 18px;flex-wrap:nowrap;min-height:49px}
   body.has-line{--panel-top:calc(8px + var(--mh-h) + var(--line-h))}
 }
+
+/* ============================================================ B-350 (D-312): Record's other views, as the log =======
+   Dates, Journal, Canvas and Library share the log's frame: the toolbar strip under the header, rows edge to edge
+   grouped by day (Library by course) with one badge, and the picked row's detail in the panel. Add date and New entry
+   open their form where the detail sits. */
+#p-record > .panel{margin:-18px -16px 0;gap:0}
+#p-record > .panel .rec-bar{padding:12px 18px;border-bottom:1px solid var(--line);gap:8px;flex-wrap:wrap;min-height:0}
+#p-record > .panel .rec-bar > .seg{align-self:center}
+#p-record > .panel .seg button .n{margin-left:6px;color:var(--quiet);font-variant-numeric:tabular-nums}
+#p-record > .panel .cols > .col-main{gap:0}
+.rec-count{color:var(--quiet);font-size:calc(13px * var(--ts));line-height:28px}
+.rec-add{gap:6px}
+.rec-add .ico{width:15px;height:15px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round}
+.rec-add[aria-pressed=true]{filter:brightness(.92)}
+.rec-form{display:flex;flex-direction:column;gap:10px;background:none;border:0;box-shadow:none;padding:0;margin:0}
+.rec-form[hidden]{display:none}
+.rec-form h2{margin:0;font:600 calc(18px * var(--ts))/1.3 var(--sans);color:var(--text)}
+.rec-form .fields{display:flex;gap:8px;flex-wrap:wrap}
+.rec-form .fields > *{flex:1 1 140px;min-width:0}
+.rec-form textarea{min-height:140px}
+.rec-form .actions{display:flex;align-items:center;justify-content:flex-end;gap:8px}
+.col-main > .rec-form{padding:14px 18px 18px;border-bottom:1px solid var(--line)}
+#p-record .rec-list > .empty{margin:0;padding:14px 18px;color:var(--quiet);font-size:calc(13.5px * var(--ts))}
+#record-dates .rec-li .badge{min-width:92px}
+#record-library .rec-li .badge,#record-news .rec-li .badge{min-width:84px}
+.rec-detail .rec-body{white-space:pre-wrap;color:var(--text);overflow-wrap:anywhere}
+.rec-detail .rec-acts{display:flex;gap:8px;flex-wrap:wrap}
+@media (min-width:1200px){
+  section.panel > .panel > .cols > .col-side .rec-detail{background:none;border:0;box-shadow:none;padding:0;border-radius:0}
+}
+@media (max-width:599px){
+  #p-record > .panel .rec-bar{padding:10px 12px}
+  #p-record > .panel .rec-bar > .seg{flex:none;width:auto}
+  .col-main > .rec-form{padding:14px 16px 18px}
+  #p-record .rec-list > .empty{padding:14px 16px}
+  #record-dates .rec-li .badge,#record-library .rec-li .badge,#record-news .rec-li .badge{min-width:0}
+  .rec-form .fields > *{flex-basis:100%}
+}
