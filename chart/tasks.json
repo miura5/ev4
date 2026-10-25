@@ -5552,12 +5552,12 @@
   "title": "The app without Study Watch or builder jobs: the shim offers no mcp; a study session runs (timer, breaks, +5 minutes, the quiz) with no note binding.",
   "dod": "npm run smoke:pwa green, its session step included. The shim's use('mcp') resolves null; the smoke records no request to a host: server or to Claude Code Remote.",
   "milestone": "app (data, pipelines, ops)",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-313"
   ],
-  "notes": "proofs green: smoke:pwa 16/16, smoke 28/28, run/captions/core/look harnesses green (check --touched stops at npm test's one inherited B-64 failure in the Progress file); reviewed twice, fixes in a5e07cb",
-  "commit": null,
+  "notes": "Shipped to staging at a5e07cb: ship staging GREEN.",
+  "commit": "a5e07cb",
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
  {
