@@ -2,7 +2,7 @@
 //   - The page's files (public/) are served by Cloudflare's static assets before this code runs.
 //   - /api/db reads and writes the record in D1 (env.DB). Every /api call needs the token (env.EV_TOKEN).
 // The record is one table: docs(c = collection, id, data = the document as JSON, at = when it last changed).
-//   - /api/claude asks Claude (Haiku) with the key the Worker holds as a secret (env.ANTHROPIC_API_KEY, D-296).
+//   - /api/claude asks Claude (Haiku) with the key the Worker holds as a secret (env.ANTHROPIC_API_KEY, D-299).
 
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
@@ -39,7 +39,7 @@ export default {
     }
 
     // POST /api/claude with {messages, tools?, tool_choice?}: one Claude API request on Haiku. The key is added here
-    // and never leaves Cloudflare (D-296); the model and the length cap are set here, not by the page.
+    // and never leaves Cloudflare (D-299); the model and the length cap are set here, not by the page.
     if (url.pathname === '/api/claude' && request.method === 'POST') {
       if (!env.ANTHROPIC_API_KEY) return json({ error: 'no ANTHROPIC_API_KEY secret on the Worker' }, 503);
       const { messages, tools, tool_choice } = await request.json();

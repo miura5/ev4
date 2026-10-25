@@ -3,7 +3,7 @@
 //   db:     the whole record is loaded once, kept in memory, and checked for changes every 10 s and on focus.
 //           A write goes to the Worker first; only when it is saved does the page's copy change.
 //   user:   whoever holds the token is the owner (one person).
-//   sample: Claude on Haiku through the Worker's /api/claude (D-296); the key stays on the Worker.
+//   sample: Claude on Haiku through the Worker's /api/claude (D-299); the key stays on the Worker.
 //   mcp:    none (the scheduled runs and the Study Watch reader live on claude.ai and the Mac).
 (function () {
   const KEY = 'ev.token';

@@ -18,7 +18,7 @@ phone (installed app) ──/api + token──► Worker ──► D1 (the recor
 - `../tools/build-pwa.mjs --record staging|live`: builds `public/` from that record's built page, wrapped byte for
   byte, with the app named "E.V." (window title and icon label).
 
-- Claude: the shim's `sample` goes to the Worker's `/api/claude`, which adds your API key and asks Haiku (D-296, B-10).
+- Claude: the shim's `sample` goes to the Worker's `/api/claude`, which adds your API key and asks Haiku (D-299: the key is only a Cloudflare secret, under a $5 monthly spend limit set in the Anthropic Console).
   The key is a Cloudflare secret: never in this repository, the page or a browser.
 
 Not in the demo: images to Claude (library photo reading), scheduled runs, the Study Watch reader, your real record.
