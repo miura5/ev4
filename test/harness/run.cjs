@@ -1327,6 +1327,18 @@ const results = [];
 const ok = (name, cond, detail = '') => {
   results.push([cond ? 'PASS' : 'FAIL', name, detail]);
 };
+// B-357: a control he must reach is checked for being tappable where it sits (nothing over it) as its own check,
+// then taken by a script click, so one covered control is one FAIL and the run goes on.
+async function tap(page, locator, name) {
+  await locator.scrollIntoViewIfNeeded().catch(() => {});
+  const free = await locator.evaluate(b => {
+    const r = b.getBoundingClientRect(),
+      at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    return !!at && (at === b || b.contains(at));
+  });
+  if (name) ok(name, free);
+  await locator.evaluate(b => b.click());
+}
 (async () => {
   const browser = await chromium
     .launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' })
@@ -1384,10 +1396,10 @@ const ok = (name, cond, detail = '') => {
     );
     await page.screenshot({ path: `${shots}/update-bar-${scheme}.png`, fullPage: false });
     ok(
-      `[${scheme}] the bar never covers the top bar's buttons or sideways-scrolls`,
+      `[${scheme}] the bar never covers the header's buttons or sideways-scrolls`,
       await page.evaluate(() => {
         const b = document.getElementById('ev-update').getBoundingClientRect(),
-          t = document.getElementById('tab-system').getBoundingClientRect();
+          t = document.getElementById('mh').getBoundingClientRect();
         return (b.top >= t.bottom || b.bottom <= t.top) && document.documentElement.scrollWidth <= innerWidth + 1;
       })
     );
@@ -1400,9 +1412,9 @@ const ok = (name, cond, detail = '') => {
     await page.waitForTimeout(100);
     ok(`[${scheme}] back on this page's build, the bar goes away`, !(await page.isVisible('#ev-update')));
     ok(
-      `[${scheme}] five sections and System in the sidebar or the tab bar; no top bar, no dock (D-210)`,
+      `[${scheme}] five sections in the sidebar or the tab bar, System with no link (D-314); no top bar, no dock (D-210)`,
       (await page.locator('#top .tabs .tab').count()) === 5 &&
-        (await page.isVisible('#tab-system')) &&
+        !(await page.isVisible('#tab-system')) &&
         (await page.locator('.dock').count()) === 0 &&
         (await page.locator('header.top').count()) === 0
     );
@@ -1496,14 +1508,15 @@ const ok = (name, cond, detail = '') => {
       await page.click('#thread .msg.greet .brief-row');
       await page.waitForTimeout(900);
     }
-    // D-125 as amended: the greeting has no card; its offers are the chips, at most three, the finished job among them.
+    // D-125 as amended: the greeting has no card; its offers are the chips, at most five as the demo's (D-312), the
+    // finished job among them.
     const gm = await page.evaluate(() => ({
       cards: document.querySelectorAll('#thread .msg.greet .ev-card').length,
       chips: [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent),
     }));
     ok(
-      `[${scheme}] the greeting has no card; at most three chips, one opening the finished study guide`,
-      gm.cards === 0 && gm.chips.length <= 3 && gm.chips.includes('Open the study guide'),
+      `[${scheme}] the greeting has no card; at most five chips, one opening the finished study guide`,
+      gm.cards === 0 && gm.chips.length <= 5 && gm.chips.includes('Open the study guide'),
       JSON.stringify(gm)
     );
     ok(
@@ -2050,7 +2063,11 @@ const ok = (name, cond, detail = '') => {
       guardText
     );
     await page.screenshot({ path: `${shots}/id-held-${scheme}.png` });
-    await page.locator('#ev-guard button', { hasText: 'Leave it out' }).click();
+    await tap(
+      page,
+      page.locator('#ev-guard button', { hasText: 'Leave it out' }),
+      `[${scheme}] the guard line's Leave it out is tappable, nothing covering it`
+    );
     await page.waitForTimeout(300);
     ok(
       'Leave it out sends his words with only that detail left out',
@@ -2060,7 +2077,11 @@ const ok = (name, cond, detail = '') => {
     await page.fill('#ev-input', 'Sim lab: the resident in room 7 was confused');
     await page.click('#ev-send');
     await page.waitForTimeout(300);
-    await page.locator('#ev-guard button', { hasText: 'It’s made up' }).click();
+    await tap(
+      page,
+      page.locator('#ev-guard button', { hasText: 'It’s made up' }),
+      `[${scheme}] the guard line's It’s made up is tappable, nothing covering it`
+    );
     await page.waitForTimeout(300);
     const kept2 = await idDocs();
     ok(
@@ -3786,7 +3807,7 @@ const ok = (name, cond, detail = '') => {
       )
     );
     // System
-    await page.click('#tab-system');
+    await page.$eval('#tab-system', b => b.click());
     await page.waitForTimeout(100);
     // B-119: the lists fold under one line each; the cards' lines carry their counts.
     ok(

@@ -80,13 +80,11 @@ const skeleton = body =>
 const TYPES = { '.js': 'text/javascript', '.json': 'application/json', '.css': 'text/css', '.html': 'text/html' };
 const { SIZES, viewsOf, shotName } = require('./views.cjs');
 const VIEWS = viewsOf(fs.readFileSync(path.join(pageDir, 'index.html'), 'utf8'));
-// B-115: the tenet checks, on every view at spec.ui.tenets.widths; a tab in spec.ui.tenets.on fails the pass.
+// B-115: spec.ui.tenets: the widths read closely and D-271's motion check (the look checks retired, D-315).
 const TENETS = JSON.parse(fs.readFileSync(path.join(root, 'spec', 'ev.spec.json'), 'utf8')).ui.tenets;
-const { collect, judge, motion, judgeMotion } = require('./tenets.cjs');
-const { collectButtons, judgeKinds } = require('./components.cjs'); // B-285
+const { motion, judgeMotion } = require('./tenets.cjs');
 const png = require('./png.cjs');
 const { studyView } = require('./paint.cjs'); // B-297
-const FIVE_VIEWS = ['ev', 'today', 'study', 'progress', 'record']; // B-303 (D-278)
 const reports = [];
 const results = [];
 const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', name, detail]);
@@ -193,7 +191,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
       await page.screenshot({ path: `${shots}/theme-${label.replace(/\W+/g, '-')}-390x844.png` });
       if (!stored && want === 'dark') {
         // B-214 (D-211): System's switch: Light stores light on this device and paints it now; System forgets it.
-        await page.click('#tab-system');
+        await page.$eval('#tab-system', b => b.click());
         await page.click('#theme-seg [data-t="light"]');
         const a = await page.evaluate(() => ({
           attr: document.documentElement.getAttribute('data-theme'),
@@ -310,7 +308,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
       );
     }
     for (const view of VIEWS) {
-      await page.click('#tab-' + view.tab);
+      await page.$eval('#tab-' + view.tab, b => b.click());
       if (view.v && (await page.isVisible(`#seg-${view.tab} [data-v="${view.v}"]`)))
         await page.click(`#seg-${view.tab} [data-v="${view.v}"]`); // D-249: every view is a tab at every width
       else if (view.v && view.tab === 'study') await studyView(page, view.v); // B-297: the review's quiz card
@@ -321,22 +319,8 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)
       );
       if (TENETS.widths.includes(size.width) && [844, 830, 800].includes(size.height)) {
-        const snap = await page.evaluate(collect);
-        for (const c of judge(snap, TENETS.exceptions)) {
-          if (
-            TENETS.on.includes(view.tab) ||
-            TENETS.on.includes(view.id) ||
-            ((TENETS.onFor || {})[c.tenet] || []).some(x => x === view.tab || x === view.id)
-          )
-            ok(`[${width}] ${view.id}: ${c.tenet}`, c.ok, c.detail);
-          else reports.push([c.ok ? 'ok  ' : 'NOT ', `[${width}] ${view.id}: ${c.tenet}`, c.detail]);
-        }
-        // B-285 (D-278): the view's buttons against the component set's five kinds; B-303 (the sweep) makes it a failure
-        // on the five views (E.V., Today, Study, Progress, Record), System still reporting.
-        const kinds = judgeKinds(await page.evaluate(collectButtons, `#top, #mh, #p-${view.tab}`));
-        if (FIVE_VIEWS.includes(view.tab))
-          ok(`[${width}] ${view.id}: D-278: five kinds, one primary`, kinds.ok, kinds.detail);
-        else reports.push([kinds.ok ? 'ok  ' : 'NOT ', `[${width}] ${view.id}: D-278`, kinds.detail]);
+        // B-357 (D-315): the look tenets' checks (D-146 to D-151, D-160, D-276) and D-278's five kinds, one primary,
+        // are retired with the old UI tenets; the demo is the UI.
         // B-285 (C-15): the screen-reader tree names the picked option of every switch on screen.
         for (const id of await page.$$eval('.seg[id]', s =>
           s.filter(x => !x.closest('[hidden]') && x.getBoundingClientRect().width > 1).map(x => x.id)
@@ -875,7 +859,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
     // B-119: System: the planted failed run leads; no ok pill; no card stands empty; the pipeline and run lists fold
     // under one line each, and only the runs that did not finish ok are marked.
     if (TENETS.widths.includes(size.width) && [844, 830, 800].includes(size.height)) {
-      await page.click('#tab-system');
+      await page.$eval('#tab-system', b => b.click());
       await page.waitForTimeout(500);
       const s0 = await page.evaluate(() => {
         const vis = e =>
@@ -953,7 +937,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           };
         });
       for (const tab of ['today', 'study', 'progress', 'record', 'system']) {
-        await page.click('#tab-' + tab);
+        await page.$eval('#tab-' + tab, b => b.click());
         const first = await page.$(`#seg-${tab} button`);
         if (first && (await first.isVisible())) await first.click(); // a one-view switch is hidden (B-297)
         await page.waitForTimeout(500);
@@ -1060,11 +1044,11 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         // B-297: the review's quiz card is reached from Today first; the timed open is then Study's tab, which keeps it
         if (view.v && view.tab === 'study' && !(await page.$(`#seg-study [data-v="${view.v}"]`)))
           await studyView(page, view.v);
-        await page.click(view.tab === 'system' ? '#tab-today' : '#tab-system');
+        await page.$eval(view.tab === 'system' ? '#tab-today' : '#tab-system', b => b.click());
         await page.waitForTimeout(300);
         await page.evaluate(() => window.scrollTo(0, 0));
         const t0 = Date.now();
-        await page.click('#tab-' + view.tab);
+        await page.$eval('#tab-' + view.tab, b => b.click());
         if (view.v && (await page.isVisible(`#seg-${view.tab} [data-v="${view.v}"]`)))
           await page.click(`#seg-${view.tab} [data-v="${view.v}"]`);
         return t0;
@@ -1125,7 +1109,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
     // Each seg control back to its first view, as a fresh open has it.
     for (const v of VIEWS.filter(x => x.v))
       if (VIEWS.find(x => x.tab === v.tab).v === v.v) {
-        await page.click('#tab-' + v.tab);
+        await page.$eval('#tab-' + v.tab, b => b.click());
         if (await page.isVisible(`#seg-${v.tab} [data-v="${v.v}"]`))
           await page.click(`#seg-${v.tab} [data-v="${v.v}"]`); // a one-view switch is hidden (B-297)
         else if (v.tab === 'study') await studyView(page, v.v); // out of the review's quiz card (B-297)

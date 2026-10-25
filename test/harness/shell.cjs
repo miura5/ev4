@@ -80,6 +80,12 @@ async function open(browser, { viewport, pre = '', overrides = {}, db = seed, sc
   return { page, errors };
 }
 const statusText = page => page.evaluate(() => (document.getElementById('status') || {}).textContent || '');
+// B-357: a boot refusal is no refusal unless he can read it (the header's status is hidden while all is well)
+const statusShown = page =>
+  page.evaluate(() => {
+    const s = document.getElementById('status');
+    return !!s && s.getClientRects().length > 0 && getComputedStyle(s).visibility !== 'hidden';
+  });
 
 (async () => {
   const browser = await chromium
@@ -115,8 +121,8 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
         )
     );
     ok(
-      `[${scheme}] five tabs in the top bar beside System`,
-      (await page.locator('#top .tabs .tab').count()) === 5 && (await page.isVisible('#tab-system'))
+      `[${scheme}] five tabs in the nav; System has no link, as the demo (D-314)`,
+      (await page.locator('#top .tabs .tab').count()) === 5 && !(await page.isVisible('#tab-system'))
     );
     ok(
       `[${scheme}] the staging stamp, a quiet status and the staging readout`,
@@ -142,10 +148,10 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
       `[${scheme}] each tab opens its own panel`,
       (await page.isVisible('#p-record')) && !(await page.isVisible('#p-ev'))
     );
-    await page.click('#tab-system');
-    await page.waitForTimeout(80);
+    await page.evaluate(() => (location.hash = '#system')); // D-314: #system opens it
+    await page.waitForTimeout(120);
     ok(
-      `[${scheme}] System shows the release`,
+      `[${scheme}] #system opens System, which shows the release`,
       new RegExp('Release ' + reEsc(RELEASE)).test(await page.locator('#versions').textContent())
     );
     await page.screenshot({ path: `${shots}/system-${scheme}.png` });
@@ -211,10 +217,9 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
           ? 'the sidebar beside the pane'
           : 'the sidebar, the pane and the details panel';
     ok(
-      `[${w}] ${want}; no top bar; the column at most 680 px, centred`,
+      `[${w}] ${want}; no top bar; the column centred (B-357: the 680 px cap retired with D-312)`,
       !v.sideways &&
         !v.topBar &&
-        v.wrapW <= 680 &&
         v.centred &&
         (w < 600 ? v.bar && !v.sidebar && !v.right : w < 1200 ? v.sidebar && !v.right : v.sidebar && v.right),
       JSON.stringify(v)
@@ -234,7 +239,7 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
           her = document.getElementById('tab-her'),
           hr = her.getBoundingClientRect(),
           icon = document.querySelector('#tab-ev > svg'),
-          targets = [...document.querySelectorAll('#top .tabs .tab'), document.getElementById('tab-system')].map(t => {
+          targets = [...document.querySelectorAll('#top .tabs .tab')].map(t => {
             const r = t.getBoundingClientRect();
             return [t.id, Math.round(r.width), Math.round(r.height)];
           });
@@ -257,13 +262,13 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
       );
       if (phone)
         ok(
-          `[${w} ${scheme}] every tab target, System's too, is 44 px or more each way (B-288)`,
-          bar.targets.length === 6 && bar.targets.every(([, tw, th]) => tw >= 44 && th >= 44),
+          `[${w} ${scheme}] every tab target is 44 px or more each way (B-288; System has no link, D-314)`,
+          bar.targets.length === 5 && bar.targets.every(([, tw, th]) => tw >= 44 && th >= 44),
           JSON.stringify(bar.targets)
         );
       const panels = [];
       for (const t of ['today', 'progress', 'record', 'system']) {
-        await page.click('#tab-' + t);
+        await page.$eval('#tab-' + t, b => b.click());
         await page.waitForTimeout(250);
         if (t === 'today') await page.screenshot({ path: `${shots}/widths-today-${w}-${scheme}.png` });
         panels.push(
@@ -331,11 +336,11 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
           first:
             document.querySelector('#tab-ev .lab-side') &&
             cs(document.querySelector('#tab-ev .lab-side')).display !== 'none' &&
-            document.querySelector('#tab-ev .lab-side').textContent.trim() === 'E.V.',
+            document.querySelector('#tab-ev .lab-side').textContent.trim() === 'Conversation',
         };
       });
       ok(
-        `[${w} ${scheme}] the sidebar on the sunken ground, the view in a raised, outlined pane; Today in the sidebar; her status word; E.V. first (D-293)`,
+        `[${w} ${scheme}] the sidebar on the sunken ground, the view in a raised, outlined pane; Today in the sidebar; her status word; Conversation first, as the demo (D-312)`,
         v.html === v.sunken &&
           v.pane === v.bg &&
           v.html !== v.pane &&
@@ -394,17 +399,32 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
           working:
             [...side.querySelectorAll('.sec')].some(x => /working/i.test(x.textContent)) ||
             !!document.getElementById('side-work'),
-          foot: ['side-theme-seg', 'side-contrast-seg'].every(id => {
-            const g = document.getElementById(id);
-            return g && g.offsetParent && g.querySelectorAll('[aria-pressed="true"]').length === 1;
-          }),
+          foot: !!document.getElementById('side-prefs-btn') && !!document.getElementById('side-prefs-btn').offsetParent,
           rows: [...document.querySelectorAll('#side-today .si:not(.more)')].length,
           more: (document.querySelector('#side-today .si.more') || {}).textContent || '',
         };
       });
+      // B-357 (D-314): the foot is one Preferences button; its popover holds Theme and Contrast, each with one pressed
+      await page.click('#side-prefs-btn');
+      await page.waitForTimeout(100);
+      v.foot =
+        v.foot &&
+        (await page.evaluate(() =>
+          ['side-theme-seg', 'side-contrast-seg'].every(id => {
+            const g = document.getElementById(id);
+            return g && g.offsetParent && g.querySelectorAll('[aria-pressed="true"]').length === 1;
+          })
+        ));
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(100);
+      v.footClosed = await page.evaluate(
+        () =>
+          document.getElementById('side-prefpop').hidden && document.activeElement.id === 'side-prefs-btn'
+      );
       ok(
-        `[1280 ${scheme}] sidebar: E.V., Today, Study, Progress, Record with neutral icons; her dial in her palette; Theme and Contrast in the foot; no Working (B-286)`,
-        v.names.join(',') === 'E.V.,Today,Study,Progress,Record' &&
+        `[1280 ${scheme}] sidebar: Conversation, Today, Study, Progress, Record with neutral icons; her dial in her palette; Preferences in the foot with Theme and Contrast, Esc closes it; no Working (B-286, D-314)`,
+        v.names.join(',') === 'Conversation,Today,Study,Progress,Record' &&
+          v.footClosed &&
           v.neutral &&
           v.av1 &&
           v.av2 &&
@@ -456,18 +476,8 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
         ),
         JSON.stringify(ring)
       );
-      // Today is open now (the walk passed it); open it again and read the sidebar.
-      await page.click('#tab-today');
-      await page.waitForTimeout(150);
-      const hiddenOnToday = await page.evaluate(() => {
-        const t = document.getElementById('side-today');
-        return t.hidden || getComputedStyle(t).display === 'none';
-      });
-      ok(
-        `[1280 ${scheme}] with Today open, the sidebar shows no Today list (D-292)`,
-        hiddenOnToday && !errors.length,
-        errors.slice(0, 2).join(' | ')
-      );
+      // B-357: the demo keeps the sidebar's Today list while Today is open (D-292's stepping aside is retired)
+      ok(`[1280 ${scheme}] no page errors on the sidebar walk`, !errors.length, errors.slice(0, 2).join(' | '));
       await page.screenshot({ path: `${shots}/shell-sidebar-1280-${scheme}.png` });
       await page.close();
     }
@@ -488,8 +498,8 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
       };
     });
     ok(
-      `[${w}] the header names the view; the status line hides while all is well`,
-      v.head === 'Today' && (v.ok ? !v.shown : v.shown),
+      `[${w}] the header names the view, Today with its day as the demo; the status line hides while all is well`,
+      /^Today · \w+day \d{1,2} \w+$/.test(v.head) && (v.ok ? !v.shown : v.shown),
       JSON.stringify(v)
     );
     await page.close();
@@ -516,12 +526,15 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
     };
     const { page } = await open(browser, { viewport: { width: 1280, height: 860 }, db });
     await page.waitForTimeout(600);
+    // B-332, B-341: health and status live in System; a failed run is its lead line
+    await page.evaluate(() => (location.hash = '#system'));
+    await page.waitForTimeout(300);
     const v = await page.evaluate(() => {
-      const s = document.getElementById('status');
-      return { status: s.textContent, shown: getComputedStyle(s).display !== 'none', color: getComputedStyle(s).color };
+      const s = document.querySelector('#p-system .sys-lead');
+      return { status: s ? s.textContent : '', shown: !!s && s.getClientRects().length > 0 };
     });
     ok(
-      '[1280] a planted failed run is the status line, by name, with no count',
+      '[1280] a planted failed run leads System, by name, with no count',
       /^Weekly review’s last run failed/.test(v.status) && v.shown && !/\d+ (active|practice|things)/.test(v.status),
       JSON.stringify(v)
     );
@@ -535,6 +548,7 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
   ok(
     'someone other than the owner sees only the private-record line',
     /private study record/.test(await statusText(r.page)) &&
+      (await statusShown(r.page)) &&
       !(await r.page.isVisible('#p-ev')) &&
       !(await r.page.isVisible('.tabs'))
   );
@@ -550,7 +564,7 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
   await r.page.waitForTimeout(400);
   ok(
     'files from two releases stop the boot and say so',
-    /different releases.*app v4\.0\.0-old/.test(await statusText(r.page)),
+    /different releases.*app v4\.0\.0-old/.test(await statusText(r.page)) && (await statusShown(r.page)),
     await statusText(r.page)
   );
   await r.page.close();
@@ -558,7 +572,7 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
   await r.page.waitForTimeout(400);
   ok(
     'a file that does not load stops the boot and says which',
-    /could not load its files \(core\.js did not load\)/.test(await statusText(r.page)),
+    /could not load its files \(core\.js did not load\)/.test(await statusText(r.page)) && (await statusShown(r.page)),
     await statusText(r.page)
   );
   await r.page.screenshot({ path: `${shots}/boot-failed-phone.png` });
@@ -602,7 +616,7 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
       } else
         ok(`[${w} ${scheme}] a review on Conversation shows its count once (D-245)`, false, 'no Start review chip');
       for (const t of ['today', 'progress', 'record', 'system']) {
-        await page.click('#tab-' + t);
+        await page.$eval('#tab-' + t, b => b.click());
         await look(t, t === 'today');
       }
       await page.click('#tab-study');
@@ -639,7 +653,7 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
     for (const w of [390, 735]) {
       const { page } = await open(browser, { viewport: { width: w, height: 844 } });
       await page.waitForTimeout(600);
-      await page.click('#tab-system');
+      await page.$eval('#tab-system', b => b.click());
       await page.waitForTimeout(300);
       const before = await texts(page);
       await page.click('#text-seg [data-p="larger"]');
@@ -654,7 +668,7 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
       await page.click('#motion-seg [data-p="reduce"]');
       await page.reload();
       await page.waitForTimeout(700);
-      await page.click('#tab-system');
+      await page.$eval('#tab-system', b => b.click());
       await page.waitForTimeout(200);
       const kept = await page.evaluate(() => ({
         text: document.documentElement.getAttribute('data-text'),
@@ -681,7 +695,7 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
       await page.waitForTimeout(600);
       const wide = [];
       for (const t of ['ev', 'today', 'study', 'progress', 'record', 'system']) {
-        await page.click('#tab-' + t);
+        await page.$eval('#tab-' + t, b => b.click());
         await page.waitForTimeout(250);
         if (await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)) wide.push(t);
       }
@@ -698,7 +712,7 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
           const { page } = await open(browser, { viewport: { width: w, height: 844 }, pre });
           await page.emulateMedia({ reducedMotion: reduce ? 'reduce' : 'no-preference' });
           await page.waitForTimeout(700);
-          await page.click('#tab-' + t);
+          await page.$eval('#tab-' + t, b => b.click());
           await page.waitForTimeout(800);
           const b = await page.screenshot();
           await page.close();
@@ -761,8 +775,8 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
         newShown: !!document.getElementById('new-btn').offsetParent,
       }));
       ok(
-        `${tag} the header is 48 px, names her view "E.V." and ends with New (B-287)`,
-        head.title === 'E.V.' && head.h === 48 && head.newShown,
+        `${tag} the header is 48 px, names her view "Conversation" as the demo, and ends with New (B-287, D-314)`,
+        head.title === 'Conversation' && head.h === 48 && head.newShown,
         JSON.stringify(head)
       );
       const focusId = () => page.evaluate(() => (document.activeElement && document.activeElement.id) || '');
@@ -1025,6 +1039,7 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
       const d = new Date(Date.now() + 3 * 864e5);
       return d.toISOString().slice(0, 10);
     });
+    await page.click('#record-dates .rec-add'); // B-350: the form opens from its Add date button
     await page.fill('#d-date', day);
     const dates = [];
     for (const t of ['Harness date A', 'Harness date B']) {
@@ -1061,6 +1076,7 @@ const statusText = page => page.evaluate(() => (document.getElementById('status'
   console.log(`\n${results.length - failed} of ${results.length} checks pass; screenshots in ${shots}`);
   process.exit(failed ? 1 : 0);
 })().catch(e => {
+  for (const [s, n, d] of results) console.log(`${s}  ${n}${d && s === "FAIL" ? "  -- " + d : ""}`);
   console.error(e);
   process.exit(1);
 });

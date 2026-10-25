@@ -33,13 +33,10 @@ test('B-223 (D-294): a planted repeat across the sidebar and the panel fails', (
   assert.deepEqual(failed(s), ['D-294 once']);
 });
 
-test('B-223 (D-245): a planted off-shade card fails, in the surface shade and without its hairline', () => {
-  assert.deepEqual(failed(good({ panel: { ...good().panel, cards: [card('ev-surf', 'rgb(255, 255, 255)')] } })), [
-    'D-245 shade',
-  ]);
-  assert.deepEqual(failed(good({ panel: { ...good().panel, cards: [card('ev-surf', GROUND, 'none')] } })), [
-    'D-245 shade',
-  ]);
+test('B-357 (D-314): the sidebar Today mirrors the Today pane, as the demo; the pane and the panel still never repeat', () => {
+  const t = 'Read Ch 39: Fluid, electrolyte and acid-base balance';
+  assert.deepEqual(failed(good({ view: 'today', pane: [t], greet: null })), []);
+  assert.deepEqual(failed(good({ pane: ['Exam 4: Fluids, electrolytes and perfusion'] })), ['D-294 once']);
 });
 
 test('B-223 (D-245, D-151): a planted empty panel fails, and so do a missing one and one below 1200 px', () => {
@@ -49,8 +46,7 @@ test('B-223 (D-245, D-151): a planted empty panel fails, and so do a missing one
   assert.deepEqual(failed(good({ width: 1100 })), ['D-245 panel']);
 });
 
-test("B-223 (D-294): the sidebar's Today steps aside on Today and stays on Study", () => {
-  assert.deepEqual(failed(good({ view: 'today', greet: null })), ['D-294 Today steps aside']);
+test("B-223 (D-294): the sidebar's Today stays on Study", () => {
   assert.deepEqual(failed(good({ view: 'study', sideToday: false, greet: null })), [
     'D-294 Today in the sidebar elsewhere',
   ]);
