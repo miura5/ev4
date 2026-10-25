@@ -6808,10 +6808,10 @@
  {
   "id": "B-381",
   "kind": "bug",
-  "title": "Bug (reported Oct 25): The sprint's code review found a note can overwrite another with the same title the same day, the phone can't open the file picker, snoozed graded work loses its Graded tag, nothing writes an exam score, the quiz results claim a triage that does not exist, failures have nowhere to show, and some cards open hidden places.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "title": "Code review fixes for the fidelity sprint: unique note ids (no overwrite), the file picker on a tap, snoozed graded work stays Graded and fixed, exam scores through E.V., true words on quiz results and weak spots, failures shown in her status line, cards that open real places, and dead code removed",
+  "dod": "Each item fixed with a test where it touches data; npm test, npm run smoke and ship staging GREEN; a fresh reviewer checks the core/data changes.",
+  "milestone": "v4.8 redesign",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -6820,6 +6820,10 @@
   "reportedAt": "2026-10-25T16:18:46.083Z",
   "board": {
    "row": "v4 B-381: The sprint's code review found a note can overwrite another with the…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-25T16:18:46.619Z"
   }
  }
 ]
