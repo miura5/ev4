@@ -5707,7 +5707,7 @@
    "B-311",
    "B-314"
   ],
-  "notes": "claimed by lane app",
+  "notes": "built at d083269: jobs run in the app through the Worker; npm test, smoke:pwa 23/23 green; starting the staging proof",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
