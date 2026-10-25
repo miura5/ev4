@@ -273,7 +273,19 @@
         ),
       };
     }
-    function renderBudget(bv) {
+    // a toolbar icon, as the demo draws them: one 24-unit path, stroked
+    function svgIcon(d) {
+      const NS = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(NS, 'svg');
+      svg.setAttribute('viewBox', '0 0 24 24');
+      svg.setAttribute('aria-hidden', 'true');
+      svg.setAttribute('class', 'ico');
+      const path = document.createElementNS(NS, 'path');
+      path.setAttribute('d', d);
+      svg.append(path);
+      return svg;
+    }
+    function renderBudget(bv, nOpen) {
       // built here, not in the shell, which is at its byte budget; first in the side column (the right panel from 1200 px)
       let card = $('today-budget');
       if (!card) {
@@ -294,11 +306,20 @@
       d.style.width = bv.donePct.toFixed(1) + '%';
       l.style.width = bv.leftPct.toFixed(1) + '%';
       bar.append(d, l);
+      // B-335 (D-312): the demo's large figure, then the bar, then On the list and Done as two rows
+      const big = el('p', 'tb-big' + (bv.over ? ' tb-over' : ''));
+      big.append(el('span', null, `${bv.left} min left`), el('span', 'tb-free', ` · ${bv.free} free`));
+      const prop = (k, v, cls) => {
+        const p = el('div', 'prop' + (cls ? ' ' + cls : ''));
+        p.append(el('span', 'prop-k', k), el('span', 'prop-v', v));
+        return p;
+      };
       card.replaceChildren(
         el('h2', null, 'Today’s budget'),
-        el('p', 'tb-big' + (bv.over ? ' tb-over' : ''), bv.line),
+        big,
         bar,
-        el('p', 'meta tb-done-line', `${bv.done} min done`),
+        prop('On the list', `${bv.planned} min · ${plural(nOpen, 'item')}`),
+        prop('Done', `${bv.done} min`, 'tb-done-line'),
         ...(bv.over
           ? [el('p', 'meta tb-over tb-over-line', `Over by ${bv.over} min · ${bv.available} min budget`)]
           : [])
@@ -731,37 +752,64 @@
       );
       return line;
     }
+    // B-335 (D-312): the demo's filter, All / Classes / Study with the count of open rows in each. Study is the work on
+    // weak spots and practice (review, practice, notes); everything else on the list is the classes' own.
+    const STUDY_TAGS = new Set(['REVIEW', 'ATI REVIEW', 'PRACTICE', 'NOTES']);
+    const catOf = it => (STUDY_TAGS.has(it.tag) ? 'study' : 'class');
+    const FILTERS = [
+      ['all', 'All'],
+      ['class', 'Classes'],
+      ['study', 'Study'],
+    ];
     function renderToday() {
       const { day, items, isDone, budget, skipped } = dayState();
       // B-291 (D-286): no Now card; the prep check is under her greeting and the exam countdown on Study.
       // List
       const box = $('today-list');
-      const head = el('div', 'card-head');
-      head.append(el('h2', null, 'Today’s list'));
-      // B-292 (C-5): the day's budget as what's left against the time left; the side card holds the bar and the done line
+      // B-292 (C-5): the day's budget as what's left against the time left; the side card holds the bar and the rows
       const bv = budgetView(budget, items, isDone);
-      if (bv) head.append(el('span', 'meta tb-short' + (bv.over ? ' tb-over' : ''), bv.line));
-      renderBudget(bv);
       renderChanges(); // B-294
       renderTask(items, isDone, day); // B-296
-      // B-293 (C-9): Plan the rest, at the head's end; its proposal waits here until he accepts, keeps or rejects it
+      // B-293 (C-9): Plan the rest, in the toolbar; its proposal waits here until he accepts, keeps or rejects it
       if (ui.restPlan && ui.restPlan.date !== today) ui.restPlan = null;
       const P = ui.restPlan;
       const rest = btn('Plan the rest', null, { cls: 'btn neutral sm ti-rest', disabled: !!P });
+      rest.prepend(svgIcon('M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6z'));
       rest.addEventListener('click', () => {
         const np = restProposal();
         if (!np.adds.length && !np.offs.length) return toast('Nothing to change: today’s list already fits the plan.');
         ui.restPlan = np;
         render();
       });
-      head.append(rest);
       // B-291: the open rows, then Done, then "Deferred: over today's budget" and "Taken off today" folded under the list.
       // A row he ticks on this visit stays where it is (rule 6); only rows done before it sit in Done.
-      const shown = items.filter(i => i.tag !== 'EXAM'); // the exam is in Next 7 days (B-117)
+      const shown = items.filter(i => i.tag !== 'EXAM'); // the exam is on the week (B-117)
       const inDone = it => isDone(it) && !T.ticked.has(it.id);
-      const todo = shown.filter(it => !inDone(it) && !it.deferred),
-        done = shown.filter(inDone),
+      const f = FILTERS.some(x => x[0] === ui.todayFilter) ? ui.todayFilter : 'all';
+      const inF = it => f === 'all' || catOf(it) === f;
+      const open = shown.filter(it => !inDone(it) && !it.deferred);
+      const todo = open.filter(inF),
+        done = shown.filter(it => inDone(it) && inF(it)),
         later = shown.filter(it => !inDone(it) && it.deferred);
+      renderBudget(bv, open.length);
+      const fseg = el('div', 'seg ti-filter');
+      fseg.id = 'today-filter';
+      fseg.setAttribute('role', 'group');
+      fseg.setAttribute('aria-label', 'Show');
+      for (const [k, n] of FILTERS) {
+        const b = el('button', null, n);
+        b.type = 'button';
+        b.dataset.f = k;
+        b.setAttribute('aria-pressed', String(k === f));
+        b.append(el('i', null, String(open.filter(it => k === 'all' || catOf(it) === k).length)));
+        b.addEventListener('click', () => {
+          ui.todayFilter = k;
+          render();
+        });
+        fseg.append(b);
+      }
+      todayBar.list = [fseg];
+      todayBar.listEnd = [rest];
       const offOf = it => P && P.offs.find(p => p.id === it.id);
       const first = todo.find(it => startable(it, isDone) && !offOf(it));
       const ul = el('ul', 'list ti-list');
@@ -771,10 +819,12 @@
       }
       if (P) for (const p of P.adds) ul.append(proposedAddRow(P, p));
       const folds = ui.todayFolds || {};
-      const kids = [head, ...(P ? [restLine(P)] : [])];
+      const kids = [...(P ? [restLine(P)] : [])];
       const after = [];
-      if (shown.length || (P && P.adds.length)) kids.push(ul);
-      else
+      if (todo.length || (P && P.adds.length)) kids.push(ul);
+      else if (shown.length && f !== 'all')
+        kids.push(el('p', 'empty', 'Nothing open in ' + FILTERS.find(x => x[0] === f)[1] + ' on today’s list.'));
+      else if (!shown.length)
         kids.push(
           el(
             'p',
@@ -809,7 +859,7 @@
         sRows.push(row({ title: 'Ask E.V. to put one back.', cls: 'ti-hint' }));
         after.push(...todayFold('off', 'Taken off today · ' + skipped.length, sRows, !!folds.off));
       }
-      if (day.live) after.push(el('p', 'meta', 'Built live from your record. The 4:25am run saves the day’s plan.'));
+      if (day.live) after.push(el('p', 'meta ti-live', 'Built live from your record. The 4:25am run saves the day’s plan.'));
       // B-287 (C-7): no Add row; the header's New is the one way to put a task on today's list
       box.replaceChildren(...kids, ...after);
       // Weekly review (Sundays)
@@ -833,28 +883,7 @@
           })
         );
       }
-      // Next 7 days
-      const week = weekDates();
-      renderEvDates(week);
-      const ahead = $('ahead'),
-        open = week.length <= 5 || ui.aheadOpen;
-      let fold = $('ahead-fold');
-      if (week.length > 5) {
-        if (!fold) {
-          fold = el('button', 'fold-line');
-          fold.id = 'ahead-fold';
-          fold.type = 'button';
-          fold.addEventListener('click', () => {
-            ui.aheadOpen = !ui.aheadOpen;
-            render();
-          });
-          ahead.before(fold);
-        }
-        fold.textContent = plural(week.length, 'date') + ' this week';
-        fold.setAttribute('aria-expanded', String(!!open));
-      } else if (fold) fold.remove();
-      ahead.hidden = !open;
-      ahead.replaceChildren(...(week.length ? week.map(weekRow) : [empty('No dates in the next week.')]));
+      renderEvDates(weekDates());
       renderWeek(); // B-295
     }
     /**
@@ -865,18 +894,27 @@
      * the seven days from the dates themselves. A taken-off date keeps its chip, so it can come back from here.
      */
     const WEEK_DAYS = 7;
+    // B-335 (D-312): the demo's toolbar, one row at the top of the view: in the list the filter, List / Week and Plan the
+    // rest; in the week List / Week, back / Today / forward and the date range. New in the header stays the one Add (C-7).
+    const todayBar = (() => {
+      const bar = el('div', 'toolbar today-bar');
+      bar.id = 'today-bar';
+      $('p-today').querySelector('.cols').before(bar);
+      return { bar, list: [], listEnd: [] };
+    })();
     const weekSeg = (() => {
       const sg = el('div', 'seg');
       sg.id = 'seg-today';
       sg.setAttribute('role', 'group');
       sg.setAttribute('aria-label', 'Today views');
-      for (const [v, n] of [
-        ['list', 'List'],
-        ['week', 'Week'],
+      for (const [v, n, d] of [
+        ['list', 'List', 'M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01'],
+        ['week', 'Week', 'M4 5h16v14H4zM4 10h16M10 10v9'],
       ]) {
         const b = el('button', null, n);
         b.type = 'button';
         b.dataset.v = v;
+        b.prepend(svgIcon(d));
         b.addEventListener('click', () => {
           ui.todayView = v;
           store.set('todayView', v);
@@ -884,10 +922,31 @@
         });
         sg.append(b);
       }
-      $('p-today').querySelector('.cols').before(sg);
       ui.todayView = store.get('todayView') === 'week' ? 'week' : 'list';
       return sg;
     })();
+    const WK_MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    function weekNav(start, wk) {
+      const nav = el('div', 'wk-nav');
+      const go = n => () => {
+        ui.weekOff = n;
+        ui.weekSel = null;
+        render();
+      };
+      const prev = btn('', go(wk - 1), { cls: 'btn ghost icon sm' }),
+        next = btn('', go(wk + 1), { cls: 'btn ghost icon sm' });
+      prev.append(svgIcon('M15 6l-6 6 6 6'));
+      next.append(svgIcon('M9 6l6 6-6 6'));
+      prev.setAttribute('aria-label', 'Previous week');
+      next.setAttribute('aria-label', 'Next week');
+      const now = btn('Today', go(0), { cls: 'btn ghost sm' });
+      const end = E.addDays(start, WEEK_DAYS - 1);
+      const [, m0, d0] = start.split('-').map(Number),
+        [, m1, d1] = end.split('-').map(Number);
+      const label = d0 + (m0 !== m1 ? ' ' + WK_MON[m0 - 1] : '') + ' – ' + d1 + ' ' + WK_MON[m1 - 1] + (wk === 0 ? ' · next 7 days' : '');
+      nav.append(prev, now, next, el('span', 'mini wk-range', label));
+      return nav;
+    }
     const dayName = d => new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' });
     function gradedLine(entries) {
       const g = entries.filter(d => d.graded && !E.isRemovedDate(d));
@@ -950,6 +1009,15 @@
     }
     function renderWeek() {
       const on = ui.todayView === 'week';
+      const wk = Number(ui.weekOff) || 0,
+        start = E.addDays(today, WEEK_DAYS * wk);
+      todayBar.bar.replaceChildren(
+        ...(on ? [] : todayBar.list),
+        weekSeg,
+        ...(on ? [weekNav(start, wk)] : []),
+        el('span', 'sp'),
+        ...(on ? [] : todayBar.listEnd)
+      );
       weekSeg
         .querySelectorAll('button')
         .forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === ui.todayView)));
@@ -967,19 +1035,19 @@
       }
       // the list view's cards step aside in the week, and the week's in the list
       $('today-list').hidden = on;
-      for (const c of [$('today-budget'), $('today-changes'), $('weekly'), $('ahead').closest('.card')])
+      for (const c of [$('today-budget'), $('today-changes'), $('weekly')])
         if (c) c.classList.toggle('wk-away', on);
       box.hidden = !on;
       if (!on) {
         panel.hidden = true;
         return;
       }
-      const entries = weekDates(E.addDays(today, WEEK_DAYS - 1), true);
+      const entries = weekDates(E.addDays(start, WEEK_DAYS - 1), true, start);
       if (!entries.some(d => d.id === ui.weekSel)) ui.weekSel = (entries[0] || {}).id || null;
       const days = el('div', 'wk-days');
       for (let i = 0; i < WEEK_DAYS; i++) {
-        const date = E.addDays(today, i);
-        const col = el('div', 'wk-day' + (i === 0 ? ' today' : ''));
+        const date = E.addDays(start, i);
+        const col = el('div', 'wk-day' + (date === today ? ' today' : ''));
         col.dataset.date = date;
         const [, m, dd] = date.split('-');
         const h = el('div', 'wk-h');
@@ -995,7 +1063,7 @@
           )
         );
         const chips = el('div', 'wk-chips');
-        if (i === 0) {
+        if (date === today) {
           const n = sideOpen().length;
           const t = el('button', 'wchip wk-list');
           t.type = 'button';
@@ -1011,7 +1079,7 @@
         col.append(h, chips);
         days.append(col);
       }
-      box.replaceChildren(el('p', 'wk-her', gradedLine(entries)), days);
+      box.replaceChildren(...(wk === 0 ? [el('p', 'wk-her', gradedLine(entries))] : []), days);
       // the picked date's panel
       const d = entries.find(x => x.id === ui.weekSel);
       panel.hidden = !d;
@@ -1059,8 +1127,8 @@
     }
     // The exam leaves the tick list for Next 7 days (B-117): exams in the window join the calendar's dates, once each.
     // B-295: the week view asks for its seven days, with the dates taken off (their chips can bring them back).
-    function weekDates(last = E.addDays(today, 7), withRemoved = false) {
-      const inWeek = d => d.date >= today && d.date <= last;
+    function weekDates(last = E.addDays(today, 7), withRemoved = false, first = today) {
+      const inWeek = d => d.date >= first && d.date <= last;
       const examDates = S.exams
         .filter(e => e.date && inWeek(e) && !S.dates.some(d => d.kind === 'exam' && d.date === e.date))
         .map(e => ({ id: 'exam-' + e.id, date: e.date, title: e.title || e.id, kind: 'exam', course: E.courseOf(e) }));

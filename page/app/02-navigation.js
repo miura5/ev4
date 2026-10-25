@@ -50,7 +50,7 @@
     const quizOpen = id => id === 'study' && (ui.study === 'review' || ui.study === 'practice');
     function placeSegs(t) {
       const mh = $('mh');
-      for (const id of ['today', 'study', 'progress', 'record']) {
+      for (const id of ['study', 'progress', 'record']) { // B-335: Today's switch sits in its own toolbar, as in the demo
         const sg = $('seg-' + id);
         if (!sg || !mh) continue;
         if (!SEG_HOME[id]) {

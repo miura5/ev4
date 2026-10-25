@@ -1290,6 +1290,68 @@ button.btn:disabled{opacity:.45;cursor:default}
   #today-task .tp-seg button{height:44px;min-width:44px;padding:0 12px;justify-content:center}
   #today-task .wk-acts .btn{min-height:44px;height:44px}
 }
+/* ============================================================ B-335 (D-312): Today as in the demo ===============
+   One toolbar row across the pane under the header: in the list the All / Classes / Study filter with its counts,
+   List / Week and Plan the rest; in the week List / Week, back / Today / forward and the range. Rows span the pane,
+   44 px, hairline between. The budget's figure is large, with On the list and Done as rows. The week fills the pane. */
+#p-today>.today-bar{margin:-16px -16px 0;padding:12px 18px;min-height:0;gap:8px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+#p-today>.today-bar .seg{flex:none;background:var(--hover);box-shadow:none;align-self:center;width:auto}
+#p-today>.today-bar .seg button{min-height:24px;height:24px;padding:0 9px;display:inline-flex;align-items:center;gap:6px;color:var(--quiet);font:500 calc(12px * var(--ts)) var(--sans);box-sizing:border-box}
+#p-today>.today-bar .seg button:hover{color:var(--text);background:var(--bg)}
+#p-today>.today-bar .seg button[aria-pressed="true"]{background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line)}
+#p-today>.today-bar .seg button i{font-style:normal;color:var(--quiet);font-weight:400}
+#p-today>.today-bar svg.ico{width:14px;height:14px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#p-today>.today-bar .wk-nav{display:flex;align-items:center;gap:2px;flex-wrap:nowrap}
+#p-today>.today-bar .wk-range{margin-left:6px;white-space:nowrap;color:var(--faint);font-size:calc(12.5px * var(--ts))}
+#p-today>.today-bar .sp{flex:1}
+#p-today{gap:0}
+#p-today>.cols{margin-top:0}
+#today-list{gap:0}
+#today-list .ti-list{margin:0 -16px}
+#today-list .ti-list>.li{height:auto;min-height:44px;padding:0 18px;gap:12px;font-size:calc(13.5px * var(--ts))}
+#today-list .ti-list>.li:hover{background:var(--chrome)}
+#today-list .li .t{min-width:70px;color:var(--quiet);font-size:calc(12.5px * var(--ts))}
+#today-list .li .nm{flex:0 1 auto}
+#today-list .li>.badge,#today-list .li>.nm:not(:has(+ .badge)){margin-right:auto}
+#today-list .ti-fold{margin:0 -16px;padding:14px 18px 6px;min-height:32px;font-size:calc(12px * var(--ts));font-weight:500}
+#today-list .ti-folded{margin:0 -16px}
+#today-list .ti-folded>.li{min-height:44px;height:auto;padding:0 18px;gap:12px}
+#today-list .ti-folded .row{padding:0 18px 0 46px}
+#today-list>.empty,#today-list>.ti-live{padding:14px 2px}
+#today-list .ti-review{margin:0 -16px;border-radius:0;padding:9px 18px;background:var(--chrome);box-shadow:none;border-bottom:1px solid var(--line)}
+#today-budget{background:var(--surface);border-radius:12px;box-shadow:0 0 0 1px var(--line);padding:14px;gap:10px}
+#p-today #today-budget>h2{min-height:0;font:500 calc(12px * var(--ts))/1.3 var(--sans);color:var(--quiet)}
+#today-budget .tb-big{font:600 30px/1.1 var(--sans);letter-spacing:-.02em;font-variation-settings:"opsz" 32;margin:0}
+#today-budget .tb-big .tb-free{font-size:calc(15px * var(--ts));font-weight:500;letter-spacing:0;color:var(--quiet)}
+#today-budget .tb-bar{height:6px;margin:0}
+#today-budget .prop{display:grid;grid-template-columns:92px 1fr;align-items:center;gap:8px;min-height:34px;font-size:calc(13px * var(--ts))}
+#today-budget .prop .prop-k{color:var(--faint);font-size:calc(12.5px * var(--ts))}
+#today-week .wk-her{display:none}
+#today-week{gap:0}
+#today-week .wk-days{margin:0 -16px;border-radius:0;box-shadow:none}
+@media (min-width:1200px){
+  #today-week .wk-days{min-height:calc(100dvh - var(--mh-h) - 8px - 8px - 53px)}
+  #today-week .wk-day{min-height:0;padding:10px 8px;gap:6px}
+  #today-week .wk-chips{gap:6px}
+  #today-week .wchip{padding:6px 8px;gap:2px}
+  #today-week .wchip .wc-t{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:break-word;hyphens:auto}
+  #today-week .wk-h{font-size:calc(12px * var(--ts))}
+  #today-week .wk-h b{font-size:calc(15px * var(--ts))}
+}
+@media (min-width:600px) and (max-width:1199px){
+  #today-week .wchip .wc-t{white-space:normal}
+}
+@media (max-width:599px){
+  #p-today>.today-bar{padding:10px 16px}
+  #p-today>.today-bar .seg button{height:44px;min-height:44px;padding:0 12px;min-width:44px;justify-content:center}
+  #today-list .ti-list>.li{flex-wrap:wrap;padding:6px 16px;gap:4px 12px}
+  #today-list .ti-folded>.li{padding:6px 16px}
+  #today-list .li .t{min-width:0}
+  #today-list .ti-list>.li .nm{max-width:calc(100% - 40px);white-space:normal}
+  #today-list .ti-list>.li .nm .ti-t{white-space:normal;overflow:visible}
+  #today-list .ti-fold{padding:14px 16px 6px}
+  #today-week .wchip .wc-t{white-space:normal}
+}
 /* ============================================================ B-297 (D-283, C-1, C-8, C-13): Study's overview ========
    The toolbar (the view tabs sit beside the title from 600 px), then the exam header with its readiness bar and one
    32 px row per objective (44 px on the phone): its state badge, its words, its weak spots and Quiz me on hover or
