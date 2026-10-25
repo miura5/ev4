@@ -276,45 +276,4 @@
         attachFile(e.dataTransfer.files[0]);
       });
     }
-    function renderLibrary() {
-      const box = $('library');
-      if (!box) return;
-      if (!LIB.mats) {
-        $('lib-count').textContent = '';
-        box.replaceChildren(empty(LIB.loading ? 'Loading your library…' : 'Opening your library…'));
-        if (ui.record === 'library' && !LIB.loading)
-          library().catch(e => {
-            box.replaceChildren(empty('Couldn’t load the library: ' + ((e && (e.code || e.message)) || 'error')));
-          });
-        return;
-      }
-      const cat = E.libraryCatalog(LIB.mats);
-      $('lib-count').textContent = plural(cat.length, 'file');
-      const order = E.courses();
-      const rows = [];
-      for (const c of [...order, ...new Set(cat.map(x => x.course).filter(x => !order.includes(x)))]) {
-        const mine = cat.filter(x => x.course === c);
-        if (!mine.length) continue;
-        rows.push(el('li', 'row daysep-row', c));
-        for (const x of mine) {
-          const m = matById(x.id) || x;
-          rows.push(
-            row({
-              title: x.title.replace(/\.(pdf|docx|pptx)$/i, ''),
-              detail: matMeta(m),
-              chips: [[MAT_KIND[x.kind] || x.kind, x.kind === 'lab' ? 'ok' : x.kind === 'upload' ? 'plum' : '']],
-              action:
-                m.source === 'upload'
-                  ? btn('Remove', ev => guard(ev.target, () => removeUpload(m), 'Removed from your library'))
-                  : null,
-            })
-          );
-        }
-      }
-      box.replaceChildren(
-        ...(rows.length
-          ? rows
-          : [empty('Nothing yet. The evening run brings your Canvas files; attach your own in the conversation.')])
-      );
-    }
 

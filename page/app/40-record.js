@@ -148,7 +148,14 @@
       types.setAttribute('role', 'group');
       types.setAttribute('aria-label', 'Types');
       fw.append(fb, pop);
-      bar.append(fw, types);
+      // B-367: the board's Log something, at the toolbar's right on every size; it opens New's note
+      const log = el('button', 'btn primary sm rec-log');
+      log.type = 'button';
+      log.innerHTML =
+        '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>';
+      log.append(document.createTextNode('Log something'));
+      log.addEventListener('click', () => newOpen('note'));
+      bar.append(fw, types, el('span', 'sp'), log);
       const cols = el('div', 'cols'),
         main = el('div', 'col-main'),
         side = el('div', 'col-side'),
