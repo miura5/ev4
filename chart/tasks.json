@@ -5238,7 +5238,7 @@
    "B-291",
    "B-308"
   ],
-  "notes": "built: budget card (left · free, done line, bar red over budget) and its prep-harness checks; proofs running",
+  "notes": "proofs green: npm test, smoke, prep harness 122/122 (budget under and over at 390 and 1280, light and dark), run, components, captions, core, greet; shell and look red only on Progress (B-301, views lane, in progress); committed 4c3575a, reviewing",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
