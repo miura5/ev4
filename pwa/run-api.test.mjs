@@ -39,6 +39,7 @@ const freePort = () =>
     });
   });
 
+let d1Dir = null;
 before(async () => {
   if (REMOTE) {
     assert.ok(TOKEN, 'EV_TOKEN is set for the staging Worker');
@@ -46,7 +47,7 @@ before(async () => {
   }
   const wrangler = path.join(PWA, 'node_modules/.bin/wrangler');
   assert.ok(fs.existsSync(wrangler), 'wrangler is installed in pwa/: run npm ci --prefix pwa first');
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-run-api-d1-'));
+  const dir = (d1Dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-run-api-d1-')));
   fs.writeFileSync(path.join(dir, 'seed.sql'), execFileSync('node', ['seed.mjs'], { cwd: PWA }));
   for (const file of [path.join(PWA, 'schema.sql'), path.join(dir, 'seed.sql')])
     execFileSync(wrangler, ['d1', 'execute', 'ev-demo', '--local', '--persist-to', dir, '--file', file], {
@@ -80,6 +81,8 @@ before(async () => {
 
 after(() => {
   if (proc) proc.kill();
+  // B-326: the local D1 leaves the temp folder with the suite.
+  if (d1Dir) fs.rmSync(d1Dir, { recursive: true, force: true, maxRetries: 5 });
 });
 
 const call = async (method, route, body, token = TOKEN) => {

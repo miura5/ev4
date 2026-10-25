@@ -2396,8 +2396,8 @@ function buildIn(root, commit, files, label) {
   const base = fs.mkdtempSync(path.join(os.tmpdir(), `ev4-${label}-`)),
     dir = path.join(base, 'tree'),
     out = path.join(base, 'dist');
-  git(root, ['worktree', 'add', '--detach', '-q', dir, commit]);
   try {
+    git(root, ['worktree', 'add', '--detach', '-q', dir, commit]);
     if (files) applyRestore(dir, files.to, files);
     // The build's own tools: what it ships is what its commit built.
     execFileSync('node', [path.join(dir, 'tools', 'build.mjs'), '--root', dir, '--out', out], { stdio: 'pipe' });
@@ -2405,9 +2405,18 @@ function buildIn(root, commit, files, label) {
       spec = readJson(path.join(out, 'system', 'spec.json'));
     return { dir, out, manifest, hash: contentHash(manifest, spec, sha256) };
   } catch (e) {
-    git(root, ['worktree', 'remove', '--force', dir]);
+    dropBuild(root, dir);
     throw e;
   }
+}
+/** Removes a buildIn tree: its git worktree, then its temporary folder (B-326: nothing left in the temp folder). */
+function dropBuild(root, dir) {
+  try {
+    git(root, ['worktree', 'remove', '--force', dir]);
+  } catch {
+    /* gone */
+  }
+  fs.rmSync(path.dirname(dir), { recursive: true, force: true });
 }
 async function rollback(o) {
   const root = rootOf(o);
@@ -2418,10 +2427,16 @@ async function rollback(o) {
     head = git(root, ['rev-parse', 'HEAD']).trim();
   const files = { ...restoreFiles(root, toFull), to: toFull };
   const crossings = schemaCrossings(schemaVersions(root, head), schemaVersions(root, toFull));
-  const then = buildIn(root, toFull, null, `then-${to.commit}`),
-    now = buildIn(root, head, null, `now-${from.commit}`),
-    restored = buildIn(root, head, files, 'restore');
+  const builds = [];
+  const build = (...a) => {
+    const b = buildIn(root, ...a);
+    builds.push(b);
+    return b;
+  };
   try {
+    const then = build(toFull, null, `then-${to.commit}`),
+      now = build(head, null, `now-${from.commit}`),
+      restored = build(head, files, 'restore');
     const same = restored.hash === then.hash,
       prompts = promptChanges(now.manifest, then.manifest);
     const tasksBetween = (() => {
@@ -2548,13 +2563,7 @@ async function rollback(o) {
     console.log(out.join('\n'));
     return 0;
   } finally {
-    for (const b of [then, now, restored]) {
-      try {
-        git(root, ['worktree', 'remove', '--force', b.dir]);
-      } catch {
-        /* gone */
-      }
-    }
+    for (const b of builds) dropBuild(root, b.dir);
   }
 }
 

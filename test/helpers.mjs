@@ -5,6 +5,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { listRepoFiles } from '../tools/personal-data.mjs';
+import { keepForFile } from './tmp-root.mjs';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 /** A source file as one line (B-64): the formatter's line breaks and indents collapse to single spaces, and none
@@ -75,7 +76,7 @@ export function chartCopy(root = ROOT) {
   if (recordCopy && root === ROOT) return recordCopy;
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-record-'));
   for (const f of RECORD_FILES) fs.cpSync(path.join(root, f), path.join(dir, f), { recursive: true });
-  if (root === ROOT) recordCopy = dir;
+  if (root === ROOT) recordCopy = keepForFile(dir); // B-326: shared by the file's tests, removed at exit
   return dir;
 }
 /** Direct reads of the real record in a test's source: ROOT joined to a record file, or loadChart(ROOT). */

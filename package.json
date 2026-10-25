@@ -8,7 +8,7 @@
   "node": ">=22"
  },
  "scripts": {
-  "test": "node --test test/*.test.mjs",
+  "test": "node --import ./test/tmp-root.mjs --test test/*.test.mjs",
   "build": "node tools/build.mjs",
   "check": "node tools/check.mjs",
   "smoke": "node tools/build.mjs && node test/smoke-keys.cjs synthetic && node test/harness/smoke.cjs synthetic",

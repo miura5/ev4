@@ -168,6 +168,8 @@ export function main(argv = process.argv.slice(2), { marker = process.env.EV_RUN
     const r = spawnSync(
       process.execPath,
       [
+        '--import',
+        './test/tmp-root.mjs', // B-326: each test process empties its own temp folder
         '--test',
         ...fs
           .readdirSync(path.join(ROOT, 'test'))

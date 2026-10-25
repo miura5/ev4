@@ -33,7 +33,11 @@ test('the orientation files exist', () => {
 test('package.json runs node:test and depends on playwright and the formatter only', () => {
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
   assert.equal(pkg.type, 'module');
-  assert.match(pkg.scripts.test, /^node --test /);
+  assert.match(
+    pkg.scripts.test,
+    /^node --import \.\/test\/tmp-root\.mjs --test /,
+    'B-326: each test process gets its own temp folder, emptied as its tests end'
+  );
   assert.deepEqual(Object.keys(pkg.dependencies || {}), []);
   assert.deepEqual(
     Object.keys(pkg.devDependencies || {}),

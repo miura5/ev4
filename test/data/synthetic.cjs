@@ -94,6 +94,8 @@ function recordDir(arg) {
   if (arg && arg !== 'synthetic') return arg;
   const out = fs.mkdtempSync(path.join(require('os').tmpdir(), 'ev4-synthetic-'));
   write(syntheticRecord(), out); fs.writeFileSync(path.join(out, 'SYNTHETIC'), 'Made-up records from test/data/synthetic.cjs.\n');
+  // B-326: the record lives as long as the process that asked for it, then leaves the temp folder.
+  process.on('exit', () => fs.rmSync(out, { recursive: true, force: true }));
   return out;
 }
 
