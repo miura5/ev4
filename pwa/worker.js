@@ -60,7 +60,7 @@ export default {
         },
         body: JSON.stringify({
           model: env.CLAUDE_MODEL || 'claude-haiku-5-5',
-          max_tokens: 4096,
+          max_tokens: 8192, // B-324: a job's answer (a practice set of 15 questions) runs past 4,096
           messages,
           ...(tools && tools.length ? { tools, ...(tool_choice ? { tool_choice } : {}) } : {}),
         }),

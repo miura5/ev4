@@ -6,7 +6,11 @@
 // and a chat message with a planted patient identifier stopped by the page's gate with no call to /api/claude. B-314:
 // the shim offers no mcp (use('mcp') resolves null), a study session runs with no note (start, Break and Resume,
 // +5 minutes, Quiz me now, End), and no request leaves the app for a host: server or Claude Code Remote. B-322: a
-// photographed page attached in the conversation reaches /api/claude as an image and its reading lands in D1.
+// photographed page attached in the conversation reaches /api/claude as an image and its reading lands in D1. B-324:
+// one job of each kind in spec.jobs, started from the conversation (the stub calls start_job), runs at once through
+// the shim and /api/claude (the stub answers with the job's answer tool) and its result is read back from D1; a planted
+// reply that fails the checks writes nothing it made, and a brief asking for help on graded work is refused before any
+// call.
 //   node pwa/smoke.mjs [screenshots dir] [--plant page-error]      (npm run smoke:pwa; needs `npm ci --prefix pwa`)
 // Exit code 1 when any counted check fails. --plant page-error makes the served app.js throw once the page is up, to
 // prove the smoke turns red (the smoke workflow runs it and expects red).
@@ -18,6 +22,7 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { makeIdCheck } from '../core/idcheck.mjs';
+import { briefOf, jobReply, PLANTS, STUB_TEXT } from './job-stub.mjs';
 
 const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
@@ -123,8 +128,51 @@ const textOf = content =>
           .join('\n')
       : '';
 const imagesOf = content => (Array.isArray(content) ? content.filter(b => b && b.type === 'image') : []);
+// B-324: the jobs the conversation starts, by name: "Smoke job <name>" makes the stub call start_job with this one.
+const SMOKE_JOBS = {
+  'study-guide': { kind: 'study-guide', brief: 'A one-page guide on fluid volume deficit.' },
+  'practice-set': { kind: 'practice-set', brief: '5 questions on fluid volume deficit.' },
+  'exam-plan': { kind: 'exam-plan', brief: 'A study plan for E4.' },
+  'exam-retro': { kind: 'exam-retro', brief: 'The retro for E3.' },
+  'clinical-prep': { kind: 'clinical-prep', brief: '2026-10-28: the skills to review.' },
+  'share-set': { kind: 'share-set', brief: 'drill-E4-ch39 for my study group.' },
+  general: { kind: 'general', brief: 'List the major electrolytes and their normal ranges.' },
+  graded: { kind: 'general', brief: 'Proofread my graded care plan draft before I submit it.' },
+  'plant-shape': { kind: 'general', title: PLANTS.shape, brief: 'Anything.' },
+  'plant-plan': { kind: 'exam-plan', title: PLANTS.plan, brief: 'A study plan for E4.' },
+};
+const SMOKE_ASK = /^Smoke job (\S+) \((\d+)\)$/;
+const titleOf = (name, scheme) => `${SMOKE_JOBS[name].title || 'Smoke ' + name} ${scheme}`;
 function stubAnswer(body) {
-  const last = (body.messages || []).filter(m => m.role === 'user').pop();
+  // B-324: a job's ask (the answer tool) gets the job's answer; the conversation's start_job round gets a line back
+  if (briefOf(body)) return jobReply(body);
+  const lastTurn = (body.messages || []).filter(m => m.role === 'user').pop();
+  const toolTurn = lastTurn && Array.isArray(lastTurn.content) && lastTurn.content.some(b => b.type === 'tool_result');
+  const asked = !toolTurn && lastTurn && SMOKE_ASK.exec(textOf(lastTurn.content).trim().split('\n').pop());
+  if (toolTurn || (asked && (body.tools || []).some(t => t.name === 'start_job')))
+    return {
+      id: 'msg_stub',
+      type: 'message',
+      role: 'assistant',
+      model: 'stub',
+      content: toolTurn
+        ? [{ type: 'text', text: 'Stub: the job is on its way.' }]
+        : [
+            {
+              type: 'tool_use',
+              id: 'toolu_start',
+              name: 'start_job',
+              input: {
+                kind: SMOKE_JOBS[asked[1]].kind,
+                title: titleOf(asked[1], asked[2]),
+                brief: SMOKE_JOBS[asked[1]].brief,
+              },
+            },
+          ],
+      stop_reason: toolTurn ? 'end_turn' : 'tool_use',
+      usage: { input_tokens: 0, output_tokens: 0 },
+    };
+  const last = lastTurn;
   const said = last ? textOf(last.content) : '';
   // B-322: a page reading (an image with the library's transcribe ask) gets that page's text back
   const text =
@@ -563,6 +611,100 @@ async function main() {
         mcpGot.length > 0 && mcpGot.every(m => m === null) && seen.tools.length === 0 && outside.length === 0,
         JSON.stringify({ mcp: mcpGot, tools: seen.tools, outside: outside.slice(0, 3) })
       );
+
+      // 9. B-324: one job of each kind, started from the conversation, run at once through the shim and /api/claude, its
+      // result read back from D1 (once, at the first width: the record is shared). A planted bad reply writes nothing it
+      // made; a brief asking for help on graded work is refused before any call.
+      if (scheme === '390') {
+        const got = async () =>
+          fetch(origin + '/api/db?since=0', { headers: { authorization: 'Bearer ' + TOKEN } })
+            .then(r => r.json())
+            .then(b => b.docs);
+        const answerCalls = title =>
+          calls.filter(([, b]) => {
+            const br = briefOf(b);
+            return br && br.job.title === title;
+          }).length;
+        const ran = {};
+        for (const name of Object.keys(SMOKE_JOBS)) {
+          await idle();
+          await say(`Smoke job ${name} (${scheme})`);
+          const title = titleOf(name, scheme);
+          let job = null,
+            res = null;
+          for (let i = 0; i < 40 && !(res && res.data.status !== 'running'); i++) {
+            await page.waitForTimeout(250);
+            const docs = await got();
+            job = docs.find(d => d.c === 'jobs' && d.data.title === title) || null;
+            res = job ? docs.find(d => d.c === 'jobresults' && d.id === job.id) || null : null;
+          }
+          ran[name] = { job, res, asked: answerCalls(title) };
+        }
+        const docs = await got();
+        const talkOf = id =>
+          docs
+            .filter(d => d.c === 'talk')
+            .flatMap(d => Object.entries(d.data.messages || {}))
+            .filter(([k, m]) => m.jobId === id && /-job$/.test(k)); // the job's own message (the chat's reply names it too)
+        const kinds = Object.keys(SMOKE_JOBS).filter(n => !/^(graded|plant-)/.test(n));
+        const bad = [];
+        for (const name of kinds) {
+          const { job, res, asked } = ran[name];
+          if (!job) {
+            bad.push(name + ': no job in D1');
+            continue;
+          }
+          const r = res && res.data;
+          const want = name === 'share-set' ? 'failed' : 'done';
+          if (!r || r.status !== want) bad.push(`${name}: jobresults ${r ? r.status : 'missing'}, expected ${want}`);
+          if (!(job.data.fired && job.data.fired.ok === true))
+            bad.push(name + ': the hand-off is not recorded as made');
+          if (asked !== 1) bad.push(`${name}: ${asked} asks to Claude, expected 1`);
+          if (talkOf(job.id).length !== 1) bad.push(`${name}: ${talkOf(job.id).length} messages in talk, expected 1`);
+          const result = (r && r.result) || {};
+          if (name === 'study-guide' && (!String(result.text).includes(STUB_TEXT['study-guide']) || result.docUrl))
+            bad.push('study-guide: the guide is not saved in E.V.');
+          if (name === 'practice-set') {
+            const set = docs.find(d => d.c === 'sets' && d.id === result.setId);
+            if (!set || (set.data.items || []).length !== 2) bad.push('practice-set: no set of 2 questions in D1');
+          }
+          if (
+            name === 'exam-plan' &&
+            !docs.some(
+              d => d.c === 'plans' && d.data.writer === 'worker' && d.data.exam === 'E4' && d.data.source === 'E.V. app'
+            )
+          )
+            bad.push('exam-plan: no plan in D1');
+        }
+        ok(
+          `${tag} one job of each kind runs through the API and its result is read back from D1`,
+          bad.length === 0,
+          bad.join(' | ') || kinds.join(', ')
+        );
+        const held = [];
+        for (const name of ['plant-shape', 'plant-plan']) {
+          const { job, res, asked } = ran[name];
+          const r = res && res.data;
+          if (!job || !r || r.status !== 'failed' || !/didn’t pass E\.V\.’s checks/.test(r.error || ''))
+            held.push(`${name}: ${r ? r.status + ' ' + r.error : 'no result'}`);
+          if (job && talkOf(job.id).length) held.push(name + ': a message was written');
+          if (asked !== 1) held.push(`${name}: ${asked} asks`);
+        }
+        if (
+          docs.some(
+            d => d.c === 'plans' && d.data.title === 'Stub plan for E4' && !(d.data.days || []).every(x => x.date)
+          )
+        )
+          held.push('plant-plan: its plan was written');
+        ok(`${tag} a planted reply that fails the checks writes nothing it made`, held.length === 0, held.join(' | '));
+        const g = ran.graded;
+        const gr = g.res && g.res.data;
+        ok(
+          `${tag} a brief asking for help on graded work is refused before any call`,
+          !!gr && gr.status === 'failed' && /graded work/.test(gr.error || '') && g.asked === 0,
+          JSON.stringify({ status: gr && gr.status, error: gr && gr.error, asks: g.asked })
+        );
+      }
 
       await page.screenshot({ path: `${shots}/smoke-pwa-${scheme}.png` });
       ok(`${tag} no page errors`, errors.length === 0, errors.slice(0, 3).join(' | '));

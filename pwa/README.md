@@ -24,7 +24,7 @@ phone (installed app) ──/api + token──► Worker ──► D1 (the recor
 Images to Claude (B-322): a photo or an image-only PDF page attached in the conversation goes with the ask as a
 base64 image block; a type the API does not take (an iPhone's HEIC photo) or one over 3.5 MB is redrawn as a JPEG first.
 
-Not in the demo: scheduled runs, the Study Watch reader, your real record.
+Not in the demo: scheduled runs, the Study Watch reader, your real record. Jobs run in the app itself (B-324).
 With no Study Watch reader a study session reads no note: it keeps time, and its questions come from your objectives
 and weak spots (B-314).
 
@@ -81,6 +81,24 @@ the conflict. A batch of up to 50 writes lands whole or not at all. A delete is 
 its suite against `wrangler dev` on a fresh local D1; the pwa-staging workflow adds the version column to the staging
 D1 once and runs the same suite against the staging Worker, writing only into the suite's own `runapi-suite`
 collection.
+
+## Jobs through the API (B-324, D-308)
+
+A job the page starts (a study guide, a practice set, an exam plan, a retro, a clinical prep, a background task) runs at
+once, in the app, instead of waiting on the scheduled worker. The page saves `jobs/<id>` and asks to fire the worker;
+with no mcp that ask finds none, and for a worker kind the shim records the hand-off as made and hands the job to
+`jobs.mjs`. It builds the job's brief with the worker pipeline's own code step (the kind's guide, with the passages,
+objectives, weak spots and dates core gathers), asks Haiku once through `/api/claude` with the do-job answer shape as a
+tool, and checks the reply as the worker run does: its shape, the job-result fold, the identifier check, each write's
+schema, writers and size. A reply that fails any of them writes nothing it made; the job is marked failed with the
+reason, to try again. What passes goes to D1 through the run API (`jobresults/<id>`, what the job made, one message in
+`talk/<date>`), pinned to versions. A brief asking for help on graded work is refused before any call (B-01). Two kinds
+differ from claude.ai: a study guide is saved in E.V. (its text in the job's result and message), not as a Claude Doc;
+a shareable practice page is published on claude.ai only, so the app says so. Builder kinds stay off the app (D-304).
+In the browser the runner and the core modules it imports are served as ES modules (`build-pwa` copies them, with
+`jobs-spec.json`, the spec sections and schemas it reads); `node-fs.mjs` and `node-path.mjs` stand in for node's.
+The smoke starts one job of each kind from the conversation; the pwa-staging workflow with `jobs: true` runs one real
+Haiku job of each kind on staging (`tools/pwa-jobs.mjs`) and reads it back from the staging D1.
 
 ## The demo's Worker
 

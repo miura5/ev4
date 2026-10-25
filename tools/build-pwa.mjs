@@ -4,9 +4,13 @@
 // It wraps that record's built page, byte for byte, in the document claude.ai adds at publish, and puts the shim
 // (pwa/bridge.js) first, so window.claude exists before the page asks for it. The app is named "E.V.": its window
 // title and icon label come from the wrapper's head, ahead of the page's own title. Run `node tools/build.mjs` first.
+// B-324: beside the shim, the app's job runner (pwa/jobs.mjs) and the core modules it imports, served as ES modules at
+// the paths they have in the repository (jobs.mjs at the root, core/ beside it), with an import map that gives node:fs
+// and node:path their browser stand-ins; and jobs-spec.json, the spec sections and schemas the runner reads.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { SPEC_KEYS } from '../pwa/jobs.mjs';
 
 export const RECORDS = ['staging', 'live'];
 export const NAME = 'E.V.';
@@ -23,11 +27,41 @@ export const HEAD =
   '<meta name=apple-mobile-web-app-capable content=yes><meta name=mobile-web-app-capable content=yes>' +
   '<meta name=apple-mobile-web-app-status-bar-style content=black-translucent><meta name=theme-color content="#1c1a17">' +
   '<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>' +
+  '<script type=importmap>{"imports":{"node:fs":"./node-fs.mjs","node:path":"./node-path.mjs"}}</script>' +
   '<script src="bridge.js"></script></head><body>';
 export const FOOT = '</body></html>';
 
 // The wrapped document: the head, then the record's built page exactly as the build wrote it, then the foot.
 export const wrap = page => Buffer.concat([Buffer.from(HEAD), page, Buffer.from(FOOT)]);
+
+/** B-324: the runner and every module it imports, by relative import, as repository paths (pwa/jobs.mjs first). */
+export function jobModules(root = ROOT, entry = 'pwa/jobs.mjs') {
+  const seen = [];
+  const walk = rel => {
+    if (seen.includes(rel)) return;
+    seen.push(rel);
+    const src = fs.readFileSync(path.join(root, rel), 'utf8');
+    for (const m of src.matchAll(/^\s*(?:import|export)\s[^'"]*?from\s+['"](\.{1,2}\/[^'"]+)['"]/gm))
+      walk(path.posix.normalize(path.posix.join(path.posix.dirname(rel), m[1])));
+  };
+  walk(entry);
+  return seen;
+}
+/** Where a module is served: pwa/<f> at the root, core/<f> under core/ (so '../core/x' from the root resolves). */
+export const servedAt = rel => (rel.startsWith('pwa/') ? rel.slice(4) : rel);
+export const JOB_SHIMS = ['node-fs.mjs', 'node-path.mjs'];
+
+export function jobsSpec(root = ROOT) {
+  const spec = JSON.parse(fs.readFileSync(path.join(root, 'spec/ev.spec.json'), 'utf8'));
+  const dir = path.join(root, 'spec/schemas');
+  const schemas = {};
+  for (const f of fs
+    .readdirSync(dir)
+    .filter(f => f.endsWith('.schema.json'))
+    .sort())
+    schemas[f.slice(0, -'.schema.json'.length)] = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
+  return { spec: Object.fromEntries(SPEC_KEYS.map(k => [k, spec[k]])), schemas };
+}
 
 export function buildPwa({ record, root = ROOT, out = path.join(root, 'pwa', 'public') } = {}) {
   if (!RECORDS.includes(record)) throw new Error('build-pwa: --record must be one of ' + RECORDS.join(', '));
@@ -39,6 +73,13 @@ export function buildPwa({ record, root = ROOT, out = path.join(root, 'pwa', 'pu
   for (const f of fs.readdirSync(out)) fs.rmSync(path.join(out, f), { recursive: true, force: true });
   for (const f of fs.readdirSync(from)) if (f !== 'index.html') fs.copyFileSync(path.join(from, f), path.join(out, f));
   for (const f of SHIM) fs.copyFileSync(path.join(root, 'pwa', f), path.join(out, f));
+  for (const rel of jobModules(root)) {
+    const to = path.join(out, servedAt(rel));
+    fs.mkdirSync(path.dirname(to), { recursive: true });
+    fs.copyFileSync(path.join(root, rel), to);
+  }
+  for (const f of JOB_SHIMS) fs.copyFileSync(path.join(root, 'pwa', f), path.join(out, f));
+  fs.writeFileSync(path.join(out, 'jobs-spec.json'), JSON.stringify(jobsSpec(root)));
   fs.writeFileSync(path.join(out, 'index.html'), wrap(fs.readFileSync(path.join(from, 'index.html'))));
   return { record, from, out, files: fs.readdirSync(out) };
 }

@@ -3,13 +3,20 @@
 # nothing is ever deleted there), and the ev-staging Worker serving the staging page with its own token. Then the
 # check: /api/db answers 401 without the token, and with it the counts per collection equal the seed's. B-312: the
 # version column is added once to a D1 made before it, and the run API suite (pwa/run-api.test.mjs) runs against the
-# Worker; it writes only into its own collection, and nothing is deleted.
+# Worker; it writes only into its own collection, and nothing is deleted. B-324: with the input jobs set to true, one
+# real Haiku job of each kind is started from the app's page in Chromium, run through the shim and the Worker, and read
+# back from the staging D1 (tools/pwa-jobs.mjs); what it writes carries the app's source and is additive.
 # Started by hand only (gh workflow run pwa-staging.yml): never on a push or a pull request, and staging only; the live
 # Worker and a live D1 are never named here. Secrets reach wrangler and the check through the environment or stdin,
 # never on a command line or in the log.
 name: pwa-staging
 on:
   workflow_dispatch:
+    inputs:
+      jobs:
+        description: 'B-324: also run one real Haiku job of each kind and read it back from the staging D1'
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -18,7 +25,7 @@ concurrency:
 jobs:
   staging:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -109,3 +116,10 @@ jobs:
           EV_TOKEN: ${{ secrets.EV_STAGING_TOKEN }}
           EV_RUN_API_URL: ${{ steps.deploy.outputs.url }}
         run: node --test pwa/run-api.test.mjs
+      - name: one real Haiku job of each kind, read back from the staging D1 (B-324)
+        if: ${{ inputs.jobs }}
+        env:
+          EV_TOKEN: ${{ secrets.EV_STAGING_TOKEN }}
+        run: |
+          npx playwright install --with-deps chromium >/dev/null
+          node tools/pwa-jobs.mjs "${{ steps.deploy.outputs.url }}" shots-jobs

@@ -1,0 +1,219 @@
+// B-324 (D-308): the app's job runner (pwa/jobs.mjs) with no Worker and no browser: each worker kind on the synthetic
+// record, answered by the stub (pwa/job-stub.mjs); the checks that refuse a reply whole; the graded refusal before any
+// call; the pins its writes carry. The same runner in the browser is the smoke's (npm run smoke:pwa).
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import * as J from '../pwa/jobs.mjs';
+import { jobReply, PLANTS } from '../pwa/job-stub.mjs';
+import { seedRecord } from '../pwa/seed.mjs';
+import { loadSchemas } from '../core/schemas.mjs';
+import { makeValidator } from '../core/validate.mjs';
+import { jobModules, servedAt, jobsSpec, HEAD } from '../tools/build-pwa.mjs';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
+const schemas = loadSchemas();
+const validate = makeValidator(schemas);
+const NOW = new Date('2026-10-25T15:00:00Z');
+
+function withJob(kind, { title = 'Test ' + kind, brief = 'fluid volume deficit' } = {}) {
+  const db = J.asRunDb(seedRecord());
+  const id = 'job-test-' + kind;
+  db.jobs = [
+    ...(db.jobs || []),
+    { id, schema: 2, writer: 'page', at: NOW.toISOString(), source: 'E.V. Home', kind, title, brief },
+  ];
+  return { db, id };
+}
+async function run(kind, opts) {
+  const { db, id } = withJob(kind, opts);
+  const asks = [];
+  const writes = [];
+  const r = await J.runJob({
+    db,
+    spec,
+    schemas,
+    jobId: id,
+    now: NOW,
+    release: 'v4.5.5+1',
+    ask: async body => (asks.push(body), jobReply(body)),
+    write: async w => writes.push(w),
+  });
+  return { r, asks, writes, id };
+}
+const flat = writes => writes.flat();
+
+test('B-324: each worker kind runs on the record and writes what the worker run would', async () => {
+  const briefs = {
+    'exam-plan': 'a study plan for E4',
+    'exam-retro': 'the retro for E3',
+    'share-set': 'drill-E4-ch39',
+    'clinical-prep': '2026-10-28',
+  };
+  for (const kind of Object.keys(spec.jobs.kinds)) {
+    const { r, asks, writes, id } = await run(kind, { brief: briefs[kind] || 'fluid volume deficit' });
+    assert.equal(asks.length, 1, kind + ': one ask');
+    const all = flat(writes);
+    // the running status first, on its own; then the fold's writes in one batch
+    assert.equal(writes[0].length, 1);
+    assert.equal(writes[0][0].data.status, 'running');
+    const done = all.filter(w => w.collection === 'jobresults' && w.data.status !== 'running');
+    assert.equal(done.length, 1, kind);
+    assert.equal(done[0].data.status, kind === 'share-set' ? 'failed' : 'done', kind + ': ' + r.said);
+    assert.ok(
+      all.some(w => w.collection === 'talk'),
+      kind + ': one message in talk'
+    );
+    for (const w of all) {
+      assert.equal(w.data.source, J.APP_SOURCE, `${kind}: ${w.collection}/${w.id} carries the app's source`);
+      if (w.op === 'set') assert.ok(validate(w.collection, w.data, { id: w.id }).ok, `${kind}: ${w.collection}`);
+    }
+    assert.ok(all.every(w => w.id === id || w.collection !== 'jobresults'));
+    if (kind === 'practice-set') assert.equal(all.find(w => w.collection === 'sets').data.items.length, 2);
+    if (kind === 'exam-plan') assert.ok(all.some(w => w.collection === 'plans' && w.data.exam === 'E4'));
+  }
+});
+
+test('B-324: the ask carries the kind’s guide, its material and the do-job shape as the one tool', async () => {
+  const { asks } = await run('practice-set');
+  const body = asks[0];
+  assert.deepEqual(body.tool_choice, { type: 'tool', name: 'answer' });
+  assert.deepEqual(body.tools[0].input_schema, spec.pipelines.worker.steps.find(s => s.id === 'do-job').output);
+  const text = body.messages[0].content;
+  assert.ok(text.includes(spec.jobs.kinds['practice-set'].guide));
+  assert.match(text, /"passages":\[\{"ref":"materials\//);
+  assert.match(text, /no help with graded or submitted work/);
+});
+
+test('B-324: a study guide is saved in E.V., not as a Claude Doc; a shareable page is not made in the app', async () => {
+  const guide = await run('study-guide');
+  const text = guide.asks[0].messages[0].content;
+  const said = text.split('The kind’s guide: ')[1].split('\n')[0];
+  assert.ok(!/Claude Docs tools/.test(said) && /saves it in E\.V\./.test(said), 'the app’s guide asks for no doc');
+  assert.equal(guide.asks[0].tools[0].input_schema.properties.text.maxLength, 4000);
+  const share = await run('share-set', { brief: 'drill-E4-ch39' });
+  const brief = JSON.parse(share.asks[0].messages[0].content.match(/```json\n([\s\S]*?)\n```/)[1]);
+  assert.equal(brief.groups, undefined, 'no publish is printed');
+  assert.match(brief.context.refused, /can’t publish pages/);
+});
+
+test('B-324: a reply that fails the checks writes nothing it made; the job is marked failed', async () => {
+  for (const [kind, title, why] of [
+    ['general', PLANTS.shape + ' x', /answer: \/text: required/],
+    ['exam-plan', PLANTS.plan + ' x', /plans\/E4-\d+: \/days\/0\/date: required/],
+  ]) {
+    const { r, writes } = await run(kind, { title, brief: 'a study plan for E4' });
+    assert.equal(r.status, 'refused');
+    assert.match(r.problems[0], why);
+    const all = flat(writes);
+    assert.deepEqual(
+      all.map(w => `${w.collection}:${w.data.status}`),
+      ['jobresults:running', 'jobresults:failed'],
+      'only the job’s own status'
+    );
+    assert.match(all[1].data.error, /didn’t pass E\.V\.’s checks/);
+    assert.ok(validate('jobresults', all[1].data).ok && validate('jobresults', all[0].data).ok);
+  }
+});
+
+test('B-324 (B-01): a brief asking for help on graded work is refused before any call', async () => {
+  const { r, asks, writes } = await run('general', { brief: 'Proofread my graded care plan draft before I submit it' });
+  assert.equal(asks.length, 0);
+  assert.equal(r.status, 'failed');
+  const res = flat(writes).find(w => w.collection === 'jobresults');
+  assert.equal(res.data.status, 'failed');
+  assert.match(res.data.error, /graded work, so it stays yours/);
+});
+
+test('B-324: a builder kind, or a job with a result, is left as the worker run leaves it', async () => {
+  const { r, asks } = await run('build');
+  assert.equal(r.status, 'skipped');
+  assert.equal(asks.length, 0);
+  const { db, id } = withJob('general');
+  db.jobresults = [{ id, status: 'done' }];
+  const again = await J.runJob({ db, spec, schemas, jobId: id, release: 'v4', ask: assert.fail, write: assert.fail });
+  assert.equal(again.status, 'skipped');
+});
+
+test('B-324: a value that could be a real patient’s, in what a reply made, is held back as a run holds it', async () => {
+  const { db, id } = withJob('general');
+  const prepared = J.prepare({ db, spec, jobId: id, now: NOW, release: 'v4' });
+  const r = J.finish({ prepared, answer: { text: 'Her MRN 4417203 was on the chart.' }, db, spec, schemas });
+  assert.ok(r.ok);
+  assert.ok(!JSON.stringify(r.writes.filter(w => w.collection !== 'idchecks')).includes('4417203'));
+  const held = r.writes.find(w => w.collection === 'idchecks');
+  assert.equal(held.data.verdict, 'unsure');
+  assert.equal(held.data.by, 'held');
+});
+
+test('B-324: writes are pinned to the version the record holds; a create that appeared meanwhile is a conflict', async () => {
+  const db = { talk: [{ id: '2026-10-25' }] };
+  const v = { 'talk/2026-10-25': 4, 'jobresults/j': 2 };
+  const versionOf = async (c, id) => v[c + '/' + id] ?? null;
+  const out = await J.pinned(
+    [
+      { op: 'update', collection: 'talk', id: '2026-10-25', data: {} },
+      { op: 'set', collection: 'sets', id: 'job-x', data: {} },
+    ],
+    versionOf,
+    db
+  );
+  assert.deepEqual(
+    out.map(w => [w.doc_id, w.if_version]),
+    [
+      ['2026-10-25', 4],
+      ['job-x', undefined],
+    ]
+  );
+  await assert.rejects(
+    J.pinned([{ op: 'set', collection: 'jobresults', id: 'j', data: {} }], versionOf, db),
+    e => e.conflict
+  );
+});
+
+test('B-324: the app serves the runner and every module it imports, at paths its imports resolve to', () => {
+  const mods = jobModules(ROOT);
+  assert.equal(mods[0], 'pwa/jobs.mjs');
+  for (const m of ['core/evcore.mjs', 'core/validate.mjs', 'core/steps-worker.mjs', 'core/steps-shared.mjs'])
+    assert.ok(mods.includes(m), m);
+  // every relative import of a served module resolves, as a URL, to another served module
+  const served = new Set(mods.map(servedAt));
+  for (const m of mods) {
+    const src = fs.readFileSync(path.join(ROOT, m), 'utf8');
+    for (const [, rel] of src.matchAll(/^\s*(?:import|export)\s[^'"]*?from\s+['"](\.{1,2}\/[^'"]+)['"]/gm)) {
+      const url = new URL(rel, 'https://app.invalid/' + servedAt(m)).pathname.slice(1);
+      assert.ok(served.has(url), `${m} imports ${rel}: ${url} is served`);
+    }
+    for (const [, bare] of src.matchAll(/^\s*(?:import|export)\s[^'"]*?from\s+['"]([^.'"][^'"]*)['"]/gm))
+      assert.ok(['node:fs', 'node:path'].includes(bare), `${m} imports ${bare}, which the import map does not give`);
+  }
+  assert.match(
+    HEAD,
+    /<script type=importmap>\{"imports":\{"node:fs":"\.\/node-fs\.mjs","node:path":"\.\/node-path\.mjs"\}\}<\/script><script src="bridge\.js">/
+  );
+  const js = jobsSpec(ROOT);
+  assert.deepEqual(Object.keys(js.spec), J.SPEC_KEYS);
+  assert.ok(js.schemas.jobresults && js.schemas.talk);
+});
+
+test('B-324: the staging count check leaves out what the app’s job runner wrote; the proof judges each kind', async () => {
+  const { countsOf } = await import('../tools/pwa-staging.mjs');
+  const { judge, PROOF_JOBS, EXPECTED } = await import('../tools/pwa-jobs.mjs');
+  const docs = [
+    { c: 'talk', id: 'a', data: { source: 'E.V. Home' } },
+    { c: 'talk', id: 'b', data: { source: J.APP_SOURCE } },
+    { c: 'jobs', id: 'job-proof-x', data: { source: J.APP_SOURCE } },
+  ];
+  assert.deepEqual(countsOf({ docs }), { talk: 1 });
+  assert.deepEqual(Object.keys(PROOF_JOBS), Object.keys(spec.jobs.kinds), 'the proof starts one job of each kind');
+  const job = { data: { fired: { ok: true } } };
+  const done = { data: { status: 'done', result: { text: 'x', setId: 's' } } };
+  assert.ok(judge('practice-set', job, done, { id: 's', data: { items: [{}] } }).every(l => l.ok));
+  assert.ok(!judge('practice-set', job, done, null).every(l => l.ok), 'a set must be saved');
+  assert.ok(!judge('general', job, { data: { status: 'failed', error: 'x' } }).every(l => l.ok));
+  assert.equal(EXPECTED('share-set'), 'failed');
+  assert.ok(!judge('general', { data: { fired: { ok: false } } }, done).every(l => l.ok), 'handed over at once');
+});

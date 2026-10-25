@@ -113,7 +113,7 @@ test('B-322: the Worker passes an image block to the Claude API as the page sent
     const body = JSON.parse(sent[0].init.body);
     assert.deepEqual(body.messages, messages, 'the image block reaches the API unchanged');
     assert.equal(body.model, 'claude-haiku-5-5', 'the page cannot pick the model');
-    assert.equal(body.max_tokens, 4096, 'nor the length cap');
+    assert.equal(body.max_tokens, 8192, 'nor the length cap'); // B-324: 8,192, for a job's answer
   } finally {
     globalThis.fetch = realFetch;
   }

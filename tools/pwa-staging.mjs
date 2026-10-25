@@ -4,15 +4,18 @@
 //   node tools/pwa-staging.mjs reach <worker url>      no token: only that /api/db answers 401 without one
 // The full check: /api/db answers 401 with no token and with a wrong one; with the token, the documents per
 // collection equal the made-up record the app is seeded with (pwa/seed.mjs, from test/data/synthetic.cjs). It prints
-// counts and statuses only: never the token, never a document.
+// counts and statuses only: never the token, never a document. B-324: a document the app's job runner wrote (its
+// source is the app's: the staging proof's jobs and what they made) is the app's own, not the seed's, and is left out.
 import { fileURLToPath } from 'node:url';
+import { APP_SOURCE } from '../pwa/jobs.mjs';
 import { seedCounts } from '../pwa/seed.mjs';
 import { SUITE, SUITE_DOCS_PER_RUN } from '../pwa/runapi.js';
 
-/** Documents per collection in a GET /api/db answer. */
+/** Documents per collection in a GET /api/db answer, leaving out those the app's job runner wrote (B-324). */
 export function countsOf(body) {
   const out = {};
-  for (const d of (body && body.docs) || []) out[d.c] = (out[d.c] || 0) + 1;
+  for (const d of (body && body.docs) || [])
+    if (!(d.data && d.data.source === APP_SOURCE)) out[d.c] = (out[d.c] || 0) + 1;
   return out;
 }
 

@@ -5,6 +5,10 @@
 //   user:   whoever holds the token is the owner (one person).
 //   sample: Claude on Haiku through the Worker's /api/claude (D-299); the key stays on the Worker.
 //   mcp:    none (the scheduled runs and the Study Watch reader live on claude.ai and the Mac).
+//   jobs:   B-324 (D-308): a job runs here at once, through the Worker, instead of waiting on the scheduled worker. The
+//           page saves jobs/<id>, then asks to fire the worker; with no mcp that ask comes back mcp_unavailable, and the
+//           page records it on the job. For a worker kind the shim records the hand-off as made instead and runs the
+//           job (jobs.mjs, the worker's own brief, fold and checks), writing what passes through the run API.
 (function () {
   const KEY = 'ev.token';
   const read = () => {
@@ -93,6 +97,8 @@
     return t;
   }
   async function save(c, id, doc) {
+    const job = await jobHandOff(c, doc);
+    if (job) doc = job;
     const r = await api('db/' + encodeURIComponent(c) + '/' + encodeURIComponent(id), {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
@@ -105,6 +111,81 @@
     }
     (db[c] = db[c] || {})[id] = doc;
     emit(c);
+    if (job) runAppJob(id);
+  }
+
+  // ---- B-324: jobs through the API. jobs-spec.json is what the runner reads of the spec, with the schemas.
+  let jobsSpec = null;
+  const loadJobsSpec = () =>
+    (jobsSpec =
+      jobsSpec ||
+      fetch('jobs-spec.json').then(r => {
+        if (!r.ok) throw new Error('jobs-spec.json answered ' + r.status);
+        return r.json();
+      }));
+  /** The job with its hand-off recorded as made, when the page records that firing the worker found no mcp. */
+  async function jobHandOff(c, doc) {
+    const f = doc && doc.fired;
+    if (c !== 'jobs' || !f || f.ok !== false || f.error !== 'mcp_unavailable') return null;
+    const { spec } = await loadJobsSpec().catch(() => ({ spec: null }));
+    if (!spec || !(spec.jobs.kinds || {})[doc.kind]) return null; // a builder kind stays as the page wrote it
+    return { ...doc, fired: { at: f.at, ok: true } };
+  }
+  const running = new Set();
+  const getJson = async path => {
+    const r = await api(path);
+    if (r.status === 404) return null;
+    if (!r.ok) throw new Error(path.split('?')[0] + ' answered ' + r.status);
+    return r.json();
+  };
+  // A document the shim's copy does not hold is written unpinned: if it appeared meanwhile, the batch is refused (409)
+  // and the job folds again over the record as it is now.
+  const versionOf = async (c, id) => {
+    if (!(db[c] && db[c][id])) return null;
+    const d = await getJson('run/get?collection=' + encodeURIComponent(c) + '&doc_id=' + encodeURIComponent(id));
+    return d ? d.version : null;
+  };
+  async function runAppJob(id) {
+    if (running.has(id)) return;
+    running.add(id);
+    try {
+      const [{ spec, schemas }, J] = await Promise.all([loadJobsSpec(), import('./jobs.mjs')]);
+      const fresh = async () => {
+        const ch = await pull();
+        if (ch instanceof Set) ch.forEach(emit);
+        return J.asRunDb(db);
+      };
+      const meta = document.querySelector('meta[name="ev-release"]');
+      await J.runJob({
+        db: await fresh(),
+        spec,
+        schemas,
+        jobId: id,
+        release: meta ? meta.content : 'v4',
+        reload: fresh,
+        ask: async body => {
+          const r = await api('claude', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(body),
+          });
+          if (!r.ok) throw new Error('the Worker answered ' + r.status);
+          return r.json();
+        },
+        write: async (writes, seen) => {
+          const body = JSON.stringify({ writes: await J.pinned(writes, versionOf, seen) });
+          const r = await api('run/batch', { method: 'POST', headers: { 'content-type': 'application/json' }, body });
+          if (r.status === 409) throw Object.assign(new Error('a document changed'), { conflict: true });
+          if (!r.ok) throw new Error('not saved (' + r.status + ')');
+          const ch = await pull();
+          if (ch instanceof Set) ch.forEach(emit);
+        },
+      });
+    } catch (e) {
+      console.warn('E.V. app: job ' + id + ' stopped: ' + (e && e.message));
+    } finally {
+      running.delete(id);
+    }
   }
 
   const ops = {
