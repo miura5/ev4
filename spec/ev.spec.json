@@ -2371,7 +2371,7 @@
     ],
     "macBound": true,
     "push": false,
-    "trigger": null,
+    "trigger": "trig_01Gxz5Yv4Q21UrdY8kK6iYza",
     "watchSchedule": "CRON_TZ=America/Chicago 20 20 * * *"
    },
    "weekly": {
@@ -2418,7 +2418,7 @@
     ],
     "macBound": true,
     "push": false,
-    "trigger": null,
+    "trigger": "trig_01P9SCjuNLjRxbzWgZBnHBEk",
     "note": "D-322 (B-317): restores the newest staging backup (Mac or R2 export, spec.registry.records.staging.runs.backup) into the scratch D1 and checks counts and hashes per collection. Slot agreed with Matt Oct 18."
    }
   },
