@@ -5739,9 +5739,9 @@
   "title": "The test suite cleans up after itself: every temporary copy a test makes (ev4-run, ev4-copy, ev4-mark, ev4-restore, ev4-origin, ev4-build, ev4-guard, ev4-src and the rest) is removed when its test ends, so a long session's disk never fills (Oct 24: about 15,000 left over filled a build chat's disk)",
   "dod": "After npm test, no ev4-* entry the run made is left in the temporary folder (a test counts them before and after); npm test green; an independent review finds no gaps.",
   "milestone": "trim",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
-  "notes": "",
+  "notes": "Taken (urgent, from the build manager): make every test remove its own temporary folders, even on a failed assertion, and add a test that counts ev temp entries before and after a slice of the suite.",
   "commit": null,
   "source": "build chat (Oct 24)"
  },
