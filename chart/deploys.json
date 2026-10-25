@@ -4219,5 +4219,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "a1ad965",
+  "time": "2026-10-25T12:10:39.431Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "3dfe1fd",
+  "tasks": [
+   "B-337"
+  ],
+  "summary": "Fidelity",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
