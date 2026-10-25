@@ -5527,7 +5527,7 @@
   "depends": [
    "B-311"
   ],
-  "notes": "claimed by lane app",
+  "notes": "built; local suite 7/7 against wrangler dev, staging suite green in pwa-staging run 40184790655 (version column added to the staging D1)",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
