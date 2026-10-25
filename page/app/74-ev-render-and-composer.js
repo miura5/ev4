@@ -177,15 +177,16 @@
       const qc = $('qchips');
       if (qc.dataset.k !== chips.join('|')) {
         qc.dataset.k = chips.join('|');
-        qc.replaceChildren(
-          ...chips.map(c => {
-            const b = /^Resume .+ · \d+ of \d+$/.test(c)
-              ? btn(c, () => skillPark(false))
-              : btn(c, () => guard(null, () => quick(c)));
-            b.className = 'qchip';
-            return b;
-          })
-        );
+        const bs = chips.map(c => {
+          const b = /^Resume .+ · \d+ of \d+$/.test(c)
+            ? btn(c, () => skillPark(false))
+            : btn(c, () => guard(null, () => quick(c)));
+          b.className = 'qchip';
+          return b;
+        });
+        // B-345 (D-312): five chips sit in the demo's rows, three then two, from 600 px (a quiet line break).
+        if (bs.length === 5) bs.splice(3, 0, el('span', 'qc-br'));
+        qc.replaceChildren(...bs);
       }
       syncChips();
       renderCheckin();
