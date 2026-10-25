@@ -5997,5 +5997,22 @@
    "outcome": "task",
    "at": "2026-10-25T12:02:18.146Z"
   }
+ },
+ {
+  "id": "B-344",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Fidelity fix: the sidebar's first section reads E.V. where the demo and an earlier task say Conversation, and its icons differ from the demo's (speech bubble, sun, book, bars, archive).",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "fidelity review of B-334, Oct 25 (D-312)",
+  "words": "Fidelity fix: the sidebar's first section reads E.V. where the demo and an earlier task say Conversation, and its icons differ from the demo's (speech bubble, sun, book, bars, archive).",
+  "reportedAt": "2026-10-25T12:03:13.729Z",
+  "board": {
+   "row": "v4 B-344: Fidelity fix: the sidebar's first section reads E.V. where the demo…"
+  }
  }
 ]
