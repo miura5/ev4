@@ -4284,5 +4284,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "662a8b3",
+  "time": "2026-10-25T12:21:34.375Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "ac5415a",
+  "tasks": [
+   "B-343"
+  ],
+  "summary": "Fidelity fix: on the phone an opened task does not come into view;…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
