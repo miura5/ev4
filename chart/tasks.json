@@ -7021,7 +7021,7 @@
   "milestone": "v4.9 cleanup",
   "status": "open",
   "depends": [],
-  "notes": "Also from B-357's second review: prep.cjs's week-line checks accept 'Three or Four graded'; tighten to the count the page now always shows (Four on the synthetic record) and rename the check.",
+  "notes": "Also from the final release review at 10798d8 (verdict: ready for live): a session's link to an open idea isn't shown or stored; Space's keyup activation is unproven outside Chromium (guarded against a double answer); the per-class [hidden] rules are now redundant; gradedWeek reads Canvas dates without his date edits (matches the pane today).",
   "commit": null,
   "source": "release code review (page), 368b104..fc9133e, Oct 25",
   "words": "Dead code and styles for removed screens remain; a stale saved Study view can reopen a closed set; his own snoozes can't be brought back once the panel closes.",
