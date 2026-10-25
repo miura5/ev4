@@ -120,6 +120,23 @@ test("B-184: under the marker log's push of a commit touching a guarded path is 
   assert.equal(C.pushRecord(dir, null).pushed, true);
 });
 
+test("B-184: a guarded change another chat put on main is not the run's: only the run's own commits are held", () => {
+  const dir = copyRepo({ push: true });
+  const g = (...a) => execFileSync('git', ['-C', dir, ...a], { encoding: 'utf8' }).trim();
+  const head = g('rev-parse', 'HEAD');
+  // Another chat, with Matt present, changes a guarded path on main after the run began.
+  fs.appendFileSync(path.join(dir, 'tools', 'gate.mjs'), '\n// by a build chat\n');
+  g('commit', '-qam', 'a build chat changes a guarded path');
+  g('push', '-q', 'origin', 'HEAD:main');
+  g('fetch', '-q', 'origin');
+  // The run's own commit touches nothing guarded.
+  fs.appendFileSync(path.join(dir, 'BACKLOG.md'), '\n');
+  g('commit', '-qam', "the run's own commit");
+  const run = { at: new Date().toISOString(), head };
+  assert.equal(pushRefusal(dir, run), null);
+  assert.equal(C.pushRecord(dir, run).pushed, true);
+});
+
 test('B-184: under the marker log decision refuses a tenet, a change to one, and superseding or amending one', () => {
   const rec = {
     decisions: [
