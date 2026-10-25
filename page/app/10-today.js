@@ -130,24 +130,21 @@
         .find(x => E.similarity(x.title || '', it.text || '') >= 0.3);
       return named ? named.date : null;
     }
-    // B-296 (C-10): the name opens the task's panel (the right panel from 1200 px, under the pane below it)
-    // B-343 (D-312): on the phone (under 600 px) the opened task takes the view in place of the list, as the demo's
-    // TaskDetail board at 390: a back arrow before the header's "Today" closes it and returns to the list where it was.
+    // B-364 (D-312): the name opens the task as the TaskDetail board's full view at every size, in place of the list; the
+    // header's back arrow before "Today" closes it and returns to the list where it was (B-343 on the phone).
     const phone = () => innerWidth < 600;
     function openTask(id) {
-      if (phone() && !(ui.taskSel && !ui.taskGone)) ui.taskScroll = window.scrollY;
-      ui.taskSel = id; // Close closes it; a second tap on the name leaves it open
+      if (!(ui.taskSel && !ui.taskGone)) ui.taskScroll = window.scrollY;
+      ui.taskSel = id;
       ui.taskGone = null;
       render();
-      const p = $('today-task');
-      if (p && !p.hidden && phone()) window.scrollTo(0, 0);
-      else if (p && !p.hidden && innerWidth < 1200) p.scrollIntoView({ block: 'nearest' });
+      window.scrollTo(0, 0);
     }
     function closeTask() {
       ui.taskSel = null;
       ui.taskGone = null;
       render();
-      if (phone()) window.scrollTo(0, ui.taskScroll || 0);
+      window.scrollTo(0, ui.taskScroll || 0);
       ui.taskScroll = 0;
     }
     const taskBack = (() => {
@@ -158,10 +155,10 @@
       b.addEventListener('click', closeTask);
       const t = $('mh-title');
       if (t) t.before(b);
-      // a tab tapped on the phone leaves the task: Today comes back as its list
+      // a view picked in the nav leaves the task: Today comes back as its list
       for (const tab of document.querySelectorAll('[data-tab]'))
         tab.addEventListener('click', () => {
-          if (phone() && ui.taskSel) {
+          if (ui.taskSel) {
             ui.taskSel = null;
             ui.taskGone = null;
             ui.taskScroll = 0;
@@ -528,6 +525,20 @@
       else await editList(today, { action: 'restore', id: it.id }, 'Matt');
       if (gone.tomorrowId) await editList(E.addDays(today, 1), { action: 'remove', id: gone.tomorrowId }, 'Matt');
     }
+    // B-364 (D-312): an opened task is the TaskDetail board's full view at every size. The main pane carries the
+    // breadcrumb with 'N of M' and up and down, the large title with its tick, its description and Where it came from;
+    // the right panel (under it below 1200 px) the properties card, the one primary Start and Snooze to tomorrow. The
+    // header's back arrow returns to the list where it was; no Close, no Remove from today.
+    function taskOrder(items, isDone) {
+      const shown = items.filter(i => i.tag !== 'EXAM');
+      const f = FILTERS.some(x => x[0] === ui.todayFilter) ? ui.todayFilter : 'all';
+      const vis = shown.filter(it => f === 'all' || catOf(it) === f);
+      return [
+        ...vis.filter(it => !isDone(it) && !it.deferred),
+        ...vis.filter(it => !isDone(it) && it.deferred),
+        ...vis.filter(it => isDone(it)),
+      ];
+    }
     function renderTask(items, isDone, day) {
       let panel = $('today-task');
       if (!panel) {
@@ -537,31 +548,74 @@
         panel.setAttribute('aria-label', 'Task');
         document.querySelector('#p-today .col-side').prepend(panel);
       }
+      let main = $('today-taskmain');
+      if (!main) {
+        main = el('div', 'tv-main');
+        main.id = 'today-taskmain';
+        main.setAttribute('role', 'region');
+        main.setAttribute('aria-label', 'Task');
+        document.querySelector('#p-today .col-main').prepend(main);
+      }
       const G = ui.taskGone;
       const it = G ? G.it : items.find(x => x.id === ui.taskSel);
       if (!it) ui.taskSel = null;
-      panel.hidden = !it || ui.todayView === 'week';
-      // B-336 (D-312): an opened task is the panel's only card; the others step aside until it closes
-      for (const c of panel.parentNode.children)
-        if (c !== panel) c.classList.toggle('tk-away', !panel.hidden);
-      // B-343: the phone shows the task alone, with the header's back arrow
-      $('p-today').classList.toggle('tk-open', !panel.hidden);
-      document.body.classList.toggle('task-open', !panel.hidden);
-      if (!it) {
-        panel.dataset.k = '';
+      const open = !!it && ui.todayView !== 'week';
+      panel.hidden = main.hidden = !open;
+      // an opened task is the view: the list, the toolbar and the panel's other cards step aside until it closes
+      for (const c of [...panel.parentNode.children, ...main.parentNode.children])
+        if (c !== panel && c !== main) c.classList.toggle('tk-away', open);
+      $('p-today').classList.toggle('tk-open', open);
+      document.body.classList.toggle('task-open', open);
+      // the header reads "Today" while a task is open, as the board's
+      const head = $('mh-title'),
+        tb = $('tab-today');
+      if (head && tb && ui.tab === 'today')
+        head.textContent = open ? tb.title : tb.title + (typeof headDate === 'function' ? ' · ' + headDate(today) : '');
+      if (!open) {
+        panel.dataset.k = main.dataset.k = '';
+        main.replaceChildren();
         return panel.replaceChildren();
       }
       // drawn again only when what it shows changes, so a tap on its buttons is never lost to a redraw
       const f = G ? null : taskFacts(it, isDone, day);
-      const k = JSON.stringify([it.id, it.text, G && G.line, f, isDone(it), startable(it, isDone), !!openItem(it)]);
-      if (panel.dataset.k === k && panel.firstChild) return;
+      const order = taskOrder(items, isDone);
+      const i = Math.max(
+        0,
+        order.findIndex(x => x.id === it.id)
+      );
+      const k = JSON.stringify([
+        it.id,
+        it.text,
+        G && G.line,
+        f,
+        isDone(it),
+        startable(it, isDone),
+        !!openItem(it),
+        order.map(x => x.id),
+      ]);
+      if (panel.dataset.k === k && main.firstChild) return;
       panel.dataset.k = k;
       const text = String(it.text || '').replace(/\s*\(~?\d+\s*min\)\s*$/i, '');
-      const close = btn('Close', closeTask, { cls: 'btn ghost sm tp-close' });
-      close.setAttribute('aria-label', 'Close the task');
-      const head = el('div', 'card-head');
+      // the board's head row: Today › Study (or Classes), N of M, up and down through the list as it is shown
+      const tvh = el('div', 'tvh');
+      tvh.append(el('span', 'mini tvh-crumb', 'Today › ' + (catOf(it) === 'study' ? 'Study' : 'Classes')), el('span', 'sp'));
+      if (!G && order.length) {
+        const go = d => () => {
+          ui.taskSel = order[(i + d + order.length) % order.length].id;
+          render();
+        };
+        const up = btn('', go(-1), { cls: 'btn ghost icon sm tvh-up' }),
+          dn = btn('', go(1), { cls: 'btn ghost icon sm tvh-dn' });
+        up.append(svgIcon('M12 19V5M6 11l6-6 6 6'));
+        dn.append(svgIcon('M12 5v14M6 13l6 6 6-6'));
+        up.setAttribute('aria-label', 'Previous task');
+        dn.setAttribute('aria-label', 'Next task');
+        tvh.append(el('span', 'mini tvh-pos', i + 1 + ' of ' + order.length), up, dn);
+      }
+      const tvb = el('div', 'tvb');
+      const title = el('div', 'tvb-title');
       if (!G) {
-        // B-355 (D-314): the tick beside the title, as the TaskDetail board; it ticks the task as the Status switch does
+        // the tick beside the title ticks the task, as the Status switch does
         const chk = el('button', 'tp-chk' + (isDone(it) ? ' done' : ''));
         chk.type = 'button';
         chk.setAttribute('aria-label', 'Done: ' + text);
@@ -572,12 +626,14 @@
           T.ticked.add(it.id);
           guard(chk, () => tickWrite(it, v), v ? 'Checked off' : 'Unchecked');
         });
-        head.append(chk);
+        title.append(chk);
       }
-      head.append(el('h2', null, text), close);
+      title.append(el('h2', null, text));
+      tvb.append(title);
       if (G) {
-        // what Snooze or Remove just wrote, and its Undo
-        const undo = btn('Undo', null, { cls: 'btn neutral sm tp-undo' });
+        // what Snooze just wrote, and its Undo in the panel
+        tvb.append(el('p', 'tp-desc tp-gone', G.line));
+        const undo = btn('Undo', null, { cls: 'btn neutral wide tp-undo' });
         undo.setAttribute('aria-label', 'Undo: ' + G.line);
         undo.addEventListener('click', () =>
           guard(
@@ -593,14 +649,25 @@
         );
         const acts = el('div', 'wk-acts');
         acts.append(undo);
-        return panel.replaceChildren(head, el('p', 'meta tp-gone', G.line), acts);
+        main.replaceChildren(tvh, tvb);
+        return panel.replaceChildren(acts);
       }
+      if (f.desc) tvb.append(el('p', 'tp-desc', f.desc));
+      const from = el('div', 'tp-from');
+      from.append(el('span', 'prop-k', 'Where it came from'));
+      for (const a of f.from) {
+        const r = el('div', 'tp-act');
+        r.append(el('i', 'tp-dot'), el('span', 'tp-what', a.t), el('span', 'tp-when', a.when));
+        from.append(r);
+      }
+      tvb.append(from);
+      main.replaceChildren(tvh, tvb);
       const prop = (k, v) => {
         const p = el('div', 'prop');
         p.append(el('span', 'prop-k', k), el('span', 'prop-v', v));
         return p;
       };
-      // B-336 (D-312): the properties in one card, as the demo's 'a task opened' board; Status is a To do / Done switch
+      // the properties in one card; Status is a To do / Done switch
       const props = el('div', 'tp-props');
       const status = prop('Status', '');
       const sw = el('div', 'tp-seg');
@@ -629,19 +696,12 @@
       if (f.due) props.append(prop('Due', f.due));
       if (f.course) props.append(prop('Course', f.course));
       if (f.topic) props.append(prop('Topic', f.topic));
-      // B-355 (D-314): its description, then Where it came from as rows (a dot, what, when), under the title
-      const desc = f.desc ? [el('p', 'tp-desc', f.desc)] : [];
-      const from = el('div', 'tp-from');
-      from.append(el('span', 'prop-k', 'Where it came from'));
-      for (const a of f.from) {
-        const r = el('div', 'tp-act');
-        r.append(el('i', 'tp-dot'), el('span', 'tp-what', a.t), el('span', 'tp-when', a.when));
-        from.append(r);
-      }
       const acts = el('div', 'wk-acts');
       const go = openItem(it);
       if (go && startable(it, isDone)) {
-        const st = btn('Start', go, { cls: 'btn primary wide tp-start' });
+        // a set of questions, as the board's topic tasks: "Start the quiz"
+        const st = btn('Start the quiz', go, { cls: 'btn primary wide tp-start' });
+        st.prepend(svgIcon('M8 5l11 7-11 7z'));
         st.setAttribute('aria-label', 'Start: ' + text);
         acts.append(st);
       } else if (go && it.tag !== 'GRADED') {
@@ -651,39 +711,27 @@
         acts.append(op);
       }
       if (!fixedItem(it) && !isDone(it)) {
-        const gone = (line, w) => {
-          ui.taskGone = { it, line, ...w };
-          render();
-        };
         const sz = btn('Snooze to tomorrow', null, { cls: 'btn neutral wide tp-snooze' });
         sz.addEventListener('click', () =>
-          guard(sz, async () => gone('Moved to tomorrow’s list.', await snoozeTask(it)), 'Moved to tomorrow')
-        );
-        const rm = btn('Remove from today', null, { cls: 'btn ghost wide tp-remove' });
-        rm.addEventListener('click', () =>
           guard(
-            rm,
+            sz,
             async () => {
-              const add = it.added ? { ...((dayEditDoc(today) || {}).added || {})[it.id] } : null;
-              await editList(today, { action: 'remove', id: it.id }, 'Matt');
-              gone('Taken off today.', { tomorrowId: null, add });
+              ui.taskGone = { it, line: 'Moved to tomorrow’s list.', ...(await snoozeTask(it)) };
+              render();
             },
-            'Taken off today'
+            'Moved to tomorrow'
           )
         );
-        acts.append(sz, rm);
+        acts.append(sz);
       }
       // graded work: the one line the demo carries, since E.V. helps him prepare and never with the work (B-01)
-      const graded =
+      const note =
         it.tag === 'GRADED'
           ? [el('p', 'meta tp-note', 'Graded work: E.V. helps you prepare, never with the work itself.')]
-          : [];
-      const note = graded.length
-        ? graded
-        : acts.querySelector('.tp-snooze')
-          ? [el('p', 'meta tp-note', 'Snooze moves it to tomorrow, with Undo.')]
-          : [];
-      panel.replaceChildren(head, ...desc, from, props, ...(acts.children.length ? [acts] : []), ...note);
+          : acts.querySelector('.tp-snooze')
+            ? [el('p', 'meta tp-note', 'Snooze moves it to tomorrow, with Undo.')]
+            : [];
+      panel.replaceChildren(props, ...(acts.children.length ? [acts] : []), ...note);
     }
     /**
      * B-293 (C-9): Plan the rest. planDay runs again on the record as it stands, and its difference from today's list

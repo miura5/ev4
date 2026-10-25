@@ -1258,16 +1258,14 @@ button.btn:disabled{opacity:.45;cursor:default}
    one primary when it can start, Snooze to tomorrow and Remove from today. The open row is marked on the list. */
 #today-list .li.sel{background:var(--hover);border-radius:6px}
 #today-task{gap:8px}
-#today-task>.card-head{gap:8px;align-items:flex-start}
-#today-task>.card-head h2{flex:1;min-width:0;margin:0;padding-top:5px;color:var(--text);font:600 calc(14px * var(--ts))/1.35 var(--sans);overflow-wrap:anywhere}
-#today-task .tp-from{display:flex;flex-direction:column;gap:2px;font-size:calc(13px * var(--ts))}
+#today-taskmain .tp-from{display:flex;flex-direction:column;gap:2px;font-size:calc(13px * var(--ts))}
 #today-task .wk-acts{flex-direction:column;align-items:stretch}
-#today-task .tp-from .meta,#today-task .tp-gone,#today-task .tp-note{margin:0;color:var(--faint);font-size:calc(12.5px * var(--ts));line-height:1.4}
+#today-taskmain .tp-from .meta,#today-task .tp-note{margin:0;color:var(--faint);font-size:calc(12.5px * var(--ts));line-height:1.4}
 /* B-336 (D-312): as the demo's 'a task opened' board: the panel holds only the task; its properties sit in one card in
    a 92 px label column, Status is a To do / Done switch, the actions are full-width buttons with the grey note under them. */
 #today-task.tp-panel{display:flex;flex-direction:column;gap:14px;min-width:0}
 #today-task[hidden]{display:none}
-.col-side>.tk-away{display:none!important}
+.col-side>.tk-away,.col-main>.tk-away{display:none!important}
 #today-task .tp-props{border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line);padding:14px;box-sizing:border-box;display:flex;flex-direction:column;gap:2px}
 #today-task .tp-props .prop{display:grid;grid-template-columns:92px minmax(0,1fr);align-items:center;gap:8px;min-height:34px;font-size:calc(13px * var(--ts));border:0}
 #today-task .tp-props .prop-k{color:var(--quiet)}
@@ -1280,25 +1278,23 @@ button.btn:disabled{opacity:.45;cursor:default}
 #today-task .wk-acts{display:flex;flex-direction:column;align-items:stretch;gap:10px}
 #today-task .wk-acts .btn{width:100%;min-height:32px;height:32px;border-radius:8px;padding:0 12px;font:500 calc(13px * var(--ts)) var(--sans)}
 #today-task .tp-note{line-height:1.5}
-#today-task .tp-from{gap:4px}
-#today-task .tp-from .prop-k{font-size:calc(12px * var(--ts));font-weight:500;color:var(--quiet)}
+#today-taskmain .tp-from{gap:4px}
+#today-taskmain .tp-from .prop-k{font-size:calc(12px * var(--ts));font-weight:500;color:var(--quiet)}
 /* B-355 (D-314): as the TaskDetail board: the tick beside the title (a 16 px rounded square, green when done), the
    description in quiet 14 px, then Where it came from as rows with a grey dot and the time on the right, above the card. */
-#today-task>.card-head{align-items:flex-start}
-#today-task>.card-head h2{font:600 calc(18px * var(--ts))/1.3 var(--sans);padding-top:0;letter-spacing:-.01em}
-#today-task .tp-chk{flex:none;width:16px;height:16px;min-height:0;margin-top:4px;padding:0;border:0;border-radius:5px;background:none;box-shadow:inset 0 0 0 1.5px var(--line2);color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
-#today-task .tp-chk svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;opacity:0}
-#today-task .tp-chk:hover{background:none}
-#today-task .tp-chk:not(.done):hover svg{opacity:.5;color:var(--quiet)}
-#today-task .tp-chk.done{background:var(--sem-green);box-shadow:none}
-#today-task .tp-chk.done svg{opacity:1}
-#today-task .tp-chk:focus-visible{outline:2px solid var(--text);outline-offset:2px}
-#today-task .tp-desc{margin:0;color:var(--quiet);font-size:calc(14px * var(--ts));line-height:1.6;overflow-wrap:anywhere;white-space:pre-line}
-#today-task .tp-from{gap:8px;padding-bottom:14px;border-bottom:1px solid var(--line)}
-#today-task .tp-act{display:flex;align-items:center;gap:10px;font-size:calc(13px * var(--ts));color:var(--quiet);min-width:0}
-#today-task .tp-dot{flex:none;width:6px;height:6px;border-radius:50%;background:var(--faint)}
-#today-task .tp-what{flex:1;min-width:0;overflow-wrap:anywhere}
-#today-task .tp-when{flex:none;font-size:calc(12px * var(--ts));color:var(--faint)}
+#today-taskmain .tp-chk{flex:none;width:16px;height:16px;min-height:0;margin-top:4px;padding:0;border:0;border-radius:5px;background:none;box-shadow:inset 0 0 0 1.5px var(--line2);color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+#today-taskmain .tp-chk svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+#today-taskmain .tp-chk:hover{background:none}
+#today-taskmain .tp-chk:not(.done):hover svg{opacity:.5;color:var(--quiet)}
+#today-taskmain .tp-chk.done{background:var(--sem-green);box-shadow:none}
+#today-taskmain .tp-chk.done svg{opacity:1}
+#today-taskmain .tp-chk:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+#today-taskmain .tp-desc{margin:0;color:var(--quiet);font-size:calc(14px * var(--ts));line-height:1.6;overflow-wrap:anywhere;white-space:pre-line}
+#today-taskmain .tp-from{gap:8px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+#today-taskmain .tp-act{display:flex;align-items:center;gap:10px;font-size:calc(13px * var(--ts));color:var(--quiet);min-width:0}
+#today-taskmain .tp-dot{flex:none;width:6px;height:6px;border-radius:50%;background:var(--faint)}
+#today-taskmain .tp-what{flex:1;min-width:0;overflow-wrap:anywhere}
+#today-taskmain .tp-when{flex:none;font-size:calc(12px * var(--ts));color:var(--faint)}
 @media (max-width:599px){
   #today-task .tp-props .prop{min-height:44px}
   #today-task .tp-seg button{height:44px;min-width:44px;padding:0 12px;justify-content:center}
@@ -1383,31 +1379,48 @@ button.btn:disabled{opacity:.45;cursor:default}
   #today-list .li>.nm:not(:has(+ .badge)){margin-right:0}
   #today-list .li .t{flex:none;min-width:0;text-align:right}
 }
-/* B-343 (D-312): on the phone an opened task takes the view in place of the list, as the TaskDetail board at 390: the
-   header's back arrow before "Today", the name large, where it came from, the properties card, then Start and Snooze
-   full width with the grey note. The panel's Close steps aside for the arrow. */
+/* B-364 (D-312): an opened task is the TaskDetail board's full view at every size: the header's back arrow before
+   "Today" (no line under it), the head row (breadcrumb, N of M, up and down) across the pane, the 22 px title with its
+   tick, the description and Where it came from in a 720 px column; the right panel (under it below 1200 px) holds the
+   properties card, Start and Snooze full width and the grey note. The list and its toolbar step aside until it closes. */
 button.btn.mh-back{display:none}
+body[data-view="today"].task-open .mh button.btn.mh-back{display:inline-grid;place-items:center;width:28px;height:28px;min-height:0;padding:0;margin-left:-8px;border:0;background:none;color:var(--quiet);flex:0 0 28px;border-radius:6px}
+body[data-view="today"].task-open .mh button.btn.mh-back:hover{background:var(--hover);color:var(--text)}
+.mh .mh-back svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+body[data-view="today"].task-open #evline{display:none} /* the board's task view carries no line */
+body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h))}
+#p-today.tk-open>#today-bar{display:none!important}
+#today-taskmain[hidden]{display:none}
+#today-taskmain{display:flex;flex-direction:column;min-width:0;margin:-18px -16px 0}
+#today-taskmain .tvh{display:flex;align-items:center;gap:8px;min-height:53px;padding:0 18px;box-sizing:border-box;border-bottom:1px solid var(--line)}
+#today-taskmain .tvh .sp{flex:1}
+#today-taskmain .tvh .mini{color:var(--quiet);font-size:calc(12.5px * var(--ts))}
+#today-taskmain .tvh-pos{margin-right:6px;font-variant-numeric:tabular-nums}
+#today-taskmain .tvh .btn.icon{width:28px;height:28px;min-height:0;padding:0;border:0;background:none;color:var(--quiet);display:inline-grid;place-items:center}
+#today-taskmain .tvh .btn.icon:hover{background:var(--hover);color:var(--text)}
+#today-taskmain .tvh .btn.icon svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#today-taskmain .tvb{display:flex;flex-direction:column;gap:16px;max-width:720px;padding:26px 40px;box-sizing:border-box}
+#today-taskmain .tvb-title{display:flex;align-items:flex-start;gap:12px}
+#today-taskmain .tvb-title h2{flex:1;min-width:0;margin:0;color:var(--text);font:600 calc(22px * var(--ts))/1.3 var(--sans);letter-spacing:-.01em;overflow-wrap:anywhere}
+#today-taskmain .tp-chk{margin-top:8px}
+#today-taskmain .tp-desc{font-size:calc(14.5px * var(--ts))}
+#today-taskmain .tp-from{gap:10px;padding-bottom:0;border-bottom:0}
+#today-taskmain .tp-from .prop-k{font-size:calc(12.5px * var(--ts));font-weight:500;color:var(--text)}
+#today-taskmain .tp-gone{color:var(--quiet)}
+@media (max-width:1199px){
+  #p-today.tk-open #today-task{padding-top:16px;border-top:1px solid var(--line);margin:0 -16px;padding-left:16px;padding-right:16px}
+}
 @media (max-width:599px){
-  body[data-view="today"].task-open .mh button.btn.mh-back{display:inline-grid;place-items:center;width:44px;height:44px;min-height:44px;padding:0;margin-left:-12px;border:0;background:none;color:var(--text);flex:0 0 44px}
-  .mh .mh-back svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-  body[data-view="today"].task-open #evline{display:none} /* the board's task view carries no line */
-  #p-today.tk-open>#today-bar,#p-today.tk-open>.cols>.col-main{display:none!important}
-  #p-today.tk-open #today-task{gap:16px;padding-top:4px}
-  #p-today.tk-open #today-task .tp-close{display:none}
-  #p-today.tk-open #today-task>.card-head{order:0}
-  #p-today.tk-open #today-task>.card-head h2{font:600 calc(22px * var(--ts))/1.3 var(--sans);padding-top:0}
-  #p-today.tk-open #today-task>.card-head{gap:0;align-items:flex-start}
-  #today-task .tp-chk{width:44px;height:44px;min-height:44px;margin:-6px 0 0 -14px;box-shadow:none;background:none;position:relative}
-  #today-task .tp-chk::before{content:"";position:absolute;width:18px;height:18px;border-radius:5px;box-shadow:inset 0 0 0 1.5px var(--line2)}
-  #today-task .tp-chk.done{background:none}
-  #today-task .tp-chk.done::before{background:var(--sem-green);box-shadow:none}
-  #today-task .tp-chk svg{position:relative;z-index:1}
-  #p-today.tk-open #today-task .tp-desc{order:1}
-  #p-today.tk-open #today-task .tp-from{order:1}
-  #p-today.tk-open #today-task .tp-from{order:1;padding-bottom:16px;border-bottom:1px solid var(--line)}
-  #p-today.tk-open #today-task .tp-props{order:2}
-  #p-today.tk-open #today-task .wk-acts{order:3}
-  #p-today.tk-open #today-task .tp-note,#p-today.tk-open #today-task .tp-gone{order:4}
+  body[data-view="today"].task-open .mh button.btn.mh-back{width:44px;height:44px;margin-left:-12px;color:var(--text)}
+  .mh .mh-back svg{width:18px;height:18px}
+  #today-taskmain .tvh{min-height:68px;padding:0 4px 0 18px}
+  #today-taskmain .tvh .btn.icon{width:44px;height:44px}
+  #today-taskmain .tvb{padding:18px 16px}
+  #today-taskmain .tp-chk{width:44px;height:44px;min-height:44px;margin:-6px -12px 0 -14px;box-shadow:none;background:none;position:relative}
+  #today-taskmain .tp-chk::before{content:"";position:absolute;width:18px;height:18px;border-radius:5px;box-shadow:inset 0 0 0 1.5px var(--line2)}
+  #today-taskmain .tp-chk.done{background:none}
+  #today-taskmain .tp-chk.done::before{background:var(--sem-green);box-shadow:none}
+  #today-taskmain .tp-chk svg{position:relative;z-index:1}
 }
 /* ============================================================ B-297 (D-283, C-1, C-8, C-13): Study's overview ========
    The toolbar (the view tabs sit beside the title from 600 px), then the exam header with its readiness bar and one
