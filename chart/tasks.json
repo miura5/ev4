@@ -6098,11 +6098,11 @@
   "title": "Fidelity fix: Study: the Plan tab, a quiz and its results as the StudyQuiz and StudyResults boards (toolbar strip, the question card with its bar and lettered answers, This quiz in the panel, the results card); the Plan tab's rows in the same row and card style; no toast from Today's Plan the rest on Study",
   "dod": "The quiz and results match their boards; the Plan tab uses the demo's toolbar strip, rows and panel card; opening Study shows no toast. Proof (D-312, fidelity sprint): node tools/build.mjs, tools/fidelity demo and built screenshots of each state read side by side at 1280, 1706, 2560 and 390, on the synthetic record and with a long real-shaped list, npm run smoke, ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-337"
   ],
-  "notes": "",
+  "notes": "claimed by lane study",
   "commit": null,
   "source": "Matt's staging look and fidelity review, Oct 25 (D-312)",
   "words": "Fidelity fix: Study's Plan tab, a running quiz and its results are still the old screens, and a Plan the rest message pops up on Study.",
