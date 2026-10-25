@@ -6067,5 +6067,22 @@
    "outcome": "task",
    "at": "2026-10-25T12:12:21.909Z"
   }
+ },
+ {
+  "id": "B-347",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Fidelity fix: Study's Weak spots tab is still the old screen: a large heading, bare rows and a stray Copy for Quizlet, nothing like the demo's StudyWeak board.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt's staging look and fidelity review, Oct 25 (D-312)",
+  "words": "Fidelity fix: Study's Weak spots tab is still the old screen: a large heading, bare rows and a stray Copy for Quizlet, nothing like the demo's StudyWeak board.",
+  "reportedAt": "2026-10-25T12:26:56.256Z",
+  "board": {
+   "row": "v4 B-347: Fidelity fix: Study's Weak spots tab is still the old screen: a large…"
+  }
  }
 ]
