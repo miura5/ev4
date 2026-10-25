@@ -6275,5 +6275,22 @@
    "outcome": "task",
    "at": "2026-10-25T12:48:33.814Z"
   }
+ },
+ {
+  "id": "B-356",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Fidelity fix: Record at 390 drops the row's result column; Progress's day panel shows notes and quizzes the corrections cut.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "fidelity review, Oct 25 (D-314)",
+  "words": "Fidelity fix: Record at 390 drops the row's result column; Progress's day panel shows notes and quizzes the corrections cut.",
+  "reportedAt": "2026-10-25T12:48:37.204Z",
+  "board": {
+   "row": "v4 B-356: Fidelity fix: Record at 390 drops the row's result column; Progress's…"
+  }
  }
 ]
