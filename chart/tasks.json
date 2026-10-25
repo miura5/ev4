@@ -6855,7 +6855,7 @@
   "milestone": "v4.8 redesign",
   "status": "in progress",
   "depends": [],
-  "notes": "claimed by lane ev",
+  "notes": "read the demo's session and Plan the rest; building the wording, session chips and the 390 composer fix",
   "commit": null,
   "source": "UI reviewer click-through 4 at 45d2d51, Oct 25 (D-316)",
   "words": "Review 4: E.V.'s chip reply wording and session start, running and end lines differ from the demo, and on the phone the composer slides under the tab bar during a session.",
