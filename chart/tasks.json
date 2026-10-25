@@ -6051,12 +6051,12 @@
   "title": "Fidelity fix: Today: the header reads Today · <weekday> <day> <month> as the demo does, and the budget's large figure reads <on the list> of <budget> min with the bar filled to it, as the demo's TodayList board",
   "dod": "Matches the TodayList board at 1280, 1706, 2560 and 390 apart from the build corrections. Proof (D-312, fidelity sprint): node tools/build.mjs, tools/fidelity screenshots side by side, npm run smoke, ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-335"
   ],
-  "notes": "claimed by lane today",
-  "commit": null,
+  "notes": "Shipped to staging at ac5415a: ship staging GREEN.",
+  "commit": "ac5415a",
   "source": "fidelity review of B-335, Oct 25 (D-312)",
   "words": "Fidelity fix: Today's header reads only Today where the demo reads Today with the weekday and date, and the budget's large figure reads minutes left and free where the demo reads minutes on the list of the day's budget.",
   "reportedAt": "2026-10-25T12:12:19.498Z",
