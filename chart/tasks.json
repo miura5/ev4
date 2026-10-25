@@ -5406,7 +5406,7 @@
    "B-302",
    "B-308"
   ],
-  "notes": "Matt, Oct 24: the one-primary check becomes a failure here, once every view is rebuilt (B-285's open gap), and Inter, which fell out between the hand-offs, is added here.",
+  "notes": "Also, when the sweep is done: free some room in the page shell (index.html is within bytes of its 32 KB budget since B-301; the views now build their parts in script). Move what the shell no longer needs, with no change Matt can see.",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },
