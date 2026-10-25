@@ -7134,5 +7134,22 @@
   "board": {
    "row": "v4 B-396: Replace the retired Study Watch with note-taking inside E.V.: a…"
   }
+ },
+ {
+  "id": "B-397",
+  "kind": "bug",
+  "title": "Bug (reported Oct 25): The run API rejects cursors issued before the base64url change, and the client's curl retries timeouts and server errors, so a write that landed can be reported as refused.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "B-319 second review, Oct 25",
+  "words": "The run API rejects cursors issued before the base64url change, and the client's curl retries timeouts and server errors, so a write that landed can be reported as refused.",
+  "reportedAt": "2026-10-25T22:18:33.821Z",
+  "board": {
+   "row": "v4 B-397: The run API rejects cursors issued before the base64url change, and…"
+  }
  }
 ]
