@@ -5579,7 +5579,7 @@
   "depends": [
    "B-312"
   ],
-  "notes": "claimed by the PWA builder",
+  "notes": "6ee2be2 (on de39b55): staging cloud runs target the staging Worker run API; manifest deployed to staging at 6ee2be2 and the five staging cloud task prompts updated (hashes match). Firing each once next.",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
