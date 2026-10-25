@@ -6645,7 +6645,7 @@
   "milestone": "v4.8 redesign",
   "status": "done",
   "depends": [],
-  "notes": "x",
+  "notes": "The task you open and the New note dialog now match the demo. Every opened task shows Snooze to tomorrow, and the Estimate, Due and Course rows always show (a dash when the record has nothing). When you open graded work, E.V.'s line sits under the header: 'Graded. I can quiz you on <the topic> beforehand; I stay out of the quiz itself.' with Quiz me on it, or, when no objective matches, 'Graded work: your draft, your words. I keep the due date and stay out of the writing.' New note now has a Title field, a box for your words and a Course switch (NUR 112, BIO 201, None), each field with one plain focus ring; Record shows the title, the words under it and the course. Staging GREEN at 812ca4c. Decided my way: graded work, exams, clinicals and validations stay on their due day (E.V. won't move them), so their Snooze shows but is greyed out with that reason, where the demo's works. Still differs from the demo at 1280 and 390: the topic in her graded line comes from the assignment title (after the colon), so it reads 'fluids and electrolytes' where the demo has its own topic names; the dialog sits a few px narrower on the phone; there is no Topic row unless the record has one. 1706 and 2560 use the same frame. Smoke: the 8 failing checks also fail on main before this change (left for the test agent, B-357); npm test shows the same 5 failures as main. Reviewer: none (fidelity sprint, D-312).",
   "commit": "812ca4c",
   "source": "UI reviewer click-through 2 at 112b83f, Oct 25 (D-316)",
   "words": "Review 2: the task panel lacks Snooze on most tasks and a graded task lacks the demo's line and Estimate.",
