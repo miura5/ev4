@@ -6344,10 +6344,10 @@
  {
   "id": "B-359",
   "kind": "request",
-  "title": "Request (reported Oct 25): Record keeps tabs the demo does not have; the demo's Record has none.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "title": "Fidelity fix: Record: no Log / Dates / Journal / Canvas / Library tabs; Record is the Record board's log only (filter, type tabs, day-grouped rows, panel); the other screens leave the page, their data kept in the record",
+  "dod": "Record matches the Record board at every size with no tabs in the header; no other page reaches the retired screens. Proof (D-312): node tools/build.mjs; crawl.cjs demo and built (synthetic and a real-shaped record: many due items, long titles) side by side at 1280, 1706, 2560 and 390; npm run smoke; ship staging GREEN.",
+  "milestone": "v4.8 redesign",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -6356,6 +6356,10 @@
   "reportedAt": "2026-10-25T13:18:02.688Z",
   "board": {
    "row": "v4 B-359: Record keeps tabs the demo does not have; the demo's Record has"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-25T13:18:05.943Z"
   }
  }
 ]
