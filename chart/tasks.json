@@ -7143,7 +7143,7 @@
   "milestone": "v5 app",
   "status": "open",
   "depends": [],
-  "notes": "Correction: the fix landed on main as 4a2f8ac (9cddd71 before the rebase). B-317 fixed its drill-worker test in 840cb36, and npm test in a fresh clone at f725953 is green: 681 pass, 0 fail.",
+  "notes": "Second review (fresh agent, at 2ff8f76): the OUTCOME UNKNOWN gap is closed; one gap left: the new sentence also changes the two staging Mac-bound prompts, so staging can't be GREEN until they are re-created with Matt. Planned: they're re-created once, with B-399's prompt change, then one staging ship carries B-397 and B-399. Checks retired or loosened: none. Size: +274 -47, in line.",
   "commit": null,
   "source": "B-319 second review, Oct 25",
   "words": "The run API rejects cursors issued before the base64url change, and the client's curl retries timeouts and server errors, so a write that landed can be reported as refused.",
