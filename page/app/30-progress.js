@@ -278,6 +278,14 @@
             // B-378: with neither the next exam still has its row, an empty bar saying so, so By course is never alone
             if (!n) unit = 'none';
           }
+          return { e, n, so, al, unit };
+        })
+        .map(({ e, n, so, al, unit }, _i, all) => {
+          // B-386: the heading names what the rows count; when every row counts the same thing the rows carry only the
+          // numbers, as the demo's; mixed rows keep their own unit and the heading names none
+          const units = new Set(all.map(r => (/^items? today$/.test(r.unit) ? 'items today' : r.unit)));
+          units.delete('none');
+          const same = units.size === 1;
           const row = el('div', 'prog-hb');
           const top = el('div', 'prog-hb-top');
           top.append(
@@ -285,7 +293,7 @@
             el(
               'span',
               'meta',
-              unit === 'none' ? 'no plan yet' : so + ' of ' + n + (unit === 'objectives' ? '' : ' ' + unit)
+              unit === 'none' ? 'no plan yet' : so + ' of ' + n + (same || unit === 'objectives' ? '' : ' ' + unit)
             )
           );
           const bar = el('div', 'pbar');
@@ -304,11 +312,25 @@
           y.style.width = (n ? Math.round((100 * al) / n) : 0) + '%';
           bar.append(g, y);
           row.append(top, bar);
+          row.dataset.unit = unit;
           return row;
         })
         .filter(Boolean);
+      // B-386: heading and count agree: objectives solid, plan tasks done, items done today, or (mixed) no unit
+      const readyUnits = new Set(
+        readyRows.map(r => r.dataset.unit).map(u => (/^items? today$/.test(u) ? 'items today' : u))
+      );
+      readyUnits.delete('none');
+      const readyHeading =
+        'Exam readiness' +
+        (readyUnits.size === 1
+          ? ' · ' +
+            { objectives: 'objectives solid', 'plan tasks': 'plan tasks done', 'items today': 'items done today' }[
+              [...readyUnits][0]
+            ]
+          : '');
       $('prog-ready').hidden = !readyRows.length;
-      $('prog-ready').replaceChildren(el('span', 'lab', 'Exam readiness · objectives solid'), ...readyRows);
+      $('prog-ready').replaceChildren(el('span', 'lab', readyHeading), ...readyRows);
       // the day panel (B-342, the demo's): what that day holds in Record, sessions, quizzes and notes, newest first; the
       // total is its study time
       const b = bs[pick];
