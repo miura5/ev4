@@ -7021,7 +7021,7 @@
   "milestone": "v4.9 cleanup",
   "status": "open",
   "depends": [],
-  "notes": "Also: replace B-388's same-pass test (a copy of the page loop plus a source regex) with a run harness case: the stub reader gives two files naming one open topic, and the filing pass makes one idea.",
+  "notes": "Also: fold test/smoke-keys.cjs (B-390) into test/harness/smoke.cjs, using its opener with a skeleton option that drops the [hidden] rule, instead of a ninth copy of the harness setup.",
   "commit": null,
   "source": "release code review (page), 368b104..fc9133e, Oct 25",
   "words": "Dead code and styles for removed screens remain; a stale saved Study view can reopen a closed set; his own snoozes can't be brought back once the panel closes.",
