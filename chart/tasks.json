@@ -6783,5 +6783,22 @@
    "outcome": "task",
    "at": "2026-10-25T15:48:16.876Z"
   }
+ },
+ {
+  "id": "B-380",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Review 3: dialogs' spacing and segmented controls differ, and confirmation toasts appear where the demo has none.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UI reviewer click-through 3 at d6bee63, Oct 25 (D-316)",
+  "words": "Review 3: dialogs' spacing and segmented controls differ, and confirmation toasts appear where the demo has none.",
+  "reportedAt": "2026-10-25T15:48:17.299Z",
+  "board": {
+   "row": "v4 B-380: Review 3: dialogs' spacing and segmented controls differ, and…"
+  }
  }
 ]
