@@ -5846,11 +5846,11 @@
   "title": "Fidelity: the sidebar as in the demo. Each Today item shows its minutes or day and a dot coloured by its type, with N left beside the heading; Preferences in the foot opens a small popover with Theme and Contrast and a System link (replacing open controls), Esc closes it and returns focus.",
   "dod": "Matches the demo's sidebar and its Preferences popover at 1280 and 390; N left equals the open items; Esc returns focus to Preferences. Proof (D-312, fidelity sprint): node tools/build.mjs, then tools/fidelity's demo and built screenshots read side by side at 1280, 1706, 2560 and 390, plus npm run smoke; then ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-332"
   ],
-  "notes": "",
+  "notes": "claimed by lane side",
   "commit": null,
   "source": "fidelity review, Oct 25 (D-312)"
  },
