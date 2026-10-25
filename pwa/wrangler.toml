@@ -1,0 +1,14 @@
+name = "ev-demo"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+
+# The page's files, built by `npm run build` here (tools/build-pwa.mjs).
+[assets]
+directory = "public"
+binding = "ASSETS"
+
+# The record. `npx wrangler d1 create ev-demo` prints the id to paste here.
+[[d1_databases]]
+binding = "DB"
+database_name = "ev-demo"
+database_id = "paste-the-id-from-d1-create"

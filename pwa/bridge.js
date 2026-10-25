@@ -1,0 +1,299 @@
+// The shim (ev-bridge): gives the page the same window.claude.use('db' | 'user' | 'sample' | 'mcp') it has on
+// claude.ai, backed by this Worker's /api/db instead. Adapted from test/harness/stub.js.
+//   db:     the whole record is loaded once, kept in memory, and checked for changes every 10 s and on focus.
+//           A write goes to the Worker first; only when it is saved does the page's copy change.
+//   user:   whoever holds the token is the owner (one person).
+//   sample: Claude on Haiku through the Worker's /api/claude (D-296); the key stays on the Worker.
+//   mcp:    none (the scheduled runs and the Study Watch reader live on claude.ai and the Mac).
+(function () {
+  const KEY = 'ev.token';
+  const read = () => {
+    try {
+      return localStorage.getItem(KEY) || '';
+    } catch (e) {
+      return '';
+    }
+  };
+  let token = read();
+  const clone = v => JSON.parse(JSON.stringify(v));
+  const api = (path, init = {}) =>
+    fetch('/api/' + path, { ...init, headers: { ...(init.headers || {}), authorization: 'Bearer ' + token } });
+
+  // The token form: shown on first open, or when the Worker refuses the token.
+  const askToken = msg =>
+    new Promise(resolve => {
+      const f = document.createElement('form');
+      f.id = 'ev-token';
+      f.style.cssText =
+        'position:fixed;inset:0;z-index:99;display:grid;place-content:center;gap:10px;padding:24px;background:var(--bg,#111);color:var(--text,#eee);font:16px system-ui';
+      f.innerHTML =
+        '<b>E.V.</b><label>' +
+        msg +
+        '<br><input type=password autocomplete=current-password style="font:16px system-ui;padding:8px;margin-top:6px;width:16em"></label><button style="font:16px system-ui;padding:8px">Open</button>';
+      f.onsubmit = e => {
+        e.preventDefault();
+        token = f.querySelector('input').value.trim();
+        try {
+          localStorage.setItem(KEY, token);
+        } catch (e) {}
+        f.remove();
+        resolve();
+      };
+      const show = () => {
+        document.body.appendChild(f);
+        f.querySelector('input').focus();
+      };
+      if (document.body) show();
+      else addEventListener('DOMContentLoaded', show);
+    });
+
+  const db = {};
+  let since = 0;
+  const subs = [];
+  const emit = c => subs.filter(s => s.c === c).forEach(s => s.fire());
+  const take = docs => {
+    const changed = new Set();
+    for (const d of docs) {
+      (db[d.c] = db[d.c] || {})[d.id] = d.data;
+      changed.add(d.c);
+    }
+    return changed;
+  };
+  async function pull() {
+    const r = await api('db?since=' + since);
+    if (r.status === 401) return 401;
+    if (!r.ok) throw new Error('record unavailable (' + r.status + ')');
+    const body = await r.json();
+    since = body.now;
+    return take(body.docs);
+  }
+  const ready = (async () => {
+    if (!token) await askToken('Your E.V. token');
+    for (;;) {
+      const got = await pull();
+      if (got !== 401) break;
+      await askToken('That token was refused. Try again');
+    }
+    const refresh = () =>
+      pull()
+        .then(ch => ch instanceof Set && ch.forEach(emit))
+        .catch(() => {});
+    setInterval(refresh, 10000);
+    addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && refresh());
+  })();
+
+  function merge(t, s) {
+    for (const k of Object.keys(s)) {
+      const v = s[k];
+      if (v && typeof v === 'object' && !Array.isArray(v) && t[k] && typeof t[k] === 'object' && !Array.isArray(t[k]))
+        merge(t[k], v);
+      else t[k] = clone(v);
+    }
+    return t;
+  }
+  async function save(c, id, doc) {
+    const r = await api('db/' + encodeURIComponent(c) + '/' + encodeURIComponent(id), {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(doc),
+    });
+    if (!r.ok) {
+      const e = new Error('not saved (' + r.status + ')');
+      e.code = r.status === 401 ? 'permission_denied' : 'unavailable';
+      throw e;
+    }
+    (db[c] = db[c] || {})[id] = doc;
+    emit(c);
+  }
+
+  const ops = {
+    '==': (a, b) => a === b,
+    '>=': (a, b) => a >= b,
+    '<=': (a, b) => a <= b,
+    '>': (a, b) => a > b,
+    '<': (a, b) => a < b,
+  };
+  function query(c, filters) {
+    const rows = () =>
+      Object.entries(db[c] || {})
+        .filter(([, d]) => filters.every(([f, op, v]) => ops[op](d[f], v)))
+        .map(([id, d]) => ({ id, exists: true, data: () => clone(d) }));
+    return {
+      where: (f, op, v) => query(c, [...filters, [f, op, v]]),
+      async get() {
+        await ready;
+        return { docs: rows() };
+      },
+      onSnapshot(cb) {
+        const s = { c, fire: () => cb({ docs: rows() }) };
+        subs.push(s);
+        ready.then(s.fire);
+        return () => subs.splice(subs.indexOf(s), 1);
+      },
+      doc: id => {
+        const snap = () => {
+          const d = (db[c] || {})[id];
+          return { id, exists: !!d, data: () => d && clone(d) };
+        };
+        return {
+          set: data => save(c, id, clone(data)),
+          async update(data) {
+            const cur = (db[c] || {})[id];
+            if (!cur) {
+              const e = new Error('not found');
+              e.code = 'invalid_argument';
+              throw e;
+            }
+            return save(c, id, merge(clone(cur), data));
+          },
+          async get() {
+            await ready;
+            return snap();
+          },
+          onSnapshot(cb) {
+            const s = { c, fire: () => cb(snap()) };
+            subs.push(s);
+            ready.then(s.fire);
+            return () => subs.splice(subs.indexOf(s), 1);
+          },
+        };
+      },
+      async add(data) {
+        const id = 'x' + Math.random().toString(36).slice(2, 10);
+        await save(c, id, clone(data));
+        return { id };
+      },
+    };
+  }
+  const DB = {
+    collection: c => query(c, []),
+    doc: p => {
+      const [c, id] = p.split('/');
+      return query(c, []).doc(id);
+    },
+  };
+
+  // sample: the claude.ai call shape (sample(input, opts), sample.json, sample.limits), answered by Haiku through
+  // /api/claude. Every tier is Haiku. Page tools run here, in rounds, as on claude.ai. No images (limits() says so).
+  const fail = (code, message, text) => Object.assign({ code, message }, text ? { text } : {});
+  const ROUNDS = 6;
+  async function ask(input, opts = {}, wantJson = false) {
+    let turns = typeof input === 'string' ? [{ role: 'user', content: input }] : (input || []).map(t => ({ ...t }));
+    if (!turns.length || turns[turns.length - 1].role !== 'user')
+      throw fail('invalid_request', 'input must end on a user turn');
+    if (opts.images) throw fail('images_unavailable', 'the PWA sends no images');
+    // consecutive turns of one role read as one, as on claude.ai
+    turns = turns.reduce((a, t) => {
+      const last = a[a.length - 1];
+      if (last && last.role === t.role) last.content += '\n\n' + t.content;
+      else a.push({ role: t.role, content: String(t.content) });
+      return a;
+    }, []);
+    if (wantJson)
+      turns[turns.length - 1].content +=
+        '\n\nYour reply is machine-parsed: reply with only the JSON value, no other text and no code fence.';
+    const tools = (opts.tools || []).map(t => ({
+      name: t.name,
+      description: t.description,
+      input_schema: t.inputSchema || { type: 'object', properties: {} },
+    }));
+    const messages = turns;
+    let text = '';
+    let truncated = false;
+    for (let round = 0; round < ROUNDS; round++) {
+      let r;
+      try {
+        r = await api('claude', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            messages,
+            tools,
+            ...(tools.length && round === ROUNDS - 1 ? { tool_choice: { type: 'none' } } : {}),
+          }),
+          signal: opts.signal,
+        });
+      } catch (e) {
+        throw opts.signal && opts.signal.aborted
+          ? fail('cancelled', 'stopped', text)
+          : fail('upstream_error', e.message, text);
+      }
+      if (!r.ok) {
+        const why = await r.text().catch(() => '');
+        throw fail(
+          r.status === 429 ? 'rate_limited' : r.status === 401 ? 'not_granted' : 'upstream_error',
+          r.status + ' ' + why.slice(0, 300),
+          text
+        );
+      }
+      const res = await r.json();
+      if (res.stop_reason === 'refusal') throw fail('refused', 'Claude declined');
+      const said = res.content
+        .filter(b => b.type === 'text')
+        .map(b => b.text)
+        .join('');
+      if (said.trim()) {
+        const before = text;
+        text = text ? text + '\n\n' + said : said;
+        if (opts.onText) opts.onText({ text, delta: text.slice(before.length) });
+      }
+      truncated = res.stop_reason === 'max_tokens';
+      const uses = res.content.filter(b => b.type === 'tool_use');
+      if (res.stop_reason !== 'tool_use' || !uses.length) break;
+      messages.push({ role: 'assistant', content: res.content });
+      const results = await Promise.all(
+        uses.map(async u => {
+          const t = opts.tools.find(x => x.name === u.name);
+          try {
+            if (!t) throw new Error('no tool ' + u.name);
+            const out = await t.execute(u.input || {}, { signal: opts.signal || new AbortController().signal });
+            return {
+              type: 'tool_result',
+              tool_use_id: u.id,
+              content: typeof out === 'string' ? out : JSON.stringify(out ?? null),
+            };
+          } catch (e) {
+            return { type: 'tool_result', tool_use_id: u.id, content: 'Error: ' + e.message, is_error: true };
+          }
+        })
+      );
+      messages.push({ role: 'user', content: results });
+    }
+    if (!text.trim()) throw fail('empty_completion', 'Claude wrote nothing');
+    return { text, truncated, modelTierApplied: opts.modelTier || 'default' };
+  }
+  const parseJson = raw => {
+    const tries = [raw, (raw.match(/```(?:json)?\s*([\s\S]*?)```/) || [])[1]];
+    const a = raw.search(/[[{]/),
+      b = Math.max(raw.lastIndexOf('}'), raw.lastIndexOf(']'));
+    if (a >= 0 && b > a) tries.push(raw.slice(a, b + 1));
+    for (const t of tries)
+      if (t != null)
+        try {
+          return JSON.parse(t);
+        } catch (e) {}
+    throw fail('invalid_json', 'no JSON in the reply', raw);
+  };
+  const sample = Object.assign((input, opts) => ask(input, opts), {
+    json: async (input, opts = {}) => {
+      // on tool calls only the final round's text is parsed, as on claude.ai
+      let last = '';
+      const res = await ask(input, { ...opts, onText: u => ((last = u.delta), opts.onText && opts.onText(u)) }, true);
+      if (res.truncated) throw fail('invalid_json', 'cut short', res.text);
+      return parseJson((opts.tools ? last : res.text).trim());
+    },
+    limits: async () => ({ maxPromptBytes: 262144, maxInputBytes: 262144, tools: { maxCount: 16 } }),
+  });
+
+  window.claude = {
+    use: async n => {
+      if (n === 'db') return ready.then(() => DB);
+      if (n === 'user') return { isOwner: async () => true };
+      if (n === 'sample') return sample;
+      return null;
+    },
+  };
+
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+})();

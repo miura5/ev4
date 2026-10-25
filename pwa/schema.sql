@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS docs (
+  c TEXT NOT NULL,
+  id TEXT NOT NULL,
+  data TEXT NOT NULL,
+  at INTEGER NOT NULL,
+  PRIMARY KEY (c, id)
+);
+CREATE INDEX IF NOT EXISTS docs_at ON docs (at);

@@ -2,3 +2,8 @@ fixtures/
 dist/
 node_modules
 *.local.json
+pwa/public/
+pwa/seed.sql
+pwa/.wrangler/
+pwa/.dev.vars
+pwa/node_modules/
