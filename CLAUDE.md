@@ -89,9 +89,11 @@ build; then the card goes to Matt either way, with the score. A release is ready
 main: the rubric bar is met (or the card says by how much it missed), npm test and the full npm run check are GREEN
 (dist/check-full.json), and ship staging is GREEN.
 
-**One development chat.** E.V. is developed in one long chat. This file is what survives a /clear or a new session:
-before clearing, the build manager writes where things stand into the Chart's task notes, so the next context picks
-up from `brief`.
+**One development chat, one build manager.** E.V. is developed in one long chat. This file and `docs/handover.md` are
+what survive a /clear or a new chat: before clearing or ending, the build manager rewrites `docs/handover.md` (where
+things stand, what is running, agents and lanes, the next steps, and anything waiting on Matt) and pushes it; a new
+build manager reads it right after this file. There is one build manager at a time: a chat that finds the handover
+naming another chat still managing asks Matt which one continues before firing anything.
 
 ## Every session
 
