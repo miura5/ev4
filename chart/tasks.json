@@ -5707,7 +5707,7 @@
    "B-311",
    "B-314"
   ],
-  "notes": "built at d083269: jobs run in the app through the Worker; npm test, smoke:pwa 23/23 green; starting the staging proof",
+  "notes": "staging proof in progress: real Haiku answers on staging; fixing a job left running when two jobs write at once",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
