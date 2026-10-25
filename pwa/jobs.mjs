@@ -25,6 +25,7 @@ export const SPEC_KEYS = ['jobs', 'pipelines', 'collections', 'capacity', 'bound
 
 const STUDY_GUIDE_APP =
   'Write a one-page study guide on the brief, grounded in the passages given from his course materials: the key rules, a comparison laid out as short lines where it helps, 3 memory hooks, the NCLEX traps, and 3 self-check questions with answers at the end. Put the whole guide in text, as plain lines (no links): the app saves it in E.V., in this job’s result and its message, not as a Claude Doc. Mark anything from general knowledge ‘check your materials’.';
+const CONFLICT_TRIES = 4;
 const STUDY_GUIDE_CHARS = 4000; // a talk message holds 4,000 (the job-result fold cuts there)
 const SHARE_REFUSED =
   'a shareable practice page is published on claude.ai, and the app can’t publish pages: share this set from E.V. Home on claude.ai';
@@ -261,16 +262,19 @@ export function statusWrite(ctx, status, error = null) {
 export async function runJob({ db, spec, schemas, jobId, ask, write, reload, now = new Date(), release, dir }) {
   const prepared = prepare({ db, spec, jobId, now, release, dir });
   if (prepared.skip) return { status: 'skipped', said: prepared.skip };
+  // A conflict (a document changed while the job ran) folds the reply again over the record as it is now, with no
+  // new ask, a few times; then it is a failure like any other.
   const commit = async answer => {
     let r = finish({ prepared, answer, db, spec, schemas });
-    if (!r.ok) return r;
-    try {
-      await write(r.writes, db);
-    } catch (e) {
-      if (!(e && e.conflict) || !reload) throw e;
-      db = await reload();
-      r = finish({ prepared, answer, db, spec, schemas });
-      if (r.ok) await write(r.writes, db);
+    for (let tries = 0; r.ok; tries++) {
+      try {
+        await write(r.writes, db);
+        return r;
+      } catch (e) {
+        if (!(e && e.conflict) || !reload || tries >= CONFLICT_TRIES) throw e;
+        db = await reload();
+        r = finish({ prepared, answer, db, spec, schemas });
+      }
     }
     return r;
   };
@@ -294,9 +298,20 @@ export async function runJob({ db, spec, schemas, jobId, ask, write, reload, now
     return { status: 'failed', said: why };
   }
   const answer = reply && reply.stop_reason === 'max_tokens' ? null : answerOf(reply);
-  const r = answer
-    ? await commit(answer)
-    : { ok: false, problems: [reply && reply.stop_reason === 'max_tokens' ? 'the reply was cut short' : 'no answer'] };
+  let r;
+  try {
+    r = answer
+      ? await commit(answer)
+      : {
+          ok: false,
+          problems: [reply && reply.stop_reason === 'max_tokens' ? 'the reply was cut short' : 'no answer'],
+        };
+  } catch (e) {
+    const why = 'what it made couldn’t be saved (' + String((e && e.message) || e).slice(0, 120) + '). Try again.';
+    if (reload) db = await reload().catch(() => db);
+    await write([statusWrite(prepared.ctx, 'failed', why)], db);
+    return { status: 'failed', said: why };
+  }
   if (!r.ok) {
     const why = 'the reply didn’t pass E.V.’s checks, so nothing it made was saved (' + r.problems[0] + '). Try again.';
     await write([statusWrite(prepared.ctx, 'failed', why.slice(0, 300))], db);

@@ -172,20 +172,25 @@
           if (!r.ok) throw new Error('the Worker answered ' + r.status);
           return r.json();
         },
-        write: async (writes, seen) => {
-          const body = JSON.stringify({ writes: await J.pinned(writes, versionOf, seen) });
-          const r = await api('run/batch', { method: 'POST', headers: { 'content-type': 'application/json' }, body });
-          if (r.status === 409) throw Object.assign(new Error('a document changed'), { conflict: true });
-          if (!r.ok) throw new Error('not saved (' + r.status + ')');
-          const ch = await pull();
-          if (ch instanceof Set) ch.forEach(emit);
-        },
+        // one job's batch at a time, each pinned just before it is sent, so jobs run side by side but never write
+        // over each other's versions
+        write: (writes, seen) => (writeLock = writeLock.catch(() => {}).then(() => batch(writes, seen))),
       });
     } catch (e) {
       console.warn('E.V. app: job ' + id + ' stopped: ' + (e && e.message));
     } finally {
       running.delete(id);
     }
+  }
+  let writeLock = Promise.resolve();
+  async function batch(writes, seen) {
+    const J = await import('./jobs.mjs');
+    const body = JSON.stringify({ writes: await J.pinned(writes, versionOf, seen) });
+    const r = await api('run/batch', { method: 'POST', headers: { 'content-type': 'application/json' }, body });
+    if (r.status === 409) throw Object.assign(new Error('a document changed'), { conflict: true });
+    if (!r.ok) throw new Error('not saved (' + r.status + ')');
+    const ch = await pull();
+    if (ch instanceof Set) ch.forEach(emit);
   }
 
   const ops = {

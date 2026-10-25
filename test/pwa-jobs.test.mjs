@@ -223,3 +223,68 @@ test('B-324: the staging count check leaves out what the app’s job runner wrot
   );
   assert.ok(!judge('general', { data: { fired: { ok: false } } }, done).every(l => l.ok), 'handed over at once');
 });
+
+test('B-324: a document that changed while the job ran folds the reply again, with no new ask', async () => {
+  const { db, id } = withJob('general');
+  db.talk = (db.talk || []).filter(t => t.id !== '2026-10-25');
+  const asks = [];
+  const batches = [];
+  let first = true;
+  const r = await J.runJob({
+    db,
+    spec,
+    schemas,
+    jobId: id,
+    now: NOW,
+    release: 'v4',
+    ask: async body => (asks.push(body), jobReply(body)),
+    write: async w => {
+      if (w.some(x => x.collection === 'talk') && first) {
+        first = false;
+        throw Object.assign(new Error('changed'), { conflict: true });
+      }
+      batches.push(w);
+    },
+    // meanwhile another job opened today's talk
+    reload: async () => ({
+      ...db,
+      jobresults: [{ id, status: 'running' }],
+      talk: [
+        ...(db.talk || []),
+        {
+          id: '2026-10-25',
+          schema: 4,
+          writer: 'page',
+          at: NOW.toISOString(),
+          source: 'x',
+          date: '2026-10-25',
+          messages: {},
+        },
+      ],
+    }),
+  });
+  assert.equal(r.status, 'done');
+  assert.equal(asks.length, 1);
+  const talk = batches.flat().find(w => w.collection === 'talk');
+  assert.equal(talk.op, 'update', 'the second fold adds to the day instead of replacing it');
+});
+
+test('B-324: a save that keeps failing marks the job failed instead of leaving it running', async () => {
+  const { db, id } = withJob('general');
+  const statuses = [];
+  const r = await J.runJob({
+    db,
+    spec,
+    schemas,
+    jobId: id,
+    now: NOW,
+    release: 'v4',
+    ask: async body => jobReply(body),
+    write: async w => {
+      if (w.length === 1 && w[0].collection === 'jobresults') return statuses.push(w[0].data.status);
+      throw new Error('not saved (500)');
+    },
+  });
+  assert.equal(r.status, 'failed');
+  assert.deepEqual(statuses, ['running', 'failed']);
+});
