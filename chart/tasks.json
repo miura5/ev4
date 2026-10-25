@@ -5717,7 +5717,7 @@
    "B-311",
    "B-314"
   ],
-  "notes": "staging proof in progress: real Haiku answers on staging; fixing a job left running when two jobs write at once",
+  "notes": "proofs green: npm test, smoke:pwa 23/23, staging proof GREEN in pwa-staging run 40190826199 (7 real Haiku jobs read back from staging D1); reviewing",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
