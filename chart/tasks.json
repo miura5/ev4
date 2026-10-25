@@ -6340,5 +6340,22 @@
    "outcome": "task",
    "at": "2026-10-25T13:17:59.028Z"
   }
+ },
+ {
+  "id": "B-359",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Record keeps tabs the demo does not have; the demo's Record has none.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt, staging, Oct 25 (D-316)",
+  "words": "Record keeps tabs the demo does not have; the demo's Record has none.",
+  "reportedAt": "2026-10-25T13:18:02.688Z",
+  "board": {
+   "row": "v4 B-359: Record keeps tabs the demo does not have; the demo's Record has"
+  }
  }
 ]
