@@ -5888,11 +5888,11 @@
   "title": "Fidelity: Study overview as in the demo. The exam card spans the pane; from 1200 px picking an objective fills the right panel (its state, its weak spots, Quiz me on this), under the row only below 1200 px; Coming up in this course under the exam card. Weak spots, quiz and results screens stay deferred (B-298 to B-300).",
   "dod": "Matches the Study overview board at every width; at 1280 a picked objective fills the panel; at 390 it opens under the row. Proof (D-312, fidelity sprint): node tools/build.mjs, then tools/fidelity's demo and built screenshots read side by side at 1280, 1706, 2560 and 390, plus npm run smoke; then ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-332"
   ],
-  "notes": "",
+  "notes": "claimed by lane study",
   "commit": null,
   "source": "fidelity review, Oct 25 (D-312)"
  },
