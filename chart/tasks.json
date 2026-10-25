@@ -5589,12 +5589,12 @@
   "title": "Backups (D-302): a nightly Worker export of D1 to Cloudflare R2, D1 Time Travel on, and evening-mac's nightly backup and Sunday mirror exported from D1. No export is overwritten or deleted.",
   "dod": "A restore of the newest staging R2 export into a scratch D1 matches counts and SHA-256 hashes per collection. A test shows an export never replaces an earlier one. Time Travel is confirmed on for the staging D1 (wrangler d1 time-travel info).",
   "milestone": "app (data, pipelines, ops)",
-  "status": "blocked",
+  "status": "done",
   "depends": [
    "B-312"
   ],
-  "notes": "R2 turned on by Matt. pwa-staging run 40219122263 (backup on) GREEN: the ev-staging-exports bucket created and the nightly export bound, Time Travel on, an export made and the newest restored into a scratch D1 with counts and SHA-256 per collection matching. Done once the release's data and tools code review (which covers pwa/) finds no gap in it.",
-  "commit": null,
+  "notes": "Nightly D1 export to R2, never over an earlier one; Time Travel on; restore check matches counts and SHA-256 per collection (pwa-staging 40219122263). Reviewer: the release code review of pwa/ (368b104..fc9133e) found no gap in the backup code. evening-mac's Mac backup from D1 goes with B-317.",
+  "commit": "db07f7c",
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
  {
