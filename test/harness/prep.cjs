@@ -1217,6 +1217,10 @@ async function tickAll(page) {
           tops: new Set(days.map(d => Math.round(box(d).top))).size,
           oneLine: titles.every(t => t.getClientRects().length === 1 && box(t).height < 24),
           seg: [...document.querySelectorAll('#seg-today button')].map(b => b.getAttribute('aria-pressed')),
+          segWhole: [...document.querySelectorAll('#seg-today, #seg-today button')].every(
+            b => b.scrollWidth <= b.clientWidth + 1
+          ),
+          status: !!document.getElementById('status').textContent.trim(),
           listHidden: document.getElementById('today-list').hidden,
           panel: !document.getElementById('today-date').hidden,
           sideways: document.documentElement.scrollWidth > innerWidth + 1,
@@ -1241,6 +1245,7 @@ async function tickAll(page) {
         JSON.stringify(r)
       );
       ok(`${tag} no chip title wraps past one line`, r.oneLine);
+      ok(`${tag} List and Week show whole, beside the header's status line`, r.segWhole, JSON.stringify(r.status));
       if (w !== 700) {
         await page.click('#today-week .wchip[data-id="p295-lab"]');
         await page.waitForTimeout(200);

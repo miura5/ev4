@@ -1110,6 +1110,7 @@ button.btn:disabled{opacity:.45;cursor:default}
    right panel from 1200 px and reads under the days below it. */
 #p-today .wk-away{display:none!important}
 #p-today>#seg-today{margin:0 0 10px}
+.mh #seg-today{flex:none} /* two words: in the header the status line gives way, never the switch */
 #today-week{gap:8px}
 #today-week .wk-her{margin:0;color:var(--quiet);font-size:calc(13px * var(--ts));line-height:1.4}
 .wk-days{display:flex;flex-direction:column;border-radius:10px;box-shadow:0 0 0 1px var(--line);overflow:hidden}
