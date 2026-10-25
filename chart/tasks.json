@@ -5483,10 +5483,10 @@
   "title": "Bring the demo onto main: pwa/ and tools/build-pwa.mjs from pwa-demo at 2f24443, without its chart/, DECISIONS.md or spec edits. The app is named \"E.V.\" (manifest, window title, icon label), and build-pwa wraps the page node tools/build.mjs writes for the record it is given (staging or live).",
   "dod": "git diff main shows no change under chart/, spec/, page/ or test/harness/. The built pwa/public/index.html carries the title \"E.V.\" and the manifest's name is \"E.V.\". build-pwa --record staging and --record live each wrap that record's built page byte for byte. npm test and prettier --check . green.",
   "milestone": "app (data, pipelines, ops)",
-  "status": "in progress",
+  "status": "done",
   "depends": [],
-  "notes": "Product review card. What changes for you when you study: nothing yet. The installable app now lives on the main line of E.V., beside the page, instead of on a side branch. It is named E.V. on your home screen and in its window, and it shows exactly the page E.V. builds, without changing it. Why: every later app step (its own staging database, the smoke check, running jobs through the API) builds on this. What it touches: the build tools and the app's own folder only; not the page, its checks, the record, the runs or the claude.ai pages. What could break and how we'd notice: an app that drifted from the page; a test now proves the app wraps the staging and live pages byte for byte and is titled E.V. Size: small in code (about 650 lines plus a lockfile), and it can be undone by removing the folder; no deploy. Checks: npm test 560 green, formatting green, page smoke 28 of 28, touched check GREEN (look 305 of 305). First reviewer named one gap (two notes cited an outdated decision for where the API key lives), fixed to cite D-299; second reviewer: No gaps. Checks retired or loosened: none. Size: +2194 -0 lines (1542 lockfile). Open: none. Demo differences kept: none (no board for this lane). Staging page: not changed by this task.",
-  "commit": null,
+  "notes": "pwa/ and build-pwa on main, named E.V., wrapping each record's built page byte for byte; reviewed No gaps",
+  "commit": "8cb38ee",
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
  {
