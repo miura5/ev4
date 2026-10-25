@@ -6075,12 +6075,12 @@
   "title": "Fidelity fix: Study: the Weak spots tab as the StudyWeak board: the toolbar strip (back to topics, Weak spots · course, Quiz me), To review rows with Accept / Join / Not now / Decline, Open rows with their dot, the miss line, Drill and Mark solid, Quiz me on all of them, and the panel's own card; due today, previews and solid as quiet sections in the same rows",
   "dod": "The Weak spots tab matches the StudyWeak board apart from the build corrections, with his real counts (a dozen due, notes and skills) laid out in the same rows and no screen-wide heading. Proof (D-312, fidelity sprint): node tools/build.mjs, tools/fidelity demo and built screenshots of each state read side by side at 1280, 1706, 2560 and 390, on the synthetic record and with a long real-shaped list, npm run smoke, ship staging GREEN.",
   "milestone": "v4.8 redesign",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-337"
   ],
-  "notes": "claimed by lane study",
-  "commit": null,
+  "notes": "Weak spots now looks like the demo's weak-spots screen: a strip with All topics, Weak spots and your course, and Quiz me; then every weak spot as one full-width row (a yellow dot, its topic, a grey line with where it came from, when it's due and its objective) with Drill and Mark solid, under quiet heads: Due today, Due tomorrow, Later, Notes and skills, then Previews and Solid in grey. Quiz me on all of them (and the strip's Quiz me) opens today's review; Drill quizzes that spot's objective; Copy for Quizlet sits beside it. From 1200 px the right panel says how a weak spot closes. Still differs from the demo at every size: no To review section with Accept / Join / Not now / Decline, because nothing in your record proposes weak spots yet (that arrives with the after-exams weak-spot work, B-300); the panel explains how a spot closes instead of how triage works; your topics carry longer grey lines, so rows wrap to two lines where the demo's fit one. 390: the Objectives / Plan / Weak spots switch sits above the strip (the hand-off's tabs).",
+  "commit": "1277296",
   "source": "Matt's staging look and fidelity review, Oct 25 (D-312)",
   "words": "Fidelity fix: Study's Weak spots tab is still the old screen: a large heading, bare rows and a stray Copy for Quizlet, nothing like the demo's StudyWeak board.",
   "reportedAt": "2026-10-25T12:26:56.256Z",
