@@ -13,10 +13,18 @@
 # Started by hand only (gh workflow run pwa-staging.yml): never on a push or a pull request, and staging only; the live
 # Worker and a live D1 are never named here. Secrets reach wrangler and the check through the environment or stdin,
 # never on a command line or in the log.
+# B-318: ship staging prints this workflow's dispatch at the build's commit (input commit) and reads the run back
+# through the GitHub API: the deploy tags the Worker version with the build hash (tools/pwa-app.mjs message), and the
+# last check reads the active version's tag and every served page file back, then leaves the hash as a notice.
 name: pwa-staging
+run-name: pwa-staging ${{ inputs.commit || github.sha }}
 on:
   workflow_dispatch:
     inputs:
+      commit:
+        description: 'B-318: the commit to build and deploy (ship staging passes the build commit); empty for the branch head'
+        type: string
+        default: ''
       jobs:
         description: 'B-324: also run one real Haiku job of each kind and read it back from the staging D1'
         type: boolean
@@ -50,6 +58,10 @@ jobs:
           if [ -n "$missing" ]; then echo "missing Actions secrets:$missing"; exit 1; fi
           echo "all four set"
       - uses: actions/checkout@v4
+        with:
+          # B-318: the build's own commit, with its tags, so the page carries the same release as ship's build.
+          ref: ${{ inputs.commit || github.sha }}
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -116,7 +128,9 @@ jobs:
         id: deploy
         working-directory: pwa
         run: |
-          npx wrangler deploy --env staging > deploy.log 2>&1 || { cat deploy.log; exit 1; }
+          msg=$(node ../tools/pwa-app.mjs message staging)
+          echo "the version's build hash: $msg"
+          npx wrangler deploy --env staging --message "$msg" > deploy.log 2>&1 || { cat deploy.log; exit 1; }
           url=$(grep -o 'https://ev-staging\.[a-z0-9.-]*\.workers\.dev' deploy.log | head -1)
           [ -n "$url" ] || { cat deploy.log; echo "no workers.dev address in the deploy output"; exit 1; }
           echo "url=$url" >> "$GITHUB_OUTPUT"
@@ -136,6 +150,8 @@ jobs:
             echo "retrying in 10 s (a new secret can take a moment to reach the Worker)"; sleep 10
           done
           exit 1
+      - name: the Worker's build hash and its page files, read back (B-318)
+        run: node tools/pwa-app.mjs deployed staging "${{ steps.deploy.outputs.url }}"
       - name: the run API suite against the staging Worker (B-312)
         env:
           EV_TOKEN: ${{ secrets.EV_STAGING_TOKEN }}

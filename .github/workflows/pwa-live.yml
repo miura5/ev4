@@ -1,0 +1,105 @@
+# B-318: the app's live deploy, prepared and not yet used (tools/pwa-app.mjs keeps live off until the ev-live D1 and
+# the live secrets exist). The same path as pwa-staging: the build at one commit, the ev-live Worker deployed with its
+# build hash, then the hash and every served page file read back and left as a notice for ship live's read.
+# Started by hand only, and only as ship live prints it on Matt's OK (R-04): the run refuses unless matt_ok names the
+# very commit it deploys, and unless a green pwa-staging run deployed that commit first (R-02). It runs in the GitHub
+# environment "live", where required reviewers can hold it for Matt too. It never creates, seeds or alters a database:
+# no ev-live D1, no deploy. Secrets reach wrangler through the environment or stdin, never a command line or the log.
+name: pwa-live
+run-name: pwa-live ${{ inputs.commit }}
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'the commit to deploy (ship live passes the build commit)'
+        type: string
+        required: true
+      matt_ok:
+        description: 'R-04: the commit Matt said OK to (ship live prints it only on his OK); must equal commit'
+        type: string
+        required: true
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: pwa-live
+  cancel-in-progress: false
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: live
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      EV_LIVE_TOKEN: ${{ secrets.EV_LIVE_TOKEN }}
+      ANTHROPIC_API_KEY_LIVE: ${{ secrets.ANTHROPIC_API_KEY_LIVE }}
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - name: R-04, Matt's OK names this commit
+        env:
+          COMMIT: ${{ inputs.commit }}
+          MATT_OK: ${{ inputs.matt_ok }}
+        run: |
+          echo "$COMMIT" | grep -Eq '^[0-9a-f]{40}$' || { echo "commit must be a full 40-character sha"; exit 1; }
+          [ "$MATT_OK" = "$COMMIT" ] || { echo "R-04: no OK from Matt for $COMMIT (ship live --matt-ok prints it)"; exit 1; }
+          echo "OK for $COMMIT"
+      - name: R-02, a green pwa-staging run deployed this commit first
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMIT: ${{ inputs.commit }}
+        run: |
+          n=$(gh api "repos/${{ github.repository }}/actions/workflows/pwa-staging.yml/runs?status=success&per_page=50" --jq "[.workflow_runs[] | select(.display_title == \"pwa-staging $COMMIT\")] | length")
+          [ "$n" -gt 0 ] || { echo "R-02: no green pwa-staging run at $COMMIT: ship staging first"; exit 1; }
+          echo "pwa-staging green at $COMMIT"
+      - name: the four secrets are set
+        run: |
+          missing=""
+          for v in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID EV_LIVE_TOKEN ANTHROPIC_API_KEY_LIVE; do
+            [ -n "${!v}" ] || missing="$missing $v"
+          done
+          if [ -n "$missing" ]; then echo "missing Actions secrets:$missing"; exit 1; fi
+          echo "all four set"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            pwa/package-lock.json
+      - run: npm ci
+      - run: npm ci --prefix pwa
+      - name: build the live page and wrap it
+        run: node tools/build.mjs && node tools/build-pwa.mjs --record live
+      - name: find the ev-live D1 (never made here)
+        working-directory: pwa
+        run: |
+          id=$(npx wrangler d1 list --json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const d=JSON.parse(s).find(x=>x.name==="ev-live");process.stdout.write(d?d.uuid:"")})')
+          [ -n "$id" ] || { echo "no ev-live D1: the live record moves to D1 in its own task first"; exit 1; }
+          sed -i "s/filled-in-by-the-pwa-live-workflow/$id/" wrangler.toml
+          grep -q "database_id = \"$id\"" wrangler.toml
+      - name: deploy the ev-live Worker
+        id: deploy
+        working-directory: pwa
+        run: |
+          msg=$(node ../tools/pwa-app.mjs message live)
+          echo "the version's build hash: $msg"
+          npx wrangler deploy --env live --message "$msg" > deploy.log 2>&1 || { cat deploy.log; exit 1; }
+          url=$(grep -o 'https://ev-live\.[a-z0-9.-]*\.workers\.dev' deploy.log | head -1)
+          [ -n "$url" ] || { cat deploy.log; echo "no workers.dev address in the deploy output"; exit 1; }
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "ev-live Worker: $url"
+      - name: the Worker's secrets, from the Actions secrets
+        working-directory: pwa
+        run: |
+          printf '%s' "$EV_LIVE_TOKEN" | npx wrangler secret put EV_TOKEN --env live >/dev/null
+          printf '%s' "$ANTHROPIC_API_KEY_LIVE" | npx wrangler secret put ANTHROPIC_API_KEY --env live >/dev/null
+          echo "EV_TOKEN and ANTHROPIC_API_KEY set on ev-live"
+      - name: reach (401 without the token)
+        run: node tools/pwa-staging.mjs reach "${{ steps.deploy.outputs.url }}"
+      - name: the Worker's build hash and its page files, read back (B-318)
+        run: node tools/pwa-app.mjs deployed live "${{ steps.deploy.outputs.url }}"

@@ -103,6 +103,15 @@ async function deployedStaging() {
     hashes: {},
     command: 'seed-staging',
   });
+  // B-318: the app's read, a green pwa-staging run whose Worker carries this build's hash.
+  const { expectedApp } = await import('../tools/pwa-app.mjs');
+  const app = await expectedApp({ root: dir, dist, target: 'staging' });
+  write(path.join(state, 'app.json'), {
+    target: 'staging',
+    run: { id: 1, status: 'completed', conclusion: 'success', headSha: manifest.commit },
+    steps: [],
+    app: { commit: manifest.commit.slice(0, 12), worker: app.worker.slice(0, 16), files: app.files.slice(0, 16) },
+  });
   return { dir, dist, state, manifest };
 }
 

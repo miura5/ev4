@@ -29,3 +29,16 @@ database_id = "filled-in-by-the-pwa-staging-workflow"
 # in winter). R2 must be on for the account first; the pwa-staging workflow then creates the ev-staging-exports bucket
 # once and adds its binding and the cron to [env.staging] at deploy (a binding to a missing bucket would stop the
 # deploy). Exports are never overwritten or deleted.
+
+# B-318: live, prepared and not yet used: its own Worker over its own D1. Deployed only by the pwa-live workflow
+# (.github/workflows/pwa-live.yml), which ship live dispatches only on Matt's OK (R-04) and which never creates or
+# seeds a database: it finds ev-live (made by the task that moves the record to D1) or refuses. Until then
+# tools/pwa-app.mjs keeps live off (APPS.live.ready false), so nothing dispatches it.
+[env.live]
+name = "ev-live"
+workers_dev = true
+
+[[env.live.d1_databases]]
+binding = "DB"
+database_name = "ev-live"
+database_id = "filled-in-by-the-pwa-live-workflow"

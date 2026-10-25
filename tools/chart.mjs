@@ -55,6 +55,7 @@ const ACTIONS = makeActions(validateAgainst);
 import { commitsBehind, mainHead } from '../core/cli.mjs';
 import { readState, withShell } from '../core/verifystate.mjs';
 import { build, BOOKKEEPING } from './build.mjs';
+import { APPS, appRead, appCalls, appLines, expectedApp } from './pwa-app.mjs';
 
 // The record, its constants and the shared helpers live in tools/chart/record.mjs (B-262).
 export {
@@ -911,6 +912,7 @@ export function skips({ manifest, target, deployed, rec }) {
 const PARTS = [
   ['tasks', /trigger/, /^(task |scheduled tasks read|retired tasks)/],
   ['pages', /^Artifact$/, /^(\w+ page read|page stamp|published page files|page capability declaration)/],
+  ['app', /^Bash$/, /^app /], // B-318: the Worker and its page files, through the target's workflow
 ];
 const partOf = x =>
   (PARTS.find(([, tool, what]) => (x.tool !== undefined ? tool : what).test(x.tool ?? x.what)) || [])[0];
@@ -1208,13 +1210,23 @@ async function ship(o) {
       ? last.skip
       : skips({ manifest, target, deployed, rec });
   const have = p => (p.endsWith('/') ? fs.existsSync(p) && fs.readdirSync(p).length > 0 : fs.existsSync(p));
-  const reads = verifyReads({ manifest, target, stateDir }).map(r => ({ ...r, have: have(r.save) }));
   const savedAt = f => (fs.existsSync(f) ? fs.statSync(f).mtimeMs : 0);
+  // B-318: the app's read, made again after a dispatch ship printed (its file older than that print).
+  const app = APPS[target].ready ? appRead({ target, stateDir }) : null;
+  const appAfter = last && last.commit === manifest.commit && last.touched && last.touched.app ? last.at : 0;
+  const reads = [
+    ...verifyReads({ manifest, target, stateDir }).map(r => ({ ...r, have: have(r.save) })),
+    ...(app ? [{ ...app, have: savedAt(app.save) > appAfter }] : []),
+  ];
   const stale =
     last &&
     last.commit === manifest.commit &&
     savedAt(path.join(stateDir, 'record', 'system', 'manifest.json')) < last.at
-      ? { tasks: last.touched ? last.touched.tasks : true, pages: last.touched ? last.touched.pages : true }
+      ? {
+          tasks: last.touched ? last.touched.tasks : true,
+          pages: last.touched ? last.touched.pages : true,
+          app: last.touched ? Boolean(last.touched.app) : true,
+        }
       : null;
   const buildInfo = {
     pushed,
@@ -1223,6 +1235,18 @@ async function ship(o) {
     contentHash: contentHash(manifest, distDocs.spec, sha256),
   };
   const verifyResult = verify({ manifest, target, state, build: buildInfo, dist: distDocs, sha256 });
+  // B-318: the app's lines, the saved read against what this build would deploy.
+  const appSaved = app ? readJsonIf(app.save) : null;
+  if (app) {
+    const lines = appLines({
+      target,
+      commit: manifest.commit,
+      expected: await expectedApp({ root, dist, target }),
+      saved: appSaved || null,
+    });
+    verifyResult.lines.push(...lines);
+    verifyResult.green = verifyResult.lines.every(l => l.ok);
+  }
   const file = o.transcript || newestTranscript(),
     jsonl = file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
   const recordUrl = artifactUrl(manifest.records[target].artifact);
@@ -1269,8 +1293,21 @@ async function ship(o) {
     stagingVerify,
     stateDir,
   });
+  // B-318: the app's deploy is a dispatch of its workflow, after the record and page calls; never while a run is going.
+  const appRunning = appSaved && appSaved.run && appSaved.run.status !== 'completed';
+  if (app && deploy.ok && !appRunning && verifyResult.lines.some(l => !l.ok && /^app /.test(l.what))) {
+    const a = appCalls({ target, commit: manifest.commit, mattOk: Boolean(o['matt-ok'] || shipJobOk) });
+    if (a.ok) deploy.calls = [...deploy.calls, ...a.calls];
+    else refusals.push(...a.refusals);
+  }
   const step = shipStep({ target, manifest, state, verifyResult, reads, deploy, rec, refusals, skip, stale });
   const head = `ship ${target}: ${manifest.release} at ${manifest.commit.slice(0, 7)}`;
+  if (step.kind === 'deploy' && appRunning) {
+    console.log(
+      `${head}: the ${APPS[target].workflow} run ${appSaved.run.id} is still going (another session's, or this deploy's): make the app read again once it ends, then run ship ${target} again:\n  ${app.args.command}`
+    );
+    return 1;
+  }
   if (step.kind === 'refused') {
     console.log([`${head}: REFUSED`, ...step.refusals.map(r => '  ' + r)].join('\n'));
     return 1;
@@ -1310,6 +1347,7 @@ async function ship(o) {
     const touched = {
       tasks: step.calls.some(c => partOf(c) === 'tasks'),
       pages: step.calls.some(c => partOf(c) === 'pages'),
+      app: step.calls.some(c => partOf(c) === 'app'),
     };
     // B-58: ship live prints these calls only on Matt's OK (R-04), so the live-write guard lets them through for a while.
     if (target === 'live')

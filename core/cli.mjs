@@ -528,12 +528,27 @@ const commands = {
     );
     return v.failed ? 1 : 0;
   },
-  'verify-deploy'(o) {
+  async 'verify-deploy'(o) {
     const target = o._[1];
-    const { dist, manifest, distDocs, stateDir, build } = load(o, target);
+    const { root, dist, manifest, distDocs, stateDir, build } = load(o, target);
     const state = withShell(readState(stateDir), manifest, target, dist);
     const result = verify({ manifest, target, state, build, dist: distDocs, sha256 });
     const reads = verifyReads({ manifest, target, stateDir });
+    // B-318: the app (the Worker and its page files), from the saved read of its workflow (tools/pwa-app.mjs).
+    const APP = await import('../tools/pwa-app.mjs');
+    if (APP.APPS[target].ready) {
+      const read = APP.appRead({ target, stateDir });
+      result.lines.push(
+        ...APP.appLines({
+          target,
+          commit: manifest.commit,
+          expected: await APP.expectedApp({ root, dist, target }),
+          saved: maybeJson(read.save) || null,
+        })
+      );
+      result.green = result.lines.every(l => l.ok);
+      reads.push(read);
+    }
     fs.writeFileSync(
       path.join(dist, `verify-${target}.json`),
       JSON.stringify(
@@ -583,7 +598,7 @@ const commands = {
 };
 
 const TARGETED = ['verify-deploy', 'deploy'];
-export function main(argv) {
+export async function main(argv) {
   const o = args(argv);
   const cmd = commands[o._[0]];
   if (!cmd || (TARGETED.includes(o._[0]) && !['live', 'staging'].includes(o._[1]))) {
@@ -593,7 +608,7 @@ export function main(argv) {
     return 2;
   }
   try {
-    return cmd(o);
+    return await cmd(o);
   } catch (e) {
     console.error(`${o._[0]} failed: ${e.message}`);
     return 1;
@@ -601,4 +616,4 @@ export function main(argv) {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url))
-  process.exitCode = main(process.argv.slice(2));
+  process.exitCode = await main(process.argv.slice(2));
