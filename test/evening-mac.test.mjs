@@ -15,6 +15,8 @@ import { readExport, loadValidator } from '../core/schemas.mjs';
 import { ROOT } from './helpers.mjs';
 
 const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
+// B-315, B-317: these tests drive the ArtifactData protocol on the staging record; test/run-worker.test.mjs proves the Worker target.
+delete spec.registry.records.staging.runs;
 EV.configure(spec);
 const validate = loadValidator();
 const tmp = p => fs.mkdtempSync(path.join(os.tmpdir(), p));
@@ -345,8 +347,9 @@ test('restore drill: the newest backup restores into staging, counts and hashes 
       assert.equal(r.status, 'waiting');
       assert.equal(r.step, 'fetch-backup');
       assert.deepEqual(r.question.material.look, [
-        '/Users/peachfritter/Documents/E.V. Study Watch/backup',
-        '/Users/peachfritter/Documents/E.V. Study Watch/staging/backup',
+        // D-322: the drill's folder is staging's one backup folder.
+        spec.tasks.staging['restore-drill'].folders[0] + '/backup',
+        spec.tasks.staging['restore-drill'].folders[0] + '/staging/backup',
       ]);
       if (body != null) {
         fs.mkdirSync(path.join(dir, 'in'), { recursive: true });

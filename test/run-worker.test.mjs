@@ -83,13 +83,15 @@ const filesUnder = d =>
     .readdirSync(d, { withFileTypes: true })
     .flatMap(e => (e.isDirectory() ? filesUnder(path.join(d, e.name)) : [path.join(d, e.name)]));
 
-test("the target is per record: staging's five cloud pipelines go to the Worker; live, the Mac lane and the diagnostic keep ArtifactData", () => {
+test("the target is per record: staging's Worker pipelines go to the Worker; live and the diagnostic keep ArtifactData", () => {
   for (const p of ['morning', 'evening-cloud', 'weekly', 'worker', 'watchdog']) {
     assert.equal(RUN.runTarget(spec, 'staging', p), 'worker', p);
     assert.equal(RUN.runTarget(spec, 'live', p), 'artifact', p);
   }
-  for (const p of ['evening-mac', 'restore-drill', 'diagnostic'])
-    assert.equal(RUN.runTarget(spec, 'staging', p), 'artifact', p);
+  // B-317: staging's Mac lane too; the diagnostic keeps ArtifactData (its probes test that store).
+  for (const p of ['evening-mac', 'restore-drill']) assert.equal(RUN.runTarget(spec, 'staging', p), 'worker', p);
+  assert.equal(RUN.runTarget(spec, 'staging', 'diagnostic'), 'artifact');
+  assert.equal(RUN.runTarget(spec, 'live', 'evening-mac'), 'artifact');
   assert.equal(spec.registry.records.live.runs, undefined, 'live keeps ArtifactData until the cutover (B-320)');
 });
 
@@ -193,7 +195,7 @@ test('a staging run end to end through the run API: pinned writes, a refused bat
           cwd: ROOT,
           stdio: 'pipe',
         }),
-      e => /api <pull\|batch\|set>/.test(String(e.stderr))
+      e => /api <pull\|batch\|set\|restore-check\|export>/.test(String(e.stderr))
     );
     const pulled = RUN.pulled({ spec, dir, transcript: '' });
     assert.equal(pulled.done, true);

@@ -215,7 +215,7 @@ test('B-389: a scheduled run on staging is a known writer only where the spec le
   assert.equal(red([{ c: 'days', id: 'd', data: { writer: 'page' } }]).length, 1);
   // a run document whose id is not its pipeline's, or a pipeline that does not run against staging
   assert.equal(red([run('morning', 'worker-4')]).length, 1);
-  assert.equal(red([run('evening-mac', 'evening-mac-5')]).length, 1);
+  assert.equal(red([run('diagnostic', 'diagnostic-5')]).length, 1); // B-317: evening-mac runs on the staging Worker now
 });
 
 test('B-311: the pwa-staging workflow is started by hand, names staging only and never echoes a secret', () => {

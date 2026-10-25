@@ -46,6 +46,7 @@ import { lintRecord, formatLint } from './lint.mjs';
 import { rebuild } from './derive.mjs';
 import * as RUN from './run.mjs';
 import * as API from './runapi-client.mjs';
+import * as D1B from './d1backup.mjs';
 import { newestTranscript } from './transcript.mjs';
 import { builderRun } from '../tools/guard.mjs';
 import EV from './evcore.mjs';
@@ -475,7 +476,7 @@ const commands = {
     // document or the token. Exit 1 on a refusal, its words quoted, as an ArtifactData refusal would be.
     const what = o._[1];
     if (!o.worker) throw new Error('api needs --worker <the saved system/worker file>');
-    const worker = API.readWorker(path.resolve(o.worker));
+    const worker = API.onHost(API.readWorker(path.resolve(o.worker)), o.host);
     if (what === 'pull') {
       // Every read of a pull or repull, in order; stops at the first refusal.
       const reads = readJson(path.resolve(o.reads || ''));
@@ -502,13 +503,14 @@ const commands = {
         const r = API.batch(worker, readJson(path.resolve(files[i])));
         if (!r.ok) {
           const n = first + i;
+          const label = o.label ? o.label + ' ' : '';
           console.log(
-            `api batch ${n}: REFUSED (${r.status}): ${JSON.stringify(r.error)}${r.entry != null ? ` (entry ${r.entry + 1})` : ''} · nothing in batch ${n} was written${i ? `; batches ${first} to ${n - 1} were` : ''}.${r.status === 409 ? ` A document changed: run the apply --failed ${n} command.` : ''}`
+            `api ${label}batch ${n}: REFUSED (${r.status}): ${JSON.stringify(r.error)}${r.entry != null ? ` (entry ${r.entry + 1})` : ''} · nothing in batch ${n} was written${i ? `; batches ${first} to ${n - 1} were` : ''}.${r.status === 409 && !o.label ? ` A document changed: run the apply --failed ${n} command.` : ''}`
           );
           return 1;
         }
         console.log(
-          `api batch ${first + i}: ${r.results.map(x => `${x.collection}/${x.doc_id} version ${x.version}`).join(', ')}`
+          `api ${o.label ? o.label + ' ' : ''}batch ${first + i}: ${r.results.map(x => `${x.collection}/${x.doc_id} version ${x.version}`).join(', ')}`
         );
       }
       return 0;
@@ -532,7 +534,37 @@ const commands = {
       console.log(`api ${what}: ${r.results.map(x => `${x.collection}/${x.doc_id} version ${x.version}`).join(', ')}`);
       return 0;
     }
-    throw new Error('api <pull|batch|set> ... --worker <file>');
+    if (what === 'restore-check') {
+      // B-317: the drill's read-back from the scratch D1, held to the backup's manifest; the result to --out.
+      const want = readJson(path.resolve(o.want || ''));
+      const r = API.readBack(worker, o.prefix, Object.keys(want));
+      const res = r.ok
+        ? (() => {
+            const got = D1B.manifestSync(r.rows.map(x => ({ ...x, id: D1B.decodeId(x.id) })));
+            const diffs = D1B.manifestDiffs(got, want);
+            return { ok: !diffs.length, diffs, docs: r.rows.length, collections: Object.keys(got).length };
+          })()
+        : { ok: false, diffs: [`the read-back of ${r.collection} was refused (${r.status}): ${r.error}`] };
+      fs.mkdirSync(path.dirname(path.resolve(o.out)), { recursive: true });
+      fs.writeFileSync(path.resolve(o.out), JSON.stringify(res, null, 1));
+      console.log(
+        res.ok
+          ? `api restore-check: ${res.docs} documents in ${res.collections} collections, counts and SHA-256 match the backup`
+          : `api restore-check: REFUSED: ${res.diffs.slice(0, 3).join('; ')}`
+      );
+      return res.ok ? 0 : 1;
+    }
+    if (what === 'export') {
+      // B-317: the newest R2 export (B-316) saved for the drill; prints its key, never a document.
+      const r = API.newestExport(worker, path.resolve(o.out || ''));
+      console.log(
+        r.ok
+          ? `api export: ${r.key} saved to ${o.out}`
+          : `api export: REFUSED (${r.status}): ${JSON.stringify(r.error)}`
+      );
+      return r.ok ? 0 : 1;
+    }
+    throw new Error('api <pull|batch|set|restore-check|export> ... --worker <file>');
   },
   'canvas-script'(o) {
     // One read-only Canvas script for the run in --dir, its parameters filled in from the spec and the run's pull

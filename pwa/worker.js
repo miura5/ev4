@@ -10,7 +10,7 @@
 //   - B-316: a nightly export of D1 to R2 (backup.js) on the cron in wrangler.toml, and POST /api/backup/export to make
 //     one now; GET /api/backup/newest names the newest export. Exports are never overwritten or deleted.
 import { handleRun } from './runapi.js';
-import { exportToR2, newestExport } from './backup.js';
+import { exportToR2, newestExport, EXPORT_PREFIX } from './backup.js';
 import { tokenOk, ifVersionOf } from './guard.js';
 
 const OVERLAP_MS = 5000;
@@ -42,6 +42,15 @@ export default {
     if (url.pathname === '/api/backup/newest' && request.method === 'GET') {
       if (!env.EXPORTS) return json({ error: 'no EXPORTS bucket on this Worker' }, 503);
       return json({ key: await newestExport(env.EXPORTS) });
+    }
+    // B-317 (D-322): one export's body, read-only, for the restore drill's R2 source. Only keys under exports/.
+    if (url.pathname === '/api/backup/get' && request.method === 'GET') {
+      if (!env.EXPORTS) return json({ error: 'no EXPORTS bucket on this Worker' }, 503);
+      const key = url.searchParams.get('key') || '';
+      if (!key.startsWith(EXPORT_PREFIX) || key.includes('..')) return json({ error: 'key: an export key' }, 400);
+      const obj = await env.EXPORTS.get(key);
+      if (!obj) return json({ error: 'no such export' }, 404);
+      return new Response(obj.body, { status: 200, headers: { 'content-type': 'application/json' } });
     }
 
     // GET /api/db?since=<ms>: every document changed after `since` (0 = the whole record).

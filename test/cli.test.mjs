@@ -396,7 +396,7 @@ test('B-137 (O-5): a Mac task is created, never edited: its create_trigger print
     'every channel named, none left to a default'
   );
   assert.equal(create.args.requires_local_device, true);
-  assert.deepEqual(create.args.folders, ['/Users/peachfritter/Documents/E.V. Study Watch/staging']);
+  assert.deepEqual(create.args.folders, ['/Users/peachfritter/Documents/E.V. Backups/staging']); // D-322
   assert.equal(create.args.cron_expression, undefined, 'staging evening-mac is fire-only');
   assert.match(create.then, /spec\.tasks\.staging\.evening-mac\.trigger/);
   assert.match(create.then, /retired/, 'the old task is disabled and listed as retired, never deleted');

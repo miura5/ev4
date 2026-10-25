@@ -497,6 +497,8 @@ export function compute({ spec, dir, validate, at }) {
     url: run.url,
     dir,
     outputs: run.outputs,
+    target: run.target || 'artifact',
+    worker: run.worker || null,
   };
   const writes = [];
   const steps = [];
@@ -505,6 +507,7 @@ export function compute({ spec, dir, validate, at }) {
   const problems = [];
   const fires = [];
   const device = [];
+  let scratch = null; // B-317: a drill's restore into the scratch D1 (never the record)
   for (const s of def.steps) {
     let r;
     if (s.kind === 'code') r = CODE_STEPS[s.fn || s.id](db, ctx, spec);
@@ -546,6 +549,11 @@ export function compute({ spec, dir, validate, at }) {
       }
       writes.push(w);
       applyInMemory(db, w);
+    }
+    if (r.scratch) {
+      if (run.target !== 'worker' || run.pipeline !== 'restore-drill')
+        problems.push(`${s.id}: only a Worker restore drill writes the scratch database`);
+      else scratch = r.scratch;
     }
     if (r.push) push = r.push;
     if (r.detail) detail = detail ? detail + ' · ' + r.detail : r.detail;
@@ -639,6 +647,23 @@ export function compute({ spec, dir, validate, at }) {
   }
   if (problems.length) return { status: 'refused', problems, steps };
   const batches = chunkWrites(files, spec.capacity.batch).map(b => b.map(({ data, ...x }) => x));
+  // B-317: the scratch restore's writes as files and batches of their own, and the manifest the read-back must match.
+  let scratchPlan = null;
+  if (scratch) {
+    const sfiles = scratch.writes.map((w, i) => {
+      const file = path.join(dir, 'scratch', 'writes', String(i).padStart(6, '0') + '.json');
+      writeJson(file, w.data);
+      return { op: 'set', collection: w.collection, doc_id: w.id, file_path: file, data: w.data };
+    });
+    const want = path.join(dir, 'scratch', 'want.json');
+    writeJson(want, scratch.want);
+    scratchPlan = {
+      host: scratch.host,
+      prefix: scratch.prefix,
+      want,
+      batches: chunkWrites(sfiles, spec.capacity.batch).map(b => b.map(({ data, ...x }) => x)),
+    };
+  }
   const plan = {
     runId: run.id,
     pipeline: run.pipeline,
@@ -652,6 +677,7 @@ export function compute({ spec, dir, validate, at }) {
     batches,
     fires,
     ...(device.length ? { device } : {}),
+    ...(scratchPlan ? { scratch: scratchPlan } : {}),
     hash: null,
     replans: [],
   };
@@ -675,6 +701,16 @@ export function planHash(plan) {
       fires: plan.fires,
       ...(plan.device && plan.device.length ? { device: plan.device } : {}),
       batches,
+      ...(plan.scratch
+        ? {
+            scratch: {
+              host: plan.scratch.host,
+              prefix: plan.scratch.prefix,
+              want: readJson(plan.scratch.want),
+              batches: plan.scratch.batches.map(b => b.map(w => ({ ...w, data: readJson(w.file_path) }))),
+            },
+          }
+        : {}),
     })
   );
 }
@@ -709,9 +745,27 @@ export function apply({ dir }) {
         ? [apiBatches(run, files, 1)]
         : []
       : plan.batches.map(b => batchCall(run.url, b))),
+    ...(plan.scratch ? scratchCalls(run, plan.scratch) : []),
     ...(plan.device || []),
     ...(plan.fires || []).map(f => ({ tool: 'mcp__claude-code-remote__fire_trigger', args: f })),
   ]);
+}
+/** B-317: the drill's restore into the scratch D1, one command, then its read-back check, one command. */
+function scratchCalls(run, sc) {
+  const files = sc.batches.map((b, i) => apiBatchFile(run, `scratch-${i + 1}`, b));
+  const out = path.join(run.dir, 'api', 'restore-check.json');
+  return [
+    ...(files.length
+      ? [
+          apiCall(
+            `${API} batch --files ${files.join(',')} --first 1 --label scratch --host ${sc.host} --worker ${run.worker}`
+          ),
+        ]
+      : []),
+    apiCall(
+      `${API} restore-check --prefix ${sc.prefix} --want ${sc.want} --out ${out} --host ${sc.host} --worker ${run.worker}`
+    ),
+  ];
 }
 /** Batch n (1-based) was refused on a version pin: the fresh pull of its collections, into <dir>/repull-<n>. */
 export function applyFailed({ dir, batch }) {
@@ -839,17 +893,35 @@ export function end({ dir, at, status, detail, transcript }) {
             .slice(0, 300),
     });
   }
-  const why = [changed, detail || (plan && plan.detail)].filter(Boolean).join(' · ');
+  // B-317: a scratch restore passes only on its read-back check (api restore-check wrote it), counts and hashes.
+  let checked = null;
+  if (plan && plan.scratch) {
+    const f = path.join(dir, 'api', 'restore-check.json');
+    const c = fs.existsSync(f) ? readJson(f) : null;
+    checked = !c
+      ? { ok: false, line: 'restore: the read-back check did not run' }
+      : c.ok
+        ? {
+            ok: true,
+            line: `read back from the scratch D1: ${c.docs} documents in ${c.collections} collections, counts and SHA-256 match`,
+          }
+        : {
+            ok: false,
+            line: `restore: the scratch D1 differs from the backup: ${(c.diffs || []).slice(0, 3).join('; ')}`,
+          };
+  }
+  const why = [changed, detail || (plan && plan.detail), checked && checked.line].filter(Boolean).join(' · ');
   // B-163: a restore drill that left a document as the record has it, for a value held for Matt, did not restore the
   // whole backup: partial until he answers on the page, and the next firing reads his answer first.
-  const final = changed
-    ? 'failed'
-    : status || (plan ? (plan.held && run.pipeline === 'restore-drill' ? 'partial' : 'ok') : 'failed');
+  const final =
+    changed || (checked && !checked.ok && !status)
+      ? 'failed'
+      : status || (plan ? (plan.held && run.pipeline === 'restore-drill' ? 'partial' : 'ok') : 'failed');
   // B-40: a failed run's push names the failed step (the detail's "<move>:" lead), never the plan's push; B-172: in
   // plain words, led by what Matt went without (failLine).
   const failedAt =
     final !== 'ok'
-      ? String(changed ? 'apply' : (detail || '').split(':')[0] || '')
+      ? String(changed || (checked && !checked.ok) ? 'apply' : (detail || '').split(':')[0] || '')
           .trim()
           .slice(0, 40)
       : '';

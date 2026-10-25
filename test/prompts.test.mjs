@@ -66,7 +66,10 @@ test('every pipeline with steps has a prompt for live and staging; the rest wait
   assert.ok(ready.includes('evening-mac'));
   assert.match(
     p['staging.evening-mac'],
-    /E\.V\.'s folder for this record there is "\/Users\/peachfritter\/Documents\/E\.V\. Study Watch\/staging"/
+    // D-322: staging's folder is its one backup folder (spec.registry.records.staging.runs.backup).
+    new RegExp(
+      `E\\.V\\.'s folder for this record there is "${spec.registry.records.staging.runs.backup.folder.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')}"`
+    )
   );
   assert.match(p['live.evening-mac'], /there is "\/Users\/peachfritter\/Documents\/E\.V\. Study Watch"\./);
   assert.match(p['staging.evening-mac'], /Canvas is read-only: only the GET requests the printed scripts make/);

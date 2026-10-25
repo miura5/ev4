@@ -27,6 +27,7 @@ import { describeErrors } from './validate.mjs';
 import { models, ITEM_FIELDS, pick, library, passages } from './steps-shared.mjs';
 import * as WORKER from './steps-worker.mjs';
 import * as DIAGNOSTIC from './steps-diagnostic.mjs';
+import * as D1B from './d1backup.mjs';
 
 /**
  * The evening push line (B-40, Matt's pick 8), composed from state/current (just written by the state step) and
@@ -440,8 +441,16 @@ CODE_STEPS.health = function healthStep(db, ctx, spec) {
 
 // ------------------------------------------------------------------------------------------------ evening-mac
 const WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-/** The Mac folder this run's record writes to (spec.tasks.<record>.evening-mac.folders[0]). */
+/** B-317 (D-322): a Worker record's backup setting (spec.registry.records.<r>.runs.backup), or null. */
+export function backupSetting(spec, record) {
+  const runs = ((spec.registry || {}).records || {})[record];
+  return (runs && runs.runs && runs.runs.backup) || null;
+}
+/** The Mac folder this run's record writes to: a Worker record's one backup folder (D-322), else
+ *  spec.tasks.<record>.evening-mac.folders[0]. */
 function macFolder(spec, record) {
+  const b = backupSetting(spec, record);
+  if (b && b.folder) return b.folder;
   const t = ((spec.tasks || {})[record] || {})['evening-mac'];
   if (!t || !(t.folders || []).length) throw new Error(`spec.tasks.${record}.evening-mac names no Mac folder`);
   return t.folders[0];
@@ -569,6 +578,61 @@ export function planRestore(b, db, ctx, spec, name = 'backup', versions = regist
 }
 
 /**
+ * B-317 (D-322): a Worker record's drill. The backup (a Mac backup or an R2 export, one shape) is checked against its
+ * own manifest, held for anything that could be a real patient's (B-04: the drill then restores nothing), and planned
+ * as writes into the scratch D1 under drills/<run id>/<collection>, new there, so nothing is replaced. It writes nothing
+ * to the record but its own runs entry; the apply move restores, then reads the scratch back and checks every
+ * collection's count and SHA-256 against the backup's manifest.
+ */
+function restoreToScratch(answer, db, ctx, spec) {
+  const file = path.join(ctx.dir, 'in', 'backup.json');
+  if (!fs.existsSync(file)) return { problems: [`no ${file}: save the backup there first`] };
+  let b;
+  try {
+    b = JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch (e) {
+    return { problems: ['the backup does not parse: ' + e.message] };
+  }
+  const problems = D1B.backupProblems(b);
+  if (b && b.collections && b.collections.system) problems.push('the backup holds system, which no backup may');
+  if (problems.length) return { problems: problems.slice(0, 20) };
+  const IDC = EV;
+  const kept = IDC.keptVerdicts([
+    ...(db.idchecks || []),
+    ...b.docs.filter(d => d.c === 'idchecks').map(d => ({ id: d.id, ...JSON.parse(d.data) })),
+  ]);
+  const held = new Set();
+  for (const d of b.docs)
+    for (const c of IDC.identifierCandidates(d.data))
+      if (!kept[c.key] || kept[c.key].verdict !== 'practice') held.add(`${d.c}/${d.id}`);
+  if (held.size)
+    return {
+      problems: [
+        `${held.size} document${held.size === 1 ? '' : 's'} hold what could be a real patient's details (B-04); the drill restores nothing: ${[...held].slice(0, 3).join(', ')}`,
+      ],
+    };
+  const scratch = (((spec.registry || {}).records || {})[ctx.record] || {}).runs || {};
+  if (!scratch.scratch || !scratch.scratch.host)
+    return { problems: ['spec names no scratch database for this record'] };
+  const writes = b.docs.map(d => ({
+    op: 'set',
+    collection: D1B.drillCollection(ctx.runId, d.c),
+    id: D1B.encodeId(d.id),
+    data: JSON.parse(d.data),
+  }));
+  const docs = b.docs.length;
+  const n = Object.keys(b.collections).length;
+  const from = path.basename(String(answer.path || 'backup'));
+  return {
+    writes: [],
+    scratch: { host: scratch.scratch.host, prefix: `drills/${ctx.runId}`, want: b.collections, writes },
+    detail: `drill: ${from} (${b.at}), ${n} collections and ${docs} documents; counts and hashes match its own manifest; restored into the scratch D1 under drills/${ctx.runId}`,
+    push: `Restore drill passed: ${docs} documents match the backup.`,
+    say: [`Restore drill: ${docs} documents in ${n} collections from ${from}, into the scratch D1.`],
+  };
+}
+
+/**
  * The nightly backup (and, on Sundays or when the run is told to, the Markdown mirror) written under ctx.outputs and
  * handed to the Mac as device_commit_files calls the apply move prints. Nothing on the Mac is read or deleted.
  */
@@ -583,10 +647,15 @@ CODE_STEPS['mac-files'] = function macFiles(db, ctx, spec) {
     fs.writeFileSync(f, body);
     files.push({ stagedPath: f, devicePath: folder + '/' + rel });
   };
-  const backup = macBackup(db, { now: ctx.now, label: `${ctx.pipeline} ${ctx.runId}`, release: ctx.release });
+  // B-317: a Worker run's backup is its pull of D1, in the R2 export's shape with pwa/backup.js's hashes (D-322).
+  const worker = ctx.target === 'worker';
+  const rows = worker ? D1B.rowsFromPull(path.join(ctx.dir, 'pull')) : null;
+  const backup = worker
+    ? D1B.backupOf(rows, { at: ctx.now, label: `${ctx.pipeline} ${ctx.runId}`, release: ctx.release })
+    : macBackup(db, { now: ctx.now, label: `${ctx.pipeline} ${ctx.runId}`, release: ctx.release });
   const body = JSON.stringify(backup, null, 1);
   put(MAC_FILES.backup(day), body);
-  const docs = Object.values(backup.counts).reduce((a, b) => a + b, 0);
+  const docs = worker ? rows.length : Object.values(backup.counts).reduce((a, b) => a + b, 0);
   const mirror = day === 'sunday' || /^(yes|true|1)$/i.test(String((ctx.input || {}).mirror || ''));
   let mirrored = 0;
   if (mirror) {
@@ -600,7 +669,7 @@ CODE_STEPS['mac-files'] = function macFiles(db, ctx, spec) {
   for (let i = 0; i < files.length; i += 50)
     device.push({ tool: 'mcp__remote-devices__device_commit_files', args: { files: files.slice(i, i + 50) } });
   // B-163 (D-186): the backup's schema versions, so the watchdog can say how many bumps behind the latest backup is.
-  const detail = `backup ${MAC_FILES.backup(day)} (${docs} documents, ${Math.round(Buffer.byteLength(body) / 1024)} KB; ${backupSchemaLine(backup.collections)})${mirror ? `, mirror ${mirrored} files` : ''}`;
+  const detail = `backup ${MAC_FILES.backup(day)} (${docs} documents, ${Math.round(Buffer.byteLength(body) / 1024)} KB; ${worker ? D1B.schemaLineOf(rows) : backupSchemaLine(backup.collections)})${mirror ? `, mirror ${mirrored} files` : ''}`;
   return { device, detail, say: [`Mac files: ${detail}, to ${folder}.`] };
 };
 
@@ -678,6 +747,37 @@ export const AGENT_MATERIAL = {
   },
   /** Where the newest v4 backup is on the Mac, and where the run wants its copy (restore-drill). */
   'backup-brief'(db, ctx, spec) {
+    // B-317 (D-322): a Worker record's drill restores from its one backup folder, or the newest R2 export.
+    const setting = ctx.target === 'worker' ? backupSetting(spec, ctx.record) : null;
+    if (setting) {
+      const saveTo = path.join(ctx.dir, 'in', 'backup.json');
+      if (setting.restoreFrom === 'r2')
+        return {
+          source: 'the newest nightly export in R2 (B-316)',
+          saveTo,
+          how: 'run the one printed command; it saves the export to saveTo. Then answer {status: ok, path: <the key it printed>}.',
+          groups: [
+            {
+              name: 'export',
+              rule: 'one command, as printed',
+              calls: [
+                {
+                  tool: 'Bash',
+                  args: { command: `node core/cli.mjs api export --out ${saveTo} --worker ${ctx.worker}` },
+                },
+              ],
+            },
+          ],
+        };
+      return {
+        source: 'the newest backup on the Mac',
+        look: [setting.folder + '/backup'],
+        files: 'E.V.-v4-backup-<weekday>.json',
+        pick: 'the one with the newest mtimeMs',
+        saveTo,
+        how: "device_list_dir on the folder in look; device_stage_files with that one file's full path; then copy the staged file (the stage result names where it landed, under /mnt/user-data/uploads/) to saveTo with cp. Read nothing else on the Mac and change nothing there.",
+      };
+    }
     const t = ((spec.tasks || {})[ctx.record] || {})['restore-drill'];
     if (!t || !(t.folders || []).length) return { skip: `spec.tasks.${ctx.record}.restore-drill names no Mac folder` };
     const folder = t.folders[0];
@@ -967,6 +1067,7 @@ export const AGENT_FOLDS = {
    * build's schema or a version with no migration refuses the plan, with the reason.
    */
   restore(answer, db, ctx, spec) {
+    if (ctx.target === 'worker' && answer.status === 'ok') return restoreToScratch(answer, db, ctx, spec);
     if (answer.status !== 'ok')
       return {
         problems: [`no backup to restore: ${answer.status}${answer.problem ? ' (' + answer.problem + ')' : ''}`],

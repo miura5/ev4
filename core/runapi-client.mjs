@@ -29,9 +29,19 @@ export function readWorker(file) {
 
 const q = s => '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
 
-/** One request to the Worker. {status, body}: the reply parsed as JSON (or {error: text} when it is not). */
+/** The same account's other Worker (B-317: the drill's scratch D1): the url's first host label replaced. */
+export function onHost(worker, host) {
+  if (!host) return worker;
+  if (!/^[a-z0-9-]{1,63}$/.test(host)) throw new Error('--host: one host label');
+  const u = new URL(worker.url);
+  u.hostname = [host, ...u.hostname.split('.').slice(1)].join('.');
+  return { ...worker, url: u.origin };
+}
+
+/** One request to the Worker. {status, body}: the reply parsed as JSON (or {error: text} when it is not). route is
+ *  under /api/run/, or a full /api/... path. */
 export function request(worker, { method = 'GET', route, params = {}, body = null, timeout = 90 }) {
-  const u = new URL(worker.url + '/api/run/' + route);
+  const u = new URL(worker.url + (route.startsWith('/api/') ? route : '/api/run/' + route));
   for (const [k, v] of Object.entries(params)) if (v != null) u.searchParams.set(k, String(v));
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ev-runapi-'));
   try {
@@ -110,4 +120,44 @@ export function batch(worker, writes) {
   if (r.status === 200 && r.body.ok) return { ok: true, results: r.body.results };
   const { error, entry, current_version } = r.body || {};
   return { ok: false, status: r.status, error: error || 'refused', entry, current_version };
+}
+
+/** B-317: every document under a drill's prefix in the scratch D1, as rows [{c, id, data}] (data JSON.stringify of
+ *  what the Worker returns, as D1 holds it), for the collections in `want`. {ok, rows} or {ok: false, ...}. */
+export function readBack(worker, prefix, collections) {
+  const rows = [];
+  for (const c of collections) {
+    let cursor = null;
+    do {
+      const r = request(worker, { route: 'list', params: { collection: `${prefix}/${c}`, limit: 1000, cursor } });
+      if (r.status !== 200) return { ok: false, status: r.status, error: r.body.error || 'refused', collection: c };
+      for (const d of r.body.documents || []) rows.push({ c, id: d.id, data: JSON.stringify(d.data) });
+      cursor = r.body.next_cursor || null;
+    } while (cursor);
+  }
+  return { ok: true, rows };
+}
+
+/** B-317: the newest R2 export (B-316), its body saved to `out`. {ok, key} or {ok: false, status, error}. */
+export function newestExport(worker, out) {
+  const n = request(worker, { route: '/api/backup/newest' });
+  if (n.status !== 200 || !n.body.key) return { ok: false, status: n.status, error: n.body.error || 'no export yet' };
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ev-export-'));
+  try {
+    const u = new URL(worker.url + '/api/backup/get');
+    u.searchParams.set('key', n.body.key);
+    const conf = [`url = ${q(u.href)}`, `header = ${q('authorization: Bearer ' + worker.token)}`];
+    const code = String(
+      execFileSync('curl', ['-sS', '--max-time', '120', '-K', '-', '-o', path.join(tmp, 'x'), '-w', '%{http_code}'], {
+        input: conf.join('\n') + '\n',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      })
+    ).trim();
+    if (code !== '200') return { ok: false, status: Number(code), error: 'the export could not be read' };
+    fs.mkdirSync(path.dirname(out), { recursive: true });
+    fs.copyFileSync(path.join(tmp, 'x'), out);
+    return { ok: true, key: n.body.key };
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
 }
