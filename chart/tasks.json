@@ -6741,5 +6741,22 @@
    "outcome": "task",
    "at": "2026-10-25T15:48:15.237Z"
   }
+ },
+ {
+  "id": "B-378",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Review 3: Progress still drops the Exam readiness card for an exam with no objectives.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UI reviewer click-through 3 at d6bee63, Oct 25 (D-316)",
+  "words": "Review 3: Progress still drops the Exam readiness card for an exam with no objectives.",
+  "reportedAt": "2026-10-25T15:48:15.633Z",
+  "board": {
+   "row": "v4 B-378: Review 3: Progress still drops the Exam readiness card for an exam…"
+  }
  }
 ]
