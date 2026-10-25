@@ -5624,7 +5624,7 @@
    "B-311",
    "B-313"
   ],
-  "notes": "ship staging GREEN at 9ae2e85 (v4.5.6+24), and verify-deploy staging GREEN: pwa-staging run 40230957571 green; Worker build fa2f30d1c2cdcca1 at 9ae2e85 and 35 app files (f52c34298bba7493) read back through the run's notice. ship counted the deploy against B-389, whose commit it was. B-318 code: 3f9b8c6 and fa51e6b (the read-back walks past secret-change Worker versions, and failures come home as error annotations because build sessions cannot read run logs). Not marked done: the coordinator runs the review.",
+  "notes": "Review gap fixed in 3c8190a: removed .github/workflows/pwa-live.yml (dispatchable by anyone with write access) and the [env.live] block in pwa/wrangler.toml, plus the live-only code and tests. APPS.live stays ready: false, appCalls still refuses live without Matt's OK (R-04), and tools/pwa-app.mjs commands accept staging only. The live gates are now in B-320's notes. npm test green (629). verify-deploy unchanged, so no staging ship. Waiting for the second review; not marked done.",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
