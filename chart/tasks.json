@@ -7042,7 +7042,7 @@
   "milestone": "v4.8 redesign",
   "status": "in progress",
   "depends": [],
-  "notes": "claimed by the release fixer",
+  "notes": "Fix at 2f58077 (E.gradedWeek one seven-day count for the answer, banner, header line and pane; E.shortTitle word-boundary cut, 11:59pm whole; answer names two (three when three) then 'and N more'; heads-up rows say their day once via headsUpTitle/rowText). Tests in test/core.test.mjs (3 new); npm test 607 pass; smoke 28/28 (one earlier run flaked on the refused-answer check, then 3 clean runs). Staging snapshot: answer 2 lines at 1280, 3 at 390; answer, banner and pane all 7. Shots /home/claude/ui-review6/b392/{1280,390}. ship staging GREEN at 2f58077. Open: the fresh-subagent review was not run (no subagent tool in the fixer session).",
   "commit": null,
   "source": "final rubric click-through at fc9133e (92/100), Oct 25",
   "words": "On real data, E.V.'s answer to What's due this week? runs to one long sentence naming eight items, cuts a title at the colon in a time (11:59pm reads as 11), counts eight days while the week banner and pane count other numbers, and heads-up rows say due tomorrow twice.",
