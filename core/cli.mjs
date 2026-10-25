@@ -501,6 +501,14 @@ const commands = {
       const first = Number(o.first || 1);
       for (let i = 0; i < files.length; i++) {
         const r = API.batch(worker, readJson(path.resolve(files[i])));
+        if (!r.ok && r.unknown) {
+          // B-397: no answer says whether it landed: never "refused", and the run reads again before writing
+          const n = first + i;
+          console.log(
+            `api ${o.label ? o.label + ' ' : ''}batch ${n}: OUTCOME UNKNOWN (${r.status || 'no reply'}): ${JSON.stringify(r.error)}${i ? `; batches ${first} to ${n - 1} were written` : ''}. Re-pull before writing again.`
+          );
+          return 1;
+        }
         if (!r.ok) {
           const n = first + i;
           const label = o.label ? o.label + ' ' : '';
@@ -525,6 +533,12 @@ const commands = {
           'api batch --file <writes.json> --worker <file>, or api set --collection <c> --doc-id <id> --file <doc.json> --worker <file>'
         );
       const r = API.batch(worker, writes);
+      if (!r.ok && r.unknown) {
+        console.log(
+          `api ${what}: OUTCOME UNKNOWN (${r.status || 'no reply'}): ${JSON.stringify(r.error)}. Re-pull before writing again.`
+        );
+        return 1;
+      }
       if (!r.ok) {
         console.log(
           `api ${what}: REFUSED (${r.status}): ${JSON.stringify(r.error)}${r.entry != null ? ` (entry ${r.entry + 1})` : ''}${r.status === 409 ? ' · a document changed: nothing was written' : ''}`

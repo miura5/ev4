@@ -89,6 +89,12 @@ test('B-312: a list cursor round-trips an id and refuses anything else', () => {
   assert.equal(decodeCursor(encodeCursor('2026-10-25.a_b')), '2026-10-25.a_b');
   assert.equal(decodeCursor('%%%'), null);
   for (const id of ['NUR 112', 'é ü', 'a+b=c']) assert.equal(decodeCursor(encodeCursor(id)), id, 'B-319: any id');
+  // B-397: a cursor given before B-319 (btoa: +, / and = padding) still decodes to its id
+  for (const id of ['2026-10-25.a_b', 'ab?', 'a~~>', 'x'])
+    assert.equal(decodeCursor(btoa(id)), id, `old cursor ${btoa(id)}`);
+  assert.ok(/[+/]/.test(btoa('ab?') + btoa('a~~>')) && /=$/.test(btoa('x')), 'the cases hold +, / and padding');
+  assert.equal(decodeCursor('YQ=='), 'a');
+  assert.equal(decodeCursor('YQ==='), null, 'three = is not base64');
   assert.equal(decodeCursor(btoa('a/b')), null);
 });
 

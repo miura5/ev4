@@ -337,6 +337,10 @@ export function importExport(worker, rows, { resume = false, log = () => {}, max
   let written = 0;
   for (let i = 0; i < parts.length; i++) {
     const r = batch(worker, parts[i]);
+    if (!r.ok && r.unknown)
+      throw new Error(
+        `batch ${i + 1} of ${parts.length}: ${r.error}; ${written} documents written before it: run verify, then import again with --resume`
+      );
     if (!r.ok)
       throw new Error(
         `batch ${i + 1} of ${parts.length} refused (${r.status} ${r.error}${r.entry != null ? `, entry ${r.entry}` : ''}): ${written} documents written before it; run again with --resume`

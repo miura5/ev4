@@ -38,9 +38,25 @@ export function onHost(worker, host) {
   return { ...worker, url: u.origin };
 }
 
-/** One request to the Worker. {status, body}: the reply parsed as JSON (or {error: text} when it is not). route is
- *  under /api/run/, or a full /api/... path. */
-export function request(worker, { method = 'GET', route, params = {}, body = null, timeout = 90 }) {
+/** B-397: curl's exit for a refused connection: nothing was sent, so it is the one failure tried again. */
+export const CONNECT_REFUSED = 7;
+export const RETRIES = 2;
+const sleepSync = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+
+/** B-397: whether a write's reply leaves its outcome unknown: no reply after the request may have been sent (a timeout,
+ *  a dropped connection), or 408, 429 or a 5xx, after which the Worker may have written it. A GET is never a write. */
+export const outcomeUnknown = (method, status, curlExit = null) =>
+  method !== 'GET' &&
+  ((status === 0 && curlExit !== CONNECT_REFUSED) || status === 408 || status === 429 || status >= 500);
+
+/** One request to the Worker. {status, body, unknown?, curlExit?}: the reply parsed as JSON (or {error: text} when it is
+ *  not). route is under /api/run/, or a full /api/... path. B-397: a refused connection (curl exit 7) sent nothing and
+ *  is tried again, RETRIES times, retryDelayMs apart; nothing else is ever retried (a timeout or a 5xx may follow a
+ *  write that landed), and for a write that ends that way `unknown` is true. */
+export function request(
+  worker,
+  { method = 'GET', route, params = {}, body = null, timeout = 90, retryDelayMs = 1000 }
+) {
   // B-319: each value encoded with encodeURIComponent (an id may hold a space or any letter); the Worker decodes it.
   const query = Object.entries(params)
     .filter(([, v]) => v != null)
@@ -61,43 +77,44 @@ export function request(worker, { method = 'GET', route, params = {}, body = nul
       fs.writeFileSync(f, JSON.stringify(body));
       conf.push(`header = "content-type: application/json"`, `data-binary = ${q('@' + f)}`);
     }
-    const out = execFileSync(
-      'curl',
-      // A refused connection sent nothing, so it is tried again (twice); a write that did land is never doubled by a
-      // retry either, since every write is pinned to a version or is a create the Worker refuses once it exists.
-      [
-        '-sS',
-        '--max-time',
-        String(timeout),
-        '--retry',
-        '2',
-        '--retry-connrefused',
-        '--retry-delay',
-        '1',
-        '-K',
-        '-',
-        '-o',
-        path.join(tmp, 'reply'),
-        '-w',
-        '%{http_code}',
-      ],
-      { input: conf.join('\n') + '\n', stdio: ['pipe', 'pipe', 'pipe'] }
-    );
-    const status = Number(String(out).trim());
-    const text = fs.existsSync(path.join(tmp, 'reply')) ? fs.readFileSync(path.join(tmp, 'reply'), 'utf8') : '';
-    let parsed;
-    try {
-      parsed = JSON.parse(text);
-    } catch {
-      parsed = { error: text.slice(0, 300) || 'no reply' };
+    const reply = path.join(tmp, 'reply');
+    for (let attempt = 0; ; attempt++) {
+      try {
+        const out = execFileSync(
+          'curl',
+          ['-sS', '--max-time', String(timeout), '-K', '-', '-o', reply, '-w', '%{http_code}'],
+          {
+            input: conf.join('\n') + '\n',
+            stdio: ['pipe', 'pipe', 'pipe'],
+          }
+        );
+        const status = Number(String(out).trim());
+        const text = fs.existsSync(reply) ? fs.readFileSync(reply, 'utf8') : '';
+        let parsed;
+        try {
+          parsed = JSON.parse(text);
+        } catch {
+          parsed = { error: text.slice(0, 300) || 'no reply' };
+        }
+        return { status, body: parsed, ...(outcomeUnknown(method, status) ? { unknown: true } : {}) };
+      } catch (e) {
+        if (e.status === CONNECT_REFUSED && attempt < RETRIES) {
+          sleepSync(retryDelayMs);
+          continue;
+        }
+        // curl's own error (no route, a timeout): its stderr names the host, never the token (that went on stdin).
+        const said = String((e.stderr && String(e.stderr)) || e.message)
+          .trim()
+          .split('\n')[0];
+        const curlExit = Number.isInteger(e.status) ? e.status : null;
+        return {
+          status: 0,
+          curlExit,
+          body: { error: said.replace(worker.token, '<token>') },
+          ...(outcomeUnknown(method, 0, curlExit) ? { unknown: true } : {}),
+        };
+      }
     }
-    return { status, body: parsed };
-  } catch (e) {
-    // curl's own error (no route, a timeout): its stderr names the host, never the token (that went on stdin).
-    const said = String((e.stderr && String(e.stderr)) || e.message)
-      .trim()
-      .split('\n')[0];
-    return { status: 0, body: { error: said.replace(worker.token, '<token>') } };
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
@@ -137,11 +154,18 @@ export function resolveWrites(writes) {
   }));
 }
 
-/** One all-or-nothing batch. {ok, results} or {ok: false, status, error, entry?, current_version?}. */
-export function batch(worker, writes) {
-  const r = request(worker, { method: 'POST', route: 'batch', body: { writes: resolveWrites(writes) } });
+/** B-397: what a batch whose outcome is unknown says: it may have landed, so the run reads again before writing. */
+export const UNKNOWN_OUTCOME =
+  'the outcome is unknown: the batch may have been written; re-pull the documents it names before writing again';
+
+/** One all-or-nothing batch. {ok, results}, or {ok: false, status, error, entry?, current_version?} when the Worker
+ *  refused it (nothing written), or {ok: false, unknown: true, status, error} when no answer says either way (B-397). */
+export function batch(worker, writes, opts = {}) {
+  const r = request(worker, { method: 'POST', route: 'batch', body: { writes: resolveWrites(writes) }, ...opts });
   if (r.status === 200 && r.body.ok) return { ok: true, results: r.body.results };
   const { error, entry, current_version } = r.body || {};
+  if (r.unknown)
+    return { ok: false, unknown: true, status: r.status, error: `${UNKNOWN_OUTCOME} (${error || 'no reply'})` };
   return { ok: false, status: r.status, error: error || 'refused', entry, current_version };
 }
 

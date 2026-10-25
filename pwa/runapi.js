@@ -114,8 +114,9 @@ export const encodeCursor = id => {
 };
 export const decodeCursor = s => {
   try {
-    if (typeof s !== 'string' || !/^[A-Za-z0-9_-]+$/.test(s)) return null;
-    const bin = atob(s.replace(/-/g, '+').replace(/_/g, '/'));
+    // B-397: base64url as given now, and the btoa cursors given before B-319 (+, / and = padding) all decode the same
+    if (typeof s !== 'string' || !/^[A-Za-z0-9_+/-]+={0,2}$/.test(s)) return null;
+    const bin = atob(s.replace(/-/g, '+').replace(/_/g, '/').replace(/=+$/, ''));
     const id = new TextDecoder('utf-8', { fatal: true }).decode(Uint8Array.from(bin, ch => ch.charCodeAt(0)));
     return validDocId(id) ? id : null;
   } catch {
