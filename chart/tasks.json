@@ -6594,5 +6594,22 @@
    "outcome": "task",
    "at": "2026-10-25T14:52:54.560Z"
   }
+ },
+ {
+  "id": "B-371",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Review 2: Study still shows a placeholder card with no pane for an exam with no objectives or a course with no exam; mini quiz wording and the weak spots page's sections differ.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UI reviewer click-through 2 at 112b83f, Oct 25 (D-316)",
+  "words": "Review 2: Study still shows a placeholder card with no pane for an exam with no objectives or a course with no exam; mini quiz wording and the weak spots page's sections differ.",
+  "reportedAt": "2026-10-25T14:52:54.931Z",
+  "board": {
+   "row": "v4 B-371: Review 2: Study still shows a placeholder card with no pane for an…"
+  }
  }
 ]
