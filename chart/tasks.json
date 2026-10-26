@@ -7307,7 +7307,7 @@
    "B-402",
    "B-398"
   ],
-  "notes": "Builder (B-404) started in its own worktree: IndexedDB copy and notes outbox in pwa/bridge.js, sw.js module cache, D-326 conflict as '<title> (earlier)' replacing B-402's stopgap, and the shrink-over-cap and noteTooBig fixes in 25-notes.js.",
+  "notes": "Ready for review (not done): a0bd029 + 735a179. bridge.js IndexedDB copy, notes outbox, offline refusal of other writes, replay with D-326 keep-both ('<title> (earlier)', ev-note-kept); sw.js boot precache; 25-notes.js picker, Keep this version swap, Undo, sync header, B-402 stopgap removed, shrink-over-cap allowed, save-time noteTooBig. npm test 736/737 (B-324 pwa-jobs talk-date fails on clean main too, after Chicago midnight), smoke 28/28, smoke:pwa 31/31, notes harness 62/62, pwa-offline 7/7. Needs the review skill in a fresh subagent; staging not shipped.",
   "commit": null,
   "source": "build manager, B-396 plan",
   "words": "Build offline and sync in the app (B-396, D-325).",
