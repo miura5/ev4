@@ -7168,7 +7168,7 @@
   "milestone": "v5 app",
   "status": "in progress",
   "depends": [],
-  "notes": "ready for staging",
+  "notes": "Review (fresh agent at f4808f4): no behaviour gap; it confirmed data kept, both backups hash the same text, if_version unchanged, and the token never printed. One size gap: test/pwa-worker-server.mjs is a third copy of the node:sqlite D1 stand-in, moved to B-391 cleanup. Checks retired or loosened: none. Size +252 -9 (source +40 -9). npm test 681/681; run API suite 9/9 on wrangler dev; pwa-staging GREEN at f4808f4. Done with the next staging ship.",
   "commit": null,
   "source": "B-317 second review, Oct 25",
   "words": "A Mac backup's per-collection hashes can differ from the R2 export's when a page save stored JSON text in a non-canonical form, because the backup re-serialises documents while the export hashes the stored text.",
