@@ -331,14 +331,8 @@ const SIZES = [
       continue;
     }
     await page.click('#tab-notes');
-    await page.evaluate(i => {
-      const b = document.createElement('button');
-      b.dataset.studyNote = i;
-      b.id = 'h-study';
-      b.textContent = 'Study with E.V.';
-      document.getElementById('p-notes').append(b);
-    }, NID);
-    await page.click('#h-study');
+    await page.click(`#notes-rows [data-note="${NID}"] .nm`);
+    await page.click('#notes-pv-study');
     await until(page, () => /left/.test((document.querySelector('#ev-sslot .s-left') || {}).textContent || ''));
     for (const v of ['notes', 'today', 'study', 'progress', 'record', 'ev']) {
       await page.click('#tab-' + v);

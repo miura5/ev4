@@ -1004,16 +1004,13 @@ const openNoteId = page =>
     );
     await page.screenshot({ path: path.join(shots, 'notes-session-undone-1280.png') });
 
-    // Study with E.V. on a note he has (the list's button carries data-study-note) starts one on it; with no Undo
+    // Study with E.V. in the list's preview starts one on that note; with no Undo
     // the ended session is filed once Undo is no longer offered
-    await page.evaluate(i => {
-      const b = document.createElement('button');
-      b.dataset.studyNote = i;
-      b.id = 'h-study';
-      b.textContent = 'Study with E.V.';
-      document.getElementById('p-notes').append(b);
-    }, noteB);
-    await page.click('#h-study');
+    await page.keyboard.press('Escape'); // the chat floats over the preview; close it first
+    await page.click('.n-back');
+    await until(page, () => !document.getElementById('notes-list').hidden);
+    await page.click(`#notes-rows [data-note="${noteB}"] .nm`);
+    await page.click('#notes-pv-study');
     await until(
       page,
       i => Object.values(window.__db.sessions).some(x => x.note === 'notes/' + i && x.status === 'active'),
