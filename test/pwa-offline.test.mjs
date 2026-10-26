@@ -1375,3 +1375,47 @@ test('B-409 (shim): a note taken over mid-session reaches the page at once (so i
   );
   release();
 });
+
+test('B-409 review (shim): a seen stamp another tab left in IndexedDB never lets a save drop refused words it never showed', async () => {
+  const env = envOf();
+  await put(env, 'notes', ID, BASE);
+  const idb = fakeIDB();
+  let busy = false;
+  const T3 = await shim(
+    env,
+    idb,
+    { down: false },
+    {
+      status: async (url, init) => (busy && init.method === 'PUT' ? new Response('busy', { status: 503 }) : null),
+    }
+  );
+  await kept();
+  const T1 = await shim(env, idb);
+  T1.net.down = T3.net.down = true;
+  await T1.db.collection('notes').doc(ID).set(HUGE());
+  const own = lines(BASE, ['ul', 'T3 offline']);
+  await T3.db.collection('notes').doc(ID).set(own);
+  await kept();
+  T1.close();
+  const T2 = await shim(env, idb, { down: true });
+  T2.wake();
+  await until(() => (T2.sync().refused || []).length >= 1 && !T2.sync().syncing);
+  await kept();
+  T2.close();
+  busy = true;
+  T3.wake();
+  await until(() => T3.sync().online && (T3.sync().refused || []).length >= 1 && !T3.sync().syncing);
+  await T3.db
+    .collection('notes')
+    .doc(ID)
+    .set(lines(own, ['ul', 'T3 again']));
+  await kept();
+  busy = false;
+  await new Promise(r => setTimeout(r, 2500));
+  T3.focus();
+  await until(() => !T3.sync().syncing && T3.sync().pending === 0, 8000);
+  await kept();
+  const hugeKept = idb.box().some(o => o.refused && JSON.stringify(o.doc.blocks) === JSON.stringify(HUGE().blocks));
+  assert.ok(hugeKept, 'the refused words are kept, as their own note');
+  assert.ok(textOfAll(env).includes('T3 again'), 'his later save landed');
+});

@@ -207,6 +207,7 @@
       if (outbox[key] || !o || !o.c || claimed.has(o.tag)) continue; // B-410: an entry this tab moved stays moved
       if (o.tab !== TAB && open && open.has(o.tab)) continue; // that tab is open: it sends its own
       if (o.tab === TAB) continue;
+      delete o.seen; // B-409 review: a stamp is this tab's own; one another tab left in IndexedDB never counts here
       outbox[key] = o;
       n++;
       // B-410: refused words the record has since passed get their own second note, as take() does
