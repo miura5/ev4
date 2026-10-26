@@ -7483,7 +7483,7 @@
   "depends": [
    "B-406"
   ],
-  "notes": "Review gaps fixed, ready for second review (9595a2d): findings first and the session update (filedAt) last; a filing mark is honoured only with no reopen after it, and Undo's reopen sets filing null; sessionTick files a session left in ending (from its mark after 30 s, or after the takeover delay); the shim lays the mark under (a different mark is a conflict) and fileSession files from the mark the record holds after both land; the mark is built once. npm test 759/761 (1 skip; 1 fail is chart.test B-147, red on main too since B-233's chart change), smoke 28/28, smoke:pwa 31/31, notes 88/88, frame 134/134.",
+  "notes": "Second review: gaps 1, 2, 3, 5 and 6 closed; gap 4 closed through the app's bridge. Open for the release card: on the claude.ai page (no bridge), two views filing within the same moment can still write two summaries, and a filer mid-write can file over a session just brought back by Undo. Both are narrow, and Notes runs in the app, where the bridge refuses a second mark.",
   "commit": null,
   "source": "B-406 second review",
   "words": "Notes sessions: in rare cases a switched session is filed twice (the driver view is not the one holding Undo, or a reload lands between a filing's findings and its filed mark), and the Undo button can show after Undo has stopped working, with no word when a tap does nothing.",
