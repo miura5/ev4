@@ -253,7 +253,37 @@ const openNoteId = page =>
       /^h1:Fluids lecture\/ul:first point\/.*p:Bold words pasted strong$/.test(back) && /words/.test(boldBack),
       back + ' | bold: ' + boldBack
     );
-    ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
+
+    // a refused save keeps the text, says Not saved, and the note stays open until a save lands
+    await page.keyboard.press(`${mod}+End`);
+    await page.evaluate(() => (window.__writeFail = 'permission_denied'));
+    await page.keyboard.type(' kept');
+    await settle(page);
+    const failed = await page.evaluate(() => ({
+      sync: (document.querySelector('.mh .n-sync') || {}).textContent || '',
+      text: document.getElementById('note-body').lastElementChild.textContent,
+    }));
+    await page.click('.n-back');
+    await page.waitForTimeout(400);
+    const stayed = await page.evaluate(() => !document.getElementById('notes-editor').hidden);
+    await page.evaluate(() => (window.__writeFail = null));
+    await page.click('.n-back');
+    await until(page, () => !document.getElementById('notes-list').hidden);
+    const landed = await savedDoc(page, id2);
+    ok(
+      `${tag} a refused save keeps the text and says Not saved; Back keeps the note open until it saves, then it lands`,
+      /Not saved/.test(failed.sync) &&
+        /kept$/.test(failed.text) &&
+        stayed &&
+        !!landed &&
+        JSON.stringify(landed.blocks).includes(' kept'),
+      JSON.stringify({ failed, stayed, landed: !!landed })
+    );
+    ok(
+      `${tag} no page error`,
+      errors.filter(e => !/permission_denied/.test(e)).length === 0,
+      errors.slice(0, 3).join(' | ')
+    );
     await page.context().close();
   }
 

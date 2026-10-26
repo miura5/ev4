@@ -276,7 +276,7 @@
 
     // ---- desktop only: no Notes entry below 1024 px, and no way into it by address
     function notesWidth() {
-      const wide = WIDE.matches;
+      const wide = WIDE.matches && !READ_ONLY; // the claude.ai page after the cutover writes nothing (B-320)
       if (notesTab) notesTab.hidden = !wide;
       if (!wide && ui.tab === 'notes') {
         saveNote();
@@ -286,9 +286,9 @@
     WIDE.addEventListener('change', notesWidth);
     notesWidth();
     window.addEventListener('hashchange', () => {
-      if (location.hash === '#notes' && !WIDE.matches) showTab('ev');
+      if (location.hash === '#notes' && (!WIDE.matches || READ_ONLY)) showTab('ev');
     });
-    if (location.hash === '#notes' && WIDE.matches) showTab('notes'); // 02 opened the address before Notes existed
+    if (location.hash === '#notes' && WIDE.matches && !READ_ONLY) showTab('notes'); // 02 opened the address before Notes existed
 
     // ---- the list
     function renderNotes() {
@@ -355,7 +355,7 @@
       updateBar();
     }
     async function openNote(id) {
-      await flushNote();
+      if (!(await flushNote())) return;
       const doc = (S.notes || []).find(n => n.id === id);
       if (!doc) return;
       const { id: _drop, ...data } = doc;
@@ -368,7 +368,7 @@
       setNoteSel({ a: { b: last, o: E.noteText(NOTE.blocks[last]).length } });
     }
     async function newNote() {
-      await flushNote();
+      if (!(await flushNote())) return;
       const at = now();
       const id = E.newNoteId(at, noteRandom());
       loadNote(id, null);
@@ -378,7 +378,7 @@
       saveNote();
     }
     async function closeNote() {
-      await flushNote();
+      if (!(await flushNote())) return;
       showEditor(false);
     }
 
@@ -513,8 +513,14 @@
     const noteUndo = () => restore(NOTE.undo, NOTE.redo);
     const noteRedo = () => restore(NOTE.redo, NOTE.undo);
     /** A model change: remembered for undo, painted, the caret placed, saved after the pause. */
+    const NOTE_MAX_BLOCKS = 4000; // notes.schema.json's maxItems: a change past it is refused, never cut short
     function apply(kind, r, sel) {
       if (!r) return;
+      if (r.blocks.length > NOTE_MAX_BLOCKS) {
+        toast('A note holds up to 4,000 lines. Start a new note for the rest.');
+        if (sel) setNoteSel(sel);
+        return;
+      }
       remember(kind, sel);
       NOTE.blocks = r.blocks;
       NOTE.pend = null;
@@ -943,9 +949,17 @@
       return NOTE.saving;
     }
     /** Every pending change of the open note saved (before another note opens, or the view or page goes). */
+    /**
+     * Every pending change of the open note saved, before another note opens or the editor closes; a refused save is
+     * tried once more here. false while the note is still not saved: it stays open with its text, and he is told why.
+     */
     async function flushNote() {
       if (NOTE.saving) await NOTE.saving.catch(() => {});
-      if (NOTE.dirty && NOTE.state !== 'failed') await saveNote();
+      if (NOTE.dirty) await saveNote();
+      if (NOTE.saving) await NOTE.saving.catch(() => {});
+      if (!NOTE.open || !NOTE.dirty) return true;
+      toast('This note isn’t saved yet, so it stays open. ' + (NOTE.why || ''));
+      return false;
     }
     window.addEventListener('pagehide', () => saveNote());
     document.addEventListener('visibilitychange', () => {

@@ -681,7 +681,7 @@ export function makeNotes() {
       ...out.slice(p.b + 1),
     ];
     return {
-      blocks: all.slice(0, MAX.blocks),
+      blocks: all, // past the schema's 4000 the editor refuses the paste; nothing is cut here
       pos: clampPos(all, { b: p.b + add.length - 1, o: blockText(lastAdd).length }),
     };
   }
