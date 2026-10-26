@@ -7343,5 +7343,22 @@
    "outcome": "task",
    "at": "2026-10-26T00:52:53.081Z"
   }
+ },
+ {
+  "id": "B-406",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Build study sessions move into Notes (B-396, D-325).",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build manager, B-396 plan",
+  "words": "Build study sessions move into Notes (B-396, D-325).",
+  "reportedAt": "2026-10-26T00:52:55.639Z",
+  "board": {
+   "row": "v4 B-406: Build study sessions move into Notes (B-396,"
+  }
  }
 ]
