@@ -7480,7 +7480,7 @@
   "depends": [
    "B-406"
   ],
-  "notes": "Builder took it: switching view on the end event, a filing mark before findings, Undo's deadline from the record.",
+  "notes": "Ready for review (data write: sessions gain a filing mark; switch end event names its view). Built at d49459d, not shipped. Scope: core/sessions.mjs (switchSession view, switchedEnd/switchedAt, filingMark, closeSession filing from the mark against the record before its own findings), spec/schemas/sessions.schema.json and spec.collections.sessions.marks (filing, a page mark), page/app/64-ev-study-sessions.js (fileSession writes the mark first and resumes from it; switchTick files only from the switching view, others after the takeover delay; Undo deadline from undoEndsAt and the refused line). Proofs: npm test 749/750 (1 skip), smoke 28/28, smoke:pwa 32/32, notes 81/81, frame 134/134.",
   "commit": null,
   "source": "B-406 second review",
   "words": "Notes sessions: in rare cases a switched session is filed twice (the driver view is not the one holding Undo, or a reload lands between a filing's findings and its filed mark), and the Undo button can show after Undo has stopped working, with no word when a tap does nothing.",
