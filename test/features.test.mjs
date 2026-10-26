@@ -89,7 +89,7 @@ test('B-409: a skill step missed, passed, then missed in a new session reopens i
   assert.deepEqual(doc.origin, miss.data.origin, 'its origin is the first session’s');
   assert.equal(doc.at, miss.data.at);
   assert.equal(model()[0].derived.status, 'open');
-  // parked or declined, the same
+  // parked or declined: updated in place, never set over
   for (const type of ['park', 'decline']) {
     const set = { ...doc, events: { 'page-20261021-120000': { type, by: 'owner' } } };
     const m = EV.buildWeakspots({ weakspots: [set], sets: [], answers: [], exams: [] });
@@ -97,6 +97,8 @@ test('B-409: a skill step missed, passed, then missed in a new session reopens i
       x => x.collection === 'weakspots'
     );
     assert.equal(w.op, 'update', type);
+    // parked is reopened; a decline is his triage tap and stands: the re-miss is seen, never a reopen
+    assert.equal(Object.values(w.data.events)[0].type, type === 'park' ? 'reopen' : 'seen', type);
   }
 });
 

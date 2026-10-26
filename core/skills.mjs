@@ -190,7 +190,14 @@ export function makeSkills(core) {
       data: { events: { [eventKey('page', at)]: { type, by, note, at } } },
     });
     if (result === 'miss' && open) writes.push(ev('seen', 'Skills practice'));
-    else if (result === 'miss' && there) writes.push(ev('reopen', 'Skills practice: missed again'));
+    // a spot he passed or parked is reopened; one he triaged (proposed, snoozed, declined) or joined keeps his choice and
+    // is seen again (a duplicate's seen is credited to its survivor), so a re-miss never overrides his tap
+    else if (result === 'miss' && there)
+      writes.push(
+        ['reviewed', 'parked'].includes(there.derived && there.derived.status)
+          ? ev('reopen', 'Skills practice: missed again')
+          : ev('seen', 'Skills practice: missed again')
+      );
     else if (result === 'miss')
       writes.push({
         op: 'set',
