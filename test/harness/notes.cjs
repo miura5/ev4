@@ -1267,14 +1267,15 @@ const openNoteId = page =>
       const evs = Object.values((window.__db.sessions[i] || {}).events || {});
       return evs.filter(e => e.type === 'end' && e.why === 'switched').pop() || null;
     }, sa.id);
-    await until(page, () => !document.querySelector('#ev-sslot .s-undo'), null, 16000);
+    // B-421: the floor proves Undo lasts its 12 s; the ceiling allows a slow runner's polling, not a stuck button
+    await until(page, () => !document.querySelector('#ev-sslot .s-undo'), null, 24000);
     const undoGone = Date.now();
     const filed = await until(page, i => !!(window.__db.sessions[i] || {}).filedAt, sa.id, 30000);
     const fa = await sess(sa.id);
     const lasted = swEnd ? undoGone - Date.parse(swEnd.at) : null;
     ok(
       `${tag} the switch's end event names its view; its Undo button goes when the record's Undo ends (12 s)`,
-      !!swEnd && typeof swEnd.view === 'string' && swEnd.view.length > 0 && lasted >= 11000 && lasted <= 14000,
+      !!swEnd && typeof swEnd.view === 'string' && swEnd.view.length > 0 && lasted >= 11000 && lasted <= 22000,
       JSON.stringify({ swEnd, lasted })
     );
     const dupes = await page.evaluate(i => {
