@@ -5603,13 +5603,13 @@
   "title": "evening-mac and the restore drill pointed at the staging Worker: each re-created as a staging task from a chat with Matt present and the Mac linked (O-5); the old staging tasks listed disabled in spec.tasks.retired. evening-mac still reads Canvas through Matt's signed-in browser (B-12).",
   "dod": "One staging firing of each, read back from staging D1. The drill restores the Mac's newest backup into a scratch D1, with counts and hashes matching per collection. verify-deploy staging asserts the old tasks are disabled.",
   "milestone": "app (data, pipelines, ops)",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-315",
    "B-316"
   ],
-  "notes": "Proved on staging with Matt present: evening-mac (trig_01Gxz5Yv4Q21UrdY8kK6iYza) ran ok as runs/evening-mac-20261025-223227266 and wrote the backup to E.V. Backups/staging; restore-drill (trig_01P9SCjuNLjRxbzWgZBnHBEk) ran ok as runs/restore-drill-20261025-230809312: 770 documents in 22 collections, counts and SHA-256 match after restore into the scratch D1. Old staging Mac tasks disabled. Done after the staging ship that carries B-397 and B-399 goes GREEN.",
-  "commit": null,
+  "notes": "Shipped to staging at 4ed5d54: ship staging GREEN.",
+  "commit": "4ed5d54",
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
  {
