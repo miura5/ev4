@@ -810,7 +810,12 @@
      },
      "fold": "restore"
     }
-   ]
+   ],
+   "stagingWords": {
+    "purpose": "restores the newest staging backup (from his Mac, or the newest nightly export) into the staging scratch database and checks every count and hash against the backup's own manifest",
+    "alsoWrites": "the restore it checks, into the staging scratch D1's drills/<run id>/ tables (D-302), never this record",
+    "_why": "D-342: the staging restore-drill Mac task keeps the words it was created with until it is re-created from a chat linked to the Mac with Matt present; then this is removed."
+   }
   },
   "diagnostic": {
    "lane": "cloud",
