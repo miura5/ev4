@@ -202,17 +202,17 @@ as the brief says.
 A session started by one of E.V.'s own scheduled tasks (its prompt begins "E.V. <pipeline> run" and names one record) is
 not a build chat; the build-chat rules above do not apply to it. Matt created each of those tasks and approved what it
 does: writing the documents its run protocol prints into the record its prompt names, live or staging, is that task's
-job and needs no further OK. Its limits are the hard limits in its own prompt, which stay absolute: no help on graded
-work, no patient identifiers, Canvas read-only, nothing posted as Matt, nothing deleted, no other artifact, page, file,
+job and needs no further OK. Its limits are the hard limits in its own prompt, which stay absolute: Canvas read-only, nothing posted as Matt, nothing deleted, no other artifact, page, file,
 account or scheduled task touched.
 
-## Hard limits (unchanged from v3)
+## Hard limits
 
 They are `spec.boundaries` B-01 to B-18 (B-01 graded work, B-02 drug cards, B-03 proctored exams, B-04 patient
 identifiers, B-05 health data, B-06 Apple Notes folders, B-07 owner-only record, B-08 passwords, B-09 posting as Matt,
 B-10 no API key, B-11 nothing deleted, B-12 Canvas read-only, B-13 grounding, B-14 tone, B-15 a run's own record only,
 B-16 scheduled tasks, B-17 Quizlet read-only, B-18 E.V.'s Mac folder); the run prompts' limits are rendered from them
-(D-175). No help on graded or submitted work. No patient identifiers, ever. Canvas is read-only GETs through Matt's
+(D-175). B-01 (graded work) and B-04 (patient identifiers) are ended by Matt's own decision (D-324): E.V. no longer
+checks for, flags, holds or blocks either, and Matt is accountable for both. Canvas is read-only GETs through Matt's
 signed-in browser; never a token. Nothing is deleted anywhere: records, Mac files, scheduled tasks, docs; retire
 by marking. Repository code may be removed outright when it is no longer needed; git history keeps it (D-166). No passwords, nothing posted as Matt. The journal is a named read (D-106, D-113): a run reads it only for
 a step that names it, backups and the mirror include it, and a build session may read it. Personal data never enters
