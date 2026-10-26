@@ -514,39 +514,165 @@ const openNoteId = page =>
     await page.click('#notes-editor button[aria-label="Undo"]');
     await settle(page);
 
-    // B-402 review, D-326: a stale save (409) is not tried again, so the other device's version is never overwritten
-    const w1 = await noteWrites();
-    await page.keyboard.press(`${mod}+End`);
-    await page.evaluate(() => (window.__writeFail = 'conflict'));
-    await page.keyboard.type(' stale');
-    await settle(page);
+    // B-404 (D-326): a stale save (409) is never written over the other device's version: his words become a second
+    // note '<title> (earlier)' at once, the newer version stays the note, the picker shows; Keep this version swaps
+    // them, Undo swaps them back, and the note closes normally.
+    const before409 = await notesIn(page);
     const other = await page.evaluate(i => {
-      window.__writeFail = null;
       const d = JSON.parse(JSON.stringify(window.__db.notes[i]));
-      d.blocks = [{ type: 'h1', runs: [{ text: 'Written on the other device' }] }];
-      d.title = 'Written on the other device';
-      window.__db.notes[i] = d;
+      d.blocks = [
+        { type: 'h1', runs: [{ text: 'Fluids lecture' }] },
+        { type: 'p', runs: [{ text: 'Written on the other device' }] },
+      ];
+      d.at = d.editedAt = '2026-10-26T09:00:00.000Z';
+      window.__db.notes[i] = d; // the record moved on; this page has not seen it
+      // the next write is refused as stale, once: stub.js reads the flag three times for one refused write (the
+      // check, the message, the code)
+      let reads = 0;
+      Object.defineProperty(window, '__writeFail', {
+        configurable: true,
+        get: () => (reads++ < 3 ? 'conflict' : null),
+        set: () => {},
+      });
       return JSON.stringify(d);
     }, id2);
-    await page.keyboard.type(' more');
-    await settle(page, 1600);
-    await page.click('.n-back');
-    await page.waitForTimeout(400);
-    const stale = await page.evaluate(() => ({
-      sync: (document.querySelector('.mh .n-sync') || {}).textContent || '',
-      text: document.getElementById('note-body').lastElementChild.textContent,
-      open: !document.getElementById('notes-editor').hidden,
-    }));
-    const now409 = JSON.stringify(await savedDoc(page, id2));
-    ok(
-      `${tag} a 409 says Not saved: changed on another device, keeps his text, is not retried and overwrites nothing`,
-      /Not saved: changed on another device/.test(stale.sync) &&
-        / stale more$/.test(stale.text) &&
-        stale.open &&
-        (await noteWrites()) === w1 &&
-        now409 === other,
-      JSON.stringify({ stale, writes: (await noteWrites()) - w1, same: now409 === other })
+    await page.keyboard.press(`${mod}+End`);
+    await page.keyboard.type(' stale words');
+    await settle(page, 1800);
+    await page.evaluate(() => {
+      delete window.__writeFail;
+      window.__writeFail = null;
+    });
+    const kept = await page.evaluate(
+      ([i, was]) => {
+        const notes = window.__db.notes;
+        const eid = Object.keys(notes).find(k => !was.includes(k) && notes[k].earlierOf === i);
+        const txt = d => (d ? d.blocks.map(b => b.runs.map(r => r.text).join('')).join('\n') : '');
+        return {
+          eid,
+          title: eid ? notes[eid].title : '',
+          earlier: txt(notes[eid]),
+          sync: (document.querySelector('.mh .n-sync') || {}).textContent || '',
+          body: document.getElementById('note-body').innerText,
+          vers: document.querySelectorAll('.n-pick .ver').length,
+        };
+      },
+      [id2, before409]
     );
+    const orig409 = JSON.stringify(await savedDoc(page, id2));
+    ok(
+      `${tag} a stale save keeps his words at once as '<title> (earlier)' and the newer version stays the note, untouched`,
+      !!kept.eid &&
+        kept.title === 'Fluids lecture (earlier)' &&
+        / stale words/.test(kept.earlier) &&
+        orig409 === other &&
+        /Written on the other device/.test(kept.body) &&
+        !/stale words/.test(kept.body),
+      JSON.stringify({ ...kept, same: orig409 === other })
+    );
+    ok(
+      `${tag} the header says Two versions · pick one and the picker shows both versions`,
+      /Two versions · pick one/.test(kept.sync) && kept.vers === 2,
+      JSON.stringify({ sync: kept.sync, vers: kept.vers })
+    );
+    await page.screenshot({ path: path.join(shots, 'notes-two-versions-1280.png') });
+    const txtOf = (page, i) =>
+      page.evaluate(i => {
+        const d = window.__db.notes[i];
+        return d ? d.blocks.map(b => b.runs.map(r => r.text).join('')).join('\n') : '';
+      }, i);
+    await page.click('.n-pick .ver:first-child button'); // Keep this version: this device's
+    await settle(page, 1600);
+    const sw = { note: await txtOf(page, id2), earlier: await txtOf(page, kept.eid) };
+    const undoLine = await page.evaluate(() => (document.querySelector('.n-pick .endline') || {}).textContent || '');
+    await page.click('.n-pick .endline button'); // Undo
+    await settle(page, 1600);
+    const un = { note: await txtOf(page, id2), earlier: await txtOf(page, kept.eid) };
+    const again = await page.evaluate(() => document.querySelectorAll('.n-pick .ver').length);
+    ok(
+      `${tag} Keep this version swaps the two notes; Undo swaps them back and the picker shows again`,
+      / stale words/.test(sw.note) &&
+        /Written on the other device/.test(sw.earlier) &&
+        /Kept this device’s version/.test(undoLine) &&
+        /Written on the other device/.test(un.note) &&
+        !/stale words/.test(un.note) &&
+        / stale words/.test(un.earlier) &&
+        again === 2,
+      JSON.stringify({ sw, undoLine, un, again })
+    );
+    await page.click('.n-back');
+    const closed409 = await until(page, () => document.getElementById('notes-editor').hidden, null, 3000);
+    const listed = await until(
+      page,
+      eid => {
+        const r = document.querySelector(`#notes-rows [data-note="${eid}"] .nm`);
+        return !!r && r.textContent === 'Fluids lecture (earlier)';
+      },
+      kept.eid,
+      3000
+    );
+    ok(`${tag} the note then closes normally, and the '(earlier)' note is in the list`, closed409 && listed, '');
+
+    // B-404: an edit that shrinks a note already past the size cap is allowed (only growth past it is refused)
+    const bigId = 'n-20261026-100000-BigNoteBigNote01';
+    await page.evaluate(id => {
+      const at = '2026-10-26T10:00:00.000Z';
+      const line = n => ({ type: 'p', runs: [{ text: String(n).padEnd(15000, 'x') }] });
+      window.__db.notes[id] = {
+        schema: 1,
+        writer: 'page',
+        at,
+        source: 'E.V. Home',
+        createdAt: at,
+        title: 'Big note',
+        course: null,
+        blocks: [{ type: 'h1', runs: [{ text: 'Big note' }] }, ...Array.from({ length: 20 }, (_, i) => line(i))],
+        editedAt: at,
+      };
+      sessionStorage.setItem('__db', JSON.stringify(window.__db));
+    }, bigId);
+    await page.reload();
+    await until(page, () => /^Live$/.test((document.getElementById('status') || {}).textContent || ''), null, 8000);
+    await page.click('#tab-notes');
+    await openFromList(page, bigId);
+    await until(page, () => !document.getElementById('notes-editor').hidden);
+    const linesBefore = await page.evaluate(() => document.getElementById('note-body').children.length);
+    await page.click('#note-body');
+    // the last line selected whole (a 15,000-character line wraps, so Shift+Home would take only its last row)
+    await page.evaluate(() => {
+      const last = document.getElementById('note-body').lastElementChild;
+      const r = document.createRange();
+      r.selectNodeContents(last);
+      const sel = getSelection();
+      sel.removeAllRanges();
+      sel.addRange(r);
+      document.dispatchEvent(new Event('selectionchange'));
+    });
+    await page.waitForTimeout(100);
+    await page.keyboard.press('Backspace'); // its text goes
+    await page.keyboard.press('Backspace'); // and the empty line joins the one above
+    await page.waitForTimeout(300);
+    const shrunk = await page.evaluate(() => {
+      const t = document.getElementById('toast');
+      const body = document.getElementById('note-body');
+      return {
+        lines: body.children.length,
+        len: body.innerText.length,
+        toast: t && !t.hidden ? t.textContent : '',
+      };
+    });
+    ok(
+      `${tag} an edit that shrinks a note already past the size cap is allowed`,
+      shrunk.lines === linesBefore - 1 && !/too long/.test(shrunk.toast),
+      JSON.stringify({ linesBefore, ...shrunk })
+    );
+    await paste('', 'y'.repeat(20000)); // a change through apply() that leaves it past the cap and larger
+    await page.waitForTimeout(300);
+    const grown = await page.evaluate(() => {
+      const t = document.getElementById('toast');
+      return t && !t.hidden ? t.textContent : '';
+    });
+    ok(`${tag} while growing it past the cap is still refused`, /too long to save/.test(grown), grown);
 
     ok(
       `${tag} no page error`,

@@ -303,7 +303,9 @@ async function notesOffline(browser, origin) {
   };
   const openIn = async (page, id) => {
     await page.click('#tab-notes');
-    await page.click(`.n-row[data-note="${id}"]`);
+    // B-403: a row shows the note in the preview; Open note opens it
+    await page.click(`#notes-rows [data-note="${id}"] .nm`);
+    await page.click('#notes-pv-open');
     return until(page, () => !document.getElementById('notes-editor').hidden, null, 4000);
   };
   const A = await device();
@@ -428,6 +430,17 @@ async function notesOffline(browser, origin) {
   await A.page.click('.n-back');
   const closed = await until(A.page, () => document.getElementById('notes-editor').hidden, null, 4000);
   ok(`${tag} the note then closes normally`, closed, '');
+  // the second note is a real note: it is in the list, by its '(earlier)' title
+  const listed = await until(
+    A.page,
+    eid => {
+      const r = document.querySelector(`#notes-rows [data-note="${eid}"] .nm`);
+      return !!r && r.textContent === 'Offline smoke note (earlier)';
+    },
+    earlier.id,
+    4000
+  );
+  ok(`${tag} the '(earlier)' note shows in the Notes list`, listed, earlier.id);
   // expected: requests the dropped connection refused, and the one stale save of this note (the 409 D-326 answers)
   const offlineNoise = /Failed to fetch|ERR_INTERNET_DISCONNECTED|net::ERR/i;
   const stale409 = new RegExp('^HTTP 409 PUT ' + origin.replace(/[.]/g, '\\.') + '/api/db/notes/' + id + '\\?');
