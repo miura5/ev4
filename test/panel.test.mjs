@@ -1,4 +1,4 @@
-// B-223 (D-294, D-315): the right-panel judge, held to planted failures (the shell harness runs it on the real page).
+// B-223 (D-294, D-327): the right-panel judge, held to planted failures (the shell harness runs it on the real page).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
@@ -33,17 +33,17 @@ test('B-223 (D-294): a planted repeat across the sidebar and the panel fails', (
   assert.deepEqual(failed(s), ['D-294 once']);
 });
 
-test('B-357 (D-315): the sidebar Today mirrors the Today pane, as the demo; the pane and the panel still never repeat', () => {
+test('B-357 (D-327): the sidebar Today mirrors the Today pane, as the demo; the pane and the panel still never repeat', () => {
   const t = 'Read Ch 39: Fluid, electrolyte and acid-base balance';
   assert.deepEqual(failed(good({ view: 'today', pane: [t], greet: null })), []);
   assert.deepEqual(failed(good({ pane: ['Exam 4: Fluids, electrolytes and perfusion'] })), ['D-294 once']);
 });
 
-test('B-223 (D-315): a planted empty panel fails, and so do a missing one and one below 1200 px', () => {
-  assert.deepEqual(failed(good({ panel: { id: 'ev-side', cards: [], titles: [] } })), ['D-315 not empty']);
-  assert.deepEqual(failed(good({ panel: null })), ['D-315 panel']);
-  assert.deepEqual(failed(good({ detail: false })), ['D-315 panel']);
-  assert.deepEqual(failed(good({ width: 1100 })), ['D-315 panel']);
+test('B-223 (D-327): a planted empty panel fails, and so do a missing one and one below 1200 px', () => {
+  assert.deepEqual(failed(good({ panel: { id: 'ev-side', cards: [], titles: [] } })), ['D-327 not empty']);
+  assert.deepEqual(failed(good({ panel: null })), ['D-327 panel']);
+  assert.deepEqual(failed(good({ detail: false })), ['D-327 panel']);
+  assert.deepEqual(failed(good({ width: 1100 })), ['D-327 panel']);
 });
 
 test("B-223 (D-294): the sidebar's Today stays on Study", () => {

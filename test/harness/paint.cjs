@@ -99,7 +99,7 @@ async function studyView(page, v) {
     return shown();
   }
   await page.click('#tab-study');
-  // B-357 (D-315): Study is the demo's overview with no view tabs. Each way back (All topics, the plan's and Weak
+  // B-357 (D-327): Study is the demo's overview with no view tabs. Each way back (All topics, the plan's and Weak
   // spots' own) returns to it; Weak spots · N opens Weak spots; a plan day's Open the plan opens the plan.
   for (const back of ['#study-back', '#plan-back', '#weak-back'])
     if (await page.isVisible(back)) {

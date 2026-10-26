@@ -178,7 +178,7 @@ const statusShown = page =>
     }
     await page.close();
   }
-  // B-208 (D-210, D-315): three layouts by width. Under 600 px the sections are a tab bar along the bottom; 600 to 1199
+  // B-208 (D-210, D-327): three layouts by width. Under 600 px the sections are a tab bar along the bottom; 600 to 1199
   // px a sidebar on the left beside the pane; from 1200 px the details panel on the right too (Today has a side
   // column). The top bar is gone; the reading column is at most 680 px and centred in the pane; nothing scrolls sideways.
   for (const w of [390, 560, 599, 600, 735, 960, 1199, 1200, 1706, 2560]) {
@@ -227,7 +227,7 @@ const statusShown = page =>
     );
     await page.close();
   }
-  // B-288 (D-315, C-4): at 390, 700, 1000 and 1280 in both themes. The tab bar shows only at 390, its first tab the
+  // B-288 (D-327, C-4): at 390, 700, 1000 and 1280 in both themes. The tab bar shows only at 390, its first tab the
   // demo's speech-bubble icon (B-361), and every tab target there is 44 px or more each way. The right panel
   // shows only from 1200 px; below that, each view's side column follows its main column inside the pane.
   for (const scheme of ['light', 'dark'])
@@ -582,7 +582,7 @@ const statusShown = page =>
   );
   await r.page.screenshot({ path: `${shots}/boot-failed-phone.png` });
   await r.page.close();
-  // B-223 (D-315, D-292): one right panel on every view, each thing once, in both themes at Matt's widths; her lines
+  // B-223 (D-327, D-292): one right panel on every view, each thing once, in both themes at Matt's widths; her lines
   // left-aligned on Conversation. Each view and state is judged by panel.cjs (planted failures in test/panel.test.mjs).
   for (const scheme of ['light', 'dark'])
     for (const w of [735, 1280, 1470, 1706, 2560]) {
@@ -610,7 +610,7 @@ const statusShown = page =>
           return { counts: m.length, text: t.slice(0, 120) };
         });
         ok(
-          `[${w} ${scheme}] a review on Conversation shows its count once (D-315)`,
+          `[${w} ${scheme}] a review on Conversation shows its count once (D-327)`,
           !!once && once.counts === 1,
           JSON.stringify(once)
         );
@@ -631,7 +631,7 @@ const statusShown = page =>
       await look('study-practice', true);
       const bad = judged.filter(([, j]) => !j.ok);
       ok(
-        `[${w} ${scheme}] one right panel on every view with detail, one shade, nothing twice, Today steps aside, her lines left (D-315, D-292)`,
+        `[${w} ${scheme}] one right panel on every view with detail, one shade, nothing twice, Today steps aside, her lines left (D-327, D-292)`,
         !bad.length && judged.length > 0 && !errors.length,
         bad.length
           ? bad

@@ -528,7 +528,7 @@ async function sideBySide(browser, left, right, out, vp) {
       JSON.stringify(v.texts)
     );
     ok(
-      // B-357 (D-315): her lines' sizes and the earlier lines' fade are the demo's; her flower and stage stay (D-213)
+      // B-357 (D-327): her lines' sizes and the earlier lines' fade are the demo's; her flower and stage stay (D-213)
       `[${scheme}] in conversation: her flower the same ${A.convCore} px on its stage (D-213)`,
       v.step === 'conversation' &&
         Math.abs(v.corePx - A.convCore) <= 1 &&
@@ -1041,7 +1041,7 @@ async function sideBySide(browser, left, right, out, vp) {
             av = document.querySelector('#hero .ev-av').getBoundingClientRect();
           return {
             sideShown: getComputedStyle(document.getElementById('ev-side')).display !== 'none',
-            // B-223 (D-315), B-290: with nothing beside her, from 1200 px the panel holds its resting content only:
+            // B-223 (D-327), B-290: with nothing beside her, from 1200 px the panel holds its resting content only:
             // the session card and Coming up
             datesOnly: [...document.getElementById('ev-side').children]
               .filter(c => getComputedStyle(c).display !== 'none')
@@ -1072,7 +1072,7 @@ async function sideBySide(browser, left, right, out, vp) {
         e900 = await lay(1024);
       ok(
         // B-208 (D-210): centred in the pane, which starts after the 212 px sidebar and ends 8 px from the edge; from
-        // 1200 px (B-223, D-315) the right panel holds the dates after today, and the pane ends where it begins.
+        // 1200 px (B-223, D-327) the right panel holds the dates after today, and the pane ends where it begins.
         "[desktop] with nothing beside her: at 1280 the panel holds only the session card and the dates, and her stage centres over her lines; at 1024 no side column (B-357: the demo's pane widths)",
         e1280.sideShown &&
           e1280.datesOnly &&
@@ -1134,7 +1134,7 @@ async function sideBySide(browser, left, right, out, vp) {
       });
       const back = await lay(1280);
       ok(
-        '[desktop] emptied, what was beside her goes; the panel keeps the dates (D-315) and her stage centres in the pane',
+        '[desktop] emptied, what was beside her goes; the panel keeps the dates (D-327) and her stage centres in the pane',
         back.sideShown && back.datesOnly && Math.abs(back.coreX - (back.threadLeft + back.threadRight) / 2) <= 2,
         JSON.stringify(back)
       );
@@ -1827,7 +1827,7 @@ async function sideBySide(browser, left, right, out, vp) {
       await ctx.close();
     }
   }
-  // B-112 (D-315): at short heights (390x450 is the phone with its keyboard open) the composer's bottom edge and her
+  // B-112 (D-327): at short heights (390x450 is the phone with its keyboard open) the composer's bottom edge and her
   // current line stay inside the viewport, idle, in a conversation and in a session.
   {
     const sessionSeed = () => {
@@ -2055,7 +2055,7 @@ async function sideBySide(browser, left, right, out, vp) {
             v.px === want,
             JSON.stringify(v)
           );
-          // B-357 (D-315): her lines' sizes are the demo's (C-2's 20 px and 14/15 px retired)
+          // B-357 (D-327): her lines' sizes are the demo's (C-2's 20 px and 14/15 px retired)
           const hex = c =>
             /^#/.test(String(c))
               ? String(c).toLowerCase()
@@ -2199,7 +2199,7 @@ async function sideBySide(browser, left, right, out, vp) {
           !s0.pills,
         JSON.stringify(s0)
       );
-      // B-357: the old look tenets' checks on the open surface are retired (D-315)
+      // B-357: the old look tenets' checks on the open surface are retired (D-327)
       // B-244: the review card in the surface reads no larger than her line above it
       const sizes = await page.evaluate(() => {
         const px = q => {

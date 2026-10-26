@@ -1,9 +1,9 @@
 // B-217: the sweep after four Oct 22 tenets (the layout tenet and three since superseded themselves: the two motion
-// tenets by D-271 and D-272, swept by B-276 below; the grey interface, itself since retired by D-315) superseded the
+// tenets by D-271 and D-272, swept by B-276 below; the grey interface, itself since retired by D-327) superseded the
 // four tenets in GONE. No open task,
 // rule or test cites a superseded tenet as current (history may name it, marked as such), and the checks hold to the
 // new tenets' words: violet retired, one clock (test/interface-motion.test.mjs), and a 0.16 s settle (the 680 px
-// reading cap is retired with D-315).
+// reading cap is retired with D-327).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -52,7 +52,7 @@ test('B-217: a test or harness names a superseded tenet only as history', () => 
   assert.deepEqual(bad, []);
 });
 
-// B-275: the sweep for the grey-interface tenet (since retired by D-315), which took the place of the Oct 22 grey-interface tenet (and of the forget-me-not
+// B-275: the sweep for the grey-interface tenet (since retired by D-327), which took the place of the Oct 22 grey-interface tenet (and of the forget-me-not
 // blue and flower decisions; D-266 and D-265). No open task but the
 // sweep's own and no test names them except as history, and no old teal, amber, coral or forget-me-not blue hex is
 // left in page/ or test/. #F08A78 was dark coral and is now her own dark halftone (D-266), so it is not on the list.

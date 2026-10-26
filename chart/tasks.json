@@ -4015,7 +4015,7 @@
   "depends": [
    "B-202"
   ],
-  "notes": "D-315 (Oct 25): the demo is the UI; this task's look rules are retired with the tenets D-315 supersedes, and it is built to the demo when taken.",
+  "notes": "D-327 carries D-315 forward (the Notes canvas is now the demo, with the L-frame on desktop): read this task's D-315 as D-327.",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z",
   "waitingOn": "Matt"
@@ -4149,7 +4149,7 @@
    "B-222",
    "B-226"
   ],
-  "notes": "D-315 (Oct 25): the demo is the UI; this task's look rules are retired with the tenets D-315 supersedes, and it is built to the demo when taken.",
+  "notes": "D-327 carries D-315 forward (the Notes canvas is now the demo, with the L-frame on desktop): read this task's D-315 as D-327.",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z",
   "waitingOn": "Matt"
@@ -4164,7 +4164,7 @@
   "depends": [
    "B-234"
   ],
-  "notes": "D-315 (Oct 25): the demo is the UI; this task's look rules are retired with the tenets D-315 supersedes, and it is built to the demo when taken.",
+  "notes": "D-327 carries D-315 forward (the Notes canvas is now the demo, with the L-frame on desktop): read this task's D-315 as D-327.",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z",
   "waitingOn": "Matt"
@@ -5333,7 +5333,7 @@
    "B-297",
    "B-234"
   ],
-  "notes": "D-315 (Oct 25): the demo is the UI; this task's look rules are retired with the tenets D-315 supersedes, and it is built to the demo when taken.",
+  "notes": "D-327 carries D-315 forward (the Notes canvas is now the demo, with the L-frame on desktop): read this task's D-315 as D-327.",
   "commit": null,
   "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
  },

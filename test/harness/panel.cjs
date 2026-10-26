@@ -1,10 +1,10 @@
-// B-223 (D-294, D-315): one right panel on every view, each thing once. collect() runs in the page and snapshots the
+// B-223 (D-294, D-327): one right panel on every view, each thing once. collect() runs in the page and snapshots the
 // three regions (sidebar, pane, right panel); judge() is pure, so a test can plant a repeat, an off-shade card or an
 // empty panel and see each fail.
-//   D-315: from 1200 px a view with detail to show has the right panel and a view without has none, as the demo's
+//   D-327: from 1200 px a view with detail to show has the right panel and a view without has none, as the demo's
 //          boards (the old one-shade rule is retired: the demo's own card styles win).
 //   D-294: no record item shows in both the pane and the right panel, nor in the sidebar and the panel. The sidebar's
-//          Today list stays while Today is open, as the demo's (D-292, build correction C-14, gave way to the demo, D-315).
+//          Today list stays while Today is open, as the demo's (D-292, build correction C-14, gave way to the demo, D-327).
 //   Matt, Oct 23: from 600 px her greeting and her lines read left-aligned on Conversation (the demo's own inset).
 
 /** In the page: what each region shows. Titles are the rows' own names (a date's title, a task's words, a question's
@@ -43,7 +43,7 @@ function collect() {
   const panel = candidates[0] || null;
   const cardsOf = p =>
     [...p.children]
-      // B-357 (D-315): the demo's panels hold lists and lines as often as cards; anything visible with words counts
+      // B-357 (D-327): the demo's panels hold lists and lines as often as cards; anything visible with words counts
       .filter(c => vis(c) && c.textContent.trim())
       .map(c => ({
         id: c.id || c.className,
@@ -98,11 +98,11 @@ function judge(s) {
   const wide = s.width >= 1200;
   const base = s.view.replace('+surface', '');
   r(
-    'D-315 panel',
+    'D-327 panel',
     wide ? !!s.panel === !!s.detail : !s.panel,
     `${s.view} at ${s.width}: detail ${!!s.detail}, panel ${s.panel ? s.panel.id : 'none'}`
   );
-  if (s.panel) r('D-315 not empty', s.panel.cards.length > 0, `${s.panel.id}: ${s.panel.cards.length} visible cards`);
+  if (s.panel) r('D-327 not empty', s.panel.cards.length > 0, `${s.panel.id}: ${s.panel.cards.length} visible cards`);
   const regions = { sidebar: s.sidebar, pane: s.pane, panel: s.panel ? s.panel.titles : [] };
   const seen = {};
   for (const [name, list] of Object.entries(regions))

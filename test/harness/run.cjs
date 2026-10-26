@@ -565,7 +565,7 @@ async function quizMeChecks(page, scheme) {
     await page.waitForTimeout(150);
     await page.screenshot({ path: `${shots}/study-objectives-${scheme}-${theme}.png` });
   }
-  // B-351 (D-315): the demo's StudyOverview: the strip carries the course switch, Quiz me, Weak spots and Start
+  // B-351 (D-327): the demo's StudyOverview: the strip carries the course switch, Quiz me, Weak spots and Start
   // session in one row; the exam card's objective rows; the mini quiz beside Coming up
   ok(
     `[${scheme}] Study's overview: Start session and Quiz me in the toolbar (one row from 600 px), the exam's objective rows (B-351)`,
@@ -1278,7 +1278,7 @@ const results = [];
 const ok = (name, cond, detail = '') => {
   results.push([cond ? 'PASS' : 'FAIL', name, detail]);
 };
-// B-348 (D-315): an open set closes by the strip's All topics (its old fold line where one still shows)
+// B-348 (D-327): an open set closes by the strip's All topics (its old fold line where one still shows)
 async function closeSet(page) {
   if (await page.isVisible('#pr-fold')) await page.click('#pr-fold');
   else if (await page.isVisible('#study-back')) await page.click('#study-back');
@@ -2193,7 +2193,7 @@ async function tap(page, locator, name) {
           .filter(b => /^(Add|Remove)$/.test(b.textContent.trim()))
           .map(b => b.outerHTML.slice(0, 120)),
       }));
-      // B-357 (D-315): the demo's toolbar has Add; Remove stays off Today (B-364)
+      // B-357 (D-327): the demo's toolbar has Add; Remove stays off Today (B-364)
       t.addRemove = t.addRemove.filter(h => !/ti-add/.test(h));
       ok(
         'Today has no Now card, Focus heading or Remove',
@@ -2218,7 +2218,7 @@ async function tap(page, locator, name) {
         .split('\n')
         .map(l => l.split(' | '));
     const budgetMin = async () =>
-      // B-346 (D-315): the budget card's "<on the list> of <budget> min"; an added, unticked task adds to it
+      // B-346 (D-327): the budget card's "<on the list> of <budget> min"; an added, unticked task adds to it
       Number(((await page.textContent('#today-budget .tb-big')) || '').replace(/^\D*?(\d+) of \d+ min.*$/s, '$1'));
     const min0 = await budgetMin();
     await page.evaluate(() => {
@@ -3172,7 +3172,7 @@ async function tap(page, locator, name) {
           rows.push(
             await page.evaluate(k => {
               const bar = document.querySelector(`#prog-chart .pc-bar[data-key="${k}"]`);
-              // B-342 (D-315): the demo's day panel: the day's total over what it holds in Record (sessions, quizzes, notes)
+              // B-342 (D-327): the demo's day panel: the day's total over what it holds in Record (sessions, quizzes, notes)
               const items = [...document.querySelectorAll('#prog-day .prog-s')];
               const tt = (document.querySelector('#prog-day .prog-day-total') || {}).textContent || '';
               const mm = /^(\d+) h(?: (\d+) m)?$/.exec(tt) || [];
@@ -3262,7 +3262,7 @@ async function tap(page, locator, name) {
         !/share of|Copy summary/i.test(await page.textContent('#p-progress'))
       );
     }
-    // B-338, B-342 (D-315): the readiness card, its line chart and the week's insights left Progress (their data stays
+    // B-338, B-342 (D-327): the readiness card, its line chart and the week's insights left Progress (their data stays
     // in the record); its Exam readiness rows count each course's next exam's objectives
     {
       const rd = await page.textContent('#prog-ready');
@@ -4324,7 +4324,7 @@ async function tap(page, locator, name) {
       }
     }
 
-    // ---- B-290 (D-315): Coming up in E.V.'s right panel lists the dates after today that the sidebar doesn't show.
+    // ---- B-290 (D-327): Coming up in E.V.'s right panel lists the dates after today that the sidebar doesn't show.
     // Graded work due tomorrow is on today's list (a heads-up), so it can be in the sidebar; then it is not Coming up.
     {
       const cp = await browser.newPage({ viewport: { width: 1280, height: 900 } });
@@ -4472,7 +4472,7 @@ async function tap(page, locator, name) {
     await ss.evaluate(() => {
       window.__readerFail = null;
     });
-    // Start: B-290 (D-315), from 1200 px from the right panel's card, the chip's call; below it the card is absent
+    // Start: B-290 (D-327), from 1200 px from the right panel's card, the chip's call; below it the card is absent
     await setNote(note1);
     const sessCard = () =>
       ss.evaluate(() => {

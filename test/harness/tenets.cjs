@@ -1,4 +1,4 @@
-// The UI tenets' checks the look pass runs (B-115). B-357 (D-315): the old look checks (one primary, cards with
+// The UI tenets' checks the look pass runs (B-115). B-357 (D-327): the old look checks (one primary, cards with
 // controls, five-row lists, three chips, no close buttons, no empty cards) are retired with the old UI tenets; the demo
 // is the UI. What stays is D-271's motion check: motion runs in the page and judgeMotion
 // holds two reads to it, so a test can plant a read without a browser.

@@ -80,7 +80,7 @@ const skeleton = body =>
 const TYPES = { '.js': 'text/javascript', '.json': 'application/json', '.css': 'text/css', '.html': 'text/html' };
 const { SIZES, viewsOf, shotName } = require('./views.cjs');
 const VIEWS = viewsOf(fs.readFileSync(path.join(pageDir, 'index.html'), 'utf8'));
-// B-115: spec.ui.tenets: the widths read closely and D-271's motion check (the look checks retired, D-315).
+// B-115: spec.ui.tenets: the widths read closely and D-271's motion check (the look checks retired, D-327).
 const TENETS = JSON.parse(fs.readFileSync(path.join(root, 'spec', 'ev.spec.json'), 'utf8')).ui.tenets;
 const { motion, judgeMotion } = require('./tenets.cjs');
 const png = require('./png.cjs');
@@ -319,7 +319,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)
       );
       if (TENETS.widths.includes(size.width) && [844, 830, 800].includes(size.height)) {
-        // B-357 (D-315): the old look tenets' checks and the five kinds, one primary, are retired with the old UI
+        // B-357 (D-327): the old look tenets' checks and the five kinds, one primary, are retired with the old UI
         // tenets; the demo is the UI.
         // B-285 (C-15): the screen-reader tree names the picked option of every switch on screen.
         for (const id of await page.$$eval('.seg[id]', s =>
@@ -393,13 +393,13 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           })
         );
     }
-    // B-357 (D-315): the old look's Today row heights, the view switch in the header, the Plan tab and the 680 px
+    // B-357 (D-327): the old look's Today row heights, the view switch in the header, the Plan tab and the 680 px
     // column are retired; the demo's boards are the UI (the fidelity tools compare them)
-    // B-338 (D-315): the readiness card and its objective list left Progress (the exam readiness rows are the run
+    // B-338 (D-327): the readiness card and its objective list left Progress (the exam readiness rows are the run
     // harness's check)
-    // B-357 (D-315): the old question view's layout checks (B-116, B-126) are retired; the quiz is the demo's StudyQuiz
+    // B-357 (D-327): the old question view's layout checks (B-116, B-126) are retired; the quiz is the demo's StudyQuiz
     // (B-348, B-365, B-370), and its behaviour is the run harness's
-    // B-357 (D-315): B-117's Today layout checks are retired with the old look (the prep harness checks Today's list)
+    // B-357 (D-327): B-117's Today layout checks are retired with the old look (the prep harness checks Today's list)
     // B-119: System: the planted failed run leads; no ok pill; no card stands empty; the pipeline and run lists fold
     // under one line each, and only the runs that did not finish ok are marked.
     if (TENETS.widths.includes(size.width) && [844, 830, 800].includes(size.height)) {
@@ -455,8 +455,8 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
       await page.click('#runs-fold');
       await page.evaluate(() => window.scrollTo(0, 0));
     }
-    // B-357 (D-315): B-121's two columns are retired; the demo's frame is the shell harness's
-    // B-357 (D-315): B-123's Weak spots layout is retired with the old look (StudyWeak, B-365; Mark solid's write is the
+    // B-357 (D-327): B-121's two columns are retired; the demo's frame is the shell harness's
+    // B-357 (D-327): B-123's Weak spots layout is retired with the old look (StudyWeak, B-365; Mark solid's write is the
     // run harness's)
     // B-125 (D-271): every view at 390 and 1280: no transition or animation over 450 ms outside her stage, her core (the
     // header avatar too), the reveal and the echo of his line; the view settled 450 ms after the switch; and the

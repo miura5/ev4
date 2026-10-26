@@ -485,7 +485,7 @@ async function tickAll(page) {
           sideways: document.documentElement.scrollWidth > innerWidth + 1,
         };
       });
-      // B-357 (D-315): the rows are the demo's height (B-354); what stays is that each row's time keeps its line
+      // B-357 (D-327): the rows are the demo's height (B-354); what stays is that each row's time keeps its line
       ok(`${tag} each row's time stays on its line`, r.heights.length >= 4 && r.timeOnLine, JSON.stringify(r.heights));
       ok(
         `${tag} graded work is the demo's neutral grey, never red, whenever it is due (B-361)`,
@@ -571,7 +571,7 @@ async function tickAll(page) {
       await openPage(page, ct(today, 10, 0), panelRecord());
       await page.click('#tab-today');
       await page.waitForTimeout(300);
-      // B-364 (D-315): an opened task is the TaskDetail board's full view at every size; the header's back arrow
+      // B-364 (D-327): an opened task is the TaskDetail board's full view at every size; the header's back arrow
       // returns to the list
       const openRow = async text => {
         if (await page.isVisible('.mh-back')) {
@@ -617,7 +617,7 @@ async function tickAll(page) {
       await openRow('Practice: fluid balance');
       const s = await readPanel();
       ok(
-        `${tag} a study task opens as its full view, its properties ${w >= 1200 ? 'in the right panel' : 'under it'}, the list stepping aside (D-315)`,
+        `${tag} a study task opens as its full view, its properties ${w >= 1200 ? 'in the right panel' : 'under it'}, the list stepping aside (D-327)`,
         s.shown && s.listAway && (w >= 1200 ? s.right : s.under) && /^Practice: fluid balance/.test(s.title),
         JSON.stringify(s)
       );
@@ -633,7 +633,7 @@ async function tickAll(page) {
         JSON.stringify({ props: s.props, from: s.from })
       );
       ok(
-        `${tag} Start the quiz is its one primary, with Snooze to tomorrow, and up and down through the list (D-315)`,
+        `${tag} Start the quiz is its one primary, with Snooze to tomorrow, and up and down through the list (D-327)`,
         s.primaries.join() === 'Start the quiz' && s.btns.includes('Snooze to tomorrow') && s.nav,
         JSON.stringify({ btns: s.btns, primaries: s.primaries, nav: s.nav })
       );
@@ -743,7 +743,7 @@ async function tickAll(page) {
         un.w.length === 4 && un.w[2][0] === today && !un.w[2][2] && un.w[3][0] === tomorrow && !un.w[3][1] && un.onList,
         JSON.stringify(un)
       );
-      // B-364 (D-315): the task view has no Remove from today, as the TaskDetail board
+      // B-364 (D-327): the task view has no Remove from today, as the TaskDetail board
       const end = await readPanel();
       ok(`${tag} no sideways scroll, no page errors`, !end.sideways && !errors.length, errors.join(' | '));
       await ctx.close();
@@ -787,7 +787,7 @@ async function tickAll(page) {
               const m = e && re.exec(e.textContent);
               return m ? m.slice(1).map(Number) : null;
             };
-            // B-346 (D-315): the demo's figure, '<on the list> of <budget> min', one fill, and Done as its own row
+            // B-346 (D-327): the demo's figure, '<on the list> of <budget> min', one fill, and Done as its own row
             const big = num('.tb-big', /^(\d+) of (\d+) min$/);
             const done = num('.tb-done-line .prop-v', /^(\d+) min$/);
             const bar = c.querySelector('.tb-bar');
@@ -1002,7 +1002,7 @@ async function tickAll(page) {
           /take “Read Ch 40: acid-base balance” off today, since it’s planned for /.test(a.line || ''),
         JSON.stringify(a)
       );
-      // a proposed row is a standard row of the demo's (B-357, D-315: no fixed heights): its whole name shows
+      // a proposed row is a standard row of the demo's (B-357, D-327: no fixed heights): its whole name shows
       ok(
         `${tag} each proposed row has its whole name, its one mark (Proposed, or Off today · why) and Accept and Keep`,
         a.prop.every(
@@ -1423,7 +1423,7 @@ async function tickAll(page) {
           days: days.length,
           lefts: new Set(days.map(d => Math.round(box(d).left))).size,
           tops: new Set(days.map(d => Math.round(box(d).top))).size,
-          // B-354 (D-315): a title wraps between words only, as the demo's, and never runs out of its chip
+          // B-354 (D-327): a title wraps between words only, as the demo's, and never runs out of its chip
           oneLine: titles.every(
             t =>
               !/break-all|anywhere/.test(getComputedStyle(t).wordBreak + getComputedStyle(t).overflowWrap) &&

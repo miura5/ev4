@@ -3,7 +3,7 @@
 // set promises every view: a row is 32 px from 600 px and 44 px on the phone; the screen-reader tree names the picked
 // option of every segmented switch; coded yellow is D-269's L52 C54 (light) and L72 C48 (dark) at hue 82, read back
 // from the page, not from the generator; the words on a badge and a tint button hold 4.5:1 on their own tint. B-357
-// (D-315): the five-kinds, one-primary and no-close-button checks are retired with the old UI tenets.
+// (D-327): the five-kinds, one-primary and no-close-button checks are retired with the old UI tenets.
 //   node test/harness/components.cjs [record dir | synthetic] [screenshots dir] [target]
 // The record argument is accepted so check.mjs can call every harness alike; the sheet reads no record.
 // Run `node tools/build.mjs` first. Exit code 1 when any check fails.
