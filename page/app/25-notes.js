@@ -400,8 +400,7 @@
       const shown = all.filter(n => NOTE_LIST.filter === 'all' || keyOf(n) === NOTE_LIST.filter);
       // a filter that hides the picked note moves the preview to the first note shown
       // B-409: never an "(earlier)" copy by default
-      const pick =
-        shown.find(n => n.id === NOTE_LIST.pick) || shown.find(n => !n.earlierOf) || shown[0] || null;
+      const pick = shown.find(n => n.id === NOTE_LIST.pick) || shown.find(n => !n.earlierOf) || shown[0] || null;
       const groups = [...order, NO_COURSE]
         .map(k => ({ k, rows: shown.filter(n => keyOf(n) === k) }))
         .filter(g => g.rows.length);
@@ -501,7 +500,8 @@
       const OTL_MAX = 6;
       const otl = heads.slice(0, OTL_MAX);
       outline.append(...(otl.length ? otl : ['No sections yet']).map(t => el('div', 'si static', t)));
-      if (otl.length < heads.length) outline.append(el('div', 'si static n-otl-more', heads.length - otl.length + ' more'));
+      if (otl.length < heads.length)
+        outline.append(el('div', 'si static n-otl-more', heads.length - otl.length + ' more'));
       const acts = el('div', 'n-acts');
       const bOpen = btn('Open note', () => openNote(n.id), { cls: 'btn neutral wide' });
       bOpen.id = 'notes-pv-open';
