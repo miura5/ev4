@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-326",
+  "date": "Oct 25",
+  "title": "Notes conflicts are never merged. When a save of a note is refused because it is stale, both versions are kept at once: the one he doesn't keep becomes a second note, '<title> (earlier)', linked to the original. Keep this version swaps them, and Undo is offered. This applies to notes only.",
+  "why": "Nothing is lost and no merge logic is needed; Matt chose the second note over version history (Oct 25).",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-325",
   "date": "Oct 25",
   "title": "Notes (B-396), Matt's go Oct 25 after his playtest of the 'E.V. demo v4 + Notes' canvas: a notes collection written by the page only. Body: blocks with a small inline-mark set; HTML is never stored, and stored text never becomes HTML; size capped at capacity.documentBytes. Nothing is deleted: archived and discarded are marks. Pipelines skip notes as they skip the journal. The Sunday mirror writes each note as Markdown. Backups and copies carry them. Sessions name the note they study. Offline: notes read and write; everything else is read-only from the cache. Desktop only, at 1024 px and wider; the phone layout is unchanged. It ships first in the app on staging, and live only with or after the cutover (B-320); Study Watch stays in use on the claude.ai live page until then. Built during the freeze on Matt's go, as D-279 was; it retires Study Watch, the Conversation's session card and B-321.",
