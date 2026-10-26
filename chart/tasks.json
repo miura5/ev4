@@ -7460,7 +7460,7 @@
   "depends": [
    "B-404"
   ],
-  "notes": "Ready for final review (not done): 22e2a19. moveRefused claims the refused entry through boxClaim (tag checked, old entry deleted, second note put, one transaction); only the winning tab adds the second note, and an entry IndexedDB never held (or a claim whose transaction failed) counts as won with the new entry marked local. Covers a reload taking the entry over twice, two tabs opening at once, a crash right after the move, and a full disk (words still in IndexedDB on reload). npm test 764/765 (1 skipped, 0 fail), pwa-offline 29/29 (4 new, each fails on b06dfe8), notes harness 88/88, smoke:pwa 31/31. Staging not shipped.",
+  "notes": "Correction: the moveRefused commit landed on main as c405fa2 (rebased over B-232), not 22e2a19. npm test rerun at that head: 772/773 (1 skipped, 0 fail). Ready for final review.",
   "commit": null,
   "source": "B-404 second review",
   "words": "Notes offline: after a reload, a note the Worker refused stays stuck (Not saved, old words shown, remote edits ignored), and cutting and saving it can overwrite another device's newer words. Two tabs adopting one closed tab's entry over a changed record make two identical (earlier) notes. The 429/5xx backoff is bypassed by the 10 s refresh.",
