@@ -203,7 +203,7 @@
     const open = await openTabs();
     let n = 0;
     for (const [key, o] of all) {
-      if (outbox[key] || !o || !o.c) continue;
+      if (outbox[key] || !o || !o.c || claimed.has(o.tag)) continue; // B-410: an entry this tab moved stays moved
       if (o.tab !== TAB && open && open.has(o.tab)) continue; // that tab is open: it sends its own
       if (o.tab === TAB) continue;
       outbox[key] = o;
@@ -311,6 +311,9 @@
     return changed;
   };
   let moved = false;
+  // B-410 final review: the tags of refused entries this tab has moved, so a failed claim (IndexedDB still holding the
+  // old entry) is never taken over and moved again by a later adopt()
+  const claimed = new Set();
   /**
    * B-410: a refused entry's words as a second note on this device: a new id, earlierOf the note, still refused. The
    * old entry is claimed in one transaction (its tag checked, it deleted, the new entry put), so only one tab, and only
@@ -324,6 +327,7 @@
     const eo = { tab: TAB, c: o.c, id: eid, doc: earlierNote(o.doc, o.id, at), base: null, tag: rand(12) };
     eo.refused = o.refused;
     if (outbox[key] === o) delete outbox[key]; // the note now follows the newer version
+    if (o.tag) claimed.add(o.tag);
     moved = true;
     const claim = o.local ? boxPut(ekey, eo).then(() => true) : boxClaim(key, o.tag, ekey, eo);
     return claim.then(won => {

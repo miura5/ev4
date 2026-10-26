@@ -1098,6 +1098,37 @@ test('B-410 (shim): when IndexedDB can’t write, the refused words are not lost
   assert.equal(refusedSeconds(idb).length, 1, 'once');
 });
 
+test('B-410 (shim): a failed claim is never moved again by a later replay, in IndexedDB trouble or after it', async () => {
+  const env = envOf();
+  await put(env, 'notes', ID, BASE);
+  const idb = fakeIDB();
+  await refusedPassedAndClosed(env, idb);
+  idb.failOutbox = true; // the claim fails: IndexedDB keeps the old entry
+  const r = await shim(env, idb);
+  assert.ok(await until(() => r.sync() && r.sync().refused.some(x => x.id !== ID)));
+  await kept();
+  // another note waits (saved offline), so each wake replays, and a replay takes closed tabs' entries over again
+  r.net.down = true;
+  await r.db
+    .collection('notes')
+    .doc(ID3)
+    .set(
+      note([
+        ['h1', 'Potassium'],
+        ['p', 'waiting'],
+      ])
+    );
+  r.wake();
+  await kept();
+  r.focus();
+  await kept();
+  idb.failOutbox = false;
+  r.focus();
+  await kept();
+  assert.equal(r.sync().refused.filter(x => x.id !== ID).length, 1, JSON.stringify(r.sync().refused));
+  r.close();
+});
+
 test('B-410 (shim): a tab that dies right after moving refused words leaves one second note, never two', async () => {
   const env = envOf();
   await put(env, 'notes', ID, BASE);
