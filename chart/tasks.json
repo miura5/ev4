@@ -7347,11 +7347,14 @@
  {
   "id": "B-406",
   "kind": "request",
-  "title": "Request (reported Oct 25): Build study sessions move into Notes (B-396, D-325).",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
-  "depends": [],
+  "title": "Notes: study sessions move into Notes",
+  "dod": "A new note starts a 25-minute session; Study with E.V. starts one on an existing note; a Today task can still start one. The controls live in the strip. Starting a second session ends and logs the running one first. Undo restores the whole previous state (the open note, the chat, the check answer and the timer) through marks: the new session is marked discarded, the ended one is active again, and nothing is deleted. Checks read the open note's text through sample, not the Study Watch reader. Proven by sessions tests (end and log, then Undo restores all of it), a harness (New note gives a session naming notes/<id>), a smoke:pwa session step, and one staging session read back with note set. ship staging GREEN. Own review.",
+  "milestone": "PWA",
+  "status": "open",
+  "depends": [
+   "B-402",
+   "B-405"
+  ],
   "notes": "",
   "commit": null,
   "source": "build manager, B-396 plan",
@@ -7359,6 +7362,10 @@
   "reportedAt": "2026-10-26T00:52:55.639Z",
   "board": {
    "row": "v4 B-406: Build study sessions move into Notes (B-396,"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-26T00:52:58.040Z"
   }
  }
 ]
