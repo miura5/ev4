@@ -2428,7 +2428,12 @@
     ],
     "macBound": true,
     "push": true,
-    "trigger": "trig_01AxnPF3iPyo2BpCQtMdAKP8"
+    "trigger": "trig_01AxnPF3iPyo2BpCQtMdAKP8",
+    "keepEnded": [
+     "B-01",
+     "B-04"
+    ],
+    "_keepEndedWhy": "D-344: this Mac task was created before D-324 ended B-01 and B-04; it keeps those words until the cutover retires it (O-5: Mac tasks are never edited)."
    },
    "weekly": {
     "pipeline": "weekly",

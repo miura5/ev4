@@ -172,7 +172,9 @@ export function cutoverSpec(spec, { at = 'the cutover' } = {}) {
       name: 'E.V. evening-mac',
       reason: `B-320 (D-303, D-322): replaced at ${at} by the live evening-mac on the ev-live Worker, writing E.V. Backups; disabled (update_trigger enabled false) once its replacement exists, from the chat linked to the Mac with Matt present. Kept, never deleted.`,
     });
-  s.tasks.live['evening-mac'] = { ...em, folders: [folder], trigger: null };
+  // D-344: the replacement is created fresh, so it carries none of the old task's kept ended words
+  const { keepEnded, _keepEndedWhy, ...rest } = em;
+  s.tasks.live['evening-mac'] = { ...rest, folders: [folder], trigger: null };
   for (const [k, t] of Object.entries(c.tasks || {})) s.tasks.live[k] = t;
   live.cutover = {
     _why: `B-320: applied at ${at} (tools/pwa-live.mjs cutover --apply): readOnly, d1, runs and the live Mac tasks above.`,

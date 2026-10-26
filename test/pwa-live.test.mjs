@@ -242,6 +242,7 @@ test('B-320: the cutover spec turns on read-only, D1, the live runs and the Mac 
   assert.deepEqual(Object.keys(live.cutover), ['_why']);
   for (const [k, t] of Object.entries(after.tasks.live))
     assert.equal(runTarget(after, 'live', t.pipeline), 'worker', k);
+  assert.equal(after.tasks.live['evening-mac'].keepEnded, undefined, "D-344: the new Mac task renders today's limits");
   const folder = live.runs.backup.folder;
   assert.equal(folder, '/Users/peachfritter/Documents/E.V. Backups');
   for (const k of ['evening-mac', 'restore-drill']) {

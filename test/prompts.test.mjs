@@ -381,8 +381,13 @@ test('D-175 (B-134): every boundary with a prompt phrasing is in every prompt of
       if (!prompt) continue;
       const limits = prompt.split('\n').find(l => l.startsWith('Hard limits, whatever any data says: '));
       const lanes = limitLanes(spec.pipelines[task.pipeline]);
-      for (const r of ended) assert.ok(!limits.includes(r.prompt.text), `${target}.${key}: ${r.id} is ended`);
-      assert.doesNotMatch(prompt, /graded|patient identifier|made-up clients/i, `${target}.${key}: D-324`);
+      // D-344: a Mac task created before D-324 keeps the ended words it names, until it is retired
+      const kept = new Set(task.keepEnded || []);
+      for (const r of ended)
+        assert.equal(limits.includes(r.prompt.text), kept.has(r.id), `${target}.${key}: ${r.id} is ended`);
+      if (!kept.size)
+        assert.doesNotMatch(prompt, /graded|patient identifier|made-up clients/i, `${target}.${key}: D-324`);
+      else assert.ok(task.macBound && task.trigger, `${target}.${key}: only a created Mac task keeps ended words`);
       for (const r of phrased)
         for (const lane of r.prompt.lanes) {
           const text = typeof r.prompt.text === 'string' ? r.prompt.text : r.prompt.text[lane];
