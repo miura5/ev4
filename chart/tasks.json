@@ -7253,13 +7253,13 @@
   "title": "Notes: the editor",
   "dod": "A page-less contenteditable editor in its own page part. The toolbar has undo, redo, the style menu (Paragraph, H1 to H3, bulleted, numbered, checklist, each with its Quip shortcut), B, I, U, S and link. Markdown-style typing works ('# ', '- ', '1. ', '[] '). Paste is sanitized. Autosave is debounced through write(). Each New note gets a fresh id that cannot collide across devices. Proven by unit tests (block-model round trip, shortcut transforms, paste stripped of HTML and script) and a harness at 1280: New note twice gives two notes, '# ' makes a heading, Bold and Undo/Redo work, and text survives a reload. At 390 there is no Notes entry. Smoke green. Own review of the save path only.",
   "milestone": "PWA",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-401",
    "B-399"
   ],
-  "notes": "Second review (fresh) at 8da719f: the 4 first-review gaps closed. Open for the release card: an edit that shrinks an over-cap note is refused until one change brings it under (no loss, the way out is blocked); the save-time size check repeats noteTooBig in other words. The conflict stopgap holds only while B-404 ships in the same release. Checks: shell harness skips [hidden] tabs at phone width (D-325). Size +267 -30.",
-  "commit": null,
+  "notes": "Shipped to staging at 8da719f: ship staging GREEN.",
+  "commit": "8da719f",
   "source": "build manager, B-396 plan",
   "words": "Build the editor (B-396, D-325).",
   "reportedAt": "2026-10-26T00:52:35.638Z",
