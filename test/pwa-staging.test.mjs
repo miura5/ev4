@@ -295,6 +295,21 @@ test('B-389: a staging pipeline writing as one of its roles (evening-mac as canv
   assert.equal(red([eveningRun(), rowLate]).length, 1);
   const rowIn = { ...canvas('dates', 'canvas-202'), at: Date.parse('2026-10-25T22:41:00.000Z') };
   assert.deepEqual(red([eveningRun(), rowIn]), []);
+  // a date created in one run and moved by a later one: its own `at` is the first run's, its row the later run's
+  const runB = {
+    ...eveningRun(),
+    id: EVENING + '-b',
+    data: { ...eveningRun().data, startedAt: '2026-10-26T22:32:00.000Z', endedAt: '2026-10-26T22:57:00.000Z' },
+  };
+  runB.id = 'evening-mac-20261026-223200-b';
+  const moved = { ...canvas('dates', 'canvas-202'), at: Date.parse('2026-10-26T22:40:00.000Z') };
+  assert.deepEqual(red([eveningRun(), runB, moved]), []);
+  // but a document whose own `at` is later than its row time is not a write the run made
+  const backdated = {
+    ...canvas('dates', 'canvas-202', { at: '2026-10-26T22:40:00.000Z' }),
+    at: Date.parse('2026-10-25T22:40:00.000Z'),
+  };
+  assert.equal(red([eveningRun(), backdated]).length, 1);
   // a source naming a run the record does not hold
   assert.equal(red([canvas('dates', 'canvas-9', { source: 'evening-mac evening-mac-x', at: 'no' })]).length, 1);
   // the spec's allowlist: canvas-sync never writes days or sets; a role no staging pipeline has is no writer

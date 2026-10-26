@@ -101,14 +101,18 @@ const ms = t => (typeof t === 'string' ? Date.parse(t) : NaN);
  * its source names that run ("<pipeline> <run id>", as a step's own writes do), or its own `at` falls inside a run of
  * that pipeline whose runs/<id> document says the step that folds the role ended ok (a run still going: from its
  * start, for at most RUNNING_MAX_MS, so a run that never ended opens no endless window). A role's own source ("Canvas
- * sync") names no run, so the run's window and its step are the trace. Both times must fall in the window: the
- * document's own `at` and the row's `at` the Worker stamps on every write (rowAt, ms), when there is one. */
+ * sync") names no run, so the run's window and its step are the trace. With the row's `at` the Worker stamps on every
+ * write (rowAt, ms), that time must fall in the window and the document's own `at` may not be later; without one, the
+ * document's own `at` must. */
 export const RUNNING_MAX_MS = 3 * 60 * 60 * 1000;
 function roleRun(data, role, runs, rowAt) {
   const [by, runId, ...rest] = String(data.source || '').split(' ');
   const at = ms(data.at);
-  const times = Number.isFinite(rowAt) ? [at, rowAt] : [at];
-  const inside = (from, to) => times.every(t => from <= t && t <= to);
+  // The Worker's row time is when the write happened: it must fall in the run, and the document's own `at` may not be
+  // later than it (a date created in one run and moved by a later one keeps its first `at`; its row is the later run's).
+  const inside = Number.isFinite(rowAt)
+    ? (from, to) => from <= rowAt && rowAt <= to && (!Number.isFinite(at) || at <= rowAt)
+    : (from, to) => from <= at && at <= to;
   for (const { pipeline, step } of ROLES[role] || []) {
     if (by === pipeline && !rest.length && runs.get(runId)?.pipeline === pipeline) return true;
     if (!Number.isFinite(at) || !step) continue;
