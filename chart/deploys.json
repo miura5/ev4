@@ -5258,5 +5258,22 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "ba08025",
+  "time": "2026-10-26T16:31:22.599Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "c9ce3e7",
+  "tasks": [
+   "B-409",
+   "B-320"
+  ],
+  "summary": "Build rubric click-through, code review and release card (B-396,…; Cutover",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
