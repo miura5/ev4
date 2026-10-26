@@ -5,7 +5,14 @@ reads it right after CLAUDE.md. It holds no personal data: the repository is pub
 
 **Managing chat:** https://claude.ai/code/session_01CWeveciiiW2pUvFQtQJ3HK (still managing as of Oct 26, 12:20 am Central)
 
-## Now (Oct 26, ~9 am Central)
+## Now (Oct 26, ~11 am Central)
+
+- Matt said "OK, ship it live". Live Mac tasks created with no schedule (poke-only) so they never fire before the
+  cutover: evening-mac trig_01Ma8woo5ieoWM1s5KHuRpip, restore-drill trig_018VSRmz8pdNzdVSxpH42PEG (folder E.V.
+  Backups). At the cutover: set their cron (evening-mac 20:20, restore-drill 20:55 on the 1st, Central) with
+  update_trigger, record the ids in the cutover commit, fire both for the proof. The staging restore-drill Mac task's
+  prompt is out of date after 8d3dc1b (record-neutral wording); re-create it with Matt present.
+- Matt is at the gym; the cutover sitting (docs/cutover.md) starts when he is back.
 
 - Notes release ready at c9ce3e7: staging GREEN, full check GREEN (dist/check-full.json in /tmp/ev4-full), rubric 84.
   Release card https://claude.ai/artifact/GwY8LThmCPePMr9jz3DqAA. Waiting on Matt's "OK, ship it live", then the
