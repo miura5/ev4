@@ -114,6 +114,9 @@ const HIDES = [
   [/\bbase64\s+(-\w*d\w*|--decode)\b|\bb64decode\b|\batob\s*\(|base64['"]?\s*\)\.toString/, 'a base64 decode'],
   [/(^|[;&|({]\s*)eval\b/, 'eval'],
   [/\|\s*(sudo\s+)?(env\s+)?(ba|z|da|k|c|tc|fi)?sh\b/, 'a pipe into a shell'],
+  // second review of b05acb8: words assembled and handed to gh, a pipe into gh, or a percent-encoded API path
+  [/\bxargs\b[^;&|\n]*\b(gh|curl|wget)\b/, 'xargs into gh, curl or wget'],
+  [/\|\s*(sudo\s+|env\s+|command\s+|exec\s+)*gh\b/, 'a pipe into gh'],
 ];
 const NEVER_IN_DISPATCH = [
   [/[$`]/, 'it builds part of itself at run time ($ or a backtick)'],
@@ -123,7 +126,11 @@ const NEVER_IN_DISPATCH = [
   [/<|\|\s*gh\b|--json\b|--input\b|=@/, 'it reads inputs from a file or stdin'],
 ];
 export function liveDispatch(command) {
-  const raw = String(command || '');
+  // gh's global flags may sit between workflow and run (gh workflow -R o/r run ...): fold them after run
+  const raw = String(command || '').replace(
+    /\bworkflow((?:\s+(?:-R|--repo|-r)\s+\S+|\s+--repo=\S+)+)\s+run\b/g,
+    (m, flags) => `workflow run${flags}`
+  );
   const c = raw.replace(/["'\\]/g, ''); // any quoting or escaping, taken out
   const pwaLive = /pwa/i.test(c) && /live/i.test(c);
   const rerun = /\brun\s+rerun\b|\/rerun/.test(c);
@@ -158,6 +165,8 @@ export function liveDispatch(command) {
   )
     reasons.push('writes to an API at an address or with a body it builds at run time');
   for (const [re, what] of HIDES) if (re.test(raw) || re.test(c)) reasons.push(`hides what it runs (${what})`);
+  if (/\bgh\s+api\b|\bcurl\b|\bwget\b/i.test(c) && /%[0-9a-f]{2}/i.test(c))
+    reasons.push('calls an API at a percent-encoded address');
   if (!reasons.length) return null;
   const why = [];
   if (rerun)

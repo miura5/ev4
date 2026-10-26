@@ -450,6 +450,15 @@ test('B-320 (D-331): the dispatch guard fails closed on the review probes, whate
     `gh api -X POST repos/miura5/ev4/actions/workflows/123456789/dispatches -f ref=main -f inputs[commit]=${sha}`,
     `gh api -X POST repos/miura5/ev4/actions/workflows/123456789/dispatc"h"es -f ref=main -f inputs[commit]=${sha}`,
     `gh api -X POST repos/miura5/ev4/dispatches -f event_type=pwa-live -f client_payload[commit]=${sha}`,
+    // second review of b05acb8: gh's global flag between workflow and run, words assembled for gh, a percent-encoded
+    // path, and a re-run assembled the same way
+    `gh workflow -R miura5/ev4 run 123456 -f commit=${sha}`,
+    `gh workflow --repo miura5/ev4 run pwa-live.yml -f commit=${sha}`,
+    `echo workflowXrun 123456 -f commit=${sha} | tr X ' ' | xargs gh`,
+    `echo repos/miura5/ev4/actions/workflows/1/dispatcheZ | tr Z s | xargs gh api -X POST -f ref=main -f inputs[commit]=${sha}`,
+    `echo runXrerun 5 | tr X ' ' | xargs gh`,
+    `gh api -X POST repos/miura5/ev4/actions/runs/5/re%72un`,
+    `gh api -X POST repos/miura5/ev4/actions/workflows/123456/dispatche%73 -f ref=main -f inputs[commit]=${sha}`,
   ];
   for (const c of named) assert.ok(H.liveDispatch(c), c);
   fs.writeFileSync(okFile, JSON.stringify({ at: Date.now(), commit: 'f'.repeat(40), by: 'ship live --matt-ok' }));
@@ -465,6 +474,8 @@ test('B-320 (D-331): the dispatch guard fails closed on the review probes, whate
     'git add tools/pwa-live.mjs test/pwa-live.test.mjs',
     'gh workflow run nightly.yml --ref main',
     'echo hi | sha256sum',
+    'git log --oneline | grep -c gh',
+    'ls tools | xargs -n1 echo',
   ])
     assert.equal(hook(dir, 'live-guard', bash(c)).code, 0, c);
 });
