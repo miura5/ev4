@@ -1,6 +1,9 @@
 // The Notes editor (B-402, D-325): on the synthetic record at 1280, New note twice gives two notes in the record, '# '
 // makes a heading, Bold and Undo/Redo work from the format bar, a pasted script stays text-free and inert, and the text
-// survives a reload. At 390 there is no Notes entry, and #notes does not open it.
+// survives a reload. At 390 there is no Notes entry, and #notes does not open it. B-403, the list: course filters with
+// counts, notes grouped by course, the picked note's preview (From, Edited, Length, Studied, On this page, Open note,
+// Study with E.V.), the empty states for no notes at all and for none in a course, and nothing overflowing, at 1280,
+// 1706 and 2560 on synthetic, synthetic with no notes, and synthetic with a long-title note.
 //   node test/harness/notes.cjs [record dir | synthetic] [screenshots dir]
 // Run `node tools/build.mjs` first. Exit code 1 when any check fails.
 const { chromium } = require('playwright');
@@ -45,7 +48,7 @@ const until = (page, fn, arg, ms = 4000) =>
 // The record lives in sessionStorage across a reload, so a reload reads what the page wrote (as the real record would).
 const init =
   'window.__db = JSON.parse(sessionStorage.getItem("__db") || ' + JSON.stringify(JSON.stringify(seed)) + ');' + stub;
-async function open(browser, viewport) {
+async function open(browser, viewport, db = null) {
   const ctx = await browser.newContext({ viewport, colorScheme: 'light' });
   const page = await ctx.newPage();
   const errors = [];
@@ -66,7 +69,11 @@ async function open(browser, viewport) {
       ? r.fulfill({ body: fs.readFileSync(f, 'utf8'), contentType: TYPES[path.extname(name)] || 'text/plain' })
       : r.fulfill({ status: 404, body: 'not published' });
   });
-  await page.addInitScript(init);
+  await page.addInitScript(
+    db
+      ? 'window.__db = JSON.parse(sessionStorage.getItem("__db") || ' + JSON.stringify(JSON.stringify(db)) + ');' + stub
+      : init
+  );
   await page.goto(ORIGIN + '/');
   await until(page, () => /^Live$/.test((document.getElementById('status') || {}).textContent || ''), null, 8000);
   return { page, errors };
@@ -74,6 +81,66 @@ async function open(browser, viewport) {
 const notesIn = page => page.evaluate(() => Object.keys(window.__db.notes || {}));
 const savedDoc = (page, id) => page.evaluate(i => (window.__db.notes || {})[i] || null, id);
 const settle = (page, ms = 1300) => page.waitForTimeout(ms); // the autosave's pause (800 ms) and the write
+// B-403: a row's name picks the note for the preview; the preview's Open note opens it
+async function openFromList(page, id) {
+  await page.click(`#notes-rows [data-note="${id}"] .nm`);
+  await page.click('#notes-pv-open');
+}
+// the list as shown: filters, groups, rows, the preview, the empty state, and anything wider than its box
+const listState = page =>
+  page.evaluate(() => {
+    const vis = e => !!e && e.getClientRects().length > 0 && getComputedStyle(e).visibility !== 'hidden';
+    const txt = e => (e ? e.innerText.replace(/\s+/g, ' ').trim() : '');
+    const pv = document.getElementById('notes-preview');
+    const props = {};
+    for (const p of pv.querySelectorAll('.prop')) props[p.firstChild.textContent] = p.lastChild.textContent;
+    const over = [];
+    // the list pane runs edge to edge past the panel's padding, as Record's does: what counts is inside it
+    const box = document.getElementById('notes-list');
+    for (const e of [box, ...box.querySelectorAll('*')]) {
+      if (!vis(e)) continue;
+      const cs = getComputedStyle(e);
+      const r = e.getBoundingClientRect();
+      if (r.right > innerWidth + 1) over.push((e.className.baseVal ?? e.className) + ' right ' + Math.round(r.right));
+      if (e.scrollWidth > e.clientWidth + 1 && !/hidden|auto|scroll|clip/.test(cs.overflowX) && cs.display !== 'inline')
+        over.push((e.className.baseVal ?? e.className) + ' spills ' + (e.scrollWidth - e.clientWidth));
+    }
+    const pvR = pv.getBoundingClientRect();
+    return {
+      filters: [...document.querySelectorAll('#notes-filters button')].map(
+        b =>
+          b.firstChild.textContent +
+          ':' +
+          b.querySelector('.n').textContent +
+          (b.getAttribute('aria-pressed') === 'true' ? '*' : '')
+      ),
+      groups: [...document.querySelectorAll('#notes-rows .n-grp')].map(txt),
+      rows: [...document.querySelectorAll('#notes-rows .n-row')].map(r => ({
+        id: r.dataset.note,
+        name: txt(r.querySelector('.nm')),
+        sel: r.classList.contains('sel'),
+        kind: txt(r.querySelector('.nk')),
+        when: txt(r.querySelector('.t')),
+        cut: r.querySelector('.nm').scrollWidth > r.querySelector('.nm').clientWidth,
+        h: Math.round(r.getBoundingClientRect().height),
+      })),
+      empty: txt(document.querySelector('#notes-rows .nempty')),
+      pv: {
+        badge: txt(pv.querySelector('.badge')),
+        title: txt(pv.querySelector('.n-pvt')),
+        props,
+        outline: [...pv.querySelectorAll('.n-outline .si')].map(txt),
+        open: vis(document.getElementById('notes-pv-open')),
+        study: vis(document.getElementById('notes-pv-study')),
+        none: txt(pv.querySelector('.n-pvnone')),
+        right: Math.round(innerWidth - pvR.right),
+        w: Math.round(pvR.width),
+        fixed: getComputedStyle(pv).position === 'fixed',
+      },
+      over,
+      hscroll: document.documentElement.scrollWidth > innerWidth,
+    };
+  });
 const openNoteId = page =>
   page.evaluate(() => {
     const w = (window.__writes || []).filter(x => x[1] === 'notes');
@@ -101,6 +168,102 @@ const openNoteId = page =>
     ok(`${tag} the Notes panel opens`, await until(page, () => !document.getElementById('p-notes').hidden), '');
     const before = await notesIn(page);
     await page.screenshot({ path: path.join(shots, 'notes-list-1280.png') });
+
+    // B-403: the list on synthetic: All, NUR 112 and BIO 201 with their counts (the archived note is left out), the
+    // notes grouped by course, the newest picked, and its preview
+    const L0 = await listState(page);
+    ok(
+      `${tag} the course filters read All, NUR 112 and BIO 201 with their counts, All on`,
+      JSON.stringify(L0.filters) === JSON.stringify(['All:3*', 'NUR 112:2', 'BIO 201:1']),
+      JSON.stringify(L0.filters)
+    );
+    ok(
+      `${tag} the notes are grouped by course with counts, 44 px rows with label and day, the first picked`,
+      JSON.stringify(L0.groups) === JSON.stringify(['NUR 112 2', 'BIO 201 1']) &&
+        L0.rows.length === 3 &&
+        L0.rows.every(r => r.h >= 44 && r.kind && r.when) &&
+        L0.rows[0].sel &&
+        L0.rows.filter(r => r.sel).length === 1,
+      JSON.stringify({ g: L0.groups, rows: L0.rows })
+    );
+    ok(
+      `${tag} the preview has the course, title, From, Edited, Length, Studied, On this page and both buttons, as the right panel`,
+      L0.pv.badge === 'NUR 112' &&
+        L0.pv.title === L0.rows[0].name &&
+        Object.keys(L0.pv.props).join() === 'From,Edited,Length,Studied' &&
+        /^\d[\d,]* words?$/.test(L0.pv.props.Length) &&
+        /, \d{1,2}:\d\d [ap]m$/.test(L0.pv.props.Edited) &&
+        L0.pv.props.Studied === 'Not yet' &&
+        L0.pv.outline.length >= 1 &&
+        L0.pv.open &&
+        L0.pv.study &&
+        L0.pv.fixed &&
+        L0.pv.w === 320,
+      JSON.stringify(L0.pv)
+    );
+    ok(`${tag} nothing in the list overflows`, !L0.over.length && !L0.hscroll, L0.over.slice(0, 4).join(' | '));
+    // a name picks the note for the preview and does not open it
+    const renal = L0.rows.find(r => /Renal/.test(r.name));
+    await page.click(`#notes-rows [data-note="${renal.id}"] .nm`);
+    const L1 = await listState(page);
+    ok(
+      `${tag} clicking a name previews it without opening it`,
+      L1.pv.title === renal.name &&
+        L1.pv.badge === 'BIO 201' &&
+        L1.rows.find(r => r.id === renal.id).sel &&
+        (await page.evaluate(() => document.getElementById('notes-editor').hidden)),
+      JSON.stringify(L1.pv)
+    );
+    // BIO 201 shows only its notes; back to NUR 112 the preview moves to the first note shown
+    await page.click('#notes-filters [data-filter="BIO 201"]');
+    const L2 = await listState(page);
+    await page.click('#notes-filters [data-filter="NUR 112"]');
+    const L3 = await listState(page);
+    ok(
+      `${tag} a course filter shows only that course; a filter that hides the picked note moves the preview to the first shown`,
+      L2.rows.length === 1 &&
+        L2.rows[0].id === renal.id &&
+        JSON.stringify(L2.groups) === JSON.stringify(['BIO 201 1']) &&
+        L2.filters[2] === 'BIO 201:1*' &&
+        L3.rows.length === 2 &&
+        L3.rows.every(r => r.id !== renal.id) &&
+        L3.pv.title === L3.rows[0].name &&
+        L3.rows[0].sel,
+      JSON.stringify({ L2: L2.rows.map(r => r.name), L3: L3.rows.map(r => r.name), pv: L3.pv.title })
+    );
+    await page.click('#notes-filters [data-filter="all"]');
+    // Open shows on hover, and opens the note; Back returns to the list as it was
+    await page.hover(`#notes-rows [data-note="${renal.id}"]`);
+    const hovOpen = await page.isVisible(`#notes-rows [data-note="${renal.id}"] .n-open`);
+    await page.click(`#notes-rows [data-note="${renal.id}"] .n-open`);
+    const opened = await until(page, () => !document.getElementById('notes-editor').hidden);
+    const openedTitle = await page.evaluate(() => document.querySelector('#note-body h1')?.textContent || '');
+    const noPaneInEditor = await page.evaluate(
+      () => document.getElementById('notes-preview').getClientRects().length === 0
+    );
+    await page.click('.n-back');
+    await until(page, () => !document.getElementById('notes-list').hidden);
+    ok(
+      `${tag} a row's Open shows on hover and opens the note; the preview is gone in the editor; Back returns to the list`,
+      hovOpen && opened && /Renal/.test(openedTitle) && noPaneInEditor && (await page.isVisible('#notes-preview')),
+      JSON.stringify({ hovOpen, opened, openedTitle, noPaneInEditor })
+    );
+    // Study with E.V. opens the note and asks for a session on it (B-406 starts the session)
+    await page.evaluate(() => {
+      window.__studyAsked = [];
+      document.addEventListener('ev:note-study', e => window.__studyAsked.push(e.detail.id));
+    });
+    await page.click(`#notes-rows [data-note="${L0.rows[0].id}"] .nm`);
+    await page.click('#notes-pv-study');
+    await until(page, () => !document.getElementById('notes-editor').hidden);
+    const asked = await page.evaluate(() => window.__studyAsked);
+    ok(
+      `${tag} Study with E.V. opens the note and asks for a session on it`,
+      JSON.stringify(asked) === JSON.stringify([L0.rows[0].id]),
+      JSON.stringify(asked)
+    );
+    await page.click('.n-back');
+    await until(page, () => !document.getElementById('notes-list').hidden);
 
     // New note twice: two new notes, two ids
     await page.click('#notes-new');
@@ -243,7 +406,7 @@ const openNoteId = page =>
     await page.reload();
     await until(page, () => /^Live$/.test((document.getElementById('status') || {}).textContent || ''), null, 8000);
     await page.click('#tab-notes');
-    await page.click(`#notes-rows [data-note="${id2}"]`);
+    await openFromList(page, id2);
     const back = await page.evaluate(() =>
       [...document.querySelectorAll('#note-body > *')].map(b => b.dataset.t + ':' + b.textContent).join('/')
     );
@@ -280,7 +443,7 @@ const openNoteId = page =>
       JSON.stringify({ failed, stayed, landed: !!landed })
     );
     // B-402 review: a paste past a limit is refused whole with a line saying why, and the note stays as it was
-    await page.click(`#notes-rows [data-note="${id2}"]`);
+    await openFromList(page, id2);
     await until(page, () => !document.getElementById('notes-editor').hidden);
     await page.keyboard.press(`${mod}+End`);
     const bodyNow = () =>
@@ -391,6 +554,138 @@ const openNoteId = page =>
       errors.slice(0, 3).join(' | ')
     );
     await page.context().close();
+  }
+
+  // ---- B-403: the list on three records (synthetic, no notes, a long-title note) at 1280, 1706 and 2560
+  {
+    const noNotes = JSON.parse(JSON.stringify(seed));
+    noNotes.notes = {};
+    const long = JSON.parse(JSON.stringify(seed));
+    const LONG_ID = 'n-20261020-120000-longtitlenote01';
+    const longTitle =
+      'Fluid and electrolyte imbalances: hyponatremia, hypernatremia, hypokalemia and hyperkalemia, their causes, signs, ECG changes and nursing care in full';
+    const longLabel = 'Lecture 9 and the skills lab review session';
+    const anyNote = Object.values(long.notes)[0];
+    long.notes[LONG_ID] = {
+      ...anyNote,
+      title: longTitle,
+      label: longLabel,
+      course: 'NUR 112',
+      editedAt: new Date().toISOString(),
+      at: new Date().toISOString(),
+      blocks: [
+        { type: 'h1', runs: [{ text: longTitle }] },
+        {
+          type: 'h2',
+          runs: [
+            { text: 'Sodium: hyponatremia and hypernatremia, causes, signs and what the nurse watches for first' },
+          ],
+        },
+        { type: 'p', runs: [{ text: 'Supercalifragilisticexpialidocious'.repeat(8) }] },
+        { type: 'h2', runs: [{ text: 'Potassium' }] },
+      ],
+    };
+    delete long.notes[LONG_ID].archivedAt;
+    delete long.notes[LONG_ID].earlierOf;
+    // no BIO 201 notes here, so BIO 201's filter shows its empty state
+    for (const [k, n] of Object.entries(long.notes)) if (n.course === 'BIO 201') delete long.notes[k];
+    const todayCT = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Chicago' });
+    const anySession = Object.values(long.sessions || {})[0];
+    long.sessions = long.sessions || {};
+    long.sessions['ss-20261020-130000-longnote'] = {
+      ...anySession,
+      status: 'ended',
+      date: todayCT,
+      minutes: 25,
+      note: 'notes/' + LONG_ID,
+      noteId: LONG_ID,
+    };
+    for (const width of [1280, 1706, 2560]) {
+      const vp = { width, height: width === 1280 ? 860 : 1240 };
+      // synthetic
+      {
+        const { page, errors } = await open(browser, vp);
+        const tag = `[${width} synthetic]`;
+        await page.click('#tab-notes');
+        await until(page, () => !document.getElementById('p-notes').hidden);
+        const L = await listState(page);
+        ok(
+          `${tag} filters, groups and the preview show; nothing overflows`,
+          L.filters.length === 3 && L.groups.length === 2 && L.pv.title && L.pv.fixed && !L.over.length && !L.hscroll,
+          JSON.stringify({ f: L.filters, g: L.groups, over: L.over.slice(0, 3) })
+        );
+        await page.screenshot({ path: path.join(shots, `notes-list-${width}.png`) });
+        ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
+        await page.context().close();
+      }
+      // no notes at all
+      {
+        const { page, errors } = await open(browser, vp, noNotes);
+        const tag = `[${width} no notes]`;
+        await page.click('#tab-notes');
+        await until(page, () => !document.getElementById('p-notes').hidden);
+        const L = await listState(page);
+        ok(
+          `${tag} No notes yet, with the preview's line; All reads 0 and New note is there`,
+          /^No notes yet A new note is where you study/.test(L.empty) &&
+            !L.rows.length &&
+            /^Your notes show here/.test(L.pv.none) &&
+            L.filters[0] === 'All:0*' &&
+            (await page.isVisible('#notes-new')) &&
+            !L.over.length &&
+            !L.hscroll,
+          JSON.stringify({ empty: L.empty, pv: L.pv.none, f: L.filters, over: L.over.slice(0, 3) })
+        );
+        await page.screenshot({ path: path.join(shots, `notes-list-empty-${width}.png`) });
+        ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
+        await page.context().close();
+      }
+      // a long-title note, studied today, and no BIO 201 notes
+      {
+        const { page, errors } = await open(browser, vp, long);
+        const tag = `[${width} long title]`;
+        await page.click('#tab-notes');
+        await until(page, () => !document.getElementById('p-notes').hidden);
+        const L = await listState(page);
+        const row = L.rows.find(r => r.id === LONG_ID);
+        ok(
+          `${tag} the long title is cut with an ellipsis in its row; label and day keep their place; nothing overflows`,
+          !!row && (row.cut || width > 2000) && row.h === 44 && row.when && row.kind && !L.over.length && !L.hscroll,
+          JSON.stringify({ row, over: L.over.slice(0, 4) })
+        );
+        ok(
+          `${tag} the preview shows the whole title wrapped, its sections, and Studied from the session that named it`,
+          L.pv.title === longTitle &&
+            L.pv.props.Studied === '25 min, today' &&
+            L.pv.props.From === longLabel &&
+            L.pv.outline.length === 2 &&
+            L.pv.w === 320,
+          JSON.stringify(L.pv)
+        );
+        await page.screenshot({ path: path.join(shots, `notes-list-long-${width}.png`) });
+        await page.click('#notes-filters [data-filter="BIO 201"]');
+        const E = await listState(page);
+        ok(
+          `${tag} a course with no notes says so, with Show all notes; the preview says there is nothing to preview`,
+          /^No BIO 201 notes yet Notes for this course show here, newest first\./.test(E.empty) &&
+            !E.rows.length &&
+            E.pv.none === 'Nothing to preview in this course.' &&
+            E.filters.includes('BIO 201:0*') &&
+            !E.over.length,
+          JSON.stringify({ empty: E.empty, pv: E.pv.none, f: E.filters })
+        );
+        await page.screenshot({ path: path.join(shots, `notes-list-course-empty-${width}.png`) });
+        await page.click('#notes-rows .nempty button');
+        const A = await listState(page);
+        ok(
+          `${tag} Show all notes goes back to All`,
+          A.filters[0].endsWith('*') && A.rows.length >= 2,
+          JSON.stringify(A.filters)
+        );
+        ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
+        await page.context().close();
+      }
+    }
   }
 
   // ---- 390: no Notes

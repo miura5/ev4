@@ -133,17 +133,30 @@
       return p;
     })();
 
-    // ---- the list (the minimum: New note and his notes, newest edited first)
-    const nList = el('div', 'n-list');
+    // ---- the list (B-403, the demo's NotesList board): the course filters and New note on the toolbar, his notes by
+    // course, newest edited first, and the picked note's preview in the right panel (from 1200 px; under it, below)
+    const NOTE_LIST = { filter: 'all', pick: null }; // the course shown ('all' or a spec.courses key) and the picked note
+    const nList = el('div', 'panel n-list');
     nList.id = 'notes-list';
     const nListBar = el('div', 'n-toolbar');
+    const nFilters = el('div', 'seg n-filters');
+    nFilters.id = 'notes-filters';
+    nFilters.setAttribute('role', 'group');
+    nFilters.setAttribute('aria-label', 'Course');
     const nNew = nBtn('btn primary sm', null, NI.plus, () => newNote());
     nNew.id = 'notes-new';
     nNew.append('New note');
-    nListBar.append(el('span', 'sp'), nNew);
+    nListBar.append(nFilters, el('span', 'sp'), nNew);
     const nRows = el('div', 'n-rows');
     nRows.id = 'notes-rows';
-    nList.append(nListBar, nRows);
+    const nCols = el('div', 'cols'),
+      nMain = el('div', 'col-main'),
+      nSide = el('div', 'col-side n-pv');
+    nSide.id = 'notes-preview';
+    nSide.setAttribute('aria-label', 'Preview');
+    nMain.append(nRows);
+    nCols.append(nMain, nSide);
+    nList.append(nListBar, nCols);
 
     // ---- the editor: the format bar, then the page-less document
     const nEd = el('div', 'n-ed');
@@ -298,34 +311,184 @@
     if (location.hash === '#notes' && WIDE.matches && !READ_ONLY) showTab('notes'); // 02 opened the address before Notes existed
 
     // ---- the list
+    const NO_COURSE = '\u0000none'; // the group key of notes in no course (shown under All only)
+    const noteWords = n => (n.blocks || []).reduce((t, b) => t + (E.noteText(b).match(/[^\s]+/g) || []).length, 0);
+    const listWhen = iso => {
+      const d = iso ? new Date(iso) : null;
+      if (!d || isNaN(d)) return '';
+      const day = E.chicagoDate(d);
+      if (day === today) return clock12(iso);
+      return day === E.addDays(today, -1) ? 'Yesterday' : short(day);
+    };
+    const longWhen = iso => {
+      const d = iso ? new Date(iso) : null;
+      if (!d || isNaN(d)) return '';
+      const day = E.chicagoDate(d);
+      const at = clock12(iso);
+      return (day === today ? 'Today' : day === E.addDays(today, -1) ? 'Yesterday' : short(day)) + ', ' + at;
+    };
+    // the last session that studied this note (sessions name it, D-325): its minutes and day, as the demo says it
+    function noteStudied(id) {
+      const s = (S.sessions || [])
+        .filter(x => x && x.status !== 'discarded' && (x.note === 'notes/' + id || x.noteId === id) && x.date)
+        .sort((a, b) => String(b.date + (b.at || '')).localeCompare(String(a.date + (a.at || ''))))[0];
+      if (!s) return 'Not yet';
+      if (s.status === 'active') return 'Now';
+      const day = s.date === today ? 'today' : s.date === E.addDays(today, -1) ? 'yesterday' : WD3[E.weekday(s.date)];
+      return (s.minutes > 0 ? durFmt(s.minutes) + ', ' : '') + day;
+    }
+    const courseName = k => (k === NO_COURSE ? 'No course' : k);
     function renderNotes() {
       syncHead();
       if (NOTE.view !== 'list') return;
-      const rows = (S.notes || [])
+      const all = (S.notes || [])
         .filter(n => !n.archivedAt && !n.discardedAt)
         .sort((a, b) => String(b.editedAt || b.at || '').localeCompare(String(a.editedAt || a.at || '')));
-      nRows.replaceChildren(
-        ...rows.map(n => {
-          const r = el('button', 'li n-row');
-          r.type = 'button';
-          r.dataset.note = n.id;
-          r.append(
-            nIcon(NI.note, 'ico sicon'),
-            el('span', 'nm', noteName(n)),
-            el('span', 'sp'),
-            el('span', 'mini nk', n.label || ''),
-            el('span', 'mini nc', n.course || ''),
-            el('span', 't', editedText(n.editedAt || n.at))
+      const keyOf = n => (n.course && typeof n.course === 'string' ? n.course : NO_COURSE);
+      // the filters: All, then each active course (and any course a note names), with its count
+      const known = courseKeys().filter(k => (EV_SPEC.courses[k] || {}).status !== 'done');
+      const order = [...known, ...all.map(keyOf).filter(k => k !== NO_COURSE && !known.includes(k))].filter(
+        (k, i, a) => a.indexOf(k) === i
+      );
+      if (NOTE_LIST.filter !== 'all' && !order.includes(NOTE_LIST.filter)) NOTE_LIST.filter = 'all';
+      nFilters.replaceChildren(
+        ...['all', ...order].map(k => {
+          const b = el('button');
+          b.type = 'button';
+          b.dataset.filter = k;
+          b.setAttribute('aria-pressed', String(NOTE_LIST.filter === k));
+          b.append(
+            k === 'all' ? 'All' : k,
+            el('span', 'n', String(k === 'all' ? all.length : all.filter(n => keyOf(n) === k).length))
           );
-          r.addEventListener('click', () => openNote(n.id));
-          return r;
+          b.addEventListener('click', () => {
+            NOTE_LIST.filter = k;
+            renderNotes();
+          });
+          return b;
         })
       );
-      if (!rows.length) {
+      const shown = all.filter(n => NOTE_LIST.filter === 'all' || keyOf(n) === NOTE_LIST.filter);
+      // a filter that hides the picked note moves the preview to the first note shown
+      const pick = shown.find(n => n.id === NOTE_LIST.pick) || shown[0] || null;
+      const groups = [...order, NO_COURSE]
+        .map(k => ({ k, rows: shown.filter(n => keyOf(n) === k) }))
+        .filter(g => g.rows.length);
+      const rowOf = n => {
+        const r = el('div', 'li n-row' + (pick && pick.id === n.id ? ' sel' : ''));
+        r.dataset.note = n.id;
+        const nm = el('button', 'nm', noteName(n));
+        nm.type = 'button';
+        nm.title = noteName(n);
+        if (pick && pick.id === n.id) nm.setAttribute('aria-current', 'true');
+        nm.addEventListener('click', () => {
+          NOTE_LIST.pick = n.id;
+          renderNotes();
+        });
+        nm.addEventListener('dblclick', () => openNote(n.id));
+        const op = btn('Open', () => openNote(n.id), { cls: 'btn ghost sm hov n-open' });
+        op.setAttribute('aria-label', 'Open ' + noteName(n));
+        r.append(
+          nIcon(NI.note, 'ico sicon'),
+          nm,
+          op,
+          el('span', 'mini nk', n.label || ''),
+          el('span', 't', listWhen(n.editedAt || n.at))
+        );
+        return r;
+      };
+      nRows.replaceChildren(
+        ...groups.flatMap(g => {
+          const h = el('div', 'dayh n-grp', courseName(g.k));
+          h.append(el('span', 'n', String(g.rows.length)));
+          return [h, ...g.rows.map(rowOf)];
+        })
+      );
+      const empty = (title, line, act) => {
         const e = el('div', 'nempty');
-        e.append(nIcon(NI.note), el('b', null, 'No notes yet'), el('span', null, 'Start one with New note.'));
+        e.append(nIcon(NI.note), el('b', null, title), el('span', null, line));
+        if (act) e.append(act);
         nRows.append(e);
+      };
+      if (!all.length)
+        empty(
+          'No notes yet',
+          'A new note is where you study: it starts a 25-minute session, and E.V. follows along as you write.'
+        );
+      else if (!shown.length)
+        empty(
+          'No ' + courseName(NOTE_LIST.filter) + ' notes yet',
+          'Notes for this course show here, newest first.',
+          btn(
+            'Show all notes',
+            () => {
+              NOTE_LIST.filter = 'all';
+              renderNotes();
+            },
+            { cls: 'btn neutral sm' }
+          )
+        );
+      renderPreview(pick, all.length);
+    }
+    // the right panel: the picked note's course, title, where it came from, when it was edited, its length, when he
+    // last studied it and its sections, with Open note and Study with E.V.
+    function renderPreview(n, any) {
+      if (!n) {
+        nSide.replaceChildren(
+          el(
+            'span',
+            'mini n-pvnone',
+            any
+              ? 'Nothing to preview in this course.'
+              : 'Your notes show here, by course, newest first. Start one with New note.'
+          )
+        );
+        return;
       }
+      const prop = (k, v) => {
+        const p = el('div', 'prop');
+        p.append(el('span', null, k), el('span', 'prop-v', v));
+        return p;
+      };
+      const props = el('div', 'n-props');
+      const words = noteWords(n);
+      props.append(
+        prop('From', n.label || '—'),
+        prop('Edited', longWhen(n.editedAt || n.at)),
+        prop('Length', words.toLocaleString('en-US') + (words === 1 ? ' word' : ' words')),
+        prop('Studied', noteStudied(n.id))
+      );
+      const heads = (n.blocks || [])
+        .filter(b => b && b.type === 'h2')
+        .map(b => E.noteText(b).trim())
+        .filter(Boolean);
+      const outline = el('div', 'n-outline');
+      outline.append(...(heads.length ? heads : ['No sections yet']).map(t => el('div', 'si static', t)));
+      const acts = el('div', 'n-acts');
+      const bOpen = btn('Open note', () => openNote(n.id), { cls: 'btn neutral wide' });
+      bOpen.id = 'notes-pv-open';
+      const bStudy = nBtn('btn neutral wide', null, 'M8 5l11 7-11 7z', () => studyNote(n.id));
+      bStudy.id = 'notes-pv-study';
+      bStudy.append('Study with E.V.');
+      acts.append(bOpen, bStudy);
+      nSide.replaceChildren(
+        el('span', 'badge x-quiet', courseName(n.course || NO_COURSE)),
+        el('h2', 'n-pvt', noteName(n)),
+        props,
+        el('span', 'lab n-otl', 'On this page'),
+        outline,
+        acts,
+        el(
+          'span',
+          'mini n-pvfoot',
+          'You study where you write: a new note starts a session, and E.V. follows along beside it. She never edits your note.'
+        )
+      );
+    }
+    // Study with E.V. opens the note; the session itself is B-406's, which listens for this event
+    async function studyNote(id) {
+      await openNote(id);
+      if (NOTE.open === id) document.dispatchEvent(new CustomEvent('ev:note-study', { detail: { id } }));
     }
 
     // ---- opening, creating, closing

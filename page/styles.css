@@ -2048,16 +2048,47 @@ body.has-line #today-week .wk-her{display:none}
 #tab-notes[hidden],#p-notes[hidden]{display:none!important}
 @media (max-width:1023px){#tab-notes,#p-notes{display:none!important}}
 #p-notes .ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-#p-notes .n-toolbar{display:flex;align-items:center;gap:8px;padding:12px 18px;border-bottom:1px solid var(--line)}
-#p-notes .n-toolbar .sp,#p-notes .n-row .sp{flex:1}
-#p-notes .n-row{display:flex;align-items:center;gap:12px;width:100%;min-height:44px;padding:0 18px;border:0;border-bottom:1px solid var(--line);background:none;color:var(--text);font:400 calc(13.5px * var(--ts)) var(--sans);text-align:left;cursor:pointer;box-sizing:border-box}
-#p-notes .n-row:hover{background:var(--hover)}
-#p-notes .n-row .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+/* B-403: the list, as the NotesList board. The toolbar (course filters with counts, New note) spans the pane under a
+   hairline; rows run edge to edge, 44 px, grouped by course; Open shows on hover or focus. The picked note's preview is
+   the right panel from 1200 px, and reads under the list from 1024 to 1199 px. */
+#p-notes > .n-list{margin:-18px -16px 0;gap:0}
+#p-notes .n-list .col-main{gap:0}
+#p-notes .n-toolbar{display:flex;align-items:center;gap:8px;padding:12px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+#p-notes .n-toolbar .sp{flex:1}
+#p-notes .n-filters{align-self:center;flex:none}
+#p-notes .n-filters .n{color:var(--quiet);font-weight:400;font-variant-numeric:tabular-nums}
+#p-notes .n-grp{display:flex;gap:8px;padding:14px 18px 6px;font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
+#p-notes .n-grp .n{color:var(--faint);font-weight:400;font-variant-numeric:tabular-nums}
+#p-notes .n-row{display:flex;align-items:center;gap:12px;height:auto;min-height:44px;padding:0 18px;border-bottom:1px solid var(--line);color:var(--text);font:400 calc(13.5px * var(--ts)) var(--sans);box-sizing:border-box}
+#p-notes .n-row:hover,#p-notes .n-row.sel{background:var(--chrome)}
+#p-notes .n-row .nm{flex:1 1 auto;min-width:0;align-self:stretch;appearance:none;border:0;background:none;padding:0;margin:0;font:inherit;color:inherit;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#p-notes .n-row .nm:focus-visible{outline:2px solid var(--focus,var(--text));outline-offset:-2px;border-radius:4px}
 #p-notes .n-row .sicon{color:var(--quiet)}
-#p-notes .n-row .mini,#p-notes .n-row .t{flex:none;font-size:calc(12.5px * var(--ts));color:var(--quiet)}
-#p-notes .nempty{display:flex;flex-direction:column;align-items:center;gap:6px;padding:64px 18px;color:var(--quiet);font-size:calc(13.5px * var(--ts));text-align:center}
-#p-notes .nempty .ico{width:28px;height:28px;stroke-width:1.4;color:var(--faint)}
-#p-notes .nempty b{color:var(--text);font-weight:600}
+#p-notes .n-row .hov{visibility:hidden}
+#p-notes .n-row:hover .hov,#p-notes .n-row:focus-within .hov{visibility:visible}
+#p-notes .n-row .nk,#p-notes .n-row .t{flex:none;font-size:calc(12.5px * var(--ts));color:var(--quiet);white-space:nowrap;text-align:right}
+#p-notes .n-row .nk{width:92px;overflow:hidden;text-overflow:ellipsis}
+#p-notes .n-row .t{min-width:70px}
+#p-notes .nempty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:72px 24px;color:var(--quiet);font-size:calc(13.5px * var(--ts));line-height:1.5;text-align:center}
+#p-notes .nempty span{max-width:360px}
+#p-notes .nempty .ico{width:28px;height:28px;stroke-width:1.4;color:var(--faint);margin-bottom:4px}
+#p-notes .nempty b{color:var(--text);font-size:calc(15px * var(--ts));font-weight:600}
+#p-notes .nempty .btn{margin-top:6px}
+#p-notes .n-pv .badge{align-self:flex-start;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+#p-notes .n-pvt{margin:0;font:600 calc(17px * var(--ts))/1.3 var(--sans);color:var(--text);overflow-wrap:anywhere}
+#p-notes .n-props{display:flex;flex-direction:column;gap:2px;padding:14px;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line)}
+#p-notes .n-props .prop{display:grid;grid-template-columns:92px minmax(0,1fr);align-items:center;gap:8px;min-height:34px;font-size:calc(13px * var(--ts))}
+#p-notes .n-props .prop > span:first-child{color:var(--quiet)}
+#p-notes .n-props .prop-v{overflow-wrap:anywhere}
+#p-notes .n-otl{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
+#p-notes .n-outline{display:flex;flex-direction:column;margin-top:-8px}
+#p-notes .n-outline .si{height:30px;padding:0 10px;font-size:calc(13px * var(--ts));color:var(--quiet);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;line-height:30px;box-sizing:border-box}
+#p-notes .n-acts{display:flex;flex-direction:column;gap:10px}
+#p-notes .n-acts .btn{width:100%;justify-content:center}
+#p-notes .n-pvfoot,#p-notes .n-pvnone{font-size:calc(12.5px * var(--ts));color:var(--quiet);line-height:1.5}
+@media (max-width:1199px){
+  #p-notes .n-pv{display:flex;flex-direction:column;gap:14px;padding:18px;border-top:1px solid var(--line);margin-top:24px}
+}
 #p-notes .n-fbar{position:sticky;top:calc(var(--mh-h,48px) + 8px);z-index:6;display:flex;align-items:center;gap:2px;height:44px;padding:0 12px;border-bottom:1px solid var(--line);background:var(--bg)}
 #p-notes .n-fbar button.btn.on{color:var(--text);background:var(--hover);box-shadow:inset 0 0 0 1px var(--line)}
 #p-notes .fsep{width:1px;height:18px;background:var(--line);margin:0 6px;flex:none}
