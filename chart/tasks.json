@@ -7189,7 +7189,7 @@
   "milestone": "PWA",
   "status": "open",
   "depends": [],
-  "notes": "Review 2 (fresh agent at 1d0d0e7): earlier gaps closed; two small new ones fixed in 54faa3f (a 'No graded coursework' line in More questions, now in the D-324 grep; share no longer blocks a drill for having 'graded' in its title, while proctored, exam, validation and clinical stay blocked). Not reviewed again, per the one-more-review rule; listed on the release card. npm test 676/677, 1 skipped; smoke 28/28. Ready for staging with the two staging Mac tasks re-created.",
+  "notes": "Staging Mac tasks re-created with Matt at the Mac (evening-mac trig_01LRaXp8yBp16n61E7sYZQoQ, restore-drill trig_016MfX6dcGkX1pe834pZN9kJ) with the new prompts; proved: runs/evening-mac-20261026-003343406 ok (backup 890 documents, mirror 39 files) and runs/restore-drill-20261026-004037655 ok (890 documents in 23 collections, counts and SHA-256 match). Cloud prompts updated. Staging ship waits on the pwa-staging check fix (B-389).",
   "commit": null,
   "source": "build manager, D-324",
   "words": "Remove every check, flag, hold and block for graded work and patient identifiers from E.V., as D-324 decides.",
