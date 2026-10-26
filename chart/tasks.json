@@ -7367,5 +7367,22 @@
    "outcome": "task",
    "at": "2026-10-26T00:52:58.040Z"
   }
+ },
+ {
+  "id": "B-407",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Build a missed check proposes a weak spot to To review, visibly (B-396, D-325).",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build manager, B-396 plan",
+  "words": "Build a missed check proposes a weak spot to To review, visibly (B-396, D-325).",
+  "reportedAt": "2026-10-26T00:53:00.621Z",
+  "board": {
+   "row": "v4 B-407: Build a missed check proposes a weak spot to To review, visibly…"
+  }
  }
 ]
