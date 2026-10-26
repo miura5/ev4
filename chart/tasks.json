@@ -4102,7 +4102,7 @@
   "depends": [
    "B-231"
   ],
-  "notes": "Waiting on nobody since D-334.",
+  "notes": "Built on main (schema 2, events, duplicate credit, D-115 bump with fixtures and idempotence, spec.links row, lint duplicate chain, migrate bumps --store worker); npm test 768/0. Running harnesses next.",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },
