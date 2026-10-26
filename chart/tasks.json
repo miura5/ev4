@@ -7126,7 +7126,7 @@
   "milestone": "PWA",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Design final: 'E.V. demo v4 + Notes' canvas (AppNotes), independent playtest 89/100 at 1280, no blocker. Matt's fixed choices: E.V.'s chat floats over the page as in Linear; desktop only; no graded or patient-detail rules (D-324). Build rules taken from the last review: (1) starting a session while one runs ends and logs it first, and Undo restores the whole previous state (note, chat and check answer), not only the timer; (2) a proposed weak spot stays visible after the chat closes (Weak spots '· 1 to review', E.V.'s Study line, a sidebar line that isn't cut off at 1280); (3) each New note creates its own note. Waiting on Matt's go.",
   "commit": null,
   "source": "Matt in the development chat, Oct 25",
   "words": "Replace the retired Study Watch with note-taking inside E.V.: a lightweight notes view modelled on Quip's basics (one continuous page per note, simple formatting, keyboard shortcuts for headings and lists), usable offline in the PWA and synced to E.V.'s database when back online, so E.V. can use the notes as Study Watch did.",
