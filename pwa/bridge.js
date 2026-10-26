@@ -202,6 +202,7 @@
     const all = await boxAll().catch(() => []);
     const open = await openTabs();
     let n = 0;
+    const shown = new Set();
     for (const [key, o] of all) {
       if (outbox[key] || !o || !o.c || claimed.has(o.tag)) continue; // B-410: an entry this tab moved stays moved
       if (o.tab !== TAB && open && open.has(o.tab)) continue; // that tab is open: it sends its own
@@ -215,11 +216,14 @@
         continue;
       }
       (db[o.c] = db[o.c] || {})[o.id] = o.doc;
+      o.seen = ++SEQ; // B-409: shown to the page from here on (a save asked before this never saw these words)
+      shown.add(o.c);
     }
     if (moved) {
       moved = false;
       tell();
     }
+    shown.forEach(emit); // B-409: the page shows the words it took over, mid-session as at boot
     return n;
   }
   const net = { online: true, syncing: false };
@@ -401,18 +405,20 @@
   // over a document that changed is not retried. Any save that fails (a conflict, a network failure, a refusal) reaches
   // the page with the document it tried to save (e.unsaved), so his words are never simply gone.
   const queues = new Map();
+  let SEQ = 0; // B-409: the order of saves asked and of words shown to the page, to tell what a save could have seen
   function save(c, id, make, kind = 'set') {
     const key = c + '\n' + id;
+    const seq = ++SEQ; // the page asked for this save now: words shown after it were never in it
     const attempt = async () => {
       const doc = make();
       // B-404: a note goes to the outbox while offline, or while an earlier save of it waits there (so they stay in
       // order); any other write is refused offline, with the document it tried to save
-      if (c === 'notes' && (waiting(c, id) || !net.online)) return queueNote(c, id, doc);
+      if (c === 'notes' && (waiting(c, id) || !net.online)) return queueNote(c, id, doc, seq);
       if (!net.online && c !== 'notes') throw offlineError(doc);
       try {
         return await saveNow(c, id, doc);
       } catch (e) {
-        if (e.offline && c === 'notes') return queueNote(c, id, doc);
+        if (e.offline && c === 'notes') return queueNote(c, id, doc, seq);
         if (e.offline) throw Object.assign(offlineError(doc), { cause: e });
         if (!e.conflict) throw Object.assign(e, { unsaved: doc });
         let again = null;
@@ -507,14 +513,24 @@
     e.unsaved = doc;
     return e;
   }
-  async function queueNote(c, id, doc) {
+  async function queueNote(c, id, doc, seq = ++SEQ) {
     const key = ownKey(c, id);
     const was = outbox[key];
-    // B-410: a save of the note replaces every other entry for it this tab holds: one a closed tab left (adopted) or
-    // one the record refused (D-332: he may have cut it down). The page's words were built on what those entries
-    // showed, so the new entry keeps their base: if the record moved on since, the send is stale and both are kept
-    // (D-326), never written over the other device's words.
-    const replaced = Object.entries(outbox).filter(([k, o]) => k !== key && o.c === c && o.id === id);
+    // B-410, B-409: a save of the note replaces another entry for it (one a closed tab left, adopted) only when the
+    // save was built on that entry's words: the same words, or refused words he was shown before he saved (D-332: he
+    // cut them down). Then the new entry keeps its base: if the record moved on since, the send is stale and both are
+    // kept (D-326). Words the save never saw are never dropped: an entry that can still be sent stays and goes first,
+    // so this save goes stale behind it and both are kept; refused words become their own second note, still refused.
+    const replaced = [];
+    for (const [k, o] of Object.entries(outbox)) {
+      if (k === key || o.c !== c || o.id !== id) continue;
+      if (sameWords(o.doc, doc) || (o.refused && (o.seen || 0) < seq)) replaced.push([k, o]);
+      else if (o.refused) moveRefused(k, o);
+    }
+    if (moved) {
+      moved = false;
+      tell();
+    }
     const from = replaced.length ? replaced[0] : null;
     for (const [k, o] of replaced) {
       delete outbox[k];

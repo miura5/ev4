@@ -1149,3 +1149,119 @@ test('B-410 (shim): a tab that dies right after moving refused words leaves one 
   assert.equal(refusedSeconds(idb).length, 1);
   assert.deepEqual(refusedSeconds(idb)[0].doc.blocks, HUGE().blocks);
 });
+
+// ---- B-409 (release fix wave 1): an adopted note is never replaced by a save that never saw it
+
+test('B-409 (shim): a note taken over mid-session from a closed tab, then saved here before it is sent: both kept', async () => {
+  const env = envOf();
+  assert.equal((await put(env, 'notes', ID, BASE)).status, 200);
+  const Y = 'n-20261026-150000-YyYyYyYyYyYyYyYy';
+  const NY = note([['h1', 'Potassium']]);
+  assert.equal((await put(env, 'notes', Y, NY)).status, 200);
+  const idb = fakeIDB();
+  let hold = null;
+  const status = async (url, init) => {
+    if (hold && init.method === 'PUT' && url.includes(Y)) {
+      const h = hold;
+      hold = null;
+      await h();
+    }
+    return null;
+  };
+  const A = await shim(env, idb, { down: false }, { status });
+  const B = await shim(env, idb, { down: false });
+  A.net.down = B.net.down = true;
+  const bWords = note(
+    [
+      ['h1', 'Sodium (Na+)'],
+      ['ul', 'B wrote this offline'],
+    ],
+    AT,
+    BASE
+  );
+  await B.db.collection('notes').doc(ID).set(bWords);
+  B.close(); // window B closes with its words waiting
+  await A.db
+    .collection('notes')
+    .doc(Y)
+    .set(
+      note(
+        [
+          ['h1', 'Potassium'],
+          ['ul', 'A offline'],
+        ],
+        AT,
+        NY
+      )
+    );
+  // while Y's send is out (A has taken B's note over by then), A saves the note as it was before B's words
+  let aSave = null;
+  hold = async () => {
+    await new Promise(r => setTimeout(r, 50));
+    aSave = A.db
+      .collection('notes')
+      .doc(ID)
+      .set(
+        note(
+          [
+            ['h1', 'Sodium (Na+)'],
+            ['ul', 'A typed this online'],
+          ],
+          AT,
+          BASE
+        )
+      );
+    await new Promise(r => setTimeout(r, 50));
+  };
+  // the page is shown the words it took over
+  const seen = [];
+  A.db.collection('notes').onSnapshot(q => seen.push(JSON.stringify(q.docs.map(d => d.data()))));
+  await A.online();
+  await aSave;
+  await A.online();
+  await kept();
+  const all = JSON.stringify(allNotes(env));
+  assert.ok(all.includes('B wrote this offline'), 'B’s offline words are in the record');
+  assert.ok(all.includes('A typed this online'), 'and A’s');
+  assert.equal(allNotes(env).filter(n => n.earlierOf === ID).length, 1, 'one of them as the second note');
+  assert.ok(
+    seen.some(x => x.includes('B wrote this offline')),
+    'the page was shown B’s words when A took them over'
+  );
+  assert.deepEqual(idb.box(), []);
+});
+
+test('B-409 (shim): refused words taken over from a closed tab and a save here: the save lands, the refused words are their own note', async () => {
+  const env = envOf();
+  await put(env, 'notes', ID, BASE);
+  const idb = fakeIDB();
+  const A = await shim(env, idb);
+  const B = await shim(env, idb);
+  B.net.down = true;
+  await B.db.collection('notes').doc(ID).set(HUGE());
+  B.wake();
+  assert.ok(await until(() => (B.sync().refused || []).length === 1 && !B.sync().syncing));
+  await kept();
+  B.close();
+  // A asks for a save of the note before it has taken B's refused words over; it lands after the take-over
+  A.net.down = true;
+  const aWords = lines(BASE, ['ul', 'A wrote this']);
+  const asked = A.db.collection('notes').doc(ID).set(aWords);
+  await asked;
+  A.wake();
+  assert.ok(await until(() => !A.sync().syncing && A.sync().pending === 0 && (A.sync().refused || []).length === 1));
+  await kept();
+  const [ref] = A.sync().refused;
+  assert.ok(
+    stored(env, 'notes', ID).data.blocks.some(b => b.runs[0].text === 'A wrote this'),
+    'A’s save lands'
+  );
+  assert.notEqual(ref.id, ID, 'the refusal names a second note, not the note A saved');
+  const second = await A.data('notes', ref.id);
+  assert.equal(second.earlierOf, ID);
+  assert.deepEqual(second.blocks, HUGE().blocks, 'B’s refused words kept whole, as their own note');
+  assert.ok(
+    idb.box().some(o => o.refused && JSON.stringify(o.doc.blocks) === JSON.stringify(HUGE().blocks)),
+    'and still in IndexedDB'
+  );
+});
