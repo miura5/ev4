@@ -7473,11 +7473,13 @@
  {
   "id": "B-411",
   "kind": "bug",
-  "title": "Bug (reported Oct 26): Notes sessions: in rare cases a switched session is filed twice (the driver view is not the one holding Undo, or a reload lands between a filing's findings and its filed mark), and the Undo button can show after Undo has stopped working, with no word when a tap does nothing.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
-  "depends": [],
+  "title": "Notes sessions: one filer per switch, idempotent re-filing, honest Undo button",
+  "dod": "switchSession's end event names the switching view, and only that view files at the deadline with no takeover delay; every other view waits the takeover delay. Re-filing is idempotent (a filing mark on the session before its findings, or finding ids keyed on the session), so a reload mid-filing never writes findings twice. The Undo button's deadline is undoEndsAt(prev), and a refused Undo says one line. Tests for each; its own fresh review; staging GREEN.",
+  "milestone": "PWA",
+  "status": "open",
+  "depends": [
+   "B-406"
+  ],
   "notes": "",
   "commit": null,
   "source": "B-406 second review",
@@ -7485,6 +7487,10 @@
   "reportedAt": "2026-10-26T06:07:38.893Z",
   "board": {
    "row": "v4 B-411: Notes sessions: in rare cases a switched session is filed twice (the…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-26T06:07:50.260Z"
   }
  }
 ]
