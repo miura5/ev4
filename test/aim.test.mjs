@@ -167,3 +167,23 @@ test('B-170: the morning reads the latest weeks, and the practice brief and the 
   assert.ok(spec.pipelines.morning.reads.some(r => r.collection === 'weeks' && r.windowDays === 14));
   assert.equal(spec.study.aim, 'today');
 });
+
+test('B-406: a discarded session (an Undo took it back) counts in no week: not in sessions, minutes or study vs next day', () => {
+  const base = record();
+  const s = (id, minutes, status) => ({
+    id,
+    ...env('page', '2026-10-21T15:00:00Z'),
+    source: 'E.V. Home',
+    date: '2026-10-21',
+    status,
+    minutes,
+  });
+  const one = { ...base, sessions: [s('ss-20261021-150000-kept', 30, 'ended')] };
+  const two = { ...one, sessions: [...one.sessions, s('ss-20261021-151000-undone', 25, 'discarded')] };
+  const w1 = produce(one, spec, 'weeks', { date: '2026-10-25', now: '2026-10-26T00:30:00Z' });
+  const w2 = produce(two, spec, 'weeks', { date: '2026-10-25', now: '2026-10-26T00:30:00Z' });
+  assert.equal(w2.rollups.sessions, 1);
+  assert.equal(w2.rollups.studyMinutes, 30);
+  assert.deepEqual(w2.rollups, w1.rollups);
+  assert.deepEqual(w2.insights, w1.insights);
+});

@@ -1103,7 +1103,7 @@ const openNoteId = page =>
     const c = (await sessions()).find(x => x.note === 'notes/' + noteB && x.status === 'active');
     const openNow = await page.evaluate(() => (window.__writes || []).length);
     void openNow;
-    const filed = await until(page, i => !!(window.__db.sessions[i] || {}).filedAt, sa.id, 16000);
+    const filed = await until(page, i => !!(window.__db.sessions[i] || {}).filedAt, sa.id, 30000);
     const fa = await sess(sa.id);
     ok(
       `${tag} Study with E.V. starts a 25-minute session on that note; the one it ended is filed when Undo runs out`,

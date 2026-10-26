@@ -257,7 +257,9 @@ export function weekInsights(v, db, date) {
   for (let d = from7; d <= date; d = EV.addDays(d, 1)) {
     const next = EV.addDays(d, 1);
     const na = all.filter(a => a.date === next);
-    const minutes = (db.sessions || []).filter(s => s.date === d).reduce((n, s) => n + (Number(s.minutes) || 0), 0);
+    const minutes = (db.sessions || [])
+      .filter(s => s.date === d && s.status !== 'discarded')
+      .reduce((n, s) => n + (Number(s.minutes) || 0), 0);
     const ci = edits[d] && edits[d].checkin;
     studyVsNextDay.push({
       date: d,
@@ -479,7 +481,8 @@ function weekBody(db, { date, verify = null, recap = null }, spec, stored) {
     w => w.addedAt && EV.chicagoDate(w.addedAt) >= from && EV.chicagoDate(w.addedAt) <= date
   );
   const solid = v.models.filter(w => w.derived.solidAt && EV.chicagoDate(w.derived.solidAt) >= from);
-  const sessions = (db.sessions || []).filter(s => s.date >= from && s.date <= date);
+  // B-406: a session an Undo took back (discarded) is kept, never counted
+  const sessions = (db.sessions || []).filter(s => s.status !== 'discarded' && s.date >= from && s.date <= date);
   const runs = (db.runs || []).filter(
     r => r.pipeline && EV.chicagoDate(r.startedAt || r.at) >= from && EV.chicagoDate(r.startedAt || r.at) <= date
   );

@@ -570,7 +570,7 @@
     }
     // The summary from Claude (when the session had checks, comments or reads) and the close's writes: one session
     // update and its findings. B-406: also files a session a switch ended once its Undo has passed.
-    async function fileSession(s2, reason) {
+    async function fileSession(s2, reason, { recheck = false } = {}) {
       const st = E.sessionState(s2, now());
       let wrap = {};
       let note = '';
@@ -589,6 +589,13 @@
         } catch (e) {
           note = ` I couldn’t write the summary (${(e && e.code) || 'error'}), so it’s saved without one.`;
         }
+      }
+      if (recheck) {
+        // B-406 review: the session as it stands now, after Claude's summary: an Undo or another view may have
+        // reopened or filed it meanwhile, and then this view files nothing
+        const now2 = sessOf(s2.id);
+        if (!now2 || !E.switchedUnfiled(now2)) return null;
+        s2 = now2;
       }
       const r = E.closeSession(s2, wrap, {
         weakspots: M.models,
@@ -1053,6 +1060,13 @@
     // The ended session is filed (summary, findings, minutes) only once Undo is no longer offered, so an Undo never takes
     // back a write-once field or a finding; a page closed before then files it on the next load.
     const UNDO_MS = 12000;
+    // B-406 review: a switched session is filed only once its Undo is over by the record's own clock (its end event's
+    // time + UNDO_MS + this margin), in every view; Undo is refused past UNDO_MS by the same clock.
+    const FILE_MARGIN_MS = 5000;
+    const undoEndsAt = s => {
+      const at = E.switchedAt(s);
+      return at ? Date.parse(at) + UNDO_MS : 0;
+    };
     SS.undo = null;
     SS.filing = new Set();
     // The note a Notes session reads: the open note as he is writing it, else as saved. Its text goes to Claude
@@ -1231,10 +1245,28 @@
     }
     async function undoSwitch() {
       const u = SS.undo;
-      if (!u || Date.now() >= u.until) return;
-      SS.undo = null;
+      const prev = u && sessOf(u.prev);
+      if (!u || Date.now() >= u.until || !prev || Date.now() >= undoEndsAt(prev)) {
+        SS.undo = null;
+        return;
+      }
       const at = now();
-      await run(E.undoSwitch(sessOf(u.prev), sessOf(u.next), { at, keys: [pageKey(at), pageKey(at)] }));
+      const writes = E.undoSwitch(prev, sessOf(u.next), {
+        at,
+        keys: [pageKey(at), pageKey(at)],
+        windowMs: UNDO_MS,
+      });
+      SS.undo = null;
+      if (!writes.length) return;
+      // held until the reopen lands, so switchTick never files the session in the middle of its Undo
+      SS.filing.add(u.prev);
+      try {
+        await run(writes);
+      } catch (e) {
+        SS.filing.delete(u.prev);
+        throw e;
+      }
+      SS.filing.delete(u.prev); // active again: if it is switched later, that switch is filed in its turn
       SS.text = null;
       SS.seen = null;
       SS.added = '';
@@ -1267,17 +1299,24 @@
       for (const s of S.sessions) {
         if (SS.filing.has(s.id) || (SS.undo && SS.undo.prev === s.id) || !E.switchedUnfiled(s)) continue;
         if (s.source !== 'E.V. Home') continue;
+        // every view waits out the Undo by the record's clock; the view that drove the session files it, and any
+        // other view only after the takeover delay past that
+        const due = undoEndsAt(s) + FILE_MARGIN_MS;
+        const mine = s.driver && s.driver.view === SS.view;
+        if (Date.now() < due + (mine ? 0 : (SWC.takeoverMinutes || 2) * 60e3)) continue;
         SS.filing.add(s.id); // once per page load, whatever happens
-        fileSession(s, 'switched')
-          .then(({ up, st, r, note }) =>
-            evSay(
+        fileSession(s, 'switched', { recheck: true })
+          .then(res => {
+            if (!res) return;
+            const { up, st, r, note } = res;
+            return evSay(
               `Saved “${sessName(s)}”: ${savedBits(up, st)}.${r.questions.length ? ' One thing to settle on the card.' : ''}${note}`,
               r.questions.length
                 ? [{ type: 'session', id: s.id }]
                 : [{ type: 'go', label: 'Open in Record', to: 'record', id: s.id }],
               { tier: 'local', ...thOf(s) }
-            )
-          )
+            );
+          })
           .catch(() => {});
       }
     }

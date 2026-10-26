@@ -830,21 +830,26 @@ export function makeSessions(core) {
       },
     ];
   }
-  /** B-406: whether a session was ended by a switch and is still waiting to be filed (its summary not written yet). */
-  function switchedUnfiled(s) {
-    if (!s || s.status !== 'ended' || s.filedAt || s.kind === 'skill') return false;
+  /** B-406: when a switch ended this session (its end event's time), while it waits to be filed; else null. */
+  function switchedAt(s) {
+    if (!s || s.status !== 'ended' || s.filedAt || s.kind === 'skill') return null;
     const ends = Object.entries(s.events || {})
       .filter(([, e]) => e && (e.type === 'end' || e.type === 'reopen'))
       .sort(([a], [b]) => a.localeCompare(b));
-    const last = ends.length ? ends[ends.length - 1][1] : null;
-    return !!last && last.type === 'end' && last.why === 'switched';
+    const [k, last] = ends.length ? ends[ends.length - 1] : [];
+    return last && last.type === 'end' && last.why === 'switched' ? isoOf(entryTime(k, last)) : null;
   }
+  /** B-406: whether a session was ended by a switch and is still waiting to be filed (its summary not written yet). */
+  const switchedUnfiled = s => switchedAt(s) != null;
   /**
    * B-406: Undo of a switch, through marks only (nothing is deleted): the session started by the switch is marked
    * discarded (with an end event), and the one it ended is active again (a reopen event; its clock, checks and answers
    * pick up where they were). `keys` are two page event keys for `at`, in order.
    */
-  function undoSwitch(ended, started, { at, keys }) {
+  function undoSwitch(ended, started, { at, keys, windowMs = null }) {
+    // nothing changes unless the ended session can be reopened: still unfiled, and (given a window) inside it
+    if (!ended || !switchedUnfiled(ended)) return [];
+    if (windowMs != null && toMs(at) - toMs(switchedAt(ended)) >= windowMs) return [];
     const out = [];
     if (started && started.status !== 'discarded')
       out.push({
@@ -853,13 +858,12 @@ export function makeSessions(core) {
         id: started.id,
         data: { status: 'discarded', endedAt: at, events: { [keys[0]]: { type: 'end', why: 'undone', at } } },
       });
-    if (ended && switchedUnfiled(ended))
-      out.push({
-        op: 'update',
-        collection: 'sessions',
-        id: ended.id,
-        data: { status: 'active', endedAt: null, events: { [keys[1]]: { type: 'reopen', at } } },
-      });
+    out.push({
+      op: 'update',
+      collection: 'sessions',
+      id: ended.id,
+      data: { status: 'active', endedAt: null, events: { [keys[1]]: { type: 'reopen', at } } },
+    });
     return out;
   }
   /** Matt's same-or-different answer for one pending near-repeat. */
@@ -969,6 +973,7 @@ export function makeSessions(core) {
     closeSession,
     startTimedSession,
     switchSession,
+    switchedAt,
     switchedUnfiled,
     undoSwitch,
     decideSessionQuestion,

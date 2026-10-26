@@ -575,7 +575,8 @@
                 break;
               }
               case 'sessions':
-                out = [...S.sessions]
+                out = S.sessions
+                  .filter(s => s.status !== 'discarded') // B-406: an Undo took it back
                   .sort((a, b) => String(b.date).localeCompare(String(a.date)))
                   .filter(s => has((s.topic || '') + ' ' + (s.summary || '')))
                   .slice(0, 8)

@@ -617,6 +617,7 @@ test('B-406 (D-325): a second session ends and logs the running one; Undo restor
   assert.equal(after.answered[1], 'm2', 'the check answer stands');
   assert.equal(after.checks, 1);
   assert.equal(EV.undoSwitch(a, b, { at: plus(11), keys: [sk(plus(11)), sk(plus(11, 1))] }).length, 0, 'once');
+  // B-406 review: Undo changes nothing once the ended session can't be reopened (filed, or past the window)
   // the clock runs out at 30 study minutes (10:20 to 30:20), and ends then
   assert.equal(EV.sessionState(a, plus(30, 10)).timeUp, false);
   assert.equal(EV.sessionState(a, plus(30, 20)).timeUp, true);
@@ -632,6 +633,25 @@ test('B-406 (D-325): a second session ends and logs the running one; Undo restor
   assert.equal(c.endedAt, plus(12));
   assert.equal(c.summary, 'Fluids.');
   assert.equal(EV.switchedUnfiled(c), false, 'filed');
+  const late = { ...b, status: 'active' };
+  assert.deepEqual(
+    EV.undoSwitch(c, late, { at: plus(13), keys: [sk(plus(13)), sk(plus(13, 1))] }),
+    [],
+    'Undo after filing changes nothing: the new session is not discarded'
+  );
+  let e = apply(session({}, base), [EV.switchSession(session({}, base), { at: plus(12), key: sk(plus(12)) })[0]]);
+  assert.equal(EV.switchedAt(e), plus(12));
+  assert.equal(
+    EV.undoSwitch(e, late, { at: plus(12, 11), keys: [sk(plus(12, 11)), sk(plus(12, 12))], windowMs: 12e3 }).length,
+    2,
+    'inside the window'
+  );
+  assert.deepEqual(
+    EV.undoSwitch(e, late, { at: plus(12, 12), keys: [sk(plus(12, 12)), sk(plus(12, 13))], windowMs: 12e3 }),
+    [],
+    'past the window, nothing'
+  );
+  assert.equal(EV.undoSwitch(null, late, { at: plus(13), keys: ['a', 'b'] }).length, 0);
   // a break at the switch is a break again after Undo
   let d = apply(session({ [plus(3)]: { type: 'break' } }, base), [
     EV.switchSession(session({ [plus(3)]: { type: 'break' } }, base), { at: plus(4), key: sk(plus(4)) })[0],

@@ -107,7 +107,7 @@
               .filter(a => a.date >= E.addDays(today, -6))
               .map(a => ({ date: a.date, correct: !!a.correct })),
             sessions: S.sessions
-              .filter(x => x.date >= E.addDays(today, -6))
+              .filter(x => x.status !== 'discarded' && x.date >= E.addDays(today, -6))
               .map(x => ({ date: x.date, minutes: x.minutes || 0 })),
           },
         })

@@ -70,8 +70,12 @@ export function makeMirror(core) {
       files.push({
         path: `sessions/${s.id}.md`,
         content:
-          fm({ date: s.date, minutes: s.minutes, source: s.source }) +
-          `# ${s.topic || 'Study session'}\n\n${s.summary || ''}\n`,
+          fm({
+            date: s.date,
+            minutes: s.minutes,
+            source: s.source,
+            ...(s.status === 'discarded' ? { status: 'discarded' } : {}),
+          }) + `# ${s.topic || 'Study session'}\n\n${s.summary || ''}\n`,
       });
     // D-113 (B-62): the mirror holds the journal too, when the run read it.
     for (const j of db.journal || [])
@@ -106,7 +110,7 @@ export function makeMirror(core) {
       });
     files.push({
       path: 'index.md',
-      content: `# E.V. record mirror\n\nRead-only copy written by the evening pipeline${date ? ' on ' + date : ''}. Edit in E.V. Home, not here.\n\n- Weak spots: ${ws.length}\n- Objectives: ${(db.objectives || []).length}\n- Sessions: ${(db.sessions || []).length}\n- Ideas: ${(db.ideas || []).length}\n${db.notes ? `- Notes: ${db.notes.length}\n` : ''}`,
+      content: `# E.V. record mirror\n\nRead-only copy written by the evening pipeline${date ? ' on ' + date : ''}. Edit in E.V. Home, not here.\n\n- Weak spots: ${ws.length}\n- Objectives: ${(db.objectives || []).length}\n- Sessions: ${(db.sessions || []).filter(s => s.status !== 'discarded').length}\n- Ideas: ${(db.ideas || []).length}\n${db.notes ? `- Notes: ${db.notes.length}\n` : ''}`,
     });
     return files;
   }

@@ -214,3 +214,15 @@ test('B-72 (D-120): weekInsights ranks objectives by accuracy, finds items misse
   ]);
   assert.equal(r.byFormat[0].id, 'single');
 });
+
+test('B-406: study vs next day leaves out a discarded session', async () => {
+  const { weekInsights } = await import('../core/derive.mjs');
+  const db = {
+    sessions: [
+      { id: 'ss-1', date: '2026-10-15', minutes: 45 },
+      { id: 'ss-2', date: '2026-10-15', minutes: 25, status: 'discarded' },
+    ],
+  };
+  const r = weekInsights({ sets: [], answers: [], models: [] }, db, '2026-10-18');
+  assert.equal(r.studyVsNextDay.find(x => x.date === '2026-10-15').minutes, 45);
+});
