@@ -1269,7 +1269,7 @@
      "exports": "ev-live-exports",
      "workflow": "pwa-live.yml",
      "environment": "live",
-     "ready": false,
+     "ready": true,
      "_why": "B-320 (D-330): the live app: the ev-live Worker at this address over the ev-live D1, deployed only by .github/workflows/pwa-live.yml in the GitHub environment live (Matt is its required reviewer), with environment-only secrets; never seeded. The workflow also keeps the ev-live-scratch Worker and D1 for the live restore drill, and the ev-live-exports R2 bucket for the nightly export. ready turns the app on in ship live and verify-deploy live (tools/pwa-app.mjs APPS.live): false until the cutover sitting flips it (docs/cutover.md step 3), so no live release before then waits on a Worker that is not there."
     },
     "copy": {
