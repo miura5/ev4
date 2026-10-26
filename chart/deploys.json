@@ -5307,5 +5307,22 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "18d5fb0",
+  "time": "2026-10-26T23:12:36.473Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "bc356de",
+  "tasks": [
+   "B-320",
+   "B-421"
+  ],
+  "summary": "Cutover; The nightly full check can fail the Notes harness's 12-second Undo…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
