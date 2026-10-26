@@ -7406,7 +7406,7 @@
   "depends": [
    "B-406"
   ],
-  "notes": "Built and pushed (5511d25, d125f73, e7c8777). npm test 754/755 (1 skip), smoke 28/28, smoke:pwa 31/31, harnesses frame 134, notes 82, captions 198, core 142, run 387 all green; check --touched running.",
+  "notes": "Ready for review (data path: what the page declares, and session writes). Built at 5511d25, d125f73, e7c8777; not shipped. Scope: page/app/64 (reader path, renderSessCard and the desktop header line removed; startSession: desktop opens a new note's session in Notes, phone starts a no-note session; the strip shows any running session), 62/70/72/73 (page filing of Study Watch sessions, File it and the file_sessions tool removed), 74/20 (desktop chip is the Notes demo's Start a note and study; Back to my note in a note session), styles.css (#ev-sess), tools/build.mjs (stops packing spec.reader), spec (ui.page.capabilities drops host:E_V__Study_Watch_reader; registry.studyWatch and its environments row marked retired; conversation tools and sessions text). Phone keeps its header session line (D-327: phone unchanged). Proofs: npm test 754/755 (1 skip), smoke 28/28, smoke:pwa 31/31, frame 134, notes 82, captions 198, core 142, run 387. check --touched RED only at core's advisory phone frame budget, which also fails at the pre-change base f53cd7e under this machine's load (load 7 to 10).",
   "commit": null,
   "source": "build manager, B-396 plan",
   "words": "Build retire Study Watch and the Conversation's session card (B-396, D-325).",
