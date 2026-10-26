@@ -7425,7 +7425,7 @@
   "title": "Notes: rubric click-through, code review and release card",
   "dod": "The UI reviewer scores at one pinned commit on the three records, at 1280, 1706 and 2560, with 390 confirming the phone is unchanged and has no Notes. At most two fix waves. A code reviewer reads the whole release diff. The full npm run check is GREEN (dist/check-full.json). Done at rubric 80 or more with no factor below 3 and no blocker (or the card says by how much it missed), staging GREEN at the same commit, and the release card written for Matt.",
   "milestone": "PWA",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-400",
    "B-401",
@@ -7437,7 +7437,7 @@
    "B-407",
    "B-408"
   ],
-  "notes": "",
+  "notes": "Build manager: release review at 5a0e981 (staging GREEN): one UI click-through scorer, three code reviewers splitting 10798d8..5a0e981, the full npm run check in the background.",
   "commit": null,
   "source": "build manager, B-396 plan",
   "words": "Build rubric click-through, code review and release card (B-396, D-325).",
