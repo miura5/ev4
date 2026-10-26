@@ -7185,7 +7185,7 @@
   "milestone": "PWA",
   "status": "open",
   "depends": [],
-  "notes": "page harnesses brought in line (run 402/402, shell 115/115 green); prep, captions, greet, look and the app smoke running",
+  "notes": "ready for staging ship: 6ebf03d; npm test 676/677 (1 skipped), npm run smoke 28/28, smoke:pwa 22/22, harnesses run 402, shell 115, prep 250, captions 199, greet 74, look 239 all green; no independent review yet (this agent could not start a subagent); the staging Mac tasks evening-mac and restore-drill need re-creating with Matt",
   "commit": null,
   "source": "build manager, D-324",
   "words": "Remove every check, flag, hold and block for graded work and patient identifiers from E.V., as D-324 decides.",
