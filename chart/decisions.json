@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-345",
+  "date": "Oct 26",
+  "title": "Matt can delete his own items, through a 30-day trash; runs and agents still never delete, enforced by the Worker rather than by prompt rules",
+  "why": "Matt's call (Oct 26): the blanket no-deletion rule (B-11) was made for the claude.ai record, which had no restore. On the app, D1 Time Travel, nightly R2 exports, Mac backups and the monthly restore drill cover recovery, so the rule narrows: the page offers delete with a trash kept 30 days before it is cleared; runs and agents get no delete path (the Worker's run API has none). Repository code was already removable (D-166). The sweep task brings spec.boundaries B-11 and the run prompts in line.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-344",
   "date": "Oct 26",
   "title": "A created Mac task keeps the ended limits it was made with until it is retired",
