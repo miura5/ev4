@@ -341,22 +341,29 @@
    "format": "date-time"
   },
   "filing": {
-   "type": "object",
-   "properties": {
-    "at": {
-     "type": "string",
-     "format": "date-time"
+   "anyOf": [
+    {
+     "type": "object",
+     "properties": {
+      "at": {
+       "type": "string",
+       "format": "date-time"
+      },
+      "wrap": {
+       "type": "object"
+      }
+     },
+     "required": [
+      "at",
+      "wrap"
+     ],
+     "additionalProperties": false
     },
-    "wrap": {
-     "type": "object"
+    {
+     "type": "null"
     }
-   },
-   "required": [
-    "at",
-    "wrap"
    ],
-   "additionalProperties": false,
-   "description": "B-411: a mark the page sets before a session's findings: when its filing began and the summary it files, so filing again after a reload writes the same findings once"
+   "description": "B-411: a mark the page sets before a session's findings: when its filing began and the summary it files, so filing again after a reload writes the same findings once; null once an Undo voids it"
   },
   "comments": {
    "enum": [

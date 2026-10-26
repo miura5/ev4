@@ -989,3 +989,27 @@ test('B-410 review (shim): a note IndexedDB could not hold still makes its secon
   assert.deepEqual(earlier.blocks, mine.blocks);
   assert.ok(textOfAll(env).includes('from the other device'));
 });
+
+test('B-411 review (shim): a session’s filing mark is laid under: a different mark already there wins, the same one passes', async () => {
+  const env = envOf();
+  const SID = 'ss-20261026-150000-mark';
+  await put(env, 'sessions', SID, { status: 'ending', topic: 'Potassium' });
+  const a = await shim(env, fakeIDB());
+  const b = await shim(env, fakeIDB()); // a second view, booted before the first one's mark
+  const markA = { at: '2026-10-26T15:10:00.000Z', wrap: { summary: 'A' } };
+  const markB = { at: '2026-10-26T15:10:01.000Z', wrap: { summary: 'B' } };
+  await a.db.collection('sessions').doc(SID).update({ filing: markA });
+  const e = await b.db
+    .collection('sessions')
+    .doc(SID)
+    .update({ filing: markB })
+    .then(
+      () => null,
+      x => x
+    );
+  assert.ok(e && e.conflict, 'the second view’s different mark is refused as a conflict');
+  assert.deepEqual(stored(env, 'sessions', SID).data.filing, markA, 'the first mark stays in the record');
+  await b.db.collection('sessions').doc(SID).update({ filing: markA }); // the same mark passes
+  await a.db.collection('sessions').doc(SID).update({ filing: null }); // an Undo voids it
+  assert.equal(stored(env, 'sessions', SID).data.filing, null);
+});

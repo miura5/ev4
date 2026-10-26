@@ -484,12 +484,17 @@
     }
     // The summary from Claude (when the session had checks, comments or reads) and the close's writes: one session
     // update and its findings. B-406: also files a session a switch ended once its Undo has passed.
-    async function fileSession(s2, reason, { recheck = false } = {}) {
+    const MARK_SETTLE_MS = 800; // B-411 review: views racing to mark one session read back after both marks land
+    const sessRead = async id => {
+      const d = await db.collection('sessions').doc(id).get();
+      return d && d.exists ? { ...d.data(), id } : null;
+    };
+    async function fileSession(s2, reason, { recheck = null } = {}) {
       const st = E.sessionState(s2, now());
       let wrap = {};
       let note = '';
       // B-411: a filing a reload interrupted goes on from its mark (its time and summary), with no second summary
-      const resumed = !!(s2.filing && s2.filing.at);
+      const resumed = !!E.filingOf(s2);
       if (!resumed && (st.checks || st.comments || st.reads) && sample && !T.sampleOff) {
         try {
           wrap =
@@ -510,15 +515,24 @@
         // B-406 review: the session as it stands now, after Claude's summary: an Undo or another view may have
         // reopened or filed it meanwhile, and then this view files nothing
         const now2 = sessOf(s2.id);
-        if (!now2 || !E.switchedUnfiled(now2)) return null;
+        if (!now2 || !recheck(now2)) return null;
         s2 = now2;
       }
-      if (!s2.filing || !s2.filing.at) {
-        // B-411: the filing mark lands before any finding, so a reload between them files the same findings once
-        const at = now();
-        await write(E.filingMark(s2, wrap, { now: at }));
-        s2 = { ...s2, filing: E.filingMark(s2, wrap, { now: at }).data.filing };
+      // B-411: the filing mark lands before any finding, so a reload between them files the same findings once. B-411
+      // review: a mark already there wins (the shim refuses a different one), and every view files from the mark the
+      // record holds once both have landed, so two views filing at once make the same writes.
+      let held = (await sessRead(s2.id)) || s2;
+      if (!E.filingOf(held)) {
+        try {
+          await write(E.filingMark(held, wrap, { now: now() }));
+        } catch (e) {
+          if (!(e && e.conflict)) throw e;
+        }
+        await new Promise(ok => setTimeout(ok, MARK_SETTLE_MS));
+        held = await sessRead(s2.id);
       }
+      if (!held || !E.filingOf(held) || held.filedAt) return null;
+      s2 = held;
       const r = E.closeSession(s2, wrap, {
         weakspots: M.models,
         objectives: S.objectives,
@@ -526,7 +540,9 @@
         now: now(),
         endedBy: reason,
       });
-      await run(withDerived(r.writes));
+      // B-411 review: every finding first, the session's own update (which marks it filed) last
+      await run(E.closeFindings(r.writes));
+      await run(E.closeUpdate(r.writes));
       return { up: r.writes[0].data, st, r, note };
     }
     function savedBits(up, st) {
@@ -560,7 +576,9 @@
           });
           s2 = { ...s, status: 'ending', events: { ...(s.events || {}), [k]: { type: 'end', why: reason, at } } };
         }
-        const { up, st, r, note } = await fileSession(s2, reason);
+        const res = await fileSession(s2, reason);
+        if (!res) return ['Session saved.', [{ type: 'go', label: 'Open in Record', to: 'record', id: s.id }]]; // filed elsewhere
+        const { up, st, r, note } = res;
         SS.text = null;
         SS.added = '';
         SS.seen = null;
@@ -779,6 +797,10 @@
       renderSession();
       if (M && loaded.has('sessions')) switchTick(); // B-406: a switch's Undo runs out, then its session is filed
       if (!s || !M || SS.busy) return;
+      if (s.status === 'ending') {
+        endingTick(s);
+        return;
+      }
       if (s.status !== 'active') return;
       const st = E.sessionState(s, now());
       // B-87: the view in front of him takes the session over at once (a reload or a reopened tab used to wait two minutes
@@ -1074,7 +1096,7 @@
         const mine = !!sw && sw.view === SS.view; // B-411: the view that switched, which held the Undo
         if (Date.now() < due + (mine ? 0 : (SWC.takeoverMinutes || 2) * 60e3)) continue;
         SS.filing.add(s.id); // once per page load, whatever happens
-        fileSession(s, 'switched', { recheck: true })
+        fileSession(s, 'switched', { recheck: E.switchedUnfiled })
           .then(res => {
             if (!res) return;
             const { up, st, r, note } = res;
@@ -1088,6 +1110,30 @@
           })
           .catch(() => {});
       }
+    }
+    // B-411 review: a session left wrapping up (a reload or a closed view mid-End) is filed again: from its mark once
+    // that is MARK_STALE_MS old (its filer is gone), or with no mark once the takeover delay has passed since its end
+    const MARK_STALE_MS = 30e3;
+    function endingTick(s) {
+      const e = E.endingOf(s);
+      if (!e || SS.filing.has(s.id)) return;
+      const mark = E.filingOf(s);
+      const since = mark ? Date.parse(mark.at) + MARK_STALE_MS : Date.parse(e.at) + (SWC.takeoverMinutes || 2) * 60e3;
+      if (!(Date.now() >= since)) return;
+      SS.filing.add(s.id); // once per page load
+      fileSession(s, e.why, { recheck: x => !!E.endingOf(x) })
+        .then(res => {
+          if (!res) return;
+          const { up, st, r, note } = res;
+          return evSay(
+            `Session saved: ${savedBits(up, st)}.${r.questions.length ? ' One thing to settle on the card.' : ''}${note}`,
+            r.questions.length
+              ? [{ type: 'session', id: s.id }]
+              : [{ type: 'go', label: 'Open in Record', to: 'record', id: s.id }],
+            { tier: 'local', ...thOf(s) }
+          );
+        })
+        .catch(() => {});
     }
     // A break in a Notes session is five minutes, as the demo's; then the clock goes on by itself.
     function breakOver(s, st) {

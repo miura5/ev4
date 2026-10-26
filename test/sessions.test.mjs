@@ -719,3 +719,44 @@ test('B-411: the switching view is on the end event; a filing mark makes filing 
   const plain = EV.closeSession(session({ [plus(7)]: { type: 'end' } }, base), wrap, { ...opts, now: plus(8) });
   assert.equal(plain.writes[0].data.filedAt, plus(8));
 });
+
+test('B-411 review: a filing mark from before an Undo is void; the later End files at its own time, minutes kept', () => {
+  const base = {
+    schema: 2,
+    writer: 'page',
+    at: T0,
+    source: 'E.V. Home',
+    kind: 'note',
+    date: '2026-10-18',
+    planned: 30,
+  };
+  const merge = (a, b) => {
+    const o = { ...a };
+    for (const [k, v] of Object.entries(b))
+      o[k] = v && typeof v === 'object' && !Array.isArray(v) && a[k] && typeof a[k] === 'object' ? merge(a[k], v) : v;
+    return o;
+  };
+  // End at 10 (ending), its filing marked at 10:20, then interrupted; switched away at 11, Undone at 11:05
+  let s = session({ [plus(10)]: { type: 'end', why: 'ended', at: plus(10) } }, { ...base, status: 'ending' });
+  assert.deepEqual(EV.endingOf(s), { at: plus(10), why: 'ended', view: null });
+  s = merge(s, EV.filingMark(s, { summary: 'old' }, { now: plus(10, 20) }).data);
+  assert.equal(EV.filingOf(s).at, plus(10, 20));
+  s = merge(s, EV.switchSession(s, { at: plus(11), key: sk(plus(11)), view: 'v' })[0].data);
+  const undo = EV.undoSwitch(s, null, { at: plus(11, 5), keys: [sk(plus(11, 5)), sk(plus(11, 6))] });
+  assert.equal(undo.length, 1);
+  assertValid(undo[0], s);
+  assert.equal(undo[0].data.filing, null, 'the reopen voids the mark');
+  // even had the null not landed, a reopen after the mark voids it
+  const kept = merge(s, { ...undo[0].data, filing: s.filing });
+  assert.equal(EV.filingOf(kept), null);
+  s = merge(s, undo[0].data);
+  assert.equal(s.status, 'active');
+  // the later End files at its own time with its own summary
+  s = merge(s, { status: 'ending', events: { [sk(plus(20))]: { type: 'end', why: 'ended', at: plus(20) } } });
+  const r = EV.closeSession(kept.filing ? { ...s, filing: kept.filing } : s, { summary: 'new' }, { now: plus(20, 30) });
+  assert.equal(r.writes[0].data.filedAt, plus(20, 30));
+  assert.equal(r.writes[0].data.summary, 'new');
+  assert.equal(r.writes[0].data.minutes, 19, 'the minutes after the Undo count (20 less the minute it stood ended)');
+  assert.deepEqual(EV.closeFindings(r.writes), r.writes.slice(1));
+  assert.deepEqual(EV.closeUpdate(r.writes), [r.writes[0]]);
+});

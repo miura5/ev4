@@ -838,6 +838,20 @@
                   e.code = 'invalid_argument';
                   throw e;
                 }
+                // B-411 review: a session's filing mark is laid under, as mergeUnder: a different mark already there
+                // wins and this one is refused as a conflict, so two views filing at once file from one mark
+                const has = cur.filing && typeof cur.filing === 'object';
+                if (
+                  c === 'sessions' &&
+                  patch.filing &&
+                  has &&
+                  JSON.stringify(cur.filing) !== JSON.stringify(patch.filing)
+                ) {
+                  const e = new Error('another view began filing this session first');
+                  e.code = 'conflict';
+                  e.conflict = true;
+                  throw e;
+                }
                 return merge(clone(cur), patch);
               },
               'update'

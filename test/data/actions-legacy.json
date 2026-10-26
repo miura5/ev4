@@ -1,6 +1,6 @@
 {
  "_note": "B-186 (D-203): the page write sites that do not yet take their writes from act or a core composer, by file, as of Oct 21. This list only shrinks: a site moved to act shrinks its count here; a new write site goes through act (test/actions.test.mjs).",
- "total": 33,
+ "total": 32,
  "sites": {
   "page/app/05-question-runner.js": 2,
   "page/app/10-today.js": 2,
@@ -8,7 +8,7 @@
   "page/app/30-progress.js": 1,
   "page/app/40-record.js": 1,
   "page/app/62-ev-jobs-and-filing.js": 4,
-  "page/app/64-ev-study-sessions.js": 9,
+  "page/app/64-ev-study-sessions.js": 8,
   "page/app/65-ev-skills-practice.js": 1,
   "page/app/66-ev-workouts.js": 1,
   "page/app/67-ev-cards.js": 1,

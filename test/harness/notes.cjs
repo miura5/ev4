@@ -1286,6 +1286,99 @@ const openNoteId = page =>
     await page.context().close();
   }
 
+  // ---- B-411 review: one filer per switch, and a session left wrapping up is filed again, on planted sessions
+  {
+    const t = ms => new Date(Date.now() - ms).toISOString();
+    const k = iso => 'page-' + iso.replace(/\D/g, '').slice(0, 8) + '-' + iso.replace(/\D/g, '').slice(8, 17);
+    const planted = (id, { status, endAgo, why = 'switched', view, mark }) => {
+      const start = t(endAgo + 10 * 60e3),
+        end = t(endAgo);
+      return {
+        schema: 2,
+        writer: 'page',
+        at: start,
+        source: 'E.V. Home',
+        kind: 'note',
+        status,
+        date: start.slice(0, 10),
+        startedAt: start,
+        planned: 25,
+        topic: 'Planted ' + id,
+        noteId: '',
+        folder: '',
+        ...(status === 'ended' ? { endedAt: end } : {}),
+        ...(mark ? { filing: mark } : {}),
+        events: {
+          [k(start)]: { type: 'start' },
+          [k(end)]: { type: 'end', why, at: end, ...(view ? { view } : {}) },
+        },
+      };
+    };
+    const TAKE = 2 * 60e3;
+    const db = JSON.parse(JSON.stringify(seed));
+    db.sessions = {
+      ...db.sessions,
+      'ss-p-other': planted('other', { status: 'ended', endAgo: 20e3, view: 'another-view' }),
+      'ss-p-noview': planted('noview', { status: 'ended', endAgo: 20e3 }),
+      'ss-p-late': planted('late', { status: 'ended', endAgo: 20e3 + TAKE + 5e3 }),
+      'ss-p-ending': planted('ending', { status: 'ending', endAgo: TAKE + 10e3, why: 'ended' }),
+      'ss-p-marked': planted('marked', {
+        status: 'ending',
+        endAgo: 90e3,
+        why: 'ended',
+        mark: { at: t(60e3), wrap: { summary: 'Filed from the mark.' } },
+      }),
+    };
+    const { page, errors } = await open(browser, { width: 1280, height: 860 }, db);
+    const tag = '[1280 filing]';
+    const filedAt = id => page.evaluate(i => (window.__db.sessions[i] || {}).filedAt || null, id);
+    await until(page, () => !!window.__db.sessions['ss-p-late'].filedAt, null, 12000);
+    await until(
+      page,
+      () => !!window.__db.sessions['ss-p-ending'].filedAt && !!window.__db.sessions['ss-p-marked'].filedAt,
+      null,
+      12000
+    );
+    await page.waitForTimeout(2000);
+    const got = {};
+    for (const id of ['ss-p-other', 'ss-p-noview', 'ss-p-late', 'ss-p-ending', 'ss-p-marked'])
+      got[id] = await filedAt(id);
+    ok(
+      `${tag} at the deadline a switch is not filed by a view that didn't make it, nor one whose end names no view`,
+      !got['ss-p-other'] && !got['ss-p-noview'],
+      JSON.stringify(got)
+    );
+    ok(
+      `${tag} after the takeover delay any view files a switch whose end names no view`,
+      !!got['ss-p-late'],
+      JSON.stringify(got)
+    );
+    const marked = await page.evaluate(() => window.__db.sessions['ss-p-marked']);
+    const ending = await page.evaluate(() => window.__db.sessions['ss-p-ending']);
+    ok(
+      `${tag} a session left wrapping up is filed again: from its mark (its time and summary), or after the takeover delay`,
+      ending.status === 'ended' &&
+        !!ending.filing &&
+        marked.status === 'ended' &&
+        marked.filedAt === marked.filing.at &&
+        marked.summary === 'Filed from the mark.',
+      JSON.stringify({
+        ending: [ending.status, !!ending.filing],
+        marked: [marked.status, marked.filedAt, marked.summary],
+      })
+    );
+    const order = await page.evaluate(() =>
+      window.__writes.filter(w => w[1] === 'sessions' && w[2] === 'ss-p-ending').map(w => Object.keys(w[3]).join(','))
+    );
+    ok(
+      `${tag} the mark lands first and the session's own update (filedAt) last`,
+      order.length >= 2 && /^filing$/.test(order[0]) && /filedAt/.test(order[order.length - 1]),
+      JSON.stringify(order)
+    );
+    ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
+    await page.context().close();
+  }
+
   // ---- 390: no Notes
   {
     const { page, errors } = await open(browser, { width: 390, height: 844 });

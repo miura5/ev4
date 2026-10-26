@@ -743,7 +743,7 @@ export function makeSessions(core) {
   function closeSession(s, wrap, { weakspots = [], objectives = [], ideas: known = [], now, endedBy = 'ended' } = {}) {
     // B-411: a session whose filing began (its filing mark) is filed again with that mark's time and summary, so a
     // reload mid-filing writes the same findings, and those already in the record are left out
-    const mark = s && s.filing && s.filing.at ? s.filing : null;
+    const mark = filingOf(s);
     const at = isoOf(mark ? mark.at : now);
     const st = sessionState(s, at);
     const w = parseWrap(mark ? mark.wrap : wrap);
@@ -806,6 +806,33 @@ export function makeSessions(core) {
       linked: f.linked,
     };
   }
+  /**
+   * B-411 review: the filing mark closeSession honours: one with a time and no reopen after it (an Undo that brought
+   * the session back makes a filing begun before it void); else null.
+   */
+  function filingOf(s) {
+    const m = s && s.filing && typeof s.filing === 'object' && s.filing.at ? s.filing : null;
+    if (!m) return null;
+    const t = toMs(m.at);
+    const reopened = Object.entries(s.events || {}).some(
+      ([k, e]) => e && e.type === 'reopen' && toMs(entryTime(k, e)) > t
+    );
+    return reopened ? null : m;
+  }
+  /** B-411 review: a session left wrapping up (status ending, not filed): its end event {at, why, view}; else null. */
+  function endingOf(s) {
+    if (!s || s.status !== 'ending' || s.filedAt || s.kind === 'skill') return null;
+    const ends = Object.entries(s.events || {})
+      .filter(([, e]) => e && e.type === 'end')
+      .sort(([a], [b]) => a.localeCompare(b));
+    const [k, e] = ends.length ? ends[ends.length - 1] : [];
+    return e
+      ? { at: isoOf(entryTime(k, e)), why: e.why || 'ended', view: e.view || null }
+      : { at: null, why: 'ended', view: null };
+  }
+  /** B-411 review: a close's findings, to write before the session's own update (closeUpdate), which marks it filed. */
+  const closeFindings = writes => (writes || []).slice(1);
+  const closeUpdate = writes => (writes || []).slice(0, 1);
   /**
    * B-411: the mark a session's filing starts with, written before any of its findings: when, and the summary it files
    * (as parseWrap reads it). closeSession files from it, so filing again after a reload is the same filing.
@@ -904,7 +931,8 @@ export function makeSessions(core) {
       op: 'update',
       collection: 'sessions',
       id: ended.id,
-      data: { status: 'active', endedAt: null, events: { [keys[1]]: { type: 'reopen', at } } },
+      // B-411 review: a filing begun before the Undo is void (filingOf also says so by the reopen's time)
+      data: { status: 'active', endedAt: null, filing: null, events: { [keys[1]]: { type: 'reopen', at } } },
     });
     return out;
   }
@@ -1018,6 +1046,10 @@ export function makeSessions(core) {
     switchedAt,
     switchedEnd,
     filingMark,
+    filingOf,
+    endingOf,
+    closeFindings,
+    closeUpdate,
     switchedUnfiled,
     undoSwitch,
     decideSessionQuestion,
