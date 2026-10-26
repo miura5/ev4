@@ -406,11 +406,22 @@ test('B-232 review: a duplicate-of naming a missing spot credits no one: the spo
   const a = EV.collectAttempts([set], answers, [lost]);
   assert.deepEqual(Object.keys(a.byWeakspot), ['lost']);
   assert.equal(a.all[0].creditedFrom, undefined);
+  // and it stays counted: open, in review and readiness, with its own answer (lint names the link)
+  const lostModel = build([lost], { sets: [set], answers }).find(w => w.id === 'lost');
+  assert.equal(lostModel.derived.status, 'open');
+  assert.equal(lostModel.derived.answered, 1);
+  assert.equal(EV.isActive(lostModel), true);
+  assert.equal(EV.readiness({ examId: 'E4', weakspots: [lostModel] }).active, 1);
   // a cycle credits no one either
   const c1 = ws('c1', { links: [{ to: 'weakspots/c2', type: 'duplicate-of' }] });
   const c2 = ws('c2', { links: [{ to: 'weakspots/c1', type: 'duplicate-of' }] });
   const set2 = { ...set, items: [{ id: 'q1', weakspotId: 'c1', objective: 'E4-3' }] };
   assert.deepEqual(Object.keys(EV.collectAttempts([set2], answers, [c1, c2]).byWeakspot), ['c1']);
+  assert.deepEqual(
+    build([c1, c2]).map(w => w.derived.status),
+    ['open', 'open'],
+    'a cycle leaves both counted'
+  );
 });
 
 test("B-232 review (D-240): a duplicate's seen events count on its survivor; a session never matches a duplicate", () => {
@@ -449,7 +460,11 @@ test("B-232 review (D-240): a duplicate's seen events count on its survivor; a s
   });
   assert.equal(p.state.recurrence, 2);
   // a session's finding near a duplicate or a proposed spot asks nothing about it and writes no seen to it
-  const only = build([dup, ws('prop-seen', { topic: 'Made-up potassium topic too', proposed: true })]);
+  const only = build([
+    ws('surv-seen', { topic: 'Cardiac output basics' }),
+    dup,
+    ws('prop-seen', { topic: 'Made-up potassium topic too', proposed: true }),
+  ]);
   const T0 = '2026-10-18T15:00:00.000Z';
   const session = {
     id: 'ss-20261018-150000-made-up',
@@ -473,4 +488,82 @@ test("B-232 review (D-240): a duplicate's seen events count on its survivor; a s
   });
   assert.equal(f.questions.length, 0);
   assert.ok(!f.writes.some(w => w.op === 'update' && w.collection === 'weakspots'));
+});
+
+test('B-232 final: a session finding never sets over a spot already there; a parked one made today keeps its events', () => {
+  const T0 = '2026-10-18T15:00:00.000Z';
+  const id = 'ws-2026-10-18-E4-3-made-up-sodium-shifts';
+  const parkKey = EV.eventKey('page', '2026-10-18T14:00:00.000Z');
+  const parked = ws(id, {
+    topic: 'Made-up sodium shifts',
+    events: { [parkKey]: { type: 'park', by: 'owner', note: 'not on this exam', at: '2026-10-18T14:00:00.000Z' } },
+  });
+  const models = build([parked]);
+  assert.equal(models[0].derived.status, 'parked');
+  const session = {
+    id: 'ss-20261018-150000-made-up',
+    source: 'E.V. Home',
+    status: 'active',
+    topic: 'Made-up topic',
+    startedAt: T0,
+    events: { [EV.eventKey('page', T0)]: { type: 'start' } },
+  };
+  const wrap = {
+    summary: 's',
+    weakSpots: [
+      { objective: 'E4-3', topic: 'Made-up sodium shifts' },
+      { objective: 'E4-3', topic: 'Made-up sodium shifts!' },
+    ],
+    connections: [],
+    noteTodos: [],
+    cards: [],
+  };
+  const r = EV.closeSession(session, wrap, {
+    weakspots: models,
+    objectives: [{ id: 'E4-3' }],
+    now: '2026-10-18T15:20:00Z',
+  });
+  const sets = r.writes.filter(w => w.collection === 'weakspots' && w.op === 'set').map(w => w.id);
+  assert.ok(!sets.includes(id), 'the parked spot is never set over');
+  assert.deepEqual(sets, [id + '-2', id + '-3'], 'the next free ids, as ideas take them');
+  for (const w of r.writes.filter(x => x.collection === 'weakspots')) assertValid(w);
+});
+
+test('B-232 final: freeWeakspotId gives the next free id, and her add_weakspot tool logs a topic that has a spot today', async () => {
+  const { makeActions } = await import('../core/actions.mjs');
+  const { validateAgainst } = await import('../core/validate.mjs');
+  const base = 'ws-2026-10-21-E9-2-pump-rates';
+  assert.equal(EV.freeWeakspotId(base, []), base);
+  assert.equal(EV.freeWeakspotId(base, [{ id: base }]), base + '-2');
+  assert.equal(EV.freeWeakspotId(base, [base, base + '-2']), base + '-3');
+  const taken = new Set([base]);
+  assert.equal(EV.freeWeakspotId(base, taken), base + '-2');
+  assert.equal(EV.freeWeakspotId(base, taken), base + '-3', 'a Set the caller keeps gains each id it hands out');
+  // the tool path, as toolLogWeakspot calls it: a same-day declined spot holds the base id
+  const A = makeActions(validateAgainst, EV);
+  const tool = A.actor(spec, 'tool');
+  const HIS = 'm-20261021-232900000-m';
+  const ctx = {
+    now: '2026-10-21T23:30:00.000Z',
+    key: () => 'page-20261021-233000000',
+    weakspots: [{ id: base, events: { 'page-20261021-120000': { type: 'decline', by: 'owner' } } }],
+    line: id => (id === HIS ? { role: 'matt', text: 'log pump rates as a weak spot' } : null),
+  };
+  const args = id => ({
+    id,
+    topic: 'pump rates',
+    objective: 'E9-2',
+    course: 'NUR 112',
+    source: 'Told E.V.',
+    initial: { streak: 0, nextDue: '2026-10-21', recurrence: 1, misses: 0 },
+    from: HIS,
+  });
+  assert.ok(tool('weakspot-log', args(base), ctx).refused, 'act() still refuses an id already there');
+  const free = EV.freeWeakspotId(base, ctx.weakspots);
+  const r = tool('weakspot-log', args(free), ctx);
+  assert.equal(r.ok, true, JSON.stringify(r.refused));
+  assert.equal(r.writes[0].id, base + '-2');
+  const forms = fs.readFileSync(path.join(ROOT, 'page', 'app', '91-forms.js'), 'utf8');
+  const body = forms.slice(forms.indexOf('async function toolLogWeakspot'), forms.indexOf('async function weakAct'));
+  assert.match(body, /E\.freeWeakspotId\([\s\S]*?, S\.weak\)/, 'the page passes a free id, checked against S.weak');
 });

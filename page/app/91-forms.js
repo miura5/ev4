@@ -14,7 +14,8 @@
     /** Her add_weakspot tool: his own weak spot, at once (D-235), only through the tool actor, so act() checks from,
      * the talk line of his the turn answers; a turn with none (Read from here, a retry of hers) is refused. */
     async function toolLogWeakspot({ topic, objective = '', from }) {
-      const id = E.safeId('ws-' + today + '-' + (objective || 'x') + '-' + E.slug(topic));
+      // B-232: the next free id, so a topic with a spot already made today (proposed, declined, solid) is still logged
+      const id = E.freeWeakspotId(E.safeId('ws-' + today + '-' + (objective || 'x') + '-' + E.slug(topic)), S.weak);
       const args = {
         id,
         topic,

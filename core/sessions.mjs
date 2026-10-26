@@ -17,6 +17,7 @@ export function makeSessions(core) {
     hash,
     isActive,
     isSolid,
+    freeWeakspotId,
     isoOf,
     norm,
     safeId,
@@ -50,6 +51,10 @@ export function makeSessions(core) {
   ) {
     const writes = [],
       questions = [];
+    // B-232: a new weak spot never lands on one already there (a spot he parked, declined or snoozed today keeps its
+    // events and history): ws-<date>-<objective>-<slug>, then -2, -3 while taken, as ideas (B-381)
+    const spotsTaken = idSet(weakspots);
+    const spotId = base => freeWeakspotId(base, spotsTaken);
     const taken = idSet(ideas); // B-381: a new idea never replaces one already there (or the status he set on it)
     // B-388: a topic whose normalised text matches an open idea's links to that idea instead of adding another; the idea
     // is not written (its status stays his). Only ideas already in the record count (B-381: two same lines in one
@@ -124,7 +129,7 @@ export function makeSessions(core) {
         writes.push({
           op: 'set',
           collection: 'weakspots',
-          id: safeId('ws-' + date + '-' + w.objective + '-' + slug(topic)),
+          id: spotId(safeId('ws-' + date + '-' + w.objective + '-' + slug(topic))),
           data: {
             ...env(),
             schema: 2, // B-232
@@ -163,7 +168,7 @@ export function makeSessions(core) {
       writes.push({
         op: 'set',
         collection: 'weakspots',
-        id: safeId('note-' + date + '-' + slug(text, 40)),
+        id: spotId(safeId('note-' + date + '-' + slug(text, 40))),
         data: {
           ...env(),
           schema: 2, // B-232

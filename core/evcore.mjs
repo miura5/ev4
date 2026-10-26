@@ -572,6 +572,14 @@ const EVCore = (() => {
       ? 'proposed'
       : (w && w.derived && w.derived.status) || null;
   const toReview = (models, date) => (models || []).filter(w => triageStatus(w, date) === 'proposed');
+  /** B-232: a new weak spot's id never lands on one already there (a spot set aside today keeps its events): base, then
+   *  base-2, base-3 while taken. taken: weak spots (or ids), or a Set the caller keeps; a Set gains the id returned. */
+  function freeWeakspotId(base, taken) {
+    const set = taken instanceof Set ? taken : new Set((taken || []).map(w => (w && w.id) || w));
+    let id = base;
+    for (let k = 2; set.has(id); k++) id = base + '-' + k;
+    return (set.add(id), id);
+  }
   /** Facts of a v4 weak spot document, normalized. Never includes derived state (nothing derived is stored, D-047). */
   function weakspotFacts(doc) {
     const w = doc || {};
@@ -728,7 +736,8 @@ const EVCore = (() => {
     }
     st.history = st.history.slice(-20);
     if (!concept && st.status === 'open') st.nextDue = null;
-    if (duplicateOf(f)) Object.assign(st, { status: 'duplicate', duplicateOf: duplicateOf(f) });
+    // a duplicate only when its link reaches a spot there (buildWeakspots' survivors); a dangling one stays counted
+    if (opts.duplicateOf) Object.assign(st, { status: 'duplicate', duplicateOf: opts.duplicateOf });
     return st;
   }
   function applyEvent(st, e, at, date) {
@@ -796,7 +805,10 @@ const EVCore = (() => {
     return (weakspots || []).map(doc => {
       const f = weakspotFacts(doc);
       if (credited[f.id]) f.creditedEvents = credited[f.id];
-      const derived = deriveWeakspot(f, byWeakspot[f.id] || [], { examDate: examDate(f.exam || examOf(f)) });
+      const derived = deriveWeakspot(f, byWeakspot[f.id] || [], {
+        examDate: examDate(f.exam || examOf(f)),
+        duplicateOf: survivor(f.id) !== f.id ? survivor(f.id) : null,
+      });
       if (derived.objective && derived.objective !== f.objective) {
         // B-232: his accept named the objective; the exam follows it unless the spot named its own
         f.objective = derived.objective;
@@ -2293,6 +2305,7 @@ const EVCore = (() => {
     entryTime,
     envelope,
     eventKey,
+    freeWeakspotId,
     hash,
     isActive,
     isSolid,
@@ -2422,6 +2435,7 @@ const EVCore = (() => {
     survivors, // B-233: injected into core/actions.mjs, the one chain walk
     triageStatus,
     toReview,
+    freeWeakspotId,
     reviewNeed,
     derivedHash,
     examOf,
