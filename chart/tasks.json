@@ -7234,7 +7234,7 @@
    "B-398",
    "B-399"
   ],
-  "notes": "ready for Mac proof and staging ship. Code 1bb4cca (npm test 704 pass, 0 fail). pwa-staging run 40256175577 GREEN at 1bb4cca after the 4 seed notes and a proof note (notes/n-20261026-020000-b401) were planted through the run API. evening-cloud on staging: evening-cloud-20261026-015412453 lint 0 errors with the note planted, evening-cloud-20261026-015603478 lint 0 errors after it was edited and archived (both ran the deployed staging commit 4ed5d54); the staging D1 linted with 1bb4cca's code: 0 errors, 5 notes valid. Review skill not run: this agent had no subagent tool. Left for the build manager: evening-mac and restore-drill proof, review, ship staging.",
+  "notes": "Review gaps fixed in 0a5ee69: every notes write (page write() set and update, the Worker's PUT and run API batch) is judged on the merged document by core/validate.mjs noteProblem: the notes schema, capacity.documentBytes, and write-once createdAt and earlierOf; lint again holds notes a run read to schema and size (an edit that keeps the shape is still no issue, never fact-changed); the mirror escapes a block's opening (- + = >, digits. and digits), ---/***/===) and trims leading indentation. npm test 713 (710 pass, 3 skipped, 0 fail); npm run smoke 28/28. Review skill not run: this builder had no subagent tool. Still open from before: evening-mac and restore-drill proof, review, ship staging.",
   "commit": null,
   "source": "build manager, B-396 plan",
   "words": "Build the notes record (collection, schema, pipelines, mirror, backups) (B-396, D-325).",
