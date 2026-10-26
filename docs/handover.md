@@ -3,42 +3,31 @@
 The build manager rewrites this file before a chat is cleared or ends (CLAUDE.md, Roles, D-317). A new build manager
 reads it right after CLAUDE.md. It holds no personal data: the repository is public.
 
-**Managing chat:** https://claude.ai/code/session_01CWeveciiiW2pUvFQtQJ3HK (still managing as of Oct 25, 7:55 pm
-Central)
+**Managing chat:** https://claude.ai/code/session_01CWeveciiiW2pUvFQtQJ3HK (still managing as of Oct 25, 8:35 pm Central)
 
 ## Where things stand
 
-- Live: v4.5.6 at 10798d8 (the redesign). Nothing else has gone live.
-- Staging: 0010b8a carries B-397 (OUTCOME UNKNOWN path), B-399 (D-324: the graded-work and patient-identifier checks
-  removed, Matt's decision) and B-317 (staging Mac tasks on E.V. Backups/staging, D-322).
-  - The staging page, system documents and every staging prompt are updated.
-  - The two staging Mac tasks were re-created with Matt at the Mac: evening-mac trig_01LRaXp8yBp16n61E7sYZQoQ and
-    restore-drill trig_016MfX6dcGkX1pe834pZN9kJ. The four older staging Mac tasks are disabled and listed retired.
-  - Both runs are proven: runs/evening-mac-20261026-003343406 and runs/restore-drill-20261026-004037655 (890 documents,
-    counts and SHA-256 match).
-  - NOT GREEN yet: the pwa-staging workflow's check step failed (run 40249907424) after real staging pipeline writes and
-    the UTC date roll. An agent is fixing tools/pwa-staging.mjs, pwa/seed.mjs and the workflow (B-389). Then run ship
-    staging until GREEN and mark B-317, B-397 and B-399 done.
-- Notes (B-396): Matt approved the design after playing it.
-  - Canvas: https://claude.ai/artifact/26TPNoqZBmPkEN5SmtJF9k (AppNotes board). Independent playtest: 89/100.
-  - Decisions: D-325 (scope), D-326 (conflicts become a second note), D-327 (tenet: the Notes canvas is the demo,
-    superseding D-315), D-328 (Matt's OK for note text in D1, backups, the mirror and Haiku).
-  - Build tasks: B-400 to B-409, all under the PWA milestone. B-401 waits on B-398 and B-399.
+- Live: v4.5.6 at 10798d8. Nothing else live.
+- Staging GREEN at 4ed5d54 (Oct 26 01:30Z): B-317, B-389, B-397, B-398, B-399 done. Staging Mac tasks: evening-mac
+  trig_01LRaXp8yBp16n61E7sYZQoQ, restore-drill trig_016MfX6dcGkX1pe834pZN9kJ (both proven with Matt present).
+- Ship staging runs from a clean worktree, /home/claude/ev4-ship (branch shipwt, push with `git push origin HEAD:main`),
+  because builders share /home/claude/ev4. Its dist/state holds the reads; save the page read with tools/tool-result.mjs
+  (--html and --declaration) before re-running ship.
+- Notes (B-396): Matt's go; canvas https://claude.ai/artifact/26TPNoqZBmPkEN5SmtJF9k (89/100). D-325 to D-329.
+  Tasks B-400 (done) to B-409.
 
 ## Running (agents)
 
-- B-389 check fix (pwa-staging check) with a full workflow re-run.
-- B-400: Notes demo snapshot and crawl.
-- B-398: canonical JSON in the Worker.
+- B-320 prep: the live deploy workflow behind the GitHub "live" environment, the live registry, the read-only flag,
+  the D-307 lint and docs/cutover.md. Nothing live; it reports what Matt must do.
+- B-401: the notes record (schema, pipelines, mirror, backups) with staging cloud proofs; the Mac proof (evening-mac
+  and restore-drill fired with Matt's Mac awake) is the build manager's.
 
 ## Next
 
-1. Get staging GREEN at the check fix's commit; mark B-317, B-397 and B-399 done.
-2. Notes build in dependency order: B-401 → B-402/B-405 → B-403/B-404/B-406 → B-407/B-408 → B-409. Each task with data,
-   pipeline or deploy changes gets its own fresh review.
-3. The PWA cutover: B-319 (live copy, on Matt's OK), B-320 (at his Mac, with Matt present), the live safeguards. Notes
-   reaches live only with or after the cutover (D-325).
-4. B-391 cleanup.
+1. B-401 → its review, the Mac proof, ship staging. Then B-402 (editor) and B-405 (L-frame strip) in parallel.
+2. Cutover sitting with Matt (Monday evening estimate): B-319 live copy on his OK, B-320 at his Mac, release card.
+3. B-391 cleanup (includes folding the three test D1 stand-ins).
 
 ## Waiting on Matt
 
