@@ -7331,7 +7331,7 @@
    "B-400",
    "B-401"
   ],
-  "notes": "claimed by build-manager agent",
+  "notes": "91a8f3b pushed: strip, floating pop-up, threads, chat-close row, frame harness (99/99), smoke green, 390 unchanged; check --touched running",
   "commit": null,
   "source": "build manager, B-396 plan",
   "words": "Build L-frame, E.V. strip and floating pop-up on every desktop view (B-396, D-325).",
