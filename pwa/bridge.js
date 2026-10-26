@@ -180,7 +180,10 @@
       };
     }).then(
       won => !!won,
-      () => true
+      () => {
+        eo.local = true; // the transaction failed: nothing changed in IndexedDB, and the new entry is this tab's alone
+        return true;
+      }
     );
   // a tab is open while it holds its lock; a closed tab's waiting notes are taken over by the next tab that looks
   const locks = typeof navigator !== 'undefined' && navigator && navigator.locks;
@@ -308,19 +311,29 @@
     return changed;
   };
   let moved = false;
-  /** B-410: a refused entry's words as a second note on this device: a new id, earlierOf the note, still refused. */
+  /**
+   * B-410: a refused entry's words as a second note on this device: a new id, earlierOf the note, still refused. The
+   * old entry is claimed in one transaction (its tag checked, it deleted, the new entry put), so only one tab, and only
+   * once, makes the second note: not a reload that takes the entry over twice, not two tabs opening at once, and a
+   * crash can't leave both. An entry IndexedDB never held is this tab's, so its claim holds.
+   */
   function moveRefused(key, o) {
     const at = new Date().toISOString();
     const eid = newNoteId(at);
     const ekey = ownKey(o.c, eid);
     const eo = { tab: TAB, c: o.c, id: eid, doc: earlierNote(o.doc, o.id, at), base: null, tag: rand(12) };
     eo.refused = o.refused;
-    delete outbox[key];
-    outbox[ekey] = eo;
-    (db[o.c] = db[o.c] || {})[eid] = eo.doc;
-    // the new entry is written before the old one leaves IndexedDB
-    boxPut(ekey, eo).then(() => boxDone(key, o.tag));
+    if (outbox[key] === o) delete outbox[key]; // the note now follows the newer version
     moved = true;
+    const claim = o.local ? boxPut(ekey, eo).then(() => true) : boxClaim(key, o.tag, ekey, eo);
+    return claim.then(won => {
+      if (!won) return; // another tab (or an earlier take-over in this one) made it
+      outbox[ekey] = eo;
+      (db[o.c] = db[o.c] || {})[eid] = eo.doc;
+      keepCopy();
+      tell();
+      emit(o.c);
+    });
   }
   async function pull() {
     const r = await api('db?since=' + since);

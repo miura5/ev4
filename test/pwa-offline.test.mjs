@@ -71,7 +71,8 @@ function fakeIDB() {
       let open = 0;
       let finish;
       const finished = new Promise(r => (finish = r));
-      const ready = turn;
+      let before = null; // the store as the transaction found it: an aborted transaction leaves it so
+      const ready = turn.then(() => (before = new Map(m)));
       turn = turn.then(() => finished);
       const settle = () =>
         later(() => {
@@ -79,6 +80,8 @@ function fakeIDB() {
             t.done = true;
             finish();
             if (t.failed) {
+              m.clear();
+              for (const [k, v] of before) m.set(k, v);
               t.error = new Error('QuotaExceededError');
               if (t.onabort) t.onabort();
             } else if (t.oncomplete) t.oncomplete();
@@ -98,13 +101,16 @@ function fakeIDB() {
         return r;
       };
       t.objectStore = () => ({
-        get: k => req(() => (m.has(k) ? structuredClone(m.get(k)) : undefined)),
+        get: k => req(() => (!fake.crashed && m.has(k) ? structuredClone(m.get(k)) : undefined)),
         put: (v, k) =>
           req(() => {
+            if (fake.crashed) return;
             if (name === 'outbox' && fake.failOutbox) return void (t.failed = true);
             m.set(k, structuredClone(v));
+            // the tab dies the moment an outbox write lands: nothing after it reaches IndexedDB
+            if (name === 'outbox' && fake.crashOnPut) fake.crashed = true;
           }),
-        delete: k => req(() => void m.delete(k)),
+        delete: k => req(() => void (!fake.crashed && m.delete(k))),
         openCursor: () => {
           open++;
           const r = {};
@@ -134,6 +140,8 @@ function fakeIDB() {
   const held = new Set();
   const fake = {
     failOutbox: false, // true: every write to the outbox store fails
+    crashOnPut: false, // true: the first outbox write that lands is the last thing that reaches IndexedDB
+    crashed: false,
     stores,
     kv: k => st('kv').get(k),
     box: () => [...st('outbox').values()],
@@ -789,8 +797,9 @@ test('B-410 (shim): refused, reload, another device wrote: the note is theirs, h
   const r = await shim(env, idb);
   assert.ok(await until(() => r.sync() && !r.sync().syncing));
   assert.deepEqual(await r.data('notes', ID), other, 'the newer version is the note');
+  // the second note comes once its claim lands in IndexedDB, a moment after the boot
+  assert.ok(await until(() => r.sync().refused.some(x => x.id !== ID)), 'the refusal now names the second note');
   const [ref] = r.sync().refused;
-  assert.ok(ref && ref.id !== ID, 'the refusal now names the second note');
   const kept1 = await r.data('notes', ref.id);
   assert.equal(kept1.earlierOf, ID);
   assert.deepEqual(kept1.blocks, HUGE().blocks, 'his refused words, whole');
@@ -1012,4 +1021,100 @@ test('B-411 review (shim): a session’s filing mark is laid under: a different 
   await b.db.collection('sessions').doc(SID).update({ filing: markA }); // the same mark passes
   await a.db.collection('sessions').doc(SID).update({ filing: null }); // an Undo voids it
   assert.equal(stored(env, 'sessions', SID).data.filing, null);
+});
+
+// ---- B-410: moveRefused claims its entry in one transaction: one second note, and never lost
+
+const ID3 = 'n-20261026-151000-WaItInGnOtEtHrEe';
+/** A tab that saved a refused note, then closed; another device has since written the note (v2). */
+async function refusedPassedAndClosed(env, idb, more) {
+  await refusedThenClosed(env, idb);
+  if (more) await more();
+  await put(env, 'notes', ID, lines(BASE, ['ul', 'from the other device']), 1);
+}
+const refusedSeconds = idb => idb.box().filter(o => o.refused && o.doc.earlierOf === ID);
+
+test('B-410 (shim): a reload that takes the refused entry over twice (boot, then the send) makes one second note', async () => {
+  const env = envOf();
+  await put(env, 'notes', ID, BASE);
+  const idb = fakeIDB();
+  // another note waits too, so the reload sends, and takes entries over a second time
+  await refusedPassedAndClosed(env, idb, async () => {
+    const s = await shim(env, idb, { down: true });
+    await s.db
+      .collection('notes')
+      .doc(ID3)
+      .set(
+        note([
+          ['h1', 'Potassium'],
+          ['p', 'waiting'],
+        ])
+      );
+    await kept();
+    s.close();
+  });
+  const r = await shim(env, idb);
+  assert.ok(await until(() => r.sync() && !r.sync().syncing && r.sync().pending === 0 && r.sync().refused.length));
+  await kept();
+  assert.equal(r.sync().refused.length, 1, JSON.stringify(r.sync().refused));
+  assert.equal(idb.box().length, 1, JSON.stringify(idb.box().map(o => [o.id, !!o.refused])));
+  assert.equal(refusedSeconds(idb).length, 1);
+  assert.ok(stored(env, 'notes', ID3), 'the other waiting note was sent');
+});
+
+test('B-410 (shim): two tabs opening at once over a passed refused entry make one second note', async () => {
+  const env = envOf();
+  await put(env, 'notes', ID, BASE);
+  const idb = fakeIDB();
+  await refusedPassedAndClosed(env, idb);
+  const [t2, t3] = await Promise.all([shim(env, idb), shim(env, idb)]);
+  assert.ok(await until(() => t2.sync().refused.length + t3.sync().refused.length === 1));
+  await kept();
+  assert.equal(idb.box().length, 1, JSON.stringify(idb.box().map(o => [o.id, o.tab, !!o.refused])));
+  assert.equal(refusedSeconds(idb).length, 1);
+  assert.deepEqual(refusedSeconds(idb)[0].doc.blocks, HUGE().blocks, 'his words, whole');
+});
+
+test('B-410 (shim): when IndexedDB can’t write, the refused words are not lost: a reload still has them', async () => {
+  const env = envOf();
+  await put(env, 'notes', ID, BASE);
+  const idb = fakeIDB();
+  await refusedPassedAndClosed(env, idb);
+  idb.failOutbox = true; // the claim's transaction fails: nothing in IndexedDB changes
+  const r = await shim(env, idb);
+  assert.ok(await until(() => r.sync().refused.some(x => x.id !== ID)), 'this tab shows them as a second note');
+  await kept();
+  assert.ok(
+    idb.box().some(o => o.refused && JSON.stringify(o.doc.blocks) === JSON.stringify(HUGE().blocks)),
+    'and IndexedDB still holds them'
+  );
+  r.close();
+  idb.failOutbox = false;
+  const r2 = await shim(env, idb);
+  assert.ok(await until(() => r2.sync().refused.length === 1));
+  await kept();
+  const [ref] = r2.sync().refused;
+  assert.deepEqual((await r2.data('notes', ref.id)).blocks, HUGE().blocks, 'after the reload, his words are there');
+  assert.equal(refusedSeconds(idb).length, 1, 'once');
+});
+
+test('B-410 (shim): a tab that dies right after moving refused words leaves one second note, never two', async () => {
+  const env = envOf();
+  await put(env, 'notes', ID, BASE);
+  const idb = fakeIDB();
+  await refusedPassedAndClosed(env, idb);
+  idb.crashOnPut = true; // the tab dies as soon as its first outbox write lands
+  const r = await shim(env, idb);
+  assert.ok(await until(() => idb.crashed));
+  await kept();
+  r.close();
+  idb.crashed = idb.crashOnPut = false; // a fresh start of the app on the same device
+  // the move was one transaction: IndexedDB holds the second note and not the old entry, never both
+  assert.equal(idb.box().length, 1, JSON.stringify(idb.box().map(o => [o.id, !!o.refused])));
+  const r2 = await shim(env, idb);
+  assert.ok(await until(() => r2.sync() && !r2.sync().syncing && r2.sync().refused.length));
+  await kept();
+  assert.equal(r2.sync().refused.length, 1, JSON.stringify(r2.sync().refused));
+  assert.equal(refusedSeconds(idb).length, 1);
+  assert.deepEqual(refusedSeconds(idb)[0].doc.blocks, HUGE().blocks);
 });
