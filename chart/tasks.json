@@ -7512,5 +7512,22 @@
   "board": {
    "row": "v4 B-412: Retire the journal's named read and the notes skip everywhere they…"
   }
+ },
+ {
+  "id": "B-413",
+  "kind": "request",
+  "title": "Request (reported Oct 26): Lightweight version history for notes: see a note's past versions and revert to one, before any note-based insights.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "chat, Oct 26",
+  "words": "Lightweight version history for notes: see a note's past versions and revert to one, before any note-based insights.",
+  "reportedAt": "2026-10-26T08:31:44.968Z",
+  "board": {
+   "row": "v4 B-413: Lightweight version history for notes: see a note's past versions and…"
+  }
  }
 ]
