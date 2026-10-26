@@ -7229,12 +7229,12 @@
   "title": "Notes: the notes record (collection, schema, pipelines, mirror, backups)",
   "dod": "Per D-325: spec/schemas/notes.schema.json plus the spec collection, links and capacity, with writer page only. The body is blocks with an inline-mark subset, never HTML. archived and discarded are marks, never deletes. sessions gain note (notes/<id>); talk gains thread and a closed mark. Pipelines skip notes as they skip the journal, so an edited note causes no lint error and no fact-changed. core/mirror.mjs writes notes/<id>.md. Backups and pwa-copy carry notes, and the synthetic fixtures have notes. Proven by: schema, link, lint and mirror tests; the personal-data test green; staging evening-cloud fired with a planted note that is then edited, read back with lint 0; staging evening-mac and restore-drill read back with notes counts and SHA-256 matching; ship staging GREEN. Its own review.",
   "milestone": "PWA",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-398",
    "B-399"
   ],
-  "notes": "",
+  "notes": "claimed by build-manager agent",
   "commit": null,
   "source": "build manager, B-396 plan",
   "words": "Build the notes record (collection, schema, pipelines, mirror, backups) (B-396, D-325).",
