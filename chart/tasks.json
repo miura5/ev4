@@ -6979,7 +6979,7 @@
   "milestone": "v5 app",
   "status": "done",
   "depends": [],
-  "notes": "Page saves carry the version they read; a refused save retries once without overwriting and his words come back; timing-safe token compare; the staging check holds additions to known writers, id shapes and schemas. pwa-staging GREEN at 0286de8. Reviewer: second review found the overwrite guard sound; its four open gaps (a line lost if he has typed, a reply to a refused line, a create-race field drop, missing tests) moved to B-394 before cutover.",
+  "notes": "Staging check (pwa-staging check step) fixed for real pipeline writes: 76e7de7, 368b7ab, ab05058. Review 1 found three gaps (fixed in 368b7ab). Review 2: those three closed; one new false-red (a Canvas date moved by a later run) fixed in ab05058 with a test, not reviewed again; on the release card. pwa-staging GREEN at 368b7ab.",
   "commit": "0286de8",
   "source": "release code review (data, tools), 368b104..fc9133e, Oct 25",
   "words": "The staging Worker's page saves are last-write-wins with no version check, and its token comparison is not constant-time.",
