@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-325",
+  "date": "Oct 25",
+  "title": "Notes (B-396), Matt's go Oct 25 after his playtest of the 'E.V. demo v4 + Notes' canvas: a notes collection written by the page only. Body: blocks with a small inline-mark set; HTML is never stored, and stored text never becomes HTML; size capped at capacity.documentBytes. Nothing is deleted: archived and discarded are marks. Pipelines skip notes as they skip the journal. The Sunday mirror writes each note as Markdown. Backups and copies carry them. Sessions name the note they study. Offline: notes read and write; everything else is read-only from the cache. Desktop only, at 1024 px and wider; the phone layout is unchanged. It ships first in the app on staging, and live only with or after the cutover (B-320); Study Watch stays in use on the claude.ai live page until then. Built during the freeze on Matt's go, as D-279 was; it retires Study Watch, the Conversation's session card and B-321.",
+  "why": "Matt asked for note-taking inside E.V. to replace Study Watch (B-396), and approved the demo after playing it (89/100 in an independent playtest). The architect's plan named these choices.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-324",
   "date": "Oct 25",
   "title": "Matt overrides the graded-work and patient-identifier rules (boundaries B-01 and B-04): E.V. no longer checks for, flags, holds or blocks anything as graded work or as a patient identifier, on the page, in the runs, their prompts or the tests. Matt is accountable for both himself. The other hard limits stand (nothing deleted, Canvas and Quizlet read-only, nothing posted as Matt, no passwords, owner-only record).",
