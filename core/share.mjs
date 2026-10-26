@@ -23,9 +23,9 @@ export function makeShare(core) {
     if (!task) return { ok: false, why: 'its plan task is not in the plan' };
     if (
       ['graded', 'exam', 'val', 'clinical'].includes(task.kind) ||
-      /\b(graded|proctored)\b/i.test((task.text || '') + ' ' + (set.title || ''))
+      /\bproctored\b/i.test((task.text || '') + ' ' + (set.title || ''))
     )
-      return { ok: false, why: 'graded or proctored work is never shared' };
+      return { ok: false, why: 'an exam, validation, clinical or proctored item is never shared' };
     if (!['drill', 'sim'].includes(task.kind)) return { ok: false, why: 'only a drill or sim set can be shared' };
     if (/weak spot/i.test(set.title || '') || /weak spot/i.test(task.text || ''))
       return { ok: false, why: 'a weak-spot drill is built from your weak spots' };

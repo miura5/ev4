@@ -54,8 +54,11 @@ test('B-54 (D-110): only a calendar set over a chapter range is shared; the page
     no({ ...drill, id: 'E4-drill-7', planTaskId: 'd7', title: 'Drill 7: the group’s weak spots from the sim' }).why,
     /weak-spot drill/
   );
-  assert.match(no({ ...drill, planTaskId: 'g1', title: 'ATI proctored practice' }).why, /graded or proctored/);
-  assert.match(no({ ...drill, planTaskId: 'q1' }).why, /graded or proctored/);
+  assert.match(
+    no({ ...drill, planTaskId: 'g1', title: 'ATI proctored practice' }).why,
+    /proctored item is never shared/
+  );
+  assert.match(no({ ...drill, planTaskId: 'q1' }).why, /proctored item is never shared/);
   assert.match(no({ ...drill, kind: 'job', planTaskId: undefined }).why, /job set/);
   assert.match(no({ ...drill, planTaskId: undefined }).why, /exam plan’s calendar/);
   assert.equal(no(null).why, 'no such set');

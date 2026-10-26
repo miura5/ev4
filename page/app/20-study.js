@@ -1320,7 +1320,7 @@
           'Rules: ' + (EV_SPEC.items.writingGuide || []).join(' '),
           'Write exactly 5 questions. "single": 4 to 6 options, exactly one correct. "sata": 5 or 6 options, 2 or more correct, never "select N". "matrix": 2 to 3 columns and 3 to 5 rows, one correct column per row. A rationale for every option or row. Tag each with one cjStep from ' +
             JSON.stringify(E.CJ_STEPS) +
-            '. Set verify true when the point relies on general knowledge rather than his chapters. No graded coursework.',
+            '. Set verify true when the point relies on general knowledge rather than his chapters.',
           'Shape: {"items":[{"weakspotId":"<id or omit>","objective":"E4-3","topic":"<short>","type":"single"|"sata","stem":"...","options":["..."],"correct":[0],"rationales":["..."],"cjStep":"analyze-cues","verify":false} or {"type":"matrix","objective":"...","topic":"...","stem":"...","matrix":{"columns":["Expected","Unexpected"],"rows":[{"text":"...","correct":0,"rationale":"..."}]},"cjStep":"recognize-cues","verify":false}]}',
         ]
           .filter(Boolean)
