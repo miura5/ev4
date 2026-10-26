@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { check, recordDiffs, seededAt, keyOk, keyPattern } from '../tools/pwa-staging.mjs';
+import { check, recordDiffs, seededAt, keyOk, keyPattern, ROLES } from '../tools/pwa-staging.mjs';
 import { APP_SOURCE } from '../pwa/jobs.mjs';
 import { SUITE, SUITE_DOCS_PER_RUN } from '../pwa/runapi.js';
 import { seedCounts, seedRecord, seedSql, LEFT_OUT } from '../pwa/seed.mjs';
@@ -181,14 +181,14 @@ test('B-389: the record is held to the seed by document; what the seed lacks mus
   // A document from no known writer is red, in a seed collection or a new one.
   assert.deepEqual(
     recordDiffs({ docs: [...docs, { c: 'runs', id: 'x', data: { writer: 'morning' } }] }, seed).problems,
-    ['runs: 1 documents not in the seed and from no known writer (x)']
+    ['runs: 1 documents not in the seed and from no known writer (x; writer / source: morning / undefined)']
   );
   // The suite's collection holds only the suite's documents, in whole runs.
   assert.deepEqual(recordDiffs({ docs: [...docs, ...suiteRun.slice(1)] }, seed).problems, [
     `${SUITE}: ${SUITE_DOCS_PER_RUN - 1} documents, not a whole number of runs of ${SUITE_DOCS_PER_RUN}`,
   ]);
   assert.deepEqual(recordDiffs({ docs: [...docs, { c: SUITE, id: 'p', data: { writer: 'page' } }] }, seed).problems, [
-    `${SUITE}: 1 documents not in the seed and from no known writer (p)`,
+    `${SUITE}: 1 documents not in the seed and from no known writer (p; writer / source: page / undefined)`,
   ]);
 });
 
@@ -216,6 +216,157 @@ test('B-389: a scheduled run on staging is a known writer only where the spec le
   // a run document whose id is not its pipeline's, or a pipeline that does not run against staging
   assert.equal(red([run('morning', 'worker-4')]).length, 1);
   assert.equal(red([run('diagnostic', 'diagnostic-5')]).length, 1); // B-317: evening-mac runs on the staging Worker now
+});
+
+// A staging evening-mac run as its runs/<id> document holds it once ended (core/run.mjs start and end), and the
+// documents its Canvas step writes as canvas-sync (core/canvas-rules.mjs: source "Canvas sync", `at` the run's now).
+const EVENING = 'evening-mac-20261025-223200-a1b2';
+const eveningRun = (over = {}) => ({
+  c: 'runs',
+  id: EVENING,
+  data: {
+    schema: 1,
+    writer: 'evening-mac',
+    at: '2026-10-25T22:32:00.000Z',
+    source: 'evening-mac run',
+    release: 'v4.0.0',
+    pipeline: 'evening-mac',
+    startedAt: '2026-10-25T22:32:00.000Z',
+    endedAt: '2026-10-25T22:57:00.000Z',
+    status: 'ok',
+    steps: [
+      { id: 'canvas', status: 'ok', detail: 'Canvas: 13 new and 0 changed dates' },
+      { id: 'note', status: 'ok' },
+      { id: 'mac-files', status: 'skipped' },
+    ],
+    ...over,
+  },
+});
+const canvas = (c, id, over = {}) => ({
+  c,
+  id,
+  data: { schema: 1, writer: 'canvas-sync', at: '2026-10-25T22:40:11.000Z', source: 'Canvas sync', ...over },
+});
+
+test('B-389: a staging pipeline writing as one of its roles (evening-mac as canvas-sync) is traced to its run', () => {
+  assert.deepEqual(ROLES['canvas-sync'], [{ pipeline: 'evening-mac', step: 'canvas' }], 'from spec.pipelines roles');
+  const seed = { a: { 1: {} } };
+  const base = [{ c: 'a', id: '1', data: {} }];
+  const synced = [
+    canvas('announcements', 'canvas-101'),
+    canvas('dates', 'canvas-202'),
+    canvas('materials', 'NUR112-303'),
+    canvas('dates', 'canvas-204', { source: 'evening-mac ' + EVENING, at: 'not a time' }),
+  ];
+  const ok = recordDiffs({ docs: [...base, eveningRun(), ...synced] }, seed);
+  assert.deepEqual(ok.problems, []);
+  assert.deepEqual(ok.added.runs, { 'evening-mac': 1, 'canvas-sync': 4 });
+  // a run still going: from its start
+  const going = eveningRun({ endedAt: null, status: 'running', steps: undefined });
+  assert.deepEqual(recordDiffs({ docs: [...base, going, ...synced] }, seed).problems, []);
+
+  const red = docs => recordDiffs({ docs: [...base, ...docs] }, seed).problems;
+  // no run of evening-mac in the record, or one of another pipeline
+  assert.equal(red([canvas('dates', 'canvas-202')]).length, 1);
+  assert.match(red([canvas('dates', 'canvas-202')])[0], /writer \/ source: canvas-sync \/ Canvas sync/);
+  const morning = {
+    c: 'runs',
+    id: 'morning-1',
+    data: { ...eveningRun().data, writer: 'morning', pipeline: 'morning' },
+  };
+  assert.equal(red([morning, canvas('dates', 'canvas-202')]).length, 1);
+  // written outside the run's window, or by a run whose Canvas step did not end ok
+  assert.equal(red([eveningRun(), canvas('dates', 'canvas-202', { at: '2026-10-25T23:30:00.000Z' })]).length, 1);
+  assert.equal(red([eveningRun(), canvas('dates', 'canvas-202', { at: '2026-10-25T22:00:00.000Z' })]).length, 1);
+  const skipped = eveningRun({ steps: [{ id: 'canvas', status: 'skipped' }] });
+  assert.equal(red([skipped, canvas('dates', 'canvas-202')]).length, 1);
+  assert.equal(red([eveningRun({ status: 'failed', steps: [] }), canvas('dates', 'canvas-202')]).length, 1);
+  // a source naming a run the record does not hold
+  assert.equal(red([canvas('dates', 'canvas-9', { source: 'evening-mac evening-mac-x', at: 'no' })]).length, 1);
+  // the spec's allowlist: canvas-sync never writes days or sets; a role no staging pipeline has is no writer
+  assert.equal(red([eveningRun(), canvas('days', '2026-10-25')]).length, 1);
+  assert.equal(red([eveningRun(), canvas('sets', 'review-2026-10-25')]).length, 1);
+  assert.equal(red([eveningRun(), canvas('sessions', 'ss-1', { writer: 'filing' })]).length, 1);
+  assert.equal(red([eveningRun(), canvas('dates', 'canvas-202', { writer: 'deploy' })]).length, 1);
+});
+
+// The rows `node pwa/seed.mjs --append` writes, read back as GET /api/db answers them.
+function seededRows(at) {
+  return seedSql({ append: true, at })
+    .trim()
+    .split('\n')
+    .map(l => {
+      const [, c, id, data, t] = l.match(
+        /^INSERT INTO docs \(c, id, data, at\) VALUES \('(.*?)', '(.*?)', '(.*)', (\d+)\);$/
+      );
+      const un = x => x.replace(/''/g, "'");
+      return { c: un(c), id: un(id), data: JSON.parse(un(data)), at: Number(t), v: 1 };
+    });
+}
+async function stand(docs) {
+  const server = http.createServer((req, res) => {
+    const ok = req.headers.authorization === 'Bearer ' + TOKEN;
+    res.writeHead(ok ? 200 : 401, { 'content-type': 'application/json' });
+    res.end(JSON.stringify(ok ? { now: 1, docs } : { error: 'wrong token' }));
+  });
+  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  return { url: `http://127.0.0.1:${server.address().port}`, close: () => server.close() };
+}
+// The clock moved to `now` for fn: Date.now() and new Date() with no argument.
+async function at(now, fn) {
+  const Real = Date;
+  class Fake extends Real {
+    constructor(...a) {
+      super(...(a.length ? a : [now]));
+    }
+    static now() {
+      return now;
+    }
+  }
+  globalThis.Date = Fake;
+  try {
+    return await fn();
+  } finally {
+    globalThis.Date = Real;
+  }
+}
+
+test('B-389: the date-relative seed is matched by the instant its rows carry, whatever the date is now', async () => {
+  // Seeded at 04:30Z on Oct 25, still Oct 24 in Central; checked days later, on either side of midnight in both zones.
+  const T = Date.parse('2026-10-25T04:30:00.000Z');
+  const rows = seededRows(T);
+  assert.ok(rows.every(r => r.at === T));
+  assert.deepEqual(
+    rows.filter(r => r.c === 'runs').map(r => r.id),
+    Object.keys(seedRecord(new Date(T)).runs),
+    'the seed rows are the record of their own instant'
+  );
+  const later = [
+    eveningRun(),
+    { ...canvas('announcements', 'canvas-101'), at: T + 2 * 864e5 },
+    { ...canvas('materials', 'NUR112-303'), at: T + 2 * 864e5 },
+  ];
+  const w = await stand([...rows.map(r => (r.c === 'dates' ? { ...r, at: T + 864e5 } : r)), ...later]);
+  try {
+    for (const now of [
+      '2026-10-25T04:30:01Z',
+      '2026-10-26T00:10:00Z',
+      '2026-10-26T05:10:00Z',
+      '2026-11-03T12:00:00Z',
+    ]) {
+      const lines = await at(Date.parse(now), () => check(w.url, TOKEN));
+      assert.ok(
+        lines.every(l => l.ok),
+        `checked at ${now}: ` + lines.map(l => l.what).join(' | ')
+      );
+      assert.match(lines.at(-1).what, /the seed as of 2026-10-25T04:30:00\.000Z/);
+    }
+  } finally {
+    w.close();
+  }
+  // Held to the seed of another day it is red, both ways: a dated seed document missing, and one not in that seed.
+  const other = recordDiffs({ docs: [...rows, ...later] }, seedRecord(new Date(T + 864e5))).problems;
+  assert.ok(other.some(p => /documents missing/.test(p)) && other.some(p => /from no known writer/.test(p)), other);
 });
 
 test('B-311: the pwa-staging workflow is started by hand, names staging only and never echoes a secret', () => {

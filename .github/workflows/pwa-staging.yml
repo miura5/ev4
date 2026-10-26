@@ -160,7 +160,8 @@ jobs:
           EV_TOKEN: ${{ secrets.EV_STAGING_TOKEN }}
         run: |
           for i in 1 2 3 4 5 6; do
-            if node tools/pwa-staging.mjs check "${{ steps.deploy.outputs.url }}"; then exit 0; fi
+            # the last try writes its problems as error annotations (the log is not readable where they are)
+            if PWA_STAGING_LAST=$([ "$i" = 6 ] && echo 1 || echo 0) node tools/pwa-staging.mjs check "${{ steps.deploy.outputs.url }}"; then exit 0; fi
             echo "retrying in 10 s (a new secret can take a moment to reach the Worker)"; sleep 10
           done
           exit 1

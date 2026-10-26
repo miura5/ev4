@@ -26,7 +26,8 @@ export function seedCounts() {
 export function seedSql({ append = false, at = Date.now() } = {}) {
   const q = s => "'" + String(s).replace(/'/g, "''") + "'";
   const lines = append ? [] : ['DELETE FROM docs;'];
-  for (const [c, docs] of Object.entries(seedRecord()))
+  // B-389: the record is dated from the same instant its rows carry as `at`, which the staging check rebuilds it from
+  for (const [c, docs] of Object.entries(seedRecord(new Date(at))))
     for (const [id, doc] of Object.entries(docs))
       lines.push(`INSERT INTO docs (c, id, data, at) VALUES (${q(c)}, ${q(id)}, ${q(JSON.stringify(doc))}, ${at});`);
   return lines.join('\n') + '\n';
