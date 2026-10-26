@@ -341,3 +341,33 @@ test('B-163, D-324: v3-era runs and legacy copies restore as written, the checkl
   const end1 = JSON.parse(fs.readFileSync(path.join(first.dir, 'out/runs', r.plan.runId + '.end.json'), 'utf8'));
   assert.equal(end1.status, 'ok');
 });
+
+test('B-409: an ArtifactData drill checks the journal and his notes by count and hash and plans no write to them; a schema-1 weak spot comes back at 2', () => {
+  const src = tmp('ev4-src-');
+  pullFixture(src);
+  const db = RUN.loadPulled(src);
+  const b = oldBackup(db);
+  const fixture = c =>
+    readExport(path.join(ROOT, 'test/data/record'))
+      .filter(x => x.collection === c)
+      .map(x => ({ ...x.doc, id: x.id }));
+  // the journal is in backups (D-335) though no pull holds it; a note the record no longer matches
+  b.collections.journal = fixture('journal');
+  b.collections.notes = (b.collections.notes || fixture('notes')).map(n => ({ ...n, title: 'A made-up older title' }));
+  b.collections.weakspots = b.collections.weakspots.map(w => ({ ...w, schema: 1 }));
+  assert.ok(b.collections.journal.length && b.collections.notes.length);
+  const { r } = drill(seal(b.collections));
+  assert.equal(r.status, 'planned', JSON.stringify(r.problems));
+  const writes = r.plan.batches.flat();
+  assert.ok(!writes.some(w => ['journal', 'notes'].includes(w.collection)), writes.map(w => w.collection).join(' '));
+  assert.ok(
+    !writes.some(w => w.collection === 'weakspots'),
+    'migrated to schema 2, the weak spot is already identical'
+  );
+  assert.match(r.plan.detail, /page-only documents \(journal, notes\) checked, not written/);
+  assert.match(r.plan.detail, /weakspots schema 1 to 2/);
+  // a page-only collection that does not hash to its manifest is still refused
+  const bad = seal(b.collections);
+  bad.collections.journal = bad.collections.journal.map(j => ({ ...j, text: 'changed' }));
+  assert.match(drill(bad).r.problems.join(' '), /journal: its documents do not hash to its manifest/);
+});

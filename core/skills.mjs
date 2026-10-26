@@ -180,14 +180,17 @@ export function makeSkills(core) {
     ];
     const id = skillWeakspotId(s, st.n);
     const open = weakspots.find(w => w.id === id && w.derived && w.derived.status === 'open');
+    // B-409: a spot already there (passed, parked, declined) is reopened, never set over: its history stays
+    const there = !open && weakspots.find(w => w && w.id === id);
     const title = (s.skill && s.skill.title) || s.topic || 'Skill';
-    if (result === 'miss' && open)
-      writes.push({
-        op: 'update',
-        collection: 'weakspots',
-        id,
-        data: { events: { [eventKey('page', at)]: { type: 'seen', by, note: 'Skills practice', at } } },
-      });
+    const ev = (type, note) => ({
+      op: 'update',
+      collection: 'weakspots',
+      id,
+      data: { events: { [eventKey('page', at)]: { type, by, note, at } } },
+    });
+    if (result === 'miss' && open) writes.push(ev('seen', 'Skills practice'));
+    else if (result === 'miss' && there) writes.push(ev('reopen', 'Skills practice: missed again'));
     else if (result === 'miss')
       writes.push({
         op: 'set',

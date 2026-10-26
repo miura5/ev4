@@ -324,11 +324,16 @@
         date = E.chicagoDate(at);
       POP.closed.set(th, at);
       const p = talkQ.then(async () => {
-        let exists = T.created.has(date) || S.talk.some(d => d.id === date);
-        if (!exists) exists = (await db.collection('talk').doc(date).get()).exists;
-        const a = ACT ? ACT.tap('chat-close', { thread: th, date, at, exists }) : { ok: false, refused: 'no actions' };
-        if (!a.ok) throw new Error(a.refused);
-        await run(ACT.tap('chat-close', { thread: th, date, at, exists }).writes);
+        // B-409: an update first, the day made only when the store has none, so a day made meanwhile is never replaced
+        if (!ACT) throw new Error('no actions');
+        await ACT.closeChat({
+          send: async exists => {
+            const a = ACT.tap('chat-close', { thread: th, date, at, exists });
+            if (!a.ok) throw new Error(a.refused);
+            await run(ACT.tap('chat-close', { thread: th, date, at, exists }).writes);
+          },
+          exists: async () => (await db.collection('talk').doc(date).get()).exists,
+        });
         T.created.add(date);
       });
       talkQ = p.then(

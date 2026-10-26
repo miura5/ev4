@@ -365,5 +365,22 @@ export function makeActions(validateAgainst, evcore) {
     if (!CALLERS.includes(caller)) throw new Error(`no such caller: ${caller}`);
     return (name, args, ctx = {}) => act(spec, name, args, { ...ctx, caller }, composers);
   }
-  return { act, actor, rowProblem, CALLERS, COSTS, COMPOSERS };
+  /**
+   * B-409: a closed chat's mark saved without ever replacing the day it lands on. The mark goes on the day as an update
+   * first; only when the store says the day is not there (a missing update is refused, nothing written) is the day made,
+   * after one more look, so a day written meanwhile (another tab, her reply) keeps its messages. The app's store also
+   * lays a create over a day that appeared under the day's own fields (pwa/bridge.js mergeUnder).
+   * send(exists): runs the chat-close tap with that exists (an update when true, the day's create when false);
+   * exists(): reads the day from the store.
+   */
+  async function closeChat({ send, exists }) {
+    try {
+      return await send(true);
+    } catch (e) {
+      // the day is there (made since, or the update failed for its own reason): the mark goes on it, once more
+      if (await exists()) return send(true);
+    }
+    return send(false);
+  }
+  return { act, actor, rowProblem, CALLERS, COSTS, COMPOSERS, closeChat };
 }

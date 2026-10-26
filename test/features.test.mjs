@@ -58,6 +58,48 @@ test('skillSteps reads one checklist from its page: title, numbered steps, criti
   assert.equal(EV.skillSteps(PACKET, { page: 6 }).steps.length, 2, 'the next checklist starts over at 1');
 });
 
+test('B-409: a skill step missed, passed, then missed in a new session reopens its spot and keeps its history', () => {
+  const sk = EV.skillSteps(PACKET, { page: 4 });
+  const run = now => {
+    const st = EV.startSkill(sk, { now });
+    return { id: st.id, ...st.data };
+  };
+  const s1 = run(NOW);
+  const miss = EV.skillStep(s1, 1, 'miss', { now: '2026-10-18T19:01:00Z' }).find(w => w.collection === 'weakspots');
+  assert.equal(miss.op, 'set');
+  let doc = { id: miss.id, ...miss.data };
+  const model = () => EV.buildWeakspots({ weakspots: [doc], sets: [], answers: [], exams: [] });
+  const add = w => (doc = { ...doc, events: { ...doc.events, ...w.data.events } });
+  add(
+    EV.skillStep(s1, 1, 'pass', { weakspots: model(), now: '2026-10-18T19:02:00Z' }).find(
+      w => w.collection === 'weakspots'
+    )
+  );
+  assert.equal(model()[0].derived.status, 'reviewed', 'passed: done');
+  // a new session, the same step missed again: the spot is reopened in place, never set over
+  const s2 = run('2026-10-20T19:00:00Z');
+  const again = EV.skillStep(s2, 1, 'miss', { weakspots: model(), now: '2026-10-20T19:01:00Z' }).find(
+    w => w.collection === 'weakspots'
+  );
+  assert.equal(again.id, miss.id);
+  assert.equal(again.op, 'update');
+  assert.equal(Object.values(again.data.events)[0].type, 'reopen');
+  add(again);
+  assert.equal(Object.keys(doc.events).length, 2, 'the pass is kept beside the reopen');
+  assert.deepEqual(doc.origin, miss.data.origin, 'its origin is the first session’s');
+  assert.equal(doc.at, miss.data.at);
+  assert.equal(model()[0].derived.status, 'open');
+  // parked or declined, the same
+  for (const type of ['park', 'decline']) {
+    const set = { ...doc, events: { 'page-20261021-120000': { type, by: 'owner' } } };
+    const m = EV.buildWeakspots({ weakspots: [set], sets: [], answers: [], exams: [] });
+    const w = EV.skillStep(s2, 1, 'miss', { weakspots: m, now: '2026-10-21T19:01:00Z' }).find(
+      x => x.collection === 'weakspots'
+    );
+    assert.equal(w.op, 'update', type);
+  }
+});
+
 test('a skills session: start, a miss files a skill weak spot at once, a later pass marks it done, the end sums up', () => {
   const sk = EV.skillSteps(PACKET, { page: 4 });
   const start = EV.startSkill(sk, { now: NOW });

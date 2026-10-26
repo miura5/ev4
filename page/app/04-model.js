@@ -20,7 +20,11 @@
     // (a build ask, a reply, Ship it) runs ACT.tap(...).writes through run and makes its effects; the model's tools
     // move to ACT.tool as a task touches them.
     const ACT = window.EVActions
-      ? { tap: window.EVActions.actor(EV_SPEC, 'tap'), tool: window.EVActions.actor(EV_SPEC, 'tool') }
+      ? {
+          tap: window.EVActions.actor(EV_SPEC, 'tap'),
+          tool: window.EVActions.actor(EV_SPEC, 'tool'),
+          closeChat: window.EVActions.closeChat, // B-409
+        }
       : null;
     delete window.EVActions; // the two actors are all the page keeps: no other code path names its own caller
     const answersOf = set => (M && set && M.latest[set.id]) || {};

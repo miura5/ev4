@@ -22,7 +22,7 @@ import { buildRecap, chartFromMain } from './recap.mjs';
 import { canvasRaw } from './canvas.mjs';
 import { collectionHash, migrateBackup, migratedLine } from './seed.mjs';
 import { lintRecord, lintSummary } from './lint.mjs';
-import { loadValidator, loadSchemas } from './schemas.mjs';
+import { loadValidator, loadSchemas, PAGE_ONLY } from './schemas.mjs';
 import { describeErrors } from './validate.mjs';
 import { models, ITEM_FIELDS, pick, library, passages } from './steps-shared.mjs';
 import * as WORKER from './steps-worker.mjs';
@@ -485,7 +485,9 @@ export function backupSchemaLine(collections) {
 function registryVersions(schemas = loadSchemas()) {
   return Object.fromEntries(
     Object.entries(schemas).map(([c, s]) => {
-      const v = ((s.properties || {}).schema || {}).const;
+      // B-409: a schema that keeps its previous version valid until its migration (weakspots' enum [1, 2]) is at its newest
+      const sv = (s.properties || {}).schema || {};
+      const v = Array.isArray(sv.enum) && sv.enum.every(Number.isInteger) ? Math.max(...sv.enum) : sv.const;
       return [c, Number.isInteger(v) ? v : null];
     })
   );
@@ -533,9 +535,15 @@ export function planRestore(b, db, ctx, spec, name = 'backup', versions = regist
   const writes = [];
   let identical = 0,
     logsKept = 0,
-    extra = 0;
+    extra = 0,
+    pageOnly = 0;
   const after = {};
   for (const [c, docs] of Object.entries(target)) {
+    // B-409 (D-335): only the page writes the journal and his notes; a drill checks them by count and hash, as above
+    if (PAGE_ONLY.includes(c)) {
+      pageOnly += docs.length;
+      continue;
+    }
     const have = Object.fromEntries((db[c] || []).map(d => [d.id, d]));
     for (const d of docs) {
       const cur = have[d.id];
@@ -566,7 +574,7 @@ export function planRestore(b, db, ctx, spec, name = 'backup', versions = regist
   if (problems.length) return { problems };
   const docs = Object.values(b.counts).reduce((x, y) => x + y, 0);
   const moved = migratedLine(m.schemas);
-  const detail = `drill ok: ${name} (${b.at}), ${Object.keys(b.collections).length} collections and ${docs} documents; counts and hashes match its manifest; ${moved ? 'migrated to this build: ' + moved : "every document already at this build's schema"}; ${writes.length} restored, ${identical} already identical, ${logsKept} log entries kept as they are, ${extra} documents not in the backup kept${preV4.length ? `; ${preV4.length} pre-v4 documents (no envelope) kept as written: ${preV4.slice(0, 6).join(', ')}${preV4.length > 6 ? ', …' : ''}` : ''}`;
+  const detail = `drill ok: ${name} (${b.at}), ${Object.keys(b.collections).length} collections and ${docs} documents; counts and hashes match its manifest; ${moved ? 'migrated to this build: ' + moved : "every document already at this build's schema"}; ${writes.length} restored, ${identical} already identical, ${logsKept} log entries kept as they are, ${extra} documents not in the backup kept${pageOnly ? `; ${pageOnly} page-only documents (journal, notes) checked, not written` : ''}${preV4.length ? `; ${preV4.length} pre-v4 documents (no envelope) kept as written: ${preV4.slice(0, 6).join(', ')}${preV4.length > 6 ? ', …' : ''}` : ''}`;
   return {
     writes,
     detail,
