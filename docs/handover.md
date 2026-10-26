@@ -5,6 +5,14 @@ reads it right after CLAUDE.md. It holds no personal data: the repository is pub
 
 **Managing chat:** https://claude.ai/code/session_01CWeveciiiW2pUvFQtQJ3HK (still managing as of Oct 26, 12:20 am Central)
 
+## Now (Oct 26, ~9 am Central)
+
+- Notes release ready at c9ce3e7: staging GREEN, full check GREEN (dist/check-full.json in /tmp/ev4-full), rubric 84.
+  Release card https://claude.ai/artifact/GwY8LThmCPePMr9jz3DqAA. Waiting on Matt's "OK, ship it live", then the
+  cutover sitting per docs/cutover.md (protection rules before secrets; copy right before 7.5; re-verify after).
+- At the sitting also: the live weak-spot migration (migrate bumps on the live record, covered by his OK), the B-401 Mac
+  proof, B-319 copy, B-320 cutover. Then B-414 (two weeks of use), B-418, B-415.
+
 ## Plan change (Oct 26)
 
 - The cutover sitting moves from Monday to when Notes is ready (estimate Wednesday evening): one live release carries the
