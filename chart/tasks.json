@@ -7399,11 +7399,11 @@
   "title": "Notes: retire Study Watch and the Conversation's session card",
   "dod": "The reader code path (readerCall, probeReader), renderSessCard, renderBar and Conversation's Start session are removed from the page. spec.registry.studyWatch is marked retired; studywatch/ and the .mcpb stay (nothing deleted). The build stops packing the reader, and the environments rows are updated. Checks that pinned these are retired, each confirmed by an independent reviewer. B-321 is joined. grep finds no live reader call in page/ or tools/. npm test, smoke, smoke:pwa and check --touched are green, and ship staging is GREEN. Never reaches the claude.ai live page before the cutover (D-325). Own review.",
   "milestone": "PWA",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-406"
   ],
-  "notes": "",
+  "notes": "Lane build: retiring the Study Watch reader path and the Conversation's session card; phone session moves to Notes.",
   "commit": null,
   "source": "build manager, B-396 plan",
   "words": "Build retire Study Watch and the Conversation's session card (B-396, D-325).",
