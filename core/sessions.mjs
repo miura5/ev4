@@ -741,9 +741,12 @@ export function makeSessions(core) {
 
   /** Ends a session run in E.V. Home: the session update plus the findings writes; near-repeats wait in session.pending. */
   function closeSession(s, wrap, { weakspots = [], objectives = [], ideas: known = [], now, endedBy = 'ended' } = {}) {
-    const at = isoOf(now);
+    // B-411: a session whose filing began (its filing mark) is filed again with that mark's time and summary, so a
+    // reload mid-filing writes the same findings, and those already in the record are left out
+    const mark = s && s.filing && s.filing.at ? s.filing : null;
+    const at = isoOf(mark ? mark.at : now);
     const st = sessionState(s, at);
-    const w = parseWrap(wrap);
+    const w = parseWrap(mark ? mark.wrap : wrap);
     const label = SESSION_SOURCE + ' · ' + (s.topic || 'note');
     const f = sessionFindings(
       {
@@ -756,7 +759,14 @@ export function makeSessions(core) {
         noteTodos: w.noteTodos,
         writer: 'page',
       },
-      { weakspots, objectives, ideas: known }
+      // filed again: the record as it was before this session's own findings, so each decision is the same one
+      mark
+        ? {
+            weakspots: weakspots.filter(x => !(x && x.origin && x.origin.session === s.id)),
+            objectives,
+            ideas: (known || []).filter(x => !(x && typeof x === 'object' && x.sessionId === s.id)),
+          }
+        : { weakspots, objectives, ideas: known }
     );
     const pending = {};
     for (const q of f.questions) pending[q.key] = { topic: q.topic, objective: q.objective, candidate: q.candidate };
@@ -779,10 +789,33 @@ export function makeSessions(core) {
       filedAt: at,
       pending,
     };
+    const wsIds = new Set(weakspots.map(x => x && x.id));
+    const ideaKeys = new Set(
+      (known || []).filter(x => x && typeof x === 'object' && x.sessionId === s.id).map(x => norm(x.text))
+    );
+    const findings = mark
+      ? f.writes.filter(
+          x =>
+            !(x.op === 'set' && x.collection === 'weakspots' && wsIds.has(x.id)) &&
+            !(x.op === 'set' && x.collection === 'ideas' && ideaKeys.has(norm(x.data.text)))
+        )
+      : f.writes;
     return {
-      writes: [{ op: 'update', collection: 'sessions', id: s.id, data }, ...f.writes],
+      writes: [{ op: 'update', collection: 'sessions', id: s.id, data }, ...findings],
       questions: f.questions,
       linked: f.linked,
+    };
+  }
+  /**
+   * B-411: the mark a session's filing starts with, written before any of its findings: when, and the summary it files
+   * (as parseWrap reads it). closeSession files from it, so filing again after a reload is the same filing.
+   */
+  function filingMark(s, wrap, { now } = {}) {
+    return {
+      op: 'update',
+      collection: 'sessions',
+      id: s.id,
+      data: { filing: { at: isoOf(now), wrap: parseWrap(wrap) } },
     };
   }
   /**
@@ -819,26 +852,35 @@ export function makeSessions(core) {
    * the session as it stands), so an Undo never has to take back a write-once field or a finding.
    * `key` is the page's event key for `at`.
    */
-  function switchSession(s, { at, key }) {
+  function switchSession(s, { at, key, view = '' }) {
     if (!s || !(s.status === 'active' || s.status === 'ending')) return [];
     return [
       {
         op: 'update',
         collection: 'sessions',
         id: s.id,
-        data: { status: 'ended', endedAt: at, events: { [key]: { type: 'end', why: 'switched', at } } },
+        // B-411: the view that switched (and holds the Undo) is the one that files it at the deadline
+        data: {
+          status: 'ended',
+          endedAt: at,
+          events: { [key]: { type: 'end', why: 'switched', at, ...(view ? { view: String(view) } : {}) } },
+        },
       },
     ];
   }
-  /** B-406: when a switch ended this session (its end event's time), while it waits to be filed; else null. */
-  function switchedAt(s) {
+  /** B-411: the switch that ended this session, while it waits to be filed: {at, view}; else null. */
+  function switchedEnd(s) {
     if (!s || s.status !== 'ended' || s.filedAt || s.kind === 'skill') return null;
     const ends = Object.entries(s.events || {})
       .filter(([, e]) => e && (e.type === 'end' || e.type === 'reopen'))
       .sort(([a], [b]) => a.localeCompare(b));
     const [k, last] = ends.length ? ends[ends.length - 1] : [];
-    return last && last.type === 'end' && last.why === 'switched' ? isoOf(entryTime(k, last)) : null;
+    return last && last.type === 'end' && last.why === 'switched'
+      ? { at: isoOf(entryTime(k, last)), view: last.view || null }
+      : null;
   }
+  /** B-406: when a switch ended this session (its end event's time), while it waits to be filed; else null. */
+  const switchedAt = s => (switchedEnd(s) || {}).at || null;
   /** B-406: whether a session was ended by a switch and is still waiting to be filed (its summary not written yet). */
   const switchedUnfiled = s => switchedAt(s) != null;
   /**
@@ -974,6 +1016,8 @@ export function makeSessions(core) {
     startTimedSession,
     switchSession,
     switchedAt,
+    switchedEnd,
+    filingMark,
     switchedUnfiled,
     undoSwitch,
     decideSessionQuestion,

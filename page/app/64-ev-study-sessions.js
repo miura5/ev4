@@ -574,7 +574,9 @@
       const st = E.sessionState(s2, now());
       let wrap = {};
       let note = '';
-      if ((st.checks || st.comments || st.reads) && sample && !T.sampleOff) {
+      // B-411: a filing a reload interrupted goes on from its mark (its time and summary), with no second summary
+      const resumed = !!(s2.filing && s2.filing.at);
+      if (!resumed && (st.checks || st.comments || st.reads) && sample && !T.sampleOff) {
         try {
           wrap =
             (await sample.json(
@@ -596,6 +598,12 @@
         const now2 = sessOf(s2.id);
         if (!now2 || !E.switchedUnfiled(now2)) return null;
         s2 = now2;
+      }
+      if (!s2.filing || !s2.filing.at) {
+        // B-411: the filing mark lands before any finding, so a reload between them files the same findings once
+        const at = now();
+        await write(E.filingMark(s2, wrap, { now: at }));
+        s2 = { ...s2, filing: E.filingMark(s2, wrap, { now: at }).data.filing };
       }
       const r = E.closeSession(s2, wrap, {
         weakspots: M.models,
@@ -1139,7 +1147,9 @@
           until: Date.now() + 60e3, // held while the new session is written, so the ended one isn't filed meanwhile
         };
         SS.undo = prior;
-        await run(E.switchSession(cur, { at, key: pageKey(at) }));
+        await run(E.switchSession(cur, { at, key: pageKey(at), view: SS.view }));
+        // B-411: the Undo lasts as long as the record says it does: from the switch's end event
+        prior.until = undoEndsAt(sessOf(cur.id)) || Date.now() + UNDO_MS;
       }
       const stamp = at.replace(/\D/g, '').slice(0, 14);
       let id = E.safeId(`ss-${stamp.slice(0, 8)}-${stamp.slice(8)}-${E.slug(topic || 'note', 24)}`);
@@ -1176,7 +1186,7 @@
       SS.note = null;
       SS.nextRead = Date.now() + (SWC.readSeconds || 30) * 1e3;
       SS.changedAt = Date.now();
-      SS.undo = prior ? { ...prior, next: id, until: Date.now() + UNDO_MS } : null;
+      SS.undo = prior ? { ...prior, next: id } : null;
       if (popReady()) {
         POP.th = sThread({ id }); // the pop-up's chat is the session's now; the one he had stays in history
         if (POP.open && !POP.hist) POP.open = false;
@@ -1248,13 +1258,19 @@
       const prev = u && sessOf(u.prev);
       if (!u || Date.now() >= u.until || !prev || Date.now() >= undoEndsAt(prev)) {
         SS.undo = null;
+        if (u) toast(`Too late to undo: “${u.name}” is saved.`); // B-411: a refused Undo says so
+        render();
         return;
       }
       const at = now();
       const o = { at, keys: [pageKey(at), pageKey(at)], windowMs: UNDO_MS };
       const next = sessOf(u.next);
       SS.undo = null;
-      if (!E.undoSwitch(prev, next, o).length) return;
+      if (!E.undoSwitch(prev, next, o).length) {
+        toast(`Too late to undo: “${u.name}” is saved.`);
+        render();
+        return;
+      }
       // held until the reopen lands, so switchTick never files the session in the middle of its Undo
       SS.filing.add(u.prev);
       try {
@@ -1296,10 +1312,11 @@
       for (const s of S.sessions) {
         if (SS.filing.has(s.id) || (SS.undo && SS.undo.prev === s.id) || !E.switchedUnfiled(s)) continue;
         if (s.source !== 'E.V. Home') continue;
-        // every view waits out the Undo by the record's clock; the view that drove the session files it, and any
-        // other view only after the takeover delay past that
+        // every view waits out the Undo by the record's clock; the view that switched files it, and any other view
+        // only after the takeover delay past that
         const due = undoEndsAt(s) + FILE_MARGIN_MS;
-        const mine = s.driver && s.driver.view === SS.view;
+        const sw = E.switchedEnd(s);
+        const mine = !!sw && sw.view === SS.view; // B-411: the view that switched, which held the Undo
         if (Date.now() < due + (mine ? 0 : (SWC.takeoverMinutes || 2) * 60e3)) continue;
         SS.filing.add(s.id); // once per page load, whatever happens
         fileSession(s, 'switched', { recheck: true })

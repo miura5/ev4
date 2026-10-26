@@ -1106,10 +1106,33 @@ const openNoteId = page =>
       4000
     );
     const c = (await sessions()).find(x => x.note === 'notes/' + noteB && x.status === 'active');
-    const openNow = await page.evaluate(() => (window.__writes || []).length);
-    void openNow;
+    // B-411: the end event names the view that switched; the Undo button lasts as long as the record's Undo
+    const swEnd = await page.evaluate(i => {
+      const evs = Object.values((window.__db.sessions[i] || {}).events || {});
+      return evs.filter(e => e.type === 'end' && e.why === 'switched').pop() || null;
+    }, sa.id);
+    await until(page, () => !document.querySelector('#ev-sslot .s-undo'), null, 16000);
+    const undoGone = Date.now();
     const filed = await until(page, i => !!(window.__db.sessions[i] || {}).filedAt, sa.id, 30000);
     const fa = await sess(sa.id);
+    const lasted = swEnd ? undoGone - Date.parse(swEnd.at) : null;
+    ok(
+      `${tag} the switch's end event names its view; its Undo button goes when the record's Undo ends (12 s)`,
+      !!swEnd && typeof swEnd.view === 'string' && swEnd.view.length > 0 && lasted >= 11000 && lasted <= 14000,
+      JSON.stringify({ swEnd, lasted })
+    );
+    const dupes = await page.evaluate(i => {
+      const by = (c, f) => Object.values(window.__db[c] || {}).filter(f).length;
+      return {
+        ideas: by('ideas', x => x.sessionId === i),
+        weak: by('weakspots', x => x.origin && x.origin.session === i),
+      };
+    }, sa.id);
+    ok(
+      `${tag} filing starts with its mark (time and summary), then files from it`,
+      !!fa.filing && fa.filedAt === fa.filing.at && typeof fa.filing.wrap === 'object',
+      JSON.stringify({ filing: fa.filing, filedAt: fa.filedAt, dupes })
+    );
     ok(
       `${tag} Study with E.V. starts a 25-minute session on that note; the one it ended is filed when Undo runs out`,
       !!c &&
@@ -1145,6 +1168,25 @@ const openNoteId = page =>
       JSON.stringify({ started, planned: t.planned, topic: t.topic, sw3 })
     );
     await page.screenshot({ path: path.join(shots, 'notes-session-task-1280.png') });
+    // B-411: an Undo pressed after the record's Undo has ended is refused with one line, and changes nothing
+    const refused = await page.evaluate(async () => {
+      const b = document.querySelector('#ev-sslot .s-undo');
+      if (!b) return { shown: false };
+      const real = Date.now;
+      Date.now = () => real() + 13000;
+      document.getElementById('toast').hidden = true;
+      b.click();
+      await new Promise(r => setTimeout(r, 300));
+      Date.now = real;
+      const x = document.getElementById('toast');
+      return { shown: true, line: x && !x.hidden ? x.textContent : '' };
+    });
+    const cNow = await sess(c.id);
+    ok(
+      `${tag} an Undo past the record's Undo says so in one line and reopens nothing`,
+      refused.shown && /^Too late to undo: “.+” is saved\.$/.test(refused.line) && cNow.status === 'ended',
+      JSON.stringify({ refused, c: cNow.status })
+    );
     // End from the strip saves it and the strip empties
     await page.click('#ev-sslot .s-end');
     const endedT = await until(page, i => (window.__db.sessions[i] || {}).status === 'ended', t.id, 6000);

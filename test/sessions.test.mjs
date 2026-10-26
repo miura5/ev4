@@ -662,3 +662,62 @@ test('B-406 (D-325): a second session ends and logs the running one; Undo restor
   assert.equal(ds.minutes, 3);
   assert.equal(ds.breakStartedAt, plus(5));
 });
+
+test('B-411: the switching view is on the end event; a filing mark makes filing again after a reload write each finding once', () => {
+  const base = {
+    schema: 2,
+    writer: 'page',
+    at: T0,
+    source: 'E.V. Home',
+    kind: 'note',
+    date: '2026-10-18',
+    planned: 25,
+  };
+  const merge = (a, b) => {
+    const o = { ...a };
+    for (const [k, v] of Object.entries(b))
+      o[k] = v && typeof v === 'object' && !Array.isArray(v) && a[k] && typeof a[k] === 'object' ? merge(a[k], v) : v;
+    return o;
+  };
+  // the end event names the view that switched
+  const s0 = session({ [plus(7)]: { type: 'check', n: 1, items: 2 } }, base);
+  const sw = EV.switchSession(s0, { at: plus(10), key: sk(plus(10)), view: 'view-a' });
+  assertValid(sw[0], s0);
+  let s = merge(s0, sw[0].data);
+  assert.deepEqual(EV.switchedEnd(s), { at: plus(10), view: 'view-a' });
+  assert.equal(EV.switchedAt(s), plus(10));
+  // the filing mark lands first, with its time and summary
+  const wrap = {
+    summary: 'Potassium.',
+    weakSpots: [{ objective: 'E4-3', topic: 'Hyperkalemia ECG' }, { topic: 'Why the kidneys hold potassium' }],
+    connections: ['Insulin moves potassium into cells'],
+    noteTodos: ['Fill in the ECG table'],
+  };
+  const fm = EV.filingMark(s, wrap, { now: plus(10, 30) });
+  assertValid(fm, s);
+  s = merge(s, fm.data);
+  const opts = { weakspots: [], objectives: [{ id: 'E4-3' }], ideas: [], endedBy: 'switched' };
+  const first = EV.closeSession(s, { summary: 'a different summary' }, { ...opts, now: plus(11) });
+  assert.equal(first.writes[0].data.summary, 'Potassium.', 'filed from the mark, not a second summary');
+  assert.equal(first.writes[0].data.filedAt, plus(10, 30), 'at the mark’s time');
+  const sets = first.writes.filter(w => w.op === 'set');
+  assert.equal(sets.length, 4, 'a weak spot, two ideas and a note to-do');
+  // a reload after the findings landed but before the session's own update: filed again, each finding once
+  const ideas = sets.filter(w => w.collection === 'ideas').map(w => ({ id: w.id, ...w.data }));
+  const weakspots = sets
+    .filter(w => w.collection === 'weakspots')
+    .map(w => ({ id: w.id, ...w.data, derived: { status: 'open' } }));
+  const again = EV.closeSession(s, {}, { ...opts, weakspots, ideas, now: plus(30) });
+  assert.equal(again.writes.filter(w => w.op === 'set').length, 0, 'no finding written twice');
+  assert.equal(again.writes.filter(w => w.collection === 'weakspots').length, 0, 'and no weak spot seen again');
+  assert.deepEqual(again.writes[0].data, first.writes[0].data, 'the same session update');
+  // a weak spot already in the record before the session is seen once: filed again, the same event key
+  const old = [{ ...ws('ws-k', { objective: 'E4-3', topic: 'Hyperkalemia ECG' }), derived: { status: 'open' } }];
+  const seen1 = EV.closeSession(s, {}, { ...opts, weakspots: old, now: plus(11) }).writes.find(w => w.id === 'ws-k');
+  const seen2 = EV.closeSession(s, {}, { ...opts, weakspots: old, now: plus(40) }).writes.find(w => w.id === 'ws-k');
+  assert.ok(seen1);
+  assert.deepEqual(seen2, seen1);
+  // with no mark (a session ended the usual way) closing is as before
+  const plain = EV.closeSession(session({ [plus(7)]: { type: 'end' } }, base), wrap, { ...opts, now: plus(8) });
+  assert.equal(plain.writes[0].data.filedAt, plus(8));
+});

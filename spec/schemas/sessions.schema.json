@@ -23,6 +23,9 @@
    ],
    "comments": [
     "page"
+   ],
+   "filing": [
+    "page"
    ]
   }
  },
@@ -336,6 +339,24 @@
   "filedAt": {
    "type": "string",
    "format": "date-time"
+  },
+  "filing": {
+   "type": "object",
+   "properties": {
+    "at": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "wrap": {
+     "type": "object"
+    }
+   },
+   "required": [
+    "at",
+    "wrap"
+   ],
+   "additionalProperties": false,
+   "description": "B-411: a mark the page sets before a session's findings: when its filing began and the summary it files, so filing again after a reload writes the same findings once"
   },
   "comments": {
    "enum": [
