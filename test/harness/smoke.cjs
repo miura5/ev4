@@ -408,7 +408,10 @@ async function open(browser, viewport) {
     // paint check here reads the page on the first frame after the tap, with a loose 500 ms bound (the record answers
     // 2 s later; a loaded machine stretches a frame's time, so the old 100 ms budget flaked) (B-357).
     const chipPaint = await page.evaluate(async () => {
-      const b = [...document.querySelectorAll('#qchips button')].find(x => !/^Your turn|^Resume /.test(x.textContent));
+      // B-408: Start a note and study opens Notes with no line of his (the Notes demo), so the chip measured is the next
+      const b = [...document.querySelectorAll('#qchips button')].find(
+        x => !/^Your turn|^Resume |^Start a note and study$/.test(x.textContent)
+      );
       if (!b) return null;
       const said = b.textContent.trim();
       window.__writeDelayMs = 2000;
