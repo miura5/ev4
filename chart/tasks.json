@@ -7606,5 +7606,22 @@
    "outcome": "task",
    "at": "2026-10-26T08:59:54.442Z"
   }
+ },
+ {
+  "id": "B-417",
+  "kind": "request",
+  "title": "Request (reported Oct 26): E.V. course: lesson 1",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "chat, Oct 26 (D-337)",
+  "words": "E.V. course: lesson 1",
+  "reportedAt": "2026-10-26T08:59:55.006Z",
+  "board": {
+   "row": "v4 B-417: E.V. course: lesson"
+  }
  }
 ]
