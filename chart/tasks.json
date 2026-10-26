@@ -7539,5 +7539,22 @@
    "outcome": "task",
    "at": "2026-10-26T08:32:02.271Z"
   }
+ },
+ {
+  "id": "B-414",
+  "kind": "request",
+  "title": "Request (reported Oct 26): After Notes: two weeks of use, fixes only",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "chat, Oct 26 (D-337)",
+  "words": "After Notes: two weeks of use, fixes only",
+  "reportedAt": "2026-10-26T08:59:50.546Z",
+  "board": {
+   "row": "v4 B-414: After Notes: two weeks of use, fixes"
+  }
  }
 ]
