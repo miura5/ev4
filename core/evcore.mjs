@@ -22,6 +22,7 @@ import { makeMirror } from './mirror.mjs';
 import { makeCanvasRules } from './canvas-rules.mjs';
 import { makeShare } from './share.mjs';
 import { makeItemKinds } from './item-kinds.mjs';
+import { makeNotes } from './notes.mjs';
 const EVCore = (() => {
   'use strict';
   const VERSION = '__EV_RELEASE__'; // B-149: the build writes the release in (tools/build.mjs RELEASE_SLOT)
@@ -2254,6 +2255,9 @@ const EVCore = (() => {
   });
 
   // ---------------------------------------------------------------- shareable practice pages (D-110) · core/share.mjs (B-160)
+  // ---------------------------------------------------------------- his notes' block model (B-402, D-325) · core/notes.mjs
+  const NOTES = makeNotes();
+
   const SHARE = makeShare({
     itemType,
     planTasks,
@@ -2286,6 +2290,7 @@ const EVCore = (() => {
     ...SESSIONS, // Study Watch intake and study sessions in E.V. Home
     ...SKILLS, // skills practice, Quizlet cards, weak-spot cards and workouts (D-108)
     ...SHARE, // shareable practice pages (D-110)
+    ...NOTES, // his notes' blocks: the editor's model, paste and the saved document (B-402)
     VERSION,
     TZ,
     CJ_STEPS,

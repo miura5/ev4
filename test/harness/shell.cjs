@@ -122,8 +122,9 @@ const statusShown = page =>
         )
     );
     ok(
-      `[${scheme}] five tabs in the nav; System has no link, as the demo (D-314)`,
-      (await page.locator('#top .tabs .tab').count()) === 5 && !(await page.isVisible('#tab-system'))
+      `[${scheme}] five tabs in the nav, and Notes a sixth from 1024 px (D-327); System has no link, as the demo (D-314)`,
+      (await page.locator('#top .tabs .tab:visible').count()) === (scheme === 'phone' ? 5 : 6) &&
+        !(await page.isVisible('#tab-system'))
     );
     ok(
       `[${scheme}] the staging stamp, a quiet status and the staging readout`,
@@ -426,8 +427,8 @@ const statusShown = page =>
         () => document.getElementById('side-prefpop').hidden && document.activeElement.id === 'side-prefs-btn'
       );
       ok(
-        `[1280 ${scheme}] sidebar: Conversation, Today, Study, Progress, Record with neutral icons; her dial in her palette; Preferences in the foot with Theme and Contrast, Esc closes it; no Working (B-286, D-314)`,
-        v.names.join(',') === 'Conversation,Today,Study,Progress,Record' &&
+        `[1280 ${scheme}] sidebar: Conversation, Today, Study, Notes (D-327), Progress, Record with neutral icons; her dial in her palette; Preferences in the foot with Theme and Contrast, Esc closes it; no Working (B-286, D-314)`,
+        v.names.join(',') === 'Conversation,Today,Study,Notes,Progress,Record' &&
           v.footClosed &&
           v.neutral &&
           v.av1 &&

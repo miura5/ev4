@@ -10,6 +10,7 @@
       renderReadiness();
       renderWeak();
       renderRecord();
+      renderNotes(); // B-402: Notes (25-notes)
       renderSystem();
       renderEV();
       renderSide();

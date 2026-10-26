@@ -1378,8 +1378,8 @@ async function tap(page, locator, name) {
     await page.waitForTimeout(100);
     ok(`[${scheme}] back on this page's build, the bar goes away`, !(await page.isVisible('#ev-update')));
     ok(
-      `[${scheme}] five sections in the sidebar or the tab bar, System with no link (D-314); no top bar, no dock (D-210)`,
-      (await page.locator('#top .tabs .tab').count()) === 5 &&
+      `[${scheme}] five sections in the sidebar or the tab bar, Notes a sixth on the desktop (D-327), System with no link (D-314); no top bar, no dock (D-210)`,
+      (await page.locator('#top .tabs .tab:visible').count()) === (scheme === 'phone' ? 5 : 6) &&
         !(await page.isVisible('#tab-system')) &&
         (await page.locator('.dock').count()) === 0 &&
         (await page.locator('header.top').count()) === 0

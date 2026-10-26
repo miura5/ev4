@@ -1416,6 +1416,7 @@ test("B-160: what stays in E.V. core is the record's rules, under 2,500 lines; e
     'item-kinds',
     'library',
     'mirror',
+    'notes',
     'prep',
     'sessions',
     'share',
