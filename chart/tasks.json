@@ -7402,12 +7402,12 @@
   "title": "Notes: retire Study Watch and the Conversation's session card",
   "dod": "The reader code path (readerCall, probeReader), renderSessCard, renderBar and Conversation's Start session are removed from the page. spec.registry.studyWatch is marked retired; studywatch/ and the .mcpb stay (nothing deleted). The build stops packing the reader, and the environments rows are updated. Checks that pinned these are retired, each confirmed by an independent reviewer. B-321 is joined. grep finds no live reader call in page/ or tools/. npm test, smoke, smoke:pwa and check --touched are green, and ship staging is GREEN. Never reaches the claude.ai live page before the cutover (D-325). Own review.",
   "milestone": "PWA",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-406"
   ],
-  "notes": "Review gaps fixed, ready for second review (at 0607742). 1: notes harness read-along now asserts the quote is never stored in talk, and a silent read (Claude asked, say null) leaves the session's chat and events unchanged; the pop-up renders no cap-quote (B-406), so none is asserted there. 2: core greeting's File it branch and core intakeSession removed; their tests moved onto closeSession (findings: bump, near-repeat, ideas, note to-dos, B-388 linking) or dropped (the evening-pass B-388 case). 3: the B-290 #sbar rule and phoneBar's empty s-read span and its CSS removed. 4: spec lists the page's 15 tools (start_workout, practice_skill added; limits say 15). 5: run harness ends the phone's no-note session from the strip's End at 1280 (ended, wrap-up posts, strip empties). Done note to carry: renderBar remains as phoneBar under 1024 px, per D-327 (phone unchanged). Proofs: npm test 759/760 (1 skip), smoke 28/28, smoke:pwa 31/31, run 388, notes 90, frame 134.",
-  "commit": null,
+  "notes": "Shipped to staging at 0247a24: ship staging GREEN.",
+  "commit": "0247a24",
   "source": "build manager, B-396 plan",
   "words": "Build retire Study Watch and the Conversation's session card (B-396, D-325).",
   "reportedAt": "2026-10-26T00:53:05.604Z",
