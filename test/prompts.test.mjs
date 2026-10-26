@@ -439,3 +439,17 @@ test('B-149 (D-173), D-192 (B-173): no prompt carries a literal release; each pi
     assert.doesNotMatch(text, /\bv4\.\d+(\.\d+)?\b/, `${key}: no release literal, so a release changes no prompt`);
   }
 });
+
+test('D-344: a manifest entry (only some of the task fields) renders the kept ended limits its spec task names', () => {
+  const spec = JSON.parse(fs.readFileSync(new URL('../spec/ev.spec.json', import.meta.url), 'utf8'));
+  for (const [id, t] of Object.entries(spec.tasks.live)) {
+    if (!t.keepEnded) continue;
+    const { keepEnded, _keepEndedWhy, ...entry } = t;
+    const key = `live.${id}`;
+    assert.equal(
+      renderPrompt({ key, task: entry, spec, release: 'v4.0.0' }),
+      renderPrompt({ key, task: t, spec, release: 'v4.0.0' }),
+      key
+    );
+  }
+});

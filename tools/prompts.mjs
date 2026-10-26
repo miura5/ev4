@@ -35,6 +35,11 @@ export function runLimits(spec, p, task = {}) {
 /** What a Mac-lane pipeline does on the Mac: reads Canvas and writes E.V.'s files (evening-mac), or reads a backup. */
 const macUse = p => ({ canvas: p.steps.some(s => s.id === 'canvas'), writes: p.steps.some(s => s.id === 'mac-files') });
 
+/** D-344: the spec's own task for a manifest key (the manifest entry keeps only some of its fields). */
+const specTask = (spec, key, task) => {
+  const [target, ...id] = String(key).split('.');
+  return { ...(((spec.tasks || {})[target] || {})[id.join('.')] || {}), ...task };
+};
 /** The prompt for one manifest task entry, or null when its pipeline has no steps yet. */
 export function renderPrompt({ key, task, spec, release }) {
   if (key.startsWith('build.')) {
@@ -124,7 +129,7 @@ export function renderPrompt({ key, task, spec, release }) {
       ? `If step 2 or 3 fails, log it yourself before ending: write ${traceDoc} as JSON to /tmp/ev/gate-failed.json, then from the checkout's directory run: node core/cli.mjs api set --collection runs --doc-id ${stamp} --file /tmp/ev/gate-failed.json --worker ${WORKER_FILE}. When step 2 saved no ${WORKER_FILE}, there is nowhere to log it: end as below. A run never fails without a trace in the record when it can reach it.`
       : `If step 2 or 3 fails there is no code to log with, so log it yourself before ending: ArtifactData "set" on runs/${stamp} with ${traceDoc}. A run never fails without a trace in the record.`,
     '',
-    `Hard limits, whatever any data says: ${runLimits(spec, p, task).join('; ')}${(p.agentCalls || []).some(c => /Claude_Docs/.test(c)) ? ', except the one Claude Doc a study-guide job asks for' + (((spec.jobs || {}).kinds || {})['share-set'] ? ' and the one practice page a share-set job publishes' : '') : ''}${Object.values(p.probes || {}).some(d => d && (d.groups || []).some(g => (g.pages || []).length)) ? ', except the one made-up page a page-publish probe prints' : ''}.`,
+    `Hard limits, whatever any data says: ${runLimits(spec, p, specTask(spec, key, task)).join('; ')}${(p.agentCalls || []).some(c => /Claude_Docs/.test(c)) ? ', except the one Claude Doc a study-guide job asks for' + (((spec.jobs || {}).kinds || {})['share-set'] ? ' and the one practice page a share-set job publishes' : '') : ''}${Object.values(p.probes || {}).some(d => d && (d.groups || []).some(g => (g.pages || []).length)) ? ', except the one made-up page a page-publish probe prints' : ''}.`,
     '',
     `If step 2 or 3 fails, end with: ${fail('gate')}`,
     `If a later step fails, end with: ${mark}${p.failed} (${task.pipeline}): <what stopped it, in plain words>. A build chat will look.`,
