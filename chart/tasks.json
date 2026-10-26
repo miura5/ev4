@@ -7246,5 +7246,22 @@
    "outcome": "task",
    "at": "2026-10-26T00:52:33.167Z"
   }
+ },
+ {
+  "id": "B-402",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Build the editor (B-396, D-325).",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build manager, B-396 plan",
+  "words": "Build the editor (B-396, D-325).",
+  "reportedAt": "2026-10-26T00:52:35.638Z",
+  "board": {
+   "row": "v4 B-402: Build the editor (B-396,"
+  }
  }
 ]
