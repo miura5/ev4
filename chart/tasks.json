@@ -7383,7 +7383,7 @@
    "B-232",
    "B-233"
   ],
-  "notes": "Ready for review at cf9b20a+86e2e97 (not shipped): planAnswer and session filing (closeFindings path; filing order and mark unchanged) write misses as proposed on a free id (B-232); a twin waiting for triage or set aside takes the miss. Study button 'Weak spots · N · 1 to review', her Study line with Review, sidebar review row with '1 to review' on its own line (unclipped at 1280), To review rows (Accept/Join/Not now/Decline through the B-233 rows), quiz results line with Accept all and Review. freeWeakspotId moved to core/sessions.mjs (evcore at its 2,500-line budget). test/proposed-misses 2/2; npm test 790/0; smoke 28/28; notes 101/101 (B-407 11/11 after chat close and reload); frame 134/134; run 390/390; core 142/142. Needs its own review (data writes).",
+  "notes": "Review gaps fixed at cc92921, ready for second review: (1) Join targets E.joinTarget (concept, open or solid, same objective, similarity >= 0.5, best first), off when none, target named in title; (2) heldTwin holds a miss only for proposed, snoozed, duplicate, or declined that day; later a fresh proposal on a free id; (3) weekly newWeakSpots counts a proposal only once accepted by the week's end; (4) Accept and Accept all gated on an objective in the record; (5) a session miss on a joined duplicate writes seen on its survivor; (6) pane copy 'Not now: back tomorrow'. heldTwin/joinTarget in core/sessions.mjs (evcore 2497 lines). proposed-misses 4/4; npm test 792/0; smoke 28/28; notes 104/104 (B-407 14/14); run 390/390; frame 134/134.",
   "commit": null,
   "source": "build manager, B-396 plan",
   "words": "Build a missed check proposes a weak spot to To review, visibly (B-396, D-325).",
