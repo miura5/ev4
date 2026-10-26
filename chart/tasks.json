@@ -7355,7 +7355,7 @@
    "B-402",
    "B-405"
   ],
-  "notes": "Review gaps fixed, ready for second review (c3b8c97 and the follow-up commit): Undo holds the session until its reopen lands and is refused past UNDO_MS by the end event's time; fileSession re-reads after the summary; filing waits end+UNDO_MS+5 s and is done by the driver view (others after the takeover delay); core undoSwitch returns [] unless the ended session can be reopened (windowMs); discarded sessions are left out of derive's weekly roll-ups and study vs next day, the greeting's momentum, the sessions tool and the mirror's count (file kept, marked discarded). npm test 748/749 (1 skip), smoke 28/28, smoke:pwa 32/32, notes 78/78, frame 134/134, core green.",
+  "notes": "Second review: the four first-review gaps are closed. Three narrower ones remain (a cross-view double filing, a reload mid-filing, an Undo button showing past its window), filed as B-411 and fixed before the Notes release.",
   "commit": null,
   "source": "build manager, B-396 plan",
   "words": "Build study sessions move into Notes (B-396, D-325).",
