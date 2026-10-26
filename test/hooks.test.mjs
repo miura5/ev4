@@ -360,9 +360,8 @@ test("B-320 (D-331): a dispatch of pwa-live.yml passes only under a fresh dist/l
     run,
     `gh api -X POST repos/miura5/ev4/actions/workflows/pwa-live.yml/dispatches -f ref=main -f inputs[commit]=${sha}`,
     `curl -X POST https://api.github.com/repos/miura5/ev4/actions/workflows/pwa-live.yml/dispatches -d '{"ref":"main","inputs":{"commit":"${sha}"}}'`,
-    'gh workflow run pwa-live --ref main -f commit=' + sha.slice(0, 7),
   ];
-  for (const c of forms) {
+  for (const c of [...forms, 'gh workflow run pwa-live --ref main -f commit=' + sha.slice(0, 7)]) {
     const r = hook(dir, 'live-guard', bash(c));
     assert.equal(r.code, 2, c);
     assert.match(r.err, /Refused: a dispatch of the live app's workflow/);
@@ -387,8 +386,15 @@ test("B-320 (D-331): a dispatch of pwa-live.yml passes only under a fresh dist/l
     2,
     'two commits'
   );
-  assert.equal(H.liveDispatch('gh workflow run pwa-live.yml -f commit=abc1234').commit, 'abc1234');
+  assert.equal(H.liveDispatch('gh workflow run pwa-live.yml -f commit=abc1234').commit, null, 'a short sha is none');
+  assert.equal(H.liveDispatch(run).commit, sha);
   assert.equal(H.dispatchAllowed(null, sha), false);
+  put({ at: Date.now(), commit: sha, by: 'deploy live --matt-ok' });
+  assert.equal(
+    hook(dir, 'live-guard', bash('gh workflow run pwa-live --ref main -f commit=' + sha.slice(0, 7))).code,
+    2,
+    'a short sha, even one the OK starts with'
+  );
   // the pipeline case: a fresh run marker stands the hook down (D-169), as for every hook
   fs.rmSync(okFile, { force: true });
   const marker = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-marker-')), 'pipeline-run');
@@ -399,4 +405,83 @@ test("B-320 (D-331): a dispatch of pwa-live.yml passes only under a fresh dist/l
     env: { ...process.env, EV_RUN_MARKER: marker },
   });
   assert.equal(r.status, 0, 'a pipeline run is never guarded');
+});
+
+test('B-320 (D-331): the dispatch guard fails closed on the review probes, whatever dist/live-ok allows', () => {
+  const dir = copyRepo();
+  const sha = '0123456789abcdef0123456789abcdef01234567';
+  const bash = command => ({ tool_name: 'Bash', tool_input: { command } });
+  const okFile = path.join(dir, 'dist', 'live-ok');
+  fs.mkdirSync(path.dirname(okFile), { recursive: true });
+  fs.writeFileSync(okFile, JSON.stringify({ at: Date.now(), commit: sha, by: 'ship live --matt-ok' }));
+  const b64 = Buffer.from(`gh workflow run pwa-live.yml -f commit=${sha}`).toString('base64');
+  // refused even under Matt's OK for this very commit
+  const refused = [
+    [`echo commit=${sha}; gh workflow run pwa-live.yml -f commit=$(git rev-parse HEAD)`, /run time|2 commits/],
+    ['gh workflow run pwa-live.yml -f commit=`git rev-parse HEAD`', /run time/],
+    [`C=${sha}; gh workflow run pwa-live.yml -f commit=$C`, /run time/],
+    [`W=pwa-live.yml; gh workflow run $W -f commit=${sha}`, /run time/],
+    [`echo ${b64} | base64 -d | sh`, /base64|pipes into a shell/],
+    [`echo ${b64} | base64 --decode | bash`, /base64|pipes into a shell/],
+    [`eval "$(echo ${b64} | base64 -d)"`, /eval|base64/],
+    ['gh run rerun 1234567890', /re-run is never/],
+    ['gh run rerun 1234567890 --failed', /re-run is never/],
+    ['gh api -X POST repos/miura5/ev4/actions/runs/1234567890/rerun', /re-run is never/],
+    ['gh api -X POST repos/miura5/ev4/actions/runs/1234567890/rerun-failed-jobs', /re-run is never/],
+    [
+      `P=dispatc; gh api -X POST repos/miura5/ev4/actions/workflows/1/\${P}hes -f ref=main -f inputs[commit]=${sha}`,
+      /run time/,
+    ],
+    [`gh workflow run pwa-live.yml --json < inputs.json`, /stdin|no commit/],
+    [`gh workflow run pwa-live.yml -f commit=${sha} -f commit=${'f'.repeat(40)}`, /2 commits/],
+  ];
+  for (const [c, why] of refused) {
+    const r = hook(dir, 'live-guard', bash(c));
+    assert.equal(r.code, 2, c);
+    assert.match(r.err, /Refused: a dispatch of the live app's workflow/, c);
+    assert.match(r.err, why, c);
+  }
+  // obfuscated names and the numeric id: each is a possible dispatch, refused without the OK for its commit ...
+  const named = [
+    `gh workflow run "pwa"-live.yml --ref main -f commit=${sha}`,
+    `gh workflow run 'pwa'-'live'.yml --ref main -f commit=${sha}`,
+    `gh workflow run pwa\\-live.yml --ref main -f commit=${sha}`,
+    `gh workflow run 123456789 --ref main -f commit=${sha}`,
+    `gh api -X POST repos/miura5/ev4/actions/workflows/123456789/dispatches -f ref=main -f inputs[commit]=${sha}`,
+    `gh api -X POST repos/miura5/ev4/actions/workflows/123456789/dispatc"h"es -f ref=main -f inputs[commit]=${sha}`,
+    `gh api -X POST repos/miura5/ev4/dispatches -f event_type=pwa-live -f client_payload[commit]=${sha}`,
+  ];
+  for (const c of named) assert.ok(H.liveDispatch(c), c);
+  fs.writeFileSync(okFile, JSON.stringify({ at: Date.now(), commit: 'f'.repeat(40), by: 'ship live --matt-ok' }));
+  for (const c of named) assert.equal(hook(dir, 'live-guard', bash(c)).code, 2, 'another commit: ' + c);
+  fs.rmSync(okFile);
+  for (const c of named) assert.equal(hook(dir, 'live-guard', bash(c)).code, 2, 'no OK: ' + c);
+  // ... and an ordinary command that only names the workflow, or reads it, passes: the runbook's own commands
+  for (const c of [
+    'node tools/pwa-live.mjs cutover --apply',
+    'node tools/pwa-copy.mjs export-calls $D --record live',
+    'gh run list --repo miura5/ev4 --workflow pwa-live.yml --limit 1',
+    'cat .github/workflows/pwa-live.yml',
+    'git add tools/pwa-live.mjs test/pwa-live.test.mjs',
+    'gh workflow run nightly.yml --ref main',
+    'echo hi | sha256sum',
+  ])
+    assert.equal(hook(dir, 'live-guard', bash(c)).code, 0, c);
+});
+
+test('B-320: treeHash reads a diff over 1 MiB whole: the same hash on two runs, and a change past 1 MiB moves it', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-treehash-'));
+  const git = (...a) => spawnSync('git', ['-C', dir, ...a], { encoding: 'utf8' });
+  git('init', '-q');
+  fs.writeFileSync(path.join(dir, 'big.txt'), 'a\n'.repeat(10));
+  git('add', 'big.txt');
+  git('-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'x');
+  const line = 'x'.repeat(99) + '\n';
+  const body = line.repeat(Math.ceil((1.5 * (1 << 20)) / line.length));
+  fs.writeFileSync(path.join(dir, 'big.txt'), body + 'tail-one\n');
+  assert.ok(git('diff').stdout.length > 1 << 20, 'the diff is over 1 MiB');
+  const one = H.treeHash(dir);
+  assert.equal(H.treeHash(dir), one, 'the same on a second run');
+  fs.writeFileSync(path.join(dir, 'big.txt'), body + 'tail-two\n');
+  assert.notEqual(H.treeHash(dir), one, 'a change past the first 1 MiB is seen');
 });

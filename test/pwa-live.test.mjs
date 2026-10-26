@@ -6,7 +6,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT } from './helpers.mjs';
 import {
-  BOOKKEEPING_PATHS,
   stagingGreen,
   nightlyGreen,
   gateRefusals,
@@ -15,7 +14,10 @@ import {
   workerDoc,
   liveApp,
 } from '../tools/pwa-live.mjs';
-import { BOOKKEEPING_PATHS as BUILD_BOOKKEEPING, buildPages, loadSchemas, appSource } from '../tools/build.mjs';
+import { buildPages, loadSchemas, appSource, buildCommitOf } from '../tools/build.mjs';
+import { fullCheckRefusal } from '../tools/chart.mjs';
+import os from 'node:os';
+import { execFileSync } from 'node:child_process';
 import { appsOf, appCalls } from '../tools/pwa-app.mjs';
 import { runTarget } from '../core/run.mjs';
 
@@ -144,7 +146,41 @@ test('B-320 (R-02, R-06): the gate refuses what ship live refuses, and passes a 
     nightlyGreen(runs, C, () => null),
     false
   );
-  assert.deepEqual(BOOKKEEPING_PATHS, BUILD_BOOKKEEPING, 'one bookkeeping list');
+});
+
+test('B-320 (R-06): the gate and ship live take the same nightly: at the build commit, or at a bookkeeping head on it', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-r06-'));
+  const git = (...a) =>
+    execFileSync('git', ['-C', dir, '-c', 'user.email=t@t', '-c', 'user.name=t', ...a], { encoding: 'utf8' }).trim();
+  git('init', '-q');
+  const commit = (f, msg) => {
+    fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true });
+    fs.writeFileSync(path.join(dir, f), msg);
+    git('add', f);
+    git('commit', '-qm', msg);
+    return git('rev-parse', 'HEAD');
+  };
+  const build = commit('a.js', 'the build');
+  const books = commit('chart/deploys.json', 'ship staging recorded');
+  const later = commit('b.js', 'another build after it');
+  assert.equal(buildCommitOf(dir, books), build, "the bookkeeping head's build commit");
+  const memo = rev => buildCommitOf(dir, rev);
+  const base = {
+    commit: build,
+    onMain: true,
+    spec: on(),
+    deploys: [{ target: 'staging', commit: build, verify: 'green' }],
+    buildCommit: memo,
+  };
+  for (const [head, green] of [
+    [build, true],
+    [books, true],
+    [later, false],
+  ]) {
+    const runs = [{ headSha: head, conclusion: 'success' }];
+    assert.equal(gateRefusals({ ...base, runs }).length === 0, green, `the gate, a nightly at ${head.slice(0, 7)}`);
+    assert.equal(fullCheckRefusal(dir, build, runs) === null, green, `ship live, a nightly at ${head.slice(0, 7)}`);
+  }
 });
 
 test('B-320 (D-330): the live app in the spec, off until the cutover sitting; ship live dispatches it on his OK', () => {

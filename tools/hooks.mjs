@@ -89,26 +89,94 @@ export function traceAllows(a, traceOk, { liveId, now = Date.now() }) {
 }
 
 /**
- * B-320 (D-331): a shell command that dispatches the live app's workflow (pwa-live.yml): {commit} (null when it names
- * none), or null when the command is not one. gh workflow run, a POST to its dispatches endpoint, by name or path.
+ * B-320 (D-331): whether a shell command may dispatch the live app's workflow (pwa-live.yml), failing closed: null when
+ * it plainly cannot, else {commit, why}. It may when, read with every quote and backslash taken out:
+ *   - it posts to a /dispatches endpoint, or re-runs a run (gh run rerun, .../runs/<id>/rerun): always refused, as
+ *     going back is the rollback skill's (a rerun can't be told apart from a re-run of an old pwa-live run);
+ *   - it runs gh workflow run on a workflow that isn't a plain literal name (quoted, escaped, a variable, a numeric
+ *     id) or whose name says pwa and live;
+ *   - it says pwa and live and calls GitHub (gh other than a read, gh api, curl, wget, api.github.com);
+ *   - it writes to an API (gh api, curl or wget with a method or a body) with a $ or backtick in it;
+ *   - it hides what it runs: a base64 decode, eval, or a pipe into a shell.
+ * (A plain "pwa" and "live" with no GitHub call is not one: the runbook's own node tools/pwa-live.mjs and pwa-copy.mjs
+ * --record live commands must run; docs/cutover.md, Known limits.)
+ * Plain mentions (node tools/pwa-live.mjs, git add, cat .github/workflows/pwa-live.yml) and gh reads pass. One that may
+ * dispatch passes only (dispatchAllowed) when why is empty and its commit is the one dist/live-ok names: exactly one
+ * literal commit=<40 hex>, and no $, backtick, base64, eval, pipe into a shell or input from a file or stdin, so the
+ * commit run is the commit read.
  */
 export const LIVE_WORKFLOW = 'pwa-live';
+const GH_READS =
+  /^(run (list|view|watch|download)|workflow (list|view)|pr (view|list|diff|checks)|secret list|auth status|repo view|release (list|view))$/;
+const VALUE_FLAGS = new Set(['-R', '--repo', '-r', '--ref', '-f', '-F', '--field', '--raw-field']);
+// what makes any command one that may dispatch (it hides what it runs), and, more broadly, what a dispatch may not hold
+const HIDES = [
+  [/\bbase64\s+(-\w*d\w*|--decode)\b|\bb64decode\b|\batob\s*\(|base64['"]?\s*\)\.toString/, 'a base64 decode'],
+  [/(^|[;&|({]\s*)eval\b/, 'eval'],
+  [/\|\s*(sudo\s+)?(env\s+)?(ba|z|da|k|c|tc|fi)?sh\b/, 'a pipe into a shell'],
+];
+const NEVER_IN_DISPATCH = [
+  [/[$`]/, 'it builds part of itself at run time ($ or a backtick)'],
+  [/base64/i, 'it names base64'],
+  [/\beval\b/, 'it names eval'],
+  [/\|\s*(sudo\s+)?(env\s+)?(ba|z|da|k|c|tc|fi)?sh\b/, 'it pipes into a shell'],
+  [/<|\|\s*gh\b|--json\b|--input\b|=@/, 'it reads inputs from a file or stdin'],
+];
 export function liveDispatch(command) {
-  const c = String(command || '');
-  if (!new RegExp(`\\b${LIVE_WORKFLOW}(\\.ya?ml)?\\b`).test(c)) return null;
-  if (!/\bworkflow\s+run\b|\/dispatches\b/.test(c)) return null;
-  // every commit it names: more than one names none (refused), so one command never carries a second dispatch
-  const named = [...new Set([...c.matchAll(/\bcommit["'\]]?\s*[=:]\s*["']?([0-9a-f]{7,40})\b/g)].map(m => m[1]))];
-  return { commit: named.length === 1 ? named[0] : null };
+  const raw = String(command || '');
+  const c = raw.replace(/["'\\]/g, ''); // any quoting or escaping, taken out
+  const pwaLive = /pwa/i.test(c) && /live/i.test(c);
+  const rerun = /\brun\s+rerun\b|\/rerun/.test(c);
+  const reasons = [];
+  if (/\/dispatches\b/.test(c)) reasons.push('posts to a dispatches endpoint');
+  if (rerun) reasons.push('re-runs a run');
+  // gh workflow run: the workflow it names, from the raw command (a literal name has no quote, escape or $)
+  for (const m of raw.matchAll(/\bworkflow\s+run\b([^;&|\n]*)/g)) {
+    const toks = m[1].trim().split(/\s+/).filter(Boolean);
+    let name = null;
+    for (let i = 0; i < toks.length; i++) {
+      if (VALUE_FLAGS.has(toks[i])) i++;
+      else if (!toks[i].startsWith('-')) {
+        name = toks[i];
+        break;
+      }
+    }
+    if (!name || !/^[A-Za-z0-9_.\/-]+$/.test(name) || /^\d+$/.test(name))
+      reasons.push('runs a workflow it does not name');
+    else if (/pwa/i.test(name) && /live/i.test(name)) reasons.push('runs the live workflow');
+  }
+  if (!/\bworkflow\s+run\b/.test(raw) && /\bworkflow\s+run\b/.test(c)) reasons.push('runs a workflow it does not name');
+  if (pwaLive) {
+    const ghCalls = [...c.matchAll(/\bgh\s+(\S+)(?:\s+(\S+))?/g)].map(m => `${m[1]} ${m[2] || ''}`.trim());
+    if (ghCalls.some(g => !GH_READS.test(g)) || /\b(curl|wget|http|https?ie)\b|api\.github\.com|\bfetch\s*\(/i.test(c))
+      reasons.push('names the live workflow and calls GitHub');
+  }
+  if (
+    /\bgh\s+api\b|\bcurl\b|\bwget\b/i.test(c) &&
+    /[$`]/.test(raw) &&
+    /(-X|--method|--request)\s*(POST|PUT|PATCH)\b|\s-[fFd]\s|--(field|raw-field|input|data|post-data)\b/i.test(c)
+  )
+    reasons.push('writes to an API at an address or with a body it builds at run time');
+  for (const [re, what] of HIDES) if (re.test(raw) || re.test(c)) reasons.push(`hides what it runs (${what})`);
+  if (!reasons.length) return null;
+  const why = [];
+  if (rerun)
+    why.push("a re-run is never a live dispatch: going back is the rollback skill's (.claude/skills/rollback)");
+  for (const [re, what] of NEVER_IN_DISPATCH) if (re.test(raw) || re.test(c)) why.push(what);
+  const named = [...c.matchAll(/\bcommit\]?\s*[=:]\s*(\S*)/gi)].map(m => m[1]);
+  const commit = named.length === 1 && /^[0-9a-f]{40}(?![0-9a-f])/.test(named[0]) ? named[0].slice(0, 40) : null;
+  if (named.length !== 1) why.push(named.length ? `it names ${named.length} commits` : 'it names no commit');
+  else if (!commit) why.push('its commit is not one literal 40-character sha');
+  return { commit, why, reasons };
 }
-/** B-320: whether dist/live-ok allows dispatching the live workflow at this commit: fresh, Matt's OK, the same commit. */
+/** B-320: whether dist/live-ok allows dispatching the live workflow at this commit: fresh, Matt's OK, the same full
+ * 40-character commit. */
 export function dispatchAllowed(liveOk, commit, now = Date.now()) {
   if (!liveOk || !Number.isFinite(liveOk.at) || now - liveOk.at >= LIVE_OK_HOURS * 36e5 || liveOk.at > now + 60e3)
     return false;
   if (!/^(deploy live --matt-ok|ship live --matt-ok|ship live --from-job \S+)$/.test(String(liveOk.by || '')))
     return false;
-  const c = String(liveOk.commit || '');
-  return !!commit && c.length >= 7 && commit.length >= 7 && (c.startsWith(commit) || commit.startsWith(c));
+  return /^[0-9a-f]{40}$/.test(String(commit || '')) && liveOk.commit === commit;
 }
 
 /** B-58: the refusal for a tool call aimed at the live record or page, or null when it may go. */
@@ -120,8 +188,9 @@ export function liveGuard(input, { liveId, liveOk = null, traceOk = null, now = 
   if (name === 'Bash') {
     const d = liveDispatch(a.command);
     if (!d) return null;
-    if (dispatchAllowed(liveOk, d.commit, now)) return null;
-    return `Refused: a dispatch of the live app's workflow (${LIVE_WORKFLOW}.yml${d.commit ? ' at ' + d.commit.slice(0, 7) : ', naming no commit'}). It goes only at the commit Matt's OK names: deploy live --matt-ok or ship live --matt-ok writes dist/live-ok for that commit for ${LIVE_OK_HOURS} hours (B-58, D-331)${liveOk ? `; the one there names ${String(liveOk.commit || 'none').slice(0, 7)}, by ${liveOk.by || 'nothing'}, and may be older than that` : ''}.`;
+    if (!d.why.length && dispatchAllowed(liveOk, d.commit, now)) return null;
+    const why = d.why.length ? d.why.join('; ') : `dist/live-ok does not allow ${d.commit.slice(0, 7)}`;
+    return `Refused: a dispatch of the live app's workflow (${LIVE_WORKFLOW}.yml), or a command that may be one (it ${d.reasons.join(', ')}): ${why}. It goes only as one plain command naming one literal commit=<40 hex> that Matt's OK names: deploy live --matt-ok or ship live --matt-ok writes dist/live-ok for that commit for ${LIVE_OK_HOURS} hours (B-58, D-331)${liveOk ? `; the one there names ${String(liveOk.commit || 'none').slice(0, 7)}, by ${liveOk.by || 'nothing'}, and may be older than that` : ''}.`;
   }
   const aimed = String(a.url || a.from_url || '').includes(liveId);
   let what = null;

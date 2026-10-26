@@ -67,37 +67,55 @@ workflow's first step checks them again.
 
 ## 2. The ev-live Worker's release (build manager)
 
+`ship live` checks R-06 before it tags, the tag stays local until live is recorded, and both `ship live` and the
+workflow's gate take a nightly whose head is the build commit or a bookkeeping commit on it (one rule, `nightlyGreen`
+in tools/pwa-live.mjs, with the build commit from tools/build.mjs). So the full check runs first, at the exact build
+commit `ship live` will name, before anything is tagged:
+
 1. Turn the live app on: in `spec/ev.spec.json`, set `registry.records.live.app.ready` to `true`. Commit it as
-   "B-320: the live app on (ev-live in ship live)", with the session's trailers, and push.
+   "B-320: the live app on (ev-live in ship live)", with the session's trailers, and push. This is the build commit
+   (call it B) that `ship live` and the dispatch will name.
 2. `node tools/chart.mjs ship staging`. Make every call and read it prints until GREEN. The staging app is unchanged;
-   this records the commit.
-3. `node tools/chart.mjs ship live --matt-ok` once, **only after Matt's OK** (step 3). This tags the release and stops:
-   "tagged v4.x.y ... ship staging, then ship live again". Then `ship staging` again until GREEN.
-4. The full check at the tag (R-06; the workflow's gate reads a nightly run, ship live reads either):
+   this records B (a bookkeeping commit on main, which doesn't move the build commit).
+3. Hold every lane and builder that could push code (anything but the Chart's bookkeeping) to main until step 4's
+   dispatch. Then check that main's head still builds B:
 
-       gh workflow run nightly.yml --ref v4.x.y
+       git fetch -q origin main
+       node -e "import('./tools/build.mjs').then(m => console.log(m.buildCommitOf('.', 'origin/main')))"
 
-   Wait for it green, about 30 minutes: `gh run list --workflow nightly.yml --limit 1`.
+   It must print B. If it doesn't, another build commit landed: start step 2 again at the new one.
+4. The full check at B (R-06), on GitHub, since the workflow's gate reads only a nightly run:
+
+       gh workflow run nightly.yml --repo miura5/ev4 --ref main
+
+   Wait for it green, about 30 minutes: `gh run list --workflow nightly.yml --limit 1 --json headSha,conclusion`. Its
+   headSha is main's head, which builds B, so both the gate and `ship live` count it. (A full `npm run check` here at
+   B also writes dist/check-full.json, which `ship live` takes, but the gate can't see it: the nightly is still needed.)
 
 ## 3. Matt's OK for the first live release (Matt: one line in the chat)
 
-The build manager writes one release card: what changes for him (nothing visible; the Worker is made), the commit,
-staging GREEN, the nightly green.
+The build manager writes one release card: what changes for him (nothing visible; the Worker is made), the commit B,
+staging GREEN, the nightly green at it.
 
-**Matt:** "OK, ship <commit> live."
+**Matt:** "OK, ship <B> live."
 
 ## 4. Ship live with the Worker (build manager, then Matt in GitHub)
 
-    node tools/chart.mjs ship live --matt-ok
+1. `node tools/chart.mjs ship live --matt-ok`. R-06 passes (step 2.4), so it tags the release locally and stops:
+   "tagged v4.x.y ... ship staging, then ship live again".
+2. `node tools/chart.mjs ship staging` until GREEN: staging carries the tag. Its bookkeeping commit doesn't move B,
+   so the nightly still counts.
+3. `node tools/chart.mjs ship live --matt-ok` again. It reads first (the running-session read, R-03), then writes
+   dist/live-ok for B and prints the calls: the system documents, the claude.ai live page (unchanged, still writable)
+   and the app's dispatch:
 
-- It reads first (the running-session read, R-03), then writes dist/live-ok for this commit and prints the calls:
-  the system documents, the claude.ai live page (unchanged, still writable) and the app's dispatch:
+       gh workflow run pwa-live.yml --repo miura5/ev4 --ref main -f commit=<B, all 40 characters>
 
-      gh workflow run pwa-live.yml --repo miura5/ev4 --ref main -f commit=<the commit>
-
-- Make the calls in order. The hook lets the dispatch through only because dist/live-ok names that commit.
+- Make the calls in order. The hook lets the dispatch through only as that one plain command, naming B exactly as
+  dist/live-ok does.
 - **Matt:** in GitHub, Actions, pwa-live, the newest run, "Review deployments", tick live, Approve. Its gate job has
-  already passed by then: the commit is on main, the app is on, staging GREEN (R-02) and the nightly green (R-06).
+  already passed by then: B is on main, the app is on, staging GREEN at B (R-02) and the nightly green at it (R-06).
+  The lanes may push again once the gate job is green.
 - The run creates the ev-live D1 with the schema only (empty; never seeded), the ev-live-exports bucket, the ev-live
   Worker, its EV_TOKEN, and the ev-live-scratch Worker and D1. It checks 401 without the token, 401 with a wrong one
   and 200 with it, with no collections yet, and reads back the build hash.
@@ -155,13 +173,26 @@ expired, he says OK again, then run `node core/cli.mjs deploy live --matt-ok`.
      and the old evening-mac listed in `tasks.retired`.
 2. `npm test` green, including test/d307.test.mjs on the real spec now. Commit "B-320: the cutover (read-only page,
    live on D1)" and push.
-3. `ship staging` until GREEN, the nightly at the new tag (as step 2), then the release card.
+3. `ship staging` until GREEN, then the full check at this build commit exactly as steps 2.3 and 2.4 (lanes held,
+   main's head building it, the nightly on main green), then the release card.
 4. **Matt:** "OK, ship <commit> live."
-5. `node tools/chart.mjs ship live --matt-ok`. Make every call it prints:
+5. `node tools/chart.mjs ship live --matt-ok` (tag, `ship staging`, `ship live --matt-ok` again, as step 4). Make
+   every call it prints:
    - the system documents and the read-only claude.ai live page;
    - `update_trigger` for the five cloud tasks (morning, evening-cloud, weekly, worker, watchdog);
    - the pwa-live dispatch, which **Matt** approves in GitHub as in step 4;
    - two `create_trigger` calls for the Mac tasks, only from the chat linked to the Mac with Matt present (step 8).
+
+   **At once, in the same sitting, before anything else:** disable the old live Mac tasks, so no pipeline can write
+   the claude.ai record overnight. The page's read-only flag stops the page, not a run's ArtifactData writes.
+   - The old live evening-mac (`trig_01AxnPF3iPyo2BpCQtMdAKP8`, now listed in `tasks.retired`): `update_trigger`
+     enabled false. Matt's OK in 7.4 covers it, and he is present. It is kept, never deleted.
+   - Any older live restore drill: there is none in the spec before the cutover (only staging's, which stays). Read
+     `list_triggers` and disable any live restore-drill task found there in the same way.
+   - **Proof:** `list_triggers` shows each one `enabled: false`.
+
+   If step 8 can't follow tonight, nothing then writes the live record until it does. evening-mac's backup and
+   tonight's run are missed, not misdirected, and the watchdog reports the gap.
 6. **Proof:** `ship live` again says GREEN for the record, the page and the cloud tasks. The page proof is its files
    equal to the build, so its spec.json carries `readOnly: true`. Then open the claude.ai live page: the banner shows,
    the composer and New are gone, and a tick says "Couldn't save: This page is read-only now".
@@ -174,8 +205,7 @@ From the managing chat linked to his Mac, with **Matt** present:
    /Users/peachfritter/Documents/E.V. Backups only.
 2. **Matt:** in the Claude desktop app, approve each new task's folder access (E.V. Backups). Until he does, a Mac
    task writes nothing.
-3. Disable the old live evening-mac (its id is in `tasks.retired`) with `update_trigger` enabled false. It is kept,
-   never deleted.
+3. Check that the old live evening-mac is still disabled (`list_triggers`; it was disabled in step 7.5).
 4. Record the two new ids as `spec.tasks.live.<key>.trigger`, commit "B-320: record the live Mac task ids", push,
    `ship staging`, then `ship live --matt-ok` on Matt's OK. That is the system/spec write only: the prompts are
    unchanged.
@@ -219,7 +249,14 @@ From the managing chat linked to his Mac, with **Matt** present:
 ## Known limits at this commit
 
 - The workflow's gate reads R-06 from a nightly run only. A full check run here (dist/check-full.json) satisfies ship
-  live, but the workflow can't see it, so the nightly runs at the tag (step 2.4).
+  live, but the workflow can't see it, so the nightly runs on main while its head builds the release (steps 2.3 and
+  2.4). Both count a nightly at the build commit or at a bookkeeping commit on it, and nothing else.
 - R-03 (no study session running) is checked by ship live before it prints the dispatch, not by the workflow.
-- A dispatch by run id or a re-run of an old pwa-live run (`gh run rerun`) is not recognised by the hook. GitHub's
-  live environment approval still holds it.
+- The dispatch guard (tools/hooks.mjs `liveDispatch`) fails closed but reads only the command's text. Still open:
+  - A command that only names pwa and live with no GitHub call passes (so the runbook's own `node tools/pwa-live.mjs`
+    and `pwa-copy.mjs --record live` commands run). A script written to a file first and run later, or a dispatch
+    built inside another program (`node -e`, `python -c`) from pieces that never spell pwa-live, /dispatches or
+    `workflow run`, isn't seen.
+  - Every re-run is refused, a nightly's included (`gh run rerun`, `.../rerun`): re-run a nightly with
+    `gh workflow run nightly.yml` instead.
+  - The hook is unproven in a managing chat until step 0's probe; GitHub's live environment approval holds either way.

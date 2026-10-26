@@ -22,19 +22,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { buildCommitOf } from './build.mjs'; // one build-commit rule for the gate, ship live and the copy
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const REPO = 'miura5/ev4';
-/** The paths a bookkeeping commit touches (tools/build.mjs BOOKKEEPING_PATHS; a test holds them equal). */
-export const BOOKKEEPING_PATHS = [
-  'chart',
-  'BACKLOG.md',
-  'DECISIONS.md',
-  'CHANGELOG.md',
-  'tools/chart.mjs',
-  'tools/chart',
-  'test/chart.test.mjs',
-];
 
 const readSpec = (root = ROOT) => JSON.parse(fs.readFileSync(path.join(root, 'spec', 'ev.spec.json'), 'utf8'));
 const git = (root, a) =>
@@ -42,19 +33,6 @@ const git = (root, a) =>
 
 /** The live app's settings (spec.registry.records.live.app), or null. */
 export const liveApp = spec => ((spec.registry.records || {}).live || {}).app || null;
-
-/** The build commit of a revision: its newest commit that changed anything but the bookkeeping (tools/build.mjs). */
-export function buildCommitOf(root, rev) {
-  return git(root, [
-    'log',
-    '-1',
-    '--format=%H',
-    rev,
-    '--',
-    '.',
-    ...BOOKKEEPING_PATHS.map(p => `:(exclude)${p}`),
-  ]).trim();
-}
 
 /** R-02 (D-049): a staging deploy recorded GREEN at the commit (the Chart's deploys, as origin/main holds them). */
 export function stagingGreen(deploys, commit) {
@@ -64,10 +42,14 @@ export function stagingGreen(deploys, commit) {
   );
 }
 
-/** R-06 (D-226): a green nightly full check whose head builds this commit (its build commit, so a later bookkeeping
- * commit on main is the same build). runs: [{headSha, conclusion}]. */
+/** R-06 (D-226): a green nightly full check whose head is this commit or builds it (its build commit, so a later
+ * bookkeeping commit on main is the same build). runs: [{headSha, conclusion}]. ship live's R-06 (tools/chart.mjs
+ * fullCheckRefusal) calls this too, so the workflow's gate and ship live take the same runs. */
+export const NIGHTLY_RUNS = 50;
 export function nightlyGreen(runs, commit, buildCommit) {
-  return (runs || []).some(r => r.conclusion === 'success' && r.headSha && buildCommit(r.headSha) === commit);
+  return (runs || []).some(
+    r => r.conclusion === 'success' && r.headSha && (r.headSha === commit || buildCommit(r.headSha) === commit)
+  );
 }
 
 /** Every reason the workflow refuses this commit; empty when it may deploy. */
@@ -90,7 +72,7 @@ export function gateRefusals({ commit, onMain, spec, deploys, runs, buildCommit 
     );
   if (!nightlyGreen(runs, commit, buildCommit))
     out.push(
-      `R-06 (D-226): no green nightly full check at ${commit.slice(0, 7)}: gh workflow run nightly.yml --ref <its tag>, wait for it green, then dispatch again`
+      `R-06 (D-226): no green nightly full check at ${commit.slice(0, 7)}: gh workflow run nightly.yml --ref main while main's head builds it, wait for it green, then dispatch again (docs/cutover.md step 2)`
     );
   return out;
 }
@@ -122,7 +104,7 @@ function gate(commit, root = ROOT) {
         '--workflow',
         'nightly.yml',
         '--limit',
-        '50',
+        String(NIGHTLY_RUNS),
         '--json',
         'headSha,conclusion,databaseId',
       ],

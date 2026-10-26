@@ -377,3 +377,36 @@ test('the copy target job: its own Worker over a scratch D1 (never ev-staging), 
   assert.match(job, /copy_manifest/);
   assert.match(job, /process\.exit\(1\)/, 'a difference fails the step');
 });
+
+test("B-320: the live copy takes Matt's OK for this checkout's build commit or HEAD, and nothing older, stale or short", () => {
+  const dir = tmp('ev4-copy-ok-');
+  const git = (...a) =>
+    execFileSync('git', ['-C', dir, '-c', 'user.email=t@t', '-c', 'user.name=t', ...a], { encoding: 'utf8' }).trim();
+  git('init', '-q');
+  const commit = (f, msg) => {
+    fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true });
+    fs.writeFileSync(path.join(dir, f), msg);
+    git('add', f);
+    git('commit', '-qm', msg);
+    return git('rev-parse', 'HEAD');
+  };
+  const older = commit('a.js', 'an older build');
+  const build = commit('b.js', 'the build');
+  const head = commit('chart/deploys.json', 'bookkeeping: the deploy recorded');
+  fs.mkdirSync(path.join(dir, 'dist'));
+  const ok = (o, now = Date.now()) => {
+    fs.writeFileSync(path.join(dir, 'dist', 'live-ok'), JSON.stringify({ by: 'ship live --matt-ok', ...o }));
+    return COPY.liveAllowed({ root: dir, now });
+  };
+  assert.deepEqual(ok({ at: Date.now(), commit: build }), { ok: true }, 'the build commit ship live names');
+  assert.deepEqual(ok({ at: Date.now(), commit: head }), { ok: true }, 'HEAD, a bookkeeping commit on it');
+  const old = ok({ at: Date.now(), commit: older });
+  assert.equal(old.ok, false, 'an older build commit');
+  assert.match(old.why, /names commit/);
+  const stale = ok({ at: Date.now() - 2 * 36e5 - 1000, commit: build });
+  assert.equal(stale.ok, false, 'an OK older than 2 h');
+  assert.match(stale.why, /older than 2 hours/);
+  const short = ok({ at: Date.now(), commit: build.slice(0, 6) });
+  assert.equal(short.ok, false, 'a 6-character sha');
+  assert.match(short.why, /names commit/);
+});

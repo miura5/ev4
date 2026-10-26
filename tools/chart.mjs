@@ -54,7 +54,8 @@ import EVCORE from '../core/evcore.mjs';
 const ACTIONS = makeActions(validateAgainst);
 import { commitsBehind, mainHead } from '../core/cli.mjs';
 import { readState, withShell } from '../core/verifystate.mjs';
-import { build, BOOKKEEPING } from './build.mjs';
+import { build, BOOKKEEPING, buildCommitOf } from './build.mjs';
+import { nightlyGreen, NIGHTLY_RUNS } from './pwa-live.mjs';
 import { APPS, appRead, appCalls, appLines, expectedApp } from './pwa-app.mjs';
 
 // The record, its constants and the shared helpers live in tools/chart/record.mjs (B-262).
@@ -1114,9 +1115,11 @@ export function shipJobRefusals({ id, job, result, commit, now = Date.now() }) {
 
 /**
  * R-06 (D-226, B-219): null when the full check passed at this commit, here (dist/check-full.json) or as a green
- * nightly run on GitHub (read through gh, when it answers); else the refusal, with the two ways to get one.
+ * nightly run on GitHub (read through gh, when it answers); else the refusal, with the two ways to get one. A nightly
+ * counts when its head is the commit or builds it (B-320: nightlyGreen, the same rule as pwa-live.yml's gate), so a
+ * nightly dispatched on main after ship staging's bookkeeping commit counts for the build commit ship live names.
  */
-export function fullCheckRefusal(root, commit, runs = null) {
+export function fullCheckRefusal(root, commit, runs = null, buildCommit = null) {
   const file = path.join(root, 'dist', 'check-full.json');
   const here = fs.existsSync(file) ? readJson(file) : null;
   if (here && here.commit === commit) return null;
@@ -1126,15 +1129,36 @@ export function fullCheckRefusal(root, commit, runs = null) {
       list = JSON.parse(
         execFileSync(
           'gh',
-          ['run', 'list', '--workflow', 'nightly.yml', '--limit', '30', '--json', 'headSha,conclusion,databaseId'],
+          [
+            'run',
+            'list',
+            '--workflow',
+            'nightly.yml',
+            '--limit',
+            String(NIGHTLY_RUNS),
+            '--json',
+            'headSha,conclusion,databaseId',
+          ],
           { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 30000 }
         )
       );
     } catch {
       list = [];
     }
-  if (list.some(r => r.headSha === commit && r.conclusion === 'success')) return null;
-  return `R-06 (D-226): live takes only a commit the full check passed; ${commit.slice(0, 7)} has none${here ? ` (the last full check here was at ${String(here.commit).slice(0, 7)})` : ''}. Run npm run check in the background (about 30 min), or gh workflow run nightly.yml --ref main and wait for it green, then ship live again`;
+  const memo = new Map();
+  const bc =
+    buildCommit ||
+    (rev => {
+      if (!memo.has(rev))
+        try {
+          memo.set(rev, buildCommitOf(root, rev));
+        } catch {
+          memo.set(rev, null);
+        }
+      return memo.get(rev);
+    });
+  if (nightlyGreen(list, commit, bc)) return null;
+  return `R-06 (D-226): live takes only a commit the full check passed; ${commit.slice(0, 7)} has none${here ? ` (the last full check here was at ${String(here.commit).slice(0, 7)})` : ''}. Run npm run check in the background at it (about 30 min), or gh workflow run nightly.yml --ref main while main's head builds it and wait for it green, then ship live again`;
 }
 
 async function ship(o) {

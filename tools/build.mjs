@@ -75,10 +75,24 @@ export const BOOKKEEPING_PATHS = [
  * commit is the newest that changed anything but the bookkeeping (M12): recording a task or a deploy in chart/ never
  * moves it, so verify-deploy stays green across it, and a bookkeeping change left uncommitted is not dirt.
  */
+/** The build commit of a revision: its newest commit that changed anything but the bookkeeping (gitState; B-320: the
+ * live workflow's gate, ship live's R-06 and the live copy read it from here, so the three agree). */
+export function buildCommitOf(root, rev = 'HEAD') {
+  return git(root, [
+    'log',
+    '-1',
+    '--format=%H',
+    rev,
+    '--',
+    '.',
+    ...BOOKKEEPING_PATHS.map(p => `:(exclude)${p}`),
+  ]).trim();
+}
+
 export function gitState(root) {
   let commit = '';
   try {
-    commit = git(root, ['log', '-1', '--format=%H', '--', '.', ...BOOKKEEPING_PATHS.map(p => `:(exclude)${p}`)]).trim();
+    commit = buildCommitOf(root);
   } catch {
     /* none in a shallow checkout */
   }
