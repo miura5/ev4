@@ -5658,7 +5658,7 @@
    "B-315",
    "B-317"
   ],
-  "notes": "Oct 26: preparing the cutover (nothing live): pwa-live.yml in the live environment with its gate, the Bash dispatch guard, spec.registry.records.live (app, copy, staged cutover), the read-only flag, D-307's lint, docs/cutover.md. B-320 stays open; the cutover waits on Matt.",
+  "notes": "prepared; cutover waits on Matt. 374160b: pwa-live.yml (gate job: on main, app on, R-02, R-06; deploy job in the GitHub environment live, environment-only secrets, the D1 never seeded, 401/200 check and build hash read back), the Bash dispatch guard in live-guard (D-331; hooks test green; probe pending in the managing chat, environments row unproven), spec.registry.records.live (app ev-live, ready false; copy.worker ev-live; the staged cutover applied by tools/pwa-live.mjs cutover --apply), the read-only page flag (D-306; browser-proved: a tick refused with the banner, and the app unaffected), D-307 lint (tools/d307.mjs, on once live.d1), docs/cutover.md. npm test 695 pass, 0 fail, 1 skipped; smoke 28/28, smoke:pwa 22/22. The review skill was not run: this builder had no subagent tool, so a fresh review is still owed before anything rests on it. Matt's steps: docs/cutover.md 1, 3, 4 (GitHub approval), 5, 7.4, 8, 9.",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
