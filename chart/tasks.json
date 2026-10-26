@@ -7460,7 +7460,7 @@
   "depends": [
    "B-404"
   ],
-  "notes": "Correction: the moveRefused commit landed on main as c405fa2 (rebased over B-232), not 22e2a19. npm test rerun at that head: 772/773 (1 skipped, 0 fail). Ready for final review.",
+  "notes": "Final narrow review of c405fa2: lost words and the IndexedDB-working duplicates closed. Its in-tab repeat after a failed claim fixed by the build manager (a moved tag is never taken over again, tested). Open for the release card: with IndexedDB unable to write, two tabs opening at once can each show the refused words as a second note; nothing is lost, and a reload settles to one.",
   "commit": null,
   "source": "B-404 second review",
   "words": "Notes offline: after a reload, a note the Worker refused stays stuck (Not saved, old words shown, remote edits ignored), and cutting and saving it can overwrite another device's newer words. Two tabs adopting one closed tab's entry over a changed record make two identical (earlier) notes. The 429/5xx backoff is bypassed by the 10 s refresh.",
