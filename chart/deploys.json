@@ -5197,5 +5197,32 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "0247a24",
+  "time": "2026-10-26T10:43:27.981Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "8da719f",
+  "tasks": [
+   "B-403",
+   "B-324",
+   "B-404",
+   "B-342",
+   "B-406",
+   "B-411",
+   "B-408",
+   "B-410",
+   "B-233",
+   "B-412",
+   "B-409",
+   "B-232"
+  ],
+  "summary": "Build the notes list (B-396,; Every job through the API; Build offline and sync in the app (B-396,; Fidelity fix: Progress still differs from its demo board after B-338:…; Build study sessions move into Notes (B-396,; Notes sessions: in rare cases a switched session is filed twice (the…; Build retire Study Watch and the Conversation's session card (B-396,…; Notes offline: after a reload, a note the Worker refused stays stuck…; Triage rows in the actions table; Retire the journal's named read and the notes skip everywhere they…; Build rubric click-through, code review and release card (B-396,…; Weak-spot schema 2",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
