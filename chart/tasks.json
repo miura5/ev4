@@ -7479,12 +7479,12 @@
   "title": "Notes sessions: one filer per switch, idempotent re-filing, honest Undo button",
   "dod": "switchSession's end event names the switching view, and only that view files at the deadline with no takeover delay; every other view waits the takeover delay. Re-filing is idempotent (a filing mark on the session before its findings, or finding ids keyed on the session), so a reload mid-filing never writes findings twice. The Undo button's deadline is undoEndsAt(prev), and a refused Undo says one line. Tests for each; its own fresh review; staging GREEN.",
   "milestone": "PWA",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-406"
   ],
-  "notes": "Second review: gaps 1, 2, 3, 5 and 6 closed; gap 4 closed through the app's bridge. Open for the release card: on the claude.ai page (no bridge), two views filing within the same moment can still write two summaries, and a filer mid-write can file over a session just brought back by Undo. Both are narrow, and Notes runs in the app, where the bridge refuses a second mark.",
-  "commit": null,
+  "notes": "Shipped to staging at 0247a24: ship staging GREEN.",
+  "commit": "0247a24",
   "source": "B-406 second review",
   "words": "Notes sessions: in rare cases a switched session is filed twice (the driver view is not the one holding Undo, or a reload lands between a filing's findings and its filed mark), and the Undo button can show after Undo has stopped working, with no word when a tap does nothing.",
   "reportedAt": "2026-10-26T06:07:38.893Z",
