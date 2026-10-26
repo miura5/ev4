@@ -7355,7 +7355,7 @@
    "B-402",
    "B-405"
   ],
-  "notes": "Builder took it: sessions in Notes (new note, Study with E.V., Today task) with controls in the strip slot #ev-sslot.",
+  "notes": "Ready for review (data write: sessions shape). Built and proven at 64e3aec, not shipped. Scope for the fresh review: core/sessions.mjs (sessionState planned/leftMs/timeUp/reopen/breakStartedAt; startTimedSession, switchSession, switchedUnfiled, undoSwitch), spec/schemas/sessions.schema.json (planned; status discarded; event reopen), page/app/64-ev-study-sessions.js (startTimed, noteSession, undoSwitch, switchTick deferred filing via fileSession, sessionNote reads Notes not the reader, timed thread th-<session id>), 90-render.js (check card and noteAnswer in the pop-up), 40-record.js (discarded hidden), 25-notes.js and 10-today.js hooks, test/data/record/state/current.json (factFields gains planned). Proofs: npm test 737/738 green (1 skip); smoke 28/28; smoke:pwa 23/23 with the new session step; notes 70/70; frame 134/134; shell, captions, core green; run 400/402, both Progress planted-week failures also on main today (Monday edge). Left: review, then ship staging and one staging session read back with note set.",
   "commit": null,
   "source": "build manager, B-396 plan",
   "words": "Build study sessions move into Notes (B-396, D-325).",
