@@ -72,6 +72,7 @@ Status: `open` · `in progress` · `blocked` · `done`. A task opens when every 
 | B-414 | After Notes: two weeks of use, fixes only Done when: Two weeks from the Notes live release: only bugs he reports and bugs the nightly finds are built; every new idea is filed and parked; the release card at the end re-rates the seven areas (D-337). | B-409 | After Notes | open |  |
 | B-415 | Architecture probe at the latest version Done when: After the Notes release, fresh agents map the whole system as it stands (runtimes, data paths, core and page modules, tools, deploy steps, tests and check time) and propose the consolidation: what retires with the cutover (the claude.ai page path, its artifact-data record, the shim that imitates it), how core splits by domain, how the deploy shortens, which multi-device cases can go; with before and after numbers; filed as tasks of the consolidation release (D-337). | B-409 | After Notes | open |  |
 | B-416 | Upkeep section on every release card Done when: tools that write the release card add an upkeep block measured at the release commit: lines of code by area, runtimes E.V. runs in, steps per staging and live deploy, full check minutes, test count, open edge cases named by reviews, and each against the last release; a number that got worse needs one line of why; the seven-area scores re-rated (D-337). | — | After Notes | open |  |
+| B-417 | E.V. course: lesson 1 Done when: The first lesson of the E.V. and engineering course, built on the consolidation: how one feature he uses (practice questions) runs from tap to record, then one small change he makes himself with guidance, reviewed like any other; format and home decided with Matt when it starts (D-337). | B-415 | After Notes | open |  |
 
 ## Your turn
 
@@ -489,4 +490,3 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-281 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; folded into B-297 to B-300 (Study), B-301 (Progress) and B-302 (Record). |
 | B-282 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; replaced by B-303. |
 | B-321 | task |  |  | plan 1eW5FgG9VNzhCySbL1uWuo | declined | Waiting on Matt to scope it: its definition of done is written with him when he does (hand-off 3). |
-| B-417 | request | 2026-10-26T08:59:55.006Z | E.V. course: lesson 1 | chat, Oct 26 (D-337) | inbox |  |

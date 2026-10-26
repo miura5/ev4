@@ -7610,11 +7610,13 @@
  {
   "id": "B-417",
   "kind": "request",
-  "title": "Request (reported Oct 26): E.V. course: lesson 1",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
-  "depends": [],
+  "title": "E.V. course: lesson 1",
+  "dod": "The first lesson of the E.V. and engineering course, built on the consolidation: how one feature he uses (practice questions) runs from tap to record, then one small change he makes himself with guidance, reviewed like any other; format and home decided with Matt when it starts (D-337).",
+  "milestone": "After Notes",
+  "status": "open",
+  "depends": [
+   "B-415"
+  ],
   "notes": "",
   "commit": null,
   "source": "chat, Oct 26 (D-337)",
@@ -7622,6 +7624,10 @@
   "reportedAt": "2026-10-26T08:59:55.006Z",
   "board": {
    "row": "v4 B-417: E.V. course: lesson"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-26T08:59:55.653Z"
   }
  }
 ]
