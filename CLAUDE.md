@@ -214,8 +214,10 @@ B-16 scheduled tasks, B-17 Quizlet read-only, B-18 E.V.'s Mac folder); the run p
 (D-175). B-01 (graded work) and B-04 (patient identifiers) are ended by Matt's own decision (D-324): E.V. no longer
 checks for, flags, holds or blocks either, and Matt is accountable for both. Canvas is read-only GETs through Matt's
 signed-in browser; never a token. Nothing is deleted anywhere: records, Mac files, scheduled tasks, docs; retire
-by marking. Repository code may be removed outright when it is no longer needed; git history keeps it (D-166). No passwords, nothing posted as Matt. The journal is a named read (D-106, D-113): a run reads it only for
-a step that names it, backups and the mirror include it, and a build session may read it. Personal data never enters
+by marking. Repository code may be removed outright when it is no longer needed; git history keeps it (D-166). No passwords, nothing posted as Matt. Everything in Matt's record, notes and journal
+included, is open to E.V.'s runs, agents and app logic to read and analyze, with no checks for personal details on what
+goes in (D-335, Matt's call; it ends the journal's named read, D-106 and D-113, and D-325's skip of notes). The record
+stays owner-only, and reading never writes. Personal data never enters
 this repository (`fixtures/` and `dist/` are ignored; a test greps for exports). **In a build chat**, Matt's explicit OK is
 required for: publishing the live page, creating or changing a Mac-bound task, touching the live record by hand. A refused action is reported in Notes, never worked around. Build chats load three hooks
 (.claude/settings.json, B-56 to B-58): npm test at the end of a turn, the spec's JSON form, and a guard that refuses a

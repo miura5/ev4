@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-335",
+  "date": "Oct 26",
+  "title": "Everything in Matt's record, notes and journal included, is open to runs, agents and app logic to read and analyze; no personal-detail checks on what goes in",
+  "why": "Matt, Oct 26: he owns the record, the app and its development, and wants every item queryable as models improve (the north star: a personal assistant for him alone). Ends the journal's named read (D-106, D-113) and D-325's 'pipelines skip notes'. Kept: the record is owner-only (B-07), nothing is deleted (B-11), reads never write, and personal data never enters this public repository.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-334",
   "date": "Oct 26",
   "title": "Weak-spot schema 2 and its triage rows (B-232, B-233) are built during the freeze as part of Notes",
