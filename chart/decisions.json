@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-344",
+  "date": "Oct 26",
+  "title": "A created Mac task keeps the ended limits it was made with until it is retired",
+  "why": "Mac tasks are never edited (O-5). The old live evening-mac predates D-324, so its prompt still names B-01 and B-04; tasks.live.evening-mac.keepEnded renders those words for it alone so verify matches the real task, and the cutover's replacement drops them.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-343",
   "date": "Oct 26",
   "title": "A release tag the git proxy keeps local is made again in the app workflow's runner",
