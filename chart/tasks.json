@@ -7383,7 +7383,7 @@
    "B-232",
    "B-233"
   ],
-  "notes": "Final fixes in at d9c22a3: a proposal is new in the week of his first accept (addedAt for his own spots); Join skips opposites (opposed(): hypo/hyper, left/right, differing numbers) and the row names its target ('Repeats “X”?'). proposed-misses 4/4; npm test 792/0; smoke 28/28; notes 105/105 (B-407 15/15).",
+  "notes": "Correction: the final-fixes commit on main is 28abf9b (d9c22a3 was its local sha before a rebase).",
   "commit": null,
   "source": "build manager, B-396 plan",
   "words": "Build a missed check proposes a weak spot to To review, visibly (B-396, D-325).",
