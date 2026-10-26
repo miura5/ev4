@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-346",
+  "date": "Oct 26",
+  "title": "The live app token may be a password manager's 20-character mixed password",
+  "why": "Matt's EV_LIVE_TOKEN is a 20-character password mixing letters, digits and symbols (about 130 bits), stronger than the 32-hex minimum it replaces in workerDoc; 32+ printable or 20+ mixing three kinds now pass.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-345",
   "date": "Oct 26",
   "title": "Matt can delete his own items, through a 30-day trash; runs and agents still never delete, enforced by the Worker rather than by prompt rules",
