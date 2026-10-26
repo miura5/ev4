@@ -1538,7 +1538,10 @@
     "worker",
     "filing"
    ],
-   "key": "ws-<date>-<objective>-<slug>",
+   "key": [
+    "ws-<date>-<objective>-<slug>",
+    "note-<date>-<slug>"
+   ],
    "holds": "topic, objective, exam, course, kind, source, initial, events map; schema 2 (B-232, D-236, D-240): proposed, words, links (duplicate-of among them) and the accept, snooze and decline events; links is a mark the page changes (his Join adds duplicate-of)",
    "fromV3": "weakspots minus derived",
    "appends": {
