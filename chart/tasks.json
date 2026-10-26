@@ -4112,12 +4112,12 @@
   "title": "Triage rows in the actions table (D-235, D-242): weakspot-log, weakspot-propose, weakspot-accept, weakspot-join, weakspot-snooze and weakspot-decline as this doc's section 6 gives them; the page writes weak spots through act(); weakspot-log's tool caller is checked against his talk line",
   "dod": "test/actions.test.mjs: each row validates; act() refuses an accept, join, snooze or decline from tool, worker or builder, and a weakspot-log tool call whose from names her line; the legacy write list shrinks by the weak-spot sites; npm test green; ship staging green; live only with B-238",
   "milestone": "v4.6 triage",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-232"
   ],
-  "notes": "Second review: gaps 1 to 6 closed, 7 and 8 kept with reasons; its one usability gap (tool log over a same-day id) closed by B-232's 0247a24. Ready for staging.",
-  "commit": null,
+  "notes": "Shipped to staging at 0247a24: ship staging GREEN.",
+  "commit": "0247a24",
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },
  {
