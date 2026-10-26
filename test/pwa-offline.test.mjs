@@ -78,7 +78,10 @@ function fakeIDB() {
           if (!open && !t.done) {
             t.done = true;
             finish();
-            if (t.oncomplete) t.oncomplete();
+            if (t.failed) {
+              t.error = new Error('QuotaExceededError');
+              if (t.onabort) t.onabort();
+            } else if (t.oncomplete) t.oncomplete();
           }
         });
       const req = fn => {
@@ -96,7 +99,11 @@ function fakeIDB() {
       };
       t.objectStore = () => ({
         get: k => req(() => (m.has(k) ? structuredClone(m.get(k)) : undefined)),
-        put: (v, k) => req(() => void m.set(k, structuredClone(v))),
+        put: (v, k) =>
+          req(() => {
+            if (name === 'outbox' && fake.failOutbox) return void (t.failed = true);
+            m.set(k, structuredClone(v));
+          }),
         delete: k => req(() => void m.delete(k)),
         openCursor: () => {
           open++;
@@ -125,7 +132,8 @@ function fakeIDB() {
     },
   };
   const held = new Set();
-  return {
+  const fake = {
+    failOutbox: false, // true: every write to the outbox store fails
     stores,
     kv: k => st('kv').get(k),
     box: () => [...st('outbox').values()],
@@ -141,6 +149,7 @@ function fakeIDB() {
       },
     },
   };
+  return fake;
 }
 
 /** The shim loaded as the page loads it. `net.down` makes every request fail as a dropped connection does. */
@@ -770,7 +779,7 @@ test('B-410 (shim): a refused note after a reload, cut down and saved: the refus
   assert.deepEqual(await r3.data('notes', ID), other);
 });
 
-test('B-410 (shim): refused, reload, another device writes, he cuts and saves: the other device’s words stay, his are kept', async () => {
+test('B-410 (shim): refused, reload, another device wrote: the note is theirs, his refused words are their own note, still refused', async () => {
   const env = envOf();
   await put(env, 'notes', ID, BASE);
   const idb = fakeIDB();
@@ -779,15 +788,24 @@ test('B-410 (shim): refused, reload, another device writes, he cuts and saves: t
   await put(env, 'notes', ID, other, 1);
   const r = await shim(env, idb);
   assert.ok(await until(() => r.sync() && !r.sync().syncing));
-  assert.deepEqual(await r.data('notes', ID), HUGE(), 'his refused words are what he sees and cuts');
-  const cut = lines(BASE, ['p', 'cut down from his refused note']);
-  await r.db.collection('notes').doc(ID).set(cut);
-  assert.ok(await until(() => allNotes(env).length === 2 && r.sync().pending === 0 && !r.sync().syncing));
-  assert.deepEqual(stored(env, 'notes', ID).data, other, 'never written over the other device’s words');
-  const earlier = allNotes(env).find(n => n.earlierOf === ID);
-  assert.ok(earlier, 'his cut words are kept as the second note');
-  assert.deepEqual(earlier.blocks, cut.blocks);
-  assert.deepEqual(r.sync().refused, [], 'and the refusal is cleared');
+  assert.deepEqual(await r.data('notes', ID), other, 'the newer version is the note');
+  const [ref] = r.sync().refused;
+  assert.ok(ref && ref.id !== ID, 'the refusal now names the second note');
+  const kept1 = await r.data('notes', ref.id);
+  assert.equal(kept1.earlierOf, ID);
+  assert.deepEqual(kept1.blocks, HUGE().blocks, 'his refused words, whole');
+  await kept();
+  assert.deepEqual(
+    idb.box().map(o => [o.id, !!o.refused]),
+    [[ref.id, true]],
+    'only the second note waits in IndexedDB, still refused'
+  );
+  // he opens the second note, cuts it and saves it: it lands as a note of its own, and the refusal clears
+  const cut = N.noteDoc(kept1, { blocks: [block('h1', 'Sodium (Na+)'), block('p', 'cut down')], at: AT });
+  await r.db.collection('notes').doc(ref.id).set(cut);
+  assert.ok(await until(() => !!stored(env, 'notes', ref.id) && r.sync().refused.length === 0 && !r.sync().syncing));
+  assert.deepEqual(stored(env, 'notes', ID).data, other, 'the other device’s words untouched');
+  assert.equal(stored(env, 'notes', ref.id).data.earlierOf, ID);
   await kept();
   assert.deepEqual(idb.box(), []);
 });
@@ -867,4 +885,107 @@ test('B-410 (shim): during a busy Worker’s pause, reading the record again sen
   assert.equal(puts, 1, 'nothing sent before the pause runs out');
   assert.ok(await until(() => stored(env, 'notes', ID).v === 2, 5000), 'then it lands');
   assert.equal(puts, 2);
+});
+
+// ---- B-410 review: the refused edge in a live tab and after a reload, a late refusal, an entry IndexedDB never held
+
+/** Refused in a live tab or a reloaded one, then another device writes, he sees it and edits it. */
+async function refusedThenOtherWrites(reload) {
+  const env = envOf();
+  await put(env, 'notes', ID, BASE);
+  const idb = fakeIDB();
+  let s;
+  if (reload) {
+    await refusedThenClosed(env, idb);
+    s = await shim(env, idb);
+    assert.ok(await until(() => s.sync() && !s.sync().syncing));
+  } else {
+    s = await shim(env, idb);
+    s.net.down = true;
+    await s.db.collection('notes').doc(ID).set(HUGE());
+    s.wake();
+    assert.ok(await until(() => (s.sync().refused || []).length === 1 && !s.sync().syncing));
+  }
+  const other = lines(BASE, ['ul', 'from the other device']);
+  await put(env, 'notes', ID, other, 1);
+  s.focus();
+  assert.ok(
+    await until(async () => JSON.stringify((await s.data('notes', ID)).blocks) === JSON.stringify(other.blocks))
+  );
+  const edit = lines(other, ['p', 'his edit on the shown note']);
+  await s.db.collection('notes').doc(ID).set(edit);
+  assert.ok(await until(() => stored(env, 'notes', ID).v === 3 && !s.sync().syncing));
+  await kept();
+  assert.deepEqual(stored(env, 'notes', ID).data, edit, 'his edit lands in place, from the version he saw');
+  assert.equal(
+    allNotes(env).length,
+    1,
+    'no second note made from that edit: ' + JSON.stringify(allNotes(env).map(n => n.title))
+  );
+  const [ref] = s.sync().refused;
+  assert.ok(ref && ref.id !== ID);
+  const second = await s.data('notes', ref.id);
+  assert.equal(second.earlierOf, ID);
+  assert.equal(second.title, 'Sodium (Na+) (earlier)');
+  assert.deepEqual(second.blocks, HUGE().blocks, 'his refused words have a home: a second note, still refused');
+  assert.deepEqual(
+    idb.box().map(o => [o.id, !!o.refused]),
+    [[ref.id, true]]
+  );
+}
+test('B-410 review (shim): refused in a live tab, another device writes, he edits: in place, refused words kept apart', () =>
+  refusedThenOtherWrites(false));
+test('B-410 review (shim): the same after a reload (a refused entry taken over from the closed tab)', () =>
+  refusedThenOtherWrites(true));
+
+test('B-410 review (shim): a refusal that comes back after he saved a cut marks nothing; the cut lands', async () => {
+  const env = envOf();
+  await put(env, 'notes', ID, BASE);
+  const idb = fakeIDB();
+  let hold = null;
+  let first = true;
+  const s = await shim(
+    env,
+    idb,
+    { down: false },
+    {
+      status: async (url, init) => {
+        if (init.method === 'PUT' && first) {
+          first = false;
+          await new Promise(r => (hold = r)); // the big send is out; its answer (400) comes after the cut is saved
+        }
+        return null;
+      },
+    }
+  );
+  s.net.down = true;
+  await s.db.collection('notes').doc(ID).set(HUGE());
+  s.wake();
+  assert.ok(await until(() => !!hold));
+  const cut = lines(BASE, ['p', 'cut while the big one was out']);
+  await s.db.collection('notes').doc(ID).set(cut);
+  hold();
+  assert.ok(await until(() => stored(env, 'notes', ID).v === 2 && !s.sync().syncing));
+  assert.deepEqual(stored(env, 'notes', ID).data, cut, 'the cut goes in the same replay');
+  assert.deepEqual(s.sync().refused, [], 'the late refusal marks nothing');
+  await kept();
+  assert.deepEqual(idb.box(), [], 'and writes nothing to IndexedDB');
+  assert.deepEqual(await s.data('notes', ID), cut);
+});
+
+test('B-410 review (shim): a note IndexedDB could not hold still makes its second note when it is stale', async () => {
+  const env = envOf();
+  await put(env, 'notes', ID, BASE);
+  const idb = fakeIDB();
+  const s = await shim(env, idb);
+  s.net.down = true;
+  idb.failOutbox = true; // a full disk, or a private window: the outbox entry lives in this tab only
+  const mine = lines(BASE, ['ul', 'kept only in this tab']);
+  await s.db.collection('notes').doc(ID).set(mine);
+  await put(env, 'notes', ID, lines(BASE, ['ul', 'from the other device']), 1);
+  await s.online();
+  const earlier = allNotes(env).find(n => n.earlierOf === ID);
+  assert.ok(earlier, 'the claim holds for an entry no other tab could see');
+  assert.deepEqual(earlier.blocks, mine.blocks);
+  assert.ok(textOfAll(env).includes('from the other device'));
 });

@@ -412,10 +412,13 @@
         nm.addEventListener('dblclick', () => openNote(n.id));
         const op = btn('Open', () => openNote(n.id), { cls: 'btn ghost sm hov n-open' });
         op.setAttribute('aria-label', 'Open ' + noteName(n));
+        // B-410: a note the record refused (kept on this device only) says so in the list, as its header does
+        const unsaved = NET.refused.some(x => x.c === 'notes' && x.id === n.id);
         r.append(
           nIcon(NI.note, 'ico sicon'),
           nm,
           op,
+          ...(unsaved ? [el('span', 'mini n-unsaved', 'Not saved')] : []),
           el('span', 'mini nk', n.label || ''),
           el('span', 't', listWhen(n.editedAt || n.at))
         );
@@ -1296,6 +1299,7 @@
       NET.syncing = !!d.syncing;
       NET.refused = Array.isArray(d.refused) ? d.refused : [];
       syncHead();
+      if (NOTE.view === 'list') renderNotes(); // the list marks a refused note
     });
 
     // ---- the two-versions picker (NoteStates): this device's version and the other, each with Keep this version

@@ -135,7 +135,19 @@
         cur.continue();
       };
     });
-  const boxPut = (key, o) => idbTx(BOX, 'readwrite', st => st.put(clone(o), key)).catch(() => {});
+  /** true once the entry is in IndexedDB; false when it could not be written (the entry then lives in this tab only,
+   * marked local, and its claim is this tab's: no other tab can hold what IndexedDB never held). */
+  const boxPut = (key, o) =>
+    idbTx(BOX, 'readwrite', st => st.put(clone(o), key)).then(
+      () => {
+        delete o.local;
+        return true;
+      },
+      () => {
+        o.local = true;
+        return false;
+      }
+    );
   /** The entry removed only when it is still the one sent: another tab's newer words under that key stay. */
   const boxDone = (key, tag) =>
     idbTx(BOX, 'readwrite', (st, done) => {
@@ -192,8 +204,18 @@
       if (o.tab !== TAB && open && open.has(o.tab)) continue; // that tab is open: it sends its own
       if (o.tab === TAB) continue;
       outbox[key] = o;
-      (db[o.c] = db[o.c] || {})[o.id] = o.doc;
       n++;
+      // B-410: refused words the record has since passed get their own second note, as take() does
+      const v = verOf(o.c, o.id);
+      if (o.refused && v && (!o.base || v > o.base)) {
+        moveRefused(key, o);
+        continue;
+      }
+      (db[o.c] = db[o.c] || {})[o.id] = o.doc;
+    }
+    if (moved) {
+      moved = false;
+      tell();
     }
     return n;
   }
@@ -264,16 +286,42 @@
       if (Number.isInteger(d.v) && d.v < (verOf(d.c, d.id) || 0)) continue;
       // B-404: a note saved on this device and not yet sent stays as he wrote it; replay() settles it
       if (sendableFor(d.c, d.id)) continue;
-      // a refused entry hides nothing newer: only the version its words were built on (read again) leaves them shown
-      const refused = Object.values(outbox).filter(o => o.c === d.c && o.id === d.id && o.refused);
-      if (refused.length && refused.every(o => o.base && Number.isInteger(d.v) && d.v <= o.base)) continue;
+      // B-410: a refused entry (words the record can't take as they are) never hides a newer version. The version its
+      // words were built on, read again, leaves them shown; a newer one takes the note, and his refused words move at
+      // once to a second note of their own, '<title> (earlier)', still refused, which he can open, cut and save. The
+      // note then has no entry, so his next save goes straight on from the version he sees.
+      const refused = Object.entries(outbox).filter(([, o]) => o.c === d.c && o.id === d.id && o.refused);
+      if (refused.length) {
+        const newer = !Number.isInteger(d.v) || refused.some(([, o]) => !o.base || d.v > o.base);
+        if (!newer) continue;
+        for (const [key, o] of refused) moveRefused(key, o);
+      }
       (db[d.c] = db[d.c] || {})[d.id] = d.data;
       setVer(d.c, d.id, d.v);
       changed.add(d.c);
     }
     if (changed.size) keepCopy();
+    if (moved) {
+      moved = false;
+      tell();
+    }
     return changed;
   };
+  let moved = false;
+  /** B-410: a refused entry's words as a second note on this device: a new id, earlierOf the note, still refused. */
+  function moveRefused(key, o) {
+    const at = new Date().toISOString();
+    const eid = newNoteId(at);
+    const ekey = ownKey(o.c, eid);
+    const eo = { tab: TAB, c: o.c, id: eid, doc: earlierNote(o.doc, o.id, at), base: null, tag: rand(12) };
+    eo.refused = o.refused;
+    delete outbox[key];
+    outbox[ekey] = eo;
+    (db[o.c] = db[o.c] || {})[eid] = eo.doc;
+    // the new entry is written before the old one leaves IndexedDB
+    boxPut(ekey, eo).then(() => boxDone(key, o.tag));
+    moved = true;
+  }
   async function pull() {
     const r = await api('db?since=' + since);
     if (r.status === 401) return 401;
@@ -563,9 +611,16 @@
           } else if (r.status === 401) return;
           else if (r.status === 429 || r.status >= 500) return retryLater();
           else {
+            const why = await r.text().catch(() => '');
+            if (outbox[key] !== o) {
+              // B-410: a save of the note replaced this entry while it was out: the refusal was of words he has
+              // since changed, so it marks nothing and writes nothing; the new entry goes in this same replay
+              if (o.tab !== TAB) boxDone(key, o.tag);
+              sent++;
+              continue;
+            }
             // refused for good (its shape or size): kept on this device, unsent, and the page is told; a new save of
             // the note (cut down, D-332) tries again
-            const why = await r.text().catch(() => '');
             o.refused = r.status + ' ' + why.slice(0, 200);
             await boxPut(key, o);
             console.warn('E.V. app: ' + o.c + '/' + o.id + ' was refused: ' + o.refused);
@@ -618,7 +673,8 @@
     const eo = { tab: TAB, c: o.c, id: eid, doc: earlier, base: null, tag: rand(12) };
     // B-410: only the tab whose claim holds makes the second note (two tabs that took over one closed tab's entry, or
     // two tabs with no Web Locks, never make it twice); the second note's entry lands in the same transaction
-    const won = await boxClaim(key, now.tag, ekey, eo);
+    // an entry IndexedDB never held is this tab's alone: its claim holds, and the second note is put on its own
+    const won = now.local ? (await boxPut(ekey, eo), true) : await boxClaim(key, now.tag, ekey, eo);
     if (outbox[key] !== now) {
       // a save of the note replaced the entry while the claim was out: if the claim held, his words in the
       // second note are kept as well; the new entry goes on as a stale send

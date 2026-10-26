@@ -2055,6 +2055,7 @@ body.has-line #today-week .wk-her{display:none}
 #p-notes .n-row .nk,#p-notes .n-row .t{flex:none;font-size:calc(12.5px * var(--ts));color:var(--quiet);white-space:nowrap;text-align:right}
 #p-notes .n-row .nk{width:92px;overflow:hidden;text-overflow:ellipsis}
 #p-notes .n-row .t{min-width:70px}
+#p-notes .n-row .n-unsaved{flex:none;font-size:calc(12.5px * var(--ts));color:var(--urg);white-space:nowrap} /* B-410: refused, kept on this device */
 #p-notes .nempty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:72px 24px;color:var(--quiet);font-size:calc(13.5px * var(--ts));line-height:1.5;text-align:center}
 #p-notes .nempty span{max-width:360px}
 #p-notes .nempty .ico{width:28px;height:28px;stroke-width:1.4;color:var(--faint);margin-bottom:4px}

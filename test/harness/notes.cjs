@@ -699,6 +699,37 @@ const openNoteId = page =>
     );
     ok(`${tag} the note then closes normally, and the '(earlier)' note is in the list`, closed409 && listed, '');
 
+    // B-410: a note the record refused (the app's shim says so through ev-sync) reads Not saved in the list and in its
+    // header, and the mark goes when the refusal does
+    const tell = refused =>
+      page.evaluate(
+        r =>
+          window.dispatchEvent(
+            new CustomEvent('ev-sync', { detail: { online: true, pending: 0, syncing: false, refused: r } })
+          ),
+        refused
+      );
+    await tell([{ c: 'notes', id: kept.eid, why: '400 too large' }]);
+    const row410 = await page.evaluate(
+      id => (document.querySelector(`#notes-rows [data-note="${id}"] .n-unsaved`) || {}).textContent || '',
+      kept.eid
+    );
+    await openFromList(page, kept.eid);
+    await until(page, () => !document.getElementById('notes-editor').hidden);
+    const head410 = await page.evaluate(() => document.querySelector('.mh .n-sync').textContent);
+    await page.click('.n-back');
+    await until(page, () => document.getElementById('notes-editor').hidden, null, 3000);
+    await tell([]);
+    const gone410 = await page.evaluate(
+      id => !document.querySelector(`#notes-rows [data-note="${id}"] .n-unsaved`),
+      kept.eid
+    );
+    ok(
+      `${tag} a refused note reads Not saved in the list and in its header, until the refusal clears`,
+      /Not saved/.test(head410) && row410 === 'Not saved' && gone410,
+      JSON.stringify({ head410, row410, gone410 })
+    );
+
     // B-404, D-332: an edit that shrinks a note already past the size cap is allowed (only growth past it is refused)
     const bigId = 'n-20261026-100000-BigNoteBigNote01';
     await page.evaluate(id => {
