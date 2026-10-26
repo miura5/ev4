@@ -4116,7 +4116,7 @@
   "depends": [
    "B-232"
   ],
-  "notes": "Review gaps fixed, ready for second review at 342a072: tool path always ACT.tool (no tap fallback; page-path test on the built core.js); join builds links from ctx.weakspots, refuses a missing spot, drops args.links, re-points spots joined to it (no chain); accept/snooze/decline/solid refuse a duplicate; log/propose refuse a set over an existing id; survivors and duplicateOf injected from E.V. core (makeActions second arg); double compose kept, as D-200's lint takes only run(ACT.tap|tool(...).writes); 12 KB actions cap kept, since rows can't share args without a validator change. npm test 785 pass 0 fail 1 skipped; actions.test 22/22; smoke 28/28; run harness 389/389.",
+  "notes": "Second review: gaps 1 to 6 closed, 7 and 8 kept with reasons; its one usability gap (tool log over a same-day id) closed by B-232's 0247a24. Ready for staging.",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },
