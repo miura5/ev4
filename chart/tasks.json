@@ -7258,7 +7258,7 @@
    "B-401",
    "B-399"
   ],
-  "notes": "claimed by build-manager agent",
+  "notes": "milestone: editor, block model, save path and tests pushed (10929dc, 762bc0b, 3b43fd1); npm test 725/725, smoke 28/28, notes harness 18/18, frame 111/111; full touched check running",
   "commit": null,
   "source": "build manager, B-396 plan",
   "words": "Build the editor (B-396, D-325).",
