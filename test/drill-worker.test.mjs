@@ -16,7 +16,7 @@ import { CODE_STEPS } from '../core/steps.mjs';
 import * as D1B from '../core/d1backup.mjs';
 import { manifestOf } from '../pwa/backup.js';
 import { renderPrompt } from '../tools/prompts.mjs';
-import { ROOT } from './helpers.mjs';
+import { ROOT, preCutoverSpec } from './helpers.mjs';
 
 const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
 EV.configure(spec);
@@ -70,40 +70,55 @@ const rowsOf = (dump, keep = c => c !== 'system') =>
     .map(([k, v]) => ({ c: k.split('/')[0], id: k.split('/').slice(1).join('/'), data: JSON.stringify(v.data) }))
     .filter(r => keep(r.c));
 
-test('the backup folder is one spec value, every Worker pipeline of staging is targeted, and no prompt names Study Watch anew', () => {
-  const runs = spec.registry.records.staging.runs;
-  for (const p of ['evening-mac', 'restore-drill']) {
-    assert.equal(RUN.runTarget(spec, 'staging', p), 'worker', p);
-    assert.deepEqual(spec.tasks.staging[p].folders, [runs.backup.folder], `${p} lists the one backup folder`);
-    // B-317: created Oct 25 from the chat linked to the Mac with Matt present; the old tasks are retired and disabled
-    assert.match(spec.tasks.staging[p].trigger || '', /^trig_/, `${p}: its replacement was created with Matt present`);
-    assert.ok(
-      !Object.values(spec.tasks.staging).some(
-        t => t && t.trigger === spec.tasks.staging[p].trigger && t !== spec.tasks.staging[p]
-      ),
-      `${p}: its trigger id is its own`
-    );
+test('the backup folder is one spec value, every Worker pipeline of staging and live is targeted, and no prompt names Study Watch anew', () => {
+  // B-320: since the cutover live runs on its Worker too, with its own backup folder (E.V. Backups) and Mac tasks
+  const LIVE_TRIGGERS = {
+    'evening-mac': 'trig_01Ma8woo5ieoWM1s5KHuRpip',
+    'restore-drill': 'trig_018VSRmz8pdNzdVSxpH42PEG',
+  };
+  assert.equal(spec.registry.records.live.runs.backup.folder, '/Users/peachfritter/Documents/E.V. Backups');
+  assert.notEqual(spec.registry.records.live.runs.backup.folder, spec.registry.records.staging.runs.backup.folder);
+  for (const rec of ['staging', 'live']) {
+    const runs = spec.registry.records[rec].runs;
+    assert.ok(['mac', 'r2'].includes(runs.backup.restoreFrom), rec);
+    for (const p of ['evening-mac', 'restore-drill']) {
+      const task = spec.tasks[rec][p];
+      assert.equal(RUN.runTarget(spec, rec, p), 'worker', `${rec}.${p}`);
+      assert.deepEqual(task.folders, [runs.backup.folder], `${rec}.${p} lists the one backup folder`);
+      // B-317, B-320: created from the chat linked to the Mac with Matt present; the old tasks are retired and disabled
+      assert.match(task.trigger || '', /^trig_/, `${rec}.${p}: its replacement was created with Matt present`);
+      if (rec === 'live') assert.equal(task.trigger, LIVE_TRIGGERS[p], `live.${p}`);
+      assert.ok(
+        !['staging', 'live'].some(r =>
+          Object.values(spec.tasks[r]).some(t => t && t.trigger === task.trigger && t !== task)
+        ),
+        `${rec}.${p}: its trigger id is its own`
+      );
+      const pr = renderPrompt({ key: `${rec}.${p}`, task, spec });
+      assert.ok(pr.includes('doc_id "worker"') && pr.includes('--worker /tmp/ev/system/worker.json'), `${rec}.${p}`);
+      assert.ok(pr.includes(runs.backup.folder), `${rec}.${p}`);
+      assert.ok(!/Study Watch/.test(pr), `${rec}.${p}`);
+      assert.ok(
+        !/Bearer|"token"\s*:/.test(
+          pr
+            .split('\n')
+            .filter(l => !l.startsWith("node -e '"))
+            .join('\n')
+        ),
+        `${rec}.${p}`
+      );
+    }
   }
-  assert.equal(RUN.runTarget(spec, 'live', 'evening-mac'), 'artifact');
   assert.equal(RUN.runTarget(spec, 'staging', 'diagnostic'), 'artifact');
-  assert.ok(['mac', 'r2'].includes(runs.backup.restoreFrom));
+  // before the cutover live's evening-mac ran on ArtifactData, and the cutover is what moves it
+  assert.equal(RUN.runTarget(preCutoverSpec(spec), 'live', 'evening-mac'), 'artifact');
   const retired = spec.tasks.retired.map(r => r.trigger);
-  for (const t of ['trig_01EQBnYdtbqUKkh8bjTiTvCA', 'trig_011xnMqTq16qeEw68DPJzXVH']) assert.ok(retired.includes(t), t);
-  for (const k of ['evening-mac', 'restore-drill']) {
-    const p = renderPrompt({ key: 'staging.' + k, task: spec.tasks.staging[k], spec });
-    assert.ok(p.includes('doc_id "worker"') && p.includes('--worker /tmp/ev/system/worker.json'), k);
-    assert.ok(p.includes(runs.backup.folder), k);
-    assert.ok(!/Study Watch/.test(p), k);
-    assert.ok(
-      !/Bearer|"token"\s*:/.test(
-        p
-          .split('\n')
-          .filter(l => !l.startsWith("node -e '"))
-          .join('\n')
-      ),
-      k
-    );
-  }
+  for (const t of ['trig_01EQBnYdtbqUKkh8bjTiTvCA', 'trig_011xnMqTq16qeEw68DPJzXVH', 'trig_01AxnPF3iPyo2BpCQtMdAKP8'])
+    assert.ok(retired.includes(t), t);
+  assert.ok(
+    !Object.values(spec.tasks.live).some(t => retired.includes(t && t.trigger)),
+    'no live task keeps a retired trigger'
+  );
 });
 
 test("manifestSync is pwa/backup.js's manifestOf", async () => {

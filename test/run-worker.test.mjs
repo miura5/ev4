@@ -13,7 +13,7 @@ import EV from '../core/evcore.mjs';
 import { loadValidator } from '../core/schemas.mjs';
 import * as RUN from '../core/run.mjs';
 import { renderPrompt } from '../tools/prompts.mjs';
-import { ROOT } from './helpers.mjs';
+import { ROOT, preCutoverSpec } from './helpers.mjs';
 
 const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
 EV.configure(spec);
@@ -83,22 +83,42 @@ const filesUnder = d =>
     .readdirSync(d, { withFileTypes: true })
     .flatMap(e => (e.isDirectory() ? filesUnder(path.join(d, e.name)) : [path.join(d, e.name)]));
 
-test("the target is per record: staging's Worker pipelines go to the Worker; live and the diagnostic keep ArtifactData", () => {
-  for (const p of ['morning', 'evening-cloud', 'weekly', 'worker', 'watchdog']) {
+test("the target is per record: staging's and (since the cutover) live's Worker pipelines go to the Worker; the diagnostic keeps ArtifactData", () => {
+  const pre = preCutoverSpec(spec);
+  for (const p of ['morning', 'evening-cloud', 'weekly', 'worker', 'watchdog', 'evening-mac', 'restore-drill']) {
     assert.equal(RUN.runTarget(spec, 'staging', p), 'worker', p);
-    assert.equal(RUN.runTarget(spec, 'live', p), 'artifact', p);
+    // B-320: the cutover moved every live pipeline to the ev-live Worker
+    assert.equal(RUN.runTarget(spec, 'live', p), 'worker', p);
+    assert.equal(RUN.runTarget(pre, 'staging', p), 'worker', p);
   }
-  // B-317: staging's Mac lane too; the diagnostic keeps ArtifactData (its probes test that store).
-  for (const p of ['evening-mac', 'restore-drill']) assert.equal(RUN.runTarget(spec, 'staging', p), 'worker', p);
+  // before the cutover live kept ArtifactData
+  for (const p of ['morning', 'evening-cloud', 'weekly', 'worker', 'watchdog', 'evening-mac'])
+    assert.equal(RUN.runTarget(pre, 'live', p), 'artifact', p);
+  assert.equal(pre.registry.records.live.runs, undefined);
+  // the diagnostic keeps ArtifactData (its probes test that store).
   assert.equal(RUN.runTarget(spec, 'staging', 'diagnostic'), 'artifact');
-  assert.equal(RUN.runTarget(spec, 'live', 'evening-mac'), 'artifact');
-  assert.equal(spec.registry.records.live.runs, undefined, 'live keeps ArtifactData until the cutover (B-320)');
+  assert.equal(RUN.runTarget(spec, 'live', 'diagnostic'), 'artifact');
 });
 
-test('live still prints ArtifactData at every move', () => {
+test('a record off the Worker (live before the cutover) still prints ArtifactData at every move; live now needs its Worker file', () => {
+  // B-320: since the cutover live is on the Worker, so a live run without its saved Worker file stops at start
+  assert.throws(
+    () =>
+      RUN.start({
+        spec,
+        pipeline: 'evening-cloud',
+        record: 'live',
+        at: AT,
+        dir: tmp('ev4-live-'),
+        release: 'v',
+        worker: '/nonexistent',
+      }),
+    /no Worker file at \/nonexistent.*get system\/worker/
+  );
+  const pre = preCutoverSpec(spec);
   const dir = tmp('ev4-live-');
   const s = RUN.start({
-    spec,
+    spec: pre,
     pipeline: 'evening-cloud',
     record: 'live',
     at: AT,
@@ -110,7 +130,7 @@ test('live still prints ArtifactData at every move', () => {
     [s[0].tool, s[0].args.action, s[0].args.url],
     ['ArtifactData', 'set', 'https://claude.ai/artifact/' + spec.registry.records.live.artifact]
   );
-  const pulls = RUN.pull({ spec, dir, at: AT });
+  const pulls = RUN.pull({ spec: pre, dir, at: AT });
   assert.ok(pulls.length && pulls.every(c => c.tool === 'ArtifactData'));
   const e = RUN.end({ dir, at: AT, status: 'failed', detail: 'pull: test', transcript: null });
   assert.equal(e[0].tool, 'ArtifactData');

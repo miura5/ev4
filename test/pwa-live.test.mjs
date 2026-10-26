@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT } from './helpers.mjs';
+import { ROOT, preCutoverSpec } from './helpers.mjs';
 import {
   stagingGreen,
   nightlyGreen,
@@ -35,6 +35,9 @@ const off = () => {
   s.registry.records.live.app.ready = false;
   return s;
 };
+// B-320: the spec as it stood before the cutover commit (the cutover reversed), with the live app on or off.
+const preOn = () => preCutoverSpec(on());
+const preOff = () => preCutoverSpec(off());
 const jobOf = name => {
   const i = wf.indexOf(`\n  ${name}:\n`);
   assert.ok(i > 0, name + ' job');
@@ -197,13 +200,21 @@ test('B-320 (D-330): the live app in the spec, on from the cutover sitting; ship
   assert.equal(app.environment, 'live');
   assert.equal(app.ready, true, 'turned on at the sitting (docs/cutover.md step 2.1)');
   assert.equal(spec.registry.records.live.copy.worker, 'ev-live', "B-319's copy target");
+  // B-320: since the cutover every live pipeline runs on the ev-live Worker; before it, on the claude.ai record
+  const runs = spec.registry.records.live.runs;
+  assert.equal(runs.store, 'worker');
+  assert.deepEqual(runs.worker, { collection: 'system', doc_id: 'worker' });
+  assert.deepEqual(Object.keys(spec.tasks.live).sort(), [...runs.pipelines].sort(), 'every live task is on the Worker');
+  for (const p of runs.pipelines) assert.equal(runTarget(spec, 'live', p), 'worker', p);
+  assert.equal(runTarget(spec, 'live', 'diagnostic'), 'artifact', 'a pipeline not listed keeps ArtifactData');
+  const pre = preOn();
   assert.equal(
-    spec.registry.records.live.runs,
+    pre.registry.records.live.runs,
     undefined,
-    'live pipelines stay on the claude.ai record until the cutover'
+    'live pipelines stayed on the claude.ai record until the cutover'
   );
   for (const p of ['morning', 'evening-cloud', 'evening-mac', 'weekly', 'worker', 'watchdog'])
-    assert.equal(runTarget(spec, 'live', p), 'artifact', p);
+    assert.equal(runTarget(pre, 'live', p), 'artifact', p);
   const apps = appsOf(on());
   assert.deepEqual(apps.live, { worker: 'ev-live', workflow: 'pwa-live.yml', ready: true });
   assert.equal(appsOf(off()).live.ready, false);
@@ -232,8 +243,9 @@ test('B-320: the live check: 401 without the token and with a wrong one, 200 wit
 });
 
 test('B-320: the cutover spec turns on read-only, D1, the live runs and the Mac tasks; the old evening-mac is retired', () => {
-  assert.throws(() => cutoverSpec(off()), /live app is not on/);
-  const before = on();
+  assert.throws(() => cutoverSpec(preOff()), /live app is not on/);
+  assert.throws(() => cutoverSpec(spec), /no staged cutover/, 'the spec is cut over: it refuses a second time');
+  const before = preOn();
   const after = cutoverSpec(before);
   const live = after.registry.records.live;
   assert.equal(live.readOnly, true);
@@ -255,7 +267,7 @@ test('B-320: the cutover spec turns on read-only, D1, the live runs and the Mac 
     after.tasks.retired.slice(before.tasks.retired.length).map(r => [r.trigger, r.was]),
     [[old, 'live.evening-mac']]
   );
-  assert.deepEqual(before, on(), 'the input is left as it is');
+  assert.deepEqual(before, preOn(), 'the input is left as it is');
   assert.throws(() => cutoverSpec(after), /no staged cutover/);
   // the staged runs mirror staging's, on their own scratch and folder
   const st = spec.registry.records.staging.runs;
@@ -266,6 +278,25 @@ test('B-320: the cutover spec turns on read-only, D1, the live runs and the Mac 
   const pages = buildPages({ root: ROOT, spec: after, schemas: loadSchemas(ROOT), release: 'v' + spec.specVersion });
   assert.equal(JSON.parse(pages.live['spec.json']).readOnly, true);
   assert.equal(JSON.parse(pages.staging['spec.json']).readOnly, false);
+  // the committed spec is that cutover, with the two live Mac tasks' trigger ids filled in at the Mac (D-322)
+  const now = spec.registry.records.live;
+  assert.equal(now.readOnly, true);
+  assert.equal(now.d1, true);
+  assert.deepEqual(Object.keys(now.cutover), ['_why']);
+  assert.equal(spec.tasks.live['evening-mac'].trigger, 'trig_01Ma8woo5ieoWM1s5KHuRpip');
+  assert.equal(spec.tasks.live['restore-drill'].trigger, 'trig_018VSRmz8pdNzdVSxpH42PEG');
+  assert.equal(spec.tasks.live['evening-mac'].keepEnded, undefined);
+  for (const k of ['evening-mac', 'restore-drill']) {
+    assert.deepEqual(spec.tasks.live[k].folders, ['/Users/peachfritter/Documents/E.V. Backups'], k);
+    assert.equal(spec.tasks.live[k].macBound, true, k);
+  }
+  assert.ok(
+    spec.tasks.retired.some(r => r.trigger === 'trig_01AxnPF3iPyo2BpCQtMdAKP8' && r.was === 'live.evening-mac'),
+    'the old evening-mac is retired'
+  );
+  const expected = JSON.parse(JSON.stringify(spec));
+  for (const k of ['evening-mac', 'restore-drill']) expected.tasks.live[k].trigger = null;
+  assert.deepEqual(after, expected, 'cutover --apply on the pre-cutover spec gives the committed spec');
 });
 
 test('B-320: the live record system/worker carries the address from the spec and the token from its file only', () => {
@@ -284,9 +315,14 @@ test('B-320: the live record system/worker carries the address from the spec and
   assert.throws(() => workerDoc(bad, t), /not an https workers.dev/);
 });
 
-test('B-320 (D-306): the read-only flag: off now on both pages; on, the claude.ai live page refuses every write first', () => {
-  const pages = buildPages({ root: ROOT, spec, schemas: loadSchemas(ROOT), release: 'v' + spec.specVersion });
-  for (const t of ['live', 'staging']) assert.equal(JSON.parse(pages[t]['spec.json']).readOnly, false, t);
+test('B-320 (D-306): the read-only flag: on for the live page since the cutover, off for staging; on, the claude.ai live page refuses every write first', () => {
+  const schemas = loadSchemas(ROOT);
+  const pages = buildPages({ root: ROOT, spec, schemas, release: 'v' + spec.specVersion });
+  assert.equal(JSON.parse(pages.live['spec.json']).readOnly, true, 'live');
+  assert.equal(JSON.parse(pages.staging['spec.json']).readOnly, false, 'staging');
+  const prePages = buildPages({ root: ROOT, spec: preOn(), schemas, release: 'v' + spec.specVersion });
+  for (const t of ['live', 'staging'])
+    assert.equal(JSON.parse(prePages[t]['spec.json']).readOnly, false, t + ' before the cutover');
   const app = appSource(ROOT);
   // the flag, evaluated as the page does: the flag on and not the app's host
   const m =

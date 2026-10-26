@@ -12,7 +12,7 @@ import { renderPrompt, RUN_MARKER, limitLanes } from '../tools/prompts.mjs';
 import { renderGate } from '../tools/gate.mjs';
 import * as H from '../tools/hooks.mjs';
 import { build } from '../tools/build.mjs';
-import { ROOT, copyRepo, git } from './helpers.mjs';
+import { ROOT, copyRepo, git, preCutoverSpec } from './helpers.mjs';
 
 const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
 const release = 'v' + spec.specVersion;
@@ -36,16 +36,17 @@ test('every pipeline with steps has a prompt for live and staging; the rest wait
     if (spec.tasks.live[n]) assert.equal(typeof p[`live.${n}`], 'string', n);
     assert.equal(typeof p[`staging.${n}`], 'string', n);
   }
-  assert.equal(spec.tasks.live['restore-drill'], undefined, 'the drill restores into staging only');
-  assert.match(
-    p['staging.restore-drill'],
-    /reads one backup file from it, with device_list_dir and device_stage_files/
-  );
-  assert.match(
-    p['staging.restore-drill'],
-    /on the Mac, read only the backup files the step names, and write, move or change nothing there/
-  );
-  assert.doesNotMatch(p['staging.restore-drill'], /Canvas|Quizlet|device_commit_files/);
+  // B-320: since the cutover live has its own drill too (into the ev-live-scratch D1); both only read the Mac
+  assert.equal(spec.tasks.live['restore-drill'].trigger, 'trig_018VSRmz8pdNzdVSxpH42PEG');
+  for (const k of ['staging.restore-drill', 'live.restore-drill']) {
+    assert.match(p[k], /reads one backup file from it, with device_list_dir and device_stage_files/, k);
+    assert.match(
+      p[k],
+      /on the Mac, read only the backup files the step names, and write, move or change nothing there/,
+      k
+    );
+    assert.doesNotMatch(p[k], /Canvas|Quizlet|device_commit_files/, k);
+  }
   const diag = renderPrompt({ key: 'staging.diagnostic', task: spec.tasks.diagnostic, spec, release });
   assert.match(diag, /end this turn with exactly: Waiting for the probe\. When it arrives, add --probe/);
   assert.doesNotMatch(diag, /journal|add_repo|git clone/i);
@@ -71,7 +72,15 @@ test('every pipeline with steps has a prompt for live and staging; the rest wait
       `E\\.V\\.'s folder for this record there is "${spec.registry.records.staging.runs.backup.folder.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')}"`
     )
   );
-  assert.match(p['live.evening-mac'], /there is "\/Users\/peachfritter\/Documents\/E\.V\. Study Watch"\./);
+  // B-320 (D-322): since the cutover live's evening-mac writes E.V. Backups, its one backup folder; before it, Study Watch
+  assert.match(p['live.evening-mac'], /there is "\/Users\/peachfritter\/Documents\/E\.V\. Backups"\./);
+  assert.equal(spec.registry.records.live.runs.backup.folder, '/Users/peachfritter/Documents/E.V. Backups');
+  assert.doesNotMatch(p['live.evening-mac'], /Study Watch/);
+  const pre = preCutoverSpec(spec);
+  assert.match(
+    renderPrompt({ key: 'live.evening-mac', task: pre.tasks.live['evening-mac'], spec: pre, release }),
+    /there is "\/Users\/peachfritter\/Documents\/E\.V\. Study Watch"\./
+  );
   assert.match(p['staging.evening-mac'], /Canvas is read-only: only the GET requests the printed scripts make/);
   assert.match(p['staging.evening-mac'], /never enter a password/);
   for (const n of ['morning', 'evening-cloud', 'weekly', 'worker'])

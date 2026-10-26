@@ -13,7 +13,7 @@ import * as RUN from '../core/run.mjs';
 import os from 'node:os';
 import { rebuildOne } from '../core/derive.mjs';
 import { loadValidator } from '../core/schemas.mjs';
-import { ROOT } from './helpers.mjs';
+import { ROOT, preCutoverSpec } from './helpers.mjs';
 
 const base = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
 EV.configure(base);
@@ -168,8 +168,35 @@ test('the watch step names both kinds in the push; health/current keeps the sche
 
 test('the pull prints the list_triggers read; pulled saves its pages and asks for the next one; no result leaves the kinds at no-run', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-b61-'));
-  RUN.start({ spec, pipeline: 'watchdog', record: 'live', at: '2026-10-20T10:40:00Z', dir, release: 'v4.0.0' });
-  const calls = RUN.pull({ spec, dir, at: '2026-10-20T10:40:00Z' });
+  // B-320: live's watchdog is on the ev-live Worker since the cutover; its pull still ends with the list_triggers read
+  const wdir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-b61w-'));
+  const wfile = path.join(wdir, 'worker.json');
+  fs.writeFileSync(
+    wfile,
+    JSON.stringify({ schema: 1, url: 'https://ev-live.x.workers.dev', token: 'planted-' + 'x7Q9'.repeat(8) })
+  );
+  fs.mkdirSync(path.join(wdir, 'run'));
+  const at = '2026-10-20T10:40:00Z';
+  RUN.start({
+    spec,
+    pipeline: 'watchdog',
+    record: 'live',
+    at,
+    dir: path.join(wdir, 'run'),
+    release: 'v4.0.0',
+    worker: wfile,
+  });
+  const wcalls = RUN.pull({ spec, dir: path.join(wdir, 'run'), at });
+  assert.match(wcalls[0].args.command, /^node core\/cli\.mjs api pull /);
+  assert.deepEqual(wcalls.at(-1), {
+    tool: 'mcp__claude-code-remote__list_triggers',
+    args: { limit: 100, enabled: true },
+  });
+  fs.rmSync(wdir, { recursive: true, force: true });
+  // the paging itself, on a record still on ArtifactData (live before the cutover)
+  const pre = preCutoverSpec(spec);
+  RUN.start({ spec: pre, pipeline: 'watchdog', record: 'live', at, dir, release: 'v4.0.0' });
+  const calls = RUN.pull({ spec: pre, dir, at });
   assert.deepEqual(calls[calls.length - 1], {
     tool: 'mcp__claude-code-remote__list_triggers',
     args: { limit: 100, enabled: true },
@@ -188,7 +215,7 @@ test('the pull prints the list_triggers read; pulled saves its pages and asks fo
   for (const c of calls.slice(0, -1))
     say('ArtifactData', c.args, `No documents matched in collection "${c.args.collection}".`);
   // Without the scheduler's result the run goes on, with no pages.
-  assert.equal(RUN.pulled({ spec, dir, transcript: lines.join('\n') }).done, true);
+  assert.equal(RUN.pulled({ spec: pre, dir, transcript: lines.join('\n') }).done, true);
   assert.equal(fs.existsSync(path.join(dir, 'scheduler')), false);
   // With a first page that has more, pulled asks for the next page; with both, it is done and both are saved.
   say(
@@ -196,14 +223,14 @@ test('the pull prints the list_triggers read; pulled saves its pages and asks fo
     { limit: 100, enabled: true },
     JSON.stringify({ ...page([T('morning'), '2026-10-20T09:25:28Z']), has_more: true, next_cursor: 'c2' })
   );
-  const more = RUN.pulled({ spec, dir, transcript: lines.join('\n') });
+  const more = RUN.pulled({ spec: pre, dir, transcript: lines.join('\n') });
   assert.deepEqual([more.done, more.calls[0].args], [false, { limit: 100, enabled: true, cursor: 'c2' }]);
   say(
     'mcp__claude-code-remote__list_triggers',
     { limit: 100, enabled: true, cursor: 'c2' },
     JSON.stringify(page([T('watchdog'), '2026-10-20T09:55:10Z']))
   );
-  assert.equal(RUN.pulled({ spec, dir, transcript: lines.join('\n') }).done, true);
+  assert.equal(RUN.pulled({ spec: pre, dir, transcript: lines.join('\n') }).done, true);
   assert.deepEqual(fs.readdirSync(path.join(dir, 'scheduler')).sort(), ['triggers-1.json', 'triggers-2.json']);
   const ctx = { dir, record: 'live', now: '2026-10-20T10:40:00Z', release: 'v4.0.0', source: 't' };
   const r = CODE_STEPS.watch({ runs: [] }, ctx, spec);

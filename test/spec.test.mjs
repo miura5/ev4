@@ -172,10 +172,12 @@ function checkTask(id, t, record) {
 
 test('tasks: every live pipeline has a task, every pipeline has a staging task, with the design schedules', () => {
   const { live, staging } = spec.tasks;
+  // B-320: the cutover added live's restore drill; live and staging now run the same pipelines
   assert.deepEqual(Object.keys(live).sort(), [
     'evening-cloud',
     'evening-mac',
     'morning',
+    'restore-drill',
     'watchdog',
     'weekly',
     'worker',
@@ -203,6 +205,22 @@ test('tasks: every live pipeline has a task, every pipeline has a staging task, 
     'hours spelled out (D-084): an every-3-hours cron anchors to its creation minute'
   );
   assert.equal(at('worker'), null);
+  assert.equal(at('restore-drill'), 'CRON_TZ=America/Chicago 55 20 1 * *', "monthly, after that night's backup");
+  // the two live Mac tasks: created at the cutover with Matt present, writing (or reading) E.V. Backups
+  const backups = '/Users/peachfritter/Documents/E.V. Backups';
+  assert.deepEqual(
+    Object.entries(live)
+      .filter(([, t]) => t.lane === 'mac')
+      .map(([id, t]) => [id, t.trigger, t.folders, t.macBound]),
+    [
+      ['evening-mac', 'trig_01Ma8woo5ieoWM1s5KHuRpip', [backups], true],
+      ['restore-drill', 'trig_018VSRmz8pdNzdVSxpH42PEG', [backups], true],
+    ]
+  );
+  assert.ok(
+    spec.tasks.retired.some(r => r.was === 'live.evening-mac' && r.trigger === 'trig_01AxnPF3iPyo2BpCQtMdAKP8'),
+    'the old live evening-mac is listed retired'
+  );
 });
 
 test('staging is not a second live: no pushes, Mac writes only under staging/ except the drill reading the backup', () => {

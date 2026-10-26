@@ -88,3 +88,39 @@ export function directRecordReads(text) {
   );
   return String(text).match(re) || [];
 }
+
+/** The live Mac folder evening-mac wrote before the cutover re-pointed it at E.V. Backups (D-322). */
+export const PRE_CUTOVER_MAC_FOLDER = '/Users/peachfritter/Documents/E.V. Study Watch';
+/**
+ * B-320: the spec as it stood before the cutover commit, rebuilt from a cut-over spec (the reverse of
+ * tools/pwa-live.mjs cutoverSpec): the live page writing, live off D1, the live runs staged back under
+ * records.live.cutover with restore-drill (no trigger yet), and the old evening-mac back from tasks.retired with its
+ * Study Watch folder and kept ended words. Lets the pre-cutover behaviour keep its tests after the spec moves on.
+ */
+export function preCutoverSpec(spec) {
+  const s = JSON.parse(JSON.stringify(spec));
+  const live = s.registry.records.live;
+  if (!live.runs) throw new Error('the spec is not cut over (no spec.registry.records.live.runs)');
+  const i = s.tasks.retired.findLastIndex(r => r.was === 'live.evening-mac' && /cutover/.test(r.reason || ''));
+  if (i < 0) throw new Error('no retired live.evening-mac to restore');
+  const [old] = s.tasks.retired.splice(i, 1);
+  const { 'restore-drill': drill, ...tasks } = s.tasks.live;
+  tasks['evening-mac'] = {
+    ...tasks['evening-mac'],
+    folders: [PRE_CUTOVER_MAC_FOLDER],
+    trigger: old.trigger,
+    keepEnded: ['B-01', 'B-04'],
+    _keepEndedWhy:
+      'D-344: this Mac task was created before D-324 ended B-01 and B-04; it keeps those words until the cutover retires it (O-5: Mac tasks are never edited).',
+  };
+  s.tasks.live = tasks;
+  live.readOnly = false;
+  live.d1 = false;
+  live.cutover = {
+    _why: 'B-320: what the cutover commit turns on (rebuilt by test/helpers.mjs preCutoverSpec).',
+    runs: live.runs,
+    tasks: { 'restore-drill': { ...drill, trigger: null } },
+  };
+  delete live.runs;
+  return s;
+}
