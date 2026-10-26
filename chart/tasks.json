@@ -7589,10 +7589,10 @@
  {
   "id": "B-416",
   "kind": "request",
-  "title": "Request (reported Oct 26): Upkeep section on every release card",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "title": "Upkeep section on every release card",
+  "dod": "tools that write the release card add an upkeep block measured at the release commit: lines of code by area, runtimes E.V. runs in, steps per staging and live deploy, full check minutes, test count, open edge cases named by reviews, and each against the last release; a number that got worse needs one line of why; the seven-area scores re-rated (D-337).",
+  "milestone": "After Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -7601,6 +7601,10 @@
   "reportedAt": "2026-10-26T08:59:53.835Z",
   "board": {
    "row": "v4 B-416: Upkeep section on every release"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-26T08:59:54.442Z"
   }
  }
 ]
