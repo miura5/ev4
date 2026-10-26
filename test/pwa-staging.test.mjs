@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { check, recordDiffs, seededAt, keyOk, keyPattern, ROLES } from '../tools/pwa-staging.mjs';
+import { check, recordDiffs, seededAt, keyOk, keyPattern, ROLES, RUNNING_MAX_MS } from '../tools/pwa-staging.mjs';
 import { APP_SOURCE } from '../pwa/jobs.mjs';
 import { SUITE, SUITE_DOCS_PER_RUN } from '../pwa/runapi.js';
 import { seedCounts, seedRecord, seedSql, LEFT_OUT } from '../pwa/seed.mjs';
@@ -281,6 +281,20 @@ test('B-389: a staging pipeline writing as one of its roles (evening-mac as canv
   const skipped = eveningRun({ steps: [{ id: 'canvas', status: 'skipped' }] });
   assert.equal(red([skipped, canvas('dates', 'canvas-202')]).length, 1);
   assert.equal(red([eveningRun({ status: 'failed', steps: [] }), canvas('dates', 'canvas-202')]).length, 1);
+  // a run whose Canvas step failed
+  assert.equal(
+    red([eveningRun({ steps: [{ id: 'canvas', status: 'failed' }] }), canvas('dates', 'canvas-202')]).length,
+    1
+  );
+  // a run that never ended opens a window of RUNNING_MAX_MS from its start, no longer
+  const stale = eveningRun({ endedAt: null, status: 'running', steps: undefined });
+  const late = new Date(Date.parse('2026-10-25T22:32:00.000Z') + RUNNING_MAX_MS + 60000).toISOString();
+  assert.equal(red([stale, canvas('dates', 'canvas-202', { at: late })]).length, 1);
+  // the Worker's row time must fall in the window too, not only the document's own `at`
+  const rowLate = { ...canvas('dates', 'canvas-202'), at: Date.parse('2026-10-28T10:00:00.000Z') };
+  assert.equal(red([eveningRun(), rowLate]).length, 1);
+  const rowIn = { ...canvas('dates', 'canvas-202'), at: Date.parse('2026-10-25T22:41:00.000Z') };
+  assert.deepEqual(red([eveningRun(), rowIn]), []);
   // a source naming a run the record does not hold
   assert.equal(red([canvas('dates', 'canvas-9', { source: 'evening-mac evening-mac-x', at: 'no' })]).length, 1);
   // the spec's allowlist: canvas-sync never writes days or sets; a role no staging pipeline has is no writer
@@ -343,8 +357,9 @@ test('B-389: the date-relative seed is matched by the instant its rows carry, wh
   );
   const later = [
     eveningRun(),
-    { ...canvas('announcements', 'canvas-101'), at: T + 2 * 864e5 },
-    { ...canvas('materials', 'NUR112-303'), at: T + 2 * 864e5 },
+    // the Worker stamps their rows inside the run's window (22:32 to 22:57Z), as it does for a real run's writes
+    { ...canvas('announcements', 'canvas-101'), at: Date.parse('2026-10-25T22:40:11.000Z') },
+    { ...canvas('materials', 'NUR112-303'), at: Date.parse('2026-10-25T22:40:12.000Z') },
   ];
   const w = await stand([...rows.map(r => (r.c === 'dates' ? { ...r, at: T + 864e5 } : r)), ...later]);
   try {

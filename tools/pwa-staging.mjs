@@ -100,17 +100,27 @@ const ms = t => (typeof t === 'string' ? Date.parse(t) : NaN);
 /** Whether a document a staging pipeline wrote as one of its roles is traced to a run of that pipeline in the record:
  * its source names that run ("<pipeline> <run id>", as a step's own writes do), or its own `at` falls inside a run of
  * that pipeline whose runs/<id> document says the step that folds the role ended ok (a run still going: from its
- * start). A role's own source ("Canvas sync") names no run, so the run's window and its step are the trace. */
-function roleRun(data, role, runs) {
+ * start, for at most RUNNING_MAX_MS, so a run that never ended opens no endless window). A role's own source ("Canvas
+ * sync") names no run, so the run's window and its step are the trace. Both times must fall in the window: the
+ * document's own `at` and the row's `at` the Worker stamps on every write (rowAt, ms), when there is one. */
+export const RUNNING_MAX_MS = 3 * 60 * 60 * 1000;
+function roleRun(data, role, runs, rowAt) {
   const [by, runId, ...rest] = String(data.source || '').split(' ');
   const at = ms(data.at);
+  const times = Number.isFinite(rowAt) ? [at, rowAt] : [at];
+  const inside = (from, to) => times.every(t => from <= t && t <= to);
   for (const { pipeline, step } of ROLES[role] || []) {
     if (by === pipeline && !rest.length && runs.get(runId)?.pipeline === pipeline) return true;
     if (!Number.isFinite(at) || !step) continue;
     for (const r of runs.values()) {
-      if (r.pipeline !== pipeline || !(ms(r.startedAt) <= at)) continue;
-      if (r.status === 'running' && r.endedAt == null) return true;
-      if (at <= ms(r.endedAt) && (r.steps || []).some(s => s && s.id === step && s.status === 'ok')) return true;
+      if (r.pipeline !== pipeline) continue;
+      const from = ms(r.startedAt);
+      if (r.status === 'running' && r.endedAt == null) {
+        if (inside(from, from + RUNNING_MAX_MS)) return true;
+        continue;
+      }
+      if (inside(from, ms(r.endedAt)) && (r.steps || []).some(s => s && s.id === step && s.status === 'ok'))
+        return true;
     }
   }
   return false;
@@ -132,7 +142,7 @@ export function knownWriter(d, runs = new Map()) {
     return allows(d.c, 'page') && keyOk(d.c, d.id) && validate(d.c, data, { id: d.id }).ok ? 'page' : null;
   const w = data.writer;
   if (typeof w !== 'string' || !allows(d.c, w)) return null;
-  if (!STAGING_PIPELINES.includes(w)) return Object.hasOwn(ROLES, w) && roleRun(data, w, runs) ? 'role' : null;
+  if (!STAGING_PIPELINES.includes(w)) return Object.hasOwn(ROLES, w) && roleRun(data, w, runs, d.at) ? 'role' : null;
   if (d.c === 'runs') return runs.get(d.id)?.pipeline === w ? 'run' : null;
   const [by, runId, ...rest] = String(data.source || '').split(' ');
   return by === w && !rest.length && runs.get(runId)?.pipeline === w ? 'run' : null;
