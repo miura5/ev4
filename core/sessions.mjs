@@ -17,7 +17,6 @@ export function makeSessions(core) {
     hash,
     isActive,
     isSolid,
-    freeWeakspotId,
     isoOf,
     norm,
     safeId,
@@ -39,6 +38,14 @@ export function makeSessions(core) {
     for (let k = 2; taken.has(id); k++) id = base + '-' + k;
     taken.add(id);
     return id;
+  }
+  /** B-232 (moved from evcore.mjs for its line budget, B-407): a new weak spot's id never lands on one already there (a spot set aside today keeps its events): base, then
+   *  base-2, base-3 while taken. taken: weak spots (or ids), or a Set the caller keeps; a Set gains the id returned. */
+  function freeWeakspotId(base, taken) {
+    const set = taken instanceof Set ? taken : new Set((taken || []).map(w => (w && w.id) || w));
+    let id = base;
+    for (let k = 2; set.has(id); k++) id = base + '-' + k;
+    return (set.add(id), id);
   }
   const idSet = list => new Set([...(list || [])].map(x => (x && typeof x === 'object' ? x.id : x)));
   /**
@@ -1007,6 +1014,7 @@ export function makeSessions(core) {
     filingMark,
     filingOf,
     endingOf,
+    freeWeakspotId,
     closeFindings,
     closeUpdate,
     switchedUnfiled,

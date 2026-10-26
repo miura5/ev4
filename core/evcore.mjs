@@ -572,14 +572,6 @@ const EVCore = (() => {
       ? 'proposed'
       : (w && w.derived && w.derived.status) || null;
   const toReview = (models, date) => (models || []).filter(w => triageStatus(w, date) === 'proposed');
-  /** B-232: a new weak spot's id never lands on one already there (a spot set aside today keeps its events): base, then
-   *  base-2, base-3 while taken. taken: weak spots (or ids), or a Set the caller keeps; a Set gains the id returned. */
-  function freeWeakspotId(base, taken) {
-    const set = taken instanceof Set ? taken : new Set((taken || []).map(w => (w && w.id) || w));
-    let id = base;
-    for (let k = 2; set.has(id); k++) id = base + '-' + k;
-    return (set.add(id), id);
-  }
   /** Facts of a v4 weak spot document, normalized. Never includes derived state (nothing derived is stored, D-047). */
   function weakspotFacts(doc) {
     const w = doc || {};
@@ -890,26 +882,24 @@ const EVCore = (() => {
       outcome = 'Nice. No new weak spot.';
     } else {
       const topic = q.topic || String(q.stem || '').slice(0, 80);
-      const twin = models.find(
-        w => isActive(w) && (w.objective || '') === (q.objective || '') && norm(w.topic) === norm(topic)
-      );
-      // B-407 (D-237): a twin waiting for his triage (or set aside) takes the miss and adds nothing; a new spot lands on
-      // a free id (B-232), so none already there is replaced
       const same = w => (w.objective || '') === (q.objective || '') && norm(w.topic) === norm(topic);
+      const twin = models.find(w => isActive(w) && same(w));
+      // B-407 (D-237): a twin waiting for his triage (or set aside) takes the miss; a new spot gets a free id (B-232)
       const held = !twin && models.find(w => (w.kind || 'concept') === 'concept' && untriaged(w) && same(w));
-      if (twin) {
-        answer.weakspotId = twin.id;
-        answer.matched = true;
-        state = recompute(twin, { matched: true });
-        weakspotId = twin.id;
-        outcome = 'Already a weak spot, so it’s seen again and comes back tomorrow.';
-      } else if (held) {
-        answer.weakspotId = held.id;
-        weakspotId = held.id;
-        outcome =
-          triageStatus(held, date) === 'proposed' ? 'Already proposed. It waits in Study’s To review.' : 'Noted.';
+      if (twin || held) {
+        answer.weakspotId = weakspotId = (twin || held).id;
+        if (twin) [answer.matched, state] = [true, recompute(twin, { matched: true })];
+        const waits = held && triageStatus(held, date) === 'proposed';
+        outcome = twin
+          ? 'Already a weak spot, so it’s seen again and comes back tomorrow.'
+          : waits
+            ? 'Already proposed. It waits in Study’s To review.'
+            : 'Noted.';
       } else {
-        const id = freeWeakspotId(safeId('ws-' + date + '-' + (q.objective || 'x') + '-' + slug(topic)), models);
+        const id = SESSIONS.freeWeakspotId(
+          safeId('ws-' + date + '-' + (q.objective || 'x') + '-' + slug(topic)),
+          models
+        );
         const pre = preReadFor(q, plans, date);
         const facts = {
           ...envelope('page', label || 'E.V. · ' + shortDate(date), at),
@@ -2315,7 +2305,6 @@ const EVCore = (() => {
     entryTime,
     envelope,
     eventKey,
-    freeWeakspotId,
     hash,
     isActive,
     isSolid,
@@ -2446,7 +2435,6 @@ const EVCore = (() => {
     survivors, // B-233: injected into core/actions.mjs, the one chain walk
     triageStatus,
     toReview,
-    freeWeakspotId,
     reviewNeed,
     derivedHash,
     examOf,
