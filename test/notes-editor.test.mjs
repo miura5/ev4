@@ -276,7 +276,14 @@ test('B-402: the page saves only through write(), and its size cap is spec.capac
   assert.match(part, /const NOTE_BYTES = \(EV_SPEC\.capacity \|\| \{\}\)\.documentBytes \|\| (\d+);/);
   assert.equal(Number(part.match(/documentBytes \|\| (\d+);/)[1]), spec.capacity.documentBytes);
   assert.ok(!/\binnerHTML\b|insertAdjacentHTML|outerHTML|execCommand|document\.write/.test(part));
-  assert.ok(!/db\.collection/.test(part)); // no write around write()
+  // no write around write(); B-404 reads the note as the record holds it after a 409 (noteInRecord), and only reads
+  assert.ok(
+    !/db\.collection\([^)]*\)\s*\.doc\([^)]*\)\s*\.(set|update)\b|db\.collection\([^)]*\)\s*\.add\b|\bref\.(set|update)\b/.test(
+      part
+    )
+  );
+  assert.equal((part.match(/db\.collection\(/g) || []).length, 1);
+  assert.match(part, /db\.collection\('notes'\)\.doc\(id\)\.get\(\)/);
   assert.match(part, /write\(\{ op: 'set', collection: 'notes', id, data: doc \}\)/);
   assert.ok(spec.ui.page.subscribe.some(s => s.collection === 'notes' && !s.windowDays));
 });
@@ -307,7 +314,9 @@ test('B-402: a saved note keeps its identity and marks; the title follows the fi
   assert.equal(doc.label, 'Lecture 3');
   assert.equal(doc.earlierOf, prev.earlierOf);
   assert.equal(doc.archivedAt, null);
-  assert.equal(doc.title, 'Renal system');
+  // B-404 (D-326): a second note (earlierOf set) is titled '<title> (earlier)'; any other note follows its heading
+  assert.equal(doc.title, 'Renal system (earlier)');
+  assert.equal(E.noteDoc({ ...prev, earlierOf: undefined }, { blocks: doc.blocks, at: doc.at }).title, 'Renal system');
   assert.equal(doc.editedAt, '2026-10-26T10:00:00Z');
   assert.ok(loadValidator()('notes', doc, { id: 'n-20261020-100000-abcdefghijkl' }).ok);
 });
@@ -372,22 +381,38 @@ test('B-402 review: a paragraph of 450 formatted spans keeps all its text, split
   assert.equal(E.noteText(E.notePaste({ html: huge, text: 'z'.repeat(10) })[0]), 'z'.repeat(10));
 });
 
-test('B-402 review: a change past the size cap is refused in apply(), before any save', () => {
+test('B-402 review, B-404: a change past the size cap is refused in apply() unless it shrinks the note', () => {
   const apply = EDITOR.slice(
     EDITOR.indexOf('function apply('),
     EDITOR.indexOf('remember(kind, sel)', EDITOR.indexOf('function apply('))
   );
   assert.match(apply, /noteTooBig\(r\.blocks\)/);
+  // a note already past a limit can be cut down: only a change that is past a limit and no smaller is refused
+  assert.match(apply, /if \(why && !noteShrinks\(r\.blocks\)\)/);
   assert.match(EDITOR, /function noteTooBig\(blocks\)[\s\S]*?bytes <= NOTE_BYTES/);
+  assert.match(EDITOR, /const noteShrinks = blocks =>[\s\S]*?noteBytes\(blocks\) <= noteBytes\(NOTE\.blocks\)/);
 });
 
-test('B-402 review: a stale save (409) is never retried, keeps his text and says so', () => {
-  const save = EDITOR.slice(EDITOR.indexOf('function saveNote('), EDITOR.indexOf('async function flushNote('));
-  // the conflict branch sets no retry timer; any later save stops at NOTE.conflict
-  const conflict = save.slice(save.indexOf('e.conflict'), save.indexOf('} else if (NOTE.open === id)'));
-  assert.match(conflict, /NOTE\.conflict = true/);
+test('B-404 (D-326): a stale save is never retried over the other version: both are kept, and the size check is noteTooBig', () => {
+  const save = EDITOR.slice(EDITOR.indexOf('    function saveNote('), EDITOR.indexOf('async function flushNote('));
+  // the save-time size check is noteTooBig, not a copy of it
+  assert.match(save, /const big = noteTooBig\(NOTE\.blocks\);/);
+  assert.doesNotMatch(save, /new Blob/);
+  // a version from elsewhere is never written over: the save becomes keepBoth
+  assert.match(save, /const theirs = noteElsewhere\(\);\s*if \(theirs\) return keepBoth\(theirs\);/);
+  const conflict = save.slice(save.indexOf("e.code === 'conflict'"), save.indexOf('} else if (NOTE.open === id)'));
   assert.match(conflict, /NOTE\.dirty = true/);
-  assert.match(conflict, /Not saved: changed on another device/);
   assert.doesNotMatch(conflict, /setTimeout|saveNote\(/);
-  assert.match(save, /if \(NOTE\.conflict\) return/);
+  assert.match(save, /await keepBoth\(theirs\)/);
+  // the stopgap is gone: no conflict flag holds the note open
+  assert.doesNotMatch(EDITOR, /NOTE\.conflict|Not saved: changed on another device/);
+  // the second note is written before the editor shows the newer version
+  const keep = EDITOR.slice(
+    EDITOR.indexOf('function keepBoth('),
+    EDITOR.indexOf("window.addEventListener('ev-note-kept'")
+  );
+  assert.ok(
+    keep.indexOf("await write({ op: 'set', collection: 'notes', id: eid, data: doc })") <
+      keep.indexOf('showVersion(theirs)')
+  );
 });

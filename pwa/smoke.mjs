@@ -10,7 +10,10 @@
 // one job of each kind in spec.jobs, started from the conversation (the stub calls start_job), runs at once through
 // the shim and /api/claude (the stub answers with the job's answer tool) and its result is read back from D1; a planted
 // reply that fails the checks writes nothing it made. B-394: a send the record refuses keeps his words in the box, beside what he has started typing, and E.V. never
-// answers it.
+// answers it. B-404 (D-325, D-326), at 1280 with the service worker on: a note written offline survives a reload with
+// no connection (the page from the worker's cache, the record from the shim's copy) and reaches D1 when the connection
+// is back; two devices edit one note offline and end with 2 notes in D1 and every word kept; Keep this version swaps
+// them and Undo swaps them back; the note then closes.
 //   node pwa/smoke.mjs [screenshots dir] [--plant page-error]      (npm run smoke:pwa; needs `npm ci --prefix pwa`)
 // Exit code 1 when any counted check fails. --plant page-error makes the served app.js throw once the page is up, to
 // prove the smoke turns red (the smoke workflow runs it and expects red).
@@ -256,6 +259,186 @@ async function open(context, origin) {
 }
 const booted = page =>
   until(page, () => /^Live$/.test((document.getElementById('status') || {}).textContent || ''), null, 15000);
+
+// B-404: Notes offline, on two "devices" (two browser contexts, each with its own service worker and IndexedDB).
+async function notesOffline(browser, origin) {
+  const tag = '[notes offline]';
+  const notesInD1 = () =>
+    fetch(origin + '/api/db?since=0', { headers: { authorization: 'Bearer ' + TOKEN } })
+      .then(r => r.json())
+      .then(b => b.docs.filter(d => d.c === 'notes'));
+  const textOf = d => (d.data.blocks || []).map(b => b.runs.map(r => r.text).join('')).join('\n');
+  const inD1 = async (test, ms = 15000) => {
+    for (let t = Date.now(); Date.now() - t < ms; await new Promise(r => setTimeout(r, 250))) {
+      const docs = await notesInD1();
+      if (test(docs)) return docs;
+    }
+    return null;
+  };
+  const device = async () => {
+    const context = await browser.newContext({ viewport: { width: 1280, height: 860 }, colorScheme: 'dark' });
+    await context.addInitScript(t => localStorage.setItem('ev.token', t), TOKEN);
+    await context.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));
+    await context.route(origin + '/api/claude', r =>
+      r.fulfill({
+        body: JSON.stringify(stubAnswer(JSON.parse(r.request().postData() || '{}'))),
+        contentType: 'application/json',
+      })
+    );
+    const { page, errors } = await open(context, origin);
+    page.on(
+      'response',
+      r => r.status() >= 400 && errors.push('HTTP ' + r.status() + ' ' + r.request().method() + ' ' + r.url())
+    );
+    const up = await booted(page);
+    const sw = await until(page, () => !!(navigator.serviceWorker && navigator.serviceWorker.controller), null, 15000);
+    return { context, page, errors, up, sw };
+  };
+  const syncLine = page => page.evaluate(() => (document.querySelector('.mh .n-sync') || {}).textContent || '');
+  const bodyOf = page => page.evaluate(() => document.getElementById('note-body').innerText);
+  const typeAtEnd = async (page, text) => {
+    await page.click('#note-body');
+    await page.keyboard.press('Control+End');
+    await page.keyboard.type(text);
+  };
+  const openIn = async (page, id) => {
+    await page.click('#tab-notes');
+    await page.click(`.n-row[data-note="${id}"]`);
+    return until(page, () => !document.getElementById('notes-editor').hidden, null, 4000);
+  };
+  const A = await device();
+  ok(`${tag} the app boots with its service worker in control`, A.up && A.sw, JSON.stringify({ up: A.up, sw: A.sw }));
+  await A.page.click('#tab-notes');
+  await A.page.click('#notes-new');
+  await until(A.page, () => !document.getElementById('notes-editor').hidden);
+  await A.page.click('#note-body');
+  await A.page.keyboard.type('# Offline smoke note');
+  await A.page.keyboard.press('Enter');
+  await A.page.keyboard.type('Written online.');
+  const first = await inD1(docs =>
+    docs.some(d => d.data.title === 'Offline smoke note' && /Written online\./.test(textOf(d)))
+  );
+  const id = first && first.find(d => d.data.title === 'Offline smoke note').id;
+
+  // offline: the note keeps saving on this device, and the header says so; nothing reaches D1
+  await A.context.setOffline(true);
+  await typeAtEnd(A.page, ' Typed offline.');
+  const offLine = await until(
+    A.page,
+    () => /Offline · saved on this device/.test(document.querySelector('.mh .n-sync').textContent),
+    null,
+    6000
+  );
+  const heldBack = !textOf((await notesInD1()).find(d => d.id === id)).includes('Typed offline');
+  // a reload with no connection: the page from the worker's cache, the record and the note from the shim's copy
+  await A.page.reload();
+  const reBoot = await booted(A.page);
+  const reOpen = reBoot && (await openIn(A.page, id));
+  const afterReload = reOpen ? await bodyOf(A.page) : '';
+  ok(
+    `${tag} offline, a note saves on this device, says so, and survives a reload with no connection`,
+    !!id && offLine && heldBack && reBoot && /Written online\. Typed offline\./.test(afterReload),
+    JSON.stringify({ id, offLine, heldBack, reBoot, afterReload: afterReload.slice(0, 120) })
+  );
+  await A.context.setOffline(false);
+  const synced = await inD1(docs => docs.some(d => d.id === id && /Typed offline\./.test(textOf(d))));
+  const saidSaved = await until(
+    A.page,
+    () => /^Saved$/.test(document.querySelector('.mh .n-sync').textContent),
+    null,
+    8000
+  );
+  ok(
+    `${tag} back online, the offline words are read back from D1 and the header says Saved`,
+    !!synced && saidSaved,
+    await syncLine(A.page)
+  );
+
+  // two devices edit the note while both are offline: never merged, both kept
+  const B = await device();
+  const bOpen = await openIn(B.page, id);
+  await A.context.setOffline(true);
+  await B.context.setOffline(true);
+  await typeAtEnd(A.page, ' Laptop words.');
+  await typeAtEnd(B.page, ' Phone words.');
+  await until(A.page, () => /Offline/.test(document.querySelector('.mh .n-sync').textContent), null, 6000);
+  await until(B.page, () => /Offline/.test(document.querySelector('.mh .n-sync').textContent), null, 6000);
+  await B.context.setOffline(false);
+  await inD1(docs => docs.some(d => d.id === id && /Phone words/.test(textOf(d))));
+  await A.context.setOffline(false);
+  const both = await inD1(docs => docs.some(d => d.data.earlierOf === id && /Laptop words/.test(textOf(d))));
+  const picker = await until(
+    A.page,
+    () =>
+      /Two versions · pick one/.test(document.querySelector('.mh .n-sync').textContent) &&
+      document.querySelectorAll('.n-pick .ver').length === 2,
+    null,
+    8000
+  );
+  const pair = both ? both.filter(d => d.id === id || d.data.earlierOf === id) : [];
+  const orig = pair.find(d => d.id === id);
+  const earlier = pair.find(d => d.id !== id);
+  const all = pair.map(textOf).join('\n');
+  ok(
+    `${tag} two devices edit one note offline: 2 notes in D1, the newer stays the note, his is '<title> (earlier)', every word kept`,
+    bOpen &&
+      pair.length === 2 &&
+      /Phone words/.test(textOf(orig)) &&
+      !/Laptop words/.test(textOf(orig)) &&
+      /Laptop words/.test(textOf(earlier)) &&
+      earlier.data.title === 'Offline smoke note (earlier)' &&
+      ['Written online.', 'Typed offline.', 'Laptop words.', 'Phone words.'].every(w => all.includes(w)) &&
+      picker &&
+      /Phone words/.test(await bodyOf(A.page)),
+    JSON.stringify({
+      bOpen,
+      n: pair.length,
+      titles: pair.map(d => d.data.title),
+      picker,
+      body: (await bodyOf(A.page)).slice(0, 120),
+    })
+  );
+  await A.page.screenshot({ path: `${shots}/smoke-pwa-notes-two-versions.png` });
+
+  // Keep this version on this device's: the two notes swap; Undo swaps them back and the picker shows again
+  await A.page.click('.n-pick .ver:first-child button');
+  const swapped = await inD1(docs => {
+    const o = docs.find(d => d.id === id);
+    const e = docs.find(d => d.id === earlier.id);
+    return o && e && /Laptop words/.test(textOf(o)) && /Phone words/.test(textOf(e)) && !/Phone words/.test(textOf(o));
+  });
+  const undoShown = await until(
+    A.page,
+    () => /Undo/.test((document.querySelector('.n-pick .endline') || {}).textContent || ''),
+    null,
+    4000
+  );
+  await A.page.click('.n-pick .endline button');
+  const back = await inD1(docs => {
+    const o = docs.find(d => d.id === id);
+    const e = docs.find(d => d.id === earlier.id);
+    return o && e && /Phone words/.test(textOf(o)) && /Laptop words/.test(textOf(e)) && !/Laptop words/.test(textOf(o));
+  });
+  const pickAgain = await until(A.page, () => document.querySelectorAll('.n-pick .ver').length === 2, null, 4000);
+  ok(
+    `${tag} Keep this version swaps the two notes in D1, and Undo swaps them back`,
+    !!swapped && undoShown && !!back && pickAgain,
+    JSON.stringify({ swapped: !!swapped, undoShown, back: !!back, pickAgain })
+  );
+  await A.page.click('.n-back');
+  const closed = await until(A.page, () => document.getElementById('notes-editor').hidden, null, 4000);
+  ok(`${tag} the note then closes normally`, closed, '');
+  // expected: requests the dropped connection refused, and the one stale save of this note (the 409 D-326 answers)
+  const offlineNoise = /Failed to fetch|ERR_INTERNET_DISCONNECTED|net::ERR/i;
+  const stale409 = new RegExp('^HTTP 409 PUT ' + origin.replace(/[.]/g, '\\.') + '/api/db/notes/' + id + '\\?');
+  const errs = [...A.errors, ...B.errors].filter(
+    e => !offlineNoise.test(e) && !stale409.test(e) && !/status of 409 \(Conflict\)/.test(e)
+  );
+  ok(`${tag} the stale replay was answered 409 once`, A.errors.filter(e => stale409.test(e)).length === 1, '');
+  ok(`${tag} no page errors`, errs.length === 0, errs.slice(0, 3).join(' | '));
+  await A.context.close();
+  await B.context.close();
+}
 
 async function main() {
   const t0 = Date.now();
@@ -732,6 +915,7 @@ async function main() {
       ok(`${tag} no page errors`, errors.length === 0, errors.slice(0, 3).join(' | '));
       await context.close();
     }
+    if (!PLANT) await notesOffline(browser, origin);
   } finally {
     await browser.close();
     proc.kill();

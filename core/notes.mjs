@@ -118,6 +118,16 @@ export function makeNotes() {
     const h = (blocks || []).find(b => b.type === 'h1') || (blocks || []).find(b => /^h[23]$/.test(b.type));
     return h ? blockText(h).replace(/\s+/g, ' ').trim().slice(0, MAX.title) : '';
   }
+  const EARLIER = ' (earlier)';
+  /**
+   * B-404 (D-326): the title of the second note a stale save becomes, '<title> (earlier)': his title (or Untitled), cut
+   * so the whole fits in 300 characters, and never '(earlier)' twice. pwa/bridge.js names a note it keeps on reconnect
+   * the same way (test/pwa-offline.test.mjs holds the two equal).
+   */
+  function noteEarlierTitle(title) {
+    const t = String(title || '').endsWith(EARLIER) ? String(title).slice(0, -EARLIER.length) : String(title || '');
+    return (t.trim() || 'Untitled').slice(0, MAX.title - EARLIER.length) + EARLIER;
+  }
   /** The runs between two offsets of a block's text, with their marks. */
   function sliceRuns(runs, from, to = Infinity) {
     const out = [];
@@ -760,7 +770,7 @@ export function makeNotes() {
       at,
       source: source || 'E.V. Home',
       createdAt: (prev && prev.createdAt) || at,
-      title: noteTitleOf(b),
+      title: prev && prev.earlierOf ? noteEarlierTitle(noteTitleOf(b)) : noteTitleOf(b),
       course: course === undefined ? (prev && prev.course !== undefined ? prev.course : null) : course,
       blocks: b,
       editedAt: at,
@@ -782,6 +792,7 @@ export function makeNotes() {
     noteFits,
     noteText: blockText,
     noteTitleOf,
+    noteEarlierTitle,
     noteMarksAt: marksAt,
     noteDelete,
     noteInsertText,

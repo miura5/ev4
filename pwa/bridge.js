@@ -6,6 +6,12 @@
 //           changed since is refused (409), the shim reads the record again and tries once more without overwriting
 //           what is newer (an update re-merged, a create laid under); any save that still fails is refused to the page
 //           with the document it tried to save.
+//           B-404 (D-325, D-326): offline. An IndexedDB copy of the record (and the versions) is kept, so the app boots
+//           with no connection; a note saved with no connection goes to an outbox (kept in IndexedDB) and the page's
+//           copy changes at once; every other write is refused offline with the document it tried to save. Back online,
+//           the outbox is sent pinned to the version each note was read at; a stale one is never merged: the newer
+//           version stays the note and his is kept at once as a second note, '<title> (earlier)' (earlierOf the
+//           original), and the page is told ('ev-note-kept'). 'ev-sync' tells the page online, pending and syncing.
 //   user:   whoever holds the token is the owner (one person).
 //   sample: Claude on Haiku through the Worker's /api/claude (D-299); the key stays on the Worker.
 //   mcp:    none (the scheduled runs and the Study Watch reader live on claude.ai and the Mac).
@@ -24,8 +30,83 @@
   };
   let token = read();
   const clone = v => JSON.parse(JSON.stringify(v));
-  const api = (path, init = {}) =>
-    fetch('/api/' + path, { ...init, headers: { ...(init.headers || {}), authorization: 'Bearer ' + token } });
+  // B-404: a request the network refuses marks the app offline (a cancelled ask does not); any answer marks it online
+  const api = async (path, init = {}) => {
+    let r;
+    try {
+      r = await fetch('/api/' + path, {
+        ...init,
+        headers: { ...(init.headers || {}), authorization: 'Bearer ' + token },
+      });
+    } catch (e) {
+      if (!(init.signal && init.signal.aborted)) setOnline(false);
+      throw Object.assign(e instanceof Error ? e : new Error(String(e)), { offline: true });
+    }
+    setOnline(true);
+    return r;
+  };
+
+  // ---- B-404: the IndexedDB copy (the record, its versions and the cursor) and the outbox of note saves
+  const IDB = 'ev-app';
+  const KV = 'kv';
+  let idbP = null;
+  const idb = () =>
+    (idbP =
+      idbP ||
+      new Promise((ok, no) => {
+        if (typeof indexedDB === 'undefined' || !indexedDB) return no(new Error('no IndexedDB'));
+        const q = indexedDB.open(IDB, 1);
+        q.onupgradeneeded = () => q.result.createObjectStore(KV);
+        q.onsuccess = () => ok(q.result);
+        q.onerror = () => no(q.error);
+      }));
+  const idbGet = k =>
+    idb().then(
+      d =>
+        new Promise((ok, no) => {
+          const q = d.transaction(KV, 'readonly').objectStore(KV).get(k);
+          q.onsuccess = () => ok(q.result);
+          q.onerror = () => no(q.error);
+        })
+    );
+  const idbPut = (k, v) =>
+    idb().then(
+      d =>
+        new Promise((ok, no) => {
+          const t = d.transaction(KV, 'readwrite');
+          t.objectStore(KV).put(v, k);
+          t.oncomplete = () => ok();
+          t.onerror = t.onabort = () => no(t.error);
+        })
+    );
+  let copyTimer = 0;
+  /** The record's copy written a moment after the last change (the outbox is written at once, by keepOutbox). */
+  const keepCopy = () => {
+    clearTimeout(copyTimer);
+    copyTimer = setTimeout(() => {
+      idbPut('record', { db, vers, since, at: Date.now() }).catch(() => {});
+    }, 300);
+  };
+  const outbox = {}; // c \n id -> {c, id, doc, base}: a note saved on this device, not yet in the record
+  const keepOutbox = () => idbPut('outbox', clone(outbox)).catch(() => {});
+  const net = { online: true, syncing: false };
+  const pending = () => Object.keys(outbox).length;
+  let told = '';
+  function tell() {
+    const detail = { online: net.online, pending: pending(), syncing: net.syncing };
+    const k = JSON.stringify(detail);
+    if (k === told) return;
+    told = k;
+    try {
+      window.dispatchEvent(new CustomEvent('ev-sync', { detail }));
+    } catch (e) {}
+  }
+  function setOnline(on) {
+    if (net.online === on) return;
+    net.online = on;
+    tell();
+    if (on && pending()) replay();
+  }
 
   // The token form: shown on first open, or when the Worker refuses the token.
   const askToken = msg =>
@@ -69,10 +150,13 @@
     for (const d of docs) {
       // a read that left before a save landed never puts the older copy back over it
       if (Number.isInteger(d.v) && d.v < (verOf(d.c, d.id) || 0)) continue;
+      // B-404: a note saved on this device and not yet sent stays as he wrote it; replay() settles it
+      if (outbox[d.c + '\n' + d.id]) continue;
       (db[d.c] = db[d.c] || {})[d.id] = d.data;
       setVer(d.c, d.id, d.v);
       changed.add(d.c);
     }
+    if (changed.size) keepCopy();
     return changed;
   };
   async function pull() {
@@ -84,18 +168,43 @@
     return take(body.docs);
   }
   const ready = (async () => {
+    // B-404: the copy kept on this device, read first, so the app opens with no connection
+    const [copy, box] = await Promise.all([idbGet('record').catch(() => null), idbGet('outbox').catch(() => null)]);
+    if (box && typeof box === 'object') Object.assign(outbox, box);
     if (!token) await askToken('Your E.V. token');
     for (;;) {
-      const got = await pull();
+      let got;
+      try {
+        got = await pull();
+      } catch (e) {
+        if (!(copy && copy.db)) throw e;
+        // no record to read (offline, or the Worker is down): the copy kept on this device, read-only but for notes
+        for (const c of Object.keys(copy.db)) db[c] = copy.db[c];
+        for (const c of Object.keys(copy.vers || {})) vers[c] = copy.vers[c];
+        since = copy.since || 0;
+        setOnline(false);
+        break;
+      }
       if (got !== 401) break;
       await askToken('That token was refused. Try again');
     }
+    for (const k of Object.keys(outbox)) {
+      const o = outbox[k];
+      (db[o.c] = db[o.c] || {})[o.id] = o.doc;
+    }
+    tell();
+    if (net.online && pending()) replay();
     const refresh = () =>
       pull()
-        .then(ch => ch instanceof Set && ch.forEach(emit))
+        .then(ch => {
+          if (ch instanceof Set) ch.forEach(emit);
+          if (pending()) replay();
+        })
         .catch(() => {});
     setInterval(refresh, 10000);
     addEventListener('focus', refresh);
+    addEventListener('online', refresh);
+    addEventListener('offline', () => setOnline(false));
     document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && refresh());
   })();
 
@@ -120,9 +229,15 @@
     const key = c + '\n' + id;
     const attempt = async () => {
       const doc = make();
+      // B-404: a note goes to the outbox while offline, or while an earlier save of it waits there (so they stay in
+      // order); any other write is refused offline, with the document it tried to save
+      if (c === 'notes' && (outbox[key] || !net.online)) return queueNote(c, id, doc);
+      if (!net.online && c !== 'notes') throw offlineError(doc);
       try {
         return await saveNow(c, id, doc);
       } catch (e) {
+        if (e.offline && c === 'notes') return queueNote(c, id, doc);
+        if (e.offline) throw Object.assign(offlineError(doc), { cause: e });
         if (!e.conflict) throw Object.assign(e, { unsaved: doc });
         let again = null;
         if (kind === 'update') again = make;
@@ -190,6 +305,8 @@
       e.conflict = true;
       e.wasCreate = !seen;
       e.currentVersion = b.current_version == null ? null : b.current_version;
+      const cur = (db[c] || {})[id];
+      if (cur) e.current = clone(cur); // B-404: the version that stays, for the page to show beside his
       throw e;
     }
     if (!r.ok) {
@@ -200,8 +317,138 @@
     const saved = await r.json().catch(() => ({}));
     (db[c] = db[c] || {})[id] = doc;
     setVer(c, id, saved.version);
+    keepCopy();
     emit(c);
     if (job) runAppJob(id);
+  }
+
+  // ---- B-404: notes offline. A save with no connection is kept in the outbox and shown at once; replay() sends the
+  // outbox when the connection is back, each note pinned to the version it was read at.
+  function offlineError(doc) {
+    const e = new Error('you’re offline, so it wasn’t saved');
+    e.code = 'unavailable';
+    e.offline = true;
+    e.unsaved = doc;
+    return e;
+  }
+  async function queueNote(c, id, doc) {
+    const key = c + '\n' + id;
+    const was = outbox[key];
+    outbox[key] = { c, id, doc, base: was ? was.base : verOf(c, id) };
+    (db[c] = db[c] || {})[id] = doc;
+    await keepOutbox();
+    keepCopy();
+    tell();
+    emit(c);
+    if (net.online) replay();
+  }
+  const putPath = (c, id, base) =>
+    'db/' + encodeURIComponent(c) + '/' + encodeURIComponent(id) + (base ? '?if_version=' + base : '');
+  const EARLIER = ' (earlier)';
+  /** core/notes.mjs noteEarlierTitle, the same rule (test/pwa-offline.test.mjs holds them equal). */
+  const earlierTitle = title => {
+    const t = String(title || '').endsWith(EARLIER) ? String(title).slice(0, -EARLIER.length) : String(title || '');
+    return (t.trim() || 'Untitled').slice(0, 300 - EARLIER.length) + EARLIER;
+  };
+  /** A new note id as core/notes.mjs newNoteId makes one: n-<UTC time>-<16 random letters and digits>. */
+  function newNoteId(at) {
+    const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const v = new Uint32Array(16);
+    crypto.getRandomValues(v);
+    const iso = new Date(at).toISOString();
+    const t = iso.slice(0, 10).replace(/-/g, '') + '-' + iso.slice(11, 19).replace(/:/g, '');
+    return 'n-' + t + '-' + Array.from(v, x => A[x % 62]).join('');
+  }
+  /** D-326: his version of note `id` as the second note: a new note, made now, earlierOf the original. */
+  function earlierNote(his, id, at) {
+    const d = clone(his);
+    for (const k of ['archivedAt', 'discardedAt']) delete d[k];
+    return { ...d, at, createdAt: at, title: earlierTitle(his.title), earlierOf: id, editedAt: his.editedAt || at };
+  }
+  let replaying = null;
+  function replay() {
+    if (replaying) return replaying;
+    replaying = (async () => {
+      net.syncing = true;
+      tell();
+      for (let round = 0; round < 20 && net.online; round++) {
+        let sent = 0;
+        for (const key of Object.keys(outbox)) {
+          const o = outbox[key];
+          if (!o || o.refused) continue;
+          const doc = o.doc;
+          let r;
+          try {
+            r = await api(putPath(o.c, o.id, o.base), {
+              method: 'PUT',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify(doc),
+            });
+          } catch (e) {
+            return; // offline again: the outbox waits
+          }
+          sent++;
+          if (r.ok) {
+            const saved = await r.json().catch(() => ({}));
+            setVer(o.c, o.id, saved.version);
+            // a save made while this one was out goes next, pinned to the version just written
+            if (outbox[key] === o && o.doc === doc) delete outbox[key];
+            else if (outbox[key]) outbox[key].base = saved.version;
+          } else if (r.status === 409) {
+            try {
+              await keepBoth(key, o);
+            } catch (e) {
+              return; // the record could not be read: the note stays in the outbox, tried again later
+            }
+          } else if (r.status === 401) return;
+          else {
+            // refused for good (its shape or size): kept here, unsent, and never tried again in a loop
+            const why = await r.text().catch(() => '');
+            o.refused = r.status + ' ' + why.slice(0, 200);
+            console.warn('E.V. app: ' + o.c + '/' + o.id + ' was refused: ' + o.refused);
+          }
+          await keepOutbox();
+        }
+        if (!sent) break;
+      }
+      const ch = await pull().catch(() => null);
+      if (ch instanceof Set) ch.forEach(emit);
+    })().finally(() => {
+      net.syncing = false;
+      replaying = null;
+      keepCopy();
+      tell();
+    });
+    return replaying;
+  }
+  /** D-326, on a stale note in the outbox: the version in the record stays the note; his is kept at once as the second
+   * note '<title> (earlier)' (sent next, as a create), and the page is told. Nothing is merged and nothing is lost. */
+  async function keepBoth(key, o) {
+    const got = await api('run/get?collection=' + encodeURIComponent(o.c) + '&doc_id=' + encodeURIComponent(o.id));
+    if (got.status === 404) {
+      o.base = null; // it was never written after all: sent again as a create
+      return;
+    }
+    if (!got.ok) throw new Error('run/get answered ' + got.status);
+    const cur = await got.json();
+    // from here to the event, nothing waits: no save of this note can slip in between
+    const his = outbox[key].doc; // the newest he saved on this device, a save made meanwhile included
+    delete outbox[key];
+    const at = new Date().toISOString();
+    const eid = newNoteId(at);
+    const earlier = earlierNote(his, o.id, at);
+    outbox[o.c + '\n' + eid] = { c: o.c, id: eid, doc: earlier, base: null };
+    db[o.c][eid] = earlier;
+    db[o.c][o.id] = cur.data;
+    setVer(o.c, o.id, cur.version);
+    try {
+      window.dispatchEvent(
+        new CustomEvent('ev-note-kept', {
+          detail: { id: o.id, earlierId: eid, current: clone(cur.data), earlier: clone(earlier) },
+        })
+      );
+    } catch (e) {}
+    emit(o.c);
   }
 
   // ---- B-324: jobs through the API. jobs-spec.json is what the runner reads of the spec, with the schemas.

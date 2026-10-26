@@ -2145,5 +2145,28 @@ body.has-line #today-week .wk-her{display:none}
 .mh .n-sync .ico{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .mh .n-sync.bad{color:var(--urg)}
 body[data-view=notes] .mh .n-sync:not([hidden])~.new-wrap{margin-left:12px}
+/* B-404 (D-326, NoteStates): the sync line's two-versions state, and the picker above his text */
+.mh .n-sync.warn .ico{color:var(--att)}
+#p-notes .n-pick .vpick{display:flex;flex-direction:column;gap:14px;padding:14px;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line2);margin:2px 0 18px}
+#p-notes .n-pick .vh{display:flex;gap:10px;align-items:flex-start;font-size:calc(13.5px * var(--ts))}
+#p-notes .n-pick .vh>.ico{width:16px;height:16px;flex:none;margin-top:2px;color:var(--att);fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#p-notes .n-pick .vhw{display:flex;flex-direction:column;gap:2px}
+#p-notes .n-pick .vhw b{font-weight:600}
+#p-notes .n-pick .vhw span{color:var(--quiet)}
+#p-notes .n-pick .vgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#p-notes .n-pick .ver{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:9px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2);min-width:0}
+#p-notes .n-pick .ver .btn{align-self:flex-start}
+#p-notes .n-pick .vrow{display:flex;align-items:center;justify-content:space-between;gap:8px}
+#p-notes .n-pick .vwho{display:flex;align-items:center;gap:7px;font-size:calc(13.5px * var(--ts))}
+#p-notes .n-pick .vwho b{font-weight:600}
+#p-notes .n-pick .vwho .ico{width:15px;height:15px;color:var(--quiet);fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#p-notes .n-pick .vx{display:flex;flex-direction:column;gap:1px;font-size:calc(13.5px * var(--ts));line-height:1.55;min-width:0}
+#p-notes .n-pick .vt{font-weight:600;font-size:calc(14px * var(--ts));margin-bottom:2px;overflow-wrap:anywhere}
+#p-notes .n-pick .vl{display:flex;gap:8px;padding:1px 6px;margin-left:-6px;border-radius:5px;overflow-wrap:anywhere}
+#p-notes .n-pick .vl::before{content:"•";color:var(--faint)}
+#p-notes .n-pick .only{background:var(--tint);box-shadow:inset 0 0 0 1px var(--line2)}
+#p-notes .n-pick .mini{font-size:calc(12.5px * var(--ts));color:var(--faint)}
+#p-notes .n-pick .endline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;margin-bottom:18px;border-radius:9px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2);font-size:calc(13px * var(--ts))}
+#p-notes .n-pick .endline .sp{flex:1;min-width:220px}
 .mh .n-crumb[hidden],.mh .n-sync[hidden],.mh .n-back[hidden]{display:none}
 /* ==== end B-402 ==== */

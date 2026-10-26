@@ -21,7 +21,10 @@
       redo: [],
       last: { kind: '', at: 0 },
       dirty: false,
-      conflict: false, // a save was refused as stale (409): nothing more is saved until B-404 resolves it
+      seen: new Set(), // B-404: the versions (their `at`) this editor knows: the one it opened and its own saves
+      pick: null, // B-404 (D-326): the two versions after a stale save, until he picks one (and while Undo is offered)
+      keeping: null, // B-404: the second note being written
+      gen: 0, // B-404: one more each time another version replaces the editor's; a save made before it lands quietly
       saving: null,
       again: false,
       timer: 0,
@@ -49,7 +52,14 @@
       plus: 'M12 5v14M5 12h14',
       note: 'M6 4h9l3 3v13H6zM9 10h6M9 14h6',
       saved: 'M5 12l5 5 9-10',
+      syncing: 'M4 12a8 8 0 0 1 13.7-5.6M20 12a8 8 0 0 1-13.7 5.6M18 3v4h-4M6 21v-4h4',
+      offline: 'M8 18h9a4 4 0 0 0 1.2-7.8A6 6 0 0 0 7 9.2 4.4 4.4 0 0 0 8 18zM4 4l16 16',
+      two: 'M8 3h7l3 3v11H8zM5 7v14h10',
+      device: 'M5 6h14v9H5zM3 18h18',
+      other: 'M8 3h8v18H8zM11 18h2',
     };
+    // B-404: the app's connection, as its shim tells it (pwa/bridge.js 'ev-sync'); on claude.ai always online
+    const NET = { online: true, pending: 0, syncing: false };
     const NSTYLES = [
       ['p', 'Paragraph', '¶', '⌘⌥0'],
       ['h1', 'Heading 1', 'H1', '⌘⌥1'],
@@ -251,7 +261,9 @@
     body.setAttribute('aria-label', 'Note');
     body.dataset.placeholder =
       'Write as the lecture goes. Type “# ” for a heading, “- ” for a list, “[] ” for a checklist, or use the bar above.';
-    nDoc.append(nMeta, body);
+    const nPick = el('div', 'n-pick'); // B-404 (D-326): the two versions, above his text, never changing a word of it
+    nPick.hidden = true;
+    nDoc.append(nMeta, nPick, body);
     nScroll.append(nDoc);
     nEd.append(fbar, nScroll);
     notesPanel.append(nList, nEd);
@@ -275,17 +287,22 @@
       nBack.hidden = nCrumb.hidden = nSync.hidden = !on;
       if (!on) return;
       nCrumb.textContent = '/ ' + (E.noteTitleOf(NOTE.blocks || []) || 'New note').split(':')[0];
-      nSync.replaceChildren(
-        ...(NOTE.state === 'saved' ? [nIcon(NI.saved)] : []),
-        NOTE.state === 'saving'
-          ? 'Saving…'
-          : NOTE.conflict
-            ? 'Not saved: changed on another device'
+      // B-404: one quiet line in the same place in every state, as NoteStates shows it
+      const [text, icon, cls] =
+        NOTE.pick && !NOTE.pick.kept
+          ? ['Two versions · pick one', NI.two, 'warn']
+          : NOTE.state === 'saving'
+            ? ['Saving…', null, '']
             : NOTE.state === 'failed'
-              ? 'Not saved'
-              : 'Saved'
-      );
-      nSync.classList.toggle('bad', NOTE.state === 'failed');
+              ? ['Not saved', null, 'bad']
+              : !NET.online
+                ? ['Offline · saved on this device', NI.offline, '']
+                : NET.pending || NET.syncing
+                  ? ['Syncing…', NI.syncing, '']
+                  : ['Saved', NI.saved, ''];
+      nSync.replaceChildren(...(icon ? [nIcon(icon)] : []), text);
+      nSync.classList.toggle('bad', cls === 'bad');
+      nSync.classList.toggle('warn', cls === 'warn');
       nSync.title = NOTE.state === 'failed' ? NOTE.why || '' : '';
     }
     // the view follows showTab (02) through the body's data-view; leaving Notes saves what is pending
@@ -339,6 +356,7 @@
     }
     const courseName = k => (k === NO_COURSE ? 'No course' : k);
     function renderNotes() {
+      noteFollow();
       syncHead();
       if (NOTE.view !== 'list') return;
       const all = (S.notes || [])
@@ -517,9 +535,12 @@
       NOTE.redo = [];
       NOTE.pend = null;
       NOTE.dirty = false;
-      NOTE.conflict = false;
       NOTE.state = 'saved';
+      NOTE.why = '';
+      NOTE.seen = new Set(doc && doc.at ? [doc.at] : []);
+      NOTE.pick = null;
       NOTE.edited = doc ? doc.editedAt || doc.at : null;
+      paintPick();
       showEditor(true);
       paintMeta();
       notePaint({ a: { b: 0, o: 0 }, f: { b: 0, o: 0 } }, false);
@@ -687,10 +708,12 @@
     /** A model change: remembered for undo, painted, the caret placed, saved after the pause. */
     // A change past notes.schema.json's limits (4000 lines, 400 runs a line) or past the size a save may write is
     // refused here, with a line saying why, and the note stays as it was: never cut short, never refused only at save.
+    // A note already past a limit (made elsewhere) can still be cut down: only a change that leaves it past a limit and
+    // larger than it is now is refused.
     function apply(kind, r, sel) {
       if (!r) return;
       const why = E.noteFits(r.blocks) || noteTooBig(r.blocks);
-      if (why) {
+      if (why && !noteShrinks(r.blocks)) {
         toast(why);
         if (sel) setNoteSel(sel);
         return;
@@ -1059,6 +1082,7 @@
 
     // ---- saving: the whole note through write(), a pause after the last change; nothing typed is dropped on a refusal
     function noteChanged() {
+      if (NOTE.pick && NOTE.pick.kept) closePick(); // Undo swaps whole versions: offered only until he writes again
       NOTE.dirty = true;
       NOTE.edited = now();
       clearTimeout(NOTE.timer);
@@ -1083,38 +1107,334 @@
         '). Start a new note for the rest.'
       );
     }
+    const maxRuns = blocks => blocks.reduce((m, b) => Math.max(m, b.runs.length), 0);
+    /** These blocks are no further past any limit than the note is now: no more lines, runs a line, or bytes. */
+    const noteShrinks = blocks =>
+      !!NOTE.blocks &&
+      blocks.length <= NOTE.blocks.length &&
+      maxRuns(blocks) <= maxRuns(NOTE.blocks) &&
+      noteBytes(blocks) <= noteBytes(NOTE.blocks);
+
+    // ---- B-404 (D-326): a note changed elsewhere is never merged. When the version in the record is one this editor
+    // does not know while he has unsaved words, both are kept at once: the newer stays the note, his becomes a second
+    // note '<title> (earlier)' linked to it, and the two-versions picker shows. With nothing unsaved the newer one is
+    // simply shown (that is sync, not a conflict).
+    /** The open note as the record holds it now, when that is a version this editor does not know; else null. */
+    function noteElsewhere() {
+      if (!NOTE.open) return null;
+      const cur = (S.notes || []).find(n => n.id === NOTE.open);
+      if (!cur || !cur.at || NOTE.seen.has(cur.at)) return null;
+      const { id: _drop, ...data } = cur;
+      void _drop;
+      return data;
+    }
+    function noteFollow() {
+      if (NOTE.view !== 'editor' || NOTE.saving || NOTE.keeping) return;
+      const theirs = noteElsewhere();
+      if (!theirs) return;
+      if (NOTE.dirty) return void keepBoth(theirs);
+      NOTE.seen.add(theirs.at);
+      showVersion(theirs);
+    }
+    /** `doc` in the editor in place of what it shows, the caret kept where it can be. */
+    function showVersion(doc) {
+      const sel = NOTE.sel;
+      const focus = document.activeElement === body;
+      NOTE.gen++;
+      NOTE.doc = doc;
+      NOTE.blocks = E.noteBlocks(doc.blocks);
+      NOTE.course = doc.course === undefined ? null : doc.course;
+      NOTE.edited = doc.editedAt || doc.at;
+      NOTE.undo = [];
+      NOTE.redo = [];
+      NOTE.dirty = false;
+      NOTE.state = 'saved';
+      NOTE.why = '';
+      const last = NOTE.blocks.length - 1;
+      const clamp = p =>
+        p && p.b <= last ? { b: p.b, o: Math.min(p.o, E.noteText(NOTE.blocks[p.b]).length) } : { b: 0, o: 0 };
+      paintMeta();
+      notePaint(sel ? { a: clamp(sel.a), f: clamp(sel.f || sel.a) } : { a: { b: 0, o: 0 } }, focus);
+      updateBar();
+      syncHead();
+    }
+    /** The second note's document: `blocks` as '<title> (earlier)', earlierOf the open note (prev: as it is stored). */
+    const earlierDoc = (prev, blocks, at) =>
+      E.noteDoc(prev, {
+        blocks,
+        course: prev.course === undefined ? NOTE.course : prev.course,
+        at,
+        source: 'E.V. Home',
+      });
+    /** The version in the record now, read from the record (a 409 can come before the page has seen it). */
+    async function noteInRecord(id) {
+      const snap = await db.collection('notes').doc(id).get();
+      const d = snap && snap.exists ? snap.data() : null;
+      return d ? Object.fromEntries(Object.entries(d).filter(([k]) => k !== 'id')) : null;
+    }
+    /** D-326 on this page: his words (the editor's, all of them) written as the second note first, then the newer
+     * version shown with the picker. A second note that can't be written leaves his words in the editor, unsaved. */
+    function keepBoth(theirs) {
+      if (NOTE.keeping) return NOTE.keeping;
+      const id = NOTE.open;
+      const at = now();
+      const eid = E.newNoteId(at, noteRandom());
+      const base = {
+        createdAt: at,
+        earlierOf: id,
+        course: NOTE.course,
+        ...(NOTE.doc && NOTE.doc.label ? { label: NOTE.doc.label } : {}),
+      };
+      clearTimeout(NOTE.timer);
+      NOTE.state = 'saving';
+      syncHead();
+      const hisAt = NOTE.edited;
+      NOTE.keeping = (async () => {
+        let his;
+        let doc = base;
+        // words typed while the second note is written go into it too, until it holds the editor's last word
+        while (NOTE.open === id && his !== NOTE.blocks) {
+          his = NOTE.blocks;
+          doc = earlierDoc(doc, his, now());
+          await write({ op: 'set', collection: 'notes', id: eid, data: doc });
+        }
+        if (NOTE.open !== id) return;
+        NOTE.seen.add(theirs.at);
+        showVersion(theirs);
+        openPick({ id, earlierId: eid, earlier: doc, his, hisAt, theirs, offline: false });
+      })()
+        .catch(e => {
+          if (NOTE.open !== id)
+            return toast('Couldn’t keep your version: ' + ((e && (e.message || e.code)) || 'error'));
+          NOTE.dirty = true; // his words stay in the editor; the next save tries again
+          NOTE.state = 'failed';
+          NOTE.why = 'Couldn’t keep your version: ' + ((e && (e.message || e.code)) || 'error');
+          NOTE.timer = setTimeout(saveNote, NOTE_RETRY_MS);
+        })
+        .finally(() => {
+          NOTE.keeping = null;
+          syncHead();
+        });
+      return NOTE.keeping;
+    }
+    // the app's shim kept a stale save from this device's outbox as the second note (pwa/bridge.js keepBoth)
+    window.addEventListener('ev-note-kept', e => {
+      const d = e.detail;
+      if (!d || !d.current || NOTE.open !== d.id) return;
+      const typed = NOTE.dirty && NOTE.blocks;
+      NOTE.seen.add(d.current.at);
+      let earlier = d.earlier;
+      if (typed) {
+        // words typed after the last save on this device go into the second note as well
+        earlier = earlierDoc(d.earlier, typed, now());
+        write({ op: 'set', collection: 'notes', id: d.earlierId, data: earlier }).catch(x =>
+          toast('Couldn’t keep your last words: ' + ((x && (x.message || x.code)) || 'error'))
+        );
+      }
+      clearTimeout(NOTE.timer);
+      showVersion(d.current);
+      openPick({
+        id: d.id,
+        earlierId: d.earlierId,
+        earlier,
+        his: typed || E.noteBlocks(d.earlier.blocks),
+        hisAt: (typed && now()) || d.earlier.editedAt,
+        theirs: d.current,
+        offline: true,
+      });
+    });
+    window.addEventListener('ev-sync', e => {
+      const d = e.detail || {};
+      NET.online = d.online !== false;
+      NET.pending = d.pending || 0;
+      NET.syncing = !!d.syncing;
+      syncHead();
+    });
+
+    // ---- the two-versions picker (NoteStates): this device's version and the other, each with Keep this version
+    function openPick(p) {
+      NOTE.pick = { ...p, his: E.noteBlocks(p.his), theirsBlocks: E.noteBlocks(p.theirs.blocks), kept: null };
+      paintPick();
+      syncHead();
+    }
+    function closePick() {
+      NOTE.pick = null;
+      paintPick();
+      syncHead();
+    }
+    const lineTexts = blocks => blocks.map(b => E.noteText(b).trim()).filter(Boolean);
+    function verCard(name, icon, at, blocks, other, keep) {
+      const o = new Set(lineTexts(other));
+      const v = el('div', 'ver');
+      const head = el('div', 'vrow');
+      const who = el('span', 'vwho');
+      who.append(nIcon(icon, 'ico sicon'), el('b', null, name));
+      head.append(who, el('span', 'mini', at ? 'Edited ' + editedText(at) : ''));
+      const x = el('div', 'vx');
+      const shown = blocks.filter(b => E.noteText(b).trim());
+      const only = shown.filter(b => !o.has(E.noteText(b).trim()));
+      const list = shown.length <= 8 ? shown : [...new Set([...only, ...shown])].slice(0, 8);
+      for (const b of list)
+        x.append(
+          el(
+            'span',
+            /^h[123]$/.test(b.type)
+              ? 'vt' + (o.has(E.noteText(b).trim()) ? '' : ' only')
+              : 'vl' + (only.includes(b) ? ' only' : ''),
+            E.noteText(b)
+          )
+        );
+      if (shown.length > list.length)
+        x.append(el('span', 'mini', 'and ' + (shown.length - list.length) + ' more lines'));
+      const n = only.length;
+      const b = btn('Keep this version', keep, { cls: 'btn neutral sm' });
+      v.append(
+        head,
+        x,
+        el(
+          'span',
+          'mini',
+          n ? n + (n === 1 ? ' line' : ' lines') + ' only in this version' : 'No line only in this version'
+        ),
+        b
+      );
+      return v;
+    }
+    function paintPick() {
+      const p = NOTE.pick;
+      nPick.hidden = !p;
+      if (!p) return nPick.replaceChildren();
+      const earlierName = noteName({
+        title: E.noteEarlierTitle(E.noteTitleOf(p.kept === 'his' ? p.theirsBlocks : p.his)),
+      });
+      if (p.kept) {
+        const line = el('div', 'endline');
+        line.setAttribute('role', 'status');
+        line.append(
+          el(
+            'span',
+            'sp',
+            p.kept === 'his'
+              ? 'Kept this device’s version. The other device’s version is saved as a second note, “' +
+                  earlierName +
+                  '”.'
+              : 'Kept the other device’s version. This device’s version is saved as a second note, “' +
+                  earlierName +
+                  '”.'
+          ),
+          btn('Undo', () => undoPick(), { cls: 'btn ghost sm' })
+        );
+        return nPick.replaceChildren(line);
+      }
+      const box = el('div', 'vpick');
+      box.setAttribute('role', 'group');
+      box.setAttribute('aria-label', 'Two versions of this note');
+      const h = el('div', 'vh');
+      const words = el('div', 'vhw');
+      words.append(
+        el(
+          'b',
+          null,
+          p.offline
+            ? 'This note changed on two devices while both were offline.'
+            : 'This note changed on another device while you were writing.'
+        ),
+        el(
+          'span',
+          null,
+          'E.V. doesn’t merge them. Pick the one to keep here; the other is saved as a second note, so nothing is lost.'
+        )
+      );
+      h.append(nIcon(NI.two), words);
+      const grid = el('div', 'vgrid');
+      grid.append(
+        verCard('This device', NI.device, p.hisAt, p.his, p.theirsBlocks, () => keepVersion('his')),
+        verCard('Another device', NI.other, p.theirs.editedAt || p.theirs.at, p.theirsBlocks, p.his, () =>
+          keepVersion('theirs')
+        )
+      );
+      box.append(h, grid);
+      nPick.replaceChildren(box);
+    }
+    /** Both notes written with these blocks: the note gets `note`, the second note `earlier`. */
+    async function writeBoth(note, earlier) {
+      const p = NOTE.pick;
+      const prev = (S.notes || []).find(n => n.id === p.earlierId) || p.earlier;
+      const { id: _drop, ...prevDoc } = prev;
+      void _drop;
+      const at = now();
+      const edoc = earlierDoc(prevDoc, earlier, at);
+      await write({ op: 'set', collection: 'notes', id: p.earlierId, data: edoc });
+      p.earlier = edoc;
+      NOTE.blocks = E.noteBlocks(note);
+      NOTE.undo = [];
+      NOTE.redo = [];
+      notePaint({ a: { b: 0, o: 0 } }, false);
+      NOTE.dirty = true;
+      NOTE.edited = at;
+      await saveNote();
+    }
+    /** Keep this version: his swaps the two notes' words; the other's leaves both as they are. Undo is offered. */
+    async function keepVersion(which) {
+      const p = NOTE.pick;
+      if (!p || p.kept) return;
+      if (which === 'his') {
+        try {
+          await writeBoth(p.his, p.theirsBlocks);
+        } catch (e) {
+          return toast('Couldn’t swap the versions: ' + ((e && (e.message || e.code)) || 'error'));
+        }
+      }
+      p.kept = which;
+      paintPick();
+      syncHead();
+    }
+    async function undoPick() {
+      const p = NOTE.pick;
+      if (!p || !p.kept) return;
+      if (p.kept === 'his') {
+        try {
+          await writeBoth(p.theirsBlocks, p.his);
+        } catch (e) {
+          return toast('Couldn’t undo: ' + ((e && (e.message || e.code)) || 'error'));
+        }
+      }
+      p.kept = null;
+      paintPick();
+      syncHead();
+    }
+
     function saveNote() {
       clearTimeout(NOTE.timer);
-      // B-402 review, D-326: after a stale save nothing more is written over the other device's version; his text stays
-      // in the editor, unsaved, until B-404 keeps both versions
-      if (NOTE.conflict) return NOTE.saving || Promise.resolve();
-      if (!NOTE.open || !NOTE.dirty) return NOTE.saving || Promise.resolve();
+      if (!NOTE.open || !NOTE.dirty) return NOTE.saving || NOTE.keeping || Promise.resolve();
+      if (NOTE.keeping) return NOTE.keeping;
       if (NOTE.saving) {
         NOTE.again = true;
         return NOTE.saving;
       }
-      const id = NOTE.open;
-      const at = now();
-      const doc = E.noteDoc(NOTE.doc, { blocks: NOTE.blocks, course: NOTE.course, at, source: 'E.V. Home' });
-      const bytes = new Blob([JSON.stringify(doc)]).size;
-      if (bytes > NOTE_BYTES) {
+      // D-326: never written over a version from elsewhere; both are kept instead
+      const theirs = noteElsewhere();
+      if (theirs) return keepBoth(theirs);
+      const big = noteTooBig(NOTE.blocks);
+      if (big) {
         NOTE.state = 'failed';
-        NOTE.why =
-          'This note is too long to save (' +
-          Math.round(bytes / 1024) +
-          ' KB of ' +
-          NOTE_BYTES / 1024 +
-          '). Split it into two notes.';
+        NOTE.why = big;
         syncHead();
         return Promise.resolve();
       }
+      const id = NOTE.open;
+      const at = now();
+      const doc = E.noteDoc(NOTE.doc, { blocks: NOTE.blocks, course: NOTE.course, at, source: 'E.V. Home' });
+      NOTE.seen.add(at); // known before the write lands: the record may show it before write() answers
+      const gen = NOTE.gen;
       NOTE.dirty = false;
       NOTE.state = 'saving';
       syncHead();
+      let stale = null;
       NOTE.saving = write({ op: 'set', collection: 'notes', id, data: doc })
         .then(
           () => {
-            if (NOTE.open === id) {
+            if (NOTE.open === id && NOTE.gen === gen) {
               NOTE.doc = doc;
               if (!NOTE.dirty) NOTE.state = 'saved';
               NOTE.why = '';
@@ -1122,14 +1442,12 @@
             }
           },
           e => {
-            if (NOTE.open === id && e && (e.conflict || e.code === 'conflict')) {
-              // a stale save (409): the record already holds what another device wrote, and the bridge has read it.
-              // Never tried again (that would write over his other device's words, D-326): his text stays here unsaved.
+            if (NOTE.open === id && NOTE.gen !== gen) {
+              // another version took the editor while this save was out (the shim kept both): nothing more to do
+            } else if (NOTE.open === id && e && (e.conflict || e.code === 'conflict')) {
+              // a stale save (409): another device wrote it since. Never tried again over it (D-326): both are kept.
               NOTE.dirty = true;
-              NOTE.conflict = true;
-              NOTE.state = 'failed';
-              NOTE.why = 'Not saved: changed on another device';
-              clearTimeout(NOTE.timer);
+              stale = e.current || true;
             } else if (NOTE.open === id) {
               NOTE.dirty = true; // the text stays in the editor and goes with the next save
               NOTE.state = 'failed';
@@ -1144,10 +1462,14 @@
           syncHead();
           if (NOTE.again) {
             NOTE.again = false;
-            if (NOTE.dirty && NOTE.open === id && NOTE.state !== 'failed') saveNote();
+            if (!stale && NOTE.dirty && NOTE.open === id && NOTE.state !== 'failed') saveNote();
           }
         });
-      return NOTE.saving;
+      return NOTE.saving.then(async () => {
+        if (!stale || NOTE.open !== id) return;
+        const theirs = stale === true ? noteElsewhere() || (await noteInRecord(id).catch(() => null)) : stale;
+        if (theirs && NOTE.open === id) await keepBoth(theirs);
+      });
     }
     /** Every pending change of the open note saved (before another note opens, or the view or page goes). */
     /**
@@ -1156,8 +1478,10 @@
      */
     async function flushNote() {
       if (NOTE.saving) await NOTE.saving.catch(() => {});
+      if (NOTE.keeping) await NOTE.keeping.catch(() => {});
       if (NOTE.dirty) await saveNote();
       if (NOTE.saving) await NOTE.saving.catch(() => {});
+      if (NOTE.keeping) await NOTE.keeping.catch(() => {});
       if (!NOTE.open || !NOTE.dirty) return true;
       toast('This note isn’t saved yet, so it stays open. ' + (NOTE.why || ''));
       return false;
