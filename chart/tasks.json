@@ -7403,7 +7403,7 @@
   "depends": [
    "B-406"
   ],
-  "notes": "Lane build: retiring the Study Watch reader path and the Conversation's session card; phone session moves to Notes.",
+  "notes": "Page side built: reader path, session card and Conversation's desktop Start removed; phone keeps its no-note session and header line; capability and studyWatch registry marked. npm test, smoke, smoke:pwa green locally; harnesses running.",
   "commit": null,
   "source": "build manager, B-396 plan",
   "words": "Build retire Study Watch and the Conversation's session card (B-396, D-325).",
