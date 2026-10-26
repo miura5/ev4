@@ -1982,3 +1982,65 @@ body.has-line #today-week .wk-her{display:none}
 /* B-320 (D-306): the claude.ai live page after the cutover: one line at the top, and nothing offered that would write */
 .ro-banner{position:sticky;top:0;z-index:50;margin:0;padding:8px 16px;background:var(--surface);color:var(--text);font-size:13px;text-align:center;border-bottom:1px solid var(--line)}
 [data-readonly] #composer,[data-readonly] #new-wrap{display:none!important}
+/* ============================================================ B-405 (D-327): the L-frame on desktop
+   From 1024 px, as the AppNotes board: the raised page ends 38 px above the window's foot; the ground runs down the
+   sidebar and along the bottom as a slim strip (the session-controls slot, a minimized chat's chip, her suggestion, the
+   E.V. button, the chats history). Her chat floats over the page, bottom right, as Linear's does; nothing under it moves.
+   --dock-h is the 30 px the page gives up beyond its old 8 px foot, so every height that already counts it stays right.
+   Below 1024 px none of it shows: the phone layout is unchanged. */
+.estrip,.chatp{display:none}
+@media (min-width:1024px){
+  :root{--strip-h:38px;--dock-h:30px}
+  body::before{bottom:var(--strip-h)}
+  section.panel > .cols > .col-side,section.panel > .panel > .cols > .col-side,#study-side:not([hidden]),body.captions.side-on #p-ev>#ev-side,body.captions.ev-rest-on #p-ev>#ev-side{bottom:var(--strip-h)}
+  .estrip{display:flex;position:fixed;z-index:30;left:var(--pane-l);right:0;bottom:0;height:var(--strip-h);align-items:center;gap:6px;padding:0 8px 0 6px;box-sizing:border-box;background:var(--sunken);font:400 calc(12.5px * var(--ts)) var(--sans);color:var(--quiet)}
+  .estrip .ss{display:flex;align-items:center;gap:8px;white-space:nowrap;min-width:0}
+  .estrip .ss:empty{display:none}
+  .estrip>.sp{flex:1;min-width:0}
+  .estrip .sug{appearance:none;border:0;background:none;padding:0 8px;height:28px;min-height:0;border-radius:6px;font:inherit;color:var(--quiet);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;max-width:520px}
+  .estrip .sug:hover{color:var(--text);background:var(--hover)}
+  .estrip button.btn.evb{color:var(--text)}
+  .estrip button.btn.evb.on{background:var(--hover)}
+  .estrip button.btn.pchip{max-width:260px;justify-content:flex-start;min-width:0;flex:0 1 auto}
+  .estrip .pchip .pc{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  .estrip .ico,.chatp .ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .chatp:not([hidden]){display:flex}
+  .chatp{position:fixed;z-index:35;right:10px;bottom:calc(var(--strip-h) + 4px);top:30vh;width:400px;flex-direction:column;box-sizing:border-box;border-radius:14px;background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line),0 12px 32px rgba(0,0,0,.10),0 2px 6px rgba(0,0,0,.05);font:400 calc(13.5px * var(--ts))/1.55 var(--sans)}
+  .chatp.wide{width:640px;top:56px}
+  .chatp .cph{display:flex;align-items:center;gap:4px;padding:14px 10px 6px 18px;flex:none}
+  .chatp .cph .tt{flex:1;min-width:0;display:flex;flex-direction:column}
+  .chatp .cph .tt b{font-size:calc(14px * var(--ts));font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chatp .cph .tt span{font-size:calc(12px * var(--ts));color:var(--quiet);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chatp .msgs{flex:1;min-height:0;overflow:auto;padding:10px 18px 12px;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin}
+  .chatp .mev{margin:0;color:var(--text);overflow-wrap:anywhere}
+  .chatp .mev p{margin:0 0 6px}.chatp .mev p:last-child{margin-bottom:0}
+  .chatp .mev ul{margin:0 0 6px;padding-left:18px}
+  .chatp .mev.err{color:var(--quiet)}
+  .chatp .mev .mch{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .chatp .myou{margin:0;align-self:flex-end;text-align:right;color:var(--quiet);max-width:85%;overflow-wrap:anywhere}
+  .chatp .myou b{display:block;font-size:calc(11.5px * var(--ts));font-weight:500;color:var(--faint)}
+  .chatp .pchips{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:0 10px 10px;flex:none}
+  .chatp .pchips .qchip{max-width:100%;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+  .chatp .cin2{margin:0 8px 8px;border-radius:12px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);display:flex;flex-direction:column;flex:none}
+  .chatp .cin2:focus-within{box-shadow:inset 0 0 0 2px var(--text)}
+  .chatp .cin2 textarea{border:0;border-radius:12px 12px 0 0;background:none;resize:none;font:400 calc(13.5px * var(--ts))/1.45 var(--sans);color:var(--text);padding:10px 12px 4px;min-height:0;height:38px;max-height:140px;box-sizing:border-box;outline:none}
+  .chatp .cin2 textarea::placeholder{color:var(--faint)}
+  .chatp .cin2 .crow{display:flex;align-items:center;gap:6px;padding:0 6px 6px 10px}
+  .chatp .cin2 .crow .sp{flex:1}
+  .chatp .cin2 .ctx{display:inline-flex;align-items:center;gap:5px;font-size:calc(12px * var(--ts));color:var(--quiet);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .chatp .cin2 .ctx .ico{width:13px;height:13px}
+  .chatp .cin2 .send{width:28px;height:28px;min-height:0;border-radius:14px;border:0;background:var(--her);color:var(--on-her);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;padding:0}
+  .chatp .cin2 .send .ico{width:14px;height:14px;stroke-width:2}
+  .chatp .hlist{flex:1;min-height:0;overflow:auto;padding:6px}
+  .chatp .hlist .mhd{font:500 calc(11.5px * var(--ts))/1.45 var(--sans);color:var(--quiet);padding:6px 9px 4px}
+  .chatp .hlist .mi{appearance:none;display:flex;align-items:center;gap:10px;min-height:44px;padding:5px 9px;border-radius:6px;border:0;background:none;width:100%;font:400 calc(13px * var(--ts)) var(--sans);color:var(--text);cursor:pointer;text-align:left;box-sizing:border-box}
+  .chatp .hlist .mi:hover{background:var(--hover)}
+  .chatp .hlist .pt{flex:1;min-width:0;display:flex;flex-direction:column}
+  .chatp .hlist .pn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chatp .hlist .pm{font-size:calc(12px * var(--ts));color:var(--faint)}
+  .chatp .hlist .hnone{padding:6px 9px;color:var(--faint);font-size:calc(12.5px * var(--ts))}
+}
+@media (min-width:1200px){
+  #today-week .wk-days{min-height:calc(100dvh - var(--mh-h) - 8px - var(--strip-h) - 53px)}
+  body.has-line #today-week .wk-days{min-height:calc(100dvh - var(--mh-h) - var(--line-h, 0px) - 8px - var(--strip-h) - 53px)}
+}

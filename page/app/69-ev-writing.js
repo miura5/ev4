@@ -41,7 +41,9 @@
           talkQueued--;
           T.local.delete(id);
           render();
-          const back = m.role === 'matt' && o.restore !== false && T.restoreInput ? T.restoreInput(m.text) : false;
+          // B-405: a pop-up line goes back into the pop-up's own box (o.restoreTo), never the Conversation's
+          const restore = o.restoreTo || T.restoreInput;
+          const back = m.role === 'matt' && o.restore !== false && restore ? restore(m.text) : false;
           const why =
             e && e.conflict
               ? 'the conversation changed while you were writing'
@@ -79,13 +81,14 @@
         at: now(),
         tier: o.tier || 'local',
         ...(o.replyTo ? { replyTo: o.replyTo } : {}),
+        ...(o.thread ? { thread: o.thread } : {}), // B-405: a pop-up chat's line
       });
     // B-394: a line of his the record refused rejects (e.refused), after postMsg has put his words back, so no caller
     // goes on to answer a line that was never saved; a resend is then his one line, not a second copy.
     const mattSay = (text, o = {}) => {
       const id = msgId('m');
       capEcho(id, text);
-      return postMsg({ id, role: 'matt', text, at: now() }, o).then(
+      return postMsg({ id, role: 'matt', text, at: now(), ...(o.thread ? { thread: o.thread } : {}) }, o).then(
         () => id,
         e => {
           throw Object.assign(e instanceof Error ? e : new Error(String(e)), { refused: true, lineId: id });

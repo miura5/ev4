@@ -18,6 +18,7 @@ test('B-219: each harness is chosen by a path it covers (planted), and only it',
     prep: 'test/harness/prep.cjs',
     core: 'test/harness/core.cjs',
     greet: 'test/harness/greet.cjs',
+    frame: 'page/app/90-render.js',
     look: 'test/harness/views.cjs',
   };
   for (const h of HARNESSES) assert.ok(harnessesFor([planted[h]]).includes(h), `${planted[h]} runs ${h}`);
@@ -29,7 +30,7 @@ test('B-219: each harness is chosen by a path it covers (planted), and only it',
   );
   assert.deepEqual(harnessesFor(['page/app/30-progress.js']), ['run', 'look']);
   assert.deepEqual(harnessesFor(['page/app/73-ev-greeting.js']), ['run', 'captions', 'prep', 'greet', 'look']);
-  assert.deepEqual(harnessesFor(['page/styles.css']), ['components', 'run', 'captions', 'prep', 'look']);
+  assert.deepEqual(harnessesFor(['page/styles.css']), ['components', 'run', 'captions', 'prep', 'frame', 'look']);
 });
 
 test('B-219: the record of the work, docs, CI and tools touch no harness; an unknown path runs them all', () => {
@@ -58,7 +59,7 @@ test('B-219: the record of the work, docs, CI and tools touch no harness; an unk
 test('B-219: --touched keeps npm test and the build and drops the harnesses not chosen', () => {
   const names = steps({ record: 'synthetic', shots: '/tmp/x', only: ['run', 'look'] }).map(s => s[0]);
   assert.deepEqual(names, ['npm test', 'build', 'run', 'look']);
-  assert.equal(steps({ record: 'synthetic', shots: '/tmp/x' }).length, 10, 'the full check runs every step');
+  assert.equal(steps({ record: 'synthetic', shots: '/tmp/x' }).length, 11, 'the full check runs every step');
   const src = flatSource('tools/check.mjs');
   assert.match(src, /LOOK_SIZES = FIRST\.join/, 'the touched look pass shoots the four first sizes');
   assert.match(src, /check-full\.json/, 'a full GREEN is recorded for ship live');

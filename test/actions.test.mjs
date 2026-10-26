@@ -35,6 +35,7 @@ test('B-186: spec.actions has its _rules and the v4.4 rows, each a valid row wit
   assert.ok(Array.isArray(spec.actions._rules) && spec.actions._rules.length >= 3);
   assert.deepEqual(rows.map(([k]) => k).sort(), [
     'build-ask',
+    'chat-close',
     'design-ask',
     'job-fired',
     'plan-ask',
@@ -49,7 +50,7 @@ test('B-186: spec.actions has its _rules and the v4.4 rows, each a valid row wit
     assert.ok(row.callers.every(c => CALLERS.includes(c)) && COSTS.includes(row.cost), name);
   }
   // The tap rows are the page's; the trace and the live deploy are the builder's; the row is the OK for ship-it.
-  for (const n of ['build-ask', 'reply', 'design-ask', 'plan-ask', 'ship-it', 'job-fired'])
+  for (const n of ['build-ask', 'reply', 'design-ask', 'plan-ask', 'ship-it', 'job-fired', 'chat-close'])
     assert.deepEqual(spec.actions[n].callers, ['tap']);
   assert.deepEqual([spec.actions.trace.callers, spec.actions['ship-live'].callers], [['builder'], ['builder']]);
   assert.deepEqual(
@@ -135,6 +136,28 @@ test('B-186: a valid call returns only the row writes and effects', () => {
   assert.deepEqual(f.effects, []);
   assert.match(tap('job-fired', { job: 'talk', fired: { at: NOW, ok: true } }).refused, /do not fit/);
   assert.match(tap('job-fired', { job, fired: { at: NOW, ok: true, status: 'done' } }).refused, /do not fit/);
+});
+
+test('B-405 (D-327): chat-close marks a pop-up chat closed on its day, makes the day when missing, and nothing else', async () => {
+  const { loadValidator } = await import('../core/schemas.mjs');
+  const v = loadValidator();
+  const th = 'th-20261021-233000123';
+  const u = tap('chat-close', { thread: th, date: '2026-10-21', at: NOW, exists: true });
+  assert.equal(u.ok, true, u.refused);
+  assert.deepEqual(u.writes, [{ op: 'update', collection: 'talk', id: '2026-10-21', data: { closed: { [th]: NOW } } }]);
+  assert.deepEqual(u.effects, []);
+  const s = tap('chat-close', { thread: th, date: '2026-10-21', at: NOW, exists: false });
+  assert.equal(s.ok, true, s.refused);
+  assert.deepEqual(
+    s.writes.map(w => [w.op, w.collection, w.id, w.data.messages, w.data.closed]),
+    [['set', 'talk', '2026-10-21', {}, { [th]: NOW }]]
+  );
+  const r = v('talk', s.writes[0].data, { id: '2026-10-21' });
+  assert.ok(r.ok, JSON.stringify(r.errors));
+  // only his tap closes a chat; a bad thread or day does not fit
+  assert.match(tool('chat-close', { thread: th, date: '2026-10-21', at: NOW, exists: true }).refused, /may not call/);
+  assert.match(tap('chat-close', { thread: 'x', date: '2026-10-21', at: NOW, exists: true }).refused, /do not fit/);
+  assert.match(tap('chat-close', { thread: th, date: 'memory', at: NOW, exists: true }).refused, /do not fit/);
 });
 
 test('B-186: a wrong caller, a bad shape, a write outside the row and an unmet cost are each refused with the reason', () => {

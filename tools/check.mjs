@@ -24,9 +24,9 @@ const opt = (argv, name, dflt) => {
   return i >= 0 && argv[i + 1] ? path.resolve(argv[i + 1]) : dflt;
 };
 
-export const HARNESSES = ['shell', 'components', 'run', 'captions', 'prep', 'core', 'greet', 'look'];
+export const HARNESSES = ['shell', 'components', 'run', 'captions', 'prep', 'core', 'greet', 'frame', 'look'];
 const ALL = HARNESSES;
-const PAGE = ['shell', 'run', 'captions', 'prep', 'greet', 'look']; // everything that boots the page but core's timing
+const PAGE = ['shell', 'run', 'captions', 'prep', 'greet', 'frame', 'look']; // everything that boots the page but core's timing
 // Paths no harness reads: the record of the work, the docs, CI, the Chart and every tool but the build. npm test runs
 // the *.test.mjs files whatever the change.
 const NONE = [
@@ -63,15 +63,15 @@ const PARTS = {
   65: ['run', 'look'],
   66: ['run', 'look'],
   67: ['run', 'captions', 'look'],
-  68: ['run', 'captions', 'look'],
-  69: ['run', 'look'],
+  68: ['run', 'captions', 'frame', 'look'],
+  69: ['run', 'frame', 'look'],
   70: ['run', 'captions', 'look'],
   71: ['run', 'look'],
-  72: ['run', 'captions', 'greet', 'look'],
+  72: ['run', 'captions', 'greet', 'frame', 'look'],
   73: ['run', 'captions', 'prep', 'greet', 'look'],
   74: ['run', 'captions', 'look'],
   75: ['run', 'captions', 'prep', 'look'],
-  90: ['run', 'look'],
+  90: ['run', 'frame', 'look'], // B-405: the L-frame, strip and pop-up
   91: ['run', 'look'],
 };
 /** B-219: the harnesses a change to these paths needs, in check's order; an unknown path needs every one. */
@@ -84,7 +84,8 @@ export function harnessesFor(paths) {
       ['components', 'look'].forEach(h => need.add(h)); // B-285: look uses its checks
     else if ((m = p.match(/^test\/harness\/([a-z]+)\.cjs$/)) && HARNESSES.includes(m[1])) need.add(m[1]);
     else if (/^test\/harness\/(views|contrast)\.cjs$/.test(p)) need.add('look');
-    else if (p === 'page/styles.css') ['components', 'run', 'captions', 'prep', 'look'].forEach(h => need.add(h));
+    else if (p === 'page/styles.css')
+      ['components', 'run', 'captions', 'prep', 'frame', 'look'].forEach(h => need.add(h));
     else if ((m = p.match(/^page\/app\/(\d\d)-[a-z0-9-]+\.js$/)) && PARTS[m[1]]) PARTS[m[1]].forEach(h => need.add(h));
     else ALL.forEach(h => need.add(h));
   }
@@ -130,6 +131,7 @@ export function steps({ record, shots, only = null }) {
     h('prep', record, path.join(shots, 'prep')),
     h('core', record, path.join(shots, 'core')),
     h('greet', record, path.join(shots, 'greet')),
+    h('frame', record, path.join(shots, 'frame')), // B-405 (D-327): the desktop L-frame
     h('look', record, path.join(shots, 'look')),
   ].filter(([name, , args]) => {
     const h = path.basename(args[0] || '', '.cjs');

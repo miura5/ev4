@@ -1,0 +1,326 @@
+// B-405 (D-327): the L-frame on desktop. At 1280, 1706 and 2560 on every view (Today, Study, Progress, Record, Notes
+// once the page has its tab, and Conversation): the raised page ends above a 38 px strip holding the session-controls
+// slot, her suggestion and the E.V. button; the button opens a chat that floats over the page, bottom right, and the
+// page under it does not move; Escape closes it. On Today, one chat end to end: a line sent in the pop-up is answered
+// by chat() in its own thread (talk lines carry `thread`, the model sees only that thread), minimize leaves a chip that
+// reopens it, close writes talk/<day>.closed, history lists it and reopens it, and after a reload history still has it.
+// On Conversation the button focuses the view's own composer and the pop-up's lines are not in its thread. At 390 the
+// strip and the pop-up are absent (the phone layout is unchanged).
+//   node test/harness/frame.cjs [record dir | synthetic] [screenshots dir]
+// Run `node tools/build.mjs` first. Exit code 1 when any check fails.
+const { chromium } = require('playwright');
+const fs = require('fs');
+const path = require('path');
+const root = path.resolve(__dirname, '../..');
+const args = process.argv.slice(2);
+const dbDir = require('../data/synthetic.cjs').recordDir(args[0] || 'synthetic');
+const shots = args[1] || '/tmp/ev4-frame';
+fs.mkdirSync(shots, { recursive: true });
+const pageDir = path.join(root, 'dist/page/staging');
+const ORIGIN = 'https://ev.local';
+const TYPES = { '.js': 'text/javascript', '.json': 'application/json', '.css': 'text/css', '.html': 'text/html' };
+
+function load(dir) {
+  const db = {};
+  for (const c of fs.readdirSync(dir)) {
+    const p = path.join(dir, c);
+    if (!fs.statSync(p).isDirectory()) continue;
+    db[c] = {};
+    for (const f of fs.readdirSync(p))
+      if (f.endsWith('.json')) db[c][f.slice(0, -5)] = JSON.parse(fs.readFileSync(path.join(p, f), 'utf8'));
+  }
+  return db;
+}
+const seed = load(dbDir);
+for (const c of ['system', 'legacy', 'debug', 'journal']) delete seed[c];
+const stub = fs.readFileSync(path.join(__dirname, 'stub.js'), 'utf8');
+const skeleton = body =>
+  '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0}[hidden]{display:none!important}</style></head><body>' +
+  body +
+  '</body></html>';
+
+const results = [];
+const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', name, detail]);
+const until = (page, fn, arg, ms = 4000) =>
+  page
+    .waitForFunction(fn, arg, { timeout: ms })
+    .then(() => true)
+    .catch(() => false);
+
+async function open(ctx, db) {
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on('pageerror', e => errors.push(e.message));
+  page.on('console', m => {
+    if (m.type() === 'error') errors.push(m.text());
+  });
+  await page.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));
+  await page.route(ORIGIN + '/**', r => {
+    const name = new URL(r.request().url()).pathname.replace(/^\//, '') || 'index.html';
+    const f = path.join(pageDir, name);
+    if (name === 'index.html')
+      return r.fulfill({ body: skeleton(fs.readFileSync(f, 'utf8')), contentType: 'text/html' });
+    return fs.existsSync(f)
+      ? r.fulfill({ body: fs.readFileSync(f), contentType: TYPES[path.extname(name)] || 'application/octet-stream' })
+      : r.fulfill({ status: 404, body: 'not published' });
+  });
+  await page.addInitScript('window.__db=' + JSON.stringify(db) + ';' + stub);
+  await page.goto(ORIGIN + '/');
+  await until(page, () => /^Live$/.test((document.getElementById('status') || {}).textContent || ''), null, 8000);
+  return { page, errors };
+}
+const geo = page =>
+  page.evaluate(() => {
+    const r = s => {
+      const e = document.querySelector(s);
+      if (!e) return null;
+      const b = e.getBoundingClientRect();
+      return { x: Math.round(b.x), y: Math.round(b.y), w: Math.round(b.width), h: Math.round(b.height) };
+    };
+    const pop = document.getElementById('evchat');
+    return {
+      vw: innerWidth,
+      vh: innerHeight,
+      strip: r('#evstrip'),
+      stripShown:
+        !!document.getElementById('evstrip') && getComputedStyle(document.getElementById('evstrip')).display !== 'none',
+      paneBottom: getComputedStyle(document.body, '::before').bottom,
+      pop: pop && !pop.hidden && getComputedStyle(pop).display !== 'none' ? r('#evchat') : null,
+      slot: !!document.getElementById('ev-sslot'),
+      sug: ((document.getElementById('ev-sug') || {}).textContent || '').trim(),
+      evb: r('#ev-btn'),
+      chip: r('#ev-pchip:not([hidden])'),
+      head: r('#mh'),
+      panel: r('section.panel:not([hidden])'),
+      scroll: Math.round(scrollY),
+      focus: (document.activeElement && document.activeElement.id) || '',
+    };
+  });
+const writesOf = page => page.evaluate(() => window.__writes.filter(w => w[1] === 'talk'));
+const SIZES = [
+  [1280, 860],
+  [1706, 1240],
+  [2560, 1240],
+];
+
+(async () => {
+  const t0 = Date.now();
+  const browser = await chromium
+    .launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' })
+    .catch(() => chromium.launch());
+  for (const [w, h] of SIZES) {
+    const tag = `[${w}]`;
+    const ctx = await browser.newContext({ viewport: { width: w, height: h }, colorScheme: 'light' });
+    const { page, errors } = await open(ctx, seed);
+    const views = ['today', 'study', 'progress', 'record'];
+    if (await page.locator('#tab-notes').count()) views.push('notes');
+    // 1. Every view: the frame, then the pop-up over the page, the page unmoved, Escape closes it.
+    for (const v of views) {
+      await page.click('#tab-' + v);
+      await page.waitForTimeout(150);
+      const g = await geo(page);
+      ok(
+        `${tag} ${v}: the page ends above a 38 px strip with the slot, her suggestion and the E.V. button`,
+        g.stripShown &&
+          g.strip &&
+          g.strip.h === 38 &&
+          g.strip.y + g.strip.h === g.vh &&
+          g.paneBottom === '38px' &&
+          g.slot &&
+          !!g.sug &&
+          !!g.evb &&
+          !g.pop,
+        JSON.stringify({ strip: g.strip, pane: g.paneBottom, sug: g.sug })
+      );
+      await page.click('#ev-btn');
+      await page.waitForTimeout(250);
+      const o = await geo(page);
+      ok(
+        `${tag} ${v}: E.V. opens the chat floating bottom right over the page, which does not move`,
+        !!o.pop &&
+          o.vw - (o.pop.x + o.pop.w) <= 12 &&
+          o.pop.y + o.pop.h <= o.strip.y &&
+          o.focus === 'evc-input' &&
+          JSON.stringify([o.head, o.panel, o.scroll]) === JSON.stringify([g.head, g.panel, g.scroll]),
+        JSON.stringify({ pop: o.pop, before: [g.head, g.panel], after: [o.head, o.panel] })
+      );
+      await page.screenshot({ path: `${shots}/frame-${v}-open-${w}.png` });
+      await page.locator('#tab-' + v).focus(); // Escape from anywhere, not only inside the pop-up
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(150);
+      ok(`${tag} ${v}: Escape closes the chat`, !(await geo(page)).pop);
+    }
+
+    // 2. One chat on Today: send, minimize, reopen, close, history, reopen from history.
+    await page.click('#tab-today');
+    await page.evaluate(() => (window.__chatReply = 'Start with the reading, then the drill.'));
+    await page.click('#ev-btn');
+    const asked = `What first? (${w})`;
+    await page.fill('#evc-input', asked);
+    await page.press('#evc-input', 'Enter');
+    const answered = await until(page, () =>
+      [...document.querySelectorAll('#evchat .mev')].some(m => /reading, then the drill/.test(m.textContent))
+    );
+    const ws = await writesOf(page);
+    const lines = ws.flatMap(x => Object.values((x[3] && x[3].messages) || {}));
+    const th = (lines.find(m => m.text === asked) || {}).thread || '';
+    const call = await page.evaluate(() => window.__chatCalls[window.__chatCalls.length - 1]);
+    ok(
+      `${tag} a pop-up line is answered by chat() and both lines are written with the chat's thread`,
+      answered &&
+        /^th-[A-Za-z0-9-]+$/.test(th) &&
+        lines.some(m => m.role === 'ev' && m.thread === th && /drill/.test(m.text)),
+      JSON.stringify({ answered, th, n: lines.length })
+    );
+    ok(
+      `${tag} the model sees the view and only this chat's lines`,
+      !!call &&
+        /side chat over the Today view/.test(call.input[0].content) &&
+        call.input.slice(1, -1).length === 0 &&
+        call.input[call.input.length - 1].content === asked,
+      JSON.stringify(call && call.input.map(x => String(x.content).slice(0, 40)))
+    );
+    await page.screenshot({ path: `${shots}/frame-chat-${w}.png` });
+    await page.click('#evchat [aria-label="Minimize to the bar"]');
+    await page.waitForTimeout(150);
+    let g = await geo(page);
+    const chipText = await page.locator('#ev-pchip').textContent();
+    ok(
+      `${tag} minimize leaves the chat as a chip in the strip`,
+      !g.pop && !!g.chip && chipText.includes('What first?')
+    );
+    await page.screenshot({ path: `${shots}/frame-min-${w}.png` });
+    await page.click('#ev-pchip');
+    await page.waitForTimeout(150);
+    ok(
+      `${tag} the chip reopens the same chat`,
+      !!(await geo(page)).pop && (await page.locator('#evchat .myou').count()) === 1
+    );
+    await page.click('#evchat [aria-label="Close"]');
+    await page.waitForTimeout(400);
+    const closedW = (await writesOf(page)).find(x => x[3] && x[3].closed && x[3].closed[th]);
+    ok(`${tag} close writes the chat's closed mark (talk/<day>.closed)`, !!closedW && !(await geo(page)).pop);
+    await page.click('#ev-histbtn');
+    await page.waitForTimeout(200);
+    const row = page.locator(`#evchat .hlist [data-thread="${th}"]`);
+    ok(
+      `${tag} history lists the closed chat`,
+      (await row.count()) === 1 && /closed/.test(await row.textContent()),
+      (await page
+        .locator('#evchat .hlist')
+        .textContent()
+        .catch(() => '')) || ''
+    );
+    await page.screenshot({ path: `${shots}/frame-history-${w}.png` });
+    await row.click();
+    await page.waitForTimeout(200);
+    ok(
+      `${tag} history reopens the chat with its lines`,
+      (await page.locator('#evchat .myou').count()) === 1 && (await page.locator('#evchat .mev').count()) >= 1
+    );
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+    // a new chat after closing starts empty
+    await page.click('#ev-btn');
+    await page.waitForTimeout(150);
+    ok(
+      `${tag} the next open is a new chat`,
+      (await page.locator('#evchat .myou').count()) === 0 &&
+        (await page.locator('#evchat .cph b').textContent()) === 'New chat'
+    );
+    await page.keyboard.press('Escape');
+
+    // 2b. On every view, Conversation too: reopen the chat from history, minimize it to the chip, reopen it, close it.
+    for (const v of [...views, 'ev']) {
+      await page.click('#tab-' + v);
+      await page.waitForTimeout(120);
+      await page.click('#ev-histbtn');
+      await page.waitForTimeout(150);
+      const r = page.locator(`#evchat .hlist [data-thread="${th}"]`);
+      const listed = (await r.count()) === 1;
+      if (listed) await r.click();
+      await page.waitForTimeout(150);
+      const reopened = (await page.locator('#evchat:not([hidden]) .myou').count()) === 1;
+      await page.click('#evchat [aria-label="Minimize to the bar"]');
+      await page.waitForTimeout(120);
+      const m = await geo(page);
+      await page.click('#ev-pchip');
+      await page.waitForTimeout(120);
+      const back = !!(await geo(page)).pop && (await page.locator('#evchat .myou').count()) === 1;
+      await page.click('#evchat [aria-label="Close"]');
+      await page.waitForTimeout(200);
+      const shut = !(await geo(page)).pop;
+      ok(
+        `${tag} ${v}: reopen from history, minimize to the chip, reopen, close`,
+        listed && reopened && !m.pop && !!m.chip && back && shut,
+        JSON.stringify({ listed, reopened, chip: !!m.chip, back, shut })
+      );
+    }
+
+    // 3. Conversation: the button focuses its own composer; the pop-up's lines stay out of its thread.
+    await page.click('#tab-ev');
+    await page.waitForTimeout(200);
+    await page.click('#ev-btn');
+    await page.waitForTimeout(150);
+    g = await geo(page);
+    const inThread = await page.evaluate(q => (document.getElementById('thread').textContent || '').includes(q), asked);
+    ok(
+      `${tag} on Conversation the E.V. button focuses its composer and opens no pop-up`,
+      g.focus === 'ev-input' && !g.pop && g.stripShown,
+      JSON.stringify({ focus: g.focus, pop: g.pop })
+    );
+    ok(`${tag} the Conversation's thread does not show the pop-up's lines`, !inThread);
+    await page.screenshot({ path: `${shots}/frame-ev-${w}.png` });
+
+    // 4. A reload keeps history: the record carries the thread and its closed mark.
+    const db = await page.evaluate(() => JSON.parse(JSON.stringify(window.__db)));
+    ok(`${tag} no page errors`, errors.length === 0, errors.slice(0, 3).join(' | '));
+    await page.close();
+    const again = await open(ctx, db);
+    await again.page.click('#tab-study');
+    await again.page.click('#ev-histbtn');
+    await again.page.waitForTimeout(250);
+    const row2 = again.page.locator(`#evchat .hlist [data-thread="${th}"]`);
+    ok(
+      `${tag} after a reload history still lists the chat, closed`,
+      (await row2.count()) === 1 && /closed/.test(await row2.textContent())
+    );
+    if (await row2.count()) {
+      await row2.click();
+      await again.page.waitForTimeout(200);
+      ok(
+        `${tag} after a reload the chat reopens from history with its lines`,
+        (await again.page.locator('#evchat .myou').count()) === 1 &&
+          (await again.page.locator('#evchat .mev').textContent()).includes('drill')
+      );
+    }
+    ok(`${tag} no page errors after the reload`, again.errors.length === 0, again.errors.slice(0, 3).join(' | '));
+    await ctx.close();
+  }
+  // 5. The phone: no strip, no pop-up, nothing taken from the page's height.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: 'light' });
+    const { page, errors } = await open(ctx, seed);
+    for (const v of ['today', 'study', 'progress', 'record', 'ev']) {
+      await page.click('#tab-' + v);
+      await page.waitForTimeout(100);
+      const g = await geo(page);
+      const dock = await page.evaluate(() =>
+        getComputedStyle(document.documentElement).getPropertyValue('--dock-h').trim()
+      );
+      ok(`[390] ${v}: no strip and no pop-up below 1024 px`, !g.stripShown && !g.pop && dock === '60px', dock);
+    }
+    ok('[390] no page errors', errors.length === 0, errors.slice(0, 3).join(' | '));
+    await ctx.close();
+  }
+  await browser.close();
+  for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : '');
+  const failed = results.filter(r => r[0] === 'FAIL').length;
+  console.log(
+    `${failed ? failed + ' FAILED' : 'ALL PASSED'} of ${results.length} frame checks in ${Math.round((Date.now() - t0) / 1000)} s; shots in ${shots}`
+  );
+  process.exit(failed ? 1 : 0);
+})().catch(e => {
+  console.error(e);
+  process.exit(1);
+});

@@ -6,7 +6,12 @@
           if (m && m.role) out.push({ ...m, id, day: d.date || d.id });
       return out;
     }
+    // B-405 (D-327): a line with a thread belongs to a chat in the desktop pop-up, never to the Conversation's own thread;
+    // allMsgs() is the Conversation's (no thread), everyMsg() every line, for the pop-up to pick its thread from.
     function allMsgs() {
+      return everyMsg().filter(m => !m.thread);
+    }
+    function everyMsg() {
       const map = new Map(storedMsgs().map(m => [m.id, m]));
       for (const [id, m] of T.local) {
         if (map.has(id) && !m.pending) T.local.delete(id);

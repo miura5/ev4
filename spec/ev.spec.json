@@ -4020,6 +4020,56 @@
    ],
    "cost": "nothing"
   },
+  "chat-close": {
+   "does": "The page closes a chat of the desktop pop-up (B-405, D-327): talk/<day>.closed gets the thread with when; a closed chat is kept and listed in history, never deleted. The day's talk document is made (no messages) when it has none yet.",
+   "args": {
+    "type": "object",
+    "properties": {
+     "thread": {
+      "type": "string",
+      "pattern": "^th-[A-Za-z0-9-]{1,80}$"
+     },
+     "date": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+     },
+     "at": {
+      "type": "string",
+      "minLength": 1
+     },
+     "exists": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "thread",
+     "date",
+     "at",
+     "exists"
+    ],
+    "additionalProperties": false
+   },
+   "writes": [
+    {
+     "collection": "talk",
+     "key": "^\\d{4}-\\d{2}-\\d{2}$",
+     "ops": [
+      "set",
+      "update"
+     ],
+     "fields": [
+      "date",
+      "messages",
+      "closed"
+     ]
+    }
+   ],
+   "effects": [],
+   "callers": [
+    "tap"
+   ],
+   "cost": "nothing"
+  },
   "trace": {
    "does": "The builder's trace (D-195, B-178): its job's result, one talk line as E.V. with the job card, and system/yourturn",
    "args": {

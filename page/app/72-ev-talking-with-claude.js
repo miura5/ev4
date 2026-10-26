@@ -165,9 +165,10 @@
         L.push('Earlier conversations, summarized: ' + String(S.memory.summary).slice(0, 1200));
       return L.join('\n');
     }
-    function history(beforeId) {
-      const upTo = (S.memory && S.memory.upTo) || '';
-      return allMsgs()
+    // B-405 (D-327): a pop-up chat's turn sees only its own thread's lines; the Conversation's sees only its own.
+    function history(beforeId, thread) {
+      const upTo = thread ? '' : (S.memory && S.memory.upTo) || '';
+      return (thread ? everyMsg().filter(m => m.thread === thread) : allMsgs())
         .filter(m => !m.pending && m.id < beforeId && m.id > upTo && (m.text || (m.cards || []).length))
         .slice(-14)
         .map(m => {
@@ -907,7 +908,8 @@
       if (!sample || T.sampleOff) {
         await evSay(
           SAMPLE_COPY[T.sampleOff] || 'Asking Claude isn’t available in this view. The quick asks still work.',
-          []
+          [],
+          o.thread ? { thread: o.thread } : {}
         );
         return;
       }
@@ -927,6 +929,7 @@
         replyTo: o.replyTo,
         raw: '',
         cut: 0,
+        ...(o.thread ? { thread: o.thread } : {}), // B-405: a pop-up chat's reply stays in its thread
       };
       const t0 = Date.now(); // B-227: her work line's duration runs from his send to her line
       const ctl = new AbortController();
@@ -952,7 +955,16 @@
       let error = null;
       try {
         const res = await sample(
-          [{ role: 'user', content: evContext() }, ...history(o.replyTo || id), { role: 'user', content: text }],
+          [
+            {
+              role: 'user',
+              content:
+                evContext() +
+                (o.view ? `\nHe is asking in the side chat over the ${o.view} view; that view is what he sees.` : ''),
+            },
+            ...history(o.replyTo || id, o.thread),
+            { role: 'user', content: text },
+          ],
           opts
         );
         pend.text = lastRound(res.text, pend.cut) + (res.truncated ? '\n\n(Cut short. Ask for less at once.)' : '');
@@ -993,6 +1005,7 @@
         at,
         tier,
         ...(o.replyTo ? { replyTo: o.replyTo } : {}),
+        ...(o.thread ? { thread: o.thread } : {}),
         ...(pend.jobId ? { jobId: pend.jobId } : {}),
         ...(error && error !== 'cancelled' ? { error } : {}),
         // B-227 (D-232): a reply that changed something carries its work: how long it took and what it changed.

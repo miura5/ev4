@@ -201,6 +201,29 @@ export function makeActions(validateAgainst) {
       effects: [],
     }),
     trace,
+    // B-405 (D-327): a closed pop-up chat is a mark on the day it was closed (talk/<day>.closed), never a deletion; the
+    // day's document is made with no messages when it has none yet.
+    'chat-close': args => ({
+      writes: [
+        args.exists
+          ? { op: 'update', collection: 'talk', id: args.date, data: { closed: { [args.thread]: args.at } } }
+          : {
+              op: 'set',
+              collection: 'talk',
+              id: args.date,
+              data: {
+                schema: 4,
+                writer: 'page',
+                at: args.at,
+                source: 'E.V. Home',
+                date: args.date,
+                messages: {},
+                closed: { [args.thread]: args.at },
+              },
+            },
+      ],
+      effects: [],
+    }),
     // The live deploy's gate (D-198): its caller and cost; the deploy itself is core/deploy.mjs's printout, never a row's
     // writes (no row writes system/spec).
     'ship-live': () => ({ writes: [], effects: [{ kind: 'publish' }] }),
