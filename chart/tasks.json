@@ -4102,7 +4102,7 @@
   "depends": [
    "B-231"
   ],
-  "notes": "Ready for review at 7b0ba45: npm test 768 pass 0 fail; new test/weakspots2.test.mjs 8/8; smoke 28/28; harnesses run 387/387, core 142/142, views green, look 239/239 (one flaky C-15 Today-filter run, green on rerun). Not shipped. Staging migration prepared: migrate bumps --store worker (api pull, then api batch --files), to run right after the staging deploy and before the next staging evening-cloud. Proposed decision for the build manager: weakspots.links is a page mark, so his Join can add duplicate-of.",
+  "notes": "Review gaps fixed at b6a7bbe, ready for second review: D-115 copy hashed over fact fields (omits events, links) and rebuilt over the current facts; schema enum 1,2 with schema-2 fields refused at 1, so the migration is safe any time after the deploy; a dangling or cyclic duplicate-of credits no one; a duplicate's seen events count on its survivor; session near-matches only open or solid spots; skills credits duplicates. npm test 776/0, weakspots2 12/12, smoke 28/28, core harness 142/142.",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },
