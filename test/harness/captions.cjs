@@ -1273,7 +1273,10 @@ async function sideBySide(browser, left, right, out, vp) {
         bar: (document.querySelector('#kbar .s-clock') || {}).textContent || null,
         barBtns: [...document.querySelectorAll('#kbar button')].map(b => b.textContent),
         barInHeader: !!document.querySelector('#mh > #kbar'),
+        // B-405 (D-327): the approved board's chat pop-up has its Close (it files the chat in history); it is not the
+        // skills run's, so it is outside this check
         closers: [...document.querySelectorAll('button,[role=button]')]
+          .filter(b => !b.closest('#evchat'))
           .map(b => b.textContent.trim() || b.getAttribute('aria-label') || '')
           .filter(t => /^(hide|close|dismiss)\b|^[×✕✖]$/i.test(t)),
         // B-78: a reply's card is a surface (#ev-surf), not under her line
