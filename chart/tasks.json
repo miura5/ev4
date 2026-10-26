@@ -7520,11 +7520,13 @@
  {
   "id": "B-413",
   "kind": "request",
-  "title": "Request (reported Oct 26): Lightweight version history for notes: see a note's past versions and revert to one, before any note-based insights.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
-  "depends": [],
+  "title": "Notes: version history and revert",
+  "dod": "Each note keeps its past versions in the record (a version at most every few minutes of editing, at session end and before any revert or (earlier) swap; nothing is ever deleted, older versions are kept, capped by count with the oldest folded into daily ones). The note's menu opens History: versions by time with a word-count change, a read-only view of one, and Restore, which saves it as the newest version so restoring is itself undoable. Backups and the mirror carry versions. Designed against the Notes canvas look; core tests, the notes harness at 1280 and 1706, its own review, ship staging GREEN.",
+  "milestone": "PWA",
+  "status": "open",
+  "depends": [
+   "B-409"
+  ],
   "notes": "",
   "commit": null,
   "source": "chat, Oct 26",
@@ -7532,6 +7534,10 @@
   "reportedAt": "2026-10-26T08:31:44.968Z",
   "board": {
    "row": "v4 B-413: Lightweight version history for notes: see a note's past versions and…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-26T08:32:02.271Z"
   }
  }
 ]
