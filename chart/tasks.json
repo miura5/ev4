@@ -4102,7 +4102,7 @@
   "depends": [
    "B-231"
   ],
-  "notes": "Final fixes in at 0247a24: a session finding never sets over a spot already there (freeWeakspotId: base, -2, -3; also on her add_weakspot tool path against S.weak); a dangling or cyclic duplicate-of stays open and counted. npm test 788/0, weakspots2 14/14, smoke 28/28, core harness 142/142. evcore.mjs at 2,498 of 2,500 lines.",
+  "notes": "Final narrow check of 0247a24: No gaps. Reviews: first found 4 gaps (fixed b6a7bbe), second 2 more plus the B-233 tool-path id collision (fixed 0247a24 with freeWeakspotId), narrow check clean. Ready for staging with its migration. evcore.mjs is at 2,498 of 2,500 lines: B-415's core split comes first.",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },
