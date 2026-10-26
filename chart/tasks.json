@@ -7234,7 +7234,7 @@
    "B-398",
    "B-399"
   ],
-  "notes": "Review gaps fixed in 0a5ee69: every notes write (page write() set and update, the Worker's PUT and run API batch) is judged on the merged document by core/validate.mjs noteProblem: the notes schema, capacity.documentBytes, and write-once createdAt and earlierOf; lint again holds notes a run read to schema and size (an edit that keeps the shape is still no issue, never fact-changed); the mirror escapes a block's opening (- + = >, digits. and digits), ---/***/===) and trims leading indentation. npm test 713 (710 pass, 3 skipped, 0 fail); npm run smoke 28/28. Review skill not run: this builder had no subagent tool. Still open from before: evening-mac and restore-drill proof, review, ship staging.",
+  "notes": "Review 2 (fresh agent at 1b41a7a): gap 1 (every notes write checked) closed on every path; one mirror gap left (line breaks in a title or run could open a block), closed in 5024a9e with a test, not reviewed again; on the release card. Size +430 -61 (0a5ee69). Left: ship staging (repeat evening-cloud on the new code), then the Mac proof (evening-mac and restore-drill) at Matt's sitting.",
   "commit": null,
   "source": "build manager, B-396 plan",
   "words": "Build the notes record (collection, schema, pipelines, mirror, backups) (B-396, D-325).",
