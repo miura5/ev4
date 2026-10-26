@@ -1152,7 +1152,7 @@ test('B-410 (shim): a tab that dies right after moving refused words leaves one 
 
 // ---- B-409 (release fix wave 1): an adopted note is never replaced by a save that never saw it
 
-test('B-409 (shim): a note taken over mid-session from a closed tab, then saved here before it is sent: both kept', async () => {
+test('B-409 (shim): a save asked before a closed tab’s note is taken over, landing after it: both kept', async () => {
   const env = envOf();
   assert.equal((await put(env, 'notes', ID, BASE)).status, 200);
   const Y = 'n-20261026-150000-YyYyYyYyYyYyYyYy';
@@ -1171,15 +1171,19 @@ test('B-409 (shim): a note taken over mid-session from a closed tab, then saved 
   const A = await shim(env, idb, { down: false }, { status });
   const B = await shim(env, idb, { down: false });
   A.net.down = B.net.down = true;
-  const bWords = note(
-    [
-      ['h1', 'Sodium (Na+)'],
-      ['ul', 'B wrote this offline'],
-    ],
-    AT,
-    BASE
-  );
-  await B.db.collection('notes').doc(ID).set(bWords);
+  await B.db
+    .collection('notes')
+    .doc(ID)
+    .set(
+      note(
+        [
+          ['h1', 'Sodium (Na+)'],
+          ['ul', 'B wrote this offline'],
+        ],
+        AT,
+        BASE
+      )
+    );
   B.close(); // window B closes with its words waiting
   await A.db
     .collection('notes')
@@ -1194,40 +1198,29 @@ test('B-409 (shim): a note taken over mid-session from a closed tab, then saved 
         NY
       )
     );
-  // while Y's send is out (A has taken B's note over by then), A saves the note as it was before B's words
-  let aSave = null;
-  hold = async () => {
-    await new Promise(r => setTimeout(r, 50));
-    aSave = A.db
-      .collection('notes')
-      .doc(ID)
-      .set(
-        note(
-          [
-            ['h1', 'Sodium (Na+)'],
-            ['ul', 'A typed this online'],
-          ],
-          AT,
-          BASE
-        )
-      );
-    await new Promise(r => setTimeout(r, 50));
-  };
-  // the page is shown the words it took over
-  const seen = [];
-  A.db.collection('notes').onSnapshot(q => seen.push(JSON.stringify(q.docs.map(d => d.data()))));
+  // A's save of the note, built on the version before B's words, is asked now: before A takes B's note over
+  const aSave = A.db
+    .collection('notes')
+    .doc(ID)
+    .set(
+      note(
+        [
+          ['h1', 'Sodium (Na+)'],
+          ['ul', 'A typed this'],
+        ],
+        AT,
+        BASE
+      )
+    );
+  hold = () => new Promise(r => setTimeout(r, 100)); // Y's send is out while the take-over runs
   await A.online();
   await aSave;
   await A.online();
   await kept();
   const all = JSON.stringify(allNotes(env));
   assert.ok(all.includes('B wrote this offline'), 'B’s offline words are in the record');
-  assert.ok(all.includes('A typed this online'), 'and A’s');
+  assert.ok(all.includes('A typed this'), 'and A’s');
   assert.equal(allNotes(env).filter(n => n.earlierOf === ID).length, 1, 'one of them as the second note');
-  assert.ok(
-    seen.some(x => x.includes('B wrote this offline')),
-    'the page was shown B’s words when A took them over'
-  );
   assert.deepEqual(idb.box(), []);
 });
 
@@ -1264,4 +1257,121 @@ test('B-409 (shim): refused words taken over from a closed tab and a save here: 
     idb.box().some(o => o.refused && JSON.stringify(o.doc.blocks) === JSON.stringify(HUGE().blocks)),
     'and still in IndexedDB'
   );
+});
+
+// ---- B-409 (release fix wave 2): adopted notes after a reload, and never over this tab's own
+
+test('B-409 (shim): save offline, reload offline, edit the note shown, back online: one note with both edits', async () => {
+  const env = envOf();
+  await put(env, 'notes', ID, BASE);
+  const idb = fakeIDB();
+  const s = await shim(env, idb);
+  s.net.down = true;
+  const w1 = lines(BASE, ['ul', 'W1 before the reload']);
+  await s.db.collection('notes').doc(ID).set(w1);
+  await kept();
+  s.close();
+  const r = await shim(env, idb, { down: true }); // a new page load: a new tab, which takes the waiting note over
+  assert.deepEqual(await r.data('notes', ID), w1, 'the page shows W1');
+  const w2 = lines(w1, ['ul', 'W2 after the reload']);
+  await r.db.collection('notes').doc(ID).set(w2); // built on what it shows
+  await r.online();
+  await kept();
+  assert.equal(allNotes(env).length, 1, JSON.stringify(allNotes(env).map(n => n.title)));
+  assert.deepEqual(stored(env, 'notes', ID).data, w2, 'one note holding W1 and W2');
+  assert.equal(r.kept().length, 0, 'no second note');
+  assert.deepEqual(idb.box(), []);
+});
+
+test('B-409 (shim): a closed tab’s words are never shown over this tab’s own waiting words, and both are kept', async () => {
+  const env = envOf();
+  await put(env, 'notes', ID, BASE);
+  const idb = fakeIDB();
+  let busy = 2; // the Worker is busy at first: the take-over happens while nothing can be sent
+  const A = await shim(
+    env,
+    idb,
+    { down: false },
+    {
+      status: async (url, init) => (init.method === 'PUT' && busy-- > 0 ? new Response('busy', { status: 503 }) : null),
+    }
+  );
+  const B = await shim(env, idb);
+  A.net.down = B.net.down = true;
+  const w1 = lines(BASE, ['ul', 'W1 in tab A']);
+  await A.db.collection('notes').doc(ID).set(w1);
+  await B.db
+    .collection('notes')
+    .doc(ID)
+    .set(lines(BASE, ['ul', 'W2 in tab B']));
+  await kept();
+  B.close();
+  A.wake(); // back online, the Worker busy: A takes B's entry over
+  assert.ok(await until(() => idb.box().length === 2 && A.sync().pending === 2));
+  assert.deepEqual(await A.data('notes', ID), w1, 'A still shows its own words');
+  // A edits the note it shows and saves; this replaces only A's own entry
+  await A.db
+    .collection('notes')
+    .doc(ID)
+    .set(lines(w1, ['ul', 'A’s edit']));
+  assert.ok(await until(() => A.sync().pending === 0 && !A.sync().syncing, 8000));
+  await kept();
+  const all = textOfAll(env);
+  for (const w of ['W1 in tab A', 'A’s edit', 'W2 in tab B']) assert.ok(all.includes(w), w + ' is kept: ' + all);
+  assert.equal(allNotes(env).length, 2);
+  assert.equal(allNotes(env).filter(n => n.earlierOf === ID).length, 1);
+});
+
+test('B-409 (shim): a note taken over mid-session reaches the page at once (so its own check sees the newer words)', async () => {
+  const env = envOf();
+  await put(env, 'notes', ID, BASE);
+  const Y = 'n-20261026-150000-YyYyYyYyYyYyYyYy';
+  await put(env, 'notes', Y, note([['h1', 'Potassium']]));
+  const idb = fakeIDB();
+  let release = null;
+  let duringSend = null; // what the page had been shown when the first send went out
+  const shown = [];
+  const A = await shim(
+    env,
+    idb,
+    { down: false },
+    {
+      status: async (url, init) => {
+        if (init.method === 'PUT' && !release) {
+          duringSend = shown.slice();
+          await new Promise(r => (release = r));
+        }
+        return null;
+      },
+    }
+  );
+  const B = await shim(env, idb);
+  A.net.down = B.net.down = true;
+  await B.db
+    .collection('notes')
+    .doc(ID)
+    .set(lines(BASE, ['ul', 'B wrote this offline']));
+  await kept();
+  B.close();
+  await A.db
+    .collection('notes')
+    .doc(Y)
+    .set(
+      note([
+        ['h1', 'Potassium'],
+        ['ul', 'A offline'],
+      ])
+    ); // so A sends, and takes over
+  A.db
+    .collection('notes')
+    .doc(ID)
+    .onSnapshot(d => shown.push(JSON.stringify(d.data())));
+  await new Promise(r => setTimeout(r, 20));
+  A.wake();
+  assert.ok(await until(() => !!release));
+  assert.ok(
+    duringSend.some(x => x.includes('B wrote this offline')),
+    'the page was told when the note was taken over, before anything was sent'
+  );
+  release();
 });

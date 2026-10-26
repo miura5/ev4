@@ -215,6 +215,9 @@
         moveRefused(key, o);
         continue;
       }
+      // B-409: this tab's own words for the note wait to be sent: they stay what the page shows, and the words taken
+      // over are never stamped seen, so no save here replaces them; they send on their own, and both are kept (D-326)
+      if (outbox[ownKey(o.c, o.id)]) continue;
       (db[o.c] = db[o.c] || {})[o.id] = o.doc;
       o.seen = ++SEQ; // B-409: shown to the page from here on (a save asked before this never saw these words)
       shown.add(o.c);
@@ -517,14 +520,17 @@
     const key = ownKey(c, id);
     const was = outbox[key];
     // B-410, B-409: a save of the note replaces another entry for it (one a closed tab left, adopted) only when the
-    // save was built on that entry's words: the same words, or refused words he was shown before he saved (D-332: he
-    // cut them down). Then the new entry keeps its base: if the record moved on since, the send is stale and both are
+    // save was built on that entry's words: the same words, or words the page showed before he saved (after a
+    // reload; refused ones he cut down, D-332). Then the new entry keeps its base: if the record moved on since, the send is stale and both are
     // kept (D-326). Words the save never saw are never dropped: an entry that can still be sent stays and goes first,
     // so this save goes stale behind it and both are kept; refused words become their own second note, still refused.
     const replaced = [];
     for (const [k, o] of Object.entries(outbox)) {
       if (k === key || o.c !== c || o.id !== id) continue;
-      if (sameWords(o.doc, doc) || (o.refused && (o.seen || 0) < seq)) replaced.push([k, o]);
+      // B-409: the page showed these words before this save was asked (after a reload, the note he is editing), so
+      // the save was built on them: it replaces them and carries their base on
+      const saw = !!o.seen && o.seen < seq;
+      if (saw || sameWords(o.doc, doc)) replaced.push([k, o]);
       else if (o.refused) moveRefused(k, o);
     }
     if (moved) {
