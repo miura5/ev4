@@ -7656,10 +7656,10 @@
  {
   "id": "B-419",
   "kind": "bug",
-  "title": "Bug (reported Oct 26): Tasks E.V. adds for later days are saved (dayedits per date) but the Week view never shows them, and the Today list cannot look ahead, so he cannot see that practice blocks across the week landed. A to-do E.V. added to today also shows in Today's list but not on the Week calendar. Seen on the staging app: a week of medication-administration practice blocks and an email-the-instructors to-do were all saved, none on the Week view. E.V. also added two batches of blocks for the same request, so some days hold two or three.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "title": "Week view shows the tasks E.V. adds to later days",
+  "dod": "The Week view and its day panels list every task in dayedits.added for each date (with today's), the same as Today's list does for today; a day can be opened ahead of time to see its tasks; E.V.'s add-tasks tool does not add a second batch for the same request (one call per ask, or a duplicate check on text and date). Harness check on a planted week; staging read back; its own review.",
+  "milestone": "After Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -7668,6 +7668,10 @@
   "reportedAt": "2026-10-26T15:24:56.304Z",
   "board": {
    "row": "v4 B-419: Tasks E.V. adds for later days are saved (dayedits per date) but the…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-26T15:24:57.884Z"
   }
  }
 ]
