@@ -7280,13 +7280,13 @@
   "title": "Notes: the notes list",
   "dod": "Course filters; empty states for no notes at all and for no notes in a course; a preview pane with edited, length, studied and 'on this page'; Open note and Study with E.V. Desktop only. A harness at 1280 and 2560 on synthetic, on synthetic with no notes, and with a long-title note shows the filters, both empty states and nothing overflowing. Smoke green.",
   "milestone": "PWA",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-401",
    "B-402"
   ],
-  "notes": "ready for staging: f9fe7da. List with course filters and counts, course groups, both empty states, preview pane (From, Edited, Length, Studied, On this page, Open note, Study with E.V.). No data writes. Study with E.V. opens the note and dispatches ev:note-study for B-406 to start the session. npm test 729 pass, smoke 28, frame 111, shell 115, notes 57 of 57 (1280, 1706, 2560 on synthetic, no notes, long title).",
-  "commit": null,
+  "notes": "Shipped to staging at 0247a24: ship staging GREEN.",
+  "commit": "0247a24",
   "source": "build manager, B-396 plan",
   "words": "Build the notes list (B-396, D-325).",
   "reportedAt": "2026-10-26T00:52:40.473Z",
