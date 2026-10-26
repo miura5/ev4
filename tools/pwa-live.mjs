@@ -198,8 +198,13 @@ export function workerDoc(spec, token, { at = new Date().toISOString() } = {}) {
   const app = liveApp(spec);
   if (!app || !/^https:\/\/[a-z0-9-]+\.[a-z0-9-]+\.workers\.dev$/.test(app.url || ''))
     throw new Error('spec.registry.records.live.app.url is not an https workers.dev address');
-  if (typeof token !== 'string' || !/^[\x21-\x7e]{32,}$/.test(token) || /["\\]/.test(token))
-    throw new Error('the token file holds no usable token (32 or more printable characters, no quote or backslash)');
+  // D-346: a password manager's 20-character mixed password (letters, digits and symbols) is as strong as 32 hex
+  const classes = t => [/[a-z]/, /[A-Z]/, /\d/, /[^A-Za-z0-9]/].filter(r => r.test(t)).length;
+  const strong = t => /^[\x21-\x7e]{32,}$/.test(t) || (/^[\x21-\x7e]{20,}$/.test(t) && classes(t) >= 3);
+  if (typeof token !== 'string' || !strong(token) || /["\\]/.test(token))
+    throw new Error(
+      'the token file holds no usable token (32 or more printable characters, or 20 or more mixing three of lower case, upper case, digits and symbols; no quote or backslash)'
+    );
   return { schema: 2, writer: 'deploy', at, source: 'B-320 cutover (D-320)', url: app.url, token };
 }
 

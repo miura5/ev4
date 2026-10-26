@@ -1281,52 +1281,36 @@
      "worker": "ev-live",
      "_why": "B-319, B-320 (D-330): the one-time copy of the live record goes into the live D1 itself, through the ev-live Worker (its workers.dev name, on the account of the Worker that system/worker names). A live copy also needs dist/live-ok bound to the commit (Matt OK in the chat)."
     },
-    "readOnly": false,
-    "d1": false,
+    "readOnly": true,
+    "d1": true,
     "cutover": {
-     "_why": "B-320 (D-306, D-307, D-331): what the cutover commit turns on, applied by node tools/pwa-live.mjs cutover --apply (docs/cutover.md), never by hand: readOnly true (the claude.ai live page refuses every write and says E.V. lives in the app now), d1 true (D-307 lint on for live: tools/d307.mjs), these runs moved to records.live.runs (every live pipeline on the ev-live Worker, token from the live record system/worker, D-320), and the live Mac tasks re-pointed at E.V. Backups (evening-mac re-created, restore-drill new, the old evening-mac listed retired). Live pipelines stay on the claude.ai record until then.",
-     "runs": {
-      "store": "worker",
-      "worker": {
-       "collection": "system",
-       "doc_id": "worker"
-      },
-      "pipelines": [
-       "morning",
-       "evening-cloud",
-       "weekly",
-       "worker",
-       "watchdog",
-       "evening-mac",
-       "restore-drill"
-      ],
-      "backup": {
-       "folder": "/Users/peachfritter/Documents/E.V. Backups",
-       "restoreFrom": "mac",
-       "_why": "D-322: the one place the live backup folder is named. evening-mac writes the nightly backup and the Sunday mirror there, exported from D1; the drill restores the newest one (or with restoreFrom r2 the newest R2 export)."
-      },
-      "scratch": {
-       "host": "ev-live-scratch",
-       "_why": "B-320: the live restore drill restores into the ev-live-scratch D1 through its Worker (pwa-live.yml keeps it), same token, under drills/<run id>/<collection>; it writes nothing else there."
-      },
-      "_why": "B-320 (D-307, D-320, D-322): the live runs read and write the ev-live Worker run API (D1), its url and token from the live record system/worker."
+     "_why": "B-320: applied at the cutover (tools/pwa-live.mjs cutover --apply): readOnly, d1, runs and the live Mac tasks above."
+    },
+    "runs": {
+     "store": "worker",
+     "worker": {
+      "collection": "system",
+      "doc_id": "worker"
      },
-     "tasks": {
-      "restore-drill": {
-       "pipeline": "restore-drill",
-       "record": "live",
-       "lane": "mac",
-       "schedule": "CRON_TZ=America/Chicago 55 20 1 * *",
-       "cadence": "monthly, the 1st at 8:55pm (after that night's backup)",
-       "folders": [
-        "/Users/peachfritter/Documents/E.V. Backups"
-       ],
-       "macBound": true,
-       "push": true,
-       "trigger": null,
-       "note": "B-320 (D-322): restores the newest live backup into the ev-live-scratch D1 and checks counts and hashes per collection. Created at the cutover from the chat linked to the Mac with Matt present."
-      }
-     }
+     "pipelines": [
+      "morning",
+      "evening-cloud",
+      "weekly",
+      "worker",
+      "watchdog",
+      "evening-mac",
+      "restore-drill"
+     ],
+     "backup": {
+      "folder": "/Users/peachfritter/Documents/E.V. Backups",
+      "restoreFrom": "mac",
+      "_why": "D-322: the one place the live backup folder is named. evening-mac writes the nightly backup and the Sunday mirror there, exported from D1; the drill restores the newest one (or with restoreFrom r2 the newest R2 export)."
+     },
+     "scratch": {
+      "host": "ev-live-scratch",
+      "_why": "B-320: the live restore drill restores into the ev-live-scratch D1 through its Worker (pwa-live.yml keeps it), same token, under drills/<run id>/<collection>; it writes nothing else there."
+     },
+     "_why": "B-320 (D-307, D-320, D-322): the live runs read and write the ev-live Worker run API (D1), its url and token from the live record system/worker."
     }
    },
    "staging": {
@@ -2427,16 +2411,11 @@
     "schedule": "CRON_TZ=America/Chicago 20 20 * * *",
     "cadence": "daily 8:20pm",
     "folders": [
-     "/Users/peachfritter/Documents/E.V. Study Watch"
+     "/Users/peachfritter/Documents/E.V. Backups"
     ],
     "macBound": true,
     "push": true,
-    "trigger": "trig_01AxnPF3iPyo2BpCQtMdAKP8",
-    "keepEnded": [
-     "B-01",
-     "B-04"
-    ],
-    "_keepEndedWhy": "D-344: this Mac task was created before D-324 ended B-01 and B-04; it keeps those words until the cutover retires it (O-5: Mac tasks are never edited)."
+    "trigger": "trig_01Ma8woo5ieoWM1s5KHuRpip"
    },
    "weekly": {
     "pipeline": "weekly",
@@ -2471,6 +2450,20 @@
     "push": true,
     "trigger": "trig_01GrcEzEwb4L3oXX7dsTdpwD",
     "note": "Hours spelled out (D-084): an every-3-hours cron anchors to the minute it was created. Pushes per D-097."
+   },
+   "restore-drill": {
+    "pipeline": "restore-drill",
+    "record": "live",
+    "lane": "mac",
+    "schedule": "CRON_TZ=America/Chicago 55 20 1 * *",
+    "cadence": "monthly, the 1st at 8:55pm (after that night's backup)",
+    "folders": [
+     "/Users/peachfritter/Documents/E.V. Backups"
+    ],
+    "macBound": true,
+    "push": true,
+    "trigger": "trig_018VSRmz8pdNzdVSxpH42PEG",
+    "note": "B-320 (D-322): restores the newest live backup into the ev-live-scratch D1 and checks counts and hashes per collection. Created at the cutover from the chat linked to the Mac with Matt present."
    }
   },
   "staging": {
@@ -2789,6 +2782,12 @@
     "was": "staging.restore-drill",
     "name": "E.V. staging · restore-drill",
     "reason": "B-397, B-399 (D-324): its prompt changed, so it was re-created Oct 26 from the chat linked to the Mac with Matt present as trig_016MfX6dcGkX1pe834pZN9kJ; disabled and kept."
+   },
+   {
+    "trigger": "trig_01AxnPF3iPyo2BpCQtMdAKP8",
+    "was": "live.evening-mac",
+    "name": "E.V. evening-mac",
+    "reason": "B-320 (D-303, D-322): replaced at the cutover by the live evening-mac on the ev-live Worker, writing E.V. Backups; disabled (update_trigger enabled false) once its replacement exists, from the chat linked to the Mac with Matt present. Kept, never deleted."
    }
   ]
  },

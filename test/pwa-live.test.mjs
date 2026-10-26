@@ -276,6 +276,9 @@ test('B-320: the live record system/worker carries the address from the spec and
   assert.equal(d.token, t);
   assert.throws(() => workerDoc(s, 'short'), /no usable token/);
   assert.throws(() => workerDoc(s, 'a'.repeat(40) + '"'), /no usable token/);
+  // D-346: 20 or more characters mixing three kinds pass; 20 of one kind does not
+  assert.doesNotThrow(() => workerDoc(s, 'aB3$aB3$aB3$aB3$aB3$'));
+  assert.throws(() => workerDoc(s, 'a'.repeat(25)), /no usable token/);
   const bad = on();
   bad.registry.records.live.app.url = 'http://ev-live.x.workers.dev';
   assert.throws(() => workerDoc(bad, t), /not an https workers.dev/);
