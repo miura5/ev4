@@ -377,3 +377,25 @@ test('B-324: the staging proof holds a study guide to done', async () => {
   );
   assert.ok(judge('study-guide', job, { data: { status: 'done', result: { text: 'guide' } } }).every(l => l.ok));
 });
+
+test('B-232 (D-115): the staging check knows a schema bump legacy copy, and nothing that only looks like one', async () => {
+  const { knownWriter } = await import('../tools/pwa-staging.mjs');
+  const copy = {
+    changed: { schema: 1 },
+    added: [],
+    omits: ['events', 'links'],
+    hash: 'a'.repeat(64),
+    migratedFrom: 'weakspots/ws-x',
+    migratedTo: 'weakspots/ws-x',
+    migratedAt: '2026-10-26T10:43:38.172Z',
+    migration: 'weakspots schema 1 to 2',
+  };
+  assert.equal(knownWriter({ c: 'legacy', id: 'v4-weakspots-ws-x-s1', data: copy }), 'migration');
+  assert.equal(knownWriter({ c: 'legacy', id: 'not-a-copy', data: copy }), null, 'an id of another shape');
+  assert.equal(knownWriter({ c: 'legacy', id: 'v4-weakspots-ws-x-s1', data: { ...copy, hash: 'x' } }), null);
+  assert.equal(
+    knownWriter({ c: 'legacy', id: 'v4-weakspots-ws-x-s1', data: { ...copy, migratedTo: 'weakspots/other' } }),
+    null
+  );
+  assert.equal(knownWriter({ c: 'notes', id: 'v4-weakspots-ws-x-s1', data: copy }), null, 'only in legacy');
+});

@@ -139,6 +139,17 @@ function roleRun(data, role, runs, rowAt) {
 export function knownWriter(d, runs = new Map()) {
   const data = (d && d.data) || {};
   if (d.c === SUITE) return data.writer === 'run-api-suite' ? 'suite' : null;
+  // B-232 (D-115, D-338): a schema bump's legacy copy, written by migrate bumps beside the document it bumped: an id of
+  // the copy's shape, the migration's marks and the hash of the original; the document it names is in the record
+  if (d.c === 'legacy')
+    return /^v4-[a-z]+-.+-s\d+$/.test(d.id) &&
+      typeof data.migration === 'string' &&
+      typeof data.migratedAt === 'string' &&
+      /^[0-9a-f]{64}$/.test(String(data.hash || '')) &&
+      typeof data.migratedFrom === 'string' &&
+      data.migratedTo === data.migratedFrom
+      ? 'migration'
+      : null;
   if (data.source === APP_SOURCE) return 'app';
   // B-389: a page save is held to the spec, not only to its own writer field: a collection the page writes, an id of
   // that collection's shape (spec.collections.<c>.key), and a document its schema passes
@@ -175,6 +186,7 @@ export function recordDiffs(body, seed = seedRecord()) {
     if (seed[d.c] && Object.hasOwn(seed[d.c], d.id)) continue;
     const w = knownWriter(d, runs);
     if (w === 'suite') added.suite++;
+    else if (w === 'migration') added.migration = (added.migration || 0) + 1;
     else if (w === 'app') added.app++;
     else if (w === 'page') added.page[d.c] = (added.page[d.c] || 0) + 1;
     else if (w === 'run' || w === 'role') added.runs[d.data.writer] = (added.runs[d.data.writer] || 0) + 1;
@@ -229,7 +241,7 @@ export async function check(base, token, { seed = null } = {}) {
     problems.length
       ? `the record differs from ${as}: ${problems.join('; ')}`
       : `the token: all ${seedDocs} documents of ${as} there; added since: ${added.suite / SUITE_DOCS_PER_RUN} suite ` +
-          `runs, ${added.app} by the app's jobs, page saves ${page}, scheduled runs and their roles ${runs}`,
+          `runs, ${added.app} by the app's jobs, ${added.migration || 0} migration copies, page saves ${page}, scheduled runs and their roles ${runs}`,
     problems
   );
   return lines;
