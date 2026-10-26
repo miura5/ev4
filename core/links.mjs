@@ -126,7 +126,7 @@ function targetHas(db, to, value, spec) {
     if (i < 1) return null;
     const col = value.slice(0, i);
     if (!(spec.collections || {})[col]) return OUTSIDE; // note/<id>#line: his note, not the record
-    // B-401 (D-325): a page-only collection a run did not read (notes/<id> on a session) is not judged by that run
+    // B-401 (D-325): a page-only collection a run did not pull (notes/<id> on a session) is not judged by that run
     if (PAGE_ONLY.includes(col) && !(db && db[col])) return OUTSIDE;
     return ((db && db[col]) || []).find(d => d.id === value.slice(i + 1)) || null;
   }

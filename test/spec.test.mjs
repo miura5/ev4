@@ -137,9 +137,19 @@ test('appended maps are appended only by roles, on Facts', () => {
   }
 });
 
-test('the journal is private and in no read set', () => {
-  assert.equal(spec.collections.journal.private, true);
-  assert.deepEqual(spec.collections.journal.writers, ['page']);
+test('D-335: the journal and his notes are written by the page only, and runs read them with the record', () => {
+  for (const c of ['journal', 'notes']) {
+    assert.deepEqual(spec.collections[c].writers, ['page'], c);
+    for (const p of ['evening-cloud', 'evening-mac'])
+      assert.ok(
+        spec.pipelines[p].reads.some(r => r.collection === c && !r.for),
+        `${p} pulls ${c} with the rest of the record`
+      );
+  }
+  assert.ok(
+    spec.ui.page.subscribe.some(s => s.collection === 'journal' && !s.windowDays),
+    'the page reads the journal'
+  );
 });
 
 test('the personal-data scan knows every collection', () => {
@@ -285,7 +295,7 @@ test('boundaries B-01 to B-14 ported (B-15 to B-18 added with D-175), the explic
     assert.ok(spec.boundaries.mattOkRequired.includes(ok), ok);
   assert.ok(
     !spec.boundaries.mattOkRequired.includes('reading the journal'),
-    'D-106, D-113: a build session may read the journal'
+    'D-335: a build session may read the journal'
   );
   assert.ok(spec.workingAgreements.some(w => /No time-gating/.test(w)));
   assert.ok(spec.workingAgreements.some(w => /Nothing is deleted/.test(w)));

@@ -200,7 +200,7 @@ test('an evening-mac run: Canvas folds into the record, the backup and mirror be
   assert.ok(!pullCalls.some(c => c.args.collection === 'system'), 'system is never pulled');
   assert.ok(
     pullCalls.some(c => c.args.collection === 'journal'),
-    'the journal is a named read for the backup and mirror (D-113)'
+    'the journal is pulled with the record (D-335)'
   );
   // The pull, as files and versions (the transcript side is run.test's).
   const versions = {};
@@ -270,7 +270,7 @@ test('an evening-mac run: Canvas folds into the record, the backup and mirror be
   assert.equal(
     !!backup.collections.journal,
     fs.existsSync(path.join(ROOT, 'test/data/record/journal')),
-    'the journal is in the backup when there is one (D-113)'
+    'the journal is in the backup when there is one (D-335)'
   );
   assert.ok(
     backup.collections.dates.some(d => d.id === 'canvas-9001'),
@@ -380,7 +380,7 @@ test('restore drill: the newest backup restores into staging, counts and hashes 
   });
 });
 
-test('B-62 (D-113): the mirror holds the journal the run read; the restore drill takes a backup that holds it', () => {
+test('B-62 (D-335): the mirror holds the journal the run read; the restore drill takes a backup that holds it', () => {
   const files = EV.toMarkdown(
     { journal: [{ id: 'j-made-up', kind: 'free', createdAt: '2026-10-19T02:00:00Z', text: 'A made-up entry.' }] },
     { date: '2026-10-19' }

@@ -33,8 +33,8 @@ import * as D1B from './d1backup.mjs';
  * The evening push line (B-40, Matt's pick 8), composed from state/current (just written by the state step) and
  * days/<tomorrow> (or tomorrow's plan as the morning will make it, when that document is not written yet): today's
  * review answered or left, weak spots made solid or reopened today, tomorrow's day type and first item, and last
- * night's Canvas note (D-097), and tomorrow's pack check when tomorrow is a prep day (B-107, D-143). Never from the
- * journal: nothing here reads it. Fits spec.constants.push.maxChars.
+ * night's Canvas note (D-097), and tomorrow's pack check when tomorrow is a prep day (B-107, D-143). Fits
+ * spec.constants.push.maxChars.
  */
 export function eveningPush(db, ctx, spec) {
   const max = ((spec.constants || {}).push || {}).maxChars || 120;
@@ -457,7 +457,7 @@ function macFolder(spec, record) {
 }
 /** E.V. v4's own files in that folder: names v3's files never use, so the two never overwrite each other. */
 export const MAC_FILES = { backup: day => `backup/E.V.-v4-backup-${day}.json`, mirror: 'mirror-v4' };
-/** A backup as restore-drill checks it: every collection the run pulled (the journal too, D-113; never system), with counts and hashes. */
+/** A backup as restore-drill checks it: every collection the run pulled (the journal and his notes too, D-335; never system), with counts and hashes. */
 export function macBackup(db, { now, label, release }) {
   const collections = {};
   for (const col of Object.keys(db)
@@ -500,7 +500,7 @@ export function planRestore(b, db, ctx, spec, name = 'backup', versions = regist
   if (!b || b.kind !== 'E.V. record backup' || !b.hashes || !b.collections)
     return { problems: ['not a v4 backup (no kind, hashes or collections)'] };
   const problems = [];
-  if (b.collections.system) problems.push('the backup holds system, which no backup may'); // the journal is in backups (D-113)
+  if (b.collections.system) problems.push('the backup holds system, which no backup may'); // the journal is in backups (D-335)
   for (const [c, docs] of Object.entries(b.collections)) {
     if (!spec.collections[c]) {
       problems.push(`the backup holds ${c}, which is no collection`);

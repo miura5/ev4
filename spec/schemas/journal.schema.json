@@ -2,7 +2,7 @@
  "$schema": "https://json-schema.org/draft/2020-12/schema",
  "$id": "ev4/journal",
  "title": "journal/<id>",
- "description": "entries; pipelines never read; not in backups",
+ "description": "entries, written by the page only; runs read them with the rest of the record (D-335); in backups and the mirror",
  "x-ev": {
   "collection": "journal",
   "class": "Fact",
@@ -11,7 +11,7 @@
   ],
   "schema": 1
  },
- "$comment": "Private: the page only; no pipeline pulls it, no backup includes it.",
+ "$comment": "Written by the page only. Open to read (D-335): runs pull it with the rest of the record and the conversation can look it up; reading never writes.",
  "type": "object",
  "properties": {
   "schema": {

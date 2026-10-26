@@ -35,7 +35,17 @@ const seed = load(dbDir);
 delete seed.system;
 delete seed.legacy;
 delete seed.debug;
-delete seed.journal; // the harness never needs his journal
+// D-335: the conversation can look up his journal; the harness reads one made-up entry in place of any real one
+seed.journal = {
+  'j-harness-1': {
+    schema: 1,
+    writer: 'page',
+    at: '2026-10-01T02:00:00Z',
+    source: 'E.V. Home',
+    kind: 'free',
+    text: 'A made-up journal line about harness week',
+  },
+};
 seed.ideas = seed.ideas || {};
 seed.ideas['idea-harness-feature'] = {
   schema: 2,
@@ -2552,6 +2562,25 @@ async function tap(page, locator, name) {
       'lookup dates returns ids and marks what is off',
       /"id":"canvas-h-graded"/.test(lk) && /"id":"canvas-h-hall"[^}]*"off":true/.test(lk),
       lk.slice(0, 200)
+    );
+    // D-335: his notes and journal are open to the conversation's lookup
+    await page.evaluate(() => {
+      window.__toolResults = [];
+      window.__chatScript = [
+        { tool: 'lookup', input: { what: 'notes', query: 'potassium' } },
+        { tool: 'lookup', input: { what: 'journal', query: 'harness week' } },
+      ];
+      window.__chatReply = 'Here is what I see.';
+    });
+    await send(page, 'What did I write about potassium?');
+    await page.waitForTimeout(300);
+    const [lkNotes, lkJournal] = await page.evaluate(() => window.__toolResults.slice(-2));
+    ok(
+      'lookup notes and journal read his notes (with their text) and his journal (D-335)',
+      /"title":"Fluid and electrolytes: potassium and sodium"/.test(lkNotes || '') &&
+        /3\.5 to 5\.0 mEq\/L/.test(lkNotes || '') &&
+        /A made-up journal line about harness week/.test(lkJournal || ''),
+      String(lkNotes).slice(0, 160) + ' | ' + String(lkJournal).slice(0, 160)
     );
     await page.click('#tab-today');
     await page.waitForTimeout(150);

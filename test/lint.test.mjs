@@ -158,7 +158,7 @@ test('the record as of a time: later documents and entries are left out; an Edit
   assert.ok(!then.exams.some(e => e.id === 'E10'));
   assert.ok(!(late in then.answers[0].answers[item]));
   assert.deepEqual(inexact, [`planedits/${pe.id}`]);
-  assert.ok(!('journal' in then), 'the journal is never read');
+  assert.ok(!('journal' in then), 'no Derived document is rebuilt from the journal');
   assert.equal(rebuildOne(db, spec, 'state', doc(db, 'state', 'current')).status.startsWith('inexact-'), true);
 });
 

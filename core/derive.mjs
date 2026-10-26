@@ -57,7 +57,7 @@ function cutMap(value, at, depth) {
 /**
  * The record as it stood at `at`: documents created by then, their append maps cut to entries made by then. An Edit
  * is replaced whole, so one changed since `at` cannot be wound back; it is used as it is now and named in `inexact`.
- * Config documents (system/*) are always current. The journal and his notes are left out: no pipeline reads them (D-059, D-325).
+ * Config documents (system/*) are always current. The journal and his notes are left out: no producer derives from them (D-059, D-325).
  */
 export function asOf(db, at, spec, { since = null, self = null } = {}) {
   const t = ms(at);
@@ -71,7 +71,7 @@ export function asOf(db, at, spec, { since = null, self = null } = {}) {
     [d.at, d.endedAt, d.updatedAt].some(x => Number.isFinite(ms(x)) && ms(x) > s && ms(x) <= t);
   for (const [col, docs] of Object.entries(db || {})) {
     const c = spec.collections[col];
-    if (!c || PAGE_ONLY.includes(col)) continue; // no producer reads the journal or his notes (D-059, D-325)
+    if (!c || PAGE_ONLY.includes(col)) continue; // no producer derives from the journal or his notes (D-059, D-325)
     const appends = Object.keys(c.appends || {});
     out[col] = [];
     for (const d of docs || []) {
@@ -370,12 +370,14 @@ function stateBody(all, { date, now, specVersion, release = null, part = null, s
   const db = reads.size ? Object.fromEntries(Object.entries(all).filter(([c]) => reads.has(c))) : all;
   const v = views(db);
   // The counts are of what the run reads: state/current leaves itself out (the run sees the previous one, a rebuild
-  // the one it wrote), and Config (system/*) is the deploy's, not the record's.
+  // the one it wrote), and Config (system/*) is the deploy's, not the record's. The journal and his notes, read since
+  // D-335, are left out as asOf leaves them out, so a rebuild counts the same.
   const counts = Object.fromEntries(
     Object.entries(db)
       .filter(
         ([k, d]) =>
           k !== 'state' &&
+          !PAGE_ONLY.includes(k) &&
           spec.collections[k] &&
           spec.collections[k].class !== 'Config' &&
           !spec.collections[k].retired &&
@@ -421,7 +423,7 @@ function stateBody(all, { date, now, specVersion, release = null, part = null, s
   const factHashes = {};
   const fieldLists = {};
   for (const [col, docs] of Object.entries(db).sort(([a], [b]) => (a < b ? -1 : 1))) {
-    if (PAGE_ONLY.includes(col)) continue; // pipelines never read them (D-059, D-325)
+    if (PAGE_ONLY.includes(col)) continue; // the page edits them in place: never fact-hashed (D-059, D-325)
     for (const d of [...docs].sort((a, b) => (a.id < b.id ? -1 : 1))) {
       if (classOf(spec, col, d.id) !== 'Fact') continue;
       const fields = (fieldLists[col] = fieldLists[col] || factFields(spec, col));

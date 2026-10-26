@@ -6,9 +6,9 @@ import { fileURLToPath } from 'node:url';
 import { makeValidator } from './validate.mjs';
 
 /**
- * The page's own collections that pipelines skip (D-059, D-325): no producer, rebuild, fact hash or record lint reads
- * them, and a run pulls one only for a step that names it (D-113: evening-mac's backup and mirror). The journal, and his
- * notes (B-401), which he edits in place: an edited note is never a lint error or a fact-changed.
+ * The page's own collections (D-059, D-325): written by the page only, and no producer, rebuild, fact hash or record
+ * lint takes them as Facts, so an edited note is never a lint error or a fact-changed. Runs read them with the rest of
+ * the record (D-335: the named read of D-113 is ended); reading never writes. The journal, and his notes (B-401).
  */
 export const PAGE_ONLY = ['journal', 'notes'];
 

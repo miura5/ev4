@@ -28,14 +28,7 @@ test('every pipeline names its lane, writer and purpose; every step it lists exi
       assert.match(p.pendingIn, /^B-\d\d$/, n);
       continue;
     }
-    for (const r of p.reads) {
-      assert.ok(spec.collections[r.collection], `${n} reads ${r.collection}`);
-      if (r.collection === 'journal')
-        assert.ok(
-          r.for && p.steps.some(s => s.id === r.for),
-          `${n} reads the journal only for a step it names (D-113)`
-        );
-    }
+    for (const r of p.reads) assert.ok(spec.collections[r.collection], `${n} reads ${r.collection}`);
     for (const s of p.steps) {
       assert.ok(['code', 'agent', 'io'].includes(s.kind), `${n}.${s.id}`);
       if (s.kind === 'code') assert.ok(CODE_STEPS[s.fn || s.id], `${n}: no code step ${s.id}`);

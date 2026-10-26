@@ -77,7 +77,7 @@ export function makeMirror(core) {
             ...(s.status === 'discarded' ? { status: 'discarded' } : {}),
           }) + `# ${s.topic || 'Study session'}\n\n${s.summary || ''}\n`,
       });
-    // D-113 (B-62): the mirror holds the journal too, when the run read it.
+    // B-62 (D-335): the mirror holds the journal too, when the run read it.
     for (const j of db.journal || [])
       files.push({
         path: `journal/${j.id}.md`,

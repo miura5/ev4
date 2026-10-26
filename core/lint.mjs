@@ -13,9 +13,9 @@
 //   frozen           (info) D-090: a document carrying migratedAt or migratedTo is a frozen original, so is a v2 or v3
 //                    leftover (B-34), and a collection in spec.legacyCollections is v3's, kept by rule; each is one note
 //                    per collection, never an error
-// plus the content checks E.V. core has always run (items, orphans, duplicates). The journal is never read, and his
-// notes only for their schema and size when a run read them (D-059, D-325, B-401): an edited note that keeps its shape
-// is no lint error and never a fact-changed.
+// plus the content checks E.V. core has always run (items, orphans, duplicates). The journal is not linted, and his
+// notes only for their schema and size when a run read them (D-059, D-325, B-401, D-335): an edited note that keeps its
+// shape is no lint error and never a fact-changed.
 import EV from './evcore.mjs';
 import {
   classOf,
@@ -281,7 +281,7 @@ export function lintRecord(db, spec, validate, { date, commit = null } = {}) {
       add('warning', 'over-budget', col, `${total} bytes; warns at ${b.warnBytes}`);
   }
 
-  // B-401 (D-325): his notes, when a run read them (evening-mac's named read), are held to their schema and the size
+  // B-401 (D-325): his notes, when a run read them (D-335: runs read them with the record), are held to their schema and the size
   // cap, as every write of one is (core/validate.mjs noteProblem). Only those: an edited note is never fact-changed,
   // since no state hashes a note, and an edit that keeps its shape is no issue at all.
   for (const d of (db && db.notes) || []) {

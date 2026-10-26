@@ -127,7 +127,7 @@ const answer = (dir, v) => {
   fs.writeFileSync(path.join(dir, 'answers', 'note.json'), JSON.stringify(v));
 };
 
-test('start and pull print the same calls every time, and the journal is in no read set', () => {
+test('start and pull print the same calls every time; a journal read is pulled like any read (D-335)', () => {
   const a = begin();
   const b = begin();
   const strip = (calls, dir) => JSON.stringify(calls).split(dir).join('<dir>');
@@ -154,7 +154,8 @@ test('start and pull print the same calls every time, and the journal is in no r
   );
   fs.renameSync(path.join(dir, 'keep.txt'), path.join(dir, '..', path.basename(dir) + '-keep.txt'));
   RUN.start({ spec: bad, pipeline: 'evening-cloud', at: AT, dir, release: 'v4.0.0' });
-  assert.throws(() => RUN.pull({ spec: bad, dir, at: AT }), /journal is read only for a step that names it/);
+  // D-335: a journal read names no step; the named read of D-113 is ended
+  assert.ok(RUN.pull({ spec: bad, dir, at: AT }).some(c => c.args.collection === 'journal'));
 });
 
 test('pulled takes every version from the replies, asks for the next page, and refuses a missing read', () => {

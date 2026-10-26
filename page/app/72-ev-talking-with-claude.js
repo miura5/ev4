@@ -529,13 +529,24 @@
         {
           name: 'lookup',
           description:
-            "Read more of his record when the summary above isn't enough. what: weakspots (optionally matching query), missed (recent wrong answers), sessions, ideas, plan (an exam plan, next 5 days: the one matching query, e.g. dosage, else the target exam's, else the soonest exam's), announcements, objectives, dates (his calendar from today, or any date matching query, with ids; off = taken off). Returns small JSON.",
+            "Read more of his record when the summary above isn't enough. what: weakspots (optionally matching query), missed (recent wrong answers), sessions, ideas, plan (an exam plan, next 5 days: the one matching query, e.g. dosage, else the target exam's, else the soonest exam's), announcements, objectives, dates (his calendar from today, or any date matching query, with ids; off = taken off), notes (his notes, newest first, or those matching query, with their text), journal (his journal entries, newest first, or matching query). Returns small JSON.",
           inputSchema: {
             type: 'object',
             properties: {
               what: {
                 type: 'string',
-                enum: ['weakspots', 'missed', 'sessions', 'ideas', 'plan', 'announcements', 'objectives', 'dates'],
+                enum: [
+                  'weakspots',
+                  'missed',
+                  'sessions',
+                  'ideas',
+                  'plan',
+                  'announcements',
+                  'objectives',
+                  'dates',
+                  'notes',
+                  'journal',
+                ],
               },
               query: { type: 'string' },
             },
@@ -655,6 +666,32 @@
                     notes: d.notes || undefined,
                     off: E.isRemovedDate(d) || undefined,
                   }));
+                break;
+              case 'notes': {
+                // D-335: his notes are open to read; archived ones say so, discarded ones are left out
+                const text = n => (n.blocks || []).map(b => E.noteText(b)).join('\n');
+                const found = (S.notes || [])
+                  .filter(n => !n.discardedAt && has((n.title || '') + ' ' + text(n)))
+                  .sort((a, b) => String(b.editedAt || b.at || '').localeCompare(String(a.editedAt || a.at || '')))
+                  .slice(0, q ? 4 : 8);
+                out = found.map(n => ({
+                  id: n.id,
+                  title: n.title || E.noteTitleOf(n.blocks || []) || 'Untitled',
+                  course: n.course || undefined,
+                  edited: n.editedAt || n.at,
+                  archived: n.archivedAt ? true : undefined,
+                  earlierOf: n.earlierOf || undefined, // a copy a refused stale save kept
+                  text: text(n).slice(0, q ? 900 : 300),
+                }));
+                break;
+              }
+              case 'journal':
+                // D-335: his journal is open to read
+                out = [...(S.journal || [])]
+                  .filter(j => has(j.text || ''))
+                  .sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')))
+                  .slice(0, 8)
+                  .map(j => ({ at: j.at, kind: j.kind || undefined, text: String(j.text || '').slice(0, 400) }));
                 break;
               default:
                 throw new Error('unknown lookup ' + i.what);

@@ -1,8 +1,8 @@
 // B-401 (D-325, D-326, D-328): the notes record. A notes collection written by the page only, its body blocks with
 // inline marks (never HTML), archived and discarded as marks; sessions name the note they study and talk lines carry a
-// thread with a closed mark. Pipelines skip notes as they skip the journal (an edited note is no lint error and no
-// fact-changed); evening-mac reads them only for its backup and mirror; the mirror writes notes/<id>.md; backups,
-// pwa-copy and the app's made-up record carry them.
+// thread with a closed mark. No Derived document hashes or rebuilds from notes, as none does the journal (an edited
+// note is no lint error and no fact-changed); runs read them with the rest of the record (D-335); the mirror writes
+// notes/<id>.md; backups, pwa-copy and the app's made-up record carry them.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -162,7 +162,7 @@ test('B-401: links: a session names its note; a run that did not read notes does
   );
 });
 
-test('B-401: lint and rebuild skip notes as they skip the journal: an edited or archived note is no error', () => {
+test('B-401: lint and rebuild take no note as a Fact, as with the journal: an edited or archived note is no error', () => {
   const db = load();
   const green = lintRecord(db, spec, validate, { date: '2026-10-17' });
   const errors = r => r.issues.filter(i => i.severity === 'error');
@@ -214,34 +214,37 @@ test('B-401 review: lint still holds a note a run read to its schema and size, n
     ['error', 'invalid', 'notes/n-made-up-html'],
     ['error', 'invalid', 'notes/n-made-up-js'],
   ]);
-  // with no notes read (every run but evening-mac's), nothing about notes is judged
+  // with no notes pulled (a run whose reads leave them out), nothing about notes is judged
   delete db.notes;
   assert.deepEqual(codes(lintRecord(db, spec, validate, { date: '2026-10-17' })), []);
 });
 
-test('B-401: no pipeline reads notes but evening-mac, and that only for its backup and mirror (a named read)', () => {
-  for (const [name, p] of Object.entries(spec.pipelines)) {
-    if (name.startsWith('_')) continue;
-    const reads = (p.reads || []).filter(r => r.collection === 'notes');
-    if (name === 'evening-mac') assert.deepEqual(reads, [{ collection: 'notes', for: 'mac-files' }]);
-    else assert.deepEqual(reads, [], `${name} reads no notes`);
-  }
-  // a read with no step named is refused, as the journal's is
+test('D-335: evening-cloud and evening-mac pull notes and the journal with the rest of the record', () => {
+  for (const name of ['evening-cloud', 'evening-mac'])
+    for (const c of ['notes', 'journal'])
+      assert.deepEqual(
+        spec.pipelines[name].reads.filter(r => r.collection === c),
+        [{ collection: c }],
+        `${name} reads ${c} with no step named`
+      );
+  // the pull prints a list of each, as of any collection (the named read of D-113 is ended)
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'b401-pull-'));
   try {
-    const DEF = spec.pipelines['evening-cloud'];
-    const bad = {
-      ...spec,
-      pipelines: { ...spec.pipelines, 'evening-cloud': { ...DEF, reads: [...DEF.reads, { collection: 'notes' }] } },
-    };
     fs.writeFileSync(
       path.join(dir, 'run.json'),
-      JSON.stringify({ pipeline: 'evening-cloud', id: 'evening-cloud-made-up', url: 'https://example.invalid' })
+      JSON.stringify({
+        pipeline: 'evening-cloud',
+        id: 'evening-cloud-made-up',
+        url: 'https://example.invalid',
+        calls: [],
+      })
     );
-    assert.throws(
-      () => RUN.pull({ spec: bad, dir, at: '2026-10-17T01:15:00Z' }),
-      /notes are read only for a step that names it/
-    );
+    const calls = RUN.pull({ spec, dir, at: '2026-10-17T01:15:00Z' });
+    for (const c of ['notes', 'journal'])
+      assert.ok(
+        calls.some(x => x.args.collection === c && x.args.action === 'list'),
+        c
+      );
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

@@ -34,7 +34,7 @@
    ]
   }
  },
- "$comment": "B-401 (D-325, D-326, D-328): written by the page only. The note's identity (createdAt, earlierOf) is write-once; what he edits is a mark the page changes in place. Archived and discarded are marks, never deletes. The body is structured blocks of plain-text runs: no HTML is stored, and a reader never turns stored text into HTML. Pipelines skip notes as they skip the journal; evening-mac reads them only for its backup and mirror.",
+ "$comment": "B-401 (D-325, D-326, D-328): written by the page only. The note's identity (createdAt, earlierOf) is write-once; what he edits is a mark the page changes in place. Archived and discarded are marks, never deletes. The body is structured blocks of plain-text runs: no HTML is stored, and a reader never turns stored text into HTML. Runs read them with the rest of the record (D-335); no Derived document hashes them, so an edit is never a fact-changed.",
  "type": "object",
  "properties": {
   "schema": {
