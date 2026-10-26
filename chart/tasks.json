@@ -7495,5 +7495,22 @@
    "outcome": "task",
    "at": "2026-10-26T06:07:50.260Z"
   }
+ },
+ {
+  "id": "B-412",
+  "kind": "request",
+  "title": "Request (reported Oct 26): Retire the journal's named read and the notes skip everywhere they are enforced, so runs and agents may read and analyze notes and the journal like any other record data.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "chat, Oct 26 (D-335)",
+  "words": "Retire the journal's named read and the notes skip everywhere they are enforced, so runs and agents may read and analyze notes and the journal like any other record data.",
+  "reportedAt": "2026-10-26T08:31:44.276Z",
+  "board": {
+   "row": "v4 B-412: Retire the journal's named read and the notes skip everywhere they…"
+  }
  }
 ]

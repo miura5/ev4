@@ -484,3 +484,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-281 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; folded into B-297 to B-300 (Study), B-301 (Progress) and B-302 (Record). |
 | B-282 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; replaced by B-303. |
 | B-321 | task |  |  | plan 1eW5FgG9VNzhCySbL1uWuo | declined | Waiting on Matt to scope it: its definition of done is written with him when he does (hand-off 3). |
+| B-412 | request | 2026-10-26T08:31:44.276Z | Retire the journal's named read and the notes skip everywhere they are enforced, so runs and agents may read and analyze notes and the journal like any other record data. | chat, Oct 26 (D-335) | inbox |  |
