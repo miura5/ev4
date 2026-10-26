@@ -7719,10 +7719,10 @@
  {
   "id": "B-422",
   "kind": "request",
-  "title": "Request (reported Oct 26): Let Matt delete his own notes, tasks and other items in the app; deleted items go to a trash list kept 30 days, restorable from there, and are cleared after that.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "title": "Delete with a 30-day trash (D-345)",
+  "dod": "Matt can delete a note, task or other item he made; it moves to a Trash list he can restore from; items older than 30 days are cleared by the Worker; runs and agents have no delete path; B-11 and the run prompts say so; staging GREEN",
+  "milestone": "after Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -7731,6 +7731,10 @@
   "reportedAt": "2026-10-26T21:58:54.003Z",
   "board": {
    "row": "v4 B-422: Let Matt delete his own notes, tasks and other items in the app;…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-26T21:59:01.003Z"
   }
  }
 ]

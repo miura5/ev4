@@ -67,6 +67,7 @@ Status: `open` · `in progress` · `blocked` · `done`. A task opens when every 
 | B-419 | Week view shows the tasks E.V. adds to later days Done when: The Week view and its day panels list every task in dayedits.added for each date (with today's), the same as Today's list does for today; a day can be opened ahead of time to see its tasks; E.V.'s add-tasks tool does not add a second batch for the same request (one call per ask, or a duplicate check on text and date). Harness check on a planted week; staging read back; its own review. | — | After Notes | open |  |
 | B-420 | Tidy the D-343 release-tag step Done when: One tested script holds the runner's release-tag step, the live gate job has none, the whole input is checked, and tests pin the step before every build and the hooks guard accepting -f release= | — | after Notes | open |  |
 | B-421 | Make the Notes Undo-timing check independent of runner speed Done when: The notes harness's switch Undo check passes on GitHub's runners across three nightly runs without a timing failure | — | after Notes | open |  |
+| B-422 | Delete with a 30-day trash (D-345) Done when: Matt can delete a note, task or other item he made; it moves to a Trash list he can restore from; items older than 30 days are cleared by the Worker; runs and agents have no delete path; B-11 and the run prompts say so; staging GREEN | — | after Notes | open |  |
 
 ## Your turn
 
@@ -494,4 +495,3 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-281 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; folded into B-297 to B-300 (Study), B-301 (Progress) and B-302 (Record). |
 | B-282 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; replaced by B-303. |
 | B-321 | task |  |  | plan 1eW5FgG9VNzhCySbL1uWuo | declined | Waiting on Matt to scope it: its definition of done is written with him when he does (hand-off 3). |
-| B-422 | request | 2026-10-26T21:58:54.003Z | Let Matt delete his own notes, tasks and other items in the app; deleted items go to a trash list kept 30 days, restorable from there, and are cleared after that. | chat, Oct 26 (D-345) | inbox |  |
