@@ -7189,7 +7189,7 @@
   "milestone": "PWA",
   "status": "open",
   "depends": [],
-  "notes": "Review 1 (fresh agent at 6ebf03d): three gaps. (1) Two prompts still refused graded work: fixed in 1d0d0e7, and the D-324 test now greps for both. (2) CLAUDE.md still listed B-01 and B-04 as in force: fixed in 5a7e417. (3) The guarded paths spec.boundaries and spec.actions changed on D-324: Matt was present in the development chat when he made D-324 and asked for this sweep (Oct 25). npm test 676/677, 1 skipped; smoke 28/28.",
+  "notes": "Review 2 (fresh agent at 1d0d0e7): earlier gaps closed; two small new ones fixed in 54faa3f (a 'No graded coursework' line in More questions, now in the D-324 grep; share no longer blocks a drill for having 'graded' in its title, while proctored, exam, validation and clinical stay blocked). Not reviewed again, per the one-more-review rule; listed on the release card. npm test 676/677, 1 skipped; smoke 28/28. Ready for staging with the two staging Mac tasks re-created.",
   "commit": null,
   "source": "build manager, D-324",
   "words": "Remove every check, flag, hold and block for graded work and patient identifiers from E.V., as D-324 decides.",
