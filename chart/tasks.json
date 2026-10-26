@@ -7277,12 +7277,12 @@
   "title": "Notes: the notes list",
   "dod": "Course filters; empty states for no notes at all and for no notes in a course; a preview pane with edited, length, studied and 'on this page'; Open note and Study with E.V. Desktop only. A harness at 1280 and 2560 on synthetic, on synthetic with no notes, and with a long-title note shows the filters, both empty states and nothing overflowing. Smoke green.",
   "milestone": "PWA",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-401",
    "B-402"
   ],
-  "notes": "",
+  "notes": "Builder took it: list, course filters, empty states and preview pane in its own worktree; no data writes planned.",
   "commit": null,
   "source": "build manager, B-396 plan",
   "words": "Build the notes list (B-396, D-325).",
