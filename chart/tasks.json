@@ -7326,12 +7326,12 @@
   "title": "Notes: L-frame, E.V. strip and floating pop-up on every desktop view",
   "dod": "Per D-327, at 1024 px and wider: a raised page, and a bottom strip on every view with a suggestion line and the E.V. button. The button opens a chat pop-up floating over the page (Linear-like; fixed). There is a minimize chip, a history of closed chats (talk thread) and a session-controls slot. On Conversation the button focuses that view's own thread. The pop-up reuses chat(). Below 1024 px nothing changes. A harness at 1280, 1706 and 2560 on Today, Study, Progress, Record, Notes and Conversation covers open, minimize, close, reopen from history and survival across a reload. The 390 shots match v4.5.6. Smoke green. Own review of the talk write path.",
   "milestone": "PWA",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-400",
    "B-401"
   ],
-  "notes": "",
+  "notes": "claimed by build-manager agent",
   "commit": null,
   "source": "build manager, B-396 plan",
   "words": "Build L-frame, E.V. strip and floating pop-up on every desktop view (B-396, D-325).",
