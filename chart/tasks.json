@@ -7457,7 +7457,7 @@
   "depends": [
    "B-404"
   ],
-  "notes": "Builder (B-404's) took it: refused/adopted entries cleared on a new save, take() skips only sendable entries, entry claimed in one IndexedDB transaction before a second note, refresh honours backoff, size toast wording.",
+  "notes": "Ready for review (not done): 1fe6306. A save of a note replaces every other entry for it (adopted or refused) and keeps its base, so a changed record makes it stale and both are kept; take() skips only sendable entries, and a refused entry holds back only the version its words were built on; keepBoth claims the entry in one IndexedDB transaction (get, tag check, delete, put the second note) so one tab makes the second note; replay honours a not-before time set by the 429/5xx backoff; the size line rounds the size up and the limit down. npm test 753/754 (1 skipped, 0 fail), smoke 28/28, smoke:pwa 32/32, notes harness 78/78, pwa-offline 20/20 (5 new; 4 fail on the old bridge). Needs its own fresh review; staging not shipped.",
   "commit": null,
   "source": "B-404 second review",
   "words": "Notes offline: after a reload, a note the Worker refused stays stuck (Not saved, old words shown, remote edits ignored), and cutting and saving it can overwrite another device's newer words. Two tabs adopting one closed tab's entry over a changed record make two identical (earlier) notes. The 429/5xx backoff is bypassed by the 10 s refresh.",
