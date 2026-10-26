@@ -7383,7 +7383,7 @@
    "B-232",
    "B-233"
   ],
-  "notes": "Taken by a builder: proposed spots from session and quiz misses, To review in Study, the sidebar line; worktree b407.",
+  "notes": "Ready for review at cf9b20a+86e2e97 (not shipped): planAnswer and session filing (closeFindings path; filing order and mark unchanged) write misses as proposed on a free id (B-232); a twin waiting for triage or set aside takes the miss. Study button 'Weak spots · N · 1 to review', her Study line with Review, sidebar review row with '1 to review' on its own line (unclipped at 1280), To review rows (Accept/Join/Not now/Decline through the B-233 rows), quiz results line with Accept all and Review. freeWeakspotId moved to core/sessions.mjs (evcore at its 2,500-line budget). test/proposed-misses 2/2; npm test 790/0; smoke 28/28; notes 101/101 (B-407 11/11 after chat close and reload); frame 134/134; run 390/390; core 142/142. Needs its own review (data writes).",
   "commit": null,
   "source": "build manager, B-396 plan",
   "words": "Build a missed check proposes a weak spot to To review, visibly (B-396, D-325).",
