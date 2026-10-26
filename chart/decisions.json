@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-339",
+  "date": "Oct 26",
+  "title": "Notes: E.V. reads along by default, with hard limits on the server",
+  "why": "Matt, Oct 26: on the app, E.V.'s reads go to Haiku through his API key, and always-on read-along is worth its cost to him (about 7 cents on a heavy day). So read-along is on by default for the note he is writing, with a toggle in the note to turn it off. Guards, enforced on the Worker, not the page: a read only on new text, at most one per 75 s; a per-hour and a per-day token ceiling on /api/claude (about twice and four times a heavy hour and day), refused with a plain message when reached; a session stops reading after 10 idle minutes. A usage meter (month to date, per day) comes later. Supersedes D-333's 'a new note starts a 25-minute session' for read-along.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-338",
   "date": "Oct 26",
   "title": "Weak spots accept schema 1 until the 1-to-2 migration has run on their record",
