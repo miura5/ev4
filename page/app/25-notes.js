@@ -1112,12 +1112,15 @@
     function noteTooBig(blocks) {
       const bytes = noteBytes(blocks);
       if (bytes <= NOTE_BYTES - NOTE_ROOM) return '';
+      // B-410: in tenths of a KB, the size rounded up and the limit down, so a note just over the limit never reads as
+      // equal to it (it read '256 KB of 256')
+      const kb = (b, round) => (round((b / 1024) * 10) / 10).toFixed(1);
       return (
-        'This note would be too long to save (' +
-        Math.round(bytes / 1024) +
-        ' KB of ' +
-        NOTE_BYTES / 1024 +
-        '). Start a new note for the rest.'
+        'This note would be too long to save: ' +
+        kb(bytes, Math.ceil) +
+        ' KB, and a note holds up to ' +
+        kb(NOTE_BYTES - NOTE_ROOM, Math.floor) +
+        ' KB. Start a new note for the rest.'
       );
     }
     const maxRuns = blocks => blocks.reduce((m, b) => Math.max(m, b.runs.length), 0);

@@ -391,6 +391,9 @@ test('B-402 review, B-404, D-332: a change past the size cap is refused in apply
   assert.match(apply, /if \(why && !noteShrinks\(r\.blocks\)\)/);
   // B-404 review: the cap less the room a second note needs ('<title> (earlier)' and its earlierOf, D-326)
   assert.match(EDITOR, /function noteTooBig\(blocks\)[\s\S]*?bytes <= NOTE_BYTES - NOTE_ROOM/);
+  // B-410: the line shows the size rounded up against the limit rounded down
+  assert.match(EDITOR, /kb\(bytes, Math\.ceil\)[\s\S]*?kb\(NOTE_BYTES - NOTE_ROOM, Math\.floor\)/);
+  assert.doesNotMatch(EDITOR, /' KB of '/);
   assert.match(EDITOR, /const noteShrinks = blocks =>[\s\S]*?noteBytes\(blocks\) <= noteBytes\(NOTE\.blocks\)/);
 });
 

@@ -758,7 +758,12 @@ const openNoteId = page =>
       const t = document.getElementById('toast');
       return t && !t.hidden ? t.textContent : '';
     });
-    ok(`${tag} while growing it past the cap is still refused`, /too long to save/.test(grown), grown);
+    // B-410: the line names the real limit (the cap less the room a second note needs), never 'of 256' at 256
+    ok(
+      `${tag} while growing it past the cap is still refused, with the limit it is past`,
+      /too long to save: \d+\.\d KB, and a note holds up to 255\.7 KB/.test(grown),
+      grown
+    );
 
     ok(
       `${tag} no page error`,

@@ -149,6 +149,27 @@
   const outbox = {};
   const ownKey = (c, id) => TAB + '\n' + c + '\n' + id;
   const waiting = (c, id) => Object.values(outbox).some(o => o.c === c && o.id === id);
+  // B-410: an entry that can still be sent (not refused) keeps the record's newer copy from replacing his words
+  const sendableFor = (c, id) => Object.values(outbox).some(o => o.c === c && o.id === id && !o.refused);
+  /**
+   * B-410: the entry claimed for the second note in one transaction: removed only if it is still the one this tab
+   * holds (its tag), and the second note's entry put in the same transaction. true: this tab made the claim, so it
+   * makes the second note; false: another tab took it first (or it changed), so nothing is kept twice. With no
+   * IndexedDB there is no other tab, and the claim is this tab's.
+   */
+  const boxClaim = (key, tag, ekey, eo) =>
+    idbTx(BOX, 'readwrite', (st, done) => {
+      const q = st.get(key);
+      q.onsuccess = () => {
+        if (!q.result || q.result.tag !== tag) return done(false);
+        st.delete(key);
+        st.put(clone(eo), ekey);
+        done(true);
+      };
+    }).then(
+      won => !!won,
+      () => true
+    );
   // a tab is open while it holds its lock; a closed tab's waiting notes are taken over by the next tab that looks
   const locks = typeof navigator !== 'undefined' && navigator && navigator.locks;
   if (locks) locks.request('ev-tab-' + TAB, () => new Promise(() => {})).catch(() => {});
@@ -242,7 +263,10 @@
       // a read that left before a save landed never puts the older copy back over it
       if (Number.isInteger(d.v) && d.v < (verOf(d.c, d.id) || 0)) continue;
       // B-404: a note saved on this device and not yet sent stays as he wrote it; replay() settles it
-      if (waiting(d.c, d.id)) continue;
+      if (sendableFor(d.c, d.id)) continue;
+      // a refused entry hides nothing newer: only the version its words were built on (read again) leaves them shown
+      const refused = Object.values(outbox).filter(o => o.c === d.c && o.id === d.id && o.refused);
+      if (refused.length && refused.every(o => o.base && Number.isInteger(d.v) && d.v <= o.base)) continue;
       (db[d.c] = db[d.c] || {})[d.id] = d.data;
       setVer(d.c, d.id, d.v);
       changed.add(d.c);
@@ -318,7 +342,7 @@
       const doc = make();
       // B-404: a note goes to the outbox while offline, or while an earlier save of it waits there (so they stay in
       // order); any other write is refused offline, with the document it tried to save
-      if (c === 'notes' && (outbox[ownKey(c, id)] || !net.online)) return queueNote(c, id, doc);
+      if (c === 'notes' && (waiting(c, id) || !net.online)) return queueNote(c, id, doc);
       if (!net.online && c !== 'notes') throw offlineError(doc);
       try {
         return await saveNow(c, id, doc);
@@ -421,8 +445,25 @@
   async function queueNote(c, id, doc) {
     const key = ownKey(c, id);
     const was = outbox[key];
-    // a new save of a refused note is a new try: he may have cut it down (D-332)
-    outbox[key] = { tab: TAB, c, id, doc, base: was ? was.base : verOf(c, id), tag: rand(12) };
+    // B-410: a save of the note replaces every other entry for it this tab holds: one a closed tab left (adopted) or
+    // one the record refused (D-332: he may have cut it down). The page's words were built on what those entries
+    // showed, so the new entry keeps their base: if the record moved on since, the send is stale and both are kept
+    // (D-326), never written over the other device's words.
+    const replaced = Object.entries(outbox).filter(([k, o]) => k !== key && o.c === c && o.id === id);
+    const from = replaced.length ? replaced[0] : null;
+    for (const [k, o] of replaced) {
+      delete outbox[k];
+      boxDone(k, o.tag);
+    }
+    outbox[key] = {
+      tab: TAB,
+      c,
+      id,
+      doc,
+      base: was ? was.base : from ? from[1].base : verOf(c, id),
+      tag: rand(12),
+      ...(was && was.from ? { from: was.from } : from ? { from: from[0] } : {}),
+    };
     (db[c] = db[c] || {})[id] = doc;
     await boxPut(key, outbox[key]);
     keepCopy();
@@ -459,11 +500,16 @@
   let replaying = null;
   let backoff = 0;
   let retryTimer = 0;
+  let notBefore = 0; // B-410: no send before this time (a busy Worker's pause), whatever asks: refresh, a save, online
   /** A refusal that may pass later (the Worker or D1 busy, a rate limit): tried again after a pause that doubles. */
   function retryLater() {
     backoff = Math.min(60000, backoff ? backoff * 2 : 2000);
+    notBefore = Date.now() + backoff;
     clearTimeout(retryTimer);
-    retryTimer = setTimeout(() => net.online && replay(), backoff);
+    retryTimer = setTimeout(() => {
+      notBefore = 0;
+      if (net.online) replay();
+    }, backoff);
   }
   function settled(key, o, doc) {
     // a save made while this one was out goes next, pinned to the version just written
@@ -477,6 +523,7 @@
   }
   function replay() {
     if (replaying) return replaying;
+    if (Date.now() < notBefore) return Promise.resolve(); // the pause runs out first; its timer sends
     replaying = (async () => {
       net.syncing = true;
       tell();
@@ -503,6 +550,8 @@
             const saved = await r.json().catch(() => ({}));
             setVer(o.c, o.id, saved.version);
             if (outbox[key] && outbox[key] !== o) outbox[key].base = saved.version;
+            // B-410: a save that replaced this entry while it was out was built on these words: it goes on from here
+            for (const e of Object.values(outbox)) if (e.from === key && e.base === o.base) e.base = saved.version;
             await settled(key, o, doc);
           } else if (r.status === 409) {
             sent++;
@@ -546,14 +595,18 @@
     }
     if (!got.ok) throw new Error('run/get answered ' + got.status);
     const cur = await got.json();
-    // from here to the event, nothing waits: no save of this note can slip in between
     const now = outbox[key];
-    if (!now) return;
+    if (!now) return; // replaced meanwhile by a save of the note (B-410): that entry carries his words on
     const his = now.doc; // the newest he saved on this device, a save made meanwhile included
-    db[o.c][o.id] = cur.data;
-    setVer(o.c, o.id, cur.version);
-    delete outbox[key];
+    const settle = () => {
+      if (outbox[key] === now) delete outbox[key];
+      if (!sendableFor(o.c, o.id)) {
+        db[o.c][o.id] = cur.data;
+        setVer(o.c, o.id, cur.version);
+      }
+    };
     if (sameWords(cur.data, his)) {
+      settle();
       emit(o.c);
       await boxDone(key, now.tag);
       return;
@@ -562,7 +615,21 @@
     const eid = newNoteId(at);
     const earlier = earlierNote(his, o.id, at);
     const ekey = ownKey(o.c, eid);
-    outbox[ekey] = { tab: TAB, c: o.c, id: eid, doc: earlier, base: null, tag: rand(12) };
+    const eo = { tab: TAB, c: o.c, id: eid, doc: earlier, base: null, tag: rand(12) };
+    // B-410: only the tab whose claim holds makes the second note (two tabs that took over one closed tab's entry, or
+    // two tabs with no Web Locks, never make it twice); the second note's entry lands in the same transaction
+    const won = await boxClaim(key, now.tag, ekey, eo);
+    if (outbox[key] !== now) {
+      // a save of the note replaced the entry while the claim was out: if the claim held, his words in the
+      // second note are kept as well; the new entry goes on as a stale send
+      if (!won) return;
+    }
+    settle();
+    if (!won) {
+      emit(o.c);
+      return;
+    }
+    outbox[ekey] = eo;
     db[o.c][eid] = earlier;
     try {
       window.dispatchEvent(
@@ -572,9 +639,6 @@
       );
     } catch (e) {}
     emit(o.c);
-    // the second note is in IndexedDB before his entry leaves it
-    await boxPut(ekey, outbox[ekey]);
-    await boxDone(key, now.tag);
   }
 
   // ---- B-324: jobs through the API. jobs-spec.json is what the runner reads of the spec, with the schemas.

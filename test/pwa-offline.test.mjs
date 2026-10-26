@@ -212,6 +212,8 @@ async function shim(env, idb, net = { down: false }, { status } = {}) {
     data: async (c, id) => (await db.collection(c).doc(id).get()).data(),
     /** the tab closed: its lock is free, so the next tab takes over its waiting notes */
     close: () => mine.forEach(n => idb.held.delete(n)),
+    /** the app comes to the front: the shim reads the record again and sends what waits */
+    focus: () => listeners.focus && listeners.focus(),
     /** the 'online' event alone, for a test that waits on its own condition */
     wake: () => {
       net.down = false;
@@ -720,4 +722,149 @@ test('B-404 review: the page keeps the headroom under the cap that a second note
   // what a second note adds: ' (earlier)' on the title and an earlierOf of the longest id the schema allows
   const added = Buffer.byteLength(',"earlierOf":""') + 120 + ' (earlier)'.length;
   assert.ok(added < 256, String(added));
+});
+
+// ---- B-410: refused and adopted entries across a reload, one second note per closed tab's entry, the backoff
+
+const HUGE = () => lines(BASE, ['p', 'y'.repeat(20000)], ...Array.from({ length: 14 }, () => ['p', 'z'.repeat(19000)]));
+/** A tab that saved a note the record refuses (too large), then closed: its refused entry waits in IndexedDB. */
+async function refusedThenClosed(env, idb) {
+  const s = await shim(env, idb);
+  s.net.down = true;
+  await s.db.collection('notes').doc(ID).set(HUGE());
+  s.wake();
+  assert.ok(await until(() => (s.sync().refused || []).length === 1 && !s.sync().syncing));
+  await kept();
+  s.close();
+}
+
+test('B-410 (shim): a refused note after a reload, cut down and saved: the refusal clears and stays cleared', async () => {
+  const env = envOf();
+  await put(env, 'notes', ID, BASE);
+  const idb = fakeIDB();
+  await refusedThenClosed(env, idb);
+  const r = await shim(env, idb);
+  assert.ok(await until(() => r.sync() && !r.sync().syncing));
+  assert.deepEqual(
+    r.sync().refused.map(x => x.id),
+    [ID],
+    'the reload still names the refusal'
+  );
+  assert.deepEqual(await r.data('notes', ID), HUGE(), 'and shows his words');
+  const cut = lines(BASE, ['p', 'cut down']);
+  await r.db.collection('notes').doc(ID).set(cut);
+  assert.ok(await until(() => stored(env, 'notes', ID).v === 2));
+  assert.deepEqual(stored(env, 'notes', ID).data, cut);
+  assert.ok(await until(() => r.sync().refused.length === 0), 'the refusal is cleared');
+  await kept();
+  assert.deepEqual(idb.box(), [], 'nothing left waiting in IndexedDB');
+  r.close();
+  const r2 = await shim(env, idb);
+  assert.deepEqual(await r2.data('notes', ID), cut, 'a second reload shows what was saved');
+  assert.deepEqual(r2.sync().refused, []);
+  // and a later save from another device reaches this device (nothing hides the note any more)
+  const other = lines(cut, ['ul', 'from the other device']);
+  await put(env, 'notes', ID, other, 2);
+  r2.close();
+  const r3 = await shim(env, idb);
+  assert.deepEqual(await r3.data('notes', ID), other);
+});
+
+test('B-410 (shim): refused, reload, another device writes, he cuts and saves: the other device’s words stay, his are kept', async () => {
+  const env = envOf();
+  await put(env, 'notes', ID, BASE);
+  const idb = fakeIDB();
+  await refusedThenClosed(env, idb);
+  const other = lines(BASE, ['ul', 'from the other device']);
+  await put(env, 'notes', ID, other, 1);
+  const r = await shim(env, idb);
+  assert.ok(await until(() => r.sync() && !r.sync().syncing));
+  assert.deepEqual(await r.data('notes', ID), HUGE(), 'his refused words are what he sees and cuts');
+  const cut = lines(BASE, ['p', 'cut down from his refused note']);
+  await r.db.collection('notes').doc(ID).set(cut);
+  assert.ok(await until(() => allNotes(env).length === 2 && r.sync().pending === 0 && !r.sync().syncing));
+  assert.deepEqual(stored(env, 'notes', ID).data, other, 'never written over the other device’s words');
+  const earlier = allNotes(env).find(n => n.earlierOf === ID);
+  assert.ok(earlier, 'his cut words are kept as the second note');
+  assert.deepEqual(earlier.blocks, cut.blocks);
+  assert.deepEqual(r.sync().refused, [], 'and the refusal is cleared');
+  await kept();
+  assert.deepEqual(idb.box(), []);
+});
+
+test('B-410 (shim): two tabs take over one closed tab’s note over a changed record: one second note, every word kept', async () => {
+  const env = envOf();
+  await put(env, 'notes', ID, BASE);
+  const idb = fakeIDB();
+  const t1 = await shim(env, idb);
+  t1.net.down = true;
+  await t1.db
+    .collection('notes')
+    .doc(ID)
+    .set(lines(BASE, ['ul', 'Written in a tab since closed']));
+  await kept();
+  t1.close();
+  await put(env, 'notes', ID, lines(BASE, ['ul', 'from the other device']), 1);
+  const t2 = await shim(env, idb, { down: true });
+  const t3 = await shim(env, idb, { down: true });
+  t2.wake();
+  t3.wake();
+  assert.ok(await until(() => idb.box().length === 0 && t2.sync().pending === 0 && t3.sync().pending === 0));
+  await new Promise(r => setTimeout(r, 300));
+  assert.equal(allNotes(env).filter(n => n.earlierOf === ID).length, 1, textOfAll(env));
+  assert.equal(allNotes(env).length, 2);
+  const all = textOfAll(env);
+  assert.ok(all.includes('Written in a tab since closed') && all.includes('from the other device'), all);
+  assert.equal(t2.kept().length + t3.kept().length, 1, 'one tab made it, and told its page');
+});
+
+test('B-410 (shim): with no Web Locks (both tabs take every entry), a stale note still makes one second note', async () => {
+  const env = envOf();
+  await put(env, 'notes', ID, BASE);
+  const idb = fakeIDB();
+  const t1 = await shim(env, idb);
+  const t2 = await shim(env, idb);
+  idb.held.clear(); // every tab looks closed: each takes the other's entries, as with no Web Locks
+  t1.net.down = t2.net.down = true;
+  await t1.db
+    .collection('notes')
+    .doc(ID)
+    .set(lines(BASE, ['ul', 'tab one']));
+  await kept();
+  await put(env, 'notes', ID, lines(BASE, ['ul', 'other device']), 1);
+  t1.wake();
+  t2.wake();
+  assert.ok(await until(() => idb.box().length === 0 && t1.sync().pending === 0 && t2.sync().pending === 0));
+  await new Promise(r => setTimeout(r, 300));
+  assert.equal(allNotes(env).filter(n => n.earlierOf === ID).length, 1, textOfAll(env));
+  assert.ok(textOfAll(env).includes('tab one') && textOfAll(env).includes('other device'));
+});
+
+test('B-410 (shim): during a busy Worker’s pause, reading the record again sends nothing', async () => {
+  const env = envOf();
+  await put(env, 'notes', ID, BASE);
+  let puts = 0;
+  let busy = 1;
+  const net = { down: false };
+  const s = await shim(env, fakeIDB(), net, {
+    status: async (url, init) => {
+      if (init.method !== 'PUT') return null;
+      puts++;
+      return busy-- > 0 ? new Response('busy', { status: 503 }) : null;
+    },
+  });
+  net.down = true;
+  await s.db
+    .collection('notes')
+    .doc(ID)
+    .set(lines(BASE, ['ul', 'Saved while the Worker was busy']));
+  s.wake();
+  assert.ok(await until(() => puts === 1 && !s.sync().syncing));
+  for (let i = 0; i < 5; i++) {
+    s.focus(); // the 10-second refresh, a focus, a save: each would send at once without the pause
+    await new Promise(r => setTimeout(r, 100));
+  }
+  assert.equal(puts, 1, 'nothing sent before the pause runs out');
+  assert.ok(await until(() => stored(env, 'notes', ID).v === 2, 5000), 'then it lands');
+  assert.equal(puts, 2);
 });
