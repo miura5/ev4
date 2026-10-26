@@ -7253,12 +7253,12 @@
   "title": "Notes: the editor",
   "dod": "A page-less contenteditable editor in its own page part. The toolbar has undo, redo, the style menu (Paragraph, H1 to H3, bulleted, numbered, checklist, each with its Quip shortcut), B, I, U, S and link. Markdown-style typing works ('# ', '- ', '1. ', '[] '). Paste is sanitized. Autosave is debounced through write(). Each New note gets a fresh id that cannot collide across devices. Proven by unit tests (block-model round trip, shortcut transforms, paste stripped of HTML and script) and a harness at 1280: New note twice gives two notes, '# ' makes a heading, Bold and Undo/Redo work, and text survives a reload. At 390 there is no Notes entry. Smoke green. Own review of the save path only.",
   "milestone": "PWA",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-401",
    "B-399"
   ],
-  "notes": "",
+  "notes": "claimed by build-manager agent",
   "commit": null,
   "source": "build manager, B-396 plan",
   "words": "Build the editor (B-396, D-325).",
