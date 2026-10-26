@@ -379,6 +379,20 @@ test('B-401: pwa-copy and the app carry notes; the synthetic record holds made-u
   assert.ok(new Set(notes.map(([, d]) => d.course)).size >= 2, 'notes in both courses');
 });
 
+test('B-401 second review: a line break inside a title or a run, \\r or \\n, never opens a block in the mirror', () => {
+  const n = note({
+    title: 'Title\n\n---\n\n- list\n\n    code',
+    blocks: [
+      { type: 'p', runs: [{ text: 'a\r- list\r\r    code' }] },
+      { type: 'p', runs: [{ text: 'b\u2028- list' }] },
+    ],
+  });
+  const body = EV.noteMarkdown(n);
+  assert.ok(!/\r/.test(body), 'no carriage return survives');
+  for (const line of body.split('\n')) assert.ok(!/^(\s*[-+*]\s|\s*\d+[.)]\s|---|\s{4})/.test(line), line);
+  assert.match(body, /^# Title --- - list code$/m);
+});
+
 test('B-401 review: the mirror escapes what a block opens with, so note text never starts a list, rule, quote or code', () => {
   const p = text => ({ type: 'p', runs: [{ text }] });
   const n = note({

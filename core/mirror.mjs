@@ -127,7 +127,7 @@ export function makeMirror(core) {
   function runsMarkdown(runs) {
     return (runs || [])
       .map(r => {
-        const raw = String((r && r.text) || '').replace(/\s*\n\s*/g, ' ');
+        const raw = String((r && r.text) || '').replace(/\s*[\r\n\u2028\u2029]\s*/g, ' ');
         if (!raw) return '';
         // marks wrap the text inside its spaces, so ** never sits next to a space
         const [, lead, core, trail] = raw.match(/^(\s*)([\s\S]*?)(\s*)$/);
@@ -144,7 +144,9 @@ export function makeMirror(core) {
   function noteMarkdown(n) {
     const out = [];
     // his title heads the file unless the body opens with its own first heading
-    const title = String(n.title || '').trim();
+    const title = String(n.title || '')
+      .replace(/\s*[\r\n\u2028\u2029]\s*/g, ' ')
+      .trim();
     if (title && !(n.blocks || []).some(b => b.type === 'h1')) out.push(`# ${blockStart(mdEscape(title))}`, '');
     let num = 0;
     let prev = null;
