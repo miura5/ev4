@@ -7294,5 +7294,22 @@
    "outcome": "task",
    "at": "2026-10-26T00:52:42.835Z"
   }
+ },
+ {
+  "id": "B-404",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Build offline and sync in the app (B-396, D-325).",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build manager, B-396 plan",
+  "words": "Build offline and sync in the app (B-396, D-325).",
+  "reportedAt": "2026-10-26T00:52:45.290Z",
+  "board": {
+   "row": "v4 B-404: Build offline and sync in the app (B-396,"
+  }
  }
 ]
