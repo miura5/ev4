@@ -1,7 +1,7 @@
 {
  "hooks": {
   "PreToolUse": [
-   { "matcher": "ArtifactData|Artifact|mcp__.*ArtifactData|mcp__.*__Artifact", "hooks": [ { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/tools/hooks.mjs\" live-guard" } ] }
+   { "matcher": "ArtifactData|Artifact|mcp__.*ArtifactData|mcp__.*__Artifact|Bash", "hooks": [ { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/tools/hooks.mjs\" live-guard" } ] }
   ],
   "PostToolUse": [
    { "matcher": "Edit|Write|MultiEdit", "hooks": [ { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/tools/hooks.mjs\" spec-format" } ] }

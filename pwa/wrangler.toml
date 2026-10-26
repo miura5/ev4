@@ -30,3 +30,16 @@ database_id = "filled-in-by-the-pwa-staging-workflow"
 # once and adds its binding and the cron to [env.staging] at deploy (a binding to a missing bucket would stop the
 # deploy). Exports are never overwritten or deleted.
 
+
+# B-320 (D-330): live, the ev-live Worker over the ev-live D1, never seeded. Deployed only by the pwa-live workflow
+# (.github/workflows/pwa-live.yml) in the GitHub environment live, which fills in the database id it finds or creates
+# and adds the nightly export's R2 binding and cron; EV_TOKEN comes from the environment secret EV_LIVE_TOKEN, and the
+# Claude API key is a Cloudflare secret Matt sets on ev-live (D-299).
+[env.live]
+name = "ev-live"
+workers_dev = true
+
+[[env.live.d1_databases]]
+binding = "DB"
+database_name = "ev-live"
+database_id = "filled-in-by-the-pwa-live-workflow"

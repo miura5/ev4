@@ -27,8 +27,8 @@
 //       the manifest as one line of JSON ({collection: [count, sha256]}, no document) for the pwa-staging workflow's
 //       copy_manifest input, which checks the D1's own rows against it.
 // Live (B-319): export-calls, export-done and import against the live record refuse unless dist/live-ok, written by an
-// OK bound to this checkout's commit (ship live --matt-ok, deploy live --matt-ok), is under LIVE_OK_HOURS old; and
-// live has no copy target until B-320 names it. A limit, said in what it prints: ArtifactData has no way to list a
+// OK bound to this checkout's commit or its build commit (ship live --matt-ok, deploy live --matt-ok), is under
+// LIVE_OK_HOURS old; live's copy target is the ev-live Worker (B-320, D-330), the live D1 itself. A limit, said in what it prints: ArtifactData has no way to list a
 // record's collections, so a collection the spec does not name is not exported.
 // The export holds the record, so <dir> must be outside the repository (under /tmp or the session's scratchpad): every
 // command refuses a directory inside it. Nothing printed is a document or the token: counts, ids, short hashes and the
@@ -44,6 +44,7 @@ import { manifestOf, manifestDiffs } from '../pwa/backup.js';
 import { validCollection, validDocId } from '../pwa/runapi.js';
 import { verify as verifyLines } from './pwa-backup.mjs';
 import { LIVE_OK_HOURS } from './hooks.mjs';
+import { gitState } from './build.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const PAGE = 1000;
@@ -105,8 +106,12 @@ export function liveAllowed({ root = ROOT, now = Date.now(), head = null } = {})
   if (!Number.isFinite(ok.at) || now - ok.at >= LIVE_OK_HOURS * 36e5)
     return { ok: false, why: `dist/live-ok is older than ${LIVE_OK_HOURS} hours` };
   const h = head || execFileSync('git', ['-C', root, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+  // B-320: or this checkout's build commit (tools/build.mjs gitState), which ship live's OK names: recording the deploy
+  // and the cutover's notes are bookkeeping commits that move HEAD but not the build
+  const b = head ? h : gitState(root).commit;
   const c = String(ok.commit || '');
-  if (c.length < 7 || !(h.startsWith(c) || c.startsWith(h)))
+  const same = x => x && (x.startsWith(c) || c.startsWith(x));
+  if (c.length < 7 || !(same(h) || same(b)))
     return { ok: false, why: `dist/live-ok names commit ${c || 'none'}, not this checkout's ${h.slice(0, 12)}` };
   return { ok: true };
 }

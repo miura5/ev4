@@ -1979,3 +1979,6 @@ body.has-line #today-week .wk-her{display:none}
   body.on-ev .mh>#sbar .s-acts button:not(.end):not(:first-child){display:none}
   body.on-ev .mh>#sbar .s-acts button.btn{height:28px;min-height:28px;padding:0 10px;border-radius:7px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);color:var(--text)}
 }
+/* B-320 (D-306): the claude.ai live page after the cutover: one line at the top, and nothing offered that would write */
+.ro-banner{position:sticky;top:0;z-index:50;margin:0;padding:8px 16px;background:var(--surface);color:var(--text);font-size:13px;text-align:center;border-bottom:1px solid var(--line)}
+[data-readonly] #composer,[data-readonly] #new-wrap{display:none!important}

@@ -548,6 +548,7 @@
   });
 
   window.claude = {
+    host: 'ev-app', // B-320 (D-306): the app, never the read-only claude.ai live page (page/app/04-model.js)
     use: async n => {
       if (n === 'db') return ready.then(() => DB);
       if (n === 'user') return { isOwner: async () => true };

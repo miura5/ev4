@@ -7,7 +7,8 @@
 //   node tools/hooks.mjs stop          B-56: npm test before the session ends; red is reported, nothing is changed
 //   node tools/hooks.mjs spec-format   B-57: after Edit or Write on spec/**/*.json, the file again at indent 1, no newline
 //   node tools/hooks.mjs live-guard    B-58: an ArtifactData write or an Artifact publish aimed at the live record or
-//                                      page is refused unless deploy live --matt-ok wrote dist/live-ok in the last 2 h
+//                                      page is refused unless deploy live --matt-ok wrote dist/live-ok in the last 2 h;
+//                                      B-320: so is a Bash dispatch of pwa-live.yml unless that dist/live-ok names its commit
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -87,10 +88,41 @@ export function traceAllows(a, traceOk, { liveId, now = Date.now() }) {
   );
 }
 
+/**
+ * B-320 (D-331): a shell command that dispatches the live app's workflow (pwa-live.yml): {commit} (null when it names
+ * none), or null when the command is not one. gh workflow run, a POST to its dispatches endpoint, by name or path.
+ */
+export const LIVE_WORKFLOW = 'pwa-live';
+export function liveDispatch(command) {
+  const c = String(command || '');
+  if (!new RegExp(`\\b${LIVE_WORKFLOW}(\\.ya?ml)?\\b`).test(c)) return null;
+  if (!/\bworkflow\s+run\b|\/dispatches\b/.test(c)) return null;
+  // every commit it names: more than one names none (refused), so one command never carries a second dispatch
+  const named = [...new Set([...c.matchAll(/\bcommit["'\]]?\s*[=:]\s*["']?([0-9a-f]{7,40})\b/g)].map(m => m[1]))];
+  return { commit: named.length === 1 ? named[0] : null };
+}
+/** B-320: whether dist/live-ok allows dispatching the live workflow at this commit: fresh, Matt's OK, the same commit. */
+export function dispatchAllowed(liveOk, commit, now = Date.now()) {
+  if (!liveOk || !Number.isFinite(liveOk.at) || now - liveOk.at >= LIVE_OK_HOURS * 36e5 || liveOk.at > now + 60e3)
+    return false;
+  if (!/^(deploy live --matt-ok|ship live --matt-ok|ship live --from-job \S+)$/.test(String(liveOk.by || '')))
+    return false;
+  const c = String(liveOk.commit || '');
+  return !!commit && c.length >= 7 && commit.length >= 7 && (c.startsWith(commit) || commit.startsWith(c));
+}
+
 /** B-58: the refusal for a tool call aimed at the live record or page, or null when it may go. */
 export function liveGuard(input, { liveId, liveOk = null, traceOk = null, now = Date.now() }) {
   const name = String((input && input.tool_name) || ''),
     a = (input && input.tool_input) || {};
+  // B-320 (D-331): dispatching the live app's workflow needs Matt's OK bound to that commit (dist/live-ok), as a live
+  // deploy does; GitHub's live environment then waits for his approval there too.
+  if (name === 'Bash') {
+    const d = liveDispatch(a.command);
+    if (!d) return null;
+    if (dispatchAllowed(liveOk, d.commit, now)) return null;
+    return `Refused: a dispatch of the live app's workflow (${LIVE_WORKFLOW}.yml${d.commit ? ' at ' + d.commit.slice(0, 7) : ', naming no commit'}). It goes only at the commit Matt's OK names: deploy live --matt-ok or ship live --matt-ok writes dist/live-ok for that commit for ${LIVE_OK_HOURS} hours (B-58, D-331)${liveOk ? `; the one there names ${String(liveOk.commit || 'none').slice(0, 7)}, by ${liveOk.by || 'nothing'}, and may be older than that` : ''}.`;
+  }
   const aimed = String(a.url || a.from_url || '').includes(liveId);
   let what = null;
   if (/(^|__)ArtifactData$/.test(name) && aimed && WRITES.has(a.action))
@@ -110,7 +142,8 @@ export function liveGuard(input, { liveId, liveOk = null, traceOk = null, now = 
  * the last green run left in dist/test-ok.
  */
 export function treeHash(root = ROOT) {
-  const g = a => spawnSync('git', ['-C', root, ...a], { encoding: 'utf8' }).stdout || '';
+  // B-320: a buffer the whole diff fits in (the default 1 MiB cut it short, a different length each run)
+  const g = a => spawnSync('git', ['-C', root, ...a], { encoding: 'utf8', maxBuffer: 1 << 30 }).stdout || '';
   const h = createHash('sha256');
   h.update(g(['ls-files', '-s']));
   h.update('\0' + g(['diff', '--no-color', '--no-ext-diff']));
@@ -196,6 +229,8 @@ export function main(argv = process.argv.slice(2), { marker = process.env.EV_RUN
     return 0;
   }
   if (cmd === 'live-guard') {
+    // B-320: a shell command is read only for a dispatch of the live workflow; anything else passes at once
+    if (input && input.tool_name === 'Bash' && !liveDispatch((input.tool_input || {}).command)) return 0;
     const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec', 'ev.spec.json'), 'utf8'));
     const okFile = path.join(ROOT, 'dist', 'live-ok');
     let liveOk = null;

@@ -27,7 +27,21 @@
     /** One write, checked against its collection's schema first (the page refuses what the pipelines refuse). */
     // B-227 (D-232): while one of her tools runs, the documents it writes are what her reply changed (her work line).
     const WORK = { collect: null };
+    // B-320 (D-306): after the cutover the claude.ai live page keeps his record readable and writes nothing: E.V. lives
+    // in the app (its shim names its host, pwa/bridge.js), where this flag never holds. Every write stops here, the one
+    // place the page writes, and the page says so at the top.
+    const READ_ONLY = EV_SPEC.readOnly === true && !(window.claude && window.claude.host === 'ev-app');
+    const READ_ONLY_TEXT = 'This page is read-only now: E.V. lives in the app.';
+    if (READ_ONLY) {
+      document.documentElement.setAttribute('data-readonly', '');
+      const ro = document.createElement('p');
+      ro.className = 'ro-banner';
+      ro.setAttribute('role', 'status');
+      ro.textContent = READ_ONLY_TEXT + ' Your record here stays as it was at the move.';
+      document.body.prepend(ro);
+    }
     async function write(w) {
+      if (READ_ONLY) throw new Error(READ_ONLY_TEXT);
       if (WORK.collect && !['talk', 'jobs'].includes(w.collection)) WORK.collect.add(w.collection + '/' + w.id);
       const ref = db.collection(w.collection).doc(w.id);
       if (validate && w.op === 'set') {

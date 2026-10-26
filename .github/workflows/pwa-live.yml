@@ -1,0 +1,153 @@
+# B-320 (D-330, D-331): the live app. The ev-live Worker over the ev-live D1, on Matt's Cloudflare account, deployed at
+# one commit and read back. Started by hand only (workflow_dispatch), from main, and only after two gates:
+#   - the gate job (no secrets) refuses unless the commit is on main, its spec turns the live app on
+#     (spec.registry.records.live.app.ready), origin/main's Chart records a GREEN staging ship at it (R-02) and a nightly
+#     full check passed at it (R-06), as ship live refuses (tools/pwa-live.mjs gate);
+#   - the live job runs in the GitHub environment "live", whose required reviewer is Matt: it waits for his approval
+#     in GitHub before any step, and only it sees the environment's secrets.
+# A build session dispatches this only under dist/live-ok for that commit, which deploy live --matt-ok or ship live
+# --matt-ok writes on his OK in the chat (tools/hooks.mjs live-guard, B-58).
+# The live D1 is found, or created once, with the schema only: nothing here seeds, writes or deletes a document
+# (the record arrives once, by the B-319 copy through the Worker's run API). The ev-live-exports R2 bucket is created
+# once for the nightly export; the ev-live-scratch Worker over the ev-live-scratch D1 is the live restore drill's
+# target. Secrets reach wrangler and the checks through the environment or stdin, never on a command line or in the
+# log. The live Claude API key is not here: it is a Cloudflare secret on ev-live only, set by Matt (D-299).
+name: pwa-live
+run-name: pwa-live ${{ inputs.commit }}
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'the build commit to deploy live (40 characters): ship live prints it'
+        type: string
+        required: true
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: pwa-live
+  cancel-in-progress: false
+jobs:
+  gate:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: the commit is on main, turns the live app on, and passed staging and the full check (R-02, R-06)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMIT: ${{ inputs.commit }}
+        run: node tools/pwa-live.mjs gate "$COMMIT"
+
+  live:
+    needs: gate
+    environment: live
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.LIVE_CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.LIVE_CLOUDFLARE_ACCOUNT_ID }}
+      EV_LIVE_TOKEN: ${{ secrets.EV_LIVE_TOKEN }}
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - name: the three environment secrets are set
+        run: |
+          missing=""
+          for v in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID EV_LIVE_TOKEN; do
+            [ -n "${!v}" ] || missing="$missing $v"
+          done
+          if [ -n "$missing" ]; then echo "missing live environment secrets:$missing (LIVE_ for the Cloudflare two)"; exit 1; fi
+          echo "all three set"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            pwa/package-lock.json
+      - run: npm ci
+      - run: npm ci --prefix pwa
+      - name: build the live page and wrap it
+        run: |
+          node tools/build.mjs
+          node tools/build-pwa.mjs --record live
+      - name: find or create the ev-live D1, with the schema only (no made-up record, ever)
+        working-directory: pwa
+        run: |
+          id_of() { npx wrangler d1 list --json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const d=JSON.parse(s).find(x=>x.name===process.argv[1]);process.stdout.write(d?d.uuid:"")})' "$1"; }
+          id=$(id_of ev-live)
+          if [ -z "$id" ]; then npx wrangler d1 create ev-live >/dev/null; id=$(id_of ev-live); fi
+          [ -n "$id" ] || { echo "ev-live D1 not found after create"; exit 1; }
+          echo "ev-live D1: $id"
+          sed -i "s/filled-in-by-the-pwa-live-workflow/$id/" wrangler.toml
+          grep -q "database_id = \"$id\"" wrangler.toml
+          npx wrangler d1 execute ev-live --env live --remote --file schema.sql >/dev/null
+          n=$(npx wrangler d1 execute ev-live --env live --remote --json --command "SELECT COUNT(*) AS n FROM pragma_table_info('docs') WHERE name = 'v'" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>process.stdout.write(String(JSON.parse(s)[0].results[0].n)))')
+          [ "$n" = "1" ] || { echo "the ev-live docs table has no version column"; exit 1; }
+          n=$(npx wrangler d1 execute ev-live --env live --remote --json --command "SELECT COUNT(*) AS n FROM docs" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>process.stdout.write(String(JSON.parse(s)[0].results[0].n)))')
+          echo "documents in ev-live: $n (left as they are)"
+      - name: the ev-live-exports R2 bucket, created once, and the nightly export bound
+        working-directory: pwa
+        run: |
+          if npx wrangler r2 bucket info ev-live-exports >/dev/null 2>&1; then
+            echo "ev-live-exports already there"
+          else
+            npx wrangler r2 bucket create ev-live-exports > r2.log 2>&1 || { tail -5 r2.log; echo "R2 is turned on in the Cloudflare dashboard first"; exit 1; }
+            echo "ev-live-exports created"
+          fi
+          printf '\n[[env.live.r2_buckets]]\nbinding = "EXPORTS"\nbucket_name = "ev-live-exports"\n\n[env.live.triggers]\ncrons = ["17 8 * * *"]\n' >> wrangler.toml
+          echo "the nightly export is bound: EXPORTS -> ev-live-exports, cron 17 8 * * *"
+      - name: deploy the ev-live Worker
+        id: deploy
+        working-directory: pwa
+        run: |
+          msg=$(node ../tools/pwa-app.mjs message live)
+          echo "the version's build hash: $msg"
+          npx wrangler deploy --env live --message "$msg" > deploy.log 2>&1 || { cat deploy.log; exit 1; }
+          url=$(grep -o 'https://ev-live\.[a-z0-9.-]*\.workers\.dev' deploy.log | head -1)
+          [ -n "$url" ] || { cat deploy.log; echo "no workers.dev address in the deploy output"; exit 1; }
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "ev-live Worker: $url"
+      - name: the Worker's token, from the environment secret; the Claude key is checked by name only (D-299)
+        working-directory: pwa
+        run: |
+          printf '%s' "$EV_LIVE_TOKEN" | npx wrangler secret put EV_TOKEN --env live >/dev/null
+          echo "EV_TOKEN set on ev-live"
+          if npx wrangler secret list --env live | grep -q '"ANTHROPIC_API_KEY"'; then
+            echo "ANTHROPIC_API_KEY is set on ev-live"
+          else
+            echo "::warning title=pwa-live::ANTHROPIC_API_KEY is not set on ev-live: Matt sets it in the Cloudflare dashboard (docs/cutover.md); until then the app's Claude asks fail"
+          fi
+      - name: check (401 without the token and with a wrong one, 200 with it; collection counts only)
+        env:
+          EV_TOKEN: ${{ secrets.EV_LIVE_TOKEN }}
+        run: |
+          for i in 1 2 3 4 5 6; do
+            if node tools/pwa-live.mjs check "${{ steps.deploy.outputs.url }}"; then exit 0; fi
+            echo "retrying in 10 s (a new secret can take a moment to reach the Worker)"; sleep 10
+          done
+          exit 1
+      - name: the Worker's build hash and its page files, read back
+        run: node tools/pwa-app.mjs deployed live "${{ steps.deploy.outputs.url }}"
+      - name: the ev-live-scratch Worker over the ev-live-scratch D1 (the live restore drill's target)
+        working-directory: pwa
+        run: |
+          id_of() { npx wrangler d1 list --json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const d=JSON.parse(s).find(x=>x.name===process.argv[1]);process.stdout.write(d?d.uuid:"")})' "$1"; }
+          id=$(id_of ev-live-scratch)
+          if [ -z "$id" ]; then npx wrangler d1 create ev-live-scratch >/dev/null; id=$(id_of ev-live-scratch); fi
+          [ -n "$id" ] || { echo "ev-live-scratch D1 not found after create"; exit 1; }
+          printf 'name = "ev-live-scratch"\nmain = "worker.js"\ncompatibility_date = "2026-10-01"\nworkers_dev = true\n\n[[d1_databases]]\nbinding = "DB"\ndatabase_name = "ev-live-scratch"\ndatabase_id = "%s"\n' "$id" > scratch.toml
+          npx wrangler d1 execute ev-live-scratch --config scratch.toml --remote --file schema.sql >/dev/null
+          npx wrangler deploy --config scratch.toml > scratch.log 2>&1 || { cat scratch.log; exit 1; }
+          printf '%s' "$EV_LIVE_TOKEN" | npx wrangler secret put EV_TOKEN --config scratch.toml >/dev/null
+          echo "ev-live-scratch: D1 $id, Worker deployed, EV_TOKEN set"

@@ -1252,7 +1252,69 @@
   "records": {
    "live": {
     "artifact": "Bu8RevP4r1twPdSGc77nfg",
-    "name": "E.V. Home"
+    "name": "E.V. Home",
+    "app": {
+     "worker": "ev-live",
+     "url": "https://ev-live.peppercheese1.workers.dev",
+     "d1": "ev-live",
+     "scratch": "ev-live-scratch",
+     "exports": "ev-live-exports",
+     "workflow": "pwa-live.yml",
+     "environment": "live",
+     "ready": false,
+     "_why": "B-320 (D-330): the live app: the ev-live Worker at this address over the ev-live D1, deployed only by .github/workflows/pwa-live.yml in the GitHub environment live (Matt is its required reviewer), with environment-only secrets; never seeded. The workflow also keeps the ev-live-scratch Worker and D1 for the live restore drill, and the ev-live-exports R2 bucket for the nightly export. ready turns the app on in ship live and verify-deploy live (tools/pwa-app.mjs APPS.live): false until the cutover sitting flips it (docs/cutover.md step 3), so no live release before then waits on a Worker that is not there."
+    },
+    "copy": {
+     "worker": "ev-live",
+     "_why": "B-319, B-320 (D-330): the one-time copy of the live record goes into the live D1 itself, through the ev-live Worker (its workers.dev name, on the account of the Worker that system/worker names). A live copy also needs dist/live-ok bound to the commit (Matt OK in the chat)."
+    },
+    "readOnly": false,
+    "d1": false,
+    "cutover": {
+     "_why": "B-320 (D-306, D-307, D-331): what the cutover commit turns on, applied by node tools/pwa-live.mjs cutover --apply (docs/cutover.md), never by hand: readOnly true (the claude.ai live page refuses every write and says E.V. lives in the app now), d1 true (D-307 lint on for live: tools/d307.mjs), these runs moved to records.live.runs (every live pipeline on the ev-live Worker, token from the live record system/worker, D-320), and the live Mac tasks re-pointed at E.V. Backups (evening-mac re-created, restore-drill new, the old evening-mac listed retired). Live pipelines stay on the claude.ai record until then.",
+     "runs": {
+      "store": "worker",
+      "worker": {
+       "collection": "system",
+       "doc_id": "worker"
+      },
+      "pipelines": [
+       "morning",
+       "evening-cloud",
+       "weekly",
+       "worker",
+       "watchdog",
+       "evening-mac",
+       "restore-drill"
+      ],
+      "backup": {
+       "folder": "/Users/peachfritter/Documents/E.V. Backups",
+       "restoreFrom": "mac",
+       "_why": "D-322: the one place the live backup folder is named. evening-mac writes the nightly backup and the Sunday mirror there, exported from D1; the drill restores the newest one (or with restoreFrom r2 the newest R2 export)."
+      },
+      "scratch": {
+       "host": "ev-live-scratch",
+       "_why": "B-320: the live restore drill restores into the ev-live-scratch D1 through its Worker (pwa-live.yml keeps it), same token, under drills/<run id>/<collection>; it writes nothing else there."
+      },
+      "_why": "B-320 (D-307, D-320, D-322): the live runs read and write the ev-live Worker run API (D1), its url and token from the live record system/worker."
+     },
+     "tasks": {
+      "restore-drill": {
+       "pipeline": "restore-drill",
+       "record": "live",
+       "lane": "mac",
+       "schedule": "CRON_TZ=America/Chicago 55 20 1 * *",
+       "cadence": "monthly, the 1st at 8:55pm (after that night's backup)",
+       "folders": [
+        "/Users/peachfritter/Documents/E.V. Backups"
+       ],
+       "macBound": true,
+       "push": true,
+       "trigger": null,
+       "note": "B-320 (D-322): restores the newest live backup into the ev-live-scratch D1 and checks counts and hashes per collection. Created at the cutover from the chat linked to the Mac with Matt present."
+      }
+     }
+    }
    },
    "staging": {
     "artifact": "Pb6jQ6CvEbtxi6Rcshu9uC",
@@ -3006,6 +3068,14 @@
      "date": "2026-10-21",
      "run": "cse_01V57XaMtYQSf8Et4sqf8Z2u",
      "evidence": "refused: the ArtifactData get of live health/current was refused by the auto-mode classifier (PII data handling); not worked around (its note on B-187). A builder run reads health from staging or leaves step 1's live read to a build chat until this is proven"
+    },
+    {
+     "capability": "the live-guard hook on Bash: a dispatch of pwa-live.yml refused without dist/live-ok naming its commit (B-320, D-331)",
+     "task": "no task: a v4 build chat started in the checkout",
+     "proven": false,
+     "date": "2026-10-26",
+     "run": null,
+     "evidence": "test/hooks.test.mjs runs the hook as the harness does (and the pipeline case, D-169). Not yet probed in a session: a subagent of the managing chat (session_01CWeveciiiW2pUvFQtQJ3HK) ran echo \"gh workflow run pwa-live.yml -f commit=0000000\" after the settings change and it was not refused (hooks are read at session start). The cutover sitting probes it first in the managing chat (docs/cutover.md step 0) before anything rests on it; GitHub's live environment approval is the gate that holds either way."
     }
    ]
   }

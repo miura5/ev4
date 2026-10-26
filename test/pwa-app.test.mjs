@@ -48,7 +48,7 @@ test("B-318: the live app is refused without Matt's OK (R-04), and stays off unt
   assert.equal(no.ok, false);
   assert.match(no.refusals[0], /R-04/);
   assert.deepEqual(appCalls({ target: 'live', commit: C, mattOk: true }), { ok: true, calls: [] }, 'live is off');
-  assert.equal(APPS.live.ready, false, 'B-320 builds the live app path');
+  assert.equal(APPS.live.ready, false, 'B-320: off until the cutover sitting turns it on (docs/cutover.md)');
 });
 
 test('B-318: the build hash rides in the Worker version message and reads back', () => {
@@ -165,18 +165,17 @@ test('B-318: the build hash covers the Worker source and every served file', () 
   assert.notEqual(hashOf(publicFiles(dir)), h);
 });
 
-test('B-318: the staging workflow deploys at the build commit with its hash; there is no live app workflow', () => {
+test('B-318: the staging workflow deploys at the build commit with its hash (the live one: test/pwa-live.test.mjs)', () => {
   const st = fs.readFileSync(path.join(ROOT, '.github/workflows/pwa-staging.yml'), 'utf8');
   assert.match(st, /run-name: pwa-staging \$\{\{ inputs\.commit \|\| github\.sha \}\}/);
   assert.match(st, /ref: \$\{\{ inputs\.commit \|\| github\.sha \}\}\n\s+fetch-depth: 0/);
   assert.match(st, /wrangler deploy --env staging --message "\$msg"/);
   assert.match(st, /node tools\/pwa-app\.mjs deployed staging/);
-  assert.equal(
-    fs.existsSync(path.join(ROOT, '.github/workflows/pwa-live.yml')),
-    false,
-    'B-320 builds it with its gates'
+  assert.doesNotMatch(
+    st,
+    /ev-live|EV_LIVE_TOKEN|LIVE_CLOUDFLARE/,
+    'staging never names the live Worker or its secrets'
   );
-  assert.doesNotMatch(fs.readFileSync(path.join(ROOT, 'pwa/wrangler.toml'), 'utf8'), /\[env\.live\]/);
 });
 
 test('B-318: ship carries the app read and dispatch as its own part, and reads it again after a dispatch', async () => {

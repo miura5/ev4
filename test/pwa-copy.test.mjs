@@ -311,7 +311,7 @@ test('verify is RED when a collection differs from the export, or the D1 holds a
   );
 });
 
-test("the copy target is the registry's copy Worker on the record's account, over https only; live has none", () => {
+test("the copy target is the registry's copy Worker on the record's account, over https only; live's is ev-live", () => {
   const own = 'https://ev-staging.acct-1.workers.dev';
   assert.equal(COPY.targetUrl(spec, 'staging', own), 'https://ev-staging-scratch.acct-1.workers.dev');
   assert.equal(
@@ -332,7 +332,18 @@ test("the copy target is the registry's copy Worker on the record's account, ove
     () => COPY.targetUrl(spec, 'staging', 'http://ev-staging.acct-1.workers.dev'),
     /not an https workers\.dev/
   );
-  assert.throws(() => COPY.targetUrl(spec, 'live', 'https://ev-live.acct-1.workers.dev'), /no copy target for live/);
+  // B-320 (D-330): live's copy goes into the live D1 itself, through the ev-live Worker on the record's own account
+  assert.equal(
+    COPY.targetUrl(spec, 'live', 'https://ev-live.acct-1.workers.dev'),
+    'https://ev-live.acct-1.workers.dev'
+  );
+  assert.throws(
+    () => COPY.targetUrl(spec, 'live', 'https://ev-live.acct-1.workers.dev', 'https://ev-staging.acct-1.workers.dev'),
+    /not live's copy target/
+  );
+  const none = JSON.parse(JSON.stringify(spec));
+  delete none.registry.records.live.copy;
+  assert.throws(() => COPY.targetUrl(none, 'live', 'https://ev-live.acct-1.workers.dev'), /no copy target for live/);
 });
 
 test('the manifest for the workflow holds counts and hashes only', async () => {

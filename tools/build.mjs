@@ -224,6 +224,7 @@ export const PAGE_SPEC_KEYS = [
   'schemas',
   'worker',
   'builder',
+  'readOnly',
 ];
 // Notes the validator ignores (core/validate.mjs) leave the page's schemas; x-ev keeps only its documents map. A map
 // of names to schemas (properties, $defs and the like) keeps every name: a field called title is not a note.
@@ -292,6 +293,9 @@ export function pageSpecFor(spec, schemas, { target, release }) {
           .map(([k, row]) => [k, Object.fromEntries(Object.entries(row).filter(([f]) => f !== 'does'))])
       ),
     persona: () => spec.persona || null,
+    // B-320 (D-306): the claude.ai live page after the cutover keeps the record readable and refuses every write; the
+    // app on the live Worker is not read-only (the page asks its host, page/app/04-model.js). Staging never is.
+    readOnly: () => target === 'live' && ((spec.registry.records || {}).live || {}).readOnly === true,
     // ui.tenets is the look pass's (test/harness/look.cjs reads it from the spec), not the page's.
     // Of ui.look.flower (B-276) and the retired Silk core (B-205) the page keeps only the stage sizes it lays her out by.
     ui: () =>

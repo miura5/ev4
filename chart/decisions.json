@@ -1,5 +1,25 @@
 [
  {
+  "id": "D-331",
+  "date": "Oct 25",
+  "title": "The cutover's safeguards and switches (B-320). (1) Dispatching pwa-live.yml is a live act. The live-guard hook now also reads Bash and refuses a dispatch unless dist/live-ok is fresh, comes from Matt's OK (deploy live --matt-ok, ship live --matt-ok or his Ship it job) and names that commit. This extends B-58's allowance (D-201): its hooks test is test/hooks.test.mjs, its environments row stays unproven until the managing chat probes it, and GitHub's live environment approval holds either way. (2) The claude.ai live page's read-only mode (D-306) is spec.registry.records.live.readOnly. Its page refuses every write in write() and says so at the top. The app's shim names its host, so the app is never read-only. (3) D-307's lint is tools/d307.mjs, on for a record once spec marks it d1. Its exemptions are named in the tool, the one-time copy among them. (4) The cutover commit is made by node tools/pwa-live.mjs cutover --apply, never by hand: readOnly, d1, the live runs on the Worker, and the live Mac tasks re-pointed at E.V. Backups, with the old evening-mac listed retired.",
+  "why": "D-306, D-307 and D-320 left the mechanisms to B-320. One switch per safeguard, each tested, lets Matt's cutover sitting be approvals and read-backs rather than edits.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
+  "id": "D-330",
+  "date": "Oct 25",
+  "title": "The live app is the ev-live Worker at https://ev-live.peppercheese1.workers.dev over the ev-live D1 (with ev-live-scratch for the live restore drill and the ev-live-exports R2 bucket), on Matt's Cloudflare account. Only .github/workflows/pwa-live.yml deploys it, dispatched by hand from main, in the GitHub environment live, whose required reviewer is Matt. It uses environment-only secrets: LIVE_CLOUDFLARE_API_TOKEN, LIVE_CLOUDFLARE_ACCOUNT_ID and EV_LIVE_TOKEN. The live Worker token's other home is the live record's system/worker, written at the cutover on Matt's OK through a file, never typed into a chat or printed (D-320). The live Claude API key is only a Cloudflare secret on ev-live, which Matt sets (D-299). The live D1 is never seeded; the record arrives once, by the B-319 copy.",
+  "why": "B-320 prepares the cutover. The Worker's name fixes the B-319 copy target and the live runs' address; separate secret names keep the live deploy from silently using the staging repository secrets; and Matt's approval in GitHub is a second gate after his OK in the chat.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-329",
   "date": "Oct 25",
   "title": "The Worker's canonical document text (B-398) is a JSON parse written back compactly, with keys in the order they were written (number-like keys first, as JSON parsing puts them). Keys are not sorted. A repeated key keeps its last value, and a number too large for JSON is refused. Rows already stored are not rewritten; each becomes canonical on its next write.",

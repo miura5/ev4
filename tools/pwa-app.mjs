@@ -24,13 +24,22 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const REPO = 'miura5/ev4';
 
 /**
- * The app per target. live has no app path yet (ready: false): ship live and verify-deploy live leave the app out.
- * The cutover task (B-320) builds the live Worker, its workflow and their gates.
+ * The app per target. live (B-320, D-330) is the ev-live Worker, deployed by pwa-live.yml in the GitHub environment
+ * live; it is on in ship live and verify-deploy live only once spec.registry.records.live.app.ready is true (the
+ * cutover sitting turns it on, docs/cutover.md), so no live release before then waits on a Worker that is not there.
  */
-export const APPS = {
-  staging: { worker: 'ev-staging', workflow: 'pwa-staging.yml', ready: true },
-  live: { ready: false },
-};
+export function appsOf(spec) {
+  const live = ((spec.registry || {}).records || {}).live || {};
+  const app = live.app || {};
+  return {
+    staging: { worker: 'ev-staging', workflow: 'pwa-staging.yml', ready: true },
+    live:
+      app.worker && app.workflow
+        ? { worker: app.worker, workflow: app.workflow, ready: app.ready === true }
+        : { ready: false },
+  };
+}
+export const APPS = appsOf(JSON.parse(fs.readFileSync(path.join(ROOT, 'spec', 'ev.spec.json'), 'utf8')));
 
 const sha256 = buf => crypto.createHash('sha256').update(buf).digest('hex');
 /** One hash over a {path: sha256} map: its "<path> <sha256>" lines, sorted. */
@@ -207,11 +216,12 @@ export function readRun(target, api = gh) {
     at: r.created_at,
   };
   if (r.status !== 'completed') return out;
-  const job = (api(`repos/${REPO}/actions/runs/${r.id}/jobs`).jobs || [])[0];
-  if (!job) return out;
-  out.steps = (job.steps || []).map(s => ({ name: s.name, conclusion: s.conclusion }));
-  const notes = api(`repos/${REPO}/check-runs/${job.id}/annotations`);
-  const mine = (notes || []).filter(a => a.title === `app ${target}`);
+  // B-320: every job's steps and notes (pwa-live.yml has a gate job before the one that deploys)
+  const jobs = api(`repos/${REPO}/actions/runs/${r.id}/jobs`).jobs || [];
+  if (!jobs.length) return out;
+  out.steps = jobs.flatMap(job => (job.steps || []).map(s => ({ name: s.name, conclusion: s.conclusion })));
+  const notes = jobs.flatMap(job => api(`repos/${REPO}/check-runs/${job.id}/annotations`) || []);
+  const mine = notes.filter(a => a.title === `app ${target}`);
   const note = mine.filter(a => a.annotation_level === 'notice').at(-1);
   out.app = note ? parseAppMessage(note.message) : null;
   out.errors = mine.filter(a => a.annotation_level === 'failure').map(a => String(a.message).slice(0, 300));
@@ -285,7 +295,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   };
   if (!['message', 'deployed', 'readback'].includes(cmd) || !(APPS[target] && APPS[target].ready)) {
     console.error(
-      'usage: node tools/pwa-app.mjs message|deployed|readback staging [...] (live has no app path yet: B-320)'
+      'usage: node tools/pwa-app.mjs message|deployed|readback staging|live [...] (live only once spec.registry.records.live.app.ready)'
     );
     process.exit(2);
   }
@@ -294,7 +304,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.log(appMessage({ commit, ...buildHash(ROOT, path.join(ROOT, 'pwa', 'public')) }));
   } else if (cmd === 'deployed') {
     if (!/^https:\/\//.test(third || '')) {
-      console.error('usage: node tools/pwa-app.mjs deployed staging https://<the Worker>');
+      console.error('usage: node tools/pwa-app.mjs deployed staging|live https://<the Worker>');
       process.exit(2);
     }
     const { lines, message } = await deployedCheck(target, third).catch(e => ({

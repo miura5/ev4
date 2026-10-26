@@ -336,3 +336,67 @@ test('B-319: the copy (tools/pwa-copy.mjs) reads or writes for the live record o
   fs.rmSync(okFile);
   assert.equal(run('staging', 'd').status, 0, 'staging needs no allowance');
 });
+
+test("B-320 (D-331): a dispatch of pwa-live.yml passes only under a fresh dist/live-ok from Matt's OK naming that commit", () => {
+  const dir = copyRepo();
+  const sha = '0123456789abcdef0123456789abcdef01234567';
+  const bash = command => ({ tool_name: 'Bash', tool_input: { command } });
+  const run = `gh workflow run pwa-live.yml --repo miura5/ev4 --ref main -f commit=${sha}`;
+  const okFile = path.join(dir, 'dist', 'live-ok');
+  fs.mkdirSync(path.dirname(okFile), { recursive: true });
+  fs.rmSync(okFile, { force: true });
+  // the settings send every Bash call to live-guard
+  assert.ok(
+    settings.hooks.PreToolUse.some(
+      h => new RegExp('^(' + h.matcher + ')$').test('Bash') && h.hooks.some(x => /live-guard$/.test(x.command))
+    ),
+    'Bash reaches live-guard'
+  );
+  // anything else in a shell passes at once, with or without an allowance
+  for (const c of ['npm test', 'gh workflow run pwa-staging.yml -f commit=' + sha, 'echo pwa-live', 'git log'])
+    assert.equal(hook(dir, 'live-guard', bash(c)).code, 0, c);
+  // no allowance: refused, and every form of the dispatch is one
+  const forms = [
+    run,
+    `gh api -X POST repos/miura5/ev4/actions/workflows/pwa-live.yml/dispatches -f ref=main -f inputs[commit]=${sha}`,
+    `curl -X POST https://api.github.com/repos/miura5/ev4/actions/workflows/pwa-live.yml/dispatches -d '{"ref":"main","inputs":{"commit":"${sha}"}}'`,
+    'gh workflow run pwa-live --ref main -f commit=' + sha.slice(0, 7),
+  ];
+  for (const c of forms) {
+    const r = hook(dir, 'live-guard', bash(c));
+    assert.equal(r.code, 2, c);
+    assert.match(r.err, /Refused: a dispatch of the live app's workflow/);
+  }
+  const put = o => fs.writeFileSync(okFile, JSON.stringify(o));
+  // Matt's OK for this commit, fresh: passes, whichever command wrote it
+  for (const by of ['deploy live --matt-ok', 'ship live --matt-ok', 'ship live --from-job job-1']) {
+    put({ at: Date.now(), commit: sha, by });
+    for (const c of forms) assert.equal(hook(dir, 'live-guard', bash(c)).code, 0, `${by}: ${c}`);
+  }
+  // another commit, a stale one, one from no OK, a command naming no commit or two: refused
+  put({ at: Date.now(), commit: 'fedcba9876543210fedcba9876543210fedcba98', by: 'deploy live --matt-ok' });
+  assert.equal(hook(dir, 'live-guard', bash(run)).code, 2, 'another commit');
+  put({ at: Date.now() - (H.LIVE_OK_HOURS * 36e5 + 1000), commit: sha, by: 'deploy live --matt-ok' });
+  assert.equal(hook(dir, 'live-guard', bash(run)).code, 2, 'stale');
+  put({ at: Date.now(), commit: sha, by: 'hand' });
+  assert.equal(hook(dir, 'live-guard', bash(run)).code, 2, 'not written by an OK');
+  put({ at: Date.now(), commit: sha, by: 'deploy live --matt-ok' });
+  assert.equal(hook(dir, 'live-guard', bash('gh workflow run pwa-live.yml --ref main')).code, 2, 'no commit');
+  assert.equal(
+    hook(dir, 'live-guard', bash(`${run}; gh workflow run pwa-live.yml -f commit=fedcba9876543210`)).code,
+    2,
+    'two commits'
+  );
+  assert.equal(H.liveDispatch('gh workflow run pwa-live.yml -f commit=abc1234').commit, 'abc1234');
+  assert.equal(H.dispatchAllowed(null, sha), false);
+  // the pipeline case: a fresh run marker stands the hook down (D-169), as for every hook
+  fs.rmSync(okFile, { force: true });
+  const marker = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-marker-')), 'pipeline-run');
+  fs.writeFileSync(marker, JSON.stringify({ pipeline: 'watchdog', record: 'live', at: new Date().toISOString() }));
+  const r = spawnSync(process.execPath, [path.join(dir, 'tools', 'hooks.mjs'), 'live-guard'], {
+    input: JSON.stringify(bash(run)),
+    encoding: 'utf8',
+    env: { ...process.env, EV_RUN_MARKER: marker },
+  });
+  assert.equal(r.status, 0, 'a pipeline run is never guarded');
+});
