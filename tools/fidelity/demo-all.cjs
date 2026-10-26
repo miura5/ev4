@@ -31,16 +31,31 @@ const boards = [
   'Record',
   'NewItem',
 ];
+// The Notes canvas (D-327): AppNotes is the new whole app in the L-frame; Main stays the old demo's whole app.
+// Notes is desktop only, so these boards are shot at the desktop widths.
+const notesBoards = [
+  'AppNotes',
+  'NotesList',
+  'NoteEditor',
+  'NoteStyleMenu',
+  'NoteStudyPopup',
+  'AppTodayEV',
+  'NoteStates',
+];
+const runs = [
+  [{ width: 1280, height: 900 }, boards],
+  [{ width: 390, height: 844 }, boards],
+  [{ width: 1280, height: 900 }, notesBoards],
+  [{ width: 1706, height: 1240 }, notesBoards],
+  [{ width: 2560, height: 1240 }, notesBoards],
+];
 (async () => {
   const b = await chromium
     .launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' })
     .catch(() => chromium.launch());
   const rep = {};
-  for (const vp of [
-    { width: 1280, height: 900 },
-    { width: 390, height: 844 },
-  ])
-    for (const bd of boards) {
+  for (const [vp, list] of runs)
+    for (const bd of list) {
       const pg = await b.newPage({ viewport: vp, colorScheme: 'light' });
       await pg.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));
       await pg.goto(`http://localhost:8712/project/${bd}.dc.html`);

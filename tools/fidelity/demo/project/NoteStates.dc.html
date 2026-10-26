@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>E.V. v4 · Notes · sync and two versions</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&amp;display=swap">
+<style>
+body{margin:0}
+.app{width:100%;height:100vh;min-height:560px;display:flex;background:var(--chrome);color:var(--text);font:400 14px/1.45 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;font-optical-sizing:auto;overflow:hidden;position:relative}
+.app button,.app input,.app textarea,.sheet button{font-family:inherit}
+.app :focus,.sheet :focus{outline:none}
+.app :focus-visible,.sheet :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.side{width:236px;flex:none;display:flex;flex-direction:column;padding:8px;box-sizing:border-box}
+.brand{height:48px;display:flex;align-items:center;gap:10px;padding:0 8px}
+.brand b{font-size:14px;font-weight:600}
+.brand .bs{font-size:12px;color:var(--faint);display:block;line-height:1.15}
+.nav{display:flex;flex-direction:column;gap:1px;margin-top:4px}
+.ni{height:32px;display:flex;align-items:center;gap:10px;padding:0 10px;border-radius:7px;font-size:13.5px;color:var(--quiet);border:0;background:none;cursor:pointer;text-align:left;width:100%;box-sizing:border-box}
+.ni:hover{background:var(--hover);color:var(--text)}
+.ni.on{background:var(--bg);color:var(--text);box-shadow:0 0 0 1px var(--line)}
+.sec{font-size:12px;font-weight:500;color:var(--faint);padding:20px 10px 6px;display:flex}
+.sec .sp,.sp{flex:1}
+.si{box-sizing:border-box;height:30px;display:flex;align-items:center;gap:10px;padding:0 10px;font-size:13px;color:var(--quiet);border:0;background:none;border-radius:7px;cursor:pointer;text-align:left;width:100%}
+.si:hover{background:var(--hover);color:var(--text)}
+.si.static{cursor:default}
+.si.static:hover{background:none;color:var(--quiet)}
+.si .sn{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.si .st{font-size:11.5px;color:var(--quiet)}
+.si.more{color:var(--quiet);font-size:12.5px}
+.dot{width:8px;height:8px;border-radius:4px;background:var(--x);flex:none}
+.sfoot{margin-top:auto;display:flex;flex-direction:column;gap:8px;padding:8px 0 0;position:relative}
+.seg{display:inline-flex;padding:2px;border-radius:8px;background:var(--hover);gap:2px;flex-wrap:wrap;align-self:flex-start;justify-self:start;flex:none}
+.seg button{height:24px;padding:0 9px;border:0;border-radius:6px;background:none;color:var(--quiet);font:500 12px Inter,system-ui,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.seg button:hover{color:var(--text);background:var(--bg)}
+.seg button.on{background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line)}
+.seg button i{font-style:normal;color:var(--quiet);font-weight:400}
+.main{flex:1;margin:8px 8px 8px 0;min-height:0;border-radius:12px;background:var(--bg);box-shadow:0 0 0 1px var(--line);display:flex;flex-direction:column;min-width:0;position:relative}
+.mh{height:48px;display:flex;align-items:center;gap:8px;padding:0 12px 0 18px;border-bottom:1px solid var(--line);flex:none}
+.mh h1{margin:0;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mh .crumb{font-size:14px;color:var(--quiet);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.body{flex:1;display:flex;min-height:0}
+.pane{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;position:relative}
+.scroll{overflow:auto;flex:1;min-height:0}
+.right{width:320px;flex:none;border-left:1px solid var(--line);padding:16px;box-sizing:border-box;display:flex;flex-direction:column;gap:14px;overflow:auto}
+.btn{height:32px;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 12px;border-radius:8px;font:500 13px Inter,system-ui,sans-serif;cursor:pointer;border:0;white-space:nowrap;box-sizing:border-box;text-decoration:none}
+.btn.neutral{background:var(--surface);color:var(--text);box-shadow:inset 0 0 0 1px var(--line2)}
+.btn.neutral:hover{background:var(--hover)}
+.btn.neutral.on{background:var(--hover)}
+.btn.primary{background:var(--accent);color:var(--onAccent)}
+.btn.primary:hover{background:var(--accentHover)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.ghost{background:none;color:var(--quiet)}
+.btn.ghost:hover:not(:disabled){background:var(--hover);color:var(--text)}
+.btn.ghost.on{background:var(--hover);color:var(--text)}
+.btn.icon{width:32px;padding:0}
+.btn.sm{height:28px;padding:0 10px;font-size:12.5px}
+.btn.icon.sm{width:28px;padding:0}
+.btn.wide{width:100%}
+.badge{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:11px;font-size:12px;font-weight:500;background:var(--xt);color:var(--text);box-shadow:inset 0 0 0 1px var(--xl);white-space:nowrap;flex:none}
+.badge i{width:6px;height:6px;border-radius:3px;background:var(--x)}
+.card{border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line);padding:14px;box-sizing:border-box}
+.lab{font-size:12px;color:var(--quiet);font-weight:500}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sb{justify-content:space-between}
+.col2{display:flex;flex-direction:column;gap:10px}
+.mini{font-size:12.5px;color:var(--faint)}
+.sicon{color:var(--quiet)}
+.toolbar{display:flex;align-items:center;gap:8px;padding:12px 18px;border-bottom:1px solid var(--line);position:relative;flex:none;flex-wrap:wrap}
+.list{display:flex;flex-direction:column;overflow:auto;min-height:0;flex:1}
+.li{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 18px;border-bottom:1px solid var(--line);font-size:13.5px;flex:none}
+.li:hover{background:var(--chrome)}
+.li .hov{visibility:hidden}
+.li:hover .hov,.li:focus-within .hov{visibility:visible}
+.li .t{color:var(--quiet);font-size:12.5px;min-width:70px;text-align:right;flex:none}
+.li.sel{background:var(--chrome)}
+.nm{border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;text-align:left}
+.nm:hover{text-decoration:underline;text-underline-offset:3px}
+.chk{width:16px;height:16px;border-radius:5px;box-shadow:inset 0 0 0 1.5px var(--line2);flex:none;border:0;padding:0;background:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:#fff}
+.chk.done{background:var(--sem-green);box-shadow:none}
+.chk .ico{width:11px;height:11px;stroke-width:2.6;opacity:0}
+.chk.done .ico{opacity:1}
+.chk:not(.done):hover .ico{opacity:.5;color:var(--quiet)}
+.dayh{font-size:12px;font-weight:500;color:var(--quiet);padding:14px 18px 6px;flex:none;display:flex;gap:8px}
+.dayh i{font-style:normal;font-weight:400;color:var(--faint)}
+.pop{position:absolute;z-index:30;padding:12px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.14);display:flex;flex-direction:column;gap:10px;width:260px;box-sizing:border-box}
+.prefpop{left:0;bottom:44px}
+.menu{position:absolute;z-index:30;width:240px;padding:5px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.14);box-sizing:border-box}
+.newm{right:12px;top:44px}
+.mi{display:flex;align-items:center;gap:10px;height:32px;padding:0 9px;border-radius:6px;border:0;background:none;width:100%;font:400 13px Inter,system-ui,sans-serif;color:var(--text);cursor:pointer;text-align:left;box-sizing:border-box}
+.mi:hover{background:var(--hover)}
+.mi .ico{color:var(--quiet)}
+.mhd{font-size:11.5px;font-weight:500;color:var(--quiet);padding:6px 9px 4px}
+.props{display:flex;flex-direction:column;gap:2px}
+.prop{display:grid;grid-template-columns:92px 1fr;align-items:center;gap:8px;min-height:34px;font-size:13px}
+.prop > span:first-child{color:var(--quiet)}
+.in{height:34px;border-radius:8px;border:0;box-shadow:inset 0 0 0 1px var(--line2);background:var(--bg);padding:0 10px;font:400 13.5px Inter,system-ui,sans-serif;color:var(--text);width:100%;box-sizing:border-box}
+.in:focus,.in:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--focus)}
+.in::placeholder{color:var(--faint);opacity:1}
+.endline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:9px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2);font-size:13px}
+.tabbar{display:none}
+
+/* ---------- the note: format bar ---------- */
+.fbar{display:flex;align-items:center;gap:2px;height:44px;padding:0 12px;border-bottom:1px solid var(--line);flex:none;position:relative}
+.fbar .btn.ghost{color:var(--quiet)}
+.fbar .btn.ghost.on{color:var(--text);background:var(--hover);box-shadow:inset 0 0 0 1px var(--line)}
+.fsep{width:1px;height:18px;background:var(--line);margin:0 6px;flex:none}
+.stb{width:164px;justify-content:flex-start;gap:8px;padding:0 8px;color:var(--text) !important}
+.stb .gl,.mi .gl{width:20px;flex:none;display:inline-flex;align-items:center;justify-content:center;font:600 11.5px Inter,system-ui,sans-serif;color:var(--quiet);letter-spacing:-.02em}
+.stb .lb{flex:1;text-align:left}
+.stm{left:84px;top:40px;width:252px}
+.stm .mi{height:34px}
+.stm .mi .lb{flex:1}
+.stm .mi .ks{font-size:12px;color:var(--faint);letter-spacing:.04em}
+.stm .mi.on{background:var(--hover);font-weight:500}
+.stm .mi.on .gl{color:var(--text)}
+.lkp{left:300px;top:40px;width:300px}
+.ks{font-variant-numeric:tabular-nums}
+
+/* ---------- the note: page ---------- */
+.sync{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--quiet);white-space:nowrap;padding:0 6px;min-width:0}
+.sync .ico{width:14px;height:14px}
+.sync.warn .ico{color:var(--holdX)}
+.doc{width:100%;max-width:700px;margin:0 auto;padding:34px 40px 120px;box-sizing:border-box;color:var(--text)}
+.dmeta{display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:12.5px;color:var(--quiet);margin:0 0 8px -10px}
+.dmeta .btn{color:var(--quiet);gap:5px}
+.dmeta .ico{width:14px;height:14px}
+.dmeta .dt{padding:0 4px}
+.doc h1{margin:0 0 14px;font-size:30px;font-weight:600;letter-spacing:-.02em;line-height:1.2;font-variation-settings:"opsz" 32}
+.doc h2{margin:28px 0 6px;font-size:20px;font-weight:600;letter-spacing:-.012em;line-height:1.3}
+.doc h3{margin:18px 0 4px;font-size:16px;font-weight:600;line-height:1.4}
+.doc p{margin:6px 0;font-size:15.5px;line-height:1.65}
+.doc ul,.doc ol{margin:4px 0;padding-left:24px;font-size:15.5px;line-height:1.65}
+.doc li{padding-left:4px;margin:1px 0}
+.doc li::marker{color:var(--faint)}
+.doc ol li::marker{font-size:14px;font-variant-numeric:tabular-nums}
+.doc strong{font-weight:600}
+.doc ul.todo{list-style:none;padding-left:0}
+.doc .td{display:flex;align-items:flex-start;gap:10px;padding-left:0}
+.doc .td .chk{margin-top:4px}
+.doc .td.dn .tx{color:var(--faint);text-decoration:line-through}
+.doc .ph{color:var(--faint)}
+.caret{display:inline-block;width:1.5px;height:1.1em;background:var(--text);vertical-align:-0.15em;margin-left:1px}
+.fb{font-weight:600}.fi{font-style:italic}.fu{text-decoration:underline;text-underline-offset:3px}.fs{text-decoration:line-through}.fu.fs{text-decoration:underline line-through}
+.flk{color:var(--link);text-decoration:underline;text-underline-offset:3px}
+
+/* ---------- E.V. while he writes ---------- */
+.abar{display:flex;align-items:center;gap:8px;height:44px;padding:0 8px 0 14px;border-top:1px solid var(--line);background:var(--chrome);border-radius:0 0 12px 12px;flex:none;position:relative}
+.abar .ss{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--quiet);white-space:nowrap;min-width:0}
+.abar .ss b{font-weight:500;color:var(--text)}
+.abar .sug{border:0;background:none;padding:0 6px;height:28px;border-radius:6px;font:400 12.5px Inter,system-ui,sans-serif;color:var(--quiet);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;max-width:440px}
+.abar .sug:hover{color:var(--text);background:var(--hover)}
+.chatp{position:absolute;right:12px;bottom:52px;z-index:35;width:384px;height:540px;max-height:calc(100% - 112px);border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 16px 40px rgba(0,0,0,.16);display:flex;flex-direction:column;box-sizing:border-box}
+.chatp.big{width:600px;height:calc(100% - 112px)}
+.cph{display:flex;align-items:center;gap:6px;padding:10px 8px 10px 14px;border-bottom:1px solid var(--line);flex:none}
+.cph .tt{flex:1;min-width:0;display:flex;flex-direction:column;gap:0}
+.cph .tt b{font-size:13.5px;font-weight:600}
+.cph .tt span{font-size:12px;color:var(--quiet);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.msgs{flex:1;min-height:0;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:12px}
+.mev{margin:0;font-size:13.5px;line-height:1.55;color:var(--text)}
+.mev.old{color:var(--quiet)}
+.myou{margin:0;align-self:flex-end;text-align:right;font-size:13.5px;color:var(--quiet);max-width:85%}
+.myou b{display:block;font-size:11.5px;font-weight:500;color:var(--faint)}
+.mcard{display:flex;align-items:center;gap:10px;padding:8px 8px 8px 12px;border-radius:9px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2);font-size:13px}
+.mcard .tt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.mcard .tt span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cin{display:flex;align-items:center;gap:6px;margin:0 10px 10px;padding:0 6px 0 12px;height:44px;border-radius:12px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2);flex:none}
+.cin:focus-within{box-shadow:inset 0 0 0 2px var(--focus)}
+.cin input{flex:1;border:0;background:none;font:400 13.5px Inter,system-ui,sans-serif;color:var(--text);min-width:0;height:100%}
+.cin input:focus-visible{outline:none}
+.cin input::placeholder{color:var(--faint)}
+.send{width:30px;height:30px;border-radius:15px;border:0;background:var(--accent);color:var(--onAccent);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
+.send:hover{background:var(--accentHover)}
+.evp{width:360px;flex:none;border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:var(--bg);border-radius:0 0 12px 0}
+.evp .cph{padding:10px 10px 10px 14px}
+.evp .sbox{display:flex;align-items:center;gap:10px;margin:12px 14px 0;padding:10px 12px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line);font-size:13px}
+.evp .sbox .tt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.evp .sbox .tt b{font-weight:600;font-size:15px;letter-spacing:-.01em}
+.evp .sbox .tt span{font-size:12px;color:var(--quiet);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ---------- states sheet ---------- */
+.sheet{width:100%;min-height:100vh;box-sizing:border-box;background:var(--chrome);color:var(--text);font:400 14px/1.45 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;padding:36px 40px 48px}
+.sheet h1.sh{font-size:22px;font-weight:600;margin:0 0 6px;letter-spacing:-.01em}
+.sheet .lede{color:var(--quiet);margin:0 0 6px;max-width:720px}
+.sheet h2.sh{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--quiet);margin:30px 0 10px}
+.frame{border-radius:12px;background:var(--bg);box-shadow:0 0 0 1px var(--line);position:relative}
+.frame .mh{border-bottom:0}
+.frame .fb2{border-top:1px solid var(--line)}
+.frame .doc{padding:22px 40px 26px;max-width:none}
+.hrow{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:18px;align-items:center;margin-bottom:10px}
+.cap{margin:0;font-size:13px;color:var(--quiet);line-height:1.45}
+.vpick{display:flex;flex-direction:column;gap:14px;padding:14px;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line2);margin:2px 0 18px}
+.vh{display:flex;gap:10px;align-items:flex-start;font-size:13.5px}
+.vh .ico{color:var(--holdX);margin-top:2px}
+.vgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.ver{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:9px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2)}
+.ver .btn{align-self:flex-start}
+.vx{font-size:13.5px;line-height:1.55;display:flex;flex-direction:column;gap:1px}
+.vx .vt{font-weight:600;font-size:14px;margin-bottom:2px}
+.vl{padding:1px 6px;margin-left:-6px;border-radius:5px;display:flex;gap:8px}
+.vl::before{content:"•";color:var(--faint)}
+.vl.only{background:var(--infoT);box-shadow:inset 0 0 0 1px var(--infoL)}
+@media (max-width: 1199px) {
+  .body{flex-direction:column;overflow:auto}
+  .pane{flex:none}
+  .body.bed .pane{flex:1}
+  .list{overflow:visible;flex:none}
+  .right{width:auto;border-left:0;border-top:1px solid var(--line);overflow:visible}
+  .hrow,.vgrid{grid-template-columns:1fr}
+}
+</style>
+</helmet>
+<sc-if value="{{isSheet}}" hint-placeholder-val="{{ false }}">
+<div class="sheet" style="{{vars}}">
+  <h1 class="sh">Notes: sync, and edits on two devices</h1>
+  <p class="lede">Sync shows once, quietly, in the note’s header, at the same place in every state. The two-versions picker sits at the top of the page, above his text, and never changes a word of it.</p>
+
+  <h2 class="sh">Sync, in the note’s header</h2>
+  <sc-for list="{{hstates}}" as="h" hint-placeholder-count="4"><div class="hrow">
+    <div class="frame"><div class="mh"><button type="button" class="btn ghost icon sm" aria-label="Back to Notes" style="margin-left:-8px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><h1>Notes</h1><span class="crumb">/ Fluid &amp; electrolytes</span><span class="sp"></span><span class="{{h.cls}}" role="status"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="{{h.icon}}"></path></svg>{{h.text}}</span><button type="button" class="btn neutral sm"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>New</button></div></div>
+    <p class="cap"><b style="font-weight:600;color:var(--text)">{{h.name}}.</b> {{h.cap}}</p>
+  </div></sc-for>
+
+  <h2 class="sh">Edited on two devices while offline: never merged</h2>
+  <div class="frame">
+    <div class="mh"><button type="button" class="btn ghost icon sm" aria-label="Back to Notes" style="margin-left:-8px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><h1>Notes</h1><span class="crumb">/ Fluid &amp; electrolytes</span><span class="sp"></span><span class="{{cf.cls}}" role="status"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="{{cf.icon}}"></path></svg>{{cf.text}}</span></div>
+    <div class="fb2"><div class="doc">
+      <div class="dmeta"><span class="dt">NUR 112</span><span>·</span><span class="dt">Lecture 9</span></div>
+      <sc-if value="{{cf.open}}" hint-placeholder-val="{{ true }}">
+        <div class="vpick" role="group" aria-label="Two versions of this note">
+          <div class="vh"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h7l3 3v11H8zM5 7v14h10"></path></svg><div class="col2" style="gap:2px"><b style="font-weight:600">This note changed on two devices while both were offline.</b><span style="color:var(--quiet)">E.V. doesn’t merge them. Pick the one to keep here; the other is saved as a second note, so nothing is lost.</span></div></div>
+          <div class="vgrid">
+            <sc-for list="{{cf.vers}}" as="v" hint-placeholder-count="2"><div class="ver">
+              <div class="row sb"><span class="row" style="gap:7px;flex-wrap:nowrap"><svg class="ico sicon" viewBox="0 0 24 24" aria-hidden="true"><path d="{{v.icon}}"></path></svg><b style="font-weight:600;font-size:13.5px">{{v.dev}}</b></span><span class="mini">{{v.when}}</span></div>
+              <div class="vx"><span class="vt">Sodium (Na⁺)</span><sc-for list="{{v.lines}}" as="l" hint-placeholder-count="3"><span class="{{l.cls}}">{{l.t}}</span></sc-for></div>
+              <span class="mini">1 line only in this version</span>
+              <button type="button" class="btn neutral sm" onClick="{{v.keep}}">Keep this version</button>
+            </div></sc-for>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{cf.done}}" hint-placeholder-val="{{ false }}"><div class="endline" style="margin-bottom:18px"><span class="sp" style="min-width:220px">{{cf.msg}}</span><button type="button" class="btn ghost sm" onClick="{{cf.undo}}">Undo</button></div></sc-if>
+      <h2 style="margin-top:4px">Sodium (Na⁺)</h2>
+      <ul><li>Normal range: <strong>135–145 mEq/L</strong></li><li>Water follows sodium</li><sc-for list="{{cf.extra}}" as="x" hint-placeholder-count="0"><li>{{x}}</li></sc-for></ul>
+    </div></div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{isApp}}" hint-placeholder-val="{{ true }}">
+<div class="app" style="{{vars}}">
+  <aside class="side">
+    <div class="brand"><dc-import name="Avatar" size="24" mood="idle" theme="{{mode}}" tex="halftone" smode="pointer" session="{{sessV}}" c1="{{av1}}" c2="{{av2}}" bgu="{{chromeHex}}" hint-size="24px,24px"></dc-import><div><b>E.V.</b><span class="bs">{{status}}</span></div></div>
+    <div class="nav"><sc-for list="{{nav}}" as="n" hint-placeholder-count="6"><button type="button" class="{{n.cls}}" aria-current="{{n.cur}}" onClick="{{n.pick}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="{{n.icon}}"></path></svg>{{n.name}}</button></sc-for></div>
+    <div class="sec"><span>Today</span><span class="sp"></span><span>6 left</span></div>
+    <sc-for list="{{sideToday}}" as="s" hint-placeholder-count="5"><button type="button" class="si"><i class="dot" style="--x:{{s.col}}"></i><span class="sn">{{s.name}}</span><span class="st">{{s.time}}</span></button></sc-for>
+    <button type="button" class="si more">1 more in Today</button>
+    <div class="sfoot">
+      <sc-if value="{{prefsOpen}}" hint-placeholder-val="{{ false }}"><div class="pop prefpop" onKeyDown="{{prefsKey}}">
+        <span class="lab">Theme</span>
+        <div class="seg"><sc-for list="{{modes}}" as="m" hint-placeholder-count="2"><button type="button" class="{{m.cls}}" onClick="{{m.pick}}">{{m.name}}</button></sc-for></div>
+        <span class="lab">Contrast</span>
+        <div class="seg"><sc-for list="{{contrasts}}" as="m" hint-placeholder-count="3"><button type="button" class="{{m.cls}}" onClick="{{m.pick}}">{{m.name}}</button></sc-for></div>
+      </div></sc-if>
+      <button type="button" class="{{prefsCls}}" aria-expanded="{{prefsOpen}}" onClick="{{togglePrefs}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8M14 5v4M8 15v4"></path></svg>Preferences</button>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="mh">
+      <sc-if value="{{isEd}}" hint-placeholder-val="{{ false }}"><button type="button" class="btn ghost icon sm" aria-label="Back to Notes" style="margin-left:-8px" onClick="{{toList}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button></sc-if>
+      <h1>Notes</h1>
+      <sc-if value="{{isEd}}" hint-placeholder-val="{{ false }}"><span class="crumb">/ {{ed.short}}</span></sc-if>
+      <span class="sp"></span>
+      <sc-if value="{{isEd}}" hint-placeholder-val="{{ false }}"><span class="{{sy.cls}}" role="status"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="{{sy.icon}}"></path></svg>{{sy.text}}</span></sc-if>
+      <button type="button" class="btn neutral sm" aria-haspopup="menu" aria-expanded="{{newOpen}}" onClick="{{toggleNew}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>New</button>
+    </div>
+    <sc-if value="{{newOpen}}" hint-placeholder-val="{{ false }}">
+      <div class="menu newm" role="menu" aria-label="Create" onKeyDown="{{escNew}}">
+        <div class="mhd">Create</div>
+        <button type="button" class="mi" role="menuitem" onClick="{{closeNew}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14v14H5zM9 12l2 2 4-4"></path></svg>Task for Today</button>
+        <button type="button" class="mi" role="menuitem" onClick="{{newNote}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h9l3 3v13H6zM9 10h6M9 14h6"></path></svg>Note, and study with E.V.</button>
+      </div>
+    </sc-if>
+    <div class="{{bodyCls}}">
+
+      <sc-if value="{{isList}}" hint-placeholder-val="{{ true }}">
+        <div class="pane">
+          <div class="toolbar">
+            <div class="seg"><sc-for list="{{filters}}" as="o" hint-placeholder-count="3"><button type="button" class="{{o.cls}}" aria-pressed="{{o.on}}" onClick="{{o.pick}}">{{o.name}}<i>{{o.n}}</i></button></sc-for></div>
+            <span class="sp"></span>
+            <button type="button" class="btn primary sm" onClick="{{newNote}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>New note</button>
+          </div>
+          <div class="list">
+            <sc-for list="{{groups}}" as="g" hint-placeholder-count="2">
+              <div class="dayh">{{g.name}}<i>{{g.n}}</i></div>
+              <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="3"><div class="{{r.cls}}"><svg class="ico sicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h9l3 3v13H6zM9 10h6M9 14h6"></path></svg><button type="button" class="nm" aria-current="{{r.cur}}" onClick="{{r.pick}}">{{r.title}}</button><span class="sp"></span><button type="button" class="btn ghost sm hov" aria-label="{{r.openLabel}}" onClick="{{r.open}}">Open</button><span class="mini">{{r.kind}}</span><span class="t">{{r.when}}</span></div></sc-for>
+            </sc-for>
+          </div>
+        </div>
+        <aside class="right">
+          <span class="badge" style="--x:{{quietCol}};--xt:{{quietTint}};--xl:{{quietLine}};align-self:flex-start"><i></i>{{pv.course}}</span>
+          <div style="font-size:17px;font-weight:600;line-height:1.3">{{pv.title}}</div>
+          <div class="card props">
+            <div class="prop"><span>From</span><span>{{pv.kind}}</span></div>
+            <div class="prop"><span>Edited</span><span>{{pv.edited}}</span></div>
+            <div class="prop"><span>Length</span><span>{{pv.words}}</span></div>
+            <div class="prop"><span>Studied</span><span>{{pv.studied}}</span></div>
+          </div>
+          <span class="lab">On this page</span>
+          <div style="display:flex;flex-direction:column;margin-top:-8px"><sc-for list="{{pv.outline}}" as="o" hint-placeholder-count="3"><div class="si static"><span class="sn">{{o}}</span></div></sc-for></div>
+          <div class="col2"><button type="button" class="btn neutral wide" onClick="{{pv.open}}">Open note</button><button type="button" class="btn neutral wide" onClick="{{pv.study}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"></path></svg>Study with E.V.</button></div>
+          <span class="mini" style="line-height:1.5">You study where you write: a new note starts a session, and E.V. follows along beside it. She never edits your note.</span>
+        </aside>
+      </sc-if>
+
+      <sc-if value="{{isEd}}" hint-placeholder-val="{{ false }}">
+        <div class="pane">
+          <div class="fbar" role="toolbar" aria-label="Formatting">
+            <button type="button" class="btn ghost icon sm" aria-label="Undo" title="Undo  ⌘Z" disabled="{{noUndo}}" onClick="{{undo}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3"></path></svg></button>
+            <button type="button" class="btn ghost icon sm" aria-label="Redo" title="Redo  ⌘⇧Z" disabled="{{noRedo}}" onClick="{{redo}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14l5-5-5-5M20 9H9a5 5 0 0 0 0 10h3"></path></svg></button>
+            <span class="fsep"></span>
+            <button type="button" class="btn ghost sm stb" aria-haspopup="menu" aria-expanded="{{styleOpen}}" aria-label="{{stAria}}" onClick="{{toggleStyle}}"><span class="gl"><sc-if value="{{st.svg}}" hint-placeholder-val="{{ false }}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="{{st.icon}}"></path></svg></sc-if><sc-if value="{{st.txt}}" hint-placeholder-val="{{ true }}">{{st.gl}}</sc-if></span><span class="lb">{{st.name}}</span><svg class="ico sicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+            <span class="fsep"></span>
+            <sc-for list="{{fmts}}" as="f" hint-placeholder-count="4"><button type="button" class="{{f.cls}}" aria-label="{{f.label}}" title="{{f.tip}}" aria-pressed="{{f.on}}" onClick="{{f.run}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="{{f.icon}}"></path></svg></button></sc-for>
+            <span class="fsep"></span>
+            <button type="button" class="{{lkCls}}" aria-label="Link" title="Link  ⌘K" aria-haspopup="dialog" aria-expanded="{{linkOpen}}" onClick="{{toggleLink}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg></button>
+            <sc-if value="{{styleOpen}}" hint-placeholder-val="{{ false }}">
+              <div class="menu stm" role="menu" aria-label="Text style" onKeyDown="{{menuKeys}}">
+                <sc-for list="{{styles}}" as="m" hint-placeholder-count="7"><button type="button" class="{{m.cls}}" role="menuitemradio" aria-checked="{{m.on}}" autoFocus="{{m.on}}" onClick="{{m.pick}}"><span class="gl"><sc-if value="{{m.svg}}" hint-placeholder-val="{{ false }}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="{{m.icon}}"></path></svg></sc-if><sc-if value="{{m.txt}}" hint-placeholder-val="{{ true }}">{{m.gl}}</sc-if></span><span class="lb">{{m.name}}</span><span class="ks">{{m.keys}}</span></button></sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{linkOpen}}" hint-placeholder-val="{{ false }}">
+              <div class="pop lkp" role="dialog" aria-label="Add a link" onKeyDown="{{linkKey}}">
+                <label class="lab" for="lkin">Link</label>
+                <input id="lkin" class="in" type="url" placeholder="Paste or type a link" autoFocus="{{yes}}">
+                <div class="row" style="justify-content:flex-end"><button type="button" class="btn ghost sm" onClick="{{toggleLink}}">Cancel</button><button type="button" class="btn neutral sm" onClick="{{addLink}}">Add link</button></div>
+              </div>
+            </sc-if>
+          </div>
+          <div class="scroll">
+            <article class="doc" aria-label="{{ed.aria}}">
+              <div class="dmeta"><button type="button" class="btn ghost sm" aria-label="{{ed.courseAria}}"><span>{{ed.course}}</span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button><span>·</span><span class="dt">{{ed.kind}}</span><span>·</span><span class="dt">{{ed.edited}}</span></div>
+              <sc-if value="{{ed.blank}}" hint-placeholder-val="{{ false }}">
+                <h1 class="ph">Lecture or topic<span class="caret"></span></h1>
+                <p class="ph">Write as the lecture goes. Type “# ” for a heading, “- ” for a list, “[] ” for a checklist, or use the bar above.</p>
+              </sc-if>
+              <sc-for list="{{ed.doc}}" as="b" hint-placeholder-count="6">
+                <sc-if value="{{b.h1}}" hint-placeholder-val="{{ false }}"><h1><sc-for list="{{b.segs}}" as="g" hint-placeholder-count="1"><sc-if value="{{g.b}}" hint-placeholder-val="{{ false }}"><strong>{{g.t}}</strong></sc-if><sc-if value="{{g.i}}" hint-placeholder-val="{{ false }}"><em>{{g.t}}</em></sc-if><sc-if value="{{g.n}}" hint-placeholder-val="{{ true }}"><span>{{g.t}}</span></sc-if></sc-for></h1></sc-if>
+                <sc-if value="{{b.h2}}" hint-placeholder-val="{{ false }}"><h2><sc-for list="{{b.segs}}" as="g" hint-placeholder-count="1"><sc-if value="{{g.b}}" hint-placeholder-val="{{ false }}"><strong>{{g.t}}</strong></sc-if><sc-if value="{{g.i}}" hint-placeholder-val="{{ false }}"><em>{{g.t}}</em></sc-if><sc-if value="{{g.n}}" hint-placeholder-val="{{ true }}"><span>{{g.t}}</span></sc-if></sc-for></h2></sc-if>
+                <sc-if value="{{b.h3}}" hint-placeholder-val="{{ false }}"><h3><sc-for list="{{b.segs}}" as="g" hint-placeholder-count="1"><sc-if value="{{g.b}}" hint-placeholder-val="{{ false }}"><strong>{{g.t}}</strong></sc-if><sc-if value="{{g.i}}" hint-placeholder-val="{{ false }}"><em>{{g.t}}</em></sc-if><sc-if value="{{g.n}}" hint-placeholder-val="{{ true }}"><span>{{g.t}}</span></sc-if></sc-for></h3></sc-if>
+                <sc-if value="{{b.p}}" hint-placeholder-val="{{ true }}"><p><sc-for list="{{b.segs}}" as="g" hint-placeholder-count="1"><sc-if value="{{g.b}}" hint-placeholder-val="{{ false }}"><strong>{{g.t}}</strong></sc-if><sc-if value="{{g.i}}" hint-placeholder-val="{{ false }}"><em>{{g.t}}</em></sc-if><sc-if value="{{g.n}}" hint-placeholder-val="{{ true }}"><span>{{g.t}}</span></sc-if></sc-for></p></sc-if>
+                <sc-if value="{{b.ul}}" hint-placeholder-val="{{ false }}"><ul><sc-for list="{{b.items}}" as="it" hint-placeholder-count="2"><li><sc-for list="{{it.segs}}" as="g" hint-placeholder-count="1"><sc-if value="{{g.b}}" hint-placeholder-val="{{ false }}"><strong>{{g.t}}</strong></sc-if><sc-if value="{{g.i}}" hint-placeholder-val="{{ false }}"><em>{{g.t}}</em></sc-if><sc-if value="{{g.n}}" hint-placeholder-val="{{ true }}"><span>{{g.t}}</span></sc-if></sc-for></li></sc-for></ul></sc-if>
+                <sc-if value="{{b.ol}}" hint-placeholder-val="{{ false }}"><ol><sc-for list="{{b.items}}" as="it" hint-placeholder-count="2"><li><sc-for list="{{it.segs}}" as="g" hint-placeholder-count="1"><sc-if value="{{g.b}}" hint-placeholder-val="{{ false }}"><strong>{{g.t}}</strong></sc-if><sc-if value="{{g.i}}" hint-placeholder-val="{{ false }}"><em>{{g.t}}</em></sc-if><sc-if value="{{g.n}}" hint-placeholder-val="{{ true }}"><span>{{g.t}}</span></sc-if></sc-for></li></sc-for></ol></sc-if>
+                <sc-if value="{{b.todo}}" hint-placeholder-val="{{ false }}"><ul class="todo"><sc-for list="{{b.items}}" as="it" hint-placeholder-count="2"><li class="{{it.cls}}"><button type="button" class="{{it.chk}}" aria-pressed="{{it.pressed}}" aria-label="{{it.aria}}" onClick="{{it.toggle}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></button><span class="tx"><sc-for list="{{it.segs}}" as="g" hint-placeholder-count="1"><sc-if value="{{g.b}}" hint-placeholder-val="{{ false }}"><strong>{{g.t}}</strong></sc-if><sc-if value="{{g.i}}" hint-placeholder-val="{{ false }}"><em>{{g.t}}</em></sc-if><sc-if value="{{g.n}}" hint-placeholder-val="{{ true }}"><span>{{g.t}}</span></sc-if></sc-for></span></li></sc-for></ul></sc-if>
+              </sc-for>
+              <sc-if value="{{cb.on}}" hint-placeholder-val="{{ true }}">
+                <sc-if value="{{cb.h1}}" hint-placeholder-val="{{ false }}"><h1><span class="{{cb.cls}}">{{cb.text}}</span><span class="caret"></span></h1></sc-if>
+                <sc-if value="{{cb.h2}}" hint-placeholder-val="{{ false }}"><h2><span class="{{cb.cls}}">{{cb.text}}</span><span class="caret"></span></h2></sc-if>
+                <sc-if value="{{cb.h3}}" hint-placeholder-val="{{ false }}"><h3><span class="{{cb.cls}}">{{cb.text}}</span><span class="caret"></span></h3></sc-if>
+                <sc-if value="{{cb.p}}" hint-placeholder-val="{{ true }}"><p><span class="{{cb.cls}}">{{cb.text}}</span><span class="caret"></span></p></sc-if>
+                <sc-if value="{{cb.ul}}" hint-placeholder-val="{{ false }}"><ul><li><span class="{{cb.cls}}">{{cb.text}}</span><span class="caret"></span></li></ul></sc-if>
+                <sc-if value="{{cb.ol}}" hint-placeholder-val="{{ false }}"><ol><li><span class="{{cb.cls}}">{{cb.text}}</span><span class="caret"></span></li></ol></sc-if>
+                <sc-if value="{{cb.todo}}" hint-placeholder-val="{{ false }}"><ul class="todo"><li class="td"><button type="button" class="chk" aria-pressed="false" aria-label="Done"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></button><span class="tx"><span class="{{cb.cls}}">{{cb.text}}</span><span class="caret"></span></span></li></ul></sc-if>
+              </sc-if>
+            </article>
+          </div>
+        </div>
+        <sc-if value="{{isSide}}" hint-placeholder-val="{{ false }}">
+          <aside class="evp" aria-label="E.V., studying with you">
+            <div class="cph"><dc-import name="Avatar" size="20" mood="idle" theme="{{mode}}" tex="halftone" smode="pointer" session="{{sessV}}" c1="{{av1}}" c2="{{av2}}" bgu="{{bgHex}}" hint-size="20px,20px"></dc-import><div class="tt"><b>E.V.</b><span>Studying with you</span></div></div>
+            <sc-if value="{{hasSess}}" hint-placeholder-val="{{ true }}"><div class="sbox"><div class="tt"><b>{{ss.left}}</b><span>{{ss.on}}</span></div><button type="button" class="btn neutral sm" onClick="{{ss.brk}}">{{ss.brkLabel}}</button><button type="button" class="btn neutral sm" onClick="{{ss.end}}">End</button></div></sc-if>
+            <sc-if value="{{noSess}}" hint-placeholder-val="{{ false }}"><div class="sbox"><div class="tt"><b style="font-size:13.5px">{{ss.idle}}</b><span>{{ss.idleSub}}</span></div><button type="button" class="btn neutral sm" onClick="{{startSess}}">Study with E.V.</button></div></sc-if>
+            <div class="msgs" ref="{{msgRef}}">
+              <sc-for list="{{msgs}}" as="m" hint-placeholder-count="4">
+                <sc-if value="{{m.ev}}" hint-placeholder-val="{{ true }}"><p class="{{m.cls}}">{{m.text}}</p></sc-if>
+                <sc-if value="{{m.you}}" hint-placeholder-val="{{ false }}"><p class="myou"><b>You</b>{{m.text}}</p></sc-if>
+                <sc-if value="{{m.link}}" hint-placeholder-val="{{ false }}"><div class="mcard"><svg class="ico sicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h9l3 3v13H6zM9 10h6M9 14h6"></path></svg><div class="tt"><span>{{m.title}}</span><span class="mini">{{m.sub}}</span></div><button type="button" class="btn ghost sm" onClick="{{m.run}}">Open</button></div></sc-if>
+                <sc-if value="{{m.weak}}" hint-placeholder-val="{{ false }}"><div class="mcard"><svg class="ico sicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6z"></path></svg><div class="tt"><span>{{m.title}}</span><span class="mini">{{m.sub}}</span></div><a class="btn ghost sm" href="StudyWeak.dc.html">Review in Study</a></div></sc-if>
+              </sc-for>
+            </div>
+            <div class="cin"><input type="text" value="{{draft}}" onChange="{{onDraft}}" onKeyDown="{{onDraftKey}}" placeholder="Ask E.V. about this note" aria-label="Message E.V."><button type="button" class="send" aria-label="Send" onClick="{{send}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button></div>
+          </aside>
+        </sc-if>
+      </sc-if>
+
+    </div>
+    <sc-if value="{{hasBar}}" hint-placeholder-val="{{ false }}">
+      <div class="abar">
+        <sc-if value="{{hasSess}}" hint-placeholder-val="{{ true }}"><div class="ss"><dc-import name="Avatar" size="20" mood="idle" theme="{{mode}}" tex="halftone" smode="pointer" session="{{sessV}}" c1="{{av1}}" c2="{{av2}}" bgu="{{chromeHex}}" hint-size="20px,20px"></dc-import><span><b>{{ss.left}}</b> · {{ss.on}}</span><button type="button" class="btn ghost sm" onClick="{{ss.brk}}">{{ss.brkLabel}}</button><button type="button" class="btn ghost sm" onClick="{{ss.end}}">End</button></div></sc-if>
+        <sc-if value="{{noSess}}" hint-placeholder-val="{{ false }}"><div class="ss"><span>{{ss.idle}}</span><button type="button" class="btn ghost sm" onClick="{{startSess}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"></path></svg>Study with E.V.</button></div></sc-if>
+        <span class="sp"></span>
+        <sc-if value="{{barSug}}" hint-placeholder-val="{{ true }}"><button type="button" class="sug" onClick="{{openChat}}">{{sugText}}</button></sc-if>
+        <button type="button" class="{{evBtnCls}}" aria-expanded="{{chatOpen}}" aria-controls="evchat" onClick="{{toggleChat}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6z"></path></svg>E.V.</button>
+      </div>
+    </sc-if>
+    <sc-if value="{{chatOpen}}" hint-placeholder-val="{{ false }}">
+      <section id="evchat" class="{{chatCls}}" role="dialog" aria-label="Studying with E.V." onKeyDown="{{chatKey}}">
+        <div class="cph"><div class="tt"><b>Studying with E.V.</b><span>{{chatSub}}</span></div>
+          <button type="button" class="btn ghost icon sm" aria-label="Minimize to the bar" onClick="{{toggleChat}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"></path></svg></button>
+          <button type="button" class="btn ghost icon sm" aria-label="{{bigLabel}}" onClick="{{toggleBig}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="{{bigIcon}}"></path></svg></button>
+          <button type="button" class="btn ghost icon sm" aria-label="Close" onClick="{{closeChat}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+        </div>
+        <div class="msgs" ref="{{msgRef}}">
+          <sc-for list="{{msgs}}" as="m" hint-placeholder-count="4">
+            <sc-if value="{{m.ev}}" hint-placeholder-val="{{ true }}"><p class="{{m.cls}}">{{m.text}}</p></sc-if>
+            <sc-if value="{{m.you}}" hint-placeholder-val="{{ false }}"><p class="myou"><b>You</b>{{m.text}}</p></sc-if>
+            <sc-if value="{{m.link}}" hint-placeholder-val="{{ false }}"><div class="mcard"><svg class="ico sicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h9l3 3v13H6zM9 10h6M9 14h6"></path></svg><div class="tt"><span>{{m.title}}</span><span class="mini">{{m.sub}}</span></div><button type="button" class="btn ghost sm" onClick="{{m.run}}">Open</button></div></sc-if>
+            <sc-if value="{{m.weak}}" hint-placeholder-val="{{ false }}"><div class="mcard"><svg class="ico sicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6z"></path></svg><div class="tt"><span>{{m.title}}</span><span class="mini">{{m.sub}}</span></div><a class="btn ghost sm" href="StudyWeak.dc.html">Review in Study</a></div></sc-if>
+          </sc-for>
+        </div>
+        <div class="cin"><input type="text" value="{{draft}}" onChange="{{onDraft}}" onKeyDown="{{onDraftKey}}" placeholder="Ask E.V. about this note" aria-label="Message E.V."><button type="button" class="send" aria-label="Send" onClick="{{send}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button></div>
+      </section>
+    </sc-if>
+    <nav class="tabbar" aria-label="Views"><sc-for list="{{tabs}}" as="t" hint-placeholder-count="5"><button type="button" class="{{t.cls}}" aria-current="{{t.cur}}" onClick="{{t.pick}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="{{t.icon}}"></path></svg>{{t.name}}</button></sc-for></nav>
+  </main>
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mode":{"editor":"enum","options":["light","dark"],"default":"light"},"contrast":{"editor":"enum","options":["30","60","100"],"default":"60"},"view":{"editor":"enum","options":["states"],"default":"states"},"sync":{"editor":"enum","options":["saved","syncing","offline"],"default":"saved"},"menu":{"editor":"enum","options":["closed","style"],"default":"closed"},"chat":{"editor":"enum","options":["closed","open"],"default":"closed"},"$preview":{"width":960,"height":1100}}'>
+// ---------- LCH theme (the demo's, unchanged) ----------
+const lch2hex = (L, C, H) => {
+  const h = (H * Math.PI) / 180, a = C * Math.cos(h), b = C * Math.sin(h), e = 216 / 24389, k = 24389 / 27;
+  const fy = (L + 16) / 116, fx = fy + a / 500, fz = fy - b / 200;
+  const xr = fx ** 3 > e ? fx ** 3 : (116 * fx - 16) / k, yr = L > k * e ? fy ** 3 : L / k, zr = fz ** 3 > e ? fz ** 3 : (116 * fz - 16) / k;
+  const X = xr * 0.96422, Y = yr, Z = zr * 0.82521;
+  const lin = [3.1338561 * X - 1.6168667 * Y - 0.4906146 * Z, -0.9787684 * X + 1.9161415 * Y + 0.033454 * Z, 0.0719453 * X - 0.2289914 * Y + 1.4052427 * Z];
+  return '#' + lin.map((v) => { v = Math.max(0, Math.min(1, v)); v = v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055; return Math.round(v * 255).toString(16).padStart(2, '0'); }).join('');
+};
+const lum = (hex) => { const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+const cratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+const mixHex = (a, b, t) => { const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)); const x = p(a), y = p(b); return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
+const SEM = { green: 145, yellow: 76, red: 28, blue: 265, violet: 305 };
+const genTheme = (mode, contrast) => {
+  const k = Math.max(0.3, Math.min(1, (contrast || 60) / 100)), B = { h: 70, c: 3.2 }, dark = mode === 'dark';
+  const n = (L, cm) => lch2hex(L, B.c * (cm ?? 1), B.h), T = { mode, k };
+  if (!dark) {
+    T.bg = n(98.2); T.chrome = n(98.2 - (2.2 + 2.6 * k)); T.surface = n(99.6, 0.4); T.hover = n(98.2 - (3 + 3 * k));
+    T.line = n(98.2 - (6 + 6 * k)); T.line2 = n(98.2 - (11 + 9 * k)); T.text = n(13, 1.5); T.quiet = n(36 - 6 * k, 1.5);
+    let fl = 52; while (cratio(n(fl, 1.5), T.chrome) < 4.6 && fl > 20) fl -= 1; T.faint = n(fl, 1.5);
+    T.accent = lch2hex(48, 62, 52); T.accent2 = lch2hex(47, 56, 32); T.onAccent = '#FFFFFF';
+    T.semL = 52; T.semC = 54; T.tintMix = 0.11; T.scrim = 'rgba(40,32,24,.22)';
+  } else {
+    T.bg = n(10.5); T.chrome = n(10.5 - (1.5 + 2 * k)); T.surface = n(13 + 3 * k); T.hover = n(14 + 4 * k);
+    T.line = n(10.5 + (6 + 6 * k)); T.line2 = n(10.5 + (11 + 9 * k)); T.text = n(94, 0.8); T.quiet = n(72 + 6 * k, 0.8);
+    let fl = 56; while (cratio(n(fl, 0.8), T.surface) < 4.6 && fl < 90) fl += 1; T.faint = n(fl, 0.8);
+    T.accent = lch2hex(70, 57, 52); T.accent2 = lch2hex(68, 50, 32); T.onAccent = n(9);
+    T.semL = 72; T.semC = 48; T.tintMix = 0.16; T.scrim = 'rgba(0,0,0,.5)';
+  }
+  T.sem = {}; for (const s in SEM) T.sem[s] = lch2hex(T.semL + (s === 'yellow' && !dark ? 6 : 0), T.semC + (s === 'yellow' ? 2 : 0), SEM[s]);
+  T.tint = (hex) => mixHex(T.surface, hex, T.tintMix); T.tintLine = (hex) => mixHex(T.line2, hex, 0.35);
+  return T;
+};
+
+// ---------- icons ----------
+const IC = {
+  chat: 'M4 5h16v11H9l-5 4z', today: 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4',
+  study: 'M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z', progress: 'M5 19V11M12 19V5M19 19v-6', record: 'M4 5h16v4H4zM6 9v10h12V9M10 13h4',
+  note: 'M6 4h9l3 3v13H6zM9 10h6M9 14h6', play: 'M8 5l11 7-11 7z', coffee: 'M5 9h11v5a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4zM16 10h2a2 2 0 0 1 0 4h-2M8 3v3M12 3v3',
+  saved: 'M5 12l5 5 9-10', syncing: 'M4 12a8 8 0 0 1 13.7-5.6M20 12a8 8 0 0 1-13.7 5.6M18 3v4h-4M6 21v-4h4',
+  offline: 'M8 18h9a4 4 0 0 0 1.2-7.8A6 6 0 0 0 7 9.2 4.4 4.4 0 0 0 8 18zM4 4l16 16', two: 'M8 3h7l3 3v11H8zM5 7v14h10',
+  laptop: 'M5 6h14v9H5zM3 18h18', phone: 'M8 3h8v18H8zM11 18h2',
+  bold: 'M7 5h6a3.5 3.5 0 0 1 0 7H7zM7 12h7a3.5 3.5 0 0 1 0 7H7z', italic: 'M10 5h8M6 19h8M14 5l-4 14', underline: 'M7 4v7a5 5 0 0 0 10 0V4M5 20h14',
+  strike: 'M5 12h14M16 7.5C15.4 6 13.9 5 12 5c-2.5 0-4 1.3-4 3 0 1.3.8 2.2 2.4 2.8M8 16.5c.6 1.5 2.1 2.5 4 2.5 2.5 0 4-1.3 4-3',
+  bullets: 'M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01', numbers: 'M10 6h10M10 12h10M10 18h10M4 4.5h1.5V9M4 9h3M4 14.5c.5-.8 2.5-.9 2.5.6 0 1.1-2.5 2-2.5 3.4h2.8',
+  checks: 'M4 4.5h5v5H4zM5.5 7l1 1 2-2M12 7h8M4 14.5h5v5H4zM12 17h8', expand: 'M14 4h6v6M10 20H4v-6M20 4l-6 6M4 20l6-6', shrink: 'M20 4l-6 6M14 5v5h5M4 20l6-6M10 19v-5H5',
+};
+const SYNC = { saved: ['Saved', 'saved', 'sync'], syncing: ['Syncing…', 'syncing', 'sync'], offline: ['Offline · saved on this device', 'offline', 'sync'], two: ['Two versions · pick one', 'two', 'sync warn'] };
+const STYLES = [
+  ['p', 'Paragraph', '¶', '⌘⌥0'], ['h1', 'Heading 1', 'H1', '⌘⌥1'], ['h2', 'Heading 2', 'H2', '⌘⌥2'], ['h3', 'Heading 3', 'H3', '⌘⌥3'],
+  ['ul', 'Bulleted list', 'bullets', '⌘⇧L'], ['ol', 'Numbered list', 'numbers', '⌘⇧7'], ['todo', 'Checklist', 'checks', '⌘⇧9'],
+];
+const FMTS = [['b', 'Bold', 'bold', '⌘B'], ['i', 'Italic', 'italic', '⌘I'], ['u', 'Underline', 'underline', '⌘U'], ['s', 'Strikethrough', 'strike', '⌘⇧X']];
+
+// ---------- data (demo day: Friday 23 October) ----------
+const PAGES = [['conversation', 'E.V.', 'chat'], ['today', 'Today', 'today'], ['study', 'Study', 'study'], ['notes', 'Notes', 'note'], ['progress', 'Progress', 'progress'], ['record', 'Record', 'record']];
+const SIDE = [['Dosage calculations, 8 conversions', 'violet', '15m'], ['Write your class’s rounding rule', 'blue', '5m'], ['NUR 112 quiz: fluid balance', 'quiet', 'Tue'], ['BIO 201 lab report draft', 'quiet', 'Mon'], ['Review: 3 weak spots', 'violet', '10m']];
+const CN = { nur: 'NUR 112', bio: 'BIO 201' };
+// a note is blocks; **bold**, __italic__; its title is its first heading; caret: the line being typed
+const NOTES = [
+  { id: 'n1', course: 'nur', kind: 'Lecture 9', when: '4:10 pm', edited: 'Today, 4:10 pm', studied: '25 min, today', caret: ['h2', 'Questions for skills lab'], doc: [
+    ['h1', 'Fluid & electrolytes: potassium and sodium'],
+    ['p', 'Two electrolytes, their normal ranges, and what too little or too much looks like. __Know the ECG changes for both.__'],
+    ['h2', 'Potassium (K⁺)'],
+    ['ul', ['Normal range: **3.5–5.0 mEq/L**', 'Mostly inside the cells; the kidneys excrete most of it']],
+    ['h3', 'Hypokalemia: below 3.5'],
+    ['ul', ['Causes: loop and thiazide diuretics, vomiting, NG suction', 'Signs: muscle weakness, leg cramps, **flat T waves and U waves**', 'IV potassium is **never** given IV push']],
+    ['h3', 'Hyperkalemia: above 5.0'],
+    ['ul', ['Causes: kidney failure, potassium-sparing diuretics, ACE inhibitors', 'Signs: **tall, peaked T waves**, muscle weakness, dysrhythmias']],
+    ['h2', 'Sodium (Na⁺)'],
+    ['ul', ['Normal range: **135–145 mEq/L**', 'Water follows sodium']],
+    ['ol', ['Hyponatremia: headache, confusion, seizures when severe', 'Hypernatremia: thirst, dry mucous membranes, restlessness']],
+    ['h2', 'Before Tuesday’s quiz'],
+    ['todo', [[true, 'Redo the ECG strip practice'], [false, 'Flash cards for the causes'], [false, 'Ask in skills lab how our units dilute IV potassium']]],
+  ] },
+  { id: 'n2', course: 'nur', kind: 'Skills lab', when: 'Yesterday', edited: 'Yesterday, 2:30 pm', studied: '20 min, yesterday', doc: [
+    ['h1', 'IV rates and drop factors'], ['p', 'Two formulas, and which one the order needs.'],
+    ['h2', 'Pump: mL/h'], ['ul', ['mL/h = **total volume ÷ hours**', '500 mL over 4 h = 125 mL/h']],
+    ['h2', 'Gravity: gtt/min'], ['ul', ['gtt/min = **volume in mL × drop factor ÷ minutes**', 'Macrodrip sets: 10, 15 or 20 gtt/mL; microdrip: 60 gtt/mL', 'Round to the whole drop']],
+    ['todo', [[false, 'Practice set from the lab handout']]],
+  ] },
+  { id: 'n4', course: 'nur', kind: 'From class', when: 'Wed 21 Oct', edited: 'Wed 21 Oct, 11:55 am', studied: 'Not yet', doc: [
+    ['h1', 'Rounding rules for dose math'], ['ul', ['mL to the nearest **tenth**', 'Tablets to the nearest **half**', 'Round once, at the end of the problem']],
+  ] },
+  { id: 'n3', course: 'nur', kind: 'Lecture 8', when: 'Tue 20 Oct', edited: 'Tue 20 Oct, 8:05 pm', studied: '20 min, Thu', doc: [
+    ['h1', 'Cardiac meds: digoxin and beta blockers'],
+    ['h2', 'Digoxin'], ['ul', ['Strengthens contraction and slows the heart rate', 'Take the **apical pulse for a full minute** first; hold below 60 and report', 'Toxicity: nausea, vision changes, yellow-green halos']],
+    ['h2', 'Beta blockers'], ['ul', ['Names end in **-olol**', 'Check heart rate and blood pressure before giving']],
+  ] },
+  { id: 'n5', course: 'bio', kind: 'Lecture 12', when: 'Yesterday', edited: 'Yesterday, 9:40 am', studied: '30 min, yesterday', doc: [
+    ['h1', 'Renal: filtration and reabsorption'],
+    ['h2', 'The nephron'], ['ul', ['The glomerulus filters; the tubules reabsorb and secrete', 'Most reabsorption happens in the **proximal convoluted tubule**']],
+    ['h2', 'Questions'], ['todo', [[false, 'Why does glucose show up in urine when blood sugar is high?']]],
+  ] },
+  { id: 'n6', course: 'bio', kind: 'Lecture 11', when: 'Wed 21 Oct', edited: 'Wed 21 Oct, 10:20 am', studied: 'Not yet', doc: [
+    ['h1', 'ADH vs aldosterone'], ['ul', ['ADH: **water only**, collecting duct', 'Aldosterone: **sodium**, and water follows; distal tubule']],
+  ] },
+  { id: 'n7', course: 'bio', kind: 'Lecture 10', when: 'Mon 19 Oct', edited: 'Mon 19 Oct, 9:15 pm', studied: '30 min, Wed', doc: [
+    ['h1', 'Cell transport: the sodium-potassium pump'], ['ul', ['**3 Na⁺ out, 2 K⁺ in**, one ATP per cycle', 'Active transport: against the gradient']],
+  ] },
+];
+// the note he is writing now, in today's lecture
+const LIVE = { id: 'n9', course: 'nur', kind: 'Lecture 10', when: 'Now', edited: 'Just now', studied: 'Now', caret: ['p', 'Causes of metabolic acidosis: diarrhea, kidney failure,'], doc: [
+  ['h1', 'Acid–base balance: reading an ABG'],
+  ['h2', 'Normal values'],
+  ['ul', ['pH **7.35–7.45**', 'PaCO₂ **35–45 mmHg**: the respiratory part', 'HCO₃⁻ **22–26 mEq/L**: the metabolic part']],
+  ['h2', 'Reading an ABG'],
+  ['ol', ['Look at the pH: acidosis or alkalosis?', 'Match it to PaCO₂ or HCO₃⁻: respiratory or metabolic?', 'Check whether the other value is compensating']],
+  ['h3', 'Examples from class'],
+  ['ul', ['pH 7.30, PaCO₂ 50: **respiratory acidosis**', 'pH 7.50, HCO₃⁻ 30: **metabolic alkalosis**']],
+] };
+const plain = (s) => s.replace(/\*\*|__/g, '');
+const titleOf = (n) => plain((n.doc.find((b) => b[0] === 'h1') || ['h1', 'New note'])[1]);
+const noteOf = (id) => (id === 'n9' ? LIVE : NOTES.find((n) => n.id === id) || NOTES[0]);
+const segs = (s) => s.split(/(\*\*[^*]+\*\*|__[^_]+__)/).filter(Boolean).map((t) => (t.startsWith('**') ? { t: t.slice(2, -2), b: true } : t.startsWith('__') ? { t: t.slice(2, -2), i: true } : { t, n: true }));
+const wordCount = (n) => n.doc.reduce((c, b) => c + (Array.isArray(b[1]) ? b[1].map((x) => (Array.isArray(x) ? x[1] : x)).join(' ') : b[1]).split(/\s+/).filter(Boolean).length, 0);
+const studyChat = () => [
+  { k: 'ev', text: 'Started 25 minutes on this note. I’ll follow along as you write; ask me anything, or I’ll check in now and then.' },
+  { k: 'ev', text: 'Your three ABG steps match the lecture’s order. Quick question on step 3: if the pH is back between 7.35 and 7.45, what kind of compensation is that?' },
+  { k: 'you', text: 'Partially compensated' },
+  { k: 'ev', text: 'Not quite: with the pH back in range it’s full compensation. Partial means the other value has moved but the pH is still out of range. I proposed it as a weak spot, for you to review in Study.' },
+  { k: 'weak', title: 'Full vs partial compensation', sub: 'Proposed from this session · To review' },
+  { k: 'ev', text: 'One link while you’re on acidosis: your potassium note lists hyperkalemia, and acidosis shifts potassium out of the cells.' },
+  { k: 'link', title: 'Fluid & electrolytes: potassium and sodium', sub: 'NUR 112 · Lecture 9', to: 'n1' },
+];
+
+class Component extends DCLogic {
+  base() {
+    if (this._D) return this._D;
+    const P = this.props, v = P.view || 'states';
+    const studying = v === 'study' || v === 'sidebar';
+    this._D = {
+      view: v === 'states' ? 'states' : v === 'list' ? 'list' : 'editor', side: v === 'sidebar',
+      mode: P.mode === 'dark' ? 'dark' : 'light', contrast: +(P.contrast || 60),
+      sel: 'n1', open: studying ? 'n9' : 'n1', blank: false, filter: 'all', sync: P.sync || 'saved',
+      styleOpen: P.menu === 'style', linkOpen: false, fmt: {}, styleOver: null, hist: [], fut: [],
+      sess: studying ? { left: 18, state: 'run', note: 'n9' } : null, chatOpen: P.chat === 'open', big: false,
+      msgs: studying ? studyChat() : [], draft: '', done: {}, newOpen: false, prefsOpen: false, cf: null, ended: null,
+    };
+    return this._D;
+  }
+  S() { return Object.assign({}, this.base(), this.state || {}); }
+  put(o) { this.setState(o); }
+  edit(o) { const S = this.S(); this.put(Object.assign({ hist: S.hist.concat([{ fmt: S.fmt, styleOver: S.styleOver }]), fut: [] }, o)); }
+  startOn(id, blank) {
+    this.put({ view: 'editor', side: false, open: id, sel: id === 'n9' ? 'n1' : id, blank: !!blank, sess: { left: 25, state: 'run', note: id }, ended: null, chatOpen: false, newOpen: false, styleOpen: false, linkOpen: false, fmt: {}, styleOver: null, hist: [], fut: [],
+      msgs: [{ k: 'ev', text: blank ? 'Started 25 minutes on your new note. Write as the lecture goes; I’ll follow along and check in now and then.' : 'Started 25 minutes on “' + titleOf(noteOf(id)) + '”. I’ll follow along as you write.' }] });
+  }
+
+  renderVals() {
+    const S = this.S(), T = genTheme(S.mode, S.contrast), sm = T.sem, dark = S.mode === 'dark';
+    T.focus = T.quiet; T.accentHover = dark ? lch2hex(76, 50, 52) : lch2hex(42, 62, 52);
+    const C = (k) => { const col = k === 'quiet' ? T.quiet : sm[k] || k; return { col, tint: T.tint(col), line: T.tintLine(col) }; };
+    const vars = ['--bg:' + T.bg, '--chrome:' + T.chrome, '--surface:' + T.surface, '--hover:' + T.hover, '--line:' + T.line, '--line2:' + T.line2, '--text:' + T.text, '--quiet:' + T.quiet, '--faint:' + T.faint, '--accent:' + T.accent, '--accentHover:' + T.accentHover, '--focus:' + T.focus, '--onAccent:' + T.onAccent, '--sem-green:' + sm.green, '--holdX:' + sm.yellow, '--infoT:' + T.tint(sm.blue), '--infoL:' + T.tintLine(sm.blue), '--link:' + sm.blue].join(';');
+    const q = C('quiet');
+    const out = { vars, mode: S.mode, av1: T.accent, av2: T.accent2, bgHex: T.bg, chromeHex: T.chrome, quietCol: q.col, quietTint: q.tint, quietLine: q.line, yes: true };
+    out.isSheet = S.view === 'states'; out.isApp = !out.isSheet;
+    const syncOf = (k) => { const s = SYNC[k]; return { text: s[0], icon: IC[s[1]], cls: s[2] }; };
+
+    // ---------- the states sheet ----------
+    const hcap = {
+      saved: ['Saved', 'Online. Every change is saved to E.V. as he types; there is nothing to press.'],
+      syncing: ['Syncing', 'Back online after offline edits. Usually a second or two, then Saved.'],
+      offline: ['Offline', 'No connection. The note keeps saving on this device and syncs when he is back online.'],
+      two: ['Two versions', 'Edited on two devices while both were offline; see below.'],
+    };
+    out.hstates = ['saved', 'syncing', 'offline', 'two'].map((k) => Object.assign(syncOf(k), { name: hcap[k][0], cap: hcap[k][1] }));
+    const cf = S.cf, laptopOnly = 'Hyponatremia: headache, confusion, seizures when severe', phoneOnly = 'Hypernatremia: thirst, dry mucous membranes';
+    out.cf = Object.assign(syncOf(cf ? 'saved' : 'two'), {
+      open: !cf, done: !!cf,
+      msg: cf === 'laptop' ? 'Kept this laptop’s version. The iPhone version is saved as a second note, “Fluid & electrolytes: potassium and sodium (earlier)”.' : 'Kept the iPhone version. This laptop’s version is saved as a second note, “Fluid & electrolytes: potassium and sodium (earlier)”.',
+      extra: cf === 'phone' ? [phoneOnly] : cf ? [laptopOnly] : [],
+      vers: [
+        { dev: 'This laptop', icon: IC.laptop, when: 'Edited 3:42 pm', lines: [{ t: 'Normal range: 135–145 mEq/L', cls: 'vl' }, { t: 'Water follows sodium', cls: 'vl' }, { t: laptopOnly, cls: 'vl only' }], keep: () => this.put({ cf: 'laptop' }) },
+        { dev: 'iPhone', icon: IC.phone, when: 'Edited 4:05 pm', lines: [{ t: 'Normal range: 135–145 mEq/L', cls: 'vl' }, { t: 'Water follows sodium', cls: 'vl' }, { t: phoneOnly, cls: 'vl only' }], keep: () => this.put({ cf: 'phone' }) },
+      ],
+      undo: () => this.put({ cf: null }),
+    });
+    if (out.isSheet) return out;
+
+    // ---------- shell ----------
+    const view = S.view, s = S.sess;
+    out.sessV = s ? Math.round(((25 - s.left) / 25) * 1000) / 1000 : -1;
+    out.status = s ? (s.state === 'break' ? 'on a break' : 'studying with you') : 'ready when you are';
+    const go = (id) => () => { if (id === 'notes') this.put({ view: 'list', newOpen: false, styleOpen: false, linkOpen: false, chatOpen: false }); };
+    out.nav = PAGES.map(([id, name, ic]) => ({ name: id === 'conversation' ? 'Conversation' : name, icon: IC[ic], cls: id === 'notes' ? 'ni on' : 'ni', cur: id === 'notes' ? 'page' : 'false', pick: go(id) }));
+    out.tabs = PAGES.filter((p) => p[0] !== 'notes').map(([id, name, ic]) => ({ name, icon: IC[ic], cls: 'tab', cur: 'false', pick: go(id) })); // desktop only: no Notes tab on the phone
+    out.sideToday = SIDE.map(([name, k, time]) => ({ name, time, col: C(k).col }));
+    out.modes = ['light', 'dark'].map((m) => ({ name: m === 'light' ? 'Light' : 'Dark', cls: S.mode === m ? 'on' : '', pick: () => this.put({ mode: m }) }));
+    out.contrasts = [30, 60, 100].map((c) => ({ name: String(c), cls: S.contrast === c ? 'on' : '', pick: () => this.put({ contrast: c }) }));
+    out.prefsOpen = S.prefsOpen; out.prefsCls = S.prefsOpen ? 'ni on' : 'ni'; out.togglePrefs = () => this.put({ prefsOpen: !S.prefsOpen, newOpen: false });
+    out.prefsKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); this.put({ prefsOpen: false }); } };
+    out.toggleNew = () => this.put({ newOpen: !S.newOpen, styleOpen: false, linkOpen: false }); out.newOpen = S.newOpen; out.closeNew = () => this.put({ newOpen: false });
+    out.escNew = (e) => { if (e.key === 'Escape') { e.preventDefault(); this.put({ newOpen: false }); } };
+    out.newNote = () => this.startOn('n9', true);
+    out.isList = view === 'list'; out.isEd = view === 'editor'; out.isSide = out.isEd && S.side;
+    out.bodyCls = 'body' + (out.isEd ? ' bed' : '');
+    out.toList = () => this.put({ view: 'list', styleOpen: false, linkOpen: false, chatOpen: false });
+
+    // ---------- list ----------
+    const counts = { all: NOTES.length, nur: NOTES.filter((n) => n.course === 'nur').length, bio: NOTES.filter((n) => n.course === 'bio').length };
+    out.filters = [['all', 'All'], ['nur', 'NUR 112'], ['bio', 'BIO 201']].map(([k, name]) => ({ name, n: counts[k], cls: S.filter === k ? 'on' : '', on: S.filter === k ? 'true' : 'false', pick: () => this.put({ filter: k }) }));
+    out.groups = ['nur', 'bio'].filter((c) => S.filter === 'all' || S.filter === c).map((c) => { const rows = NOTES.filter((n) => n.course === c); return { name: CN[c], n: rows.length, rows: rows.map((n) => ({ title: titleOf(n), kind: n.kind, when: n.when, cls: S.sel === n.id ? 'li sel' : 'li', cur: S.sel === n.id ? 'true' : 'false', openLabel: 'Open ' + titleOf(n), pick: () => this.put({ sel: n.id }), open: () => this.put({ view: 'editor', side: false, open: n.id, sel: n.id, blank: false, sess: null, ended: null, msgs: [], fmt: {}, styleOver: null, hist: [], fut: [] }) })) }; });
+    const pv = noteOf(S.sel);
+    out.pv = { course: CN[pv.course], title: titleOf(pv), kind: pv.kind, edited: pv.edited, studied: pv.studied, words: wordCount(pv) + ' words', outline: pv.doc.filter((b) => b[0] === 'h2').map((b) => plain(b[1])), open: () => this.put({ view: 'editor', side: false, open: pv.id, blank: false, sess: null, ended: null, msgs: [], fmt: {}, styleOver: null, hist: [], fut: [] }), study: () => this.startOn(pv.id) };
+    if (!out.pv.outline.length) out.pv.outline = ['No sections yet'];
+
+    // ---------- editor ----------
+    const edNote = noteOf(S.open);
+    out.sy = syncOf(S.sync);
+    const toDoc = (n) => n.doc.map((b, bi) => {
+      const k = b[0], o = { h1: k === 'h1', h2: k === 'h2', h3: k === 'h3', p: k === 'p', ul: k === 'ul', ol: k === 'ol', todo: k === 'todo' };
+      if (k === 'ul' || k === 'ol') o.items = b[1].map((t) => ({ segs: segs(t) }));
+      else if (k === 'todo') o.items = b[1].map(([d, t], ii) => { const key = n.id + ':' + bi + ':' + ii, done = key in S.done ? S.done[key] : d; return { segs: segs(t), cls: done ? 'td dn' : 'td', chk: done ? 'chk done' : 'chk', pressed: done ? 'true' : 'false', aria: 'Done: ' + plain(t), toggle: () => this.put({ done: Object.assign({}, S.done, { [key]: !done }) }) }; });
+      else o.segs = segs(b[1]);
+      return o;
+    });
+    const caret = S.blank ? null : edNote.caret;
+    const cur = S.styleOver || (caret ? caret[0] : S.blank ? 'h1' : 'p');
+    const fm = S.fmt;
+    out.cb = { on: !!caret, text: caret ? caret[1] : '', cls: [fm.b && 'fb', fm.i && 'fi', fm.u && 'fu', fm.s && 'fs', fm.link && 'flk'].filter(Boolean).join(' ') };
+    ['h1', 'h2', 'h3', 'p', 'ul', 'ol', 'todo'].forEach((k) => { out.cb[k] = cur === k; });
+    out.ed = S.blank
+      ? { blank: true, doc: [], short: 'New note', course: 'NUR 112', courseAria: 'Course: NUR 112. Change it', kind: 'New note', edited: 'Just now', aria: 'New note' }
+      : { blank: false, doc: toDoc(edNote), short: titleOf(edNote).split(':')[0], course: CN[edNote.course], courseAria: 'Course: ' + CN[edNote.course] + '. Change it', kind: edNote.kind, edited: edNote.id === 'n9' ? 'Edited just now' : 'Edited ' + edNote.edited.replace('Today, ', '').replace('Yesterday, ', 'yesterday, '), aria: 'Note: ' + titleOf(edNote) };
+
+    // format bar
+    const stOf = STYLES.find((x) => x[0] === cur) || STYLES[0];
+    const glyph = (x) => (IC[x[2]] ? { svg: true, txt: false, icon: IC[x[2]], gl: '' } : { svg: false, txt: true, icon: '', gl: x[2] });
+    out.st = Object.assign(glyph(stOf), { name: stOf[1] });
+    out.stAria = 'Text style: ' + stOf[1];
+    out.styleOpen = S.styleOpen; out.toggleStyle = () => this.put({ styleOpen: !S.styleOpen, linkOpen: false, newOpen: false });
+    out.styles = STYLES.map((x) => Object.assign(glyph(x), { name: x[1], keys: x[3], cls: x[0] === cur ? 'mi on' : 'mi', on: x[0] === cur, pick: () => this.edit({ styleOver: x[0], styleOpen: false }) }));
+    out.menuKeys = (e) => {
+      if (e.key === 'Escape') { e.preventDefault(); this.put({ styleOpen: false }); return; }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); const its = Array.from(e.currentTarget.querySelectorAll('.mi')), i = its.indexOf(document.activeElement); const nx = its[(i + (e.key === 'ArrowDown' ? 1 : -1) + its.length) % its.length]; if (nx) nx.focus(); }
+    };
+    out.fmts = FMTS.map(([k, label, ic, keys]) => ({ label, tip: label + '  ' + keys, icon: IC[ic], on: fm[k] ? 'true' : 'false', cls: fm[k] ? 'btn ghost icon sm on' : 'btn ghost icon sm', run: () => this.edit({ fmt: Object.assign({}, fm, { [k]: !fm[k] }) }) }));
+    out.linkOpen = S.linkOpen; out.lkCls = fm.link || S.linkOpen ? 'btn ghost icon sm on' : 'btn ghost icon sm';
+    out.toggleLink = () => this.put({ linkOpen: !S.linkOpen, styleOpen: false, newOpen: false });
+    out.addLink = () => this.edit({ fmt: Object.assign({}, fm, { link: true }), linkOpen: false });
+    out.linkKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); this.put({ linkOpen: false }); } else if (e.key === 'Enter') { e.preventDefault(); out.addLink(); } };
+    out.noUndo = !S.hist.length; out.noRedo = !S.fut.length;
+    out.undo = () => { const h = S.hist; if (!h.length) return; const last = h[h.length - 1]; this.put({ hist: h.slice(0, -1), fut: S.fut.concat([{ fmt: S.fmt, styleOver: S.styleOver }]), fmt: last.fmt, styleOver: last.styleOver }); };
+    out.redo = () => { const f = S.fut; if (!f.length) return; const nx = f[f.length - 1]; this.put({ fut: f.slice(0, -1), hist: S.hist.concat([{ fmt: S.fmt, styleOver: S.styleOver }]), fmt: nx.fmt, styleOver: nx.styleOver }); };
+
+    // ---------- E.V. while he writes: bar + pop-up, or the side panel ----------
+    out.hasSess = !!s; out.noSess = !s;
+    out.hasBar = out.isEd && !S.side;
+    out.startSess = () => this.startOn(S.blank ? 'n9' : S.open, S.blank);
+    if (s) {
+      const brk = s.state === 'break';
+      out.ss = { left: brk ? '5 min break' : s.left + ' min left', on: (S.blank ? 'your new note' : 'this note') + ' · 25 min session', brkLabel: brk ? 'Resume' : 'Break',
+        brk: () => this.put({ sess: Object.assign({}, s, { state: brk ? 'run' : 'break' }) }),
+        end: () => this.put({ sess: null, ended: (25 - s.left) + ' min', msgs: S.msgs.concat([{ k: 'ev', text: 'Ended: ' + (25 - s.left) + ' minutes on this note. Logged to Record.' }]) }) };
+    } else out.ss = { idle: S.ended ? 'Studied ' + S.ended + ' · logged to Record' : 'Not studying this note', idleSub: 'Start a session and E.V. follows along' };
+    out.chatOpen = out.isEd && !S.side && S.chatOpen;
+    out.chatCls = S.big ? 'chatp big' : 'chatp';
+    out.chatSub = s ? out.ss.left + ' · ' + (S.blank ? 'New note' : titleOf(edNote)) : (S.blank ? 'New note' : titleOf(edNote));
+    out.toggleChat = () => this.put({ chatOpen: !S.chatOpen, styleOpen: false, linkOpen: false });
+    out.openChat = () => this.put({ chatOpen: true });
+    out.closeChat = () => this.put({ chatOpen: false, big: false });
+    out.toggleBig = () => this.put({ big: !S.big }); out.bigLabel = S.big ? 'Make smaller' : 'Make bigger'; out.bigIcon = S.big ? IC.shrink : IC.expand;
+    out.chatKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); this.put({ chatOpen: false }); } };
+    out.evBtnCls = S.chatOpen ? 'btn neutral sm on' : 'btn neutral sm';
+    out.barSug = !S.chatOpen;
+    out.sugText = s ? (edNote.id === 'n9' ? 'Ask me: what makes a compensation full rather than partial?' : 'Want three quick questions on this note?') : 'Studying this note? E.V. can follow along and ask the odd question.';
+    const lastEv = S.msgs.map((m) => m.k).lastIndexOf('ev');
+    out.msgs = S.msgs.map((m, j) => ({ ev: m.k === 'ev', you: m.k === 'you', link: m.k === 'link', weak: m.k === 'weak', cls: j === lastEv ? 'mev' : 'mev old', text: m.text || '', title: m.title || '', sub: m.sub || '', run: () => m.to && this.put({ view: 'editor', open: m.to, blank: false, chatOpen: false }) }));
+    if (!out.msgs.length) out.msgs = [{ ev: true, you: false, link: false, weak: false, cls: 'mev', text: 'Ask me anything about this note. I can confirm a concept, link it to your other notes, or quiz you on it.', title: '', sub: '' }];
+    out.msgRef = (el) => { if (el) el.scrollTop = el.scrollHeight; };
+    out.draft = S.draft; out.onDraft = (e) => this.put({ draft: e.target.value });
+    out.send = () => { const t = (S.draft || '').trim(); if (!t) return; this.put({ draft: '', msgs: S.msgs.concat([{ k: 'you', text: t }, { k: 'ev', text: edNote.id === 'n9' ? 'Your note covers that under “Reading an ABG”: start with the pH, then match it to PaCO₂ or HCO₃⁻.' : 'Your note covers that under “' + plain((edNote.doc.find((x) => x[0] === 'h2') || ['h2', titleOf(edNote)])[1]) + '”. Want a quick question on it?' }]) }); };
+    out.onDraftKey = (e) => { if (e.key === 'Enter') { e.preventDefault(); out.send(); } };
+    return out;
+  }
+}
+</script>
+</body>
+</html>

@@ -66,10 +66,22 @@ fs.mkdirSync(out, { recursive: true });
       })
       .catch(() => {});
     await page.waitForTimeout(1500);
-    for (const t of ['ev', 'today', 'study', 'progress', 'record']) {
-      await page.click('#tab-' + t).catch(e => errors.push('click ' + t));
+    // Notes (D-325, D-327) is shot when the page has its tab (desktop only): the list, then the first note opened.
+    const hasNotes = await page
+      .$('#tab-notes')
+      .then(e => e && e.isVisible())
+      .catch(() => false);
+    const views = ['ev', 'today', 'study', 'progress', 'record'].concat(hasNotes ? ['notes', 'note'] : []);
+    if (!hasNotes) report['notes-' + vp.width] = 'no Notes tab in this build';
+    for (const v of views) {
+      const t = v === 'note' ? 'notes' : v;
+      if (v === 'note') {
+        const row = await page.$('#p-notes button, #p-notes [role=button], #p-notes a[href]');
+        if (row) await row.click().catch(e => errors.push('open a note'));
+        else errors.push('no note to open');
+      } else await page.click('#tab-' + t).catch(e => errors.push('click ' + t));
       await page.waitForTimeout(900);
-      const tag = `${t}-${vp.width}`;
+      const tag = `${v}-${vp.width}`;
       await page.screenshot({ path: `${out}/${tag}.png` });
       await page.screenshot({ path: `${out}/${tag}-full.png`, fullPage: true });
       report[tag] = await page.evaluate(t => {

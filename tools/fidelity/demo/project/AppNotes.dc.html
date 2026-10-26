@@ -1,0 +1,1865 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>E.V. v4 · the app, with Notes and E.V.’s bar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&amp;display=swap">
+<style>
+body{margin:0}
+.app{width:100%;height:100vh;min-height:560px;display:flex;background:var(--chrome);color:var(--text);font:400 14px/1.45 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;font-optical-sizing:auto;overflow:hidden;position:relative}
+.app button,.app input,.app textarea{font-family:inherit}
+.app :focus{outline:none}
+.app :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.side{width:236px;flex:none;display:flex;flex-direction:column;padding:8px;box-sizing:border-box}
+.brand{height:48px;display:flex;align-items:center;gap:10px;padding:0 8px}
+.brand b{font-size:14px;font-weight:600}
+.brand .bs{font-size:12px;color:var(--faint);display:block;line-height:1.15}
+.nav{display:flex;flex-direction:column;gap:1px;margin-top:4px}
+.ni{height:32px;display:flex;align-items:center;gap:10px;padding:0 10px;border-radius:7px;font-size:13.5px;color:var(--quiet);border:0;background:none;cursor:pointer;text-align:left;width:100%;box-sizing:border-box}
+.ni:hover{background:var(--hover);color:var(--text)}
+.ni.on{background:var(--bg);color:var(--text);box-shadow:0 0 0 1px var(--line)}
+.sec{font-size:12px;font-weight:500;color:var(--faint);padding:20px 10px 6px;display:flex}
+.sec .sp,.sp{flex:1}
+.si{box-sizing:border-box;height:30px;display:flex;align-items:center;gap:10px;padding:0 10px;font-size:13px;color:var(--quiet);border:0;background:none;border-radius:7px;cursor:pointer;text-align:left;width:100%}
+.si:hover{background:var(--hover);color:var(--text)}
+.si.on{background:var(--bg);color:var(--text);box-shadow:0 0 0 1px var(--line)}
+.si.static{cursor:default}
+.si.static:hover{background:none;color:var(--quiet)}
+.si .sn{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.si .st{font-size:11.5px;color:var(--quiet)}
+.si.more{color:var(--quiet);font-size:12.5px}
+.dot{width:8px;height:8px;border-radius:4px;background:var(--x);flex:none}
+.sfoot{margin-top:auto;display:flex;flex-direction:column;gap:8px;padding:8px 0 0;position:relative}
+.sess{margin:10px 0 0;padding:6px 4px 6px 10px;border-radius:8px;background:var(--bg);box-shadow:0 0 0 1px var(--line);display:flex;align-items:center;gap:4px}
+.sess .sl{flex:1;min-width:0;border:0;background:none;padding:0;text-align:left;cursor:pointer;font:500 12.5px Inter,system-ui,sans-serif;color:var(--text);display:flex;flex-direction:column;gap:1px}
+.sess .sl .bs{font-weight:400;color:var(--quiet);font-size:12px}
+.seg{display:inline-flex;padding:2px;border-radius:8px;background:var(--hover);gap:2px;flex-wrap:wrap;align-self:flex-start;justify-self:start;flex:none}
+.seg button{height:24px;padding:0 9px;border:0;border-radius:6px;background:none;color:var(--quiet);font:500 12px Inter,system-ui,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.seg button:hover{color:var(--text);background:var(--bg)}
+.seg button.on{background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line)}
+.seg button i{font-style:normal;color:var(--quiet);font-weight:400}
+.main{flex:1;margin:8px 8px 8px 0;min-height:0;border-radius:12px;background:var(--bg);box-shadow:0 0 0 1px var(--line);display:flex;flex-direction:column;min-width:0;position:relative}
+.mh{height:48px;display:flex;align-items:center;gap:8px;padding:0 12px 0 18px;border-bottom:1px solid var(--line);flex:none}
+.mh h1{margin:0;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.body{flex:1;display:flex;min-height:0}
+.pane{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;position:relative}
+.scroll{overflow:auto;flex:1;min-height:0}
+.right{width:320px;flex:none;border-left:1px solid var(--line);padding:16px;box-sizing:border-box;display:flex;flex-direction:column;gap:14px;overflow:auto}
+.btn{height:32px;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 12px;border-radius:8px;font:500 13px Inter,system-ui,sans-serif;cursor:pointer;border:0;white-space:nowrap;box-sizing:border-box}
+.btn.neutral{background:var(--surface);color:var(--text);box-shadow:inset 0 0 0 1px var(--line2)}
+.btn.neutral:hover{background:var(--hover)}
+.btn.primary{background:var(--accent);color:var(--onAccent)}
+.btn.primary:hover{background:var(--accentHover)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.ghost{background:none;color:var(--quiet)}
+.btn.ghost:hover{background:var(--hover);color:var(--text)}
+.btn.icon{width:32px;padding:0}
+.btn.sm{height:28px;padding:0 10px;font-size:12.5px}
+.btn.icon.sm{width:28px;padding:0}
+.btn.wide{width:100%}
+.badge{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:11px;font-size:12px;font-weight:500;background:var(--xt);color:var(--text);box-shadow:inset 0 0 0 1px var(--xl);white-space:nowrap;flex:none}
+.badge i{width:6px;height:6px;border-radius:3px;background:var(--x)}
+.card{border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line);padding:14px;box-sizing:border-box}
+.lab{font-size:12px;color:var(--quiet);font-weight:500}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sb{justify-content:space-between}
+.col2{display:flex;flex-direction:column;gap:10px}
+.mini{font-size:12.5px;color:var(--faint)}
+.big{font-size:30px;font-weight:600;letter-spacing:-.02em;line-height:1.1;font-variation-settings:"opsz" 32}
+.sicon{color:var(--quiet)}
+.evline{display:flex;align-items:center;gap:10px;min-height:40px;padding:4px 12px 4px 18px;border-bottom:1px solid var(--line);font-size:13px;flex:none}
+.evline .et{flex:1;min-width:0;color:var(--text)}
+.sstrip{display:none}
+.conv{flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0;overflow:hidden}
+.stage{display:flex;justify-content:center;padding:8px 0 4px;flex:none}
+.col{width:100%;max-width:600px;margin:0 auto;display:flex;flex-direction:column;gap:14px;padding:18px 24px 14px;box-sizing:border-box;flex:none}
+.e{margin:0;font-size:14px;color:var(--faint)}
+.you{margin:0;align-self:flex-end;text-align:right;font-size:14px;color:var(--quiet);max-width:80%}
+.you b{display:block;font-size:12px;font-weight:500;color:var(--faint)}
+.now{margin:0;font-size:17px;line-height:1.5;letter-spacing:-.005em}
+.chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;width:100%;max-width:600px;margin:0 auto 10px;padding:0 16px;box-sizing:border-box;flex:none}
+.chip{height:30px;padding:0 12px;border-radius:15px;border:0;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);color:var(--quiet);font:500 12.5px Inter,system-ui,sans-serif;cursor:pointer}
+.chip:hover{background:var(--hover);color:var(--text)}
+.field{width:calc(100% - 32px);max-width:600px;margin:0 auto 18px;height:50px;border-radius:14px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);display:flex;align-items:center;gap:8px;padding:0 9px 0 16px;box-sizing:border-box;flex:none}
+.field:focus-within{box-shadow:inset 0 0 0 2px var(--focus)}
+.field input{flex:1;border:0;background:none;font:400 14.5px Inter,system-ui,sans-serif;color:var(--text);min-width:0;height:100%}
+.field input:focus-visible{outline:none}
+.field input::placeholder{color:var(--faint)}
+.send{width:32px;height:32px;border-radius:16px;border:0;background:var(--accent);color:var(--onAccent);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
+.send:hover{background:var(--accentHover)}
+.bar{height:6px;border-radius:3px;background:var(--hover);overflow:hidden;display:flex}
+.bar i{display:block;height:100%;background:var(--x)}
+.toolbar{display:flex;align-items:center;gap:8px;padding:12px 18px;border-bottom:1px solid var(--line);position:relative;flex:none;flex-wrap:wrap}
+.list{display:flex;flex-direction:column;overflow:auto;min-height:0;flex:1}
+.li{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 18px;border-bottom:1px solid var(--line);font-size:13.5px;flex:none}
+.li:hover{background:var(--chrome)}
+.li .hov{visibility:hidden}
+.li:hover .hov,.li:focus-within .hov{visibility:visible}
+.li .t{color:var(--quiet);font-size:12.5px;min-width:70px;text-align:right;flex:none}
+.nm{border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;text-align:left}
+.nm:hover{text-decoration:underline;text-underline-offset:3px}
+.li.dn .nm{color:var(--faint);text-decoration:line-through}
+.li.off .nm{text-decoration:line-through;color:var(--quiet)}
+.li.padd{background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2);border-bottom:0;margin:4px 12px;border-radius:8px;outline:1px dashed var(--line2);outline-offset:-4px}
+.pmark{font-size:12.5px;color:var(--quiet);white-space:nowrap}
+.chk{width:16px;height:16px;border-radius:5px;box-shadow:inset 0 0 0 1.5px var(--line2);flex:none;border:0;padding:0;background:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:#fff}
+.chk.done{background:var(--sem-green);box-shadow:none}
+.chk .ico{width:11px;height:11px;stroke-width:2.6;opacity:0}
+.chk.done .ico{opacity:1}
+.chk:not(.done):hover .ico{opacity:.5;color:var(--quiet)}
+.grp{font-size:12px;font-weight:500;color:var(--quiet);padding:14px 18px 6px;display:flex;gap:8px;align-items:center;border:0;background:none;cursor:pointer;text-align:left;flex:none;min-height:32px}
+.grp .ico{width:14px;height:14px}
+.review{display:flex;align-items:center;gap:10px;padding:9px 18px;border-bottom:1px solid var(--line);font-size:13px;background:var(--chrome);flex:none;flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:0 18px 18px}
+.exh{margin:18px 18px 12px}
+.obj{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 4px 0 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.obj:last-child{border-bottom:0}
+.obj.on .nm{font-weight:600}
+.obj .ow{font-size:12.5px;color:var(--quiet);white-space:nowrap}
+.fcard{width:calc(100% - 36px);max-width:640px;margin:26px auto 0;padding:26px;border-radius:14px;background:var(--surface);box-shadow:0 0 0 1px var(--line);display:flex;flex-direction:column;gap:16px;box-sizing:border-box}
+.fcard:focus-visible{outline:none}
+.fcard .q{font-size:22px;font-weight:500;letter-spacing:-.01em;line-height:1.35}
+.opt{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 14px;border-radius:9px;border:0;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);font:400 14px Inter,system-ui,sans-serif;color:var(--text);cursor:pointer;text-align:left;width:100%}
+.opt:hover{background:var(--hover)}
+.opt.mk{background:var(--xt);box-shadow:inset 0 0 0 1px var(--xl)}
+.opt.mk .ico{color:var(--x)}
+.opt .k{width:20px;color:var(--quiet);font-size:12.5px;font-weight:500}
+.kbd{font:500 11px Inter,system-ui,sans-serif;color:var(--quiet);padding:1px 5px;border-radius:4px;box-shadow:inset 0 0 0 1px var(--line2)}
+
+.propbox{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:9px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2);font-size:13px}
+.wl{display:flex;align-items:center;gap:12px;padding:10px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.wl.pw{background:var(--bg)}
+.wl>.sp{min-width:0}
+.wl.pw .badge{flex:none}
+.chart{display:flex;align-items:flex-end;gap:10px;height:170px;padding:24px 4px 0}
+.bcol{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;gap:4px;height:100%;position:relative}
+.bbtn{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;border:0;background:none;padding:0;cursor:pointer;flex:1;border-radius:6px}
+.bbtn:hover s{filter:brightness(1.08)}
+.bbtn s{display:block;width:40px;max-width:100%;border-radius:3px;background:var(--x);text-decoration:none}
+.bbtn .ahead{width:40px;max-width:100%;height:6px;border-radius:3px;box-shadow:inset 0 0 0 1px var(--line2)}
+.bcol .bl{font-size:11.5px;color:var(--quiet);text-align:center}
+.bcol .bl.on{color:var(--text);font-weight:600}
+.tip{position:absolute;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);font-size:11.5px;line-height:1.35;padding:6px 8px;border-radius:6px;white-space:nowrap;z-index:5;pointer-events:none}
+.hb{height:10px;border-radius:5px;background:var(--hover);overflow:hidden;display:flex}
+.hb i{display:block;height:100%;background:var(--x)}
+.dayh{font-size:12px;font-weight:500;color:var(--quiet);padding:14px 18px 6px;flex:none}
+.li.sel{background:var(--chrome)}
+.pop{position:absolute;top:52px;z-index:30;padding:12px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.14);display:flex;flex-direction:column;gap:10px;width:260px;box-sizing:border-box}
+.prefpop{left:0;bottom:44px;top:auto}
+.ck{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);cursor:pointer;position:relative;min-height:28px}
+.cki{position:absolute;opacity:0;width:16px;height:16px;margin:0;left:0}
+.ckb{width:16px;height:16px;border-radius:5px;box-shadow:inset 0 0 0 1.5px var(--line2);display:inline-flex;align-items:center;justify-content:center;color:var(--bg);flex:none}
+.ckb .ico{width:11px;height:11px;stroke-width:2.6;opacity:0}
+.cki:checked + .ckb{background:var(--text);box-shadow:none}
+.cki:checked + .ckb .ico{opacity:1}
+.cki:focus-visible + .ckb{outline:2px solid var(--focus);outline-offset:2px}
+.menu{position:absolute;right:12px;top:44px;z-index:30;width:240px;padding:5px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.14);box-sizing:border-box}
+.mi{display:flex;align-items:center;gap:10px;height:32px;padding:0 9px;border-radius:6px;border:0;background:none;width:100%;font:400 13px Inter,system-ui,sans-serif;color:var(--text);cursor:pointer;text-align:left;box-sizing:border-box}
+.mi:hover{background:var(--hover)}
+.mi .ico{color:var(--quiet)}
+.mhd{font-size:11.5px;font-weight:500;color:var(--quiet);padding:6px 9px 4px}
+.ovl{position:absolute;inset:0;z-index:40;display:flex;justify-content:center;align-items:flex-start;padding:110px 12px 12px;box-sizing:border-box}
+.scrim{position:absolute;inset:0;border:0;padding:0;background:var(--scrim);cursor:default}
+.modal{position:relative;width:560px;max-width:100%;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 24px 60px rgba(0,0,0,.22);display:flex;flex-direction:column}
+.mhdr{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);font-weight:600;font-size:14px}
+.mhdr .ico{color:var(--quiet)}
+.mbody{padding:16px;display:flex;flex-direction:column;gap:14px}
+.mfoot{display:flex;align-items:center;gap:8px;padding:12px 16px;border-top:1px solid var(--line);flex-wrap:wrap}
+.in{height:38px;border-radius:8px;border:0;box-shadow:inset 0 0 0 1px var(--line2);background:var(--bg);padding:0 12px;font:400 14px Inter,system-ui,sans-serif;color:var(--text);width:100%;box-sizing:border-box}
+.in:focus,.in:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--focus)}
+.in.title{height:44px;font-size:17px;font-weight:500}
+textarea.in{height:86px;padding:10px 12px;resize:none;line-height:1.45}
+.frow{display:grid;grid-template-columns:96px 1fr;align-items:center;gap:10px;font-size:13px}
+.frow > span{color:var(--quiet)}
+.tvh{display:flex;align-items:center;gap:8px;padding:12px 18px;border-bottom:1px solid var(--line);flex:none}
+.tvb{padding:26px 40px;display:flex;flex-direction:column;gap:16px;overflow:auto;max-width:720px}
+.tvb h2{margin:0;font-size:22px;font-weight:600;letter-spacing:-.01em}
+.desc{margin:0;font-size:14.5px;line-height:1.6;color:var(--quiet)}
+.step{display:flex;align-items:center;gap:10px;min-height:34px;font-size:13.5px;border-bottom:1px solid var(--line)}
+.step.dn .stt{color:var(--faint);text-decoration:line-through}
+.actv{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--quiet)}
+.props{display:flex;flex-direction:column;gap:2px}
+.prop{display:grid;grid-template-columns:92px 1fr;align-items:center;gap:8px;min-height:34px;font-size:13px}
+.prop > span:first-child{color:var(--quiet)}
+.lnk{border:0;background:none;padding:0;font:inherit;color:var(--text);text-decoration:underline;text-underline-offset:3px;cursor:pointer;text-align:left}
+.sbtns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.chg{display:flex;align-items:flex-start;gap:10px;font-size:13px;padding:10px 0;border-bottom:1px solid var(--line)}
+.chg .dot{margin-top:6px}
+.chg.un .ct{color:var(--faint);text-decoration:line-through}
+.week{flex:1;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));min-height:0;overflow:auto}
+.wcol{border-left:1px solid var(--line);display:flex;flex-direction:column;gap:6px;padding:10px 8px;min-height:0}
+.wcol:first-child{border-left:0}
+.wcol.today{background:var(--chrome)}
+.wh{display:flex;align-items:baseline;gap:6px;font-size:12px;color:var(--quiet);padding:0 2px 4px}
+.wh b{font-size:15px;font-weight:600;color:var(--text)}
+.wh.today b{color:var(--bg);background:var(--text);border-radius:6px;padding:0 6px}
+.wchip{display:flex;flex-direction:column;gap:2px;padding:6px 8px;border-radius:7px;border:0;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);text-align:left;cursor:pointer;font:400 12.5px/1.3 Inter,system-ui,sans-serif;color:var(--text)}
+.wchip:hover{box-shadow:inset 0 0 0 1px var(--line2);background:var(--hover)}
+.wchip.on{box-shadow:inset 0 0 0 1.5px var(--text)}
+.wchip.past{color:var(--quiet)}
+.wchip.exam{font-weight:600}
+.wchip .wt{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--quiet);font-weight:400}
+.wchip .dot{width:6px;height:6px}
+.up{display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:10px;padding:8px 6px;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;cursor:pointer;font:400 13px Inter,system-ui,sans-serif;color:var(--text);width:100%;border-radius:6px;box-sizing:border-box}
+.up:hover{background:var(--hover)}
+.up:last-child{border-bottom:0}
+.up .ud{color:var(--quiet);font-size:12px}
+.up .un{display:flex;align-items:center;gap:8px;min-width:0}
+.up .un .ut{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty{padding:40px 18px;color:var(--quiet);font-size:13.5px;text-align:center}
+.tabbar{display:none}
+.btn.primary .kbd{color:var(--onAccent);box-shadow:inset 0 0 0 1px var(--onAccent);opacity:1}
+.in::placeholder,textarea.in::placeholder{color:var(--faint);opacity:1}
+.obj .oq{visibility:hidden}
+.obj:hover .oq,.obj:focus-within .oq{visibility:visible}
+.conv{overflow-y:auto;justify-content:flex-start}
+.conv>.stage{margin-top:auto}
+.ckin{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line)}
+.ckin .row{gap:10px}
+.ckin .adv{font-size:13.5px;color:var(--text);line-height:1.5}
+.pcard{margin:0 18px;display:flex;flex-direction:column;gap:6px}
+.trow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 18px;border-bottom:1px solid var(--line);background:var(--bg)}
+.trow .tt{flex:1;min-width:200px;display:flex;flex-direction:column;gap:2px}
+.trow .acts{display:flex;gap:6px;flex-wrap:wrap}
+.endline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:9px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2);font-size:13px}
+.endline .sp{min-width:180px}
+
+/* ---------- the L-frame: the page floats; the ground runs down the side and along the bottom ---------- */
+.rcol{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;position:relative}
+.rcol > .main{margin:8px 8px 0 0}
+.estrip{height:38px;display:flex;align-items:center;gap:6px;padding:0 8px 0 6px;flex:none;font-size:12.5px;color:var(--quiet)}
+.estrip .ss{display:flex;align-items:center;gap:8px;white-space:nowrap;min-width:0}
+.estrip .ss b{font-weight:500;color:var(--text)}
+.estrip .ss .tn{max-width:260px;overflow:hidden;text-overflow:ellipsis}
+.estrip .sug{border:0;background:none;padding:0 8px;height:28px;border-radius:6px;font:400 12.5px Inter,system-ui,sans-serif;color:var(--quiet);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;max-width:520px}
+.estrip .sug:hover{color:var(--text);background:var(--hover)}
+.estrip .sugt{padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.evb{position:relative;color:var(--text) !important}
+.evb .edot{position:absolute;top:5px;right:5px;width:6px;height:6px;border-radius:3px;background:var(--accent)}
+.chatp{position:absolute;right:8px;bottom:46px;z-index:35;width:392px;height:560px;max-height:calc(100% - 100px);border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 16px 40px rgba(0,0,0,.16);display:flex;flex-direction:column;box-sizing:border-box}
+.chatp.wide{width:620px;height:calc(100% - 100px)}
+.cph{display:flex;align-items:center;gap:4px;padding:10px 8px 10px 14px;border-bottom:1px solid var(--line);flex:none}
+.cph .tt{flex:1;min-width:0;display:flex;flex-direction:column}
+.cph .tt b{font-size:13.5px;font-weight:600}
+.cph .tt span{font-size:12px;color:var(--quiet);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.msgs{flex:1;min-height:0;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:12px}
+.mev{margin:0;font-size:13.5px;line-height:1.55;color:var(--text)}
+.mev.old{color:var(--quiet)}
+.myou{margin:0;align-self:flex-end;text-align:right;font-size:13.5px;color:var(--quiet);max-width:85%}
+.myou b{display:block;font-size:11.5px;font-weight:500;color:var(--faint)}
+.mcard{display:flex;align-items:center;gap:10px;padding:8px 8px 8px 12px;border-radius:9px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2);font-size:13px}
+.mcard .tt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.mcard .tt span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mch{display:flex;gap:6px;flex-wrap:wrap}
+.cin{display:flex;align-items:center;gap:6px;margin:0 10px 10px;padding:0 6px 0 12px;height:44px;border-radius:12px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2);flex:none}
+.cin:focus-within{box-shadow:inset 0 0 0 2px var(--focus)}
+.cin input{flex:1;border:0;background:none;font:400 13.5px Inter,system-ui,sans-serif;color:var(--text);min-width:0;height:100%}
+.cin input:focus-visible{outline:none}
+.cin input::placeholder{color:var(--faint)}
+.cin .send{width:30px;height:30px;border-radius:15px}
+.hlist{flex:1;min-height:0;overflow:auto;padding:6px}
+.pki{height:auto;min-height:44px;padding:5px 9px}
+.pki .pt{flex:1;min-width:0;display:flex;flex-direction:column}
+.pki .pn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pki .pm{font-size:12px;color:var(--faint)}
+.li .nk{flex:none;width:92px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+.nempty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:72px 24px;text-align:center;color:var(--quiet);font-size:13.5px;line-height:1.5}
+.nempty b{font-size:15px;font-weight:600;color:var(--text)}
+.nempty span{max-width:360px}
+.nempty .ico{width:28px;height:28px;stroke-width:1.4;color:var(--faint);margin-bottom:4px}
+.nempty .btn{margin-top:6px}
+.csel{background:var(--selT);border-radius:3px;box-shadow:0 0 0 2px var(--selT)}
+
+.nrow > .sp{display:none}
+
+.nrow .nm{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nrow .t{flex:none}
+/* ---------- E.V.'s chat: a floating card over the page, anchored above the bar's E.V. button (Linear's agent chat) ---------- */
+.rcol .chatp{position:absolute;right:10px;bottom:42px;top:30%;width:400px;height:auto;max-height:none;z-index:35;border-radius:14px;background:var(--surface);box-shadow:0 0 0 1px var(--line),0 12px 32px rgba(0,0,0,.10),0 2px 6px rgba(0,0,0,.05)}
+.rcol .chatp.wide{width:640px;top:56px}
+.rcol .chatp .cph{border-bottom:0;padding:14px 10px 6px 18px}
+.rcol .chatp .cph .tt b{font-weight:500;font-size:14px}
+.rcol .chatp .msgs{padding:10px 18px 12px}
+.pchips{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:0 10px 10px 10px;flex:none}
+.pchips .chip{height:30px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
+.rcol .chatp .cin2{margin:0 8px 8px;border-radius:12px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);display:flex;flex-direction:column;flex:none}
+.rcol .chatp .cin2:focus-within{box-shadow:inset 0 0 0 2px var(--focus)}
+.cin2 input{border:0;background:none;font:400 13.5px Inter,system-ui,sans-serif;color:var(--text);height:40px;padding:0 12px;min-width:0}
+.cin2 input:focus-visible{outline:none}
+.cin2 input::placeholder{color:var(--faint)}
+.cin2 .crow{display:flex;align-items:center;gap:6px;padding:0 6px 6px 10px}
+.cin2 .ctx{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--quiet);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.cin2 .ctx .ico{width:13px;height:13px}
+.cin2 .send{width:28px;height:28px;border-radius:14px}
+
+.pvt,.doc h1,.doc h2,.doc h3,.doc p,.doc li,.mev,.myou,.mcard .tt{overflow-wrap:anywhere}
+.mh h1{flex:none}
+.mh .crumb{flex:0 1 auto;max-width:45%}
+.pchip{max-width:260px;justify-content:flex-start;min-width:0}
+.pchip .pc{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.mcard .tt span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mh .crumb{font-size:14px;color:var(--quiet);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.dayh i{font-style:normal;font-weight:400;color:var(--faint)}
+.dayh{display:flex;gap:8px}
+.stm,.lkp{z-index:30}
+.menu.stm{right:auto}
+.pop.lkp{top:40px}
+
+/* ---------- Notes (from the Notes row) ---------- */
+.fbar{display:flex;align-items:center;gap:2px;height:44px;padding:0 12px;border-bottom:1px solid var(--line);flex:none;position:relative}
+.fbar .btn.ghost{color:var(--quiet)}
+.fbar .btn.ghost.on{color:var(--text);background:var(--hover);box-shadow:inset 0 0 0 1px var(--line)}
+.fsep{width:1px;height:18px;background:var(--line);margin:0 6px;flex:none}
+.stb{width:164px;justify-content:flex-start;gap:8px;padding:0 8px;color:var(--text) !important}
+.stb .gl,.mi .gl{width:20px;flex:none;display:inline-flex;align-items:center;justify-content:center;font:600 11.5px Inter,system-ui,sans-serif;color:var(--quiet);letter-spacing:-.02em}
+.stb .lb{flex:1;text-align:left}
+.stm{left:84px;top:40px;width:252px}
+.stm .mi{height:34px}
+.stm .mi .lb{flex:1}
+.stm .mi .ks{font-size:12px;color:var(--faint);letter-spacing:.04em}
+.stm .mi.on{background:var(--hover);font-weight:500}
+.stm .mi.on .gl{color:var(--text)}
+.lkp{left:300px;top:40px;width:300px}
+.ks{font-variant-numeric:tabular-nums}
+
+/* ---------- the note: page ---------- */
+.sync{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--quiet);white-space:nowrap;padding:0 6px;min-width:0}
+.sync .ico{width:14px;height:14px}
+.sync.warn .ico{color:var(--holdX)}
+.doc{width:100%;max-width:700px;margin:0 auto;padding:34px 40px 120px;box-sizing:border-box;color:var(--text)}
+.dmeta{display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:12.5px;color:var(--quiet);margin:0 0 8px -10px}
+.dmeta .btn{color:var(--quiet);gap:5px}
+.dmeta .ico{width:14px;height:14px}
+.dmeta .dt{padding:0 4px}
+.doc h1{margin:0 0 14px;font-size:30px;font-weight:600;letter-spacing:-.02em;line-height:1.2;font-variation-settings:"opsz" 32}
+.doc h2{margin:28px 0 6px;font-size:20px;font-weight:600;letter-spacing:-.012em;line-height:1.3}
+.doc h3{margin:18px 0 4px;font-size:16px;font-weight:600;line-height:1.4}
+.doc p{margin:6px 0;font-size:15.5px;line-height:1.65}
+.doc ul,.doc ol{margin:4px 0;padding-left:24px;font-size:15.5px;line-height:1.65}
+.doc li{padding-left:4px;margin:1px 0}
+.doc li::marker{color:var(--faint)}
+.doc ol li::marker{font-size:14px;font-variant-numeric:tabular-nums}
+.doc strong{font-weight:600}
+.doc ul.todo{list-style:none;padding-left:0}
+.doc .td{display:flex;align-items:flex-start;gap:10px;padding-left:0}
+.doc .td .chk{margin-top:4px}
+.doc .td.dn .tx{color:var(--faint);text-decoration:line-through}
+.doc .ph{color:var(--faint)}
+.caret{display:inline-block;width:1.5px;height:1.1em;background:var(--text);vertical-align:-0.15em;margin-left:1px}
+.fb{font-weight:600}.fi{font-style:italic}.fu{text-decoration:underline;text-underline-offset:3px}.fs{text-decoration:line-through}.fu.fs{text-decoration:underline line-through}
+.flk{color:var(--link);text-decoration:underline;text-underline-offset:3px}
+
+/* ---------- E.V. while he writes ---------- */
+.abar{display:flex;align-items:center;gap:8px;height:44px;padding:0 8px 0 14px;border-top:1px solid var(--line);background:var(--chrome);border-radius:0 0 12px 12px;flex:none;position:relative}
+.abar .ss{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--quiet);white-space:nowrap;min-width:0}
+.abar .ss b{font-weight:500;color:var(--text)}
+.abar .sug{border:0;background:none;padding:0 6px;height:28px;border-radius:6px;font:400 12.5px Inter,system-ui,sans-serif;color:var(--quiet);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;max-width:440px}
+.abar .sug:hover{color:var(--text);background:var(--hover)}
+.chatp{position:absolute;right:12px;bottom:52px;z-index:35;width:384px;height:540px;max-height:calc(100% - 112px);border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 16px 40px rgba(0,0,0,.16);display:flex;flex-direction:column;box-sizing:border-box}
+.chatp.wide{width:600px;height:calc(100% - 112px)}
+.cph{display:flex;align-items:center;gap:6px;padding:10px 8px 10px 14px;border-bottom:1px solid var(--line);flex:none}
+.cph .tt{flex:1;min-width:0;display:flex;flex-direction:column;gap:0}
+.cph .tt b{font-size:13.5px;font-weight:600}
+.cph .tt span{font-size:12px;color:var(--quiet);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.msgs{flex:1;min-height:0;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:12px}
+.mev{margin:0;font-size:13.5px;line-height:1.55;color:var(--text)}
+.mev.old{color:var(--quiet)}
+.myou{margin:0;align-self:flex-end;text-align:right;font-size:13.5px;color:var(--quiet);max-width:85%}
+.myou b{display:block;font-size:11.5px;font-weight:500;color:var(--faint)}
+.mcard{display:flex;align-items:center;gap:10px;padding:8px 8px 8px 12px;border-radius:9px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2);font-size:13px}
+.mcard .tt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.mcard .tt span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cin{display:flex;align-items:center;gap:6px;margin:0 10px 10px;padding:0 6px 0 12px;height:44px;border-radius:12px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2);flex:none}
+.cin:focus-within{box-shadow:inset 0 0 0 2px var(--focus)}
+.cin input{flex:1;border:0;background:none;font:400 13.5px Inter,system-ui,sans-serif;color:var(--text);min-width:0;height:100%}
+.cin input:focus-visible{outline:none}
+.cin input::placeholder{color:var(--faint)}
+.send{width:30px;height:30px;border-radius:15px;border:0;background:var(--accent);color:var(--onAccent);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
+.send:hover{background:var(--accentHover)}
+.evp{width:360px;flex:none;border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:var(--bg);border-radius:0 0 12px 0}
+.evp .cph{padding:10px 10px 10px 14px}
+.evp .sbox{display:flex;align-items:center;gap:10px;margin:12px 14px 0;padding:10px 12px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line);font-size:13px}
+.evp .sbox .tt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.evp .sbox .tt b{font-weight:600;font-size:15px;letter-spacing:-.01em}
+.evp .sbox .tt span{font-size:12px;color:var(--quiet);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+
+@media (max-width: 1199px) {
+  .body{flex-direction:column;overflow:auto}
+  .body.bconv{overflow:hidden}
+  .pane{flex:none}
+  .body.bconv .pane{flex:1}
+  .list{overflow:visible;flex:none}
+  .right{width:auto;border-left:0;border-top:1px solid var(--line);overflow:visible}
+  .right.convr{display:none}
+  .sstrip.onconv{display:flex;align-items:center;gap:6px;padding:4px 8px 4px 16px;border-bottom:1px solid var(--line);font-size:13px;flex:none}
+  .sstrip .sl{flex:1;min-width:0}
+  .week{grid-template-columns:1fr;overflow:visible;flex:none}
+  .wcol{border-left:0;border-top:1px solid var(--line);flex-direction:row;flex-wrap:wrap;align-items:flex-start;padding:8px 12px}
+  .wcol:first-child{border-top:0}
+  .wh{width:96px;flex:none;padding-top:6px}
+  .wchip{flex:1 1 220px;max-width:360px}
+}
+@media (max-width: 599px) {
+  .app{flex-direction:column}
+  .side{display:none}
+  .main{margin:0;border-radius:0;box-shadow:none}
+  .mh{padding:0 8px 0 16px}
+  .sstrip{display:flex;align-items:center;gap:6px;padding:4px 8px 4px 16px;border-bottom:1px solid var(--line);font-size:13px;flex:none}
+  .tabbar{display:flex;flex:none;border-top:1px solid var(--line);background:var(--chrome);padding:2px 4px}
+  .tab{flex:1;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:0;background:none;color:var(--quiet);font:500 11px Inter,system-ui,sans-serif;cursor:pointer;border-radius:8px}
+  .tab.on{color:var(--text)}
+  .tab:hover{background:var(--hover)}
+  .btn,.btn.sm,.btn.icon,.btn.icon.sm{min-height:44px;min-width:44px}
+  .seg button{height:44px;padding:0 12px;min-width:44px;justify-content:center;box-sizing:border-box}
+  .chip{height:44px}
+  .send{width:44px;height:44px;border-radius:22px}
+  .field{height:56px;margin-bottom:12px;padding:0 6px 0 16px}
+  .chk{width:44px;height:44px;box-shadow:none;background:none;margin:0 -12px 0 -14px;position:relative}
+  .chk.done{background:none;box-shadow:none}
+  .chk::before{content:"";position:absolute;width:18px;height:18px;border-radius:5px;box-shadow:inset 0 0 0 1.5px var(--line2)}
+  .chk.done::before{background:var(--sem-green);box-shadow:none}
+  .chk .ico{position:relative;z-index:1}
+  .li{flex-wrap:wrap;padding:6px 16px;gap:4px 12px}
+  .li .t{min-width:0}
+  .li .hov{visibility:visible}
+  .nm{min-height:44px}
+  .grid2{grid-template-columns:1fr}
+  .toolbar{padding:10px 12px}
+  .wcol{flex-direction:column;align-items:stretch}
+  .wh{width:auto;padding-top:0}
+  .wchip{min-height:44px;justify-content:center;max-width:none;flex:none}
+  .up{min-height:48px}
+  .tvb{padding:18px 16px}
+  .col{padding:12px 16px}
+  .stage{padding-top:4px}
+  .lnk,.grp,.mi{min-height:44px;display:inline-flex;align-items:center}
+  .ck{min-height:44px}
+  .evline{padding:4px 8px 4px 16px;flex-wrap:wrap}
+  .review{padding:8px 12px}
+  .wl{padding:8px 16px}
+  .trow{padding:10px 16px}
+  .ovl{padding-top:48px}
+  .opt{min-height:52px}
+  .li .rstart{display:none}
+  .review .sp{flex-basis:100%}
+  .review .sicon{display:none}
+  .endline .sp{flex-basis:100%}
+  .obj{flex-wrap:nowrap;padding:0}
+  .obj .btn{display:none}
+  .obj .nm{text-align:left}
+  .pcard{margin:0 8px}
+  .chart{gap:2px}
+  .bbtn{min-width:44px}
+  .bbtn s,.bbtn .ahead{width:44px}
+}
+</style>
+</helmet>
+<div class="app" style="{{vars}}">
+  <aside class="side">
+    <div class="brand"><dc-import name="Avatar" size="{{sm}}" mood="{{mood}}" g="{{g}}" theme="{{mode}}" tex="halftone" smode="pointer" session="{{sessV}}" c1="{{av1}}" c2="{{av2}}" bgu="{{chromeHex}}" hint-size="24px,24px"></dc-import><div><b>E.V.</b><span class="bs">{{status}}</span></div></div>
+    <div class="nav"><sc-for list="{{nav}}" as="n" hint-placeholder-count="5"><button type="button" class="{{n.cls}}" aria-current="{{n.cur}}" onClick="{{n.pick}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="{{n.icon}}"></path></svg>{{n.name}}</button></sc-for></div>
+    <sc-if value="{{sessSide}}" hint-placeholder-val="{{ false }}"><div class="sess"><button type="button" class="sl" onClick="{{goConv}}">{{ss.topic}}<span class="bs">{{ss.left}}</span></button><button type="button" class="btn ghost icon sm" aria-label="{{ss.brkLabel}}" onClick="{{ss.brk}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="{{ss.brkIcon}}"></path></svg></button><button type="button" class="btn ghost icon sm" aria-label="End the session" onClick="{{ss.end}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h12v12H6z"></path></svg></button></div></sc-if>
+    <div class="sec"><span>Today</span><span class="sp"></span><span>{{todayLeft}}</span></div>
+    <sc-for list="{{sideToday}}" as="s" hint-placeholder-count="4"><button type="button" class="{{s.cls}}" onClick="{{s.open}}"><i class="dot" style="--x:{{s.col}}"></i><span class="sn">{{s.name}}</span><span class="st">{{s.time}}</span></button></sc-for>
+    <sc-if value="{{sideMore}}" hint-placeholder-val="{{ true }}"><button type="button" class="si more" onClick="{{goToday}}">{{sideMoreLabel}}</button></sc-if>
+    <div class="sfoot">
+      <sc-if value="{{prefsOpen}}" hint-placeholder-val="{{ false }}"><div class="pop prefpop" onKeyDown="{{prefsKey}}">
+        <span class="lab">Theme</span>
+        <div class="seg"><sc-for list="{{modes}}" as="m" hint-placeholder-count="2"><button type="button" class="{{m.cls}}" onClick="{{m.pick}}">{{m.name}}</button></sc-for></div>
+        <span class="lab">Contrast</span>
+        <div class="seg"><sc-for list="{{contrasts}}" as="m" hint-placeholder-count="3"><button type="button" class="{{m.cls}}" onClick="{{m.pick}}">{{m.name}}</button></sc-for></div>
+      </div></sc-if>
+      <button type="button" class="{{prefsCls}}" aria-expanded="{{prefsOpen}}" onClick="{{togglePrefs}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8M14 5v4M8 15v4"></path></svg>Preferences</button>
+    </div>
+  </aside>
+  <div class="{{rcolCls}}">
+  <main class="main">
+    <div class="mh">
+      <sc-if value="{{isTask}}" hint-placeholder-val="{{ false }}"><button type="button" class="btn ghost icon sm" aria-label="Back to Today" onClick="{{closeTask}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button></sc-if>
+      <sc-if value="{{nIsEd}}" hint-placeholder-val="{{ false }}"><button type="button" class="btn ghost icon sm" aria-label="Back to Notes" onClick="{{toNotesList}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button></sc-if>
+      <h1>{{title}}</h1><sc-if value="{{nIsEd}}" hint-placeholder-val="{{ false }}"><span class="crumb">/ {{ed.short}}</span></sc-if><span class="sp"></span>
+      <sc-if value="{{nIsEd}}" hint-placeholder-val="{{ false }}"><span class="sync" role="status"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>Saved</span></sc-if>
+      <button type="button" class="{{newCls}}" ref="{{newRef}}" aria-haspopup="menu" aria-expanded="{{newOpen}}" onClick="{{toggleNew}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>New</button>
+    </div>
+    <sc-if value="{{newOpen}}" hint-placeholder-val="{{ false }}">
+      <div class="menu" role="menu" aria-label="Create" onKeyDown="{{menuKey}}">
+        <div class="mhd">Create</div>
+        <sc-for list="{{newItems}}" as="m" hint-placeholder-count="2"><button type="button" class="mi" role="menuitem" autoFocus="{{m.first}}" onClick="{{m.run}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="{{m.icon}}"></path></svg>{{m.label}}</button></sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{sessStrip}}" hint-placeholder-val="{{ false }}"><div class="{{sstripCls}}"><span class="sl"><b style="font-weight:600">{{ss.topic}}</b> · {{ss.left}}</span><button type="button" class="btn neutral sm" onClick="{{ss.brk}}">{{ss.brkLabel}}</button><button type="button" class="btn neutral sm" onClick="{{ss.end}}">End</button></div></sc-if>
+    <sc-if value="{{hasLine}}" hint-placeholder-val="{{ false }}"><div class="evline"><svg class="ico sicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6z"></path></svg><span class="et">{{line.text}}</span><sc-for list="{{line.acts}}" as="a" hint-placeholder-count="1"><button type="button" class="btn neutral sm" onClick="{{a.run}}">{{a.label}}</button></sc-for></div></sc-if>
+    <div class="{{bodyCls}}">
+
+      <sc-if value="{{isTask}}" hint-placeholder-val="{{ false }}">
+        <div class="pane">
+          <div class="tvh"><span class="mini">{{tv.crumb}}</span><span class="sp"></span><span class="mini">{{tv.pos}}</span><button type="button" class="btn ghost icon sm" aria-label="Previous task" onClick="{{tv.prev}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"></path></svg></button><button type="button" class="btn ghost icon sm" aria-label="Next task" onClick="{{tv.next}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"></path></svg></button></div>
+          <div class="tvb">
+            <div class="row" style="gap:12px;flex-wrap:nowrap"><button type="button" class="{{tv.chk}}" aria-label="Done" onClick="{{tv.toggle}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></button><h2>{{tv.name}}</h2></div>
+            <p class="desc">{{tv.desc}}</p>
+            <div class="col2"><span class="lab">Where it came from</span>
+              <sc-for list="{{tv.act}}" as="a" hint-placeholder-count="1"><div class="actv"><i class="dot" style="--x:{{a.col}}"></i><span class="sp">{{a.t}}</span><span class="mini">{{a.when}}</span></div></sc-for>
+            </div>
+          </div>
+        </div>
+        <aside class="right">
+          <div class="card props">
+            <div class="prop"><span>Status</span><div class="seg"><sc-for list="{{tv.status}}" as="o" hint-placeholder-count="2"><button type="button" class="{{o.cls}}" onClick="{{o.pick}}">{{o.name}}</button></sc-for></div></div>
+            <div class="prop"><span>Category</span><span><span class="badge" style="--x:{{tv.col}};--xt:{{tv.tint}};--xl:{{tv.line}}"><i></i>{{tv.tag}}</span></span></div>
+            <div class="prop"><span>Estimate</span><span>{{tv.est}}</span></div>
+            <div class="prop"><span>Due</span><span>{{tv.due}}</span></div>
+            <div class="prop"><span>Course</span><span>{{tv.course}}</span></div>
+            <sc-if value="{{tv.hasTopic}}" hint-placeholder-val="{{ true }}"><div class="prop"><span>Topic</span><button type="button" class="lnk" onClick="{{tv.quiz}}">{{tv.topic}}</button></div></sc-if>
+          </div>
+          <div class="col2">
+            <sc-if value="{{tv.startable}}" hint-placeholder-val="{{ true }}"><button type="button" class="btn primary wide" onClick="{{tv.start}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"></path></svg>{{tv.startLabel}}</button></sc-if>
+            <button type="button" class="btn neutral wide" onClick="{{tv.snooze}}">Snooze to tomorrow</button>
+          </div>
+          <span class="mini" style="line-height:1.5">{{tv.note}}</span>
+        </aside>
+      </sc-if>
+
+      <sc-if value="{{isConv}}" hint-placeholder-val="{{ true }}">
+        <div class="pane">
+          <div class="conv" ref="{{convRef}}"><div class="stage"><dc-import name="Avatar" size="{{big}}" mood="{{mood}}" g="{{g}}" theme="{{mode}}" tex="halftone" smode="pointer" session="{{sessV}}" c1="{{av1}}" c2="{{av2}}" bgu="{{bgHex}}" hint-size="128px,128px"></dc-import></div>
+          <div class="col">
+            <sc-if value="{{showCk}}" hint-placeholder-val="{{ true }}">
+              <div class="ckin">
+                <div class="row sb"><span class="lab">Daily check-in · Friday</span><span class="mini">{{ck.when}}</span></div>
+                <div class="row"><span style="font-size:13.5px">Energy today</span><div class="seg" role="group" aria-label="Energy, 1 to 5"><sc-for list="{{ck.opts}}" as="o" hint-placeholder-count="5"><button type="button" class="{{o.cls}}" aria-pressed="{{o.on}}" onClick="{{o.pick}}">{{o.name}}</button></sc-for></div></div>
+                <sc-if value="{{ck.has}}" hint-placeholder-val="{{ true }}"><span class="adv">{{ck.advice}}</span></sc-if>
+              </div>
+            </sc-if>
+            <sc-for list="{{chat}}" as="m" hint-placeholder-count="4">
+              <sc-if value="{{m.isYou}}" hint-placeholder-val="{{ false }}"><p class="you"><b>You</b>{{m.text}}</p></sc-if>
+              <sc-if value="{{m.isPast}}" hint-placeholder-val="{{ true }}"><p class="e">{{m.text}}</p></sc-if>
+              <sc-if value="{{m.isNow}}" hint-placeholder-val="{{ false }}"><p class="now">{{m.text}}</p></sc-if>
+            </sc-for>
+            <sc-if value="{{hasActs}}" hint-placeholder-val="{{ false }}"><div class="row"><sc-for list="{{acts}}" as="a" hint-placeholder-count="2"><button type="button" class="btn neutral sm" onClick="{{a.run}}">{{a.label}}</button></sc-for></div></sc-if>
+          </div></div>
+          <div class="chips"><sc-for list="{{chips}}" as="c" hint-placeholder-count="4"><button type="button" class="chip" onClick="{{c.run}}">{{c.label}}</button></sc-for></div>
+          <div class="field"><input type="text" ref="{{fieldRef}}" value="{{draft}}" onChange="{{onDraft}}" onKeyDown="{{onDraftKey}}" placeholder="Ask E.V., or “log: …” to add a Record entry" aria-label="Message E.V."><button type="button" class="send" aria-label="Send" onClick="{{sendDraft}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button></div>
+        </div>
+        <aside class="right convr">
+          <sc-if value="{{hasSess}}" hint-placeholder-val="{{ false }}">
+            <div class="card col2">
+              <div class="row sb"><span class="lab">Study session</span><span class="badge" style="--x:{{ss.col}};--xt:{{ss.tint}};--xl:{{ss.line}}"><i></i>{{ss.badge}}</span></div>
+              <div><div style="font-weight:600">{{ss.topic}}</div><div class="mini">{{ss.sub}}</div></div>
+              <div class="big">{{ss.left}}</div>
+              <div class="sbtns"><button type="button" class="btn neutral sm" onClick="{{ss.brk}}">{{ss.brkLabel}}</button><button type="button" class="btn neutral sm" onClick="{{ss.plus}}">+5 min</button><button type="button" class="btn neutral sm" onClick="{{ss.end}}">End</button></div>
+            </div>
+          </sc-if>
+          <sc-if value="{{noSess}}" hint-placeholder-val="{{ true }}">
+            <div class="card col2">
+              <span class="lab">{{note.lab}}</span>
+              <div><div style="font-weight:600">{{note.title}}</div><div class="mini">{{note.sub}}</div></div>
+              <button type="button" class="btn primary wide" onClick="{{startNote}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"></path></svg>{{note.cta}}</button>
+            </div>
+          </sc-if>
+          <span class="lab">Coming up</span>
+          <sc-for list="{{upNext}}" as="u" hint-placeholder-count="3"><button type="button" class="si" onClick="{{u.open}}"><i class="dot" style="--x:{{u.col}}"></i><span class="sn">{{u.name}}</span><span class="st">{{u.tag}}</span></button></sc-for>
+        </aside>
+      </sc-if>
+
+      <sc-if value="{{isToday}}" hint-placeholder-val="{{ false }}">
+        <div class="pane">
+          <div class="toolbar">
+            <sc-if value="{{isList}}" hint-placeholder-val="{{ true }}"><div class="seg"><sc-for list="{{tFilters}}" as="o" hint-placeholder-count="3"><button type="button" class="{{o.cls}}" onClick="{{o.pick}}">{{o.name}}<i>{{o.n}}</i></button></sc-for></div></sc-if>
+            <div class="seg"><sc-for list="{{tViews}}" as="o" hint-placeholder-count="2"><button type="button" class="{{o.cls}}" onClick="{{o.pick}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="{{o.icon}}"></path></svg>{{o.name}}</button></sc-for></div>
+            <sc-if value="{{isWeek}}" hint-placeholder-val="{{ false }}"><div class="row" style="gap:2px;flex-wrap:nowrap"><button type="button" class="btn ghost icon sm" aria-label="Previous week" onClick="{{wkPrev}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><button type="button" class="btn ghost sm" onClick="{{wkNow}}">Today</button><button type="button" class="btn ghost icon sm" aria-label="Next week" onClick="{{wkNext}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button><span class="mini" style="margin-left:6px;white-space:nowrap">{{wkLabel}}</span></div></sc-if>
+            <span class="sp"></span>
+            <sc-if value="{{isList}}" hint-placeholder-val="{{ true }}"><button type="button" class="btn neutral sm" disabled="{{hasProp}}" onClick="{{proposePlan}}"><svg class="ico sicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6z"></path></svg>Plan the rest</button></sc-if>
+            <button type="button" class="{{addCls}}" onClick="{{newTask}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Add</button>
+          </div>
+          <sc-if value="{{showReview}}" hint-placeholder-val="{{ false }}"><div class="review"><svg class="ico sicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6z"></path></svg><span class="sp">{{propText}}</span><button type="button" class="btn primary sm" onClick="{{acceptAll}}">Accept all</button><button type="button" class="btn neutral sm" onClick="{{rejectAll}}">Reject</button></div></sc-if>
+          <sc-if value="{{isList}}" hint-placeholder-val="{{ true }}">
+            <div class="list">
+              <sc-for list="{{todo}}" as="r" hint-placeholder-count="5">
+                <sc-if value="{{r.isAdd}}" hint-placeholder-val="{{ false }}"><div class="li padd"><svg class="ico sicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg><span>{{r.name}}</span><span class="badge" style="--x:{{r.col}};--xt:{{r.tint}};--xl:{{r.line}}"><i></i>{{r.tag}}</span><span class="sp"></span><span class="pmark">{{r.why}}</span><button type="button" class="btn ghost icon sm" aria-label="Accept this addition" onClick="{{r.ok}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></button><button type="button" class="btn ghost icon sm" aria-label="Reject this addition" onClick="{{r.no}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button><span class="t">{{r.time}}</span></div></sc-if>
+                <sc-if value="{{r.isTask}}" hint-placeholder-val="{{ true }}"><div class="{{r.cls}}"><button type="button" class="{{r.chk}}" aria-label="Done" onClick="{{r.toggle}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></button><button type="button" class="nm" onClick="{{r.open}}">{{r.name}}</button><span class="badge" style="--x:{{r.col}};--xt:{{r.tint}};--xl:{{r.line}}"><i></i>{{r.tag}}</span><span class="sp"></span>
+                  <sc-if value="{{r.isOff}}" hint-placeholder-val="{{ false }}"><span class="pmark">{{r.why}}</span><button type="button" class="btn ghost icon sm" aria-label="Accept moving it" onClick="{{r.ok}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></button><button type="button" class="btn ghost icon sm" aria-label="Keep it on today" onClick="{{r.no}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></sc-if>
+                  <sc-if value="{{r.startable}}" hint-placeholder-val="{{ false }}"><button type="button" class="{{r.startCls}}" onClick="{{r.start}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"></path></svg>Start</button></sc-if><span class="t">{{r.time}}</span></div></sc-if>
+              </sc-for>
+              <sc-if value="{{hasDone}}" hint-placeholder-val="{{ true }}"><button type="button" class="grp" aria-expanded="{{showDone}}" onClick="{{toggleDone}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="{{doneChev}}"></path></svg>{{doneLabel}}</button></sc-if>
+              <sc-for list="{{doneRows}}" as="r" hint-placeholder-count="1"><div class="{{r.cls}}"><button type="button" class="{{r.chk}}" aria-label="Not done" onClick="{{r.toggle}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></button><button type="button" class="nm" onClick="{{r.open}}">{{r.name}}</button><span class="badge" style="--x:{{r.col}};--xt:{{r.tint}};--xl:{{r.line}}"><i></i>{{r.tag}}</span><span class="sp"></span><span class="t">{{r.time}}</span></div></sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{isWeek}}" hint-placeholder-val="{{ false }}">
+            <div class="week"><sc-for list="{{wdays}}" as="d" hint-placeholder-count="7"><div class="{{d.cls}}"><div class="{{d.hcls}}"><span>{{d.dow}}</span><b>{{d.num}}</b><span>{{d.mon}}</span></div><sc-for list="{{d.items}}" as="it" hint-placeholder-count="2"><button type="button" class="{{it.cls}}" onClick="{{it.pick}}"><span>{{it.name}}</span><span class="wt"><i class="dot" style="--x:{{it.col}}"></i>{{it.sub}}</span></button></sc-for></div></sc-for></div>
+          </sc-if>
+        </div>
+        <aside class="right">
+          <sc-if value="{{isWeek}}" hint-placeholder-val="{{ false }}">
+            <sc-if value="{{hasCal}}" hint-placeholder-val="{{ false }}">
+              <span class="badge" style="--x:{{cs.col}};--xt:{{cs.tint}};--xl:{{cs.line}};align-self:flex-start"><i></i>{{cs.tag}}</span>
+              <div style="font-size:17px;font-weight:600;line-height:1.3">{{cs.name}}</div>
+              <div class="card props"><div class="prop"><span>When</span><span>{{cs.when}}</span></div><div class="prop"><span>Course</span><span>{{cs.course}}</span></div><div class="prop"><span>{{cs.statLab}}</span><span>{{cs.stat}}</span></div></div>
+              <div class="col2" style="align-items:flex-start"><sc-if value="{{cs.canQuiz}}" hint-placeholder-val="{{ true }}"><button type="button" class="btn neutral" onClick="{{cs.quiz}}">Quiz me on it</button></sc-if><sc-if value="{{cs.hasTask}}" hint-placeholder-val="{{ false }}"><button type="button" class="btn neutral" onClick="{{cs.open}}">Open the task</button></sc-if></div>
+            </sc-if>
+            <sc-if value="{{noCal}}" hint-placeholder-val="{{ true }}">
+              <div class="card col2"><span class="lab">Next exam</span><div style="font-weight:600">{{nx.name}}</div><div class="mini">{{nx.when}}</div><div class="hb"><i style="--x:{{green}};width:{{nx.solid}}"></i><i style="--x:{{yellow}};width:{{nx.almost}}"></i></div><span class="mini">{{nx.text}}</span></div>
+              <span class="lab">{{wkSumLab}}</span>
+              <sc-for list="{{wkSum}}" as="u" hint-placeholder-count="2"><div class="row sb" style="font-size:13px"><span class="row" style="gap:8px"><i class="dot" style="--x:{{u.col}}"></i>{{u.name}}</span><span class="mini">{{u.n}}</span></div></sc-for>
+            </sc-if>
+          </sc-if>
+          <sc-if value="{{isList}}" hint-placeholder-val="{{ true }}">
+            <div class="card col2">
+              <span class="lab">Today’s budget</span>
+              <div class="big">{{day.big}}</div>
+              <div class="bar"><i style="--x:{{day.col}};width:{{day.pct}}"></i></div>
+              <div class="prop"><span class="mini">On the list</span><span>{{day.listed}}</span></div>
+              <div class="prop"><span class="mini">Done</span><span>{{day.done}}</span></div>
+            </div>
+            <div class="col2" style="gap:0"><span class="lab">E.V.’s changes today</span>
+              <sc-for list="{{chgTop}}" as="c" hint-placeholder-count="2"><div class="{{c.cls}}"><i class="dot" style="--x:{{c.col}}"></i><div class="col2 sp" style="gap:2px"><span class="ct">{{c.label}}</span><span class="mini">{{c.sub}}</span></div><button type="button" class="btn ghost sm" onClick="{{c.toggle}}">{{c.btn}}</button></div></sc-for>
+              <sc-if value="{{noChg}}" hint-placeholder-val="{{ false }}"><span class="mini" style="padding-top:8px">Nothing yet today.</span></sc-if>
+            </div>
+          </sc-if>
+        </aside>
+      </sc-if>
+
+      <sc-if value="{{isStudy}}" hint-placeholder-val="{{ false }}">
+        <div class="pane">
+          <div class="toolbar">
+            <sc-if value="{{stOverview}}" hint-placeholder-val="{{ true }}"><div class="seg"><sc-for list="{{courses}}" as="o" hint-placeholder-count="2"><button type="button" class="{{o.cls}}" onClick="{{o.pick}}">{{o.name}}</button></sc-for></div></sc-if>
+            <sc-if value="{{stSub}}" hint-placeholder-val="{{ false }}"><button type="button" class="btn ghost sm" onClick="{{toOverview}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>All topics</button><span class="mini">{{stSubLabel}}</span></sc-if>
+            <span class="sp"></span>
+            <button type="button" class="btn neutral" onClick="{{quizMe}}">Quiz me</button>
+            <sc-if value="{{notWeak}}" hint-placeholder-val="{{ true }}"><button type="button" class="btn neutral" onClick="{{weakSpots}}">{{weakLabel}}</button></sc-if>
+            <sc-if value="{{showStart}}" hint-placeholder-val="{{ true }}"><button type="button" class="btn primary" onClick="{{startNote}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"></path></svg>Start session</button></sc-if>
+          </div>
+          <sc-if value="{{stOverview}}" hint-placeholder-val="{{ true }}">
+            <div class="scroll">
+              <div class="card exh col2">
+                <div class="row sb"><span><b style="font-weight:600">{{ex.name}}</b><span class="mini"> · {{ex.when}}</span></span><span class="mini">{{ex.count}}</span></div>
+                <div class="hb"><i style="--x:{{green}};width:{{ex.solid}}"></i><i style="--x:{{yellow}};width:{{ex.almost}}"></i></div>
+                <div class="col2" style="gap:0;margin-top:4px">
+                  <sc-for list="{{objs}}" as="o" hint-placeholder-count="6"><div class="{{o.cls}}"><span class="badge" style="--x:{{o.col}};--xt:{{o.tint}};--xl:{{o.line}};min-width:64px;justify-content:center"><i></i>{{o.status}}</span><button type="button" class="nm sp" onClick="{{o.pick}}">{{o.name}}</button><span class="ow">{{o.weak}}</span><button type="button" class="btn ghost sm oq" aria-label="{{o.qlabel}}" onClick="{{o.quiz}}">Quiz me</button></div></sc-for>
+                </div>
+              </div>
+              <div class="grid2">
+                <div class="card col2" style="gap:4px">
+                  <div class="row sb" style="padding-bottom:4px"><span class="lab">Coming up in {{courseName}}</span><button type="button" class="btn ghost sm" onClick="{{openWeek}}">Week view</button></div>
+                  <sc-for list="{{courseUp}}" as="u" hint-placeholder-count="4"><button type="button" class="up" onClick="{{u.pick}}"><span class="ud">{{u.date}}</span><span class="un"><i class="dot" style="--x:{{u.col}}"></i><span class="ut">{{u.name}}</span></span><span class="ud">{{u.rel}}</span></button></sc-for>
+                </div>
+                <div class="card col2" style="gap:12px">
+                  <span class="lab">Mini quiz · five questions from this course</span>
+                  <div style="font-size:17px;font-weight:500">{{quizTeaser}}</div>
+                  <div class="mini">Misses are proposed as weak spots at the end, for you to review.</div>
+                  <div class="row"><button type="button" class="btn neutral" onClick="{{quizMe}}">Take the quiz</button></div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{stQuiz}}" hint-placeholder-val="{{ false }}">
+            <div class="scroll">
+            <sc-if value="{{qz.live}}" hint-placeholder-val="{{ true }}">
+              <div class="fcard" tabIndex="-1" ref="{{cardRef}}" onKeyDown="{{qz.key}}">
+                <div class="row sb"><span class="lab">{{qz.lab}}</span><span class="mini">{{qz.score}}</span></div>
+                <div class="bar"><i style="--x:{{violet}};width:{{qz.pct}}"></i></div>
+                <span class="q">{{qz.q}}</span>
+                <div class="col2" style="gap:8px"><sc-for list="{{qz.opts}}" as="o" hint-placeholder-count="4"><button type="button" class="{{o.cls}}" style="--x:{{o.col}};--xt:{{o.tint}};--xl:{{o.line}}" onClick="{{o.pick}}"><span class="k">{{o.k}}</span><span class="sp">{{o.t}}</span><sc-if value="{{o.mark}}" hint-placeholder-val="{{ false }}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="{{o.icon}}"></path></svg></sc-if></button></sc-for></div>
+                <sc-if value="{{qz.answered}}" hint-placeholder-val="{{ false }}"><div class="col2">
+                  <span style="font-size:13.5px">{{qz.expl}}</span>
+                  <div class="row"><button type="button" class="btn primary" onClick="{{qz.next}}">{{qz.nextLabel}}<span class="kbd">Enter</span></button></div>
+                </div></sc-if>
+              </div>
+            </sc-if>
+            <sc-if value="{{qz.over}}" hint-placeholder-val="{{ false }}">
+              <div class="fcard">
+                <span class="lab">{{qz.lab}}</span>
+                <div class="big">{{qz.sumBig}}</div>
+                <span class="mini">{{qz.sumSub}}</span>
+                <sc-if value="{{qz.hasProp}}" hint-placeholder-val="{{ true }}"><div class="endline"><span class="sp">{{qz.propLine}}</span><button type="button" class="btn primary sm" onClick="{{qz.acceptAll}}">Accept all</button><button type="button" class="btn neutral sm" onClick="{{weakSpots}}">Review</button></div></sc-if>
+                <div class="row"><button type="button" class="btn neutral" onClick="{{quizMe}}">New quiz</button><button type="button" class="btn ghost" onClick="{{toOverview}}">Back to topics</button></div>
+              </div>
+            </sc-if>
+            </div>
+          </sc-if>
+          <sc-if value="{{stWeak}}" hint-placeholder-val="{{ false }}">
+            <div class="list">
+              <sc-if value="{{hasPropW}}" hint-placeholder-val="{{ false }}"><div class="dayh">{{toReviewLab}}</div></sc-if>
+              <sc-for list="{{propRows}}" as="w" hint-placeholder-count="1"><div class="trow"><div class="tt"><span style="font-size:13.5px;font-weight:500">{{w.name}}</span><span class="mini">{{w.sub}}</span></div><div class="acts"><button type="button" class="btn neutral sm" onClick="{{w.accept}}">Accept</button><button type="button" class="btn ghost sm" disabled="{{w.noJoin}}" aria-label="{{w.joinAria}}" onClick="{{w.join}}">Join</button><button type="button" class="btn ghost sm" onClick="{{w.later}}">Not now</button><button type="button" class="btn ghost sm" onClick="{{w.decline}}">Decline</button></div></div></sc-for>
+              <div class="dayh">{{weakIntro}}</div>
+              <sc-for list="{{weakRows}}" as="w" hint-placeholder-count="3"><div class="wl"><i class="dot" style="--x:{{yellow}}"></i><div class="col2 sp" style="gap:2px"><span style="font-size:13.5px">{{w.name}}</span><span class="mini">{{w.sub}}</span></div><button type="button" class="btn neutral sm" onClick="{{w.drill}}">Drill</button><button type="button" class="btn ghost sm" onClick="{{w.solid}}">Mark solid</button></div></sc-for>
+              <sc-if value="{{weakAny}}" hint-placeholder-val="{{ true }}"><div class="wl" style="border-bottom:0"><button type="button" class="btn neutral sm" onClick="{{drillAll}}">Quiz me on all of them</button></div></sc-if>
+              <sc-if value="{{weakNone}}" hint-placeholder-val="{{ false }}"><div class="empty">No weak spots open in this course.</div></sc-if>
+            </div>
+          </sc-if>
+        </div>
+        <aside class="right">
+          <span class="lab">{{sp.lab}}</span>
+          <sc-if value="{{sp.isObj}}" hint-placeholder-val="{{ true }}">
+            <div style="font-size:16px;font-weight:600;line-height:1.3">{{sp.name}}</div>
+            <div class="row"><span class="badge" style="--x:{{sp.col}};--xt:{{sp.tint}};--xl:{{sp.line}}"><i></i>{{sp.status}}</span><span class="mini">{{sp.exam}}</span></div>
+            <span class="lab">Weak spots under it</span>
+          </sc-if>
+          <sc-for list="{{sp.rows}}" as="p" hint-placeholder-count="3"><div class="si static"><i class="dot" style="--x:{{p.col}}"></i><span class="sn">{{p.name}}</span><span class="st">{{p.sub}}</span></div></sc-for>
+          <sc-if value="{{sp.isObj}}" hint-placeholder-val="{{ true }}"><button type="button" class="btn neutral" style="align-self:flex-start" onClick="{{sp.quiz}}">Quiz me on this</button></sc-if>
+          <span class="mini" style="line-height:1.5">{{sp.note}}</span>
+        </aside>
+      </sc-if>
+
+      <sc-if value="{{isProgress}}" hint-placeholder-val="{{ false }}">
+        <div class="pane"><div class="scroll">
+          <div class="toolbar">
+            <div class="seg"><sc-for list="{{periods}}" as="o" hint-placeholder-count="3"><button type="button" class="{{o.cls}}" onClick="{{o.pick}}">{{o.name}}</button></sc-for></div>
+          </div>
+          <div class="card props" style="margin:18px 18px 12px"><sc-for list="{{stats}}" as="s" hint-placeholder-count="3"><div class="prop"><span>{{s.name}}</span><span><b style="font-weight:600">{{s.val}}</b><span class="mini"> · {{s.delta}}</span></span></div></sc-for></div>
+          <div class="card pcard">
+            <div class="row sb"><b style="font-weight:600">{{chartTitle}}</b><span class="mini">From your logged sessions</span></div>
+            <div class="chart"><sc-for list="{{bars}}" as="b" hint-placeholder-count="7"><div class="bcol"><sc-if value="{{b.tipOn}}" hint-placeholder-val="{{ false }}"><div class="tip" style="bottom:{{b.tipB}}">{{b.tip}}</div></sc-if><button type="button" class="bbtn" aria-label="{{b.aria}}" onClick="{{b.pick}}" onMouseEnter="{{b.enter}}" onMouseLeave="{{b.leave}}" onFocus="{{b.enter}}" onBlur="{{b.leave}}"><sc-if value="{{b.ahead}}" hint-placeholder-val="{{ false }}"><span class="ahead"></span></sc-if><sc-if value="{{b.has}}" hint-placeholder-val="{{ true }}"><s style="--x:{{violet}};height:{{b.h}}"></s></sc-if></button><span class="{{b.lcls}}">{{b.label}}</span></div></sc-for></div>
+          </div>
+          <div class="grid2" style="padding-top:12px">
+            <div class="card col2"><span class="lab">By course · {{periodName}}</span><sc-for list="{{byCourse}}" as="c" hint-placeholder-count="2"><div class="col2" style="gap:5px"><div class="row sb"><span style="font-size:13.5px">{{c.name}}</span><span class="mini">{{c.val}}</span></div><div class="hb"><i style="--x:{{violet}};width:{{c.pct}}"></i></div></div></sc-for></div>
+            <div class="card col2"><span class="lab">Exam readiness · objectives solid</span><sc-for list="{{ready}}" as="c" hint-placeholder-count="2"><div class="col2" style="gap:5px"><div class="row sb"><span style="font-size:13.5px">{{c.name}}</span><span class="mini">{{c.val}}</span></div><div class="hb"><i style="--x:{{green}};width:{{c.solid}}"></i><i style="--x:{{yellow}};width:{{c.almost}}"></i></div></div></sc-for></div>
+          </div>
+        </div></div>
+        <aside class="right">
+          <span class="lab">{{pd.lab}}</span>
+          <div class="big">{{pd.total}}</div>
+          <span class="lab">{{pd.listLab}}</span>
+          <sc-for list="{{pd.items}}" as="p" hint-placeholder-count="3"><div class="row" style="flex-wrap:nowrap;align-items:flex-start;font-size:13px"><span class="badge" style="--x:{{p.col}};--xt:{{p.tint}};--xl:{{p.line}}"><i></i>{{p.tag}}</span><div class="col2" style="gap:1px"><span>{{p.name}}</span><span class="mini">{{p.val}}</span></div></div></sc-for>
+        </aside>
+      </sc-if>
+
+      <sc-if value="{{isRecord}}" hint-placeholder-val="{{ false }}">
+        <div class="pane">
+          <div class="toolbar">
+            <button type="button" class="btn neutral sm" aria-expanded="{{filterOpen}}" onClick="{{toggleFilter}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>{{filterLabel}}</button>
+            <div class="seg"><sc-for list="{{rTabs}}" as="o" hint-placeholder-count="4"><button type="button" class="{{o.cls}}" onClick="{{o.pick}}">{{o.name}}<i>{{o.n}}</i></button></sc-for></div>
+            <span class="sp"></span>
+            <button type="button" class="btn primary sm" onClick="{{logSomething}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Log something</button>
+            <sc-if value="{{filterOpen}}" hint-placeholder-val="{{ false }}">
+              <div class="pop" style="left:18px" onKeyDown="{{popKey}}">
+                <span class="lab">Course</span>
+                <div class="seg"><sc-for list="{{fCourses}}" as="o" hint-placeholder-count="3"><button type="button" class="{{o.cls}}" onClick="{{o.pick}}">{{o.name}}</button></sc-for></div>
+                <span class="lab">When</span>
+                <div class="seg"><sc-for list="{{fWhens}}" as="o" hint-placeholder-count="3"><button type="button" class="{{o.cls}}" onClick="{{o.pick}}">{{o.name}}</button></sc-for></div>
+                <label class="ck"><input class="cki" type="checkbox" checked="{{fLife}}" onChange="{{toggleLife}}"><span class="ckb"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></span>Show workouts</label>
+                <div class="row sb"><button type="button" class="btn ghost sm" onClick="{{clearFilter}}">Reset</button><button type="button" class="btn neutral sm" onClick="{{toggleFilter}}">Done</button></div>
+              </div>
+            </sc-if>
+          </div>
+          <div class="list">
+            <sc-for list="{{recGroups}}" as="g" hint-placeholder-count="2">
+              <div class="dayh">{{g.day}}</div>
+              <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="3"><div class="{{r.cls}}"><span class="badge" style="--x:{{r.col}};--xt:{{r.tint}};--xl:{{r.line}};min-width:74px"><i></i>{{r.tag}}</span><button type="button" class="nm" onClick="{{r.open}}">{{r.name}}</button><span class="sp"></span><span class="mini">{{r.meta}}</span><span class="t">{{r.time}}</span></div></sc-for>
+            </sc-for>
+            <sc-if value="{{recEmpty}}" hint-placeholder-val="{{ false }}"><div class="empty">Nothing matches this filter.</div></sc-if>
+          </div>
+        </div>
+        <aside class="right">
+          <sc-if value="{{hasRec}}" hint-placeholder-val="{{ true }}">
+            <span class="badge" style="--x:{{rd.col}};--xt:{{rd.tint}};--xl:{{rd.line}};align-self:flex-start"><i></i>{{rd.tag}}</span>
+            <div style="font-size:17px;font-weight:600;line-height:1.3">{{rd.name}}</div>
+            <div class="card props">
+              <div class="prop"><span>When</span><span>{{rd.when}}</span></div>
+              <div class="prop"><span>Result</span><span>{{rd.meta}}</span></div>
+              <div class="prop"><span>Course</span><span>{{rd.course}}</span></div>
+            </div>
+            <p class="desc" style="font-size:13.5px">{{rd.detail}}</p>
+            <sc-if value="{{rd.hasDeck}}" hint-placeholder-val="{{ true }}"><button type="button" class="btn neutral" style="align-self:flex-start" onClick="{{rd.review}}">{{rd.reviewLabel}}</button></sc-if>
+          </sc-if>
+          <sc-if value="{{noRec}}" hint-placeholder-val="{{ false }}"><span class="mini" style="line-height:1.5">Pick an entry to see it.</span></sc-if>
+        </aside>
+      </sc-if>
+
+      <sc-if value="{{nIsList}}" hint-placeholder-val="{{ false }}">
+
+        <div class="pane">
+          <div class="toolbar">
+            <div class="seg"><sc-for list="{{nFilters}}" as="o" hint-placeholder-count="3"><button type="button" class="{{o.cls}}" aria-pressed="{{o.on}}" onClick="{{o.pick}}">{{o.name}}<i>{{o.n}}</i></button></sc-for></div>
+            <span class="sp"></span>
+            <button type="button" class="btn primary sm" onClick="{{newNote}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>New note</button>
+          </div>
+          <div class="list">
+            <sc-for list="{{nGroups}}" as="g" hint-placeholder-count="2">
+              <div class="dayh">{{g.name}}<i>{{g.n}}</i></div>
+              <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="3"><div class="{{r.cls}}"><svg class="ico sicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h9l3 3v13H6zM9 10h6M9 14h6"></path></svg><button type="button" class="nm" aria-current="{{r.cur}}" onClick="{{r.pick}}">{{r.title}}</button><span class="sp"></span><button type="button" class="btn ghost sm hov" aria-label="{{r.openLabel}}" onClick="{{r.open}}">Open</button><span class="mini nk">{{r.kind}}</span><span class="t">{{r.when}}</span></div></sc-for>
+            </sc-for>
+            <sc-if value="{{nEmptyAll}}" hint-placeholder-val="{{ false }}"><div class="nempty"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h9l3 3v13H6zM9 10h6M9 14h6"></path></svg><b>No notes yet</b><span>A new note is where you study: it starts a 25-minute session, and E.V. follows along as you write.</span></div></sc-if>
+            <sc-if value="{{nEmptyCourse}}" hint-placeholder-val="{{ false }}"><div class="nempty"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h9l3 3v13H6zM9 10h6M9 14h6"></path></svg><b>No {{nCourseName}} notes yet</b><span>Notes for this course show here, newest first.</span><button type="button" class="btn neutral sm" onClick="{{nShowAll}}">Show all notes</button></div></sc-if>
+          </div>
+        </div>
+        <aside class="right">
+          <sc-if value="{{pvNone}}" hint-placeholder-val="{{ false }}"><span class="mini" style="line-height:1.5">{{pvNoneText}}</span></sc-if>
+          <sc-if value="{{pvHas}}" hint-placeholder-val="{{ true }}">
+          <span class="badge" style="--x:{{quietCol}};--xt:{{quietTint}};--xl:{{quietLine}};align-self:flex-start"><i></i>{{pv.course}}</span>
+          <div class="pvt" style="font-size:17px;font-weight:600;line-height:1.3">{{pv.title}}</div>
+          <div class="card props">
+            <div class="prop"><span>From</span><span>{{pv.kind}}</span></div>
+            <div class="prop"><span>Edited</span><span>{{pv.edited}}</span></div>
+            <div class="prop"><span>Length</span><span>{{pv.words}}</span></div>
+            <div class="prop"><span>Studied</span><span>{{pv.studied}}</span></div>
+          </div>
+          <span class="lab">On this page</span>
+          <div style="display:flex;flex-direction:column;margin-top:-8px"><sc-for list="{{pv.outline}}" as="o" hint-placeholder-count="3"><div class="si static"><span class="sn">{{o}}</span></div></sc-for></div>
+          <div class="col2"><button type="button" class="btn neutral wide" onClick="{{pv.open}}">Open note</button><button type="button" class="btn neutral wide" onClick="{{pv.study}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"></path></svg>Study with E.V.</button></div>
+          <span class="mini" style="line-height:1.5">You study where you write: a new note starts a session, and E.V. follows along beside it. She never edits your note.</span>
+          </sc-if>
+        </aside>
+      </sc-if>
+
+
+      <sc-if value="{{nIsEd}}" hint-placeholder-val="{{ false }}">
+        <div class="pane">
+          <div class="fbar" role="toolbar" aria-label="Formatting">
+            <button type="button" class="btn ghost icon sm" aria-label="Undo" title="Undo  ⌘Z" disabled="{{noUndo}}" onClick="{{undo}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3"></path></svg></button>
+            <button type="button" class="btn ghost icon sm" aria-label="Redo" title="Redo  ⌘⇧Z" disabled="{{noRedo}}" onClick="{{redo}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14l5-5-5-5M20 9H9a5 5 0 0 0 0 10h3"></path></svg></button>
+            <span class="fsep"></span>
+            <button type="button" class="btn ghost sm stb" aria-haspopup="menu" aria-expanded="{{styleOpen}}" aria-label="{{stAria}}" onClick="{{toggleStyle}}"><span class="gl"><sc-if value="{{st.svg}}" hint-placeholder-val="{{ false }}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="{{st.icon}}"></path></svg></sc-if><sc-if value="{{st.txt}}" hint-placeholder-val="{{ true }}">{{st.gl}}</sc-if></span><span class="lb">{{st.name}}</span><svg class="ico sicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+            <span class="fsep"></span>
+            <sc-for list="{{fmts}}" as="f" hint-placeholder-count="4"><button type="button" class="{{f.cls}}" aria-label="{{f.label}}" title="{{f.tip}}" aria-pressed="{{f.on}}" onClick="{{f.run}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="{{f.icon}}"></path></svg></button></sc-for>
+            <span class="fsep"></span>
+            <button type="button" class="{{lkCls}}" aria-label="Link" title="Link  ⌘K" aria-haspopup="dialog" aria-expanded="{{linkOpen}}" onClick="{{toggleLink}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg></button>
+            <sc-if value="{{styleOpen}}" hint-placeholder-val="{{ false }}">
+              <div class="menu stm" role="menu" aria-label="Text style" onKeyDown="{{menuKeys}}">
+                <sc-for list="{{styles}}" as="m" hint-placeholder-count="7"><button type="button" class="{{m.cls}}" role="menuitemradio" aria-checked="{{m.on}}" autoFocus="{{m.on}}" onClick="{{m.pick}}"><span class="gl"><sc-if value="{{m.svg}}" hint-placeholder-val="{{ false }}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="{{m.icon}}"></path></svg></sc-if><sc-if value="{{m.txt}}" hint-placeholder-val="{{ true }}">{{m.gl}}</sc-if></span><span class="lb">{{m.name}}</span><span class="ks">{{m.keys}}</span></button></sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{linkOpen}}" hint-placeholder-val="{{ false }}">
+              <div class="pop lkp" role="dialog" aria-label="Add a link" onKeyDown="{{linkKey}}">
+                <label class="lab" for="lkin">Link</label>
+                <input id="lkin" class="in" type="url" placeholder="Paste or type a link" autoFocus="{{yes}}">
+                <div class="row" style="justify-content:flex-end"><button type="button" class="btn ghost sm" onClick="{{toggleLink}}">Cancel</button><button type="button" class="btn neutral sm" onClick="{{addLink}}">Add link</button></div>
+              </div>
+            </sc-if>
+          </div>
+          <div class="scroll">
+            <article class="doc" aria-label="{{ed.aria}}">
+              <div class="dmeta"><button type="button" class="btn ghost sm" aria-label="{{ed.courseAria}}"><span>{{ed.course}}</span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button><span>·</span><span class="dt">{{ed.kind}}</span><span>·</span><span class="dt">{{ed.edited}}</span></div>
+              <sc-if value="{{ed.blank}}" hint-placeholder-val="{{ false }}">
+                <h1 class="ph">Lecture or topic<span class="caret"></span></h1>
+                <p class="ph">Write as the lecture goes. Type “# ” for a heading, “- ” for a list, “[] ” for a checklist, or use the bar above.</p>
+              </sc-if>
+              <sc-for list="{{ed.doc}}" as="b" hint-placeholder-count="6">
+                <sc-if value="{{b.h1}}" hint-placeholder-val="{{ false }}"><h1><sc-for list="{{b.segs}}" as="g" hint-placeholder-count="1"><sc-if value="{{g.b}}" hint-placeholder-val="{{ false }}"><strong>{{g.t}}</strong></sc-if><sc-if value="{{g.i}}" hint-placeholder-val="{{ false }}"><em>{{g.t}}</em></sc-if><sc-if value="{{g.n}}" hint-placeholder-val="{{ true }}"><span>{{g.t}}</span></sc-if></sc-for></h1></sc-if>
+                <sc-if value="{{b.h2}}" hint-placeholder-val="{{ false }}"><h2><sc-for list="{{b.segs}}" as="g" hint-placeholder-count="1"><sc-if value="{{g.b}}" hint-placeholder-val="{{ false }}"><strong>{{g.t}}</strong></sc-if><sc-if value="{{g.i}}" hint-placeholder-val="{{ false }}"><em>{{g.t}}</em></sc-if><sc-if value="{{g.n}}" hint-placeholder-val="{{ true }}"><span>{{g.t}}</span></sc-if></sc-for></h2></sc-if>
+                <sc-if value="{{b.h3}}" hint-placeholder-val="{{ false }}"><h3><sc-for list="{{b.segs}}" as="g" hint-placeholder-count="1"><sc-if value="{{g.b}}" hint-placeholder-val="{{ false }}"><strong>{{g.t}}</strong></sc-if><sc-if value="{{g.i}}" hint-placeholder-val="{{ false }}"><em>{{g.t}}</em></sc-if><sc-if value="{{g.n}}" hint-placeholder-val="{{ true }}"><span>{{g.t}}</span></sc-if></sc-for></h3></sc-if>
+                <sc-if value="{{b.p}}" hint-placeholder-val="{{ true }}"><p><sc-for list="{{b.segs}}" as="g" hint-placeholder-count="1"><sc-if value="{{g.b}}" hint-placeholder-val="{{ false }}"><strong>{{g.t}}</strong></sc-if><sc-if value="{{g.i}}" hint-placeholder-val="{{ false }}"><em>{{g.t}}</em></sc-if><sc-if value="{{g.n}}" hint-placeholder-val="{{ true }}"><span>{{g.t}}</span></sc-if></sc-for></p></sc-if>
+                <sc-if value="{{b.ul}}" hint-placeholder-val="{{ false }}"><ul><sc-for list="{{b.items}}" as="it" hint-placeholder-count="2"><li><sc-for list="{{it.segs}}" as="g" hint-placeholder-count="1"><sc-if value="{{g.b}}" hint-placeholder-val="{{ false }}"><strong>{{g.t}}</strong></sc-if><sc-if value="{{g.i}}" hint-placeholder-val="{{ false }}"><em>{{g.t}}</em></sc-if><sc-if value="{{g.n}}" hint-placeholder-val="{{ true }}"><span>{{g.t}}</span></sc-if></sc-for></li></sc-for></ul></sc-if>
+                <sc-if value="{{b.ol}}" hint-placeholder-val="{{ false }}"><ol><sc-for list="{{b.items}}" as="it" hint-placeholder-count="2"><li><sc-for list="{{it.segs}}" as="g" hint-placeholder-count="1"><sc-if value="{{g.b}}" hint-placeholder-val="{{ false }}"><strong>{{g.t}}</strong></sc-if><sc-if value="{{g.i}}" hint-placeholder-val="{{ false }}"><em>{{g.t}}</em></sc-if><sc-if value="{{g.n}}" hint-placeholder-val="{{ true }}"><span>{{g.t}}</span></sc-if></sc-for></li></sc-for></ol></sc-if>
+                <sc-if value="{{b.todo}}" hint-placeholder-val="{{ false }}"><ul class="todo"><sc-for list="{{b.items}}" as="it" hint-placeholder-count="2"><li class="{{it.cls}}"><button type="button" class="{{it.chk}}" aria-pressed="{{it.pressed}}" aria-label="{{it.aria}}" onClick="{{it.toggle}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></button><span class="tx"><sc-for list="{{it.segs}}" as="g" hint-placeholder-count="1"><sc-if value="{{g.b}}" hint-placeholder-val="{{ false }}"><strong>{{g.t}}</strong></sc-if><sc-if value="{{g.i}}" hint-placeholder-val="{{ false }}"><em>{{g.t}}</em></sc-if><sc-if value="{{g.n}}" hint-placeholder-val="{{ true }}"><span>{{g.t}}</span></sc-if></sc-for></span></li></sc-for></ul></sc-if>
+              </sc-for>
+              <sc-if value="{{cb.on}}" hint-placeholder-val="{{ true }}"><div class="cline" ref="{{caretRef}}">
+                <sc-if value="{{cb.h1}}" hint-placeholder-val="{{ false }}"><h1><span class="{{cb.cls}}">{{cb.text}}</span><span class="caret"></span></h1></sc-if>
+                <sc-if value="{{cb.h2}}" hint-placeholder-val="{{ false }}"><h2><span class="{{cb.cls}}">{{cb.text}}</span><span class="caret"></span></h2></sc-if>
+                <sc-if value="{{cb.h3}}" hint-placeholder-val="{{ false }}"><h3><span class="{{cb.cls}}">{{cb.text}}</span><span class="caret"></span></h3></sc-if>
+                <sc-if value="{{cb.p}}" hint-placeholder-val="{{ true }}"><p><span class="{{cb.cls}}">{{cb.text}}</span><span class="caret"></span></p></sc-if>
+                <sc-if value="{{cb.ul}}" hint-placeholder-val="{{ false }}"><ul><li><span class="{{cb.cls}}">{{cb.text}}</span><span class="caret"></span></li></ul></sc-if>
+                <sc-if value="{{cb.ol}}" hint-placeholder-val="{{ false }}"><ol><li><span class="{{cb.cls}}">{{cb.text}}</span><span class="caret"></span></li></ol></sc-if>
+                <sc-if value="{{cb.todo}}" hint-placeholder-val="{{ false }}"><ul class="todo"><li class="td"><button type="button" class="chk" aria-pressed="false" aria-label="Done"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></button><span class="tx"><span class="{{cb.cls}}">{{cb.text}}</span><span class="caret"></span></span></li></ul></sc-if>
+              </div></sc-if>
+            </article>
+          </div>
+        </div>
+      </sc-if>
+
+    </div>
+    <nav class="tabbar" aria-label="Views"><sc-for list="{{tabs}}" as="t" hint-placeholder-count="5"><button type="button" class="{{t.cls}}" aria-current="{{t.cur}}" onClick="{{t.pick}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="{{t.icon}}"></path></svg>{{t.name}}</button></sc-for></nav>
+  </main>
+  <div class="estrip" role="region" aria-label="E.V." onKeyDown="{{pKey}}">
+    <sc-if value="{{sHas}}" hint-placeholder-val="{{ false }}"><div class="ss"><dc-import name="Avatar" size="20" mood="{{mood}}" theme="{{mode}}" tex="halftone" smode="pointer" session="{{sessV}}" c1="{{av1}}" c2="{{av2}}" bgu="{{chromeHex}}" hint-size="20px,20px"></dc-import><span><b>{{ss.left}}</b> · </span><button type="button" class="nm tn" onClick="{{ss.openNote}}">{{ss.on}}</button><button type="button" class="btn ghost sm" onClick="{{ss.brk}}">{{ss.brkLabel}}</button><button type="button" class="btn ghost sm" onClick="{{ss.end}}">End</button></div></sc-if>
+    <span class="sp"></span>
+    <sc-if value="{{pMinOn}}" hint-placeholder-val="{{ false }}"><button type="button" class="btn neutral sm pchip" aria-label="{{pMinAria}}" onClick="{{pRestore}}"><svg class="ico sicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"></path></svg><span class="pc">{{pMinTitle}}</span></button></sc-if>
+    <sc-if value="{{sg.btn}}" hint-placeholder-val="{{ true }}"><button type="button" class="sug" onClick="{{sg.run}}">{{sg.text}}</button></sc-if>
+    <sc-if value="{{sg.plain}}" hint-placeholder-val="{{ false }}"><span class="sugt">{{sg.text}}</span></sc-if>
+    <button type="button" class="{{evBtnCls}}" aria-expanded="{{pOpen}}" aria-controls="evchat" aria-label="{{evAria}}" onClick="{{toggleChat}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6z"></path></svg>E.V.<sc-if value="{{evDot}}" hint-placeholder-val="{{ false }}"><i class="edot"></i></sc-if></button>
+    <button type="button" class="btn ghost icon sm" aria-label="Chats with E.V." onClick="{{openHist}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.3-5.6M4 4v4h4M12 8v4l3 2"></path></svg></button>
+  </div>
+  <sc-if value="{{pOpen}}" hint-placeholder-val="{{ false }}">
+    <section id="evchat" class="{{pCls}}" role="dialog" aria-label="{{pTitle}}" onKeyDown="{{pKey}}">
+      <div class="cph"><div class="tt"><b>{{pTitle}}</b><span>{{pSub}}</span></div>
+        <button type="button" class="btn ghost icon sm" aria-label="Minimize to the bar" onClick="{{pMinF}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"></path></svg></button>
+        <button type="button" class="btn ghost icon sm" aria-label="{{bigLabel}}" onClick="{{toggleBig}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="{{bigIcon}}"></path></svg></button>
+        <button type="button" class="btn ghost icon sm" aria-label="Close" onClick="{{pClose}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+      </div>
+      <sc-if value="{{pHist}}" hint-placeholder-val="{{ false }}"><div class="hlist" role="menu" aria-label="Chats"><div class="mhd">Chats with E.V.</div><sc-for list="{{hist}}" as="h" hint-placeholder-count="2"><button type="button" class="mi pki" role="menuitem" autoFocus="{{h.first}}" onClick="{{h.open}}"><span class="pt"><span class="pn">{{h.title}}</span><span class="pm">{{h.sub}}</span></span></button></sc-for><sc-if value="{{histNone}}" hint-placeholder-val="{{ false }}"><div class="mini" style="padding:6px 9px">No chats yet today.</div></sc-if></div></sc-if>
+      <sc-if value="{{pChat}}" hint-placeholder-val="{{ true }}">
+        <div class="msgs" ref="{{msgRef}}">
+          <sc-for list="{{pm}}" as="m" hint-placeholder-count="3">
+            <sc-if value="{{m.ev}}" hint-placeholder-val="{{ true }}"><p class="{{m.cls}}">{{m.text}}</p></sc-if>
+            <sc-if value="{{m.you}}" hint-placeholder-val="{{ false }}"><p class="myou"><b>You</b>{{m.text}}</p></sc-if>
+            <sc-if value="{{m.choice}}" hint-placeholder-val="{{ false }}"><div class="mch"><sc-for list="{{m.opts}}" as="o" hint-placeholder-count="2"><button type="button" class="btn neutral sm" onClick="{{o.run}}">{{o.label}}</button></sc-for></div></sc-if>
+            <sc-if value="{{m.link}}" hint-placeholder-val="{{ false }}"><div class="mcard"><svg class="ico sicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h9l3 3v13H6zM9 10h6M9 14h6"></path></svg><div class="tt"><span>{{m.title}}</span><span class="mini">{{m.sub}}</span></div><button type="button" class="btn ghost sm" onClick="{{m.run}}">Open</button></div></sc-if>
+            <sc-if value="{{m.weak}}" hint-placeholder-val="{{ false }}"><div class="mcard"><svg class="ico sicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6z"></path></svg><div class="tt"><span>{{m.title}}</span><span class="mini">{{m.sub}}</span></div><button type="button" class="btn neutral sm" onClick="{{m.run}}">Review in Study</button></div></sc-if>
+          </sc-for>
+        </div>
+        <sc-if value="{{pChipsOn}}" hint-placeholder-val="{{ false }}"><div class="pchips"><sc-for list="{{pChips}}" as="c" hint-placeholder-count="2"><button type="button" class="chip" onClick="{{c.run}}">{{c.label}}</button></sc-for></div></sc-if>
+        <div class="cin2"><input type="text" value="{{pDraft}}" onChange="{{onPDraft}}" onKeyDown="{{onPKey}}" placeholder="{{pPh}}" aria-label="Message E.V." autoFocus="{{yes}}">
+          <div class="crow"><span class="ctx" title="What E.V. can see in this chat"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="{{pCtxIcon}}"></path></svg>{{pCtx}}</span><span class="sp"></span><button type="button" class="send" aria-label="Send" onClick="{{pSend}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"></path></svg></button></div>
+        </div>
+      </sc-if>
+    </section>
+  </sc-if>
+  </div>
+
+  <sc-if value="{{modalOpen}}" hint-placeholder-val="{{ false }}">
+    <div class="ovl">
+      <button type="button" class="scrim" aria-label="Cancel" tabIndex="-1" onClick="{{closeModal}}"></button>
+      <div class="modal" role="dialog" aria-modal="true" aria-label="{{md.head}}" onKeyDown="{{md.onKeys}}">
+        <div class="mhdr"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="{{md.icon}}"></path></svg>{{md.head}}</div>
+        <div class="mbody">
+          <input class="in title" type="text" value="{{md.title}}" onChange="{{md.onTitle}}" onKeyDown="{{md.onKey}}" autoFocus="{{yes}}" placeholder="{{md.ph}}" aria-label="Title">
+          <sc-if value="{{md.isNote}}" hint-placeholder-val="{{ false }}"><textarea class="in" value="{{md.body}}" onChange="{{md.onBody}}" placeholder="What did you learn, in your words?" aria-label="Note"></textarea></sc-if>
+          <sc-for list="{{md.rows}}" as="f" hint-placeholder-count="2"><div class="frow"><span>{{f.label}}</span><div class="seg"><sc-for list="{{f.opts}}" as="o" hint-placeholder-count="3"><button type="button" class="{{o.cls}}" onClick="{{o.pick}}">{{o.name}}</button></sc-for></div></div></sc-for>
+        </div>
+        <div class="mfoot"><span class="mini sp">{{md.hint}}</span><button type="button" class="btn ghost sm" onClick="{{closeModal}}">Cancel</button><button type="button" class="btn primary sm" disabled="{{md.disabled}}" onClick="{{createNew}}">{{md.cta}}</button></div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mode":{"editor":"enum","options":["light","dark"],"default":"light"},"contrast":{"editor":"enum","options":["30","60","100"],"default":"60"},"page":{"editor":"enum","options":["conversation","today","study","notes","progress","record"],"default":"notes"},"nview":{"editor":"enum","options":["list","editor"],"default":"list"},"note":{"editor":"enum","options":["n1","n2","n3","n4","n5","n6","n7"],"default":"n1"},"menu":{"editor":"enum","options":["closed","style"],"default":"closed"},"study":{"editor":"enum","options":["off","missed"],"default":"off"},"chat":{"editor":"enum","options":["closed","open"],"default":"closed"},"notes":{"editor":"enum","options":["demo","none"],"default":"demo"},"todayView":{"editor":"enum","options":["list","week"],"default":"list"},"studyView":{"editor":"enum","options":["overview","quiz","weak"],"default":"overview"},"session":{"editor":"enum","options":["off","on"],"default":"off"},"overlay":{"editor":"enum","options":["none","new","menu","task"],"default":"none"},"proposal":{"editor":"enum","options":["off","on"],"default":"off"},"quizState":{"editor":"enum","options":["off","miss","end"],"default":"off"},"filterOpen":{"editor":"boolean","default":false},"speed":{"editor":"enum","options":["1","30","120"],"default":"1"},"$preview":{"width":1280,"height":900}}'>
+// ---------- LCH theme (as in the Shipped component) ----------
+const lch2hex = (L, C, H) => {
+  const h = (H * Math.PI) / 180, a = C * Math.cos(h), b = C * Math.sin(h), e = 216 / 24389, k = 24389 / 27;
+  const fy = (L + 16) / 116, fx = fy + a / 500, fz = fy - b / 200;
+  const xr = fx ** 3 > e ? fx ** 3 : (116 * fx - 16) / k, yr = L > k * e ? fy ** 3 : L / k, zr = fz ** 3 > e ? fz ** 3 : (116 * fz - 16) / k;
+  const X = xr * 0.96422, Y = yr, Z = zr * 0.82521;
+  const lin = [3.1338561 * X - 1.6168667 * Y - 0.4906146 * Z, -0.9787684 * X + 1.9161415 * Y + 0.033454 * Z, 0.0719453 * X - 0.2289914 * Y + 1.4052427 * Z];
+  return '#' + lin.map((v) => { v = Math.max(0, Math.min(1, v)); v = v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055; return Math.round(v * 255).toString(16).padStart(2, '0'); }).join('');
+};
+const lum = (hex) => { const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+const cratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+const mixHex = (a, b, t) => { const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)); const x = p(a), y = p(b); return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
+const SEM = { green: 145, yellow: 76, red: 28, blue: 265, violet: 305 };
+const genTheme = (mode, contrast) => {
+  const k = Math.max(0.3, Math.min(1, (contrast || 60) / 100)), B = { h: 70, c: 3.2 }, dark = mode === 'dark';
+  const n = (L, cm) => lch2hex(L, B.c * (cm ?? 1), B.h), T = { mode, k };
+  if (!dark) {
+    T.bg = n(98.2); T.chrome = n(98.2 - (2.2 + 2.6 * k)); T.surface = n(99.6, 0.4); T.hover = n(98.2 - (3 + 3 * k));
+    T.line = n(98.2 - (6 + 6 * k)); T.line2 = n(98.2 - (11 + 9 * k)); T.text = n(13, 1.5); T.quiet = n(36 - 6 * k, 1.5);
+    let fl = 52; while (cratio(n(fl, 1.5), T.chrome) < 4.6 && fl > 20) fl -= 1; T.faint = n(fl, 1.5);
+    T.accent = lch2hex(48, 62, 52); T.accent2 = lch2hex(47, 56, 32); T.onAccent = '#FFFFFF';
+    T.semL = 52; T.semC = 54; T.tintMix = 0.11; T.scrim = 'rgba(40,32,24,.22)';
+  } else {
+    T.bg = n(10.5); T.chrome = n(10.5 - (1.5 + 2 * k)); T.surface = n(13 + 3 * k); T.hover = n(14 + 4 * k);
+    T.line = n(10.5 + (6 + 6 * k)); T.line2 = n(10.5 + (11 + 9 * k)); T.text = n(94, 0.8); T.quiet = n(72 + 6 * k, 0.8);
+    let fl = 56; while (cratio(n(fl, 0.8), T.surface) < 4.6 && fl < 90) fl += 1; T.faint = n(fl, 0.8);
+    T.accent = lch2hex(70, 57, 52); T.accent2 = lch2hex(68, 50, 32); T.onAccent = n(9);
+    T.semL = 72; T.semC = 48; T.tintMix = 0.16; T.scrim = 'rgba(0,0,0,.5)';
+  }
+  T.sem = {}; for (const s in SEM) T.sem[s] = lch2hex(T.semL + (s === 'yellow' && !dark ? 6 : 0), T.semC + (s === 'yellow' ? 2 : 0), SEM[s]); // yellow: the one lightness exception, honey-gold instead of olive
+  T.tint = (hex) => mixHex(T.surface, hex, T.tintMix); T.tintLine = (hex) => mixHex(T.line2, hex, 0.35);
+  return T;
+};
+
+// ---------- icons ----------
+const IC = {
+  chat: 'M4 5h16v11H9l-5 4z', today: 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4',
+  study: 'M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z', progress: 'M5 19V11M12 19V5M19 19v-6', record: 'M4 5h16v4H4zM6 9v10h12V9M10 13h4',
+  check: 'M5 12l5 5 9-10', pause: 'M9 5v14M15 5v14', stop: 'M6 6h12v12H6z', search: 'M11 5a6 6 0 1 0 0 12a6 6 0 1 0 0-12M20 20l-4.5-4.5', plus: 'M12 5v14M5 12h14',
+  play: 'M8 5l11 7-11 7z', quiz: 'M9 9a3 3 0 1 1 4 2.8c-.7.3-1 .8-1 1.5V14M12 18h.01', redo: 'M4 12a8 8 0 1 0 2.3-5.6M4 4v4h4', up: 'M12 19V5M6 11l6-6 6 6', bolt: 'M13 3L5 13h6l-1 8 8-10h-6z',
+  coffee: 'M5 9h11v5a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4zM16 10h2a2 2 0 0 1 0 4h-2M8 3v3M12 3v3', list: 'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01', cal: 'M4 6h16v14H4zM4 10h16M9 3v4M15 3v4',
+  note: 'M6 4h9l3 3v13H6zM9 10h6M9 14h6', lift: 'M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10', task: 'M5 5h14v14H5zM9 12l2 2 4-4', x: 'M6 6l12 12M18 6L6 18', spark: 'M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6z',
+  chevD: 'M6 9l6 6 6-6', grid: 'M4 5h16v14H4zM4 10h16M9 10v9M15 10v9', chevR: 'M9 6l6 6-6 6', theme: 'M12 4a8 8 0 1 0 8 8a6 6 0 0 1-8-8',
+};
+
+// ---------- data (demo day: Friday 23 October) ----------
+const GD = { send: 1.2, done: 1.6, error: 1.8, glance: 2.2, settle: 2.4 };
+const PAGES = [['conversation', 'E.V.', 'chat'], ['today', 'Today', 'today'], ['study', 'Study', 'study'], ['notes', 'Notes', 'note'], ['progress', 'Progress', 'progress'], ['record', 'Record', 'record']];
+// D-270: colour is meaning. Violet study, blue information, neutral for everything else; Graded turns red only when due today or tomorrow.
+const TAGSEM = { Study: 'violet', Review: 'violet', Quiz: 'violet', Session: 'violet', Note: 'blue', Entry: 'blue', Class: 'quiet', Workout: 'quiet', Graded: 'quiet' };
+const BUDGET = 90;
+const TOPICS = { fluid: 'Fluid & electrolytes', dose: 'Dosage calculations', cardiac: 'Cardiac meds', renal: 'Renal', cell: 'Cell transport', muscle: 'Muscle' };
+const OBJ = {
+  nur: { exam: 'd13', items: [
+    ['o1', 'Fluid volume deficit and excess', 'almost', 'fluid'], ['o2', 'Potassium and sodium imbalances', 'not', 'fluid'], ['o3', 'Calcium and magnesium imbalances', 'not', 'fluid'],
+    ['o4', 'IV rates and drop factors', 'almost', 'dose'], ['o5', 'Weight-based dosing', 'solid', 'dose'], ['o6', 'Tablet and liquid dose math', 'solid', 'dose'],
+    ['o7', 'Digoxin: actions and holds', 'solid', 'cardiac'], ['o8', 'Beta blockers and ACE inhibitors', 'solid', 'cardiac'], ['o9', 'Nitrates for chest pain', 'solid', 'cardiac'], ['o10', 'Acid–base balance and ABGs', 'not', 'fluid']] },
+  bio: { exam: 'd15', items: [
+    ['b1', 'Nephron structure', 'solid', 'renal'], ['b2', 'Filtration and reabsorption', 'almost', 'renal'], ['b3', 'Hormonal control: ADH and aldosterone', 'not', 'renal'],
+    ['b4', 'Membrane transport', 'almost', 'cell'], ['b5', 'Muscle contraction', 'not', 'muscle']] },
+};
+const STAT = { solid: ['Solid', 'green'], almost: ['Almost', 'yellow'], not: ['Not yet', 'quiet'] };
+const QUIZ = {
+  nur: [
+    ['Normal adult serum potassium?', ['2.5–3.5 mEq/L', '3.5–5.0 mEq/L', '5.0–6.5 mEq/L', '135–145 mEq/L'], 1, '3.5–5.0 mEq/L; 135–145 is the sodium range.', 'o2'],
+    ['Which IV fluid is isotonic?', ['0.45% NaCl', '0.9% NaCl', '3% NaCl', 'Sterile water'], 1, '0.9% NaCl matches plasma osmolality.', 'o1'],
+    ['An ECG sign of hyperkalemia?', ['Tall, peaked T waves', 'U waves', 'A longer QT only', 'ST depression only'], 0, 'Peaked T waves; U waves point to low potassium.', 'o2'],
+    ['1,000 mL over 8 h, drop factor 15 gtt/mL. The rate?', ['21 gtt/min', '31 gtt/min', '42 gtt/min', '125 gtt/min'], 1, '1,000 × 15 ÷ 480 = 31.25, so 31 gtt/min.', 'o4'],
+    ['Signs of hypocalcemia include…', ['Chvostek’s and Trousseau’s signs', 'Kussmaul breathing', 'Peaked T waves', 'Flushing and bradycardia'], 0, 'Both test for neuromuscular irritability from low calcium.', 'o3'],
+    ['Hold digoxin when the adult apical pulse is below…', ['50', '60', '70', '80'], 1, 'Below 60 beats per minute, hold it and report.', 'o7'],
+    ['A 70 kg patient is ordered 5 mg/kg. The dose?', ['35 mg', '75 mg', '350 mg', '700 mg'], 2, '70 × 5 = 350 mg.', 'o5'],
+  ],
+  bio: [
+    ['The functional unit of the kidney?', ['Glomerulus', 'Nephron', 'Ureter', 'Loop of Henle'], 1, 'The nephron; the glomerulus is one part of it.', 'b1'],
+    ['Where is most filtrate reabsorbed?', ['Proximal convoluted tubule', 'Collecting duct', 'Distal convoluted tubule', 'Bladder'], 0, 'About two thirds is reabsorbed in the proximal tubule.', 'b2'],
+    ['Per cycle, the Na⁺/K⁺ pump moves…', ['2 Na⁺ out, 3 K⁺ in', '3 Na⁺ out, 2 K⁺ in', '3 Na⁺ in, 2 K⁺ out', '1 Na⁺ out, 1 K⁺ in'], 1, '3 sodium out, 2 potassium in, one ATP.', 'b4'],
+    ['Which hormone increases water reabsorption?', ['ADH', 'Insulin', 'Glucagon', 'Calcitonin'], 0, 'ADH adds water channels in the collecting duct.', 'b3'],
+    ['Calcium starts contraction by binding…', ['Myosin', 'Actin', 'Troponin', 'Tropomyosin'], 2, 'Troponin shifts tropomyosin off actin’s binding sites.', 'b5'],
+  ],
+};
+const WEAK = () => [
+  { id: 'w1', course: 'nur', obj: 'o4', name: 'IV drip rates (gtt/min)', sub: 'Missed twice this week · last on Thursday’s quiz' },
+  { id: 'w2', course: 'nur', obj: 'o2', name: 'Hyperkalemia ECG changes', sub: 'Missed twice · fluid balance practice' },
+  { id: 'w3', course: 'nur', obj: 'o3', name: 'Hypocalcemia signs', sub: 'Missed once · Wednesday' },
+  { id: 'w4', course: 'bio', obj: 'b4', name: 'Na⁺/K⁺ pump ratio', sub: 'Missed once · Cell transport session' },
+];
+const TASKS = () => [
+  { id: 't1', name: 'Dosage calculations, 8 conversions', cat: 'study', tag: 'Study', est: 15, due: 'Today', dueD: 0, course: 'NUR 112', topic: 'dose', done: false, desc: 'Eight conversions from Tuesday’s lab handout: mg to mcg, lb to kg, and mL/h rates. E.V. checks each answer as you go.', act: [['Added by E.V. from Tuesday’s lab handout', 'Tue']] },
+  { id: 't2', name: 'Write your class’s rounding rule', cat: 'class', tag: 'Note', est: 5, due: 'Today', dueD: 0, course: 'NUR 112', done: false, desc: 'Your instructor rounds mL to tenths and tablets to halves. Write it once, in your words, so every practice set uses it.', act: [['Added by E.V. from your lecture notes', 'Today']] },
+  { id: 't3', name: 'NUR 112 quiz: fluid balance', cat: 'class', tag: 'Graded', est: 0, due: 'Tue 9:00 am', dueD: 4, course: 'NUR 112', topic: 'fluid', done: false, desc: 'In-class quiz, graded. E.V. can quiz you on fluid balance beforehand.', act: [['From the NUR 112 syllabus', 'Aug 24']] },
+  { id: 't4', name: 'BIO 201 lab report draft', cat: 'class', tag: 'Graded', est: 45, due: 'Mon', dueD: 3, course: 'BIO 201', done: false, desc: 'Osmosis lab report, graded. The draft is due Monday at 11:59 pm.', act: [['From the BIO 201 lab schedule', 'Oct 12']] },
+  { id: 't5', name: 'Review: 3 weak spots', cat: 'study', tag: 'Review', est: 10, due: 'Today', dueD: 0, course: 'NUR 112', topic: 'weak', done: false, desc: 'Drip rates, hyperkalemia ECG changes and hypocalcemia signs, as a short quiz.', act: [['Added by E.V. from your daily review set', 'Today']] },
+  { id: 't6', name: 'Pack clinical bag for Monday', cat: 'class', tag: 'Class', est: 10, due: 'Sun', dueD: 2, course: 'NUR 112', done: false, desc: 'Stethoscope, penlight, badge, watch with a second hand, black pens.', act: [['Added by you', 'Wed']] },
+  { id: 't9', name: 'Read chapter 12, renal', cat: 'class', tag: 'Class', est: 30, due: 'Today', dueD: 0, course: 'BIO 201', done: true, desc: 'Before Monday’s lecture.', act: [['Added by you', 'Mon']] },
+];
+const T10 = { id: 't10', name: 'Fluid & electrolytes: 5-question quiz', cat: 'study', tag: 'Quiz', est: 10, due: 'Today', dueD: 0, course: 'NUR 112', topic: 'fluid', done: false, desc: 'Five questions on Tuesday’s quiz topics. Misses are proposed as weak spots at the end.', act: [['Added by E.V.; you accepted her suggestion', 'Just now']] };
+const DATES = [
+  { id: 'd1', d: -11, time: '1:00 pm', name: 'BIO 201 lab: diffusion', course: 'bio', tag: 'Class' },
+  { id: 'd2', d: -9, time: '9:00 am', name: 'NUR 112 quiz: med math', course: 'nur', tag: 'Graded', score: '9 of 10', topic: 'dose' },
+  { id: 'd3', d: -7, time: '10:00 am', name: 'Skills check-off: vitals', course: 'nur', tag: 'Class' },
+  { id: 'd4', d: -4, time: '7:00 am', name: 'Clinical', course: 'nur', tag: 'Class' },
+  { id: 'd5', d: -2, time: '9:00 am', name: 'NUR 112 Exam 4', course: 'nur', tag: 'Graded', score: '84%' },
+  { id: 'd6', d: -1, time: '1:00 pm', name: 'Skills lab', course: 'nur', tag: 'Class' },
+  { id: 'd7', d: 2, time: 'Any time', name: 'Pack clinical bag for Monday', course: 'nur', tag: 'Class', task: 't6' },
+  { id: 'd8', d: 3, time: '7:00 am', name: 'Clinical', course: 'nur', tag: 'Class' },
+  { id: 'd9', d: 3, time: '11:59 pm', name: 'BIO 201 lab report draft', course: 'bio', tag: 'Graded', task: 't4', short: 'the BIO 201 lab report draft' },
+  { id: 'd10', d: 4, time: '9:00 am', name: 'NUR 112 quiz: fluid balance', course: 'nur', tag: 'Graded', task: 't3', topic: 'fluid', short: 'the NUR 112 fluid balance quiz' },
+  { id: 'd11', d: 6, time: '10:00 am', name: 'BIO 201 quiz: renal', course: 'bio', tag: 'Graded', topic: 'renal', short: 'the BIO 201 renal quiz' },
+  { id: 'd12', d: 10, time: '7:00 am', name: 'Clinical', course: 'nur', tag: 'Class' },
+  { id: 'd13', d: 12, time: '9:00 am', name: 'NUR 112 Exam 5', course: 'nur', tag: 'Graded', exam: true },
+  { id: 'd14', d: 14, time: '11:59 pm', name: 'BIO 201 lab report final', course: 'bio', tag: 'Graded' },
+  { id: 'd15', d: 19, time: '10:00 am', name: 'BIO 201 Exam 3', course: 'bio', tag: 'Graded', exam: true },
+];
+const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], DOWL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const dayOf = (off) => new Date(2026, 9, 23 + off);
+const RECORDS = () => [
+  { id: 'r3', type: 'note', tag: 'Entry', name: 'Rounding: tenths for mL', meta: 'From class', day: 'Today', time: '11:55 am', course: 'NUR 112', detail: 'Round mL to the nearest tenth; tablets to the nearest half. Never round a pediatric dose until the end.' },
+  { id: 'r1', type: 'session', tag: 'Session', name: 'Dosage calc handout, p. 1–2', meta: '25 min · 7 of 8', day: 'Today', time: '7:12 am', course: 'NUR 112', topic: 'dose', detail: 'Bound to your Study Watch note. Seven conversions right; the miss was a drip rate in gtt/min.' },
+  { id: 'r2', type: 'quiz', tag: 'Quiz', name: 'Fluid balance practice', meta: '9 of 10', day: 'Today', time: '6:40 am', course: 'NUR 112', topic: 'fluid', detail: 'Missed the ECG sign of hyperkalemia. You accepted it as a weak spot.' },
+  { id: 'r5', type: 'session', tag: 'Session', name: 'Cardiac meds', meta: '20 min', day: 'Yesterday', time: '8:10 pm', course: 'NUR 112', topic: 'cardiac', detail: 'Digoxin holds, beta blocker suffixes and nitro dosing. One miss on the digoxin pulse.' },
+  { id: 'r6', type: 'workout', tag: 'Workout', name: '1,500-rep ladder', meta: '19 rounds', day: 'Yesterday', time: '6:30 pm', course: '—', detail: 'Logged from your phone.' },
+  { id: 'r7', type: 'quiz', tag: 'Quiz', name: 'Renal anatomy review', meta: '4 of 5', day: 'Yesterday', time: '4:15 pm', course: 'BIO 201', topic: 'renal', detail: 'Missed where most filtrate is reabsorbed.' },
+  { id: 'r9', type: 'note', tag: 'Entry', name: 'ADH vs aldosterone', meta: 'From lecture', day: 'Wed 21 Oct', time: '10:20 am', course: 'BIO 201', detail: 'ADH: water only, collecting duct. Aldosterone: sodium (and water follows), distal tubule.' },
+  { id: 'r10', type: 'session', tag: 'Session', name: 'Cell transport', meta: '30 min', day: 'Wed 21 Oct', time: '9:00 pm', course: 'BIO 201', topic: 'cell', detail: 'Osmosis and the sodium-potassium pump.' },
+  { id: 'r11', type: 'quiz', tag: 'Quiz', name: 'Cardiac meds', meta: '8 of 10', day: 'Tue 20 Oct', time: '8:30 pm', course: 'NUR 112', topic: 'cardiac', detail: 'Missed the digoxin hold threshold twice.' },
+  { id: 'r13', type: 'workout', tag: 'Workout', name: '5 km run', meta: '28 min', day: 'Tue 20 Oct', time: '7:00 am', course: '—', detail: 'Logged from your phone.' },
+];
+const PROG = {
+  week: { name: 'This week', chart: 'Study time by day', labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], ahead: [false, false, false, false, false, true, true], v: [112, 132, 108, 148, 120, 0, 0], full: ['Monday 19 Oct', 'Tuesday 20 Oct', 'Wednesday 21 Oct', 'Thursday 22 Oct', 'Friday 23 Oct', 'Saturday 24 Oct', 'Sunday 25 Oct'], acc: ['86%', '+4 points on last week'], delta: '+1 h 10 m on last week', course: [0.62, 0.38], sel: 4 },
+  month: { name: 'This month', chart: 'Study time by week', labels: ['Sep 28', 'Oct 5', 'Oct 12', 'Oct 19'], ahead: [false, false, false, false], v: [620, 700, 860, 620], full: ['Week of 28 September', 'Week of 5 October', 'Week of 12 October', 'Week of 19 October (so far)'], acc: ['84%', '+2 points on September'], delta: '+3 h 20 m on September', course: [0.58, 0.42], sel: 3 },
+  sem: { name: 'This semester', chart: 'Study time by month', labels: ['Aug', 'Sep', 'Oct', 'Nov', 'Dec'], ahead: [false, false, false, true, true], v: [1400, 2500, 2800, 0, 0], full: ['August', 'September', 'October (so far)', 'November', 'December'], acc: ['83%', 'since 24 August'], delta: 'since 24 August', course: [0.6, 0.4], sel: 2 },
+};
+const NOTE = { title: 'Dosage calc handout, p. 3', sub: 'Your Study Watch note · saved 4:10 pm · 25 min' };
+const ADVICE = {
+  1: 'A low day. If that’s all there is, the 15-minute dosage set and the 5-minute rounding note are the two that matter.',
+  2: 'Go easy. The dosage set and the rounding note first; the weak-spot review only if you still have it in you.',
+  3: 'A steady day. The dosage set first, then the weak-spot review: 25 of your 90 minutes.',
+  4: 'Good energy. Do the dosage set while it’s fresh, then the lab report draft in your own words.',
+  5: 'A strong day. The dosage set, the review, then a long run at the lab report draft, in your own words.',
+};
+const fmtMin = (m) => { m = Math.round(m); const h = Math.floor(m / 60), r = m % 60; return h ? h + ' h' + (r ? ' ' + r + ' m' : '') : r + ' m'; };
+const words = (t) => t.split(' ');
+const cn = (c) => (c === 'nur' ? 'NUR 112' : 'BIO 201');
+const objOf = (id) => { for (const c in OBJ) { const o = OBJ[c].items.find((x) => x[0] === id); if (o) return { id: o[0], name: o[1], st: o[2], topic: o[3], course: c }; } return null; };
+const rel = (d) => (d === 0 ? 'today' : d === 1 ? 'tomorrow' : d === -1 ? 'yesterday' : d > 0 ? 'in ' + d + ' days' : -d + ' days ago');
+const fmtD = (d) => { const t = dayOf(d); return DOW[t.getDay()] + ' ' + t.getDate() + ' ' + MON[t.getMonth()]; };
+const joinList = (xs) => (xs.length < 2 ? xs.join('') : xs.slice(0, -1).join(', ') + ' and ' + xs[xs.length - 1]);
+const pending = (w) => w.proposed && !w.declined && !w.later && !w.joinedTo;
+const openW = (w) => !w.proposed && !w.declined && !w.solid && !w.joinedTo;
+// graded dates in the next seven days, counted from the dates themselves
+const gradedSoon = () => DATES.filter((x) => x.tag === 'Graded' && x.d >= 1 && x.d <= 7);
+const gradedLine = () => { const g = gradedSoon(); return (g.length === 1 ? 'One graded date' : ['No', 'One', 'Two', 'Three', 'Four', 'Five'][g.length] + ' graded dates') + ' in the next 7 days: ' + joinList(g.map((x) => x.short + ' on ' + DOWL[dayOf(x.d).getDay()])) + '.'; };
+
+
+// ---------- Notes data (the Notes row's) ----------
+const IC2 = {
+  bold: 'M7 5h6a3.5 3.5 0 0 1 0 7H7zM7 12h7a3.5 3.5 0 0 1 0 7H7z', italic: 'M10 5h8M6 19h8M14 5l-4 14', underline: 'M7 4v7a5 5 0 0 0 10 0V4M5 20h14',
+  strike: 'M5 12h14M16 7.5C15.4 6 13.9 5 12 5c-2.5 0-4 1.3-4 3 0 1.3.8 2.2 2.4 2.8M8 16.5c.6 1.5 2.1 2.5 4 2.5 2.5 0 4-1.3 4-3',
+  bullets: 'M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01', numbers: 'M10 6h10M10 12h10M10 18h10M4 4.5h1.5V9M4 9h3M4 14.5c.5-.8 2.5-.9 2.5.6 0 1.1-2.5 2-2.5 3.4h2.8',
+  checks: 'M4 4.5h5v5H4zM5.5 7l1 1 2-2M12 7h8M4 14.5h5v5H4zM12 17h8', expand: 'M14 4h6v6M10 20H4v-6M20 4l-6 6M4 20l6-6', shrink: 'M20 4l-6 6M14 5v5h5M4 20l6-6M10 19v-5H5',
+};
+const STYLES = [
+  ['p', 'Paragraph', '¶', '⌘⌥0'], ['h1', 'Heading 1', 'H1', '⌘⌥1'], ['h2', 'Heading 2', 'H2', '⌘⌥2'], ['h3', 'Heading 3', 'H3', '⌘⌥3'],
+  ['ul', 'Bulleted list', 'bullets', '⌘⇧L'], ['ol', 'Numbered list', 'numbers', '⌘⇧7'], ['todo', 'Checklist', 'checks', '⌘⇧9'],
+];
+const FMTS = [['b', 'Bold', 'bold', '⌘B'], ['i', 'Italic', 'italic', '⌘I'], ['u', 'Underline', 'underline', '⌘U'], ['s', 'Strikethrough', 'strike', '⌘⇧X']];
+const NOTES = [
+  { id: 'n1', course: 'nur', kind: 'Lecture 9', when: '4:10 pm', edited: 'Today, 4:10 pm', studied: '25 min, today', caret: ['h2', 'Questions for skills lab'], doc: [
+    ['h1', 'Fluid & electrolytes: potassium and sodium'],
+    ['p', 'Two electrolytes, their normal ranges, and what too little or too much looks like. __Know the ECG changes for both.__'],
+    ['h2', 'Potassium (K⁺)'], ['ul', ['Normal range: **3.5–5.0 mEq/L**', 'Mostly inside the cells; the kidneys excrete most of it']],
+    ['h3', 'Hypokalemia: below 3.5'], ['ul', ['Causes: loop and thiazide diuretics, vomiting, NG suction', 'Signs: muscle weakness, leg cramps, **flat T waves and U waves**', 'IV potassium is **never** given IV push']],
+    ['h3', 'Hyperkalemia: above 5.0'], ['ul', ['Causes: kidney failure, potassium-sparing diuretics, ACE inhibitors', 'Signs: **tall, peaked T waves**, muscle weakness, dysrhythmias']],
+    ['h2', 'Sodium (Na⁺)'], ['ul', ['Normal range: **135–145 mEq/L**', 'Water follows sodium']],
+    ['ol', ['Hyponatremia: headache, confusion, seizures when severe', 'Hypernatremia: thirst, dry mucous membranes, restlessness']],
+    ['h2', 'Before Tuesday’s quiz'], ['todo', [[true, 'Redo the ECG strip practice'], [false, 'Flash cards for the causes'], [false, 'Ask in skills lab how our units dilute IV potassium']]],
+  ] },
+  { id: 'n2', course: 'nur', kind: 'Skills lab', when: 'Yesterday', edited: 'Yesterday, 2:30 pm', studied: '20 min, yesterday', doc: [
+    ['h1', 'IV rates and drop factors'], ['p', 'Two formulas, and which one the order needs.'],
+    ['h2', 'Pump: mL/h'], ['ul', ['mL/h = **total volume ÷ hours**', '500 mL over 4 h = 125 mL/h']],
+    ['h2', 'Gravity: gtt/min'], ['ul', ['gtt/min = **volume in mL × drop factor ÷ minutes**', 'Macrodrip sets: 10, 15 or 20 gtt/mL; microdrip: 60 gtt/mL', 'Round to the whole drop']],
+    ['todo', [[false, 'Practice set from the lab handout']]],
+  ] },
+  { id: 'n4', course: 'nur', kind: 'From class', when: 'Wed 21 Oct', edited: 'Wed 21 Oct, 11:55 am', studied: 'Not yet', doc: [
+    ['h1', 'Rounding rules for dose math'], ['ul', ['mL to the nearest **tenth**', 'Tablets to the nearest **half**', 'Round once, at the end of the problem']],
+  ] },
+  { id: 'n3', course: 'nur', kind: 'Lecture 8', when: 'Tue 20 Oct', edited: 'Tue 20 Oct, 8:05 pm', studied: '20 min, Thu', doc: [
+    ['h1', 'Cardiac meds: digoxin and beta blockers'],
+    ['h2', 'Digoxin'], ['ul', ['Strengthens contraction and slows the heart rate', 'Take the **apical pulse for a full minute** first; hold below 60 and report', 'Toxicity: nausea, vision changes, yellow-green halos']],
+    ['h2', 'Beta blockers'], ['ul', ['Names end in **-olol**', 'Check heart rate and blood pressure before giving']],
+  ] },
+  { id: 'n5', course: 'bio', kind: 'Lecture 12', when: 'Yesterday', edited: 'Yesterday, 9:40 am', studied: '30 min, yesterday', doc: [
+    ['h1', 'Renal: filtration and reabsorption'],
+    ['h2', 'The nephron'], ['ul', ['The glomerulus filters; the tubules reabsorb and secrete', 'Most reabsorption happens in the **proximal convoluted tubule**']],
+    ['h2', 'Questions'], ['todo', [[false, 'Why does glucose show up in urine when blood sugar is high?']]],
+  ] },
+  { id: 'n6', course: 'bio', kind: 'Lecture 11', when: 'Wed 21 Oct', edited: 'Wed 21 Oct, 10:20 am', studied: 'Not yet', doc: [
+    ['h1', 'ADH vs aldosterone'], ['ul', ['ADH: **water only**, collecting duct', 'Aldosterone: **sodium**, and water follows; distal tubule']],
+  ] },
+  { id: 'n7', course: 'bio', kind: 'Lecture 10', when: 'Mon 19 Oct', edited: 'Mon 19 Oct, 9:15 pm', studied: '30 min, Wed', doc: [
+    ['h1', 'Cell transport: the sodium-potassium pump'], ['ul', ['**3 Na⁺ out, 2 K⁺ in**, one ATP per cycle', 'Active transport: against the gradient']],
+  ] },
+];
+// the note he writes in today's lecture: a New note plays it in, block by block (scripted typing)
+const LIVE = { id: 'n9', course: 'nur', kind: 'Lecture 10', when: 'Now', edited: 'Just now', studied: 'Now', caret: ['p', 'Causes of metabolic acidosis: diarrhea, kidney failure,'], doc: [
+  ['h1', 'Acid–base balance: reading an ABG'],
+  ['h2', 'Normal values'],
+  ['ul', ['pH **7.35–7.45**', 'PaCO₂ **35–45 mmHg**: the respiratory part', 'HCO₃⁻ **22–26 mEq/L**: the metabolic part']],
+  ['h2', 'Reading an ABG'],
+  ['ol', ['Look at the pH: acidosis or alkalosis?', 'Match it to PaCO₂ or HCO₃⁻: respiratory or metabolic?', 'Check whether the other value is compensating']],
+  ['h3', 'Examples from class'],
+  ['ul', ['pH 7.30, PaCO₂ 50: **respiratory acidosis**', 'pH 7.50, HCO₃⁻ 30: **metabolic alkalosis**']],
+] };
+const ncn = (c) => (c === 'nur' ? 'NUR 112' : 'BIO 201');
+const plainT = (s) => s.replace(/\*\*|__/g, '');
+const noteTitle = (n) => plainT((n.doc.find((b) => b[0] === 'h1') || ['h1', 'New note'])[1]);
+const noteOf = (id) => (id === 'n9' ? LIVE : NOTES.find((n) => n.id === id) || null);
+const mdSegs = (s) => s.split(/(\*\*[^*]+\*\*|__[^_]+__)/).filter(Boolean).map((t) => (t.startsWith('**') ? { t: t.slice(2, -2), b: true } : t.startsWith('__') ? { t: t.slice(2, -2), i: true } : { t, n: true }));
+const wordCount = (n) => n.doc.reduce((c, b) => c + (Array.isArray(b[1]) ? b[1].map((x) => (Array.isArray(x) ? x[1] : x)).join(' ') : b[1]).split(/\s+/).filter(Boolean).length, 0);
+const WEAK_ABG = { id: 'wn1', course: 'nur', obj: 'o10', name: 'Full vs partial compensation', src: 'session', sub: 'From your note session · just now', proposed: true };
+
+class Component extends DCLogic {
+  base() {
+    if (this._D) return this._D;
+    const P = this.props, sessOn = P.session === 'on', ov = P.overlay || 'none', qs = P.quizState || 'off';
+    const chat = [
+      { who: 'ev', text: 'Six things on today’s list, 85 of your 90 minutes, and the fluid balance quiz on Tuesday.' },
+      { who: 'you', text: 'How did yesterday go?' },
+      { who: 'ev', text: 'Cardiac meds for 20 minutes, and 4 of 5 on the renal review. The miss was where most filtrate is reabsorbed.' },
+    ];
+    if (sessOn) { chat.push({ who: 'you', text: 'Start a study session' }); chat.push({ who: 'ev', text: 'Started 25 minutes on your Study Watch note, “Dosage calc handout, p. 3”. The dial shows the time; I’ll check in at the halfway mark.' }); }
+    chat.forEach((m) => { if (m.who === 'ev') { m.len = words(m.text).length; m.n = m.len; m.actions = []; } });
+    const weak = WEAK();
+    if (qs === 'miss' || qs === 'end') weak.push({ id: 'wq', course: 'nur', obj: 'o2', name: 'Normal adult serum potassium', q: 'Normal adult serum potassium?', src: 'quiz', sub: 'From your miss on “Normal adult serum potassium?” · today’s mini quiz', proposed: true });
+    if (qs === 'end') {
+      weak.push({ id: 'wq3', course: 'nur', obj: 'o4', name: 'Drip rate for 1,000 mL over 8 h', q: '1,000 mL over 8 h, drop factor 15 gtt/mL. The rate?', src: 'quiz', sub: 'From your miss on “1,000 mL over 8 h, drop factor 15 gtt/mL” · today’s mini quiz', proposed: true });
+      weak.push({ id: 'ws1', course: 'nur', obj: 'o1', name: 'Deficit vs excess signs', src: 'session', sub: 'From your Study Watch session: “mixed up deficit and excess signs” · Thursday', proposed: true });
+    }
+    this._D = {
+      page: P.page || 'conversation', mode: P.mode === 'dark' ? 'dark' : 'light', contrast: +(P.contrast || 60), speed: +(P.speed || 30),
+      sess: sessOn ? { topic: NOTE.title, total: 25, elapsed: 9, state: 'run', half: false } : null,
+      chat, phase: 'idle', thinkUntil: 0, g: '', gUntil: 0, draft: '', energy: 3,
+      tasks: TASKS(), tFilter: 'all', tView: P.todayView === 'week' ? 'week' : 'list', wk: 0, calSel: P.todayView === 'week' ? 'd10' : null, showDone: true,
+      taskId: ov === 'task' ? 't1' : null,
+      course: 'nur', studyView: P.studyView || 'overview', objSel: 'o4', weak, quizS: null,
+      period: 'week', pSel: null, pHover: null,
+      records: RECORDS(), rTab: 'all', filterOpen: !!P.filterOpen, fCourse: P.filterOpen ? 'nur' : 'any', fWhen: 'all', fLife: true, recSel: P.filterOpen ? 'r2' : 'r1',
+      proposal: null, react: null, prefsOpen: false,
+      changes: [{ id: 'c2', kind: 'weak', label: 'Proposed “Hyperkalemia ECG changes” as a weak spot', sub: '6:52 am · from the fluid balance practice; you accepted it', undone: false, payload: { id: 'w2' } }],
+      newOpen: ov === 'menu', modal: ov === 'new' ? { kind: 'task', title: 'Flash review: chapter 12 terms', cat: 'study', est: 15, when: 'today', course: 'BIO 201', body: '' } : null,
+    };
+    const D = this._D;
+    if (qs !== 'off') {
+      D.page = 'study'; D.studyView = P.studyView === 'weak' ? 'weak' : 'quiz';
+      if (qs === 'miss') D.quizS = { course: 'nur', order: [0, 2, 4, 3, 1], label: 'Mini quiz · NUR 112', i: 0, picked: 3, score: 0, misses: [0], over: false, streak: 0, made: ['wq'] };
+      else D.quizS = { course: 'nur', order: [0, 2, 4, 3, 1], label: 'Mini quiz · NUR 112', i: 4, picked: -1, score: 3, misses: [0, 3], over: true, streak: 0, made: ['wq', 'wq3'] };
+      D.changes = [{ id: 'cq1', kind: 'weak', label: 'Proposed a weak spot under “Potassium and sodium imbalances”', sub: 'Just now · from a miss on the mini quiz', undone: false, payload: { id: 'wq' } }].concat(qs === 'end' ? [{ id: 'cq2', kind: 'weak', label: 'Proposed a weak spot under “IV rates and drop factors”', sub: 'Just now · from a miss on the mini quiz', undone: false, payload: { id: 'wq3' } }] : []).concat(D.changes);
+    }
+    if (P.proposal === 'on') { D.proposal = { add: true, off: true }; D.page = 'today'; D.tView = 'list'; }
+
+    Object.assign(D, { nView: P.nview === 'editor' ? 'editor' : 'list', nSel: 'n1', nOpen: P.note || 'n1', nFilter: 'all', styleOpen: P.menu === 'style', linkOpen: false, fmt: {}, styleOver: null, hist: [], fut: [], nDone: {},
+      nType: null, nNext: 0, ans: null, pmStudy: [], pmGen: [], pOpen: P.chat === 'open', pBig: false, pHist: false, pThread: 'gen', pDraft: '', genArch: [], studyOn: false, studyNote: null, ended: null, pMin: false, hasLive: false, edTick: 0, notesSet: P.notes === 'none' ? 'none' : 'demo' });
+    if (P.study === 'missed') {
+      Object.assign(D, { page: 'notes', nView: 'editor', nOpen: 'n9', nSel: 'n9', hasLive: true, nType: LIVE.doc.length, ans: 'partial', studyOn: true, studyNote: 'n9', pOpen: true, pThread: 'study',
+        sess: { topic: noteTitle(LIVE), note: 'n9', total: 25, elapsed: 7, state: 'run', half: false } });
+      D.weak = D.weak.concat([Object.assign({}, WEAK_ABG)]);
+      D.changes = [{ id: 'cn1', kind: 'weak', label: 'Proposed a weak spot under “Acid–base balance and ABGs”', sub: 'Just now · from your note session', undone: false, payload: { id: 'wn1' } }].concat(D.changes);
+    }
+    return D;
+  }
+  S() { return Object.assign({}, this.base(), this.state || {}); }
+  put(o) { this.setState(o); }
+  now() { return performance.now(); }
+  componentDidMount() { this.last = this.now(); this.iv = setInterval(() => this.tick(), 100); this.onDocKey = (e) => { if (e.key === 'Escape' && this.S().pOpen) { e.preventDefault(); this.closeChat(); } }; document.addEventListener('keydown', this.onDocKey); }
+  componentWillUnmount() { clearInterval(this.iv); document.removeEventListener('keydown', this.onDocKey); }
+  // closing keeps the chat: a general chat moves to today's history, as in Linear
+  closeChat() { const S = this.S(), study = S.pThread === 'study' && S.studyOn && S.studyNote, o = { pOpen: false, pBig: false, pMin: false, pHist: false }; if (!study && S.pmGen.length) { o.genArch = [{ title: (S.pmGen.find((m) => m.k === 'you') || { text: 'Chat' }).text, msgs: S.pmGen }].concat(S.genArch || []); o.pmGen = []; } this.put(o); }
+  focusNew() { setTimeout(() => { if (this._newBtn && document.body.contains(this._newBtn)) this._newBtn.focus(); }, 0); }
+
+  // ---------- chat ----------
+  withMsgs(base, you, ev, actions) {
+    const msgs = base.map((m) => (m.who === 'ev' && m.n < m.len ? Object.assign({}, m, { n: m.len }) : m));
+    if (you) msgs.push({ who: 'you', text: you });
+    if (ev) msgs.push({ who: 'ev', text: ev, len: words(ev).length, n: 0, actions: actions || [] });
+    return msgs;
+  }
+  talk(you, ev, actions, extra) {
+    const S = this.S();
+    this.put(Object.assign({ chat: this.withMsgs(S.chat, you, ev, actions), phase: ev ? 'think' : S.phase, thinkUntil: this.now() + (you ? 850 : 450) }, extra || {}));
+  }
+  gesture(g) { return { g, gUntil: this.now() + GD[g] * 1000 }; }
+  react(text, acts, mood) { return { react: { text, acts: acts || [], mood: mood || null, until: this.now() + (acts && acts.length ? 12000 : 4500) } }; }
+  tick() {
+    const now = this.now(), dt = Math.min(0.5, (now - this.last) / 1000); this.last = now;
+    const S = this.S(), up = {}; let say = null;
+    if (S.sess) {
+      const s = Object.assign({}, S.sess), m = (dt * S.speed) / 60;
+      if (s.state === 'run') {
+        const before = s.elapsed; s.elapsed = Math.min(s.total, s.elapsed + m);
+        if (before < s.total / 2 && s.elapsed >= s.total / 2 && !s.half) { s.half = true; say = 'Halfway: ' + Math.ceil(s.total - s.elapsed) + ' minutes left.'; }
+        if (s.elapsed >= s.total) { this.endSession(true); return; }
+        up.sess = s;
+      } else if (s.state === 'break') {
+        s.breakLeft = Math.max(0, s.breakLeft - m);
+        if (s.breakLeft <= 0) { s.state = 'run'; say = 'Break’s over: ' + Math.ceil(s.total - s.elapsed) + ' minutes left.'; }
+        up.sess = s;
+      }
+    }
+    let chat = S.chat, phase = S.phase;
+    if (phase === 'think' && now >= S.thinkUntil) phase = 'speak';
+    if (phase === 'speak') { chat = chat.slice(); const i = chat.length - 1, m = Object.assign({}, chat[i]); m.n = Math.min(m.len, m.n + dt * 13); chat[i] = m; if (m.n >= m.len) phase = 'idle'; }
+    if (chat !== S.chat) up.chat = chat;
+    if (phase !== S.phase) up.phase = phase;
+    if (say) up.pmStudy = (S.pmStudy || []).concat([{ k: 'ev', text: say }]);
+    if (S.nType != null && S.nType < LIVE.doc.length && now >= (S.nNext || 0)) { up.nType = S.nType + 1; up.nNext = now + 650; if (S.sess && S.sess.note === 'n9') up.sess = Object.assign({}, up.sess || S.sess, { topic: noteTitle(LIVE) }); }
+    if (S.g && now > S.gUntil) up.g = '';
+    if (S.react && now > S.react.until) up.react = null;
+    if (Object.keys(up).length) this.put(up);
+  }
+
+  // ---------- E.V.'s changes today: only her list edits and her weak-spot events ----------
+  logChange(S, c) { const ch = Object.assign({ id: 'c' + Date.now() + Math.floor(Math.random() * 999), sub: 'Just now', undone: false }, c); return { changes: [ch].concat(S.changes) }; }
+  applyChange(S, c, undo) {
+    const P = c.payload, k = c.kind;
+    if (k === 'weak') return { weak: S.weak.map((w) => (w.id === P.id ? Object.assign({}, w, { declined: undo }) : w)) }; // undo = the decline event
+    if (k === 'add') return { tasks: S.tasks.map((t) => (t.id === P.id ? Object.assign({}, t, { snz: undo }) : t)) }; // undo = take it off today
+    if (k === 'takeoff') return { tasks: S.tasks.map((t) => (t.id === P.id ? Object.assign({}, t, { snz: !undo }) : t)) }; // undo = bring it back
+    return {};
+  }
+  toggleChange(id) {
+    const S = this.S(), c = S.changes.find((x) => x.id === id); if (!c) return; const undo = !c.undone;
+    const what = c.kind === 'weak' ? (undo ? 'Declined it; nothing is counted.' : 'Back as it was.') : c.kind === 'add' ? (undo ? 'Took it off today.' : 'Back on today.') : undo ? 'Brought it back to today.' : 'Off today again.';
+    this.put(Object.assign(this.applyChange(S, c, undo), { changes: S.changes.map((x) => (x.id === id ? Object.assign({}, x, { undone: undo }) : x)) }, this.react(what)));
+  }
+
+  // ---------- sessions live in Notes: a new note starts one; E.V. follows in the bar ----------
+  newNote() {
+    if (this.S().sess) this.endSession(false);
+    const now = this.now();
+    this.put({ page: 'notes', taskId: null, modal: null, newOpen: false, nView: 'editor', nOpen: 'n9', nSel: 'n9', hasLive: true, pMin: false, nType: 0, nNext: now + 900, ans: null, studyOn: true, studyNote: 'n9', pmStudy: [], pThread: 'study', pOpen: false, pHist: false,
+      fmt: {}, styleOver: null, hist: [], fut: [], styleOpen: false, linkOpen: false, ended: null,
+      sess: { topic: 'New note', note: 'n9', total: 25, elapsed: 0, state: 'run', half: false } });
+  }
+  startNote() { const S = this.S(); if (S.sess && !S.sess.note) { this.openTask(S.sess.task); return; } if (S.sess) { this.put({ page: 'notes', nView: 'editor', nOpen: S.sess.note, taskId: null }); return; } this.newNote(); }
+  studyNote(id) {
+    { const S0 = this.S(); if (S0.sess && S0.sess.note === id) { this.put({ page: 'notes', nView: 'editor', nOpen: id, taskId: null }); return; } if (S0.sess) this.endSession(false); }
+    const n = noteOf(id); if (!n) return;
+    this.put({ page: 'notes', taskId: null, nView: 'editor', pMin: false, nOpen: id, studyOn: true, studyNote: id, pThread: 'study', pHist: false, ended: null,
+      pmStudy: [{ k: 'ev', text: 'Started 25 minutes on “' + noteTitle(n) + '”. I’ll follow along as you read and write.' }],
+      sess: { topic: noteTitle(n), note: id, total: 25, elapsed: 0, state: 'run', half: false } });
+  }
+  pSay(list) { const S = this.S(); this.put({ pmStudy: (S.pmStudy || []).concat(list) }); }
+  sessBreak() { const S = this.S(); if (!S.sess) return; if (S.sess.state === 'break') { this.sessResume(); return; } this.put({ sess: Object.assign({}, S.sess, { state: 'break', breakLeft: 5 }), pmStudy: S.pmStudy.concat([{ k: 'ev', text: 'Five-minute break. The session clock stops; I’ll call you back.' }]) }); }
+  sessResume() { const S = this.S(), s = Object.assign({}, S.sess, { state: 'run' }); this.put({ sess: s, pmStudy: S.pmStudy.concat([{ k: 'ev', text: 'Back to it: ' + Math.ceil(s.total - s.elapsed) + ' minutes left.' }]) }); }
+  sessPlus() { const S = this.S(), s = Object.assign({}, S.sess, { total: S.sess.total + 5 }); this.put({ sess: s }); }
+  endSession(auto) {
+    const S = this.S(), s = S.sess; if (!s) return;
+    const mins = Math.max(1, Math.round(s.elapsed)), n = noteOf(s.note) || LIVE, t = !s.note ? s.topic : s.note === 'n9' && (S.nType || 0) < 1 ? 'New note' : noteTitle(n);
+    const rec = { id: 'r' + Date.now(), type: 'session', tag: 'Session', name: t, meta: mins + ' min', day: 'Today', time: 'Just now', course: s.course || ncn(n.course), detail: (auto ? 'Ran the full ' + s.total + ' minutes' : 'Ended after ' + mins + ' of ' + s.total + ' minutes') + (s.note ? ', studying from your note.' : ', on a task from Today.') };
+    const before = { sess: s, ended: S.ended, records: S.records, pmStudy: S.pmStudy };
+    this.put(Object.assign({ sess: null, ended: { mins, rec: rec.id }, records: [rec].concat(S.records), pmStudy: S.pmStudy.concat([{ k: 'ev', text: (auto ? 'Time. ' : 'Ended: ') + mins + (mins === 1 ? ' minute' : ' minutes') + ' on “' + t + '”. Logged to Record.' }]) },
+      this.react('Ended the session on “' + t + '”: ' + mins + (mins === 1 ? ' minute' : ' minutes') + ', logged to Record.', auto ? [] : [{ label: 'Undo', run: () => this.put(before) }])));
+  }
+  answer(v) {
+    const S = this.S(); if (S.ans) return;
+    const extra = v === 'partial' && !S.weak.find((w) => w.id === 'wn1') ? Object.assign({ weak: S.weak.concat([Object.assign({}, WEAK_ABG)]) }, this.logChange(S, { kind: 'weak', label: 'Proposed a weak spot under “Acid–base balance and ABGs”', sub: 'Just now · from your note session', payload: { id: 'wn1' } })) : {};
+    this.put(Object.assign({ ans: v }, extra));
+  }
+  askGen(q, a) { const S = this.S(); this.put({ pOpen: true, pHist: false, pThread: 'gen', pmGen: S.pmGen.concat([{ k: 'you', text: q }, { k: 'ev', text: a }]) }); }
+
+  // ---------- conversation chips ----------
+  chipList(S) {
+    const s = S.sess;
+    if (s && s.state === 'break') return [['I’m back early', () => this.sessResume()]];
+    if (s) return [['Back to my note', () => this.put({ page: 'notes', nView: 'editor', nOpen: s.note, taskId: null })]];
+    return [
+      ['Start a note and study', () => this.newNote()],
+      ['What’s due this week?', () => this.talk('What’s due this week?', gradedLine() + ' The clinical bag is due Sunday.', [{ label: 'Open the week', run: () => this.put({ page: 'today', tView: 'week', wk: 0, taskId: null }) }])],
+      ['Quiz me on fluid balance', () => this.talk('Quiz me on fluid balance', 'Five questions on fluid balance. Misses are proposed as weak spots at the end, for you to review.', [{ label: 'Open the quiz', run: () => this.openQuiz('nur', 'fluid') }])],
+      ['How did this week go?', () => this.talk('How did this week go?', '10 h 20 m this week, 1 h 10 m more than last week, and 86% on quizzes. Fluid & electrolytes holds 2 of your 3 weak spots.', [{ label: 'Open Progress', run: () => this.put({ page: 'progress', period: 'week', taskId: null }) }])],
+      ['Plan the rest of today', () => { this.talk('Plan the rest of today', 'I suggested one thing to add and one to take off. Nothing changes until you accept.', [{ label: 'Review on Today', run: () => this.put({ page: 'today', tView: 'list', taskId: null }) }]); setTimeout(() => this.put({ proposal: { add: true, off: true } }), 30); }],
+    ];
+  }
+  sendDraft() {
+    const S = this.S(), t = (S.draft || '').trim(); if (!t) return;
+    const low = t.toLowerCase();
+    if (/^(note|log)[: ]/.test(low)) { const body = t.replace(/^(note|log)[: ]\s*/i, ''); const rec = { id: 'r' + Date.now(), type: 'note', tag: 'Entry', name: body.slice(0, 48), meta: 'From chat', day: 'Today', time: 'Just now', course: '—', detail: body };
+      this.talk(t, 'Logged to Record: “' + body + '”.', [{ label: 'Open in Record', run: () => this.put({ page: 'record', recSel: rec.id, rTab: 'all' }) }], { draft: '', records: [rec].concat(S.records) }); return; }
+    if (!S.sess && (low.includes('session') || low.includes('start'))) { this.put({ draft: '' }); this.newNote(); return; }
+    this.talk(t, 'In this demo my replies are scripted, so try a suggestion above. Starting a message with “note:” logs it to Record.', [], { draft: '' });
+  }
+
+  // ---------- today ----------
+  setTask(id, patch) { const S = this.S(); this.put({ tasks: S.tasks.map((t) => (t.id === id ? Object.assign({}, t, patch) : t)) }); }
+  toggleTask(id) { const S = this.S(); this.put({ tasks: S.tasks.map((x) => (x.id === id ? Object.assign({}, x, { done: !x.done }) : x)) }); }
+  startTask(t) { if (t.topic === 'weak') { this.drillWeak(null); return; } if (t.topic && t.cat === 'study' && t.id !== 't1') { this.openQuiz('nur', t.topic); return; } if (t.cat === 'study') { this.startNote(); return; }
+    // any other task (a lab report draft, packing a bag) gets a timed session of its own in the bar; no note
+    const S = this.S(); if (S.sess) return;
+    this.put(Object.assign({ sess: { topic: t.name, note: null, task: t.id, course: t.course, total: t.est || 25, elapsed: 0, state: 'run', half: false } }, this.react('Started ' + (t.est || 25) + ' minutes on “' + t.name + '”. The clock is in the bar below.'))); }
+  snooze(id) {
+    const S = this.S(), t = S.tasks.find((x) => x.id === id);
+    this.put(Object.assign({ tasks: S.tasks.map((x) => (x.id === id ? Object.assign({}, x, { snz: true }) : x)), taskId: null }, this.react('Snoozed “' + t.name + '” to tomorrow.', [{ label: 'Undo', run: () => this.setTask(id, { snz: false }) }])));
+  }
+  openTask(id) { this.put({ taskId: id, newOpen: false }); }
+  acceptProp(which) {
+    const S = this.S(), P = S.proposal; if (!P) return;
+    const doAdd = P.add && (which === 'all' || which === 'add'), doOff = P.off && (which === 'all' || which === 'off');
+    let tasks = S.tasks, st = S; const np = Object.assign({}, P);
+    if (doAdd) { tasks = tasks.filter((t) => t.id !== 't10').concat([Object.assign({}, T10)]); st = Object.assign({}, st, this.logChange(st, { kind: 'add', label: 'Added “' + T10.name + '” to today', sub: 'Just now · you accepted', payload: { id: 't10' } })); np.add = false; }
+    if (doOff) { tasks = tasks.map((t) => (t.id === 't6' ? Object.assign({}, t, { snz: true }) : t)); st = Object.assign({}, st, this.logChange(st, { kind: 'takeoff', label: 'Took “Pack clinical bag” off today; it’s due Sunday', sub: 'Just now · you accepted', payload: { id: 't6' } })); np.off = false; }
+    const left = np.add || np.off;
+    this.put(Object.assign({ tasks, changes: st.changes, proposal: left ? np : null }, left ? {} : this.react('Done. Both are in E.V.’s changes today, each with Undo.', null, 'happy'), left ? {} : this.gesture('done')));
+  }
+  rejectProp(which) {
+    const S = this.S(), P = S.proposal; if (!P) return; const np = Object.assign({}, P);
+    if (which === 'all' || which === 'add') np.add = false; if (which === 'all' || which === 'off') np.off = false;
+    const left = np.add || np.off;
+    this.put(Object.assign({ proposal: left ? np : null }, left ? {} : this.react('Okay, nothing changed.')));
+  }
+
+  // ---------- study ----------
+  drillWeak(id) { const S = this.S(), w = id ? S.weak.find((x) => x.id === id) : null; if (w) { const o = objOf(w.obj); this.openQuiz(w.course, o.topic, w.name); return; } this.openQuiz(S.course, 'weak'); }
+  openQuiz(course, focus, name) {
+    const S = this.S(), QL = QUIZ[course], all = QL.map((q, i) => i);
+    let want = all, label = 'Mini quiz · ' + cn(course);
+    if (focus === 'weak') { const os = S.weak.filter((w) => w.course === course && openW(w)).map((w) => w.obj); want = all.filter((i) => os.includes(QL[i][4])); label = 'Weak spots · ' + cn(course); }
+    else if (focus && TOPICS[focus]) { want = all.filter((i) => objOf(QL[i][4]).topic === focus); label = (name ? 'Drill: ' + name : TOPICS[focus]) + ' · 5 questions'; }
+    else if (focus) { want = all.filter((i) => QL[i][4] === focus); const o = objOf(focus); label = o ? o.name : label; }
+    const order = want.concat(all.filter((i) => !want.includes(i))).slice(0, 5);
+    this.put({ page: 'study', taskId: null, studyView: 'quiz', course, quizS: { course, order, label, i: 0, picked: null, score: 0, misses: [], over: false, streak: 0, made: [] } });
+  }
+  qOf(z) { return QUIZ[z.course][z.order[z.i]]; }
+  pickQuiz(j) {
+    const S = this.S(), z = S.quizS; if (!z || z.picked != null || z.over) return; const Q = this.qOf(z), ok = j === Q[2];
+    const nz = Object.assign({}, z, { picked: j, score: z.score + (ok ? 1 : 0), misses: ok ? z.misses : z.misses.concat([z.i]), streak: ok ? z.streak + 1 : 0, made: z.made.slice() });
+    let extra = {};
+    if (!ok) { // proposed quietly; triage waits for the end of the set (D-235, D-238)
+      const o = objOf(Q[4]), name = Q[0].replace(/…$/, '').replace(/\?$/, '');
+      if (!S.weak.find((x) => x.q === Q[0] && !x.declined)) {
+        const w = { id: 'w' + Date.now(), course: z.course, obj: Q[4], name, q: Q[0], src: 'quiz', sub: 'From your miss on “' + Q[0].replace(/[?…]$/, '') + '” · today’s mini quiz', proposed: true };
+        nz.made.push(w.id);
+        extra = Object.assign({ weak: S.weak.concat([w]) }, this.logChange(S, { kind: 'weak', label: 'Proposed a weak spot under “' + o.name + '”', sub: 'Just now · from a miss on the mini quiz', payload: { id: w.id } }));
+      }
+    } else if (nz.streak === 3) extra = Object.assign(this.react('Three right in a row.', null, 'happy'), this.gesture('done'));
+    this.put(Object.assign({ quizS: nz }, extra));
+  }
+  nextQuiz() {
+    const S = this.S(), z = Object.assign({}, S.quizS); if (z.picked == null || z.over) return; z.i++; z.picked = null; let extra = {};
+    if (z.i >= z.order.length) {
+      z.over = true; z.i = z.order.length - 1; z.picked = -1;
+      const rec = { id: 'r' + Date.now(), type: 'quiz', tag: 'Quiz', name: z.label, meta: z.score + ' of ' + z.order.length, day: 'Today', time: 'Just now', course: cn(z.course), detail: z.misses.length ? z.misses.length + ' missed; each was proposed as a weak spot for you to review.' : 'Nothing missed.' };
+      extra = Object.assign({ records: [rec].concat(S.records) }, z.misses.length ? {} : this.react(z.score + ' of ' + z.order.length + '. Clean sweep.', null, 'happy'));
+    }
+    this.put(Object.assign({ quizS: z }, extra));
+  }
+  // triage: Accept, Join, Not now, Decline (D-242); every one has Undo
+  joinTarget(S, w) { return S.weak.find((x) => x.id !== w.id && x.obj === w.obj && openW(x)); }
+  triage(id, act) {
+    const S = this.S(), w = S.weak.find((x) => x.id === id); if (!w) return; const o = objOf(w.obj);
+    const patch = act === 'accept' ? { proposed: false } : act === 'join' ? { joinedTo: (this.joinTarget(S, w) || {}).id } : act === 'later' ? { later: true } : { declined: true };
+    const back = act === 'accept' ? { proposed: true } : act === 'join' ? { joinedTo: null } : act === 'later' ? { later: false } : { declined: false };
+    const tgt = act === 'join' ? this.joinTarget(S, w) : null;
+    const text = act === 'accept' ? 'Accepted under “' + o.name + '”.' : act === 'join' ? 'Joined to “' + tgt.name + '”.' : act === 'later' ? 'Not now: it comes back at your next session.' : 'Declined. Nothing is counted.';
+    this.put(Object.assign({ weak: S.weak.map((x) => (x.id === id ? Object.assign({}, x, patch) : x)) }, this.react(text, [{ label: 'Undo', run: () => { const St = this.S(); this.put({ weak: St.weak.map((x) => (x.id === id ? Object.assign({}, x, back) : x)) }); } }])));
+  }
+  acceptAllFrom(ids) {
+    const S = this.S(), take = S.weak.filter((w) => ids.includes(w.id) && pending(w)).map((w) => w.id); if (!take.length) return;
+    this.put(Object.assign({ weak: S.weak.map((x) => (take.includes(x.id) ? Object.assign({}, x, { proposed: false }) : x)) }, this.react('Accepted ' + take.length + (take.length === 1 ? ' weak spot.' : ' weak spots.'), [{ label: 'Undo', run: () => { const St = this.S(); this.put({ weak: St.weak.map((x) => (take.includes(x.id) ? Object.assign({}, x, { proposed: true }) : x)) }); } }])));
+  }
+  markSolid(id) {
+    const S = this.S(), w = S.weak.find((x) => x.id === id);
+    this.put(Object.assign({ weak: S.weak.map((x) => (x.id === id ? Object.assign({}, x, { solid: true }) : x)) }, this.react('Marked “' + w.name + '” solid.', [{ label: 'Undo', run: () => { const St = this.S(); this.put({ weak: St.weak.map((x) => (x.id === id ? Object.assign({}, x, { solid: false }) : x)) }); } }])));
+  }
+
+  // ---------- new: a task or a note (D-162) ----------
+  openModal(kind) { const S = this.S(); this.put({ newOpen: false, modal: { kind, title: '', cat: kind === 'task' && S.tFilter === 'study' ? 'study' : 'class', est: 15, when: 'today', course: 'NUR 112', body: '' } }); }
+  closeModal() { this.put({ modal: null }); this.focusNew(); }
+  patchModal(o) { const S = this.S(); this.put({ modal: Object.assign({}, S.modal, o) }); }
+  createNew() {
+    const S = this.S(), m = S.modal; if (!m) return; const title = (m.title || '').trim(); if (!title) return;
+    if (m.kind === 'task') {
+      const t = { id: 't' + Date.now(), name: title, cat: m.cat, tag: m.cat === 'study' ? 'Study' : 'Class', est: m.est, due: m.when === 'today' ? 'Today' : 'Tomorrow', dueD: m.when === 'today' ? 0 : 1, course: m.course, done: false, desc: 'Added just now.', act: [['Added by you', 'Just now']], snz: m.when !== 'today' };
+      this.put(Object.assign({ tasks: S.tasks.concat([t]), modal: null }, this.react(m.when === 'today' ? 'Added “' + title + '” to today.' : 'Added “' + title + '” for tomorrow.'))); this.focusNew(); return;
+    }
+    const rec = { id: 'r' + Date.now(), type: 'note', tag: 'Entry', name: title, meta: 'Your entry', day: 'Today', time: 'Just now', course: m.course, detail: m.body || 'No body yet.' };
+    this.put(Object.assign({ records: [rec].concat(S.records), modal: null, recSel: rec.id }, this.react('Logged “' + title + '” to Record.'))); this.focusNew();
+  }
+
+  // ---------- render ----------
+  renderVals() {
+    const S = this.S(), T = genTheme(S.mode, S.contrast), sm = T.sem, dark = S.mode === 'dark';
+    T.focus = T.quiet; T.accentHover = dark ? lch2hex(76, 50, 52) : lch2hex(42, 62, 52);
+    const C = (k) => { const col = k === 'quiet' ? T.quiet : sm[k] || k; return { col, tint: T.tint(col), line: T.tintLine(col) }; };
+    const CT = (tag, d) => (tag === 'Graded' && d != null && d >= 0 && d <= 1 ? C('red') : C(TAGSEM[tag] || 'quiet'));
+    const vars = ['--bg:' + T.bg, '--chrome:' + T.chrome, '--surface:' + T.surface, '--hover:' + T.hover, '--line:' + T.line, '--line2:' + T.line2, '--text:' + T.text, '--quiet:' + T.quiet, '--faint:' + T.faint, '--accent:' + T.accent, '--accentHover:' + T.accentHover, '--focus:' + T.focus, '--onAccent:' + T.onAccent, '--sem-green:' + sm.green, '--scrim:' + T.scrim, '--selT:' + T.tint(sm.blue), '--link:' + sm.blue, '--holdX:' + sm.yellow].join(';');
+    const s = S.sess, page = S.page, taskOpen = !!S.taskId;
+    const tasksVis = S.tasks.filter((t) => !t.snz && !t.gone);
+    const out = { vars, mode: S.mode, sm: 24, big: 128, yes: true, av1: T.accent, av2: T.accent2, bgHex: T.bg, chromeHex: T.chrome, green: sm.green, yellow: sm.yellow, violet: sm.violet };
+    out.cardRef = (el) => { if (el && !S.modal && !S.newOpen) { const a = document.activeElement; if (!a || a === document.body || !document.body.contains(a) || a.closest('.fcard') !== el) el.focus({ preventScroll: true }); } };
+    out.newRef = (el) => { if (el) this._newBtn = el; };
+    out.convRef = (el) => { if (el) el.scrollTop = el.scrollHeight; };
+    const P = S.proposal;
+    const view = taskOpen ? 'task' : page;
+
+    // avatar + status
+    const left = s ? Math.max(0, s.total - s.elapsed) : 0;
+    out.sessV = s ? Math.round((s.elapsed / s.total) * 1000) / 1000 : -1;
+    out.mood = S.react && S.react.mood ? S.react.mood : S.phase === 'think' ? 'thinking' : S.phase === 'speak' ? 'speaking' : s && s.state === 'break' ? 'sleepy' : (S.draft || '').length ? 'listening' : 'idle';
+    out.g = S.g || '';
+    out.status = S.phase === 'think' ? 'thinking…' : s ? (s.state === 'break' ? 'on a break' : 'in a session') : P ? 'waiting on your review' : 'ready when you are';
+
+    // nav + tabs (neutral icons, D-270)
+    const go = (id) => () => this.put(Object.assign({ page: id, taskId: null, newOpen: false, filterOpen: false, prefsOpen: false, styleOpen: false, linkOpen: false }, id === 'study' ? { studyView: 'overview' } : id === 'notes' ? { nView: 'list' } : id === 'conversation' && S.pOpen ? { pOpen: false, pMin: true } : {}, { pHist: false }));
+    out.nav = PAGES.map(([id, name, ic]) => ({ name: id === 'conversation' ? 'Conversation' : name, icon: IC[ic], cls: page === id && !taskOpen ? 'ni on' : 'ni', cur: page === id ? 'page' : 'false', pick: go(id) }));
+    out.tabs = PAGES.map(([id, name, ic]) => ({ name, icon: IC[ic], cls: page === id ? 'tab on' : 'tab', cur: page === id ? 'page' : 'false', pick: go(id) }));
+    out.modes = ['light', 'dark'].map((m) => ({ name: m === 'light' ? 'Light' : 'Dark', cls: S.mode === m ? 'on' : '', pick: () => this.put({ mode: m }) }));
+    out.contrasts = [30, 60, 100].map((c) => ({ name: String(c), cls: S.contrast === c ? 'on' : '', pick: () => this.put({ contrast: c }) }));
+    out.prefsOpen = S.prefsOpen; out.prefsCls = S.prefsOpen ? 'ni on' : 'ni'; out.togglePrefs = () => this.put({ prefsOpen: !S.prefsOpen, newOpen: false });
+    out.prefsKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); this.put({ prefsOpen: false }); } };
+
+    // sidebar today
+    const undone = tasksVis.filter((t) => !t.done);
+    const sideShown = undone.slice(0, 5);
+    out.todayLeft = undone.length + ' left';
+    const tName = (t) => { if (t.id !== 't5') return t.name; const o = S.weak.filter((w) => w.course === 'nur' && openW(w)).length, p = S.weak.filter((w) => w.course === 'nur' && pending(w)).length; return 'Review: ' + o + ' weak spots' + (p ? ' · ' + p + ' to review' : ''); };
+    out.sideToday = sideShown.map((t) => ({ name: tName(t), col: CT(t.tag, t.dueD).col, time: t.due === 'Today' ? t.est + 'm' : t.due.split(' ')[0], cls: S.taskId === t.id ? 'si on' : 'si', open: () => this.openTask(t.id) }));
+    out.sideMore = undone.length > 5; out.sideMoreLabel = (undone.length - 5) + ' more in Today';
+    out.goToday = go('today'); out.goConv = go('conversation');
+
+    // session: the time and controls show once per width
+    out.hasSess = !!s; out.noSess = !s;
+    out.sessSide = !!s && !(page === 'conversation' && !taskOpen);
+    out.sessStrip = !!s; out.sstripCls = 'sstrip' + (page === 'conversation' && !taskOpen ? ' onconv' : '');
+    if (s) {
+      const brk = s.state === 'break';
+      out.ss = Object.assign({}, C('quiet'), {
+        topic: s.topic, badge: brk ? 'Break' : 'Running', sub: 'Your Study Watch note · ' + s.total + ' min',
+        left: brk ? Math.ceil(s.breakLeft) + ' min break' : Math.ceil(left) + ' min left',
+        brkLabel: brk ? 'Resume' : 'Break', brkIcon: brk ? IC.play : IC.coffee, brk: () => this.sessBreak(), plus: () => this.sessPlus(), end: () => this.endSession(false),
+      });
+    } else out.ss = {};
+    out.note = NOTE; out.startNote = () => this.startNote();
+
+    // header + new menu
+    const titleOf = { conversation: 'Conversation', today: 'Today · Friday 23 October', study: 'Study', notes: 'Notes', progress: 'Progress', record: 'Record' };
+    out.title = taskOpen ? 'Today' : titleOf[page];
+    out.isTask = taskOpen; out.isConv = !taskOpen && page === 'conversation'; out.isToday = !taskOpen && page === 'today'; out.isStudy = !taskOpen && page === 'study'; out.isProgress = !taskOpen && page === 'progress'; out.isRecord = !taskOpen && page === 'record';
+    out.bodyCls = 'body' + (out.isConv ? ' bconv' : '');
+    out.closeTask = () => this.put({ taskId: null });
+    out.toggleNew = () => this.put({ newOpen: !S.newOpen, filterOpen: false, prefsOpen: false });
+    out.newOpen = S.newOpen;
+    out.newItems = [['task', 'Task for Today', 'task'], ['note', 'Note, and study with E.V.', 'note']].map(([k, label, ic], i) => ({ label, icon: IC[ic], first: i === 0, run: () => (k === 'note' ? this.newNote() : this.openModal(k)) }));
+    out.menuKey = (e) => {
+      if (e.key === 'Escape') { e.preventDefault(); this.put({ newOpen: false }); this.focusNew(); return; }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); const its = Array.from(e.currentTarget.querySelectorAll('.mi')), i = its.indexOf(document.activeElement); const n = its[(i + (e.key === 'ArrowDown' ? 1 : -1) + its.length) % its.length]; if (n) n.focus(); }
+    };
+
+    // ---------- daily check-in ----------
+    out.showCk = !s;
+    out.ck = { when: '6:52 am', has: !!S.energy, advice: S.energy ? ADVICE[S.energy] : '', opts: [1, 2, 3, 4, 5].map((n) => ({ name: String(n), on: S.energy === n ? 'true' : 'false', cls: S.energy === n ? 'on' : '', pick: () => this.put(Object.assign({ energy: n }, this.gesture('glance'))) })) };
+
+    // ---------- her line ----------
+    const A = (label, run) => ({ label, run: () => { this.put({ react: null }); run(); } });
+    const courseAll = S.weak.filter((w) => w.course === S.course);
+    const courseWeak = courseAll.filter(openW), courseProp = courseAll.filter(pending);
+    const listed = tasksVis.filter((t) => !t.done).reduce((a, t) => a + t.est, 0), doneMin = tasksVis.filter((t) => t.done).reduce((a, t) => a + t.est, 0);
+    const sv = S.studyView;
+    const hint = (() => {
+      if (view === 'today') { if (S.tView === 'week') return { text: gradedLine() }; if (P) return null; return { text: listed + ' of your ' + BUDGET + ' minutes are on the list. Plan the rest suggests what to add or take off; nothing moves without you.' }; }
+      if (view === 'task') { const t = S.tasks.find((x) => x.id === S.taskId) || {}; if (t.topic && TOPICS[t.topic]) return { text: 'Due ' + t.due + '. I can quiz you on ' + TOPICS[t.topic].toLowerCase() + ' beforehand.', acts: [A('Quiz me on it', () => this.openQuiz('nur', t.topic))] }; return null; }
+      if (view === 'study') { if (sv === 'quiz') return S.quizS && S.quizS.over ? null : { text: 'Misses are proposed as weak spots. You review them once, at the end.' }; if (sv === 'weak') return { text: courseProp.length ? courseProp.length + ' to review. Accept the real ones, join duplicates, and decline slips.' : 'Each closes after two right answers on different days.' }; if (courseProp.length) { const nS = courseProp.filter((w) => w.src === 'session').length; return { text: (nS === courseProp.length ? courseProp.length + (courseProp.length === 1 ? ' weak spot from your note session' : ' weak spots from your note sessions') : courseProp.length + (courseProp.length === 1 ? ' weak spot' : ' weak spots')) + ' to review.', acts: [A('Review', () => this.put({ studyView: 'weak' }))] }; } return S.course === 'nur' ? { text: 'Two Exam 5 objectives are not yet solid, both on electrolytes.', acts: [A('Quiz me on them', () => this.openQuiz('nur', 'fluid'))] } : { text: 'Hormonal control and muscle contraction are not yet solid for Exam 3.', acts: [A('Quiz me on them', () => this.openQuiz('bio', 'renal'))] }; }
+      if (view === 'progress') return { text: 'Fluid & electrolytes got 18% of this week’s time and holds Tuesday’s quiz.' };
+      return null;
+    })();
+    let line = null;
+    if (S.react) line = { text: S.react.text, acts: S.react.acts.map((a) => A(a.label, a.run)) };
+    else if (P && view !== 'today') line = { text: 'I suggested changes to today’s list. Nothing changes until you accept.', acts: [A('Review', () => this.put({ page: 'today', tView: 'list', taskId: null }))] };
+    else if (hint) line = hint;
+    out.hasLine = !!line && !out.isConv;
+    out.line = line ? { text: line.text, acts: line.acts || [] } : { acts: [] };
+
+    // ---------- task view ----------
+    if (taskOpen) {
+      const t = S.tasks.find((x) => x.id === S.taskId) || S.tasks[0], list = tasksVis.filter((x) => !x.done).concat(tasksVis.filter((x) => x.done)), i = Math.max(0, list.findIndex((x) => x.id === t.id));
+      const startable = !t.done && t.est > 0 && !s;
+      out.tv = Object.assign({}, CT(t.tag, t.dueD), {
+        crumb: 'Today › ' + (t.cat === 'class' ? 'Classes' : 'Study'), pos: (i + 1) + ' of ' + list.length, name: t.name, desc: t.desc, tag: t.tag,
+        chk: t.done ? 'chk done' : 'chk', toggle: () => this.toggleTask(t.id),
+        prev: () => this.put({ taskId: list[(i - 1 + list.length) % list.length].id }), next: () => this.put({ taskId: list[(i + 1) % list.length].id }),
+        act: t.act.map(([a, w]) => ({ t: a, when: w, col: T.faint })),
+        status: [['To do', false], ['Done', true]].map(([n, v]) => ({ name: n, cls: t.done === v ? 'on' : '', pick: () => this.setTask(t.id, { done: v }) })),
+        est: t.est ? t.est + ' min' : '—', due: t.due, course: t.course,
+        hasTopic: !!(t.topic && TOPICS[t.topic]), topic: t.topic && TOPICS[t.topic] ? TOPICS[t.topic] : '', quiz: () => this.openQuiz('nur', t.topic),
+        startable, start: () => this.startTask(t), startLabel: t.id === 't1' ? 'Start study session' : t.topic ? 'Start the quiz' : 'Start',
+        snooze: () => this.snooze(t.id),
+        note: 'Snooze moves it to tomorrow, with Undo.',
+      });
+    } else out.tv = { status: [], act: [] };
+
+    // ---------- conversation ----------
+    const shown = S.chat.slice(-6), lastEv = S.chat.length - 1;
+    out.chat = shown.map((m, j) => { const isLast = S.chat.length - shown.length + j === lastEv && m.who === 'ev'; const txt = m.who === 'ev' && m.n < m.len ? words(m.text).slice(0, Math.max(0, Math.floor(m.n))).join(' ') : m.text; return { text: txt, isYou: m.who === 'you', isNow: isLast, isPast: m.who === 'ev' && !isLast }; });
+    const lm = S.chat[lastEv];
+    out.acts = lm && lm.who === 'ev' && lm.n >= lm.len && lm.actions ? lm.actions.map((a) => ({ label: a.label, run: a.run })) : [];
+    out.hasActs = out.acts.length > 0;
+    out.chips = this.chipList(S).map(([label, run]) => ({ label, run }));
+    out.draft = S.draft || '';
+    out.onDraft = (e) => this.put({ draft: e.target.value });
+    out.onDraftKey = (e) => { if (e.key === 'Enter') { e.preventDefault(); this.sendDraft(); } };
+    out.sendDraft = () => this.sendDraft();
+    // Coming up: the dates after today, never what the sidebar already shows (D-245)
+    const inSide = new Set(sideShown.map((t) => t.id));
+    out.upNext = DATES.filter((x) => x.d > 0 && !(x.task && inSide.has(x.task)) && !(x.task && (S.tasks.find((t) => t.id === x.task) || {}).done)).slice(0, 4).map((x) => Object.assign({ name: x.name, tag: DOW[dayOf(x.d).getDay()] + ' ' + dayOf(x.d).getDate(), open: () => (x.task ? this.openTask(x.task) : this.put({ page: 'today', tView: 'week', wk: Math.floor(x.d / 7), calSel: x.id })) }, CT(x.tag, x.d)));
+
+    // ---------- today ----------
+    const inF = (t) => S.tFilter === 'all' || t.cat === S.tFilter;
+    out.tFilters = [['all', 'All'], ['class', 'Classes'], ['study', 'Study']].map(([k, n]) => ({ name: n, n: tasksVis.filter((t) => !t.done && (k === 'all' || t.cat === k)).length, cls: S.tFilter === k ? 'on' : '', pick: () => this.put({ tFilter: k }) }));
+    out.tViews = [['list', 'List', 'list'], ['week', 'Week', 'grid']].map(([k, n, ic]) => ({ name: n, icon: IC[ic], cls: S.tView === k ? 'on' : '', pick: () => this.put({ tView: k }) }));
+    out.isList = S.tView === 'list'; out.isWeek = S.tView === 'week';
+    out.newTask = () => this.openModal('task');
+    out.hasProp = !!P; out.showReview = !!P && out.isList;
+    out.addCls = P ? 'btn neutral sm' : 'btn primary sm';
+    out.proposePlan = () => this.put(Object.assign({ proposal: { add: true, off: true } }, this.gesture('glance')));
+    out.acceptAll = () => this.acceptProp('all'); out.rejectAll = () => this.rejectProp('all');
+    if (P) { const parts = []; if (P.add) parts.push('add a 10-minute fluid & electrolytes quiz before Tuesday'); if (P.off) parts.push('take the clinical bag off today, since it’s due Sunday'); out.propText = 'E.V. suggests: ' + parts.join(', and ') + '. Today would be ' + (listed + (P.add ? T10.est : 0) - (P.off ? 10 : 0)) + ' of ' + BUDGET + ' min. Nothing changes until you accept.'; }
+    let firstStart = null;
+    const row = (t) => {
+      const off = !!(P && P.off && t.id === 't6'), canStart = !s && !t.done && t.est > 0 && !off; if (canStart && !firstStart) firstStart = t.id;
+      return Object.assign({ isTask: true, isAdd: false, isOff: off, why: off ? 'Off today · due Sun' : '', ok: () => this.acceptProp('off'), no: () => this.rejectProp('off'), name: tName(t), tag: t.tag, cls: t.done ? 'li dn' : off ? 'li off' : 'li', chk: t.done ? 'chk done' : 'chk', time: t.done ? 'Done' : t.due === 'Today' ? (t.est ? t.est + ' min' : 'Today') : t.due.split(' ')[0], startable: canStart, startCls: firstStart === t.id ? 'btn neutral sm rstart' : 'btn neutral sm hov rstart', start: () => this.startTask(t), toggle: () => this.toggleTask(t.id), open: () => this.openTask(t.id) }, CT(t.tag, t.dueD));
+    };
+    out.todo = tasksVis.filter((t) => !t.done && inF(t)).map(row);
+    if (P && P.add && inF(T10)) out.todo.splice(1, 0, Object.assign({ isAdd: true, isTask: false, name: T10.name, tag: T10.tag, why: 'Proposed', time: T10.est + ' min', ok: () => this.acceptProp('add'), no: () => this.rejectProp('add') }, CT(T10.tag)));
+    const doneL = tasksVis.filter((t) => t.done && inF(t));
+    out.hasDone = doneL.length > 0; out.showDone = S.showDone; out.doneLabel = 'Done · ' + doneL.length; out.doneChev = S.showDone ? IC.chevD : IC.chevR; out.toggleDone = () => this.put({ showDone: !S.showDone });
+    out.doneRows = S.showDone ? doneL.map(row) : [];
+    out.day = { big: listed + ' of ' + BUDGET + ' min', pct: Math.min(100, Math.round((listed / BUDGET) * 100)) + '%', col: listed > BUDGET ? sm.red : T.quiet, listed: listed + ' min · ' + undone.length + ' items', done: doneMin + ' min' };
+    const chgRow = (c) => Object.assign({ label: c.label, sub: c.sub + (c.undone ? ' · undone' : ''), cls: c.undone ? 'chg un' : 'chg', btn: c.undone ? 'Redo' : 'Undo', toggle: () => this.toggleChange(c.id) }, C(c.kind === 'weak' ? 'yellow' : 'blue'));
+    out.chgTop = S.changes.slice(0, 4).map(chgRow); out.noChg = S.changes.length === 0;
+    // week
+    const wk = S.wk || 0, base = 7 * wk; // a rolling seven days from today
+    const d0 = dayOf(base), d6 = dayOf(base + 6);
+    out.wkLabel = d0.getDate() + (d0.getMonth() !== d6.getMonth() ? ' ' + MON[d0.getMonth()] : '') + ' – ' + d6.getDate() + ' ' + MON[d6.getMonth()] + (wk === 0 ? ' · next 7 days' : '');
+    out.wkPrev = () => this.put({ wk: wk - 1, calSel: null }); out.wkNext = () => this.put({ wk: wk + 1, calSel: null }); out.wkNow = () => this.put({ wk: 0, calSel: null });
+    out.wdays = [0, 1, 2, 3, 4, 5, 6].map((i) => {
+      const off = base + i, dt = dayOf(off), isT = off === 0;
+      const its = DATES.filter((x) => x.d === off && !(x.task && (S.tasks.find((t) => t.id === x.task) || {}).done)).map((x) => Object.assign({ name: x.name, sub: x.score ? x.time + ' · ' + x.score : x.time, cls: 'wchip' + (off < 0 ? ' past' : '') + (x.exam ? ' exam' : '') + (S.calSel === x.id ? ' on' : ''), pick: () => this.put({ calSel: x.id }) }, CT(x.tag, x.d)));
+      if (isT) its.unshift(Object.assign({ name: undone.filter((t) => t.due === 'Today').length + ' on today’s list', sub: 'Open the list', cls: 'wchip', pick: () => this.put({ tView: 'list' }) }, C('quiet')));
+      return { dow: DOW[dt.getDay()], num: String(dt.getDate()), mon: dt.getDate() === 1 || i === 0 ? MON[dt.getMonth()] : '', cls: isT ? 'wcol today' : 'wcol', hcls: isT ? 'wh today' : 'wh', items: its };
+    });
+    const readyOf = (course, topic) => { const its = OBJ[course].items.filter((o) => !topic || o[3] === topic), n = its.length, so = its.filter((o) => o[2] === 'solid').length, al = its.filter((o) => o[2] === 'almost').length; return { n, so, al, solid: Math.round((so / n) * 100) + '%', almost: Math.round((al / n) * 100) + '%', text: so + ' of ' + n + ' objectives solid' + (al ? ', ' + al + ' almost' : '') }; };
+    const cx = DATES.find((x) => x.id === S.calSel);
+    out.hasCal = !!cx; out.noCal = !cx;
+    out.cs = cx ? Object.assign({ name: cx.name, tag: cx.tag, when: fmtD(cx.d) + ', ' + cx.time + ' · ' + rel(cx.d), course: cn(cx.course), statLab: cx.d < 0 ? 'Result' : 'Readiness', stat: cx.d < 0 ? cx.score || 'Done' : cx.exam ? readyOf(cx.course).text : cx.topic ? readyOf(cx.course, cx.topic).text : 'Upcoming', canQuiz: !!cx.topic || !!cx.exam, quiz: () => this.openQuiz(cx.course, cx.topic || null), hasTask: !!cx.task, open: () => this.openTask(cx.task) }, CT(cx.tag, cx.d)) : {};
+    const nxt = DATES.find((x) => x.exam && x.d >= 0);
+    { const r = readyOf(nxt.course); out.nx = { name: nxt.name, when: fmtD(nxt.d) + ' · ' + rel(nxt.d), solid: r.solid, almost: r.almost, text: r.text }; }
+    const inWk = DATES.filter((x) => x.d >= base && x.d <= base + 6);
+    out.wkSumLab = wk === 0 ? 'Next 7 days' : 'Those 7 days';
+    out.wkSum = [['Graded', 'Graded work and exams'], ['Class', 'Classes, labs, clinicals']].map(([tg, n]) => ({ name: n, n: String(inWk.filter((x) => x.tag === tg).length), col: T.quiet }));
+
+    // ---------- study ----------
+    out.stOverview = sv === 'overview'; out.stSub = sv !== 'overview'; out.stQuiz = sv === 'quiz'; out.stWeak = sv === 'weak'; out.notWeak = sv !== 'weak';
+    out.stSubLabel = sv === 'quiz' ? (S.quizS ? S.quizS.label : '') : 'Weak spots · ' + cn(S.course);
+    out.courses = ['nur', 'bio'].map((c) => ({ name: cn(c), cls: S.course === c ? 'on' : '', pick: () => this.put({ course: c, objSel: c === 'nur' ? 'o4' : 'b4' }) }));
+    out.toOverview = () => this.put({ studyView: 'overview' });
+    out.quizMe = () => this.openQuiz(S.course);
+    out.weakSpots = () => this.put({ page: 'study', studyView: 'weak', taskId: null });
+    out.weakLabel = 'Weak spots · ' + courseWeak.length + (courseProp.length ? ' · ' + courseProp.length + ' to review' : '');
+    out.showStart = sv === 'overview' && !s;
+    const OB = OBJ[S.course], exD = DATES.find((x) => x.id === OB.exam), rAll = readyOf(S.course);
+    out.ex = { name: exD.name, when: fmtD(exD.d) + ' · ' + rel(exD.d), count: rAll.text, solid: rAll.solid, almost: rAll.almost };
+    out.objs = OB.items.map(([id, name, st]) => { const nW = courseWeak.filter((w) => w.obj === id).length; return Object.assign({ name, status: STAT[st][0], weak: nW ? nW + (nW === 1 ? ' weak spot' : ' weak spots') : '', cls: S.objSel === id ? 'obj on' : 'obj', qlabel: 'Quiz me on ' + name, pick: () => this.put({ objSel: id }), quiz: () => this.openQuiz(S.course, id) }, C(STAT[st][1])); });
+    out.courseName = cn(S.course);
+    out.courseUp = DATES.filter((x) => x.course === S.course && x.d >= 0).slice(0, 5).map((x) => Object.assign({ date: DOW[dayOf(x.d).getDay()] + ' ' + dayOf(x.d).getDate(), name: x.name, rel: rel(x.d), pick: () => this.put({ page: 'today', tView: 'week', wk: Math.floor(x.d / 7), calSel: x.id, taskId: null }) }, CT(x.tag, x.d)));
+    out.openWeek = () => this.put({ page: 'today', tView: 'week', wk: 0, taskId: null });
+    out.quizTeaser = QUIZ[S.course][0][0];
+    // quiz: no triage mid-set; one line at the end (D-238)
+    const Z = S.quizS;
+    if (Z && QUIZ[Z.course]) {
+      const QL = Z.order.map((k) => QUIZ[Z.course][k]), Q = QL[Z.i], ans = Z.picked != null && !Z.over;
+      const fromThis = S.weak.filter((w) => Z.made.includes(w.id) && pending(w));
+      out.qz = {
+        live: !Z.over, over: Z.over, lab: Z.over ? Z.label + ' · done' : 'Question ' + (Z.i + 1) + ' of ' + QL.length + ' · ' + Z.label, score: Z.score + ' right so far', pct: Math.round(((Z.i + (ans ? 1 : 0)) / QL.length) * 100) + '%', q: Q[0], answered: ans,
+        opts: Q[1].map((o, j) => { const right = j === Q[2], picked = j === Z.picked, mark = ans && (right || picked); return Object.assign({ t: o, k: 'ABCD'[j], cls: mark ? 'opt mk' : 'opt', mark, icon: right ? IC.check : IC.x, pick: () => this.pickQuiz(j) }, mark ? C(right ? 'green' : 'red') : { col: '', tint: '', line: '' }); }),
+        expl: ans ? (Z.picked === Q[2] ? 'Right. ' : 'Not quite. ') + Q[3] : '',
+        next: () => this.nextQuiz(), nextLabel: Z.i + 1 >= QL.length ? 'See results' : 'Next question',
+        key: (e) => { const St = this.S(), ZZ = St.quizS; if (!ZZ || ZZ.over) return; const k = e.key.toLowerCase(); if (ZZ.picked == null) { const j = 'abcd'.indexOf(k); if (j >= 0 && k.length === 1) { e.preventDefault(); this.pickQuiz(j); } return; } if (k === 'enter') { e.preventDefault(); this.nextQuiz(); } },
+        sumBig: Z.score + ' of ' + QL.length, sumSub: 'Logged to Record.',
+        hasProp: fromThis.length > 0, propLine: fromThis.length + (fromThis.length === 1 ? ' miss is proposed as a weak spot.' : ' misses are proposed as weak spots.'),
+        acceptAll: () => this.acceptAllFrom(fromThis.map((w) => w.id)),
+      };
+    } else out.qz = { opts: [] };
+    // weak spots: "To review · n" at the top (D-238), four outcomes per row (D-242)
+    out.hasPropW = courseProp.length > 0; out.toReviewLab = 'To review · ' + courseProp.length;
+    out.propRows = courseProp.map((w) => { const o = objOf(w.obj), tgt = this.joinTarget(S, w); return { name: w.name, sub: 'Under “' + o.name + '” · ' + w.sub, noJoin: !tgt, joinAria: tgt ? 'Join to “' + tgt.name + '” (it’s a duplicate)' : 'Join: no open weak spot under this objective', accept: () => this.triage(w.id, 'accept'), join: () => this.triage(w.id, 'join'), later: () => this.triage(w.id, 'later'), decline: () => this.triage(w.id, 'decline') }; });
+    out.weakRows = courseWeak.map((w) => ({ name: w.name, sub: w.sub + ' · ' + objOf(w.obj).name, drill: () => this.drillWeak(w.id), solid: () => this.markSolid(w.id) }));
+    out.weakAny = courseWeak.length > 0; out.weakNone = !out.weakAny;
+    out.weakIntro = 'Open · ' + courseWeak.length + ' in ' + cn(S.course);
+    out.drillAll = () => this.drillWeak(null);
+    // study side panel
+    if (sv === 'overview' && S.objSel && objOf(S.objSel) && objOf(S.objSel).course === S.course) {
+      const o = objOf(S.objSel), ws = S.weak.filter((w) => w.obj === o.id && (openW(w) || pending(w)));
+      out.sp = Object.assign({ lab: 'Objective', isObj: true, name: o.name, status: STAT[o.st][0], exam: exD.name, rows: ws.map((w) => Object.assign({ name: w.name, sub: pending(w) ? 'to review' : 'open' }, C(pending(w) ? 'quiet' : 'yellow'))), quiz: () => this.openQuiz(S.course, o.id), note: ws.length ? 'Drill a weak spot from Weak spots, or quiz the whole objective.' : 'No weak spots under it. Quiz it to check it stays solid.' }, C(STAT[o.st][1]));
+    } else if (sv === 'quiz' && Z) {
+      const QL = Z.order.map((k) => QUIZ[Z.course][k]);
+      out.sp = { lab: 'This quiz', isObj: false, rows: QL.map((q, j) => { const done = j < Z.i || (j === Z.i && Z.picked != null); return Object.assign({ name: q[0], sub: done ? (Z.misses.includes(j) ? 'missed' : 'right') : j === Z.i ? 'now' : '' }, done ? C(Z.misses.includes(j) ? 'red' : 'green') : { col: j === Z.i ? sm.violet : T.line2, tint: '', line: '' }); }), note: 'Five questions from the course’s exam objectives. Keys A to D answer; Enter goes on.' };
+    } else out.sp = { lab: 'How triage works', isObj: false, rows: [['Accept: it counts under her objective', 'quiet'], ['Join: a duplicate of an open one', 'quiet'], ['Not now: back at your next session', 'quiet'], ['Decline: kept, never counted', 'quiet']].map(([n, k]) => Object.assign({ name: n, sub: '' }, C(k))), note: 'Nothing proposed counts until you decide. Quizlet stays yours: E.V. reads only its home page, on Saturdays.' };
+
+    // ---------- progress ----------
+    const PD = PROG[S.period];
+    out.periods = [['week', 'This week'], ['month', 'Month'], ['sem', 'Semester']].map(([k, n]) => ({ name: n, cls: S.period === k ? 'on' : '', pick: () => this.put({ period: k, pSel: null, pHover: null }) }));
+    out.periodName = PD.name.toLowerCase();
+    const grand = PD.v.reduce((a, v) => a + v, 0), mx = Math.max(1, ...PD.v);
+    const nOpen = S.weak.filter(openW).length, nRev = S.weak.filter(pending).length;
+    out.stats = [{ name: 'Study time', val: fmtMin(grand), delta: PD.delta }, { name: 'Quiz accuracy', val: PD.acc[0], delta: PD.acc[1] }, { name: 'Weak spots', val: nOpen + ' open', delta: nRev ? nRev + ' to review' : 'none to review' }];
+    out.chartTitle = PD.chart;
+    const selI = S.pSel == null ? PD.sel : S.pSel;
+    out.bars = PD.labels.map((lab, i) => { const v = PD.v[i], hgt = (v / mx) * 120; return { label: lab, lcls: i === selI ? 'bl on' : 'bl', ahead: PD.ahead[i], has: v > 0, h: hgt + 'px', aria: PD.full[i] + ': ' + (PD.ahead[i] ? 'ahead' : fmtMin(v)), tipOn: S.pHover === i, tipB: hgt + 30 + 'px', tip: PD.full[i] + ' · ' + (PD.ahead[i] ? 'ahead' : fmtMin(v)), pick: () => this.put({ pSel: i }), enter: () => this.put({ pHover: i }), leave: () => this.put({ pHover: null }) }; });
+    out.byCourse = [['NUR 112', PD.course[0]], ['BIO 201', PD.course[1]]].map(([n, f]) => ({ name: n, val: fmtMin(grand * f), pct: Math.round(f * 100) + '%' }));
+    out.ready = [['nur', 'NUR 112 · Exam 5'], ['bio', 'BIO 201 · Exam 3']].map(([c, n]) => { const r = readyOf(c); return { name: n, val: r.so + ' of ' + r.n, solid: r.solid, almost: r.almost }; });
+    const dayMap = { 4: 'Today', 3: 'Yesterday', 2: 'Wed 21 Oct', 1: 'Tue 20 Oct' };
+    const recentFor = S.period === 'week' ? S.records.filter((r) => r.day === dayMap[selI]) : S.records.slice(0, 4);
+    out.pd = { lab: PD.full[selI], total: PD.ahead[selI] ? 'Ahead' : fmtMin(PD.v[selI]), listLab: recentFor.length ? (S.period === 'week' ? 'That day in Record' : 'Recent in Record') : 'Nothing logged', items: recentFor.slice(0, 5).map((r) => Object.assign({ tag: r.tag, name: r.name, val: r.meta }, CT(r.tag))) };
+
+    // ---------- record ----------
+    const typeOf = { all: null, sessions: ['session'], quizzes: ['quiz'], notes: ['note'] };
+    const passF = (r) => (S.fCourse === 'any' || r.course === cn(S.fCourse)) && (S.fLife || r.type !== 'workout') && (S.fWhen === 'all' || (S.fWhen === 'today' ? r.day === 'Today' : ['Today', 'Yesterday'].includes(r.day)));
+    const passT = (r, k) => !typeOf[k] || typeOf[k].includes(r.type);
+    out.rTabs = [['all', 'All'], ['sessions', 'Sessions'], ['quizzes', 'Quizzes'], ['notes', 'Entries']].map(([k, n]) => ({ name: n, n: S.records.filter((r) => passF(r) && passT(r, k)).length, cls: S.rTab === k ? 'on' : '', pick: () => this.put({ rTab: k }) }));
+    const recs = S.records.filter((r) => passF(r) && passT(r, S.rTab)), days = [];
+    recs.forEach((r) => { let g = days.find((x) => x.day === r.day); if (!g) { g = { day: r.day, rows: [] }; days.push(g); } g.rows.push(Object.assign({ tag: r.tag, name: r.name, meta: r.meta, time: r.time, cls: S.recSel === r.id ? 'li sel' : 'li', open: () => this.put({ recSel: r.id }) }, CT(r.tag))); });
+    out.recGroups = days; out.recEmpty = recs.length === 0;
+    const nF = (S.fCourse !== 'any' ? 1 : 0) + (S.fWhen !== 'all' ? 1 : 0) + (!S.fLife ? 1 : 0);
+    out.filterLabel = nF ? 'Filter · ' + nF : 'Filter'; out.filterOpen = S.filterOpen;
+    out.toggleFilter = () => this.put({ filterOpen: !S.filterOpen, newOpen: false });
+    out.popKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); this.put({ filterOpen: false }); } };
+    out.clearFilter = () => this.put({ fCourse: 'any', fWhen: 'all', fLife: true });
+    out.fCourses = [['any', 'Any'], ['nur', 'NUR 112'], ['bio', 'BIO 201']].map(([k, n]) => ({ name: n, cls: S.fCourse === k ? 'on' : '', pick: () => this.put({ fCourse: k }) }));
+    out.fWhens = [['today', 'Today'], ['two', '2 days'], ['all', 'All']].map(([k, n]) => ({ name: n, cls: S.fWhen === k ? 'on' : '', pick: () => this.put({ fWhen: k }) }));
+    out.fLife = !!S.fLife; out.toggleLife = () => this.put({ fLife: !S.fLife });
+    out.logSomething = () => this.openModal('note');
+    const rsel = S.records.find((r) => r.id === S.recSel);
+    out.hasRec = !!rsel; out.noRec = !rsel;
+    out.rd = rsel ? Object.assign({ tag: rsel.tag, name: rsel.name, when: rsel.day + ', ' + rsel.time, meta: rsel.meta, course: rsel.course, detail: rsel.detail, hasDeck: !!(rsel.topic && TOPICS[rsel.topic]), reviewLabel: rsel.topic && TOPICS[rsel.topic] ? 'Quiz me on ' + TOPICS[rsel.topic].toLowerCase() : '', review: () => this.openQuiz(rsel.course === 'BIO 201' ? 'bio' : 'nur', rsel.topic) }, CT(rsel.tag)) : {};
+
+    // ---------- new modal ----------
+    const M = S.modal; out.modalOpen = !!M; out.closeModal = () => this.closeModal();
+    if (M) {
+      const segs = (label, key, opts) => ({ label, opts: opts.map(([v, n]) => ({ name: n, cls: M[key] === v ? 'on' : '', pick: () => this.patchModal({ [key]: v }) })) });
+      const rows = M.kind === 'task' ? [segs('Category', 'cat', [['class', 'Classes'], ['study', 'Study']]), segs('Estimate', 'est', [[5, '5 min'], [15, '15'], [30, '30'], [45, '45']]), segs('When', 'when', [['today', 'Today'], ['tomorrow', 'Tomorrow']]), segs('Course', 'course', [['NUR 112', 'NUR 112'], ['BIO 201', 'BIO 201']])]
+        : [segs('Course', 'course', [['NUR 112', 'NUR 112'], ['BIO 201', 'BIO 201'], ['—', 'None']])];
+      out.md = {
+        head: M.kind === 'task' ? 'New task' : 'Log entry', icon: IC[M.kind === 'task' ? 'task' : 'note'], title: M.title, rows, isNote: M.kind === 'note', body: M.body,
+        ph: M.kind === 'task' ? 'What needs doing?' : 'Title, e.g. Rounding: tenths for mL',
+        hint: M.kind === 'task' ? 'Shows on Today and in the sidebar.' : 'Goes to Record as yours.',
+        cta: M.kind === 'task' ? 'Add task' : 'Save entry', disabled: !(M.title || '').trim(),
+        onTitle: (e) => this.patchModal({ title: e.target.value }), onBody: (e) => this.patchModal({ body: e.target.value }),
+        onKey: (e) => { if (e.key === 'Enter') { e.preventDefault(); this.createNew(); } },
+        onKeys: (e) => {
+          if (e.key === 'Escape') { e.preventDefault(); this.closeModal(); return; }
+          if (e.key === 'Tab') { // keep focus inside the dialog
+            const f = Array.from(e.currentTarget.querySelectorAll('button:not([disabled]),input,textarea')).filter((x) => x.offsetParent !== null);
+            if (!f.length) return; const i = f.indexOf(document.activeElement);
+            if (e.shiftKey && (i <= 0)) { e.preventDefault(); f[f.length - 1].focus(); } else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+          }
+        },
+      };
+    } else out.md = { rows: [] };
+    out.createNew = () => this.createNew();
+
+    // ---------- Notes ----------
+    out.isNotes = !taskOpen && page === 'notes';
+    out.nIsList = out.isNotes && S.nView !== 'editor'; out.nIsEd = out.isNotes && S.nView === 'editor';
+    out.toNotesList = () => this.put({ nView: 'list', styleOpen: false, linkOpen: false });
+    const liveRow = Object.assign({}, LIVE, { doc: LIVE.doc.slice(0, S.nType == null ? LIVE.doc.length : S.nType) });
+    const allN = (S.hasLive ? [liveRow] : []).concat(S.notesSet === 'none' ? [] : NOTES);
+    const nT = (n) => (n.id === 'n9' && !n.doc.length ? 'New note' : noteTitle(n));
+    const counts = { all: allN.length, nur: allN.filter((n) => n.course === 'nur').length, bio: allN.filter((n) => n.course === 'bio').length };
+    out.nFilters = [['all', 'All'], ['nur', 'NUR 112'], ['bio', 'BIO 201']].map(([k, name]) => ({ name, n: counts[k], cls: S.nFilter === k ? 'on' : '', on: S.nFilter === k ? 'true' : 'false', pick: () => this.put({ nFilter: k }) }));
+    const openN = (id) => this.put({ nView: 'editor', nOpen: id, nSel: id, fmt: {}, styleOver: null, hist: [], fut: [], styleOpen: false, linkOpen: false });
+    const visN = allN.filter((n) => S.nFilter === 'all' || n.course === S.nFilter);
+    const selN = visN.find((n) => n.id === S.nSel) || visN[0] || null; // a filter that hides the selection moves the preview to the first note shown
+    out.nGroups = ['nur', 'bio'].map((c) => { const rows = visN.filter((n) => n.course === c); return { name: ncn(c), n: rows.length, rows: rows.map((n) => ({ title: nT(n), kind: n.kind, when: n.when, cls: selN && selN.id === n.id ? 'li sel nrow' : 'li nrow', cur: selN && selN.id === n.id ? 'true' : 'false', openLabel: 'Open ' + nT(n), pick: () => this.put({ nSel: n.id }), open: () => openN(n.id) })) }; }).filter((g) => g.rows.length);
+    out.nEmptyAll = !allN.length; out.nEmptyCourse = !!allN.length && !visN.length; out.nCourseName = ncn(S.nFilter);
+    out.nShowAll = () => this.put({ nFilter: 'all' });
+    out.pvHas = !!selN; out.pvNone = !selN; out.pvNoneText = allN.length ? 'Nothing to preview in this course.' : 'Your notes show here, by course, newest first. Start one with New note.';
+    const pv = selN || liveRow;
+    out.pv = { course: ncn(pv.course), title: nT(pv), kind: pv.kind, edited: pv.edited, studied: pv.studied, words: wordCount(pv) + ' words', outline: pv.doc.filter((b) => b[0] === 'h2').map((b) => plainT(b[1])), open: () => openN(pv.id), study: () => this.studyNote(pv.id) };
+    if (!out.pv.outline.length) out.pv.outline = ['No sections yet'];
+    out.newCls = 'btn neutral sm';
+    out.newNote = () => this.newNote();
+    const edNote = noteOf(S.nOpen) || LIVE, live = S.nOpen === 'n9', typed = live ? (S.nType == null ? LIVE.doc.length : S.nType) : null, typedDone = !live || typed >= LIVE.doc.length;
+    const toDoc = (n, upto) => n.doc.slice(0, upto == null ? n.doc.length : upto).map((b, bi) => {
+      const k = b[0], o = { h1: k === 'h1', h2: k === 'h2', h3: k === 'h3', p: k === 'p', ul: k === 'ul', ol: k === 'ol', todo: k === 'todo' };
+      if (k === 'ul' || k === 'ol') o.items = b[1].map((t) => ({ segs: mdSegs(t) }));
+      else if (k === 'todo') o.items = b[1].map(([d, t], ii) => { const key = n.id + ':' + bi + ':' + ii, done = key in S.nDone ? S.nDone[key] : d; return { segs: mdSegs(t), cls: done ? 'td dn' : 'td', chk: done ? 'chk done' : 'chk', pressed: done ? 'true' : 'false', aria: 'Done: ' + plainT(t), toggle: () => this.put({ nDone: Object.assign({}, S.nDone, { [key]: !done }) }) }; });
+      else o.segs = mdSegs(b[1]);
+      return o;
+    });
+    const blank = live && typed === 0;
+    const caret = blank ? null : live ? (typedDone ? LIVE.caret : ['p', '']) : edNote.caret;
+    const cur = S.styleOver || (caret ? caret[0] : 'h1'), fm = S.fmt;
+    out.cb = { on: !!caret, text: caret ? caret[1] : '', cls: [fm.b && 'fb', fm.i && 'fi', fm.u && 'fu', fm.s && 'fs', fm.link && 'flk', (S.hist.length || S.styleOpen || S.linkOpen) && 'csel'].filter(Boolean).join(' ') };
+    out.caretRef = (el) => { const St = this.S(), key = (St.edTick || 0) + '|' + St.styleOpen; if (el && key !== this._ck && ((St.edTick || 0) > 0 || St.styleOpen)) { this._ck = key; el.scrollIntoView({ block: 'center' }); } };
+    ['h1', 'h2', 'h3', 'p', 'ul', 'ol', 'todo'].forEach((k) => { out.cb[k] = cur === k; });
+    const edTitle = blank ? 'New note' : noteTitle(edNote);
+    out.ed = { blank, doc: toDoc(edNote, live ? typed : null), short: edTitle.split(':')[0], course: ncn(edNote.course), courseAria: 'Course: ' + ncn(edNote.course) + '. Change it', kind: edNote.kind, edited: live ? 'Edited just now' : 'Edited ' + edNote.edited.replace('Today, ', '').replace('Yesterday, ', 'yesterday, '), aria: 'Note: ' + edTitle };
+    const stOf = STYLES.find((x) => x[0] === cur) || STYLES[0];
+    const glyph = (x) => (IC2[x[2]] ? { svg: true, txt: false, icon: IC2[x[2]], gl: '' } : { svg: false, txt: true, icon: '', gl: x[2] });
+    out.st = Object.assign(glyph(stOf), { name: stOf[1] }); out.stAria = 'Text style: ' + stOf[1];
+    const edit = (o) => { const St = this.S(); this.put(Object.assign({ hist: St.hist.concat([{ fmt: St.fmt, styleOver: St.styleOver }]), fut: [], edTick: (St.edTick || 0) + 1 }, o)); };
+    out.styleOpen = S.styleOpen; out.toggleStyle = () => this.put({ styleOpen: !S.styleOpen, linkOpen: false, newOpen: false });
+    out.styles = STYLES.map((x) => Object.assign(glyph(x), { name: x[1], keys: x[3], cls: x[0] === cur ? 'mi on' : 'mi', on: x[0] === cur, pick: () => edit({ styleOver: x[0], styleOpen: false }) }));
+    out.menuKeys = (e) => {
+      if (e.key === 'Escape') { e.preventDefault(); this.put({ styleOpen: false }); return; }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); const its = Array.from(e.currentTarget.querySelectorAll('.mi')), i = its.indexOf(document.activeElement); const nx = its[(i + (e.key === 'ArrowDown' ? 1 : -1) + its.length) % its.length]; if (nx) nx.focus(); }
+    };
+    out.fmts = FMTS.map(([k, label, ic, keys]) => ({ label, tip: label + '  ' + keys, icon: IC2[ic], on: fm[k] ? 'true' : 'false', cls: fm[k] ? 'btn ghost icon sm on' : 'btn ghost icon sm', run: () => edit({ fmt: Object.assign({}, fm, { [k]: !fm[k] }) }) }));
+    out.linkOpen = S.linkOpen; out.lkCls = fm.link || S.linkOpen ? 'btn ghost icon sm on' : 'btn ghost icon sm';
+    out.toggleLink = () => this.put({ linkOpen: !S.linkOpen, styleOpen: false, newOpen: false });
+    out.addLink = () => edit({ fmt: Object.assign({}, fm, { link: true }), linkOpen: false });
+    out.linkKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); this.put({ linkOpen: false }); } else if (e.key === 'Enter') { e.preventDefault(); out.addLink(); } };
+    out.noUndo = !S.hist.length; out.noRedo = !S.fut.length;
+    out.undo = () => { const h = S.hist; if (!h.length) return; const last = h[h.length - 1]; this.put({ hist: h.slice(0, -1), fut: S.fut.concat([{ fmt: S.fmt, styleOver: S.styleOver }]), fmt: last.fmt, styleOver: last.styleOver, edTick: (S.edTick || 0) + 1 }); };
+    out.redo = () => { const f = S.fut; if (!f.length) return; const nx = f[f.length - 1]; this.put({ fut: f.slice(0, -1), hist: S.hist.concat([{ fmt: S.fmt, styleOver: S.styleOver }]), fmt: nx.fmt, styleOver: nx.styleOver, edTick: (S.edTick || 0) + 1 }); };
+    out.yes = true;
+    { const qq = C('quiet'); out.quietCol = qq.col; out.quietTint = qq.tint; out.quietLine = qq.line; }
+
+    // the conversation's side card points to Notes now
+    out.hasSess = false; out.noSess = true; out.sessSide = false; out.sessStrip = false;
+    const mmss0 = (m) => { const t = Math.max(0, Math.ceil(m * 60)); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
+    out.note = s ? { lab: 'Study session · running', title: s.topic, sub: mmss0(left) + ' left, in Notes', cta: s.note ? 'Open the note' : 'Open the task' } : { lab: 'Study session', title: 'You study where you write', sub: 'A new note starts 25 minutes, and E.V. follows along from the bar below.', cta: 'New note' };
+    out.startNote = () => this.startNote();
+
+    // ---------- E.V.'s bar: the ground's bottom edge, on every view ----------
+    out.sHas = !!s;
+    const mmss = (m) => { const t = Math.max(0, Math.ceil(m * 60)); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
+    const leftTxt = s ? (s.state === 'break' ? 'Break · ' + mmss(s.breakLeft || 0) : mmss(left) + ' left') : '';
+    if (s) {
+      const sn = noteOf(s.note) || LIVE;
+      out.ss.left = leftTxt;
+      out.ss.on = !s.note ? s.topic : s.note === 'n9' && (S.nType || 0) < 1 ? 'your new note' : noteTitle(sn);
+      out.ss.openNote = !s.note ? () => this.openTask(s.task) : () => this.put({ page: 'notes', nView: 'editor', nOpen: s.note, taskId: null });
+    }
+    const studyThread = S.studyOn && S.studyNote;
+    const askReady = studyThread && S.studyNote === 'n9' && (S.nType || 0) >= LIVE.doc.length;
+    const viewName = taskOpen ? 'Today' : (titleOf[page] || 'E.V.').split(' · ')[0];
+    const PROMPT = {
+      conversation: ['What’s due this week?', gradedLine() + ' The clinical bag is due Sunday.'],
+      today: ['What should I do first today?', 'The dosage set first, while it’s fresh, then the weak-spot review: 25 of your 90 minutes.'],
+      study: ['Which objectives aren’t solid yet?', 'For NUR 112 Exam 5: potassium and sodium imbalances, calcium and magnesium imbalances, and acid–base balance. Fluid volume and IV rates are almost there.'],
+      progress: ['How did this week go?', '10 h 20 m this week, 1 h 10 m more than last week, and 86% on quizzes. Fluid & electrolytes holds 2 of your 3 weak spots.'],
+      record: ['What did I study yesterday?', 'Cardiac meds for 20 minutes, and 4 of 5 on the renal review. The miss was where most filtrate is reabsorbed.'],
+      notes: ['Which note should I review before Tuesday?', 'Fluid & electrolytes: potassium and sodium. Tuesday’s quiz is on fluid balance, and the note covers hyperkalemia, one of your open weak spots.'],
+    };
+    if (S.notesSet === 'none' && !S.hasLive) PROMPT.notes = ['How do I start my first note?', 'Press New note. It starts a 25-minute session, and I follow along as you write.'];
+    const pr = PROMPT[taskOpen ? 'today' : page] || PROMPT.conversation;
+    let sg;
+    if (out.isNotes && s && S.studyNote === s.note) {
+      if (s.state === 'break') sg = { text: 'On a break. Resume when you’re back.', plain: true };
+      else if (S.studyNote === 'n9' && !askReady) sg = { text: 'Following along as you write…', plain: true };
+      else if (askReady && !S.ans) sg = { text: 'E.V. has a quick check on step 3', run: () => this.put({ pOpen: true, pHist: false, pThread: 'study' }) };
+      else sg = { text: 'Ask E.V. about this note', run: () => this.put({ pOpen: true, pHist: false, pThread: 'study' }) };
+    } else if (out.nIsEd && !s) sg = S.ended && S.studyNote === S.nOpen ? { text: 'Studied ' + S.ended.mins + ' min on this note · open in Record', run: () => this.put({ page: 'record', recSel: S.ended.rec, rTab: 'all', taskId: null }) } : { text: 'Study this note with E.V.', run: () => this.studyNote(S.nOpen) };
+    else if (out.isConv) sg = { text: pr[0], run: () => this.talk(pr[0], pr[1]) };
+    else sg = { text: pr[0], run: () => this.askGen(pr[0], pr[1]) };
+    out.sg = Object.assign({ btn: !sg.plain, plain: !!sg.plain }, sg);
+    out.evDot = !!(askReady && !S.ans && !S.pOpen);
+    out.evAria = out.evDot ? 'E.V., with a question for you' : out.isConv ? 'E.V.: write in the conversation' : 'E.V.';
+    out.pOpen = S.pOpen;
+    out.evBtnCls = S.pOpen ? 'btn ghost sm evb on' : 'btn ghost sm evb';
+    const thread = S.pThread === 'study' && studyThread ? 'study' : 'gen';
+    out.fieldRef = (el) => { if (el) this._field = el; };
+    out.toggleChat = () => { const St = this.S(); if (out.isConv) { this.put({ pOpen: false, pHist: false }); if (this._field) this._field.focus(); return; } this.put({ pMin: false, pOpen: !St.pOpen, pHist: false, pThread: out.isNotes && St.studyOn ? 'study' : 'gen', styleOpen: false, linkOpen: false, newOpen: false }); };
+    out.pMinF = () => this.put({ pOpen: false, pMin: true, pHist: false });
+    out.pRestore = () => this.put({ pOpen: true, pMin: false, pHist: false });
+    out.pClose = () => this.closeChat();
+    out.toggleBig = () => this.put({ pBig: !S.pBig }); out.bigLabel = S.pBig ? 'Make smaller' : 'Make bigger'; out.bigIcon = S.pBig ? IC2.shrink : IC2.expand;
+    out.pKey = () => {}; // Escape is handled once, at the document, while the pop-up is open
+    out.pCls = S.pBig ? 'chatp wide' : 'chatp';
+    out.rcolCls = 'rcol' + (S.pOpen ? ' pon' + (S.pBig ? ' pwide' : '') : '');
+    out.openHist = () => this.put({ pOpen: true, pHist: true, pMin: false });
+    out.pHist = S.pHist; out.pChat = !S.pHist;
+    const sTitle = S.studyNote ? (S.studyNote === 'n9' && (S.nType || 0) < 1 ? 'New note' : noteTitle(noteOf(S.studyNote))) : '';
+    out.hist = [];
+    if (studyThread) out.hist.push({ title: 'Studying: ' + sTitle, sub: s ? 'This session · ' + leftTxt : 'Today’s session', open: () => this.put({ pHist: false, pThread: 'study' }) });
+    if (S.pmGen.length) out.hist.push({ title: (S.pmGen.find((m) => m.k === 'you') || { text: 'Chat' }).text, sub: 'Today · open', open: () => this.put({ pHist: false, pThread: 'gen' }) });
+    (S.genArch || []).forEach((a, i) => out.hist.push({ title: a.title, sub: 'Today · closed', open: () => { const St = this.S(), arch = (St.genArch || []).filter((_, j) => j !== i); this.put({ pHist: false, pThread: 'gen', pmGen: a.msgs, genArch: St.pmGen.length ? [{ title: (St.pmGen.find((m) => m.k === 'you') || { text: 'Chat' }).text, msgs: St.pmGen }].concat(arch) : arch }); } }));
+    out.hist.forEach((h, i) => { h.first = i === 0; });
+    out.histNone = !out.hist.length;
+    out.pMinOn = !!S.pMin && !S.pOpen;
+    out.pMinTitle = thread === 'study' ? 'Studying: ' + sTitle : (S.pmGen.find((m) => m.k === 'you') || { text: 'New chat' }).text;
+    out.pMinAria = 'Open the chat: ' + out.pMinTitle;
+    out.pTitle = S.pHist ? 'Chats' : thread === 'study' ? 'Studying with E.V.' : S.pmGen.length ? (S.pmGen.find((m) => m.k === 'you') || { text: 'Chat' }).text : 'New chat';
+    { const asked = (q) => (thread === 'study' ? S.pmStudy : S.pmGen).some((m) => m.k === 'you' && m.text === q);
+      const sayS = (q, a) => { const St = this.S(); this.put({ pmStudy: St.pmStudy.concat([{ k: 'you', text: q }, { k: 'ev', text: a }]) }); };
+      const opts = thread === 'study'
+        ? [['Quiz me on this note', 'Five questions from this note. Misses are proposed as weak spots, for you to review in Study.'], ['What else links to this note?', S.studyNote === 'n9' ? 'Your potassium note: acidosis shifts potassium out of the cells. And your renal note, since the kidneys adjust HCO₃⁻.' : 'Your other NUR 112 notes from this week cover the same unit.']].map(([q, a]) => ({ label: q, run: () => sayS(q, a), q })) 
+        : [[pr[0], pr[1]], ['What’s due this week?', gradedLine() + ' The clinical bag is due Sunday.']].filter((x, i, arr) => i === 0 || x[0] !== arr[0][0]).map(([q, a]) => ({ label: q, run: () => this.askGen(q, a), q }));
+      out.pChips = opts.filter((o) => !asked(o.q)); out.pChipsOn = out.pChips.length > 0 && !S.pHist; }
+    out.pCtx = thread === 'study' ? 'Sees this note' : 'Sees ' + (taskOpen ? 'this task' : (titleOf[page] || 'this view').split(' · ')[0]);
+    out.pCtxIcon = thread === 'study' ? IC.note : IC.spark;
+    out.pSub = S.pHist ? 'Today' : thread === 'study' ? (s ? leftTxt + ' · ' : 'Session ended · ') + sTitle : 'On ' + viewName;
+    // the study thread: the concept check, his answer, the proposed weak spot, a link to another note
+    let pm = [];
+    if (thread === 'study') {
+      if (S.studyNote === 'n9') {
+        pm.push({ k: 'ev', text: 'Started 25 minutes on your new note. Write as the lecture goes; I’ll follow along and check in now and then.' });
+        if (askReady) {
+          pm.push({ k: 'ev', text: 'Your three ABG steps match the lecture’s order. Quick check on step 3: if the pH is back between 7.35 and 7.45, what kind of compensation is that?' });
+          if (!S.ans) pm.push({ k: 'choice', opts: [['Fully compensated', 'full'], ['Partially compensated', 'partial']].map(([label, v]) => ({ label, run: () => this.answer(v) })) });
+          else {
+            pm.push({ k: 'you', text: S.ans === 'full' ? 'Fully compensated' : 'Partially compensated' });
+            if (S.ans === 'full') pm.push({ k: 'ev', text: 'Right. With the pH back in range, it’s full compensation; partial means the other value has moved but the pH is still out of range.' });
+            else {
+              pm.push({ k: 'ev', text: 'Not quite: with the pH back in range, it’s full compensation. Partial means the other value has moved but the pH is still out of range. I proposed it as a weak spot; it waits in Study’s To review.' });
+              pm.push({ k: 'weak', title: 'Full vs partial compensation', sub: 'Under Acid–base balance and ABGs', run: () => this.put({ page: 'study', studyView: 'weak', course: 'nur', taskId: null, pOpen: false }) });
+            }
+            pm.push({ k: 'ev', text: 'One link while you’re on acidosis: your potassium note lists hyperkalemia, and acidosis shifts potassium out of the cells.' });
+            pm.push({ k: 'link', title: 'Fluid & electrolytes: potassium and sodium', sub: 'NUR 112 · Lecture 9', run: () => this.put({ page: 'notes', nView: 'editor', nOpen: 'n1', taskId: null, pOpen: false }) });
+          }
+        }
+      }
+      pm = pm.concat(S.pmStudy);
+    } else {
+      pm = S.pmGen.slice();
+    }
+    const lastEvI = pm.map((m) => m.k).lastIndexOf('ev');
+    out.pm = pm.map((m, j) => ({ ev: m.k === 'ev', you: m.k === 'you', choice: m.k === 'choice', link: m.k === 'link', weak: m.k === 'weak', cls: j === lastEvI ? 'mev' : 'mev old', text: m.text || '', title: m.title || '', sub: m.sub || '', opts: m.opts || [], run: m.run || null }));
+    out.msgRef = (el) => { if (el) el.scrollTop = el.scrollHeight; };
+    out.pPh = thread === 'study' ? 'Ask E.V. about this note' : 'Ask E.V.';
+    out.pDraft = S.pDraft; out.onPDraft = (e) => this.put({ pDraft: e.target.value });
+    out.pSend = () => {
+      const St = this.S(), t = (St.pDraft || '').trim(); if (!t) return;
+      if (thread === 'study') this.put({ pDraft: '', pmStudy: St.pmStudy.concat([{ k: 'you', text: t }, { k: 'ev', text: St.studyNote === 'n9' ? 'Your note covers that under “Reading an ABG”: start with the pH, then match it to PaCO₂ or HCO₃⁻.' : 'Your note covers that. In this demo my replies are scripted.' }]) });
+      else this.put({ pDraft: '', pmGen: St.pmGen.concat([{ k: 'you', text: t }, { k: 'ev', text: 'In this demo my replies are scripted, so try the suggestion in the bar.' }]) });
+    };
+    out.onPKey = (e) => { if (e.key === 'Enter') { e.preventDefault(); out.pSend(); } };
+    if (S.react && S.react.mood === 'happy') out.status = S.react.text;
+    return out;
+  }
+}
+</script>
+</body>
+</html>
