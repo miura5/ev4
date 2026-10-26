@@ -7499,10 +7499,10 @@
  {
   "id": "B-412",
   "kind": "request",
-  "title": "Request (reported Oct 26): Retire the journal's named read and the notes skip everywhere they are enforced, so runs and agents may read and analyze notes and the journal like any other record data.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "title": "D-335 sweep: notes and journal open to runs and agents",
+  "dod": "Every place that enforces the journal's named read or skips notes is retired or brought in line with D-335: spec.boundaries' privacy text, core/run.mjs's pull refusal, rendered run prompts (tools/prompts.mjs), the conversation's read tools, and the tests that pinned the old rule (each removal named on the release card). Runs pull notes and the journal with the rest of the record; nothing writes to them but the page. npm test green; one staging evening-cloud run reads back with notes and journal in its pull; its own review; ship staging GREEN.",
+  "milestone": "PWA",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -7511,6 +7511,10 @@
   "reportedAt": "2026-10-26T08:31:44.276Z",
   "board": {
    "row": "v4 B-412: Retire the journal's named read and the notes skip everywhere they…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-26T08:32:01.808Z"
   }
  },
  {
