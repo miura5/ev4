@@ -5,7 +5,9 @@
 // by chat() in its own thread (talk lines carry `thread`, the model sees only that thread), minimize leaves a chip that
 // reopens it, close writes talk/<day>.closed, history lists it and reopens it, and after a reload history still has it.
 // On Conversation the button focuses the view's own composer and the pop-up's lines are not in its thread. At 390 the
-// strip and the pop-up are absent (the phone layout is unchanged).
+// strip and the pop-up are absent (the phone layout is unchanged). B-406: a Notes session's controls are in the strip
+// on every view at each width, its long title cut short and clear of her line and the button; the phone shows it in
+// the header's line.
 //   node test/harness/frame.cjs [record dir | synthetic] [screenshots dir]
 // Run `node tools/build.mjs` first. Exit code 1 when any check fails.
 const { chromium } = require('playwright');
@@ -297,6 +299,96 @@ const SIZES = [
     ok(`${tag} no page errors after the reload`, again.errors.length === 0, again.errors.slice(0, 3).join(' | '));
     await ctx.close();
   }
+  // 6. B-406 (D-325): a Notes session's controls in the strip on every view, its long title cut short, never over her
+  // suggestion or the E.V. button; the header's session line stays hidden; on the phone the header's line shows it.
+  const LONG =
+    'Fluid and electrolyte imbalances, acid–base compensation and the IV rate calculations for Tuesday’s unit quiz';
+  const NID = 'n-20261025-120000-framelongtitle';
+  const withLong = JSON.parse(JSON.stringify(seed));
+  withLong.notes = {
+    ...(withLong.notes || {}),
+    [NID]: {
+      schema: 1,
+      writer: 'page',
+      at: '2026-10-25T17:00:00.000Z',
+      source: 'E.V. Home',
+      createdAt: '2026-10-25T17:00:00.000Z',
+      editedAt: '2026-10-25T17:00:00.000Z',
+      title: LONG,
+      course: 'NUR 112',
+      blocks: [
+        { type: 'h1', runs: [{ text: LONG }] },
+        { type: 'p', runs: [{ text: 'Hyperkalemia peaks the T waves.' }] },
+      ],
+    },
+  };
+  for (const [w, h] of SIZES) {
+    const tag = `[${w} session]`;
+    const ctx = await browser.newContext({ viewport: { width: w, height: h }, colorScheme: 'light' });
+    const { page, errors } = await open(ctx, withLong);
+    if (!(await page.locator('#tab-notes').count())) {
+      await ctx.close();
+      continue;
+    }
+    await page.click('#tab-notes');
+    await page.evaluate(i => {
+      const b = document.createElement('button');
+      b.dataset.studyNote = i;
+      b.id = 'h-study';
+      b.textContent = 'Study with E.V.';
+      document.getElementById('p-notes').append(b);
+    }, NID);
+    await page.click('#h-study');
+    await until(page, () => /left/.test((document.querySelector('#ev-sslot .s-left') || {}).textContent || ''));
+    for (const v of ['notes', 'today', 'study', 'progress', 'record', 'ev']) {
+      await page.click('#tab-' + v);
+      await page.waitForTimeout(150);
+      const r = await page.evaluate(() => {
+        const box = s => {
+          const e = document.querySelector(s);
+          if (!e || e.hidden || getComputedStyle(e).display === 'none') return null;
+          const b = e.getBoundingClientRect();
+          return b.width ? { l: Math.round(b.left), r: Math.round(b.right), w: Math.round(b.width) } : null;
+        };
+        const tn = document.querySelector('#ev-sslot .tn');
+        return {
+          slot: box('#ev-sslot'),
+          tn: box('#ev-sslot .tn'),
+          end: box('#ev-sslot .s-end'),
+          sug: box('#ev-sug'),
+          evb: box('#ev-btn'),
+          cut: !!tn && tn.scrollWidth > tn.clientWidth,
+          left: (document.querySelector('#ev-sslot .s-left') || {}).textContent || '',
+          header: !document.getElementById('sbar').hidden,
+          sx: document.documentElement.scrollWidth - innerWidth,
+        };
+      });
+      const clear = r.end && r.evb && r.end.r <= r.evb.l && (!r.sug || r.end.r <= r.sug.l);
+      ok(
+        `${tag} ${v}: the strip holds the session (time left, the note cut short, Break, End), clear of her line and the button`,
+        !!r.slot && /^\d+:\d\d left$/.test(r.left) && r.cut && r.tn.w <= 260 && clear && !r.header && r.sx <= 0,
+        JSON.stringify(r)
+      );
+    }
+    await page.screenshot({ path: `${shots}/frame-session-${w}.png` });
+    ok(`${tag} no page errors`, errors.length === 0, errors.slice(0, 3).join(' | '));
+    if (w === 1280) {
+      // the same record on the phone: no strip; the header's line shows the running session
+      const db = await page.evaluate(() => JSON.parse(JSON.stringify(window.__db)));
+      const pctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: 'light' });
+      const ph = await open(pctx, db);
+      await ph.page.click('#tab-today');
+      await ph.page.waitForTimeout(1300);
+      const g = await geo(ph.page);
+      const bar = await ph.page.evaluate(() => !document.getElementById('sbar').hidden);
+      ok('[390 session] a Notes session shows in the header’s line on the phone, with no strip', !g.stripShown && bar);
+      await ph.page.screenshot({ path: `${shots}/frame-session-390.png` });
+      ok('[390 session] no page errors', ph.errors.length === 0, ph.errors.slice(0, 3).join(' | '));
+      await pctx.close();
+    }
+    await ctx.close();
+  }
+
   // 5. The phone: no strip, no pop-up, nothing taken from the page's height.
   {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: 'light' });
