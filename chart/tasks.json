@@ -7408,7 +7408,7 @@
   "depends": [
    "B-406"
   ],
-  "notes": "Page side built: reader path, session card and Conversation's desktop Start removed; phone keeps its no-note session and header line; capability and studyWatch registry marked. npm test, smoke, smoke:pwa green locally; harnesses running.",
+  "notes": "Built and pushed (5511d25, d125f73, e7c8777). npm test 754/755 (1 skip), smoke 28/28, smoke:pwa 31/31, harnesses frame 134, notes 82, captions 198, core 142, run 387 all green; check --touched running.",
   "commit": null,
   "source": "build manager, B-396 plan",
   "words": "Build retire Study Watch and the Conversation's session card (B-396, D-325).",
