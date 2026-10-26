@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-333",
+  "date": "Oct 26",
+  "title": "Notes sessions: timed on their clock, switched with a deferred filing, the chat thread derived",
+  "why": "B-406. A Notes session ends when its planned time runs out, not after idle checks, so he can read a note without the session wrapping up. Starting a second session ends the first and offers Undo for 12 s; because session fields are write-once, the ended session is only marked (status, endedAt, an end event) and its summary, findings and minutes are filed when Undo runs out or on the next load. Undo marks the new session discarded and reopens the old one with a reopen event; nothing is deleted, and a note the new session made stays in the list. The session's chat thread is th-<session id>, derived, not stored.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-332",
   "date": "Oct 26",
   "title": "Notes: an edit that shrinks a note already past the size cap is allowed",
