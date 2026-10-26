@@ -7504,7 +7504,7 @@
   "milestone": "PWA",
   "status": "in progress",
   "depends": [],
-  "notes": "review gaps fixed, ready for second review at d07cdd9: notes/journal lookup returns the passage around the match, cut/from/chars when shortened, one shared 4,000-char budget (JSON never cut), id reads one note whole; run.mjs refuses any planned journal or notes write (restore drill's as-written copies excepted); seed and migrate re-cite D-335. npm test 783/0, smoke 28/28, run harness 390/390.",
+  "notes": "Second review: both first-review gaps closed. Its one remaining gap, the restore-drill exemption (dead on the Worker path, harmful on the artifact path), is removed by the build manager: no run writes journal or notes, with no exception. Ready for staging.",
   "commit": null,
   "source": "chat, Oct 26 (D-335)",
   "words": "Retire the journal's named read and the notes skip everywhere they are enforced, so runs and agents may read and analyze notes and the journal like any other record data.",
