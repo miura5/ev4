@@ -7298,11 +7298,15 @@
  {
   "id": "B-404",
   "kind": "request",
-  "title": "Request (reported Oct 25): Build offline and sync in the app (B-396, D-325).",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
-  "depends": [],
+  "title": "Notes: offline and sync in the app",
+  "dod": "pwa/bridge.js keeps an IndexedDB copy of the record and an outbox for notes, and sw.js caches the app's modules so the app boots offline. Notes read and write offline. Other writes are refused offline with his words kept (B-394/395). On reconnect a stale save is never merged (D-326): his version is kept at once as '<title> (earlier)', linked to the original; the NoteStates picker shows; Keep this version swaps them; Undo is offered. The note header shows the sync status. Proven by shim tests and smoke:pwa: an offline write and reload come back online and read back from D1; two contexts edit one note offline and end with 2 notes and every word kept; then the swap and Undo. pwa-staging and ship staging GREEN. Own review.",
+  "milestone": "PWA",
+  "status": "open",
+  "depends": [
+   "B-401",
+   "B-402",
+   "B-398"
+  ],
   "notes": "",
   "commit": null,
   "source": "build manager, B-396 plan",
@@ -7310,6 +7314,10 @@
   "reportedAt": "2026-10-26T00:52:45.290Z",
   "board": {
    "row": "v4 B-404: Build offline and sync in the app (B-396,"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-26T00:52:47.740Z"
   }
  }
 ]
