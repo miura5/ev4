@@ -42,15 +42,23 @@ chat, not in a subagent:
 
 ## 1. GitHub: the live environment's secrets (Matt, about 5 minutes)
 
-**Matt**, in Terminal on his Mac (gh signed in as himself), from any folder:
+**Matt**, first in GitHub (release review, B-409: the protection comes before any secret, so no run can ever use a
+live secret without his approval): Settings, Environments, New environment, name `live`. Under Deployment protection
+rules tick Required reviewers and add himself; under Deployment branches choose "Selected branches" and add `main`.
+Save.
+
+Then in Terminal on his Mac (gh signed in as himself), from any folder:
 
     gh secret set LIVE_CLOUDFLARE_API_TOKEN --env live --repo miura5/ev4
     gh secret set LIVE_CLOUDFLARE_ACCOUNT_ID --env live --repo miura5/ev4
 
 - Each one asks for its value and doesn't show it. The account ID is the same one staging uses (Cloudflare dashboard,
   right column of Workers & Pages).
-- The API token can be the staging one, or a new one from Cloudflare (My Profile, API Tokens, Create Token). A new
-  one needs the "Edit Cloudflare Workers" template plus Account D1 Edit and Workers R2 Storage Edit.
+- The API token is a new one from Cloudflare (My Profile, API Tokens, Create Token): the "Edit Cloudflare Workers"
+  template plus Account D1 Edit and Workers R2 Storage Edit. Not the staging one. Known limit (on the release card):
+  on one Cloudflare account any Workers token can reach every Worker and D1 on it, so the staging token could in
+  principle touch ev-live; the GitHub environment protects the live secrets, not the live resources. Isolating them
+  (a second Cloudflare account, or a staging token scoped away from ev-live) is Matt's call, after the cutover.
 
 Then the app's token, made on his Mac so it's never in a chat:
 
@@ -59,8 +67,8 @@ Then the app's token, made on his Mac so it's never in a chat:
 
 - He keeps the file until step 5, then puts the token in his password manager (he types it once into the app on
   each device, D-301) and moves the file to the Trash himself.
-- In GitHub (Settings, Environments, live) he checks: Required reviewers is himself, and Deployment branches is
-  "Selected branches: main".
+- In GitHub (Settings, Environments, live) he checks again: Required reviewers is himself, and Deployment branches
+  is "Selected branches: main".
 
 **Proof:** `gh secret list --env live --repo miura5/ev4` on his Mac lists the three names and no values. The
 workflow's first step checks them again.
@@ -149,6 +157,12 @@ showing it, then:
 **Matt** then saves the token in his password manager and moves ~/Documents/ev-live-token.txt to the Trash.
 
 ## 6. The one-time copy (B-319; build manager, in the window)
+
+**When (release review, B-409):** do the copy after step 7.4's OK and right before 7.5, so nothing reaches the
+claude.ai record between the export and the switch. From the copy until 7.5 is done, Matt doesn't use the claude.ai
+page, and the build manager starts it just after a live watchdog run (`list_triggers` shows the next one) so no
+scheduled run lands in between. After 7.5, export again into a second folder and `verify` it against the ev-live D1:
+GREEN means nothing was written in the gap.
 
 Matt's OK in step 3 covers this commit: dist/live-ok names its build commit, which the copy accepts. If it has
 expired, he says OK again, then run `node core/cli.mjs deploy live --matt-ok`.
