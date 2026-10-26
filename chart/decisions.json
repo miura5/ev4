@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-334",
+  "date": "Oct 26",
+  "title": "Weak-spot schema 2 and its triage rows (B-232, B-233) are built during the freeze as part of Notes",
+  "why": "Matt chose on Oct 26 to build them with Notes, so a missed check goes to Study's To review as the Notes demo he approved shows (B-407). D-325's freeze exception covers them; the migration keeps a legacy copy (D-115) and nothing is lost.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-333",
   "date": "Oct 26",
   "title": "Notes sessions: timed on their clock, switched with a deferred filing, the chat thread derived",
