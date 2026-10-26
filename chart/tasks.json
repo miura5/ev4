@@ -7392,5 +7392,22 @@
    "outcome": "task",
    "at": "2026-10-26T00:53:03.128Z"
   }
+ },
+ {
+  "id": "B-408",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Build retire Study Watch and the Conversation's session card (B-396, D-325).",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build manager, B-396 plan",
+  "words": "Build retire Study Watch and the Conversation's session card (B-396, D-325).",
+  "reportedAt": "2026-10-26T00:53:05.604Z",
+  "board": {
+   "row": "v4 B-408: Build retire Study Watch and the Conversation's session card (B-396,…"
+  }
  }
 ]
