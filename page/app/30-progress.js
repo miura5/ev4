@@ -37,6 +37,11 @@
     const timed = () => (S.sessions || []).filter(s => s.status !== 'active' && s.date && (s.minutes || 0) > 0);
     // a session's course: its Study Watch folder names one (aliases), else its words guess one, else the default
     function sessionCourse(s) {
+      // B-409: a Notes session's course is its note's (its folder is empty and its topic may be 'New note')
+      const nid = noteOfSession(s);
+      const doc = nid && (S.notes || []).find(n => n.id === nid);
+      const nc = doc && doc.course ? E.normCourse(doc.course) : null;
+      if (nc && E.isCourse(nc)) return nc;
       const f = E.normCourse(s.folder);
       if (E.isCourse(f)) return f;
       return E.guessCourse([s.folder, s.topic].filter(Boolean).join(' '));
@@ -369,12 +374,15 @@
       // next graded date in its course this week; absent while the period holds no study time (D-151)
       const byT = {};
       for (const s of timed())
-        if (inSpan(s.date, span.from, span.to) && s.topic) byT[s.topic] = (byT[s.topic] || 0) + s.minutes;
+        if (inSpan(s.date, span.from, span.to) && s.topic) {
+          const t = sessName(s); // B-409: a Notes session by its note's title, as Record names it
+          byT[t] = (byT[t] || 0) + s.minutes;
+        }
       const top = Object.entries(byT).sort((x, y) => y[1] - x[1])[0];
       const line = $('prog-line');
       line.hidden = !top || !grand;
       if (top && grand) {
-        const ts = timed().find(s => s.topic === top[0]);
+        const ts = timed().find(s => s.topic && sessName(s) === top[0]);
         const c = ts ? sessionCourse(ts) : null;
         const ex = E.nextExams(S.exams, today).find(e => E.courseOf(e) === c && E.diffDays(today, e.date) <= 6);
         const when = ex

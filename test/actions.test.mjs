@@ -248,6 +248,15 @@ test('D-203: ctx.caller is set by code; a planted tap call claiming to be a buil
 // ------------------------------------------------------------------------------------------------ the write-site lint
 const LEGACY = path.join(ROOT, 'test', 'data', 'actions-legacy.json');
 /** The code of a source with its comments and string and template text blanked (a template's ${...} code is kept). */
+// Whether a / here starts a regex literal: after nothing, an operator or opening punctuation, or a keyword that
+// takes an expression; after a name, a number or a closing bracket it is division.
+function regexAt(out) {
+  const t = out.replace(/\s+$/, '');
+  if (!t) return true;
+  const last = t[t.length - 1];
+  if ('(,=:[!&|?{};+-*%<>~^'.includes(last)) return true;
+  return /(?:^|[^\w$])(?:return|typeof|instanceof|in|of|new|delete|void|throw|case|do|else|yield|await)$/.test(t);
+}
 export function codeOnly(src) {
   let out = '',
     i = 0;
@@ -271,6 +280,22 @@ export function codeOnly(src) {
     if (c === '/' && d === '*') {
       while (i < n && !(src[i] === '*' && src[i + 1] === '/')) ((out += blank(src[i])), i++);
       ((out += '  '), (i += 2));
+      continue;
+    }
+    // a regex literal (a / where an expression starts): its body is blanked, so a quote inside a character class
+    // (/[^"]/) never opens a string that would hide the rest of the file
+    if (c === '/' && regexAt(out)) {
+      ((out += c), i++);
+      let cls = false;
+      while (i < n && src[i] !== '\n' && (cls || src[i] !== '/')) {
+        if (src[i] === '\\') ((out += '  '), (i += 2));
+        else {
+          if (src[i] === '[') cls = true;
+          else if (src[i] === ']') cls = false;
+          ((out += blank(src[i])), i++);
+        }
+      }
+      if (src[i] === '/') ((out += '/'), i++);
       continue;
     }
     if (c === "'" || c === '"') {
@@ -796,4 +821,14 @@ test('B-233: the page writes weak spots only through act: no weak-spot write obj
   }
   // the page gives act() the spots as read, its own event keys and its talk lines
   assert.match(fs.readFileSync(path.join(dir, '91-forms.js'), 'utf8'), /weakspots: S\.weak, line: talkLine/);
+});
+
+test('B-409: a regex literal with a quote in it hides no write site from the D-200 lint', () => {
+  const src = [
+    "const ok = h => /^https?:\\/\\/[^\\s<>\"]+$/.test(h) && h.split('/').length / 2;",
+    "const t = /'/; const u = x => x / 2 / 3;",
+    "write({ op: 'set', collection: 'notes', id: 'n', data: {} });",
+  ].join('\n');
+  assert.equal(writeSites(src).length, 1, JSON.stringify(writeSites(src)));
+  assert.match(codeOnly(src), /write\(\{ op: /, 'the code after the regex is still code');
 });

@@ -328,6 +328,7 @@
     // Her line is posted to the conversation; the line of his it answers stays in this page's memory (SS.quotes), never
     // in the record. A comment writes a check event marked comment, so the note's mark and the idle count move with it.
     async function readTick(s) {
+      const sid = s.id; // B-409: the session this read is for
       if (noteless(s)) return;
       if (SS.reading || SS.busy || Date.now() < SS.nextRead) return;
       SS.reading = true;
@@ -386,6 +387,9 @@
           if (code === 'rate_limited') SS.lastAsk = Date.now() + 10 * 60e3;
           return;
         }
+        // B-409: a reply that lands after a switch belongs to a session no longer running: dropped
+        const cur = activeSession();
+        if (!cur || cur.id !== sid || cur.status !== 'active') return;
         SS.seen = seenNext;
         SS.added = added;
         const c = E.parseComment(out, added);

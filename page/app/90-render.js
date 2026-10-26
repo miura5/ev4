@@ -446,6 +446,10 @@
           const pref = $('side-prefpop'),
             menu = $('new-menu');
           if ((pref && !pref.hidden) || (menu && !menu.hidden)) return;
+          // B-409: a menu or popover of the view (Notes' style and course menus, its link box, Record's filter) takes
+          // Escape first; the chat stays open
+          const shown = x => !x.hidden && x.getClientRects().length > 0 && !F.pop.contains(x);
+          if ([...document.querySelectorAll('.menu, .n-lkp, #rec-filter')].some(shown)) return;
           e.preventDefault();
           e.stopPropagation();
           popClose(true);

@@ -1770,6 +1770,140 @@ const openNoteId = page =>
     await page.context().close();
   }
 
+  // ---- B-409: with the chat open, Escape in Notes' link box closes only the link box
+  {
+    const { page, errors } = await open(browser, { width: 1280, height: 860 });
+    const tag = '[1280 escape]';
+    await page.click('#tab-notes');
+    await page.click('#notes-new');
+    await until(page, () => !document.getElementById('notes-editor').hidden);
+    await page.click('#ev-btn');
+    await until(page, () => !document.getElementById('evchat').hidden);
+    await page.click('#note-body');
+    await page.keyboard.type('a link here');
+    await page.keyboard.press('Shift+Home');
+    await page.click('#notes-editor button[aria-label="Link"]');
+    const vis = () =>
+      page.evaluate(() => {
+        const l = document.querySelector('#notes-editor .n-lkp');
+        return {
+          link: !!l && !l.hidden && l.getClientRects().length > 0,
+          chat: !document.getElementById('evchat').hidden,
+        };
+      });
+    const before = await vis();
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(150);
+    const after = await vis();
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(150);
+    const last = await vis();
+    ok(
+      `${tag} Escape in the link box closes only the link box; the next Escape closes the chat`,
+      before.link && before.chat && !after.link && after.chat && !last.chat,
+      JSON.stringify({ before, after, last })
+    );
+    ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
+    await page.context().close();
+  }
+
+  // ---- B-409: a Notes session's minutes go to its note's course, in Progress and in Record's course filter
+  {
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date());
+    const at = new Date(Date.now() - 3 * 3600e3).toISOString();
+    const key = iso => 'page-' + iso.replace(/\D/g, '').slice(0, 8) + '-' + iso.replace(/\D/g, '').slice(8, 17);
+    const NID = 'n-20261026-090000-coursebio01';
+    const SID = 'ss-p-bio-note';
+    const planted = JSON.parse(JSON.stringify(seed));
+    planted.notes = {
+      ...(planted.notes || {}),
+      [NID]: {
+        schema: 1,
+        writer: 'page',
+        at,
+        source: 'E.V. Home',
+        createdAt: at,
+        editedAt: at,
+        title: 'Membrane transport',
+        course: 'BIO 201',
+        blocks: [{ type: 'h1', runs: [{ text: 'Membrane transport' }] }],
+      },
+    };
+    planted.sessions = {
+      ...planted.sessions,
+      [SID]: {
+        schema: 2,
+        writer: 'page',
+        at,
+        source: 'E.V. Home',
+        kind: 'note',
+        status: 'ended',
+        date: today,
+        startedAt: at,
+        endedAt: at,
+        filedAt: at,
+        planned: 25,
+        minutes: 40,
+        topic: 'New note',
+        noteId: NID,
+        note: 'notes/' + NID,
+        folder: '',
+        events: { [key(at)]: { type: 'start' } },
+      },
+    };
+    const toMin = t => {
+      const m = /^(?:(\d+) h)?\s*(?:(\d+) (?:m|min))?$/.exec(String(t || '').trim()) || [];
+      return 60 * Number(m[1] || 0) + Number(m[2] || 0);
+    };
+    const bioWeek = async db => {
+      const { page, errors } = await open(browser, { width: 1280, height: 860 }, db);
+      await page.click('#tab-progress');
+      await page.click('#prog-period [data-p="week"]');
+      await page.waitForTimeout(200);
+      const rows = await page.evaluate(() =>
+        [...document.querySelectorAll('.prog-hb .prog-hb-top')].map(r => [
+          r.firstChild.textContent,
+          r.querySelector('.meta').textContent,
+        ])
+      );
+      return { page, errors, bio: toMin((rows.find(r => r[0] === 'BIO 201') || [])[1]), rows };
+    };
+    const without = await bioWeek(seed);
+    await without.page.context().close();
+    const { page, errors, bio, rows } = await bioWeek(planted);
+    const tag = '[1280 course]';
+    ok(
+      `${tag} a Notes session's minutes land in its note's course bar in Progress`,
+      bio - without.bio === 40,
+      JSON.stringify({ with: rows, without: without.bio })
+    );
+    await page.click('#tab-record');
+    await page.waitForTimeout(200);
+    const shown = async () => page.evaluate(i => !!document.querySelector(`.rec-li[data-id="${i}"]`), SID);
+    const pick = async v => {
+      await page.click('#rec-filter-btn');
+      await page.click(`#rec-filter [aria-label="Course"] [data-v="${v}"]`);
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(150);
+    };
+    await pick('BIO 201');
+    const inBio = await shown();
+    await pick('NUR 112');
+    const inNur = await shown();
+    await pick('any');
+    const name = await page.evaluate(
+      i => (document.querySelector(`.rec-li[data-id="${i}"] .nm`) || {}).textContent || '',
+      SID
+    );
+    ok(
+      `${tag} Record's course filter finds it under its note's course, named by the note`,
+      inBio && !inNur && /Membrane transport/.test(name),
+      JSON.stringify({ inBio, inNur, name })
+    );
+    ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
+    await page.context().close();
+  }
+
   // ---- 390: no Notes
   {
     const { page, errors } = await open(browser, { width: 390, height: 844 });
@@ -1782,6 +1916,28 @@ const openNoteId = page =>
       return !!p && !p.hidden && p.getBoundingClientRect().height > 0;
     });
     ok(`${tag} #notes does not open Notes on the phone`, !shown, '');
+    // B-409: the phone's session reads no note, and E.V.'s instructions never say it does
+    await page.click('#tab-ev');
+    const send = async t => {
+      await page.fill('#ev-input', t);
+      await page.locator('#ev-form').evaluate(f => f.requestSubmit());
+    };
+    await send('Start a study session');
+    await until(page, () => Object.values(window.__db.sessions || {}).some(x => x.status === 'active'), null, 6000);
+    await page.waitForTimeout(500);
+    const n0 = await page.evaluate(() => window.__chatCalls.length);
+    await send('How is my session going?');
+    await until(page, n => window.__chatCalls.length > n, n0, 6000);
+    const sys = await page.evaluate(() => {
+      const c = window.__chatCalls[window.__chatCalls.length - 1];
+      return JSON.stringify(c && c.input);
+    });
+    const line = (/Study session running on [^"]*?(?=\\n|")/.exec(sys) || [''])[0];
+    ok(
+      `${tag} a session with no note: E.V.'s instructions name his objectives and weak spots and never say she reads a note`,
+      /his objectives and weak spots/.test(line) && !/reads his note|from his note|his newest writing/i.test(line),
+      line.slice(0, 240)
+    );
     ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
     await page.context().close();
   }

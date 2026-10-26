@@ -824,7 +824,7 @@
       if (h && !/^[a-z][a-z0-9+.-]*:/i.test(h)) h = 'https://' + h;
       const sel = NOTE.linkSel;
       if (!sel) return closeLink(true);
-      if (h && !/^https?:\/\/[^\s<>"]+$/.test(h)) {
+      if (h && !/^https?:\/\/[^\s<>\x22]+$/.test(h)) {
         lkErr.textContent = 'Only a web link (http or https).';
         return;
       }
@@ -1551,6 +1551,14 @@
         if (!stale || NOTE.open !== id) return;
         const theirs = stale === true ? noteElsewhere() || (await noteInRecord(id).catch(() => null)) : stale;
         if (theirs && NOTE.open === id) await keepBoth(theirs);
+        else if (NOTE.open === id && NOTE.gen === gen) {
+          // B-409: the other version couldn't be read: say so, keep his text, and try again shortly
+          NOTE.state = 'failed';
+          NOTE.why = 'Not saved: changed elsewhere, and that version couldn’t be read yet';
+          clearTimeout(NOTE.timer);
+          NOTE.timer = setTimeout(saveNote, NOTE_RETRY_MS);
+          syncHead();
+        }
       });
     }
     /** Every pending change of the open note saved (before another note opens, or the view or page goes). */
