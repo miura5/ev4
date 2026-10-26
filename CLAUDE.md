@@ -205,7 +205,7 @@ does: writing the documents its run protocol prints into the record its prompt n
 job and needs no further OK. Its limits are the hard limits in its own prompt, which stay absolute: Canvas read-only, nothing posted as Matt, nothing deleted, no other artifact, page, file,
 account or scheduled task touched.
 
-## Hard limits
+## Hard limits (unchanged from v3)
 
 They are `spec.boundaries` B-01 to B-18 (B-01 graded work, B-02 drug cards, B-03 proctored exams, B-04 patient
 identifiers, B-05 health data, B-06 Apple Notes folders, B-07 owner-only record, B-08 passwords, B-09 posting as Matt,

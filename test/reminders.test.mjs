@@ -59,7 +59,7 @@ test('the greeting names graded work without a reminder', () => {
 
 test('D-324: nothing refuses a graded-work ask or holds a detail as an identifier, on the page, in core or the app', () => {
   const GATES =
-    /gradedAsk|identifierCandidates|scanIdentifiers|keptVerdicts|heldByPlace|idGate|idUnpassed|It’s made up|graded work, so it stays yours/;
+    /gradedAsk|identifierCandidates|scanIdentifiers|keptVerdicts|heldByPlace|idGate|idUnpassed|It’s made up|graded work, so it stays yours|[Nn]ever for graded work|never graded work/;
   for (const [name, src] of [
     ['page/app', appSource(ROOT)],
     ['page/index.src.html', read('page/index.src.html')],
