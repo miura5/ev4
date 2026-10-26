@@ -52,8 +52,10 @@
    "enum": [
     "active",
     "ending",
-    "ended"
-   ]
+    "ended",
+    "discarded"
+   ],
+   "description": "B-406 (D-325): discarded marks a session an Undo took back (kept, never counted); an ended session an Undo restored is active again"
   },
   "kind": {
    "enum": [
@@ -150,6 +152,12 @@
    "pattern": "^notes/n-[A-Za-z0-9-]{1,120}$",
    "description": "B-401 (D-325): the E.V. note this session studies, as notes/<id>"
   },
+  "planned": {
+   "type": "integer",
+   "minimum": 1,
+   "maximum": 600,
+   "description": "B-406 (D-325): a timed session's planned minutes (25 for a note; a Today task's estimate); +5 adds to it"
+  },
   "folder": {
    "type": "string"
   },
@@ -172,7 +180,8 @@
        "extend",
        "answer",
        "end",
-       "step"
+       "step",
+       "reopen"
       ]
      },
      "len": {

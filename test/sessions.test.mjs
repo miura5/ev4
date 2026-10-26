@@ -513,3 +513,132 @@ test('B-381: E.V.’s save_idea and a session’s findings never land on an idea
     'his done idea stays as he left it; two same lines are two ideas'
   );
 });
+
+test('B-406 (D-325): a second session ends and logs the running one; Undo restores it whole through marks', () => {
+  const merge = (a, b) => {
+    const o = { ...a };
+    for (const [k, v] of Object.entries(b))
+      o[k] = v && typeof v === 'object' && !Array.isArray(v) && a[k] && typeof a[k] === 'object' ? merge(a[k], v) : v;
+    return o;
+  };
+  const apply = (doc, writes) => {
+    for (const w of writes.filter(x => x.id === doc.id)) {
+      assertValid(w, doc);
+      doc = merge(doc, w.data);
+    }
+    return doc;
+  };
+  const base = {
+    schema: 2,
+    writer: 'page',
+    at: T0,
+    source: 'E.V. Home',
+    kind: 'note',
+    date: '2026-10-18',
+    planned: 25,
+    noteId: 'n-20261018-150000-abcdefgh',
+    note: 'notes/n-20261018-150000-abcdefgh',
+  };
+  // the start writes: a new note at its empty mark, naming notes/<id>; a Today task with no note, its estimate long
+  const w0 = EV.startTimedSession({
+    id: 'ss-20261018-150000-new-note',
+    at: T0,
+    key: sk(T0),
+    topic: 'New note',
+    noteId: base.noteId,
+    fresh: true,
+    comments: 'more',
+    view: 'v1',
+  });
+  assertValid(w0);
+  assert.equal(w0.data.note, base.note);
+  assert.equal(w0.data.planned, 25);
+  assert.deepEqual(Object.values(w0.data.events)[0], { type: 'start', noteId: base.noteId, ...EV.noteMark('') });
+  const w1 = EV.startTimedSession({
+    id: 'ss-20261018-150000-lab',
+    at: T0,
+    key: sk(T0),
+    topic: 'Lab draft',
+    planned: 40,
+  });
+  assertValid(w1);
+  assert.equal(w1.data.note, undefined);
+  assert.equal(w1.data.planned, 40);
+  assert.equal(w1.data.comments, 'some');
+  // A: a note session, a quiz at 7 answered at 8, a +5 at 9
+  let a = session(
+    {
+      [plus(7)]: { type: 'check', n: 1, items: 2, msgId: 'm1' },
+      [plus(8)]: { type: 'answer', n: 1, msgId: 'm2' },
+      [plus(9)]: { type: 'extend' },
+    },
+    base
+  );
+  const before = EV.sessionState(a, plus(10));
+  assert.equal(before.planned, 30, '+5 lengthens a timed session');
+  assert.equal(before.leftMs, 20 * 60e3);
+  assert.equal(before.nextCheckAt, plus(19));
+  // the switch at 10: A is ended (a mark and an event), B starts
+  const sw = EV.switchSession(a, { at: plus(10), key: sk(plus(10)) });
+  assert.equal(sw.length, 1);
+  assert.deepEqual(Object.keys(sw[0].data).sort(), ['endedAt', 'events', 'status']);
+  a = apply(a, sw);
+  assert.equal(a.status, 'ended');
+  assert.ok(EV.switchedUnfiled(a), 'ended by the switch, waiting to be filed');
+  const ended = EV.sessionState(a, plus(10, 20));
+  assert.equal(ended.minutes, 10, 'logged: ten minutes so far');
+  assert.equal(ended.nextCheckAt, null);
+  assert.equal(
+    EV.switchSession(a, { at: plus(11), key: sk(plus(11)) }).length,
+    0,
+    'an ended session is not ended twice'
+  );
+  let b = {
+    ...session({}, { ...base, id: 'ss-20261018-151000-new-note', startedAt: plus(10), planned: 25 }),
+    events: { [sk(plus(10, 1))]: { type: 'start', len: 0, h: EV.noteMark('').h } },
+  };
+  // Undo 20 s later: B discarded, A active again; nothing removed
+  const undo = EV.undoSwitch(a, b, { at: plus(10, 20), keys: [sk(plus(10, 20)), sk(plus(10, 21))] });
+  assert.equal(undo.length, 2);
+  assert.ok(undo.every(w => w.op === 'update'));
+  const evBefore = Object.keys(a.events).length;
+  a = apply(a, undo);
+  b = apply(b, undo);
+  assert.equal(b.status, 'discarded');
+  assert.equal(Object.values(b.events).filter(e => e.type === 'end').length, 1);
+  assert.equal(a.status, 'active');
+  assert.equal(a.endedAt, null);
+  assert.equal(Object.keys(a.events).length, evBefore + 1, 'one reopen event added; every event kept');
+  assert.equal(EV.switchedUnfiled(a), false);
+  const after = EV.sessionState(a, plus(10, 20));
+  assert.equal(after.minutes, 10, 'the timer is where it stopped');
+  assert.equal(after.leftMs, 20 * 60e3);
+  assert.equal(after.nextCheckAt, plus(19, 20), 'the next check moves on by the time it stood ended');
+  assert.equal(after.answered[1], 'm2', 'the check answer stands');
+  assert.equal(after.checks, 1);
+  assert.equal(EV.undoSwitch(a, b, { at: plus(11), keys: [sk(plus(11)), sk(plus(11, 1))] }).length, 0, 'once');
+  // the clock runs out at 30 study minutes (10:20 to 30:20), and ends then
+  assert.equal(EV.sessionState(a, plus(30, 10)).timeUp, false);
+  assert.equal(EV.sessionState(a, plus(30, 20)).timeUp, true);
+  assert.equal(EV.sessionState(a, plus(40)).shouldWrap, false, 'a timed session ends on its clock, not on idle');
+  // a session the switch ended and nobody undid is filed in full: its minutes, summary and status
+  let c = apply(session({ [plus(7)]: { type: 'check', n: 1, items: 1 } }, base), [
+    EV.switchSession(session({}, base), { at: plus(12), key: sk(plus(12)) })[0],
+  ]);
+  const r = EV.closeSession(c, { summary: 'Fluids.' }, { now: plus(12, 30), endedBy: 'switched' });
+  assertValid(r.writes[0], c);
+  c = apply(c, r.writes);
+  assert.equal(c.minutes, 12);
+  assert.equal(c.endedAt, plus(12));
+  assert.equal(c.summary, 'Fluids.');
+  assert.equal(EV.switchedUnfiled(c), false, 'filed');
+  // a break at the switch is a break again after Undo
+  let d = apply(session({ [plus(3)]: { type: 'break' } }, base), [
+    EV.switchSession(session({ [plus(3)]: { type: 'break' } }, base), { at: plus(4), key: sk(plus(4)) })[0],
+  ]);
+  d = apply(d, EV.undoSwitch(d, null, { at: plus(5), keys: [sk(plus(5)), sk(plus(5, 1))] }));
+  const ds = EV.sessionState(d, plus(6));
+  assert.equal(ds.onBreak, true);
+  assert.equal(ds.minutes, 3);
+  assert.equal(ds.breakStartedAt, plus(5));
+});

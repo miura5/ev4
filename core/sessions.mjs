@@ -262,7 +262,7 @@ export function makeSessions(core) {
   });
   const SESSION_SOURCE = 'Study session';
 
-  /** {status, onBreak, nextCheckAt, breakRemainingMs, due, checks, questions, comments, reads, idleChecks, shouldWrap, lastCheck, lastMark, lastQuizMark, answered, minutes, overdueMs, toCheck}
+  /** {status, onBreak, nextCheckAt, breakRemainingMs, due, checks, questions, comments, reads, idleChecks, shouldWrap, lastCheck, lastMark, lastQuizMark, answered, minutes, overdueMs, toCheck, planned, leftMs, timeUp, breakStartedAt}
    * B-273 (D-267, Matt's answer): toCheck is how far the session is through the stretch to its next check, 0 to 1. It
    * starts at 0 when the session starts and after every checkpoint, +5 lengthens the stretch, and a break holds it.
    * B-88: in comment mode (studyWatch.mode) a check event is one of three: a quiz (items asked, counted in checks),
@@ -299,7 +299,9 @@ export function makeSessions(core) {
       breakAt = null,
       remaining = 0,
       breakMs = 0,
-      endMs = null;
+      endMs = null,
+      endBreak = false,
+      plannedMs = Number(s && s.planned) > 0 ? Number(s.planned) * 60e3 : null;
     const evs = Object.entries((s && s.events) || {})
       .filter(([, e]) => e && e.type)
       .map(([k, e]) => [entryTime(k, e), e])
@@ -364,27 +366,50 @@ export function makeSessions(core) {
         if (st.onBreak) remaining += add;
         else next = (next == null ? t : next) + add;
         span += add;
+        if (plannedMs != null) plannedMs += add; // B-406: +5 lengthens a timed session too
       } else if (e.type === 'answer') {
         st.answered[e.n] = e.msgId || true;
       } else if (e.type === 'end') {
+        if (endMs != null) continue; // already ended: a second end changes nothing
         endMs = t;
+        endBreak = st.onBreak;
         if (st.onBreak) {
           breakMs += t - breakAt;
           st.onBreak = false;
           breakAt = null;
         }
+      } else if (e.type === 'reopen') {
+        // B-406: Undo of an end (a second session started over it, then undone). The time it stood ended is not
+        // study time, and every clock picks up where it stopped: the next check moves on by the gap, a break goes on.
+        if (endMs == null) continue;
+        const gap = Math.max(0, t - endMs);
+        breakMs += gap;
+        if (next != null && !endBreak) next += gap;
+        if (endBreak) {
+          st.onBreak = true;
+          breakAt = t;
+        }
+        endMs = null;
+        endBreak = false;
       }
     }
     const until = endMs != null ? endMs : Number.isFinite(toMs(s && s.endedAt)) ? toMs(s.endedAt) : nowMs;
     if (st.onBreak && breakAt != null) breakMs += Math.max(0, until - breakAt);
-    st.minutes = Number.isFinite(t0) ? Math.max(0, Math.round((until - t0 - breakMs) / 60000)) : 0;
+    const activeMs = Number.isFinite(t0) ? Math.max(0, until - t0 - breakMs) : 0;
+    st.minutes = Math.round(activeMs / 60000);
+    // B-406 (D-325): a session from Notes or a Today task runs for its planned minutes (25 for a note); +5 adds to it
+    st.planned = plannedMs != null ? Math.round(plannedMs / 60e3) : null;
+    st.leftMs = plannedMs != null ? Math.max(0, plannedMs - activeMs) : null;
+    st.breakStartedAt = st.onBreak && breakAt != null ? new Date(breakAt).toISOString() : null;
     st.breakRemainingMs = st.onBreak ? remaining : 0;
     st.nextCheckAt = st.status === 'active' && !st.onBreak && next != null ? new Date(next).toISOString() : null;
     st.due = !!st.nextCheckAt && nowMs >= next;
     st.overdueMs = st.due ? nowMs - next : 0;
     const left = st.onBreak ? remaining : next == null ? span : next - nowMs;
     st.toCheck = st.status === 'active' ? Math.max(0, Math.min(1, 1 - left / span)) : 0;
-    st.shouldWrap = st.status === 'active' && st.idleChecks >= c.idleChecksToEnd;
+    // a timed session ends on its clock, not on idle checks (he may be reading his note, not writing)
+    st.shouldWrap = st.status === 'active' && plannedMs == null && st.idleChecks >= c.idleChecksToEnd;
+    st.timeUp = st.status === 'active' && plannedMs != null && !st.onBreak && st.leftMs <= 0;
     return st;
   }
 
@@ -760,6 +785,83 @@ export function makeSessions(core) {
       linked: f.linked,
     };
   }
+  /**
+   * B-406 (D-325): the write that starts a timed session: from Notes (a new note, fresh, or Study with E.V. on one he
+   * has; it names the note as notes/<id>) or from a Today task (no note). It runs `planned` minutes (25 for a note).
+   * A new note starts at its empty mark, so the first check is on what he writes; a note he has is read whole.
+   */
+  function startTimedSession({ id, at, key, date, topic, planned = 25, noteId = '', fresh = false, comments, view }) {
+    return {
+      op: 'set',
+      collection: 'sessions',
+      id,
+      data: {
+        ...envelope('page', 'E.V. Home', at),
+        schema: 2,
+        status: 'active',
+        kind: 'note',
+        comments: ['more', 'some', 'off'].includes(comments) ? comments : 'some',
+        date: date || chicagoDate(at),
+        startedAt: at,
+        planned: Math.max(1, Math.min(600, Math.round(Number(planned) || 25))),
+        topic: String(topic || 'Study session').slice(0, 120),
+        noteId: String(noteId || ''),
+        ...(noteId ? { note: 'notes/' + noteId } : {}),
+        folder: '',
+        driver: { view: String(view || ''), at },
+        events: { [key]: fresh && noteId ? { type: 'start', noteId, ...noteMark('') } : { type: 'start' } },
+      },
+    };
+  }
+  /**
+   * B-406 (D-325): starting a second session ends the running one first. The switch only marks it: status ended, when,
+   * and an end event saying why. Its summary and findings are filed once Undo is no longer offered (closeSession, on
+   * the session as it stands), so an Undo never has to take back a write-once field or a finding.
+   * `key` is the page's event key for `at`.
+   */
+  function switchSession(s, { at, key }) {
+    if (!s || !(s.status === 'active' || s.status === 'ending')) return [];
+    return [
+      {
+        op: 'update',
+        collection: 'sessions',
+        id: s.id,
+        data: { status: 'ended', endedAt: at, events: { [key]: { type: 'end', why: 'switched', at } } },
+      },
+    ];
+  }
+  /** B-406: whether a session was ended by a switch and is still waiting to be filed (its summary not written yet). */
+  function switchedUnfiled(s) {
+    if (!s || s.status !== 'ended' || s.filedAt || s.kind === 'skill') return false;
+    const ends = Object.entries(s.events || {})
+      .filter(([, e]) => e && (e.type === 'end' || e.type === 'reopen'))
+      .sort(([a], [b]) => a.localeCompare(b));
+    const last = ends.length ? ends[ends.length - 1][1] : null;
+    return !!last && last.type === 'end' && last.why === 'switched';
+  }
+  /**
+   * B-406: Undo of a switch, through marks only (nothing is deleted): the session started by the switch is marked
+   * discarded (with an end event), and the one it ended is active again (a reopen event; its clock, checks and answers
+   * pick up where they were). `keys` are two page event keys for `at`, in order.
+   */
+  function undoSwitch(ended, started, { at, keys }) {
+    const out = [];
+    if (started && started.status !== 'discarded')
+      out.push({
+        op: 'update',
+        collection: 'sessions',
+        id: started.id,
+        data: { status: 'discarded', endedAt: at, events: { [keys[0]]: { type: 'end', why: 'undone', at } } },
+      });
+    if (ended && switchedUnfiled(ended))
+      out.push({
+        op: 'update',
+        collection: 'sessions',
+        id: ended.id,
+        data: { status: 'active', endedAt: null, events: { [keys[1]]: { type: 'reopen', at } } },
+      });
+    return out;
+  }
   /** Matt's same-or-different answer for one pending near-repeat. */
   function decideSessionQuestion(s, key, decision, { weakspots = [], objectives = [], ideas = [], now } = {}) {
     const q = s && s.pending && s.pending[key];
@@ -865,6 +967,10 @@ export function makeSessions(core) {
     wrapPrompt,
     parseWrap,
     closeSession,
+    startTimedSession,
+    switchSession,
+    switchedUnfiled,
+    undoSwitch,
     decideSessionQuestion,
     noteIdea,
     ideaId: (words, { at, date, existing = [] } = {}) =>

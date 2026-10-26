@@ -3,7 +3,10 @@
 // survives a reload. At 390 there is no Notes entry, and #notes does not open it. B-403, the list: course filters with
 // counts, notes grouped by course, the picked note's preview (From, Edited, Length, Studied, On this page, Open note,
 // Study with E.V.), the empty states for no notes at all and for none in a course, and nothing overflowing, at 1280,
-// 1706 and 2560 on synthetic, synthetic with no notes, and synthetic with a long-title note.
+// 1706 and 2560 on synthetic, synthetic with no notes, and synthetic with a long-title note. B-406: New note starts a 25-minute
+// session naming notes/<id> with its controls in the strip; a check reads the open note through sample in the session's
+// own chat; a second session ends and logs the first, and Undo puts back the note, the chat, the answer and the timer;
+// Study with E.V. and a Today task start one; End in the strip saves it.
 //   node test/harness/notes.cjs [record dir | synthetic] [screenshots dir]
 // Run `node tools/build.mjs` first. Exit code 1 when any check fails.
 const { chromium } = require('playwright');
@@ -812,6 +815,262 @@ const openNoteId = page =>
         await page.context().close();
       }
     }
+  }
+
+  // ---- B-406 (D-325): study sessions move into Notes, at 1280
+  {
+    const { page, errors } = await open(browser, { width: 1280, height: 860 });
+    const tag = '[1280 sessions]';
+    const sessions = () =>
+      page.evaluate(() => Object.entries(window.__db.sessions || {}).map(([id, d]) => ({ id, ...d })));
+    const sess = id => page.evaluate(i => (window.__db.sessions || {})[i] || null, id);
+    const slot = () =>
+      page.evaluate(() => {
+        const s = document.getElementById('ev-sslot');
+        const q = c => (s.querySelector(c) || {}).textContent || '';
+        return {
+          shown: !!s && s.getBoundingClientRect().width > 0,
+          left: q('.s-left'),
+          name: q('.tn'),
+          brk: q('.s-brk'),
+          end: q('.s-end'),
+          ended: q('.s-ended'),
+          undo: !!s.querySelector('.s-undo'),
+          header: !document.getElementById('sbar').hidden,
+        };
+      });
+    const secsLeft = t => {
+      const m = /(\d+):(\d\d) left/.exec(t);
+      return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+    };
+    const active = async () => (await sessions()).filter(x => x.status === 'active');
+    await page.click('#tab-notes');
+    await until(page, () => !document.getElementById('p-notes').hidden);
+    const before = (await sessions()).map(x => x.id);
+
+    // New note starts a 25-minute session naming notes/<id>; its controls are in the strip, not the header
+    await page.click('#notes-new');
+    await until(page, () => !document.getElementById('notes-editor').hidden);
+    await settle(page);
+    const noteA = await openNoteId(page);
+    await until(page, () => /left/.test((document.querySelector('#ev-sslot .s-left') || {}).textContent || ''));
+    const a = (await sessions()).filter(x => !before.includes(x.id));
+    const sa = a[0] || {};
+    const st1 = await slot();
+    ok(
+      `${tag} New note starts one 25-minute session naming notes/<id>, its first line in its own chat`,
+      a.length === 1 &&
+        sa.status === 'active' &&
+        sa.note === 'notes/' + noteA &&
+        sa.planned === 25 &&
+        sa.kind === 'note' &&
+        (await page.evaluate(
+          th =>
+            Object.values(window.__db.talk || {}).some(d =>
+              Object.values(d.messages || {}).some(m => m.thread === th && /Started 25 minutes/.test(m.text))
+            ),
+          'th-' + sa.id
+        )),
+      JSON.stringify({ n: a.length, note: sa.note, noteA, planned: sa.planned, status: sa.status })
+    );
+    ok(
+      `${tag} the strip shows the time left, the note, Break and End; the header's session line stays hidden`,
+      st1.shown &&
+        secsLeft(st1.left) > 24 * 60 &&
+        secsLeft(st1.left) <= 25 * 60 &&
+        st1.name === 'your new note' &&
+        st1.brk === 'Break' &&
+        st1.end === 'End' &&
+        !st1.header,
+      JSON.stringify(st1)
+    );
+    await page.click('#note-body');
+    await page.keyboard.type('# Potassium');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('Hyperkalemia peaks the T waves and can stop the heart.');
+    await settle(page);
+    const named = await slot();
+    ok(`${tag} the strip names the note by its title as he writes`, named.name === 'Potassium', named.name);
+    await page.screenshot({ path: path.join(shots, 'notes-session-strip-1280.png') });
+
+    // a check reads the open note through sample, never the Study Watch reader; it lands in the session's chat
+    await page.evaluate(() => {
+      window.__mcpCalls = [];
+      window.__chatScript = [{ tool: 'study_session', input: { action: 'quiz' } }];
+      window.__chatReply = 'Posted.';
+      window.__sampleFn = p => {
+        const t = JSON.stringify(p);
+        if (/short items|items/.test(t))
+          return {
+            items: [{ text: 'What does hyperkalemia do to the T waves?', kind: 'recall', answer: 'Peaks them' }],
+          };
+        return {};
+      };
+    });
+    await page.click('#ev-btn');
+    await until(page, () => !document.getElementById('evchat').hidden);
+    const popHead = await page.evaluate(() => document.querySelector('#evchat .cph .tt').textContent);
+    await page.fill('#evc-input', 'Quiz me on this note');
+    await page.press('#evc-input', 'Enter');
+    const carded = await until(page, () => !!document.querySelector('#evchat .msgs .check'), null, 6000);
+    const check = await page.evaluate(() => ({
+      prompt: JSON.stringify(window.__lastPrompt || ''),
+      reader: window.__mcpCalls.filter(c => String(c[0]).startsWith('host:')).length,
+      card: (document.querySelector('#evchat .msgs .check') || {}).textContent || '',
+    }));
+    const sa2 = await sess(sa.id);
+    const ev2 = Object.values(sa2.events || {});
+    ok(
+      `${tag} a check sends the open note's text through sample, asks no reader, and shows in the session's chat`,
+      carded &&
+        /Hyperkalemia peaks the T waves/.test(check.prompt) &&
+        check.reader === 0 &&
+        /What does hyperkalemia do/.test(check.card) &&
+        ev2.some(e => e.type === 'check' && e.n === 1) &&
+        !JSON.stringify(sa2).includes('Hyperkalemia peaks'),
+      JSON.stringify({ carded, reader: check.reader, card: check.card.slice(0, 80), popHead })
+    );
+    ok(`${tag} the pop-up is the session's chat, as the demo names it`, /Studying with E\.V\./.test(popHead), popHead);
+    await page.evaluate(() => (window.__chatScript = []));
+    await page.fill('#evc-input', 'They peak');
+    await page.press('#evc-input', 'Enter');
+    const answered = await until(
+      page,
+      i => Object.values((window.__db.sessions[i] || {}).events || {}).some(e => e.type === 'answer' && e.n === 1),
+      sa.id,
+      4000
+    );
+    ok(`${tag} his line in the session's chat answers its check`, answered, '');
+    await page.screenshot({ path: path.join(shots, 'notes-session-check-1280.png') });
+
+    // a second New note ends and logs the running session first, and offers Undo
+    const leftBefore = secsLeft((await slot()).left);
+    await page.click('.n-back');
+    await until(page, () => !document.getElementById('notes-list').hidden);
+    await page.click('#notes-new');
+    await until(page, () => !!document.querySelector('#ev-sslot .s-undo'), null, 4000);
+    const noteB = await openNoteId(page);
+    const sw = await slot();
+    const ended = await sess(sa.id);
+    const b = (await sessions()).find(x => x.note === 'notes/' + noteB);
+    ok(
+      `${tag} starting a second session ends and logs the running one first, then offers Undo in the strip`,
+      ended.status === 'ended' &&
+        Object.values(ended.events).some(e => e.type === 'end' && e.why === 'switched') &&
+        !!b &&
+        b.status === 'active' &&
+        (await active()).length === 1 &&
+        sw.undo &&
+        /Ended “Potassium”: .*logged to Record/.test(sw.ended),
+      JSON.stringify({ ended: ended.status, b: b && b.status, sw })
+    );
+    await page.screenshot({ path: path.join(shots, 'notes-session-undo-1280.png') });
+    await page.click('#ev-sslot .s-undo');
+    await until(page, i => (window.__db.sessions[i] || {}).status === 'active', sa.id, 4000);
+    await page.waitForTimeout(400);
+    const back = await sess(sa.id);
+    const gone = await sess(b.id);
+    const sw2 = await slot();
+    const restored = await page.evaluate(() => ({
+      body: document.getElementById('note-body').textContent,
+      editor: !document.getElementById('notes-editor').hidden,
+      pop: !document.getElementById('evchat').hidden,
+      title: (document.querySelector('#evchat .cph .tt') || {}).textContent || '',
+      card: (document.querySelector('#evchat .msgs .check') || {}).textContent || '',
+    }));
+    const evs = Object.values(back.events);
+    ok(
+      `${tag} Undo marks the new session discarded and the ended one active again; nothing is deleted`,
+      gone.status === 'discarded' &&
+        back.status === 'active' &&
+        back.endedAt === null &&
+        evs.some(e => e.type === 'reopen') &&
+        evs.some(e => e.type === 'end' && e.why === 'switched') &&
+        !!(await savedDoc(page, noteB)),
+      JSON.stringify({ gone: gone.status, back: back.status, endedAt: back.endedAt })
+    );
+    ok(
+      `${tag} Undo puts back the open note, the chat, the check answer and the timer`,
+      restored.editor &&
+        /Hyperkalemia peaks/.test(restored.body) &&
+        restored.pop &&
+        /Potassium/.test(restored.title) &&
+        /What does hyperkalemia do/.test(restored.card) &&
+        evs.some(e => e.type === 'answer' && e.n === 1) &&
+        sw2.name === 'Potassium' &&
+        !sw2.undo &&
+        Math.abs(secsLeft(sw2.left) - leftBefore) <= 4,
+      JSON.stringify({ restored: { ...restored, body: restored.body.slice(0, 40) }, sw2, leftBefore })
+    );
+    await page.screenshot({ path: path.join(shots, 'notes-session-undone-1280.png') });
+
+    // Study with E.V. on a note he has (the list's button carries data-study-note) starts one on it; with no Undo
+    // the ended session is filed once Undo is no longer offered
+    await page.evaluate(i => {
+      const b = document.createElement('button');
+      b.dataset.studyNote = i;
+      b.id = 'h-study';
+      b.textContent = 'Study with E.V.';
+      document.getElementById('p-notes').append(b);
+    }, noteB);
+    await page.click('#h-study');
+    await until(
+      page,
+      i => Object.values(window.__db.sessions).some(x => x.note === 'notes/' + i && x.status === 'active'),
+      noteB,
+      4000
+    );
+    const c = (await sessions()).find(x => x.note === 'notes/' + noteB && x.status === 'active');
+    const openNow = await page.evaluate(() => (window.__writes || []).length);
+    void openNow;
+    const filed = await until(page, i => !!(window.__db.sessions[i] || {}).filedAt, sa.id, 16000);
+    const fa = await sess(sa.id);
+    ok(
+      `${tag} Study with E.V. starts a 25-minute session on that note; the one it ended is filed when Undo runs out`,
+      !!c &&
+        c.planned === 25 &&
+        filed &&
+        fa.status === 'ended' &&
+        fa.minutes >= 0 &&
+        typeof fa.summary === 'string' &&
+        !(await slot()).undo,
+      JSON.stringify({ c: c && c.id, filed, minutes: fa.minutes })
+    );
+
+    // a Today task still starts one: a timed session of its own, its estimate long
+    await page.click('#tab-today');
+    const started = await page.evaluate(async () => {
+      for (const r of document.querySelectorAll('#today-list .li .nm')) {
+        r.click();
+        await new Promise(x => setTimeout(x, 150));
+        const b = document.querySelector('.tp-start');
+        if (b && /Start study session/.test(b.textContent)) {
+          b.click();
+          return r.textContent;
+        }
+      }
+      return null;
+    });
+    await page.waitForTimeout(800);
+    const t = (await active())[0] || {};
+    const sw3 = await slot();
+    ok(
+      `${tag} a Today task's Start still starts a session, timed by its estimate, with the controls in the strip`,
+      !!started && !!t.planned && t.id !== c.id && sw3.shown && /left/.test(sw3.left) && sw3.end === 'End',
+      JSON.stringify({ started, planned: t.planned, topic: t.topic, sw3 })
+    );
+    await page.screenshot({ path: path.join(shots, 'notes-session-task-1280.png') });
+    // End from the strip saves it and the strip empties
+    await page.click('#ev-sslot .s-end');
+    const endedT = await until(page, i => (window.__db.sessions[i] || {}).status === 'ended', t.id, 6000);
+    await page.waitForTimeout(300);
+    ok(
+      `${tag} End in the strip saves the session and empties the strip`,
+      endedT && !(await slot()).left,
+      JSON.stringify(await slot())
+    );
+    ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
+    await page.context().close();
   }
 
   // ---- 390: no Notes

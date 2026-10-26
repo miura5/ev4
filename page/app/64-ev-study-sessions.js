@@ -26,6 +26,19 @@
       changedAt: 0,
     };
     const COMMENT = SWC.mode === 'comment';
+    // B-406 (D-325): a session from Notes (a new note, or Study with E.V. on one) or from a Today task is timed: it runs
+    // its planned minutes, its controls are in the strip, and its lines are its own chat in the pop-up (a thread named
+    // for the session), never the Conversation's.
+    const NOTE_MINUTES = 25;
+    const WIDE_STRIP = window.matchMedia ? window.matchMedia('(min-width:1024px)') : { matches: true };
+    const isTimed = s => !!(s && Number(s.planned) > 0);
+    const sThread = s =>
+      'th-' +
+      String(s.id)
+        .replace(/[^A-Za-z0-9-]/g, '-')
+        .slice(0, 77);
+    const thOf = s => (isTimed(s) ? { thread: sThread(s) } : {});
+    const noteOfSession = s => (s && /^notes\//.test(String(s.note || '')) ? String(s.note).slice(6) : null);
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
         SS.mayClaim = true;
@@ -220,7 +233,7 @@
         await sessEvent(s, 'skip', { why });
         if (say && !SS.said.has(why)) {
           SS.said.add(why);
-          await evSay(say, [], { tier: 'local' });
+          await evSay(say, [], { tier: 'local', ...thOf(s) });
         }
       };
       try {
@@ -246,7 +259,7 @@
           p = { found: true, note: { id: '', name: s.topic || 'Study session', text: ctx.text } };
         } else
           try {
-            p = await readerCall('latest_note');
+            p = await sessionNote(s); // B-406: a Notes session reads its own note, never the reader
           } catch (e) {
             const code = (e && e.code) || 'upstream_error';
             if (NOT_OFFERED.includes(code)) SS.readerOk = false;
@@ -310,7 +323,9 @@
               ],
               at: now(),
               tier: 'quick',
+              ...thOf(s),
             });
+            sessPing(s, true);
             await sessEvent(s, 'check', {
               n,
               format: 'open',
@@ -346,7 +361,9 @@
           cards: [{ type: 'check', session: s.id, n, items }],
           at: now(),
           tier: 'quick',
+          ...thOf(s),
         });
+        sessPing(s, true);
         await sessEvent(s, 'check', {
           n,
           format: 'mc', // D-133 (B-75): an open check that fell back is stored as multiple choice
@@ -391,7 +408,7 @@
       try {
         let p;
         try {
-          p = await readerCall('latest_note');
+          p = await sessionNote(s);
         } catch {
           return;
         }
@@ -448,7 +465,8 @@
         if (!c) return;
         const id = msgId('e');
         if (c.quote) SS.quotes.set(id, c.quote);
-        await postMsg({ id, role: 'ev', text: c.say, at: now(), tier: 'quick' });
+        await postMsg({ id, role: 'ev', text: c.say, at: now(), tier: 'quick', ...thOf(s) });
+        sessPing(s, false);
         const m2 = E.noteMark(text);
         await sessEvent(s, 'check', {
           comment: true,
@@ -491,7 +509,7 @@
           });
         let p;
         try {
-          p = await readerCall('latest_note');
+          p = await sessionNote(s);
         } catch (e) {
           const code = (e && e.code) || 'upstream_error';
           if (['server_not_connected', 'mcp_unavailable', 'capability_disabled', 'not_granted'].includes(code))
@@ -499,7 +517,7 @@
           await sessEvent(s, 'skip', { why: 'reader-' + code });
           if (!SS.said.has('reader-' + code)) {
             SS.said.add('reader-' + code);
-            await evSay(readerCopy(code, e && e.message), [], { tier: 'local' });
+            await evSay(readerCopy(code, e && e.message), [], { tier: 'local', ...thOf(s) });
           }
           return;
         }
@@ -538,7 +556,8 @@
     // hidden from the shell); she still reads along (SS.text), and the session's own line and card say what it is on.
 
     function sessionTranscript(s) {
-      return allMsgs()
+      // B-406: a Notes session's lines are its own chat (its thread); the Conversation's session, the lines since it began
+      return (isTimed(s) ? everyMsg().filter(m => m.thread === sThread(s)) : allMsgs())
         .filter(m => !m.pending && !m.greeting && String(m.at) >= String(s.startedAt))
         .map(m => {
           const chk = (m.cards || []).find(c => c && c.type === 'check' && c.session === s.id);
@@ -548,6 +567,50 @@
           };
         })
         .filter(t => t.text);
+    }
+    // The summary from Claude (when the session had checks, comments or reads) and the close's writes: one session
+    // update and its findings. B-406: also files a session a switch ended once its Undo has passed.
+    async function fileSession(s2, reason) {
+      const st = E.sessionState(s2, now());
+      let wrap = {};
+      let note = '';
+      if ((st.checks || st.comments || st.reads) && sample && !T.sampleOff) {
+        try {
+          wrap =
+            (await sample.json(
+              E.wrapPrompt({
+                noteName: s2.topic,
+                transcript: sessionTranscript(s2),
+                context: sessCtx(),
+                opening: SS.text && activeSession() && activeSession().id === s2.id ? SS.text.slice(0, 800) : '',
+              }),
+              { modelTier: 'default', cache: false }
+            )) || {};
+        } catch (e) {
+          note = ` I couldn’t write the summary (${(e && e.code) || 'error'}), so it’s saved without one.`;
+        }
+      }
+      const r = E.closeSession(s2, wrap, {
+        weakspots: M.models,
+        objectives: S.objectives,
+        ideas: S.ideas || [],
+        now: now(),
+        endedBy: reason,
+      });
+      await run(withDerived(r.writes));
+      return { up: r.writes[0].data, st, r, note };
+    }
+    function savedBits(up, st) {
+      return [
+        `${up.minutes} min`,
+        ...(COMMENT
+          ? [st.comments ? plural(st.comments, 'comment') : '', up.questions ? plural(up.questions, 'question') : '']
+          : [plural(up.checks, 'check')]),
+        up.weakSpots.length ? plural(up.weakSpots.length, 'weak spot') : '',
+        up.cardCount ? plural(up.cardCount, 'card') : '',
+      ]
+        .filter(Boolean)
+        .join(', ');
     }
     async function endSession(reason = 'ended') {
       const s = activeSession();
@@ -568,50 +631,15 @@
           });
           s2 = { ...s, status: 'ending', events: { ...(s.events || {}), [k]: { type: 'end', why: reason, at } } };
         }
-        const st = E.sessionState(s2, now());
-        let wrap = {};
-        let note = '';
-        if ((st.checks || st.comments || st.reads) && sample && !T.sampleOff) {
-          try {
-            wrap =
-              (await sample.json(
-                E.wrapPrompt({
-                  noteName: s.topic,
-                  transcript: sessionTranscript(s),
-                  context: sessCtx(),
-                  opening: SS.text ? SS.text.slice(0, 800) : '',
-                }),
-                { modelTier: 'default', cache: false }
-              )) || {};
-          } catch (e) {
-            note = ` I couldn’t write the summary (${(e && e.code) || 'error'}), so it’s saved without one.`;
-          }
-        }
-        const r = E.closeSession(s2, wrap, {
-          weakspots: M.models,
-          objectives: S.objectives,
-          ideas: S.ideas || [],
-          now: now(),
-          endedBy: reason,
-        });
-        await run(withDerived(r.writes));
-        const up = r.writes[0].data;
+        const { up, st, r, note } = await fileSession(s2, reason);
         SS.text = null;
         SS.added = '';
         SS.seen = null;
         SS.note = null;
-        const bits = [
-          `${up.minutes} min`,
-          ...(COMMENT
-            ? [st.comments ? plural(st.comments, 'comment') : '', up.questions ? plural(up.questions, 'question') : '']
-            : [plural(up.checks, 'check')]),
-          up.weakSpots.length ? plural(up.weakSpots.length, 'weak spot') : '',
-          up.cardCount ? plural(up.cardCount, 'card') : '',
-        ]
-          .filter(Boolean)
-          .join(', ');
+        const lead =
+          reason === 'idle' ? 'No new writing for a while, so I wrapped up. ' : reason === 'time' ? 'Time. ' : '';
         return [
-          `${reason === 'idle' ? 'No new writing for a while, so I wrapped up. ' : ''}Session saved: ${bits}.${r.questions.length ? ' One thing to settle on the card.' : ''}${note}`,
+          `${lead}Session saved: ${savedBits(up, st)}.${r.questions.length ? ' One thing to settle on the card.' : ''}${note}`,
           // B-377 (D-316): as the demo, her one line and Open in Record; the summary card only when a question waits on him
           r.questions.length
             ? [{ type: 'session', id: s.id }]
@@ -638,7 +666,8 @@
     }
     // B-377 (D-316): Break and Resume, from the session's buttons or the break's chip, answer with her line in the thread
     async function breakOrResume(type) {
-      const st = activeSession() && E.sessionState(activeSession(), now());
+      const cur = activeSession();
+      const st = cur && E.sessionState(cur, now());
       const ok = st && (type === 'break' ? !st.onBreak : st.onBreak);
       const r = await sessionCmd(type);
       await evSay(
@@ -648,7 +677,7 @@
             ? 'Five-minute break. No checks until you’re back, and breaks don’t count as study time.'
             : 'Back to it. Checks resume.',
         [],
-        { tier: 'local' }
+        { tier: 'local', ...thOf(cur) }
       );
     }
     async function decideSession(s, key, decision) {
@@ -663,10 +692,12 @@
         )
       );
     }
-    function noteAnswer(mid) {
-      // a message he sends during a session answers the newest check he hasn't answered yet
+    function noteAnswer(mid, th) {
+      // a message he sends during a session answers the newest check he hasn't answered yet; B-406: a Notes session's
+      // check is answered in its own chat, the Conversation's in the Conversation
       const s = activeSession();
       if (!s || s.status !== 'active') return;
+      if ((th || null) !== (isTimed(s) ? sThread(s) : null)) return;
       const st = E.sessionState(s, now());
       if (st.lastCheck && !st.answered[st.lastCheck.n])
         sessEvent(s, 'answer', { n: st.lastCheck.n, msgId: mid }).catch(() => {});
@@ -710,7 +741,7 @@
       }
       const end = mk(ending ? 'Finish' : 'End', async () => {
         const [t, c] = await endSession('ended');
-        await evSay(t, c, { tier: 'local' });
+        await evSay(t, c, { tier: 'local', ...thOf(s) });
       });
       end.classList.add('end');
       if (SS.busy === true) end.disabled = true;
@@ -728,6 +759,7 @@
       renderSessCard();
       const s = activeSession();
       document.body.classList.toggle('in-session', !!s);
+      renderSlot(); // B-406: a Notes session's controls are the strip's on desktop
       if (!s) {
         CORE.setRing(-1);
         if (!bar.hidden) {
@@ -739,6 +771,16 @@
       }
       const st = E.sessionState(s, now());
       const ending = s.status === 'ending';
+      if (isTimed(s) && WIDE_STRIP.matches) {
+        // B-406: on desktop a Notes session shows once, in the strip; the header's line stays for the phone
+        CORE.setRing(ringFill(st, ending));
+        if (!bar.hidden) {
+          bar.hidden = true;
+          bar.replaceChildren();
+          bar.dataset.k = '';
+        }
+        return;
+      }
       const k = [s.id, s.status, st.onBreak, !!SS.busy].join('|');
       bar.hidden = false;
       bar.classList.toggle('brk', st.onBreak);
@@ -921,7 +963,16 @@
       // B-362, B-368 (D-316): as the demo, '<what> · N min': where the session's words come from and its minutes (a
       // session has no planned length, so N is how long it has run)
       card.querySelector('.ss-sub').textContent =
-        (noteless(s) ? 'Study session' : 'Your Study Watch note') + ' · ' + Math.max(1, st.minutes) + ' min';
+        (isTimed(s)
+          ? noteOfSession(s)
+            ? 'In Notes'
+            : 'A task from Today'
+          : noteless(s)
+            ? 'Study session'
+            : 'Your Study Watch note') +
+        ' · ' +
+        Math.max(1, st.minutes) +
+        ' min';
     }
     // B-273 (D-267, Matt's answer): her ring is the stretch to the next check. Her segments fill clockwise toward it and
     // start over after it; the checks he answered show on their cards (D-217). The ring is full while she wraps up.
@@ -951,18 +1002,19 @@
       }
       const s = activeSession();
       renderBar();
+      if (M && loaded.has('sessions')) switchTick(); // B-406: a switch's Undo runs out, then its session is filed
       if (!s || !M || SS.busy) return;
       if (SS.readerOk === false && Date.now() > SS.reprobeAt) {
         SS.reprobeAt = Date.now() + 30e3;
         SS.readerOk = null;
       } // B-87: a failed probe is retried
-      if (SS.readerOk == null && !noteless(s)) probeReader();
+      if (SS.readerOk == null && !noteless(s) && !noteOfSession(s)) probeReader();
       if (s.status !== 'active') return;
       const st = E.sessionState(s, now());
       // B-87: the view in front of him takes the session over as soon as its reader answers (a reload or a reopened tab
       // used to wait two minutes past a due check, the clock at 0:00).
-      // B-314: a session with no note needs no reader to be driven
-      const free = SS.readerOk === true || noteless(s);
+      // B-314: a session with no note needs no reader to be driven; B-406: nor does one on a note in Notes
+      const free = SS.readerOk === true || noteless(s) || !!noteOfSession(s);
       if (free && SS.mayClaim && document.visibilityState !== 'hidden' && (!s.driver || s.driver.view !== SS.view)) {
         SS.mayClaim = false;
         write({ op: 'update', collection: 'sessions', id: s.id, data: { driver: { view: SS.view, at: now() } } }).catch(
@@ -976,6 +1028,10 @@
         (s.driver && s.driver.view === SS.view) ||
         (free && (!s.driver || st.overdueMs > (SWC.takeoverMinutes || 2) * 60e3));
       if (!mine) return;
+      if (isTimed(s) && (st.timeUp || breakOver(s, st))) {
+        timedTick(s, st);
+        return;
+      }
       if (st.shouldWrap) {
         endSession('idle')
           .then(([t, c]) => evSay(t, c, { tier: 'local' }))
@@ -989,5 +1045,362 @@
       }
       if (COMMENT && !st.onBreak) readTick(s);
     }
+    // ---------------------------------------------------------------- B-406 (D-325): study sessions in Notes
+    // A new note starts a 25-minute session on it; Study with E.V. starts one on a note he has; a Today task starts one
+    // (a study task on a new note, any other task a timed session of its own). Starting one while another runs ends
+    // the running one first and offers Undo in the strip for UNDO_MS: Undo marks the new session discarded and the
+    // ended one active again (core undoSwitch), and puts back the open note, the tab and the chat. Nothing is deleted.
+    // The ended session is filed (summary, findings, minutes) only once Undo is no longer offered, so an Undo never takes
+    // back a write-once field or a finding; a page closed before then files it on the next load.
+    const UNDO_MS = 12000;
+    SS.undo = null;
+    SS.filing = new Set();
+    // The note a Notes session reads: the open note as he is writing it, else as saved. Its text goes to Claude
+    // through sample() at a check (D-328); the record keeps its length and hash only.
+    async function sessionNote(s) {
+      const id = noteOfSession(s);
+      if (!id) return readerCall('latest_note');
+      const open = NOTE.open === id && NOTE.blocks;
+      const doc = (S.notes || []).find(n => n.id === id) || null;
+      const blocks = open ? NOTE.blocks : doc ? E.noteBlocks(doc.blocks || []) : null;
+      if (!blocks) return { found: false };
+      return {
+        found: true,
+        note: {
+          id,
+          name: E.noteTitleOf(blocks) || 'Untitled',
+          text: blocks.map(b => E.noteText(b)).join('\n'),
+          modifiedAt: (doc && doc.editedAt) || null,
+        },
+      };
+    }
+    // What a session is on, as the strip names it: a note's title as it is now (a new note's grows as he writes)
+    function sessName(s) {
+      const id = noteOfSession(s);
+      if (!id) return noteLabel(s && s.topic) || 'Study session';
+      const blocks =
+        NOTE.open === id && NOTE.blocks ? NOTE.blocks : ((S.notes || []).find(n => n.id === id) || {}).blocks;
+      return (blocks && E.noteTitleOf(E.noteBlocks(blocks))) || s.topic || 'New note';
+    }
+    // the pop-up's state (90-render.js) once the page's parts are all declared
+    const popReady = () => {
+      try {
+        return !!POP && !!F.strip;
+      } catch {
+        return false;
+      }
+    };
+    const notesOn = () => typeof notesTab !== 'undefined' && !!notesTab && !notesTab.hidden;
+    // A line of hers in a Notes session's chat brings the chat up: a check opens the pop-up (without taking the focus
+    // from his note), a comment shows as its chip. On Conversation the chip waits.
+    function sessPing(s, open) {
+      if (!isTimed(s) || !popReady() || !DESK.matches) return;
+      POP.th = sThread(s);
+      if (open && ui.tab !== 'ev') {
+        POP.open = true;
+        POP.min = false;
+        POP.hist = false;
+      } else if (!POP.open) POP.min = true;
+      popSave();
+      renderFrame();
+    }
+    /** Starts a timed session; a running one is ended first (the switch), with Undo offered in the strip. */
+    // Where he was before a session started, for its Undo: the view and the note open in Notes
+    const whereNow = () => ({ tab: ui.tab, note: ui.tab === 'notes' && NOTE.view === 'editor' ? NOTE.open : null });
+    async function startTimed({ noteId = '', topic, planned = NOTE_MINUTES, fresh = false, say, from = whereNow() }) {
+      unlockAudio();
+      const cur = activeSession();
+      const at = now();
+      let prior = null;
+      if (cur) {
+        prior = {
+          prev: cur.id,
+          name: sessName(cur),
+          mins: E.sessionState(cur, at).minutes,
+          ...from,
+          th: popReady() ? POP.th : null,
+          open: popReady() && POP.open,
+          min: popReady() && POP.min,
+          next: null,
+          until: Date.now() + 60e3, // held while the new session is written, so the ended one isn't filed meanwhile
+        };
+        SS.undo = prior;
+        await run(E.switchSession(cur, { at, key: pageKey(at) }));
+      }
+      const stamp = at.replace(/\D/g, '').slice(0, 14);
+      let id = E.safeId(`ss-${stamp.slice(0, 8)}-${stamp.slice(8)}-${E.slug(topic || 'note', 24)}`);
+      if (sessOf(id)) id = E.safeId(id + '-2');
+      const k = pageKey(at);
+      try {
+        await write(
+          E.startTimedSession({
+            id,
+            at,
+            key: k,
+            date: today,
+            topic,
+            planned,
+            noteId,
+            fresh,
+            comments: lastComments(),
+            view: SS.view,
+          })
+        );
+      } catch (e) {
+        // the new session wasn't saved: the one it ended goes on as it was
+        if (prior) {
+          SS.undo = null;
+          const t = now();
+          await run(E.undoSwitch(sessOf(prior.prev), null, { at: t, keys: [pageKey(t), pageKey(t)] })).catch(() => {});
+        }
+        throw e;
+      }
+      SS.text = null;
+      SS.added = '';
+      SS.said.clear();
+      SS.seen = null;
+      SS.note = null;
+      SS.nextRead = Date.now() + (SWC.readSeconds || 30) * 1e3;
+      SS.changedAt = Date.now();
+      SS.undo = prior ? { ...prior, next: id, until: Date.now() + UNDO_MS } : null;
+      if (popReady()) {
+        POP.th = sThread({ id }); // the pop-up's chat is the session's now; the one he had stays in history
+        if (POP.open && !POP.hist) POP.open = false;
+        POP.min = false;
+        popSave();
+      }
+      await evSay(say, [], { tier: 'local', thread: sThread({ id }) });
+      render();
+      return id;
+    }
+    /** New note (fresh) or Study with E.V. on a note he has: a 25-minute session on it, the note open in Notes. */
+    async function noteSession(id, fresh = false, from = whereNow()) {
+      const cur = activeSession();
+      if (cur && noteOfSession(cur) === id) {
+        if (ui.tab !== 'notes') showTab('notes');
+        if (NOTE.open !== id || NOTE.view !== 'editor') await openNote(id);
+        return;
+      }
+      if (!fresh) {
+        if (ui.tab !== 'notes') showTab('notes');
+        if (NOTE.open !== id || NOTE.view !== 'editor') await openNote(id);
+        if (NOTE.open !== id) return; // the open note couldn't be saved, so it stays open and nothing starts
+      }
+      const doc = (S.notes || []).find(n => n.id === id);
+      const name = fresh ? 'New note' : noteName(doc);
+      await startTimed({
+        noteId: id,
+        topic: name,
+        fresh,
+        from,
+        say: fresh
+          ? `Started ${NOTE_MINUTES} minutes on your new note. I’ll follow along as you write.`
+          : `Started ${NOTE_MINUTES} minutes on “${name}”. I’ll follow along as you read and write.`,
+      });
+    }
+    // B-403's preview: Study with E.V. opens the note, then asks for the session on it
+    document.addEventListener('ev:note-study', e => {
+      const id = e && e.detail && e.detail.id;
+      if (id) guard(null, () => noteSession(id));
+    });
+    /**
+     * A Today task's Start where Notes is (desktop): a study task opens a new note with its session (or the note a
+     * session already runs on); any other task gets a timed session of its own, its estimate long. Null elsewhere, so
+     * the phone keeps the Conversation's session.
+     */
+    function taskStudy(it) {
+      if (!notesOn()) return null;
+      return () =>
+        guard(null, async () => {
+          const cur = activeSession();
+          const from = whereNow();
+          if (catOf(it) === 'study') {
+            if (cur && noteOfSession(cur)) return noteSession(noteOfSession(cur));
+            showTab('notes');
+            return newNote(from);
+          }
+          const name = E.rowText(it);
+          const m = Math.max(1, Math.round(Number(it.minutes) || NOTE_MINUTES));
+          await startTimed({
+            topic: name,
+            planned: m,
+            from,
+            say: `Started ${m} minutes on “${name}”. The clock is in the bar below.`,
+          });
+        });
+    }
+    async function undoSwitch() {
+      const u = SS.undo;
+      if (!u || Date.now() >= u.until) return;
+      SS.undo = null;
+      const at = now();
+      await run(E.undoSwitch(sessOf(u.prev), sessOf(u.next), { at, keys: [pageKey(at), pageKey(at)] }));
+      SS.text = null;
+      SS.seen = null;
+      SS.added = '';
+      SS.note = null;
+      SS.nextRead = Date.now() + (SWC.readSeconds || 30) * 1e3;
+      // the open note, the view and the chat as they were: the restored session's note open again in Notes, or the
+      // view he was on
+      const prevNote = noteOfSession(sessOf(u.prev));
+      if (prevNote && (S.notes || []).some(n => n.id === prevNote)) {
+        if (ui.tab !== 'notes') showTab('notes');
+        await openNote(prevNote);
+      } else if (u.tab === 'notes') {
+        if (ui.tab !== 'notes') showTab('notes');
+        if (u.note) await openNote(u.note);
+        else await closeNote();
+      } else if (ui.tab !== u.tab) showTab(u.tab);
+      if (popReady()) {
+        POP.th = u.th;
+        POP.open = !!u.open;
+        POP.min = !!u.min && !u.open;
+        POP.hist = false;
+        popSave();
+        renderFrame();
+      }
+      render();
+    }
+    // Each second: the switch's Undo runs out, then the ended session is filed; one a closed page left is filed here.
+    function switchTick() {
+      if (SS.undo && Date.now() >= SS.undo.until) SS.undo = null;
+      for (const s of S.sessions) {
+        if (SS.filing.has(s.id) || (SS.undo && SS.undo.prev === s.id) || !E.switchedUnfiled(s)) continue;
+        if (s.source !== 'E.V. Home') continue;
+        SS.filing.add(s.id); // once per page load, whatever happens
+        fileSession(s, 'switched')
+          .then(({ up, st, r, note }) =>
+            evSay(
+              `Saved “${sessName(s)}”: ${savedBits(up, st)}.${r.questions.length ? ' One thing to settle on the card.' : ''}${note}`,
+              r.questions.length
+                ? [{ type: 'session', id: s.id }]
+                : [{ type: 'go', label: 'Open in Record', to: 'record', id: s.id }],
+              { tier: 'local', ...thOf(s) }
+            )
+          )
+          .catch(() => {});
+      }
+    }
+    // A break in a Notes session is five minutes, as the demo's; then the clock goes on by itself.
+    function breakOver(s, st) {
+      return !!(st.onBreak && st.breakStartedAt && Date.now() - Date.parse(st.breakStartedAt) >= BREAK_MIN * 60e3);
+    }
+    function timedTick(s, st) {
+      SS.busy = true;
+      (async () => {
+        try {
+          if (st.timeUp) {
+            SS.busy = false;
+            const [t, c] = await endSession('time');
+            await evSay(t, c, { tier: 'local', ...thOf(s) });
+            return;
+          }
+          await sessEvent(s, 'resume');
+          const left = Math.ceil((E.sessionState(sessOf(s.id) || s, now()).leftMs || 0) / 60e3);
+          await evSay(`Break’s over: ${plural(left, 'minute')} left.`, [], { tier: 'local', ...thOf(s) });
+        } catch (e) {
+          toast('Couldn’t update the session: ' + ((e && (e.message || e.code)) || 'error'));
+        } finally {
+          SS.busy = false;
+          render();
+        }
+      })();
+    }
+    // The strip's session controls (D-327's L-frame): the time left, what it is on (opens it), Break or Resume, End;
+    // after a switch, the ended session's line and Undo.
+    const clockLeft = ms => {
+      const t = Math.max(0, Math.ceil(ms / 1000));
+      return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0');
+    };
+    /** A Notes session's chat, as the pop-up names it: {title, sub, chip}; null for any other chat. */
+    function sessThreadInfo(th) {
+      if (!th || !/^th-ss-/.test(th)) return null;
+      const s = S.sessions.find(x => isTimed(x) && sThread(x) === th);
+      if (!s) return null;
+      const name = sessName(s);
+      let sub = 'Session ended · ' + name;
+      if (s.status === 'active' || s.status === 'ending') {
+        const st = E.sessionState(s, now());
+        sub = (st.onBreak ? 'On a break' : clockLeft(st.leftMs) + ' left') + ' · ' + name;
+      }
+      return { title: 'Studying with E.V.', sub, chip: 'Studying: ' + name };
+    }
+    function renderSlot() {
+      if (popReady() && POP.open && !POP.hist && F.sub) {
+        const ss = sessThreadInfo(POP.th);
+        if (ss && F.sub.textContent !== ss.sub) F.sub.textContent = ss.sub;
+      }
+      const slot = $('ev-sslot');
+      if (!slot) return;
+      const s0 = activeSession();
+      const s = isTimed(s0) ? s0 : null;
+      const u = SS.undo && Date.now() < SS.undo.until ? SS.undo : null;
+      if (!s && !u) {
+        if (slot.firstChild) slot.replaceChildren();
+        slot.dataset.k = '';
+        return;
+      }
+      const st = s ? E.sessionState(s, now()) : null;
+      const ending = !!s && s.status === 'ending';
+      const k = [s && s.id, s && s.status, st && st.onBreak, SS.busy === true, u && u.next].join('|');
+      if (slot.dataset.k !== k) {
+        slot.dataset.k = k;
+        const kids = [];
+        if (s) {
+          const led = el('span', 's-led');
+          led.setAttribute('aria-hidden', 'true');
+          const go = el('button', 'nm tn');
+          go.type = 'button';
+          go.addEventListener('click', () => {
+            const id = noteOfSession(s);
+            if (id) noteSession(id).catch(() => {});
+            else showTab('today');
+          });
+          const brk = btn(st.onBreak ? 'Resume' : 'Break', () =>
+            barPress(brk, () => breakOrResume(st.onBreak ? 'resume' : 'break'))
+          );
+          brk.className = 'btn ghost sm s-brk';
+          brk.disabled = ending;
+          const end = btn('End', () =>
+            barPress(end, async () => {
+              const [t, c] = await endSession('ended');
+              await evSay(t, c, { tier: 'local', ...thOf(s) });
+            })
+          );
+          end.className = 'btn ghost sm s-end';
+          end.disabled = ending || SS.busy === true;
+          end.setAttribute('aria-label', 'End the session');
+          kids.push(led, el('b', 's-left'), el('span', 's-dot', '·'), go, brk, end);
+        }
+        if (u) {
+          const un = btn('Undo', () => barPress(un, undoSwitch));
+          un.className = 'btn neutral sm s-undo';
+          un.setAttribute('aria-label', `Undo: go back to “${u.name}”`);
+          kids.push(
+            el('span', 's-ended', `Ended “${u.name}”: ${plural(Math.max(1, u.mins), 'minute')}, logged to Record.`),
+            un
+          );
+        }
+        slot.replaceChildren(...kids);
+        slot.setAttribute('aria-label', s ? 'Study session: ' + sessName(s) : 'Session ended');
+      }
+      if (!s) return;
+      slot.classList.toggle('brk', st.onBreak);
+      const left = slot.querySelector('.s-left');
+      const since = st.breakStartedAt ? Date.parse(st.breakStartedAt) : Date.now();
+      left.textContent = ending
+        ? 'Wrapping up…'
+        : st.onBreak
+          ? 'Break · ' + clockLeft(BREAK_MIN * 60e3 - (Date.now() - since))
+          : clockLeft(st.leftMs) + ' left';
+      const go = slot.querySelector('.tn');
+      const nm = sessName(s);
+      const name = noteOfSession(s) && nm === 'New note' ? 'your new note' : nm; // the demo's words for an empty one
+      if (go.textContent !== name) {
+        go.textContent = name;
+        go.title = noteOfSession(s) ? 'Open the note: ' + name : 'Open Today: ' + name;
+      }
+    }
+
     setInterval(sessionTick, 1000);
 

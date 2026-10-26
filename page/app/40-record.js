@@ -71,25 +71,35 @@
       return out;
     }
     function recEntries() {
-      const ses = S.sessions.map(s => ({
-        kind: 'session',
-        id: s.id,
-        name: s.topic || (s.kind === 'skill' ? 'Skills practice' : 'Study session'),
-        at: s.startedAt || s.date,
-        date: s.date || E.chicagoDate(s.startedAt),
-        result:
-          s.status === 'active' || s.status === 'ending'
-            ? 'going now'
-            : [s.minutes ? durFmt(s.minutes) : '', s.questions ? plural(s.questions, 'question') : '']
-                .filter(Boolean)
-                .join(' · '),
-        courses: [sessionCourse(s)].filter(Boolean),
-        props: [
-          s.cardCount ? ['Cards', String(s.cardCount)] : null,
-          s.source === 'E.V. Home' ? ['From', 'E.V.'] : null,
-        ],
-        detail: s.summary || '',
-      }));
+      // B-406: a session an Undo took back (discarded) is kept in the record but never listed or counted
+      const ses = S.sessions
+        .filter(s => s.status !== 'discarded')
+        .map(s => ({
+          kind: 'session',
+          id: s.id,
+          name:
+            (noteOfSession(s) && sessName(s)) || s.topic || (s.kind === 'skill' ? 'Skills practice' : 'Study session'),
+          at: s.startedAt || s.date,
+          date: s.date || E.chicagoDate(s.startedAt),
+          result:
+            s.status === 'active' || s.status === 'ending'
+              ? 'going now'
+              : [
+                  // B-406: a session a switch ended shows its minutes before it is filed
+                  (s.minutes ?? E.sessionState(s, now()).minutes)
+                    ? durFmt(s.minutes ?? E.sessionState(s, now()).minutes)
+                    : '',
+                  s.questions ? plural(s.questions, 'question') : '',
+                ]
+                  .filter(Boolean)
+                  .join(' · '),
+          courses: [sessionCourse(s)].filter(Boolean),
+          props: [
+            s.cardCount ? ['Cards', String(s.cardCount)] : null,
+            s.source === 'E.V. Home' ? ['From', 'E.V.'] : null,
+          ],
+          detail: s.summary || '',
+        }));
       const notes = S.ideas
         .filter(i => i.status !== 'archived')
         .map(i => ({

@@ -559,7 +559,8 @@
       body.focus();
       setNoteSel({ a: { b: last, o: E.noteText(NOTE.blocks[last]).length } });
     }
-    async function newNote() {
+    async function newNote(from) {
+      const was = from && from.tab ? from : whereNow(); // B-406: where he was, for the session's Undo
       if (!(await flushNote())) return;
       const at = now();
       const id = E.newNoteId(at, noteRandom());
@@ -569,6 +570,9 @@
       body.focus();
       setNoteSel({ a: { b: 0, o: 0 } });
       saveNote();
+      await noteSession(id, true, was).catch(e =>
+        toast('Couldn’t start the session: ' + ((e && (e.message || e.code)) || 'error'))
+      ); // B-406: a new note starts a session
     }
     async function closeNote() {
       if (!(await flushNote())) return;

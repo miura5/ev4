@@ -175,7 +175,7 @@
   "materials/NUR112-900002": "62b93b52e2ae4b641c4bb71d9d2edc348f015a4b25a00b06a3956dc253b4df68.7p6",
   "objectives/E9-1": "5df46bdb96da5ced69f7d4847254b251e308c3a72ed8aa994a128979a18fe1f8.3j",
   "plans/E9": "821421d879d2ff8aba67dca68afb0354b4be00ca9373cb63843c265af731c92e.bi",
-  "sessions/ss-20261016-200000-sample-note": "8ff15d3c651ac051c55ac6e5dae984f1d1975af2c9d0150731649e0939cb714d.3dixe",
+  "sessions/ss-20261016-200000-sample-note": "8ff15d3c651ac051c55ac6e5dae984f1d1975af2c9d0150731649e0939cb714d.6r11u",
   "sets/review-2026-10-16": "c1a02f8b2fa50f322c2c715e403240a3950656a13230e8c2746463459c923a64.27q",
   "talk/2026-10-16": "d52f118bbc661fdbf21139b8f3c4d1f9284ac8393bf132965656c8f7f3e9e9ad.f",
   "weakspots/ws-2026-10-16-E9-1-sample-topic": "caa1e436f384c33a5b2c48d4a5e1f46b5ec603c443ce8f1ff4a2ac11886c2e09.5z2"
@@ -293,6 +293,7 @@
    "note",
    "noteId",
    "noteTodos",
+   "planned",
    "questions",
    "schema",
    "skill",

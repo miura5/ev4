@@ -515,14 +515,20 @@
         if (e && e.refused) return; // his words are back in the pop-up's box
         throw e;
       }
+      noteAnswer(mid, th); // B-406: in a Notes session's chat, his line answers its open check
       await chat(text, { replyTo: mid, fromMatt: true, thread: th, view: viewName() });
     }
     function popMsgEl(m, last) {
+      const checks = (m.cards || []).filter(c => c && c.type === 'check' && CARDS.check);
       const sig = JSON.stringify([
         m.text,
         !!m.pending,
         m.error,
         (m.cards || []).length,
+        checks.map(c => {
+          const s = sessOf(c.session);
+          return s ? s.status + Object.keys(s.events || {}).length : '';
+        }),
         last,
         T.busy,
         T.retry.has(m.id),
@@ -541,6 +547,16 @@
           d.append(el('i'), el('i'), el('i'));
           node.append(d);
         } else node.append(fmt(m.text));
+        // B-406: a Notes session's check, as the Conversation shows it, in the session's own chat
+        for (const c of !m.pending ? checks : []) {
+          const box = el('div', 'card ev-card');
+          try {
+            CARDS.check(box, c, m.id + '#' + c.n);
+          } catch (e) {
+            box.replaceChildren(el('p', 'empty', 'This check couldn’t load.'));
+          }
+          node.append(box);
+        }
         const gos = !m.pending ? (m.cards || []).filter(c => c && c.type === 'go' && c.label) : [];
         if (gos.length && last) {
           const r = el('div', 'mch');
@@ -584,11 +600,12 @@
       const onConv = ui.tab === 'ev';
       const th = POP.th;
       const msgs = threadMsgs(th);
-      const title = threadTitle(msgs);
+      const ss = sessThreadInfo(th); // B-406: a Notes session's chat is named for it, as the demo's
+      const title = ss ? ss.title : threadTitle(msgs);
       // the strip
       F.chip.hidden = !(POP.min && !POP.open);
-      F.chipT.textContent = title;
-      F.chip.setAttribute('aria-label', 'Open the chat: ' + title);
+      F.chipT.textContent = ss ? ss.chip : title;
+      F.chip.setAttribute('aria-label', 'Open the chat: ' + (ss ? ss.chip : title));
       const q = POP_ASK[ui.tab] || POP_ASK.ev;
       if (F.sug.textContent !== q) F.sug.textContent = q;
       F.evb.classList.toggle('on', POP.open);
@@ -605,7 +622,11 @@
       document.body.classList.toggle('pop-on', POP.open);
       if (!POP.open) return;
       F.title.textContent = POP.hist ? 'Chats' : title;
-      F.sub.textContent = POP.hist ? 'Last 7 days' : 'On ' + (viewName() === 'this task' ? 'Today' : viewName());
+      F.sub.textContent = POP.hist
+        ? 'Last 7 days'
+        : ss
+          ? ss.sub
+          : 'On ' + (viewName() === 'this task' ? 'Today' : viewName());
       F.hist.hidden = !POP.hist;
       F.msgs.hidden = F.chips.hidden = F.form.hidden = POP.hist;
       if (POP.hist) {
@@ -621,7 +642,7 @@
             const pt = el('span', 'pt');
             const day = E.chicagoDate(t.msgs[t.msgs.length - 1].at);
             pt.append(
-              el('span', 'pn', threadTitle(t.msgs)),
+              el('span', 'pn', (sessThreadInfo(t.th) || {}).chip || threadTitle(t.msgs)),
               el('span', 'pm', dayWord(day) + ' · ' + (t.closed && t.th !== POP.th ? 'closed' : 'open'))
             );
             b.append(pt);

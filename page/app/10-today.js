@@ -238,6 +238,8 @@
       const go = openItem(it);
       if (go) return go;
       if (!(Number(it.minutes) > 0)) return null;
+      const notes = taskStudy(it); // B-406: on desktop the session is in Notes (or a timed one of its own)
+      if (notes) return notes;
       return () => {
         showTab('ev');
         guard(null, () => quick('Start a study session'));
