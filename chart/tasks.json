@@ -7274,11 +7274,14 @@
  {
   "id": "B-403",
   "kind": "request",
-  "title": "Request (reported Oct 25): Build the notes list (B-396, D-325).",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
-  "depends": [],
+  "title": "Notes: the notes list",
+  "dod": "Course filters; empty states for no notes at all and for no notes in a course; a preview pane with edited, length, studied and 'on this page'; Open note and Study with E.V. Desktop only. A harness at 1280 and 2560 on synthetic, on synthetic with no notes, and with a long-title note shows the filters, both empty states and nothing overflowing. Smoke green.",
+  "milestone": "PWA",
+  "status": "open",
+  "depends": [
+   "B-401",
+   "B-402"
+  ],
   "notes": "",
   "commit": null,
   "source": "build manager, B-396 plan",
@@ -7286,6 +7289,10 @@
   "reportedAt": "2026-10-26T00:52:40.473Z",
   "board": {
    "row": "v4 B-403: Build the notes list (B-396,"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-26T00:52:42.835Z"
   }
  }
 ]
