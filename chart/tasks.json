@@ -7304,14 +7304,14 @@
   "title": "Notes: offline and sync in the app",
   "dod": "pwa/bridge.js keeps an IndexedDB copy of the record and an outbox for notes, and sw.js caches the app's modules so the app boots offline. Notes read and write offline. Other writes are refused offline with his words kept (B-394/395). On reconnect a stale save is never merged (D-326): his version is kept at once as '<title> (earlier)', linked to the original; the NoteStates picker shows; Keep this version swaps them; Undo is offered. The note header shows the sync status. Proven by shim tests and smoke:pwa: an offline write and reload come back online and read back from D1; two contexts edit one note offline and end with 2 notes and every word kept; then the swap and Undo. pwa-staging and ship staging GREEN. Own review.",
   "milestone": "PWA",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-401",
    "B-402",
    "B-398"
   ],
-  "notes": "Second review: gaps 1-3 closed within a tab; what remains (refused entry stuck across a reload with an overwrite path, duplicate earlier notes from two adopting tabs, backoff bypassed) is filed as B-410, a release blocker, fixed before the Notes release.",
-  "commit": null,
+  "notes": "Shipped to staging at 0247a24: ship staging GREEN.",
+  "commit": "0247a24",
   "source": "build manager, B-396 plan",
   "words": "Build offline and sync in the app (B-396, D-325).",
   "reportedAt": "2026-10-26T00:52:45.290Z",
