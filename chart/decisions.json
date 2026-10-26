@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-343",
+  "date": "Oct 26",
+  "title": "A release tag the git proxy keeps local is made again in the app workflow's runner",
+  "why": "Cloud sessions can't push tags, and the app workflows build from origin, so a just-tagged release built as vX+1 there and its page files never matched ship's build. ship now passes the tag as the release input; the runner makes it at the same commit (refusing one already elsewhere) before building.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-342",
   "date": "Oct 26",
   "title": "A pipeline may keep separate staging words until its staging Mac task is re-created",
