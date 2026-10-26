@@ -4116,7 +4116,7 @@
   "depends": [
    "B-232"
   ],
-  "notes": "Ready for review at cf9113a (on B-232's review fixes b6a7bbe): seven weakspot rows in spec.actions (log tap+tool with fromHis, propose tap+worker, accept/join/snooze/decline/solid tap only), composed in core/actions.mjs, each tap on the spot's survivor; act() refuses a fromHis tool call whose from is not his talk line. Page: addWeakspot, the add_weakspot tool (from: pend.replyTo) and Mark solid go through act; legacy write list 32 -> 30. npm test 782 pass 0 fail 1 skipped; actions.test 19/19; smoke 28/28; run harness 388/388. Not shipped: needs its own review (data writes).",
+  "notes": "Review gaps fixed, ready for second review at 342a072: tool path always ACT.tool (no tap fallback; page-path test on the built core.js); join builds links from ctx.weakspots, refuses a missing spot, drops args.links, re-points spots joined to it (no chain); accept/snooze/decline/solid refuse a duplicate; log/propose refuse a set over an existing id; survivors and duplicateOf injected from E.V. core (makeActions second arg); double compose kept, as D-200's lint takes only run(ACT.tap|tool(...).writes); 12 KB actions cap kept, since rows can't share args without a validator change. npm test 785 pass 0 fail 1 skipped; actions.test 22/22; smoke 28/28; run harness 389/389.",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },
