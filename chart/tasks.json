@@ -7258,7 +7258,7 @@
    "B-401",
    "B-399"
   ],
-  "notes": "milestone: editor, block model, save path and tests pushed (10929dc, 762bc0b, 3b43fd1); npm test 725/725, smoke 28/28, notes harness 18/18, frame 111/111; full touched check running",
+  "notes": "ready for staging at 3b43fd1 (10929dc, 762bc0b, 3b43fd1). npm test 725/725; smoke 28/28; notes harness 18/18 (1280 and 390); touched check: shell, components, run GREEN; captions RED 3/199 from B-405's pop-up Close button (the same 3 fail at 6be3f50 without B-402); prep 250, core 142, greet 74, frame 111, look 239 run alone, all GREEN. Review: no subagent tool in this run, so a self-check of the save path, not a fresh review; it found 3 gaps, all fixed (762bc0b, 3b43fd1). A fresh review of the save path is still owed.",
   "commit": null,
   "source": "build manager, B-396 plan",
   "words": "Build the editor (B-396, D-325).",
