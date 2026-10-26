@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-337",
+  "date": "Oct 26",
+  "title": "After the Notes release: slow down and raise architecture, simplicity and upkeep before new features",
+  "why": "Matt, Oct 26: the goal is high, balanced scores across seven areas. Baseline Oct 26 (build manager's rating, 1-10): vision 8, data and operations 8, look and polish 7, study impact 5, architecture 6, simplicity and upkeep 4, cost per benefit 4. Order: (1) ship Notes with the cutover; (2) two weeks of use, fixes only; (3) an in-depth architecture probe at the latest version; (4) a consolidation release from it (one runtime after the cutover, the core split by domain, a shorter deploy, fewer multi-device edge cases); (5) every release card gains an upkeep section (lines, runtimes, deploy steps, check minutes, open edge cases) beside the look rubric, and none may get worse without a reason on the card; (6) the E.V. course, first lesson on the consolidation; (7) features resume once architecture and simplicity reach 7. The scores are re-rated on each release card; this decision is superseded when the plan changes.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-336",
   "date": "Oct 26",
   "title": "A weak spot's links are a page mark",
