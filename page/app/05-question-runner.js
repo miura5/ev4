@@ -800,7 +800,7 @@
       );
       if (fromThis.length) {
         const line = el('div', 'endline');
-        const ok = fromThis.filter(w => w.objective);
+        const ok = fromThis.filter(w => w.objective && S.objectives.some(o => o.id === w.objective)); // B-407 review
         const all = btn(
           'Accept all',
           ev =>

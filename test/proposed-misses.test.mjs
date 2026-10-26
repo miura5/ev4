@@ -4,7 +4,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import EV from '../core/evcore.mjs';
-import { at, key, ws, E4, assertValid } from './core-fixtures.mjs';
+import { at, key, ws, E4, assertValid, spec } from './core-fixtures.mjs';
+import { produce } from '../core/derive.mjs';
 
 const T0 = '2026-10-18T15:00:00.000Z';
 const plus = min => new Date(Date.parse(T0) + min * 60e3).toISOString();
@@ -61,7 +62,8 @@ test('B-407: a planted session miss is filed as proposed, in no review pick and 
   assert.equal(audit[0].notYet + audit[0].rightOnce + audit[0].solid + audit[0].preRead, 1);
   assert.deepEqual(ids(EV.toReview(models, '2026-10-19')), [spot.id], 'it waits in To review');
 
-  // the next session finding the same miss adds nothing while it waits, and nothing once he declined it
+  // the next session finding the same miss adds nothing while it waits, nor on the day he declined it; a day later a
+  // miss on a spot he declined proposes a fresh one, on a free id (B-407 review)
   const s2 = { ...session({ [plus(30)]: { type: 'end' } }), id: 'ss-20261018-153000-n9' };
   const again = EV.closeSession(s2, wrap, { weakspots: models, objectives, now: plus(31) });
   assert.equal(EV.closeFindings(again.writes).filter(w => w.collection === 'weakspots').length, 0);
@@ -70,7 +72,27 @@ test('B-407: a planted session miss is filed as proposed, in no review pick and 
     { ...docOf(spot), events: { [key(plus(25))]: { type: 'decline', by: 'owner', at: plus(25) } } },
   ]);
   const after = EV.closeSession(s2, wrap, { weakspots: declined, objectives, now: plus(31) });
-  assert.equal(EV.closeFindings(after.writes).filter(w => w.collection === 'weakspots').length, 0);
+  assert.equal(EV.closeFindings(after.writes).filter(w => w.collection === 'weakspots').length, 0, 'declined today');
+  const nextDay = new Date(Date.parse(T0) + 864e5).toISOString();
+  const s3 = { ...session({ [nextDay]: { type: 'end' } }), id: 'ss-20261019-150000-n9' };
+  const later = EV.closeFindings(EV.closeSession(s3, wrap, { weakspots: declined, objectives, now: nextDay }).writes);
+  const fresh = later.filter(w => w.collection === 'weakspots' && w.op === 'set');
+  assert.equal(fresh.length, 1, 'declined yesterday holds nothing');
+  assert.equal(fresh[0].data.proposed, true);
+  assert.notEqual(fresh[0].id, spot.id);
+  // a twin he joined as a duplicate takes the miss as a seen event on its survivor, as an exact repeat does
+  const joined = build([
+    counted,
+    {
+      ...docOf(spot),
+      links: [{ to: 'weakspots/ws-counted', type: 'duplicate-of', createdAt: plus(25), createdBy: 'owner' }],
+    },
+  ]);
+  const dup = EV.closeFindings(EV.closeSession(s2, wrap, { weakspots: joined, objectives, now: plus(31) }).writes);
+  assert.deepEqual(
+    dup.filter(w => w.collection === 'weakspots').map(w => [w.op, w.id, Object.values(w.data.events || {})[0]?.type]),
+    [['update', 'ws-counted', 'seen']]
+  );
 
   // his accept counts it from tomorrow
   const acc = build([
@@ -110,4 +132,60 @@ test('B-407: a missed quiz question writes one proposed spot; a second miss on i
   assert.equal(r2.writes.filter(w => w.collection === 'weakspots').length, 0, 'the spot is never replaced');
   assert.equal(r2.answer.weakspotId, made[0].id);
   assert.match(r2.outcome, /Already proposed/);
+  // declined today it still takes the miss; declined the day before, a miss proposes a fresh spot on a free id
+  const dec = d =>
+    build([counted, { ...docOf(made[0]), events: { [key(at(d))]: { type: 'decline', by: 'owner', at: at(d) } } }]);
+  const r3 = EV.planAnswer({
+    set,
+    item: { ...item, id: 'q3' },
+    chosen: [1],
+    now,
+    weakspots: dec('2026-10-18'),
+    exams: [E4],
+  });
+  assert.equal(r3.writes.filter(w => w.collection === 'weakspots').length, 0);
+  const r4 = EV.planAnswer({
+    set,
+    item: { ...item, id: 'q4' },
+    chosen: [1],
+    now: at('2026-10-19'),
+    weakspots: dec('2026-10-18'),
+    exams: [E4],
+  });
+  const fresh = r4.writes.filter(w => w.collection === 'weakspots');
+  assert.equal(fresh.length, 1);
+  assert.equal(fresh[0].data.proposed, true);
+});
+
+test('B-407 review: Join targets only a near-repeat: a concept, open or solid, same objective, at least 0.5 similar', () => {
+  const models = build([
+    counted, // 'counted' under E4-3: unrelated words
+    ws('ws-frank', { objective: 'E4-3', topic: 'Frank-Starling law' }),
+    ws('ws-frank-other', { objective: 'E4-2', topic: 'Frank-Starling curve' }),
+  ]);
+  const spot = { id: 'ws-new', objective: 'E4-3', topic: 'Frank-Starling curve' };
+  assert.equal(EV.joinTarget(models, spot).id, 'ws-frank');
+  assert.equal(EV.joinTarget(models, { ...spot, topic: 'Afterload and vasoconstriction' }), null, 'unrelated: off');
+});
+
+test('B-407 review: the weekly counts a proposal among new weak spots only once he accepted it by the week’s end', () => {
+  const inWeek = '2026-10-15T15:00:00.000Z';
+  const doc = (id, extra) => ({ ...ws(id, { objective: 'E4-3', topic: id }), addedAt: inWeek, at: inWeek, ...extra });
+  const db = {
+    weakspots: [
+      doc('ws-his'),
+      doc('ws-waits', { proposed: true }),
+      doc('ws-took', {
+        proposed: true,
+        events: { [key(at('2026-10-16'))]: { type: 'accept', by: 'owner', objective: 'E4-3', at: at('2026-10-16') } },
+      }),
+      doc('ws-late', {
+        proposed: true,
+        events: { [key(at('2026-10-20'))]: { type: 'accept', by: 'owner', objective: 'E4-3', at: at('2026-10-20') } },
+      }),
+    ],
+    exams: [E4],
+  };
+  const week = produce(db, spec, 'weeks', { date: '2026-10-18', now: '2026-10-18T22:57:00Z' }, { source: 'test' });
+  assert.deepEqual(week.rollups.newWeakSpots, ['ws-his', 'ws-took']);
 });

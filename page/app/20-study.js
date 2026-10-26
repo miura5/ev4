@@ -853,9 +853,12 @@
       }
       return row;
     }
-    /** B-407: one To review row. Accept counts it under its objective from tomorrow; Join links it to an open spot
-     *  under the same objective (off when there is none); Not now hides it until tomorrow; Decline keeps it, uncounted. */
-    function reviewRow(w, open) {
+    /** B-407: one To review row. Accept counts it under its objective from tomorrow (off unless that objective is in the
+     *  record); Join links it to the spot it nearly repeats (E.joinTarget: a concept, open or solid, same objective, at
+     *  least 0.5 similar; off when none, the target named in its title); Not now hides it until tomorrow; Decline keeps
+     *  it, uncounted. */
+    const objKnown = w => !!w.objective && S.objectives.some(o => o.id === w.objective);
+    function reviewRow(w) {
       const row = el('div', 'trow');
       row.dataset.id = w.id;
       const obj = objText(w.objective);
@@ -864,7 +867,7 @@
         el('span', 'wn', w.topic || 'Untitled'),
         el('span', 'mini', [obj ? 'Under “' + obj + '”' : 'No objective yet', w.source].filter(Boolean).join(' · '))
       );
-      const to = open.find(x => x.id !== w.id && x.objective && x.objective === w.objective);
+      const to = E.joinTarget(M.models, w);
       const name = w.topic || 'this weak spot';
       const tap = (label, aria, fn, cls = 'btn ghost sm') => {
         const b = btn(label, ev => guard(ev.currentTarget, fn), { cls });
@@ -877,15 +880,16 @@
         () => weakAct('weakspot-accept', { items: [{ id: w.id, objective: w.objective }] }),
         'btn neutral sm'
       );
-      acc.disabled = !w.objective; // its objective is changed in B-235's surface; with none there is nothing to count under
+      acc.disabled = !objKnown(w); // its objective is changed in B-235's surface; with none there is nothing to count under
       const join = tap(
         'Join',
         to
           ? 'Join to “' + (to.topic || to.id) + '” (it’s a duplicate)'
-          : 'Join: no open weak spot under this objective',
+          : 'Join: no weak spot under this objective repeats it',
         () => weakAct('weakspot-join', { id: w.id, to: to.id }) // B-233 review: join reads the spot's links itself
       );
       join.disabled = !to;
+      join.title = to ? 'Join to “' + (to.topic || to.id) + '”' : 'Nothing under this objective repeats it';
       const acts = el('div', 'acts');
       acts.append(
         acc,
@@ -913,7 +917,7 @@
       const prop = reviewInCourse(course);
       if (prop.length) {
         out.push(el('div', 'dayh', 'To review · ' + prop.length));
-        for (const w of prop) out.push(reviewRow(w, active));
+        for (const w of prop) out.push(reviewRow(w));
       }
       if (active.length) {
         out.push(el('div', 'dayh', 'Open · ' + active.length + (course ? ' in ' + course : '')));
@@ -930,7 +934,7 @@
       for (const t of [
         'Accept: it counts under her objective',
         'Join: a duplicate of an open one',
-        'Not now: back at your next session',
+        'Not now: back tomorrow',
         'Decline: kept, never counted',
       ]) {
         const r = el('div', 'od-ws');

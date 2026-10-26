@@ -24,7 +24,7 @@ export function makeSessions(core) {
     slug,
     toMs,
     openItemErrors,
-    untriaged,
+    survivors,
   } = core;
 
   // ---------------------------------------------------------------- session findings
@@ -46,6 +46,49 @@ export function makeSessions(core) {
     let id = base;
     for (let k = 2; set.has(id); k++) id = base + '-' + k;
     return (set.add(id), id);
+  }
+  /**
+   * B-407 review: the twin (a concept under the same objective, in the same words) that takes a new miss of hers instead
+   * of a new proposal: one proposed, snoozed or joined as a duplicate, or one he declined on the miss's own day. A spot
+   * he declined on an earlier day holds nothing, so a later miss proposes a fresh spot (on a free id).
+   */
+  function heldTwin(models, objective, topic, date) {
+    const declinedOn = x =>
+      Object.entries(x.events || {}).some(
+        ([k, e]) => e && e.type === 'decline' && chicagoDate(entryTime(k, e)) === date
+      );
+    return (
+      (models || []).find(
+        x =>
+          x &&
+          (x.kind || 'concept') === 'concept' &&
+          (x.objective || '') === (objective || '') &&
+          norm(x.topic) === norm(topic) &&
+          x.derived &&
+          (['proposed', 'snoozed', 'duplicate'].includes(x.derived.status) ||
+            (x.derived.status === 'declined' && declinedOn(x)))
+      ) || null
+    );
+  }
+  /**
+   * B-407 review: the spot a near-repeat would join, as a session's near-repeat question picks it: a concept, open or
+   * solid (never one waiting for triage, a duplicate or a parked one), under the same objective, at least 0.5 similar,
+   * the most similar first; else null.
+   */
+  function joinTarget(models, { id, objective, topic }) {
+    return (
+      (models || [])
+        .filter(
+          x =>
+            x &&
+            x.id !== id &&
+            (x.kind || 'concept') === 'concept' &&
+            (isActive(x) || isSolid(x)) &&
+            x.objective === objective &&
+            similarity(x.topic, topic) >= 0.5
+        )
+        .sort((a, b) => similarity(b.topic, topic) - similarity(a.topic, topic))[0] || null
+    );
   }
   const idSet = list => new Set([...(list || [])].map(x => (x && typeof x === 'object' ? x.id : x)));
   /**
@@ -106,17 +149,7 @@ export function makeSessions(core) {
       }
       const same = weakspots.find(x => isActive(x) && x.objective === w.objective && norm(x.topic) === norm(topic));
       const key = `ws${i}`;
-      const near =
-        !same &&
-        weakspots
-          .filter(
-            x =>
-              (x.kind || 'concept') === 'concept' &&
-              (isActive(x) || isSolid(x)) && // B-232: never a spot waiting for triage, a duplicate or a parked one
-              x.objective === w.objective &&
-              similarity(x.topic, topic) >= 0.5
-          )
-          .sort((a, b) => similarity(b.topic, topic) - similarity(a.topic, topic))[0];
+      const near = !same && joinTarget(weakspots, { objective: w.objective, topic });
       const decision = decisions[key];
       if (same || (near && decision === 'same')) {
         writes.push({
@@ -134,17 +167,20 @@ export function makeSessions(core) {
           ask: 'same or different?',
         });
       } else {
-        // B-407 (D-237): a finding whose twin already waits for his triage (or he declined, snoozed or joined it) adds
-        // nothing; a new one lands on a free id (B-232) and waits as proposed
-        const held = weakspots.find(
-          x =>
-            x &&
-            (x.kind || 'concept') === 'concept' &&
-            untriaged(x) &&
-            x.objective === w.objective &&
-            norm(x.topic) === norm(topic)
-        );
-        if (held) return;
+        // B-407 (D-237): a finding whose twin waits for his triage (heldTwin) adds no proposal; a twin joined as a
+        // duplicate is seen again on its survivor, as an exact repeat is. A new one lands on a free id (B-232).
+        const held = heldTwin(weakspots, w.objective, topic, date);
+        if (held) {
+          const to = held.derived.status === 'duplicate' ? survivors(weakspots)(held.id) : held.id;
+          if (to !== held.id)
+            writes.push({
+              op: 'update',
+              collection: 'weakspots',
+              id: to,
+              data: { events: { [eventKey(writer, at)]: { type: 'seen', by, note: label, at } } },
+            });
+          return;
+        }
         writes.push({
           op: 'set',
           collection: 'weakspots',
@@ -1015,6 +1051,8 @@ export function makeSessions(core) {
     filingOf,
     endingOf,
     freeWeakspotId,
+    heldTwin,
+    joinTarget,
     closeFindings,
     closeUpdate,
     switchedUnfiled,

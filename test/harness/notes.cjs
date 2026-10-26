@@ -13,6 +13,7 @@
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
+const { openSet } = require('./paint.cjs');
 const root = path.resolve(__dirname, '../..');
 const args = process.argv.slice(2);
 const dbDir = require('../data/synthetic.cjs').recordDir(args[0] || 'synthetic');
@@ -1353,6 +1354,31 @@ const openNoteId = page =>
       text: 'Review · 3 weak spots (~10 min)',
       minutes: 10,
     });
+    // a two-question practice set under two objectives in the record, both to be missed (made-up items)
+    const QSET = 'more-' + day + '-b407';
+    db.sets[QSET] = {
+      schema: 2,
+      writer: 'page',
+      at: new Date(Date.now() - 864e5).toISOString(),
+      source: 'More practice',
+      kind: 'more',
+      date: day,
+      exam: 'E4',
+      title: 'Harness misses',
+      createdAt: new Date(Date.now() - 864e5).toISOString(),
+      items: [1, 2].map(n => ({
+        id: 'm' + n,
+        kind: 'check',
+        objective: n === 1 ? 'E4-2' : 'E4-5',
+        topic: 'Harness miss ' + n,
+        type: 'single',
+        cjStep: 'recognize-cues',
+        stem: `Harness question ${n}: which is right?`,
+        options: ['Right ' + n, 'Not it ' + n, 'Other ' + n, 'Last ' + n],
+        correct: [0],
+        rationales: ['Right.', 'No.', 'No.', 'No.'],
+      })),
+    };
     const { page, errors } = await open(browser, { width: 1280, height: 860 }, db);
     const tag = '[1280 B-407]';
     const TOPIC = 'Frank-Starling curve';
@@ -1502,6 +1528,19 @@ const openNoteId = page =>
         wk.btns[0][1] === false,
       JSON.stringify(wk)
     );
+    // B-407 review: Join is off when no spot nearly repeats it, though open spots unrelated to it share its objective
+    const unrelated = await page.evaluate(
+      id =>
+        Object.values(window.__db.weakspots).filter(
+          w => w.objective === 'E4-3' && w.kind === 'concept' && !w.proposed && w.topic && !/Frank/.test(w.topic)
+        ).length,
+      sp.id
+    );
+    ok(
+      `${tag} Join is off for a spot nothing nearly repeats, though ${unrelated} unrelated spots share its objective`,
+      unrelated > 0 && wk.btns[1][1] === true,
+      JSON.stringify(wk.btns)
+    );
     await page.screenshot({ path: path.join(shots, 'b407-to-review-1280.png') });
     const openBefore = await page.evaluate(() => document.getElementById('study-qweak').textContent);
     const accBtn = `#weak-list .trow[data-id="${sp.id}"] button:has-text("Accept")`;
@@ -1527,6 +1566,69 @@ const openNoteId = page =>
       `${tag} Accept writes his accept event with its objective; To review is gone and the spot is open`,
       accepted && !after.heads.some(h => /To review/.test(h)) && after.open,
       JSON.stringify({ accepted, after, openBefore })
+    );
+    // B-407 review: a quiz that ends with two misses names both as proposed, and Accept all makes both open and in
+    // tomorrow's picks
+    await openSet(page, QSET);
+    await page.waitForTimeout(300);
+    for (const n of [1, 2]) {
+      await page.locator('#pr-body label.opt', { hasText: 'Not it ' + n }).click();
+      await page.waitForTimeout(200);
+      const next = page.locator('#pr-body button', { hasText: n === 1 ? 'Next question' : 'See results' }).first();
+      if (await next.isVisible().catch(() => false)) await next.click();
+      await page.waitForTimeout(200);
+    }
+    const qMade = await page.evaluate(() =>
+      Object.entries(window.__db.weakspots)
+        .filter(([, w]) => /^Harness miss /.test(w.topic || ''))
+        .map(([id, w]) => ({ id, proposed: !!w.proposed }))
+    );
+    const endLine = await page.evaluate(() => (document.querySelector('#pr-body .endline') || {}).textContent || '');
+    ok(
+      `${tag} a quiz ending with two misses proposes both and its results say so, with Accept all and Review`,
+      qMade.length === 2 &&
+        qMade.every(w => w.proposed) &&
+        /^2 misses are proposed as weak spots\.Accept allReview$/.test(endLine),
+      JSON.stringify({ qMade, endLine })
+    );
+    await page.screenshot({ path: path.join(shots, 'b407-quiz-results-1280.png') });
+    await page.locator('#pr-body .endline button', { hasText: 'Accept all' }).click();
+    await until(
+      page,
+      ids =>
+        ids.every(id =>
+          Object.values(window.__db.weakspots[id].events || {}).some(e => e.type === 'accept' && e.by === 'owner')
+        ),
+      qMade.map(w => w.id),
+      4000
+    );
+    const picks = await page.evaluate(
+      ids => {
+        const C = window.EVCore,
+          L = c => Object.entries(window.__db[c] || {}).map(([id, d]) => ({ id, ...d }));
+        const tomorrow = C.addDays(C.chicagoDate(new Date()), 1);
+        const exams = L('exams');
+        const models = C.buildWeakspots({ weakspots: L('weakspots'), sets: L('sets'), answers: L('answers'), exams });
+        const pick = ws =>
+          C.pickReviews({ date: tomorrow, dayType: 'off', exams, weakspots: ws, objectives: L('objectives') });
+        // the record's own pick (its older due spots fill the day's load first, so the new ones may wait as deferred),
+        // and the same pick with only these two open: both picked
+        const r = pick(models),
+          own = pick(models.filter(w => ids.includes(w.id) || !C.isActive(w)));
+        const has = (xs, id) => xs.some(w => (w.id || w) === id);
+        return ids.map(id => ({
+          id,
+          status: models.find(w => w.id === id).derived.status,
+          ranked: has(r.picked, id) || has(r.deferred, id),
+          picked: has(own.picked, id),
+        }));
+      },
+      qMade.map(w => w.id)
+    );
+    ok(
+      `${tag} Accept all makes both open and in tomorrow's picks (ranked in the record's, picked when the load allows)`,
+      picks.length === 2 && picks.every(x => x.status === 'open' && x.ranked && x.picked),
+      JSON.stringify(picks)
     );
     ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
     await page.context().close();

@@ -885,7 +885,7 @@ const EVCore = (() => {
       const same = w => (w.objective || '') === (q.objective || '') && norm(w.topic) === norm(topic);
       const twin = models.find(w => isActive(w) && same(w));
       // B-407 (D-237): a twin waiting for his triage (or set aside) takes the miss; a new spot gets a free id (B-232)
-      const held = !twin && models.find(w => (w.kind || 'concept') === 'concept' && untriaged(w) && same(w));
+      const held = !twin && SESSIONS.heldTwin(models, q.objective, topic, date);
       if (twin || held) {
         answer.weakspotId = weakspotId = (twin || held).id;
         if (twin) [answer.matched, state] = [true, recompute(twin, { matched: true })];
@@ -2315,7 +2315,7 @@ const EVCore = (() => {
     slug,
     toMs,
     openItemErrors,
-    untriaged,
+    survivors,
   });
 
   // ---------------------------------------------------------------- skills practice (Features: "Skills practice mode"); workouts (D-108) · core/skills.mjs (B-158)
