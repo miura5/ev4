@@ -4113,11 +4113,11 @@
   "title": "Triage rows in the actions table (D-235, D-242): weakspot-log, weakspot-propose, weakspot-accept, weakspot-join, weakspot-snooze and weakspot-decline as this doc's section 6 gives them; the page writes weak spots through act(); weakspot-log's tool caller is checked against his talk line",
   "dod": "test/actions.test.mjs: each row validates; act() refuses an accept, join, snooze or decline from tool, worker or builder, and a weakspot-log tool call whose from names her line; the legacy write list shrinks by the weak-spot sites; npm test green; ship staging green; live only with B-238",
   "milestone": "v4.6 triage",
-  "status": "blocked",
+  "status": "open",
   "depends": [
    "B-232"
   ],
-  "notes": "parked for the freeze week",
+  "notes": "Unparked by D-334 (Matt's choice, Oct 26): built with Notes for B-407.",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z",
   "waitingOn": "Matt"
