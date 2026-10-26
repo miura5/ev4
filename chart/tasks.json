@@ -7677,10 +7677,10 @@
  {
   "id": "B-420",
   "kind": "request",
-  "title": "Request (reported Oct 26): Tidy the D-343 release-tag step: one tested script instead of three copies in the app workflows, drop it from the live gate job, check the whole input value, and pin both the step order and the hooks guard's acceptance of the release input in tests.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "title": "Tidy the D-343 release-tag step",
+  "dod": "One tested script holds the runner's release-tag step, the live gate job has none, the whole input is checked, and tests pin the step before every build and the hooks guard accepting -f release=",
+  "milestone": "after Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -7689,6 +7689,10 @@
   "reportedAt": "2026-10-26T17:41:22.712Z",
   "board": {
    "row": "v4 B-420: Tidy the D-343 release-tag step: one tested script instead of three…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-26T17:41:27.976Z"
   }
  }
 ]
