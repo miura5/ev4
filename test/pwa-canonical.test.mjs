@@ -40,9 +40,9 @@ async function serve() {
 
 // What a page (or anything on the page path) might send: the same data in texts that differ from the canonical one.
 const PAGE_SAVES = [
-  ['notes', 'pretty', '{\n  "title": "Cardiac output",\n  "tags": [ "BIO 201", "exam 2" ],\n  "done": false\n}'],
-  ['notes', 'escaped', '{"text":"caf\\u00e9 \\u2014 \\/ok","n":1.0,"big":1e2,"neg":-0.50}'],
-  ['notes', 'int keys', '{"b":1,"a":{"10":"x","2":"y","z":null},"1":true}'],
+  ['scratch', 'pretty', '{\n  "title": "Cardiac output",\n  "tags": [ "BIO 201", "exam 2" ],\n  "done": false\n}'],
+  ['scratch', 'escaped', '{"text":"caf\\u00e9 \\u2014 \\/ok","n":1.0,"big":1e2,"neg":-0.50}'],
+  ['scratch', 'int keys', '{"b":1,"a":{"10":"x","2":"y","z":null},"1":true}'],
   ['days', '2026-10-26', '{ "schema" : 2 , "items" : [ { "id" : "i1" , "done" : true } ] }\n'],
   ['libindex', 'NUR 112', '\t{"files":[],"at":"2026-10-26T12:00:00Z"}  '],
 ];
@@ -58,7 +58,7 @@ test('B-398: canonicalJson keeps the data and gives the text a read gives back',
   assert.match(canonicalJson('{"a": 1e400}').error, /too large/);
   assert.equal(finiteJson({ a: [1, { b: 2.5 }], c: 'Infinity' }), true);
   assert.equal(finiteJson({ a: [1, { b: Infinity }] }), false);
-  const wall = checkWrites([{ op: 'set', collection: 'notes', doc_id: 'x', data: { a: -Infinity } }]);
+  const wall = checkWrites([{ op: 'set', collection: 'scratch', doc_id: 'x', data: { a: -Infinity } }]);
   assert.equal(wall.status, 400);
   assert.match(wall.error, /too large/);
 });
@@ -73,7 +73,7 @@ test("B-398: non-canonical page saves leave the Mac backup's manifest equal to e
     // a later page save of one of them, at the version it read, in yet another spacing
     const again = await w.call(
       'PUT',
-      '/api/db/notes/pretty?if_version=1',
+      '/api/db/scratch/pretty?if_version=1',
       '{ "done" : true,\n "title" : "Cardiac output" }'
     );
     assert.equal(again.status, 200, JSON.stringify(again.body));
@@ -81,15 +81,15 @@ test("B-398: non-canonical page saves leave the Mac backup's manifest equal to e
     const b = await w.call(
       'POST',
       '/api/run/batch',
-      JSON.stringify({ writes: [{ op: 'set', collection: 'notes', doc_id: 'run', data: { z: 1, a: [2, 3] } }] })
+      JSON.stringify({ writes: [{ op: 'set', collection: 'scratch', doc_id: 'run', data: { z: 1, a: [2, 3] } }] })
     );
     assert.equal(b.status, 200, JSON.stringify(b.body));
 
     // Stored canonical, and the data as sent.
     const rows = await w.rows();
     const want = new Map(PAGE_SAVES.map(([c, id, text]) => [c + '\n' + id, JSON.parse(text)]));
-    want.set('notes\npretty', { done: true, title: 'Cardiac output' });
-    want.set('notes\nrun', { z: 1, a: [2, 3] });
+    want.set('scratch\npretty', { done: true, title: 'Cardiac output' });
+    want.set('scratch\nrun', { z: 1, a: [2, 3] });
     assert.equal(rows.length, want.size);
     for (const r of rows) {
       assert.equal(r.data, JSON.stringify(JSON.parse(r.data)), `${r.c}/${r.id} is stored canonical`);
@@ -104,7 +104,7 @@ test("B-398: non-canonical page saves leave the Mac backup's manifest equal to e
     const exp = await w.call('POST', '/api/backup/export');
     assert.equal(exp.status, 200, JSON.stringify(exp.body));
     assert.deepEqual(mac.collections, exp.body.collections, "the Mac backup's manifest is exportToR2's");
-    assert.deepEqual(Object.keys(exp.body.collections), ['days', 'libindex', 'notes']);
+    assert.deepEqual(Object.keys(exp.body.collections), ['days', 'libindex', 'scratch']);
 
     // The proof can fail: the texts as sent (what D1 held before B-398) hash differently from the Mac backup.
     const asSent = PAGE_SAVES.map(([c, id, data]) => ({ c, id, data }));
@@ -118,13 +118,13 @@ test("B-398: non-canonical page saves leave the Mac backup's manifest equal to e
 test('B-398: a page save holding a number JSON cannot hold is refused, and nothing is written', async () => {
   const w = await serve();
   try {
-    const r = await w.call('PUT', '/api/db/notes/huge', '{"n": 1e400}');
+    const r = await w.call('PUT', '/api/db/scratch/huge', '{"n": 1e400}');
     assert.equal(r.status, 400);
     assert.match(r.body.error, /too large/);
     const b = await w.call(
       'POST',
       '/api/run/batch',
-      '{"writes":[{"op":"set","collection":"notes","doc_id":"huge","data":{"n":-1e999}}]}'
+      '{"writes":[{"op":"set","collection":"scratch","doc_id":"huge","data":{"n":-1e999}}]}'
     );
     assert.equal(b.status, 400);
     assert.deepEqual(await w.rows(), []);

@@ -115,6 +115,15 @@ export function makeMirror(core) {
   // Text is escaped: a character Markdown or HTML would read as markup is written with a backslash, so a note never
   // becomes markup it did not ask for. Underline has no Markdown form and is written as plain text.
   const mdEscape = s => String(s == null ? '' : s).replace(/([\\`*_~[\]<>#|])/g, '\\$1');
+  // B-401: what a block's text opens with is escaped too, so it never starts a block of its own: indentation is
+  // trimmed (four spaces would make a code block), and a leading - + or = (a list, a rule, a setext underline), digits
+  // then . or ) (a numbered list) and > (a quote) are written with a backslash. A * or > of his own text is already
+  // escaped above; a leading * left here is his italic or bold mark, which never reads as a list (no space follows).
+  const blockStart = s =>
+    String(s)
+      .replace(/^\s+/, '')
+      .replace(/^([-+=>])/, '\\$1')
+      .replace(/^(\d+)([.)])/, '$1\\$2');
   function runsMarkdown(runs) {
     return (runs || [])
       .map(r => {
@@ -136,11 +145,11 @@ export function makeMirror(core) {
     const out = [];
     // his title heads the file unless the body opens with its own first heading
     const title = String(n.title || '').trim();
-    if (title && !(n.blocks || []).some(b => b.type === 'h1')) out.push(`# ${mdEscape(title)}`, '');
+    if (title && !(n.blocks || []).some(b => b.type === 'h1')) out.push(`# ${blockStart(mdEscape(title))}`, '');
     let num = 0;
     let prev = null;
     for (const b of n.blocks || []) {
-      const text = runsMarkdown(b.runs);
+      const text = blockStart(runsMarkdown(b.runs));
       const pad = '  '.repeat(Math.max(0, Math.min(6, b.indent || 0)));
       const list = b.type === 'ul' || b.type === 'ol' || b.type === 'todo';
       // a blank line between blocks, but not between items of one list

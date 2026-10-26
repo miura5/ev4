@@ -21,12 +21,12 @@ import { recordDiffs } from '../tools/pwa-staging.mjs';
 import { seedRecord } from '../pwa/seed.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const w = (doc_id, extra = {}) => ({ op: 'set', collection: 'notes', doc_id, data: { a: 1 }, ...extra });
-const cur = entries => new Map(entries.map(([id, v, data = {}]) => ['notes\n' + id, { v, data }]));
+const w = (doc_id, extra = {}) => ({ op: 'set', collection: 'scratch', doc_id, data: { a: 1 }, ...extra });
+const cur = entries => new Map(entries.map(([id, v, data = {}]) => ['scratch\n' + id, { v, data }]));
 
 test('B-312: a batch is refused whole for a delete, a bad op, a document twice or over 50 writes', () => {
   assert.equal(checkWrites([w('a'), w('b')]), null);
-  const del = checkWrites([w('a'), { op: 'delete', collection: 'notes', doc_id: 'b' }]);
+  const del = checkWrites([w('a'), { op: 'delete', collection: 'scratch', doc_id: 'b' }]);
   assert.equal(del.status, 403);
   assert.equal(del.entry, 1);
   assert.equal(checkWrites([{ ...w('a'), op: 'merge' }]).status, 400);
@@ -41,7 +41,9 @@ test('B-312: a batch is refused whole for a delete, a bad op, a document twice o
 });
 
 test('B-312: collection paths and ids as ArtifactData takes them', () => {
-  assert.ok(validCollection('notes') && validCollection('data/users/me/decks/cards'.split('/').slice(0, 3).join('/')));
+  assert.ok(
+    validCollection('scratch') && validCollection('data/users/me/decks/cards'.split('/').slice(0, 3).join('/'))
+  );
   assert.ok(!validCollection('data/users'), 'an even number of segments is a document');
   assert.ok(!validCollection('../x') && !validCollection('') && !validCollection('a\u0000b'));
   assert.ok(validCollection('a b'), 'B-319: a space is a character a claude.ai id may hold');
@@ -76,10 +78,10 @@ test('B-312: update merges objects deeply, replaces arrays, removes __delete__ f
     a: { b: 1, c: 3 },
     l: [9],
   });
-  const p = planBatch([{ op: 'update', collection: 'notes', doc_id: 'n', data: { a: { b: 1 } } }], cur([]));
-  assert.deepEqual(p.rows[0], { c: 'notes', id: 'n', data: { a: { b: 1 } }, from: null, v: 1 });
+  const p = planBatch([{ op: 'update', collection: 'scratch', doc_id: 'n', data: { a: { b: 1 } } }], cur([]));
+  assert.deepEqual(p.rows[0], { c: 'scratch', id: 'n', data: { a: { b: 1 } }, from: null, v: 1 });
   const q = planBatch(
-    [{ op: 'update', collection: 'notes', doc_id: 'n', if_version: 1, data: { y: 2 } }],
+    [{ op: 'update', collection: 'scratch', doc_id: 'n', if_version: 1, data: { y: 2 } }],
     cur([['n', 1, { x: 1 }]])
   );
   assert.deepEqual(q.rows[0].data, { x: 1, y: 2 });

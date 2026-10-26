@@ -44,6 +44,18 @@
       if (READ_ONLY) throw new Error(READ_ONLY_TEXT);
       if (WORK.collect && !['talk', 'jobs'].includes(w.collection)) WORK.collect.add(w.collection + '/' + w.id);
       const ref = db.collection(w.collection).doc(w.id);
+      // B-401 (D-325): a note is judged on the whole document a write leaves, set or update: the schema, the size cap
+      // and its write-once createdAt and earlierOf (core/validate.mjs noteProblem, which the Worker asks too).
+      if (w.collection === 'notes') {
+        const V = window.EVValidate;
+        if (!validate || !V || !V.noteProblem) throw new Error('notes/' + w.id + ': no validator to check the note');
+        const snap = await ref.get();
+        const prev = snap && snap.exists ? snap.data() : null;
+        if (w.op === 'update' && !prev) throw new Error('notes/' + w.id + ' does not exist to update');
+        const doc = w.op === 'update' ? V.mergeUpdate(prev, w.data) : w.data;
+        const bad = V.noteProblem(validate, w.id, doc, prev, (EV_SPEC.capacity || {}).documentBytes);
+        if (bad) throw new Error(bad);
+      }
       if (validate && w.op === 'set') {
         const r = validate(w.collection, w.data, { id: w.id });
         if (!r.ok)

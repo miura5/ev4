@@ -47,66 +47,66 @@ const row = (env, c, id) => {
 
 test('B-389: a create with no version still works, at version 1', async () => {
   const env = envOf();
-  const r = await put(env, 'notes', 'n1', { a: 1 });
+  const r = await put(env, 'scratch', 'n1', { a: 1 });
   assert.equal(r.status, 200, JSON.stringify(r.body));
   assert.equal(r.body.ok, true);
   assert.equal(r.body.version, 1);
-  assert.deepEqual(JSON.parse(row(env, 'notes', 'n1').data), { a: 1 });
+  assert.deepEqual(JSON.parse(row(env, 'scratch', 'n1').data), { a: 1 });
 });
 
 test('B-389: a fresh save (the version it read) is accepted, one version more', async () => {
   const env = envOf();
-  await put(env, 'notes', 'n1', { a: 1 });
-  const r = await put(env, 'notes', 'n1', { a: 2 }, 1);
+  await put(env, 'scratch', 'n1', { a: 1 });
+  const r = await put(env, 'scratch', 'n1', { a: 2 }, 1);
   assert.equal(r.status, 200, JSON.stringify(r.body));
   assert.equal(r.body.version, 2);
-  const again = await put(env, 'notes', 'n1', { a: 3 }, 2);
+  const again = await put(env, 'scratch', 'n1', { a: 3 }, 2);
   assert.equal(again.body.version, 3);
-  assert.deepEqual(row(env, 'notes', 'n1'), { data: '{"a":3}', v: 3 });
+  assert.deepEqual(row(env, 'scratch', 'n1'), { data: '{"a":3}', v: 3 });
   // the page's read carries each document's version, which its next save sends
   const read = await call(env, 'GET', '/api/db?since=0');
   assert.deepEqual(
     read.body.docs.map(d => [d.c, d.id, d.v, d.data]),
-    [['notes', 'n1', 3, { a: 3 }]]
+    [['scratch', 'n1', 3, { a: 3 }]]
   );
 });
 
 test('B-389: a stale save is refused with 409 and the current version, and writes nothing', async () => {
   const env = envOf();
-  await put(env, 'notes', 'n1', { a: 1 });
-  await put(env, 'notes', 'n1', { a: 2, other: 'device' }, 1); // another device saved since: now version 2
-  const r = await put(env, 'notes', 'n1', { a: 'stale' }, 1);
+  await put(env, 'scratch', 'n1', { a: 1 });
+  await put(env, 'scratch', 'n1', { a: 2, other: 'device' }, 1); // another device saved since: now version 2
+  const r = await put(env, 'scratch', 'n1', { a: 'stale' }, 1);
   assert.equal(r.status, 409);
   assert.equal(r.body.current_version, 2);
   assert.equal(r.body.if_version, 1);
-  assert.deepEqual([r.body.collection, r.body.doc_id], ['notes', 'n1']);
+  assert.deepEqual([r.body.collection, r.body.doc_id], ['scratch', 'n1']);
   assert.match(r.body.error, /nothing was written/);
-  assert.deepEqual(row(env, 'notes', 'n1'), { data: '{"a":2,"other":"device"}', v: 2 }, 'unchanged');
+  assert.deepEqual(row(env, 'scratch', 'n1'), { data: '{"a":2,"other":"device"}', v: 2 }, 'unchanged');
 });
 
 test('B-389: a save with no version to a document that exists, or one pinned to a missing document, is refused', async () => {
   const env = envOf();
-  await put(env, 'notes', 'n1', { a: 1 });
-  const bare = await put(env, 'notes', 'n1', { a: 'blind' });
+  await put(env, 'scratch', 'n1', { a: 1 });
+  const bare = await put(env, 'scratch', 'n1', { a: 'blind' });
   assert.equal(bare.status, 409, 'a create over a document that exists is a conflict, as in the run API');
   assert.equal(bare.body.current_version, 1);
-  assert.deepEqual(row(env, 'notes', 'n1'), { data: '{"a":1}', v: 1 });
-  const ghost = await put(env, 'notes', 'n2', { a: 1 }, 3);
+  assert.deepEqual(row(env, 'scratch', 'n1'), { data: '{"a":1}', v: 1 });
+  const ghost = await put(env, 'scratch', 'n2', { a: 1 }, 3);
   assert.equal(ghost.status, 409);
   assert.equal(ghost.body.current_version, null);
-  assert.equal(row(env, 'notes', 'n2'), undefined, 'not created');
+  assert.equal(row(env, 'scratch', 'n2'), undefined, 'not created');
 });
 
 test('B-389: a bad version or a body that is not JSON is refused with 400; a run pinned to the old version after a page save is refused', async () => {
   const env = envOf();
   for (const v of ['0', '-1', '1.5', 'x', '01'])
-    assert.equal((await put(env, 'notes', 'n1', { a: 1 }, v)).status, 400, v);
-  assert.equal((await call(env, 'PUT', '/api/db/notes/n1', '{not json')).status, 400);
-  assert.equal(row(env, 'notes', 'n1'), undefined);
-  await put(env, 'notes', 'n1', { a: 1 });
-  await put(env, 'notes', 'n1', { a: 2 }, 1);
+    assert.equal((await put(env, 'scratch', 'n1', { a: 1 }, v)).status, 400, v);
+  assert.equal((await call(env, 'PUT', '/api/db/scratch/n1', '{not json')).status, 400);
+  assert.equal(row(env, 'scratch', 'n1'), undefined);
+  await put(env, 'scratch', 'n1', { a: 1 });
+  await put(env, 'scratch', 'n1', { a: 2 }, 1);
   const r = await call(env, 'POST', '/api/run/batch', {
-    writes: [{ op: 'update', collection: 'notes', doc_id: 'n1', if_version: 1, data: { run: true } }],
+    writes: [{ op: 'update', collection: 'scratch', doc_id: 'n1', if_version: 1, data: { run: true } }],
   });
   assert.equal(r.status, 409);
   assert.equal(r.body.current_version, 2);
@@ -246,21 +246,21 @@ const stored = (env, c, id) => {
 
 test('B-389 (shim): two quick saves of one document go one at a time, each merged at its turn', async () => {
   const env = envOf();
-  await put(env, 'notes', 'n1', { a: 1 });
+  await put(env, 'scratch', 'n1', { a: 1 });
   const s = await shim(env);
-  const ref = s.db.collection('notes').doc('n1');
+  const ref = s.db.collection('scratch').doc('n1');
   await Promise.all([ref.update({ b: 1 }), ref.update({ c: 1 }), ref.update({ b: 2 })]);
-  assert.deepEqual(stored(env, 'notes', 'n1'), { v: 4, data: { a: 1, b: 2, c: 1 } });
+  assert.deepEqual(stored(env, 'scratch', 'n1'), { v: 4, data: { a: 1, b: 2, c: 1 } });
   assert.deepEqual(
     s.puts.map(p => [p.route, p.status, p.together]),
     [
-      ['/api/db/notes/n1?if_version=1', 200, 1],
-      ['/api/db/notes/n1?if_version=2', 200, 1],
-      ['/api/db/notes/n1?if_version=3', 200, 1],
+      ['/api/db/scratch/n1?if_version=1', 200, 1],
+      ['/api/db/scratch/n1?if_version=2', 200, 1],
+      ['/api/db/scratch/n1?if_version=3', 200, 1],
     ],
     'each save waits for the one before, and carries the version it made'
   );
-  assert.deepEqual(await s.data('notes', 'n1'), { a: 1, b: 2, c: 1 });
+  assert.deepEqual(await s.data('scratch', 'n1'), { a: 1, b: 2, c: 1 });
 });
 
 test('B-389 (shim): an update refused because a run wrote since is read again and merged once more', async () => {
@@ -441,13 +441,13 @@ test('B-394 (shim): a create race where both sides set one field differently is 
 
 test('B-389 (shim): a read that left before a save landed never puts the older copy back', async () => {
   const env = envOf();
-  await put(env, 'notes', 'n1', { a: 1 });
+  await put(env, 'scratch', 'n1', { a: 1 });
   const s = await shim(env);
-  await s.db.collection('notes').doc('n1').set({ a: 2 }); // version 2
-  s.stale({ now: 1, docs: [{ c: 'notes', id: 'n1', data: { a: 1 }, at: 1, v: 1 }] });
+  await s.db.collection('scratch').doc('n1').set({ a: 2 }); // version 2
+  s.stale({ now: 1, docs: [{ c: 'scratch', id: 'n1', data: { a: 1 }, at: 1, v: 1 }] });
   await s.focus();
-  assert.deepEqual(await s.data('notes', 'n1'), { a: 2 });
-  await put(env, 'notes', 'n1', { a: 3 }, 2); // a newer version from elsewhere is taken
+  assert.deepEqual(await s.data('scratch', 'n1'), { a: 2 });
+  await put(env, 'scratch', 'n1', { a: 3 }, 2); // a newer version from elsewhere is taken
   await s.focus();
-  assert.deepEqual(await s.data('notes', 'n1'), { a: 3 });
+  assert.deepEqual(await s.data('scratch', 'n1'), { a: 3 });
 });

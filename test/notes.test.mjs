@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { createRequire } from 'node:module';
+import { DatabaseSync } from 'node:sqlite';
 import EV from '../core/evcore.mjs';
 import * as RUN from '../core/run.mjs';
 import { readExport, loadValidator, loadSchemas, PAGE_ONLY } from '../core/schemas.mjs';
@@ -17,7 +18,10 @@ import { rebuild, asOf, factFields } from '../core/derive.mjs';
 import { linked, linkIssues, linkProblems } from '../core/links.mjs';
 import { macBackup, CODE_STEPS } from '../core/steps.mjs';
 import { backupOf, manifestSync } from '../core/d1backup.mjs';
-import { registryProblems } from '../tools/build.mjs';
+import { registryProblems, pageSpecFor } from '../tools/build.mjs';
+import * as V from '../core/validate.mjs';
+import worker from '../pwa/worker.js';
+import { DOCUMENT_BYTES } from '../pwa/notes.js';
 import { recordCollections } from '../tools/pwa-copy.mjs';
 import { seedRecord, LEFT_OUT } from '../pwa/seed.mjs';
 import { ROOT } from './helpers.mjs';
@@ -35,6 +39,8 @@ const load = () => {
   return db;
 };
 const note = (extra = {}) => ({ ...load().notes.find(n => n.id === NOTE_ID), ...extra });
+/** Blocks that fit the schema (20 runs of 20,000 characters) but hold more than capacity.documentBytes. */
+const bigBlocks = () => Array.from({ length: 20 }, () => ({ type: 'p', runs: [{ text: 'm'.repeat(20000) }] }));
 const ok = (col, doc, id = doc.id) => {
   const { id: _drop, ...data } = doc;
   return validate(col, data, { id }).ok;
@@ -156,7 +162,7 @@ test('B-401: links: a session names its note; a run that did not read notes does
   );
 });
 
-test('B-401: lint and rebuild skip notes as they skip the journal: an edited, archived or even malformed note is no error', () => {
+test('B-401: lint and rebuild skip notes as they skip the journal: an edited or archived note is no error', () => {
   const db = load();
   const green = lintRecord(db, spec, validate, { date: '2026-10-17' });
   const errors = r => r.issues.filter(i => i.severity === 'error');
@@ -173,7 +179,6 @@ test('B-401: lint and rebuild skip notes as they skip the journal: an edited, ar
     archivedAt: '2026-10-17T02:00:00Z',
     createdAt: '2026-10-15T00:00:00Z', // even its write-once field
   });
-  db.notes.push({ id: 'n-made-up-bad', html: '<p>never</p>' });
   const after = lintRecord(db, spec, validate, { date: '2026-10-17' });
   assert.deepEqual(errors(after), []);
   assert.ok(
@@ -188,6 +193,30 @@ test('B-401: lint and rebuild skip notes as they skip the journal: an edited, ar
     rebuild(without, spec).map(r => [r.ref, r.status])
   );
   assert.ok(!('notes' in asOf(db, '2026-10-17T12:00:00Z', spec).db));
+});
+
+test('B-401 review: lint still holds a note a run read to its schema and size, never as fact-changed', () => {
+  const db = load();
+  const codes = r =>
+    r.issues
+      .filter(i => /^notes/.test(i.ref))
+      .map(i => [i.severity, i.code, i.ref])
+      .sort((a, b) => a[2].localeCompare(b[2]));
+  db.notes.push({ ...note(), id: 'n-made-up-html', html: '<p>never</p>' });
+  db.notes.push({
+    ...note(),
+    id: 'n-made-up-js',
+    blocks: [{ type: 'p', runs: [{ text: 'x', href: 'javascript:alert(1)' }] }],
+  });
+  db.notes.push({ ...note(), id: 'n-made-up-big', blocks: bigBlocks() });
+  assert.deepEqual(codes(lintRecord(db, spec, validate, { date: '2026-10-17' })), [
+    ['error', 'over-budget', 'notes/n-made-up-big'],
+    ['error', 'invalid', 'notes/n-made-up-html'],
+    ['error', 'invalid', 'notes/n-made-up-js'],
+  ]);
+  // with no notes read (every run but evening-mac's), nothing about notes is judged
+  delete db.notes;
+  assert.deepEqual(codes(lintRecord(db, spec, validate, { date: '2026-10-17' })), []);
 });
 
 test('B-401: no pipeline reads notes but evening-mac, and that only for its backup and mirror (a named read)', () => {
@@ -348,4 +377,231 @@ test('B-401: pwa-copy and the app carry notes; the synthetic record holds made-u
     'an earlier version linked to its note (D-326)'
   );
   assert.ok(new Set(notes.map(([, d]) => d.course)).size >= 2, 'notes in both courses');
+});
+
+test('B-401 review: the mirror escapes what a block opens with, so note text never starts a list, rule, quote or code', () => {
+  const p = text => ({ type: 'p', runs: [{ text }] });
+  const n = note({
+    title: '- made-up title',
+    blocks: [
+      p('- not a list'),
+      p('+ not a list'),
+      p('* not a list'),
+      p('= not a heading line'),
+      p('12. not numbered'),
+      p('3) not numbered'),
+      p('---'),
+      p('***'),
+      p('==='),
+      p('> not a quote'),
+      p('    not code'),
+      { type: 'ul', runs: [{ text: '1. not nested' }] },
+      { type: 'todo', runs: [{ text: '  - not nested' }] },
+      { type: 'p', runs: [{ text: '  ' }, { text: 'bold', b: true }, { text: ' and 2. mid-line stays' }] },
+    ],
+  });
+  const body = EV.noteMarkdown(n);
+  assert.equal(
+    body,
+    [
+      '# \\- made-up title',
+      '',
+      '\\- not a list',
+      '',
+      '\\+ not a list',
+      '',
+      '\\* not a list',
+      '',
+      '\\= not a heading line',
+      '',
+      '12\\. not numbered',
+      '',
+      '3\\) not numbered',
+      '',
+      '\\---',
+      '',
+      '\\*\\*\\*',
+      '',
+      '\\===',
+      '',
+      '\\> not a quote',
+      '',
+      'not code',
+      '',
+      '- 1\\. not nested',
+      '',
+      '- [ ] \\- not nested',
+      '',
+      '**bold** and 2. mid-line stays',
+      '',
+    ].join('\n')
+  );
+  // no line of the body opens a block its text did not ask for (only the mirror's own heading and list markers do)
+  for (const line of body.split('\n')) assert.doesNotMatch(line, /^(?:\s|[+=>]|\d+[.)]|---|\*\*\*|\*\s)/, line);
+});
+
+// ---------------------------------------------------------------- B-401 review: every notes write is checked whole
+
+const NOTE = () => {
+  const { id: _id, ...data } = note();
+  return data;
+};
+const JS_RUN = { blocks: [{ type: 'p', runs: [{ text: 'click', href: 'javascript:alert(1)' }] }] };
+const MOVED = { createdAt: '2026-10-01T00:00:00Z' };
+
+/** The page's own write() (page/app/04-model.js), lifted out of the app with an in-memory record behind it. */
+function pageWrite() {
+  const src = fs.readFileSync(path.join(ROOT, 'page/app/04-model.js'), 'utf8');
+  const from = src.indexOf('    async function write(w) {');
+  const to = src.indexOf('\n    async function run(', from);
+  assert.ok(from > 0 && to > from, 'write() is in 04-model.js');
+  const EV_SPEC = pageSpecFor(spec, schemas, { target: 'staging', release: 'test' });
+  const store = new Map();
+  const db = {
+    collection: c => ({
+      doc: id => {
+        const key = c + '/' + id;
+        return {
+          get: async () => ({ exists: store.has(key), data: () => structuredClone(store.get(key)) }),
+          set: async d => void store.set(key, structuredClone(d)),
+          update: async d => void store.set(key, V.mergeUpdate(store.get(key), d)),
+        };
+      },
+    }),
+  };
+  const make = new Function(
+    'READ_ONLY',
+    'READ_ONLY_TEXT',
+    'WORK',
+    'db',
+    'validate',
+    'window',
+    'EV_SPEC',
+    'paintSet',
+    'unpaint',
+    src.slice(from, to) + '\nreturn write;'
+  );
+  const write = make(
+    false,
+    '',
+    { collect: null },
+    db,
+    V.makeValidator(EV_SPEC.schemas),
+    { EVValidate: V },
+    EV_SPEC,
+    () => false,
+    () => {}
+  );
+  return { write, store };
+}
+
+test('B-401 review: the page refuses a notes update with a script link, a moved createdAt or over documentBytes', async () => {
+  const { write, store } = pageWrite();
+  const id = NOTE_ID;
+  await write({ op: 'set', collection: 'notes', id, data: NOTE() });
+  const kept = JSON.stringify(store.get('notes/' + id));
+  await write({
+    op: 'update',
+    collection: 'notes',
+    id,
+    data: { title: 'A made-up edit', editedAt: '2026-10-17T01:00:00Z' },
+  });
+  assert.equal(store.get('notes/' + id).title, 'A made-up edit', 'a sound edit is saved');
+  const before = JSON.stringify(store.get('notes/' + id));
+  assert.notEqual(before, kept);
+  await assert.rejects(write({ op: 'update', collection: 'notes', id, data: JS_RUN }), /does not match/);
+  await assert.rejects(write({ op: 'update', collection: 'notes', id, data: MOVED }), /createdAt is written once/);
+  await assert.rejects(
+    write({ op: 'update', collection: 'notes', id, data: { earlierOf: 'n-20261016-150000-other' } }),
+    /earlierOf is written once/
+  );
+  await assert.rejects(write({ op: 'update', collection: 'notes', id, data: { html: '<p>x</p>' } }), /unknown field/);
+  await assert.rejects(write({ op: 'update', collection: 'notes', id, data: { blocks: bigBlocks() } }), /bytes/);
+  // a set over the note is held to the same write-once identity, and a too-big new note is refused too
+  await assert.rejects(write({ op: 'set', collection: 'notes', id, data: { ...NOTE(), ...MOVED } }), /createdAt/);
+  await assert.rejects(
+    write({ op: 'set', collection: 'notes', id: 'n-made-up-big', data: { ...NOTE(), blocks: bigBlocks() } }),
+    /bytes/
+  );
+  await assert.rejects(write({ op: 'update', collection: 'notes', id: 'n-made-up-none', data: { title: 'x' } }));
+  assert.equal(JSON.stringify(store.get('notes/' + id)), before, 'nothing refused reached the record');
+  assert.ok(!store.has('notes/n-made-up-big'));
+});
+
+/** D1 over node:sqlite (as test/pwa-save.test.mjs), with the app's schema. */
+function workerEnv() {
+  const sql = new DatabaseSync(':memory:');
+  sql.exec(fs.readFileSync(path.join(ROOT, 'pwa/schema.sql'), 'utf8'));
+  const stmt = (q, args = []) => ({
+    bind: (...a) => stmt(q, a),
+    first: async () => sql.prepare(q).get(...args) ?? null,
+    all: async () => ({ results: sql.prepare(q).all(...args) }),
+    run: async () => ({ meta: { changes: Number(sql.prepare(q).run(...args).changes) } }),
+  });
+  const TOKEN = 'notes-suite-token-not-a-secret';
+  const env = {
+    EV_TOKEN: TOKEN,
+    DB: { prepare: q => stmt(q), batch: async list => Promise.all(list.map(s => s.all())) },
+    ASSETS: { fetch: () => new Response('') },
+  };
+  const call = async (method, route, body) => {
+    const r = await worker.fetch(
+      new Request('https://ev.example' + route, {
+        method,
+        headers: { authorization: 'Bearer ' + TOKEN, 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      }),
+      env
+    );
+    return { status: r.status, body: await r.json() };
+  };
+  const row = id => {
+    const r = sql.prepare('SELECT data, v FROM docs WHERE c = ? AND id = ?').get('notes', id);
+    return r && { data: JSON.parse(r.data), v: r.v };
+  };
+  return { call, row };
+}
+
+test('B-401 review: the Worker refuses a note that fails the schema, size or write-once check, on a save and in a batch', async () => {
+  assert.equal(DOCUMENT_BYTES, spec.capacity.documentBytes, 'pwa/notes.js holds the spec size');
+  const { call, row } = workerEnv();
+  const id = NOTE_ID;
+  const put = (data, v) => call('PUT', `/api/db/notes/${id}` + (v ? '?if_version=' + v : ''), data);
+  const batch = w => call('POST', '/api/run/batch', { writes: [w] });
+  assert.equal((await put(NOTE())).status, 200);
+  // the page's save sends the whole merged document
+  for (const bad of [
+    { ...NOTE(), ...JS_RUN },
+    { ...NOTE(), ...MOVED },
+    { ...NOTE(), blocks: bigBlocks() },
+  ]) {
+    const r = await put(bad, 1);
+    assert.equal(r.status, 400, JSON.stringify(r.body).slice(0, 200));
+    assert.match(r.body.error, /nothing was written/);
+  }
+  assert.equal((await put({ ...NOTE(), title: 'A made-up edit' }, 1)).status, 200, 'a sound edit is saved');
+  assert.equal(row(id).v, 2);
+  // a too-big or malformed new note is refused on create too
+  const big = await call('PUT', '/api/db/notes/n-made-up-big', { ...NOTE(), blocks: bigBlocks() });
+  assert.equal(big.status, 400);
+  // the run API: an update is judged merged into the stored note
+  for (const data of [JS_RUN, MOVED, { blocks: bigBlocks() }, { createdAt: { __delete__: true } }, { html: 'x' }]) {
+    const r = await batch({ op: 'update', collection: 'notes', doc_id: id, data, if_version: 2 });
+    assert.equal(r.status, 400, JSON.stringify(r.body).slice(0, 200));
+    assert.equal(r.body.entry, 0);
+  }
+  const set = await batch({ op: 'set', collection: 'notes', doc_id: id, data: { ...NOTE(), ...MOVED }, if_version: 2 });
+  assert.equal(set.status, 400);
+  assert.equal(row(id).v, 2, 'nothing refused was written');
+  assert.equal(row(id).data.title, 'A made-up edit');
+  assert.equal(row('n-made-up-big'), undefined);
+  const good = await batch({
+    op: 'update',
+    collection: 'notes',
+    doc_id: id,
+    data: { archivedAt: '2026-10-18T01:00:00Z' },
+    if_version: 2,
+  });
+  assert.equal(good.status, 200, JSON.stringify(good.body));
+  assert.equal(row(id).data.archivedAt, '2026-10-18T01:00:00Z');
 });

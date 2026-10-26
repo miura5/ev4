@@ -207,3 +207,44 @@ export function makeValidator(schemas) {
 export function describeErrors(label, result) {
   return result.errors.map(e => `${label}: ${e.path}: ${e.message}`).join('\n');
 }
+
+/**
+ * B-401 (D-325): an update as the record applies it: `patch` merged into `doc`, objects deeply, arrays and values
+ * replaced, and a field given as {"__delete__": true} removed (the run API's merge, pwa/runapi.js).
+ */
+export function mergeUpdate(doc, patch) {
+  const isObj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
+  const out = isObj(doc) ? { ...doc } : {};
+  for (const [k, v] of Object.entries(patch || {})) {
+    if (isObj(v) && v.__delete__ === true && Object.keys(v).length === 1) delete out[k];
+    else if (isObj(v)) out[k] = mergeUpdate(out[k], v);
+    else out[k] = v;
+  }
+  return out;
+}
+
+/** The size a document is stored at: the UTF-8 bytes of its JSON (spec.capacity.documentBytes caps it). */
+export function docBytes(doc) {
+  return new TextEncoder().encode(JSON.stringify(doc)).length;
+}
+
+/**
+ * B-401 (D-325): every write of a note, set or update, judged on the whole document it leaves (`doc`, an update
+ * already merged into `prev`): the notes schema, the size cap, and the write-once identity: once a note exists, its
+ * createdAt and earlierOf never change, and neither is added or taken away. `prev` is the note as stored (null for a
+ * create). The page's write(), the Worker's save and its run API batch all ask this, and lint asks it of every note a
+ * run read. Returns null when the write is sound, else the reason in one line.
+ */
+export function noteProblem(validate, id, doc, prev, documentBytes) {
+  const r = validate('notes', doc, { id });
+  if (!r.ok)
+    return `notes/${id} does not fit its shape: ${r.errors[0] ? r.errors[0].path + ' ' + r.errors[0].message : ''}`;
+  const size = docBytes(doc);
+  if (documentBytes && size > documentBytes)
+    return `notes/${id} is ${size} bytes; a note holds at most ${documentBytes}`;
+  if (prev && typeof prev === 'object')
+    for (const k of ['createdAt', 'earlierOf'])
+      if (JSON.stringify(prev[k]) !== JSON.stringify(doc[k]))
+        return `notes/${id}: ${k} is written once, when the note is made, and never changed`;
+  return null;
+}

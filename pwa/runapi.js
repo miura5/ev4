@@ -11,6 +11,8 @@
 // op, or any DELETE request, is refused and the batch writes nothing.
 // Pure functions first (tested in test/pwa-run-api.test.mjs with no Worker); `handleRun` is what worker.js calls.
 
+import { writeProblem } from './notes.js';
+
 /** The run API suite's own collection (pwa/run-api.test.mjs): the only one it writes, never in the seed. */
 export const SUITE = 'runapi-suite';
 /** What one run of the suite leaves there: the staging count check expects a whole number of runs' worth. */
@@ -131,6 +133,9 @@ export function planBatch(writes, current) {
       };
     }
     const data = w.op === 'set' ? w.data : merge(cur ? cur.data : {}, w.data);
+    // B-401 (D-325): a note is judged on the document the write leaves (pwa/notes.js); nothing in the batch is written
+    const bad = writeProblem(w.collection, w.doc_id, data, cur ? cur.data : null);
+    if (bad) return { ok: false, status: 400, error: `entry ${i}: ${bad}; nothing was written`, entry: i };
     rows.push({ c: w.collection, id: w.doc_id, data, from: have, v: have == null ? 1 : have + 1 });
   }
   return { ok: true, rows };

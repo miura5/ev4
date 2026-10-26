@@ -14,6 +14,7 @@
 import { handleRun, validCollection, validDocId, canonicalJson } from './runapi.js';
 import { exportToR2, newestExport, EXPORT_PREFIX } from './backup.js';
 import { tokenOk, ifVersionOf } from './guard.js';
+import { writeProblem } from './notes.js';
 
 const OVERLAP_MS = 5000;
 const json = (body, status = 200) =>
@@ -92,6 +93,16 @@ export default {
         return json({ error: 'the path is not encoded' }, 400);
       }
       if (!validCollection(c) || !validDocId(id)) return json({ error: 'not a collection and document id' }, 400);
+      // B-401 (D-325): a note is checked whole (pwa/notes.js) against the version the save names; a save pinned to a
+      // version the document no longer has falls through to the 409 below, since its UPDATE matches no row.
+      if (c === 'notes') {
+        const prev =
+          want == null
+            ? null
+            : await env.DB.prepare('SELECT data FROM docs WHERE c = ? AND id = ? AND v = ?').bind(c, id, want).first();
+        const bad = writeProblem(c, id, JSON.parse(data), prev ? JSON.parse(prev.data) : null);
+        if (bad) return json({ error: bad + '; nothing was written', collection: c, doc_id: id }, 400);
+      }
       const at = Date.now();
       const row =
         want == null
