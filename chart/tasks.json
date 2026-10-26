@@ -5658,7 +5658,7 @@
    "B-315",
    "B-317"
   ],
-  "notes": "From B-319 (Oct 25): before the live copy, B-320 adds spec.registry.records.live.copy.worker (the live Worker's workers.dev name; tools/pwa-copy.mjs refuses a live import until it is there) and the live Worker's url and token in the live record's system/worker (D-320); when B-320 turns on the D-307 lint, tools/pwa-copy.mjs needs an exemption, since the one-way one-time copy reads ArtifactData and writes D1 by design. A live export or import also needs dist/live-ok from Matt's OK bound to the commit.",
+  "notes": "Oct 26: preparing the cutover (nothing live): pwa-live.yml in the live environment with its gate, the Bash dispatch guard, spec.registry.records.live (app, copy, staged cutover), the read-only flag, D-307's lint, docs/cutover.md. B-320 stays open; the cutover waits on Matt.",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo"
  },
