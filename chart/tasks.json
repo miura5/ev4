@@ -7437,7 +7437,7 @@
    "B-407",
    "B-408"
   ],
-  "notes": "Build manager: release review at 5a0e981 (staging GREEN): one UI click-through scorer, three code reviewers splitting 10798d8..5a0e981, the full npm run check in the background.",
+  "notes": "Release card at c9ce3e7: https://claude.ai/artifact/GwY8LThmCPePMr9jz3DqAA. Rubric 84/100 (78 first, one UI wave), no blockers; full npm run check GREEN at c9ce3e7; staging GREEN at c9ce3e7; three code reviewers plus per-fix reviews; fix waves 1 and 2 applied. Live waits on Matt's OK (covers To review, D-340).",
   "commit": null,
   "source": "build manager, B-396 plan",
   "words": "Build rubric click-through, code review and release card (B-396, D-325).",
