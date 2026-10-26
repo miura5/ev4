@@ -1364,6 +1364,7 @@
    "v3": "miura5/ev-core"
   },
   "studyWatch": {
+   "retired": "B-408 (D-325): the page no longer reads Study Watch. Notes holds his notes and study sessions on a computer; the phone keeps a session that reads no note. The Mac app, the reader extension, studywatch/ and the .mcpb are kept as they are (nothing deleted); session files Study Watch leaves on the Mac are no longer filed from the page. Study Watch stays in use on the claude.ai live page until that page takes this build at the cutover (D-325).",
    "app": {
     "version": "0.4",
     "path": "~/Applications/E.V. Study Watch.app",
@@ -2995,7 +2996,8 @@
      "proven": true,
      "date": "2026-10-17",
      "run": null,
-     "evidence": "v3 study sessions"
+     "evidence": "v3 study sessions",
+     "retired": "B-408 (D-325): the page no longer declares or calls the reader; the row stays as the history of the v3 proof"
     },
     {
      "capability": "a build ask from the page: jobs/<id> written, ev4-builder fired with Job <id> and his message, the request filed in his words with the job on the task, and the trace back on the page",
@@ -3038,7 +3040,7 @@
     }
    ],
    "limits": [
-    "13 page tools in use; the tool cap is unknown (to measure)"
+    "12 page tools in use; the tool cap is unknown (to measure)"
    ]
   },
   "build-chat": {
@@ -4482,7 +4484,7 @@
   "conversation": {
    "opens": "The page always opens on E.V. A #tab link can open another tab.",
    "greeting": "EVCore.greeting on each open, frozen for that open. B-129 (D-167, amending 'never stored'): its headline is worded by one quick-tier call from greeting(ctx).situation and his last 7 headlines, held to the facts by EVCore.checkHeadline, with core's line on a 2 s timeout or a failed check; the last 7 headlines are kept in talk/memory.headlines. The briefing under it stays code.",
-   "quickAsks": "Greeting chips and their typed equivalents are answered on the page with no model call: Start review, Start a study session, What's due this week?, Give me 5 more, File it, How ready am I?, I'm wiped, Show my progress, plus End session, Take a break, Resume and Add 5 minutes while a session runs.",
+   "quickAsks": "Greeting chips and their typed equivalents are answered on the page with no model call: Start review, Start a study session, What's due this week?, Give me 5 more, How ready am I?, I'm wiped, Show my progress, plus End session, Take a break, Resume and Add 5 minutes while a session runs.",
    "chat": "sample with the persona, rules and a compact record summary as the first turn, then up to 14 recent turns after talk/memory.upTo. Tier: quick by default; default for explain/why/compare questions or long messages, and for 'Go deeper'.",
    "tools": [
     "show_card",
@@ -4497,7 +4499,6 @@
     "materials",
     "save_idea",
     "make_practice",
-    "file_sessions",
     "study_session"
    ],
    "cards": [
@@ -4516,9 +4517,9 @@
    ],
    "errors": "sample and mcp failures are branched by code; nothing retries on its own. Writes to the connector are re-sent only from a 'Try again' click.",
    "sessions": {
-    "where": "Entirely in the E.V. conversation (D-073). Nothing in the Study tab.",
-    "start": "'Start a study session' (chip, typed, or the study_session tool) binds to the school note Study Watch saved last, read through the reader connector. Without the reader (a browser tab, the iPhone) E.V. says to open E.V. Home in the Claude desktop app on the Mac.",
-    "checks": "Every checkMinutes (breaks and +5 min shift it), the page reads latest_note, computes the new writing with EVCore.noteDelta, and asks sample.json with EVCore.checkPrompt for 1 to 3 items. E.V. posts them as a check card; Matt answers in the card or in the composer, and E.V. replies as a study partner. No new writing for idleChecksToEnd checks wraps the session up.",
+    "where": "B-408 (D-325): from 1024 px a session is in Notes, on a note (New note, Study with E.V., a study task from Today, or Start a study session asked in words) or a Today task timed by its estimate; its controls are in the strip and its lines are its own chat. Under 1024 px (no Notes) it runs in the E.V. conversation, its line under the pane header. Nothing in the Study tab.",
+    "start": "On the phone, Start a study session (chip, typed, or the study_session tool) starts a session that reads no note: it keeps time, breaks and +5 min, and its checks ask about his objectives and weak spots (B-314). On a computer the same ask starts a new note with its 25-minute session. Study Watch and its reader are retired from the page (B-408).",
+    "checks": "Every checkMinutes (breaks and +5 min shift it). A Notes session reads its note as he is writing it, computes the new writing with EVCore.noteDelta, and sends it through sample (D-328); a session with no note asks about his objectives and weak spots. sample.json with EVCore.checkPrompt gives 1 to 3 items, posted as a check card; Matt answers in the card or in the composer, and E.V. replies as a study partner. A Notes session ends when its planned time runs out (D-333).",
     "end": "End (bar, chip, typed or tool) asks sample.json with EVCore.wrapPrompt, then EVCore.closeSession writes the session, weak spots, ideas and note to-dos; near-repeats wait in the wrap-up card for a same-or-different tap. Cards copy as Quizlet text."
    },
    "listEdits": "E.V. edits the daily list with edit_list (D-078): add a study task he or E.V. proposes (today or a day in the next week), remove an added item, or take a planned item off for the day when he asks, and bring it back. Graded work, exams, clinicals and validations stay. Rules in EVCore.listEdit and EVCore.dayView; The calendar is edited the same way with edit_dates (dateEdits).",
@@ -4900,15 +4901,6 @@
        "server": "Claude Code Remote",
        "tools": [
         "fire_trigger"
-       ]
-      },
-      {
-       "server": "host:E_V__Study_Watch_reader",
-       "tools": [
-        "status",
-        "latest_note",
-        "list_sessions",
-        "read_session"
        ]
       }
      ]

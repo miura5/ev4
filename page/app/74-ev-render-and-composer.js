@@ -3,8 +3,6 @@
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'; // B-340: the demo's arrow
     const STOP_ICON =
       '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2.5" fill="currentColor"/></svg>';
-    // B-352 (D-314): the demo's outline play
-    const PLAY_ICON = '<svg class="play-o" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>';
     // E.V.'s state, shown by every core that follows it and by the readout: streaming → speaking, Claude working → thinking,
     // a check just posted → check ready, a session break → resting, a right answer → pleased, typing → listening.
     // B-215 (D-216): turning to face him is the notification. A job that finishes, or a new ask in Your turn, while he is on
@@ -182,23 +180,24 @@
         COMMENT && sa && sa.status === 'active'
           ? ['Quiz me now']
           : ((T.greet && T.greet.chips) || ['What’s due this week?', 'How ready am I?']).filter(
-              c => !(c === 'Start a study session' && sa)
+              c => !(c === 'Start a study session' && (sa || WIDE_STRIP.matches))
             );
       // B-362 (D-316): on a break, the demo's one chip back to work
       if (sa && sa.status === 'active' && E.sessionState(sa, now()).onBreak) chips = ['I’m back early'];
       // B-358 (D-314): at rest, the demo's five chips and only those.
       // B-357: a skills run left going keeps its Resume chip first (the runner waits behind it, B-82)
       const resume = ((T.greet && T.greet.chips) || []).filter(c => /^Resume .+ · \d+ of \d+$/.test(c));
+      // B-408 (D-325): from 1024 px a session starts in Notes (or from a Today task), so the Conversation offers none
       if (!sa)
         chips = [
           ...resume,
-          'Start a study session',
+          ...(WIDE_STRIP.matches ? [] : ['Start a study session']),
           'What’s due this week?',
           quizChip(),
           'How did this week go?',
           'Plan the rest of today',
         ];
-      renderBar();
+      renderSession();
       renderSkillDock();
       const qc = $('qchips');
       if (qc.dataset.k !== chips.join('|')) {

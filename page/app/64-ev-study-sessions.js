@@ -1,8 +1,8 @@
-    // ---------------------------------------------------------------- study sessions (D-073: all in this conversation)
-    // Study Watch (reader mode) saves the school note he is writing, and the read-only reader connector serves it to
-    // this page inside the Claude desktop app. Rules (timer, new-text diff, prompts, filing) live in E.V. core. The note's
-    // text stays in this page's memory; the record keeps only its length and hash.
-    const READER = EV_SPEC.reader || {};
+    // ---------------------------------------------------------------- study sessions
+    // B-408 (D-325): on desktop a session is in Notes (a note's session, or a Today task's); on the phone (no Notes) the
+    // Conversation's session keeps time and asks about his objectives and weak spots. Study Watch and its reader are
+    // retired from the page. Rules (timer, new-text diff, prompts, filing) live in E.V. core; a note's text goes to
+    // Claude through sample at a check (D-328), and the session keeps only its length and hash.
     const SWC = (EV_SPEC.constants && EV_SPEC.constants.studyWatch) || {};
     const SS = {
       view: Math.random().toString(36).slice(2, 10),
@@ -11,11 +11,8 @@
       added: '',
       said: new Set(),
       audio: null,
-      readerOk: null,
-      probing: false,
-      // B-87: a view claims a running session once the reader answers (on open and each time the tab comes back).
+      // B-87: a view claims a running session it can drive (on open and each time the tab comes back).
       mayClaim: true,
-      reprobeAt: 0,
       // B-88: comment mode reads every readSeconds; seen is what she has read, quotes keep her quoted lines in memory only.
       seen: null,
       nextRead: 0,
@@ -45,47 +42,10 @@
         SS.nextRead = 0;
       }
     });
-    const READER_COPY = {
-      mcp_unavailable:
-        'I can’t reach the Study Watch reader in this view. Open E.V. Home in the Claude desktop app on your Mac.',
-      server_not_connected:
-        'I can’t reach the Study Watch reader from here. Open E.V. Home in the Claude desktop app on your Mac, with the E.V. Study Watch reader extension turned on.',
-      not_in_manifest:
-        'The Study Watch reader is switched off for this page. Turn it on in the page’s Permissions menu, then try again.',
-      cancelled: 'You declined the reader just now, so I didn’t read your note.',
-      approval_required: 'Reading your note needs your OK. Try again and choose Allow when the app asks.',
-      blocked_by_policy: 'Your organization blocks local connectors, so I can’t read your note.',
-      not_granted: 'Reading your note isn’t available in this view.',
-      capability_disabled:
-        'Reading your note isn’t available in this view. Open E.V. Home in the Claude desktop app on your Mac.',
-    };
-    // B-314 (D-298): with no Study Watch reader offered (no mcp, as in the app) a session starts with no note: it keeps
-    // time, breaks and +5, and its checks and Quiz me now ask about his objectives and weak spots instead of a note.
-    const NOT_OFFERED = ['server_not_connected', 'mcp_unavailable', 'capability_disabled', 'not_granted'];
+    // B-314 (D-298): a session not on a note in Notes (the phone's, or a Today task's) reads no note: it keeps time,
+    // breaks and +5, and its checks and Quiz me now ask about his objectives and weak spots instead.
     const noteless = s => !!s && !s.noteId;
     const noteLabel = t => String(t || '').replace(/\.(md|markdown|txt|rtf)$/i, ''); // B-383: a note's name as its title
-    const readerCopy = (code, msg) =>
-      READER_COPY[code] ||
-      (code === 'tool_error' && msg
-        ? 'The Study Watch reader says: ' + msg
-        : `Couldn’t read your note (${code}). I’ll try again at the next check.`);
-    async function readerCall(tool, input) {
-      if (!mcp || !READER.host) throw Object.assign(new Error('no connector'), { code: 'mcp_unavailable' });
-      const r = await mcp.callTool(READER.host, tool, input || {}, { cache: false });
-      SS.readerOk = true;
-      return (r && r.payload) || {};
-    }
-    async function probeReader() {
-      if (SS.probing || SS.readerOk != null) return;
-      SS.probing = true;
-      try {
-        await readerCall('status');
-      } catch {
-        SS.readerOk = false;
-      } finally {
-        SS.probing = false;
-      }
-    }
     const sessOf = id => S.sessions.find(s => s.id === id) || null;
     // D-130: the level his last study session (not a skills run) was left at, else Some.
     const lastComments = () => {
@@ -141,40 +101,29 @@
 
     async function startSession() {
       unlockAudio();
-      const cur = activeSession();
-      if (cur)
-        return [
-          `A session on **${cur.topic}** is already running. End it from the bar at the top when you’re done.`,
-          [],
-        ];
       if (!sample || T.sampleOff)
         return [
           'Study sessions need permission to ask Claude for the checks. Allow Claude for this page from its Permissions menu.',
           [],
         ];
-      const bare = !mcp || !READER.host; // B-314: no reader offered (the app has no mcp), so the session reads no note
-      let p = null;
-      if (!bare)
-        try {
-          p = await readerCall('latest_note');
-        } catch (e) {
-          SS.readerOk = false;
-          return [readerCopy((e && e.code) || 'upstream_error', e && e.message), []];
-        }
-      if (!bare && !p.found)
+      // B-408 (D-325): on desktop a study session is in Notes: a new note with its 25-minute session (a running one is
+      // ended first, with Undo in the strip); her line is in the session's own chat
+      if (notesOn()) {
+        const from = whereNow();
+        showTab('notes');
+        await newNote(from);
+        return [null, []];
+      }
+      const cur = activeSession();
+      if (cur)
         return [
-          p.refused
-            ? 'Study Watch’s latest note isn’t in ' +
-              E.courses().join(' or ') +
-              ', so I won’t read it. Type a line in a school note, then start again.'
-            : 'Study Watch hasn’t saved a school note yet. Check that it’s running in reader mode, type a line in your NUR 112 or BIO 201 note, then start again.',
+          `A session on **${noteLabel(cur.topic) || 'Study session'}** is already running. End it from the bar at the top when you’re done.`,
           [],
         ];
-      const n = bare ? { id: '', name: 'Study session', folder: '' } : p.note || {};
+      // The phone's session (no Notes under 1024 px): no note; it keeps time and asks about his objectives and weak spots
       const at = now();
       const stamp = at.replace(/\D/g, '').slice(0, 14);
-      const mark = E.noteMark(n.text || '');
-      const id = E.safeId(`ss-${stamp.slice(0, 8)}-${stamp.slice(8)}-${E.slug(n.name || 'note', 24)}`);
+      const id = E.safeId(`ss-${stamp.slice(0, 8)}-${stamp.slice(8)}-study-session`);
       await write({
         op: 'set',
         collection: 'sessions',
@@ -187,38 +136,24 @@
           comments: lastComments(),
           date: today,
           startedAt: at,
-          topic: String(n.name || 'Study session').slice(0, 120),
-          noteId: String(n.id || ''),
-          folder: String(n.folder || ''),
+          topic: 'Study session',
+          noteId: '',
+          folder: '',
           driver: { view: SS.view, at },
-          events: {
-            [pageKey(at)]: bare
-              ? { type: 'start' }
-              : { type: 'start', noteId: n.id, len: mark.len, h: mark.h, modifiedAt: n.modifiedAt || null },
-          },
+          events: { [pageKey(at)]: { type: 'start' } },
         },
       });
-      SS.text = bare ? null : n.text || '';
+      SS.text = null;
       SS.added = '';
       SS.said.clear();
-      SS.seen = SS.text;
-      SS.note = bare ? null : { id: n.id, name: n.name, folder: n.folder || '', title: n.title || '' };
+      SS.seen = null;
+      SS.note = null;
       SS.nextRead = Date.now() + (SWC.readSeconds || 30) * 1e3;
       SS.changedAt = Date.now();
-      if (bare)
-        return [
-          COMMENT
-            ? 'Session started. I’ll keep time; tap Quiz me now whenever you want questions on your objectives and weak spots.'
-            : `Session started. Every ${SWC.checkMinutes || 7} minutes I’ll post questions on your objectives and weak spots.`,
-          [],
-        ];
-      if (COMMENT)
-        return [
-          `Session started on **${n.name}**. I’m reading along as you write and I’ll only chime in when a line makes a connection. Tap Quiz me now whenever you want questions.`,
-          [],
-        ];
       return [
-        `Session started on **${n.name}**. I’ll check your new writing every ${SWC.checkMinutes || 7} minutes and post the questions here.`,
+        COMMENT
+          ? 'Session started. I’ll keep time; tap Quiz me now whenever you want questions on your objectives and weak spots.'
+          : `Session started. Every ${SWC.checkMinutes || 7} minutes I’ll post questions on your objectives and weak spots.`,
         [],
       ];
     }
@@ -257,17 +192,9 @@
             return;
           }
           p = { found: true, note: { id: '', name: s.topic || 'Study session', text: ctx.text } };
-        } else
-          try {
-            p = await sessionNote(s); // B-406: a Notes session reads its own note, never the reader
-          } catch (e) {
-            const code = (e && e.code) || 'upstream_error';
-            if (NOT_OFFERED.includes(code)) SS.readerOk = false;
-            await skip('reader-' + code, readerCopy(code, e && e.message));
-            return;
-          }
+        } else p = await sessionNote(s); // B-406: a Notes session reads its own note
         if (!p.found) {
-          await skip('no-note', 'I can’t see a saved school note right now. Is Study Watch running in reader mode?');
+          await skip('no-note', 'I can’t see the note this session is on right now. The session keeps time.');
           return;
         }
         const note = p.note || {};
@@ -440,7 +367,7 @@
         if (!sample || T.sampleOff) return;
         SS.lastAsk = Date.now();
         SS.thinking = true;
-        renderBar();
+        renderSession();
         let out;
         try {
           out = await sample.json(
@@ -507,20 +434,7 @@
             id: s.id,
             data: { driver: { view: SS.view, at: now() } },
           });
-        let p;
-        try {
-          p = await sessionNote(s);
-        } catch (e) {
-          const code = (e && e.code) || 'upstream_error';
-          if (['server_not_connected', 'mcp_unavailable', 'capability_disabled', 'not_granted'].includes(code))
-            SS.readerOk = false;
-          await sessEvent(s, 'skip', { why: 'reader-' + code });
-          if (!SS.said.has('reader-' + code)) {
-            SS.said.add('reader-' + code);
-            await evSay(readerCopy(code, e && e.message), [], { tier: 'local', ...thOf(s) });
-          }
-          return;
-        }
+        const p = await sessionNote(s);
         if (!p.found) {
           await sessEvent(s, 'skip', { why: 'no-note' });
           return;
@@ -763,20 +677,23 @@
       out.push(end);
       return out;
     }
-    // B-84 (the Captions v2 artboard): a session's progress to the next check is the particle ring round her own core.
-    // B-86 (Matt, Oct 19): its stats are one quiet line under her core (a dot, the minutes and the next check, then Break,
-    // +5 and End as text buttons), not a pill above her; the note's title is in the line's label and tooltip.
-    function renderBar() {
-      const bar = $('sbar');
-      // B-211 (D-217): the session's bar is the pane header's, after its title, on every tab; the session folds to it.
-      const mh = $('mh');
-      if (bar.parentNode !== mh) mh.insertBefore(bar, $('status').nextSibling);
-      renderSessCard();
+    // B-408 (D-325): a session's controls are the strip's on desktop (renderSlot) and the header's line on the phone
+    // (phoneBar); her ring is the stretch to the next check on both (B-273).
+    function renderSession() {
       const s = activeSession();
       document.body.classList.toggle('in-session', !!s);
-      renderSlot(); // B-406: a Notes session's controls are the strip's on desktop
-      if (!s) {
-        CORE.setRing(-1);
+      renderSlot();
+      CORE.setRing(s ? ringFill(E.sessionState(s, now()), s.status === 'ending') : -1);
+      phoneBar(s);
+    }
+    // B-86 (Matt, Oct 19), B-353 (D-314): under 1024 px the session is one quiet line under the pane header, the demo's
+    // strip: the topic in bold, the minutes, Break and End. From 1024 px it is the strip's (renderSlot).
+    function phoneBar(s) {
+      const bar = $('sbar');
+      // B-211 (D-217): the line is the pane header's, after its title, on every tab
+      const mh = $('mh');
+      if (bar.parentNode !== mh) mh.insertBefore(bar, $('status').nextSibling);
+      if (!s || WIDE_STRIP.matches) {
         if (!bar.hidden) {
           bar.hidden = true;
           bar.replaceChildren();
@@ -786,36 +703,20 @@
       }
       const st = E.sessionState(s, now());
       const ending = s.status === 'ending';
-      if (isTimed(s) && WIDE_STRIP.matches) {
-        // B-406: on desktop a Notes session shows once, in the strip; the header's line stays for the phone
-        CORE.setRing(ringFill(st, ending));
-        if (!bar.hidden) {
-          bar.hidden = true;
-          bar.replaceChildren();
-          bar.dataset.k = '';
-        }
-        return;
-      }
       const k = [s.id, s.status, st.onBreak, !!SS.busy].join('|');
       bar.hidden = false;
       bar.classList.toggle('brk', st.onBreak);
       bar.classList.toggle('busy', SS.busy === true || SS.thinking || ending);
       bar.classList.toggle('alert', Date.now() < (SS.alertUntil || 0));
       if (bar.dataset.k !== k) {
-        // buttons change with the state; the clock line and the ring update in place every second
+        // buttons change with the state; the clock line updates in place every second
         bar.dataset.k = k;
         const led = el('span', 's-led');
         led.setAttribute('aria-hidden', 'true');
         const main = el('span', 's-main');
-        // B-353 (D-314): the topic and her reading-along words, each its own span: under 600 px (and on her view under
-        // 1200 px) the line is the demo's strip under the header, the topic in bold, the minutes, Break and End.
-        main.append(
-          el('b', 's-topic', noteLabel(s.topic) || 'Study session'),
-          el('span', 's-clock', ''),
-          el('span', 's-read', '')
-        );
-        bar.setAttribute('aria-label', 'Study session: ' + (s.topic || 'untitled'));
-        bar.title = s.topic || '';
+        main.append(el('b', 's-topic', sessName(s)), el('span', 's-clock', ''), el('span', 's-read', ''));
+        bar.setAttribute('aria-label', 'Study session: ' + sessName(s));
+        bar.title = sessName(s);
         const acts = el('div', 's-acts');
         acts.append(...sessButtons(s, st, ending, { cls: 'btn ghost sm' })); // B-303 (D-278): ghost, the header's quiet measure
         bar.replaceChildren(led, main, acts);
@@ -829,8 +730,6 @@
             : st.onBreak
               ? breakLeft(s) // B-377: the demo's 5 min break
               : `${minsLeft(st) ?? st.minutes} min${minsLeft(st) == null ? '' : ' to next check'}`; // B-383: what it counts
-        bar.querySelector('.s-read').textContent = ''; // B-362 (D-316): the demo's line is the topic and the minutes
-        CORE.setRing(ringFill(st, ending));
         return;
       }
       bar.querySelector('.s-clock').textContent = ending
@@ -840,13 +739,8 @@
           : st.onBreak
             ? `On a break · ${tickClock(st.breakRemainingMs)} to the check`
             : `${tickClock(Date.parse(st.nextCheckAt) - Date.now())} left to the check`;
-      CORE.setRing(ringFill(st, ending));
     }
-    // B-290 (D-245): the session in E.V.'s right panel, shown from 1200 px (CSS), where the header's line gives way to
-    // it on her view so the minutes show once. Idle, it starts a session on his Study Watch note (the chip's call);
-    // running, it shows the session's state, the minutes left to her next check, and Break, +5 min and End.
-    // B-290: the minutes left, the one figure the header's line and the card both show: to her next check, or of the
-    // break; null when the session has no next check.
+    // B-290: the minutes left to her next check, or of the break; null when the session has no next check.
     function minsLeft(st) {
       const m = ms => Math.max(0, Math.ceil(ms / 60e3));
       if (st.onBreak) return m(st.breakRemainingMs);
@@ -866,129 +760,6 @@
       const m = Math.ceil((BREAK_MIN * 60e3 - (Date.now() - since)) / 60e3);
       return since && m <= 0 ? 'Break’s over' : Math.min(BREAK_MIN, Math.max(1, m)) + ' min break';
     }
-    // B-383: when Study Watch saved the note, as the demo's 'saved 4:10 pm'; an older save names its day
-    function savedWhen(at) {
-      const d = new Date(at);
-      if (isNaN(d)) return '';
-      const ymd = E.chicagoDate(at);
-      const day =
-        !ymd || ymd === today
-          ? ''
-          : new Date(ymd + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short' }) + ' ';
-      return day + clock12(at);
-    }
-    function renderSessCard() {
-      let card = $('ev-sess');
-      if (!card) {
-        card = el('section', 'card ev-sess rest');
-        card.id = 'ev-sess';
-        capSide.append(card);
-      }
-      const s = activeSession();
-      if (!s) {
-        const offered = !!(mcp && READER.host); // B-314: with no reader the session reads no note
-        // B-383 (D-316): as the demo, the card names the note before Start: the reader's status (its name and when
-        // Study Watch saved it, never its text), read once per page load
-        if (offered && SS.noteHead === undefined) {
-          SS.noteHead = null;
-          readerCall('status')
-            .then(p => {
-              const n = p && p.latestNote;
-              SS.noteHead = n && n.found && n.name ? { name: String(n.name), at: n.modifiedAt || null } : false;
-            })
-            .catch(() => (SS.noteHead = false))
-            .finally(() => renderSessCard());
-        }
-        const nh = offered && SS.noteHead ? SS.noteHead : null;
-        const idleK = 'idle' + offered + (nh ? nh.name + nh.at : '');
-        if (card.dataset.k === idleK) return;
-        card.dataset.k = idleK;
-        card.setAttribute('aria-label', 'Start a study session');
-        // B-377 (D-316): as the demo, the panel's button starts the session with her line only, never his
-        const go = btn(
-          'Start study session',
-          () =>
-            guard(go, async () => {
-              T.bigCore = false;
-              const [t, c] = await startSession();
-              await evSay(t, c, { tier: 'local' });
-            }),
-          {
-            cls: 'btn primary wide', // B-340 (D-312): the panel's main button, in Ember as in the demo
-          }
-        );
-        go.insertAdjacentHTML('afterbegin', PLAY_ICON);
-        card.replaceChildren(
-          el('h2', null, 'Start a study session'),
-          ...(offered
-            ? [
-                el('p', 'ss-topic', nh ? noteLabel(nh.name) : 'Your Study Watch note'),
-                el(
-                  'p',
-                  'meta',
-                  (nh
-                    ? 'Your Study Watch note' + (nh.at ? ' · saved ' + savedWhen(nh.at) : '')
-                    : 'Your latest note in ' + E.courses().join(' or ')) +
-                    ' · checks every ' +
-                    (SWC.checkMinutes || 7) +
-                    ' min'
-                ),
-              ]
-            : [el('p', 'meta', 'A timer and breaks, with questions on your objectives and weak spots.')]),
-          go
-        );
-        return;
-      }
-      const st = E.sessionState(s, now());
-      const ending = s.status === 'ending';
-      const k = [s.id, s.status, st.onBreak, !!SS.busy].join('|');
-      if (card.dataset.k !== k) {
-        card.dataset.k = k;
-        card.setAttribute('aria-label', 'Study session: ' + (s.topic || 'untitled'));
-        const head = el('div', 'card-head');
-        head.append(
-          el('h2', null, 'Study session'),
-          el('span', 'badge x-quiet', ending ? 'Ending' : st.onBreak ? 'Break' : 'Running') // B-362, B-377: the demo's grey-filled quiet badge
-        );
-        const acts = el('div', 'ss-acts');
-        acts.append(...sessButtons(s, st, ending, { cls: 'btn neutral sm', long: true }));
-        card.replaceChildren(
-          head,
-          el('p', 'ss-topic', noteLabel(s.topic) || 'Your Study Watch note'),
-          el('p', 'ss-left'),
-          el('p', 'meta ss-sub'),
-          acts
-        );
-      }
-      const left = minsLeft(st);
-      // B-383: the big figure says what it counts, '7 min' then 'to my next check' under it
-      const leftEl = card.querySelector('.ss-left');
-      const leftK = ending
-        ? 'Wrapping up'
-        : st.onBreak
-          ? breakLeft(s)
-          : left == null
-            ? durFmt(st.minutes)
-            : left + ' min';
-      if (leftEl.dataset.k !== leftK) {
-        leftEl.dataset.k = leftK;
-        leftEl.replaceChildren(leftK);
-        if (!ending && !st.onBreak && left != null) leftEl.append(el('span', 'ss-what', 'to my next check'));
-      }
-      // B-362, B-368 (D-316): as the demo, '<what> · N min': where the session's words come from and its minutes (a
-      // session has no planned length, so N is how long it has run)
-      card.querySelector('.ss-sub').textContent =
-        (isTimed(s)
-          ? noteOfSession(s)
-            ? 'In Notes'
-            : 'A task from Today'
-          : noteless(s)
-            ? 'Study session'
-            : 'Your Study Watch note') +
-        ' · ' +
-        Math.max(1, st.minutes) +
-        ' min';
-    }
     // B-273 (D-267, Matt's answer): her ring is the stretch to the next check. Her segments fill clockwise toward it and
     // start over after it; the checks he answered show on their cards (D-217). The ring is full while she wraps up.
     function ringFill(st, ending) {
@@ -1004,32 +775,16 @@
             SK.ending = false;
           });
       }
-      if (!FILE.opened && M && mcp && loaded.has('sessions')) {
-        FILE.opened = true;
-        fileSessions({ quiet: true })
-          .then(r => {
-            if (r) evSay(r.text, r.cards, { tier: 'local' });
-          })
-          .catch(() => {
-            FILE.quiet = FILE.quiet || { ok: false };
-          })
-          .finally(regreet);
-      }
       const s = activeSession();
-      renderBar();
+      renderSession();
       if (M && loaded.has('sessions')) switchTick(); // B-406: a switch's Undo runs out, then its session is filed
       if (!s || !M || SS.busy) return;
-      if (SS.readerOk === false && Date.now() > SS.reprobeAt) {
-        SS.reprobeAt = Date.now() + 30e3;
-        SS.readerOk = null;
-      } // B-87: a failed probe is retried
-      if (SS.readerOk == null && !noteless(s) && !noteOfSession(s)) probeReader();
       if (s.status !== 'active') return;
       const st = E.sessionState(s, now());
-      // B-87: the view in front of him takes the session over as soon as its reader answers (a reload or a reopened tab
-      // used to wait two minutes past a due check, the clock at 0:00).
-      // B-314: a session with no note needs no reader to be driven; B-406: nor does one on a note in Notes
-      const free = SS.readerOk === true || noteless(s) || !!noteOfSession(s);
+      // B-87: the view in front of him takes the session over at once (a reload or a reopened tab used to wait two minutes
+      // past a due check, the clock at 0:00). B-408: a session on a Study Watch note (the retired reader) is never
+      // driven here; a noteless one or one on a note in Notes is.
+      const free = noteless(s) || !!noteOfSession(s);
       if (free && SS.mayClaim && document.visibilityState !== 'hidden' && (!s.driver || s.driver.view !== SS.view)) {
         SS.mayClaim = false;
         write({ op: 'update', collection: 'sessions', id: s.id, data: { driver: { view: SS.view, at: now() } } }).catch(
@@ -1081,7 +836,7 @@
     // through sample() at a check (D-328); the record keeps its length and hash only.
     async function sessionNote(s) {
       const id = noteOfSession(s);
-      if (!id) return readerCall('latest_note');
+      if (!id) return { found: false }; // B-408: a session on a Study Watch note (the retired reader) reads nothing here
       const open = NOTE.open === id && NOTE.blocks;
       const doc = (S.notes || []).find(n => n.id === id) || null;
       const blocks = open ? NOTE.blocks : doc ? E.noteBlocks(doc.blocks || []) : null;
@@ -1386,8 +1141,9 @@
       }
       const slot = $('ev-sslot');
       if (!slot) return;
-      const s0 = activeSession();
-      const s = isTimed(s0) ? s0 : null;
+      // B-408: any running session shows here on desktop, one the phone started too (it reads no note and has no end
+      // of its own, so its line counts to the next check)
+      const s = activeSession();
       const u = SS.undo && Date.now() < SS.undo.until ? SS.undo : null;
       if (!s && !u) {
         if (slot.firstChild) slot.replaceChildren();
@@ -1408,7 +1164,7 @@
           go.addEventListener('click', () => {
             const id = noteOfSession(s);
             if (id) noteSession(id).catch(() => {});
-            else showTab('today');
+            else showTab(isTimed(s) ? 'today' : 'ev');
           });
           const brk = btn(st.onBreak ? 'Resume' : 'Break', () =>
             barPress(brk, () => breakOrResume(st.onBreak ? 'resume' : 'break'))
@@ -1447,13 +1203,15 @@
         ? 'Wrapping up…'
         : st.onBreak
           ? 'Break · ' + clockLeft(BREAK_MIN * 60e3 - (Date.now() - since))
-          : clockLeft(st.leftMs) + ' left';
+          : isTimed(s)
+            ? clockLeft(st.leftMs) + ' left'
+            : `${minsLeft(st) ?? st.minutes} min${minsLeft(st) == null ? '' : ' to next check'}`;
       const go = slot.querySelector('.tn');
       const nm = sessName(s);
       const name = noteOfSession(s) && nm === 'New note' ? 'your new note' : nm; // the demo's words for an empty one
       if (go.textContent !== name) {
         go.textContent = name;
-        go.title = noteOfSession(s) ? 'Open the note: ' + name : 'Open Today: ' + name;
+        go.title = noteOfSession(s) ? 'Open the note: ' + name : (isTimed(s) ? 'Open Today: ' : 'Open E.V.: ') + name;
       }
     }
 

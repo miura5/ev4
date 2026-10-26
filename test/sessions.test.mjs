@@ -475,8 +475,8 @@ test('B-388: two sessions on one open topic make one idea; the second links to i
   assert.deepEqual(d.linked, []);
 });
 
-test('B-388: two Study Watch files in one evening pass naming one open topic make one idea', async () => {
-  // as the page's filing pass (page/app/62-ev-jobs-and-filing.js): each file's ideas join madeIdeas as documents
+test('B-388: two Study Watch files in one evening pass naming one open topic make one idea', () => {
+  // as the page's filing pass did (retired by B-408): each file's ideas join madeIdeas as documents
   const files = ['sw-a', 'sw-b'].map((id, i) => ({
     id,
     date: '2026-10-18',
@@ -492,9 +492,7 @@ test('B-388: two Study Watch files in one evening pass naming one open topic mak
     made += r.writes.filter(w => w.collection === 'ideas').length;
   }
   assert.equal(made, 1, 'the second file links to the first file’s idea');
-  const { readFileSync } = await import('node:fs');
-  const src = readFileSync(new URL('../page/app/62-ev-jobs-and-filing.js', import.meta.url), 'utf8');
-  assert.match(src, /madeIdeas\.push\(\{ id: w\.id, \.\.\.w\.data \}\)/, 'the pass keeps each idea’s text and status');
+  // B-408 retired the page's filing pass (the Study Watch reader); core's intake keeps the rule above
 });
 
 test('B-381: E.V.’s save_idea and a session’s findings never land on an idea already there', () => {

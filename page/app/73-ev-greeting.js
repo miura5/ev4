@@ -1,11 +1,10 @@
     // ---------------------------------------------------------------- greeting (once per open)
     const latestRuns = () => E.lastRuns(S.runs);
-    // The chips change once quiet filing has run (or could not): the greeting's offers are recomputed, its lines kept.
+    // The chips change when what they offer does (a skills run, Your turn): the greeting's offers are recomputed, its lines kept.
     function regreet() {
       if (!T.greet || !T.greetCtx) return;
       const c = E.greeting({
         ...T.greetCtx,
-        unfiled: fileUnfiled(),
         sessionActive: !!activeSession(),
         skillRun: resumeChip(),
         yourTurn: yourTurnCount(),
@@ -50,7 +49,6 @@
         (T.greetCtx = {
           now: new Date(),
           date: today,
-          unfiled: fileUnfiled(),
           yourTurn: yourTurnCount(), // B-182
           dayType: day.dayType,
           items: items.map(it => ({

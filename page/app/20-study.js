@@ -1392,6 +1392,13 @@
     });
     $('study-start').addEventListener('click', ev => {
       const b = ev.currentTarget;
+      if (notesOn()) {
+        // B-408 (D-325): from 1024 px a session starts in Notes, on a new note
+        const from = whereNow();
+        showTab('notes');
+        guard(b, () => newNote(from));
+        return;
+      }
       showTab('ev');
       guard(b, () => quick('Start a study session'));
     });

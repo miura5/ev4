@@ -221,7 +221,7 @@ test('deploy prints one publish call: the shell, the four files by their publish
   for (const k of ['db', 'user', 'sample', 'mcp']) assert.ok(pub[0].args.capabilities[k], `capability ${k} restated`);
   assert.deepEqual(
     pub[0].args.capabilities.mcp.servers.map(s => s.server),
-    ['Claude Code Remote', 'host:E_V__Study_Watch_reader']
+    ['Claude Code Remote'] // B-408: the Study Watch reader is no longer declared
   );
   // verify: a published file that differs is reported (the shell by containment, see withShell in the CLI test).
   const state = {
@@ -274,10 +274,20 @@ test('the shell counts as published only when the saved page holds it verbatim',
     'not-the-built-shell'
   );
 });
+// B-408 retired the page's one host: server (the Study Watch reader); deploy's host: rules are kept, so their tests run on
+// the page's declaration plus a made-up local server with four tools.
+const withHost = () => {
+  const c = JSON.parse(JSON.stringify(spec.ui.page.capabilities));
+  c.mcp.servers.push({
+    server: 'host:Made_up_reader',
+    tools: ['status', 'latest_note', 'list_sessions', 'read_session'],
+  });
+  return c;
+};
 test('B-28: the stored capability declaration is saved from a page read and diffed against the build', async () => {
   const { declarationOf, resultBody } = await import('../core/transcript.mjs');
   const { capabilityDiffs, hostToolsToAdd } = await import('../core/deploy.mjs');
-  const built = spec.ui.page.capabilities;
+  const built = withHost();
   const host = built.mcp.servers.find(s => s.server.startsWith('host:'));
   // As the live page holds it since the Oct 18 cloud publish: the reader with two of its four tools.
   const stored = JSON.parse(JSON.stringify(built));
@@ -310,7 +320,7 @@ test('B-28: the stored capability declaration is saved from a page read and diff
 
 test('B-28: verify reports a stale declaration and an enabled retired task; deploy marks the host: publish as a desktop-app step', () => {
   const files = Object.fromEntries(Object.entries(pages.staging).map(([f]) => ['page/staging/' + f, 'h'.repeat(64)]));
-  const caps = spec.ui.page.capabilities;
+  const caps = withHost();
   const manifest = {
     release,
     commit: 'a'.repeat(40),
@@ -387,7 +397,7 @@ test('B-28: verify reports a stale declaration and an enabled retired task; depl
   const pub = stale.calls.find(c => c.tool === 'Artifact');
   assert.match(
     pub.step,
-    /^page \(from the Claude desktop app on the Mac: a cloud session cannot add host:E_V__Study_Watch_reader list_sessions, host:E_V__Study_Watch_reader read_session\)$/
+    /^page \(from the Claude desktop app on the Mac: a cloud session cannot add host:Made_up_reader list_sessions, host:Made_up_reader read_session\)$/
   );
   assert.deepEqual(pub.args.capabilities, caps);
   assert.ok(stale.skipped.some(s => /capabilities exactly as stored .*page-declaration\.json/.test(s)));

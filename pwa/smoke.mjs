@@ -674,7 +674,8 @@ async function main() {
       await page.fill('#ev-input', '');
 
       // 6. B-314: a study session with no note: it starts, breaks and resumes, takes +5 minutes, quizzes (questions on
-      // his objectives and weak spots, from the stub) and ends, with no Study Watch reader to ask.
+      // his objectives and weak spots, from the stub) and ends. B-408 (D-325): that is the phone's session (under 1024 px,
+      // no Notes); from 1024 px the same ask starts a note's session in Notes (6b).
       await idle();
       const say = async line => {
         await idle();
@@ -706,8 +707,9 @@ async function main() {
         );
       };
       const steps = [];
-      await say('Start a study session');
+      if (scheme === '390') await say('Start a study session');
       const started =
+        scheme === '390' &&
         (await until(page, () => !document.getElementById('sbar').hidden, null, 6000)) &&
         (await until(
           page,
@@ -746,14 +748,15 @@ async function main() {
         else if (!(await until(page, () => document.getElementById('sbar').hidden, null, 8000)))
           steps.push('the bar stayed after End');
       }
-      ok(
-        `${tag} a study session with no note starts, breaks, takes +5, quizzes and ends`,
-        steps.length === 0,
-        steps.join(' | ')
-      );
+      if (scheme === '390')
+        ok(
+          `${tag} a study session with no note starts, breaks, takes +5, quizzes and ends`,
+          steps.length === 0,
+          steps.join(' | ')
+        );
 
       // 6b. B-406 (D-325): at 1280 a new note starts a 25-minute session naming notes/<id> in D1, its controls in the
-      // strip; End there saves it.
+      // strip; End there saves it. B-408: Start a study session asked in the Conversation is that new note.
       if (scheme === '1280') {
         await idle();
         const docs = () =>
@@ -762,8 +765,9 @@ async function main() {
             .then(b => b.docs);
         const nsteps = [];
         const notesBefore = new Set((await docs()).filter(d => d.c === 'notes').map(d => d.id));
-        await page.click('#tab-notes');
-        await page.click('#notes-new');
+        await say('Start a study session');
+        if (!(await until(page, () => !document.getElementById('p-notes').hidden, null, 6000)))
+          nsteps.push('Start a study session did not open Notes');
         const strip = await until(
           page,
           () => /\d+:\d\d left/.test((document.querySelector('#ev-sslot .s-left') || {}).textContent || ''),

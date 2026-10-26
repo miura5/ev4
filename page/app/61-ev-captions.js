@@ -52,8 +52,8 @@
     $('p-ev').append(capSide);
     // The side column is there only while it holds something (D-122 as amended): B-78's surfaces and a session's notes
     // go in #ev-side; with nothing in it her stage centres in the window.
-    // B-223, B-290: the session card (ev-sess) and Coming up (ev-dates) are the panel's resting content from 1200 px
-    // (class rest), not something beside her.
+    // B-223: Coming up (ev-dates) is the panel's resting content from 1200 px (class rest), not something beside her.
+    // B-408 retired the session card that sat with it (a session's controls are the strip's on desktop).
     const sideSync = () => {
       const kids = [...capSide.children];
       document.body.classList.toggle(

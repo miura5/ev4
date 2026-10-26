@@ -782,8 +782,8 @@
         {
           name: 'study_session',
           description: COMMENT
-            ? 'Run his study session in this conversation. start: begin a session on the school note he is writing (Study Watch saves it; the page reads along and comments only when a line earns it). quiz: 1 to 3 questions now on what he has written, as a check card. end: wrap up and save the summary, weak spots and flashcards. break, resume. Returns what happened.'
-            : 'Run his study session in this conversation. start: begin a session on the school note he is writing (Study Watch saves it; you check his new writing every 7 minutes). end: wrap up and save the summary, weak spots and flashcards. break, resume, or extend (5 more minutes before the next check). Returns what happened.',
+            ? 'Run his study session. start: on a computer, a new note in Notes with a 25-minute session (the page reads along and comments only when a line earns it); on the phone, a session that keeps time and asks about his objectives and weak spots. quiz: 1 to 3 questions now, as a check card. end: wrap up and save the summary, weak spots and flashcards. break, resume. Returns what happened.'
+            : 'Run his study session. start: on a computer, a new note in Notes with a 25-minute session (checks on his new writing every 7 minutes); on the phone, a session that keeps time and asks about his objectives and weak spots. end: wrap up and save the summary, weak spots and flashcards. break, resume, or extend (5 more minutes before the next check). Returns what happened.',
           inputSchema: {
             type: 'object',
             properties: { action: { type: 'string', enum: ['start', 'end', 'break', 'resume', 'extend', 'quiz'] } },
@@ -791,7 +791,8 @@
           },
           execute: async i => {
             const a = str(i.action, 10);
-            if (a === 'start') return (await startSession())[0];
+            if (a === 'start')
+              return (await startSession())[0] || 'Started: a new note in Notes with a 25-minute session.';
             if (a === 'quiz') {
               const r = await quizNow();
               return r ? r[0] : 'The quiz is posted as a check card.';
@@ -803,16 +804,6 @@
             }
             if (['break', 'resume', 'extend'].includes(a)) return sessionCmd(a);
             throw new Error('action must be start, end, break, resume or extend');
-          },
-        },
-        {
-          name: 'file_sessions',
-          description:
-            'File his new Study Watch sessions into the record now, through the Study Watch reader (the desktop app on his Mac). Use when he says to file, save or sync his sessions. Returns what was filed; session cards are attached.',
-          execute: async () => {
-            const r = await fileSessions();
-            if (r) (r.cards || []).forEach(addCard);
-            return r ? r.text : 'nothing new to file';
           },
         },
         {

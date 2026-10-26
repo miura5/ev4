@@ -233,7 +233,6 @@ export const PAGE_SPEC_KEYS = [
   'persona',
   'ui',
   'pipelines',
-  'reader',
   'schedules',
   'schemas',
   'worker',
@@ -337,11 +336,6 @@ export function pageSpecFor(spec, schemas, { target, release }) {
           .filter(([k]) => !k.startsWith('_'))
           .map(([k, p]) => [k, { lane: p.lane, purpose: p.purpose, steps: p.steps ? p.steps.length : null }])
       ),
-    // The Study Watch reader by the host the page calls (the rest of its row is the Mac's).
-    reader: () => {
-      const r = (spec.registry.studyWatch || {}).reader;
-      return r ? { name: r.name, host: r.host, tools: r.tools } : null;
-    },
     // When each runs live (no task ids); a pipeline with no live task (the restore drill, which drills into staging)
     // shows its staging task's schedule.
     schedules: () =>

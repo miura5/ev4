@@ -93,7 +93,6 @@
         morePractice({ announce: true });
         return ['Writing 5 now, aimed at your weakest spots. They’ll post here in about a minute.', []];
       },
-      'file it': () => fileItReply(),
       // B-353: the paperclip's job, asked in words (or a file dropped on the pane). B-381: the picker opens in the chip's
       // click or the composer's submit, before any await, since a phone opens it only inside his tap.
       'attach a file': () => {
