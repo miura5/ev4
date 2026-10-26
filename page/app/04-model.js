@@ -114,13 +114,4 @@
       lastKey = k;
       return k;
     }
-    function weakEvent(w, type, note) {
-      const at = now();
-      return {
-        op: 'update',
-        collection: 'weakspots',
-        id: w.id,
-        data: { events: { [pageKey(at)]: { type, by: 'owner', at, ...(note ? { note } : {}) } } },
-      };
-    }
 

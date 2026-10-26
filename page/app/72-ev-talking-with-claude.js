@@ -398,7 +398,8 @@
             const same = M.models.find(w => E.isActive(w) && E.norm(w.topic) === E.norm(topic));
             if (same) return 'already active: ' + same.id;
             const objective = S.objectives.some(o => o.id === i.objective) ? String(i.objective) : '';
-            return 'logged ' + (await addWeakspot({ topic, objective, source: 'Told E.V.' }));
+            // B-233 (D-235): her tool logs only what his own line asked for: from is the line this turn answers
+            return 'logged ' + (await addWeakspot({ topic, objective, source: 'Told E.V.', from: pend.replyTo }));
           },
         },
         {

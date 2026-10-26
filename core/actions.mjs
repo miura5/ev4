@@ -189,7 +189,86 @@ export function makeActions(validateAgainst) {
       effects: [],
     };
   }
+  // ---------------------------------------------------------------- weak spots and triage (B-233, D-235, D-242)
+  /** An event key: <writer>-YYYYMMDD-HHMMSSmmm, or ctx.key(at) when the code path keeps its keys unique (the page's). */
+  const evKey = (at, ctx) => {
+    if (ctx && typeof ctx.key === 'function') return ctx.key(at);
+    const d = String(at).replace(/\D/g, '');
+    return `page-${d.slice(0, 8)}-${d.slice(8, 17)}`;
+  };
+  /** The spot a weak spot's answers and his taps count toward: a duplicate's survivor (D-240), through a chain, which
+   * lint fails; a dangling link or a cycle keeps the spot itself. ctx.weakspots is the code's list of spots. */
+  const dupOf = w => {
+    const l = ((w && w.links) || []).find(x => x && x.type === 'duplicate-of' && /^weakspots\/./.test(x.to || ''));
+    return l ? l.to.slice('weakspots/'.length) : null;
+  };
+  function survivor(id, ctx) {
+    const all = new Map(((ctx && ctx.weakspots) || []).map(w => [w.id, w]));
+    const seen = new Set([id]);
+    let cur = id;
+    for (;;) {
+      const next = dupOf(all.get(cur));
+      if (!next || !all.has(next)) return cur; // no link, or a dangling one: this spot stands
+      if (seen.has(next)) return id; // a cycle credits no one else
+      seen.add((cur = next));
+    }
+  }
+  /** A new weak spot, schema 2. weakspot-log is his (never proposed); weakspot-propose is her candidate (D-235). */
+  const SPOT = ['topic', 'words', 'objective', 'exam', 'course', 'kind', 'origin', 'preRead', 'readingDue', 'initial'];
+  const newSpot = proposed => (args, ctx) => {
+    const at = ctx.now || new Date().toISOString();
+    const data = {
+      schema: 2,
+      writer: ctx.caller === 'worker' ? 'worker' : 'page',
+      at,
+      source: args.source || (proposed ? 'E.V.' : 'Logged by you'),
+    };
+    for (const f of SPOT) if (args[f] !== undefined) data[f] = args[f];
+    const objective = args.objective || '';
+    Object.assign(data, {
+      objective,
+      exam: args.exam !== undefined ? args.exam : objective.split('-')[0] || '',
+      kind: args.kind || 'concept',
+      addedBy: ctx.caller === 'worker' ? 'worker' : 'page',
+      initial: args.initial,
+      events: {},
+    });
+    if (proposed) data.proposed = true;
+    return { writes: [{ op: 'set', collection: 'weakspots', id: args.id, data }], effects: [] };
+  };
+  /** One of his triage taps (or Mark solid) on one or several spots: an event on each spot's survivor, once each. */
+  const spotEvent = (type, extra) => (args, ctx) => {
+    const at = ctx.now || new Date().toISOString();
+    const key = evKey(at, ctx);
+    const done = new Set();
+    const writes = [];
+    for (const it of args.items || [{ id: args.id }]) {
+      const id = survivor(it.id, ctx);
+      if (done.has(id)) continue;
+      done.add(id);
+      const e = { type, by: 'owner', at, ...extra(args, it) };
+      writes.push({ op: 'update', collection: 'weakspots', id, data: { events: { [key]: e } } });
+    }
+    return { writes, effects: [] };
+  };
+  /** His Join (D-240, D-284): a duplicate-of link to the spot it repeats, resolved to that spot's survivor; the
+   * spot is kept, and any link it had of another kind stays. args.links is the spot's links as read. */
+  function join(args, ctx) {
+    const at = ctx.now || new Date().toISOString();
+    const to = survivor(args.to, ctx);
+    if (to === survivor(args.id, ctx)) return { refused: 'a spot cannot join itself or a spot joined to it' };
+    const links = (args.links || []).filter(l => l.type !== 'duplicate-of');
+    links.push({ to: 'weakspots/' + to, type: 'duplicate-of', createdAt: at, createdBy: 'owner' });
+    return { writes: [{ op: 'update', collection: 'weakspots', id: args.id, data: { links } }], effects: [] };
+  }
   const COMPOSERS = {
+    'weakspot-log': newSpot(false),
+    'weakspot-propose': newSpot(true),
+    'weakspot-accept': spotEvent('accept', (a, it) => ({ objective: it.objective })),
+    'weakspot-join': join,
+    'weakspot-snooze': spotEvent('snooze', a => ({ until: a.until })),
+    'weakspot-decline': spotEvent('decline', a => (a.note ? { note: a.note } : {})),
+    'weakspot-solid': spotEvent('solid', () => ({})),
     'build-ask': jobAsk('build'),
     reply: jobAsk('reply'),
     'design-ask': jobAsk('design'),
@@ -242,9 +321,19 @@ export function makeActions(validateAgainst) {
     if (!shape.ok) return no(`its arguments do not fit: ${shape.errors.map(e => e.path + ' ' + e.message).join('; ')}`);
     const unmet = costMet(row, args || {}, ctx);
     if (unmet) return no(unmet);
+    // B-233 (D-235): a row marked fromHis takes a tool call only for his own words: args.from names the talk line the
+    // call answers, and the code's ctx.line(id) must find it written by him, never by her.
+    if (row.fromHis && ctx.caller === 'tool') {
+      const line = args && args.from && typeof ctx.line === 'function' ? ctx.line(args.from) : null;
+      if (!line || line.role !== 'matt')
+        return no(
+          `a tool may call it only from his own line: ${args && args.from ? args.from + ' is not his' : 'no from'}`
+        );
+    }
     const compose = composers[name];
     if (typeof compose !== 'function') return no('no composer for it yet');
     const out = compose(args, ctx) || {};
+    if (out.refused) return no(out.refused);
     const writes = out.writes || [],
       effects = out.effects || [];
     for (const w of writes) {

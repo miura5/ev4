@@ -3705,7 +3705,8 @@
    "core/actions.mjs act(spec, name, args, ctx) composes a call and checks it against its row: the row exists and is valid, the caller may call it, the args fit, every write stays inside the row's collections, keys and fields, every effect is the row's, and the cost is met; else it refuses with the reason. ctx.caller is set by code: each code path makes one actor (tap, tool, builder, worker) and the actor's caller overwrites any the call claims.",
    "No row writes system/spec, where this table lives, or the table itself, and no effect creates, changes or deletes a scheduled task (D-200); act() and test/actions.test.mjs both refuse such a row. A deploy's system documents are core/deploy.mjs's printout, never a row's writes: ship-live is the gate (its caller and cost) and composes no writes.",
    "Every page write site and every record write a tools command prints comes from act or a core composer; today's other page sites are the legacy list in test/data/actions-legacy.json, which only shrinks (test/actions.test.mjs). The 13 conversation tools become rows one at a time, when a task touches them (their schemas move here and the page builds the tool from the row).",
-   "B-229 (D-233): a collection's his lists the fields only Matt writes (his words and his ticks): no actions row with a tool, worker or builder caller may write one (core/actions.mjs rowProblem, held by test/actions.test.mjs). A weak spot's words join with weakspots schema 2 (B-232), his talk lines with talk/guidance (B-237)."
+   "B-229 (D-233): a collection's his lists the fields only Matt writes (his words and his ticks): no actions row with a tool, worker or builder caller may write one (core/actions.mjs rowProblem, held by test/actions.test.mjs). A weak spot's words join with weakspots schema 2 (B-232), his talk lines with talk/guidance (B-237).",
+   "B-233 (D-235, D-242): weak spots are written through rows: weakspot-log (his, at once) and weakspot-propose (hers, proposed), and his triage taps weakspot-accept, weakspot-join, weakspot-snooze and weakspot-decline, with weakspot-solid; only his tap triages. A row marked fromHis takes a tool call only when args.from names a talk line of his (ctx.line, set by code), never hers. Each tap lands on the spot's survivor (a duplicate-of resolves through ctx.weakspots)."
   ],
   "build-ask": {
    "does": "A message starting build:, bug: or idea: on the page: a build job for ev4-builder (D-194, B-180)",
@@ -4263,6 +4264,448 @@
     "builder"
    ],
    "cost": "ok"
+  },
+  "weakspot-log": {
+   "does": "His own weak spot, from his words or a tap: written at once, never proposed (D-235, B-233); a tool call only with from, the talk line of his it answers, which act() checks is his",
+   "args": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string",
+      "pattern": "^(ws|note|skill)-[A-Za-z0-9_.~:@+-]{1,176}$"
+     },
+     "topic": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+     },
+     "words": {
+      "type": "string",
+      "maxLength": 2000
+     },
+     "objective": {
+      "type": "string",
+      "maxLength": 40
+     },
+     "exam": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "course": {
+      "type": "string",
+      "maxLength": 40
+     },
+     "kind": {
+      "enum": [
+       "concept",
+       "note",
+       "connection",
+       "format",
+       "skill"
+      ]
+     },
+     "origin": {
+      "type": "object"
+     },
+     "preRead": {
+      "type": "boolean"
+     },
+     "readingDue": {
+      "type": "string",
+      "format": "date"
+     },
+     "initial": {
+      "type": "object"
+     },
+     "source": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "from": {
+      "type": "string",
+      "pattern": "^m-\\d{8}-\\d{6}(\\d{3})?-[a-z]+$"
+     }
+    },
+    "required": [
+     "id",
+     "topic",
+     "initial"
+    ],
+    "additionalProperties": false
+   },
+   "writes": [
+    {
+     "collection": "weakspots",
+     "key": "^(ws|note|skill)-[A-Za-z0-9_.~:@+-]{1,176}$",
+     "ops": [
+      "set"
+     ],
+     "fields": [
+      "topic",
+      "words",
+      "objective",
+      "exam",
+      "course",
+      "kind",
+      "addedBy",
+      "origin",
+      "preRead",
+      "readingDue",
+      "initial",
+      "events"
+     ]
+    }
+   ],
+   "effects": [],
+   "callers": [
+    "tap",
+    "tool"
+   ],
+   "fromHis": true,
+   "cost": "nothing"
+  },
+  "weakspot-propose": {
+   "does": "Her candidate from a miss, a session finding or the debrief: proposed, counted nowhere until his triage (D-235, B-233)",
+   "args": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string",
+      "pattern": "^(ws|note|skill)-[A-Za-z0-9_.~:@+-]{1,176}$"
+     },
+     "topic": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+     },
+     "words": {
+      "type": "string",
+      "maxLength": 2000
+     },
+     "objective": {
+      "type": "string",
+      "maxLength": 40
+     },
+     "exam": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "course": {
+      "type": "string",
+      "maxLength": 40
+     },
+     "kind": {
+      "enum": [
+       "concept",
+       "note",
+       "connection",
+       "format",
+       "skill"
+      ]
+     },
+     "origin": {
+      "type": "object"
+     },
+     "preRead": {
+      "type": "boolean"
+     },
+     "readingDue": {
+      "type": "string",
+      "format": "date"
+     },
+     "initial": {
+      "type": "object"
+     },
+     "source": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     }
+    },
+    "required": [
+     "id",
+     "topic",
+     "initial"
+    ],
+    "additionalProperties": false
+   },
+   "writes": [
+    {
+     "collection": "weakspots",
+     "key": "^(ws|note|skill)-[A-Za-z0-9_.~:@+-]{1,176}$",
+     "ops": [
+      "set"
+     ],
+     "fields": [
+      "topic",
+      "words",
+      "objective",
+      "exam",
+      "course",
+      "kind",
+      "addedBy",
+      "origin",
+      "preRead",
+      "readingDue",
+      "initial",
+      "events",
+      "proposed"
+     ]
+    }
+   ],
+   "effects": [],
+   "callers": [
+    "tap",
+    "worker"
+   ],
+   "cost": "nothing"
+  },
+  "weakspot-accept": {
+   "does": "His Accept, one or several, each with the objective it counts under (D-242): an accept event on each spot's survivor",
+   "args": {
+    "type": "object",
+    "properties": {
+     "items": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "items": {
+       "type": "object",
+       "properties": {
+        "id": {
+         "type": "string",
+         "pattern": "^(ws|note|skill)-[A-Za-z0-9_.~:@+-]{1,176}$"
+        },
+        "objective": {
+         "type": "string",
+         "minLength": 1,
+         "maxLength": 40
+        }
+       },
+       "required": [
+        "id",
+        "objective"
+       ],
+       "additionalProperties": false
+      }
+     }
+    },
+    "required": [
+     "items"
+    ],
+    "additionalProperties": false
+   },
+   "writes": [
+    {
+     "collection": "weakspots",
+     "key": "^(ws|note|skill)-[A-Za-z0-9_.~:@+-]{1,176}$",
+     "ops": [
+      "update"
+     ],
+     "fields": [
+      "events"
+     ]
+    }
+   ],
+   "effects": [],
+   "callers": [
+    "tap"
+   ],
+   "cost": "nothing"
+  },
+  "weakspot-join": {
+   "does": "His Join (D-240, D-284): a duplicate-of link to the spot it repeats, resolved to that spot's survivor; links is the spot's links as read, kept but for an old duplicate-of",
+   "args": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string",
+      "pattern": "^(ws|note|skill)-[A-Za-z0-9_.~:@+-]{1,176}$"
+     },
+     "to": {
+      "type": "string",
+      "pattern": "^(ws|note|skill)-[A-Za-z0-9_.~:@+-]{1,176}$"
+     },
+     "links": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+       "type": "object"
+      }
+     }
+    },
+    "required": [
+     "id",
+     "to"
+    ],
+    "additionalProperties": false
+   },
+   "writes": [
+    {
+     "collection": "weakspots",
+     "key": "^(ws|note|skill)-[A-Za-z0-9_.~:@+-]{1,176}$",
+     "ops": [
+      "update"
+     ],
+     "fields": [
+      "links"
+     ]
+    }
+   ],
+   "effects": [],
+   "callers": [
+    "tap"
+   ],
+   "cost": "nothing"
+  },
+  "weakspot-snooze": {
+   "does": "His Not now (D-242): a snooze event until a date on each spot's survivor",
+   "args": {
+    "type": "object",
+    "properties": {
+     "items": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "items": {
+       "type": "object",
+       "properties": {
+        "id": {
+         "type": "string",
+         "pattern": "^(ws|note|skill)-[A-Za-z0-9_.~:@+-]{1,176}$"
+        }
+       },
+       "required": [
+        "id"
+       ],
+       "additionalProperties": false
+      }
+     },
+     "until": {
+      "type": "string",
+      "format": "date"
+     }
+    },
+    "required": [
+     "items",
+     "until"
+    ],
+    "additionalProperties": false
+   },
+   "writes": [
+    {
+     "collection": "weakspots",
+     "key": "^(ws|note|skill)-[A-Za-z0-9_.~:@+-]{1,176}$",
+     "ops": [
+      "update"
+     ],
+     "fields": [
+      "events"
+     ]
+    }
+   ],
+   "effects": [],
+   "callers": [
+    "tap"
+   ],
+   "cost": "nothing"
+  },
+  "weakspot-decline": {
+   "does": "His Decline (D-242): a decline event, with his note when he gave one, on each spot's survivor; the spot is kept",
+   "args": {
+    "type": "object",
+    "properties": {
+     "items": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "items": {
+       "type": "object",
+       "properties": {
+        "id": {
+         "type": "string",
+         "pattern": "^(ws|note|skill)-[A-Za-z0-9_.~:@+-]{1,176}$"
+        }
+       },
+       "required": [
+        "id"
+       ],
+       "additionalProperties": false
+      }
+     },
+     "note": {
+      "type": "string",
+      "maxLength": 300
+     }
+    },
+    "required": [
+     "items"
+    ],
+    "additionalProperties": false
+   },
+   "writes": [
+    {
+     "collection": "weakspots",
+     "key": "^(ws|note|skill)-[A-Za-z0-9_.~:@+-]{1,176}$",
+     "ops": [
+      "update"
+     ],
+     "fields": [
+      "events"
+     ]
+    }
+   ],
+   "effects": [],
+   "callers": [
+    "tap"
+   ],
+   "cost": "nothing"
+  },
+  "weakspot-solid": {
+   "does": "His Mark solid (B-357): a solid event on the spot's survivor",
+   "args": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string",
+      "pattern": "^(ws|note|skill)-[A-Za-z0-9_.~:@+-]{1,176}$"
+     }
+    },
+    "required": [
+     "id"
+    ],
+    "additionalProperties": false
+   },
+   "writes": [
+    {
+     "collection": "weakspots",
+     "key": "^(ws|note|skill)-[A-Za-z0-9_.~:@+-]{1,176}$",
+     "ops": [
+      "update"
+     ],
+     "fields": [
+      "events"
+     ]
+    }
+   ],
+   "effects": [],
+   "callers": [
+    "tap"
+   ],
+   "cost": "nothing"
   }
  },
  "persona": {

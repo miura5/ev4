@@ -450,9 +450,9 @@
     }
     // B-123 (D-162): a weak spot is one line, its topic and objective, opening in place to its source and its action.
     const openWs = new Set();
-    // B-357: his Mark solid, one write site for Progress's row and Study's (D-203: the legacy list only shrinks)
+    // B-357: his Mark solid, one site for Progress's row and Study's; B-233: through act() (weakspot-solid)
     function markSolid(w) {
-      return write(weakEvent(w, 'solid'));
+      return weakAct('weakspot-solid', { id: w.id });
     }
     function wsRow(w) {
       const d = w.derived;

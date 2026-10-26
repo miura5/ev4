@@ -1,21 +1,43 @@
     // ------------------------------------------------------------ forms
-    async function addWeakspot({ topic, objective = '', source }) {
-      const at = now();
+    // B-233 (D-235, D-242): every weak spot the page writes goes through act(): his own (weakspot-log), and his triage
+    // taps and Mark solid (weakAct). A refusal throws, so the tap's guard puts the old state back and says why.
+    const acted = a => {
+      if (!a || !a.ok) throw new Error((a && a.refused) || 'the actions table did not load');
+    };
+    const weakCtx = () => ({ now: now(), key: pageKey, weakspots: S.weak, line: talkLine });
+    /** A talk line by id, as the page holds it: its own unsaved lines first, then the record's days. */
+    function talkLine(id) {
+      if (T.local.has(id)) return T.local.get(id);
+      for (const d of S.talk || []) if (d.messages && d.messages[id]) return d.messages[id];
+      return null;
+    }
+    /** His own weak spot, at once (D-235). from: the talk line of his a tool call answers; without it, his tap. */
+    async function addWeakspot({ topic, objective = '', source, from }) {
       const id = E.safeId('ws-' + today + '-' + (objective || 'x') + '-' + E.slug(topic));
-      const facts = {
-        ...envelope(source || 'Logged by you', at),
-        schema: 2, // B-232
+      const args = {
+        id,
         topic,
         objective,
-        exam: objective.split('-')[0] || '',
         course: E.defaultCourse(),
-        kind: 'concept',
-        addedBy: 'page',
+        source: source || 'Logged by you',
         initial: { streak: 0, nextDue: today, recurrence: 1, misses: 0 },
-        events: {},
+        ...(from ? { from } : {}),
       };
-      await write({ op: 'set', collection: 'weakspots', id, data: facts });
+      const ctx = weakCtx();
+      if (from) {
+        acted(ACT && ACT.tool('weakspot-log', args, ctx));
+        await run(ACT.tool('weakspot-log', args, ctx).writes);
+      } else {
+        acted(ACT && ACT.tap('weakspot-log', args, ctx));
+        await run(ACT.tap('weakspot-log', args, ctx).writes);
+      }
       return id;
+    }
+    /** His tap on one weak-spot row: weakspot-accept, -join, -snooze, -decline or -solid. */
+    async function weakAct(name, args) {
+      const ctx = weakCtx();
+      acted(ACT && ACT.tap(name, args, ctx));
+      await run(ACT.tap(name, args, ctx).writes);
     }
     async function editDates(edit, by) {
       // one add / change / remove / restore through EVCore.dateEdit (D-080)
