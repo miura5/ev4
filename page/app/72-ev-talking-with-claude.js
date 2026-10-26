@@ -530,7 +530,7 @@
         {
           name: 'lookup',
           description:
-            "Read more of his record when the summary above isn't enough. what: weakspots (optionally matching query), missed (recent wrong answers), sessions, ideas, plan (an exam plan, next 5 days: the one matching query, e.g. dosage, else the target exam's, else the soonest exam's), announcements, objectives, dates (his calendar from today, or any date matching query, with ids; off = taken off), notes (his notes, newest first, or those matching query, with their text), journal (his journal entries, newest first, or matching query). Returns small JSON.",
+            "Read more of his record when the summary above isn't enough. what: weakspots (optionally matching query), missed (recent wrong answers), sessions, ideas, plan (an exam plan, next 5 days: the one matching query, e.g. dosage, else the target exam's, else the soonest exam's), announcements, objectives, dates (his calendar from today, or any date matching query, with ids; off = taken off), notes (his notes, newest first, or those matching query, each with the passage around the match; id reads one note whole), journal (his journal entries, newest first, or matching query). Text shortened to fit says cut, with from and chars. Returns small JSON.",
           inputSchema: {
             type: 'object',
             properties: {
@@ -550,12 +550,43 @@
                 ],
               },
               query: { type: 'string' },
+              id: {
+                type: 'string',
+                description: 'notes: one note by its id, read whole (up to the size a reply holds)',
+              },
             },
             required: ['what'],
           },
           execute: i => {
             const q = E.norm(i.query || '');
             const has = t => !q || E.norm(t).includes(q);
+            // D-335 (B-412 review): notes and journal text, the passage around the first match, sharing one reply's
+            // 4,000 characters across the rows found so the JSON is never cut; a shortened text says cut, from, chars.
+            const CAP = 4000;
+            const passage = (t, n) => {
+              if (t.length <= n) return { text: t };
+              const low = t.toLowerCase();
+              let at = q ? low.indexOf(String(i.query).toLowerCase().trim()) : 0;
+              for (const w of at < 0 ? q.split(' ').filter(w => w.length > 2) : [])
+                if ((at = low.indexOf(w)) >= 0) break;
+              const from = Math.max(0, Math.min(Math.max(at, 0) - Math.floor(n / 4), t.length - n));
+              return { text: t.slice(from, from + n), cut: true, from, chars: t.length };
+            };
+            const fitText = rows => {
+              for (let list = rows; ; list = list.slice(0, -1)) {
+                for (
+                  let n = Math.floor(CAP / Math.max(1, list.length));
+                  n >= 0;
+                  n = n > 40 ? Math.floor(n * 0.85) : n - 20
+                ) {
+                  const json = JSON.stringify(
+                    list.map(({ text, ...r }) => ({ ...r, ...passage(text, Math.max(n, 0)) }))
+                  );
+                  if (json.length <= CAP) return json;
+                }
+                if (list.length <= 1) return '[]';
+              }
+            };
             let out;
             switch (i.what) {
               case 'weakspots':
@@ -671,29 +702,36 @@
               case 'notes': {
                 // D-335: his notes are open to read; archived ones say so, discarded ones are left out
                 const text = n => (n.blocks || []).map(b => E.noteText(b)).join('\n');
-                const found = (S.notes || [])
-                  .filter(n => !n.discardedAt && has((n.title || '') + ' ' + text(n)))
-                  .sort((a, b) => String(b.editedAt || b.at || '').localeCompare(String(a.editedAt || a.at || '')))
-                  .slice(0, q ? 4 : 8);
-                out = found.map(n => ({
-                  id: n.id,
-                  title: n.title || E.noteTitleOf(n.blocks || []) || 'Untitled',
-                  course: n.course || undefined,
-                  edited: n.editedAt || n.at,
-                  archived: n.archivedAt ? true : undefined,
-                  earlierOf: n.earlierOf || undefined, // a copy a refused stale save kept
-                  text: text(n).slice(0, q ? 900 : 300),
-                }));
-                break;
+                const one = i.id ? (S.notes || []).find(n => n.id === i.id) : null;
+                if (i.id && !one) return JSON.stringify({ error: 'no note ' + i.id });
+                const found = one
+                  ? [one]
+                  : (S.notes || [])
+                      .filter(n => !n.discardedAt && has((n.title || '') + ' ' + text(n)))
+                      .sort((a, b) => String(b.editedAt || b.at || '').localeCompare(String(a.editedAt || a.at || '')))
+                      .slice(0, q ? 4 : 8);
+                return fitText(
+                  found.map(n => ({
+                    id: n.id,
+                    title: n.title || E.noteTitleOf(n.blocks || []) || 'Untitled',
+                    course: n.course || undefined,
+                    edited: n.editedAt || n.at,
+                    archived: n.archivedAt ? true : undefined,
+                    discarded: n.discardedAt ? true : undefined,
+                    earlierOf: n.earlierOf || undefined, // a copy a refused stale save kept
+                    text: text(n),
+                  }))
+                );
               }
               case 'journal':
                 // D-335: his journal is open to read
-                out = [...(S.journal || [])]
-                  .filter(j => has(j.text || ''))
-                  .sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')))
-                  .slice(0, 8)
-                  .map(j => ({ at: j.at, kind: j.kind || undefined, text: String(j.text || '').slice(0, 400) }));
-                break;
+                return fitText(
+                  [...(S.journal || [])]
+                    .filter(j => has(j.text || ''))
+                    .sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')))
+                    .slice(0, 8)
+                    .map(j => ({ at: j.at, kind: j.kind || undefined, text: String(j.text || '') }))
+                );
               default:
                 throw new Error('unknown lookup ' + i.what);
             }

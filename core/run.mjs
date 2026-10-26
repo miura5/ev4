@@ -13,7 +13,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import EV from './evcore.mjs';
-import { readExport } from './schemas.mjs';
+import { readExport, PAGE_ONLY } from './schemas.mjs';
 import { chunkWrites } from './batches.mjs';
 import { describeErrors, validateAgainst } from './validate.mjs';
 import { writersOf, classOf, appendEntries, appendDepth, keyWriter } from './derive.mjs';
@@ -516,6 +516,12 @@ export function compute({ spec, dir, validate, at }) {
     const ref = `${w.collection}/${w.id}`;
     if (!spec.collections[w.collection]) {
       problems.push(`${ref}: no such collection`);
+      continue;
+    }
+    // D-335: runs read the journal and his notes with the record; reading never writes, and only the page writes them.
+    // The one exception is the restore drill putting back the page's own documents as the backup holds them (B-163).
+    if (PAGE_ONLY.includes(w.collection) && !(w.asWritten === true && run.pipeline === 'restore-drill')) {
+      problems.push(`${ref}: written by the page only (D-335)`);
       continue;
     }
     const existing = (pulledDb[w.collection] || []).find(d => d.id === w.id) || null;

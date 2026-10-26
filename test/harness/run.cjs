@@ -46,6 +46,25 @@ seed.journal = {
     text: 'A made-up journal line about harness week',
   },
 };
+// B-412 review: a long made-up note whose match sits far past its start, for the lookup's passage and size checks
+const filler = k =>
+  Array.from({ length: k }, (_, n) => ({ type: 'p', runs: [{ text: `Made-up filler line ${n} about nothing.` }] }));
+seed.notes = seed.notes || {};
+seed.notes['n-20261020-120000-harnesslong'] = {
+  schema: 1,
+  writer: 'page',
+  at: '2026-10-20T17:00:00Z',
+  source: 'E.V. Home',
+  createdAt: '2026-10-20T17:00:00Z',
+  editedAt: '2026-10-20T17:00:00Z',
+  title: 'A long made-up note',
+  course: 'BIO 201',
+  blocks: [
+    ...filler(60),
+    { type: 'p', runs: [{ text: 'The zygote ladder "quoted" is the made-up marker.' }] },
+    ...filler(120),
+  ],
+};
 seed.ideas = seed.ideas || {};
 seed.ideas['idea-harness-feature'] = {
   schema: 2,
@@ -2581,6 +2600,45 @@ async function tap(page, locator, name) {
         /3\.5 to 5\.0 mEq\/L/.test(lkNotes || '') &&
         /A made-up journal line about harness week/.test(lkJournal || ''),
       String(lkNotes).slice(0, 160) + ' | ' + String(lkJournal).slice(0, 160)
+    );
+    // B-412 review: a match far past the note's start comes back as its passage, marked cut; a query that matches every
+    // note shares the 4,000 characters and still parses; one note by id reads up to the cap
+    await page.evaluate(() => {
+      window.__toolResults = [];
+      window.__chatScript = [
+        { tool: 'lookup', input: { what: 'notes', query: 'zygote ladder' } },
+        { tool: 'lookup', input: { what: 'notes', query: 'a' } },
+        { tool: 'lookup', input: { what: 'notes', id: 'n-20261020-120000-harnesslong' } },
+      ];
+      window.__chatReply = 'Here is what I see.';
+    });
+    await send(page, 'Find the zygote ladder in my notes');
+    await page.waitForTimeout(300);
+    const lkLong = await page.evaluate(() => window.__toolResults.slice(-3));
+    const parsed = lkLong.map(t => {
+      try {
+        return JSON.parse(t);
+      } catch {
+        return null;
+      }
+    });
+    const [far, many, whole] = parsed;
+    const farNote = (far || []).find(n => n.id === 'n-20261020-120000-harnesslong') || {};
+    ok(
+      'lookup notes: a match past character 900 comes back with its passage, cut and placed; every reply parses (B-412)',
+      parsed.every(Boolean) &&
+        lkLong.every(t => t.length <= 4000) &&
+        farNote.cut === true &&
+        farNote.from > 900 &&
+        farNote.chars > farNote.text.length &&
+        /zygote ladder "quoted"/.test(farNote.text) &&
+        Array.isArray(many) &&
+        many.length > 1 &&
+        many.some(n => n.cut) &&
+        whole.length === 1 &&
+        whole[0].cut === true &&
+        whole[0].text.length > 3000,
+      lkLong.map(t => String(t).length + ':' + String(t).slice(0, 120)).join(' | ')
     );
     await page.click('#tab-today');
     await page.waitForTimeout(150);

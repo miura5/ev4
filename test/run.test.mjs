@@ -722,3 +722,29 @@ test('B-163: only the restore drill may mark a write as written; any other pipel
     delete CODE_STEPS['test-copy'];
   }
 });
+
+test('D-335: a run reads the journal and his notes but never writes them; only the page does', () => {
+  const s2 = {
+    ...spec,
+    pipelines: { ...spec.pipelines, 'evening-cloud': { ...DEF, steps: [{ id: 'test-page-only', kind: 'code' }] } },
+  };
+  const text = { schema: 1, writer: 'page', at: AT, source: 'E.V. Home', text: 'A made-up line' };
+  CODE_STEPS['test-page-only'] = () => ({
+    writes: [
+      { op: 'set', collection: 'journal', id: 'j-made-up', data: text },
+      // even marked as written: only the restore drill may put back the page's own documents
+      { op: 'set', collection: 'notes', id: 'n-made-up', asWritten: true, data: { ...text, title: 'x' } },
+    ],
+  });
+  try {
+    const { dir, lines } = begin();
+    RUN.pulled({ spec: s2, dir, transcript: lines.join('\n') });
+    const r = RUN.compute({ spec: s2, dir, validate, at: AT });
+    assert.equal(r.status, 'refused');
+    assert.ok(r.problems.includes('journal/j-made-up: written by the page only (D-335)'), r.problems.join('\n'));
+    assert.ok(r.problems.includes('notes/n-made-up: written by the page only (D-335)'), r.problems.join('\n'));
+    assert.ok(!fs.existsSync(path.join(dir, 'plan.json')), 'nothing is planned');
+  } finally {
+    delete CODE_STEPS['test-page-only'];
+  }
+});

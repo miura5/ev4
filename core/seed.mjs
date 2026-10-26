@@ -1,7 +1,8 @@
 // seed-staging (Operational architecture, "Staging seeded from live"): makes the staging record a copy of the live
 // record as of an export, and stamps system/seed with that export's time, document counts and per-collection
 // hashes, so verify-deploy staging can say how old staging is. Pure. A v4 export or a backup is copied as it is, at
-// today's schema versions. The journal is never part of a seed.
+// today's schema versions. The journal is never part of a seed: copying it out of the live record is a separate matter
+// from reading it, which D-335 opens to runs; a seed still leaves it in the live record only.
 import EV from './evcore.mjs';
 import { bumpWrite, BUMPS } from './migrate.mjs';
 
@@ -18,7 +19,9 @@ export function collectionHash(docs) {
 export function seedStaging(exp, { at, exportedAt, from = 'live export', command = 'seed-staging' } = {}) {
   if (!at || !exportedAt) throw new Error('seedStaging needs opts.at and opts.exportedAt');
   if (exp.journal && exp.journal.length)
-    throw new Error('the journal is never seeded: it stays in the live record only (D-059)');
+    throw new Error(
+      'the journal is never seeded: it stays in the live record only (D-335 opens it to reading, not to copying out)'
+    );
   let docs = [];
   // A v4 export lands at today's schema versions: each document goes through its collection's bumps (none: unchanged).
   for (const [col, list] of Object.entries(exp))

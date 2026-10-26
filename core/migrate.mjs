@@ -3,7 +3,8 @@
 // original whose document changes is kept as legacy/v3-<collection>-<id>, marked migratedTo. Deterministic: the
 // same export and `at` give the same writes, every output id comes from its input id, and an export that already
 // holds the v4 documents yields no writes (so running it twice changes nothing).
-// Never reads the journal: it is not in an export, and a journal collection passed in is refused.
+// Never copies the journal: it is not in an export, and a journal collection passed in is refused. Copying it out of
+// the live record is a separate matter from reading it, which D-335 opens to runs.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -96,7 +97,9 @@ const runId = (pipeline, startedAt, v3key) =>
 export function migrateV3(v3, { at } = {}) {
   if (!at) throw new Error('migrateV3 needs opts.at (the migration stamp)');
   if (v3.journal && v3.journal.length)
-    throw new Error('the journal is page-only and never migrated by a pipeline (D-059)');
+    throw new Error(
+      'the journal is page-only and never migrated by a pipeline (D-335 opens it to reading, not to copying out)'
+    );
   const writes = [],
     skipped = [];
   const have = {};
