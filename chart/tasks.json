@@ -7698,10 +7698,10 @@
  {
   "id": "B-421",
   "kind": "bug",
-  "title": "Bug (reported Oct 26): The nightly full check can fail the Notes harness's 12-second Undo timing under load on GitHub's runners while it passes locally; make that check independent of runner speed.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "title": "Make the Notes Undo-timing check independent of runner speed",
+  "dod": "The notes harness's switch Undo check passes on GitHub's runners across three nightly runs without a timing failure",
+  "milestone": "after Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -7710,6 +7710,10 @@
   "reportedAt": "2026-10-26T18:58:26.417Z",
   "board": {
    "row": "v4 B-421: The nightly full check can fail the Notes harness's 12-second Undo…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-26T18:58:31.274Z"
   }
  }
 ]
