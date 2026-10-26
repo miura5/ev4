@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-338",
+  "date": "Oct 26",
+  "title": "Weak spots accept schema 1 until the 1-to-2 migration has run on their record",
+  "why": "B-232 review: a schema bump must not refuse writes between a deploy and its migration. weakspots.schema allows schema 1 only without schema-2 fields (proposed, words, links, accept/snooze/decline events); every writer writes 2; the D-115 migration runs any time after deploy, on staging and live, and a re-pull confirms nothing is left.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-337",
   "date": "Oct 26",
   "title": "After the Notes release: slow down and raise architecture, simplicity and upkeep before new features",
