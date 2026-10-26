@@ -7562,5 +7562,22 @@
    "outcome": "task",
    "at": "2026-10-26T08:59:51.639Z"
   }
+ },
+ {
+  "id": "B-415",
+  "kind": "request",
+  "title": "Request (reported Oct 26): Architecture probe at the latest version",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "chat, Oct 26 (D-337)",
+  "words": "Architecture probe at the latest version",
+  "reportedAt": "2026-10-26T08:59:52.530Z",
+  "board": {
+   "row": "v4 B-415: Architecture probe at the latest"
+  }
  }
 ]
