@@ -690,8 +690,8 @@
   "restore-drill": {
    "lane": "mac",
    "writer": "restore-drill",
-   "purpose": "restores the newest staging backup (from his Mac, or the newest nightly export) into the staging scratch database and checks every count and hash against the backup's own manifest",
-   "alsoWrites": "the restore it checks, into the staging scratch D1's drills/<run id>/ tables (D-302), never this record",
+   "purpose": "restores the newest backup of this record (from his Mac, or the newest nightly export) into this record's scratch database and checks every count and hash against the backup's own manifest",
+   "alsoWrites": "the restore it checks, into this record's scratch D1 (drills/<run id>/ tables, D-302), never this record",
    "failed": "The restore drill didn't finish",
    "reads": [
     {
