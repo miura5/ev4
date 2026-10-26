@@ -381,15 +381,16 @@ test('B-402 review: a paragraph of 450 formatted spans keeps all its text, split
   assert.equal(E.noteText(E.notePaste({ html: huge, text: 'z'.repeat(10) })[0]), 'z'.repeat(10));
 });
 
-test('B-402 review, B-404: a change past the size cap is refused in apply() unless it shrinks the note', () => {
+test('B-402 review, B-404, D-332: a change past the size cap is refused in apply() unless it shrinks the note', () => {
   const apply = EDITOR.slice(
     EDITOR.indexOf('function apply('),
     EDITOR.indexOf('remember(kind, sel)', EDITOR.indexOf('function apply('))
   );
   assert.match(apply, /noteTooBig\(r\.blocks\)/);
-  // a note already past a limit can be cut down: only a change that is past a limit and no smaller is refused
+  // D-332: a note already past a limit can be cut down: only a change that is past a limit and no smaller is refused
   assert.match(apply, /if \(why && !noteShrinks\(r\.blocks\)\)/);
-  assert.match(EDITOR, /function noteTooBig\(blocks\)[\s\S]*?bytes <= NOTE_BYTES/);
+  // B-404 review: the cap less the room a second note needs ('<title> (earlier)' and its earlierOf, D-326)
+  assert.match(EDITOR, /function noteTooBig\(blocks\)[\s\S]*?bytes <= NOTE_BYTES - NOTE_ROOM/);
   assert.match(EDITOR, /const noteShrinks = blocks =>[\s\S]*?noteBytes\(blocks\) <= noteBytes\(NOTE\.blocks\)/);
 });
 
@@ -406,13 +407,15 @@ test('B-404 (D-326): a stale save is never retried over the other version: both 
   assert.match(save, /await keepBoth\(theirs\)/);
   // the stopgap is gone: no conflict flag holds the note open
   assert.doesNotMatch(EDITOR, /NOTE\.conflict|Not saved: changed on another device/);
-  // the second note is written before the editor shows the newer version
+  // the second note is written before the editor shows the newer version (the first showVersion is the case where
+  // the record already holds his words, so nothing is kept twice)
   const keep = EDITOR.slice(
     EDITOR.indexOf('function keepBoth('),
     EDITOR.indexOf("window.addEventListener('ev-note-kept'")
   );
+  assert.match(keep, /if \(sameWords\(theirs, \{ blocks: NOTE\.blocks/);
   assert.ok(
     keep.indexOf("await write({ op: 'set', collection: 'notes', id: eid, data: doc })") <
-      keep.indexOf('showVersion(theirs)')
+      keep.lastIndexOf('showVersion(theirs)')
   );
 });

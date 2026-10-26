@@ -46,54 +46,145 @@
     return r;
   };
 
-  // ---- B-404: the IndexedDB copy (the record, its versions and the cursor) and the outbox of note saves
+  // ---- B-404: the IndexedDB copy (the record, its versions and the cursor) and the outbox of note saves. Two stores:
+  // 'kv' holds the record's copy, merged on each write so two tabs never drop each other's documents; 'outbox' holds one
+  // entry per note per tab (<tab> \n <collection> \n <id>), so no tab ever writes over another's waiting words. An
+  // entry is removed only once it is in the record, and only when it is still the one that was sent (its tag).
   const IDB = 'ev-app';
   const KV = 'kv';
+  const BOX = 'outbox';
+  const rand = n => {
+    const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const v = new Uint32Array(n);
+    crypto.getRandomValues(v);
+    return Array.from(v, x => A[x % 62]).join('');
+  };
+  const TAB = rand(12); // this tab, for as long as it is open
   let idbP = null;
   const idb = () =>
     (idbP =
       idbP ||
       new Promise((ok, no) => {
         if (typeof indexedDB === 'undefined' || !indexedDB) return no(new Error('no IndexedDB'));
-        const q = indexedDB.open(IDB, 1);
-        q.onupgradeneeded = () => q.result.createObjectStore(KV);
+        const q = indexedDB.open(IDB, 2);
+        q.onupgradeneeded = () => {
+          const names = q.result.objectStoreNames;
+          const has = n => (names && names.contains ? names.contains(n) : false);
+          if (!has(KV)) q.result.createObjectStore(KV);
+          if (!has(BOX)) q.result.createObjectStore(BOX);
+        };
         q.onsuccess = () => ok(q.result);
         q.onerror = () => no(q.error);
       }));
-  const idbGet = k =>
+  /** One transaction over `store`: fn(objectStore, done) runs inside it; resolves with what done() was given. */
+  const idbTx = (store, mode, fn) =>
     idb().then(
       d =>
         new Promise((ok, no) => {
-          const q = d.transaction(KV, 'readonly').objectStore(KV).get(k);
-          q.onsuccess = () => ok(q.result);
-          q.onerror = () => no(q.error);
-        })
-    );
-  const idbPut = (k, v) =>
-    idb().then(
-      d =>
-        new Promise((ok, no) => {
-          const t = d.transaction(KV, 'readwrite');
-          t.objectStore(KV).put(v, k);
-          t.oncomplete = () => ok();
+          const t = d.transaction(store, mode);
+          let out;
+          fn(t.objectStore(store), v => (out = v));
+          t.oncomplete = () => ok(out);
           t.onerror = t.onabort = () => no(t.error);
         })
     );
+  const idbGet = k =>
+    idbTx(KV, 'readonly', (st, done) => {
+      const q = st.get(k);
+      q.onsuccess = () => done(q.result);
+    });
+  /** The record's copy: read and written in one transaction, each document kept at the newer of the two versions. */
+  const writeCopy = () =>
+    idbTx(KV, 'readwrite', st => {
+      const q = st.get('record');
+      q.onsuccess = () => {
+        const old = q.result && q.result.db ? q.result : { db: {}, vers: {}, since: 0 };
+        const out = { db: clone(old.db), vers: clone(old.vers || {}), since: since, at: Date.now() };
+        for (const c of Object.keys(db)) {
+          const od = (out.db[c] = out.db[c] || {});
+          const ov = (out.vers[c] = out.vers[c] || {});
+          for (const id of Object.keys(db[c])) {
+            const mine = verOf(c, id) || 0;
+            // a newer version wins; at the same version the copy keeps what it holds (another tab's offline words,
+            // perhaps) unless this tab's own words wait to be sent
+            if (!(id in od) || mine > (ov[id] || 0) || (mine === (ov[id] || 0) && !!outbox[ownKey(c, id)])) {
+              od[id] = clone(db[c][id]);
+              if (mine) ov[id] = mine;
+            }
+          }
+        }
+        // the older cursor of the two: a read from it brings whatever either tab had not seen
+        out.since = Math.min(since || 0, old.since || 0) || since || old.since || 0;
+        st.put(out, 'record');
+      };
+    });
   let copyTimer = 0;
-  /** The record's copy written a moment after the last change (the outbox is written at once, by keepOutbox). */
+  /** The record's copy written a moment after the last change (an outbox entry is written at once, by boxPut). */
   const keepCopy = () => {
     clearTimeout(copyTimer);
-    copyTimer = setTimeout(() => {
-      idbPut('record', { db, vers, since, at: Date.now() }).catch(() => {});
-    }, 300);
+    copyTimer = setTimeout(() => writeCopy().catch(() => {}), 300);
   };
-  const outbox = {}; // c \n id -> {c, id, doc, base}: a note saved on this device, not yet in the record
-  const keepOutbox = () => idbPut('outbox', clone(outbox)).catch(() => {});
+  const boxAll = () =>
+    idbTx(BOX, 'readonly', (st, done) => {
+      const out = [];
+      const q = st.openCursor();
+      q.onsuccess = () => {
+        const cur = q.result;
+        if (!cur) return done(out);
+        out.push([cur.key, cur.value]);
+        cur.continue();
+      };
+    });
+  const boxPut = (key, o) => idbTx(BOX, 'readwrite', st => st.put(clone(o), key)).catch(() => {});
+  /** The entry removed only when it is still the one sent: another tab's newer words under that key stay. */
+  const boxDone = (key, tag) =>
+    idbTx(BOX, 'readwrite', (st, done) => {
+      const q = st.get(key);
+      q.onsuccess = () => {
+        if (q.result && q.result.tag === tag) st.delete(key);
+        done(q.result && q.result.tag !== tag ? q.result : null);
+      };
+    }).catch(() => null);
+  // outbox: <tab> \n c \n id -> {tab, c, id, doc, base, tag, refused?}: a note saved on this device, not yet in the record
+  const outbox = {};
+  const ownKey = (c, id) => TAB + '\n' + c + '\n' + id;
+  const waiting = (c, id) => Object.values(outbox).some(o => o.c === c && o.id === id);
+  // a tab is open while it holds its lock; a closed tab's waiting notes are taken over by the next tab that looks
+  const locks = typeof navigator !== 'undefined' && navigator && navigator.locks;
+  if (locks) locks.request('ev-tab-' + TAB, () => new Promise(() => {})).catch(() => {});
+  async function openTabs() {
+    if (!locks) return null;
+    try {
+      const q = await locks.query();
+      return new Set((q.held || []).map(l => String(l.name).replace(/^ev-tab-/, '')));
+    } catch (e) {
+      return null;
+    }
+  }
+  /** Waiting notes of tabs no longer open, taken into this tab's outbox (under their own keys) to send. */
+  async function adopt() {
+    const all = await boxAll().catch(() => []);
+    const open = await openTabs();
+    let n = 0;
+    for (const [key, o] of all) {
+      if (outbox[key] || !o || !o.c) continue;
+      if (o.tab !== TAB && open && open.has(o.tab)) continue; // that tab is open: it sends its own
+      if (o.tab === TAB) continue;
+      outbox[key] = o;
+      (db[o.c] = db[o.c] || {})[o.id] = o.doc;
+      n++;
+    }
+    return n;
+  }
   const net = { online: true, syncing: false };
-  const pending = () => Object.keys(outbox).length;
+  const sendable = () => Object.values(outbox).filter(o => !o.refused);
+  const pending = () => sendable().length;
   let told = '';
   function tell() {
-    const detail = { online: net.online, pending: pending(), syncing: net.syncing };
+    const refused = Object.values(outbox)
+      .filter(o => o.refused)
+      .map(o => ({ c: o.c, id: o.id, why: o.refused }));
+    const detail = { online: net.online, pending: pending(), syncing: net.syncing, refused };
     const k = JSON.stringify(detail);
     if (k === told) return;
     told = k;
@@ -151,7 +242,7 @@
       // a read that left before a save landed never puts the older copy back over it
       if (Number.isInteger(d.v) && d.v < (verOf(d.c, d.id) || 0)) continue;
       // B-404: a note saved on this device and not yet sent stays as he wrote it; replay() settles it
-      if (outbox[d.c + '\n' + d.id]) continue;
+      if (waiting(d.c, d.id)) continue;
       (db[d.c] = db[d.c] || {})[d.id] = d.data;
       setVer(d.c, d.id, d.v);
       changed.add(d.c);
@@ -169,8 +260,7 @@
   }
   const ready = (async () => {
     // B-404: the copy kept on this device, read first, so the app opens with no connection
-    const [copy, box] = await Promise.all([idbGet('record').catch(() => null), idbGet('outbox').catch(() => null)]);
-    if (box && typeof box === 'object') Object.assign(outbox, box);
+    const copy = await idbGet('record').catch(() => null);
     if (!token) await askToken('Your E.V. token');
     for (;;) {
       let got;
@@ -188,10 +278,7 @@
       if (got !== 401) break;
       await askToken('That token was refused. Try again');
     }
-    for (const k of Object.keys(outbox)) {
-      const o = outbox[k];
-      (db[o.c] = db[o.c] || {})[o.id] = o.doc;
-    }
+    await adopt(); // the notes a closed tab (or this app before a reload) left waiting
     tell();
     if (net.online && pending()) replay();
     const refresh = () =>
@@ -231,7 +318,7 @@
       const doc = make();
       // B-404: a note goes to the outbox while offline, or while an earlier save of it waits there (so they stay in
       // order); any other write is refused offline, with the document it tried to save
-      if (c === 'notes' && (outbox[key] || !net.online)) return queueNote(c, id, doc);
+      if (c === 'notes' && (outbox[ownKey(c, id)] || !net.online)) return queueNote(c, id, doc);
       if (!net.online && c !== 'notes') throw offlineError(doc);
       try {
         return await saveNow(c, id, doc);
@@ -332,11 +419,12 @@
     return e;
   }
   async function queueNote(c, id, doc) {
-    const key = c + '\n' + id;
+    const key = ownKey(c, id);
     const was = outbox[key];
-    outbox[key] = { c, id, doc, base: was ? was.base : verOf(c, id) };
+    // a new save of a refused note is a new try: he may have cut it down (D-332)
+    outbox[key] = { tab: TAB, c, id, doc, base: was ? was.base : verOf(c, id), tag: rand(12) };
     (db[c] = db[c] || {})[id] = doc;
-    await keepOutbox();
+    await boxPut(key, outbox[key]);
     keepCopy();
     tell();
     emit(c);
@@ -352,12 +440,8 @@
   };
   /** A new note id as core/notes.mjs newNoteId makes one: n-<UTC time>-<16 random letters and digits>. */
   function newNoteId(at) {
-    const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    const v = new Uint32Array(16);
-    crypto.getRandomValues(v);
     const iso = new Date(at).toISOString();
-    const t = iso.slice(0, 10).replace(/-/g, '') + '-' + iso.slice(11, 19).replace(/:/g, '');
-    return 'n-' + t + '-' + Array.from(v, x => A[x % 62]).join('');
+    return 'n-' + iso.slice(0, 10).replace(/-/g, '') + '-' + iso.slice(11, 19).replace(/:/g, '') + '-' + rand(16);
   }
   /** D-326: his version of note `id` as the second note: a new note, made now, earlierOf the original. */
   function earlierNote(his, id, at) {
@@ -365,12 +449,38 @@
     for (const k of ['archivedAt', 'discardedAt']) delete d[k];
     return { ...d, at, createdAt: at, title: earlierTitle(his.title), earlierOf: id, editedAt: his.editedAt || at };
   }
+  /** The same words: blocks, course and label, which is all a note's text is (the stamps aside). */
+  const sameWords = (a, b) =>
+    !!a &&
+    !!b &&
+    JSON.stringify(a.blocks || []) === JSON.stringify(b.blocks || []) &&
+    (a.course === undefined ? null : a.course) === (b.course === undefined ? null : b.course) &&
+    (a.label || '') === (b.label || '');
   let replaying = null;
+  let backoff = 0;
+  let retryTimer = 0;
+  /** A refusal that may pass later (the Worker or D1 busy, a rate limit): tried again after a pause that doubles. */
+  function retryLater() {
+    backoff = Math.min(60000, backoff ? backoff * 2 : 2000);
+    clearTimeout(retryTimer);
+    retryTimer = setTimeout(() => net.online && replay(), backoff);
+  }
+  function settled(key, o, doc) {
+    // a save made while this one was out goes next, pinned to the version just written
+    if (outbox[key] === o && o.doc === doc) {
+      delete outbox[key];
+      return boxDone(key, o.tag).then(newer => {
+        // another tab wrote newer words under this key meanwhile: they wait here now, pinned to what they read
+        if (newer && !outbox[key]) outbox[key] = newer;
+      });
+    }
+  }
   function replay() {
     if (replaying) return replaying;
     replaying = (async () => {
       net.syncing = true;
       tell();
+      await adopt();
       for (let round = 0; round < 20 && net.online; round++) {
         let sent = 0;
         for (const key of Object.keys(outbox)) {
@@ -387,27 +497,30 @@
           } catch (e) {
             return; // offline again: the outbox waits
           }
-          sent++;
           if (r.ok) {
+            sent++;
+            backoff = 0;
             const saved = await r.json().catch(() => ({}));
             setVer(o.c, o.id, saved.version);
-            // a save made while this one was out goes next, pinned to the version just written
-            if (outbox[key] === o && o.doc === doc) delete outbox[key];
-            else if (outbox[key]) outbox[key].base = saved.version;
+            if (outbox[key] && outbox[key] !== o) outbox[key].base = saved.version;
+            await settled(key, o, doc);
           } else if (r.status === 409) {
+            sent++;
             try {
               await keepBoth(key, o);
             } catch (e) {
-              return; // the record could not be read: the note stays in the outbox, tried again later
+              return retryLater(); // the record could not be read: the note waits, tried again later
             }
           } else if (r.status === 401) return;
+          else if (r.status === 429 || r.status >= 500) return retryLater();
           else {
-            // refused for good (its shape or size): kept here, unsent, and never tried again in a loop
+            // refused for good (its shape or size): kept on this device, unsent, and the page is told; a new save of
+            // the note (cut down, D-332) tries again
             const why = await r.text().catch(() => '');
             o.refused = r.status + ' ' + why.slice(0, 200);
+            await boxPut(key, o);
             console.warn('E.V. app: ' + o.c + '/' + o.id + ' was refused: ' + o.refused);
           }
-          await keepOutbox();
         }
         if (!sent) break;
       }
@@ -422,7 +535,9 @@
     return replaying;
   }
   /** D-326, on a stale note in the outbox: the version in the record stays the note; his is kept at once as the second
-   * note '<title> (earlier)' (sent next, as a create), and the page is told. Nothing is merged and nothing is lost. */
+   * note '<title> (earlier)' (sent next, as a create), and the page is told. Nothing is merged and nothing is lost.
+   * When the record already holds his words (another tab sent the same entry, or a save landed and its answer was
+   * lost) there is nothing to keep twice: the entry is done. */
   async function keepBoth(key, o) {
     const got = await api('run/get?collection=' + encodeURIComponent(o.c) + '&doc_id=' + encodeURIComponent(o.id));
     if (got.status === 404) {
@@ -432,15 +547,23 @@
     if (!got.ok) throw new Error('run/get answered ' + got.status);
     const cur = await got.json();
     // from here to the event, nothing waits: no save of this note can slip in between
-    const his = outbox[key].doc; // the newest he saved on this device, a save made meanwhile included
+    const now = outbox[key];
+    if (!now) return;
+    const his = now.doc; // the newest he saved on this device, a save made meanwhile included
+    db[o.c][o.id] = cur.data;
+    setVer(o.c, o.id, cur.version);
     delete outbox[key];
+    if (sameWords(cur.data, his)) {
+      emit(o.c);
+      await boxDone(key, now.tag);
+      return;
+    }
     const at = new Date().toISOString();
     const eid = newNoteId(at);
     const earlier = earlierNote(his, o.id, at);
-    outbox[o.c + '\n' + eid] = { c: o.c, id: eid, doc: earlier, base: null };
+    const ekey = ownKey(o.c, eid);
+    outbox[ekey] = { tab: TAB, c: o.c, id: eid, doc: earlier, base: null, tag: rand(12) };
     db[o.c][eid] = earlier;
-    db[o.c][o.id] = cur.data;
-    setVer(o.c, o.id, cur.version);
     try {
       window.dispatchEvent(
         new CustomEvent('ev-note-kept', {
@@ -449,6 +572,9 @@
       );
     } catch (e) {}
     emit(o.c);
+    // the second note is in IndexedDB before his entry leaves it
+    await boxPut(ekey, outbox[ekey]);
+    await boxDone(key, now.tag);
   }
 
   // ---- B-324: jobs through the API. jobs-spec.json is what the runner reads of the spec, with the schemas.

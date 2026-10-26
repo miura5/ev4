@@ -584,7 +584,8 @@ const openNoteId = page =>
         const d = window.__db.notes[i];
         return d ? d.blocks.map(b => b.runs.map(r => r.text).join('')).join('\n') : '';
       }, i);
-    await page.click('.n-pick .ver:first-child button'); // Keep this version: this device's
+    // the plain swap and Undo: Keep this version (this device's) swaps the two notes; Undo swaps them back
+    await page.click('.n-pick .ver:first-child button');
     await settle(page, 1600);
     const sw = { note: await txtOf(page, id2), earlier: await txtOf(page, kept.eid) };
     const undoLine = await page.evaluate(() => (document.querySelector('.n-pick .endline') || {}).textContent || '');
@@ -603,6 +604,88 @@ const openNoteId = page =>
         again === 2,
       JSON.stringify({ sw, undoLine, un, again })
     );
+    // B-404 review: words typed into the shown version go with it when he keeps his: nothing is dropped
+    await page.click('#note-body');
+    await page.keyboard.press(`${mod}+End`);
+    await page.keyboard.type(' typed into the shown version');
+    await settle(page, 1600);
+    await page.click('.n-pick .ver:first-child button');
+    await settle(page, 1600);
+    const typed = { note: await txtOf(page, id2), earlier: await txtOf(page, kept.eid) };
+    ok(
+      `${tag} words typed into the shown version, then Keep this version: his is the note, and the typed words are kept`,
+      / stale words/.test(typed.note) &&
+        /Written on the other device/.test(typed.earlier) &&
+        /typed into the shown version/.test(typed.earlier),
+      JSON.stringify(typed)
+    );
+    // B-404 review: the second note changes on another device while Undo is offered; Undo then never writes over it
+    const remote = (i, line) =>
+      page.evaluate(
+        async ([i, line]) => {
+          const d = JSON.parse(JSON.stringify(window.__db.notes[i]));
+          d.blocks = [...d.blocks, { type: 'p', runs: [{ text: line }] }];
+          d.at = d.editedAt = new Date(Date.parse(d.at) + 60000).toISOString();
+          const db = await window.claude.use('db');
+          await db.collection('notes').doc(i).set(d); // as another device's save arrives: the page is told
+        },
+        [i, line]
+      );
+    const before2 = await notesIn(page);
+    await remote(kept.eid, 'Remote edit on the second note');
+    await page.waitForTimeout(300);
+    await page.click('.n-pick .endline button'); // Undo
+    await settle(page, 1600);
+    const after2 = await page.evaluate(
+      ([i, eid, was]) => {
+        const txt = d => d.blocks.map(b => b.runs.map(r => r.text).join('')).join('\n');
+        const n = window.__db.notes;
+        const fresh = Object.keys(n).filter(k => !was.includes(k));
+        return { note: txt(n[i]), earlier: txt(n[eid]), fresh: fresh.map(k => [n[k].earlierOf, txt(n[k])]) };
+      },
+      [id2, kept.eid, before2]
+    );
+    ok(
+      `${tag} a remote edit to the second note, then Undo: it keeps its edit, his words go into a new second note`,
+      /Remote edit on the second note/.test(after2.earlier) &&
+        /typed into the shown version/.test(after2.earlier) &&
+        after2.fresh.length === 1 &&
+        after2.fresh[0][0] === id2 &&
+        / stale words/.test(after2.fresh[0][1]) &&
+        /Remote edit on the second note/.test(after2.note),
+      JSON.stringify(after2)
+    );
+    // a remote edit to the note itself, while the pick is open: the new version shows, and the pick ends
+    await page.click('.n-pick .ver:first-child button'); // keep again, so Undo is offered
+    await settle(page, 1600);
+    const undoBefore = await page.evaluate(() => !!document.querySelector('.n-pick .endline'));
+    await remote(id2, 'Remote line on the note');
+    await page.waitForTimeout(500);
+    const after3 = await page.evaluate(
+      i => ({
+        pick: !!document.querySelector('.n-pick .endline') || document.querySelectorAll('.n-pick .ver').length > 0,
+        body: document.getElementById('note-body').innerText,
+        all: Object.values(window.__db.notes)
+          .filter(n => n.earlierOf === i || n.createdAt)
+          .map(d => d.blocks.map(b => b.runs.map(r => r.text).join('')).join('\n'))
+          .join('\n'),
+      }),
+      id2
+    );
+    ok(
+      `${tag} a remote edit to the note ends the pick and its Undo, and every word is still kept`,
+      undoBefore &&
+        !after3.pick &&
+        /Remote line on the note/.test(after3.body) &&
+        [
+          ' stale words',
+          'Written on the other device',
+          'typed into the shown version',
+          'Remote edit on the second note',
+          'Remote line on the note',
+        ].every(w => after3.all.includes(w)),
+      JSON.stringify({ undoBefore, pick: after3.pick, body: after3.body.slice(-120) })
+    );
     await page.click('.n-back');
     const closed409 = await until(page, () => document.getElementById('notes-editor').hidden, null, 3000);
     const listed = await until(
@@ -616,7 +699,7 @@ const openNoteId = page =>
     );
     ok(`${tag} the note then closes normally, and the '(earlier)' note is in the list`, closed409 && listed, '');
 
-    // B-404: an edit that shrinks a note already past the size cap is allowed (only growth past it is refused)
+    // B-404, D-332: an edit that shrinks a note already past the size cap is allowed (only growth past it is refused)
     const bigId = 'n-20261026-100000-BigNoteBigNote01';
     await page.evaluate(id => {
       const at = '2026-10-26T10:00:00.000Z';
@@ -665,7 +748,7 @@ const openNoteId = page =>
       };
     });
     ok(
-      `${tag} an edit that shrinks a note already past the size cap is allowed`,
+      `${tag} D-332: an edit that shrinks a note already past the size cap is allowed`,
       shrunk.lines === linesBefore - 1 && !/too long/.test(shrunk.toast),
       JSON.stringify({ linesBefore, ...shrunk })
     );

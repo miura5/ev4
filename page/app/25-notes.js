@@ -59,7 +59,7 @@
       other: 'M8 3h8v18H8zM11 18h2',
     };
     // B-404: the app's connection, as its shim tells it (pwa/bridge.js 'ev-sync'); on claude.ai always online
-    const NET = { online: true, pending: 0, syncing: false };
+    const NET = { online: true, pending: 0, syncing: false, refused: [] };
     const NSTYLES = [
       ['p', 'Paragraph', '¶', '⌘⌥0'],
       ['h1', 'Heading 1', 'H1', '⌘⌥1'],
@@ -288,12 +288,13 @@
       if (!on) return;
       nCrumb.textContent = '/ ' + (E.noteTitleOf(NOTE.blocks || []) || 'New note').split(':')[0];
       // B-404: one quiet line in the same place in every state, as NoteStates shows it
+      const refused = NET.refused.find(r => r.c === 'notes' && r.id === NOTE.open);
       const [text, icon, cls] =
         NOTE.pick && !NOTE.pick.kept
           ? ['Two versions · pick one', NI.two, 'warn']
           : NOTE.state === 'saving'
             ? ['Saving…', null, '']
-            : NOTE.state === 'failed'
+            : NOTE.state === 'failed' || refused
               ? ['Not saved', null, 'bad']
               : !NET.online
                 ? ['Offline · saved on this device', NI.offline, '']
@@ -303,7 +304,12 @@
       nSync.replaceChildren(...(icon ? [nIcon(icon)] : []), text);
       nSync.classList.toggle('bad', cls === 'bad');
       nSync.classList.toggle('warn', cls === 'warn');
-      nSync.title = NOTE.state === 'failed' ? NOTE.why || '' : '';
+      nSync.title =
+        NOTE.state === 'failed'
+          ? NOTE.why || ''
+          : refused
+            ? 'The record refused this note (' + refused.why + '). Your words are kept on this device.'
+            : '';
     }
     // the view follows showTab (02) through the body's data-view; leaving Notes saves what is pending
     new MutationObserver(() => {
@@ -1099,10 +1105,13 @@
     const noteBytes = blocks =>
       new Blob([JSON.stringify(E.noteDoc(NOTE.doc, { blocks, course: NOTE.course, at: now(), source: 'E.V. Home' }))])
         .size;
-    /** Why these blocks are too big to save, or '' (the cap write() and the Worker hold a note to). */
+    // B-404 review: a note is saved only with room left under the cap for it to become a second note, '<title>
+    // (earlier)' with its earlierOf link (D-326), so a stale save can always be kept whole; the Worker's cap is unchanged
+    const NOTE_ROOM = 256;
+    /** Why these blocks are too big to save, or '' (the cap write() and the Worker hold a note to, less NOTE_ROOM). */
     function noteTooBig(blocks) {
       const bytes = noteBytes(blocks);
-      if (bytes <= NOTE_BYTES) return '';
+      if (bytes <= NOTE_BYTES - NOTE_ROOM) return '';
       return (
         'This note would be too long to save (' +
         Math.round(bytes / 1024) +
@@ -1132,10 +1141,20 @@
       void _drop;
       return data;
     }
+    const wordsOf = d =>
+      JSON.stringify([E.noteBlocks(d.blocks || []), d.course === undefined ? null : d.course, d.label || '']);
+    /** The same words (blocks, course and label): a version that holds them is no other device's. */
+    const sameWords = (a, b) => !!a && !!b && wordsOf(a) === wordsOf(b);
     function noteFollow() {
       if (NOTE.view !== 'editor' || NOTE.saving || NOTE.keeping) return;
       const theirs = noteElsewhere();
       if (!theirs) return;
+      if (NOTE.dirty && NOTE.doc && sameWords(theirs, NOTE.doc)) {
+        // his own last save, landed by another way (sent from this device's outbox): his newer words go on from it
+        NOTE.seen.add(theirs.at);
+        NOTE.doc = theirs;
+        return;
+      }
       if (NOTE.dirty) return void keepBoth(theirs);
       NOTE.seen.add(theirs.at);
       showVersion(theirs);
@@ -1144,6 +1163,11 @@
     function showVersion(doc) {
       const sel = NOTE.sel;
       const focus = document.activeElement === body;
+      // a version brought in ends any pick and its Undo: they were about the versions before it
+      if (NOTE.pick) {
+        NOTE.pick = null;
+        paintPick();
+      }
       NOTE.gen++;
       NOTE.doc = doc;
       NOTE.blocks = E.noteBlocks(doc.blocks);
@@ -1180,6 +1204,20 @@
      * version shown with the picker. A second note that can't be written leaves his words in the editor, unsaved. */
     function keepBoth(theirs) {
       if (NOTE.keeping) return NOTE.keeping;
+      if (sameWords(theirs, { blocks: NOTE.blocks, course: NOTE.course, label: NOTE.doc && NOTE.doc.label })) {
+        NOTE.seen.add(theirs.at); // the record already holds his words: nothing to keep twice
+        showVersion(theirs);
+        return Promise.resolve();
+      }
+      const big = noteTooBig(NOTE.blocks);
+      if (big) {
+        // his words can't be one note as they are: they stay here, unsaved, until he cuts them (D-332)
+        NOTE.dirty = true;
+        NOTE.state = 'failed';
+        NOTE.why = big;
+        syncHead();
+        return Promise.resolve();
+      }
       const id = NOTE.open;
       const at = now();
       const eid = E.newNoteId(at, noteRandom());
@@ -1245,6 +1283,7 @@
         hisAt: (typed && now()) || d.earlier.editedAt,
         theirs: d.current,
         offline: true,
+        earlierAts: [d.earlier.at],
       });
     });
     window.addEventListener('ev-sync', e => {
@@ -1252,12 +1291,19 @@
       NET.online = d.online !== false;
       NET.pending = d.pending || 0;
       NET.syncing = !!d.syncing;
+      NET.refused = Array.isArray(d.refused) ? d.refused : [];
       syncHead();
     });
 
     // ---- the two-versions picker (NoteStates): this device's version and the other, each with Keep this version
     function openPick(p) {
-      NOTE.pick = { ...p, his: E.noteBlocks(p.his), theirsBlocks: E.noteBlocks(p.theirs.blocks), kept: null };
+      NOTE.pick = {
+        ...p,
+        his: E.noteBlocks(p.his),
+        theirsBlocks: E.noteBlocks(p.theirs.blocks),
+        kept: null,
+        earlierSeen: new Set([p.earlier.at, ...(p.earlierAts || [])]), // the second note's versions this page wrote
+      };
       paintPick();
       syncHead();
     }
@@ -1308,9 +1354,7 @@
       const p = NOTE.pick;
       nPick.hidden = !p;
       if (!p) return nPick.replaceChildren();
-      const earlierName = noteName({
-        title: E.noteEarlierTitle(E.noteTitleOf(p.kept === 'his' ? p.theirsBlocks : p.his)),
-      });
+      const earlierName = noteName(p.earlier);
       if (p.kept) {
         const line = el('div', 'endline');
         line.setAttribute('role', 'status');
@@ -1360,23 +1404,48 @@
       box.append(h, grid);
       nPick.replaceChildren(box);
     }
-    /** Both notes written with these blocks: the note gets `note`, the second note `earlier`. */
-    async function writeBoth(note, earlier) {
+    /**
+     * The two notes' words swapped: the note takes what the second note holds now, and the second note takes what the
+     * note holds now (NOTE.blocks: words typed into the shown version included, so nothing is dropped). A version of
+     * the note from elsewhere goes through keepBoth instead (false: a new pick opens); a second note changed elsewhere
+     * keeps its words, and the note's go into a new second note.
+     */
+    async function swapVersions() {
       const p = NOTE.pick;
-      const prev = (S.notes || []).find(n => n.id === p.earlierId) || p.earlier;
-      const { id: _drop, ...prevDoc } = prev;
-      void _drop;
+      const theirs = noteElsewhere();
+      if (theirs) {
+        NOTE.dirty = true;
+        await keepBoth(theirs);
+        return false;
+      }
+      const stored = (S.notes || []).find(n => n.id === p.earlierId);
+      const cur = stored ? Object.fromEntries(Object.entries(stored).filter(([k]) => k !== 'id')) : p.earlier;
       const at = now();
-      const edoc = earlierDoc(prevDoc, earlier, at);
-      await write({ op: 'set', collection: 'notes', id: p.earlierId, data: edoc });
+      const mine = NOTE.blocks;
+      let eid = p.earlierId;
+      let prev = cur;
+      if (!p.earlierSeen.has(cur.at)) {
+        eid = E.newNoteId(at, noteRandom());
+        prev = {
+          createdAt: at,
+          earlierOf: NOTE.open,
+          course: NOTE.course,
+          ...(NOTE.doc && NOTE.doc.label ? { label: NOTE.doc.label } : {}),
+        };
+      }
+      const edoc = earlierDoc(prev, mine, at);
+      await write({ op: 'set', collection: 'notes', id: eid, data: edoc });
+      p.earlierId = eid;
       p.earlier = edoc;
-      NOTE.blocks = E.noteBlocks(note);
+      p.earlierSeen.add(edoc.at);
+      NOTE.blocks = E.noteBlocks(cur.blocks);
       NOTE.undo = [];
       NOTE.redo = [];
       notePaint({ a: { b: 0, o: 0 } }, false);
       NOTE.dirty = true;
       NOTE.edited = at;
       await saveNote();
+      return true;
     }
     /** Keep this version: his swaps the two notes' words; the other's leaves both as they are. Undo is offered. */
     async function keepVersion(which) {
@@ -1384,11 +1453,12 @@
       if (!p || p.kept) return;
       if (which === 'his') {
         try {
-          await writeBoth(p.his, p.theirsBlocks);
+          if (!(await swapVersions())) return;
         } catch (e) {
           return toast('Couldn’t swap the versions: ' + ((e && (e.message || e.code)) || 'error'));
         }
       }
+      if (NOTE.pick !== p) return;
       p.kept = which;
       paintPick();
       syncHead();
@@ -1398,11 +1468,12 @@
       if (!p || !p.kept) return;
       if (p.kept === 'his') {
         try {
-          await writeBoth(p.theirsBlocks, p.his);
+          if (!(await swapVersions())) return;
         } catch (e) {
           return toast('Couldn’t undo: ' + ((e && (e.message || e.code)) || 'error'));
         }
       }
+      if (NOTE.pick !== p) return;
       p.kept = null;
       paintPick();
       syncHead();
