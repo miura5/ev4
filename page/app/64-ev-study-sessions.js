@@ -557,6 +557,17 @@
         .filter(Boolean)
         .join(', ');
     }
+    // B-407 (D-237): the weak spots a filing proposed wait in Study's To review, and her line says so
+    function waitsLine(r) {
+      const n = ((r && r.writes) || []).filter(
+        w => w.collection === 'weakspots' && w.op === 'set' && w.data && w.data.proposed
+      ).length;
+      return n
+        ? n === 1
+          ? ' I proposed a weak spot; it waits in Study’s To review.'
+          : ` I proposed ${n} weak spots; they wait in Study’s To review.`
+        : '';
+    }
     async function endSession(reason = 'ended') {
       const s = activeSession();
       if (!s) return ['No session is running. Say “start a study session” when you’re ready.', []];
@@ -586,7 +597,7 @@
         const lead =
           reason === 'idle' ? 'No new writing for a while, so I wrapped up. ' : reason === 'time' ? 'Time. ' : '';
         return [
-          `${lead}Session saved: ${savedBits(up, st)}.${r.questions.length ? ' One thing to settle on the card.' : ''}${note}`,
+          `${lead}Session saved: ${savedBits(up, st)}.${waitsLine(r)}${r.questions.length ? ' One thing to settle on the card.' : ''}${note}`,
           // B-377 (D-316): as the demo, her one line and Open in Record; the summary card only when a question waits on him
           r.questions.length
             ? [{ type: 'session', id: s.id }]
@@ -1101,7 +1112,7 @@
             if (!res) return;
             const { up, st, r, note } = res;
             return evSay(
-              `Saved “${sessName(s)}”: ${savedBits(up, st)}.${r.questions.length ? ' One thing to settle on the card.' : ''}${note}`,
+              `Saved “${sessName(s)}”: ${savedBits(up, st)}.${waitsLine(r)}${r.questions.length ? ' One thing to settle on the card.' : ''}${note}`,
               r.questions.length
                 ? [{ type: 'session', id: s.id }]
                 : [{ type: 'go', label: 'Open in Record', to: 'record', id: s.id }],
@@ -1126,7 +1137,7 @@
           if (!res) return;
           const { up, st, r, note } = res;
           return evSay(
-            `Session saved: ${savedBits(up, st)}.${r.questions.length ? ' One thing to settle on the card.' : ''}${note}`,
+            `Session saved: ${savedBits(up, st)}.${waitsLine(r)}${r.questions.length ? ' One thing to settle on the card.' : ''}${note}`,
             r.questions.length
               ? [{ type: 'session', id: s.id }]
               : [{ type: 'go', label: 'Open in Record', to: 'record', id: s.id }],

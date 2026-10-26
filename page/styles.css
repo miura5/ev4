@@ -722,6 +722,11 @@ body:not(.on-ev) .mh .cap-now{display:none}
 .side-sec .si .st{font-size:calc(11.5px * var(--ts));color:var(--quiet);flex:none}
 .side-sec .si:hover{background:var(--surface);color:var(--text)}
 .side-sec .si.on{background:var(--bg);color:var(--text);box-shadow:0 0 0 1px var(--line)}
+/* B-407: the review row's "· 1 to review" sits on a second line, so the sidebar never cuts it off */
+.side-sec .si.si-rev{height:auto;min-height:30px;padding-top:5px;padding-bottom:5px}
+.side-sec .si.si-rev .t{display:flex;flex-direction:column;white-space:normal}
+.side-sec .si.si-rev .t,.side-sec .si.si-rev .tr{overflow:visible;text-overflow:clip}
+.side-sec .si.si-rev .tr{font-size:calc(11.5px * var(--ts));color:var(--faint)}
 .sdot{width:8px;height:8px;border-radius:4px;flex:0 0 8px;background:var(--x,var(--quiet))}
 .sdot.d-q{--x:var(--quiet)}
 .side .lab-side{display:none}
@@ -1573,6 +1578,11 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--lin
 .wk-list .wl-all{border-bottom:0;padding:8px 18px 4px;gap:8px}
 .wk-list .wl-all + .dayh{border-top:1px solid var(--line);margin-top:8px}
 .wk-list .wl-note{color:var(--quiet)}
+/* B-407: a To review row, the demo's trow: its topic and where it came from, then Accept, Join, Not now, Decline */
+.wk-list .trow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 18px;border-bottom:1px solid var(--line);background:var(--bg)}
+.wk-list .trow .tt{flex:1;min-width:200px;display:flex;flex-direction:column;gap:2px}
+.wk-list .trow .tt .wn{font-weight:500;overflow-wrap:anywhere}
+.wk-list .trow .acts{display:flex;gap:6px;flex-wrap:wrap}
 .wk-list .empty{padding:40px 18px;text-align:center}
 #weak-quizlet{display:contents}
 #weak-quizlet[hidden]{display:none}

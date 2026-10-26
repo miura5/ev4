@@ -3397,12 +3397,13 @@ async function tap(page, locator, name) {
       (await page.locator('#weak-list .wl[data-id]:not(.quiet)').count()) > 5,
       String(await page.locator('#weak-list .wl[data-id]:not(.quiet)').count())
     );
-    // B-371 (D-316): the demo's sections only: Open · N in the course; previews and solid ones stay in the record
+    // B-371 (D-316): the demo's sections only: To review · N when this run's misses were proposed (B-407), then Open · N
+    // in the course; previews and solid ones stay in the record
+    const heads = await page.$$eval('#weak-list .dayh', xs => xs.map(x => x.textContent));
     ok(
-      'weak spots: Open · N in the course, and no previews or solid section',
-      /^Open · \d+ in /.test(
-        ((await page.$('#weak-list .dayh')) && (await page.textContent('#weak-list .dayh'))) || ''
-      ) && !/Previews, before the reading|Solid ·/.test(await page.textContent('#weak-list')),
+      'weak spots: To review (when any), Open · N in the course, and no previews or solid section',
+      /^(To review · \d+\|)?Open · \d+ in /.test(heads.join('|')) &&
+        !/Previews, before the reading|Solid ·/.test(await page.textContent('#weak-list')),
       (await page.textContent('#weak-list')).slice(0, 200)
     );
     await page

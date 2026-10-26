@@ -893,14 +893,23 @@ const EVCore = (() => {
       const twin = models.find(
         w => isActive(w) && (w.objective || '') === (q.objective || '') && norm(w.topic) === norm(topic)
       );
+      // B-407 (D-237): a twin waiting for his triage (or set aside) takes the miss and adds nothing; a new spot lands on
+      // a free id (B-232), so none already there is replaced
+      const same = w => (w.objective || '') === (q.objective || '') && norm(w.topic) === norm(topic);
+      const held = !twin && models.find(w => (w.kind || 'concept') === 'concept' && untriaged(w) && same(w));
       if (twin) {
         answer.weakspotId = twin.id;
         answer.matched = true;
         state = recompute(twin, { matched: true });
         weakspotId = twin.id;
         outcome = 'Already a weak spot, so it’s seen again and comes back tomorrow.';
+      } else if (held) {
+        answer.weakspotId = held.id;
+        weakspotId = held.id;
+        outcome =
+          triageStatus(held, date) === 'proposed' ? 'Already proposed. It waits in Study’s To review.' : 'Noted.';
       } else {
-        const id = safeId('ws-' + date + '-' + (q.objective || 'x') + '-' + slug(topic));
+        const id = freeWeakspotId(safeId('ws-' + date + '-' + (q.objective || 'x') + '-' + slug(topic)), models);
         const pre = preReadFor(q, plans, date);
         const facts = {
           ...envelope('page', label || 'E.V. · ' + shortDate(date), at),
@@ -921,13 +930,14 @@ const EVCore = (() => {
           events: {},
         };
         if (pre) Object.assign(facts, { preRead: true, readingDue: pre.readingDue, preReadNote: pre.note });
+        else facts.proposed = true; // B-407 (D-237): her find waits in To review; a preview (D-041) stays as it was
         state = deriveWeakspot({ id, ...facts }, [], { examDate: examDateOf(facts.exam) });
         weakspotId = id;
         writes.push({ op: 'set', collection: 'weakspots', id, data: facts });
         answer.createdWeakspot = id;
         outcome = pre
           ? `Missed before the reading (${pre.what}), so it’s a preview, not a weak spot yet. One right answer after the reading clears it.`
-          : 'Added as a new weak spot. It comes back tomorrow.';
+          : 'Proposed as a weak spot. It waits in Study’s To review.';
       }
     }
     answer.outcome = outcome;
@@ -2316,6 +2326,7 @@ const EVCore = (() => {
     slug,
     toMs,
     openItemErrors,
+    untriaged,
   });
 
   // ---------------------------------------------------------------- skills practice (Features: "Skills practice mode"); workouts (D-108) · core/skills.mjs (B-158)

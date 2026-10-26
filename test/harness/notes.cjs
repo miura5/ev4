@@ -6,7 +6,8 @@
 // 1706 and 2560 on synthetic, synthetic with no notes, and synthetic with a long-title note. B-406: New note starts a 25-minute
 // session naming notes/<id> with its controls in the strip; a check reads the open note through sample in the session's
 // own chat; a second session ends and logs the first, and Undo puts back the note, the chat, the answer and the timer;
-// Study with E.V. and a Today task start one; End in the strip saves it.
+// Study with E.V. and a Today task start one; End in the strip saves it. B-407: a session's miss is proposed and shows
+// in Study's button, her Study line and the sidebar after the chat closes, and To review's Accept counts it.
 //   node test/harness/notes.cjs [record dir | synthetic] [screenshots dir]
 // Run `node tools/build.mjs` first. Exit code 1 when any check fails.
 const { chromium } = require('playwright');
@@ -1333,6 +1334,199 @@ const openNoteId = page =>
       `${tag} End in the strip saves the session and empties the strip`,
       endedT && !(await slot()).left,
       JSON.stringify(await slot())
+    );
+    ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
+    await page.context().close();
+  }
+
+  // ---- B-407 (D-237, D-334): a missed check in a Notes session proposes a weak spot to Study's To review, visibly.
+  // With the morning's review row on today (as it writes it), a session's miss is filed proposed at End; after the
+  // chat closes (and after a reload) Study's button reads "Weak spots · N · 1 to review", her Study line names it, and
+  // the sidebar's review row carries "· 1 to review" whole, not cut off; Accept then counts it and To review empties.
+  {
+    const db = JSON.parse(JSON.stringify(seed));
+    const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date());
+    db.days[day].list.items.push({
+      id: 'review-base',
+      tag: 'REVIEW',
+      kind: 'reviews',
+      text: 'Review · 3 weak spots (~10 min)',
+      minutes: 10,
+    });
+    const { page, errors } = await open(browser, { width: 1280, height: 860 }, db);
+    const tag = '[1280 B-407]';
+    const TOPIC = 'Frank-Starling curve';
+    const spots = () =>
+      page.evaluate(() => Object.entries(window.__db.weakspots || {}).map(([id, d]) => ({ id, ...d })));
+    const before = (await spots()).map(w => w.id);
+    await page.click('#tab-notes');
+    await until(page, () => !document.getElementById('p-notes').hidden);
+    await page.click('#notes-new');
+    await until(page, () => !document.getElementById('notes-editor').hidden);
+    await settle(page);
+    await until(page, () => /left/.test((document.querySelector('#ev-sslot .s-left') || {}).textContent || ''));
+    await page.click('#note-body');
+    await page.keyboard.type('# Cardiac output');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type(
+      'Preload is the stretch before contraction; afterload is the pressure the heart pumps against.'
+    );
+    await settle(page);
+    // one check through the session's chat, answered wrong; Claude's wrap-up at End names the miss under E4-3
+    await page.evaluate(topic => {
+      window.__chatScript = [{ tool: 'study_session', input: { action: 'quiz' } }];
+      window.__chatReply = 'Posted.';
+      window.__sampleFn = p => {
+        const t = JSON.stringify(p);
+        if (/weakSpots/.test(t))
+          return {
+            summary: 'Worked through preload and afterload.',
+            weakSpots: [{ objective: 'E4-3', topic }],
+            connections: [],
+            noteTodos: [],
+            cards: [],
+          };
+        if (/items/.test(t)) return { items: [{ text: 'Which one does vasoconstriction raise?', kind: 'why' }] };
+        return {};
+      };
+    }, TOPIC);
+    await page.click('#ev-btn');
+    await until(page, () => !document.getElementById('evchat').hidden);
+    await page.fill('#evc-input', 'Quiz me on this note');
+    await page.press('#evc-input', 'Enter');
+    await until(page, () => !!document.querySelector('#evchat .msgs .check'), null, 6000);
+    await page.evaluate(() => {
+      window.__chatScript = [];
+      window.__chatReply = 'Not quite: vasoconstriction raises afterload.';
+    });
+    await page.fill('#evc-input', 'Preload');
+    await page.press('#evc-input', 'Enter');
+    await page.waitForTimeout(800);
+    await page.click('#ev-sslot .s-end');
+    const filed = await until(
+      page,
+      ([b, topic]) =>
+        Object.entries(window.__db.weakspots || {}).some(([id, w]) => !b.includes(id) && w.topic === topic),
+      [before, TOPIC],
+      8000
+    );
+    const made = (await spots()).filter(w => !before.includes(w.id));
+    const sp = made[0] || {};
+    ok(
+      `${tag} the session's miss is filed as one proposed weak spot under its objective, from the session`,
+      filed &&
+        made.length === 1 &&
+        sp.proposed === true &&
+        sp.objective === 'E4-3' &&
+        !!(sp.origin && sp.origin.session),
+      JSON.stringify(made.map(w => [w.id, w.proposed, w.objective]))
+    );
+    const said = await until(
+      page,
+      () => /waits in Study’s To review/.test(document.getElementById('evchat').textContent),
+      null,
+      4000
+    );
+    ok(`${tag} her line in the session's chat says it waits in Study's To review`, said, '');
+    await page.screenshot({ path: path.join(shots, 'b407-session-filed-1280.png') });
+    await page.click('#evchat [aria-label="Close"]');
+    await page.waitForTimeout(400);
+    const places = () =>
+      page.evaluate(() => {
+        const side = [...document.querySelectorAll('#side-today .si')].find(b => /to review/.test(b.textContent));
+        const t = side && side.querySelector('.t');
+        const tr = side && side.querySelector('.t .tr');
+        const box = side && side.getBoundingClientRect();
+        // each part whole: no ellipsis, nothing wider than its box, nothing past the row's right edge
+        const cut = x => !x || x.scrollWidth > x.clientWidth + 0.5 || x.getBoundingClientRect().right > box.right + 0.5;
+        const line = document.getElementById('evline');
+        return {
+          chat: !document.getElementById('evchat').hidden,
+          button: (document.getElementById('study-qweak') || {}).textContent || '',
+          buttonShown: !!document.getElementById('study-qweak') && !document.getElementById('study-qweak').hidden,
+          line: line && !line.hidden ? line.textContent : '',
+          side: t ? [t.firstChild.textContent, tr ? tr.textContent : ''] : [],
+          clipped: t ? cut(t) || cut(tr) : null,
+          sideW: t ? [t.scrollWidth, t.clientWidth, tr && tr.scrollWidth, tr && tr.clientWidth] : null,
+        };
+      });
+    const check = async when => {
+      await page.click('#tab-study');
+      await until(page, () => !document.getElementById('p-study').hidden);
+      await page.waitForTimeout(300);
+      const p = await places();
+      ok(
+        `${tag} ${when}: Study's button reads "Weak spots · N · 1 to review"`,
+        !p.chat && p.buttonShown && /^Weak spots · \d+ · 1 to review$/.test(p.button),
+        p.button
+      );
+      ok(
+        `${tag} ${when}: her Study line names it, with Review`,
+        /1 weak spot from your note session to review\./.test(p.line) && /Review/.test(p.line),
+        p.line
+      );
+      ok(
+        `${tag} ${when}: the sidebar's review row reads "Review · 3 weak spots", then "1 to review", neither cut off`,
+        JSON.stringify(p.side) === '["Review · 3 weak spots","1 to review"]' && p.clipped === false,
+        JSON.stringify({ side: p.side, w: p.sideW })
+      );
+      return p;
+    };
+    await check('after the chat closes');
+    await page.screenshot({ path: path.join(shots, 'b407-study-1280.png') });
+    await page.evaluate(() => sessionStorage.setItem('__db', JSON.stringify(window.__db))); // the record, as written
+    await page.reload();
+    await until(page, () => !!document.getElementById('tab-study'));
+    await page.waitForTimeout(800);
+    await check('after a reload');
+    // To review on Weak spots: the row, its four taps, and Accept counts it under its objective
+    await page.click('#study-qweak');
+    await until(page, () => !document.getElementById('weak-list').closest('[hidden]'));
+    await page.waitForTimeout(300);
+    const wk = await page.evaluate(id => {
+      const heads = [...document.querySelectorAll('#weak-list .dayh')].map(x => x.textContent);
+      const row = document.querySelector(`#weak-list .trow[data-id="${id}"]`);
+      return {
+        heads,
+        row: row ? row.textContent : '',
+        btns: row ? [...row.querySelectorAll('button')].map(b => [b.textContent, b.disabled]) : [],
+        side: (document.getElementById('study-side') || document.body).textContent.includes('How triage works'),
+      };
+    }, sp.id);
+    ok(
+      `${tag} Weak spots leads with "To review · 1": its topic, its objective and Accept, Join, Not now, Decline`,
+      wk.heads[0] === 'To review · 1' &&
+        wk.row.includes(TOPIC) &&
+        /Under “Describe preload/.test(wk.row) &&
+        JSON.stringify(wk.btns.map(b => b[0])) === '["Accept","Join","Not now","Decline"]' &&
+        wk.btns[0][1] === false,
+      JSON.stringify(wk)
+    );
+    await page.screenshot({ path: path.join(shots, 'b407-to-review-1280.png') });
+    const openBefore = await page.evaluate(() => document.getElementById('study-qweak').textContent);
+    const accBtn = `#weak-list .trow[data-id="${sp.id}"] button:has-text("Accept")`;
+    if (sp.id && (await page.locator(accBtn).count())) await page.click(accBtn);
+    const accepted = await until(
+      page,
+      id =>
+        Object.values((window.__db.weakspots[id] || {}).events || {}).some(
+          e => e.type === 'accept' && e.objective === 'E4-3' && e.by === 'owner'
+        ),
+      sp.id,
+      4000
+    );
+    await page.waitForTimeout(300);
+    const after = await page.evaluate(
+      id => ({
+        heads: [...document.querySelectorAll('#weak-list .dayh')].map(x => x.textContent),
+        open: !!document.querySelector(`#weak-list .wl[data-id="${id}"]`),
+      }),
+      sp.id
+    );
+    ok(
+      `${tag} Accept writes his accept event with its objective; To review is gone and the spot is open`,
+      accepted && !after.heads.some(h => /To review/.test(h)) && after.open,
+      JSON.stringify({ accepted, after, openBefore })
     );
     ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
     await page.context().close();

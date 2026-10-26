@@ -792,17 +792,33 @@
       parts.push(
         el('span', 'mini', ['Logged to Record.', solid ? solid + ' marked solid.' : ''].filter(Boolean).join(' '))
       );
-      // B-376 (D-316): the demo's StudyResults line under the score. B-381: in true words: each miss already wrote its
-      // weak spot through the answer's own write (a new spot, or its twin seen again), so the line says they are saved,
-      // with Review; there is nothing to accept.
-      if (missed.length) {
+      // B-376 (D-316): the demo's StudyResults line under the score. B-407 (D-237): each miss with no weak spot of its
+      // own was proposed as one; those still waiting for his triage are named, with Accept all and Review (Weak spots).
+      const waiting = E.toReview(M.models, today);
+      const fromThis = waiting.filter(w =>
+        missed.some(q => answers[q.id] && (answers[q.id].createdWeakspot === w.id || answers[q.id].weakspotId === w.id))
+      );
+      if (fromThis.length) {
         const line = el('div', 'endline');
+        const ok = fromThis.filter(w => w.objective);
+        const all = btn(
+          'Accept all',
+          ev =>
+            guard(ev.currentTarget, () =>
+              weakAct('weakspot-accept', { items: ok.map(w => ({ id: w.id, objective: w.objective })) })
+            ),
+          { cls: 'btn primary sm' }
+        );
+        all.disabled = !ok.length;
         line.append(
           el(
             'span',
             'sp',
-            missed.length === 1 ? '1 miss is saved as a weak spot.' : missed.length + ' misses are saved as weak spots.'
+            fromThis.length === 1
+              ? '1 miss is proposed as a weak spot.'
+              : fromThis.length + ' misses are proposed as weak spots.'
           ),
+          all,
           btn(
             'Review',
             () => {

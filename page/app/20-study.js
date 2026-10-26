@@ -109,6 +109,13 @@
             String(b.addedAt || '').localeCompare(String(a.addedAt || ''))
         );
     }
+    /** B-407 (D-237): her proposed spots waiting for his triage in a course (a snooze run out is back), as the demo's
+     *  "To review · N"; a spot with no course shows in every course. */
+    function reviewInCourse(course) {
+      return E.toReview(M ? M.models : [], today).filter(
+        w => (w.kind || 'concept') === 'concept' && (!course || !wsCourse(w) || wsCourse(w) === course)
+      );
+    }
     function syncStudyBar() {
       const v = ui.study,
         quiz = v === 'review' || v === 'practice';
@@ -129,14 +136,17 @@
       // B-351 (D-313): on the overview the strip is the demo's: the course switch, Quiz me, Weak spots · N, Start session
       const ov = v === 'objectives';
       $('study-qquiz').hidden = !quiz && !ov;
-      let nW = 0;
+      let nW = 0,
+        nR = 0;
       try {
         nW = M ? openInCourse(ui.studyCourse).length : 0; // B-371: the same N as Weak spots' "Open · N in <course>"
+        nR = M ? reviewInCourse(ui.studyCourse).length : 0; // B-407: and the demo's "· 1 to review"
       } catch {
-        nW = 0; // the bar can sync before the model is first built
+        nW = nR = 0; // the bar can sync before the model is first built
       }
       $('study-qweak').hidden = !quiz && !ov;
-      $('study-qweak').textContent = 'Weak spots' + (nW ? ' · ' + nW : '');
+      $('study-qweak').textContent =
+        'Weak spots' + (nW || nR ? ' · ' + nW : '') + (nR ? ' · ' + nR + ' to review' : '');
       // in the quiz card the way back replaces the view tabs, so no switch shows with nothing picked (C-15)
       $('seg-study').hidden = quizOpen('study') || (innerWidth >= 600 && ui.tab !== 'study');
       $('study-course').hidden = v !== 'objectives' || $('study-course').children.length < 2;
@@ -169,8 +179,34 @@
       if (ui.study === 'review' || ui.study === 'practice')
         return quizAtEnd[ui.study === 'review' ? 'rv' : 'pr'] // B-370: the results card speaks for itself, as the demo's
           ? null
-          : { text: 'Each miss is saved as a weak spot as you go.' }; // B-385: as the answer's own write does
-      if (ui.study === 'weak') return { text: 'Each closes after two right answers on different days.' };
+          : { text: 'Misses are proposed as weak spots. You review them once, at the end.' }; // B-407, as the demo's
+      const prop = reviewInCourse(ui.studyCourse);
+      if (ui.study === 'weak')
+        return {
+          text: prop.length
+            ? prop.length + ' to review. Accept the real ones, join duplicates, and decline slips.'
+            : 'Each closes after two right answers on different days.',
+        };
+      if (prop.length) {
+        // B-407: on the overview her proposed spots lead, with Review (the demo's line)
+        const fromS = prop.filter(w => w.origin && w.origin.session).length === prop.length;
+        const n = prop.length;
+        return {
+          text:
+            (fromS
+              ? n === 1
+                ? '1 weak spot from your note session'
+                : n + ' weak spots from your note sessions'
+              : plural(n, 'weak spot')) + ' to review.',
+          act: [
+            'Review',
+            () => {
+              setStudy('weak');
+              render();
+            },
+          ],
+        };
+      }
       const cur = studyExams().find(x => x.course === ui.studyCourse);
       if (!cur) return null;
       if (!cur.exam) {
@@ -651,7 +687,7 @@
         el('span', 'lab', 'Mini quiz · ' + miniWords(cur) + ' from this course'), // B-385: the number it holds
         // B-375: with nothing waiting, Take the quiz writes five for the course
         el('div', 'mq-q', teaser || 'Five new questions from this course, written when you start.'),
-        el('div', 'mini', 'Each miss is saved as a weak spot as you go.') // B-385: as the answer's own write does
+        el('div', 'mini', 'Misses are proposed as weak spots, for you to review.') // B-407: as the answer's own write does
       );
       const r = el('div', 'mq-row');
       r.append(btn('Take the quiz', ev => courseQuiz(ev.currentTarget), { cls: 'btn neutral' }));
@@ -760,7 +796,7 @@
     /** B-347 (D-312): Weak spots as the demo's StudyWeak board. A strip (All topics back to Objectives, "Weak spots ·
      *  course", Quiz me), then the open spots in that course as full-width rows under one quiet head (B-371). An open row has its dot, its topic, a grey line (where it came from, how often, when
      *  it is next due, its objective), Drill and Mark solid. The side pane is the demo's
-     *  How triage works (B-365). There is no To review section: nothing in the record proposes weak spots yet (B-300). */
+     *  How triage works (B-365, B-407). To review leads with her proposed spots (B-407). */
     const objText = id => (S.objectives.find(o => o.id === id) || {}).text || '';
     function weakQuizAll(b, course) {
       // today's review set aims at the most due spots; with none yet, five new questions for the course (B-375)
@@ -817,14 +853,68 @@
       }
       return row;
     }
+    /** B-407: one To review row. Accept counts it under its objective from tomorrow; Join links it to an open spot
+     *  under the same objective (off when there is none); Not now hides it until tomorrow; Decline keeps it, uncounted. */
+    function reviewRow(w, open) {
+      const row = el('div', 'trow');
+      row.dataset.id = w.id;
+      const obj = objText(w.objective);
+      const tx = el('div', 'tt');
+      tx.append(
+        el('span', 'wn', w.topic || 'Untitled'),
+        el('span', 'mini', [obj ? 'Under “' + obj + '”' : 'No objective yet', w.source].filter(Boolean).join(' · '))
+      );
+      const to = open.find(x => x.id !== w.id && x.objective && x.objective === w.objective);
+      const name = w.topic || 'this weak spot';
+      const tap = (label, aria, fn, cls = 'btn ghost sm') => {
+        const b = btn(label, ev => guard(ev.currentTarget, fn), { cls });
+        b.setAttribute('aria-label', aria);
+        return b;
+      };
+      const acc = tap(
+        'Accept',
+        'Accept ' + name + (obj ? ' under ' + obj : ''),
+        () => weakAct('weakspot-accept', { items: [{ id: w.id, objective: w.objective }] }),
+        'btn neutral sm'
+      );
+      acc.disabled = !w.objective; // its objective is changed in B-235's surface; with none there is nothing to count under
+      const join = tap(
+        'Join',
+        to
+          ? 'Join to “' + (to.topic || to.id) + '” (it’s a duplicate)'
+          : 'Join: no open weak spot under this objective',
+        () => weakAct('weakspot-join', { id: w.id, to: to.id }) // B-233 review: join reads the spot's links itself
+      );
+      join.disabled = !to;
+      const acts = el('div', 'acts');
+      acts.append(
+        acc,
+        join,
+        tap('Not now', 'Not now: ' + name + ' comes back tomorrow', () =>
+          weakAct('weakspot-snooze', { items: [{ id: w.id }], until: E.addDays(today, 1) })
+        ),
+        tap('Decline', 'Decline ' + name + ': kept, never counted', () =>
+          weakAct('weakspot-decline', { items: [{ id: w.id }] })
+        )
+      );
+      row.append(tx, acts);
+      return row;
+    }
     function renderWeak() {
-      // B-371 (D-316): the demo's sections only: To review (nothing in the record proposes weak spots yet, B-300), then
+      // B-371 (D-316): the demo's sections only: To review (B-407), then
       // Open · N in the course picked on the overview, then Quiz me on all of them. Previews, solid ones, notes and
       // skills stay in the record and in Progress; this screen doesn't list them.
       const course = ui.studyCourse || E.defaultCourse();
       const active = openInCourse(course);
       $('weak-lab').textContent = 'Weak spots' + (course ? ' · ' + course : '');
       const out = [];
+      // B-407 (D-237, D-242): her proposed spots first, under "To review · N", absent at zero; each row is the demo's
+      // trow (its topic, where it came from and its objective) with Accept, Join, Not now and Decline, through act()
+      const prop = reviewInCourse(course);
+      if (prop.length) {
+        out.push(el('div', 'dayh', 'To review · ' + prop.length));
+        for (const w of prop) out.push(reviewRow(w, active));
+      }
       if (active.length) {
         out.push(el('div', 'dayh', 'Open · ' + active.length + (course ? ' in ' + course : '')));
         for (const w of active) out.push(wkRow(w));
@@ -833,15 +923,15 @@
         out.push(all);
       } else out.push(el('div', 'empty', 'No weak spots open' + (course ? ' in ' + course : '') + '.'));
       $('weak-list').replaceChildren(...out);
-      // B-365 (D-316): the side pane, in the demo's place. B-381: it says what happens: a miss is saved as a counted weak
-      // spot at once, with nothing to accept, and the spot closes when he answers it right over time or marks it solid.
+      // B-365 (D-316): the side pane, in the demo's place. B-407: the demo's How triage works, now that a miss is
+      // proposed and waits for his tap
       const p = el('div', 'ov-detail wk-side');
-      p.append(el('span', 'lab', 'How weak spots work'));
+      p.append(el('span', 'lab', 'How triage works'));
       for (const t of [
-        'A miss is saved as a weak spot right away',
-        'It counts under its objective until it closes',
-        'Answered right over time, it closes on its own',
-        'Mark solid closes it now',
+        'Accept: it counts under her objective',
+        'Join: a duplicate of an open one',
+        'Not now: back at your next session',
+        'Decline: kept, never counted',
       ]) {
         const r = el('div', 'od-ws');
         r.append(el('i', 'dot'), el('span', 'sn', t));

@@ -56,11 +56,25 @@
         b.addEventListener('click', go);
         return b;
       };
+      // B-407: her proposed weak spots show on the day's review row, as the demo's "Review: 3 weak spots · 1 to review";
+      // with no review row today, one row of their own that opens Weak spots, so they stay in sight
+      let nR = 0;
+      try {
+        nR = E.toReview(M.models, today).filter(w => (w.kind || 'concept') === 'concept').length;
+      } catch {
+        nR = 0; // the sidebar can draw before the model is first built
+      }
+      const revRow = open.find(it => it.tag === 'REVIEW');
+      const toWeak = () => {
+        showTab('study');
+        setStudy('weak');
+        render();
+      };
       const item = it => {
         const due = it.tag === 'GRADED' ? gradedDue(it) : null;
         const dot = (it.tag !== 'GRADED' && BADGE[it.tag] && BADGE[it.tag][1]) || 'd-q'; // B-361: Graded's dot is grey
         const sel = ui.tab === 'today' && ui.taskSel === it.id && !ui.taskGone;
-        return row(
+        const b = row(
           dot,
           E.rowText(it), // B-392: the row shows its day
           sideWhen(it, due),
@@ -70,16 +84,24 @@
           },
           sel ? 'si on' : 'si'
         );
+        if (it === revRow && nR) {
+          // B-407: "· 1 to review" on its own line under the row's words, so neither is cut off in the 236 px sidebar
+          b.classList.add('si-rev');
+          b.querySelector('.t').append(el('span', 'tr', nR + ' to review'));
+        }
+        return b;
       };
       const more = open.length - SIDE_MAX;
       const head = el('p', 'sec');
       head.append(el('span', null, 'Today'), el('span', 'sp'), el('span', 'n-left', open.length + ' left'));
+      const own = nR && !(revRow && open.indexOf(revRow) < SIDE_MAX);
       t.replaceChildren(
-        ...(open.length ? [head] : []),
+        ...(open.length || own ? [head] : []),
         ...open.slice(0, SIDE_MAX).map(item),
+        ...(own ? [row(BADGE.REVIEW ? BADGE.REVIEW[1] : 'd-q', 'Weak spots · ' + nR + ' to review', '', toWeak)] : []),
         ...(more > 0 ? [row(null, more + ' more in Today', '', () => showTab('today'), 'si more')] : [])
       );
-      t.hidden = !open.length;
+      t.hidden = !open.length && !own;
     }
     // B-334 (D-312): Preferences opens its popover (Theme, Contrast, System); Esc, a click outside or System closes it,
     // and Esc returns focus to the button.

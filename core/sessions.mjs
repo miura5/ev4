@@ -25,6 +25,7 @@ export function makeSessions(core) {
     slug,
     toMs,
     openItemErrors,
+    untriaged,
   } = core;
 
   // ---------------------------------------------------------------- session findings
@@ -126,6 +127,17 @@ export function makeSessions(core) {
           ask: 'same or different?',
         });
       } else {
+        // B-407 (D-237): a finding whose twin already waits for his triage (or he declined, snoozed or joined it) adds
+        // nothing; a new one lands on a free id (B-232) and waits as proposed
+        const held = weakspots.find(
+          x =>
+            x &&
+            (x.kind || 'concept') === 'concept' &&
+            untriaged(x) &&
+            x.objective === w.objective &&
+            norm(x.topic) === norm(topic)
+        );
+        if (held) return;
         writes.push({
           op: 'set',
           collection: 'weakspots',
@@ -133,6 +145,7 @@ export function makeSessions(core) {
           data: {
             ...env(),
             schema: 2, // B-232
+            proposed: true, // B-407 (D-237): her find waits in Study's To review, counted nowhere until he accepts it
             topic,
             objective: w.objective,
             exam: w.objective.split('-')[0],
