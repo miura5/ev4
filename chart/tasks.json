@@ -7396,11 +7396,13 @@
  {
   "id": "B-408",
   "kind": "request",
-  "title": "Request (reported Oct 25): Build retire Study Watch and the Conversation's session card (B-396, D-325).",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
-  "depends": [],
+  "title": "Notes: retire Study Watch and the Conversation's session card",
+  "dod": "The reader code path (readerCall, probeReader), renderSessCard, renderBar and Conversation's Start session are removed from the page. spec.registry.studyWatch is marked retired; studywatch/ and the .mcpb stay (nothing deleted). The build stops packing the reader, and the environments rows are updated. Checks that pinned these are retired, each confirmed by an independent reviewer. B-321 is joined. grep finds no live reader call in page/ or tools/. npm test, smoke, smoke:pwa and check --touched are green, and ship staging is GREEN. Never reaches the claude.ai live page before the cutover (D-325). Own review.",
+  "milestone": "PWA",
+  "status": "open",
+  "depends": [
+   "B-406"
+  ],
   "notes": "",
   "commit": null,
   "source": "build manager, B-396 plan",
@@ -7408,6 +7410,10 @@
   "reportedAt": "2026-10-26T00:53:05.604Z",
   "board": {
    "row": "v4 B-408: Build retire Study Watch and the Conversation's session card (B-396,…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-26T00:53:08.090Z"
   }
  }
 ]
