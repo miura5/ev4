@@ -378,24 +378,41 @@ test('B-324: the staging proof holds a study guide to done', async () => {
   assert.ok(judge('study-guide', job, { data: { status: 'done', result: { text: 'guide' } } }).every(l => l.ok));
 });
 
-test('B-232 (D-115): the staging check knows a schema bump legacy copy, and nothing that only looks like one', async () => {
-  const { knownWriter } = await import('../tools/pwa-staging.mjs');
-  const copy = {
-    changed: { schema: 1 },
-    added: [],
-    omits: ['events', 'links'],
-    hash: 'a'.repeat(64),
-    migratedFrom: 'weakspots/ws-x',
-    migratedTo: 'weakspots/ws-x',
-    migratedAt: '2026-10-26T10:43:38.172Z',
-    migration: 'weakspots schema 1 to 2',
-  };
-  assert.equal(knownWriter({ c: 'legacy', id: 'v4-weakspots-ws-x-s1', data: copy }), 'migration');
-  assert.equal(knownWriter({ c: 'legacy', id: 'not-a-copy', data: copy }), null, 'an id of another shape');
-  assert.equal(knownWriter({ c: 'legacy', id: 'v4-weakspots-ws-x-s1', data: { ...copy, hash: 'x' } }), null);
-  assert.equal(
-    knownWriter({ c: 'legacy', id: 'v4-weakspots-ws-x-s1', data: { ...copy, migratedTo: 'weakspots/other' } }),
-    null
-  );
-  assert.equal(knownWriter({ c: 'notes', id: 'v4-weakspots-ws-x-s1', data: copy }), null, 'only in legacy');
+test('B-232 (D-115): the staging check knows a weak-spot bump copy as the migration writes it, and nothing else', async () => {
+  const { knownWriter, recordDiffs } = await import('../tools/pwa-staging.mjs');
+  const { migrateBumps } = await import('../core/migrate.mjs');
+  const dir = path.join(ROOT, 'test/data/bumps/weakspots-1/before/weakspots');
+  const spot = JSON.parse(fs.readFileSync(path.join(dir, fs.readdirSync(dir).sort()[0]), 'utf8'));
+  const { writes } = migrateBumps({ weakspots: [spot] }, { at: '2026-10-26T10:43:38.172Z' });
+  const copy = writes.find(w => w.collection === 'legacy');
+  const bumped = writes.find(w => w.collection === 'weakspots');
+  const doc = (c, id, data) => ({ c, id, data });
+  const seed = { weakspots: { [spot.id]: spot } };
+  const body = docs => ({ docs });
+  // the real copy beside its bumped document: counted as the migration's, no problem
+  const ok = recordDiffs(body([doc('weakspots', bumped.id, bumped.data), doc('legacy', copy.id, copy.data)]), seed);
+  assert.deepEqual(ok.problems, []);
+  assert.equal(ok.added.migration, 1);
+  // the same copy with its document still at schema 1, or missing, is no known writer's
+  const stale = recordDiffs(body([doc('weakspots', spot.id, spot), doc('legacy', copy.id, copy.data)]), seed);
+  assert.equal(stale.problems.length, 1, JSON.stringify(stale.problems));
+  const have = new Map([[`weakspots/${bumped.id}`, bumped.data]]);
+  assert.equal(knownWriter(doc('legacy', copy.id, copy.data), new Map(), have), 'migration');
+  assert.equal(knownWriter(doc('legacy', copy.id, copy.data), new Map(), new Map()), null, 'its document missing');
+  // anything that only looks like one
+  const bad = [
+    ['an id that does not match', 'v4-weakspots-other-s1', copy.data],
+    ['another collection in the id', copy.id.replace('weakspots', 'sets'), copy.data],
+    ['empty marks', copy.id, { ...copy.data, migration: '', migratedAt: '' }],
+    [
+      'a migratedFrom it does not name',
+      copy.id,
+      { ...copy.data, migratedFrom: 'weakspots/zzz', migratedTo: 'weakspots/zzz' },
+    ],
+    ['no hash', copy.id, { ...copy.data, hash: '0' }],
+    ['no delta', copy.id, { ...copy.data, changed: undefined }],
+    ['a step that goes down', copy.id, { ...copy.data, migration: 'weakspots schema 1 to 1' }],
+  ];
+  for (const [why, id, data] of bad) assert.equal(knownWriter(doc('legacy', id, data), new Map(), have), null, why);
+  assert.equal(knownWriter(doc('notes', copy.id, copy.data), new Map(), have), null, 'only in legacy');
 });

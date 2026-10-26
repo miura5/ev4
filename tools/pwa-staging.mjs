@@ -136,20 +136,31 @@ function roleRun(data, role, runs, rowAt) {
  * record (`runs`, from runsOf); or a staging pipeline writing as one of its roles (evening-mac's canvas-sync), traced
  * to its run by roleRun. The page, the runs and the roles only where the spec lets that writer write. Anything else is
  * null. */
-export function knownWriter(d, runs = new Map()) {
+/** A D-115 schema bump's legacy copy, exactly as core/migrate.mjs writes it: id v4-<col>-<id>-s<n>, migration
+ * '<col> schema <n> to <m>' with m > n, migratedFrom = migratedTo = '<col>/<id>', a 64-hex hash of the original, the
+ * delta fields (changed, added, omits), and the bumped document present in the record (`have`: 'c/id' to its data) at
+ * schema m or later. */
+export function isBumpCopy(d, have) {
+  const data = (d && d.data) || {};
+  const from = /^([a-z]+)\/(.+)$/.exec(String(data.migratedFrom || ''));
+  const mig = /^([a-z]+) schema (\d+) to (\d+)$/.exec(String(data.migration || ''));
+  if (!from || !mig || mig[1] !== from[1] || Number(mig[3]) <= Number(mig[2])) return false;
+  if (d.id !== `v4-${from[1]}-${from[2]}-s${mig[2]}` || data.migratedTo !== data.migratedFrom) return false;
+  if (!/^\d{4}-\d\d-\d\dT/.test(String(data.migratedAt || '')) || !/^[0-9a-f]{64}$/.test(String(data.hash || '')))
+    return false;
+  if (!data.changed || typeof data.changed !== 'object' || !Array.isArray(data.added) || !Array.isArray(data.omits))
+    return false;
+  const bumped = have && have.get(data.migratedFrom);
+  return !!bumped && Number(bumped.schema) >= Number(mig[3]);
+}
+
+export function knownWriter(d, runs = new Map(), have = null) {
   const data = (d && d.data) || {};
   if (d.c === SUITE) return data.writer === 'run-api-suite' ? 'suite' : null;
-  // B-232 (D-115, D-338): a schema bump's legacy copy, written by migrate bumps beside the document it bumped: an id of
-  // the copy's shape, the migration's marks and the hash of the original; the document it names is in the record
-  if (d.c === 'legacy')
-    return /^v4-[a-z]+-.+-s\d+$/.test(d.id) &&
-      typeof data.migration === 'string' &&
-      typeof data.migratedAt === 'string' &&
-      /^[0-9a-f]{64}$/.test(String(data.hash || '')) &&
-      typeof data.migratedFrom === 'string' &&
-      data.migratedTo === data.migratedFrom
-      ? 'migration'
-      : null;
+  // B-232 (D-115, D-338): a D-115 legacy copy, written by migrate bumps beside the document it bumped. Only that: the
+  // spec's legacy collection has no writer, so the copy must match what core/migrate.mjs writes, and the document it
+  // names must be in the record at the bumped schema.
+  if (d.c === 'legacy') return isBumpCopy(d, have) ? 'migration' : null;
   if (data.source === APP_SOURCE) return 'app';
   // B-389: a page save is held to the spec, not only to its own writer field: a collection the page writes, an id of
   // that collection's shape (spec.collections.<c>.key), and a document its schema passes
@@ -168,6 +179,7 @@ export function knownWriter(d, runs = new Map()) {
  * { problems: [line], seedDocs, added: { suite, app, page: { collection: n }, runs: { pipeline or role: n } } }. */
 export function recordDiffs(body, seed = seedRecord()) {
   const have = new Set(((body && body.docs) || []).map(d => d.c + '\u0000' + d.id));
+  const docs = new Map(((body && body.docs) || []).map(d => [d.c + '/' + d.id, d.data || {}]));
   const problems = [];
   let seedDocs = 0;
   for (const c of Object.keys(seed).sort()) {
@@ -184,7 +196,7 @@ export function recordDiffs(body, seed = seedRecord()) {
   const runs = runsOf((body && body.docs) || []);
   for (const d of (body && body.docs) || []) {
     if (seed[d.c] && Object.hasOwn(seed[d.c], d.id)) continue;
-    const w = knownWriter(d, runs);
+    const w = knownWriter(d, runs, docs);
     if (w === 'suite') added.suite++;
     else if (w === 'migration') added.migration = (added.migration || 0) + 1;
     else if (w === 'app') added.app++;
