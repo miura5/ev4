@@ -7319,5 +7319,22 @@
    "outcome": "task",
    "at": "2026-10-26T00:52:47.740Z"
   }
+ },
+ {
+  "id": "B-405",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Build L-frame, E.V. strip and floating pop-up on every desktop view (B-396, D-325).",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build manager, B-396 plan",
+  "words": "Build L-frame, E.V. strip and floating pop-up on every desktop view (B-396, D-325).",
+  "reportedAt": "2026-10-26T00:52:50.536Z",
+  "board": {
+   "row": "v4 B-405: Build L-frame, E.V. strip and floating pop-up on every desktop view…"
+  }
  }
 ]
