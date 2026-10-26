@@ -4102,10 +4102,9 @@
   "depends": [
    "B-231"
   ],
-  "notes": "Builder took it (D-334): weakspots schema 2, migration 1 to 2 with legacy copy, links, lint",
+  "notes": "Waiting on nobody since D-334.",
   "commit": null,
-  "source": "plan SyfKhhZHXubJo4RN8CEw7Z",
-  "waitingOn": "Matt"
+  "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },
  {
   "id": "B-233",
