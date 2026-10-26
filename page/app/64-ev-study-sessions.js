@@ -1251,17 +1251,14 @@
         return;
       }
       const at = now();
-      const writes = E.undoSwitch(prev, sessOf(u.next), {
-        at,
-        keys: [pageKey(at), pageKey(at)],
-        windowMs: UNDO_MS,
-      });
+      const o = { at, keys: [pageKey(at), pageKey(at)], windowMs: UNDO_MS };
+      const next = sessOf(u.next);
       SS.undo = null;
-      if (!writes.length) return;
+      if (!E.undoSwitch(prev, next, o).length) return;
       // held until the reopen lands, so switchTick never files the session in the middle of its Undo
       SS.filing.add(u.prev);
       try {
-        await run(writes);
+        await run(E.undoSwitch(prev, next, o));
       } catch (e) {
         SS.filing.delete(u.prev);
         throw e;
