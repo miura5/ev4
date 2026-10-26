@@ -1,0 +1,31 @@
+{
+ "schema": 2,
+ "writer": "page",
+ "at": "2026-10-14T15:00:00Z",
+ "source": "Told E.V.",
+ "topic": "Made-up parked topic",
+ "objective": "",
+ "exam": null,
+ "course": "BIO 201",
+ "kind": "concept",
+ "addedBy": "page",
+ "initial": {
+  "streak": 0,
+  "nextDue": "2026-10-15",
+  "recurrence": 1,
+  "misses": 0
+ },
+ "events": {
+  "page-20261015-150000": {
+   "type": "park",
+   "by": "owner",
+   "note": "not on the exam",
+   "at": "2026-10-15T15:00:00Z"
+  },
+  "page-20261016-150000": {
+   "type": "activate",
+   "by": "owner",
+   "at": "2026-10-16T15:00:00Z"
+  }
+ }
+}

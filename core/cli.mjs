@@ -150,12 +150,16 @@ function loadExport(dir) {
 const commands = {
   migrate(o) {
     if (o._[1] === 'bumps') return commands['migrate-bumps'](o);
-    throw new Error('usage: migrate bumps --from <v4 export dir> --record <target> [--versions <file>]');
+    throw new Error(
+      'usage: migrate bumps --from <v4 export dir> --record <target> [--versions <file> | --versions-dir <dir>] [--store worker --worker <file>]'
+    );
   },
   /**
    * The schema bumps a v4 record needs (Data architecture, "Schema registry"), printed as pinned batch calls: --from a
    * pull of the bumped collections (ArtifactData list with out_dir), --versions a JSON {collection: {id: version}} of
    * that pull (from its replies), --record the target. A record already at today's versions prints nothing to do.
+   * B-232: --store worker, for a record on the Worker's D1: --versions-dir holds the <collection>.json version files
+   * `api pull` saved, and the writes go out as batch files through `api batch --files`, printed with --worker.
    */
   'migrate-bumps'(o) {
     const root = o.root ? path.resolve(o.root) : HERE;
@@ -165,6 +169,9 @@ const commands = {
     const db = loadExport(o.from);
     const at = o.at || new Date().toISOString();
     const versions = o.versions ? readJson(path.resolve(o.versions)) : {};
+    if (o['versions-dir'])
+      for (const f of fs.readdirSync(path.resolve(o['versions-dir'])).filter(f => f.endsWith('.json')))
+        versions[f.slice(0, -5)] = readJson(path.resolve(o['versions-dir'], f));
     const { writes, counts } = migrateBumps(db, { at });
     if (!writes.length) {
       console.log("migrate bumps: nothing to do; every document is at its collection's version");
@@ -205,6 +212,24 @@ const commands = {
       };
     });
     const batches = chunkWrites(files, spec.capacity.batch).map(b => b.map(({ data, ...w }) => w));
+    if (o.store === 'worker') {
+      // B-232: each batch a file the Worker's run API takes as it is (file_path read at send time, if_version pinned)
+      const names = batches.map((b, i) => {
+        const f = path.join(out, `batch-${i + 1}.json`);
+        fs.writeFileSync(f, JSON.stringify(b, null, 1));
+        return f;
+      });
+      console.log(
+        `migrate bumps: ${writes.length} writes in ${batches.length} batch file${batches.length === 1 ? '' : 's'} for the ${o.record || 'staging'} Worker (${Object.entries(
+          counts
+        )
+          .map(([k, v]) => `${k} ${v}`)
+          .join(
+            ', '
+          )}). Run:\n\nnode core/cli.mjs api batch --worker ${o.worker || '<the saved system/worker file>'} --label bumps --files ${names.join(',')}\n\nthen pull the bumped collections again and run this once more: it must say nothing to do.`
+      );
+      return 0;
+    }
     console.log(
       `migrate bumps: ${writes.length} writes in ${batches.length} batch${batches.length === 1 ? '' : 'es'} (${Object.entries(
         counts

@@ -219,7 +219,8 @@
           (w.kind || 'concept') === 'concept' &&
           w.objective === o.id &&
           w.derived &&
-          !['parked', 'moved'].includes(w.derived.status)
+          !['parked', 'moved'].includes(w.derived.status) &&
+          !E.untriaged(w) // B-232 (D-235): a spot waiting for his triage counts nowhere
       );
       const open = ws.filter(E.isActive);
       const notYet = open.filter(w => !w.derived.preRead && !((w.derived.streak || 0) > 0));

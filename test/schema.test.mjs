@@ -90,7 +90,7 @@ test('planted invalid writes are refused, with the field named', () => {
   refused(validate('weakspots', noWriter), '/writer');
   refused(validate('weakspots', { ...ws, writer: 'weekly' }), '/writer');
   refused(validate('weakspots', { ...ws, at: '2026-10-16 14:00' }), '/at');
-  refused(validate('weakspots', { ...ws, schema: 2 }), '/schema');
+  refused(validate('weakspots', { ...ws, schema: 1 }), '/schema'); // B-232: weak spots are at schema 2
   refused(validate('weakspots', { ...ws, derived: { status: 'active' } }), '(document)');
   refused(validate('weakspots', { ...ws, events: { 'Oct 16': { type: 'seen' } } }), '/events/Oct 16');
   refused(

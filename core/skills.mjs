@@ -195,6 +195,7 @@ export function makeSkills(core) {
         id,
         data: {
           ...envelope('page', 'Skills practice · ' + title, at),
+          schema: 2, // B-232
           topic: (title + ': step ' + st.n + ', ' + st.text).slice(0, 200),
           objective: '',
           exam: '',

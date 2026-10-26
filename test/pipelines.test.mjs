@@ -222,7 +222,7 @@ test('evening-cloud: auto-park and the snapshot, with no judgment; state/current
   });
   db.weakspots.push({
     id: 'ws-old',
-    schema: 1,
+    schema: 2, // B-232
     writer: 'page',
     at: '2026-09-02T00:00:00Z',
     source: 'test',

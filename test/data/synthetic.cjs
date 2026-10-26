@@ -20,7 +20,8 @@ function ct(date, hh, mm = 0) {
 function syntheticRecord(now = new Date()) {
   const db = seed(now);
   const today = ymd(now), d = n => addDays(today, n), at = ct(d(-7), 18), env = (writer, source, when = at) => ({ schema: 1, writer, at: when, source });
-  const put = (c, id, doc) => { (db[c] = db[c] || {})[id] = doc; };
+  // B-232: weak spots are at schema 2
+  const put = (c, id, doc) => { (db[c] = db[c] || {})[id] = c === 'weakspots' ? { ...doc, schema: 2 } : doc; };
   // run.cjs: graded work due today is the greeting's one urgent line.
   put('dates', 'synthetic-ati', { ...env('page', 'owner'), addedAt: at, date: today, title: 'ATI Engage Fundamentals: health assessment module and its practice assessment due 11:59pm', kind: 'due', course: 'NUR 112', graded: true });
   db.dates['demo-quiz'].date = d(4);

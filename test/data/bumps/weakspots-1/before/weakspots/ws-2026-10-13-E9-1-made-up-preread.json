@@ -1,0 +1,22 @@
+{
+ "schema": 1,
+ "writer": "page",
+ "at": "2026-10-13T22:00:00Z",
+ "source": "Pre-reading check",
+ "topic": "Made-up pre-reading topic",
+ "objective": "E9-1",
+ "exam": "E9",
+ "course": "NUR 112",
+ "kind": "concept",
+ "addedBy": "page",
+ "origin": null,
+ "preRead": true,
+ "readingDue": "2026-10-16",
+ "initial": {
+  "streak": 0,
+  "nextDue": "2026-10-17",
+  "recurrence": 1,
+  "misses": 1
+ },
+ "events": {}
+}

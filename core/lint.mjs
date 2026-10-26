@@ -8,6 +8,8 @@
 //   derived-differs  a Derived document that rebuild does not reproduce byte for byte
 //   dangling-link    a typed link (spec.links, B-231) naming a document that is not there: an error when the link is
 //                    required, a note when it is optional
+//   duplicate-chain  B-232 (D-240): a weak spot's duplicate-of naming itself or another duplicate; duplicate-dangling
+//                    when it names no weak spot there, duplicate-links when a spot has more than one
 //   frozen           (info) D-090: a document carrying migratedAt or migratedTo is a frozen original, so is a v2 or v3
 //                    leftover (B-34), and a collection in spec.legacyCollections is v3's, kept by rule; each is one note
 //                    per collection, never an error
@@ -27,14 +29,23 @@ import {
 } from './derive.mjs';
 import { describeErrors } from './validate.mjs';
 import { PAGE_ONLY } from './schemas.mjs';
-import { linkIssues } from './links.mjs';
+import { linkIssues, duplicateIssues } from './links.mjs';
+import { fromLegacy } from './migrate.mjs';
 
-/** The legacy copy a schema bump kept of collection/id (legacy/v4-<collection>-<id>-s<n>) that passes ok(copy), if any. */
+/** The legacy copy a schema bump kept of collection/id (legacy/v4-<collection>-<id>-s<n>) whose original passes
+ *  ok(original), if any. A D-115 copy (B-232) holds only what changed, so its original is rebuilt over the current. */
 function migratedCopy(rec, col, id, ok) {
   const pre = `v4-${col}-${id}-s`;
+  const cur = (rec[col] || []).find(d => d.id === id);
+  const original = l => (l.changed ? cur && fromLegacy(cur, l) && { ...fromLegacy(cur, l), id } : l);
   return (
     (rec.legacy || []).find(
-      l => l.id.startsWith(pre) && /^\d+$/.test(l.id.slice(pre.length)) && l.migratedTo === `${col}/${id}` && ok(l)
+      l =>
+        l.id.startsWith(pre) &&
+        /^\d+$/.test(l.id.slice(pre.length)) &&
+        l.migratedTo === `${col}/${id}` &&
+        original(l) &&
+        ok(original(l))
     ) || null
   );
 }
@@ -317,6 +328,7 @@ export function lintRecord(db, spec, validate, { date, commit = null } = {}) {
   // orphan-item and unknown-objective warnings, which named the same two links.
   const skip = (col, d) => isFrozen(d) || isLeftover(d, spec.collections[col]);
   for (const i of linkIssues(rec, spec, { skip })) add(i.severity, i.code, i.ref, i.msg);
+  for (const i of duplicateIssues(rec)) add(i.severity, i.code, i.ref, i.msg);
   for (const i of EV.lint(rec, { date }))
     if (i.code !== 'orphan-item' && i.code !== 'unknown-objective') add(i.severity, i.code, i.ref, i.msg);
   const rank = { error: 0, warning: 1, info: 2 };

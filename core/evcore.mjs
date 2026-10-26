@@ -495,9 +495,11 @@ const EVCore = (() => {
     return m;
   };
   /** Every attempt at every item of every set, oldest first, plus an index by weak spot. answers: answers/<setId> docs,
-   *  each {setId, answers: {itemId: {attemptKey: {chosen, correct, score, at, weakspotId?, matched?, createdWeakspot?}}}}. */
-  function collectAttempts(sets, answers) {
+   *  each {setId, answers: {itemId: {attemptKey: {chosen, correct, score, at, weakspotId?, matched?, createdWeakspot?}}}}.
+   *  B-232 (D-240): given the weak spots, an attempt on a duplicate counts toward its survivor (creditedFrom names it). */
+  function collectAttempts(sets, answers, weakspots = null) {
     const all = [];
+    const survivor = survivors(weakspots);
     const bySet = answersIndex(answers);
     for (const s of sets || []) {
       const items = new Map((s.items || []).map(q => [q.id, q]));
@@ -506,6 +508,7 @@ const EVCore = (() => {
         if (!q) continue;
         for (const [key, a] of Object.entries(attempts || {})) {
           if (!a || !a.at) continue;
+          const named = a.weakspotId || q.weakspotId || null;
           all.push({
             setId: s.id,
             setKind: s.kind || null,
@@ -515,7 +518,8 @@ const EVCore = (() => {
             date: chicagoDate(a.at),
             correct: !!a.correct,
             score: typeof a.score === 'number' ? a.score : a.correct ? 1 : 0,
-            weakspotId: a.weakspotId || q.weakspotId || null,
+            weakspotId: survivor(named),
+            ...(survivor(named) !== named ? { creditedFrom: named } : {}),
             matched: !!a.matched,
             created: a.createdWeakspot || null,
             objective: q.objective || null,
@@ -540,6 +544,32 @@ const EVCore = (() => {
 
   // ---------------------------------------------------------------- weak spots
   const examOf = w => (w && (w.exam || String(w.objective || '').split('-')[0])) || null;
+  // B-232 (D-236, D-240): schema 2. A spot she infers is proposed until his accept, join, snooze or decline; a joined
+  // spot keeps a duplicate-of link to the one it repeats and is never merged away.
+  const UNTRIAGED = ['proposed', 'snoozed', 'declined', 'duplicate'];
+  const untriaged = w => !!(w && w.derived && UNTRIAGED.includes(w.derived.status));
+  /** The id a weak spot's duplicate-of link names, or null. */
+  const duplicateOf = w => {
+    const l = ((w && w.links) || []).find(x => x && x.type === 'duplicate-of' && /^weakspots\//.test(x.to || ''));
+    return l ? l.to.slice('weakspots/'.length) : null;
+  };
+  /** id -> the spot its answers count toward: a duplicate's survivor (through a chain, which lint fails), else itself. */
+  function survivors(weakspots) {
+    const next = new Map();
+    for (const w of weakspots || []) if (duplicateOf(w)) next.set(w.id, duplicateOf(w));
+    return id => {
+      const seen = new Set([id]);
+      let cur = id;
+      while (next.has(cur) && !seen.has(next.get(cur))) seen.add((cur = next.get(cur)));
+      return next.has(cur) ? id : cur; // a cycle credits no one else
+    };
+  }
+  /** His To review status on date: a snooze that has run out is proposed again (the snoozed state stays computed). */
+  const triageStatus = (w, date) =>
+    w && w.derived && w.derived.status === 'snoozed' && w.derived.snoozedUntil && w.derived.snoozedUntil <= date
+      ? 'proposed'
+      : (w && w.derived && w.derived.status) || null;
+  const toReview = (models, date) => (models || []).filter(w => triageStatus(w, date) === 'proposed');
   /** Facts of a v4 weak spot document, normalized. Never includes derived state (nothing derived is stored, D-047). */
   function weakspotFacts(doc) {
     const w = doc || {};
@@ -558,6 +588,9 @@ const EVCore = (() => {
       addedBy: w.addedBy || '',
     };
     if (w.origin) f.origin = w.origin;
+    if (w.proposed) f.proposed = true;
+    if (w.words) f.words = w.words;
+    if (Array.isArray(w.links) && w.links.length) f.links = w.links;
     if (w.preRead) f.preRead = true;
     if (w.readingDue) f.readingDue = w.readingDue;
     if (w.preReadNote) f.preReadNote = w.preReadNote;
@@ -598,6 +631,7 @@ const EVCore = (() => {
       right: 0,
       history: [],
     };
+    if (f.proposed) st.status = 'proposed';
     const examDate = opts.examDate || null;
     const concept = f.kind === 'concept';
     const timeline = [
@@ -611,7 +645,7 @@ const EVCore = (() => {
         continue;
       }
       const a = t.a;
-      if (!concept || st.status === 'parked' || st.status === 'moved') continue;
+      if (!concept || st.status === 'parked' || st.status === 'moved' || UNTRIAGED.includes(st.status)) continue;
       st.answered++;
       if (a.correct) st.right++;
       st.history.push({ date, correct: !!a.correct });
@@ -690,6 +724,7 @@ const EVCore = (() => {
     }
     st.history = st.history.slice(-20);
     if (!concept && st.status === 'open') st.nextDue = null;
+    if (duplicateOf(f)) Object.assign(st, { status: 'duplicate', duplicateOf: duplicateOf(f) });
     return st;
   }
   function applyEvent(st, e, at, date) {
@@ -718,7 +753,18 @@ const EVCore = (() => {
       case 'reopen':
         Object.assign(st, { status: 'open', streak: 0, nextDue: date, reopenedAt: at });
         break;
+      case 'accept': // B-232 (D-236): his accept counts it from tomorrow, under the objective he confirmed
+        Object.assign(st, { status: 'open', streak: 0, nextDue: addDays(date, 1), snoozedUntil: null });
+        if (e.objective) st.objective = e.objective;
+        break;
+      case 'snooze':
+        Object.assign(st, { status: 'snoozed', snoozedUntil: e.until || null });
+        break;
+      case 'decline':
+        Object.assign(st, { status: 'declined', snoozedUntil: null });
+        break;
       case 'seen':
+        if (UNTRIAGED.includes(st.status)) break;
         Object.assign(st, { recurrence: st.recurrence + 1, streak: 0, nextDue: addDays(date, 1) });
         if (st.status === 'reviewed')
           Object.assign(st, { status: 'open', reopenedAt: at, solidBy: null, solidAt: null });
@@ -729,7 +775,7 @@ const EVCore = (() => {
   }
   /** Weak spot model used everywhere: facts + derived, with the exam date resolved. */
   function buildWeakspots({ weakspots, sets, answers, exams }) {
-    const { byWeakspot } = collectAttempts(sets, answers);
+    const { byWeakspot } = collectAttempts(sets, answers, weakspots);
     const examDate = id => {
       const e = (exams || []).find(x => x.id === id);
       return e && e.date ? e.date : null;
@@ -737,6 +783,11 @@ const EVCore = (() => {
     return (weakspots || []).map(doc => {
       const f = weakspotFacts(doc);
       const derived = deriveWeakspot(f, byWeakspot[f.id] || [], { examDate: examDate(f.exam || examOf(f)) });
+      if (derived.objective && derived.objective !== f.objective) {
+        // B-232: his accept named the objective; the exam follows it unless the spot named its own
+        f.objective = derived.objective;
+        if (!(doc && doc.exam)) f.exam = examOf({ objective: f.objective }) || '';
+      }
       return { ...f, derived };
     });
   }
@@ -782,7 +833,7 @@ const EVCore = (() => {
     const attemptKey = eventKey('page', at);
     const writes = [];
     const models = ctx.weakspots || [];
-    const byWeakspot = ctx.byWeakspot || collectAttempts(ctx.sets || [], ctx.answers || []).byWeakspot;
+    const byWeakspot = ctx.byWeakspot || collectAttempts(ctx.sets || [], ctx.answers || [], models).byWeakspot;
     const examDateOf = id => {
       const e = (ctx.exams || []).find(x => x.id === id);
       return e && e.date ? e.date : null;
@@ -797,8 +848,14 @@ const EVCore = (() => {
     let outcome,
       state = null,
       weakspotId = null;
-    const target = q.weakspotId ? models.find(w => w.id === q.weakspotId) : null;
-    if (target && target.kind === 'concept' && !['parked', 'moved'].includes(target.derived.status)) {
+    const named = q.weakspotId ? models.find(w => w.id === q.weakspotId) : null;
+    // B-232 (D-240): an item on a duplicate counts toward its survivor
+    const target = (named && duplicateOf(named) && models.find(w => w.id === named.derived.duplicateOf)) || named;
+    if (target && untriaged(target)) {
+      // B-232 (D-235): a spot waiting for his triage, or set aside, is reviewed by nothing and counts nowhere
+      weakspotId = target.id;
+      outcome = correct ? 'Nice. No new weak spot.' : 'Noted. It isn’t on your review list.';
+    } else if (target && target.kind === 'concept' && !['parked', 'moved'].includes(target.derived.status)) {
       const before = target.derived;
       state = recompute(target);
       weakspotId = target.id;
@@ -821,6 +878,7 @@ const EVCore = (() => {
         const pre = preReadFor(q, plans, date);
         const facts = {
           ...envelope('page', label || 'E.V. · ' + shortDate(date), at),
+          schema: 2, // B-232
           topic,
           objective: q.objective || '',
           exam: String(q.objective || '').split('-')[0] || (set && set.exam) || '',
@@ -2099,6 +2157,7 @@ const EVCore = (() => {
     examOf,
     isActive,
     isSolid,
+    untriaged,
     planTasks,
     reviewNeed,
     searchLibrary,
@@ -2343,6 +2402,10 @@ const EVCore = (() => {
     isActive,
     isSolid,
     isDue,
+    untriaged,
+    duplicateOf,
+    triageStatus,
+    toReview,
     reviewNeed,
     derivedHash,
     examOf,

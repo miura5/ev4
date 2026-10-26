@@ -22,7 +22,8 @@
     const now = nowDate || new Date(), today = ymd(now), yday = addDays(today, -1), d = n => addDays(today, n);
     const morning = ct(today, 4, 25), lastNight = ct(yday, 20, 15);
     const db = {};
-    const put = (c, id, doc) => { (db[c] = db[c] || {})[id] = doc; };
+    // B-232: weak spots are at schema 2
+    const put = (c, id, doc) => { (db[c] = db[c] || {})[id] = c === 'weakspots' ? { ...doc, schema: 2 } : doc; };
 
     // ---- exams and objectives
     put('exams', 'E3', { schema: 2, writer: 'page', at: ct(addDays(today, -40), 9), source: 'Told E.V.', course: 'NUR 112', kind: 'unit', date: d(-12), title: 'Exam 3: Safety and infection control', status: 'done' });

@@ -198,3 +198,26 @@ export function linkIssues(db, spec, { skip = () => false } = {}) {
   }
   return issues;
 }
+
+/**
+ * B-232 (D-240): a weak spot's duplicate-of link names one weak spot that exists, is not itself and is no duplicate
+ * itself (a chain would credit answers past the spot he joined it to). Each break is an error.
+ */
+export function duplicateIssues(db) {
+  const issues = [];
+  const add = (code, ref, msg) => issues.push({ severity: 'error', code, ref, msg });
+  const byId = new Map(((db && db.weakspots) || []).map(w => [w.id, w]));
+  for (const w of byId.values()) {
+    const dups = (w.links || []).filter(l => l && l.type === 'duplicate-of');
+    if (!dups.length) continue;
+    const ref = `weakspots/${w.id}`;
+    const to = EV.duplicateOf(w);
+    if (dups.length > 1) add('duplicate-links', ref, `${dups.length} duplicate-of links; a spot repeats one`);
+    if (!to) add('duplicate-dangling', ref, `duplicate-of names ${dups[0].to}, which is not a weak spot`);
+    else if (to === w.id) add('duplicate-chain', ref, 'duplicate-of names itself');
+    else if (!byId.has(to)) add('duplicate-dangling', ref, `duplicate-of names weakspots/${to}, which is missing`);
+    else if (EV.duplicateOf(byId.get(to)))
+      add('duplicate-chain', ref, `duplicate-of names weakspots/${to}, itself a duplicate: join it to the survivor`);
+  }
+  return issues;
+}

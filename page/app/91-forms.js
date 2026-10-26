@@ -4,6 +4,7 @@
       const id = E.safeId('ws-' + today + '-' + (objective || 'x') + '-' + E.slug(topic));
       const facts = {
         ...envelope(source || 'Logged by you', at),
+        schema: 2, // B-232
         topic,
         objective,
         exam: objective.split('-')[0] || '',

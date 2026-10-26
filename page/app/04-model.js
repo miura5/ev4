@@ -2,7 +2,7 @@
     let M = null;
     function model() {
       const models = E.buildWeakspots({ weakspots: S.weak, sets: S.sets, answers: S.answers, exams: S.exams });
-      const attempts = E.collectAttempts(S.sets, S.answers);
+      const attempts = E.collectAttempts(S.sets, S.answers, S.weak); // B-232: a duplicate's answers on its survivor
       const target = E.targetExam({ exams: S.exams, objectives: S.objectives, weakspots: models, date: today });
       const day = S.days.find(d => d.id === today) || null;
       const dayedit = S.dayedits.find(d => d.id === today) || null;

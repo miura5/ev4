@@ -178,7 +178,7 @@
   "sessions/ss-20261016-200000-sample-note": "8ff15d3c651ac051c55ac6e5dae984f1d1975af2c9d0150731649e0939cb714d.6r11u",
   "sets/review-2026-10-16": "c1a02f8b2fa50f322c2c715e403240a3950656a13230e8c2746463459c923a64.27q",
   "talk/2026-10-16": "d52f118bbc661fdbf21139b8f3c4d1f9284ac8393bf132965656c8f7f3e9e9ad.f",
-  "weakspots/ws-2026-10-16-E9-1-sample-topic": "caa1e436f384c33a5b2c48d4a5e1f46b5ec603c443ce8f1ff4a2ac11886c2e09.5z2"
+  "weakspots/ws-2026-10-16-E9-1-sample-topic": "ccb6ff62d39704eb51044231c6367301b2630519399ba5b9e122416ca677e52b.i7y"
  },
  "factFields": {
   "announcements": [
@@ -333,10 +333,12 @@
    "objective",
    "origin",
    "preRead",
+   "proposed",
    "readingDue",
    "schema",
    "source",
    "topic",
+   "words",
    "writer"
   ]
  }

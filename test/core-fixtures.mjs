@@ -15,7 +15,7 @@ export const key = (iso, writer = 'page') => EV.eventKey(writer, iso);
 export const ev = (iso, e, writer = 'page') => ({ [key(iso, writer)]: { ...e } });
 export const ws = (id, extra = {}) => ({
   id,
-  schema: 1,
+  schema: 2, // B-232
   writer: 'page',
   at: at('2026-10-15'),
   source: 'test',

@@ -558,6 +558,11 @@ export const BUMPS = {
     // worker's, so a job only moves to the new version.
     1: d => ({ data: { ...d, schema: 2 }, also: [] }),
   },
+  weakspots: {
+    // B-232 (D-236, D-240): schema 2 adds proposed, words, links and the accept, snooze and decline events, all
+    // optional; a spot written before it is his or was counted at once, so it only moves to the new version.
+    1: d => ({ data: { ...d, schema: 2 }, also: [] }),
+  },
   ideas: {
     // D-109: ideas carry a kind; every idea before it came from study (sessions, Study Watch, the conversation), so
     // each becomes a learning idea, the only kind that can become a weak spot.
@@ -588,6 +593,28 @@ export const BUMPS = {
     },
   },
 };
+/**
+ * D-115: a bump's legacy copy holds only the fields the bump changed (their old values) and the fields it added, with
+ * the original's hash, so fromLegacy rebuilds the original exactly. The bumps before B-232 kept whole copies, already
+ * written to both records; they stay as they are.
+ */
+export const D115 = new Set(['weakspots:1']);
+const sha = d => EV.sha256(EV.stableStringify(d));
+export function legacyDelta(original, bumped) {
+  const changed = {};
+  for (const [k, v] of Object.entries(original))
+    if (!(k in bumped) || EV.stableStringify(bumped[k]) !== EV.stableStringify(v)) changed[k] = v;
+  const added = Object.keys(bumped).filter(k => !(k in original));
+  return { changed, added, hash: sha(original) };
+}
+/** The original a D-115 copy was taken from, rebuilt over the document as it is now; null when its hash disagrees. */
+export function fromLegacy(current, copy) {
+  if (!copy || !copy.changed || !copy.hash) return null;
+  const d = { ...EV.docData(current) };
+  for (const k of copy.added || []) delete d[k];
+  Object.assign(d, copy.changed);
+  return sha(d) === copy.hash ? d : null;
+}
 /** The version a collection's documents are at today: the highest a bump leads to, else 1. */
 export const currentVersion = collection => {
   const b = BUMPS[collection];
@@ -628,7 +655,7 @@ export function migrateBumps(db, { at } = {}) {
         collection: 'legacy',
         id: `v4-${col}-${d.id}-s${from}`,
         data: {
-          ...EV.docData(d),
+          ...(D115.has(`${col}:${from}`) ? legacyDelta(EV.docData(d), main.data) : EV.docData(d)),
           migratedFrom: `${col}/${d.id}`,
           migratedTo: `${col}/${d.id}`,
           migratedAt: iso(at),

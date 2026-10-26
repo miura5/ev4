@@ -348,6 +348,7 @@ test('B-32 (D-089): x-ev.marks in the five schemas match the spec, and the regis
     jobs: ['fired'],
     sessions: ['status', 'pending', 'endedAt', 'comments', 'filing'], // comments: D-130, B-74; filing: B-411
     ideas: ['status', 'kind'],
+    weakspots: ['links'], // B-232 (D-240): his Join adds a duplicate-of link to a spot already written
     dates: ['date', 'dueAt', 'syncedAt'],
     materials: ['text', 'fileUpdatedAt', 'fetchedAt', 'needsOcr', 'pages', 'chars', 'ocr'],
   }; // pages, chars, ocr: Matt, Oct 18 (B-32 follow-up)

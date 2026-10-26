@@ -13,6 +13,7 @@ export function makeInsights(core) {
     examOf,
     isActive,
     isSolid,
+    untriaged,
     planTasks,
     reviewNeed,
     searchLibrary,
@@ -80,7 +81,8 @@ export function makeInsights(core) {
         (w.kind || 'concept') === 'concept' &&
         examOf(w) === examId &&
         w.derived &&
-        !['parked', 'moved'].includes(w.derived.status)
+        !['parked', 'moved'].includes(w.derived.status) &&
+        !untriaged(w) // B-232 (D-235): proposed, snoozed, declined and duplicate spots count nowhere
     );
     const rows = [];
     for (const o of objectives.filter(o => o.exam === examId || String(o.id).split('-')[0] === examId)) {
@@ -207,7 +209,12 @@ export function makeInsights(core) {
       .map(([id, s]) => ({ id, text: objText.get(id) || '', right: s.right, n: s.n, pct: pctOf(s.right, s.n) }))
       .sort((a, b) => a.right / a.n - b.right / b.n || b.n - a.n || (a.id < b.id ? -1 : 1));
     const mine = (weakspots || []).filter(
-      w => (w.kind || 'concept') === 'concept' && examOf(w) === examId && w.derived && w.derived.status !== 'moved'
+      w =>
+        (w.kind || 'concept') === 'concept' &&
+        examOf(w) === examId &&
+        w.derived &&
+        w.derived.status !== 'moved' &&
+        !untriaged(w) // B-232
     );
     const byNeed = (a, b) =>
       (b.derived.recurrence || 1) - (a.derived.recurrence || 1) ||

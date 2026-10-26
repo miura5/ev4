@@ -1,0 +1,29 @@
+{
+ "schema": 1,
+ "writer": "page",
+ "at": "2026-10-15T20:00:00Z",
+ "source": "Study session",
+ "topic": "Made-up note to look up",
+ "objective": "",
+ "exam": "",
+ "course": "NUR 112",
+ "kind": "note",
+ "addedBy": "Matt",
+ "origin": {
+  "session": "ss-20261015-190000-made-up",
+  "at": "2026-10-15T20:00:00Z"
+ },
+ "initial": {
+  "streak": 0,
+  "nextDue": null,
+  "recurrence": 1,
+  "misses": 0
+ },
+ "events": {
+  "page-20261016-120000": {
+   "type": "done",
+   "by": "owner",
+   "at": "2026-10-16T12:00:00Z"
+  }
+ }
+}

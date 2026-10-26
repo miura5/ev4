@@ -1,0 +1,11 @@
+{
+ "changed": {
+  "schema": 1
+ },
+ "added": [],
+ "hash": "f68fa7c22010625198a18838f3fded43ce77e8f13a49ada578099bd60d37b768",
+ "migratedFrom": "weakspots/ws-2026-10-12-E9-2-made-up-pump-rates",
+ "migratedTo": "weakspots/ws-2026-10-12-E9-2-made-up-pump-rates",
+ "migratedAt": "2026-10-26T18:00:00.000Z",
+ "migration": "weakspots schema 1 to 2"
+}

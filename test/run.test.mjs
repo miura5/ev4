@@ -282,7 +282,7 @@ test('batches are chunked to the platform limits, one write per document per bat
   ];
   const many = Array.from({ length: 120 }, (_, i) => ({
     id: `ws-made-up-${String(i).padStart(3, '0')}`,
-    schema: 1,
+    schema: 2, // B-232
     writer: 'page',
     at: '2026-09-02T00:00:00Z',
     source: 'test',

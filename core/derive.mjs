@@ -248,7 +248,7 @@ export function weekInsights(v, db, date) {
     .sort((a, b) => b.attempts - a.attempts || (a.ref < b.ref ? -1 : 1))
     .slice(0, 5);
   const recurrence = v.models
-    .filter(w => (w.derived.recurrence || 1) > 1 && w.derived.status !== 'parked')
+    .filter(w => (w.derived.recurrence || 1) > 1 && w.derived.status !== 'parked' && !EV.untriaged(w))
     .sort((a, b) => b.derived.recurrence - a.derived.recurrence || (a.id < b.id ? -1 : 1))
     .slice(0, 5)
     .map(w => ({ weakspotId: w.id, topic: w.topic, recurrence: w.derived.recurrence }));

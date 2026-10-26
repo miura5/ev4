@@ -1,0 +1,26 @@
+{
+ "schema": 1,
+ "writer": "page",
+ "at": "2026-10-16T18:00:00Z",
+ "source": "Skills practice · Made-up skill",
+ "topic": "Made-up skill: step 3, check the label",
+ "objective": "",
+ "exam": "",
+ "course": "NUR 112",
+ "kind": "skill",
+ "addedBy": "Matt",
+ "origin": {
+  "session": "ss-skill-20261016-made-up",
+  "step": 3,
+  "at": "2026-10-16T18:00:00Z",
+  "material": null,
+  "page": null
+ },
+ "initial": {
+  "streak": 0,
+  "nextDue": null,
+  "recurrence": 1,
+  "misses": 1
+ },
+ "events": {}
+}

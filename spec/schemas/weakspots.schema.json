@@ -2,7 +2,7 @@
  "$schema": "https://json-schema.org/draft/2020-12/schema",
  "$id": "ev4/weakspots",
  "title": "weakspots/<id>",
- "description": "topic, objective, exam, course, kind, source, initial, events map",
+ "description": "topic, objective, exam, course, kind, source, initial, events map; schema 2 (D-236, D-240): proposed, words, links",
  "x-ev": {
   "collection": "weakspots",
   "class": "Fact",
@@ -12,13 +12,18 @@
    "worker",
    "filing"
   ],
-  "schema": 1
+  "schema": 2,
+  "marks": {
+   "links": [
+    "page"
+   ]
+  }
  },
- "$comment": "Nothing derived on a Fact: state comes from answers and events by the core function.",
+ "$comment": "Nothing derived on a Fact: state comes from answers and events by the core function. Schema 2 (B-232): proposed marks a spot she inferred (D-235, D-237), counted nowhere until his accept, join, snooze or decline; words keeps his words or the item's stem under her topic (D-239); links is the ideas link shape plus duplicate-of (D-240).",
  "type": "object",
  "properties": {
   "schema": {
-   "const": 1
+   "const": 2
   },
   "writer": {
    "enum": [
@@ -39,6 +44,9 @@
   "topic": {
    "type": "string",
    "minLength": 1
+  },
+  "words": {
+   "type": "string"
   },
   "objective": {
    "type": "string"
@@ -64,6 +72,9 @@
     "format",
     "skill"
    ]
+  },
+  "proposed": {
+   "type": "boolean"
   },
   "addedBy": {
    "type": "string"
@@ -143,6 +154,42 @@
    "required": [],
    "additionalProperties": false
   },
+  "links": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "to": {
+      "type": "string",
+      "pattern": "^[a-z]+/.+"
+     },
+     "type": {
+      "enum": [
+       "seen-in",
+       "related",
+       "contrasts",
+       "causes",
+       "duplicate-of"
+      ]
+     },
+     "note": {
+      "type": "string"
+     },
+     "createdAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "createdBy": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "to",
+     "type"
+    ],
+    "additionalProperties": false
+   }
+  },
   "events": {
    "type": "object",
    "propertyNames": {
@@ -159,7 +206,10 @@
        "done",
        "move",
        "seen",
-       "reopen"
+       "reopen",
+       "accept",
+       "snooze",
+       "decline"
       ]
      },
      "by": {
@@ -171,12 +221,35 @@
      "at": {
       "type": "string",
       "format": "date-time"
+     },
+     "objective": {
+      "type": "string"
+     },
+     "until": {
+      "type": "string",
+      "format": "date"
      }
     },
     "required": [
      "type"
     ],
-    "additionalProperties": false
+    "additionalProperties": false,
+    "anyOf": [
+     {
+      "properties": {
+       "type": {
+        "not": {
+         "const": "snooze"
+        }
+       }
+      }
+     },
+     {
+      "required": [
+       "until"
+      ]
+     }
+    ]
    }
   }
  },

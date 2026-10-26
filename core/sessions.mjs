@@ -186,6 +186,7 @@ export function makeSessions(core) {
           id: safeId('ws-' + date + '-' + w.objective + '-' + slug(topic)),
           data: {
             ...env(),
+            schema: 2, // B-232
             topic,
             objective: w.objective,
             exam: w.objective.split('-')[0],
@@ -224,6 +225,7 @@ export function makeSessions(core) {
         id: safeId('note-' + date + '-' + slug(text, 40)),
         data: {
           ...env(),
+          schema: 2, // B-232
           topic: text,
           objective: '',
           exam: '',

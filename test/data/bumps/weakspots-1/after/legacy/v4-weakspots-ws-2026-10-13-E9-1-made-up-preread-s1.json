@@ -1,0 +1,11 @@
+{
+ "changed": {
+  "schema": 1
+ },
+ "added": [],
+ "hash": "4d764356148d1887c7721a21941982983a0f03ae58d650be14234f16706a92b3",
+ "migratedFrom": "weakspots/ws-2026-10-13-E9-1-made-up-preread",
+ "migratedTo": "weakspots/ws-2026-10-13-E9-1-made-up-preread",
+ "migratedAt": "2026-10-26T18:00:00.000Z",
+ "migration": "weakspots schema 1 to 2"
+}
