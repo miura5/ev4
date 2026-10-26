@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-341",
+  "date": "Oct 26",
+  "title": "Note saves are the page's direct writes through the bridge's versioned path, listed on D-200's legacy list",
+  "why": "Release review (B-409): the four note writes in page/app/25-notes.js go through the bridge's own versioned save (outbox, if_version, 409 to keepBoth, D-326), which act() does not model. They stay direct writes, named on test/data/actions-legacy.json so the D-200 lint sees them and the list can only shrink; moving them behind act() is a candidate for the consolidation (B-415).",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-340",
   "date": "Oct 26",
   "title": "Triage goes live with the Notes release; Matt's look at To review is part of his OK",
