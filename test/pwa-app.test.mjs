@@ -43,12 +43,14 @@ test('B-318: ship staging prints the pwa-staging dispatch at the build commit', 
   assert.equal(r.save, '/x/state/staging/app.json');
 });
 
-test("B-318: the live app is refused without Matt's OK (R-04), and stays off until it is set up", () => {
+test("B-318: the live app is refused without Matt's OK (R-04), and dispatches on it once on", () => {
   const no = appCalls({ target: 'live', commit: C });
   assert.equal(no.ok, false);
   assert.match(no.refusals[0], /R-04/);
-  assert.deepEqual(appCalls({ target: 'live', commit: C, mattOk: true }), { ok: true, calls: [] }, 'live is off');
-  assert.equal(APPS.live.ready, false, 'B-320: off until the cutover sitting turns it on (docs/cutover.md)');
+  assert.equal(APPS.live.ready, true, 'B-320: on since the cutover sitting (docs/cutover.md step 2.1)');
+  const yes = appCalls({ target: 'live', commit: C, mattOk: true });
+  assert.equal(yes.ok, true);
+  assert.ok(yes.calls.some(c => /pwa-live\.yml/.test(JSON.stringify(c))), 'the dispatch of the live workflow');
 });
 
 test('B-318: the build hash rides in the Worker version message and reads back', () => {

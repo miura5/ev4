@@ -29,6 +29,12 @@ const on = () => {
   s.registry.records.live.app.ready = true;
   return s;
 };
+// The spec as it was before the sitting turned the live app on (B-320, step 2.1).
+const off = () => {
+  const s = JSON.parse(JSON.stringify(spec));
+  s.registry.records.live.app.ready = false;
+  return s;
+};
 const jobOf = name => {
   const i = wf.indexOf(`\n  ${name}:\n`);
   assert.ok(i > 0, name + ' job');
@@ -129,7 +135,7 @@ test('B-320 (R-02, R-06): the gate refuses what ship live refuses, and passes a 
   assert.deepEqual(gateRefusals(base), []);
   const why = o => gateRefusals({ ...base, ...o }).join(' | ');
   assert.match(why({ onMain: false }), /not on origin\/main/);
-  assert.match(why({ spec }), /does not turn the live app on/, 'the spec at that commit has ready false');
+  assert.match(why({ spec: off() }), /does not turn the live app on/, 'the spec at that commit has ready false');
   assert.match(why({ deploys: [] }), /R-02/);
   assert.match(why({ deploys: [{ ...deploys[0], verify: 'red' }] }), /R-02/);
   assert.match(why({ deploys: [{ target: 'live', commit: short, verify: 'green' }] }), /R-02/);
@@ -183,13 +189,13 @@ test('B-320 (R-06): the gate and ship live take the same nightly: at the build c
   }
 });
 
-test('B-320 (D-330): the live app in the spec, off until the cutover sitting; ship live dispatches it on his OK', () => {
+test('B-320 (D-330): the live app in the spec, on from the cutover sitting; ship live dispatches it on his OK', () => {
   const app = liveApp(spec);
   assert.equal(app.worker, 'ev-live');
   assert.match(app.url, /^https:\/\/ev-live\.[a-z0-9-]+\.workers\.dev$/);
   assert.equal(app.workflow, 'pwa-live.yml');
   assert.equal(app.environment, 'live');
-  assert.equal(app.ready, false, 'turned on at the sitting (docs/cutover.md)');
+  assert.equal(app.ready, true, 'turned on at the sitting (docs/cutover.md step 2.1)');
   assert.equal(spec.registry.records.live.copy.worker, 'ev-live', "B-319's copy target");
   assert.equal(
     spec.registry.records.live.runs,
@@ -200,7 +206,7 @@ test('B-320 (D-330): the live app in the spec, off until the cutover sitting; sh
     assert.equal(runTarget(spec, 'live', p), 'artifact', p);
   const apps = appsOf(on());
   assert.deepEqual(apps.live, { worker: 'ev-live', workflow: 'pwa-live.yml', ready: true });
-  assert.equal(appsOf(spec).live.ready, false);
+  assert.equal(appsOf(off()).live.ready, false);
   assert.equal(appCalls({ target: 'live', commit: C }).ok, false, 'never without --matt-ok');
 });
 
@@ -226,7 +232,7 @@ test('B-320: the live check: 401 without the token and with a wrong one, 200 wit
 });
 
 test('B-320: the cutover spec turns on read-only, D1, the live runs and the Mac tasks; the old evening-mac is retired', () => {
-  assert.throws(() => cutoverSpec(spec), /live app is not on/);
+  assert.throws(() => cutoverSpec(off()), /live app is not on/);
   const before = on();
   const after = cutoverSpec(before);
   const live = after.registry.records.live;
