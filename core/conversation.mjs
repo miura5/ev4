@@ -233,7 +233,6 @@ export function makeConversation(core) {
     // B-182 (D-196): what waits on him, one chip with its count, inside the three-chip rule.
     if (c.yourTurn > 0) add(`Your turn (${c.yourTurn})`);
     if (finished) add('Open the ' + (JOB_NOUN[finished.kind] || 'result'));
-    if (c.unfiled > 0) add('File it');
     if (c.dueSoon == null || c.dueSoon > 0) add('What’s due this week?');
     add('How ready am I?');
     if (segment !== 'late') add('Give me 5 more');

@@ -20,18 +20,13 @@ const session = (events, extra = {}) => ({
   ...extra,
 });
 
-test('Study Watch intake: repeats bump, near-repeats ask, non-objectives become ideas, gaps become note to-dos; every write validates', () => {
+test('session findings: repeats bump, near-repeats ask, non-objectives become ideas, gaps become note to-dos; every write validates', () => {
+  // B-408: these rules were tested through the retired Study Watch intake; closeSession files them the same way
   const existing = [
     { ...ws('ws-k', { objective: 'E4-3', topic: 'Hypokalemia findings' }), derived: { status: 'open' } },
     { ...ws('ws-fluid', { objective: 'E4-3', topic: 'Fluid volume excess signs' }), derived: { status: 'open' } },
   ];
-  const file = {
-    id: '2026-10-18-0900-Ch-42',
-    date: '2026-10-18',
-    startedAt: '2026-10-18T14:00:00Z',
-    endedAt: '2026-10-18T14:20:00Z',
-    note: 'Ch 42',
-    minutes: 20,
+  const wrap = {
     summary: 's',
     weakSpots: [
       { objective: 'E4-3', topic: 'Hypokalemia findings' },
@@ -41,33 +36,24 @@ test('Study Watch intake: repeats bump, near-repeats ask, non-objectives become 
     ],
     connections: ['Potassium links insulin and the ECG'],
     noteTodos: ['Fill in the ABG table'],
+    cards: [],
   };
   const objectives = [{ id: 'E4-3' }];
-  let r = EV.intakeSession(file, { weakspots: existing, objectives, now: '2026-10-18T15:00:00Z' });
+  const r = EV.closeSession(session({}), wrap, { weakspots: existing, objectives, now: '2026-10-18T15:20:00Z' });
   assert.equal(r.questions.length, 1, 'near-repeat asks');
-  r = EV.intakeSession(file, {
-    weakspots: existing,
-    objectives,
-    now: '2026-10-18T15:00:00Z',
-    decisions: { ws1: 'same' },
-  });
+  assert.equal(r.questions[0].candidate.id, 'ws-fluid');
   const cols = r.writes.map(w => w.collection + ':' + w.op);
   const bump = r.writes.find(w => w.id === 'ws-k' && w.data.events);
-  assert.ok(bump);
-  assert.deepEqual(
-    Object.keys(bump.data.events),
-    ['filing-20261018-150000000'],
-    'filed by the filing role, keyed by writer and time'
-  );
-  assert.ok(r.writes.some(w => w.id === 'ws-fluid' && w.data.events));
+  assert.ok(bump, 'exact repeat bumps');
+  assert.deepEqual(Object.keys(bump.data.events), ['page-20261018-152000000'], 'keyed by writer and time');
+  assert.ok(!r.writes.some(w => w.id === 'ws-fluid'), 'the near-repeat waits on his answer');
   assert.equal(cols.filter(c => c === 'weakspots:set').length, 2, 'acid-base new + one note to-do');
   assert.equal(cols.filter(c => c === 'ideas:set').length, 2, 'unconfirmed objective + connection');
   const byId = Object.fromEntries(existing.map(({ derived, ...doc }) => [doc.id, doc])); // stored documents carry no derived
-  for (const w of r.writes) {
-    assert.equal(w.op === 'set' ? w.data.writer : 'filing', 'filing');
+  for (const w of r.writes.slice(1)) {
+    assert.equal(w.op === 'set' ? w.data.writer : 'page', 'page');
     assertValid(w, byId[w.id]);
   }
-  assert.ok(EV.intakeSession(file, { sessions: [{ id: '2026-10-18-0900-Ch-42' }] }).skip);
 });
 
 test('session timer: checks every 7 min; breaks keep the remaining time; +5 min; idle checks wrap up', () => {
@@ -431,23 +417,19 @@ test('B-381: record_score holds only a number he typed plainly in this turn’s 
 });
 
 test('B-388: two sessions on one open topic make one idea; the second links to it and writes no idea', () => {
-  const file = (id, at) => ({
-    id,
-    date: '2026-10-18',
-    startedAt: at,
-    note: 'Ch 42',
+  // B-408: two closed sessions (the retired Study Watch intake shared these findings)
+  const wrap0 = {
+    summary: 'x',
     weakSpots: [{ topic: 'Why the kidneys hold sodium' }],
     connections: ['Potassium links insulin and the ECG'],
-  });
-  const a = EV.intakeSession(file('sw-a', '2026-10-18T14:00:00Z'), { now: '2026-10-18T15:00:00Z' });
+    noteTodos: [],
+    cards: [],
+  };
+  const a = EV.closeSession({ ...session({}), id: 'ss-a' }, wrap0, { now: '2026-10-18T15:00:00Z' });
   const made = a.writes.filter(w => w.collection === 'ideas');
   assert.equal(made.length, 2);
   const ideas = made.map(w => ({ id: w.id, ...w.data }));
-  const b = EV.intakeSession(file('sw-b', '2026-10-19T14:00:00Z'), {
-    ideas,
-    sessions: [{ id: 'sw-a' }],
-    now: '2026-10-19T15:00:00Z',
-  });
+  const b = EV.closeSession({ ...session({}), id: 'ss-b' }, wrap0, { ideas, now: '2026-10-19T15:00:00Z' });
   assert.equal(b.writes.filter(w => w.collection === 'ideas').length, 0, 'no second idea for the same topic');
   assert.deepEqual(b.linked.map(l => l.idea).sort(), ideas.map(i => i.id).sort());
   assert.ok(
@@ -473,26 +455,6 @@ test('B-388: two sessions on one open topic make one idea; the second links to i
   assert.equal(w.length, 1);
   assert.ok(!shut.some(i => i.id === w[0].id), 'a new id never overwrites one there');
   assert.deepEqual(d.linked, []);
-});
-
-test('B-388: two Study Watch files in one evening pass naming one open topic make one idea', () => {
-  // as the page's filing pass did (retired by B-408): each file's ideas join madeIdeas as documents
-  const files = ['sw-a', 'sw-b'].map((id, i) => ({
-    id,
-    date: '2026-10-18',
-    startedAt: `2026-10-18T1${4 + i}:00:00Z`,
-    note: 'Ch 42',
-    weakSpots: [{ topic: 'Why the kidneys hold sodium' }],
-  }));
-  const madeIdeas = [];
-  let made = 0;
-  for (const f of files) {
-    const r = EV.intakeSession(f, { ideas: [...madeIdeas], now: '2026-10-18T20:00:00Z', writer: 'page' });
-    for (const w of r.writes) if (w.collection === 'ideas') madeIdeas.push({ id: w.id, ...w.data });
-    made += r.writes.filter(w => w.collection === 'ideas').length;
-  }
-  assert.equal(made, 1, 'the second file links to the first file’s idea');
-  // B-408 retired the page's filing pass (the Study Watch reader); core's intake keeps the rule above
 });
 
 test('B-381: E.V.’s save_idea and a session’s findings never land on an idea already there', () => {

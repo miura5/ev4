@@ -113,7 +113,7 @@ test('greeting offers a study session unless one is running', () => {
   assert.ok(!EV.greeting({ ...base, sessionActive: true }).chips.includes('Start a study session'));
 });
 
-test('greeting chips (D-125 as amended): at most three; Start a study session last unless one runs; then review, finished job, filing, what is due', () => {
+test('greeting chips (D-125 as amended): at most three; Start a study session last unless one runs; then review, finished job, what is due', () => {
   const base = {
     now: '2026-10-18T20:00:00Z',
     date: '2026-10-18',
@@ -129,24 +129,24 @@ test('greeting chips (D-125 as amended): at most three; Start a study session la
     status: 'done',
     finishedAt: '2026-10-18T19:00:00Z',
   };
-  assert.deepEqual(EV.greeting({ ...base, reviewLeft: 4, jobs: [job], unfiled: 2, dueSoon: 3 }).chips, [
+  assert.deepEqual(EV.greeting({ ...base, reviewLeft: 4, jobs: [job], dueSoon: 3 }).chips, [
     'Start review',
     'Open the practice set',
     'Start a study session',
   ]);
-  assert.deepEqual(EV.greeting({ ...base, reviewLeft: 0, jobs: [job], unfiled: 1, dueSoon: 3 }).chips, [
+  assert.deepEqual(EV.greeting({ ...base, reviewLeft: 0, jobs: [job], dueSoon: 3 }).chips, [
     'Open the practice set',
-    'File it',
+    'What’s due this week?',
     'Start a study session',
   ]);
   assert.deepEqual(
-    EV.greeting({ ...base, reviewLeft: 0, unfiled: 0, dueSoon: 3 }).chips,
+    EV.greeting({ ...base, reviewLeft: 0, dueSoon: 3 }).chips,
     ['What’s due this week?', 'How ready am I?', 'Start a study session'],
     'what is due is the first offer to drop, but fills a free slot'
   );
   assert.deepEqual(
-    EV.greeting({ ...base, reviewLeft: 4, jobs: [job], unfiled: 2, dueSoon: 3, sessionActive: true }).chips,
-    ['Start review', 'Open the practice set', 'File it'],
+    EV.greeting({ ...base, reviewLeft: 4, jobs: [job], dueSoon: 3, sessionActive: true }).chips,
+    ['Start review', 'Open the practice set', 'What’s due this week?'],
     'during a session the slot goes back to the priority list'
   );
   assert.deepEqual(EV.greeting({ ...base, reviewLeft: 0, dueSoon: 0 }).chips, [

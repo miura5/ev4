@@ -4726,8 +4726,11 @@ async function tap(page, locator, name) {
         !/On a break|min break/.test(await ss.textContent('#sbar')),
       await ss.textContent('#sbar')
     );
-    // End: wrap-up as JSON, filed with the same rules as evening filing; near-repeat waits on a tap
-    await ss.locator('#sbar button', { hasText: 'End' }).click();
+    // End: wrap-up as JSON, filed with the same rules as evening filing; near-repeat waits on a tap. B-408: ended from
+    // the strip's End at 1280, where the phone's session (no note, no planned end) shows on desktop
+    await ss.setViewportSize({ width: 1280, height: 860 });
+    await ss.waitForTimeout(600);
+    await ss.locator('#ev-sslot .s-end').click();
     for (
       let i = 0;
       i < 50 &&
@@ -4737,6 +4740,16 @@ async function tap(page, locator, name) {
       await ss.waitForTimeout(100);
     await ss.waitForTimeout(400);
     S1 = await sess();
+    ok(
+      "[desktop] the strip's End ends the phone's session, its wrap-up posts in the Conversation, and the strip empties",
+      S1.status === 'ended' &&
+        S1.endedBy === 'ended' &&
+        /Session saved/.test((await msgs(ss)).slice(-1)[0].text) &&
+        !(await ss.evaluate(() => !!document.querySelector('#ev-sslot .s-end'))),
+      JSON.stringify({ st: S1.status, by: S1.endedBy, last: (await msgs(ss)).slice(-1)[0].text })
+    );
+    await ss.setViewportSize({ width: 390, height: 844 });
+    await ss.waitForTimeout(600);
     ok(
       'session ended with summary, counts and cards',
       S1.weakSpots.length === 3 &&

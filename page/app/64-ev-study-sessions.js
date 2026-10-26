@@ -732,7 +732,7 @@
         const led = el('span', 's-led');
         led.setAttribute('aria-hidden', 'true');
         const main = el('span', 's-main');
-        main.append(el('b', 's-topic', sessName(s)), el('span', 's-clock', ''), el('span', 's-read', ''));
+        main.append(el('b', 's-topic', sessName(s)), el('span', 's-clock', ''));
         bar.setAttribute('aria-label', 'Study session: ' + sessName(s));
         bar.title = sessName(s);
         const acts = el('div', 's-acts');

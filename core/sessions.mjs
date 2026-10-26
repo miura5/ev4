@@ -25,7 +25,7 @@ export function makeSessions(core) {
     openItemErrors,
   } = core;
 
-  // ---------------------------------------------------------------- Study Watch session intake
+  // ---------------------------------------------------------------- session findings
   /**
    * B-381: an ideas id that never lands on one already there: idea-<Central date>-<Central HHMMSS>-<slug>, then -2, -3
    * while taken. taken is a Set of ids (the record's ideas plus any this call already made); the new id joins it.
@@ -39,71 +39,7 @@ export function makeSessions(core) {
   }
   const idSet = list => new Set([...(list || [])].map(x => (x && typeof x === 'object' ? x.id : x)));
   /**
-   * Proposes the record writes for one Study Watch session file. Exact repeats bump the existing weak spot;
-   * near-repeats (similarity >= 0.5) are listed for the agent to decide.
-   */
-  function intakeSession(
-    file,
-    { weakspots = [], sessions = [], objectives = [], ideas = [], now, decisions = {}, writer = 'filing' } = {}
-  ) {
-    const at = isoOf(now);
-    const id = safeId(
-      file.id ||
-        [
-          file.date,
-          String(file.startedAt || '')
-            .slice(11, 16)
-            .replace(':', ''),
-          slug(file.note || file.topic || 'session', 30),
-        ]
-          .filter(Boolean)
-          .join('-')
-    );
-    if (sessions.some(s => s.id === id)) return { id, skip: true, reason: 'already filed', writes: [], questions: [] };
-    const label = 'Study Watch · ' + (file.note || file.topic || 'session');
-    const writes = [];
-    writes.push({
-      op: 'set',
-      collection: 'sessions',
-      id,
-      data: {
-        ...envelope(writer, file.source === 'E.V. Home' ? 'E.V. Home' : 'Study Watch', at),
-        schema: 2, // B-74
-        date: file.date || chicagoDate(file.startedAt || at),
-        startedAt: file.startedAt || null,
-        endedAt: file.endedAt || null,
-        topic: file.note || file.topic || '',
-        minutes: file.minutes || null,
-        checks: file.checks || null,
-        questions: file.questions || null,
-        endedBy: file.endedBy || null,
-        summary: file.summary || '',
-        weakSpots: (file.weakSpots || []).map(w => (typeof w === 'string' ? w : w.topic)),
-        cardCount: (file.cards || []).length || file.cardCount || 0,
-        cardsFile: file.cardsFile || null,
-        appVersion: file.appVersion || null,
-        filedAt: at,
-      },
-    });
-    const f = sessionFindings(
-      {
-        id,
-        label,
-        by: 'Study Watch',
-        at,
-        weakSpots: file.weakSpots,
-        connections: file.connections,
-        noteTodos: file.noteTodos,
-        writer,
-      },
-      { weakspots, objectives, decisions, ideas }
-    );
-    return { id, skip: false, writes: [...writes, ...f.writes], questions: f.questions, linked: f.linked };
-  }
-
-  /**
-   * The record writes a finished session leads to, shared by evening filing (Study Watch files) and sessions run
-   * in E.V. Home. Weak spots need a known objective, or they become ideas (Matt's rule); exact repeats bump the
+   * The record writes a finished session leads to (closeSession; B-408 retired the Study Watch intake that shared it). Weak spots need a known objective, or they become ideas (Matt's rule); exact repeats bump the
    * active weak spot; near-repeats (similarity >= 0.5) come back as questions until decided ('same'|'different').
    * B-388: an idea-bound topic whose text matches an open idea comes back in linked ({text, idea}) with no write.
    */
@@ -1026,8 +962,6 @@ export function makeSessions(core) {
   /** Flashcards as Quizlet import text: term<TAB>definition per line. */
 
   return {
-    intakeSession,
-
     sessionState,
     noteMark,
     noteDelta,

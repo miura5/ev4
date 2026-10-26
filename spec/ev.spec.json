@@ -3051,7 +3051,7 @@
     }
    ],
    "limits": [
-    "12 page tools in use; the tool cap is unknown (to measure)"
+    "15 page tools in use; the tool cap is unknown (to measure)"
    ]
   },
   "build-chat": {
@@ -4510,7 +4510,9 @@
     "materials",
     "save_idea",
     "make_practice",
-    "study_session"
+    "study_session",
+    "start_workout",
+    "practice_skill"
    ],
    "cards": [
     "today",

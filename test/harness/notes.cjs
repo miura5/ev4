@@ -1066,6 +1066,58 @@ const openNoteId = page =>
         !/Insulin with glucose|insulin moves potassium/.test(rd.doc),
       JSON.stringify({ said, tier: rd.tier, ce, prompt: rd.prompt.slice(0, 200) })
     );
+    // her quote of his line stays in this page's memory: no talk message holds it (the pop-up's chat shows no quote line,
+    // as B-406 built it, so nothing is asserted there)
+    const talkJson = await page.evaluate(() => JSON.stringify(window.__db.talk || {}));
+    ok(
+      `${tag} her quote of his line is never stored in the chat's record`,
+      !/Insulin with glucose shifts potassium/.test(talkJson),
+      talkJson.slice(0, 200)
+    );
+    // a read with nothing worth a word stays silent: Claude is asked, and the chat and the session are unchanged (the
+    // page's clock runs 80 s ahead here, past the gap between two asks, commentGapSeconds)
+    const quiet = () =>
+      page.evaluate(
+        ([i, th]) => ({
+          lines: Object.values(window.__db.talk || {}).reduce(
+            (n, d) => n + Object.values(d.messages || {}).filter(m => m.thread === th).length,
+            0
+          ),
+          events: Object.keys((window.__db.sessions[i] || {}).events || {}).length,
+        }),
+        [sa.id, 'th-' + sa.id]
+      );
+    await page.evaluate(() => {
+      window.__jsonCalls = [];
+      window.__sampleFn = p =>
+        /reading over his shoulder/.test(JSON.stringify(p)) ? { say: null, quote: null, kind: null } : {};
+      const real = Date.now.bind(Date);
+      window.__realNow = real;
+      Date.now = () => real() + 80e3;
+    });
+    const q0 = await quiet();
+    await page.click('#note-body');
+    await page.keyboard.press('Control+End');
+    await page.keyboard.type('Hypokalemia flattens the T waves and brings U waves.');
+    await page.keyboard.press('Enter');
+    await settle(page);
+    await readNow();
+    const asked = await until(
+      page,
+      () => (window.__jsonCalls || []).some(x => /reading over his shoulder/.test(JSON.stringify(x.prompt))),
+      null,
+      6000
+    );
+    await page.waitForTimeout(1200);
+    const q1 = await quiet();
+    await page.evaluate(() => {
+      Date.now = window.__realNow;
+    });
+    ok(
+      `${tag} a read with nothing worth a word stays silent: no line in the session's chat, no session event`,
+      asked && q1.lines === q0.lines && q1.events === q0.events,
+      JSON.stringify({ asked, q0, q1 })
+    );
 
     // a check reads the open note through sample, never the Study Watch reader; it lands in the session's chat
     await page.evaluate(() => {

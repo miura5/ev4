@@ -1461,8 +1461,8 @@ const SPLIT_FILES = [
   [
     'sessions',
     'makeSessions',
-    /function sessionState|function closeSession|function intakeSession/,
-    ['sessionState', 'closeSession', 'intakeSession', 'commentPrompt', 'parseComment', 'noteDelta'],
+    /function sessionState|function closeSession|function sessionFindings/,
+    ['sessionState', 'closeSession', 'commentPrompt', 'parseComment', 'noteDelta'],
   ],
   ['share', 'makeShare', /function (shareableSet|sharePage)\(/, ['shareableSet', 'sharePage']],
   [

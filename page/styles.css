@@ -874,9 +874,6 @@ button.tlink:hover{text-decoration-color:currentColor}
   #study-side .card,#ev-dates{padding:6px 10px 10px;gap:0}
   #study-side .card>h2,#ev-dates>h2{min-height:36px;display:flex;align-items:center;margin:0;font:600 calc(13px * var(--ts)) var(--sans);color:var(--text)}
   #study-side .set-list{margin:0}
-  /* B-290: the session card leads the panel, even beside an open surface; on her view the header's session line gives
-     way to it, so the minutes left show once */
-  body.captions.on-ev .mh #sbar{display:none}
 }
 /* A surface's own head line carries its title, count and state; the card under it never says them again (D-228). */
 .surf .ev-card>.card-head:first-child>:is(.meta,.chip){display:none}
@@ -1925,7 +1922,7 @@ body.has-line #today-week .wk-her{display:none}
   .mh:has(>#sbar:not([hidden])){flex-wrap:wrap;align-content:flex-start;row-gap:0}
   .mh:has(>#sbar:not([hidden]))::before{content:"";order:-1;flex:0 0 0;width:0;margin-right:-10px;height:calc(var(--mh-h) - 1px)}
   .mh>#sbar{order:20;flex:1 0 calc(100% + 24px);box-sizing:border-box;max-width:calc(100% + 24px);justify-content:flex-start;gap:6px;margin:0 -8px 0 -16px;padding:4px 8px 4px 16px;min-height:44px;border-top:1px solid var(--line);font:400 calc(13px * var(--ts)) var(--sans);color:var(--text)}
-  .mh>#sbar .s-led,.mh>#sbar .s-read{display:none}
+  .mh>#sbar .s-led{display:none}
   .mh>#sbar .s-main{flex:1 1 auto;min-width:0}
   .mh>#sbar .s-topic{display:inline;font-weight:600;color:var(--text)}
   .mh>#sbar .s-topic::after{content:" · ";font-weight:400}
@@ -1951,7 +1948,7 @@ body.has-line #today-week .wk-her{display:none}
   body.on-ev .mh:has(>#sbar:not([hidden]))::before{content:"";order:-1;flex:0 0 0;width:0;margin-right:-10px;height:calc(var(--mh-h) - 1px)}
   body.on-ev .mh>#sbar .s-acts{display:flex;gap:6px;flex:none}
   body.on-ev .mh>#sbar{order:20;flex:1 0 100%;justify-content:flex-start;gap:6px;margin:0 -16px;padding:4px 8px 4px 18px;min-height:40px;border-top:1px solid var(--line);font:400 calc(13px * var(--ts)) var(--sans);color:var(--text)}
-  body.on-ev .mh>#sbar .s-led,body.on-ev .mh>#sbar .s-read{display:none}
+  body.on-ev .mh>#sbar .s-led{display:none}
   body.on-ev .mh>#sbar .s-main{flex:1 1 auto;min-width:0}
   body.on-ev .mh>#sbar .s-topic{display:inline;font-weight:600;color:var(--text)}
   body.on-ev .mh>#sbar .s-topic::after{content:" · ";font-weight:400}
