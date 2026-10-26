@@ -7585,5 +7585,22 @@
    "outcome": "task",
    "at": "2026-10-26T08:59:53.306Z"
   }
+ },
+ {
+  "id": "B-416",
+  "kind": "request",
+  "title": "Request (reported Oct 26): Upkeep section on every release card",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "chat, Oct 26 (D-337)",
+  "words": "Upkeep section on every release card",
+  "reportedAt": "2026-10-26T08:59:53.835Z",
+  "board": {
+   "row": "v4 B-416: Upkeep section on every release"
+  }
  }
 ]
