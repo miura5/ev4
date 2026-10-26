@@ -3,38 +3,46 @@
 The build manager rewrites this file before a chat is cleared or ends (CLAUDE.md, Roles, D-317). A new build manager
 reads it right after CLAUDE.md. It holds no personal data: the repository is public.
 
-**Managing chat:** https://claude.ai/code/session_01CWeveciiiW2pUvFQtQJ3HK (still managing as of Oct 25, 8:35 pm Central)
+**Managing chat:** https://claude.ai/code/session_01CWeveciiiW2pUvFQtQJ3HK (still managing as of Oct 26, 12:20 am Central)
 
 ## Where things stand
 
 - Live: v4.5.6 at 10798d8. Nothing else live.
-- Staging GREEN at 4ed5d54 (Oct 26 01:30Z): B-317, B-389, B-397, B-398, B-399 done. Staging Mac tasks: evening-mac
-  trig_01LRaXp8yBp16n61E7sYZQoQ, restore-drill trig_016MfX6dcGkX1pe834pZN9kJ (both proven with Matt present).
+- Staging GREEN at 8da719f (Oct 26 ~04:30Z): B-402 (Notes editor) and B-405 (L-frame strip and floating pop-up) done.
+  Staging evening-cloud ran ok at 8da719f, lint 0 errors.
+- Staging Mac tasks: evening-mac trig_01LRaXp8yBp16n61E7sYZQoQ, restore-drill trig_016MfX6dcGkX1pe834pZN9kJ.
 - Ship staging runs from a clean worktree, /home/claude/ev4-ship (branch shipwt, push with `git push origin HEAD:main`),
-  because builders share /home/claude/ev4. Its dist/state holds the reads; save the page read with tools/tool-result.mjs
-  (--html and --declaration) before re-running ship.
-- Notes (B-396): Matt's go; canvas https://claude.ai/artifact/26TPNoqZBmPkEN5SmtJF9k (89/100). D-325 to D-329.
-  Tasks B-400 (done) to B-409.
+  because builders share /home/claude/ev4. Make the printed calls, then the reads; save the page read with
+  tools/tool-result.mjs (--html and --declaration) and run `node tools/pwa-app.mjs readback staging ...` before re-running.
+- Notes (B-396): canvas https://claude.ai/artifact/26TPNoqZBmPkEN5SmtJF9k. D-325 to D-329. B-400, B-402, B-405 done;
+  B-403 (list) on main, ready for staging; B-401 waits only on its Mac proof.
 
 ## Running (agents)
 
-- B-320 prep: the live deploy workflow behind the GitHub "live" environment, the live registry, the read-only flag,
-  the D-307 lint and docs/cutover.md. Nothing live; it reports what Matt must do.
-- B-401: the notes record (schema, pipelines, mirror, backups) with staging cloud proofs; the Mac proof (evening-mac
-  and restore-drill fired with Matt's Mac awake) is the build manager's.
+- B-404 (offline sync, D-326 keep-both "(earlier)" note): built on main (a0bd029, 735a179); a fresh review is running.
+  Fix its gaps once, review once more, then ship.
+- B-406 (study sessions in Notes, controls in the strip's #ev-sslot; listens for B-403's `ev:note-study` event): building.
 
 ## Next
 
-1. B-401 → its review, the Mac proof, ship staging. Then B-402 (editor) and B-405 (L-frame strip) in parallel.
-2. Cutover sitting with Matt (Monday evening estimate): B-319 live copy on his OK, B-320 at his Mac, release card.
-3. B-391 cleanup (includes folding the three test D1 stand-ins).
+1. B-404 review → fixes → second review. B-406 report → review if it changed session writes.
+2. Ship staging once with B-403, B-404, B-406.
+3. B-407, B-408, then B-409 (rubric click-through, code review, release card).
+4. Cutover sitting with Matt (Monday evening estimate, docs/cutover.md): step 0 hook probe; his GitHub live-env
+   secrets; his OK; B-319 live copy; B-320 cutover (old live evening-mac trig_01AxnPF3iPyo2BpCQtMdAKP8 disabled at step
+   7.5); live Mac tasks re-created; app on Mac and iPhone; release card. Also the B-401 Mac proof at that sitting.
+5. B-391 cleanup (fold the three test D1 stand-ins; pwa-staging check goes red when the seed gains a collection).
 
 ## Waiting on Matt
 
-- Nothing tonight. Later: OK for the live copy (B-319), the cutover at his Mac (B-320), and each live release on his
-  word.
+- Nothing now. At the sitting: the live copy (B-319), the cutover at his Mac (B-320), and each live release on his word.
 
 ## For the release card
 
-- B-399's second review found two small gaps; both were fixed in a later commit that was not reviewed again.
+- Open from second reviews: B-402, an edit that shrinks an over-cap note was refused (B-404 fixes it); B-405, after a
+  reload a failed pop-up line says "Tap Try again" with no button.
+- Not re-reviewed after their last fixes: B-399, B-389, B-401 (mirror line breaks), B-320 (hook bypass).
+- B-320 changed guarded paths (tools/hooks.mjs, .claude/settings.json) on the build manager's direction.
+- Checks loosened: captions' no-Close check skips #evchat (D-327); shell harness skips [hidden] tabs at phone width
+  (D-325, Notes is desktop only).
 - A stray remote branch `mgr-chart` can be ignored or removed by Matt.
