@@ -431,7 +431,7 @@ export function buildPages({ root, spec, schemas, release }) {
     ' };\n})();\n' +
     '\n// ---- core/actions.mjs\n(function () {\n' +
     actions.replace(/^export (function|const) /gm, '$1 ') +
-    '\nif (window.EVValidate) window.EVActions = makeActions(window.EVValidate.validateAgainst);\n})();\n';
+    '\nif (window.EVValidate) window.EVActions = makeActions(window.EVValidate.validateAgainst, window.EVCore);\n})();\n';
   // B-149: core and the page carry no release of their own; the build writes the one release into both.
   const app0 = appSource(root);
   if (!app0.includes(RELEASE_SLOT)) throw new Error(`page/app has no ${RELEASE_SLOT} for the release`);

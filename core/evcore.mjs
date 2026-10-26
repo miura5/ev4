@@ -2419,6 +2419,7 @@ const EVCore = (() => {
     isDue,
     untriaged,
     duplicateOf,
+    survivors, // B-233: injected into core/actions.mjs, the one chain walk
     triageStatus,
     toReview,
     reviewNeed,

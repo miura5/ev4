@@ -46,8 +46,10 @@ export function rowProblem(name, row, his = {}) {
   return null;
 }
 
-export function makeActions(validateAgainst) {
+/** core: E.V. core (or any object with survivors and duplicateOf), for the weak-spot rows (B-233). */
+export function makeActions(validateAgainst, evcore) {
   'use strict';
+  const core = evcore || {};
   /** Whether the row's cost is met: staging is R-02's check (a green staging verify at the commit), ok is R-04's in
    * either form (his tap on a row that is the OK, his words in a build chat, or a ship job he wrote, as fetched). */
   function costMet(row, args, ctx) {
@@ -196,26 +198,21 @@ export function makeActions(validateAgainst) {
     const d = String(at).replace(/\D/g, '');
     return `page-${d.slice(0, 8)}-${d.slice(8, 17)}`;
   };
-  /** The spot a weak spot's answers and his taps count toward: a duplicate's survivor (D-240), through a chain, which
-   * lint fails; a dangling link or a cycle keeps the spot itself. ctx.weakspots is the code's list of spots. */
-  const dupOf = w => {
-    const l = ((w && w.links) || []).find(x => x && x.type === 'duplicate-of' && /^weakspots\/./.test(x.to || ''));
-    return l ? l.to.slice('weakspots/'.length) : null;
-  };
-  function survivor(id, ctx) {
-    const all = new Map(((ctx && ctx.weakspots) || []).map(w => [w.id, w]));
-    const seen = new Set([id]);
-    let cur = id;
-    for (;;) {
-      const next = dupOf(all.get(cur));
-      if (!next || !all.has(next)) return cur; // no link, or a dangling one: this spot stands
-      if (seen.has(next)) return id; // a cycle credits no one else
-      seen.add((cur = next));
-    }
-  }
-  /** A new weak spot, schema 2. weakspot-log is his (never proposed); weakspot-propose is her candidate (D-235). */
+  // B-233 (D-240): the duplicate-of link and the survivor walk are E.V. core's (duplicateOf, survivors), injected by
+  // makeActions' second argument, so the chain walk lives in one place. ctx.weakspots is the code's list of spots as
+  // read; a weak-spot row with no core or no list refuses rather than guess.
+  const spotsOf = ctx => (ctx && Array.isArray(ctx.weakspots) ? ctx.weakspots : null);
+  const spotIn = (ctx, id) => (spotsOf(ctx) || []).find(w => w && w.id === id) || null;
+  const noCore = () =>
+    typeof core.survivors !== 'function' || typeof core.duplicateOf !== 'function'
+      ? 'E.V. core (survivors, duplicateOf) was not given to makeActions'
+      : null;
+  /** A new weak spot, schema 2. weakspot-log is his (never proposed); weakspot-propose is her candidate (D-235). A
+   * set over an id already in the record would erase its events and links: refused, the caller picks another id. */
   const SPOT = ['topic', 'words', 'objective', 'exam', 'course', 'kind', 'origin', 'preRead', 'readingDue', 'initial'];
   const newSpot = proposed => (args, ctx) => {
+    if (!spotsOf(ctx)) return { refused: 'no weak spots read to check the id against (ctx.weakspots)' };
+    if (spotIn(ctx, args.id)) return { refused: `weakspots/${args.id} already exists: a set would erase its events` };
     const at = ctx.now || new Date().toISOString();
     const data = {
       schema: 2,
@@ -236,30 +233,46 @@ export function makeActions(validateAgainst) {
     if (proposed) data.proposed = true;
     return { writes: [{ op: 'set', collection: 'weakspots', id: args.id, data }], effects: [] };
   };
-  /** One of his triage taps (or Mark solid) on one or several spots: an event on each spot's survivor, once each. */
+  /** One of his triage taps (or Mark solid) on one or several spots: an event on each, once each. A spot that is not
+   * in the record, or is itself joined to another (a duplicate), is refused: his tap names the row he saw. */
   const spotEvent = (type, extra) => (args, ctx) => {
+    const bad = noCore() || (!spotsOf(ctx) && 'no weak spots read (ctx.weakspots)');
+    if (bad) return { refused: bad };
+    const surv = core.survivors(spotsOf(ctx));
     const at = ctx.now || new Date().toISOString();
     const key = evKey(at, ctx);
     const done = new Set();
     const writes = [];
     for (const it of args.items || [{ id: args.id }]) {
-      const id = survivor(it.id, ctx);
-      if (done.has(id)) continue;
-      done.add(id);
+      if (done.has(it.id)) continue;
+      done.add(it.id);
+      if (!spotIn(ctx, it.id)) return { refused: `weakspots/${it.id} is not in the record` };
+      if (surv(it.id) !== it.id) return { refused: `weakspots/${it.id} is already joined to ${surv(it.id)}` };
       const e = { type, by: 'owner', at, ...extra(args, it) };
-      writes.push({ op: 'update', collection: 'weakspots', id, data: { events: { [key]: e } } });
+      writes.push({ op: 'update', collection: 'weakspots', id: it.id, data: { events: { [key]: e } } });
     }
     return { writes, effects: [] };
   };
-  /** His Join (D-240, D-284): a duplicate-of link to the spot it repeats, resolved to that spot's survivor; the
-   * spot is kept, and any link it had of another kind stays. args.links is the spot's links as read. */
+  /** His Join (D-240, D-284): a duplicate-of link to the spot it repeats, resolved to that spot's survivor, built from
+   * the spot as read (an update replaces the whole links array), so its other links stay; any spot joined to this one
+   * is re-pointed to the same survivor in the same act, so no chain is made. Nothing is merged away. */
   function join(args, ctx) {
+    const bad = noCore() || (!spotsOf(ctx) && 'no weak spots read (ctx.weakspots)');
+    if (bad) return { refused: bad };
+    const spot = spotIn(ctx, args.id);
+    if (!spot) return { refused: `weakspots/${args.id} is not in the record` };
+    if (!spotIn(ctx, args.to)) return { refused: `weakspots/${args.to} is not in the record` };
+    const to = core.survivors(spotsOf(ctx))(args.to);
+    if (to === args.id) return { refused: 'a spot cannot join itself or a spot joined to it' };
+    if (core.duplicateOf(spot) === to) return { refused: `weakspots/${args.id} is already joined to ${to}` };
     const at = ctx.now || new Date().toISOString();
-    const to = survivor(args.to, ctx);
-    if (to === survivor(args.id, ctx)) return { refused: 'a spot cannot join itself or a spot joined to it' };
-    const links = (args.links || []).filter(l => l.type !== 'duplicate-of');
-    links.push({ to: 'weakspots/' + to, type: 'duplicate-of', createdAt: at, createdBy: 'owner' });
-    return { writes: [{ op: 'update', collection: 'weakspots', id: args.id, data: { links } }], effects: [] };
+    const link = { to: 'weakspots/' + to, type: 'duplicate-of', createdAt: at, createdBy: 'owner' };
+    const relinked = w => [...(w.links || []).filter(l => !(l && l.type === 'duplicate-of')), link];
+    const writes = [{ op: 'update', collection: 'weakspots', id: args.id, data: { links: relinked(spot) } }];
+    for (const w of spotsOf(ctx))
+      if (w && w.id !== args.id && core.duplicateOf(w) === args.id)
+        writes.push({ op: 'update', collection: 'weakspots', id: w.id, data: { links: relinked(w) } });
+    return { writes, effects: [] };
   }
   const COMPOSERS = {
     'weakspot-log': newSpot(false),

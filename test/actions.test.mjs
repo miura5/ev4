@@ -10,9 +10,10 @@ import { ROOT } from './helpers.mjs';
 import { makeActions, rowProblem, CALLERS, COSTS } from '../core/actions.mjs';
 import { hisFields } from '../core/his.mjs';
 import { validateAgainst, checkSchema } from '../core/validate.mjs';
+import EVCore from '../core/evcore.mjs';
 
 const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec', 'ev.spec.json'), 'utf8'));
-const A = makeActions(validateAgainst);
+const A = makeActions(validateAgainst, EVCore);
 const rows = Object.entries(spec.actions).filter(([k]) => !k.startsWith('_'));
 const NOW = '2026-10-21T23:30:00.000Z';
 const tap = A.actor(spec, 'tap'),
@@ -426,7 +427,7 @@ test('B-186: the page gets EVActions in core.js, over the validator, and its tap
   const { buildPages, loadSchemas } = await import('../tools/build.mjs');
   const pages = buildPages({ root: ROOT, spec, schemas: loadSchemas(ROOT), release: 'v' + spec.specVersion });
   const core = pages.staging['core.js'];
-  assert.match(core, /window\.EVActions = makeActions\(window\.EVValidate\.validateAgainst\);/);
+  assert.match(core, /window\.EVActions = makeActions\(window\.EVValidate\.validateAgainst, window\.EVCore\);/);
   assert.ok(
     Buffer.byteLength(JSON.stringify(JSON.parse(pages.live['spec.json']).actions)) < 12000,
     'actions under 12 KB (B-233: the seven weak-spot rows)'
@@ -482,8 +483,7 @@ test('B-229 (D-233) lint: his words are his: no row with a tool, worker or build
 
 // ------------------------------------------------------------------------------------ B-233: the weak-spot rows
 const worker = A.actor(spec, 'worker');
-const DAY = '2026-10-21';
-const INITIAL = { streak: 0, nextDue: DAY, recurrence: 1, misses: 0 };
+const INITIAL = { streak: 0, nextDue: '2026-10-21', recurrence: 1, misses: 0 };
 const spotArgs = { id: 'ws-2026-10-21-E9-2-pump-rates', topic: 'pump rates', objective: 'E9-2', initial: INITIAL };
 const HIS = 'm-20261021-232900000-m',
   HERS = 'm-20261021-232930000-e';
@@ -492,51 +492,72 @@ const talk = {
   [HERS]: { role: 'ev', text: 'Pump rates?' },
 };
 const line = id => talk[id] || null;
+const KEY = 'page-20261021-233000000';
+// a is a survivor with a link of another kind; b is joined to a; c is joined to b (a chain lint fails, planted);
+// d's duplicate-of dangles; e stands alone
+const SEEN = { to: 'sets/s1', type: 'seen-in' };
 const spots = [
-  { id: 'ws-a', links: [] },
+  { id: 'ws-a', links: [SEEN] },
   { id: 'ws-b', links: [{ to: 'weakspots/ws-a', type: 'duplicate-of' }] },
   { id: 'ws-c', links: [{ to: 'weakspots/ws-b', type: 'duplicate-of' }] },
   { id: 'ws-d', links: [{ to: 'weakspots/ws-gone', type: 'duplicate-of' }] },
+  { id: 'ws-e', links: [] },
 ];
+const W = { now: NOW, weakspots: spots };
 const TRIAGE = ['weakspot-accept', 'weakspot-join', 'weakspot-snooze', 'weakspot-decline'];
 const triageArgs = {
   'weakspot-accept': { items: [{ id: 'ws-a', objective: 'E9-2' }] },
-  'weakspot-join': { id: 'ws-a', to: 'ws-e' },
+  'weakspot-join': { id: 'ws-e', to: 'ws-a' },
   'weakspot-snooze': { items: [{ id: 'ws-a' }], until: '2026-10-23' },
   'weakspot-decline': { items: [{ id: 'ws-a' }], note: 'not mine' },
 };
+const v2 = async () => (await import('../core/schemas.mjs')).loadValidator();
+const BASE = {
+  schema: 2,
+  writer: 'page',
+  at: NOW,
+  source: 'x',
+  topic: 't',
+  objective: 'E9-2',
+  kind: 'concept',
+  initial: {},
+};
 
 test('B-233 (D-235, D-242): the weak-spot rows are as section 6 gives them, and only his tap triages', () => {
-  const W = n => spec.actions[n];
-  assert.deepEqual(W('weakspot-log').callers, ['tap', 'tool']);
-  assert.equal(W('weakspot-log').fromHis, true);
-  assert.deepEqual(W('weakspot-propose').callers, ['tap', 'worker']);
-  for (const n of [...TRIAGE, 'weakspot-solid']) assert.deepEqual(W(n).callers, ['tap'], n);
+  const R = n => spec.actions[n];
+  assert.deepEqual(R('weakspot-log').callers, ['tap', 'tool']);
+  assert.equal(R('weakspot-log').fromHis, true);
+  assert.deepEqual(R('weakspot-propose').callers, ['tap', 'worker']);
+  for (const n of [...TRIAGE, 'weakspot-solid']) assert.deepEqual(R(n).callers, ['tap'], n);
   for (const n of Object.keys(spec.actions).filter(n => n.startsWith('weakspot-'))) {
-    assert.equal(W(n).cost, 'nothing', n);
+    assert.equal(R(n).cost, 'nothing', n);
     assert.ok(
-      W(n).writes.every(w => w.collection === 'weakspots'),
+      R(n).writes.every(w => w.collection === 'weakspots'),
       n
     );
   }
-  // his log never writes proposed; her candidate does
-  assert.ok(!W('weakspot-log').writes[0].fields.includes('proposed'));
-  assert.ok(W('weakspot-propose').writes[0].fields.includes('proposed'));
-  // accept, join, snooze and decline from a tool, a worker or the builder are refused
+  assert.ok(!R('weakspot-log').writes[0].fields.includes('proposed'));
+  assert.ok(R('weakspot-propose').writes[0].fields.includes('proposed'));
+  assert.ok(
+    !('links' in R('weakspot-join').args.properties),
+    'join builds links from the spot as read, never from args'
+  );
   for (const n of TRIAGE)
     for (const who of ['tool', 'worker', 'builder']) {
-      const r = A.actor(spec, who)(n, triageArgs[n], { now: NOW, weakspots: spots });
+      const r = A.actor(spec, who)(n, triageArgs[n], W);
       assert.equal(r.ok, false, `${n} from ${who}`);
       assert.match(r.refused, new RegExp(`a ${who} may not call it \\(callers: tap\\)`));
       assert.deepEqual(r.writes, []);
     }
-  for (const n of TRIAGE) assert.equal(tap(n, triageArgs[n], { now: NOW, weakspots: spots }).ok, true, n);
+  for (const n of TRIAGE) assert.equal(tap(n, triageArgs[n], W).ok, true, n);
+  // without E.V. core injected, the weak-spot rows refuse rather than guess
+  const bare = makeActions(validateAgainst).actor(spec, 'tap');
+  assert.match(bare('weakspot-join', triageArgs['weakspot-join'], W).refused, /E\.V\. core .* was not given/);
 });
 
 test('B-233: weakspot-log and weakspot-propose write a schema-2 spot that fits; only hers is proposed', async () => {
-  const { loadValidator } = await import('../core/schemas.mjs');
-  const v = loadValidator();
-  const mine = tap('weakspot-log', spotArgs, { now: NOW });
+  const v = await v2();
+  const mine = tap('weakspot-log', spotArgs, W);
   assert.equal(mine.ok, true, mine.refused);
   const [w] = mine.writes;
   assert.deepEqual([w.op, w.collection, w.id], ['set', 'weakspots', spotArgs.id]);
@@ -548,14 +569,13 @@ test('B-233: weakspot-log and weakspot-propose write a schema-2 spot that fits; 
   const hers = worker(
     'weakspot-propose',
     { ...spotArgs, words: 'Which rate for 1 L over 8 h?', origin: { set: 's1', item: 'q3', at: NOW } },
-    { now: NOW }
+    W
   );
   assert.equal(hers.ok, true, hers.refused);
   assert.deepEqual([hers.writes[0].data.proposed, hers.writes[0].data.writer], [true, 'worker']);
   assert.ok(v('weakspots', hers.writes[0].data, { id: spotArgs.id }).ok);
-  assert.equal(tap('weakspot-propose', spotArgs, { now: NOW }).writes[0].data.writer, 'page');
-  // a tool may not propose, and a planted log composer that sets proposed is outside its row
-  assert.match(tool('weakspot-propose', spotArgs, { now: NOW }).refused, /a tool may not call it/);
+  assert.equal(tap('weakspot-propose', spotArgs, W).writes[0].data.writer, 'page');
+  assert.match(tool('weakspot-propose', spotArgs, W).refused, /a tool may not call it/);
   const planted = A.act(
     spec,
     'weakspot-log',
@@ -568,48 +588,76 @@ test('B-233: weakspot-log and weakspot-propose write a schema-2 spot that fits; 
     }
   );
   assert.match(planted.refused, /sets proposed, outside the row's fields/);
-  // no id outside a weak spot's keys, no extra argument
-  assert.match(tap('weakspot-log', { ...spotArgs, id: 'jobs-x' }, { now: NOW }).refused, /do not fit/);
-  assert.match(tap('weakspot-log', { ...spotArgs, proposed: true }, { now: NOW }).refused, /do not fit/);
+  assert.match(tap('weakspot-log', { ...spotArgs, id: 'jobs-x' }, W).refused, /do not fit/);
+  assert.match(tap('weakspot-log', { ...spotArgs, proposed: true }, W).refused, /do not fit/);
+});
+
+test('B-233: a new spot is never set over an id already in the record (its events would be erased)', () => {
+  for (const n of ['weakspot-log', 'weakspot-propose']) {
+    const r = tap(n, { ...spotArgs, id: 'ws-a' }, W);
+    assert.equal(r.ok, false, n);
+    assert.match(r.refused, /weakspots\/ws-a already exists: a set would erase its events/);
+    assert.deepEqual(r.writes, []);
+    assert.match(tap(n, spotArgs, { now: NOW }).refused, /no weak spots read to check the id against/);
+  }
+  assert.match(tool('weakspot-log', { ...spotArgs, id: 'ws-a', from: HIS }, { ...W, line }).refused, /already exists/);
 });
 
 test("B-233 (D-235): weakspot-log's tool call is checked against his talk line; her line or none is refused", () => {
-  const ok = tool('weakspot-log', { ...spotArgs, from: HIS }, { now: NOW, line });
+  const ok = tool('weakspot-log', { ...spotArgs, from: HIS }, { ...W, line });
   assert.equal(ok.ok, true, ok.refused);
   assert.equal(ok.writes[0].data.proposed, undefined);
-  const hers = tool('weakspot-log', { ...spotArgs, from: HERS }, { now: NOW, line });
+  const hers = tool('weakspot-log', { ...spotArgs, from: HERS }, { ...W, line });
   assert.equal(hers.ok, false);
   assert.match(
     hers.refused,
     /weakspot-log: a tool may call it only from his own line: m-20261021-232930000-e is not his/
   );
   assert.deepEqual(hers.writes, []);
-  assert.match(tool('weakspot-log', spotArgs, { now: NOW, line }).refused, /only from his own line: no from/);
+  assert.match(tool('weakspot-log', spotArgs, { ...W, line }).refused, /only from his own line: no from/);
   assert.match(
-    tool('weakspot-log', { ...spotArgs, from: 'm-20261021-000000000-m' }, { now: NOW, line }).refused,
+    tool('weakspot-log', { ...spotArgs, from: 'm-20261021-000000000-m' }, { ...W, line }).refused,
     /is not his/
   );
-  assert.match(tool('weakspot-log', { ...spotArgs, from: HIS }, { now: NOW }).refused, /is not his/, 'no line lookup');
-  // the tool cannot claim a line role through its arguments or claim to be a tap
-  assert.match(tool('weakspot-log', { ...spotArgs, from: HERS }, { now: NOW, line, caller: 'tap' }).refused, /not his/);
-  // his tap needs no line
-  assert.equal(tap('weakspot-log', spotArgs, { now: NOW }).ok, true);
+  assert.match(tool('weakspot-log', { ...spotArgs, from: HIS }, W).refused, /is not his/, 'no line lookup');
+  assert.match(tool('weakspot-log', { ...spotArgs, from: HERS }, { ...W, line, caller: 'tap' }).refused, /not his/);
+  assert.equal(tap('weakspot-log', spotArgs, W).ok, true, 'his tap needs no line');
 });
 
-test('B-233 (D-242): accept, snooze, decline and solid are events on each spot, landing on its survivor once', async () => {
-  const { loadValidator } = await import('../core/schemas.mjs');
-  const v = loadValidator();
-  const key = 'page-20261021-233000000';
+test('B-233 (D-235): the page path: her add_weakspot tool always goes through the tool actor, so a turn with no line of his is refused', async () => {
+  const forms = fs.readFileSync(path.join(ROOT, 'page', 'app', '91-forms.js'), 'utf8');
+  const body = forms.slice(forms.indexOf('async function toolLogWeakspot'), forms.indexOf('async function weakAct'));
+  assert.match(body, /ACT\.tool\('weakspot-log'/);
+  assert.doesNotMatch(body, /ACT\.tap\(/, 'no tap fallback on the tool path');
+  assert.doesNotMatch(forms, /ACT\.tap\('weakspot-log'/);
+  const chat = fs.readFileSync(path.join(ROOT, 'page', 'app', '72-ev-talking-with-claude.js'), 'utf8');
+  assert.match(chat, /toolLogWeakspot\(\{ topic, objective, from: pend\.replyTo \}\)/);
+  // the page's own tool actor, as built into core.js over E.V. core, refuses the args that path makes with no from
+  const { buildPages, loadSchemas } = await import('../tools/build.mjs');
+  const pages = buildPages({ root: ROOT, spec, schemas: loadSchemas(ROOT), release: 'v' + spec.specVersion });
+  const g = {};
+  new Function('window', pages.staging['core.js'])(g);
+  assert.equal(typeof g.EVCore.survivors, 'function');
+  const pageTool = g.EVActions.actor(JSON.parse(pages.staging['spec.json']), 'tool');
+  const args = { ...spotArgs, course: 'NUR 112', source: 'Told E.V.' };
+  const none = pageTool('weakspot-log', args, { ...W, line });
+  assert.equal(none.ok, false);
+  assert.match(none.refused, /only from his own line: no from/);
+  assert.equal(pageTool('weakspot-log', { ...args, from: HIS }, { ...W, line }).ok, true);
+});
+
+test('B-233 (D-242): accept, snooze, decline and solid are events on each spot named; a duplicate is refused', async () => {
+  const v = await v2();
   const a = tap(
     'weakspot-accept',
     {
       items: [
         { id: 'ws-e', objective: 'E9-2' },
-        { id: 'ws-c', objective: 'E9-1' },
-        { id: 'ws-b', objective: 'E9-1' },
+        { id: 'ws-a', objective: 'E9-1' },
+        { id: 'ws-e', objective: 'E9-3' },
       ],
     },
-    { now: NOW, weakspots: spots }
+    W
   );
   assert.equal(a.ok, true, a.refused);
   assert.deepEqual(a.writes, [
@@ -617,100 +665,126 @@ test('B-233 (D-242): accept, snooze, decline and solid are events on each spot, 
       op: 'update',
       collection: 'weakspots',
       id: 'ws-e',
-      data: { events: { [key]: { type: 'accept', by: 'owner', at: NOW, objective: 'E9-2' } } },
+      data: { events: { [KEY]: { type: 'accept', by: 'owner', at: NOW, objective: 'E9-2' } } },
     },
     {
       op: 'update',
       collection: 'weakspots',
       id: 'ws-a',
-      data: { events: { [key]: { type: 'accept', by: 'owner', at: NOW, objective: 'E9-1' } } },
+      data: { events: { [KEY]: { type: 'accept', by: 'owner', at: NOW, objective: 'E9-1' } } },
     },
   ]);
+  // a spot joined to another is refused, whichever tap; nothing is written for the rest of the call
+  for (const [n, args] of [
+    [
+      'weakspot-accept',
+      {
+        items: [
+          { id: 'ws-e', objective: 'E9-2' },
+          { id: 'ws-b', objective: 'E9-1' },
+        ],
+      },
+    ],
+    ['weakspot-snooze', { items: [{ id: 'ws-c' }], until: '2026-10-23' }],
+    ['weakspot-decline', { items: [{ id: 'ws-b' }] }],
+    ['weakspot-solid', { id: 'ws-b' }],
+  ]) {
+    const r = tap(n, args, W);
+    assert.equal(r.ok, false, n);
+    assert.match(r.refused, /weakspots\/ws-[bc] is already joined to ws-a/);
+    assert.deepEqual(r.writes, []);
+  }
   assert.match(
-    tap('weakspot-accept', { items: [{ id: 'ws-a' }] }, { now: NOW }).refused,
+    tap('weakspot-decline', { items: [{ id: 'ws-zz' }] }, W).refused,
+    /weakspots\/ws-zz is not in the record/
+  );
+  assert.match(
+    tap('weakspot-accept', { items: [{ id: 'ws-a' }] }, W).refused,
     /do not fit/,
     'accept needs an objective'
   );
-  assert.match(tap('weakspot-accept', { items: [] }, { now: NOW }).refused, /do not fit/);
+  assert.match(tap('weakspot-accept', { items: [] }, W).refused, /do not fit/);
   const s = tap(
     'weakspot-snooze',
     { items: [{ id: 'ws-d' }], until: '2026-10-23' },
-    { now: NOW, weakspots: spots, key: () => 'page-x-20261021-233000123' }
+    { ...W, key: () => 'page-20261021-233000123' }
   );
   assert.equal(s.ok, true, s.refused);
-  assert.deepEqual(s.writes[0].id, 'ws-d', 'a dangling duplicate-of keeps the spot');
+  assert.equal(s.writes[0].id, 'ws-d', 'a dangling duplicate-of is no duplicate: the spot stands');
   assert.deepEqual(s.writes[0].data.events, {
-    'page-x-20261021-233000123': { type: 'snooze', by: 'owner', at: NOW, until: '2026-10-23' },
+    'page-20261021-233000123': { type: 'snooze', by: 'owner', at: NOW, until: '2026-10-23' },
   });
-  assert.match(
-    tap('weakspot-snooze', { items: [{ id: 'ws-a' }] }, { now: NOW }).refused,
-    /do not fit/,
-    'a snooze needs until'
-  );
-  const d = tap('weakspot-decline', { items: [{ id: 'ws-a' }] }, { now: NOW });
-  assert.deepEqual(d.writes[0].data.events[key], { type: 'decline', by: 'owner', at: NOW });
+  assert.match(tap('weakspot-snooze', { items: [{ id: 'ws-a' }] }, W).refused, /do not fit/, 'a snooze needs until');
+  const d = tap('weakspot-decline', { items: [{ id: 'ws-a' }] }, W);
+  assert.deepEqual(d.writes[0].data.events[KEY], { type: 'decline', by: 'owner', at: NOW });
   assert.equal(
-    tap('weakspot-decline', { items: [{ id: 'ws-a' }], note: 'not mine' }, { now: NOW }).writes[0].data.events[key]
-      .note,
+    tap('weakspot-decline', { items: [{ id: 'ws-a' }], note: 'not mine' }, W).writes[0].data.events[KEY].note,
     'not mine'
   );
-  const solid = tap('weakspot-solid', { id: 'ws-b' }, { now: NOW, weakspots: spots });
-  assert.deepEqual([solid.writes[0].id, solid.writes[0].data.events[key].type], ['ws-a', 'solid']);
-  // every event fits the schema-2 event shape
-  const base = {
-    schema: 2,
-    writer: 'page',
-    at: NOW,
-    source: 'x',
-    topic: 't',
-    objective: 'E9-2',
-    kind: 'concept',
-    initial: {},
-  };
+  const solid = tap('weakspot-solid', { id: 'ws-a' }, W);
+  assert.deepEqual([solid.writes[0].id, solid.writes[0].data.events[KEY].type], ['ws-a', 'solid']);
   for (const r of [a, s, d, solid])
-    for (const w of r.writes) assert.ok(v('weakspots', { ...base, ...w.data }, { id: w.id }).ok, JSON.stringify(w));
+    for (const w of r.writes) assert.ok(v('weakspots', { ...BASE, ...w.data }, { id: w.id }).ok, JSON.stringify(w));
 });
 
-test('B-233 (D-240, D-284): his Join links the spot to the survivor of what it repeats, keeps its other links, never itself', async () => {
-  const { loadValidator } = await import('../core/schemas.mjs');
-  const v = loadValidator();
-  const seen = { to: 'sets/s1', type: 'seen-in' };
-  const j = tap('weakspot-join', { id: 'ws-e', to: 'ws-c', links: [seen] }, { now: NOW, weakspots: spots });
+test('B-233 (D-240, D-284): his Join links the spot to the survivor of what it repeats, from the spot as read, keeping its other links', async () => {
+  const v = await v2();
+  const dup = to => ({ to: 'weakspots/' + to, type: 'duplicate-of', createdAt: NOW, createdBy: 'owner' });
+  // e joins b, whose survivor is a: e links to a
+  const j = tap('weakspot-join', { id: 'ws-e', to: 'ws-b' }, W);
   assert.equal(j.ok, true, j.refused);
-  assert.deepEqual(j.writes, [
-    {
-      op: 'update',
-      collection: 'weakspots',
-      id: 'ws-e',
-      data: { links: [seen, { to: 'weakspots/ws-a', type: 'duplicate-of', createdAt: NOW, createdBy: 'owner' }] },
-    },
-  ]);
-  const base = {
-    schema: 2,
-    writer: 'page',
-    at: NOW,
-    source: 'x',
-    topic: 't',
-    objective: 'E9-2',
-    kind: 'concept',
-    initial: {},
-    events: {},
-  };
-  assert.ok(v('weakspots', { ...base, ...j.writes[0].data }, { id: 'ws-e' }).ok);
+  assert.deepEqual(j.writes, [{ op: 'update', collection: 'weakspots', id: 'ws-e', data: { links: [dup('ws-a')] } }]);
+  // a's other links are kept though no links come in the args (an update replaces the whole array)
+  const ka = tap('weakspot-join', { id: 'ws-a', to: 'ws-e' }, W);
+  assert.equal(ka.ok, true, ka.refused);
+  assert.deepEqual(ka.writes[0], {
+    op: 'update',
+    collection: 'weakspots',
+    id: 'ws-a',
+    data: { links: [SEEN, dup('ws-e')] },
+  });
+  for (const w of ka.writes) assert.ok(v('weakspots', { ...BASE, events: {}, ...w.data }, { id: w.id }).ok);
   // re-pointed: an old duplicate-of is replaced, not doubled
-  const re = tap('weakspot-join', { id: 'ws-d', to: 'ws-e', links: spots[3].links }, { now: NOW, weakspots: spots });
-  assert.deepEqual(
-    re.writes[0].data.links.map(l => l.to),
-    ['weakspots/ws-e']
-  );
-  // itself, or a spot already joined to it (a cycle), is refused
+  const re = tap('weakspot-join', { id: 'ws-d', to: 'ws-e' }, W);
+  assert.deepEqual(re.writes[0].data.links, [dup('ws-e')]);
+  // itself, a spot joined to it, one already joined there, or a spot not in the record: refused
+  assert.match(tap('weakspot-join', { id: 'ws-a', to: 'ws-a' }, W).refused, /cannot join itself/);
   assert.match(
-    tap('weakspot-join', { id: 'ws-a', to: 'ws-a' }, { now: NOW, weakspots: spots }).refused,
-    /cannot join itself/
-  );
-  assert.match(
-    tap('weakspot-join', { id: 'ws-a', to: 'ws-c' }, { now: NOW, weakspots: spots }).refused,
+    tap('weakspot-join', { id: 'ws-a', to: 'ws-c' }, W).refused,
     /cannot join itself or a spot joined to it/
+  );
+  assert.match(
+    tap('weakspot-join', { id: 'ws-b', to: 'ws-a' }, W).refused,
+    /weakspots\/ws-b is already joined to ws-a/
+  );
+  assert.match(tap('weakspot-join', { id: 'ws-zz', to: 'ws-a' }, W).refused, /weakspots\/ws-zz is not in the record/);
+  assert.match(tap('weakspot-join', { id: 'ws-e', to: 'ws-zz' }, W).refused, /weakspots\/ws-zz is not in the record/);
+  assert.match(tap('weakspot-join', { id: 'ws-e', to: 'ws-a', links: [] }, W).refused, /do not fit/);
+});
+
+test('B-233 (D-240): a Join makes no chain: the spots joined to the one he joins are re-pointed to its new survivor', () => {
+  // y is a duplicate of x; he joins x to z: x and y both name z, and the chain lint finds nothing
+  const xyz = [
+    { id: 'ws-x', links: [{ to: 'notes/n1', type: 'related' }] },
+    { id: 'ws-y', links: [SEEN, { to: 'weakspots/ws-x', type: 'duplicate-of', createdAt: NOW, createdBy: 'owner' }] },
+    { id: 'ws-z', links: [] },
+  ];
+  const r = tap('weakspot-join', { id: 'ws-x', to: 'ws-z' }, { now: NOW, weakspots: xyz });
+  assert.equal(r.ok, true, r.refused);
+  const dupZ = { to: 'weakspots/ws-z', type: 'duplicate-of', createdAt: NOW, createdBy: 'owner' };
+  assert.deepEqual(r.writes, [
+    { op: 'update', collection: 'weakspots', id: 'ws-x', data: { links: [{ to: 'notes/n1', type: 'related' }, dupZ] } },
+    { op: 'update', collection: 'weakspots', id: 'ws-y', data: { links: [SEEN, dupZ] } },
+  ]);
+  const after = xyz.map(w => ({ ...w, ...((r.writes.find(x => x.id === w.id) || {}).data || {}) }));
+  const chains = after.filter(w => {
+    const to = EVCore.duplicateOf(w);
+    return to && EVCore.duplicateOf(after.find(x => x.id === to));
+  });
+  assert.deepEqual(chains, [], 'no duplicate-of reaches another duplicate');
+  assert.deepEqual(
+    after.map(w => EVCore.survivors(after)(w.id)),
+    ['ws-z', 'ws-z', 'ws-z']
   );
 });
 
@@ -720,7 +794,6 @@ test('B-233: the page writes weak spots only through act: no weak-spot write obj
     const src = fs.readFileSync(path.join(dir, f), 'utf8');
     assert.doesNotMatch(src, /collection:\s*'weakspots'/, `${f} writes a weak spot outside act`);
   }
-  const forms = fs.readFileSync(path.join(dir, '91-forms.js'), 'utf8');
-  assert.match(forms, /ACT\.tool\('weakspot-log'/);
-  assert.match(fs.readFileSync(path.join(dir, '72-ev-talking-with-claude.js'), 'utf8'), /from: pend\.replyTo/);
+  // the page gives act() the spots as read, its own event keys and its talk lines
+  assert.match(fs.readFileSync(path.join(dir, '91-forms.js'), 'utf8'), /weakspots: S\.weak, line: talkLine/);
 });

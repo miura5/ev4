@@ -11,26 +11,23 @@
       for (const d of S.talk || []) if (d.messages && d.messages[id]) return d.messages[id];
       return null;
     }
-    /** His own weak spot, at once (D-235). from: the talk line of his a tool call answers; without it, his tap. */
-    async function addWeakspot({ topic, objective = '', source, from }) {
+    /** Her add_weakspot tool: his own weak spot, at once (D-235), only through the tool actor, so act() checks from,
+     * the talk line of his the turn answers; a turn with none (Read from here, a retry of hers) is refused. */
+    async function toolLogWeakspot({ topic, objective = '', from }) {
       const id = E.safeId('ws-' + today + '-' + (objective || 'x') + '-' + E.slug(topic));
       const args = {
         id,
         topic,
         objective,
         course: E.defaultCourse(),
-        source: source || 'Logged by you',
+        source: 'Told E.V.',
         initial: { streak: 0, nextDue: today, recurrence: 1, misses: 0 },
         ...(from ? { from } : {}),
       };
       const ctx = weakCtx();
-      if (from) {
-        acted(ACT && ACT.tool('weakspot-log', args, ctx));
-        await run(ACT.tool('weakspot-log', args, ctx).writes);
-      } else {
-        acted(ACT && ACT.tap('weakspot-log', args, ctx));
-        await run(ACT.tap('weakspot-log', args, ctx).writes);
-      }
+      // D-200's write-site lint takes run(ACT.tool(...).writes) only, so the call is checked, then composed again to run
+      acted(ACT && ACT.tool('weakspot-log', args, ctx));
+      await run(ACT.tool('weakspot-log', args, ctx).writes);
       return id;
     }
     /** His tap on one weak-spot row: weakspot-accept, -join, -snooze, -decline or -solid. */

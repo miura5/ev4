@@ -3706,7 +3706,7 @@
    "No row writes system/spec, where this table lives, or the table itself, and no effect creates, changes or deletes a scheduled task (D-200); act() and test/actions.test.mjs both refuse such a row. A deploy's system documents are core/deploy.mjs's printout, never a row's writes: ship-live is the gate (its caller and cost) and composes no writes.",
    "Every page write site and every record write a tools command prints comes from act or a core composer; today's other page sites are the legacy list in test/data/actions-legacy.json, which only shrinks (test/actions.test.mjs). The 13 conversation tools become rows one at a time, when a task touches them (their schemas move here and the page builds the tool from the row).",
    "B-229 (D-233): a collection's his lists the fields only Matt writes (his words and his ticks): no actions row with a tool, worker or builder caller may write one (core/actions.mjs rowProblem, held by test/actions.test.mjs). A weak spot's words join with weakspots schema 2 (B-232), his talk lines with talk/guidance (B-237).",
-   "B-233 (D-235, D-242): weak spots are written through rows: weakspot-log (his, at once) and weakspot-propose (hers, proposed), and his triage taps weakspot-accept, weakspot-join, weakspot-snooze and weakspot-decline, with weakspot-solid; only his tap triages. A row marked fromHis takes a tool call only when args.from names a talk line of his (ctx.line, set by code), never hers. Each tap lands on the spot's survivor (a duplicate-of resolves through ctx.weakspots)."
+   "B-233 (D-235, D-242): weak spots are written through rows: weakspot-log (his, at once) and weakspot-propose (hers, proposed), never over an id already in the record; his triage taps weakspot-accept, weakspot-join, weakspot-snooze and weakspot-decline, with weakspot-solid; only his tap triages. A row marked fromHis takes a tool call only when args.from names a talk line of his (ctx.line, set by code), never hers. A tap on a spot joined to another is refused; a Join resolves to the survivor and re-points the spots joined to it (E.V. core survivors, injected into makeActions; ctx.weakspots is the spots as read)."
   ],
   "build-ask": {
    "does": "A message starting build:, bug: or idea: on the page: a build job for ev4-builder (D-194, B-180)",
@@ -4266,7 +4266,7 @@
    "cost": "ok"
   },
   "weakspot-log": {
-   "does": "His own weak spot, from his words or a tap: written at once, never proposed (D-235, B-233); a tool call only with from, the talk line of his it answers, which act() checks is his",
+   "does": "His own weak spot, from his words or a tap: written at once, never proposed (D-235, B-233); a tool call only with from, the talk line of his it answers, which act() checks is his; never over an id already in the record",
    "args": {
     "type": "object",
     "properties": {
@@ -4372,7 +4372,7 @@
    "cost": "nothing"
   },
   "weakspot-propose": {
-   "does": "Her candidate from a miss, a session finding or the debrief: proposed, counted nowhere until his triage (D-235, B-233)",
+   "does": "Her candidate from a miss, a session finding or the debrief: proposed, counted nowhere until his triage (D-235, B-233); never over an id already in the record",
    "args": {
     "type": "object",
     "properties": {
@@ -4474,7 +4474,7 @@
    "cost": "nothing"
   },
   "weakspot-accept": {
-   "does": "His Accept, one or several, each with the objective it counts under (D-242): an accept event on each spot's survivor",
+   "does": "His Accept, one or several, each with the objective it counts under (D-242): an accept event on each spot named; a spot joined to another is refused",
    "args": {
     "type": "object",
     "properties": {
@@ -4527,7 +4527,7 @@
    "cost": "nothing"
   },
   "weakspot-join": {
-   "does": "His Join (D-240, D-284): a duplicate-of link to the spot it repeats, resolved to that spot's survivor; links is the spot's links as read, kept but for an old duplicate-of",
+   "does": "His Join (D-240, D-284): a duplicate-of link to the spot it repeats, resolved to that spot's survivor and built from the spot as read; spots joined to it are re-pointed in the same act, so no chain",
    "args": {
     "type": "object",
     "properties": {
@@ -4538,13 +4538,6 @@
      "to": {
       "type": "string",
       "pattern": "^(ws|note|skill)-[A-Za-z0-9_.~:@+-]{1,176}$"
-     },
-     "links": {
-      "type": "array",
-      "maxItems": 20,
-      "items": {
-       "type": "object"
-      }
      }
     },
     "required": [
@@ -4572,7 +4565,7 @@
    "cost": "nothing"
   },
   "weakspot-snooze": {
-   "does": "His Not now (D-242): a snooze event until a date on each spot's survivor",
+   "does": "His Not now (D-242): a snooze event until a date on each spot named; a spot joined to another is refused",
    "args": {
     "type": "object",
     "properties": {
@@ -4624,7 +4617,7 @@
    "cost": "nothing"
   },
   "weakspot-decline": {
-   "does": "His Decline (D-242): a decline event, with his note when he gave one, on each spot's survivor; the spot is kept",
+   "does": "His Decline (D-242): a decline event, with his note when he gave one, on each spot named; a spot joined to another is refused; the spot is kept",
    "args": {
     "type": "object",
     "properties": {
@@ -4675,7 +4668,7 @@
    "cost": "nothing"
   },
   "weakspot-solid": {
-   "does": "His Mark solid (B-357): a solid event on the spot's survivor",
+   "does": "His Mark solid (B-357): a solid event on each spot named; a spot joined to another is refused",
    "args": {
     "type": "object",
     "properties": {
