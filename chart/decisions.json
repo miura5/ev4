@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-332",
+  "date": "Oct 26",
+  "title": "Notes: an edit that shrinks a note already past the size cap is allowed",
+  "why": "B-404 review. A note can pass NOTE_BYTES by typing, which is only checked at save. Refusing every edit past the cap then blocked the way out (deleting lines, cutting). apply() refuses only a change that is past a limit and no smaller than the note it replaces; saveNote still refuses to save past the cap and keeps his words, so no data path loosens.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-331",
   "date": "Oct 25",
   "title": "The cutover's safeguards and switches (B-320). (1) Dispatching pwa-live.yml is a live act. The live-guard hook now also reads Bash and refuses a dispatch unless dist/live-ok is fresh, comes from Matt's OK (deploy live --matt-ok, ship live --matt-ok or his Ship it job) and names that commit. This extends B-58's allowance (D-201): its hooks test is test/hooks.test.mjs, its environments row stays unproven until the managing chat probes it, and GitHub's live environment approval holds either way. (2) The claude.ai live page's read-only mode (D-306) is spec.registry.records.live.readOnly. Its page refuses every write in write() and says so at the top. The app's shim names its host, so the app is never read-only. (3) D-307's lint is tools/d307.mjs, on for a record once spec marks it d1. Its exemptions are named in the tool, the one-time copy among them. (4) The cutover commit is made by node tools/pwa-live.mjs cutover --apply, never by hand: readOnly, d1, the live runs on the Worker, and the live Mac tasks re-pointed at E.V. Backups, with the old evening-mac listed retired.",
