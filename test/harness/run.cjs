@@ -3116,8 +3116,10 @@ async function tap(page, locator, name) {
               source: 'E.V. Home',
               status: 'ended',
               date,
-              startedAt: date + 'T15:00:00.000Z',
-              endedAt: date + 'T15:30:00.000Z',
+              // late in the day (Chicago), so on a Monday, when both days are today, the planted sessions are the
+              // day's newest and the panel's five rows hold them ahead of the seed's own entries for today
+              startedAt: E.addDays(date, 1) + 'T03:00:00.000Z',
+              endedAt: E.addDays(date, 1) + 'T03:30:00.000Z',
               topic,
               folder,
               minutes,
@@ -3149,7 +3151,7 @@ async function tap(page, locator, name) {
             postedAt: d0 + 'T17:00:00.000Z',
             date: d0,
           });
-        return { d0, d1 };
+        return { d0, d1, t };
       });
       await page.waitForTimeout(300);
       await page.click('#tab-study');
@@ -3200,7 +3202,12 @@ async function tap(page, locator, name) {
         ok(
           `[${w}] Progress: on a planted week each day panel's total is its bar, the day's sessions' minutes, and lists them`,
           rows.length === 7 &&
-            rows.every(r => r.sum === r.bar && r.bar === r.wantMin && r.ids.every(i => r.want.includes(i))) &&
+            // a day after today reads Ahead (the demo's), with no bar
+            rows.every(r =>
+              r.k > plant.t
+                ? r.bar === 0 && /Ahead/.test(r.text)
+                : r.sum === r.bar && r.bar === r.wantMin && r.ids.every(i => r.want.includes(i))
+            ) &&
             rows.find(r => r.k === plant.d0).ids.includes('pw-a') &&
             rows.find(r => r.k === plant.d1).ids.includes('pw-c'),
           JSON.stringify(rows.map(r => [r.k, r.bar, r.sum, r.ids.length]))
