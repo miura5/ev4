@@ -7446,5 +7446,22 @@
    "outcome": "task",
    "at": "2026-10-26T00:53:12.894Z"
   }
+ },
+ {
+  "id": "B-410",
+  "kind": "bug",
+  "title": "Bug (reported Oct 26): Notes offline: after a reload, a note the Worker refused stays stuck (Not saved, old words shown, remote edits ignored), and cutting and saving it can overwrite another device's newer words. Two tabs adopting one closed tab's entry over a changed record make two identical (earlier) notes. The 429/5xx backoff is bypassed by the 10 s refresh.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "B-404 second review",
+  "words": "Notes offline: after a reload, a note the Worker refused stays stuck (Not saved, old words shown, remote edits ignored), and cutting and saving it can overwrite another device's newer words. Two tabs adopting one closed tab's entry over a changed record make two identical (earlier) notes. The 429/5xx backoff is bypassed by the 10 s refresh.",
+  "reportedAt": "2026-10-26T06:00:24.660Z",
+  "board": {
+   "row": "v4 B-410: Notes offline: after a reload, a note the Worker refused stays stuck…"
+  }
  }
 ]
