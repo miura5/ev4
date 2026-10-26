@@ -7476,11 +7476,11 @@
   "title": "Notes sessions: one filer per switch, idempotent re-filing, honest Undo button",
   "dod": "switchSession's end event names the switching view, and only that view files at the deadline with no takeover delay; every other view waits the takeover delay. Re-filing is idempotent (a filing mark on the session before its findings, or finding ids keyed on the session), so a reload mid-filing never writes findings twice. The Undo button's deadline is undoEndsAt(prev), and a refused Undo says one line. Tests for each; its own fresh review; staging GREEN.",
   "milestone": "PWA",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-406"
   ],
-  "notes": "",
+  "notes": "Builder took it: switching view on the end event, a filing mark before findings, Undo's deadline from the record.",
   "commit": null,
   "source": "B-406 second review",
   "words": "Notes sessions: in rare cases a switched session is filed twice (the driver view is not the one holding Undo, or a reload lands between a filing's findings and its filed mark), and the Undo button can show after Undo has stopped working, with no word when a tap does nothing.",
