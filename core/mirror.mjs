@@ -81,6 +81,22 @@ export function makeMirror(core) {
           fm({ kind: j.kind, date: j.createdAt ? chicagoDate(j.createdAt) : null }) +
           `# Journal${j.createdAt ? ': ' + shortDate(chicagoDate(j.createdAt)) : ''}\n\n${j.text || ''}\n`,
       });
+    // B-401 (D-325): his notes, each as Markdown made from its blocks. Stored text is escaped so it is never markup or
+    // HTML here; archived and discarded notes are kept and marked in their front matter (nothing is deleted).
+    for (const n of db.notes || [])
+      files.push({
+        path: `notes/${n.id}.md`,
+        content:
+          fm({
+            course: n.course,
+            label: n.label,
+            created: n.createdAt,
+            edited: n.editedAt,
+            earlierOf: n.earlierOf,
+            archived: n.archivedAt,
+            discarded: n.discardedAt,
+          }) + noteMarkdown(n),
+      });
     for (const i of db.ideas || [])
       files.push({
         path: `ideas/${i.id}.md`,
@@ -90,9 +106,57 @@ export function makeMirror(core) {
       });
     files.push({
       path: 'index.md',
-      content: `# E.V. record mirror\n\nRead-only copy written by the evening pipeline${date ? ' on ' + date : ''}. Edit in E.V. Home, not here.\n\n- Weak spots: ${ws.length}\n- Objectives: ${(db.objectives || []).length}\n- Sessions: ${(db.sessions || []).length}\n- Ideas: ${(db.ideas || []).length}\n`,
+      content: `# E.V. record mirror\n\nRead-only copy written by the evening pipeline${date ? ' on ' + date : ''}. Edit in E.V. Home, not here.\n\n- Weak spots: ${ws.length}\n- Objectives: ${(db.objectives || []).length}\n- Sessions: ${(db.sessions || []).length}\n- Ideas: ${(db.ideas || []).length}\n${db.notes ? `- Notes: ${db.notes.length}\n` : ''}`,
     });
     return files;
+  }
+
+  // ---------------------------------------------------------------- notes as Markdown (B-401, D-325)
+  // Text is escaped: a character Markdown or HTML would read as markup is written with a backslash, so a note never
+  // becomes markup it did not ask for. Underline has no Markdown form and is written as plain text.
+  const mdEscape = s => String(s == null ? '' : s).replace(/([\\`*_~[\]<>#|])/g, '\\$1');
+  function runsMarkdown(runs) {
+    return (runs || [])
+      .map(r => {
+        const raw = String((r && r.text) || '').replace(/\s*\n\s*/g, ' ');
+        if (!raw) return '';
+        // marks wrap the text inside its spaces, so ** never sits next to a space
+        const [, lead, core, trail] = raw.match(/^(\s*)([\s\S]*?)(\s*)$/);
+        if (!core) return raw;
+        let s = mdEscape(core);
+        if (r.s) s = `~~${s}~~`;
+        if (r.i) s = `*${s}*`;
+        if (r.b) s = `**${s}**`;
+        if (r.href && /^https?:\/\/[^\s<>"()]+$/.test(r.href)) s = `[${s}](${r.href})`;
+        return lead + s + trail;
+      })
+      .join('');
+  }
+  function noteMarkdown(n) {
+    const out = [];
+    // his title heads the file unless the body opens with its own first heading
+    const title = String(n.title || '').trim();
+    if (title && !(n.blocks || []).some(b => b.type === 'h1')) out.push(`# ${mdEscape(title)}`, '');
+    let num = 0;
+    let prev = null;
+    for (const b of n.blocks || []) {
+      const text = runsMarkdown(b.runs);
+      const pad = '  '.repeat(Math.max(0, Math.min(6, b.indent || 0)));
+      const list = b.type === 'ul' || b.type === 'ol' || b.type === 'todo';
+      // a blank line between blocks, but not between items of one list
+      if (out.length && out[out.length - 1] !== '' && !(list && b.type === prev)) out.push('');
+      num = b.type === 'ol' ? (prev === 'ol' ? num + 1 : 1) : 0;
+      if (b.type === 'h1') out.push(`# ${text}`);
+      else if (b.type === 'h2') out.push(`## ${text}`);
+      else if (b.type === 'h3') out.push(`### ${text}`);
+      else if (b.type === 'ul') out.push(`${pad}- ${text}`);
+      else if (b.type === 'ol') out.push(`${pad}${num}. ${text}`);
+      else if (b.type === 'todo') out.push(`${pad}- [${b.checked ? 'x' : ' '}] ${text}`);
+      else out.push(text);
+      prev = b.type;
+    }
+    while (out.length && out[out.length - 1] === '') out.pop();
+    return out.join('\n') + '\n';
   }
 
   // ---------------------------------------------------------------- backup
@@ -119,5 +183,5 @@ export function makeMirror(core) {
     return writes;
   }
 
-  return { toMarkdown, buildBackup, restorePlan };
+  return { toMarkdown, noteMarkdown, buildBackup, restorePlan };
 }

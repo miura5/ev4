@@ -5,6 +5,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { makeValidator } from './validate.mjs';
 
+/**
+ * The page's own collections that pipelines skip (D-059, D-325): no producer, rebuild, fact hash or record lint reads
+ * them, and a run pulls one only for a step that names it (D-113: evening-mac's backup and mirror). The journal, and his
+ * notes (B-401), which he edits in place: an edited note is never a lint error or a fact-changed.
+ */
+export const PAGE_ONLY = ['journal', 'notes'];
+
 export const SCHEMA_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'spec', 'schemas');
 
 export function loadSchemas(dir = SCHEMA_DIR) {

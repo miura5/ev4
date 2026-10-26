@@ -1,6 +1,6 @@
 // The synthetic record (B-100): a made-up study record in v4 shapes for the page harnesses, so any session can run
 // them without a staging export. It is the made-up record of test/data/seed.cjs, dated from the day it is built, with
-// the documents the harnesses' own checks name. Nothing here is Matt's: no export, no Canvas text, no journal, no
+// the documents the harnesses' own checks name. Nothing here is Matt's: no export, no Canvas text, no journal, no note of his, no
 // conversation of his; clinical content is generic and every client is made up.
 //   node test/data/synthetic.cjs <out dir>        -> <out dir>/<collection>/<id>.json
 // The harnesses (run.cjs, captions.cjs, core.cjs) build one themselves when no record dir is given, or given "synthetic".
@@ -79,6 +79,35 @@ function syntheticRecord(now = new Date()) {
         neverMissed: 5, recurrence: [{ weakspotId: 'ws-synth-5', topic: 'Stroke volume factors', recurrence: 3 }],
         studyVsNextDay: [], weakestObjective: 'E4-3',
         lines: ['Weakest objective: E4-3, 2 of 7 right (29%).', 'Missed every time: What raises cardiac output (3 of 3).', 'Back most often: Stroke volume factors (3 times).'] } }); }
+  // B-401 (D-325): made-up notes in the notes record's shape: blocks with inline marks, never HTML. One per course, an
+  // archived one, and the earlier version a refused stale save keeps (D-326). Generic textbook content only.
+  const r = (text, m = {}) => ({ text, ...m });
+  const note = (id, created, edited, title, course, label, blocks, extra = {}) =>
+    put('notes', id, { ...env('page', 'E.V. Home', edited), createdAt: created, editedAt: edited, title, course, label, blocks, ...extra });
+  const nId = (when, tail) => 'n-' + when.replace(/[-:]/g, '').replace('T', '-').replace(/\.\d+Z$/, '').replace(/Z$/, '') + '-' + tail;
+  const n1 = ct(d(-1), 16, 10), n2 = ct(d(-3), 9, 40), n3 = ct(d(-12), 20, 5), n4 = ct(d(-1), 16, 30);
+  const k = [
+    { type: 'h1', runs: [r('Fluid and electrolytes: potassium and sodium')] },
+    { type: 'p', runs: [r('Two electrolytes, their normal ranges, and what too little or too much looks like. '), r('Know the ECG changes for both.', { i: true })] },
+    { type: 'h2', runs: [r('Potassium')] },
+    { type: 'ul', runs: [r('Normal range: '), r('3.5 to 5.0 mEq/L', { b: true })] },
+    { type: 'ul', runs: [r('Low: flat T waves and U waves')] },
+    { type: 'ol', runs: [r('Check the level')] },
+    { type: 'ol', runs: [r('Check the rhythm')] },
+    { type: 'todo', checked: true, runs: [r('Redo the ECG strip practice')] },
+    { type: 'todo', runs: [r('Flash cards for the causes', { u: true })] },
+    { type: 'p', runs: [r('Reference: '), r('a made-up link', { href: 'https://example.com/fluids' })] },
+  ];
+  note(nId(n1, 'syn1'), n1, ct(d(-1), 16, 25), 'Fluid and electrolytes: potassium and sodium', 'NUR 112', 'Lecture 9', k);
+  note(nId(n2, 'syn2'), n2, n2, 'Renal: filtration and reabsorption', 'BIO 201', 'Lecture 12', [
+    { type: 'h1', runs: [r('Renal: filtration and reabsorption')] },
+    { type: 'ul', runs: [r('Most reabsorption happens in the '), r('proximal convoluted tubule', { b: true })] },
+    { type: 'todo', runs: [r('Why does glucose show up in urine when blood sugar is high?')] },
+  ]);
+  note(nId(n3, 'syn3'), n3, n3, 'Rounding rules for dose math', 'NUR 112', 'From class', [
+    { type: 'ul', runs: [r('mL to the nearest tenth'), r(' (old rule)', { s: true })] },
+  ], { archivedAt: ct(d(-2), 21) });
+  note(nId(n4, 'syn4'), n4, n4, 'Fluid and electrolytes: potassium and sodium (earlier)', 'NUR 112', 'Lecture 9', k.slice(0, 4), { earlierOf: nId(n1, 'syn1') });
   return db;
 }
 

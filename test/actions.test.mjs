@@ -411,11 +411,12 @@ test('B-186: the page gets EVActions in core.js, over the validator, and its tap
 
 test('B-229 (D-233) lint: his words are his: no row with a tool, worker or builder caller writes a field spec marks as his', () => {
   const his = hisFields(spec);
-  // every marked field, listed: his journal text, the dates he adds, his ideas' text, his plan ticks
+  // every marked field, listed: his journal text, the dates he adds, his ideas' text, his plan ticks, his notes (B-401)
   assert.deepEqual(his, {
     dateedits: ['title'],
     ideas: ['text'],
     journal: ['text'],
+    notes: ['title', 'label', 'blocks'],
     planedits: ['ticks'],
   });
   for (const [c, fields] of Object.entries(his))

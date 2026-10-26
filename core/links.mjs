@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import EV from './evcore.mjs';
+import { PAGE_ONLY } from './schemas.mjs';
 
 const KINDS = ['required', 'optional', 'external'];
 let SPEC0 = null;
@@ -123,8 +124,11 @@ function targetHas(db, to, value, spec) {
   if (to === 'named') {
     const i = value.indexOf('/');
     if (i < 1) return null;
-    if (!(spec.collections || {})[value.slice(0, i)]) return OUTSIDE; // note/<id>#line: his note, not the record
-    return ((db && db[value.slice(0, i)]) || []).find(d => d.id === value.slice(i + 1)) || null;
+    const col = value.slice(0, i);
+    if (!(spec.collections || {})[col]) return OUTSIDE; // note/<id>#line: his note, not the record
+    // B-401 (D-325): a page-only collection a run did not read (notes/<id> on a session) is not judged by that run
+    if (PAGE_ONLY.includes(col) && !(db && db[col])) return OUTSIDE;
+    return ((db && db[col]) || []).find(d => d.id === value.slice(i + 1)) || null;
   }
   if (to === 'plans.tasks') {
     for (const p of (db && db.plans) || []) {
@@ -141,6 +145,7 @@ function targetHas(db, to, value, spec) {
     const m = spec[to.slice(5)] || {};
     return Object.prototype.hasOwnProperty.call(m, value) ? m[value] : null;
   }
+  if (PAGE_ONLY.includes(to) && !(db && db[to])) return OUTSIDE;
   return ((db && db[to]) || []).find(d => d.id === value) || null;
 }
 

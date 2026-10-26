@@ -445,6 +445,10 @@
     {
      "collection": "journal",
      "for": "mac-files"
+    },
+    {
+     "collection": "notes",
+     "for": "mac-files"
     }
    ],
    "agentCalls": [
@@ -504,7 +508,7 @@
     {
      "id": "mac-files",
      "kind": "code",
-     "does": "writes the nightly backup (every collection, the journal included (D-113), with counts and per-collection hashes) and, on Sundays, the Markdown mirror, as device_commit_files calls into E.V.'s own files in the Mac folder"
+     "does": "writes the nightly backup (every collection, the journal (D-113) and his notes (D-325) included, with counts and per-collection hashes) and, on Sundays, the Markdown mirror, as device_commit_files calls into E.V.'s own files in the Mac folder"
     }
    ],
    "roles": [
@@ -1877,6 +1881,44 @@
     "text"
    ]
   },
+  "notes": {
+   "class": "Fact",
+   "writers": [
+    "page"
+   ],
+   "key": "n-<YYYYMMDD-HHMMSS>-<random>",
+   "holds": "his notes (D-325): title, course, label and a body of blocks with inline marks, never HTML; the page edits them in place as marks; archived and discarded are marks, nothing is deleted; pipelines skip them as they skip the journal (evening-mac reads them for its backup and mirror only)",
+   "fromV3": "new (D-325, B-401)",
+   "schema": "spec/schemas/notes.schema.json",
+   "marks": {
+    "title": [
+     "page"
+    ],
+    "course": [
+     "page"
+    ],
+    "label": [
+     "page"
+    ],
+    "blocks": [
+     "page"
+    ],
+    "editedAt": [
+     "page"
+    ],
+    "archivedAt": [
+     "page"
+    ],
+    "discardedAt": [
+     "page"
+    ]
+   },
+   "his": [
+    "title",
+    "label",
+    "blocks"
+   ]
+  },
   "talk": {
    "class": "Fact",
    "writers": [
@@ -1904,7 +1946,12 @@
      "fromV3": "talk/memory"
     }
    },
-   "schema": "spec/schemas/talk.schema.json"
+   "schema": "spec/schemas/talk.schema.json",
+   "marks": {
+    "closed": [
+     "page"
+    ]
+   }
   },
   "jobs": {
    "class": "Fact",
@@ -2240,6 +2287,12 @@
     "link": "external"
    },
    {
+    "collection": "sessions",
+    "field": "note",
+    "to": "named",
+    "link": "optional"
+   },
+   {
     "collection": "dates",
     "field": "course",
     "to": "spec.courses",
@@ -2291,6 +2344,18 @@
     "collection": "weeks",
     "field": "insights.recurrence[].weakspotId",
     "to": "weakspots",
+    "link": "optional"
+   },
+   {
+    "collection": "notes",
+    "field": "course",
+    "to": "spec.courses",
+    "link": "optional"
+   },
+   {
+    "collection": "notes",
+    "field": "earlierOf",
+    "to": "notes",
     "link": "optional"
    }
   ]
@@ -3259,6 +3324,13 @@
     "relief": null
    },
    "journal": {
+    "warnDocs": null,
+    "failDocs": null,
+    "warnBytes": null,
+    "failBytes": null,
+    "relief": null
+   },
+   "notes": {
     "warnDocs": null,
     "failDocs": null,
     "warnBytes": null,

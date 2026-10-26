@@ -1,0 +1,204 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/notes",
+ "title": "notes/<id>",
+ "description": "his notes (D-325): a title, a course and a body of blocks with inline marks; never HTML",
+ "x-ev": {
+  "collection": "notes",
+  "class": "Fact",
+  "writers": [
+   "page"
+  ],
+  "schema": 1,
+  "marks": {
+   "title": [
+    "page"
+   ],
+   "course": [
+    "page"
+   ],
+   "label": [
+    "page"
+   ],
+   "blocks": [
+    "page"
+   ],
+   "editedAt": [
+    "page"
+   ],
+   "archivedAt": [
+    "page"
+   ],
+   "discardedAt": [
+    "page"
+   ]
+  }
+ },
+ "$comment": "B-401 (D-325, D-326, D-328): written by the page only. The note's identity (createdAt, earlierOf) is write-once; what he edits is a mark the page changes in place. Archived and discarded are marks, never deletes. The body is structured blocks of plain-text runs: no HTML is stored, and a reader never turns stored text into HTML. Pipelines skip notes as they skip the journal; evening-mac reads them only for its backup and mirror.",
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "page"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "createdAt": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "title": {
+   "type": "string",
+   "maxLength": 300,
+   "description": "his title; empty until he gives one (the list then reads the first heading)"
+  },
+  "course": {
+   "anyOf": [
+    {
+     "type": "string",
+     "minLength": 1
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "description": "a spec.courses key, or null for a note in no course"
+  },
+  "label": {
+   "type": "string",
+   "maxLength": 80,
+   "description": "his short label, such as Lecture 9 or Skills lab"
+  },
+  "blocks": {
+   "type": "array",
+   "maxItems": 4000,
+   "items": {
+    "$ref": "#/$defs/block"
+   }
+  },
+  "editedAt": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "earlierOf": {
+   "type": "string",
+   "pattern": "^n-[A-Za-z0-9-]{1,120}$",
+   "description": "D-326: the note this one is the kept earlier version of, when a stale save was refused"
+  },
+  "archivedAt": {
+   "anyOf": [
+    {
+     "type": "string",
+     "format": "date-time"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "description": "a mark: when he archived it (null when he brings it back)"
+  },
+  "discardedAt": {
+   "anyOf": [
+    {
+     "type": "string",
+     "format": "date-time"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "description": "a mark: when it was discarded (null when Undo brings it back); the note itself is kept"
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "createdAt",
+  "title",
+  "blocks"
+ ],
+ "additionalProperties": false,
+ "$defs": {
+  "block": {
+   "type": "object",
+   "description": "one line of the note: a paragraph, a heading, or one item of a bulleted, numbered or check list",
+   "properties": {
+    "type": {
+     "enum": [
+      "p",
+      "h1",
+      "h2",
+      "h3",
+      "ul",
+      "ol",
+      "todo"
+     ]
+    },
+    "runs": {
+     "type": "array",
+     "maxItems": 400,
+     "items": {
+      "$ref": "#/$defs/run"
+     }
+    },
+    "checked": {
+     "type": "boolean",
+     "description": "a checklist item's tick (todo only)"
+    },
+    "indent": {
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 6
+    }
+   },
+   "required": [
+    "type",
+    "runs"
+   ],
+   "additionalProperties": false
+  },
+  "run": {
+   "type": "object",
+   "description": "plain text with its inline marks: bold, italic, underline, strikethrough, and a link",
+   "properties": {
+    "text": {
+     "type": "string",
+     "maxLength": 20000
+    },
+    "b": {
+     "const": true
+    },
+    "i": {
+     "const": true
+    },
+    "u": {
+     "const": true
+    },
+    "s": {
+     "const": true
+    },
+    "href": {
+     "type": "string",
+     "maxLength": 2000,
+     "pattern": "^https?://[^\\s<>\"]+$"
+    }
+   },
+   "required": [
+    "text"
+   ],
+   "additionalProperties": false
+  }
+ }
+}

@@ -35,9 +35,9 @@ const synthetic = () => {
 const dangling = db =>
   lintRecord(db, spec, validate, { date: '2026-10-17' }).issues.filter(i => i.code === 'dangling-link');
 
-test('B-231: spec.links names 36 id fields, each in its schema, with a target the record or the spec has', () => {
+test('B-231: spec.links names 39 id fields, each in its schema, with a target the record or the spec has', () => {
   const rows = linkRows(spec);
-  assert.equal(rows.length, 36);
+  assert.equal(rows.length, 39); // B-401: sessions.note, notes.course, notes.earlierOf
   assert.deepEqual(linkProblems(spec, schemas), []);
   assert.equal(rows.filter(r => r.link === 'required').length, 8);
   assert.deepEqual(

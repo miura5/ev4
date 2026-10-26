@@ -11,8 +11,8 @@
 //   frozen           (info) D-090: a document carrying migratedAt or migratedTo is a frozen original, so is a v2 or v3
 //                    leftover (B-34), and a collection in spec.legacyCollections is v3's, kept by rule; each is one note
 //                    per collection, never an error
-// plus the content checks E.V. core has always run (items, orphans, duplicates). The journal is never
-// read: it stays the page's (D-059).
+// plus the content checks E.V. core has always run (items, orphans, duplicates). The journal and his notes are never
+// read: they stay the page's (D-059, D-325), so an edited note is no lint error and no fact-changed.
 import EV from './evcore.mjs';
 import {
   classOf,
@@ -25,6 +25,7 @@ import {
   keyWriter,
 } from './derive.mjs';
 import { describeErrors } from './validate.mjs';
+import { PAGE_ONLY } from './schemas.mjs';
 import { linkIssues } from './links.mjs';
 
 /** The legacy copy a schema bump kept of collection/id (legacy/v4-<collection>-<id>-s<n>) that passes ok(copy), if any. */
@@ -116,7 +117,7 @@ export function unknownCourses(db) {
 export function lintRecord(db, spec, validate, { date, commit = null } = {}) {
   const issues = [];
   const add = (severity, code, ref, msg) => issues.push({ severity, code, ref, msg });
-  const rec = Object.fromEntries(Object.entries(db || {}).filter(([c]) => c !== 'journal'));
+  const rec = Object.fromEntries(Object.entries(db || {}).filter(([c]) => !PAGE_ONLY.includes(c)));
   const cap = spec.capacity || {};
   const state = (rec.state || []).find(d => d.id === 'current') || null;
   const kf = knownFacts(rec.state);

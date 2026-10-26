@@ -1,0 +1,42 @@
+{
+ "schema": 1,
+ "writer": "page",
+ "at": "2026-10-16T15:20:00Z",
+ "source": "E.V. Home",
+ "createdAt": "2026-10-16T15:00:00Z",
+ "editedAt": "2026-10-16T15:20:00Z",
+ "title": "Made-up note",
+ "course": "NUR 112",
+ "label": "Lecture 1",
+ "blocks": [
+  {
+   "type": "h1",
+   "runs": [
+    {
+     "text": "Made-up note"
+    }
+   ]
+  },
+  {
+   "type": "p",
+   "runs": [
+    {
+     "text": "Made-up text with "
+    },
+    {
+     "text": "one bold word",
+     "b": true
+    }
+   ]
+  },
+  {
+   "type": "todo",
+   "checked": false,
+   "runs": [
+    {
+     "text": "A made-up thing to do"
+    }
+   ]
+  }
+ ]
+}

@@ -14,6 +14,11 @@
   "schema": 4,
   "documents": {
    "memory": "#/$defs/memory"
+  },
+  "marks": {
+   "closed": [
+    "page"
+   ]
   }
  },
  "$comment": "talk/<date> is a Fact of appended messages; talk/memory is Derived (its own shape).",
@@ -92,6 +97,11 @@
       "pattern": "^ss-[A-Za-z0-9-]+$",
       "description": "B-74 (D-128): the study session the message was written during"
      },
+     "thread": {
+      "type": "string",
+      "pattern": "^th-[A-Za-z0-9-]{1,80}$",
+      "description": "B-401 (D-325, D-327): the chat thread the line belongs to (the E.V. pop-up keeps one thread per chat; a closed one is in history)"
+     },
      "note": {
       "type": "object",
       "description": "B-74 (D-130, D-131): the note line a comment is about",
@@ -154,6 +164,17 @@
      "at"
     ],
     "additionalProperties": false
+   }
+  },
+  "closed": {
+   "type": "object",
+   "description": "B-401 (D-327): a mark the page sets: each thread it closed on this day, with when (a closed thread is kept and listed in history, never deleted)",
+   "propertyNames": {
+    "pattern": "^th-[A-Za-z0-9-]{1,80}$"
+   },
+   "additionalProperties": {
+    "type": "string",
+    "format": "date-time"
    }
   }
  },

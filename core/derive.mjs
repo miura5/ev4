@@ -7,7 +7,7 @@
 import EV from './evcore.mjs';
 import * as STUDY from './study.mjs';
 import { healthBody } from './watch.mjs';
-import { loadSchemas } from './schemas.mjs';
+import { loadSchemas, PAGE_ONLY } from './schemas.mjs';
 
 const ms = x => EV.toMs(x);
 
@@ -57,7 +57,7 @@ function cutMap(value, at, depth) {
 /**
  * The record as it stood at `at`: documents created by then, their append maps cut to entries made by then. An Edit
  * is replaced whole, so one changed since `at` cannot be wound back; it is used as it is now and named in `inexact`.
- * Config documents (system/*) are always current. The journal is left out: no pipeline reads it (D-059).
+ * Config documents (system/*) are always current. The journal and his notes are left out: no pipeline reads them (D-059, D-325).
  */
 export function asOf(db, at, spec, { since = null, self = null } = {}) {
   const t = ms(at);
@@ -71,7 +71,7 @@ export function asOf(db, at, spec, { since = null, self = null } = {}) {
     [d.at, d.endedAt, d.updatedAt].some(x => Number.isFinite(ms(x)) && ms(x) > s && ms(x) <= t);
   for (const [col, docs] of Object.entries(db || {})) {
     const c = spec.collections[col];
-    if (!c || col === 'journal') continue; // no producer reads the journal (D-059)
+    if (!c || PAGE_ONLY.includes(col)) continue; // no producer reads the journal or his notes (D-059, D-325)
     const appends = Object.keys(c.appends || {});
     out[col] = [];
     for (const d of docs || []) {
@@ -382,7 +382,7 @@ function stateBody(all, { date, now, specVersion, release = null, part = null, s
       .map(([k, d]) => [k, d.length])
       .sort(([a], [b]) => (a < b ? -1 : 1))
   );
-  const content = EV.lint({ ...db, journal: [], weakspotModels: v.models, counts }, { date });
+  const content = EV.lint({ ...db, journal: [], notes: [], weakspotModels: v.models, counts }, { date });
   // Bytes for the collections a byte budget watches (D-093). state leaves itself out, as the counts do (it cannot
   // measure the document it is writing); lint measures it.
   const budgets = (spec.capacity && spec.capacity.collections) || {};
@@ -419,7 +419,7 @@ function stateBody(all, { date, now, specVersion, release = null, part = null, s
   const factHashes = {};
   const fieldLists = {};
   for (const [col, docs] of Object.entries(db).sort(([a], [b]) => (a < b ? -1 : 1))) {
-    if (col === 'journal') continue; // pipelines never read it (D-059)
+    if (PAGE_ONLY.includes(col)) continue; // pipelines never read them (D-059, D-325)
     for (const d of [...docs].sort((a, b) => (a.id < b.id ? -1 : 1))) {
       if (classOf(spec, col, d.id) !== 'Fact') continue;
       const fields = (fieldLists[col] = fieldLists[col] || factFields(spec, col));

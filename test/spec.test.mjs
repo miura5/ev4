@@ -47,6 +47,7 @@ const COLLECTIONS = [
   'ideas',
   'workouts',
   'journal',
+  'notes',
   'talk',
   'jobs',
   'jobresults',

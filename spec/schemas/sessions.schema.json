@@ -26,7 +26,7 @@
    ]
   }
  },
- "$comment": "The note's text never enters the record: length and hash only (B-06).",
+ "$comment": "The note's text never enters a session: length and hash only (B-06), so text and noteText are refused. B-401 (D-325): note names his E.V. note by reference (notes/<id>), never its text; the text stays in notes/.",
  "type": "object",
  "properties": {
   "schema": {
@@ -144,6 +144,11 @@
   },
   "noteId": {
    "type": "string"
+  },
+  "note": {
+   "type": "string",
+   "pattern": "^notes/n-[A-Za-z0-9-]{1,120}$",
+   "description": "B-401 (D-325): the E.V. note this session studies, as notes/<id>"
   },
   "folder": {
    "type": "string"
@@ -350,11 +355,6 @@
    {
     "required": [
      "noteText"
-    ]
-   },
-   {
-    "required": [
-     "note"
     ]
    }
   ]

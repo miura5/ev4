@@ -30,6 +30,7 @@ export const RECORD_COLLECTIONS = [
   'ideas',
   'workouts',
   'journal',
+  'notes',
   'talk',
   'jobs',
   'jobresults',

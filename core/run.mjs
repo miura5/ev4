@@ -13,7 +13,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import EV from './evcore.mjs';
-import { readExport } from './schemas.mjs';
+import { readExport, PAGE_ONLY } from './schemas.mjs';
 import { chunkWrites } from './batches.mjs';
 import { describeErrors, validateAgainst } from './validate.mjs';
 import { writersOf, classOf, appendEntries, appendDepth, keyWriter } from './derive.mjs';
@@ -230,9 +230,10 @@ export function pull({ spec, dir, at }) {
   const out = path.join(dir, 'pull');
   const calls = (def.reads || []).map(r => {
     // D-113 (B-62): the journal is a named read: a pipeline pulls it only for a step it names (r.for), never by default.
-    if (r.collection === 'journal' && !(r.for && (def.steps || []).some(s => s.id === r.for)))
+    // B-401 (D-325): so are his notes.
+    if (PAGE_ONLY.includes(r.collection) && !(r.for && (def.steps || []).some(s => s.id === r.for)))
       throw new Error(
-        "the journal is read only for a step that names it (D-113): give the read a for naming one of this pipeline's steps"
+        `the ${r.collection === 'journal' ? 'journal is' : `${r.collection} are`} read only for a step that names it (D-113): give the read a for naming one of this pipeline's steps`
       );
     const query = { limit: 1000 };
     if (r.windowDays) query.where = [['at', '>=', new Date(EV.toMs(at) - r.windowDays * 864e5).toISOString()]];
