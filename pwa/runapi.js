@@ -36,6 +36,35 @@ const isObj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
 const isDel = v => isObj(v) && v.__delete__ === true && Object.keys(v).length === 1;
 const hasDel = v => (isDel(v) ? true : Array.isArray(v) ? v.some(hasDel) : isObj(v) && Object.values(v).some(hasDel));
 
+// B-398: every write stores a document in one canonical JSON form: the text JSON.stringify gives for the value JSON.parse
+// read, so compact, with the keys in the order every reader already sees them (integer-like keys first, the rest as
+// written). It is the form a read gives back (run API, GET /api/db), so a Mac backup, which re-serialises what it reads
+// (core/d1backup.mjs dumpD1), and the R2 export, which keeps D1's text (pwa/backup.js), hash the same. Only whitespace,
+// escapes and the spelling of numbers change; the data a reader parses is the same. A number JSON cannot hold (1e400
+// parses to Infinity, which would be stored as null) is refused instead, so nothing is changed by canonicalising.
+/** Whether every number in v is finite (JSON.parse gives Infinity for a number too large to hold). */
+export const finiteJson = v =>
+  typeof v === 'number'
+    ? Number.isFinite(v)
+    : Array.isArray(v)
+      ? v.every(finiteJson)
+      : isObj(v)
+        ? Object.values(v).every(finiteJson)
+        : true;
+/** The canonical text of a parsed document. */
+export const canonicalText = v => JSON.stringify(v);
+/** A body as the Worker stores it: {text} (canonical) or {error} when it is not JSON or holds a number JSON cannot. */
+export function canonicalJson(text) {
+  let v;
+  try {
+    v = JSON.parse(text);
+  } catch {
+    return { error: 'the body is not JSON' };
+  }
+  if (!finiteJson(v)) return { error: 'a number too large for JSON (it would be stored as null); nothing was written' };
+  return { text: canonicalText(v) };
+}
+
 /** update: `patch` merged into `doc`, objects deeply; {"__delete__": true} removes that field. */
 export function merge(doc, patch) {
   const out = isObj(doc) ? { ...doc } : {};
@@ -62,6 +91,7 @@ export function checkWrites(writes) {
     if (!validDocId(w.doc_id)) return at(400, 'doc_id: not a document id');
     if (!isObj(w.data)) return at(400, 'data: a JSON object');
     if (w.op === 'set' && hasDel(w.data)) return at(400, 'set rejects {"__delete__": true}; use update');
+    if (!finiteJson(w.data)) return at(400, 'data: a number too large for JSON (it would be stored as null)'); // B-398
     if (w.if_version != null && !(Number.isInteger(w.if_version) && w.if_version >= 1))
       return at(400, 'if_version: a whole number from 1');
     const key = w.collection + '\n' + w.doc_id;
@@ -213,11 +243,11 @@ export async function handleRun(request, env, url) {
           ? env.DB.prepare('INSERT INTO docs (c, id, data, at, v) VALUES (?, ?, ?, ?, 1)').bind(
               r.c,
               r.id,
-              JSON.stringify(r.data),
+              canonicalText(r.data), // B-398
               at
             )
           : env.DB.prepare('UPDATE docs SET data = ?, at = ?, v = ? WHERE c = ? AND id = ? AND v = ?').bind(
-              JSON.stringify(r.data),
+              canonicalText(r.data),
               at,
               r.v,
               r.c,

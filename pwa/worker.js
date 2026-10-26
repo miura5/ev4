@@ -9,7 +9,9 @@
 //     more on every write, the page's saves here included). Nothing is ever deleted.
 //   - B-316: a nightly export of D1 to R2 (backup.js) on the cron in wrangler.toml, and POST /api/backup/export to make
 //     one now; GET /api/backup/newest names the newest export. Exports are never overwritten or deleted.
-import { handleRun, validCollection, validDocId } from './runapi.js';
+//   - B-398: every write (a page save here, a run API batch) stores the document in one canonical JSON form
+//     (runapi.js canonicalJson), so a Mac backup and the R2 export of the same D1 hash the same.
+import { handleRun, validCollection, validDocId, canonicalJson } from './runapi.js';
 import { exportToR2, newestExport, EXPORT_PREFIX } from './backup.js';
 import { tokenOk, ifVersionOf } from './guard.js';
 
@@ -76,12 +78,11 @@ export default {
     if (m && request.method === 'PUT') {
       const want = ifVersionOf(url);
       if (want === undefined) return json({ error: 'if_version: a whole number from 1' }, 400);
-      const data = await request.text();
-      try {
-        JSON.parse(data);
-      } catch {
-        return json({ error: 'the body is not JSON' }, 400); // refuses anything that is not JSON
-      }
+      // B-398: stored in the one canonical form every write uses (runapi.js canonicalJson), whatever spacing or escapes
+      // the body came with; anything that is not JSON, or holds a number JSON cannot, is refused.
+      const body = canonicalJson(await request.text());
+      if (body.error) return json({ error: body.error }, 400);
+      const data = body.text;
       // B-319: the path carries both encoded (encodeURIComponent); decoded here, an id may hold a space but no "/".
       let c, id;
       try {
