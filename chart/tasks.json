@@ -7419,11 +7419,21 @@
  {
   "id": "B-409",
   "kind": "request",
-  "title": "Request (reported Oct 25): Build rubric click-through, code review and release card (B-396, D-325).",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
-  "depends": [],
+  "title": "Notes: rubric click-through, code review and release card",
+  "dod": "The UI reviewer scores at one pinned commit on the three records, at 1280, 1706 and 2560, with 390 confirming the phone is unchanged and has no Notes. At most two fix waves. A code reviewer reads the whole release diff. The full npm run check is GREEN (dist/check-full.json). Done at rubric 80 or more with no factor below 3 and no blocker (or the card says by how much it missed), staging GREEN at the same commit, and the release card written for Matt.",
+  "milestone": "PWA",
+  "status": "open",
+  "depends": [
+   "B-400",
+   "B-401",
+   "B-402",
+   "B-403",
+   "B-404",
+   "B-405",
+   "B-406",
+   "B-407",
+   "B-408"
+  ],
   "notes": "",
   "commit": null,
   "source": "build manager, B-396 plan",
@@ -7431,6 +7441,10 @@
   "reportedAt": "2026-10-26T00:53:10.420Z",
   "board": {
    "row": "v4 B-409: Build rubric click-through, code review and release card (B-396,…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-26T00:53:12.894Z"
   }
  }
 ]
