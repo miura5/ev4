@@ -7307,7 +7307,7 @@
    "B-402",
    "B-398"
   ],
-  "notes": "Ready for review (not done): a0bd029 + 735a179. bridge.js IndexedDB copy, notes outbox, offline refusal of other writes, replay with D-326 keep-both ('<title> (earlier)', ev-note-kept); sw.js boot precache; 25-notes.js picker, Keep this version swap, Undo, sync header, B-402 stopgap removed, shrink-over-cap allowed, save-time noteTooBig. npm test 736/737 (B-324 pwa-jobs talk-date fails on clean main too, after Chicago midnight), smoke 28/28, smoke:pwa 31/31, notes harness 62/62, pwa-offline 7/7. Needs the review skill in a fresh subagent; staging not shipped.",
+  "notes": "Review gaps fixed, ready for second review (not done): 9a76e0d on main after a0bd029/735a179. (1) A version arriving mid-pick ends the pick and its Undo; the swap moves the note's current words (typed words included) into the second note, and goes through keepBoth when the note changed elsewhere, or uses a new second note when the second note did. (2) Outbox is one IndexedDB entry per tab per note, removed only by matching tag; closed tabs' entries are taken over (Web Locks); the record copy is merged in one transaction. (3) Same words already in the record (blocks, course, label): no second note, in the shim and the page. (4) 429/5xx retried with doubling backoff; a 4xx refusal is kept, sent to the page (ev-sync refused, header Not saved) and left out of Syncing; the page saves only under cap less NOTE_ROOM 256 so a second note always fits. At main head: npm test 745/746 (1 skipped, 0 fail), smoke 28/28, smoke:pwa 32/32, notes harness 78/78, pwa-offline 15/15. Staging not shipped.",
   "commit": null,
   "source": "build manager, B-396 plan",
   "words": "Build offline and sync in the app (B-396, D-325).",
