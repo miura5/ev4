@@ -19,11 +19,14 @@
    ]
   }
  },
- "$comment": "Nothing derived on a Fact: state comes from answers and events by the core function. Schema 2 (B-232): proposed marks a spot she inferred (D-235, D-237), counted nowhere until his accept, join, snooze or decline; words keeps his words or the item's stem under her topic (D-239); links is the ideas link shape plus duplicate-of (D-240).",
+ "$comment": "Nothing derived on a Fact: state comes from answers and events by the core function. Schema 2 (B-232): proposed marks a spot she inferred (D-235, D-237), counted nowhere until his accept, join, snooze or decline; words keeps his words or the item's stem under her topic (D-239); links is the ideas link shape plus duplicate-of (D-240). Schema 1 stays valid until the 1 to 2 migration runs (a spot written before it, with none of schema 2's fields or events), so a release can land before its migration; every writer writes 2.",
  "type": "object",
  "properties": {
   "schema": {
-   "const": 2
+   "enum": [
+    1,
+    2
+   ]
   },
   "writer": {
    "enum": [
@@ -277,5 +280,55 @@
     ]
    }
   ]
- }
+ },
+ "anyOf": [
+  {
+   "properties": {
+    "schema": {
+     "const": 2
+    }
+   }
+  },
+  {
+   "properties": {
+    "schema": {
+     "const": 1
+    },
+    "events": {
+     "additionalProperties": {
+      "properties": {
+       "type": {
+        "not": {
+         "enum": [
+          "accept",
+          "snooze",
+          "decline"
+         ]
+        }
+       }
+      }
+     }
+    }
+   },
+   "not": {
+    "anyOf": [
+     {
+      "required": [
+       "proposed"
+      ]
+     },
+     {
+      "required": [
+       "words"
+      ]
+     },
+     {
+      "required": [
+       "links"
+      ]
+     }
+    ]
+   }
+  }
+ ]
 }

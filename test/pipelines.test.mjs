@@ -215,7 +215,7 @@ test('evening-cloud: auto-park and the snapshot, with no judgment; state/current
   });
   db.weakspots.push({
     id: 'ws-old',
-    schema: 2, // B-232
+    schema: 1, // B-232: a spot not yet migrated still takes the evening's park (schema 1 is valid until the bump)
     writer: 'page',
     at: '2026-09-02T00:00:00Z',
     source: 'test',

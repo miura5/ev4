@@ -439,7 +439,7 @@ export function makeSkills(core) {
     const objText = new Map((objectives || []).map(o => [o.id, o.text]));
     const items = new Map();
     for (const st of sets || []) for (const q of st.items || []) items.set(st.id + '/' + q.id, q);
-    const { byWeakspot } = collectAttempts(sets, answers);
+    const { byWeakspot } = collectAttempts(sets, answers, weakspots); // B-232: a duplicate's answers on its survivor
     const why = q => {
       if (!q) return '';
       if (q.matrix && Array.isArray(q.matrix.rows))

@@ -45,7 +45,14 @@ test("every schema's metadata agrees with the spec's collection map", () => {
     assert.deepEqual(meta.writers, c.writers, `${name}: writers`);
     assert.ok(Number.isInteger(meta.schema) && meta.schema >= 1, `${name}: schema number`);
     if (name === 'legacy') continue;
-    assert.deepEqual(s.properties.schema, { const: meta.schema }, `${name}: envelope schema number`);
+    // B-232: a bump may keep its previous version valid until its migration runs, naming both (newest last)
+    const window = { weakspots: [1, 2] };
+    if (window[name]) assert.equal(window[name][window[name].length - 1], meta.schema, `${name}: the newest is x-ev's`);
+    assert.deepEqual(
+      s.properties.schema,
+      window[name] ? { enum: window[name] } : { const: meta.schema },
+      `${name}: envelope schema number`
+    );
     assert.deepEqual(s.properties.writer.enum, c.writers, `${name}: envelope writer`);
     for (const f of ['schema', 'writer', 'at', 'source']) assert.ok(s.required.includes(f), `${name}: envelope ${f}`);
     if (c.class === 'Edit') assert.ok(s.required.includes('updatedAt'), `${name}: Edits carry updatedAt`);
@@ -90,7 +97,10 @@ test('planted invalid writes are refused, with the field named', () => {
   refused(validate('weakspots', noWriter), '/writer');
   refused(validate('weakspots', { ...ws, writer: 'weekly' }), '/writer');
   refused(validate('weakspots', { ...ws, at: '2026-10-16 14:00' }), '/at');
-  refused(validate('weakspots', { ...ws, schema: 1 }), '/schema'); // B-232: weak spots are at schema 2
+  refused(validate('weakspots', { ...ws, schema: 3 }), '/schema');
+  // B-232: schema 1 stays valid until the migration, but never with a schema-2 field
+  assert.ok(validate('weakspots', { ...ws, schema: 1 }).ok);
+  refused(validate('weakspots', { ...ws, schema: 1, proposed: true }), '(document)');
   refused(validate('weakspots', { ...ws, derived: { status: 'active' } }), '(document)');
   refused(validate('weakspots', { ...ws, events: { 'Oct 16': { type: 'seen' } } }), '/events/Oct 16');
   refused(

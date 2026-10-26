@@ -16,6 +16,7 @@ export function makeSessions(core) {
     eventKey,
     hash,
     isActive,
+    isSolid,
     isoOf,
     norm,
     safeId,
@@ -96,7 +97,11 @@ export function makeSessions(core) {
         !same &&
         weakspots
           .filter(
-            x => (x.kind || 'concept') === 'concept' && x.objective === w.objective && similarity(x.topic, topic) >= 0.5
+            x =>
+              (x.kind || 'concept') === 'concept' &&
+              (isActive(x) || isSolid(x)) && // B-232: never a spot waiting for triage, a duplicate or a parked one
+              x.objective === w.objective &&
+              similarity(x.topic, topic) >= 0.5
           )
           .sort((a, b) => similarity(b.topic, topic) - similarity(a.topic, topic))[0];
       const decision = decisions[key];

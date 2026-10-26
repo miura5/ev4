@@ -556,7 +556,9 @@ const EVCore = (() => {
   /** id -> the spot its answers count toward: a duplicate's survivor (through a chain, which lint fails), else itself. */
   function survivors(weakspots) {
     const next = new Map();
-    for (const w of weakspots || []) if (duplicateOf(w)) next.set(w.id, duplicateOf(w));
+    const have = new Set((weakspots || []).map(w => w && w.id));
+    // a link to a spot that is not there credits no one: the spot keeps its own answers (lint names the link)
+    for (const w of weakspots || []) if (duplicateOf(w) && have.has(duplicateOf(w))) next.set(w.id, duplicateOf(w));
     return id => {
       const seen = new Set([id]);
       let cur = id;
@@ -636,6 +638,8 @@ const EVCore = (() => {
     const concept = f.kind === 'concept';
     const timeline = [
       ...Object.entries(f.events || {}).map(([key, e]) => ({ at: entryTime(key, e), e })),
+      // B-232 (D-240): a duplicate's seen events, credited to this survivor by buildWeakspots
+      ...Object.entries(f.creditedEvents || {}).map(([key, e]) => ({ at: entryTime(key, e), e })),
       ...(attempts || []).filter(a => !a.created || a.created !== f.id).map(a => ({ at: a.at, a })),
     ].sort(byAt);
     for (const t of timeline) {
@@ -776,12 +780,22 @@ const EVCore = (() => {
   /** Weak spot model used everywhere: facts + derived, with the exam date resolved. */
   function buildWeakspots({ weakspots, sets, answers, exams }) {
     const { byWeakspot } = collectAttempts(sets, answers, weakspots);
+    // B-232 (D-240): a duplicate's seen events count toward its survivor, as its answers do
+    const survivor = survivors(weakspots),
+      credited = {};
+    for (const w of weakspots || []) {
+      const to = survivor(w.id);
+      if (to === w.id) continue;
+      for (const [k, e] of Object.entries(w.events || {}))
+        if (e && e.type === 'seen') credited[to] = { ...credited[to], [k]: e };
+    }
     const examDate = id => {
       const e = (exams || []).find(x => x.id === id);
       return e && e.date ? e.date : null;
     };
     return (weakspots || []).map(doc => {
       const f = weakspotFacts(doc);
+      if (credited[f.id]) f.creditedEvents = credited[f.id];
       const derived = deriveWeakspot(f, byWeakspot[f.id] || [], { examDate: examDate(f.exam || examOf(f)) });
       if (derived.objective && derived.objective !== f.objective) {
         // B-232: his accept named the objective; the exam follows it unless the spot named its own
@@ -2281,6 +2295,7 @@ const EVCore = (() => {
     eventKey,
     hash,
     isActive,
+    isSolid,
     isoOf,
     norm,
     safeId,

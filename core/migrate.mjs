@@ -4,6 +4,9 @@
 // same export and `at` give the same writes, every output id comes from its input id, and an export that already
 // holds the v4 documents yields no writes (so running it twice changes nothing).
 // Never reads the journal: it is not in an export, and a journal collection passed in is refused.
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import EV from './evcore.mjs';
 
 export const MIGRATION = 'v3-to-v4';
@@ -595,25 +598,42 @@ export const BUMPS = {
 };
 /**
  * D-115: a bump's legacy copy holds only the fields the bump changed (their old values) and the fields it added, with
- * the original's hash, so fromLegacy rebuilds the original exactly. The bumps before B-232 kept whole copies, already
- * written to both records; they stay as they are.
+ * the hash of the original's own fields, so fromLegacy rebuilds the original's facts exactly. The hash leaves out the
+ * collection's append maps and marks (named in the copy's `omits`), which keep changing after the bump: a later event
+ * or Join leaves the copy whole. The bumps before B-232 kept whole copies, already written to both records; they stay.
  */
 export const D115 = new Set(['weakspots:1']);
-const sha = d => EV.sha256(EV.stableStringify(d));
-export function legacyDelta(original, bumped) {
+let SPEC = null;
+const repoSpec = () =>
+  SPEC ||
+  (SPEC = JSON.parse(
+    fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'spec', 'ev.spec.json'), 'utf8')
+  ));
+/** The fields of a collection that change after a document is written (append maps and marks), so no hash covers. */
+export const changingFields = (collection, spec = repoSpec()) => {
+  const c = (spec.collections || {})[collection] || {};
+  return [...Object.keys(c.appends || {}), ...Object.keys(c.marks || {})].sort();
+};
+const factsHash = (d, omits) => {
+  const o = { ...d };
+  for (const k of omits || []) delete o[k];
+  return EV.sha256(EV.stableStringify(o));
+};
+export function legacyDelta(original, bumped, omits = []) {
   const changed = {};
   for (const [k, v] of Object.entries(original))
     if (!(k in bumped) || EV.stableStringify(bumped[k]) !== EV.stableStringify(v)) changed[k] = v;
   const added = Object.keys(bumped).filter(k => !(k in original));
-  return { changed, added, hash: sha(original) };
+  return { changed, added, omits, hash: factsHash(original, omits) };
 }
-/** The original a D-115 copy was taken from, rebuilt over the document as it is now; null when its hash disagrees. */
+/** The original a D-115 copy was taken from, rebuilt over the document as it is now (its append maps and marks as
+ *  they are now); null when the hash of its own fields disagrees. */
 export function fromLegacy(current, copy) {
   if (!copy || !copy.changed || !copy.hash) return null;
   const d = { ...EV.docData(current) };
   for (const k of copy.added || []) delete d[k];
   Object.assign(d, copy.changed);
-  return sha(d) === copy.hash ? d : null;
+  return factsHash(d, copy.omits) === copy.hash ? d : null;
 }
 /** The version a collection's documents are at today: the highest a bump leads to, else 1. */
 export const currentVersion = collection => {
@@ -655,7 +675,7 @@ export function migrateBumps(db, { at } = {}) {
         collection: 'legacy',
         id: `v4-${col}-${d.id}-s${from}`,
         data: {
-          ...(D115.has(`${col}:${from}`) ? legacyDelta(EV.docData(d), main.data) : EV.docData(d)),
+          ...(D115.has(`${col}:${from}`) ? legacyDelta(EV.docData(d), main.data, changingFields(col)) : EV.docData(d)),
           migratedFrom: `${col}/${d.id}`,
           migratedTo: `${col}/${d.id}`,
           migratedAt: iso(at),

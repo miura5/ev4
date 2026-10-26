@@ -12,6 +12,7 @@ import { spec, at, ev, ws, E4, assertValid } from './core-fixtures.mjs';
 import { readExport, loadValidator } from '../core/schemas.mjs';
 import { migrateBumps, applyWrites, fromLegacy, currentVersion, BUMPS } from '../core/migrate.mjs';
 import { lintRecord } from '../core/lint.mjs';
+import { factHash, factFields } from '../core/derive.mjs';
 import { ROOT } from './helpers.mjs';
 
 const validate = loadValidator();
@@ -216,6 +217,7 @@ test('B-232 (D-115): the weakspots 1 to 2 bump changes only the version, keeps a
     const copy = got.legacy.find(l => l.id === `v4-weakspots-${d.id}-s1`);
     assert.deepEqual(copy.changed, { schema: 1 }, 'D-115: only the changed fields');
     assert.deepEqual(copy.added, []);
+    assert.deepEqual(copy.omits, ['events', 'links'], 'the hash leaves out the append map and the mark');
     assert.equal(copy.migratedTo, `weakspots/${d.id}`);
     assert.deepEqual({ ...fromLegacy(moved, copy), id: d.id }, d, 'the original rebuilds from the copy and its hash');
     assert.equal(fromLegacy({ ...moved, topic: 'changed' }, copy), null, 'a hash that disagrees rebuilds nothing');
@@ -325,4 +327,150 @@ test('B-232: migrate bumps --store worker writes pinned batch files for the run 
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
+});
+
+// ---------------------------------------------------------------- the first review's gaps
+const loadRecord = () => {
+  const db = {};
+  for (const { collection, id, doc } of readExport(path.join(ROOT, 'test/data/record')))
+    (db[collection] = db[collection] || []).push({ ...doc, id });
+  return db;
+};
+const lintOf = db =>
+  lintRecord(db, spec, validate, { date: '2026-10-17' }).issues.filter(i => (i.ref || '').startsWith('weakspots/'));
+
+test('B-232 review: after the migration, a later event or Join leaves the D-115 copy whole: fact-migrated, never fact-changed', () => {
+  const db = loadRecord();
+  const w = db.weakspots[0];
+  w.schema = 1; // the record as it was before the release, hashed by state/current at schema 1
+  const cur = db.state.find(s => s.id === 'current');
+  const fields = factFields(spec, 'weakspots');
+  cur.factHashes[`weakspots/${w.id}`] = factHash(spec, 'weakspots', w, { fields });
+  cur.factFields.weakspots = fields;
+  assert.deepEqual(
+    lintOf(db).filter(i => i.severity !== 'info'),
+    [],
+    'a schema-1 spot lints green before the migration'
+  );
+  const r = migrateBumps(db, { at: '2026-10-26T18:00:00Z' });
+  const m = applyWrites(db, r.writes);
+  const after = JSON.parse(JSON.stringify(m));
+  const x = after.weakspots.find(d => d.id === w.id);
+  x.events = { ...x.events, 'page-20261026-190000': { type: 'solid', by: 'owner', at: '2026-10-26T19:00:00Z' } };
+  x.links = [{ to: 'weakspots/other', type: 'related' }];
+  for (const rec of [m, after]) {
+    const is = lintOf(rec);
+    assert.deepEqual(
+      is.filter(i => i.severity !== 'info'),
+      [],
+      JSON.stringify(is.filter(i => i.severity !== 'info'))
+    );
+    assert.ok(
+      is.some(i => i.code === 'fact-migrated'),
+      'the bump is a note until the next state rebuild'
+    );
+  }
+  const copy = after.legacy.find(l => l.id === `v4-weakspots-${w.id}-s1`);
+  const orig = fromLegacy(x, copy);
+  assert.ok(orig, 'the original still rebuilds');
+  assert.equal(orig.schema, 1);
+  assert.equal(factHash(spec, 'weakspots', orig, { fields }), cur.factHashes[`weakspots/${w.id}`]);
+  // a change to one of its own fields still breaks the copy
+  assert.equal(fromLegacy({ ...x, topic: 'changed' }, copy), null);
+});
+
+test('B-232 review: a schema-1 spot stays valid until the migration, with none of schema 2', () => {
+  const doc = { ...EV.docData(ws('old')), schema: 1 };
+  assert.ok(validate('weakspots', doc, { id: 'old' }).ok);
+  const parked = {
+    ...doc,
+    events: { 'evening-cloud-20261026-011500': { type: 'park', by: 'E.V.', note: 'exam passed' } },
+  };
+  assert.ok(validate('weakspots', parked, { id: 'old' }).ok, "the evening's park on an unmigrated spot");
+  for (const extra of [
+    { proposed: true },
+    { words: 'his words' },
+    { links: [] },
+    { events: { 'page-20261026-120000': { type: 'accept', by: 'owner' } } },
+    { events: { 'page-20261026-120000': { type: 'snooze', by: 'owner', until: '2026-10-28' } } },
+    { events: { 'page-20261026-120000': { type: 'decline', by: 'owner' } } },
+  ])
+    assert.equal(validate('weakspots', { ...doc, ...extra }, { id: 'old' }).ok, false, JSON.stringify(extra));
+  assert.ok(validate('weakspots', { ...doc, schema: 2, proposed: true }, { id: 'old' }).ok);
+});
+
+test('B-232 review: a duplicate-of naming a missing spot credits no one: the spot keeps its own answers', () => {
+  const lost = ws('lost', { links: [{ to: 'weakspots/nowhere', type: 'duplicate-of' }] });
+  const set = { id: 'drill-made-up', kind: 'drill', items: [{ id: 'q1', weakspotId: 'lost', objective: 'E4-3' }] };
+  const answers = [{ setId: 'drill-made-up', answers: { q1: { a1: { at: at('2026-10-16'), correct: true } } } }];
+  const a = EV.collectAttempts([set], answers, [lost]);
+  assert.deepEqual(Object.keys(a.byWeakspot), ['lost']);
+  assert.equal(a.all[0].creditedFrom, undefined);
+  // a cycle credits no one either
+  const c1 = ws('c1', { links: [{ to: 'weakspots/c2', type: 'duplicate-of' }] });
+  const c2 = ws('c2', { links: [{ to: 'weakspots/c1', type: 'duplicate-of' }] });
+  const set2 = { ...set, items: [{ id: 'q1', weakspotId: 'c1', objective: 'E4-3' }] };
+  assert.deepEqual(Object.keys(EV.collectAttempts([set2], answers, [c1, c2]).byWeakspot), ['c1']);
+});
+
+test("B-232 review (D-240): a duplicate's seen events count on its survivor; a session never matches a duplicate", () => {
+  const surv = ws('surv-seen', { topic: 'Made-up potassium topic' });
+  const dup = ws('dup-seen', {
+    topic: 'Made-up potassium topic again',
+    links: [{ to: 'weakspots/surv-seen', type: 'duplicate-of' }],
+    events: ev(at('2026-10-17'), { type: 'seen', by: 'E.V.', note: 'Study session', at: at('2026-10-17') }),
+  });
+  const models = build([surv, dup]);
+  const s = models.find(w => w.id === 'surv-seen'),
+    d = models.find(w => w.id === 'dup-seen');
+  assert.equal(s.derived.recurrence, 2, 'seen again, on the survivor');
+  assert.equal(s.derived.nextDue, '2026-10-18');
+  assert.equal(d.derived.status, 'duplicate');
+  assert.deepEqual(Object.keys(s.events), [], "the survivor's own events are unchanged");
+  // planAnswer's recompute of the survivor keeps the credited event
+  const q = {
+    id: 'q9',
+    type: 'single',
+    stem: 'A made-up stem',
+    options: ['a', 'b'],
+    correct: [0],
+    objective: 'E4-3',
+    weakspotId: 'surv-seen',
+  };
+  const p = EV.planAnswer({
+    set: { id: 'drill-x', kind: 'drill', items: [q] },
+    item: q,
+    chosen: [0],
+    weakspots: models,
+    sets: [],
+    answers: [],
+    exams: [E4],
+    now: at('2026-10-18'),
+  });
+  assert.equal(p.state.recurrence, 2);
+  // a session's finding near a duplicate or a proposed spot asks nothing about it and writes no seen to it
+  const only = build([dup, ws('prop-seen', { topic: 'Made-up potassium topic too', proposed: true })]);
+  const T0 = '2026-10-18T15:00:00.000Z';
+  const session = {
+    id: 'ss-20261018-150000-made-up',
+    source: 'E.V. Home',
+    status: 'active',
+    topic: 'Made-up topic',
+    startedAt: T0,
+    events: { [EV.eventKey('page', T0)]: { type: 'start' } },
+  };
+  const wrap = {
+    summary: 's',
+    weakSpots: [{ objective: 'E4-3', topic: 'Made-up potassium topic' }],
+    connections: [],
+    noteTodos: [],
+    cards: [],
+  };
+  const f = EV.closeSession(session, wrap, {
+    weakspots: only,
+    objectives: [{ id: 'E4-3' }],
+    now: '2026-10-18T15:20:00Z',
+  });
+  assert.equal(f.questions.length, 0);
+  assert.ok(!f.writes.some(w => w.op === 'update' && w.collection === 'weakspots'));
 });

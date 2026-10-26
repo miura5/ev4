@@ -3,7 +3,11 @@
   "schema": 1
  },
  "added": [],
- "hash": "adc85727f713949686d40b1ddce021d3b50c3ac43af0251b655cbd0de41ca66d",
+ "omits": [
+  "events",
+  "links"
+ ],
+ "hash": "d41a94594e76bba9d2db54c439b7196d0ac9747c07e12d1d47100be958af2256",
  "migratedFrom": "weakspots/skill-made-up-step-3",
  "migratedTo": "weakspots/skill-made-up-step-3",
  "migratedAt": "2026-10-26T18:00:00.000Z",
