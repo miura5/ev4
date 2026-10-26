@@ -36,6 +36,24 @@
       const ctx = weakCtx();
       acted(ACT && ACT.tap(name, args, ctx));
       await run(ACT.tap(name, args, ctx).writes);
+      const said = triageSaid(name, args);
+      if (said) toast(said);
+    }
+    // B-409: his triage tap says what it did, as the demo's line. The demo's Undo is not offered: the actions table
+    // (core/actions.mjs) has no event that puts a spot back to proposed or takes a Join's link off, and a new data path
+    // is out of this wave's reach, so the line says what happened and nothing more.
+    function triageSaid(name, args) {
+      const items = args.items || [{ id: args.id }];
+      const spot = id => (S.weak || []).find(w => w && w.id === id) || {};
+      if (name === 'weakspot-accept') {
+        if (items.length !== 1) return 'Accepted ' + items.length + ' weak spots.';
+        const o = (S.objectives || []).find(x => x.id === items[0].objective);
+        return o && o.text ? 'Accepted under “' + o.text + '”.' : 'Accepted.';
+      }
+      if (name === 'weakspot-join') return 'Joined to “' + (spot(args.to).topic || args.to) + '”.';
+      if (name === 'weakspot-snooze') return 'Not now: it comes back tomorrow.';
+      if (name === 'weakspot-decline') return 'Declined. Nothing is counted.';
+      return '';
     }
     async function editDates(edit, by) {
       // one add / change / remove / restore through EVCore.dateEdit (D-080)

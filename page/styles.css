@@ -2084,6 +2084,14 @@ body.has-line #today-week .wk-her{display:none}
   #p-notes .n-pv{display:flex;flex-direction:column;gap:14px;padding:18px;border-top:1px solid var(--line);margin-top:24px}
 }
 #p-notes .n-fbar{position:sticky;top:calc(var(--mh-h,48px) + 8px);z-index:6;display:flex;align-items:center;gap:2px;height:44px;padding:0 12px;border-bottom:1px solid var(--line);background:var(--bg)}
+/* B-409: as the demo, the format bar sits right under the header (or her band) with its rule across the whole page, and
+   nothing of the note shows in the ground above the page while it scrolls */
+#p-notes > .n-ed{margin:-18px -16px 0}
+#p-notes .n-fbar{top:calc(var(--mh-h,48px) + 8px + var(--line-h,0px));padding:0 28px;box-sizing:border-box}
+@media (min-width:600px){
+  body:has(#notes-editor:not([hidden])) .mh::before{content:"";position:absolute;left:-1px;right:-1px;top:-8px;height:8px;background:var(--sunken);pointer-events:none}
+}
+.estrip .sug.plain,.estrip .sug:disabled{cursor:default;background:none;color:var(--quiet)}
 #p-notes .n-fbar button.btn.on{color:var(--text);background:var(--hover);box-shadow:inset 0 0 0 1px var(--line)}
 #p-notes .fsep{width:1px;height:18px;background:var(--line);margin:0 6px;flex:none}
 #p-notes .n-stb{width:164px;justify-content:flex-start;gap:8px;padding:0 8px;color:var(--text)!important}
@@ -2116,8 +2124,8 @@ body.has-line #today-week .wk-her{display:none}
 #note-body.empty::before{content:attr(data-placeholder);position:absolute;pointer-events:none;color:var(--faint);max-width:620px}
 #note-body .nb{margin:6px 0}
 #note-body h1.nb{margin:0 0 14px;font-size:30px;font-weight:600;letter-spacing:-.02em;line-height:1.2}
-#note-body h2.nb{margin:28px 0 6px;font-size:20px;font-weight:600;letter-spacing:-.012em;line-height:1.3}
-#note-body h3.nb{margin:18px 0 4px;font-size:16px;font-weight:600;line-height:1.4}
+#note-body h2.nb{margin:28px 0 6px;font-size:20px;font-weight:600;letter-spacing:-.012em;line-height:1.3;color:var(--ink)}
+#note-body h3.nb{margin:18px 0 4px;font-size:16px;font-weight:600;line-height:1.4;color:var(--ink)}
 #note-body p.nb{margin:6px 0}
 #note-body .nb[data-t=ul],#note-body .nb[data-t=ol],#note-body .nb[data-t=todo]{position:relative;margin:1px 0;padding-left:28px}
 #note-body .nb:not([data-t=ol]){counter-reset:nol}

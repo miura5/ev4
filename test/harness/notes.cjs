@@ -833,6 +833,12 @@ const openNoteId = page =>
         },
         { type: 'p', runs: [{ text: 'Supercalifragilisticexpialidocious'.repeat(8) }] },
         { type: 'h2', runs: [{ text: 'Potassium' }] },
+        // B-409: nine sections in all, so the preview shows six and "3 more"
+        ...['Calcium', 'Magnesium', 'Phosphate', 'Chloride', 'Bicarbonate', 'Review'].map(t => ({
+          type: 'h2',
+          runs: [{ text: t }],
+        })),
+        { type: 'h2', runs: [{ text: 'Practice' }] },
       ],
     };
     delete long.notes[LONG_ID].archivedAt;
@@ -863,6 +869,14 @@ const openNoteId = page =>
           `${tag} filters, groups and the preview show; nothing overflows`,
           L.filters.length === 3 && L.groups.length === 2 && L.pv.title && L.pv.fixed && !L.over.length && !L.hscroll,
           JSON.stringify({ f: L.filters, g: L.groups, over: L.over.slice(0, 3) })
+        );
+        // B-409: the "(earlier)" copy (edited last) sits directly below the note it copies, and is never the default pick
+        const ci = L.rows.findIndex(r => / \(earlier\)$/.test(r.name));
+        const pi = L.rows.findIndex(r => r.name === L.rows[ci].name.replace(/ \(earlier\)$/, ''));
+        ok(
+          `${tag} the "(earlier)" note sits directly below the note it copies and isn't picked for the preview`,
+          ci > 0 && pi === ci - 1 && !/\(earlier\)/.test(L.pv.title) && !L.rows[ci].sel,
+          JSON.stringify({ rows: L.rows.map(r => r.name), pv: L.pv.title })
         );
         await page.screenshot({ path: path.join(shots, `notes-list-${width}.png`) });
         ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
@@ -908,7 +922,9 @@ const openNoteId = page =>
           L.pv.title === longTitle &&
             L.pv.props.Studied === '25 min, today' &&
             L.pv.props.From === longLabel &&
-            L.pv.outline.length === 2 &&
+            L.pv.outline.length === 7 &&
+            L.pv.outline[5] === 'Chloride' &&
+            L.pv.outline[6] === '3 more' &&
             L.pv.w === 320,
           JSON.stringify(L.pv)
         );
@@ -1418,6 +1434,35 @@ const openNoteId = page =>
     }, TOPIC);
     await page.click('#ev-btn');
     await until(page, () => !document.getElementById('evchat').hidden);
+    // B-409: with a note open, the pop-up and the strip speak of this note, as the demo's
+    const words = () =>
+      page.evaluate(() => ({
+        ph: document.getElementById('evc-input').placeholder,
+        ctx: document.querySelector('#evchat .ctx').textContent,
+        chips: [...document.querySelectorAll('#evchat .pchips .qchip')].map(b => b.textContent),
+        sug: document.getElementById('ev-sug').textContent,
+        sugOff: document.getElementById('ev-sug').disabled,
+      }));
+    const w1 = await words();
+    ok(
+      `${tag} with a note open in a session: "Ask E.V. about this note", "Sees this note", its two asks, and the strip's ask`,
+      w1.ph === 'Ask E.V. about this note' &&
+        w1.ctx === 'Sees this note' &&
+        JSON.stringify(w1.chips) === '["Quiz me on this note","What else links to this note?"]' &&
+        w1.sug === 'Ask E.V. about this note' &&
+        !w1.sugOff,
+      JSON.stringify(w1)
+    );
+    await page.click('#ev-sslot .s-brk');
+    await until(page, () => /^On a break/.test(document.getElementById('ev-sug').textContent), null, 3000);
+    const w2 = await words();
+    ok(
+      `${tag} on a break the strip reads "On a break. Resume when you’re back." and is not a button to press`,
+      w2.sug === 'On a break. Resume when you’re back.' && w2.sugOff,
+      JSON.stringify(w2)
+    );
+    await page.click('#ev-sslot .s-brk');
+    await until(page, () => document.getElementById('ev-sug').textContent === 'Ask E.V. about this note', null, 3000);
     await page.fill('#evc-input', 'Quiz me on this note');
     await page.press('#evc-input', 'Enter');
     await until(page, () => !!document.querySelector('#evchat .msgs .check'), null, 6000);
@@ -1454,6 +1499,25 @@ const openNoteId = page =>
       4000
     );
     ok(`${tag} her line in the session's chat says it waits in Study's To review`, said, '');
+    // B-409: her band under the note's header names the session's minutes (no Undo: End files it at once), then the
+    // strip reads "Studied N min on this note · open in Record"
+    const band = await page.evaluate(() => {
+      const l = document.getElementById('evline');
+      return { text: l && !l.hidden ? l.textContent : '', btns: l ? l.querySelectorAll('button').length : -1 };
+    });
+    ok(
+      `${tag} after End her band reads "Ended the session on “Cardiac output”: N minutes, logged to Record."`,
+      /^Ended the session on “Cardiac output”: (\d+ minutes?|under a minute), logged to Record\.$/.test(band.text) &&
+        band.btns === 0,
+      JSON.stringify(band)
+    );
+    await page.screenshot({ path: path.join(shots, 'b409-session-ended-1280.png') });
+    const studied = await page.evaluate(() => document.getElementById('ev-sug').textContent);
+    ok(
+      `${tag} afterwards the strip reads "Studied N min on this note · open in Record"`,
+      /^Studied (\d+ min|under a minute) on this note · open in Record$/.test(studied),
+      studied
+    );
     await page.screenshot({ path: path.join(shots, 'b407-session-filed-1280.png') });
     await page.click('#evchat [aria-label="Close"]');
     await page.waitForTimeout(400);
@@ -1561,6 +1625,15 @@ const openNoteId = page =>
         open: !!document.querySelector(`#weak-list .wl[data-id="${id}"]`),
       }),
       sp.id
+    );
+    const accToast = await page.evaluate(() => {
+      const x = document.getElementById('toast');
+      return x && !x.hidden ? x.textContent : '';
+    });
+    ok(
+      `${tag} Accept says what it did: "Accepted under “<objective>”."`,
+      /^Accepted under “.+”\.$/.test(accToast),
+      accToast
     );
     ok(
       `${tag} Accept writes his accept event with its objective; To review is gone and the spot is open`,
@@ -1900,6 +1973,65 @@ const openNoteId = page =>
       inBio && !inNur && /Membrane transport/.test(name),
       JSON.stringify({ inBio, inNur, name })
     );
+    ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
+    await page.context().close();
+  }
+
+  // ---- B-409: To review's Accept with no objective says why it is off; Decline says what it did; the triage pane says
+  // nothing proposed counts until he decides
+  {
+    const db = JSON.parse(JSON.stringify(seed));
+    const at = new Date(Date.now() - 36e5).toISOString();
+    db.weakspots['ws-harness-noobj'] = {
+      schema: 2,
+      writer: 'page',
+      at,
+      source: 'E.V.',
+      topic: 'Harness spot with no objective',
+      objective: '',
+      exam: '',
+      course: 'NUR 112',
+      kind: 'concept',
+      addedBy: 'page',
+      proposed: true,
+      initial: { streak: 0, nextDue: null, recurrence: 1, misses: 1 },
+      events: {},
+    };
+    const { page, errors } = await open(browser, { width: 1280, height: 860 }, db);
+    const tag = '[1280 B-409 triage]';
+    await page.click('#tab-study');
+    await until(page, () => !document.getElementById('p-study').hidden);
+    await page.click('#study-qweak');
+    await until(page, () => !!document.querySelector('#weak-list .trow[data-id="ws-harness-noobj"]'));
+    const r = await page.evaluate(() => {
+      const row = document.querySelector('#weak-list .trow[data-id="ws-harness-noobj"]');
+      const acc = row && row.querySelector('button');
+      return {
+        row: row ? row.innerText : '',
+        acc: acc ? [acc.textContent, acc.disabled, acc.title] : [],
+        side: document.body.innerText,
+      };
+    });
+    ok(
+      `${tag} a proposed spot with no objective shows "Pick an objective first" by its greyed Accept`,
+      /Pick an objective first/.test(r.row) &&
+        r.acc[0] === 'Accept' &&
+        r.acc[1] === true &&
+        r.acc[2] === 'Pick an objective first',
+      JSON.stringify(r)
+    );
+    ok(
+      `${tag} How triage works says "Nothing proposed counts until you decide." and keeps "Not now: back tomorrow"`,
+      /Nothing proposed counts until you decide\./.test(r.side) && /Not now: back tomorrow/.test(r.side),
+      ''
+    );
+    await page.screenshot({ path: path.join(shots, 'b409-to-review-noobj-1280.png') });
+    await page.click('#weak-list .trow[data-id="ws-harness-noobj"] button:has-text("Decline")');
+    const declined = await until(page, () => {
+      const x = document.getElementById('toast');
+      return x && !x.hidden && x.textContent === 'Declined. Nothing is counted.';
+    });
+    ok(`${tag} Decline says "Declined. Nothing is counted."`, declined, '');
     ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
     await page.context().close();
   }

@@ -368,6 +368,11 @@
       const all = (S.notes || [])
         .filter(n => !n.archivedAt && !n.discardedAt)
         .sort((a, b) => String(b.editedAt || b.at || '').localeCompare(String(a.editedAt || a.at || '')));
+      // B-409: an "(earlier)" note (earlierOf, D-326) sits directly below the note it copies
+      const kept = new Set(all.map(n => n.id));
+      const isCopy = n => !!(n.earlierOf && kept.has(n.earlierOf) && n.earlierOf !== n.id);
+      const tops = all.filter(n => !isCopy(n));
+      all.splice(0, all.length, ...tops.flatMap(n => [n, ...all.filter(c => isCopy(c) && c.earlierOf === n.id)]));
       const keyOf = n => (n.course && typeof n.course === 'string' ? n.course : NO_COURSE);
       // the filters: All, then each active course (and any course a note names), with its count
       const known = courseKeys().filter(k => (EV_SPEC.courses[k] || {}).status !== 'done');
@@ -394,7 +399,9 @@
       );
       const shown = all.filter(n => NOTE_LIST.filter === 'all' || keyOf(n) === NOTE_LIST.filter);
       // a filter that hides the picked note moves the preview to the first note shown
-      const pick = shown.find(n => n.id === NOTE_LIST.pick) || shown[0] || null;
+      // B-409: never an "(earlier)" copy by default
+      const pick =
+        shown.find(n => n.id === NOTE_LIST.pick) || shown.find(n => !n.earlierOf) || shown[0] || null;
       const groups = [...order, NO_COURSE]
         .map(k => ({ k, rows: shown.filter(n => keyOf(n) === k) }))
         .filter(g => g.rows.length);
@@ -490,7 +497,11 @@
         .map(b => E.noteText(b).trim())
         .filter(Boolean);
       const outline = el('div', 'n-outline');
-      outline.append(...(heads.length ? heads : ['No sections yet']).map(t => el('div', 'si static', t)));
+      // B-409: at most six entries, then "N more"
+      const OTL_MAX = 6;
+      const otl = heads.slice(0, OTL_MAX);
+      outline.append(...(otl.length ? otl : ['No sections yet']).map(t => el('div', 'si static', t)));
+      if (otl.length < heads.length) outline.append(el('div', 'si static n-otl-more', heads.length - otl.length + ' more'));
       const acts = el('div', 'n-acts');
       const bOpen = btn('Open note', () => openNote(n.id), { cls: 'btn neutral wide' });
       bOpen.id = 'notes-pv-open';
@@ -533,6 +544,7 @@
       closeLink(false);
       closeCourseMenu();
       syncHead();
+      renderFrame(); // B-409: the strip's suggestion and the pop-up's words follow the open note
       if (!on) renderNotes();
     }
     function loadNote(id, doc) {

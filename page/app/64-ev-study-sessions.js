@@ -572,6 +572,16 @@
           : ` I proposed ${n} weak spots; they wait in Study’s To review.`
         : '';
     }
+    // B-409: her band under the header once a session ends: "Ended the session on “<note>”: N minutes, logged to
+    // Record." It has no Undo: End files the session at once (its summary, findings and minutes are written once), and
+    // the only reopen there is (core undoSwitch) is for a switched session whose filing still waits.
+    const ENDED_MS = 6000;
+    SS.ended = null;
+    function noteEnded(s, name, mins) {
+      const until = Date.now() + ENDED_MS;
+      SS.ended = { id: s.id, note: noteOfSession(s), name, mins: Math.max(0, Math.round(Number(mins) || 0)), until };
+      setTimeout(() => SS.ended && SS.ended.until === until && render(), ENDED_MS + 50);
+    }
     async function endSession(reason = 'ended') {
       const s = activeSession();
       if (!s) return ['No session is running. Say “start a study session” when you’re ready.', []];
@@ -591,7 +601,9 @@
           });
           s2 = { ...s, status: 'ending', events: { ...(s.events || {}), [k]: { type: 'end', why: reason, at } } };
         }
+        const endedName = sessName(s2);
         const res = await fileSession(s2, reason);
+        if (res) noteEnded(s2, endedName, res.up.minutes);
         if (!res) return ['Session saved.', [{ type: 'go', label: 'Open in Record', to: 'record', id: s.id }]]; // filed elsewhere
         const { up, st, r, note } = res;
         SS.text = null;

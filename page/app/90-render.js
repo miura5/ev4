@@ -145,6 +145,12 @@
     const NUM = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
     const numWord = n => NUM[n] || String(n);
     function lineFor(t) {
+      // B-409: a session just ended, as the demo's band (no Undo: see noteEnded)
+      const ended = SS.ended && Date.now() < SS.ended.until ? SS.ended : null;
+      if (ended && t === 'notes')
+        return {
+          text: `Ended the session on “${ended.name}”: ${ended.mins ? plural(ended.mins, 'minute') : 'under a minute'}, logged to Record.`,
+        };
       if (t === 'today') {
         if (ui.todayView === 'week') {
           // B-392: the same seven days and items as the banner, the pane and her answer
@@ -250,6 +256,7 @@
       spark: 'M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6z',
       hist: 'M4 12a8 8 0 1 0 2.3-5.6M4 4v4h4M12 8v4l3 2',
       bubble: 'M4 5h16v11H9l-5 4z',
+      note: 'M6 4h9l3 3v13H6zM9 10h6M9 14h6',
       min: 'M6 12h12',
       expand: 'M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7',
       shrink: 'M4 14h6v6M20 10h-6V4M10 14l-7 7M14 10l7-7',
@@ -257,6 +264,51 @@
       send: 'M12 19V5M6 11l6-6 6 6',
       stop: 'M7 7h10v10H7z',
     };
+    // B-409: with a note open in Notes, the pop-up and the strip speak of that note, as the demo's
+    const NOTE_ASKS = ['Quiz me on this note', 'What else links to this note?'];
+    function openNoteId() {
+      try {
+        return ui.tab === 'notes' && NOTE.view === 'editor' && NOTE.open ? NOTE.open : null;
+      } catch (e) {
+        return null; // the Notes part not declared yet
+      }
+    }
+    // what she is told the side chat sees: the open note by its id, which her notes lookup reads
+    function noteView(id) {
+      const doc = (S.notes || []).find(n => n.id === id);
+      return `Notes, with his note “${(doc && noteName(doc)) || 'Untitled'}” open (notes id ${id})`;
+    }
+    // his last session on this note today, once filed: {id, mins}
+    function lastStudied(id) {
+      let best = null;
+      for (const s of S.sessions || [])
+        if (noteOfSession(s) === id && s.filedAt && s.status !== 'discarded' && E.chicagoDate(s.filedAt) === today)
+          if (!best || String(s.filedAt) > String(best.filedAt)) best = s;
+      return best ? { id: best.id, mins: Math.max(0, Math.round(Number(best.minutes) || 0)) } : null;
+    }
+    // the strip's suggestion with a note open: {text, run} or {text, plain}; null for the view's own ask
+    function noteSug(id) {
+      const s = activeSession();
+      if (s && noteOfSession(s) === id) {
+        if (s.status === 'active' && E.sessionState(s, now()).onBreak)
+          return { text: 'On a break. Resume when you’re back.', plain: true };
+        return {
+          text: 'Ask E.V. about this note',
+          run: () => {
+            if (isTimed(s)) POP.th = sThread(s);
+            popShow({ hist: false });
+          },
+        };
+      }
+      if (s) return null; // a session on another note or task: the view's own ask
+      const done = lastStudied(id);
+      if (done)
+        return {
+          text: `Studied ${done.mins ? done.mins + ' min' : 'under a minute'} on this note · open in Record`,
+          run: () => goTo({ type: 'go', to: 'record', id: done.id }),
+        };
+      return { text: 'Study this note with E.V.', run: () => guard(null, () => noteSession(id)) };
+    }
     const svgIco = (d, cls = 'ico') => {
       const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       s.setAttribute('viewBox', '0 0 24 24');
@@ -366,7 +418,11 @@
       F.sug.id = 'ev-sug';
       F.sug.addEventListener('click', () => {
         const q = F.sug.textContent;
-        if (!q) return;
+        if (!q || F.sug.disabled) return;
+        if (F.sugRun) {
+          F.sugRun();
+          return;
+        }
         if (ui.tab === 'ev') {
           sendText(q);
           return;
@@ -547,7 +603,8 @@
         throw e;
       }
       noteAnswer(mid, th); // B-406: in a Notes session's chat, his line answers its open check
-      await chat(text, { replyTo: mid, fromMatt: true, thread: th, view: viewName() });
+      const nid = openNoteId();
+      await chat(text, { replyTo: mid, fromMatt: true, thread: th, view: nid ? noteView(nid) : viewName() });
     }
     function popMsgEl(m, last) {
       const checks = (m.cards || []).filter(c => c && c.type === 'check' && CARDS.check);
@@ -637,8 +694,13 @@
       F.chip.hidden = !(POP.min && !POP.open);
       F.chipT.textContent = ss ? ss.chip : title;
       F.chip.setAttribute('aria-label', 'Open the chat: ' + (ss ? ss.chip : title));
-      const q = POP_ASK[ui.tab] || POP_ASK.ev;
+      const nid = openNoteId();
+      const ns = nid ? noteSug(nid) : null;
+      const q = ns ? ns.text : POP_ASK[ui.tab] || POP_ASK.ev;
       if (F.sug.textContent !== q) F.sug.textContent = q;
+      F.sugRun = ns && ns.run ? ns.run : null;
+      F.sug.disabled = !!(ns && ns.plain); // on a break it is her line, not a button
+      F.sug.classList.toggle('plain', !!(ns && ns.plain));
       F.evb.classList.toggle('on', POP.open);
       F.evb.setAttribute('aria-expanded', String(POP.open));
       F.evb.setAttribute('aria-label', onConv ? 'E.V.: write in the conversation' : 'E.V.');
@@ -699,7 +761,9 @@
         F.msgs.scrollTop = F.msgs.scrollHeight;
       } else kids.forEach((k, i) => F.msgs.children[i] !== k && F.msgs.children[i].replaceWith(k));
       const asked = new Set(msgs.filter(m => m.role === 'matt').map(m => m.text));
-      const chips = [...new Set([POP_ASK[ui.tab] || POP_ASK.ev, POP_ASK.ev])].filter(c => !asked.has(c));
+      const chips = (nid ? NOTE_ASKS : [...new Set([POP_ASK[ui.tab] || POP_ASK.ev, POP_ASK.ev])]).filter(
+        c => !asked.has(c)
+      );
       if (F.chips.dataset.k !== chips.join('|')) {
         F.chips.dataset.k = chips.join('|');
         F.chips.replaceChildren(
@@ -712,7 +776,12 @@
         );
       }
       F.chips.hidden = !chips.length || T.busy;
-      F.ctx.replaceChildren(svgIco(POP_ICON.spark), document.createTextNode('Sees ' + viewName()));
+      F.ctx.replaceChildren(
+        svgIco(nid ? POP_ICON.note : POP_ICON.spark),
+        document.createTextNode(nid ? 'Sees this note' : 'Sees ' + viewName())
+      );
+      const ph = nid ? 'Ask E.V. about this note' : 'Ask E.V.';
+      if (F.input.placeholder !== ph) F.input.placeholder = ph;
       const sk = T.busy ? 'stop' : 'send';
       if (F.send.dataset.k !== sk) {
         F.send.dataset.k = sk;

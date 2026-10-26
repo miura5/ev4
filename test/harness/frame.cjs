@@ -146,11 +146,55 @@ const SIZES = [
           JSON.stringify([o.head, o.panel, o.scroll]) === JSON.stringify([g.head, g.panel, g.scroll]),
         JSON.stringify({ pop: o.pop, before: [g.head, g.panel], after: [o.head, o.panel] })
       );
+      // B-409: away from an open note, the pop-up's words are the view's own
+      const pw = await page.evaluate(() => ({
+        ph: document.getElementById('evc-input').placeholder,
+        ctx: document.querySelector('#evchat .ctx').textContent,
+      }));
+      ok(
+        `${tag} ${v}: with no note open the box reads "Ask E.V." and its chip names the view`,
+        pw.ph === 'Ask E.V.' && /^Sees /.test(pw.ctx) && pw.ctx !== 'Sees this note',
+        JSON.stringify(pw)
+      );
       await page.screenshot({ path: `${shots}/frame-${v}-open-${w}.png` });
       await page.locator('#tab-' + v).focus(); // Escape from anywhere, not only inside the pop-up
       await page.keyboard.press('Escape');
       await page.waitForTimeout(150);
       ok(`${tag} ${v}: Escape closes the chat`, !(await geo(page)).pop);
+    }
+
+    // B-409: a note open in Notes with no session: the strip offers "Study this note with E.V.", and the pop-up's box,
+    // chip and asks speak of this note; the format bar runs the page's full width right under the header
+    if (views.includes('notes')) {
+      await page.click('#tab-notes');
+      await page.click('#notes-pv-open');
+      await page.waitForTimeout(300);
+      const fb = await page.evaluate(() => {
+        const a = document.querySelector('#p-notes .n-fbar').getBoundingClientRect();
+        const m = document.getElementById('mh').getBoundingClientRect();
+        return [Math.round(a.left - m.left), Math.round(a.width - m.width), Math.round(a.top - m.bottom), a.height];
+      });
+      ok(`${tag} the format bar spans the page under the header, 44 px high`, JSON.stringify(fb) === '[0,0,0,44]', fb);
+      const sug0 = (await geo(page)).sug;
+      await page.click('#ev-btn');
+      await page.waitForTimeout(250);
+      const nw = await page.evaluate(() => ({
+        ph: document.getElementById('evc-input').placeholder,
+        ctx: document.querySelector('#evchat .ctx').textContent,
+        chips: [...document.querySelectorAll('#evchat .pchips .qchip')].map(b => b.textContent),
+      }));
+      ok(
+        `${tag} a note open: "Study this note with E.V." in the strip; "Ask E.V. about this note", "Sees this note" and its two asks`,
+        sug0 === 'Study this note with E.V.' &&
+          nw.ph === 'Ask E.V. about this note' &&
+          nw.ctx === 'Sees this note' &&
+          JSON.stringify(nw.chips) === '["Quiz me on this note","What else links to this note?"]',
+        JSON.stringify({ sug0, nw })
+      );
+      await page.screenshot({ path: `${shots}/frame-note-open-${w}.png` });
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(150);
+      await page.click('#mh .n-back');
     }
 
     // 2. One chat on Today: send, minimize, reopen, close, history, reopen from history.

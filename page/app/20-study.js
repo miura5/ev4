@@ -870,7 +870,8 @@
           'span',
           'mini',
           [
-            obj ? 'Under “' + obj + '”' : 'No objective yet',
+            // B-409: a greyed Accept says why, in sight
+            !objKnown(w) ? 'Pick an objective first' : obj ? 'Under “' + obj + '”' : '',
             w.source,
             to ? 'Repeats “' + (to.topic || to.id) + '”?' : '', // what Join would join it to, in sight before the tap
           ]
@@ -891,6 +892,10 @@
         'btn neutral sm'
       );
       acc.disabled = !objKnown(w); // its objective is changed in B-235's surface; with none there is nothing to count under
+      if (acc.disabled) {
+        acc.title = 'Pick an objective first';
+        acc.setAttribute('aria-label', 'Accept ' + name + ': pick an objective first');
+      }
       const join = tap(
         'Join',
         to
@@ -951,6 +956,7 @@
         r.append(el('i', 'dot'), el('span', 'sn', t));
         p.append(r);
       }
+      p.append(el('span', 'mini od-note wk-decide', 'Nothing proposed counts until you decide.'));
       p.append(el('span', 'mini od-note', 'Quizlet stays yours: E.V. reads only its home page, on Saturdays.'));
       ui.weakPanel = p;
     }
