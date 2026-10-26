@@ -21,6 +21,7 @@
       redo: [],
       last: { kind: '', at: 0 },
       dirty: false,
+      conflict: false, // a save was refused as stale (409): nothing more is saved until B-404 resolves it
       saving: null,
       again: false,
       timer: 0,
@@ -263,7 +264,13 @@
       nCrumb.textContent = '/ ' + (E.noteTitleOf(NOTE.blocks || []) || 'New note').split(':')[0];
       nSync.replaceChildren(
         ...(NOTE.state === 'saved' ? [nIcon(NI.saved)] : []),
-        NOTE.state === 'saving' ? 'Saving…' : NOTE.state === 'failed' ? 'Not saved' : 'Saved'
+        NOTE.state === 'saving'
+          ? 'Saving…'
+          : NOTE.conflict
+            ? 'Not saved: changed on another device'
+            : NOTE.state === 'failed'
+              ? 'Not saved'
+              : 'Saved'
       );
       nSync.classList.toggle('bad', NOTE.state === 'failed');
       nSync.title = NOTE.state === 'failed' ? NOTE.why || '' : '';
@@ -347,6 +354,7 @@
       NOTE.redo = [];
       NOTE.pend = null;
       NOTE.dirty = false;
+      NOTE.conflict = false;
       NOTE.state = 'saved';
       NOTE.edited = doc ? doc.editedAt || doc.at : null;
       showEditor(true);
@@ -514,11 +522,13 @@
     const noteUndo = () => restore(NOTE.undo, NOTE.redo);
     const noteRedo = () => restore(NOTE.redo, NOTE.undo);
     /** A model change: remembered for undo, painted, the caret placed, saved after the pause. */
-    const NOTE_MAX_BLOCKS = 4000; // notes.schema.json's maxItems: a change past it is refused, never cut short
+    // A change past notes.schema.json's limits (4000 lines, 400 runs a line) or past the size a save may write is
+    // refused here, with a line saying why, and the note stays as it was: never cut short, never refused only at save.
     function apply(kind, r, sel) {
       if (!r) return;
-      if (r.blocks.length > NOTE_MAX_BLOCKS) {
-        toast('A note holds up to 4,000 lines. Start a new note for the rest.');
+      const why = E.noteFits(r.blocks) || noteTooBig(r.blocks);
+      if (why) {
+        toast(why);
         if (sel) setNoteSel(sel);
         return;
       }
@@ -894,8 +904,27 @@
       updateBar();
       syncHead();
     }
+    /** The size the note's saved document would be, in bytes, for these blocks. */
+    const noteBytes = blocks =>
+      new Blob([JSON.stringify(E.noteDoc(NOTE.doc, { blocks, course: NOTE.course, at: now(), source: 'E.V. Home' }))])
+        .size;
+    /** Why these blocks are too big to save, or '' (the cap write() and the Worker hold a note to). */
+    function noteTooBig(blocks) {
+      const bytes = noteBytes(blocks);
+      if (bytes <= NOTE_BYTES) return '';
+      return (
+        'This note would be too long to save (' +
+        Math.round(bytes / 1024) +
+        ' KB of ' +
+        NOTE_BYTES / 1024 +
+        '). Start a new note for the rest.'
+      );
+    }
     function saveNote() {
       clearTimeout(NOTE.timer);
+      // B-402 review, D-326: after a stale save nothing more is written over the other device's version; his text stays
+      // in the editor, unsaved, until B-404 keeps both versions
+      if (NOTE.conflict) return NOTE.saving || Promise.resolve();
       if (!NOTE.open || !NOTE.dirty) return NOTE.saving || Promise.resolve();
       if (NOTE.saving) {
         NOTE.again = true;
@@ -930,7 +959,15 @@
             }
           },
           e => {
-            if (NOTE.open === id) {
+            if (NOTE.open === id && e && (e.conflict || e.code === 'conflict')) {
+              // a stale save (409): the record already holds what another device wrote, and the bridge has read it.
+              // Never tried again (that would write over his other device's words, D-326): his text stays here unsaved.
+              NOTE.dirty = true;
+              NOTE.conflict = true;
+              NOTE.state = 'failed';
+              NOTE.why = 'Not saved: changed on another device';
+              clearTimeout(NOTE.timer);
+            } else if (NOTE.open === id) {
               NOTE.dirty = true; // the text stays in the editor and goes with the next save
               NOTE.state = 'failed';
               NOTE.why = 'Couldn’t save: ' + ((e && (e.message || e.code)) || 'error');

@@ -61,17 +61,12 @@ export function makeNotes() {
       if (last && sameMarks(last, m)) last.text += text;
       else out.push({ text, ...m });
     }
+    // a run longer than the schema's 20000 characters goes on as more runs with the same marks; nothing is cut. A block
+    // past 400 runs is kept whole here: a paste splits it (noteSplitWide), and the editor refuses any other change
+    // that would leave one (B-402 review: text was folded and cut here before)
     const capped = [];
     for (const r of out) {
       for (let i = 0; i < r.text.length; i += MAX.text) capped.push({ ...r, text: r.text.slice(i, i + MAX.text) });
-    }
-    if (capped.length > MAX.runs) {
-      const rest = capped
-        .slice(MAX.runs - 1)
-        .map(r => r.text)
-        .join('');
-      capped.length = MAX.runs - 1;
-      capped.push({ text: rest.slice(0, MAX.text) });
     }
     return capped;
   }
@@ -84,10 +79,38 @@ export function makeNotes() {
     if (ind && LISTS.includes(type)) out.indent = ind;
     return out;
   }
-  /** A note's blocks as stored: at least one (an empty paragraph), at most the schema's 4000. */
+  /**
+   * A note's blocks as stored: at least one (an empty paragraph). Never cut to the schema's 4000: the editor refuses a
+   * change past it (noteFits), and a save past it is refused by the schema, so no text is ever silently dropped.
+   */
   function noteBlocks(blocks) {
-    const out = (Array.isArray(blocks) ? blocks : []).slice(0, MAX.blocks).map(noteBlock);
+    const out = (Array.isArray(blocks) ? blocks : []).map(noteBlock);
     return out.length ? out : [{ type: 'p', runs: [] }];
+  }
+  /** Blocks with more than the schema's 400 runs split into following paragraphs of 400 runs each, all text kept. */
+  function noteSplitWide(blocks) {
+    const out = [];
+    for (const b of noteBlocks(blocks)) {
+      if (b.runs.length <= MAX.runs) {
+        out.push(b);
+        continue;
+      }
+      for (let i = 0; i < b.runs.length; i += MAX.runs) {
+        const runs = b.runs.slice(i, i + MAX.runs);
+        out.push(i ? { type: 'p', runs } : { ...b, runs });
+      }
+    }
+    return out;
+  }
+  /**
+   * Why these blocks can't be kept in one note, in his words, or '' when they can: past the schema's 4000 blocks or 400
+   * runs a block. The editor refuses such a change and leaves the note as it was (B-402 review).
+   */
+  function noteFits(blocks) {
+    if (blocks.length > MAX.blocks) return 'A note holds up to 4,000 lines. Start a new note for the rest.';
+    if (blocks.some(b => b.runs.length > MAX.runs))
+      return 'A line holds up to 400 changes of formatting. Split it into shorter lines.';
+    return '';
   }
   const blockText = b => (b && b.runs ? b.runs.map(r => r.text).join('') : '');
   /** The note's title: its first heading 1, else its first heading, cut to 300 characters; empty when it has none. */
@@ -467,6 +490,7 @@ export function makeNotes() {
   }
 
   // ---------------------------------------------------------------- clipboard markup, tokenized into an inert tree
+  const HTML_MAX = 2000000;
   const VOID = new Set('area base br col embed hr img input link meta param source track wbr'.split(' '));
   const RAW = new Set('script style textarea title xmp iframe noembed noframes noscript plaintext'.split(' '));
   const ENT = {
@@ -534,7 +558,7 @@ export function makeNotes() {
    * declarations go; entities are decoded into text.
    */
   function noteParseHtml(html) {
-    const src = String(html || '').slice(0, 2000000);
+    const src = String(html || '').slice(0, HTML_MAX); // notePaste never sends more
     const root = mkEl('#root', {});
     const stack = [root];
     const top = () => stack[stack.length - 1];
@@ -644,14 +668,15 @@ export function makeNotes() {
     if (json) {
       try {
         const v = JSON.parse(json);
-        if (Array.isArray(v) && v.length) return noteBlocks(v);
+        if (Array.isArray(v) && v.length) return noteSplitWide(v);
       } catch (e) {
         /* not ours after all */
       }
     }
-    if (html && /<[a-z!]/i.test(html)) {
+    // markup past what the tokenizer reads whole is not read at all: the plain text comes instead, all of it
+    if (html && html.length <= HTML_MAX && /<[a-z!]/i.test(html)) {
       const r = noteFromTree(noteParseHtml(html), { paste: true });
-      if (r.blocks.some(b => blockText(b).trim())) return r.blocks;
+      if (r.blocks.some(b => blockText(b).trim())) return noteSplitWide(r.blocks);
     }
     return noteFromText(text || '');
   }
@@ -681,7 +706,7 @@ export function makeNotes() {
       ...out.slice(p.b + 1),
     ];
     return {
-      blocks: all, // past the schema's 4000 the editor refuses the paste; nothing is cut here
+      blocks: all, // past the schema's limits the editor refuses the paste (noteFits); nothing is cut here
       pos: clampPos(all, { b: p.b + add.length - 1, o: blockText(lastAdd).length }),
     };
   }
@@ -753,6 +778,8 @@ export function makeNotes() {
     noteRuns,
     noteBlock,
     noteBlocks,
+    noteSplitWide,
+    noteFits,
     noteText: blockText,
     noteTitleOf,
     noteMarksAt: marksAt,

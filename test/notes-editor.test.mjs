@@ -325,3 +325,69 @@ test('B-402: the note model adds names to E.V. core and shadows none', () => {
   );
   for (const k of mine) assert.equal(typeof E[k], typeof makeNotes()[k], k);
 });
+
+// ---- B-402's review gaps: nothing pasted is silently dropped; a change past a limit is refused whole, and a stale
+// save is never retried over the other device's version (D-326)
+const textOf = blocks => blocks.map(E.noteText).join('\n');
+const EDITOR = fs.readFileSync(path.join(ROOT, 'page/app/25-notes.js'), 'utf8');
+
+test('B-402 review: a 5,000-line paste keeps every line in the model, and the editor refuses it whole', () => {
+  const lines = Array.from({ length: 5000 }, (_, i) => 'line ' + i);
+  const pasted = E.notePaste({ text: lines.join('\n') });
+  assert.equal(pasted.length, 5000);
+  const start = [{ type: 'p', runs: [r('before')] }];
+  const res = E.noteInsertBlocks(start, { a: { b: 0, o: 6 }, f: { b: 0, o: 6 } }, pasted);
+  assert.equal(res.blocks.length, 5000);
+  assert.equal(textOf(res.blocks), 'before' + lines.join('\n'));
+  assert.match(E.noteFits(res.blocks), /4,000 lines/);
+  assert.equal(E.noteFits(start), '');
+  // apply() asks noteFits before it changes anything, and the note is left as it was
+  const apply = EDITOR.slice(
+    EDITOR.indexOf('function apply('),
+    EDITOR.indexOf('remember(kind, sel)', EDITOR.indexOf('function apply('))
+  );
+  assert.match(apply, /E\.noteFits\(r\.blocks\)/);
+  assert.match(apply, /return;\s*}\s*$/);
+});
+
+test('B-402 review: a paragraph of 450 formatted spans keeps all its text, split into following lines', () => {
+  const spans = Array.from({ length: 450 }, (_, i) => (i % 2 ? '<b>w' + i + ' </b>' : '<i>w' + i + ' </i>')).join('');
+  const want = Array.from({ length: 450 }, (_, i) => 'w' + i + ' ')
+    .join('')
+    .trimEnd();
+  const blocks = E.notePaste({ html: '<p>' + spans + '</p>', text: want });
+  assert.equal(blocks.map(E.noteText).join(''), want);
+  assert.ok(blocks.length >= 2 && blocks.every(b => b.runs.length <= 400), blocks.map(b => b.runs.length).join(','));
+  assert.equal(E.noteFits(blocks), '');
+  // noteRuns itself never folds or cuts: 450 runs stay 450, and a run past 20000 characters goes on as more runs
+  const many = E.noteRuns(Array.from({ length: 450 }, (_, i) => r('x' + i, i % 2 ? { b: true } : {})));
+  assert.equal(many.length, 450);
+  const long = E.noteRuns([r('y'.repeat(45000), { i: true })]);
+  assert.equal(long.map(x => x.text).join('').length, 45000);
+  assert.ok(long.every(x => x.i && x.text.length <= 20000));
+  // a block past 400 runs in the editor is refused, not folded
+  assert.match(E.noteFits([{ type: 'p', runs: many }]), /400/);
+  // markup too big to read whole gives way to the plain text, all of it
+  const huge = '<p>' + 'a'.repeat(2000001) + '</p>';
+  assert.equal(E.noteText(E.notePaste({ html: huge, text: 'z'.repeat(10) })[0]), 'z'.repeat(10));
+});
+
+test('B-402 review: a change past the size cap is refused in apply(), before any save', () => {
+  const apply = EDITOR.slice(
+    EDITOR.indexOf('function apply('),
+    EDITOR.indexOf('remember(kind, sel)', EDITOR.indexOf('function apply('))
+  );
+  assert.match(apply, /noteTooBig\(r\.blocks\)/);
+  assert.match(EDITOR, /function noteTooBig\(blocks\)[\s\S]*?bytes <= NOTE_BYTES/);
+});
+
+test('B-402 review: a stale save (409) is never retried, keeps his text and says so', () => {
+  const save = EDITOR.slice(EDITOR.indexOf('function saveNote('), EDITOR.indexOf('async function flushNote('));
+  // the conflict branch sets no retry timer; any later save stops at NOTE.conflict
+  const conflict = save.slice(save.indexOf('e.conflict'), save.indexOf('} else if (NOTE.open === id)'));
+  assert.match(conflict, /NOTE\.conflict = true/);
+  assert.match(conflict, /NOTE\.dirty = true/);
+  assert.match(conflict, /Not saved: changed on another device/);
+  assert.doesNotMatch(conflict, /setTimeout|saveNote\(/);
+  assert.match(save, /if \(NOTE\.conflict\) return/);
+});

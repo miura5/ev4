@@ -279,9 +279,115 @@ const openNoteId = page =>
         JSON.stringify(landed.blocks).includes(' kept'),
       JSON.stringify({ failed, stayed, landed: !!landed })
     );
+    // B-402 review: a paste past a limit is refused whole with a line saying why, and the note stays as it was
+    await page.click(`#notes-rows [data-note="${id2}"]`);
+    await until(page, () => !document.getElementById('notes-editor').hidden);
+    await page.keyboard.press(`${mod}+End`);
+    const bodyNow = () =>
+      page.evaluate(() => [...document.querySelectorAll('#note-body > *')].map(b => b.dataset.t + ':' + b.textContent));
+    const noteWrites = () =>
+      page.evaluate(i => (window.__writes || []).filter(w => w[1] === 'notes' && w[2] === i).length, id2);
+    const paste = (html, text) =>
+      page.evaluate(
+        ([h, t]) => {
+          document.getElementById('toast').hidden = true;
+          const dt = new DataTransfer();
+          if (h) dt.setData('text/html', h);
+          dt.setData('text/plain', t);
+          document
+            .getElementById('note-body')
+            .dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true }));
+        },
+        [html, text]
+      );
+    const toastText = () =>
+      page.evaluate(() => {
+        const x = document.getElementById('toast');
+        return x && !x.hidden ? x.textContent : '';
+      });
+    const was = await bodyNow();
+    const savedWas = JSON.stringify((await savedDoc(page, id2)).blocks);
+    const w0 = await noteWrites();
+    await paste('', Array.from({ length: 5000 }, (_, i) => 'pasted line ' + i).join('\n'));
+    await page.waitForTimeout(200);
+    const t5000 = await toastText();
+    const after5000 = await bodyNow();
+    await settle(page);
+    ok(
+      `${tag} a 5,000-line paste is refused with a line saying why; the note is unchanged and nothing is saved`,
+      /4,000 lines/.test(t5000) &&
+        JSON.stringify(after5000) === JSON.stringify(was) &&
+        (await noteWrites()) === w0 &&
+        JSON.stringify((await savedDoc(page, id2)).blocks) === savedWas,
+      JSON.stringify({ t5000, n: after5000.length, was: was.length, writes: (await noteWrites()) - w0 })
+    );
+    await paste('', Array.from({ length: 3000 }, (_, i) => String(i).padEnd(100, 'x')).join('\n'));
+    await page.waitForTimeout(200);
+    const tBig = await toastText();
+    const afterBig = await bodyNow();
+    await settle(page);
+    ok(
+      `${tag} a paste past the size cap is refused before any save; the note is unchanged`,
+      /too long to save/.test(tBig) &&
+        JSON.stringify(afterBig) === JSON.stringify(was) &&
+        (await noteWrites()) === w0 &&
+        JSON.stringify((await savedDoc(page, id2)).blocks) === savedWas,
+      JSON.stringify({ tBig, n: afterBig.length, writes: (await noteWrites()) - w0 })
+    );
+    const words = Array.from({ length: 450 }, (_, i) => 'w' + i);
+    await page.keyboard.press('Enter');
+    await paste(
+      '<p>' + words.map((w, i) => (i % 2 ? '<b>' + w + ' </b>' : '<i>' + w + ' </i>')).join('') + '</p>',
+      words.join(' ')
+    );
+    await page.waitForTimeout(200);
+    const wide = await page.evaluate(() => document.getElementById('note-body').textContent);
+    ok(
+      `${tag} a paragraph of 450 formatted spans keeps all its text`,
+      words.every(w => wide.includes(w + ' ') || wide.endsWith(w)) && wide.includes(words.join(' ')),
+      wide.slice(-80)
+    );
+    await page.click('#notes-editor button[aria-label="Undo"]');
+    await page.click('#notes-editor button[aria-label="Undo"]');
+    await settle(page);
+
+    // B-402 review, D-326: a stale save (409) is not tried again, so the other device's version is never overwritten
+    const w1 = await noteWrites();
+    await page.keyboard.press(`${mod}+End`);
+    await page.evaluate(() => (window.__writeFail = 'conflict'));
+    await page.keyboard.type(' stale');
+    await settle(page);
+    const other = await page.evaluate(i => {
+      window.__writeFail = null;
+      const d = JSON.parse(JSON.stringify(window.__db.notes[i]));
+      d.blocks = [{ type: 'h1', runs: [{ text: 'Written on the other device' }] }];
+      d.title = 'Written on the other device';
+      window.__db.notes[i] = d;
+      return JSON.stringify(d);
+    }, id2);
+    await page.keyboard.type(' more');
+    await settle(page, 1600);
+    await page.click('.n-back');
+    await page.waitForTimeout(400);
+    const stale = await page.evaluate(() => ({
+      sync: (document.querySelector('.mh .n-sync') || {}).textContent || '',
+      text: document.getElementById('note-body').lastElementChild.textContent,
+      open: !document.getElementById('notes-editor').hidden,
+    }));
+    const now409 = JSON.stringify(await savedDoc(page, id2));
+    ok(
+      `${tag} a 409 says Not saved: changed on another device, keeps his text, is not retried and overwrites nothing`,
+      /Not saved: changed on another device/.test(stale.sync) &&
+        / stale more$/.test(stale.text) &&
+        stale.open &&
+        (await noteWrites()) === w1 &&
+        now409 === other,
+      JSON.stringify({ stale, writes: (await noteWrites()) - w1, same: now409 === other })
+    );
+
     ok(
       `${tag} no page error`,
-      errors.filter(e => !/permission_denied/.test(e)).length === 0,
+      errors.filter(e => !/permission_denied|conflict/.test(e)).length === 0,
       errors.slice(0, 3).join(' | ')
     );
     await page.context().close();

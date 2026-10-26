@@ -190,7 +190,8 @@ const statusShown = page =>
         document.getElementById('tab-today').click();
         const side = document.getElementById('top').getBoundingClientRect(),
           wrap = document.querySelector('.wrap').getBoundingClientRect(),
-          tabs = [...document.querySelectorAll('#top .tabs .tab')].map(t => t.getBoundingClientRect()),
+          // D-325: a tab hidden by design (Notes, desktop only) is not on the phone's bar
+          tabs = [...document.querySelectorAll('#top .tabs .tab:not([hidden])')].map(t => t.getBoundingClientRect()),
           right = document.querySelector('#p-today .col-side'),
           rr = right && right.firstElementChild && right.getBoundingClientRect(),
           pane = parseFloat(getComputedStyle(document.body).paddingLeft);
@@ -239,7 +240,8 @@ const statusShown = page =>
       const bar = await page.evaluate(() => {
         const side = document.getElementById('top').getBoundingClientRect(),
           icon = document.querySelector('#tab-ev > svg'),
-          targets = [...document.querySelectorAll('#top .tabs .tab')].map(t => {
+          // D-325: Notes is desktop only, hidden on the phone by design, so it has no target there
+          targets = [...document.querySelectorAll('#top .tabs .tab:not([hidden])')].map(t => {
             const r = t.getBoundingClientRect();
             return [t.id, Math.round(r.width), Math.round(r.height)];
           });
@@ -443,10 +445,11 @@ const statusShown = page =>
         v.rows === 5 && /^2 more in Today$/.test(v.more.trim()),
         JSON.stringify({ rows: v.rows, more: v.more })
       );
-      // Tab through the five nav items: each takes the focus with a visible ring, and Enter opens it. B-368: the brand
-      // is no control, so the walk starts on the first nav item.
+      // Tab through the six nav items (Notes after Study at this width, D-325): each takes the focus with a visible
+      // ring, and Enter opens it. B-368: the brand is no control, so the walk starts on the first nav item.
       const ring = [];
-      for (const t of ['ev', 'today', 'study', 'progress', 'record']) {
+      const NAV = ['ev', 'today', 'study', 'notes', 'progress', 'record'];
+      for (const t of NAV) {
         if (t === 'ev') await page.focus('#tab-ev');
         else await page.keyboard.press('Tab');
         const f = await page.evaluate(() => {
@@ -476,10 +479,8 @@ const statusShown = page =>
       }
       ok(
         `[1280 ${scheme}] every nav item takes Tab with a ring of 3:1 or more, and Enter opens it (B-286)`,
-        ring.every(
-          (r, i) =>
-            r.id === 'tab-' + ['ev', 'today', 'study', 'progress', 'record'][i] && r.ring && r.ratio >= 3 && r.opened
-        ),
+        ring.length === NAV.length &&
+          ring.every((r, i) => r.id === 'tab-' + NAV[i] && r.ring && r.ratio >= 3 && r.opened),
         JSON.stringify(ring)
       );
       // B-357: the demo keeps the sidebar's Today list while Today is open (D-292's stepping aside is retired)
