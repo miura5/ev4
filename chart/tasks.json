@@ -7222,5 +7222,22 @@
    "outcome": "task",
    "at": "2026-10-26T00:52:27.946Z"
   }
+ },
+ {
+  "id": "B-401",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Build the notes record (collection, schema, pipelines, mirror, backups) (B-396, D-325).",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build manager, B-396 plan",
+  "words": "Build the notes record (collection, schema, pipelines, mirror, backups) (B-396, D-325).",
+  "reportedAt": "2026-10-26T00:52:30.460Z",
+  "board": {
+   "row": "v4 B-401: Build the notes record (collection, schema, pipelines, mirror,…"
+  }
  }
 ]
