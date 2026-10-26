@@ -7021,7 +7021,7 @@
   "milestone": "v4.9 cleanup",
   "status": "open",
   "depends": [],
-  "notes": "From B-398's review: fold the three node:sqlite D1 stand-ins (test/pwa-save.test.mjs, test/pwa-backup.test.mjs, test/pwa-worker-server.mjs) into one shared test helper with the transactional batch.",
+  "notes": "From B-401: the pwa-staging check goes red when the app's seed gains a collection the staging D1 was seeded before (notes); the builder planted the seed's notes by hand. Make the check (or the workflow's seed step) add a new seed collection's documents to an existing D1 once, append-only.",
   "commit": null,
   "source": "release code review (page), 368b104..fc9133e, Oct 25",
   "words": "Dead code and styles for removed screens remain; a stale saved Study view can reopen a closed set; his own snoozes can't be brought back once the panel closes.",
