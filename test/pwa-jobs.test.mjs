@@ -20,7 +20,7 @@ const validate = makeValidator(schemas);
 const NOW = new Date('2026-10-25T15:00:00Z');
 
 function withJob(kind, { title = 'Test ' + kind, brief = 'fluid volume deficit' } = {}) {
-  const db = J.asRunDb(seedRecord());
+  const db = J.asRunDb(seedRecord(NOW)); // dated at NOW, so the run never meets a talk day the seed made from the real clock
   const id = 'job-test-' + kind;
   db.jobs = [
     ...(db.jobs || []),
