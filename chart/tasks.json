@@ -7326,13 +7326,13 @@
   "title": "Notes: L-frame, E.V. strip and floating pop-up on every desktop view",
   "dod": "Per D-327, at 1024 px and wider: a raised page, and a bottom strip on every view with a suggestion line and the E.V. button. The button opens a chat pop-up floating over the page (Linear-like; fixed). There is a minimize chip, a history of closed chats (talk thread) and a session-controls slot. On Conversation the button focuses that view's own thread. The pop-up reuses chat(). Below 1024 px nothing changes. A harness at 1280, 1706 and 2560 on Today, Study, Progress, Record, Notes and Conversation covers open, minimize, close, reopen from history and survival across a reload. The 390 shots match v4.5.6. Smoke green. Own review of the talk write path.",
   "milestone": "PWA",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-400",
    "B-401"
   ],
-  "notes": "Review: first found no Try again in the pop-up and the double tap; fixed at 8da719f. Second review: Try again answers in its thread, nothing leaks into the Conversation, the double tap is harmless. Open for the release card: after a reload a failed pop-up line still says Tap Try again with no button (the B-265 fallback is not in popMsgEl). Check loosened: captions no-Close check skips #evchat (D-327). Size +975 -17 and +31 -2.",
-  "commit": null,
+  "notes": "Shipped to staging at 8da719f: ship staging GREEN.",
+  "commit": "8da719f",
   "source": "build manager, B-396 plan",
   "words": "Build L-frame, E.V. strip and floating pop-up on every desktop view (B-396, D-325).",
   "reportedAt": "2026-10-26T00:52:50.536Z",
