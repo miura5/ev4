@@ -5,6 +5,18 @@ reads it right after CLAUDE.md. It holds no personal data: the repository is pub
 
 **Managing chat:** https://claude.ai/code/session_01CWeveciiiW2pUvFQtQJ3HK (still managing as of Oct 26, 12:20 am Central)
 
+## Plan change (Oct 26)
+
+- The cutover sitting moves from Monday to when Notes is ready (estimate Wednesday evening): one live release carries the
+  PWA cutover and Notes, because live ships main's build commit and main now holds Notes, B-408 (Study Watch gone) and
+  B-232 (weak-spot schema 2, whose migration must run right after any deploy that carries it, staging and live).
+- D-335 (Matt): notes and journal open to runs and agents; sweep is B-412. B-413 (note history and revert) comes right
+  after the Notes release, before any note-based insights. D-334: B-232/B-233 unparked for B-407. D-336: weak-spot links
+  are a page mark.
+- In flight: reviews of B-232, B-408 (second), B-410 (final narrow); B-412 building. Then B-233, B-407, ship staging
+  (with the B-232 staging migration the builder's report lists), B-409, the cutover sitting.
+- Release card adds: B-411's two claude.ai-only filing races (Notes runs in the app); B-406/B-411 timing edges.
+
 ## Where things stand
 
 - Live: v4.5.6 at 10798d8. Nothing else live.
