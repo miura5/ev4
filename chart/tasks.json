@@ -7715,5 +7715,22 @@
    "outcome": "task",
    "at": "2026-10-26T18:58:31.274Z"
   }
+ },
+ {
+  "id": "B-422",
+  "kind": "request",
+  "title": "Request (reported Oct 26): Let Matt delete his own notes, tasks and other items in the app; deleted items go to a trash list kept 30 days, restorable from there, and are cleared after that.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "chat, Oct 26 (D-345)",
+  "words": "Let Matt delete his own notes, tasks and other items in the app; deleted items go to a trash list kept 30 days, restorable from there, and are cleared after that.",
+  "reportedAt": "2026-10-26T21:58:54.003Z",
+  "board": {
+   "row": "v4 B-422: Let Matt delete his own notes, tasks and other items in the app;…"
+  }
  }
 ]
