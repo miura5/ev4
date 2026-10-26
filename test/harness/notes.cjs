@@ -1268,8 +1268,19 @@ const openNoteId = page =>
       return evs.filter(e => e.type === 'end' && e.why === 'switched').pop() || null;
     }, sa.id);
     // B-421: the floor proves Undo lasts its 12 s; the ceiling allows a slow runner's polling, not a stuck button
-    await until(page, () => !document.querySelector('#ev-sslot .s-undo'), null, 24000);
-    const undoGone = Date.now();
+    // B-421: the button counts as gone only once it stays gone for 1.5 s: a record update between the switch's two
+    // writes redraws the strip without it for a moment, which a slow runner can catch
+    let undoGone = null;
+    for (const stop = Date.now() + 24000; Date.now() < stop;) {
+      await until(page, () => !document.querySelector('#ev-sslot .s-undo'), null, Math.max(1, stop - Date.now()));
+      const at = Date.now();
+      await page.waitForTimeout(1500);
+      if (!(await page.$('#ev-sslot .s-undo'))) {
+        undoGone = at;
+        break;
+      }
+    }
+    undoGone = undoGone || Date.now();
     const filed = await until(page, i => !!(window.__db.sessions[i] || {}).filedAt, sa.id, 30000);
     const fa = await sess(sa.id);
     const lasted = swEnd ? undoGone - Date.parse(swEnd.at) : null;

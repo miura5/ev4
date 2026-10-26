@@ -34,7 +34,7 @@ jobs:
       # B-320: a red check's reasons as annotations, readable through the API where the log itself is not.
       - if: failure()
         shell: bash
-        run: grep -E '(^| )(NO|RED|not ok|FAIL|Error)( |:)' check.log | tail -12 | cut -c1-400 | sed 's/^/::error::/' || true
+        run: grep -A3 -E '(^| )(NO|RED|not ok|FAIL)( |:)' check.log | tail -16 | cut -c1-400 | sed 's/^/::error::/' || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
