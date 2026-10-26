@@ -50,7 +50,10 @@ test("B-318: the live app is refused without Matt's OK (R-04), and dispatches on
   assert.equal(APPS.live.ready, true, 'B-320: on since the cutover sitting (docs/cutover.md step 2.1)');
   const yes = appCalls({ target: 'live', commit: C, mattOk: true });
   assert.equal(yes.ok, true);
-  assert.ok(yes.calls.some(c => /pwa-live\.yml/.test(JSON.stringify(c))), 'the dispatch of the live workflow');
+  assert.ok(
+    yes.calls.some(c => /pwa-live\.yml/.test(JSON.stringify(c))),
+    'the dispatch of the live workflow'
+  );
 });
 
 test('B-318: the build hash rides in the Worker version message and reads back', () => {
