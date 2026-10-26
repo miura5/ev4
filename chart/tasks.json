@@ -7021,7 +7021,7 @@
   "milestone": "v4.9 cleanup",
   "status": "open",
   "depends": [],
-  "notes": "Also from the final release review at 10798d8 (verdict: ready for live): a session's link to an open idea isn't shown or stored; Space's keyup activation is unproven outside Chromium (guarded against a double answer); the per-class [hidden] rules are now redundant; gradedWeek reads Canvas dates without his date edits (matches the pane today).",
+  "notes": "From B-398's review: fold the three node:sqlite D1 stand-ins (test/pwa-save.test.mjs, test/pwa-backup.test.mjs, test/pwa-worker-server.mjs) into one shared test helper with the transactional batch.",
   "commit": null,
   "source": "release code review (page), 368b104..fc9133e, Oct 25",
   "words": "Dead code and styles for removed screens remain; a stale saved Study view can reopen a closed set; his own snoozes can't be brought back once the panel closes.",
