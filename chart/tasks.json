@@ -7258,7 +7258,7 @@
    "B-401",
    "B-399"
   ],
-  "notes": "Review gaps fixed at 8d0912d: (1) pasted blocks are no longer cut to 4,000; apply() refuses the paste with its message and the note is unchanged; (2) noteRuns never folds or cuts; a paste splits a line past 400 runs into following paragraphs, all text kept, and markup past 2 MB falls back to the full plain text; (3) apply() refuses any change whose saved document would pass NOTE_BYTES, with a toast, before any save; (4) a 409 in saveNote is not retried: his text stays, the head says 'Not saved: changed on another device', and nothing more is saved over the other device's version. B-404 owns the resolution (the '(earlier)' copy, D-326); until then the note stays open with his text. Shell harness: the phone bar skips Notes (hidden by design, D-325) and the 1280 nav walk expects Notes after Study. npm test 727 pass / 0 fail / 3 skipped (730); smoke 28/28; notes harness 22/22; shell harness 115/115.",
+  "notes": "Second review (fresh) at 8da719f: the 4 first-review gaps closed. Open for the release card: an edit that shrinks an over-cap note is refused until one change brings it under (no loss, the way out is blocked); the save-time size check repeats noteTooBig in other words. The conflict stopgap holds only while B-404 ships in the same release. Checks: shell harness skips [hidden] tabs at phone width (D-325). Size +267 -30.",
   "commit": null,
   "source": "build manager, B-396 plan",
   "words": "Build the editor (B-396, D-325).",
