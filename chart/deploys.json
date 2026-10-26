@@ -5150,5 +5150,33 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "4ed5d54",
+  "time": "2026-10-26T01:28:13.904Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "9ae2e85",
+  "tasks": [
+   "B-315",
+   "B-318",
+   "B-326",
+   "B-394",
+   "B-395",
+   "B-393",
+   "B-319",
+   "B-317",
+   "B-397",
+   "B-399",
+   "B-398",
+   "B-389",
+   "B-400"
+  ],
+  "summary": "The run protocol targets the Worker. Where a run applies ArtifactData batches today, it applies them to the Worker's run API with the shared token, read from the task's settings and never from its prompt. The target is chosen per record, so live runs keep writing the artifact until B-320.; Ship flow; The test suite cleans up after itself; In the PWA a refused conversation line is still lost if he has…; When a refused conversation line is restored to the box, a remembered…; The smoke workflow on GitHub has failed on every push since about…; The one-time copy of the live record into a new live D1. The export stays off the repository. Matt's OK in the chat.; evening-mac and the restore drill pointed at the staging Worker; The run API rejects cursors issued before the base64url change, and…; Remove every check, flag, hold and block for graded work and patient…; A Mac backup's per-collection hashes can differ from the R2 export's…; The staging Worker's page saves are last-write-wins with no version…; Build pin the Notes demo and extend the crawl (B-396,",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
