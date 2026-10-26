@@ -7168,7 +7168,7 @@
   "milestone": "v5 app",
   "status": "in progress",
   "depends": [],
-  "notes": "claimed by build-manager agent",
+  "notes": "ready for staging",
   "commit": null,
   "source": "B-317 second review, Oct 25",
   "words": "A Mac backup's per-collection hashes can differ from the R2 export's when a page save stored JSON text in a non-canonical form, because the backup re-serialises documents while the export hashes the stored text.",
