@@ -7453,11 +7453,11 @@
   "title": "Notes offline: refused entries across a reload, adopted-entry duplicates, backoff",
   "dod": "A save of a note clears or replaces every waiting entry for that note from any tab key that is refused or adopted, and take() skips only entries it can still send; a shim test (refused, reload, other device writes, cut and save) keeps the other device's words and clears the refusal. Two tabs adopting one closed tab's entry over a changed record make one (earlier) note: the entry is claimed in one IndexedDB transaction before the second note is made, tested. refresh() honours the 429/5xx backoff. Its own fresh review; staging GREEN.",
   "milestone": "PWA",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-404"
   ],
-  "notes": "",
+  "notes": "Builder (B-404's) took it: refused/adopted entries cleared on a new save, take() skips only sendable entries, entry claimed in one IndexedDB transaction before a second note, refresh honours backoff, size toast wording.",
   "commit": null,
   "source": "B-404 second review",
   "words": "Notes offline: after a reload, a note the Worker refused stays stuck (Not saved, old words shown, remote edits ignored), and cutting and saving it can overwrite another device's newer words. Two tabs adopting one closed tab's entry over a changed record make two identical (earlier) notes. The 429/5xx backoff is bypassed by the 10 s refresh.",
