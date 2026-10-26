@@ -4116,10 +4116,9 @@
   "depends": [
    "B-232"
   ],
-  "notes": "Unparked by D-334 (Matt's choice, Oct 26): built with Notes for B-407.",
+  "notes": "Waiting on nobody since D-334.",
   "commit": null,
-  "source": "plan SyfKhhZHXubJo4RN8CEw7Z",
-  "waitingOn": "Matt"
+  "source": "plan SyfKhhZHXubJo4RN8CEw7Z"
  },
  {
   "id": "B-234",
