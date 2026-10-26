@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-336",
+  "date": "Oct 26",
+  "title": "A weak spot's links are a page mark",
+  "why": "B-232. His Join adds a duplicate-of link to a weak spot already written; as a fact field that would be lint's fact-changed. links is declared a page mark ({links: ['page']}) in the spec and the schema, like status marks, so it may change after the spot is written and stays out of the fact hash.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-335",
   "date": "Oct 26",
   "title": "Everything in Matt's record, notes and journal included, is open to runs, agents and app logic to read and analyze; no personal-detail checks on what goes in",
