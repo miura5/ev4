@@ -7543,11 +7543,13 @@
  {
   "id": "B-414",
   "kind": "request",
-  "title": "Request (reported Oct 26): After Notes: two weeks of use, fixes only",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
-  "depends": [],
+  "title": "After Notes: two weeks of use, fixes only",
+  "dod": "Two weeks from the Notes live release: only bugs he reports and bugs the nightly finds are built; every new idea is filed and parked; the release card at the end re-rates the seven areas (D-337).",
+  "milestone": "After Notes",
+  "status": "open",
+  "depends": [
+   "B-409"
+  ],
   "notes": "",
   "commit": null,
   "source": "chat, Oct 26 (D-337)",
@@ -7555,6 +7557,10 @@
   "reportedAt": "2026-10-26T08:59:50.546Z",
   "board": {
    "row": "v4 B-414: After Notes: two weeks of use, fixes"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-26T08:59:51.639Z"
   }
  }
 ]
