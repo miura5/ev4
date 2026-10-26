@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-329",
+  "date": "Oct 25",
+  "title": "The Worker's canonical document text (B-398) is a JSON parse written back compactly, with keys in the order they were written (number-like keys first, as JSON parsing puts them). Keys are not sorted. A repeated key keeps its last value, and a number too large for JSON is refused. Rows already stored are not rewritten; each becomes canonical on its next write.",
+  "why": "The Mac backup rebuilds the same text, so its hashes match the R2 export's. Keeping the written key order means the page never shows fields in a new order.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-328",
   "date": "Oct 25",
   "title": "Matt's OK (Oct 25) for his own note text to be kept in E.V.'s database, in the nightly backups (R2 and his Mac folder) and in the Sunday Markdown mirror, and to be sent to E.V.'s model (Haiku) during study sessions and chats about the open note. This amends D-074 for notes written in E.V. (Notes, D-325). Nothing changes for Apple Notes (B-06).",
