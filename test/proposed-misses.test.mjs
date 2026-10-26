@@ -166,26 +166,40 @@ test('B-407 review: Join targets only a near-repeat: a concept, open or solid, s
   const spot = { id: 'ws-new', objective: 'E4-3', topic: 'Frank-Starling curve' };
   assert.equal(EV.joinTarget(models, spot).id, 'ws-frank');
   assert.equal(EV.joinTarget(models, { ...spot, topic: 'Afterload and vasoconstriction' }), null, 'unrelated: off');
+  // B-407 review: close words naming opposite things are never a join target (hypo and hyper, left and right, type 1
+  // and type 2), though their similarity alone would allow one
+  for (const [have, miss] of [
+    ['Hypokalemia ECG changes and signs', 'Hyperkalemia ECG changes and signs'],
+    ['Left-sided heart failure signs', 'Right-sided heart failure signs'],
+    ['Type 1 diabetes insulin needs', 'Type 2 diabetes insulin needs'],
+  ]) {
+    const m = build([ws('ws-have', { objective: 'E4-3', topic: have })]);
+    assert.ok(EV.similarity(have, miss) >= 0.5 || /Hypo/.test(have), have);
+    assert.equal(EV.joinTarget(m, { id: 'ws-miss', objective: 'E4-3', topic: miss }), null, miss);
+    assert.equal(EV.opposed(have, miss), true, miss);
+  }
 });
 
-test('B-407 review: the weekly counts a proposal among new weak spots only once he accepted it by the week’s end', () => {
+test('B-407 review: the weekly counts a proposal among new weak spots in the week he accepts it', () => {
   const inWeek = '2026-10-15T15:00:00.000Z';
   const doc = (id, extra) => ({ ...ws(id, { objective: 'E4-3', topic: id }), addedAt: inWeek, at: inWeek, ...extra });
+  const accept = d => ({ [key(at(d))]: { type: 'accept', by: 'owner', objective: 'E4-3', at: at(d) } });
   const db = {
     weakspots: [
       doc('ws-his'),
       doc('ws-waits', { proposed: true }),
-      doc('ws-took', {
-        proposed: true,
-        events: { [key(at('2026-10-16'))]: { type: 'accept', by: 'owner', objective: 'E4-3', at: at('2026-10-16') } },
-      }),
+      doc('ws-took', { proposed: true, events: accept('2026-10-16') }),
+      // proposed on Saturday the 17th, accepted on Monday the 19th: new in the week of Monday, not of Saturday
       doc('ws-late', {
         proposed: true,
-        events: { [key(at('2026-10-20'))]: { type: 'accept', by: 'owner', objective: 'E4-3', at: at('2026-10-20') } },
+        addedAt: '2026-10-17T15:00:00.000Z',
+        at: '2026-10-17T15:00:00.000Z',
+        events: accept('2026-10-19'),
       }),
     ],
     exams: [E4],
   };
-  const week = produce(db, spec, 'weeks', { date: '2026-10-18', now: '2026-10-18T22:57:00Z' }, { source: 'test' });
-  assert.deepEqual(week.rollups.newWeakSpots, ['ws-his', 'ws-took']);
+  const week = d => produce(db, spec, 'weeks', { date: d, now: d + 'T22:57:00Z' }, { source: 'test' });
+  assert.deepEqual(week('2026-10-18').rollups.newWeakSpots, ['ws-his', 'ws-took']);
+  assert.deepEqual(week('2026-10-25').rollups.newWeakSpots, ['ws-late']);
 });

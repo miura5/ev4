@@ -479,16 +479,18 @@ function weekBody(db, { date, verify = null, recap = null }, spec, stored) {
   const from = EV.addDays(date, -6);
   const atts = EV.collectAttempts(v.sets, v.answers).all.filter(a => a.date >= from && a.date <= date);
   const stats = EV.answerStats(atts, { date });
-  // B-407 review: her proposals count among the week's new spots only once he accepted them by the week's end (an
-  // accept event is append-only, so a rebuild of the week stays the same); proposed, snoozed or declined ones never do
-  const accepted = w =>
-    !w.proposed ||
-    Object.entries(w.events || {}).some(
-      ([k, e]) => e && e.type === 'accept' && EV.chicagoDate(EV.entryTime(k, e)) <= date
-    );
-  const added = v.models.filter(
-    w => w.addedAt && EV.chicagoDate(w.addedAt) >= from && EV.chicagoDate(w.addedAt) <= date && accepted(w)
-  );
+  // B-407 review: a spot of his is new on the day it was added; one of her proposals is new on the day he first
+  // accepted it (an accept event is append-only, so a rebuild of the week stays the same), and never while it waits,
+  // is snoozed or is declined
+  const newOn = w => {
+    if (!w.proposed) return w.addedAt ? EV.chicagoDate(w.addedAt) : null;
+    const days = Object.entries(w.events || {})
+      .filter(([, e]) => e && e.type === 'accept')
+      .map(([k, e]) => EV.chicagoDate(EV.entryTime(k, e)))
+      .sort();
+    return days[0] || null;
+  };
+  const added = v.models.filter(w => newOn(w) && newOn(w) >= from && newOn(w) <= date);
   const solid = v.models.filter(w => w.derived.solidAt && EV.chicagoDate(w.derived.solidAt) >= from);
   // B-406: a session an Undo took back (discarded) is kept, never counted
   const sessions = (db.sessions || []).filter(s => s.status !== 'discarded' && s.date >= from && s.date <= date);

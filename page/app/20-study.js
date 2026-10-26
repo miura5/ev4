@@ -862,12 +862,22 @@
       const row = el('div', 'trow');
       row.dataset.id = w.id;
       const obj = objText(w.objective);
+      const to = E.joinTarget(M.models, w); // B-407 review: never one naming the opposite (hypo/hyper, left/right, 1/2)
       const tx = el('div', 'tt');
       tx.append(
         el('span', 'wn', w.topic || 'Untitled'),
-        el('span', 'mini', [obj ? 'Under “' + obj + '”' : 'No objective yet', w.source].filter(Boolean).join(' · '))
+        el(
+          'span',
+          'mini',
+          [
+            obj ? 'Under “' + obj + '”' : 'No objective yet',
+            w.source,
+            to ? 'Repeats “' + (to.topic || to.id) + '”?' : '', // what Join would join it to, in sight before the tap
+          ]
+            .filter(Boolean)
+            .join(' · ')
+        )
       );
-      const to = E.joinTarget(M.models, w);
       const name = w.topic || 'this weak spot';
       const tap = (label, aria, fn, cls = 'btn ghost sm') => {
         const b = btn(label, ev => guard(ev.currentTarget, fn), { cls });

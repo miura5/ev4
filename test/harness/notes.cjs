@@ -1630,6 +1630,49 @@ const openNoteId = page =>
       picks.length === 2 && picks.every(x => x.status === 'open' && x.ranked && x.picked),
       JSON.stringify(picks)
     );
+    // B-407 review: a proposal that nearly repeats an open spot has Join on, and its row names the target before the tap
+    await page.evaluate(async () => {
+      const db = await window.claude.use('db');
+      const at = new Date().toISOString();
+      await db
+        .collection('weakspots')
+        .doc('ws-harness-near')
+        .set({
+          schema: 2,
+          writer: 'page',
+          at,
+          source: 'E.V. · harness',
+          addedAt: at,
+          addedBy: 'page',
+          proposed: true,
+          topic: 'Fluid volume excess signs',
+          objective: 'E4-3',
+          exam: 'E4',
+          course: 'NUR 112',
+          kind: 'concept',
+          initial: { streak: 0, nextDue: null, recurrence: 1, misses: 0 },
+          events: {},
+        });
+    });
+    await page.click('#tab-study');
+    await page.waitForTimeout(200);
+    if (await page.isVisible('#study-qweak')) await page.click('#study-qweak');
+    await until(page, () => !!document.querySelector('#weak-list .trow[data-id="ws-harness-near"]'), null, 4000);
+    const near = await page.evaluate(() => {
+      const row = document.querySelector('#weak-list .trow[data-id="ws-harness-near"]');
+      const j = row && [...row.querySelectorAll('button')].find(b => b.textContent === 'Join');
+      return {
+        mini: row ? (row.querySelector('.mini') || {}).textContent : '',
+        on: !!j && !j.disabled,
+        title: j ? j.title : '',
+      };
+    });
+    ok(
+      `${tag} Join is on for a near-repeat and its row names the target: Repeats “Fluid volume excess”?`,
+      near.on && /Repeats “Fluid volume excess”\?$/.test(near.mini) && /Fluid volume excess/.test(near.title),
+      JSON.stringify(near)
+    );
+    await page.screenshot({ path: path.join(shots, 'b407-join-target-1280.png') });
     ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
     await page.context().close();
   }

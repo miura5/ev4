@@ -71,6 +71,21 @@ export function makeSessions(core) {
     );
   }
   /**
+   * B-407 review: two topics a similarity score calls close that name opposite things: one says hypo and the other
+   * hyper, or left and right, or their numbers differ (type 1 and type 2 diabetes). Such a pair is never a join target.
+   */
+  function opposed(a, b) {
+    const A = String(a || '').toLowerCase(),
+      B = String(b || '').toLowerCase();
+    const nums = s => (s.match(/\d+/g) || []).join(' ');
+    if (nums(A) !== nums(B)) return true;
+    const has = (s, w) => new RegExp('\\b' + w).test(s);
+    return [
+      ['hypo', 'hyper'],
+      ['left', 'right'],
+    ].some(pair => pair.some(w => has(A, w) || has(B, w)) && pair.some(w => has(A, w) !== has(B, w)));
+  }
+  /**
    * B-407 review: the spot a near-repeat would join, as a session's near-repeat question picks it: a concept, open or
    * solid (never one waiting for triage, a duplicate or a parked one), under the same objective, at least 0.5 similar,
    * the most similar first; else null.
@@ -85,7 +100,8 @@ export function makeSessions(core) {
             (x.kind || 'concept') === 'concept' &&
             (isActive(x) || isSolid(x)) &&
             x.objective === objective &&
-            similarity(x.topic, topic) >= 0.5
+            similarity(x.topic, topic) >= 0.5 &&
+            !opposed(x.topic, topic)
         )
         .sort((a, b) => similarity(b.topic, topic) - similarity(a.topic, topic))[0] || null
     );
@@ -1053,6 +1069,7 @@ export function makeSessions(core) {
     freeWeakspotId,
     heldTwin,
     joinTarget,
+    opposed,
     closeFindings,
     closeUpdate,
     switchedUnfiled,
