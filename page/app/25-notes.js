@@ -6,7 +6,7 @@
     // whole note through write() after a short pause; New note writes a fresh note at once, under an id with a random
     // part from crypto, so two devices never make the same one. The list here is the minimum way in: Notes' own list,
     // the L-frame strip and sessions are B-403, B-405 and B-406.
-    const NOTE_BYTES = 262144; // spec.capacity.documentBytes (test/notes-editor.test.mjs holds them equal)
+    const NOTE_BYTES = (EV_SPEC.capacity || {}).documentBytes || 262144; // the size write() and the Worker allow
     const NOTE_SAVE_MS = 800; // the autosave's pause after the last change
     const NOTE_RETRY_MS = 15000; // a refused save tries again after this, or on the next change
     const NOTE = {
@@ -372,6 +372,7 @@
       const at = now();
       const id = E.newNoteId(at, noteRandom());
       loadNote(id, null);
+      NOTE.doc = { createdAt: at }; // written once (noteProblem): every save of this note carries the same createdAt
       NOTE.dirty = true; // a new note is written at once, so it is in the record before a word is typed
       body.focus();
       setNoteSel({ a: { b: 0, o: 0 } });

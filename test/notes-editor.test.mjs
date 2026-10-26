@@ -273,7 +273,8 @@ test('B-402: a new note’s id is fresh every time and fits the key', () => {
 test('B-402: the page saves only through write(), and its size cap is spec.capacity.documentBytes', () => {
   const part = fs.readFileSync(path.join(ROOT, 'page/app/25-notes.js'), 'utf8');
   const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
-  assert.equal(Number(part.match(/const NOTE_BYTES = (\d+)/)[1]), spec.capacity.documentBytes);
+  assert.match(part, /const NOTE_BYTES = \(EV_SPEC\.capacity \|\| \{\}\)\.documentBytes \|\| (\d+);/);
+  assert.equal(Number(part.match(/documentBytes \|\| (\d+);/)[1]), spec.capacity.documentBytes);
   assert.ok(!/\binnerHTML\b|insertAdjacentHTML|outerHTML|execCommand|document\.write/.test(part));
   assert.ok(!/db\.collection/.test(part)); // no write around write()
   assert.match(part, /write\(\{ op: 'set', collection: 'notes', id, data: doc \}\)/);
