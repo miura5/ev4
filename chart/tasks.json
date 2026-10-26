@@ -7469,5 +7469,22 @@
    "outcome": "task",
    "at": "2026-10-26T06:00:32.386Z"
   }
+ },
+ {
+  "id": "B-411",
+  "kind": "bug",
+  "title": "Bug (reported Oct 26): Notes sessions: in rare cases a switched session is filed twice (the driver view is not the one holding Undo, or a reload lands between a filing's findings and its filed mark), and the Undo button can show after Undo has stopped working, with no word when a tap does nothing.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "B-406 second review",
+  "words": "Notes sessions: in rare cases a switched session is filed twice (the driver view is not the one holding Undo, or a reload lands between a filing's findings and its filed mark), and the Undo button can show after Undo has stopped working, with no word when a tap does nothing.",
+  "reportedAt": "2026-10-26T06:07:38.893Z",
+  "board": {
+   "row": "v4 B-411: Notes sessions: in rare cases a switched session is filed twice (the…"
+  }
  }
 ]
