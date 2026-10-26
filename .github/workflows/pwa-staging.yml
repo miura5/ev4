@@ -26,6 +26,10 @@ on:
         description: 'B-318: the commit to build and deploy (ship staging passes the build commit); empty for the branch head'
         type: string
         default: ''
+      release:
+        description: 'D-343: the release tag ship made for this commit, kept local by the git proxy (v4.x.y); made here too before the build'
+        type: string
+        default: ''
       jobs:
         description: 'B-324: also run one real Haiku job of each kind and read it back from the staging D1'
         type: boolean
@@ -76,6 +80,22 @@ jobs:
           # B-318: the build's own commit, with its tags, so the page carries the same release as ship's build.
           ref: ${{ inputs.commit || github.sha }}
           fetch-depth: 0
+      # D-343: a release tag ship made here but couldn't push (a cloud session's git proxy refuses tag pushes) is made
+      # in this runner too, at the same commit, so the page carries the same release as ship's build.
+      - name: the release tag ship names, at this commit
+        env:
+          RELEASE: ${{ inputs.release }}
+          COMMIT: ${{ inputs.commit || github.sha }}
+        run: |
+          [ -z "$RELEASE" ] && { echo "no release named"; exit 0; }
+          echo "$RELEASE" | grep -Eq '^v4\.[0-9]+\.[0-9]+$' || { echo "release $RELEASE is not v4.x.y"; exit 1; }
+          git config user.name 'E.V. CI' && git config user.email 'ci@example.invalid'
+          if git rev-parse -q --verify "refs/tags/$RELEASE" >/dev/null; then
+            [ "$(git rev-list -n1 "$RELEASE")" = "$(git rev-parse "$COMMIT")" ] || { echo "$RELEASE is already at another commit"; exit 1; }
+          else
+            git tag -a "$RELEASE" "$COMMIT" -m "E.V. $RELEASE (made in this runner only, D-343)"
+          fi
+          echo "release $RELEASE at $(git rev-parse --short "$COMMIT")"
       - uses: actions/setup-node@v4
         with:
           node-version: 22

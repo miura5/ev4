@@ -1320,7 +1320,12 @@ async function ship(o) {
   // B-318: the app's deploy is a dispatch of its workflow, after the record and page calls; never while a run is going.
   const appRunning = appSaved && appSaved.run && appSaved.run.status !== 'completed';
   if (app && deploy.ok && !appRunning && verifyResult.lines.some(l => !l.ok && /^app /.test(l.what))) {
-    const a = appCalls({ target, commit: manifest.commit, mattOk: Boolean(o['matt-ok'] || shipJobOk) });
+    const a = appCalls({
+      target,
+      commit: manifest.commit,
+      mattOk: Boolean(o['matt-ok'] || shipJobOk),
+      release: manifest.release,
+    });
     if (a.ok) deploy.calls = [...deploy.calls, ...a.calls];
     else refusals.push(...a.refusals);
   }

@@ -38,6 +38,14 @@ test('B-318: ship staging prints the pwa-staging dispatch at the build commit', 
   assert.equal(a.calls[0].tool, 'Bash');
   assert.equal(a.calls[0].args.command, `gh workflow run pwa-staging.yml --repo miura5/ev4 --ref main -f commit=${C}`);
   assert.match(a.calls[0].step, /^app staging: /, 'ship counts it as the app part');
+  // D-343: a tagged release is named, so the runner makes the tag ship couldn't push; build metadata never is
+  const t = appCalls({ target: 'staging', commit: C, release: 'v4.5.7' });
+  assert.equal(
+    t.calls[0].args.command,
+    `gh workflow run pwa-staging.yml --repo miura5/ev4 --ref main -f commit=${C} -f release=v4.5.7`
+  );
+  for (const release of ['v4.5.7+3', 'v4.5.7; rm', null])
+    assert.doesNotMatch(appCalls({ target: 'staging', commit: C, release }).calls[0].args.command, /release=/);
   const r = appRead({ target: 'staging', stateDir: '/x/state/staging' });
   assert.equal(r.args.command, 'node tools/pwa-app.mjs readback staging --out /x/state/staging/app.json --wait 9');
   assert.equal(r.save, '/x/state/staging/app.json');

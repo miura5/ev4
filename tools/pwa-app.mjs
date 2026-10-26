@@ -116,7 +116,7 @@ export function appRead({ target, stateDir }) {
  * The call that deploys the app: a dispatch of the target's workflow at the build's commit. live only on Matt's OK
  * (R-04): without it, refused here as ship live refuses before any call; with it, nothing until live is ready.
  */
-export function appCalls({ target, commit, mattOk = false }) {
+export function appCalls({ target, commit, mattOk = false, release = null }) {
   const app = APPS[target];
   if (target === 'live' && !mattOk)
     return { ok: false, refusals: ["R-04 (D-083): the live app deploys only on Matt's explicit OK (--matt-ok)"] };
@@ -127,7 +127,10 @@ export function appCalls({ target, commit, mattOk = false }) {
       {
         step: `app ${target}: deploy the ${app.worker} Worker and its page files at ${commit.slice(0, 7)}`,
         tool: 'Bash',
-        args: { command: `gh workflow run ${app.workflow} --repo ${REPO} --ref main -f commit=${commit}` },
+        // D-343: a release tag made here but not pushed is named, so the runner makes it too and builds the same release
+        args: {
+          command: `gh workflow run ${app.workflow} --repo ${REPO} --ref main -f commit=${commit}${release && /^v4\.\d+\.\d+$/.test(release) ? ` -f release=${release}` : ''}`,
+        },
         then: `the read below waits for the run (or gh run list --repo ${REPO} --workflow ${app.workflow} --limit 1)`,
       },
     ],
