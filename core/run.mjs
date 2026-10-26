@@ -519,8 +519,8 @@ export function compute({ spec, dir, validate, at }) {
       continue;
     }
     // D-335: runs read the journal and his notes with the record; reading never writes, and only the page writes them.
-    // The one exception is the restore drill putting back the page's own documents as the backup holds them (B-163).
-    if (PAGE_ONLY.includes(w.collection) && !(w.asWritten === true && run.pipeline === 'restore-drill')) {
+    // No exception: a restore drill writes its copies to the scratch D1 (D-302), never through this plan.
+    if (PAGE_ONLY.includes(w.collection)) {
       problems.push(`${ref}: written by the page only (D-335)`);
       continue;
     }

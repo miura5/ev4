@@ -732,7 +732,7 @@ test('D-335: a run reads the journal and his notes but never writes them; only t
   CODE_STEPS['test-page-only'] = () => ({
     writes: [
       { op: 'set', collection: 'journal', id: 'j-made-up', data: text },
-      // even marked as written: only the restore drill may put back the page's own documents
+      // even marked as written: no run, the restore drill included, writes them (its copies go to the scratch D1)
       { op: 'set', collection: 'notes', id: 'n-made-up', asWritten: true, data: { ...text, title: 'x' } },
     ],
   });
