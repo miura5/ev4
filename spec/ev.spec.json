@@ -2350,7 +2350,7 @@
     ],
     "macBound": true,
     "push": false,
-    "trigger": "trig_01Gxz5Yv4Q21UrdY8kK6iYza",
+    "trigger": "trig_01LRaXp8yBp16n61E7sYZQoQ",
     "watchSchedule": "CRON_TZ=America/Chicago 20 20 * * *"
    },
    "weekly": {
@@ -2397,7 +2397,7 @@
     ],
     "macBound": true,
     "push": false,
-    "trigger": "trig_01P9SCjuNLjRxbzWgZBnHBEk",
+    "trigger": "trig_016MfX6dcGkX1pe834pZN9kJ",
     "note": "D-322 (B-317): restores the newest staging backup (Mac or R2 export, spec.registry.records.staging.runs.backup) into the scratch D1 and checks counts and hashes per collection. Slot agreed with Matt Oct 18."
    }
   },
@@ -2619,6 +2619,18 @@
     "was": "staging.restore-drill",
     "name": "E.V. staging · restore-drill",
     "reason": "B-317 (D-303, D-322): replaced by the staging restore drill into the scratch D1; to be disabled (update_trigger enabled false) once its replacement exists, from a chat linked to the Mac with Matt present. Kept, never deleted."
+   },
+   {
+    "trigger": "trig_01Gxz5Yv4Q21UrdY8kK6iYza",
+    "was": "staging.evening-mac",
+    "name": "E.V. staging · evening-mac",
+    "reason": "B-397, B-399 (D-324): its prompt changed (the OUTCOME UNKNOWN path; B-01 and B-04 ended), so it was re-created Oct 26 from the chat linked to the Mac with Matt present as trig_01LRaXp8yBp16n61E7sYZQoQ; disabled and kept."
+   },
+   {
+    "trigger": "trig_01P9SCjuNLjRxbzWgZBnHBEk",
+    "was": "staging.restore-drill",
+    "name": "E.V. staging · restore-drill",
+    "reason": "B-397, B-399 (D-324): its prompt changed, so it was re-created Oct 26 from the chat linked to the Mac with Matt present as trig_016MfX6dcGkX1pe834pZN9kJ; disabled and kept."
    }
   ]
  },
