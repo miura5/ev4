@@ -7415,5 +7415,22 @@
    "outcome": "task",
    "at": "2026-10-26T00:53:08.090Z"
   }
+ },
+ {
+  "id": "B-409",
+  "kind": "request",
+  "title": "Request (reported Oct 25): Build rubric click-through, code review and release card (B-396, D-325).",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build manager, B-396 plan",
+  "words": "Build rubric click-through, code review and release card (B-396, D-325).",
+  "reportedAt": "2026-10-26T00:53:10.420Z",
+  "board": {
+   "row": "v4 B-409: Build rubric click-through, code review and release card (B-396,…"
+  }
  }
 ]
