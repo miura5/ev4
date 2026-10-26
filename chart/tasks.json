@@ -5668,14 +5668,19 @@
   "title": "A new way to bring his notes into a study session, free to use D1 (for example, notes written in E.V. itself). B-06's note-text rule is revisited here, with Matt.",
   "dod": "Defined with Matt when the task is taken.",
   "milestone": "app (data, pipelines, ops)",
-  "status": "blocked",
+  "status": "declined",
   "depends": [
    "B-320"
   ],
   "notes": "Waiting on Matt to scope it: its definition of done is written with him when he does (hand-off 3).",
   "commit": null,
   "source": "plan 1eW5FgG9VNzhCySbL1uWuo",
-  "waitingOn": "Matt"
+  "triage": {
+   "outcome": "joined",
+   "into": "B-408",
+   "reason": "D-325: Notes is the new way to bring his notes into a study session (notes written in E.V., read through sample at a check, D-328); B-408 retires Study Watch from the page",
+   "at": "2026-10-26T07:03:13.305Z"
+  }
  },
  {
   "id": "B-322",

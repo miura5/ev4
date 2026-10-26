@@ -431,10 +431,11 @@ async function sideBySide(browser, left, right, out, vp) {
       chips: [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent),
     }));
     ok(
-      `[${scheme}] the greeting has no card; its offers are the demo's five chips, Start a study session first (B-358)`,
+      // B-408 (D-325): on desktop the first is the Notes demo's Start a note and study; the phone keeps its session
+      `[${scheme}] the greeting has no card; its offers are the demo's five chips, ${scheme === 'desktop' ? 'Start a note and study' : 'Start a study session'} first (B-358)`,
       gc.cards === 0 &&
         gc.chips.length === 5 &&
-        gc.chips[0] === 'Start a study session' &&
+        gc.chips[0] === (scheme === 'desktop' ? 'Start a note and study' : 'Start a study session') &&
         !gc.chips.includes('File it'),
       JSON.stringify(gc)
     );
@@ -1450,40 +1451,6 @@ async function sideBySide(browser, left, right, out, vp) {
       JSON.stringify({ st3, v })
     );
     await c3.close();
-  }
-  // D-125 as amended: File it is the fallback chip when quiet filing cannot run; here the reader is unreachable and
-  // two Study Watch sessions wait. With no review left and no unseen job, it takes a priority slot.
-  {
-    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: 'dark' });
-    const page = await ctx.newPage();
-    await page.addInitScript(() => {
-      window.__readerFail = 'server_not_connected';
-      window.__readerSessions = {
-        sessions: [
-          { id: 'h1', title: 'Harness note one', modifiedAt: new Date().toISOString() },
-          { id: 'h2', title: 'Harness note two', modifiedAt: new Date().toISOString() },
-        ],
-      };
-    });
-    const quiet = JSON.parse(JSON.stringify(seed));
-    delete (quiet.sets || {})['review-' + today];
-    quiet.talk.memory = { ...(quiet.talk.memory || {}), lastSeenAt: new Date(Date.now() + 864e5).toISOString() };
-    await openPage(page, quiet);
-    await page.waitForTimeout(2500);
-    const chips = await page.evaluate(() => [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent));
-    // B-358 (D-316): the chips are the demo's five; File it is asked in words, and she answers it
-    const before = await page.locator('#thread .msg.ev').count();
-    await page.fill('#ev-input', 'File it');
-    await page.click('#ev-send');
-    await page.waitForTimeout(1200);
-    ok(
-      "[phone] with the reader unreachable, the demo's five chips, and File it asked in words gets her answer",
-      chips.length === 5 &&
-        chips[0] === 'Start a study session' &&
-        (await page.locator('#thread .msg.ev').count()) > before,
-      JSON.stringify(chips)
-    );
-    await ctx.close();
   }
   // B-122 (D-161): a session's check folds to its head line by a tap on it and back, files nothing, and the next
   // checkpoint's card arrives open; at 390, 735 and 1280.

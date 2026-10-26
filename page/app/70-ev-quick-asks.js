@@ -146,6 +146,7 @@
           : ['No open weak spots right now, so nothing to send to Quizlet.', []];
       },
       'start a study session': () => startSession(),
+      'start a note and study': () => startSession(), // B-408: the Notes demo's chip, typed
       'start session': () => startSession(),
       'start studying': () => startSession(),
       'start a session': () => startSession(),

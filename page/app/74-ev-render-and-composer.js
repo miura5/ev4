@@ -180,18 +180,20 @@
         COMMENT && sa && sa.status === 'active'
           ? ['Quiz me now']
           : ((T.greet && T.greet.chips) || ['What’s due this week?', 'How ready am I?']).filter(
-              c => !(c === 'Start a study session' && (sa || WIDE_STRIP.matches))
+              c => !(c === 'Start a study session' && (sa || notesOn()))
             );
+      // B-408 (D-325): from 1024 px, as the Notes demo, a session on a note offers the one way back to it
+      if (sa && sa.status === 'active' && notesOn() && noteOfSession(sa)) chips = ['Back to my note'];
       // B-362 (D-316): on a break, the demo's one chip back to work
       if (sa && sa.status === 'active' && E.sessionState(sa, now()).onBreak) chips = ['I’m back early'];
       // B-358 (D-314): at rest, the demo's five chips and only those.
       // B-357: a skills run left going keeps its Resume chip first (the runner waits behind it, B-82)
       const resume = ((T.greet && T.greet.chips) || []).filter(c => /^Resume .+ · \d+ of \d+$/.test(c));
-      // B-408 (D-325): from 1024 px a session starts in Notes (or from a Today task), so the Conversation offers none
+      // B-408 (D-325): from 1024 px a session is in Notes, so the first chip is the Notes demo's Start a note and study
       if (!sa)
         chips = [
           ...resume,
-          ...(WIDE_STRIP.matches ? [] : ['Start a study session']),
+          notesOn() ? 'Start a note and study' : 'Start a study session',
           'What’s due this week?',
           quizChip(),
           'How did this week go?',
@@ -207,10 +209,21 @@
             ? btn(c, () => skillPark(false))
             : c === 'I’m back early' // B-377 (D-316): as the demo, her line only
               ? btn(c, () => guard(null, () => breakOrResume('resume')))
-              : btn(c, () => {
-                  if (/^attach a file$/i.test(c)) $('ev-file').click(); // B-381: inside his tap, before any await
-                  guard(null, () => quick(c));
-                });
+              : c === 'Start a note and study' // B-408: as the Notes demo, a new note with its session, no line of his
+                ? btn(c, () => {
+                    const from = whereNow();
+                    showTab('notes');
+                    guard(null, () => newNote(from));
+                  })
+                : c === 'Back to my note'
+                  ? btn(c, () => {
+                      const s = activeSession();
+                      if (s && noteOfSession(s)) guard(null, () => noteSession(noteOfSession(s)));
+                    })
+                  : btn(c, () => {
+                      if (/^attach a file$/i.test(c)) $('ev-file').click(); // B-381: inside his tap, before any await
+                      guard(null, () => quick(c));
+                    });
           b.className = 'qchip';
           return b;
         });

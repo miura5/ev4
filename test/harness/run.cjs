@@ -1420,12 +1420,14 @@ async function tap(page, locator, name) {
       gb.lines.length === 1 && /on today’s list/.test(gb.lines[0]) && !gb.buttons && !gb.cards && !gb.shown,
       JSON.stringify(gb)
     );
-    // B-358 (D-316): at rest the chips are the demo's five, Start a study session first
+    // B-358 (D-316): at rest the chips are the demo's five, Start a study session first; B-408 (D-325): on desktop the
+    // Notes demo's Start a note and study takes its place
     const gm = await page.evaluate(() => [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent));
+    const first = scheme === 'desktop' ? 'Start a note and study' : 'Start a study session';
     ok(
-      `[${scheme}] at rest the demo's five chips, Start a study session first`,
+      `[${scheme}] at rest the demo's five chips, ${first} first`,
       gm.length === 5 &&
-        gm[0] === 'Start a study session' &&
+        gm[0] === first &&
         gm.includes('What’s due this week?') &&
         gm.includes('How did this week go?') &&
         gm.includes('Plan the rest of today') &&
@@ -3744,104 +3746,31 @@ async function tap(page, locator, name) {
     await st.waitForTimeout(300);
     const smc = await st.evaluate(() => window.__mcpCalls.find(c => c[1] === 'fire_trigger'));
     ok('staging fires only the staging worker', smc && smc[2].trigger_id === stagingWorker, JSON.stringify(smc));
+    // B-408: the page files no Study Watch session any more; File it asked in words fires no task and asks no reader
+    await st.evaluate(() => {
+      window.__chatScript = [];
+      window.__chatReply = 'Your study sessions are saved as they end.';
+    });
     await send(st, 'File it');
-    await st.waitForTimeout(200);
+    await st.waitForTimeout(300);
     ok(
-      'file it files through the reader on the page, never a Mac task',
-      /Nothing new to file/.test((await msgs(st)).slice(-1)[0].text) &&
-        (await st.evaluate(() => window.__mcpCalls.filter(c => c[1] === 'fire_trigger').length)) === 1
+      'file it asked in words fires no task and calls no local reader',
+      (await st.evaluate(() => window.__mcpCalls.filter(c => c[1] === 'fire_trigger').length)) === 1 &&
+        (await st.evaluate(() => window.__mcpCalls.filter(c => String(c[0]).startsWith('host:')).length)) === 0,
+      JSON.stringify(await st.evaluate(() => window.__mcpCalls.map(c => c[0] + ' ' + c[1])))
     );
     ok('staging readout says staging', /staging/i.test(await st.textContent('#readout')));
     await st.close();
 
-    // ---- B-18: session filing from the page, skills practice, the readiness audit, grounded explanations
+    // ---- B-18: skills practice, the readiness audit, grounded explanations (B-408 retired the page's session filing)
     {
       const fp = await browser.newPage({ viewport: { width: 390, height: 844 } });
       const fErr = [];
       fp.on('pageerror', e => fErr.push(e.message));
       await fp.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
-      // The reader lists two sessions: one new, one v3 already filed (under its bare id). D-324: nothing is left out as #graded.
-      const fresh = {
-        found: true,
-        id: '2026-10-18-1300-Harness-Fluids',
-        date: today,
-        startedAt: today + 'T18:00:00Z',
-        endedAt: today + 'T18:40:00Z',
-        note: 'Harness Fluids',
-        minutes: 40,
-        checks: 3,
-        questions: 4,
-        summary: 'Worked through third spacing.',
-        weakSpots: [
-          { objective: 'E4-3', topic: 'Third spacing signs' },
-          { objective: '', topic: 'Why albumin holds fluid in the vessels' },
-        ],
-        connections: ['Albumin links nutrition to edema'],
-        noteTodos: ['Add a third-spacing example'],
-        cardCount: 2,
-        source: 'Study Watch',
-      };
-      const pre = `window.__readerSessions = { sessions: [{ id: '2026-10-18-1300-Harness-Fluids', bytes: 900, sha256: 'a', modifiedAt: '${today}T18:41:00Z' }, { id: '2026-10-17-0035-Pharmacology-Chapter-50', bytes: 800, sha256: 'b', modifiedAt: '2026-10-17T05:50:00Z' }], count: 2, more: false };
-        window.__readerSession = { '2026-10-18-1300-Harness-Fluids': ${JSON.stringify(fresh)} };`;
-      await openPage(fp, 'staging', pre);
-      await fp.waitForTimeout(2500);
-      const filed = await fp.evaluate(() => window.__db.sessions['sw-2026-10-18-1300-Harness-Fluids']);
-      ok(
-        'on open, new Study Watch sessions are filed from the page through the reader',
-        filed &&
-          filed.writer === 'page' &&
-          filed.source === 'Study Watch' &&
-          filed.summary === 'Worked through third spacing.' &&
-          !JSON.stringify(filed).includes('note text'),
-        JSON.stringify(filed).slice(0, 200)
-      );
-      ok(
-        'only findings were read, and only from the reader’s session tools',
-        await fp.evaluate(
-          h =>
-            window.__mcpCalls
-              .filter(c => c[0] === h)
-              .map(c => c[1])
-              .every(t => ['status', 'list_sessions', 'read_session'].includes(t)) &&
-            window.__mcpCalls.some(c => c[1] === 'read_session' && c[2].id === '2026-10-18-1300-Harness-Fluids'),
-          spec.registry.studyWatch.reader.host
-        )
-      );
-      ok(
-        'a session v3 already filed is left alone',
-        await fp.evaluate(
-          () =>
-            !window.__db.sessions['sw-2026-10-17-0035-Pharmacology-Chapter-50'] &&
-            !window.__mcpCalls.some(
-              c => c[1] === 'read_session' && c[2].id === '2026-10-17-0035-Pharmacology-Chapter-50'
-            )
-        )
-      );
-      const fw = await fp.evaluate(() => ({
-        ws: Object.values(window.__db.weakspots)
-          .filter(w => w.topic === 'Third spacing signs' || w.topic === 'Add a third-spacing example')
-          .map(w => w.kind),
-        ideas: Object.values(window.__db.ideas).filter(i => i.sessionId === 'sw-2026-10-18-1300-Harness-Fluids').length,
-      }));
-      ok(
-        'its findings are filed by the session rules: a weak spot, a note to-do, ideas',
-        fw.ws.includes('concept') && fw.ws.includes('note') && fw.ideas === 2,
-        JSON.stringify(fw)
-      );
-      const fm = (await msgs(fp)).slice(-1)[0];
-      ok(
-        'E.V. says what it filed, once, with the session card',
-        /^Filed 1 Study Watch session, 2 new weak spots, 2 ideas\.$/.test(fm.text) && fm.cards[0].type === 'session',
-        fm.text
-      );
-      await send(fp, 'File it');
-      await fp.waitForTimeout(500);
-      ok(
-        'file it again: nothing new, nothing written twice',
-        /Nothing new to file/.test((await msgs(fp)).slice(-1)[0].text) &&
-          (await fp.evaluate(() => Object.keys(window.__db.sessions).filter(k => k.startsWith('sw-')).length)) === 1,
-        (await msgs(fp)).slice(-1)[0].text
-      );
+      // B-408 retired the page's Study Watch filing (the reader); this page goes on with skills practice and the rest
+      await openPage(fp, 'staging');
+      await fp.waitForTimeout(1500);
       // Skills practice: E.V. finds the checklist in the library and runs it in a card, one step at a time
       await fp.evaluate(() => {
         window.__toolResults = [];
@@ -4410,7 +4339,8 @@ async function tap(page, locator, name) {
       await cp.close();
     }
 
-    // ---- Study session, entirely in the E.V. conversation (D-073). A fake clock fast-forwards to each check.
+    // ---- Study session on the phone (B-408, D-325: under 1024 px there is no Notes, so the session is the
+    // Conversation's; it reads no note and asks about his objectives and weak spots, B-314). A fake clock fast-forwards.
     const ss = await browser.newPage({ viewport: { width: 390, height: 844 } });
     const sErr = [];
     ss.on('pageerror', e => sErr.push(e.message));
@@ -4420,26 +4350,6 @@ async function tap(page, locator, name) {
     await ss.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
     await openPage(ss);
     await ss.waitForTimeout(900);
-    const host = spec.registry.studyWatch.reader.host;
-    const note1 = 'Fluids and electrolytes\nIsotonic: 0.9% NaCl stays in the vessels.';
-    const setNote = (text, extra = {}) =>
-      ss.evaluate(
-        ([t, e]) => {
-          window.__readerNote = {
-            found: true,
-            appVersion: '0.4',
-            note: {
-              id: 'x-coredata://n1',
-              name: 'Fluids and electrolytes',
-              folder: '2026/2026 Fall/NUR 112/Week 9',
-              modifiedAt: new Date().toISOString(),
-              text: t,
-            },
-            ...e,
-          };
-        },
-        [text, extra]
-      );
     const sess = () =>
       ss.evaluate(
         () =>
@@ -4458,108 +4368,51 @@ async function tap(page, locator, name) {
       const s = await sess();
       return !!s && Object.values(s.events || {}).some(test);
     };
-    // Without the reader (a browser tab or the iPhone), E.V. says where to open the page
-    await ss.evaluate(() => {
-      window.__readerFail = 'server_not_connected';
-    });
-    // B-358 (D-316): while no session runs, Start a study session leads the demo's five chips.
-    const sc = await ss.evaluate(() => [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent));
-    ok(
-      'session chip offered, first of the five',
-      sc.length === 5 && sc[0] === 'Start a study session',
-      JSON.stringify(sc)
-    );
-    await ss.locator('#qchips .qchip', { hasText: 'Start a study session' }).click();
-    await ss.waitForTimeout(300);
-    ok(
-      'no reader: says to open the desktop app, starts nothing',
-      /Claude desktop app on your Mac/.test((await msgs(ss)).slice(-1)[0].text) && !(await sess()),
-      (await msgs(ss)).slice(-1)[0].text
-    );
-    await ss.evaluate(() => {
-      window.__readerFail = null;
-    });
-    // Start: B-290 (D-327), from 1200 px from the right panel's card, the chip's call; below it the card is absent
-    await setNote(note1);
-    const sessCard = () =>
-      ss.evaluate(() => {
-        const v = e => !!e && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().width > 1;
-        const c = document.getElementById('ev-sess'),
-          q = sel => (c && c.querySelector(sel) ? c.querySelector(sel).textContent : '');
-        return {
-          strip: v(document.getElementById('sbar')),
-          card: v(c),
-          head: q('h2'),
-          left: q('.ss-left'),
-          clock: (document.querySelector('#sbar .s-clock') || {}).textContent || '',
-          badge: q('.badge'),
-          topic: q('.ss-topic'),
-          btns: c ? [...c.querySelectorAll('button')].filter(v).map(b => b.textContent) : [],
-          inPanel: !!c && c.parentNode.id === 'ev-side' && c.getBoundingClientRect().left > innerWidth / 2,
-          minutesShown: [...document.querySelectorAll('#ev-sess .ss-left, #sbar .s-clock')].filter(
-            e => v(e) && v(e.closest('#ev-sess, #sbar'))
-          ).length,
-        };
-      });
-    const sessShots = async name => {
-      for (const scheme of ['light', 'dark']) {
-        await ss.emulateMedia({ colorScheme: scheme });
-        await ss.waitForTimeout(200);
-        await ss.screenshot({ path: `${shots}/b290-${name}-${scheme}.png` });
-      }
-      await ss.emulateMedia({ colorScheme: null });
-    };
-    const idle390 = await sessCard();
-    await sessShots('idle-390');
+    const hostCalls = () => ss.evaluate(() => window.__mcpCalls.filter(c => String(c[0]).startsWith('host:')).length);
+    // B-408 (D-325): at 1280 the Conversation offers no session of its own (the Notes demo's Start a note and study leads
+    // the chips) and has no session card; at 390 Start a study session leads the demo's five (B-358).
+    const restView = () =>
+      ss.evaluate(() => ({
+        chips: [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent),
+        card: !!document.getElementById('ev-sess'),
+      }));
     await ss.setViewportSize({ width: 1280, height: 900 });
     await ss.waitForTimeout(600);
-    const idle1280 = await sessCard();
-    await sessShots('idle-1280');
-    ok(
-      'B-290: idle, the right panel offers Start a study session from 1200 px, and the card is absent at 390',
-      !idle390.card &&
-        idle1280.card &&
-        idle1280.inPanel &&
-        idle1280.head === 'Start a study session' &&
-        idle1280.btns.join() === 'Start study session',
-      JSON.stringify({ idle390, idle1280 })
-    );
-    await ss.locator('#ev-sess button', { hasText: 'Start study session' }).click();
-    await ss.waitForTimeout(500);
-    const wide = await sessCard();
-    await sessShots('session-1280');
+    const rest1280 = await restView();
+    await ss.screenshot({ path: `${shots}/b408-rest-1280.png` });
     await ss.setViewportSize({ width: 390, height: 844 });
     await ss.waitForTimeout(600);
-    const phone = await sessCard();
-    await sessShots('session-390');
+    const rest390 = await restView();
+    await ss.screenshot({ path: `${shots}/b408-rest-390.png` });
     ok(
-      'B-290: in a session the minutes left show once per width: at 1280 the card (Running, the topic, n min left, Break, +5 min and End, B-362) and no header line; at 390 the strip (n min left) and no card',
-      wide.card &&
-        !wide.strip &&
-        wide.minutesShown === 1 &&
-        wide.badge === 'Running' &&
-        wide.topic === 'Fluids and electrolytes' &&
-        /^\d+ (?:min left|min\s*to (?:my )?next check)$/.test(wide.left) && // B-385: the demo's 'n min to next check'
-        wide.btns.join() === 'Break,+5 min,End' &&
-        phone.strip &&
-        !phone.card &&
-        phone.minutesShown === 1 &&
-        /^\d+ (?:min left|min\s*to (?:my )?next check)/.test(phone.clock),
-      JSON.stringify({ wide, phone })
+      'B-408: at 1280 no session card and no Start a study session (Start a note and study first); at 390 Start a study session first of the five',
+      !rest1280.card &&
+        rest1280.chips[0] === 'Start a note and study' &&
+        !rest1280.chips.includes('Start a study session') &&
+        !rest390.card &&
+        rest390.chips.length === 5 &&
+        rest390.chips[0] === 'Start a study session',
+      JSON.stringify({ rest1280, rest390 })
     );
+    await ss.locator('#qchips .qchip', { hasText: 'Start a study session' }).click();
+    for (let i = 0; i < 40 && !(await sess()); i++) await ss.waitForTimeout(100);
+    await ss.waitForTimeout(400);
     let S1 = await sess();
     ok(
-      'session saved as active with a start mark, no note text',
+      'the phone starts a session on no note, with a start mark and no call to a local reader',
       S1 &&
         S1.status === 'active' &&
-        S1.topic === 'Fluids and electrolytes' &&
-        Object.values(S1.events)[0].len === note1.length &&
-        !JSON.stringify(S1).includes('Isotonic'),
-      JSON.stringify(S1 && S1.events)
+        S1.topic === 'Study session' &&
+        S1.noteId === '' &&
+        !S1.note &&
+        Object.values(S1.events)[0].type === 'start' &&
+        (await hostCalls()) === 0,
+      JSON.stringify(S1 && { topic: S1.topic, noteId: S1.noteId, events: S1.events })
     );
     ok(
       'start message in the thread',
-      /Session started on Fluids and electrolytes/.test((await msgs(ss)).slice(-1)[0].text.replace(/\*\*/g, ''))
+      /^Session started\. I’ll keep time; tap Quiz me now/.test((await msgs(ss)).slice(-1)[0].text),
+      (await msgs(ss)).slice(-1)[0].text
     );
     // Captions (B-77, D-122): in a session only her latest two lines show, and her core is at the session step (66%).
     // The stage steps down over its own transition: measure once its height has held still (under a loaded check run
@@ -4636,7 +4489,7 @@ async function tap(page, locator, name) {
       );
       ok(
         'the line names the session in its label and shows the minutes, then Break and End (B-88; no reading-along words, B-362)',
-        /Fluids and electrolytes/.test(pr.label) &&
+        /Study session/.test(pr.label) &&
           /^\d+ (?:min left|min\s*to (?:my )?next check)$/.test(await ss.textContent('#sbar .s-clock')) &&
           (await ss.locator('#sbar button').allTextContents()).join(',') === 'Break,End',
         await ss.textContent('#sbar')
@@ -4653,33 +4506,35 @@ async function tap(page, locator, name) {
         JSON.stringify(rv)
       );
     }
-    {
-      // B-74 (D-131): reader 0.3 names the note (course › first heading); the next read puts its title on the line.
-      await ss.evaluate(() => {
-        window.__readerNote.note.title = 'NUR 112 › Fluids and electrolytes';
-      });
-      await jump(31e3, async () => false);
-      const reading = await ss.evaluate(() => {
-        const r = document.getElementById('sread');
-        return !!r && !r.hidden && r.getClientRects().length > 0;
-      });
-      ok('in a session, against reader 0.3: still no Reading line on the page (B-362)', !reading);
-    }
     ok(
       'chip hidden while a session runs',
       (await ss.locator('#qchips .qchip', { hasText: 'Start a study session' }).count()) === 0
     );
     await ss.screenshot({ path: `${shots}/session-bar.png` });
-    // The same line at 1280, at the right of the pane header, on the other views; on hers it gives way to the right
-    // panel's session card from 1200 px (B-290), so the check reads it on Today.
+    // B-408 (D-325): at 1280 the phone's session shows in the strip on every view (as a Notes session does), never as
+    // the header's line: the minutes to her next check, what it is on, Break and End.
     await ss.setViewportSize({ width: 1280, height: 860 });
     await ss.click('#tab-today');
-    await ss.waitForTimeout(500);
+    await ss.waitForTimeout(800);
     {
-      const pd = await lineView();
+      const pd = await ss.evaluate(() => {
+        const sl = document.getElementById('ev-sslot'),
+          q = c => ((sl && sl.querySelector(c)) || {}).textContent || '';
+        return {
+          header: !document.getElementById('sbar').hidden,
+          shown: !!sl && sl.getBoundingClientRect().width > 0,
+          left: q('.s-left'),
+          name: q('.tn'),
+          btns: sl ? [...sl.querySelectorAll('button.btn')].map(b => b.textContent) : [],
+        };
+      });
       ok(
-        '[desktop] on another view the line stays one line, in the pane header at its right, just before New',
-        pd.h <= 34 && pd.inHeader && pd.right <= 24 && !pd.over,
+        '[desktop] the session is in the strip (n min to next check, Study session, Break, End); the header line stays hidden',
+        !pd.header &&
+          pd.shown &&
+          /^\d+ min to next check$/.test(pd.left) &&
+          pd.name === 'Study session' &&
+          pd.btns.join() === 'Break,End',
         JSON.stringify(pd)
       );
     }
@@ -4687,7 +4542,8 @@ async function tap(page, locator, name) {
     await ss.click('#tab-ev');
     await ss.setViewportSize({ width: 390, height: 844 });
     await ss.waitForTimeout(400);
-    // B-88: she reads along every 30 s; a line that earns it gets one short comment quoting it (the quote in memory only)
+    // B-408: the phone's session reads no note, so she never reads along here (a Notes session's read-along is the notes
+    // harness's); Quiz me now and the wrap-up are answered from the stub below.
     const WRAP = {
       summary: 'Worked through IV fluid tonicity and where water moves.',
       weakSpots: [
@@ -4721,65 +4577,7 @@ async function tap(page, locator, name) {
               }
             : w;
     }, WRAP);
-    const note2 = note1 + '\nHypotonic: 0.45% NaCl shifts water into the cells.\n';
-    await setNote(note2);
-    const beforeC = (await msgs(ss)).length;
-    await jump(
-      31e3,
-      hasEvent(e => e.type === 'check' && e.comment)
-    );
-    await ss.waitForTimeout(400);
-    S1 = await sess();
-    const cev = Object.values(S1.events).find(e => e.type === 'check' && e.comment);
-    const cp = await ss.evaluate(
-      () => (window.__jsonCalls || []).filter(c => /reading over his shoulder/.test(c.prompt)).slice(-1)[0]
-    );
-    ok(
-      'a read sends only the new lines to Claude on the quick tier, with the record context',
-      cp &&
-        /The new lines he just wrote:\nHypotonic: 0\.45% NaCl shifts water into the cells\./.test(cp.prompt) &&
-        /Testable objectives:/.test(cp.prompt) &&
-        cp.tier === 'quick',
-      cp && cp.prompt.slice(0, 300)
-    );
-    const cm = (await msgs(ss)).slice(-1)[0];
-    ok(
-      'her comment posts as one line with no card, and the session keeps a mark, not the text or the quote',
-      (await msgs(ss)).length === beforeC + 1 &&
-        cm.text === 'Good link: that is tonicity deciding where the water goes.' &&
-        !cm.cards &&
-        cev &&
-        cev.msgId === cm.id &&
-        cev.len === note2.length &&
-        !JSON.stringify(S1).includes('Hypotonic') &&
-        !JSON.stringify(await msgs(ss)).includes('shifts water into the cells'),
-      JSON.stringify({ cm, cev })
-    );
-    ok(
-      'the quote shows under her line on the page',
-      (await ss.textContent('#thread .msg.ev.current .cap-quote').catch(() => '')) ===
-        'on “Hypotonic: 0.45% NaCl shifts water into the cells.”'
-    );
-    await ss.screenshot({ path: `${shots}/session-comment.png` });
-    // A read with nothing worth a word stays silent: no message, no event
-    await ss.evaluate(() => {
-      window.__commentSay = { say: null, quote: null, kind: null };
-    });
-    await setNote(note2 + 'Hypertonic: 3% NaCl pulls water out of the cells.\n');
-    const beforeS = (await msgs(ss)).length;
-    const evN = Object.keys((await sess()).events).length;
-    await jump(
-      80e3,
-      async () =>
-        (await ss.evaluate(
-          () => (window.__jsonCalls || []).filter(c => /reading over his shoulder/.test(c.prompt)).length
-        )) >= 2
-    );
-    ok(
-      'a read with nothing worth saying stays silent',
-      (await msgs(ss)).length === beforeS && Object.keys((await sess()).events).length === evN
-    );
-    // Quiz me now: 1 to 3 questions on what he wrote since the session started, as a check card
+    // Quiz me now: 1 to 3 questions on his objectives and weak spots, as a check card
     await ss.locator('#qchips .qchip', { hasText: 'Quiz me now' }).click();
     for (let i = 0; i < 50 && !(await hasEvent(e => e.type === 'check' && e.items)()); i++)
       await ss.waitForTimeout(100);
@@ -4789,21 +4587,15 @@ async function tap(page, locator, name) {
     const jp = await ss.evaluate(
       () => (window.__jsonCalls || []).filter(c => /Study session check/.test(c.prompt)).slice(-1)[0]
     );
+    ok('Quiz me now calls no local reader', (await hostCalls()) === 0);
     ok(
-      'Quiz me now reads the note through the reader',
-      await ss.evaluate(h => window.__mcpCalls.some(c => c[0] === h && c[1] === 'latest_note'), host)
-    );
-    ok(
-      'the quiz prompt carries his writing since the start and the record context',
-      jp &&
-        /New text since the last check:\n\nHypotonic: 0\.45% NaCl[\s\S]*Hypertonic: 3% NaCl/.test(jp.prompt) &&
-        /Testable objectives:/.test(jp.prompt) &&
-        jp.tier === 'quick',
+      'the quiz prompt carries the record context on the quick tier',
+      jp && /Testable objectives:/.test(jp.prompt) && jp.tier === 'quick',
       jp && jp.prompt.slice(0, 400)
     );
     ok(
-      'the quiz keeps a mark, not the text',
-      chk && chk.n === 1 && chk.items === 2 && chk.len > note1.length && !JSON.stringify(S1).includes('Hypotonic'),
+      'the quiz keeps a check event on no note',
+      chk && chk.n === 1 && chk.items === 2 && chk.noteId === '',
       JSON.stringify(chk)
     );
     const lastChk = (await msgs(ss)).slice(-1)[0];
@@ -4817,7 +4609,7 @@ async function tap(page, locator, name) {
     );
     ok(
       'check card rendered',
-      /Two questions on what you just wrote/.test((await msgs(ss)).slice(-1)[0].text) &&
+      /Two questions on your objectives and weak spots/.test((await msgs(ss)).slice(-1)[0].text) &&
         /Check 1 · 2 questions/.test(await ss.locator('#p-ev').textContent()) &&
         (await ss.locator('#ev-surf').locator('ol.check-items li').count()) === 2
     );
@@ -4849,7 +4641,7 @@ async function tap(page, locator, name) {
     );
     ok(
       'chat sees the session and the check questions',
-      /Study session running on his note "Fluids and electrolytes"/.test(cc.input[0].content) &&
+      /Study session running on his objectives and weak spots/.test(cc.input[0].content) &&
         cc.input.some(t => /Why does 0\.45% NaCl move water into the cells\?/.test(t.content)) &&
         cc.tools.includes('study_session')
     );
@@ -4933,20 +4725,6 @@ async function tap(page, locator, name) {
       /(?:min left|min\s*to (?:my )?next check)/.test(await ss.textContent('#sbar')) &&
         !/On a break|min break/.test(await ss.textContent('#sbar')),
       await ss.textContent('#sbar')
-    );
-    // D-324: new writing that names a room is never skipped as an identifier
-    await setNote(
-      note1 +
-        '\nHypotonic: 0.45% NaCl shifts water into the cells.\nHypertonic: 3% NaCl pulls water out of the cells.\nThe resident in room 12 had edema.\n'
-    );
-    const before3 = (await msgs(ss)).length;
-    await jump(80e3, async () => false);
-    S1 = await sess();
-    ok(
-      'D-324: new writing with a room number is not skipped as an identifier, and nothing is said about it',
-      !Object.values(S1.events).some(e => e.type === 'skip' && e.why === 'identifiers') &&
-        !(await msgs(ss)).slice(before3).some(m => /room number|identifier/.test(m.text)),
-      JSON.stringify(Object.values(S1.events).map(e => e.type))
     );
     // End: wrap-up as JSON, filed with the same rules as evening filing; near-repeat waits on a tap
     await ss.locator('#sbar button', { hasText: 'End' }).click();
@@ -5039,7 +4817,7 @@ async function tap(page, locator, name) {
         await ss.waitForTimeout(150);
         const t = await ss.textContent('#rec-list'); // B-302: the log
         await ss.click('#tab-ev');
-        return /Fluids and electrolytes/.test(t);
+        return /Study session/.test(t);
       })()
     );
     ok(
@@ -5101,7 +4879,7 @@ async function tap(page, locator, name) {
       await rp.close();
     }
     // B-87: a page opened mid-session (a reload, a reopened tab, a live publish) past a due checkpoint takes the session
-    // over as soon as its reader answers, instead of sitting at 0:00 for two minutes.
+    // over at once, instead of sitting at 0:00 for two minutes. B-408: the phone's session, on no note.
     {
       const tk = await browser.newPage({ viewport: { width: 390, height: 844 } });
       const tErr = [];
@@ -5117,17 +4895,6 @@ async function tap(page, locator, name) {
             .replace(/[-:]/g, '')
             .replace('T', '-')
             .replace(/\.\d+Z$/, '');
-        window.__readerNote = {
-          found: true,
-          appVersion: '0.4',
-          note: {
-            id: 'x-coredata://n9',
-            name: 'Reload test',
-            folder: 'NUR 112',
-            modifiedAt: t0,
-            text: 'Line one\nLine two\n',
-          },
-        };
         const db = await window.claude.use('db');
         await db
           .collection('sessions')
@@ -5140,17 +4907,17 @@ async function tap(page, locator, name) {
             status: 'active',
             date: t0.slice(0, 10),
             startedAt: t0,
-            topic: 'Reload test',
-            noteId: 'x-coredata://n9',
+            topic: 'Study session',
+            noteId: '',
             driver: { view: 'gone', at: t0 },
-            events: { [k]: { type: 'start', at: t0, len: 5, h: 'zz', noteId: 'x-coredata://n9' } },
+            events: { [k]: { type: 'start', at: t0 } },
           });
       });
       const t0 = Date.now();
       let d = null;
       for (let i = 0; i < 80; i++) {
         d = await tk.evaluate(() => window.__db.sessions['ss-reload']);
-        if (d.driver.view !== 'gone' && Object.values(d.events).some(e => e.type === 'check' || e.type === 'idle'))
+        if (d.driver.view !== 'gone' && Object.values(d.events).some(e => e.type === 'skip' && e.why === 'no-note'))
           break;
         await tk.waitForTimeout(100);
       }
@@ -5158,11 +4925,11 @@ async function tap(page, locator, name) {
         'B-87: a page opened mid-session past a due checkpoint claims the session and runs the checkpoint within seconds',
         d &&
           d.driver.view !== 'gone' &&
-          Object.values(d.events).some(e => e.type === 'check' && e.quiet) &&
+          Object.values(d.events).some(e => e.type === 'skip' && e.why === 'no-note') && // B-314: a checkpoint on no note
           Date.now() - t0 < 8000,
         JSON.stringify({
           driver: d && d.driver,
-          events: d && Object.values(d.events).map(e => e.type + (e.quiet ? ':quiet' : '')),
+          events: d && Object.values(d.events).map(e => e.type + (e.why ? ':' + e.why : '')),
           ms: Date.now() - t0,
         })
       );

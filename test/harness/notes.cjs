@@ -981,6 +981,61 @@ const openNoteId = page =>
     ok(`${tag} the strip names the note by its title as he writes`, named.name === 'Potassium', named.name);
     await page.screenshot({ path: path.join(shots, 'notes-session-strip-1280.png') });
 
+    // B-88, kept by B-408 from the retired Conversation session: she reads along (every readSeconds; a tab coming back
+    // reads at once) and a complete new line that earns it gets one short comment in the session's chat; the session
+    // keeps a mark, never his words or her quote
+    await page.evaluate(() => {
+      window.__jsonCalls = [];
+      window.__sampleFn = p =>
+        /reading over his shoulder/.test(JSON.stringify(p))
+          ? {
+              say: 'Good link: insulin moves potassium into the cells.',
+              quote: 'Insulin with glucose shifts potassium into the cells.',
+              kind: 'connection',
+            }
+          : {};
+    });
+    const readNow = () => page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    await readNow();
+    await page.waitForTimeout(1600); // the first read takes what is written as read
+    await page.click('#note-body');
+    await page.keyboard.press('Control+End');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('Insulin with glucose shifts potassium into the cells.');
+    await page.keyboard.press('Enter');
+    await settle(page);
+    await readNow();
+    const said = await until(
+      page,
+      th =>
+        Object.values(window.__db.talk || {}).some(d =>
+          Object.values(d.messages || {}).some(m => m.thread === th && /insulin moves potassium/.test(m.text))
+        ),
+      'th-' + sa.id,
+      6000
+    );
+    const rd = await page.evaluate(i => {
+      const c = (window.__jsonCalls || [])
+        .filter(x => /reading over his shoulder/.test(JSON.stringify(x.prompt)))
+        .pop();
+      return {
+        prompt: c ? String(c.prompt) : '',
+        tier: c && c.tier,
+        doc: JSON.stringify(window.__db.sessions[i] || {}),
+      };
+    }, sa.id);
+    const ce = Object.values((await sess(sa.id)).events || {}).find(e => e.type === 'check' && e.comment);
+    ok(
+      `${tag} she reads along: a new line goes to Claude on the quick tier, her comment lands in the session's chat, and the session keeps a mark only`,
+      said &&
+        /Insulin with glucose shifts potassium into the cells\./.test(rd.prompt) &&
+        rd.tier === 'quick' &&
+        !!ce &&
+        ce.len > 0 &&
+        !/Insulin with glucose|insulin moves potassium/.test(rd.doc),
+      JSON.stringify({ said, tier: rd.tier, ce, prompt: rd.prompt.slice(0, 200) })
+    );
+
     // a check reads the open note through sample, never the Study Watch reader; it lands in the session's chat
     await page.evaluate(() => {
       window.__mcpCalls = [];
