@@ -990,7 +990,7 @@
             'session_expired',
           ].includes(code)
         )
-          T.retry.set(id, { text, tier, replyTo: o.replyTo });
+          T.retry.set(id, { text, tier, replyTo: o.replyTo, thread: o.thread, view: o.view });
       } finally {
         T.busy = false;
         T.ctl = null;

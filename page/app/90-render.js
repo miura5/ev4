@@ -518,7 +518,15 @@
       await chat(text, { replyTo: mid, fromMatt: true, thread: th, view: viewName() });
     }
     function popMsgEl(m, last) {
-      const sig = JSON.stringify([m.text, !!m.pending, m.error, (m.cards || []).length, last, T.busy]);
+      const sig = JSON.stringify([
+        m.text,
+        !!m.pending,
+        m.error,
+        (m.cards || []).length,
+        last,
+        T.busy,
+        T.retry.has(m.id),
+      ]);
       const rec = POP.els.get(m.id);
       if (rec && rec.sig === sig) return rec.el;
       let node;
@@ -537,6 +545,27 @@
         if (gos.length && last) {
           const r = el('div', 'mch');
           r.append(...gos.map(c => btn(c.label, () => goTo(c), { cls: 'btn neutral sm' })));
+          node.append(r);
+        }
+        // B-405 review: a pop-up reply that failed on a transient error keeps a Try again, answered in its own thread
+        const ask = last && !m.pending && !T.busy ? T.retry.get(m.id) : null;
+        if (ask) {
+          const r = el('div', 'mch');
+          r.append(
+            btn(
+              'Try again',
+              () => {
+                T.retry.delete(m.id);
+                chat(ask.text, {
+                  tier: ask.tier,
+                  replyTo: ask.replyTo,
+                  thread: ask.thread,
+                  view: ask.view || viewName(),
+                });
+              },
+              { cls: 'btn neutral sm' }
+            )
+          );
           node.append(r);
         }
         if (m.pending && T.ctl) node.append(btn('Stop', () => T.ctl && T.ctl.abort(), { cls: 'btn ghost sm' }));
