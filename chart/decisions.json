@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-340",
+  "date": "Oct 26",
+  "title": "Triage goes live with the Notes release; Matt's look at To review is part of his OK",
+  "why": "B-232's done bar said live only with B-238 (Matt's look at triage). Since D-334 built triage with Notes, the Notes release card shows To review (accept, join, not now, decline) and his OK for that release is his look. B-238 is closed by that OK; its other parts (B-234 capture routing beyond sessions, B-235 to B-237) stay open after Notes.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-339",
   "date": "Oct 26",
   "title": "Notes: E.V. reads along by default, with hard limits on the server",
