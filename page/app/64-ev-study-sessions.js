@@ -1293,6 +1293,7 @@
             SS.busy = false;
             const [t, c] = await endSession('time');
             await evSay(t, c, { tier: 'local', ...thOf(s) });
+            sessPing(s, false); // her saved line waits as the chat's chip
             return;
           }
           await sessEvent(s, 'resume');
@@ -1365,6 +1366,7 @@
             barPress(end, async () => {
               const [t, c] = await endSession('ended');
               await evSay(t, c, { tier: 'local', ...thOf(s) });
+              sessPing(s, false); // her saved line waits as the chat's chip
             })
           );
           end.className = 'btn ghost sm s-end';

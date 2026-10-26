@@ -752,6 +752,53 @@ async function main() {
         steps.join(' | ')
       );
 
+      // 6b. B-406 (D-325): at 1280 a new note starts a 25-minute session naming notes/<id> in D1, its controls in the
+      // strip; End there saves it.
+      if (scheme === '1280') {
+        await idle();
+        const docs = () =>
+          fetch(origin + '/api/db?since=0', { headers: { authorization: 'Bearer ' + TOKEN } })
+            .then(r => r.json())
+            .then(b => b.docs);
+        const nsteps = [];
+        const notesBefore = new Set((await docs()).filter(d => d.c === 'notes').map(d => d.id));
+        await page.click('#tab-notes');
+        await page.click('#notes-new');
+        const strip = await until(
+          page,
+          () => /\d+:\d\d left/.test((document.querySelector('#ev-sslot .s-left') || {}).textContent || ''),
+          null,
+          8000
+        );
+        if (!strip) nsteps.push('no session in the strip');
+        await page.click('#note-body');
+        await page.keyboard.type('# Smoke note');
+        await page.waitForTimeout(1500);
+        let all = await docs();
+        const note = all.find(d => d.c === 'notes' && !notesBefore.has(d.id));
+        const ses = note && all.find(d => d.c === 'sessions' && d.data.note === 'notes/' + note.id);
+        if (!note) nsteps.push('the new note is not in D1');
+        else if (!ses || ses.data.status !== 'active' || ses.data.planned !== 25)
+          nsteps.push('no active 25-minute session naming notes/' + note.id + ' in D1');
+        if (ses) {
+          await page.click('#ev-sslot .s-end');
+          let ended = null;
+          for (let i = 0; i < 20 && !ended; i++) {
+            await page.waitForTimeout(400);
+            all = await docs();
+            ended = all.find(d => d.c === 'sessions' && d.id === ses.id && d.data.status === 'ended' && d.data.filedAt);
+          }
+          if (!ended) nsteps.push('End in the strip did not save the session to D1');
+        }
+        await page.screenshot({ path: path.join(shots, `notes-session-${scheme}.png`) });
+        ok(
+          `${tag} a new note starts a 25-minute session naming notes/<id> in D1; End in the strip saves it`,
+          nsteps.length === 0,
+          nsteps.join(' | ')
+        );
+        await page.click('#tab-ev');
+      }
+
       // 7. B-322: a photographed page attached in the conversation goes to Claude as an image through /api/claude,
       // and its reading is saved to the library in D1 (the stub transcribes it).
       await idle();
