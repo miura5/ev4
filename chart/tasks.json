@@ -7331,7 +7331,7 @@
    "B-400",
    "B-401"
   ],
-  "notes": "ready for staging at dc68e0d: frame harness 111/111 (incl. Notes), smoke 28/28, npm test green, captions 199, prep 250, core 142, greet 74, look 109 at the 4 sizes; 390 shots match v4.5.6 (only the check-in clock differs). Shell RED from B-402's Notes tab at phone width (tab-notes 0x0), not this diff. Review of the talk write path NOT run: this builder had no subagent tool; build manager to run it.",
+  "notes": "Review: first found no Try again in the pop-up and the double tap; fixed at 8da719f. Second review: Try again answers in its thread, nothing leaks into the Conversation, the double tap is harmless. Open for the release card: after a reload a failed pop-up line still says Tap Try again with no button (the B-265 fallback is not in popMsgEl). Check loosened: captions no-Close check skips #evchat (D-327). Size +975 -17 and +31 -2.",
   "commit": null,
   "source": "build manager, B-396 plan",
   "words": "Build L-frame, E.V. strip and floating pop-up on every desktop view (B-396, D-325).",
