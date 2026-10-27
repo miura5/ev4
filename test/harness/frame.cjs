@@ -582,6 +582,14 @@ const SIZES = [
     await page.waitForTimeout(200);
     const fs = await page.evaluate(() => parseFloat(getComputedStyle(document.getElementById('ev-input')).fontSize));
     ok('[390 keyboard] the message box is 16 px or more, so Safari does not zoom on focus', fs >= 16, String(fs));
+    const others = await page.evaluate(() =>
+      ['#new-title', '#new-text'].map(s => parseFloat(getComputedStyle(document.querySelector(s)).fontSize))
+    );
+    ok(
+      "[390 keyboard] the New dialog's title and note fields are 16 px or more too",
+      others.every(n => n >= 16),
+      String(others)
+    );
     const KB = 844 - 336;
     await page.focus('#ev-input');
     await page.evaluate(h => window.__kb(h), KB);

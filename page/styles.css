@@ -2232,3 +2232,7 @@ body[data-view=notes] .mh .n-sync:not([hidden])~.new-wrap{margin-left:12px}
   .side{top:calc(var(--app-h,100dvh) - 60px - env(safe-area-inset-bottom,0px));bottom:auto}
   body{--fh:var(--app-h,100dvh)}
 }
+/* B-432 (review): the fields whose own rules outrank the phone's 16 px floor: the New note text and Record's kind select */
+@media (max-width:599px){
+  #new-dlg .new-body #new-text,#p-record .rec-detail select.idea-kind{font-size:max(16px,calc(14.5px * var(--ts)))}
+}

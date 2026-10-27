@@ -160,6 +160,10 @@
       };
       appHeight();
       addEventListener('resize', appHeight);
+      // a tab switch can leave the document scrolled where iOS's shortened viewport lets it; E.V.'s frame sits at 0
+      new MutationObserver(() => {
+        if (document.body.classList.contains('on-ev') && scrollY) window.scrollTo(0, 0);
+      }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
       addEventListener('orientationchange', () => setTimeout(appHeight, 300));
     }
     // B-432: with the phone's keyboard up, E.V.'s frame is the visible viewport and the tab bar steps aside (styles.css)
@@ -180,7 +184,7 @@
     // B-85: a placeholder that fits one line in a narrow pane.
     // B-340 (D-312): the demo's placeholder at every width; "note: …" saves a note (B-290).
     const PH_LONG = 'Ask E.V., or “note: …” to log something',
-      PH_SHORT = PH_LONG;
+      PH_SHORT = 'Ask E.V., or “note: …”'; // B-432: at 16 px the long line no longer fits the phone's field
     const placeholder = () => (innerWidth < 600 ? PH_SHORT : PH_LONG);
     const fitPlaceholder = () => {
       const i = $('ev-input');
