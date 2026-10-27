@@ -204,7 +204,9 @@ function triggerFields(t) {
     // computer" on, yet showed no bound_device); attached folders exist only on a task that requires the computer.
     macBound: Boolean(t.bound_device_uuid || t.bound_device || ds.folders_state === 'FOLDERS_STATE_PRESENT'),
     folders: ds.folders || [],
-    push: Boolean(t.notifications && t.notifications.channel && t.notifications.channel.push),
+    // null when the task carries no notification setting: the server's default (push on) applies at fire time
+    // (a channel object without push is an explicit choice that leaves push off)
+    push: t.notifications ? Boolean(t.notifications.channel && t.notifications.channel.push) : null,
   };
 }
 
@@ -408,7 +410,9 @@ export function verify({ manifest, target, state, build, dist, sha256, now = new
       if (f.macBound !== t.macBound) diffs.push(t.macBound ? 'not bound to the Mac' : 'bound to a device');
       if (t.macBound && !same(f.folders.slice().sort(), t.folders.slice().sort()))
         diffs.push(`folders ${JSON.stringify(f.folders)}, expected ${JSON.stringify(t.folders)}`);
-      if (f.push !== t.push) diffs.push(`push ${f.push}, expected ${t.push}`);
+      // unset is the server default, push on: it matches a task that should push, never one that should stay quiet
+      if (f.push === null ? !t.push : f.push !== t.push)
+        diffs.push(`push ${f.push === null ? 'unset (default on)' : f.push}, expected ${t.push}`);
       add(diffs.length === 0, `task ${key}`, diffs.join('; ') || t.trigger);
     }
 

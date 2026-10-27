@@ -225,6 +225,50 @@ test('verify reports each kind of drift: missing task, schedule, binding, push, 
   assert.equal(result.green, false);
 });
 
+test('verify reads a task with no notification setting as the server default, push on', async () => {
+  const { dist, state, manifest } = await deployedStaging();
+  const read = p => JSON.parse(fs.readFileSync(p, 'utf8'));
+  const triggers = [
+    ...read(path.join(state, 'triggers-1.json')).data,
+    ...read(path.join(state, 'triggers-2.json')).data,
+  ];
+  const byKey = k => triggers.find(t => t.id === manifest.tasks[k].trigger);
+  delete byKey('staging.worker').notifications; // expected quiet: unset (default on) is drift
+  delete byKey('staging.weekly').notifications; // expected to push: unset matches
+  byKey('staging.morning').notifications = { channel: { email: true } }; // explicit, push left off
+  byKey('staging.evening-cloud').notifications = {}; // an opt-out of every channel: push off, not the default
+  const m = JSON.parse(JSON.stringify(manifest));
+  m.tasks['staging.weekly'].push = true;
+  m.tasks['staging.morning'].push = true;
+  m.tasks['staging.evening-cloud'].push = true;
+  const result = verify({
+    manifest: m,
+    target: 'staging',
+    build: { pushed: true },
+    dist: {
+      spec: read(path.join(dist, 'system/spec.json')),
+      environments: read(path.join(dist, 'system/environments.json')),
+    },
+    sha256,
+    state: {
+      triggers,
+      record: {
+        manifest: read(path.join(state, 'record/system/manifest.json')),
+        spec: read(path.join(state, 'record/system/spec.json')),
+        environments: read(path.join(state, 'record/system/environments.json')),
+      },
+      pageHtml: `<meta name="ev-release" content="${m.release}">`,
+      pageFiles: null,
+    },
+  });
+  const line = what => result.lines.find(l => l.what === what);
+  assert.equal(line('task staging.weekly').ok, true);
+  assert.equal(line('task staging.worker').ok, false);
+  assert.match(line('task staging.worker').detail, /push unset \(default on\), expected false/);
+  assert.match(line('task staging.morning').detail, /push false, expected true/);
+  assert.match(line('task staging.evening-cloud').detail, /push false, expected true/);
+});
+
 test('deploy prints the system batch with expected versions, refuses dirty, unpushed and live without OK', async () => {
   const { dir, dist } = await deployedStaging();
   const r = cli(dir, 'deploy', 'staging', '--version', 'manifest=7', '--version', 'spec=3');
