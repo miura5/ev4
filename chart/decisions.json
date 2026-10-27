@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-347",
+  "date": "Oct 26",
+  "title": "The plan after Notes moves by milestone: stability window with fixes, then the in-depth review, consolidation, final review, Matt's course",
+  "why": "Matt's call, Oct 26 (updates D-337): two weeks of stable use start at the switch; fixes run inside it; the architecture review starts when the fixes milestone is met and stays read-only; consolidation (with the D-345 trash) follows both; features resume after it; the final review settles what runs after his Max plan ends Nov 23; then his hands-on engineering course and a last sprint.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-346",
   "date": "Oct 26",
   "title": "The live app token may be a password manager's 20-character mixed password",
