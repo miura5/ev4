@@ -504,3 +504,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-281 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; folded into B-297 to B-300 (Study), B-301 (Progress) and B-302 (Record). |
 | B-282 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; replaced by B-303. |
 | B-321 | task |  |  | plan 1eW5FgG9VNzhCySbL1uWuo | declined | Waiting on Matt to scope it: its definition of done is written with him when he does (hand-off 3). |
+| B-432 | bug | 2026-10-27T19:44:54.815Z | On the iPhone, tapping the E.V. message box zooms the page (the send button and the Record tab are cut off at the right) and the keyboard pushes the composer up with the tab bar left floating above the keyboard and an empty gap between them. | Matt, chat, Oct 27 (screenshot) | inbox |  |
