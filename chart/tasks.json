@@ -7766,7 +7766,7 @@
   "milestone": "After Notes",
   "status": "done",
   "depends": [],
-  "notes": "Staging GREEN at 94c0035. The live drill firing that reads back passed comes after the next live release (the build manager fires it then).",
+  "notes": "Live proof: the restore drill on v4.5.11 passed (703 documents) and its detail names its source, from the Mac backup.",
   "commit": "94c0035",
   "source": "build chat, Oct 26 cutover",
   "words": "The live restore drill fails when the Mac backup folder has no backup yet instead of using the newest nightly export, as its prompt says it does.",
