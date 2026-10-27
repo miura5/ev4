@@ -151,6 +151,16 @@
         if (innerWidth < 600 && document.body.classList.contains('on-ev') && scrollY) window.scrollTo(0, 0);
       }, 250)
     );
+    // B-433: in the installed app the frame is the screen's height (styles.css), whatever height iOS gives the viewport
+    if (matchMedia('(display-mode: standalone)').matches || navigator.standalone === true) {
+      const appHeight = () => {
+        const tall = innerHeight >= innerWidth ? Math.max(screen.height, screen.width) : Math.min(screen.height, screen.width);
+        document.documentElement.style.setProperty('--app-h', Math.max(innerHeight, tall) + 'px');
+      };
+      appHeight();
+      addEventListener('resize', appHeight);
+      addEventListener('orientationchange', () => setTimeout(appHeight, 300));
+    }
     // B-432: with the phone's keyboard up, E.V.'s frame is the visible viewport and the tab bar steps aside (styles.css)
     const vv = window.visualViewport;
     if (vv) {

@@ -7946,5 +7946,26 @@
    "outcome": "task",
    "at": "2026-10-27T19:45:00.837Z"
   }
+ },
+ {
+  "id": "B-433",
+  "kind": "bug",
+  "title": "Bug (reported Oct 27): In the installed iPhone app on v4.5.12, the tab bar floats a status-bar height above the bottom after launch on the E.V. tab, and the Record tab shows the page zoomed out because a long workout result line does not wrap.",
+  "dod": "On the phone a Record row's long result wraps and the document is never wider than the screen; in the installed app the tab bar is placed by the screen's height; frame.cjs section 9 green; npm test and smoke green; Matt confirms on his iPhone after live.",
+  "milestone": "After Notes",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt, chat, Oct 27 (screenshots)",
+  "words": "In the installed iPhone app on v4.5.12, the tab bar floats a status-bar height above the bottom after launch on the E.V. tab, and the Record tab shows the page zoomed out because a long workout result line does not wrap.",
+  "reportedAt": "2026-10-27T20:05:53.042Z",
+  "board": {
+   "row": "v4 B-433: In the installed iPhone app on v4.5.12, the tab bar floats a…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-27T20:05:53.266Z"
+  }
  }
 ]

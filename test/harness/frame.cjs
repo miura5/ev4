@@ -626,6 +626,39 @@ const SIZES = [
     ok('[390 keyboard] no page errors', errors.length === 0, errors.slice(0, 3).join(' | '));
     await ctx.close();
   }
+
+  // 9. B-433: on the phone nothing widens the document (a Record row's long result wraps; iOS shrinks a wider page to
+  // fit), and with the installed app's screen height (--app-h) the tab bar sits on the screen's bottom edge.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+    const { page, errors } = await open(ctx, seed);
+    await page.click('#tab-record');
+    await page.waitForTimeout(300);
+    const wide = await page.evaluate(() => {
+      const r = document.querySelector('.rec-li .r');
+      if (!r) return { row: false };
+      r.textContent =
+        'stopped in round 4 after 6:53 (90 reps) · energy 5/5 · ' + '“' + 'a long quoted line '.repeat(12) + '”';
+      return {
+        row: true,
+        doc: document.documentElement.scrollWidth,
+        right: Math.round(r.getBoundingClientRect().right),
+      };
+    });
+    ok(
+      '[390] Record: a row with a long result wraps inside the screen, and the document is no wider than the screen',
+      wide.row && wide.doc <= 390 && wide.right <= 390,
+      JSON.stringify(wide)
+    );
+    await page.screenshot({ path: `${shots}/frame-record-long-390.png` });
+    await page.click('#tab-ev');
+    await page.evaluate(() => document.documentElement.style.setProperty('--app-h', '844px'));
+    await page.waitForTimeout(200);
+    const bar = await page.evaluate(() => Math.round(document.querySelector('.side').getBoundingClientRect().bottom));
+    ok('[390 app] with the screen height set, the tab bar ends on the screen bottom', bar === 844, String(bar));
+    ok('[390] no page errors (B-433)', errors.length === 0, errors.slice(0, 3).join(' | '));
+    await ctx.close();
+  }
   await browser.close();
   for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : '');
   const failed = results.filter(r => r[0] === 'FAIL').length;

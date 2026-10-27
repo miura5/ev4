@@ -2217,3 +2217,18 @@ body[data-view=notes] .mh .n-sync:not([hidden])~.new-wrap{margin-left:12px}
   html:has(>body.on-ev.kb){height:var(--vvh,100%)}
   body.on-ev.kb{height:var(--vvh,100%)}
 }
+/* B-433: on the phone nothing may widen the document: a row's long result (a workout's quoted words) wraps, and the
+   page clips any stray overflow, because iOS shrinks a wider page to fit and the whole view reads zoomed out. */
+@media (max-width:599px){
+  .rec-li .r{white-space:normal;overflow-wrap:anywhere;min-width:0;max-width:100%}
+  body{overflow-x:clip}
+}
+/* B-433: the installed iPhone app. A moment after launch iOS shortens the app's viewport by the status bar when the
+   document cannot scroll, and the tab bar, fixed to that viewport's bottom, floats a band above the screen's. In the
+   installed app (--app-h, set from the screen's height by the composer part) the frame and the tab bar are placed by
+   the screen's height instead. */
+@media (max-width:599px){
+  html:has(>body.on-ev){height:var(--app-h,100%)}
+  .side{top:calc(var(--app-h,100dvh) - 60px - env(safe-area-inset-bottom,0px));bottom:auto}
+  body{--fh:var(--app-h,100dvh)}
+}
