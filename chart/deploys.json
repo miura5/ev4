@@ -5356,5 +5356,28 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "94c0035",
+  "time": "2026-10-27T06:02:26.913Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "b355507",
+  "tasks": [
+   "B-319",
+   "B-426",
+   "B-420",
+   "B-421",
+   "B-424",
+   "B-419",
+   "B-425",
+   "B-427"
+  ],
+  "summary": "The one-time copy of the live record into a new live D1. The export stays off the repository. Matt's OK in the chat.; deploy prints no call that sets a cloud task's notifications when…; Tidy the D-343 release-tag step: one tested script instead of three…; The nightly full check can fail the Notes harness's 12-second Undo…; The live restore drill fails when the Mac backup folder has no backup…; Tasks E.V. adds for later days are saved (dayedits per date) but the…; A docs-only commit moves the build commit, so ship live then demands…; A build after a release whose tag the git proxy kept local…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
