@@ -127,11 +127,9 @@ test('B-420: the release-tag step comes before every build in the app workflows,
       assert.match(steps[checkout], /fetch-depth: 0/, `${file} ${name}: the checkout brings the tags`);
       assert.match(steps[tags[0]], /RELEASE: \$\{\{ inputs\.release \}\}/);
       const ref = (steps[checkout].match(/ref: (\$\{\{[^}]*\}\})/) || [])[1];
-      assert.match(
-        steps[tags[0]],
-        new RegExp(`COMMIT: ${ref.replace(/[$|{}.]/g, '\\$&')}`),
-        'the commit it checked out'
-      );
+      // B-427: the commit it checked out, unless ship names the commit a +n build's base tag is at
+      const want = ref.replace('${{ ', '${{ inputs.release_at || ');
+      assert.match(steps[tags[0]], new RegExp(`COMMIT: ${want.replace(/[$|{}.]/g, '\\$&')}`), 'the tag commit');
     }
   }
   assert.equal(builds, 2, 'the staging job and the live job');
@@ -163,4 +161,32 @@ test("B-420: the hooks' live guard accepts ship's live dispatch with -f release=
     assert.equal(r.ok, false, JSON.stringify(bad));
     assert.match(r.refusals[0], /not 40 hex/);
   }
+});
+
+test('B-427: a +n build names its base tag and the commit that tag is at; an exact release only itself', async () => {
+  const { releaseArgs } = await import('../tools/pwa-app.mjs');
+  const at = 'b'.repeat(40);
+  assert.equal(releaseArgs('v4.5.10', at), ' -f release=v4.5.10');
+  assert.equal(releaseArgs('v4.5.10+24', at), ` -f release=v4.5.10 -f release_at=${at}`);
+  assert.equal(releaseArgs('v4.5.10+24', null), '', 'no tag commit: nothing, as before');
+  assert.equal(releaseArgs('v4.5.10+24', 'abc;rm -rf /'), '', 'a tag commit must be 40 hex');
+  for (const bad of ['v4.5.10+x', 'v4.05.1', 'v4.5.10\n', 'v4.5.10+24 -f x=y', '', null])
+    assert.equal(releaseArgs(bad, at), '', JSON.stringify(bad));
+});
+
+test("B-427: the live guard reads a +n dispatch's release_at as the tag's commit, not a second build commit", () => {
+  const sha = '0123456789abcdef0123456789abcdef01234567';
+  const at = 'a'.repeat(40);
+  const command = appCalls({ target: 'live', commit: sha, mattOk: true, release: 'v4.9.2+3', releaseAt: at }).calls[0]
+    .args.command;
+  assert.match(command, / -f commit=[0-9a-f]{40} -f release=v4\.9\.2 -f release_at=a{40}$/);
+  const input = { tool_name: 'Bash', tool_input: { command } };
+  const now = Date.now();
+  const liveOk = { at: now - 60e3, by: 'ship live --matt-ok', commit: sha };
+  assert.equal(H.liveGuard(input, { liveId: 'x', liveOk, now }), null, 'passes under the OK for the build commit');
+  assert.notEqual(
+    H.liveGuard(input, { liveId: 'x', liveOk: { ...liveOk, commit: at }, now }),
+    null,
+    'an OK for the tag commit is not an OK for the build'
+  );
 });

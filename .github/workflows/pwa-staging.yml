@@ -30,6 +30,10 @@ on:
         description: 'D-343: the release tag ship made for this commit, kept local by the git proxy (v4.x.y); made here too before the build'
         type: string
         default: ''
+      release_at:
+        description: 'B-427: for a build after a release (v4.x.y+n), the commit the release tag is at; the tag is made there'
+        required: false
+        type: string
       jobs:
         description: 'B-324: also run one real Haiku job of each kind and read it back from the staging D1'
         type: boolean
@@ -92,7 +96,7 @@ jobs:
       - name: the release tag ship names, at this commit
         env:
           RELEASE: ${{ inputs.release }}
-          COMMIT: ${{ inputs.commit || github.sha }}
+          COMMIT: ${{ inputs.release_at || inputs.commit || github.sha }}
         run: node tools/release-tag.mjs "$RELEASE" "$COMMIT"
       - run: npm ci
       - run: npm ci --prefix pwa

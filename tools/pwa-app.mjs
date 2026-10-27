@@ -117,7 +117,19 @@ export function appRead({ target, stateDir }) {
  * The call that deploys the app: a dispatch of the target's workflow at the build's commit. live only on Matt's OK
  * (R-04): without it, refused here as ship live refuses before any call; with it, nothing until live is ready.
  */
-export function appCalls({ target, commit, mattOk = false, release = null }) {
+/**
+ * The release arguments of a dispatch (D-343, B-427): an exact release (v4.x.y) is made at the build commit; a build
+ * after one (v4.x.y+n) names its base tag and the commit that tag is at (releaseAt), since a tag the git proxy kept
+ * local is missing on origin and the runner's own describe would name an older release. Anything else adds nothing.
+ */
+export function releaseArgs(release, releaseAt) {
+  const m = /^(v4\.(?:0|[1-9]\d{0,5})\.(?:0|[1-9]\d{0,5}))(\+\d{1,6})?$/.exec(String(release || ''));
+  if (!m) return '';
+  if (!m[2]) return ` -f release=${m[1]}`;
+  return COMMIT.test(String(releaseAt || '')) ? ` -f release=${m[1]} -f release_at=${releaseAt}` : '';
+}
+
+export function appCalls({ target, commit, mattOk = false, release = null, releaseAt = null }) {
   const app = APPS[target];
   if (target === 'live' && !mattOk)
     return { ok: false, refusals: ["R-04 (D-083): the live app deploys only on Matt's explicit OK (--matt-ok)"] };
@@ -136,7 +148,7 @@ export function appCalls({ target, commit, mattOk = false, release = null }) {
         tool: 'Bash',
         // D-343: a release tag made here but not pushed is named, so the runner makes it too and builds the same release
         args: {
-          command: `gh workflow run ${app.workflow} --repo ${REPO} --ref main -f commit=${commit}${release && RELEASE.test(release) ? ` -f release=${release}` : ''}`,
+          command: `gh workflow run ${app.workflow} --repo ${REPO} --ref main -f commit=${commit}${releaseArgs(release, releaseAt)}`,
         },
         then: `the read below waits for the run (or gh run list --repo ${REPO} --workflow ${app.workflow} --limit 1)`,
       },

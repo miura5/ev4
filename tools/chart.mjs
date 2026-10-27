@@ -1327,6 +1327,14 @@ async function ship(o) {
       commit: manifest.commit,
       mattOk: Boolean(o['matt-ok'] || shipJobOk),
       release: manifest.release,
+      // B-427: a +n build names the commit its base tag is at, so the runner can make that tag before it builds
+      releaseAt: (b => {
+        try {
+          return b ? git(root, ['rev-list', '-n', '1', b]).trim() : null;
+        } catch {
+          return null;
+        }
+      })((/^(v4\.\d+\.\d+)\+\d+$/.exec(String(manifest.release || '')) || [])[1]),
     });
     if (a.ok) deploy.calls = [...deploy.calls, ...a.calls];
     else refusals.push(...a.refusals);
