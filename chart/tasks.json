@@ -7904,5 +7904,22 @@
    "outcome": "task",
    "at": "2026-10-27T19:15:01.668Z"
   }
+ },
+ {
+  "id": "B-431",
+  "kind": "bug",
+  "title": "Bug (reported Oct 27): UI review of 74499d4 (80/100) fixes: at 390 the header's New button touches the top edge; at 390 the Back to now pill covers the Conversation title when the thread is scrolled up; at 1280 the read-along toggle's off state looks pressed; at 390 the Study exam card's date splits after the weekday; at 390 the plain page's tab bar runs 1 px past 844.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UI review 74499d4",
+  "words": "UI review of 74499d4 (80/100) fixes: at 390 the header's New button touches the top edge; at 390 the Back to now pill covers the Conversation title when the thread is scrolled up; at 1280 the read-along toggle's off state looks pressed; at 390 the Study exam card's date splits after the weekday; at 390 the plain page's tab bar runs 1 px past 844.",
+  "reportedAt": "2026-10-27T19:16:49.106Z",
+  "board": {
+   "row": "v4 B-431: UI review of 74499d4 (80/100) fixes: at 390 the header's New button…"
+  }
  }
 ]
