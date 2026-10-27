@@ -6,6 +6,18 @@ reads it right after CLAUDE.md. It holds no personal data: the repository is pub
 **Managing chat:** https://claude.ai/code/session_01CWeveciiiW2pUvFQtQJ3HK (still managing as of Oct 27, afternoon
 Central). One manager at a time.
 
+## Update (Oct 27, late evening)
+
+- Live is **v4.5.13 at 6bd6483** (B-432 keyboard, B-433 tab bar and Record), recorded GREEN. Matt has not yet reported
+  how it behaves on his iPhone.
+- **Batch at 02066e6 is GREEN on staging with a green nightly** (B-429, B-430, B-431, B-434, B-435; UI review 80/100,
+  code reviews No gaps after one fix round). Card sent; **live waits on Matt's word for 02066e6**. ship live will re-tag
+  it, so re-ship staging first; R-03 via D1 sessions.
+- B-435 (D-349): Claude ceilings are a D1 setting: `PUT /api/claude/limits {hour, day}` on the Worker with the run-API
+  client (core/runapi-client.mjs, scratchpad live|stg/system/worker.json). Matt chose 500k/hour, 1.5M/day and will raise
+  his Console spend limit. Matt wants batched releases, not tiny ones.
+- Next: B-436 (UI review fixes), B-421 (three of three green nightlies now: mark done), B-424 live drill check.
+
 ## Update (Oct 27, evening)
 
 - Live is **v4.5.12 at 74499d4** (B-418, B-428), recorded GREEN.
