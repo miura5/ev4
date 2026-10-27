@@ -58,7 +58,13 @@ export const BOOKKEEPING = [
   /^tools\/chart(\/|$)/,
   /^test\/chart\.test\.mjs$/,
 ];
-const bookkeeping = f => BOOKKEEPING.some(re => re.test(f));
+// B-425: paths no build, run, check or test reads (docs/: the hand-over, briefs, lessons and the trim maps, read only by
+// people and build chats; smoke.yml skips them and tools/check.mjs runs no harness for them). A commit that touches
+// only these, or these and the bookkeeping, keeps the build commit, so a docs edit never asks ship live (R-06) for a
+// new full check or a new OK on unchanged code. The personal-data test still scans them, as it scans chart/.
+export const INERT = [/^docs\//];
+export const INERT_PATHS = ['docs'];
+const bookkeeping = f => BOOKKEEPING.some(re => re.test(f)) || INERT.some(re => re.test(f));
 // The same list as pathspecs, for the log that finds the build's commit (one list, so the two never drift: B-149).
 export const BOOKKEEPING_PATHS = [
   'chart',
@@ -75,8 +81,9 @@ export const BOOKKEEPING_PATHS = [
  * commit is the newest that changed anything but the bookkeeping (M12): recording a task or a deploy in chart/ never
  * moves it, so verify-deploy stays green across it, and a bookkeeping change left uncommitted is not dirt.
  */
-/** The build commit of a revision: its newest commit that changed anything but the bookkeeping (gitState; B-320: the
- * live workflow's gate, ship live's R-06 and the live copy read it from here, so the three agree). */
+/** The build commit of a revision: its newest commit that changed anything but the bookkeeping or the inert paths
+ * (gitState; B-320: the live workflow's gate, ship live's R-06 and the live copy read it from here, so the three agree;
+ * B-425: a docs-only commit keeps it). */
 export function buildCommitOf(root, rev = 'HEAD') {
   return git(root, [
     'log',
@@ -85,7 +92,7 @@ export function buildCommitOf(root, rev = 'HEAD') {
     rev,
     '--',
     '.',
-    ...BOOKKEEPING_PATHS.map(p => `:(exclude)${p}`),
+    ...[...BOOKKEEPING_PATHS, ...INERT_PATHS].map(p => `:(exclude)${p}`),
   ]).trim();
 }
 

@@ -190,3 +190,63 @@ test('B-150: build refuses to write a system document past spec.capacity.system.
     /system\/spec is \d+ bytes \(\d+ KiB; warns at 39 KiB, fails at 49 KiB\): over the budget/
   );
 });
+
+test('B-425: a docs-only commit keeps the build commit; a code commit moves it; a commit mixing both moves it', async () => {
+  const { buildCommitOf, gitState } = await import('../tools/build.mjs');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-b425-'));
+  const g = (...a) => git(dir, '-c', 'user.email=t@t', '-c', 'user.name=t', ...a).trim();
+  g('init', '-q');
+  const commit = (files, msg) => {
+    for (const f of files) {
+      fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true });
+      fs.writeFileSync(path.join(dir, f), msg);
+    }
+    g('add', ...files);
+    g('commit', '-qm', msg);
+    return g('rev-parse', 'HEAD');
+  };
+  const code = commit(['core/a.mjs', 'docs/handover.md'], 'the build');
+  const docs = commit(['docs/review-brief.md'], 'a docs edit');
+  assert.equal(buildCommitOf(dir, docs), code, 'a docs-only commit keeps the build commit');
+  const both = commit(['docs/trim/scan/core.md', 'chart/deploys.json'], 'docs and the record');
+  assert.equal(buildCommitOf(dir, both), code, 'docs plus bookkeeping keeps it too');
+  assert.equal(gitState(dir).commit, code, 'gitState names the same build commit');
+  fs.writeFileSync(path.join(dir, 'docs/lessons.md'), 'an uncommitted docs edit');
+  assert.equal(gitState(dir).dirty, false, 'an uncommitted docs edit is not dirt');
+  const moved = commit(['core/a.mjs'], 'a code change');
+  assert.equal(buildCommitOf(dir, moved), moved, 'a code commit moves it');
+  const mixed = commit(['docs/handover.md', 'page/x.js'], 'docs and code together');
+  assert.equal(buildCommitOf(dir, mixed), mixed, 'a commit mixing docs and code moves it');
+  for (const f of ['docs.md', 'test/docs/x.json', 'core/docs.mjs']) {
+    const c = commit([f], `${f} is not under docs/`);
+    assert.equal(buildCommitOf(dir, c), c, f);
+  }
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('B-425: no build, run, check or test code reads a file under docs/ (so a docs commit can keep the build commit)', () => {
+  const read = /(readFileSync|readdirSync|existsSync|statSync|createReadStream)\([^)]*['"`]docs[/'"`]/;
+  const found = [];
+  const walk = d => {
+    const abs = path.join(ROOT, d);
+    if (!fs.existsSync(abs)) return;
+    for (const e of fs.readdirSync(abs, { withFileTypes: true })) {
+      const rel = path.join(d, e.name);
+      if (e.isDirectory()) {
+        if (e.name !== 'node_modules') walk(rel);
+      } else if (/\.(m?js|cjs)$/.test(e.name) && read.test(fs.readFileSync(path.join(ROOT, rel), 'utf8')))
+        found.push(rel);
+    }
+  };
+  for (const d of ['core', 'page', 'pwa', 'scripts', 'tools', 'test']) walk(d);
+  assert.deepEqual(found, []);
+  // The workflows name docs/ only to skip it (smoke.yml's paths-ignore) or in a message.
+  for (const f of fs.readdirSync(path.join(ROOT, '.github', 'workflows'))) {
+    const text = fs.readFileSync(path.join(ROOT, '.github', 'workflows', f), 'utf8');
+    const uses = text
+      .split('\n')
+      .filter(l => /(^|[\s'"(])docs\//.test(l))
+      .filter(l => !/^\s*#/.test(l) && !/^\s*- 'docs\/\*\*'\s*$/.test(l) && !/::warning/.test(l));
+    assert.deepEqual(uses, [], `${f} reads docs/`);
+  }
+});
