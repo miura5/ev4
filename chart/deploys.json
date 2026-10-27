@@ -5432,5 +5432,22 @@
   "decisions": [],
   "source": "log",
   "release": "v4.5.11"
+ },
+ {
+  "target": "staging",
+  "commit": "74499d4",
+  "time": "2026-10-27T18:50:19.045Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "94c0035",
+  "tasks": [
+   "B-428",
+   "B-418"
+  ],
+  "summary": "On the phone app, a swipe that starts on the message box or the…; A new note should not always start a study session, since many notes…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
