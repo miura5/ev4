@@ -5467,5 +5467,22 @@
   "decisions": [],
   "source": "log",
   "release": "v4.5.12"
+ },
+ {
+  "target": "staging",
+  "commit": "02c31c5",
+  "time": "2026-10-27T20:38:41.284Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "74499d4",
+  "tasks": [
+   "B-432",
+   "B-433"
+  ],
+  "summary": "On the iPhone, tapping the E.V. message box zooms the page (the send…; In the installed iPhone app on v4.5.12, the tab bar floats a…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
