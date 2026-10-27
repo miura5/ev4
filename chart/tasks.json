@@ -7774,5 +7774,22 @@
   "board": {
    "row": "v4 B-424: The live restore drill fails when the Mac backup folder has no backup…"
   }
+ },
+ {
+  "id": "B-425",
+  "kind": "bug",
+  "title": "Bug (reported Oct 26): A docs-only commit moves the build commit, so ship live then demands a new full check and a new OK for a build whose code did not change.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat, Oct 26 cutover",
+  "words": "A docs-only commit moves the build commit, so ship live then demands a new full check and a new OK for a build whose code did not change.",
+  "reportedAt": "2026-10-27T03:58:30.980Z",
+  "board": {
+   "row": "v4 B-425: A docs-only commit moves the build commit, so ship live then demands…"
+  }
  }
 ]
