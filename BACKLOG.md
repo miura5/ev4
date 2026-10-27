@@ -506,3 +506,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-281 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; folded into B-297 to B-300 (Study), B-301 (Progress) and B-302 (Record). |
 | B-282 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; replaced by B-303. |
 | B-321 | task |  |  | plan 1eW5FgG9VNzhCySbL1uWuo | declined | Waiting on Matt to scope it: its definition of done is written with him when he does (hand-off 3). |
+| B-434 | bug | 2026-10-27T20:49:47.764Z | After a release the Mac app showed the new page logic with the previous stylesheet (the Week view's day headers drew as pills) until a manual reload; the app should load the stylesheet and scripts of the release it runs. | Matt, chat, Oct 27 (fixed by a reload) | inbox |  |

@@ -7967,5 +7967,22 @@
    "outcome": "task",
    "at": "2026-10-27T20:05:53.266Z"
   }
+ },
+ {
+  "id": "B-434",
+  "kind": "bug",
+  "title": "Bug (reported Oct 27): After a release the Mac app showed the new page logic with the previous stylesheet (the Week view's day headers drew as pills) until a manual reload; the app should load the stylesheet and scripts of the release it runs.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt, chat, Oct 27 (fixed by a reload)",
+  "words": "After a release the Mac app showed the new page logic with the previous stylesheet (the Week view's day headers drew as pills) until a manual reload; the app should load the stylesheet and scripts of the release it runs.",
+  "reportedAt": "2026-10-27T20:49:47.764Z",
+  "board": {
+   "row": "v4 B-434: After a release the Mac app showed the new page logic with the…"
+  }
  }
 ]
