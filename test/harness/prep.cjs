@@ -1389,6 +1389,40 @@ async function tickAll(page) {
     plant('p295-b', 3, 'Care plan 2 draft', 'due', true);
     plant('p295-c', 5, 'Dosage calculation practice', 'other', false);
     plant('p295-lab', 4, 'Skills lab open practice', 'other', false);
+    // B-419: tasks E.V. and he added to today and to later days (dayedits/<date>.added), one of them ticked
+    db.dayedits = db.dayedits || {};
+    const task = (text, kind, minutes, by) => ({
+      text,
+      tag: kind === 'todo' ? null : kind.toUpperCase(),
+      kind,
+      minutes,
+      course: 'NUR 112',
+      at: env.at,
+      by,
+    });
+    const added = (n, items, checks = {}) => {
+      const date = addDays(today, n);
+      db.dayedits[date] = {
+        ...env,
+        ...(db.dayedits[date] || {}),
+        date,
+        added: { ...((db.dayedits[date] || {}).added || {}), ...items },
+        checks: { ...((db.dayedits[date] || {}).checks || {}), ...checks },
+        skipped: (db.dayedits[date] || {}).skipped || {},
+      };
+    };
+    added(0, { 'add-p419-email': task('Email the clinical instructors', 'todo', 10, 'E.V.') });
+    added(2, {
+      'add-p419-med-a': task('Med administration practice: oral meds', 'practice', 30, 'E.V.'),
+      'add-p419-med-b': task('Med administration practice: injections', 'practice', 30, 'E.V.'),
+    });
+    added(
+      3,
+      { 'add-p419-read': task('Read the insulin chapter', 'reading', 25, 'Matt') },
+      {
+        'add-p419-read': { at: env.at, by: 'Matt' },
+      }
+    );
     return db;
   };
   for (const viewport of [
@@ -1458,6 +1492,25 @@ async function tickAll(page) {
         JSON.stringify(r)
       );
       ok(`${tag} chip titles wrap between words only and never overflow (B-354)`, r.oneLine);
+      // B-419: every task added to a day is a card on that day, today's too; a ticked one reads Done
+      const tk = await page.evaluate(() =>
+        [...document.querySelectorAll('#today-week .wchip.wk-task')].map(c => [
+          c.closest('.wk-day').dataset.date,
+          c.dataset.task,
+          c.querySelector('.wc-s').textContent,
+        ])
+      );
+      ok(
+        `${tag} the tasks added to today and later days show on their days (B-419)`,
+        JSON.stringify(tk) ===
+          JSON.stringify([
+            [today, 'add-p419-email', 'To do · 10 min'],
+            [addDays(today, 2), 'add-p419-med-a', 'Practice · 30 min'],
+            [addDays(today, 2), 'add-p419-med-b', 'Practice · 30 min'],
+            [addDays(today, 3), 'add-p419-read', 'Done'],
+          ]),
+        JSON.stringify(tk)
+      );
       ok(`${tag} List and Week show whole, beside the header's status line`, r.segWhole, JSON.stringify(r.status));
       if (w !== 700) {
         await page.click('#today-week .wchip[data-id="p295-lab"]');
@@ -1496,6 +1549,37 @@ async function tickAll(page) {
             btn: document.querySelector('#today-date .wk-off').textContent,
           };
         }, n0);
+        // B-419: a later day opens ahead of time from its head: its tasks, who added them, and its calendar dates
+        await page.click(`#today-week .wk-day[data-date="${addDays(today, 2)}"] .wk-h`);
+        await page.waitForTimeout(200);
+        const dp = await page.evaluate(() => ({
+          title: document.querySelector('#today-date .wd-title').textContent,
+          tasks: [...document.querySelectorAll('#today-date .wd-task')].map(t => t.textContent),
+          cal: [...document.querySelectorAll('#today-date .wd-cal .wchip')].map(c => c.dataset.id),
+          pressed: document.querySelector('#today-week .wk-day.today .wk-h').getAttribute('aria-pressed'),
+          sideways: document.documentElement.scrollWidth > innerWidth + 1,
+        }));
+        ok(
+          `${tag} a later day opens from its head with its tasks and dates (B-419)`,
+          dp.tasks.length === 2 &&
+            dp.tasks.every(t => /^Med administration practice: .*Practice · 30 min · added by E\.V\.$/.test(t)) &&
+            dp.cal.includes('p295-a') &&
+            dp.pressed === 'false' &&
+            !dp.sideways,
+          JSON.stringify(dp)
+        );
+        await page.locator('#p-today').screenshot({ path: `${shots}/today-week-day-${w}-${scheme}.png` });
+        if (w === 1280) await page.screenshot({ path: `${shots}/today-week-day-${w}-${scheme}-page.png` });
+        await page.click(`#today-week .wchip[data-task="add-p419-read"]`);
+        await page.waitForTimeout(200);
+        const dn = await page.evaluate(() =>
+          [...document.querySelectorAll('#today-date .wd-task')].map(t => [t.className, t.textContent])
+        );
+        ok(
+          `${tag} a task's card opens its day; a ticked one reads Done (B-419)`,
+          dn.length === 1 && /\bdone\b/.test(dn[0][0]) && /Done · added by you$/.test(dn[0][1]),
+          JSON.stringify(dn)
+        );
         ok(
           `${tag} Bring back reverses it`,
           back.w.length === 2 &&

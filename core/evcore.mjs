@@ -1701,12 +1701,12 @@ const EVCore = (() => {
       if (!text) throw new Error('text is required');
       let kind = Object.prototype.hasOwnProperty.call(LIST_KINDS, edit.kind) ? edit.kind : 'todo';
       if (kind === 'graded' && by !== 'Matt') kind = 'todo'; // only his own Snooze carries graded work
-      const same = dayView(day, dayedit).items.find(it => norm(it.text) === norm(text));
+      // B-419: E.V.'s near-repeat (a second batch for one ask, reworded) is already on the list; his adds match exactly
+      const dup = it => norm(it.text) === norm(text) || (by === 'E.V.' && similarity(it.text, text) >= 0.75);
+      const same = dayView(day, dayedit).items.find(dup);
       if (same) {
-        // B-381: graded work snoozed onto a day that already holds the same words stays graded: an added item is
-        // upgraded to GRADED (fixed); a planned one that isn't fixed can't be, so the snooze is refused
-        // B-381: a fixed item that is not graded (an exam, clinical, validation, or a date-, exam- or soon- id) never
-        // absorbs it either: refused, so the snooze keeps today's item
+        // B-381: his graded snooze onto a day with the same words upgrades an added item to GRADED; a planned or fixed
+        // one (exam, clinical, validation, a date-, exam- or soon- id) can't absorb it, so the snooze is refused
         if (kind === 'graded' && same.tag !== 'GRADED') {
           if (!added[same.id] || isFixedItem(same))
             throw new Error(`“${same.text}” is already planned that day; it can't carry the graded tag`);

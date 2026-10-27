@@ -500,7 +500,7 @@
         {
           name: 'edit_list',
           description:
-            'Edit his daily list. add: a study task he asks for or agrees to, in his words (kind reading, practice, review, notes or todo; minutes when known; course). remove: take an item off by id (an added item goes; a planned one is skipped for that day). restore: bring a skipped item back. Today unless he names a day in the next 7. Graded work, exams, clinicals and validations always stay. Returns the item id.',
+            'Edit his daily list. add: a study task he asks for or agrees to, in his words (kind reading, practice, review, notes or todo; minutes when known; course). remove: take an item off by id (an added item goes; a planned one is skipped for that day). restore: bring a skipped item back. Today unless he names a day in the next 7. Add each task once per day: check the list and Added to later days above first, and never repeat a batch already added. Graded work, exams, clinicals and validations always stay. Returns the item id.',
           inputSchema: {
             type: 'object',
             properties: {

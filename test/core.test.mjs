@@ -892,6 +892,12 @@ test('list edits: added items ride on the planned list, planned ones can be take
   assert.equal(b.doc.added[b.id].tag, null);
   assert.ok(b.doc.added[a.id], 'the edit keeps what was there: it is replaced whole');
   assert.equal(b.doc.at, e1.at, 'the envelope of the first edit stays');
+  // B-419: a second batch for the same ask, reworded, is not a second item for E.V.; a different task still is, and
+  // his own adds stay exact-match only
+  const again = EV.listEdit(day, e1, { action: 'add', text: 'Quizlets for Ch 7 and 8 lecture' }, { now, by: 'E.V.' });
+  assert.deepEqual([again.doc, again.id, again.note], [null, a.id, 'already on the list']);
+  assert.ok(EV.listEdit(day, e1, { action: 'add', text: 'Quizlets: Ch 9 lab' }, { now, by: 'E.V.' }).doc);
+  assert.ok(EV.listEdit(day, e1, { action: 'add', text: 'Quizlets for Ch 7 and 8 lecture' }, { now, by: 'Matt' }).doc);
   // Taking a planned item off skips it for the day and frees its minutes; restore brings it back
   const r = EV.listEdit(day, e1, { action: 'remove', id: 'plan-t1' }, { now, by: 'Matt' });
   assert.deepEqual(r.doc.skipped, { 'plan-t1': { at: '2026-10-17T23:20:00.000Z', by: 'Matt' } });

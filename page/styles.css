@@ -1218,6 +1218,21 @@ button.btn:disabled{opacity:.45;cursor:default}
 .wchip .wc-s.urgent{color:var(--urg)}
 .wchip.off .wc-t{color:var(--faint);text-decoration:line-through}
 .wchip.wk-list .wc-t{color:var(--quiet)}
+/* B-419: a day's head opens its panel; a task added to a day is a card on it, struck through when done; the day's
+   panel lists its tasks in one card, as the date panel's properties. */
+button.wk-h{border:0;margin:0;background:none;font-family:inherit;text-align:left;cursor:pointer;border-radius:6px}
+button.wk-h:hover b{text-decoration:underline}
+button.wk-h:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+button.wk-h[aria-pressed="true"]>span:first-child{color:var(--text);font-weight:600}
+.wchip.wk-task .wc-t{color:var(--ink2,var(--text))}
+.wchip.wk-task.done .wc-t,#today-date .wd-task.done .wd-tt{color:var(--faint);text-decoration:line-through}
+#today-date .wd-tasks{border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line);padding:6px 14px;display:flex;flex-direction:column}
+#today-date .wd-task{display:flex;flex-direction:column;gap:2px;padding:8px 0;border-top:1px solid var(--line);min-width:0}
+#today-date .wd-task:first-child{border-top:0}
+#today-date .wd-tt{font-size:calc(13px * var(--ts));color:var(--text);overflow-wrap:anywhere}
+#today-date .wd-tasks>.mini{padding:8px 0}
+#today-date .wd-cal{display:flex;flex-direction:column;gap:6px}
+#today-date .wd-cal .wchip{flex:none;width:100%}
 /* B-349 (D-312): the picked date's panel as the demo's TodayWeek board: no card around it, the badge, an 18 px title,
    When / Course / Readiness in one card in a 92 px label column, the actions stacked at their own width. */
 #today-date.wk-panel{display:flex;flex-direction:column;gap:14px;min-width:0}
@@ -1250,6 +1265,7 @@ button.btn:disabled{opacity:.45;cursor:default}
   .wchip{flex:none;width:100%;min-height:44px;justify-content:center}
   #today-date .wd-props .prop{min-height:44px}
   #today-date .wd-acts .btn{min-height:44px;height:44px}
+  button.wk-h{min-height:44px;align-items:center}
 }
 /* ============================================================ B-296 (C-10, D-282): the task's panel ================
    A row's name opens its task in the side column (the right panel from 1200 px, under the pane below it): the name and

@@ -1223,6 +1223,95 @@
       });
       return c;
     }
+    // B-419: a day's tasks as Today's list holds them (EVCore.dayView): its saved plan, when there is one, and what he
+    // or E.V. added (dayedits/<date>), less what was taken off; today's are today's list itself.
+    function weekTasks(date) {
+      if (date === today) {
+        const s = dayState();
+        return s.items.filter(it => !it.deferred).map(it => ({ ...it, done: s.isDone(it) }));
+      }
+      return E.dayView(dayDoc(date), dayEditDoc(date)).items.map(it => ({ ...it, done: !!it.checked }));
+    }
+    const taskSub = it =>
+      [(BADGE[it.tag] || [it.tag ? 'Class' : 'To do'])[0], it.minutes ? durFmt(it.minutes) : ''].filter(Boolean).join(' · ');
+    // B-419: a task added to a day shows on that day as a card; it opens the day's panel
+    function taskChip(it, date) {
+      const c = el('button', 'wchip wk-task' + (it.done ? ' done' : ''));
+      c.type = 'button';
+      c.dataset.task = it.id;
+      c.title = it.text || '';
+      c.setAttribute('aria-pressed', String(ui.weekSel === 'day:' + date));
+      const sub = el('span', 'wc-s');
+      sub.append(el('i', 'dot'), document.createTextNode(it.done ? 'Done' : taskSub(it)));
+      c.append(el('span', 'wc-t', it.text || ''), sub);
+      c.addEventListener('click', () => {
+        ui.weekSel = 'day:' + date;
+        render();
+      });
+      return c;
+    }
+    // B-419: a day opened from the week: its name, when, its tasks (each with its kind, time and who added it) and its
+    // calendar dates; today's offers its list.
+    function dayPanel(date, entries) {
+      const tasks = weekTasks(date);
+      const dw = new Date(date + 'T12:00:00Z');
+      const title = el(
+        'div',
+        'wd-title',
+        dayName(date) + ' ' + dw.getUTCDate() + ' ' + dw.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' })
+      );
+      const open = tasks.filter(it => !it.done);
+      const mins = open.reduce((n, it) => n + (Number(it.minutes) || 0), 0);
+      const props = el('div', 'wd-props');
+      for (const [k, v] of [
+        ['When', date < today ? 'Past' : relDay(date).replace(/^./, c => c.toUpperCase())],
+        ['Tasks', tasks.length ? open.length + ' open of ' + tasks.length + (mins ? ' · ' + durFmt(mins) : '') : 'None yet'],
+      ]) {
+        const p = el('div', 'prop');
+        p.append(el('span', 'prop-k', k), el('span', 'prop-v', v));
+        props.append(p);
+      }
+      const list = el('div', 'wd-tasks');
+      for (const it of tasks) {
+        const r = el('div', 'wd-task' + (it.done ? ' done' : ''));
+        r.dataset.task = it.id;
+        r.append(
+          el('span', 'wd-tt', it.text || ''),
+          el(
+            'span',
+            'mini',
+            [it.done ? 'Done' : taskSub(it), it.added ? 'added by ' + (it.by === 'Matt' ? 'you' : 'E.V.') : '']
+              .filter(Boolean)
+              .join(' · ')
+          )
+        );
+        list.append(r);
+      }
+      if (!tasks.length) list.append(el('span', 'mini', 'Nothing on this day’s list yet.'));
+      const out = [el('span', 'badge wd-badge x-quiet', 'Day'), title, props, el('span', 'lab', 'Tasks'), list];
+      const dates = entries.filter(x => x.date === date);
+      if (dates.length) {
+        const cal = el('div', 'wd-cal');
+        cal.append(...dates.map(x => weekChip(x, false)));
+        out.push(el('span', 'lab', 'On the calendar'), cal);
+      }
+      if (date === today) {
+        const acts = el('div', 'wd-acts');
+        acts.append(
+          btn(
+            'Open the list',
+            () => {
+              ui.todayView = 'list';
+              store.set('todayView', 'list');
+              render();
+            },
+            { cls: 'btn neutral' }
+          )
+        );
+        out.push(acts);
+      }
+      return out;
+    }
     // B-363 (D-312): with no card picked the week's panel is the demo's: the Next exam card (its name, when, the
     // readiness bar and its words), then Next 7 days (Those 7 days off this week) with the graded and class counts.
     function weekSummary(entries, wk) {
@@ -1313,14 +1402,25 @@
         return;
       }
       const entries = weekDates(E.addDays(start, WEEK_DAYS - 1), true, start);
-      if (!entries.some(d => d.id === ui.weekSel)) ui.weekSel = null; // B-363: opens on Next exam, as the demo
+      // B-363: opens on Next exam, as the demo; B-419: a picked day (day:<date>) stays while it is in the week
+      const selDay = /^day:/.test(ui.weekSel || '') ? ui.weekSel.slice(4) : null;
+      if (selDay ? !(selDay >= start && selDay <= E.addDays(start, WEEK_DAYS - 1)) : !entries.some(d => d.id === ui.weekSel))
+        ui.weekSel = null;
       const days = el('div', 'wk-days');
       for (let i = 0; i < WEEK_DAYS; i++) {
         const date = E.addDays(start, i);
         const col = el('div', 'wk-day' + (date === today ? ' today' : ''));
         col.dataset.date = date;
         const [, m, dd] = date.split('-');
-        const h = el('div', 'wk-h');
+        // B-419: a day's head opens that day's panel, its tasks ahead of time
+        const h = el('button', 'wk-h');
+        h.type = 'button';
+        h.setAttribute('aria-label', 'Open ' + dayName(date) + ' ' + Number(dd) + ': its tasks');
+        h.setAttribute('aria-pressed', String(ui.weekSel === 'day:' + date));
+        h.addEventListener('click', () => {
+          ui.weekSel = 'day:' + date;
+          render();
+        });
         h.append(
           el('span', null, dayName(date).slice(0, 3)),
           el('b', null, String(Number(dd))),
@@ -1347,7 +1447,12 @@
           });
           chips.append(t);
         }
-        chips.append(...entries.filter(d => d.date === date).map(d => weekChip(d, d.id === ui.weekSel)));
+        chips.append(
+          ...entries.filter(d => d.date === date).map(d => weekChip(d, d.id === ui.weekSel)),
+          ...weekTasks(date)
+            .filter(it => it.added)
+            .map(it => taskChip(it, date))
+        );
         col.append(h, chips);
         days.append(col);
       }
@@ -1355,6 +1460,7 @@
       // the picked date's panel
       const d = entries.find(x => x.id === ui.weekSel);
       panel.hidden = false;
+      if (ui.weekSel && /^day:/.test(ui.weekSel)) return panel.replaceChildren(...dayPanel(ui.weekSel.slice(4), entries));
       if (!d) return panel.replaceChildren(...weekSummary(entries, wk));
       // B-349 (D-312): as the demo's TodayWeek board: the badge, the 18 px title, When / Course / Readiness in one card,
       // then Quiz me on it and Open the task stacked; Take off stays for a date that can leave the calendar (D-080).
