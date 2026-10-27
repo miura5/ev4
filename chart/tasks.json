@@ -8009,5 +8009,26 @@
    "outcome": "task",
    "at": "2026-10-27T21:46:55.812Z"
   }
+ },
+ {
+  "id": "B-436",
+  "kind": "bug",
+  "title": "Bug (reported Oct 27): UI review of 02066e6 fixes: on the phone Back to now keeps a floating shadow and squeezes the header status to a stub; the Study exam card's separator can hang at the end of the title line; Study plan rows show their date twice; the scrolled-up E.V. thread on the phone leaves a large empty gap above the start of today.",
+  "dod": "Each of the four is fixed and seen in the look pass at 390x844 and 1280; npm test and smoke green.",
+  "milestone": "After Notes",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UI review 02066e6",
+  "words": "UI review of 02066e6 fixes: on the phone Back to now keeps a floating shadow and squeezes the header status to a stub; the Study exam card's separator can hang at the end of the title line; Study plan rows show their date twice; the scrolled-up E.V. thread on the phone leaves a large empty gap above the start of today.",
+  "reportedAt": "2026-10-27T22:57:22.868Z",
+  "board": {
+   "row": "v4 B-436: UI review of 02066e6 fixes: on the phone Back to now keeps a floating…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-27T22:57:23.089Z"
+  }
  }
 ]
