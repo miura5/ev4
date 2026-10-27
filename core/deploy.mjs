@@ -210,6 +210,14 @@ function triggerFields(t) {
   };
 }
 
+/** A task's push setting against the manifest's, as verify words it; null when they agree. Unset is the server
+ *  default, push on: it matches a task that should push, never one that should stay quiet. */
+function pushDiff(f, t) {
+  if (f.push === null ? !t.push : f.push !== t.push)
+    return `push ${f.push === null ? 'unset (default on)' : f.push}, expected ${t.push}`;
+  return null;
+}
+
 /**
  * Diffs saved live state against the manifest. state: {triggers: [list_triggers entries] | null, record: {manifest,
  * spec, environments} (absent docs undefined) | null, pageHtml: string | null, pageFiles: {path: sha256} | null}.
@@ -410,9 +418,8 @@ export function verify({ manifest, target, state, build, dist, sha256, now = new
       if (f.macBound !== t.macBound) diffs.push(t.macBound ? 'not bound to the Mac' : 'bound to a device');
       if (t.macBound && !same(f.folders.slice().sort(), t.folders.slice().sort()))
         diffs.push(`folders ${JSON.stringify(f.folders)}, expected ${JSON.stringify(t.folders)}`);
-      // unset is the server default, push on: it matches a task that should push, never one that should stay quiet
-      if (f.push === null ? !t.push : f.push !== t.push)
-        diffs.push(`push ${f.push === null ? 'unset (default on)' : f.push}, expected ${t.push}`);
+      const pd = pushDiff(f, t);
+      if (pd) diffs.push(pd);
       add(diffs.length === 0, `task ${key}`, diffs.join('; ') || t.trigger);
     }
 
@@ -598,6 +605,17 @@ export function deployCalls({
       continue;
     }
     const promptFile = `${distDir}/prompts/${key}.txt`;
+    // B-426: verify compares each task's push setting, so a difference is named here, never left with nothing to make.
+    // update_trigger takes no notifications (only name, schedule, enabled, model, prompt, run_once_at), so no call can
+    // set it: a cloud task's note names the difference and the fix; a Mac-bound one is never edited (O-5, B-137).
+    const listed = t.trigger && state && state.triggers && state.triggers.find(x => x.id === t.trigger);
+    const pd = listed && pushDiff(triggerFields(listed), t);
+    if (pd)
+      skipped.push(
+        t.macBound
+          ? `${key}: ${pd}; Mac-bound, so not changed here (O-5: Mac tasks are created, never edited); a chat linked to the Mac with Matt present re-creates it with notifications {push: ${Boolean(t.push)}, email: false} and retires this one`
+          : `${key}: ${pd}; update_trigger takes no notifications, so no call sets it: turn push ${t.push ? 'on' : 'off'} in the task's settings (notifications {push: ${Boolean(t.push)}, email: false}), then verify again`
+      );
     // B-184 (D-200): a builder run creates, changes or deletes no scheduled task; what this would print is named instead.
     if (builder) {
       const live = state && state.triggers && state.triggers.find(x => x.id === t.trigger);

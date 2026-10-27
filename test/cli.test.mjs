@@ -451,6 +451,47 @@ test('B-137 (O-5): a Mac task is created, never edited: its create_trigger print
   );
 });
 
+test('B-426: a task whose push differs is named under Not printed: a cloud one with its fix, a Mac-bound one under O-5', async () => {
+  const { dir, state } = await deployedStaging();
+  const p = path.join(state, 'triggers-2.json');
+  const page = JSON.parse(fs.readFileSync(p, 'utf8'));
+  const p1 = path.join(state, 'triggers-1.json');
+  const page1 = JSON.parse(fs.readFileSync(p1, 'utf8'));
+  const all = [...page1.data, ...page.data];
+  const cloud = all.find(t => !t.bound_device_uuid && /^E\.V\. staging/.test(t.name));
+  const mac = all.find(t => t.bound_device_uuid && /^E\.V\. staging/.test(t.name));
+  assert.ok(cloud && mac, 'the staging tasks hold a cloud and a Mac-bound one');
+  const flip = t => (t.notifications = { channel: { push: !t.notifications.channel.push } });
+  flip(cloud);
+  flip(mac);
+  write(p1, page1);
+  write(p, page);
+  const plan = JSON.parse(cli(dir, 'deploy', 'staging', '--json').out);
+  const manifest = JSON.parse(fs.readFileSync(path.join(dir, 'dist', 'manifest.json'), 'utf8'));
+  const keyOf = id => Object.keys(manifest.tasks).find(k => manifest.tasks[k].trigger === id);
+  const ck = keyOf(cloud.id),
+    mk = keyOf(mac.id);
+  // update_trigger takes no notifications parameter, so the difference is a note, never a call that cannot set it.
+  assert.deepEqual(
+    plan.calls.filter(c => c.tool.endsWith('update_trigger') || c.tool.endsWith('create_trigger')),
+    [],
+    'no trigger call: the prompts and names match'
+  );
+  const want = Boolean(manifest.tasks[ck].push);
+  const cn = plan.skipped.find(s => s.startsWith(ck + ':'));
+  assert.ok(cn, JSON.stringify(plan.skipped));
+  assert.match(cn, new RegExp(`push ${!want}, expected ${want}; update_trigger takes no notifications`));
+  assert.match(cn, new RegExp(`notifications \\{push: ${want}, email: false\\}`));
+  const mn = plan.skipped.find(s => s.startsWith(mk + ':'));
+  assert.ok(mn, JSON.stringify(plan.skipped));
+  assert.match(mn, /Mac-bound, so not changed here \(O-5: Mac tasks are created, never edited\)/);
+  // verify names the same difference, and the printed text carries both notes under Not printed
+  const text = cli(dir, 'deploy', 'staging').out;
+  assert.match(text, /Not printed:[\s\S]*update_trigger takes no notifications[\s\S]*O-5/);
+  // a task whose push matches is not named
+  assert.ok(!plan.skipped.some(s => /push .*expected/.test(s) && !s.startsWith(ck) && !s.startsWith(mk)));
+});
+
 test('B-184 (D-200): under the builder marker deploy prints no create_trigger or update_trigger, and names why', async () => {
   const { dir, dist } = await deployedStaging();
   const mp = path.join(dist, 'manifest.json');
