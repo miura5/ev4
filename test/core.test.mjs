@@ -894,9 +894,21 @@ test('list edits: added items ride on the planned list, planned ones can be take
   assert.equal(b.doc.at, e1.at, 'the envelope of the first edit stays');
   // B-419: a second batch for the same ask, reworded, is not a second item for E.V.; a different task still is, and
   // his own adds stay exact-match only
-  const again = EV.listEdit(day, e1, { action: 'add', text: 'Quizlets for Ch 7 and 8 lecture' }, { now, by: 'E.V.' });
+  const near = text => ({ action: 'add', text, nearRepeat: true });
+  const again = EV.listEdit(day, e1, near('Quizlets for Ch 7 and 8 lecture'), { now, by: 'E.V.' });
   assert.deepEqual([again.doc, again.id, again.note], [null, a.id, 'already on the list']);
-  assert.ok(EV.listEdit(day, e1, { action: 'add', text: 'Quizlets: Ch 9 lab' }, { now, by: 'E.V.' }).doc);
+  assert.ok(EV.listEdit(day, e1, near('Quizlets: Ch 9 lab'), { now, by: 'E.V.' }).doc);
+  // only E.V.'s own tool asks for the near-repeat check: an add he accepted (no nearRepeat) matches exact words only
+  assert.ok(EV.listEdit(day, e1, { action: 'add', text: 'Quizlets for Ch 7 and 8 lecture' }, { now, by: 'E.V.' }).doc);
+  // a long title that differs only by its number is a different task, however much else it shares
+  const mod = EV.listEdit(day, e1, near('Review NUR 112 module 5 fluid and electrolytes notes'), { now, by: 'E.V.' });
+  const mod6 = EV.listEdit(
+    day,
+    { id: '2026-10-17', ...mod.doc },
+    near('Review NUR 112 module 6 fluid and electrolytes notes'),
+    { now, by: 'E.V.' }
+  );
+  assert.ok(mod6.doc, 'module 6 is not module 5');
   assert.ok(EV.listEdit(day, e1, { action: 'add', text: 'Quizlets for Ch 7 and 8 lecture' }, { now, by: 'Matt' }).doc);
   // Taking a planned item off skips it for the day and frees its minutes; restore brings it back
   const r = EV.listEdit(day, e1, { action: 'remove', id: 'plan-t1' }, { now, by: 'Matt' });

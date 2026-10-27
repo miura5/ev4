@@ -1701,8 +1701,9 @@ const EVCore = (() => {
       if (!text) throw new Error('text is required');
       let kind = Object.prototype.hasOwnProperty.call(LIST_KINDS, edit.kind) ? edit.kind : 'todo';
       if (kind === 'graded' && by !== 'Matt') kind = 'todo'; // only his own Snooze carries graded work
-      // B-419: E.V.'s near-repeat (a second batch for one ask, reworded) is already on the list; his adds match exactly
-      const dup = it => norm(it.text) === norm(text) || (by === 'E.V.' && similarity(it.text, text) >= 0.75);
+      const near = it => edit.nearRepeat === true && by === 'E.V.' && similarity(it.text, text) >= 0.75,
+        numsOf = t => (String(t).match(/\d+/g) || []).join(' ');
+      const dup = it => norm(it.text) === norm(text) || (near(it) && numsOf(it.text) === numsOf(text));
       const same = dayView(day, dayedit).items.find(dup);
       if (same) {
         // B-381: his graded snooze onto a day with the same words upgrades an added item to GRADED; a planned or fixed

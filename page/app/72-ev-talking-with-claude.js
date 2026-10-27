@@ -521,7 +521,15 @@
             const a = str(i.action, 10);
             const r = await editList(
               date,
-              { action: a, text: i.text, kind: i.kind, minutes: i.minutes, course: i.course, id: str(i.id, 120) },
+              {
+                action: a,
+                text: i.text,
+                kind: i.kind,
+                minutes: i.minutes,
+                course: i.course,
+                id: str(i.id, 120),
+                nearRepeat: true,
+              },
               'E.V.'
             );
             if (date === today) {
@@ -533,7 +541,7 @@
             }
             const day = date === today ? 'today’s' : short(date) + '’s';
             return r.note
-              ? `${r.note}: ${r.id}`
+              ? `${r.note}${r.note === 'already on the list' ? ` as "${r.text}"` : ''}: ${r.id}`
               : `${a === 'add' ? 'added to' : a === 'remove' ? 'taken off' : 'back on'} ${day} list: ${r.id} "${r.text}"`;
           },
         },
