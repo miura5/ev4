@@ -7930,9 +7930,9 @@
   "id": "B-432",
   "kind": "bug",
   "title": "Bug (reported Oct 27): On the iPhone, tapping the E.V. message box zooms the page (the send button and the Record tab are cut off at the right) and the keyboard pushes the composer up with the tab bar left floating above the keyboard and an empty gap between them.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "At 390x844 with touch and a simulated keyboard (visualViewport shrunk), focusing the E.V. input does not zoom (its text is at least 16 px), the page fits the space above the keyboard with the header and composer visible and the tab bar hidden while typing, and nothing runs past the right edge; frame.cjs asserts it; npm test and smoke green; Matt confirms on his iPhone after live.",
+  "milestone": "After Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -7941,6 +7941,10 @@
   "reportedAt": "2026-10-27T19:44:54.815Z",
   "board": {
    "row": "v4 B-432: On the iPhone, tapping the E.V. message box zooms the page (the send…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-27T19:45:00.837Z"
   }
  }
 ]
