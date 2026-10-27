@@ -13,13 +13,16 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const RELEASE = /^v4\.(0|[1-9]\d{0,5})\.(0|[1-9]\d{0,5})$/;
+// B-427: a build after a release, v4.x.y+n: its base tag is made at the commit ship names, and the checkout must then
+// describe as exactly this release (the base commit an ancestor of it, n commits past)
+export const BUILD_RELEASE = /^(v4\.(?:0|[1-9]\d{0,5})\.(?:0|[1-9]\d{0,5}))(?:\+([1-9]\d{0,5}))?$/;
 export const COMMIT = /^[0-9a-f]{40}$/;
 
 /** The input refusal, or null when both inputs are whole and well formed (an empty release is allowed: nothing to do). */
 export function releaseInputRefusal(release, commit) {
   const r = String(release ?? '');
   if (r === '') return null;
-  if (!RELEASE.test(r)) return `release ${JSON.stringify(r)} is not v4.x.y`;
+  if (!BUILD_RELEASE.test(r)) return `release ${JSON.stringify(r)} is not v4.x.y or v4.x.y+n`;
   if (!COMMIT.test(String(commit ?? '')))
     return `commit ${JSON.stringify(String(commit ?? ''))} is not 40 hex characters`;
   return null;
@@ -30,6 +33,7 @@ export function releaseTag({ root, release, commit }) {
   const refused = releaseInputRefusal(release, commit);
   if (refused) return { ok: false, line: refused };
   if (!release) return { ok: true, line: 'no release named' };
+  const base = BUILD_RELEASE.exec(release)[1];
   const git = (...a) =>
     execFileSync('git', ['-C', root, ...a], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
   let at;
@@ -40,14 +44,14 @@ export function releaseTag({ root, release, commit }) {
   }
   let tagged = null;
   try {
-    tagged = git('rev-parse', '--verify', '-q', `refs/tags/${release}^{commit}`);
+    tagged = git('rev-parse', '--verify', '-q', `refs/tags/${base}^{commit}`);
   } catch {
     /* no such tag yet */
   }
   if (tagged && tagged !== at)
     return {
       ok: false,
-      line: `${release} is already at another commit (${tagged.slice(0, 7)}, not ${at.slice(0, 7)})`,
+      line: `${base} is already at another commit (${tagged.slice(0, 7)}, not ${at.slice(0, 7)})`,
     };
   if (!tagged)
     git(
@@ -57,12 +61,27 @@ export function releaseTag({ root, release, commit }) {
       'user.email=ci@example.invalid',
       'tag',
       '-a',
-      release,
+      base,
       at,
       '-m',
-      `E.V. ${release} (made in this runner only, D-343)`
+      `E.V. ${base} (made in this runner only, D-343)`
     );
-  return { ok: true, line: `release ${release} at ${at.slice(0, 7)}${tagged ? ' (already tagged)' : ''}` };
+  // B-427: the checkout must build exactly ship's release: the tag's commit an ancestor of it, and its describe equal
+  try {
+    git('merge-base', '--is-ancestor', at, 'HEAD');
+  } catch {
+    return { ok: false, line: `${base}'s commit ${at.slice(0, 7)} is not an ancestor of the checkout` };
+  }
+  let d = '';
+  try {
+    d = git('describe', '--tags', '--long', '--match', 'v4.*', 'HEAD');
+  } catch {
+    /* no tag reachable */
+  }
+  const m = /^(v4\.\d+\.\d+)-(\d+)-g[0-9a-f]+$/.exec(d);
+  const built = m ? (m[2] === '0' ? m[1] : `${m[1]}+${m[2]}`) : '(none)';
+  if (built !== release) return { ok: false, line: `the checkout builds as ${built}, not ship's ${release}` };
+  return { ok: true, line: `release ${release} (${base} at ${at.slice(0, 7)}${tagged ? ', already tagged' : ''})` };
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

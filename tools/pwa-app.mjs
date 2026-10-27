@@ -19,7 +19,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { RELEASE, COMMIT } from './release-tag.mjs'; // B-420: the inputs the runner's release-tag step takes, whole
+import { BUILD_RELEASE, COMMIT } from './release-tag.mjs'; // B-420: the inputs the runner's release-tag step takes, whole
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const REPO = 'miura5/ev4';
@@ -123,10 +123,10 @@ export function appRead({ target, stateDir }) {
  * local is missing on origin and the runner's own describe would name an older release. Anything else adds nothing.
  */
 export function releaseArgs(release, releaseAt) {
-  const m = /^(v4\.(?:0|[1-9]\d{0,5})\.(?:0|[1-9]\d{0,5}))(\+\d{1,6})?$/.exec(String(release || ''));
+  const m = BUILD_RELEASE.exec(String(release || ''));
   if (!m) return '';
-  if (!m[2]) return ` -f release=${m[1]}`;
-  return COMMIT.test(String(releaseAt || '')) ? ` -f release=${m[1]} -f release_at=${releaseAt}` : '';
+  if (!m[2]) return ` -f release=${release}`;
+  return COMMIT.test(String(releaseAt || '')) ? ` -f release=${release} -f release_at=${releaseAt}` : '';
 }
 
 export function appCalls({ target, commit, mattOk = false, release = null, releaseAt = null }) {

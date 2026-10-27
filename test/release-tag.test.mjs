@@ -39,7 +39,8 @@ test('B-420: the whole of each input is checked before git sees it', () => {
     'x\nv4.5.7',
     'v4.5.7 ',
     ' v4.5.7',
-    'v4.5.7+3',
+    'v4.5.7+0',
+    'v4.5.7+x',
     'v4.5',
     'v5.1.2',
     'v4.05.1',
@@ -57,30 +58,54 @@ test('B-420: the step makes the tag at the commit, accepts it already there, and
   const two = commit('two');
   const none = releaseTag({ root: dir, release: '', commit: two });
   assert.deepEqual(none, { ok: true, line: 'no release named' });
-  const made = releaseTag({ root: dir, release: 'v4.2.0', commit: one });
+  const made = releaseTag({ root: dir, release: 'v4.2.0', commit: two });
   assert.equal(made.ok, true, made.line);
-  assert.equal(g('rev-list', '-n1', 'v4.2.0'), one);
+  assert.equal(g('rev-list', '-n1', 'v4.2.0'), two);
   assert.equal(g('cat-file', '-t', 'v4.2.0'), 'tag', 'an annotated tag, as ship makes');
-  const again = releaseTag({ root: dir, release: 'v4.2.0', commit: one });
+  const again = releaseTag({ root: dir, release: 'v4.2.0', commit: two });
   assert.equal(again.ok, true, 'already at that commit: fine');
-  const elsewhere = releaseTag({ root: dir, release: 'v4.2.0', commit: two });
+  const elsewhere = releaseTag({ root: dir, release: 'v4.2.0', commit: one });
   assert.equal(elsewhere.ok, false);
   assert.match(elsewhere.line, /already at another commit/);
-  assert.equal(g('rev-list', '-n1', 'v4.2.0'), one, 'the tag is left where it was');
+  assert.equal(g('rev-list', '-n1', 'v4.2.0'), two, 'the tag is left where it was');
   const missing = releaseTag({ root: dir, release: 'v4.2.1', commit: 'b'.repeat(40) });
   assert.equal(missing.ok, false);
   assert.match(missing.line, /not in this checkout/);
   // the command line the workflows run: exit 0 made, 1 refused, the refusal before any git call
+  const three = commit('three');
   const cli = (...a) => spawnSync(process.execPath, [SCRIPT, ...a], { cwd: dir, encoding: 'utf8' });
-  const ok = cli('v4.3.0', two);
+  const ok = cli('v4.3.0', three);
   assert.equal(ok.status, 0, ok.stderr);
-  assert.match(ok.stdout, /^release v4\.3\.0 at [0-9a-f]{7}/);
-  assert.equal(g('rev-list', '-n1', 'v4.3.0'), two);
+  assert.match(ok.stdout, /^release v4\.3\.0 \(v4\.3\.0 at [0-9a-f]{7}/);
+  assert.equal(g('rev-list', '-n1', 'v4.3.0'), three);
   assert.equal(cli('', '').status, 0);
-  assert.equal(cli('v4.3.0\nx', two).status, 1);
-  assert.equal(cli('v4.3.0', one).status, 1, 'v4.3.0 is at two');
+  assert.equal(cli('v4.3.0\nx', three).status, 1);
+  assert.equal(cli('v4.3.0', one).status, 1, 'v4.3.0 is at three');
   const config = spawnSync('git', ['-C', dir, 'config', '--local', '--get', 'user.name'], { encoding: 'utf8' });
   assert.equal(config.stdout.trim(), '', 'no repository config is written');
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('B-427: a +n build tags its base at an ancestor and must describe as exactly that release', () => {
+  const { dir, g, commit } = repo();
+  const base = commit('base');
+  commit('a');
+  const head = commit('b');
+  // the intended case: the base two commits back, the checkout builds as v4.6.0+2
+  const ok = releaseTag({ root: dir, release: 'v4.6.0+2', commit: base });
+  assert.equal(ok.ok, true, ok.line);
+  assert.equal(g('rev-list', '-n1', 'v4.6.0'), base);
+  // a wrong count: the tag is right but the checkout does not build as ship's release
+  const count = releaseTag({ root: dir, release: 'v4.6.0+5', commit: base });
+  assert.equal(count.ok, false);
+  assert.match(count.line, /builds as v4\.6\.0\+2, not ship's v4\.6\.0\+5/);
+  // a side branch: its commit is in the checkout but not an ancestor of it
+  g('checkout', '-q', '-b', 'side', base);
+  const side = commit('side');
+  g('checkout', '-q', head);
+  const off = releaseTag({ root: dir, release: 'v4.7.0+1', commit: side });
+  assert.equal(off.ok, false);
+  assert.match(off.line, /not an ancestor of the checkout/);
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
@@ -167,7 +192,7 @@ test('B-427: a +n build names its base tag and the commit that tag is at; an exa
   const { releaseArgs } = await import('../tools/pwa-app.mjs');
   const at = 'b'.repeat(40);
   assert.equal(releaseArgs('v4.5.10', at), ' -f release=v4.5.10');
-  assert.equal(releaseArgs('v4.5.10+24', at), ` -f release=v4.5.10 -f release_at=${at}`);
+  assert.equal(releaseArgs('v4.5.10+24', at), ` -f release=v4.5.10+24 -f release_at=${at}`);
   assert.equal(releaseArgs('v4.5.10+24', null), '', 'no tag commit: nothing, as before');
   assert.equal(releaseArgs('v4.5.10+24', 'abc;rm -rf /'), '', 'a tag commit must be 40 hex');
   for (const bad of ['v4.5.10+x', 'v4.05.1', 'v4.5.10\n', 'v4.5.10+24 -f x=y', '', null])
@@ -179,7 +204,7 @@ test("B-427: the live guard reads a +n dispatch's release_at as the tag's commit
   const at = 'a'.repeat(40);
   const command = appCalls({ target: 'live', commit: sha, mattOk: true, release: 'v4.9.2+3', releaseAt: at }).calls[0]
     .args.command;
-  assert.match(command, / -f commit=[0-9a-f]{40} -f release=v4\.9\.2 -f release_at=a{40}$/);
+  assert.match(command, / -f commit=[0-9a-f]{40} -f release=v4\.9\.2\+3 -f release_at=a{40}$/);
   const input = { tool_name: 'Bash', tool_input: { command } };
   const now = Date.now();
   const liveOk = { at: now - 60e3, by: 'ship live --matt-ok', commit: sha };
