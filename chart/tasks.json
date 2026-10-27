@@ -7867,9 +7867,9 @@
   "id": "B-429",
   "kind": "bug",
   "title": "Bug (reported Oct 27): The Worker's Claude proxy keeps a note's read mark when the connection drops while the answer body is being read (pwa/claude.js reads r.text() outside the try), so that note text is then refused as unchanged; and the B-418 tests do not cover restoring an earlier mark, the concurrent-mark guard, a failed usage write or a 2xx with a bad body.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "A body read that throws after fetch resolves gives the read mark back and returns the same JSON 502; tests cover restoring an earlier mark, the concurrent-mark guard, a failed usage write (200) and a 2xx with a bad body (counts as read); npm test green.",
+  "milestone": "After Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -7878,6 +7878,10 @@
   "reportedAt": "2026-10-27T18:20:01.218Z",
   "board": {
    "row": "v4 B-429: The Worker's Claude proxy keeps a note's read mark when the…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-27T18:20:16.123Z"
   }
  }
 ]
