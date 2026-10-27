@@ -7791,5 +7791,22 @@
   "board": {
    "row": "v4 B-425: A docs-only commit moves the build commit, so ship live then demands…"
   }
+ },
+ {
+  "id": "B-426",
+  "kind": "bug",
+  "title": "Bug (reported Oct 26): deploy prints no call that sets a cloud task's notifications when only its push setting differs, so verify can stay red with nothing to make.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "review of de1ffb3",
+  "words": "deploy prints no call that sets a cloud task's notifications when only its push setting differs, so verify can stay red with nothing to make.",
+  "reportedAt": "2026-10-27T03:58:31.443Z",
+  "board": {
+   "row": "v4 B-426: deploy prints no call that sets a cloud task's notifications when…"
+  }
  }
 ]

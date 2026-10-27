@@ -498,3 +498,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-321 | task |  |  | plan 1eW5FgG9VNzhCySbL1uWuo | declined | Waiting on Matt to scope it: its definition of done is written with him when he does (hand-off 3). |
 | B-424 | bug | 2026-10-27T03:58:30.502Z | The live restore drill fails when the Mac backup folder has no backup yet instead of using the newest nightly export, as its prompt says it does. | build chat, Oct 26 cutover | inbox |  |
 | B-425 | bug | 2026-10-27T03:58:30.980Z | A docs-only commit moves the build commit, so ship live then demands a new full check and a new OK for a build whose code did not change. | build chat, Oct 26 cutover | inbox |  |
+| B-426 | bug | 2026-10-27T03:58:31.443Z | deploy prints no call that sets a cloud task's notifications when only its push setting differs, so verify can stay red with nothing to make. | review of de1ffb3 | inbox |  |
