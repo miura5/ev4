@@ -9,7 +9,8 @@
 // Study with E.V. and a Today task start one; End in the strip saves it. B-407: a session's miss is proposed and shows
 // in Study's button, her Study line and the sidebar after the chat closes, and To review's Accept counts it.
 //   node test/harness/notes.cjs [record dir | synthetic] [screenshots dir]
-// Run `node tools/build.mjs` first. Exit code 1 when any check fails.
+// Run `node tools/build.mjs` first. Exit code 1 when any check fails. EV_CPU_SLOWDOWN=<n> runs every page at 1/n of
+// the CPU's speed (B-421: the timing checks must hold on a slow runner).
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
@@ -42,6 +43,10 @@ const skeleton = body =>
   body +
   '</body></html>';
 
+// B-421: the page's own Undo window for a switched session, read from the built page rather than restated here
+const UNDO_MS = Number((/const UNDO_MS = (\d+);/.exec(fs.readFileSync(path.join(pageDir, 'app.js'), 'utf8')) || [])[1]);
+if (!(UNDO_MS > 0)) throw new Error('UNDO_MS not found in the built page');
+
 const results = [];
 const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', name, detail]);
 const until = (page, fn, arg, ms = 4000) =>
@@ -56,6 +61,8 @@ const init =
 async function open(browser, viewport, db = null) {
   const ctx = await browser.newContext({ viewport, colorScheme: 'light' });
   const page = await ctx.newPage();
+  const slow = Number(process.env.EV_CPU_SLOWDOWN || 0);
+  if (slow > 1) await (await ctx.newCDPSession(page)).send('Emulation.setCPUThrottlingRate', { rate: slow });
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => {
@@ -1254,6 +1261,15 @@ const openNoteId = page =>
     await page.click('.n-back');
     await until(page, () => !document.getElementById('notes-list').hidden);
     await page.click(`#notes-rows [data-note="${noteB}"] .nm`);
+    // B-421: the page logs, by its own clock, each time the strip's Undo button comes or goes, from before the switch
+    await page.evaluate(() => {
+      const has = () => !!document.querySelector('#ev-sslot .s-undo');
+      const log = (window.__undoLog = [{ at: Date.now(), shown: has() }]);
+      new MutationObserver(() => {
+        const shown = has();
+        if (shown !== log[log.length - 1].shown) log.push({ at: Date.now(), shown });
+      }).observe(document.body, { childList: true, subtree: true });
+    });
     await page.click('#notes-pv-study');
     await until(
       page,
@@ -1267,27 +1283,34 @@ const openNoteId = page =>
       const evs = Object.values((window.__db.sessions[i] || {}).events || {});
       return evs.filter(e => e.type === 'end' && e.why === 'switched').pop() || null;
     }, sa.id);
-    // B-421: the floor proves Undo lasts its 12 s; the ceiling allows a slow runner's polling, not a stuck button
-    // B-421: the button counts as gone only once it stays gone for 1.5 s: a record update between the switch's two
-    // writes redraws the strip without it for a moment, which a slow runner can catch
-    let undoGone = null;
-    for (const stop = Date.now() + 24000; Date.now() < stop;) {
-      await until(page, () => !document.querySelector('#ev-sslot .s-undo'), null, Math.max(1, stop - Date.now()));
-      const at = Date.now();
-      await page.waitForTimeout(1500);
-      if (!(await page.$('#ev-sslot .s-undo'))) {
-        undoGone = at;
-        break;
-      }
-    }
-    undoGone = undoGone || Date.now();
+    // B-421: judged by events and the page's own clock, not the runner's speed: the button shows after the switch, and
+    // its last going (a record update can redraw the strip without it for a moment) is no earlier than the record's
+    // Undo end (the end event's time + the page's UNDO_MS), and it stays gone. The wait is only a cap on a stuck button.
+    const undoEnd = swEnd ? Date.parse(swEnd.at) + UNDO_MS : 0;
+    const undoOver = await until(
+      page,
+      e => {
+        const l = window.__undoLog;
+        return Date.now() >= e && !l[l.length - 1].shown;
+      },
+      undoEnd,
+      UNDO_MS * 4
+    );
     const filed = await until(page, i => !!(window.__db.sessions[i] || {}).filedAt, sa.id, 30000);
     const fa = await sess(sa.id);
-    const lasted = swEnd ? undoGone - Date.parse(swEnd.at) : null;
+    const undoLog = await page.evaluate(() => window.__undoLog);
+    const lastGone = undoLog.filter(x => !x.shown).pop();
     ok(
-      `${tag} the switch's end event names its view; its Undo button goes when the record's Undo ends (12 s)`,
-      !!swEnd && typeof swEnd.view === 'string' && swEnd.view.length > 0 && lasted >= 11000 && lasted <= 22000,
-      JSON.stringify({ swEnd, lasted })
+      `${tag} the switch's end event names its view; its Undo button shows, then goes on its own when the record's Undo ends (${UNDO_MS / 1000} s) and stays gone`,
+      !!swEnd &&
+        typeof swEnd.view === 'string' &&
+        swEnd.view.length > 0 &&
+        undoOver &&
+        undoLog.some(x => x.shown) &&
+        !undoLog[undoLog.length - 1].shown &&
+        !!lastGone &&
+        lastGone.at >= undoEnd,
+      JSON.stringify({ swEnd, undoEnd, undoLog })
     );
     const dupes = await page.evaluate(i => {
       const by = (c, f) => Object.values(window.__db[c] || {}).filter(f).length;
