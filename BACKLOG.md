@@ -499,3 +499,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-281 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; folded into B-297 to B-300 (Study), B-301 (Progress) and B-302 (Record). |
 | B-282 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; replaced by B-303. |
 | B-321 | task |  |  | plan 1eW5FgG9VNzhCySbL1uWuo | declined | Waiting on Matt to scope it: its definition of done is written with him when he does (hand-off 3). |
+| B-427 | bug | 2026-10-27T05:49:53.187Z | A build after a release whose tag the git proxy kept local (v4.5.10+24) is named after an older release by the app workflow's runner, so the Worker's files never match the build and ship staging stays red. | build chat, Oct 27 staging ship | inbox |  |
