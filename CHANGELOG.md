@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 27 | v4 staging deployed at 02066e6 (17:41 CT), from 6bd6483: The Worker's Claude proxy keeps a note's read mark when the…; Raise E.V.'s Claude ceilings to 500,000 tokens an hour and 1,500,000…; After a release the Mac app showed the new page logic with the…; UI review of 74499d4 (80/100) fixes: at 390 the header's New button… (B-429, B-435, B-434, B-431). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 27 | v4 live deployed at 6bd6483 (16:33 CT), from 74499d4: In the installed iPhone app on v4.5.12, the tab bar floats a…; On the iPhone, tapping the E.V. message box zooms the page (the send… (B-433, B-432). verify-deploy live GREEN. Rollback is a redeploy of 74499d4 | Matt's OK | D-049 |
 | Oct 27 | v4 staging deployed at 6bd6483 (16:22 CT), from 02c31c5: On the iPhone, tapping the E.V. message box zooms the page (the send… (B-432). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 27 | v4 staging deployed at 02c31c5 (15:38 CT), from 74499d4: On the iPhone, tapping the E.V. message box zooms the page (the send…; In the installed iPhone app on v4.5.12, the tab bar floats a… (B-432, B-433). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
