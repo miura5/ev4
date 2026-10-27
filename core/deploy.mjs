@@ -599,11 +599,6 @@ export function deployCalls({
   }
 
   for (const [key, t] of tasksFor(manifest, target)) {
-    if (key.startsWith('build.')) continue;
-    if (!t.promptSha256) {
-      skipped.push(`${key}: no prompt rendered (tools/prompts.mjs)`);
-      continue;
-    }
     const promptFile = `${distDir}/prompts/${key}.txt`;
     // B-426: verify compares each task's push setting, so a difference is named here, never left with nothing to make.
     // update_trigger takes no notifications (only name, schedule, enabled, model, prompt, run_once_at), so no call can
@@ -616,6 +611,12 @@ export function deployCalls({
           ? `${key}: ${pd}; Mac-bound, so not changed here (O-5: Mac tasks are created, never edited); a chat linked to the Mac with Matt present re-creates it with notifications {push: ${Boolean(t.push)}, email: false} and retires this one`
           : `${key}: ${pd}; update_trigger takes no notifications, so no call sets it: turn push ${t.push ? 'on' : 'off'} in the task's settings (notifications {push: ${Boolean(t.push)}, email: false}), then verify again`
       );
+    // the push note above covers build.* tasks too (verify checks theirs); nothing else is printed for them
+    if (key.startsWith('build.')) continue;
+    if (!t.promptSha256) {
+      skipped.push(`${key}: no prompt rendered (tools/prompts.mjs)`);
+      continue;
+    }
     // B-184 (D-200): a builder run creates, changes or deletes no scheduled task; what this would print is named instead.
     if (builder) {
       const live = state && state.triggers && state.triggers.find(x => x.id === t.trigger);

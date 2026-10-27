@@ -181,7 +181,10 @@ async function drill(opts = {}) {
     throw e;
   }
 }
-async function drillWith(fw, { from = 'mac', tamper = false, mutate = null, macEmpty = false, answer = null }) {
+async function drillWith(
+  fw,
+  { from = 'mac', tamper = false, mutate = null, macEmpty = false, answer = null, fetched = false }
+) {
   const s = JSON.parse(JSON.stringify(spec));
   s.registry.records.staging.runs.backup.restoreFrom = from;
   const dir = tmp('ev4-drill-');
@@ -227,7 +230,7 @@ async function drillWith(fw, { from = 'mac', tamper = false, mutate = null, macE
   const m = wait.question.material;
   const saveTo = path.join(dir, 'in', 'backup.json');
   assert.equal(m.saveTo, saveTo);
-  if (answer) {
+  if (answer && !fetched) {
     // the agent's answer as given (no backup fetched)
   } else if (from === 'r2' || macEmpty) {
     // B-424: with restoreFrom mac and no backup in the Mac folder, the material's fallback is the same printed export.
@@ -355,6 +358,20 @@ test('B-424: a Mac folder with no backup falls back to the newest nightly export
     assert.match(run.detail, /from the newest nightly export \(the Mac folder had no backup\)/);
     // the export command the agent ran was a printed one: the audit holds it
     assert.equal(run.steps.find(x => x.id === 'audit').status, 'ok');
+  } finally {
+    d.fw.child.kill();
+  }
+});
+
+test('B-424: an export answer that names no source is still reported as the export, from its exports/ key', async () => {
+  const d = await drill({ macEmpty: true, fetched: true, answer: { status: 'ok', path: 'exports/2026-10-18/a.json' } });
+  try {
+    assert.equal(d.plan.status, 'planned', JSON.stringify(d.plan.problems));
+    RUN.apply({ dir: d.dir }).forEach(d.made);
+    RUN.end({ dir: d.dir, at: AT, transcript: d.lines.join('\n') }).forEach(d.made);
+    const run = d.fw.get('/_dump')['runs/' + RUN.runIdFor('restore-drill', AT)].data;
+    assert.match(run.detail, /from the newest nightly export \(the Mac folder had no backup\)/);
+    assert.doesNotMatch(run.detail, /from the Mac backup/);
   } finally {
     d.fw.child.kill();
   }

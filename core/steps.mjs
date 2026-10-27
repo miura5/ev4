@@ -620,7 +620,10 @@ function restoreToScratch(answer, db, ctx, spec) {
   const from = path.basename(String(answer.path || 'backup'));
   // B-424: the detail says which source the run restored: the Mac backup, or the newest nightly export.
   const setting = backupSetting(spec, ctx.record) || {};
-  const exported = answer.source ? answer.source === 'export' : setting.restoreFrom === 'r2';
+  // the restored file's own key decides when the answer names no source: a nightly export lives under exports/
+  const exported = answer.source
+    ? answer.source === 'export'
+    : /(^|\/)exports\//.test(String(answer.path || '')) || setting.restoreFrom === 'r2';
   const source = !exported
     ? 'the Mac backup'
     : setting.restoreFrom === 'r2'

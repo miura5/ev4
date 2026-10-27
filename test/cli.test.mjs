@@ -464,6 +464,10 @@ test('B-426: a task whose push differs is named under Not printed: a cloud one w
   const flip = t => (t.notifications = { channel: { push: !t.notifications.channel.push } });
   flip(cloud);
   flip(mac);
+  // a build.* task's push is checked by verify too, so its difference is named as well
+  const builderT = all.find(t => t.name === 'ev4-builder');
+  assert.ok(builderT, 'the staging state holds the builder task');
+  flip(builderT);
   write(p1, page1);
   write(p, page);
   const plan = JSON.parse(cli(dir, 'deploy', 'staging', '--json').out);
@@ -482,6 +486,8 @@ test('B-426: a task whose push differs is named under Not printed: a cloud one w
   assert.ok(cn, JSON.stringify(plan.skipped));
   assert.match(cn, new RegExp(`push ${!want}, expected ${want}; update_trigger takes no notifications`));
   assert.match(cn, new RegExp(`notifications \\{push: ${want}, email: false\\}`));
+  const bn = plan.skipped.find(s => s.startsWith(keyOf(builderT.id) + ':'));
+  assert.ok(bn && /update_trigger takes no notifications/.test(bn), JSON.stringify(plan.skipped));
   const mn = plan.skipped.find(s => s.startsWith(mk + ':'));
   assert.ok(mn, JSON.stringify(plan.skipped));
   assert.match(mn, /Mac-bound, so not changed here \(O-5: Mac tasks are created, never edited\)/);
@@ -489,7 +495,11 @@ test('B-426: a task whose push differs is named under Not printed: a cloud one w
   const text = cli(dir, 'deploy', 'staging').out;
   assert.match(text, /Not printed:[\s\S]*update_trigger takes no notifications[\s\S]*O-5/);
   // a task whose push matches is not named
-  assert.ok(!plan.skipped.some(s => /push .*expected/.test(s) && !s.startsWith(ck) && !s.startsWith(mk)));
+  assert.ok(
+    !plan.skipped.some(
+      s => /push .*expected/.test(s) && !s.startsWith(ck) && !s.startsWith(mk) && !s.startsWith(keyOf(builderT.id))
+    )
+  );
 });
 
 test('B-184 (D-200): under the builder marker deploy prints no create_trigger or update_trigger, and names why', async () => {
