@@ -5484,5 +5484,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "6bd6483",
+  "time": "2026-10-27T21:22:54.425Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "02c31c5",
+  "tasks": [
+   "B-432"
+  ],
+  "summary": "On the iPhone, tapping the E.V. message box zooms the page (the send…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]

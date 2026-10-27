@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 27 | v4 staging deployed at 6bd6483 (16:22 CT), from 02c31c5: On the iPhone, tapping the E.V. message box zooms the page (the send… (B-432). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 27 | v4 staging deployed at 02c31c5 (15:38 CT), from 74499d4: On the iPhone, tapping the E.V. message box zooms the page (the send…; In the installed iPhone app on v4.5.12, the tab bar floats a… (B-432, B-433). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 27 | v4 live deployed at 74499d4 (14:57 CT), from 94c0035: On the phone app, a swipe that starts on the message box or the…; A new note should not always start a study session, since many notes… (B-428, B-418). verify-deploy live GREEN. Rollback is a redeploy of 94c0035 | Matt's OK | D-049 |
 | Oct 27 | v4 staging deployed at 74499d4 (13:50 CT), from 94c0035: On the phone app, a swipe that starts on the message box or the…; A new note should not always start a study session, since many notes… (B-428, B-418). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
