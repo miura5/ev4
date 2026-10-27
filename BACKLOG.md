@@ -500,3 +500,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-281 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; folded into B-297 to B-300 (Study), B-301 (Progress) and B-302 (Record). |
 | B-282 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; replaced by B-303. |
 | B-321 | task |  |  | plan 1eW5FgG9VNzhCySbL1uWuo | declined | Waiting on Matt to scope it: its definition of done is written with him when he does (hand-off 3). |
+| B-428 | bug | 2026-10-27T17:35:58.105Z | On the phone app, a swipe that starts on the message box or the quick-ask chips scrolls the whole page up, leaving the header under the status bar and a blank area below the composer; it stays stuck until scrolled back down. The composer area should not move the page. | chat, Oct 27 (live app on iPhone, screenshot) | inbox |  |
