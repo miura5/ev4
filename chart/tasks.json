@@ -7766,7 +7766,7 @@
   "milestone": "After Notes",
   "status": "done",
   "depends": [],
-  "notes": "Shipped to staging at 94c0035: ship staging GREEN.",
+  "notes": "Staging GREEN at 94c0035. The live drill firing that reads back passed comes after the next live release (the build manager fires it then).",
   "commit": "94c0035",
   "source": "build chat, Oct 26 cutover",
   "words": "The live restore drill fails when the Mac backup folder has no backup yet instead of using the newest nightly export, as its prompt says it does.",
