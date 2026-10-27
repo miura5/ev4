@@ -557,6 +557,75 @@ const SIZES = [
     ok('[390 app] no page errors', errors.length === 0, errors.slice(0, 3).join(' | '));
     await ctx.close();
   }
+
+  // 8. B-432: the phone's keyboard. Chromium has no on-screen keyboard, so visualViewport is stood in for (its height
+  // shrinks as iOS's does when the keyboard rises). Focusing the message box must not zoom (16 px or more), and with the
+  // keyboard up the frame is the space above it: header and composer on screen, the tab bar stepped aside, nothing past
+  // the right edge. When the box is left and the keyboard drops, the tab bar is back.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+    await ctx.addInitScript(() => {
+      const real = window.visualViewport,
+        fake = new EventTarget();
+      let h = null;
+      for (const k of ['width', 'offsetLeft', 'offsetTop', 'pageLeft', 'pageTop', 'scale'])
+        Object.defineProperty(fake, k, { get: () => real[k] });
+      Object.defineProperty(fake, 'height', { get: () => (h == null ? real.height : h) });
+      Object.defineProperty(window, 'visualViewport', { value: fake, configurable: true });
+      window.__kb = px => {
+        h = px;
+        fake.dispatchEvent(new Event('resize'));
+      };
+    });
+    const { page, errors } = await open(ctx, seed);
+    await page.click('#tab-ev');
+    await page.waitForTimeout(200);
+    const fs = await page.evaluate(() => parseFloat(getComputedStyle(document.getElementById('ev-input')).fontSize));
+    ok('[390 keyboard] the message box is 16 px or more, so Safari does not zoom on focus', fs >= 16, String(fs));
+    const KB = 844 - 336;
+    await page.focus('#ev-input');
+    await page.evaluate(h => window.__kb(h), KB);
+    await page.waitForTimeout(250);
+    const up = await page.evaluate(() => {
+      const r = s => document.querySelector(s).getBoundingClientRect();
+      return {
+        kb: document.body.classList.contains('kb'),
+        side: getComputedStyle(document.querySelector('.side')).display,
+        head: r('#mh').top,
+        comp: r('#composer').bottom,
+        send: r('#ev-send').right,
+        wide: document.documentElement.scrollWidth,
+        doc: document.scrollingElement.scrollTop,
+      };
+    });
+    ok(
+      '[390 keyboard] with the keyboard up the header and composer fit above it, the tab bar steps aside, nothing past the edge',
+      up.kb &&
+        up.side === 'none' &&
+        up.head >= 0 &&
+        up.comp <= KB + 1 &&
+        up.send <= 390 &&
+        up.wide <= 390 &&
+        up.doc === 0,
+      JSON.stringify(up)
+    );
+    await page.screenshot({ path: `${shots}/frame-keyboard-390-up.png` });
+    await page.evaluate(() => document.activeElement.blur());
+    await page.evaluate(() => window.__kb(null));
+    await page.waitForTimeout(400);
+    const down = await page.evaluate(() => ({
+      kb: document.body.classList.contains('kb'),
+      side: getComputedStyle(document.querySelector('.side')).display,
+      vvh: document.documentElement.style.getPropertyValue('--vvh'),
+    }));
+    ok(
+      '[390 keyboard] the keyboard down, the tab bar is back and the frame is the screen again',
+      !down.kb && down.side !== 'none' && !down.vvh,
+      JSON.stringify(down)
+    );
+    ok('[390 keyboard] no page errors', errors.length === 0, errors.slice(0, 3).join(' | '));
+    await ctx.close();
+  }
   await browser.close();
   for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : '');
   const failed = results.filter(r => r[0] === 'FAIL').length;

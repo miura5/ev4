@@ -352,7 +352,7 @@ a.btn-link{display:inline-flex;align-items:center;min-height:40px;padding:0 14px
 body.captions.on-ev{padding-bottom:0}
 body.captions.on-ev .top-av{opacity:0;transform:scale(.5);width:0;flex-basis:0;margin-right:-10px;overflow:hidden}
 body.captions #p-ev{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr) auto auto;row-gap:0;
-  height:calc(100dvh - var(--top-h) - 18px - var(--dock-h) - 22px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));min-height:420px;position:relative}
+  height:calc(var(--fh,100dvh) - var(--top-h) - 18px - var(--dock-h) - 22px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));min-height:420px;position:relative}
 body.captions #p-ev>*{grid-column:1;min-width:0}
 /* B-112: under 560 px tall the panel gives up its floor and the composer its fade, so it fits the screen. */
 @media (max-height:559px){body.captions #p-ev{min-height:0}body.captions .composer{padding-top:10px}}
@@ -1971,7 +1971,7 @@ body.has-line #today-week .wk-her{display:none}
 }
 /* B-383: the strip takes its height from her view, so the composer stays above the tab bar during a session. */
 @media (max-width:599px){
-  body.captions:has(.mh>#sbar:not([hidden])) #p-ev{height:calc(100dvh - var(--top-h) - 18px - var(--dock-h) - 22px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 53px)}
+  body.captions:has(.mh>#sbar:not([hidden])) #p-ev{height:calc(var(--fh,100dvh) - var(--top-h) - 18px - var(--dock-h) - 22px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 53px)}
   .mh>#sbar .s-main{display:flex;align-items:baseline;overflow:visible}
   .mh>#sbar .s-topic{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .mh>#sbar .s-topic::after{content:none}
@@ -1979,7 +1979,7 @@ body.has-line #today-week .wk-her{display:none}
   .mh>#sbar .s-clock::before{content:"\00a0·\00a0"}
 }
 @media (min-width:600px) and (max-width:1199px){
-  body.captions.on-ev:has(.mh>#sbar:not([hidden])) #p-ev{height:calc(100dvh - var(--top-h) - 18px - var(--dock-h) - 22px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 41px)}
+  body.captions.on-ev:has(.mh>#sbar:not([hidden])) #p-ev{height:calc(var(--fh,100dvh) - var(--top-h) - 18px - var(--dock-h) - 22px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 41px)}
 }
 @media (min-width:600px) and (max-width:1199px){
   body.on-ev .mh:has(>#sbar:not([hidden])){flex-wrap:wrap;align-content:flex-start;row-gap:0}
@@ -2204,3 +2204,16 @@ body[data-view=notes] .mh .n-sync:not([hidden])~.new-wrap{margin-left:12px}
 .mh .n-read[aria-pressed=false]{color:var(--faint)}
 .mh .n-crumb[hidden],.mh .n-sync[hidden],.mh .n-back[hidden],.mh .n-read[hidden]{display:none}
 /* ==== end B-402 ==== */
+/* B-432: the phone's keyboard. Safari zooms the page on a text field under 16 px, so every field is 16 px or more here.
+   While the keyboard is up (body.kb, set from visualViewport by the composer part), the frame is the space above it
+   and the tab bar steps aside, so the header, thread and composer stay on screen with no gap and nothing past the edge. */
+@media (max-width:599px){
+  input[type=text],input[type=date],input[type=number],input[type=search],select,textarea,.compose-row textarea,
+  :where(#p-today,#p-study,#p-progress,#p-record,#p-system) input[type=text],.chatp .cin2 textarea{font-size:max(16px,calc(14.5px * var(--ts)))}
+  /* the panel's height is the frame's (--fh): the visible viewport, with the home bar's inset handed back as the keyboard covers it */
+  body.kb{--dock-h:0px;--fh:calc(var(--vvh,100dvh) + env(safe-area-inset-bottom,0px))}
+  body.captions.kb #p-ev{min-height:0}
+  body.kb .side{display:none}
+  html:has(>body.on-ev.kb){height:var(--vvh,100%)}
+  body.on-ev.kb{height:var(--vvh,100%)}
+}

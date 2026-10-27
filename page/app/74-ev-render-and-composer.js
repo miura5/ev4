@@ -151,6 +151,21 @@
         if (innerWidth < 600 && document.body.classList.contains('on-ev') && scrollY) window.scrollTo(0, 0);
       }, 250)
     );
+    // B-432: with the phone's keyboard up, E.V.'s frame is the visible viewport and the tab bar steps aside (styles.css)
+    const vv = window.visualViewport;
+    if (vv) {
+      const fitKeyboard = () => {
+        const a = document.activeElement,
+          kb = innerWidth < 600 && innerHeight - vv.height > 120 && !!a && /^(TEXTAREA|INPUT|SELECT)$/.test(a.tagName);
+        document.body.classList.toggle('kb', kb);
+        document.documentElement.style.setProperty('--vvh', kb ? Math.round(vv.height) + 'px' : '');
+        if (kb && document.body.classList.contains('on-ev') && scrollY) window.scrollTo(0, 0);
+      };
+      vv.addEventListener('resize', fitKeyboard);
+      vv.addEventListener('scroll', fitKeyboard);
+      document.addEventListener('focusin', () => setTimeout(fitKeyboard, 60));
+      document.addEventListener('focusout', () => setTimeout(fitKeyboard, 60));
+    }
     // B-85: a placeholder that fits one line in a narrow pane.
     // B-340 (D-312): the demo's placeholder at every width; "note: …" saves a note (B-290).
     const PH_LONG = 'Ask E.V., or “note: …” to log something',
