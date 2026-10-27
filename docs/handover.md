@@ -6,7 +6,17 @@ reads it right after CLAUDE.md. It holds no personal data: the repository is pub
 **Managing chat:** https://claude.ai/code/session_01CWeveciiiW2pUvFQtQJ3HK (still managing as of Oct 27, afternoon
 Central). One manager at a time.
 
-## Where things stand (Oct 27)
+## Update (Oct 27, evening)
+
+- Live is **v4.5.12 at 74499d4** (B-418, B-428), recorded GREEN.
+- **Phone fix release at 6bd6483 is GREEN on staging with a green nightly** (B-432 keyboard, B-433 installed-app tab bar
+  and Record overflow; UI review 94/100, its gaps fixed). The card went to Matt; **live waits on his word for 6bd6483**.
+  ship live will re-tag it v4.5.13, so re-ship staging first (as at 74499d4). R-03: read D1 sessions via the Worker.
+- After live: Matt tries on his iPhone (keyboard, tab bar on E.V., Record). The tab-bar fix rests on an iOS hypothesis
+  (standalone viewport shortened by the status bar when the page cannot scroll).
+- Open next: B-429, B-430, B-431, B-434 (release-keyed page files), B-421 (two of three green nightlies).
+
+## Where things stood (Oct 27, earlier)
 
 - Live is v4.5.11 at 94c0035 (ev-live Worker and D1), recorded GREEN.
 - **Release candidate v4.5.11+18 at 74499d4 is GREEN on staging** (B-418 read-along and the Worker's Claude ceilings;
