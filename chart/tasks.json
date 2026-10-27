@@ -7783,9 +7783,9 @@
   "id": "B-425",
   "kind": "bug",
   "title": "Bug (reported Oct 26): A docs-only commit moves the build commit, so ship live then demands a new full check and a new OK for a build whose code did not change.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "The build commit (buildCommitOf) skips commits that touch only docs/ (and other paths no build, run or check reads), so a docs commit keeps the build commit and its green full check; tests pin that a docs-only commit keeps it and a code commit moves it; its own review.",
+  "milestone": "After Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -7794,6 +7794,10 @@
   "reportedAt": "2026-10-27T03:58:30.980Z",
   "board": {
    "row": "v4 B-425: A docs-only commit moves the build commit, so ship live then demands…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-27T03:58:38.859Z"
   }
  },
  {
