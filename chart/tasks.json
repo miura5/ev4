@@ -7888,9 +7888,9 @@
   "id": "B-430",
   "kind": "bug",
   "title": "Bug (reported Oct 27): Once a Claude token ceiling is reached, read-along in Notes shows the same limit toast again about every 11 minutes while he keeps writing; it should say so once per ceiling and hold read-along off until the Worker's reset time.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "After a ceiling refusal, read-along shows the toast once per hour or day ceiling and asks nothing until the reset; a test drives two refusals and sees one toast; npm test green.",
+  "milestone": "After Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -7899,6 +7899,10 @@
   "reportedAt": "2026-10-27T19:15:01.210Z",
   "board": {
    "row": "v4 B-430: Once a Claude token ceiling is reached, read-along in Notes shows the…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-27T19:15:01.668Z"
   }
  }
 ]
