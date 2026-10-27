@@ -501,3 +501,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-281 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; folded into B-297 to B-300 (Study), B-301 (Progress) and B-302 (Record). |
 | B-282 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; replaced by B-303. |
 | B-321 | task |  |  | plan 1eW5FgG9VNzhCySbL1uWuo | declined | Waiting on Matt to scope it: its definition of done is written with him when he does (hand-off 3). |
+| B-429 | bug | 2026-10-27T18:20:01.218Z | The Worker's Claude proxy keeps a note's read mark when the connection drops while the answer body is being read (pwa/claude.js reads r.text() outside the try), so that note text is then refused as unchanged; and the B-418 tests do not cover restoring an earlier mark, the concurrent-mark guard, a failed usage write or a 2xx with a bad body. | B-418 second review | inbox |  |
