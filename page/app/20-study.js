@@ -383,7 +383,10 @@
           'span',
           'meta',
           // B-431: the date and the days left each stay whole on the phone (non-breaking spaces inside each)
-          ' · ' + nbsp(dayMonth(ex.date)) + ' · ' + nbsp(days <= 0 ? 'today' : days === 1 ? 'tomorrow' : 'in ' + days + ' days')
+          ' · ' +
+            nbsp(dayMonth(ex.date)) +
+            ' · ' +
+            nbsp(days <= 0 ? 'today' : days === 1 ? 'tomorrow' : 'in ' + days + ' days')
         )
       );
       const bar = el('div', 'pbar ov-bar');
