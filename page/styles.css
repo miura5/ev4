@@ -2236,3 +2236,14 @@ body[data-view=notes] .mh .n-sync:not([hidden])~.new-wrap{margin-left:12px}
 @media (max-width:599px){
   #new-dlg .new-body #new-text,#p-record .rec-detail select.idea-kind{font-size:max(16px,calc(14.5px * var(--ts)))}
 }
+/* B-431 (UI review of 74499d4): read-along's toggle is filled only when on; on the phone the header's New sits inside
+   the 48 px header with room above and below (its tap area still 44 px), Back to now takes its place in the header's
+   row instead of over the title, and the tab bar stays inside the screen. */
+.mh .n-read{background:transparent;box-shadow:none}
+.mh .n-read[aria-pressed=true]{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);color:var(--text)}
+@media (max-width:599px){
+  .mh #new-btn{height:34px;min-height:34px;position:relative}
+  .mh #new-btn::after{content:"";position:absolute;inset:-5px 0}
+  body.captions .mh .cap-now{position:static;left:auto;transform:none;margin-left:auto;min-height:32px;height:32px}
+  .side{box-sizing:border-box}
+}

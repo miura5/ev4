@@ -382,7 +382,8 @@
         el(
           'span',
           'meta',
-          ' · ' + dayMonth(ex.date) + ' · ' + (days <= 0 ? 'today' : days === 1 ? 'tomorrow' : 'in ' + days + ' days')
+          // B-431: the date and the days left each stay whole on the phone (non-breaking spaces inside each)
+          ' · ' + nbsp(dayMonth(ex.date)) + ' · ' + nbsp(days <= 0 ? 'today' : days === 1 ? 'tomorrow' : 'in ' + days + ' days')
         )
       );
       const bar = el('div', 'pbar ov-bar');
@@ -416,7 +417,7 @@
         el(
           'span',
           'mini',
-          dayMonth(ex.date) + ' · ' + (days <= 0 ? 'today' : days === 1 ? 'tomorrow' : 'in ' + days + ' days')
+          nbsp(dayMonth(ex.date)) + ' · ' + nbsp(days <= 0 ? 'today' : days === 1 ? 'tomorrow' : 'in ' + days + ' days')
         )
       );
       d.append(
@@ -695,6 +696,7 @@
     }
     const OV_MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const OV_WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const nbsp = t => String(t).replace(/ /g, '\u00a0');
     function dayMonth(ds) {
       const d = new Date(ds + 'T12:00:00Z');
       return OV_WD[d.getUTCDay()] + ' ' + d.getUTCDate() + ' ' + OV_MON[d.getUTCMonth()];
