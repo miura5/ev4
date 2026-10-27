@@ -796,7 +796,11 @@
             // B-418 (D-339): a token ceiling's refusal keeps the Worker's plain sentence for the job's result
             const own = await r.json().catch(() => null);
             if (own && own.code === 'ceiling' && own.error)
-              throw Object.assign(new Error(String(own.error)), { code: 'ceiling' });
+              throw Object.assign(new Error(String(own.error)), {
+                code: 'ceiling',
+                scope: own.scope || null,
+                until: Number(own.until) || null, // B-430: when the ceiling resets
+              });
             throw new Error('the Worker answered ' + r.status);
           }
           return r.json();

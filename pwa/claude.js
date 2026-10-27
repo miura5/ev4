@@ -9,21 +9,61 @@
 // The 10 idle minutes after which read-along stops are the page's (core sessions readAlongAsk): an idle page sends
 // nothing new, and anything it did send would meet the rules above.
 // GET /api/claude/usage answers this hour's and today's tokens and the ceilings, read-only.
+// B-435 (D-349): the ceilings are a setting, kept in D1 (claude_settings) and changed with PUT /api/claude/limits
+// {hour, day} with no release; a stored value wins over the Worker's vars, which win over the defaults here.
 
-/** The ceilings, in tokens (input, output and cache together): about twice a heavy hour and four times a heavy day. */
-export const HOUR_TOKENS = 150000;
-export const DAY_TOKENS = 600000;
+/** The default ceilings, in tokens (input, output and cache together); D-349 (Matt's option A): 500,000 an hour and
+ * 1,500,000 a day, the Console's monthly spend limit being the hard money stop. */
+export const HOUR_TOKENS = 500000;
+export const DAY_TOKENS = 1500000;
+/** A stored ceiling must be a whole number of tokens from 1,000 to this. */
+export const MAX_LIMIT = 50000000;
 /** A note is read at most once per this long (spec.constants.studyWatch.commentGapSeconds, 75 s). */
 export const READ_GAP_MS = 75000;
 
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 const posInt = (v, d) => (Number.isInteger(Number(v)) && Number(v) > 0 ? Number(v) : d);
-/** The ceilings this Worker keeps: its vars CLAUDE_HOUR_TOKENS and CLAUDE_DAY_TOKENS, else the defaults. */
-export const ceilingsOf = env => ({
-  hour: posInt(env.CLAUDE_HOUR_TOKENS, HOUR_TOKENS),
-  day: posInt(env.CLAUDE_DAY_TOKENS, DAY_TOKENS),
+/** The ceilings this Worker keeps: the stored setting (B-435), else its vars CLAUDE_HOUR_TOKENS and
+ * CLAUDE_DAY_TOKENS, else the defaults. */
+export const ceilingsOf = (env, stored = {}) => ({
+  hour: posInt(stored.hour, posInt(env.CLAUDE_HOUR_TOKENS, HOUR_TOKENS)),
+  day: posInt(stored.day, posInt(env.CLAUDE_DAY_TOKENS, DAY_TOKENS)),
 });
+const LIMIT_KEYS = { hour: 'claude.hourTokens', day: 'claude.dayTokens' };
+/** The stored ceilings (an empty object when none, or when the table cannot be read: the vars and defaults stand). */
+export async function storedLimits(env) {
+  try {
+    const { results } = await env.DB.prepare('SELECT key, value FROM claude_settings WHERE key IN (?, ?)')
+      .bind(LIMIT_KEYS.hour, LIMIT_KEYS.day)
+      .all();
+    const out = {};
+    for (const r of results || [])
+      for (const [k, key] of Object.entries(LIMIT_KEYS)) if (r.key === key) out[k] = r.value;
+    return out;
+  } catch (e) {
+    console.log('claude_settings: not read:', String(e));
+    return {};
+  }
+}
+export const limitsOf = async env => ceilingsOf(env, await storedLimits(env));
+/** {hour?, day?} checked: a whole number from 1,000 to MAX_LIMIT each, at least one given; else the error string. */
+export function limitsChange(body) {
+  const b = body && typeof body === 'object' ? body : {};
+  const out = {};
+  for (const k of ['hour', 'day']) {
+    if (b[k] == null) continue;
+    const n = Number(b[k]);
+    if (!Number.isInteger(n) || n < 1000 || n > MAX_LIMIT)
+      return k + ': a whole number of tokens from 1000 to ' + MAX_LIMIT;
+    out[k] = n;
+  }
+  if (!Object.keys(out).length) return 'give hour, day or both';
+  const hour = out.hour,
+    day = out.day;
+  if (hour && day && hour > day) return 'the hourly ceiling cannot be above the daily one';
+  return out;
+}
 
 const HOUR_MS = 3600e3;
 const dayOf = ms => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date(ms));
@@ -50,12 +90,22 @@ export async function usageNow(env, ms = Date.now()) {
   return { hour: h ? Number(h.tokens) : 0, day: d ? Number(d.t) : 0 };
 }
 
-/** null while under both ceilings, else the refusal: which one, and the sentence the page shows. */
+/** The next Central midnight after `ms`, in ms (the daily ceiling's reset). */
+export function nextMidnight(ms) {
+  let t = (Math.floor(ms / HOUR_MS) + 1) * HOUR_MS;
+  const hourOf = x =>
+    Number(new Date(x).toLocaleString('en-US', { hour: 'numeric', hourCycle: 'h23', timeZone: 'America/Chicago' }));
+  while (hourOf(t) !== 0) t += HOUR_MS;
+  return t;
+}
+
+/** null while under both ceilings, else the refusal: which one, until when (B-430: `until`, ms), and the sentence. */
 export function ceilingProblem(used, limits, ms = Date.now()) {
   if (used.day >= limits.day)
     return {
       code: 'ceiling',
       scope: 'day',
+      until: nextMidnight(ms),
       used: used.day,
       limit: limits.day,
       error: 'E.V. has used today’s Claude allowance, so asking Claude pauses until midnight.',
@@ -64,6 +114,7 @@ export function ceilingProblem(used, limits, ms = Date.now()) {
     return {
       code: 'ceiling',
       scope: 'hour',
+      until: (Math.floor(ms / HOUR_MS) + 1) * HOUR_MS,
       used: used.hour,
       limit: limits.hour,
       error: `E.V. has used this hour’s Claude allowance, so asking Claude pauses until ${clockOf((Math.floor(ms / HOUR_MS) + 1) * HOUR_MS)}.`,
@@ -113,7 +164,27 @@ export async function claimRead(env, read, ms = Date.now()) {
 /** POST /api/claude with {messages, tools?, tool_choice?, read?}, and GET /api/claude/usage. */
 export async function handleClaude(request, env, url) {
   if (url.pathname === '/api/claude/usage' && request.method === 'GET')
-    return json({ ...(await usageNow(env)), limits: ceilingsOf(env) });
+    return json({ ...(await usageNow(env)), limits: await limitsOf(env) });
+  // B-435: the ceilings are changed here, with no release; each change is a row's new value (nothing is deleted)
+  if (url.pathname === '/api/claude/limits' && request.method === 'GET') return json({ limits: await limitsOf(env) });
+  if (url.pathname === '/api/claude/limits' && request.method === 'PUT') {
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return json({ error: 'the body is not JSON' }, 400);
+    }
+    const change = limitsChange(body);
+    if (typeof change === 'string') return json({ error: change }, 400);
+    const now = Date.now();
+    for (const [k, v] of Object.entries(change))
+      await env.DB.prepare(
+        'INSERT INTO claude_settings (key, value, at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, at = excluded.at'
+      )
+        .bind(LIMIT_KEYS[k], v, now)
+        .run();
+    return json({ limits: await limitsOf(env) });
+  }
   if (url.pathname !== '/api/claude' || request.method !== 'POST') return json({ error: 'no such route' }, 404);
   if (!env.ANTHROPIC_API_KEY) return json({ error: 'no ANTHROPIC_API_KEY secret on the Worker' }, 503);
   let body;
@@ -125,7 +196,7 @@ export async function handleClaude(request, env, url) {
   const { messages, tools, tool_choice } = body || {};
   const read = readOf(body && body.read);
   if (typeof read === 'string') return json({ error: read }, 400);
-  const over = ceilingProblem(await usageNow(env), ceilingsOf(env));
+  const over = ceilingProblem(await usageNow(env), await limitsOf(env));
   if (over) return json(over, 429);
   // the mark before the claim, so a failed call gives the text back (B-418 review): the same text may be read again
   const before = read

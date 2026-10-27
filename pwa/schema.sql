@@ -21,3 +21,10 @@ CREATE TABLE IF NOT EXISTS claude_reads (
   h TEXT NOT NULL,
   at INTEGER NOT NULL
 );
+
+-- B-435 (D-349): settings changed without a release (the Claude ceilings: claude.hourTokens, claude.dayTokens).
+CREATE TABLE IF NOT EXISTS claude_settings (
+  key TEXT PRIMARY KEY,
+  value INTEGER NOT NULL,
+  at INTEGER NOT NULL
+);

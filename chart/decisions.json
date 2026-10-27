@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-349",
+  "date": "Oct 27",
+  "title": "Claude ceilings: 500k an hour, 1.5M a day, kept as a D1 setting changed without a release",
+  "why": "Matt hit the 150k hourly ceiling in one study session and chose option A: higher ceilings with the Anthropic Console's monthly spend limit as the hard money stop; he asked that such limits be adjustable without a release (B-435). Supersedes D-348's numbers.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-348",
   "date": "Oct 27",
   "title": "B-418's Claude ceilings on the app: 150,000 tokens an hour and 600,000 a day (Central), overridable by Worker vars",

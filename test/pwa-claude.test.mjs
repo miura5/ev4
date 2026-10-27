@@ -240,3 +240,52 @@ test('B-429: a 2xx with a body that is not JSON still counts as read; a failed u
     assert.equal(sent.length, 1);
   });
 });
+
+test('B-435: the ceilings are a setting in D1: PUT /api/claude/limits changes them with no release, checked and kept', async () => {
+  await withApi(100, async ({ ask, env, usage }) => {
+    const call = async (method, body) => {
+      const r = await worker.fetch(
+        new Request('https://ev.example/api/claude/limits', {
+          method,
+          headers: { authorization: 'Bearer t', 'content-type': 'application/json' },
+          ...(body === undefined ? {} : { body: typeof body === 'string' ? body : JSON.stringify(body) }),
+        }),
+        env
+      );
+      return { status: r.status, body: await r.json() };
+    };
+    assert.deepEqual((await call('GET')).body.limits, { hour: HOUR_TOKENS, day: DAY_TOKENS });
+    assert.equal(HOUR_TOKENS, 500000);
+    assert.equal(DAY_TOKENS, 1500000);
+    // refused: nothing given, not a number, out of range, the hour above the day, not JSON
+    for (const bad of [{}, { hour: 'lots' }, { hour: 10 }, { day: 1e9 }, { hour: 900000, day: 800000 }, 'x'])
+      assert.equal((await call('PUT', bad)).status, 400, JSON.stringify(bad));
+    // a stored value wins over the Worker's var and the default, and the usage read shows it
+    env.CLAUDE_HOUR_TOKENS = '200000';
+    const set = await call('PUT', { hour: 1000 });
+    assert.equal(set.status, 200);
+    assert.deepEqual(set.body.limits, { hour: 1000, day: DAY_TOKENS });
+    assert.deepEqual((await usage()).limits, { hour: 1000, day: DAY_TOKENS });
+    // and the asks meet it: 100 tokens a call, so the 11th is past 1,000 and refused with its reset time
+    for (let i = 0; i < 10; i++) assert.equal((await ask()).status, 200);
+    const over = await ask();
+    assert.equal(over.status, 429);
+    assert.equal(over.body.code, 'ceiling');
+    assert.equal(over.body.scope, 'hour');
+    assert.ok(over.body.until > Date.now() && over.body.until <= Date.now() + 3600e3, String(over.body.until));
+    // raised again: asking goes on
+    assert.equal((await call('PUT', { hour: 400000, day: 1200000 })).status, 200);
+    assert.equal((await ask()).status, 200);
+  });
+});
+
+test('B-430: a daily refusal says until Central midnight', async () => {
+  const { nextMidnight } = await import('../pwa/claude.js');
+  // 2026-10-27 15:30 Central (20:30 UTC) -> 2026-10-28 00:00 Central (05:00 UTC)
+  assert.equal(new Date(nextMidnight(Date.parse('2026-10-27T20:30:00Z'))).toISOString(), '2026-10-28T05:00:00.000Z');
+  // across the November clock change: 2026-11-01 00:00 CDT -> the next midnight is 2026-11-02 00:00 CST (06:00 UTC)
+  assert.equal(new Date(nextMidnight(Date.parse('2026-11-01T06:00:00Z'))).toISOString(), '2026-11-02T06:00:00.000Z');
+  const p = ceilingProblem({ hour: 0, day: 2e6 }, { hour: 5e5, day: 1.5e6 }, Date.parse('2026-10-27T20:30:00Z'));
+  assert.equal(p.scope, 'day');
+  assert.equal(p.until, Date.parse('2026-10-28T05:00:00Z'));
+});

@@ -140,7 +140,8 @@ export default {
 
     // /api/claude (B-418, claude.js): one Claude API request on Haiku, with the key added here (D-299) and the model,
     // the length cap, the token ceilings and the read-along limits set here, not by the page (D-339).
-    if (url.pathname === '/api/claude' || url.pathname === '/api/claude/usage') return handleClaude(request, env, url);
+    if (url.pathname === '/api/claude' || url.pathname === '/api/claude/usage' || url.pathname === '/api/claude/limits')
+      return handleClaude(request, env, url);
 
     return json({ error: 'no such route' }, 404);
   },

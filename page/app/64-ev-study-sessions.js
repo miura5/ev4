@@ -382,8 +382,17 @@
         const code = (e && e.code) || 'error';
         if (HIDE.has(code)) T.sampleOff = code;
         if (code === 'unchanged') st.seen = a.seenNext; // another view already read this text
-        if (code === 'rate_limited' || code === 'ceiling') st.lastAsk = Date.now() + 10 * 60e3;
-        if (code === 'ceiling' && e.message) toast(e.message); // the Worker's own words: which limit, and until when
+        if (code === 'rate_limited') st.lastAsk = Date.now() + 10 * 60e3;
+        if (code === 'ceiling') {
+          // B-430: no reads until the ceiling resets (the gate opens a gap after lastAsk), and its words said once
+          const until = Number(e.until) > Date.now() ? Number(e.until) : Date.now() + 10 * 60e3;
+          st.lastAsk = until - (SWC.commentGapSeconds || 75) * 1e3;
+          const key = (e.scope || 'ceiling') + '@' + until;
+          if (e.message && T.ceilingSaid !== key) {
+            T.ceilingSaid = key;
+            toast(e.message); // the Worker's own words: which limit, and until when
+          }
+        }
         return;
       }
       // B-409: a reply that lands after a switch belongs to a session no longer running: dropped; a free read's, once

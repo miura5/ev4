@@ -2205,6 +2205,55 @@ const openNoteId = page =>
       JSON.stringify({ t3, t4 })
     );
 
+    // B-430: a ceiling refusal is said once, and read-along asks nothing more until the ceiling resets
+    await page.evaluate(() => {
+      window.__jsonCalls = [];
+      window.__toasts = [];
+      new MutationObserver(() => {
+        const t = document.getElementById('toast');
+        if (t && !t.hidden && /allowance/.test(t.textContent)) window.__toasts.push(t.textContent);
+      }).observe(document.getElementById('toast'), {
+        childList: true,
+        characterData: true,
+        subtree: true,
+        attributes: true,
+      });
+      const until = Date.now() + 30 * 60e3;
+      window.__sampleFn = p => {
+        if (/reading over his shoulder/.test(JSON.stringify(p)))
+          throw Object.assign(
+            new Error('E.V. has used this hour’s Claude allowance, so asking Claude pauses until 5:00 pm.'),
+            {
+              code: 'ceiling',
+              scope: 'hour',
+              until,
+            }
+          );
+        return {};
+      };
+    });
+    for (const line of ['Hyperkalemia peaks the T wave first.', 'Then the QRS widens as potassium climbs.']) {
+      await page.evaluate(() => {
+        const real = Date.now;
+        Date.now = () => real() + 80e3; // past the 75 s gap each time
+      });
+      await page.click('#note-body');
+      await page.keyboard.press('Control+End');
+      await page.keyboard.press('Enter');
+      await page.keyboard.type(line);
+      await page.keyboard.press('Enter');
+      await settle(page);
+      await readNow();
+      await page.waitForTimeout(1600);
+    }
+    const ceil = await page.evaluate(() => ({ toasts: [...new Set(window.__toasts)].length }));
+    const ceilReads = await reads();
+    ok(
+      `${tag} at a Claude ceiling read-along says so once and asks nothing more until it resets`,
+      ceilReads === 1 && ceil.toasts === 1,
+      JSON.stringify({ reads: ceilReads, ...ceil })
+    );
+
     // a quick note: New note, nothing written, asks Claude nothing
     await page.evaluate(() => {
       window.__jsonCalls = [];

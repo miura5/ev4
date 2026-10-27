@@ -7871,7 +7871,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "Taking it after v4.5.13 went live.",
+  "notes": "Review (fresh subagent): No gaps; mutation-tested seven regressions, each caught. Checks: none retired or loosened. Size: +57 -1.",
   "commit": null,
   "source": "B-418 second review",
   "words": "The Worker's Claude proxy keeps a note's read mark when the connection drops while the answer body is being read (pwa/claude.js reads r.text() outside the try), so that note text is then refused as unchanged; and the B-418 tests do not cover restoring an earlier mark, the concurrent-mark guard, a failed usage write or a 2xx with a bad body.",
@@ -7987,6 +7987,27 @@
   "triage": {
    "outcome": "task",
    "at": "2026-10-27T20:49:48.357Z"
+  }
+ },
+ {
+  "id": "B-435",
+  "kind": "request",
+  "title": "Request (reported Oct 27): Raise E.V.'s Claude ceilings to 500,000 tokens an hour and 1,500,000 a day (option A, with the Console's monthly spend limit as the money stop), and make the ceilings a setting that can be changed without a release; ship it batched with bug fixes, not as its own small release.",
+  "dod": "Defaults 500,000 an hour and 1,500,000 a day; the ceilings are stored in D1 and changed with PUT /api/claude/limits (checked: whole numbers, 1,000 to 50,000,000, hour not above day), a stored value winning over vars and defaults; tests cover it; shipped in a batched release.",
+  "milestone": "After Notes",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt, chat, Oct 27",
+  "words": "Raise E.V.'s Claude ceilings to 500,000 tokens an hour and 1,500,000 a day (option A, with the Console's monthly spend limit as the money stop), and make the ceilings a setting that can be changed without a release; ship it batched with bug fixes, not as its own small release.",
+  "reportedAt": "2026-10-27T21:46:55.623Z",
+  "board": {
+   "row": "v4 B-435: Raise E.V.'s Claude ceilings to 500,000 tokens an hour and 1,500,000…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-27T21:46:55.812Z"
   }
  }
 ]
