@@ -19,6 +19,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { RELEASE, COMMIT } from './release-tag.mjs'; // B-420: the inputs the runner's release-tag step takes, whole
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const REPO = 'miura5/ev4';
@@ -121,6 +122,12 @@ export function appCalls({ target, commit, mattOk = false, release = null }) {
   if (target === 'live' && !mattOk)
     return { ok: false, refusals: ["R-04 (D-083): the live app deploys only on Matt's explicit OK (--matt-ok)"] };
   if (!app || !app.ready) return { ok: true, calls: [] };
+  // B-420: the commit goes into a shell command and the runner's checkout as it is, so only a whole 40-character sha
+  if (!COMMIT.test(String(commit || '')))
+    return {
+      ok: false,
+      refusals: [`app ${target}: the build commit ${JSON.stringify(String(commit || ''))} is not 40 hex characters`],
+    };
   return {
     ok: true,
     calls: [
@@ -129,7 +136,7 @@ export function appCalls({ target, commit, mattOk = false, release = null }) {
         tool: 'Bash',
         // D-343: a release tag made here but not pushed is named, so the runner makes it too and builds the same release
         args: {
-          command: `gh workflow run ${app.workflow} --repo ${REPO} --ref main -f commit=${commit}${release && /^v4\.\d+\.\d+$/.test(release) ? ` -f release=${release}` : ''}`,
+          command: `gh workflow run ${app.workflow} --repo ${REPO} --ref main -f commit=${commit}${release && RELEASE.test(release) ? ` -f release=${release}` : ''}`,
         },
         then: `the read below waits for the run (or gh run list --repo ${REPO} --workflow ${app.workflow} --limit 1)`,
       },

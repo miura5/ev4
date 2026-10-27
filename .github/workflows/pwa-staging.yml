@@ -80,22 +80,6 @@ jobs:
           # B-318: the build's own commit, with its tags, so the page carries the same release as ship's build.
           ref: ${{ inputs.commit || github.sha }}
           fetch-depth: 0
-      # D-343: a release tag ship made here but couldn't push (a cloud session's git proxy refuses tag pushes) is made
-      # in this runner too, at the same commit, so the page carries the same release as ship's build.
-      - name: the release tag ship names, at this commit
-        env:
-          RELEASE: ${{ inputs.release }}
-          COMMIT: ${{ inputs.commit || github.sha }}
-        run: |
-          [ -z "$RELEASE" ] && { echo "no release named"; exit 0; }
-          echo "$RELEASE" | grep -Eq '^v4\.[0-9]+\.[0-9]+$' || { echo "release $RELEASE is not v4.x.y"; exit 1; }
-          git config user.name 'E.V. CI' && git config user.email 'ci@example.invalid'
-          if git rev-parse -q --verify "refs/tags/$RELEASE" >/dev/null; then
-            [ "$(git rev-list -n1 "$RELEASE")" = "$(git rev-parse "$COMMIT")" ] || { echo "$RELEASE is already at another commit"; exit 1; }
-          else
-            git tag -a "$RELEASE" "$COMMIT" -m "E.V. $RELEASE (made in this runner only, D-343)"
-          fi
-          echo "release $RELEASE at $(git rev-parse --short "$COMMIT")"
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -103,6 +87,13 @@ jobs:
           cache-dependency-path: |
             package-lock.json
             pwa/package-lock.json
+      # D-343 (B-420): a release tag ship made but couldn't push (a cloud session's git proxy refuses tag pushes) is
+      # made in this runner too, at the same commit, before the build, so the page carries ship's release.
+      - name: the release tag ship names, at this commit
+        env:
+          RELEASE: ${{ inputs.release }}
+          COMMIT: ${{ inputs.commit || github.sha }}
+        run: node tools/release-tag.mjs "$RELEASE" "$COMMIT"
       - run: npm ci
       - run: npm ci --prefix pwa
       - name: build the staging page and wrap it
