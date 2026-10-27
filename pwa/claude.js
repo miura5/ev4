@@ -11,8 +11,8 @@
 // GET /api/claude/usage answers this hour's and today's tokens and the ceilings, read-only.
 
 /** The ceilings, in tokens (input, output and cache together): about twice a heavy hour and four times a heavy day. */
-export const HOUR_TOKENS = 500000;
-export const DAY_TOKENS = 2000000;
+export const HOUR_TOKENS = 150000;
+export const DAY_TOKENS = 600000;
 /** A note is read at most once per this long (spec.constants.studyWatch.commentGapSeconds, 75 s). */
 export const READ_GAP_MS = 75000;
 

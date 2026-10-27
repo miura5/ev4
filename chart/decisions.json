@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-348",
+  "date": "Oct 27",
+  "title": "B-418's Claude ceilings on the app: 150,000 tokens an hour and 600,000 a day (Central), overridable by Worker vars",
+  "why": "D-339 asks for about twice a heavy hour and four times a heavy day. Its heavy day (about 7 cents of Haiku) covers read-along only, but the ceilings guard every /api/claude call, chats and jobs included, and a refused study-guide job would break studying. These numbers keep a runaway day to a small fraction of a dollar-scale cost while leaving room for a long chat or a big job; they are revisited with the usage meter's first real week.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-347",
   "date": "Oct 26",
   "title": "The plan after Notes moves by milestone: stability window with fixes, then the in-depth review, consolidation, final review, Matt's course",
