@@ -5214,19 +5214,18 @@ async function tap(page, locator, name) {
     const jobs0 = await page.evaluate(
       () => Object.values(window.__db.jobs || {}).filter(j => j.kind === 'build').length
     );
-    await page.evaluate(() => {
-      window.__chatScript = [];
-      window.__chatReply = 'Noted.';
-    });
-    await send(page, 'bug: the timer resets when I switch tabs');
-    await page.waitForTimeout(400);
+    // B-320 (D-306): since the cutover the claude.ai live page is read-only: it says so, and nothing can be sent
+    const ro = await page.evaluate(() => ({
+      text: document.body.innerText.includes('This page is read-only now: E.V. lives in the app.'),
+      composer: !!document.querySelector('#ev-input') && document.querySelector('#ev-input').offsetParent !== null,
+    }));
     const jobs1 = await page.evaluate(
       () => Object.values(window.__db.jobs || {}).filter(j => j.kind === 'build').length
     );
     ok(
-      '[live 390] while the builder cannot read live: no Your turn chip and no build ask',
-      !chips.some(c => /^Your turn/.test(c)) && jobs1 === jobs0,
-      JSON.stringify({ chips, jobs0, jobs1 })
+      '[live 390] the claude.ai live page is read-only since the cutover: it says so, no composer, no Your turn chip, no build ask',
+      ro.text && !ro.composer && !chips.some(c => /^Your turn/.test(c)) && jobs1 === jobs0,
+      JSON.stringify({ ro, chips, jobs0, jobs1 })
     );
     await page.close();
   }
