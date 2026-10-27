@@ -168,3 +168,26 @@ test('B-418: a read-along read goes only on new text, at most once per 75 s per 
     assert.equal(sent.length, 4);
   });
 });
+
+test('B-418 review: a failed API call gives the read back, so the same text is read on the next try; a throw is a 502', async () => {
+  await withApi(100, async ({ ask }) => {
+    const stub = globalThis.fetch;
+    const read = { read: { note: 'n-20261027-b', h: '40-cccccccc' } };
+    // an overloaded answer: passed through, and the mark is put back
+    globalThis.fetch = async () =>
+      new Response(JSON.stringify({ error: { type: 'overloaded_error' } }), { status: 529 });
+    assert.equal((await ask(read)).status, 529);
+    // fetch itself throws: a JSON 502, and the mark is put back again
+    globalThis.fetch = async () => {
+      throw new Error('network down');
+    };
+    const thrown = await ask(read);
+    assert.equal(thrown.status, 502);
+    assert.match(thrown.body.error, /could not be reached/);
+    // the same text, straight after: not "unchanged", not "too soon": read now
+    globalThis.fetch = stub;
+    assert.equal((await ask(read)).status, 200);
+    // and once read, the same text is unchanged
+    assert.equal((await ask(read)).status, 409);
+  });
+});

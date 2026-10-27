@@ -127,6 +127,10 @@ export async function handleClaude(request, env, url) {
   if (typeof read === 'string') return json({ error: read }, 400);
   const over = ceilingProblem(await usageNow(env), ceilingsOf(env));
   if (over) return json(over, 429);
+  // the mark before the claim, so a failed call gives the text back (B-418 review): the same text may be read again
+  const before = read
+    ? await env.DB.prepare('SELECT h, at FROM claude_reads WHERE note = ?').bind(read.note).first()
+    : null;
   if (read) {
     const no = await claimRead(env, read);
     if (no) {
@@ -134,25 +138,48 @@ export async function handleClaude(request, env, url) {
       return json(rest, status);
     }
   }
-  const r = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-api-key': env.ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: env.CLAUDE_MODEL || 'claude-haiku-5-5',
-      max_tokens: 8192, // B-324: a job's answer (a practice set of 15 questions) runs past 4,096
-      messages,
-      ...(tools && tools.length ? { tools, ...(tool_choice ? { tool_choice } : {}) } : {}),
-    }),
-  });
+  const unclaim = async () => {
+    if (!read) return;
+    try {
+      await env.DB.prepare('UPDATE claude_reads SET h = ?, at = ? WHERE note = ? AND h = ?')
+        .bind(before ? before.h : '', before ? before.at : 0, read.note, read.h)
+        .run();
+    } catch (e) {
+      console.log('claude_reads: the mark was not given back:', String(e));
+    }
+  };
+  let r;
+  try {
+    r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: env.CLAUDE_MODEL || 'claude-haiku-5-5',
+        max_tokens: 8192, // B-324: a job's answer (a practice set of 15 questions) runs past 4,096
+        messages,
+        ...(tools && tools.length ? { tools, ...(tool_choice ? { tool_choice } : {}) } : {}),
+      }),
+    });
+  } catch (e) {
+    await unclaim();
+    return json({ error: 'the Claude API could not be reached: ' + String((e && e.message) || e).slice(0, 200) }, 502);
+  }
   const text = await r.text();
+  if (!r.ok) await unclaim();
   let used = 0;
   try {
     used = tokensOf(JSON.parse(text));
   } catch {}
-  if (used) await addUsage(env, used);
+  // an answer already made is returned even when its count can't be written (logged; the next write adds on)
+  if (used)
+    try {
+      await addUsage(env, used);
+    } catch (e) {
+      console.log('claude_usage: not counted:', used, String(e));
+    }
   return new Response(text, { status: r.status, headers: { 'content-type': 'application/json' } });
 }
