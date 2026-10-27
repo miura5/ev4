@@ -9,7 +9,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { build } from '../tools/build.mjs';
-import { buildPwa, HEAD, FOOT, NAME, RECORDS, SHIM } from '../tools/build-pwa.mjs';
+import { buildPwa, releaseKeyed, HEAD, FOOT, NAME, RECORDS, SHIM } from '../tools/build-pwa.mjs';
 import { listRepoFiles } from '../tools/personal-data.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -47,9 +47,11 @@ test('B-309: build-pwa wraps each record’s built page byte for byte, titled E.
     const page = fs.readFileSync(path.join(dir, 'dist/page', record, 'index.html'));
     const html = fs.readFileSync(path.join(out, 'index.html'));
     assert.ok(html.subarray(0, HEAD.length).equals(Buffer.from(HEAD)), record + ': the head comes first');
-    assert.ok(
-      html.subarray(HEAD.length, html.length - FOOT.length).equals(page),
-      record + ': the page is wrapped byte for byte'
+    // byte for byte but for B-434's three file addresses keyed to the release (styles.css, core.js, app.js ?v=<release>)
+    assert.equal(
+      html.subarray(HEAD.length, html.length - FOOT.length).toString(),
+      releaseKeyed(page.toString()),
+      record + ': the page is wrapped byte for byte, its files keyed to the release'
     );
     assert.equal(html.subarray(html.length - FOOT.length).toString(), FOOT);
     const text = html.toString();

@@ -63,6 +63,23 @@ export function jobsSpec(root = ROOT) {
   return { spec: Object.fromEntries(SPEC_KEYS.map(k => [k, spec[k]])), schemas };
 }
 
+/** B-434: the page's stylesheet and scripts asked for under the release's name (styles.css?v=<release>), so a browser or
+ * installed app that kept an earlier copy never pairs this release's scripts with an older stylesheet. */
+export function releaseKeyed(html) {
+  const m = String(html).match(/<meta name="ev-release" content="([^"]+)">/);
+  if (!m) throw new Error('build-pwa: the page names no release (meta ev-release)');
+  const v = encodeURIComponent(m[1]);
+  let out = String(html)
+    .replace('<link rel="stylesheet" href="styles.css">', `<link rel="stylesheet" href="styles.css?v=${v}">`)
+    .replace(
+      "await script('core.js'); await script('app.js');",
+      `await script('core.js?v=${v}'); await script('app.js?v=${v}');`
+    );
+  for (const f of ['styles.css', 'core.js', 'app.js'])
+    if (!out.includes(f + '?v=' + v)) throw new Error('build-pwa: could not key ' + f + ' to the release');
+  return out;
+}
+
 export function buildPwa({ record, root = ROOT, out = path.join(root, 'pwa', 'public') } = {}) {
   if (!RECORDS.includes(record)) throw new Error('build-pwa: --record must be one of ' + RECORDS.join(', '));
   const from = path.join(root, 'dist/page', record);
@@ -80,7 +97,7 @@ export function buildPwa({ record, root = ROOT, out = path.join(root, 'pwa', 'pu
   }
   for (const f of JOB_SHIMS) fs.copyFileSync(path.join(root, 'pwa', f), path.join(out, f));
   fs.writeFileSync(path.join(out, 'jobs-spec.json'), JSON.stringify(jobsSpec(root)));
-  fs.writeFileSync(path.join(out, 'index.html'), wrap(fs.readFileSync(path.join(from, 'index.html'))));
+  fs.writeFileSync(path.join(out, 'index.html'), releaseKeyed(wrap(fs.readFileSync(path.join(from, 'index.html')))));
   return { record, from, out, files: fs.readdirSync(out) };
 }
 

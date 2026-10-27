@@ -264,3 +264,16 @@ test('B-425: no build, run, check or test code reads a file under docs/ (so a do
     assert.deepEqual(uses, [], `${f} reads docs/`);
   }
 });
+
+test('B-434: the app asks for its stylesheet and scripts under the release, so a new release never meets an old stylesheet', async () => {
+  const { releaseKeyed } = await import('../tools/build-pwa.mjs');
+  const shell =
+    '<meta name="ev-release" content="v4.5.13+2">\n<link rel="stylesheet" href="styles.css">\n<script>(async()=>{await script(\'core.js\'); await script(\'app.js\');})()</script>';
+  const out = releaseKeyed(shell);
+  for (const f of ['styles.css', 'core.js', 'app.js']) assert.ok(out.includes(f + '?v=v4.5.13%2B2'), f);
+  assert.throws(() => releaseKeyed('<link rel="stylesheet" href="styles.css">'), /names no release/);
+  // the real shell: its lines are the ones keyed
+  const real = fs.readFileSync(path.join(ROOT, 'page/index.src.html'), 'utf8');
+  assert.ok(real.includes('<link rel="stylesheet" href="styles.css">'));
+  assert.ok(real.includes("await script('core.js'); await script('app.js');"));
+});
