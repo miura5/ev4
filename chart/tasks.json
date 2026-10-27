@@ -7640,7 +7640,7 @@
   "depends": [
    "B-409"
   ],
-  "notes": "Shipped to staging at 74499d4: ship staging GREEN.",
+  "notes": "Staging proof at 74499d4 (ev-staging Worker): usage read 0 then 22 tokens after one real ask; a read-along ask of a note was answered, the same text again refused 409 unchanged, new text within 75 s refused 429 too_soon. The ceiling refusal itself is proven by the unit tests (a staging proof would need a var override or 150,000 real tokens). Second review: both first gaps closed; open on the card: body-read throw keeps the mark, four paths without tests (B-429).",
   "commit": "74499d4",
   "source": "chat, Oct 26 (staging try-out)",
   "words": "A new note should not always start a study session, since many notes are quick. Let him turn E.V.'s session on and off from the note (or start it after a few minutes of writing), with a clear active-note state and a guard so an open but idle note never keeps E.V. reading it.",
