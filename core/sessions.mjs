@@ -278,6 +278,7 @@ export function makeSessions(core) {
     readSeconds: 30,
     commentMinChars: 20,
     commentGapSeconds: 75,
+    readAlongIdleMinutes: 10,
     ...((core.C && core.C.studyWatch) || {}),
   });
   const SESSION_SOURCE = 'Study session';
@@ -683,6 +684,32 @@ export function makeSessions(core) {
     };
   }
 
+  /**
+   * B-418 (D-339): read-along, on the note he is writing. Whether a read goes now, from what the page last read (seen),
+   * the note's text now, whether it changed since the page's last look (typing: then complete lines only), when it last
+   * changed and when the last read went. {ask: true, added, before, seenNext}, or {ask: false, why} with why one of
+   * first (what is written when reading starts counts as read: seen comes back as the text), same (no new text: never
+   * a second read of the same text), idle (nothing written for readAlongIdleMinutes: reading stops until he writes),
+   * small (under commentMinChars of new text) or soon (within commentGapSeconds of the last read). The Worker holds the
+   * same text and gap rules (pwa/claude.js); this keeps the page from asking.
+   */
+  function readAlongAsk({ text, seen, typing = false, changedAt = 0, lastAsk = 0, now = Date.now() }) {
+    const c = SW();
+    const t = String(text == null ? '' : text);
+    if (seen == null) return { ask: false, why: 'first', seen: t };
+    if (t === seen) return { ask: false, why: 'same' };
+    if (now - changedAt >= c.readAlongIdleMinutes * 60e3) return { ask: false, why: 'idle' };
+    const grew = t.startsWith(seen);
+    let added = grew ? t.slice(seen.length) : t.slice(-1200);
+    if (typing) {
+      const k = added.lastIndexOf('\n');
+      added = k >= 0 ? added.slice(0, k + 1) : '';
+    }
+    if (added.replace(/\s/g, '').length < c.commentMinChars) return { ask: false, why: 'small' };
+    if (now - lastAsk < c.commentGapSeconds * 1e3) return { ask: false, why: 'soon' };
+    return { ask: true, added, before: grew ? seen.slice(-800) : '', seenNext: grew ? seen + added : t };
+  }
+
   /** The wrap-up prompt (Study Watch's format, as JSON). transcript: [{who: 'E.V.'|'Matt', text}] from the session. */
   function wrapPrompt({ noteName, transcript, context, opening }) {
     const turns = (transcript || [])
@@ -1055,6 +1082,7 @@ export function makeSessions(core) {
     openCheckPrompt,
     parseOpenCheck,
     commentPrompt,
+    readAlongAsk,
     parseComment,
     wrapPrompt,
     parseWrap,

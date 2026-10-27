@@ -722,3 +722,50 @@ test('B-411 review: a filing mark from before an Undo is void; the later End fil
   assert.deepEqual(EV.closeFindings(r.writes), r.writes.slice(1));
   assert.deepEqual(EV.closeUpdate(r.writes), [r.writes[0]]);
 });
+
+test('B-418 (D-339): read-along reads new text only, complete lines while typing, at most once per 75 s, and stops after 10 idle minutes', () => {
+  const N = Date.parse(T0);
+  const base = { changedAt: N, lastAsk: 0, now: N };
+  // a note opened (or a new one before a word): what is written counts as read, so a quick note costs nothing
+  assert.deepEqual(EV.readAlongAsk({ ...base, text: 'Old lines.', seen: null }), {
+    ask: false,
+    why: 'first',
+    seen: 'Old lines.',
+  });
+  assert.equal(EV.readAlongAsk({ ...base, text: '', seen: '' }).why, 'same');
+  assert.equal(EV.readAlongAsk({ ...base, text: 'Old lines.', seen: 'Old lines.' }).why, 'same');
+  const line = 'Potassium shifts into cells with insulin.\n';
+  const a = EV.readAlongAsk({ ...base, text: 'Old lines.\n' + line, seen: 'Old lines.\n' });
+  assert.equal(a.ask, true);
+  assert.equal(a.added, line);
+  assert.equal(a.before, 'Old lines.\n');
+  assert.equal(a.seenNext, 'Old lines.\n' + line);
+  // still typing: the unfinished line waits
+  assert.equal(
+    EV.readAlongAsk({ ...base, typing: true, text: 'Old lines.\nPotassium shifts into cells', seen: 'Old lines.\n' })
+      .why,
+    'small'
+  );
+  assert.equal(EV.readAlongAsk({ ...base, text: 'Old lines.\nK+.', seen: 'Old lines.\n' }).why, 'small');
+  // within 75 s of the last read
+  assert.equal(
+    EV.readAlongAsk({ ...base, lastAsk: N - 74e3, text: 'Old lines.\n' + line, seen: 'Old lines.\n' }).why,
+    'soon'
+  );
+  assert.equal(
+    EV.readAlongAsk({ ...base, lastAsk: N - 75e3, text: 'Old lines.\n' + line, seen: 'Old lines.\n' }).ask,
+    true
+  );
+  // nothing written for 10 minutes: no read, until he writes again
+  const idle = { ...base, changedAt: N - 10 * 60e3 };
+  assert.equal(EV.readAlongAsk({ ...idle, text: 'Old lines.\n' + line, seen: 'Old lines.\n' }).why, 'idle');
+  assert.equal(
+    EV.readAlongAsk({ ...base, changedAt: N - 9 * 60e3, text: 'Old lines.\n' + line, seen: 'Old lines.\n' }).ask,
+    true
+  );
+  // a rewrite reads the end
+  const r = EV.readAlongAsk({ ...base, text: 'New start.\n' + line, seen: 'Old lines.\n' });
+  assert.equal(r.ask, true);
+  assert.equal(r.before, '');
+  assert.equal(r.seenNext, 'New start.\n' + line);
+});

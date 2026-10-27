@@ -40,6 +40,7 @@
       if (document.visibilityState === 'visible') {
         SS.mayClaim = true;
         SS.nextRead = 0;
+        RA.nextRead = 0; // B-418: the open note's read-along reads at once too
       }
     });
     // B-314 (D-298): a session not on a note in Notes (the phone's, or a Today task's) reads no note: it keeps time,
@@ -313,9 +314,11 @@
         if (HIDE.has(code)) T.sampleOff = code;
         await skip(
           'sample-' + code,
-          code === 'rate_limited'
-            ? 'You’ve hit a usage limit, so checks pause until it resets. The session keeps time.'
-            : SAMPLE_COPY[code] || 'That check didn’t go through. I’ll try again at the next one.'
+          code === 'ceiling' && e.message
+            ? e.message + ' The session keeps time.' // B-418: the Worker's words
+            : code === 'rate_limited'
+              ? 'You’ve hit a usage limit, so checks pause until it resets. The session keeps time.'
+              : SAMPLE_COPY[code] || 'That check didn’t go through. I’ll try again at the next one.'
         ).catch(() => {});
       } finally {
         SS.busy = false;
@@ -327,8 +330,98 @@
     // land, asks Claude whether one of them earns a word (a connection, an exam point, a slip). Most reads say nothing.
     // Her line is posted to the conversation; the line of his it answers stays in this page's memory (SS.quotes), never
     // in the record. A comment writes a check event marked comment, so the note's mark and the idle count move with it.
+    // B-418 (D-339): she reads along in the note he is writing by default, session or not, unless the note's toggle is
+    // off. A session's note is read by readTick, the open note with no session on it by freeReadTick; both ask through
+    // readAlong, whose rules are core's readAlongAsk (new text only, at most once per commentGapSeconds, none after
+    // readAlongIdleMinutes with nothing written). In the app the ask carries the note's mark, and the Worker holds the
+    // same text and gap limits and the hourly and daily token ceilings (pwa/claude.js).
+    const readMark = (id, text) => {
+      if (!(window.claude && window.claude.host === 'ev-app')) return {};
+      const m = E.noteMark(text);
+      return { read: { note: id, h: m.len + '-' + m.h } };
+    };
+    // the open note's own chat, for her lines on it when no session runs on it (derived, like a session's)
+    const noteThread = id => 'th-' + ('note-' + String(id)).replace(/[^A-Za-z0-9-]/g, '-').slice(0, 77);
+    async function readAlong(st, note, s) {
+      if (!readAlongOn(note.id)) {
+        st.seen = null; // off: what he writes meanwhile is never read; turned back on, reading starts from there
+        return;
+      }
+      const text = String(note.text || '');
+      const prev = st.text;
+      st.text = text;
+      if (prev !== text) st.changedAt = Date.now();
+      const a = E.readAlongAsk({
+        text,
+        seen: st.seen,
+        typing: prev !== text, // still typing: complete lines only
+        changedAt: st.changedAt || 0,
+        lastAsk: st.lastAsk || 0,
+        now: Date.now(),
+      });
+      if (a.why === 'first') st.seen = a.seen; // opened mid-way: what is already written counts as read
+      if (!a.ask || !sample || T.sampleOff) return;
+      st.lastAsk = Date.now();
+      if (s) {
+        SS.thinking = true;
+        renderSession();
+      }
+      let out;
+      try {
+        out = await sample.json(
+          E.commentPrompt({
+            noteName: note.name,
+            opening: text.slice(0, SWC.openingChars || 800),
+            before: a.before,
+            added: a.added,
+            context: sessCtx(),
+          }),
+          { modelTier: 'quick', cache: false, ...readMark(note.id, text) }
+        );
+      } catch (e) {
+        const code = (e && e.code) || 'error';
+        if (HIDE.has(code)) T.sampleOff = code;
+        if (code === 'unchanged') st.seen = a.seenNext; // another view already read this text
+        if (code === 'rate_limited' || code === 'ceiling') st.lastAsk = Date.now() + 10 * 60e3;
+        if (code === 'ceiling' && e.message) toast(e.message); // the Worker's own words: which limit, and until when
+        return;
+      }
+      // B-409: a reply that lands after a switch belongs to a session no longer running: dropped; a free read's, once
+      // the note is closed or its toggle turned off
+      if (s) {
+        const cur = activeSession();
+        if (!cur || cur.id !== s.id || cur.status !== 'active') return;
+      } else if (NOTE.open !== note.id || !readAlongOn(note.id)) return;
+      st.seen = a.seenNext;
+      if (s) SS.added = a.added;
+      const c = E.parseComment(out, a.added);
+      if (!c) return;
+      const id = msgId('e');
+      if (c.quote) SS.quotes.set(id, c.quote);
+      await postMsg({
+        id,
+        role: 'ev',
+        text: c.say,
+        at: now(),
+        tier: 'quick',
+        ...(s ? thOf(s) : { thread: noteThread(note.id) }),
+      });
+      if (s) {
+        sessPing(s, false);
+        const m2 = E.noteMark(text);
+        await sessEvent(s, 'check', {
+          comment: true,
+          kind: c.kind,
+          msgId: id,
+          noteId: note.id,
+          len: m2.len,
+          h: m2.h,
+          modifiedAt: note.modifiedAt || null,
+        });
+      } else popPing(noteThread(note.id), false, true);
+      SS.alertUntil = Date.now() + 4500;
+    }
     async function readTick(s) {
-      const sid = s.id; // B-409: the session this read is for
       if (noteless(s)) return;
       if (SS.reading || SS.busy || Date.now() < SS.nextRead) return;
       SS.reading = true;
@@ -342,77 +435,35 @@
         }
         if (!p || !p.found) return;
         const note = p.note || {};
-        const text = String(note.text || '');
-        const prev = SS.text;
-        SS.text = text;
         SS.note = { id: note.id, name: note.name, folder: note.folder || '', title: note.title || '' };
-        if (prev !== text) SS.changedAt = Date.now();
-
-        if (SS.seen == null) {
-          SS.seen = text;
-          return;
-        } // opened mid-session: what is already written counts as read
-        const grew = text.startsWith(SS.seen);
-        let added = grew ? text.slice(SS.seen.length) : text.slice(-1200);
-        if (prev !== text) {
-          const k = added.lastIndexOf('\n');
-          added = k >= 0 ? added.slice(0, k + 1) : '';
-        } // still typing: complete lines only
-        if (
-          added.replace(/\s/g, '').length < (SWC.commentMinChars || 20) ||
-          Date.now() - SS.lastAsk < (SWC.commentGapSeconds || 75) * 1e3
-        )
-          return;
-        const seenNext = grew ? SS.seen + added : text;
-        const before = grew ? SS.seen.slice(-800) : '';
-        if (!sample || T.sampleOff) return;
-        SS.lastAsk = Date.now();
-        SS.thinking = true;
-        renderSession();
-        let out;
-        try {
-          out = await sample.json(
-            E.commentPrompt({
-              noteName: note.name,
-              opening: text.slice(0, SWC.openingChars || 800),
-              before,
-              added,
-              context: sessCtx(),
-            }),
-            { modelTier: 'quick', cache: false }
-          );
-        } catch (e) {
-          const code = (e && e.code) || 'error';
-          if (HIDE.has(code)) T.sampleOff = code;
-          if (code === 'rate_limited') SS.lastAsk = Date.now() + 10 * 60e3;
-          return;
-        }
-        // B-409: a reply that lands after a switch belongs to a session no longer running: dropped
-        const cur = activeSession();
-        if (!cur || cur.id !== sid || cur.status !== 'active') return;
-        SS.seen = seenNext;
-        SS.added = added;
-        const c = E.parseComment(out, added);
-        if (!c) return;
-        const id = msgId('e');
-        if (c.quote) SS.quotes.set(id, c.quote);
-        await postMsg({ id, role: 'ev', text: c.say, at: now(), tier: 'quick', ...thOf(s) });
-        sessPing(s, false);
-        const m2 = E.noteMark(text);
-        await sessEvent(s, 'check', {
-          comment: true,
-          kind: c.kind,
-          msgId: id,
-          noteId: note.id,
-          len: m2.len,
-          h: m2.h,
-          modifiedAt: note.modifiedAt || null,
-        });
-        SS.alertUntil = Date.now() + 4500;
+        await readAlong(SS, note, s);
       } finally {
         SS.reading = false;
         SS.thinking = false;
       }
+    }
+    // B-418: the note open in Notes when no running session is on it
+    const RA = { noteId: null, seen: null, text: null, changedAt: 0, lastAsk: 0, nextRead: 0, reading: false };
+    function freeReadTick(s) {
+      if (!COMMENT || !M || RA.reading || SS.busy || document.visibilityState === 'hidden') return;
+      if (!notesOn() || ui.tab !== 'notes' || NOTE.view !== 'editor' || !NOTE.open || !NOTE.blocks) return;
+      if (s && s.status === 'active' && noteOfSession(s) === NOTE.open) return; // its session reads it (readTick)
+      const id = NOTE.open;
+      if (RA.noteId !== id)
+        Object.assign(RA, { noteId: id, seen: null, text: null, changedAt: Date.now(), nextRead: 0 });
+      if (Date.now() < RA.nextRead) return;
+      RA.nextRead = Date.now() + (SWC.readSeconds || 30) * 1e3;
+      RA.reading = true;
+      const blocks = NOTE.blocks;
+      readAlong(
+        RA,
+        { id, name: E.noteTitleOf(blocks) || 'Untitled', text: blocks.map(b => E.noteText(b)).join('\n') },
+        null
+      )
+        .catch(() => {})
+        .finally(() => {
+          RA.reading = false;
+        });
     }
     // The checkpoint every checkMinutes in comment mode: no Claude call, only whether he wrote (the idle count that ends a
     // session left alone, and the mark a quiz starts from).
@@ -822,6 +873,7 @@
       }
       const s = activeSession();
       renderSession();
+      freeReadTick(s); // B-418 (D-339): read-along in the open note, session or not
       if (M && loaded.has('sessions')) switchTick(); // B-406: a switch's Undo runs out, then its session is filed
       if (!s || !M || SS.busy) return;
       if (s.status === 'ending') {
@@ -920,8 +972,13 @@
     // A line of hers in a Notes session's chat brings the chat up: a check opens the pop-up (without taking the focus
     // from his note), a comment shows as its chip. On Conversation the chip waits.
     function sessPing(s, open) {
-      if (!isTimed(s) || !popReady() || !DESK.matches) return;
-      POP.th = sThread(s);
+      if (isTimed(s)) popPing(sThread(s), open);
+    }
+    // B-418: a free read's line goes to its note's chat (keep: never taking over a pop-up open on another chat)
+    function popPing(th, open, keep = false) {
+      if (!popReady() || !DESK.matches) return;
+      if (keep && POP.open && POP.th && POP.th !== th) return;
+      POP.th = th;
       if (open && ui.tab !== 'ev') {
         POP.open = true;
         POP.min = false;

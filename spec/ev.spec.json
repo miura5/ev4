@@ -1056,7 +1056,8 @@
    "mode": "comment",
    "readSeconds": 30,
    "commentMinChars": 20,
-   "commentGapSeconds": 75
+   "commentGapSeconds": 75,
+   "readAlongIdleMinutes": 10
   },
   "library": {
    "chunkChars": 900,

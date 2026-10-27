@@ -7,7 +7,8 @@
 // session naming notes/<id> with its controls in the strip; a check reads the open note through sample in the session's
 // own chat; a second session ends and logs the first, and Undo puts back the note, the chat, the answer and the timer;
 // Study with E.V. and a Today task start one; End in the strip saves it. B-407: a session's miss is proposed and shows
-// in Study's button, her Study line and the sidebar after the chat closes, and To review's Accept counts it.
+// in Study's button, her Study line and the sidebar after the chat closes, and To review's Accept counts it. B-418: read-along
+// is on by default in an open note, session or not; the header's toggle turns it off per note; a quick note asks nothing.
 //   node test/harness/notes.cjs [record dir | synthetic] [screenshots dir]
 // Run `node tools/build.mjs` first. Exit code 1 when any check fails. EV_CPU_SLOWDOWN=<n> runs every page at 1/n of
 // the CPU's speed (B-421: the timing checks must hold on a slow runner).
@@ -2068,6 +2069,161 @@ const openNoteId = page =>
       return x && !x.hidden && x.textContent === 'Declined. Nothing is counted.';
     });
     ok(`${tag} Decline says "Declined. Nothing is counted."`, declined, '');
+    ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
+    await page.context().close();
+  }
+
+  // ---- B-418 (D-339): read-along is on by default in the note he is writing, session or not; the toggle in the note's
+  // header turns it off for that note (remembered across a reload, and only for that note); a quick note with no new
+  // text asks Claude nothing
+  {
+    const { page, errors } = await open(browser, { width: 1280, height: 860 });
+    const tag = '[1280 read-along]';
+    const reads = () =>
+      page.evaluate(
+        () => (window.__jsonCalls || []).filter(x => /reading over his shoulder/.test(JSON.stringify(x.prompt))).length
+      );
+    const readNow = () => page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    const toggle = () =>
+      page.evaluate(() => {
+        const b = document.getElementById('notes-read');
+        return b && b.getClientRects().length ? { text: b.textContent, pressed: b.getAttribute('aria-pressed') } : null;
+      });
+    const noteThread = id => 'th-' + ('note-' + id).replace(/[^A-Za-z0-9-]/g, '-').slice(0, 77);
+    const linesIn = th =>
+      page.evaluate(
+        t =>
+          Object.values(window.__db.talk || {}).flatMap(d =>
+            Object.values(d.messages || {})
+              .filter(m => m.thread === t)
+              .map(m => m.text)
+          ),
+        th
+      );
+    await page.evaluate(() => {
+      window.__jsonCalls = [];
+      window.__sampleFn = p =>
+        /reading over his shoulder/.test(JSON.stringify(p))
+          ? { say: 'Right: low potassium flattens the T wave.', quote: null, kind: 'exam' }
+          : {};
+    });
+    await page.click('#tab-notes');
+    await until(page, () => !document.getElementById('p-notes').hidden);
+    const [n1, n2] = await page.evaluate(() =>
+      [...document.querySelectorAll('#notes-rows .n-row')].map(r => r.dataset.note)
+    );
+    const sessionsBefore = await page.evaluate(() => Object.keys(window.__db.sessions || {}).length);
+
+    // a note he has, opened with no session: the toggle reads Reading along, and a new line gets her word in the note's
+    // own chat
+    await openFromList(page, n1);
+    await until(page, () => !document.getElementById('notes-editor').hidden);
+    const t1 = await toggle();
+    ok(
+      `${tag} the note's header shows the toggle on by default`,
+      !!t1 && t1.text === 'Reading along' && t1.pressed === 'true',
+      JSON.stringify(t1)
+    );
+    await readNow();
+    await page.waitForTimeout(1600); // the first read takes what is written as read: no ask
+    const r0 = await reads();
+    await page.click('#note-body');
+    await page.keyboard.press('Control+End');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('Hypokalemia flattens the T wave and brings out a U wave.');
+    await page.keyboard.press('Enter');
+    await settle(page);
+    await readNow();
+    const said = await until(
+      page,
+      th =>
+        Object.values(window.__db.talk || {}).some(d =>
+          Object.values(d.messages || {}).some(m => m.thread === th && /flattens the T wave/.test(m.text))
+        ),
+      noteThread(n1),
+      6000
+    );
+    const prompt = await page.evaluate(() => {
+      const c = (window.__jsonCalls || [])
+        .filter(x => /reading over his shoulder/.test(JSON.stringify(x.prompt)))
+        .pop();
+      return c ? String(c.prompt) : '';
+    });
+    ok(
+      `${tag} with no session, opening a note asks nothing, and a new line is read and answered in the note's chat`,
+      r0 === 0 &&
+        said &&
+        /brings out a U wave/.test(prompt) &&
+        (await page.evaluate(() => Object.keys(window.__db.sessions || {}).length)) === sessionsBefore,
+      JSON.stringify({ r0, said, prompt: prompt.slice(-160) })
+    );
+    const lines = await linesIn(noteThread(n1));
+    ok(`${tag} her line on the note is one line in that note's chat`, lines.length === 1, JSON.stringify(lines));
+    // the same text again is never read twice
+    const r1 = await reads();
+    await page.evaluate(() => {
+      const real = Date.now.bind(Date);
+      Date.now = () => real() + 80e3; // past the 75 s gap
+    });
+    await readNow();
+    await page.waitForTimeout(1600);
+    ok(`${tag} unchanged text is not read again`, (await reads()) === r1, String((await reads()) - r1));
+
+    // off: the toggle says so, and a new line is not read
+    await page.click('#notes-read');
+    const t2 = await toggle();
+    await page.click('#note-body');
+    await page.keyboard.press('Control+End');
+    await page.keyboard.type('Peaked T waves mean hyperkalemia: check the potassium now.');
+    await page.keyboard.press('Enter');
+    await settle(page);
+    await readNow();
+    await page.waitForTimeout(1600);
+    ok(
+      `${tag} the toggle turns read-along off, and then a new line goes to no one`,
+      !!t2 && t2.text === 'Not reading' && t2.pressed === 'false' && (await reads()) === r1,
+      JSON.stringify({ t2, reads: (await reads()) - r1 })
+    );
+    await page.screenshot({ path: path.join(shots, 'b418-read-along-off-1280.png') });
+
+    // remembered per note: off again after a reload, and another note still reads along
+    await page.reload();
+    await until(page, () => /^Live$/.test((document.getElementById('status') || {}).textContent || ''), null, 8000);
+    await page.click('#tab-notes');
+    await until(page, () => !document.getElementById('p-notes').hidden);
+    await openFromList(page, n1);
+    await until(page, () => !document.getElementById('notes-editor').hidden);
+    const t3 = await toggle();
+    await page.click('.mh .n-back');
+    await until(page, () => !document.getElementById('notes-list').hidden);
+    await openFromList(page, n2);
+    await until(page, () => !document.getElementById('notes-editor').hidden);
+    const t4 = await toggle();
+    ok(
+      `${tag} the toggle is remembered for its note across a reload, and only for that note`,
+      !!t3 && t3.pressed === 'false' && !!t4 && t4.pressed === 'true',
+      JSON.stringify({ t3, t4 })
+    );
+
+    // a quick note: New note, nothing written, asks Claude nothing
+    await page.evaluate(() => {
+      window.__jsonCalls = [];
+    });
+    await page.click('.mh .n-back');
+    await until(page, () => !document.getElementById('notes-list').hidden);
+    await page.click('#notes-new');
+    await until(page, () => !document.getElementById('notes-editor').hidden);
+    await settle(page);
+    for (let i = 0; i < 3; i++) {
+      await readNow();
+      await page.waitForTimeout(1200);
+    }
+    const t5 = await toggle();
+    ok(
+      `${tag} a new note reads along by default, and with no new text it asks Claude nothing`,
+      !!t5 && t5.pressed === 'true' && (await reads()) === 0,
+      JSON.stringify({ t5, reads: await reads() })
+    );
     ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
     await page.context().close();
   }

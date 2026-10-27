@@ -94,7 +94,17 @@ test('B-322: the Worker passes an image block to the Claude API as the page sent
     });
   };
   try {
-    const env = { EV_TOKEN: 't', ANTHROPIC_API_KEY: 'k-test', ASSETS: { fetch: () => new Response('') } };
+    // B-418: the token ceilings keep their count in D1, so the Worker has one here (an in-memory SQLite)
+    const { DatabaseSync } = await import('node:sqlite');
+    const sql = new DatabaseSync(':memory:');
+    sql.exec(fs.readFileSync(path.join(ROOT, 'pwa/schema.sql'), 'utf8'));
+    const stmt = (q, args = []) => ({
+      bind: (...a) => stmt(q, a),
+      first: async () => sql.prepare(q).get(...args) ?? null,
+      run: async () => ({ meta: { changes: Number(sql.prepare(q).run(...args).changes) } }),
+    });
+    const DB = { prepare: q => stmt(q) };
+    const env = { EV_TOKEN: 't', ANTHROPIC_API_KEY: 'k-test', DB, ASSETS: { fetch: () => new Response('') } };
     const ask = token =>
       worker.fetch(
         new Request('https://ev.example/api/claude', {

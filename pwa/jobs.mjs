@@ -277,7 +277,10 @@ export async function runJob({ db, spec, schemas, jobId, ask, write, reload, now
   try {
     reply = await ask(request(spec, prepared));
   } catch (e) {
-    const why = 'Claude couldn’t be reached (' + String((e && e.message) || e).slice(0, 120) + '). Try again.';
+    const why =
+      e && e.code === 'ceiling' // B-418 (D-339): a token ceiling, in the Worker's own words
+        ? String(e.message).slice(0, 300)
+        : 'Claude couldn’t be reached (' + String((e && e.message) || e).slice(0, 120) + '). Try again.';
     await save(status('failed', why));
     return { status: 'failed', said: why };
   }

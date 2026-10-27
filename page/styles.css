@@ -2186,5 +2186,9 @@ body[data-view=notes] .mh .n-sync:not([hidden])~.new-wrap{margin-left:12px}
 #p-notes .n-pick .mini{font-size:calc(12.5px * var(--ts));color:var(--faint)}
 #p-notes .n-pick .endline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;margin-bottom:18px;border-radius:9px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2);font-size:calc(13px * var(--ts))}
 #p-notes .n-pick .endline .sp{flex:1;min-width:220px}
-.mh .n-crumb[hidden],.mh .n-sync[hidden],.mh .n-back[hidden]{display:none}
+/* B-418 (D-339): read-along's toggle, beside the sync line */
+.mh .n-read{order:9;margin-left:8px;gap:5px;color:var(--quiet);font-weight:400}
+.mh .n-read .ico{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.mh .n-read[aria-pressed=false]{color:var(--faint)}
+.mh .n-crumb[hidden],.mh .n-sync[hidden],.mh .n-back[hidden],.mh .n-read[hidden]{display:none}
 /* ==== end B-402 ==== */

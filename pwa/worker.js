@@ -2,7 +2,8 @@
 //   - The page's files (public/) are served by Cloudflare's static assets before this code runs.
 //   - /api/db reads and writes the record in D1 (env.DB). Every /api call needs the token (env.EV_TOKEN).
 // The record is one table: docs(c = collection, id, data = the document as JSON, at = when it last changed).
-//   - /api/claude asks Claude (Haiku) with the key the Worker holds as a secret (env.ANTHROPIC_API_KEY, D-299).
+//   - /api/claude asks Claude (Haiku) with the key the Worker holds as a secret (env.ANTHROPIC_API_KEY, D-299), within
+//     an hourly and a daily token ceiling and the read-along limits (B-418, D-339: claude.js).
 //   - B-389: a page save (PUT /api/db/<c>/<id>) carries the version it read, as the run API's if_version: a save to a
 //     document that changed since is refused with 409 and the current version. The token is compared in constant time.
 //   - /api/run/* is the run API (B-312, runapi.js): list, get and an all-or-nothing batch pinned to versions (v, one
@@ -15,6 +16,7 @@ import { handleRun, validCollection, validDocId, canonicalJson } from './runapi.
 import { exportToR2, newestExport, EXPORT_PREFIX } from './backup.js';
 import { tokenOk, ifVersionOf } from './guard.js';
 import { writeProblem } from './notes.js';
+import { handleClaude } from './claude.js';
 
 const OVERLAP_MS = 5000;
 const json = (body, status = 200) =>
@@ -136,27 +138,9 @@ export default {
       );
     }
 
-    // POST /api/claude with {messages, tools?, tool_choice?}: one Claude API request on Haiku. The key is added here
-    // and never leaves Cloudflare (D-299); the model and the length cap are set here, not by the page.
-    if (url.pathname === '/api/claude' && request.method === 'POST') {
-      if (!env.ANTHROPIC_API_KEY) return json({ error: 'no ANTHROPIC_API_KEY secret on the Worker' }, 503);
-      const { messages, tools, tool_choice } = await request.json();
-      const r = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          'x-api-key': env.ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01',
-        },
-        body: JSON.stringify({
-          model: env.CLAUDE_MODEL || 'claude-haiku-5-5',
-          max_tokens: 8192, // B-324: a job's answer (a practice set of 15 questions) runs past 4,096
-          messages,
-          ...(tools && tools.length ? { tools, ...(tool_choice ? { tool_choice } : {}) } : {}),
-        }),
-      });
-      return new Response(r.body, { status: r.status, headers: { 'content-type': 'application/json' } });
-    }
+    // /api/claude (B-418, claude.js): one Claude API request on Haiku, with the key added here (D-299) and the model,
+    // the length cap, the token ceilings and the read-along limits set here, not by the page (D-339).
+    if (url.pathname === '/api/claude' || url.pathname === '/api/claude/usage') return handleClaude(request, env, url);
 
     return json({ error: 'no such route' }, 404);
   },

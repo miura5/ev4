@@ -213,6 +213,7 @@
       tools_unavailable:
         'My tools aren’t available in this view, so I can talk but not act. Send that again and I’ll answer without them.',
       rate_limited: 'You’ve hit a usage limit for now. I’ll be here when it resets.',
+      ceiling: 'E.V. has used its Claude allowance for now. Asking Claude starts again when it resets.', // B-418
       session_expired: 'Your claude.ai session expired. Sign in again, then reload this page.',
       refused: 'I can’t help with that one as asked. Try putting it differently.',
       empty_completion: 'I came back with nothing. Try asking for less at once.',
@@ -1066,7 +1067,8 @@
         if (code === 'cancelled') pend.text = (pend.text ? pend.text + '\n\n' : '') + '(Stopped.)';
         else
           pend.text =
-            (pend.text ? pend.text + '\n\n' : '') + (SAMPLE_COPY[code] || 'Connection hiccup. Tap Try again.');
+            (pend.text ? pend.text + '\n\n' : '') +
+            ((code === 'ceiling' && e && e.message) || SAMPLE_COPY[code] || 'Connection hiccup. Tap Try again.'); // B-418: the Worker's words
         if (
           !HIDE.has(code) &&
           ![
@@ -1075,6 +1077,7 @@
             'prompt_too_large',
             'tools_unavailable',
             'rate_limited',
+            'ceiling',
             'session_expired',
           ].includes(code)
         )

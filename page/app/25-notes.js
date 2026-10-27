@@ -57,6 +57,8 @@
       two: 'M8 3h7l3 3v11H8zM5 7v14h10',
       device: 'M5 6h14v9H5zM3 18h18',
       other: 'M8 3h8v18H8zM11 18h2',
+      eye: 'M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12zM12 14.8a2.8 2.8 0 1 0 0-5.6 2.8 2.8 0 0 0 0 5.6z',
+      eyeOff: 'M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12zM4 4l16 16',
     };
     // B-404: the app's connection, as its shim tells it (pwa/bridge.js 'ev-sync'); on claude.ai always online
     const NET = { online: true, pending: 0, syncing: false, refused: [] };
@@ -277,15 +279,34 @@
     const nSync = el('span', 'n-sync');
     nSync.setAttribute('role', 'status');
     nSync.hidden = true;
+    // B-418 (D-339): E.V. reads along in the open note by default; this turns it off and on for the note, remembered
+    // per note on this device. While it is off, nothing of the note goes to Claude between a session's checks.
+    const raKey = id => 'readalong-off-' + id;
+    const readAlongOn = id => !!id && store.get(raKey(id)) !== '1';
+    const nRead = nBtn('btn ghost sm n-read', null, null, () => {
+      const id = NOTE.open;
+      if (!id) return;
+      store.set(raKey(id), readAlongOn(id) ? '1' : '0');
+      syncHead();
+    });
+    nRead.id = 'notes-read';
+    nRead.hidden = true;
     if (mhTitle) {
       mhTitle.before(nBack);
       mhTitle.after(nCrumb);
       nCrumb.after(nSync);
+      nSync.after(nRead);
     }
     function syncHead() {
       const on = document.body.dataset.view === 'notes' && NOTE.view === 'editor' && !!NOTE.open;
-      nBack.hidden = nCrumb.hidden = nSync.hidden = !on;
+      nBack.hidden = nCrumb.hidden = nSync.hidden = nRead.hidden = !on;
       if (!on) return;
+      const ra = readAlongOn(NOTE.open);
+      nRead.replaceChildren(nIcon(ra ? NI.eye : NI.eyeOff), ra ? 'Reading along' : 'Not reading');
+      nRead.setAttribute('aria-pressed', String(ra));
+      nRead.title = ra
+        ? 'E.V. reads along as you write this note. Click to turn it off for this note.'
+        : 'E.V. isn’t reading this note. Click to have her read along as you write.';
       nCrumb.textContent = '/ ' + (E.noteTitleOf(NOTE.blocks || []) || 'New note').split(':')[0];
       // B-404: one quiet line in the same place in every state, as NoteStates shows it
       const refused = NET.refused.find(r => r.c === 'notes' && r.id === NOTE.open);

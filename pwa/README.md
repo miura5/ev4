@@ -18,7 +18,7 @@ phone (installed app) ──/api + token──► Worker ──► D1 (the recor
 - `../tools/build-pwa.mjs --record staging|live`: builds `public/` from that record's built page, wrapped byte for
   byte, with the app named "E.V." (window title and icon label).
 
-- Claude: the shim's `sample` goes to the Worker's `/api/claude`, which adds your API key and asks Haiku (D-299: the key is only a Cloudflare secret, under a $5 monthly spend limit set in the Anthropic Console).
+- Claude: the shim's `sample` goes to the Worker's `/api/claude`, which adds your API key and asks Haiku (D-299: the key is only a Cloudflare secret, under a $5 monthly spend limit set in the Anthropic Console). B-418 (D-339): the Worker also keeps an hourly and a daily token ceiling (`claude.js`, counted from the API's usage numbers in D1's `claude_usage`; `CLAUDE_HOUR_TOKENS` and `CLAUDE_DAY_TOKENS` override the defaults) and read-along's limits (new text only, one read per note per 75 s, `claude_reads`); `GET /api/claude/usage` reads the counts.
   The key is a Cloudflare secret: never in this repository, the page or a browser.
 
 Images to Claude (B-322): a photo or an image-only PDF page attached in the conversation goes with the ask as a

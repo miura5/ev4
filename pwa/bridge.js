@@ -792,7 +792,13 @@
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify(body),
           });
-          if (!r.ok) throw new Error('the Worker answered ' + r.status);
+          if (!r.ok) {
+            // B-418 (D-339): a token ceiling's refusal keeps the Worker's plain sentence for the job's result
+            const own = await r.json().catch(() => null);
+            if (own && own.code === 'ceiling' && own.error)
+              throw Object.assign(new Error(String(own.error)), { code: 'ceiling' });
+            throw new Error('the Worker answered ' + r.status);
+          }
           return r.json();
         },
         // one job's batch at a time, each pinned just before it is sent, so jobs run side by side but never write
@@ -1014,6 +1020,8 @@
             messages,
             tools,
             ...(tools.length && round === ROUNDS - 1 ? { tool_choice: { type: 'none' } } : {}),
+            // B-418 (D-339): a read-along ask names the note and its text's mark, for the Worker's read limits
+            ...(opts.read && round === 0 ? { read: opts.read } : {}),
           }),
           signal: opts.signal,
         });
@@ -1024,6 +1032,14 @@
       }
       if (!r.ok) {
         const why = await r.text().catch(() => '');
+        // B-418 (D-339): the Worker's own refusals (a token ceiling, a read on unchanged text or too soon) keep its code
+        // and its plain sentence, which the page shows as it is
+        let own = null;
+        try {
+          own = JSON.parse(why);
+        } catch {}
+        if (own && ['ceiling', 'unchanged', 'too_soon'].includes(own.code) && own.error)
+          throw fail(own.code, String(own.error), text);
         throw fail(
           r.status === 429 ? 'rate_limited' : r.status === 401 ? 'not_granted' : 'upstream_error',
           r.status + ' ' + why.slice(0, 300),

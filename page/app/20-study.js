@@ -1481,11 +1481,13 @@
         return true;
       } catch (e) {
         out.textContent =
-          e && e.code === 'rate_limited'
-            ? 'You’ve hit a usage limit for now. Try again later.'
-            : e && e.code === 'not_granted'
-              ? 'More practice needs permission to ask Claude. Allow it from the page’s Permissions menu.'
-              : 'Couldn’t write questions right now. Try again in a moment.';
+          e && e.code === 'ceiling' && e.message
+            ? e.message // B-418: the Worker's words
+            : e && e.code === 'rate_limited'
+              ? 'You’ve hit a usage limit for now. Try again later.'
+              : e && e.code === 'not_granted'
+                ? 'More practice needs permission to ask Claude. Allow it from the page’s Permissions menu.'
+                : 'Couldn’t write questions right now. Try again in a moment.';
         say(out.textContent);
         return false;
       } finally {
