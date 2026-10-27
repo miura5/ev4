@@ -7757,5 +7757,22 @@
    "outcome": "task",
    "at": "2026-10-27T01:13:23.586Z"
   }
+ },
+ {
+  "id": "B-424",
+  "kind": "bug",
+  "title": "Bug (reported Oct 26): The live restore drill fails when the Mac backup folder has no backup yet instead of using the newest nightly export, as its prompt says it does.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat, Oct 26 cutover",
+  "words": "The live restore drill fails when the Mac backup folder has no backup yet instead of using the newest nightly export, as its prompt says it does.",
+  "reportedAt": "2026-10-27T03:58:30.502Z",
+  "board": {
+   "row": "v4 B-424: The live restore drill fails when the Mac backup folder has no backup…"
+  }
  }
 ]
