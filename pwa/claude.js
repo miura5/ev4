@@ -176,6 +176,9 @@ export async function handleClaude(request, env, url) {
     }
     const change = limitsChange(body);
     if (typeof change === 'string') return json({ error: change }, 400);
+    // a change of one ceiling is checked against the other as it stands (review: hour never above day)
+    const next = { ...(await limitsOf(env)), ...change };
+    if (next.hour > next.day) return json({ error: 'the hourly ceiling cannot be above the daily one' }, 400);
     const now = Date.now();
     for (const [k, v] of Object.entries(change))
       await env.DB.prepare(

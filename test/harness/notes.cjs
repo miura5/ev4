@@ -2209,15 +2209,12 @@ const openNoteId = page =>
     await page.evaluate(() => {
       window.__jsonCalls = [];
       window.__toasts = [];
-      new MutationObserver(() => {
+      // every toast() call stamps data-at: each stamp with the ceiling's words is one showing, however alike (review)
+      new MutationObserver(ms => {
         const t = document.getElementById('toast');
-        if (t && !t.hidden && /allowance/.test(t.textContent)) window.__toasts.push(t.textContent);
-      }).observe(document.getElementById('toast'), {
-        childList: true,
-        characterData: true,
-        subtree: true,
-        attributes: true,
-      });
+        for (const m of ms)
+          if (m.attributeName === 'data-at' && /allowance/.test(t.textContent)) window.__toasts.push(t.textContent);
+      }).observe(document.getElementById('toast'), { attributes: true, attributeFilter: ['data-at'] });
       const until = Date.now() + 30 * 60e3;
       window.__sampleFn = p => {
         if (/reading over his shoulder/.test(JSON.stringify(p)))
@@ -2246,7 +2243,7 @@ const openNoteId = page =>
       await readNow();
       await page.waitForTimeout(1600);
     }
-    const ceil = await page.evaluate(() => ({ toasts: [...new Set(window.__toasts)].length }));
+    const ceil = await page.evaluate(() => ({ toasts: window.__toasts.length }));
     const ceilReads = await reads();
     ok(
       `${tag} at a Claude ceiling read-along says so once and asks nothing more until it resets`,

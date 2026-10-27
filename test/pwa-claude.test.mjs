@@ -258,7 +258,17 @@ test('B-435: the ceilings are a setting in D1: PUT /api/claude/limits changes th
     assert.equal(HOUR_TOKENS, 500000);
     assert.equal(DAY_TOKENS, 1500000);
     // refused: nothing given, not a number, out of range, the hour above the day, not JSON
-    for (const bad of [{}, { hour: 'lots' }, { hour: 10 }, { day: 1e9 }, { hour: 900000, day: 800000 }, 'x'])
+    // ... and one ceiling changed alone past the other as it stands (hour 2M over the 1.5M day; day 5k under the 500k hour)
+    for (const bad of [
+      {},
+      { hour: 'lots' },
+      { hour: 10 },
+      { day: 1e9 },
+      { hour: 900000, day: 800000 },
+      'x',
+      { hour: 2e6 },
+      { day: 5000 },
+    ])
       assert.equal((await call('PUT', bad)).status, 400, JSON.stringify(bad));
     // a stored value wins over the Worker's var and the default, and the usage read shows it
     env.CLAUDE_HOUR_TOKENS = '200000';
@@ -288,4 +298,16 @@ test('B-430: a daily refusal says until Central midnight', async () => {
   const p = ceilingProblem({ hour: 0, day: 2e6 }, { hour: 5e5, day: 1.5e6 }, Date.parse('2026-10-27T20:30:00Z'));
   assert.equal(p.scope, 'day');
   assert.equal(p.until, Date.parse('2026-10-28T05:00:00Z'));
+});
+
+test('B-435: a D1 with no settings table (schema not yet applied) keeps the defaults, and asks still answer', async () => {
+  await withApi(100, async ({ ask, env, usage }) => {
+    const prepare = env.DB.prepare;
+    env.DB.prepare = q => {
+      if (/claude_settings/.test(q)) throw new Error('no such table: claude_settings');
+      return prepare(q);
+    };
+    assert.equal((await ask()).status, 200);
+    assert.deepEqual((await usage()).limits, { hour: HOUR_TOKENS, day: DAY_TOKENS });
+  });
 });
