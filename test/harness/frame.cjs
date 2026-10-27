@@ -7,7 +7,8 @@
 // On Conversation the button focuses the view's own composer and the pop-up's lines are not in its thread. At 390 the
 // strip and the pop-up are absent (the phone layout is unchanged). B-406: a Notes session's controls are in the strip
 // on every view at each width, its long title cut short and clear of her line and the button; the phone shows it in
-// the header's line.
+// the header's line. B-428: in the installed phone app (the PWA shell's safe-area padding, touch) E.V.'s frame never
+// scrolls under a swipe on the composer or chips, the thread does, and the other views still scroll.
 //   node test/harness/frame.cjs [record dir | synthetic] [screenshots dir]
 // Run `node tools/build.mjs` first. Exit code 1 when any check fails.
 const { chromium } = require('playwright');
@@ -441,6 +442,119 @@ const SIZES = [
       ok(`[390] ${v}: no strip and no pop-up below 1024 px`, !g.stripShown && !g.pop && dock === '60px', dock);
     }
     ok('[390] no page errors', errors.length === 0, errors.slice(0, 3).join(' | '));
+    await ctx.close();
+  }
+
+  // 7. B-428: the installed phone app (390x844, touch, the PWA shell's safe-area padding on <html>, iPhone insets 47/34):
+  // on E.V. the frame never scrolls. A swipe up on the message box or the chips leaves the document at 0 and the header,
+  // the composer and the tab bar where they were; the thread still scrolls; the other views still scroll the document.
+  // Chromium's touch emulation, not iOS Safari: the swipe is a finger drag sent as touch events (Input.dispatchTouchEvent).
+  {
+    const { HEAD } = await import(path.join(root, 'tools/build-pwa.mjs'));
+    const shellCss = (HEAD.match(/<style>([^<]*)<\/style>/) || [])[1] || '';
+    const ctx = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      hasTouch: true,
+      isMobile: true,
+      deviceScaleFactor: 2,
+      colorScheme: 'light',
+    });
+    const { page, errors } = await open(ctx, seed);
+    const cdp = await ctx.newCDPSession(page);
+    const insets = await cdp
+      .send('Emulation.setSafeAreaInsetsOverride', { insets: { top: 47, bottom: 34, left: 0, right: 0 } })
+      .then(() => true)
+      .catch(() => false);
+    await page.addStyleTag({ content: shellCss });
+    await page.waitForTimeout(150);
+    ok('[390 app] the PWA shell pads <html> by the safe areas', /safe-area-inset-top/.test(shellCss) && insets);
+    const box = s =>
+      page.evaluate(s => {
+        const b = document.querySelector(s).getBoundingClientRect();
+        return [Math.round(b.x), Math.round(b.y), Math.round(b.width), Math.round(b.height)].join(',');
+      }, s);
+    const frame = async () => ({
+      doc: await page.evaluate(() => document.scrollingElement.scrollTop),
+      body: await page.evaluate(() => document.body.scrollTop),
+      head: await box('#mh'),
+      bar: await box('.side .tabs'),
+      comp: await box('#composer'),
+    });
+    // a finger drag: touchStart, 12 moves over about 200 ms, touchEnd (Chromium turns these into a touch scroll)
+    const drag = async (x, y, dy) => {
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+      for (let k = 1; k <= 12; k++) {
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: y + (dy * k) / 12 }] });
+        await page.waitForTimeout(16);
+      }
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await page.waitForTimeout(400);
+    };
+    const swipe = async (s, dy) => {
+      const b = await page.locator(s).first().boundingBox();
+      await drag(Math.round(b.x + b.width / 2), Math.round(b.y + b.height / 2), dy);
+    };
+    // entering E.V. from a scrolled view leaves the frame at the top (the switch scrolls to the end of the document)
+    await page.click('#tab-record');
+    await page.evaluate(() => window.scrollTo(0, 60));
+    await page.click('#tab-ev');
+    await page.waitForTimeout(300);
+    const fit = await page.evaluate(() => [document.scrollingElement.scrollHeight, innerHeight]);
+    const f0 = await frame();
+    ok(
+      '[390 app] E.V.: the document is exactly the screen and sits at 0, the header below the status bar',
+      fit[0] === fit[1] && f0.doc === 0 && f0.body === 0 && Number(f0.head.split(',')[1]) === 47,
+      JSON.stringify({ fit, f0 })
+    );
+    await page.screenshot({ path: `${shots}/frame-app-ev-390-before.png` });
+    for (const [what, s] of [
+      ['the message box', '#ev-input'],
+      ['the quick-ask chips', '#qchips'],
+    ]) {
+      if (!(await page.locator(s).first().isVisible())) {
+        ok(`[390 app] ${what} is on screen to swipe`, false);
+        continue;
+      }
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await swipe(s, -150);
+      const f = await frame();
+      ok(
+        `[390 app] a swipe up on ${what} moves nothing: the document and body at 0, the header, composer and tab bar unmoved`,
+        f.doc === 0 && f.body === 0 && f.head === f0.head && f.bar === f0.bar && f.comp === f0.comp,
+        JSON.stringify({ f0, f })
+      );
+    }
+    await page.screenshot({ path: `${shots}/frame-app-ev-390-after.png` });
+    // the thread is still the scroller: it overflows (its pull room at least) and a swipe on it moves it, not the frame
+    const t0 = await page.evaluate(() => {
+      const t = document.querySelector('#p-ev .thread');
+      return [t.scrollHeight - t.clientHeight, t.scrollTop];
+    });
+    await swipe('#p-ev .thread', t0[1] > 40 ? 120 : -120);
+    const t1 = await page.evaluate(() => document.querySelector('#p-ev .thread').scrollTop);
+    const f1 = await frame();
+    ok(
+      '[390 app] the thread still scrolls under a swipe, and the frame does not',
+      t0[0] > 0 && t1 !== t0[1] && f1.doc === 0 && f1.head === f0.head && f1.bar === f0.bar,
+      JSON.stringify({ overflow: t0[0], from: t0[1], to: t1, f1 })
+    );
+    // every other view still scrolls its content (the document) under a swipe, its header held below the status bar
+    for (const v of ['today', 'study', 'progress', 'record']) {
+      await page.click('#tab-' + v);
+      await page.waitForTimeout(250);
+      await page.evaluate(() => window.scrollTo(0, 0));
+      const room = await page.evaluate(() => document.scrollingElement.scrollHeight - innerHeight);
+      await drag(195, 420, -200);
+      const y = await page.evaluate(() => document.scrollingElement.scrollTop);
+      const head = await box('#mh');
+      ok(
+        `[390 app] ${v} still scrolls its content under a swipe, the header held below the status bar`,
+        room > 0 && y > 0 && head === f0.head,
+        JSON.stringify({ room, y, head })
+      );
+      await page.screenshot({ path: `${shots}/frame-app-${v}-390-scrolled.png` });
+    }
+    ok('[390 app] no page errors', errors.length === 0, errors.slice(0, 3).join(' | '));
     await ctx.close();
   }
   await browser.close();

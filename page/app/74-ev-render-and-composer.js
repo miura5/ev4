@@ -145,6 +145,12 @@
     );
     $('ev-input').addEventListener('focus', () => syncChips());
     $('ev-input').addEventListener('blur', () => setTimeout(syncChips, 200));
+    // B-428: the phone's keyboard may leave the window panned when it closes; E.V.'s frame never scrolls, so put it back
+    $('ev-input').addEventListener('blur', () =>
+      setTimeout(() => {
+        if (innerWidth < 600 && document.body.classList.contains('on-ev') && scrollY) window.scrollTo(0, 0);
+      }, 250)
+    );
     // B-85: a placeholder that fits one line in a narrow pane.
     // B-340 (D-312): the demo's placeholder at every width; "note: …" saves a note (B-290).
     const PH_LONG = 'Ask E.V., or “note: …” to log something',

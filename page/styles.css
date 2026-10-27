@@ -662,6 +662,18 @@ body.on-ev.opening .side .top-av,body.on-ev.in-session .side .top-av,body.on-ev.
   .mh{padding:0 8px 0 16px} /* B-361: New sits flush right, as in the demo */
   /* the surface sheet gives the tab bar its height back, so her line keeps its room */
   body.captions #ev-surf{max-height:clamp(300px,calc(46dvh - var(--dock-h)),410px)}
+  /* B-428: E.V.'s view is a fixed frame on the phone. The installed app pads <html> by the safe areas (build-pwa.mjs),
+     so body's min-height:100vh made the document 81 px taller than the screen and a swipe on the composer or chips
+     scrolled it: the header slid under the status bar and a band opened over the tab bar. Here the document is
+     exactly the screen and never scrolls; the thread (and the surface sheet) scroll inside it. Other views still
+     scroll the document. */
+  html:has(>body.on-ev){height:100%;overflow:hidden;overscroll-behavior:none}
+  body.on-ev{box-sizing:border-box;height:100%;min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:none}
+  body.on-ev .qchips{touch-action:pan-x}
+  /* The views that do scroll the document hold the header under the status bar's band, not beneath it; the shadow
+     fills the band above the header so lines scroll away under it. Without insets (the artifact page) both are 0. */
+  .mh{top:env(safe-area-inset-top,0px);box-shadow:0 calc(-.5 * env(safe-area-inset-top,0px)) 0 calc(.5 * env(safe-area-inset-top,0px)) var(--bg)}
+  body.on-ev .mh{top:0} /* on E.V. the body is the frame, and it starts below the band already */
 }
 /* From 600 px: the dim sidebar and the raised pane, drawn behind the document's flow. */
 @media (min-width:600px){
