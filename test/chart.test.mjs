@@ -1327,6 +1327,7 @@ test('B-144 (W-2): a deploy credits product commits only: a record commit ("(cha
       { subject: 'B-43: dosage practice', files: ['core/evcore.mjs', 'chart/tasks.json'] },
       { subject: 'B-93: log and the views', files: ['tools/chart.mjs', 'test/chart.test.mjs'] },
       { subject: 'B-74: talk fields', files: ['spec/ev.spec.json'] },
+      { subject: 'B-415: the review brief', files: ['docs/review-brief.md'] }, // B-425: docs ship nothing either
     ]),
     ['B-74', 'B-43']
   );

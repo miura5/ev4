@@ -1309,7 +1309,8 @@ const openNoteId = page =>
         undoLog.some(x => x.shown) &&
         !undoLog[undoLog.length - 1].shown &&
         !!lastGone &&
-        lastGone.at >= undoEnd,
+        lastGone.at >= undoEnd &&
+        lastGone.at <= undoEnd + UNDO_MS / 4,
       JSON.stringify({ swEnd, undoEnd, undoLog })
     );
     const dupes = await page.evaluate(i => {

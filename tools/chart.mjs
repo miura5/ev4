@@ -54,7 +54,7 @@ import EVCORE from '../core/evcore.mjs';
 const ACTIONS = makeActions(validateAgainst);
 import { commitsBehind, mainHead } from '../core/cli.mjs';
 import { readState, withShell } from '../core/verifystate.mjs';
-import { build, BOOKKEEPING, buildCommitOf } from './build.mjs';
+import { build, BOOKKEEPING, INERT, buildCommitOf } from './build.mjs';
 import { nightlyGreen, NIGHTLY_RUNS } from './pwa-live.mjs';
 import { APPS, appRead, appCalls, appLines, expectedApp } from './pwa-app.mjs';
 
@@ -1051,7 +1051,9 @@ export function commitTasks(commits) {
     ...new Set(
       list
         .filter(c => !/\(chart\)\s*$/.test(c.subject))
-        .filter(c => !c.files || !c.files.length || !c.files.every(f => BOOKKEEPING.some(re => re.test(f))))
+        .filter(
+          c => !c.files || !c.files.length || !c.files.every(f => [...BOOKKEEPING, ...INERT].some(re => re.test(f)))
+        )
         .map(c => (c.subject.match(/^(B-\d{2,3})\b/) || [])[1])
         .filter(Boolean)
     ),

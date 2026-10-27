@@ -225,7 +225,21 @@ test('B-425: a docs-only commit keeps the build commit; a code commit moves it; 
 });
 
 test('B-425: no build, run, check or test code reads a file under docs/ (so a docs commit can keep the build commit)', () => {
-  const read = /(readFileSync|readdirSync|existsSync|statSync|createReadStream)\([^)]*['"`]docs[/'"`]/;
+  // a read naming docs/ in its call, a path literal under docs/, or a path built with a 'docs' segment (save for the
+  // export folders named docs inside a run's own directory: core/cli.mjs and tools/pwa-copy.mjs)
+  const allowed = /path\.join\((out|dir), 'docs'/;
+  const reads = [
+    /(readFileSync|readdirSync|existsSync|statSync|createReadStream)\([^)]*['"`]docs[/'"`]/,
+    /['"`]docs\/[^'"`\s]/,
+    /path\.(join|resolve)\([^)]*['"`]docs['"`/]/,
+  ];
+  // (test files name docs/ paths as fixtures in throwaway repositories: for them only a read call counts)
+  const read = {
+    test: (t, rel) =>
+      t
+        .split('\n')
+        .some(l => !allowed.test(l) && (rel.startsWith('test') ? reads.slice(0, 1) : reads).some(re => re.test(l))),
+  };
   const found = [];
   const walk = d => {
     const abs = path.join(ROOT, d);
@@ -234,7 +248,7 @@ test('B-425: no build, run, check or test code reads a file under docs/ (so a do
       const rel = path.join(d, e.name);
       if (e.isDirectory()) {
         if (e.name !== 'node_modules') walk(rel);
-      } else if (/\.(m?js|cjs)$/.test(e.name) && read.test(fs.readFileSync(path.join(ROOT, rel), 'utf8')))
+      } else if (/\.(m?js|cjs)$/.test(e.name) && read.test(fs.readFileSync(path.join(ROOT, rel), 'utf8'), rel))
         found.push(rel);
     }
   };
