@@ -168,7 +168,14 @@ export async function handleClaude(request, env, url) {
     await unclaim();
     return json({ error: 'the Claude API could not be reached: ' + String((e && e.message) || e).slice(0, 200) }, 502);
   }
-  const text = await r.text();
+  // the answer's body can still fail after the headers came (a dropped connection): the mark goes back, as above
+  let text;
+  try {
+    text = await r.text();
+  } catch (e) {
+    await unclaim();
+    return json({ error: 'the Claude API could not be reached: ' + String((e && e.message) || e).slice(0, 200) }, 502);
+  }
   if (!r.ok) await unclaim();
   let used = 0;
   try {

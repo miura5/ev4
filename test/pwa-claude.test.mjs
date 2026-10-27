@@ -191,3 +191,52 @@ test('B-418 review: a failed API call gives the read back, so the same text is r
     assert.equal((await ask(read)).status, 409);
   });
 });
+
+test('B-429: the read mark comes back when the answer body fails, an earlier mark is restored exactly, a newer one is kept', async () => {
+  await withApi(100, async ({ ask, env }) => {
+    const ok = globalThis.fetch;
+    const note = 'n-20261027-c';
+    const row = () => env.DB.sql.prepare('SELECT h, at FROM claude_reads WHERE note = ?').get(note);
+    // the headers came, then the body failed: a JSON 502 and the mark given back (no row, as before)
+    globalThis.fetch = async () => ({ ok: true, status: 200, text: async () => Promise.reject(new Error('reset')) });
+    const dropped = await ask({ read: { note, h: '10-aaaa' } });
+    assert.equal(dropped.status, 502);
+    assert.match(dropped.body.error, /could not be reached/);
+    // read text A, then let the 75 s gap pass (the mark backdated); a failed read of B restores A's mark exactly
+    globalThis.fetch = ok;
+    assert.equal((await ask({ read: { note, h: '10-aaaa' } })).status, 200);
+    env.DB.sql.prepare('UPDATE claude_reads SET at = at - 80000 WHERE note = ?').run(note);
+    const before = row();
+    globalThis.fetch = async () => new Response('{"error":{}}', { status: 500 });
+    assert.equal((await ask({ read: { note, h: '11-bbbb' } })).status, 500);
+    assert.deepEqual(row(), before);
+    // a newer mark written while the call was out is not overwritten by the give-back
+    globalThis.fetch = async () => {
+      env.DB.sql.prepare('UPDATE claude_reads SET h = ?, at = ? WHERE note = ?').run('12-zzzz', Date.now(), note);
+      return new Response('{"error":{}}', { status: 500 });
+    };
+    assert.equal((await ask({ read: { note, h: '13-cccc' } })).status, 500);
+    assert.equal(row().h, '12-zzzz');
+  });
+});
+
+test('B-429: a 2xx with a body that is not JSON still counts as read; a failed usage write still answers', async () => {
+  await withApi(100, async ({ ask, env }) => {
+    const note = 'n-20261027-d';
+    // the Worker passes the body on as it came, so the helper's own JSON read of it fails: that is the 2xx answered
+    globalThis.fetch = async () => new Response('not json', { status: 200 });
+    await assert.rejects(() => ask({ read: { note, h: '10-dddd' } }), SyntaxError);
+    globalThis.fetch = async () => new Response('{}', { status: 200 });
+    assert.equal((await ask({ read: { note, h: '10-dddd' } })).status, 409);
+  });
+  await withApi(100, async ({ ask, env, sent }) => {
+    const prepare = env.DB.prepare;
+    env.DB.prepare = q => {
+      if (/INSERT INTO claude_usage/.test(q)) throw new Error('D1 down');
+      return prepare(q);
+    };
+    const r = await ask();
+    assert.equal(r.status, 200);
+    assert.equal(sent.length, 1);
+  });
+});
