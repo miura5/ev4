@@ -7740,10 +7740,10 @@
  {
   "id": "B-423",
   "kind": "request",
-  "title": "Request (reported Oct 26): Keep one development tier switch in the repository (Pro or Max) that the build manager, lane builders, reviewers and the scheduled tasks read before starting, so a session on the Pro plan never runs Max-sized work; switching tier pauses or resumes the sprint-only tasks, and a test proves nothing sprint-only stays on under Pro. The Pro tier also slims E.V.'s own scheduled runs.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "title": "Development tier switch, Pro or Max (last sprint)",
+  "dod": "docs/tiers.md describes each tier from Matt's outline; one spec value names the current tier; CLAUDE.md, the lane builder and reviewer prompts read it; switching pauses or resumes sprint-only scheduled tasks; a test fails if a sprint-only task is enabled under Pro; the Pro run schedule is set",
+  "milestone": "last sprint",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -7752,6 +7752,10 @@
   "reportedAt": "2026-10-27T01:13:23.090Z",
   "board": {
    "row": "v4 B-423: Keep one development tier switch in the repository (Pro or Max) that…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-27T01:13:23.586Z"
   }
  }
 ]
