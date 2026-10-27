@@ -618,12 +618,20 @@ function restoreToScratch(answer, db, ctx, spec) {
   const docs = b.docs.length;
   const n = Object.keys(b.collections).length;
   const from = path.basename(String(answer.path || 'backup'));
+  // B-424: the detail says which source the run restored: the Mac backup, or the newest nightly export.
+  const setting = backupSetting(spec, ctx.record) || {};
+  const exported = answer.source ? answer.source === 'export' : setting.restoreFrom === 'r2';
+  const source = !exported
+    ? 'the Mac backup'
+    : setting.restoreFrom === 'r2'
+      ? 'the newest nightly export'
+      : 'the newest nightly export (the Mac folder had no backup)';
   return {
     writes: [],
     scratch: { host: scratch.scratch.host, prefix: `drills/${ctx.runId}`, want: b.collections, writes },
-    detail: `drill: ${from} (${b.at}), ${n} collections and ${docs} documents; counts and hashes match its own manifest${left ? `; ${left} per-target system documents left out (D-321)` : ''}; restored into the scratch D1 under drills/${ctx.runId}`,
+    detail: `drill: ${from} (${b.at}) from ${source}, ${n} collections and ${docs} documents; counts and hashes match its own manifest${left ? `; ${left} per-target system documents left out (D-321)` : ''}; restored into the scratch D1 under drills/${ctx.runId}`,
     push: `Restore drill passed: ${docs} documents match the backup.`,
-    say: [`Restore drill: ${docs} documents in ${n} collections from ${from}, into the scratch D1.`],
+    say: [`Restore drill: ${docs} documents in ${n} collections from ${from} (${source}), into the scratch D1.`],
   };
 }
 
@@ -749,31 +757,37 @@ export const AGENT_MATERIAL = {
     const setting = ctx.target === 'worker' ? backupSetting(spec, ctx.record) : null;
     if (setting) {
       const saveTo = path.join(ctx.dir, 'in', 'backup.json');
+      const exportGroup = {
+        name: 'export',
+        rule: 'one command, as printed',
+        calls: [
+          {
+            tool: 'Bash',
+            args: { command: `node core/cli.mjs api export --out ${saveTo} --worker ${ctx.worker}` },
+          },
+        ],
+      };
       if (setting.restoreFrom === 'r2')
         return {
           source: 'the newest nightly export in R2 (B-316)',
           saveTo,
-          how: 'run the one printed command; it saves the export to saveTo. Then answer {status: ok, path: <the key it printed>}.',
-          groups: [
-            {
-              name: 'export',
-              rule: 'one command, as printed',
-              calls: [
-                {
-                  tool: 'Bash',
-                  args: { command: `node core/cli.mjs api export --out ${saveTo} --worker ${ctx.worker}` },
-                },
-              ],
-            },
-          ],
+          how: 'run the one printed command; it saves the export to saveTo. Then answer {status: ok, source: export, path: <the key it printed>}.',
+          groups: [exportGroup],
         };
+      // B-424: a Mac folder with no backup yet (no backup/ subfolder, or no backup file in it) falls back to the newest
+      // nightly export, as the drill's purpose says; the answer's source names which one the run restored.
       return {
-        source: 'the newest backup on the Mac',
+        source: 'the newest backup on the Mac, or the newest nightly export when the Mac has none',
         look: [setting.folder + '/backup'],
         files: 'E.V.-v4-backup-<weekday>.json',
         pick: 'the one with the newest mtimeMs',
         saveTo,
-        how: "device_list_dir on the folder in look; device_stage_files with that one file's full path; then copy the staged file (the stage result names where it landed, under /mnt/user-data/uploads/) to saveTo with cp. Read nothing else on the Mac and change nothing there.",
+        how: "device_list_dir on the folder in look; device_stage_files with that one file's full path; then copy the staged file (the stage result names where it landed, under /mnt/user-data/uploads/) to saveTo with cp. Read nothing else on the Mac and change nothing there. Then answer {status: ok, source: mac, path: <its full path on the Mac>}.",
+        fallback: {
+          when: 'the folder in look is not there, or holds no E.V.-v4-backup-*.json',
+          how: 'run the one printed command instead; it saves the newest nightly export to saveTo. Then answer {status: ok, source: export, path: <the key it printed>}. If it is refused too, answer {status: none, problem: <no Mac backup, and the refusal in one line>}.',
+        },
+        groups: [exportGroup],
       };
     }
     const t = ((spec.tasks || {})[ctx.record] || {})['restore-drill'];
@@ -1066,10 +1080,20 @@ export const AGENT_FOLDS = {
    */
   restore(answer, db, ctx, spec) {
     if (ctx.target === 'worker' && answer.status === 'ok') return restoreToScratch(answer, db, ctx, spec);
-    if (answer.status !== 'ok')
+    if (answer.status !== 'ok') {
+      // B-424: a Worker record's refusal names every source the run tried.
+      const setting = ctx.target === 'worker' ? backupSetting(spec, ctx.record) : null;
+      const tried = !setting
+        ? ''
+        : setting.restoreFrom === 'r2'
+          ? '; tried the newest nightly export'
+          : '; tried the Mac folder, then the newest nightly export';
       return {
-        problems: [`no backup to restore: ${answer.status}${answer.problem ? ' (' + answer.problem + ')' : ''}`],
+        problems: [
+          `no backup to restore: ${answer.status}${answer.problem ? ' (' + answer.problem + ')' : ''}${tried}`,
+        ],
       };
+    }
     const file = path.join(ctx.dir, 'in', 'backup.json');
     if (!fs.existsSync(file)) return { problems: [`no ${file}: copy the staged backup there first`] };
     let b;

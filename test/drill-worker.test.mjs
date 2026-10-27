@@ -181,7 +181,7 @@ async function drill(opts = {}) {
     throw e;
   }
 }
-async function drillWith(fw, { from = 'mac', tamper = false, mutate = null }) {
+async function drillWith(fw, { from = 'mac', tamper = false, mutate = null, macEmpty = false, answer = null }) {
   const s = JSON.parse(JSON.stringify(spec));
   s.registry.records.staging.runs.backup.restoreFrom = from;
   const dir = tmp('ev4-drill-');
@@ -227,7 +227,11 @@ async function drillWith(fw, { from = 'mac', tamper = false, mutate = null }) {
   const m = wait.question.material;
   const saveTo = path.join(dir, 'in', 'backup.json');
   assert.equal(m.saveTo, saveTo);
-  if (from === 'r2') {
+  if (answer) {
+    // the agent's answer as given (no backup fetched)
+  } else if (from === 'r2' || macEmpty) {
+    // B-424: with restoreFrom mac and no backup in the Mac folder, the material's fallback is the same printed export.
+    if (macEmpty) assert.match(m.fallback.when, /no E\.V\.-v4-backup/);
     const calls = m.groups[0].calls;
     assert.match(calls[0].args.command, /^node core\/cli\.mjs api export --out \S+ --worker \S+$/);
     assert.match(made(calls[0]).out, /api export: exports\/\S+ saved to /);
@@ -244,7 +248,12 @@ async function drillWith(fw, { from = 'mac', tamper = false, mutate = null }) {
   fs.mkdirSync(path.join(dir, 'answers'), { recursive: true });
   fs.writeFileSync(
     path.join(dir, 'answers', 'fetch-backup.json'),
-    JSON.stringify({ status: 'ok', path: 'E.V.-v4-backup-saturday.json' })
+    JSON.stringify(
+      answer ||
+        (from === 'r2' || macEmpty
+          ? { status: 'ok', source: 'export', path: 'exports/2026-10-18/a.json' }
+          : { status: 'ok', source: 'mac', path: 'E.V.-v4-backup-saturday.json' })
+    )
   );
   const plan = RUN.compute({ spec: s, dir, validate, at: AT });
   return { fw, dir, out, lines, made, plan, s, before: fw.get('/_dump') };
@@ -278,6 +287,7 @@ test('the drill restores the newest Mac backup into the scratch D1, reads it bac
       rec['runs/' + id].data.detail,
       /read back from the scratch D1: \d+ documents in \d+ collections, counts and SHA-256 match/
     );
+    assert.match(rec['runs/' + id].data.detail, /\) from the Mac backup, /, 'B-424: the detail names its source');
     const audit = rec['runs/' + id].data.steps.find(x => x.id === 'audit');
     assert.equal(audit.status, 'ok', audit.detail);
     // The record changed only by the run's own entry; the scratch holds the backup under drills/<run id>/.
@@ -323,6 +333,44 @@ test('the drill can test the newest R2 export instead (restoreFrom r2), through 
     RUN.end({ dir: d.dir, at: AT, transcript: null }).forEach(d.made);
     const id = RUN.runIdFor('restore-drill', AT);
     assert.equal(d.fw.get('/_dump')['runs/' + id].data.status, 'ok');
+  } finally {
+    d.fw.child.kill();
+  }
+});
+
+test('B-424: a Mac folder with no backup falls back to the newest nightly export, and the detail says so', async () => {
+  const d = await drill({ macEmpty: true });
+  try {
+    assert.equal(d.plan.status, 'planned', JSON.stringify(d.plan.problems));
+    assert.deepEqual(
+      RUN.apply({ dir: d.dir })
+        .map(d.made)
+        .map(r => r.code),
+      [0, 0]
+    );
+    RUN.end({ dir: d.dir, at: AT, transcript: d.lines.join('\n') }).forEach(d.made);
+    const id = RUN.runIdFor('restore-drill', AT);
+    const run = d.fw.get('/_dump')['runs/' + id].data;
+    assert.equal(run.status, 'ok', run.detail);
+    assert.match(run.detail, /from the newest nightly export \(the Mac folder had no backup\)/);
+    // the export command the agent ran was a printed one: the audit holds it
+    assert.equal(run.steps.find(x => x.id === 'audit').status, 'ok');
+  } finally {
+    d.fw.child.kill();
+  }
+});
+
+test('B-424: with neither a Mac backup nor a nightly export the drill refuses, naming both sources it tried', async () => {
+  const d = await drill({
+    answer: { status: 'none', problem: 'E.V. Backups has no backup/ subfolder; the export was refused (404)' },
+  });
+  try {
+    assert.equal(d.plan.status, 'refused');
+    assert.match(
+      d.plan.problems.join('\n'),
+      /no backup to restore: none \(E\.V\. Backups has no backup\/ subfolder; .*\); tried the Mac folder, then the newest nightly export/
+    );
+    assert.deepEqual(d.fw.get('/_dump?store=scratch'), {});
   } finally {
     d.fw.child.kill();
   }

@@ -781,7 +781,7 @@
     {
      "id": "fetch-backup",
      "kind": "agent",
-     "judgment": "Bring the newest v4 backup from the Mac into this run, as the material says: list the folders it names, pick the newest E.V.-v4-backup-*.json by modification time, stage that one file, and copy the staged file to saveTo. Read nothing else on the Mac and change nothing there. Answer ok with the backup's full path on the Mac, none when no v4 backup exists, failed with the problem in one line otherwise.",
+     "judgment": "Bring the newest v4 backup from the Mac into this run, as the material says: list the folders it names, pick the newest E.V.-v4-backup-*.json by modification time, stage that one file, and copy the staged file to saveTo. Read nothing else on the Mac and change nothing there. When the material has a fallback and the Mac folder holds no v4 backup, run its one printed command instead (the newest nightly export). Answer ok with source (mac or export) and the backup's full path on the Mac or the export's key, none when neither exists, failed with the problem in one line otherwise.",
      "material": "backup-brief",
      "output": {
       "type": "object",
@@ -791,6 +791,12 @@
          "ok",
          "none",
          "failed"
+        ]
+       },
+       "source": {
+        "enum": [
+         "mac",
+         "export"
         ]
        },
        "path": {
