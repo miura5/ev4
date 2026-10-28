@@ -30,7 +30,12 @@ export function briefOf(body) {
 /** B-449: a later turn of the same ask (a fix ask or a lookup's answer): its last user message holds tool results. */
 const laterTurn = body => {
   const last = [...((body && body.messages) || [])].reverse().find(m => m.role === 'user');
-  return !!last && Array.isArray(last.content) && last.content.some(b => b && b.type === 'tool_result');
+  // a tool's result, or (B-449) any turn after the first: a fix asked in words is a later turn too
+  return (
+    !!last &&
+    ((Array.isArray(last.content) && last.content.some(b => b && b.type === 'tool_result')) ||
+      ((body && body.messages) || []).length > 1)
+  );
 };
 
 export const STUB_TEXT = {

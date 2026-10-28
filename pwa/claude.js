@@ -396,6 +396,19 @@ export async function handleClaude(request, env, url) {
   try {
     text = await r.text();
   } catch (e) {
+    if (r.ok) {
+      // B-449: Claude answered, and billed, but the body was lost: the Sonnet claim stays (the cap counts billed asks)
+      // and a conservative estimate (the request's input plus its whole answer allowance) is counted to the ceilings
+      planClaim = null;
+      const est = Math.round(
+        (Math.ceil(JSON.stringify({ messages, tools }).length / 3.5) + use.maxTokens) * (use.scale || 1)
+      );
+      try {
+        await addUsage(env, est);
+      } catch (e2) {
+        console.log('claude_usage: the estimate was not counted:', est, String(e2));
+      }
+    }
     await unclaim();
     return json({ error: 'the Claude API could not be reached: ' + String((e && e.message) || e).slice(0, 200) }, 502);
   }

@@ -915,6 +915,78 @@ test('B-449: a Sonnet ask Claude did not answer gives its claim back; the cap ho
   assert.equal(slip.out[0], 200, 'a clock’s slip of a minute is fine');
 });
 
+test('B-449: an answer billed but lost after its headers keeps its Sonnet claim and counts an estimate to the ceilings', async () => {
+  const plan = { purpose: 'exam-plan', max_tokens: 24000, job: 'job-plan' };
+  const dropped = () => ({
+    ok: true,
+    status: 200,
+    headers: new Headers({ 'content-type': 'application/json' }),
+    text: async () => {
+      throw new Error('the connection dropped');
+    },
+  });
+  const r = await viaWorker([plan], {}, undefined, dropped);
+  assert.deepEqual([r.out[0], r.sent.length], [502, 1]);
+  assert.equal(r.DB.sql.prepare('SELECT n FROM claude_plan_asks WHERE job = ?').get('job-plan').n, 1, 'claim kept');
+  assert.ok(r.used >= 24000 * 3, `counted ${r.used}: at least the whole answer allowance at Sonnet's weight`);
+  // a refusal (no answer, nothing billed) still gives it back
+  const no = await viaWorker([plan], {}, undefined, () => new Response('{"type":"error"}', { status: 400 }));
+  assert.equal(no.DB.sql.prepare('SELECT n FROM claude_plan_asks WHERE job = ?').get('job-plan').n, 0);
+});
+
+test('B-449: an answer in the text gets its one fix ask too, by a plain line; a malformed one fails cleanly after it', async () => {
+  const inText = body => {
+    const rep = jobReply(body);
+    return { ...rep, content: [{ type: 'text', text: JSON.stringify(rep.content[0].input) }] };
+  };
+  // weak by its own score: one fix, asked in words, and the fixed plan saved
+  const weak = await run(
+    record(),
+    { title: PLANTS.low + ' plan', brief: 'a plan', course: 'NUR 112' },
+    { reply: inText }
+  );
+  assert.equal(weak.r.status, 'done', weak.r.said);
+  assert.equal(weak.asks.length, 2);
+  const last = weak.asks[1].messages.at(-1).content[0];
+  assert.equal(last.type, 'text');
+  assert.match(last.text, /total is 61, under 85[\s\S]*answer tool, or as one JSON object/);
+  assert.equal(weak.writes.find(w => w.collection === 'plans').data.score.total, 88);
+  // malformed, twice: one fix, then a clean failure with nothing it made written
+  for (const bad of ['Sorry, here is my plan in words.', JSON.stringify({ text: 'x', plan: { title: 'no days' } })]) {
+    const reply = () => ({
+      content: [{ type: 'text', text: bad }],
+      stop_reason: 'end_turn',
+      usage: { input_tokens: 10, output_tokens: 10 },
+    });
+    const m = await run(record(), { title: 'plan', brief: 'a plan', course: 'NUR 112' }, { reply });
+    assert.equal(m.asks.length, 2, bad);
+    assert.equal(m.asks[1].messages.at(-1).content[0].type, 'text');
+    assert.ok(['failed', 'refused'].includes(m.r.status), m.r.status);
+    assert.ok(!m.writes.some(w => w.collection === 'plans'), 'no plan written');
+    assert.equal(m.writes.at(-1).data.status, 'failed');
+  }
+});
+
+test('B-449: an edit that keeps looking things up past the cap stops there: its asks counted, failed, nothing written', async () => {
+  const db = await withDraft();
+  let n = 0;
+  const reply = () => ({
+    content: [{ type: 'tool_use', id: 'lk' + ++n, name: 'lookup', input: { ref: 'dates/demo-quiz' } }],
+    stop_reason: 'tool_use',
+    usage: { input_tokens: 10, output_tokens: 10 },
+  });
+  const before = db.plans.length;
+  const { r, asks, writes } = await run(db, { title: 'Plan changes', brief: 'move t3', revise: 'E4-2' }, { reply });
+  const most = spec.jobs.kinds['exam-plan'].edit.lookups;
+  assert.equal(most, 3);
+  assert.equal(asks.length, 1 + most, 'the ask and one per lookup round, no more');
+  assert.match(JSON.stringify(asks.at(-1).messages.at(-1).content), /No more lookups: answer now/);
+  assert.equal(r.status, 'refused', 'no answer: refused by the checks');
+  assert.ok(!writes.some(w => w.collection === 'plans'));
+  assert.equal(writes.at(-1).data.status, 'failed');
+  assert.equal(db.plans.length, before);
+});
+
 test('B-449: no plan ask forces tool_choice (the plan models refuse it); the answer is asked for in words', async () => {
   // the make ask and its fix ask
   const { asks } = await run(record(), { title: PLANTS.low + ' plan', brief: 'a plan', course: 'NUR 112' });

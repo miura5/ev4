@@ -423,27 +423,45 @@ async function planAsks({ spec, prepared, ask, usage, db }) {
     return { reply, answer: cutShort(reply) ? null : answerOf(reply) };
   }
   const answer = cutShort(reply) ? null : answerOf(reply);
-  const why = planProblem(spec, prepared, answer);
+  // B-449: the one fix ask: for a plan that misses its shape or its own score's bar, and for a reply with no answer in
+  // it at all (a reply cut short is not asked again); by a tool_result when it answered by the tool, else (an answer in
+  // the text, or none) by a plain line
+  const why = answer
+    ? planProblem(spec, prepared, answer)
+    : cutShort(reply)
+      ? null
+      : 'there is no answer in it: neither the answer tool nor a JSON answer';
+  if (!why) return { reply, answer };
   const use = toolUse(reply, 'answer')[0];
-  if (!why || !use) return { reply, answer };
+  const words =
+    'Checked: ' + why + '. Fix the plan where it falls short, by the instructions and the rubric, and score it again.';
   const fix = {
     ...body,
     messages: [
       ...body.messages,
-      { role: 'assistant', content: reply.content },
+      {
+        role: 'assistant',
+        content: (reply && reply.content && reply.content.length && reply.content) || [{ type: 'text', text: '…' }],
+      },
       {
         role: 'user',
-        content: [
-          {
-            type: 'tool_result',
-            tool_use_id: use.id,
-            is_error: true,
-            content:
-              'Checked: ' +
-              why +
-              '. Fix the plan where it falls short, by the instructions and the rubric, and score it again. Answer by calling the answer tool once more with the whole fixed plan.',
-          },
-        ],
+        content: use
+          ? [
+              {
+                type: 'tool_result',
+                tool_use_id: use.id,
+                is_error: true,
+                content: words + ' Answer by calling the answer tool once more with the whole fixed plan.',
+              },
+            ]
+          : [
+              {
+                type: 'text',
+                text:
+                  words +
+                  ' Answer again with the whole fixed plan: by calling the answer tool, or as one JSON object in its shape.',
+              },
+            ],
       },
     ],
   };
