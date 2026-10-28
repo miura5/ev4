@@ -183,7 +183,9 @@ export function planRequest(spec, prepared) {
       { name: 'answer', description: 'Your answer to this job, in its shape.', input_schema: prepared.output },
       ...(edit ? [LOOKUP_TOOL] : []),
     ],
-    tool_choice: edit ? { type: 'any' } : { type: 'tool', name: 'answer' },
+    // no forced tool_choice: the plan models refuse "tool" and "any" (staging, Oct 28: Sonnet 400s on them); the
+    // prompt asks for the answer tool, and answerOf also reads a JSON answer in the text
+    tool_choice: { type: 'auto' },
     cache: [
       { m: 0, b: 0 },
       { m: 0, b: 1 },
@@ -399,7 +401,7 @@ async function planAsks({ spec, prepared, ask, usage, db }) {
     const most = (spec.jobs.kinds[PLAN].edit || {}).lookups || 3;
     for (let round = 1; !cutShort(reply) && !toolUse(reply, 'answer').length; round++) {
       const looks = toolUse(reply, 'lookup');
-      if (!looks.length) break;
+      if (!looks.length || round > most) break; // the rounds are capped: a reply past them is read as it is
       const results = looks.map(b => ({
         type: 'tool_result',
         tool_use_id: b.id,
@@ -407,10 +409,13 @@ async function planAsks({ spec, prepared, ask, usage, db }) {
           EV.studyPlanLookup(db, b.input && b.input.ref, b.input && b.input.query, prepared.brief.context.section)
         ).slice(0, 6000),
       }));
+      // the last round's lookups are answered with the ask to answer now (no forced tool_choice, as above)
+      if (round >= most)
+        results.push({ type: 'text', text: 'No more lookups: answer now by calling the answer tool.' });
       body = {
         ...body,
         messages: [...body.messages, { role: 'assistant', content: reply.content }, { role: 'user', content: results }],
-        tool_choice: round >= most ? { type: 'tool', name: 'answer' } : { type: 'any' },
+        tool_choice: { type: 'auto' },
       };
       reply = await ask(body);
       tally(u, reply);
@@ -506,8 +511,9 @@ export async function runJob({ db, spec, schemas, jobId, ask, write, reload, usa
     }
   } catch (e) {
     const why =
-      e && (e.code === 'ceiling' || e.code === 'room') // B-418 (D-339): a token ceiling, in the Worker's own words
-        ? String(e.message).slice(0, 300)
+      e && (e.code === 'ceiling' || e.code === 'room' || e.code === 'refused') // B-418 (D-339): a token ceiling, in
+        ? // the Worker's own words; B-449: a refused ask, in Claude's or the Worker's own words
+          String(e.message).slice(0, 300) + (e.code === 'refused' ? '. Try again.' : '')
         : 'Claude couldn’t be reached (' + String((e && e.message) || e).slice(0, 120) + '). Try again.';
     await save(status('failed', why));
     return { status: 'failed', said: why };

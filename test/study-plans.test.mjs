@@ -773,7 +773,7 @@ function seedJob(db, id, { job = {}, result = { status: 'running' }, at = new Da
   if (result)
     put('jobresults', { schema: 2, writer: 'worker', at, source: 'x', release: 'v4', startedAt: at, ...result });
 }
-async function viaWorker(bodies, vars = {}, seed = db => seedJob(db, 'job-plan')) {
+async function viaWorker(bodies, vars = {}, seed = db => seedJob(db, 'job-plan'), api = null) {
   const DB = fakeD1();
   if (seed) seed(DB);
   const env = {
@@ -787,12 +787,14 @@ async function viaWorker(bodies, vars = {}, seed = db => seedJob(db, 'job-plan')
   const real = globalThis.fetch;
   globalThis.fetch = async (url, init) => {
     sent.push(JSON.parse(init.body));
+    if (api) return api(sent.length);
     return new Response(
       JSON.stringify({ content: [], stop_reason: 'end_turn', usage: { input_tokens: 900, output_tokens: 100 } }),
       { status: 200 }
     );
   };
   const out = [];
+  const replies = [];
   try {
     for (const b of bodies) {
       const r = await worker.fetch(
@@ -804,6 +806,7 @@ async function viaWorker(bodies, vars = {}, seed = db => seedJob(db, 'job-plan')
         env
       );
       out.push(r.status);
+      replies.push(await r.json().catch(() => null));
     }
     const u = await (
       await worker.fetch(
@@ -811,7 +814,7 @@ async function viaWorker(bodies, vars = {}, seed = db => seedJob(db, 'job-plan')
         env
       )
     ).json();
-    return { out, sent, used: u.hour };
+    return { out, sent, used: u.hour, DB, replies };
   } finally {
     globalThis.fetch = real;
   }
@@ -870,6 +873,86 @@ test('D-355: a plan’s Sonnet tokens count 3 each against the ceilings, cache w
   assert.equal(plan.used, 3000);
   const edit = await viaWorker([{ purpose: 'plan-edit' }]);
   assert.equal(edit.used, 1000);
+});
+
+test('B-449: a Sonnet ask Claude did not answer gives its claim back; the cap holds for answered ones; its refusal reads plainly', async () => {
+  const plan = { purpose: 'exam-plan', max_tokens: 24000, job: 'job-plan' };
+  const ok = () =>
+    new Response(
+      JSON.stringify({ content: [], stop_reason: 'end_turn', usage: { input_tokens: 9, output_tokens: 1 } }),
+      {
+        status: 200,
+      }
+    );
+  const refused = () =>
+    new Response(
+      JSON.stringify({
+        type: 'error',
+        error: { type: 'invalid_request_error', message: 'tool_choice: type "tool" and "any" are not supported' },
+      }),
+      { status: 400 }
+    );
+  // a 400, a 529 and a dropped connection each give the claim back: the two answered asks still both go
+  const api = n => {
+    if (n === 1) return refused();
+    if (n === 2) return new Response('{"type":"error"}', { status: 529 });
+    if (n === 3) throw new Error('socket hang up');
+    return ok();
+  };
+  const r = await viaWorker([plan, plan, plan, plan, plan, plan], {}, undefined, api);
+  assert.deepEqual(r.out, [400, 529, 502, 200, 200, 429]);
+  assert.equal(r.sent.length, 5, 'the sixth is refused unsent');
+  assert.equal(r.DB.sql.prepare('SELECT n FROM claude_plan_asks WHERE job = ?').get('job-plan').n, 2);
+  assert.deepEqual(r.replies[5], { error: 'This plan has had its 2 Sonnet asks', code: 'ceiling', scope: 'plan' });
+  // a job dated in the future is refused
+  const ahead = await viaWorker([plan], {}, db =>
+    seedJob(db, 'job-plan', { at: new Date(Date.now() + 10 * 60000).toISOString() })
+  );
+  assert.deepEqual([ahead.out[0], ahead.sent.length], [403, 0]);
+  const slip = await viaWorker([plan], {}, db =>
+    seedJob(db, 'job-plan', { at: new Date(Date.now() + 60000).toISOString() })
+  );
+  assert.equal(slip.out[0], 200, 'a clock’s slip of a minute is fine');
+});
+
+test('B-449: no plan ask forces tool_choice (the plan models refuse it); the answer is asked for in words', async () => {
+  // the make ask and its fix ask
+  const { asks } = await run(record(), { title: PLANTS.low + ' plan', brief: 'a plan', course: 'NUR 112' });
+  assert.equal(asks.length, 2);
+  for (const a of asks) assert.deepEqual(a.tool_choice, { type: 'auto' });
+  assert.match(asks[0].messages[0].content[2].text, /calling the answer tool/);
+  // an edit, its lookup rounds and the last round's ask to answer now
+  const db = await withDraft();
+  const ed = await run(db, {
+    title: 'Plan changes',
+    brief: 'look up the clinical and move t3 after it',
+    revise: 'E4-2',
+  });
+  assert.equal(ed.r.status, 'done', ed.r.said);
+  for (const a of ed.asks) assert.deepEqual(a.tool_choice, { type: 'auto' });
+  // an answer given as JSON in the text, with no tool call, is read as the answer
+  const inText = body => {
+    const rep = jobReply(body);
+    return { ...rep, content: [{ type: 'text', text: 'Here it is: ' + JSON.stringify(rep.content[0].input) }] };
+  };
+  const t = await run(record(), { title: 'plan', brief: 'a plan', course: 'NUR 112' }, { reply: inText });
+  assert.equal(t.r.status, 'done', t.r.said);
+  assert.ok(t.writes.some(w => w.collection === 'plans'));
+  // Claude's own words reach the job's result when it refuses an ask
+  const no = async () => {
+    throw Object.assign(new Error('Claude refused the ask (400): tool_choice: type "tool" is not supported'), {
+      code: 'refused',
+    });
+  };
+  const f = await run(record(), { title: 'plan', brief: 'a plan', course: 'NUR 112' }, { reply: no });
+  assert.equal(f.r.status, 'failed');
+  assert.match(
+    f.writes.at(-1).data.error,
+    /^Claude refused the ask \(400\): tool_choice: type "tool" is not supported\. Try again\.$/
+  );
+  const bridge = fs.readFileSync(path.join(ROOT, 'pwa/bridge.js'), 'utf8');
+  assert.match(bridge, /own\.error && typeof own\.error === 'object' \? own\.error\.message : own && own\.error/);
+  assert.match(bridge, /code: words \? 'refused' : null/);
 });
 
 test('D-355: Sonnet only for a running study plan job the Worker finds in D1, twice a job at most; else refused, unsent', async () => {
@@ -1264,4 +1347,23 @@ test('B-450: Ask for changes on a plan’s card edits that plan, whatever exam i
   assert.equal(EV.studyPlanChatAsk({ ...base, revise: 'ATI-DOSE' }).edit.revise, 'ATI-DOSE', 'a plan for no exam');
   const job = EV.studyPlanJob({ revise: 'ATI-DOSE', changes: base.brief });
   assert.equal(job.revise, 'ATI-DOSE');
+});
+
+test('B-449: Ask for changes on a plan’s card that plainly asks for a new plan gets the chip alone, no edit beside it', () => {
+  const db = record();
+  const ask = said =>
+    EV.studyPlanChatAsk({
+      said,
+      brief: said,
+      title: 'Study plan: NUR 112',
+      exams: db.exams,
+      plansRaw: db.plans,
+      planedits: db.planedits || [],
+      date: TODAY,
+      revise: 'E4',
+    });
+  const whole = ask('redo the plan around my revalidation');
+  assert.deepEqual([whole.edit, whole.offer && whole.offer.type], [null, 'newplan']);
+  const edit = ask('move the drill to Friday');
+  assert.deepEqual([edit.edit.revise, edit.offer], ['E4', null]);
 });

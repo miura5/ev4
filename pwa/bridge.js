@@ -806,7 +806,15 @@
                 scope: own.scope || null,
                 until: Number(own.until) || null, // B-430: when the ceiling resets
               });
-            throw new Error('the Worker answered ' + r.status);
+            // B-449: the refusal's own words (Claude's error message, or the Worker's), short, so the job's result says
+            // what went wrong; neither carries a key or a token
+            const said =
+              (own && own.error && typeof own.error === 'object' ? own.error.message : own && own.error) || '';
+            const words = String(said).replace(/\s+/g, ' ').trim().slice(0, 160);
+            throw Object.assign(
+              new Error(words ? `Claude refused the ask (${r.status}): ${words}` : 'the Worker answered ' + r.status),
+              { code: words ? 'refused' : null, status: r.status }
+            );
           }
           return r.json();
         },

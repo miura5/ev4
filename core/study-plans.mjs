@@ -372,11 +372,12 @@ export function makeStudyPlans(core) {
     return WHOLE_PLAN.test(w) && !ONE_TASK.test(w);
   }
   /**
-   * D-362: what a study plan ask in chat does. `said` is his own line; `brief` is the chat model's. edit: the Haiku
-   * change of the plan he has ({course, revise, said}: his line rides on the job, so the edit's own chip offer carries
-   * his words), or null when he has none (chat never starts a new plan). offer: the Make a new <course> plan chip (a
-   * newplan card whose brief is his line, never the model's) when he typed a line and has no plan yet or his line
-   * plainly asks for a whole new one; null when there is no line of his (a retry, a read-along), whatever the brief.
+   * D-362: what a study plan ask in chat does. `said` is his own line; `brief` is the chat model's. offer: the Make a
+   * new <course> plan chip (a newplan card whose brief is his line, never the model's) when he typed a line and has no
+   * plan yet or his line plainly asks for a whole new one; null when there is no line of his (a retry, a read-along),
+   * whatever the brief. edit: the Haiku change of the plan he has ({course, revise, said}: his line rides on the job,
+   * so the edit's own chip offer carries his words) when no chip is offered; null when the chip is offered (it is the
+   * answer) or he has no plan (chat never starts a new plan).
    */
   function studyPlanChatAsk({ said = '', brief = '', title = '', exams, plansRaw, planedits, date, revise = null }) {
     const his = chipBrief(said);
@@ -384,10 +385,12 @@ export function makeStudyPlans(core) {
     const shown = revise ? (plansRaw || []).find(p => p.id === revise) : null;
     if (shown) {
       const c = (shown.section && shown.section.course) || studyPlanCourse({ title, brief: `${his} ${brief}` }, exams);
+      const offer = c && his && studyPlanLooksNew(his) ? { type: 'newplan', course: c, brief: his } : null;
+      // as below: when the chip is offered it is the answer, with no edit beside it
       return {
         course: c,
-        edit: { ...(c ? { course: c } : {}), revise: shown.id, ...(his ? { said: his } : {}) },
-        offer: c && his && studyPlanLooksNew(his) ? { type: 'newplan', course: c, brief: his } : null,
+        edit: offer ? null : { ...(c ? { course: c } : {}), revise: shown.id, ...(his ? { said: his } : {}) },
+        offer,
       };
     }
     const course = studyPlanCourse({ title, brief: `${his} ${brief}` }, exams);

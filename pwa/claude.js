@@ -146,9 +146,19 @@ export async function planJobProblem(env, job, ms = Date.now()) {
   if (!j || j.kind !== 'exam-plan' || j.revise) return `job: ${job} is no study plan job in the record`;
   const at = Date.parse(j.at);
   if (!(ms - at < PLAN_JOB_MS)) return `job: ${job} is over a day old`;
+  if (at > ms + 5 * 60000) return `job: ${job} is dated in the future`; // a clock's slip of minutes, no more
   const r = await doc('jobresults');
   if (!r || r.status !== 'running') return `job: ${job} is not running`;
   return null;
+}
+/** B-449: a claimed ask given back, in one statement, when Claude did not answer it (a 4xx or 5xx, or no reply), so a
+ *  failed first ask still leaves the fix ask; a successful ask keeps its claim, so the cap stays exact. */
+export async function releasePlanAsk(env, job) {
+  try {
+    await env.DB.prepare('UPDATE claude_plan_asks SET n = n - 1 WHERE job = ? AND n > 0').bind(job).run();
+  } catch (e) {
+    console.log('claude_plan_asks: the claim was not given back:', String(e));
+  }
 }
 /** One of a job's PLAN_ASKS Sonnet asks, claimed in one statement; null when claimed, else why not. */
 export async function claimPlanAsk(env, job, ms = Date.now()) {
@@ -158,7 +168,7 @@ export async function claimPlanAsk(env, job, ms = Date.now()) {
   )
     .bind(job, ms, PLAN_ASKS)
     .first();
-  return row ? null : `job: ${job} has had its ${PLAN_ASKS} study plan asks`;
+  return row ? null : `This plan has had its ${PLAN_ASKS} Sonnet asks`;
 }
 
 /** This hour's and today's tokens. */
@@ -321,6 +331,7 @@ export async function handleClaude(request, env, url) {
   const use = purposeOf(body, env);
   if (typeof use === 'string') return json({ error: use }, 400);
   if (use.purpose && read) return json({ error: 'purpose: a read-along ask has none' }, 400);
+  let planClaim = null; // B-449: the job whose Sonnet ask this claimed, given back if Claude does not answer it
   if (use.purpose && PURPOSES[use.purpose].job) {
     const no = await planJobProblem(env, use.job);
     if (no) return json({ error: no }, 403);
@@ -329,7 +340,9 @@ export async function handleClaude(request, env, url) {
   if (over) return json(over, 429);
   if (use.purpose && PURPOSES[use.purpose].job) {
     const spent = await claimPlanAsk(env, use.job);
-    if (spent) return json({ error: spent }, 429);
+    // the cap's refusal reads as a ceiling's (its own plain sentence), never as a connection failure
+    if (spent) return json({ error: spent, code: 'ceiling', scope: 'plan' }, 429);
+    planClaim = use.job;
   }
   // the mark before the claim, so a failed call gives the text back (B-418 review): the same text may be read again
   const before = read
@@ -343,6 +356,10 @@ export async function handleClaude(request, env, url) {
     }
   }
   const unclaim = async () => {
+    if (planClaim) {
+      await releasePlanAsk(env, planClaim);
+      planClaim = null;
+    }
     if (!read) return;
     try {
       await env.DB.prepare('UPDATE claude_reads SET h = ?, at = ? WHERE note = ? AND h = ?')
