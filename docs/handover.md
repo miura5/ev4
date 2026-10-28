@@ -6,6 +6,25 @@ reads it right after CLAUDE.md. It holds no personal data: the repository is pub
 **Managing chat:** https://claude.ai/code/session_01CWeveciiiW2pUvFQtQJ3HK (still managing as of Oct 28, early morning
 Central). One manager at a time.
 
+## Update (Oct 28, midday Central): PAUSED for Claude peak hours (Matt)
+
+- **Live:** v4.5.14 at 219358d. **Staging:** v4.5.14+104 at e26d231, ship staging GREEN.
+- **The batch on staging** (since live): B-446, B-447, B-449, B-450, B-452, B-453, B-454, B-455, B-456, B-389, plus D-357 to D-364. It carries study plans and the merged plan screen, the conversation tweaks, the notes clock on saved notes, the weak-spot objective picker and tap-to-start plans (D-362).
+- **Rules now:** at most two review rounds and two fix waves per release (D-364 supersedes D-361). Open gaps go on the card. No hand-made documents in records (D-363).
+- **Blocking the card:**
+  1. **Make a plan fails in the staging PWA.** Matt tapped it and got an error about needing a remote connector, then "Making…" stuck.
+     - A builder was diagnosing and fixing it in its own worktree, /tmp/claude-0/-home-claude/018a6162-6713-5595-b2c2-e8ae330cda7f/scratchpad/b456stuck, WIP branch b456-stuck-wip if not pushed.
+     - Its brief: the PWA must always reach the Worker job route; "Making…" never sticks (a job with no result releases the guard after ~2 min); the claude.ai page says plans are made in the app.
+     - On resume: read its report, review it (deploy/data path), ship staging, and have Matt tap Make a plan on the staging PWA. This sandbox's proxy cuts requests at 30 s, so a Sonnet plan can't finish from here.
+  2. **The full `npm run check` must be re-run fresh** at the final commit. The last run was spoiled by a builder working in the ship worktree.
+  3. **The UI rescore was stopped.** Re-run it at the final commit. The first score at 8c274d3 was 74/100; fix wave 1 landed at e0f3715.
+- **Card notes so far:** /tmp/claude-0/-home-claude/018a6162-6713-5595-b2c2-e8ae330cda7f/scratchpad/card-notes.md (scratch; may not survive). Open items for the card:
+  - B-457: a Sonnet ask cut in transit can be under-counted.
+  - B-458: the staging check's 'E.V. app' source plus a pipeline writer.
+  - B-459: the plan ask is one long silent request; a dropped connection loses it, so make it background.
+  - The code reviews' minor items.
+- **Next batch:** B-457, B-458, B-459, B-448, B-451, B-436. Parked for the architecture review (B-415): B-443, B-444, B-445.
+
 ## Update (Oct 28, early morning Central)
 
 - Live is **v4.5.14 at 219358d** (B-429, B-430, B-431, B-434, B-435, B-437 to B-442), recorded GREEN. Staging carries
