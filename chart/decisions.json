@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-357",
+  "date": "Oct 27",
+  "title": "Study plan tasks carry one badge from a fixed set: Graded, Learn, Practice, Review, Clinical prep, Skills prep",
+  "why": "Matt likes the badges and the per-badge counts, and noticed reading tasks wrongly badged Practice. The brief's five tags have no home for preview, lecture and full-read tasks, so Learn is added. The model picks from the set (schema enum, anything else refused); code sets Graded on any task whose ref is a dated graded item, whatever the model said. The badge shows on the plan's rows, in the Study view's per-badge counts and filter, and on the task's row in Today. Matt changes a badge by asking for changes (a Haiku patch, D-356); no badge editor.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-356",
   "date": "Oct 27",
   "title": "Plan edits are cheap patches on Haiku; only a new or remade plan uses Sonnet",
