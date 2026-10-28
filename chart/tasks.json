@@ -8587,9 +8587,9 @@
   "id": "B-463",
   "kind": "bug",
   "title": "Bug (reported Oct 28): A plan edit's reply named the wrong weekday (said Tue 28 Oct for a Wednesday)",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Plan edit replies name the weekday that matches the date in Central time (Wed 28 Oct for 2026-10-28); npm test covers the weekday formatting where the reply is composed.",
+  "milestone": "After Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -8599,6 +8599,10 @@
   "reportedAt": "2026-10-28T19:54:05.715Z",
   "board": {
    "row": "v4 B-463: A plan edit's reply named the wrong weekday (said Tue 28 Oct for a…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-28T21:10:57.461Z"
   }
  },
  {
