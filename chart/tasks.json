@@ -8565,9 +8565,9 @@
   "id": "B-462",
   "kind": "bug",
   "title": "Bug (reported Oct 28): A finished job's finish time is stamped with its start time, which can hide its done note in the conversation",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "A finished job's finish time is stamped when it finishes, not with its start time, so its done note sits in the conversation in order; npm test covers the stamp.",
+  "milestone": "After Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -8577,6 +8577,10 @@
   "reportedAt": "2026-10-28T19:54:05.372Z",
   "board": {
    "row": "v4 B-462: A finished job's finish time is stamped with its start time, which…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-28T21:10:53.852Z"
   }
  },
  {
